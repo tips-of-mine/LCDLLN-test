@@ -1,5 +1,7 @@
 #include "engine/core/Time.h"
 
+#include "engine/core/memory/Memory.h"
+
 #include <algorithm>
 
 namespace engine::core {
@@ -13,6 +15,7 @@ std::uint64_t Time::s_frameIndex = 0;
 bool Time::s_initialized = false;
 
 void Time::BeginFrame() {
+    engine::core::memory::Memory::BeginFrame();
     s_frameStart = std::chrono::steady_clock::now();
     if (!s_initialized) {
         s_lastFrameStart = s_frameStart;

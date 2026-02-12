@@ -1,89 +1,76 @@
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 #include "engine/core/Time.h"
-#include "engine/core/memory/Memory.h"
-
-#include <chrono>
-#include <cstddef>
-#include <thread>
-#include <vector>
+#include "engine/platform/FileSystem.h"
+#include "engine/platform/Input.h"
+#include "engine/platform/Window.h"
 
 int main(int argc, char** argv) {
     engine::core::Config config;
     config.SetDefault("log.level", "info");
     config.SetDefault("log.file", "engine.log");
     config.SetDefault("log.flush", "true");
-    config.SetDefault("app.version", "0.1.0");
+    config.SetDefault("app.window.title", "LCDLLN");
+    config.SetDefault("app.window.width", "1280");
+    config.SetDefault("app.window.height", "720");
+    config.SetDefault("app.window.fullscreen", "false");
     config.SetDefault("paths.content", "game/data");
 
     config.LoadFromFile("config.json");
     config.ApplyCommandLine(argc, argv);
 
-    engine::core::LogLevel level = engine::core::LogLevel::Info;
-    const std::string levelText = config.GetString("log.level", "info");
-    if (levelText == "trace") level = engine::core::LogLevel::Trace;
-    else if (levelText == "debug") level = engine::core::LogLevel::Debug;
-    else if (levelText == "warn") level = engine::core::LogLevel::Warn;
-    else if (levelText == "error") level = engine::core::LogLevel::Error;
-    else if (levelText == "fatal") level = engine::core::LogLevel::Fatal;
-
     engine::core::Log::Init({
-        .minLevel = level,
+        .minLevel = engine::core::LogLevel::Info,
         .filePath = config.GetString("log.file", "engine.log"),
         .flushAlways = config.GetBool("log.flush", true),
     });
 
-    LOG_INFO(Core, "Engine version: ", config.GetString("app.version", "unknown"));
-    LOG_INFO(Core, "Content path: ", config.GetString("paths.content", "game/data"));
+    engine::platform::FileSystem fileSystem(config.GetString("paths.content", "game/data"));
+    const auto contentEntries = fileSystem.List(".");
+    LOG_INFO(Core, "Content root: ", config.GetString("paths.content", "game/data"));
+    LOG_INFO(Core, "Entries in content root: ", static_cast<int>(contentEntries.size()));
 
-    engine::core::memory::Memory::InitializeFrameArenas(1024 * 1024);
+    engine::platform::Window window;
+    const engine::platform::WindowDesc windowDesc{
+        .title = config.GetString("app.window.title", "LCDLLN"),
+        .width = config.GetInt("app.window.width", 1280),
+        .height = config.GetInt("app.window.height", 720),
+        .fullscreen = config.GetBool("app.window.fullscreen", false),
+    };
 
-    // Ticket M00.2 validation sample: arena alloc/reset cycle + tag tracking.
-    constexpr int kArenaAllocsPerBatch = 10000;
-    void* renderAlloc = engine::core::memory::SystemAllocator::Alloc(4096, alignof(std::max_align_t), engine::core::memory::MemTag::Render);
-    void* worldAlloc = engine::core::memory::SystemAllocator::Alloc(2048, alignof(std::max_align_t), engine::core::memory::MemTag::World);
-
-    std::vector<std::thread> workers;
-    workers.reserve(4);
-    for (int worker = 0; worker < 4; ++worker) {
-        workers.emplace_back([worker]() {
-            for (int i = 0; i < 250; ++i) {
-                LOG_DEBUG(Job, "worker=", worker, " log=", i);
-            }
-        });
-    }
-    for (auto& worker : workers) {
-        worker.join();
+    if (!window.Create(windowDesc)) {
+        LOG_ERROR(Core, "Unable to create platform window");
+        engine::core::Log::Shutdown();
+        return 1;
     }
 
-    double elapsedForReport = 0.0;
-    for (int i = 0; i < 180; ++i) {
+    engine::platform::Input input;
+    input.Attach(window);
+
+    while (!window.ShouldClose()) {
+        window.ResetFrameFlags();
         engine::core::Time::BeginFrame();
 
-        auto& frameArena = engine::core::memory::Memory::CurrentFrameArena();
-        for (int allocIndex = 0; allocIndex < kArenaAllocsPerBatch; ++allocIndex) {
-            (void)frameArena.Alloc(32, alignof(std::max_align_t));
+        window.PollEvents();
+        input.BeginFrame();
+
+        if (input.WasKeyPressed(engine::platform::Input::Key::Escape)) {
+            window.RequestClose();
+        }
+        if (input.WasKeyPressed(engine::platform::Input::Key::F11)) {
+            window.ToggleFullscreen();
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        if (window.WasResized()) {
+            LOG_INFO(Core, "Window resized: ", window.Width(), "x", window.Height());
+        }
 
+        input.EndFrame();
         engine::core::Time::EndFrame();
-        elapsedForReport += engine::core::Time::DeltaSeconds();
-
-        if (elapsedForReport >= 1.0) {
-            LOG_INFO(Core,
-                     "Frame=", engine::core::Time::FrameIndex(),
-                     " Delta=", engine::core::Time::DeltaSeconds(),
-                     " FPS=", engine::core::Time::Fps());
-            elapsedForReport = 0.0;
-        }
     }
 
-    engine::core::memory::SystemAllocator::Free(renderAlloc, engine::core::memory::MemTag::Render);
-    engine::core::memory::SystemAllocator::Free(worldAlloc, engine::core::memory::MemTag::World);
-    engine::core::memory::Memory::ShutdownFrameArenas();
-    engine::core::memory::Memory::DumpStats();
-
+    input.Detach();
+    window.Destroy();
     engine::core::Log::Shutdown();
     return 0;
 }

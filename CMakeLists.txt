@@ -10,6 +10,7 @@ add_executable(engine_app
     engine/core/Log.cpp
     engine/core/Time.cpp
     engine/core/Config.cpp
+    engine/core/memory/Memory.cpp
 )
 
 target_include_directories(engine_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

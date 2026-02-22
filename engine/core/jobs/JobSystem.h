@@ -1,7 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
+#include <new>
 #include <type_traits>
 #include <utility>
 
@@ -50,10 +52,12 @@ constexpr size_t kJobFunctionStorageSize = 64;
 struct JobFunction {
     using Invoker = void (*)(void*);
     using Destroyer = void (*)(void*);
+    using Mover = void (*)(void* dst, void* src);
 
     alignas(std::max_align_t) unsigned char storage[kJobFunctionStorageSize] = {};
     Invoker invoke = nullptr;
     Destroyer destroy = nullptr;
+    Mover move = nullptr;
 
     JobFunction() = default;
     JobFunction(const JobFunction&) = delete;
@@ -70,10 +74,12 @@ struct JobFunction {
         Reset();
         invoke = other.invoke;
         destroy = other.destroy;
-        if (invoke) {
-            std::memcpy(storage, other.storage, kJobFunctionStorageSize);
+        move = other.move;
+        if (move) {
+            move(storage, other.storage);
             other.invoke = nullptr;
             other.destroy = nullptr;
+            other.move = nullptr;
         }
         return *this;
     }
@@ -88,6 +94,10 @@ struct JobFunction {
         new (storage) T(std::forward<F>(fn));
         invoke = [](void* data) { (*reinterpret_cast<T*>(data))(); };
         destroy = [](void* data) { reinterpret_cast<T*>(data)->~T(); };
+        move = [](void* dst, void* src) {
+            new (dst) T(std::move(*reinterpret_cast<T*>(src)));
+            reinterpret_cast<T*>(src)->~T();
+        };
     }
 
     void Execute() {
@@ -99,9 +109,10 @@ struct JobFunction {
     void Reset() {
         if (destroy) {
             destroy(storage);
-            destroy = nullptr;
-            invoke = nullptr;
         }
+        invoke = nullptr;
+        destroy = nullptr;
+        move = nullptr;
     }
 };
 

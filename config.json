@@ -1,0 +1,18 @@
+{
+  "paths": {
+    "content": "game/data"
+  },
+  "window": {
+    "width":  1280,
+    "height":  720,
+    "title":  "MMORPG Engine"
+  },
+  "render": {
+    "gamma": 2.2,
+    "vsync": true
+  },
+  "log": {
+    "level": "DEBUG",
+    "file":  "engine.log"
+  }
+}

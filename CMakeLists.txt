@@ -15,16 +15,22 @@ find_package(nlohmann_json REQUIRED)
 
 # ---------------------------------------------------------------------------
 # engine_core static library (M00.1: Log, Time, Config)
+#                             (M00.2: Memory — SystemAllocator, LinearArena)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp
     engine/core/Time.cpp
     engine/core/Config.cpp
+
+    # M00.2 — Memory subsystem
+    engine/core/memory/SystemAllocator.cpp
+    engine/core/memory/LinearArena.cpp
+    engine/core/memory/Memory.cpp
 )
 
 target_include_directories(engine_core
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}   # makes "engine/core/Log.h" resolvable
+        ${CMAKE_CURRENT_SOURCE_DIR}   # makes "engine/core/..." includes resolvable
 )
 
 target_link_libraries(engine_core

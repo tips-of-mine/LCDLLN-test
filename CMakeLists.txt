@@ -16,6 +16,7 @@ find_package(nlohmann_json REQUIRED)
 # ---------------------------------------------------------------------------
 # engine_core static library (M00.1: Log, Time, Config)
 #                             (M00.2: Memory — SystemAllocator, LinearArena)
+#                             (M00.3: Jobs — JobSystem)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp
@@ -26,6 +27,9 @@ add_library(engine_core STATIC
     engine/core/memory/SystemAllocator.cpp
     engine/core/memory/LinearArena.cpp
     engine/core/memory/Memory.cpp
+
+    # M00.3 — Job System
+    engine/core/jobs/JobSystem.cpp
 )
 
 target_include_directories(engine_core

@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS        OFF)
 # Dependencies (via vcpkg toolchain or system)
 # ---------------------------------------------------------------------------
 find_package(nlohmann_json REQUIRED)
+find_package(glfw3         REQUIRED)   # M00.4 — Window/Input platform layer
 
 # ---------------------------------------------------------------------------
 # engine_core static library (M00.1: Log, Time, Config)
@@ -50,12 +51,39 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_platform static library  (M00.4: Window, Input, FileSystem)
+# ---------------------------------------------------------------------------
+add_library(engine_platform STATIC
+    engine/platform/Window.cpp
+    engine/platform/Input.cpp
+    engine/platform/FileSystem.cpp
+)
+
+target_include_directories(engine_platform
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}   # "engine/platform/..." includes
+)
+
+target_link_libraries(engine_platform
+    PUBLIC
+        engine_core
+        glfw
+)
+
+if (MSVC)
+    target_compile_options(engine_platform PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_platform PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_app — minimal executable (main.cpp)
 # ---------------------------------------------------------------------------
 add_executable(engine_app main.cpp)
 
 target_link_libraries(engine_app
-    PRIVATE engine_core
+    PRIVATE engine_platform
+            engine_core
 )
 
 if (MSVC)

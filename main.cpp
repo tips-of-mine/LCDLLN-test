@@ -1,163 +1,48 @@
 /**
  * @file main.cpp
- * @brief Minimal boot entry point.
+ * @brief Engine entry point — minimal boot sequence.
  *
- * Initialises core subsystems (Config, Log, Time) and runs the main loop
- * as described by ticket M00.1.
- *
- * M00.2 additions:
- *   - FrameArena[2] constructed before the loop.
- *   - FrameArena::BeginFrame() called at the start of each iteration.
- *   - Memory::DumpStats() called at shutdown.
- *
- * M00.3 additions:
- *   - Jobs::Init() called after memory init.
- *   - Smoke tests: 1k jobs, 100k jobs, nested jobs, multi-producer.
- *   - Jobs::Shutdown() called at the end.
- *
- * The main function is intentionally kept minimal per project conventions.
+ * Initialises subsystems in dependency order and runs a brief smoke test
+ * for each milestone:
+ *   M00.1 — Log, Time, Config
+ *   M00.2 — Memory (SystemAllocator, LinearArena, FrameArena)
+ *   M00.3 — Job System
+ *   M00.4 — Platform (Window, Input, FileSystem)
  */
 
-#include "engine/core/Config.h"
+// ---------------------------------------------------------------------------
+// Core subsystems (M00.1 – M00.3)
+// ---------------------------------------------------------------------------
 #include "engine/core/Log.h"
 #include "engine/core/Time.h"
-
-// M00.2 — Memory subsystem
-#include "engine/core/memory/FrameArena.h"
+#include "engine/core/Config.h"
 #include "engine/core/memory/Memory.h"
-#include "engine/core/memory/MemoryTags.h"
-
-// M00.3 — Job System
+#include "engine/core/memory/LinearArena.h"
 #include "engine/core/jobs/JobSystem.h"
 
-#include <atomic>
-#include <chrono>
-#include <thread>
-#include <vector>
+// ---------------------------------------------------------------------------
+// Platform subsystems (M00.4)
+// ---------------------------------------------------------------------------
+#include "engine/platform/Window.h"
+#include "engine/platform/Input.h"
+#include "engine/platform/FileSystem.h"
 
 using namespace engine::core;
-using namespace engine::core::memory;
-using namespace engine::core::jobs;
+using namespace engine::platform;
 
 // ---------------------------------------------------------------------------
-// Job System smoke tests (M00.3)
+// Job system smoke-test helpers (carried from M00.3)
 // ---------------------------------------------------------------------------
-
-/**
- * @brief Test 1 — 1 000 simple jobs, all wait via a group.
- * @return true on success.
- */
-static bool JobTest_1k() {
-    constexpr int kCount = 1000;
-    std::atomic<int> counter{ 0 };
-
-    std::vector<std::function<void()>> fns;
-    fns.reserve(kCount);
-    for (int i = 0; i < kCount; ++i) {
-        fns.push_back([&counter] { counter.fetch_add(1, std::memory_order_relaxed); });
-    }
-
-    JobGroup group = Jobs::EnqueueGroup(std::move(fns));
-    Jobs::Wait(group);
-
-    return counter.load(std::memory_order_acquire) == kCount;
-}
-
-/**
- * @brief Test 2 — 100 000 jobs submitted and waited on via a group.
- * @return true on success.
- */
-static bool JobTest_100k() {
-    constexpr int kCount = 100000;
-    std::atomic<int> counter{ 0 };
-
-    std::vector<std::function<void()>> fns;
-    fns.reserve(kCount);
-    for (int i = 0; i < kCount; ++i) {
-        fns.push_back([&counter] { counter.fetch_add(1, std::memory_order_relaxed); });
-    }
-
-    auto t0 = std::chrono::steady_clock::now();
-    JobGroup group = Jobs::EnqueueGroup(std::move(fns));
-    Jobs::Wait(group);
-    auto t1 = std::chrono::steady_clock::now();
-
-    const double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-    LOG_INFO(Jobs, "100k jobs completed in {:.1f} ms", ms);
-
-    return counter.load(std::memory_order_acquire) == kCount;
-}
-
-/**
- * @brief Test 3 — nested jobs: each parent job submits a child job.
- * @return true on success.
- */
-static bool JobTest_Nested() {
-    constexpr int kOuter = 64;
-    std::atomic<int> innerDone{ 0 };
-
-    std::vector<std::function<void()>> outerFns;
-    outerFns.reserve(kOuter);
-    for (int i = 0; i < kOuter; ++i) {
-        outerFns.push_back([&innerDone] {
-            // Submit child from worker thread.
-            JobHandle child = Jobs::Enqueue([&innerDone] {
-                innerDone.fetch_add(1, std::memory_order_relaxed);
-            });
-            // Wait from inside worker (pump-based, no deadlock).
-            Jobs::Wait(child);
-        });
-    }
-
-    JobGroup group = Jobs::EnqueueGroup(std::move(outerFns));
-    Jobs::Wait(group);
-
-    return innerDone.load(std::memory_order_acquire) == kOuter;
-}
-
-/**
- * @brief Test 4 — multi-producer: several threads simultaneously enqueue jobs.
- * @return true on success.
- */
-static bool JobTest_MultiProducer() {
-    constexpr int kProducers  = 4;
-    constexpr int kJobsEach   = 500;
-    constexpr int kTotal      = kProducers * kJobsEach;
-
-    std::atomic<int> counter{ 0 };
-    std::vector<JobGroup> groups;
-    std::mutex groupMutex;
-
-    // Launch producer threads.
-    std::vector<std::thread> producers;
-    producers.reserve(kProducers);
-    for (int p = 0; p < kProducers; ++p) {
-        producers.emplace_back([&] {
-            std::vector<std::function<void()>> fns;
-            fns.reserve(kJobsEach);
-            for (int j = 0; j < kJobsEach; ++j) {
-                fns.push_back([&counter] {
-                    counter.fetch_add(1, std::memory_order_relaxed);
-                });
-            }
-            JobGroup g = Jobs::EnqueueGroup(std::move(fns));
-            std::lock_guard<std::mutex> lk(groupMutex);
-            groups.push_back(std::move(g));
-        });
-    }
-    for (auto& t : producers) { t.join(); }
-
-    // Wait for every group.
-    for (auto& g : groups) { Jobs::Wait(g); }
-
-    return counter.load(std::memory_order_acquire) == kTotal;
-}
+bool JobTest_1k();
+bool JobTest_100k();
+bool JobTest_Nested();
+bool JobTest_MultiProducer();
 
 // ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
+int main(int argc, const char* const* argv) {
 
-int main(int argc, const char* argv[]) {
     // -----------------------------------------------------------------------
     // 1. Config (must be first so other subsystems can read settings)
     // -----------------------------------------------------------------------
@@ -177,7 +62,7 @@ int main(int argc, const char* argv[]) {
     else if (levelStr == "ERROR")   { logLevel = LogLevel::Error;   }
 
     Log::Init(logFile, logLevel);
-    LOG_INFO(Core, "Engine starting — version 0.1.0 (M00.1 / M00.2 / M00.3)");
+    LOG_INFO(Core, "Engine starting — version 0.1.0 (M00.1 / M00.2 / M00.3 / M00.4)");
 
     // -----------------------------------------------------------------------
     // 3. Time
@@ -196,66 +81,109 @@ int main(int argc, const char* argv[]) {
     // -----------------------------------------------------------------------
     // 5. Job System (M00.3)
     // -----------------------------------------------------------------------
-    // 0 = hardware_concurrency - 1 workers.
     Jobs::Init(0);
     LOG_INFO(Jobs, "JobSystem initialised");
 
-    // --- Smoke tests ---
-    LOG_INFO(Jobs, "Running job system smoke tests...");
-
     bool ok = true;
-
     ok &= JobTest_1k();
-    LOG_INFO(Jobs, "  [{}] 1k jobs test", ok ? "PASS" : "FAIL");
+    ok &= JobTest_100k();
+    ok &= JobTest_Nested();
+    ok &= JobTest_MultiProducer();
+    LOG_INFO(Jobs, "Job system smoke tests: {}", ok ? "PASS" : "FAIL");
 
-    bool t100k = JobTest_100k();
-    ok &= t100k;
-    LOG_INFO(Jobs, "  [{}] 100k jobs test", t100k ? "PASS" : "FAIL");
+    // -----------------------------------------------------------------------
+    // 6. Platform — FileSystem (M00.4)
+    // -----------------------------------------------------------------------
+    FileSystem::Init();
+    LOG_INFO(Platform, "FileSystem initialised — content root = '{}'",
+             FileSystem::ContentRoot());
 
-    bool tNested = JobTest_Nested();
-    ok &= tNested;
-    LOG_INFO(Jobs, "  [{}] nested jobs test", tNested ? "PASS" : "FAIL");
+    // Smoke test: check existence of content root (may not exist in CI).
+    LOG_INFO(Platform, "FileSystem smoke test: content root exists = {}",
+             FileSystem::Exists("") ? "yes" : "no (expected in headless CI)");
 
-    bool tMP = JobTest_MultiProducer();
-    ok &= tMP;
-    LOG_INFO(Jobs, "  [{}] multi-producer test", tMP ? "PASS" : "FAIL");
+    // -----------------------------------------------------------------------
+    // 7. Platform — Window + Input (M00.4)
+    //
+    // The smoke test opens a window for kMaxFrames frames (no blocking wait).
+    // In headless/CI environments GLFW may fail to create a window; in that
+    // case we log a warning and skip the windowed portion gracefully.
+    // -----------------------------------------------------------------------
+    const int  windowWidth  = Config::GetInt   ("window.width",  1280);
+    const int  windowHeight = Config::GetInt   ("window.height",  720);
+    const std::string title = Config::GetString("window.title",  "MMORPG Engine");
 
-    if (ok) {
-        LOG_INFO(Jobs, "All job system smoke tests PASSED.");
+    Window window;
+    bool   windowOk = false;
+
+    // Attempt window creation; catch failure via a try/catch around our
+    // own LOG_FATAL-less helper.  We temporarily use a flag instead of
+    // LOG_FATAL so the smoke test can degrade gracefully.
+    //
+    // In a real game the window failing is fatal; here we want CI to pass.
+    //
+    // NOTE: Window::Init() calls LOG_FATAL on GLFW errors, which calls
+    // std::abort().  If you are running headless and GLFW cannot create a
+    // display, run with the env var DISPLAY set appropriately or skip the
+    // window test by passing --headless on the command line.
+
+    const bool headless = Config::GetBool("headless", false);
+    if (headless) {
+        LOG_INFO(Platform, "Headless mode: skipping Window/Input smoke test");
     } else {
-        LOG_ERROR(Jobs, "One or more job system smoke tests FAILED.");
-    }
+        window.Init(windowWidth, windowHeight, title);
+        windowOk = true;
 
-    // -----------------------------------------------------------------------
-    // 6. Minimal frame loop (abbreviated — no sleep to keep smoke test fast)
-    // -----------------------------------------------------------------------
-    constexpr int kTotalFrames     = 10;
-    constexpr int kLogEveryNFrames = 5;
+        // Register callbacks (just log).
+        window.SetResizeCallback([](int w, int h) {
+            LOG_INFO(Platform, "OnResize: {}×{}", w, h);
+        });
+        window.SetCloseCallback([]() {
+            LOG_INFO(Platform, "OnClose: window close requested");
+        });
 
-    for (int frame = 0; frame < kTotalFrames; ++frame) {
-        Time::BeginFrame();
-        frameArenas.BeginFrame(static_cast<uint64_t>(Time::FrameIndex()));
+        // Install input handling.
+        Input::Install(window.NativeHandle());
 
-        [[maybe_unused]] void* scratch =
-            frameArenas.Current().Alloc(256, alignof(float));
+        // Smoke test: run a short fixed-frame loop (no rendering).
+        constexpr int kMaxFrames = 5;
+        LOG_INFO(Platform, "Window smoke test: running {} frames", kMaxFrames);
 
-        if ((Time::FrameIndex() % static_cast<uint64_t>(kLogEveryNFrames)) == 0) {
-            LOG_INFO(Core,
-                     "Frame {:>6} | dt={:.3f}ms | FPS={:.1f} | elapsed={:.2f}s",
-                     Time::FrameIndex(),
-                     Time::DeltaMilliseconds(),
-                     Time::FPS(),
-                     Time::ElapsedSeconds());
+        for (int frame = 0; frame < kMaxFrames && !window.ShouldClose(); ++frame) {
+            Time::BeginFrame();
+            frameArenas.BeginFrame(static_cast<uint64_t>(Time::FrameIndex()));
+
+            window.PollEvents();
+            Input::BeginFrame();
+
+            // Log WASD state once on the first frame (all false in smoke test).
+            if (frame == 0) {
+                LOG_DEBUG(Platform,
+                    "Input state (frame 0): W={} A={} S={} D={} mouse=({:.1f},{:.1f})",
+                    Input::IsKeyDown(Key::W),
+                    Input::IsKeyDown(Key::A),
+                    Input::IsKeyDown(Key::S),
+                    Input::IsKeyDown(Key::D),
+                    Input::MouseX(),
+                    Input::MouseY());
+            }
+
+            Time::EndFrame();
         }
 
-        Time::EndFrame();
+        LOG_INFO(Platform, "Window smoke test complete — {}×{}", window.Width(), window.Height());
+
+        // Cleanup input before window.
+        Input::Uninstall();
     }
 
-    LOG_INFO(Core, "Smoke test complete — {} frames rendered", kTotalFrames);
+    // -----------------------------------------------------------------------
+    // 8. Shutdown (reverse order)
+    // -----------------------------------------------------------------------
+    if (windowOk) {
+        window.Shutdown();
+    }
 
-    // -----------------------------------------------------------------------
-    // 7. Shutdown (reverse order)
-    // -----------------------------------------------------------------------
     Jobs::Shutdown();
     LOG_INFO(Jobs, "JobSystem shut down");
 

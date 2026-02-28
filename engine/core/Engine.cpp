@@ -12,6 +12,8 @@
 #include "engine/render/vk/VkFrameResources.h"
 #include "engine/render/vk/VkSceneColor.h"
 #include "engine/render/vk/VkSwapchain.h"
+#include "engine/math/Frustum.h"
+#include "engine/platform/Input.h"
 
 #include <vulkan/vulkan.h>
 
@@ -220,24 +222,47 @@ void Engine::BeginFrame() {
 }
 
 void Engine::Update() {
-    // Choose timestep: either variable or simple fixed step.
+    using namespace engine::platform;
+    using namespace engine::render;
+    using namespace engine::math;
+
     const float dt = m_useFixedTimestep ? m_fixedDeltaSeconds
                                         : Time::DeltaSeconds();
 
-    // Select the write slot and populate the next RenderState.
     const std::uint32_t writeIdx = m_renderWriteIndex;
     RenderState& rs = m_renderStates[writeIdx];
 
-    // Basic camera setup: keep it static for now but ensure aspect is correct.
     const float w = (m_framebufferWidth  > 0) ? static_cast<float>(m_framebufferWidth)  : 1280.0f;
     const float h = (m_framebufferHeight > 0) ? static_cast<float>(m_framebufferHeight) : 720.0f;
     const float aspect = (h > 0.0f) ? (w / h) : (16.0f / 9.0f);
 
-    rs.camera.aspect = aspect;
+    m_camera.aspect = aspect;
 
-    (void)dt; // dt is currently unused; it will drive simulation in later tickets.
+    CameraControllerInput input;
+    input.mouseDeltaX = Input::MouseDeltaX();
+    input.mouseDeltaY = Input::MouseDeltaY();
+    input.keyW = Input::IsKeyDown(Key::W);
+    input.keyA = Input::IsKeyDown(Key::A);
+    input.keyS = Input::IsKeyDown(Key::S);
+    input.keyD = Input::IsKeyDown(Key::D);
+    input.keyShift = Input::IsKeyDown(Key::LeftShift);
+    m_cameraController.Update(m_camera, input, dt);
 
-    // Atomically publish the write slot to the reader and flip for next frame.
+    rs.camera = m_camera;
+    ComputeViewMatrix(rs.camera, rs.view.m);
+    ComputeProjectionMatrix(rs.camera, rs.proj.m);
+
+    float viewProj[16];
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            viewProj[j * 4 + i] = rs.proj.m[0 * 4 + i] * rs.view.m[j * 4 + 0]
+                                + rs.proj.m[1 * 4 + i] * rs.view.m[j * 4 + 1]
+                                + rs.proj.m[2 * 4 + i] * rs.view.m[j * 4 + 2]
+                                + rs.proj.m[3 * 4 + i] * rs.view.m[j * 4 + 3];
+        }
+    }
+    ExtractFromMatrix(viewProj, rs.frustum);
+
     m_renderReadIndex.store(writeIdx, std::memory_order_release);
     m_renderWriteIndex = writeIdx ^ 1u;
 }

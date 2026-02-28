@@ -15,7 +15,9 @@
  */
 
 #include "engine/core/FrameArena.h"
+#include "engine/math/Frustum.h"
 #include "engine/platform/Window.h"
+#include "engine/render/Camera.h"
 #include "engine/render/FrameGraph.h"
 #include "engine/render/vk/VkInstance.h"
 #include "engine/render/vk/VkDeviceContext.h"
@@ -30,33 +32,8 @@
 namespace engine::core {
 
 // ---------------------------------------------------------------------------
-// Minimal math and render state types
+// Minimal math and render state types (M03.0: Camera from engine/render, Frustum from engine/math)
 // ---------------------------------------------------------------------------
-
-/**
- * @brief Minimal camera description stored in the RenderState.
- *
- * This is intentionally lightweight: it carries just enough information
- * for basic view/projection setup.  More advanced camera behaviour is
- * implemented in later tickets.
- */
-struct Camera {
-    /// World-space position of the camera.
-    float position[3]{ 0.0f, 0.0f, 0.0f };
-    /// Forward (look) direction, normalised.
-    float forward[3]{ 0.0f, 0.0f, -1.0f };
-    /// Up vector, normalised.
-    float up[3]{ 0.0f, 1.0f, 0.0f };
-
-    /// Vertical field of view in radians.
-    float fovY      = 60.0f * 3.1415926535f / 180.0f;
-    /// Aspect ratio (width / height).
-    float aspect    = 16.0f / 9.0f;
-    /// Near plane distance.
-    float nearPlane = 0.1f;
-    /// Far plane distance.
-    float farPlane  = 1000.0f;
-};
 
 /**
  * @brief Minimal 4×4 matrix storage for view/projection.
@@ -81,15 +58,16 @@ struct Mat4 {
  * swapped atomically once Update has finished writing.
  */
 struct RenderState {
-    /// Camera parameters for the current frame.
-    Camera camera{};
-    /// View matrix corresponding to the camera.
+    /// Camera (position, yaw, pitch, FOV, aspect, near, far) — M03.0.
+    ::engine::render::Camera camera{};
+    /// View matrix (column-major).
     Mat4   view{};
-    /// Projection matrix corresponding to the camera and window size.
+    /// Projection matrix (column-major, Vulkan).
     Mat4   proj{};
+    /// Frustum planes for culling (from view*proj).
+    ::engine::math::Frustum frustum{};
 
     /// Reserved field for a future draw-list representation.
-    /// Kept empty on purpose for this ticket.
     std::uint64_t drawListPlaceholder = 0;
 };
 
@@ -224,6 +202,10 @@ private:
 
     /// Vulkan frame resources: cmd pools, cmd buffers, semaphores, fences (M01.4).
     ::engine::render::vk::VkFrameResources m_vkFrameResources;
+
+    /// Camera and FPS controller (M03.0).
+    ::engine::render::Camera          m_camera{};
+    ::engine::render::CameraController m_cameraController;
 
     /// Offscreen SceneColor target; resize with swapchain (M02.4).
     ::engine::render::vk::VkSceneColor m_vkSceneColor;

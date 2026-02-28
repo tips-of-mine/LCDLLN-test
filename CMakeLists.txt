@@ -40,6 +40,9 @@ add_library(engine_core STATIC
     engine/core/Config.cpp
     engine/core/Engine.cpp
 
+    # M09.1 — World model: Zone 4km, Chunk 256m, rings
+    engine/world/World.cpp
+
     # M01.1 — Vulkan instance / surface
     engine/render/vk/VkInstance.cpp
 

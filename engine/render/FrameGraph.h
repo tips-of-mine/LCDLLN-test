@@ -7,7 +7,8 @@
  * Ticket: M02.1 — Frame Graph: API ressources + passes + registry.
  *
  * Resources are transient by default (frame lifetime). Pass = setup + execute(cmd, registry).
- * Resources and passes are named for debug. Passes execute in add order (temporary).
+ * Resources and passes are named for debug.
+ * Passes execute in compiled (topological) order after Compile() (M02.2).
  */
 
 #include <vulkan/vulkan.h>
@@ -162,10 +163,21 @@ public:
      * @param name  Debug name for the pass.
      * @return      PassBuilder for this pass.
      */
-    PassBuilder& AddPass(std::string_view name);
+    PassBuilder AddPass(std::string_view name);
 
     /**
-     * @brief Executes all passes in add order; each pass receives cmd and registry.
+     * @brief Builds dependency graph (writer→reader), topo-sorts passes, detects cycles.
+     *
+     * Multi-writer on the same resource triggers assert (MVP). Cycle triggers LOG_FATAL.
+     *
+     * @return  true if compilation succeeded, false on cycle or multi-writer.
+     */
+    [[nodiscard]] bool Compile();
+
+    /**
+     * @brief Executes passes in compiled (topological) order.
+     *
+     * Compile() must have been called and succeeded. Each pass receives cmd and registry.
      *
      * @param cmd      Command buffer to record into.
      * @param registry Registry to resolve resource IDs to Vulkan handles.
@@ -181,6 +193,11 @@ public:
      * @brief Returns the debug name of a pass by index.
      */
     [[nodiscard]] std::string_view GetPassName(size_t index) const;
+
+    /**
+     * @brief Returns whether the graph has been successfully compiled.
+     */
+    [[nodiscard]] bool IsCompiled() const noexcept { return m_compiled; }
 
 private:
     friend class PassBuilder;
@@ -201,6 +218,10 @@ private:
 
     std::vector<ResourceEntry> m_resources;
     std::vector<PassData>     m_passes;
+
+    /// Pass indices in topological (compiled) order; valid after Compile() succeeds.
+    std::vector<size_t> m_executionOrder;
+    bool m_compiled = false;
 };
 
 } // namespace engine::render

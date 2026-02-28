@@ -1,9 +1,15 @@
 /**
  * @file FrameGraph.cpp
  * @brief Frame Graph API implementation: Registry, PassBuilder, FrameGraph.
+ *
+ * M02.2: Dependency graph (writer→reader), topological sort (Kahn), cycle detection.
  */
 
 #include "engine/render/FrameGraph.h"
+#include "engine/core/Log.h"
+
+#include <cassert>
+#include <queue>
 
 namespace engine::render {
 
@@ -97,10 +103,82 @@ PassBuilder FrameGraph::AddPass(std::string_view name) {
     return PassBuilder(this, m_passes.size() - 1);
 }
 
+bool FrameGraph::Compile() {
+    m_executionOrder.clear();
+    m_compiled = false;
+
+    const size_t numPasses = m_passes.size();
+    if (numPasses == 0) {
+        m_compiled = true;
+        return true;
+    }
+
+    const size_t numResources = m_resources.size();
+    std::vector<size_t> lastWriter(numResources, numPasses);
+    std::vector<std::vector<size_t>> successors(numPasses);
+
+    for (size_t i = 0; i < numPasses; ++i) {
+        const PassData& pass = m_passes[i];
+
+        for (ResourceId rid : pass.reads) {
+            if (rid >= numResources) continue;
+            const size_t prev = lastWriter[rid];
+            if (prev < numPasses) {
+                successors[prev].push_back(i);
+            }
+        }
+
+        for (ResourceId rid : pass.writes) {
+            if (rid >= numResources) continue;
+            const size_t prev = lastWriter[rid];
+            assert((prev >= numPasses || prev == i) && "FrameGraph: multi-writer not allowed (MVP)");
+            lastWriter[rid] = i;
+        }
+    }
+
+    std::vector<size_t> inDegree(numPasses, 0);
+    for (const auto& succ : successors) {
+        for (size_t j : succ) {
+            ++inDegree[j];
+        }
+    }
+
+    std::queue<size_t> q;
+    for (size_t i = 0; i < numPasses; ++i) {
+        if (inDegree[i] == 0) {
+            q.push(i);
+        }
+    }
+
+    m_executionOrder.reserve(numPasses);
+    while (!q.empty()) {
+        const size_t u = q.front();
+        q.pop();
+        m_executionOrder.push_back(u);
+        for (size_t v : successors[u]) {
+            if (--inDegree[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+
+    if (m_executionOrder.size() != numPasses) {
+        LOG_FATAL(Render, "FrameGraph: cycle detected in pass dependencies");
+        return false;
+    }
+
+    m_compiled = true;
+    return true;
+}
+
 void FrameGraph::Execute(VkCommandBuffer cmd, Registry& registry) {
-    for (PassData& pass : m_passes) {
-        if (pass.execute) {
-            pass.execute(cmd, registry);
+    assert(m_compiled && "FrameGraph::Execute: call Compile() first");
+    if (!m_compiled) {
+        return;
+    }
+    for (size_t idx : m_executionOrder) {
+        if (idx < m_passes.size() && m_passes[idx].execute) {
+            m_passes[idx].execute(cmd, registry);
         }
     }
 }

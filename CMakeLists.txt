@@ -26,6 +26,7 @@ find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 #                             (M01.4: Vulkan frame resources + render loop)
 #                             (M01.5: Shader management + hot reload)
 #                             (M02.1: Frame Graph API + registry)
+#                             (M02.2: Frame Graph compilation + topo order)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp

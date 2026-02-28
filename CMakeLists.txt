@@ -86,6 +86,9 @@ add_library(engine_core STATIC
 
     # M05.3 — IBL: prefiltered specular cubemap (mips)
     engine/render/vk/VkPrefilteredEnvCubemap.cpp
+
+    # M06.1 — SSAO: kernel + noise generation
+    engine/render/vk/VkSsaoKernelNoise.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
     # M03.3 — Materials: BaseColor/Normal/ORM + loader

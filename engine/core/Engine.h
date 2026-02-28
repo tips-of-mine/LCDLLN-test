@@ -36,6 +36,7 @@
 #include "engine/render/vk/VkBrdfLut.h"
 #include "engine/render/vk/VkIrradianceCubemap.h"
 #include "engine/render/vk/VkPrefilteredEnvCubemap.h"
+#include "engine/render/vk/VkSsaoKernelNoise.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -264,6 +265,8 @@ private:
     ::engine::render::vk::VkPrefilteredEnvCubemap m_vkPrefilteredEnvCubemap;
     /// Sampler for env/irradiance cubemap (convolution source and default cube fallback).
     VkSampler m_envCubemapSampler = VK_NULL_HANDLE;
+    /// SSAO kernel UBO + 4x4 noise texture, generated at boot (M06.1).
+    ::engine::render::vk::VkSsaoKernelNoise m_ssaoKernelNoise;
     uint32_t m_shadowMapSize = 1024u;
 
     /// Frame graph: Shadow0..3 → Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2, M04.2).

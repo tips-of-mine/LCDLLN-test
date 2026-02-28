@@ -313,6 +313,12 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                     if (normView == VK_NULL_HANDLE) normView = m_textureLoader.CreateDefaultTexture(128, 128, 255, false);
                                     VkImageView ormView = m_textureLoader.Load("textures/default_orm.png", false);
                                     if (ormView == VK_NULL_HANDLE) ormView = m_textureLoader.CreateDefaultTexture(255, 128, 0, false);
+                                    {
+                                        float ssaoRadius = Config::GetFloat("ssao.radius", 0.5f);
+                                        float ssaoBias   = Config::GetFloat("ssao.bias", 0.01f);
+                                        m_ssaoKernelNoise.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
+                                                              m_vkDevice.GraphicsQueue(), m_uploadCommandPool, ssaoRadius, ssaoBias);
+                                    }
                                     if (!engine::render::vk::CreateMaterialDescriptorSetLayout(m_vkDevice.Device(), &m_materialSetLayout)) {
                                         LOG_ERROR(Render, "Material descriptor set layout failed");
                                     } else {
@@ -538,6 +544,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_vkBrdfLut.Shutdown();
         m_vkIrradianceCubemap.Shutdown();
         m_vkPrefilteredEnvCubemap.Shutdown();
+        m_ssaoKernelNoise.Shutdown();
         if (m_envCubemapSampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_vkDevice.Device(), m_envCubemapSampler, nullptr);
             m_envCubemapSampler = VK_NULL_HANDLE;

@@ -46,6 +46,8 @@ add_library(engine_core STATIC
     engine/world/ZoneBuildFormat.cpp
     # M11.3 — Navmesh/portals binary format reader
     engine/world/NavMeshFormat.cpp
+    # M11.4 — Probes (probes.bin) + zone atmosphere format reader
+    engine/world/ProbesFormat.cpp
     # M09.2 — Budgets par chunk (triangles/drawcalls) + instrumentation
     engine/world/ChunkStats.cpp
     engine/world/HlodRuntime.cpp

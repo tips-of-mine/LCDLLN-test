@@ -819,6 +819,9 @@ void Engine::BeginFrame() {
                 // M11.3: load navmesh + portals for this chunk (pathfind across chunks uses these).
                 ::engine::world::ReadNavMeshBin(chunkDir + "/navmesh.bin", m_zoneNavMesh);
                 ::engine::world::ReadPortalsBin(chunkDir + "/portals.bin", m_zoneNavPortals);
+                // M11.4: load zone-level probes and atmosphere (lighting uses global probe or fallback sky).
+                ::engine::world::ReadProbesBin(base + "/probes.bin", m_zoneProbes);
+                ::engine::world::ReadZoneAtmosphere(base + "/zone_atmosphere.json", m_zoneAtmosphere);
             }
         }
     }

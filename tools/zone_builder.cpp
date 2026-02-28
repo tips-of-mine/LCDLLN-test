@@ -5,6 +5,7 @@
  * - layout.json: versioned; positions in meters; GUID per instance.
  * - glTF: load via TinyGLTF; list meshes/materials.
  * - M11.2: chunk coord = floor(x/256), floor(z/256); write chunk.meta (bounds, flags), instances.bin, zone.meta.
+ * - M11.4: one global zone probe at zone center (probes.bin) + zone_atmosphere.json.
  */
 
 #include <tiny_gltf.h>
@@ -98,7 +99,7 @@ bool LoadGltfWithTinygltf(const std::string& path, std::vector<std::string>& mes
 /** @brief Prints usage to stderr. */
 void PrintUsage(const char* prog) {
     std::cerr << "Usage: " << prog << " <layout.json> <scene.gltf|scene.glb> [outputDir]\n";
-    std::cerr << "  If outputDir (e.g. build/zone_0) is given, writes chunked outputs: zone.meta, chunks/chunk_i_j/chunk.meta, instances.bin.\n";
+    std::cerr << "  If outputDir (e.g. build/zone_0) is given, writes zone.meta, chunks/chunk_i_j/chunk.meta, instances.bin, probes.bin, zone_atmosphere.json.\n";
 }
 
 /* M11.2: zone builder output format constants (must match engine reader). */
@@ -177,6 +178,36 @@ bool WriteInstancesBin(const std::string& path, const std::vector<ChunkInstanceR
     return true;
 }
 
+/* M11.4: probes.bin format (must match engine ProbesFormat.h). */
+constexpr uint32_t kProbesBinMagic = 0x424F5250u; /* "PROB" */
+constexpr uint32_t kProbesBinVersion = 1u;
+struct ProbeRecord { float position[3] = {}; float radius = 1000.f; float intensity = 1.f; };
+
+/** @brief Writes probes.bin (positions, radius, params). At least one global zone probe. */
+bool WriteProbesBin(const std::string& path, const std::vector<ProbeRecord>& probes) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
+    uint32_t magic = kProbesBinMagic, version = kProbesBinVersion;
+    uint32_t n = static_cast<uint32_t>(probes.size());
+    out.write(reinterpret_cast<const char*>(&magic), 4);
+    out.write(reinterpret_cast<const char*>(&version), 4);
+    out.write(reinterpret_cast<const char*>(&n), 4);
+    for (const auto& p : probes) {
+        out.write(reinterpret_cast<const char*>(p.position), 12);
+        out.write(reinterpret_cast<const char*>(&p.radius), 4);
+        out.write(reinterpret_cast<const char*>(&p.intensity), 4);
+    }
+    return true;
+}
+
+/** @brief Writes zone_atmosphere.json (MVP: sky color, horizon exponent). */
+bool WriteZoneAtmosphereJson(const std::string& path) {
+    std::ofstream out(path);
+    if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
+    out << "{\"version\":1,\"skyColor\":[0.53,0.81,1.0],\"horizonExponent\":1.0}\n";
+    return true;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -227,7 +258,26 @@ int main(int argc, char** argv) {
             if (!WriteInstancesBin(chunkDir + "/instances.bin", kv.second)) return 1;
         }
         if (!WriteZoneMeta(base + "zone.meta", zoneId, chunkCoords)) return 1;
-        std::cout << "zone_builder: wrote zone.meta + " << chunkCoords.size() << " chunks to " << outputDir << "\n";
+        /* M11.4: one global zone probe at zone center + zone_atmosphere.json. */
+        int32_t minCi = chunkCoords.empty() ? 0 : chunkCoords[0].first;
+        int32_t maxCi = minCi, minCj = chunkCoords.empty() ? 0 : chunkCoords[0].second, maxCj = minCj;
+        for (const auto& p : chunkCoords) {
+            if (p.first < minCi) minCi = p.first;
+            if (p.first > maxCi) maxCi = p.first;
+            if (p.second < minCj) minCj = p.second;
+            if (p.second > maxCj) maxCj = p.second;
+        }
+        float zoneCenterX = 0.5f * (static_cast<float>(minCi + maxCi + 1) * static_cast<float>(kChunkSize));
+        float zoneCenterZ = 0.5f * (static_cast<float>(minCj + maxCj + 1) * static_cast<float>(kChunkSize));
+        ProbeRecord globalProbe;
+        globalProbe.position[0] = zoneCenterX;
+        globalProbe.position[1] = 0.f;
+        globalProbe.position[2] = zoneCenterZ;
+        globalProbe.radius = 2000.f;
+        globalProbe.intensity = 1.f;
+        if (!WriteProbesBin(base + "probes.bin", { globalProbe })) return 1;
+        if (!WriteZoneAtmosphereJson(base + "zone_atmosphere.json")) return 1;
+        std::cout << "zone_builder: wrote zone.meta + " << chunkCoords.size() << " chunks, probes.bin, zone_atmosphere.json to " << outputDir << "\n";
     } else {
         for (size_t i = 0; i < instances.size(); ++i) {
             const LayoutInstance& inst = instances[i];

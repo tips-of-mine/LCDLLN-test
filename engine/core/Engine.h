@@ -57,6 +57,7 @@
 #include "engine/world/HlodRuntime.h"
 #include "engine/world/ZoneBuildFormat.h"
 #include "engine/world/NavMeshFormat.h"
+#include "engine/world/ProbesFormat.h"
 #include "engine/streaming/StreamingScheduler.h"
 #include "engine/streaming/LruCache.h"
 #include "engine/render/vk/DeferredDestroyQueue.h"
@@ -360,6 +361,8 @@ private:
     std::vector<::engine::world::ZoneChunkInstance> m_zoneChunkInstances;
     ::engine::world::NavMeshData m_zoneNavMesh;
     std::vector<::engine::world::NavMeshPortal> m_zoneNavPortals;
+    std::vector<::engine::world::ZoneProbe> m_zoneProbes;
+    ::engine::world::ZoneAtmosphere m_zoneAtmosphere;
     bool m_zoneBuildLoaded = false;
 
     /// True when the window was successfully created.

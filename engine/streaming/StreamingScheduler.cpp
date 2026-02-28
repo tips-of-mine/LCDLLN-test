@@ -62,9 +62,12 @@ void StreamingScheduler::PushRequest(::engine::world::ChunkCoord chunkId,
                                      float playerX, float playerZ,
                                      float viewDirX, float viewDirZ,
                                      double currentTime) {
+    uint32_t& v = m_chunkVersion[chunkId];
+    v = (v == 0xFFFFFFFFu) ? 1u : (v + 1u);
     QueuedChunkRequest q;
     q.request.chunkId = chunkId;
     q.request.targetState = targetState;
+    q.request.streamVersion = v;
     q.enqueueTime = currentTime;
     m_requestQueue.push_back(q);
 }
@@ -95,6 +98,18 @@ bool StreamingScheduler::PopFromIoQueue(ChunkRequest& out) {
     return true;
 }
 
+bool StreamingScheduler::TryAdvanceFromIoToCpu() {
+    if (m_ioQueue.empty()) return false;
+    ChunkRequest req = m_ioQueue.front();
+    m_ioQueue.pop();
+    if (!IsVersionCurrent(req.chunkId, req.streamVersion)) {
+        RecordCancelled();
+        return true;
+    }
+    m_cpuQueue.push(req);
+    return true;
+}
+
 void StreamingScheduler::PushToCpuQueue(const ChunkRequest& req) {
     m_cpuQueue.push(req);
 }
@@ -103,6 +118,18 @@ bool StreamingScheduler::PopFromCpuQueue(ChunkRequest& out) {
     if (m_cpuQueue.empty()) return false;
     out = m_cpuQueue.front();
     m_cpuQueue.pop();
+    return true;
+}
+
+bool StreamingScheduler::TryAdvanceFromCpuToGpuUpload() {
+    if (m_cpuQueue.empty()) return false;
+    ChunkRequest req = m_cpuQueue.front();
+    m_cpuQueue.pop();
+    if (!IsVersionCurrent(req.chunkId, req.streamVersion)) {
+        RecordCancelled();
+        return true;
+    }
+    m_gpuUploadQueue.push(req);
     return true;
 }
 
@@ -127,6 +154,15 @@ size_t StreamingScheduler::CpuQueueSize() const noexcept {
 
 size_t StreamingScheduler::GpuUploadQueueSize() const noexcept {
     return m_gpuUploadQueue.size();
+}
+
+bool StreamingScheduler::IsVersionCurrent(::engine::world::ChunkCoord chunkId, uint32_t streamVersion) const {
+    auto it = m_chunkVersion.find(chunkId);
+    return it != m_chunkVersion.end() && it->second == streamVersion;
+}
+
+void StreamingScheduler::RecordCancelled() noexcept {
+    ++m_cancelledCount;
 }
 
 } // namespace engine::streaming

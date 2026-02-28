@@ -12,16 +12,33 @@
 
 #include <cstdint>
 #include <queue>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::streaming {
 
+/** @brief Hash for ChunkCoord for use in unordered_map (version store). */
+struct ChunkCoordHash {
+    std::size_t operator()(const ::engine::world::ChunkCoord& c) const noexcept {
+        std::size_t h = 0;
+        h ^= static_cast<std::size_t>(static_cast<uint32_t>(c.zoneX)) + 0x9e3779b9u + (h << 6) + (h >> 2);
+        h ^= static_cast<std::size_t>(static_cast<uint32_t>(c.zoneZ)) + 0x9e3779b9u + (h << 6) + (h >> 2);
+        h ^= static_cast<std::size_t>(static_cast<uint32_t>(c.chunkX)) + 0x9e3779b9u + (h << 6) + (h >> 2);
+        h ^= static_cast<std::size_t>(static_cast<uint32_t>(c.chunkZ)) + 0x9e3779b9u + (h << 6) + (h >> 2);
+        return h;
+    }
+};
+
 /**
- * @brief A chunk load request: chunk identifier and target ring state.
+ * @brief A chunk load request: chunk identifier, target ring state, and stream version (M10.2).
+ *
+ * streamVersion is set when the request is pushed; at each stage (IO/CPU/GPU)
+ * the consumer must check IsVersionCurrent() and drop (RecordCancelled) if mismatch.
  */
 struct ChunkRequest {
     ::engine::world::ChunkCoord chunkId{};
     ::engine::world::RingType   targetState = ::engine::world::RingType::Active;
+    uint32_t                    streamVersion = 0u;
 };
 
 /**
@@ -54,7 +71,7 @@ float ComputeChunkPriority(const ChunkRequest& request,
                            double enqueueTime, double currentTime);
 
 /**
- * @brief Streaming scheduler: request queue (priority) + io / cpu / gpuUpload queues.
+ * @brief Streaming scheduler: request queue (priority) + io / cpu / gpuUpload queues + per-chunk versioning (M10.2).
  */
 class StreamingScheduler {
 public:
@@ -104,11 +121,23 @@ public:
     /** @brief Pops one item from the IO queue. Returns false if empty. */
     bool PopFromIoQueue(ChunkRequest& out);
 
+    /**
+     * @brief Pops from IO and, if version still current, pushes to CPU; otherwise drops and records cancelled.
+     * @return true if one item was consumed (either advanced or dropped), false if IO queue empty.
+     */
+    bool TryAdvanceFromIoToCpu();
+
     /** @brief Pushes a request onto the CPU queue. */
     void PushToCpuQueue(const ChunkRequest& req);
 
     /** @brief Pops one item from the CPU queue. Returns false if empty. */
     bool PopFromCpuQueue(ChunkRequest& out);
+
+    /**
+     * @brief Pops from CPU and, if version still current, pushes to GPU upload; otherwise drops and records cancelled.
+     * @return true if one item was consumed (either advanced or dropped), false if CPU queue empty.
+     */
+    bool TryAdvanceFromCpuToGpuUpload();
 
     /** @brief Pushes a request onto the GPU upload queue. */
     void PushToGpuUploadQueue(const ChunkRequest& req);
@@ -120,11 +149,26 @@ public:
     [[nodiscard]] size_t CpuQueueSize() const noexcept;
     [[nodiscard]] size_t GpuUploadQueueSize() const noexcept;
 
+    /**
+     * @brief Returns true if the given streamVersion is still the current version for that chunk.
+     *
+     * Call after popping from IO/CPU/GPU before pushing to the next stage; if false, drop and call RecordCancelled().
+     */
+    [[nodiscard]] bool IsVersionCurrent(::engine::world::ChunkCoord chunkId, uint32_t streamVersion) const;
+
+    /** @brief Records one dropped job (version mismatch). */
+    void RecordCancelled() noexcept;
+
+    /** @brief Returns the number of jobs dropped due to version mismatch (cancelled stats). */
+    [[nodiscard]] uint32_t GetCancelledCount() const noexcept { return m_cancelledCount; }
+
 private:
     std::vector<QueuedChunkRequest> m_requestQueue;
     std::queue<ChunkRequest>         m_ioQueue;
     std::queue<ChunkRequest>        m_cpuQueue;
     std::queue<ChunkRequest>        m_gpuUploadQueue;
+    std::unordered_map<::engine::world::ChunkCoord, uint32_t, ChunkCoordHash> m_chunkVersion;
+    uint32_t m_cancelledCount = 0u;
 };
 
 } // namespace engine::streaming

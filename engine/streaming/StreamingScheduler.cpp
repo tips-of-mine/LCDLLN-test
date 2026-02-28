@@ -165,4 +165,9 @@ void StreamingScheduler::RecordCancelled() noexcept {
     ++m_cancelledCount;
 }
 
+std::optional<std::pair<const void*, size_t>> StreamingScheduler::GetCachedBlob(const std::string& key) const {
+    if (!m_cache) return std::nullopt;
+    return m_cache->Get(key);
+}
+
 } // namespace engine::streaming

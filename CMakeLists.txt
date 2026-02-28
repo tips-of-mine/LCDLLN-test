@@ -47,6 +47,9 @@ add_library(engine_core STATIC
     engine/world/HlodRuntime.cpp
     # M10.1 — Streaming scheduler: requests + priorities
     engine/streaming/StreamingScheduler.cpp
+    # M10.3 — Cache: CPU LRU + GPU deferred free
+    engine/streaming/LruCache.cpp
+    engine/render/vk/DeferredDestroyQueue.cpp
     # M09.3 — LOD rules + instancing (props/foliage)
     engine/world/Lod.cpp
     engine/world/InstanceBatch.cpp

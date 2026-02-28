@@ -9,8 +9,10 @@
  */
 
 #include "engine/world/World.h"
+#include "engine/streaming/LruCache.h"
 
 #include <cstdint>
+#include <optional>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -115,6 +117,12 @@ public:
     /** @brief Request queue size (priority-ordered). */
     [[nodiscard]] size_t RequestQueueSize() const noexcept { return m_requestQueue.size(); }
 
+    /** @brief Sets the LRU cache used by the IO stage (hit cache -> skip disk). May be null. */
+    void SetCache(LruCache* cache) noexcept { m_cache = cache; }
+
+    /** @brief Returns cached blob for key if present (IO stage: hit -> skip disk). */
+    [[nodiscard]] std::optional<std::pair<const void*, size_t>> GetCachedBlob(const std::string& key) const;
+
     /** @brief Pushes a request onto the IO queue (after request stage). */
     void PushToIoQueue(const ChunkRequest& req);
 
@@ -169,6 +177,7 @@ private:
     std::queue<ChunkRequest>        m_gpuUploadQueue;
     std::unordered_map<::engine::world::ChunkCoord, uint32_t, ChunkCoordHash> m_chunkVersion;
     uint32_t m_cancelledCount = 0u;
+    LruCache* m_cache = nullptr;
 };
 
 } // namespace engine::streaming

@@ -244,6 +244,13 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
              m_vsyncEnabled ? "on" : "off",
              targetFps);
 
+    // M10.3: LRU cache for streaming (1-4GB configurable).
+    int cacheMb = Config::GetInt("streaming.cache_size_mb", 2048);
+    if (cacheMb < 1024) cacheMb = 1024;
+    if (cacheMb > 4096) cacheMb = 4096;
+    m_lruCache.SetCapacityBytes(static_cast<size_t>(cacheMb) * 1024u * 1024u);
+    m_streamingScheduler.SetCache(&m_lruCache);
+
     // Window parameters.
     const int  windowWidth  = Config::GetInt   ("window.width",  1280);
     const int  windowHeight = Config::GetInt   ("window.height",  720);
@@ -777,6 +784,10 @@ void Engine::BeginFrame() {
     // Advance time and reset the appropriate frame arena.
     Time::BeginFrame();
     m_frameArenas.BeginFrame(Time::FrameIndex());
+
+    // M10.3: collect deferred GPU destroys when fences have signaled.
+    if (m_vkDevice.IsValid())
+        m_deferredDestroyQueue.Collect(m_vkDevice.Device());
 
     // Pump OS/window events and snapshot input state.
     if (!m_headless && m_windowOk) {

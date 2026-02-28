@@ -56,6 +56,8 @@
 #include "engine/world/ChunkStats.h"
 #include "engine/world/HlodRuntime.h"
 #include "engine/streaming/StreamingScheduler.h"
+#include "engine/streaming/LruCache.h"
+#include "engine/render/vk/DeferredDestroyQueue.h"
 
 #include <array>
 #include <atomic>
@@ -345,6 +347,10 @@ private:
     uint32_t m_instanceDrawsThisFrame = 0u;
     /// Streaming scheduler: request/io/cpu/gpuUpload queues + priority (M10.1).
     ::engine::streaming::StreamingScheduler m_streamingScheduler;
+    /// LRU cache for decompressed blobs (IO stage: hit -> skip disk) (M10.3).
+    ::engine::streaming::LruCache m_lruCache;
+    /// Deferred GPU resource destruction (collect at BeginFrame when fence signaled) (M10.3).
+    ::engine::render::vk::DeferredDestroyQueue m_deferredDestroyQueue;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

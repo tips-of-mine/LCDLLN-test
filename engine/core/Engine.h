@@ -41,6 +41,7 @@
 #include "engine/render/vk/VkSsaoPipeline.h"
 #include "engine/render/vk/VkSsaoBlur.h"
 #include "engine/render/vk/VkSsaoBlurPipeline.h"
+#include "engine/render/vk/VkTaaHistory.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -302,6 +303,10 @@ private:
     ::engine::render::ResourceId m_fgSsaoRawId       = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSsaoBlurTempId  = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSsaoBlurId     = ::engine::render::kInvalidResourceId;
+    /// TAA history ping-pong (M07.2): HistoryA = 0, HistoryB = 1.
+    ::engine::render::vk::VkTaaHistory m_vkTaaHistory;
+    ::engine::render::ResourceId m_fgTaaHistoryAId  = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgTaaHistoryBId  = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.
@@ -340,6 +345,12 @@ private:
     bool m_taaResetHistory = true;
     float m_taaPrevAspect = 0.0f;
     float m_taaPrevFov = 0.0f;
+    /// M07.2 — TAA: ping-pong index (next=idx, prev=idx^1); swap each frame after render.
+    uint32_t m_taaHistoryIdx = 0u;
+    /// First frame: copy current to both history buffers.
+    bool m_taaFirstFrame = true;
+    /// On reset: copy current -> history next (set in OnResize / Update when reset detected).
+    bool m_taaCopyHistoryOnReset = false;
 };
 
 } // namespace engine::core

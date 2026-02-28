@@ -62,6 +62,7 @@ add_library(engine_core STATIC
 
     # M02.4 — Offscreen SceneColor + copy to swapchain
     engine/render/vk/VkSceneColor.cpp
+    engine/render/vk/VkTaaHistory.cpp
 
     # M03.1 — Deferred GBuffer + geometry pass
     engine/render/vk/VkGBuffer.cpp

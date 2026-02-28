@@ -290,6 +290,14 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                         } else {
                             const uint32_t w = m_vkSwapchain.Extent().width;
                             const uint32_t h = m_vkSwapchain.Extent().height;
+                            const bool taaHistoryOk = m_vkTaaHistory.Init(
+                                m_vkDevice.PhysicalDevice(),
+                                m_vkDevice.Device(),
+                                w, h,
+                                m_vkSwapchain.Format());
+                            if (!taaHistoryOk) {
+                                LOG_ERROR(Render, "TAA history ping-pong initialisation failed");
+                            }
                             const bool gbufOk = m_vkGBuffer.Init(
                                 m_vkDevice.PhysicalDevice(),
                                 m_vkDevice.Device(), w, h);
@@ -604,6 +612,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_vkGBuffer.Shutdown();
         m_vkFrameResources.Shutdown();
         m_vkSceneColor.Shutdown();
+        m_vkTaaHistory.Shutdown();
         m_vkSwapchain.Shutdown();
         m_vkDevice.Shutdown();
         m_vkInstance.Shutdown();
@@ -673,6 +682,7 @@ void Engine::Update() {
     if (resetHistory) {
         m_taaPrevAspect = aspect;
         m_taaPrevFov = rs.camera.fovY;
+        m_taaCopyHistoryOnReset = true;
     } else {
         const RenderState& prevRs = m_renderStates[readIdx];
         for (int i = 0; i < 16; ++i) rs.viewProjPrev[i] = prevRs.viewProjCurr[i];
@@ -742,6 +752,10 @@ void Engine::Render() {
             if (m_vkSsaoBlur.IsValid()) {
                 m_vkSsaoBlur.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
                 m_lightingPipeline.SetSsaoBlurView(m_vkSsaoBlur.GetImageViewOutput());
+            }
+            if (m_vkTaaHistory.IsValid()) {
+                m_vkTaaHistory.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+                m_taaCopyHistoryOnReset = true;
             }
         }
     }
@@ -831,6 +845,16 @@ void Engine::Render() {
         sceneLDRDesc.layers = 1;
         sceneLDRDesc.format = m_vkSwapchain.Format();
         m_fgSceneColorId = m_frameGraph.CreateImage(sceneLDRDesc, "SceneColor_LDR");
+
+        if (m_vkTaaHistory.IsValid()) {
+            ImageDesc historyDesc{};
+            historyDesc.width  = ext.width;
+            historyDesc.height = ext.height;
+            historyDesc.layers = 1;
+            historyDesc.format = m_vkSwapchain.Format();
+            m_fgTaaHistoryAId = m_frameGraph.CreateImage(historyDesc, "HistoryA");
+            m_fgTaaHistoryBId = m_frameGraph.CreateImage(historyDesc, "HistoryB");
+        }
 
         ImageDesc swapDesc{};
         swapDesc.width  = ext.width;
@@ -1100,6 +1124,53 @@ void Engine::Render() {
                 vkCmdEndRenderPass(cmd);
             });
 
+        if (m_vkTaaHistory.IsValid()) {
+            m_frameGraph.AddPass("TAA_CopyToHistoryA")
+                .Read(m_fgSceneColorId, ImageUsage::TransferSrc)
+                .Write(m_fgTaaHistoryAId, ImageUsage::TransferDst)
+                .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                    if (!m_vkTaaHistory.IsValid()) return;
+                    if (m_taaFirstFrame || (m_taaCopyHistoryOnReset && m_taaHistoryIdx == 0u)) {
+                        const VkImage srcImg = reg.GetImage(m_fgSceneColorId);
+                        const VkImage dstImg = reg.GetImage(m_fgTaaHistoryAId);
+                        if (srcImg != VK_NULL_HANDLE && dstImg != VK_NULL_HANDLE) {
+                            const VkExtent2D ext = m_vkTaaHistory.Extent();
+                            VkImageCopy region{};
+                            region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                            region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                            region.extent = {ext.width, ext.height, 1};
+                            vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                           dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                        }
+                        if (m_taaCopyHistoryOnReset && m_taaHistoryIdx == 0u)
+                            m_taaCopyHistoryOnReset = false;
+                    }
+                });
+            m_frameGraph.AddPass("TAA_CopyToHistoryB")
+                .Read(m_fgSceneColorId, ImageUsage::TransferSrc)
+                .Write(m_fgTaaHistoryBId, ImageUsage::TransferDst)
+                .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                    if (!m_vkTaaHistory.IsValid()) return;
+                    if (m_taaFirstFrame || (m_taaCopyHistoryOnReset && m_taaHistoryIdx == 1u)) {
+                        const VkImage srcImg = reg.GetImage(m_fgSceneColorId);
+                        const VkImage dstImg = reg.GetImage(m_fgTaaHistoryBId);
+                        if (srcImg != VK_NULL_HANDLE && dstImg != VK_NULL_HANDLE) {
+                            const VkExtent2D ext = m_vkTaaHistory.Extent();
+                            VkImageCopy region{};
+                            region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                            region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                            region.extent = {ext.width, ext.height, 1};
+                            vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                           dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                        }
+                        if (m_taaFirstFrame)
+                            m_taaFirstFrame = false;
+                        if (m_taaCopyHistoryOnReset && m_taaHistoryIdx == 1u)
+                            m_taaCopyHistoryOnReset = false;
+                    }
+                });
+        }
+
         m_frameGraph.AddPass("Present")
             .Read(m_fgSceneColorId, ImageUsage::TransferSrc)
             .Write(m_fgSwapchainId, ImageUsage::TransferDst)
@@ -1171,8 +1242,15 @@ void Engine::Render() {
     }
     m_fgRegistry.SetImage(m_fgSceneColorHDRId, m_vkSceneColorHDR.GetImage());
     m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());
+    if (m_vkTaaHistory.IsValid()) {
+        m_fgRegistry.SetImage(m_fgTaaHistoryAId, m_vkTaaHistory.GetImage(0));
+        m_fgRegistry.SetImage(m_fgTaaHistoryBId, m_vkTaaHistory.GetImage(1));
+    }
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
+
+    if (m_vkTaaHistory.IsValid())
+        m_taaHistoryIdx ^= 1u;
 
     if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) {
         LOG_ERROR(Render, "vkEndCommandBuffer failed");
@@ -1246,6 +1324,7 @@ void Engine::OnResize(int width, int height) {
     m_framebufferWidth  = width;
     m_framebufferHeight = height;
     m_taaResetHistory = true;
+    m_taaCopyHistoryOnReset = true;
     if (m_vkSwapchain.IsValid()) {
         m_vkSwapchain.RequestRecreate();
     }

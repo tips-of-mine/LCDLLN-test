@@ -37,6 +37,11 @@ public:
      */
     void SetHDRView(VkImageView hdrView);
 
+    /**
+     * @brief Binds exposure UBO (binding 1). Used for auto-exposure (M08.3) or manual value.
+     */
+    void SetExposureBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
+
     void Shutdown();
 
     [[nodiscard]] bool IsValid() const noexcept { return m_pipeline != VK_NULL_HANDLE; }

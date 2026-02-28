@@ -28,6 +28,20 @@
 #include "engine/platform/Input.h"
 
 #include <vulkan/vulkan.h>
+
+#include <cstring>
+
+namespace {
+uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProps;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+    for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
+        if ((typeFilter & (1u << i)) && (memProps.memoryTypes[i].propertyFlags & properties) == properties)
+            return i;
+    }
+    return UINT32_MAX;
+}
+} // namespace
 #include <cmath>
 #include <cstring>
 
@@ -493,6 +507,48 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                 if (!m_bloomPrefilterPipeline.IsValid())
                                                     m_vkBloomPyramid.Shutdown();
                                             }
+                                            {
+                                                std::vector<uint8_t> compReduce = m_shaderCache.Get("shaders/luminance_reduce.comp");
+                                                std::vector<uint8_t> compMid = m_shaderCache.Get("shaders/luminance_reduce_mid.comp");
+                                                std::vector<uint8_t> compFinal = m_shaderCache.Get("shaders/luminance_reduce_final.comp");
+                                                if (!compReduce.empty() && !compMid.empty() && !compFinal.empty()) {
+                                                    if (!m_vkExposureReduce.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), w * h, compReduce, compMid, compFinal)) {
+                                                        LOG_ERROR(Render, "VkExposureReduce init failed");
+                                                    }
+                                                }
+                                                VkBufferCreateInfo ebci{};
+                                                ebci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+                                                ebci.size = 4u;
+                                                ebci.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+                                                ebci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                                                if (vkCreateBuffer(m_vkDevice.Device(), &ebci, nullptr, &m_exposureFallbackBuffer) == VK_SUCCESS) {
+                                                    VkMemoryRequirements memReqs;
+                                                    vkGetBufferMemoryRequirements(m_vkDevice.Device(), m_exposureFallbackBuffer, &memReqs);
+                                                    VkMemoryAllocateInfo allocInfo{};
+                                                    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+                                                    allocInfo.allocationSize = memReqs.size;
+                                                    allocInfo.memoryTypeIndex = FindMemoryType(m_vkDevice.PhysicalDevice(), memReqs.memoryTypeBits,
+                                                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                                                    if (allocInfo.memoryTypeIndex != UINT32_MAX &&
+                                                        vkAllocateMemory(m_vkDevice.Device(), &allocInfo, nullptr, &m_exposureFallbackMemory) == VK_SUCCESS &&
+                                                        vkBindBufferMemory(m_vkDevice.Device(), m_exposureFallbackBuffer, m_exposureFallbackMemory, 0) == VK_SUCCESS) {
+                                                        float initExp = 1.0f;
+                                                        void* ptr = nullptr;
+                                                        if (vkMapMemory(m_vkDevice.Device(), m_exposureFallbackMemory, 0, 4, 0, &ptr) == VK_SUCCESS) {
+                                                            std::memcpy(ptr, &initExp, 4);
+                                                            vkUnmapMemory(m_vkDevice.Device(), m_exposureFallbackMemory);
+                                                        }
+                                                        m_tonemapPipeline.SetExposureBuffer(m_exposureFallbackBuffer, 0, 4);
+                                                    } else {
+                                                        if (m_exposureFallbackMemory != VK_NULL_HANDLE) {
+                                                            vkFreeMemory(m_vkDevice.Device(), m_exposureFallbackMemory, nullptr);
+                                                            m_exposureFallbackMemory = VK_NULL_HANDLE;
+                                                        }
+                                                        vkDestroyBuffer(m_vkDevice.Device(), m_exposureFallbackBuffer, nullptr);
+                                                        m_exposureFallbackBuffer = VK_NULL_HANDLE;
+                                                    }
+                                                }
+                                            }
                                             if (m_vkTaaHistory.IsValid() && m_vkTaaOutput.IsValid()) {
                                                 std::vector<uint8_t> taaVert = m_shaderCache.Get("shaders/taa.vert");
                                                 std::vector<uint8_t> taaFrag = m_shaderCache.Get("shaders/taa.frag");
@@ -680,6 +736,15 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_vkBloomCombineTarget.Shutdown();
         m_bloomUpsamplePipeline.Shutdown();
         m_vkBloomPyramid.Shutdown();
+        m_vkExposureReduce.Shutdown();
+        if (m_exposureFallbackBuffer != VK_NULL_HANDLE) {
+            vkDestroyBuffer(m_vkDevice.Device(), m_exposureFallbackBuffer, nullptr);
+            m_exposureFallbackBuffer = VK_NULL_HANDLE;
+        }
+        if (m_exposureFallbackMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_vkDevice.Device(), m_exposureFallbackMemory, nullptr);
+            m_exposureFallbackMemory = VK_NULL_HANDLE;
+        }
         m_vkSwapchain.Shutdown();
         m_vkDevice.Shutdown();
         m_vkInstance.Shutdown();
@@ -828,8 +893,12 @@ void Engine::Render() {
                 m_vkTaaOutput.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             if (m_vkBloomPyramid.IsValid())
                 m_vkBloomPyramid.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
-            if (m_vkBloomCombineTarget.IsValid())
-                m_vkBloomCombineTarget.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+                if (m_vkBloomCombineTarget.IsValid())
+                    m_vkBloomCombineTarget.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+                if (m_vkExposureReduce.IsValid()) {
+                    const VkExtent2D ext = m_vkSwapchain.Extent();
+                    m_vkExposureReduce.Recreate(ext.width * ext.height);
+                }
         }
     }
 
@@ -1321,11 +1390,47 @@ void Engine::Render() {
         }
 
         const bool bloomCombineActive = m_fgBloomCombineId != ::engine::render::kInvalidResourceId;
+        const bool autoExposureActive = m_vkExposureReduce.IsValid();
+        if (bloomCombineActive && autoExposureActive) {
+            m_frameGraph.AddPass("Exposure_Reduce")
+                .Read(m_fgBloomCombineId, ImageUsage::SampledRead)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    m_vkExposureReduce.SetHDRView(m_vkBloomCombineTarget.GetImageView());
+                    const VkExtent2D ext = m_vkBloomCombineTarget.Extent();
+                    const float dt = static_cast<float>(Time::DeltaSeconds());
+                    const float key = static_cast<float>(Config::GetFloat("exposure.key", 0.18));
+                    const float speed = static_cast<float>(Config::GetFloat("exposure.speed", 1.0));
+                    m_vkExposureReduce.Dispatch(cmd, ext.width, ext.height, dt, key, speed);
+                });
+        } else if (!bloomCombineActive && autoExposureActive) {
+            m_frameGraph.AddPass("Exposure_Reduce")
+                .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    m_vkExposureReduce.SetHDRView(m_vkSceneColorHDR.GetImageView());
+                    const VkExtent2D ext = m_vkSceneColorHDR.Extent();
+                    const float dt = static_cast<float>(Time::DeltaSeconds());
+                    const float key = static_cast<float>(Config::GetFloat("exposure.key", 0.18));
+                    const float speed = static_cast<float>(Config::GetFloat("exposure.speed", 1.0));
+                    m_vkExposureReduce.Dispatch(cmd, ext.width, ext.height, dt, key, speed);
+                });
+        }
         if (bloomCombineActive) {
             m_frameGraph.AddPass("Tonemap")
                 .Read(m_fgBloomCombineId, ImageUsage::SampledRead)
                 .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
                 .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    if (autoExposureActive) {
+                        m_tonemapPipeline.SetExposureBuffer(m_vkExposureReduce.GetExposureBuffer(),
+                            m_vkExposureReduce.GetExposureBufferOffset(), m_vkExposureReduce.GetExposureBufferSize());
+                    } else if (m_exposureFallbackBuffer != VK_NULL_HANDLE) {
+                        float manualExp = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
+                        void* ptr = nullptr;
+                        if (vkMapMemory(m_vkDevice.Device(), m_exposureFallbackMemory, 0, 4, 0, &ptr) == VK_SUCCESS) {
+                            std::memcpy(ptr, &manualExp, 4);
+                            vkUnmapMemory(m_vkDevice.Device(), m_exposureFallbackMemory);
+                        }
+                        m_tonemapPipeline.SetExposureBuffer(m_exposureFallbackBuffer, 0, 4);
+                    }
                     m_tonemapPipeline.SetHDRView(m_vkBloomCombineTarget.GetImageView());
                     VkClearValue clearColor{}; clearColor.color.float32[0] = 0.1f; clearColor.color.float32[1] = 0.1f; clearColor.color.float32[2] = 0.15f; clearColor.color.float32[3] = 1.0f;
                     VkRenderPassBeginInfo rpbi{};
@@ -1342,8 +1447,6 @@ void Engine::Render() {
                     vkCmdSetScissor(cmd, 0, 1, &scissor);
                     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
                     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
-                    float exposure = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
-                    vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &exposure);
                     vkCmdDraw(cmd, 3, 1, 0, 0);
                     vkCmdEndRenderPass(cmd);
                 });
@@ -1352,6 +1455,18 @@ void Engine::Render() {
                 .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)
                 .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
                 .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    if (autoExposureActive) {
+                        m_tonemapPipeline.SetExposureBuffer(m_vkExposureReduce.GetExposureBuffer(),
+                            m_vkExposureReduce.GetExposureBufferOffset(), m_vkExposureReduce.GetExposureBufferSize());
+                    } else if (m_exposureFallbackBuffer != VK_NULL_HANDLE) {
+                        float manualExp = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
+                        void* ptr = nullptr;
+                        if (vkMapMemory(m_vkDevice.Device(), m_exposureFallbackMemory, 0, 4, 0, &ptr) == VK_SUCCESS) {
+                            std::memcpy(ptr, &manualExp, 4);
+                            vkUnmapMemory(m_vkDevice.Device(), m_exposureFallbackMemory);
+                        }
+                        m_tonemapPipeline.SetExposureBuffer(m_exposureFallbackBuffer, 0, 4);
+                    }
                     m_tonemapPipeline.SetHDRView(m_vkSceneColorHDR.GetImageView());
                     VkClearValue clearColor{}; clearColor.color.float32[0] = 0.1f; clearColor.color.float32[1] = 0.1f; clearColor.color.float32[2] = 0.15f; clearColor.color.float32[3] = 1.0f;
                     VkRenderPassBeginInfo rpbi{};
@@ -1368,8 +1483,6 @@ void Engine::Render() {
                     vkCmdSetScissor(cmd, 0, 1, &scissor);
                     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
                     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
-                    float exposure = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
-                    vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &exposure);
                     vkCmdDraw(cmd, 3, 1, 0, 0);
                     vkCmdEndRenderPass(cmd);
                 });

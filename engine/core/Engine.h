@@ -50,6 +50,7 @@
 #include "engine/render/vk/VkBloomUpsamplePipeline.h"
 #include "engine/render/vk/VkBloomCombineTarget.h"
 #include "engine/render/vk/VkBloomCombinePipeline.h"
+#include "engine/render/vk/VkExposureReduce.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -329,6 +330,10 @@ private:
     ::engine::render::vk::VkBloomCombinePipeline m_bloomCombinePipeline;
     ::engine::render::ResourceId m_fgBloomMipId[::engine::render::vk::kBloomMipCount]{};
     ::engine::render::ResourceId m_fgBloomCombineId = ::engine::render::kInvalidResourceId;
+    /// Auto-exposure: luminance reduce + temporal adapt (M08.3).
+    ::engine::render::vk::VkExposureReduce m_vkExposureReduce;
+    VkBuffer m_exposureFallbackBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_exposureFallbackMemory = VK_NULL_HANDLE;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

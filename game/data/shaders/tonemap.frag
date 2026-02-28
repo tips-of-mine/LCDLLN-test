@@ -2,10 +2,9 @@
 layout(location = 0) in vec2 vUV;
 
 layout(binding = 0) uniform sampler2D uHDR;
-
-layout(push_constant) uniform Push {
+layout(binding = 1) uniform ExposureBuf {
     float exposure;
-} pc;
+};
 
 layout(location = 0) out vec4 outColor;
 
@@ -21,7 +20,7 @@ vec3 ACESFilm(vec3 x) {
 
 void main() {
     vec3 hdr = texture(uHDR, vUV).rgb;
-    hdr *= pc.exposure;
+    hdr *= exposure;
     vec3 ldr = ACESFilm(hdr);
     float gamma = 2.2;
     ldr = pow(ldr, vec3(1.0 / gamma));

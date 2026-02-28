@@ -46,17 +46,22 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
         return false;
     }
 
-    VkDescriptorSetLayoutBinding binding{};
-    binding.binding            = 0;
-    binding.descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    binding.descriptorCount    = 1;
-    binding.stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
-    binding.pImmutableSamplers = nullptr;
+    std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
+    bindings[0].binding            = 0;
+    bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[0].descriptorCount    = 1;
+    bindings[0].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+    bindings[1].binding            = 1;
+    bindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[1].descriptorCount    = 1;
+    bindings[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[1].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo dslci{};
     dslci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslci.bindingCount = 1;
-    dslci.pBindings    = &binding;
+    dslci.bindingCount = 2;
+    dslci.pBindings    = bindings.data();
     if (vkCreateDescriptorSetLayout(device, &dslci, nullptr, &m_setLayout) != VK_SUCCESS) {
         vkDestroyShaderModule(device, vertModule, nullptr);
         vkDestroyShaderModule(device, fragModule, nullptr);
@@ -64,17 +69,12 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
         return false;
     }
 
-    VkPushConstantRange pushConstant{};
-    pushConstant.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    pushConstant.offset     = 0;
-    pushConstant.size       = 4; // float exposure
-
     VkPipelineLayoutCreateInfo plci{};
     plci.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     plci.setLayoutCount         = 1;
     plci.pSetLayouts            = &m_setLayout;
-    plci.pushConstantRangeCount = 1;
-    plci.pPushConstantRanges    = &pushConstant;
+    plci.pushConstantRangeCount = 0;
+    plci.pPushConstantRanges    = nullptr;
     if (vkCreatePipelineLayout(device, &plci, nullptr, &m_layout) != VK_SUCCESS) {
         vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr);
         vkDestroyShaderModule(device, vertModule, nullptr);
@@ -248,6 +248,23 @@ void VkTonemapPipeline::SetHDRView(VkImageView hdrView) {
     write.descriptorCount = 1;
     write.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     write.pImageInfo      = &imageInfo;
+    vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+}
+
+void VkTonemapPipeline::SetExposureBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range) {
+    if (m_device == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = buffer;
+    bufferInfo.offset = offset;
+    bufferInfo.range  = range;
+    VkWriteDescriptorSet write{};
+    write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet          = m_descriptorSet;
+    write.dstBinding      = 1;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.pBufferInfo    = &bufferInfo;
     vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }
 

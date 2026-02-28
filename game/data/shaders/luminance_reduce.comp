@@ -1,0 +1,56 @@
+#version 450
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(binding = 0) uniform sampler2D uHDR;
+
+layout(push_constant) uniform Push {
+    uint width;
+    uint height;
+} pc;
+
+layout(binding = 1) buffer OutBuf {
+    float logSumAndCount[];
+};
+
+const float kEpsilon = 1e-6;
+
+float luminance(vec3 rgb) {
+    return dot(rgb, vec3(0.2126, 0.7152, 0.0784));
+}
+
+void main() {
+    uint pixelIndex = gl_GlobalInvocationID.x;
+    uint totalPixels = pc.width * pc.height;
+    if (pixelIndex >= totalPixels) return;
+
+    uint px = pixelIndex % pc.width;
+    uint py = pixelIndex / pc.width;
+    vec2 uv = (vec2(px, py) + 0.5) / vec2(float(pc.width), float(pc.height));
+    vec3 rgb = texture(uHDR, uv).rgb;
+    float lum = luminance(rgb);
+    float logLum = log(max(lum, kEpsilon));
+
+    shared float s_logSum[256];
+    shared float s_count[256];
+    uint lid = gl_LocalInvocationID.x;
+    s_logSum[lid] = logLum;
+    s_count[lid] = (lum >= kEpsilon) ? 1.0 : 0.0;
+
+    barrier();
+    memoryBarrierShared();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (lid < stride) {
+            s_logSum[lid] += s_logSum[lid + stride];
+            s_count[lid] += s_count[lid + stride];
+        }
+        barrier();
+        memoryBarrierShared();
+    }
+
+    if (lid == 0u) {
+        uint groupId = gl_WorkGroupID.x;
+        logSumAndCount[groupId * 2u + 0u] = s_logSum[0];
+        logSumAndCount[groupId * 2u + 1u] = s_count[0];
+    }
+}

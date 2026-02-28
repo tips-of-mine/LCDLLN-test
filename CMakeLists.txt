@@ -89,6 +89,7 @@ add_library(engine_core STATIC
     engine/render/vk/VkBloomUpsamplePipeline.cpp
     engine/render/vk/VkBloomCombineTarget.cpp
     engine/render/vk/VkBloomCombinePipeline.cpp
+    engine/render/vk/VkExposureReduce.cpp
 
     # M05.1 — IBL: BRDF LUT (compute) generation
     engine/render/vk/VkBrdfLut.cpp

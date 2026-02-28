@@ -86,6 +86,12 @@ struct RenderState {
     /// Frustum planes for culling (from view*proj).
     ::engine::math::Frustum frustum{};
 
+    /// M07.1 — TAA: curr/prev ViewProj (column-major) and jitter in NDC for reprojection.
+    float viewProjCurr[16]{};
+    float viewProjPrev[16]{};
+    float jitterCurr[2]{0.0f, 0.0f};
+    float jitterPrev[2]{0.0f, 0.0f};
+
     /// Reserved field for a future draw-list representation.
     std::uint64_t drawListPlaceholder = 0;
 };
@@ -328,6 +334,12 @@ private:
 
     /// Latest known framebuffer height (for aspect ratio computation).
     int m_framebufferHeight = 0;
+
+    /// M07.1 — TAA: Halton sample index (mod kHaltonSequenceSize); reset history on resize/FOV.
+    uint32_t m_taaFrameIndex = 0u;
+    bool m_taaResetHistory = true;
+    float m_taaPrevAspect = 0.0f;
+    float m_taaPrevFov = 0.0f;
 };
 
 } // namespace engine::core

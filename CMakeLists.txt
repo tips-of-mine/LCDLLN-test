@@ -103,6 +103,7 @@ add_library(engine_core STATIC
 
     # M03.0 — Camera + frustum culling MVP
     engine/render/Camera.cpp
+    engine/render/Halton.cpp
     engine/math/Frustum.cpp
 
     # M00.2 — Memory subsystem

@@ -23,6 +23,7 @@
 #include "engine/render/vk/VkShadowMap.h"
 #include "engine/render/vk/VkShadowPipeline.h"
 #include "engine/render/Csm.h"
+#include "engine/render/Halton.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Input.h"
 
@@ -665,16 +666,46 @@ void Engine::Update() {
     ComputeViewMatrix(rs.camera, rs.view.m);
     ComputeProjectionMatrix(rs.camera, rs.proj.m);
 
-    float viewProj[16];
+    const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+    const bool resetHistory = m_taaResetHistory ||
+        (m_framebufferWidth > 0 && m_framebufferHeight > 0 &&
+         (std::abs(aspect - m_taaPrevAspect) > 1e-6f || std::abs(rs.camera.fovY - m_taaPrevFov) > 1e-6f));
+    if (resetHistory) {
+        m_taaPrevAspect = aspect;
+        m_taaPrevFov = rs.camera.fovY;
+    } else {
+        const RenderState& prevRs = m_renderStates[readIdx];
+        for (int i = 0; i < 16; ++i) rs.viewProjPrev[i] = prevRs.viewProjCurr[i];
+        rs.jitterPrev[0] = prevRs.jitterCurr[0];
+        rs.jitterPrev[1] = prevRs.jitterCurr[1];
+    }
+
+    const uint32_t haltonIndex = m_taaFrameIndex % engine::render::kHaltonSequenceSize;
+    float hx, hy;
+    engine::render::Halton2D(haltonIndex, hx, hy);
+    const float jitterNdcX = (w > 0.0f) ? (2.0f * (hx - 0.5f) / w) : 0.0f;
+    const float jitterNdcY = (h > 0.0f) ? (2.0f * (hy - 0.5f) / h) : 0.0f;
+    rs.proj.m[12] += jitterNdcX;
+    rs.proj.m[13] += jitterNdcY;
+    rs.jitterCurr[0] = jitterNdcX;
+    rs.jitterCurr[1] = jitterNdcY;
+
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-            viewProj[j * 4 + i] = rs.proj.m[0 * 4 + i] * rs.view.m[j * 4 + 0]
-                                + rs.proj.m[1 * 4 + i] * rs.view.m[j * 4 + 1]
-                                + rs.proj.m[2 * 4 + i] * rs.view.m[j * 4 + 2]
-                                + rs.proj.m[3 * 4 + i] * rs.view.m[j * 4 + 3];
+            rs.viewProjCurr[j * 4 + i] = rs.proj.m[0 * 4 + i] * rs.view.m[j * 4 + 0]
+                                        + rs.proj.m[1 * 4 + i] * rs.view.m[j * 4 + 1]
+                                        + rs.proj.m[2 * 4 + i] * rs.view.m[j * 4 + 2]
+                                        + rs.proj.m[3 * 4 + i] * rs.view.m[j * 4 + 3];
         }
     }
-    ExtractFromMatrix(viewProj, rs.frustum);
+    if (resetHistory) {
+        for (int i = 0; i < 16; ++i) rs.viewProjPrev[i] = rs.viewProjCurr[i];
+        rs.jitterPrev[0] = rs.jitterCurr[0];
+        rs.jitterPrev[1] = rs.jitterCurr[1];
+        m_taaResetHistory = false;
+    }
+    ExtractFromMatrix(rs.viewProjCurr, rs.frustum);
+    m_taaFrameIndex++;
 
     float lightDir[3] = { 0.5f, -1.0f, 0.3f };
     float len = std::sqrt(lightDir[0]*lightDir[0] + lightDir[1]*lightDir[1] + lightDir[2]*lightDir[2]);
@@ -1214,6 +1245,7 @@ void Engine::EndFrame() {
 void Engine::OnResize(int width, int height) {
     m_framebufferWidth  = width;
     m_framebufferHeight = height;
+    m_taaResetHistory = true;
     if (m_vkSwapchain.IsValid()) {
         m_vkSwapchain.RequestRecreate();
     }

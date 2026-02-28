@@ -31,6 +31,9 @@
 #include "engine/render/vk/VkTonemapPipeline.h"
 #include "engine/render/vk/VkMaterial.h"
 #include "engine/render/vk/VkTextureLoader.h"
+#include "engine/render/vk/VkShadowMap.h"
+#include "engine/render/vk/VkShadowPipeline.h"
+#include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
 #include <array>
@@ -245,7 +248,13 @@ private:
     ::engine::render::vk::VkLightingPipeline m_lightingPipeline;
     ::engine::render::vk::VkTonemapPipeline m_tonemapPipeline;
 
-    /// Frame graph: Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2).
+    /// Shadow maps: 4 cascades, depth-only (M04.2).
+    ::engine::render::vk::VkShadowMap m_vkShadowMap;
+    ::engine::render::vk::VkShadowPipeline m_shadowPipeline;
+    ::engine::render::CsmUniform m_csmUniform{};
+    uint32_t m_shadowMapSize = 1024u;
+
+    /// Frame graph: Shadow0..3 → Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2, M04.2).
     ::engine::render::FrameGraph m_frameGraph;
     ::engine::render::Registry  m_fgRegistry;
     ::engine::render::ResourceId m_fgSceneColorId = ::engine::render::kInvalidResourceId;
@@ -255,6 +264,10 @@ private:
     ::engine::render::ResourceId m_fgGBufferCId    = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgDepthId       = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSceneColorHDRId = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgShadowMap0Id   = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgShadowMap1Id   = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgShadowMap2Id   = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgShadowMap3Id   = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

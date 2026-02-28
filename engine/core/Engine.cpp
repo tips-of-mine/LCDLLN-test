@@ -20,10 +20,14 @@
 #include "engine/render/vk/VkTonemapPipeline.h"
 #include "engine/render/vk/VkMaterial.h"
 #include "engine/render/vk/VkTextureLoader.h"
+#include "engine/render/vk/VkShadowMap.h"
+#include "engine/render/vk/VkShadowPipeline.h"
+#include "engine/render/Csm.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Input.h"
 
 #include <vulkan/vulkan.h>
+#include <cmath>
 #include <cstring>
 
 #include <chrono>
@@ -400,6 +404,24 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                             } else {
                                                 m_tonemapPipeline.SetHDRView(m_vkSceneColorHDR.GetImageView());
                                             }
+                                            m_shadowMapSize = static_cast<uint32_t>(Config::GetInt("render.shadow_map_size", 1024));
+                                            if (m_shadowMapSize < 64) m_shadowMapSize = 64;
+                                            if (!m_vkShadowMap.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), m_shadowMapSize)) {
+                                                LOG_ERROR(Render, "VkShadowMap initialisation failed");
+                                            } else {
+                                                std::vector<uint8_t> svert = m_shaderCache.Get("shaders/shadow.vert");
+                                                std::vector<uint8_t> sfrag = m_shaderCache.Get("shaders/shadow.frag");
+                                                if (!svert.empty() && !sfrag.empty()) {
+                                                    if (!m_shadowPipeline.Init(m_vkDevice.Device(),
+                                                                              m_vkShadowMap.GetRenderPass(), svert, sfrag)) {
+                                                        LOG_ERROR(Render, "VkShadowPipeline initialisation failed");
+                                                        m_vkShadowMap.Shutdown();
+                                                    }
+                                                } else {
+                                                    LOG_ERROR(Render, "Shadow shaders not found or failed to compile");
+                                                    m_vkShadowMap.Shutdown();
+                                                }
+                                            }
                                         }
                                     } else {
                                         LOG_ERROR(Render, "Lighting/tonemap shaders not found or failed to compile");
@@ -447,6 +469,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         }
         m_tonemapPipeline.Shutdown();
         m_lightingPipeline.Shutdown();
+        m_shadowPipeline.Shutdown();
+        m_vkShadowMap.Shutdown();
         m_geometryPipeline.Shutdown();
         if (m_materialSampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_vkDevice.Device(), m_materialSampler, nullptr);
@@ -542,6 +566,15 @@ void Engine::Update() {
     }
     ExtractFromMatrix(viewProj, rs.frustum);
 
+    float lightDir[3] = { 0.5f, -1.0f, 0.3f };
+    float len = std::sqrt(lightDir[0]*lightDir[0] + lightDir[1]*lightDir[1] + lightDir[2]*lightDir[2]);
+    if (len > 1e-6f) {
+        lightDir[0] /= len; lightDir[1] /= len; lightDir[2] /= len;
+    }
+    engine::render::CsmComputeCascades(rs.view.m, rs.camera.nearZ, rs.camera.farZ,
+                                       rs.camera.fovY, rs.camera.aspect,
+                                       lightDir, m_shadowMapSize, m_csmUniform);
+
     m_renderReadIndex.store(writeIdx, std::memory_order_release);
     m_renderWriteIndex = writeIdx ^ 1u;
 }
@@ -592,9 +625,22 @@ void Engine::Render() {
         return;
     }
 
-    // Build frame graph once: GBuffer + SceneColor + Swapchain, Geometry pass, Clear pass, Present pass (M02.4, M03.1).
+    // Build frame graph once: Shadow0..3, Geometry, Lighting, Tonemap, Present (M02.4, M03.1, M03.2, M04.2).
     if (!m_frameGraphBuilt) {
         const VkExtent2D ext = m_vkSwapchain.Extent();
+        const uint32_t shadowSize = m_vkShadowMap.IsValid() ? m_vkShadowMap.Size() : 0u;
+
+        if (shadowSize > 0) {
+            ImageDesc shadowDesc{};
+            shadowDesc.width = shadowSize;
+            shadowDesc.height = shadowSize;
+            shadowDesc.layers = 1;
+            shadowDesc.format = VK_FORMAT_D32_SFLOAT;
+            m_fgShadowMap0Id = m_frameGraph.CreateImage(shadowDesc, "ShadowMap0");
+            m_fgShadowMap1Id = m_frameGraph.CreateImage(shadowDesc, "ShadowMap1");
+            m_fgShadowMap2Id = m_frameGraph.CreateImage(shadowDesc, "ShadowMap2");
+            m_fgShadowMap3Id = m_frameGraph.CreateImage(shadowDesc, "ShadowMap3");
+        }
 
         ImageDesc gbufADesc{}; gbufADesc.width = ext.width; gbufADesc.height = ext.height; gbufADesc.layers = 1; gbufADesc.format = VK_FORMAT_R8G8B8A8_SRGB;
         m_fgGBufferAId = m_frameGraph.CreateImage(gbufADesc, "GBufferA");
@@ -625,6 +671,45 @@ void Engine::Render() {
         swapDesc.layers = 1;
         swapDesc.format = m_vkSwapchain.Format();
         m_fgSwapchainId = m_frameGraph.CreateImage(swapDesc, "Swapchain");
+
+        if (m_vkShadowMap.IsValid() && m_shadowPipeline.IsValid()) {
+            for (int c = 0; c < engine::render::kCsmCascadeCount; ++c) {
+                const ResourceId shadowId = (c == 0) ? m_fgShadowMap0Id : (c == 1) ? m_fgShadowMap1Id : (c == 2) ? m_fgShadowMap2Id : m_fgShadowMap3Id;
+                m_frameGraph.AddPass(std::string("Shadow") + std::to_string(c))
+                    .Write(shadowId, ImageUsage::DepthWrite)
+                    .Execute([this, c](VkCommandBuffer cmd, Registry&) {
+                        VkViewport vp{};
+                        vp.x = 0.0f;
+                        vp.y = 0.0f;
+                        vp.width  = static_cast<float>(m_vkShadowMap.Size());
+                        vp.height = static_cast<float>(m_vkShadowMap.Size());
+                        vp.minDepth = 0.0f;
+                        vp.maxDepth = 1.0f;
+                        vkCmdSetViewport(cmd, 0, 1, &vp);
+                        VkRect2D scissor{};
+                        scissor.offset = {0, 0};
+                        scissor.extent = {m_vkShadowMap.Size(), m_vkShadowMap.Size()};
+                        vkCmdSetScissor(cmd, 0, 1, &scissor);
+                        VkClearValue clearDepth{};
+                        clearDepth.depthStencil.depth = 1.0f;
+                        clearDepth.depthStencil.stencil = 0;
+                        VkRenderPassBeginInfo rpbi{};
+                        rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                        rpbi.renderPass      = m_vkShadowMap.GetRenderPass();
+                        rpbi.framebuffer     = m_vkShadowMap.GetFramebuffer(static_cast<uint32_t>(c));
+                        rpbi.renderArea      = {{0, 0}, {m_vkShadowMap.Size(), m_vkShadowMap.Size()}};
+                        rpbi.clearValueCount = 1;
+                        rpbi.pClearValues    = &clearDepth;
+                        vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipeline.GetPipeline());
+                        vkCmdPushConstants(cmd, m_shadowPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 64, m_csmUniform.lightViewProj[c]);
+                        VkDeviceSize offset = 0;
+                        vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
+                        vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
+                        vkCmdEndRenderPass(cmd);
+                    });
+            }
+        }
 
         m_frameGraph.AddPass("Geometry")
             .Write(m_fgGBufferAId, ImageUsage::ColorWrite)
@@ -785,6 +870,16 @@ void Engine::Render() {
         return;
     }
 
+    if (m_vkShadowMap.IsValid()) {
+        m_fgRegistry.SetImage(m_fgShadowMap0Id, m_vkShadowMap.GetImage(0));
+        m_fgRegistry.SetView(m_fgShadowMap0Id, m_vkShadowMap.GetView(0));
+        m_fgRegistry.SetImage(m_fgShadowMap1Id, m_vkShadowMap.GetImage(1));
+        m_fgRegistry.SetView(m_fgShadowMap1Id, m_vkShadowMap.GetView(1));
+        m_fgRegistry.SetImage(m_fgShadowMap2Id, m_vkShadowMap.GetImage(2));
+        m_fgRegistry.SetView(m_fgShadowMap2Id, m_vkShadowMap.GetView(2));
+        m_fgRegistry.SetImage(m_fgShadowMap3Id, m_vkShadowMap.GetImage(3));
+        m_fgRegistry.SetView(m_fgShadowMap3Id, m_vkShadowMap.GetView(3));
+    }
     m_fgRegistry.SetImage(m_fgGBufferAId, m_vkGBuffer.GetImageA());
     m_fgRegistry.SetImage(m_fgGBufferBId, m_vkGBuffer.GetImageB());
     m_fgRegistry.SetImage(m_fgGBufferCId, m_vkGBuffer.GetImageC());

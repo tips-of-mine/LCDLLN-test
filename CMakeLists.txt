@@ -67,6 +67,13 @@ add_library(engine_core STATIC
     engine/render/vk/VkGBuffer.cpp
     engine/render/vk/VkGeometryPipeline.cpp
 
+    # M04.1 — CSM: splits + matrices + stabilization
+    engine/render/Csm.cpp
+
+    # M04.2 — Shadow pass: depth-only render per cascade
+    engine/render/vk/VkShadowMap.cpp
+    engine/render/vk/VkShadowPipeline.cpp
+
     # M03.2 — Deferred lighting pass fullscreen (PBR GGX) + tonemap
     engine/render/vk/VkSceneColorHDR.cpp
     engine/render/vk/VkLightingPipeline.cpp

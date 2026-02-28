@@ -42,6 +42,8 @@
 #include "engine/render/vk/VkSsaoBlur.h"
 #include "engine/render/vk/VkSsaoBlurPipeline.h"
 #include "engine/render/vk/VkTaaHistory.h"
+#include "engine/render/vk/VkTaaOutput.h"
+#include "engine/render/vk/VkTaaPipeline.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -308,6 +310,10 @@ private:
     ::engine::render::vk::VkTaaHistory m_vkTaaHistory;
     ::engine::render::ResourceId m_fgTaaHistoryAId  = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgTaaHistoryBId  = ::engine::render::kInvalidResourceId;
+    /// TAA pass output (M07.4); then copied to HistoryNext, used for Present.
+    ::engine::render::vk::VkTaaOutput m_vkTaaOutput;
+    ::engine::render::vk::VkTaaPipeline m_taaPipeline;
+    ::engine::render::ResourceId m_fgTaaOutputId = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

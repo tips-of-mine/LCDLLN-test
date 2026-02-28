@@ -298,6 +298,15 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                             if (!taaHistoryOk) {
                                 LOG_ERROR(Render, "TAA history ping-pong initialisation failed");
                             }
+                            if (m_vkTaaHistory.IsValid()) {
+                                const bool taaOutOk = m_vkTaaOutput.Init(
+                                    m_vkDevice.PhysicalDevice(),
+                                    m_vkDevice.Device(),
+                                    w, h,
+                                    m_vkSwapchain.Format());
+                                if (!taaOutOk)
+                                    LOG_ERROR(Render, "TAA output initialisation failed");
+                            }
                             const bool gbufOk = m_vkGBuffer.Init(
                                 m_vkDevice.PhysicalDevice(),
                                 m_vkDevice.Device(), w, h);
@@ -446,6 +455,19 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                 m_lightingPipeline.Shutdown();
                                             } else {
                                                 m_tonemapPipeline.SetHDRView(m_vkSceneColorHDR.GetImageView());
+                                            }
+                                            if (m_vkTaaHistory.IsValid() && m_vkTaaOutput.IsValid()) {
+                                                std::vector<uint8_t> taaVert = m_shaderCache.Get("shaders/taa.vert");
+                                                std::vector<uint8_t> taaFrag = m_shaderCache.Get("shaders/taa.frag");
+                                                if (!taaVert.empty() && !taaFrag.empty()) {
+                                                    if (!m_taaPipeline.Init(m_vkDevice.Device(),
+                                                                          m_vkTaaOutput.GetRenderPass(),
+                                                                          taaVert, taaFrag)) {
+                                                        LOG_ERROR(Render, "TAA pipeline initialisation failed");
+                                                    }
+                                                } else {
+                                                    LOG_ERROR(Render, "TAA shaders not found or failed to compile");
+                                                }
                                             }
                                             m_shadowMapSize = static_cast<uint32_t>(Config::GetInt("render.shadow_map_size", 1024));
                                             if (m_shadowMapSize < 64) m_shadowMapSize = 64;
@@ -612,6 +634,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_vkGBuffer.Shutdown();
         m_vkFrameResources.Shutdown();
         m_vkSceneColor.Shutdown();
+        m_taaPipeline.Shutdown();
+        m_vkTaaOutput.Shutdown();
         m_vkTaaHistory.Shutdown();
         m_vkSwapchain.Shutdown();
         m_vkDevice.Shutdown();
@@ -757,6 +781,8 @@ void Engine::Render() {
                 m_vkTaaHistory.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
                 m_taaCopyHistoryOnReset = true;
             }
+            if (m_vkTaaOutput.IsValid())
+                m_vkTaaOutput.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
         }
     }
 
@@ -856,6 +882,14 @@ void Engine::Render() {
             historyDesc.format = m_vkSwapchain.Format();
             m_fgTaaHistoryAId = m_frameGraph.CreateImage(historyDesc, "HistoryA");
             m_fgTaaHistoryBId = m_frameGraph.CreateImage(historyDesc, "HistoryB");
+            if (m_vkTaaOutput.IsValid()) {
+                ImageDesc taaOutDesc{};
+                taaOutDesc.width  = ext.width;
+                taaOutDesc.height = ext.height;
+                taaOutDesc.layers = 1;
+                taaOutDesc.format = m_vkSwapchain.Format();
+                m_fgTaaOutputId = m_frameGraph.CreateImage(taaOutDesc, "TAA_Output");
+            }
         }
 
         ImageDesc swapDesc{};
@@ -1171,33 +1205,131 @@ void Engine::Render() {
                 });
         }
 
-        m_frameGraph.AddPass("Present")
-            .Read(m_fgSceneColorId, ImageUsage::TransferSrc)
-            .Write(m_fgSwapchainId, ImageUsage::TransferDst)
-            .Execute([this](VkCommandBuffer cmd, Registry& reg) {
-                const VkImage srcImg = reg.GetImage(m_fgSceneColorId);
-                const VkImage dstImg = reg.GetImage(m_fgSwapchainId);
-                if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
-                const VkExtent2D ext = m_vkSceneColor.Extent();
-                VkImageCopy region{};
-                region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                region.extent         = {ext.width, ext.height, 1};
-                vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-                VkImageMemoryBarrier bar{};
-                bar.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                bar.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-                bar.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-                bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                bar.image               = dstImg;
-                bar.subresourceRange    = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-                bar.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-                bar.dstAccessMask       = 0;
-                vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &bar);
-            });
+        const bool taaPassActive = m_taaPipeline.IsValid() && m_fgTaaOutputId != ::engine::render::kInvalidResourceId;
+        if (taaPassActive) {
+            m_frameGraph.AddPass("TAA")
+                .Read(m_fgSceneColorId, ImageUsage::SampledRead)
+                .Read(m_fgTaaHistoryAId, ImageUsage::SampledRead)
+                .Read(m_fgTaaHistoryBId, ImageUsage::SampledRead)
+                .Read(m_fgGBufferVelocityId, ImageUsage::SampledRead)
+                .Read(m_fgDepthId, ImageUsage::SampledRead)
+                .Write(m_fgTaaOutputId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    if (!m_taaPipeline.IsValid() || !m_vkTaaOutput.IsValid()) return;
+                    m_taaPipeline.SetInputs(
+                        m_vkSceneColor.GetImageView(),
+                        m_vkTaaHistory.GetView(0),
+                        m_vkTaaHistory.GetView(1),
+                        m_vkGBuffer.GetViewD(),
+                        m_vkGBuffer.GetViewDepth());
+                    const uint32_t prevIdx = m_taaHistoryIdx ^ 1u;
+                    vkCmdPushConstants(cmd, m_taaPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &prevIdx);
+                    VkClearValue clearColor{}; clearColor.color.float32[0] = 0.0f; clearColor.color.float32[1] = 0.0f; clearColor.color.float32[2] = 0.0f; clearColor.color.float32[3] = 1.0f;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass      = m_vkTaaOutput.GetRenderPass();
+                    rpbi.framebuffer     = m_vkTaaOutput.GetFramebuffer();
+                    rpbi.renderArea      = {{0, 0}, m_vkTaaOutput.Extent()};
+                    rpbi.clearValueCount = 1;
+                    rpbi.pClearValues    = &clearColor;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkTaaOutput.Extent().width); vp.height = static_cast<float>(m_vkTaaOutput.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkTaaOutput.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_taaPipeline.GetPipeline());
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_taaPipeline.GetPipelineLayout(), 0, 1, &m_taaPipeline.GetDescriptorSet(), 0, nullptr);
+                    vkCmdDraw(cmd, 3, 1, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
+            m_frameGraph.AddPass("TAA_CopyToA")
+                .Read(m_fgTaaOutputId, ImageUsage::TransferSrc)
+                .Write(m_fgTaaHistoryAId, ImageUsage::TransferDst)
+                .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                    if (m_taaHistoryIdx != 0u) return;
+                    const VkImage srcImg = reg.GetImage(m_fgTaaOutputId);
+                    const VkImage dstImg = reg.GetImage(m_fgTaaHistoryAId);
+                    if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+                    const VkExtent2D ext = m_vkTaaOutput.Extent();
+                    VkImageCopy region{};
+                    region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.extent = {ext.width, ext.height, 1};
+                    vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                   dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                });
+            m_frameGraph.AddPass("TAA_CopyToB")
+                .Read(m_fgTaaOutputId, ImageUsage::TransferSrc)
+                .Write(m_fgTaaHistoryBId, ImageUsage::TransferDst)
+                .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                    if (m_taaHistoryIdx != 1u) return;
+                    const VkImage srcImg = reg.GetImage(m_fgTaaOutputId);
+                    const VkImage dstImg = reg.GetImage(m_fgTaaHistoryBId);
+                    if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+                    const VkExtent2D ext = m_vkTaaOutput.Extent();
+                    VkImageCopy region{};
+                    region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.extent = {ext.width, ext.height, 1};
+                    vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                   dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                });
+            m_frameGraph.AddPass("Present")
+                .Read(m_fgTaaOutputId, ImageUsage::TransferSrc)
+                .Write(m_fgSwapchainId, ImageUsage::TransferDst)
+                .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                    const VkImage srcImg = reg.GetImage(m_fgTaaOutputId);
+                    const VkImage dstImg = reg.GetImage(m_fgSwapchainId);
+                    if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+                    const VkExtent2D ext = m_vkTaaOutput.Extent();
+                    VkImageCopy region{};
+                    region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.extent = {ext.width, ext.height, 1};
+                    vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                   dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                    VkImageMemoryBarrier bar{};
+                    bar.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                    bar.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                    bar.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                    bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bar.image               = dstImg;
+                    bar.subresourceRange    = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+                    bar.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+                    bar.dstAccessMask       = 0;
+                    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &bar);
+                });
+        } else {
+            m_frameGraph.AddPass("Present")
+                .Read(m_fgSceneColorId, ImageUsage::TransferSrc)
+                .Write(m_fgSwapchainId, ImageUsage::TransferDst)
+                .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                    const VkImage srcImg = reg.GetImage(m_fgSceneColorId);
+                    const VkImage dstImg = reg.GetImage(m_fgSwapchainId);
+                    if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+                    const VkExtent2D ext = m_vkSceneColor.Extent();
+                    VkImageCopy region{};
+                    region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    region.extent         = {ext.width, ext.height, 1};
+                    vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                   dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                    VkImageMemoryBarrier bar{};
+                    bar.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                    bar.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                    bar.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                    bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bar.image               = dstImg;
+                    bar.subresourceRange    = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+                    bar.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+                    bar.dstAccessMask       = 0;
+                    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &bar);
+                });
+        }
 
         if (!m_frameGraph.Compile()) {
             LOG_ERROR(Render, "Frame graph compile failed");
@@ -1247,6 +1379,8 @@ void Engine::Render() {
         m_fgRegistry.SetImage(m_fgTaaHistoryAId, m_vkTaaHistory.GetImage(0));
         m_fgRegistry.SetImage(m_fgTaaHistoryBId, m_vkTaaHistory.GetImage(1));
     }
+    if (m_fgTaaOutputId != ::engine::render::kInvalidResourceId && m_vkTaaOutput.IsValid())
+        m_fgRegistry.SetImage(m_fgTaaOutputId, m_vkTaaOutput.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
 

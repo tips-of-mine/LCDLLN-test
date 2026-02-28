@@ -58,6 +58,7 @@
 #include "engine/streaming/StreamingScheduler.h"
 #include "engine/streaming/LruCache.h"
 #include "engine/render/vk/DeferredDestroyQueue.h"
+#include "engine/render/vk/VkUploadBudget.h"
 
 #include <array>
 #include <atomic>
@@ -351,6 +352,8 @@ private:
     ::engine::streaming::LruCache m_lruCache;
     /// Deferred GPU resource destruction (collect at BeginFrame when fence signaled) (M10.3).
     ::engine::render::vk::DeferredDestroyQueue m_deferredDestroyQueue;
+    /// GPU upload budget per frame + staging ring (M10.4).
+    ::engine::render::vk::VkUploadBudget m_uploadBudget;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

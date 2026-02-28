@@ -302,7 +302,14 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                         m_vkDevice.Indices().graphicsFamily);
                     if (!frOk) {
                         LOG_ERROR(Render, "Vulkan frame resources initialisation failed");
-                    } else if (m_vkSwapchain.IsValid()) {
+                    } else {
+                        int uploadMb = Config::GetInt("streaming.upload_budget_mb", 32);
+                        if (uploadMb < 1) uploadMb = 1;
+                        if (uploadMb > 128) uploadMb = 128;
+                        const VkDeviceSize budgetBytes = static_cast<VkDeviceSize>(uploadMb) * 1024u * 1024u;
+                        if (!m_uploadBudget.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), budgetBytes))
+                            LOG_ERROR(Render, "VkUploadBudget init failed");
+                        if (m_vkSwapchain.IsValid()) {
                         const bool sceneOk = m_vkSceneColor.Init(
                             m_vkDevice.PhysicalDevice(),
                             m_vkDevice.Device(),
@@ -672,9 +679,10 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                             }
                         }
                     }
+                        }
+                    }
                 }
             }
-        }
     }
 
     m_running        = true;
@@ -745,6 +753,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         }
         m_vkSceneColorHDR.Shutdown();
         m_vkGBuffer.Shutdown();
+        m_uploadBudget.Shutdown();
         m_vkFrameResources.Shutdown();
         m_vkSceneColor.Shutdown();
         m_taaPipeline.Shutdown();
@@ -788,6 +797,10 @@ void Engine::BeginFrame() {
     // M10.3: collect deferred GPU destroys when fences have signaled.
     if (m_vkDevice.IsValid())
         m_deferredDestroyQueue.Collect(m_vkDevice.Device());
+
+    // M10.4: reset upload budget staging for this frame.
+    if (m_uploadBudget.IsValid())
+        m_uploadBudget.BeginFrame(m_vkFrameResources.CurrentFrameIndex());
 
     // Pump OS/window events and snapshot input state.
     if (!m_headless && m_windowOk) {
@@ -1746,6 +1759,9 @@ void Engine::Render() {
         LOG_ERROR(Render, "vkBeginCommandBuffer failed");
         return;
     }
+
+    if (m_uploadBudget.IsValid())
+        m_uploadBudget.ProcessFrame(fr.cmdBuffer, m_vkFrameResources.CurrentFrameIndex());
 
     if (m_vkShadowMap.IsValid()) {
         m_fgRegistry.SetImage(m_fgShadowMap0Id, m_vkShadowMap.GetImage(0));

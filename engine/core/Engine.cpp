@@ -391,6 +391,21 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                 if (!hdrOk) {
                                     LOG_ERROR(Render, "SceneColorHDR initialisation failed");
                                 } else {
+                                    if (m_ssaoKernelNoise.IsValid()) {
+                                        if (m_vkSsaoRaw.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), w, h)) {
+                                            std::vector<uint8_t> ssaoVert = m_shaderCache.Get("shaders/ssao.vert");
+                                            std::vector<uint8_t> ssaoFrag = m_shaderCache.Get("shaders/ssao.frag");
+                                            if (!ssaoVert.empty() && !ssaoFrag.empty() &&
+                                                m_ssaoPipeline.Init(m_vkDevice.Device(), m_vkSsaoRaw.GetRenderPass(), ssaoVert, ssaoFrag)) {
+                                                m_ssaoPipeline.SetInputs(m_vkGBuffer.GetViewDepth(), m_vkGBuffer.GetViewB(),
+                                                    m_ssaoKernelNoise.GetKernelBuffer(), m_ssaoKernelNoise.GetKernelBufferSize(),
+                                                    m_ssaoKernelNoise.GetNoiseImageView(), m_ssaoKernelNoise.GetNoiseSampler());
+                                            } else {
+                                                if (m_ssaoPipeline.IsValid()) m_ssaoPipeline.Shutdown();
+                                                m_vkSsaoRaw.Shutdown();
+                                            }
+                                        }
+                                    }
                                     std::vector<uint8_t> lvert = m_shaderCache.Get("shaders/lighting.vert");
                                     std::vector<uint8_t> lfrag = m_shaderCache.Get("shaders/lighting.frag");
                                     std::vector<uint8_t> tvert = m_shaderCache.Get("shaders/tonemap.vert");
@@ -539,6 +554,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         }
         m_tonemapPipeline.Shutdown();
         m_lightingPipeline.Shutdown();
+        m_ssaoPipeline.Shutdown();
+        m_vkSsaoRaw.Shutdown();
         m_shadowPipeline.Shutdown();
         m_vkShadowMap.Shutdown();
         m_vkBrdfLut.Shutdown();
@@ -669,6 +686,13 @@ void Engine::Render() {
             m_vkSceneColor.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             m_vkGBuffer.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             m_vkSceneColorHDR.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+            if (m_vkSsaoRaw.IsValid()) {
+                m_vkSsaoRaw.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+                if (m_ssaoPipeline.IsValid())
+                    m_ssaoPipeline.SetInputs(m_vkGBuffer.GetViewDepth(), m_vkGBuffer.GetViewB(),
+                        m_ssaoKernelNoise.GetKernelBuffer(), m_ssaoKernelNoise.GetKernelBufferSize(),
+                        m_ssaoKernelNoise.GetNoiseImageView(), m_ssaoKernelNoise.GetNoiseSampler());
+            }
         }
     }
 
@@ -735,6 +759,13 @@ void Engine::Render() {
         sceneHDRDesc.layers = 1;
         sceneHDRDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
         m_fgSceneColorHDRId = m_frameGraph.CreateImage(sceneHDRDesc, "SceneColor_HDR");
+
+        ImageDesc ssaoRawDesc{};
+        ssaoRawDesc.width  = ext.width;
+        ssaoRawDesc.height = ext.height;
+        ssaoRawDesc.layers = 1;
+        ssaoRawDesc.format = VK_FORMAT_R16_SFLOAT;
+        m_fgSsaoRawId = m_frameGraph.CreateImage(ssaoRawDesc, "SSAO_Raw");
 
         ImageDesc sceneLDRDesc{};
         sceneLDRDesc.width  = ext.width;
@@ -834,6 +865,41 @@ void Engine::Render() {
                 vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
                 vkCmdEndRenderPass(cmd);
             });
+
+        if (m_vkSsaoRaw.IsValid() && m_ssaoPipeline.IsValid()) {
+            m_frameGraph.AddPass("SSAO_Generate")
+                .Read(m_fgDepthId, ImageUsage::SampledRead)
+                .Read(m_fgGBufferBId, ImageUsage::SampledRead)
+                .Write(m_fgSsaoRawId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+                    const RenderState& rs = m_renderStates[readIdx];
+                    float invProj[16];
+                    Invert4x4ColumnMajor(rs.proj.m, invProj);
+                    float pushData[48];
+                    std::memcpy(pushData, invProj, 64);
+                    std::memcpy(pushData + 16, rs.proj.m, 64);
+                    std::memcpy(pushData + 32, rs.view.m, 64);
+                    vkCmdPushConstants(cmd, m_ssaoPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 192, pushData);
+                    VkClearValue clearVal{}; clearVal.color.float32[0] = 1.0f; clearVal.color.float32[1] = 0.0f; clearVal.color.float32[2] = 0.0f; clearVal.color.float32[3] = 1.0f;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass      = m_vkSsaoRaw.GetRenderPass();
+                    rpbi.framebuffer     = m_vkSsaoRaw.GetFramebuffer();
+                    rpbi.renderArea      = {{0, 0}, m_vkSsaoRaw.Extent()};
+                    rpbi.clearValueCount = 1;
+                    rpbi.pClearValues    = &clearVal;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSsaoRaw.Extent().width); vp.height = static_cast<float>(m_vkSsaoRaw.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSsaoRaw.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoPipeline.GetPipeline());
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoPipeline.GetPipelineLayout(), 0, 1, &m_ssaoPipeline.GetDescriptorSet(), 0, nullptr);
+                    vkCmdDraw(cmd, 3, 1, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
+        }
 
         {
             auto lightingPass = m_frameGraph.AddPass("Lighting");
@@ -974,6 +1040,10 @@ void Engine::Render() {
     m_fgRegistry.SetImage(m_fgGBufferBId, m_vkGBuffer.GetImageB());
     m_fgRegistry.SetImage(m_fgGBufferCId, m_vkGBuffer.GetImageC());
     m_fgRegistry.SetImage(m_fgDepthId, m_vkGBuffer.GetImageDepth());
+    if (m_vkSsaoRaw.IsValid()) {
+        m_fgRegistry.SetImage(m_fgSsaoRawId, m_vkSsaoRaw.GetImage());
+        m_fgRegistry.SetView(m_fgSsaoRawId, m_vkSsaoRaw.GetImageView());
+    }
     m_fgRegistry.SetImage(m_fgSceneColorHDRId, m_vkSceneColorHDR.GetImage());
     m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));

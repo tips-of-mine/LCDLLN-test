@@ -89,6 +89,9 @@ add_library(engine_core STATIC
 
     # M06.1 — SSAO: kernel + noise generation
     engine/render/vk/VkSsaoKernelNoise.cpp
+    # M06.2 — SSAO: generate pass (depth+normal)
+    engine/render/vk/VkSsaoRaw.cpp
+    engine/render/vk/VkSsaoPipeline.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
     # M03.3 — Materials: BaseColor/Normal/ORM + loader

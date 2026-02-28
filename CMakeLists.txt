@@ -92,6 +92,9 @@ add_library(engine_core STATIC
     # M06.2 — SSAO: generate pass (depth+normal)
     engine/render/vk/VkSsaoRaw.cpp
     engine/render/vk/VkSsaoPipeline.cpp
+    # M06.3 — SSAO: bilateral blur (2 passes)
+    engine/render/vk/VkSsaoBlur.cpp
+    engine/render/vk/VkSsaoBlurPipeline.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
     # M03.3 — Materials: BaseColor/Normal/ORM + loader

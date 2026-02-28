@@ -39,6 +39,8 @@
 #include "engine/render/vk/VkSsaoKernelNoise.h"
 #include "engine/render/vk/VkSsaoRaw.h"
 #include "engine/render/vk/VkSsaoPipeline.h"
+#include "engine/render/vk/VkSsaoBlur.h"
+#include "engine/render/vk/VkSsaoBlurPipeline.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -272,6 +274,9 @@ private:
     /// SSAO_Raw render target (R16F) and generate pass pipeline (M06.2).
     ::engine::render::vk::VkSsaoRaw m_vkSsaoRaw;
     ::engine::render::vk::VkSsaoPipeline m_ssaoPipeline;
+    /// SSAO_Blur temp + output (R16F) and bilateral blur pipeline (M06.3).
+    ::engine::render::vk::VkSsaoBlur m_vkSsaoBlur;
+    ::engine::render::vk::VkSsaoBlurPipeline m_ssaoBlurPipeline;
     uint32_t m_shadowMapSize = 1024u;
 
     /// Frame graph: Shadow0..3 → Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2, M04.2).
@@ -289,6 +294,8 @@ private:
     ::engine::render::ResourceId m_fgShadowMap2Id   = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgShadowMap3Id   = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSsaoRawId       = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgSsaoBlurTempId  = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgSsaoBlurId     = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

@@ -400,6 +400,17 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                 m_ssaoPipeline.SetInputs(m_vkGBuffer.GetViewDepth(), m_vkGBuffer.GetViewB(),
                                                     m_ssaoKernelNoise.GetKernelBuffer(), m_ssaoKernelNoise.GetKernelBufferSize(),
                                                     m_ssaoKernelNoise.GetNoiseImageView(), m_ssaoKernelNoise.GetNoiseSampler());
+                                                if (m_vkSsaoBlur.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), w, h)) {
+                                                    std::vector<uint8_t> blurVert = m_shaderCache.Get("shaders/ssao_blur.vert");
+                                                    std::vector<uint8_t> blurFrag = m_shaderCache.Get("shaders/ssao_blur.frag");
+                                                    if (blurVert.empty() || blurFrag.empty() ||
+                                                        !m_ssaoBlurPipeline.Init(m_vkDevice.Device(), m_vkSsaoBlur.GetRenderPass(), blurVert, blurFrag)) {
+                                                        if (m_ssaoBlurPipeline.IsValid()) m_ssaoBlurPipeline.Shutdown();
+                                                        m_vkSsaoBlur.Shutdown();
+                                                    } else {
+                                                        m_ssaoBlurPipeline.SetInputs(m_vkSsaoRaw.GetImageView(), m_vkGBuffer.GetViewDepth());
+                                                    }
+                                                }
                                             } else {
                                                 if (m_ssaoPipeline.IsValid()) m_ssaoPipeline.Shutdown();
                                                 m_vkSsaoRaw.Shutdown();
@@ -556,6 +567,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_lightingPipeline.Shutdown();
         m_ssaoPipeline.Shutdown();
         m_vkSsaoRaw.Shutdown();
+        m_ssaoBlurPipeline.Shutdown();
+        m_vkSsaoBlur.Shutdown();
         m_shadowPipeline.Shutdown();
         m_vkShadowMap.Shutdown();
         m_vkBrdfLut.Shutdown();
@@ -693,6 +706,8 @@ void Engine::Render() {
                         m_ssaoKernelNoise.GetKernelBuffer(), m_ssaoKernelNoise.GetKernelBufferSize(),
                         m_ssaoKernelNoise.GetNoiseImageView(), m_ssaoKernelNoise.GetNoiseSampler());
             }
+            if (m_vkSsaoBlur.IsValid())
+                m_vkSsaoBlur.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
         }
     }
 
@@ -766,6 +781,14 @@ void Engine::Render() {
         ssaoRawDesc.layers = 1;
         ssaoRawDesc.format = VK_FORMAT_R16_SFLOAT;
         m_fgSsaoRawId = m_frameGraph.CreateImage(ssaoRawDesc, "SSAO_Raw");
+
+        ImageDesc ssaoBlurDesc{};
+        ssaoBlurDesc.width  = ext.width;
+        ssaoBlurDesc.height = ext.height;
+        ssaoBlurDesc.layers = 1;
+        ssaoBlurDesc.format = VK_FORMAT_R16_SFLOAT;
+        m_fgSsaoBlurTempId = m_frameGraph.CreateImage(ssaoBlurDesc, "SSAO_Blur_temp");
+        m_fgSsaoBlurId    = m_frameGraph.CreateImage(ssaoBlurDesc, "SSAO_Blur");
 
         ImageDesc sceneLDRDesc{};
         sceneLDRDesc.width  = ext.width;
@@ -896,6 +919,65 @@ void Engine::Render() {
                     vkCmdSetScissor(cmd, 0, 1, &scissor);
                     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoPipeline.GetPipeline());
                     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoPipeline.GetPipelineLayout(), 0, 1, &m_ssaoPipeline.GetDescriptorSet(), 0, nullptr);
+                    vkCmdDraw(cmd, 3, 1, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
+        }
+
+        if (m_vkSsaoBlur.IsValid() && m_ssaoBlurPipeline.IsValid()) {
+            m_frameGraph.AddPass("SSAO_Blur_H")
+                .Read(m_fgSsaoRawId, ImageUsage::SampledRead)
+                .Read(m_fgDepthId, ImageUsage::SampledRead)
+                .Write(m_fgSsaoBlurTempId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    m_ssaoBlurPipeline.SetInputs(m_vkSsaoRaw.GetImageView(), m_vkGBuffer.GetViewDepth());
+                    float invW = 1.0f / static_cast<float>(m_vkSsaoBlur.Extent().width);
+                    float invH = 1.0f / static_cast<float>(m_vkSsaoBlur.Extent().height);
+                    float pushData[4] = { 1.0f, 0.0f, invW, invH };
+                    vkCmdPushConstants(cmd, m_ssaoBlurPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16, pushData);
+                    VkClearValue clearVal{}; clearVal.color.float32[0] = 1.0f; clearVal.color.float32[1] = 0.0f; clearVal.color.float32[2] = 0.0f; clearVal.color.float32[3] = 1.0f;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass      = m_vkSsaoBlur.GetRenderPass();
+                    rpbi.framebuffer     = m_vkSsaoBlur.GetFramebufferTemp();
+                    rpbi.renderArea      = {{0, 0}, m_vkSsaoBlur.Extent()};
+                    rpbi.clearValueCount = 1;
+                    rpbi.pClearValues    = &clearVal;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSsaoBlur.Extent().width); vp.height = static_cast<float>(m_vkSsaoBlur.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSsaoBlur.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoBlurPipeline.GetPipeline());
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoBlurPipeline.GetPipelineLayout(), 0, 1, &m_ssaoBlurPipeline.GetDescriptorSet(), 0, nullptr);
+                    vkCmdDraw(cmd, 3, 1, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
+            m_frameGraph.AddPass("SSAO_Blur_V")
+                .Read(m_fgSsaoBlurTempId, ImageUsage::SampledRead)
+                .Read(m_fgDepthId, ImageUsage::SampledRead)
+                .Write(m_fgSsaoBlurId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    m_ssaoBlurPipeline.SetInputs(m_vkSsaoBlur.GetImageViewTemp(), m_vkGBuffer.GetViewDepth());
+                    float invW = 1.0f / static_cast<float>(m_vkSsaoBlur.Extent().width);
+                    float invH = 1.0f / static_cast<float>(m_vkSsaoBlur.Extent().height);
+                    float pushData[4] = { 0.0f, 1.0f, invW, invH };
+                    vkCmdPushConstants(cmd, m_ssaoBlurPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16, pushData);
+                    VkClearValue clearVal{}; clearVal.color.float32[0] = 1.0f; clearVal.color.float32[1] = 0.0f; clearVal.color.float32[2] = 0.0f; clearVal.color.float32[3] = 1.0f;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass      = m_vkSsaoBlur.GetRenderPass();
+                    rpbi.framebuffer     = m_vkSsaoBlur.GetFramebufferOutput();
+                    rpbi.renderArea      = {{0, 0}, m_vkSsaoBlur.Extent()};
+                    rpbi.clearValueCount = 1;
+                    rpbi.pClearValues    = &clearVal;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSsaoBlur.Extent().width); vp.height = static_cast<float>(m_vkSsaoBlur.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSsaoBlur.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoBlurPipeline.GetPipeline());
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ssaoBlurPipeline.GetPipelineLayout(), 0, 1, &m_ssaoBlurPipeline.GetDescriptorSet(), 0, nullptr);
                     vkCmdDraw(cmd, 3, 1, 0, 0);
                     vkCmdEndRenderPass(cmd);
                 });
@@ -1043,6 +1125,12 @@ void Engine::Render() {
     if (m_vkSsaoRaw.IsValid()) {
         m_fgRegistry.SetImage(m_fgSsaoRawId, m_vkSsaoRaw.GetImage());
         m_fgRegistry.SetView(m_fgSsaoRawId, m_vkSsaoRaw.GetImageView());
+    }
+    if (m_vkSsaoBlur.IsValid()) {
+        m_fgRegistry.SetImage(m_fgSsaoBlurTempId, m_vkSsaoBlur.GetImageTemp());
+        m_fgRegistry.SetView(m_fgSsaoBlurTempId, m_vkSsaoBlur.GetImageViewTemp());
+        m_fgRegistry.SetImage(m_fgSsaoBlurId, m_vkSsaoBlur.GetImageOutput());
+        m_fgRegistry.SetView(m_fgSsaoBlurId, m_vkSsaoBlur.GetImageViewOutput());
     }
     m_fgRegistry.SetImage(m_fgSceneColorHDRId, m_vkSceneColorHDR.GetImage());
     m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());

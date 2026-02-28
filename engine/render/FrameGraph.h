@@ -9,6 +9,7 @@
  * Resources are transient by default (frame lifetime). Pass = setup + execute(cmd, registry).
  * Resources and passes are named for debug.
  * Passes execute in compiled (topological) order after Compile() (M02.2).
+ * M02.3: Usage tracking and Vulkan barriers (layout transitions + access) between passes.
  */
 
 #include <vulkan/vulkan.h>
@@ -47,6 +48,35 @@ struct ImageDesc {
 struct BufferDesc {
     size_t size = 0;
 };
+
+// ---------------------------------------------------------------------------
+// Image usage states (M02.3): layout + stage + access for barriers
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief How an image is used in a pass (maps to layout/stage/access for barriers).
+ */
+enum class ImageUsage : uint8_t {
+    ColorWrite,   ///< Color attachment write (COLOR_ATTACHMENT_OPTIMAL).
+    DepthWrite,   ///< Depth/stencil attachment write.
+    SampledRead,  ///< Sampled in fragment shader (SHADER_READ_ONLY_OPTIMAL).
+    TransferSrc,  ///< Transfer source.
+    TransferDst,  ///< Transfer destination.
+};
+
+/**
+ * @brief Vulkan state for an image usage (layout, stage, access).
+ */
+struct ImageUsageState {
+    VkImageLayout       layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkPipelineStageFlags stage = 0;
+    VkAccessFlags       access = 0;
+};
+
+/**
+ * @brief Returns the layout/stage/access for a given image usage.
+ */
+ImageUsageState GetImageUsageState(ImageUsage usage);
 
 // ---------------------------------------------------------------------------
 // Registry: resolve ResourceId -> VkImage / VkBuffer / VkImageView
@@ -102,19 +132,19 @@ private:
 // ---------------------------------------------------------------------------
 
 /**
- * @brief Builds a single pass: declare read/write resources and execute callback.
+ * @brief Builds a single pass: declare read/write resources (with usage) and execute callback.
  */
 class PassBuilder {
 public:
     /**
-     * @brief Declares a resource as read by this pass.
+     * @brief Declares a resource as read by this pass (default: SampledRead).
      */
-    PassBuilder& Read(ResourceId id);
+    PassBuilder& Read(ResourceId id, ImageUsage usage = ImageUsage::SampledRead);
 
     /**
-     * @brief Declares a resource as written by this pass.
+     * @brief Declares a resource as written by this pass (default: ColorWrite).
      */
-    PassBuilder& Write(ResourceId id);
+    PassBuilder& Write(ResourceId id, ImageUsage usage = ImageUsage::ColorWrite);
 
     /**
      * @brief Sets the execute callback for this pass (cmd, registry).
@@ -212,7 +242,9 @@ private:
     struct PassData {
         std::string name;
         std::vector<ResourceId> reads;
+        std::vector<ImageUsage> readUsages;
         std::vector<ResourceId> writes;
+        std::vector<ImageUsage> writeUsages;
         std::function<void(VkCommandBuffer, Registry&)> execute;
     };
 

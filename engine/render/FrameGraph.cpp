@@ -3,6 +3,7 @@
  * @brief Frame Graph API implementation: Registry, PassBuilder, FrameGraph.
  *
  * M02.2: Dependency graph (writer→reader), topological sort (Kahn), cycle detection.
+ * M02.3: Usage tracking and vkCmdPipelineBarrier between passes (layout + access).
  */
 
 #include "engine/render/FrameGraph.h"
@@ -12,6 +13,46 @@
 #include <queue>
 
 namespace engine::render {
+
+// ---------------------------------------------------------------------------
+// Image usage -> layout/stage/access (M02.3)
+// ---------------------------------------------------------------------------
+
+ImageUsageState GetImageUsageState(ImageUsage usage) {
+    switch (usage) {
+    case ImageUsage::ColorWrite:
+        return {
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        };
+    case ImageUsage::DepthWrite:
+        return {
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        };
+    case ImageUsage::SampledRead:
+        return {
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+        };
+    case ImageUsage::TransferSrc:
+        return {
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+        };
+    case ImageUsage::TransferDst:
+        return {
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+        };
+    }
+    return { VK_IMAGE_LAYOUT_UNDEFINED, 0, 0 };
+}
 
 // ---------------------------------------------------------------------------
 // Registry
@@ -51,16 +92,18 @@ VkImageView Registry::GetView(ResourceId id) const {
 PassBuilder::PassBuilder(FrameGraph* graph, size_t passIndex)
     : m_graph(graph), m_passIndex(passIndex) {}
 
-PassBuilder& PassBuilder::Read(ResourceId id) {
+PassBuilder& PassBuilder::Read(ResourceId id, ImageUsage usage) {
     if (m_graph && m_passIndex < m_graph->m_passes.size()) {
         m_graph->m_passes[m_passIndex].reads.push_back(id);
+        m_graph->m_passes[m_passIndex].readUsages.push_back(usage);
     }
     return *this;
 }
 
-PassBuilder& PassBuilder::Write(ResourceId id) {
+PassBuilder& PassBuilder::Write(ResourceId id, ImageUsage usage) {
     if (m_graph && m_passIndex < m_graph->m_passes.size()) {
         m_graph->m_passes[m_passIndex].writes.push_back(id);
+        m_graph->m_passes[m_passIndex].writeUsages.push_back(usage);
     }
     return *this;
 }
@@ -176,9 +219,110 @@ void FrameGraph::Execute(VkCommandBuffer cmd, Registry& registry) {
     if (!m_compiled) {
         return;
     }
+
+    const size_t numResources = m_resources.size();
+    std::vector<VkImageLayout>        lastLayout(numResources, VK_IMAGE_LAYOUT_UNDEFINED);
+    std::vector<VkPipelineStageFlags> lastStage(numResources, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+    std::vector<VkAccessFlags>        lastAccess(numResources, 0);
+
     for (size_t idx : m_executionOrder) {
-        if (idx < m_passes.size() && m_passes[idx].execute) {
-            m_passes[idx].execute(cmd, registry);
+        if (idx >= m_passes.size()) continue;
+
+        const PassData& pass = m_passes[idx];
+
+        std::vector<VkImageMemoryBarrier> barriers;
+        VkPipelineStageFlags srcStageMask = 0;
+        VkPipelineStageFlags dstStageMask = 0;
+
+        for (size_t i = 0; i < pass.reads.size() && i < pass.readUsages.size(); ++i) {
+            const ResourceId rid = pass.reads[i];
+            if (rid >= numResources || !m_resources[rid].isImage) continue;
+            const VkImage image = registry.GetImage(rid);
+            if (image == VK_NULL_HANDLE) continue;
+
+            const ImageUsageState req = GetImageUsageState(pass.readUsages[i]);
+            if (lastLayout[rid] != req.layout || lastAccess[rid] != req.access) {
+                VkImageMemoryBarrier bar = {};
+                bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                bar.oldLayout = lastLayout[rid];
+                bar.newLayout = req.layout;
+                bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bar.image = image;
+                bar.subresourceRange.aspectMask = (pass.readUsages[i] == ImageUsage::DepthWrite)
+                    ? (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+                    : VK_IMAGE_ASPECT_COLOR_BIT;
+                bar.subresourceRange.baseMipLevel = 0;
+                bar.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+                bar.subresourceRange.baseArrayLayer = 0;
+                bar.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+                bar.srcAccessMask = lastAccess[rid];
+                bar.dstAccessMask = req.access;
+                barriers.push_back(bar);
+                srcStageMask |= lastStage[rid];
+                dstStageMask |= req.stage;
+            }
+        }
+
+        for (size_t i = 0; i < pass.writes.size() && i < pass.writeUsages.size(); ++i) {
+            const ResourceId rid = pass.writes[i];
+            if (rid >= numResources || !m_resources[rid].isImage) continue;
+            const VkImage image = registry.GetImage(rid);
+            if (image == VK_NULL_HANDLE) continue;
+
+            const ImageUsageState req = GetImageUsageState(pass.writeUsages[i]);
+            if (lastLayout[rid] != req.layout || lastAccess[rid] != req.access) {
+                VkImageMemoryBarrier bar = {};
+                bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                bar.oldLayout = lastLayout[rid];
+                bar.newLayout = req.layout;
+                bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bar.image = image;
+                bar.subresourceRange.aspectMask = (pass.writeUsages[i] == ImageUsage::DepthWrite)
+                    ? (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)
+                    : VK_IMAGE_ASPECT_COLOR_BIT;
+                bar.subresourceRange.baseMipLevel = 0;
+                bar.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+                bar.subresourceRange.baseArrayLayer = 0;
+                bar.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+                bar.srcAccessMask = lastAccess[rid];
+                bar.dstAccessMask = req.access;
+                barriers.push_back(bar);
+                srcStageMask |= lastStage[rid];
+                dstStageMask |= req.stage;
+            }
+        }
+
+        if (!barriers.empty()) {
+            if (srcStageMask == 0) {
+                srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            }
+            vkCmdPipelineBarrier(cmd, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr,
+                                static_cast<uint32_t>(barriers.size()), barriers.data());
+        }
+
+        for (size_t i = 0; i < pass.reads.size() && i < pass.readUsages.size(); ++i) {
+            const ResourceId rid = pass.reads[i];
+            if (rid < numResources && m_resources[rid].isImage) {
+                const ImageUsageState s = GetImageUsageState(pass.readUsages[i]);
+                lastLayout[rid] = s.layout;
+                lastStage[rid] = s.stage;
+                lastAccess[rid] = s.access;
+            }
+        }
+        for (size_t i = 0; i < pass.writes.size() && i < pass.writeUsages.size(); ++i) {
+            const ResourceId rid = pass.writes[i];
+            if (rid < numResources && m_resources[rid].isImage) {
+                const ImageUsageState s = GetImageUsageState(pass.writeUsages[i]);
+                lastLayout[rid] = s.layout;
+                lastStage[rid] = s.stage;
+                lastAccess[rid] = s.access;
+            }
+        }
+
+        if (pass.execute) {
+            pass.execute(cmd, registry);
         }
     }
 }

@@ -416,6 +416,10 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                                               m_vkShadowMap.GetRenderPass(), svert, sfrag)) {
                                                         LOG_ERROR(Render, "VkShadowPipeline initialisation failed");
                                                         m_vkShadowMap.Shutdown();
+                                                    } else {
+                                                        m_lightingPipeline.SetShadowMapViews(
+                                                            m_vkShadowMap.GetView(0), m_vkShadowMap.GetView(1),
+                                                            m_vkShadowMap.GetView(2), m_vkShadowMap.GetView(3));
                                                     }
                                                 } else {
                                                     LOG_ERROR(Render, "Shadow shaders not found or failed to compile");
@@ -757,13 +761,22 @@ void Engine::Render() {
                 vkCmdEndRenderPass(cmd);
             });
 
-        m_frameGraph.AddPass("Lighting")
-            .Read(m_fgGBufferAId, ImageUsage::SampledRead)
-            .Read(m_fgGBufferBId, ImageUsage::SampledRead)
-            .Read(m_fgGBufferCId, ImageUsage::SampledRead)
-            .Read(m_fgDepthId, ImageUsage::SampledRead)
-            .Write(m_fgSceneColorHDRId, ImageUsage::ColorWrite)
-            .Execute([this](VkCommandBuffer cmd, Registry&) {
+        {
+            auto lightingPass = m_frameGraph.AddPass("Lighting");
+            lightingPass.Read(m_fgGBufferAId, ImageUsage::SampledRead)
+                .Read(m_fgGBufferBId, ImageUsage::SampledRead)
+                .Read(m_fgGBufferCId, ImageUsage::SampledRead)
+                .Read(m_fgDepthId, ImageUsage::SampledRead);
+            if (m_vkShadowMap.IsValid()) {
+                lightingPass.Read(m_fgShadowMap0Id, ImageUsage::SampledRead)
+                    .Read(m_fgShadowMap1Id, ImageUsage::SampledRead)
+                    .Read(m_fgShadowMap2Id, ImageUsage::SampledRead)
+                    .Read(m_fgShadowMap3Id, ImageUsage::SampledRead);
+            }
+            lightingPass.Write(m_fgSceneColorHDRId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                const float shadowBiasConst = static_cast<float>(Config::GetFloat("shadow.bias_constant", 0.002));
+                const float shadowBiasSlope = static_cast<float>(Config::GetFloat("shadow.bias_slope", 0.5f));
                 const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
                 const RenderState& rs = m_renderStates[readIdx];
                 float viewProj[16];
@@ -780,7 +793,9 @@ void Engine::Render() {
                 const float lightDir[3] = { 0.5f, -1.0f, 0.3f };
                 const float lightColor[3] = { 1.0f, 0.95f, 0.9f };
                 const float ambient[3] = { 0.05f, 0.05f, 0.08f };
-                m_lightingPipeline.UpdateUniforms(invViewProj, rs.camera.position, lightDir, lightColor, ambient);
+                const engine::render::CsmUniform* csmPtr = m_vkShadowMap.IsValid() ? &m_csmUniform : nullptr;
+                m_lightingPipeline.UpdateUniforms(invViewProj, rs.view.m, rs.camera.position, lightDir, lightColor, ambient,
+                                                csmPtr, shadowBiasConst, shadowBiasSlope, m_shadowMapSize);
                 VkClearValue clearHDR{}; clearHDR.color.float32[0] = 0.0f; clearHDR.color.float32[1] = 0.0f; clearHDR.color.float32[2] = 0.0f; clearHDR.color.float32[3] = 1.0f;
                 VkRenderPassBeginInfo rpbi{};
                 rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -799,6 +814,7 @@ void Engine::Render() {
                 vkCmdDraw(cmd, 3, 1, 0, 0);
                 vkCmdEndRenderPass(cmd);
             });
+        }
 
         m_frameGraph.AddPass("Tonemap")
             .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)

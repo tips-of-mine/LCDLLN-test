@@ -1,1 +1,1 @@
-{"paths":{"content":"game/data"},"window":{"width":1280,"height":720,"title":"MMORPG Engine"},"render":{"gamma":2.2,"vsync":true,"shadow_map_size":1024},"tonemap":{"exposure":1.0},"log":{"level":"DEBUG","file":"engine.log"}}
+{"paths":{"content":"game/data"},"window":{"width":1280,"height":720,"title":"MMORPG Engine"},"render":{"gamma":2.2,"vsync":true,"shadow_map_size":1024},"shadow":{"bias_constant":0.002,"bias_slope":0.5},"tonemap":{"exposure":1.0},"log":{"level":"DEBUG","file":"engine.log"}}

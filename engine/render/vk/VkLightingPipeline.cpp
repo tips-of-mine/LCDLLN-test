@@ -4,6 +4,7 @@
  */
 
 #include "engine/render/vk/VkLightingPipeline.h"
+#include "engine/render/Csm.h"
 #include "engine/core/Log.h"
 
 #include <array>
@@ -14,7 +15,7 @@ namespace engine::render::vk {
 
 namespace {
 
-constexpr VkDeviceSize kUBOSize = 256u;
+constexpr VkDeviceSize kUBOSize = 480u;  // 128 (lighting) + 64 (view) + 256 (lightViewProj[4]) + 16 (splitDepths) + 16 (bias + enabled + pad)
 
 VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint8_t>& spirv) {
     if (spirv.empty() || (spirv.size() % 4) != 0) return VK_NULL_HANDLE;
@@ -62,7 +63,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         return false;
     }
 
-    std::array<VkDescriptorSetLayoutBinding, 5> bindings{};
+    std::array<VkDescriptorSetLayoutBinding, 9> bindings{};
     for (uint32_t i = 0; i < 4; ++i) {
         bindings[i].binding            = i;
         bindings[i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -75,10 +76,17 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
     bindings[4].descriptorCount    = 1;
     bindings[4].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[4].pImmutableSamplers = nullptr;
+    for (uint32_t i = 0; i < 4; ++i) {
+        bindings[5 + i].binding            = 5 + i;
+        bindings[5 + i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        bindings[5 + i].descriptorCount    = 1;
+        bindings[5 + i].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+        bindings[5 + i].pImmutableSamplers = nullptr;
+    }
 
     VkDescriptorSetLayoutCreateInfo dslci{};
     dslci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslci.bindingCount = 5;
+    dslci.bindingCount = 9;
     dslci.pBindings    = bindings.data();
     if (vkCreateDescriptorSetLayout(device, &dslci, nullptr, &m_setLayout) != VK_SUCCESS) {
         vkDestroyShaderModule(device, vertModule, nullptr);
@@ -103,7 +111,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
 
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
     poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[0].descriptorCount = 4;
+    poolSizes[0].descriptorCount = 8;  // 4 GBuffer + 4 shadow maps
     poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[1].descriptorCount = 1;
     VkDescriptorPoolCreateInfo dpci{};
@@ -165,12 +173,39 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         return false;
     }
 
+    VkSamplerCreateInfo shadowSci{};
+    shadowSci.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    shadowSci.magFilter                = VK_FILTER_LINEAR;
+    shadowSci.minFilter                = VK_FILTER_LINEAR;
+    shadowSci.mipmapMode               = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    shadowSci.addressModeU             = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    shadowSci.addressModeV             = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    shadowSci.addressModeW             = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    shadowSci.compareEnable            = VK_TRUE;
+    shadowSci.compareOp                = VK_COMPARE_OP_LESS_OR_EQUAL;
+    shadowSci.borderColor              = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    if (vkCreateSampler(device, &shadowSci, nullptr, &m_shadowSampler) != VK_SUCCESS) {
+        vkDestroySampler(device, m_sampler, nullptr);
+        vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
+        vkDestroyPipelineLayout(device, m_layout, nullptr);
+        vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr);
+        vkDestroyShaderModule(device, vertModule, nullptr);
+        vkDestroyShaderModule(device, fragModule, nullptr);
+        m_sampler = VK_NULL_HANDLE;
+        m_descriptorPool = VK_NULL_HANDLE;
+        m_layout = VK_NULL_HANDLE;
+        m_setLayout = VK_NULL_HANDLE;
+        LOG_ERROR(Render, "VkLightingPipeline: failed to create shadow sampler");
+        return false;
+    }
+
     VkBufferCreateInfo bci{};
     bci.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bci.size        = kUBOSize;
     bci.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     if (vkCreateBuffer(device, &bci, nullptr, &m_ubo) != VK_SUCCESS) {
+        vkDestroySampler(device, m_shadowSampler, nullptr);
         vkDestroySampler(device, m_sampler, nullptr);
         vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
         vkDestroyPipelineLayout(device, m_layout, nullptr);
@@ -194,6 +229,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
     if (allocInfo.memoryTypeIndex == UINT32_MAX) {
         vkDestroyBuffer(device, m_ubo, nullptr);
         m_ubo = VK_NULL_HANDLE;
+        vkDestroySampler(device, m_shadowSampler, nullptr);
         vkDestroySampler(device, m_sampler, nullptr);
         vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
         vkDestroyPipelineLayout(device, m_layout, nullptr);
@@ -214,6 +250,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         vkDestroyBuffer(device, m_ubo, nullptr);
         m_ubo = VK_NULL_HANDLE;
         m_uboMemory = VK_NULL_HANDLE;
+        vkDestroySampler(device, m_shadowSampler, nullptr);
         vkDestroySampler(device, m_sampler, nullptr);
         vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
         vkDestroyPipelineLayout(device, m_layout, nullptr);
@@ -305,6 +342,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         vkUnmapMemory(device, m_uboMemory);
         vkFreeMemory(device, m_uboMemory, nullptr);
         vkDestroyBuffer(device, m_ubo, nullptr);
+        vkDestroySampler(device, m_shadowSampler, nullptr);
         vkDestroySampler(device, m_sampler, nullptr);
         vkDestroyDescriptorPool(device, m_descriptorPool, nullptr);
         vkDestroyPipelineLayout(device, m_layout, nullptr);
@@ -329,7 +367,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
 
 void VkLightingPipeline::SetGBufferViews(VkImageView viewA, VkImageView viewB, VkImageView viewC, VkImageView viewDepth) {
     if (m_device == VK_NULL_HANDLE || m_sampler == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
-    std::array<VkDescriptorImageInfo, 4> imageInfos{};
+    std::array<VkDescriptorImageInfo, 8> imageInfos{};
     imageInfos[0].sampler     = m_sampler;
     imageInfos[0].imageView   = viewA;
     imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -342,8 +380,13 @@ void VkLightingPipeline::SetGBufferViews(VkImageView viewA, VkImageView viewB, V
     imageInfos[3].sampler     = m_sampler;
     imageInfos[3].imageView   = viewDepth;
     imageInfos[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    for (uint32_t i = 0; i < 4; ++i) {
+        imageInfos[4 + i].sampler     = m_shadowSampler;
+        imageInfos[4 + i].imageView   = viewDepth;
+        imageInfos[4 + i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
 
-    std::array<VkWriteDescriptorSet, 5> writes{};
+    std::array<VkWriteDescriptorSet, 9> writes{};
     for (uint32_t i = 0; i < 4; ++i) {
         writes[i].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writes[i].dstSet           = m_descriptorSet;
@@ -364,20 +407,81 @@ void VkLightingPipeline::SetGBufferViews(VkImageView viewA, VkImageView viewB, V
     writes[4].descriptorCount  = 1;
     writes[4].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     writes[4].pBufferInfo      = &bufferInfo;
-    vkUpdateDescriptorSets(m_device, 5, writes.data(), 0, nullptr);
+    for (uint32_t i = 0; i < 4; ++i) {
+        writes[5 + i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[5 + i].dstSet           = m_descriptorSet;
+        writes[5 + i].dstBinding       = 5 + i;
+        writes[5 + i].dstArrayElement  = 0;
+        writes[5 + i].descriptorCount  = 1;
+        writes[5 + i].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writes[5 + i].pImageInfo       = &imageInfos[4 + i];
+    }
+    vkUpdateDescriptorSets(m_device, 9, writes.data(), 0, nullptr);
+}
+
+void VkLightingPipeline::SetShadowMapViews(VkImageView view0, VkImageView view1, VkImageView view2, VkImageView view3) {
+    if (m_device == VK_NULL_HANDLE || m_shadowSampler == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
+    std::array<VkDescriptorImageInfo, 4> imageInfos{};
+    imageInfos[0].sampler     = m_shadowSampler;
+    imageInfos[0].imageView   = view0;
+    imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfos[1].sampler     = m_shadowSampler;
+    imageInfos[1].imageView   = view1;
+    imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfos[2].sampler     = m_shadowSampler;
+    imageInfos[2].imageView   = view2;
+    imageInfos[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfos[3].sampler     = m_shadowSampler;
+    imageInfos[3].imageView   = view3;
+    imageInfos[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    std::array<VkWriteDescriptorSet, 4> writes{};
+    for (uint32_t i = 0; i < 4; ++i) {
+        writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[i].dstSet           = m_descriptorSet;
+        writes[i].dstBinding       = 5 + i;
+        writes[i].dstArrayElement  = 0;
+        writes[i].descriptorCount  = 1;
+        writes[i].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writes[i].pImageInfo      = &imageInfos[i];
+    }
+    vkUpdateDescriptorSets(m_device, 4, writes.data(), 0, nullptr);
 }
 
 void VkLightingPipeline::UpdateUniforms(const float invViewProj[16],
+                                        const float view[16],
                                         const float cameraPos[3],
                                         const float lightDir[3],
                                         const float lightColor[3],
-                                        const float ambient[3]) {
+                                        const float ambient[3],
+                                        const CsmUniform* csmUniform,
+                                        float shadowBiasConst,
+                                        float shadowBiasSlope,
+                                        uint32_t shadowMapSize) {
     if (!m_uboMapped) return;
-    std::memcpy(m_uboMapped, invViewProj, 64);
-    std::memcpy(static_cast<char*>(m_uboMapped) + 64, cameraPos, 12);
-    std::memcpy(static_cast<char*>(m_uboMapped) + 80, lightDir, 12);
-    std::memcpy(static_cast<char*>(m_uboMapped) + 96, lightColor, 12);
-    std::memcpy(static_cast<char*>(m_uboMapped) + 112, ambient, 12);
+    char* base = static_cast<char*>(m_uboMapped);
+    std::memcpy(base, invViewProj, 64);
+    std::memcpy(base + 64, cameraPos, 12);
+    std::memcpy(base + 80, lightDir, 12);
+    std::memcpy(base + 96, lightColor, 12);
+    std::memcpy(base + 112, ambient, 12);
+    std::memcpy(base + 128, view, 64);
+    if (csmUniform) {
+        std::memcpy(base + 192, csmUniform->lightViewProj, sizeof(csmUniform->lightViewProj));
+        std::memcpy(base + 448, csmUniform->splitDepths, sizeof(csmUniform->splitDepths));
+        std::memcpy(base + 464, &shadowBiasConst, 4);
+        std::memcpy(base + 468, &shadowBiasSlope, 4);
+        const float one = 1.0f;
+        std::memcpy(base + 472, &one, 4);
+    } else {
+        std::memset(base + 192, 0, 256);
+        std::memset(base + 448, 0, 24);
+        std::memcpy(base + 464, &shadowBiasConst, 4);
+        std::memcpy(base + 468, &shadowBiasSlope, 4);
+        const float zero = 0.0f;
+        std::memcpy(base + 472, &zero, 4);
+    }
+    const float sizeF = (shadowMapSize > 0u) ? static_cast<float>(shadowMapSize) : 1024.0f;
+    std::memcpy(base + 476, &sizeF, 4);
 }
 
 void VkLightingPipeline::Shutdown() {
@@ -393,6 +497,10 @@ void VkLightingPipeline::Shutdown() {
     if (m_uboMemory != VK_NULL_HANDLE) {
         vkFreeMemory(m_device, m_uboMemory, nullptr);
         m_uboMemory = VK_NULL_HANDLE;
+    }
+    if (m_shadowSampler != VK_NULL_HANDLE) {
+        vkDestroySampler(m_device, m_shadowSampler, nullptr);
+        m_shadowSampler = VK_NULL_HANDLE;
     }
     if (m_sampler != VK_NULL_HANDLE) {
         vkDestroySampler(m_device, m_sampler, nullptr);

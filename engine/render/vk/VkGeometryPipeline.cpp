@@ -40,7 +40,8 @@ VkGeometryPipeline::~VkGeometryPipeline() {
 bool VkGeometryPipeline::Init(VkDevice device,
                               VkRenderPass renderPass,
                               const std::vector<uint8_t>& vertSpirv,
-                              const std::vector<uint8_t>& fragSpirv) {
+                              const std::vector<uint8_t>& fragSpirv,
+                              VkDescriptorSetLayout materialSetLayout) {
     if (device == VK_NULL_HANDLE || renderPass == VK_NULL_HANDLE ||
         vertSpirv.empty() || fragSpirv.empty()) {
         return false;
@@ -64,8 +65,8 @@ bool VkGeometryPipeline::Init(VkDevice device,
 
     VkPipelineLayoutCreateInfo plci{};
     plci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    plci.setLayoutCount         = 0;
-    plci.pSetLayouts            = nullptr;
+    plci.setLayoutCount         = (materialSetLayout != VK_NULL_HANDLE) ? 1u : 0u;
+    plci.pSetLayouts            = (materialSetLayout != VK_NULL_HANDLE) ? &materialSetLayout : nullptr;
     plci.pushConstantRangeCount = 1;
     plci.pPushConstantRanges    = &pushConstant;
     if (vkCreatePipelineLayout(device, &plci, nullptr, &m_layout) != VK_SUCCESS) {
@@ -85,7 +86,7 @@ bool VkGeometryPipeline::Init(VkDevice device,
     stages[1].module = fragModule;
     stages[1].pName  = "main";
 
-    std::array<VkVertexInputAttributeDescription, 2> attrs{};
+    std::array<VkVertexInputAttributeDescription, 3> attrs{};
     attrs[0].location = 0;
     attrs[0].binding  = 0;
     attrs[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
@@ -94,17 +95,21 @@ bool VkGeometryPipeline::Init(VkDevice device,
     attrs[1].binding  = 0;
     attrs[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
     attrs[1].offset   = 12;
+    attrs[2].location = 2;
+    attrs[2].binding  = 0;
+    attrs[2].format   = VK_FORMAT_R32G32_SFLOAT;
+    attrs[2].offset   = 24;
 
     VkVertexInputBindingDescription binding{};
     binding.binding   = 0;
-    binding.stride    = 24;
+    binding.stride    = 32;
     binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     VkPipelineVertexInputStateCreateInfo vi{};
     vi.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vi.vertexBindingDescriptionCount   = 1;
     vi.pVertexBindingDescriptions      = &binding;
-    vi.vertexAttributeDescriptionCount  = 2;
+    vi.vertexAttributeDescriptionCount  = 3;
     vi.pVertexAttributeDescriptions    = attrs.data();
 
     VkPipelineInputAssemblyStateCreateInfo ia{};

@@ -1,12 +1,19 @@
 #version 450
 layout(location = 0) in vec3 vNormal;
+layout(location = 1) in vec2 vUV;
+
+layout(binding = 0) uniform sampler2D uBaseColor;
+layout(binding = 1) uniform sampler2D uNormal;
+layout(binding = 2) uniform sampler2D uORM;
 
 layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outORM;
 
 void main() {
-    outAlbedo = vec4(0.8, 0.4, 0.2, 1.0);
-    outNormal = vec4(normalize(vNormal) * 0.5 + 0.5, 1.0);
-    outORM = vec4(1.0, 0.5, 0.1, 1.0);
+    outAlbedo = texture(uBaseColor, vUV);
+    vec3 N = normalize(texture(uNormal, vUV).rgb * 2.0 - 1.0);
+    outNormal = vec4(N * 0.5 + 0.5, 1.0);
+    vec3 orm = texture(uORM, vUV).rgb;
+    outORM = vec4(orm.r, orm.g, orm.b, 1.0);
 }

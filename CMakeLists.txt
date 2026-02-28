@@ -32,6 +32,7 @@ find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 #                             (M03.0: Camera + frustum culling MVP)
 #                             (M03.1: Deferred GBuffer + geometry pass)
 #                             (M03.2: Deferred lighting pass + tonemap)
+#                             (M03.3: Materials BaseColor/Normal/ORM + loader)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp
@@ -71,6 +72,10 @@ add_library(engine_core STATIC
     engine/render/vk/VkLightingPipeline.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
+    # M03.3 — Materials: BaseColor/Normal/ORM + loader
+    engine/render/vk/VkMaterial.cpp
+    engine/render/vk/VkTextureLoader.cpp
+
     # M03.0 — Camera + frustum culling MVP
     engine/render/Camera.cpp
     engine/math/Frustum.cpp
@@ -86,7 +91,7 @@ add_library(engine_core STATIC
 
 target_include_directories(engine_core
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}   # makes "engine/core/..." includes resolvable
+        ${CMAKE_CURRENT_SOURCE_DIR}   # makes "engine/..." and "external/..." includes resolvable
 )
 
 target_link_libraries(engine_core

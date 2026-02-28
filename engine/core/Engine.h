@@ -29,6 +29,8 @@
 #include "engine/render/vk/VkSceneColorHDR.h"
 #include "engine/render/vk/VkLightingPipeline.h"
 #include "engine/render/vk/VkTonemapPipeline.h"
+#include "engine/render/vk/VkMaterial.h"
+#include "engine/render/vk/VkTextureLoader.h"
 #include "engine/render/ShaderCache.h"
 
 #include <array>
@@ -229,6 +231,14 @@ private:
     VkBuffer m_cubeVertexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_cubeVertexBufferMemory = VK_NULL_HANDLE;
     uint32_t m_cubeVertexCount = 0;
+
+    /// Texture loader + default material (M03.3).
+    ::engine::render::vk::VkTextureLoader m_textureLoader;
+    VkCommandPool m_uploadCommandPool = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_materialSetLayout = VK_NULL_HANDLE;
+    VkDescriptorPool m_materialDescriptorPool = VK_NULL_HANDLE;
+    VkSampler m_materialSampler = VK_NULL_HANDLE;
+    ::engine::render::vk::VkMaterial m_defaultMaterial;
 
     /// SceneColor_HDR for lighting output; tonemap reads it (M03.2).
     ::engine::render::vk::VkSceneColorHDR m_vkSceneColorHDR;

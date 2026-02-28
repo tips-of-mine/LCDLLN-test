@@ -18,6 +18,8 @@
 #include "engine/render/vk/VkSceneColorHDR.h"
 #include "engine/render/vk/VkLightingPipeline.h"
 #include "engine/render/vk/VkTonemapPipeline.h"
+#include "engine/render/vk/VkMaterial.h"
+#include "engine/render/vk/VkTextureLoader.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Input.h"
 
@@ -34,30 +36,30 @@ using namespace engine::platform;
 using namespace engine::core::memory;
 
 // ---------------------------------------------------------------------------
-// Cube mesh for geometry pass (M03.1): position (vec3) + normal (vec3) per vertex
+// Cube mesh for geometry pass (M03.1, M03.3): position (vec3) + normal (vec3) + UV (vec2)
 // ---------------------------------------------------------------------------
 namespace {
 constexpr uint32_t kCubeVertexCount = 36;
-struct CubeVertex { float px, py, pz, nx, ny, nz; };
+struct CubeVertex { float px, py, pz, nx, ny, nz, u, v; };
 const CubeVertex kCubeVertices[kCubeVertexCount] = {
     // -Z
-    {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, { 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f},
-    { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, {-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f},
+    {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f}, { 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f}, { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f},
+    { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f}, {-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f}, {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f},
     // +Z
-    {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, { 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f},
-    { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, {-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f},
+    {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f}, { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f}, { 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f},
+    { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f}, {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f}, {-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f},
     // -Y
-    {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f}, { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f}, { 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f},
-    { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f}, {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f}, {-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f},
+    {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f}, { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f}, { 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f},
+    { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f}, {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f}, {-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f},
     // +Y
-    {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f}, { 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f}, { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f},
-    { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f}, {-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f}, {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f},
+    {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f}, { 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f}, { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f},
+    { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f}, {-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f}, {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f},
     // -X
-    {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f},
-    {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f},
+    {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f}, {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f}, {-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f},
+    {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f}, {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f}, {-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f},
     // +X
-    { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f},
-    { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f},
+    { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f}, { 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f}, { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f},
+    { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f}, { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f}, { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f},
 };
 
 uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -289,12 +291,76 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                             if (!gbufOk) {
                                 LOG_ERROR(Render, "GBuffer initialisation failed");
                             } else {
+                                VkCommandPoolCreateInfo cpci{};
+                                cpci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+                                cpci.queueFamilyIndex = m_vkDevice.Indices().graphicsFamily;
+                                cpci.flags = 0;
+                                if (vkCreateCommandPool(m_vkDevice.Device(), &cpci, nullptr, &m_uploadCommandPool) != VK_SUCCESS) {
+                                    LOG_ERROR(Render, "Upload command pool creation failed");
+                                } else if (!m_textureLoader.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
+                                                                 m_vkDevice.GraphicsQueue(), m_uploadCommandPool)) {
+                                    LOG_ERROR(Render, "Texture loader initialisation failed");
+                                    vkDestroyCommandPool(m_vkDevice.Device(), m_uploadCommandPool, nullptr);
+                                    m_uploadCommandPool = VK_NULL_HANDLE;
+                                } else {
+                                    VkImageView baseView = m_textureLoader.Load("textures/default_basecolor.png", true);
+                                    if (baseView == VK_NULL_HANDLE) baseView = m_textureLoader.CreateDefaultTexture(255, 255, 255, true);
+                                    VkImageView normView = m_textureLoader.Load("textures/default_normal.png", false);
+                                    if (normView == VK_NULL_HANDLE) normView = m_textureLoader.CreateDefaultTexture(128, 128, 255, false);
+                                    VkImageView ormView = m_textureLoader.Load("textures/default_orm.png", false);
+                                    if (ormView == VK_NULL_HANDLE) ormView = m_textureLoader.CreateDefaultTexture(255, 128, 0, false);
+                                    if (!engine::render::vk::CreateMaterialDescriptorSetLayout(m_vkDevice.Device(), &m_materialSetLayout)) {
+                                        LOG_ERROR(Render, "Material descriptor set layout failed");
+                                    } else {
+                                        VkDescriptorPoolSize poolSize{};
+                                        poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                                        poolSize.descriptorCount = 3;
+                                        VkDescriptorPoolCreateInfo dpci{};
+                                        dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                                        dpci.maxSets = 1;
+                                        dpci.poolSizeCount = 1;
+                                        dpci.pPoolSizes = &poolSize;
+                                        if (vkCreateDescriptorPool(m_vkDevice.Device(), &dpci, nullptr, &m_materialDescriptorPool) != VK_SUCCESS) {
+                                            vkDestroyDescriptorSetLayout(m_vkDevice.Device(), m_materialSetLayout, nullptr);
+                                            m_materialSetLayout = VK_NULL_HANDLE;
+                                            LOG_ERROR(Render, "Material descriptor pool failed");
+                                        } else {
+                                            VkSamplerCreateInfo sci{};
+                                            sci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+                                            sci.magFilter = sci.minFilter = VK_FILTER_LINEAR;
+                                            sci.addressModeU = sci.addressModeV = sci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                                            if (vkCreateSampler(m_vkDevice.Device(), &sci, nullptr, &m_materialSampler) != VK_SUCCESS) {
+                                                vkDestroyDescriptorPool(m_vkDevice.Device(), m_materialDescriptorPool, nullptr);
+                                                vkDestroyDescriptorSetLayout(m_vkDevice.Device(), m_materialSetLayout, nullptr);
+                                                m_materialDescriptorPool = VK_NULL_HANDLE;
+                                                m_materialSetLayout = VK_NULL_HANDLE;
+                                                LOG_ERROR(Render, "Material sampler failed");
+                                            } else {
+                                                m_defaultMaterial.baseColorView = baseView;
+                                                m_defaultMaterial.normalView = normView;
+                                                m_defaultMaterial.ormView = ormView;
+                                                m_defaultMaterial.sampler = m_materialSampler;
+                                                if (!engine::render::vk::AllocAndUpdateMaterialDescriptorSet(
+                                                        m_vkDevice.Device(), m_materialDescriptorPool, m_materialSetLayout,
+                                                        m_defaultMaterial, &m_defaultMaterial.descriptorSet)) {
+                                                    vkDestroySampler(m_vkDevice.Device(), m_materialSampler, nullptr);
+                                                    vkDestroyDescriptorPool(m_vkDevice.Device(), m_materialDescriptorPool, nullptr);
+                                                    vkDestroyDescriptorSetLayout(m_vkDevice.Device(), m_materialSetLayout, nullptr);
+                                                    m_materialSampler = VK_NULL_HANDLE;
+                                                    m_materialDescriptorPool = VK_NULL_HANDLE;
+                                                    m_materialSetLayout = VK_NULL_HANDLE;
+                                                    LOG_ERROR(Render, "Material descriptor set alloc/update failed");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 std::vector<uint8_t> vertSpirv = m_shaderCache.Get("shaders/geometry.vert");
                                 std::vector<uint8_t> fragSpirv = m_shaderCache.Get("shaders/geometry.frag");
-                                if (!vertSpirv.empty() && !fragSpirv.empty()) {
+                                if (!vertSpirv.empty() && !fragSpirv.empty() && m_materialSetLayout != VK_NULL_HANDLE) {
                                     if (!m_geometryPipeline.Init(m_vkDevice.Device(),
                                                                  m_vkGBuffer.GetRenderPass(),
-                                                                 vertSpirv, fragSpirv)) {
+                                                                 vertSpirv, fragSpirv, m_materialSetLayout)) {
                                         LOG_ERROR(Render, "Geometry pipeline initialisation failed");
                                     } else if (!CreateCubeVertexBuffer(
                                             m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
@@ -382,6 +448,23 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_tonemapPipeline.Shutdown();
         m_lightingPipeline.Shutdown();
         m_geometryPipeline.Shutdown();
+        if (m_materialSampler != VK_NULL_HANDLE) {
+            vkDestroySampler(m_vkDevice.Device(), m_materialSampler, nullptr);
+            m_materialSampler = VK_NULL_HANDLE;
+        }
+        if (m_materialDescriptorPool != VK_NULL_HANDLE) {
+            vkDestroyDescriptorPool(m_vkDevice.Device(), m_materialDescriptorPool, nullptr);
+            m_materialDescriptorPool = VK_NULL_HANDLE;
+        }
+        if (m_materialSetLayout != VK_NULL_HANDLE) {
+            vkDestroyDescriptorSetLayout(m_vkDevice.Device(), m_materialSetLayout, nullptr);
+            m_materialSetLayout = VK_NULL_HANDLE;
+        }
+        m_textureLoader.Shutdown();
+        if (m_uploadCommandPool != VK_NULL_HANDLE) {
+            vkDestroyCommandPool(m_vkDevice.Device(), m_uploadCommandPool, nullptr);
+            m_uploadCommandPool = VK_NULL_HANDLE;
+        }
         m_vkSceneColorHDR.Shutdown();
         m_vkGBuffer.Shutdown();
         m_vkFrameResources.Shutdown();
@@ -578,6 +661,10 @@ void Engine::Render() {
                 VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkGBuffer.Extent();
                 vkCmdSetScissor(cmd, 0, 1, &scissor);
                 vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_geometryPipeline.GetPipeline());
+                if (m_defaultMaterial.descriptorSet != VK_NULL_HANDLE) {
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_geometryPipeline.GetPipelineLayout(),
+                                           0, 1, &m_defaultMaterial.descriptorSet, 0, nullptr);
+                }
                 VkDeviceSize offset = 0;
                 vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
                 vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 64, viewProj);

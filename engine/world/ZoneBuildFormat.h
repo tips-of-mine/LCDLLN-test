@@ -2,7 +2,7 @@
 
 /**
  * @file ZoneBuildFormat.h
- * @brief Reader for zone_builder output: zone.meta, chunk.meta (bounds+flags), instances.bin (M11.2).
+ * @brief Reader for zone_builder output: zone.meta, chunk.meta (bounds+flags), instances.bin (M11.2, M11.5 versioned).
  */
 
 #include <cstdint>
@@ -13,6 +13,8 @@ namespace engine::world {
 
 constexpr uint32_t kZoneMetaMagic = 0x4D4E4F5Au;
 constexpr uint32_t kZoneChunkMetaMagic = 0x4D4E4843u;
+/** @brief instances.bin file magic "INST" (M11.5). */
+constexpr uint32_t kInstancesBinMagic = 0x54534E49u;
 
 struct ZoneChunkMeta {
     float boundsMin[3] = { 0.f, 0.f, 0.f };

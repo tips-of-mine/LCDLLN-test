@@ -1,9 +1,10 @@
 /**
  * @file ProbesFormat.cpp
- * @brief Reader for probes.bin and zone_atmosphere.json (M11.4).
+ * @brief Reader for probes.bin and zone_atmosphere.json (M11.4, M11.5 versioned).
  */
 
 #include "engine/world/ProbesFormat.h"
+#include "engine/world/VersionedHeader.h"
 
 #include <cstdio>
 #include <cstring>
@@ -19,13 +20,23 @@ bool ReadProbesBin(const std::string& path, std::vector<ZoneProbe>& out) {
     std::FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) return false;
 #endif
-    uint32_t magic = 0, version = 0, numProbes = 0;
-    if (std::fread(&magic, 1, 4, f) != 4 || std::fread(&version, 1, 4, f) != 4 ||
-        std::fread(&numProbes, 1, 4, f) != 4) {
+    uint32_t magic = 0;
+    if (std::fread(&magic, 1, 4, f) != 4 || magic != kProbesBinMagic) {
         std::fclose(f);
         return false;
     }
-    if (magic != kProbesBinMagic || version != kProbesBinVersion) {
+    VersionedHeader vh;
+    if (std::fread(&vh.formatVersion, 4, 1, f) != 1 || std::fread(&vh.builderVersion, 4, 1, f) != 1 ||
+        std::fread(&vh.engineVersion, 4, 1, f) != 1 || std::fread(&vh.contentHash, 8, 1, f) != 1) {
+        std::fclose(f);
+        return false;
+    }
+    if (!ValidateVersionedHeader(vh, "probes.bin")) {
+        std::fclose(f);
+        return false;
+    }
+    uint32_t numProbes = 0;
+    if (std::fread(&numProbes, 1, 4, f) != 4) {
         std::fclose(f);
         return false;
     }

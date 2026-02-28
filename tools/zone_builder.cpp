@@ -6,11 +6,16 @@
  * - glTF: load via TinyGLTF; list meshes/materials.
  * - M11.2: chunk coord = floor(x/256), floor(z/256); write chunk.meta (bounds, flags), instances.bin, zone.meta.
  * - M11.4: one global zone probe at zone center (probes.bin) + zone_atmosphere.json.
+ * - M11.5: versioned header (builderVersion, engineVersion, contentHash xxhash) in each bin/meta; layout + asset mtime for hash.
  */
 
 #include <tiny_gltf.h>
 
 #include <nlohmann/json.hpp>
+
+#include "engine/world/VersionedHeader.h"
+
+#include <xxhash.h>
 
 #include <algorithm>
 #include <cmath>
@@ -96,10 +101,28 @@ bool LoadGltfWithTinygltf(const std::string& path, std::vector<std::string>& mes
     return true;
 }
 
+/** @brief Computes content hash (xxhash) from layout file content + referenced asset mtime (M11.5). Avoids hashing large files. */
+uint64_t ComputeContentHash(const std::string& layoutPath, const std::string& gltfPath) {
+    std::ifstream layoutFile(layoutPath, std::ios::binary);
+    std::string layoutContent((std::istreambuf_iterator<char>(layoutFile)), std::istreambuf_iterator<char>());
+    layoutFile.close();
+    XXH64_state_t* state = XXH64_createState();
+    if (!state) return 0;
+    XXH64_reset(state, 0);
+    XXH64_update(state, layoutContent.data(), layoutContent.size());
+    std::error_code ec;
+    auto gltfMtime = std::filesystem::last_write_time(gltfPath, ec);
+    uint64_t mtimeVal = ec ? 0 : static_cast<uint64_t>(gltfMtime.time_since_epoch().count());
+    XXH64_update(state, &mtimeVal, sizeof(mtimeVal));
+    uint64_t hash = XXH64_digest(state);
+    XXH64_freeState(state);
+    return hash;
+}
+
 /** @brief Prints usage to stderr. */
 void PrintUsage(const char* prog) {
     std::cerr << "Usage: " << prog << " <layout.json> <scene.gltf|scene.glb> [outputDir]\n";
-    std::cerr << "  If outputDir (e.g. build/zone_0) is given, writes zone.meta, chunks/chunk_i_j/chunk.meta, instances.bin, probes.bin, zone_atmosphere.json.\n";
+    std::cerr << "  If outputDir (e.g. build/zone_0) is given, writes zone.meta, chunks/chunk_i_j/chunk.meta, instances.bin, probes.bin, zone_atmosphere.json (M11.5 versioned).\n";
 }
 
 /* M11.2: zone builder output format constants (must match engine reader). */
@@ -123,13 +146,21 @@ void MakeTransformFromPosition(const float pos[3], float transform[16]) {
     transform[12] = pos[0]; transform[13] = pos[1]; transform[14] = pos[2];
 }
 
-/** @brief Writes zone.meta (list of chunk coords). */
-bool WriteZoneMeta(const std::string& path, int32_t zoneId, const std::vector<std::pair<int32_t, int32_t>>& chunkCoords) {
+/** @brief Writes versioned header (magic + VersionedHeader) then payload. */
+static bool WriteVersionedHeader(std::ofstream& out, uint32_t magic, const engine::world::VersionedHeader& vh) {
+    out.write(reinterpret_cast<const char*>(&magic), 4);
+    out.write(reinterpret_cast<const char*>(&vh.formatVersion), 4);
+    out.write(reinterpret_cast<const char*>(&vh.builderVersion), 4);
+    out.write(reinterpret_cast<const char*>(&vh.engineVersion), 4);
+    out.write(reinterpret_cast<const char*>(&vh.contentHash), 8);
+    return out.good();
+}
+
+/** @brief Writes zone.meta (list of chunk coords) with versioned header (M11.5). */
+bool WriteZoneMeta(const std::string& path, int32_t zoneId, const std::vector<std::pair<int32_t, int32_t>>& chunkCoords, const engine::world::VersionedHeader& vh) {
     std::ofstream out(path, std::ios::binary);
     if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
-    uint32_t magic = kZoneMetaMagic, version = kZoneMetaVersion;
-    out.write(reinterpret_cast<const char*>(&magic), 4);
-    out.write(reinterpret_cast<const char*>(&version), 4);
+    if (!WriteVersionedHeader(out, kZoneMetaMagic, vh)) return false;
     out.write(reinterpret_cast<const char*>(&zoneId), 4);
     uint32_t n = static_cast<uint32_t>(chunkCoords.size());
     out.write(reinterpret_cast<const char*>(&n), 4);
@@ -140,13 +171,11 @@ bool WriteZoneMeta(const std::string& path, int32_t zoneId, const std::vector<st
     return true;
 }
 
-/** @brief Writes chunk.meta (bounds + flags) for zone builder output. */
-bool WriteChunkMeta(const std::string& path, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, uint32_t flags) {
+/** @brief Writes chunk.meta (bounds + flags) with versioned header (M11.5). */
+bool WriteChunkMeta(const std::string& path, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, uint32_t flags, const engine::world::VersionedHeader& vh) {
     std::ofstream out(path, std::ios::binary);
     if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
-    uint32_t magic = kChunkMetaMagic, version = kChunkMetaVersion;
-    out.write(reinterpret_cast<const char*>(&magic), 4);
-    out.write(reinterpret_cast<const char*>(&version), 4);
+    if (!WriteVersionedHeader(out, kChunkMetaMagic, vh)) return false;
     out.write(reinterpret_cast<const char*>(&minX), 4);
     out.write(reinterpret_cast<const char*>(&minY), 4);
     out.write(reinterpret_cast<const char*>(&minZ), 4);
@@ -164,10 +193,13 @@ struct ChunkInstanceRecord {
     uint32_t flags = 0;
 };
 
-/** @brief Writes instances.bin (transform[16] + assetId + flags per instance). */
-bool WriteInstancesBin(const std::string& path, const std::vector<ChunkInstanceRecord>& instances) {
+constexpr uint32_t kInstancesBinMagic = 0x54534E49u; /* "INST" */
+
+/** @brief Writes instances.bin with versioned header (M11.5). */
+bool WriteInstancesBin(const std::string& path, const std::vector<ChunkInstanceRecord>& instances, const engine::world::VersionedHeader& vh) {
     std::ofstream out(path, std::ios::binary);
     if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
+    if (!WriteVersionedHeader(out, kInstancesBinMagic, vh)) return false;
     uint32_t n = static_cast<uint32_t>(instances.size());
     out.write(reinterpret_cast<const char*>(&n), 4);
     for (const auto& inst : instances) {
@@ -183,14 +215,12 @@ constexpr uint32_t kProbesBinMagic = 0x424F5250u; /* "PROB" */
 constexpr uint32_t kProbesBinVersion = 1u;
 struct ProbeRecord { float position[3] = {}; float radius = 1000.f; float intensity = 1.f; };
 
-/** @brief Writes probes.bin (positions, radius, params). At least one global zone probe. */
-bool WriteProbesBin(const std::string& path, const std::vector<ProbeRecord>& probes) {
+/** @brief Writes probes.bin with versioned header (M11.5). */
+bool WriteProbesBin(const std::string& path, const std::vector<ProbeRecord>& probes, const engine::world::VersionedHeader& vh) {
     std::ofstream out(path, std::ios::binary);
     if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
-    uint32_t magic = kProbesBinMagic, version = kProbesBinVersion;
+    if (!WriteVersionedHeader(out, kProbesBinMagic, vh)) return false;
     uint32_t n = static_cast<uint32_t>(probes.size());
-    out.write(reinterpret_cast<const char*>(&magic), 4);
-    out.write(reinterpret_cast<const char*>(&version), 4);
     out.write(reinterpret_cast<const char*>(&n), 4);
     for (const auto& p : probes) {
         out.write(reinterpret_cast<const char*>(p.position), 12);
@@ -230,6 +260,13 @@ int main(int argc, char** argv) {
               << ", meshes " << meshNames.size() << ", materials " << materialNames.size() << "\n";
 
     if (!outputDir.empty()) {
+        /* M11.5: content hash from layout + asset mtime for versioned headers. */
+        uint64_t contentHash = ComputeContentHash(layoutPath, gltfPath);
+        engine::world::VersionedHeader vh;
+        vh.formatVersion = engine::world::kZoneBuildFormatVersion;
+        vh.builderVersion = engine::world::kCurrentBuilderVersion;
+        vh.engineVersion = engine::world::kCurrentEngineVersion;
+        vh.contentHash = contentHash;
         /* M11.2: chunk assignation floor(x/256), floor(z/256); write build/zone_x/chunks/chunk_i_j/chunk.meta + instances.bin, zone.meta. */
         std::map<std::pair<int32_t, int32_t>, std::vector<ChunkInstanceRecord>> chunks;
         for (const LayoutInstance& inst : instances) {
@@ -254,10 +291,10 @@ int main(int argc, char** argv) {
             float maxZ = static_cast<float>((cj + 1) * kChunkSize);
             std::string chunkDir = base + "chunks/chunk_" + std::to_string(ci) + "_" + std::to_string(cj);
             std::filesystem::create_directories(chunkDir);
-            if (!WriteChunkMeta(chunkDir + "/chunk.meta", minX, 0.f, minZ, maxX, 256.f, maxZ, 0u)) return 1;
-            if (!WriteInstancesBin(chunkDir + "/instances.bin", kv.second)) return 1;
+            if (!WriteChunkMeta(chunkDir + "/chunk.meta", minX, 0.f, minZ, maxX, 256.f, maxZ, 0u, vh)) return 1;
+            if (!WriteInstancesBin(chunkDir + "/instances.bin", kv.second, vh)) return 1;
         }
-        if (!WriteZoneMeta(base + "zone.meta", zoneId, chunkCoords)) return 1;
+        if (!WriteZoneMeta(base + "zone.meta", zoneId, chunkCoords, vh)) return 1;
         /* M11.4: one global zone probe at zone center + zone_atmosphere.json. */
         int32_t minCi = chunkCoords.empty() ? 0 : chunkCoords[0].first;
         int32_t maxCi = minCi, minCj = chunkCoords.empty() ? 0 : chunkCoords[0].second, maxCj = minCj;
@@ -275,7 +312,7 @@ int main(int argc, char** argv) {
         globalProbe.position[2] = zoneCenterZ;
         globalProbe.radius = 2000.f;
         globalProbe.intensity = 1.f;
-        if (!WriteProbesBin(base + "probes.bin", { globalProbe })) return 1;
+        if (!WriteProbesBin(base + "probes.bin", { globalProbe }, vh)) return 1;
         if (!WriteZoneAtmosphereJson(base + "zone_atmosphere.json")) return 1;
         std::cout << "zone_builder: wrote zone.meta + " << chunkCoords.size() << " chunks, probes.bin, zone_atmosphere.json to " << outputDir << "\n";
     } else {

@@ -48,6 +48,8 @@ add_library(engine_core STATIC
     engine/world/NavMeshFormat.cpp
     # M11.4 — Probes (probes.bin) + zone atmosphere format reader
     engine/world/ProbesFormat.cpp
+    # M11.5 — Versioned header validation (bin/pak/meta)
+    engine/world/VersionedHeader.cpp
     # M09.2 — Budgets par chunk (triangles/drawcalls) + instrumentation
     engine/world/ChunkStats.cpp
     engine/world/HlodRuntime.cpp
@@ -248,8 +250,21 @@ set(TINYGLTF_HEADER_ONLY OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(tinygltf)
 target_link_libraries(tinygltf PUBLIC nlohmann_json::nlohmann_json)
 
+# M11.5: xxHash for content hash (builder only; no CMake in xxHash repo, add lib manually)
+FetchContent_Declare(
+  xxhash
+  GIT_REPOSITORY https://github.com/Cyan4973/xxHash.git
+  GIT_TAG v0.8.2
+)
+FetchContent_GetProperties(xxhash)
+if(NOT xxhash_POPULATED)
+  FetchContent_Populate(xxhash)
+  add_library(xxhash STATIC ${xxhash_SOURCE_DIR}/xxhash.c)
+  target_include_directories(xxhash PUBLIC ${xxhash_SOURCE_DIR})
+endif()
+
 add_executable(zone_builder tools/zone_builder.cpp)
-target_link_libraries(zone_builder PRIVATE nlohmann_json::nlohmann_json tinygltf)
+target_link_libraries(zone_builder PRIVATE nlohmann_json::nlohmann_json tinygltf xxhash)
 target_include_directories(zone_builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 if (MSVC)
     target_compile_options(zone_builder PRIVATE /W4 /WX /utf-8)

@@ -1,9 +1,10 @@
 /**
  * @file ZoneBuildFormat.cpp
- * @brief Reader for zone_builder output (M11.2).
+ * @brief Reader for zone_builder output (M11.2, M11.5 versioned).
  */
 
 #include "engine/world/ZoneBuildFormat.h"
+#include "engine/world/VersionedHeader.h"
 
 #include <cstdio>
 #include <cstring>
@@ -19,14 +20,23 @@ bool ReadZoneMeta(const std::string& path, int32_t& zoneId, std::vector<std::pai
     std::FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) return false;
 #endif
-    uint32_t magic = 0, version = 0;
-    uint32_t numChunks = 0;
-    if (std::fread(&magic, 1, 4, f) != 4 || std::fread(&version, 1, 4, f) != 4 ||
-        std::fread(&zoneId, 1, 4, f) != 4 || std::fread(&numChunks, 1, 4, f) != 4) {
+    uint32_t magic = 0;
+    if (std::fread(&magic, 1, 4, f) != 4 || magic != kZoneMetaMagic) {
         std::fclose(f);
         return false;
     }
-    if (magic != kZoneMetaMagic || version != 1u) {
+    VersionedHeader vh;
+    if (std::fread(&vh.formatVersion, 4, 1, f) != 1 || std::fread(&vh.builderVersion, 4, 1, f) != 1 ||
+        std::fread(&vh.engineVersion, 4, 1, f) != 1 || std::fread(&vh.contentHash, 8, 1, f) != 1) {
+        std::fclose(f);
+        return false;
+    }
+    if (!ValidateVersionedHeader(vh, "zone.meta")) {
+        std::fclose(f);
+        return false;
+    }
+    uint32_t numChunks = 0;
+    if (std::fread(&zoneId, 1, 4, f) != 4 || std::fread(&numChunks, 1, 4, f) != 4) {
         std::fclose(f);
         return false;
     }
@@ -50,12 +60,18 @@ bool ReadZoneChunkMeta(const std::string& path, ZoneChunkMeta& out) {
     std::FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) return false;
 #endif
-    uint32_t magic = 0, version = 0;
-    if (std::fread(&magic, 1, 4, f) != 4 || std::fread(&version, 1, 4, f) != 4) {
+    uint32_t magic = 0;
+    if (std::fread(&magic, 1, 4, f) != 4 || magic != kZoneChunkMetaMagic) {
         std::fclose(f);
         return false;
     }
-    if (magic != kZoneChunkMetaMagic || version != 1u) {
+    VersionedHeader vh;
+    if (std::fread(&vh.formatVersion, 4, 1, f) != 1 || std::fread(&vh.builderVersion, 4, 1, f) != 1 ||
+        std::fread(&vh.engineVersion, 4, 1, f) != 1 || std::fread(&vh.contentHash, 8, 1, f) != 1) {
+        std::fclose(f);
+        return false;
+    }
+    if (!ValidateVersionedHeader(vh, "chunk.meta")) {
         std::fclose(f);
         return false;
     }
@@ -76,6 +92,21 @@ bool ReadZoneChunkInstances(const std::string& path, std::vector<ZoneChunkInstan
     std::FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) return false;
 #endif
+    uint32_t magic = 0;
+    if (std::fread(&magic, 1, 4, f) != 4 || magic != kInstancesBinMagic) {
+        std::fclose(f);
+        return false;
+    }
+    VersionedHeader vh;
+    if (std::fread(&vh.formatVersion, 4, 1, f) != 1 || std::fread(&vh.builderVersion, 4, 1, f) != 1 ||
+        std::fread(&vh.engineVersion, 4, 1, f) != 1 || std::fread(&vh.contentHash, 8, 1, f) != 1) {
+        std::fclose(f);
+        return false;
+    }
+    if (!ValidateVersionedHeader(vh, "instances.bin")) {
+        std::fclose(f);
+        return false;
+    }
     uint32_t n = 0;
     if (std::fread(&n, 1, 4, f) != 4) {
         std::fclose(f);

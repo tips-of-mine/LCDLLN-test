@@ -54,20 +54,25 @@ float ComputeChunkPriority(const ChunkRequest& request,
     float age  = static_cast<float>(currentTime - enqueueTime) * kAgingBoostPerSecond;
     float agingMax = ::engine::core::Config::GetFloat("streaming.aging_boost_max", 500.0f);
     if (age > agingMax) age = agingMax;
-    return base + dir + age;
+    /* M10.5: load geo before tex before instances/nav/probes (lower asset type = higher priority). */
+    constexpr float kAssetPriorityScale = 0.01f;
+    float assetOrder = static_cast<float>(static_cast<uint8_t>(ChunkAssetType::Probes) - static_cast<uint8_t>(request.assetType)) * kAssetPriorityScale;
+    return base + dir + age + assetOrder;
 }
 
 void StreamingScheduler::PushRequest(::engine::world::ChunkCoord chunkId,
                                      ::engine::world::RingType targetState,
                                      float playerX, float playerZ,
                                      float viewDirX, float viewDirZ,
-                                     double currentTime) {
+                                     double currentTime,
+                                     ChunkAssetType assetType) {
     uint32_t& v = m_chunkVersion[chunkId];
     v = (v == 0xFFFFFFFFu) ? 1u : (v + 1u);
     QueuedChunkRequest q;
     q.request.chunkId = chunkId;
     q.request.targetState = targetState;
     q.request.streamVersion = v;
+    q.request.assetType = assetType;
     q.enqueueTime = currentTime;
     m_requestQueue.push_back(q);
 }

@@ -1,15 +1,16 @@
 /**
  * @file hlod_builder.cpp
- * @brief Offline tool: build HLOD per chunk — clustering (spatial + material), mesh merge, output hlod.pak (M09.4).
+ * @brief Offline tool: build HLOD per chunk — clustering, mesh merge; output chunk packages (M09.4, M10.5).
  *
  * Input: JSON with chunk instances (meshId, materialId, transform, bounds) and mesh/material data.
- * Output: hlod.pak (merged meshes + materials list). Clusters limited to 20-80 per chunk.
+ * Output (M10.5): outputDir/chunk.meta, geo.pak, tex.pak, instances.bin, navmesh.bin, probes.bin.
  */
 
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -21,8 +22,16 @@ namespace {
 
 using namespace nlohmann;
 
-constexpr uint32_t kPakMagic = 0x444F4C48u; /* "HLOD" */
-constexpr uint32_t kPakVersion = 1u;
+constexpr uint32_t kHlodMagic = 0x444F4C48u; /* "HLOD" */
+constexpr uint32_t kHlodVersion = 1u;
+/* Generic .pak format (M10.5) — same layout as engine/streaming/PakReader.h */
+constexpr uint32_t kGenericPakMagic = 0x004B4150u; /* "PAK\0" */
+constexpr uint32_t kGenericPakVersion = 1u;
+constexpr size_t   kPakEntryNameSize = 64u;
+/* chunk.meta format (M10.5) */
+constexpr uint32_t kChunkMetaMagic = 0x4154454Du; /* "META" */
+constexpr uint32_t kChunkMetaVersion = 1u;
+constexpr size_t   kChunkMetaSlotCount = 5u;
 constexpr unsigned kMinClustersPerChunk = 20u;
 constexpr unsigned kMaxClustersPerChunk = 80u;
 
@@ -210,39 +219,95 @@ void MergeClustersToLimit(
     }
 }
 
-/** Writes hlod.pak: magic, version, num meshes, per-mesh bounds/materialId/vertex/index counts and data, then materials list. */
-bool WritePak(const std::string& path,
-              const std::vector<Bounds>& mergedBounds,
-              const std::vector<uint32_t>& mergedMaterialIds,
-              const std::vector<std::vector<Vec3>>& mergedVertices,
-              const std::vector<std::vector<uint32_t>>& mergedIndices,
-              const std::vector<std::string>& materialPaths)
+/** Writes HLOD payload (magic, version, meshes, materials) to a buffer for embedding in geo.pak. */
+static void AppendHlodPayload(std::vector<char>& out,
+    const std::vector<Bounds>& mergedBounds,
+    const std::vector<uint32_t>& mergedMaterialIds,
+    const std::vector<std::vector<Vec3>>& mergedVertices,
+    const std::vector<std::vector<uint32_t>>& mergedIndices,
+    const std::vector<std::string>& materialPaths)
 {
-    std::ofstream out(path, std::ios::binary);
-    if (!out) { std::cerr << "hlod_builder: cannot write " << path << "\n"; return false; }
-    auto write32 = [&out](uint32_t v) { out.write(reinterpret_cast<const char*>(&v), 4); };
-    auto writeF = [&out](float v) { out.write(reinterpret_cast<const char*>(&v), 4); };
-    write32(kPakMagic);
-    write32(kPakVersion);
-    const uint32_t numMeshes = static_cast<uint32_t>(mergedBounds.size());
-    write32(numMeshes);
-    const uint32_t numMats = static_cast<uint32_t>(materialPaths.size());
-    write32(numMats);
+    auto append32 = [&out](uint32_t v) { out.insert(out.end(), reinterpret_cast<const char*>(&v), reinterpret_cast<const char*>(&v) + 4); };
+    auto appendF = [&out](float v) { out.insert(out.end(), reinterpret_cast<const char*>(&v), reinterpret_cast<const char*>(&v) + 4); };
+    append32(kHlodMagic);
+    append32(kHlodVersion);
+    append32(static_cast<uint32_t>(mergedBounds.size()));
+    append32(static_cast<uint32_t>(materialPaths.size()));
     for (size_t i = 0; i < mergedBounds.size(); ++i) {
         const Bounds& b = mergedBounds[i];
-        writeF(b.minX); writeF(b.minY); writeF(b.minZ);
-        writeF(b.maxX); writeF(b.maxY); writeF(b.maxZ);
-        write32(mergedMaterialIds[i]);
-        write32(static_cast<uint32_t>(mergedVertices[i].size()));
-        write32(static_cast<uint32_t>(mergedIndices[i].size()));
+        appendF(b.minX); appendF(b.minY); appendF(b.minZ);
+        appendF(b.maxX); appendF(b.maxY); appendF(b.maxZ);
+        append32(mergedMaterialIds[i]);
+        append32(static_cast<uint32_t>(mergedVertices[i].size()));
+        append32(static_cast<uint32_t>(mergedIndices[i].size()));
     }
     for (size_t i = 0; i < mergedVertices.size(); ++i) {
-        out.write(reinterpret_cast<const char*>(mergedVertices[i].data()), mergedVertices[i].size() * sizeof(Vec3));
-        out.write(reinterpret_cast<const char*>(mergedIndices[i].data()), mergedIndices[i].size() * sizeof(uint32_t));
+        const char* vp = reinterpret_cast<const char*>(mergedVertices[i].data());
+        out.insert(out.end(), vp, vp + mergedVertices[i].size() * sizeof(Vec3));
+        const char* ip = reinterpret_cast<const char*>(mergedIndices[i].data());
+        out.insert(out.end(), ip, ip + mergedIndices[i].size() * sizeof(uint32_t));
     }
     for (const std::string& s : materialPaths) {
-        write32(static_cast<uint32_t>(s.size()));
-        out.write(s.data(), s.size());
+        append32(static_cast<uint32_t>(s.size()));
+        out.insert(out.end(), s.data(), s.data() + s.size());
+    }
+}
+
+/** Writes generic .pak (header + entries + payload): one entry "hlod" with given payload. */
+static bool WriteGenericPak(const std::string& path, const char* entryName, const void* payload, size_t payloadSize) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "hlod_builder: cannot write " << path << "\n"; return false; }
+    const uint32_t numEntries = payloadSize > 0 ? 1u : 0u;
+    const uint64_t dataOffset = 12u + 80u * numEntries;
+    const uint64_t dataSize = payloadSize;
+    out.write(reinterpret_cast<const char*>(&kGenericPakMagic), 4);
+    out.write(reinterpret_cast<const char*>(&kGenericPakVersion), 4);
+    out.write(reinterpret_cast<const char*>(&numEntries), 4);
+    if (numEntries > 0) {
+        char name[kPakEntryNameSize] = {};
+        size_t nlen = std::strlen(entryName);
+        if (nlen >= kPakEntryNameSize) nlen = kPakEntryNameSize - 1;
+        std::memcpy(name, entryName, nlen);
+        out.write(name, kPakEntryNameSize);
+        out.write(reinterpret_cast<const char*>(&dataOffset), 8);
+        out.write(reinterpret_cast<const char*>(&dataSize), 8);
+        out.write(static_cast<const char*>(payload), static_cast<std::streamsize>(payloadSize));
+    }
+    return true;
+}
+
+/** Writes chunk.meta: magic, version, 5 slots (present + size). */
+static bool WriteChunkMeta(const std::string& path,
+    uint64_t geoSize, uint64_t texSize, uint64_t instancesSize, uint64_t navSize, uint64_t probesSize) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "hlod_builder: cannot write " << path << "\n"; return false; }
+    out.write(reinterpret_cast<const char*>(&kChunkMetaMagic), 4);
+    out.write(reinterpret_cast<const char*>(&kChunkMetaVersion), 4);
+    auto slot = [&out](uint8_t present, uint64_t size) {
+        out.write(reinterpret_cast<const char*>(&present), 1);
+        char pad[7] = {};
+        out.write(pad, 7);
+        out.write(reinterpret_cast<const char*>(&size), 8);
+    };
+    slot(geoSize > 0 ? 1u : 0u, geoSize);
+    slot(texSize > 0 ? 1u : 0u, texSize);
+    slot(instancesSize > 0 ? 1u : 0u, instancesSize);
+    slot(navSize > 0 ? 1u : 0u, navSize);
+    slot(probesSize > 0 ? 1u : 0u, probesSize);
+    return true;
+}
+
+/** Writes instances.bin: count then per-instance meshId, materialId, transform[16], bounds[6]. */
+static bool WriteInstancesBin(const std::string& path, const std::vector<Instance>& instances) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "hlod_builder: cannot write " << path << "\n"; return false; }
+    uint32_t n = static_cast<uint32_t>(instances.size());
+    out.write(reinterpret_cast<const char*>(&n), 4);
+    for (const Instance& i : instances) {
+        out.write(reinterpret_cast<const char*>(&i.meshId), 4);
+        out.write(reinterpret_cast<const char*>(&i.materialId), 4);
+        out.write(reinterpret_cast<const char*>(i.transform), 16 * sizeof(float));
+        out.write(reinterpret_cast<const char*>(&i.bounds.minX), 6 * sizeof(float));
     }
     return true;
 }
@@ -251,9 +316,10 @@ bool WritePak(const std::string& path,
 
 int main(int argc, char** argv) {
     std::string inputPath = "chunk_input.json";
-    std::string outputPath = "hlod.pak";
+    std::string outputDir = ".";
     if (argc >= 2) inputPath = argv[1];
-    if (argc >= 3) outputPath = argv[2];
+    if (argc >= 3) outputDir = argv[2];
+    if (outputDir.empty()) outputDir = ".";
 
     std::vector<Instance> instances;
     std::vector<MeshData> meshes;
@@ -285,7 +351,27 @@ int main(int argc, char** argv) {
         mergedIndices.push_back(std::move(indsOut));
     }
 
-    if (!WritePak(outputPath, mergedBounds, mergedMaterialIds, mergedVertices, mergedIndices, materialPaths)) return 1;
-    std::cout << "hlod_builder: wrote " << mergedBounds.size() << " merged meshes to " << outputPath << "\n";
+    /* M10.5: write chunk packages (chunk.meta + geo.pak, tex.pak, instances.bin, navmesh.bin, probes.bin). */
+    std::string base = outputDir;
+    if (!base.empty() && base.back() != '/' && base.back() != '\\') base += '/';
+
+    std::vector<char> hlodPayload;
+    AppendHlodPayload(hlodPayload, mergedBounds, mergedMaterialIds, mergedVertices, mergedIndices, materialPaths);
+    uint64_t geoSize = 12 + 80 + hlodPayload.size();
+    if (!WriteGenericPak(base + "geo.pak", "hlod", hlodPayload.data(), hlodPayload.size())) return 1;
+
+    uint64_t texSize = 12u;
+    if (!WriteGenericPak(base + "tex.pak", nullptr, nullptr, 0)) return 1;
+
+    if (!WriteInstancesBin(base + "instances.bin", instances)) return 1;
+    uint64_t instancesSize = 4u + static_cast<uint64_t>(instances.size()) * (4u + 4u + 16u * 4u + 6u * 4u);
+
+    std::ofstream(base + "navmesh.bin", std::ios::binary).close();
+    std::ofstream(base + "probes.bin", std::ios::binary).close();
+    uint64_t navSize = 0, probesSize = 0;
+
+    if (!WriteChunkMeta(base + "chunk.meta", geoSize, texSize, instancesSize, navSize, probesSize)) return 1;
+
+    std::cout << "hlod_builder: wrote chunk.meta, geo.pak (" << mergedBounds.size() << " meshes), tex.pak, instances.bin, navmesh.bin, probes.bin to " << outputDir << "\n";
     return 0;
 }

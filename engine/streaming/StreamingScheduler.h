@@ -10,6 +10,7 @@
 
 #include "engine/world/World.h"
 #include "engine/streaming/LruCache.h"
+#include "engine/streaming/ChunkMeta.h"
 
 #include <cstdint>
 #include <optional>
@@ -32,15 +33,17 @@ struct ChunkCoordHash {
 };
 
 /**
- * @brief A chunk load request: chunk identifier, target ring state, and stream version (M10.2).
+ * @brief A chunk load request: chunk identifier, target ring state, stream version, and asset type (M10.2, M10.5).
  *
  * streamVersion is set when the request is pushed; at each stage (IO/CPU/GPU)
  * the consumer must check IsVersionCurrent() and drop (RecordCancelled) if mismatch.
+ * assetType orders IO load priority: Geo first, then Tex, then Instances/Nav/Probes.
  */
 struct ChunkRequest {
     ::engine::world::ChunkCoord chunkId{};
     ::engine::world::RingType   targetState = ::engine::world::RingType::Active;
     uint32_t                    streamVersion = 0u;
+    ChunkAssetType              assetType = ChunkAssetType::Geo;
 };
 
 /**
@@ -96,7 +99,8 @@ public:
                      ::engine::world::RingType targetState,
                      float playerX, float playerZ,
                      float viewDirX, float viewDirZ,
-                     double currentTime);
+                     double currentTime,
+                     ChunkAssetType assetType = ChunkAssetType::Geo);
 
     /**
      * @brief Pops the highest-priority request from the request queue.

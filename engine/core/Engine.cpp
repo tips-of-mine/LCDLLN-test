@@ -853,8 +853,10 @@ void Engine::Update() {
         ::engine::world::EmitChunkRequestsForPosition(
             m_camera.position[0], m_camera.position[2],
             [this, viewDirX, viewDirZ, currentTime](::engine::world::RingType ring, const std::vector<::engine::world::ChunkCoord>& chunks) {
-                for (const auto& c : chunks)
-                    m_streamingScheduler.PushRequest(c, ring, m_camera.position[0], m_camera.position[2], viewDirX, viewDirZ, currentTime);
+                for (const auto& c : chunks) {
+                    for (unsigned at = 0; at < static_cast<unsigned>(::engine::streaming::kChunkMetaSlotCount); ++at)
+                        m_streamingScheduler.PushRequest(c, ring, m_camera.position[0], m_camera.position[2], viewDirX, viewDirZ, currentTime, static_cast<::engine::streaming::ChunkAssetType>(at));
+                }
             });
     }
 

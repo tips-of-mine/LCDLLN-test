@@ -429,6 +429,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                             m_lightingPipeline.SetGBufferViews(
                                                 m_vkGBuffer.GetViewA(), m_vkGBuffer.GetViewB(),
                                                 m_vkGBuffer.GetViewC(), m_vkGBuffer.GetViewDepth());
+                                            m_lightingPipeline.SetSsaoBlurView(m_vkSsaoBlur.IsValid()
+                                                ? m_vkSsaoBlur.GetImageViewOutput() : m_defaultMaterial.baseColorView);
                                             if (!m_tonemapPipeline.Init(m_vkDevice.Device(),
                                                                         m_vkSceneColor.GetRenderPass(), tvert, tfrag)) {
                                                 LOG_ERROR(Render, "Tonemap pipeline initialisation failed");
@@ -706,8 +708,10 @@ void Engine::Render() {
                         m_ssaoKernelNoise.GetKernelBuffer(), m_ssaoKernelNoise.GetKernelBufferSize(),
                         m_ssaoKernelNoise.GetNoiseImageView(), m_ssaoKernelNoise.GetNoiseSampler());
             }
-            if (m_vkSsaoBlur.IsValid())
+            if (m_vkSsaoBlur.IsValid()) {
                 m_vkSsaoBlur.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+                m_lightingPipeline.SetSsaoBlurView(m_vkSsaoBlur.GetImageViewOutput());
+            }
         }
     }
 
@@ -989,6 +993,8 @@ void Engine::Render() {
                 .Read(m_fgGBufferBId, ImageUsage::SampledRead)
                 .Read(m_fgGBufferCId, ImageUsage::SampledRead)
                 .Read(m_fgDepthId, ImageUsage::SampledRead);
+            if (m_vkSsaoBlur.IsValid())
+                lightingPass.Read(m_fgSsaoBlurId, ImageUsage::SampledRead);
             if (m_vkShadowMap.IsValid()) {
                 lightingPass.Read(m_fgShadowMap0Id, ImageUsage::SampledRead)
                     .Read(m_fgShadowMap1Id, ImageUsage::SampledRead)

@@ -34,6 +34,7 @@ layout(binding = 8) uniform sampler2DShadow uShadowMap3;
 layout(binding = 9) uniform sampler2D uBrdfLut;  // M05.1: split-sum GGX LUT (NdotV, roughness) -> (scale, bias)
 layout(binding = 10) uniform samplerCube uIrradianceMap;  // M05.2: diffuse irradiance cubemap (sample with N)
 layout(binding = 11) uniform samplerCube uPrefilteredEnv;  // M05.3: specular prefiltered (sample with R, lod = roughness*(mipCount-1))
+layout(binding = 12) uniform sampler2D uSsaoBlur;  // M06.4: SSAO_Blur (R), combine with AO ORM for ambient
 
 layout(location = 0) out vec4 outColor;
 
@@ -133,7 +134,12 @@ void main() {
         shadow = PCF3x3(cascade, shadowUV, depthCompare, texelSize);
     }
 
-    vec3 directLight = (diffuse + specular) * shadow * occlusion;
+    // M06.4: AO n'affecte pas la lumière directe
+    vec3 directLight = (diffuse + specular) * shadow;
+
+    // M06.4: AO_final = AO_ssao * AO_tex; ambient *= AO_final
+    float ao_ssao = texture(uSsaoBlur, vUV).r;
+    float AO_final = ao_ssao * occlusion;
 
     // M05.4 — IBL split-sum: kD = (1 - kS) * (1 - metallic), specIBL = prefiltered * (F*brdf.x + brdf.y)
     float F_ibl = Schlick_F(NdotV, F0);  // Fresnel at viewing angle for IBL
@@ -141,11 +147,11 @@ void main() {
     float kD = (1.0 - kS) * (1.0 - metallic);
     vec2 brdf = texture(uBrdfLut, vec2(NdotV, roughness)).rg;
     vec3 irradiance = texture(uIrradianceMap, N).rgb;
-    vec3 diffuseIBL = kD * irradiance * albedo * occlusion;
+    vec3 diffuseIBL = kD * irradiance * albedo * AO_final;
     vec3 R = reflect(-V, N);
     float lod = roughness * max(ubo.prefilteredMipCount - 1.0, 0.0);
     vec3 prefilteredColor = textureLod(uPrefilteredEnv, R, lod).rgb;
-    vec3 specIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y) * occlusion;
+    vec3 specIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y) * AO_final;
 
     vec3 Lo = directLight + diffuseIBL + specIBL;
     outColor = vec4(Lo, 1.0);

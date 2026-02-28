@@ -78,6 +78,11 @@ public:
     void SetPrefilteredEnvView(VkImageView view, VkSampler sampler);
 
     /**
+     * @brief Binds the SSAO_Blur view to the descriptor set (M06.4). Use fallback view (e.g. white) when SSAO not available.
+     */
+    void SetSsaoBlurView(VkImageView view);
+
+    /**
      * @brief Updates UBO with lighting params, inverse view-projection, camera position,
      * CSM matrices/splits and shadow bias (M04.3).
      * Call each frame before the lighting pass.

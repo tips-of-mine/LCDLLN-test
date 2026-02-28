@@ -80,6 +80,9 @@ add_library(engine_core STATIC
 
     # M05.1 — IBL: BRDF LUT (compute) generation
     engine/render/vk/VkBrdfLut.cpp
+
+    # M05.2 — IBL: irradiance cubemap convolution
+    engine/render/vk/VkIrradianceCubemap.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
     # M03.3 — Materials: BaseColor/Normal/ORM + loader

@@ -34,6 +34,7 @@
 #include "engine/render/vk/VkShadowMap.h"
 #include "engine/render/vk/VkShadowPipeline.h"
 #include "engine/render/vk/VkBrdfLut.h"
+#include "engine/render/vk/VkIrradianceCubemap.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -256,6 +257,10 @@ private:
 
     /// BRDF LUT 256x256 RG16F, compute-generated at boot (M05.1).
     ::engine::render::vk::VkBrdfLut m_vkBrdfLut;
+    /// Irradiance cubemap (64x64 RGBA16F) from env HDR; fallback 1x1 cube if env not loaded (M05.2).
+    ::engine::render::vk::VkIrradianceCubemap m_vkIrradianceCubemap;
+    /// Sampler for env/irradiance cubemap (convolution source and default cube fallback).
+    VkSampler m_envCubemapSampler = VK_NULL_HANDLE;
     uint32_t m_shadowMapSize = 1024u;
 
     /// Frame graph: Shadow0..3 → Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2, M04.2).

@@ -66,6 +66,12 @@ public:
     void SetBrdfLutView(VkImageView view, VkSampler sampler);
 
     /**
+     * @brief Binds the irradiance cubemap view and sampler to the descriptor set (M05.2).
+     * Call when irradiance has been convolved from env HDR cubemap.
+     */
+    void SetIrradianceView(VkImageView view, VkSampler sampler);
+
+    /**
      * @brief Updates UBO with lighting params, inverse view-projection, camera position,
      * CSM matrices/splits and shadow bias (M04.3).
      * Call each frame before the lighting pass.

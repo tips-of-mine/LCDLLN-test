@@ -442,6 +442,36 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                             } else {
                                                 LOG_WARN(Render, "BRDF LUT compute shader not found or failed to compile");
                                             }
+                                            if (m_envCubemapSampler == VK_NULL_HANDLE) {
+                                                VkSamplerCreateInfo sciEnv{};
+                                                sciEnv.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+                                                sciEnv.magFilter = sciEnv.minFilter = VK_FILTER_LINEAR;
+                                                sciEnv.addressModeU = sciEnv.addressModeV = sciEnv.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+                                                if (vkCreateSampler(m_vkDevice.Device(), &sciEnv, nullptr, &m_envCubemapSampler) != VK_SUCCESS) {
+                                                    LOG_ERROR(Render, "Env cubemap sampler failed");
+                                                }
+                                            }
+                                            if (m_envCubemapSampler != VK_NULL_HANDLE) {
+                                                std::string envBase = Config::GetString("env.base_path", "env");
+                                                VkImageView envView = m_textureLoader.LoadCubemapHDR(envBase);
+                                                if (envView != VK_NULL_HANDLE) {
+                                                    std::vector<uint8_t> irrComp = m_shaderCache.Get("shaders/irradiance_conv.comp");
+                                                    if (!irrComp.empty() && m_vkIrradianceCubemap.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), irrComp, 64)) {
+                                                        if (m_vkIrradianceCubemap.Convolve(m_vkDevice.Device(), m_vkDevice.GraphicsQueue(),
+                                                                m_vkDevice.Indices().graphicsFamily, envView, m_envCubemapSampler)) {
+                                                            m_lightingPipeline.SetIrradianceView(m_vkIrradianceCubemap.GetView(), m_vkIrradianceCubemap.GetSampler());
+                                                        } else {
+                                                            m_vkIrradianceCubemap.Shutdown();
+                                                            m_lightingPipeline.SetIrradianceView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
+                                                        }
+                                                    } else {
+                                                        if (m_vkIrradianceCubemap.IsValid()) m_vkIrradianceCubemap.Shutdown();
+                                                        m_lightingPipeline.SetIrradianceView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
+                                                    }
+                                                } else {
+                                                    m_lightingPipeline.SetIrradianceView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
+                                                }
+                                            }
                                         }
                                     } else {
                                         LOG_ERROR(Render, "Lighting/tonemap shaders not found or failed to compile");
@@ -492,6 +522,11 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_shadowPipeline.Shutdown();
         m_vkShadowMap.Shutdown();
         m_vkBrdfLut.Shutdown();
+        m_vkIrradianceCubemap.Shutdown();
+        if (m_envCubemapSampler != VK_NULL_HANDLE) {
+            vkDestroySampler(m_vkDevice.Device(), m_envCubemapSampler, nullptr);
+            m_envCubemapSampler = VK_NULL_HANDLE;
+        }
         m_geometryPipeline.Shutdown();
         if (m_materialSampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_vkDevice.Device(), m_materialSampler, nullptr);

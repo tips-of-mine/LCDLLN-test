@@ -42,6 +42,8 @@ add_library(engine_core STATIC
 
     # M09.1 — World model: Zone 4km, Chunk 256m, rings
     engine/world/World.cpp
+    # M11.2 — Zone builder format reader (chunk.meta + instances.bin)
+    engine/world/ZoneBuildFormat.cpp
     # M09.2 — Budgets par chunk (triangles/drawcalls) + instrumentation
     engine/world/ChunkStats.cpp
     engine/world/HlodRuntime.cpp

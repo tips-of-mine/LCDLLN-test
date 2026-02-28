@@ -1,9 +1,10 @@
 /**
  * @file zone_builder.cpp
- * @brief CLI tool: read glTF (assets) + layout.json (placements) to build a zone (M11.1).
+ * @brief CLI tool: read glTF + layout.json, chunk zone, write build/zone_x/chunks/chunk_i_j/* (M11.1, M11.2).
  *
  * - layout.json: versioned; positions in meters; GUID per instance.
- * - glTF: load via TinyGLTF; list meshes/materials; emit instances + assets.
+ * - glTF: load via TinyGLTF; list meshes/materials.
+ * - M11.2: chunk coord = floor(x/256), floor(z/256); write chunk.meta (bounds, flags), instances.bin, zone.meta.
  */
 
 #include <tiny_gltf.h>
@@ -11,6 +12,9 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cmath>
+#include <filesystem>
+#include <map>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -93,8 +97,84 @@ bool LoadGltfWithTinygltf(const std::string& path, std::vector<std::string>& mes
 
 /** @brief Prints usage to stderr. */
 void PrintUsage(const char* prog) {
-    std::cerr << "Usage: " << prog << " <layout.json> <scene.gltf|scene.glb>\n";
-    std::cerr << "  Loads layout (placements, GUID, positions in meters) and glTF (TinyGLTF); lists instances and assets.\n";
+    std::cerr << "Usage: " << prog << " <layout.json> <scene.gltf|scene.glb> [outputDir]\n";
+    std::cerr << "  If outputDir (e.g. build/zone_0) is given, writes chunked outputs: zone.meta, chunks/chunk_i_j/chunk.meta, instances.bin.\n";
+}
+
+/* M11.2: zone builder output format constants (must match engine reader). */
+constexpr uint32_t kZoneMetaMagic = 0x4D4E4F5Au; /* "ZONM" */
+constexpr uint32_t kZoneMetaVersion = 1u;
+constexpr uint32_t kChunkMetaMagic = 0x4D4E4843u; /* "CHNM" */
+constexpr uint32_t kChunkMetaVersion = 1u;
+constexpr int kChunkSize = 256;
+
+/** @brief Resolves mesh ref (name or index) to asset id (0-based). */
+uint32_t ResolveMeshToAssetId(const std::string& meshRef, const std::vector<std::string>& meshNames) {
+    if (meshRef.empty()) return 0u;
+    for (size_t i = 0; i < meshNames.size(); ++i)
+        if (meshNames[i] == meshRef) return static_cast<uint32_t>(i);
+    return 0u;
+}
+
+/** @brief Builds column-major 4x4 transform from position (translation only). */
+void MakeTransformFromPosition(const float pos[3], float transform[16]) {
+    for (int i = 0; i < 16; ++i) transform[i] = (i % 5 == 0) ? 1.f : 0.f;
+    transform[12] = pos[0]; transform[13] = pos[1]; transform[14] = pos[2];
+}
+
+/** @brief Writes zone.meta (list of chunk coords). */
+bool WriteZoneMeta(const std::string& path, int32_t zoneId, const std::vector<std::pair<int32_t, int32_t>>& chunkCoords) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
+    uint32_t magic = kZoneMetaMagic, version = kZoneMetaVersion;
+    out.write(reinterpret_cast<const char*>(&magic), 4);
+    out.write(reinterpret_cast<const char*>(&version), 4);
+    out.write(reinterpret_cast<const char*>(&zoneId), 4);
+    uint32_t n = static_cast<uint32_t>(chunkCoords.size());
+    out.write(reinterpret_cast<const char*>(&n), 4);
+    for (const auto& p : chunkCoords) {
+        out.write(reinterpret_cast<const char*>(&p.first), 4);
+        out.write(reinterpret_cast<const char*>(&p.second), 4);
+    }
+    return true;
+}
+
+/** @brief Writes chunk.meta (bounds + flags) for zone builder output. */
+bool WriteChunkMeta(const std::string& path, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, uint32_t flags) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
+    uint32_t magic = kChunkMetaMagic, version = kChunkMetaVersion;
+    out.write(reinterpret_cast<const char*>(&magic), 4);
+    out.write(reinterpret_cast<const char*>(&version), 4);
+    out.write(reinterpret_cast<const char*>(&minX), 4);
+    out.write(reinterpret_cast<const char*>(&minY), 4);
+    out.write(reinterpret_cast<const char*>(&minZ), 4);
+    out.write(reinterpret_cast<const char*>(&maxX), 4);
+    out.write(reinterpret_cast<const char*>(&maxY), 4);
+    out.write(reinterpret_cast<const char*>(&maxZ), 4);
+    out.write(reinterpret_cast<const char*>(&flags), 4);
+    return true;
+}
+
+/** @brief Per-instance data for instances.bin (transform + assetId + flags). */
+struct ChunkInstanceRecord {
+    float transform[16] = {};
+    uint32_t assetId = 0;
+    uint32_t flags = 0;
+};
+
+/** @brief Writes instances.bin (transform[16] + assetId + flags per instance). */
+bool WriteInstancesBin(const std::string& path, const std::vector<ChunkInstanceRecord>& instances) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) { std::cerr << "zone_builder: cannot write " << path << "\n"; return false; }
+    uint32_t n = static_cast<uint32_t>(instances.size());
+    out.write(reinterpret_cast<const char*>(&n), 4);
+    for (const auto& inst : instances) {
+        out.write(reinterpret_cast<const char*>(inst.transform), 16 * 4);
+        out.write(reinterpret_cast<const char*>(&inst.assetId), 4);
+        out.write(reinterpret_cast<const char*>(&inst.flags), 4);
+    }
+    return true;
 }
 
 } // namespace
@@ -106,6 +186,7 @@ int main(int argc, char** argv) {
     }
     const std::string layoutPath = argv[1];
     const std::string gltfPath   = argv[2];
+    const std::string outputDir  = (argc >= 4) ? argv[3] : "";
 
     uint32_t layoutVersion = 0;
     std::vector<LayoutInstance> instances;
@@ -117,16 +198,48 @@ int main(int argc, char** argv) {
     std::cout << "zone_builder: layout version " << layoutVersion << ", instances " << instances.size()
               << ", meshes " << meshNames.size() << ", materials " << materialNames.size() << "\n";
 
-    for (size_t i = 0; i < instances.size(); ++i) {
-        const LayoutInstance& inst = instances[i];
-        std::cout << "  instance[" << i << "] guid=" << inst.guid
-                  << " pos=(" << inst.position[0] << "," << inst.position[1] << "," << inst.position[2] << ")m"
-                  << " mesh=" << inst.meshRef << " material=" << inst.materialRef << "\n";
+    if (!outputDir.empty()) {
+        /* M11.2: chunk assignation floor(x/256), floor(z/256); write build/zone_x/chunks/chunk_i_j/chunk.meta + instances.bin, zone.meta. */
+        std::map<std::pair<int32_t, int32_t>, std::vector<ChunkInstanceRecord>> chunks;
+        for (const LayoutInstance& inst : instances) {
+            int32_t ci = static_cast<int32_t>(std::floor(inst.position[0] / static_cast<float>(kChunkSize)));
+            int32_t cj = static_cast<int32_t>(std::floor(inst.position[2] / static_cast<float>(kChunkSize)));
+            ChunkInstanceRecord rec;
+            MakeTransformFromPosition(inst.position, rec.transform);
+            rec.assetId = ResolveMeshToAssetId(inst.meshRef, meshNames);
+            rec.flags = 0;
+            chunks[{ci, cj}].push_back(rec);
+        }
+        std::vector<std::pair<int32_t, int32_t>> chunkCoords;
+        for (const auto& kv : chunks) chunkCoords.push_back(kv.first);
+        std::string base = outputDir;
+        if (!base.empty() && base.back() != '/' && base.back() != '\\') base += '/';
+        const int32_t zoneId = 0;
+        for (const auto& kv : chunks) {
+            int32_t ci = kv.first.first, cj = kv.first.second;
+            float minX = static_cast<float>(ci * kChunkSize);
+            float minZ = static_cast<float>(cj * kChunkSize);
+            float maxX = static_cast<float>((ci + 1) * kChunkSize);
+            float maxZ = static_cast<float>((cj + 1) * kChunkSize);
+            std::string chunkDir = base + "chunks/chunk_" + std::to_string(ci) + "_" + std::to_string(cj);
+            std::filesystem::create_directories(chunkDir);
+            if (!WriteChunkMeta(chunkDir + "/chunk.meta", minX, 0.f, minZ, maxX, 256.f, maxZ, 0u)) return 1;
+            if (!WriteInstancesBin(chunkDir + "/instances.bin", kv.second)) return 1;
+        }
+        if (!WriteZoneMeta(base + "zone.meta", zoneId, chunkCoords)) return 1;
+        std::cout << "zone_builder: wrote zone.meta + " << chunkCoords.size() << " chunks to " << outputDir << "\n";
+    } else {
+        for (size_t i = 0; i < instances.size(); ++i) {
+            const LayoutInstance& inst = instances[i];
+            std::cout << "  instance[" << i << "] guid=" << inst.guid
+                      << " pos=(" << inst.position[0] << "," << inst.position[1] << "," << inst.position[2] << ")m"
+                      << " mesh=" << inst.meshRef << " material=" << inst.materialRef << "\n";
+        }
+        for (size_t i = 0; i < meshNames.size(); ++i)
+            std::cout << "  mesh[" << i << "] " << meshNames[i] << "\n";
+        for (size_t i = 0; i < materialNames.size(); ++i)
+            std::cout << "  material[" << i << "] " << materialNames[i] << "\n";
     }
-    for (size_t i = 0; i < meshNames.size(); ++i)
-        std::cout << "  mesh[" << i << "] " << meshNames[i] << "\n";
-    for (size_t i = 0; i < materialNames.size(); ++i)
-        std::cout << "  material[" << i << "] " << materialNames[i] << "\n";
 
     return 0;
 }

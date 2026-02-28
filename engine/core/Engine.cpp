@@ -802,6 +802,24 @@ void Engine::BeginFrame() {
     if (m_uploadBudget.IsValid())
         m_uploadBudget.BeginFrame(m_vkFrameResources.CurrentFrameIndex());
 
+    // M11.2: load zone chunk instances once from zone.build_path (content-relative) for placeholder display.
+    if (!m_zoneBuildLoaded) {
+        m_zoneBuildLoaded = true;
+        const std::string zonePath = Config::GetString("zone.build_path", "");
+        if (!zonePath.empty()) {
+            const std::string content = Config::GetString("paths.content", "game/data");
+            const std::string base = content + "/" + zonePath;
+            int32_t zoneId = 0;
+            std::vector<std::pair<int32_t, int32_t>> chunkCoords;
+            if (::engine::world::ReadZoneMeta(base + "/zone.meta", zoneId, chunkCoords) && !chunkCoords.empty()) {
+                const int32_t ci = chunkCoords[0].first, cj = chunkCoords[0].second;
+                const std::string chunkDir = base + "/chunks/chunk_" + std::to_string(ci) + "_" + std::to_string(cj);
+                if (!::engine::world::ReadZoneChunkInstances(chunkDir + "/instances.bin", m_zoneChunkInstances))
+                    m_zoneChunkInstances.clear();
+            }
+        }
+    }
+
     // Pump OS/window events and snapshot input state.
     if (!m_headless && m_windowOk) {
         m_window.PollEvents();
@@ -1190,6 +1208,13 @@ void Engine::Render() {
                         ::engine::world::RingType::Active,
                         1u,
                         m_cubeVertexCount / 3u);
+                }
+                /* M11.2: placeholders for loaded zone chunk instances. */
+                for (const auto& inst : m_zoneChunkInstances) {
+                    std::memcpy(pushData + 32, inst.transform, sizeof(inst.transform));
+                    std::memcpy(pushData + 48, inst.transform, sizeof(inst.transform));
+                    vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
+                    vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
                 }
                 vkCmdEndRenderPass(cmd);
             });

@@ -2,9 +2,9 @@
 
 /**
  * @file VkTonemapPipeline.h
- * @brief Fullscreen tonemap pass: samples SceneColor_HDR, writes LDR SceneColor.
+ * @brief Fullscreen tonemap pass: HDR->LDR filmic (ACES-ish) + gamma, writes SceneColor_LDR.
  *
- * Ticket: M03.2 — Deferred: lighting pass fullscreen (PBR GGX).
+ * Ticket: M03.2 — Deferred lighting. M03.4 — Tonemap filmic + exposure.
  */
 
 #include <vulkan/vulkan.h>
@@ -14,7 +14,7 @@
 namespace engine::render::vk {
 
 /**
- * @brief Tonemap pass: one combined image sampler (SceneColor_HDR), fullscreen quad.
+ * @brief Tonemap pass: samples SceneColor_HDR, push constant exposure, writes LDR.
  */
 class VkTonemapPipeline {
 public:

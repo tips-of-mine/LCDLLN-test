@@ -64,10 +64,17 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
         return false;
     }
 
+    VkPushConstantRange pushConstant{};
+    pushConstant.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstant.offset     = 0;
+    pushConstant.size       = 4; // float exposure
+
     VkPipelineLayoutCreateInfo plci{};
-    plci.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    plci.setLayoutCount = 1;
-    plci.pSetLayouts     = &m_setLayout;
+    plci.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    plci.setLayoutCount         = 1;
+    plci.pSetLayouts            = &m_setLayout;
+    plci.pushConstantRangeCount = 1;
+    plci.pPushConstantRanges    = &pushConstant;
     if (vkCreatePipelineLayout(device, &plci, nullptr, &m_layout) != VK_SUCCESS) {
         vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr);
         vkDestroyShaderModule(device, vertModule, nullptr);

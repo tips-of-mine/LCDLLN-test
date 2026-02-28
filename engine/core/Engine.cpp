@@ -612,12 +612,12 @@ void Engine::Render() {
         sceneHDRDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
         m_fgSceneColorHDRId = m_frameGraph.CreateImage(sceneHDRDesc, "SceneColor_HDR");
 
-        ImageDesc sceneDesc{};
-        sceneDesc.width  = ext.width;
-        sceneDesc.height = ext.height;
-        sceneDesc.layers = 1;
-        sceneDesc.format = m_vkSwapchain.Format();
-        m_fgSceneColorId = m_frameGraph.CreateImage(sceneDesc, "SceneColor");
+        ImageDesc sceneLDRDesc{};
+        sceneLDRDesc.width  = ext.width;
+        sceneLDRDesc.height = ext.height;
+        sceneLDRDesc.layers = 1;
+        sceneLDRDesc.format = m_vkSwapchain.Format();
+        m_fgSceneColorId = m_frameGraph.CreateImage(sceneLDRDesc, "SceneColor_LDR");
 
         ImageDesc swapDesc{};
         swapDesc.width  = ext.width;
@@ -734,6 +734,8 @@ void Engine::Render() {
                 vkCmdSetScissor(cmd, 0, 1, &scissor);
                 vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
                 vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
+                float exposure = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
+                vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &exposure);
                 vkCmdDraw(cmd, 3, 1, 0, 0);
                 vkCmdEndRenderPass(cmd);
             });

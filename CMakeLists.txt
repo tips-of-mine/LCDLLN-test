@@ -81,6 +81,11 @@ add_library(engine_core STATIC
     engine/render/vk/VkSceneColorHDR.cpp
     engine/render/vk/VkLightingPipeline.cpp
 
+    # M08.1 — Bloom: prefilter + downsample pyramid
+    engine/render/vk/VkBloomPyramid.cpp
+    engine/render/vk/VkBloomPrefilterPipeline.cpp
+    engine/render/vk/VkBloomDownsamplePipeline.cpp
+
     # M05.1 — IBL: BRDF LUT (compute) generation
     engine/render/vk/VkBrdfLut.cpp
 

@@ -44,6 +44,9 @@
 #include "engine/render/vk/VkTaaHistory.h"
 #include "engine/render/vk/VkTaaOutput.h"
 #include "engine/render/vk/VkTaaPipeline.h"
+#include "engine/render/vk/VkBloomPyramid.h"
+#include "engine/render/vk/VkBloomPrefilterPipeline.h"
+#include "engine/render/vk/VkBloomDownsamplePipeline.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -314,6 +317,11 @@ private:
     ::engine::render::vk::VkTaaOutput m_vkTaaOutput;
     ::engine::render::vk::VkTaaPipeline m_taaPipeline;
     ::engine::render::ResourceId m_fgTaaOutputId = ::engine::render::kInvalidResourceId;
+    /// Bloom pyramid 1/2..1/32 (M08.1).
+    ::engine::render::vk::VkBloomPyramid m_vkBloomPyramid;
+    ::engine::render::vk::VkBloomPrefilterPipeline m_bloomPrefilterPipeline;
+    ::engine::render::vk::VkBloomDownsamplePipeline m_bloomDownsamplePipeline;
+    ::engine::render::ResourceId m_fgBloomMipId[::engine::render::vk::kBloomMipCount]{};
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

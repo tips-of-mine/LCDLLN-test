@@ -47,6 +47,9 @@
 #include "engine/render/vk/VkBloomPyramid.h"
 #include "engine/render/vk/VkBloomPrefilterPipeline.h"
 #include "engine/render/vk/VkBloomDownsamplePipeline.h"
+#include "engine/render/vk/VkBloomUpsamplePipeline.h"
+#include "engine/render/vk/VkBloomCombineTarget.h"
+#include "engine/render/vk/VkBloomCombinePipeline.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -321,7 +324,11 @@ private:
     ::engine::render::vk::VkBloomPyramid m_vkBloomPyramid;
     ::engine::render::vk::VkBloomPrefilterPipeline m_bloomPrefilterPipeline;
     ::engine::render::vk::VkBloomDownsamplePipeline m_bloomDownsamplePipeline;
+    ::engine::render::vk::VkBloomUpsamplePipeline m_bloomUpsamplePipeline;
+    ::engine::render::vk::VkBloomCombineTarget m_vkBloomCombineTarget;
+    ::engine::render::vk::VkBloomCombinePipeline m_bloomCombinePipeline;
     ::engine::render::ResourceId m_fgBloomMipId[::engine::render::vk::kBloomMipCount]{};
+    ::engine::render::ResourceId m_fgBloomCombineId = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

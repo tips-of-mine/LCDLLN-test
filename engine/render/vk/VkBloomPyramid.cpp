@@ -150,6 +150,56 @@ bool CreateMipLevel(VkPhysicalDevice physicalDevice, VkDevice device,
     return true;
 }
 
+/** Creates render pass (LOAD) and framebuffer for additive upsample (M08.2). */
+bool CreateUpsamplePassAndFramebuffer(VkDevice device, VkImageView imageView,
+                                     uint32_t width, uint32_t height,
+                                     VkRenderPass& outRenderPass, VkFramebuffer& outFramebuffer) {
+    if (imageView == VK_NULL_HANDLE || width == 0 || height == 0) return true;
+
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format         = kBloomFormat;
+    colorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+    colorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachment.finalLayout   = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference colorRef{};
+    colorRef.attachment = 0;
+    colorRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments    = &colorRef;
+
+    VkRenderPassCreateInfo rpci{};
+    rpci.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    rpci.attachmentCount = 1;
+    rpci.pAttachments    = &colorAttachment;
+    rpci.subpassCount    = 1;
+    rpci.pSubpasses      = &subpass;
+    if (vkCreateRenderPass(device, &rpci, nullptr, &outRenderPass) != VK_SUCCESS)
+        return false;
+
+    VkFramebufferCreateInfo fbci{};
+    fbci.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    fbci.renderPass      = outRenderPass;
+    fbci.attachmentCount = 1;
+    fbci.pAttachments    = &imageView;
+    fbci.width           = width;
+    fbci.height          = height;
+    fbci.layers          = 1;
+    if (vkCreateFramebuffer(device, &fbci, nullptr, &outFramebuffer) != VK_SUCCESS) {
+        vkDestroyRenderPass(device, outRenderPass, nullptr);
+        outRenderPass = VK_NULL_HANDLE;
+        return false;
+    }
+    return true;
+}
+
 void DestroyMipLevel(VkDevice device,
                      VkImage& img, VkDeviceMemory& mem, VkImageView& view,
                      VkRenderPass& rp, VkFramebuffer& fb) {
@@ -158,6 +208,11 @@ void DestroyMipLevel(VkDevice device,
     if (view != VK_NULL_HANDLE) { vkDestroyImageView(device, view, nullptr); view = VK_NULL_HANDLE; }
     if (img != VK_NULL_HANDLE) { vkDestroyImage(device, img, nullptr); img = VK_NULL_HANDLE; }
     if (mem != VK_NULL_HANDLE) { vkFreeMemory(device, mem, nullptr); mem = VK_NULL_HANDLE; }
+}
+
+void DestroyUpsamplePassAndFramebuffer(VkDevice device, VkRenderPass& rp, VkFramebuffer& fb) {
+    if (fb != VK_NULL_HANDLE) { vkDestroyFramebuffer(device, fb, nullptr); fb = VK_NULL_HANDLE; }
+    if (rp != VK_NULL_HANDLE) { vkDestroyRenderPass(device, rp, nullptr); rp = VK_NULL_HANDLE; }
 }
 
 } // namespace
@@ -169,6 +224,7 @@ VkBloomPyramid::~VkBloomPyramid() {
 void VkBloomPyramid::DestroyResources() {
     if (m_device == VK_NULL_HANDLE) return;
     for (uint32_t i = 0; i < kBloomMipCount; ++i) {
+        DestroyUpsamplePassAndFramebuffer(m_device, m_upsampleRenderPasses[i], m_upsampleFramebuffers[i]);
         DestroyMipLevel(m_device, m_images[i], m_memory[i], m_views[i],
                        m_renderPasses[i], m_framebuffers[i]);
         m_extents[i] = {0, 0};
@@ -195,6 +251,12 @@ bool VkBloomPyramid::Init(VkPhysicalDevice physicalDevice,
                            m_images[i], m_memory[i], m_views[i],
                            m_renderPasses[i], m_framebuffers[i])) {
             LOG_ERROR(Render, "VkBloomPyramid: failed to create mip level {}", i);
+            DestroyResources();
+            return false;
+        }
+        if (!CreateUpsamplePassAndFramebuffer(device, m_views[i], w, h,
+                                              m_upsampleRenderPasses[i], m_upsampleFramebuffers[i])) {
+            LOG_ERROR(Render, "VkBloomPyramid: failed to create upsample pass for mip {}", i);
             DestroyResources();
             return false;
         }
@@ -236,6 +298,14 @@ VkRenderPass VkBloomPyramid::GetRenderPass(uint32_t level) const noexcept {
 
 VkFramebuffer VkBloomPyramid::GetFramebuffer(uint32_t level) const noexcept {
     return (level < kBloomMipCount) ? m_framebuffers[level] : VK_NULL_HANDLE;
+}
+
+VkRenderPass VkBloomPyramid::GetUpsampleRenderPass(uint32_t level) const noexcept {
+    return (level < kBloomMipCount) ? m_upsampleRenderPasses[level] : VK_NULL_HANDLE;
+}
+
+VkFramebuffer VkBloomPyramid::GetUpsampleFramebuffer(uint32_t level) const noexcept {
+    return (level < kBloomMipCount) ? m_upsampleFramebuffers[level] : VK_NULL_HANDLE;
 }
 
 } // namespace engine::render::vk

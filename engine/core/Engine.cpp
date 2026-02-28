@@ -469,6 +469,27 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                         m_bloomPrefilterPipeline.Shutdown();
                                                     }
                                                 }
+                                                if (m_bloomPrefilterPipeline.IsValid()) {
+                                                    std::vector<uint8_t> upVert = m_shaderCache.Get("shaders/bloom_upsample.vert");
+                                                    std::vector<uint8_t> upFrag = m_shaderCache.Get("shaders/bloom_upsample.frag");
+                                                    std::vector<uint8_t> combVert = m_shaderCache.Get("shaders/bloom_combine.vert");
+                                                    std::vector<uint8_t> combFrag = m_shaderCache.Get("shaders/bloom_combine.frag");
+                                                    if (!upVert.empty() && !upFrag.empty() && !combVert.empty() && !combFrag.empty() &&
+                                                        m_vkBloomCombineTarget.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), w, h)) {
+                                                        if (!m_bloomUpsamplePipeline.Init(m_vkDevice.Device(), m_vkBloomPyramid.GetUpsampleRenderPass(0), upVert, upFrag)) {
+                                                            LOG_ERROR(Render, "Bloom upsample pipeline init failed");
+                                                            m_vkBloomCombineTarget.Shutdown();
+                                                        } else if (!m_bloomCombinePipeline.Init(m_vkDevice.Device(), m_vkBloomCombineTarget.GetRenderPass(), combVert, combFrag)) {
+                                                            LOG_ERROR(Render, "Bloom combine pipeline init failed");
+                                                            m_bloomUpsamplePipeline.Shutdown();
+                                                            m_vkBloomCombineTarget.Shutdown();
+                                                        }
+                                                    }
+                                                    if (!m_bloomCombinePipeline.IsValid())
+                                                        m_vkBloomCombineTarget.Shutdown();
+                                                    if (!m_vkBloomCombineTarget.IsValid())
+                                                        m_bloomUpsamplePipeline.Shutdown();
+                                                }
                                                 if (!m_bloomPrefilterPipeline.IsValid())
                                                     m_vkBloomPyramid.Shutdown();
                                             }
@@ -655,6 +676,9 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_vkTaaHistory.Shutdown();
         m_bloomDownsamplePipeline.Shutdown();
         m_bloomPrefilterPipeline.Shutdown();
+        m_bloomCombinePipeline.Shutdown();
+        m_vkBloomCombineTarget.Shutdown();
+        m_bloomUpsamplePipeline.Shutdown();
         m_vkBloomPyramid.Shutdown();
         m_vkSwapchain.Shutdown();
         m_vkDevice.Shutdown();
@@ -804,6 +828,8 @@ void Engine::Render() {
                 m_vkTaaOutput.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             if (m_vkBloomPyramid.IsValid())
                 m_vkBloomPyramid.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+            if (m_vkBloomCombineTarget.IsValid())
+                m_vkBloomCombineTarget.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
         }
     }
 
@@ -882,6 +908,14 @@ void Engine::Render() {
                 bloomDesc.layers = 1;
                 bloomDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
                 m_fgBloomMipId[i] = m_frameGraph.CreateImage(bloomDesc, "BloomMip" + std::to_string(i));
+            }
+            if (m_vkBloomCombineTarget.IsValid() && m_bloomUpsamplePipeline.IsValid() && m_bloomCombinePipeline.IsValid()) {
+                ImageDesc combineDesc{};
+                combineDesc.width  = ext.width;
+                combineDesc.height = ext.height;
+                combineDesc.layers = 1;
+                combineDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+                m_fgBloomCombineId = m_frameGraph.CreateImage(combineDesc, "Bloom_Combine");
             }
         }
 
@@ -1228,32 +1262,118 @@ void Engine::Render() {
                         vkCmdEndRenderPass(cmd);
                     });
             }
+            if (m_vkBloomCombineTarget.IsValid() && m_bloomUpsamplePipeline.IsValid() && m_bloomCombinePipeline.IsValid()) {
+                for (uint32_t u = 0; u < kBloomMipCount - 1u; ++u) {
+                    const uint32_t srcLev = kBloomMipCount - 1u - u;
+                    const uint32_t dstLev = srcLev - 1u;
+                    const ResourceId srcId = m_fgBloomMipId[srcLev];
+                    const ResourceId dstId = m_fgBloomMipId[dstLev];
+                    m_frameGraph.AddPass("Bloom_Upsample_" + std::to_string(dstLev))
+                        .Read(srcId, ImageUsage::SampledRead)
+                        .Write(dstId, ImageUsage::ColorWrite)
+                        .Execute([this, srcLev, dstLev](VkCommandBuffer cmd, Registry&) {
+                            m_bloomUpsamplePipeline.SetSourceView(m_vkBloomPyramid.GetView(srcLev));
+                            VkRenderPassBeginInfo rpbi{};
+                            rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                            rpbi.renderPass = m_vkBloomPyramid.GetUpsampleRenderPass(dstLev);
+                            rpbi.framebuffer = m_vkBloomPyramid.GetUpsampleFramebuffer(dstLev);
+                            rpbi.renderArea = {{0, 0}, m_vkBloomPyramid.GetExtent(dstLev)};
+                            rpbi.clearValueCount = 0;
+                            rpbi.pClearValues = nullptr;
+                            vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                            VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkBloomPyramid.GetExtent(dstLev).width); vp.height = static_cast<float>(m_vkBloomPyramid.GetExtent(dstLev).height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                            vkCmdSetViewport(cmd, 0, 1, &vp);
+                            VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkBloomPyramid.GetExtent(dstLev);
+                            vkCmdSetScissor(cmd, 0, 1, &scissor);
+                            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_bloomUpsamplePipeline.GetPipeline());
+                            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_bloomUpsamplePipeline.GetPipelineLayout(), 0, 1, &m_bloomUpsamplePipeline.GetDescriptorSet(), 0, nullptr);
+                            vkCmdDraw(cmd, 3, 1, 0, 0);
+                            vkCmdEndRenderPass(cmd);
+                        });
+                }
+                m_frameGraph.AddPass("Bloom_Combine")
+                    .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)
+                    .Read(m_fgBloomMipId[0], ImageUsage::SampledRead)
+                    .Write(m_fgBloomCombineId, ImageUsage::ColorWrite)
+                    .Execute([this](VkCommandBuffer cmd, Registry&) {
+                        m_bloomCombinePipeline.SetInputs(m_vkSceneColorHDR.GetImageView(), m_vkBloomPyramid.GetView(0));
+                        const float intensity = static_cast<float>(Config::GetFloat("bloom.intensity", 0.3));
+                        vkCmdPushConstants(cmd, m_bloomCombinePipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &intensity);
+                        VkClearValue clearVal{}; clearVal.color.float32[0] = 0.0f; clearVal.color.float32[1] = 0.0f; clearVal.color.float32[2] = 0.0f; clearVal.color.float32[3] = 1.0f;
+                        VkRenderPassBeginInfo rpbi{};
+                        rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                        rpbi.renderPass = m_vkBloomCombineTarget.GetRenderPass();
+                        rpbi.framebuffer = m_vkBloomCombineTarget.GetFramebuffer();
+                        rpbi.renderArea = {{0, 0}, m_vkBloomCombineTarget.Extent()};
+                        rpbi.clearValueCount = 1;
+                        rpbi.pClearValues = &clearVal;
+                        vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                        VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkBloomCombineTarget.Extent().width); vp.height = static_cast<float>(m_vkBloomCombineTarget.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                        vkCmdSetViewport(cmd, 0, 1, &vp);
+                        VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkBloomCombineTarget.Extent();
+                        vkCmdSetScissor(cmd, 0, 1, &scissor);
+                        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_bloomCombinePipeline.GetPipeline());
+                        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_bloomCombinePipeline.GetPipelineLayout(), 0, 1, &m_bloomCombinePipeline.GetDescriptorSet(), 0, nullptr);
+                        vkCmdDraw(cmd, 3, 1, 0, 0);
+                        vkCmdEndRenderPass(cmd);
+                    });
+            }
         }
 
-        m_frameGraph.AddPass("Tonemap")
-            .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)
-            .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
-            .Execute([this](VkCommandBuffer cmd, Registry&) {
-                VkClearValue clearColor{}; clearColor.color.float32[0] = 0.1f; clearColor.color.float32[1] = 0.1f; clearColor.color.float32[2] = 0.15f; clearColor.color.float32[3] = 1.0f;
-                VkRenderPassBeginInfo rpbi{};
-                rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                rpbi.renderPass      = m_vkSceneColor.GetRenderPass();
-                rpbi.framebuffer     = m_vkSceneColor.GetFramebuffer();
-                rpbi.renderArea      = {{0, 0}, m_vkSceneColor.Extent()};
-                rpbi.clearValueCount = 1;
-                rpbi.pClearValues    = &clearColor;
-                vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-                VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSceneColor.Extent().width); vp.height = static_cast<float>(m_vkSceneColor.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
-                vkCmdSetViewport(cmd, 0, 1, &vp);
-                VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSceneColor.Extent();
-                vkCmdSetScissor(cmd, 0, 1, &scissor);
-                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
-                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
-                float exposure = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
-                vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &exposure);
-                vkCmdDraw(cmd, 3, 1, 0, 0);
-                vkCmdEndRenderPass(cmd);
-            });
+        const bool bloomCombineActive = m_fgBloomCombineId != ::engine::render::kInvalidResourceId;
+        if (bloomCombineActive) {
+            m_frameGraph.AddPass("Tonemap")
+                .Read(m_fgBloomCombineId, ImageUsage::SampledRead)
+                .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    m_tonemapPipeline.SetHDRView(m_vkBloomCombineTarget.GetImageView());
+                    VkClearValue clearColor{}; clearColor.color.float32[0] = 0.1f; clearColor.color.float32[1] = 0.1f; clearColor.color.float32[2] = 0.15f; clearColor.color.float32[3] = 1.0f;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass      = m_vkSceneColor.GetRenderPass();
+                    rpbi.framebuffer     = m_vkSceneColor.GetFramebuffer();
+                    rpbi.renderArea      = {{0, 0}, m_vkSceneColor.Extent()};
+                    rpbi.clearValueCount = 1;
+                    rpbi.pClearValues    = &clearColor;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSceneColor.Extent().width); vp.height = static_cast<float>(m_vkSceneColor.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSceneColor.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
+                    float exposure = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
+                    vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &exposure);
+                    vkCmdDraw(cmd, 3, 1, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
+        } else {
+            m_frameGraph.AddPass("Tonemap")
+                .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)
+                .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    m_tonemapPipeline.SetHDRView(m_vkSceneColorHDR.GetImageView());
+                    VkClearValue clearColor{}; clearColor.color.float32[0] = 0.1f; clearColor.color.float32[1] = 0.1f; clearColor.color.float32[2] = 0.15f; clearColor.color.float32[3] = 1.0f;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass      = m_vkSceneColor.GetRenderPass();
+                    rpbi.framebuffer     = m_vkSceneColor.GetFramebuffer();
+                    rpbi.renderArea      = {{0, 0}, m_vkSceneColor.Extent()};
+                    rpbi.clearValueCount = 1;
+                    rpbi.pClearValues    = &clearColor;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSceneColor.Extent().width); vp.height = static_cast<float>(m_vkSceneColor.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSceneColor.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
+                    float exposure = static_cast<float>(Config::GetFloat("tonemap.exposure", 1.0));
+                    vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4, &exposure);
+                    vkCmdDraw(cmd, 3, 1, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
+        }
 
         if (m_vkTaaHistory.IsValid()) {
             m_frameGraph.AddPass("TAA_CopyToHistoryA")
@@ -1475,6 +1595,8 @@ void Engine::Render() {
         for (uint32_t i = 0; i < kBloomMipCount; ++i)
             m_fgRegistry.SetImage(m_fgBloomMipId[i], m_vkBloomPyramid.GetImage(i));
     }
+    if (m_fgBloomCombineId != ::engine::render::kInvalidResourceId)
+        m_fgRegistry.SetImage(m_fgBloomCombineId, m_vkBloomCombineTarget.GetImage());
     m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());
     if (m_vkTaaHistory.IsValid()) {
         m_fgRegistry.SetImage(m_fgTaaHistoryAId, m_vkTaaHistory.GetImage(0));

@@ -85,6 +85,10 @@ add_library(engine_core STATIC
     engine/render/vk/VkBloomPyramid.cpp
     engine/render/vk/VkBloomPrefilterPipeline.cpp
     engine/render/vk/VkBloomDownsamplePipeline.cpp
+    # M08.2 — Bloom: upsample + combine HDR
+    engine/render/vk/VkBloomUpsamplePipeline.cpp
+    engine/render/vk/VkBloomCombineTarget.cpp
+    engine/render/vk/VkBloomCombinePipeline.cpp
 
     # M05.1 — IBL: BRDF LUT (compute) generation
     engine/render/vk/VkBrdfLut.cpp

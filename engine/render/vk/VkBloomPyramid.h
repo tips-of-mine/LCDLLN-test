@@ -63,6 +63,10 @@ public:
     [[nodiscard]] VkRenderPass GetRenderPass(uint32_t level) const noexcept;
     [[nodiscard]] VkFramebuffer GetFramebuffer(uint32_t level) const noexcept;
 
+    /** @brief Render pass with LOAD for additive upsample (M08.2). */
+    [[nodiscard]] VkRenderPass GetUpsampleRenderPass(uint32_t level) const noexcept;
+    [[nodiscard]] VkFramebuffer GetUpsampleFramebuffer(uint32_t level) const noexcept;
+
 private:
     void DestroyResources();
 
@@ -76,6 +80,8 @@ private:
     VkImageView      m_views[kBloomMipCount]{};
     VkRenderPass     m_renderPasses[kBloomMipCount]{};
     VkFramebuffer    m_framebuffers[kBloomMipCount]{};
+    VkRenderPass     m_upsampleRenderPasses[kBloomMipCount]{};
+    VkFramebuffer    m_upsampleFramebuffers[kBloomMipCount]{};
     VkExtent2D       m_extents[kBloomMipCount]{};
 };
 

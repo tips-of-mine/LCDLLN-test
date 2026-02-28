@@ -24,6 +24,9 @@
 #include "engine/render/vk/VkSwapchain.h"
 #include "engine/render/vk/VkFrameResources.h"
 #include "engine/render/vk/VkSceneColor.h"
+#include "engine/render/vk/VkGBuffer.h"
+#include "engine/render/vk/VkGeometryPipeline.h"
+#include "engine/render/ShaderCache.h"
 
 #include <array>
 #include <atomic>
@@ -210,11 +213,29 @@ private:
     /// Offscreen SceneColor target; resize with swapchain (M02.4).
     ::engine::render::vk::VkSceneColor m_vkSceneColor;
 
-    /// Frame graph: Clear → SceneColor, Present → swapchain (M02.4).
+    /// GBuffer (A/B/C + Depth) for geometry pass (M03.1).
+    ::engine::render::vk::VkGBuffer m_vkGBuffer;
+
+    /// Shader cache for loading geometry shaders (M03.1).
+    ::engine::render::ShaderCache m_shaderCache;
+
+    /// Geometry pass pipeline (M03.1).
+    ::engine::render::vk::VkGeometryPipeline m_geometryPipeline;
+
+    /// Cube test mesh: vertex buffer and memory (M03.1).
+    VkBuffer m_cubeVertexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_cubeVertexBufferMemory = VK_NULL_HANDLE;
+    uint32_t m_cubeVertexCount = 0;
+
+    /// Frame graph: Geometry → Clear → Present (M02.4, M03.1).
     ::engine::render::FrameGraph m_frameGraph;
     ::engine::render::Registry  m_fgRegistry;
     ::engine::render::ResourceId m_fgSceneColorId = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSwapchainId  = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgGBufferAId   = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgGBufferBId   = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgGBufferCId   = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgDepthId      = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

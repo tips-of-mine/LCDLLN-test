@@ -9,13 +9,17 @@
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Input.h"
 #include "engine/render/FrameGraph.h"
+#include "engine/render/ShaderCache.h"
 #include "engine/render/vk/VkFrameResources.h"
 #include "engine/render/vk/VkSceneColor.h"
 #include "engine/render/vk/VkSwapchain.h"
+#include "engine/render/vk/VkGBuffer.h"
+#include "engine/render/vk/VkGeometryPipeline.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Input.h"
 
 #include <vulkan/vulkan.h>
+#include <cstring>
 
 #include <chrono>
 #include <cstdint>
@@ -25,6 +29,93 @@
 using namespace engine::core;
 using namespace engine::platform;
 using namespace engine::core::memory;
+
+// ---------------------------------------------------------------------------
+// Cube mesh for geometry pass (M03.1): position (vec3) + normal (vec3) per vertex
+// ---------------------------------------------------------------------------
+namespace {
+constexpr uint32_t kCubeVertexCount = 36;
+struct CubeVertex { float px, py, pz, nx, ny, nz; };
+const CubeVertex kCubeVertices[kCubeVertexCount] = {
+    // -Z
+    {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, { 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f},
+    { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, {-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f}, {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f},
+    // +Z
+    {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, { 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f},
+    { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f}, {-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f},
+    // -Y
+    {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f}, { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f}, { 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f},
+    { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f}, {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f}, {-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f},
+    // +Y
+    {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f}, { 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f}, { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f},
+    { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f}, {-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f}, {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f},
+    // -X
+    {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f},
+    {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f}, {-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f},
+    // +X
+    { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f},
+    { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f}, { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f},
+};
+
+uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProps;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+    for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
+        if ((typeFilter & (1u << i)) &&
+            (memProps.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+    return UINT32_MAX;
+}
+
+bool CreateCubeVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
+                            VkBuffer* outBuffer, VkDeviceMemory* outMemory) {
+    const VkDeviceSize size = sizeof(kCubeVertices);
+    VkBufferCreateInfo bci{};
+    bci.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bci.size       = size;
+    bci.usage      = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (vkCreateBuffer(device, &bci, nullptr, outBuffer) != VK_SUCCESS)
+        return false;
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(device, *outBuffer, &memReqs);
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize  = memReqs.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memReqs.memoryTypeBits,
+                                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (allocInfo.memoryTypeIndex == UINT32_MAX) {
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        return false;
+    }
+    if (vkAllocateMemory(device, &allocInfo, nullptr, outMemory) != VK_SUCCESS) {
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        return false;
+    }
+    if (vkBindBufferMemory(device, *outBuffer, *outMemory, 0) != VK_SUCCESS) {
+        vkFreeMemory(device, *outMemory, nullptr);
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        *outMemory = VK_NULL_HANDLE;
+        return false;
+    }
+    void* mapped = nullptr;
+    if (vkMapMemory(device, *outMemory, 0, size, 0, &mapped) != VK_SUCCESS) {
+        vkFreeMemory(device, *outMemory, nullptr);
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        *outMemory = VK_NULL_HANDLE;
+        return false;
+    }
+    std::memcpy(mapped, kCubeVertices, size);
+    vkUnmapMemory(device, *outMemory);
+    return true;
+}
+} // namespace
 
 // ---------------------------------------------------------------------------
 // Engine — public API
@@ -157,6 +248,34 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                             m_vkSwapchain.Format());
                         if (!sceneOk) {
                             LOG_ERROR(Render, "SceneColor offscreen target initialisation failed");
+                        } else {
+                            const uint32_t w = m_vkSwapchain.Extent().width;
+                            const uint32_t h = m_vkSwapchain.Extent().height;
+                            const bool gbufOk = m_vkGBuffer.Init(
+                                m_vkDevice.PhysicalDevice(),
+                                m_vkDevice.Device(), w, h);
+                            if (!gbufOk) {
+                                LOG_ERROR(Render, "GBuffer initialisation failed");
+                            } else {
+                                std::vector<uint8_t> vertSpirv = m_shaderCache.Get("shaders/geometry.vert");
+                                std::vector<uint8_t> fragSpirv = m_shaderCache.Get("shaders/geometry.frag");
+                                if (!vertSpirv.empty() && !fragSpirv.empty()) {
+                                    if (!m_geometryPipeline.Init(m_vkDevice.Device(),
+                                                                 m_vkGBuffer.GetRenderPass(),
+                                                                 vertSpirv, fragSpirv)) {
+                                        LOG_ERROR(Render, "Geometry pipeline initialisation failed");
+                                    } else if (!CreateCubeVertexBuffer(
+                                            m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
+                                            &m_cubeVertexBuffer, &m_cubeVertexBufferMemory)) {
+                                        LOG_ERROR(Render, "Cube vertex buffer creation failed");
+                                        m_geometryPipeline.Shutdown();
+                                    } else {
+                                        m_cubeVertexCount = kCubeVertexCount;
+                                    }
+                                } else {
+                                    LOG_ERROR(Render, "Geometry shaders not found or failed to compile");
+                                }
+                            }
                         }
                     }
                 }
@@ -188,6 +307,16 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
 
     // Shutdown platform subsystems (reverse order of init).
     if (!m_headless && m_windowOk) {
+        if (m_cubeVertexBuffer != VK_NULL_HANDLE) {
+            vkDestroyBuffer(m_vkDevice.Device(), m_cubeVertexBuffer, nullptr);
+            m_cubeVertexBuffer = VK_NULL_HANDLE;
+        }
+        if (m_cubeVertexBufferMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_vkDevice.Device(), m_cubeVertexBufferMemory, nullptr);
+            m_cubeVertexBufferMemory = VK_NULL_HANDLE;
+        }
+        m_geometryPipeline.Shutdown();
+        m_vkGBuffer.Shutdown();
         m_vkFrameResources.Shutdown();
         m_vkSceneColor.Shutdown();
         m_vkSwapchain.Shutdown();
@@ -271,16 +400,18 @@ void Engine::Render() {
     using namespace engine::render;
     using namespace engine::render::vk;
 
-    // Recreate swapchain on resize; then recreate SceneColor to match (M02.4).
+    // Recreate swapchain on resize; then recreate SceneColor and GBuffer to match (M02.4, M03.1).
     if (m_vkSwapchain.IsValid() && m_vkSwapchain.NeedsRecreate()) {
         const uint32_t w = (m_framebufferWidth  > 0) ? static_cast<uint32_t>(m_framebufferWidth)  : 1u;
         const uint32_t h = (m_framebufferHeight > 0) ? static_cast<uint32_t>(m_framebufferHeight) : 1u;
         if (m_vkSwapchain.Recreate(w, h)) {
             m_vkSceneColor.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+            m_vkGBuffer.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
         }
     }
 
-    if (!m_vkSwapchain.IsValid() || !m_vkFrameResources.IsValid() || !m_vkSceneColor.IsValid()) {
+    if (!m_vkSwapchain.IsValid() || !m_vkFrameResources.IsValid() || !m_vkSceneColor.IsValid() ||
+        !m_vkGBuffer.IsValid() || !m_geometryPipeline.IsValid() || m_cubeVertexBuffer == VK_NULL_HANDLE) {
         return;
     }
 
@@ -309,9 +440,19 @@ void Engine::Render() {
         return;
     }
 
-    // Build frame graph once: SceneColor + Swapchain resources, Clear pass, Present pass (M02.4).
+    // Build frame graph once: GBuffer + SceneColor + Swapchain, Geometry pass, Clear pass, Present pass (M02.4, M03.1).
     if (!m_frameGraphBuilt) {
         const VkExtent2D ext = m_vkSwapchain.Extent();
+
+        ImageDesc gbufADesc{}; gbufADesc.width = ext.width; gbufADesc.height = ext.height; gbufADesc.layers = 1; gbufADesc.format = VK_FORMAT_R8G8B8A8_SRGB;
+        m_fgGBufferAId = m_frameGraph.CreateImage(gbufADesc, "GBufferA");
+        ImageDesc gbufBDesc{}; gbufBDesc.width = ext.width; gbufBDesc.height = ext.height; gbufBDesc.layers = 1; gbufBDesc.format = VK_FORMAT_A2B10G10R10_UNORM_PACK32;
+        m_fgGBufferBId = m_frameGraph.CreateImage(gbufBDesc, "GBufferB");
+        ImageDesc gbufCDesc{}; gbufCDesc.width = ext.width; gbufCDesc.height = ext.height; gbufCDesc.layers = 1; gbufCDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+        m_fgGBufferCId = m_frameGraph.CreateImage(gbufCDesc, "GBufferC");
+        ImageDesc depthDesc{}; depthDesc.width = ext.width; depthDesc.height = ext.height; depthDesc.layers = 1; depthDesc.format = VK_FORMAT_D32_SFLOAT;
+        m_fgDepthId = m_frameGraph.CreateImage(depthDesc, "Depth");
+
         ImageDesc sceneDesc{};
         sceneDesc.width  = ext.width;
         sceneDesc.height = ext.height;
@@ -325,6 +466,48 @@ void Engine::Render() {
         swapDesc.layers = 1;
         swapDesc.format = m_vkSwapchain.Format();
         m_fgSwapchainId = m_frameGraph.CreateImage(swapDesc, "Swapchain");
+
+        m_frameGraph.AddPass("Geometry")
+            .Write(m_fgGBufferAId, ImageUsage::ColorWrite)
+            .Write(m_fgGBufferBId, ImageUsage::ColorWrite)
+            .Write(m_fgGBufferCId, ImageUsage::ColorWrite)
+            .Write(m_fgDepthId, ImageUsage::DepthWrite)
+            .Execute([this](VkCommandBuffer cmd, Registry&) {
+                const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+                const RenderState& rs = m_renderStates[readIdx];
+                float viewProj[16];
+                for (int i = 0; i < 4; ++i) {
+                    for (int j = 0; j < 4; ++j) {
+                        viewProj[j * 4 + i] = rs.proj.m[0 * 4 + i] * rs.view.m[j * 4 + 0]
+                                            + rs.proj.m[1 * 4 + i] * rs.view.m[j * 4 + 1]
+                                            + rs.proj.m[2 * 4 + i] * rs.view.m[j * 4 + 2]
+                                            + rs.proj.m[3 * 4 + i] * rs.view.m[j * 4 + 3];
+                    }
+                }
+                VkClearValue clearVals[4]{};
+                clearVals[0].color.float32[0] = 0.0f; clearVals[0].color.float32[1] = 0.0f; clearVals[0].color.float32[2] = 0.0f; clearVals[0].color.float32[3] = 1.0f;
+                clearVals[1].color.float32[0] = 0.0f; clearVals[1].color.float32[1] = 0.0f; clearVals[1].color.float32[2] = 0.0f; clearVals[1].color.float32[3] = 1.0f;
+                clearVals[2].color.float32[0] = 0.0f; clearVals[2].color.float32[1] = 0.0f; clearVals[2].color.float32[2] = 0.0f; clearVals[2].color.float32[3] = 1.0f;
+                clearVals[3].depthStencil.depth = 1.0f; clearVals[3].depthStencil.stencil = 0;
+                VkRenderPassBeginInfo rpbi{};
+                rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                rpbi.renderPass      = m_vkGBuffer.GetRenderPass();
+                rpbi.framebuffer     = m_vkGBuffer.GetFramebuffer();
+                rpbi.renderArea      = {{0, 0}, m_vkGBuffer.Extent()};
+                rpbi.clearValueCount = 4;
+                rpbi.pClearValues    = clearVals;
+                vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkGBuffer.Extent().width); vp.height = static_cast<float>(m_vkGBuffer.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                vkCmdSetViewport(cmd, 0, 1, &vp);
+                VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkGBuffer.Extent();
+                vkCmdSetScissor(cmd, 0, 1, &scissor);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_geometryPipeline.GetPipeline());
+                VkDeviceSize offset = 0;
+                vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
+                vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 64, viewProj);
+                vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
+                vkCmdEndRenderPass(cmd);
+            });
 
         m_frameGraph.AddPass("Clear")
             .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
@@ -390,6 +573,10 @@ void Engine::Render() {
         return;
     }
 
+    m_fgRegistry.SetImage(m_fgGBufferAId, m_vkGBuffer.GetImageA());
+    m_fgRegistry.SetImage(m_fgGBufferBId, m_vkGBuffer.GetImageB());
+    m_fgRegistry.SetImage(m_fgGBufferCId, m_vkGBuffer.GetImageC());
+    m_fgRegistry.SetImage(m_fgDepthId, m_vkGBuffer.GetImageDepth());
     m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);

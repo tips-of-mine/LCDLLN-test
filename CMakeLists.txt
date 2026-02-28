@@ -30,6 +30,7 @@ find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 #                             (M02.3: Frame Graph Vulkan barriers + layout tracking)
 #                             (M02.4: Offscreen SceneColor + copy to swapchain)
 #                             (M03.0: Camera + frustum culling MVP)
+#                             (M03.1: Deferred GBuffer + geometry pass)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp
@@ -59,6 +60,10 @@ add_library(engine_core STATIC
 
     # M02.4 — Offscreen SceneColor + copy to swapchain
     engine/render/vk/VkSceneColor.cpp
+
+    # M03.1 — Deferred GBuffer + geometry pass
+    engine/render/vk/VkGBuffer.cpp
+    engine/render/vk/VkGeometryPipeline.cpp
 
     # M03.0 — Camera + frustum culling MVP
     engine/render/Camera.cpp

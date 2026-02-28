@@ -25,6 +25,7 @@
 #include "engine/render/Csm.h"
 #include "engine/render/Halton.h"
 #include "engine/math/Frustum.h"
+#include "engine/world/HlodRuntime.h"
 #include "engine/platform/Input.h"
 
 #include <vulkan/vulkan.h>
@@ -1093,6 +1094,18 @@ void Engine::Render() {
             .Execute([this](VkCommandBuffer cmd, Registry&) {
                 const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
                 const RenderState& rs = m_renderStates[readIdx];
+                const float center[3] = { m_currModelMatrix[12], m_currModelMatrix[13], m_currModelMatrix[14] };
+                float dx = center[0] - rs.camera.position[0];
+                float dy = center[1] - rs.camera.position[1];
+                float dz = center[2] - rs.camera.position[2];
+                const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+                const float halfExtent = 2.0f;
+                const float aabbMin[3] = { center[0] - halfExtent, center[1] - halfExtent, center[2] - halfExtent };
+                const float aabbMax[3] = { center[0] + halfExtent, center[1] + halfExtent, center[2] + halfExtent };
+                const bool visible = ::engine::world::VisibleInFrustum(rs.frustum, aabbMin, aabbMax)
+                    && ::engine::world::WithinDrawDistance(rs.camera.position, center, rs.camera.farZ);
+                const bool useHlod = visible && ::engine::world::UseHlodForDistance(distance);
+
                 float pushData[64];
                 std::memcpy(pushData, rs.viewProjCurr, sizeof(rs.viewProjCurr));
                 std::memcpy(pushData + 16, rs.viewProjPrev, sizeof(rs.viewProjPrev));
@@ -1124,12 +1137,18 @@ void Engine::Render() {
                 VkDeviceSize offset = 0;
                 vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
                 vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
-                vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
-                m_chunkStats.RecordDraw(
-                    ::engine::world::ChunkCoord{0, 0, 0, 0},
-                    ::engine::world::RingType::Active,
-                    1u,
-                    m_cubeVertexCount / 3u);
+                if (visible) {
+                    vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
+                    if (useHlod)
+                        ++m_hlodDrawsThisFrame;
+                    else
+                        ++m_instanceDrawsThisFrame;
+                    m_chunkStats.RecordDraw(
+                        ::engine::world::ChunkCoord{0, 0, 0, 0},
+                        ::engine::world::RingType::Active,
+                        1u,
+                        m_cubeVertexCount / 3u);
+                }
                 vkCmdEndRenderPass(cmd);
             });
 
@@ -1742,9 +1761,13 @@ void Engine::Render() {
         m_fgRegistry.SetImage(m_fgTaaOutputId, m_vkTaaOutput.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
     m_chunkStats.BeginFrame();
+    m_hlodDrawsThisFrame = 0u;
+    m_instanceDrawsThisFrame = 0u;
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
     if (::engine::core::Time::FrameIndex() % 60u == 0u)
         m_chunkStats.LogFrameStats();
+    if (::engine::core::Config::GetBool("debug.hlod_overlay", false) && ::engine::core::Time::FrameIndex() % 60u == 0u)
+        LOG_INFO(Render, "HLOD overlay: hlod_draws={} instance_draws={}", m_hlodDrawsThisFrame, m_instanceDrawsThisFrame);
 
     if (m_vkTaaHistory.IsValid())
         m_taaHistoryIdx ^= 1u;

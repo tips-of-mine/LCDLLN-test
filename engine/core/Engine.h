@@ -54,6 +54,7 @@
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 #include "engine/world/ChunkStats.h"
+#include "engine/world/HlodRuntime.h"
 
 #include <array>
 #include <atomic>
@@ -338,6 +339,9 @@ private:
     bool m_frameGraphBuilt = false;
     /// Per-chunk/per-ring drawcall and triangle stats (M09.2).
     ::engine::world::ChunkStats m_chunkStats;
+    /// HLOD vs instance draw counts this frame for debug overlay (M09.5).
+    uint32_t m_hlodDrawsThisFrame = 0u;
+    uint32_t m_instanceDrawsThisFrame = 0u;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

@@ -26,6 +26,8 @@
 #include "engine/render/Halton.h"
 #include "engine/math/Frustum.h"
 #include "engine/world/HlodRuntime.h"
+#include "engine/world/World.h"
+#include "engine/streaming/StreamingScheduler.h"
 #include "engine/platform/Input.h"
 
 #include <vulkan/vulkan.h>
@@ -817,6 +819,20 @@ void Engine::Update() {
     rs.camera = m_camera;
     ComputeViewMatrix(rs.camera, rs.view.m);
     ComputeProjectionMatrix(rs.camera, rs.proj.m);
+
+    {
+        float viewDirX = -std::sin(m_camera.yaw) * std::cos(m_camera.pitch);
+        float viewDirZ = -std::cos(m_camera.yaw) * std::cos(m_camera.pitch);
+        float len = std::sqrt(viewDirX * viewDirX + viewDirZ * viewDirZ);
+        if (len > 1e-6f) { viewDirX /= len; viewDirZ /= len; }
+        const double currentTime = static_cast<double>(Time::ElapsedSeconds());
+        ::engine::world::EmitChunkRequestsForPosition(
+            m_camera.position[0], m_camera.position[2],
+            [this, viewDirX, viewDirZ, currentTime](::engine::world::RingType ring, const std::vector<::engine::world::ChunkCoord>& chunks) {
+                for (const auto& c : chunks)
+                    m_streamingScheduler.PushRequest(c, ring, m_camera.position[0], m_camera.position[2], viewDirX, viewDirZ, currentTime);
+            });
+    }
 
     const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
     const bool resetHistory = m_taaResetHistory ||

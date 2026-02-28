@@ -55,6 +55,7 @@
 #include "engine/render/ShaderCache.h"
 #include "engine/world/ChunkStats.h"
 #include "engine/world/HlodRuntime.h"
+#include "engine/streaming/StreamingScheduler.h"
 
 #include <array>
 #include <atomic>
@@ -342,6 +343,8 @@ private:
     /// HLOD vs instance draw counts this frame for debug overlay (M09.5).
     uint32_t m_hlodDrawsThisFrame = 0u;
     uint32_t m_instanceDrawsThisFrame = 0u;
+    /// Streaming scheduler: request/io/cpu/gpuUpload queues + priority (M10.1).
+    ::engine::streaming::StreamingScheduler m_streamingScheduler;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

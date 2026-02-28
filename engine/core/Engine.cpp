@@ -814,6 +814,8 @@ void Engine::Render() {
         m_fgGBufferBId = m_frameGraph.CreateImage(gbufBDesc, "GBufferB");
         ImageDesc gbufCDesc{}; gbufCDesc.width = ext.width; gbufCDesc.height = ext.height; gbufCDesc.layers = 1; gbufCDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
         m_fgGBufferCId = m_frameGraph.CreateImage(gbufCDesc, "GBufferC");
+        ImageDesc gbufVelDesc{}; gbufVelDesc.width = ext.width; gbufVelDesc.height = ext.height; gbufVelDesc.layers = 1; gbufVelDesc.format = VK_FORMAT_R16G16_SFLOAT;
+        m_fgGBufferVelocityId = m_frameGraph.CreateImage(gbufVelDesc, "GBufferVelocity");
         ImageDesc depthDesc{}; depthDesc.width = ext.width; depthDesc.height = ext.height; depthDesc.layers = 1; depthDesc.format = VK_FORMAT_D32_SFLOAT;
         m_fgDepthId = m_frameGraph.CreateImage(depthDesc, "Depth");
 
@@ -906,30 +908,28 @@ void Engine::Render() {
             .Write(m_fgGBufferAId, ImageUsage::ColorWrite)
             .Write(m_fgGBufferBId, ImageUsage::ColorWrite)
             .Write(m_fgGBufferCId, ImageUsage::ColorWrite)
+            .Write(m_fgGBufferVelocityId, ImageUsage::ColorWrite)
             .Write(m_fgDepthId, ImageUsage::DepthWrite)
             .Execute([this](VkCommandBuffer cmd, Registry&) {
                 const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
                 const RenderState& rs = m_renderStates[readIdx];
-                float viewProj[16];
-                for (int i = 0; i < 4; ++i) {
-                    for (int j = 0; j < 4; ++j) {
-                        viewProj[j * 4 + i] = rs.proj.m[0 * 4 + i] * rs.view.m[j * 4 + 0]
-                                            + rs.proj.m[1 * 4 + i] * rs.view.m[j * 4 + 1]
-                                            + rs.proj.m[2 * 4 + i] * rs.view.m[j * 4 + 2]
-                                            + rs.proj.m[3 * 4 + i] * rs.view.m[j * 4 + 3];
-                    }
-                }
-                VkClearValue clearVals[4]{};
+                float pushData[64];
+                std::memcpy(pushData, rs.viewProjCurr, sizeof(rs.viewProjCurr));
+                std::memcpy(pushData + 16, rs.viewProjPrev, sizeof(rs.viewProjPrev));
+                std::memcpy(pushData + 32, m_currModelMatrix, sizeof(m_currModelMatrix));
+                std::memcpy(pushData + 48, m_prevModelMatrix, sizeof(m_prevModelMatrix));
+                VkClearValue clearVals[5]{};
                 clearVals[0].color.float32[0] = 0.0f; clearVals[0].color.float32[1] = 0.0f; clearVals[0].color.float32[2] = 0.0f; clearVals[0].color.float32[3] = 1.0f;
                 clearVals[1].color.float32[0] = 0.0f; clearVals[1].color.float32[1] = 0.0f; clearVals[1].color.float32[2] = 0.0f; clearVals[1].color.float32[3] = 1.0f;
                 clearVals[2].color.float32[0] = 0.0f; clearVals[2].color.float32[1] = 0.0f; clearVals[2].color.float32[2] = 0.0f; clearVals[2].color.float32[3] = 1.0f;
-                clearVals[3].depthStencil.depth = 1.0f; clearVals[3].depthStencil.stencil = 0;
+                clearVals[3].color.float32[0] = 0.0f; clearVals[3].color.float32[1] = 0.0f; clearVals[3].color.float32[2] = 0.0f; clearVals[3].color.float32[3] = 1.0f;
+                clearVals[4].depthStencil.depth = 1.0f; clearVals[4].depthStencil.stencil = 0;
                 VkRenderPassBeginInfo rpbi{};
                 rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 rpbi.renderPass      = m_vkGBuffer.GetRenderPass();
                 rpbi.framebuffer     = m_vkGBuffer.GetFramebuffer();
                 rpbi.renderArea      = {{0, 0}, m_vkGBuffer.Extent()};
-                rpbi.clearValueCount = 4;
+                rpbi.clearValueCount = 5;
                 rpbi.pClearValues    = clearVals;
                 vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
                 VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkGBuffer.Extent().width); vp.height = static_cast<float>(m_vkGBuffer.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
@@ -943,7 +943,7 @@ void Engine::Render() {
                 }
                 VkDeviceSize offset = 0;
                 vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
-                vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 64, viewProj);
+                vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
                 vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
                 vkCmdEndRenderPass(cmd);
             });
@@ -1229,6 +1229,7 @@ void Engine::Render() {
     m_fgRegistry.SetImage(m_fgGBufferAId, m_vkGBuffer.GetImageA());
     m_fgRegistry.SetImage(m_fgGBufferBId, m_vkGBuffer.GetImageB());
     m_fgRegistry.SetImage(m_fgGBufferCId, m_vkGBuffer.GetImageC());
+    m_fgRegistry.SetImage(m_fgGBufferVelocityId, m_vkGBuffer.GetImageD());
     m_fgRegistry.SetImage(m_fgDepthId, m_vkGBuffer.GetImageDepth());
     if (m_vkSsaoRaw.IsValid()) {
         m_fgRegistry.SetImage(m_fgSsaoRawId, m_vkSsaoRaw.GetImage());
@@ -1251,6 +1252,9 @@ void Engine::Render() {
 
     if (m_vkTaaHistory.IsValid())
         m_taaHistoryIdx ^= 1u;
+
+    for (int i = 0; i < 16; ++i)
+        m_prevModelMatrix[i] = m_currModelMatrix[i];
 
     if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) {
         LOG_ERROR(Render, "vkEndCommandBuffer failed");

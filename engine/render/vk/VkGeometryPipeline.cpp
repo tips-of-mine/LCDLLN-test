@@ -61,7 +61,7 @@ bool VkGeometryPipeline::Init(VkDevice device,
     VkPushConstantRange pushConstant{};
     pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstant.offset      = 0;
-    pushConstant.size        = 64; // one mat4 for viewProj
+    pushConstant.size        = 256; // viewProjCurr, viewProjPrev, modelCurr, modelPrev (M07.3)
 
     VkPipelineLayoutCreateInfo plci{};
     plci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -147,17 +147,19 @@ bool VkGeometryPipeline::Init(VkDevice device,
     ds.depthBoundsTestEnable = VK_FALSE;
     ds.stencilTestEnable     = VK_FALSE;
 
-    std::array<VkPipelineColorBlendAttachmentState, 3> blendAttachments{};
+    std::array<VkPipelineColorBlendAttachmentState, 4> blendAttachments{};
     for (auto& a : blendAttachments) {
         a.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                 VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         a.blendEnable         = VK_FALSE;
     }
+    // Velocity (D) is R16G16F: only R and G
+    blendAttachments[3].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT;
 
     VkPipelineColorBlendStateCreateInfo cb{};
     cb.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     cb.logicOpEnable     = VK_FALSE;
-    cb.attachmentCount   = 3;
+    cb.attachmentCount   = 4;
     cb.pAttachments      = blendAttachments.data();
 
     std::array<VkDynamicState, 2> dynamicStates = {

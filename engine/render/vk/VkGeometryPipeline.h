@@ -2,7 +2,7 @@
 
 /**
  * @file VkGeometryPipeline.h
- * @brief Graphics pipeline for GBuffer geometry pass (VS/PS, 3 color + depth).
+ * @brief Graphics pipeline for GBuffer geometry pass (VS/PS, 4 color + depth; D = velocity, M07.3).
  *
  * Ticket: M03.1 — Deferred: GBuffer resources + geometry pass.
  */
@@ -17,7 +17,7 @@ namespace engine::render::vk {
 /**
  * @brief Geometry pass pipeline: vertex + fragment shaders, 3 color outputs, depth.
  *
- * Compatible with VkGBuffer render pass. Vertex format: position (vec3), normal (vec3).
+ * Compatible with VkGBuffer render pass (4 color: A/B/C/Velocity + depth). Vertex format: position (vec3), normal (vec3).
  */
 class VkGeometryPipeline {
 public:

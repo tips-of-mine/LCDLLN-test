@@ -190,6 +190,7 @@ void VkGBuffer::DestroyResources() {
     destroyImage(m_imageA, m_memoryA, m_viewA);
     destroyImage(m_imageB, m_memoryB, m_viewB);
     destroyImage(m_imageC, m_memoryC, m_viewC);
+    destroyImage(m_imageD, m_memoryD, m_viewD);
     destroyImage(m_imageDepth, m_memoryDepth, m_viewDepth);
 }
 
@@ -223,6 +224,13 @@ bool VkGBuffer::Init(VkPhysicalDevice physicalDevice, VkDevice device,
         DestroyResources();
         return false;
     }
+    if (!CreateColorImage(physicalDevice, device, width, height,
+                          VK_FORMAT_R16G16_SFLOAT,
+                          m_imageD, m_memoryD, m_viewD)) {
+        LOG_ERROR(Render, "VkGBuffer: failed to create image D (velocity)");
+        DestroyResources();
+        return false;
+    }
     if (!CreateDepthImage(physicalDevice, device, width, height,
                          VK_FORMAT_D32_SFLOAT,
                          m_imageDepth, m_memoryDepth, m_viewDepth)) {
@@ -231,7 +239,7 @@ bool VkGBuffer::Init(VkPhysicalDevice physicalDevice, VkDevice device,
         return false;
     }
 
-    std::array<VkAttachmentDescription, 4> attachments{};
+    std::array<VkAttachmentDescription, 5> attachments{};
     attachments[0].format         = VK_FORMAT_R8G8B8A8_SRGB;
     attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
     attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -259,36 +267,47 @@ bool VkGBuffer::Init(VkPhysicalDevice physicalDevice, VkDevice device,
     attachments[2].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
     attachments[2].finalLayout   = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    attachments[3].format         = VK_FORMAT_D32_SFLOAT;
+    attachments[3].format         = VK_FORMAT_R16G16_SFLOAT;
     attachments[3].samples        = VK_SAMPLE_COUNT_1_BIT;
     attachments[3].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[3].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
     attachments[3].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[3].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachments[3].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments[3].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    std::array<VkAttachmentReference, 3> colorRefs{};
+    attachments[4].format         = VK_FORMAT_D32_SFLOAT;
+    attachments[4].samples        = VK_SAMPLE_COUNT_1_BIT;
+    attachments[4].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[4].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[4].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[4].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[4].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[4].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    std::array<VkAttachmentReference, 4> colorRefs{};
     colorRefs[0].attachment = 0;
     colorRefs[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     colorRefs[1].attachment = 1;
     colorRefs[1].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     colorRefs[2].attachment = 2;
     colorRefs[2].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorRefs[3].attachment = 3;
+    colorRefs[3].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference depthRef{};
-    depthRef.attachment = 3;
+    depthRef.attachment = 4;
     depthRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount   = 3;
+    subpass.colorAttachmentCount   = 4;
     subpass.pColorAttachments      = colorRefs.data();
     subpass.pDepthStencilAttachment = &depthRef;
 
     VkRenderPassCreateInfo rpci{};
     rpci.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    rpci.attachmentCount = 4;
+    rpci.attachmentCount = 5;
     rpci.pAttachments    = attachments.data();
     rpci.subpassCount    = 1;
     rpci.pSubpasses      = &subpass;
@@ -299,11 +318,11 @@ bool VkGBuffer::Init(VkPhysicalDevice physicalDevice, VkDevice device,
         return false;
     }
 
-    std::array<VkImageView, 4> fbAttachments = { m_viewA, m_viewB, m_viewC, m_viewDepth };
+    std::array<VkImageView, 5> fbAttachments = { m_viewA, m_viewB, m_viewC, m_viewD, m_viewDepth };
     VkFramebufferCreateInfo fbci{};
     fbci.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     fbci.renderPass      = m_renderPass;
-    fbci.attachmentCount = 4;
+    fbci.attachmentCount = 5;
     fbci.pAttachments    = fbAttachments.data();
     fbci.width           = width;
     fbci.height          = height;

@@ -293,8 +293,9 @@ private:
     ::engine::render::ResourceId m_fgSwapchainId  = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgGBufferAId   = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgGBufferBId   = ::engine::render::kInvalidResourceId;
-    ::engine::render::ResourceId m_fgGBufferCId    = ::engine::render::kInvalidResourceId;
-    ::engine::render::ResourceId m_fgDepthId       = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgGBufferCId      = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgGBufferVelocityId = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgDepthId         = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSceneColorHDRId = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgShadowMap0Id   = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgShadowMap1Id   = ::engine::render::kInvalidResourceId;
@@ -351,6 +352,9 @@ private:
     bool m_taaFirstFrame = true;
     /// On reset: copy current -> history next (set in OnResize / Update when reset detected).
     bool m_taaCopyHistoryOnReset = false;
+    /// M07.3 — Motion vectors: prev/curr model matrix per rigid (column-major); updated at end of Render.
+    float m_prevModelMatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+    float m_currModelMatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 };
 
 } // namespace engine::core

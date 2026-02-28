@@ -7,7 +7,7 @@
  * Ticket: M03.1 — Deferred: GBuffer resources + geometry pass.
  *
  * Formats: A=R8G8B8A8_SRGB (albedo), B=A2B10G10R10_UNORM (normal),
- * C=R8G8B8A8_UNORM (ORM), Depth=D32_SFLOAT. Recreate on resize.
+ * C=R8G8B8A8_UNORM (ORM), D=R16G16_SFLOAT (velocity, M07.3), Depth=D32_SFLOAT. Recreate on resize.
  */
 
 #include <vulkan/vulkan.h>
@@ -17,7 +17,7 @@
 namespace engine::render::vk {
 
 /**
- * @brief GBuffer: 3 color images + 1 depth image, render pass and framebuffer.
+ * @brief GBuffer: 4 color images (A/B/C/Velocity) + 1 depth image, render pass and framebuffer.
  */
 class VkGBuffer {
 public:
@@ -53,10 +53,12 @@ public:
     [[nodiscard]] VkImage     GetImageA() const noexcept { return m_imageA; }
     [[nodiscard]] VkImage     GetImageB() const noexcept { return m_imageB; }
     [[nodiscard]] VkImage     GetImageC() const noexcept { return m_imageC; }
+    [[nodiscard]] VkImage     GetImageD() const noexcept { return m_imageD; }
     [[nodiscard]] VkImage     GetImageDepth() const noexcept { return m_imageDepth; }
     [[nodiscard]] VkImageView GetViewA() const noexcept { return m_viewA; }
     [[nodiscard]] VkImageView GetViewB() const noexcept { return m_viewB; }
     [[nodiscard]] VkImageView GetViewC() const noexcept { return m_viewC; }
+    [[nodiscard]] VkImageView GetViewD() const noexcept { return m_viewD; }
     [[nodiscard]] VkImageView GetViewDepth() const noexcept { return m_viewDepth; }
 
     [[nodiscard]] VkRenderPass    GetRenderPass() const noexcept { return m_renderPass; }
@@ -81,6 +83,10 @@ private:
     VkImage        m_imageC     = VK_NULL_HANDLE;
     VkDeviceMemory m_memoryC   = VK_NULL_HANDLE;
     VkImageView    m_viewC     = VK_NULL_HANDLE;
+
+    VkImage        m_imageD     = VK_NULL_HANDLE;
+    VkDeviceMemory m_memoryD    = VK_NULL_HANDLE;
+    VkImageView    m_viewD      = VK_NULL_HANDLE;
 
     VkImage        m_imageDepth = VK_NULL_HANDLE;
     VkDeviceMemory m_memoryDepth = VK_NULL_HANDLE;

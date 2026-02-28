@@ -15,6 +15,9 @@
 #include "engine/render/vk/VkSwapchain.h"
 #include "engine/render/vk/VkGBuffer.h"
 #include "engine/render/vk/VkGeometryPipeline.h"
+#include "engine/render/vk/VkSceneColorHDR.h"
+#include "engine/render/vk/VkLightingPipeline.h"
+#include "engine/render/vk/VkTonemapPipeline.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Input.h"
 
@@ -67,6 +70,35 @@ uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, Vk
         }
     }
     return UINT32_MAX;
+}
+
+/**
+ * @brief Inverts a 4x4 column-major matrix (for invViewProj).
+ */
+void Invert4x4ColumnMajor(const float m[16], float out[16]) {
+    float inv[16];
+    inv[0]  =  m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15] + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10];
+    inv[4]  = -m[4]*m[10]*m[15] + m[4]*m[11]*m[14] + m[8]*m[6]*m[15] - m[8]*m[7]*m[14] - m[12]*m[6]*m[11] + m[12]*m[7]*m[10];
+    inv[8]  =  m[4]*m[9]*m[15]  - m[4]*m[11]*m[13] - m[8]*m[5]*m[15] + m[8]*m[7]*m[13] + m[12]*m[5]*m[11] - m[12]*m[7]*m[9];
+    inv[12] = -m[4]*m[9]*m[14]  + m[4]*m[10]*m[13] + m[8]*m[5]*m[14] - m[8]*m[6]*m[13] - m[12]*m[5]*m[10] + m[12]*m[6]*m[9];
+    inv[1]  = -m[1]*m[10]*m[15] + m[1]*m[11]*m[14] + m[9]*m[2]*m[15] - m[9]*m[3]*m[14] - m[13]*m[2]*m[11] + m[13]*m[3]*m[10];
+    inv[5]  =  m[0]*m[10]*m[15] - m[0]*m[11]*m[14] - m[8]*m[2]*m[15] + m[8]*m[3]*m[14] + m[12]*m[2]*m[11] - m[12]*m[3]*m[10];
+    inv[9]  = -m[0]*m[9]*m[15]  + m[0]*m[11]*m[13] + m[8]*m[1]*m[15] - m[8]*m[3]*m[13] - m[12]*m[1]*m[11] + m[12]*m[3]*m[9];
+    inv[13] =  m[0]*m[9]*m[14]   - m[0]*m[10]*m[13] - m[8]*m[1]*m[14] + m[8]*m[2]*m[13] + m[12]*m[1]*m[10] - m[12]*m[2]*m[9];
+    inv[2]  =  m[1]*m[6]*m[15]   - m[1]*m[7]*m[14]  - m[5]*m[2]*m[15] + m[5]*m[3]*m[14] + m[13]*m[2]*m[7]  - m[13]*m[3]*m[6];
+    inv[6]  = -m[0]*m[6]*m[15]   + m[0]*m[7]*m[14]  + m[4]*m[2]*m[15] - m[4]*m[3]*m[14] - m[12]*m[2]*m[7]  + m[12]*m[3]*m[6];
+    inv[10] =  m[0]*m[5]*m[15]   - m[0]*m[7]*m[13]  - m[4]*m[1]*m[15] + m[4]*m[3]*m[13] + m[12]*m[1]*m[7]  - m[12]*m[3]*m[5];
+    inv[14] = -m[0]*m[5]*m[14]   + m[0]*m[6]*m[13]  + m[4]*m[1]*m[14] - m[4]*m[2]*m[13] - m[12]*m[1]*m[6]  + m[12]*m[2]*m[5];
+    inv[3]  = -m[1]*m[6]*m[11]   + m[1]*m[7]*m[10]  + m[5]*m[2]*m[11] - m[5]*m[3]*m[10] - m[9]*m[2]*m[7]   + m[9]*m[3]*m[6];
+    inv[7]  =  m[0]*m[6]*m[11]   - m[0]*m[7]*m[10]  - m[4]*m[2]*m[11] + m[4]*m[3]*m[10] + m[8]*m[2]*m[7]   - m[8]*m[3]*m[6];
+    inv[11] = -m[0]*m[5]*m[11]   + m[0]*m[7]*m[9]   + m[4]*m[1]*m[11] - m[4]*m[3]*m[9]  - m[8]*m[1]*m[7]   + m[8]*m[3]*m[5];
+    inv[15] =  m[0]*m[5]*m[10]   - m[0]*m[6]*m[9]   - m[4]*m[1]*m[10] + m[4]*m[2]*m[9]  + m[8]*m[1]*m[6]   - m[8]*m[2]*m[5];
+    float det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
+    if (det == 0.0f) { std::memcpy(out, m, 16 * sizeof(float)); return; }
+    det = 1.0f / det;
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 4; ++c)
+            out[c * 4 + r] = inv[r * 4 + c] * det;
 }
 
 bool CreateCubeVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
@@ -276,6 +308,38 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                     LOG_ERROR(Render, "Geometry shaders not found or failed to compile");
                                 }
                             }
+                            if (m_cubeVertexCount > 0) {
+                                const bool hdrOk = m_vkSceneColorHDR.Init(
+                                    m_vkDevice.PhysicalDevice(),
+                                    m_vkDevice.Device(), w, h);
+                                if (!hdrOk) {
+                                    LOG_ERROR(Render, "SceneColorHDR initialisation failed");
+                                } else {
+                                    std::vector<uint8_t> lvert = m_shaderCache.Get("shaders/lighting.vert");
+                                    std::vector<uint8_t> lfrag = m_shaderCache.Get("shaders/lighting.frag");
+                                    std::vector<uint8_t> tvert = m_shaderCache.Get("shaders/tonemap.vert");
+                                    std::vector<uint8_t> tfrag = m_shaderCache.Get("shaders/tonemap.frag");
+                                    if (!lvert.empty() && !lfrag.empty() && !tvert.empty() && !tfrag.empty()) {
+                                        if (!m_lightingPipeline.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
+                                                                     m_vkSceneColorHDR.GetRenderPass(), lvert, lfrag)) {
+                                            LOG_ERROR(Render, "Lighting pipeline initialisation failed");
+                                        } else {
+                                            m_lightingPipeline.SetGBufferViews(
+                                                m_vkGBuffer.GetViewA(), m_vkGBuffer.GetViewB(),
+                                                m_vkGBuffer.GetViewC(), m_vkGBuffer.GetViewDepth());
+                                            if (!m_tonemapPipeline.Init(m_vkDevice.Device(),
+                                                                        m_vkSceneColor.GetRenderPass(), tvert, tfrag)) {
+                                                LOG_ERROR(Render, "Tonemap pipeline initialisation failed");
+                                                m_lightingPipeline.Shutdown();
+                                            } else {
+                                                m_tonemapPipeline.SetHDRView(m_vkSceneColorHDR.GetImageView());
+                                            }
+                                        }
+                                    } else {
+                                        LOG_ERROR(Render, "Lighting/tonemap shaders not found or failed to compile");
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -315,7 +379,10 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
             vkFreeMemory(m_vkDevice.Device(), m_cubeVertexBufferMemory, nullptr);
             m_cubeVertexBufferMemory = VK_NULL_HANDLE;
         }
+        m_tonemapPipeline.Shutdown();
+        m_lightingPipeline.Shutdown();
         m_geometryPipeline.Shutdown();
+        m_vkSceneColorHDR.Shutdown();
         m_vkGBuffer.Shutdown();
         m_vkFrameResources.Shutdown();
         m_vkSceneColor.Shutdown();
@@ -407,11 +474,13 @@ void Engine::Render() {
         if (m_vkSwapchain.Recreate(w, h)) {
             m_vkSceneColor.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             m_vkGBuffer.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+            m_vkSceneColorHDR.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
         }
     }
 
     if (!m_vkSwapchain.IsValid() || !m_vkFrameResources.IsValid() || !m_vkSceneColor.IsValid() ||
-        !m_vkGBuffer.IsValid() || !m_geometryPipeline.IsValid() || m_cubeVertexBuffer == VK_NULL_HANDLE) {
+        !m_vkGBuffer.IsValid() || !m_vkSceneColorHDR.IsValid() || !m_geometryPipeline.IsValid() ||
+        !m_lightingPipeline.IsValid() || !m_tonemapPipeline.IsValid() || m_cubeVertexBuffer == VK_NULL_HANDLE) {
         return;
     }
 
@@ -452,6 +521,13 @@ void Engine::Render() {
         m_fgGBufferCId = m_frameGraph.CreateImage(gbufCDesc, "GBufferC");
         ImageDesc depthDesc{}; depthDesc.width = ext.width; depthDesc.height = ext.height; depthDesc.layers = 1; depthDesc.format = VK_FORMAT_D32_SFLOAT;
         m_fgDepthId = m_frameGraph.CreateImage(depthDesc, "Depth");
+
+        ImageDesc sceneHDRDesc{};
+        sceneHDRDesc.width  = ext.width;
+        sceneHDRDesc.height = ext.height;
+        sceneHDRDesc.layers = 1;
+        sceneHDRDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        m_fgSceneColorHDRId = m_frameGraph.CreateImage(sceneHDRDesc, "SceneColor_HDR");
 
         ImageDesc sceneDesc{};
         sceneDesc.width  = ext.width;
@@ -509,14 +585,54 @@ void Engine::Render() {
                 vkCmdEndRenderPass(cmd);
             });
 
-        m_frameGraph.AddPass("Clear")
+        m_frameGraph.AddPass("Lighting")
+            .Read(m_fgGBufferAId, ImageUsage::SampledRead)
+            .Read(m_fgGBufferBId, ImageUsage::SampledRead)
+            .Read(m_fgGBufferCId, ImageUsage::SampledRead)
+            .Read(m_fgDepthId, ImageUsage::SampledRead)
+            .Write(m_fgSceneColorHDRId, ImageUsage::ColorWrite)
+            .Execute([this](VkCommandBuffer cmd, Registry&) {
+                const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+                const RenderState& rs = m_renderStates[readIdx];
+                float viewProj[16];
+                for (int i = 0; i < 4; ++i) {
+                    for (int j = 0; j < 4; ++j) {
+                        viewProj[j * 4 + i] = rs.proj.m[0 * 4 + i] * rs.view.m[j * 4 + 0]
+                                            + rs.proj.m[1 * 4 + i] * rs.view.m[j * 4 + 1]
+                                            + rs.proj.m[2 * 4 + i] * rs.view.m[j * 4 + 2]
+                                            + rs.proj.m[3 * 4 + i] * rs.view.m[j * 4 + 3];
+                    }
+                }
+                float invViewProj[16];
+                Invert4x4ColumnMajor(viewProj, invViewProj);
+                const float lightDir[3] = { 0.5f, -1.0f, 0.3f };
+                const float lightColor[3] = { 1.0f, 0.95f, 0.9f };
+                const float ambient[3] = { 0.05f, 0.05f, 0.08f };
+                m_lightingPipeline.UpdateUniforms(invViewProj, rs.camera.position, lightDir, lightColor, ambient);
+                VkClearValue clearHDR{}; clearHDR.color.float32[0] = 0.0f; clearHDR.color.float32[1] = 0.0f; clearHDR.color.float32[2] = 0.0f; clearHDR.color.float32[3] = 1.0f;
+                VkRenderPassBeginInfo rpbi{};
+                rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                rpbi.renderPass      = m_vkSceneColorHDR.GetRenderPass();
+                rpbi.framebuffer     = m_vkSceneColorHDR.GetFramebuffer();
+                rpbi.renderArea      = {{0, 0}, m_vkSceneColorHDR.Extent()};
+                rpbi.clearValueCount = 1;
+                rpbi.pClearValues    = &clearHDR;
+                vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSceneColorHDR.Extent().width); vp.height = static_cast<float>(m_vkSceneColorHDR.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                vkCmdSetViewport(cmd, 0, 1, &vp);
+                VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSceneColorHDR.Extent();
+                vkCmdSetScissor(cmd, 0, 1, &scissor);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_lightingPipeline.GetPipeline());
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_lightingPipeline.GetPipelineLayout(), 0, 1, &m_lightingPipeline.GetDescriptorSet(), 0, nullptr);
+                vkCmdDraw(cmd, 3, 1, 0, 0);
+                vkCmdEndRenderPass(cmd);
+            });
+
+        m_frameGraph.AddPass("Tonemap")
+            .Read(m_fgSceneColorHDRId, ImageUsage::SampledRead)
             .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
             .Execute([this](VkCommandBuffer cmd, Registry&) {
-                VkClearValue clearColor{};
-                clearColor.color.float32[0] = 0.1f;
-                clearColor.color.float32[1] = 0.1f;
-                clearColor.color.float32[2] = 0.15f;
-                clearColor.color.float32[3] = 1.0f;
+                VkClearValue clearColor{}; clearColor.color.float32[0] = 0.1f; clearColor.color.float32[1] = 0.1f; clearColor.color.float32[2] = 0.15f; clearColor.color.float32[3] = 1.0f;
                 VkRenderPassBeginInfo rpbi{};
                 rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 rpbi.renderPass      = m_vkSceneColor.GetRenderPass();
@@ -525,6 +641,13 @@ void Engine::Render() {
                 rpbi.clearValueCount = 1;
                 rpbi.pClearValues    = &clearColor;
                 vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_vkSceneColor.Extent().width); vp.height = static_cast<float>(m_vkSceneColor.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                vkCmdSetViewport(cmd, 0, 1, &vp);
+                VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkSceneColor.Extent();
+                vkCmdSetScissor(cmd, 0, 1, &scissor);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
+                vkCmdDraw(cmd, 3, 1, 0, 0);
                 vkCmdEndRenderPass(cmd);
             });
 
@@ -577,6 +700,7 @@ void Engine::Render() {
     m_fgRegistry.SetImage(m_fgGBufferBId, m_vkGBuffer.GetImageB());
     m_fgRegistry.SetImage(m_fgGBufferCId, m_vkGBuffer.GetImageC());
     m_fgRegistry.SetImage(m_fgDepthId, m_vkGBuffer.GetImageDepth());
+    m_fgRegistry.SetImage(m_fgSceneColorHDRId, m_vkSceneColorHDR.GetImage());
     m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);

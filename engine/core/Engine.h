@@ -26,6 +26,9 @@
 #include "engine/render/vk/VkSceneColor.h"
 #include "engine/render/vk/VkGBuffer.h"
 #include "engine/render/vk/VkGeometryPipeline.h"
+#include "engine/render/vk/VkSceneColorHDR.h"
+#include "engine/render/vk/VkLightingPipeline.h"
+#include "engine/render/vk/VkTonemapPipeline.h"
 #include "engine/render/ShaderCache.h"
 
 #include <array>
@@ -227,15 +230,21 @@ private:
     VkDeviceMemory m_cubeVertexBufferMemory = VK_NULL_HANDLE;
     uint32_t m_cubeVertexCount = 0;
 
-    /// Frame graph: Geometry → Clear → Present (M02.4, M03.1).
+    /// SceneColor_HDR for lighting output; tonemap reads it (M03.2).
+    ::engine::render::vk::VkSceneColorHDR m_vkSceneColorHDR;
+    ::engine::render::vk::VkLightingPipeline m_lightingPipeline;
+    ::engine::render::vk::VkTonemapPipeline m_tonemapPipeline;
+
+    /// Frame graph: Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2).
     ::engine::render::FrameGraph m_frameGraph;
     ::engine::render::Registry  m_fgRegistry;
     ::engine::render::ResourceId m_fgSceneColorId = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSwapchainId  = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgGBufferAId   = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgGBufferBId   = ::engine::render::kInvalidResourceId;
-    ::engine::render::ResourceId m_fgGBufferCId   = ::engine::render::kInvalidResourceId;
-    ::engine::render::ResourceId m_fgDepthId      = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgGBufferCId    = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgDepthId       = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgSceneColorHDRId = ::engine::render::kInvalidResourceId;
     bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.

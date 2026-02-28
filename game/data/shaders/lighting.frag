@@ -134,13 +134,19 @@ void main() {
     }
 
     vec3 directLight = (diffuse + specular) * shadow * occlusion;
+
+    // M05.4 — IBL split-sum: kD = (1 - kS) * (1 - metallic), specIBL = prefiltered * (F*brdf.x + brdf.y)
+    float F_ibl = Schlick_F(NdotV, F0);  // Fresnel at viewing angle for IBL
+    float kS = F_ibl;
+    float kD = (1.0 - kS) * (1.0 - metallic);
     vec2 brdf = texture(uBrdfLut, vec2(NdotV, roughness)).rg;
     vec3 irradiance = texture(uIrradianceMap, N).rgb;
-    vec3 diffuseAmbient = irradiance * albedo * occlusion;
+    vec3 diffuseIBL = kD * irradiance * albedo * occlusion;
     vec3 R = reflect(-V, N);
     float lod = roughness * max(ubo.prefilteredMipCount - 1.0, 0.0);
-    vec3 prefilteredSpec = textureLod(uPrefilteredEnv, R, lod).rgb;
-    vec3 iblSpec = prefilteredSpec * (brdf.x * F0 + brdf.y);
-    vec3 Lo = directLight + diffuseAmbient + iblSpec * occlusion;
+    vec3 prefilteredColor = textureLod(uPrefilteredEnv, R, lod).rgb;
+    vec3 specIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y) * occlusion;
+
+    vec3 Lo = directLight + diffuseIBL + specIBL;
     outColor = vec4(Lo, 1.0);
 }

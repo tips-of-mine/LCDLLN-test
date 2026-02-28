@@ -203,3 +203,15 @@ add_custom_command(TARGET engine_app POST_BUILD
         "$<TARGET_FILE_DIR:engine_app>/config.json"
     COMMENT "Copying config.json to output directory"
 )
+
+# ---------------------------------------------------------------------------
+# hlod_builder — offline tool (M09.4: HLOD clustering + mesh merge → hlod.pak)
+# ---------------------------------------------------------------------------
+add_executable(hlod_builder tools/hlod_builder.cpp)
+target_link_libraries(hlod_builder PRIVATE nlohmann_json::nlohmann_json)
+target_include_directories(hlod_builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (MSVC)
+    target_compile_options(hlod_builder PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(hlod_builder PRIVATE -Wall -Wextra -Werror)
+endif()

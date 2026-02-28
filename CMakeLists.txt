@@ -24,6 +24,7 @@ find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 #                             (M01.2: Vulkan device + queues)
 #                             (M01.3: Vulkan swapchain + render pass + framebuffers)
 #                             (M01.4: Vulkan frame resources + render loop)
+#                             (M01.5: Shader management + hot reload)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp
@@ -42,6 +43,11 @@ add_library(engine_core STATIC
 
     # M01.4 — Vulkan frame resources + render loop
     engine/render/vk/VkFrameResources.cpp
+
+    # M01.5 — Shader management + hot reload
+    engine/render/ShaderCompiler.cpp
+    engine/render/ShaderCache.cpp
+    engine/render/ShaderWatcher.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

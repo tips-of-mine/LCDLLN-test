@@ -816,6 +816,9 @@ void Engine::BeginFrame() {
                 const std::string chunkDir = base + "/chunks/chunk_" + std::to_string(ci) + "_" + std::to_string(cj);
                 if (!::engine::world::ReadZoneChunkInstances(chunkDir + "/instances.bin", m_zoneChunkInstances))
                     m_zoneChunkInstances.clear();
+                // M11.3: load navmesh + portals for this chunk (pathfind across chunks uses these).
+                ::engine::world::ReadNavMeshBin(chunkDir + "/navmesh.bin", m_zoneNavMesh);
+                ::engine::world::ReadPortalsBin(chunkDir + "/portals.bin", m_zoneNavPortals);
             }
         }
     }

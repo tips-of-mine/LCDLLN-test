@@ -56,6 +56,7 @@
 #include "engine/world/ChunkStats.h"
 #include "engine/world/HlodRuntime.h"
 #include "engine/world/ZoneBuildFormat.h"
+#include "engine/world/NavMeshFormat.h"
 #include "engine/streaming/StreamingScheduler.h"
 #include "engine/streaming/LruCache.h"
 #include "engine/render/vk/DeferredDestroyQueue.h"
@@ -357,6 +358,8 @@ private:
     ::engine::render::vk::VkUploadBudget m_uploadBudget;
     /// M11.2: loaded zone chunk instances for placeholder display (from zone.build_path).
     std::vector<::engine::world::ZoneChunkInstance> m_zoneChunkInstances;
+    ::engine::world::NavMeshData m_zoneNavMesh;
+    std::vector<::engine::world::NavMeshPortal> m_zoneNavPortals;
     bool m_zoneBuildLoaded = false;
 
     /// True when the window was successfully created.

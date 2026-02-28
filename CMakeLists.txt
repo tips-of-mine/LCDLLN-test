@@ -44,6 +44,8 @@ add_library(engine_core STATIC
     engine/world/World.cpp
     # M11.2 — Zone builder format reader (chunk.meta + instances.bin)
     engine/world/ZoneBuildFormat.cpp
+    # M11.3 — Navmesh/portals binary format reader
+    engine/world/NavMeshFormat.cpp
     # M09.2 — Budgets par chunk (triangles/drawcalls) + instrumentation
     engine/world/ChunkStats.cpp
     engine/world/HlodRuntime.cpp
@@ -251,4 +253,29 @@ if (MSVC)
     target_compile_options(zone_builder PRIVATE /W4 /WX /utf-8)
 else()
     target_compile_options(zone_builder PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
+# Recast/Detour — M11.3 navmesh bake (FetchContent, build Recast + Detour only)
+# ---------------------------------------------------------------------------
+set(RECASTNAVIGATION_DEMO OFF CACHE BOOL "" FORCE)
+set(RECASTNAVIGATION_TESTS OFF CACHE BOOL "" FORCE)
+set(RECASTNAVIGATION_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  recastnavigation
+  GIT_REPOSITORY https://github.com/recastnavigation/recastnavigation.git
+  GIT_TAG v1.6.0
+)
+FetchContent_MakeAvailable(recastnavigation)
+
+# ---------------------------------------------------------------------------
+# navmesh_baker — offline tool (M11.3: Recast bake per chunk, navmesh.bin + portals.bin)
+# ---------------------------------------------------------------------------
+add_executable(navmesh_baker tools/navmesh_baker.cpp)
+target_link_libraries(navmesh_baker PRIVATE Recast)
+target_include_directories(navmesh_baker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${recastnavigation_SOURCE_DIR}/Recast/Include)
+if (MSVC)
+    target_compile_options(navmesh_baker PRIVATE /W4 /utf-8)
+else()
+    target_compile_options(navmesh_baker PRIVATE -Wall -Wextra)
 endif()

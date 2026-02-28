@@ -44,6 +44,9 @@ add_library(engine_core STATIC
     engine/world/World.cpp
     # M09.2 — Budgets par chunk (triangles/drawcalls) + instrumentation
     engine/world/ChunkStats.cpp
+    # M09.3 — LOD rules + instancing (props/foliage)
+    engine/world/Lod.cpp
+    engine/world/InstanceBatch.cpp
 
     # M01.1 — Vulkan instance / surface
     engine/render/vk/VkInstance.cpp

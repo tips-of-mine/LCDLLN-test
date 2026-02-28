@@ -33,6 +33,7 @@
 #include "engine/render/vk/VkTextureLoader.h"
 #include "engine/render/vk/VkShadowMap.h"
 #include "engine/render/vk/VkShadowPipeline.h"
+#include "engine/render/vk/VkBrdfLut.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -252,6 +253,9 @@ private:
     ::engine::render::vk::VkShadowMap m_vkShadowMap;
     ::engine::render::vk::VkShadowPipeline m_shadowPipeline;
     ::engine::render::CsmUniform m_csmUniform{};
+
+    /// BRDF LUT 256x256 RG16F, compute-generated at boot (M05.1).
+    ::engine::render::vk::VkBrdfLut m_vkBrdfLut;
     uint32_t m_shadowMapSize = 1024u;
 
     /// Frame graph: Shadow0..3 → Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2, M04.2).

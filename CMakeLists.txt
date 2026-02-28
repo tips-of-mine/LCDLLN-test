@@ -77,6 +77,9 @@ add_library(engine_core STATIC
     # M03.2 — Deferred lighting pass fullscreen (PBR GGX) + tonemap
     engine/render/vk/VkSceneColorHDR.cpp
     engine/render/vk/VkLightingPipeline.cpp
+
+    # M05.1 — IBL: BRDF LUT (compute) generation
+    engine/render/vk/VkBrdfLut.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
     # M03.3 — Materials: BaseColor/Normal/ORM + loader

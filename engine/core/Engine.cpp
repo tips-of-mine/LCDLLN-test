@@ -426,6 +426,22 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                     m_vkShadowMap.Shutdown();
                                                 }
                                             }
+                                            std::vector<uint8_t> brdfComp = m_shaderCache.Get("shaders/brdf_lut.comp");
+                                            if (!brdfComp.empty()) {
+                                                if (m_vkBrdfLut.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), brdfComp)) {
+                                                    if (m_vkBrdfLut.Generate(m_vkDevice.Device(), m_vkDevice.GraphicsQueue(),
+                                                                             m_vkDevice.Indices().graphicsFamily)) {
+                                                        m_lightingPipeline.SetBrdfLutView(m_vkBrdfLut.GetView(), m_vkBrdfLut.GetSampler());
+                                                    } else {
+                                                        LOG_ERROR(Render, "VkBrdfLut Generate failed");
+                                                        m_vkBrdfLut.Shutdown();
+                                                    }
+                                                } else {
+                                                    LOG_ERROR(Render, "VkBrdfLut Init failed");
+                                                }
+                                            } else {
+                                                LOG_WARN(Render, "BRDF LUT compute shader not found or failed to compile");
+                                            }
                                         }
                                     } else {
                                         LOG_ERROR(Render, "Lighting/tonemap shaders not found or failed to compile");
@@ -475,6 +491,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_lightingPipeline.Shutdown();
         m_shadowPipeline.Shutdown();
         m_vkShadowMap.Shutdown();
+        m_vkBrdfLut.Shutdown();
         m_geometryPipeline.Shutdown();
         if (m_materialSampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_vkDevice.Device(), m_materialSampler, nullptr);

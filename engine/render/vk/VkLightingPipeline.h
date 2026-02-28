@@ -60,6 +60,12 @@ public:
     void SetShadowMapViews(VkImageView view0, VkImageView view1, VkImageView view2, VkImageView view3);
 
     /**
+     * @brief Binds the BRDF LUT view and sampler to the descriptor set (M05.1).
+     * Call when BRDF LUT has been generated at boot.
+     */
+    void SetBrdfLutView(VkImageView view, VkSampler sampler);
+
+    /**
      * @brief Updates UBO with lighting params, inverse view-projection, camera position,
      * CSM matrices/splits and shadow bias (M04.3).
      * Call each frame before the lighting pass.

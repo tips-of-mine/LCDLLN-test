@@ -63,7 +63,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         return false;
     }
 
-    std::array<VkDescriptorSetLayoutBinding, 9> bindings{};
+    std::array<VkDescriptorSetLayoutBinding, 10> bindings{};
     for (uint32_t i = 0; i < 4; ++i) {
         bindings[i].binding            = i;
         bindings[i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -83,10 +83,15 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         bindings[5 + i].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
         bindings[5 + i].pImmutableSamplers = nullptr;
     }
+    bindings[9].binding            = 9;
+    bindings[9].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[9].descriptorCount    = 1;
+    bindings[9].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[9].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo dslci{};
     dslci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslci.bindingCount = 9;
+    dslci.bindingCount = 10;
     dslci.pBindings    = bindings.data();
     if (vkCreateDescriptorSetLayout(device, &dslci, nullptr, &m_setLayout) != VK_SUCCESS) {
         vkDestroyShaderModule(device, vertModule, nullptr);
@@ -111,7 +116,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
 
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
     poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[0].descriptorCount = 8;  // 4 GBuffer + 4 shadow maps
+    poolSizes[0].descriptorCount = 9;  // 4 GBuffer + 4 shadow maps + 1 BRDF LUT
     poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[1].descriptorCount = 1;
     VkDescriptorPoolCreateInfo dpci{};
@@ -367,7 +372,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
 
 void VkLightingPipeline::SetGBufferViews(VkImageView viewA, VkImageView viewB, VkImageView viewC, VkImageView viewDepth) {
     if (m_device == VK_NULL_HANDLE || m_sampler == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
-    std::array<VkDescriptorImageInfo, 8> imageInfos{};
+    std::array<VkDescriptorImageInfo, 9> imageInfos{};
     imageInfos[0].sampler     = m_sampler;
     imageInfos[0].imageView   = viewA;
     imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -385,8 +390,11 @@ void VkLightingPipeline::SetGBufferViews(VkImageView viewA, VkImageView viewB, V
         imageInfos[4 + i].imageView   = viewDepth;
         imageInfos[4 + i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     }
+    imageInfos[8].sampler     = m_sampler;
+    imageInfos[8].imageView   = viewDepth;
+    imageInfos[8].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    std::array<VkWriteDescriptorSet, 9> writes{};
+    std::array<VkWriteDescriptorSet, 10> writes{};
     for (uint32_t i = 0; i < 4; ++i) {
         writes[i].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writes[i].dstSet           = m_descriptorSet;
@@ -416,7 +424,31 @@ void VkLightingPipeline::SetGBufferViews(VkImageView viewA, VkImageView viewB, V
         writes[5 + i].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         writes[5 + i].pImageInfo       = &imageInfos[4 + i];
     }
-    vkUpdateDescriptorSets(m_device, 9, writes.data(), 0, nullptr);
+    writes[9].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[9].dstSet           = m_descriptorSet;
+    writes[9].dstBinding       = 9;
+    writes[9].dstArrayElement  = 0;
+    writes[9].descriptorCount  = 1;
+    writes[9].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writes[9].pImageInfo       = &imageInfos[8];
+    vkUpdateDescriptorSets(m_device, 10, writes.data(), 0, nullptr);
+}
+
+void VkLightingPipeline::SetBrdfLutView(VkImageView view, VkSampler sampler) {
+    if (m_device == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.sampler     = sampler;
+    imageInfo.imageView   = view;
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkWriteDescriptorSet write{};
+    write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet           = m_descriptorSet;
+    write.dstBinding       = 9;
+    write.dstArrayElement  = 0;
+    write.descriptorCount  = 1;
+    write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write.pImageInfo       = &imageInfo;
+    vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }
 
 void VkLightingPipeline::SetShadowMapViews(VkImageView view0, VkImageView view1, VkImageView view2, VkImageView view3) {

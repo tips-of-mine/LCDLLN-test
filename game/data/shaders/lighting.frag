@@ -30,6 +30,8 @@ layout(binding = 6) uniform sampler2DShadow uShadowMap1;
 layout(binding = 7) uniform sampler2DShadow uShadowMap2;
 layout(binding = 8) uniform sampler2DShadow uShadowMap3;
 
+layout(binding = 9) uniform sampler2D uBrdfLut;  // M05.1: split-sum GGX LUT (NdotV, roughness) -> (scale, bias)
+
 layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265359;
@@ -129,6 +131,8 @@ void main() {
     }
 
     vec3 directLight = (diffuse + specular) * shadow * occlusion;
-    vec3 Lo = directLight + ubo.ambient * albedo * occlusion;
+    vec2 brdf = texture(uBrdfLut, vec2(NdotV, roughness)).rg;
+    float iblSpec = brdf.x * F0 + brdf.y;
+    vec3 Lo = directLight + ubo.ambient * albedo * occlusion + iblSpec * ubo.ambient * 0.5;
     outColor = vec4(Lo, 1.0);
 }

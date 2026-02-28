@@ -8,7 +8,9 @@
 
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Input.h"
+#include "engine/render/FrameGraph.h"
 #include "engine/render/vk/VkFrameResources.h"
+#include "engine/render/vk/VkSceneColor.h"
 #include "engine/render/vk/VkSwapchain.h"
 
 #include <vulkan/vulkan.h>
@@ -144,6 +146,16 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                         m_vkDevice.Indices().graphicsFamily);
                     if (!frOk) {
                         LOG_ERROR(Render, "Vulkan frame resources initialisation failed");
+                    } else if (m_vkSwapchain.IsValid()) {
+                        const bool sceneOk = m_vkSceneColor.Init(
+                            m_vkDevice.PhysicalDevice(),
+                            m_vkDevice.Device(),
+                            m_vkSwapchain.Extent().width,
+                            m_vkSwapchain.Extent().height,
+                            m_vkSwapchain.Format());
+                        if (!sceneOk) {
+                            LOG_ERROR(Render, "SceneColor offscreen target initialisation failed");
+                        }
                     }
                 }
             }
@@ -175,6 +187,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
     // Shutdown platform subsystems (reverse order of init).
     if (!m_headless && m_windowOk) {
         m_vkFrameResources.Shutdown();
+        m_vkSceneColor.Shutdown();
         m_vkSwapchain.Shutdown();
         m_vkDevice.Shutdown();
         m_vkInstance.Shutdown();
@@ -230,28 +243,29 @@ void Engine::Update() {
 }
 
 void Engine::Render() {
-    // Recreate swapchain on resize if requested.
+    using namespace engine::render;
+    using namespace engine::render::vk;
+
+    // Recreate swapchain on resize; then recreate SceneColor to match (M02.4).
     if (m_vkSwapchain.IsValid() && m_vkSwapchain.NeedsRecreate()) {
         const uint32_t w = (m_framebufferWidth  > 0) ? static_cast<uint32_t>(m_framebufferWidth)  : 1u;
         const uint32_t h = (m_framebufferHeight > 0) ? static_cast<uint32_t>(m_framebufferHeight) : 1u;
-        m_vkSwapchain.Recreate(w, h);
+        if (m_vkSwapchain.Recreate(w, h)) {
+            m_vkSceneColor.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+        }
     }
 
-    // Skip Vulkan render if swapchain or frame resources invalid.
-    if (!m_vkSwapchain.IsValid() || !m_vkFrameResources.IsValid()) {
+    if (!m_vkSwapchain.IsValid() || !m_vkFrameResources.IsValid() || !m_vkSceneColor.IsValid()) {
         return;
     }
 
-    using namespace engine::render::vk;
     FrameResources& fr = m_vkFrameResources.Current();
 
-    // 1. Wait fence (ensures frame resources are not in use).
     if (vkWaitForFences(m_vkDevice.Device(), 1, &fr.inFlightFence, VK_TRUE, UINT64_MAX) != VK_SUCCESS) {
         LOG_ERROR(Render, "vkWaitForFences failed");
         return;
     }
 
-    // 2. Acquire next swapchain image.
     uint32_t imageIndex = 0;
     const VkResult acquireRes = vkAcquireNextImageKHR(
         m_vkDevice.Device(),
@@ -270,7 +284,77 @@ void Engine::Render() {
         return;
     }
 
-    // 3. Reset command pool and record.
+    // Build frame graph once: SceneColor + Swapchain resources, Clear pass, Present pass (M02.4).
+    if (!m_frameGraphBuilt) {
+        const VkExtent2D ext = m_vkSwapchain.Extent();
+        ImageDesc sceneDesc{};
+        sceneDesc.width  = ext.width;
+        sceneDesc.height = ext.height;
+        sceneDesc.layers = 1;
+        sceneDesc.format = m_vkSwapchain.Format();
+        m_fgSceneColorId = m_frameGraph.CreateImage(sceneDesc, "SceneColor");
+
+        ImageDesc swapDesc{};
+        swapDesc.width  = ext.width;
+        swapDesc.height = ext.height;
+        swapDesc.layers = 1;
+        swapDesc.format = m_vkSwapchain.Format();
+        m_fgSwapchainId = m_frameGraph.CreateImage(swapDesc, "Swapchain");
+
+        m_frameGraph.AddPass("Clear")
+            .Write(m_fgSceneColorId, ImageUsage::ColorWrite)
+            .Execute([this](VkCommandBuffer cmd, Registry&) {
+                VkClearValue clearColor{};
+                clearColor.color.float32[0] = 0.1f;
+                clearColor.color.float32[1] = 0.1f;
+                clearColor.color.float32[2] = 0.15f;
+                clearColor.color.float32[3] = 1.0f;
+                VkRenderPassBeginInfo rpbi{};
+                rpbi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                rpbi.renderPass      = m_vkSceneColor.GetRenderPass();
+                rpbi.framebuffer     = m_vkSceneColor.GetFramebuffer();
+                rpbi.renderArea      = {{0, 0}, m_vkSceneColor.Extent()};
+                rpbi.clearValueCount = 1;
+                rpbi.pClearValues    = &clearColor;
+                vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                vkCmdEndRenderPass(cmd);
+            });
+
+        m_frameGraph.AddPass("Present")
+            .Read(m_fgSceneColorId, ImageUsage::TransferSrc)
+            .Write(m_fgSwapchainId, ImageUsage::TransferDst)
+            .Execute([this](VkCommandBuffer cmd, Registry& reg) {
+                const VkImage srcImg = reg.GetImage(m_fgSceneColorId);
+                const VkImage dstImg = reg.GetImage(m_fgSwapchainId);
+                if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+                const VkExtent2D ext = m_vkSceneColor.Extent();
+                VkImageCopy region{};
+                region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                region.extent         = {ext.width, ext.height, 1};
+                vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+                VkImageMemoryBarrier bar{};
+                bar.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                bar.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                bar.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                bar.image               = dstImg;
+                bar.subresourceRange    = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+                bar.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+                bar.dstAccessMask       = 0;
+                vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &bar);
+            });
+
+        if (!m_frameGraph.Compile()) {
+            LOG_ERROR(Render, "Frame graph compile failed");
+            return;
+        }
+        m_frameGraphBuilt = true;
+    }
+
     vkResetCommandPool(m_vkDevice.Device(), fr.cmdPool, 0);
 
     VkCommandBufferBeginInfo cbbi{};
@@ -281,33 +365,17 @@ void Engine::Render() {
         return;
     }
 
-    VkClearValue clearColor{};
-    clearColor.color.float32[0] = 0.1f;
-    clearColor.color.float32[1] = 0.1f;
-    clearColor.color.float32[2] = 0.15f;
-    clearColor.color.float32[3] = 1.0f;
-
-    VkRenderPassBeginInfo rpbi{};
-    rpbi.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    rpbi.renderPass        = m_vkSwapchain.RenderPass();
-    rpbi.framebuffer       = m_vkSwapchain.Framebuffer(imageIndex);
-    rpbi.renderArea.offset = {0, 0};
-    rpbi.renderArea.extent = m_vkSwapchain.Extent();
-    rpbi.clearValueCount   = 1;
-    rpbi.pClearValues      = &clearColor;
-
-    vkCmdBeginRenderPass(fr.cmdBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdEndRenderPass(fr.cmdBuffer);
+    m_fgRegistry.SetImage(m_fgSceneColorId, m_vkSceneColor.GetImage());
+    m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
+    m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
 
     if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) {
         LOG_ERROR(Render, "vkEndCommandBuffer failed");
         return;
     }
 
-    // 4. Reset fence before submit.
     vkResetFences(m_vkDevice.Device(), 1, &fr.inFlightFence);
 
-    // 5. Submit.
     VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo si{};
     si.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -324,14 +392,13 @@ void Engine::Render() {
         return;
     }
 
-    // 6. Present.
     VkPresentInfoKHR pi{};
     pi.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    pi.waitSemaphoreCount  = 1;
-    pi.pWaitSemaphores     = &fr.renderFinished;
-    pi.swapchainCount      = 1;
-    pi.pSwapchains         = &m_vkSwapchain.Get();
-    pi.pImageIndices       = &imageIndex;
+    pi.waitSemaphoreCount = 1;
+    pi.pWaitSemaphores    = &fr.renderFinished;
+    pi.swapchainCount     = 1;
+    pi.pSwapchains       = &m_vkSwapchain.Get();
+    pi.pImageIndices     = &imageIndex;
 
     const VkResult presentRes = vkQueuePresentKHR(m_vkDevice.PresentQueue(), &pi);
 

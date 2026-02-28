@@ -119,6 +119,11 @@ public:
         return (i < m_framebuffers.size()) ? m_framebuffers[i] : VK_NULL_HANDLE;
     }
 
+    /// Returns the swapchain image for index i (M02.4: copy from SceneColor).
+    [[nodiscard]] VkImage GetImage(uint32_t i) const noexcept {
+        return (i < m_images.size()) ? m_images[i] : VK_NULL_HANDLE;
+    }
+
 private:
     /// Destroys only swapchain-dependent objects (views, framebuffers, swapchain).
     /// Keeps physical device, device, surface, indices for Recreate.
@@ -133,6 +138,7 @@ private:
     VkFormat               m_format         = VK_FORMAT_UNDEFINED;
     VkExtent2D             m_extent         = {0, 0};
     VkRenderPass           m_renderPass     = VK_NULL_HANDLE;
+    std::vector<VkImage>       m_images;
     std::vector<VkImageView>    m_imageViews;
     std::vector<VkFramebuffer>  m_framebuffers;
 

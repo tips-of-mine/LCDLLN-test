@@ -16,10 +16,12 @@
 
 #include "engine/core/FrameArena.h"
 #include "engine/platform/Window.h"
+#include "engine/render/FrameGraph.h"
 #include "engine/render/vk/VkInstance.h"
 #include "engine/render/vk/VkDeviceContext.h"
 #include "engine/render/vk/VkSwapchain.h"
 #include "engine/render/vk/VkFrameResources.h"
+#include "engine/render/vk/VkSceneColor.h"
 
 #include <array>
 #include <atomic>
@@ -222,6 +224,16 @@ private:
 
     /// Vulkan frame resources: cmd pools, cmd buffers, semaphores, fences (M01.4).
     ::engine::render::vk::VkFrameResources m_vkFrameResources;
+
+    /// Offscreen SceneColor target; resize with swapchain (M02.4).
+    ::engine::render::vk::VkSceneColor m_vkSceneColor;
+
+    /// Frame graph: Clear → SceneColor, Present → swapchain (M02.4).
+    ::engine::render::FrameGraph m_frameGraph;
+    ::engine::render::Registry  m_fgRegistry;
+    ::engine::render::ResourceId m_fgSceneColorId = ::engine::render::kInvalidResourceId;
+    ::engine::render::ResourceId m_fgSwapchainId  = ::engine::render::kInvalidResourceId;
+    bool m_frameGraphBuilt = false;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

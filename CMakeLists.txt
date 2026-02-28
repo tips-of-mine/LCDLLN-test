@@ -28,6 +28,7 @@ find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 #                             (M02.1: Frame Graph API + registry)
 #                             (M02.2: Frame Graph compilation + topo order)
 #                             (M02.3: Frame Graph Vulkan barriers + layout tracking)
+#                             (M02.4: Offscreen SceneColor + copy to swapchain)
 # ---------------------------------------------------------------------------
 add_library(engine_core STATIC
     engine/core/Log.cpp
@@ -54,6 +55,9 @@ add_library(engine_core STATIC
 
     # M02.1 — Frame Graph API + registry
     engine/render/FrameGraph.cpp
+
+    # M02.4 — Offscreen SceneColor + copy to swapchain
+    engine/render/vk/VkSceneColor.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

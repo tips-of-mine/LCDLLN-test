@@ -131,7 +131,7 @@ bool VkSwapchain::Init(VkPhysicalDevice physicalDevice,
     sci.imageColorSpace  = surfaceFormat.colorSpace;
     sci.imageExtent      = m_extent;
     sci.imageArrayLayers = 1;
-    sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     sci.imageSharingMode = exclusive ? VK_SHARING_MODE_EXCLUSIVE
                                     : VK_SHARING_MODE_CONCURRENT;
     if (!exclusive) {
@@ -152,15 +152,14 @@ bool VkSwapchain::Init(VkPhysicalDevice physicalDevice,
 
     uint32_t swapchainImageCount = 0;
     vkGetSwapchainImagesKHR(m_device, m_swapchain, &swapchainImageCount, nullptr);
-    std::vector<VkImage> swapchainImages(swapchainImageCount);
-    vkGetSwapchainImagesKHR(m_device, m_swapchain, &swapchainImageCount,
-                            swapchainImages.data());
+    m_images.resize(swapchainImageCount);
+    vkGetSwapchainImagesKHR(m_device, m_swapchain, &swapchainImageCount, m_images.data());
 
     m_imageViews.resize(swapchainImageCount);
     for (uint32_t i = 0; i < swapchainImageCount; ++i) {
         VkImageViewCreateInfo ivci{};
         ivci.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        ivci.image    = swapchainImages[i];
+        ivci.image    = m_images[i];
         ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
         ivci.format   = m_format;
         ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -330,7 +329,7 @@ bool VkSwapchain::Recreate(uint32_t width, uint32_t height) {
     sci.imageColorSpace  = surfaceFormat.colorSpace;
     sci.imageExtent      = m_extent;
     sci.imageArrayLayers = 1;
-    sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     sci.imageSharingMode = exclusive ? VK_SHARING_MODE_EXCLUSIVE
                                     : VK_SHARING_MODE_CONCURRENT;
     if (!exclusive) {
@@ -354,15 +353,14 @@ bool VkSwapchain::Recreate(uint32_t width, uint32_t height) {
 
     uint32_t swapchainImageCount = 0;
     vkGetSwapchainImagesKHR(m_device, m_swapchain, &swapchainImageCount, nullptr);
-    std::vector<VkImage> swapchainImages(swapchainImageCount);
-    vkGetSwapchainImagesKHR(m_device, m_swapchain, &swapchainImageCount,
-                            swapchainImages.data());
+    m_images.resize(swapchainImageCount);
+    vkGetSwapchainImagesKHR(m_device, m_swapchain, &swapchainImageCount, m_images.data());
 
     m_imageViews.resize(swapchainImageCount);
     for (uint32_t i = 0; i < swapchainImageCount; ++i) {
         VkImageViewCreateInfo ivci{};
         ivci.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        ivci.image    = swapchainImages[i];
+        ivci.image    = m_images[i];
         ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
         ivci.format   = m_format;
         ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -456,6 +454,7 @@ void VkSwapchain::DestroySwapchainObjects() {
         }
     }
     m_imageViews.clear();
+    m_images.clear();
 
     if (m_renderPass != VK_NULL_HANDLE) {
         vkDestroyRenderPass(m_device, m_renderPass, nullptr);

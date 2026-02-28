@@ -226,3 +226,27 @@ if (MSVC)
 else()
     target_compile_options(hlod_builder PRIVATE -Wall -Wextra -Werror)
 endif()
+
+# ---------------------------------------------------------------------------
+# zone_builder — offline tool (M11.1: import glTF + layout.json → zone)
+# Uses TinyGLTF (FetchContent) for glTF import as specified by ticket.
+# ---------------------------------------------------------------------------
+include(FetchContent)
+FetchContent_Declare(
+  tinygltf
+  GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+  GIT_TAG v2.6.3
+)
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_HEADER_ONLY OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(tinygltf)
+target_link_libraries(tinygltf PUBLIC nlohmann_json::nlohmann_json)
+
+add_executable(zone_builder tools/zone_builder.cpp)
+target_link_libraries(zone_builder PRIVATE nlohmann_json::nlohmann_json tinygltf)
+target_include_directories(zone_builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (MSVC)
+    target_compile_options(zone_builder PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(zone_builder PRIVATE -Wall -Wextra -Werror)
+endif()

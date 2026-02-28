@@ -35,6 +35,7 @@
 #include "engine/render/vk/VkShadowPipeline.h"
 #include "engine/render/vk/VkBrdfLut.h"
 #include "engine/render/vk/VkIrradianceCubemap.h"
+#include "engine/render/vk/VkPrefilteredEnvCubemap.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 
@@ -259,6 +260,8 @@ private:
     ::engine::render::vk::VkBrdfLut m_vkBrdfLut;
     /// Irradiance cubemap (64x64 RGBA16F) from env HDR; fallback 1x1 cube if env not loaded (M05.2).
     ::engine::render::vk::VkIrradianceCubemap m_vkIrradianceCubemap;
+    /// Prefiltered specular cubemap (256 RGBA16F + mips) from env HDR (M05.3).
+    ::engine::render::vk::VkPrefilteredEnvCubemap m_vkPrefilteredEnvCubemap;
     /// Sampler for env/irradiance cubemap (convolution source and default cube fallback).
     VkSampler m_envCubemapSampler = VK_NULL_HANDLE;
     uint32_t m_shadowMapSize = 1024u;

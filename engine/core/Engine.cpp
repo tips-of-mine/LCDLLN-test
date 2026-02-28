@@ -468,8 +468,22 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                         if (m_vkIrradianceCubemap.IsValid()) m_vkIrradianceCubemap.Shutdown();
                                                         m_lightingPipeline.SetIrradianceView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
                                                     }
+                                                    std::vector<uint8_t> prefilterComp = m_shaderCache.Get("shaders/prefilter_specular.comp");
+                                                    if (!prefilterComp.empty() && m_vkPrefilteredEnvCubemap.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), prefilterComp, 256)) {
+                                                        if (m_vkPrefilteredEnvCubemap.Prefilter(m_vkDevice.Device(), m_vkDevice.GraphicsQueue(),
+                                                                m_vkDevice.Indices().graphicsFamily, envView, m_envCubemapSampler)) {
+                                                            m_lightingPipeline.SetPrefilteredEnvView(m_vkPrefilteredEnvCubemap.GetView(), m_vkPrefilteredEnvCubemap.GetSampler());
+                                                        } else {
+                                                            m_vkPrefilteredEnvCubemap.Shutdown();
+                                                            m_lightingPipeline.SetPrefilteredEnvView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
+                                                        }
+                                                    } else {
+                                                        if (m_vkPrefilteredEnvCubemap.IsValid()) m_vkPrefilteredEnvCubemap.Shutdown();
+                                                        m_lightingPipeline.SetPrefilteredEnvView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
+                                                    }
                                                 } else {
                                                     m_lightingPipeline.SetIrradianceView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
+                                                    m_lightingPipeline.SetPrefilteredEnvView(m_textureLoader.CreateDefaultCubemap(), m_envCubemapSampler);
                                                 }
                                             }
                                         }
@@ -523,6 +537,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         m_vkShadowMap.Shutdown();
         m_vkBrdfLut.Shutdown();
         m_vkIrradianceCubemap.Shutdown();
+        m_vkPrefilteredEnvCubemap.Shutdown();
         if (m_envCubemapSampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_vkDevice.Device(), m_envCubemapSampler, nullptr);
             m_envCubemapSampler = VK_NULL_HANDLE;

@@ -83,6 +83,9 @@ add_library(engine_core STATIC
 
     # M05.2 — IBL: irradiance cubemap convolution
     engine/render/vk/VkIrradianceCubemap.cpp
+
+    # M05.3 — IBL: prefiltered specular cubemap (mips)
+    engine/render/vk/VkPrefilteredEnvCubemap.cpp
     engine/render/vk/VkTonemapPipeline.cpp
 
     # M03.3 — Materials: BaseColor/Normal/ORM + loader

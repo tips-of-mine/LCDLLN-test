@@ -72,6 +72,12 @@ public:
     void SetIrradianceView(VkImageView view, VkSampler sampler);
 
     /**
+     * @brief Binds the prefiltered specular cubemap view and sampler to the descriptor set (M05.3).
+     * Call when prefiltered env has been generated (mip = roughness * (mipCount-1)).
+     */
+    void SetPrefilteredEnvView(VkImageView view, VkSampler sampler);
+
+    /**
      * @brief Updates UBO with lighting params, inverse view-projection, camera position,
      * CSM matrices/splits and shadow bias (M04.3).
      * Call each frame before the lighting pass.
@@ -85,7 +91,8 @@ public:
                        const struct engine::render::CsmUniform* csmUniform,
                        float shadowBiasConst,
                        float shadowBiasSlope,
-                       uint32_t shadowMapSize);
+                       uint32_t shadowMapSize,
+                       uint32_t prefilteredMipCount = 1u);
 
     /**
      * @brief Destroys pipeline, layout, pool, set, sampler and UBO.

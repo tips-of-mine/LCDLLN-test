@@ -23,6 +23,7 @@ layout(binding = 4) uniform LightingUBO {
     float shadowBiasSlope;
     float shadowEnabled;
     float shadowMapSize;  // 1/texel for PCF offset
+    float prefilteredMipCount;  // M05.3: mip count for roughness -> lod
 } ubo;
 
 layout(binding = 5) uniform sampler2DShadow uShadowMap0;
@@ -32,6 +33,7 @@ layout(binding = 8) uniform sampler2DShadow uShadowMap3;
 
 layout(binding = 9) uniform sampler2D uBrdfLut;  // M05.1: split-sum GGX LUT (NdotV, roughness) -> (scale, bias)
 layout(binding = 10) uniform samplerCube uIrradianceMap;  // M05.2: diffuse irradiance cubemap (sample with N)
+layout(binding = 11) uniform samplerCube uPrefilteredEnv;  // M05.3: specular prefiltered (sample with R, lod = roughness*(mipCount-1))
 
 layout(location = 0) out vec4 outColor;
 
@@ -133,9 +135,12 @@ void main() {
 
     vec3 directLight = (diffuse + specular) * shadow * occlusion;
     vec2 brdf = texture(uBrdfLut, vec2(NdotV, roughness)).rg;
-    float iblSpec = brdf.x * F0 + brdf.y;
     vec3 irradiance = texture(uIrradianceMap, N).rgb;
     vec3 diffuseAmbient = irradiance * albedo * occlusion;
-    vec3 Lo = directLight + diffuseAmbient + iblSpec * ubo.ambient * 0.5;
+    vec3 R = reflect(-V, N);
+    float lod = roughness * max(ubo.prefilteredMipCount - 1.0, 0.0);
+    vec3 prefilteredSpec = textureLod(uPrefilteredEnv, R, lod).rgb;
+    vec3 iblSpec = prefilteredSpec * (brdf.x * F0 + brdf.y);
+    vec3 Lo = directLight + diffuseAmbient + iblSpec * occlusion;
     outColor = vec4(Lo, 1.0);
 }

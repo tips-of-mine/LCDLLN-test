@@ -15,7 +15,7 @@ namespace engine::render::vk {
 
 namespace {
 
-constexpr VkDeviceSize kUBOSize = 480u;  // 128 (lighting) + 64 (view) + 256 (lightViewProj[4]) + 16 (splitDepths) + 16 (bias + enabled + pad)
+constexpr VkDeviceSize kUBOSize = 484u;  // ... + 4 (prefilteredMipCount, M05.3)
 
 VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint8_t>& spirv) {
     if (spirv.empty() || (spirv.size() % 4) != 0) return VK_NULL_HANDLE;
@@ -63,7 +63,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
         return false;
     }
 
-    std::array<VkDescriptorSetLayoutBinding, 11> bindings{};
+    std::array<VkDescriptorSetLayoutBinding, 12> bindings{};
     for (uint32_t i = 0; i < 4; ++i) {
         bindings[i].binding            = i;
         bindings[i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -93,10 +93,15 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
     bindings[10].descriptorCount    = 1;
     bindings[10].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[10].pImmutableSamplers = nullptr;
+    bindings[11].binding            = 11;
+    bindings[11].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[11].descriptorCount    = 1;
+    bindings[11].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[11].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo dslci{};
     dslci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslci.bindingCount = 11;
+    dslci.bindingCount = 12;
     dslci.pBindings    = bindings.data();
     if (vkCreateDescriptorSetLayout(device, &dslci, nullptr, &m_setLayout) != VK_SUCCESS) {
         vkDestroyShaderModule(device, vertModule, nullptr);
@@ -121,7 +126,7 @@ bool VkLightingPipeline::Init(VkPhysicalDevice physicalDevice,
 
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
     poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[0].descriptorCount = 10;  // 4 GBuffer + 4 shadow + 1 BRDF LUT + 1 irradiance
+    poolSizes[0].descriptorCount = 11;  // 4 GBuffer + 4 shadow + 1 BRDF LUT + 1 irradiance + 1 prefiltered env
     poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[1].descriptorCount = 1;
     VkDescriptorPoolCreateInfo dpci{};
@@ -510,7 +515,8 @@ void VkLightingPipeline::UpdateUniforms(const float invViewProj[16],
                                         const CsmUniform* csmUniform,
                                         float shadowBiasConst,
                                         float shadowBiasSlope,
-                                        uint32_t shadowMapSize) {
+                                        uint32_t shadowMapSize,
+                                        uint32_t prefilteredMipCount) {
     if (!m_uboMapped) return;
     char* base = static_cast<char*>(m_uboMapped);
     std::memcpy(base, invViewProj, 64);
@@ -536,6 +542,25 @@ void VkLightingPipeline::UpdateUniforms(const float invViewProj[16],
     }
     const float sizeF = (shadowMapSize > 0u) ? static_cast<float>(shadowMapSize) : 1024.0f;
     std::memcpy(base + 476, &sizeF, 4);
+    const float mipCountF = static_cast<float>(prefilteredMipCount > 0u ? prefilteredMipCount : 1u);
+    std::memcpy(base + 480, &mipCountF, 4);
+}
+
+void VkLightingPipeline::SetPrefilteredEnvView(VkImageView view, VkSampler sampler) {
+    if (m_device == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.sampler     = sampler;
+    imageInfo.imageView   = view;
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkWriteDescriptorSet write{};
+    write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet           = m_descriptorSet;
+    write.dstBinding       = 11;
+    write.dstArrayElement  = 0;
+    write.descriptorCount  = 1;
+    write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write.pImageInfo       = &imageInfo;
+    vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }
 
 void VkLightingPipeline::Shutdown() {

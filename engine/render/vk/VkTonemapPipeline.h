@@ -42,6 +42,11 @@ public:
      */
     void SetExposureBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
 
+    /**
+     * @brief Binds LUT texture (binding 2). Optional; use neutral view when disabled (M08.4).
+     */
+    void SetLUTView(VkImageView lutView);
+
     void Shutdown();
 
     [[nodiscard]] bool IsValid() const noexcept { return m_pipeline != VK_NULL_HANDLE; }

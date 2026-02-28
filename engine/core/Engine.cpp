@@ -549,6 +549,16 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                     }
                                                 }
                                             }
+                                            {
+                                                std::string lutPath = Config::GetString("color_grading.lut_path", "");
+                                                VkImageView lutView = VK_NULL_HANDLE;
+                                                if (!lutPath.empty())
+                                                    lutView = m_textureLoader.Load(lutPath, true);
+                                                if (lutView == VK_NULL_HANDLE)
+                                                    lutView = m_textureLoader.CreateDefaultTexture(255, 255, 255, true);
+                                                if (lutView != VK_NULL_HANDLE)
+                                                    m_tonemapPipeline.SetLUTView(lutView);
+                                            }
                                             if (m_vkTaaHistory.IsValid() && m_vkTaaOutput.IsValid()) {
                                                 std::vector<uint8_t> taaVert = m_shaderCache.Get("shaders/taa.vert");
                                                 std::vector<uint8_t> taaFrag = m_shaderCache.Get("shaders/taa.frag");
@@ -1447,6 +1457,10 @@ void Engine::Render() {
                     vkCmdSetScissor(cmd, 0, 1, &scissor);
                     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
                     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
+                    struct { uint32_t lutEnable; float lutStrength; } lutParams;
+                    lutParams.lutEnable = (Config::GetInt("color_grading.enable", 0) != 0) ? 1u : 0u;
+                    lutParams.lutStrength = static_cast<float>(Config::GetFloat("color_grading.strength", 0.0));
+                    vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 8, &lutParams);
                     vkCmdDraw(cmd, 3, 1, 0, 0);
                     vkCmdEndRenderPass(cmd);
                 });
@@ -1483,6 +1497,10 @@ void Engine::Render() {
                     vkCmdSetScissor(cmd, 0, 1, &scissor);
                     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipeline());
                     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_tonemapPipeline.GetPipelineLayout(), 0, 1, &m_tonemapPipeline.GetDescriptorSet(), 0, nullptr);
+                    struct { uint32_t lutEnable; float lutStrength; } lutParams;
+                    lutParams.lutEnable = (Config::GetInt("color_grading.enable", 0) != 0) ? 1u : 0u;
+                    lutParams.lutStrength = static_cast<float>(Config::GetFloat("color_grading.strength", 0.0));
+                    vkCmdPushConstants(cmd, m_tonemapPipeline.GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, 8, &lutParams);
                     vkCmdDraw(cmd, 3, 1, 0, 0);
                     vkCmdEndRenderPass(cmd);
                 });

@@ -46,7 +46,7 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
         return false;
     }
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings{};
     bindings[0].binding            = 0;
     bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[0].descriptorCount    = 1;
@@ -57,10 +57,15 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
     bindings[1].descriptorCount    = 1;
     bindings[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[1].pImmutableSamplers = nullptr;
+    bindings[2].binding            = 2;
+    bindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[2].descriptorCount    = 1;
+    bindings[2].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[2].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo dslci{};
     dslci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dslci.bindingCount = 2;
+    dslci.bindingCount = 3;
     dslci.pBindings    = bindings.data();
     if (vkCreateDescriptorSetLayout(device, &dslci, nullptr, &m_setLayout) != VK_SUCCESS) {
         vkDestroyShaderModule(device, vertModule, nullptr);
@@ -69,12 +74,17 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
         return false;
     }
 
+    VkPushConstantRange pcr{};
+    pcr.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    pcr.offset     = 0;
+    pcr.size       = 8; // lutEnable (uint32) + lutStrength (float)
+
     VkPipelineLayoutCreateInfo plci{};
     plci.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     plci.setLayoutCount         = 1;
     plci.pSetLayouts            = &m_setLayout;
-    plci.pushConstantRangeCount = 0;
-    plci.pPushConstantRanges    = nullptr;
+    plci.pushConstantRangeCount = 1;
+    plci.pPushConstantRanges    = &pcr;
     if (vkCreatePipelineLayout(device, &plci, nullptr, &m_layout) != VK_SUCCESS) {
         vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr);
         vkDestroyShaderModule(device, vertModule, nullptr);
@@ -84,14 +94,16 @@ bool VkTonemapPipeline::Init(VkDevice device, VkRenderPass renderPass,
         return false;
     }
 
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSize.descriptorCount = 1;
+    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[0].descriptorCount = 2;
+    poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[1].descriptorCount = 1;
     VkDescriptorPoolCreateInfo dpci{};
     dpci.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     dpci.maxSets       = 1;
-    dpci.poolSizeCount = 1;
-    dpci.pPoolSizes    = &poolSize;
+    dpci.poolSizeCount = 2;
+    dpci.pPoolSizes    = poolSizes.data();
     if (vkCreateDescriptorPool(device, &dpci, nullptr, &m_descriptorPool) != VK_SUCCESS) {
         vkDestroyPipelineLayout(device, m_layout, nullptr);
         vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr);
@@ -265,6 +277,24 @@ void VkTonemapPipeline::SetExposureBuffer(VkBuffer buffer, VkDeviceSize offset, 
     write.descriptorCount = 1;
     write.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     write.pBufferInfo    = &bufferInfo;
+    vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+}
+
+void VkTonemapPipeline::SetLUTView(VkImageView lutView) {
+    if (m_device == VK_NULL_HANDLE || m_sampler == VK_NULL_HANDLE || m_descriptorSet == VK_NULL_HANDLE) return;
+    if (lutView == VK_NULL_HANDLE) return;
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.sampler     = m_sampler;
+    imageInfo.imageView   = lutView;
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkWriteDescriptorSet write{};
+    write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet          = m_descriptorSet;
+    write.dstBinding      = 2;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write.pImageInfo      = &imageInfo;
     vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }
 

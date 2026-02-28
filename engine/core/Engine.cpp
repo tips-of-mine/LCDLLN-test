@@ -1125,6 +1125,11 @@ void Engine::Render() {
                 vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
                 vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
                 vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
+                m_chunkStats.RecordDraw(
+                    ::engine::world::ChunkCoord{0, 0, 0, 0},
+                    ::engine::world::RingType::Active,
+                    1u,
+                    m_cubeVertexCount / 3u);
                 vkCmdEndRenderPass(cmd);
             });
 
@@ -1736,7 +1741,10 @@ void Engine::Render() {
     if (m_fgTaaOutputId != ::engine::render::kInvalidResourceId && m_vkTaaOutput.IsValid())
         m_fgRegistry.SetImage(m_fgTaaOutputId, m_vkTaaOutput.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
+    m_chunkStats.BeginFrame();
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
+    if (::engine::core::Time::FrameIndex() % 60u == 0u)
+        m_chunkStats.LogFrameStats();
 
     if (m_vkTaaHistory.IsValid())
         m_taaHistoryIdx ^= 1u;

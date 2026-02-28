@@ -53,6 +53,7 @@
 #include "engine/render/vk/VkExposureReduce.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
+#include "engine/world/ChunkStats.h"
 
 #include <array>
 #include <atomic>
@@ -335,6 +336,8 @@ private:
     VkBuffer m_exposureFallbackBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_exposureFallbackMemory = VK_NULL_HANDLE;
     bool m_frameGraphBuilt = false;
+    /// Per-chunk/per-ring drawcall and triangle stats (M09.2).
+    ::engine::world::ChunkStats m_chunkStats;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

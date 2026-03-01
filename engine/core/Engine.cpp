@@ -2135,5 +2135,7 @@ void Engine::SetHudData(const ::engine::ui::HudData& data) {
     m_hudData.targetHp = data.targetHp;
     m_hudData.targetMaxHp = data.targetMaxHp;
     m_hudData.combatLogLines = data.combatLogLines;
+    m_hudData.inventorySlots = data.inventorySlots;
+    m_hudData.itemLabels = data.itemLabels;
 }
 

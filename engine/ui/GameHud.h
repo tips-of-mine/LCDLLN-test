@@ -2,11 +2,13 @@
 
 /**
  * @file GameHud.h
- * @brief Game HUD: player HP bar, target frame, combat log (M16.2). Layout responsive; update at 60fps.
+ * @brief Game HUD: player HP bar, target frame, combat log (M16.2), inventory grid (M16.3).
  */
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -15,7 +17,13 @@ struct GLFWwindow;
 
 namespace engine::ui {
 
-/** @brief Data fed to the HUD each frame (player/target HP; optional combat log lines). */
+/** @brief One inventory slot: itemId and stack count. */
+struct InventorySlot {
+    uint32_t itemId = 0u;
+    uint32_t count = 0u;
+};
+
+/** @brief Data fed to the HUD each frame (player/target HP; combat log; inventory for panel). */
 struct HudData {
     uint32_t playerHp = 100u;
     uint32_t playerMaxHp = 100u;
@@ -25,6 +33,10 @@ struct HudData {
     uint32_t targetMaxHp = 100u;
     /** @brief Last N combat log lines (e.g. "You hit for 10" / "Target took 10"). */
     std::vector<std::string> combatLogLines;
+    /** @brief Inventory slots to display in grid (itemId + count per slot). Updated via InventoryDelta on game side. */
+    std::vector<InventorySlot> inventorySlots;
+    /** @brief Optional itemId -> label for tooltip (e.g. from game/data items.json). */
+    std::unordered_map<uint32_t, std::string> itemLabels;
 };
 
 /**
@@ -53,7 +65,7 @@ public:
     /** @brief Call once per frame before Draw (ImGui new frame). */
     void BeginFrame();
 
-    /** @brief Draws HUD panels: player HP bar, target frame (if hasTarget), combat log mini. Layout responsive to display size. */
+    /** @brief Draws HUD panels: player HP bar, target frame (if hasTarget), combat log mini, inventory grid + tooltip (M16.3). Layout responsive. */
     void Draw(const HudData& data);
 
     /** @brief Call after Draw to finalize ImGui draw data. */

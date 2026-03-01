@@ -213,6 +213,59 @@ void GameHud::Draw(const HudData& data) {
             ImGui::End();
         }
     }
+
+    // M16.3 — Inventory panel: grid slots, item id + qty (stack), tooltip on hover.
+    const int kInvCols = 8;
+    const float slotSize = 44.f;
+    const float invPad = 12.f;
+    const float invW = static_cast<float>(kInvCols) * slotSize + invPad * 2.f;
+    const int kInvRows = 8;
+    const float invH = static_cast<float>(kInvRows) * slotSize + invPad * 2.f + 20.f;
+    ImGui::SetNextWindowPos(ImVec2(displayW - invW - pad, displayH - invH - pad), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(invW, invH), ImGuiCond_Always);
+    if (ImGui::Begin("Inventory", nullptr, flags | ImGuiWindowFlags_NoScrollbar)) {
+        for (int row = 0; row < kInvRows; ++row) {
+            for (int col = 0; col < kInvCols; ++col) {
+                const int slotIdx = row * kInvCols + col;
+                if (col > 0) ImGui::SameLine(0.f, 4.f);
+                ImGui::PushID(slotIdx);
+                const bool hasItem = slotIdx < static_cast<int>(data.inventorySlots.size())
+                    && (data.inventorySlots[slotIdx].itemId != 0u || data.inventorySlots[slotIdx].count != 0u);
+                if (hasItem) {
+                    const InventorySlot& slot = data.inventorySlots[slotIdx];
+                    ImGui::BeginGroup();
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.35f, 0.4f, 0.9f));
+                    ImGui::Button("", ImVec2(slotSize - 2.f, slotSize - 2.f));
+                    ImGui::PopStyleColor();
+                    const ImVec2 rectMin = ImGui::GetItemRectMin();
+                    const ImVec2 rectMax = ImGui::GetItemRectMax();
+                    ImGui::SetCursorScreenPos(ImVec2(rectMin.x + 2.f, rectMin.y + 2.f));
+                    ImGui::Text("%u", slot.itemId);
+                    if (slot.count > 1u) {
+                        ImGui::SetCursorScreenPos(ImVec2(rectMax.x - 24.f, rectMax.y - 16.f));
+                        ImGui::Text("x%u", slot.count);
+                    }
+                    ImGui::EndGroup();
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup)) {
+                        ImGui::BeginTooltip();
+                        auto it = data.itemLabels.find(slot.itemId);
+                        if (it != data.itemLabels.end())
+                            ImGui::TextUnformatted(it->second.c_str());
+                        else
+                            ImGui::Text("Item %u", slot.itemId);
+                        ImGui::Text("Count: %u", slot.count);
+                        ImGui::EndTooltip();
+                    }
+                } else {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.22f, 0.8f));
+                    ImGui::Button("", ImVec2(slotSize - 2.f, slotSize - 2.f));
+                    ImGui::PopStyleColor();
+                }
+                ImGui::PopID();
+            }
+        }
+        ImGui::End();
+    }
 }
 
 void GameHud::EndFrame() {

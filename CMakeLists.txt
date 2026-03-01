@@ -242,6 +242,7 @@ add_custom_command(TARGET engine_app POST_BUILD
 add_library(engine_network STATIC
     engine/network/UdpSocket.cpp
     engine/network/ServerCore.cpp
+    engine/network/Replication.cpp
 )
 target_include_directories(engine_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)
@@ -257,7 +258,7 @@ endif()
 # server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
 # ---------------------------------------------------------------------------
 add_executable(server_app main_server.cpp)
-target_link_libraries(server_app PRIVATE engine_network)
+target_link_libraries(server_app PRIVATE engine_network engine_core)
 if(MSVC)
     target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
 else()

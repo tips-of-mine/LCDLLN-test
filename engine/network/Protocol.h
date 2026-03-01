@@ -10,11 +10,14 @@
 
 namespace engine::network {
 
-/** @brief Message type (first byte of packet). Connect: client->server, no payload. ConnectAck: server->client, payload clientId. Snapshot: server->client, payload tick then empty. */
+/** @brief Message type (first byte). Connect, ConnectAck, Snapshot (M13.1). Spawn, Despawn (M13.3). ClientInput: client->server position (M13.3). */
 enum class MsgType : uint8_t {
     Connect = 0,
     ConnectAck = 1,
     Snapshot = 2,
+    Spawn = 3,
+    Despawn = 4,
+    ClientInput = 5,
 };
 
 constexpr size_t kMaxSnapshotPayload = 0u;

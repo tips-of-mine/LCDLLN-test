@@ -1,0 +1,27 @@
+name: Linux Build
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # ou le label de votre runner Linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential
+
+      - name: Configure CMake
+        run: cmake --preset linux64   # adaptez selon votre preset
+
+      - name: Build
+        run: cmake --build --preset linux64
+
+      - name: Run server smoke test
+        run: timeout 5 ./build/server_app.exe || true

@@ -42,6 +42,9 @@ add_library(engine_core STATIC
 
     # M09.1 — World model: Zone 4km, Chunk 256m, rings
     engine/world/World.cpp
+    # M13.2 — Spatial partition: cells 64m, interest set
+    engine/world/CellGrid.cpp
+    engine/world/InterestSet.cpp
     # M11.2 — Zone builder format reader (chunk.meta + instances.bin)
     engine/world/ZoneBuildFormat.cpp
     # M11.3 — Navmesh/portals binary format reader

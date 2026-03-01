@@ -1,8 +1,9 @@
 /**
  * @file main_client.cpp
- * @brief Client app: connect, send ClientInput (position), receive Spawn/Despawn/Snapshot, print stats (M13.1, M13.3).
+ * @brief Client app: connect, ClientInput, Spawn/Despawn/Snapshot, AttackRequest, CombatEvent, HP display (M13.1, M13.3, M14.1).
  */
 
+#include "engine/network/Combat.h"
 #include "engine/network/Protocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/UdpSocket.h"
@@ -13,6 +14,7 @@
 #include <cstring>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -64,6 +66,9 @@ int main(int argc, char** argv) {
     uint8_t buf[1024];
     engine::network::PeerAddress from{};
     std::unordered_map<uint64_t, engine::network::ReplicationEntityState> replicatedEntities;
+    std::unordered_map<uint64_t, uint32_t> entityHp;
+    auto lastAttack = std::chrono::steady_clock::now();
+    constexpr uint64_t kMobEntityId = 1000u;
 
     for (int wait = 0; wait < 500; ++wait) {
         int n = engine::network::UdpRecvFrom(fd, buf, sizeof(buf), &from);
@@ -81,7 +86,7 @@ int main(int argc, char** argv) {
     }
     std::printf("client: connected, clientId=%u\n", clientId);
 
-    float myPosition[3] = { 100.f * static_cast<float>(clientId), 0.f, 100.f };
+    float myPosition[3] = { 48.f, 0.f, 50.f };
 
     for (;;) {
         int n = engine::network::UdpRecvFrom(fd, buf, sizeof(buf), &from);
@@ -89,8 +94,10 @@ int main(int argc, char** argv) {
             uint8_t msgType = buf[0];
             if (msgType == static_cast<uint8_t>(engine::network::MsgType::Spawn) && n >= 41) {
                 engine::network::ReplicationEntityState st;
-                if (engine::network::ParseSpawn(buf + 1, static_cast<size_t>(n) - 1, st))
+                if (engine::network::ParseSpawn(buf + 1, static_cast<size_t>(n) - 1, st)) {
                     replicatedEntities[st.entityId] = st;
+                    if (entityHp.find(st.entityId) == entityHp.end()) entityHp[st.entityId] = 100u;
+                }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::Despawn) && n >= 9) {
                 uint64_t eid;
                 if (engine::network::ParseDespawn(buf + 1, static_cast<size_t>(n) - 1, eid))
@@ -101,8 +108,17 @@ int main(int argc, char** argv) {
                 if (engine::network::ParseSnapshotWithStates(buf + 1, static_cast<size_t>(n) - 1, tickVal, states)) {
                     snapCount++;
                     lastTick = tickVal;
-                    for (const auto& st : states)
+                    for (const auto& st : states) {
                         replicatedEntities[st.entityId] = st;
+                        if (entityHp.find(st.entityId) == entityHp.end()) entityHp[st.entityId] = 100u;
+                    }
+                }
+            } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::CombatEvent) && n >= 26) {
+                uint64_t aId = 0, tId = 0;
+                uint32_t damage = 0, targetHp = 0;
+                bool targetDead = false;
+                if (engine::network::ParseCombatEvent(buf + 1, static_cast<size_t>(n) - 1, aId, tId, damage, targetHp, targetDead)) {
+                    entityHp[tId] = targetHp;
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::ZoneChange) && n >= 17) {
                 int32_t newZoneId = 0;
@@ -125,8 +141,17 @@ int main(int argc, char** argv) {
             engine::network::UdpSendTo(fd, input, sizeof(input), &serverAddr);
             lastInput = now;
         }
+        if (std::chrono::duration<double>(now - lastAttack).count() >= 1.5) {
+            std::vector<uint8_t> ar;
+            engine::network::SerializeAttackRequest(static_cast<uint64_t>(clientId), kMobEntityId, ar);
+            engine::network::UdpSendTo(fd, ar.data(), ar.size(), &serverAddr);
+            lastAttack = now;
+        }
         if (std::chrono::duration<double>(now - lastStats).count() >= 2.0) {
-            std::printf("client: zone=%d tick=%u snapshots=%u entities=%zu\n", static_cast<int>(currentZoneId), lastTick, snapCount, replicatedEntities.size());
+            uint32_t mobHp = 100u;
+            auto it = entityHp.find(kMobEntityId);
+            if (it != entityHp.end()) mobHp = it->second;
+            std::printf("client: zone=%d tick=%u entities=%zu mob_hp=%u\n", static_cast<int>(currentZoneId), lastTick, replicatedEntities.size(), mobHp);
             lastStats = now;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));

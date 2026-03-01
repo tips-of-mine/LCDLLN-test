@@ -1,8 +1,9 @@
 /**
  * @file main_server.cpp
- * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication by interest, zone transitions (M13.1, M13.3, M13.4).
+ * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat (M13.1, M13.3, M13.4, M14.1).
  */
 
+#include "engine/network/Combat.h"
 #include "engine/network/Protocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/ServerCore.h"
@@ -14,6 +15,7 @@
 
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <map>
@@ -38,6 +40,25 @@ int32_t ParseZoneIdFromActionId(const std::string& actionId) {
     }
     return 0;
 }
+
+constexpr float kAttackRange = 5.0f;
+constexpr uint32_t kAttackCooldownTicks = 20u;
+constexpr uint32_t kAttackDamage = 10u;
+constexpr uint32_t kDefaultMaxHp = 100u;
+constexpr uint32_t kFirstMobEntityId = 1000u;
+
+struct EntityCombat {
+    uint32_t hp = kDefaultMaxHp;
+    uint32_t maxHp = kDefaultMaxHp;
+    uint32_t lastAttackTick = 0u;
+    bool isDead = false;
+};
+
+struct Mob {
+    uint32_t entityId = 0;
+    int32_t zoneId = 0;
+    float position[3] = {0.f, 0.f, 0.f};
+};
 } // namespace
 
 int main(int argc, char** argv) {
@@ -64,6 +85,25 @@ int main(int argc, char** argv) {
     std::vector<int32_t> clientZoneIds;
     std::vector<engine::world::ClientInterestSet> clientInterestSets;
     std::unordered_map<uint32_t, engine::network::ReplicationEntityState> entityStates;
+    std::unordered_map<uint32_t, EntityCombat> entityCombat;
+    std::vector<Mob> mobs;
+    {
+        Mob m;
+        m.entityId = kFirstMobEntityId;
+        m.zoneId = 0;
+        m.position[0] = 50.f;
+        m.position[1] = 0.f;
+        m.position[2] = 50.f;
+        mobs.push_back(m);
+        engine::network::ReplicationEntityState st{};
+        st.entityId = m.entityId;
+        st.archetypeId = 1;
+        st.position[0] = m.position[0];
+        st.position[1] = m.position[1];
+        st.position[2] = m.position[2];
+        entityStates[m.entityId] = st;
+        entityCombat[m.entityId] = EntityCombat{};
+    }
     uint32_t nextId = 0;
     uint32_t tick = 0;
     constexpr size_t kRecvBuf = 256;
@@ -83,16 +123,57 @@ int main(int argc, char** argv) {
                     c.clientId = nextId++;
                     clients.push_back(c);
                     clientPositions.push_back({0.f, 0.f, 0.f});
+                    clientZoneIds.push_back(0);
                     clientInterestSets.push_back(engine::world::ClientInterestSet{});
                     engine::network::ReplicationEntityState st{};
                     st.entityId = c.clientId;
                     st.archetypeId = 0;
                     entityStates[c.clientId] = st;
+                    entityCombat[c.clientId] = EntityCombat{};
 
                     uint8_t ack[5];
                     ack[0] = static_cast<uint8_t>(engine::network::MsgType::ConnectAck);
                     std::memcpy(ack + 1, &c.clientId, 4);
                     engine::network::UdpSendTo(fd, ack, sizeof(ack), &from);
+                } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::AttackRequest) && kRecvBuf >= 17) {
+                    uint64_t attackerId = 0, targetId = 0;
+                    if (engine::network::ParseAttackRequest(buf + 1, 16u, attackerId, targetId)) {
+                        uint32_t aId = static_cast<uint32_t>(attackerId);
+                        uint32_t tId = static_cast<uint32_t>(targetId);
+                        bool valid = entityCombat.count(aId) && entityCombat.count(tId) && !entityCombat[tId].isDead;
+                        int32_t attackerZone = -1;
+                        float ax = 0.f, ay = 0.f, az = 0.f;
+                        for (size_t i = 0; valid && i < clients.size(); ++i) {
+                            if (clients[i].clientId == aId) {
+                                attackerZone = clientZoneIds[i];
+                                ax = clientPositions[i][0]; ay = clientPositions[i][1]; az = clientPositions[i][2];
+                                break;
+                            }
+                        }
+                        if (valid && attackerZone >= 0) {
+                            float tx = entityStates[tId].position[0], tz = entityStates[tId].position[2];
+                            float dx = tx - ax, dz = tz - az;
+                            if (std::sqrt(dx * dx + dz * dz) > kAttackRange) valid = false;
+                            int32_t targetZone = -1;
+                            for (size_t i = 0; valid && i < clients.size(); ++i)
+                                if (clients[i].clientId == tId) { targetZone = clientZoneIds[i]; break; }
+                            if (valid && targetZone < 0)
+                                for (const auto& m : mobs)
+                                    if (m.entityId == tId) { targetZone = m.zoneId; break; }
+                            if (valid && targetZone == attackerZone &&
+                                entityCombat[aId].lastAttackTick + kAttackCooldownTicks <= tick) {
+                                EntityCombat& tc = entityCombat[tId];
+                                uint32_t dmg = (tc.hp >= kAttackDamage) ? kAttackDamage : tc.hp;
+                                tc.hp -= dmg;
+                                if (tc.hp == 0u) tc.isDead = true;
+                                entityCombat[aId].lastAttackTick = tick;
+                                std::vector<uint8_t> ev;
+                                engine::network::SerializeCombatEvent(aId, tId, dmg, tc.hp, tc.isDead, ev);
+                                for (size_t i = 0; i < clients.size(); ++i)
+                                    engine::network::UdpSendTo(fd, ev.data(), ev.size(), &clients[i].address);
+                            }
+                        }
+                    }
                 } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::ClientInput) && kRecvBuf >= 13) {
                     float pos[3];
                     std::memcpy(pos, buf + 1, 12);
@@ -145,6 +226,11 @@ int main(int argc, char** argv) {
                 if (zoneGrids.find(zid) == zoneGrids.end())
                     zoneGrids[zid] = engine::world::CellGrid(0, 0);
                 zoneGrids[zid].Insert(static_cast<uint32_t>(clients[i].clientId), clientPositions[i][0], clientPositions[i][2]);
+            }
+            for (const auto& m : mobs) {
+                if (zoneGrids.find(m.zoneId) == zoneGrids.end())
+                    zoneGrids[m.zoneId] = engine::world::CellGrid(0, 0);
+                zoneGrids[m.zoneId].Insert(m.entityId, m.position[0], m.position[2]);
             }
 
             for (size_t i = 0; i < clients.size(); ++i)

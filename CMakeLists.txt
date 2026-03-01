@@ -243,6 +243,7 @@ add_library(engine_network STATIC
     engine/network/UdpSocket.cpp
     engine/network/ServerCore.cpp
     engine/network/Replication.cpp
+    engine/network/Combat.cpp
 )
 target_include_directories(engine_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)

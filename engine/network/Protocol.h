@@ -10,7 +10,7 @@
 
 namespace engine::network {
 
-/** @brief Message type (first byte). Connect, ConnectAck, Snapshot (M13.1). Spawn, Despawn (M13.3). ClientInput (M13.3). ZoneChange: server->client (M13.4). */
+/** @brief Message type (first byte). Connect, ConnectAck, Snapshot (M13.1). Spawn, Despawn (M13.3). ClientInput (M13.3). ZoneChange (M13.4). AttackRequest client->server, CombatEvent server->client (M14.1). */
 enum class MsgType : uint8_t {
     Connect = 0,
     ConnectAck = 1,
@@ -19,6 +19,8 @@ enum class MsgType : uint8_t {
     Despawn = 4,
     ClientInput = 5,
     ZoneChange = 6,
+    AttackRequest = 7,
+    CombatEvent = 8,
 };
 
 constexpr size_t kMaxSnapshotPayload = 0u;

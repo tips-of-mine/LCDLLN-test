@@ -31,12 +31,14 @@ namespace {
 
 using namespace nlohmann;
 
-/** @brief Minimal layout.json schema: version, instances with guid and position (meters). */
+/** @brief Minimal layout.json schema: version, instances with guid and position (meters). M12.4: optional assetId from editor export. */
 struct LayoutInstance {
     std::string guid;
     float position[3] = { 0.f, 0.f, 0.f };
     std::string meshRef;
     std::string materialRef;
+    bool useExplicitAssetId = false;
+    uint32_t explicitAssetId = 0;
 };
 
 /** @brief Loads and validates layout.json; fills instances. Returns true on success. */
@@ -71,6 +73,10 @@ bool LoadLayoutJson(const std::string& path, uint32_t& outVersion, std::vector<L
         }
         li.meshRef = inst.value("mesh", std::string(""));
         li.materialRef = inst.value("material", std::string(""));
+        if (inst.contains("assetId") && inst["assetId"].is_number_unsigned()) {
+            li.useExplicitAssetId = true;
+            li.explicitAssetId = inst["assetId"].get<uint32_t>();
+        }
         instances.push_back(std::move(li));
     }
     return true;
@@ -274,7 +280,7 @@ int main(int argc, char** argv) {
             int32_t cj = static_cast<int32_t>(std::floor(inst.position[2] / static_cast<float>(kChunkSize)));
             ChunkInstanceRecord rec;
             MakeTransformFromPosition(inst.position, rec.transform);
-            rec.assetId = ResolveMeshToAssetId(inst.meshRef, meshNames);
+            rec.assetId = inst.useExplicitAssetId ? inst.explicitAssetId : ResolveMeshToAssetId(inst.meshRef, meshNames);
             rec.flags = 0;
             chunks[{ci, cj}].push_back(rec);
         }

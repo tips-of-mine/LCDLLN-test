@@ -151,6 +151,8 @@ add_library(engine_core STATIC
     engine/editor/EditorUI.cpp
     # M12.3 — Volumes gameplay: JSON read/write for layout export
     engine/world/VolumeFormat.cpp
+    # M12.4 — layout.json export (instances + volumes, stable sort)
+    engine/world/LayoutExport.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

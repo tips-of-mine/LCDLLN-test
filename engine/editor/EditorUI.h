@@ -88,6 +88,8 @@ public:
      * @param selectedVolumeIndex M12.3: selected volume index (-1 = none).
      * @param zoneBasePath     M12.3: zone base path for export (volumes.json); empty disables export.
      * @param outExportVolumesRequested M12.3: set to true when user requests export volumes.
+     * @param outExportLayoutRequested  M12.4: set to true when user requests export layout.json.
+     * @param cameraPosition   M12.4: camera world position [x,y,z] for chunk overlay.
      */
     void DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* instances,
                    int* selectedIndex,
@@ -100,6 +102,8 @@ public:
                    int* selectedVolumeIndex,
                    const std::string* zoneBasePath,
                    bool* outExportVolumesRequested,
+                   bool* outExportLayoutRequested,
+                   const float cameraPosition[3],
                    const float cameraViewCol[16], const float cameraProjCol[16],
                    int viewportWidth, int viewportHeight);
 

@@ -400,6 +400,8 @@ private:
     int m_editorSelectedVolumeIndex = -1;
     /// M12.3 — Export volumes requested by editor UI (write volumes.json).
     bool m_editorExportVolumesRequested = false;
+    /// M12.4 — Export layout requested by editor UI (write layout.json).
+    bool m_editorExportLayoutRequested = false;
 
     /// Whether a fixed-timestep update loop is enabled.
     bool  m_useFixedTimestep = false;

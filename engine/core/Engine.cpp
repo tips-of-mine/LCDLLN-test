@@ -27,6 +27,7 @@
 #include "engine/math/Frustum.h"
 #include "engine/math/Ray.h"
 #include "engine/world/VolumeFormat.h"
+#include "engine/world/LayoutExport.h"
 #include "engine/world/HlodRuntime.h"
 #include "engine/world/World.h"
 #include "engine/streaming/StreamingScheduler.h"
@@ -1946,12 +1947,17 @@ void Engine::Render() {
             m_editorLayerVisible, m_editorLayerLocked,
             &m_editorDirty, &m_editorSaveRequested, &m_zoneChunkInstancesPath,
             &m_zoneVolumes, &m_editorSelectedVolumeIndex, &m_zoneBasePath, &m_editorExportVolumesRequested,
-            renderRs.view.m, renderRs.proj.m,
+            &m_editorExportLayoutRequested,
+            renderRs.camera.position, renderRs.view.m, renderRs.proj.m,
             m_framebufferWidth > 0 ? m_framebufferWidth : 1280,
             m_framebufferHeight > 0 ? m_framebufferHeight : 720);
         if (m_editorExportVolumesRequested && !m_zoneBasePath.empty()) {
             if (::engine::world::WriteVolumesJson(m_zoneBasePath + "/volumes.json", m_zoneVolumes))
                 m_editorExportVolumesRequested = false;
+        }
+        if (m_editorExportLayoutRequested && !m_zoneBasePath.empty()) {
+            if (::engine::world::WriteLayoutJson(m_zoneBasePath + "/layout.json", m_zoneChunkInstances, m_zoneVolumes))
+                m_editorExportLayoutRequested = false;
         }
         if (m_editorSaveRequested && m_editorDirty && !m_zoneChunkInstancesPath.empty()) {
             ::engine::world::VersionedHeader vh;

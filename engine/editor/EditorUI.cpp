@@ -7,6 +7,7 @@
 
 #include "engine/core/Log.h"
 #include "engine/math/Ray.h"
+#include "engine/world/World.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
@@ -208,6 +209,8 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
                           int* selectedVolumeIndex,
                           const std::string* zoneBasePath,
                           bool* outExportVolumesRequested,
+                          bool* outExportLayoutRequested,
+                          const float cameraPosition[3],
                           const float cameraViewCol[16], const float cameraProjCol[16],
                           int viewportWidth, int viewportHeight) {
     if (!m_ready || !instances || !selectedIndex) return;
@@ -218,6 +221,8 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
     if (!selectedVolumeIndex) selectedVolumeIndex = nullptr;
     if (!zoneBasePath) zoneBasePath = nullptr;
     if (!outExportVolumesRequested) outExportVolumesRequested = nullptr;
+    if (!outExportLayoutRequested) outExportLayoutRequested = nullptr;
+    if (!cameraPosition) cameraPosition = nullptr;
     const float vpW = static_cast<float>(viewportWidth > 0 ? viewportWidth : 1280);
     const float vpH = static_cast<float>(viewportHeight > 0 ? viewportHeight : 720);
 
@@ -464,7 +469,87 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
             if (zoneBasePath && !zoneBasePath->empty() && outExportVolumesRequested && ImGui::Button("Export volumes")) {
                 *outExportVolumesRequested = true;
             }
+            if (zoneBasePath && !zoneBasePath->empty() && outExportLayoutRequested && ImGui::Button("Export layout")) {
+                *outExportLayoutRequested = true;
+            }
             ImGui::End();
+        }
+    }
+
+    // M12.4: Chunk overlay debug (toggle) — grid 256m chunks + 64m cells + ring highlight.
+    static bool s_chunkOverlayVisible = false;
+    if (cameraPosition && cameraViewCol && cameraProjCol) {
+        ImGui::SetNextWindowPos(ImVec2(20, 730), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Debug overlay", nullptr, ImGuiWindowFlags_NoCollapse)) {
+            if (ImGui::Checkbox("Chunk grid (256m + 64m cells)", &s_chunkOverlayVisible)) {}
+            ImGui::End();
+        }
+        if (s_chunkOverlayVisible) {
+            constexpr float kChunkSizeM = 256.f;
+            constexpr float kCellSizeM = 64.f;
+            constexpr int kRangeChunks = 10;
+            const float camX = cameraPosition[0], camZ = cameraPosition[2];
+            const float minX = camX - kRangeChunks * kChunkSizeM, maxX = camX + kRangeChunks * kChunkSizeM;
+            const float minZ = camZ - kRangeChunks * kChunkSizeM, maxZ = camZ + kRangeChunks * kChunkSizeM;
+            const float y = 0.f;
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(vpW, vpH), ImGuiCond_Always);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.f, 0.f, 0.f));
+            if (ImGui::Begin("##ChunkOverlay", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus)) {
+                ImDrawList* dl = ImGui::GetWindowDrawList();
+                const ImU32 colChunk = IM_COL32(100, 100, 100, 180);
+                const ImU32 colCell = IM_COL32(60, 60, 60, 120);
+                const ImU32 colRing = IM_COL32(255, 200, 0, 220);
+                for (float x = std::floor(minX / kChunkSizeM) * kChunkSizeM; x <= maxX + 1.f; x += kChunkSizeM) {
+                    float sx0, sy0, sx1, sy1;
+                    if (::engine::math::WorldToScreen(x, y, minZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(x, y, maxZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colChunk, 1.5f);
+                }
+                for (float z = std::floor(minZ / kChunkSizeM) * kChunkSizeM; z <= maxZ + 1.f; z += kChunkSizeM) {
+                    float sx0, sy0, sx1, sy1;
+                    if (::engine::math::WorldToScreen(minX, y, z, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(maxX, y, z, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colChunk, 1.5f);
+                }
+                for (float x = std::floor(minX / kCellSizeM) * kCellSizeM; x <= maxX + 1.f; x += kCellSizeM) {
+                    float rem = std::fmod(std::fabs(x) + 0.001f, kChunkSizeM);
+                    if (rem < 0.002f || rem > kChunkSizeM - 0.002f) continue;
+                    float sx0, sy0, sx1, sy1;
+                    if (::engine::math::WorldToScreen(x, y, minZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(x, y, maxZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colCell, 1.f);
+                }
+                for (float z = std::floor(minZ / kCellSizeM) * kCellSizeM; z <= maxZ + 1.f; z += kCellSizeM) {
+                    float rem = std::fmod(std::fabs(z) + 0.001f, kChunkSizeM);
+                    if (rem < 0.002f || rem > kChunkSizeM - 0.002f) continue;
+                    float sx0, sy0, sx1, sy1;
+                    if (::engine::math::WorldToScreen(minX, y, z, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(maxX, y, z, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colCell, 1.f);
+                }
+                ::engine::world::ChunkCoord center = ::engine::world::WorldToChunkCoord(camX, camZ);
+                std::vector<::engine::world::ChunkCoord> ringChunks;
+                ::engine::world::GetChunksForRing(center, ::engine::world::RingType::Active, ringChunks);
+                for (const auto& c : ringChunks) {
+                    ::engine::world::ChunkBoundsResult b = ::engine::world::ChunkBounds(c);
+                    float sx0, sy0, sx1, sy1;
+                    if (::engine::math::WorldToScreen(b.minX, y, b.minZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(b.maxX, y, b.minZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colRing, 2.5f);
+                    if (::engine::math::WorldToScreen(b.maxX, y, b.minZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(b.maxX, y, b.maxZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colRing, 2.5f);
+                    if (::engine::math::WorldToScreen(b.maxX, y, b.maxZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(b.minX, y, b.maxZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colRing, 2.5f);
+                    if (::engine::math::WorldToScreen(b.minX, y, b.maxZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx0, &sy0) &&
+                        ::engine::math::WorldToScreen(b.minX, y, b.minZ, cameraViewCol, cameraProjCol, vpW, vpH, &sx1, &sy1))
+                        dl->AddLine(ImVec2(sx0, sy0), ImVec2(sx1, sy1), colRing, 2.5f);
+                }
+            }
+            ImGui::End();
+            ImGui::PopStyleColor();
         }
     }
 }

@@ -63,6 +63,7 @@
 #include "engine/render/vk/DeferredDestroyQueue.h"
 #include "engine/render/vk/VkUploadBudget.h"
 #include "engine/editor/EditorUI.h"
+#include "engine/ui/GameHud.h"
 #include "engine/world/GameplayVolume.h"
 
 #include <array>
@@ -221,6 +222,12 @@ private:
      * @param spawnPos Spawn position [x,y,z] in the new zone (camera is moved here).
      */
     void OnZoneChange(std::int32_t zoneId, const float spawnPos[3]);
+
+    /**
+     * @brief Sets HUD data for the next frame (player/target HP, combat log). M16.2.
+     * Call each frame from game layer when not in editor mode to drive HUD updates.
+     */
+    void SetHudData(const ::engine::ui::HudData& data);
 
     // Non-copyable, non-movable.
     Engine(const Engine&)            = delete;
@@ -414,6 +421,11 @@ private:
     bool m_editorExportVolumesRequested = false;
     /// M12.4 — Export layout requested by editor UI (write layout.json).
     bool m_editorExportLayoutRequested = false;
+
+    /// M16.2 — Game HUD (when not in editor): player/target bars, combat log.
+    ::engine::ui::GameHud m_gameHud;
+    /// M16.2 — HUD data fed each frame (player HP, target, combat log); default 100/100, no target.
+    ::engine::ui::HudData m_hudData;
 
     /// Whether a fixed-timestep update loop is enabled.
     bool  m_useFixedTimestep = false;

@@ -159,6 +159,9 @@ add_library(engine_core STATIC
     # M12.4 — layout.json export (instances + volumes, stable sort)
     engine/world/LayoutExport.cpp
 
+    # M16.2 — Game HUD: player/target bars, combat log
+    engine/ui/GameHud.cpp
+
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp
     engine/core/LinearArena.cpp

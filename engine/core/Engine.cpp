@@ -722,6 +722,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
     if (!m_headless && m_windowOk) {
         if (m_editor)
             m_editorUI.Shutdown();
+        else if (m_gameHud.IsReady())
+            m_gameHud.Shutdown();
         if (m_cubeVertexBuffer != VK_NULL_HANDLE) {
             vkDestroyBuffer(m_vkDevice.Device(), m_cubeVertexBuffer, nullptr);
             m_cubeVertexBuffer = VK_NULL_HANDLE;
@@ -1058,6 +1060,15 @@ void Engine::Render() {
                 }
                 m_editorUI.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
             }
+            if (!m_editor && m_gameHud.IsReady()) {
+                std::vector<VkImage> swapImages(m_vkSwapchain.ImageCount());
+                std::vector<VkImageView> swapViews(m_vkSwapchain.ImageCount());
+                for (uint32_t i = 0; i < m_vkSwapchain.ImageCount(); ++i) {
+                    swapImages[i] = m_vkSwapchain.GetImage(i);
+                    swapViews[i]  = m_vkSwapchain.GetImageView(i);
+                }
+                m_gameHud.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
+            }
         }
     }
 
@@ -1111,6 +1122,26 @@ void Engine::Render() {
             m_vkSwapchain.ImageCount());
         if (editorOk)
             m_editorUI.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
+    }
+    // M16.2 — Game HUD: lazy init ImGui when not in editor and swapchain valid.
+    if (!m_editor && !m_gameHud.IsReady() && m_vkSwapchain.IsValid()) {
+        std::vector<VkImage> swapImages(m_vkSwapchain.ImageCount());
+        std::vector<VkImageView> swapViews(m_vkSwapchain.ImageCount());
+        for (uint32_t i = 0; i < m_vkSwapchain.ImageCount(); ++i) {
+            swapImages[i] = m_vkSwapchain.GetImage(i);
+            swapViews[i]  = m_vkSwapchain.GetImageView(i);
+        }
+        const bool hudOk = m_gameHud.Init(
+            m_vkInstance.Get(),
+            m_vkDevice.PhysicalDevice(),
+            m_vkDevice.Device(),
+            m_vkDevice.GraphicsQueue(),
+            m_vkDevice.Indices().graphicsFamily,
+            m_window.NativeHandle(),
+            m_vkSwapchain.Format(),
+            m_vkSwapchain.ImageCount());
+        if (hudOk)
+            m_gameHud.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
     }
 
     // Build frame graph once: Shadow0..3, Geometry, Lighting, Tonemap, Present (M02.4, M03.1, M03.2, M04.2).
@@ -1974,12 +2005,19 @@ void Engine::Render() {
         }
         m_editorUI.EndFrame();
     }
+    if (!m_editor && m_gameHud.IsReady()) {
+        m_gameHud.BeginFrame();
+        m_gameHud.Draw(m_hudData);
+        m_gameHud.EndFrame();
+    }
     m_chunkStats.BeginFrame();
     m_hlodDrawsThisFrame = 0u;
     m_instanceDrawsThisFrame = 0u;
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
     if (m_editor && m_editorUI.IsReady())
         m_editorUI.Render(fr.cmdBuffer, imageIndex, m_vkSwapchain.Extent());
+    if (!m_editor && m_gameHud.IsReady())
+        m_gameHud.Render(fr.cmdBuffer, imageIndex, m_vkSwapchain.Extent());
     if (::engine::core::Time::FrameIndex() % 60u == 0u)
         m_chunkStats.LogFrameStats();
     if (::engine::core::Config::GetBool("debug.hlod_overlay", false) && ::engine::core::Time::FrameIndex() % 60u == 0u)
@@ -2087,5 +2125,15 @@ void Engine::OnZoneChange(std::int32_t zoneId, const float spawnPos[3]) {
     m_camera.position[2] = spawnPos[2];
     m_taaResetHistory = true;
     m_taaCopyHistoryOnReset = true;
+}
+
+void Engine::SetHudData(const ::engine::ui::HudData& data) {
+    m_hudData.playerHp = data.playerHp;
+    m_hudData.playerMaxHp = data.playerMaxHp;
+    m_hudData.hasTarget = data.hasTarget;
+    m_hudData.targetEntityId = data.targetEntityId;
+    m_hudData.targetHp = data.targetHp;
+    m_hudData.targetMaxHp = data.targetMaxHp;
+    m_hudData.combatLogLines = data.combatLogLines;
 }
 

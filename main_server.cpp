@@ -16,11 +16,13 @@
 #include "engine/network/UdpSocket.h"
 #include "engine/persistence/CharacterDb.h"
 #include "engine/quest/QuestDef.h"
+#include "engine/spawner/SpawnerDef.h"
 #include "engine/world/CellGrid.h"
 #include "engine/world/GameplayVolume.h"
 #include "engine/world/InterestSet.h"
 #include "engine/world/VolumeFormat.h"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -73,6 +75,14 @@ struct Mob {
     float position[3] = {0.f, 0.f, 0.f};
     float spawnPosition[3] = {0.f, 0.f, 0.f};
     engine::ai::MobAiState aiState = engine::ai::MobAiState::Idle;
+    int32_t spawnerInstanceIndex = -1;
+    int32_t spawnerSlot = -1;
+};
+
+struct SpawnerInstance {
+    engine::spawner::SpawnerDef def;
+    std::vector<uint32_t> spawnedIds;
+    std::vector<uint32_t> respawnAtTick;
 };
 
 struct LootBag {
@@ -123,6 +133,23 @@ int main(int argc, char** argv) {
             volumesPerZone[z] = std::move(vols);
     }
 
+    std::vector<SpawnerInstance> spawnerInstances;
+    for (int32_t z = 0; z <= 1; ++z) {
+        char path[256];
+        std::snprintf(path, sizeof(path), "%s/zones/zone_%03d/spawners.json", contentPath, static_cast<int>(z));
+        std::vector<engine::spawner::SpawnerDef> defs;
+        if (engine::spawner::LoadSpawnersJson(path, defs)) {
+            for (auto& d : defs) {
+                d.zoneId = z;
+                SpawnerInstance si;
+                si.def = d;
+                si.spawnedIds.resize(static_cast<size_t>(d.count), 0u);
+                si.respawnAtTick.resize(static_cast<size_t>(d.count), 0u);
+                spawnerInstances.push_back(std::move(si));
+            }
+        }
+    }
+
     std::vector<engine::network::ServerClient> clients;
     std::vector<std::array<float, 3>> clientPositions;
     std::vector<int32_t> clientZoneIds;
@@ -130,6 +157,7 @@ int main(int argc, char** argv) {
     std::unordered_map<uint32_t, engine::network::ReplicationEntityState> entityStates;
     std::unordered_map<uint32_t, EntityCombat> entityCombat;
     std::vector<Mob> mobs;
+    uint32_t nextMobEntityId = kFirstMobEntityId;
     engine::ai::ThreatTable threatTable;
     const float leashDistance = engine::ai::kDefaultLeashDistance;
     engine::loot::LootTableData defaultLootTable;
@@ -137,26 +165,6 @@ int main(int argc, char** argv) {
     std::vector<LootBag> lootBags;
     uint32_t nextLootBagId = kFirstLootBagEntityId;
     std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> playerInventory;
-    {
-        Mob m;
-        m.entityId = kFirstMobEntityId;
-        m.zoneId = 0;
-        m.position[0] = 50.f;
-        m.position[1] = 0.f;
-        m.position[2] = 50.f;
-        m.spawnPosition[0] = 50.f;
-        m.spawnPosition[1] = 0.f;
-        m.spawnPosition[2] = 50.f;
-        mobs.push_back(m);
-        engine::network::ReplicationEntityState st{};
-        st.entityId = m.entityId;
-        st.archetypeId = 1;
-        st.position[0] = m.position[0];
-        st.position[1] = m.position[1];
-        st.position[2] = m.position[2];
-        entityStates[m.entityId] = st;
-        entityCombat[m.entityId] = EntityCombat{};
-    }
     uint32_t nextId = 0;
     uint32_t tick = 0;
     constexpr size_t kRecvBuf = 256;
@@ -185,6 +193,67 @@ int main(int argc, char** argv) {
             lastAutosave = now;
         }
             while (now >= nextTick) {
+            std::map<int32_t, std::set<std::pair<int32_t, int32_t>>> playerCellsPerZone;
+            for (size_t i = 0; i < clients.size(); ++i) {
+                int32_t zid = clientZoneIds[i];
+                engine::world::CellCoord c = engine::world::WorldToCellCoord(clientPositions[i][0], clientPositions[i][2]);
+                playerCellsPerZone[zid].insert({c.cellX, c.cellZ});
+            }
+            for (size_t si = 0; si < spawnerInstances.size(); ++si) {
+                SpawnerInstance& inst = spawnerInstances[si];
+                const engine::spawner::SpawnerDef& def = inst.def;
+                engine::world::CellCoord center = engine::world::WorldToCellCoord(def.position[0], def.position[2]);
+                std::vector<engine::world::CellCoord> cellsInRadius;
+                engine::world::GetCellsInRadius(center, def.activationRadiusCells, cellsInRadius);
+                bool active = false;
+                auto it = playerCellsPerZone.find(def.zoneId);
+                if (it != playerCellsPerZone.end()) {
+                    for (const auto& c : cellsInRadius) {
+                        if (it->second.count({c.cellX, c.cellZ})) { active = true; break; }
+                    }
+                }
+                if (active) {
+                    uint32_t respawnTicks = static_cast<uint32_t>(def.respawnSec * 20.0f);
+                    for (size_t slot = 0; slot < inst.spawnedIds.size(); ++slot) {
+                        if (inst.spawnedIds[slot] != 0u) continue;
+                        if (inst.respawnAtTick[slot] != 0u && inst.respawnAtTick[slot] > tick) continue;
+                        uint32_t eid = nextMobEntityId++;
+                        Mob m;
+                        m.entityId = eid;
+                        m.zoneId = def.zoneId;
+                        m.position[0] = m.spawnPosition[0] = def.position[0];
+                        m.position[1] = m.spawnPosition[1] = def.position[1];
+                        m.position[2] = m.spawnPosition[2] = def.position[2];
+                        m.spawnerInstanceIndex = static_cast<int32_t>(si);
+                        m.spawnerSlot = static_cast<int32_t>(slot);
+                        mobs.push_back(m);
+                        engine::network::ReplicationEntityState st{};
+                        st.entityId = eid;
+                        st.archetypeId = def.archetypeId;
+                        st.position[0] = def.position[0];
+                        st.position[1] = def.position[1];
+                        st.position[2] = def.position[2];
+                        entityStates[eid] = st;
+                        entityCombat[eid] = EntityCombat{};
+                        inst.spawnedIds[slot] = eid;
+                    }
+                } else {
+                    for (size_t slot = 0; slot < inst.spawnedIds.size(); ++slot) {
+                        uint32_t eid = inst.spawnedIds[slot];
+                        if (eid == 0u) continue;
+                        inst.spawnedIds[slot] = 0u;
+                        inst.respawnAtTick[slot] = tick;
+                        threatTable.Clear(eid);
+                        mobs.erase(std::remove_if(mobs.begin(), mobs.end(), [eid](const Mob& m) { return m.entityId == eid; }), mobs.end());
+                        entityStates.erase(eid);
+                        entityCombat.erase(eid);
+                        std::vector<uint8_t> despawnPkt;
+                        engine::network::SerializeDespawn(static_cast<uint64_t>(eid), despawnPkt);
+                        for (size_t i = 0; i < clients.size(); ++i)
+                            engine::network::UdpSendTo(fd, despawnPkt.data(), despawnPkt.size(), &clients[i].address);
+                    }
+                }
+            }
             auto fireQuestEvent = [&](uint32_t cid, engine::quest::QuestStepType stepType, const std::string& targetStr, uint32_t count) {
                 const engine::network::PeerAddress* addr = nullptr;
                 for (size_t i = 0; i < clients.size(); ++i) if (clients[i].clientId == cid) { addr = &clients[i].address; break; }
@@ -378,6 +447,24 @@ int main(int argc, char** argv) {
                                     }
                                     std::string killTarget = "archetype:" + std::to_string(static_cast<unsigned>(entityStates[tId].archetypeId));
                                     fireQuestEvent(aId, engine::quest::QuestStepType::Kill, killTarget, 1);
+                                    auto mobIt = std::find_if(mobs.begin(), mobs.end(), [tId](const Mob& m) { return m.entityId == tId; });
+                                    if (mobIt != mobs.end() && mobIt->spawnerInstanceIndex >= 0) {
+                                        SpawnerInstance& si = spawnerInstances[static_cast<size_t>(mobIt->spawnerInstanceIndex)];
+                                        int32_t slot = mobIt->spawnerSlot;
+                                        if (slot >= 0 && slot < static_cast<int32_t>(si.spawnedIds.size())) {
+                                            uint32_t respawnTicks = static_cast<uint32_t>(si.def.respawnSec * 20.0f);
+                                            si.respawnAtTick[static_cast<size_t>(slot)] = tick + respawnTicks;
+                                            si.spawnedIds[static_cast<size_t>(slot)] = 0u;
+                                        }
+                                        threatTable.Clear(tId);
+                                        mobs.erase(mobIt);
+                                        entityStates.erase(tId);
+                                        entityCombat.erase(tId);
+                                        std::vector<uint8_t> despawnPkt;
+                                        engine::network::SerializeDespawn(static_cast<uint64_t>(tId), despawnPkt);
+                                        for (size_t i = 0; i < clients.size(); ++i)
+                                            engine::network::UdpSendTo(fd, despawnPkt.data(), despawnPkt.size(), &clients[i].address);
+                                    }
                                 }
                             }
                         }

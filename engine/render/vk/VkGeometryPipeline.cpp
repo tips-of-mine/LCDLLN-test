@@ -41,7 +41,8 @@ bool VkGeometryPipeline::Init(VkDevice device,
                               VkRenderPass renderPass,
                               const std::vector<uint8_t>& vertSpirv,
                               const std::vector<uint8_t>& fragSpirv,
-                              VkDescriptorSetLayout materialSetLayout) {
+                              VkDescriptorSetLayout materialSetLayout,
+                              VkDescriptorSetLayout transformsSetLayout) {
     if (device == VK_NULL_HANDLE || renderPass == VK_NULL_HANDLE ||
         vertSpirv.empty() || fragSpirv.empty()) {
         return false;
@@ -61,12 +62,19 @@ bool VkGeometryPipeline::Init(VkDevice device,
     VkPushConstantRange pushConstant{};
     pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstant.offset      = 0;
-    pushConstant.size        = 256; // viewProjCurr, viewProjPrev, modelCurr, modelPrev (M07.3)
+    pushConstant.size        = (transformsSetLayout != VK_NULL_HANDLE) ? 260u : 256u; // + useIndirect (4) when M18.2
+
+    std::array<VkDescriptorSetLayout, 2> setLayouts{};
+    uint32_t setLayoutCount = 0u;
+    if (materialSetLayout != VK_NULL_HANDLE)
+        setLayouts[setLayoutCount++] = materialSetLayout;
+    if (transformsSetLayout != VK_NULL_HANDLE)
+        setLayouts[setLayoutCount++] = transformsSetLayout;
 
     VkPipelineLayoutCreateInfo plci{};
     plci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    plci.setLayoutCount         = (materialSetLayout != VK_NULL_HANDLE) ? 1u : 0u;
-    plci.pSetLayouts            = (materialSetLayout != VK_NULL_HANDLE) ? &materialSetLayout : nullptr;
+    plci.setLayoutCount         = setLayoutCount;
+    plci.pSetLayouts            = setLayouts.data();
     plci.pushConstantRangeCount = 1;
     plci.pPushConstantRanges    = &pushConstant;
     if (vkCreatePipelineLayout(device, &plci, nullptr, &m_layout) != VK_SUCCESS) {

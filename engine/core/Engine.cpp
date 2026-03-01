@@ -273,6 +273,79 @@ bool CreateParticleInstanceBuffer(VkPhysicalDevice physicalDevice, VkDevice devi
     return true;
 }
 
+// M18.2 — Culling buffers: drawItem (device + staging), indirect, count, visibleTransforms.
+bool CreateCullingBuffers(VkPhysicalDevice physicalDevice, VkDevice device,
+                          uint32_t maxDrawItems,
+                          VkBuffer* outDrawItem, VkDeviceMemory* outDrawItemMem,
+                          VkBuffer* outDrawItemStaging, VkDeviceMemory* outDrawItemStagingMem,
+                          VkBuffer* outIndirect, VkDeviceMemory* outIndirectMem,
+                          VkBuffer* outCount, VkDeviceMemory* outCountMem,
+                          VkBuffer* outVisible, VkDeviceMemory* outVisibleMem) {
+    using namespace ::engine::render;
+    const VkDeviceSize drawItemSize = static_cast<VkDeviceSize>(maxDrawItems) * kDrawItemGpuSize;
+    const VkDeviceSize indirectSize = static_cast<VkDeviceSize>(maxDrawItems) * 16u;
+    const VkDeviceSize visibleSize  = static_cast<VkDeviceSize>(maxDrawItems) * 64u;
+
+    auto makeBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProps,
+                          VkBuffer* buf, VkDeviceMemory* mem) -> bool {
+        VkBufferCreateInfo bci{};
+        bci.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bci.size        = size;
+        bci.usage       = usage;
+        bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        if (vkCreateBuffer(device, &bci, nullptr, buf) != VK_SUCCESS) return false;
+        VkMemoryRequirements mr;
+        vkGetBufferMemoryRequirements(device, *buf, &mr);
+        VkMemoryAllocateInfo alloc{};
+        alloc.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        alloc.allocationSize  = mr.size;
+        alloc.memoryTypeIndex = FindMemoryType(physicalDevice, mr.memoryTypeBits, memProps);
+        if (alloc.memoryTypeIndex == UINT32_MAX) { vkDestroyBuffer(device, *buf, nullptr); *buf = VK_NULL_HANDLE; return false; }
+        if (vkAllocateMemory(device, &alloc, nullptr, mem) != VK_SUCCESS) {
+            vkDestroyBuffer(device, *buf, nullptr); *buf = VK_NULL_HANDLE; return false;
+        }
+        if (vkBindBufferMemory(device, *buf, *mem, 0) != VK_SUCCESS) {
+            vkFreeMemory(device, *mem, nullptr); vkDestroyBuffer(device, *buf, nullptr);
+            *buf = VK_NULL_HANDLE; *mem = VK_NULL_HANDLE; return false;
+        }
+        return true;
+    };
+
+    if (!makeBuffer(drawItemSize,
+                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, outDrawItem, outDrawItemMem))
+        return false;
+    if (!makeBuffer(drawItemSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    outDrawItemStaging, outDrawItemStagingMem)) {
+        vkFreeMemory(device, *outDrawItemMem, nullptr); vkDestroyBuffer(device, *outDrawItem, nullptr);
+        *outDrawItem = VK_NULL_HANDLE; *outDrawItemMem = VK_NULL_HANDLE;
+        return false;
+    }
+    if (!makeBuffer(indirectSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, outIndirect, outIndirectMem)) {
+        vkFreeMemory(device, *outDrawItemStagingMem, nullptr); vkDestroyBuffer(device, *outDrawItemStaging, nullptr);
+        vkFreeMemory(device, *outDrawItemMem, nullptr); vkDestroyBuffer(device, *outDrawItem, nullptr);
+        return false;
+    }
+    if (!makeBuffer(4u, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, outCount, outCountMem)) {
+        vkFreeMemory(device, *outIndirectMem, nullptr); vkDestroyBuffer(device, *outIndirect, nullptr);
+        vkFreeMemory(device, *outDrawItemStagingMem, nullptr); vkDestroyBuffer(device, *outDrawItemStaging, nullptr);
+        vkFreeMemory(device, *outDrawItemMem, nullptr); vkDestroyBuffer(device, *outDrawItem, nullptr);
+        return false;
+    }
+    if (!makeBuffer(visibleSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, outVisible, outVisibleMem)) {
+        vkFreeMemory(device, *outCountMem, nullptr); vkDestroyBuffer(device, *outCount, nullptr);
+        vkFreeMemory(device, *outIndirectMem, nullptr); vkDestroyBuffer(device, *outIndirect, nullptr);
+        vkFreeMemory(device, *outDrawItemStagingMem, nullptr); vkDestroyBuffer(device, *outDrawItemStaging, nullptr);
+        vkFreeMemory(device, *outDrawItemMem, nullptr); vkDestroyBuffer(device, *outDrawItem, nullptr);
+        return false;
+    }
+    return true;
+}
+
 // M17.3 — Decal cube: 8 vertices (vec3), 36 indices (uint16).
 const float kDecalCubeVertices[8][3] = {
     {-0.5f, -0.5f, -0.5f}, { 0.5f, -0.5f, -0.5f}, { 0.5f,  0.5f, -0.5f}, {-0.5f,  0.5f, -0.5f},
@@ -613,20 +686,78 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/, ::engine::aud
                                         }
                                     }
                                 }
+                                // M18.2 — Transforms set layout for indirect-draw visible transforms buffer.
+                                if (m_transformsSetLayout == VK_NULL_HANDLE) {
+                                    VkDescriptorSetLayoutBinding bind{};
+                                    bind.binding         = 0;
+                                    bind.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                                    bind.descriptorCount = 1;
+                                    bind.stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+                                    VkDescriptorSetLayoutCreateInfo dslci{};
+                                    dslci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                                    dslci.bindingCount = 1;
+                                    dslci.pBindings    = &bind;
+                                    if (vkCreateDescriptorSetLayout(m_vkDevice.Device(), &dslci, nullptr, &m_transformsSetLayout) != VK_SUCCESS)
+                                        m_transformsSetLayout = VK_NULL_HANDLE;
+                                }
                                 std::vector<uint8_t> vertSpirv = m_shaderCache.Get("shaders/geometry.vert");
                                 std::vector<uint8_t> fragSpirv = m_shaderCache.Get("shaders/geometry.frag");
                                 if (!vertSpirv.empty() && !fragSpirv.empty() && m_materialSetLayout != VK_NULL_HANDLE) {
-                                    if (!m_geometryPipeline.Init(m_vkDevice.Device(),
-                                                                 m_vkGBuffer.GetRenderPass(),
-                                                                 vertSpirv, fragSpirv, m_materialSetLayout)) {
-                                        LOG_ERROR(Render, "Geometry pipeline initialisation failed");
-                                    } else if (!CreateCubeVertexBuffer(
+                                    if (!CreateCubeVertexBuffer(
                                             m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
                                             &m_cubeVertexBuffer, &m_cubeVertexBufferMemory)) {
                                         LOG_ERROR(Render, "Cube vertex buffer creation failed");
-                                        m_geometryPipeline.Shutdown();
                                     } else {
                                         m_cubeVertexCount = kCubeVertexCount;
+                                        if (m_transformsSetLayout != VK_NULL_HANDLE && CreateCullingBuffers(
+                                                m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), kMaxDrawItems,
+                                                &m_drawItemBuffer, &m_drawItemMemory,
+                                                &m_drawItemStagingBuffer, &m_drawItemStagingMemory,
+                                                &m_indirectBuffer, &m_indirectMemory,
+                                                &m_countBuffer, &m_countMemory,
+                                                &m_visibleTransformsBuffer, &m_visibleTransformsMemory)) {
+                                            VkDescriptorPoolSize poolSize{};
+                                            poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                                            poolSize.descriptorCount = 1;
+                                            VkDescriptorPoolCreateInfo dpci{};
+                                            dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                                            dpci.maxSets = 1;
+                                            dpci.poolSizeCount = 1;
+                                            dpci.pPoolSizes = &poolSize;
+                                            if (vkCreateDescriptorPool(m_vkDevice.Device(), &dpci, nullptr, &m_transformsDescriptorPool) == VK_SUCCESS) {
+                                                VkDescriptorSetAllocateInfo dsai{};
+                                                dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                                                dsai.descriptorPool = m_transformsDescriptorPool;
+                                                dsai.descriptorSetCount = 1;
+                                                dsai.pSetLayouts = &m_transformsSetLayout;
+                                                if (vkAllocateDescriptorSets(m_vkDevice.Device(), &dsai, &m_transformsDescriptorSet) == VK_SUCCESS) {
+                                                    VkDescriptorBufferInfo dbi{};
+                                                    dbi.buffer = m_visibleTransformsBuffer;
+                                                    dbi.offset = 0;
+                                                    dbi.range = VK_WHOLE_SIZE;
+                                                    VkWriteDescriptorSet wds{};
+                                                    wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                                                    wds.dstSet = m_transformsDescriptorSet;
+                                                    wds.dstBinding = 0;
+                                                    wds.descriptorCount = 1;
+                                                    wds.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                                                    wds.pBufferInfo = &dbi;
+                                                    vkUpdateDescriptorSets(m_vkDevice.Device(), 1, &wds, 0, nullptr);
+                                                }
+                                            }
+                                            std::vector<uint8_t> cullComp = m_shaderCache.Get("shaders/frustum_cull.comp");
+                                            if (!cullComp.empty())
+                                                m_cullingPipeline.Init(m_vkDevice.Device(), cullComp, m_drawItemBuffer, m_indirectBuffer, m_countBuffer, m_visibleTransformsBuffer);
+                                        }
+                                        VkDescriptorSetLayout transformsLayoutForGeom = (m_transformsDescriptorSet != VK_NULL_HANDLE) ? m_transformsSetLayout : VK_NULL_HANDLE;
+                                        std::vector<uint8_t> vertSpirvGeom = (transformsLayoutForGeom != VK_NULL_HANDLE)
+                                            ? m_shaderCache.Get("shaders/geometry.vert", std::vector<std::string>{"USE_INDIRECT_DRAWS"})
+                                            : vertSpirv;
+                                        if (vertSpirvGeom.empty()) vertSpirvGeom = vertSpirv;
+                                        if (!m_geometryPipeline.Init(m_vkDevice.Device(), m_vkGBuffer.GetRenderPass(),
+                                                vertSpirvGeom, fragSpirv, m_materialSetLayout, transformsLayoutForGeom)) {
+                                            LOG_ERROR(Render, "Geometry pipeline initialisation failed");
+                                        }
                                     }
                                 } else {
                                     LOG_ERROR(Render, "Geometry shaders not found or failed to compile");
@@ -1015,6 +1146,19 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/, ::engine::aud
             vkDestroySampler(m_vkDevice.Device(), m_envCubemapSampler, nullptr);
             m_envCubemapSampler = VK_NULL_HANDLE;
         }
+        m_cullingPipeline.Shutdown();
+        if (m_visibleTransformsBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_visibleTransformsBuffer, nullptr); m_visibleTransformsBuffer = VK_NULL_HANDLE; }
+        if (m_visibleTransformsMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_visibleTransformsMemory, nullptr); m_visibleTransformsMemory = VK_NULL_HANDLE; }
+        if (m_countBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_countBuffer, nullptr); m_countBuffer = VK_NULL_HANDLE; }
+        if (m_countMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_countMemory, nullptr); m_countMemory = VK_NULL_HANDLE; }
+        if (m_indirectBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_indirectBuffer, nullptr); m_indirectBuffer = VK_NULL_HANDLE; }
+        if (m_indirectMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_indirectMemory, nullptr); m_indirectMemory = VK_NULL_HANDLE; }
+        if (m_drawItemStagingBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_drawItemStagingBuffer, nullptr); m_drawItemStagingBuffer = VK_NULL_HANDLE; }
+        if (m_drawItemStagingMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_drawItemStagingMemory, nullptr); m_drawItemStagingMemory = VK_NULL_HANDLE; }
+        if (m_drawItemBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_drawItemBuffer, nullptr); m_drawItemBuffer = VK_NULL_HANDLE; }
+        if (m_drawItemMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_drawItemMemory, nullptr); m_drawItemMemory = VK_NULL_HANDLE; }
+        if (m_transformsDescriptorPool != VK_NULL_HANDLE) { vkDestroyDescriptorPool(m_vkDevice.Device(), m_transformsDescriptorPool, nullptr); m_transformsDescriptorPool = VK_NULL_HANDLE; m_transformsDescriptorSet = VK_NULL_HANDLE; }
+        if (m_transformsSetLayout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(m_vkDevice.Device(), m_transformsSetLayout, nullptr); m_transformsSetLayout = VK_NULL_HANDLE; }
         m_geometryPipeline.Shutdown();
         if (m_materialSampler != VK_NULL_HANDLE) {
             vkDestroySampler(m_vkDevice.Device(), m_materialSampler, nullptr);
@@ -1585,6 +1729,49 @@ void Engine::Render() {
             .Execute([this](VkCommandBuffer cmd, Registry&) {
                 const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
                 const RenderState& rs = m_renderStates[readIdx];
+
+                uint32_t gpuDrawItemCount = 0u;
+                if (m_cullingPipeline.IsValid() && m_drawItemStagingBuffer != VK_NULL_HANDLE && !m_zoneChunkInstances.empty()) {
+                    std::vector<::engine::render::DrawItemGpu> drawItems;
+                    for (const auto& inst : m_zoneChunkInstances) {
+                        if (m_editor) {
+                            const uint32_t layer = inst.flags & 0x0Fu;
+                            if (layer >= 16u || !m_editorLayerVisible[layer]) continue;
+                        }
+                        ::engine::render::DrawItemGpu di;
+                        ::engine::render::BuildDrawItemFromInstance(inst, di);
+                        drawItems.push_back(di);
+                    }
+                    if (!drawItems.empty() && drawItems.size() <= kMaxDrawItems) {
+                        gpuDrawItemCount = static_cast<uint32_t>(drawItems.size());
+                        const VkDeviceSize copySize = drawItems.size() * ::engine::render::kDrawItemGpuSize;
+                        void* mapped = nullptr;
+                        if (vkMapMemory(m_vkDevice.Device(), m_drawItemStagingMemory, 0, copySize, 0, &mapped) == VK_SUCCESS) {
+                            std::memcpy(mapped, drawItems.data(), copySize);
+                            vkUnmapMemory(m_vkDevice.Device(), m_drawItemStagingMemory);
+                        }
+                        VkBufferCopy bc{}; bc.srcOffset = 0; bc.dstOffset = 0; bc.size = copySize;
+                        vkCmdCopyBuffer(cmd, m_drawItemStagingBuffer, m_drawItemBuffer, 1, &bc);
+                        vkCmdFillBuffer(cmd, m_countBuffer, 0, 4, 0);
+                        VkMemoryBarrier memBarrier{};
+                        memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                        memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                        memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+                        vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+                        float planes[24];
+                        for (int i = 0; i < 6; ++i) {
+                            planes[i * 4 + 0] = rs.frustum.planes[i].nx;
+                            planes[i * 4 + 1] = rs.frustum.planes[i].ny;
+                            planes[i * 4 + 2] = rs.frustum.planes[i].nz;
+                            planes[i * 4 + 3] = rs.frustum.planes[i].d;
+                        }
+                        m_cullingPipeline.Dispatch(cmd, planes, gpuDrawItemCount);
+                        memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+                        memBarrier.dstAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT | VK_ACCESS_SHADER_READ_BIT;
+                        vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+                    }
+                }
+
                 const float center[3] = { m_currModelMatrix[12], m_currModelMatrix[13], m_currModelMatrix[14] };
                 float dx = center[0] - rs.camera.position[0];
                 float dy = center[1] - rs.camera.position[1];
@@ -1597,11 +1784,12 @@ void Engine::Render() {
                     && ::engine::world::WithinDrawDistance(rs.camera.position, center, rs.camera.farZ);
                 const bool useHlod = visible && ::engine::world::UseHlodForDistance(distance);
 
-                float pushData[64];
+                float pushData[66]; // 256 bytes (viewProjCurr, viewProjPrev, modelCurr, modelPrev) + 4 bytes useIndirect
                 std::memcpy(pushData, rs.viewProjCurr, sizeof(rs.viewProjCurr));
                 std::memcpy(pushData + 16, rs.viewProjPrev, sizeof(rs.viewProjPrev));
                 std::memcpy(pushData + 32, m_currModelMatrix, sizeof(m_currModelMatrix));
                 std::memcpy(pushData + 48, m_prevModelMatrix, sizeof(m_prevModelMatrix));
+                *reinterpret_cast<uint32_t*>(pushData + 64) = 0u; // useIndirect = 0 for first draw
                 VkClearValue clearVals[5]{};
                 clearVals[0].color.float32[0] = 0.0f; clearVals[0].color.float32[1] = 0.0f; clearVals[0].color.float32[2] = 0.0f; clearVals[0].color.float32[3] = 1.0f;
                 clearVals[1].color.float32[0] = 0.0f; clearVals[1].color.float32[1] = 0.0f; clearVals[1].color.float32[2] = 0.0f; clearVals[1].color.float32[3] = 1.0f;
@@ -1621,13 +1809,16 @@ void Engine::Render() {
                 VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_vkGBuffer.Extent();
                 vkCmdSetScissor(cmd, 0, 1, &scissor);
                 vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_geometryPipeline.GetPipeline());
+                std::array<VkDescriptorSet, 2> geomSets = { m_defaultMaterial.descriptorSet, m_transformsDescriptorSet };
+                uint32_t geomSetCount = (m_transformsDescriptorSet != VK_NULL_HANDLE) ? 2u : 1u;
+                uint32_t pushSize = (geomSetCount == 2u) ? 260u : 256u;
                 if (m_defaultMaterial.descriptorSet != VK_NULL_HANDLE) {
                     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_geometryPipeline.GetPipelineLayout(),
-                                           0, 1, &m_defaultMaterial.descriptorSet, 0, nullptr);
+                                           0, geomSetCount, geomSets.data(), 0, nullptr);
                 }
                 VkDeviceSize offset = 0;
                 vkCmdBindVertexBuffers(cmd, 0, 1, &m_cubeVertexBuffer, &offset);
-                vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
+                vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushSize, pushData);
                 if (visible) {
                     vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
                     if (useHlod)
@@ -1640,16 +1831,23 @@ void Engine::Render() {
                         1u,
                         m_cubeVertexCount / 3u);
                 }
-                /* M11.2: placeholders for loaded zone chunk instances. M12.2: skip hidden layers in editor. */
-                for (const auto& inst : m_zoneChunkInstances) {
-                    if (m_editor) {
-                        const uint32_t layer = inst.flags & 0x0Fu;
-                        if (layer >= 16u || !m_editorLayerVisible[layer]) continue;
+                if (gpuDrawItemCount > 0u && m_indirectBuffer != VK_NULL_HANDLE && m_countBuffer != VK_NULL_HANDLE && m_transformsDescriptorSet != VK_NULL_HANDLE) {
+                    *reinterpret_cast<uint32_t*>(pushData + 64) = 1u; // useIndirect = 1
+                    vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 260, pushData);
+                    vkCmdDrawIndirectCount(cmd, m_indirectBuffer, 0, m_countBuffer, 0, kMaxDrawItems, sizeof(VkDrawIndirectCommand));
+                    m_instanceDrawsThisFrame += gpuDrawItemCount;
+                } else {
+                    for (const auto& inst : m_zoneChunkInstances) {
+                        if (m_editor) {
+                            const uint32_t layer = inst.flags & 0x0Fu;
+                            if (layer >= 16u || !m_editorLayerVisible[layer]) continue;
+                        }
+                        std::memcpy(pushData + 32, inst.transform, sizeof(inst.transform));
+                        std::memcpy(pushData + 48, inst.transform, sizeof(inst.transform));
+                        *reinterpret_cast<uint32_t*>(pushData + 64) = 0u;
+                        vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pushSize, pushData);
+                        vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
                     }
-                    std::memcpy(pushData + 32, inst.transform, sizeof(inst.transform));
-                    std::memcpy(pushData + 48, inst.transform, sizeof(inst.transform));
-                    vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
-                    vkCmdDraw(cmd, m_cubeVertexCount, 1, 0, 0);
                 }
                 vkCmdEndRenderPass(cmd);
             });

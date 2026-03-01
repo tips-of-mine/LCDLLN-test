@@ -176,6 +176,9 @@ add_library(engine_core STATIC
     engine/render/DecalComponent.cpp
     engine/render/vk/VkDecalPass.cpp
     engine/render/vk/VkDecalPipeline.cpp
+    # M18.2 — GPU frustum culling + indirect draws
+    engine/render/DrawItem.cpp
+    engine/render/vk/VkCullingPipeline.cpp
     # M18.1 — GPU timestamp query pool (per-pass timing)
     engine/render/vk/VkTimestampPool.cpp
 

@@ -57,9 +57,11 @@
 #include "engine/render/vk/VkParticlePipeline.h"
 #include "engine/render/ParticleSystem.h"
 #include "engine/render/DecalComponent.h"
+#include "engine/render/DrawItem.h"
 #include "engine/render/vk/VkDecalPass.h"
 #include "engine/render/vk/VkDecalPipeline.h"
 #include "engine/render/vk/VkTimestampPool.h"
+#include "engine/render/vk/VkCullingPipeline.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 #include "engine/world/ChunkStats.h"
@@ -375,6 +377,23 @@ private:
     ::engine::render::vk::VkTimestampPool m_timestampPool;
     std::vector<std::pair<std::string, float>> m_lastGpuPassMs;
     bool m_hasSubmittedTimestampFrame = false;
+
+    /// M18.2 — GPU frustum culling: DrawItem buffer, indirect buffer, visible transforms, compute pipeline.
+    static constexpr uint32_t kMaxDrawItems = 16384u;
+    VkBuffer m_drawItemBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_drawItemMemory = VK_NULL_HANDLE;
+    VkBuffer m_drawItemStagingBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_drawItemStagingMemory = VK_NULL_HANDLE;
+    VkBuffer m_indirectBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_indirectMemory = VK_NULL_HANDLE;
+    VkBuffer m_countBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_countMemory = VK_NULL_HANDLE;
+    VkBuffer m_visibleTransformsBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_visibleTransformsMemory = VK_NULL_HANDLE;
+    ::engine::render::vk::VkCullingPipeline m_cullingPipeline;
+    VkDescriptorSetLayout m_transformsSetLayout = VK_NULL_HANDLE;
+    VkDescriptorPool m_transformsDescriptorPool = VK_NULL_HANDLE;
+    VkDescriptorSet m_transformsDescriptorSet = VK_NULL_HANDLE;
     ::engine::render::ResourceId m_fgSceneColorId = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSwapchainId  = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgGBufferAId   = ::engine::render::kInvalidResourceId;

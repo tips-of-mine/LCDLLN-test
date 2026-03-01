@@ -37,14 +37,16 @@ public:
      * @param renderPass        Render pass (e.g. from VkGBuffer).
      * @param vertSpirv         Vertex shader SPIR-V bytes.
      * @param fragSpirv         Fragment shader SPIR-V bytes.
-     * @param materialSetLayout Optional descriptor set layout for materials (binding 0,1,2 = BaseColor, Normal, ORM).
-     * @return                  true on success.
+     * @param materialSetLayout   Optional descriptor set layout for materials (binding 0,1,2 = BaseColor, Normal, ORM).
+     * @param transformsSetLayout Optional descriptor set layout for visible transforms buffer (M18.2 indirect draw).
+     * @return                    true on success.
      */
     [[nodiscard]] bool Init(VkDevice device,
                             VkRenderPass renderPass,
                             const std::vector<uint8_t>& vertSpirv,
                             const std::vector<uint8_t>& fragSpirv,
-                            VkDescriptorSetLayout materialSetLayout = VK_NULL_HANDLE);
+                            VkDescriptorSetLayout materialSetLayout = VK_NULL_HANDLE,
+                            VkDescriptorSetLayout transformsSetLayout = VK_NULL_HANDLE);
 
     /**
      * @brief Destroys pipeline and layout.

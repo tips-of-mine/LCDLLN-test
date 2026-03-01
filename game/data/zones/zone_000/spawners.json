@@ -1,0 +1,11 @@
+{
+  "spawners": [
+    {
+      "position": [50, 0, 50],
+      "archetypeId": 1,
+      "count": 1,
+      "respawnSec": 10,
+      "activationRadiusCells": 1
+    }
+  ]
+}

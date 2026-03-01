@@ -2137,5 +2137,13 @@ void Engine::SetHudData(const ::engine::ui::HudData& data) {
     m_hudData.combatLogLines = data.combatLogLines;
     m_hudData.inventorySlots = data.inventorySlots;
     m_hudData.itemLabels = data.itemLabels;
+    m_hudData.questEntries = data.questEntries;
+    m_hudData.trackedQuestIds = data.trackedQuestIds;
+    m_hudData.playerPositionXZ[0] = data.playerPositionXZ[0];
+    m_hudData.playerPositionXZ[1] = data.playerPositionXZ[1];
+    m_hudData.zoneSize = data.zoneSize;
+    m_hudData.targetPositionXZ[0] = data.targetPositionXZ[0];
+    m_hudData.targetPositionXZ[1] = data.targetPositionXZ[1];
+    m_hudData.poiPositions = data.poiPositions;
 }
 

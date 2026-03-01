@@ -266,6 +266,91 @@ void GameHud::Draw(const HudData& data) {
         }
         ImGui::End();
     }
+
+    // M16.4 — Quest journal: list + details + steps.
+    const float questW = std::min(320.f, displayW * 0.28f);
+    const float questH = std::min(320.f, displayH * 0.5f);
+    ImGui::SetNextWindowPos(ImVec2(pad, pad + 60.f), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(questW, questH), ImGuiCond_Once);
+    if (ImGui::Begin("Quest Journal", nullptr, ImGuiWindowFlags_None)) {
+        for (size_t i = 0; i < data.questEntries.size(); ++i) {
+            const auto& q = data.questEntries[i];
+            ImGui::PushID(static_cast<int>(q.questId));
+            if (ImGui::CollapsingHeader(q.title.empty() ? "Quest" : q.title.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Text("Step %u", q.stepIndex + 1u);
+                ImGui::Text("Progress: %u", q.counter);
+                if (!q.currentStepLabel.empty())
+                    ImGui::TextUnformatted(q.currentStepLabel.c_str());
+                if (q.completed)
+                    ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.f), "Completed");
+            }
+            ImGui::PopID();
+        }
+        if (data.questEntries.empty())
+            ImGui::TextUnformatted("No active quests.");
+        ImGui::End();
+    }
+
+    // M16.4 — Tracker HUD: followed quests (trackedQuestIds).
+    const float trackW = std::min(260.f, displayW * 0.22f);
+    ImGui::SetNextWindowPos(ImVec2(displayW - trackW - pad - 20.f, pad + 80.f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(trackW, 120.f), ImGuiCond_Always);
+    if (ImGui::Begin("Tracker", nullptr, flags)) {
+        for (uint32_t qid : data.trackedQuestIds) {
+            const QuestDisplayEntry* entry = nullptr;
+            for (const auto& q : data.questEntries)
+                if (q.questId == qid) { entry = &q; break; }
+            if (!entry) continue;
+            ImGui::PushID(static_cast<int>(qid));
+            ImGui::TextWrapped("%s", entry->title.c_str());
+            if (!entry->currentStepLabel.empty())
+                ImGui::TextColored(ImVec4(0.85f, 0.85f, 0.7f, 1.f), "%s", entry->currentStepLabel.c_str());
+            if (entry->completed)
+                ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.f), "Done");
+            ImGui::PopID();
+        }
+        if (data.trackedQuestIds.empty())
+            ImGui::TextUnformatted("No tracked quests.");
+        ImGui::End();
+    }
+
+    // M16.4 — Minimap: xz->uv, player dot; optional target + POIs.
+    const float minimapSize = 160.f;
+    const float minimapPad = 8.f;
+    ImGui::SetNextWindowPos(ImVec2(displayW - minimapSize - minimapPad - pad, displayH - minimapSize - minimapPad - pad - 20.f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(minimapSize + minimapPad * 2.f, minimapSize + minimapPad * 2.f + 18.f), ImGuiCond_Always);
+    if (ImGui::Begin("Minimap", nullptr, flags)) {
+        const ImVec2 mapMin = ImGui::GetCursorScreenPos();
+        const ImVec2 mapSize(minimapSize, minimapSize);
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        const ImU32 bgCol = IM_COL32(40, 42, 48, 255);
+        dl->AddRectFilled(mapMin, ImVec2(mapMin.x + mapSize.x, mapMin.y + mapSize.y), bgCol);
+        const float zone = (data.zoneSize > 0.1f) ? data.zoneSize : 4096.f;
+        auto xzToUv = [zone](float x, float z) -> ImVec2 {
+            const float u = x / zone;
+            const float v = 1.f - z / zone;
+            return ImVec2(u, v);
+        };
+        auto uvToScreen = [mapMin, mapSize](float u, float v) -> ImVec2 {
+            return ImVec2(mapMin.x + u * mapSize.x, mapMin.y + v * mapSize.y);
+        };
+        const ImVec2 playerUv = xzToUv(data.playerPositionXZ[0], data.playerPositionXZ[1]);
+        const ImVec2 playerScreen = uvToScreen(playerUv.x, playerUv.y);
+        dl->AddCircleFilled(playerScreen, 4.f, IM_COL32(80, 180, 255, 255));
+        if (data.hasTarget) {
+            const ImVec2 targetUv = xzToUv(data.targetPositionXZ[0], data.targetPositionXZ[1]);
+            const ImVec2 targetScreen = uvToScreen(targetUv.x, targetUv.y);
+            dl->AddCircleFilled(targetScreen, 3.f, IM_COL32(255, 80, 80, 255));
+        }
+        for (const auto& poi : data.poiPositions) {
+            const ImVec2 uv = xzToUv(poi.first, poi.second);
+            const ImVec2 sc = uvToScreen(uv.x, uv.y);
+            dl->AddCircleFilled(sc, 2.f, IM_COL32(255, 220, 100, 255));
+        }
+        ImGui::SetCursorScreenPos(mapMin);
+        ImGui::InvisibleButton("##minimap", mapSize);
+        ImGui::End();
+    }
 }
 
 void GameHud::EndFrame() {

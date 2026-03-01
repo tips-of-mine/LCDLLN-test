@@ -1,3 +1,4 @@
+#include "engine/audio/AudioEngine.h"
 #include "engine/core/Engine.h"
 
 #include "engine/core/Config.h"
@@ -356,7 +357,7 @@ bool CreateDecalCubeBuffers(VkPhysicalDevice physicalDevice, VkDevice device,
 // Engine — public API
 // ---------------------------------------------------------------------------
 
-int Engine::Run(int argc, const char* const* argv) {
+int Engine::Run(int argc, const char* const* argv, ::engine::audio::IAudioListenerUpdate* audio) {
     // 1) Configuration (must be first so other subsystems can read settings).
     Config::Init("config.json", argc, argv);
 
@@ -383,9 +384,16 @@ int Engine::Run(int argc, const char* const* argv) {
     LOG_INFO(Platform, "FileSystem initialised — content root = '{}'",
              FileSystem::ContentRoot());
 
-    // 5) Run the main engine loop.
+    // 5) Run the main engine loop. If no audio provided, create and init one for zone ambience (M17.4).
     Engine engine;
-    const int exitCode = engine.RunInternal(argc, argv);
+    engine::audio::AudioEngine defaultAudio;
+    engine::audio::IAudioListenerUpdate* audioToUse = audio;
+    if (!audioToUse && defaultAudio.Init()) {
+        defaultAudio.LoadZoneAudio(FileSystem::ContentRoot(), "audio/zone_audio.json");
+        defaultAudio.PlayZoneAmbience("default");
+        audioToUse = &defaultAudio;
+    }
+    const int exitCode = engine.RunInternal(argc, argv, audioToUse);
 
     // 6) Final statistics and shutdown.
     Memory::DumpStats();
@@ -408,7 +416,8 @@ Engine::Engine()
 // Engine — main run sequence
 // ---------------------------------------------------------------------------
 
-int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
+int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/, ::engine::audio::IAudioListenerUpdate* audio) {
+    m_audioListener = audio;
     // Read high-level options from config.
     m_headless        = Config::GetBool ("headless", false);
     m_editor          = Config::GetBool ("editor", false);
@@ -1144,6 +1153,15 @@ void Engine::Update() {
     rs.camera = m_camera;
     ComputeViewMatrix(rs.camera, rs.view.m);
     ComputeProjectionMatrix(rs.camera, rs.proj.m);
+
+    if (m_audioListener) {
+        float velocity[3] = {0.f, 0.f, 0.f};
+        const float yaw = rs.camera.yaw, pitch = rs.camera.pitch;
+        const float cp = std::cos(pitch), sp = std::sin(pitch), cy = std::cos(yaw), sy = std::sin(yaw);
+        float forward[3] = { -sy * cp, sp, -cy * cp };
+        float up[3] = {0.f, 1.f, 0.f};
+        m_audioListener->SetListener(rs.camera.position, velocity, forward, up);
+    }
 
     if (m_particlePipeline.IsValid()) {
         m_particlePool.Update(dt, m_particleEmitterDef, m_particleSpawnPosition);

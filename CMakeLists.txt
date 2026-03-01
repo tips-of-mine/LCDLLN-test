@@ -15,6 +15,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(glfw3         REQUIRED)   # M00.4 — Window/Input platform layer
 find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 find_package(SQLite3       REQUIRED)   # M14.4 — Persistence
+find_package(OpenAL        REQUIRED)   # M17.4 — Audio spatial MVP
 # nlohmann_json already found for engine_core; engine_quest uses it
 
 # ---------------------------------------------------------------------------
@@ -226,6 +227,16 @@ if (MSVC)
 else()
     target_compile_options(engine_platform PRIVATE -Wall -Wextra -Werror)
 endif()
+
+# ---------------------------------------------------------------------------
+# engine_audio — OpenAL wrapper: 3D sounds, buses, zone ambience (M17.4)
+# ---------------------------------------------------------------------------
+add_library(engine_audio STATIC
+    engine/audio/AudioEngine.cpp
+)
+target_include_directories(engine_audio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_audio PUBLIC nlohmann_json::nlohmann_json OpenAL::OpenAL)
+target_link_libraries(engine_core PRIVATE engine_audio)
 
 # ---------------------------------------------------------------------------
 # engine_app — minimal executable (main.cpp)

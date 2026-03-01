@@ -14,6 +14,7 @@
  *   - Provide hooks for window resize and quit events.
  */
 
+#include "engine/audio/IAudioListenerUpdate.h"
 #include "engine/core/FrameArena.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Window.h"
@@ -145,8 +146,9 @@ public:
      * @param argc Argument count from main().
      * @param argv Argument vector from main().
      * @return     Process exit code (0 on success, non-zero on failure).
+     * @param audio Optional 3D audio listener update (e.g. engine::audio::AudioEngine); called each frame with camera.
      */
-    static int Run(int argc, const char* const* argv);
+    static int Run(int argc, const char* const* argv, ::engine::audio::IAudioListenerUpdate* audio = nullptr);
 
 private:
     /// Constructs an Engine with default configuration.
@@ -161,7 +163,7 @@ private:
      * @param argv Argument vector from main().
      * @return     Process exit code.
      */
-    int RunInternal(int argc, const char* const* argv);
+    int RunInternal(int argc, const char* const* argv, ::engine::audio::IAudioListenerUpdate* audio);
 
     /**
      * @brief Per-frame entry point.
@@ -265,6 +267,9 @@ private:
 
     /// Main window used by the game loop.
     platform::Window m_window;
+
+    /// M17.4 — Optional 3D audio listener update (set from Run(); called each frame in Update).
+    ::engine::audio::IAudioListenerUpdate* m_audioListener = nullptr;
 
     /// Vulkan instance + surface (M01.1).
     ::engine::render::vk::Instance m_vkInstance;

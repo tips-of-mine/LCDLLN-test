@@ -1,0 +1,16 @@
+{
+  "events": [
+    {
+      "id": 1,
+      "zoneId": 0,
+      "trigger": "time",
+      "triggerIntervalSec": 60,
+      "phases": [
+        { "durationSec": 15, "label": "Wave 1", "spawns": [{ "position": [55, 0, 55], "archetypeId": 1, "count": 1 }] },
+        { "durationSec": 20, "label": "Wave 2" }
+      ],
+      "rewards": [{ "itemId": 1, "count": 1 }],
+      "cooldownSec": 120
+    }
+  ]
+}

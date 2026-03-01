@@ -267,6 +267,89 @@ bool CreateParticleInstanceBuffer(VkPhysicalDevice physicalDevice, VkDevice devi
     }
     return true;
 }
+
+// M17.3 — Decal cube: 8 vertices (vec3), 36 indices (uint16).
+const float kDecalCubeVertices[8][3] = {
+    {-0.5f, -0.5f, -0.5f}, { 0.5f, -0.5f, -0.5f}, { 0.5f,  0.5f, -0.5f}, {-0.5f,  0.5f, -0.5f},
+    {-0.5f, -0.5f,  0.5f}, { 0.5f, -0.5f,  0.5f}, { 0.5f,  0.5f,  0.5f}, {-0.5f,  0.5f,  0.5f},
+};
+const uint16_t kDecalCubeIndices[36] = {
+    0,1,2, 2,3,0, 5,4,7, 7,6,5, 4,0,3, 3,7,4, 1,5,6, 6,2,1, 4,5,1, 1,0,4, 3,2,6, 6,7,3,
+};
+
+bool CreateDecalCubeBuffers(VkPhysicalDevice physicalDevice, VkDevice device,
+                            VkBuffer* outVB, VkDeviceMemory* outVBMemory,
+                            VkBuffer* outIB, VkDeviceMemory* outIBMemory) {
+    const VkDeviceSize vbSize = sizeof(kDecalCubeVertices);
+    VkBufferCreateInfo vbci{};
+    vbci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    vbci.size = vbSize;
+    vbci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    vbci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (vkCreateBuffer(device, &vbci, nullptr, outVB) != VK_SUCCESS) return false;
+    VkMemoryRequirements vbReqs;
+    vkGetBufferMemoryRequirements(device, *outVB, &vbReqs);
+    VkMemoryAllocateInfo vbAlloc{};
+    vbAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    vbAlloc.allocationSize = vbReqs.size;
+    vbAlloc.memoryTypeIndex = FindMemoryType(physicalDevice, vbReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (vbAlloc.memoryTypeIndex == UINT32_MAX) { vkDestroyBuffer(device, *outVB, nullptr); *outVB = VK_NULL_HANDLE; return false; }
+    if (vkAllocateMemory(device, &vbAlloc, nullptr, outVBMemory) != VK_SUCCESS) {
+        vkDestroyBuffer(device, *outVB, nullptr); *outVB = VK_NULL_HANDLE; return false;
+    }
+    if (vkBindBufferMemory(device, *outVB, *outVBMemory, 0) != VK_SUCCESS) {
+        vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; return false;
+    }
+    void* vbMapped = nullptr;
+    if (vkMapMemory(device, *outVBMemory, 0, vbSize, 0, &vbMapped) != VK_SUCCESS) {
+        vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; return false;
+    }
+    std::memcpy(vbMapped, kDecalCubeVertices, vbSize);
+    vkUnmapMemory(device, *outVBMemory);
+
+    const VkDeviceSize ibSize = sizeof(kDecalCubeIndices);
+    VkBufferCreateInfo ibci{};
+    ibci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    ibci.size = ibSize;
+    ibci.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    ibci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (vkCreateBuffer(device, &ibci, nullptr, outIB) != VK_SUCCESS) {
+        vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; return false;
+    }
+    VkMemoryRequirements ibReqs;
+    vkGetBufferMemoryRequirements(device, *outIB, &ibReqs);
+    VkMemoryAllocateInfo ibAlloc{};
+    ibAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    ibAlloc.allocationSize = ibReqs.size;
+    ibAlloc.memoryTypeIndex = FindMemoryType(physicalDevice, ibReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (ibAlloc.memoryTypeIndex == UINT32_MAX) {
+        vkDestroyBuffer(device, *outIB, nullptr); vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; *outIB = VK_NULL_HANDLE; return false;
+    }
+    if (vkAllocateMemory(device, &ibAlloc, nullptr, outIBMemory) != VK_SUCCESS) {
+        vkDestroyBuffer(device, *outIB, nullptr); vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; *outIB = VK_NULL_HANDLE; return false;
+    }
+    if (vkBindBufferMemory(device, *outIB, *outIBMemory, 0) != VK_SUCCESS) {
+        vkFreeMemory(device, *outIBMemory, nullptr); vkDestroyBuffer(device, *outIB, nullptr);
+        vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; *outIB = VK_NULL_HANDLE; *outIBMemory = VK_NULL_HANDLE; return false;
+    }
+    void* ibMapped = nullptr;
+    if (vkMapMemory(device, *outIBMemory, 0, ibSize, 0, &ibMapped) != VK_SUCCESS) {
+        vkFreeMemory(device, *outIBMemory, nullptr); vkDestroyBuffer(device, *outIB, nullptr);
+        vkFreeMemory(device, *outVBMemory, nullptr); vkDestroyBuffer(device, *outVB, nullptr);
+        *outVB = VK_NULL_HANDLE; *outVBMemory = VK_NULL_HANDLE; *outIB = VK_NULL_HANDLE; *outIBMemory = VK_NULL_HANDLE; return false;
+    }
+    std::memcpy(ibMapped, kDecalCubeIndices, ibSize);
+    vkUnmapMemory(device, *outIBMemory);
+    return true;
+}
 } // namespace
 
 // ---------------------------------------------------------------------------
@@ -606,6 +689,33 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                                     m_particlePass.Shutdown();
                                                 }
                                             }
+                                            // M17.3 — Decals: pass (GBufferA+depth), pipeline, cube VB/IB.
+                                            if (m_decalPass.Init(m_vkDevice.Device(), w, h, m_vkGBuffer.GetViewA(), m_vkGBuffer.GetViewDepth())) {
+                                                const std::string contentPath = Config::GetString("paths.content", "game/data");
+                                                std::vector<uint8_t> dvert = m_shaderCache.Get("shaders/decal.vert");
+                                                std::vector<uint8_t> dfrag = m_shaderCache.Get("shaders/decal.frag");
+                                                if (!dvert.empty() && !dfrag.empty() &&
+                                                    m_decalPipeline.Init(m_vkDevice.Device(), m_decalPass.GetRenderPass(), dvert, dfrag) &&
+                                                    CreateDecalCubeBuffers(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(),
+                                                        &m_decalCubeVB, &m_decalCubeVBMemory, &m_decalCubeIB, &m_decalCubeIBMemory)) {
+                                                    m_decalCubeIndexCount = 36u;
+                                                    m_decalAlbedoView = m_textureLoader.Load("textures/decal_impact.png", true);
+                                                    if (m_decalAlbedoView == VK_NULL_HANDLE)
+                                                        m_decalAlbedoView = m_textureLoader.CreateDefaultTexture(120, 40, 40, true);
+                                                    if (m_decalAlbedoView != VK_NULL_HANDLE)
+                                                        m_decalPipeline.SetAlbedoView(m_decalAlbedoView, VK_NULL_HANDLE);
+                                                    float decalPos[3] = {0.f, 0.5f, 2.f};
+                                                    float decalHalf[3] = {0.5f, 0.25f, 0.5f};
+                                                    m_decalList.Add(decalPos, decalHalf, 10.f);
+                                                } else {
+                                                    if (m_decalPipeline.IsValid()) m_decalPipeline.Shutdown();
+                                                    m_decalPass.Shutdown();
+                                                    if (m_decalCubeVB != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_decalCubeVB, nullptr); m_decalCubeVB = VK_NULL_HANDLE; }
+                                                    if (m_decalCubeVBMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_decalCubeVBMemory, nullptr); m_decalCubeVBMemory = VK_NULL_HANDLE; }
+                                                    if (m_decalCubeIB != VK_NULL_HANDLE) { vkDestroyBuffer(m_vkDevice.Device(), m_decalCubeIB, nullptr); m_decalCubeIB = VK_NULL_HANDLE; }
+                                                    if (m_decalCubeIBMemory != VK_NULL_HANDLE) { vkFreeMemory(m_vkDevice.Device(), m_decalCubeIBMemory, nullptr); m_decalCubeIBMemory = VK_NULL_HANDLE; }
+                                                }
+                                            }
                                             if (m_vkBloomPyramid.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), w, h)) {
                                                 std::vector<uint8_t> prefilterVert = m_shaderCache.Get("shaders/bloom_prefilter.vert");
                                                 std::vector<uint8_t> prefilterFrag = m_shaderCache.Get("shaders/bloom_prefilter.frag");
@@ -850,6 +960,24 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
         }
         m_particlePipeline.Shutdown();
         m_particlePass.Shutdown();
+        if (m_decalCubeIB != VK_NULL_HANDLE) {
+            vkDestroyBuffer(m_vkDevice.Device(), m_decalCubeIB, nullptr);
+            m_decalCubeIB = VK_NULL_HANDLE;
+        }
+        if (m_decalCubeIBMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_vkDevice.Device(), m_decalCubeIBMemory, nullptr);
+            m_decalCubeIBMemory = VK_NULL_HANDLE;
+        }
+        if (m_decalCubeVB != VK_NULL_HANDLE) {
+            vkDestroyBuffer(m_vkDevice.Device(), m_decalCubeVB, nullptr);
+            m_decalCubeVB = VK_NULL_HANDLE;
+        }
+        if (m_decalCubeVBMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_vkDevice.Device(), m_decalCubeVBMemory, nullptr);
+            m_decalCubeVBMemory = VK_NULL_HANDLE;
+        }
+        m_decalPipeline.Shutdown();
+        m_decalPass.Shutdown();
         if (m_cubeVertexBuffer != VK_NULL_HANDLE) {
             vkDestroyBuffer(m_vkDevice.Device(), m_cubeVertexBuffer, nullptr);
             m_cubeVertexBuffer = VK_NULL_HANDLE;
@@ -1021,6 +1149,8 @@ void Engine::Update() {
         m_particlePool.Update(dt, m_particleEmitterDef, m_particleSpawnPosition);
         m_particlePool.SortByDistanceToCamera(rs.camera.position);
     }
+    if (m_decalPipeline.IsValid())
+        m_decalList.Update(dt, rs.camera.position, 50.f);
 
     // M12.1 — Editor: raycast selection when clicking in viewport (instances + M12.3 volumes).
     if (m_editor && m_editorUI.IsReady() && Input::IsMouseButtonPressed(MouseButton::Left) && !m_editorUI.WantCaptureMouse()) {
@@ -1158,6 +1288,8 @@ void Engine::Render() {
             m_vkSceneColorHDR.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             if (m_particlePass.IsValid())
                 m_particlePass.Init(m_vkDevice.Device(), m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height, m_vkSceneColorHDR.GetImageView(), m_vkGBuffer.GetViewDepth());
+            if (m_decalPass.IsValid())
+                m_decalPass.Init(m_vkDevice.Device(), m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height, m_vkGBuffer.GetViewA(), m_vkGBuffer.GetViewDepth());
             if (m_vkSsaoRaw.IsValid()) {
                 m_vkSsaoRaw.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
                 if (m_ssaoPipeline.IsValid())
@@ -1498,6 +1630,52 @@ void Engine::Render() {
                 }
                 vkCmdEndRenderPass(cmd);
             });
+
+        if (m_decalPass.IsValid() && m_decalPipeline.IsValid() && m_decalAlbedoView != VK_NULL_HANDLE) {
+            m_frameGraph.AddPass("Decals")
+                .Write(m_fgGBufferAId, ImageUsage::ColorWrite)
+                .Write(m_fgDepthId, ImageUsage::DepthWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+                    const RenderState& rs = m_renderStates[readIdx];
+                    const std::vector<::engine::render::DecalInstance>& decals = m_decalList.GetDecals();
+                    if (decals.empty()) return;
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass = m_decalPass.GetRenderPass();
+                    rpbi.framebuffer = m_decalPass.GetFramebuffer();
+                    rpbi.renderArea = {{0, 0}, m_decalPass.Extent()};
+                    rpbi.clearValueCount = 0;
+                    rpbi.pClearValues = nullptr;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_decalPass.Extent().width); vp.height = static_cast<float>(m_decalPass.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_decalPass.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_decalPipeline.GetPipeline());
+                    VkDescriptorSet decalSet = m_decalPipeline.GetDescriptorSet();
+                    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_decalPipeline.GetPipelineLayout(), 0, 1, &decalSet, 0, nullptr);
+                    VkDeviceSize vbOffset = 0;
+                    vkCmdBindVertexBuffers(cmd, 0, 1, &m_decalCubeVB, &vbOffset);
+                    vkCmdBindIndexBuffer(cmd, m_decalCubeIB, 0, VK_INDEX_TYPE_UINT16);
+                    float pushData[40];
+                    std::memcpy(pushData, rs.view.m, 64);
+                    std::memcpy(pushData + 16, rs.proj.m, 64);
+                    for (const auto& decal : decals) {
+                        pushData[32] = decal.position[0];
+                        pushData[33] = decal.position[1];
+                        pushData[34] = decal.position[2];
+                        pushData[35] = 0.f;
+                        pushData[36] = decal.halfExtents[0];
+                        pushData[37] = decal.halfExtents[1];
+                        pushData[38] = decal.halfExtents[2];
+                        pushData[39] = decal.lifetimeMax > 0.f ? (decal.lifetime / decal.lifetimeMax) : 1.f;
+                        vkCmdPushConstants(cmd, m_decalPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 160, pushData);
+                        vkCmdDrawIndexed(cmd, m_decalCubeIndexCount, 1, 0, 0, 0);
+                    }
+                    vkCmdEndRenderPass(cmd);
+                });
+        }
 
         if (m_vkSsaoRaw.IsValid() && m_ssaoPipeline.IsValid()) {
             m_frameGraph.AddPass("SSAO_Generate")

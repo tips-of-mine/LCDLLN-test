@@ -54,6 +54,9 @@
 #include "engine/render/vk/VkParticlePass.h"
 #include "engine/render/vk/VkParticlePipeline.h"
 #include "engine/render/ParticleSystem.h"
+#include "engine/render/DecalComponent.h"
+#include "engine/render/vk/VkDecalPass.h"
+#include "engine/render/vk/VkDecalPipeline.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 #include "engine/world/ChunkStats.h"
@@ -318,6 +321,17 @@ private:
     VkDeviceMemory m_particleQuadVBMemory = VK_NULL_HANDLE;
     VkBuffer m_particleInstanceBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_particleInstanceMemory = VK_NULL_HANDLE;
+
+    /// M17.3 — Decals: pass (GBufferA+depth), pipeline, list, cube VB/IB, albedo texture view.
+    ::engine::render::DecalList m_decalList;
+    ::engine::render::vk::VkDecalPass m_decalPass;
+    ::engine::render::vk::VkDecalPipeline m_decalPipeline;
+    VkBuffer m_decalCubeVB = VK_NULL_HANDLE;
+    VkDeviceMemory m_decalCubeVBMemory = VK_NULL_HANDLE;
+    VkBuffer m_decalCubeIB = VK_NULL_HANDLE;
+    VkDeviceMemory m_decalCubeIBMemory = VK_NULL_HANDLE;
+    uint32_t m_decalCubeIndexCount = 0u;
+    VkImageView m_decalAlbedoView = VK_NULL_HANDLE;
 
     /// Shadow maps: 4 cascades, depth-only (M04.2).
     ::engine::render::vk::VkShadowMap m_vkShadowMap;

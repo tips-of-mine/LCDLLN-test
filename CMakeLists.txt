@@ -168,6 +168,9 @@ add_library(engine_core STATIC
     engine/render/ParticleSystem.cpp
     engine/render/vk/VkParticlePass.cpp
     engine/render/vk/VkParticlePipeline.cpp
+    engine/render/DecalComponent.cpp
+    engine/render/vk/VkDecalPass.cpp
+    engine/render/vk/VkDecalPipeline.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

@@ -40,6 +40,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <array>
 #include <cstdio>
 #include <cstring>
 #include <vector>

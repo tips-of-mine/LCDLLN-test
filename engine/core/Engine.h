@@ -229,6 +229,12 @@ private:
      */
     void SetHudData(const ::engine::ui::HudData& data);
 
+    /**
+     * @brief Switches UI theme (e.g. by race). Loads contentRoot/ui/themes/themeName/theme.json + style.qss. M16.5.
+     * @param themeName Theme folder name (e.g. "default", "human", "elf"). Path resolved via paths.content.
+     */
+    void SetTheme(const std::string& themeName);
+
     // Non-copyable, non-movable.
     Engine(const Engine&)            = delete;
     Engine& operator=(const Engine&) = delete;
@@ -426,6 +432,10 @@ private:
     ::engine::ui::GameHud m_gameHud;
     /// M16.2 — HUD data fed each frame (player HP, target, combat log); default 100/100, no target.
     ::engine::ui::HudData m_hudData;
+    /// M16.5 — Theme manager: theme.json + style.qss, apply to ImGui.
+    ::engine::ui::ThemeManager m_themeManager;
+    /// M16.5 — Current theme name (e.g. "default") for LoadTheme / hot-reload.
+    std::string m_themeName = "default";
 
     /// Whether a fixed-timestep update loop is enabled.
     bool  m_useFixedTimestep = false;

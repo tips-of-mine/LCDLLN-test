@@ -1140,8 +1140,11 @@ void Engine::Render() {
             m_window.NativeHandle(),
             m_vkSwapchain.Format(),
             m_vkSwapchain.ImageCount());
-        if (hudOk)
+        if (hudOk) {
             m_gameHud.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
+            const std::string contentPath = Config::GetString("paths.content", "game/data");
+            m_themeManager.LoadTheme(contentPath, "ui/themes/" + m_themeName);
+        }
     }
 
     // Build frame graph once: Shadow0..3, Geometry, Lighting, Tonemap, Present (M02.4, M03.1, M03.2, M04.2).
@@ -2006,6 +2009,9 @@ void Engine::Render() {
         m_editorUI.EndFrame();
     }
     if (!m_editor && m_gameHud.IsReady()) {
+        const std::string contentPath = Config::GetString("paths.content", "game/data");
+        m_themeManager.TryHotReload(contentPath, "ui/themes/" + m_themeName);
+        m_themeManager.Apply();
         m_gameHud.BeginFrame();
         m_gameHud.Draw(m_hudData);
         m_gameHud.EndFrame();
@@ -2145,5 +2151,12 @@ void Engine::SetHudData(const ::engine::ui::HudData& data) {
     m_hudData.targetPositionXZ[0] = data.targetPositionXZ[0];
     m_hudData.targetPositionXZ[1] = data.targetPositionXZ[1];
     m_hudData.poiPositions = data.poiPositions;
+}
+
+void Engine::SetTheme(const std::string& themeName) {
+    if (themeName.empty()) return;
+    m_themeName = themeName;
+    const std::string contentPath = Config::GetString("paths.content", "game/data");
+    m_themeManager.LoadTheme(contentPath, "ui/themes/" + m_themeName);
 }
 

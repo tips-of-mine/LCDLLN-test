@@ -161,6 +161,8 @@ add_library(engine_core STATIC
 
     # M16.2 — Game HUD: player/target bars, combat log
     engine/ui/GameHud.cpp
+    # M16.5 — Theme manager: theme.json + style.qss
+    engine/ui/ThemeManager.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

@@ -26,6 +26,7 @@ enum class MsgType : uint8_t {
     Logout = 11,
     QuestDelta = 12,
     AcceptQuest = 13,
+    EventState = 14,
 };
 
 constexpr size_t kMaxSnapshotPayload = 0u;

@@ -267,6 +267,20 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_event — M15.3 Dynamic events JSON
+# ---------------------------------------------------------------------------
+add_library(engine_event STATIC
+    engine/event/EventDef.cpp
+)
+target_include_directories(engine_event PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_event PUBLIC nlohmann_json::nlohmann_json)
+if(MSVC)
+    target_compile_options(engine_event PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_event PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_quest — M15.1 Quest definitions JSON
 # ---------------------------------------------------------------------------
 add_library(engine_quest STATIC
@@ -317,6 +331,7 @@ add_library(engine_network STATIC
     engine/network/Combat.cpp
     engine/network/LootProtocol.cpp
     engine/network/QuestProtocol.cpp
+    engine/network/EventProtocol.cpp
 )
 target_include_directories(engine_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)
@@ -332,7 +347,7 @@ endif()
 # server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
 # ---------------------------------------------------------------------------
 add_executable(server_app main_server.cpp)
-target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot engine_persistence engine_quest engine_spawner)
+target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot engine_persistence engine_quest engine_spawner engine_event)
 if(MSVC)
     target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
 else()

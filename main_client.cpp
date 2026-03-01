@@ -4,6 +4,7 @@
  */
 
 #include "engine/network/Combat.h"
+#include "engine/network/EventProtocol.h"
 #include "engine/network/LootProtocol.h"
 #include "engine/network/Protocol.h"
 #include "engine/network/QuestProtocol.h"
@@ -166,6 +167,14 @@ int main(int argc, char** argv) {
                 bool completed = false;
                 if (engine::network::ParseQuestDelta(buf + 1, static_cast<size_t>(n) - 1, qId, stepIdx, counter, completed))
                     std::printf("client: quest %u step %u counter %u completed=%d\n", qId, stepIdx, counter, completed ? 1 : 0);
+            } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::EventState) && n >= 15) {
+                uint32_t evId = 0, phaseIdx = 0, phaseCnt = 0;
+                engine::network::EventStateEnum evState = engine::network::EventStateEnum::Idle;
+                std::string evText;
+                if (engine::network::ParseEventState(buf + 1, static_cast<size_t>(n) - 1, evId, evState, phaseIdx, phaseCnt, evText)) {
+                    const char* stateStr = (evState == engine::network::EventStateEnum::Active) ? "active" : (evState == engine::network::EventStateEnum::Completed) ? "completed" : "idle";
+                    std::printf("client: event %u %s phase %u/%u \"%s\"\n", evId, stateStr, phaseIdx, phaseCnt, evText.c_str());
+                }
             }
         }
 

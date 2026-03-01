@@ -15,6 +15,8 @@
 #include "engine/network/ServerCore.h"
 #include "engine/network/UdpSocket.h"
 #include "engine/persistence/CharacterDb.h"
+#include "engine/event/EventDef.h"
+#include "engine/network/EventProtocol.h"
 #include "engine/quest/QuestDef.h"
 #include "engine/spawner/SpawnerDef.h"
 #include "engine/world/CellGrid.h"
@@ -24,6 +26,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -97,6 +100,15 @@ struct QuestProgress {
     uint32_t stepIndex = 0;
     uint32_t counter = 0;
 };
+
+struct EventInstanceState {
+    uint8_t state = 0;
+    uint32_t currentPhase = 0u;
+    uint32_t phaseEndTick = 0u;
+    uint32_t cooldownEndTick = 0u;
+    uint32_t lastTriggerTick = 0u;
+    std::vector<uint32_t> participants;
+};
 } // namespace
 
 int main(int argc, char** argv) {
@@ -146,6 +158,24 @@ int main(int argc, char** argv) {
                 si.spawnedIds.resize(static_cast<size_t>(d.count), 0u);
                 si.respawnAtTick.resize(static_cast<size_t>(d.count), 0u);
                 spawnerInstances.push_back(std::move(si));
+            }
+        }
+    }
+
+    std::vector<engine::event::EventDef> eventDefs;
+    std::vector<EventInstanceState> eventInstances;
+    for (int32_t z = 0; z <= 1; ++z) {
+        char path[256];
+        std::snprintf(path, sizeof(path), "%s/zones/zone_%03d/events.json", contentPath, static_cast<int>(z));
+        std::vector<engine::event::EventDef> defs;
+        if (engine::event::LoadEventsJson(path, defs)) {
+            for (auto& d : defs) {
+                d.zoneId = z;
+                eventDefs.push_back(d);
+                EventInstanceState inst;
+                inst.cooldownEndTick = 0u;
+                inst.lastTriggerTick = 0u;
+                eventInstances.push_back(inst);
             }
         }
     }
@@ -251,6 +281,103 @@ int main(int argc, char** argv) {
                         engine::network::SerializeDespawn(static_cast<uint64_t>(eid), despawnPkt);
                         for (size_t i = 0; i < clients.size(); ++i)
                             engine::network::UdpSendTo(fd, despawnPkt.data(), despawnPkt.size(), &clients[i].address);
+                    }
+                }
+            }
+            for (size_t ei = 0; ei < eventInstances.size(); ++ei) {
+                EventInstanceState& inst = eventInstances[ei];
+                const engine::event::EventDef& def = eventDefs[ei];
+                bool zoneHasPlayers = false;
+                for (size_t c = 0; c < clients.size(); ++c)
+                    if (clientZoneIds[c] == def.zoneId) { zoneHasPlayers = true; break; }
+                if (!zoneHasPlayers) continue;
+                auto sendEventStateToZone = [&](engine::network::EventStateEnum st, uint32_t phaseIdx, uint32_t phaseCnt, const char* text) {
+                    std::vector<uint8_t> pkt;
+                    engine::network::SerializeEventState(def.id, st, phaseIdx, phaseCnt, text, pkt);
+                    for (size_t c = 0; c < clients.size(); ++c)
+                        if (clientZoneIds[c] == def.zoneId)
+                            engine::network::UdpSendTo(fd, pkt.data(), pkt.size(), &clients[c].address);
+                };
+                auto spawnPhaseWave = [&](const engine::event::EventPhaseDef& phase) {
+                    for (const auto& sp : phase.spawns) {
+                        for (uint32_t n = 0; n < sp.count; ++n) {
+                            uint32_t eid = nextMobEntityId++;
+                            Mob m;
+                            m.entityId = eid;
+                            m.zoneId = def.zoneId;
+                            m.position[0] = m.spawnPosition[0] = sp.position[0];
+                            m.position[1] = m.spawnPosition[1] = sp.position[1];
+                            m.position[2] = m.spawnPosition[2] = sp.position[2];
+                            m.spawnerInstanceIndex = -1;
+                            m.spawnerSlot = -1;
+                            mobs.push_back(m);
+                            engine::network::ReplicationEntityState st{};
+                            st.entityId = eid;
+                            st.archetypeId = sp.archetypeId;
+                            st.position[0] = sp.position[0];
+                            st.position[1] = sp.position[1];
+                            st.position[2] = sp.position[2];
+                            entityStates[eid] = st;
+                            entityCombat[eid] = EntityCombat{};
+                        }
+                    }
+                };
+                if (inst.state == 0u) {
+                    if (tick < inst.cooldownEndTick) continue;
+                    bool trigger = false;
+                    if (def.triggerType == engine::event::EventTriggerType::Time) {
+                        uint32_t intervalTicks = static_cast<uint32_t>(def.triggerIntervalSec * 20.0f);
+                        if (intervalTicks == 0u) intervalTicks = 1u;
+                        if (tick >= inst.lastTriggerTick + intervalTicks) trigger = true;
+                    } else {
+                        if (std::rand() / static_cast<double>(RAND_MAX) < static_cast<double>(def.triggerChancePerTick)) trigger = true;
+                    }
+                    if (!trigger) continue;
+                    inst.state = 1u;
+                    inst.currentPhase = 0u;
+                    inst.participants.clear();
+                    for (size_t c = 0; c < clients.size(); ++c)
+                        if (clientZoneIds[c] == def.zoneId) inst.participants.push_back(clients[c].clientId);
+                    inst.lastTriggerTick = tick;
+                    uint32_t totalPhases = static_cast<uint32_t>(def.phases.size());
+                    if (totalPhases > 0u) {
+                        const auto& phase = def.phases[0];
+                        inst.phaseEndTick = tick + static_cast<uint32_t>(phase.durationSec * 20.0f);
+                        spawnPhaseWave(phase);
+                        sendEventStateToZone(engine::network::EventStateEnum::Active, 0u, totalPhases, phase.label.c_str());
+                    } else {
+                        inst.phaseEndTick = tick;
+                    }
+                } else {
+                    if (tick < inst.phaseEndTick) continue;
+                    uint32_t totalPhases = static_cast<uint32_t>(def.phases.size());
+                    inst.currentPhase++;
+                    if (inst.currentPhase >= totalPhases) {
+                        for (uint32_t cid : inst.participants) {
+                            for (const auto& r : def.rewards)
+                                playerInventory[cid][r.itemId] += r.count;
+                            std::vector<engine::network::InventoryDeltaEntry> delta;
+                            for (const auto& r : def.rewards)
+                                delta.push_back({r.itemId, r.count});
+                            if (!delta.empty()) {
+                                std::vector<uint8_t> deltaPkt;
+                                engine::network::SerializeInventoryDelta(delta.data(), delta.size(), deltaPkt);
+                                for (size_t c = 0; c < clients.size(); ++c)
+                                    if (clients[c].clientId == cid) {
+                                        engine::network::UdpSendTo(fd, deltaPkt.data(), deltaPkt.size(), &clients[c].address);
+                                        break;
+                                    }
+                            }
+                        }
+                        inst.state = 0u;
+                        inst.cooldownEndTick = tick + static_cast<uint32_t>(def.cooldownSec * 20.0f);
+                        inst.participants.clear();
+                        sendEventStateToZone(engine::network::EventStateEnum::Completed, 0u, 0u, "Complete");
+                    } else {
+                        const auto& phase = def.phases[inst.currentPhase];
+                        inst.phaseEndTick = tick + static_cast<uint32_t>(phase.durationSec * 20.0f);
+                        spawnPhaseWave(phase);
+                        sendEventStateToZone(engine::network::EventStateEnum::Active, inst.currentPhase, totalPhases, phase.label.c_str());
                     }
                 }
             }

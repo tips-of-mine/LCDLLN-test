@@ -251,6 +251,19 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_loot — M14.3 LootTable data
+# ---------------------------------------------------------------------------
+add_library(engine_loot STATIC
+    engine/loot/LootTable.cpp
+)
+target_include_directories(engine_loot PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(MSVC)
+    target_compile_options(engine_loot PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_loot PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_network — M13.1 Server: UDP transport, protocol, server tick (no Vulkan/GLFW)
 # ---------------------------------------------------------------------------
 add_library(engine_network STATIC
@@ -258,6 +271,7 @@ add_library(engine_network STATIC
     engine/network/ServerCore.cpp
     engine/network/Replication.cpp
     engine/network/Combat.cpp
+    engine/network/LootProtocol.cpp
 )
 target_include_directories(engine_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)
@@ -273,7 +287,7 @@ endif()
 # server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
 # ---------------------------------------------------------------------------
 add_executable(server_app main_server.cpp)
-target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai)
+target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot)
 if(MSVC)
     target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
 else()

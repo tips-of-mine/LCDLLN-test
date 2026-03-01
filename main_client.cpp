@@ -1,14 +1,16 @@
 /**
  * @file main_client.cpp
- * @brief Client app: connect, ClientInput, Spawn/Despawn/Snapshot, AttackRequest, CombatEvent, HP display (M13.1, M13.3, M14.1).
+ * @brief Client app: connect, ClientInput, Spawn/Despawn/Snapshot, AttackRequest, CombatEvent, PickupRequest, InventoryDelta (M13.1, M13.3, M14.1, M14.3).
  */
 
 #include "engine/network/Combat.h"
+#include "engine/network/LootProtocol.h"
 #include "engine/network/Protocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/UdpSocket.h"
 
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -67,8 +69,12 @@ int main(int argc, char** argv) {
     engine::network::PeerAddress from{};
     std::unordered_map<uint64_t, engine::network::ReplicationEntityState> replicatedEntities;
     std::unordered_map<uint64_t, uint32_t> entityHp;
+    std::unordered_map<uint32_t, uint32_t> inventory;
     auto lastAttack = std::chrono::steady_clock::now();
+    auto lastPickup = std::chrono::steady_clock::now();
     constexpr uint64_t kMobEntityId = 1000u;
+    constexpr uint32_t kLootBagArchetypeId = 2u;
+    constexpr float kPickupRange = 5.0f;
 
     for (int wait = 0; wait < 500; ++wait) {
         int n = engine::network::UdpRecvFrom(fd, buf, sizeof(buf), &from);
@@ -96,7 +102,8 @@ int main(int argc, char** argv) {
                 engine::network::ReplicationEntityState st;
                 if (engine::network::ParseSpawn(buf + 1, static_cast<size_t>(n) - 1, st)) {
                     replicatedEntities[st.entityId] = st;
-                    if (entityHp.find(st.entityId) == entityHp.end()) entityHp[st.entityId] = 100u;
+                    if (st.archetypeId != kLootBagArchetypeId && entityHp.find(st.entityId) == entityHp.end())
+                        entityHp[st.entityId] = 100u;
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::Despawn) && n >= 9) {
                 uint64_t eid;
@@ -110,7 +117,8 @@ int main(int argc, char** argv) {
                     lastTick = tickVal;
                     for (const auto& st : states) {
                         replicatedEntities[st.entityId] = st;
-                        if (entityHp.find(st.entityId) == entityHp.end()) entityHp[st.entityId] = 100u;
+                        if (st.archetypeId != kLootBagArchetypeId && entityHp.find(st.entityId) == entityHp.end())
+                            entityHp[st.entityId] = 100u;
                     }
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::CombatEvent) && n >= 26) {
@@ -130,6 +138,12 @@ int main(int argc, char** argv) {
                     myPosition[1] = spawnPos[1];
                     myPosition[2] = spawnPos[2];
                 }
+            } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::InventoryDelta) && n >= 5) {
+                std::vector<engine::network::InventoryDeltaEntry> entries;
+                if (engine::network::ParseInventoryDelta(buf + 1, static_cast<size_t>(n) - 1, entries)) {
+                    for (const auto& e : entries)
+                        inventory[e.itemId] += e.count;
+                }
             }
         }
 
@@ -147,11 +161,27 @@ int main(int argc, char** argv) {
             engine::network::UdpSendTo(fd, ar.data(), ar.size(), &serverAddr);
             lastAttack = now;
         }
+        if (std::chrono::duration<double>(now - lastPickup).count() >= 1.0) {
+            for (const auto& p : replicatedEntities) {
+                if (p.second.archetypeId != kLootBagArchetypeId) continue;
+                float dx = p.second.position[0] - myPosition[0], dz = p.second.position[2] - myPosition[2];
+                if (std::sqrt(dx * dx + dz * dz) <= kPickupRange) {
+                    std::vector<uint8_t> pr;
+                    engine::network::SerializePickupRequest(p.first, pr);
+                    engine::network::UdpSendTo(fd, pr.data(), pr.size(), &serverAddr);
+                    break;
+                }
+            }
+            lastPickup = now;
+        }
         if (std::chrono::duration<double>(now - lastStats).count() >= 2.0) {
             uint32_t mobHp = 100u;
             auto it = entityHp.find(kMobEntityId);
             if (it != entityHp.end()) mobHp = it->second;
-            std::printf("client: zone=%d tick=%u entities=%zu mob_hp=%u\n", static_cast<int>(currentZoneId), lastTick, replicatedEntities.size(), mobHp);
+            uint32_t invCount = 0;
+            auto invIt = inventory.find(1u);
+            if (invIt != inventory.end()) invCount = invIt->second;
+            std::printf("client: zone=%d tick=%u entities=%zu mob_hp=%u inv_item1=%u\n", static_cast<int>(currentZoneId), lastTick, replicatedEntities.size(), mobHp, invCount);
             lastStats = now;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));

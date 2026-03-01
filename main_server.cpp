@@ -1,12 +1,14 @@
 /**
  * @file main_server.cpp
- * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat, mob AI (M13.1, M13.3, M13.4, M14.1, M14.2).
+ * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat, mob AI, loot (M13.1, M13.3, M13.4, M14.1, M14.2, M14.3).
  */
 
 #include "engine/ai/AiState.h"
 #include "engine/ai/MobAiUpdate.h"
 #include "engine/ai/ThreatTable.h"
+#include "engine/loot/LootTable.h"
 #include "engine/network/Combat.h"
+#include "engine/network/LootProtocol.h"
 #include "engine/network/Protocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/ServerCore.h"
@@ -49,6 +51,9 @@ constexpr uint32_t kAttackCooldownTicks = 20u;
 constexpr uint32_t kAttackDamage = 10u;
 constexpr uint32_t kDefaultMaxHp = 100u;
 constexpr uint32_t kFirstMobEntityId = 1000u;
+constexpr uint32_t kFirstLootBagEntityId = 2000u;
+constexpr uint32_t kLootBagArchetypeId = 2u;
+constexpr float kPickupRange = 5.0f;
 
 struct EntityCombat {
     uint32_t hp = kDefaultMaxHp;
@@ -63,6 +68,14 @@ struct Mob {
     float position[3] = {0.f, 0.f, 0.f};
     float spawnPosition[3] = {0.f, 0.f, 0.f};
     engine::ai::MobAiState aiState = engine::ai::MobAiState::Idle;
+};
+
+struct LootBag {
+    uint32_t entityId = 0;
+    int32_t zoneId = 0;
+    float position[3] = {0.f, 0.f, 0.f};
+    std::vector<engine::loot::LootEntry> items;
+    uint32_t ownerId = 0;
 };
 } // namespace
 
@@ -94,6 +107,11 @@ int main(int argc, char** argv) {
     std::vector<Mob> mobs;
     engine::ai::ThreatTable threatTable;
     const float leashDistance = engine::ai::kDefaultLeashDistance;
+    engine::loot::LootTableData defaultLootTable;
+    defaultLootTable.entries.push_back({1u, 1u});
+    std::vector<LootBag> lootBags;
+    uint32_t nextLootBagId = kFirstLootBagEntityId;
+    std::unordered_map<uint32_t, std::unordered_map<uint32_t, uint32_t>> playerInventory;
     {
         Mob m;
         m.entityId = kFirstMobEntityId;
@@ -178,10 +196,67 @@ int main(int argc, char** argv) {
                                     if (tc.hp == 0u) tc.isDead = true;
                                     entityCombat[aId].lastAttackTick = tick;
                                     threatTable.AddThreat(tId, aId, dmg);
-                                std::vector<uint8_t> ev;
-                                engine::network::SerializeCombatEvent(aId, tId, dmg, tc.hp, tc.isDead, ev);
-                                for (size_t i = 0; i < clients.size(); ++i)
-                                    engine::network::UdpSendTo(fd, ev.data(), ev.size(), &clients[i].address);
+                                    std::vector<uint8_t> ev;
+                                    engine::network::SerializeCombatEvent(aId, tId, dmg, tc.hp, tc.isDead, ev);
+                                    for (size_t i = 0; i < clients.size(); ++i)
+                                        engine::network::UdpSendTo(fd, ev.data(), ev.size(), &clients[i].address);
+                                    if (tc.isDead && tId >= kFirstMobEntityId && tId < kFirstLootBagEntityId) {
+                                        LootBag bag;
+                                        bag.entityId = nextLootBagId++;
+                                        bag.zoneId = targetZone;
+                                        bag.position[0] = entityStates[tId].position[0];
+                                        bag.position[1] = entityStates[tId].position[1];
+                                        bag.position[2] = entityStates[tId].position[2];
+                                        bag.ownerId = 0;
+                                        engine::loot::GenerateLoot(defaultLootTable, bag.items);
+                                        engine::network::ReplicationEntityState st{};
+                                        st.entityId = bag.entityId;
+                                        st.archetypeId = kLootBagArchetypeId;
+                                        st.position[0] = bag.position[0];
+                                        st.position[1] = bag.position[1];
+                                        st.position[2] = bag.position[2];
+                                        entityStates[bag.entityId] = st;
+                                        lootBags.push_back(bag);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::PickupRequest) && kRecvBuf >= 9) {
+                    uint64_t bagId64 = 0;
+                    if (engine::network::ParsePickupRequest(buf + 1, 8u, bagId64)) {
+                        uint32_t bagId = static_cast<uint32_t>(bagId64);
+                        size_t clientIdx = clients.size();
+                        for (size_t i = 0; i < clients.size(); ++i) {
+                            if (PeerAddressEqual(clients[i].address, from)) { clientIdx = i; break; }
+                        }
+                        if (clientIdx < clients.size()) {
+                            uint32_t clientId = clients[clientIdx].clientId;
+                            LootBag* bagPtr = nullptr;
+                            size_t bagIdx = 0;
+                            for (size_t i = 0; i < lootBags.size(); ++i) {
+                                if (lootBags[i].entityId == bagId) { bagPtr = &lootBags[i]; bagIdx = i; break; }
+                            }
+                            if (bagPtr && (bagPtr->ownerId == 0u || bagPtr->ownerId == clientId)) {
+                                float px = clientPositions[clientIdx][0], pz = clientPositions[clientIdx][2];
+                                float bx = bagPtr->position[0], bz = bagPtr->position[2];
+                                float dx = px - bx, dz = pz - bz;
+                                if (std::sqrt(dx * dx + dz * dz) <= kPickupRange) {
+                                    for (const auto& e : bagPtr->items)
+                                        playerInventory[clientId][e.itemId] += e.count;
+                                    std::vector<engine::network::InventoryDeltaEntry> delta;
+                                    for (const auto& e : bagPtr->items)
+                                        delta.push_back({e.itemId, e.count});
+                                    std::vector<uint8_t> deltaPkt;
+                                    engine::network::SerializeInventoryDelta(delta.data(), delta.size(), deltaPkt);
+                                    engine::network::UdpSendTo(fd, deltaPkt.data(), deltaPkt.size(), &clients[clientIdx].address);
+                                    entityStates.erase(bagId);
+                                    lootBags.erase(lootBags.begin() + bagIdx);
+                                    std::vector<uint8_t> despawnPkt;
+                                    engine::network::SerializeDespawn(bagId64, despawnPkt);
+                                    for (size_t i = 0; i < clients.size(); ++i)
+                                        engine::network::UdpSendTo(fd, despawnPkt.data(), despawnPkt.size(), &clients[i].address);
+                                }
                             }
                         }
                     }
@@ -298,6 +373,11 @@ int main(int argc, char** argv) {
                 if (zoneGrids.find(m.zoneId) == zoneGrids.end())
                     zoneGrids[m.zoneId] = engine::world::CellGrid(0, 0);
                 zoneGrids[m.zoneId].Insert(m.entityId, m.position[0], m.position[2]);
+            }
+            for (const auto& b : lootBags) {
+                if (zoneGrids.find(b.zoneId) == zoneGrids.end())
+                    zoneGrids[b.zoneId] = engine::world::CellGrid(0, 0);
+                zoneGrids[b.zoneId].Insert(b.entityId, b.position[0], b.position[2]);
             }
 
             for (size_t i = 0; i < clients.size(); ++i)

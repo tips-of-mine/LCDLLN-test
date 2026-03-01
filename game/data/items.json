@@ -1,0 +1,6 @@
+{
+  "items": [
+    { "id": 1, "name": "Health Potion", "desc": "Restores 50 HP" },
+    { "id": 2, "name": "Mana Shard", "desc": "Restores 30 mana" }
+  ]
+}

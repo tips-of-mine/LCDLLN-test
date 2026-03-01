@@ -69,20 +69,25 @@ void FlattenJson(const json& node, const std::string& prefix) {
 // ---------------------------------------------------------------------------
 
 /**
- * @brief Parses a CLI argument of the form --key=value and stores it.
+ * @brief Parses a CLI argument of the form --key=value or --flag (bare flag sets key to "true").
  *
- * Arguments that do not start with "--" or lack "=" are silently ignored.
+ * Arguments that do not start with "--" are silently ignored.
+ * For --key=value the key and value are stored; for --flag (no '=') the key "flag" is set to "true".
  *
- * @param arg  Single argv entry (e.g. "--window.width=1280").
+ * @param arg  Single argv entry (e.g. "--window.width=1280" or "--editor").
  */
 void ParseCliArg(const char* arg) {
     if (!arg || std::strncmp(arg, "--", 2) != 0) { return; }
     const char* eq = std::strchr(arg + 2, '=');
-    if (!eq) { return; }
-
-    const std::string key(arg + 2, eq);
-    const std::string value(eq + 1);
-    g_store[key] = value;
+    if (eq) {
+        const std::string key(arg + 2, eq);
+        const std::string value(eq + 1);
+        g_store[key] = value;
+    } else {
+        const std::string key(arg + 2);
+        if (!key.empty())
+            g_store[key] = "true";
+    }
 }
 
 // ---------------------------------------------------------------------------

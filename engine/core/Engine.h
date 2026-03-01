@@ -62,6 +62,7 @@
 #include "engine/streaming/LruCache.h"
 #include "engine/render/vk/DeferredDestroyQueue.h"
 #include "engine/render/vk/VkUploadBudget.h"
+#include "engine/editor/EditorUI.h"
 
 #include <array>
 #include <atomic>
@@ -373,6 +374,13 @@ private:
 
     /// Headless mode flag (no window / input). Read from config.
     bool m_headless = false;
+
+    /// M12.1 — Editor mode (--editor or config editor: true). ImGui + selection + gizmos.
+    bool m_editor = false;
+    /// Selected zone instance index (-1 = none). Used when m_editor is true.
+    int m_editorSelectedInstanceIndex = -1;
+    /// Editor UI (ImGui). Initialized when m_editor and swapchain valid.
+    ::engine::editor::EditorUI m_editorUI;
 
     /// Whether a fixed-timestep update loop is enabled.
     bool  m_useFixedTimestep = false;

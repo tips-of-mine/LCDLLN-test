@@ -25,6 +25,7 @@
 #include "engine/render/Csm.h"
 #include "engine/render/Halton.h"
 #include "engine/math/Frustum.h"
+#include "engine/math/Ray.h"
 #include "engine/world/HlodRuntime.h"
 #include "engine/world/World.h"
 #include "engine/streaming/StreamingScheduler.h"
@@ -232,6 +233,7 @@ Engine::Engine()
 int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
     // Read high-level options from config.
     m_headless        = Config::GetBool ("headless", false);
+    m_editor          = Config::GetBool ("editor", false);
     m_useFixedTimestep = Config::GetBool("game.fixed_timestep", false);
     m_fixedDeltaSeconds = Config::GetFloat("game.fixed_delta", 1.0f / 60.0f);
 
@@ -709,6 +711,8 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
 
     // Shutdown platform subsystems (reverse order of init).
     if (!m_headless && m_windowOk) {
+        if (m_editor)
+            m_editorUI.Shutdown();
         if (m_cubeVertexBuffer != VK_NULL_HANDLE) {
             vkDestroyBuffer(m_vkDevice.Device(), m_cubeVertexBuffer, nullptr);
             m_cubeVertexBuffer = VK_NULL_HANDLE;
@@ -830,7 +834,8 @@ void Engine::BeginFrame() {
     if (!m_headless && m_windowOk) {
         m_window.PollEvents();
         Input::BeginFrame();
-
+        if (m_editor && m_editorUI.IsReady())
+            m_editorUI.BeginFrame();
         if (m_window.ShouldClose()) {
             OnQuit();
         }
@@ -867,6 +872,27 @@ void Engine::Update() {
     rs.camera = m_camera;
     ComputeViewMatrix(rs.camera, rs.view.m);
     ComputeProjectionMatrix(rs.camera, rs.proj.m);
+
+    // M12.1 — Editor: raycast selection when clicking in viewport (CPU, bounds).
+    if (m_editor && m_editorUI.IsReady() && Input::IsMouseButtonPressed(MouseButton::Left) && !m_editorUI.WantCaptureMouse() && !m_zoneChunkInstances.empty()) {
+        float rayOrigin[3], rayDir[3];
+        ScreenPointToRay(static_cast<float>(Input::MouseX()), static_cast<float>(Input::MouseY()), w, h, rs.view.m, rs.proj.m, rayOrigin, rayDir);
+        float closestT = 1e30f;
+        int picked = -1;
+        const float halfExt = 2.0f;
+        for (size_t i = 0; i < m_zoneChunkInstances.size(); ++i) {
+            const float* t = m_zoneChunkInstances[i].transform;
+            float cx = t[12], cy = t[13], cz = t[14];
+            float aabbMin[3] = { cx - halfExt, cy - halfExt, cz - halfExt };
+            float aabbMax[3] = { cx + halfExt, cy + halfExt, cz + halfExt };
+            float hitT;
+            if (RayAABB(rayOrigin, rayDir, aabbMin, aabbMax, &hitT) && hitT < closestT) {
+                closestT = hitT;
+                picked = static_cast<int>(i);
+            }
+        }
+        m_editorSelectedInstanceIndex = picked;
+    }
 
     {
         float viewDirX = -std::sin(m_camera.yaw) * std::cos(m_camera.pitch);
@@ -976,6 +1002,16 @@ void Engine::Render() {
                     const VkExtent2D ext = m_vkSwapchain.Extent();
                     m_vkExposureReduce.Recreate(ext.width * ext.height);
                 }
+            }
+            if (m_editor && m_editorUI.IsReady()) {
+                std::vector<VkImage> swapImages(m_vkSwapchain.ImageCount());
+                std::vector<VkImageView> swapViews(m_vkSwapchain.ImageCount());
+                for (uint32_t i = 0; i < m_vkSwapchain.ImageCount(); ++i) {
+                    swapImages[i] = m_vkSwapchain.GetImage(i);
+                    swapViews[i]  = m_vkSwapchain.GetImageView(i);
+                }
+                m_editorUI.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
+            }
         }
     }
 
@@ -1008,6 +1044,27 @@ void Engine::Render() {
     if (acquireRes != VK_SUCCESS && acquireRes != VK_SUBOPTIMAL_KHR) {
         LOG_ERROR(Render, "vkAcquireNextImageKHR failed (code {})", static_cast<int>(acquireRes));
         return;
+    }
+
+    // M12.1 — Editor: lazy init ImGui when editor mode and swapchain valid.
+    if (m_editor && !m_editorUI.IsReady() && m_vkSwapchain.IsValid()) {
+        std::vector<VkImage> swapImages(m_vkSwapchain.ImageCount());
+        std::vector<VkImageView> swapViews(m_vkSwapchain.ImageCount());
+        for (uint32_t i = 0; i < m_vkSwapchain.ImageCount(); ++i) {
+            swapImages[i] = m_vkSwapchain.GetImage(i);
+            swapViews[i]  = m_vkSwapchain.GetImageView(i);
+        }
+        const bool editorOk = m_editorUI.Init(
+            m_vkInstance.Get(),
+            m_vkDevice.PhysicalDevice(),
+            m_vkDevice.Device(),
+            m_vkDevice.GraphicsQueue(),
+            m_vkDevice.Indices().graphicsFamily,
+            m_window.NativeHandle(),
+            m_vkSwapchain.Format(),
+            m_vkSwapchain.ImageCount());
+        if (editorOk)
+            m_editorUI.RecreateFramebuffers(m_vkDevice.Device(), swapImages.data(), swapViews.data(), m_vkSwapchain.ImageCount(), m_vkSwapchain.Extent());
     }
 
     // Build frame graph once: Shadow0..3, Geometry, Lighting, Tonemap, Present (M02.4, M03.1, M03.2, M04.2).
@@ -1836,10 +1893,21 @@ void Engine::Render() {
     if (m_fgTaaOutputId != ::engine::render::kInvalidResourceId && m_vkTaaOutput.IsValid())
         m_fgRegistry.SetImage(m_fgTaaOutputId, m_vkTaaOutput.GetImage());
     m_fgRegistry.SetImage(m_fgSwapchainId, m_vkSwapchain.GetImage(imageIndex));
+    const std::uint32_t renderReadIdx = m_renderReadIndex.load(std::memory_order_acquire);
+    const RenderState& renderRs = m_renderStates[renderReadIdx];
+    if (m_editor && m_editorUI.IsReady()) {
+        m_editorUI.DrawPanels(&m_zoneChunkInstances, &m_editorSelectedInstanceIndex,
+            renderRs.view.m, renderRs.proj.m,
+            m_framebufferWidth > 0 ? m_framebufferWidth : 1280,
+            m_framebufferHeight > 0 ? m_framebufferHeight : 720);
+        m_editorUI.EndFrame();
+    }
     m_chunkStats.BeginFrame();
     m_hlodDrawsThisFrame = 0u;
     m_instanceDrawsThisFrame = 0u;
     m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
+    if (m_editor && m_editorUI.IsReady())
+        m_editorUI.Render(fr.cmdBuffer, imageIndex, m_vkSwapchain.Extent());
     if (::engine::core::Time::FrameIndex() % 60u == 0u)
         m_chunkStats.LogFrameStats();
     if (::engine::core::Config::GetBool("debug.hlod_overlay", false) && ::engine::core::Time::FrameIndex() % 60u == 0u)

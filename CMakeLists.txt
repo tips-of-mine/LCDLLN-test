@@ -145,6 +145,10 @@ add_library(engine_core STATIC
     engine/render/Camera.cpp
     engine/render/Halton.cpp
     engine/math/Frustum.cpp
+    # M12.1 — Editor: ray cast for selection
+    engine/math/Ray.cpp
+    # M12.1 — Editor: ImGui UI + panels + gizmo
+    engine/editor/EditorUI.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp
@@ -164,6 +168,8 @@ target_link_libraries(engine_core
     PUBLIC
         nlohmann_json::nlohmann_json
         Vulkan::Vulkan
+        imgui
+        glfw
 )
 
 # Warnings (platform-appropriate)
@@ -271,6 +277,29 @@ if (MSVC)
 else()
     target_compile_options(zone_builder PRIVATE -Wall -Wextra -Werror)
 endif()
+
+# ---------------------------------------------------------------------------
+# Dear ImGui — M12.1 editor UI (core + GLFW + Vulkan backends)
+# ---------------------------------------------------------------------------
+FetchContent_Declare(
+  imgui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG v1.92.6
+)
+FetchContent_Populate(imgui)
+add_library(imgui STATIC
+  ${imgui_SOURCE_DIR}/imgui.cpp
+  ${imgui_SOURCE_DIR}/imgui_draw.cpp
+  ${imgui_SOURCE_DIR}/imgui_tables.cpp
+  ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+  ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+)
+target_include_directories(imgui PUBLIC
+  ${imgui_SOURCE_DIR}
+  ${imgui_SOURCE_DIR}/backends
+)
+target_link_libraries(imgui PUBLIC glfw Vulkan::Vulkan)
 
 # ---------------------------------------------------------------------------
 # Recast/Detour — M11.3 navmesh bake (FetchContent, build Recast + Detour only)

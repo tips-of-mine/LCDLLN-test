@@ -124,6 +124,11 @@ public:
         return (i < m_images.size()) ? m_images[i] : VK_NULL_HANDLE;
     }
 
+    /// Returns the image view for index i (M12.1: ImGui/editor framebuffers).
+    [[nodiscard]] VkImageView GetImageView(uint32_t i) const noexcept {
+        return (i < m_imageViews.size()) ? m_imageViews[i] : VK_NULL_HANDLE;
+    }
+
 private:
     /// Destroys only swapchain-dependent objects (views, framebuffers, swapchain).
     /// Keeps physical device, device, surface, indices for Recreate.

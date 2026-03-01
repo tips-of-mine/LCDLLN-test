@@ -16,6 +16,7 @@
 
 #include "engine/audio/IAudioListenerUpdate.h"
 #include "engine/core/FrameArena.h"
+#include "engine/core/Profiler.h"
 #include "engine/math/Frustum.h"
 #include "engine/platform/Window.h"
 #include "engine/render/Camera.h"
@@ -58,6 +59,7 @@
 #include "engine/render/DecalComponent.h"
 #include "engine/render/vk/VkDecalPass.h"
 #include "engine/render/vk/VkDecalPipeline.h"
+#include "engine/render/vk/VkTimestampPool.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 #include "engine/world/ChunkStats.h"
@@ -71,11 +73,15 @@
 #include "engine/render/vk/VkUploadBudget.h"
 #include "engine/editor/EditorUI.h"
 #include "engine/ui/GameHud.h"
+#include "engine/ui/ProfilerOverlay.h"
 #include "engine/world/GameplayVolume.h"
 
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace engine::core {
 
@@ -364,6 +370,11 @@ private:
     /// Frame graph: Shadow0..3 → Geometry → Lighting → Tonemap → Present (M02.4, M03.1, M03.2, M04.2).
     ::engine::render::FrameGraph m_frameGraph;
     ::engine::render::Registry  m_fgRegistry;
+
+    /// M18.1 — Profiler: GPU timestamp pool and last frame pass times for overlay.
+    ::engine::render::vk::VkTimestampPool m_timestampPool;
+    std::vector<std::pair<std::string, float>> m_lastGpuPassMs;
+    bool m_hasSubmittedTimestampFrame = false;
     ::engine::render::ResourceId m_fgSceneColorId = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgSwapchainId  = ::engine::render::kInvalidResourceId;
     ::engine::render::ResourceId m_fgGBufferAId   = ::engine::render::kInvalidResourceId;

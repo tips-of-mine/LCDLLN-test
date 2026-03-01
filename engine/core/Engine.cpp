@@ -5,7 +5,10 @@
 #include "engine/core/Log.h"
 #include "engine/core/Memory.h"
 #include "engine/core/MemoryTags.h"
+#include "engine/core/Profiler.h"
 #include "engine/core/Time.h"
+#include "engine/ui/ProfilerOverlay.h"
+#include "engine/render/vk/VkTimestampPool.h"
 
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Input.h"
@@ -39,6 +42,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
 namespace {
 uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -1032,6 +1036,7 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/, ::engine::aud
         m_vkSceneColorHDR.Shutdown();
         m_vkGBuffer.Shutdown();
         m_uploadBudget.Shutdown();
+        m_timestampPool.Shutdown();
         m_vkFrameResources.Shutdown();
         m_vkSceneColor.Shutdown();
         m_taaPipeline.Shutdown();
@@ -2302,6 +2307,27 @@ void Engine::Render() {
             return;
         }
         m_frameGraphBuilt = true;
+        uint32_t passCount = static_cast<uint32_t>(m_frameGraph.GetExecutedPassCount());
+        if (passCount == 0u) passCount = 32u;
+        if (!m_timestampPool.Init(m_vkDevice.Device(), m_vkDevice.PhysicalDevice(), passCount))
+            LOG_ERROR(Render, "VkTimestampPool init failed");
+    }
+
+    PROFILE_SCOPE("Frame");
+
+    if (m_timestampPool.IsValid() && m_hasSubmittedTimestampFrame) {
+        std::vector<uint64_t> gpuTs(m_timestampPool.GetCount());
+        if (m_timestampPool.GetResults(m_vkDevice.Device(), gpuTs.data())) {
+            m_lastGpuPassMs.clear();
+            const size_t numPasses = m_frameGraph.GetExecutedPassCount();
+            for (size_t i = 0; i < numPasses && (2u * i + 1u) < gpuTs.size(); ++i) {
+                const uint64_t beginNs = gpuTs[2u * i];
+                const uint64_t endNs   = gpuTs[2u * i + 1u];
+                float ms = (endNs > beginNs) ? ((endNs - beginNs) / 1e6f) : 0.f;
+                std::string name(m_frameGraph.GetPassNameByExecutionIndex(i));
+                m_lastGpuPassMs.emplace_back(std::move(name), ms);
+            }
+        }
     }
 
     vkResetCommandPool(m_vkDevice.Device(), fr.cmdPool, 0);
@@ -2313,6 +2339,9 @@ void Engine::Render() {
         LOG_ERROR(Render, "vkBeginCommandBuffer failed");
         return;
     }
+
+    if (m_timestampPool.IsValid())
+        m_timestampPool.Reset(fr.cmdBuffer);
 
     if (m_uploadBudget.IsValid())
         m_uploadBudget.ProcessFrame(fr.cmdBuffer, m_vkFrameResources.CurrentFrameIndex());
@@ -2386,6 +2415,7 @@ void Engine::Render() {
                 m_editorDirty = false;
             m_editorSaveRequested = false;
         }
+        ::engine::ui::DrawProfilerOverlay(::engine::core::Profiler::Instance().GetLastFrameCpuMs(), m_lastGpuPassMs);
         m_editorUI.EndFrame();
     }
     if (!m_editor && m_gameHud.IsReady()) {
@@ -2394,12 +2424,14 @@ void Engine::Render() {
         m_themeManager.Apply();
         m_gameHud.BeginFrame();
         m_gameHud.Draw(m_hudData);
+        ::engine::ui::DrawProfilerOverlay(::engine::core::Profiler::Instance().GetLastFrameCpuMs(), m_lastGpuPassMs);
         m_gameHud.EndFrame();
     }
     m_chunkStats.BeginFrame();
     m_hlodDrawsThisFrame = 0u;
     m_instanceDrawsThisFrame = 0u;
-    m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry);
+    m_frameGraph.Execute(fr.cmdBuffer, m_fgRegistry,
+        m_timestampPool.IsValid() ? m_timestampPool.GetPool() : VK_NULL_HANDLE, 0u);
     if (m_editor && m_editorUI.IsReady())
         m_editorUI.Render(fr.cmdBuffer, imageIndex, m_vkSwapchain.Extent());
     if (!m_editor && m_gameHud.IsReady())
@@ -2437,6 +2469,8 @@ void Engine::Render() {
         LOG_ERROR(Render, "vkQueueSubmit failed");
         return;
     }
+    if (m_timestampPool.IsValid())
+        m_hasSubmittedTimestampFrame = true;
 
     VkPresentInfoKHR pi{};
     pi.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -2458,6 +2492,7 @@ void Engine::Render() {
 }
 
 void Engine::EndFrame() {
+    ::engine::core::Profiler::Instance().EndFrame();
     Time::EndFrame();
 
     const double now = Time::ElapsedSeconds();

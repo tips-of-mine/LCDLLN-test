@@ -42,6 +42,8 @@ add_library(engine_core STATIC
     engine/core/Time.cpp
     engine/core/Config.cpp
     engine/core/Engine.cpp
+    # M18.1 — Profiler: CPU scopes (ring buffer) + GPU timestamps
+    engine/core/Profiler.cpp
 
     # M09.1 — World model: Zone 4km, Chunk 256m, rings
     engine/world/World.cpp
@@ -164,6 +166,8 @@ add_library(engine_core STATIC
     engine/ui/GameHud.cpp
     # M16.5 — Theme manager: theme.json + style.qss
     engine/ui/ThemeManager.cpp
+    # M18.1 — Profiler debug overlay (CPU/GPU ms)
+    engine/ui/ProfilerOverlay.cpp
 
     # M17.2 — Particles MVP: CPU pool + billboard render pass
     engine/render/ParticleSystem.cpp
@@ -172,6 +176,8 @@ add_library(engine_core STATIC
     engine/render/DecalComponent.cpp
     engine/render/vk/VkDecalPass.cpp
     engine/render/vk/VkDecalPipeline.cpp
+    # M18.1 — GPU timestamp query pool (per-pass timing)
+    engine/render/vk/VkTimestampPool.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

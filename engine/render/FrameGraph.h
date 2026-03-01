@@ -208,11 +208,16 @@ public:
      * @brief Executes passes in compiled (topological) order.
      *
      * Compile() must have been called and succeeded. Each pass receives cmd and registry.
+     * If timestampPool is not VK_NULL_HANDLE, writes GPU timestamps before/after each pass
+     * (M18.1): query index (timestampBaseIndex + 2*i) = begin, (timestampBaseIndex + 2*i+1) = end.
      *
-     * @param cmd      Command buffer to record into.
-     * @param registry Registry to resolve resource IDs to Vulkan handles.
+     * @param cmd                Command buffer to record into.
+     * @param registry          Registry to resolve resource IDs to Vulkan handles.
+     * @param timestampPool     Optional query pool for vkCmdWriteTimestamp (per-pass timing).
+     * @param timestampBaseIndex First query index to use (0 when using a dedicated pool).
      */
-    void Execute(VkCommandBuffer cmd, Registry& registry);
+    void Execute(VkCommandBuffer cmd, Registry& registry,
+                 VkQueryPool timestampPool = VK_NULL_HANDLE, uint32_t timestampBaseIndex = 0u);
 
     /**
      * @brief Returns the debug name of a resource, or empty if invalid.
@@ -220,14 +225,26 @@ public:
     [[nodiscard]] std::string_view GetResourceName(ResourceId id) const;
 
     /**
-     * @brief Returns the debug name of a pass by index.
+     * @brief Returns the debug name of a pass by index (into m_passes).
      */
     [[nodiscard]] std::string_view GetPassName(size_t index) const;
+
+    /**
+     * @brief Returns the debug name of the pass at execution order index (for GPU timestamp display).
+     */
+    [[nodiscard]] std::string_view GetPassNameByExecutionIndex(size_t executionIndex) const;
 
     /**
      * @brief Returns whether the graph has been successfully compiled.
      */
     [[nodiscard]] bool IsCompiled() const noexcept { return m_compiled; }
+
+    /**
+     * @brief Returns the number of passes in execution order (for GPU timestamp pool sizing).
+     */
+    [[nodiscard]] size_t GetExecutedPassCount() const noexcept {
+        return m_compiled ? m_executionOrder.size() : 0u;
+    }
 
 private:
     friend class PassBuilder;

@@ -214,7 +214,8 @@ bool FrameGraph::Compile() {
     return true;
 }
 
-void FrameGraph::Execute(VkCommandBuffer cmd, Registry& registry) {
+void FrameGraph::Execute(VkCommandBuffer cmd, Registry& registry,
+                         VkQueryPool timestampPool, uint32_t timestampBaseIndex) {
     assert(m_compiled && "FrameGraph::Execute: call Compile() first");
     if (!m_compiled) {
         return;
@@ -225,10 +226,16 @@ void FrameGraph::Execute(VkCommandBuffer cmd, Registry& registry) {
     std::vector<VkPipelineStageFlags> lastStage(numResources, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
     std::vector<VkAccessFlags>        lastAccess(numResources, 0);
 
+    size_t executionIndex = 0u;
     for (size_t idx : m_executionOrder) {
         if (idx >= m_passes.size()) continue;
 
         const PassData& pass = m_passes[idx];
+
+        if (timestampPool != VK_NULL_HANDLE) {
+            const uint32_t queryBegin = timestampBaseIndex + static_cast<uint32_t>(2u * executionIndex);
+            vkCmdWriteTimestamp(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, timestampPool, queryBegin);
+        }
 
         std::vector<VkImageMemoryBarrier> barriers;
         VkPipelineStageFlags srcStageMask = 0;
@@ -324,6 +331,12 @@ void FrameGraph::Execute(VkCommandBuffer cmd, Registry& registry) {
         if (pass.execute) {
             pass.execute(cmd, registry);
         }
+
+        if (timestampPool != VK_NULL_HANDLE) {
+            const uint32_t queryEnd = timestampBaseIndex + static_cast<uint32_t>(2u * executionIndex + 1u);
+            vkCmdWriteTimestamp(cmd, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, timestampPool, queryEnd);
+        }
+        ++executionIndex;
     }
 }
 
@@ -339,6 +352,13 @@ std::string_view FrameGraph::GetPassName(size_t index) const {
         return "";
     }
     return m_passes[index].name;
+}
+
+std::string_view FrameGraph::GetPassNameByExecutionIndex(size_t executionIndex) const {
+    if (!m_compiled || executionIndex >= m_executionOrder.size()) {
+        return "";
+    }
+    return m_passes[m_executionOrder[executionIndex]].name;
 }
 
 } // namespace engine::render

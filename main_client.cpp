@@ -10,6 +10,7 @@
 #include "engine/network/QuestProtocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/UdpSocket.h"
+#include "engine/ui/UIModel.h"
 
 #include <chrono>
 #include <cmath>
@@ -80,7 +81,7 @@ int main(int argc, char** argv) {
     engine::network::PeerAddress from{};
     std::unordered_map<uint64_t, engine::network::ReplicationEntityState> replicatedEntities;
     std::unordered_map<uint64_t, uint32_t> entityHp;
-    std::unordered_map<uint32_t, uint32_t> inventory;
+    engine::ui::UIModel uiModel;
     auto lastAttack = std::chrono::steady_clock::now();
     auto lastPickup = std::chrono::steady_clock::now();
     constexpr uint64_t kMobEntityId = 1000u;
@@ -106,6 +107,8 @@ int main(int argc, char** argv) {
         engine::network::NetworkShutdown();
         return 1;
     }
+    uiModel.SetClientId(clientId);
+    uiModel.ApplyConnectAck(currentZoneId, myPosition[0], myPosition[1], myPosition[2]);
     std::printf("client: connected clientId=%u characterId=%lld (reconnect with: %s %lld)\n", clientId, static_cast<long long>(characterId), host, static_cast<long long>(characterId));
 
     std::vector<uint8_t> acceptQuest;
@@ -138,13 +141,23 @@ int main(int argc, char** argv) {
                         if (st.archetypeId != kLootBagArchetypeId && entityHp.find(st.entityId) == entityHp.end())
                             entityHp[st.entityId] = 100u;
                     }
+                    std::vector<float> positions(states.size() * 3);
+                    std::vector<uint32_t> entityIds(states.size());
+                    for (size_t i = 0; i < states.size(); ++i) {
+                        entityIds[i] = static_cast<uint32_t>(states[i].entityId);
+                        positions[i * 3 + 0] = states[i].position[0];
+                        positions[i * 3 + 1] = states[i].position[1];
+                        positions[i * 3 + 2] = states[i].position[2];
+                    }
+                    uiModel.ApplySnapshot(clientId, positions.data(), entityIds.data(), states.size());
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::CombatEvent) && n >= 26) {
                 uint64_t aId = 0, tId = 0;
                 uint32_t damage = 0, targetHp = 0;
                 bool targetDead = false;
                 if (engine::network::ParseCombatEvent(buf + 1, static_cast<size_t>(n) - 1, aId, tId, damage, targetHp, targetDead)) {
-                    entityHp[tId] = targetHp;
+                    entityHp[static_cast<uint64_t>(tId)] = targetHp;
+                    uiModel.ApplyCombatEvent(static_cast<uint32_t>(aId), static_cast<uint32_t>(tId), damage, targetHp, targetDead);
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::ZoneChange) && n >= 17) {
                 int32_t newZoneId = 0;
@@ -155,30 +168,37 @@ int main(int argc, char** argv) {
                     myPosition[0] = spawnPos[0];
                     myPosition[1] = spawnPos[1];
                     myPosition[2] = spawnPos[2];
+                    uiModel.ApplyConnectAck(newZoneId, spawnPos[0], spawnPos[1], spawnPos[2]);
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::InventoryDelta) && n >= 5) {
                 std::vector<engine::network::InventoryDeltaEntry> entries;
                 if (engine::network::ParseInventoryDelta(buf + 1, static_cast<size_t>(n) - 1, entries)) {
-                    for (const auto& e : entries)
-                        inventory[e.itemId] += e.count;
+                    std::vector<uint32_t> ids(entries.size()), counts(entries.size());
+                    for (size_t i = 0; i < entries.size(); ++i) {
+                        ids[i] = entries[i].itemId;
+                        counts[i] = entries[i].count;
+                    }
+                    uiModel.ApplyInventoryDelta(ids.data(), counts.data(), entries.size());
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::QuestDelta) && n >= 14) {
                 uint32_t qId = 0, stepIdx = 0, counter = 0;
                 bool completed = false;
                 if (engine::network::ParseQuestDelta(buf + 1, static_cast<size_t>(n) - 1, qId, stepIdx, counter, completed))
-                    std::printf("client: quest %u step %u counter %u completed=%d\n", qId, stepIdx, counter, completed ? 1 : 0);
+                    uiModel.ApplyQuestDelta(qId, stepIdx, counter, completed);
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::EventState) && n >= 15) {
                 uint32_t evId = 0, phaseIdx = 0, phaseCnt = 0;
                 engine::network::EventStateEnum evState = engine::network::EventStateEnum::Idle;
                 std::string evText;
-                if (engine::network::ParseEventState(buf + 1, static_cast<size_t>(n) - 1, evId, evState, phaseIdx, phaseCnt, evText)) {
-                    const char* stateStr = (evState == engine::network::EventStateEnum::Active) ? "active" : (evState == engine::network::EventStateEnum::Completed) ? "completed" : "idle";
-                    std::printf("client: event %u %s phase %u/%u \"%s\"\n", evId, stateStr, phaseIdx, phaseCnt, evText.c_str());
-                }
+                if (engine::network::ParseEventState(buf + 1, static_cast<size_t>(n) - 1, evId, evState, phaseIdx, phaseCnt, evText))
+                    uiModel.ApplyEventState(evId, static_cast<uint8_t>(evState), phaseIdx, phaseCnt, evText);
             }
         }
 
         auto now = std::chrono::steady_clock::now();
+        const engine::ui::PlayerStats& stats = uiModel.GetPlayerStats();
+        myPosition[0] = stats.position[0];
+        myPosition[1] = stats.position[1];
+        myPosition[2] = stats.position[2];
         if (std::chrono::duration<double>(now - lastInput).count() >= 0.05) {
             uint8_t input[13];
             input[0] = static_cast<uint8_t>(engine::network::MsgType::ClientInput);
@@ -209,10 +229,9 @@ int main(int argc, char** argv) {
             uint32_t mobHp = 100u;
             auto it = entityHp.find(kMobEntityId);
             if (it != entityHp.end()) mobHp = it->second;
-            uint32_t invCount = 0;
-            auto invIt = inventory.find(1u);
-            if (invIt != inventory.end()) invCount = invIt->second;
-            std::printf("client: zone=%d tick=%u entities=%zu mob_hp=%u inv_item1=%u\n", static_cast<int>(currentZoneId), lastTick, replicatedEntities.size(), mobHp, invCount);
+            std::string dump;
+            uiModel.DumpToDebug(dump);
+            std::printf("client: %s | tick=%u entities=%zu mob_hp=%u\n", dump.c_str(), lastTick, replicatedEntities.size(), mobHp);
             lastStats = now;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));

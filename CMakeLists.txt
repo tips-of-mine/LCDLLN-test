@@ -281,6 +281,19 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_ui — M16.1 UIModel (stats, inv, quests, events)
+# ---------------------------------------------------------------------------
+add_library(engine_ui STATIC
+    engine/ui/UIModel.cpp
+)
+target_include_directories(engine_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(MSVC)
+    target_compile_options(engine_ui PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_ui PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_quest — M15.1 Quest definitions JSON
 # ---------------------------------------------------------------------------
 add_library(engine_quest STATIC
@@ -358,7 +371,7 @@ endif()
 # client_app — M13.1 test client: connect, receive snapshot + stats
 # ---------------------------------------------------------------------------
 add_executable(client_app main_client.cpp)
-target_link_libraries(client_app PRIVATE engine_network)
+target_link_libraries(client_app PRIVATE engine_network engine_ui)
 if(WIN32)
     target_link_libraries(client_app PRIVATE ws2_32)
 endif()

@@ -3,6 +3,7 @@
  * @brief Client app: connect, ClientInput, Spawn/Despawn/Snapshot, AttackRequest, CombatEvent, PickupRequest, InventoryDelta (M13.1, M13.3, M14.1, M14.3).
  */
 
+#include "engine/fx/FxManager.h"
 #include "engine/network/Combat.h"
 #include "engine/network/EventProtocol.h"
 #include "engine/network/LootProtocol.h"
@@ -158,6 +159,14 @@ int main(int argc, char** argv) {
                 if (engine::network::ParseCombatEvent(buf + 1, static_cast<size_t>(n) - 1, aId, tId, damage, targetHp, targetDead)) {
                     entityHp[static_cast<uint64_t>(tId)] = targetHp;
                     uiModel.ApplyCombatEvent(static_cast<uint32_t>(aId), static_cast<uint32_t>(tId), damage, targetHp, targetDead);
+                    float targetPos[3] = {0.f, 0.f, 0.f};
+                    auto it = replicatedEntities.find(tId);
+                    if (it != replicatedEntities.end()) {
+                        targetPos[0] = it->second.position[0];
+                        targetPos[1] = it->second.position[1];
+                        targetPos[2] = it->second.position[2];
+                    }
+                    fxManager.OnCombatEvent(targetDead, targetPos);
                 }
             } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::ZoneChange) && n >= 17) {
                 int32_t newZoneId = 0;

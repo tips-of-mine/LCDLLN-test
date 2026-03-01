@@ -340,6 +340,21 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_fx — M17.1 FX definitions + event->FX mapping (client-side only)
+# ---------------------------------------------------------------------------
+add_library(engine_fx STATIC
+    engine/fx/FxDef.cpp
+    engine/fx/FxManager.cpp
+)
+target_include_directories(engine_fx PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_fx PUBLIC engine_core nlohmann_json::nlohmann_json)
+if(MSVC)
+    target_compile_options(engine_fx PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_fx PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_network — M13.1 Server: UDP transport, protocol, server tick (no Vulkan/GLFW)
 # ---------------------------------------------------------------------------
 add_library(engine_network STATIC
@@ -376,7 +391,7 @@ endif()
 # client_app — M13.1 test client: connect, receive snapshot + stats
 # ---------------------------------------------------------------------------
 add_executable(client_app main_client.cpp)
-target_link_libraries(client_app PRIVATE engine_network engine_ui)
+target_link_libraries(client_app PRIVATE engine_network engine_ui engine_fx)
 if(WIN32)
     target_link_libraries(client_app PRIVATE ws2_32)
 endif()

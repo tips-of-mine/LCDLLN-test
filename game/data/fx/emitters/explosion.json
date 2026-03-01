@@ -1,0 +1,8 @@
+{
+  "rate": 120,
+  "lifetimeMin": 0.3,
+  "lifetimeMax": 0.8,
+  "velocity": [0, 5, 0],
+  "size": 0.5,
+  "color": [1, 0.6, 0.1, 0.9]
+}

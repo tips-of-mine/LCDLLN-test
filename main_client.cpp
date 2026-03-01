@@ -6,6 +6,7 @@
 #include "engine/network/Combat.h"
 #include "engine/network/LootProtocol.h"
 #include "engine/network/Protocol.h"
+#include "engine/network/QuestProtocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/UdpSocket.h"
 
@@ -106,6 +107,10 @@ int main(int argc, char** argv) {
     }
     std::printf("client: connected clientId=%u characterId=%lld (reconnect with: %s %lld)\n", clientId, static_cast<long long>(characterId), host, static_cast<long long>(characterId));
 
+    std::vector<uint8_t> acceptQuest;
+    engine::network::SerializeAcceptQuest(1u, acceptQuest);
+    engine::network::UdpSendTo(fd, acceptQuest.data(), acceptQuest.size(), &serverAddr);
+
     for (;;) {
         int n = engine::network::UdpRecvFrom(fd, buf, sizeof(buf), &from);
         if (n > 0) {
@@ -156,6 +161,11 @@ int main(int argc, char** argv) {
                     for (const auto& e : entries)
                         inventory[e.itemId] += e.count;
                 }
+            } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::QuestDelta) && n >= 14) {
+                uint32_t qId = 0, stepIdx = 0, counter = 0;
+                bool completed = false;
+                if (engine::network::ParseQuestDelta(buf + 1, static_cast<size_t>(n) - 1, qId, stepIdx, counter, completed))
+                    std::printf("client: quest %u step %u counter %u completed=%d\n", qId, stepIdx, counter, completed ? 1 : 0);
             }
         }
 

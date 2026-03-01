@@ -1,6 +1,6 @@
 /**
  * @file main_server.cpp
- * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat, mob AI, loot (M13.1, M13.3, M13.4, M14.1, M14.2, M14.3).
+ * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat, mob AI, loot, quests (M13.1–M14.4, M15.1).
  */
 
 #include "engine/ai/AiState.h"
@@ -10,14 +10,16 @@
 #include "engine/network/Combat.h"
 #include "engine/network/LootProtocol.h"
 #include "engine/network/Protocol.h"
+#include "engine/network/QuestProtocol.h"
 #include "engine/network/Replication.h"
 #include "engine/network/ServerCore.h"
 #include "engine/network/UdpSocket.h"
+#include "engine/persistence/CharacterDb.h"
+#include "engine/quest/QuestDef.h"
 #include "engine/world/CellGrid.h"
 #include "engine/world/GameplayVolume.h"
 #include "engine/world/InterestSet.h"
 #include "engine/world/VolumeFormat.h"
-#include "engine/persistence/CharacterDb.h"
 
 #include <array>
 #include <chrono>
@@ -25,6 +27,8 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <set>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -78,6 +82,11 @@ struct LootBag {
     std::vector<engine::loot::LootEntry> items;
     uint32_t ownerId = 0;
 };
+
+struct QuestProgress {
+    uint32_t stepIndex = 0;
+    uint32_t counter = 0;
+};
 } // namespace
 
 int main(int argc, char** argv) {
@@ -96,6 +105,15 @@ int main(int argc, char** argv) {
         engine::network::NetworkShutdown();
         return 1;
     }
+    std::vector<engine::quest::QuestDef> questDefs;
+    std::map<uint32_t, engine::quest::QuestDef> questDefsById;
+    if (engine::quest::LoadQuestsJson(std::string(contentPath) + "/quests.json", questDefs)) {
+        for (const auto& q : questDefs) questDefsById[q.id] = q;
+    }
+    std::unordered_map<uint32_t, std::unordered_map<uint32_t, QuestProgress>> playerQuestProgress;
+    std::unordered_map<uint32_t, std::set<uint32_t>> playerCompletedQuests;
+    std::unordered_map<uint32_t, std::set<std::string>> clientTriggersInsidePrev;
+
     std::map<int32_t, std::vector<engine::world::GameplayVolume>> volumesPerZone;
     for (int32_t z = 0; z <= 1; ++z) {
         char path[256];
@@ -166,7 +184,34 @@ int main(int argc, char** argv) {
             }
             lastAutosave = now;
         }
-        while (now >= nextTick) {
+            while (now >= nextTick) {
+            auto fireQuestEvent = [&](uint32_t cid, engine::quest::QuestStepType stepType, const std::string& targetStr, uint32_t count) {
+                const engine::network::PeerAddress* addr = nullptr;
+                for (size_t i = 0; i < clients.size(); ++i) if (clients[i].clientId == cid) { addr = &clients[i].address; break; }
+                if (!addr) return;
+                auto pit = playerQuestProgress.find(cid);
+                if (pit == playerQuestProgress.end()) return;
+                std::vector<std::tuple<uint32_t, uint32_t, uint32_t, bool>> toSend;
+                for (auto it = pit->second.begin(); it != pit->second.end(); ) {
+                    auto qit = questDefsById.find(it->first);
+                    if (qit == questDefsById.end() || it->second.stepIndex >= qit->second.steps.size()) { ++it; continue; }
+                    const auto& step = qit->second.steps[it->second.stepIndex];
+                    if (step.type != stepType || step.target != targetStr) { ++it; continue; }
+                    it->second.counter += count;
+                    while (it->second.stepIndex < qit->second.steps.size() && it->second.counter >= qit->second.steps[it->second.stepIndex].count) {
+                        it->second.counter -= qit->second.steps[it->second.stepIndex].count;
+                        it->second.stepIndex++;
+                    }
+                    bool completed = (it->second.stepIndex >= qit->second.steps.size());
+                    toSend.push_back({it->first, it->second.stepIndex, it->second.counter, completed});
+                    if (completed) { playerCompletedQuests[cid].insert(it->first); it = pit->second.erase(it); } else ++it;
+                }
+                for (const auto& t : toSend) {
+                    std::vector<uint8_t> d;
+                    engine::network::SerializeQuestDelta(std::get<0>(t), std::get<1>(t), std::get<2>(t), std::get<3>(t), d);
+                    engine::network::UdpSendTo(fd, d.data(), d.size(), addr);
+                }
+            };
             while (engine::network::UdpRecvFrom(fd, buf, kRecvBuf, &from) > 0) {
                 if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::Connect)) {
                     uint64_t reqCharacterId = 0u;
@@ -248,6 +293,33 @@ int main(int argc, char** argv) {
                         entityStates.erase(clientId);
                         entityCombat.erase(clientId);
                         playerInventory.erase(clientId);
+                        playerQuestProgress.erase(clientId);
+                        playerCompletedQuests.erase(clientId);
+                        clientTriggersInsidePrev.erase(clientId);
+                    }
+                } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::AcceptQuest) && kRecvBuf >= 5) {
+                    uint32_t questId = 0;
+                    if (engine::network::ParseAcceptQuest(buf + 1, 4u, questId)) {
+                        size_t ci = clients.size();
+                        for (size_t i = 0; i < clients.size(); ++i) {
+                            if (PeerAddressEqual(clients[i].address, from)) { ci = i; break; }
+                        }
+                        if (ci < clients.size()) {
+                            uint32_t cid = clients[ci].clientId;
+                            auto qit = questDefsById.find(questId);
+                            if (qit != questDefsById.end() && playerCompletedQuests[cid].count(questId) == 0u
+                                && playerQuestProgress[cid].count(questId) == 0u) {
+                                bool prereqsOk = true;
+                                for (uint32_t pr : qit->second.prereqs)
+                                    if (playerCompletedQuests[cid].count(pr) == 0u) { prereqsOk = false; break; }
+                                if (prereqsOk) {
+                                    playerQuestProgress[cid][questId] = QuestProgress{0, 0};
+                                    std::vector<uint8_t> d;
+                                    engine::network::SerializeQuestDelta(questId, 0, 0, false, d);
+                                    engine::network::UdpSendTo(fd, d.data(), d.size(), &clients[ci].address);
+                                }
+                            }
+                        }
                     }
                 } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::AttackRequest) && kRecvBuf >= 17) {
                     uint64_t attackerId = 0, targetId = 0;
@@ -304,6 +376,8 @@ int main(int argc, char** argv) {
                                         entityStates[bag.entityId] = st;
                                         lootBags.push_back(bag);
                                     }
+                                    std::string killTarget = "archetype:" + std::to_string(static_cast<unsigned>(entityStates[tId].archetypeId));
+                                    fireQuestEvent(aId, engine::quest::QuestStepType::Kill, killTarget, 1);
                                 }
                             }
                         }
@@ -342,6 +416,8 @@ int main(int argc, char** argv) {
                                     engine::network::SerializeDespawn(bagId64, despawnPkt);
                                     for (size_t i = 0; i < clients.size(); ++i)
                                         engine::network::UdpSendTo(fd, despawnPkt.data(), despawnPkt.size(), &clients[i].address);
+                                    for (const auto& e : bagPtr->items)
+                                        fireQuestEvent(clientId, engine::quest::QuestStepType::Collect, "item:" + std::to_string(e.itemId), e.count);
                                 }
                             }
                         }
@@ -390,6 +466,26 @@ int main(int argc, char** argv) {
                         break;
                     }
                 }
+            }
+
+            for (size_t i = 0; i < clients.size(); ++i) {
+                std::set<std::string> nowInside;
+                auto vit = volumesPerZone.find(clientZoneIds[i]);
+                if (vit != volumesPerZone.end()) {
+                    for (const auto& vol : vit->second) {
+                        if (vol.type != engine::world::VolumeType::Trigger) continue;
+                        if (!engine::world::PointInVolume(clientPositions[i][0], clientPositions[i][1], clientPositions[i][2], vol)) continue;
+                        if (!vol.actionId.empty()) nowInside.insert(vol.actionId);
+                    }
+                }
+                uint32_t cid = clients[i].clientId;
+                for (const auto& actionId : nowInside) {
+                    if (clientTriggersInsidePrev[cid].count(actionId) == 0u) {
+                        fireQuestEvent(cid, engine::quest::QuestStepType::Talk, actionId, 1);
+                        fireQuestEvent(cid, engine::quest::QuestStepType::Enter, actionId, 1);
+                    }
+                }
+                clientTriggersInsidePrev[cid] = std::move(nowInside);
             }
 
             if (tick % engine::ai::kAiUpdateTickStep == 0u) {

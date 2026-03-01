@@ -15,6 +15,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(glfw3         REQUIRED)   # M00.4 — Window/Input platform layer
 find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
 find_package(SQLite3       REQUIRED)   # M14.4 — Persistence
+# nlohmann_json already found for engine_core; engine_quest uses it
 
 # ---------------------------------------------------------------------------
 # engine_core static library (M00.1: Log, Time, Config)
@@ -252,6 +253,20 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_quest — M15.1 Quest definitions JSON
+# ---------------------------------------------------------------------------
+add_library(engine_quest STATIC
+    engine/quest/QuestDef.cpp
+)
+target_include_directories(engine_quest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_quest PUBLIC nlohmann_json::nlohmann_json)
+if(MSVC)
+    target_compile_options(engine_quest PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_quest PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_persistence — M14.4 Character DB (SQLite)
 # ---------------------------------------------------------------------------
 add_library(engine_persistence STATIC
@@ -287,6 +302,7 @@ add_library(engine_network STATIC
     engine/network/Replication.cpp
     engine/network/Combat.cpp
     engine/network/LootProtocol.cpp
+    engine/network/QuestProtocol.cpp
 )
 target_include_directories(engine_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)
@@ -302,7 +318,7 @@ endif()
 # server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
 # ---------------------------------------------------------------------------
 add_executable(server_app main_server.cpp)
-target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot engine_persistence)
+target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot engine_persistence engine_quest)
 if(MSVC)
     target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
 else()

@@ -24,6 +24,8 @@ enum class MsgType : uint8_t {
     PickupRequest = 9,
     InventoryDelta = 10,
     Logout = 11,
+    QuestDelta = 12,
+    AcceptQuest = 13,
 };
 
 constexpr size_t kMaxSnapshotPayload = 0u;

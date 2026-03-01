@@ -1,0 +1,9 @@
+{
+  "zones": [
+    {
+      "id": "default",
+      "ambience": "audio/ambience_default.wav",
+      "loop": true
+    }
+  ]
+}

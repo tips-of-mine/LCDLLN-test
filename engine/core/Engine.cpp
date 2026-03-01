@@ -26,6 +26,7 @@
 #include "engine/render/Halton.h"
 #include "engine/math/Frustum.h"
 #include "engine/math/Ray.h"
+#include "engine/world/VolumeFormat.h"
 #include "engine/world/HlodRuntime.h"
 #include "engine/world/World.h"
 #include "engine/streaming/StreamingScheduler.h"
@@ -833,6 +834,10 @@ void Engine::BeginFrame() {
                 // M11.4: load zone-level probes and atmosphere (lighting uses global probe or fallback sky).
                 ::engine::world::ReadProbesBin(base + "/probes.bin", m_zoneProbes);
                 ::engine::world::ReadZoneAtmosphere(base + "/zone_atmosphere.json", m_zoneAtmosphere);
+                // M12.3: load gameplay volumes (triggers, spawns, transitions) for editor.
+                m_zoneBasePath = base;
+                if (!::engine::world::ReadVolumesJson(base + "/volumes.json", m_zoneVolumes))
+                    m_zoneVolumes.clear();
             }
         }
     }
@@ -880,12 +885,12 @@ void Engine::Update() {
     ComputeViewMatrix(rs.camera, rs.view.m);
     ComputeProjectionMatrix(rs.camera, rs.proj.m);
 
-    // M12.1 — Editor: raycast selection when clicking in viewport (CPU, bounds).
-    if (m_editor && m_editorUI.IsReady() && Input::IsMouseButtonPressed(MouseButton::Left) && !m_editorUI.WantCaptureMouse() && !m_zoneChunkInstances.empty()) {
+    // M12.1 — Editor: raycast selection when clicking in viewport (instances + M12.3 volumes).
+    if (m_editor && m_editorUI.IsReady() && Input::IsMouseButtonPressed(MouseButton::Left) && !m_editorUI.WantCaptureMouse()) {
         float rayOrigin[3], rayDir[3];
         ScreenPointToRay(static_cast<float>(Input::MouseX()), static_cast<float>(Input::MouseY()), w, h, rs.view.m, rs.proj.m, rayOrigin, rayDir);
-        float closestT = 1e30f;
-        int picked = -1;
+        float closestInstanceT = 1e30f;
+        int pickedInstance = -1;
         const float halfExt = 2.0f;
         for (size_t i = 0; i < m_zoneChunkInstances.size(); ++i) {
             const uint32_t layer = m_zoneChunkInstances[i].flags & 0x0Fu;
@@ -895,12 +900,40 @@ void Engine::Update() {
             float aabbMin[3] = { cx - halfExt, cy - halfExt, cz - halfExt };
             float aabbMax[3] = { cx + halfExt, cy + halfExt, cz + halfExt };
             float hitT;
-            if (RayAABB(rayOrigin, rayDir, aabbMin, aabbMax, &hitT) && hitT < closestT) {
-                closestT = hitT;
-                picked = static_cast<int>(i);
+            if (RayAABB(rayOrigin, rayDir, aabbMin, aabbMax, &hitT) && hitT < closestInstanceT) {
+                closestInstanceT = hitT;
+                pickedInstance = static_cast<int>(i);
             }
         }
-        m_editorSelectedInstanceIndex = picked;
+        float closestVolumeT = 1e30f;
+        int pickedVolume = -1;
+        for (size_t i = 0; i < m_zoneVolumes.size(); ++i) {
+            const auto& vol = m_zoneVolumes[i];
+            float hitT;
+            if (vol.shape == ::engine::world::VolumeShape::Box) {
+                float aabbMin[3] = { vol.position[0] - vol.halfExtents[0], vol.position[1] - vol.halfExtents[1], vol.position[2] - vol.halfExtents[2] };
+                float aabbMax[3] = { vol.position[0] + vol.halfExtents[0], vol.position[1] + vol.halfExtents[1], vol.position[2] + vol.halfExtents[2] };
+                if (RayAABB(rayOrigin, rayDir, aabbMin, aabbMax, &hitT) && hitT < closestVolumeT) {
+                    closestVolumeT = hitT;
+                    pickedVolume = static_cast<int>(i);
+                }
+            } else {
+                if (RaySphere(rayOrigin, rayDir, vol.position, vol.radius, &hitT) && hitT < closestVolumeT) {
+                    closestVolumeT = hitT;
+                    pickedVolume = static_cast<int>(i);
+                }
+            }
+        }
+        if (pickedVolume >= 0 && (pickedInstance < 0 || closestVolumeT <= closestInstanceT)) {
+            m_editorSelectedVolumeIndex = pickedVolume;
+            m_editorSelectedInstanceIndex = -1;
+        } else if (pickedInstance >= 0) {
+            m_editorSelectedInstanceIndex = pickedInstance;
+            m_editorSelectedVolumeIndex = -1;
+        } else {
+            m_editorSelectedInstanceIndex = -1;
+            m_editorSelectedVolumeIndex = -1;
+        }
     }
 
     {
@@ -1912,9 +1945,14 @@ void Engine::Render() {
         m_editorUI.DrawPanels(&m_zoneChunkInstances, &m_editorSelectedInstanceIndex,
             m_editorLayerVisible, m_editorLayerLocked,
             &m_editorDirty, &m_editorSaveRequested, &m_zoneChunkInstancesPath,
+            &m_zoneVolumes, &m_editorSelectedVolumeIndex, &m_zoneBasePath, &m_editorExportVolumesRequested,
             renderRs.view.m, renderRs.proj.m,
             m_framebufferWidth > 0 ? m_framebufferWidth : 1280,
             m_framebufferHeight > 0 ? m_framebufferHeight : 720);
+        if (m_editorExportVolumesRequested && !m_zoneBasePath.empty()) {
+            if (::engine::world::WriteVolumesJson(m_zoneBasePath + "/volumes.json", m_zoneVolumes))
+                m_editorExportVolumesRequested = false;
+        }
         if (m_editorSaveRequested && m_editorDirty && !m_zoneChunkInstancesPath.empty()) {
             ::engine::world::VersionedHeader vh;
             vh.formatVersion = ::engine::world::kZoneBuildFormatVersion;

@@ -7,6 +7,7 @@
  * Opaque implementation; no ImGui/Vulkan includes in header.
  */
 
+#include "engine/world/GameplayVolume.h"
 #include "engine/world/ZoneBuildFormat.h"
 
 #include <vulkan/vulkan.h>
@@ -83,6 +84,10 @@ public:
      * @param cameraProjCol    Projection matrix (column-major 16 floats).
      * @param viewportWidth    Full framebuffer width.
      * @param viewportHeight   Full framebuffer height.
+     * @param volumes         M12.3: gameplay volumes (triggers, spawns, transitions); may be modified.
+     * @param selectedVolumeIndex M12.3: selected volume index (-1 = none).
+     * @param zoneBasePath     M12.3: zone base path for export (volumes.json); empty disables export.
+     * @param outExportVolumesRequested M12.3: set to true when user requests export volumes.
      */
     void DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* instances,
                    int* selectedIndex,
@@ -91,6 +96,10 @@ public:
                    bool* outDirty,
                    bool* outSaveRequested,
                    const std::string* instancesPath,
+                   std::vector<::engine::world::GameplayVolume>* volumes,
+                   int* selectedVolumeIndex,
+                   const std::string* zoneBasePath,
+                   bool* outExportVolumesRequested,
                    const float cameraViewCol[16], const float cameraProjCol[16],
                    int viewportWidth, int viewportHeight);
 

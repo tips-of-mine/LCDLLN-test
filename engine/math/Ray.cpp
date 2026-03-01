@@ -5,6 +5,7 @@
 
 #include "Ray.h"
 
+#include <cmath>
 #include <cstring>
 
 namespace engine::math {
@@ -86,6 +87,41 @@ void ScreenPointToRay(float screenX, float screenY,
     outDir[0] = farWorld[0] - nearWorld[0];
     outDir[1] = farWorld[1] - nearWorld[1];
     outDir[2] = farWorld[2] - nearWorld[2];
+}
+
+bool WorldToScreen(float worldX, float worldY, float worldZ,
+                   const float viewCol[16], const float projCol[16],
+                   float viewportW, float viewportH,
+                   float* outScreenX, float* outScreenY) {
+    float viewProj[16];
+    Mat4Mul(viewCol, projCol, viewProj);
+    float p[3] = { worldX, worldY, worldZ };
+    float clip[3];
+    float w = viewProj[3]*p[0] + viewProj[7]*p[1] + viewProj[11]*p[2] + viewProj[15];
+    if (w <= 1e-6f) return false;
+    float iw = 1.0f / w;
+    clip[0] = (viewProj[0]*p[0] + viewProj[4]*p[1] + viewProj[8]*p[2] + viewProj[12]) * iw;
+    clip[1] = (viewProj[1]*p[0] + viewProj[5]*p[1] + viewProj[9]*p[2] + viewProj[13]) * iw;
+    *outScreenX = (clip[0] + 1.0f) * 0.5f * viewportW;
+    *outScreenY = (1.0f - clip[1]) * 0.5f * viewportH;
+    return true;
+}
+
+bool RaySphere(const float origin[3], const float dir[3],
+               const float center[3], float radius,
+               float* outT) {
+    float oc[3] = { origin[0] - center[0], origin[1] - center[1], origin[2] - center[2] };
+    float a = dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2];
+    float b = 2.0f * (oc[0]*dir[0] + oc[1]*dir[1] + oc[2]*dir[2]);
+    float c = (oc[0]*oc[0] + oc[1]*oc[1] + oc[2]*oc[2]) - radius * radius;
+    float disc = b*b - 4.0f*a*c;
+    if (disc < 0.0f) return false;
+    float sqrtDisc = std::sqrt(disc);
+    float t = (-b - sqrtDisc) / (2.0f * a);
+    if (t < 0.0f) t = (-b + sqrtDisc) / (2.0f * a);
+    if (t < 0.0f) return false;
+    *outT = t;
+    return true;
 }
 
 bool RayAABB(const float origin[3], const float dir[3],

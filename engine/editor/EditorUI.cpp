@@ -6,13 +6,16 @@
 #include "EditorUI.h"
 
 #include "engine/core/Log.h"
+#include "engine/math/Ray.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
 #include <cmath>
+#include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 namespace engine::editor {
@@ -201,14 +204,22 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
                           bool* outDirty,
                           bool* outSaveRequested,
                           const std::string* instancesPath,
+                          std::vector<::engine::world::GameplayVolume>* volumes,
+                          int* selectedVolumeIndex,
+                          const std::string* zoneBasePath,
+                          bool* outExportVolumesRequested,
                           const float cameraViewCol[16], const float cameraProjCol[16],
                           int viewportWidth, int viewportHeight) {
-    (void)cameraViewCol;
-    (void)cameraProjCol;
     if (!m_ready || !instances || !selectedIndex) return;
     if (!layerVisible || !layerLocked) return;
     if (!outDirty) outDirty = nullptr;
     if (!outSaveRequested) outSaveRequested = nullptr;
+    if (!volumes) volumes = nullptr;
+    if (!selectedVolumeIndex) selectedVolumeIndex = nullptr;
+    if (!zoneBasePath) zoneBasePath = nullptr;
+    if (!outExportVolumesRequested) outExportVolumesRequested = nullptr;
+    const float vpW = static_cast<float>(viewportWidth > 0 ? viewportWidth : 1280);
+    const float vpH = static_cast<float>(viewportHeight > 0 ? viewportHeight : 720);
 
     static float s_translateStep = 1.f;   // 0.5 or 1 m (M12.2)
     static float s_rotationStepDeg = 15.f; // 5 or 15 deg (M12.2)
@@ -216,8 +227,63 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(viewportWidth), static_cast<float>(viewportHeight)), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoCollapse)) {
-        ImGui::Text("Viewport (click to select object)");
+        ImGui::Text("Viewport (click to select object or volume)");
         ImGui::End();
+    }
+
+    // M12.3: debug draw volume wireframes (lines) over the full viewport.
+    if (volumes && !volumes->empty() && cameraViewCol && cameraProjCol) {
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(vpW, vpH), ImGuiCond_Always);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.f, 0.f, 0.f));
+        const ImGuiWindowFlags overlayFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
+            | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
+        if (ImGui::Begin("##VolumeOverlay", nullptr, overlayFlags)) {
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+            const ImU32 colTrigger = IM_COL32(0, 255, 128, 220);
+            const ImU32 colSpawn = IM_COL32(128, 200, 255, 220);
+            const ImU32 colTransition = IM_COL32(255, 200, 0, 220);
+            for (const auto& vol : *volumes) {
+                ImU32 col = colTrigger;
+                if (vol.type == ::engine::world::VolumeType::SpawnArea) col = colSpawn;
+                else if (vol.type == ::engine::world::VolumeType::ZoneTransition) col = colTransition;
+                if (vol.shape == ::engine::world::VolumeShape::Box) {
+                    float min[3] = { vol.position[0] - vol.halfExtents[0], vol.position[1] - vol.halfExtents[1], vol.position[2] - vol.halfExtents[2] };
+                    float max[3] = { vol.position[0] + vol.halfExtents[0], vol.position[1] + vol.halfExtents[1], vol.position[2] + vol.halfExtents[2] };
+                    float corners[8][3] = {
+                        { min[0], min[1], min[2] }, { max[0], min[1], min[2] }, { max[0], max[1], min[2] }, { min[0], max[1], min[2] },
+                        { min[0], min[1], max[2] }, { max[0], min[1], max[2] }, { max[0], max[1], max[2] }, { min[0], max[1], max[2] }
+                    };
+                    const int edges[12][2] = { {0,1},{1,2},{2,3},{3,0}, {4,5},{5,6},{6,7},{7,4}, {0,4},{1,5},{2,6},{3,7} };
+                    for (int e = 0; e < 12; ++e) {
+                        int a = edges[e][0], b = edges[e][1];
+                        float sa0, sa1, sb0, sb1;
+                        if (::engine::math::WorldToScreen(corners[a][0], corners[a][1], corners[a][2], cameraViewCol, cameraProjCol, vpW, vpH, &sa0, &sa1) &&
+                            ::engine::math::WorldToScreen(corners[b][0], corners[b][1], corners[b][2], cameraViewCol, cameraProjCol, vpW, vpH, &sb0, &sb1))
+                            dl->AddLine(ImVec2(sa0, sa1), ImVec2(sb0, sb1), col, 2.f);
+                    }
+                } else {
+                    const int kSegs = 16;
+                    const int ringAxes[3][2] = { {1, 2}, {0, 2}, {0, 1} };  // YZ, XZ, XY
+                    for (int ring = 0; ring < 3; ++ring) {
+                        int ax0 = ringAxes[ring][0], ax1 = ringAxes[ring][1];
+                        for (int i = 0; i < kSegs; ++i) {
+                            float t0 = (float)i * (6.28318530718f / (float)kSegs), t1 = (float)(i + 1) * (6.28318530718f / (float)kSegs);
+                            float p0[3] = { vol.position[0], vol.position[1], vol.position[2] };
+                            float p1[3] = { vol.position[0], vol.position[1], vol.position[2] };
+                            p0[ax0] += vol.radius * std::cos(t0); p0[ax1] += vol.radius * std::sin(t0);
+                            p1[ax0] += vol.radius * std::cos(t1); p1[ax1] += vol.radius * std::sin(t1);
+                            float s0x, s0y, s1x, s1y;
+                            if (::engine::math::WorldToScreen(p0[0], p0[1], p0[2], cameraViewCol, cameraProjCol, vpW, vpH, &s0x, &s0y) &&
+                                ::engine::math::WorldToScreen(p1[0], p1[1], p1[2], cameraViewCol, cameraProjCol, vpW, vpH, &s1x, &s1y))
+                                dl->AddLine(ImVec2(s0x, s0y), ImVec2(s1x, s1y), col, 2.f);
+                        }
+                    }
+                }
+            }
+        }
+        ImGui::End();
+        ImGui::PopStyleColor();
     }
 
     ImGui::SetNextWindowPos(ImVec2(static_cast<float>(viewportWidth) - 320.f, 20.f), ImGuiCond_FirstUseEver);
@@ -233,7 +299,39 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
                 s_rotationStepDeg = (rs == 0) ? 5.f : 15.f;
             }
         }
-        if (*selectedIndex >= 0 && static_cast<size_t>(*selectedIndex) < instances->size()) {
+        if (selectedVolumeIndex && *selectedVolumeIndex >= 0 && volumes && static_cast<size_t>(*selectedVolumeIndex) < volumes->size()) {
+            ::engine::world::GameplayVolume& vol = (*volumes)[static_cast<size_t>(*selectedVolumeIndex)];
+            int typeIdx = (vol.type == ::engine::world::VolumeType::Trigger) ? 0 : (vol.type == ::engine::world::VolumeType::SpawnArea) ? 1 : 2;
+            if (ImGui::Combo("Type", &typeIdx, "Trigger\0Spawn Area\0Zone Transition\0")) {
+                vol.type = (typeIdx == 0) ? ::engine::world::VolumeType::Trigger
+                    : (typeIdx == 1) ? ::engine::world::VolumeType::SpawnArea : ::engine::world::VolumeType::ZoneTransition;
+                if (outDirty) *outDirty = true;
+            }
+            int shapeIdx = (vol.shape == ::engine::world::VolumeShape::Sphere) ? 1 : 0;
+            if (ImGui::Combo("Shape", &shapeIdx, "Box\0Sphere\0")) {
+                vol.shape = (shapeIdx == 0) ? ::engine::world::VolumeShape::Box : ::engine::world::VolumeShape::Sphere;
+                if (outDirty) *outDirty = true;
+            }
+            if (ImGui::DragFloat3("Position", vol.position, 0.1f, 0.f, 0.f, "%.3f")) {
+                vol.position[0] = SnapTranslate(vol.position[0], s_translateStep);
+                vol.position[1] = SnapTranslate(vol.position[1], s_translateStep);
+                vol.position[2] = SnapTranslate(vol.position[2], s_translateStep);
+                if (outDirty) *outDirty = true;
+            }
+            if (vol.shape == ::engine::world::VolumeShape::Box) {
+                if (ImGui::DragFloat3("Half extents", vol.halfExtents, 0.1f, 0.01f, 1000.f, "%.2f"))
+                    if (outDirty) *outDirty = true;
+            } else {
+                if (ImGui::DragFloat("Radius", &vol.radius, 0.1f, 0.01f, 1000.f, "%.2f"))
+                    if (outDirty) *outDirty = true;
+            }
+            char actionBuf[256];
+            std::snprintf(actionBuf, sizeof(actionBuf), "%.255s", vol.actionId.c_str());
+            if (ImGui::InputText("Action ID", actionBuf, sizeof(actionBuf))) {
+                vol.actionId = actionBuf;
+                if (outDirty) *outDirty = true;
+            }
+        } else if (*selectedIndex >= 0 && static_cast<size_t>(*selectedIndex) < instances->size()) {
             ::engine::world::ZoneChunkInstance& inst = (*instances)[static_cast<size_t>(*selectedIndex)];
             const uint32_t layer = inst.flags & 0x0Fu;
             const bool locked = (layer < kMaxLayers && layerLocked[layer]);
@@ -313,6 +411,61 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
         ImGui::Text("Asset Browser (MVP)");
         ImGui::Text("Placeholder");
         ImGui::End();
+    }
+
+    // M12.3: Volumes panel — list, add trigger/spawn/transition, export.
+    if (volumes && selectedVolumeIndex) {
+        ImGui::SetNextWindowPos(ImVec2(20, 440), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(260, 280), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("Volumes", nullptr, ImGuiWindowFlags_NoCollapse)) {
+            const char* typeNames[] = { "Trigger", "Spawn", "Transition" };
+            for (size_t i = 0; i < volumes->size(); ++i) {
+                const auto& v = (*volumes)[i];
+                const char* name = (v.type == ::engine::world::VolumeType::Trigger) ? typeNames[0]
+                    : (v.type == ::engine::world::VolumeType::SpawnArea) ? typeNames[1] : typeNames[2];
+                if (ImGui::Selectable((std::string(name) + " ##" + std::to_string(i)).c_str(), *selectedVolumeIndex == static_cast<int>(i)))
+                    *selectedVolumeIndex = static_cast<int>(i);
+            }
+            if (ImGui::Button("Add Trigger")) {
+                ::engine::world::GameplayVolume vol;
+                vol.type = ::engine::world::VolumeType::Trigger;
+                vol.shape = ::engine::world::VolumeShape::Box;
+                vol.position[0] = vol.position[1] = vol.position[2] = 0.f;
+                vol.halfExtents[0] = vol.halfExtents[1] = vol.halfExtents[2] = 2.f;
+                vol.radius = 2.f;
+                volumes->push_back(vol);
+                *selectedVolumeIndex = static_cast<int>(volumes->size() - 1);
+                if (outDirty) *outDirty = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Add Spawn")) {
+                ::engine::world::GameplayVolume vol;
+                vol.type = ::engine::world::VolumeType::SpawnArea;
+                vol.shape = ::engine::world::VolumeShape::Box;
+                vol.position[0] = vol.position[1] = vol.position[2] = 0.f;
+                vol.halfExtents[0] = vol.halfExtents[1] = vol.halfExtents[2] = 2.f;
+                vol.radius = 2.f;
+                volumes->push_back(vol);
+                *selectedVolumeIndex = static_cast<int>(volumes->size() - 1);
+                if (outDirty) *outDirty = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Add Transition")) {
+                ::engine::world::GameplayVolume vol;
+                vol.type = ::engine::world::VolumeType::ZoneTransition;
+                vol.shape = ::engine::world::VolumeShape::Box;
+                vol.position[0] = vol.position[1] = vol.position[2] = 0.f;
+                vol.halfExtents[0] = vol.halfExtents[1] = vol.halfExtents[2] = 2.f;
+                vol.radius = 2.f;
+                volumes->push_back(vol);
+                *selectedVolumeIndex = static_cast<int>(volumes->size() - 1);
+                if (outDirty) *outDirty = true;
+            }
+            if (zoneBasePath && !zoneBasePath->empty() && outExportVolumesRequested && ImGui::Button("Export volumes")) {
+                *outExportVolumesRequested = true;
+            }
+            ImGui::End();
+        }
     }
 }
 

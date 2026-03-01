@@ -149,6 +149,8 @@ add_library(engine_core STATIC
     engine/math/Ray.cpp
     # M12.1 — Editor: ImGui UI + panels + gizmo
     engine/editor/EditorUI.cpp
+    # M12.3 — Volumes gameplay: JSON read/write for layout export
+    engine/world/VolumeFormat.cpp
 
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp

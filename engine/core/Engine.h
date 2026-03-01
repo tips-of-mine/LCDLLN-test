@@ -63,6 +63,7 @@
 #include "engine/render/vk/DeferredDestroyQueue.h"
 #include "engine/render/vk/VkUploadBudget.h"
 #include "engine/editor/EditorUI.h"
+#include "engine/world/GameplayVolume.h"
 
 #include <array>
 #include <atomic>
@@ -391,6 +392,14 @@ private:
     bool m_editorLayerVisible[16] = {};
     /// M12.2 — Layer locked (no edit when locked). Default all false.
     bool m_editorLayerLocked[16] = {};
+    /// M12.3 — Zone base path (content + zone.build_path) for volumes.json load/save.
+    std::string m_zoneBasePath;
+    /// M12.3 — Gameplay volumes (triggers, spawns, transitions); loaded from volumes.json.
+    std::vector<::engine::world::GameplayVolume> m_zoneVolumes;
+    /// M12.3 — Selected volume index (-1 = none).
+    int m_editorSelectedVolumeIndex = -1;
+    /// M12.3 — Export volumes requested by editor UI (write volumes.json).
+    bool m_editorExportVolumesRequested = false;
 
     /// Whether a fixed-timestep update loop is enabled.
     bool  m_useFixedTimestep = false;

@@ -9,6 +9,7 @@
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Input.h"
 #include "engine/render/FrameGraph.h"
+#include "engine/render/ParticleSystem.h"
 #include "engine/render/ShaderCache.h"
 #include "engine/render/vk/VkFrameResources.h"
 #include "engine/render/vk/VkSceneColor.h"
@@ -173,6 +174,97 @@ bool CreateCubeVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
     }
     std::memcpy(mapped, kCubeVertices, size);
     vkUnmapMemory(device, *outMemory);
+    return true;
+}
+
+// M17.2 — Particle quad (6 vertices, vec2 corners) and instance buffer (kMaxParticles * 32 bytes).
+namespace {
+constexpr uint32_t kParticleQuadVertexCount = 6;
+const float kParticleQuadVertices[kParticleQuadVertexCount][2] = {
+    {-1.f, -1.f}, { 1.f, -1.f}, {-1.f,  1.f},
+    { 1.f, -1.f}, { 1.f,  1.f}, {-1.f,  1.f},
+};
+}
+
+bool CreateParticleQuadBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
+                              VkBuffer* outBuffer, VkDeviceMemory* outMemory) {
+    const VkDeviceSize size = sizeof(kParticleQuadVertices);
+    VkBufferCreateInfo bci{};
+    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bci.size = size;
+    bci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (vkCreateBuffer(device, &bci, nullptr, outBuffer) != VK_SUCCESS) return false;
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(device, *outBuffer, &memReqs);
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (allocInfo.memoryTypeIndex == UINT32_MAX) {
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        return false;
+    }
+    if (vkAllocateMemory(device, &allocInfo, nullptr, outMemory) != VK_SUCCESS) {
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        return false;
+    }
+    if (vkBindBufferMemory(device, *outBuffer, *outMemory, 0) != VK_SUCCESS) {
+        vkFreeMemory(device, *outMemory, nullptr);
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        *outMemory = VK_NULL_HANDLE;
+        return false;
+    }
+    void* mapped = nullptr;
+    if (vkMapMemory(device, *outMemory, 0, size, 0, &mapped) != VK_SUCCESS) {
+        vkFreeMemory(device, *outMemory, nullptr);
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        *outMemory = VK_NULL_HANDLE;
+        return false;
+    }
+    std::memcpy(mapped, kParticleQuadVertices, size);
+    vkUnmapMemory(device, *outMemory);
+    return true;
+}
+
+bool CreateParticleInstanceBuffer(VkPhysicalDevice physicalDevice, VkDevice device,
+                                  VkBuffer* outBuffer, VkDeviceMemory* outMemory) {
+    const VkDeviceSize size = static_cast<VkDeviceSize>(::engine::render::kMaxParticles) * 32u;
+    VkBufferCreateInfo bci{};
+    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bci.size = size;
+    bci.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (vkCreateBuffer(device, &bci, nullptr, outBuffer) != VK_SUCCESS) return false;
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(device, *outBuffer, &memReqs);
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (allocInfo.memoryTypeIndex == UINT32_MAX) {
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        return false;
+    }
+    if (vkAllocateMemory(device, &allocInfo, nullptr, outMemory) != VK_SUCCESS) {
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        return false;
+    }
+    if (vkBindBufferMemory(device, *outBuffer, *outMemory, 0) != VK_SUCCESS) {
+        vkFreeMemory(device, *outMemory, nullptr);
+        vkDestroyBuffer(device, *outBuffer, nullptr);
+        *outBuffer = VK_NULL_HANDLE;
+        *outMemory = VK_NULL_HANDLE;
+        return false;
+    }
     return true;
 }
 } // namespace
@@ -498,6 +590,22 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
                                             } else {
                                                 m_tonemapPipeline.SetHDRView(m_vkSceneColorHDR.GetImageView());
                                             }
+                                            // M17.2 — Particles: pass (HDR+depth), pipeline, pool, quad VB, instance buffer.
+                                            if (m_particlePass.Init(m_vkDevice.Device(), w, h, m_vkSceneColorHDR.GetImageView(), m_vkGBuffer.GetViewDepth())) {
+                                                const std::string contentPath = Config::GetString("paths.content", "game/data");
+                                                (void)::engine::render::LoadEmitterJson(contentPath + "/fx/emitters/explosion.json", m_particleEmitterDef);
+                                                std::vector<uint8_t> pvert = m_shaderCache.Get("shaders/particle.vert");
+                                                std::vector<uint8_t> pfrag = m_shaderCache.Get("shaders/particle.frag");
+                                                if (!pvert.empty() && !pfrag.empty() &&
+                                                    m_particlePipeline.Init(m_vkDevice.Device(), m_particlePass.GetRenderPass(), pvert, pfrag) &&
+                                                    CreateParticleQuadBuffer(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), &m_particleQuadVB, &m_particleQuadVBMemory) &&
+                                                    CreateParticleInstanceBuffer(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), &m_particleInstanceBuffer, &m_particleInstanceMemory)) {
+                                                    // Particle system ready.
+                                                } else {
+                                                    if (m_particlePipeline.IsValid()) m_particlePipeline.Shutdown();
+                                                    m_particlePass.Shutdown();
+                                                }
+                                            }
                                             if (m_vkBloomPyramid.Init(m_vkDevice.PhysicalDevice(), m_vkDevice.Device(), w, h)) {
                                                 std::vector<uint8_t> prefilterVert = m_shaderCache.Get("shaders/bloom_prefilter.vert");
                                                 std::vector<uint8_t> prefilterFrag = m_shaderCache.Get("shaders/bloom_prefilter.frag");
@@ -724,6 +832,24 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
             m_editorUI.Shutdown();
         else if (m_gameHud.IsReady())
             m_gameHud.Shutdown();
+        if (m_particleInstanceBuffer != VK_NULL_HANDLE) {
+            vkDestroyBuffer(m_vkDevice.Device(), m_particleInstanceBuffer, nullptr);
+            m_particleInstanceBuffer = VK_NULL_HANDLE;
+        }
+        if (m_particleInstanceMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_vkDevice.Device(), m_particleInstanceMemory, nullptr);
+            m_particleInstanceMemory = VK_NULL_HANDLE;
+        }
+        if (m_particleQuadVB != VK_NULL_HANDLE) {
+            vkDestroyBuffer(m_vkDevice.Device(), m_particleQuadVB, nullptr);
+            m_particleQuadVB = VK_NULL_HANDLE;
+        }
+        if (m_particleQuadVBMemory != VK_NULL_HANDLE) {
+            vkFreeMemory(m_vkDevice.Device(), m_particleQuadVBMemory, nullptr);
+            m_particleQuadVBMemory = VK_NULL_HANDLE;
+        }
+        m_particlePipeline.Shutdown();
+        m_particlePass.Shutdown();
         if (m_cubeVertexBuffer != VK_NULL_HANDLE) {
             vkDestroyBuffer(m_vkDevice.Device(), m_cubeVertexBuffer, nullptr);
             m_cubeVertexBuffer = VK_NULL_HANDLE;
@@ -891,6 +1017,11 @@ void Engine::Update() {
     ComputeViewMatrix(rs.camera, rs.view.m);
     ComputeProjectionMatrix(rs.camera, rs.proj.m);
 
+    if (m_particlePipeline.IsValid()) {
+        m_particlePool.Update(dt, m_particleEmitterDef, m_particleSpawnPosition);
+        m_particlePool.SortByDistanceToCamera(rs.camera.position);
+    }
+
     // M12.1 — Editor: raycast selection when clicking in viewport (instances + M12.3 volumes).
     if (m_editor && m_editorUI.IsReady() && Input::IsMouseButtonPressed(MouseButton::Left) && !m_editorUI.WantCaptureMouse()) {
         float rayOrigin[3], rayDir[3];
@@ -1025,6 +1156,8 @@ void Engine::Render() {
             m_vkSceneColor.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             m_vkGBuffer.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
             m_vkSceneColorHDR.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
+            if (m_particlePass.IsValid())
+                m_particlePass.Init(m_vkDevice.Device(), m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height, m_vkSceneColorHDR.GetImageView(), m_vkGBuffer.GetViewDepth());
             if (m_vkSsaoRaw.IsValid()) {
                 m_vkSsaoRaw.Recreate(m_vkSwapchain.Extent().width, m_vkSwapchain.Extent().height);
                 if (m_ssaoPipeline.IsValid())
@@ -1515,6 +1648,57 @@ void Engine::Render() {
                 vkCmdDraw(cmd, 3, 1, 0, 0);
                 vkCmdEndRenderPass(cmd);
             });
+        }
+
+        if (m_particlePass.IsValid() && m_particlePipeline.IsValid()) {
+            m_frameGraph.AddPass("Particles")
+                .Write(m_fgSceneColorHDRId, ImageUsage::ColorWrite)
+                .Write(m_fgDepthId, ImageUsage::DepthWrite)
+                .Execute([this](VkCommandBuffer cmd, Registry&) {
+                    const std::uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+                    const RenderState& rs = m_renderStates[readIdx];
+                    const uint32_t count = m_particlePool.GetCount();
+                    if (count == 0u) return;
+                    void* mapped = nullptr;
+                    if (vkMapMemory(m_vkDevice.Device(), m_particleInstanceMemory, 0,
+                            static_cast<VkDeviceSize>(::engine::render::kMaxParticles) * 32u, 0, &mapped) != VK_SUCCESS)
+                        return;
+                    const ::engine::render::Particle* particles = m_particlePool.GetParticles();
+                    for (uint32_t i = 0; i < count; ++i) {
+                        float* dst = static_cast<float*>(mapped) + i * 8u;
+                        dst[0] = particles[i].position[0];
+                        dst[1] = particles[i].position[1];
+                        dst[2] = particles[i].position[2];
+                        dst[3] = particles[i].size;
+                        dst[4] = particles[i].color[0];
+                        dst[5] = particles[i].color[1];
+                        dst[6] = particles[i].color[2];
+                        dst[7] = particles[i].color[3];
+                    }
+                    vkUnmapMemory(m_vkDevice.Device(), m_particleInstanceMemory);
+                    VkRenderPassBeginInfo rpbi{};
+                    rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    rpbi.renderPass = m_particlePass.GetRenderPass();
+                    rpbi.framebuffer = m_particlePass.GetFramebuffer();
+                    rpbi.renderArea = {{0, 0}, m_particlePass.Extent()};
+                    rpbi.clearValueCount = 0;
+                    rpbi.pClearValues = nullptr;
+                    vkCmdBeginRenderPass(cmd, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport vp{}; vp.x = 0; vp.y = 0; vp.width = static_cast<float>(m_particlePass.Extent().width); vp.height = static_cast<float>(m_particlePass.Extent().height); vp.minDepth = 0.0f; vp.maxDepth = 1.0f;
+                    vkCmdSetViewport(cmd, 0, 1, &vp);
+                    VkRect2D scissor{}; scissor.offset = {0, 0}; scissor.extent = m_particlePass.Extent();
+                    vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_particlePipeline.GetPipeline());
+                    float pushData[32];
+                    std::memcpy(pushData, rs.view.m, 64);
+                    std::memcpy(pushData + 16, rs.proj.m, 64);
+                    vkCmdPushConstants(cmd, m_particlePipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 128, pushData);
+                    VkDeviceSize offsets[2] = {0, 0};
+                    VkBuffer buffers[2] = {m_particleQuadVB, m_particleInstanceBuffer};
+                    vkCmdBindVertexBuffers(cmd, 0, 2, buffers, offsets);
+                    vkCmdDraw(cmd, 6, count, 0, 0);
+                    vkCmdEndRenderPass(cmd);
+                });
         }
 
         if (m_vkBloomPyramid.IsValid() && m_bloomPrefilterPipeline.IsValid() && m_bloomDownsamplePipeline.IsValid()) {

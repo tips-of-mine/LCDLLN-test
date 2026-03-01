@@ -234,6 +234,48 @@ add_custom_command(TARGET engine_app POST_BUILD
 )
 
 # ---------------------------------------------------------------------------
+# engine_network — M13.1 Server: UDP transport, protocol, server tick (no Vulkan/GLFW)
+# ---------------------------------------------------------------------------
+add_library(engine_network STATIC
+    engine/network/UdpSocket.cpp
+    engine/network/ServerCore.cpp
+)
+target_include_directories(engine_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(WIN32)
+    target_link_libraries(engine_network PUBLIC ws2_32)
+endif()
+if(MSVC)
+    target_compile_options(engine_network PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_network PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
+# server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
+# ---------------------------------------------------------------------------
+add_executable(server_app main_server.cpp)
+target_link_libraries(server_app PRIVATE engine_network)
+if(MSVC)
+    target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(server_app PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
+# client_app — M13.1 test client: connect, receive snapshot + stats
+# ---------------------------------------------------------------------------
+add_executable(client_app main_client.cpp)
+target_link_libraries(client_app PRIVATE engine_network)
+if(WIN32)
+    target_link_libraries(client_app PRIVATE ws2_32)
+endif()
+if(MSVC)
+    target_compile_options(client_app PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(client_app PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # hlod_builder — offline tool (M09.4: HLOD clustering + mesh merge → hlod.pak)
 # ---------------------------------------------------------------------------
 add_executable(hlod_builder tools/hlod_builder.cpp)

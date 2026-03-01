@@ -381,6 +381,16 @@ private:
     int m_editorSelectedInstanceIndex = -1;
     /// Editor UI (ImGui). Initialized when m_editor and swapchain valid.
     ::engine::editor::EditorUI m_editorUI;
+    /// M12.2 — Path from which zone chunk instances were loaded (for Save).
+    std::string m_zoneChunkInstancesPath;
+    /// M12.2 — True when editor has unsaved changes (position/layer/etc).
+    bool m_editorDirty = false;
+    /// M12.2 — Save requested by editor UI (cleared after handling).
+    bool m_editorSaveRequested = false;
+    /// M12.2 — Layer visibility (instance layer = flags & 0x0F). Default all true.
+    bool m_editorLayerVisible[16] = {};
+    /// M12.2 — Layer locked (no edit when locked). Default all false.
+    bool m_editorLayerLocked[16] = {};
 
     /// Whether a fixed-timestep update loop is enabled.
     bool  m_useFixedTimestep = false;

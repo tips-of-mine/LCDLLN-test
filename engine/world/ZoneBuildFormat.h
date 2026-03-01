@@ -5,6 +5,8 @@
  * @brief Reader for zone_builder output: zone.meta, chunk.meta (bounds+flags), instances.bin (M11.2, M11.5 versioned).
  */
 
+#include "engine/world/VersionedHeader.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -31,5 +33,15 @@ struct ZoneChunkInstance {
 bool ReadZoneMeta(const std::string& path, int32_t& zoneId, std::vector<std::pair<int32_t, int32_t>>& chunkCoords);
 bool ReadZoneChunkMeta(const std::string& path, ZoneChunkMeta& out);
 bool ReadZoneChunkInstances(const std::string& path, std::vector<ZoneChunkInstance>& out);
+
+/**
+ * @brief Writes instances.bin with versioned header (M12.2 editor save).
+ *
+ * @param path     Output path (e.g. chunkDir + "/instances.bin").
+ * @param instances Instance data to write.
+ * @param vh       Versioned header (formatVersion, builderVersion, engineVersion, contentHash).
+ * @return         true on success.
+ */
+bool WriteZoneChunkInstances(const std::string& path, const std::vector<ZoneChunkInstance>& instances, const VersionedHeader& vh);
 
 } // namespace engine::world

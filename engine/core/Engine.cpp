@@ -234,6 +234,12 @@ int Engine::RunInternal(int /*argc*/, const char* const* /*argv*/) {
     // Read high-level options from config.
     m_headless        = Config::GetBool ("headless", false);
     m_editor          = Config::GetBool ("editor", false);
+    if (m_editor) {
+        for (int i = 0; i < 16; ++i) {
+            m_editorLayerVisible[i] = true;
+            m_editorLayerLocked[i]  = false;
+        }
+    }
     m_useFixedTimestep = Config::GetBool("game.fixed_timestep", false);
     m_fixedDeltaSeconds = Config::GetFloat("game.fixed_delta", 1.0f / 60.0f);
 
@@ -818,7 +824,8 @@ void Engine::BeginFrame() {
             if (::engine::world::ReadZoneMeta(base + "/zone.meta", zoneId, chunkCoords) && !chunkCoords.empty()) {
                 const int32_t ci = chunkCoords[0].first, cj = chunkCoords[0].second;
                 const std::string chunkDir = base + "/chunks/chunk_" + std::to_string(ci) + "_" + std::to_string(cj);
-                if (!::engine::world::ReadZoneChunkInstances(chunkDir + "/instances.bin", m_zoneChunkInstances))
+                m_zoneChunkInstancesPath = chunkDir + "/instances.bin";
+                if (!::engine::world::ReadZoneChunkInstances(m_zoneChunkInstancesPath, m_zoneChunkInstances))
                     m_zoneChunkInstances.clear();
                 // M11.3: load navmesh + portals for this chunk (pathfind across chunks uses these).
                 ::engine::world::ReadNavMeshBin(chunkDir + "/navmesh.bin", m_zoneNavMesh);
@@ -881,6 +888,8 @@ void Engine::Update() {
         int picked = -1;
         const float halfExt = 2.0f;
         for (size_t i = 0; i < m_zoneChunkInstances.size(); ++i) {
+            const uint32_t layer = m_zoneChunkInstances[i].flags & 0x0Fu;
+            if (layer < 16u && !m_editorLayerVisible[layer]) continue;
             const float* t = m_zoneChunkInstances[i].transform;
             float cx = t[12], cy = t[13], cz = t[14];
             float aabbMin[3] = { cx - halfExt, cy - halfExt, cz - halfExt };
@@ -1272,8 +1281,12 @@ void Engine::Render() {
                         1u,
                         m_cubeVertexCount / 3u);
                 }
-                /* M11.2: placeholders for loaded zone chunk instances. */
+                /* M11.2: placeholders for loaded zone chunk instances. M12.2: skip hidden layers in editor. */
                 for (const auto& inst : m_zoneChunkInstances) {
+                    if (m_editor) {
+                        const uint32_t layer = inst.flags & 0x0Fu;
+                        if (layer >= 16u || !m_editorLayerVisible[layer]) continue;
+                    }
                     std::memcpy(pushData + 32, inst.transform, sizeof(inst.transform));
                     std::memcpy(pushData + 48, inst.transform, sizeof(inst.transform));
                     vkCmdPushConstants(cmd, m_geometryPipeline.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, 256, pushData);
@@ -1897,9 +1910,21 @@ void Engine::Render() {
     const RenderState& renderRs = m_renderStates[renderReadIdx];
     if (m_editor && m_editorUI.IsReady()) {
         m_editorUI.DrawPanels(&m_zoneChunkInstances, &m_editorSelectedInstanceIndex,
+            m_editorLayerVisible, m_editorLayerLocked,
+            &m_editorDirty, &m_editorSaveRequested, &m_zoneChunkInstancesPath,
             renderRs.view.m, renderRs.proj.m,
             m_framebufferWidth > 0 ? m_framebufferWidth : 1280,
             m_framebufferHeight > 0 ? m_framebufferHeight : 720);
+        if (m_editorSaveRequested && m_editorDirty && !m_zoneChunkInstancesPath.empty()) {
+            ::engine::world::VersionedHeader vh;
+            vh.formatVersion = ::engine::world::kZoneBuildFormatVersion;
+            vh.builderVersion = ::engine::world::kCurrentBuilderVersion;
+            vh.engineVersion = ::engine::world::kCurrentEngineVersion;
+            vh.contentHash = 0u;
+            if (::engine::world::WriteZoneChunkInstances(m_zoneChunkInstancesPath, m_zoneChunkInstances, vh))
+                m_editorDirty = false;
+            m_editorSaveRequested = false;
+        }
         m_editorUI.EndFrame();
     }
     m_chunkStats.BeginFrame();

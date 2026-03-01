@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 struct GLFWwindow;
@@ -69,17 +70,27 @@ public:
     void BeginFrame();
 
     /**
-     * @brief Draws editor panels: Scene (viewport), Inspector (selected + translate gizmo), Asset Browser (MVP).
+     * @brief Draws editor panels: Scene, Inspector (transform + snap + align ground), Layers, Asset Browser, Save (M12.2).
      *
-     * @param instances         Zone chunk instances (read for display; selected instance may be modified for gizmo).
-     * @param selectedIndex     Currently selected instance index (-1 = none). Updated when editing in Inspector.
-     * @param cameraViewCol     View matrix (column-major 16 floats).
-     * @param cameraProjCol     Projection matrix (column-major 16 floats).
-     * @param viewportWidth     Full framebuffer width (for viewport).
-     * @param viewportHeight    Full framebuffer height.
+     * @param instances         Zone chunk instances (selected instance may be modified).
+     * @param selectedIndex     Currently selected instance index (-1 = none).
+     * @param layerVisible      Per-layer visibility (16 entries); toggles in Layers panel.
+     * @param layerLocked      Per-layer lock (16 entries); toggles in Layers panel.
+     * @param outDirty         Set to true when any instance or layer state changes.
+     * @param outSaveRequested Set to true when user clicks Save.
+     * @param instancesPath    Path to instances.bin (for Save; empty disables Save).
+     * @param cameraViewCol    View matrix (column-major 16 floats).
+     * @param cameraProjCol    Projection matrix (column-major 16 floats).
+     * @param viewportWidth    Full framebuffer width.
+     * @param viewportHeight   Full framebuffer height.
      */
     void DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* instances,
                    int* selectedIndex,
+                   bool* layerVisible,
+                   bool* layerLocked,
+                   bool* outDirty,
+                   bool* outSaveRequested,
+                   const std::string* instancesPath,
                    const float cameraViewCol[16], const float cameraProjCol[16],
                    int viewportWidth, int viewportHeight);
 

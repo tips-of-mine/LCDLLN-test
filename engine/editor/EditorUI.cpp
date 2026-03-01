@@ -11,6 +11,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
+#include <cmath>
 #include <cstring>
 #include <vector>
 
@@ -161,13 +162,56 @@ void EditorUI::BeginFrame() {
     ImGui::NewFrame();
 }
 
+namespace {
+constexpr int kMaxLayers = 16;
+constexpr float kPi = 3.14159265358979323846f;
+
+/** @brief Snap value to grid step. */
+float SnapTranslate(float v, float step) {
+    if (step <= 0.f) return v;
+    return std::round(v / step) * step;
+}
+
+/** @brief Snap angle (degrees) to step (5 or 15). */
+float SnapRotationDeg(float deg, float stepDeg) {
+    if (stepDeg <= 0.f) return deg;
+    return std::round(deg / stepDeg) * stepDeg;
+}
+
+/** @brief Extract rotation Y (radians) from column-major 4x4 (Y-up, rotation around Y). */
+float GetRotationYRad(const float* m) {
+    return std::atan2(m[8], m[0]);
+}
+
+/** @brief Set rotation Y in column-major 4x4 (preserve position and scale). */
+void SetRotationYRad(float* m, float rad) {
+    float c = std::cos(rad), s = std::sin(rad);
+    float scale = std::sqrt(m[0]*m[0] + m[1]*m[1] + m[2]*m[2]);
+    if (scale < 1e-6f) scale = 1.f;
+    m[0] = c * scale; m[1] = 0; m[2] = -s * scale;
+    m[4] = 0; m[5] = scale; m[6] = 0;
+    m[8] = s * scale; m[9] = 0; m[10] = c * scale;
+}
+} // namespace
+
 void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* instances,
                           int* selectedIndex,
+                          bool* layerVisible,
+                          bool* layerLocked,
+                          bool* outDirty,
+                          bool* outSaveRequested,
+                          const std::string* instancesPath,
                           const float cameraViewCol[16], const float cameraProjCol[16],
                           int viewportWidth, int viewportHeight) {
     (void)cameraViewCol;
     (void)cameraProjCol;
     if (!m_ready || !instances || !selectedIndex) return;
+    if (!layerVisible || !layerLocked) return;
+    if (!outDirty) outDirty = nullptr;
+    if (!outSaveRequested) outSaveRequested = nullptr;
+
+    static float s_translateStep = 1.f;   // 0.5 or 1 m (M12.2)
+    static float s_rotationStepDeg = 15.f; // 5 or 15 deg (M12.2)
 
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(viewportWidth), static_cast<float>(viewportHeight)), ImGuiCond_FirstUseEver);
@@ -177,15 +221,57 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
     }
 
     ImGui::SetNextWindowPos(ImVec2(static_cast<float>(viewportWidth) - 320.f, 20.f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(300, 480), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_NoCollapse)) {
+        if (ImGui::CollapsingHeader("Snapping", ImGuiTreeNodeFlags_DefaultOpen)) {
+            int ts = (s_translateStep < 0.75f) ? 0 : 1;
+            if (ImGui::Combo("Grid step", &ts, "0.5 m\01 m\0")) {
+                s_translateStep = (ts == 0) ? 0.5f : 1.f;
+            }
+            int rs = (s_rotationStepDeg < 10.f) ? 0 : 1;
+            if (ImGui::Combo("Rotation step", &rs, "5 deg\015 deg\0")) {
+                s_rotationStepDeg = (rs == 0) ? 5.f : 15.f;
+            }
+        }
         if (*selectedIndex >= 0 && static_cast<size_t>(*selectedIndex) < instances->size()) {
             ::engine::world::ZoneChunkInstance& inst = (*instances)[static_cast<size_t>(*selectedIndex)];
+            const uint32_t layer = inst.flags & 0x0Fu;
+            const bool locked = (layer < kMaxLayers && layerLocked[layer]);
+
+            int layerIdx = static_cast<int>(layer);
+            if (ImGui::SliderInt("Layer", &layerIdx, 0, kMaxLayers - 1)) {
+                layerIdx = (layerIdx < 0) ? 0 : (layerIdx >= kMaxLayers ? kMaxLayers - 1 : layerIdx);
+                inst.flags = (inst.flags & ~0x0Fu) | (static_cast<uint32_t>(layerIdx) & 0x0Fu);
+                if (outDirty) *outDirty = true;
+            }
+
             float* t = inst.transform;
             float pos[3] = { t[12], t[13], t[14] };
-            if (ImGui::DragFloat3("Position", pos, 0.5f)) {
-                t[12] = pos[0]; t[13] = pos[1]; t[14] = pos[2];
+            if (ImGui::DragFloat3("Position", pos, 0.1f, 0.f, 0.f, "%.3f", locked ? ImGuiSliderFlags_ReadOnly : 0)) {
+                if (!locked) {
+                    t[12] = SnapTranslate(pos[0], s_translateStep);
+                    t[13] = SnapTranslate(pos[1], s_translateStep);
+                    t[14] = SnapTranslate(pos[2], s_translateStep);
+                    if (outDirty) *outDirty = true;
+                }
             }
+            float rotYRad = GetRotationYRad(t);
+            float rotYDeg = rotYRad * 180.f / kPi;
+            if (ImGui::DragFloat("Rotation Y (deg)", &rotYDeg, 1.f, -180.f, 180.f, "%.1f", locked ? ImGuiSliderFlags_ReadOnly : 0)) {
+                if (!locked) {
+                    rotYDeg = SnapRotationDeg(rotYDeg, s_rotationStepDeg);
+                    SetRotationYRad(t, rotYDeg * kPi / 180.f);
+                    if (outDirty) *outDirty = true;
+                }
+            }
+            if (ImGui::Button("Align to ground")) {
+                if (!locked) {
+                    t[13] = 0.f;
+                    if (outDirty) *outDirty = true;
+                }
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("(Y=0)");
             ImGui::Text("AssetId: %u", inst.assetId);
         } else {
             ImGui::Text("No selection");
@@ -194,6 +280,34 @@ void EditorUI::DrawPanels(std::vector<::engine::world::ZoneChunkInstance>* insta
     }
 
     ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(220, 320), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Layers", nullptr, ImGuiWindowFlags_NoCollapse)) {
+        for (int i = 0; i < kMaxLayers; ++i) {
+            ImGui::PushID(i);
+            bool vis = layerVisible[i];
+            bool lock = layerLocked[i];
+            if (ImGui::Checkbox("##vis", &vis)) { layerVisible[i] = vis; }
+            ImGui::SameLine();
+            if (ImGui::Checkbox("##lock", &lock)) { layerLocked[i] = lock; }
+            ImGui::SameLine();
+            ImGui::Text("Layer %d", i);
+            ImGui::PopID();
+        }
+        ImGui::End();
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(20, 350), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(220, 80), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Save", nullptr, ImGuiWindowFlags_NoCollapse)) {
+        bool dirty = outDirty && *outDirty;
+        if (ImGui::Button("Save", ImVec2(120, 0)) && outSaveRequested) {
+            *outSaveRequested = true;
+        }
+        if (dirty) { ImGui::SameLine(); ImGui::TextUnformatted("(dirty)"); }
+        ImGui::End();
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(250, 20), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(280, 300), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Asset Browser", nullptr, ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Asset Browser (MVP)");

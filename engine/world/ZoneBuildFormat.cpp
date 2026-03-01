@@ -125,4 +125,33 @@ bool ReadZoneChunkInstances(const std::string& path, std::vector<ZoneChunkInstan
     return true;
 }
 
+bool WriteZoneChunkInstances(const std::string& path, const std::vector<ZoneChunkInstance>& instances, const VersionedHeader& vh) {
+#ifdef _WIN32
+    std::FILE* f = nullptr;
+    if (fopen_s(&f, path.c_str(), "wb") != 0 || !f) return false;
+#else
+    std::FILE* f = std::fopen(path.c_str(), "wb");
+    if (!f) return false;
+#endif
+    uint32_t magic = kInstancesBinMagic;
+    if (std::fwrite(&magic, 1, 4, f) != 4) { std::fclose(f); return false; }
+    if (std::fwrite(&vh.formatVersion, 4, 1, f) != 1 || std::fwrite(&vh.builderVersion, 4, 1, f) != 1 ||
+        std::fwrite(&vh.engineVersion, 4, 1, f) != 1 || std::fwrite(&vh.contentHash, 8, 1, f) != 1) {
+        std::fclose(f);
+        return false;
+    }
+    const uint32_t n = static_cast<uint32_t>(instances.size());
+    if (std::fwrite(&n, 1, 4, f) != 4) { std::fclose(f); return false; }
+    for (const auto& inst : instances) {
+        if (std::fwrite(inst.transform, 4, 16, f) != 16 ||
+            std::fwrite(&inst.assetId, 1, 4, f) != 4 ||
+            std::fwrite(&inst.flags, 1, 4, f) != 4) {
+            std::fclose(f);
+            return false;
+        }
+    }
+    std::fclose(f);
+    return true;
+}
+
 } // namespace engine::world

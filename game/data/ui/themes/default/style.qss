@@ -1,0 +1,17 @@
+/* M16.5 — Logical classes: hud, panel, button, tooltip */
+.hud {
+  background-color: var(--background);
+}
+.panel {
+  background-color: var(--surface);
+  color: var(--text);
+}
+.button {
+  background-color: #3d3d44;
+  hover: #4a4a52;
+  active: #323238;
+}
+.tooltip {
+  background-color: #25252c;
+  color: var(--text);
+}

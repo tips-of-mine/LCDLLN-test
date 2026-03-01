@@ -1,0 +1,13 @@
+{
+  "colors": {
+    "primary": "#4a9eff",
+    "background": "#1e1e24",
+    "surface": "#2d2d34",
+    "text": "#e8e8ec",
+    "text_dim": "#9090a0"
+  },
+  "fonts": {
+    "main": "ui/fonts/main.ttf"
+  },
+  "icons": {}
+}

@@ -89,4 +89,16 @@ bool WriteVolumesJson(const std::string& path, const std::vector<GameplayVolume>
     }
 }
 
+bool PointInVolume(float x, float y, float z, const GameplayVolume& vol) {
+    if (vol.shape == VolumeShape::Box) {
+        if (x < vol.position[0] - vol.halfExtents[0] || x > vol.position[0] + vol.halfExtents[0]) return false;
+        if (y < vol.position[1] - vol.halfExtents[1] || y > vol.position[1] + vol.halfExtents[1]) return false;
+        if (z < vol.position[2] - vol.halfExtents[2] || z > vol.position[2] + vol.halfExtents[2]) return false;
+        return true;
+    }
+    float dx = x - vol.position[0], dy = y - vol.position[1], dz = z - vol.position[2];
+    float d2 = dx * dx + dy * dy + dz * dz;
+    return d2 <= vol.radius * vol.radius;
+}
+
 } // namespace engine::world

@@ -149,4 +149,23 @@ bool ParseSnapshotWithStates(const uint8_t* data, size_t size, uint32_t& outTick
     return true;
 }
 
+constexpr size_t kZoneChangePayload = 4 + 12;  // zoneId (4) + spawnPos[3] (12)
+
+size_t SerializeZoneChange(int32_t zoneId, const float spawnPos[3], std::vector<uint8_t>& outBuffer) {
+    size_t off = outBuffer.size();
+    outBuffer.resize(off + 1 + kZoneChangePayload);
+    uint8_t* p = outBuffer.data() + off;
+    p[0] = static_cast<uint8_t>(MsgType::ZoneChange);
+    std::memcpy(p + 1, &zoneId, 4);
+    std::memcpy(p + 5, spawnPos, 12);
+    return 1 + kZoneChangePayload;
+}
+
+bool ParseZoneChange(const uint8_t* data, size_t size, int32_t& outZoneId, float outSpawnPos[3]) {
+    if (size < kZoneChangePayload) return false;
+    std::memcpy(&outZoneId, data, 4);
+    std::memcpy(outSpawnPos, data + 4, 12);
+    return true;
+}
+
 } // namespace engine::network

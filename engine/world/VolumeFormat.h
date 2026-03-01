@@ -30,4 +30,11 @@ bool ReadVolumesJson(const std::string& path, std::vector<GameplayVolume>& out);
  */
 bool WriteVolumesJson(const std::string& path, const std::vector<GameplayVolume>& volumes);
 
+/**
+ * @brief Returns true if world position (x,y,z) is inside the volume (M13.4 zone transition detection).
+ *
+ * Box: AABB test; Sphere: distance from center <= radius.
+ */
+bool PointInVolume(float x, float y, float z, const GameplayVolume& vol);
+
 } // namespace engine::world

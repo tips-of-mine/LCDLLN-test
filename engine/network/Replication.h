@@ -44,6 +44,12 @@ bool ParseDespawn(const uint8_t* data, size_t size, uint64_t& outEntityId);
 /** @brief Parses a Snapshot message with entity states (type already consumed). Returns true if valid. */
 bool ParseSnapshotWithStates(const uint8_t* data, size_t size, uint32_t& outTick, std::vector<ReplicationEntityState>& outStates);
 
+/** @brief Serializes a ZoneChange message (zoneId + spawn position). Returns bytes written (M13.4). */
+size_t SerializeZoneChange(int32_t zoneId, const float spawnPos[3], std::vector<uint8_t>& outBuffer);
+
+/** @brief Parses a ZoneChange message (type already consumed). Returns true if size >= 16 (4 + 12). */
+bool ParseZoneChange(const uint8_t* data, size_t size, int32_t& outZoneId, float outSpawnPos[3]);
+
 /** @brief Callback: get entity ids in a cell (zone and cell indices). Return 64-bit ids for replication. */
 using GetEntityIdsInCellFn = std::function<std::vector<uint64_t>(int32_t zoneX, int32_t zoneZ, int32_t cellX, int32_t cellZ)>;
 /** @brief Callback: get entity state; return false if entity unknown. */

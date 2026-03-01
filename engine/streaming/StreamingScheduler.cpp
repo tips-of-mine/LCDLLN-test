@@ -170,6 +170,13 @@ void StreamingScheduler::RecordCancelled() noexcept {
     ++m_cancelledCount;
 }
 
+void StreamingScheduler::ClearAllQueues() noexcept {
+    m_requestQueue.clear();
+    while (!m_ioQueue.empty()) m_ioQueue.pop();
+    while (!m_cpuQueue.empty()) m_cpuQueue.pop();
+    while (!m_gpuUploadQueue.empty()) m_gpuUploadQueue.pop();
+}
+
 std::optional<std::pair<const void*, size_t>> StreamingScheduler::GetCachedBlob(const std::string& key) const {
     if (!m_cache) return std::nullopt;
     return m_cache->Get(key);

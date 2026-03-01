@@ -121,6 +121,12 @@ public:
     /** @brief Request queue size (priority-ordered). */
     [[nodiscard]] size_t RequestQueueSize() const noexcept { return m_requestQueue.size(); }
 
+    /**
+     * @brief Clears all request/IO/CPU/GPU queues (e.g. on zone transition so new zone requests replace old).
+     * M13.4 — Client reset streaming before preloading new zone.
+     */
+    void ClearAllQueues() noexcept;
+
     /** @brief Sets the LRU cache used by the IO stage (hit cache -> skip disk). May be null. */
     void SetCache(LruCache* cache) noexcept { m_cache = cache; }
 

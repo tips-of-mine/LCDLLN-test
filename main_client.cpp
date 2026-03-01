@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
     uint32_t clientId = 0xFFFFFFFFu;
     uint32_t lastTick = 0;
     uint32_t snapCount = 0;
+    int32_t currentZoneId = 0;
     auto lastStats = std::chrono::steady_clock::now();
     auto lastInput = std::chrono::steady_clock::now();
     uint8_t buf[1024];
@@ -103,6 +104,16 @@ int main(int argc, char** argv) {
                     for (const auto& st : states)
                         replicatedEntities[st.entityId] = st;
                 }
+            } else if (msgType == static_cast<uint8_t>(engine::network::MsgType::ZoneChange) && n >= 17) {
+                int32_t newZoneId = 0;
+                float spawnPos[3] = {0.f, 0.f, 0.f};
+                if (engine::network::ParseZoneChange(buf + 1, static_cast<size_t>(n) - 1, newZoneId, spawnPos)) {
+                    replicatedEntities.clear();
+                    currentZoneId = newZoneId;
+                    myPosition[0] = spawnPos[0];
+                    myPosition[1] = spawnPos[1];
+                    myPosition[2] = spawnPos[2];
+                }
             }
         }
 
@@ -115,7 +126,7 @@ int main(int argc, char** argv) {
             lastInput = now;
         }
         if (std::chrono::duration<double>(now - lastStats).count() >= 2.0) {
-            std::printf("client: tick=%u snapshots=%u entities=%zu\n", lastTick, snapCount, replicatedEntities.size());
+            std::printf("client: zone=%d tick=%u snapshots=%u entities=%zu\n", static_cast<int>(currentZoneId), lastTick, snapCount, replicatedEntities.size());
             lastStats = now;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));

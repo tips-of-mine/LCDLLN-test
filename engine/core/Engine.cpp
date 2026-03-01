@@ -35,6 +35,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <cstdio>
 #include <cstring>
 
 namespace {
@@ -814,10 +815,12 @@ void Engine::BeginFrame() {
     if (m_uploadBudget.IsValid())
         m_uploadBudget.BeginFrame(m_vkFrameResources.CurrentFrameIndex());
 
-    // M11.2: load zone chunk instances once from zone.build_path (content-relative) for placeholder display.
+    // M11.2: load zone chunk instances once from zone.build_path or m_zonePathOverride (M13.4 zone transition).
     if (!m_zoneBuildLoaded) {
         m_zoneBuildLoaded = true;
-        const std::string zonePath = Config::GetString("zone.build_path", "");
+        const std::string zonePath = m_zonePathOverride.empty()
+            ? Config::GetString("zone.build_path", "")
+            : m_zonePathOverride;
         if (!zonePath.empty()) {
             const std::string content = Config::GetString("paths.content", "game/data");
             const std::string base = content + "/" + zonePath;
@@ -2070,5 +2073,19 @@ void Engine::OnResize(int width, int height) {
 void Engine::OnQuit() {
     m_running = false;
     LOG_INFO(Core, "Quit requested — shutting down main loop");
+}
+
+void Engine::OnZoneChange(std::int32_t zoneId, const float spawnPos[3]) {
+    const std::string content = Config::GetString("paths.content", "game/data");
+    char pad[16];
+    std::snprintf(pad, sizeof(pad), "zones/zone_%03d", static_cast<int>(zoneId));
+    m_zonePathOverride.assign(pad);
+    m_streamingScheduler.ClearAllQueues();
+    m_zoneBuildLoaded = false;
+    m_camera.position[0] = spawnPos[0];
+    m_camera.position[1] = spawnPos[1];
+    m_camera.position[2] = spawnPos[2];
+    m_taaResetHistory = true;
+    m_taaCopyHistoryOnReset = true;
 }
 

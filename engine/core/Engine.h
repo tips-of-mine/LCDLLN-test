@@ -212,6 +212,16 @@ private:
      */
     void OnQuit();
 
+    /**
+     * @brief Zone transition hook (M13.4): reset streaming, preload new zone, set camera to spawn pos, reset TAA history.
+     *
+     * Call when server sends ZoneChange. Client does not decide zone; server validates.
+     *
+     * @param zoneId   Target zone id (used to resolve zone path, e.g. zones/zone_001).
+     * @param spawnPos Spawn position [x,y,z] in the new zone (camera is moved here).
+     */
+    void OnZoneChange(std::int32_t zoneId, const float spawnPos[3]);
+
     // Non-copyable, non-movable.
     Engine(const Engine&)            = delete;
     Engine& operator=(const Engine&) = delete;
@@ -366,6 +376,8 @@ private:
     std::vector<::engine::world::ZoneProbe> m_zoneProbes;
     ::engine::world::ZoneAtmosphere m_zoneAtmosphere;
     bool m_zoneBuildLoaded = false;
+    /// M13.4 — When non-empty, used instead of zone.build_path for zone load (e.g. "zones/zone_002" after ZoneChange).
+    std::string m_zonePathOverride;
 
     /// True when the window was successfully created.
     bool m_windowOk = false;

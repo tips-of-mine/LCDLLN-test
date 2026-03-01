@@ -14,6 +14,7 @@ set(CMAKE_CXX_EXTENSIONS        OFF)
 find_package(nlohmann_json REQUIRED)
 find_package(glfw3         REQUIRED)   # M00.4 — Window/Input platform layer
 find_package(Vulkan        REQUIRED)   # M01.1 — Vulkan instance / surface
+find_package(SQLite3       REQUIRED)   # M14.4 — Persistence
 
 # ---------------------------------------------------------------------------
 # engine_core static library (M00.1: Log, Time, Config)
@@ -251,6 +252,20 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# engine_persistence — M14.4 Character DB (SQLite)
+# ---------------------------------------------------------------------------
+add_library(engine_persistence STATIC
+    engine/persistence/CharacterDb.cpp
+)
+target_include_directories(engine_persistence PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_persistence PUBLIC SQLite::SQLite3)
+if(MSVC)
+    target_compile_options(engine_persistence PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_persistence PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_loot — M14.3 LootTable data
 # ---------------------------------------------------------------------------
 add_library(engine_loot STATIC
@@ -287,7 +302,7 @@ endif()
 # server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
 # ---------------------------------------------------------------------------
 add_executable(server_app main_server.cpp)
-target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot)
+target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai engine_loot engine_persistence)
 if(MSVC)
     target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
 else()

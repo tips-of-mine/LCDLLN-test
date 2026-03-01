@@ -17,6 +17,7 @@
 #include "engine/world/GameplayVolume.h"
 #include "engine/world/InterestSet.h"
 #include "engine/world/VolumeFormat.h"
+#include "engine/persistence/CharacterDb.h"
 
 #include <array>
 #include <chrono>
@@ -89,6 +90,12 @@ int main(int argc, char** argv) {
     engine::network::UdpSetNonBlocking(fd);
 
     const char* contentPath = (argc >= 2) ? argv[1] : "game/data";
+    std::string dbPath = std::string(contentPath) + "/characters.db";
+    if (!engine::persistence::Open(dbPath) || !engine::persistence::CreateTablesIfNeeded()) {
+        std::fprintf(stderr, "server: failed to open or init DB at %s\n", dbPath.c_str());
+        engine::network::NetworkShutdown();
+        return 1;
+    }
     std::map<int32_t, std::vector<engine::world::GameplayVolume>> volumesPerZone;
     for (int32_t z = 0; z <= 1; ++z) {
         char path[256];
@@ -139,30 +146,109 @@ int main(int argc, char** argv) {
     engine::network::PeerAddress from{};
 
     auto nextTick = std::chrono::steady_clock::now();
+    auto lastAutosave = std::chrono::steady_clock::now();
     const auto tickDur = std::chrono::duration<double>(engine::network::kServerTickInterval);
+    constexpr double kAutosaveIntervalSec = 30.0;
 
     for (;;) {
         auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration<double>(now - lastAutosave).count() >= kAutosaveIntervalSec) {
+            for (size_t i = 0; i < clients.size(); ++i) {
+                engine::persistence::CharacterState cs{};
+                cs.zoneId = clientZoneIds[i];
+                cs.posX = clientPositions[i][0];
+                cs.posY = clientPositions[i][1];
+                cs.posZ = clientPositions[i][2];
+                cs.hp = entityCombat[clients[i].clientId].hp;
+                cs.maxHp = entityCombat[clients[i].clientId].maxHp;
+                engine::persistence::SaveCharacter(clients[i].characterId, cs);
+                engine::persistence::SaveInventory(clients[i].characterId, playerInventory[clients[i].clientId]);
+            }
+            lastAutosave = now;
+        }
         while (now >= nextTick) {
             while (engine::network::UdpRecvFrom(fd, buf, kRecvBuf, &from) > 0) {
                 if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::Connect)) {
+                    uint64_t reqCharacterId = 0u;
+                    if (kRecvBuf >= 9)
+                        std::memcpy(&reqCharacterId, buf + 1, 8);
                     engine::network::ServerClient c;
                     c.address = from;
                     c.clientId = nextId++;
+                    engine::persistence::CharacterState charState{};
+                    if (reqCharacterId == 0u) {
+                        charState.zoneId = 0;
+                        charState.posX = 0.f;
+                        charState.posY = 0.f;
+                        charState.posZ = 0.f;
+                        charState.hp = kDefaultMaxHp;
+                        charState.maxHp = kDefaultMaxHp;
+                        c.characterId = engine::persistence::InsertCharacter(charState);
+                        if (c.characterId <= 0) continue;
+                    } else {
+                        if (!engine::persistence::LoadCharacter(static_cast<int64_t>(reqCharacterId), charState))
+                            continue;
+                        c.characterId = static_cast<int64_t>(reqCharacterId);
+                    }
                     clients.push_back(c);
-                    clientPositions.push_back({0.f, 0.f, 0.f});
-                    clientZoneIds.push_back(0);
+                    clientPositions.push_back({charState.posX, charState.posY, charState.posZ});
+                    clientZoneIds.push_back(charState.zoneId);
                     clientInterestSets.push_back(engine::world::ClientInterestSet{});
                     engine::network::ReplicationEntityState st{};
                     st.entityId = c.clientId;
                     st.archetypeId = 0;
+                    st.position[0] = charState.posX;
+                    st.position[1] = charState.posY;
+                    st.position[2] = charState.posZ;
                     entityStates[c.clientId] = st;
-                    entityCombat[c.clientId] = EntityCombat{};
+                    EntityCombat ec{};
+                    ec.hp = charState.hp;
+                    ec.maxHp = charState.maxHp;
+                    entityCombat[c.clientId] = ec;
+                    engine::persistence::LoadInventory(c.characterId, playerInventory[c.clientId]);
 
-                    uint8_t ack[5];
+                    uint8_t ack[29];
                     ack[0] = static_cast<uint8_t>(engine::network::MsgType::ConnectAck);
                     std::memcpy(ack + 1, &c.clientId, 4);
+                    std::memcpy(ack + 5, &c.characterId, 8);
+                    std::memcpy(ack + 13, &charState.zoneId, 4);
+                    std::memcpy(ack + 17, &charState.posX, 4);
+                    std::memcpy(ack + 21, &charState.posY, 4);
+                    std::memcpy(ack + 25, &charState.posZ, 4);
                     engine::network::UdpSendTo(fd, ack, sizeof(ack), &from);
+                    std::vector<engine::network::InventoryDeltaEntry> initialInv;
+                    for (const auto& p : playerInventory[c.clientId])
+                        initialInv.push_back({p.first, p.second});
+                    if (!initialInv.empty()) {
+                        std::vector<uint8_t> invPkt;
+                        engine::network::SerializeInventoryDelta(initialInv.data(), initialInv.size(), invPkt);
+                        engine::network::UdpSendTo(fd, invPkt.data(), invPkt.size(), &from);
+                    }
+                } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::Logout)) {
+                    size_t idx = clients.size();
+                    for (size_t i = 0; i < clients.size(); ++i) {
+                        if (PeerAddressEqual(clients[i].address, from)) { idx = i; break; }
+                    }
+                    if (idx < clients.size()) {
+                        uint32_t clientId = clients[idx].clientId;
+                        int64_t characterId = clients[idx].characterId;
+                        engine::persistence::CharacterState cs{};
+                        cs.zoneId = clientZoneIds[idx];
+                        cs.posX = clientPositions[idx][0];
+                        cs.posY = clientPositions[idx][1];
+                        cs.posZ = clientPositions[idx][2];
+                        cs.hp = entityCombat[clientId].hp;
+                        cs.maxHp = entityCombat[clientId].maxHp;
+                        engine::persistence::SaveCharacter(characterId, cs);
+                        engine::persistence::SaveInventory(characterId, playerInventory[clientId]);
+                        clients.erase(clients.begin() + idx);
+                        clientPositions.erase(clientPositions.begin() + idx);
+                        clientZoneIds.erase(clientZoneIds.begin() + idx);
+                        clientInterestSets.erase(clientInterestSets.begin() + idx);
+                        entityStates.erase(clientId);
+                        entityCombat.erase(clientId);
+                        playerInventory.erase(clientId);
+                    }
                 } else if (buf[0] == static_cast<uint8_t>(engine::network::MsgType::AttackRequest) && kRecvBuf >= 17) {
                     uint64_t attackerId = 0, targetId = 0;
                     if (engine::network::ParseAttackRequest(buf + 1, 16u, attackerId, targetId)) {

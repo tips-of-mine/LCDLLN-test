@@ -23,6 +23,7 @@ enum class MsgType : uint8_t {
     CombatEvent = 8,
     PickupRequest = 9,
     InventoryDelta = 10,
+    Logout = 11,
 };
 
 constexpr size_t kMaxSnapshotPayload = 0u;

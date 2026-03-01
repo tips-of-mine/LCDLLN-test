@@ -9,10 +9,11 @@
 
 namespace engine::network {
 
-/** @brief One connected client (address + assigned id). */
+/** @brief One connected client (address + assigned id + persistent character id). */
 struct ServerClient {
     PeerAddress address{};
     uint32_t clientId = 0;
+    int64_t characterId = 0;
 };
 
 /** @brief One tick: drain incoming (handshake), build empty snapshot, send to all clients. */

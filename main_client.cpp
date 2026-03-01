@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -30,6 +31,10 @@ int main(int argc, char** argv) {
     if (!engine::network::NetworkInit())
         return 1;
     const char* host = (argc >= 2) ? argv[1] : "127.0.0.1";
+    uint64_t connectCharacterId = 0u;
+    if (argc >= 3) {
+        try { connectCharacterId = std::stoull(argv[2]); } catch (...) {}
+    }
     const uint16_t port = engine::network::kDefaultServerPort;
     int fd = engine::network::UdpSocketCreate();
     if (fd < 0) {
@@ -48,8 +53,10 @@ int main(int argc, char** argv) {
     sa->sin_port = htons(port);
     inet_pton(AF_INET, host, &sa->sin_addr);
 #endif
-    uint8_t conn[1] = { static_cast<uint8_t>(engine::network::MsgType::Connect) };
-    if (engine::network::UdpSendTo(fd, conn, 1, &serverAddr) < 0) {
+    uint8_t conn[9];
+    conn[0] = static_cast<uint8_t>(engine::network::MsgType::Connect);
+    std::memcpy(conn + 1, &connectCharacterId, 8);
+    if (engine::network::UdpSendTo(fd, conn, sizeof(conn), &serverAddr) < 0) {
         engine::network::UdpSocketClose(fd);
         engine::network::NetworkShutdown();
         return 1;
@@ -60,9 +67,11 @@ int main(int argc, char** argv) {
         return 1;
     }
     uint32_t clientId = 0xFFFFFFFFu;
+    int64_t characterId = 0;
     uint32_t lastTick = 0;
     uint32_t snapCount = 0;
     int32_t currentZoneId = 0;
+    float myPosition[3] = { 0.f, 0.f, 0.f };
     auto lastStats = std::chrono::steady_clock::now();
     auto lastInput = std::chrono::steady_clock::now();
     uint8_t buf[1024];
@@ -78,8 +87,13 @@ int main(int argc, char** argv) {
 
     for (int wait = 0; wait < 500; ++wait) {
         int n = engine::network::UdpRecvFrom(fd, buf, sizeof(buf), &from);
-        if (n >= 5 && buf[0] == static_cast<uint8_t>(engine::network::MsgType::ConnectAck)) {
+        if (n >= 29 && buf[0] == static_cast<uint8_t>(engine::network::MsgType::ConnectAck)) {
             std::memcpy(&clientId, buf + 1, 4);
+            std::memcpy(&characterId, buf + 5, 8);
+            std::memcpy(&currentZoneId, buf + 13, 4);
+            std::memcpy(&myPosition[0], buf + 17, 4);
+            std::memcpy(&myPosition[1], buf + 21, 4);
+            std::memcpy(&myPosition[2], buf + 25, 4);
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -90,9 +104,7 @@ int main(int argc, char** argv) {
         engine::network::NetworkShutdown();
         return 1;
     }
-    std::printf("client: connected, clientId=%u\n", clientId);
-
-    float myPosition[3] = { 48.f, 0.f, 50.f };
+    std::printf("client: connected clientId=%u characterId=%lld (reconnect with: %s %lld)\n", clientId, static_cast<long long>(characterId), host, static_cast<long long>(characterId));
 
     for (;;) {
         int n = engine::network::UdpRecvFrom(fd, buf, sizeof(buf), &from);

@@ -237,6 +237,20 @@ add_custom_command(TARGET engine_app POST_BUILD
 )
 
 # ---------------------------------------------------------------------------
+# engine_ai — M14.2 Mob AI: state machine, threat table, leash/return
+# ---------------------------------------------------------------------------
+add_library(engine_ai STATIC
+    engine/ai/ThreatTable.cpp
+    engine/ai/MobAiUpdate.cpp
+)
+target_include_directories(engine_ai PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(MSVC)
+    target_compile_options(engine_ai PRIVATE /W4 /WX /utf-8)
+else()
+    target_compile_options(engine_ai PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---------------------------------------------------------------------------
 # engine_network — M13.1 Server: UDP transport, protocol, server tick (no Vulkan/GLFW)
 # ---------------------------------------------------------------------------
 add_library(engine_network STATIC
@@ -259,7 +273,7 @@ endif()
 # server_app — M13.1 headless server: tick 20 Hz, accept, send empty snapshots
 # ---------------------------------------------------------------------------
 add_executable(server_app main_server.cpp)
-target_link_libraries(server_app PRIVATE engine_network engine_core)
+target_link_libraries(server_app PRIVATE engine_network engine_core engine_ai)
 if(MSVC)
     target_compile_options(server_app PRIVATE /W4 /WX /utf-8)
 else()

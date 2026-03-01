@@ -1,8 +1,11 @@
 /**
  * @file main_server.cpp
- * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat (M13.1, M13.3, M13.4, M14.1).
+ * @brief Server app: UDP bind, tick 20 Hz, Connect/ClientInput, replication, zone transitions, combat, mob AI (M13.1, M13.3, M13.4, M14.1, M14.2).
  */
 
+#include "engine/ai/AiState.h"
+#include "engine/ai/MobAiUpdate.h"
+#include "engine/ai/ThreatTable.h"
 #include "engine/network/Combat.h"
 #include "engine/network/Protocol.h"
 #include "engine/network/Replication.h"
@@ -58,6 +61,8 @@ struct Mob {
     uint32_t entityId = 0;
     int32_t zoneId = 0;
     float position[3] = {0.f, 0.f, 0.f};
+    float spawnPosition[3] = {0.f, 0.f, 0.f};
+    engine::ai::MobAiState aiState = engine::ai::MobAiState::Idle;
 };
 } // namespace
 
@@ -87,6 +92,8 @@ int main(int argc, char** argv) {
     std::unordered_map<uint32_t, engine::network::ReplicationEntityState> entityStates;
     std::unordered_map<uint32_t, EntityCombat> entityCombat;
     std::vector<Mob> mobs;
+    engine::ai::ThreatTable threatTable;
+    const float leashDistance = engine::ai::kDefaultLeashDistance;
     {
         Mob m;
         m.entityId = kFirstMobEntityId;
@@ -94,6 +101,9 @@ int main(int argc, char** argv) {
         m.position[0] = 50.f;
         m.position[1] = 0.f;
         m.position[2] = 50.f;
+        m.spawnPosition[0] = 50.f;
+        m.spawnPosition[1] = 0.f;
+        m.spawnPosition[2] = 50.f;
         mobs.push_back(m);
         engine::network::ReplicationEntityState st{};
         st.entityId = m.entityId;
@@ -160,13 +170,14 @@ int main(int argc, char** argv) {
                             if (valid && targetZone < 0)
                                 for (const auto& m : mobs)
                                     if (m.entityId == tId) { targetZone = m.zoneId; break; }
-                            if (valid && targetZone == attackerZone &&
-                                entityCombat[aId].lastAttackTick + kAttackCooldownTicks <= tick) {
-                                EntityCombat& tc = entityCombat[tId];
-                                uint32_t dmg = (tc.hp >= kAttackDamage) ? kAttackDamage : tc.hp;
-                                tc.hp -= dmg;
-                                if (tc.hp == 0u) tc.isDead = true;
-                                entityCombat[aId].lastAttackTick = tick;
+                                if (valid && targetZone == attackerZone &&
+                                    entityCombat[aId].lastAttackTick + kAttackCooldownTicks <= tick) {
+                                    EntityCombat& tc = entityCombat[tId];
+                                    uint32_t dmg = (tc.hp >= kAttackDamage) ? kAttackDamage : tc.hp;
+                                    tc.hp -= dmg;
+                                    if (tc.hp == 0u) tc.isDead = true;
+                                    entityCombat[aId].lastAttackTick = tick;
+                                    threatTable.AddThreat(tId, aId, dmg);
                                 std::vector<uint8_t> ev;
                                 engine::network::SerializeCombatEvent(aId, tId, dmg, tc.hp, tc.isDead, ev);
                                 for (size_t i = 0; i < clients.size(); ++i)
@@ -216,6 +227,62 @@ int main(int argc, char** argv) {
                             es->second.position[2] = spawnPos[2];
                         }
                         break;
+                    }
+                }
+            }
+
+            if (tick % engine::ai::kAiUpdateTickStep == 0u) {
+                const float aiDt = engine::ai::kAiUpdateTickStep * static_cast<float>(engine::network::kServerTickInterval);
+                auto getEntityPos = [&](uint32_t entityId, float& outX, float& outZ) -> bool {
+                    for (size_t i = 0; i < clients.size(); ++i) {
+                        if (clients[i].clientId == entityId) {
+                            outX = clientPositions[i][0];
+                            outZ = clientPositions[i][2];
+                            return true;
+                        }
+                    }
+                    auto it = entityStates.find(entityId);
+                    if (it != entityStates.end()) {
+                        outX = it->second.position[0];
+                        outZ = it->second.position[2];
+                        return true;
+                    }
+                    return false;
+                };
+                for (Mob& m : mobs) {
+                    if (entityCombat[m.entityId].isDead) continue;
+                    auto it = entityStates.find(m.entityId);
+                    if (it == entityStates.end()) continue;
+                    float curPos[3] = { it->second.position[0], it->second.position[1], it->second.position[2] };
+                    engine::ai::UpdateMobAi(m.entityId, m.aiState, m.spawnPosition, curPos, threatTable,
+                        leashDistance, getEntityPos, engine::ai::kDefaultMobMoveSpeed, aiDt);
+                    it->second.position[0] = curPos[0];
+                    it->second.position[1] = curPos[1];
+                    it->second.position[2] = curPos[2];
+                    m.position[0] = curPos[0];
+                    m.position[1] = curPos[1];
+                    m.position[2] = curPos[2];
+
+                    if (m.aiState == engine::ai::MobAiState::Aggro) {
+                        uint32_t targetId = threatTable.GetTarget(m.entityId);
+                        if (targetId != 0xFFFFFFFFu && entityCombat.count(targetId) && !entityCombat[targetId].isDead) {
+                            float tx = 0.f, tz = 0.f;
+                            if (getEntityPos(targetId, tx, tz)) {
+                                float dx = tx - curPos[0], dz = tz - curPos[2];
+                                if (std::sqrt(dx * dx + dz * dz) <= kAttackRange &&
+                                    entityCombat[m.entityId].lastAttackTick + kAttackCooldownTicks <= tick) {
+                                    EntityCombat& tc = entityCombat[targetId];
+                                    uint32_t dmg = (tc.hp >= kAttackDamage) ? kAttackDamage : tc.hp;
+                                    tc.hp -= dmg;
+                                    if (tc.hp == 0u) tc.isDead = true;
+                                    entityCombat[m.entityId].lastAttackTick = tick;
+                                    std::vector<uint8_t> ev;
+                                    engine::network::SerializeCombatEvent(m.entityId, targetId, dmg, tc.hp, tc.isDead, ev);
+                                    for (size_t i = 0; i < clients.size(); ++i)
+                                        engine::network::UdpSendTo(fd, ev.data(), ev.size(), &clients[i].address);
+                                }
+                            }
+                        }
                     }
                 }
             }

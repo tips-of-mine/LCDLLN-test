@@ -164,6 +164,11 @@ add_library(engine_core STATIC
     # M16.5 — Theme manager: theme.json + style.qss
     engine/ui/ThemeManager.cpp
 
+    # M17.2 — Particles MVP: CPU pool + billboard render pass
+    engine/render/ParticleSystem.cpp
+    engine/render/vk/VkParticlePass.cpp
+    engine/render/vk/VkParticlePipeline.cpp
+
     # M00.2 — Memory subsystem
     engine/core/SystemAllocator.cpp
     engine/core/LinearArena.cpp

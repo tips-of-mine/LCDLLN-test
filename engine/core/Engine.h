@@ -51,6 +51,9 @@
 #include "engine/render/vk/VkBloomCombineTarget.h"
 #include "engine/render/vk/VkBloomCombinePipeline.h"
 #include "engine/render/vk/VkExposureReduce.h"
+#include "engine/render/vk/VkParticlePass.h"
+#include "engine/render/vk/VkParticlePipeline.h"
+#include "engine/render/ParticleSystem.h"
 #include "engine/render/Csm.h"
 #include "engine/render/ShaderCache.h"
 #include "engine/world/ChunkStats.h"
@@ -305,6 +308,16 @@ private:
     ::engine::render::vk::VkSceneColorHDR m_vkSceneColorHDR;
     ::engine::render::vk::VkLightingPipeline m_lightingPipeline;
     ::engine::render::vk::VkTonemapPipeline m_tonemapPipeline;
+    /// M17.2 — Particles: pass (HDR+depth), pipeline (billboard blend), pool, quad VB, instance buffer.
+    ::engine::render::vk::VkParticlePass m_particlePass;
+    ::engine::render::vk::VkParticlePipeline m_particlePipeline;
+    ::engine::render::ParticlePool m_particlePool;
+    ::engine::render::ParticleEmitterDef m_particleEmitterDef{};
+    float m_particleSpawnPosition[3] = {0.f, 1.f, 0.f};
+    VkBuffer m_particleQuadVB = VK_NULL_HANDLE;
+    VkDeviceMemory m_particleQuadVBMemory = VK_NULL_HANDLE;
+    VkBuffer m_particleInstanceBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_particleInstanceMemory = VK_NULL_HANDLE;
 
     /// Shadow maps: 4 cascades, depth-only (M04.2).
     ::engine::render::vk::VkShadowMap m_vkShadowMap;

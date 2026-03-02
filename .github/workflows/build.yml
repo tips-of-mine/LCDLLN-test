@@ -27,6 +27,7 @@ jobs:
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_DEFAULT_TRIPLET: x64-windows
         run: |
           cmake --preset vs2022-x64
 
@@ -61,6 +62,7 @@ jobs:
       - name: Configure
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          VCPKG_DEFAULT_TRIPLET: x64-linux
         run: |
           cmake --preset linux-x64
 

@@ -11,7 +11,26 @@
       "displayName": "Visual Studio 17 2022 (x64)",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/vs2022-x64",
-      "architecture": "x64"
+      "architecture": "x64",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        }
+      }
+    },
+    {
+      "name": "linux-x64",
+      "displayName": "Linux x64 (Ninja + GCC/Clang)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        }
+      }
     }
   ],
   "buildPresets": [
@@ -24,6 +43,10 @@
       "name": "vs2022-x64-release",
       "configurePreset": "vs2022-x64",
       "configuration": "Release"
+    },
+    {
+      "name": "linux-x64-debug",
+      "configurePreset": "linux-x64"
     }
   ]
 }

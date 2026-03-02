@@ -13,8 +13,6 @@ add_library(engine_core
   engine/core/Time.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
-  engine/platform/Input.cpp
-  engine/platform/Window.cpp
 )
 
 target_include_directories(engine_core PUBLIC
@@ -22,9 +20,22 @@ target_include_directories(engine_core PUBLIC
 )
 
 if(MSVC)
-  target_compile_options(engine_core PRIVATE /W4 /permissive-)
+  target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)
+  target_compile_options(engine_app PRIVATE /Zc:preprocessor)
 else()
   target_compile_options(engine_core PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+if(WIN32)
+  target_sources(engine_core PRIVATE
+    engine/platform/Input.cpp
+    engine/platform/Window.cpp
+  )
+else()
+  target_sources(engine_core PRIVATE
+    engine/platform/Input_linux.cpp
+    engine/platform/Window_linux.cpp
+  )
 endif()
 
 add_executable(engine_app

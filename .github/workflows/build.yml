@@ -1,0 +1,56 @@
+# Build engine (Windows + Linux, CMake + vcpkg + Ninja)
+name: Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone vcpkg
+        run: git clone https://github.com/Microsoft/vcpkg.git "$env:GITHUB_WORKSPACE/vcpkg"
+        shell: pwsh
+
+      - name: Bootstrap vcpkg
+        run: "$env:GITHUB_WORKSPACE\vcpkg\bootstrap-vcpkg.bat"
+        shell: cmd
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --preset win-x64
+        shell: pwsh
+
+      - name: Build
+        run: cmake --build --preset win-x64
+        shell: pwsh
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone vcpkg
+        run: git clone https://github.com/Microsoft/vcpkg.git "$GITHUB_WORKSPACE/vcpkg"
+
+      - name: Bootstrap vcpkg
+        run: "$GITHUB_WORKSPACE/vcpkg/bootstrap-vcpkg.sh"
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --preset linux-x64
+
+      - name: Build
+        run: cmake --build --preset linux-x64

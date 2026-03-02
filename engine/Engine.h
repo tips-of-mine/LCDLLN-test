@@ -14,6 +14,10 @@
 #include "engine/render/ShaderCache.h"
 #include "engine/render/ShaderCompiler.h"
 #include "engine/render/ShaderHotReload.h"
+#include "engine/render/Camera.h"
+#include "engine/render/GeometryPass.h"
+#include "engine/math/Frustum.h"
+#include "engine/math/Math.h"
 
 struct GLFWwindow;
 
@@ -26,12 +30,11 @@ namespace engine
 	/// Minimal render state produced by Update and consumed by Render.
 	struct RenderState
 	{
-		// Camera-like state (placeholder until math/render layers arrive).
-		double posX = 0.0;
-		double posY = 0.0;
-		double posZ = 0.0;
-		double yaw = 0.0;
-		double pitch = 0.0;
+		engine::render::Camera camera;
+		engine::math::Mat4 viewMatrix;
+		engine::math::Mat4 projMatrix;
+		engine::math::Mat4 viewProjMatrix;
+		engine::math::Frustum frustum;
 
 		// Placeholder draw-list marker.
 		uint32_t drawItemCount = 0;
@@ -85,11 +88,19 @@ namespace engine
 		engine::render::Registry m_fgRegistry;
 		engine::render::ResourceId m_fgSceneColorId = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgBackbufferId = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgGBufferAId = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgGBufferBId = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgGBufferCId = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgDepthId = engine::render::kInvalidResourceId;
+
+		engine::render::GeometryPass m_geometryPass;
+		engine::render::MeshHandle m_geometryMeshHandle;
 
 		engine::render::AssetRegistry m_assetRegistry;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;
+		engine::render::FpsCameraController m_fpsCameraController;
 
 		std::array<RenderState, 2> m_renderStates{};
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };

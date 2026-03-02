@@ -266,6 +266,11 @@ namespace engine::render
 		std::vector<PendingBarrier> pending;
 		std::unordered_map<ResourceId, ResourceUsageState> updates;
 
+		auto getAspect = [this](ResourceId rid) {
+			for (const auto& res : m_imageResources)
+				if (res.id == rid) return res.desc.isDepthAttachment ? VkImageAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT) : VkImageAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT);
+			return VkImageAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT);
+		};
 		auto emitFor = [&](ResourceId rid, ImageUsage usage) {
 			VkImage image = registry.getImage(rid);
 			if (image == VK_NULL_HANDLE) return;
@@ -285,7 +290,7 @@ namespace engine::render
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.image = image;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.aspectMask = getAspect(rid);
 			barrier.subresourceRange.baseMipLevel = 0;
 			barrier.subresourceRange.levelCount = 1;
 			barrier.subresourceRange.baseArrayLayer = 0;
@@ -421,6 +426,10 @@ namespace engine::render
 
 			if (h.image != VK_NULL_HANDLE) continue;
 
+			VkImageUsageFlags usage = res.desc.usage;
+			if (res.desc.isDepthAttachment)
+				usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
 			VkImageCreateInfo imageInfo{};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -432,7 +441,7 @@ namespace engine::render
 			imageInfo.arrayLayers = res.desc.layers;
 			imageInfo.samples = res.desc.samples;
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-			imageInfo.usage = res.desc.usage;
+			imageInfo.usage = usage;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -477,7 +486,7 @@ namespace engine::render
 			viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 			viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 			viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewInfo.subresourceRange.aspectMask = res.desc.isDepthAttachment ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 			viewInfo.subresourceRange.baseMipLevel = 0;
 			viewInfo.subresourceRange.levelCount = 1;
 			viewInfo.subresourceRange.baseArrayLayer = 0;

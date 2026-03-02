@@ -21,6 +21,7 @@ target_include_directories(engine_core PUBLIC
 
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)
+  target_compile_options(engine_app PRIVATE /Zc:preprocessor)
 else()
   target_compile_options(engine_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()

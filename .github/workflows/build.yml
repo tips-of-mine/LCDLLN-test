@@ -19,8 +19,10 @@ jobs:
         shell: pwsh
 
       - name: Bootstrap vcpkg
-        run: "$env:GITHUB_WORKSPACE\vcpkg\bootstrap-vcpkg.bat"
-        shell: cmd
+        shell: pwsh
+        run: |
+          $vcpkg = Join-Path $env:GITHUB_WORKSPACE 'vcpkg\bootstrap-vcpkg.bat'
+          & $vcpkg
 
       - name: Configure
         env:

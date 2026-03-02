@@ -5,6 +5,8 @@
 #include "engine/core/memory/FrameArena.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
+#include "engine/render/AssetRegistry.h"
+#include "engine/render/FrameGraph.h"
 #include "engine/render/vk/VkDeviceContext.h"
 #include "engine/render/vk/VkFrameSync.h"
 #include "engine/render/vk/VkInstance.h"
@@ -78,6 +80,13 @@ namespace engine
 		uint32_t m_currentFrame = 0;
 		GLFWwindow* m_glfwWindowForVk = nullptr;
 		bool m_swapchainResizeRequested = false;
+
+		engine::render::FrameGraph m_frameGraph;
+		engine::render::Registry m_fgRegistry;
+		engine::render::ResourceId m_fgSceneColorId = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgBackbufferId = engine::render::kInvalidResourceId;
+
+		engine::render::AssetRegistry m_assetRegistry;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

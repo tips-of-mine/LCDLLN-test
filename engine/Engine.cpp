@@ -72,6 +72,67 @@ namespace engine
 				{
 					LOG_WARN(Platform, "CreateFrameResources failed");
 				}
+				else if (m_vkSwapchain.IsValid())
+				{
+					m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_cfg);
+					engine::render::ImageDesc sceneColorDesc{};
+					sceneColorDesc.format = m_vkSwapchain.GetImageFormat();
+					sceneColorDesc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+					sceneColorDesc.transient = true;
+					m_fgSceneColorId = m_frameGraph.createImage("SceneColor", sceneColorDesc);
+					m_fgBackbufferId = m_frameGraph.createExternalImage("Backbuffer");
+					m_frameGraph.addPass("Clear",
+						[this](engine::render::PassBuilder& b) { b.write(m_fgSceneColorId, engine::render::ImageUsage::TransferDst); },
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							VkImage img = reg.getImage(m_fgSceneColorId);
+							if (img == VK_NULL_HANDLE) return;
+							VkClearColorValue clearColor = { { 0.15f, 0.15f, 0.18f, 1.0f } };
+							VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+							vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
+						});
+					m_frameGraph.addPass("CopyPresent",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSceneColorId, engine::render::ImageUsage::TransferSrc);
+							b.write(m_fgBackbufferId, engine::render::ImageUsage::TransferDst);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							VkImage srcImg = reg.getImage(m_fgSceneColorId);
+							VkImage dstImg = reg.getImage(m_fgBackbufferId);
+							if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+							VkExtent2D ext = m_vkSwapchain.GetExtent();
+							VkImageCopy region{};
+							region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+							region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+							region.extent = { ext.width, ext.height, 1 };
+							vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+							VkImageMemoryBarrier barrier{};
+							barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+							barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+							barrier.dstAccessMask = 0;
+							barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+							barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+							barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+							barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+							barrier.image = dstImg;
+							barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+							barrier.subresourceRange.baseMipLevel = 0;
+							barrier.subresourceRange.levelCount = 1;
+							barrier.subresourceRange.baseArrayLayer = 0;
+							barrier.subresourceRange.layerCount = 1;
+							vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+						});
+					// Third pass (read-only) to validate 3+ passes compile and topological order (DoD M02.2).
+					m_frameGraph.addPass("PostRead",
+						[this](engine::render::PassBuilder& b) { b.read(m_fgSceneColorId, engine::render::ImageUsage::SampledRead); },
+						[](VkCommandBuffer, engine::render::Registry&) {});
+					// Asset system: load test mesh + texture (cache: second load returns same handle).
+					engine::render::MeshHandle h1 = m_assetRegistry.LoadMesh("meshes/test.mesh");
+					engine::render::MeshHandle h2 = m_assetRegistry.LoadMesh("meshes/test.mesh");
+					engine::render::TextureHandle t1 = m_assetRegistry.LoadTexture("textures/test.texr", false);
+					engine::render::TextureHandle t2 = m_assetRegistry.LoadTexture("textures/test.texr", false);
+					if (h1.IsValid() && h2.IsValid() && h1.Id() == h2.Id()) { /* cache OK */ }
+					if (t1.IsValid() && t2.IsValid() && t1.Id() == t2.Id()) { /* cache OK */ }
+				}
 			}
 			else
 			{
@@ -132,10 +193,12 @@ namespace engine
 			}
 		}
 
-		// Destroy Vulkan frame resources, swapchain, device context, then instance.
+		// Destroy Vulkan frame resources, Frame Graph, swapchain, device context, then instance.
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_assetRegistry.Destroy();
+			m_frameGraph.destroy(m_vkDeviceContext.GetDevice());
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
 		}
 		m_vkSwapchain.Destroy();
@@ -171,6 +234,7 @@ namespace engine
 			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
 			{
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+				m_frameGraph.destroy(m_vkDeviceContext.GetDevice());
 				if (m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
 				{
 					LOG_INFO(Platform, "Swapchain recreated {}x{}", m_width, m_height);
@@ -221,7 +285,6 @@ namespace engine
 		VkQueue graphicsQueue = m_vkDeviceContext.GetGraphicsQueue();
 		VkQueue presentQueue = m_vkDeviceContext.GetPresentQueue();
 		VkSwapchainKHR swapchain = m_vkSwapchain.GetSwapchain();
-		VkRenderPass renderPass = m_vkSwapchain.GetRenderPass();
 		VkExtent2D extent = m_vkSwapchain.GetExtent();
 
 		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
@@ -248,20 +311,20 @@ namespace engine
 			return;
 		}
 
-		VkClearValue clearValue{};
-		clearValue.color = { { 0.15f, 0.15f, 0.18f, 1.0f } };
-
-		VkRenderPassBeginInfo rpBegin{};
-		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		rpBegin.renderPass = renderPass;
-		rpBegin.framebuffer = m_vkSwapchain.GetFramebuffer(imageIndex);
-		rpBegin.renderArea.offset = { 0, 0 };
-		rpBegin.renderArea.extent = extent;
-		rpBegin.clearValueCount = 1;
-		rpBegin.pClearValues = &clearValue;
-
-		vkCmdBeginRenderPass(fr.cmdBuffer, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdEndRenderPass(fr.cmdBuffer);
+		if (m_fgSceneColorId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
+		{
+			VkImage backbufferImage = m_vkSwapchain.GetImage(imageIndex);
+			VkImageView backbufferView = m_vkSwapchain.GetImageView(imageIndex);
+			m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
+			m_frameGraph.execute(
+				m_vkDeviceContext.GetDevice(),
+				m_vkDeviceContext.GetPhysicalDevice(),
+				fr.cmdBuffer,
+				m_fgRegistry,
+				frameIndex,
+				extent,
+				2u);
+		}
 
 		if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS)
 		{

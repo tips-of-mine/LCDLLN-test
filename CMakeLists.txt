@@ -20,6 +20,8 @@ add_library(engine_core
   engine/render/vk/VkDeviceContext.cpp
   engine/render/vk/VkSwapchain.cpp
   engine/render/vk/VkFrameSync.cpp
+  engine/render/FrameGraph.cpp
+  engine/render/AssetRegistry.cpp
   engine/render/ShaderCompiler.cpp
   engine/render/ShaderCache.cpp
   engine/render/ShaderHotReload.cpp

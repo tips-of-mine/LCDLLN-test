@@ -170,6 +170,7 @@ namespace engine::core::jobs
 
 	private:
 		static void EnqueueInternal(JobGroup* group, JobFn&& fn);
+		static void Complete(JobGroup* group);
 	};
 }
 

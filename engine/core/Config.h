@@ -44,8 +44,10 @@ namespace engine::core
 		/// Get a bool value or return `fallback` if missing/not convertible.
 		bool GetBool(std::string_view key, bool fallback = false) const;
 
-	private:
+		/// Set a value explicitly (used by parsers and CLI overrides).
 		void SetValue(std::string_view key, Value value);
+
+	private:
 		static std::string ToOwnedKey(std::string_view key);
 		static std::optional<Value> ParseScalar(std::string_view text);
 

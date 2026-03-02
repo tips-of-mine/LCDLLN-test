@@ -168,9 +168,11 @@ namespace engine::core::jobs
 		/// Wait for a job group (pumps jobs to avoid deadlock even from a worker thread).
 		static void Wait(JobGroup& group);
 
+		/// Mark one job in a group as complete (used internally by worker loop).
+		static void Complete(JobGroup* group);
+
 	private:
 		static void EnqueueInternal(JobGroup* group, JobFn&& fn);
-		static void Complete(JobGroup* group);
 	};
 }
 

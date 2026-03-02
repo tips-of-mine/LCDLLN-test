@@ -4,6 +4,9 @@
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 
+#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
+
 #include <chrono>
 #include <thread>
 
@@ -35,6 +38,50 @@ namespace engine
 		});
 
 		m_window.GetClientSize(m_width, m_height);
+
+		// Vulkan instance + surface (GLFW) for smoke test: init/shutdown.
+		if (glfwInit() == GLFW_TRUE)
+		{
+			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+			m_glfwWindowForVk = glfwCreateWindow(1, 1, "VkSurface", nullptr, nullptr);
+			if (m_glfwWindowForVk && m_vkInstance.Create())
+			{
+				if (!m_vkInstance.CreateSurface(m_glfwWindowForVk))
+				{
+					LOG_WARN(Platform, "VkInstance::CreateSurface failed");
+				}
+				else if (!m_vkDeviceContext.Create(m_vkInstance.GetHandle(), m_vkInstance.GetSurface()))
+				{
+					LOG_WARN(Platform, "VkDeviceContext::Create failed");
+				}
+				else if (!m_vkSwapchain.Create(
+					m_vkDeviceContext.GetPhysicalDevice(),
+					m_vkDeviceContext.GetDevice(),
+					m_vkInstance.GetSurface(),
+					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+					m_vkDeviceContext.GetPresentQueueFamilyIndex(),
+					static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
+				{
+					LOG_WARN(Platform, "VkSwapchain::Create failed");
+				}
+				else if (!engine::render::CreateFrameResources(
+					m_vkDeviceContext.GetDevice(),
+					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+					m_frameResources))
+				{
+					LOG_WARN(Platform, "CreateFrameResources failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Platform, "Vulkan instance or GLFW window for surface failed");
+			}
+		}
+		else
+		{
+			LOG_WARN(Platform, "glfwInit failed");
+		}
 
 		// FS smoke: attempt reading config and a content-relative file (may be missing; API still exercised).
 		{
@@ -85,6 +132,22 @@ namespace engine
 			}
 		}
 
+		// Destroy Vulkan frame resources, swapchain, device context, then instance.
+		if (m_vkDeviceContext.IsValid())
+		{
+			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
+		}
+		m_vkSwapchain.Destroy();
+		m_vkDeviceContext.Destroy();
+		m_vkInstance.Destroy();
+		if (m_glfwWindowForVk)
+		{
+			glfwDestroyWindow(m_glfwWindowForVk);
+			m_glfwWindowForVk = nullptr;
+		}
+		glfwTerminate();
+
 		m_window.Destroy();
 		return 0;
 	}
@@ -97,6 +160,22 @@ namespace engine
 		if (m_input.WasPressed(engine::platform::Key::Escape))
 		{
 			OnQuit();
+		}
+
+		m_shaderHotReload.Poll(m_cfg);
+		m_shaderHotReload.ApplyPending(m_shaderCache);
+
+		if (m_swapchainResizeRequested)
+		{
+			m_swapchainResizeRequested = false;
+			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
+			{
+				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+				if (m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
+				{
+					LOG_INFO(Platform, "Swapchain recreated {}x{}", m_width, m_height);
+				}
+			}
 		}
 
 		m_time.BeginFrame();
@@ -131,11 +210,99 @@ namespace engine
 
 	void Engine::Render()
 	{
-		const uint32_t idx = m_renderReadIndex.load(std::memory_order_acquire) & 1u;
-		const auto& rs = m_renderStates[idx];
+		if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
+		{
+			return;
+		}
 
-		// Placeholder "render": consume RenderState without mutating it.
-		(void)rs.drawItemCount;
+		const uint32_t frameIndex = m_currentFrame % 2;
+		engine::render::FrameResources& fr = m_frameResources[frameIndex];
+		::VkDevice device = m_vkDeviceContext.GetDevice();
+		VkQueue graphicsQueue = m_vkDeviceContext.GetGraphicsQueue();
+		VkQueue presentQueue = m_vkDeviceContext.GetPresentQueue();
+		VkSwapchainKHR swapchain = m_vkSwapchain.GetSwapchain();
+		VkRenderPass renderPass = m_vkSwapchain.GetRenderPass();
+		VkExtent2D extent = m_vkSwapchain.GetExtent();
+
+		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+
+		uint32_t imageIndex = 0;
+		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			m_swapchainResizeRequested = true;
+			return;
+		}
+		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		{
+			return;
+		}
+
+		vkResetCommandPool(device, fr.cmdPool, 0);
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		if (vkBeginCommandBuffer(fr.cmdBuffer, &beginInfo) != VK_SUCCESS)
+		{
+			return;
+		}
+
+		VkClearValue clearValue{};
+		clearValue.color = { { 0.15f, 0.15f, 0.18f, 1.0f } };
+
+		VkRenderPassBeginInfo rpBegin{};
+		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		rpBegin.renderPass = renderPass;
+		rpBegin.framebuffer = m_vkSwapchain.GetFramebuffer(imageIndex);
+		rpBegin.renderArea.offset = { 0, 0 };
+		rpBegin.renderArea.extent = extent;
+		rpBegin.clearValueCount = 1;
+		rpBegin.pClearValues = &clearValue;
+
+		vkCmdBeginRenderPass(fr.cmdBuffer, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdEndRenderPass(fr.cmdBuffer);
+
+		if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS)
+		{
+			return;
+		}
+
+		VkSemaphore waitSemaphores[] = { fr.imageAvailable };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkSemaphore signalSemaphores[] = { fr.renderFinished };
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &fr.cmdBuffer;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		vkResetFences(device, 1, &fr.fence);
+		if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence) != VK_SUCCESS)
+		{
+			return;
+		}
+
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = signalSemaphores;
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = &swapchain;
+		presentInfo.pImageIndices = &imageIndex;
+
+		result = vkQueuePresentKHR(presentQueue, &presentInfo);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			m_swapchainResizeRequested = true;
+		}
+
+		m_currentFrame++;
 	}
 
 	void Engine::EndFrame()
@@ -150,10 +317,16 @@ namespace engine
 		m_renderReadIndex.store(writeIdx, std::memory_order_release);
 	}
 
+	void Engine::WatchShader(std::string_view relativePath, engine::render::ShaderStage stage, std::string_view defines)
+	{
+		m_shaderHotReload.Watch(relativePath, stage, defines);
+	}
+
 	void Engine::OnResize(int w, int h)
 	{
 		m_width = w;
 		m_height = h;
+		m_swapchainResizeRequested = true;
 		LOG_INFO(Platform, "OnResize {}x{}", w, h);
 	}
 

@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(Vulkan REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+
 add_library(engine_core
   engine/core/Config.cpp
   engine/core/jobs/JobSystem.cpp
@@ -13,10 +16,22 @@ add_library(engine_core
   engine/core/Time.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
+  engine/render/vk/VkInstance.cpp
+  engine/render/vk/VkDeviceContext.cpp
+  engine/render/vk/VkSwapchain.cpp
+  engine/render/vk/VkFrameSync.cpp
+  engine/render/ShaderCompiler.cpp
+  engine/render/ShaderCache.cpp
+  engine/render/ShaderHotReload.cpp
 )
 
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(engine_core PUBLIC
+  Vulkan::Vulkan
+  glfw
 )
 
 if(MSVC)

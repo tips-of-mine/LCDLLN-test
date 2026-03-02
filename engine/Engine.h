@@ -5,6 +5,15 @@
 #include "engine/core/memory/FrameArena.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
+#include "engine/render/vk/VkDeviceContext.h"
+#include "engine/render/vk/VkFrameSync.h"
+#include "engine/render/vk/VkInstance.h"
+#include "engine/render/vk/VkSwapchain.h"
+#include "engine/render/ShaderCache.h"
+#include "engine/render/ShaderCompiler.h"
+#include "engine/render/ShaderHotReload.h"
+
+struct GLFWwindow;
 
 #include <array>
 #include <atomic>
@@ -37,6 +46,13 @@ namespace engine
 		/// Run the main loop until quit is requested.
 		int Run();
 
+		/// Registers a shader for hot-reload (path relative to paths.content, e.g. "shaders/foo.vert").
+		void WatchShader(std::string_view relativePath, engine::render::ShaderStage stage, std::string_view defines = {});
+
+		/// Returns the shader cache (e.g. to get SPIR-V by key).
+		engine::render::ShaderCache& GetShaderCache() { return m_shaderCache; }
+		const engine::render::ShaderCache& GetShaderCache() const { return m_shaderCache; }
+
 	private:
 		void BeginFrame();
 		void Update();
@@ -52,6 +68,16 @@ namespace engine
 
 		engine::platform::Window m_window;
 		engine::platform::Input m_input;
+
+		engine::render::VkInstance m_vkInstance;
+		engine::render::VkDeviceContext m_vkDeviceContext;
+		engine::render::VkSwapchain m_vkSwapchain;
+		std::array<engine::render::FrameResources, 2> m_frameResources{};
+		engine::render::ShaderCache m_shaderCache;
+		engine::render::ShaderHotReload m_shaderHotReload;
+		uint32_t m_currentFrame = 0;
+		GLFWwindow* m_glfwWindowForVk = nullptr;
+		bool m_swapchainResizeRequested = false;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

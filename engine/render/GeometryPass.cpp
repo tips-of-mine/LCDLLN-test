@@ -146,11 +146,11 @@ namespace engine::render
 		}
 
 		VkPipelineShaderStageCreateInfo stages[2] = {};
-		stages[0].sType = VK_STRUCTURE_TYPE_SHADER_STAGE_CREATE_INFO;
+		stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
 		stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
 		stages[0].module = vertModule;
 		stages[0].pName = "main";
-		stages[1].sType = VK_STRUCTURE_TYPE_SHADER_STAGE_CREATE_INFO;
+		stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		stages[1].module = fragModule;
 		stages[1].pName = "main";

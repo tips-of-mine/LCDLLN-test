@@ -234,7 +234,7 @@ namespace engine::platform
 			break;
 		}
 
-		return reinterpret_cast<intptr_t>(DefWindowProcW(AsHwnd(m_hwnd),
+		return static_cast<intptr_t>(DefWindowProcW(AsHwnd(m_hwnd),
 			static_cast<UINT>(msg),
 			static_cast<WPARAM>(wparam),
 			static_cast<LPARAM>(lparam)));

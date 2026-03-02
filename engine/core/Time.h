@@ -1,88 +1,54 @@
-#pragma once
-
 /**
  * @file Time.h
- * @brief Frame timing utility: delta time, FPS (sliding window), frameIndex.
- *
- * Based on std::chrono::steady_clock (monotonic — never goes backward).
- *
- * Usage:
- *   Time::Init();
- *   // main loop:
- *   while (running) {
- *       Time::BeginFrame();
- *       float dt = Time::DeltaSeconds(); // clamped, never negative
- *       uint64_t fi = Time::FrameIndex();
- *       float fps = Time::FPS();
- *       Time::EndFrame();
- *   }
+ * @brief Frame timing: delta, FPS sliding average, frame index. Uses monotonic clock (steady_clock).
  */
 
+#pragma once
+
 #include <cstdint>
-#include <chrono>
 
 namespace engine::core {
 
-/// Frame-timing subsystem.
+/** Default FPS window size for sliding average (e.g. 120 frames). */
+constexpr int kDefaultFpsWindowSize = 120;
+
+/**
+ * Frame timing state. Call BeginFrame at start of frame, EndFrame at end.
+ * Delta is clamped to avoid negative or runaway values.
+ */
 class Time {
 public:
-    Time() = delete;
+    /** Initialize with optional FPS window size (default 120). */
+    explicit Time(int fpsWindowSize = kDefaultFpsWindowSize);
 
-    /**
-     * @brief Initialises the timing system.
-     *
-     * Records the base timestamp. Must be called once before any loop.
-     *
-     * @param maxDeltaSeconds  Upper clamp for delta (default 0.1 s = 100 ms).
-     *                         Prevents large spikes when the application is
-     *                         suspended or a breakpoint is hit.
-     * @param fpsWindowSize    Number of frames in the sliding FPS average
-     *                         (default 120).
-     */
-    static void Init(float   maxDeltaSeconds = 0.1f,
-                     uint32_t fpsWindowSize  = 120u);
+    /** Call at start of frame. Updates delta from previous frame. */
+    void BeginFrame();
 
-    /**
-     * @brief Must be called at the START of every frame.
-     *
-     * Samples the current time, computes delta, updates FPS window, and
-     * increments frameIndex.
-     */
-    static void BeginFrame();
+    /** Call at end of frame. Updates FPS sliding window. */
+    void EndFrame();
 
-    /**
-     * @brief May be called at the END of every frame (reserved for future
-     *        per-frame statistics; currently a no-op).
-     */
-    static void EndFrame() noexcept;
+    /** Delta time in seconds (clamped, never negative). */
+    double DeltaSeconds() const { return m_deltaSeconds; }
 
-    // -----------------------------------------------------------------------
-    // Accessors (valid after the first BeginFrame call)
-    // -----------------------------------------------------------------------
+    /** Current FPS (sliding average over the window). */
+    double Fps() const { return m_fps; }
 
-    /// Delta time in seconds (clamped to [0, maxDeltaSeconds]).
-    static float DeltaSeconds() noexcept;
+    /** Current frame index (incremented each BeginFrame). */
+    uint64_t FrameIndex() const { return m_frameIndex; }
 
-    /// Delta time in milliseconds.
-    static float DeltaMilliseconds() noexcept;
+    /** Monotonic ticks in seconds (for "now" timing). */
+    static double NowTicks();
 
-    /// Frames per second (sliding average over the configured window).
-    static float FPS() noexcept;
-
-    /// Total elapsed time in seconds since Init().
-    static double ElapsedSeconds() noexcept;
-
-    /// Monotonic frame counter, incremented once per BeginFrame.
-    static uint64_t FrameIndex() noexcept;
-
-    /**
-     * @brief Returns the current value of the system monotonic clock in
-     *        "ticks" (nanoseconds since epoch, implementation-defined).
-     *
-     * Useful for high-resolution profiling without going through the
-     * Time subsystem's per-frame state.
-     */
-    static int64_t NowTicks() noexcept;
+private:
+    static constexpr int kMaxFpsWindow = 256;
+    int m_fpsWindowSize;
+    double m_deltaSeconds = 0.0;
+    double m_fps = 0.0;
+    uint64_t m_frameIndex = 0;
+    double m_prevTicks = 0.0;
+    double m_frameTimes[kMaxFpsWindow]{};
+    int m_frameTimeWrite = 0;
+    int m_frameTimeCount = 0;
 };
 
 } // namespace engine::core

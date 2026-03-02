@@ -1,191 +1,129 @@
 /**
  * @file Log.cpp
- * @brief Implementation of the thread-safe logging system.
- *
- * Design notes:
- *  - A single std::mutex serialises all writes (simple, safe).
- *  - Entries are built into a fixed-size stack buffer (512 bytes) to avoid
- *    heap allocations in the hot path; larger messages fall back to a
- *    std::string.
- *  - The file sink is flushed after every write in Debug builds; in Release
- *    it is flushed periodically by the OS (acceptable for non-fatal writes).
+ * @brief Implementation of thread-safe logging (console + file, level filtering).
  */
 
-#include "Log.h"
-
-#include <atomic>
+#include "engine/core/Log.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#include <algorithm>
 #include <chrono>
+#include <cstdarg>
 #include <cstdio>
-#include <ctime>
-#include <fstream>
-#include <mutex>
-#include <thread>
-#include <array>
+#include <cstdlib>
 #include <cstring>
+#include <thread>
 
 namespace engine::core {
 
-// ---------------------------------------------------------------------------
-// Internal state (file-scoped)
-// ---------------------------------------------------------------------------
 namespace {
 
-/// Guards all writes to console and file.
-std::mutex  g_logMutex;
+constexpr size_t kLogBufferSize = 4096;
+constexpr size_t kFormatBufferSize = 3584; // leave room for prefix
 
-/// Optional file sink (nullptr = disabled).
-std::ofstream g_logFile;
+std::mutex g_logMutex;
+std::FILE* g_logFile = nullptr;
+LogLevel g_minLevel = LogLevel::Debug;
+bool g_initialized = false;
 
-/// Minimum level; reads are relaxed because the mutex also barriers writes.
-std::atomic<int> g_minLevel{ static_cast<int>(LogLevel::Debug) };
-
-/// Fixed-size stack buffer used to build log lines without heap allocation.
-constexpr std::size_t kStackBufSize = 512;
-
-// ---------------------------------------------------------------------------
-// Timestamp helper
-// ---------------------------------------------------------------------------
-
-/**
- * @brief Fills @p buf with the current local time in the format
- *        YYYY-MM-DD HH:MM:SS.mmm  (exactly 23 chars + null terminator).
- *
- * @param buf   Output buffer; must be at least 24 bytes.
- */
-void FillTimestamp(char* buf, std::size_t bufSize) noexcept {
-    using namespace std::chrono;
-
-    // Wall-clock time for human-readable date/time.
-    const auto now     = system_clock::now();
-    const auto nowMs   = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-    const std::time_t tt = system_clock::to_time_t(now);
-
-    std::tm localTime{};
-#if defined(_WIN32)
-    localtime_s(&localTime, &tt);
-#else
-    localtime_r(&tt, &localTime);
-#endif
-
-    std::snprintf(buf, bufSize,
-                  "%04d-%02d-%02d %02d:%02d:%02d.%03lld",
-                  localTime.tm_year + 1900,
-                  localTime.tm_mon  + 1,
-                  localTime.tm_mday,
-                  localTime.tm_hour,
-                  localTime.tm_min,
-                  localTime.tm_sec,
-                  static_cast<long long>(nowMs.count()));
+const char* LevelToString(LogLevel level) {
+    switch (level) {
+        case LogLevel::Debug: return "DEBUG";
+        case LogLevel::Info:  return "INFO ";
+        case LogLevel::Warn:  return "WARN ";
+        case LogLevel::Error: return "ERROR";
+        case LogLevel::Fatal: return "FATAL";
+        default: return "?????";
+    }
 }
 
-// ---------------------------------------------------------------------------
-// Thread-id helper
-// ---------------------------------------------------------------------------
-
-/**
- * @brief Returns a stable numeric identifier for the calling thread.
- *
- * std::hash<std::thread::id>{} is used to get a numeric value from the
- * platform thread-id; we truncate to 32-bit for brevity.
- */
-unsigned int CurrentThreadId() noexcept {
-    return static_cast<unsigned int>(
-        std::hash<std::thread::id>{}(std::this_thread::get_id()));
+void FormatTimestamp(char* out, size_t outSize) {
+    auto now = std::chrono::system_clock::now();
+    auto t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    std::tm tm_buf;
+#ifdef _WIN32
+    localtime_s(&tm_buf, &t);
+#else
+    localtime_r(&t, &tm_buf);
+#endif
+    std::snprintf(out, outSize, "%04d-%02d-%02d %02d:%02d:%02d.%03lld",
+        tm_buf.tm_year + 1900, tm_buf.tm_mon + 1, tm_buf.tm_mday,
+        tm_buf.tm_hour, tm_buf.tm_min, tm_buf.tm_sec,
+        static_cast<long long>(ms.count()));
 }
 
 } // namespace
 
-// ---------------------------------------------------------------------------
-// Log public API
-// ---------------------------------------------------------------------------
-
-void Log::Init(std::string_view logFilePath, LogLevel minLevel) {
+void LogInit(std::string_view logFilePath, LogLevel minLevel) {
     std::lock_guard<std::mutex> lock(g_logMutex);
-
-    g_minLevel.store(static_cast<int>(minLevel), std::memory_order_relaxed);
-
+    if (g_initialized) return;
+    g_minLevel = minLevel;
     if (!logFilePath.empty()) {
-        g_logFile.open(std::string(logFilePath),
-                       std::ios::out | std::ios::app);
-        if (!g_logFile.is_open()) {
-            // Non-fatal: continue with console-only logging.
-            std::fprintf(stderr,
-                         "[Log::Init] WARNING: could not open log file '%.*s'\n",
-                         static_cast<int>(logFilePath.size()), logFilePath.data());
+        std::string path(logFilePath);
+        g_logFile = std::fopen(path.c_str(), "a");
+        if (!g_logFile) {
+            std::fprintf(stderr, "[Log] Failed to open log file: %s\n", path.c_str());
         }
     }
+    g_initialized = true;
 }
 
-void Log::Shutdown() {
+void LogShutdown() {
     std::lock_guard<std::mutex> lock(g_logMutex);
-    if (g_logFile.is_open()) {
-        g_logFile.flush();
-        g_logFile.close();
+    if (g_logFile) {
+        std::fflush(g_logFile);
+        std::fclose(g_logFile);
+        g_logFile = nullptr;
     }
+    g_initialized = false;
 }
 
-void Log::Write(LogLevel level, std::string_view subsystem,
-                std::string_view message) noexcept {
-    // Level filter (atomic read, no lock needed here).
-    if (static_cast<int>(level) < g_minLevel.load(std::memory_order_relaxed)) {
-        return;
-    }
-
-    // Build the log line in a stack buffer when possible.
-    char stackBuf[kStackBufSize];
-    char timestamp[24]; // "YYYY-MM-DD HH:MM:SS.mmm\0"
-    FillTimestamp(timestamp, sizeof(timestamp));
-
-    const unsigned int tid = CurrentThreadId();
-
-    // Attempt to format into the stack buffer.
-    int needed = std::snprintf(
-        stackBuf, sizeof(stackBuf),
-        "[%s][T:%08X][%s][%.*s] %.*s\n",
-        timestamp,
-        tid,
-        LogLevelName(level).data(),
-        static_cast<int>(subsystem.size()), subsystem.data(),
-        static_cast<int>(message.size()),   message.data());
-
-    const char* line    = stackBuf;
-    std::string dynLine; // used only if the stack buffer was too small
-
-    if (needed < 0 || static_cast<std::size_t>(needed) >= sizeof(stackBuf)) {
-        // Fallback: heap allocation for oversized messages.
-        const std::size_t dynSize =
-            (needed > 0) ? static_cast<std::size_t>(needed) + 1u : 2048u;
-        dynLine.resize(dynSize);
-        std::snprintf(dynLine.data(), dynSize,
-                      "[%s][T:%08X][%s][%.*s] %.*s\n",
-                      timestamp, tid,
-                      LogLevelName(level).data(),
-                      static_cast<int>(subsystem.size()), subsystem.data(),
-                      static_cast<int>(message.size()),   message.data());
-        line = dynLine.c_str();
-    }
-
-    // Serialise the write.
+void LogSetLevel(LogLevel level) {
     std::lock_guard<std::mutex> lock(g_logMutex);
+    g_minLevel = level;
+}
 
-    // Console output.
-    std::fputs(line, stderr);
+void LogWrite(LogLevel level, const char* subsystem, const char* fmt, ...) {
+    if (level < g_minLevel || level == LogLevel::Off) return;
+    char fmtBuf[kFormatBufferSize];
+    va_list args;
+    va_start(args, fmt);
+    int n = std::vsnprintf(fmtBuf, sizeof(fmtBuf), fmt, args);
+    va_end(args);
+    if (n < 0) return;
+    size_t msgLen = static_cast<size_t>(std::min(n, static_cast<int>(sizeof(fmtBuf) - 1)));
+    fmtBuf[msgLen] = '\0';
 
-    // File output.
-    if (g_logFile.is_open()) {
-        g_logFile << line;
-#if defined(_DEBUG) || !defined(NDEBUG)
-        g_logFile.flush(); // Ensure flush in debug builds.
+    char timestamp[32];
+    FormatTimestamp(timestamp, sizeof(timestamp));
+    unsigned long long tid = 0;
+#ifdef _WIN32
+    tid = static_cast<unsigned long long>(GetCurrentThreadId());
+#else
+    tid = static_cast<unsigned long long>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
 #endif
+
+    char line[kLogBufferSize];
+    int len = std::snprintf(line, sizeof(line), "[%s][T:%llu][%s][%s] %s\n",
+        timestamp, tid, LevelToString(level), subsystem, fmtBuf);
+    if (len <= 0) return;
+    size_t lineLen = static_cast<size_t>(std::min(len, static_cast<int>(sizeof(line) - 1)));
+
+    std::lock_guard<std::mutex> lock(g_logMutex);
+    if (g_logFile) {
+        std::fwrite(line, 1, lineLen, g_logFile);
+        std::fflush(g_logFile);
     }
+    std::FILE* out = (level >= LogLevel::Error) ? stderr : stdout;
+    std::fwrite(line, 1, lineLen, out);
+    std::fflush(out);
 }
 
-void Log::SetLevel(LogLevel level) noexcept {
-    g_minLevel.store(static_cast<int>(level), std::memory_order_relaxed);
-}
-
-LogLevel Log::GetLevel() noexcept {
-    return static_cast<LogLevel>(g_minLevel.load(std::memory_order_relaxed));
+void LogFatalAbort() {
+    std::abort();
 }
 
 } // namespace engine::core

@@ -1,214 +1,155 @@
 /**
  * @file Config.cpp
- * @brief Implementation of the runtime configuration subsystem.
- *
- * Storage model:
- *   - A flat std::unordered_map<string, string> (g_store) holds all resolved
- *     key-value pairs in dot-notation (e.g. "paths.content" → "game/data").
- *   - The JSON file is parsed with nlohmann/json and flattened into this map.
- *   - CLI overrides (--key=value) are merged on top, replacing any previous
- *     value for the same key.
- *
- * Typed getters convert the stored string representation on demand.
+ * @brief Config implementation: JSON/INI load, CLI overrides, typed getters.
  */
 
-#include "Config.h"
-
+#include "engine/core/Config.h"
 #include <nlohmann/json.hpp>
-
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
+#include <sstream>
 #include <unordered_map>
+#include <cctype>
 
 namespace engine::core {
 
-// ---------------------------------------------------------------------------
-// Internal state
-// ---------------------------------------------------------------------------
 namespace {
 
-using json = nlohmann::json;
+std::unordered_map<std::string, std::string>& GetStore() {
+    static std::unordered_map<std::string, std::string> store;
+    return store;
+}
 
-/// Flat key→value store (all values as strings for uniform handling).
-std::unordered_map<std::string, std::string> g_store;
+void Set(std::string key, std::string value) {
+    GetStore()[std::move(key)] = std::move(value);
+}
 
-// ---------------------------------------------------------------------------
-// JSON flattening helpers
-// ---------------------------------------------------------------------------
+std::string Get(std::string_view key) {
+    auto it = GetStore().find(std::string(key));
+    if (it != GetStore().end()) return it->second;
+    return {};
+}
 
-/**
- * @brief Recursively flattens a JSON object into dot-notation key-value pairs.
- *
- * Example:  { "paths": { "content": "game/data" } }
- *           → g_store["paths.content"] = "game/data"
- *
- * @param node    Current JSON node.
- * @param prefix  Current dot-notation prefix (empty for root).
- */
-void FlattenJson(const json& node, const std::string& prefix) {
-    if (node.is_object()) {
-        for (auto& [k, v] : node.items()) {
-            const std::string newKey = prefix.empty() ? k : (prefix + "." + k);
-            FlattenJson(v, newKey);
+void LoadJsonRecursive(const nlohmann::json& j, const std::string& prefix) {
+    if (j.is_object()) {
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            std::string key = prefix.empty() ? std::string(it.key()) : (prefix + "." + std::string(it.key()));
+            if (it.value().is_object()) {
+                LoadJsonRecursive(it.value(), key);
+            } else if (it.value().is_string()) {
+                Set(key, it.value().get<std::string>());
+            } else if (it.value().is_number_integer()) {
+                Set(key, std::to_string(it.value().get<int64_t>()));
+            } else if (it.value().is_number_float()) {
+                Set(key, std::to_string(it.value().get<double>()));
+            } else if (it.value().is_boolean()) {
+                Set(key, it.value().get<bool>() ? "true" : "false");
+            }
         }
-    } else {
-        // Leaf node: convert to string representation.
-        if (node.is_string())      { g_store[prefix] = node.get<std::string>(); }
-        else if (node.is_number()) { g_store[prefix] = std::to_string(node.get<double>()); }
-        else if (node.is_boolean()){ g_store[prefix] = node.get<bool>() ? "true" : "false"; }
-        else                       { g_store[prefix] = node.dump(); }
     }
 }
 
-// ---------------------------------------------------------------------------
-// CLI parsing helper
-// ---------------------------------------------------------------------------
-
-/**
- * @brief Parses a CLI argument of the form --key=value or --flag (bare flag sets key to "true").
- *
- * Arguments that do not start with "--" are silently ignored.
- * For --key=value the key and value are stored; for --flag (no '=') the key "flag" is set to "true".
- *
- * @param arg  Single argv entry (e.g. "--window.width=1280" or "--editor").
- */
-void ParseCliArg(const char* arg) {
-    if (!arg || std::strncmp(arg, "--", 2) != 0) { return; }
-    const char* eq = std::strchr(arg + 2, '=');
-    if (eq) {
-        const std::string key(arg + 2, eq);
-        const std::string value(eq + 1);
-        g_store[key] = value;
-    } else {
-        const std::string key(arg + 2);
-        if (!key.empty())
-            g_store[key] = "true";
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Normalise floating-point strings produced by std::to_string
-// ---------------------------------------------------------------------------
-
-/**
- * @brief Trims trailing zeros after the decimal point (e.g. "2.200000" → "2.2").
- *
- * Used only when storing numeric JSON values so that GetFloat() and GetInt()
- * round-trip cleanly.
- */
-std::string TrimTrailingZeros(std::string s) {
-    if (s.find('.') == std::string::npos) { return s; }
-    const std::size_t last = s.find_last_not_of('0');
-    if (last != std::string::npos) {
-        s.erase(last + 1);
-        if (s.back() == '.') { s.pop_back(); }
-    }
-    return s;
-}
-
-/**
- * @brief Converts a JSON leaf node to a clean string representation.
- */
-std::string JsonLeafToString(const json& v) {
-    if (v.is_string())      { return v.get<std::string>(); }
-    if (v.is_number_float()){ return TrimTrailingZeros(std::to_string(v.get<double>())); }
-    if (v.is_number())      { return std::to_string(v.get<long long>()); }
-    if (v.is_boolean())     { return v.get<bool>() ? "true" : "false"; }
-    return v.dump();
-}
-
-/**
- * @brief Overload of FlattenJson that uses the cleaner string conversion.
- */
-void FlattenJsonClean(const json& node, const std::string& prefix) {
-    if (node.is_object()) {
-        for (auto& [k, v] : node.items()) {
-            const std::string newKey = prefix.empty() ? k : (prefix + "." + k);
-            FlattenJsonClean(v, newKey);
+void LoadIni(std::istream& in) {
+    std::string line, section;
+    while (std::getline(in, line)) {
+        size_t pos = 0;
+        while (pos < line.size() && (line[pos] == ' ' || line[pos] == '\t')) ++pos;
+        if (pos >= line.size() || line[pos] == ';' || line[pos] == '#') continue;
+        if (line[pos] == '[') {
+            size_t end = line.find(']', pos);
+            if (end != std::string::npos) {
+                section = line.substr(pos + 1, end - pos - 1);
+                continue;
+            }
         }
-    } else {
-        g_store[prefix] = JsonLeafToString(node);
+        size_t eq = line.find('=', pos);
+        if (eq != std::string::npos) {
+            std::string k = line.substr(pos, eq - pos);
+            while (!k.empty() && (k.back() == ' ' || k.back() == '\t')) k.pop_back();
+            std::string v = line.substr(eq + 1);
+            pos = 0;
+            while (pos < v.size() && (v[pos] == ' ' || v[pos] == '\t')) ++pos;
+            v = v.substr(pos);
+            if (!section.empty()) k = section + "." + k;
+            Set(k, v);
+        }
     }
+}
+
+void LoadJson(std::istream& in) {
+    try {
+        nlohmann::json j = nlohmann::json::parse(in);
+        LoadJsonRecursive(j, "");
+    } catch (...) {}
 }
 
 } // namespace
 
-// ---------------------------------------------------------------------------
-// Config public API
-// ---------------------------------------------------------------------------
+void Config::Load(std::string_view configPath) {
+    GetStore().clear();
+    Set("paths.content", "game/data");
+    Set("version", "0.1");
+    if (configPath.empty()) return;
+    std::string path(configPath);
+    std::ifstream f(path);
+    if (!f.is_open()) return;
+    if (path.size() >= 5 && path.compare(path.size() - 5, 5, ".json") == 0) {
+        LoadJson(f);
+    } else {
+        LoadIni(f);
+    }
+}
 
-void Config::Init(std::string_view jsonPath, int argc, const char* const* argv) {
-    g_store.clear();
-
-    // --- 1. Load JSON file (best-effort; missing file is not an error) -------
-    if (!jsonPath.empty()) {
-        std::string jsonPathStr{jsonPath};
-        std::ifstream f{jsonPathStr};
-        if (f.is_open()) {
-            try {
-                const json root = json::parse(f);
-                FlattenJsonClean(root, {});
-            } catch (const json::exception& e) {
-                // Malformed JSON: log to stderr and continue with defaults.
-                std::fprintf(stderr,
-                             "[Config::Init] WARNING: JSON parse error in '%.*s': %s\n",
-                             static_cast<int>(jsonPath.size()), jsonPath.data(),
-                             e.what());
+void Config::ApplyArgs(int argc, char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg.size() >= 2 && arg[0] == '-' && arg[1] == '-') {
+            size_t eq = arg.find('=', 2);
+            if (eq != std::string::npos) {
+                std::string key = arg.substr(2, eq - 2);
+                std::string value = arg.substr(eq + 1);
+                Set(key, value);
             }
         }
-        // If the file does not exist we simply skip it — defaults will be used.
-    }
-
-    // --- 2. Apply CLI overrides (highest priority) ---------------------------
-    for (int i = 1; i < argc; ++i) {
-        ParseCliArg(argv[i]);
     }
 }
 
-void Config::Shutdown() {
-    g_store.clear();
+std::string Config::GetString(std::string_view key, const std::string& defaultVal) {
+    std::string v = Get(key);
+    return v.empty() ? defaultVal : v;
 }
 
-std::string Config::GetString(std::string_view key, std::string_view fallback) {
-    const auto it = g_store.find(std::string(key));
-    return (it != g_store.end()) ? it->second : std::string(fallback);
-}
-
-int Config::GetInt(std::string_view key, int fallback) {
-    const auto it = g_store.find(std::string(key));
-    if (it == g_store.end()) { return fallback; }
+int Config::GetInt(std::string_view key, int defaultVal) {
+    std::string v = Get(key);
+    if (v.empty()) return defaultVal;
     try {
-        return std::stoi(it->second);
+        return std::stoi(v);
     } catch (...) {
-        return fallback;
+        return defaultVal;
     }
 }
 
-float Config::GetFloat(std::string_view key, float fallback) {
-    const auto it = g_store.find(std::string(key));
-    if (it == g_store.end()) { return fallback; }
+double Config::GetDouble(std::string_view key, double defaultVal) {
+    std::string v = Get(key);
+    if (v.empty()) return defaultVal;
     try {
-        return std::stof(it->second);
+        return std::stod(v);
     } catch (...) {
-        return fallback;
+        return defaultVal;
     }
 }
 
-bool Config::GetBool(std::string_view key, bool fallback) {
-    const auto it = g_store.find(std::string(key));
-    if (it == g_store.end()) { return fallback; }
-    const std::string& v = it->second;
-    if (v == "true"  || v == "1") { return true;  }
-    if (v == "false" || v == "0") { return false; }
-    return fallback;
+bool Config::GetBool(std::string_view key, bool defaultVal) {
+    std::string v = Get(key);
+    if (v.empty()) return defaultVal;
+    for (char& c : v) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    if (v == "1" || v == "true" || v == "yes") return true;
+    if (v == "0" || v == "false" || v == "no") return false;
+    return defaultVal;
 }
 
 bool Config::Has(std::string_view key) {
-    return g_store.count(std::string(key)) > 0;
+    return GetStore().count(std::string(key)) != 0;
 }
 
 } // namespace engine::core

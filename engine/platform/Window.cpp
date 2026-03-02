@@ -1,155 +1,77 @@
 /**
  * @file Window.cpp
- * @brief GLFW window implementation — engine::platform::Window.
- *
- * GLFW is only included here (not in the header) to avoid leaking its
- * symbols into every translation unit.
+ * @brief GLFW-based window implementation. Resize and close callbacks.
  */
 
-// GLFW: Vulkan is the rendering API; tell GLFW not to include any OpenGL
-// headers.  The Vulkan surface is created externally (M01.1).
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 #include "engine/platform/Window.h"
-#include "engine/core/Log.h"
-
-#include <string>
-#include <cassert>
+#include <GLFW/glfw3.h>
+#include <stdexcept>
 
 namespace engine::platform {
 
-// ---------------------------------------------------------------------------
-// Static GLFW error callback
-// ---------------------------------------------------------------------------
+namespace {
+Window* GetWindow(GLFWwindow* win) {
+    return static_cast<Window*>(glfwGetWindowUserPointer(win));
+}
+} // namespace
 
-/*static*/
-void Window::GlfwErrorCallback(int error, const char* description) {
-    LOG_ERROR(Platform, "GLFW error {}: {}", error, description ? description : "(null)");
+static void OnClose(GLFWwindow* win) {
+    Window* self = GetWindow(win);
+    if (self && self->m_onClose) self->m_onClose();
 }
 
-// ---------------------------------------------------------------------------
-// Static GLFW framebuffer-size callback
-// ---------------------------------------------------------------------------
-
-/*static*/
-void Window::GlfwFramebufferSizeCallback(GLFWwindow* win, int w, int h) {
-    // Retrieve the Window instance stored as the GLFW user pointer.
-    auto* self = static_cast<Window*>(glfwGetWindowUserPointer(win));
-    if (!self) { return; }
-
-    self->m_width  = w;
-    self->m_height = h;
-
-    LOG_DEBUG(Platform, "Framebuffer resized → {}×{}", w, h);
-
-    if (self->m_onResize) {
-        self->m_onResize(w, h);
-    }
+Window::~Window() {
+    Destroy();
 }
 
-// ---------------------------------------------------------------------------
-// Static GLFW window-close callback
-// ---------------------------------------------------------------------------
-
-/*static*/
-void Window::GlfwWindowCloseCallback(GLFWwindow* win) {
-    auto* self = static_cast<Window*>(glfwGetWindowUserPointer(win));
-    if (!self) { return; }
-
-    LOG_DEBUG(Platform, "Window close requested");
-
-    if (self->m_onClose) {
-        self->m_onClose();
+bool Window::Create(const std::string& title, int width, int height) {
+    if (m_window) return true;
+    static bool glfwInited = false;
+    if (!glfwInited) {
+        if (!glfwInit()) return false;
+        glfwInited = true;
     }
-    // glfwSetWindowShouldClose is set automatically by GLFW; we only notify.
-}
-
-// ---------------------------------------------------------------------------
-// Lifecycle
-// ---------------------------------------------------------------------------
-
-void Window::Init(int width, int height, std::string_view title, bool fullscreen) {
-    assert(m_window == nullptr && "Window::Init called twice");
-
-    // Install error callback before glfwInit so early errors are caught.
-    glfwSetErrorCallback(GlfwErrorCallback);
-
-    if (!glfwInit()) {
-        LOG_FATAL(Platform, "glfwInit() failed — cannot create window");
-    }
-
-    // We are targeting Vulkan; tell GLFW not to create an OpenGL context.
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    // Allow window resize.
-    glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
-
-    GLFWmonitor* monitor = nullptr;
-    if (fullscreen) {
-        monitor = glfwGetPrimaryMonitor();
-        if (!monitor) {
-            LOG_WARN(Platform, "Could not get primary monitor; falling back to windowed mode");
-        }
-    }
-
-    const std::string titleStr{title};
-    m_window = glfwCreateWindow(width, height, titleStr.c_str(), monitor, nullptr);
-    if (!m_window) {
-        glfwTerminate();
-        LOG_FATAL(Platform, "glfwCreateWindow({}×{}) failed", width, height);
-    }
-
-    // Store this instance as the GLFW user pointer so static callbacks can
-    // retrieve it.
-    glfwSetWindowUserPointer(m_window, this);
-
-    // Query actual framebuffer size (may differ from requested on HiDPI).
-    glfwGetFramebufferSize(m_window, &m_width, &m_height);
-
-    // Install GLFW callbacks.
-    glfwSetFramebufferSizeCallback(m_window, GlfwFramebufferSizeCallback);
-    glfwSetWindowCloseCallback    (m_window, GlfwWindowCloseCallback);
-
-    LOG_INFO(Platform, "Window created — {}×{} \"{}\" (fullscreen={})",
-             m_width, m_height, titleStr, fullscreen);
+    GLFWwindow* win = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    if (!win) return false;
+    m_window = win;
+    glfwSetWindowUserPointer(win, this);
+    glfwSetFramebufferSizeCallback(win, [](GLFWwindow* w, int a, int b) {
+        Window* self = GetWindow(w);
+        if (self) { self->m_width = a; self->m_height = b; if (self->m_onResize) self->m_onResize(a, b); }
+    });
+    glfwSetWindowCloseCallback(win, OnClose);
+    m_width = width;
+    m_height = height;
+    int w = 0, h = 0;
+    glfwGetFramebufferSize(static_cast<GLFWwindow*>(m_window), &w, &h);
+    if (w > 0 && h > 0) { m_width = w; m_height = h; }
+    return true;
 }
 
-void Window::Shutdown() {
+void Window::Destroy() {
     if (m_window) {
-        glfwDestroyWindow(m_window);
+        GLFWwindow* win = static_cast<GLFWwindow*>(m_window);
+        glfwSetFramebufferSizeCallback(win, nullptr);
+        glfwSetWindowCloseCallback(win, nullptr);
+        glfwSetWindowUserPointer(win, nullptr);
+        glfwDestroyWindow(win);
         m_window = nullptr;
-        LOG_INFO(Platform, "Window destroyed");
     }
-    glfwTerminate();
+    m_width = 0;
+    m_height = 0;
 }
-
-// ---------------------------------------------------------------------------
-// Per-frame
-// ---------------------------------------------------------------------------
 
 void Window::PollEvents() {
     glfwPollEvents();
 }
 
-// ---------------------------------------------------------------------------
-// State queries
-// ---------------------------------------------------------------------------
-
-bool Window::ShouldClose() const noexcept {
-    if (!m_window) { return true; }
-    return glfwWindowShouldClose(m_window) != 0;
+bool Window::ShouldClose() const {
+    return m_window ? (glfwWindowShouldClose(static_cast<GLFWwindow*>(m_window)) != 0) : true;
 }
 
-// ---------------------------------------------------------------------------
-// Callback registration
-// ---------------------------------------------------------------------------
-
-void Window::SetResizeCallback(ResizeCallback cb) {
-    m_onResize = std::move(cb);
-}
-
-void Window::SetCloseCallback(CloseCallback cb) {
-    m_onClose = std::move(cb);
+void* Window::GetNativeHandle() const {
+    return m_window;
 }
 
 } // namespace engine::platform

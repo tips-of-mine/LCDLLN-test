@@ -1,184 +1,121 @@
 /**
  * @file FileSystem.cpp
- * @brief File I/O and path utilities — engine::platform::FileSystem.
- *
- * Uses C++17 std::filesystem for directory traversal / existence checks and
- * standard fstream for reading file content.  All paths are normalized to
- * forward slashes internally.
+ * @brief File system implementation. Read, exists, list, path join; paths relative to content root.
  */
 
 #include "engine/platform/FileSystem.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-
-#include <filesystem>
 #include <fstream>
-#include <iterator>
-#include <string>
+#include <sstream>
 
-namespace fs = std::filesystem;
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 namespace engine::platform {
 
-// ---------------------------------------------------------------------------
-// Internal state
-// ---------------------------------------------------------------------------
 namespace {
-
-/// Resolved content root path (relative to CWD).  Set by Init().
-std::string g_contentRoot = "game/data";
-
-} // anonymous namespace
-
-// ---------------------------------------------------------------------------
-// Lifecycle
-// ---------------------------------------------------------------------------
-
-/*static*/
-void FileSystem::Init() {
-    using namespace engine::core;
-
-    // Read content root from config; fall back to "game/data".
-    g_contentRoot = Config::GetString("paths.content", "game/data");
-
-    // Normalise: strip trailing slash if present.
-    while (!g_contentRoot.empty() && (g_contentRoot.back() == '/' ||
-                                       g_contentRoot.back() == '\\')) {
-        g_contentRoot.pop_back();
-    }
-
-    if (g_contentRoot.empty()) {
-        g_contentRoot = "game/data";
-    }
-
-    // Warn (non-fatal) if the directory is absent — it may be created later.
-    std::error_code ec;
-    if (!fs::is_directory(g_contentRoot, ec)) {
-        LOG_WARN(Platform, "FileSystem: content root '{}' does not exist (will be created on demand)",
-                 g_contentRoot);
-    } else {
-        LOG_INFO(Platform, "FileSystem: content root = '{}'", g_contentRoot);
-    }
+std::string g_contentRoot;
 }
 
-/*static*/
-std::string_view FileSystem::ContentRoot() noexcept {
+void FileSystem::SetContentRoot(std::string rootPath) {
+    g_contentRoot = std::move(rootPath);
+    while (!g_contentRoot.empty() && (g_contentRoot.back() == '/' || g_contentRoot.back() == '\\'))
+        g_contentRoot.pop_back();
+}
+
+const std::string& FileSystem::GetContentRoot() {
     return g_contentRoot;
 }
 
-// ---------------------------------------------------------------------------
-// Path utilities
-// ---------------------------------------------------------------------------
-
-/*static*/
-std::string FileSystem::JoinPath(std::string_view base, std::string_view rel) {
-    if (base.empty()) { return std::string{rel}; }
-    if (rel.empty())  { return std::string{base}; }
-
-    // Use std::filesystem to normalise separator handling.
-    const fs::path joined = fs::path{base} / fs::path{rel};
-    // Normalise to forward slashes (cross-platform friendliness).
-    std::string result = joined.generic_string();
-    return result;
+std::string FileSystem::PathJoin(const std::string& a, const std::string& b) {
+    if (a.empty()) return b;
+    if (b.empty()) return a;
+    char sep = '/';
+#ifdef _WIN32
+    sep = '\\';
+#endif
+    std::string r = a;
+    if (r.back() != '/' && r.back() != '\\') r += sep;
+    if (b.front() == '/' || b.front() == '\\') r += b.substr(1);
+    else r += b;
+    return r;
 }
 
-/*static*/
-std::string FileSystem::FullPath(std::string_view relativePath) {
-    return JoinPath(g_contentRoot, relativePath);
+static std::string ResolvePath(const std::string& path) {
+    if (path.empty()) return g_contentRoot;
+#ifdef _WIN32
+    if (path.size() >= 2 && path[1] == ':') return path;
+    if (path.size() >= 1 && (path[0] == '/' || path[0] == '\\')) return path;
+#else
+    if (path.size() >= 1 && path[0] == '/') return path;
+#endif
+    return FileSystem::PathJoin(g_contentRoot, path);
 }
 
-// ---------------------------------------------------------------------------
-// File I/O
-// ---------------------------------------------------------------------------
-
-/*static*/
-bool FileSystem::Exists(std::string_view relativePath) noexcept {
-    const std::string full = FullPath(relativePath);
-    std::error_code ec;
-    return fs::exists(full, ec);
+std::vector<uint8_t> FileSystem::ReadAllBytes(const std::string& path) {
+    std::string full = ResolvePath(path);
+    std::ifstream f(full, std::ios::binary | std::ios::ate);
+    if (!f) return {};
+    auto size = f.tellg();
+    if (size <= 0) return {};
+    f.seekg(0);
+    std::vector<uint8_t> buf(static_cast<size_t>(size));
+    if (!f.read(reinterpret_cast<char*>(buf.data()), size)) return {};
+    return buf;
 }
 
-/*static*/
-std::optional<std::vector<uint8_t>>
-FileSystem::ReadAllBytes(std::string_view relativePath) {
-    const std::string full = FullPath(relativePath);
-
-    std::ifstream f{full, std::ios::binary};
-    if (!f.is_open()) {
-        LOG_ERROR(Platform, "FileSystem::ReadAllBytes: cannot open '{}'", full);
-        return std::nullopt;
-    }
-
-    // Determine file size.
-    f.seekg(0, std::ios::end);
-    const auto size = f.tellg();
-    f.seekg(0, std::ios::beg);
-
-    if (size < 0) {
-        LOG_ERROR(Platform, "FileSystem::ReadAllBytes: seekg failed for '{}'", full);
-        return std::nullopt;
-    }
-
-    std::vector<uint8_t> buffer(static_cast<std::size_t>(size));
-    if (size > 0) {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        f.read(reinterpret_cast<char*>(buffer.data()),
-               static_cast<std::streamsize>(size));
-    }
-
-    if (!f) {
-        LOG_ERROR(Platform, "FileSystem::ReadAllBytes: read error for '{}'", full);
-        return std::nullopt;
-    }
-
-    LOG_DEBUG(Platform, "ReadAllBytes: '{}' — {} bytes", full, buffer.size());
-    return buffer;
+std::string FileSystem::ReadAllText(const std::string& path) {
+    std::string full = ResolvePath(path);
+    std::ifstream f(full);
+    if (!f) return {};
+    std::ostringstream ss;
+    ss << f.rdbuf();
+    return ss.str();
 }
 
-/*static*/
-std::optional<std::string>
-FileSystem::ReadAllText(std::string_view relativePath) {
-    const std::string full = FullPath(relativePath);
-
-    std::ifstream f{full};
-    if (!f.is_open()) {
-        LOG_ERROR(Platform, "FileSystem::ReadAllText: cannot open '{}'", full);
-        return std::nullopt;
-    }
-
-    std::string content{std::istreambuf_iterator<char>{f},
-                        std::istreambuf_iterator<char>{}};
-
-    if (!f && !f.eof()) {
-        LOG_ERROR(Platform, "FileSystem::ReadAllText: read error for '{}'", full);
-        return std::nullopt;
-    }
-
-    LOG_DEBUG(Platform, "ReadAllText: '{}' — {} chars", full, content.size());
-    return content;
+bool FileSystem::Exists(const std::string& path) {
+    std::string full = ResolvePath(path);
+#ifdef _WIN32
+    DWORD att = GetFileAttributesA(full.c_str());
+    return att != INVALID_FILE_ATTRIBUTES;
+#else
+    struct stat st = {};
+    return stat(full.c_str(), &st) == 0;
+#endif
 }
 
-/*static*/
-std::vector<std::string>
-FileSystem::ListFiles(std::string_view relativeDir) {
-    const std::string full = FullPath(relativeDir);
-
-    std::error_code ec;
-    if (!fs::is_directory(full, ec)) {
-        LOG_WARN(Platform, "FileSystem::ListFiles: '{}' is not a directory", full);
-        return {};
+std::vector<std::string> FileSystem::List(const std::string& path) {
+    std::string full = ResolvePath(path);
+    std::vector<std::string> out;
+#ifdef _WIN32
+    WIN32_FIND_DATAA fd;
+    std::string pattern = full;
+    if (pattern.empty() || (pattern.back() != '/' && pattern.back() != '\\')) pattern += "\\*";
+    else pattern += "*";
+    HANDLE h = FindFirstFileA(pattern.c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE) return out;
+    do {
+        if (fd.cFileName[0] == '.' && (fd.cFileName[1] == '\0' || (fd.cFileName[1] == '.' && fd.cFileName[2] == '\0')))
+            continue;
+        out.push_back(fd.cFileName);
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+#else
+    DIR* d = opendir(full.c_str());
+    if (!d) return out;
+    while (struct dirent* e = readdir(d)) {
+        if (e->d_name[0] == '.' && (e->d_name[1] == '\0' || (e->d_name[1] == '.' && e->d_name[2] == '\0')))
+            continue;
+        out.push_back(e->d_name);
     }
-
-    std::vector<std::string> result;
-    for (const auto& entry : fs::directory_iterator{full, ec}) {
-        if (ec) { break; }
-        if (entry.is_regular_file(ec) && !ec) {
-            result.push_back(entry.path().filename().generic_string());
-        }
-    }
-
-    LOG_DEBUG(Platform, "ListFiles: '{}' — {} file(s) found", full, result.size());
-    return result;
+    closedir(d);
+#endif
+    return out;
 }
 
 } // namespace engine::platform

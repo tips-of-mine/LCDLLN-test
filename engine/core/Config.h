@@ -47,9 +47,11 @@ namespace engine::core
 		/// Set a value explicitly (used by parsers and CLI overrides).
 		void SetValue(std::string_view key, Value value);
 
+		/// Parse a string as a scalar value (used by INI/CLI parsers).
+		static std::optional<Value> ParseScalar(std::string_view text);
+
 	private:
 		static std::string ToOwnedKey(std::string_view key);
-		static std::optional<Value> ParseScalar(std::string_view text);
 
 		std::unordered_map<std::string, Value> m_values;
 	};

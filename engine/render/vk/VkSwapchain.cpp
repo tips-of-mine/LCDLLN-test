@@ -107,7 +107,7 @@ namespace engine::render
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageExtent = m_extent;
 		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		createInfo.imageSharingMode = exclusive ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = exclusive ? 0u : 2u;
 		createInfo.pQueueFamilyIndices = exclusive ? nullptr : queueFamilyIndices;
@@ -126,15 +126,15 @@ namespace engine::render
 
 		uint32_t swapchainImageCount = 0;
 		vkGetSwapchainImagesKHR(device, m_swapchain, &swapchainImageCount, nullptr);
-		std::vector<VkImage> swapchainImages(swapchainImageCount);
-		vkGetSwapchainImagesKHR(device, m_swapchain, &swapchainImageCount, swapchainImages.data());
+		m_images.resize(swapchainImageCount);
+		vkGetSwapchainImagesKHR(device, m_swapchain, &swapchainImageCount, m_images.data());
 
 		m_imageViews.resize(swapchainImageCount);
 		for (uint32_t i = 0; i < swapchainImageCount; ++i)
 		{
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = swapchainImages[i];
+			viewInfo.image = m_images[i];
 			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			viewInfo.format = m_imageFormat;
 			viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -261,6 +261,7 @@ namespace engine::render
 			}
 		}
 		m_imageViews.clear();
+		m_images.clear();
 
 		if (m_swapchain != VK_NULL_HANDLE)
 		{
@@ -293,5 +294,23 @@ namespace engine::render
 			return VK_NULL_HANDLE;
 		}
 		return m_framebuffers[imageIndex];
+	}
+
+	VkImage VkSwapchain::GetImage(uint32_t imageIndex) const
+	{
+		if (imageIndex >= m_images.size())
+		{
+			return VK_NULL_HANDLE;
+		}
+		return m_images[imageIndex];
+	}
+
+	VkImageView VkSwapchain::GetImageView(uint32_t imageIndex) const
+	{
+		if (imageIndex >= m_imageViews.size())
+		{
+			return VK_NULL_HANDLE;
+		}
+		return m_imageViews[imageIndex];
 	}
 }

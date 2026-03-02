@@ -49,6 +49,12 @@ namespace engine::render
 		/// Returns the framebuffer for the given image index (0..GetImageCount()-1).
 		VkFramebuffer GetFramebuffer(uint32_t imageIndex) const;
 
+		/// Returns the swapchain image for the given image index (for Frame Graph / copy passes).
+		VkImage GetImage(uint32_t imageIndex) const;
+
+		/// Returns the image view for the given image index (for Frame Graph / copy passes).
+		VkImageView GetImageView(uint32_t imageIndex) const;
+
 		/// Returns the current swapchain image format.
 		VkFormat GetImageFormat() const { return m_imageFormat; }
 
@@ -69,6 +75,7 @@ namespace engine::render
 		VkFormat m_imageFormat = VK_FORMAT_UNDEFINED;
 		VkExtent2D m_extent{ 0, 0 };
 
+		std::vector<VkImage> m_images;
 		std::vector<VkImageView> m_imageViews;
 		VkRenderPass m_renderPass = VK_NULL_HANDLE;
 		std::vector<VkFramebuffer> m_framebuffers;

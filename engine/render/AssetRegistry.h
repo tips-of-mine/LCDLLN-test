@@ -1,0 +1,125 @@
+#pragma once
+
+#include "engine/core/Config.h"
+
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+
+namespace engine::render
+{
+	/// Stable asset identifier (0 = invalid). Used for cache lookup and handle validity.
+	using AssetId = uint32_t;
+	constexpr AssetId kInvalidAssetId = 0;
+
+	/// GPU mesh data: vertex and index buffers (owned by registry).
+	struct MeshAsset
+	{
+		VkBuffer vertexBuffer = VK_NULL_HANDLE;
+		VkBuffer indexBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory vertexMemory = VK_NULL_HANDLE;
+		VkDeviceMemory indexMemory = VK_NULL_HANDLE;
+		uint32_t vertexCount = 0;
+		uint32_t indexCount = 0;
+	};
+
+	/// GPU texture data: image and view (owned by registry).
+	struct TextureAsset
+	{
+		VkImage image = VK_NULL_HANDLE;
+		VkImageView view = VK_NULL_HANDLE;
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+		uint32_t width = 0;
+		uint32_t height = 0;
+	};
+
+	/// Stable handle to a mesh asset. Invalid after registry destroy or if load failed.
+	class MeshHandle
+	{
+	public:
+		MeshHandle() = default;
+		MeshHandle(class AssetRegistry* registry, AssetId id) : m_registry(registry), m_id(id) {}
+
+		/// Returns true if the handle refers to a loaded mesh.
+		bool IsValid() const;
+		/// Returns the mesh asset, or nullptr if invalid.
+		MeshAsset* Get() const;
+		AssetId Id() const { return m_id; }
+
+	private:
+		class AssetRegistry* m_registry = nullptr;
+		AssetId m_id = kInvalidAssetId;
+	};
+
+	/// Stable handle to a texture asset. Invalid after registry destroy or if load failed.
+	class TextureHandle
+	{
+	public:
+		TextureHandle() = default;
+		TextureHandle(class AssetRegistry* registry, AssetId id) : m_registry(registry), m_id(id) {}
+
+		/// Returns true if the handle refers to a loaded texture.
+		bool IsValid() const;
+		/// Returns the texture asset, or nullptr if invalid.
+		TextureAsset* Get() const;
+		AssetId Id() const { return m_id; }
+
+	private:
+		class AssetRegistry* m_registry = nullptr;
+		AssetId m_id = kInvalidAssetId;
+	};
+
+	/// Asset registry: cache by path, load mesh/texture from content path, ownership explicit (destroy on shutdown).
+	/// Paths are relative to config paths.content (e.g. "meshes/test.mesh", "textures/test.texr").
+	class AssetRegistry
+	{
+	public:
+		AssetRegistry() = default;
+		AssetRegistry(const AssetRegistry&) = delete;
+		AssetRegistry& operator=(const AssetRegistry&) = delete;
+
+		/// Initializes the registry for loading (needs device and physical device for GPU upload).
+		void Init(VkDevice device, VkPhysicalDevice physicalDevice, const engine::core::Config& config);
+
+		/// Loads a mesh from content path (relative to paths.content). Returns cached asset if already loaded.
+		/// Format: minimal binary .mesh (see implementation). Returns invalid handle on failure.
+		MeshHandle LoadMesh(std::string_view relativePath);
+
+		/// Loads a texture from content path. Returns cached asset if already loaded.
+		/// \param useSrgb If true, use sRGB format; otherwise linear.
+		/// Format: raw .texr (magic, width, height, sRGB flag, RGBA pixels). Returns invalid handle on failure.
+		TextureHandle LoadTexture(std::string_view relativePath, bool useSrgb = false);
+
+		/// Returns the mesh for the given id, or nullptr.
+		MeshAsset* GetMesh(AssetId id) const;
+		/// Returns the texture for the given id, or nullptr.
+		TextureAsset* GetTexture(AssetId id) const;
+
+		/// Releases all GPU resources and clears cache. Call on shutdown.
+		void Destroy();
+
+		/// Returns true if Init was called and Destroy has not been called.
+		bool IsValid() const { return m_device != VK_NULL_HANDLE; }
+
+	private:
+		VkDevice m_device = VK_NULL_HANDLE;
+		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+		const engine::core::Config* m_config = nullptr;
+
+		AssetId m_nextMeshId = 1;
+		AssetId m_nextTextureId = 1;
+		std::unordered_map<std::string, AssetId> m_meshPathToId;
+		std::unordered_map<std::string, AssetId> m_texturePathToId;
+		std::unordered_map<AssetId, MeshAsset> m_meshes;
+		std::unordered_map<AssetId, TextureAsset> m_textures;
+
+		AssetId loadMeshInternal(std::string_view relativePath);
+		AssetId loadTextureInternal(std::string_view relativePath, bool useSrgb);
+		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+	};
+}

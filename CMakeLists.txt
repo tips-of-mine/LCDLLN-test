@@ -25,6 +25,9 @@ add_library(engine_core
   engine/render/ShaderCompiler.cpp
   engine/render/ShaderCache.cpp
   engine/render/ShaderHotReload.cpp
+  engine/render/Camera.cpp
+  engine/render/GeometryPass.cpp
+  engine/math/Frustum.cpp
 )
 
 target_include_directories(engine_core PUBLIC

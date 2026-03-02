@@ -46,6 +46,8 @@ namespace engine::render
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 		bool transient = true;
+		/// When true, image is used as depth attachment (view aspect DEPTH_BIT, barriers use depth layout).
+		bool isDepthAttachment = false;
 	};
 
 	/// Descriptor for a logical buffer resource (transient by default, frame lifetime).

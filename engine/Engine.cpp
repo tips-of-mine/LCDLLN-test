@@ -8,7 +8,9 @@
 #include <vulkan/vulkan.h>
 
 #include <chrono>
+#include <cstring>
 #include <thread>
+#include <vector>
 
 namespace engine
 {
@@ -81,6 +83,24 @@ namespace engine
 					sceneColorDesc.transient = true;
 					m_fgSceneColorId = m_frameGraph.createImage("SceneColor", sceneColorDesc);
 					m_fgBackbufferId = m_frameGraph.createExternalImage("Backbuffer");
+					// GBuffer for deferred: A=albedo (SRGB), B=normal, C=ORM, Depth
+					engine::render::ImageDesc gbufADesc{};
+					gbufADesc.format = VK_FORMAT_R8G8B8A8_SRGB;
+					gbufADesc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgGBufferAId = m_frameGraph.createImage("GBufferA", gbufADesc);
+					engine::render::ImageDesc gbufBDesc{};
+					gbufBDesc.format = VK_FORMAT_A2B10G10R10_UNORM_PACK32;
+					gbufBDesc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgGBufferBId = m_frameGraph.createImage("GBufferB", gbufBDesc);
+					engine::render::ImageDesc gbufCDesc{};
+					gbufCDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+					gbufCDesc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgGBufferCId = m_frameGraph.createImage("GBufferC", gbufCDesc);
+					engine::render::ImageDesc depthDesc{};
+					depthDesc.format = VK_FORMAT_D32_SFLOAT;
+					depthDesc.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+					depthDesc.isDepthAttachment = true;
+					m_fgDepthId = m_frameGraph.createImage("Depth", depthDesc);
 					m_frameGraph.addPass("Clear",
 						[this](engine::render::PassBuilder& b) { b.write(m_fgSceneColorId, engine::render::ImageUsage::TransferDst); },
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -89,6 +109,54 @@ namespace engine
 							VkClearColorValue clearColor = { { 0.15f, 0.15f, 0.18f, 1.0f } };
 							VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 							vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
+						});
+					// Geometry pass: load/compile shaders and init pipeline
+					std::vector<uint32_t> vertSpirv, fragSpirv;
+					{
+						auto loadSpv = [&](const char* path) -> std::vector<uint32_t> {
+							std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, path);
+							if (bytes.size() % 4 != 0) return {};
+							std::vector<uint32_t> out(bytes.size() / 4);
+							std::memcpy(out.data(), bytes.data(), bytes.size());
+							return out;
+						};
+						vertSpirv = loadSpv("shaders/gbuffer_geometry.vert.spv");
+						fragSpirv = loadSpv("shaders/gbuffer_geometry.frag.spv");
+						if (vertSpirv.empty() || fragSpirv.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path vertPath = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/gbuffer_geometry.vert");
+								std::filesystem::path fragPath = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/gbuffer_geometry.frag");
+								auto v = compiler.CompileGlslToSpirv(vertPath, engine::render::ShaderStage::Vertex);
+								auto f = compiler.CompileGlslToSpirv(fragPath, engine::render::ShaderStage::Fragment);
+								if (v.has_value() && !v->empty()) vertSpirv = std::move(*v);
+								if (f.has_value() && !f->empty()) fragSpirv = std::move(*f);
+							}
+						}
+						if (!vertSpirv.empty() && !fragSpirv.empty())
+						{
+							m_geometryPass.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(),
+								VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D32_SFLOAT,
+								vertSpirv.data(), vertSpirv.size(), fragSpirv.data(), fragSpirv.size());
+						}
+					}
+					m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
+					m_frameGraph.addPass("Geometry",
+						[this](engine::render::PassBuilder& b) {
+							b.write(m_fgGBufferAId, engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgGBufferBId, engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgGBufferCId, engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgDepthId, engine::render::ImageUsage::DepthWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+							const engine::math::Mat4& viewProj = m_renderStates[readIdx].viewProjMatrix;
+							engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+							m_geometryPass.Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
+								viewProj.m, mesh);
 						});
 					m_frameGraph.addPass("CopyPresent",
 						[this](engine::render::PassBuilder& b) {
@@ -126,11 +194,10 @@ namespace engine
 						[this](engine::render::PassBuilder& b) { b.read(m_fgSceneColorId, engine::render::ImageUsage::SampledRead); },
 						[](VkCommandBuffer, engine::render::Registry&) {});
 					// Asset system: load test mesh + texture (cache: second load returns same handle).
-					engine::render::MeshHandle h1 = m_assetRegistry.LoadMesh("meshes/test.mesh");
 					engine::render::MeshHandle h2 = m_assetRegistry.LoadMesh("meshes/test.mesh");
 					engine::render::TextureHandle t1 = m_assetRegistry.LoadTexture("textures/test.texr", false);
 					engine::render::TextureHandle t2 = m_assetRegistry.LoadTexture("textures/test.texr", false);
-					if (h1.IsValid() && h2.IsValid() && h1.Id() == h2.Id()) { /* cache OK */ }
+					if (m_geometryMeshHandle.IsValid() && h2.IsValid() && m_geometryMeshHandle.Id() == h2.Id()) { /* cache OK */ }
 					if (t1.IsValid() && t2.IsValid() && t1.Id() == t2.Id()) { /* cache OK */ }
 				}
 			}
@@ -197,6 +264,7 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_geometryPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_assetRegistry.Destroy();
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice());
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
@@ -248,21 +316,24 @@ namespace engine
 
 	void Engine::Update()
 	{
-		// Update writes to producer buffer while Render reads the consumer buffer.
 		const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
+		const auto& readState = m_renderStates[readIdx];
 		auto& out = m_renderStates[writeIdx];
 
 		const double dt = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
-		const double speed = 3.0;
+		const float mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 
-		if (m_input.IsDown(engine::platform::Key::W)) out.posZ += speed * dt;
-		if (m_input.IsDown(engine::platform::Key::S)) out.posZ -= speed * dt;
-		if (m_input.IsDown(engine::platform::Key::A)) out.posX -= speed * dt;
-		if (m_input.IsDown(engine::platform::Key::D)) out.posX += speed * dt;
+		out.camera = readState.camera;
+		m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
 
-		out.yaw += static_cast<double>(m_input.MouseDeltaX()) * 0.002;
-		out.pitch += static_cast<double>(m_input.MouseDeltaY()) * 0.002;
+		if (m_width > 0 && m_height > 0)
+			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
+
+		out.viewMatrix = out.camera.ComputeViewMatrix();
+		out.projMatrix = out.camera.ComputeProjectionMatrix();
+		out.viewProjMatrix = out.projMatrix * out.viewMatrix;
+		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
 
 		// Placeholder: build a minimal "draw list" count from temp allocations.
 		for (int i = 0; i < 256; ++i)

@@ -44,10 +44,14 @@ namespace engine::core
 		/// Get a bool value or return `fallback` if missing/not convertible.
 		bool GetBool(std::string_view key, bool fallback = false) const;
 
-	private:
+		/// Set a value explicitly (used by parsers and CLI overrides).
 		void SetValue(std::string_view key, Value value);
-		static std::string ToOwnedKey(std::string_view key);
+
+		/// Parse a string as a scalar value (used by INI/CLI parsers).
 		static std::optional<Value> ParseScalar(std::string_view text);
+
+	private:
+		static std::string ToOwnedKey(std::string_view key);
 
 		std::unordered_map<std::string, Value> m_values;
 	};

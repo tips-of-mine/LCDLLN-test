@@ -109,22 +109,14 @@ namespace engine::core::jobs
 			return s;
 		}
 
-		void FinishJob(Job& job)
-		{
-			if (job.group)
-			{
-				job.group->m_count.fetch_sub(1, std::memory_order_release);
-			}
-			S().globalCv.notify_all();
-		}
-
 		void Execute(Job& job)
 		{
 			if (job.fn.Valid())
 			{
 				job.fn.Invoke();
 			}
-			FinishJob(job);
+			Jobs::Complete(job.group);
+			S().globalCv.notify_all();
 		}
 
 		bool TryPopLocal(int idx, Job& out)
@@ -340,6 +332,14 @@ namespace engine::core::jobs
 			// No local work found: wait briefly for new jobs/completions.
 			std::unique_lock lock(st.globalMutex);
 			st.globalCv.wait_for(lock, std::chrono::milliseconds(1));
+		}
+	}
+
+	void Jobs::Complete(JobGroup* group)
+	{
+		if (group)
+		{
+			group->m_count.fetch_sub(1, std::memory_order_release);
 		}
 	}
 }

@@ -30,35 +30,10 @@ namespace engine::platform
 			auto* wnd = reinterpret_cast<Window*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 			if (wnd)
 			{
-				if (wnd->m_msgHook)
-				{
-					wnd->m_msgHook(static_cast<uint32_t>(msg), static_cast<uint64_t>(wparam), static_cast<int64_t>(lparam));
-				}
-
-				switch (msg)
-				{
-				case WM_CLOSE:
-					wnd->m_shouldClose = true;
-					if (wnd->m_onClose)
-					{
-						wnd->m_onClose();
-					}
-					DestroyWindow(hwnd);
-					return 0;
-				case WM_DESTROY:
-					PostQuitMessage(0);
-					return 0;
-				case WM_SIZE:
-					if (wnd->m_onResize)
-					{
-						const int w = LOWORD(lparam);
-						const int h = HIWORD(lparam);
-						wnd->m_onResize(w, h);
-					}
-					break;
-				default:
-					break;
-				}
+				return static_cast<LRESULT>(wnd->HandleMessage(
+					static_cast<uint32_t>(msg),
+					static_cast<uint64_t>(wparam),
+					static_cast<int64_t>(lparam)));
 			}
 			return DefWindowProcW(hwnd, msg, wparam, lparam);
 		}
@@ -76,7 +51,7 @@ namespace engine::platform
 			wc.style = CS_HREDRAW | CS_VREDRAW;
 			wc.lpfnWndProc = &WndProc;
 			wc.hInstance = GetModuleHandleW(nullptr);
-			wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+			wc.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)); // IDC_ARROW
 			wc.lpszClassName = kClassName;
 
 			RegisterClassExW(&wc);
@@ -226,6 +201,43 @@ namespace engine::platform
 	void Window::SetMessageHook(std::function<void(uint32_t, uint64_t, int64_t)> hook)
 	{
 		m_msgHook = std::move(hook);
+	}
+
+	intptr_t Window::HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam)
+	{
+		if (m_msgHook)
+		{
+			m_msgHook(msg, wparam, lparam);
+		}
+
+		switch (msg)
+		{
+		case WM_CLOSE:
+			m_shouldClose = true;
+			if (m_onClose)
+			{
+				m_onClose();
+			}
+			return 0;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			return 0;
+		case WM_SIZE:
+			if (m_onResize)
+			{
+				const int w = LOWORD(static_cast<LPARAM>(lparam));
+				const int h = HIWORD(static_cast<LPARAM>(lparam));
+				m_onResize(w, h);
+			}
+			break;
+		default:
+			break;
+		}
+
+		return reinterpret_cast<intptr_t>(DefWindowProcW(AsHwnd(m_hwnd),
+			static_cast<UINT>(msg),
+			static_cast<WPARAM>(wparam),
+			static_cast<LPARAM>(lparam)));
 	}
 }
 

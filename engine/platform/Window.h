@@ -52,6 +52,9 @@ namespace engine::platform
 		/// Provide a message handler hook (used by Input).
 		void SetMessageHook(std::function<void(uint32_t msg, uint64_t wparam, int64_t lparam)> hook);
 
+		/// Handle a native platform message (used by WndProc on Win32).
+		intptr_t HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam);
+
 	private:
 		void* m_hwnd = nullptr; // HWND
 		bool m_shouldClose = false;

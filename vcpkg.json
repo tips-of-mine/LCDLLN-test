@@ -1,0 +1,9 @@
+{
+  "name": "lcdlln-engine",
+  "version": "0.1.0",
+  "description": "LCDLLN MMORPG Engine dependencies",
+  "dependencies": [
+    "vulkan",
+    "glfw3"
+  ]
+}

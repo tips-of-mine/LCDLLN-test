@@ -28,6 +28,7 @@ add_library(engine_core
   engine/render/Camera.cpp
   engine/render/GeometryPass.cpp
   engine/render/LightingPass.cpp   # M03.2: deferred PBR GGX lighting pass
+  engine/render/TonemapPass.cpp    # M03.4: filmic tonemap HDR→LDR pass
   engine/math/Frustum.cpp
 )
 

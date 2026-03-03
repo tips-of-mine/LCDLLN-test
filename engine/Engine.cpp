@@ -114,12 +114,20 @@ namespace engine
 					depthDesc.isDepthAttachment = true;
 					m_fgDepthId = m_frameGraph.createImage("Depth", depthDesc);
 
-					// M03.2: SceneColor_HDR — output of the deferred lighting pass.
+					// M03.2: SceneColor_HDR — output of the deferred lighting pass (R16G16B16A16_SFLOAT).
+					// M03.4: SAMPLED_BIT added so the tonemap pass can read it as a texture.
 					engine::render::ImageDesc sceneColorHDRDesc{};
 					sceneColorHDRDesc.format  = VK_FORMAT_R16G16B16A16_SFLOAT;
 					sceneColorHDRDesc.usage   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-					                          | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+					                          | VK_IMAGE_USAGE_SAMPLED_BIT;
 					m_fgSceneColorHDRId = m_frameGraph.createImage("SceneColor_HDR", sceneColorHDRDesc);
+
+					// M03.4: SceneColor_LDR — output of the tonemap pass (R8G8B8A8_UNORM).
+					engine::render::ImageDesc sceneColorLDRDesc{};
+					sceneColorLDRDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+					sceneColorLDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+					                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+					m_fgSceneColorLDRId = m_frameGraph.createImage("SceneColor_LDR", sceneColorLDRDesc);
 
 					// --------------------------------------------------
 					// Helper: load pre-compiled SPV from content path.
@@ -215,6 +223,41 @@ namespace engine
 						else
 						{
 							LOG_WARN(Render, "M03.2: lighting shaders not found — lighting pass disabled");
+						}
+					}
+
+					// M03.4: Tonemap pass shaders — load SPV or compile at runtime.
+					{
+						std::vector<uint32_t> tmVert = loadSpv("shaders/tonemap.vert.spv");
+						std::vector<uint32_t> tmFrag = loadSpv("shaders/tonemap.frag.spv");
+
+						if (tmVert.empty() || tmFrag.empty())
+						{
+							engine::render::ShaderCompiler tmCompiler;
+							if (tmCompiler.LocateCompiler())
+							{
+								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/tonemap.vert");
+								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/tonemap.frag");
+								auto v = tmCompiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
+								auto f = tmCompiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
+								if (v.has_value() && !v->empty()) tmVert = std::move(*v);
+								if (f.has_value() && !f->empty()) tmFrag = std::move(*f);
+							}
+						}
+
+						if (!tmVert.empty() && !tmFrag.empty())
+						{
+							m_tonemapPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								VK_FORMAT_R8G8B8A8_UNORM,
+								tmVert.data(), tmVert.size(),
+								tmFrag.data(), tmFrag.size(),
+								2u);
+						}
+						else
+						{
+							LOG_WARN(Render, "M03.4: tonemap shaders not found — tonemap pass disabled");
 						}
 					}
 
@@ -327,15 +370,37 @@ namespace engine
 								m_fgSceneColorHDRId, lp, frameIdx);
 						});
 
-					// Pass: CopyPresent — blit SceneColor_HDR (SFLOAT) → swapchain (UNORM).
-					// The UNORM clamp acts as a basic exposure-1.0 tonemap.
+					// Pass: Tonemap (M03.4) — reads SceneColor_HDR, applies ACES filmic +
+					// exposure + gamma 2.2, writes SceneColor_LDR.
+					m_frameGraph.addPass("Tonemap",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSceneColorHDRId,  engine::render::ImageUsage::SampledRead);
+							b.write(m_fgSceneColorLDRId, engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_tonemapPass.IsValid()) return;
+
+							// Read exposure from config (default 1.0, adjustable via config.json).
+							engine::render::TonemapPass::TonemapParams tp{};
+							tp.exposure = static_cast<float>(m_cfg.GetDouble("tonemap.exposure", 1.0));
+
+							const uint32_t frameIdx = m_currentFrame % 2;
+							m_tonemapPass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg,
+								m_vkSwapchain.GetExtent(),
+								m_fgSceneColorHDRId,
+								m_fgSceneColorLDRId,
+								tp, frameIdx);
+						});
+
+					// Pass: CopyPresent — blit SceneColor_LDR (UNORM) → swapchain.
 					m_frameGraph.addPass("CopyPresent",
 						[this](engine::render::PassBuilder& b) {
-							b.read(m_fgSceneColorHDRId, engine::render::ImageUsage::TransferSrc);
+							b.read(m_fgSceneColorLDRId, engine::render::ImageUsage::TransferSrc);
 							b.write(m_fgBackbufferId,   engine::render::ImageUsage::TransferDst);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							VkImage srcImg = reg.getImage(m_fgSceneColorHDRId);
+							VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
 							VkImage dstImg = reg.getImage(m_fgBackbufferId);
 							if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 
@@ -444,6 +509,7 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4
 			m_lightingPass.Destroy(m_vkDeviceContext.GetDevice()); // M03.2
 			m_geometryPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_assetRegistry.Destroy();
@@ -498,7 +564,7 @@ namespace engine
 		const auto& readState   = m_renderStates[readIdx];
 		auto& out               = m_renderStates[writeIdx];
 
-		const double dt              = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
+		const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
 		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 
 		out.camera = readState.camera;
@@ -570,9 +636,9 @@ namespace engine
 		if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS)
 			return;
 
-		VkSemaphore          waitSemaphores[] = { fr.imageAvailable };
-		VkPipelineStageFlags waitStages[]     = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSemaphore          signalSemaphores[]= { fr.renderFinished };
+		VkSemaphore          waitSemaphores[]  = { fr.imageAvailable };
+		VkPipelineStageFlags waitStages[]      = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkSemaphore          signalSemaphores[] = { fr.renderFinished };
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -631,4 +697,5 @@ namespace engine
 	{
 		m_shaderHotReload.Watch(relativePath, stage, defines);
 	}
-}
+
+} // namespace engine

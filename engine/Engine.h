@@ -17,6 +17,7 @@
 #include "engine/render/Camera.h"
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
+#include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
 
@@ -95,12 +96,16 @@ namespace engine
 		engine::render::ResourceId m_fgDepthId           = engine::render::kInvalidResourceId;
 		/// SceneColor_HDR: output of the deferred lighting pass (R16G16B16A16_SFLOAT). Added in M03.2.
 		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
+		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
+		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 
 		engine::render::GeometryPass m_geometryPass;
 		engine::render::MeshHandle   m_geometryMeshHandle;
 
 		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
 		engine::render::LightingPass m_lightingPass;
+		/// Filmic tonemap pass: SceneColor_HDR → SceneColor_LDR. Added in M03.4.
+		engine::render::TonemapPass  m_tonemapPass;
 
 		engine::render::AssetRegistry m_assetRegistry;
 

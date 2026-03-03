@@ -27,6 +27,7 @@ add_library(engine_core
   engine/render/ShaderHotReload.cpp
   engine/render/Camera.cpp
   engine/render/GeometryPass.cpp
+  engine/render/LightingPass.cpp   # M03.2: deferred PBR GGX lighting pass
   engine/math/Frustum.cpp
 )
 
@@ -70,4 +71,3 @@ target_link_libraries(engine_app PRIVATE engine_core)
 if(WIN32)
   target_link_libraries(engine_app PRIVATE user32)
 endif()
-

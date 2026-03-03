@@ -16,6 +16,7 @@
 #include "engine/render/ShaderHotReload.h"
 #include "engine/render/Camera.h"
 #include "engine/render/GeometryPass.h"
+#include "engine/render/LightingPass.h"
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
 
@@ -86,15 +87,20 @@ namespace engine
 
 		engine::render::FrameGraph m_frameGraph;
 		engine::render::Registry m_fgRegistry;
-		engine::render::ResourceId m_fgSceneColorId = engine::render::kInvalidResourceId;
-		engine::render::ResourceId m_fgBackbufferId = engine::render::kInvalidResourceId;
-		engine::render::ResourceId m_fgGBufferAId = engine::render::kInvalidResourceId;
-		engine::render::ResourceId m_fgGBufferBId = engine::render::kInvalidResourceId;
-		engine::render::ResourceId m_fgGBufferCId = engine::render::kInvalidResourceId;
-		engine::render::ResourceId m_fgDepthId = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgSceneColorId      = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgBackbufferId      = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgGBufferAId        = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgGBufferBId        = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgGBufferCId        = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgDepthId           = engine::render::kInvalidResourceId;
+		/// SceneColor_HDR: output of the deferred lighting pass (R16G16B16A16_SFLOAT). Added in M03.2.
+		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
 
 		engine::render::GeometryPass m_geometryPass;
-		engine::render::MeshHandle m_geometryMeshHandle;
+		engine::render::MeshHandle   m_geometryMeshHandle;
+
+		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
+		engine::render::LightingPass m_lightingPass;
 
 		engine::render::AssetRegistry m_assetRegistry;
 
@@ -112,4 +118,3 @@ namespace engine
 		int m_height = 0;
 	};
 }
-

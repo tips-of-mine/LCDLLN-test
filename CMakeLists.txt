@@ -26,6 +26,8 @@ add_library(engine_core
   engine/render/ShaderCache.cpp
   engine/render/ShaderHotReload.cpp
   engine/render/Camera.cpp
+  engine/render/CascadedShadowMaps.cpp
+  engine/render/ShadowMapPass.cpp
   engine/render/GeometryPass.cpp
   engine/render/LightingPass.cpp   # M03.2: deferred PBR GGX lighting pass
   engine/render/TonemapPass.cpp    # M03.4: filmic tonemap HDR→LDR pass

@@ -129,6 +129,23 @@ namespace engine
 					                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 					m_fgSceneColorLDRId = m_frameGraph.createImage("SceneColor_LDR", sceneColorLDRDesc);
 
+					// M04.2: ShadowMap[0..3] — depth-only cascades (D32, depth attachment + sampled).
+					const uint32_t shadowRes =
+						static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
+					engine::render::ImageDesc shadowDesc{};
+					shadowDesc.format            = VK_FORMAT_D32_SFLOAT;
+					shadowDesc.width             = shadowRes;
+					shadowDesc.height            = shadowRes;
+					shadowDesc.usage             = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+					                             | VK_IMAGE_USAGE_SAMPLED_BIT;
+					shadowDesc.isDepthAttachment = true;
+					for (uint32_t i = 0; i < engine::render::kCascadeCount; ++i)
+					{
+						char name[32];
+						std::snprintf(name, sizeof(name), "ShadowMap_%u", i);
+						m_fgShadowMapIds[i] = m_frameGraph.createImage(name, shadowDesc);
+					}
+
 					// --------------------------------------------------
 					// Helper: load pre-compiled SPV from content path.
 					// --------------------------------------------------
@@ -188,6 +205,43 @@ namespace engine
 								VK_FORMAT_D32_SFLOAT,
 								vertSpirv.data(), vertSpirv.size(),
 								fragSpirv.data(), fragSpirv.size());
+						}
+					}
+
+					// M04.2: Shadow map pass shaders — load SPV or compile at runtime.
+					{
+						std::vector<uint32_t> smVert = loadSpv("shaders/shadow_depth.vert.spv");
+						std::vector<uint32_t> smFrag = loadSpv("shaders/shadow_depth.frag.spv");
+
+						if (smVert.empty() || smFrag.empty())
+						{
+							engine::render::ShaderCompiler smCompiler;
+							if (smCompiler.LocateCompiler())
+							{
+								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/shadow_depth.vert");
+								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/shadow_depth.frag");
+								auto v = smCompiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
+								auto f = smCompiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
+								if (v.has_value() && !v->empty()) smVert = std::move(*v);
+								if (f.has_value() && !f->empty()) smFrag = std::move(*f);
+							}
+						}
+
+						if (!smVert.empty() && !smFrag.empty())
+						{
+							const uint32_t shadowRes =
+								static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
+							m_shadowMapPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								VK_FORMAT_D32_SFLOAT,
+								shadowRes,
+								smVert.data(), smVert.size(),
+								smFrag.data(), smFrag.size());
+						}
+						else
+						{
+							LOG_WARN(Render, "M04.2: shadow map shaders not found — shadow pass disabled");
 						}
 					}
 
@@ -286,6 +340,40 @@ namespace engine
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
 								viewProj.m, mesh);
 						});
+
+					// Passes: ShadowMap[0..3] (M04.2) — depth-only render per cascade.
+					for (uint32_t cascade = 0; cascade < engine::render::kCascadeCount; ++cascade)
+					{
+						const std::string passName = std::string("ShadowMap_") + std::to_string(cascade);
+						m_frameGraph.addPass(passName,
+							[this, cascade](engine::render::PassBuilder& b) {
+								b.write(m_fgShadowMapIds[cascade], engine::render::ImageUsage::DepthWrite);
+							},
+							[this, cascade](VkCommandBuffer cmd, engine::render::Registry& reg) {
+								if (!m_shadowMapPass.IsValid())
+									return;
+
+								const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+								const engine::RenderState& rs = m_renderStates[readIdx];
+								engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+
+								const float depthBiasConstant =
+									static_cast<float>(m_cfg.GetDouble("shadows.depth_bias_constant", 1.25));
+								const float depthBiasSlope =
+									static_cast<float>(m_cfg.GetDouble("shadows.depth_bias_slope", 1.75));
+								const bool cullFrontFaces =
+									m_cfg.GetBool("shadows.cull_front_faces", false);
+
+								m_shadowMapPass.Record(
+									m_vkDeviceContext.GetDevice(), cmd, reg,
+									m_fgShadowMapIds[cascade],
+									rs.cascades.lightViewProj[cascade].m,
+									mesh,
+									depthBiasConstant,
+									depthBiasSlope,
+									cullFrontFaces);
+							});
+					}
 
 					// Pass: Lighting (M03.2) — reads GBuffer + Depth, writes SceneColor_HDR.
 					m_frameGraph.addPass("Lighting",
@@ -577,6 +665,16 @@ namespace engine
 		out.projMatrix     = out.camera.ComputeProjectionMatrix();
 		out.viewProjMatrix = out.projMatrix * out.viewMatrix;
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
+
+		// M04.1: compute cascaded shadow matrices and split distances for a default sun light.
+		{
+			const engine::math::Vec3 lightDirTowardLight(0.5774f, 0.5774f, 0.5774f);
+			const float lambda = 0.7f;
+			const float worldUnitsPerTexel =
+				static_cast<float>(m_cfg.GetDouble("shadows.csm_world_units_per_texel", 1.0));
+			engine::render::ComputeCascades(out.camera, lightDirTowardLight, lambda,
+				worldUnitsPerTexel, out.cascades);
+		}
 
 		// Placeholder: simulate some frame-arena allocations for MemTag::Temp test.
 		for (int i = 0; i < 256; ++i)

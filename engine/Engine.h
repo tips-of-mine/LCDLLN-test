@@ -15,6 +15,8 @@
 #include "engine/render/ShaderCompiler.h"
 #include "engine/render/ShaderHotReload.h"
 #include "engine/render/Camera.h"
+#include "engine/render/CascadedShadowMaps.h"
+#include "engine/render/ShadowMapPass.h"
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
@@ -37,6 +39,7 @@ namespace engine
 		engine::math::Mat4 projMatrix;
 		engine::math::Mat4 viewProjMatrix;
 		engine::math::Frustum frustum;
+		engine::render::CascadesUniform cascades;
 
 		// Placeholder draw-list marker.
 		uint32_t drawItemCount = 0;
@@ -98,9 +101,14 @@ namespace engine
 		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
+		/// Shadow maps per cascade (depth + sampled). Added in M04.2.
+		std::array<engine::render::ResourceId, engine::render::kCascadeCount> m_fgShadowMapIds{};
 
 		engine::render::GeometryPass m_geometryPass;
 		engine::render::MeshHandle   m_geometryMeshHandle;
+
+		/// Depth-only shadow map pass for cascades. Added in M04.2.
+		engine::render::ShadowMapPass m_shadowMapPass;
 
 		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
 		engine::render::LightingPass m_lightingPass;

@@ -37,3 +37,18 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
           cmake --build --preset vs2022-x64-debug
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
+          Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\out" -Include "*.exe","*.dll","*.pdb" |
+            Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-debug-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 4

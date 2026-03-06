@@ -179,13 +179,13 @@ namespace engine::render
 			return false;
 		}
 
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = m_descPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &m_setLayout;
+		VkDescriptorSetAllocateInfo descAllocInfo{};
+		descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descAllocInfo.descriptorPool = m_descPool;
+		descAllocInfo.descriptorSetCount = 1;
+		descAllocInfo.pSetLayouts = &m_setLayout;
 
-		if (vkAllocateDescriptorSets(device, &allocInfo, &m_descSet) != VK_SUCCESS)
+		if (vkAllocateDescriptorSets(device, &descAllocInfo, &m_descSet) != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "BrdfLutPass: vkAllocateDescriptorSets failed");
 			Destroy(device);

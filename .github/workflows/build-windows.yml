@@ -1,12 +1,10 @@
-# Build engine (Windows + Linux, CMake + vcpkg + Ninja)
+# Build engine (Windows, CMake + vcpkg + Ninja)
 name: Build Windows
-
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
-
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -38,11 +36,22 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-debug
 
+      - name: Find build output
+        shell: pwsh
+        run: |
+          Write-Host "=== EXE trouvés ==="
+          Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
+            -Include "*.exe" |
+            Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
+            Select-Object FullName
+
       - name: Collect artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
-          Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\out" -Include "*.exe","*.dll","*.pdb" |
+          Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
+            -Include "*.exe","*.dll","*.pdb" |
+            Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
             Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
 
       - name: Upload artifacts
@@ -51,4 +60,4 @@ jobs:
           name: windows-debug-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
-          retention-days: 4
+          retention-days: 7

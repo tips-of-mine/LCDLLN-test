@@ -19,22 +19,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             ninja-build \
+            libvulkan-dev vulkan-validationlayers-dev \
             libx11-dev libxrandr-dev libxinerama-dev \
             libxcursor-dev libxi-dev libgl1-mesa-dev \
             pkg-config
 
       - name: Clone vcpkg
-        run: 'git clone https://github.com/Microsoft/vcpkg.git "$GITHUB_WORKSPACE/vcpkg"'
+        run: git clone https://github.com/Microsoft/vcpkg.git "$GITHUB_WORKSPACE/vcpkg"
 
       - name: Bootstrap vcpkg
-        run: '"$GITHUB_WORKSPACE/vcpkg/bootstrap-vcpkg.sh" -disableMetrics'
+        run: bash "$GITHUB_WORKSPACE/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
 
       - name: Configure
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           VCPKG_DEFAULT_TRIPLET: x64-linux
-        run: |
-          cmake --preset linux-x64
+        run: cmake --preset linux-x64
 
       - name: Build (Debug)
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset linux-x64-debug

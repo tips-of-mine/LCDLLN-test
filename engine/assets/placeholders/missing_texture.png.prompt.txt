@@ -1,0 +1,29 @@
+SUBJECT
+A dark fantasy placeholder texture indicating a missing asset.
+
+COMPOSITION & UI CONSTRAINTS
+Flat texture-style composition,
+designed to tile if needed.
+
+MATERIALS & DETAILS
+Dark cracked stone surface,
+magical corruption leaking through the cracks,
+ancient decay.
+
+LIGHTING & MOOD
+Low lighting,
+subtle ominous glow,
+clearly unnatural and broken.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+serious and grim.
+
+TECHNICAL QUALITY
+Sharp texture, readable pattern,
+professional placeholder asset.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text, watermark

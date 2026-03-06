@@ -1,0 +1,48 @@
+/* DWARVES — Forge orange + brass */
+QWidget {
+  background: #0F0C0A;
+  color: #F3EDE7;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #19120E;
+  border: 1px solid #3A2A1F;
+  border-radius: 8px;
+}
+
+QLabel#Title {
+  font-family: "Saira Condensed";
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: #E7D18A;
+}
+
+QPushButton {
+  background: #C25A1A;
+  border: 1px solid #3A2A1F;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #D06A2B; }
+QPushButton:pressed { background: #9D4714; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #221A14;
+  border: 1px solid #3A2A1F;
+  border-radius: 8px;
+  padding: 8px;
+  selection-background-color: #B08A2E;
+}
+
+QProgressBar {
+  background: #221A14;
+  border: 1px solid #3A2A1F;
+  border-radius: 8px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #B08A2E;
+  border-radius: 8px;
+}

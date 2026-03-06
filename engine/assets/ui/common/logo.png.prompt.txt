@@ -1,0 +1,38 @@
+SUBJECT
+The main game logo representing “Les Chroniques de la Lune Noire”.
+A massive black moon as the central symbol, embodying corruption,
+ancient power and inevitable fate.
+
+COMPOSITION & UI CONSTRAINTS
+Centered logo composition.
+Designed for game UI usage and splash screens.
+Clear hierarchy: symbol first, then title.
+Readable at different scales.
+Background either transparent or very dark and simple.
+
+MATERIALS & DETAILS
+Black moon carved from obsidian stone,
+ancient cracks, subtle arcane engravings.
+Typography: gothic medieval lettering,
+carved or forged, aged, slightly eroded.
+
+LIGHTING & MOOD
+Cinematic lighting,
+cold moonlight highlights,
+faint internal purple glow,
+dark mystical and oppressive mood.
+
+ART STYLE
+Epic dark fantasy, gothic medieval,
+baroque influence,
+realistic fantasy illustration.
+
+TECHNICAL QUALITY
+Ultra high resolution,
+clean edges, professional game logo quality.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi, cyberpunk,
+bright colors, neon,
+modern typography,
+blur, noise, text artifacts, watermark

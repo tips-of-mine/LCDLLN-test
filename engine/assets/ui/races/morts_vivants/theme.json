@@ -1,0 +1,27 @@
+{
+  "id": "morts_vivants",
+  "displayName": "Morts-vivants",
+  "mood": "Nécromancie, froideur, immortalité imparfaite",
+  "palette": {
+    "primary": "#2E7D7B",
+    "secondary": "#203133",
+    "accent": "#A6FFEF",
+    "background": "#060A0A",
+    "surface": "#0D1414",
+    "panel": "#111B1B",
+    "text": "#E6F7F6",
+    "mutedText": "#9BB7B5",
+    "border": "#213434"
+  },
+  "typography": {
+    "fontFamily": "IBM Plex Serif",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 22
+  },
+  "metrics": { "radius": 12, "padding": 10 },
+  "assets": {
+    "bg": "assets/ui/races/morts_vivants/images/bg.png",
+    "emblem": "assets/ui/races/morts_vivants/images/emblem.png"
+  }
+}

@@ -65,6 +65,7 @@ endif()
 add_executable(engine_app
   engine/app/main.cpp
 )
+set_target_properties(engine_app PROPERTIES OUTPUT_NAME "lcdlln")
 
 if(MSVC)
   target_compile_options(engine_app PRIVATE /Zc:preprocessor)

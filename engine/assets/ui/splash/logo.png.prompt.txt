@@ -1,0 +1,41 @@
+SUBJECT
+A cinematic dark fantasy game splash logo featuring a massive Black Moon
+as the central emblem of the universe, symbol of ancient corruption and forbidden power.
+The logo must feel monumental, legendary, and ominous.
+
+COMPOSITION & UI CONSTRAINTS
+Centered composition designed specifically for a splash screen.
+Clear readable silhouette even when scaled down.
+The Black Moon symbol dominates the logo.
+If typography is present, it must be secondary and integrated cleanly.
+Background must be transparent or extremely dark and simple, so the logo can be overlaid easily.
+
+MATERIALS & DETAILS
+The Black Moon appears carved from obsidian stone or blackened celestial rock,
+with ancient fractures and subtle arcane engravings.
+Edges slightly worn, ancient erosion, sacred/forbidden feel.
+Optional: a thin ritual halo (very subtle) made of worn metal or stone, engraved with faint runes.
+Typography (if included): gothic medieval, carved or forged, aged, slightly damaged, not modern.
+
+LIGHTING & MOOD
+High-contrast cinematic lighting.
+Cold blue rim light outlining the emblem for readability.
+Very subtle inner purple glow leaking from cracks (not neon, not bright).
+Deep shadows, oppressive mystical atmosphere, “end of an age” vibe.
+
+ART STYLE
+Epic dark fantasy, gothic medieval, baroque influence.
+Realistic fantasy illustration / high-end concept art.
+Serious, grim tone, no humor, no cute elements.
+
+TECHNICAL QUALITY
+Ultra high resolution, razor-sharp edges, clean logo finish.
+Designed for professional game UI usage, crisp silhouette, no messy artifacts.
+
+NEGATIVE PROMPT
+cartoon, anime, manga, chibi, stylized cute,
+sci-fi, cyberpunk, futuristic symbols,
+neon colors, overly saturated bright colors,
+modern typography, flat childish icon style,
+blurry, noisy, grainy, low resolution,
+text artifacts, watermark, random letters, misspelled words

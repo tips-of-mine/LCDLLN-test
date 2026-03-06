@@ -1,0 +1,32 @@
+SUBJECT
+A dark fantasy background panel used to display tips or messages.
+
+COMPOSITION & UI CONSTRAINTS
+Rectangular panel composition,
+large readable flat area for text.
+Borders slightly decorated, center clean.
+
+MATERIALS & DETAILS
+Dark aged parchment or corrupted stone slab,
+burnt edges, subtle magical stains,
+ancient texture without visual noise.
+
+LIGHTING & MOOD
+Soft low lighting,
+slight warm or cold glow at the edges,
+dark but readable.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+UI-friendly illustration.
+
+TECHNICAL QUALITY
+High resolution,
+flat readable surface,
+designed for text overlay.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+busy textures,
+blur, noise, text already written

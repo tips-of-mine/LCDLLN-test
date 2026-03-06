@@ -1,0 +1,31 @@
+SUBJECT
+A dark fantasy background representing initiation and forbidden knowledge.
+
+COMPOSITION & UI CONSTRAINTS
+Wide composition,
+central empty space for UI elements.
+
+MATERIALS & DETAILS
+Ancient forbidden library,
+stone shelves, old grimoires,
+candles, arcane symbols.
+
+LIGHTING & MOOD
+Low light,
+cold mystical illumination,
+secretive and ominous atmosphere.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+realistic fantasy illustration.
+
+TECHNICAL QUALITY
+High resolution,
+calm composition,
+UI-friendly.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+characters in foreground,
+text, watermark

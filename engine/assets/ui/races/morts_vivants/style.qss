@@ -1,0 +1,47 @@
+/* UNDEAD — Cold teal + morgue steel */
+QWidget {
+  background: #060A0A;
+  color: #E6F7F6;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #0D1414;
+  border: 1px solid #213434;
+  border-radius: 12px;
+}
+
+QLabel#Title {
+  font-family: "IBM Plex Serif";
+  font-size: 22px;
+  color: #A6FFEF;
+}
+
+QPushButton {
+  background: #2E7D7B;
+  border: 1px solid #213434;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #399391; }
+QPushButton:pressed { background: #246362; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #111B1B;
+  border: 1px solid #213434;
+  border-radius: 12px;
+  padding: 8px;
+  selection-background-color: #A6FFEF;
+}
+
+QProgressBar {
+  background: #111B1B;
+  border: 1px solid #213434;
+  border-radius: 12px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #A6FFEF;
+  border-radius: 12px;
+}

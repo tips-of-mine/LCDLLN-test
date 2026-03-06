@@ -1,0 +1,27 @@
+{
+  "id": "nains",
+  "displayName": "Nains",
+  "mood": "Forge, endurance, tradition",
+  "palette": {
+    "primary": "#C25A1A",
+    "secondary": "#B08A2E",
+    "accent": "#E7D18A",
+    "background": "#0F0C0A",
+    "surface": "#19120E",
+    "panel": "#221A14",
+    "text": "#F3EDE7",
+    "mutedText": "#C8B9AE",
+    "border": "#3A2A1F"
+  },
+  "typography": {
+    "fontFamily": "Saira Condensed",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 22
+  },
+  "metrics": { "radius": 8, "padding": 10 },
+  "assets": {
+    "bg": "assets/ui/races/nains/images/bg.png",
+    "emblem": "assets/ui/races/nains/images/emblem.png"
+  }
+}

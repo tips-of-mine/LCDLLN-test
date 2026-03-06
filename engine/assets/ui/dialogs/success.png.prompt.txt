@@ -1,0 +1,27 @@
+SUBJECT
+A dark fantasy success icon represented by an ancient seal briefly illuminated.
+
+COMPOSITION & UI CONSTRAINTS
+Centered icon,
+clear readable state.
+
+MATERIALS & DETAILS
+Ancient stone seal,
+golden arcane glow,
+symbol of grim triumph.
+
+LIGHTING & MOOD
+Controlled warm glow,
+dark but victorious mood.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Sharp icon,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+neon colors,
+blur, noise, text

@@ -1,0 +1,53 @@
+/* HUMANS — Royal blue + gold + crusade red */
+QWidget {
+  background: #0E131A;
+  color: #E9EDF2;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #141E2A;
+  border: 1px solid #2B3A4F;
+  border-radius: 10px;
+}
+
+QLabel#Title {
+  font-family: "Cinzel";
+  font-size: 22px;
+  color: #E9EDF2;
+}
+
+QPushButton {
+  background: #1E4B7A;
+  border: 1px solid #2B3A4F;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #256199; }
+QPushButton:pressed { background: #173B60; }
+
+QPushButton#Accent {
+  background: #8B6B2E;
+  border: 1px solid #2B3A4F;
+}
+QPushButton#Accent:hover { background: #A07B33; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #172233;
+  border: 1px solid #2B3A4F;
+  border-radius: 10px;
+  padding: 8px;
+  selection-background-color: #C21B1B;
+}
+
+QProgressBar {
+  background: #172233;
+  border: 1px solid #2B3A4F;
+  border-radius: 10px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #8B6B2E;
+  border-radius: 10px;
+}

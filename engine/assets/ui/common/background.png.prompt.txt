@@ -1,0 +1,38 @@
+SUBJECT
+A dark fantasy user interface background
+showing ancient ruined gothic architecture
+beneath a massive black moon.
+
+COMPOSITION & UI CONSTRAINTS
+Wide composition designed for a game UI background.
+Large empty central and lower areas reserved for interface elements.
+Visual interest pushed to the edges.
+Calm, balanced composition, not visually noisy.
+
+MATERIALS & DETAILS
+Ancient stone ruins, broken pillars,
+eroded gothic structures,
+subtle carvings, ancient decay.
+
+LIGHTING & MOOD
+Cold moonlight,
+volumetric fog,
+drifting dust or ash,
+low saturation, deep shadows.
+
+ART STYLE
+Epic dark fantasy, gothic medieval,
+cinematic matte painting,
+realistic fantasy illustration.
+
+TECHNICAL QUALITY
+Ultra high resolution,
+sharp but not distracting,
+professional UI background quality.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+modern buildings,
+bright colors,
+characters in foreground,
+text, watermark

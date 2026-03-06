@@ -29,35 +29,54 @@ jobs:
         run: |
           cmake --preset vs2022-x64
 
-      - name: Build (Debug)
+      - name: Build (Release)
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
-          cmake --build --preset vs2022-x64-debug
-
-      - name: Find build output
-        shell: pwsh
-        run: |
-          Write-Host "=== EXE trouvés ==="
-          Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
-            -Include "*.exe" |
-            Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
-            Select-Object FullName
+          cmake --build --preset vs2022-x64-release
 
       - name: Collect artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
+
+          # Copie les binaires produits (hors vcpkg)
           Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
             -Include "*.exe","*.dll","*.pdb" |
             Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
             Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
 
+          # Copie le Visual C++ Redistributable (Release)
+          $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
+          $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
+          foreach ($dll in $dlls) {
+            $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
+              -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -like "*x64*" } |
+              Select-Object -First 1
+            if ($found) {
+              Copy-Item $found.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+              Write-Host "Copié : $($found.FullName)"
+            } else {
+              Write-Warning "Introuvable : $dll"
+            }
+          }
+
+          # Copie ucrt (Universal CRT)
+          $ucrt = "C:\Windows\System32\ucrtbase.dll"
+          if (Test-Path $ucrt) {
+            Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+            Write-Host "Copié : $ucrt"
+          }
+
+          Write-Host "=== Contenu final des artifacts ==="
+          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" | Select-Object Name, Length
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-debug-${{ github.sha }}
+          name: windows-release-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 7

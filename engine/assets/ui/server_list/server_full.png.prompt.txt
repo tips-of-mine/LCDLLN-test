@@ -1,0 +1,27 @@
+SUBJECT
+A dark fantasy UI icon indicating a full server.
+
+COMPOSITION & UI CONSTRAINTS
+Centered icon,
+clear and readable.
+
+MATERIALS & DETAILS
+Arcane orb overloaded with energy,
+cracks glowing red,
+unstable appearance.
+
+LIGHTING & MOOD
+Aggressive internal glow,
+tense and dangerous mood.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Sharp icon,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+neon colors,
+blur, noise, text

@@ -1,0 +1,27 @@
+{
+  "id": "humains",
+  "displayName": "Humains",
+  "mood": "Ambition, politique, fanatisme",
+  "palette": {
+    "primary": "#1E4B7A",
+    "secondary": "#8B6B2E",
+    "accent": "#C21B1B",
+    "background": "#0E131A",
+    "surface": "#141E2A",
+    "panel": "#172233",
+    "text": "#E9EDF2",
+    "mutedText": "#A9B4C0",
+    "border": "#2B3A4F"
+  },
+  "typography": {
+    "fontFamily": "Cinzel",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 22
+  },
+  "metrics": { "radius": 10, "padding": 10 },
+  "assets": {
+    "bg": "assets/ui/races/humains/images/bg.png",
+    "emblem": "assets/ui/races/humains/images/emblem.png"
+  }
+}

@@ -19,7 +19,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             ninja-build \
-            libvulkan-dev vulkan-validationlayers-dev \
+            libvulkan-dev vulkan-utility-libraries-dev \
             libx11-dev libxrandr-dev libxinerama-dev \
             libxcursor-dev libxi-dev libgl1-mesa-dev \
             pkg-config

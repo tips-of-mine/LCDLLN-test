@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-
 project(LCDLLN_Engine LANGUAGES CXX)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -30,26 +28,22 @@ add_library(engine_core
   engine/render/BrdfLutPass.cpp
   engine/render/ShadowMapPass.cpp
   engine/render/GeometryPass.cpp
-  engine/render/LightingPass.cpp   # M03.2: deferred PBR GGX lighting pass
-  engine/render/TonemapPass.cpp    # M03.4: filmic tonemap HDR→LDR pass
+  engine/render/LightingPass.cpp
+  engine/render/TonemapPass.cpp
   engine/math/Frustum.cpp
 )
-
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
 target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan
   glfw
 )
-
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
   target_compile_options(engine_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-
 if(WIN32)
   target_sources(engine_core PRIVATE
     engine/platform/Input.cpp
@@ -66,20 +60,20 @@ add_executable(engine_app
   engine/app/main.cpp
 )
 set_target_properties(engine_app PROPERTIES OUTPUT_NAME "lcdlln")
-
 if(MSVC)
   target_compile_options(engine_app PRIVATE /Zc:preprocessor)
 endif()
-
 target_link_libraries(engine_app PRIVATE engine_core)
-
 if(WIN32)
   target_link_libraries(engine_app PRIVATE user32)
 endif()
 
-add_custom_command(TARGET engine_app POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/assets"
-    "$<TARGET_FILE_DIR:engine_app>/assets"
-  COMMENT "Copie des assets..."
-)
+# Copie les assets uniquement si le dossier existe dans le repo
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+  add_custom_command(TARGET engine_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_SOURCE_DIR}/assets"
+      "$<TARGET_FILE_DIR:engine_app>/assets"
+    COMMENT "Copie des assets..."
+  )
+endif()

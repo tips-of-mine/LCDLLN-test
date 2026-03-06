@@ -76,7 +76,14 @@ namespace engine::render
 		std::filesystem::path outSpv = tempDir / (baseName + ".spv");
 		std::filesystem::path errTxt = tempDir / (baseName + "_err.txt");
 
-		const char* stageStr = (stage == ShaderStage::Vertex) ? "vert" : "frag";
+		const char* stageStr = "frag";
+		switch (stage)
+		{
+		case ShaderStage::Vertex:  stageStr = "vert"; break;
+		case ShaderStage::Fragment: stageStr = "frag"; break;
+		case ShaderStage::Compute: stageStr = "comp"; break;
+		default: stageStr = "frag"; break;
+		}
 		std::string compilerExe = m_compilerPath.empty() ? "glslangValidator" : GetQuotedPath(m_compilerPath);
 		std::string cmd = compilerExe + " -V -S " + stageStr + " -o " + GetQuotedPath(outSpv) + " " + GetQuotedPath(glslPath) + " 2> " + GetQuotedPath(errTxt);
 

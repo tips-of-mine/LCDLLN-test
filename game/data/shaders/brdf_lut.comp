@@ -1,0 +1,118 @@
+#version 450
+
+// BRDF integration LUT for split-sum specular GGX.
+// Outputs 2-channel result (R,G) in RG16F:
+//   R = scale term (integral over specular)
+//   G = bias term  (Fresnel-related)
+//
+// Based on the well-known UE4 BRDF LUT (Heitz 2014).
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(rg16f, binding = 0) writeonly uniform image2D uBrdfLut;
+
+const uint SAMPLE_COUNT = 1024u; // Limit samples for reasonable build time.
+
+// Schlick Fresnel approximation.
+float FresnelSchlick(float cosTheta, float F0)
+{
+	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+// GGX / Trowbridge-Reitz distribution (D term).
+float D_GGX(float NdotH, float roughness)
+{
+	float a  = roughness * roughness;
+	float a2 = a * a;
+	float d  = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
+	return a2 / (3.14159265 * d * d + 1e-7);
+}
+
+// Smith's geometry term using Schlick-GGX for V and L.
+float G_SchlickGGX(float NdotV, float NdotL, float roughness)
+{
+	float r = roughness + 1.0;
+	float k = (r * r) / 8.0;
+
+	float gV = NdotV / (NdotV * (1.0 - k) + k);
+	float gL = NdotL / (NdotL * (1.0 - k) + k);
+	return gV * gL;
+}
+
+// Importance sample GGX VNDF hemisphere.
+vec3 ImportanceSampleGGX(vec2 Xi, float roughness)
+{
+	float a = roughness * roughness;
+
+	float phi      = 2.0 * 3.14159265 * Xi.x;
+	float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
+	float sinTheta = sqrt(max(1.0 - cosTheta * cosTheta, 0.0));
+
+	return vec3(
+		sinTheta * cos(phi),
+		sinTheta * sin(phi),
+		cosTheta
+	);
+}
+
+// Integrand for BRDF LUT, returns (scale, bias).
+vec2 IntegrateBRDF(float NdotV, float roughness)
+{
+	vec3 V;
+	V.x = sqrt(1.0 - NdotV * NdotV);
+	V.y = 0.0;
+	V.z = NdotV;
+
+	vec3 N = vec3(0.0, 0.0, 1.0);
+
+	float A = 0.0;
+	float B = 0.0;
+
+	for (uint i = 0u; i < SAMPLE_COUNT; ++i)
+	{
+		// Hammersley sequence for 2D stratification.
+		float u = (float(i) + 0.5) / float(SAMPLE_COUNT);
+		float v = fract(float(i) * 0.61803398875); // Golden ratio conjugate
+		vec2 Xi = vec2(u, v);
+
+		vec3 H = ImportanceSampleGGX(Xi, roughness);
+		vec3 L = normalize(2.0 * dot(V, H) * H - V);
+
+		float NdotL = max(L.z, 0.0);
+		float NdotH = max(H.z, 0.0);
+		float VdotH = max(dot(V, H), 0.0);
+
+		if (NdotL > 0.0)
+		{
+			float D = D_GGX(NdotH, roughness);
+			float G = G_SchlickGGX(NdotV, NdotL, roughness);
+
+			float G_Vis = (G * VdotH) / max(NdotH * NdotV, 1e-7);
+			float Fc    = pow(1.0 - VdotH, 5.0);
+
+			A += (1.0 - Fc) * G_Vis;
+			B += Fc * G_Vis;
+		}
+	}
+
+	float invCount = 1.0 / float(SAMPLE_COUNT);
+	return vec2(A * invCount, B * invCount);
+}
+
+void main()
+{
+	ivec2 size = imageSize(uBrdfLut);
+
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+	if (coord.x >= size.x || coord.y >= size.y)
+		return;
+
+	// Map pixel to [0,1] range for NdotV and roughness.
+	float NdotV   = (float(coord.x) + 0.5) / float(size.x);
+	float rough   = (float(coord.y) + 0.5) / float(size.y);
+
+	vec2 brdf = IntegrateBRDF(NdotV, rough);
+
+	imageStore(uBrdfLut, coord, vec4(brdf, 0.0, 1.0));
+}
+

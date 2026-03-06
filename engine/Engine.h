@@ -17,6 +17,7 @@
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
 #include "engine/render/ShadowMapPass.h"
+#include "engine/render/BrdfLutPass.h"
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
@@ -109,6 +110,9 @@ namespace engine
 
 		/// Depth-only shadow map pass for cascades. Added in M04.2.
 		engine::render::ShadowMapPass m_shadowMapPass;
+
+		/// BRDF LUT compute pass (M05.1): generates 256x256 RG16F split-sum GGX LUT at startup.
+		engine::render::BrdfLutPass m_brdfLutPass;
 
 		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
 		engine::render::LightingPass m_lightingPass;

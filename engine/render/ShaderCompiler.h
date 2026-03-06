@@ -12,7 +12,8 @@ namespace engine::render
 	enum class ShaderStage
 	{
 		Vertex,
-		Fragment
+		Fragment,
+		Compute
 	};
 
 	/// Compiles GLSL to SPIR-V via glslangValidator (Vulkan SDK). Erreurs lisibles via GetLastErrors().

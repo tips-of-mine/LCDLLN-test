@@ -159,6 +159,48 @@ namespace engine
 					};
 
 					// --------------------------------------------------
+					// M05.1: BRDF LUT compute (256x256 RG16F, split-sum GGX).
+					// --------------------------------------------------
+					{
+						std::vector<uint32_t> brdfComp = loadSpv("shaders/brdf_lut.comp.spv");
+						if (brdfComp.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path cp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/brdf_lut.comp");
+								auto c = compiler.CompileGlslToSpirv(cp, engine::render::ShaderStage::Compute);
+								if (c.has_value() && !c->empty())
+									brdfComp = std::move(*c);
+							}
+						}
+
+						if (!brdfComp.empty())
+						{
+							const uint32_t lutSize = 256u;
+							if (m_brdfLutPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								lutSize,
+								brdfComp.data(), brdfComp.size(),
+								m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
+							{
+								m_brdfLutPass.Generate(
+									m_vkDeviceContext.GetDevice(),
+									m_vkDeviceContext.GetGraphicsQueue());
+							}
+							else
+							{
+								LOG_WARN(Render, "M05.1: BRDF LUT init failed — LUT disabled");
+							}
+						}
+						else
+						{
+							LOG_WARN(Render, "M05.1: BRDF LUT shader not found — LUT disabled");
+						}
+					}
+
+					// --------------------------------------------------
 					// Clear pass (legacy, clears SceneColor swapchain image).
 					// --------------------------------------------------
 					m_frameGraph.addPass("Clear",
@@ -595,6 +637,7 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_brdfLutPass.Destroy(m_vkDeviceContext.GetDevice());   // M05.1
 			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4
 			m_lightingPass.Destroy(m_vkDeviceContext.GetDevice()); // M03.2
 			m_geometryPass.Destroy(m_vkDeviceContext.GetDevice());

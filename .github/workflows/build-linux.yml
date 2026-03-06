@@ -1,5 +1,5 @@
 # Build engine (Windows + Linux, CMake + vcpkg + Ninja)
-name: Build
+name: Build Linux
 
 on:
   push:

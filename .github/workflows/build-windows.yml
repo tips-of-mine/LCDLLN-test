@@ -36,6 +36,22 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
+      - name: Diagnostic DLLs
+        shell: pwsh
+        run: |
+          $files = @(
+            "C:\Windows\System32\ucrtbase.dll",
+            "C:\Windows\System32\vcruntime140d.dll"
+          )
+          foreach ($f in $files) {
+            if (Test-Path $f) { Write-Host "OK : $f" }
+            else { Write-Warning "ABSENT : $f" }
+          }
+          Get-ChildItem -Recurse `
+            -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC" `
+            -Filter "VCRUNTIME140D.dll" -ErrorAction SilentlyContinue |
+            Select-Object FullName
+
       - name: Collect artifacts
         shell: pwsh
         run: |
@@ -54,9 +70,16 @@ jobs:
               -Destination "$env:GITHUB_WORKSPACE\artifacts\assets" -Force
           }
 
-          # Copie le Visual C++ Redistributable (Release)
+          # Copie les DLLs MSVC (Release + Debug) depuis VS Redist
           $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
-          $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
+          $dlls = @(
+            "MSVCP140.dll",
+            "MSVCP140D.dll",
+            "VCRUNTIME140.dll",
+            "VCRUNTIME140D.dll",
+            "VCRUNTIME140_1.dll",
+            "VCRUNTIME140_1D.dll"
+          )
           foreach ($dll in $dlls) {
             $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
               -ErrorAction SilentlyContinue |
@@ -66,18 +89,18 @@ jobs:
               Copy-Item $found.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
               Write-Host "Copié : $($found.FullName)"
             } else {
-              Write-Warning "Introuvable : $dll"
+              Write-Warning "Introuvable dans Redist : $dll"
             }
           }
 
-          # Copie ucrt Release
+          # Copie ucrtbase (Release) depuis System32
           $ucrtRelease = "C:\Windows\System32\ucrtbase.dll"
           if (Test-Path $ucrtRelease) {
             Copy-Item $ucrtRelease -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
             Write-Host "Copié : $ucrtRelease"
           }
 
-          # Copie ucrtbased.dll (Windows SDK) - filet de sécurité
+          # Copie ucrtbased (Debug) depuis Windows SDK
           $sdkBase = "C:\Program Files (x86)\Windows Kits\10\Redist"
           $ucrtDebug = Get-ChildItem -Recurse -Path $sdkBase `
             -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |

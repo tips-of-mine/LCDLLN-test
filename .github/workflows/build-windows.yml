@@ -39,19 +39,24 @@ jobs:
       - name: Trouver ucrtbased.dll
         shell: pwsh
         run: |
-          Write-Host "=== Recherche ucrtbased.dll sur tout le runner ==="
-          Get-ChildItem -Recurse -Path "C:\Program Files (x86)\Windows Kits" `
-            -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |
-            Select-Object FullName
-          Get-ChildItem -Recurse -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |
-            Select-Object FullName
+          # Trouver dumpbin.exe
+          $dumpbin = Get-ChildItem -Recurse `
+            -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
           Write-Host "=== Dépendances de lcdlln.exe ==="
           $exe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
             -Filter "lcdlln.exe" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
             Select-Object -First 1
-          if ($exe) {
-            & "dumpbin.exe" /dependents $exe.FullName
+
+          if ($exe -and $dumpbin) {
+            & $dumpbin.FullName /dependents $exe.FullName
+          } else {
+            Write-Warning "dumpbin ou lcdlln.exe introuvable"
+            Write-Host "exe: $($exe.FullName)"
+            Write-Host "dumpbin: $($dumpbin.FullName)"
           }
 
       - name: Collect artifacts

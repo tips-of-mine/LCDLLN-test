@@ -36,21 +36,23 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
-      - name: Diagnostic DLLs
+      - name: Trouver ucrtbased.dll
         shell: pwsh
         run: |
-          $files = @(
-            "C:\Windows\System32\ucrtbase.dll",
-            "C:\Windows\System32\vcruntime140d.dll"
-          )
-          foreach ($f in $files) {
-            if (Test-Path $f) { Write-Host "OK : $f" }
-            else { Write-Warning "ABSENT : $f" }
-          }
-          Get-ChildItem -Recurse `
-            -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC" `
-            -Filter "VCRUNTIME140D.dll" -ErrorAction SilentlyContinue |
+          Write-Host "=== Recherche ucrtbased.dll sur tout le runner ==="
+          Get-ChildItem -Recurse -Path "C:\Program Files (x86)\Windows Kits" `
+            -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |
             Select-Object FullName
+          Get-ChildItem -Recurse -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |
+            Select-Object FullName
+          Write-Host "=== Dépendances de lcdlln.exe ==="
+          $exe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
+            -Filter "lcdlln.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+          if ($exe) {
+            & "dumpbin.exe" /dependents $exe.FullName
+          }
 
       - name: Collect artifacts
         shell: pwsh

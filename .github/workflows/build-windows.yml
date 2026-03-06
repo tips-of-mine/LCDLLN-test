@@ -59,6 +59,22 @@ jobs:
             Write-Host "dumpbin: $($dumpbin.FullName)"
           }
 
+      - name: Diagnostic DLLs vcpkg
+        shell: pwsh
+        run: |
+          $dumpbin = Get-ChildItem -Recurse `
+            -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+          $dlls = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\artifacts" `
+            -Filter "*.dll" | Where-Object { $_.Name -match "glfw|vulkan" }
+
+          foreach ($dll in $dlls) {
+            Write-Host "=== $($dll.Name) ==="
+            & $dumpbin.FullName /dependents $dll.FullName
+          }
+
       - name: Collect artifacts
         shell: pwsh
         run: |

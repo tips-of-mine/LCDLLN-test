@@ -4,6 +4,19 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Forcer le CRT Release pour éviter ucrtbased.dll
+if(MSVC)
+  foreach(flag
+    CMAKE_C_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_C_FLAGS_RELWITHDEBINFO
+    CMAKE_CXX_FLAGS_RELWITHDEBINFO
+  )
+    string(REPLACE "/MDd" "/MD" ${flag} "${${flag}}")
+    string(REPLACE "/MTd" "/MT" ${flag} "${${flag}}")
+  endforeach()
+endif()
+
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 

@@ -229,8 +229,6 @@ namespace engine
 
 						if (!smVert.empty() && !smFrag.empty())
 						{
-							const uint32_t shadowRes =
-								static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
 							m_shadowMapPass.Init(
 								m_vkDeviceContext.GetDevice(),
 								m_vkDeviceContext.GetPhysicalDevice(),

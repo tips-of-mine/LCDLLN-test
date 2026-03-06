@@ -189,7 +189,7 @@ namespace engine::render
 		const float tanHalfFovY = std::tan(fovYRad * 0.5f);
 
 		// Light forward points from light toward the scene.
-		const Vec3 lightForward = (-lightDirTowardLight).Normalized();
+		const Vec3 lightForward = (lightDirTowardLight * -1.0f).Normalized();
 
 		for (uint32_t c = 0; c < kCascadeCount; ++c)
 		{

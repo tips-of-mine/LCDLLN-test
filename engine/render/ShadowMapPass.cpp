@@ -248,6 +248,7 @@ namespace engine::render
 		float depthBiasSlope,
 		bool cullFrontFaces)
 	{
+		(void)cullFrontFaces;
 		if (!IsValid() || device == VK_NULL_HANDLE)
 			return;
 

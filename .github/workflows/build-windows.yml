@@ -25,7 +25,7 @@ jobs:
         shell: pwsh
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-          VCPKG_DEFAULT_TRIPLET: x64-windows
+          VCPKG_DEFAULT_TRIPLET: x64-windows-release
         run: |
           cmake --preset vs2022-x64
 
@@ -47,6 +47,13 @@ jobs:
             Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
             Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
 
+          # Assets
+          $assetsSource = "$env:GITHUB_WORKSPACE\assets"
+          if (Test-Path $assetsSource) {
+            Copy-Item -Recurse -Path $assetsSource `
+              -Destination "$env:GITHUB_WORKSPACE\artifacts\assets" -Force
+          }
+
           # Copie le Visual C++ Redistributable (Release)
           $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
           $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
@@ -63,11 +70,22 @@ jobs:
             }
           }
 
-          # Copie ucrt (Universal CRT)
-          $ucrt = "C:\Windows\System32\ucrtbase.dll"
-          if (Test-Path $ucrt) {
-            Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-            Write-Host "Copié : $ucrt"
+          # Copie ucrt Release
+          $ucrtRelease = "C:\Windows\System32\ucrtbase.dll"
+          if (Test-Path $ucrtRelease) {
+            Copy-Item $ucrtRelease -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+            Write-Host "Copié : $ucrtRelease"
+          }
+
+          # Copie ucrtbased.dll (Windows SDK) - filet de sécurité
+          $sdkBase = "C:\Program Files (x86)\Windows Kits\10\Redist"
+          $ucrtDebug = Get-ChildItem -Recurse -Path $sdkBase `
+            -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*x64*" } |
+            Select-Object -First 1
+          if ($ucrtDebug) {
+            Copy-Item $ucrtDebug.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+            Write-Host "Copié : $($ucrtDebug.FullName)"
           }
 
           Write-Host "=== Contenu final des artifacts ==="
@@ -79,4 +97,4 @@ jobs:
           name: windows-release-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 5

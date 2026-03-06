@@ -76,3 +76,10 @@ target_link_libraries(engine_app PRIVATE engine_core)
 if(WIN32)
   target_link_libraries(engine_app PRIVATE user32)
 endif()
+
+add_custom_command(TARGET engine_app POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/assets"
+    "$<TARGET_FILE_DIR:engine_app>/assets"
+  COMMENT "Copie des assets..."
+)

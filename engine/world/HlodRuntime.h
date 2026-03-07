@@ -23,6 +23,9 @@ namespace engine::world
 
 	/// Return type for BuildChunkDrawList (avoids MSVC parse issues with std::string in declaration).
 	using HlodDebugString = std::string;
+	/// Parameter reference types (avoid MSVC parse issues with qualified names in declarations).
+	using Vec3Ref = const engine::math::Vec3&;
+	using FrustumRef = const engine::math::Frustum&;
 
 	/// Builds chunk draw list decisions: for each requested chunk, applies frustum + distance culling and HLOD switch by distance.
 	/// \param requestedChunks Pointer to chunk requests (from World::GetPendingChunkRequests().data()).
@@ -36,8 +39,8 @@ namespace engine::world
 	HlodDebugString BuildChunkDrawList(
 		const ChunkRequest* requestedChunks,
 		size_t requestedChunksCount,
-		const engine::math::Vec3& cameraPosition,
-		const engine::math::Frustum& frustum,
+		Vec3Ref cameraPosition,
+		FrustumRef frustum,
 		const HlodRuntime& hlod,
 		float maxDrawDistanceMeters,
 		std::vector<ChunkDrawDecision>& decisionsOut);

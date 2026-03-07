@@ -15,20 +15,20 @@ namespace engine::render
 	/// followed by gamma 2.2 correction.
 	///
 	/// Pipeline: fullscreen triangle (3 vertices, no vertex buffer).
-	/// Descriptor set 0: one combined image sampler (SceneColor_HDR).
-	/// Push constants (4 bytes): exposure (float).
+	/// Descriptor set 0: binding 0 = SceneColor_HDR, binding 1 = LUT (optional, M08.4).
+	/// Push constants: exposure (float), strength (float) for LUT blend.
 	///
-	/// Added in M03.4.
+	/// Added in M03.4; LUT support in M08.4.
 	class TonemapPass
 	{
 	public:
 		/// Push constants sent to the tonemap fragment shader each frame.
-		/// Layout must match the push_constant block in tonemap.frag exactly.
 		struct TonemapParams
 		{
-			float exposure; ///< Linear exposure multiplier applied before the curve (4 bytes).
+			float exposure; ///< Linear exposure multiplier applied before the curve.
+			float strength; ///< LUT blend strength 0..1 (0 = no LUT). M08.4.
 		};
-		static_assert(sizeof(TonemapParams) == 4, "TonemapParams must be exactly 4 bytes");
+		static_assert(sizeof(TonemapParams) == 8, "TonemapParams must be exactly 8 bytes");
 
 		TonemapPass() = default;
 		TonemapPass(const TonemapPass&) = delete;
@@ -52,11 +52,14 @@ namespace engine::render
 		/// fullscreen triangle, and ends the render pass (framebuffer is
 		/// destroyed immediately after).
 		/// \param frameIndex  Current in-flight frame index (0 .. maxFrames-1).
+		/// \param lutView     Optional LUT texture view (256x16 strip or 32^3). If VK_NULL_HANDLE, LUT is disabled (binding 1 uses HDR view as fallback).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
 			VkExtent2D extent,
 			ResourceId idSceneColorHDR,
 			ResourceId idSceneColorLDR,
-			const TonemapParams& params, uint32_t frameIndex);
+			const TonemapParams& params,
+			VkImageView lutView,
+			uint32_t frameIndex);
 
 		/// Releases all Vulkan resources. Safe to call even when not initialized.
 		void Destroy(VkDevice device);

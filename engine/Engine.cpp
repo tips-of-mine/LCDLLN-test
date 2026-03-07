@@ -81,6 +81,13 @@ namespace engine
 				{
 					m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_cfg);
 
+					// M08.4: Optional color grading LUT (strip 256x16 .texr from paths.content).
+					{
+						std::string lutPath = m_cfg.GetString("color_grading.lut_path", "");
+						if (!lutPath.empty())
+							m_colorGradingLutHandle = m_assetRegistry.LoadTexture(lutPath, true);
+					}
+
 					// SceneColor (swapchain-compatible, kept for legacy Clear pass).
 					engine::render::ImageDesc sceneColorDesc{};
 					sceneColorDesc.format   = m_vkSwapchain.GetImageFormat();
@@ -157,6 +164,25 @@ namespace engine
 					                   | VK_IMAGE_USAGE_TRANSFER_SRC_BIT; // M07.4: CopyPresent blit from HistoryNext
 					m_fgHistoryAId = m_frameGraph.createImage("HistoryA", historyDesc);
 					m_fgHistoryBId = m_frameGraph.createImage("HistoryB", historyDesc);
+
+					// M08.1: Bloom mip pyramid (full, 1/2, 1/4, 1/8, 1/16, 1/32).
+					engine::render::ImageDesc bloomMipDesc{};
+					bloomMipDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+					bloomMipDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					for (uint32_t i = 0; i < engine::render::kBloomMipCount; ++i)
+					{
+						char name[32];
+						std::snprintf(name, sizeof(name), "BloomMip_%u", i);
+						bloomMipDesc.extentScalePower = i;
+						m_fgBloomMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
+					}
+
+					// M08.2: SceneColor_HDR_WithBloom — output of bloom combine (HDR); tonemap reads this.
+					engine::render::ImageDesc sceneColorHDRWithBloomDesc{};
+					sceneColorHDRWithBloomDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+					sceneColorHDRWithBloomDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+					                                   | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgSceneColorHDRWithBloomId = m_frameGraph.createImage("SceneColor_HDR_WithBloom", sceneColorHDRWithBloomDesc);
 
 					// M04.2: ShadowMap[0..3] — depth-only cascades (D32, depth attachment + sampled).
 					const uint32_t shadowRes =
@@ -509,6 +535,123 @@ namespace engine
 						}
 					}
 
+					// M08.1: Bloom prefilter + downsample shaders.
+					{
+						std::vector<uint32_t> bpVert = loadSpv("shaders/bloom_prefilter.vert.spv");
+						std::vector<uint32_t> bpFrag = loadSpv("shaders/bloom_prefilter.frag.spv");
+						std::vector<uint32_t> bdVert = loadSpv("shaders/bloom_downsample.vert.spv");
+						std::vector<uint32_t> bdFrag = loadSpv("shaders/bloom_downsample.frag.spv");
+						if (bpVert.empty() || bpFrag.empty() || bdVert.empty() || bdFrag.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								auto resolve = [&](const char* p) {
+									return engine::platform::FileSystem::ResolveContentPath(m_cfg, p);
+								};
+								auto vbp = compiler.CompileGlslToSpirv(resolve("shaders/bloom_prefilter.vert"), engine::render::ShaderStage::Vertex);
+								auto fbp = compiler.CompileGlslToSpirv(resolve("shaders/bloom_prefilter.frag"), engine::render::ShaderStage::Fragment);
+								auto vbd = compiler.CompileGlslToSpirv(resolve("shaders/bloom_downsample.vert"), engine::render::ShaderStage::Vertex);
+								auto fbd = compiler.CompileGlslToSpirv(resolve("shaders/bloom_downsample.frag"), engine::render::ShaderStage::Fragment);
+								if (vbp.has_value() && !vbp->empty()) bpVert = std::move(*vbp);
+								if (fbp.has_value() && !fbp->empty()) bpFrag = std::move(*fbp);
+								if (vbd.has_value() && !vbd->empty()) bdVert = std::move(*vbd);
+								if (fbd.has_value() && !fbd->empty()) bdFrag = std::move(*fbd);
+							}
+						}
+						const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
+						if (!bpVert.empty() && !bpFrag.empty())
+						{
+							m_bloomPrefilterPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								bloomFmt,
+								bpVert.data(), bpVert.size(),
+								bpFrag.data(), bpFrag.size(),
+								2u);
+						}
+						if (!bdVert.empty() && !bdFrag.empty())
+						{
+							m_bloomDownsamplePass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								bloomFmt,
+								bdVert.data(), bdVert.size(),
+								bdFrag.data(), bdFrag.size(),
+								2u);
+						}
+					}
+
+					// M08.2: Bloom upsample + combine shaders.
+					{
+						std::vector<uint32_t> buVert = loadSpv("shaders/bloom_upsample.vert.spv");
+						std::vector<uint32_t> buFrag = loadSpv("shaders/bloom_upsample.frag.spv");
+						std::vector<uint32_t> bcVert = loadSpv("shaders/bloom_combine.vert.spv");
+						std::vector<uint32_t> bcFrag = loadSpv("shaders/bloom_combine.frag.spv");
+						if (buVert.empty() || buFrag.empty() || bcVert.empty() || bcFrag.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								auto resolve = [&](const char* p) {
+									return engine::platform::FileSystem::ResolveContentPath(m_cfg, p);
+								};
+								auto vbu = compiler.CompileGlslToSpirv(resolve("shaders/bloom_upsample.vert"), engine::render::ShaderStage::Vertex);
+								auto fbu = compiler.CompileGlslToSpirv(resolve("shaders/bloom_upsample.frag"), engine::render::ShaderStage::Fragment);
+								auto vbc = compiler.CompileGlslToSpirv(resolve("shaders/bloom_combine.vert"), engine::render::ShaderStage::Vertex);
+								auto fbc = compiler.CompileGlslToSpirv(resolve("shaders/bloom_combine.frag"), engine::render::ShaderStage::Fragment);
+								if (vbu.has_value() && !vbu->empty()) buVert = std::move(*vbu);
+								if (fbu.has_value() && !fbu->empty()) buFrag = std::move(*fbu);
+								if (vbc.has_value() && !vbc->empty()) bcVert = std::move(*vbc);
+								if (fbc.has_value() && !fbc->empty()) bcFrag = std::move(*fbc);
+							}
+						}
+						const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
+						if (!buVert.empty() && !buFrag.empty())
+						{
+							m_bloomUpsamplePass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								bloomFmt,
+								buVert.data(), buVert.size(),
+								buFrag.data(), buFrag.size(),
+								2u);
+						}
+						if (!bcVert.empty() && !bcFrag.empty())
+						{
+							m_bloomCombinePass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								bloomFmt,
+								bcVert.data(), bcVert.size(),
+								bcFrag.data(), bcFrag.size(),
+								2u);
+						}
+					}
+
+					// M08.3: Auto-exposure — luminance reduce compute.
+					{
+						std::vector<uint32_t> lumComp = loadSpv("shaders/luminance_reduce.comp.spv");
+						if (lumComp.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path cp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/luminance_reduce.comp");
+								auto c = compiler.CompileGlslToSpirv(cp, engine::render::ShaderStage::Compute);
+								if (c.has_value() && !c->empty()) lumComp = std::move(*c);
+							}
+						}
+						if (!lumComp.empty())
+						{
+							if (m_autoExposure.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								lumComp.data(), lumComp.size()))
+								LOG_INFO(Render, "M08.3: Auto-exposure ready");
+						}
+					}
+
 					// M07.4: TAA pass shaders — reprojection + clamp + blend.
 					{
 						std::vector<uint32_t> taaVert = loadSpv("shaders/taa.vert.spv");
@@ -793,27 +936,149 @@ namespace engine
 								lp, frameIdx);
 						});
 
-					// Pass: Tonemap (M03.4) — reads SceneColor_HDR, applies ACES filmic +
-					// exposure + gamma 2.2, writes SceneColor_LDR.
+					// M08.1: Bloom prefilter — read SceneColor_HDR, write BloomMip0 (threshold + knee).
+					m_frameGraph.addPass("Bloom_Prefilter",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSceneColorHDRId, engine::render::ImageUsage::SampledRead);
+							b.write(m_fgBloomMipIds[0], engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_bloomPrefilterPass.IsValid()) return;
+							engine::render::BloomPrefilterPass::PrefilterParams pp{};
+							pp.threshold = static_cast<float>(m_cfg.GetDouble("bloom.threshold", 1.0));
+							pp.knee      = static_cast<float>(m_cfg.GetDouble("bloom.knee", 0.5));
+							const uint32_t frameIdx = m_currentFrame % 2;
+							m_bloomPrefilterPass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg,
+								m_vkSwapchain.GetExtent(),
+								m_fgSceneColorHDRId, m_fgBloomMipIds[0],
+								pp, frameIdx);
+						});
+
+					// M08.1: Bloom downsample chain (BloomMip_i -> BloomMip_{i+1}).
+					for (uint32_t i = 0; i < engine::render::kBloomMipCount - 1; ++i)
+					{
+						const engine::render::ResourceId idSrc = m_fgBloomMipIds[i];
+						const engine::render::ResourceId idDst = m_fgBloomMipIds[i + 1];
+						char passName[32];
+						std::snprintf(passName, sizeof(passName), "Bloom_Downsample_%u", i);
+						m_frameGraph.addPass(passName,
+							[this, idSrc, idDst](engine::render::PassBuilder& b) {
+								b.read(idSrc, engine::render::ImageUsage::SampledRead);
+								b.write(idDst, engine::render::ImageUsage::ColorWrite);
+							},
+							[this, i, idSrc, idDst](VkCommandBuffer cmd, engine::render::Registry& reg) {
+								if (!m_bloomDownsamplePass.IsValid()) return;
+								VkExtent2D ext = m_vkSwapchain.GetExtent();
+								VkExtent2D extentDst;
+								extentDst.width  = ext.width >> (i + 1);
+								extentDst.height = ext.height >> (i + 1);
+								if (extentDst.width < 1) extentDst.width = 1;
+								if (extentDst.height < 1) extentDst.height = 1;
+								const uint32_t frameIdx = m_currentFrame % 2;
+								m_bloomDownsamplePass.Record(
+									m_vkDeviceContext.GetDevice(), cmd, reg,
+									extentDst, idSrc, idDst, frameIdx);
+							});
+					}
+
+					// M08.2: Bloom upsample chain (smallest → mip0): add upsampled(Mip_{i+1}) into Mip_i.
+					// Order: Upsample_4 (Mip5→Mip4), then Upsample_3 (Mip4→Mip3), ..., Upsample_0 (Mip1→Mip0).
+					for (uint32_t ii = engine::render::kBloomMipCount - 1; ii-- > 0; )
+					{
+						const uint32_t i = ii;
+						const engine::render::ResourceId idSrc = m_fgBloomMipIds[i + 1];
+						const engine::render::ResourceId idDst = m_fgBloomMipIds[i];
+						char passName[32];
+						std::snprintf(passName, sizeof(passName), "Bloom_Upsample_%u", i);
+						m_frameGraph.addPass(passName,
+							[this, idSrc, idDst](engine::render::PassBuilder& b) {
+								b.read(idSrc, engine::render::ImageUsage::SampledRead);
+								b.write(idDst, engine::render::ImageUsage::ColorWrite);
+							},
+							[this, i, idSrc, idDst](VkCommandBuffer cmd, engine::render::Registry& reg) {
+								if (!m_bloomUpsamplePass.IsValid()) return;
+								VkExtent2D ext = m_vkSwapchain.GetExtent();
+								VkExtent2D extentDst;
+								extentDst.width  = ext.width >> i;
+								extentDst.height = ext.height >> i;
+								if (extentDst.width < 1) extentDst.width = 1;
+								if (extentDst.height < 1) extentDst.height = 1;
+								const uint32_t frameIdx = m_currentFrame % 2;
+								m_bloomUpsamplePass.Record(
+									m_vkDeviceContext.GetDevice(), cmd, reg,
+									extentDst, idSrc, idDst, frameIdx);
+							});
+					}
+
+					// M08.2: Bloom combine — SceneColor_HDR + bloom*intensity → SceneColor_HDR_WithBloom.
+					m_frameGraph.addPass("Bloom_Combine",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSceneColorHDRId,       engine::render::ImageUsage::SampledRead);
+							b.read(m_fgBloomMipIds[0],       engine::render::ImageUsage::SampledRead);
+							b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_bloomCombinePass.IsValid()) return;
+							engine::render::BloomCombinePass::CombineParams cp{};
+							cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
+							const uint32_t frameIdx = m_currentFrame % 2;
+							m_bloomCombinePass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg,
+								m_vkSwapchain.GetExtent(),
+								m_fgSceneColorHDRId, m_fgBloomMipIds[0],
+								m_fgSceneColorHDRWithBloomId,
+								cp, frameIdx);
+						});
+
+					// M08.3: Auto-exposure luminance reduce — read HDR, compute log(L) grid -> staging for readback.
+					m_frameGraph.addPass("AutoExposure_Luminance",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::SampledRead);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_autoExposure.IsValid()) return;
+							m_autoExposure.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg,
+								m_fgSceneColorHDRWithBloomId,
+								m_vkSwapchain.GetExtent());
+						});
+
+					// Pass: Tonemap (M03.4) — reads SceneColor_HDR_WithBloom (M08.2), applies ACES filmic +
+					// exposure (M08.3 auto-exposure when valid) + gamma 2.2, writes SceneColor_LDR.
 					m_frameGraph.addPass("Tonemap",
 						[this](engine::render::PassBuilder& b) {
-							b.read(m_fgSceneColorHDRId,  engine::render::ImageUsage::SampledRead);
+							b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::SampledRead);
 							b.write(m_fgSceneColorLDRId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 							if (!m_tonemapPass.IsValid()) return;
 
-							// Read exposure from config (default 1.0, adjustable via config.json).
 							engine::render::TonemapPass::TonemapParams tp{};
-							tp.exposure = static_cast<float>(m_cfg.GetDouble("tonemap.exposure", 1.0));
+							tp.exposure = m_autoExposure.IsValid()
+								? m_autoExposure.GetExposure()
+								: static_cast<float>(m_cfg.GetDouble("tonemap.exposure", 1.0));
+							bool lutEnabled = m_cfg.GetBool("color_grading.enable", false)
+								&& m_colorGradingLutHandle.IsValid();
+							tp.strength = lutEnabled
+								? static_cast<float>(m_cfg.GetDouble("color_grading.strength", 1.0))
+								: 0.0f;
+
+							VkImageView lutView = VK_NULL_HANDLE;
+							if (lutEnabled)
+							{
+								engine::render::TextureAsset* lutTex = m_colorGradingLutHandle.Get();
+								if (lutTex && lutTex->view != VK_NULL_HANDLE)
+									lutView = lutTex->view;
+							}
 
 							const uint32_t frameIdx = m_currentFrame % 2;
 							m_tonemapPass.Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
-								m_fgSceneColorHDRId,
+								m_fgSceneColorHDRWithBloomId,
 								m_fgSceneColorLDRId,
-								tp, frameIdx);
+								tp, lutView, frameIdx);
 						});
 
 					// Pass: TAA_InitHistory (M07.2) — when init/reset, copy current LDR to both history buffers.
@@ -1010,6 +1275,11 @@ namespace engine
 			m_specularPrefilterPass.Destroy(m_vkDeviceContext.GetDevice()); // M05.3
 			m_brdfLutPass.Destroy(m_vkDeviceContext.GetDevice());   // M05.1
 			m_taaPass.Destroy(m_vkDeviceContext.GetDevice());      // M07.4
+			m_autoExposure.Destroy(m_vkDeviceContext.GetDevice());  // M08.3
+			m_bloomCombinePass.Destroy(m_vkDeviceContext.GetDevice());   // M08.2
+			m_bloomUpsamplePass.Destroy(m_vkDeviceContext.GetDevice()); // M08.2
+			m_bloomDownsamplePass.Destroy(m_vkDeviceContext.GetDevice()); // M08.1
+			m_bloomPrefilterPass.Destroy(m_vkDeviceContext.GetDevice());  // M08.1
 			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4
 			m_lightingPass.Destroy(m_vkDeviceContext.GetDevice()); // M03.2
 			m_geometryPass.Destroy(m_vkDeviceContext.GetDevice());
@@ -1133,6 +1403,15 @@ namespace engine
 		VkExtent2D extent            = m_vkSwapchain.GetExtent();
 
 		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+
+		// M08.3: After fence, staging has last frame's luminance; adapt exposure (key/speed from config).
+		if (m_autoExposure.IsValid())
+		{
+			const float dt    = static_cast<float>(m_time.DeltaSeconds());
+			const float key   = static_cast<float>(m_cfg.GetDouble("exposure.key", 0.18));
+			const float speed = static_cast<float>(m_cfg.GetDouble("exposure.speed", 2.0));
+			m_autoExposure.Update(device, dt, key, speed);
+		}
 
 		uint32_t imageIndex = 0;
 		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);

@@ -47,6 +47,8 @@ add_library(engine_core
   engine/render/GeometryPass.cpp
   engine/render/LightingPass.cpp
   engine/render/TonemapPass.cpp
+  engine/render/BloomPass.cpp
+  engine/render/AutoExposure.cpp
   engine/render/TaaPass.cpp
   engine/math/Frustum.cpp
 )

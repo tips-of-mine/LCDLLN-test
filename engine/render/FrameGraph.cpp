@@ -417,8 +417,20 @@ namespace engine::render
 		{
 			const ImageResource& res = m_imageResources[resIdx];
 			if (res.external) continue;
-			const uint32_t width = res.desc.width != 0 ? res.desc.width : extent.width;
-			const uint32_t height = res.desc.height != 0 ? res.desc.height : extent.height;
+			uint32_t width = extent.width;
+			uint32_t height = extent.height;
+			if (res.desc.extentScalePower > 0)
+			{
+				width = extent.width >> res.desc.extentScalePower;
+				height = extent.height >> res.desc.extentScalePower;
+				if (width < 1) width = 1;
+				if (height < 1) height = 1;
+			}
+			else if (res.desc.width != 0 || res.desc.height != 0)
+			{
+				width = res.desc.width != 0 ? res.desc.width : extent.width;
+				height = res.desc.height != 0 ? res.desc.height : extent.height;
+			}
 
 			std::vector<PerFrameImageHandles>& perFrame = m_perFrameImageHandles[resIdx];
 			if (frameIndex >= perFrame.size()) perFrame.resize(frameIndex + 1);

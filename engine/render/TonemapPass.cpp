@@ -92,20 +92,23 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 2. Descriptor set layout: 1 combined image sampler (SceneColor_HDR)
+		// 2. Descriptor set layout: binding 0 = SceneColor_HDR, binding 1 = LUT (M08.4)
 		// -----------------------------------------------------------------
 		{
-			VkDescriptorSetLayoutBinding binding{};
-			binding.binding            = 0;
-			binding.descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			binding.descriptorCount    = 1;
-			binding.stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
-			binding.pImmutableSamplers = nullptr;
+			VkDescriptorSetLayoutBinding bindings[2]{};
+			bindings[0].binding            = 0;
+			bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			bindings[0].descriptorCount    = 1;
+			bindings[0].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+			bindings[1].binding            = 1;
+			bindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			bindings[1].descriptorCount    = 1;
+			bindings[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = 1;
-			layoutInfo.pBindings    = &binding;
+			layoutInfo.bindingCount = 2;
+			layoutInfo.pBindings    = bindings;
 
 			VkResult res = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_descriptorSetLayout);
 			if (res != VK_SUCCESS)
@@ -117,12 +120,12 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 3. Descriptor pool: maxFrames sets, 1 combined image sampler each
+		// 3. Descriptor pool: maxFrames sets, 2 combined image samplers each (HDR + LUT)
 		// -----------------------------------------------------------------
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = m_maxFrames;
+			poolSize.descriptorCount = m_maxFrames * 2;
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -187,14 +190,13 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 6. Pipeline layout: descriptor set 0 + push constants
-		//    4 bytes: exposure (float, fragment stage)
+		// 6. Pipeline layout: descriptor set 0 + push constants (exposure + strength, 8 bytes)
 		// -----------------------------------------------------------------
 		{
 			VkPushConstantRange pushRange{};
 			pushRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushRange.offset     = 0;
-			pushRange.size       = static_cast<uint32_t>(sizeof(TonemapParams)); // 4 bytes
+			pushRange.size       = static_cast<uint32_t>(sizeof(TonemapParams)); // 8 bytes
 
 			VkPipelineLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -322,12 +324,13 @@ namespace engine::render
 		VkExtent2D extent,
 		ResourceId idSceneColorHDR,
 		ResourceId idSceneColorLDR,
-		const TonemapParams& params, uint32_t frameIndex)
+		const TonemapParams& params,
+		VkImageView lutView,
+		uint32_t frameIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
 
-		// Retrieve image views from the frame graph registry.
 		VkImageView viewHDR = registry.getImageView(idSceneColorHDR);
 		VkImageView viewLDR = registry.getImageView(idSceneColorLDR);
 
@@ -337,27 +340,33 @@ namespace engine::render
 			return;
 		}
 
-		// ------------------------------------------------------------------
-		// Update descriptor set for this frame with current HDR image view.
-		// This is safe because the descriptor set is not in flight while we record.
-		// ------------------------------------------------------------------
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler     = m_sampler;
-		imageInfo.imageView   = viewHDR;
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		VkDescriptorImageInfo imageInfos[2]{};
+		imageInfos[0].sampler     = m_sampler;
+		imageInfos[0].imageView   = viewHDR;
+		imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfos[1].sampler     = m_sampler;
+		imageInfos[1].imageView   = (lutView != VK_NULL_HANDLE) ? lutView : viewHDR;
+		imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		VkWriteDescriptorSet write{};
-		write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet          = ds;
-		write.dstBinding      = 0;
-		write.dstArrayElement = 0;
-		write.descriptorCount = 1;
-		write.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		write.pImageInfo      = &imageInfo;
-		vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+		VkWriteDescriptorSet writes[2]{};
+		writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[0].dstSet          = ds;
+		writes[0].dstBinding      = 0;
+		writes[0].dstArrayElement  = 0;
+		writes[0].descriptorCount  = 1;
+		writes[0].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[0].pImageInfo      = &imageInfos[0];
+		writes[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[1].dstSet          = ds;
+		writes[1].dstBinding      = 1;
+		writes[1].dstArrayElement = 0;
+		writes[1].descriptorCount = 1;
+		writes[1].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[1].pImageInfo      = &imageInfos[1];
+		vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
 
 		// ------------------------------------------------------------------
 		// Create a temporary framebuffer for the LDR output this frame.
@@ -408,7 +417,6 @@ namespace engine::render
 		VkRect2D scissor = { { 0, 0 }, extent };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		// Push exposure (4 bytes, fragment stage).
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
 			0, static_cast<uint32_t>(sizeof(TonemapParams)), &params);
 

@@ -26,6 +26,8 @@
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
+#include "engine/render/BloomPass.h"        // M08.1: bloom prefilter + downsample pyramid
+#include "engine/render/AutoExposure.h"      // M08.3: auto-exposure reduce luminance + temporal adapt
 #include "engine/render/TaaPass.h"          // M07.4: TAA reprojection + clamp
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
@@ -118,6 +120,8 @@ namespace engine
 		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
+		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.
+		engine::render::ResourceId m_fgSceneColorHDRWithBloomId = engine::render::kInvalidResourceId;
 		/// SSAO_Raw: output of SSAO generate pass (R16F). M06.2.
 		engine::render::ResourceId m_fgSsaoRawId        = engine::render::kInvalidResourceId;
 		/// SSAO_Blur_Temp: intermediate for bilateral blur H pass. M06.3.
@@ -129,6 +133,8 @@ namespace engine
 		engine::render::ResourceId m_fgHistoryBId        = engine::render::kInvalidResourceId;
 		/// Shadow maps per cascade (depth + sampled). Added in M04.2.
 		std::array<engine::render::ResourceId, engine::render::kCascadeCount> m_fgShadowMapIds{};
+		/// M08.1: Bloom mip pyramid (BloomMip0 = full res, .. BloomMip5 = 1/32).
+		std::array<engine::render::ResourceId, engine::render::kBloomMipCount> m_fgBloomMipIds{};
 
 		engine::render::GeometryPass m_geometryPass;
 		engine::render::MeshHandle   m_geometryMeshHandle;
@@ -152,10 +158,18 @@ namespace engine
 		engine::render::LightingPass m_lightingPass;
 		/// Filmic tonemap pass: SceneColor_HDR → SceneColor_LDR. Added in M03.4.
 		engine::render::TonemapPass  m_tonemapPass;
+		/// Bloom prefilter + downsample (M08.1): extract HDR highlights, pyramid 1/2..1/32.
+		engine::render::BloomPrefilterPass  m_bloomPrefilterPass;
+		engine::render::BloomDownsamplePass m_bloomDownsamplePass;
+		engine::render::BloomUpsamplePass   m_bloomUpsamplePass;
+		engine::render::BloomCombinePass    m_bloomCombinePass;
+		engine::render::AutoExposure        m_autoExposure;
 		/// TAA pass (M07.4): reproject history, clamp 3x3, blend.
 		engine::render::TaaPass      m_taaPass;
 
 		engine::render::AssetRegistry m_assetRegistry;
+		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
+		engine::render::TextureHandle m_colorGradingLutHandle;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

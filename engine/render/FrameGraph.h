@@ -48,6 +48,8 @@ namespace engine::render
 		bool transient = true;
 		/// When true, image is used as depth attachment (view aspect DEPTH_BIT, barriers use depth layout).
 		bool isDepthAttachment = false;
+		/// When > 0, effective extent is (extent.width >> extentScalePower, extent.height >> extentScalePower). Used e.g. for bloom mip pyramid (M08.1). Ignored if width/height are set.
+		uint32_t extentScalePower = 0;
 	};
 
 	/// Descriptor for a logical buffer resource (transient by default, frame lifetime).

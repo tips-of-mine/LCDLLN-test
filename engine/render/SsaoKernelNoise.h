@@ -28,9 +28,11 @@ namespace engine::render
 
 		/// Generates kernel on CPU, creates UBO and 4x4 noise texture, uploads both.
 		/// Reads and clamps ssao.radius and ssao.bias from config.
+		/// \param vmaAllocator Centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
 		/// \param queue  Used for one-time staging copy of noise texture; can be graphics queue.
 		/// \return true on success.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
+			void* vmaAllocator,
 			const engine::core::Config& config,
 			VkQueue queue, uint32_t queueFamilyIndex);
 
@@ -49,10 +51,11 @@ namespace engine::render
 		bool IsValid() const { return m_kernelBuffer != VK_NULL_HANDLE && m_noiseView != VK_NULL_HANDLE; }
 
 	private:
+		void*          m_vmaAllocator = nullptr;
 		VkBuffer       m_kernelBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_kernelMemory = VK_NULL_HANDLE;
+		void*          m_kernelAlloc  = nullptr; ///< VmaAllocation
 		VkImage        m_noiseImage   = VK_NULL_HANDLE;
-		VkDeviceMemory m_noiseMemory  = VK_NULL_HANDLE;
+		void*          m_noiseAlloc   = nullptr; ///< VmaAllocation
 		VkImageView    m_noiseView    = VK_NULL_HANDLE;
 		VkSampler      m_noiseSampler = VK_NULL_HANDLE;
 	};

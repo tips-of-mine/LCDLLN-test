@@ -27,9 +27,11 @@ namespace engine::render
 		/// \param size              Base face size (e.g. 256 or 512).
 		/// \param mipCount          Number of mip levels (roughness steps).
 		/// \param compSpirv        Compute shader SPIR-V.
+		/// \param vmaAllocator Centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
 		/// \param compWordCount    Number of 32-bit words in compSpirv.
 		/// \return true on success.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
+			void* vmaAllocator,
 			uint32_t size, uint32_t mipCount,
 			const uint32_t* compSpirv, size_t compWordCount,
 			uint32_t queueFamilyIndex);
@@ -55,8 +57,9 @@ namespace engine::render
 		bool IsValid() const { return m_image != VK_NULL_HANDLE && m_cubeView != VK_NULL_HANDLE; }
 
 	private:
+		void*                      m_vmaAllocator = nullptr;
 		VkImage                    m_image       = VK_NULL_HANDLE;
-		VkDeviceMemory             m_memory       = VK_NULL_HANDLE;
+		void*                      m_allocation   = nullptr; ///< VmaAllocation
 		VkImageView                m_cubeView     = VK_NULL_HANDLE;
 		VkSampler                  m_sampler     = VK_NULL_HANDLE;
 		std::vector<VkImageView>   m_faceMipViews;  // 6 * mipCount views for write

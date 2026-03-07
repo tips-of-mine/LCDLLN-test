@@ -41,19 +41,18 @@ namespace engine::render
 	///   - The slice is enclosed in a tight axis-aligned bounding box in light space.
 	///   - An orthographic projection is built from that AABB.
 	///   - The orthographic volume is stabilized by snapping its center in light space
-	///     to a multiple of \p worldUnitsPerTexel.
-	///
-	/// The resulting matrices and split distances are written to \p outCascades.
+	///     to a multiple of worldUnitsPerTexel, computed per cascade as
+	///     worldUnitsPerTexel = extent / shadowMapResolution (extent = max AABB width/height in light space).
 	///
 	/// \param camera                Camera defining the view frustum.
 	/// \param lightDirTowardLight   Normalized world-space direction pointing toward the light.
 	/// \param lambda                Practical split factor (recommended 0.7).
-	/// \param worldUnitsPerTexel    World-space size of a shadow-map texel for stabilization (> 0).
+	/// \param shadowMapResolution   Shadow map resolution (e.g. 1024). Used to compute worldUnitsPerTexel per cascade; must be > 0.
 	/// \param outCascades           Output cascades uniform data (matrices + split depths).
 	void ComputeCascades(const Camera& camera,
 		const engine::math::Vec3& lightDirTowardLight,
 		float lambda,
-		float worldUnitsPerTexel,
+		uint32_t shadowMapResolution,
 		CascadesUniform& outCascades);
 }
 

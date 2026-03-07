@@ -10,9 +10,6 @@
 
 namespace engine::render
 {
-	/// Number of bloom mip levels (full, 1/2, 1/4, 1/8, 1/16, 1/32). M08.1.
-	constexpr uint32_t kBloomMipCount = 6;
-
 	/// Bloom prefilter pass (M08.1): samples SceneColor_HDR, applies soft threshold (threshold + knee),
 	/// writes BloomMip0 (HDR). Fullscreen triangle, one combined image sampler, push constants (threshold, knee).
 	class BloomPrefilterPass

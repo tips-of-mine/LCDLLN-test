@@ -20,14 +20,14 @@ namespace engine::render
 	/// Maximum LOD levels in the chain (M09.3).
 	constexpr uint32_t kMeshLodLevelCount = 4;
 
-	/// GPU mesh data: vertex and index buffers (owned by registry).
+	/// GPU mesh data: vertex and index buffers (owned by registry). Allocations are VMA (opaque void*).
 	/// M09.3: optional LOD chain — when lodLevelCount > 0, each LOD has indexOffset/indexCount in the same index buffer.
 	struct MeshAsset
 	{
 		VkBuffer vertexBuffer = VK_NULL_HANDLE;
 		VkBuffer indexBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory vertexMemory = VK_NULL_HANDLE;
-		VkDeviceMemory indexMemory = VK_NULL_HANDLE;
+		void* vertexAlloc = nullptr; ///< VmaAllocation
+		void* indexAlloc = nullptr; ///< VmaAllocation
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
 
@@ -54,12 +54,12 @@ namespace engine::render
 		}
 	};
 
-	/// GPU texture data: image and view (owned by registry).
+	/// GPU texture data: image and view (owned by registry). Allocation is VMA (opaque void*).
 	struct TextureAsset
 	{
 		VkImage image = VK_NULL_HANDLE;
 		VkImageView view = VK_NULL_HANDLE;
-		VkDeviceMemory memory = VK_NULL_HANDLE;
+		void* allocation = nullptr; ///< VmaAllocation
 		uint32_t width = 0;
 		uint32_t height = 0;
 	};
@@ -109,8 +109,8 @@ namespace engine::render
 		AssetRegistry(const AssetRegistry&) = delete;
 		AssetRegistry& operator=(const AssetRegistry&) = delete;
 
-		/// Initializes the registry for loading (needs device and physical device for GPU upload).
-		void Init(VkDevice device, VkPhysicalDevice physicalDevice, const engine::core::Config& config);
+		/// Initializes the registry for loading. vmaAllocator = centralised GPU allocator (VMA); cast to VmaAllocator in impl.
+		void Init(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, const engine::core::Config& config);
 
 		/// Loads a mesh from content path (relative to paths.content). Returns cached asset if already loaded.
 		/// Format: minimal binary .mesh (see implementation). Returns invalid handle on failure.
@@ -135,6 +135,7 @@ namespace engine::render
 	private:
 		VkDevice m_device = VK_NULL_HANDLE;
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+		void* m_vmaAllocator = nullptr;
 		const engine::core::Config* m_config = nullptr;
 
 		AssetId m_nextMeshId = 1;
@@ -146,6 +147,5 @@ namespace engine::render
 
 		AssetId loadMeshInternal(std::string_view relativePath);
 		AssetId loadTextureInternal(std::string_view relativePath, bool useSrgb);
-		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 	};
 }

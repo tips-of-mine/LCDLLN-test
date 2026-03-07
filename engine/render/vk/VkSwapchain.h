@@ -17,18 +17,13 @@ namespace engine::render
 		VkSwapchain& operator=(const VkSwapchain&) = delete;
 
 		/// Creates swapchain, image views, render pass, and framebuffers.
-		/// Format: SRGB if available; present mode: MAILBOX else FIFO.
-		/// \param physicalDevice Physical device (must be valid).
-		/// \param device Logical device (must be valid).
-		/// \param surface Presentation surface (must be valid).
-		/// \param graphicsQueueFamilyIndex Queue family for graphics.
-		/// \param presentQueueFamilyIndex Queue family for present.
-		/// \param requestedWidth Requested extent width (clamped to surface capabilities).
-		/// \param requestedHeight Requested extent height (clamped to surface capabilities).
-		/// \return true on success.
+		/// Format: SRGB if available. Present mode: use requestedPresentMode if supported, else FIFO.
+		/// FIFO blocks at vkQueuePresent until next VBlank; MAILBOX is low-latency vsync; IMMEDIATE disables vsync.
+		/// \param requestedPresentMode Preferred mode: VK_PRESENT_MODE_FIFO_KHR (vsync), VK_PRESENT_MODE_MAILBOX_KHR, or VK_PRESENT_MODE_IMMEDIATE_KHR.
 		bool Create(VkPhysicalDevice physicalDevice, ::VkDevice device, VkSurfaceKHR surface,
 			uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex,
-			uint32_t requestedWidth, uint32_t requestedHeight);
+			uint32_t requestedWidth, uint32_t requestedHeight,
+			VkPresentModeKHR requestedPresentMode = VK_PRESENT_MODE_FIFO_KHR);
 
 		/// Destroys framebuffers, render pass, image views, and swapchain. Safe to call multiple times.
 		void Destroy();
@@ -64,12 +59,17 @@ namespace engine::render
 		/// Returns true if Create() succeeded and swapchain is valid.
 		bool IsValid() const { return m_swapchain != VK_NULL_HANDLE; }
 
+		/// Current present mode (stored for Recreate).
+		VkPresentModeKHR GetPresentMode() const { return m_presentMode; }
+
 	private:
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 		::VkDevice m_device = VK_NULL_HANDLE;
 		VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 		uint32_t m_graphicsQueueFamilyIndex = 0;
 		uint32_t m_presentQueueFamilyIndex = 0;
+		VkPresentModeKHR m_presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		VkPresentModeKHR m_requestedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
 		VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 		VkFormat m_imageFormat = VK_FORMAT_UNDEFINED;

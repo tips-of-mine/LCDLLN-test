@@ -23,16 +23,20 @@ namespace engine::render
 			return formats.empty() ? VkSurfaceFormatKHR{} : formats[0];
 		}
 
-		VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& modes)
+		VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& modes, VkPresentModeKHR requested)
 		{
 			for (VkPresentModeKHR m : modes)
 			{
-				if (m == VK_PRESENT_MODE_MAILBOX_KHR)
-				{
+				if (m == requested)
 					return m;
-				}
 			}
-			return VK_PRESENT_MODE_FIFO_KHR;
+			// FIFO is required by the spec to be always available; fallback for compatibility.
+			for (VkPresentModeKHR m : modes)
+			{
+				if (m == VK_PRESENT_MODE_FIFO_KHR)
+					return m;
+			}
+			return modes.empty() ? VK_PRESENT_MODE_FIFO_KHR : modes[0];
 		}
 
 		VkExtent2D ClampExtent(uint32_t requestedWidth, uint32_t requestedHeight,
@@ -53,7 +57,8 @@ namespace engine::render
 
 	bool VkSwapchain::Create(VkPhysicalDevice physicalDevice, ::VkDevice device, VkSurfaceKHR surface,
 		uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex,
-		uint32_t requestedWidth, uint32_t requestedHeight)
+		uint32_t requestedWidth, uint32_t requestedHeight,
+		VkPresentModeKHR requestedPresentMode)
 	{
 		if (physicalDevice == VK_NULL_HANDLE || device == VK_NULL_HANDLE || surface == VK_NULL_HANDLE)
 		{
@@ -86,7 +91,9 @@ namespace engine::render
 		}
 
 		VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(formats);
-		VkPresentModeKHR presentMode = ChoosePresentMode(modes);
+		m_requestedPresentMode = requestedPresentMode;
+		m_presentMode = ChoosePresentMode(modes, requestedPresentMode);
+		VkPresentModeKHR presentMode = m_presentMode;
 		m_extent = ClampExtent(requestedWidth, requestedHeight, caps);
 		m_imageFormat = surfaceFormat.format;
 
@@ -227,7 +234,10 @@ namespace engine::render
 		m_graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
 		m_presentQueueFamilyIndex = presentQueueFamilyIndex;
 
-		LOG_INFO(Render, "VkSwapchain created: {} images, extent {}x{}", swapchainImageCount, m_extent.width, m_extent.height);
+		const char* modeName = (m_presentMode == VK_PRESENT_MODE_FIFO_KHR) ? "FIFO" :
+			(m_presentMode == VK_PRESENT_MODE_MAILBOX_KHR) ? "MAILBOX" :
+			(m_presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) ? "IMMEDIATE" : "OTHER";
+		LOG_INFO(Render, "VkSwapchain created: {} images, extent {}x{}, presentMode={}", swapchainImageCount, m_extent.width, m_extent.height, modeName);
 		return true;
 	}
 
@@ -284,7 +294,7 @@ namespace engine::render
 		Destroy();
 		return Create(m_physicalDevice, m_device, m_surface,
 			m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex,
-			requestedWidth, requestedHeight);
+			requestedWidth, requestedHeight, m_requestedPresentMode);
 	}
 
 	VkFramebuffer VkSwapchain::GetFramebuffer(uint32_t imageIndex) const

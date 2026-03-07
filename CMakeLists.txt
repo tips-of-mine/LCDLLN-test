@@ -20,7 +20,28 @@ endif()
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
+# Vulkan Memory Allocator (VMA): centralised GPU allocations to avoid maxMemoryAllocationCount limit.
+# Prefer vendored copy (submodule or CI cache) so build works without network; else FetchContent.
+set(VMA_INCLUDE_DIRS "")
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/VulkanMemoryAllocator/include/vk_mem_alloc.h")
+  get_filename_component(VMA_VENDORED_DIR "${CMAKE_SOURCE_DIR}/external/VulkanMemoryAllocator/include" ABSOLUTE)
+  set(VMA_INCLUDE_DIRS "${VMA_VENDORED_DIR}")
+  message(STATUS "VMA: using vendored external/VulkanMemoryAllocator")
+else()
+  include(FetchContent)
+  FetchContent_Declare(VMA
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+    GIT_TAG        v3.0.1
+  )
+  FetchContent_Populate(VMA)
+  get_filename_component(VMA_DIR_ABS "${vma_SOURCE_DIR}" ABSOLUTE)
+  set(VMA_INCLUDE_DIRS "${VMA_DIR_ABS}/include" "${VMA_DIR_ABS}")
+  message(STATUS "VMA: using FetchContent at ${VMA_DIR_ABS}")
+endif()
+
 add_library(engine_core
+  engine/render/vk/VmaAllocator.cpp
+  engine/render/vk/VkUtils.cpp
   engine/core/Config.cpp
   engine/core/jobs/JobSystem.cpp
   engine/core/Log.cpp
@@ -50,6 +71,7 @@ add_library(engine_core
   engine/render/BloomPass.cpp
   engine/render/AutoExposure.cpp
   engine/render/TaaPass.cpp
+  engine/render/DeferredPipeline.cpp
   engine/math/Frustum.cpp
   engine/world/WorldModel.cpp
   engine/world/ChunkBudgetStats.cpp
@@ -58,6 +80,7 @@ add_library(engine_core
 )
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${VMA_INCLUDE_DIRS}
 )
 target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan

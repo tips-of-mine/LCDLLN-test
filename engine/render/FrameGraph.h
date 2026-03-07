@@ -17,6 +17,9 @@ namespace engine::render
 	using ResourceId = uint32_t;
 	constexpr ResourceId kInvalidResourceId = 0;
 
+	/// Number of bloom mip levels (full, 1/2, …, 1/32). Used by FG and Engine; defined here to avoid including BloomPass.h.
+	constexpr uint32_t kBloomMipCount = 6;
+
 	/// Usage state for image resources (maps to layout + stage/access for barriers).
 	/// MVP: conservative barriers between passes; correct transitions for COLOR_ATTACHMENT, SAMPLED, TRANSFER.
 	enum class ImageUsage
@@ -43,6 +46,7 @@ namespace engine::render
 		uint32_t width = 0;
 		uint32_t height = 0;
 		uint32_t layers = 1;
+		uint32_t mipLevels = 1;
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 		bool transient = true;
@@ -154,12 +158,13 @@ namespace engine::render
 
 		/// Executes all passes in compiled topological order: ensures transient resources exist for the frame slot,
 		/// fills the registry, then runs each pass execute(cmd, registry). Compiles the graph on first run if needed.
+		/// \param vmaAllocator Centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
 		/// \param framesInFlight Number of frame slots (e.g. 2).
-		void execute(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandBuffer cmd,
+		void execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
 			Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight);
 
 		/// Releases all allocated Vulkan resources (call on shutdown or before resize).
-		void destroy(VkDevice device);
+		void destroy(VkDevice device, void* vmaAllocator);
 
 	private:
 		struct ImageResource
@@ -179,13 +184,13 @@ namespace engine::render
 		struct PerFrameImageHandles
 		{
 			VkImage image = VK_NULL_HANDLE;
-			VkDeviceMemory memory = VK_NULL_HANDLE;
+			void* allocation = nullptr; ///< VmaAllocation (opaque to avoid including vk_mem_alloc.h here).
 			VkImageView view = VK_NULL_HANDLE;
 		};
 		struct PerFrameBufferHandles
 		{
 			VkBuffer buffer = VK_NULL_HANDLE;
-			VkDeviceMemory memory = VK_NULL_HANDLE;
+			void* allocation = nullptr; ///< VmaAllocation (opaque to avoid including vk_mem_alloc.h here).
 		};
 		struct Pass
 		{
@@ -211,9 +216,9 @@ namespace engine::render
 		std::vector<size_t> m_compiledOrder;
 		bool m_compiled = false;
 
-		void ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice,
+		void ensureImageResources(VkDevice device, void* vmaAllocator,
 			uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight);
-		void ensureBufferResources(VkDevice device, VkPhysicalDevice physicalDevice,
+		void ensureBufferResources(VkDevice device, void* vmaAllocator,
 			uint32_t frameIndex, uint32_t framesInFlight);
 		void fillRegistry(Registry& registry, uint32_t frameIndex);
 	};

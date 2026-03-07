@@ -17,18 +17,6 @@
 #include "engine/render/TaaJitter.h"
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
-#include "engine/render/ShadowMapPass.h"
-#include "engine/render/BrdfLutPass.h"
-#include "engine/render/SpecularPrefilterPass.h"
-#include "engine/render/SsaoKernelNoise.h"
-#include "engine/render/SsaoPass.h"
-#include "engine/render/SsaoBlurPass.h"
-#include "engine/render/GeometryPass.h"
-#include "engine/render/LightingPass.h"
-#include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
-#include "engine/render/BloomPass.h"        // M08.1: bloom prefilter + downsample pyramid
-#include "engine/render/AutoExposure.h"      // M08.3: auto-exposure reduce luminance + temporal adapt
-#include "engine/render/TaaPass.h"          // M07.4: TAA reprojection + clamp
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
 #include "engine/world/WorldModel.h"
@@ -38,9 +26,12 @@
 
 struct GLFWwindow;
 
+namespace engine::render { class DeferredPipeline; }
+
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -144,40 +135,15 @@ namespace engine
 		/// M08.1: Bloom mip pyramid (BloomMip0 = full res, .. BloomMip5 = 1/32).
 		std::array<engine::render::ResourceId, engine::render::kBloomMipCount> m_fgBloomMipIds{};
 
-		engine::render::GeometryPass m_geometryPass;
-		engine::render::MeshHandle   m_geometryMeshHandle;
-
-		/// Depth-only shadow map pass for cascades. Added in M04.2.
-		engine::render::ShadowMapPass m_shadowMapPass;
-
-		/// BRDF LUT compute pass (M05.1): generates 256x256 RG16F split-sum GGX LUT at startup.
-		engine::render::BrdfLutPass m_brdfLutPass;
-		/// Specular prefilter pass (M05.3): prefiltered GGX cubemap with mips = roughness.
-		engine::render::SpecularPrefilterPass m_specularPrefilterPass;
-
-		/// SSAO kernel + 4x4 noise (M06.1): UBO and tiled noise texture, generated at boot.
-		engine::render::SsaoKernelNoise m_ssaoKernelNoise;
-		/// SSAO generate pass (M06.2): depth + normal -> SSAO_Raw (R16F).
-		engine::render::SsaoPass m_ssaoPass;
-		/// SSAO bilateral blur (M06.3): 2 passes H then V, depth-aware.
-		engine::render::SsaoBlurPass m_ssaoBlurPass;
-
-		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
-		engine::render::LightingPass m_lightingPass;
-		/// Filmic tonemap pass: SceneColor_HDR → SceneColor_LDR. Added in M03.4.
-		engine::render::TonemapPass  m_tonemapPass;
-		/// Bloom prefilter + downsample (M08.1): extract HDR highlights, pyramid 1/2..1/32.
-		engine::render::BloomPrefilterPass  m_bloomPrefilterPass;
-		engine::render::BloomDownsamplePass m_bloomDownsamplePass;
-		engine::render::BloomUpsamplePass   m_bloomUpsamplePass;
-		engine::render::BloomCombinePass    m_bloomCombinePass;
-		engine::render::AutoExposure        m_autoExposure;
-		/// TAA pass (M07.4): reproject history, clamp 3x3, blend.
-		engine::render::TaaPass      m_taaPass;
+		/// All deferred passes (geometry, shadow, SSAO, lighting, bloom, tonemap, TAA). Init/Destroy in Engine.cpp.
+		std::unique_ptr<engine::render::DeferredPipeline> m_pipeline;
+		engine::render::MeshHandle m_geometryMeshHandle;
 
 		engine::render::AssetRegistry m_assetRegistry;
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
+		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
+		void* m_vmaAllocator = nullptr;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

@@ -86,11 +86,6 @@ namespace engine::render
 		VkImageView    m_fallbackView[3]   = {};
 		VkDeviceMemory m_fallbackMemory[3] = {};
 
-		/// Finds a suitable device memory type index.
-		uint32_t findMemoryType(VkPhysicalDevice physDev,
-		                        uint32_t filter,
-		                        VkMemoryPropertyFlags props) const;
-
 		/// Creates a single 1×1 fallback texture with the given RGBA data and format.
 		bool createFallbackTexture(VkDevice device, VkPhysicalDevice physDev,
 		                           uint32_t idx, const uint8_t rgba[4],

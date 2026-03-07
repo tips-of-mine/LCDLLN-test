@@ -4,11 +4,29 @@
 
 #include <vulkan/vulkan.h>
 
+#include <cstdint>
+#include <functional>
+
 namespace engine::render
 {
 	namespace
 	{
 		constexpr uint32_t kPushConstantSize = 64u; // mat4 lightViewProj
+	}
+
+	bool ShadowMapPass::FramebufferKey::operator==(const FramebufferKey& o) const
+	{
+		return renderPass == o.renderPass && depthView == o.depthView && width == o.width && height == o.height;
+	}
+
+	size_t ShadowMapPass::FramebufferKeyHash::operator()(const FramebufferKey& k) const
+	{
+		size_t h = 0;
+		h ^= std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.renderPass)) + 0x9e3779b9u + (h << 6u) + (h >> 2u);
+		h ^= std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.depthView))  + 0x9e3779b9u + (h << 6u) + (h >> 2u);
+		h ^= std::hash<uint32_t>{}(k.width)  + 0x9e3779b9u + (h << 6u) + (h >> 2u);
+		h ^= std::hash<uint32_t>{}(k.height);
+		return h;
 	}
 
 	bool ShadowMapPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
@@ -256,18 +274,24 @@ namespace engine::render
 		if (depthView == VK_NULL_HANDLE)
 			return;
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments    = &depthView;
-		fbInfo.width           = m_resolution;
-		fbInfo.height          = m_resolution;
-		fbInfo.layers          = 1;
-
-		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
-			return;
+		FramebufferKey key{ m_renderPass, depthView, m_resolution, m_resolution };
+		auto it = m_fbCache.find(key);
+		if (it == m_fbCache.end())
+		{
+			VkFramebufferCreateInfo fbInfo{};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.pAttachments    = &depthView;
+			fbInfo.width           = m_resolution;
+			fbInfo.height          = m_resolution;
+			fbInfo.layers          = 1;
+			VkFramebuffer created = VK_NULL_HANDLE;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &created) != VK_SUCCESS)
+				return;
+			it = m_fbCache.emplace(key, created).first;
+		}
+		VkFramebuffer fb = it->second;
 
 		VkClearValue clear{};
 		clear.depthStencil = { 1.0f, 0 };
@@ -321,14 +345,24 @@ namespace engine::render
 		}
 
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
+	}
+
+	void ShadowMapPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+		for (auto& p : m_fbCache)
+		{
+			if (p.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, p.second, nullptr);
+		}
+		m_fbCache.clear();
 	}
 
 	void ShadowMapPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE)
 			return;
-
+		InvalidateFramebufferCache(device);
 		if (m_pipeline != VK_NULL_HANDLE)
 		{
 			vkDestroyPipeline(device, m_pipeline, nullptr);

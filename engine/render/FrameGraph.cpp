@@ -2,6 +2,7 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
+#include <vk_mem_alloc.h>
 
 #include <algorithm>
 
@@ -102,25 +103,6 @@ namespace engine::render
 	}
 
 	// --- FrameGraph (helpers) ---
-
-	namespace
-	{
-		uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-		{
-			VkPhysicalDeviceMemoryProperties memProps;
-			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
-
-			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
-			{
-				if ((typeFilter & (1u << i)) != 0
-					&& (memProps.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					return i;
-				}
-			}
-			return UINT32_MAX;
-		}
-	}
 
 	// --- FrameGraph ---
 
@@ -271,6 +253,11 @@ namespace engine::render
 				if (res.id == rid) return res.desc.isDepthAttachment ? VkImageAspectFlags(VK_IMAGE_ASPECT_DEPTH_BIT) : VkImageAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT);
 			return VkImageAspectFlags(VK_IMAGE_ASPECT_COLOR_BIT);
 		};
+		auto getImageDesc = [this](ResourceId rid) -> const ImageDesc* {
+			for (const auto& res : m_imageResources)
+				if (res.id == rid) return &res.desc;
+			return nullptr;
+		};
 		auto emitFor = [&](ResourceId rid, ImageUsage usage) {
 			VkImage image = registry.getImage(rid);
 			if (image == VK_NULL_HANDLE) return;
@@ -281,6 +268,10 @@ namespace engine::render
 				updates[rid] = target;
 				return;
 			}
+			const ImageDesc* desc = getImageDesc(rid);
+			const uint32_t levelCount = desc ? desc->mipLevels : 1u;
+			const uint32_t layerCount = desc ? desc->layers : 1u;
+
 			VkImageMemoryBarrier barrier{};
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			barrier.srcAccessMask = cur.accessMask;
@@ -292,9 +283,9 @@ namespace engine::render
 			barrier.image = image;
 			barrier.subresourceRange.aspectMask = getAspect(rid);
 			barrier.subresourceRange.baseMipLevel = 0;
-			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.levelCount = levelCount;
 			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = 1;
+			barrier.subresourceRange.layerCount = layerCount;
 			VkPipelineStageFlags srcStage = (cur.layout == VK_IMAGE_LAYOUT_UNDEFINED)
 				? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : cur.stageMask;
 			pending.push_back({ barrier, srcStage, target.stageMask });
@@ -325,15 +316,15 @@ namespace engine::render
 			lastUsage[u.first] = u.second;
 	}
 
-	void FrameGraph::execute(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandBuffer cmd,
+	void FrameGraph::execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
 		Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
 	{
 		if (!m_compiled)
 		{
 			compile();
 		}
-		ensureImageResources(device, physicalDevice, frameIndex, extent, framesInFlight);
-		ensureBufferResources(device, physicalDevice, frameIndex, framesInFlight);
+		ensureImageResources(device, vmaAllocator, frameIndex, extent, framesInFlight);
+		ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
 		fillRegistry(registry, frameIndex);
 
 		std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
@@ -348,9 +339,10 @@ namespace engine::render
 		}
 	}
 
-	void FrameGraph::destroy(VkDevice device)
+	void FrameGraph::destroy(VkDevice device, void* vmaAllocator)
 	{
-		if (device == VK_NULL_HANDLE) return;
+		if (device == VK_NULL_HANDLE || vmaAllocator == nullptr) return;
+		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
 
 		for (auto& perFrame : m_perFrameImageHandles)
 		{
@@ -361,15 +353,11 @@ namespace engine::render
 					vkDestroyImageView(device, h.view, nullptr);
 					h.view = VK_NULL_HANDLE;
 				}
-				if (h.image != VK_NULL_HANDLE)
+				if (h.image != VK_NULL_HANDLE && h.allocation != nullptr)
 				{
-					vkDestroyImage(device, h.image, nullptr);
+					vmaDestroyImage(alloc, h.image, static_cast<VmaAllocation>(h.allocation));
 					h.image = VK_NULL_HANDLE;
-				}
-				if (h.memory != VK_NULL_HANDLE)
-				{
-					vkFreeMemory(device, h.memory, nullptr);
-					h.memory = VK_NULL_HANDLE;
+					h.allocation = nullptr;
 				}
 			}
 		}
@@ -377,15 +365,11 @@ namespace engine::render
 		{
 			for (PerFrameBufferHandles& h : perFrame)
 			{
-				if (h.buffer != VK_NULL_HANDLE)
+				if (h.buffer != VK_NULL_HANDLE && h.allocation != nullptr)
 				{
-					vkDestroyBuffer(device, h.buffer, nullptr);
+					vmaDestroyBuffer(alloc, h.buffer, static_cast<VmaAllocation>(h.allocation));
 					h.buffer = VK_NULL_HANDLE;
-				}
-				if (h.memory != VK_NULL_HANDLE)
-				{
-					vkFreeMemory(device, h.memory, nullptr);
-					h.memory = VK_NULL_HANDLE;
+					h.allocation = nullptr;
 				}
 			}
 		}
@@ -393,14 +377,15 @@ namespace engine::render
 		m_lastFramesInFlight = 0;
 	}
 
-	void FrameGraph::ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice,
+	void FrameGraph::ensureImageResources(VkDevice device, void* vmaAllocator,
 		uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
 	{
+		if (vmaAllocator == nullptr) return;
 		const bool extentChanged = m_lastExtent.width != extent.width || m_lastExtent.height != extent.height;
 		const bool framesChanged = m_lastFramesInFlight != framesInFlight;
 		if (extentChanged || framesChanged)
 		{
-			destroy(device);
+			destroy(device, vmaAllocator);
 			m_lastExtent = extent;
 			m_lastFramesInFlight = framesInFlight;
 			for (auto& perFrame : m_perFrameImageHandles)
@@ -449,7 +434,7 @@ namespace engine::render
 			imageInfo.extent.width = width;
 			imageInfo.extent.height = height;
 			imageInfo.extent.depth = 1;
-			imageInfo.mipLevels = 1;
+			imageInfo.mipLevels = res.desc.mipLevels;
 			imageInfo.arrayLayers = res.desc.layers;
 			imageInfo.samples = res.desc.samples;
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -457,37 +442,16 @@ namespace engine::render
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-			VkResult result = vkCreateImage(device, &imageInfo, nullptr, &h.image);
+			VmaAllocationCreateInfo allocCreateInfo{};
+			allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+			VmaAllocation allocation = VK_NULL_HANDLE;
+			VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
 			if (result != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "FrameGraph: vkCreateImage failed for '{}': {}", res.name, static_cast<int>(result));
+				LOG_ERROR(Render, "FrameGraph: vmaCreateImage failed for '{}': {}", res.name, static_cast<int>(result));
 				continue;
 			}
-
-			VkMemoryRequirements memReq;
-			vkGetImageMemoryRequirements(device, h.image, &memReq);
-			uint32_t memTypeIndex = findMemoryType(physicalDevice, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-			if (memTypeIndex == UINT32_MAX)
-			{
-				LOG_ERROR(Render, "FrameGraph: no suitable memory type for image '{}'", res.name);
-				vkDestroyImage(device, h.image, nullptr);
-				h.image = VK_NULL_HANDLE;
-				continue;
-			}
-
-			VkMemoryAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memReq.size;
-			allocInfo.memoryTypeIndex = memTypeIndex;
-			result = vkAllocateMemory(device, &allocInfo, nullptr, &h.memory);
-			if (result != VK_SUCCESS)
-			{
-				LOG_ERROR(Render, "FrameGraph: vkAllocateMemory failed for image '{}': {}", res.name, static_cast<int>(result));
-				vkDestroyImage(device, h.image, nullptr);
-				h.image = VK_NULL_HANDLE;
-				continue;
-			}
-			vkBindImageMemory(device, h.image, h.memory, 0);
+			h.allocation = allocation;
 
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -500,7 +464,7 @@ namespace engine::render
 			viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 			viewInfo.subresourceRange.aspectMask = res.desc.isDepthAttachment ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = 1;
+			viewInfo.subresourceRange.levelCount = res.desc.mipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = res.desc.layers;
 
@@ -508,33 +472,30 @@ namespace engine::render
 			if (result != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "FrameGraph: vkCreateImageView failed for '{}': {}", res.name, static_cast<int>(result));
-				vkDestroyImage(device, h.image, nullptr);
-				vkFreeMemory(device, h.memory, nullptr);
+				vmaDestroyImage(static_cast<VmaAllocator>(vmaAllocator), h.image, static_cast<VmaAllocation>(h.allocation));
 				h.image = VK_NULL_HANDLE;
-				h.memory = VK_NULL_HANDLE;
+				h.allocation = nullptr;
 			}
 		}
 	}
 
-	void FrameGraph::ensureBufferResources(VkDevice device, VkPhysicalDevice physicalDevice,
+	void FrameGraph::ensureBufferResources(VkDevice device, void* vmaAllocator,
 		uint32_t frameIndex, uint32_t framesInFlight)
 	{
+		if (vmaAllocator == nullptr) return;
+		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
 		const bool framesChanged = m_lastFramesInFlight != framesInFlight;
-		if (framesChanged && m_lastFramesInFlight != 0)
+		if (framesChanged && m_lastFramesInFlight != 0 && vmaAllocator != nullptr)
 		{
 			for (auto& perFrame : m_perFrameBufferHandles)
 			{
 				for (PerFrameBufferHandles& h : perFrame)
 				{
-					if (h.buffer != VK_NULL_HANDLE)
+					if (h.buffer != VK_NULL_HANDLE && h.allocation != nullptr)
 					{
-						vkDestroyBuffer(device, h.buffer, nullptr);
+						vmaDestroyBuffer(alloc, h.buffer, static_cast<VmaAllocation>(h.allocation));
 						h.buffer = VK_NULL_HANDLE;
-					}
-					if (h.memory != VK_NULL_HANDLE)
-					{
-						vkFreeMemory(device, h.memory, nullptr);
-						h.memory = VK_NULL_HANDLE;
+						h.allocation = nullptr;
 					}
 				}
 			}
@@ -558,37 +519,16 @@ namespace engine::render
 			bufInfo.usage = res.desc.usage;
 			bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			VkResult result = vkCreateBuffer(device, &bufInfo, nullptr, &h.buffer);
+			VmaAllocationCreateInfo allocCreateInfo{};
+			allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+			VmaAllocation allocation = VK_NULL_HANDLE;
+			VkResult result = vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &h.buffer, &allocation, nullptr);
 			if (result != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "FrameGraph: vkCreateBuffer failed for '{}': {}", res.name, static_cast<int>(result));
+				LOG_ERROR(Render, "FrameGraph: vmaCreateBuffer failed for '{}': {}", res.name, static_cast<int>(result));
 				continue;
 			}
-
-			VkMemoryRequirements memReq;
-			vkGetBufferMemoryRequirements(device, h.buffer, &memReq);
-			uint32_t memTypeIndex = findMemoryType(physicalDevice, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-			if (memTypeIndex == UINT32_MAX)
-			{
-				LOG_ERROR(Render, "FrameGraph: no suitable memory type for buffer '{}'", res.name);
-				vkDestroyBuffer(device, h.buffer, nullptr);
-				h.buffer = VK_NULL_HANDLE;
-				continue;
-			}
-
-			VkMemoryAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memReq.size;
-			allocInfo.memoryTypeIndex = memTypeIndex;
-			result = vkAllocateMemory(device, &allocInfo, nullptr, &h.memory);
-			if (result != VK_SUCCESS)
-			{
-				LOG_ERROR(Render, "FrameGraph: vkAllocateMemory failed for buffer '{}': {}", res.name, static_cast<int>(result));
-				vkDestroyBuffer(device, h.buffer, nullptr);
-				h.buffer = VK_NULL_HANDLE;
-				continue;
-			}
-			vkBindBufferMemory(device, h.buffer, h.memory, 0);
+			h.allocation = allocation;
 		}
 	}
 

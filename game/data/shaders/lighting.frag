@@ -7,25 +7,30 @@
 //   GBufferB (binding 1) – world normal, A2B10G10R10_UNORM, encoded as N*0.5+0.5
 //   GBufferC (binding 2) – ORM, R8G8B8A8_UNORM: R=AO, G=Roughness, B=Metallic
 //   Depth    (binding 3) – scene depth, D32_SFLOAT, sampled as float in .r
+//   (M05.4)  binding 4 – irradiance cubemap, 5 – prefiltered specular cubemap, 6 – BRDF LUT
 //
 // Outputs:
 //   outSceneColorHDR (location 0) – SceneColor_HDR, R16G16B16A16_SFLOAT
 //
-// Push constants (128 bytes, fragment stage):
+// Push constants (132 bytes, fragment stage):
 //   mat4  invVP         – inverse view-projection matrix
 //   vec4  cameraPos     – camera world-space position (xyz, w unused)
 //   vec4  lightDir      – normalised direction *toward* the light (xyz, w unused)
 //   vec4  lightColor    – RGB radiance (color * intensity, w unused)
-//   vec4  ambientColor  – constant ambient RGB (w unused)
+//   vec4  ambientColor  – constant ambient RGB (fallback when useIBL == 0)
+//   float useIBL        – 1.0 = use IBL, 0.0 = constant ambient
 
 layout(location = 0) in  vec2 inUV;
 layout(location = 0) out vec4 outSceneColorHDR;
 
 // ---- GBuffer samplers -------------------------------------------------------
-layout(set = 0, binding = 0) uniform sampler2D gbufA;    // albedo (sRGB->linear)
-layout(set = 0, binding = 1) uniform sampler2D gbufB;    // normal  [0,1] encoded
-layout(set = 0, binding = 2) uniform sampler2D gbufC;    // ORM     [0,1]
-layout(set = 0, binding = 3) uniform sampler2D depthTex; // depth, .r = [0,1]
+layout(set = 0, binding = 0) uniform sampler2D gbufA;       // albedo (sRGB->linear)
+layout(set = 0, binding = 1) uniform sampler2D gbufB;       // normal  [0,1] encoded
+layout(set = 0, binding = 2) uniform sampler2D gbufC;       // ORM     [0,1]
+layout(set = 0, binding = 3) uniform sampler2D depthTex;    // depth, .r = [0,1]
+layout(set = 0, binding = 4) uniform samplerCube irradianceMap;  // M05.4 diffuse IBL
+layout(set = 0, binding = 5) uniform samplerCube prefilterMap;  // M05.4 specular IBL
+layout(set = 0, binding = 6) uniform sampler2D   brdfLut;       // M05.4 BRDF LUT (scale, bias)
 
 // ---- Push constants ---------------------------------------------------------
 layout(push_constant) uniform PC
@@ -34,7 +39,8 @@ layout(push_constant) uniform PC
     vec4  cameraPos;    // camera world-space position (xyz, w unused)
     vec4  lightDir;     // normalised direction toward the directional light (xyz)
     vec4  lightColor;   // RGB radiance (xyz = color * intensity)
-    vec4  ambientColor; // constant ambient RGB (xyz)
+    vec4  ambientColor; // constant ambient RGB (fallback when useIBL == 0)
+    float useIBL;       // 1.0 = use IBL, 0.0 = constant ambient
 } pc;
 
 // ---- Constants --------------------------------------------------------------
@@ -119,8 +125,9 @@ void main()
     float G  = G_Smith(NdotV, NdotL, roughness);
     vec3  F  = F_Schlick(VdotH, F0);
 
+    // kD = (1 - kS) * (1 - metallic). M05.4 spec.
     vec3  kS = F;
-    vec3  kD = (1.0 - kS) * (1.0 - metallic); // energy conservation; metals have no diffuse
+    vec3  kD = (1.0 - kS) * (1.0 - metallic);
 
     // Specular lobe: DGF / (4 * NdotV * NdotL).
     vec3  specular = (D * G * F) / max(4.0 * NdotV * NdotL, 1e-7);
@@ -131,8 +138,26 @@ void main()
     // ---- Direct lighting contribution ----------------------------------
     vec3  Lo = (diffuse + specular) * pc.lightColor.rgb * NdotL;
 
-    // ---- Ambient (IBL placeholder – constant term) ---------------------
-    vec3  ambient = pc.ambientColor.rgb * albedo * ao;
+    // ---- Ambient: IBL (split-sum diffuse + spec) or fallback constant -------
+    vec3  ambient;
+    if (pc.useIBL > 0.5)
+    {
+        // Diffuse IBL: irradiance along N.
+        vec3  diffuseIBL = texture(irradianceMap, normalW).rgb * albedo * kD;
+
+        // Specular IBL: prefiltered(R, lod) * (F * brdf.x + brdf.y).
+        vec3  R = reflect(-V, normalW);
+        float lod = roughness * float(textureQueryLevels(prefilterMap) - 1);
+        vec3  prefiltered = textureLod(prefilterMap, R, lod).rgb;
+        vec2  brdfSample  = texture(brdfLut, vec2(NdotV, roughness)).rg;
+        vec3  specIBL     = prefiltered * (F * brdfSample.x + brdfSample.y);
+
+        ambient = (diffuseIBL + specIBL) * ao;
+    }
+    else
+    {
+        ambient = pc.ambientColor.rgb * albedo * ao;
+    }
 
     // ---- Combine & output HDR ------------------------------------------
     vec3  color = ambient + Lo;

@@ -72,9 +72,6 @@ jobs:
               Select-Object -First 1
             if ($found) {
               Copy-Item $found.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-              Write-Host "Copié : $($found.FullName)"
-            } else {
-              Write-Warning "Introuvable : $dll"
             }
           }
 
@@ -82,31 +79,6 @@ jobs:
           $ucrt = "C:\Windows\System32\ucrtbase.dll"
           if (Test-Path $ucrt) {
             Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-            Write-Host "Copié : $ucrt"
-          }
-
-          Write-Host "=== Contenu final des artifacts ==="
-          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" | Select-Object Name, Length
-
-      - name: Diagnostic DLLs
-        shell: pwsh
-        run: |
-          $dumpbin = Get-ChildItem -Recurse `
-            -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-
-          Write-Host "=== DLLs dans vcpkg_installed ==="
-          Get-ChildItem -Recurse `
-            -Path "$env:GITHUB_WORKSPACE\build\vs2022-x64\vcpkg_installed" `
-            -Filter "*.dll" -ErrorAction SilentlyContinue |
-            Select-Object FullName
-
-          Write-Host "=== Dépendances de toutes les DLLs dans artifacts ==="
-          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" -Filter "*.dll" |
-          ForEach-Object {
-            Write-Host "--- $($_.Name) ---"
-            & $dumpbin.FullName /dependents $_.FullName
           }
 
       - name: Upload artifacts

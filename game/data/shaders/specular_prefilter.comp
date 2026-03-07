@@ -1,0 +1,125 @@
+#version 450
+
+// M05.3: Prefiltered specular cubemap (GGX importance sampling).
+// Reads from source env cubemap (binding 0), writes to one face/mip (binding 1).
+// Dispatched once per face per mip; roughness = mipLevel / (mipCount-1).
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0) uniform samplerCube uEnvMap;
+layout(binding = 1, rgba16f) writeonly uniform image2D uOut;
+
+layout(push_constant, std430) uniform PC {
+	uint face;       // 0..5 cubemap face
+	uint faceSize;   // width/height of this mip level
+	float roughness;
+	float _pad;
+} pc;
+
+const float PI = 3.14159265359;
+
+// GGX/Trowbridge-Reitz NDF.
+float DistributionGGX(float NdotH, float roughness)
+{
+	float a  = roughness * roughness;
+	float a2 = a * a;
+	float d  = (NdotH * NdotH) * (a2 - 1.0) + 1.0;
+	return a2 / (PI * d * d + 1e-7);
+}
+
+// Van der Corput / Hammersley.
+float RadicalInverse_VdC(uint bits)
+{
+	bits = (bits << 16u) | (bits >> 16u);
+	bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+	bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+	bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+	bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+	return float(bits) * 2.3283064365386963e-10;
+}
+
+vec2 Hammersley(uint i, uint N)
+{
+	return vec2(float(i) / float(N), RadicalInverse_VdC(i));
+}
+
+// Importance sample GGX: tangent-space H, then transform to world.
+vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
+{
+	float a = roughness * roughness;
+	float phi = 2.0 * PI * Xi.x;
+	float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
+	float sinTheta = sqrt(max(1.0 - cosTheta * cosTheta, 0.0));
+
+	vec3 H;
+	H.x = cos(phi) * sinTheta;
+	H.y = sin(phi) * sinTheta;
+	H.z = cosTheta;
+
+	vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+	vec3 tangent   = normalize(cross(up, N));
+	vec3 bitangent = cross(N, tangent);
+
+	return normalize(tangent * H.x + bitangent * H.y + N * H.z);
+}
+
+// (face 0..5, u,v in [-1,1]) -> direction from cube center.
+vec3 FaceUvToDirection(uint face, float u, float v)
+{
+	switch (face) {
+		case 0u: return normalize(vec3( 1.0, -v, -u)); // +X
+		case 1u: return normalize(vec3(-1.0, -v,  u)); // -X
+		case 2u: return normalize(vec3( u,  1.0, -v)); // +Y
+		case 3u: return normalize(vec3( u, -1.0,  v)); // -Y
+		case 4u: return normalize(vec3( u, -v,  1.0)); // +Z
+		default: return normalize(vec3(-u, -v, -1.0)); // -Z (5)
+	}
+}
+
+void main()
+{
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+	uint faceSize = pc.faceSize;
+	if (coord.x >= int(faceSize) || coord.y >= int(faceSize))
+		return;
+
+	float u = 2.0 * (float(coord.x) + 0.5) / float(faceSize) - 1.0;
+	float v = 2.0 * (float(coord.y) + 0.5) / float(faceSize) - 1.0;
+	vec3 N = FaceUvToDirection(pc.face, u, v);
+
+	vec3 R = N;
+	vec3 V = R;
+
+	const uint SAMPLE_COUNT = 1024u;
+	vec3 prefilteredColor = vec3(0.0);
+	float totalWeight = 0.0;
+
+	for (uint i = 0u; i < SAMPLE_COUNT; ++i)
+	{
+		vec2 Xi = Hammersley(i, SAMPLE_COUNT);
+		vec3 H  = ImportanceSampleGGX(Xi, N, pc.roughness);
+		vec3 L  = normalize(2.0 * dot(V, H) * H - V);
+
+		float NdotL = max(dot(N, L), 0.0);
+		if (NdotL > 0.0)
+		{
+			float NdotH = max(dot(N, H), 0.0);
+			float HdotV = max(dot(H, V), 0.0);
+			float D = DistributionGGX(NdotH, pc.roughness);
+			float pdf = D * NdotH / (4.0 * HdotV + 1e-7) + 1e-6;
+
+			float resolution = 512.0;
+			float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+			float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf);
+
+			float mipLevel = pc.roughness <= 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
+			mipLevel = clamp(mipLevel, 0.0, 10.0);
+
+			prefilteredColor += textureLod(uEnvMap, L, mipLevel).rgb * NdotL;
+			totalWeight += NdotL;
+		}
+	}
+
+	prefilteredColor = totalWeight > 0.0 ? (prefilteredColor / totalWeight) : vec3(0.0);
+	imageStore(uOut, coord, vec4(prefilteredColor, 1.0));
+}

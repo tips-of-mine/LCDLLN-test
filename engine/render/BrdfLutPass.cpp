@@ -279,14 +279,14 @@ namespace engine::render
 		if (device == VK_NULL_HANDLE || queue == VK_NULL_HANDLE || m_cmdPool == VK_NULL_HANDLE)
 			return false;
 
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = m_cmdPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = 1;
+		VkCommandBufferAllocateInfo cmdBufAllocInfo{};
+		cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufAllocInfo.commandPool = m_cmdPool;
+		cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmdBufAllocInfo.commandBufferCount = 1;
 
 		VkCommandBuffer cmd = VK_NULL_HANDLE;
-		if (vkAllocateCommandBuffers(device, &allocInfo, &cmd) != VK_SUCCESS)
+		if (vkAllocateCommandBuffers(device, &cmdBufAllocInfo, &cmd) != VK_SUCCESS)
 			return false;
 
 		VkCommandBufferBeginInfo beginInfo{};

@@ -39,6 +39,7 @@ add_library(engine_core
   engine/render/Camera.cpp
   engine/render/CascadedShadowMaps.cpp
   engine/render/BrdfLutPass.cpp
+  engine/render/SpecularPrefilterPass.cpp
   engine/render/ShadowMapPass.cpp
   engine/render/GeometryPass.cpp
   engine/render/LightingPass.cpp

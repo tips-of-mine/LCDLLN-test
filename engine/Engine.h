@@ -18,6 +18,7 @@
 #include "engine/render/CascadedShadowMaps.h"
 #include "engine/render/ShadowMapPass.h"
 #include "engine/render/BrdfLutPass.h"
+#include "engine/render/SpecularPrefilterPass.h"
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
@@ -113,6 +114,8 @@ namespace engine
 
 		/// BRDF LUT compute pass (M05.1): generates 256x256 RG16F split-sum GGX LUT at startup.
 		engine::render::BrdfLutPass m_brdfLutPass;
+		/// Specular prefilter pass (M05.3): prefiltered GGX cubemap with mips = roughness.
+		engine::render::SpecularPrefilterPass m_specularPrefilterPass;
 
 		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
 		engine::render::LightingPass m_lightingPass;

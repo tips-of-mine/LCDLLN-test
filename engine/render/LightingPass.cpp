@@ -148,11 +148,11 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 2. Descriptor set layout: 4 combined image samplers (GBufA/B/C + Depth)
+		// 2. Descriptor set layout: 7 combined image samplers (GBufA/B/C, Depth, irradiance, prefilter, BRDF LUT)
 		// -----------------------------------------------------------------
 		{
-			std::array<VkDescriptorSetLayoutBinding, 4> bindings{};
-			for (uint32_t i = 0; i < 4; ++i)
+			std::array<VkDescriptorSetLayoutBinding, 7> bindings{};
+			for (uint32_t i = 0; i < 7; ++i)
 			{
 				bindings[i].binding            = i;
 				bindings[i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -163,7 +163,7 @@ namespace engine::render
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = 4;
+			layoutInfo.bindingCount = 7;
 			layoutInfo.pBindings    = bindings.data();
 
 			VkResult res = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_descriptorSetLayout);
@@ -176,12 +176,12 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 3. Descriptor pool: maxFrames sets, 4 combined image samplers each
+		// 3. Descriptor pool: maxFrames sets, 7 combined image samplers each
 		// -----------------------------------------------------------------
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 4 * m_maxFrames;
+			poolSize.descriptorCount = 7 * m_maxFrames;
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -255,13 +255,13 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 6. Pipeline layout: descriptor set 0 + push constants (128 bytes, fragment)
+		// 6. Pipeline layout: descriptor set 0 + push constants (132 bytes, fragment)
 		// -----------------------------------------------------------------
 		{
 			VkPushConstantRange pushRange{};
 			pushRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushRange.offset     = 0;
-			pushRange.size       = static_cast<uint32_t>(sizeof(LightParams)); // 128 bytes
+			pushRange.size       = static_cast<uint32_t>(sizeof(LightParams)); // 132 bytes (M05.4 useIBL)
 
 			VkPipelineLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -389,6 +389,9 @@ namespace engine::render
 		VkExtent2D extent,
 		ResourceId idGBufA, ResourceId idGBufB, ResourceId idGBufC, ResourceId idDepth,
 		ResourceId idSceneColorHDR,
+		VkImageView irradianceView, VkSampler irradianceSampler,
+		VkImageView prefilterView, VkSampler prefilterSampler,
+		VkImageView brdfLutView, VkSampler brdfLutSampler,
 		const LightParams& params, uint32_t frameIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
@@ -409,21 +412,30 @@ namespace engine::render
 			return;
 		}
 
+		// IBL: when irradiance absent bind prefilter for slot 4 so descriptor valid; params.useIBL is 0.
+		VkImageView irrView = (irradianceView != VK_NULL_HANDLE) ? irradianceView : prefilterView;
+		VkSampler   irrSamp = (irradianceSampler != VK_NULL_HANDLE) ? irradianceSampler : prefilterSampler;
+		if (prefilterView == VK_NULL_HANDLE) { prefilterView = viewA; prefilterSampler = m_sampler; }
+		if (brdfLutView == VK_NULL_HANDLE) { brdfLutView = viewA; brdfLutSampler = m_sampler; }
+		if (irrView == VK_NULL_HANDLE) { irrView = viewA; irrSamp = m_sampler; }
+
 		// ------------------------------------------------------------------
-		// Update descriptor set for this frame with current GBuffer views.
-		// This is safe because the descriptor set is not in flight while we record.
+		// Update descriptor set for this frame with GBuffer + IBL views.
 		// ------------------------------------------------------------------
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
-		std::array<VkDescriptorImageInfo, 4> imageInfos{};
-		imageInfos[0] = { m_sampler,      viewA, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		imageInfos[1] = { m_sampler,      viewB, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		imageInfos[2] = { m_sampler,      viewC, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		imageInfos[3] = { m_depthSampler, viewD, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		std::array<VkDescriptorImageInfo, 7> imageInfos{};
+		imageInfos[0] = { m_sampler,         viewA,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[1] = { m_sampler,         viewB,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[2] = { m_sampler,         viewC,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[3] = { m_depthSampler,    viewD,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[4] = { irrSamp,           irrView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[5] = { prefilterSampler,  prefilterView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[6] = { brdfLutSampler,    brdfLutView,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 
-		std::array<VkWriteDescriptorSet, 4> writes{};
-		for (uint32_t i = 0; i < 4; ++i)
+		std::array<VkWriteDescriptorSet, 7> writes{};
+		for (uint32_t i = 0; i < 7; ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writes[i].dstSet          = ds;
@@ -433,7 +445,7 @@ namespace engine::render
 			writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[i].pImageInfo      = &imageInfos[i];
 		}
-		vkUpdateDescriptorSets(device, 4, writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(device, 7, writes.data(), 0, nullptr);
 
 		// ------------------------------------------------------------------
 		// Create a temporary framebuffer for this frame.

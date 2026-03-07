@@ -201,6 +201,48 @@ namespace engine
 					}
 
 					// --------------------------------------------------
+					// M05.3: Specular prefilter pass (prefiltered GGX cubemap + mips).
+					// Generate() is only called when a source env cubemap is available (e.g. M05.2).
+					// --------------------------------------------------
+					{
+						std::vector<uint32_t> specPrefilterComp = loadSpv("shaders/specular_prefilter.comp.spv");
+						if (specPrefilterComp.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path cp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/specular_prefilter.comp");
+								auto c = compiler.CompileGlslToSpirv(cp, engine::render::ShaderStage::Compute);
+								if (c.has_value() && !c->empty())
+									specPrefilterComp = std::move(*c);
+							}
+						}
+						if (!specPrefilterComp.empty())
+						{
+							const uint32_t specSize = 256u;
+							const uint32_t specMipCount = 6u;
+							if (m_specularPrefilterPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								specSize, specMipCount,
+								specPrefilterComp.data(), specPrefilterComp.size(),
+								m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
+							{
+								// Generate() requires source env cubemap view/sampler (e.g. from M05.2).
+								// When available, call: m_specularPrefilterPass.Generate(device, queue, envView, envSampler);
+							}
+							else
+							{
+								LOG_WARN(Render, "M05.3: Specular prefilter init failed — disabled");
+							}
+						}
+						else
+						{
+							LOG_WARN(Render, "M05.3: specular_prefilter.comp not found — disabled");
+						}
+					}
+
+					// --------------------------------------------------
 					// Clear pass (legacy, clears SceneColor swapchain image).
 					// --------------------------------------------------
 					m_frameGraph.addPass("Clear",
@@ -484,18 +526,31 @@ namespace engine
 							lp.lightColor[2] = 0.85f;
 							lp.lightColor[3] = 0.0f;
 
-							// Constant ambient (IBL placeholder — very dark blue-grey).
+							// Constant ambient (fallback when IBL absent). M05.4.
 							lp.ambientColor[0] = 0.03f;
 							lp.ambientColor[1] = 0.03f;
 							lp.ambientColor[2] = 0.05f;
 							lp.ambientColor[3] = 0.0f;
+
+							// M05.4: IBL when irradiance + prefilter + BRDF LUT all available; else fallback.
+							VkImageView irrView = VK_NULL_HANDLE;  // M05.2 not implemented yet
+							VkSampler   irrSamp = VK_NULL_HANDLE;
+							VkImageView prefilterView = m_specularPrefilterPass.IsValid()
+								? m_specularPrefilterPass.GetImageView() : VK_NULL_HANDLE;
+							VkSampler   prefilterSamp = m_specularPrefilterPass.IsValid()
+								? m_specularPrefilterPass.GetSampler() : VK_NULL_HANDLE;
+							VkImageView brdfView = m_brdfLutPass.GetImageView();
+							VkSampler   brdfSamp = m_brdfLutPass.GetSampler();
+							lp.useIBL = (irrView != VK_NULL_HANDLE && prefilterView != VK_NULL_HANDLE && brdfView != VK_NULL_HANDLE) ? 1.0f : 0.0f;
 
 							const uint32_t frameIdx = m_currentFrame % 2;
 							m_lightingPass.Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
-								m_fgSceneColorHDRId, lp, frameIdx);
+								m_fgSceneColorHDRId,
+								irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
+								lp, frameIdx);
 						});
 
 					// Pass: Tonemap (M03.4) — reads SceneColor_HDR, applies ACES filmic +
@@ -637,6 +692,7 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_specularPrefilterPass.Destroy(m_vkDeviceContext.GetDevice()); // M05.3
 			m_brdfLutPass.Destroy(m_vkDeviceContext.GetDevice());   // M05.1
 			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4
 			m_lightingPass.Destroy(m_vkDeviceContext.GetDevice()); // M03.2

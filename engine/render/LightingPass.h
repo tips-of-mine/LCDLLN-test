@@ -14,12 +14,13 @@ namespace engine::render
 	///
 	/// Reads GBuffer A (albedo), B (normal), C (ORM: AO/Roughness/Metallic) and Depth,
 	/// reconstructs world position via the inverse view-projection matrix,
-	/// applies one directional light + constant ambient, and writes SceneColor_HDR
-	/// (R16G16B16A16_SFLOAT).
+	/// applies one directional light + IBL (split-sum diffuse + specular) or constant
+	/// ambient fallback, and writes SceneColor_HDR (R16G16B16A16_SFLOAT). M05.4.
 	///
 	/// Pipeline: fullscreen triangle (3 vertices, no vertex buffer).
-	/// Descriptor set 0: four combined image samplers (GBufA, GBufB, GBufC, Depth).
-	/// Push constants (128 bytes): invVP, cameraPos, lightDir, lightColor, ambientColor.
+	/// Descriptor set 0: 7 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
+	/// prefiltered specular, BRDF LUT). Push constants (132 bytes): invVP, cameraPos,
+	/// lightDir, lightColor, ambientColor, useIBL.
 	class LightingPass
 	{
 	public:
@@ -29,12 +30,13 @@ namespace engine::render
 		struct LightParams
 		{
 			float invViewProj[16]; ///< Inverse view-projection matrix, column-major (64 bytes).
-			float cameraPos[4];    ///< Camera world-space position xyz, w unused (16 bytes).
-			float lightDir[4];     ///< Normalized direction *toward* the light, xyz, w unused.
+			float cameraPos[4];   ///< Camera world-space position xyz, w unused (16 bytes).
+			float lightDir[4];    ///< Normalized direction *toward* the light, xyz, w unused.
 			float lightColor[4];   ///< RGB radiance (color * intensity), w unused.
-			float ambientColor[4]; ///< Constant ambient RGB, w unused.
+			float ambientColor[4]; ///< Constant ambient RGB, w unused (fallback when IBL absent).
+			float useIBL;          ///< 1.0 = use IBL (irradiance + prefilter + BRDF LUT), 0.0 = fallback.
 		};
-		static_assert(sizeof(LightParams) == 128, "LightParams must be exactly 128 bytes");
+		static_assert(sizeof(LightParams) == 132, "LightParams must be exactly 132 bytes");
 
 		LightingPass() = default;
 		LightingPass(const LightingPass&) = delete;
@@ -52,13 +54,20 @@ namespace engine::render
 			uint32_t maxFrames = 2);
 
 		/// Records the lighting pass into cmd.
-		/// Updates the frame's descriptor set with the current GBuffer image views,
+		/// Updates the frame's descriptor set with the current GBuffer and IBL image views,
 		/// creates a temporary framebuffer, begins the render pass, draws the fullscreen triangle,
 		/// and ends the render pass (framebuffer is destroyed immediately after).
+		/// When irradianceView is VK_NULL_HANDLE, IBL is disabled (useIBL=0, constant ambient).
+		/// \param irradianceView / irradianceSampler  Irradiance cubemap (M05.2); may be null.
+		/// \param prefilterView / prefilterSampler     Prefiltered specular cubemap (M05.3).
+		/// \param brdfLutView / brdfLutSampler         BRDF LUT 2D (M05.1).
 		/// \param frameIndex  Current in-flight frame index (0 .. maxFrames-1).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
 			ResourceId idGBufA, ResourceId idGBufB, ResourceId idGBufC, ResourceId idDepth,
 			ResourceId idSceneColorHDR,
+			VkImageView irradianceView, VkSampler irradianceSampler,
+			VkImageView prefilterView, VkSampler prefilterSampler,
+			VkImageView brdfLutView, VkSampler brdfLutSampler,
 			const LightParams& params, uint32_t frameIndex);
 
 		/// Releases all Vulkan resources. Safe to call even when not initialized.

@@ -36,30 +36,6 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
-      - name: Diagnostic contenu artifacts et vcpkg
-        shell: pwsh
-        run: |
-          $dumpbin = Get-ChildItem -Recurse `
-            -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-
-          Write-Host "=== Contenu artifacts ==="
-          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" | Select-Object Name
-
-          Write-Host "=== DLLs dans vcpkg_installed ==="
-          Get-ChildItem -Recurse `
-            -Path "$env:GITHUB_WORKSPACE\build\vs2022-x64\vcpkg_installed" `
-            -Filter "*.dll" -ErrorAction SilentlyContinue |
-            Select-Object FullName
-
-          Write-Host "=== Dépendances de toutes les DLLs dans artifacts ==="
-          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" -Filter "*.dll" |
-          ForEach-Object {
-            Write-Host "--- $($_.Name) ---"
-            & $dumpbin.FullName /dependents $_.FullName
-          }
-
       - name: Collect artifacts
         shell: pwsh
         run: |
@@ -78,49 +54,69 @@ jobs:
               -Destination "$env:GITHUB_WORKSPACE\artifacts\assets" -Force
           }
 
-          # Copie les DLLs MSVC (Release + Debug) depuis VS Redist
+          # Copie les DLLs MSVC Release depuis VS Redist
           $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
-          $dlls = @(
-            "MSVCP140.dll",
-            "MSVCP140D.dll",
-            "VCRUNTIME140.dll",
-            "VCRUNTIME140D.dll",
-            "VCRUNTIME140_1.dll",
-            "VCRUNTIME140_1D.dll"
-          )
+          $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
           foreach ($dll in $dlls) {
             $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
               -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -like "*x64*" } |
+              Where-Object { $_.FullName -like "*x64*" -and $_.FullName -notlike "*debug_nonredist*" -and $_.FullName -notlike "*onecore*" } |
               Select-Object -First 1
             if ($found) {
               Copy-Item $found.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
               Write-Host "Copié : $($found.FullName)"
             } else {
-              Write-Warning "Introuvable dans Redist : $dll"
+              Write-Warning "Introuvable : $dll"
             }
           }
 
-          # Copie ucrtbase (Release) depuis System32
-          $ucrtRelease = "C:\Windows\System32\ucrtbase.dll"
-          if (Test-Path $ucrtRelease) {
-            Copy-Item $ucrtRelease -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-            Write-Host "Copié : $ucrtRelease"
+          # Copie les DLLs depuis System32
+          $system32Dlls = @(
+            "C:\Windows\System32\ucrtbase.dll",
+            "C:\Windows\System32\vcruntime140d.dll"
+          )
+          foreach ($f in $system32Dlls) {
+            if (Test-Path $f) {
+              Copy-Item $f -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+              Write-Host "Copié : $f"
+            } else {
+              Write-Warning "Introuvable : $f"
+            }
           }
 
-          # Copie ucrtbased (Debug) depuis Windows SDK
-          $sdkBase = "C:\Program Files (x86)\Windows Kits\10\Redist"
-          $ucrtDebug = Get-ChildItem -Recurse -Path $sdkBase `
-            -Filter "ucrtbased.dll" -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*x64*" } |
+          # Copie VCRUNTIME140D.dll depuis debug_nonredist\x64
+          $vcrDebug = Get-ChildItem -Recurse -Path $vcRedistBase `
+            -Filter "VCRUNTIME140D.dll" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*debug_nonredist\x64*" } |
             Select-Object -First 1
-          if ($ucrtDebug) {
-            Copy-Item $ucrtDebug.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-            Write-Host "Copié : $($ucrtDebug.FullName)"
+          if ($vcrDebug) {
+            Copy-Item $vcrDebug.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+            Write-Host "Copié : $($vcrDebug.FullName)"
           }
 
           Write-Host "=== Contenu final des artifacts ==="
           Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" | Select-Object Name, Length
+
+      - name: Diagnostic DLLs
+        shell: pwsh
+        run: |
+          $dumpbin = Get-ChildItem -Recurse `
+            -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+          Write-Host "=== DLLs dans vcpkg_installed ==="
+          Get-ChildItem -Recurse `
+            -Path "$env:GITHUB_WORKSPACE\build\vs2022-x64\vcpkg_installed" `
+            -Filter "*.dll" -ErrorAction SilentlyContinue |
+            Select-Object FullName
+
+          Write-Host "=== Dépendances de toutes les DLLs dans artifacts ==="
+          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" -Filter "*.dll" |
+          ForEach-Object {
+            Write-Host "--- $($_.Name) ---"
+            & $dumpbin.FullName /dependents $_.FullName
+          }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -128,4 +124,4 @@ jobs:
           name: windows-release-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
-          retention-days: 5
+          retention-days: 7

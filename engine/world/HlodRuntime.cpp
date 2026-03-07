@@ -59,8 +59,7 @@ namespace engine::world
 		for (size_t i = 0; i < requestedChunksCount; ++i)
 		{
 			const ChunkRequest& req = requestedChunks[i];
-		{
-			ChunkBounds bounds2d = World::ChunkBounds(req.chunkId);
+			struct ChunkBounds bounds2d = World::ChunkBounds(req.chunkId);
 			engine::math::Vec3 aabbMin(bounds2d.minX, 0.0f, bounds2d.minZ);
 			engine::math::Vec3 aabbMax(bounds2d.maxX, kChunkAabbMaxY, bounds2d.maxZ);
 			float cx = (aabbMin.x + aabbMax.x) * 0.5f;

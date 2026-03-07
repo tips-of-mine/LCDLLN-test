@@ -25,26 +25,21 @@ namespace engine::render
 
 		/// Creates render pass and pipeline.
 		/// Shader SPIR-V words must remain valid until Destroy() is called.
-		/// \param vertSpirv       Vertex shader SPIR-V (position, normal, uv; push constant mat4 viewProj).
-		/// \param fragSpirv       Fragment shader SPIR-V (samples BaseColor/Normal/ORM; writes GBuf A/B/C).
+		/// \param formatVelocity  M07.3: velocity buffer format (e.g. R16G16_SFLOAT).
 		/// \param materialLayout  Optional descriptor set layout for material textures (set = 0).
-		///                        Pass VK_NULL_HANDLE to keep the previous hardcoded-colour behaviour.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
-		          VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat depthFormat,
+		          VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 		          const uint32_t* vertSpirv, size_t vertWordCount,
 		          const uint32_t* fragSpirv, size_t fragWordCount,
 		          VkDescriptorSetLayout materialLayout = VK_NULL_HANDLE);
 
 		/// Records the geometry pass: begin render pass, bind pipeline (and material descriptor
 		/// set if provided), draw mesh, end pass.
-		/// Creates and destroys a temporary framebuffer per call.
-		/// \param viewProjMat4         Column-major 4×4 view-projection matrix (16 floats).
-		/// \param mesh                 Mesh to draw, or nullptr to skip the draw call.
-		/// \param materialDescriptorSet  Optional material descriptor set (set = 0). Ignored if
-		///                               VK_NULL_HANDLE or if Init was called without a materialLayout.
+		/// \param prevViewProjMat4  M07.3: previous frame view-projection (column-major 4×4).
+		/// \param viewProjMat4      Current frame view-projection (column-major 4×4).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
-		            ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idDepth,
-		            const float* viewProjMat4, const MeshAsset* mesh,
+		            ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+		            const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE);
 
 		/// Releases render pass and pipeline. Safe to call when not initialized.

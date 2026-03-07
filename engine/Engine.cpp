@@ -106,6 +106,12 @@ namespace engine
 					gbufCDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 					m_fgGBufferCId   = m_frameGraph.createImage("GBufferC", gbufCDesc);
 
+					// M07.3: GBufferVelocity — motion vectors (currNDC - prevNDC), R16G16F.
+					engine::render::ImageDesc gbufVelDesc{};
+					gbufVelDesc.format = VK_FORMAT_R16G16_SFLOAT;
+					gbufVelDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgGBufferVelocityId = m_frameGraph.createImage("GBufferVelocity", gbufVelDesc);
+
 					// M03.2: depth also needs SAMPLED_BIT for the lighting pass to read it.
 					engine::render::ImageDesc depthDesc{};
 					depthDesc.format            = VK_FORMAT_D32_SFLOAT;
@@ -141,6 +147,16 @@ namespace engine
 					ssaoBlurDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 					m_fgSsaoBlurTempId = m_frameGraph.createImage("SSAO_Blur_Temp", ssaoBlurDesc);
 					m_fgSsaoBlurId     = m_frameGraph.createImage("SSAO_Blur", ssaoBlurDesc);
+
+					// M07.2: TAA history ping-pong (format LDR = input TAA format).
+					engine::render::ImageDesc historyDesc{};
+					historyDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+					historyDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+					                   | VK_IMAGE_USAGE_SAMPLED_BIT
+					                   | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+					                   | VK_IMAGE_USAGE_TRANSFER_SRC_BIT; // M07.4: CopyPresent blit from HistoryNext
+					m_fgHistoryAId = m_frameGraph.createImage("HistoryA", historyDesc);
+					m_fgHistoryBId = m_frameGraph.createImage("HistoryB", historyDesc);
 
 					// M04.2: ShadowMap[0..3] — depth-only cascades (D32, depth attachment + sampled).
 					const uint32_t shadowRes =
@@ -381,6 +397,7 @@ namespace engine
 								VK_FORMAT_R8G8B8A8_SRGB,
 								VK_FORMAT_A2B10G10R10_UNORM_PACK32,
 								VK_FORMAT_R8G8B8A8_UNORM,
+								VK_FORMAT_R16G16_SFLOAT,  // M07.3: velocity
 								VK_FORMAT_D32_SFLOAT,
 								vertSpirv.data(), vertSpirv.size(),
 								fragSpirv.data(), fragSpirv.size());
@@ -492,6 +509,40 @@ namespace engine
 						}
 					}
 
+					// M07.4: TAA pass shaders — reprojection + clamp + blend.
+					{
+						std::vector<uint32_t> taaVert = loadSpv("shaders/taa.vert.spv");
+						std::vector<uint32_t> taaFrag = loadSpv("shaders/taa.frag.spv");
+						if (taaVert.empty() || taaFrag.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/taa.vert");
+								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/taa.frag");
+								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
+								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
+								if (v.has_value() && !v->empty()) taaVert = std::move(*v);
+								if (f.has_value() && !f->empty()) taaFrag = std::move(*f);
+							}
+						}
+						if (!taaVert.empty() && !taaFrag.empty())
+						{
+							if (m_taaPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								VK_FORMAT_R8G8B8A8_UNORM,
+								taaVert.data(), taaVert.size(),
+								taaFrag.data(), taaFrag.size(),
+								2u))
+								LOG_INFO(Render, "M07.4: TAA pass ready");
+							else
+								LOG_WARN(Render, "M07.4: TAA pass init failed");
+						}
+						else
+							LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
+					}
+
 					// Load test mesh.
 					m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
 
@@ -499,23 +550,24 @@ namespace engine
 					// Frame graph passes
 					// --------------------------------------------------
 
-					// Pass: Geometry — fills GBuffer A/B/C + Depth.
+					// Pass: Geometry — fills GBuffer A/B/C + Velocity (M07.3) + Depth.
 					m_frameGraph.addPass("Geometry",
 						[this](engine::render::PassBuilder& b) {
-							b.write(m_fgGBufferAId, engine::render::ImageUsage::ColorWrite);
-							b.write(m_fgGBufferBId, engine::render::ImageUsage::ColorWrite);
-							b.write(m_fgGBufferCId, engine::render::ImageUsage::ColorWrite);
-							b.write(m_fgDepthId,    engine::render::ImageUsage::DepthWrite);
+							b.write(m_fgGBufferAId,       engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgGBufferBId,       engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgGBufferCId,       engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgGBufferVelocityId, engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgDepthId,          engine::render::ImageUsage::DepthWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-							const engine::math::Mat4& viewProj = m_renderStates[readIdx].viewProjMatrix;
+							const engine::RenderState& rs = m_renderStates[readIdx];
 							engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
 							m_geometryPass.Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
-								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
-								viewProj.m, mesh);
+								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+								rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh);
 						});
 
 					// Passes: ShadowMap[0..3] (M04.2) — depth-only render per cascade.
@@ -764,14 +816,86 @@ namespace engine
 								tp, frameIdx);
 						});
 
-					// Pass: CopyPresent — blit SceneColor_LDR (UNORM) → swapchain.
-					m_frameGraph.addPass("CopyPresent",
+					// Pass: TAA_InitHistory (M07.2) — when init/reset, copy current LDR to both history buffers.
+					m_frameGraph.addPass("TAA_InitHistory",
 						[this](engine::render::PassBuilder& b) {
 							b.read(m_fgSceneColorLDRId, engine::render::ImageUsage::TransferSrc);
-							b.write(m_fgBackbufferId,   engine::render::ImageUsage::TransferDst);
+							b.write(m_fgHistoryAId, engine::render::ImageUsage::TransferDst);
+							b.write(m_fgHistoryBId, engine::render::ImageUsage::TransferDst);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_taaHistoryInvalid) return;
+
 							VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
+							if (srcImg == VK_NULL_HANDLE) return;
+
+							VkExtent2D ext = m_vkSwapchain.GetExtent();
+							VkImageCopy region{};
+							region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+							region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+							region.extent = { ext.width, ext.height, 1 };
+
+							if (!m_taaHistoryEverFilled)
+							{
+								// First frame: init both history buffers with current.
+								VkImage dstA = reg.getImage(m_fgHistoryAId);
+								VkImage dstB = reg.getImage(m_fgHistoryBId);
+								if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
+								{
+									vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+										dstA, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+										dstB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									m_taaHistoryEverFilled = true;
+								}
+							}
+							else
+							{
+								// Reset: copy current -> history next only.
+								engine::render::ResourceId nextId = GetTaaHistoryNextId();
+								VkImage dstNext = reg.getImage(nextId);
+								if (dstNext != VK_NULL_HANDLE)
+									vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+										dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+							}
+						});
+
+					// Pass: TAA (M07.4) — read LDR + HistoryPrev + Velocity + Depth, write HistoryNext.
+					m_frameGraph.addPass("TAA",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSceneColorLDRId,  engine::render::ImageUsage::SampledRead);
+							b.read(m_fgHistoryAId,      engine::render::ImageUsage::SampledRead);
+							b.read(m_fgHistoryBId,      engine::render::ImageUsage::SampledRead);
+							b.read(m_fgGBufferVelocityId, engine::render::ImageUsage::SampledRead);
+							b.read(m_fgDepthId,         engine::render::ImageUsage::SampledRead);
+							b.write(m_fgHistoryAId,     engine::render::ImageUsage::ColorWrite);
+							b.write(m_fgHistoryBId,     engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_taaPass.IsValid()) return;
+							VkExtent2D extent = m_vkSwapchain.GetExtent();
+							const uint32_t frameIdx = m_currentFrame % 2u;
+							engine::render::TaaPass::TaaParams tp{};
+							tp.alpha = 0.9f;
+							tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
+							m_taaPass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg, extent,
+								m_fgSceneColorLDRId, GetTaaHistoryPrevId(), m_fgGBufferVelocityId, m_fgDepthId,
+								GetTaaHistoryNextId(), tp, frameIdx);
+						});
+
+					// Pass: CopyPresent — blit TAA output (HistoryNext) or LDR fallback → swapchain.
+					m_frameGraph.addPass("CopyPresent",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgHistoryAId,       engine::render::ImageUsage::TransferSrc);
+							b.read(m_fgHistoryBId,      engine::render::ImageUsage::TransferSrc);
+							b.read(m_fgSceneColorLDRId,  engine::render::ImageUsage::TransferSrc);
+							b.write(m_fgBackbufferId,    engine::render::ImageUsage::TransferDst);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							// TAA output is in HistoryNext; when TAA disabled, use LDR.
+							engine::render::ResourceId srcId = m_taaPass.IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
+							VkImage srcImg = reg.getImage(srcId);
 							VkImage dstImg = reg.getImage(m_fgBackbufferId);
 							if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 
@@ -885,6 +1009,7 @@ namespace engine
 			m_ssaoKernelNoise.Destroy(m_vkDeviceContext.GetDevice());     // M06.1
 			m_specularPrefilterPass.Destroy(m_vkDeviceContext.GetDevice()); // M05.3
 			m_brdfLutPass.Destroy(m_vkDeviceContext.GetDevice());   // M05.1
+			m_taaPass.Destroy(m_vkDeviceContext.GetDevice());      // M07.4
 			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4
 			m_lightingPass.Destroy(m_vkDeviceContext.GetDevice()); // M03.2
 			m_geometryPass.Destroy(m_vkDeviceContext.GetDevice());
@@ -949,9 +1074,33 @@ namespace engine
 		if (m_width > 0 && m_height > 0)
 			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
 
-		out.viewMatrix     = out.camera.ComputeViewMatrix();
-		out.projMatrix     = out.camera.ComputeProjectionMatrix();
+		// M07.1: Reset TAA history on FOV change (resize handled in OnResize).
+		if (m_width > 0 && m_height > 0
+			&& std::abs(out.camera.fovYDeg - readState.camera.fovYDeg) > 0.0001f)
+			m_taaHistoryInvalid = true;
+
+		out.viewMatrix = out.camera.ComputeViewMatrix();
+		out.projMatrix = out.camera.ComputeProjectionMatrix();
+
+		// M07.1: Halton jitter in NDC, apply to projection; store prev/curr ViewProj + jitter.
+		const uint32_t taaSampleIndex = m_currentFrame % engine::render::kTaaHaltonN;
+		float jitterX = 0.0f;
+		float jitterY = 0.0f;
+		if (!m_taaHistoryInvalid && m_width > 0 && m_height > 0)
+			engine::render::GetJitterNdc(taaSampleIndex,
+				static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height),
+				jitterX, jitterY);
+		// Apply NDC jitter to projection (column-major: add to z column so NDC.x += jitterX, NDC.y += jitterY).
+		out.projMatrix.m[8] += jitterX;
+		out.projMatrix.m[9] += jitterY;
+
 		out.viewProjMatrix = out.projMatrix * out.viewMatrix;
+		out.jitterCurrNdc[0] = jitterX;
+		out.jitterCurrNdc[1] = jitterY;
+		out.prevViewProjMatrix = m_taaHistoryInvalid ? out.viewProjMatrix : readState.viewProjMatrix;
+		if (m_taaHistoryInvalid)
+			m_taaHistoryInvalid = false;
+
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
 
 		// M04.1: compute cascaded shadow matrices and split distances for a default sun light.
@@ -1067,10 +1216,25 @@ namespace engine
 		m_renderReadIndex.store(writeIdx, std::memory_order_release);
 	}
 
+	engine::render::ResourceId Engine::GetTaaHistoryPrevId() const
+	{
+		// prev = idx^1, next = idx; idx = m_currentFrame % 2 (write target this frame).
+		const uint32_t nextIdx = m_currentFrame % 2u;
+		const uint32_t prevIdx = nextIdx ^ 1u;
+		return prevIdx == 0u ? m_fgHistoryAId : m_fgHistoryBId;
+	}
+
+	engine::render::ResourceId Engine::GetTaaHistoryNextId() const
+	{
+		const uint32_t nextIdx = m_currentFrame % 2u;
+		return nextIdx == 0u ? m_fgHistoryAId : m_fgHistoryBId;
+	}
+
 	void Engine::OnResize(int w, int h)
 	{
 		m_width  = w;
 		m_height = h;
+		m_taaHistoryInvalid = true; // M07.1: reset TAA history on resize
 		m_swapchainResizeRequested = true;
 	}
 

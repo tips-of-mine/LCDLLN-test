@@ -47,6 +47,7 @@ add_library(engine_core
   engine/render/GeometryPass.cpp
   engine/render/LightingPass.cpp
   engine/render/TonemapPass.cpp
+  engine/render/TaaPass.cpp
   engine/math/Frustum.cpp
 )
 target_include_directories(engine_core PUBLIC

@@ -1,27 +1,26 @@
 #version 450
-// GBuffer geometry fragment shader — M03.3
-//
-// Samples three per-material textures (set = 0):
-//   binding 0: BaseColor (sRGB — hardware linearises on sample)
-//   binding 1: Normal map (linear, tangent-space, R=X G=Y B=Z encoded [0,1])
-//   binding 2: ORM (linear, R=AO G=Roughness B=Metallic — UE4 ORM packing)
+// GBuffer geometry fragment shader — M03.3, M07.3 motion vectors
 //
 // Outputs:
-//   location 0 (GBufferA, R8G8B8A8_SRGB)   : albedo (sRGB value; hardware encodes on write)
-//   location 1 (GBufferB, normal packed)    : world-space normal encoded as N*0.5+0.5
-//   location 2 (GBufferC, R8G8B8A8_UNORM)  : ORM (R=AO, G=Roughness, B=Metallic)
+//   location 0 (GBufferA)   : albedo
+//   location 1 (GBufferB)   : world-space normal encoded N*0.5+0.5
+//   location 2 (GBufferC)   : ORM (R=AO, G=Roughness, B=Metallic)
+//   location 3 (GBufferVelocity, R16G16F) : velocity = currNDC - prevNDC (M07.3)
 
 layout(location = 0) in vec3 vNormal;
 layout(location = 1) in vec2 vUv;
+layout(location = 2) in vec4 vPrevClip;
+layout(location = 3) in vec4 vCurrClip;
 
 // Per-material textures (set = 0, bound by MaterialDescriptorCache).
 layout(set = 0, binding = 0) uniform sampler2D uBaseColor; // sRGB, linear-filter, repeat
 layout(set = 0, binding = 1) uniform sampler2D uNormal;    // linear, tangent-space normal map
 layout(set = 0, binding = 2) uniform sampler2D uORM;       // linear, R=AO G=Roughness B=Metallic
 
-layout(location = 0) out vec4 outAlbedo; // GBufferA
-layout(location = 1) out vec4 outNormal; // GBufferB
-layout(location = 2) out vec4 outORM;    // GBufferC
+layout(location = 0) out vec4 outAlbedo;   // GBufferA
+layout(location = 1) out vec4 outNormal;  // GBufferB
+layout(location = 2) out vec4 outORM;     // GBufferC
+layout(location = 3) out vec4 outVelocity; // GBufferVelocity (M07.3, .rg = currNDC - prevNDC)
 
 void main()
 {
@@ -43,6 +42,11 @@ void main()
     outNormal = vec4(N * 0.5 + 0.5, 1.0);
 
     // ---- ORM --------------------------------------------------------------
-    // Direct sample: R=AO, G=Roughness, B=Metallic (linear space).
     outORM = vec4(texture(uORM, vUv).rgb, 1.0);
+
+    // ---- Velocity (M07.3) --------------------------------------------------
+    // currNDC - prevNDC for TAA reprojection.
+    vec2 prevNDC = vPrevClip.xy / max(vPrevClip.w, 1e-6);
+    vec2 currNDC = vCurrClip.xy / max(vCurrClip.w, 1e-6);
+    outVelocity = vec4(currNDC - prevNDC, 0.0, 1.0);
 }

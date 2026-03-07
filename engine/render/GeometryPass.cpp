@@ -9,11 +9,12 @@ namespace engine::render
 {
 	namespace
 	{
-		constexpr uint32_t kPushConstantSize = 64u; // mat4 viewProj
+		/// M07.3: prevViewProj (64) + viewProj (64) for motion vectors.
+		constexpr uint32_t kPushConstantSize = 128u;
 	}
 
 	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
-	    VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat depthFormat,
+	    VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 	    const uint32_t* vertSpirv, size_t vertWordCount,
 	    const uint32_t* fragSpirv, size_t fragWordCount,
 	    VkDescriptorSetLayout materialLayout)
@@ -52,25 +53,36 @@ namespace engine::render
 		attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachments[2].finalLayout   = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		attachments[3].format        = depthFormat;
+		// M07.3: velocity (R16G16F).
+		attachments[3].format        = formatVelocity;
 		attachments[3].samples       = VK_SAMPLE_COUNT_1_BIT;
 		attachments[3].loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[3].storeOp       = VK_ATTACHMENT_STORE_OP_STORE;
 		attachments[3].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[3].stencilStoreOp= VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[3].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[3].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[3].finalLayout   = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		VkAttachmentReference colorRefs[3] = {
+		attachments[4].format        = depthFormat;
+		attachments[4].samples       = VK_SAMPLE_COUNT_1_BIT;
+		attachments[4].loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[4].storeOp       = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[4].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[4].stencilStoreOp= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[4].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[4].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference colorRefs[4] = {
 			{ 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
 			{ 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
-			{ 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }
+			{ 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+			{ 3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }
 		};
-		VkAttachmentReference depthRef = { 3, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference depthRef = { 4, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount    = 3;
+		subpass.colorAttachmentCount    = 4;
 		subpass.pColorAttachments       = colorRefs;
 		subpass.pDepthStencilAttachment = &depthRef;
 
@@ -84,7 +96,7 @@ namespace engine::render
 
 		VkRenderPassCreateInfo rpInfo = {};
 		rpInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpInfo.attachmentCount = 4;
+		rpInfo.attachmentCount = 5;
 		rpInfo.pAttachments    = attachments;
 		rpInfo.subpassCount    = 1;
 		rpInfo.pSubpasses      = &subpass;
@@ -101,7 +113,7 @@ namespace engine::render
 		// -------------------------------------------------------------------------
 		// Pipeline layout:
 		//   - set 0 (optional): material descriptor set layout (BaseColor/Normal/ORM)
-		//   - push constant: mat4 viewProj (vertex stage, 64 bytes)
+		//   - push constant: prevViewProj + viewProj (vertex stage, 128 bytes, M07.3)
 		// -------------------------------------------------------------------------
 		VkPushConstantRange pushRange = {};
 		pushRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -222,14 +234,14 @@ namespace engine::render
 		ds.depthWriteEnable = VK_TRUE;
 		ds.depthCompareOp   = VK_COMPARE_OP_LESS_OR_EQUAL;
 
-		VkPipelineColorBlendAttachmentState blendAtt[3] = {};
+		VkPipelineColorBlendAttachmentState blendAtt[4] = {};
 		for (auto& att : blendAtt)
 			att.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
 			                   | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
 		VkPipelineColorBlendStateCreateInfo cb = {};
 		cb.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		cb.attachmentCount = 3;
+		cb.attachmentCount = 4;
 		cb.pAttachments    = blendAtt;
 
 		VkDynamicState dynStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
@@ -275,26 +287,27 @@ namespace engine::render
 
 	void GeometryPass::Record(VkDevice device, VkCommandBuffer cmd,
 	    Registry& registry, VkExtent2D extent,
-	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idDepth,
-	    const float* viewProjMat4, const MeshAsset* mesh,
+	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+	    const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 	    VkDescriptorSet materialDescriptorSet)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
 
-		VkImageView viewA     = registry.getImageView(idA);
-		VkImageView viewB     = registry.getImageView(idB);
-		VkImageView viewC     = registry.getImageView(idC);
-		VkImageView viewDepth = registry.getImageView(idDepth);
-		if (!viewA || !viewB || !viewC || !viewDepth)
+		VkImageView viewA       = registry.getImageView(idA);
+		VkImageView viewB      = registry.getImageView(idB);
+		VkImageView viewC      = registry.getImageView(idC);
+		VkImageView viewVel    = registry.getImageView(idVelocity);
+		VkImageView viewDepth  = registry.getImageView(idDepth);
+		if (!viewA || !viewB || !viewC || !viewVel || !viewDepth)
 			return;
 
-		// Temporary framebuffer for this frame.
-		VkImageView views[4] = { viewA, viewB, viewC, viewDepth };
+		// Temporary framebuffer for this frame (4 color + depth).
+		VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
 		VkFramebufferCreateInfo fbInfo = {};
 		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 4;
+		fbInfo.attachmentCount = 5;
 		fbInfo.pAttachments    = views;
 		fbInfo.width           = extent.width;
 		fbInfo.height          = extent.height;
@@ -304,18 +317,19 @@ namespace engine::render
 		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
 			return;
 
-		VkClearValue clearValues[4] = {};
+		VkClearValue clearValues[5] = {};
 		clearValues[0].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 		clearValues[1].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 		clearValues[2].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clearValues[3].depthStencil = { 1.0f, 0 };
+		clearValues[3].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } }; // velocity
+		clearValues[4].depthStencil = { 1.0f, 0 };
 
 		VkRenderPassBeginInfo rpBegin = {};
 		rpBegin.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		rpBegin.renderPass      = m_renderPass;
 		rpBegin.framebuffer     = fb;
 		rpBegin.renderArea      = { { 0, 0 }, extent };
-		rpBegin.clearValueCount = 4;
+		rpBegin.clearValueCount = 5;
 		rpBegin.pClearValues    = clearValues;
 
 		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
@@ -330,9 +344,13 @@ namespace engine::render
 		VkRect2D scissor = { { 0, 0 }, extent };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		if (viewProjMat4)
+		// M07.3: push prevViewProj (64 bytes) then viewProj (64 bytes).
+		if (prevViewProjMat4 && viewProjMat4)
 			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-			                   kPushConstantSize, viewProjMat4);
+			                   kPushConstantSize, prevViewProjMat4);
+		if (viewProjMat4)
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64,
+			                   64u, viewProjMat4);
 
 		// Bind material descriptor set (set = 0) if the pass was initialised with one.
 		if (m_hasMaterialLayout && materialDescriptorSet != VK_NULL_HANDLE)

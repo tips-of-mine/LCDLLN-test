@@ -14,6 +14,7 @@
 #include "engine/render/ShaderCache.h"
 #include "engine/render/ShaderCompiler.h"
 #include "engine/render/ShaderHotReload.h"
+#include "engine/render/TaaJitter.h"
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
 #include "engine/render/ShadowMapPass.h"
@@ -25,6 +26,7 @@
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
+#include "engine/render/TaaPass.h"          // M07.4: TAA reprojection + clamp
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
 
@@ -43,6 +45,10 @@ namespace engine
 		engine::math::Mat4 viewMatrix;
 		engine::math::Mat4 projMatrix;
 		engine::math::Mat4 viewProjMatrix;
+		/// M07.1: ViewProj from previous frame (for TAA reprojection).
+		engine::math::Mat4 prevViewProjMatrix;
+		/// M07.1: Current frame jitter in NDC (x, y), applied to projection.
+		float jitterCurrNdc[2]{ 0.0f, 0.0f };
 		engine::math::Frustum frustum;
 		engine::render::CascadesUniform cascades;
 
@@ -67,6 +73,10 @@ namespace engine
 		/// Returns the shader cache (e.g. to get SPIR-V by key).
 		engine::render::ShaderCache& GetShaderCache() { return m_shaderCache; }
 		const engine::render::ShaderCache& GetShaderCache() const { return m_shaderCache; }
+
+		/// M07.2: TAA history ping-pong. next = write target this frame, prev = read (previous frame).
+		engine::render::ResourceId GetTaaHistoryPrevId() const;
+		engine::render::ResourceId GetTaaHistoryNextId() const;
 
 	private:
 		void BeginFrame();
@@ -101,6 +111,8 @@ namespace engine
 		engine::render::ResourceId m_fgGBufferAId        = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgGBufferBId        = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgGBufferCId        = engine::render::kInvalidResourceId;
+		/// M07.3: velocity buffer (currNDC - prevNDC), R16G16F.
+		engine::render::ResourceId m_fgGBufferVelocityId = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgDepthId           = engine::render::kInvalidResourceId;
 		/// SceneColor_HDR: output of the deferred lighting pass (R16G16B16A16_SFLOAT). Added in M03.2.
 		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
@@ -112,6 +124,9 @@ namespace engine
 		engine::render::ResourceId m_fgSsaoBlurTempId   = engine::render::kInvalidResourceId;
 		/// SSAO_Blur: output of bilateral blur (2 passes). M06.3.
 		engine::render::ResourceId m_fgSsaoBlurId       = engine::render::kInvalidResourceId;
+		/// M07.2: TAA history ping-pong (format LDR = input TAA format).
+		engine::render::ResourceId m_fgHistoryAId       = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgHistoryBId        = engine::render::kInvalidResourceId;
 		/// Shadow maps per cascade (depth + sampled). Added in M04.2.
 		std::array<engine::render::ResourceId, engine::render::kCascadeCount> m_fgShadowMapIds{};
 
@@ -137,6 +152,8 @@ namespace engine
 		engine::render::LightingPass m_lightingPass;
 		/// Filmic tonemap pass: SceneColor_HDR → SceneColor_LDR. Added in M03.4.
 		engine::render::TonemapPass  m_tonemapPass;
+		/// TAA pass (M07.4): reproject history, clamp 3x3, blend.
+		engine::render::TaaPass      m_taaPass;
 
 		engine::render::AssetRegistry m_assetRegistry;
 
@@ -152,5 +169,9 @@ namespace engine
 		double m_fixedDt = 0.0;
 		int m_width = 0;
 		int m_height = 0;
+		/// M07.1: When true, TAA prev history is invalid (resize/FOV/teleport); next frame prev = curr.
+		bool m_taaHistoryInvalid = true;
+		/// M07.2: True after first TAA history init (both buffers filled); on reset we copy only to next.
+		bool m_taaHistoryEverFilled = false;
 	};
 }

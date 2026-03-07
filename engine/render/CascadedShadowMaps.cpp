@@ -142,13 +142,15 @@ namespace engine::render
 	void ComputeCascades(const Camera& camera,
 		const engine::math::Vec3& lightDirTowardLight,
 		float lambda,
-		float worldUnitsPerTexel,
+		uint32_t shadowMapResolution,
 		CascadesUniform& outCascades)
 	{
 		using engine::math::Mat4;
 		using engine::math::Vec3;
 
-		const float safeWorldUnitsPerTexel = (worldUnitsPerTexel > 0.0f) ? worldUnitsPerTexel : 1.0f;
+		const float invShadowRes = (shadowMapResolution > 0u)
+			? (1.0f / static_cast<float>(shadowMapResolution))
+			: 1.0f;
 
 		// 1) Compute split distances in view space.
 		float splits[kCascadeCount]{};
@@ -282,13 +284,21 @@ namespace engine::render
 				maxZ = std::max(maxZ, lz);
 			}
 
-			// 7) Stabilization: snap orthographic center to a world-space texel grid in light space.
+			// 7) Stabilization: snap orthographic center to shadow-map texel grid in light space.
+			// worldUnitsPerTexel = extent / shadowResolution so that one texel = one grid step.
+			const float extentX = maxX - minX;
+			const float extentY = maxY - minY;
+			const float extent = std::max(extentX, extentY);
+			const float worldUnitsPerTexel = (extent > 0.0f && shadowMapResolution > 0u)
+				? (extent * invShadowRes)
+				: 1.0f;
+
 			const float centerX = 0.5f * (minX + maxX);
 			const float centerY = 0.5f * (minY + maxY);
 
-			const float invTex = 1.0f / safeWorldUnitsPerTexel;
-			const float snappedCenterX = std::floor(centerX * invTex + 0.5f) * safeWorldUnitsPerTexel;
-			const float snappedCenterY = std::floor(centerY * invTex + 0.5f) * safeWorldUnitsPerTexel;
+			const float invTex = 1.0f / worldUnitsPerTexel;
+			const float snappedCenterX = std::floor(centerX * invTex + 0.5f) * worldUnitsPerTexel;
+			const float snappedCenterY = std::floor(centerY * invTex + 0.5f) * worldUnitsPerTexel;
 
 			const float offsetX = snappedCenterX - centerX;
 			const float offsetY = snappedCenterY - centerY;

@@ -3,6 +3,7 @@
 #include "engine/platform/FileSystem.h"
 
 #include <vulkan/vulkan_core.h>
+#include <vk_mem_alloc.h>
 
 #include <cstring>
 #include <algorithm>
@@ -17,22 +18,6 @@ namespace engine::render
 	static constexpr uint32_t kMeshMagic = 0x4D455348u; // "MESH"
 	static constexpr uint32_t kTexrMagic = 0x54455852u; // "TEXR"
 	static constexpr size_t kMeshVertexStride = 32u;    // 3+3+2 floats
-
-	namespace
-	{
-		uint32_t findMemoryTypeImpl(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-		{
-			VkPhysicalDeviceMemoryProperties memProps;
-			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
-			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
-			{
-				if ((typeFilter & (1u << i)) != 0
-					&& (memProps.memoryTypes[i].propertyFlags & properties) == properties)
-					return i;
-			}
-			return UINT32_MAX;
-		}
-	}
 
 	// --- Handles ---
 
@@ -58,16 +43,12 @@ namespace engine::render
 
 	// --- AssetRegistry ---
 
-	void AssetRegistry::Init(VkDevice device, VkPhysicalDevice physicalDevice, const engine::core::Config& config)
+	void AssetRegistry::Init(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, const engine::core::Config& config)
 	{
 		m_device = device;
 		m_physicalDevice = physicalDevice;
+		m_vmaAllocator = vmaAllocator;
 		m_config = &config;
-	}
-
-	uint32_t AssetRegistry::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
-	{
-		return findMemoryTypeImpl(m_physicalDevice, typeFilter, properties);
 	}
 
 	MeshHandle AssetRegistry::LoadMesh(std::string_view relativePath)
@@ -110,26 +91,28 @@ namespace engine::render
 
 	void AssetRegistry::Destroy()
 	{
-		if (m_device == VK_NULL_HANDLE) return;
+		if (m_device == VK_NULL_HANDLE || m_vmaAllocator == nullptr) return;
+		VmaAllocator alloc = static_cast<VmaAllocator>(m_vmaAllocator);
 		for (auto& p : m_meshes)
 		{
-			if (p.second.vertexBuffer != VK_NULL_HANDLE) vkDestroyBuffer(m_device, p.second.vertexBuffer, nullptr);
-			if (p.second.indexBuffer != VK_NULL_HANDLE) vkDestroyBuffer(m_device, p.second.indexBuffer, nullptr);
-			if (p.second.vertexMemory != VK_NULL_HANDLE) vkFreeMemory(m_device, p.second.vertexMemory, nullptr);
-			if (p.second.indexMemory != VK_NULL_HANDLE) vkFreeMemory(m_device, p.second.indexMemory, nullptr);
+			if (p.second.vertexBuffer != VK_NULL_HANDLE && p.second.vertexAlloc)
+				vmaDestroyBuffer(alloc, p.second.vertexBuffer, static_cast<VmaAllocation>(p.second.vertexAlloc));
+			if (p.second.indexBuffer != VK_NULL_HANDLE && p.second.indexAlloc)
+				vmaDestroyBuffer(alloc, p.second.indexBuffer, static_cast<VmaAllocation>(p.second.indexAlloc));
 		}
 		m_meshes.clear();
 		m_meshPathToId.clear();
 		for (auto& p : m_textures)
 		{
 			if (p.second.view != VK_NULL_HANDLE) vkDestroyImageView(m_device, p.second.view, nullptr);
-			if (p.second.image != VK_NULL_HANDLE) vkDestroyImage(m_device, p.second.image, nullptr);
-			if (p.second.memory != VK_NULL_HANDLE) vkFreeMemory(m_device, p.second.memory, nullptr);
+			if (p.second.image != VK_NULL_HANDLE && p.second.allocation)
+				vmaDestroyImage(alloc, p.second.image, static_cast<VmaAllocation>(p.second.allocation));
 		}
 		m_textures.clear();
 		m_texturePathToId.clear();
 		m_device = VK_NULL_HANDLE;
 		m_physicalDevice = VK_NULL_HANDLE;
+		m_vmaAllocator = nullptr;
 		m_config = nullptr;
 		m_nextMeshId = 1;
 		m_nextTextureId = 1;
@@ -156,39 +139,35 @@ namespace engine::render
 		asset.vertexCount = numVertices;
 		asset.indexCount = numIndices;
 
-		// Host-visible coherent memory so we can map and copy directly (no staging queue for MVP).
+		if (m_vmaAllocator == nullptr) return kInvalidAssetId;
+		VmaAllocator alloc = static_cast<VmaAllocator>(m_vmaAllocator);
+		VmaAllocationCreateInfo allocCreateInfo{};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
 		VkBufferCreateInfo bufInfo{};
 		bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bufInfo.size = vertexBytes;
 		bufInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 		bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		if (vkCreateBuffer(m_device, &bufInfo, nullptr, &asset.vertexBuffer) != VK_SUCCESS) return kInvalidAssetId;
+		VmaAllocation vAlloc = VK_NULL_HANDLE;
+		if (vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &asset.vertexBuffer, &vAlloc, nullptr) != VK_SUCCESS) return kInvalidAssetId;
+		asset.vertexAlloc = vAlloc;
 		bufInfo.size = indexBytes;
 		bufInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-		if (vkCreateBuffer(m_device, &bufInfo, nullptr, &asset.indexBuffer) != VK_SUCCESS) { vkDestroyBuffer(m_device, asset.vertexBuffer, nullptr); return kInvalidAssetId; }
-		VkMemoryRequirements vr, ir;
-		vkGetBufferMemoryRequirements(m_device, asset.vertexBuffer, &vr);
-		vkGetBufferMemoryRequirements(m_device, asset.indexBuffer, &ir);
-		uint32_t vMemType = findMemoryType(vr.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		uint32_t iMemType = findMemoryType(ir.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		if (vMemType == UINT32_MAX || iMemType == UINT32_MAX) { vkDestroyBuffer(m_device, asset.indexBuffer, nullptr); vkDestroyBuffer(m_device, asset.vertexBuffer, nullptr); LOG_ERROR(Render, "AssetRegistry: no host-visible memory for mesh"); return kInvalidAssetId; }
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = vr.size;
-		allocInfo.memoryTypeIndex = vMemType;
-		if (vkAllocateMemory(m_device, &allocInfo, nullptr, &asset.vertexMemory) != VK_SUCCESS) { vkDestroyBuffer(m_device, asset.indexBuffer, nullptr); vkDestroyBuffer(m_device, asset.vertexBuffer, nullptr); return kInvalidAssetId; }
-		allocInfo.allocationSize = ir.size;
-		allocInfo.memoryTypeIndex = iMemType;
-		if (vkAllocateMemory(m_device, &allocInfo, nullptr, &asset.indexMemory) != VK_SUCCESS) { vkFreeMemory(m_device, asset.vertexMemory, nullptr); vkDestroyBuffer(m_device, asset.indexBuffer, nullptr); vkDestroyBuffer(m_device, asset.vertexBuffer, nullptr); return kInvalidAssetId; }
-		vkBindBufferMemory(m_device, asset.vertexBuffer, asset.vertexMemory, 0);
-		vkBindBufferMemory(m_device, asset.indexBuffer, asset.indexMemory, 0);
+		VmaAllocation iAlloc = VK_NULL_HANDLE;
+		if (vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &asset.indexBuffer, &iAlloc, nullptr) != VK_SUCCESS)
+		{
+			vmaDestroyBuffer(alloc, asset.vertexBuffer, vAlloc);
+			return kInvalidAssetId;
+		}
+		asset.indexAlloc = iAlloc;
 		void* pv = nullptr, *pi = nullptr;
-		vkMapMemory(m_device, asset.vertexMemory, 0, vertexBytes, 0, &pv);
+		if (vmaMapMemory(alloc, vAlloc, &pv) != VK_SUCCESS) { vmaDestroyBuffer(alloc, asset.indexBuffer, iAlloc); vmaDestroyBuffer(alloc, asset.vertexBuffer, vAlloc); return kInvalidAssetId; }
 		memcpy(pv, vertexData, vertexBytes);
-		vkUnmapMemory(m_device, asset.vertexMemory);
-		vkMapMemory(m_device, asset.indexMemory, 0, indexBytes, 0, &pi);
+		vmaUnmapMemory(alloc, vAlloc);
+		if (vmaMapMemory(alloc, iAlloc, &pi) != VK_SUCCESS) { vmaDestroyBuffer(alloc, asset.indexBuffer, iAlloc); vmaDestroyBuffer(alloc, asset.vertexBuffer, vAlloc); return kInvalidAssetId; }
 		memcpy(pi, indexData, indexBytes);
-		vkUnmapMemory(m_device, asset.indexMemory);
+		vmaUnmapMemory(alloc, iAlloc);
 		AssetId id = m_nextMeshId++;
 		m_meshes[id] = std::move(asset);
 		LOG_INFO(Render, "AssetRegistry: loaded mesh {} ({} vertices, {} indices)", relativePath, numVertices, numIndices);
@@ -226,32 +205,28 @@ namespace engine::render
 		imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 		imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		if (vkCreateImage(m_device, &imgInfo, nullptr, &asset.image) != VK_SUCCESS) return kInvalidAssetId;
-		VkMemoryRequirements mr;
-		vkGetImageMemoryRequirements(m_device, asset.image, &mr);
-		uint32_t memType = findMemoryType(mr.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		if (memType == UINT32_MAX) { vkDestroyImage(m_device, asset.image, nullptr); return kInvalidAssetId; }
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = mr.size;
-		allocInfo.memoryTypeIndex = memType;
-		if (vkAllocateMemory(m_device, &allocInfo, nullptr, &asset.memory) != VK_SUCCESS) { vkDestroyImage(m_device, asset.image, nullptr); return kInvalidAssetId; }
-		vkBindImageMemory(m_device, asset.image, asset.memory, 0);
+		if (m_vmaAllocator == nullptr) return kInvalidAssetId;
+		VmaAllocator alloc = static_cast<VmaAllocator>(m_vmaAllocator);
+		VmaAllocationCreateInfo allocCreateInfo{};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		VmaAllocation imgAlloc = VK_NULL_HANDLE;
+		if (vmaCreateImage(alloc, &imgInfo, &allocCreateInfo, &asset.image, &imgAlloc, nullptr) != VK_SUCCESS) return kInvalidAssetId;
+		asset.allocation = imgAlloc;
 		void* ptr = nullptr;
-		VkImageSubresource subres{};
-		subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subres.mipLevel = 0;
-		subres.arrayLayer = 0;
-		VkSubresourceLayout layout{};
-		vkGetImageSubresourceLayout(m_device, asset.image, &subres, &layout);
-		vkMapMemory(m_device, asset.memory, 0, mr.size, 0, &ptr);
-		const uint8_t* src = pixels;
-		uint8_t* dst = static_cast<uint8_t*>(ptr);
-		for (uint32_t y = 0; y < height; ++y)
+		if (vmaMapMemory(alloc, imgAlloc, &ptr) == VK_SUCCESS)
 		{
-			memcpy(dst + y * layout.rowPitch, src + y * width * 4, width * 4);
+			VkImageSubresource subres{};
+			subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			subres.mipLevel = 0;
+			subres.arrayLayer = 0;
+			VkSubresourceLayout layout{};
+			vkGetImageSubresourceLayout(m_device, asset.image, &subres, &layout);
+			const uint8_t* src = pixels;
+			uint8_t* dst = static_cast<uint8_t*>(ptr);
+			for (uint32_t y = 0; y < height; ++y)
+				memcpy(dst + y * layout.rowPitch, src + y * width * 4, width * 4);
+			vmaUnmapMemory(alloc, imgAlloc);
 		}
-		vkUnmapMemory(m_device, asset.memory);
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = asset.image;
@@ -262,7 +237,11 @@ namespace engine::render
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
-		if (vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS) { vkFreeMemory(m_device, asset.memory, nullptr); vkDestroyImage(m_device, asset.image, nullptr); return kInvalidAssetId; }
+		if (vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS)
+		{
+			vmaDestroyImage(alloc, asset.image, imgAlloc);
+			return kInvalidAssetId;
+		}
 		AssetId id = m_nextTextureId++;
 		m_textures[id] = std::move(asset);
 		LOG_INFO(Render, "AssetRegistry: loaded texture {} ({}x{}, {})", relativePath, width, height, useSrgb ? "sRGB" : "linear");

@@ -1,4 +1,5 @@
 #include "engine/render/BrdfLutPass.h"
+#include <vk_mem_alloc.h>
 
 #include "engine/core/Log.h"
 
@@ -6,35 +7,13 @@
 
 namespace engine::render
 {
-	namespace
-	{
-		/// Finds a memory type index on the given physical device that satisfies
-		/// the type filter and property flags.
-		uint32_t FindMemoryType(VkPhysicalDevice physicalDevice,
-			uint32_t typeFilter,
-			VkMemoryPropertyFlags properties)
-		{
-			VkPhysicalDeviceMemoryProperties memProps{};
-			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
-
-			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
-			{
-				if ((typeFilter & (1u << i)) &&
-					(memProps.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					return i;
-				}
-			}
-			return UINT32_MAX;
-		}
-	}
-
 	bool BrdfLutPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
+		void* vmaAllocator,
 		uint32_t size,
 		const uint32_t* compSpirv, size_t compWordCount,
 		uint32_t queueFamilyIndex)
 	{
-		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || vmaAllocator == nullptr
 			|| !compSpirv || compWordCount == 0 || size == 0)
 		{
 			LOG_ERROR(Render, "BrdfLutPass::Init: invalid arguments");
@@ -42,9 +21,11 @@ namespace engine::render
 		}
 
 		m_size = size;
+		m_vmaAllocator = vmaAllocator;
+		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
 
 		// ---------------------------------------------------------------------
-		// Image + memory
+		// Image + memory (VMA)
 		// ---------------------------------------------------------------------
 		VkImageCreateInfo imgInfo{};
 		imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -60,48 +41,15 @@ namespace engine::render
 		imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-		if (vkCreateImage(device, &imgInfo, nullptr, &m_image) != VK_SUCCESS)
+		VmaAllocationCreateInfo allocCreateInfo{};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+		VmaAllocation imgAlloc = VK_NULL_HANDLE;
+		if (vmaCreateImage(alloc, &imgInfo, &allocCreateInfo, &m_image, &imgAlloc, nullptr) != VK_SUCCESS)
 		{
-			LOG_ERROR(Render, "BrdfLutPass: vkCreateImage failed");
+			LOG_ERROR(Render, "BrdfLutPass: vmaCreateImage failed");
 			return false;
 		}
-
-		VkMemoryRequirements memReq{};
-		vkGetImageMemoryRequirements(device, m_image, &memReq);
-
-		const uint32_t memType = FindMemoryType(physicalDevice,
-			memReq.memoryTypeBits,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		if (memType == UINT32_MAX)
-		{
-			LOG_ERROR(Render, "BrdfLutPass: no suitable memory type");
-			vkDestroyImage(device, m_image, nullptr);
-			m_image = VK_NULL_HANDLE;
-			return false;
-		}
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memReq.size;
-		allocInfo.memoryTypeIndex = memType;
-
-		if (vkAllocateMemory(device, &allocInfo, nullptr, &m_memory) != VK_SUCCESS)
-		{
-			LOG_ERROR(Render, "BrdfLutPass: vkAllocateMemory failed");
-			vkDestroyImage(device, m_image, nullptr);
-			m_image = VK_NULL_HANDLE;
-			return false;
-		}
-
-		if (vkBindImageMemory(device, m_image, m_memory, 0) != VK_SUCCESS)
-		{
-			LOG_ERROR(Render, "BrdfLutPass: vkBindImageMemory failed");
-			vkFreeMemory(device, m_memory, nullptr);
-			vkDestroyImage(device, m_image, nullptr);
-			m_memory = VK_NULL_HANDLE;
-			m_image = VK_NULL_HANDLE;
-			return false;
-		}
+		m_allocation = imgAlloc;
 
 		// ---------------------------------------------------------------------
 		// Image view + sampler
@@ -421,16 +369,13 @@ namespace engine::render
 			vkDestroyImageView(device, m_view, nullptr);
 			m_view = VK_NULL_HANDLE;
 		}
-		if (m_image != VK_NULL_HANDLE)
+		if (m_image != VK_NULL_HANDLE && m_allocation != nullptr && m_vmaAllocator != nullptr)
 		{
-			vkDestroyImage(device, m_image, nullptr);
+			vmaDestroyImage(static_cast<VmaAllocator>(m_vmaAllocator), m_image, static_cast<VmaAllocation>(m_allocation));
 			m_image = VK_NULL_HANDLE;
+			m_allocation = nullptr;
 		}
-		if (m_memory != VK_NULL_HANDLE)
-		{
-			vkFreeMemory(device, m_memory, nullptr);
-			m_memory = VK_NULL_HANDLE;
-		}
+		m_vmaAllocator = nullptr;
 		m_size = 0;
 	}
 }

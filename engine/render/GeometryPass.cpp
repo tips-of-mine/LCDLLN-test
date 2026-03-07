@@ -3,7 +3,9 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <cstdint>
 #include <cstring>
+#include <functional>
 
 namespace engine::render
 {
@@ -13,7 +15,30 @@ namespace engine::render
 		constexpr uint32_t kPushConstantSize = 128u;
 	}
 
+<<<<<<< HEAD
 	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
+=======
+	bool GeometryPass::FramebufferKey::operator==(const FramebufferKey& o) const
+	{
+		if (renderPass != o.renderPass || width != o.width || height != o.height)
+			return false;
+		for (int i = 0; i < 5; ++i)
+			if (views[i] != o.views[i]) return false;
+		return true;
+	}
+
+	size_t GeometryPass::FramebufferKeyHash::operator()(const FramebufferKey& k) const
+	{
+		size_t h = std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.renderPass));
+		h ^= std::hash<uint32_t>{}(k.width) + 0x9e3779b9u + (h << 6u) + (h >> 2u);
+		h ^= std::hash<uint32_t>{}(k.height) + 0x9e3779b9u + (h << 6u) + (h >> 2u);
+		for (int i = 0; i < 5; ++i)
+			h ^= std::hash<uintptr_t>{}(reinterpret_cast<uintptr_t>(k.views[i])) + 0x9e3779b9u + (h << 6u) + (h >> 2u);
+		return h;
+	}
+
+	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
+>>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
 	    VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 	    const uint32_t* vertSpirv, size_t vertWordCount,
 	    const uint32_t* fragSpirv, size_t fragWordCount,
@@ -372,7 +397,7 @@ namespace engine::render
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
 
-		VkImageView viewA       = registry.getImageView(idA);
+		VkImageView viewA      = registry.getImageView(idA);
 		VkImageView viewB      = registry.getImageView(idB);
 		VkImageView viewC      = registry.getImageView(idC);
 		VkImageView viewVel    = registry.getImageView(idVelocity);
@@ -380,20 +405,34 @@ namespace engine::render
 		if (!viewA || !viewB || !viewC || !viewVel || !viewDepth)
 			return;
 
-		// Temporary framebuffer for this frame (4 color + depth).
-		VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass      = m_renderPass;
-		fbInfo.attachmentCount = 5;
-		fbInfo.pAttachments    = views;
-		fbInfo.width           = extent.width;
-		fbInfo.height          = extent.height;
-		fbInfo.layers          = 1;
+		FramebufferKey key{};
+		key.renderPass = m_renderPass;
+		key.views[0]   = viewA;
+		key.views[1]   = viewB;
+		key.views[2]   = viewC;
+		key.views[3]   = viewVel;
+		key.views[4]   = viewDepth;
+		key.width      = extent.width;
+		key.height     = extent.height;
 
-		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
-			return;
+		auto it = m_fbCache.find(key);
+		if (it == m_fbCache.end())
+		{
+			VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
+			VkFramebufferCreateInfo fbInfo = {};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 5;
+			fbInfo.pAttachments    = views;
+			fbInfo.width           = extent.width;
+			fbInfo.height         = extent.height;
+			fbInfo.layers         = 1;
+			VkFramebuffer created = VK_NULL_HANDLE;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &created) != VK_SUCCESS)
+				return;
+			it = m_fbCache.emplace(key, created).first;
+		}
+		VkFramebuffer fb = it->second;
 
 		VkClearValue clearValues[5] = {};
 		clearValues[0].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -455,16 +494,27 @@ namespace engine::render
 		}
 
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
 	}
 
 	// -------------------------------------------------------------------------
 	// GeometryPass::Destroy
 	// -------------------------------------------------------------------------
 
+	void GeometryPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+		for (auto& p : m_fbCache)
+		{
+			if (p.second != VK_NULL_HANDLE)
+				vkDestroyFramebuffer(device, p.second, nullptr);
+		}
+		m_fbCache.clear();
+	}
+
 	void GeometryPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;
+<<<<<<< HEAD
 		if (m_identityInstanceBuffer != VK_NULL_HANDLE)
 		{
 			vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
@@ -475,6 +525,9 @@ namespace engine::render
 			vkFreeMemory(device, m_identityInstanceMemory, nullptr);
 			m_identityInstanceMemory = VK_NULL_HANDLE;
 		}
+=======
+		InvalidateFramebufferCache(device);
+>>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
 		if (m_pipeline != VK_NULL_HANDLE)
 		{
 			vkDestroyPipeline(device, m_pipeline, nullptr);

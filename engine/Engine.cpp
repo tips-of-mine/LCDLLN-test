@@ -3,13 +3,17 @@
 #include "engine/core/Log.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/render/DeferredPipeline.h"
+#include "engine/render/ShaderCompiler.h"
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include <chrono>
 #include <cstring>
 #include <filesystem>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -63,26 +67,53 @@ namespace engine
 				{
 					LOG_WARN(Platform, "VkDeviceContext::Create failed");
 				}
-				else if (!m_vkSwapchain.Create(
-					m_vkDeviceContext.GetPhysicalDevice(),
-					m_vkDeviceContext.GetDevice(),
-					m_vkInstance.GetSurface(),
-					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-					m_vkDeviceContext.GetPresentQueueFamilyIndex(),
-					static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
+				else
 				{
-					LOG_WARN(Platform, "VkSwapchain::Create failed");
-				}
-				else if (!engine::render::CreateFrameResources(
-					m_vkDeviceContext.GetDevice(),
-					m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-					m_frameResources))
-				{
-					LOG_WARN(Platform, "CreateFrameResources failed");
-				}
-				else if (m_vkSwapchain.IsValid())
-				{
-					m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_cfg);
+					VkPresentModeKHR requestedMode = VK_PRESENT_MODE_FIFO_KHR;
+					if (!m_vsync)
+						requestedMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+					else
+					{
+						const std::string pm = m_cfg.GetString("render.present_mode", "fifo");
+						if (pm == "mailbox")
+							requestedMode = VK_PRESENT_MODE_MAILBOX_KHR;
+					}
+					if (!m_vkSwapchain.Create(
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkDeviceContext.GetDevice(),
+						m_vkInstance.GetSurface(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+						m_vkDeviceContext.GetPresentQueueFamilyIndex(),
+						static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height),
+						requestedMode))
+					{
+						LOG_WARN(Platform, "VkSwapchain::Create failed");
+					}
+					else if (!engine::render::CreateFrameResources(
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+						m_frameResources))
+					{
+						LOG_WARN(Platform, "CreateFrameResources failed");
+					}
+					else if (m_vkSwapchain.IsValid())
+					{
+					// Centralised GPU allocator (VMA) to avoid maxMemoryAllocationCount fragmentation.
+					VmaAllocatorCreateInfo vmaInfo{};
+					vmaInfo.physicalDevice = m_vkDeviceContext.GetPhysicalDevice();
+					vmaInfo.device         = m_vkDeviceContext.GetDevice();
+					vmaInfo.instance       = m_vkInstance.GetHandle();
+					if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
+					{
+						LOG_ERROR(Render, "VMA allocator creation failed");
+						m_vmaAllocator = nullptr;
+					}
+					if (!m_vmaAllocator)
+						continue;
+
+					m_pipeline = std::make_unique<engine::render::DeferredPipeline>();
+
+					m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
 
 					// M08.4: Optional color grading LUT (strip 256x16 .texr from paths.content).
 					{
@@ -204,183 +235,44 @@ namespace engine
 						m_fgShadowMapIds[i] = m_frameGraph.createImage(name, shadowDesc);
 					}
 
-					// --------------------------------------------------
-					// Helper: load pre-compiled SPV from content path.
-					// --------------------------------------------------
-					auto loadSpv = [&](const char* path) -> std::vector<uint32_t>
+					// Shader loader: read .spv from content path; if missing, compile .vert/.frag/.comp via ShaderCompiler.
+					auto loadSpirv = [&](const char* spvPath) -> std::vector<uint32_t>
 					{
-						std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, path);
-						if (bytes.size() % 4 != 0) return {};
-						std::vector<uint32_t> out(bytes.size() / 4);
-						std::memcpy(out.data(), bytes.data(), bytes.size());
-						return out;
+						std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, spvPath);
+						if (bytes.size() % 4 == 0 && !bytes.empty())
+						{
+							std::vector<uint32_t> out(bytes.size() / 4);
+							std::memcpy(out.data(), bytes.data(), bytes.size());
+							return out;
+						}
+						engine::render::ShaderCompiler compiler;
+						if (!compiler.LocateCompiler()) return {};
+						std::string base(spvPath);
+						if (base.size() > 4 && base.compare(base.size() - 4, 4, ".spv") == 0)
+							base.resize(base.size() - 4);
+						std::filesystem::path srcPath = engine::platform::FileSystem::ResolveContentPath(m_cfg, base);
+						engine::render::ShaderStage stage = engine::render::ShaderStage::Vertex;
+						if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".comp") == 0)
+							stage = engine::render::ShaderStage::Compute;
+						else if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".vert") == 0)
+							stage = engine::render::ShaderStage::Vertex;
+						else if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".frag") == 0)
+							stage = engine::render::ShaderStage::Fragment;
+						auto c = compiler.CompileGlslToSpirv(srcPath, stage);
+						if (c.has_value() && !c->empty()) return std::move(*c);
+						return {};
 					};
 
-					// --------------------------------------------------
-					// M05.1: BRDF LUT compute (256x256 RG16F, split-sum GGX).
-					// --------------------------------------------------
-					{
-						std::vector<uint32_t> brdfComp = loadSpv("shaders/brdf_lut.comp.spv");
-						if (brdfComp.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path cp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/brdf_lut.comp");
-								auto c = compiler.CompileGlslToSpirv(cp, engine::render::ShaderStage::Compute);
-								if (c.has_value() && !c->empty())
-									brdfComp = std::move(*c);
-							}
-						}
-
-						if (!brdfComp.empty())
-						{
-							const uint32_t lutSize = 256u;
-							if (m_brdfLutPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								lutSize,
-								brdfComp.data(), brdfComp.size(),
-								m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
-							{
-								m_brdfLutPass.Generate(
-									m_vkDeviceContext.GetDevice(),
-									m_vkDeviceContext.GetGraphicsQueue());
-							}
-							else
-							{
-								LOG_WARN(Render, "M05.1: BRDF LUT init failed — LUT disabled");
-							}
-						}
-						else
-						{
-							LOG_WARN(Render, "M05.1: BRDF LUT shader not found — LUT disabled");
-						}
-					}
-
-					// --------------------------------------------------
-					// M05.3: Specular prefilter pass (prefiltered GGX cubemap + mips).
-					// Generate() is only called when a source env cubemap is available (e.g. M05.2).
-					// --------------------------------------------------
-					{
-						std::vector<uint32_t> specPrefilterComp = loadSpv("shaders/specular_prefilter.comp.spv");
-						if (specPrefilterComp.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path cp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/specular_prefilter.comp");
-								auto c = compiler.CompileGlslToSpirv(cp, engine::render::ShaderStage::Compute);
-								if (c.has_value() && !c->empty())
-									specPrefilterComp = std::move(*c);
-							}
-						}
-						if (!specPrefilterComp.empty())
-						{
-							const uint32_t specSize = 256u;
-							const uint32_t specMipCount = 6u;
-							if (m_specularPrefilterPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								specSize, specMipCount,
-								specPrefilterComp.data(), specPrefilterComp.size(),
-								m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
-							{
-								// Generate() requires source env cubemap view/sampler (e.g. from M05.2).
-								// When available, call: m_specularPrefilterPass.Generate(device, queue, envView, envSampler);
-							}
-							else
-							{
-								LOG_WARN(Render, "M05.3: Specular prefilter init failed — disabled");
-							}
-						}
-						else
-						{
-							LOG_WARN(Render, "M05.3: specular_prefilter.comp not found — disabled");
-						}
-					}
-
-					// --------------------------------------------------
-					// M06.1: SSAO kernel + 4x4 noise (UBO + texture), generated at boot.
-					// --------------------------------------------------
-					m_ssaoKernelNoise.Init(
+					m_pipeline->Init(
 						m_vkDeviceContext.GetDevice(),
 						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vmaAllocator,
 						m_cfg,
+						shadowRes,
+						m_vkSwapchain.GetImageFormat(),
 						m_vkDeviceContext.GetGraphicsQueue(),
-						m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
-
-					// --------------------------------------------------
-					// M06.2: SSAO generate pass (depth + normal -> SSAO_Raw).
-					// --------------------------------------------------
-					{
-						std::vector<uint32_t> ssaoVert = loadSpv("shaders/ssao.vert.spv");
-						std::vector<uint32_t> ssaoFrag = loadSpv("shaders/ssao.frag.spv");
-						if (ssaoVert.empty() || ssaoFrag.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao.frag");
-								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) ssaoVert = std::move(*v);
-								if (f.has_value() && !f->empty()) ssaoFrag = std::move(*f);
-							}
-						}
-						if (!ssaoVert.empty() && !ssaoFrag.empty() && m_ssaoKernelNoise.IsValid())
-						{
-							if (m_ssaoPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_R16_SFLOAT,
-								ssaoVert.data(), ssaoVert.size(),
-								ssaoFrag.data(), ssaoFrag.size(),
-								2))
-								LOG_INFO(Render, "M06.2: SSAO generate pass ready");
-							else
-								LOG_WARN(Render, "M06.2: SSAO pass init failed");
-						}
-						else if (!m_ssaoKernelNoise.IsValid())
-							LOG_WARN(Render, "M06.2: SSAO pass skipped (kernel/noise not ready)");
-					}
-
-					// --------------------------------------------------
-					// M06.3: SSAO bilateral blur pass (2 passes: H then V, depth-aware).
-					// --------------------------------------------------
-					{
-						std::vector<uint32_t> blurVert = loadSpv("shaders/ssao_blur.vert.spv");
-						std::vector<uint32_t> blurFrag = loadSpv("shaders/ssao_blur.frag.spv");
-						if (blurVert.empty() || blurFrag.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao_blur.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao_blur.frag");
-								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) blurVert = std::move(*v);
-								if (f.has_value() && !f->empty()) blurFrag = std::move(*f);
-							}
-						}
-						if (!blurVert.empty() && !blurFrag.empty())
-						{
-							if (m_ssaoBlurPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_R16_SFLOAT,
-								blurVert.data(), blurVert.size(),
-								blurFrag.data(), blurFrag.size(),
-								2))
-								LOG_INFO(Render, "M06.3: SSAO bilateral blur pass ready");
-							else
-								LOG_WARN(Render, "M06.3: SSAO blur pass init failed");
-						}
-						else
-							LOG_WARN(Render, "M06.3: SSAO blur shaders not found — blur disabled");
-					}
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+						loadSpirv);
 
 					// --------------------------------------------------
 					// Clear pass (legacy, clears SceneColor swapchain image).
@@ -396,298 +288,6 @@ namespace engine
 							VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 							vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 						});
-
-					// --------------------------------------------------
-					// Geometry pass: load/compile shaders + init pipeline.
-					// --------------------------------------------------
-					{
-						std::vector<uint32_t> vertSpirv = loadSpv("shaders/gbuffer_geometry.vert.spv");
-						std::vector<uint32_t> fragSpirv = loadSpv("shaders/gbuffer_geometry.frag.spv");
-
-						if (vertSpirv.empty() || fragSpirv.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/gbuffer_geometry.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/gbuffer_geometry.frag");
-								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) vertSpirv = std::move(*v);
-								if (f.has_value() && !f->empty()) fragSpirv = std::move(*f);
-							}
-						}
-
-						if (!vertSpirv.empty() && !fragSpirv.empty())
-						{
-							m_geometryPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_R8G8B8A8_SRGB,
-								VK_FORMAT_A2B10G10R10_UNORM_PACK32,
-								VK_FORMAT_R8G8B8A8_UNORM,
-								VK_FORMAT_R16G16_SFLOAT,  // M07.3: velocity
-								VK_FORMAT_D32_SFLOAT,
-								vertSpirv.data(), vertSpirv.size(),
-								fragSpirv.data(), fragSpirv.size());
-						}
-					}
-
-					// M04.2: Shadow map pass shaders — load SPV or compile at runtime.
-					{
-						std::vector<uint32_t> smVert = loadSpv("shaders/shadow_depth.vert.spv");
-						std::vector<uint32_t> smFrag = loadSpv("shaders/shadow_depth.frag.spv");
-
-						if (smVert.empty() || smFrag.empty())
-						{
-							engine::render::ShaderCompiler smCompiler;
-							if (smCompiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/shadow_depth.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/shadow_depth.frag");
-								auto v = smCompiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = smCompiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) smVert = std::move(*v);
-								if (f.has_value() && !f->empty()) smFrag = std::move(*f);
-							}
-						}
-
-						if (!smVert.empty() && !smFrag.empty())
-						{
-							m_shadowMapPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_D32_SFLOAT,
-								shadowRes,
-								smVert.data(), smVert.size(),
-								smFrag.data(), smFrag.size());
-						}
-						else
-						{
-							LOG_WARN(Render, "M04.2: shadow map shaders not found — shadow pass disabled");
-						}
-					}
-
-					// M03.2: Lighting pass shaders — load SPV or compile at runtime.
-					{
-						std::vector<uint32_t> litVert = loadSpv("shaders/lighting.vert.spv");
-						std::vector<uint32_t> litFrag = loadSpv("shaders/lighting.frag.spv");
-
-						if (litVert.empty() || litFrag.empty())
-						{
-							engine::render::ShaderCompiler litCompiler;
-							if (litCompiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/lighting.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/lighting.frag");
-								auto v = litCompiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = litCompiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) litVert = std::move(*v);
-								if (f.has_value() && !f->empty()) litFrag = std::move(*f);
-							}
-						}
-
-						if (!litVert.empty() && !litFrag.empty())
-						{
-							m_lightingPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_R16G16B16A16_SFLOAT,
-								litVert.data(), litVert.size(),
-								litFrag.data(), litFrag.size(),
-								2u);
-						}
-						else
-						{
-							LOG_WARN(Render, "M03.2: lighting shaders not found — lighting pass disabled");
-						}
-					}
-
-					// M03.4: Tonemap pass shaders — load SPV or compile at runtime.
-					{
-						std::vector<uint32_t> tmVert = loadSpv("shaders/tonemap.vert.spv");
-						std::vector<uint32_t> tmFrag = loadSpv("shaders/tonemap.frag.spv");
-
-						if (tmVert.empty() || tmFrag.empty())
-						{
-							engine::render::ShaderCompiler tmCompiler;
-							if (tmCompiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/tonemap.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/tonemap.frag");
-								auto v = tmCompiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = tmCompiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) tmVert = std::move(*v);
-								if (f.has_value() && !f->empty()) tmFrag = std::move(*f);
-							}
-						}
-
-						if (!tmVert.empty() && !tmFrag.empty())
-						{
-							m_tonemapPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_R8G8B8A8_UNORM,
-								tmVert.data(), tmVert.size(),
-								tmFrag.data(), tmFrag.size(),
-								2u);
-						}
-						else
-						{
-							LOG_WARN(Render, "M03.4: tonemap shaders not found — tonemap pass disabled");
-						}
-					}
-
-					// M08.1: Bloom prefilter + downsample shaders.
-					{
-						std::vector<uint32_t> bpVert = loadSpv("shaders/bloom_prefilter.vert.spv");
-						std::vector<uint32_t> bpFrag = loadSpv("shaders/bloom_prefilter.frag.spv");
-						std::vector<uint32_t> bdVert = loadSpv("shaders/bloom_downsample.vert.spv");
-						std::vector<uint32_t> bdFrag = loadSpv("shaders/bloom_downsample.frag.spv");
-						if (bpVert.empty() || bpFrag.empty() || bdVert.empty() || bdFrag.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								auto resolve = [&](const char* p) {
-									return engine::platform::FileSystem::ResolveContentPath(m_cfg, p);
-								};
-								auto vbp = compiler.CompileGlslToSpirv(resolve("shaders/bloom_prefilter.vert"), engine::render::ShaderStage::Vertex);
-								auto fbp = compiler.CompileGlslToSpirv(resolve("shaders/bloom_prefilter.frag"), engine::render::ShaderStage::Fragment);
-								auto vbd = compiler.CompileGlslToSpirv(resolve("shaders/bloom_downsample.vert"), engine::render::ShaderStage::Vertex);
-								auto fbd = compiler.CompileGlslToSpirv(resolve("shaders/bloom_downsample.frag"), engine::render::ShaderStage::Fragment);
-								if (vbp.has_value() && !vbp->empty()) bpVert = std::move(*vbp);
-								if (fbp.has_value() && !fbp->empty()) bpFrag = std::move(*fbp);
-								if (vbd.has_value() && !vbd->empty()) bdVert = std::move(*vbd);
-								if (fbd.has_value() && !fbd->empty()) bdFrag = std::move(*fbd);
-							}
-						}
-						const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
-						if (!bpVert.empty() && !bpFrag.empty())
-						{
-							m_bloomPrefilterPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								bloomFmt,
-								bpVert.data(), bpVert.size(),
-								bpFrag.data(), bpFrag.size(),
-								2u);
-						}
-						if (!bdVert.empty() && !bdFrag.empty())
-						{
-							m_bloomDownsamplePass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								bloomFmt,
-								bdVert.data(), bdVert.size(),
-								bdFrag.data(), bdFrag.size(),
-								2u);
-						}
-					}
-
-					// M08.2: Bloom upsample + combine shaders.
-					{
-						std::vector<uint32_t> buVert = loadSpv("shaders/bloom_upsample.vert.spv");
-						std::vector<uint32_t> buFrag = loadSpv("shaders/bloom_upsample.frag.spv");
-						std::vector<uint32_t> bcVert = loadSpv("shaders/bloom_combine.vert.spv");
-						std::vector<uint32_t> bcFrag = loadSpv("shaders/bloom_combine.frag.spv");
-						if (buVert.empty() || buFrag.empty() || bcVert.empty() || bcFrag.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								auto resolve = [&](const char* p) {
-									return engine::platform::FileSystem::ResolveContentPath(m_cfg, p);
-								};
-								auto vbu = compiler.CompileGlslToSpirv(resolve("shaders/bloom_upsample.vert"), engine::render::ShaderStage::Vertex);
-								auto fbu = compiler.CompileGlslToSpirv(resolve("shaders/bloom_upsample.frag"), engine::render::ShaderStage::Fragment);
-								auto vbc = compiler.CompileGlslToSpirv(resolve("shaders/bloom_combine.vert"), engine::render::ShaderStage::Vertex);
-								auto fbc = compiler.CompileGlslToSpirv(resolve("shaders/bloom_combine.frag"), engine::render::ShaderStage::Fragment);
-								if (vbu.has_value() && !vbu->empty()) buVert = std::move(*vbu);
-								if (fbu.has_value() && !fbu->empty()) buFrag = std::move(*fbu);
-								if (vbc.has_value() && !vbc->empty()) bcVert = std::move(*vbc);
-								if (fbc.has_value() && !fbc->empty()) bcFrag = std::move(*fbc);
-							}
-						}
-						const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
-						if (!buVert.empty() && !buFrag.empty())
-						{
-							m_bloomUpsamplePass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								bloomFmt,
-								buVert.data(), buVert.size(),
-								buFrag.data(), buFrag.size(),
-								2u);
-						}
-						if (!bcVert.empty() && !bcFrag.empty())
-						{
-							m_bloomCombinePass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								bloomFmt,
-								bcVert.data(), bcVert.size(),
-								bcFrag.data(), bcFrag.size(),
-								2u);
-						}
-					}
-
-					// M08.3: Auto-exposure — luminance reduce compute.
-					{
-						std::vector<uint32_t> lumComp = loadSpv("shaders/luminance_reduce.comp.spv");
-						if (lumComp.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path cp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/luminance_reduce.comp");
-								auto c = compiler.CompileGlslToSpirv(cp, engine::render::ShaderStage::Compute);
-								if (c.has_value() && !c->empty()) lumComp = std::move(*c);
-							}
-						}
-						if (!lumComp.empty())
-						{
-							if (m_autoExposure.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								lumComp.data(), lumComp.size()))
-								LOG_INFO(Render, "M08.3: Auto-exposure ready");
-						}
-					}
-
-					// M07.4: TAA pass shaders — reprojection + clamp + blend.
-					{
-						std::vector<uint32_t> taaVert = loadSpv("shaders/taa.vert.spv");
-						std::vector<uint32_t> taaFrag = loadSpv("shaders/taa.frag.spv");
-						if (taaVert.empty() || taaFrag.empty())
-						{
-							engine::render::ShaderCompiler compiler;
-							if (compiler.LocateCompiler())
-							{
-								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/taa.vert");
-								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/taa.frag");
-								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
-								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
-								if (v.has_value() && !v->empty()) taaVert = std::move(*v);
-								if (f.has_value() && !f->empty()) taaFrag = std::move(*f);
-							}
-						}
-						if (!taaVert.empty() && !taaFrag.empty())
-						{
-							if (m_taaPass.Init(
-								m_vkDeviceContext.GetDevice(),
-								m_vkDeviceContext.GetPhysicalDevice(),
-								VK_FORMAT_R8G8B8A8_UNORM,
-								taaVert.data(), taaVert.size(),
-								taaFrag.data(), taaFrag.size(),
-								2u))
-								LOG_INFO(Render, "M07.4: TAA pass ready");
-							else
-								LOG_WARN(Render, "M07.4: TAA pass init failed");
-						}
-						else
-							LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
-					}
 
 					// Load test mesh.
 					m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
@@ -709,6 +309,7 @@ namespace engine
 							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 							const engine::RenderState& rs = m_renderStates[readIdx];
 							engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+<<<<<<< HEAD
 							// M09.2: tag draw with chunk/ring and record stats.
 							const engine::world::ChunkCoord chunk = engine::world::WorldToChunkCoord(rs.camera.position.x, rs.camera.position.z);
 							const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
@@ -716,6 +317,9 @@ namespace engine
 							m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
 							const int lodLevel = m_lodConfig.GetLodLevel(0.0f);
 							m_geometryPass.Record(
+=======
+							m_pipeline->GetGeometryPass().Record(
+>>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
@@ -732,7 +336,7 @@ namespace engine
 								b.write(m_fgShadowMapIds[cascade], engine::render::ImageUsage::DepthWrite);
 							},
 							[this, cascade](VkCommandBuffer cmd, engine::render::Registry& reg) {
-								if (!m_shadowMapPass.IsValid())
+								if (!m_pipeline->GetShadowMapPass().IsValid())
 									return;
 
 								const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
@@ -751,7 +355,7 @@ namespace engine
 								const bool cullFrontFaces =
 									m_cfg.GetBool("shadows.cull_front_faces", false);
 
-								m_shadowMapPass.Record(
+								m_pipeline->GetShadowMapPass().Record(
 									m_vkDeviceContext.GetDevice(), cmd, reg,
 									m_fgShadowMapIds[cascade],
 									rs.cascades.lightViewProj[cascade].m,
@@ -770,7 +374,7 @@ namespace engine
 							b.write(m_fgSsaoRawId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_ssaoPass.IsValid()) return;
+							if (!m_pipeline->GetSsaoPass().IsValid()) return;
 
 							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 							const engine::RenderState& rs = m_renderStates[readIdx];
@@ -810,13 +414,13 @@ namespace engine
 							std::memcpy(sp.proj, rs.projMatrix.m, sizeof(sp.proj));
 
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_ssaoPass.Record(
+							m_pipeline->GetSsaoPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgDepthId, m_fgGBufferBId, m_fgSsaoRawId,
-								m_ssaoKernelNoise.GetKernelBuffer(),
-								m_ssaoKernelNoise.GetNoiseImageView(),
-								m_ssaoKernelNoise.GetNoiseSampler(),
+								m_pipeline->GetSsaoKernelNoise().GetKernelBuffer(),
+								m_pipeline->GetSsaoKernelNoise().GetNoiseImageView(),
+								m_pipeline->GetSsaoKernelNoise().GetNoiseSampler(),
 								sp, frameIdx);
 						});
 
@@ -828,10 +432,10 @@ namespace engine
 							b.write(m_fgSsaoBlurTempId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_ssaoBlurPass.IsValid()) return;
+							if (!m_pipeline->GetSsaoBlurPass().IsValid()) return;
 							VkExtent2D extent = m_vkSwapchain.GetExtent();
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_ssaoBlurPass.Record(
+							m_pipeline->GetSsaoBlurPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg, extent,
 								m_fgSsaoRawId, m_fgDepthId, m_fgSsaoBlurTempId,
 								true, frameIdx);
@@ -845,10 +449,10 @@ namespace engine
 							b.write(m_fgSsaoBlurId,  engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_ssaoBlurPass.IsValid()) return;
+							if (!m_pipeline->GetSsaoBlurPass().IsValid()) return;
 							VkExtent2D extent = m_vkSwapchain.GetExtent();
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_ssaoBlurPass.Record(
+							m_pipeline->GetSsaoBlurPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg, extent,
 								m_fgSsaoBlurTempId, m_fgDepthId, m_fgSsaoBlurId,
 								false, frameIdx);
@@ -865,7 +469,7 @@ namespace engine
 							b.write(m_fgSceneColorHDRId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_lightingPass.IsValid()) return;
+							if (!m_pipeline->GetLightingPass().IsValid()) return;
 
 							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 							const engine::RenderState& rs = m_renderStates[readIdx];
@@ -933,16 +537,16 @@ namespace engine
 							// M05.4: IBL when irradiance + prefilter + BRDF LUT all available; else fallback.
 							VkImageView irrView = VK_NULL_HANDLE;  // M05.2 not implemented yet
 							VkSampler   irrSamp = VK_NULL_HANDLE;
-							VkImageView prefilterView = m_specularPrefilterPass.IsValid()
-								? m_specularPrefilterPass.GetImageView() : VK_NULL_HANDLE;
-							VkSampler   prefilterSamp = m_specularPrefilterPass.IsValid()
-								? m_specularPrefilterPass.GetSampler() : VK_NULL_HANDLE;
-							VkImageView brdfView = m_brdfLutPass.GetImageView();
-							VkSampler   brdfSamp = m_brdfLutPass.GetSampler();
+							VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid()
+								? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;
+							VkSampler   prefilterSamp = m_pipeline->GetSpecularPrefilterPass().IsValid()
+								? m_pipeline->GetSpecularPrefilterPass().GetSampler() : VK_NULL_HANDLE;
+							VkImageView brdfView = m_pipeline->GetBrdfLutPass().GetImageView();
+							VkSampler   brdfSamp = m_pipeline->GetBrdfLutPass().GetSampler();
 							lp.useIBL = (irrView != VK_NULL_HANDLE && prefilterView != VK_NULL_HANDLE && brdfView != VK_NULL_HANDLE) ? 1.0f : 0.0f;
 
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_lightingPass.Record(
+							m_pipeline->GetLightingPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
@@ -958,12 +562,12 @@ namespace engine
 							b.write(m_fgBloomMipIds[0], engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_bloomPrefilterPass.IsValid()) return;
+							if (!m_pipeline->GetBloomPrefilterPass().IsValid()) return;
 							engine::render::BloomPrefilterPass::PrefilterParams pp{};
 							pp.threshold = static_cast<float>(m_cfg.GetDouble("bloom.threshold", 1.0));
 							pp.knee      = static_cast<float>(m_cfg.GetDouble("bloom.knee", 0.5));
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_bloomPrefilterPass.Record(
+							m_pipeline->GetBloomPrefilterPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgSceneColorHDRId, m_fgBloomMipIds[0],
@@ -983,7 +587,7 @@ namespace engine
 								b.write(idDst, engine::render::ImageUsage::ColorWrite);
 							},
 							[this, i, idSrc, idDst](VkCommandBuffer cmd, engine::render::Registry& reg) {
-								if (!m_bloomDownsamplePass.IsValid()) return;
+								if (!m_pipeline->GetBloomDownsamplePass().IsValid()) return;
 								VkExtent2D ext = m_vkSwapchain.GetExtent();
 								VkExtent2D extentDst;
 								extentDst.width  = ext.width >> (i + 1);
@@ -991,7 +595,7 @@ namespace engine
 								if (extentDst.width < 1) extentDst.width = 1;
 								if (extentDst.height < 1) extentDst.height = 1;
 								const uint32_t frameIdx = m_currentFrame % 2;
-								m_bloomDownsamplePass.Record(
+								m_pipeline->GetBloomDownsamplePass().Record(
 									m_vkDeviceContext.GetDevice(), cmd, reg,
 									extentDst, idSrc, idDst, frameIdx);
 							});
@@ -1012,7 +616,7 @@ namespace engine
 								b.write(idDst, engine::render::ImageUsage::ColorWrite);
 							},
 							[this, i, idSrc, idDst](VkCommandBuffer cmd, engine::render::Registry& reg) {
-								if (!m_bloomUpsamplePass.IsValid()) return;
+								if (!m_pipeline->GetBloomUpsamplePass().IsValid()) return;
 								VkExtent2D ext = m_vkSwapchain.GetExtent();
 								VkExtent2D extentDst;
 								extentDst.width  = ext.width >> i;
@@ -1020,7 +624,7 @@ namespace engine
 								if (extentDst.width < 1) extentDst.width = 1;
 								if (extentDst.height < 1) extentDst.height = 1;
 								const uint32_t frameIdx = m_currentFrame % 2;
-								m_bloomUpsamplePass.Record(
+								m_pipeline->GetBloomUpsamplePass().Record(
 									m_vkDeviceContext.GetDevice(), cmd, reg,
 									extentDst, idSrc, idDst, frameIdx);
 							});
@@ -1034,11 +638,11 @@ namespace engine
 							b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_bloomCombinePass.IsValid()) return;
+							if (!m_pipeline->GetBloomCombinePass().IsValid()) return;
 							engine::render::BloomCombinePass::CombineParams cp{};
 							cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_bloomCombinePass.Record(
+							m_pipeline->GetBloomCombinePass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgSceneColorHDRId, m_fgBloomMipIds[0],
@@ -1052,8 +656,8 @@ namespace engine
 							b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::SampledRead);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_autoExposure.IsValid()) return;
-							m_autoExposure.Record(
+							if (!m_pipeline->GetAutoExposure().IsValid()) return;
+							m_pipeline->GetAutoExposure().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_fgSceneColorHDRWithBloomId,
 								m_vkSwapchain.GetExtent());
@@ -1067,11 +671,11 @@ namespace engine
 							b.write(m_fgSceneColorLDRId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_tonemapPass.IsValid()) return;
+							if (!m_pipeline->GetTonemapPass().IsValid()) return;
 
 							engine::render::TonemapPass::TonemapParams tp{};
-							tp.exposure = m_autoExposure.IsValid()
-								? m_autoExposure.GetExposure()
+							tp.exposure = m_pipeline->GetAutoExposure().IsValid()
+								? m_pipeline->GetAutoExposure().GetExposure()
 								: static_cast<float>(m_cfg.GetDouble("tonemap.exposure", 1.0));
 							bool lutEnabled = m_cfg.GetBool("color_grading.enable", false)
 								&& m_colorGradingLutHandle.IsValid();
@@ -1088,7 +692,7 @@ namespace engine
 							}
 
 							const uint32_t frameIdx = m_currentFrame % 2;
-							m_tonemapPass.Record(
+							m_pipeline->GetTonemapPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgSceneColorHDRWithBloomId,
@@ -1152,13 +756,13 @@ namespace engine
 							b.write(m_fgHistoryBId,     engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-							if (!m_taaPass.IsValid()) return;
+							if (!m_pipeline->GetTaaPass().IsValid()) return;
 							VkExtent2D extent = m_vkSwapchain.GetExtent();
 							const uint32_t frameIdx = m_currentFrame % 2u;
 							engine::render::TaaPass::TaaParams tp{};
 							tp.alpha = 0.9f;
 							tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
-							m_taaPass.Record(
+							m_pipeline->GetTaaPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg, extent,
 								m_fgSceneColorLDRId, GetTaaHistoryPrevId(), m_fgGBufferVelocityId, m_fgDepthId,
 								GetTaaHistoryNextId(), tp, frameIdx);
@@ -1174,7 +778,7 @@ namespace engine
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 							// TAA output is in HistoryNext; when TAA disabled, use LDR.
-							engine::render::ResourceId srcId = m_taaPass.IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
+							engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
 							VkImage srcImg = reg.getImage(srcId);
 							VkImage dstImg = reg.getImage(m_fgBackbufferId);
 							if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
@@ -1223,6 +827,7 @@ namespace engine
 					engine::render::TextureHandle t2 = m_assetRegistry.LoadTexture("textures/test.texr", false);
 					if (m_geometryMeshHandle.IsValid() && h2.IsValid() && m_geometryMeshHandle.Id() == h2.Id()) { /* cache OK */ }
 					if (t1.IsValid() && t2.IsValid() && t1.Id() == t2.Id()) { /* cache OK */ }
+					}
 				}
 			}
 			else
@@ -1243,7 +848,7 @@ namespace engine
 			LOG_INFO(Platform, "FS ReadAllTextContent(paths.content/'config.json'): {} bytes", contentCfgText.size());
 		}
 
-		LOG_INFO(Core, "Engine init: vsync={}", m_vsync ? "on" : "off");
+		LOG_INFO(Core, "Engine init: vsync={} (present mode from swapchain)", m_vsync ? "on" : "off");
 	}
 
 	int Engine::Run()
@@ -1266,41 +871,35 @@ namespace engine
 				lastFpsLog = now;
 			}
 
-			if (m_vsync)
+			// VSync is handled natively by Vulkan present mode (FIFO blocks until next VBlank, MAILBOX low-latency).
+			// When vsync is off (IMMEDIATE), keep a short sleep as safety net to cap max fps and avoid 100% CPU.
+			if (!m_vsync)
 			{
-				constexpr auto target = std::chrono::microseconds(16666);
+				constexpr auto safetyTarget = std::chrono::microseconds(5000); // ~200 fps cap
 				const auto elapsed = now - lastPresent;
-				if (elapsed < target)
-					std::this_thread::sleep_for(target - elapsed);
-				lastPresent = std::chrono::steady_clock::now();
+				if (elapsed < safetyTarget)
+					std::this_thread::sleep_for(safetyTarget - elapsed);
 			}
-			else
-			{
-				lastPresent = now;
-			}
+			lastPresent = std::chrono::steady_clock::now();
 		}
 
 		// Destroy in reverse order: passes → frame graph → swapchain → device → instance.
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
-			m_ssaoBlurPass.Destroy(m_vkDeviceContext.GetDevice());        // M06.3
-			m_ssaoPass.Destroy(m_vkDeviceContext.GetDevice());           // M06.2
-			m_ssaoKernelNoise.Destroy(m_vkDeviceContext.GetDevice());     // M06.1
-			m_specularPrefilterPass.Destroy(m_vkDeviceContext.GetDevice()); // M05.3
-			m_brdfLutPass.Destroy(m_vkDeviceContext.GetDevice());   // M05.1
-			m_taaPass.Destroy(m_vkDeviceContext.GetDevice());      // M07.4
-			m_autoExposure.Destroy(m_vkDeviceContext.GetDevice());  // M08.3
-			m_bloomCombinePass.Destroy(m_vkDeviceContext.GetDevice());   // M08.2
-			m_bloomUpsamplePass.Destroy(m_vkDeviceContext.GetDevice()); // M08.2
-			m_bloomDownsamplePass.Destroy(m_vkDeviceContext.GetDevice()); // M08.1
-			m_bloomPrefilterPass.Destroy(m_vkDeviceContext.GetDevice());  // M08.1
-			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4
-			m_lightingPass.Destroy(m_vkDeviceContext.GetDevice()); // M03.2
-			m_geometryPass.Destroy(m_vkDeviceContext.GetDevice());
+			if (m_pipeline)
+			{
+				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
+				m_pipeline.reset();
+			}
 			m_assetRegistry.Destroy();
-			m_frameGraph.destroy(m_vkDeviceContext.GetDevice());
+			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
+			if (m_vmaAllocator)
+			{
+				vmaDestroyAllocator(reinterpret_cast<VmaAllocator>(m_vmaAllocator));
+				m_vmaAllocator = nullptr;
+			}
 		}
 		m_vkSwapchain.Destroy();
 		m_vkDeviceContext.Destroy();
@@ -1333,7 +932,9 @@ namespace engine
 			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
 			{
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
-				m_frameGraph.destroy(m_vkDeviceContext.GetDevice());
+				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+				if (m_pipeline)
+					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				if (m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
 					LOG_INFO(Platform, "Swapchain recreated {}x{}", m_width, m_height);
 			}
@@ -1407,13 +1008,14 @@ namespace engine
 		}
 
 		// M04.1: compute cascaded shadow matrices and split distances for a default sun light.
+		// worldUnitsPerTexel is computed per cascade inside ComputeCascades from extent / shadowMapResolution.
 		{
 			const engine::math::Vec3 lightDirTowardLight(0.5774f, 0.5774f, 0.5774f);
 			const float lambda = 0.7f;
-			const float worldUnitsPerTexel =
-				static_cast<float>(m_cfg.GetDouble("shadows.csm_world_units_per_texel", 1.0));
+			const uint32_t shadowMapResolution =
+				static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
 			engine::render::ComputeCascades(out.camera, lightDirTowardLight, lambda,
-				worldUnitsPerTexel, out.cascades);
+				shadowMapResolution, out.cascades);
 		}
 
 		// Placeholder: simulate some frame-arena allocations for MemTag::Temp test.
@@ -1438,12 +1040,12 @@ namespace engine
 		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
 
 		// M08.3: After fence, staging has last frame's luminance; adapt exposure (key/speed from config).
-		if (m_autoExposure.IsValid())
+		if (m_pipeline->GetAutoExposure().IsValid())
 		{
 			const float dt    = static_cast<float>(m_time.DeltaSeconds());
 			const float key   = static_cast<float>(m_cfg.GetDouble("exposure.key", 0.18));
 			const float speed = static_cast<float>(m_cfg.GetDouble("exposure.speed", 2.0));
-			m_autoExposure.Update(device, dt, key, speed);
+			m_pipeline->GetAutoExposure().Update(device, dt, key, speed);
 		}
 
 		uint32_t imageIndex = 0;
@@ -1473,6 +1075,7 @@ namespace engine
 			m_frameGraph.execute(
 				m_vkDeviceContext.GetDevice(),
 				m_vkDeviceContext.GetPhysicalDevice(),
+				m_vmaAllocator,
 				fr.cmdBuffer,
 				m_fgRegistry,
 				frameIndex,

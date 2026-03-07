@@ -23,9 +23,11 @@ namespace engine::render
 		/// \param size                LUT resolution (width=height=size, typically 256).
 		/// \param compSpirv           Compute shader SPIR-V words.
 		/// \param compWordCount       Number of 32-bit words in compSpirv.
+		/// \param vmaAllocator Centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
 		/// \param queueFamilyIndex    Queue family index used for the internal command pool.
 		/// \return true on success.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
+			void* vmaAllocator,
 			uint32_t size,
 			const uint32_t* compSpirv, size_t compWordCount,
 			uint32_t queueFamilyIndex);
@@ -46,8 +48,9 @@ namespace engine::render
 		VkSampler GetSampler() const { return m_sampler; }
 
 	private:
+		void*           m_vmaAllocator = nullptr;
 		VkImage         m_image        = VK_NULL_HANDLE;
-		VkDeviceMemory  m_memory       = VK_NULL_HANDLE;
+		void*           m_allocation   = nullptr; ///< VmaAllocation
 		VkImageView     m_view         = VK_NULL_HANDLE;
 		VkSampler       m_sampler      = VK_NULL_HANDLE;
 		VkDescriptorSetLayout m_setLayout   = VK_NULL_HANDLE;

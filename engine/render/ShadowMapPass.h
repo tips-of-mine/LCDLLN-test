@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <unordered_map>
 
 namespace engine::render
 {
@@ -59,14 +60,31 @@ namespace engine::render
 		/// Destroys the Vulkan objects owned by this pass. Safe to call multiple times.
 		void Destroy(VkDevice device);
 
+		/// Destroys all cached framebuffers and clears the cache (e.g. on resize when FG resources are recreated).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		/// Returns true if the pass has been successfully initialised.
 		bool IsValid() const { return m_renderPass != VK_NULL_HANDLE && m_pipeline != VK_NULL_HANDLE; }
 
 	private:
+		struct FramebufferKey
+		{
+			VkRenderPass renderPass = VK_NULL_HANDLE;
+			VkImageView  depthView  = VK_NULL_HANDLE;
+			uint32_t     width      = 0;
+			uint32_t     height     = 0;
+			bool operator==(const FramebufferKey& o) const;
+		};
+		struct FramebufferKeyHash
+		{
+			size_t operator()(const FramebufferKey& k) const;
+		};
+		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_fbCache;
+
 		VkRenderPass     m_renderPass     = VK_NULL_HANDLE;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline       m_pipeline       = VK_NULL_HANDLE;
-		uint32_t         m_resolution    = 0;
+		uint32_t         m_resolution     = 0;
 	};
 }
 

@@ -23,7 +23,9 @@ namespace engine::render
 		AutoExposure& operator=(const AutoExposure&) = delete;
 
 		/// Creates compute pipeline, luminance buffer, staging buffer, exposure buffer.
+		/// vmaAllocator = centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
+			void* vmaAllocator,
 			const uint32_t* compSpirv, size_t compWordCount);
 
 		/// Records compute pass: sample HDR -> log(L) per pixel into luminance buffer; then copies to staging.
@@ -52,12 +54,13 @@ namespace engine::render
 		VkPipeline            m_pipeline            = VK_NULL_HANDLE;
 		VkSampler             m_sampler             = VK_NULL_HANDLE;
 
+		void*   m_vmaAllocator     = nullptr;
 		VkBuffer m_luminanceBuffer   = VK_NULL_HANDLE;
-		VkDeviceMemory m_luminanceMem = VK_NULL_HANDLE;
+		void*   m_luminanceAlloc   = nullptr; ///< VmaAllocation
 		VkBuffer m_stagingBuffer     = VK_NULL_HANDLE;
-		VkDeviceMemory m_stagingMem   = VK_NULL_HANDLE;
+		void*   m_stagingAlloc     = nullptr; ///< VmaAllocation
 		VkBuffer m_exposureBuffer    = VK_NULL_HANDLE;
-		VkDeviceMemory m_exposureMem  = VK_NULL_HANDLE;
+		void*   m_exposureAlloc    = nullptr; ///< VmaAllocation
 
 		float m_exposure = 1.0f;
 	};

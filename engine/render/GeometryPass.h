@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <unordered_map>
 
 namespace engine::render
 {
@@ -53,15 +54,32 @@ namespace engine::render
 		/// Releases render pass and pipeline. Safe to call when not initialized.
 		void Destroy(VkDevice device);
 
+		/// Destroys all cached framebuffers and clears the cache (e.g. on resize when FG resources are recreated).
+		void InvalidateFramebufferCache(VkDevice device);
+
 		bool IsValid() const { return m_renderPass != VK_NULL_HANDLE && m_pipeline != VK_NULL_HANDLE; }
 
 		/// Returns true if this pass was initialised with a material descriptor set layout.
 		bool HasMaterialLayout() const { return m_hasMaterialLayout; }
 
 	private:
-		VkRenderPass     m_renderPass     = VK_NULL_HANDLE;
-		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline       m_pipeline       = VK_NULL_HANDLE;
+		struct FramebufferKey
+		{
+			VkRenderPass renderPass = VK_NULL_HANDLE;
+			VkImageView  views[5]   = {};
+			uint32_t     width      = 0;
+			uint32_t     height     = 0;
+			bool operator==(const FramebufferKey& o) const;
+		};
+		struct FramebufferKeyHash
+		{
+			size_t operator()(const FramebufferKey& k) const;
+		};
+		std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_fbCache;
+
+		VkRenderPass     m_renderPass        = VK_NULL_HANDLE;
+		VkPipelineLayout m_pipelineLayout   = VK_NULL_HANDLE;
+		VkPipeline       m_pipeline         = VK_NULL_HANDLE;
 		bool             m_hasMaterialLayout = false; ///< True if materialLayout was provided at Init.
 		/// M09.3: identity mat4 for single-instance draw (binding 1).
 		VkBuffer         m_identityInstanceBuffer = VK_NULL_HANDLE;

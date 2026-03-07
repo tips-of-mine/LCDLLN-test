@@ -1,5 +1,6 @@
 #include "engine/render/Material.h"
 #include "engine/core/Log.h"
+#include "engine/render/vk/VkUtils.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -7,23 +8,6 @@
 
 namespace engine::render
 {
-	// -------------------------------------------------------------------------
-	// Helpers
-	// -------------------------------------------------------------------------
-
-	uint32_t MaterialDescriptorCache::findMemoryType(VkPhysicalDevice physDev,
-	    uint32_t filter, VkMemoryPropertyFlags props) const
-	{
-		VkPhysicalDeviceMemoryProperties memProps{};
-		vkGetPhysicalDeviceMemoryProperties(physDev, &memProps);
-		for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
-		{
-			if ((filter & (1u << i)) && (memProps.memoryTypes[i].propertyFlags & props) == props)
-				return i;
-		}
-		return UINT32_MAX;
-	}
-
 	bool MaterialDescriptorCache::createFallbackTexture(VkDevice device,
 	    VkPhysicalDevice physDev, uint32_t idx, const uint8_t rgba[4], VkFormat format)
 	{
@@ -51,7 +35,7 @@ namespace engine::render
 		VkMemoryRequirements mr{};
 		vkGetImageMemoryRequirements(device, m_fallbackImage[idx], &mr);
 
-		uint32_t memType = findMemoryType(physDev, mr.memoryTypeBits,
+		uint32_t memType = engine::render::vk::FindMemoryType(physDev, mr.memoryTypeBits,
 		    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		if (memType == UINT32_MAX)
 		{

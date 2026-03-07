@@ -15,9 +15,6 @@ namespace engine::render
 		constexpr uint32_t kPushConstantSize = 128u;
 	}
 
-<<<<<<< HEAD
-	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
-=======
 	bool GeometryPass::FramebufferKey::operator==(const FramebufferKey& o) const
 	{
 		if (renderPass != o.renderPass || width != o.width || height != o.height)
@@ -37,8 +34,7 @@ namespace engine::render
 		return h;
 	}
 
-	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
->>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
+	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 	    VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 	    const uint32_t* vertSpirv, size_t vertWordCount,
 	    const uint32_t* fragSpirv, size_t fragWordCount,
@@ -514,7 +510,6 @@ namespace engine::render
 	void GeometryPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;
-<<<<<<< HEAD
 		if (m_identityInstanceBuffer != VK_NULL_HANDLE)
 		{
 			vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
@@ -525,9 +520,7 @@ namespace engine::render
 			vkFreeMemory(device, m_identityInstanceMemory, nullptr);
 			m_identityInstanceMemory = VK_NULL_HANDLE;
 		}
-=======
 		InvalidateFramebufferCache(device);
->>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
 		if (m_pipeline != VK_NULL_HANDLE)
 		{
 			vkDestroyPipeline(device, m_pipeline, nullptr);

@@ -17,15 +17,11 @@ namespace engine::render
 	using AssetId = uint32_t;
 	constexpr AssetId kInvalidAssetId = 0;
 
-<<<<<<< HEAD
 	/// Maximum LOD levels in the chain (M09.3).
 	constexpr uint32_t kMeshLodLevelCount = 4;
 
-	/// GPU mesh data: vertex and index buffers (owned by registry).
-	/// M09.3: optional LOD chain — when lodLevelCount > 0, each LOD has indexOffset/indexCount in the same index buffer.
-=======
 	/// GPU mesh data: vertex and index buffers (owned by registry). Allocations are VMA (opaque void*).
->>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
+	/// M09.3: optional LOD chain — when lodLevelCount > 0, each LOD has indexOffset/indexCount in the same index buffer.
 	struct MeshAsset
 	{
 		VkBuffer vertexBuffer = VK_NULL_HANDLE;

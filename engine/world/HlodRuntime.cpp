@@ -68,7 +68,7 @@ namespace engine::world
 			float dy = cy - cameraPosition.y;
 			float dz = cz - cameraPosition.z;
 			float distanceMeters = std::sqrt(dx * dx + dy * dy + dz * dz);
-			bool visible = IsVisible(frustum, aabbMin, aabbMax, cameraPosition, maxDrawDistanceMeters);
+			bool visible = HlodRuntime::IsVisible(frustum, aabbMin, aabbMax, cameraPosition, maxDrawDistanceMeters);
 			bool useHlod = hlod.ShouldUseHlod(distanceMeters);
 			ChunkDrawDecision dec;
 			dec.coord = req.chunkId;

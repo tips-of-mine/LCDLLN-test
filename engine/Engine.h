@@ -31,12 +31,9 @@ namespace engine::render { class DeferredPipeline; }
 #include <array>
 #include <atomic>
 #include <cstdint>
-<<<<<<< HEAD
+#include <memory>
 #include <string>
 #include <vector>
-=======
-#include <memory>
->>>>>>> 23d6aabba5951cc57deec78caaa8911069b4dd93
 
 namespace engine
 {

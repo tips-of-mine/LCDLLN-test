@@ -21,7 +21,7 @@ namespace engine::world
 		return ChunkCoord{ clampedX, clampedZ };
 	}
 
-	ChunkBounds World::ChunkBounds(ChunkCoord c)
+	engine::world::ChunkBounds World::ChunkBounds(ChunkCoord c)
 	{
 		ChunkBounds b;
 		b.minX = static_cast<float>(c.x * kChunkSize);

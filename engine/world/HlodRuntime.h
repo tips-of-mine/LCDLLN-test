@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/math/Math.h"
+#include "engine/math/Frustum.h"
 #include "engine/world/WorldModel.h"
 
 #include <cstddef>
@@ -8,7 +9,6 @@
 #include <vector>
 
 namespace engine::core { class Config; }
-namespace engine::math { class Frustum; }
 
 namespace engine::world
 {
@@ -21,6 +21,9 @@ namespace engine::world
 		float distanceMeters = 0.0f;
 	};
 
+	/// Return type for BuildChunkDrawList (avoids MSVC parse issues with std::string in declaration).
+	using HlodDebugString = std::string;
+
 	/// Builds chunk draw list decisions: for each requested chunk, applies frustum + distance culling and HLOD switch by distance.
 	/// \param requestedChunks Pointer to chunk requests (from World::GetPendingChunkRequests().data()).
 	/// \param requestedChunksCount Number of requests (from World::GetPendingChunkRequests().size()).
@@ -30,7 +33,7 @@ namespace engine::world
 	/// \param maxDrawDistanceMeters Max distance to draw (0 = no distance cull).
 	/// \param decisionsOut Filled with one entry per chunk (useHlod, culled).
 	/// \return Debug string for overlay (e.g. "HLOD: 3 inst: 5 culled: 2").
-	std::string BuildChunkDrawList(
+	HlodDebugString BuildChunkDrawList(
 		const ChunkRequest* requestedChunks,
 		size_t requestedChunksCount,
 		const engine::math::Vec3& cameraPosition,

@@ -19,6 +19,9 @@
 #include "engine/render/ShadowMapPass.h"
 #include "engine/render/BrdfLutPass.h"
 #include "engine/render/SpecularPrefilterPass.h"
+#include "engine/render/SsaoKernelNoise.h"
+#include "engine/render/SsaoPass.h"
+#include "engine/render/SsaoBlurPass.h"
 #include "engine/render/GeometryPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"      // M03.4: filmic tonemap HDR→LDR
@@ -103,6 +106,12 @@ namespace engine
 		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
+		/// SSAO_Raw: output of SSAO generate pass (R16F). M06.2.
+		engine::render::ResourceId m_fgSsaoRawId        = engine::render::kInvalidResourceId;
+		/// SSAO_Blur_Temp: intermediate for bilateral blur H pass. M06.3.
+		engine::render::ResourceId m_fgSsaoBlurTempId   = engine::render::kInvalidResourceId;
+		/// SSAO_Blur: output of bilateral blur (2 passes). M06.3.
+		engine::render::ResourceId m_fgSsaoBlurId       = engine::render::kInvalidResourceId;
 		/// Shadow maps per cascade (depth + sampled). Added in M04.2.
 		std::array<engine::render::ResourceId, engine::render::kCascadeCount> m_fgShadowMapIds{};
 
@@ -116,6 +125,13 @@ namespace engine
 		engine::render::BrdfLutPass m_brdfLutPass;
 		/// Specular prefilter pass (M05.3): prefiltered GGX cubemap with mips = roughness.
 		engine::render::SpecularPrefilterPass m_specularPrefilterPass;
+
+		/// SSAO kernel + 4x4 noise (M06.1): UBO and tiled noise texture, generated at boot.
+		engine::render::SsaoKernelNoise m_ssaoKernelNoise;
+		/// SSAO generate pass (M06.2): depth + normal -> SSAO_Raw (R16F).
+		engine::render::SsaoPass m_ssaoPass;
+		/// SSAO bilateral blur (M06.3): 2 passes H then V, depth-aware.
+		engine::render::SsaoBlurPass m_ssaoBlurPass;
 
 		/// Deferred fullscreen lighting pass (PBR GGX). Added in M03.2.
 		engine::render::LightingPass m_lightingPass;

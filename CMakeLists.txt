@@ -40,6 +40,9 @@ add_library(engine_core
   engine/render/CascadedShadowMaps.cpp
   engine/render/BrdfLutPass.cpp
   engine/render/SpecularPrefilterPass.cpp
+  engine/render/SsaoKernelNoise.cpp
+  engine/render/SsaoPass.cpp
+  engine/render/SsaoBlurPass.cpp
   engine/render/ShadowMapPass.cpp
   engine/render/GeometryPass.cpp
   engine/render/LightingPass.cpp

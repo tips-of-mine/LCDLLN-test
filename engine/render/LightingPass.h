@@ -18,8 +18,8 @@ namespace engine::render
 	/// ambient fallback, and writes SceneColor_HDR (R16G16B16A16_SFLOAT). M05.4.
 	///
 	/// Pipeline: fullscreen triangle (3 vertices, no vertex buffer).
-	/// Descriptor set 0: 7 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
-	/// prefiltered specular, BRDF LUT). Push constants (132 bytes): invVP, cameraPos,
+	/// Descriptor set 0: 8 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
+	/// prefiltered specular, BRDF LUT, SSAO_Blur). Push constants (132 bytes): invVP, cameraPos,
 	/// lightDir, lightColor, ambientColor, useIBL.
 	class LightingPass
 	{
@@ -64,7 +64,7 @@ namespace engine::render
 		/// \param frameIndex  Current in-flight frame index (0 .. maxFrames-1).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
 			ResourceId idGBufA, ResourceId idGBufB, ResourceId idGBufC, ResourceId idDepth,
-			ResourceId idSceneColorHDR,
+			ResourceId idSceneColorHDR, ResourceId idSsaoBlur,
 			VkImageView irradianceView, VkSampler irradianceSampler,
 			VkImageView prefilterView, VkSampler prefilterSampler,
 			VkImageView brdfLutView, VkSampler brdfLutSampler,

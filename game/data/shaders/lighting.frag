@@ -8,6 +8,7 @@
 //   GBufferC (binding 2) – ORM, R8G8B8A8_UNORM: R=AO, G=Roughness, B=Metallic
 //   Depth    (binding 3) – scene depth, D32_SFLOAT, sampled as float in .r
 //   (M05.4)  binding 4 – irradiance cubemap, 5 – prefiltered specular cubemap, 6 – BRDF LUT
+//   (M06.4)  binding 7 – SSAO_Blur (R16F, .r = screen-space AO)
 //
 // Outputs:
 //   outSceneColorHDR (location 0) – SceneColor_HDR, R16G16B16A16_SFLOAT
@@ -31,6 +32,7 @@ layout(set = 0, binding = 3) uniform sampler2D depthTex;    // depth, .r = [0,1]
 layout(set = 0, binding = 4) uniform samplerCube irradianceMap;  // M05.4 diffuse IBL
 layout(set = 0, binding = 5) uniform samplerCube prefilterMap;  // M05.4 specular IBL
 layout(set = 0, binding = 6) uniform sampler2D   brdfLut;       // M05.4 BRDF LUT (scale, bias)
+layout(set = 0, binding = 7) uniform sampler2D   ssaoTex;       // M06.4 SSAO_Blur (R16F, .r = AO)
 
 // ---- Push constants ---------------------------------------------------------
 layout(push_constant) uniform PC
@@ -87,7 +89,9 @@ void main()
     vec3  gbufBsamp = texture(gbufB, inUV).rgb;
     vec3  normalW   = normalize(gbufBsamp * 2.0 - 1.0);     // decode [0,1]->[-1,1]
     vec4  orm       = texture(gbufC, inUV);
-    float ao        = orm.r;
+    float ao_tex    = orm.r;   // AO from ORM texture
+    float ao_ssao   = texture(ssaoTex, inUV).r;  // M06.4: screen-space AO
+    float ao_final  = ao_ssao * ao_tex;          // M06.4: combine for ambient
     float roughness = max(orm.g, kMinRgh);
     float metallic  = orm.b;
     float depth     = texture(depthTex, inUV).r;
@@ -152,11 +156,11 @@ void main()
         vec2  brdfSample  = texture(brdfLut, vec2(NdotV, roughness)).rg;
         vec3  specIBL     = prefiltered * (F * brdfSample.x + brdfSample.y);
 
-        ambient = (diffuseIBL + specIBL) * ao;
+        ambient = (diffuseIBL + specIBL) * ao_final;
     }
     else
     {
-        ambient = pc.ambientColor.rgb * albedo * ao;
+        ambient = pc.ambientColor.rgb * albedo * ao_final;
     }
 
     // ---- Combine & output HDR ------------------------------------------

@@ -129,6 +129,19 @@ namespace engine
 					                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 					m_fgSceneColorLDRId = m_frameGraph.createImage("SceneColor_LDR", sceneColorLDRDesc);
 
+					// M06.2: SSAO_Raw — output of SSAO generate pass (R16F occlusion 0..1).
+					engine::render::ImageDesc ssaoRawDesc{};
+					ssaoRawDesc.format = VK_FORMAT_R16_SFLOAT;
+					ssaoRawDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgSsaoRawId = m_frameGraph.createImage("SSAO_Raw", ssaoRawDesc);
+
+					// M06.3: SSAO_Blur_Temp + SSAO_Blur — bilateral blur intermediate and output (R16F).
+					engine::render::ImageDesc ssaoBlurDesc{};
+					ssaoBlurDesc.format = VK_FORMAT_R16_SFLOAT;
+					ssaoBlurDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					m_fgSsaoBlurTempId = m_frameGraph.createImage("SSAO_Blur_Temp", ssaoBlurDesc);
+					m_fgSsaoBlurId     = m_frameGraph.createImage("SSAO_Blur", ssaoBlurDesc);
+
 					// M04.2: ShadowMap[0..3] — depth-only cascades (D32, depth attachment + sampled).
 					const uint32_t shadowRes =
 						static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
@@ -240,6 +253,88 @@ namespace engine
 						{
 							LOG_WARN(Render, "M05.3: specular_prefilter.comp not found — disabled");
 						}
+					}
+
+					// --------------------------------------------------
+					// M06.1: SSAO kernel + 4x4 noise (UBO + texture), generated at boot.
+					// --------------------------------------------------
+					m_ssaoKernelNoise.Init(
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_cfg,
+						m_vkDeviceContext.GetGraphicsQueue(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+
+					// --------------------------------------------------
+					// M06.2: SSAO generate pass (depth + normal -> SSAO_Raw).
+					// --------------------------------------------------
+					{
+						std::vector<uint32_t> ssaoVert = loadSpv("shaders/ssao.vert.spv");
+						std::vector<uint32_t> ssaoFrag = loadSpv("shaders/ssao.frag.spv");
+						if (ssaoVert.empty() || ssaoFrag.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao.vert");
+								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao.frag");
+								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
+								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
+								if (v.has_value() && !v->empty()) ssaoVert = std::move(*v);
+								if (f.has_value() && !f->empty()) ssaoFrag = std::move(*f);
+							}
+						}
+						if (!ssaoVert.empty() && !ssaoFrag.empty() && m_ssaoKernelNoise.IsValid())
+						{
+							if (m_ssaoPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								VK_FORMAT_R16_SFLOAT,
+								ssaoVert.data(), ssaoVert.size(),
+								ssaoFrag.data(), ssaoFrag.size(),
+								2))
+								LOG_INFO(Render, "M06.2: SSAO generate pass ready");
+							else
+								LOG_WARN(Render, "M06.2: SSAO pass init failed");
+						}
+						else if (!m_ssaoKernelNoise.IsValid())
+							LOG_WARN(Render, "M06.2: SSAO pass skipped (kernel/noise not ready)");
+					}
+
+					// --------------------------------------------------
+					// M06.3: SSAO bilateral blur pass (2 passes: H then V, depth-aware).
+					// --------------------------------------------------
+					{
+						std::vector<uint32_t> blurVert = loadSpv("shaders/ssao_blur.vert.spv");
+						std::vector<uint32_t> blurFrag = loadSpv("shaders/ssao_blur.frag.spv");
+						if (blurVert.empty() || blurFrag.empty())
+						{
+							engine::render::ShaderCompiler compiler;
+							if (compiler.LocateCompiler())
+							{
+								std::filesystem::path vp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao_blur.vert");
+								std::filesystem::path fp = engine::platform::FileSystem::ResolveContentPath(m_cfg, "shaders/ssao_blur.frag");
+								auto v = compiler.CompileGlslToSpirv(vp, engine::render::ShaderStage::Vertex);
+								auto f = compiler.CompileGlslToSpirv(fp, engine::render::ShaderStage::Fragment);
+								if (v.has_value() && !v->empty()) blurVert = std::move(*v);
+								if (f.has_value() && !f->empty()) blurFrag = std::move(*f);
+							}
+						}
+						if (!blurVert.empty() && !blurFrag.empty())
+						{
+							if (m_ssaoBlurPass.Init(
+								m_vkDeviceContext.GetDevice(),
+								m_vkDeviceContext.GetPhysicalDevice(),
+								VK_FORMAT_R16_SFLOAT,
+								blurVert.data(), blurVert.size(),
+								blurFrag.data(), blurFrag.size(),
+								2))
+								LOG_INFO(Render, "M06.3: SSAO bilateral blur pass ready");
+							else
+								LOG_WARN(Render, "M06.3: SSAO blur pass init failed");
+						}
+						else
+							LOG_WARN(Render, "M06.3: SSAO blur shaders not found — blur disabled");
 					}
 
 					// --------------------------------------------------
@@ -457,13 +552,106 @@ namespace engine
 							});
 					}
 
-					// Pass: Lighting (M03.2) — reads GBuffer + Depth, writes SceneColor_HDR.
+					// Pass: SSAO_Generate (M06.2) — reads Depth + Normal, writes SSAO_Raw.
+					m_frameGraph.addPass("SSAO_Generate",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgDepthId,     engine::render::ImageUsage::SampledRead);
+							b.read(m_fgGBufferBId,  engine::render::ImageUsage::SampledRead);
+							b.write(m_fgSsaoRawId, engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_ssaoPass.IsValid()) return;
+
+							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+							const engine::RenderState& rs = m_renderStates[readIdx];
+
+							engine::render::SsaoPass::SsaoParams sp{};
+							const float* proj = rs.projMatrix.m;
+							const float a00=proj[0], a10=proj[1], a20=proj[2],  a30=proj[3];
+							const float a01=proj[4], a11=proj[5], a21=proj[6],  a31=proj[7];
+							const float a02=proj[8], a12=proj[9], a22=proj[10], a32=proj[11];
+							const float a03=proj[12],a13=proj[13],a23=proj[14], a33=proj[15];
+							const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+							const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+							const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+							const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+							const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+							if (det > 1e-7f || det < -1e-7f)
+							{
+								const float inv = 1.0f / det;
+								sp.invProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+								sp.invProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+								sp.invProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+								sp.invProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+								sp.invProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+								sp.invProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+								sp.invProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+								sp.invProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+								sp.invProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+								sp.invProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+								sp.invProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+								sp.invProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+								sp.invProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+								sp.invProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+								sp.invProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+								sp.invProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+							}
+							std::memcpy(sp.view, rs.viewMatrix.m, sizeof(sp.view));
+							std::memcpy(sp.proj, rs.projMatrix.m, sizeof(sp.proj));
+
+							const uint32_t frameIdx = m_currentFrame % 2;
+							m_ssaoPass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg,
+								m_vkSwapchain.GetExtent(),
+								m_fgDepthId, m_fgGBufferBId, m_fgSsaoRawId,
+								m_ssaoKernelNoise.GetKernelBuffer(),
+								m_ssaoKernelNoise.GetNoiseImageView(),
+								m_ssaoKernelNoise.GetNoiseSampler(),
+								sp, frameIdx);
+						});
+
+					// Pass: SSAO_BlurH (M06.3) — reads SSAO_Raw + Depth, writes SSAO_Blur_Temp.
+					m_frameGraph.addPass("SSAO_BlurH",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSsaoRawId,      engine::render::ImageUsage::SampledRead);
+							b.read(m_fgDepthId,       engine::render::ImageUsage::SampledRead);
+							b.write(m_fgSsaoBlurTempId, engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_ssaoBlurPass.IsValid()) return;
+							VkExtent2D extent = m_vkSwapchain.GetExtent();
+							const uint32_t frameIdx = m_currentFrame % 2;
+							m_ssaoBlurPass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg, extent,
+								m_fgSsaoRawId, m_fgDepthId, m_fgSsaoBlurTempId,
+								true, frameIdx);
+						});
+
+					// Pass: SSAO_BlurV (M06.3) — reads SSAO_Blur_Temp + Depth, writes SSAO_Blur.
+					m_frameGraph.addPass("SSAO_BlurV",
+						[this](engine::render::PassBuilder& b) {
+							b.read(m_fgSsaoBlurTempId, engine::render::ImageUsage::SampledRead);
+							b.read(m_fgDepthId,       engine::render::ImageUsage::SampledRead);
+							b.write(m_fgSsaoBlurId,  engine::render::ImageUsage::ColorWrite);
+						},
+						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+							if (!m_ssaoBlurPass.IsValid()) return;
+							VkExtent2D extent = m_vkSwapchain.GetExtent();
+							const uint32_t frameIdx = m_currentFrame % 2;
+							m_ssaoBlurPass.Record(
+								m_vkDeviceContext.GetDevice(), cmd, reg, extent,
+								m_fgSsaoBlurTempId, m_fgDepthId, m_fgSsaoBlurId,
+								false, frameIdx);
+						});
+
+					// Pass: Lighting (M03.2) — reads GBuffer + Depth + SSAO_Blur (M06.4), writes SceneColor_HDR.
 					m_frameGraph.addPass("Lighting",
 						[this](engine::render::PassBuilder& b) {
 							b.read(m_fgGBufferAId,       engine::render::ImageUsage::SampledRead);
 							b.read(m_fgGBufferBId,       engine::render::ImageUsage::SampledRead);
 							b.read(m_fgGBufferCId,       engine::render::ImageUsage::SampledRead);
 							b.read(m_fgDepthId,          engine::render::ImageUsage::SampledRead);
+							b.read(m_fgSsaoBlurId,       engine::render::ImageUsage::SampledRead);
 							b.write(m_fgSceneColorHDRId, engine::render::ImageUsage::ColorWrite);
 						},
 						[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -548,7 +736,7 @@ namespace engine
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
-								m_fgSceneColorHDRId,
+								m_fgSceneColorHDRId, m_fgSsaoBlurId,
 								irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
 								lp, frameIdx);
 						});
@@ -692,6 +880,9 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_ssaoBlurPass.Destroy(m_vkDeviceContext.GetDevice());        // M06.3
+			m_ssaoPass.Destroy(m_vkDeviceContext.GetDevice());           // M06.2
+			m_ssaoKernelNoise.Destroy(m_vkDeviceContext.GetDevice());     // M06.1
 			m_specularPrefilterPass.Destroy(m_vkDeviceContext.GetDevice()); // M05.3
 			m_brdfLutPass.Destroy(m_vkDeviceContext.GetDevice());   // M05.1
 			m_tonemapPass.Destroy(m_vkDeviceContext.GetDevice());  // M03.4

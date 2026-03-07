@@ -29,7 +29,7 @@ namespace engine::world
 	/// \param decisionsOut Filled with one entry per chunk (useHlod, culled).
 	/// \return Debug string for overlay (e.g. "HLOD: 3 inst: 5 culled: 2").
 	std::string BuildChunkDrawList(
-		std::span<const ChunkRequest> requestedChunks,
+		std::span<const engine::world::ChunkRequest> requestedChunks,
 		const engine::math::Vec3& cameraPosition,
 		const engine::math::Frustum& frustum,
 		const HlodRuntime& hlod,

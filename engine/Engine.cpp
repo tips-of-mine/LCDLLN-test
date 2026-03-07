@@ -109,8 +109,11 @@ namespace engine
 						m_vmaAllocator = nullptr;
 					}
 					if (!m_vmaAllocator)
-						continue;
-
+					{
+						// Skip pipeline and FG setup if VMA failed
+					}
+					else
+					{
 					m_pipeline = std::make_unique<engine::render::DeferredPipeline>();
 
 					m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
@@ -315,7 +318,7 @@ namespace engine
 							const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
 							m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
 							const int lodLevel = m_lodConfig.GetLodLevel(0.0f);
-							m_geometryPass.Record(
+							m_pipeline->GetGeometryPass().Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
@@ -823,6 +826,7 @@ namespace engine
 					engine::render::TextureHandle t2 = m_assetRegistry.LoadTexture("textures/test.texr", false);
 					if (m_geometryMeshHandle.IsValid() && h2.IsValid() && m_geometryMeshHandle.Id() == h2.Id()) { /* cache OK */ }
 					if (t1.IsValid() && t2.IsValid() && t1.Id() == t2.Id()) { /* cache OK */ }
+					}
 					}
 				}
 			}

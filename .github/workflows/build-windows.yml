@@ -36,30 +36,7 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
-      - name: Trouver ucrtbased.dll
-        shell: pwsh
-        run: |
-          # Trouver dumpbin.exe
-          $dumpbin = Get-ChildItem -Recurse `
-            -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-
-          Write-Host "=== Dépendances de lcdlln.exe ==="
-          $exe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
-            -Filter "lcdlln.exe" -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
-            Select-Object -First 1
-
-          if ($exe -and $dumpbin) {
-            & $dumpbin.FullName /dependents $exe.FullName
-          } else {
-            Write-Warning "dumpbin ou lcdlln.exe introuvable"
-            Write-Host "exe: $($exe.FullName)"
-            Write-Host "dumpbin: $($dumpbin.FullName)"
-          }
-
-      - name: Diagnostic DLLs vcpkg
+      - name: Diagnostic contenu artifacts et vcpkg
         shell: pwsh
         run: |
           $dumpbin = Get-ChildItem -Recurse `
@@ -67,12 +44,20 @@ jobs:
             -Filter "dumpbin.exe" -ErrorAction SilentlyContinue |
             Select-Object -First 1
 
-          $dlls = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\artifacts" `
-            -Filter "*.dll" | Where-Object { $_.Name -match "glfw|vulkan" }
+          Write-Host "=== Contenu artifacts ==="
+          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" | Select-Object Name
 
-          foreach ($dll in $dlls) {
-            Write-Host "=== $($dll.Name) ==="
-            & $dumpbin.FullName /dependents $dll.FullName
+          Write-Host "=== DLLs dans vcpkg_installed ==="
+          Get-ChildItem -Recurse `
+            -Path "$env:GITHUB_WORKSPACE\build\vs2022-x64\vcpkg_installed" `
+            -Filter "*.dll" -ErrorAction SilentlyContinue |
+            Select-Object FullName
+
+          Write-Host "=== Dépendances de toutes les DLLs dans artifacts ==="
+          Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts" -Filter "*.dll" |
+          ForEach-Object {
+            Write-Host "--- $($_.Name) ---"
+            & $dumpbin.FullName /dependents $_.FullName
           }
 
       - name: Collect artifacts

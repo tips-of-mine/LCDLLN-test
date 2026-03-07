@@ -30,6 +30,9 @@ namespace engine
 		m_chunkStats.Init(m_cfg);
 		m_lodConfig.Init(m_cfg);
 		m_hlodRuntime.Init(m_cfg);
+		m_streamCache.Init(m_cfg);
+		m_streamingScheduler.SetStreamCache(&m_streamCache);
+		m_gpuUploadQueue.Init(m_cfg);
 
 		engine::platform::Window::CreateDesc desc{};
 		desc.title  = "LCDLLN Engine";
@@ -115,6 +118,10 @@ namespace engine
 					}
 					else
 					{
+					// M10.4: Staging buffer ring for GPU uploads (budget from GpuUploadQueue).
+					if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, m_gpuUploadQueue.GetBudgetBytes()))
+						LOG_WARN(Render, "StagingAllocator init failed");
+
 					m_pipeline = std::make_unique<engine::render::DeferredPipeline>();
 
 					m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
@@ -897,6 +904,7 @@ namespace engine
 			}
 			m_assetRegistry.Destroy();
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+			m_stagingAllocator.Destroy(m_vkDeviceContext.GetDevice());
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
 			if (m_vmaAllocator)
 			{
@@ -967,12 +975,22 @@ namespace engine
 		if (m_width > 0 && m_height > 0)
 			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
 
+		out.viewMatrix = out.camera.ComputeViewMatrix();
+		// M10.1: Push requests into streaming scheduler with priority (forward = -view Z axis).
+		{
+			const engine::math::Vec3 forward(
+				-out.viewMatrix.m[8], -out.viewMatrix.m[9], -out.viewMatrix.m[10]);
+			m_streamingScheduler.PushRequests(
+				m_world.GetPendingChunkRequests(), out.camera.position, forward);
+			// M10.2: drop stale jobs from IO/CPU/GPU queues so no late uploads for chunks left the ring.
+			m_streamingScheduler.DropStaleFromAllQueues();
+		}
+
 		// M07.1: Reset TAA history on FOV change (resize handled in OnResize).
 		if (m_width > 0 && m_height > 0
 			&& std::abs(out.camera.fovYDeg - readState.camera.fovYDeg) > 0.0001f)
 			m_taaHistoryInvalid = true;
 
-		out.viewMatrix = out.camera.ComputeViewMatrix();
 		out.projMatrix = out.camera.ComputeProjectionMatrix();
 
 		// M07.1: Halton jitter in NDC, apply to projection; store prev/curr ViewProj + jitter.
@@ -997,9 +1015,10 @@ namespace engine
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
 
 		// M09.5: build draw list (HLOD vs instances, culling); debug overlay text.
+		// M10.1: use prioritized requests from scheduler (chunks in front load first).
 		{
 			const float maxDrawDist = static_cast<float>(m_cfg.GetDouble("world.max_draw_distance_m", 0.0));
-			std::span<const engine::world::ChunkRequest> pending = m_world.GetPendingChunkRequests();
+			std::span<const engine::world::ChunkRequest> pending = m_streamingScheduler.GetPrioritizedRequests();
 			out.hlodDebugText = engine::world::BuildChunkDrawList(
 				pending.data(),
 				pending.size(),
@@ -1043,6 +1062,13 @@ namespace engine
 		VkExtent2D extent            = m_vkSwapchain.GetExtent();
 
 		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+
+		// M10.3: Collect deferred GPU destroys; only free after fence signaled for that frame.
+		m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
+
+		// M10.4: Staging ring next slot; plan uploads for this frame (terrain first, then textures) within budget.
+		m_stagingAllocator.BeginFrame(frameIndex);
+		(void)m_gpuUploadQueue.PlanFrameUploads();
 
 		// M08.3: After fence, staging has last frame's luminance; adapt exposure (key/speed from config).
 		if (m_pipeline->GetAutoExposure().IsValid())

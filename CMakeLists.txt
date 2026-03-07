@@ -74,7 +74,14 @@ add_library(engine_core
   engine/render/DeferredPipeline.cpp
   engine/math/Frustum.cpp
   engine/world/WorldModel.cpp
+  engine/world/PakReader.cpp
+  engine/world/ChunkPackageLayout.cpp
+  engine/world/StreamingScheduler.cpp
+  engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/render/vk/DeferredDestroyQueue.cpp
+  engine/render/GpuUploadQueue.cpp
+  engine/render/vk/StagingAllocator.cpp
   engine/world/LodConfig.cpp
   engine/world/HlodRuntime.cpp
 )
@@ -127,3 +134,5 @@ endif()
 
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
+# M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)
+add_subdirectory(tools/zone_builder)

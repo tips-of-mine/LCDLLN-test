@@ -23,6 +23,11 @@
 #include "engine/world/ChunkBudgetStats.h"
 #include "engine/world/LodConfig.h"
 #include "engine/world/HlodRuntime.h"
+#include "engine/world/StreamingScheduler.h"
+#include "engine/world/StreamCache.h"
+#include "engine/render/vk/DeferredDestroyQueue.h"
+#include "engine/render/GpuUploadQueue.h"
+#include "engine/render/vk/StagingAllocator.h"
 
 struct GLFWwindow;
 
@@ -150,6 +155,11 @@ namespace engine
 		engine::core::memory::FrameArena m_frameArena;
 		engine::render::FpsCameraController m_fpsCameraController;
 		engine::world::World m_world;
+		engine::world::StreamingScheduler m_streamingScheduler;
+		engine::world::StreamCache m_streamCache;
+		engine::render::DeferredDestroyQueue m_deferredDestroyQueue;
+		engine::render::GpuUploadQueue m_gpuUploadQueue;
+		engine::render::StagingAllocator m_stagingAllocator;
 		engine::world::ChunkBudgetStats m_chunkStats;
 		engine::world::LodConfig m_lodConfig;
 		engine::world::HlodRuntime m_hlodRuntime;

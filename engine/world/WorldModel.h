@@ -43,10 +43,14 @@ namespace engine::world
 	};
 
 	/// Request emitted toward the streaming scheduler (M10).
+	/// Priority is set by the scheduler (higher = load first): Active > Visible > Far; in front of player > behind.
+	/// streamVersion (M10.2) is set by the scheduler when pushing; used to drop stale jobs at IO/CPU/GPU stages.
 	struct ChunkRequest
 	{
 		ChunkCoord chunkId;
 		ChunkRing targetState;
+		uint32_t priority = 0;
+		uint32_t streamVersion = 0;
 	};
 
 	/// One zone: 4 km x 4 km, origin-local in meters.

@@ -48,6 +48,7 @@ add_library(engine_core
   engine/core/Time.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
+  engine/platform/FileWatcher.cpp
   engine/render/vk/VkInstance.cpp
   engine/render/vk/VkDeviceContext.cpp
   engine/render/vk/VkSwapchain.cpp

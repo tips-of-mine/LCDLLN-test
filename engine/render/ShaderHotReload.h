@@ -2,6 +2,7 @@
 
 #include "engine/render/ShaderCache.h"
 #include "engine/render/ShaderCompiler.h"
+#include "engine/platform/FileWatcher.h"
 
 #include "engine/core/Config.h"
 
@@ -77,5 +78,7 @@ namespace engine::render
 		std::vector<PendingReloadResult> m_pending;
 		std::thread m_worker;
 		std::atomic<bool> m_workerRunning{ true };
+		engine::platform::FileWatcher m_watcher;
+		bool m_watcherInited = false;
 	};
 }

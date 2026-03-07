@@ -15,6 +15,7 @@ namespace engine::render
 	ShaderHotReload::~ShaderHotReload()
 	{
 		m_workerRunning = false;
+		m_watcher.Destroy();
 		if (m_worker.joinable())
 		{
 			m_worker.join();
@@ -32,6 +33,17 @@ namespace engine::render
 
 	void ShaderHotReload::Poll(const engine::core::Config& config)
 	{
+		if (!m_watcherInited)
+		{
+			std::filesystem::path contentPath(config.GetString("paths.content", "game/data"));
+			std::error_code ec;
+			contentPath = std::filesystem::absolute(contentPath, ec);
+			if (!ec)
+			{
+				m_watcher.Init(contentPath.string());
+				m_watcherInited = true;
+			}
+		}
 		for (WatchedShader& w : m_watched)
 		{
 			std::filesystem::path fullPath = engine::platform::FileSystem::ResolveContentPath(config, w.relativePath);
@@ -92,15 +104,20 @@ namespace engine::render
 		while (m_workerRunning)
 		{
 			CompileRequest req;
+			bool haveRequest = false;
 			{
 				std::lock_guard lock(m_queueMutex);
-				if (m_compileQueue.empty())
+				if (!m_compileQueue.empty())
 				{
-					std::this_thread::sleep_for(std::chrono::milliseconds(16));
-					continue;
+					req = std::move(m_compileQueue.front());
+					m_compileQueue.pop();
+					haveRequest = true;
 				}
-				req = std::move(m_compileQueue.front());
-				m_compileQueue.pop();
+			}
+			if (!haveRequest)
+			{
+				m_watcher.WaitForChange(500);
+				continue;
 			}
 			std::string key = ShaderCache::MakeKey(req.relativePath, req.defines);
 			auto result = m_compiler.CompileGlslToSpirv(req.fullPath, req.stage);

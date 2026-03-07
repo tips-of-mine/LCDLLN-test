@@ -28,9 +28,7 @@ namespace engine::render
 			return true;
 		}
 
-		char* val = nullptr;
-		size_t len = 0;
-		_dupenv_s(&val, &len, "MA_VARIABLE");
+		const char* vulkanSdk = std::getenv("VULKAN_SDK");
 		if (vulkanSdk)
 		{
 	#if defined(_WIN32)

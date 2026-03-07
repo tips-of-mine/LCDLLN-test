@@ -13,6 +13,7 @@
 #include <chrono>
 #include <cstring>
 #include <filesystem>
+#include <span>
 #include <string>
 #include <thread>
 #include <vector>
@@ -996,8 +997,10 @@ namespace engine
 		// M09.5: build draw list (HLOD vs instances, culling); debug overlay text.
 		{
 			const float maxDrawDist = static_cast<float>(m_cfg.GetDouble("world.max_draw_distance_m", 0.0));
+			std::span<const engine::world::ChunkRequest> pending = m_world.GetPendingChunkRequests();
 			out.hlodDebugText = engine::world::BuildChunkDrawList(
-				m_world.GetPendingChunkRequests(),
+				pending.data(),
+				pending.size(),
 				out.camera.position,
 				out.frustum,
 				m_hlodRuntime,

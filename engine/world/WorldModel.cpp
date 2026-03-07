@@ -23,7 +23,7 @@ namespace engine::world
 
 	struct ChunkBounds World::ChunkBounds(ChunkCoord c)
 	{
-		ChunkBounds b;
+		struct ChunkBounds b;
 		b.minX = static_cast<float>(c.x * kChunkSize);
 		b.minZ = static_cast<float>(c.z * kChunkSize);
 		b.maxX = static_cast<float>((c.x + 1) * kChunkSize);

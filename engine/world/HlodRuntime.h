@@ -3,7 +3,7 @@
 #include "engine/math/Math.h"
 #include "engine/world/WorldModel.h"
 
-#include <span>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -22,6 +22,8 @@ namespace engine::world
 	};
 
 	/// Builds chunk draw list decisions: for each requested chunk, applies frustum + distance culling and HLOD switch by distance.
+	/// \param requestedChunks Pointer to chunk requests (from World::GetPendingChunkRequests().data()).
+	/// \param requestedChunksCount Number of requests (from World::GetPendingChunkRequests().size()).
 	/// \param cameraPosition Zone-local camera position.
 	/// \param frustum View frustum for culling.
 	/// \param hlod HlodRuntime for threshold and culling.
@@ -29,7 +31,8 @@ namespace engine::world
 	/// \param decisionsOut Filled with one entry per chunk (useHlod, culled).
 	/// \return Debug string for overlay (e.g. "HLOD: 3 inst: 5 culled: 2").
 	std::string BuildChunkDrawList(
-		std::span<const engine::world::ChunkRequest> requestedChunks,
+		const ChunkRequest* requestedChunks,
+		size_t requestedChunksCount,
 		const engine::math::Vec3& cameraPosition,
 		const engine::math::Frustum& frustum,
 		const HlodRuntime& hlod,

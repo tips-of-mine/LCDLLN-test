@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include <format>
-#include <span>
 
 namespace engine::world
 {
@@ -47,7 +46,8 @@ namespace engine::world
 	}
 
 	std::string BuildChunkDrawList(
-		std::span<const ChunkRequest> requestedChunks,
+		const ChunkRequest* requestedChunks,
+		size_t requestedChunksCount,
 		const engine::math::Vec3& cameraPosition,
 		const engine::math::Frustum& frustum,
 		const HlodRuntime& hlod,
@@ -56,7 +56,9 @@ namespace engine::world
 	{
 		decisionsOut.clear();
 		int countHlod = 0, countInst = 0, countCulled = 0;
-		for (const ChunkRequest& req : requestedChunks)
+		for (size_t i = 0; i < requestedChunksCount; ++i)
+		{
+			const ChunkRequest& req = requestedChunks[i];
 		{
 			ChunkBounds bounds2d = World::ChunkBounds(req.chunkId);
 			engine::math::Vec3 aabbMin(bounds2d.minX, 0.0f, bounds2d.minZ);

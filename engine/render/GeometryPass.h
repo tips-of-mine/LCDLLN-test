@@ -2,6 +2,7 @@
 
 #include "engine/render/FrameGraph.h"
 #include "engine/render/AssetRegistry.h"
+#include "engine/render/InstanceBatch.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -34,13 +35,20 @@ namespace engine::render
 		          VkDescriptorSetLayout materialLayout = VK_NULL_HANDLE);
 
 		/// Records the geometry pass: begin render pass, bind pipeline (and material descriptor
-		/// set if provided), draw mesh, end pass.
-		/// \param prevViewProjMat4  M07.3: previous frame view-projection (column-major 4×4).
-		/// \param viewProjMat4      Current frame view-projection (column-major 4×4).
+		/// set if provided), draw mesh at given LOD, end pass.
+		/// \param lodLevel  M09.3: LOD level 0..3; mesh LOD chain used when mesh has lodLevelCount > 0.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
 		            ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
 		            const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
+		            uint32_t lodLevel = 0,
 		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE);
+
+		/// M09.3: Records instanced draws for batches (mesh+material key). instanceBuffer holds mat4s at each batch's instanceBufferOffset.
+		void RecordInstanced(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
+		            ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+		            const float* prevViewProjMat4, const float* viewProjMat4,
+		            const InstanceBatch* batches, uint32_t batchCount,
+		            VkBuffer instanceBuffer);
 
 		/// Releases render pass and pipeline. Safe to call when not initialized.
 		void Destroy(VkDevice device);
@@ -55,6 +63,9 @@ namespace engine::render
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline       m_pipeline       = VK_NULL_HANDLE;
 		bool             m_hasMaterialLayout = false; ///< True if materialLayout was provided at Init.
+		/// M09.3: identity mat4 for single-instance draw (binding 1).
+		VkBuffer         m_identityInstanceBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory   m_identityInstanceMemory = VK_NULL_HANDLE;
 	};
 
 } // namespace engine::render

@@ -51,6 +51,10 @@ add_library(engine_core
   engine/render/AutoExposure.cpp
   engine/render/TaaPass.cpp
   engine/math/Frustum.cpp
+  engine/world/WorldModel.cpp
+  engine/world/ChunkBudgetStats.cpp
+  engine/world/LodConfig.cpp
+  engine/world/HlodRuntime.cpp
 )
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -97,3 +101,6 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
     COMMENT "Copie des assets..."
   )
 endif()
+
+# M09.4: HLOD builder (offline tool, no Vulkan)
+add_subdirectory(tools/hlod_builder)

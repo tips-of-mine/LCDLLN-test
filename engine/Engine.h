@@ -31,12 +31,18 @@
 #include "engine/render/TaaPass.h"          // M07.4: TAA reprojection + clamp
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
+#include "engine/world/WorldModel.h"
+#include "engine/world/ChunkBudgetStats.h"
+#include "engine/world/LodConfig.h"
+#include "engine/world/HlodRuntime.h"
 
 struct GLFWwindow;
 
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace engine
 {
@@ -56,6 +62,8 @@ namespace engine
 
 		// Placeholder draw-list marker.
 		uint32_t drawItemCount = 0;
+		/// M09.5: Debug overlay HLOD state (e.g. "HLOD: 3 inst: 5 culled: 2").
+		std::string hlodDebugText;
 	};
 
 	/// Engine loop: BeginFrame/Update/Render/EndFrame with double-buffered RenderState.
@@ -174,6 +182,11 @@ namespace engine
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;
 		engine::render::FpsCameraController m_fpsCameraController;
+		engine::world::World m_world;
+		engine::world::ChunkBudgetStats m_chunkStats;
+		engine::world::LodConfig m_lodConfig;
+		engine::world::HlodRuntime m_hlodRuntime;
+		std::vector<engine::world::ChunkDrawDecision> m_chunkDrawDecisions;
 
 		std::array<RenderState, 2> m_renderStates{};
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };

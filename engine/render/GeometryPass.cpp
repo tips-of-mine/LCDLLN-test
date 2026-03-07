@@ -13,7 +13,7 @@ namespace engine::render
 		constexpr uint32_t kPushConstantSize = 128u;
 	}
 
-	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice /*physicalDevice*/,
+	bool GeometryPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 	    VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 	    const uint32_t* vertSpirv, size_t vertWordCount,
 	    const uint32_t* fragSpirv, size_t fragWordCount,
@@ -189,23 +189,30 @@ namespace engine::render
 		stages[1].pName  = "main";
 
 		// -------------------------------------------------------------------------
-		// Vertex input: position(0) vec3, normal(1) vec3, uv(2) vec2 — stride 32 bytes.
+		// Vertex input: binding 0 = vertex (pos,norm,uv); binding 1 = instance mat4 (M09.3).
 		// -------------------------------------------------------------------------
-		VkVertexInputAttributeDescription attrs[3] = {};
+		VkVertexInputAttributeDescription attrs[7] = {};
 		attrs[0].location = 0; attrs[0].binding = 0; attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[0].offset = 0;
 		attrs[1].location = 1; attrs[1].binding = 0; attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[1].offset = 12;
 		attrs[2].location = 2; attrs[2].binding = 0; attrs[2].format = VK_FORMAT_R32G32_SFLOAT;    attrs[2].offset = 24;
+		attrs[3].location = 3; attrs[3].binding = 1; attrs[3].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[3].offset = 0;
+		attrs[4].location = 4; attrs[4].binding = 1; attrs[4].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[4].offset = 16;
+		attrs[5].location = 5; attrs[5].binding = 1; attrs[5].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[5].offset = 32;
+		attrs[6].location = 6; attrs[6].binding = 1; attrs[6].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[6].offset = 48;
 
-		VkVertexInputBindingDescription vbinding = {};
-		vbinding.binding   = 0;
-		vbinding.stride    = 32;
-		vbinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		VkVertexInputBindingDescription bindings[2] = {};
+		bindings[0].binding   = 0;
+		bindings[0].stride    = 32;
+		bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		bindings[1].binding   = 1;
+		bindings[1].stride    = 64;
+		bindings[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
 		VkPipelineVertexInputStateCreateInfo vi = {};
 		vi.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vi.vertexBindingDescriptionCount   = 1;
-		vi.pVertexBindingDescriptions      = &vbinding;
-		vi.vertexAttributeDescriptionCount = 3;
+		vi.vertexBindingDescriptionCount   = 2;
+		vi.pVertexBindingDescriptions      = bindings;
+		vi.vertexAttributeDescriptionCount = 7;
 		vi.pVertexAttributeDescriptions    = attrs;
 
 		VkPipelineInputAssemblyStateCreateInfo ia = {};
@@ -278,6 +285,76 @@ namespace engine::render
 			m_renderPass     = VK_NULL_HANDLE;
 			return false;
 		}
+
+		// M09.3: identity instance buffer (one mat4) for single-instance draw (binding 1).
+		{
+			constexpr VkDeviceSize kIdentityBufferSize = 64u;
+			VkBufferCreateInfo bufInfo = {};
+			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufInfo.size  = kIdentityBufferSize;
+			bufInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+			result = vkCreateBuffer(device, &bufInfo, nullptr, &m_identityInstanceBuffer);
+			if (result != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "GeometryPass: identity instance buffer create failed: {}", static_cast<int>(result));
+				vkDestroyPipeline(device, m_pipeline, nullptr);
+				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+				vkDestroyRenderPass(device, m_renderPass, nullptr);
+				m_pipeline = VK_NULL_HANDLE;
+				m_pipelineLayout = VK_NULL_HANDLE;
+				m_renderPass = VK_NULL_HANDLE;
+				return false;
+			}
+			VkMemoryRequirements memReq;
+			vkGetBufferMemoryRequirements(device, m_identityInstanceBuffer, &memReq);
+			VkPhysicalDeviceMemoryProperties memProps;
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+			uint32_t memTypeIndex = UINT32_MAX;
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+				if ((memReq.memoryTypeBits & (1u << i)) != 0
+					&& (memProps.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0
+					&& (memProps.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0)
+				{
+					memTypeIndex = i;
+					break;
+				}
+			}
+			if (memTypeIndex == UINT32_MAX)
+			{
+				vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
+				m_identityInstanceBuffer = VK_NULL_HANDLE;
+				vkDestroyPipeline(device, m_pipeline, nullptr);
+				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+				vkDestroyRenderPass(device, m_renderPass, nullptr);
+				m_pipeline = VK_NULL_HANDLE;
+				m_pipelineLayout = VK_NULL_HANDLE;
+				m_renderPass = VK_NULL_HANDLE;
+				return false;
+			}
+			VkMemoryAllocateInfo allocInfo = {};
+			allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize  = memReq.size;
+			allocInfo.memoryTypeIndex = memTypeIndex;
+			result = vkAllocateMemory(device, &allocInfo, nullptr, &m_identityInstanceMemory);
+			if (result != VK_SUCCESS)
+			{
+				vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
+				m_identityInstanceBuffer = VK_NULL_HANDLE;
+				vkDestroyPipeline(device, m_pipeline, nullptr);
+				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+				vkDestroyRenderPass(device, m_renderPass, nullptr);
+				m_pipeline = VK_NULL_HANDLE;
+				m_pipelineLayout = VK_NULL_HANDLE;
+				m_renderPass = VK_NULL_HANDLE;
+				return false;
+			}
+			vkBindBufferMemory(device, m_identityInstanceBuffer, m_identityInstanceMemory, 0);
+			float identity[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+			void* ptr = nullptr;
+			vkMapMemory(device, m_identityInstanceMemory, 0, kIdentityBufferSize, 0, &ptr);
+			if (ptr) { std::memcpy(ptr, identity, 64); vkUnmapMemory(device, m_identityInstanceMemory); }
+		}
 		return true;
 	}
 
@@ -289,6 +366,7 @@ namespace engine::render
 	    Registry& registry, VkExtent2D extent,
 	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
 	    const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
+	    uint32_t lodLevel,
 	    VkDescriptorSet materialDescriptorSet)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
@@ -362,12 +440,18 @@ namespace engine::render
 		if (mesh
 			&& mesh->vertexBuffer != VK_NULL_HANDLE
 			&& mesh->indexBuffer  != VK_NULL_HANDLE
-			&& mesh->indexCount   > 0)
+			&& m_identityInstanceBuffer != VK_NULL_HANDLE)
 		{
-			VkDeviceSize vbOffset = 0;
-			vkCmdBindVertexBuffers(cmd, 0, 1, &mesh->vertexBuffer, &vbOffset);
-			vkCmdBindIndexBuffer(cmd, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-			vkCmdDrawIndexed(cmd, mesh->indexCount, 1, 0, 0, 0);
+			const uint32_t indexCount = mesh->GetLodIndexCount(lodLevel);
+			if (indexCount > 0)
+			{
+				const uint32_t indexOffset = mesh->GetLodIndexOffset(lodLevel);
+				VkBuffer vb[2] = { mesh->vertexBuffer, m_identityInstanceBuffer };
+				VkDeviceSize vbOffsets[2] = { 0, 0 };
+				vkCmdBindVertexBuffers(cmd, 0, 2, vb, vbOffsets);
+				vkCmdBindIndexBuffer(cmd, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+				vkCmdDrawIndexed(cmd, indexCount, 1, indexOffset, 0, 0);
+			}
 		}
 
 		vkCmdEndRenderPass(cmd);
@@ -381,6 +465,16 @@ namespace engine::render
 	void GeometryPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;
+		if (m_identityInstanceBuffer != VK_NULL_HANDLE)
+		{
+			vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
+			m_identityInstanceBuffer = VK_NULL_HANDLE;
+		}
+		if (m_identityInstanceMemory != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(device, m_identityInstanceMemory, nullptr);
+			m_identityInstanceMemory = VK_NULL_HANDLE;
+		}
 		if (m_pipeline != VK_NULL_HANDLE)
 		{
 			vkDestroyPipeline(device, m_pipeline, nullptr);
@@ -397,6 +491,99 @@ namespace engine::render
 			m_renderPass = VK_NULL_HANDLE;
 		}
 		m_hasMaterialLayout = false;
+	}
+
+	// -------------------------------------------------------------------------
+	// GeometryPass::RecordInstanced (M09.3)
+	// -------------------------------------------------------------------------
+
+	void GeometryPass::RecordInstanced(VkDevice device, VkCommandBuffer cmd,
+	    Registry& registry, VkExtent2D extent,
+	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+	    const float* prevViewProjMat4, const float* viewProjMat4,
+	    const InstanceBatch* batches, uint32_t batchCount,
+	    VkBuffer instanceBuffer)
+	{
+		if (!IsValid() || extent.width == 0 || extent.height == 0 || !batches || batchCount == 0
+			|| instanceBuffer == VK_NULL_HANDLE)
+			return;
+
+		VkImageView viewA = registry.getImageView(idA);
+		VkImageView viewB = registry.getImageView(idB);
+		VkImageView viewC = registry.getImageView(idC);
+		VkImageView viewVel = registry.getImageView(idVelocity);
+		VkImageView viewDepth = registry.getImageView(idDepth);
+		if (!viewA || !viewB || !viewC || !viewVel || !viewDepth)
+			return;
+
+		VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
+		VkFramebufferCreateInfo fbInfo = {};
+		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		fbInfo.renderPass = m_renderPass;
+		fbInfo.attachmentCount = 5;
+		fbInfo.pAttachments = views;
+		fbInfo.width = extent.width;
+		fbInfo.height = extent.height;
+		fbInfo.layers = 1;
+
+		VkFramebuffer fb = VK_NULL_HANDLE;
+		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
+			return;
+
+		VkClearValue clearValues[5] = {};
+		clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[1].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[2].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[3].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[4].depthStencil = { 1.0f, 0 };
+
+		VkRenderPassBeginInfo rpBegin = {};
+		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		rpBegin.renderPass = m_renderPass;
+		rpBegin.framebuffer = fb;
+		rpBegin.renderArea = { { 0, 0 }, extent };
+		rpBegin.clearValueCount = 5;
+		rpBegin.pClearValues = clearValues;
+
+		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+
+		VkViewport viewport = {};
+		viewport.width = static_cast<float>(extent.width);
+		viewport.height = static_cast<float>(extent.height);
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+		VkRect2D scissor = { { 0, 0 }, extent };
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		if (prevViewProjMat4 && viewProjMat4)
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, kPushConstantSize, prevViewProjMat4);
+		if (viewProjMat4)
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64, 64u, viewProjMat4);
+
+		for (uint32_t i = 0; i < batchCount; ++i)
+		{
+			const InstanceBatch& batch = batches[i];
+			if (!batch.mesh || batch.instanceCount == 0
+				|| batch.mesh->vertexBuffer == VK_NULL_HANDLE
+				|| batch.mesh->indexBuffer == VK_NULL_HANDLE)
+				continue;
+			const uint32_t indexCount = batch.mesh->GetLodIndexCount(batch.lodLevel);
+			if (indexCount == 0) continue;
+
+			if (m_hasMaterialLayout && batch.materialDescriptorSet != VK_NULL_HANDLE)
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &batch.materialDescriptorSet, 0, nullptr);
+
+			VkBuffer vb[2] = { batch.mesh->vertexBuffer, instanceBuffer };
+			VkDeviceSize vbOffsets[2] = { 0, static_cast<VkDeviceSize>(batch.instanceBufferOffset) };
+			vkCmdBindVertexBuffers(cmd, 0, 2, vb, vbOffsets);
+			vkCmdBindIndexBuffer(cmd, batch.mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			const uint32_t indexOffset = batch.mesh->GetLodIndexOffset(batch.lodLevel);
+			vkCmdDrawIndexed(cmd, indexCount, batch.instanceCount, indexOffset, 0, 0);
+		}
+
+		vkCmdEndRenderPass(cmd);
+		vkDestroyFramebuffer(device, fb, nullptr);
 	}
 
 } // namespace engine::render

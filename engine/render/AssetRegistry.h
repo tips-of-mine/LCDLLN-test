@@ -17,7 +17,11 @@ namespace engine::render
 	using AssetId = uint32_t;
 	constexpr AssetId kInvalidAssetId = 0;
 
+	/// Maximum LOD levels in the chain (M09.3).
+	constexpr uint32_t kMeshLodLevelCount = 4;
+
 	/// GPU mesh data: vertex and index buffers (owned by registry).
+	/// M09.3: optional LOD chain — when lodLevelCount > 0, each LOD has indexOffset/indexCount in the same index buffer.
 	struct MeshAsset
 	{
 		VkBuffer vertexBuffer = VK_NULL_HANDLE;
@@ -26,6 +30,28 @@ namespace engine::render
 		VkDeviceMemory indexMemory = VK_NULL_HANDLE;
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
+
+		/// M09.3: LOD chain. 0 = single LOD (use indexCount for LOD0). 1..kMeshLodLevelCount = number of LODs.
+		uint32_t lodLevelCount = 0;
+		uint32_t lodIndexOffset[kMeshLodLevelCount] = { 0, 0, 0, 0 };
+		uint32_t lodIndexCount[kMeshLodLevelCount] = { 0, 0, 0, 0 };
+
+		/// Returns index count for the given LOD level (0..3). When lodLevelCount==0, returns indexCount for LOD0 only.
+		uint32_t GetLodIndexCount(uint32_t lodLevel) const
+		{
+			if (lodLevelCount == 0)
+				return (lodLevel == 0) ? indexCount : 0;
+			if (lodLevel >= kMeshLodLevelCount) return 0;
+			return lodIndexCount[lodLevel];
+		}
+		/// Returns index buffer offset (in indices) for the given LOD level. When lodLevelCount==0, returns 0 for LOD0.
+		uint32_t GetLodIndexOffset(uint32_t lodLevel) const
+		{
+			if (lodLevelCount == 0)
+				return (lodLevel == 0) ? 0u : 0u;
+			if (lodLevel >= kMeshLodLevelCount) return 0;
+			return lodIndexOffset[lodLevel];
+		}
 	};
 
 	/// GPU texture data: image and view (owned by registry).

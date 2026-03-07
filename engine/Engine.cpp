@@ -22,6 +22,9 @@ namespace engine
 	{
 		m_vsync  = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
+		m_chunkStats.Init(m_cfg);
+		m_lodConfig.Init(m_cfg);
+		m_hlodRuntime.Init(m_cfg);
 
 		engine::platform::Window::CreateDesc desc{};
 		desc.title  = "LCDLLN Engine";
@@ -706,11 +709,18 @@ namespace engine
 							const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 							const engine::RenderState& rs = m_renderStates[readIdx];
 							engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+							// M09.2: tag draw with chunk/ring and record stats.
+							const engine::world::ChunkCoord chunk = engine::world::WorldToChunkCoord(rs.camera.position.x, rs.camera.position.z);
+							const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
+							const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
+							m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
+							const int lodLevel = m_lodConfig.GetLodLevel(0.0f);
 							m_geometryPass.Record(
 								m_vkDeviceContext.GetDevice(), cmd, reg,
 								m_vkSwapchain.GetExtent(),
 								m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-								rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh);
+								rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+								static_cast<uint32_t>(lodLevel));
 						});
 
 					// Passes: ShadowMap[0..3] (M04.2) — depth-only render per cascade.
@@ -728,6 +738,11 @@ namespace engine
 								const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 								const engine::RenderState& rs = m_renderStates[readIdx];
 								engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+								// M09.2: tag draw with chunk/ring and record stats.
+								const engine::world::ChunkCoord chunk = engine::world::WorldToChunkCoord(rs.camera.position.x, rs.camera.position.z);
+								const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
+								const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
+								m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
 
 								const float depthBiasConstant =
 									static_cast<float>(m_cfg.GetDouble("shadows.depth_bias_constant", 1.25));
@@ -1326,6 +1341,7 @@ namespace engine
 
 		m_time.BeginFrame();
 		m_frameArena.BeginFrame(m_time.FrameIndex());
+		m_chunkStats.ResetPerFrame();
 	}
 
 	void Engine::Update()
@@ -1340,6 +1356,9 @@ namespace engine
 
 		out.camera = readState.camera;
 		m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+
+		// M09.1: World model — update required chunks from player position (hysteresis).
+		m_world.Update(out.camera.position);
 
 		if (m_width > 0 && m_height > 0)
 			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
@@ -1372,6 +1391,20 @@ namespace engine
 			m_taaHistoryInvalid = false;
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
+
+		// M09.5: build draw list (HLOD vs instances, culling); debug overlay text.
+		{
+			const float maxDrawDist = static_cast<float>(m_cfg.GetDouble("world.max_draw_distance_m", 0.0));
+			out.hlodDebugText = engine::world::BuildChunkDrawList(
+				m_world.GetPendingChunkRequests(),
+				out.camera.position,
+				out.frustum,
+				m_hlodRuntime,
+				maxDrawDist,
+				m_chunkDrawDecisions);
+			if ((m_currentFrame % 60) == 0 && !out.hlodDebugText.empty())
+				LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
+		}
 
 		// M04.1: compute cascaded shadow matrices and split distances for a default sun light.
 		{
@@ -1485,7 +1518,9 @@ namespace engine
 
 	void Engine::EndFrame()
 	{
-		// Nothing to do post-present for now.
+		// M09.2: log chunk/ring stats periodically (e.g. ~1 Hz at 60 fps).
+		if (m_currentFrame > 0 && (m_currentFrame % 60) == 0)
+			m_chunkStats.LogStats();
 	}
 
 	void Engine::SwapRenderState()

@@ -12,6 +12,8 @@ namespace engine::core { class Config; }
 
 namespace engine::world
 {
+	class HlodRuntime;
+
 	/// Per-chunk draw decision: use HLOD vs instances, and culled. M09.5.
 	struct ChunkDrawDecision
 	{

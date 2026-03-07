@@ -852,6 +852,8 @@ namespace engine
 		LOG_INFO(Core, "Engine init: vsync={} (present mode from swapchain)", m_vsync ? "on" : "off");
 	}
 
+	Engine::~Engine() = default;
+
 	int Engine::Run()
 	{
 		auto lastFpsLog  = std::chrono::steady_clock::now();

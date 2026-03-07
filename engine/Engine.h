@@ -62,6 +62,7 @@ namespace engine
 	{
 	public:
 		Engine(int argc, char** argv);
+		~Engine();
 		Engine(const Engine&) = delete;
 		Engine& operator=(const Engine&) = delete;
 

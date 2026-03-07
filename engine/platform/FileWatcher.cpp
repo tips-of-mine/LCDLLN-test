@@ -71,33 +71,33 @@ namespace engine::platform
 			MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), static_cast<int>(utf8.size()), out.data(), n);
 			return out;
 		}
+	}
 
-		bool StartReadDirectoryChanges(FileWatcher::Impl* impl)
+	bool FileWatcher::StartReadDirectoryChanges(Impl* impl)
+	{
+		if (impl->hDir == INVALID_HANDLE_VALUE || impl->stopSignalled)
 		{
-			if (impl->hDir == INVALID_HANDLE_VALUE || impl->stopSignalled)
-			{
-				return false;
-			}
-			impl->overlapped = OVERLAPPED{};
-			impl->overlapped.hEvent = impl->hEvent;
-			impl->pending = true;
-			BOOL ok = ReadDirectoryChangesW(
-				impl->hDir,
-				impl->buffer.data(),
-				static_cast<DWORD>(impl->buffer.size()),
-				FALSE,
-				FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
-				nullptr,
-				&impl->overlapped,
-				nullptr
-			);
-			if (!ok)
-			{
-				impl->pending = false;
-				return false;
-			}
-			return true;
+			return false;
 		}
+		impl->overlapped = OVERLAPPED{};
+		impl->overlapped.hEvent = impl->hEvent;
+		impl->pending = true;
+		BOOL ok = ReadDirectoryChangesW(
+			impl->hDir,
+			impl->buffer.data(),
+			static_cast<DWORD>(impl->buffer.size()),
+			FALSE,
+			FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
+			nullptr,
+			&impl->overlapped,
+			nullptr
+		);
+		if (!ok)
+		{
+			impl->pending = false;
+			return false;
+		}
+		return true;
 	}
 #endif
 

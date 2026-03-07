@@ -28,6 +28,7 @@ namespace engine::platform
 
 	private:
 		struct Impl;
+		static bool StartReadDirectoryChanges(Impl* impl);
 		Impl* m_impl = nullptr;
 	};
 

@@ -41,10 +41,14 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
 
-          # Copie les binaires produits (hors vcpkg)
+          # Copie les binaires produits (hors vcpkg et hors debug)
           Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
             -Include "*.exe","*.dll","*.pdb" |
-            Where-Object { $_.FullName -notlike "*\vcpkg\*" } |
+            Where-Object {
+              $_.FullName -notlike "*\vcpkg\*" -and
+              $_.FullName -notlike "*\debug\*" -and
+              $_.FullName -notlike "*\Debug\*"
+            } |
             Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
 
           # Assets
@@ -60,7 +64,11 @@ jobs:
           foreach ($dll in $dlls) {
             $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
               -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -like "*x64*" -and $_.FullName -notlike "*debug_nonredist*" -and $_.FullName -notlike "*onecore*" } |
+              Where-Object {
+                $_.FullName -like "*x64*" -and
+                $_.FullName -notlike "*debug_nonredist*" -and
+                $_.FullName -notlike "*onecore*"
+              } |
               Select-Object -First 1
             if ($found) {
               Copy-Item $found.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
@@ -70,28 +78,11 @@ jobs:
             }
           }
 
-          # Copie les DLLs depuis System32
-          $system32Dlls = @(
-            "C:\Windows\System32\ucrtbase.dll",
-            "C:\Windows\System32\vcruntime140d.dll"
-          )
-          foreach ($f in $system32Dlls) {
-            if (Test-Path $f) {
-              Copy-Item $f -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-              Write-Host "Copié : $f"
-            } else {
-              Write-Warning "Introuvable : $f"
-            }
-          }
-
-          # Copie VCRUNTIME140D.dll depuis debug_nonredist\x64
-          $vcrDebug = Get-ChildItem -Recurse -Path $vcRedistBase `
-            -Filter "VCRUNTIME140D.dll" -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*debug_nonredist\x64*" } |
-            Select-Object -First 1
-          if ($vcrDebug) {
-            Copy-Item $vcrDebug.FullName -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
-            Write-Host "Copié : $($vcrDebug.FullName)"
+          # Copie ucrtbase.dll depuis System32
+          $ucrt = "C:\Windows\System32\ucrtbase.dll"
+          if (Test-Path $ucrt) {
+            Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+            Write-Host "Copié : $ucrt"
           }
 
           Write-Host "=== Contenu final des artifacts ==="

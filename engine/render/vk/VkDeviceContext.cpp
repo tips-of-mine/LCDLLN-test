@@ -13,6 +13,7 @@ namespace engine::render
 	namespace
 	{
 		const char* const kSwapchainExtensionName = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+		const char* const kSynchronization2ExtensionName = VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
 
 		/// Scores a physical device for suitability (higher = better). Returns 0 if unsuitable.
 		int ScorePhysicalDevice(VkPhysicalDevice phys, VkSurfaceKHR surface)
@@ -206,13 +207,46 @@ namespace engine::render
 
 		VkPhysicalDeviceFeatures deviceFeatures{};
 
+		VkPhysicalDeviceProperties physProps{};
+		vkGetPhysicalDeviceProperties(m_physicalDevice, &physProps);
+		uint32_t apiVersion = physProps.apiVersion;
+
+		uint32_t extCount = 0;
+		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, nullptr);
+		std::vector<VkExtensionProperties> deviceExts(extCount);
+		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, deviceExts.data());
+		bool hasSync2Ext = false;
+		for (const auto& e : deviceExts)
+		{
+			if (std::strcmp(e.extensionName, kSynchronization2ExtensionName) == 0)
+			{
+				hasSync2Ext = true;
+				break;
+			}
+		}
+		bool wantSync2 = (VK_VERSION_MAJOR(apiVersion) > 1 || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 3))
+			|| hasSync2Ext;
+
+		std::vector<const char*> enabledExtensions;
+		enabledExtensions.push_back(kSwapchainExtensionName);
+		bool apiPre13 = (VK_VERSION_MAJOR(apiVersion) < 1) || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) < 3);
+		if (wantSync2 && apiPre13 && hasSync2Ext)
+		{
+			enabledExtensions.push_back(kSynchronization2ExtensionName);
+		}
+
+		VkPhysicalDeviceSynchronization2FeaturesKHR sync2Features{};
+		sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
+		sync2Features.synchronization2 = VK_TRUE;
+
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		createInfo.pNext = wantSync2 ? &sync2Features : nullptr;
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 		createInfo.pEnabledFeatures = &deviceFeatures;
-		createInfo.enabledExtensionCount = 1;
-		createInfo.ppEnabledExtensionNames = &kSwapchainExtensionName;
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+		createInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
 		result = vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device);
 		if (result != VK_SUCCESS)
@@ -222,11 +256,13 @@ namespace engine::render
 			return false;
 		}
 
+		m_sync2Supported = wantSync2;
+
 		vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 		vkGetDeviceQueue(m_device, m_presentQueueFamilyIndex, 0, &m_presentQueue);
 
-		LOG_INFO(Render, "VkDeviceContext created (graphics queue family {}, present queue family {})",
-			m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex);
+		LOG_INFO(Render, "VkDeviceContext created (graphics queue family {}, present queue family {}, sync2: {})",
+			m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex, m_sync2Supported ? "yes" : "no");
 		return true;
 	}
 
@@ -243,6 +279,7 @@ namespace engine::render
 		m_presentQueue = VK_NULL_HANDLE;
 		m_graphicsQueueFamilyIndex = kInvalidQueueFamily;
 		m_presentQueueFamilyIndex = kInvalidQueueFamily;
+		m_sync2Supported = false;
 		LOG_INFO(Render, "VkDeviceContext destroyed");
 	}
 }

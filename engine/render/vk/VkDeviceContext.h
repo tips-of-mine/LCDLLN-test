@@ -48,6 +48,9 @@ namespace engine::render
 		/// Returns true if Create() succeeded and the device is valid.
 		bool IsValid() const { return m_device != VK_NULL_HANDLE; }
 
+		/// Returns true if VK_KHR_synchronization2 (or Vulkan 1.3 core) is enabled; use vkCmdPipelineBarrier2 when true.
+		bool SupportsSynchronization2() const { return m_sync2Supported; }
+
 	private:
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 		::VkDevice m_device = VK_NULL_HANDLE;
@@ -55,5 +58,6 @@ namespace engine::render
 		VkQueue m_presentQueue = VK_NULL_HANDLE;
 		uint32_t m_graphicsQueueFamilyIndex = kInvalidQueueFamily;
 		uint32_t m_presentQueueFamilyIndex = kInvalidQueueFamily;
+		bool m_sync2Supported = false;
 	};
 }

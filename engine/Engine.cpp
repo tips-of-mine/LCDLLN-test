@@ -1111,7 +1111,8 @@ namespace engine
 				m_fgRegistry,
 				frameIndex,
 				extent,
-				2u);
+				2u,
+				m_vkDeviceContext.SupportsSynchronization2());
 		}
 
 		if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS)

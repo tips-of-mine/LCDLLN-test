@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -32,11 +32,12 @@ namespace engine::render
 	};
 
 	/// Last known usage state per resource (layout, stage, access) for barrier insertion.
+	/// Uses sync2 types (VkPipelineStageFlags2 / VkAccessFlags2) for vkCmdPipelineBarrier2; fallback converts to legacy when needed.
 	struct ResourceUsageState
 	{
 		VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		VkPipelineStageFlags stageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		VkAccessFlags accessMask = 0;
+		VkPipelineStageFlags2 stageMask2 = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+		VkAccessFlags2 accessMask2 = 0;
 	};
 
 	/// Descriptor for a logical image resource (transient by default, frame lifetime).
@@ -160,8 +161,9 @@ namespace engine::render
 		/// fills the registry, then runs each pass execute(cmd, registry). Compiles the graph on first run if needed.
 		/// \param vmaAllocator Centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
 		/// \param framesInFlight Number of frame slots (e.g. 2).
+		/// \param sync2Supported When true, use vkCmdPipelineBarrier2; otherwise use legacy vkCmdPipelineBarrier.
 		void execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
-			Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight);
+			Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported = true);
 
 		/// Releases all allocated Vulkan resources (call on shutdown or before resize).
 		void destroy(VkDevice device, void* vmaAllocator);
@@ -202,7 +204,7 @@ namespace engine::render
 		};
 
 		void emitBarriersBeforePass(VkCommandBuffer cmd, const Pass& pass, Registry& registry,
-			std::unordered_map<ResourceId, ResourceUsageState>& lastUsage);
+			std::unordered_map<ResourceId, ResourceUsageState>& lastUsage, bool sync2Supported, VkDevice device);
 
 		ResourceId m_nextId = 1;
 		std::vector<ImageResource> m_imageResources;

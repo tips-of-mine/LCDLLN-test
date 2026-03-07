@@ -1,7 +1,7 @@
 #include "engine/render/FrameGraph.h"
 #include "engine/core/Log.h"
 
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
 #include <algorithm>
@@ -46,7 +46,7 @@ namespace engine::render
 		m_buffers.clear();
 	}
 
-	// --- ImageUsage -> layout/stage/access ---
+	// --- ImageUsage -> layout/stage/access (sync2 mapping) ---
 
 	ResourceUsageState GetUsageState(ImageUsage usage)
 	{
@@ -55,28 +55,28 @@ namespace engine::render
 		{
 		case ImageUsage::ColorWrite:
 			s.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			s.stageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			s.accessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			s.stageMask2 = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+			s.accessMask2 = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
 			break;
 		case ImageUsage::DepthWrite:
 			s.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			s.stageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			s.accessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			s.stageMask2 = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+			s.accessMask2 = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			break;
 		case ImageUsage::SampledRead:
 			s.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			s.stageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			s.accessMask = VK_ACCESS_SHADER_READ_BIT;
+			s.stageMask2 = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+			s.accessMask2 = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
 			break;
 		case ImageUsage::TransferSrc:
 			s.layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-			s.stageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			s.accessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			s.stageMask2 = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+			s.accessMask2 = VK_ACCESS_2_TRANSFER_READ_BIT;
 			break;
 		case ImageUsage::TransferDst:
 			s.layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			s.stageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			s.accessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			s.stageMask2 = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+			s.accessMask2 = VK_ACCESS_2_TRANSFER_WRITE_BIT;
 			break;
 		}
 		return s;
@@ -236,16 +236,37 @@ namespace engine::render
 		m_compiled = true;
 	}
 
-	void FrameGraph::emitBarriersBeforePass(VkCommandBuffer cmd, const Pass& pass, Registry& registry,
-		std::unordered_map<ResourceId, ResourceUsageState>& lastUsage)
+	namespace
 	{
-		struct PendingBarrier
+		/// Converts sync2 stage flags to legacy VkPipelineStageFlags for fallback barrier.
+		VkPipelineStageFlags ToLegacyStage(VkPipelineStageFlags2 stage2)
 		{
-			VkImageMemoryBarrier barrier;
-			VkPipelineStageFlags srcStage;
-			VkPipelineStageFlags dstStage;
-		};
-		std::vector<PendingBarrier> pending;
+			VkPipelineStageFlags out = 0;
+			if (stage2 & VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT) out |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			if (stage2 & VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT) out |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			if (stage2 & VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT) out |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			if (stage2 & VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT) out |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			if (stage2 & VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT) out |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			if (stage2 & VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT) out |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			if (stage2 & VK_PIPELINE_STAGE_2_TRANSFER_BIT) out |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+			return out;
+		}
+		/// Converts sync2 access flags to legacy VkAccessFlags for fallback barrier.
+		VkAccessFlags ToLegacyAccess(VkAccessFlags2 access2)
+		{
+			VkAccessFlags out = 0;
+			if (access2 & VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT) out |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			if (access2 & VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT) out |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			if (access2 & VK_ACCESS_2_SHADER_SAMPLED_READ_BIT) out |= VK_ACCESS_SHADER_READ_BIT;
+			if (access2 & VK_ACCESS_2_TRANSFER_READ_BIT) out |= VK_ACCESS_TRANSFER_READ_BIT;
+			if (access2 & VK_ACCESS_2_TRANSFER_WRITE_BIT) out |= VK_ACCESS_TRANSFER_WRITE_BIT;
+			return out;
+		}
+	}
+
+	void FrameGraph::emitBarriersBeforePass(VkCommandBuffer cmd, const Pass& pass, Registry& registry,
+		std::unordered_map<ResourceId, ResourceUsageState>& lastUsage, bool sync2Supported, VkDevice device)
+	{
 		std::unordered_map<ResourceId, ResourceUsageState> updates;
 
 		auto getAspect = [this](ResourceId rid) {
@@ -258,12 +279,26 @@ namespace engine::render
 				if (res.id == rid) return &res.desc;
 			return nullptr;
 		};
+
+		struct PendingSync2
+		{
+			VkImageMemoryBarrier2 bar2;
+		};
+		struct PendingLegacy
+		{
+			VkImageMemoryBarrier barrier;
+			VkPipelineStageFlags srcStage;
+			VkPipelineStageFlags dstStage;
+		};
+		std::vector<PendingSync2> pendingSync2;
+		std::vector<PendingLegacy> pendingLegacy;
+
 		auto emitFor = [&](ResourceId rid, ImageUsage usage) {
 			VkImage image = registry.getImage(rid);
 			if (image == VK_NULL_HANDLE) return;
 			ResourceUsageState cur = lastUsage[rid];
 			ResourceUsageState target = GetUsageState(usage);
-			if (cur.layout == target.layout && cur.accessMask == target.accessMask)
+			if (cur.layout == target.layout && cur.accessMask2 == target.accessMask2)
 			{
 				updates[rid] = target;
 				return;
@@ -271,24 +306,53 @@ namespace engine::render
 			const ImageDesc* desc = getImageDesc(rid);
 			const uint32_t levelCount = desc ? desc->mipLevels : 1u;
 			const uint32_t layerCount = desc ? desc->layers : 1u;
+			VkImageAspectFlags aspect = getAspect(rid);
 
-			VkImageMemoryBarrier barrier{};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.srcAccessMask = cur.accessMask;
-			barrier.dstAccessMask = target.accessMask;
-			barrier.oldLayout = cur.layout;
-			barrier.newLayout = target.layout;
-			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.image = image;
-			barrier.subresourceRange.aspectMask = getAspect(rid);
-			barrier.subresourceRange.baseMipLevel = 0;
-			barrier.subresourceRange.levelCount = levelCount;
-			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = layerCount;
-			VkPipelineStageFlags srcStage = (cur.layout == VK_IMAGE_LAYOUT_UNDEFINED)
-				? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : cur.stageMask;
-			pending.push_back({ barrier, srcStage, target.stageMask });
+			VkPipelineStageFlags2 srcStage2 = (cur.layout == VK_IMAGE_LAYOUT_UNDEFINED)
+				? VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT : cur.stageMask2;
+
+			if (sync2Supported)
+			{
+				VkImageMemoryBarrier2 bar2{};
+#if defined(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2)
+				bar2.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+#else
+				bar2.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
+#endif
+				bar2.srcStageMask = srcStage2;
+				bar2.srcAccessMask = cur.accessMask2;
+				bar2.dstStageMask = target.stageMask2;
+				bar2.dstAccessMask = target.accessMask2;
+				bar2.oldLayout = cur.layout;
+				bar2.newLayout = target.layout;
+				bar2.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar2.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				bar2.image = image;
+				bar2.subresourceRange.aspectMask = aspect;
+				bar2.subresourceRange.baseMipLevel = 0;
+				bar2.subresourceRange.levelCount = levelCount;
+				bar2.subresourceRange.baseArrayLayer = 0;
+				bar2.subresourceRange.layerCount = layerCount;
+				pendingSync2.push_back({ bar2 });
+			}
+			else
+			{
+				VkImageMemoryBarrier barrier{};
+				barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				barrier.srcAccessMask = ToLegacyAccess(cur.accessMask2);
+				barrier.dstAccessMask = ToLegacyAccess(target.accessMask2);
+				barrier.oldLayout = cur.layout;
+				barrier.newLayout = target.layout;
+				barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.image = image;
+				barrier.subresourceRange.aspectMask = aspect;
+				barrier.subresourceRange.baseMipLevel = 0;
+				barrier.subresourceRange.levelCount = levelCount;
+				barrier.subresourceRange.baseArrayLayer = 0;
+				barrier.subresourceRange.layerCount = layerCount;
+				pendingLegacy.push_back({ barrier, ToLegacyStage(srcStage2), ToLegacyStage(target.stageMask2) });
+			}
 			updates[rid] = target;
 		};
 
@@ -297,13 +361,59 @@ namespace engine::render
 		for (const auto& p : pass.writes)
 			emitFor(p.first, p.second);
 
-		if (!pending.empty())
+		if (sync2Supported && !pendingSync2.empty())
+		{
+			using PFN_barrier2 = void(VKAPI_PTR*)(VkCommandBuffer, const VkDependencyInfo*);
+			PFN_barrier2 pfnBarrier2 = reinterpret_cast<PFN_barrier2>(
+				vkGetDeviceProcAddr(device, "vkCmdPipelineBarrier2"));
+			if (!pfnBarrier2)
+			{
+				pfnBarrier2 = reinterpret_cast<PFN_barrier2>(
+					vkGetDeviceProcAddr(device, "vkCmdPipelineBarrier2KHR"));
+			}
+			if (pfnBarrier2)
+			{
+				std::vector<VkImageMemoryBarrier2> bars;
+				bars.reserve(pendingSync2.size());
+				for (auto& p : pendingSync2)
+					bars.push_back(p.bar2);
+				VkDependencyInfo dep{};
+#if defined(VK_STRUCTURE_TYPE_DEPENDENCY_INFO)
+				dep.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+#else
+				dep.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
+#endif
+				dep.imageMemoryBarrierCount = static_cast<uint32_t>(bars.size());
+				dep.pImageMemoryBarriers = bars.data();
+				pfnBarrier2(cmd, &dep);
+			}
+			else
+			{
+				for (auto& p : pendingSync2)
+				{
+					VkImageMemoryBarrier leg{};
+					leg.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					leg.srcAccessMask = ToLegacyAccess(p.bar2.srcAccessMask);
+					leg.dstAccessMask = ToLegacyAccess(p.bar2.dstAccessMask);
+					leg.oldLayout = p.bar2.oldLayout;
+					leg.newLayout = p.bar2.newLayout;
+					leg.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					leg.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+					leg.image = p.bar2.image;
+					leg.subresourceRange = p.bar2.subresourceRange;
+					VkPipelineStageFlags src = ToLegacyStage(p.bar2.srcStageMask);
+					VkPipelineStageFlags dst = ToLegacyStage(p.bar2.dstStageMask);
+					vkCmdPipelineBarrier(cmd, src, dst, 0, 0, nullptr, 0, nullptr, 1, &leg);
+				}
+			}
+		}
+		else if (!sync2Supported && !pendingLegacy.empty())
 		{
 			VkPipelineStageFlags srcStage = 0;
 			VkPipelineStageFlags dstStage = 0;
 			std::vector<VkImageMemoryBarrier> barriers;
-			barriers.reserve(pending.size());
-			for (auto& pb : pending)
+			barriers.reserve(pendingLegacy.size());
+			for (auto& pb : pendingLegacy)
 			{
 				srcStage |= pb.srcStage;
 				dstStage |= pb.dstStage;
@@ -317,7 +427,7 @@ namespace engine::render
 	}
 
 	void FrameGraph::execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
-		Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
+		Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported)
 	{
 		if (!m_compiled)
 		{
@@ -331,7 +441,7 @@ namespace engine::render
 		for (size_t passIdx : m_compiledOrder)
 		{
 			const Pass& pass = m_passes[passIdx];
-			emitBarriersBeforePass(cmd, pass, registry, lastUsage);
+			emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
 			if (pass.execute)
 			{
 				pass.execute(cmd, registry);

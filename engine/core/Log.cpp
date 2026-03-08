@@ -80,7 +80,21 @@ namespace engine::core
 
 		if (!g_settings.filePath.empty())
 		{
+			// Fermer un éventuel fichier précédent
+			if (g_file.is_open())
+				g_file.close();
+
 			g_file = std::ofstream(g_settings.filePath, std::ios::out | std::ios::app);
+
+			// ← vérification explicite
+			if (!g_file.is_open())
+			{
+				// Fallback : forcer la console pour ne pas perdre les logs
+				g_settings.console = true;
+				// Écrire l'erreur directement sur stderr (le logger n'est pas encore prêt)
+				std::fprintf(stderr, "[LOG] ERREUR: impossible d'ouvrir le fichier de log: %s\n",
+					g_settings.filePath.c_str());
+			}
 		}
 	}
 

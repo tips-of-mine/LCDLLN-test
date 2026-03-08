@@ -8,6 +8,12 @@
 #include "engine/world/ChunkBudgetStats.h"
 #include "engine/world/LodConfig.h"
 #include "engine/world/HlodRuntime.h"
+#include "engine/render/ShaderHotReload.h"
+#include "engine/render/FrameGraph.h"
+#include "engine/render/vk/DeferredDestroyQueue.h"
+#include "engine/render/vk/StagingAllocator.h"
+#include "engine/world/StreamingScheduler.h"
+#include "engine/render/Camera.h"
 
 #include <cstdio>
 #include <memory>
@@ -55,6 +61,30 @@ static void CreateAndRun(int argc, char** argv)
     std::fprintf(stderr, "[T] HlodRuntime\n");        std::fflush(stderr);
     { engine::world::HlodRuntime v; }
     std::fprintf(stderr, "[T] HlodRuntime OK\n");     std::fflush(stderr);
+
+	std::fprintf(stderr, "[T] ShaderHotReload\n");    std::fflush(stderr);
+    { engine::render::ShaderHotReload v; }
+    std::fprintf(stderr, "[T] ShaderHotReload OK\n"); std::fflush(stderr);
+
+    std::fprintf(stderr, "[T] Registry\n");           std::fflush(stderr);
+    { engine::render::Registry v; }
+    std::fprintf(stderr, "[T] Registry OK\n");        std::fflush(stderr);
+
+    std::fprintf(stderr, "[T] DeferredDestroyQueue\n");    std::fflush(stderr);
+    { engine::render::DeferredDestroyQueue v; }
+    std::fprintf(stderr, "[T] DeferredDestroyQueue OK\n"); std::fflush(stderr);
+
+    std::fprintf(stderr, "[T] StagingAllocator\n");   std::fflush(stderr);
+    { engine::render::StagingAllocator v; }
+    std::fprintf(stderr, "[T] StagingAllocator OK\n");std::fflush(stderr);
+
+    std::fprintf(stderr, "[T] StreamingScheduler\n"); std::fflush(stderr);
+    { engine::world::StreamingScheduler v; }
+    std::fprintf(stderr, "[T] StreamingScheduler OK\n");std::fflush(stderr);
+
+    std::fprintf(stderr, "[T] FpsCameraController\n");std::fflush(stderr);
+    { engine::render::FpsCameraController v; }
+    std::fprintf(stderr, "[T] FpsCameraController OK\n");std::fflush(stderr);
 
     std::fprintf(stderr, "[T] Engine()\n");           std::fflush(stderr);
     g_engine = std::make_unique<engine::Engine>(argc, argv);

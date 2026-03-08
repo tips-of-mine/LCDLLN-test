@@ -36,13 +36,23 @@ namespace engine
 			}
 		}
 		engine::core::LogSettings logSettings;
-		logSettings.filePath    = "engine.log";
+		logSettings.filePath = engine::core::Log::MakeTimestampedFilename("lcdlln.exe");
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;
 		engine::core::Log::Init(logSettings);
-		LOG_INFO(Core, "Log initialized (console={})", logToConsole ? "on" : "off");
-		LOG_INFO(Core, "Engine boot start");
+		LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+
+		m_vsync  = m_cfg.GetBool("render.vsync", true);
+		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
+		LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
+		m_chunkStats.Init(m_cfg);
+		m_lodConfig.Init(m_cfg);
+		m_hlodRuntime.Init(m_cfg);
+		m_streamCache.Init(m_cfg);
+		m_streamingScheduler.SetStreamCache(&m_streamCache);
+		m_gpuUploadQueue.Init(m_cfg);
+		LOG_INFO(Core, "[Boot] FrameArena init OK");
 
 		m_vsync  = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
@@ -60,8 +70,9 @@ namespace engine
 
 		if (!m_window.Create(desc))
 		{
-			LOG_FATAL(Platform, "Window::Create failed");
+			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
+		LOG_INFO(Core, "[Boot] Window::Create OK");
 
 		m_window.SetOnResize([this](int w, int h) { OnResize(w, h); });
 		m_window.SetOnClose([this]() { OnQuit(); });
@@ -75,23 +86,43 @@ namespace engine
 		// -----------------------------------------------------------------
 		// Vulkan init: instance → surface → device → swapchain → FG resources
 		// -----------------------------------------------------------------
-		if (glfwInit() == GLFW_TRUE)
+		if (glfwInit() != GLFW_TRUE)
 		{
+			LOG_WARN(Platform, "[Boot] glfwInit failed");
+		}
+		else
+		{
+			LOG_INFO(Core, "[Boot] glfwInit OK");
 			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			m_glfwWindowForVk = glfwCreateWindow(1, 1, "VkSurface", nullptr, nullptr);
+			if (!m_glfwWindowForVk)
+			{
+				LOG_WARN(Platform, "[Boot] glfwCreateWindow returned null");
+			}
+			else
+			{
+				LOG_INFO(Core, "[Boot] glfwCreateWindow OK");
+			}
 			if (m_glfwWindowForVk && m_vkInstance.Create())
 			{
+				LOG_INFO(Core, "[Boot] VkInstance::Create OK");
 				if (!m_vkInstance.CreateSurface(m_glfwWindowForVk))
 				{
-					LOG_WARN(Platform, "VkInstance::CreateSurface failed");
-				}
-				else if (!m_vkDeviceContext.Create(m_vkInstance.GetHandle(), m_vkInstance.GetSurface()))
-				{
-					LOG_WARN(Platform, "VkDeviceContext::Create failed");
+					LOG_WARN(Platform, "[Boot] VkInstance::CreateSurface failed");
 				}
 				else
 				{
+					LOG_INFO(Core, "[Boot] VkInstance::CreateSurface OK");
+					if (!m_vkDeviceContext.Create(m_vkInstance.GetHandle(), m_vkInstance.GetSurface()))
+					{
+						LOG_WARN(Platform, "[Boot] VkDeviceContext::Create failed");
+					}
+					else
+					{
+						VkPhysicalDeviceProperties physProps{};
+						vkGetPhysicalDeviceProperties(m_vkDeviceContext.GetPhysicalDevice(), &physProps);
+						LOG_INFO(Core, "[Boot] VkDeviceContext::Create OK (GPU: {})", physProps.deviceName);
 					VkPresentModeKHR requestedMode = VK_PRESENT_MODE_FIFO_KHR;
 					if (!m_vsync)
 						requestedMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
@@ -110,16 +141,24 @@ namespace engine
 						static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height),
 						requestedMode))
 					{
-						LOG_WARN(Platform, "VkSwapchain::Create failed");
+						LOG_WARN(Platform, "[Boot] VkSwapchain::Create failed");
 					}
-					else if (!engine::render::CreateFrameResources(
-						m_vkDeviceContext.GetDevice(),
-						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-						m_frameResources))
+					else
 					{
-						LOG_WARN(Platform, "CreateFrameResources failed");
-					}
-					else if (m_vkSwapchain.IsValid())
+						VkExtent2D swapExtent = m_vkSwapchain.GetExtent();
+						LOG_INFO(Core, "[Boot] VkSwapchain::Create OK (extent={}x{}, images={})",
+							swapExtent.width, swapExtent.height, m_vkSwapchain.GetImageCount());
+						if (!engine::render::CreateFrameResources(
+							m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+							m_frameResources))
+						{
+							LOG_WARN(Platform, "[Boot] FrameSync::Init failed");
+						}
+						else
+						{
+							LOG_INFO(Core, "[Boot] FrameSync::Init OK");
+					if (m_vkSwapchain.IsValid())
 					{
 					// Centralised GPU allocator (VMA) to avoid maxMemoryAllocationCount fragmentation.
 					VmaAllocatorCreateInfo vmaInfo{};
@@ -265,6 +304,14 @@ namespace engine
 						m_fgShadowMapIds[i] = m_frameGraph.createImage(name, shadowDesc);
 					}
 
+					// ShaderCompiler: log before pipeline init (glslangValidator used by loadSpirv).
+					{
+						engine::render::ShaderCompiler sc;
+						if (sc.LocateCompiler())
+							LOG_INFO(Core, "[Boot] ShaderCompiler OK");
+						else
+							LOG_WARN(Render, "[Boot] ShaderCompiler glslangValidator not found");
+					}
 					// Shader loader: read .spv from content path; if missing, compile .vert/.frag/.comp via ShaderCompiler.
 					auto loadSpirv = [&](const char* spvPath) -> std::vector<uint32_t>
 					{
@@ -303,6 +350,7 @@ namespace engine
 						m_vkDeviceContext.GetGraphicsQueue(),
 						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 						loadSpirv);
+					LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
 					// --------------------------------------------------
 					// Clear pass (legacy, clears SceneColor swapchain image).
@@ -856,15 +904,16 @@ namespace engine
 					}
 					}
 				}
+				}
+			}
 			}
 			else
 			{
-				LOG_WARN(Platform, "Vulkan instance or GLFW window for surface failed");
+				if (m_glfwWindowForVk)
+					LOG_WARN(Platform, "[Boot] VkInstance::Create failed");
+				else
+					LOG_WARN(Platform, "[Boot] Vulkan instance or GLFW window for surface failed");
 			}
-		}
-		else
-		{
-			LOG_WARN(Platform, "glfwInit failed");
 		}
 
 		// FS smoke.
@@ -876,6 +925,7 @@ namespace engine
 		}
 
 		LOG_INFO(Core, "Engine init: vsync={} (present mode from swapchain)", m_vsync ? "on" : "off");
+		LOG_INFO(Core, "[Boot] Engine boot COMPLETE");
 	}
 
 	Engine::~Engine() = default;

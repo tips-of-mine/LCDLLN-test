@@ -38,6 +38,9 @@ namespace engine::core
 	class Log final
 	{
 	public:
+		/// Returns a filename with timestamp suffix: prefix-YYYYMMDD-HHMMSS.log (e.g. "lcdlln.exe-20250308-143022.log").
+		static std::string MakeTimestampedFilename(std::string_view prefix);
+
 		/// Initialize logging. Safe to call once; subsequent calls overwrite settings.
 		static void Init(const LogSettings& settings);
 

@@ -57,6 +57,21 @@ namespace engine::core
 
 	std::atomic<LogLevel> Log::s_level{ LogLevel::Info };
 
+	std::string Log::MakeTimestampedFilename(std::string_view prefix)
+	{
+		const auto now = std::chrono::system_clock::now();
+		const std::time_t t = std::chrono::system_clock::to_time_t(now);
+		std::tm tm{};
+#if defined(_WIN32)
+		localtime_s(&tm, &t);
+#else
+		localtime_r(&t, &tm);
+#endif
+		char buf[64]{};
+		std::strftime(buf, sizeof(buf), "-%Y%m%d-%H%M%S.log", &tm);
+		return std::string(prefix) + buf;
+	}
+
 	void Log::Init(const LogSettings& settings)
 	{
 		std::scoped_lock lock(g_mutex);

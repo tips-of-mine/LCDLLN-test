@@ -116,7 +116,10 @@ namespace engine::render
 			}
 			if (!haveRequest)
 			{
-				m_watcher.WaitForChange(500);
+				if (m_watcherInited)           // ← AJOUTE CETTE VÉRIFICATION
+					m_watcher.WaitForChange(500);
+				else
+					std::this_thread::sleep_for(std::chrono::milliseconds(500));
 				continue;
 			}
 			std::string key = ShaderCache::MakeKey(req.relativePath, req.defines);

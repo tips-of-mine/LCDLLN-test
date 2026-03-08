@@ -26,9 +26,17 @@ namespace engine
 		, m_time(120)
 		, m_frameArena(/*framesInFlight*/ 2, /*perFrameCapacityBytes*/ 1024 * 1024)
 	{
+		// ↓↓↓ AJOUTE CES 4 LIGNES ICI ↓↓↓
+		std::fprintf(stderr, "[ENGINE] corps du constructeur atteint\n");
+		std::fflush(stderr);
+		FILE* f = std::fopen("C:/temp/test_engine.txt", "w");
+		if (f) { std::fprintf(f, "engine ok\n"); std::fclose(f); }
+		// ↑↑↑ FIN DU TEST ↑↑↑
+
 		bool logToFile    = false;
 		bool logToConsole = false;
 		for (int i = 1; i < argc; ++i)
+    // ... reste du code inchangé
 		{
 			if (!argv[i]) continue;
 			const std::string_view arg(argv[i]);

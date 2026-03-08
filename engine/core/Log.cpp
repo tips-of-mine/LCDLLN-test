@@ -84,7 +84,8 @@ namespace engine::core
 			if (g_file.is_open())
 				g_file.close();
 
-			g_file = std::ofstream(g_settings.filePath, std::ios::out | std::ios::app);
+			//g_file = std::ofstream(g_settings.filePath, std::ios::out | std::ios::app);
+			g_file = std::ofstream("C:/temp/lcdlln.log", std::ios::out | std::ios::app);
 
 			// ← vérification explicite
 			if (!g_file.is_open())

@@ -11,7 +11,11 @@ namespace engine::core
 {
 	namespace
 	{
-		std::mutex g_mutex;
+		std::mutex& GetMutex()
+		{
+			static std::mutex m;
+			return m;
+		}
 		std::ofstream g_file;
 		LogSettings g_settings{};
 
@@ -77,7 +81,7 @@ namespace engine::core
 		std::fprintf(stderr, "[LOG] Init entree\n"); std::fflush(stderr);
 
 		std::fprintf(stderr, "[LOG] avant scoped_lock\n"); std::fflush(stderr);
-		std::scoped_lock lock(g_mutex);
+		std::scoped_lock lock(GetMutex());
 		std::fprintf(stderr, "[LOG] apres scoped_lock\n"); std::fflush(stderr);
 
 		g_settings = settings;
@@ -96,7 +100,7 @@ namespace engine::core
 
 	void Log::Shutdown()
 	{
-		std::scoped_lock lock(g_mutex);
+		std::scoped_lock lock(GetMutex());
 		if (g_file.is_open())
 		{
 			g_file.flush();
@@ -130,7 +134,7 @@ namespace engine::core
 			subsystem ? subsystem : "Unknown",
 			message);
 
-		std::scoped_lock lock(g_mutex);
+		std::scoped_lock lock(GetMutex());
 
 		if (g_settings.console)
 		{

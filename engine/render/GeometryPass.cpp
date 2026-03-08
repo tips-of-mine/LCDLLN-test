@@ -376,6 +376,7 @@ namespace engine::render
 			vkMapMemory(device, m_identityInstanceMemory, 0, kIdentityBufferSize, 0, &ptr);
 			if (ptr) { std::memcpy(ptr, identity, 64); vkUnmapMemory(device, m_identityInstanceMemory); }
 		}
+		LOG_INFO(Render, "[Boot] GeometryPass init OK");
 		return true;
 	}
 

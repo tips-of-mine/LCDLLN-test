@@ -26,17 +26,19 @@ namespace engine
 		, m_time(120)
 		, m_frameArena(/*framesInFlight*/ 2, /*perFrameCapacityBytes*/ 1024 * 1024)
 	{
+		bool logToFile    = false;
 		bool logToConsole = false;
 		for (int i = 1; i < argc; ++i)
 		{
-			if (argv[i] && std::string_view(argv[i]) == "-log")
-			{
-				logToConsole = true;
-				break;
-			}
+			if (!argv[i]) continue;
+			const std::string_view arg(argv[i]);
+			if (arg == "-log")     logToFile    = true;
+			if (arg == "-console") logToConsole = true;
 		}
 		engine::core::LogSettings logSettings;
-		logSettings.filePath = engine::core::Log::MakeTimestampedFilename("lcdlln.exe");
+		logSettings.filePath    = logToFile
+			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
+			: "";                   // chaîne vide = pas de fichier créé
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;

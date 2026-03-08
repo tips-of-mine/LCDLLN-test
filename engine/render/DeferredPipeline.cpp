@@ -26,7 +26,10 @@ namespace engine::render
 				const uint32_t lutSize = 256u;
 				if (m_brdfLutPass.Init(device, physicalDevice, vmaAllocator, lutSize,
 						brdfComp.data(), brdfComp.size(), graphicsQueueFamilyIndex))
+				{
 					m_brdfLutPass.Generate(device, graphicsQueue);
+					LOG_INFO(Render, "[Boot] DeferredPipeline BRDF LUT OK");
+				}
 				else
 					LOG_WARN(Render, "M05.1: BRDF LUT init failed — LUT disabled");
 			}
@@ -40,8 +43,10 @@ namespace engine::render
 			if (!specPrefilterComp.empty())
 			{
 				const uint32_t specSize = 256u, specMipCount = 6u;
-				if (!m_specularPrefilterPass.Init(device, physicalDevice, vmaAllocator,
+				if (m_specularPrefilterPass.Init(device, physicalDevice, vmaAllocator,
 						specSize, specMipCount, specPrefilterComp.data(), specPrefilterComp.size(), graphicsQueueFamilyIndex))
+					LOG_INFO(Render, "[Boot] DeferredPipeline SpecularPrefilter OK");
+				else
 					LOG_WARN(Render, "M05.3: Specular prefilter init failed — disabled");
 			}
 			else
@@ -50,6 +55,8 @@ namespace engine::render
 
 		// M06.1: SSAO kernel + noise
 		m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator, config, graphicsQueue, graphicsQueueFamilyIndex);
+		if (m_ssaoKernelNoise.IsValid())
+			LOG_INFO(Render, "[Boot] DeferredPipeline SSAO kernel/noise OK");
 
 		// M06.2: SSAO generate
 		{
@@ -88,14 +95,21 @@ namespace engine::render
 			std::vector<uint32_t> vertSpirv = loadSpirv("shaders/gbuffer_geometry.vert.spv");
 			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
 			if (!vertSpirv.empty() && !fragSpirv.empty())
-				m_geometryPass.Init(device, physicalDevice,
-					VK_FORMAT_R8G8B8A8_SRGB,
-					VK_FORMAT_A2B10G10R10_UNORM_PACK32,
-					VK_FORMAT_R8G8B8A8_UNORM,
-					VK_FORMAT_R16G16_SFLOAT,
-					VK_FORMAT_D32_SFLOAT,
-					vertSpirv.data(), vertSpirv.size(),
-					fragSpirv.data(), fragSpirv.size());
+			{
+				if (m_geometryPass.Init(device, physicalDevice,
+						VK_FORMAT_R8G8B8A8_SRGB,
+						VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+						VK_FORMAT_R8G8B8A8_UNORM,
+						VK_FORMAT_R16G16_SFLOAT,
+						VK_FORMAT_D32_SFLOAT,
+						vertSpirv.data(), vertSpirv.size(),
+						fragSpirv.data(), fragSpirv.size()))
+					LOG_INFO(Render, "[Boot] DeferredPipeline GeometryPass OK");
+				else
+					LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass init failed");
+			}
+			else
+				LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass shaders not found");
 		}
 
 		// Shadow map pass
@@ -103,8 +117,13 @@ namespace engine::render
 			std::vector<uint32_t> smVert = loadSpirv("shaders/shadow_depth.vert.spv");
 			std::vector<uint32_t> smFrag = loadSpirv("shaders/shadow_depth.frag.spv");
 			if (!smVert.empty() && !smFrag.empty())
-				m_shadowMapPass.Init(device, physicalDevice, VK_FORMAT_D32_SFLOAT, shadowMapResolution,
-					smVert.data(), smVert.size(), smFrag.data(), smFrag.size());
+			{
+				if (m_shadowMapPass.Init(device, physicalDevice, VK_FORMAT_D32_SFLOAT, shadowMapResolution,
+						smVert.data(), smVert.size(), smFrag.data(), smFrag.size()))
+					LOG_INFO(Render, "[Boot] DeferredPipeline ShadowMapPass OK");
+				else
+					LOG_WARN(Render, "M04.2: shadow map pass init failed — disabled");
+			}
 			else
 				LOG_WARN(Render, "M04.2: shadow map shaders not found — shadow pass disabled");
 		}
@@ -114,8 +133,13 @@ namespace engine::render
 			std::vector<uint32_t> litVert = loadSpirv("shaders/lighting.vert.spv");
 			std::vector<uint32_t> litFrag = loadSpirv("shaders/lighting.frag.spv");
 			if (!litVert.empty() && !litFrag.empty())
-				m_lightingPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
-					litVert.data(), litVert.size(), litFrag.data(), litFrag.size(), 2u);
+			{
+				if (m_lightingPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
+						litVert.data(), litVert.size(), litFrag.data(), litFrag.size(), 2u))
+					LOG_INFO(Render, "[Boot] DeferredPipeline LightingPass OK");
+				else
+					LOG_WARN(Render, "M03.2: lighting pass init failed — disabled");
+			}
 			else
 				LOG_WARN(Render, "M03.2: lighting shaders not found — lighting pass disabled");
 		}
@@ -125,8 +149,13 @@ namespace engine::render
 			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");
 			std::vector<uint32_t> tmFrag = loadSpirv("shaders/tonemap.frag.spv");
 			if (!tmVert.empty() && !tmFrag.empty())
-				m_tonemapPass.Init(device, physicalDevice, sceneColorLDRFormat,
-					tmVert.data(), tmVert.size(), tmFrag.data(), tmFrag.size(), 2u);
+			{
+				if (m_tonemapPass.Init(device, physicalDevice, sceneColorLDRFormat,
+						tmVert.data(), tmVert.size(), tmFrag.data(), tmFrag.size(), 2u))
+					LOG_INFO(Render, "[Boot] DeferredPipeline TonemapPass OK");
+				else
+					LOG_WARN(Render, "M03.4: tonemap pass init failed — disabled");
+			}
 			else
 				LOG_WARN(Render, "M03.4: tonemap shaders not found — tonemap pass disabled");
 		}
@@ -179,7 +208,7 @@ namespace engine::render
 			{
 				if (m_taaPass.Init(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM,
 						taaVert.data(), taaVert.size(), taaFrag.data(), taaFrag.size(), 2u))
-					LOG_INFO(Render, "M07.4: TAA pass ready");
+					LOG_INFO(Render, "[Boot] DeferredPipeline TAA OK");
 				else
 					LOG_WARN(Render, "M07.4: TAA pass init failed");
 			}
@@ -187,6 +216,7 @@ namespace engine::render
 				LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
 		}
 
+		LOG_INFO(Render, "[Boot] DeferredPipeline all passes init done");
 		return true;
 	}
 

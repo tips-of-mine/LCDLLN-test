@@ -1,4 +1,5 @@
 #include "engine/platform/FileSystem.h"
+#include "engine/core/Log.h"
 
 #include <fstream>
 
@@ -12,6 +13,12 @@ namespace engine::platform
 	std::filesystem::path FileSystem::ResolveContentPath(const engine::core::Config& cfg, std::string_view relativeContentPath)
 	{
 		const std::string base = cfg.GetString("paths.content", "game/data");
+		static bool s_bootContentPathLogged = false;
+		if (!s_bootContentPathLogged)
+		{
+			LOG_INFO(Platform, "[Boot] FileSystem content base: {}", base);
+			s_bootContentPathLogged = true;
+		}
 		return Join(base, relativeContentPath);
 	}
 

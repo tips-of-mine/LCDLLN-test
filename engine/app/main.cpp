@@ -5,6 +5,17 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+static std::unique_ptr<engine::Engine> g_engine;
+static int g_result = 1;
+
+static void CreateAndRun(int argc, char** argv)
+{
+    g_engine = std::make_unique<engine::Engine>(argc, argv);
+    std::fprintf(stderr, "[MAIN] Engine cree OK\n");
+    std::fflush(stderr);
+    g_result = g_engine->Run();
+}
+
 int main(int argc, char** argv)
 {
     std::fprintf(stderr, "[MAIN] main() atteint\n");
@@ -15,24 +26,13 @@ int main(int argc, char** argv)
 
     __try
     {
-        auto e = std::make_unique<engine::Engine>(argc, argv);
-        std::fprintf(stderr, "[MAIN] Engine cree OK\n");
-        std::fflush(stderr);
-        return e->Run();
+        CreateAndRun(argc, argv);
     }
     __except(EXCEPTION_EXECUTE_HANDLER)
     {
         std::fprintf(stderr, "[MAIN] SEH EXCEPTION code=0x%08X\n",
             (unsigned int)GetExceptionCode());
         std::fflush(stderr);
-
-        FILE* f = std::fopen("C:/temp/crash_code.txt", "w");
-        if (f)
-        {
-            std::fprintf(f, "SEH exception code: 0x%08X\n",
-                (unsigned int)GetExceptionCode());
-            std::fclose(f);
-        }
     }
-    return 1;
+    return g_result;
 }

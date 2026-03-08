@@ -42,13 +42,19 @@ namespace engine
 		}
 
 		std::fprintf(stderr, "[ENGINE] avant Log::Init\n"); std::fflush(stderr);
+
+		std::fprintf(stderr, "[ENGINE] MakeTimestampedFilename\n"); std::fflush(stderr);
 		engine::core::LogSettings logSettings;
 		logSettings.filePath    = logToFile
 			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
 			: "";
+		std::fprintf(stderr, "[ENGINE] filePath='%s'\n", logSettings.filePath.c_str()); std::fflush(stderr);
+
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;
+
+		std::fprintf(stderr, "[ENGINE] appel Log::Init\n"); std::fflush(stderr);
 		engine::core::Log::Init(logSettings);
 		std::fprintf(stderr, "[ENGINE] Log::Init OK\n"); std::fflush(stderr);
 

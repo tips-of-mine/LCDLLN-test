@@ -29,29 +29,28 @@ namespace engine
 		// ↓↓↓ AJOUTE CES 4 LIGNES ICI ↓↓↓
 		std::fprintf(stderr, "[ENGINE] corps du constructeur atteint\n");
 		std::fflush(stderr);
-		FILE* f = std::fopen("C:/temp/test_engine.txt", "w");
-		if (f) { std::fprintf(f, "engine ok\n"); std::fclose(f); }
-		// ↑↑↑ FIN DU TEST ↑↑↑
 
+		std::fprintf(stderr, "[ENGINE] parsing args\n"); std::fflush(stderr);
 		bool logToFile    = false;
 		bool logToConsole = false;
 		for (int i = 1; i < argc; ++i)
-    // ... reste du code inchangé
 		{
 			if (!argv[i]) continue;
 			const std::string_view arg(argv[i]);
 			if (arg == "-log")     logToFile    = true;
 			if (arg == "-console") logToConsole = true;
 		}
+
+		std::fprintf(stderr, "[ENGINE] avant Log::Init\n"); std::fflush(stderr);
 		engine::core::LogSettings logSettings;
 		logSettings.filePath    = logToFile
 			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
-			: "";                   // chaîne vide = pas de fichier créé
+			: "";
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;
 		engine::core::Log::Init(logSettings);
-		LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+		std::fprintf(stderr, "[ENGINE] Log::Init OK\n"); std::fflush(stderr);
 
 		m_vsync  = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);

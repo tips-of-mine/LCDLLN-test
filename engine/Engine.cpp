@@ -907,6 +907,7 @@ namespace engine
 				}
 			}
 			}
+			}
 			else
 			{
 				if (m_glfwWindowForVk)

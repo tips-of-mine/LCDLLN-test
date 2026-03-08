@@ -14,6 +14,8 @@
 #include "engine/render/vk/StagingAllocator.h"
 #include "engine/world/StreamingScheduler.h"
 #include "engine/render/Camera.h"
+#include "engine/platform/FileWatcher.h"
+#include "engine/render/ShaderCompiler.h"
 
 #include <cstdio>
 #include <memory>
@@ -61,6 +63,14 @@ static void CreateAndRun(int argc, char** argv)
     std::fprintf(stderr, "[T] HlodRuntime\n");        std::fflush(stderr);
     { engine::world::HlodRuntime v; }
     std::fprintf(stderr, "[T] HlodRuntime OK\n");     std::fflush(stderr);
+
+	std::fprintf(stderr, "[T] FileWatcher\n");        std::fflush(stderr);
+    { engine::platform::FileWatcher v; }
+    std::fprintf(stderr, "[T] FileWatcher OK\n");     std::fflush(stderr);
+
+    std::fprintf(stderr, "[T] ShaderCompiler\n");     std::fflush(stderr);
+    { engine::render::ShaderCompiler v; v.LocateCompiler(); }
+    std::fprintf(stderr, "[T] ShaderCompiler OK\n");  std::fflush(stderr);
 
 	std::fprintf(stderr, "[T] ShaderHotReload\n");    std::fflush(stderr);
     { engine::render::ShaderHotReload v; }

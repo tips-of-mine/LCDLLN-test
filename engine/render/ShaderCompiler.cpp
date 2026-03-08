@@ -31,23 +31,21 @@ namespace engine::render
 		const char* vulkanSdk = std::getenv("VULKAN_SDK");
 		if (vulkanSdk)
 		{
-	#if defined(_WIN32)
-		std::filesystem::path exe = std::filesystem::path(vulkanSdk) / "bin" / "glslangValidator.exe";
-#else
-		std::filesystem::path exe = std::filesystem::path(vulkanSdk) / "bin" / "glslangValidator";
-#endif
+			#if defined(_WIN32)
+				std::filesystem::path exe = std::filesystem::path(vulkanSdk) / "bin" / "glslangValidator.exe";
+			#else
+				std::filesystem::path exe = std::filesystem::path(vulkanSdk) / "bin" / "glslangValidator";
+			#endif
 			std::error_code ec;
 			if (std::filesystem::exists(exe, ec))
 			{
 				m_compilerPath = exe.string();
-				LOG_INFO(Render, "ShaderCompiler: using glslangValidator at {}", m_compilerPath);
 				return true;
 			}
 		}
 
 		// Fallback: assume in PATH
 		m_compilerPath = "glslangValidator";
-		LOG_INFO(Render, "ShaderCompiler: using glslangValidator from PATH");
 		return true;
 	}
 

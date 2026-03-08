@@ -9,7 +9,7 @@ namespace engine::render
 	ShaderHotReload::ShaderHotReload()
 	{
 		m_compiler.LocateCompiler();
-		m_worker = std::thread(&ShaderHotReload::WorkerThread, this);
+		// m_worker = std::thread(&ShaderHotReload::WorkerThread, this);
 	}
 
 	ShaderHotReload::~ShaderHotReload()

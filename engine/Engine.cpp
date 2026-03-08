@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <span>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -25,6 +26,24 @@ namespace engine
 		, m_time(120)
 		, m_frameArena(/*framesInFlight*/ 2, /*perFrameCapacityBytes*/ 1024 * 1024)
 	{
+		bool logToConsole = false;
+		for (int i = 1; i < argc; ++i)
+		{
+			if (argv[i] && std::string_view(argv[i]) == "-log")
+			{
+				logToConsole = true;
+				break;
+			}
+		}
+		engine::core::LogSettings logSettings;
+		logSettings.filePath    = "engine.log";
+		logSettings.console     = logToConsole;
+		logSettings.flushAlways = true;
+		logSettings.level       = engine::core::LogLevel::Info;
+		engine::core::Log::Init(logSettings);
+		LOG_INFO(Core, "Log initialized (console={})", logToConsole ? "on" : "off");
+		LOG_INFO(Core, "Engine boot start");
+
 		m_vsync  = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		m_chunkStats.Init(m_cfg);

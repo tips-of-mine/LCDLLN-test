@@ -78,25 +78,16 @@ namespace engine::core
 		g_settings = settings;
 		s_level.store(settings.level, std::memory_order_relaxed);
 
-		if (!g_settings.filePath.empty())
-		{
-			// Fermer un éventuel fichier précédent
-			if (g_file.is_open())
-				g_file.close();
+		// TEST TEMPORAIRE — force l'ouverture sans condition
+		if (g_file.is_open())
+			g_file.close();
 
-			//g_file = std::ofstream(g_settings.filePath, std::ios::out | std::ios::app);
-			g_file = std::ofstream("C:/temp/lcdlln.log", std::ios::out | std::ios::app);
+		g_file = std::ofstream("C:/temp/lcdlln.log", std::ios::out | std::ios::app);
 
-			// ← vérification explicite
-			if (!g_file.is_open())
-			{
-				// Fallback : forcer la console pour ne pas perdre les logs
-				g_settings.console = true;
-				// Écrire l'erreur directement sur stderr (le logger n'est pas encore prêt)
-				std::fprintf(stderr, "[LOG] ERREUR: impossible d'ouvrir le fichier de log: %s\n",
-					g_settings.filePath.c_str());
-			}
-		}
+		if (!g_file.is_open())
+			std::fprintf(stderr, "[LOG] echec ouverture fichier\n");
+		else
+			std::fprintf(stderr, "[LOG] fichier ouvert OK\n");
 	}
 
 	void Log::Shutdown()

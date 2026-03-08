@@ -74,20 +74,24 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
-		std::scoped_lock lock(g_mutex);
-		g_settings = settings;
-		s_level.store(settings.level, std::memory_order_relaxed);
+		std::fprintf(stderr, "[LOG] Init entree\n"); std::fflush(stderr);
 
-		// TEST TEMPORAIRE — force l'ouverture sans condition
+		std::fprintf(stderr, "[LOG] avant scoped_lock\n"); std::fflush(stderr);
+		std::scoped_lock lock(g_mutex);
+		std::fprintf(stderr, "[LOG] apres scoped_lock\n"); std::fflush(stderr);
+
+		g_settings = settings;
+		std::fprintf(stderr, "[LOG] g_settings OK\n"); std::fflush(stderr);
+
+		s_level.store(settings.level, std::memory_order_relaxed);
+		std::fprintf(stderr, "[LOG] s_level OK\n"); std::fflush(stderr);
+
 		if (g_file.is_open())
 			g_file.close();
+		std::fprintf(stderr, "[LOG] avant ofstream\n"); std::fflush(stderr);
 
 		g_file = std::ofstream("C:/temp/lcdlln.log", std::ios::out | std::ios::app);
-
-		if (!g_file.is_open())
-			std::fprintf(stderr, "[LOG] echec ouverture fichier\n");
-		else
-			std::fprintf(stderr, "[LOG] fichier ouvert OK\n");
+		std::fprintf(stderr, "[LOG] apres ofstream open=%d\n", (int)g_file.is_open()); std::fflush(stderr);
 	}
 
 	void Log::Shutdown()

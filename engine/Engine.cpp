@@ -230,9 +230,20 @@ namespace engine
 
 									if (m_vmaAllocator)
 									{
-										std::fprintf(stderr, "[ENGINE] AE: avant StagingAllocator::Init\n"); std::fflush(stderr);
-										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, m_gpuUploadQueue.GetBudgetBytes()))
-											LOG_WARN(Render, "StagingAllocator init failed");
+										// Test raw Vulkan — vérifie que le device est fonctionnel
+										VkBufferCreateInfo testBuf{};
+										testBuf.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+										testBuf.size  = 64;
+										testBuf.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+										testBuf.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+										VkBuffer tmpBuf = VK_NULL_HANDLE;
+										VkResult testResult = vkCreateBuffer(m_vkDeviceContext.GetDevice(), &testBuf, nullptr, &tmpBuf);
+										std::fprintf(stderr, "[ENGINE] vkCreateBuffer test result=%d buf=%p\n", (int)testResult, (void*)tmpBuf); std::fflush(stderr);
+										if (tmpBuf != VK_NULL_HANDLE) vkDestroyBuffer(m_vkDeviceContext.GetDevice(), tmpBuf, nullptr);
+										
+										std::fprintf(stderr, "[ENGINE] AE: StagingAllocator::Init SKIPPED\n"); std::fflush(stderr);
+										// Temporairement désactivé — vmaCreateBuffer crash à investiguer séparément
+										// if (!m_stagingAllocator.Init(...))
 										std::fprintf(stderr, "[ENGINE] AF: avant make_unique DeferredPipeline\n"); std::fflush(stderr);
 
 										m_pipeline = std::make_unique<engine::render::DeferredPipeline>();

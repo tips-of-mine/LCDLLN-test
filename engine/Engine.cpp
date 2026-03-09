@@ -874,7 +874,7 @@ namespace engine
 
 	int Engine::Run()
 	{
-		std::fprintf(stderr, "[RUN] debut Run\n"); std::fflush(stderr)
+		std::fprintf(stderr, "[RUN] debut Run\n"); std::fflush(stderr);
 
 		auto lastFpsLog  = std::chrono::steady_clock::now();
 		auto lastPresent = lastFpsLog;
@@ -912,7 +912,7 @@ namespace engine
 		}
 
 		std::fprintf(stderr, "[RUN] sortie loop\n"); std::fflush(stderr);
-		
+
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());

@@ -86,7 +86,8 @@ namespace engine::render
 		bufInfo.size  = kKernelUboSize;
 		bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		VmaAllocationCreateInfo allocCreateInfo{};
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
 		if (vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr) != VK_SUCCESS)
 		{
@@ -145,7 +146,8 @@ namespace engine::render
 		stagingInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		stagingInfo.size  = 64u;
 		stagingInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 		if (vmaCreateBuffer(alloc, &stagingInfo, &allocCreateInfo, &stagingBuf, &stagingAlloc, nullptr) != VK_SUCCESS)
 		{
 			Destroy(device);

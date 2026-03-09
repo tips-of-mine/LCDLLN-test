@@ -40,12 +40,16 @@ namespace engine::render
 		const engine::core::Config& config,
 		VkQueue queue, uint32_t queueFamilyIndex)
 	{
+		std::fprintf(stderr, "[SSAO] Init enter vma=%p\n", vmaAllocator); std::fflush(stderr);
+		
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || vmaAllocator == nullptr)
 		{
 			LOG_ERROR(Render, "SsaoKernelNoise::Init: invalid device");
 			return false;
 		}
 
+		std::fprintf(stderr, "[SSAO] avant kernel gen\n"); std::fflush(stderr);
+		
 		// Radius and bias from config, clamped (notes: clamper radius/bias via config).
 		float radius = static_cast<float>(config.GetDouble("ssao.radius", 0.5));
 		float bias   = static_cast<float>(config.GetDouble("ssao.bias", 0.025));
@@ -77,6 +81,9 @@ namespace engine::render
 			kernelData[i * 4 + 3] = 0.0f;
 		}
 
+		std::fprintf(stderr, "[SSAO] kernel gen OK\n"); std::fflush(stderr);
+
+		std::fprintf(stderr, "[SSAO] avant vmaCreateBuffer kernel\n"); std::fflush(stderr);
 		m_vmaAllocator = vmaAllocator;
 		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
 
@@ -89,6 +96,9 @@ namespace engine::render
 		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
 		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
+
+		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel OK\n"); std::fflush(stderr);
+		
 		if (vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr) != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateBuffer (kernel UBO) failed");

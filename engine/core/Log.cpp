@@ -78,25 +78,22 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
-	    std::fprintf(stderr, "[LOG] 1 avant GetMutex\n"); std::fflush(stderr);
-	    std::scoped_lock lock(GetMutex());
-	    std::fprintf(stderr, "[LOG] 2 apres lock\n"); std::fflush(stderr);
+	    std::fprintf(stderr, "[LOG] 1 g_mutex=%p g_settings=%p g_file=%p\n",
+	        (void*)g_mutex, (void*)g_settings, (void*)g_file);
+	    std::fflush(stderr);
 	
-	    GetSettings() = settings;
+	    std::fprintf(stderr, "[LOG] 2 bypass mutex test\n"); std::fflush(stderr);
+	    *g_settings = settings;
 	    std::fprintf(stderr, "[LOG] 3 settings OK\n"); std::fflush(stderr);
 	
 	    s_level.store(settings.level, std::memory_order_relaxed);
 	    std::fprintf(stderr, "[LOG] 4 s_level OK\n"); std::fflush(stderr);
 	
-	    if (GetFile().is_open())
-	        GetFile().close();
-	    std::fprintf(stderr, "[LOG] 5 close OK\n"); std::fflush(stderr);
-	
 	    if (!settings.filePath.empty())
 	    {
-	        std::fprintf(stderr, "[LOG] 6 ouverture '%s'\n", settings.filePath.c_str()); std::fflush(stderr);
-	        GetFile().open(settings.filePath, std::ios::out | std::ios::app);
-	        std::fprintf(stderr, "[LOG] 7 open=%d\n", (int)GetFile().is_open()); std::fflush(stderr);
+	        std::fprintf(stderr, "[LOG] 5 ouverture '%s'\n", settings.filePath.c_str()); std::fflush(stderr);
+	        g_file->open(settings.filePath, std::ios::out | std::ios::app);
+	        std::fprintf(stderr, "[LOG] 6 open=%d\n", (int)g_file->is_open()); std::fflush(stderr);
 	    }
 	}
 

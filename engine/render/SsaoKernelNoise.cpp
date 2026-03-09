@@ -97,8 +97,16 @@ namespace engine::render
 		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
 		std::fprintf(stderr, "[SSAO] avant vmaCreateBuffer kernel alloc=%p\n", (void*)alloc); std::fflush(stderr);
+
+		// TEST raw vkCreateBuffer
+		VkBuffer testBuf = VK_NULL_HANDLE;
+		VkResult rawRes = vkCreateBuffer(device, &bufInfo, nullptr, &testBuf);
+		std::fprintf(stderr, "[SSAO] raw vkCreateBuffer result=%d buf=%p\n", (int)rawRes, (void*)testBuf); std::fflush(stderr);
+		if (testBuf != VK_NULL_HANDLE) vkDestroyBuffer(device, testBuf, nullptr);
+
 		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
 		VkResult vmaRes = vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr);
+
 		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel result=%d buf=%p\n", (int)vmaRes, (void*)m_kernelBuffer); std::fflush(stderr);
 		if (vmaRes != VK_SUCCESS)
 		{

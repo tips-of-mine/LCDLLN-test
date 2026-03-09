@@ -3,6 +3,7 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
+#include <cstdio>
 
 namespace engine::render
 {
@@ -15,10 +16,13 @@ namespace engine::render
 		uint32_t graphicsQueueFamilyIndex,
 		ShaderLoaderFn loadSpirv)
 	{
+		std::fprintf(stderr, "[PIPELINE] Init enter\n"); std::fflush(stderr);
+
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !loadSpirv)
 			return false;
 
 		// M05.1: BRDF LUT
+		std::fprintf(stderr, "[PIPELINE] 1 BRDF LUT\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> brdfComp = loadSpirv("shaders/brdf_lut.comp.spv");
 			if (!brdfComp.empty())
@@ -38,6 +42,7 @@ namespace engine::render
 		}
 
 		// M05.3: Specular prefilter
+		std::fprintf(stderr, "[PIPELINE] 2 SpecularPrefilter\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> specPrefilterComp = loadSpirv("shaders/specular_prefilter.comp.spv");
 			if (!specPrefilterComp.empty())
@@ -54,11 +59,13 @@ namespace engine::render
 		}
 
 		// M06.1: SSAO kernel + noise
+		std::fprintf(stderr, "[PIPELINE] 3 SSAO kernel+noise\n"); std::fflush(stderr);
 		m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator, config, graphicsQueue, graphicsQueueFamilyIndex);
 		if (m_ssaoKernelNoise.IsValid())
 			LOG_INFO(Render, "[Boot] DeferredPipeline SSAO kernel/noise OK");
 
 		// M06.2: SSAO generate
+		std::fprintf(stderr, "[PIPELINE] 4 SSAO pass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> ssaoVert = loadSpirv("shaders/ssao.vert.spv");
 			std::vector<uint32_t> ssaoFrag = loadSpirv("shaders/ssao.frag.spv");
@@ -75,6 +82,7 @@ namespace engine::render
 		}
 
 		// M06.3: SSAO blur
+		std::fprintf(stderr, "[PIPELINE] 5 SSAO blur\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> blurVert = loadSpirv("shaders/ssao_blur.vert.spv");
 			std::vector<uint32_t> blurFrag = loadSpirv("shaders/ssao_blur.frag.spv");
@@ -91,6 +99,7 @@ namespace engine::render
 		}
 
 		// Geometry pass
+		std::fprintf(stderr, "[PIPELINE] 6 GeometryPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> vertSpirv = loadSpirv("shaders/gbuffer_geometry.vert.spv");
 			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
@@ -113,6 +122,7 @@ namespace engine::render
 		}
 
 		// Shadow map pass
+		std::fprintf(stderr, "[PIPELINE] 7 ShadowMapPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> smVert = loadSpirv("shaders/shadow_depth.vert.spv");
 			std::vector<uint32_t> smFrag = loadSpirv("shaders/shadow_depth.frag.spv");
@@ -129,6 +139,7 @@ namespace engine::render
 		}
 
 		// Lighting pass
+		std::fprintf(stderr, "[PIPELINE] 8 LightingPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> litVert = loadSpirv("shaders/lighting.vert.spv");
 			std::vector<uint32_t> litFrag = loadSpirv("shaders/lighting.frag.spv");
@@ -145,6 +156,7 @@ namespace engine::render
 		}
 
 		// Tonemap pass
+		std::fprintf(stderr, "[PIPELINE] 9 TonemapPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");
 			std::vector<uint32_t> tmFrag = loadSpirv("shaders/tonemap.frag.spv");
@@ -161,6 +173,7 @@ namespace engine::render
 		}
 
 		// Bloom prefilter + downsample
+		std::fprintf(stderr, "[PIPELINE] 10 Bloom prefilter+downsample\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> bpVert = loadSpirv("shaders/bloom_prefilter.vert.spv");
 			std::vector<uint32_t> bpFrag = loadSpirv("shaders/bloom_prefilter.frag.spv");
@@ -176,6 +189,7 @@ namespace engine::render
 		}
 
 		// Bloom upsample + combine
+		std::fprintf(stderr, "[PIPELINE] 11 Bloom upsample+combine\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> buVert = loadSpirv("shaders/bloom_upsample.vert.spv");
 			std::vector<uint32_t> buFrag = loadSpirv("shaders/bloom_upsample.frag.spv");
@@ -191,6 +205,7 @@ namespace engine::render
 		}
 
 		// M08.3: Auto-exposure
+		std::fprintf(stderr, "[PIPELINE] 12 AutoExposure\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> lumComp = loadSpirv("shaders/luminance_reduce.comp.spv");
 			if (!lumComp.empty())
@@ -201,6 +216,7 @@ namespace engine::render
 		}
 
 		// M07.4: TAA
+		std::fprintf(stderr, "[PIPELINE] 13 TAA\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> taaVert = loadSpirv("shaders/taa.vert.spv");
 			std::vector<uint32_t> taaFrag = loadSpirv("shaders/taa.frag.spv");
@@ -216,6 +232,7 @@ namespace engine::render
 				LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
 		}
 
+		std::fprintf(stderr, "[PIPELINE] done\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[Boot] DeferredPipeline all passes init done");
 		return true;
 	}

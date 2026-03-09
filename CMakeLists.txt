@@ -9,12 +9,6 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
 
-# VMA: désactive la résolution statique, active la résolution dynamique via ProcAddr
-add_compile_definitions(
-    VMA_STATIC_VULKAN_FUNCTIONS=0
-    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
-)
-
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 

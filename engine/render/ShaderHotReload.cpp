@@ -8,6 +8,7 @@ namespace engine::render
 {
 	ShaderHotReload::ShaderHotReload()
 	{
+		std::fprintf(stderr, "[SHR] ctor this=%p mutex=%p\n", (void*)this, (void*)&m_pendingMutex); std::fflush(stderr);
 		m_compiler.LocateCompiler();
 		// m_worker = std::thread(&ShaderHotReload::WorkerThread, this);
 	}
@@ -83,7 +84,7 @@ namespace engine::render
 		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
 		std::vector<PendingReloadResult> results;
 
-		std::fprintf(stderr, "[AP] avant lock\n"); std::fflush(stderr);
+		std::fprintf(stderr, "[AP] avant lock, this=%p mutex=%p\n", (void*)this, (void*)&m_pendingMutex); std::fflush(stderr);
 		{
 			std::lock_guard lock(m_pendingMutex);
 			std::fprintf(stderr, "[AP] lock OK\n"); std::fflush(stderr);

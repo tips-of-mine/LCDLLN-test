@@ -34,17 +34,27 @@ namespace engine::render
 
 	void ShaderHotReload::Poll(const engine::core::Config& config)
 	{
+		std::fprintf(stderr, "[POLL] debut\n"); std::fflush(stderr);
+
 		if (!m_watcherInited)
 		{
+			std::fprintf(stderr, "[POLL] init watcher\n"); std::fflush(stderr);
 			std::filesystem::path contentPath(config.GetString("paths.content", "game/data"));
 			std::error_code ec;
 			contentPath = std::filesystem::absolute(contentPath, ec);
+			std::fprintf(stderr, "[POLL] absolute path=%s ec=%d\n", contentPath.string().c_str(), (int)ec.value()); std::fflush(stderr);
+
 			if (!ec)
 			{
+				std::fprintf(stderr, "[POLL] avant watcher.Init\n"); std::fflush(stderr);
 				m_watcher.Init(contentPath.string());
+
+				std::fprintf(stderr, "[POLL] watcher.Init OK\n"); std::fflush(stderr);
 				m_watcherInited = true;
 			}
 		}
+		std::fprintf(stderr, "[POLL] loop watched=%zu\n", m_watched.size()); std::fflush(stderr);
+
 		for (WatchedShader& w : m_watched)
 		{
 			std::filesystem::path fullPath = engine::platform::FileSystem::ResolveContentPath(config, w.relativePath);
@@ -77,6 +87,7 @@ namespace engine::render
 				}
 			}
 		}
+		std::fprintf(stderr, "[POLL] done\n"); std::fflush(stderr);
 	}
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)

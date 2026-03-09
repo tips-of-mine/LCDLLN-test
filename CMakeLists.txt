@@ -9,18 +9,11 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
 
-# Forcer le CRT Release pour éviter ucrtbased.dll
-# if(MSVC)
-#   foreach(flag
-#     CMAKE_C_FLAGS_DEBUG
-#     CMAKE_CXX_FLAGS_DEBUG
-#     CMAKE_C_FLAGS_RELWITHDEBINFO
-#     CMAKE_CXX_FLAGS_RELWITHDEBINFO
-#   )
-#     string(REPLACE "/MDd" "/MD" ${flag} "${${flag}}")
-#     string(REPLACE "/MTd" "/MT" ${flag} "${${flag}}")
-#   endforeach()
-# endif()
+# VMA: désactive la résolution statique, active la résolution dynamique via ProcAddr
+add_compile_definitions(
+    VMA_STATIC_VULKAN_FUNCTIONS=0
+    VMA_DYNAMIC_VULKAN_FUNCTIONS=1
+)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)

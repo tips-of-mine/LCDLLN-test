@@ -16,7 +16,7 @@ namespace engine::core
 			static std::mutex m;
 			return m;
 		}
-		
+
 		std::ofstream& GetFile()
 		{
 			static std::ofstream f;
@@ -35,12 +35,12 @@ namespace engine::core
 			{
 			case LogLevel::Trace: return "TRACE";
 			case LogLevel::Debug: return "DEBUG";
-			case LogLevel::Info: return "INFO";
-			case LogLevel::Warn: return "WARN";
+			case LogLevel::Info:  return "INFO";
+			case LogLevel::Warn:  return "WARN";
 			case LogLevel::Error: return "ERROR";
 			case LogLevel::Fatal: return "FATAL";
-			case LogLevel::Off: return "OFF";
-			default: return "UNKNOWN";
+			case LogLevel::Off:   return "OFF";
+			default:              return "UNKNOWN";
 			}
 		}
 
@@ -88,31 +88,23 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
-		std::fprintf(stderr, "[LOG] Init entree\n"); std::fflush(stderr);
-
-		std::fprintf(stderr, "[LOG] avant scoped_lock\n"); std::fflush(stderr);
 		std::scoped_lock lock(GetMutex());
-		std::fprintf(stderr, "[LOG] apres scoped_lock\n"); std::fflush(stderr);
-
 		GetSettings() = settings;
-		std::fprintf(stderr, "[LOG] g_settings OK\n"); std::fflush(stderr);
-
 		s_level.store(settings.level, std::memory_order_relaxed);
-		std::fprintf(stderr, "[LOG] s_level OK\n"); std::fflush(stderr);
-
-		if (GetFile().is_open()) GetFile().close();
+		if (GetFile().is_open())
+			GetFile().close();
 		if (!settings.filePath.empty())
-        	GetFile() = std::ofstream(settings.filePath, std::ios::out | std::ios::app);
-		std::fprintf(stderr, "[LOG] avant ofstream\n"); std::fflush(stderr);
-
-		g_file = std::ofstream("C:/temp/lcdlln.log", std::ios::out | std::ios::app);
-		std::fprintf(stderr, "[LOG] apres ofstream open=%d\n", (int)g_file.is_open()); std::fflush(stderr);
+			GetFile() = std::ofstream(settings.filePath, std::ios::out | std::ios::app);
 	}
 
 	void Log::Shutdown()
 	{
 		std::scoped_lock lock(GetMutex());
-		if (GetFile().is_open()) { GetFile().flush(); GetFile().close(); }
+		if (GetFile().is_open())
+		{
+			GetFile().flush();
+			GetFile().close();
+		}
 	}
 
 	LogLevel Log::GetLevel()
@@ -126,25 +118,33 @@ namespace engine::core
 	}
 
 	void Log::WriteLine(LogLevel level, const char* subsystem, std::string_view message)
-{
-    if (level < s_level.load(std::memory_order_relaxed)) return;
-    thread_local std::string line;
-    line.clear();
-    std::format_to(std::back_inserter(line), "[{}][T:{}][{}][{}] {}\n",
-        TimestampNow(), ThreadIdNumber(), ToString(level),
-        subsystem ? subsystem : "Unknown", message);
-    std::scoped_lock lock(GetMutex());
-    if (GetSettings().console)
-    {
-        FILE* out = (level >= LogLevel::Error) ? stderr : stdout;
-        std::fwrite(line.data(), 1, line.size(), out);
-        std::fflush(out);
-    }
-    if (GetFile().is_open())
-    {
-        GetFile().write(line.data(), static_cast<std::streamsize>(line.size()));
-        if (GetSettings().flushAlways) GetFile().flush();
-    }
-}
-}
+	{
+		if (level < s_level.load(std::memory_order_relaxed))
+			return;
 
+		thread_local std::string line;
+		line.clear();
+		std::format_to(std::back_inserter(line), "[{}][T:{}][{}][{}] {}\n",
+			TimestampNow(),
+			ThreadIdNumber(),
+			ToString(level),
+			subsystem ? subsystem : "Unknown",
+			message);
+
+		std::scoped_lock lock(GetMutex());
+
+		if (GetSettings().console)
+		{
+			FILE* out = (level >= LogLevel::Error) ? stderr : stdout;
+			std::fwrite(line.data(), 1, line.size(), out);
+			std::fflush(out);
+		}
+
+		if (GetFile().is_open())
+		{
+			GetFile().write(line.data(), static_cast<std::streamsize>(line.size()));
+			if (GetSettings().flushAlways)
+				GetFile().flush();
+		}
+	}
+}

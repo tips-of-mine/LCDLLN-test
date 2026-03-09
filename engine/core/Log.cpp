@@ -128,7 +128,7 @@ namespace engine::core
 	        TimestampNow(), ThreadIdNumber(), ToString(level),
 	        subsystem ? subsystem : "Unknown", message);
 	
-	    // Bypass mutex temporairement
+	    // Bypass mutex — même raison que Init
 	    if (g_settings->console)
 	    {
 	        FILE* out = (level >= LogLevel::Error) ? stderr : stdout;

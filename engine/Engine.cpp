@@ -208,9 +208,10 @@ namespace engine
 								{
 									std::fprintf(stderr, "[ENGINE] AC: avant vmaCreateAllocator\n"); std::fflush(stderr);
 									VmaAllocatorCreateInfo vmaInfo{};
-									vmaInfo.physicalDevice = m_vkDeviceContext.GetPhysicalDevice();
-									vmaInfo.device         = m_vkDeviceContext.GetDevice();
-									vmaInfo.instance       = m_vkInstance.GetHandle();
+									vmaInfo.physicalDevice   = m_vkDeviceContext.GetPhysicalDevice();
+									vmaInfo.device           = m_vkDeviceContext.GetDevice();
+									vmaInfo.instance         = m_vkInstance.GetHandle();
+									vmaInfo.vulkanApiVersion = VK_API_VERSION_1_2;
 									if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
 									{
 										LOG_ERROR(Render, "VMA allocator creation failed");

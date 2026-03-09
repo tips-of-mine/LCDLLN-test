@@ -3,6 +3,8 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
+#define VMA_STATIC_VULKAN_FUNCTIONS  0
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
 #include <vk_mem_alloc.h>
 #include <cmath>
 #include <cstring>

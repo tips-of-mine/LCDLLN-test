@@ -58,6 +58,32 @@ namespace engine
 		engine::core::Log::Init(logSettings);
 		std::fprintf(stderr, "[ENGINE] Log::Init OK\n"); std::fflush(stderr);
 
+		std::fprintf(stderr, "[ENGINE] LOG_INFO test\n"); std::fflush(stderr);
+		LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+		std::fprintf(stderr, "[ENGINE] LOG_INFO OK\n"); std::fflush(stderr);
+		
+		m_vsync  = m_cfg.GetBool("render.vsync", true);
+		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
+		std::fprintf(stderr, "[ENGINE] config OK\n"); std::fflush(stderr);
+		
+		m_chunkStats.Init(m_cfg);
+		std::fprintf(stderr, "[ENGINE] chunkStats OK\n"); std::fflush(stderr);
+		
+		m_lodConfig.Init(m_cfg);
+		std::fprintf(stderr, "[ENGINE] lodConfig OK\n"); std::fflush(stderr);
+		
+		m_hlodRuntime.Init(m_cfg);
+		std::fprintf(stderr, "[ENGINE] hlodRuntime OK\n"); std::fflush(stderr);
+		
+		m_streamCache.Init(m_cfg);
+		std::fprintf(stderr, "[ENGINE] streamCache OK\n"); std::fflush(stderr);
+		
+		m_streamingScheduler.SetStreamCache(&m_streamCache);
+		std::fprintf(stderr, "[ENGINE] scheduler OK\n"); std::fflush(stderr);
+		
+		m_gpuUploadQueue.Init(m_cfg);
+		std::fprintf(stderr, "[ENGINE] gpuUploadQueue OK\n"); std::fflush(stderr);															
+		
 		m_vsync  = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);

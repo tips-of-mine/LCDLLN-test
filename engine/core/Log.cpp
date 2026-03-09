@@ -122,23 +122,22 @@ namespace engine::core
 	    if (level < s_level.load(std::memory_order_relaxed))
 	        return;
 	
-	    thread_local std::string line;
-	    line.clear();
-	    std::format_to(std::back_inserter(line), "[{}][T:{}][{}][{}] {}\n",
-	        TimestampNow(), ThreadIdNumber(), ToString(level),
-	        subsystem ? subsystem : "Unknown", message);
+	    std::fprintf(stderr, "[LOG] WriteLine entree\n"); std::fflush(stderr);
 	
-	    // Bypass mutex — même raison que Init
-	    if (g_settings->console)
-	    {
-	        FILE* out = (level >= LogLevel::Error) ? stderr : stdout;
-	        std::fwrite(line.data(), 1, line.size(), out);
-	        std::fflush(out);
-	    }
+	    char buf[1024];
+	    std::snprintf(buf, sizeof(buf), "[%s][%s] %.*s\n",
+	        subsystem ? subsystem : "?",
+	        ToString(level),
+	        static_cast<int>(message.size()), message.data());
+	
+	    std::fprintf(stderr, "[LOG] snprintf OK\n"); std::fflush(stderr);
+	
 	    if (g_file->is_open())
 	    {
-	        g_file->write(line.data(), static_cast<std::streamsize>(line.size()));
-	        if (g_settings->flushAlways) g_file->flush();
+	        g_file->write(buf, static_cast<std::streamsize>(std::strlen(buf)));
+	        g_file->flush();
 	    }
+	
+	    std::fprintf(stderr, "[LOG] WriteLine OK\n"); std::fflush(stderr);
 	}
 }

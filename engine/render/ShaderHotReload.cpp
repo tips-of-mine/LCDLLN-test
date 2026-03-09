@@ -80,11 +80,18 @@ namespace engine::render
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)
 	{
+		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
 		std::vector<PendingReloadResult> results;
+
+		std::fprintf(stderr, "[AP] avant lock\n"); std::fflush(stderr);
 		{
 			std::lock_guard lock(m_pendingMutex);
+			std::fprintf(stderr, "[AP] lock OK\n"); std::fflush(stderr);
+
 			results.swap(m_pending);
+			std::fprintf(stderr, "[AP] swap OK size=%zu\n", results.size()); std::fflush(stderr);
 		}
+		std::fprintf(stderr, "[AP] loop\n"); std::fflush(stderr);
 		for (PendingReloadResult& r : results)
 		{
 			if (r.spirv.has_value())
@@ -97,6 +104,7 @@ namespace engine::render
 				LOG_WARN(Render, "Shader hot-reload failed (fallback kept): {} - {}", r.cacheKey, r.errorMessage);
 			}
 		}
+		std::fprintf(stderr, "[AP] done\n"); std::fflush(stderr);
 	}
 
 	void ShaderHotReload::WorkerThread()

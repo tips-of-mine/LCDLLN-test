@@ -97,27 +97,24 @@ namespace engine::render
 		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
 		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
-		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel OK\n"); std::fflush(stderr);
+		std::fprintf(stderr, "[SSAO] avant vmaCreateBuffer kernel alloc=%p\n", (void*)alloc); std::fflush(stderr);
 		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
-		
-		if (vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr) != VK_SUCCESS)
+		VkResult vmaRes = vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr);
+		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel result=%d buf=%p\n", (int)vmaRes, (void*)m_kernelBuffer); std::fflush(stderr);
+		if (vmaRes != VK_SUCCESS)
 		{
-			std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel FAILED\n"); std::fflush(stderr);
-			LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateBuffer (kernel UBO) failed");
-			return false;
+		    LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateBuffer (kernel UBO) failed");
+		    return false;
 		}
-		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel OK\n"); std::fflush(stderr);
-
 		std::fprintf(stderr, "[SSAO] avant vmaMapMemory\n"); std::fflush(stderr);
 		m_kernelAlloc = kernelAlloc;
 		void* mapped = nullptr;
 		if (vmaMapMemory(alloc, kernelAlloc, &mapped) != VK_SUCCESS)
 		{
-			std::fprintf(stderr, "[SSAO] vmaMapMemory FAILED\n"); std::fflush(stderr);
-			Destroy(device);
-			return false;
+		    std::fprintf(stderr, "[SSAO] vmaMapMemory FAILED\n"); std::fflush(stderr);
+		    Destroy(device);
+		    return false;
 		}
-
 		std::fprintf(stderr, "[SSAO] vmaMapMemory OK mapped=%p\n", mapped); std::fflush(stderr);
 
 		std::fprintf(stderr, "[SSAO] avant memcpy kernel\n"); std::fflush(stderr);

@@ -947,14 +947,20 @@ namespace engine
 
 	void Engine::BeginFrame()
 	{
+		std::fprintf(stderr, "[BF] input.BeginFrame\n"); std::fflush(stderr);
 		m_input.BeginFrame();
+		std::fprintf(stderr, "[BF] window.PollEvents\n"); std::fflush(stderr);
 		m_window.PollEvents();
+		std::fprintf(stderr, "[BF] WasPressed\n"); std::fflush(stderr);
 
 		if (m_input.WasPressed(engine::platform::Key::Escape))
 			OnQuit();
 
+		std::fprintf(stderr, "[BF] shaderHotReload.Poll\n"); std::fflush(stderr);
 		m_shaderHotReload.Poll(m_cfg);
+		std::fprintf(stderr, "[BF] shaderHotReload.ApplyPending\n"); std::fflush(stderr);
 		m_shaderHotReload.ApplyPending(m_shaderCache);
+		std::fprintf(stderr, "[BF] swapchainResizeCheck\n"); std::fflush(stderr);
 
 		if (m_swapchainResizeRequested)
 		{
@@ -970,9 +976,13 @@ namespace engine
 			}
 		}
 
+		std::fprintf(stderr, "[BF] time.BeginFrame\n"); std::fflush(stderr);
 		m_time.BeginFrame();
+		std::fprintf(stderr, "[BF] frameArena.BeginFrame\n"); std::fflush(stderr);
 		m_frameArena.BeginFrame(m_time.FrameIndex());
+		std::fprintf(stderr, "[BF] chunkStats.ResetPerFrame\n"); std::fflush(stderr);
 		m_chunkStats.ResetPerFrame();
+		std::fprintf(stderr, "[BF] done\n"); std::fflush(stderr);
 	}
 
 	void Engine::Update()

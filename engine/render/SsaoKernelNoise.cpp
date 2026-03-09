@@ -94,8 +94,7 @@ namespace engine::render
 		bufInfo.size  = kKernelUboSize;
 		bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		VmaAllocationCreateInfo allocCreateInfo{};
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
 		std::fprintf(stderr, "[SSAO] avant vmaCreateBuffer kernel alloc=%p\n", (void*)alloc); std::fflush(stderr);
 		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
@@ -165,8 +164,9 @@ namespace engine::render
 		stagingInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		stagingInfo.size  = 64u;
 		stagingInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_UNKNOWN;
+		allocCreateInfo.flags = 0;
+		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		if (vmaCreateBuffer(alloc, &stagingInfo, &allocCreateInfo, &stagingBuf, &stagingAlloc, nullptr) != VK_SUCCESS)
 		{
 			Destroy(device);

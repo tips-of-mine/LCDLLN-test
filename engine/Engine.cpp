@@ -1052,8 +1052,13 @@ namespace engine
 
 	void Engine::Render()
 	{
+		std::fprintf(stderr, "[RENDER] debut\n"); std::fflush(stderr);
 		if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
+		{
+			std::fprintf(stderr, "[RENDER] early return\n"); std::fflush(stderr);
 			return;
+		}
+		std::fprintf(stderr, "[RENDER] frameIndex=%u\n", m_currentFrame % 2); std::fflush(stderr);
 
 		const uint32_t frameIndex          = m_currentFrame % 2;
 		engine::render::FrameResources& fr = m_frameResources[frameIndex];
@@ -1063,7 +1068,10 @@ namespace engine
 		VkSwapchainKHR swapchain           = m_vkSwapchain.GetSwapchain();
 		VkExtent2D     extent              = m_vkSwapchain.GetExtent();
 
+		std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
 		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+		std::fprintf(stderr, "[RENDER] avant vkAcquireNextImageKHR\n"); std::fflush(stderr);
+
 		m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
 		m_stagingAllocator.BeginFrame(frameIndex);
 		(void)m_gpuUploadQueue.PlanFrameUploads();
@@ -1083,6 +1091,8 @@ namespace engine
 
 		vkResetCommandPool(device, fr.cmdPool, 0);
 
+		std::fprintf(stderr, "[RENDER] avant vkBeginCommandBuffer\n"); std::fflush(stderr);
+		
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;

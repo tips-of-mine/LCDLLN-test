@@ -92,29 +92,19 @@ namespace engine::render
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)
 	{
-		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
-		std::vector<PendingReloadResult> results;
-
-		std::fprintf(stderr, "[AP] avant lock, this=%p mutex=%p\n", (void*)this, (void*)&m_pendingMutex); std::fflush(stderr);
+		std::fprintf(stderr, "[AP] debut bypass\n"); std::fflush(stderr);
+		// Worker thread désactivé — m_pending toujours vide, pas besoin du mutex
+		if (m_pending.empty())
 		{
-			std::lock_guard lock(m_pendingMutex);
-			std::fprintf(stderr, "[AP] lock OK\n"); std::fflush(stderr);
-
-			results.swap(m_pending);
-			std::fprintf(stderr, "[AP] swap OK size=%zu\n", results.size()); std::fflush(stderr);
+			std::fprintf(stderr, "[AP] pending empty, return\n"); std::fflush(stderr);
+			return;
 		}
-		std::fprintf(stderr, "[AP] loop\n"); std::fflush(stderr);
+		std::vector<PendingReloadResult> results;
+		results.swap(m_pending);
 		for (PendingReloadResult& r : results)
 		{
 			if (r.spirv.has_value())
-			{
 				cache.Set(r.cacheKey, std::move(r.spirv.value()));
-				LOG_INFO(Render, "Shader hot-reload OK: {}", r.cacheKey);
-			}
-			else
-			{
-				LOG_WARN(Render, "Shader hot-reload failed (fallback kept): {} - {}", r.cacheKey, r.errorMessage);
-			}
 		}
 		std::fprintf(stderr, "[AP] done\n"); std::fflush(stderr);
 	}

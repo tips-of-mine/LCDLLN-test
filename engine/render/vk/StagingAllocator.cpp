@@ -30,15 +30,21 @@ namespace engine::render
 	    VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
 	
 	    VmaAllocationCreateInfo hostAllocInfo{};
-	    hostAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-	
+	    // Ancienne API VMA 2.x — déprécié et instable en VMA 3.x :
+		// hostAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+		// Nouvelle API VMA 3.x :
+		hostAllocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		hostAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+		
 	    for (uint32_t i = 0; i < kRingSize; ++i)
 	    {
 	        std::fprintf(stderr, "[STAGING] avant vmaCreateBuffer slot %u\n", i); std::fflush(stderr);
 	        VkBufferCreateInfo bufInfo{};
-	        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	        bufInfo.size  = static_cast<VkDeviceSize>(budgetBytesPerFrame);
-	        bufInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			bufInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufInfo.size        = static_cast<VkDeviceSize>(budgetBytesPerFrame);
+			bufInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	
 	        VmaAllocation vmaAlloc = VK_NULL_HANDLE;
 	        VkResult result = vmaCreateBuffer(alloc, &bufInfo, &hostAllocInfo,

@@ -88,13 +88,26 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
-		std::scoped_lock lock(GetMutex());
-		GetSettings() = settings;
-		s_level.store(settings.level, std::memory_order_relaxed);
-		if (GetFile().is_open())
-			GetFile().close();
-		if (!settings.filePath.empty())
-			GetFile() = std::ofstream(settings.filePath, std::ios::out | std::ios::app);
+	    std::fprintf(stderr, "[LOG] 1 avant GetMutex\n"); std::fflush(stderr);
+	    std::scoped_lock lock(GetMutex());
+	    std::fprintf(stderr, "[LOG] 2 apres lock\n"); std::fflush(stderr);
+	
+	    GetSettings() = settings;
+	    std::fprintf(stderr, "[LOG] 3 settings OK\n"); std::fflush(stderr);
+	
+	    s_level.store(settings.level, std::memory_order_relaxed);
+	    std::fprintf(stderr, "[LOG] 4 s_level OK\n"); std::fflush(stderr);
+	
+	    if (GetFile().is_open())
+	        GetFile().close();
+	    std::fprintf(stderr, "[LOG] 5 close OK\n"); std::fflush(stderr);
+	
+	    if (!settings.filePath.empty())
+	    {
+	        std::fprintf(stderr, "[LOG] 6 ouverture '%s'\n", settings.filePath.c_str()); std::fflush(stderr);
+	        GetFile().open(settings.filePath, std::ios::out | std::ios::app);
+	        std::fprintf(stderr, "[LOG] 7 open=%d\n", (int)GetFile().is_open()); std::fflush(stderr);
+	    }
 	}
 
 	void Log::Shutdown()

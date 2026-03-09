@@ -105,14 +105,24 @@ namespace engine::render
 			LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateBuffer (kernel UBO) failed");
 			return false;
 		}
+		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel OK\n"); std::fflush(stderr);
+
+		std::fprintf(stderr, "[SSAO] avant vmaMapMemory\n"); std::fflush(stderr);
 		m_kernelAlloc = kernelAlloc;
 		void* mapped = nullptr;
 		if (vmaMapMemory(alloc, kernelAlloc, &mapped) != VK_SUCCESS)
 		{
+			std::fprintf(stderr, "[SSAO] vmaMapMemory FAILED\n"); std::fflush(stderr);
 			Destroy(device);
 			return false;
 		}
+
+		std::fprintf(stderr, "[SSAO] vmaMapMemory OK mapped=%p\n", mapped); std::fflush(stderr);
+
+		std::fprintf(stderr, "[SSAO] avant memcpy kernel\n"); std::fflush(stderr);
 		std::memcpy(mapped, kernelData, 32u * 4u * sizeof(float));
+		std::fprintf(stderr, "[SSAO] memcpy kernel OK\n"); std::fflush(stderr);
+		
 		std::memcpy(static_cast<char*>(mapped) + 512, &radius, sizeof(float));
 		std::memcpy(static_cast<char*>(mapped) + 516, &bias, sizeof(float));
 		vmaUnmapMemory(alloc, kernelAlloc);

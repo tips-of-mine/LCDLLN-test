@@ -6,6 +6,7 @@
 #include <vk_mem_alloc.h>
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 
 namespace engine::render
 {

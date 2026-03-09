@@ -13,41 +13,51 @@ namespace engine::render
 
 	bool StagingAllocator::Init(VkDevice device, void* vmaAllocator, size_t budgetBytesPerFrame)
 	{
-		if (device == VK_NULL_HANDLE || vmaAllocator == nullptr || budgetBytesPerFrame == 0)
-		{
-			LOG_ERROR(Render, "StagingAllocator::Init: invalid parameters");
-			return false;
-		}
-		Destroy(device);
-		m_device = device;
-		m_vmaAllocator = vmaAllocator;
-		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
-
-		VmaAllocationCreateInfo hostAllocInfo{};
-		hostAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-		for (uint32_t i = 0; i < kRingSize; ++i)
-		{
-			VkBufferCreateInfo bufInfo{};
-			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufInfo.size = static_cast<VkDeviceSize>(budgetBytesPerFrame);
-			bufInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-			VmaAllocation vmaAlloc = VK_NULL_HANDLE;
-			VkResult result = vmaCreateBuffer(alloc, &bufInfo, &hostAllocInfo,
-				&m_ring[i].buffer, &vmaAlloc, nullptr);
-			if (result != VK_SUCCESS)
-			{
-				LOG_ERROR(Render, "StagingAllocator: vmaCreateBuffer failed for slot {}", i);
-				Destroy(device);
-				return false;
-			}
-			m_ring[i].vmaAllocation = vmaAlloc;
-			m_ring[i].sizeBytes = static_cast<VkDeviceSize>(budgetBytesPerFrame);
-		}
-		m_currentSlot = 0;
-		m_currentOffset = 0;
-		return true;
+	    std::fprintf(stderr, "[STAGING] Init enter device=%p vma=%p budget=%zu\n", (void*)device, vmaAllocator, budgetBytesPerFrame); std::fflush(stderr);
+	
+	    if (device == VK_NULL_HANDLE || vmaAllocator == nullptr || budgetBytesPerFrame == 0)
+	    {
+	        std::fprintf(stderr, "[STAGING] Init: invalid params\n"); std::fflush(stderr);
+	        return false;  // LOG_ERROR supprimé temporairement
+	    }
+	
+	    std::fprintf(stderr, "[STAGING] avant Destroy\n"); std::fflush(stderr);
+	    Destroy(device);
+	    std::fprintf(stderr, "[STAGING] Destroy OK\n"); std::fflush(stderr);
+	
+	    m_device = device;
+	    m_vmaAllocator = vmaAllocator;
+	    VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
+	
+	    VmaAllocationCreateInfo hostAllocInfo{};
+	    hostAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+	
+	    for (uint32_t i = 0; i < kRingSize; ++i)
+	    {
+	        std::fprintf(stderr, "[STAGING] avant vmaCreateBuffer slot %u\n", i); std::fflush(stderr);
+	        VkBufferCreateInfo bufInfo{};
+	        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	        bufInfo.size  = static_cast<VkDeviceSize>(budgetBytesPerFrame);
+	        bufInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	
+	        VmaAllocation vmaAlloc = VK_NULL_HANDLE;
+	        VkResult result = vmaCreateBuffer(alloc, &bufInfo, &hostAllocInfo,
+	            &m_ring[i].buffer, &vmaAlloc, nullptr);
+	        std::fprintf(stderr, "[STAGING] vmaCreateBuffer slot %u result=%d\n", i, (int)result); std::fflush(stderr);
+	
+	        if (result != VK_SUCCESS)
+	        {
+	            std::fprintf(stderr, "[STAGING] vmaCreateBuffer FAILED slot %u\n", i); std::fflush(stderr);
+	            Destroy(device);
+	            return false;
+	        }
+	        m_ring[i].vmaAllocation = vmaAlloc;
+	        m_ring[i].sizeBytes     = static_cast<VkDeviceSize>(budgetBytesPerFrame);
+	    }
+	    m_currentSlot   = 0;
+	    m_currentOffset = 0;
+	    std::fprintf(stderr, "[STAGING] Init OK\n"); std::fflush(stderr);
+	    return true;
 	}
 
 	VkBuffer StagingAllocator::Allocate(size_t sizeBytes, VkDeviceSize& outOffset)

@@ -83,6 +83,24 @@ namespace engine
 		
 		m_gpuUploadQueue.Init(m_cfg);
 		std::fprintf(stderr, "[ENGINE] gpuUploadQueue OK\n"); std::fflush(stderr);															
+
+		std::fprintf(stderr, "[ENGINE] avant Window::Create\n"); std::fflush(stderr);
+		engine::platform::Window::CreateDesc desc{};
+		desc.title  = "LCDLLN Engine";
+		desc.width  = 1280;
+		desc.height = 720;
+		if (!m_window.Create(desc))
+		{
+		    LOG_FATAL(Platform, "[Boot] Window::Create failed");
+		}
+		std::fprintf(stderr, "[ENGINE] Window::Create OK\n"); std::fflush(stderr);
+		
+		std::fprintf(stderr, "[ENGINE] avant glfwInit\n"); std::fflush(stderr);
+		if (glfwInit() != GLFW_TRUE)
+		{
+		    LOG_WARN(Platform, "[Boot] glfwInit failed");
+		}
+		std::fprintf(stderr, "[ENGINE] glfwInit OK\n"); std::fflush(stderr);
 		
 		m_vsync  = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);

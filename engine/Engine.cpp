@@ -388,14 +388,17 @@ namespace engine
 										};
 
 										std::fprintf(stderr, "[ENGINE] AL: avant pipeline->Init\n"); std::fflush(stderr);
-										// Remplace l'appel direct par un try avec traces avant/après
 										std::fprintf(stderr, "[ENGINE] AL1: appel Init...\n"); std::fflush(stderr);
-										bool pipelineOk = m_deferredPipeline->Init(
+										bool pipelineOk = m_pipeline->Init(
 										    m_vkDeviceContext.GetDevice(),
 										    m_vkDeviceContext.GetPhysicalDevice(),
-										    m_vkSwapchain.GetExtent(),
-										    m_vkSwapchain.GetFormat(),
-										    m_vmaAllocator
+										    m_vmaAllocator,
+										    m_cfg,
+										    static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024)),
+										    m_vkSwapchain.GetImageFormat(),
+										    m_vkDeviceContext.GetGraphicsQueue(),
+										    m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+										    loadSpirv
 										);
 										std::fprintf(stderr, "[ENGINE] AL2: Init retourne %d\n", (int)pipelineOk); std::fflush(stderr);
 										std::fprintf(stderr, "[ENGINE] AM: pipeline->Init OK\n"); std::fflush(stderr);

@@ -31,6 +31,10 @@ else()
   message(STATUS "VMA: using FetchContent at ${VMA_DIR_ABS}")
 endif()
 
+set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
+    COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=1"
+)
+
 add_library(engine_core
   engine/render/vk/VmaAllocator.cpp
   engine/render/vk/VkUtils.cpp

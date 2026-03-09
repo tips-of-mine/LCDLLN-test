@@ -96,12 +96,13 @@ namespace engine::render
 		VmaAllocationCreateInfo allocCreateInfo{};
 		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
 		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
 
 		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel OK\n"); std::fflush(stderr);
+		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
 		
 		if (vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr) != VK_SUCCESS)
 		{
+			std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel FAILED\n"); std::fflush(stderr);
 			LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateBuffer (kernel UBO) failed");
 			return false;
 		}

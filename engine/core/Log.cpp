@@ -11,23 +11,13 @@ namespace engine::core
 {
 	namespace
 	{
-		std::mutex& GetMutex()
-		{
-			static std::mutex m;
-			return m;
-		}
+		std::mutex* g_mutex = new std::mutex();
+		std::ofstream* g_file = new std::ofstream();
+		LogSettings* g_settings = new LogSettings();
 
-		std::ofstream& GetFile()
-		{
-			static std::ofstream f;
-			return f;
-		}
-
-		LogSettings& GetSettings()
-		{
-			static LogSettings s;
-			return s;
-		}
+		std::mutex& GetMutex()   { return *g_mutex; }
+		std::ofstream& GetFile() { return *g_file; }
+		LogSettings& GetSettings() { return *g_settings; }
 
 		const char* ToString(LogLevel level)
 		{

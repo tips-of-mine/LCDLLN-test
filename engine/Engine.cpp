@@ -874,16 +874,25 @@ namespace engine
 
 	int Engine::Run()
 	{
+		std::fprintf(stderr, "[RUN] debut Run\n"); std::fflush(stderr)
+
 		auto lastFpsLog  = std::chrono::steady_clock::now();
 		auto lastPresent = lastFpsLog;
 
 		while (!m_quitRequested && !m_window.ShouldClose())
 		{
+			std::fprintf(stderr, "[RUN] BeginFrame\n"); std::fflush(stderr);
 			BeginFrame();
+			std::fprintf(stderr, "[RUN] Update\n"); std::fflush(stderr);
 			Update();
+			std::fprintf(stderr, "[RUN] SwapRenderState\n"); std::fflush(stderr);
 			SwapRenderState();
+			std::fprintf(stderr, "[RUN] Render\n"); std::fflush(stderr);
 			Render();
+			std::fprintf(stderr, "[RUN] EndFrame\n"); std::fflush(stderr);
 			EndFrame();
+			std::fprintf(stderr, "[RUN] frame done\n"); std::fflush(stderr);
+        	break; // TEMP: one frame only for now
 
 			const auto now = std::chrono::steady_clock::now();
 			if (now - lastFpsLog >= std::chrono::seconds(1))
@@ -902,6 +911,8 @@ namespace engine
 			lastPresent = std::chrono::steady_clock::now();
 		}
 
+		std::fprintf(stderr, "[RUN] sortie loop\n"); std::fflush(stderr);
+		
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());

@@ -99,6 +99,7 @@ static void CreateAndRun(int argc, char** argv)
     std::fprintf(stderr, "[T] Engine()\n");           std::fflush(stderr);
     g_engine = std::make_unique<engine::Engine>(argc, argv);
     std::fprintf(stderr, "[T] Engine OK\n");          std::fflush(stderr);
+    
     g_result = g_engine->Run();
 }
 

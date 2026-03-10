@@ -650,9 +650,6 @@ namespace engine::render
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = res.desc.layers;
 
-			//Hubert
-			std::fprintf(stderr, "[toto] Est ce que \n"); std::fflush(stderr);
-			
 			//result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
 			VkResult result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
 			if (result != VK_SUCCESS)

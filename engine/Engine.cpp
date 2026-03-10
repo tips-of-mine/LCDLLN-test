@@ -947,7 +947,6 @@ namespace engine
 			std::fprintf(stderr, "[RUN] EndFrame\n"); std::fflush(stderr);
 			EndFrame();
 			std::fprintf(stderr, "[RUN] frame done\n"); std::fflush(stderr);
-        	break; // TEMP: one frame only for now
 
 			const auto now = std::chrono::steady_clock::now();
 			if (now - lastFpsLog >= std::chrono::seconds(1))

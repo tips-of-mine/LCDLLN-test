@@ -588,9 +588,7 @@ namespace engine::render
 			std::fprintf(stderr, "[EIR] vmaAllocator=%p allocCreateInfo.usage=%d\n",
 			    vmaAllocator, (int)allocCreateInfo.usage); std::fflush(stderr);
 			std::fprintf(stderr, "[EIR] avant vmaCreateImage[%zu] usage=0x%x\n", resIdx, (unsigned)usage); std::fflush(stderr);
-			//VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
-
-			// Remplacer le bloc vmaCreateImage par :
+			
 			VkImage newImage = VK_NULL_HANDLE;
 			VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
 			std::fprintf(stderr, "[EIR] step1 vkCreateImage r1=%d img=%p\n", (int)r1, (void*)newImage); std::fflush(stderr);
@@ -600,38 +598,42 @@ namespace engine::render
 			std::fprintf(stderr, "[EIR] step2 memReq size=%llu align=%llu bits=0x%x\n",
 			    (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits); std::fflush(stderr);
 			
-			VmaAllocation alloc = VK_NULL_HANDLE;
-			VkResult r2 = vmaAllocateMemoryForImage(static_cast<VmaAllocator>(vmaAllocator), newImage, &allocCreateInfo, &alloc, nullptr);
-			std::fprintf(stderr, "[EIR] step3 vmaAllocateMemoryForImage r2=%d alloc=%p\n", (int)r2, (void*)alloc); std::fflush(stderr);
+			VkPhysicalDeviceMemoryProperties memProps{};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+			uint32_t memTypeIndex = UINT32_MAX;
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+			    if ((memReq.memoryTypeBits & (1u << i)) &&
+			        (memProps.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+			    {
+			        memTypeIndex = i;
+			        break;
+			    }
+			}
+			std::fprintf(stderr, "[EIR] step3 memTypeIndex=%u\n", memTypeIndex); std::fflush(stderr);
 			
-			//VkResult r3 = vmaBindImageMemory(static_cast<VmaAllocator>(vmaAllocator), alloc, newImage);
-
+			VkMemoryAllocateInfo allocInfo{};
+			allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize  = memReq.size;
+			allocInfo.memoryTypeIndex = memTypeIndex;
+			VkDeviceMemory memory = VK_NULL_HANDLE;
+			VkResult r2 = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
+			std::fprintf(stderr, "[EIR] step4 vkAllocateMemory r2=%d mem=%p\n", (int)r2, (void*)memory); std::fflush(stderr);
+			
 			VkResult r3 = VK_SUCCESS;
-			if (alloc != VK_NULL_HANDLE)
+			if (memory != VK_NULL_HANDLE)
 			{
-			    r3 = vmaBindImageMemory(static_cast<VmaAllocator>(vmaAllocator), alloc, newImage);
-			    std::fprintf(stderr, "[EIR] step4 vmaBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
+			    r3 = vkBindImageMemory(device, newImage, memory, 0);
+			    std::fprintf(stderr, "[EIR] step5 vkBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
 			}
-			else
-			{
-			    std::fprintf(stderr, "[EIR] step4 SKIPPED alloc is null\n"); std::fflush(stderr);
-			    r3 = VK_ERROR_OUT_OF_DEVICE_MEMORY;
-			}
-			
-			std::fprintf(stderr, "[EIR] step4 vmaBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
-			
-			h.image = newImage;
-			// stocker alloc quelque part pour libération (remplace le nullptr passé à vmaCreateImage)
-			
-			//std::fprintf(stderr, "[EIR] apres vmaCreateImage result=%d\n", (int)result); std::fflush(stderr);
+			h.image      = newImage;
+			h.allocation = nullptr;
 			
 			if (r1 != VK_SUCCESS || r2 != VK_SUCCESS || r3 != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': r1={} r2={} r3={}", res.name, (int)r1, (int)r2, (int)r3);
-    			continue;
+			    LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': r1={} r2={} r3={}", res.name, (int)r1, (int)r2, (int)r3);
+			    continue;
 			}
-			//h.allocation = allocation;
-			h.allocation = alloc;
 
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -228,6 +228,12 @@ namespace engine
 									vmaFuncs.vkCreateImage                       = vkCreateImage;
 									vmaFuncs.vkDestroyImage                      = vkDestroyImage;
 									vmaFuncs.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
+
+									vmaFuncs.vkGetBufferMemoryRequirements2KHR       = vkGetBufferMemoryRequirements2;
+									vmaFuncs.vkGetImageMemoryRequirements2KHR        = vkGetImageMemoryRequirements2;
+									vmaFuncs.vkBindBufferMemory2KHR                  = vkBindBufferMemory2;
+									vmaFuncs.vkBindImageMemory2KHR                   = vkBindImageMemory2;
+									vmaFuncs.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2;
 									
 									VmaAllocatorCreateInfo vmaInfo{};
 									vmaInfo.physicalDevice   = m_vkDeviceContext.GetPhysicalDevice();

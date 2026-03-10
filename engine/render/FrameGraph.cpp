@@ -574,7 +574,7 @@ namespace engine::render
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 			VmaAllocationCreateInfo allocCreateInfo{};
-			allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+			allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			VmaAllocation allocation = VK_NULL_HANDLE;
 
 			// TEST direct
@@ -604,7 +604,20 @@ namespace engine::render
 			VkResult r2 = vmaAllocateMemoryForImage(static_cast<VmaAllocator>(vmaAllocator), newImage, &allocCreateInfo, &alloc, nullptr);
 			std::fprintf(stderr, "[EIR] step3 vmaAllocateMemoryForImage r2=%d alloc=%p\n", (int)r2, (void*)alloc); std::fflush(stderr);
 			
-			VkResult r3 = vmaBindImageMemory(static_cast<VmaAllocator>(vmaAllocator), alloc, newImage);
+			//VkResult r3 = vmaBindImageMemory(static_cast<VmaAllocator>(vmaAllocator), alloc, newImage);
+
+			VkResult r3 = VK_SUCCESS;
+			if (alloc != VK_NULL_HANDLE)
+			{
+			    r3 = vmaBindImageMemory(static_cast<VmaAllocator>(vmaAllocator), alloc, newImage);
+			    std::fprintf(stderr, "[EIR] step4 vmaBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
+			}
+			else
+			{
+			    std::fprintf(stderr, "[EIR] step4 SKIPPED alloc is null\n"); std::fflush(stderr);
+			    r3 = VK_ERROR_OUT_OF_DEVICE_MEMORY;
+			}
+			
 			std::fprintf(stderr, "[EIR] step4 vmaBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
 			
 			h.image = newImage;
@@ -693,7 +706,7 @@ namespace engine::render
 			bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 			VmaAllocationCreateInfo allocCreateInfo{};
-			allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+			allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			VmaAllocation allocation = VK_NULL_HANDLE;
 			VkResult result = vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &h.buffer, &allocation, nullptr);
 			if (result != VK_SUCCESS)

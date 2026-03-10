@@ -427,26 +427,30 @@ namespace engine::render
 	}
 
 	void FrameGraph::execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
-		Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported)
+	    Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported)
 	{
-		if (!m_compiled)
-		{
-			compile();
-		}
-		ensureImageResources(device, vmaAllocator, frameIndex, extent, framesInFlight);
-		ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
-		fillRegistry(registry, frameIndex);
-
-		std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
-		for (size_t passIdx : m_compiledOrder)
-		{
-			const Pass& pass = m_passes[passIdx];
-			emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
-			if (pass.execute)
-			{
-				pass.execute(cmd, registry);
-			}
-		}
+	    std::fprintf(stderr, "[FG] execute debut\n"); std::fflush(stderr);
+	    if (!m_compiled) { compile(); }
+	    std::fprintf(stderr, "[FG] ensureImageResources\n"); std::fflush(stderr);
+	    ensureImageResources(device, vmaAllocator, frameIndex, extent, framesInFlight);
+	    std::fprintf(stderr, "[FG] ensureBufferResources\n"); std::fflush(stderr);
+	    ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
+	    std::fprintf(stderr, "[FG] fillRegistry\n"); std::fflush(stderr);
+	    fillRegistry(registry, frameIndex);
+	
+	    std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
+	    std::fprintf(stderr, "[FG] loop passes=%zu\n", m_compiledOrder.size()); std::fflush(stderr);
+	    for (size_t passIdx : m_compiledOrder)
+	    {
+	        const Pass& pass = m_passes[passIdx];
+	        std::fprintf(stderr, "[FG] pass[%zu]='%s' barriers\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	        emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
+	        std::fprintf(stderr, "[FG] pass[%zu]='%s' execute\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	        if (pass.execute)
+	            pass.execute(cmd, registry);
+	        std::fprintf(stderr, "[FG] pass[%zu]='%s' done\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	    }
+	    std::fprintf(stderr, "[FG] execute done\n"); std::fflush(stderr);
 	}
 
 	void FrameGraph::destroy(VkDevice device, void* vmaAllocator)

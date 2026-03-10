@@ -181,7 +181,7 @@ namespace engine::render
 				{
 					std::fprintf(stderr, "[FG-COMPILE] MULTI-WRITER resource=%u pass1='%s' pass2='%s'\n",
 					//LOG_FATAL(Render, "FrameGraph: multi-writer on resource {} (passes '{}' and '{}'); MVP forbids multi-writer",	rid, m_passes[it->second].name, m_passes[i].name);
-					continue;
+					LOG_ERROR(Render, "FrameGraph: multi-writer on resource {} (passes '{}' and '{}'); MVP forbids multi-writer", rid, m_passes[it->second].name, m_passes[i].name);
 				}
 				lastWriter[rid] = i;
 			}

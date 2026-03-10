@@ -588,13 +588,34 @@ namespace engine::render
 			std::fprintf(stderr, "[EIR] vmaAllocator=%p allocCreateInfo.usage=%d\n",
 			    vmaAllocator, (int)allocCreateInfo.usage); std::fflush(stderr);
 			std::fprintf(stderr, "[EIR] avant vmaCreateImage[%zu] usage=0x%x\n", resIdx, (unsigned)usage); std::fflush(stderr);
-			VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
+			//VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
+
+			// Remplacer le bloc vmaCreateImage par :
+			VkImage newImage = VK_NULL_HANDLE;
+			VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
+			std::fprintf(stderr, "[EIR] step1 vkCreateImage r1=%d img=%p\n", (int)r1, (void*)newImage); std::fflush(stderr);
+			
+			VkMemoryRequirements memReq{};
+			vkGetImageMemoryRequirements(device, newImage, &memReq);
+			std::fprintf(stderr, "[EIR] step2 memReq size=%llu align=%llu bits=0x%x\n",
+			    (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits); std::fflush(stderr);
+			
+			VmaAllocation alloc = VK_NULL_HANDLE;
+			VkResult r2 = vmaAllocateMemoryForImage(static_cast<VmaAllocator>(vmaAllocator), newImage, &allocCreateInfo, &alloc, nullptr);
+			std::fprintf(stderr, "[EIR] step3 vmaAllocateMemoryForImage r2=%d alloc=%p\n", (int)r2, (void*)alloc); std::fflush(stderr);
+			
+			VkResult r3 = vmaBindImageMemory(static_cast<VmaAllocator>(vmaAllocator), alloc, newImage);
+			std::fprintf(stderr, "[EIR] step4 vmaBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
+			
+			h.image = newImage;
+			// stocker alloc quelque part pour libération (remplace le nullptr passé à vmaCreateImage)
+			
 			std::fprintf(stderr, "[EIR] apres vmaCreateImage result=%d\n", (int)result); std::fflush(stderr);
 			
-			if (result != VK_SUCCESS)
+			if (r1 != VK_SUCCESS || r2 != VK_SUCCESS || r3 != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "FrameGraph: vmaCreateImage failed for '{}': {}", res.name, static_cast<int>(result));
-				continue;
+				LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': r1={} r2={} r3={}", res.name, (int)r1, (int)r2, (int)r3);
+    			continue;
 			}
 			h.allocation = allocation;
 
@@ -613,6 +634,9 @@ namespace engine::render
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = res.desc.layers;
 
+			//Hubert
+			std::fprintf(stderr, "[toto] Est ce que \n"); std::fflush(stderr);
+			
 			result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
 			if (result != VK_SUCCESS)
 			{

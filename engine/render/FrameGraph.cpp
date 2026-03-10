@@ -562,9 +562,12 @@ namespace engine::render
 			imageInfo.extent.width = width;
 			imageInfo.extent.height = height;
 			imageInfo.extent.depth = 1;
-			imageInfo.mipLevels = res.desc.mipLevels;
-			imageInfo.arrayLayers = res.desc.layers;
-			imageInfo.samples = res.desc.samples;
+			//imageInfo.mipLevels = res.desc.mipLevels;
+			imageInfo.mipLevels  = res.desc.mipLevels > 0  ? res.desc.mipLevels : 1u;
+			//imageInfo.arrayLayers = res.desc.layers;
+			imageInfo.arrayLayers = res.desc.layers > 0     ? res.desc.layers    : 1u;
+			//imageInfo.samples = res.desc.samples;
+			imageInfo.samples    = res.desc.samples != 0    ? res.desc.samples   : VK_SAMPLE_COUNT_1_BIT;
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 			imageInfo.usage = usage;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;

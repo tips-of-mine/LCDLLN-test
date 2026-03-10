@@ -576,6 +576,14 @@ namespace engine::render
 			VmaAllocationCreateInfo allocCreateInfo{};
 			allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 			VmaAllocation allocation = VK_NULL_HANDLE;
+
+			// TEST direct
+			{
+			    VkImage testImg = VK_NULL_HANDLE;
+			    VkResult tr = vkCreateImage(device, &imageInfo, nullptr, &testImg);
+			    std::fprintf(stderr, "[EIR] vkCreateImage direct result=%d img=%p\n", (int)tr, (void*)testImg); std::fflush(stderr);
+			    if (testImg != VK_NULL_HANDLE) vkDestroyImage(device, testImg, nullptr);
+			}
 			
 			std::fprintf(stderr, "[EIR] avant vmaCreateImage[%zu] usage=0x%x\n", resIdx, (unsigned)usage); std::fflush(stderr);
 			VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);

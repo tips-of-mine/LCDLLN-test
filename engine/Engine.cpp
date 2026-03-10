@@ -1052,92 +1052,99 @@ namespace engine
 
 	void Engine::Render()
 	{
-		std::fprintf(stderr, "[RENDER] debut\n"); std::fflush(stderr);
-		if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
-		{
-			std::fprintf(stderr, "[RENDER] early return\n"); std::fflush(stderr);
-			return;
-		}
-		std::fprintf(stderr, "[RENDER] frameIndex=%u\n", m_currentFrame % 2); std::fflush(stderr);
-
-		const uint32_t frameIndex          = m_currentFrame % 2;
-		engine::render::FrameResources& fr = m_frameResources[frameIndex];
-		::VkDevice     device              = m_vkDeviceContext.GetDevice();
-		VkQueue        graphicsQueue       = m_vkDeviceContext.GetGraphicsQueue();
-		VkQueue        presentQueue        = m_vkDeviceContext.GetPresentQueue();
-		VkSwapchainKHR swapchain           = m_vkSwapchain.GetSwapchain();
-		VkExtent2D     extent              = m_vkSwapchain.GetExtent();
-
-		std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
-		vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
-		std::fprintf(stderr, "[RENDER] avant vkAcquireNextImageKHR\n"); std::fflush(stderr);
-
-		m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
-		m_stagingAllocator.BeginFrame(frameIndex);
-		(void)m_gpuUploadQueue.PlanFrameUploads();
-
-		if (m_pipeline->GetAutoExposure().IsValid())
-		{
-			const float dt    = static_cast<float>(m_time.DeltaSeconds());
-			const float key   = static_cast<float>(m_cfg.GetDouble("exposure.key", 0.18));
-			const float speed = static_cast<float>(m_cfg.GetDouble("exposure.speed", 2.0));
-			m_pipeline->GetAutoExposure().Update(device, dt, key, speed);
-		}
-
-		uint32_t imageIndex = 0;
-		VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
-		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) return;
-
-		vkResetCommandPool(device, fr.cmdPool, 0);
-
-		std::fprintf(stderr, "[RENDER] avant vkBeginCommandBuffer\n"); std::fflush(stderr);
-		
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		if (vkBeginCommandBuffer(fr.cmdBuffer, &beginInfo) != VK_SUCCESS) return;
-
-		if (m_fgSceneColorHDRId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
-		{
-			VkImage     backbufferImage = m_vkSwapchain.GetImage(imageIndex);
-			VkImageView backbufferView  = m_vkSwapchain.GetImageView(imageIndex);
-			m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
-			m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2());
-		}
-
-		if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) return;
-
-		VkSemaphore          waitSemaphores[]   = { fr.imageAvailable };
-		VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSemaphore          signalSemaphores[] = { fr.renderFinished };
-
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount   = 1;
-		submitInfo.pWaitSemaphores      = waitSemaphores;
-		submitInfo.pWaitDstStageMask    = waitStages;
-		submitInfo.commandBufferCount   = 1;
-		submitInfo.pCommandBuffers      = &fr.cmdBuffer;
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores    = signalSemaphores;
-
-		vkResetFences(device, 1, &fr.fence);
-		if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence) != VK_SUCCESS) return;
-
-		VkPresentInfoKHR presentInfo{};
-		presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores    = signalSemaphores;
-		presentInfo.swapchainCount     = 1;
-		presentInfo.pSwapchains        = &swapchain;
-		presentInfo.pImageIndices      = &imageIndex;
-
-		result = vkQueuePresentKHR(presentQueue, &presentInfo);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-			m_swapchainResizeRequested = true;
-
-		m_currentFrame++;
+	    std::fprintf(stderr, "[RENDER] debut\n"); std::fflush(stderr);
+	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
+	    {
+	        std::fprintf(stderr, "[RENDER] early return\n"); std::fflush(stderr);
+	        return;
+	    }
+	
+	    const uint32_t frameIndex          = m_currentFrame % 2;
+	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
+	    ::VkDevice     device              = m_vkDeviceContext.GetDevice();
+	    VkQueue        graphicsQueue       = m_vkDeviceContext.GetGraphicsQueue();
+	    VkQueue        presentQueue        = m_vkDeviceContext.GetPresentQueue();
+	    VkSwapchainKHR swapchain           = m_vkSwapchain.GetSwapchain();
+	    VkExtent2D     extent              = m_vkSwapchain.GetExtent();
+	
+	    std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
+	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+	    std::fprintf(stderr, "[RENDER] Collect\n"); std::fflush(stderr);
+	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
+	    std::fprintf(stderr, "[RENDER] stagingAllocator.BeginFrame\n"); std::fflush(stderr);
+	    m_stagingAllocator.BeginFrame(frameIndex);
+	    std::fprintf(stderr, "[RENDER] gpuUploadQueue\n"); std::fflush(stderr);
+	    (void)m_gpuUploadQueue.PlanFrameUploads();
+	
+	    std::fprintf(stderr, "[RENDER] autoExposure\n"); std::fflush(stderr);
+	    if (m_pipeline->GetAutoExposure().IsValid())
+	    {
+	        const float dt    = static_cast<float>(m_time.DeltaSeconds());
+	        const float key   = static_cast<float>(m_cfg.GetDouble("exposure.key", 0.18));
+	        const float speed = static_cast<float>(m_cfg.GetDouble("exposure.speed", 2.0));
+	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed);
+	    }
+	
+	    std::fprintf(stderr, "[RENDER] avant vkAcquireNextImageKHR\n"); std::fflush(stderr);
+	    uint32_t imageIndex = 0;
+	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
+	    std::fprintf(stderr, "[RENDER] vkAcquireNextImageKHR result=%d imageIndex=%u\n", (int)result, imageIndex); std::fflush(stderr);
+	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
+	    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) return;
+	
+	    std::fprintf(stderr, "[RENDER] avant vkResetCommandPool\n"); std::fflush(stderr);
+	    vkResetCommandPool(device, fr.cmdPool, 0);
+	
+	    std::fprintf(stderr, "[RENDER] avant vkBeginCommandBuffer\n"); std::fflush(stderr);
+	    VkCommandBufferBeginInfo beginInfo{};
+	    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	    if (vkBeginCommandBuffer(fr.cmdBuffer, &beginInfo) != VK_SUCCESS) return;
+	
+	    std::fprintf(stderr, "[RENDER] avant frameGraph.execute\n"); std::fflush(stderr);
+	    if (m_fgSceneColorHDRId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
+	    {
+	        VkImage     backbufferImage = m_vkSwapchain.GetImage(imageIndex);
+	        VkImageView backbufferView  = m_vkSwapchain.GetImageView(imageIndex);
+	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
+	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2());
+	    }
+	    std::fprintf(stderr, "[RENDER] frameGraph.execute OK\n"); std::fflush(stderr);
+	
+	    std::fprintf(stderr, "[RENDER] avant vkEndCommandBuffer\n"); std::fflush(stderr);
+	    if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) return;
+	
+	    std::fprintf(stderr, "[RENDER] avant vkQueueSubmit\n"); std::fflush(stderr);
+	    VkSemaphore          waitSemaphores[]   = { fr.imageAvailable };
+	    VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	    VkSemaphore          signalSemaphores[] = { fr.renderFinished };
+	    VkSubmitInfo submitInfo{};
+	    submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	    submitInfo.waitSemaphoreCount   = 1;
+	    submitInfo.pWaitSemaphores      = waitSemaphores;
+	    submitInfo.pWaitDstStageMask    = waitStages;
+	    submitInfo.commandBufferCount   = 1;
+	    submitInfo.pCommandBuffers      = &fr.cmdBuffer;
+	    submitInfo.signalSemaphoreCount = 1;
+	    submitInfo.pSignalSemaphores    = signalSemaphores;
+	    vkResetFences(device, 1, &fr.fence);
+	    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence) != VK_SUCCESS) return;
+	
+	    std::fprintf(stderr, "[RENDER] avant vkQueuePresentKHR\n"); std::fflush(stderr);
+	    VkPresentInfoKHR presentInfo{};
+	    presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	    presentInfo.waitSemaphoreCount = 1;
+	    presentInfo.pWaitSemaphores    = signalSemaphores;
+	    presentInfo.swapchainCount     = 1;
+	    presentInfo.pSwapchains        = &swapchain;
+	    presentInfo.pImageIndices      = &imageIndex;
+	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
+	    std::fprintf(stderr, "[RENDER] vkQueuePresentKHR result=%d\n", (int)result); std::fflush(stderr);
+	    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	        m_swapchainResizeRequested = true;
+	
+	    m_currentFrame++;
+	    std::fprintf(stderr, "[RENDER] done\n"); std::fflush(stderr);
 	}
 
 	void Engine::EndFrame()

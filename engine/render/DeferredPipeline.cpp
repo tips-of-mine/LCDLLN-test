@@ -60,14 +60,8 @@ namespace engine::render
 
 		// M06.1: SSAO kernel + noise
 		std::fprintf(stderr, "[PIPELINE] 3 SSAO kernel+noise\n"); std::fflush(stderr);
-		if (!m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator, config, graphicsQueue, graphicsQueueFamilyIndex))
-		{
-			LOG_WARN(Render, "M06.1: SsaoKernelNoise::Init failed — SSAO disabled");
-		}
-		else if (m_ssaoKernelNoise.IsValid())
-		{
-			LOG_INFO(Render, "[Boot] DeferredPipeline SSAO kernel/noise OK");
-		}
+		// TEMP: VMA buffer path instable sur cette branche, on laisse SSAO désactivé pour éviter les crashes.
+		std::fprintf(stderr, "[PIPELINE] 3 SSAO SKIPPED (VMA buffer disabled)\n"); std::fflush(stderr);
 
 		// M06.2: SSAO generate
 		std::fprintf(stderr, "[PIPELINE] 4 SSAO pass\n"); std::fflush(stderr);

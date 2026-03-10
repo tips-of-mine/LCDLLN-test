@@ -217,7 +217,7 @@ namespace engine
 									vmaInfo.device           = m_vkDeviceContext.GetDevice();
 									vmaInfo.instance         = m_vkInstance.GetHandle();
 									vmaInfo.vulkanApiVersion = VK_API_VERSION_1_2;
-									//vmaInfo.pVulkanFunctions = &vmaFuncs;
+									vmaInfo.pVulkanFunctions = &vmaFuncs;
 									if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
 									{
 										LOG_ERROR(Render, "VMA allocator creation failed");

@@ -500,6 +500,11 @@ namespace engine::render
 		uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
 	{
 		if (vmaAllocator == nullptr) return;
+
+		std::fprintf(stderr, "[EIR] debut nImages=%zu extent=%ux%u framesInFlight=%u lastExtent=%ux%u\n",
+		    m_imageResources.size(), extent.width, extent.height, framesInFlight,
+		    m_lastExtent.width, m_lastExtent.height); std::fflush(stderr);
+		
 		const bool extentChanged = m_lastExtent.width != extent.width || m_lastExtent.height != extent.height;
 		const bool framesChanged = m_lastFramesInFlight != framesInFlight;
 		if (extentChanged || framesChanged)
@@ -542,6 +547,10 @@ namespace engine::render
 
 			if (h.image != VK_NULL_HANDLE) continue;
 
+			std::fprintf(stderr, "[EIR] image[%zu]='%s' fmt=%d w=%u h=%u mips=%u layers=%u\n",
+			    resIdx, res.name.c_str(), (int)res.desc.format, width, height,
+			    res.desc.mipLevels, res.desc.layers); std::fflush(stderr);
+			
 			VkImageUsageFlags usage = res.desc.usage;
 			if (res.desc.isDepthAttachment)
 				usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;

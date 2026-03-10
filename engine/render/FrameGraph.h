@@ -218,7 +218,7 @@ namespace engine::render
 		std::vector<size_t> m_compiledOrder;
 		bool m_compiled = false;
 
-		void ensureImageResources(VkDevice device, void* vmaAllocator,
+		void ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator,
 			uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight);
 		void ensureBufferResources(VkDevice device, void* vmaAllocator,
 			uint32_t frameIndex, uint32_t framesInFlight);

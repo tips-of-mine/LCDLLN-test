@@ -94,12 +94,32 @@ namespace engine::render
 	{
 		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
 
-		std::vector<PendingReloadResult> results;
+		// Cas 1: worker thread non démarré (build actuel) → on garde un chemin simple, sans mutex.
+		if (!m_worker.joinable())
 		{
-			std::lock_guard lock(m_pendingMutex);
 			if (m_pending.empty())
 			{
-				std::fprintf(stderr, "[AP] pending empty, return\n"); std::fflush(stderr);
+				std::fprintf(stderr, "[AP] pending empty, return (no worker)\n"); std::fflush(stderr);
+				return;
+			}
+			std::vector<PendingReloadResult> results;
+			results.swap(m_pending);
+			for (PendingReloadResult& r : results)
+			{
+				if (r.spirv.has_value())
+					cache.Set(r.cacheKey, std::move(r.spirv.value()));
+			}
+			std::fprintf(stderr, "[AP] done (no worker)\n"); std::fflush(stderr);
+			return;
+		}
+
+		// Cas 2: worker thread actif → chemin thread-safe avec mutex.
+		std::vector<PendingReloadResult> results;
+		{
+			std::lock_guard<std::mutex> lock(m_pendingMutex);
+			if (m_pending.empty())
+			{
+				std::fprintf(stderr, "[AP] pending empty, return (worker)\n"); std::fflush(stderr);
 				return;
 			}
 			results.swap(m_pending);
@@ -110,7 +130,7 @@ namespace engine::render
 			if (r.spirv.has_value())
 				cache.Set(r.cacheKey, std::move(r.spirv.value()));
 		}
-		std::fprintf(stderr, "[AP] done\n"); std::fflush(stderr);
+		std::fprintf(stderr, "[AP] done (worker)\n"); std::fflush(stderr);
 	}
 
 	void ShaderHotReload::WorkerThread()

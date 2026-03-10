@@ -234,8 +234,8 @@ namespace engine::render
 		}
 		if (m_compiledOrder.size() != n)
 		{
-			std::fprintf(stderr, "[FG-COMPILE] CYCLE DETECTED compiled=%zu total=%zu\n",
-			//LOG_FATAL(Render, "FrameGraph: cycle detected in pass dependencies (topological sort produced {} of {} passes)", m_compiledOrder.size(), n);
+			std::fprintf(stderr, "[FG-COMPILE] CYCLE DETECTED compiled=%zu total=%zu\n", m_compiledOrder.size(), n); std::fflush(stderr);
+			LOG_ERROR(Render, "FrameGraph: cycle detected in pass dependencies (topological sort produced {} of {} passes)", m_compiledOrder.size(), n);
 		}
 		std::fprintf(stderr, "[FG-COMPILE] done order=%zu\n", m_compiledOrder.size()); std::fflush(stderr);
 		m_compiled = true;

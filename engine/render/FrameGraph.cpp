@@ -585,6 +585,8 @@ namespace engine::render
 			    if (testImg != VK_NULL_HANDLE) vkDestroyImage(device, testImg, nullptr);
 			}
 			
+			std::fprintf(stderr, "[EIR] vmaAllocator=%p allocCreateInfo.usage=%d\n",
+			    vmaAllocator, (int)allocCreateInfo.usage); std::fflush(stderr);
 			std::fprintf(stderr, "[EIR] avant vmaCreateImage[%zu] usage=0x%x\n", resIdx, (unsigned)usage); std::fflush(stderr);
 			VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
 			std::fprintf(stderr, "[EIR] apres vmaCreateImage result=%d\n", (int)result); std::fflush(stderr);

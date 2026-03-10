@@ -610,14 +610,15 @@ namespace engine::render
 			h.image = newImage;
 			// stocker alloc quelque part pour libération (remplace le nullptr passé à vmaCreateImage)
 			
-			std::fprintf(stderr, "[EIR] apres vmaCreateImage result=%d\n", (int)result); std::fflush(stderr);
+			//std::fprintf(stderr, "[EIR] apres vmaCreateImage result=%d\n", (int)result); std::fflush(stderr);
 			
 			if (r1 != VK_SUCCESS || r2 != VK_SUCCESS || r3 != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': r1={} r2={} r3={}", res.name, (int)r1, (int)r2, (int)r3);
     			continue;
 			}
-			h.allocation = allocation;
+			//h.allocation = allocation;
+			h.allocation = alloc;
 
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -637,11 +638,14 @@ namespace engine::render
 			//Hubert
 			std::fprintf(stderr, "[toto] Est ce que \n"); std::fflush(stderr);
 			
-			result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
+			//result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
+			VkResult result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
 			if (result != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "FrameGraph: vkCreateImageView failed for '{}': {}", res.name, static_cast<int>(result));
-				vmaDestroyImage(static_cast<VmaAllocator>(vmaAllocator), h.image, static_cast<VmaAllocation>(h.allocation));
+				//vmaDestroyImage(static_cast<VmaAllocator>(vmaAllocator), h.image, static_cast<VmaAllocation>(h.allocation));
+				vkDestroyImage(device, h.image, nullptr);
+				vmaFreeMemory(static_cast<VmaAllocator>(vmaAllocator), static_cast<VmaAllocation>(h.allocation));
 				h.image = VK_NULL_HANDLE;
 				h.allocation = nullptr;
 			}

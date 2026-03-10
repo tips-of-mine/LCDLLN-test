@@ -139,7 +139,8 @@ namespace engine
 		/// Shadow maps per cascade (depth + sampled). Added in M04.2.
 		std::array<engine::render::ResourceId, engine::render::kCascadeCount> m_fgShadowMapIds{};
 		/// M08.1: Bloom mip pyramid (BloomMip0 = full res, .. BloomMip5 = 1/32).
-		std::array<engine::render::ResourceId, engine::render::kBloomMipCount> m_fgBloomMipIds{};
+		std::array<engine::render::ResourceId, engine::render::kBloomMipCount> m_fgBloomDownMipIds{};
+		std::array<engine::render::ResourceId, engine::render::kBloomMipCount> m_fgBloomUpMipIds{};
 
 		/// All deferred passes (geometry, shadow, SSAO, lighting, bloom, tonemap, TAA). Init/Destroy in Engine.cpp.
 		std::unique_ptr<engine::render::DeferredPipeline> m_pipeline;

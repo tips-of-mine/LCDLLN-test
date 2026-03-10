@@ -355,9 +355,11 @@ namespace engine
 										for (uint32_t i = 0; i < engine::render::kBloomMipCount; ++i)
 										{
 											char name[32];
-											std::snprintf(name, sizeof(name), "BloomMip_%u", i);
 											bloomMipDesc.extentScalePower = i;
-											m_fgBloomMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
+											std::snprintf(name, sizeof(name), "BloomDown_%u", i);
+											m_fgBloomDownMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
+											std::snprintf(name, sizeof(name), "BloomUp_%u", i);
+											m_fgBloomUpMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
 										}
 
 										engine::render::ImageDesc sceneColorHDRWithBloomDesc{};
@@ -665,7 +667,7 @@ namespace engine
 										m_frameGraph.addPass("Bloom_Prefilter",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgSceneColorHDRId, engine::render::ImageUsage::SampledRead);
-												b.write(m_fgBloomMipIds[0], engine::render::ImageUsage::ColorWrite);
+												b.write(m_fgBloomDownMipIds[0], engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												if (!m_pipeline->GetBloomPrefilterPass().IsValid()) return;
@@ -676,13 +678,13 @@ namespace engine
 												m_pipeline->GetBloomPrefilterPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
-													m_fgSceneColorHDRId, m_fgBloomMipIds[0], pp, frameIdx);
+													m_fgSceneColorHDRId, m_fgBloomDownMipIds[0], pp, frameIdx);
 											});
 
 										for (uint32_t i = 0; i < engine::render::kBloomMipCount - 1; ++i)
 										{
-											const engine::render::ResourceId idSrc = m_fgBloomMipIds[i];
-											const engine::render::ResourceId idDst = m_fgBloomMipIds[i + 1];
+											const engine::render::ResourceId idSrc = m_fgBloomDownMipIds[i];
+											const engine::render::ResourceId idDst = m_fgBloomDownMipIds[i + 1];
 											char passName[32];
 											std::snprintf(passName, sizeof(passName), "Bloom_Downsample_%u", i);
 											m_frameGraph.addPass(passName,
@@ -702,8 +704,11 @@ namespace engine
 										for (uint32_t ii = engine::render::kBloomMipCount - 1; ii-- > 0; )
 										{
 											const uint32_t i = ii;
-											const engine::render::ResourceId idSrc = m_fgBloomMipIds[i + 1];
-											const engine::render::ResourceId idDst = m_fgBloomMipIds[i];
+											// src = niveau du dessous dans le pyramid upsample (ou down si premier)
+											const engine::render::ResourceId idSrc = (i == engine::render::kBloomMipCount - 2)
+												? m_fgBloomDownMipIds[i + 1]
+												: m_fgBloomUpMipIds[i + 1];
+											const engine::render::ResourceId idDst = m_fgBloomUpMipIds[i];
 											char passName[32];
 											std::snprintf(passName, sizeof(passName), "Bloom_Upsample_%u", i);
 											m_frameGraph.addPass(passName,
@@ -723,7 +728,7 @@ namespace engine
 										m_frameGraph.addPass("Bloom_Combine",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::SampledRead);
-												b.read(m_fgBloomMipIds[0],            engine::render::ImageUsage::SampledRead);
+												b.read(m_fgBloomDownMipIds[0],            engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -731,7 +736,7 @@ namespace engine
 												engine::render::BloomCombinePass::CombineParams cp{};
 												cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRId, m_fgBloomMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
+												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRId, m_fgBloomDownMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
 										std::fprintf(stderr, "[ENGINE] BA: addPass Bloom OK\n"); std::fflush(stderr);
 
@@ -766,57 +771,75 @@ namespace engine
 										std::fprintf(stderr, "[ENGINE] BC: addPass Tonemap OK\n"); std::fflush(stderr);
 
 										std::fprintf(stderr, "[ENGINE] BD: avant addPass TAA\n"); std::fflush(stderr);
-										m_frameGraph.addPass("TAA_InitHistory",
-											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorLDRId, engine::render::ImageUsage::TransferSrc);
-												b.write(m_fgHistoryAId,     engine::render::ImageUsage::TransferDst);
-												b.write(m_fgHistoryBId,     engine::render::ImageUsage::TransferDst);
-											},
-											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												if (!m_taaHistoryInvalid) return;
-												VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
-												if (srcImg == VK_NULL_HANDLE) return;
-												VkExtent2D ext = m_vkSwapchain.GetExtent();
-												VkImageCopy region{};
-												region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.extent = { ext.width, ext.height, 1 };
-												if (!m_taaHistoryEverFilled)
-												{
-													VkImage dstA = reg.getImage(m_fgHistoryAId);
-													VkImage dstB = reg.getImage(m_fgHistoryBId);
-													if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
-													{
-														vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstA, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-														vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-														m_taaHistoryEverFilled = true;
-													}
-												}
-												else
-												{
-													engine::render::ResourceId nextId = GetTaaHistoryNextId();
-													VkImage dstNext = reg.getImage(nextId);
-													if (dstNext != VK_NULL_HANDLE)
-														vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-												}
-											});
-
 										m_frameGraph.addPass("TAA",
 											[this](engine::render::PassBuilder& b) {
+												// Lecture pour TAA
 												b.read(m_fgSceneColorLDRId,   engine::render::ImageUsage::SampledRead);
 												b.read(m_fgHistoryAId,        engine::render::ImageUsage::SampledRead);
 												b.read(m_fgHistoryBId,        engine::render::ImageUsage::SampledRead);
 												b.read(m_fgGBufferVelocityId, engine::render::ImageUsage::SampledRead);
 												b.read(m_fgDepthId,           engine::render::ImageUsage::SampledRead);
+												// Lecture supplémentaire pour init d'historique (copies image)
+												b.read(m_fgSceneColorLDRId,   engine::render::ImageUsage::TransferSrc);
+												// Historiques écrits uniquement par cette passe
 												b.write(m_fgHistoryAId,       engine::render::ImageUsage::ColorWrite);
 												b.write(m_fgHistoryBId,       engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+												// Init / reset d'historique si nécessaire
+												if (m_taaHistoryInvalid)
+												{
+													VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
+													if (srcImg != VK_NULL_HANDLE)
+													{
+														VkExtent2D ext = m_vkSwapchain.GetExtent();
+														VkImageCopy region{};
+														region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+														region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+														region.extent        = { ext.width, ext.height, 1 };
+
+														if (!m_taaHistoryEverFilled)
+														{
+															VkImage dstA = reg.getImage(m_fgHistoryAId);
+															VkImage dstB = reg.getImage(m_fgHistoryBId);
+															if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
+															{
+																vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+																               dstA,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+																               1, &region);
+																vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+																               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+																               1, &region);
+																m_taaHistoryEverFilled = true;
+															}
+														}
+														else
+														{
+															engine::render::ResourceId nextId = GetTaaHistoryNextId();
+															VkImage dstNext = reg.getImage(nextId);
+															if (dstNext != VK_NULL_HANDLE)
+															{
+																vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+																               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+																               1, &region);
+															}
+														}
+													}
+												}
+
 												if (!m_pipeline->GetTaaPass().IsValid()) return;
 												engine::render::TaaPass::TaaParams tp{};
 												tp.alpha = 0.9f; tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
 												const uint32_t frameIdx = m_currentFrame % 2u;
-												m_pipeline->GetTaaPass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorLDRId, GetTaaHistoryPrevId(), m_fgGBufferVelocityId, m_fgDepthId, GetTaaHistoryNextId(), tp, frameIdx);
+												m_pipeline->GetTaaPass().Record(
+													m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+													m_fgSceneColorLDRId,
+													GetTaaHistoryPrevId(),
+													m_fgGBufferVelocityId,
+													m_fgDepthId,
+													GetTaaHistoryNextId(),
+													tp,
+													frameIdx);
 											});
 										std::fprintf(stderr, "[ENGINE] BE: addPass TAA OK\n"); std::fflush(stderr);
 

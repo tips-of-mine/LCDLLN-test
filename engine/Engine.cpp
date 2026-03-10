@@ -209,8 +209,25 @@ namespace engine
 								{
 									std::fprintf(stderr, "[ENGINE] AC: avant vmaCreateAllocator\n"); std::fflush(stderr);
 									VmaVulkanFunctions vmaFuncs{};
-									vmaFuncs.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-									vmaFuncs.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
+									vmaFuncs.vkGetInstanceProcAddr               = vkGetInstanceProcAddr;
+									vmaFuncs.vkGetDeviceProcAddr                 = vkGetDeviceProcAddr;
+									vmaFuncs.vkGetPhysicalDeviceProperties       = vkGetPhysicalDeviceProperties;
+									vmaFuncs.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+									vmaFuncs.vkAllocateMemory                    = vkAllocateMemory;
+									vmaFuncs.vkFreeMemory                        = vkFreeMemory;
+									vmaFuncs.vkMapMemory                         = vkMapMemory;
+									vmaFuncs.vkUnmapMemory                       = vkUnmapMemory;
+									vmaFuncs.vkFlushMappedMemoryRanges           = vkFlushMappedMemoryRanges;
+									vmaFuncs.vkInvalidateMappedMemoryRanges      = vkInvalidateMappedMemoryRanges;
+									vmaFuncs.vkBindBufferMemory                  = vkBindBufferMemory;
+									vmaFuncs.vkBindImageMemory                   = vkBindImageMemory;
+									vmaFuncs.vkGetBufferMemoryRequirements       = vkGetBufferMemoryRequirements;
+									vmaFuncs.vkGetImageMemoryRequirements        = vkGetImageMemoryRequirements;
+									vmaFuncs.vkCreateBuffer                      = vkCreateBuffer;
+									vmaFuncs.vkDestroyBuffer                     = vkDestroyBuffer;
+									vmaFuncs.vkCreateImage                       = vkCreateImage;
+									vmaFuncs.vkDestroyImage                      = vkDestroyImage;
+									vmaFuncs.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
 									
 									VmaAllocatorCreateInfo vmaInfo{};
 									vmaInfo.physicalDevice   = m_vkDeviceContext.GetPhysicalDevice();

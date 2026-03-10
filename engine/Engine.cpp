@@ -888,7 +888,7 @@ namespace engine
 			std::fprintf(stderr, "[RUN] SwapRenderState\n"); std::fflush(stderr);
 			SwapRenderState();
 			std::fprintf(stderr, "[RUN] Render\n"); std::fflush(stderr);
-			std::fprintf(stderr, "[RENDER] frameGraph extent=%ux%u framesInFlight=%u\n", m_swapchainExtent.width, m_swapchainExtent.height, m_framesInFlight); std::fflush(stderr);
+			//std::fprintf(stderr, "[RENDER] frameGraph extent=%ux%u framesInFlight=%u\n", m_swapchainExtent.width, m_swapchainExtent.height, m_framesInFlight); std::fflush(stderr);
 			
 			Render();
 

@@ -888,7 +888,10 @@ namespace engine
 			std::fprintf(stderr, "[RUN] SwapRenderState\n"); std::fflush(stderr);
 			SwapRenderState();
 			std::fprintf(stderr, "[RUN] Render\n"); std::fflush(stderr);
+			std::fprintf(stderr, "[RENDER] frameGraph extent=%ux%u framesInFlight=%u\n", m_swapchainExtent.width, m_swapchainExtent.height, m_framesInFlight); std::fflush(stderr);
+			
 			Render();
+
 			std::fprintf(stderr, "[RUN] EndFrame\n"); std::fflush(stderr);
 			EndFrame();
 			std::fprintf(stderr, "[RUN] frame done\n"); std::fflush(stderr);
@@ -1065,7 +1068,7 @@ namespace engine
 	    VkQueue        graphicsQueue       = m_vkDeviceContext.GetGraphicsQueue();
 	    VkQueue        presentQueue        = m_vkDeviceContext.GetPresentQueue();
 	    VkSwapchainKHR swapchain           = m_vkSwapchain.GetSwapchain();
-	    VkExtent2D     extent              = m_vkSwapchain.GetExtent();
+	    VkExtent2D extent{ static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height) };
 	
 	    std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);

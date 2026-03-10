@@ -92,15 +92,19 @@ namespace engine::render
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)
 	{
-		std::fprintf(stderr, "[AP] debut bypass\n"); std::fflush(stderr);
-		// Worker thread désactivé — m_pending toujours vide, pas besoin du mutex
-		if (m_pending.empty())
-		{
-			std::fprintf(stderr, "[AP] pending empty, return\n"); std::fflush(stderr);
-			return;
-		}
+		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
+
 		std::vector<PendingReloadResult> results;
-		results.swap(m_pending);
+		{
+			std::lock_guard lock(m_pendingMutex);
+			if (m_pending.empty())
+			{
+				std::fprintf(stderr, "[AP] pending empty, return\n"); std::fflush(stderr);
+				return;
+			}
+			results.swap(m_pending);
+		}
+
 		for (PendingReloadResult& r : results)
 		{
 			if (r.spirv.has_value())

@@ -60,11 +60,14 @@ namespace engine::render
 
 		// M06.1: SSAO kernel + noise
 		std::fprintf(stderr, "[PIPELINE] 3 SSAO kernel+noise\n"); std::fflush(stderr);
-		// m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator, config, graphicsQueue, graphicsQueueFamilyIndex);
-		std::fprintf(stderr, "[PIPELINE] 3 SSAO SKIPPED\n"); std::fflush(stderr);
-
-		if (m_ssaoKernelNoise.IsValid())
+		if (!m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator, config, graphicsQueue, graphicsQueueFamilyIndex))
+		{
+			LOG_WARN(Render, "M06.1: SsaoKernelNoise::Init failed — SSAO disabled");
+		}
+		else if (m_ssaoKernelNoise.IsValid())
+		{
 			LOG_INFO(Render, "[Boot] DeferredPipeline SSAO kernel/noise OK");
+		}
 
 		// M06.2: SSAO generate
 		std::fprintf(stderr, "[PIPELINE] 4 SSAO pass\n"); std::fflush(stderr);

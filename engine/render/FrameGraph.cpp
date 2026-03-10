@@ -437,7 +437,7 @@ namespace engine::render
 	    std::fprintf(stderr, "[FG] execute debut\n"); std::fflush(stderr);
 	    if (!m_compiled) { compile(); }
 	    std::fprintf(stderr, "[FG] ensureImageResources\n"); std::fflush(stderr);
-	    ensureImageResources(device, vmaAllocator, frameIndex, extent, framesInFlight);
+	    ensureImageResources(device, physicalDevice, vmaAllocator, vmaAllocator, frameIndex, extent, framesInFlight);
 	    std::fprintf(stderr, "[FG] ensureBufferResources\n"); std::fflush(stderr);
 	    ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
 	    std::fprintf(stderr, "[FG] fillRegistry\n"); std::fflush(stderr);
@@ -496,7 +496,7 @@ namespace engine::render
 		m_lastFramesInFlight = 0;
 	}
 
-	void FrameGraph::ensureImageResources(VkDevice device, void* vmaAllocator,
+	void FrameGraph::ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator,
 		uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
 	{
 		if (vmaAllocator == nullptr) return;

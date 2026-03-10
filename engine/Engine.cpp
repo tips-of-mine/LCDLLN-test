@@ -229,17 +229,17 @@ namespace engine
 									vmaFuncs.vkDestroyImage                      = vkDestroyImage;
 									vmaFuncs.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
 
-									vmaFuncs.vkGetBufferMemoryRequirements2KHR       = vkGetBufferMemoryRequirements2;
-									vmaFuncs.vkGetImageMemoryRequirements2KHR        = vkGetImageMemoryRequirements2;
-									vmaFuncs.vkBindBufferMemory2KHR                  = vkBindBufferMemory2;
-									vmaFuncs.vkBindImageMemory2KHR                   = vkBindImageMemory2;
-									vmaFuncs.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2;
+									//vmaFuncs.vkGetBufferMemoryRequirements2KHR       = vkGetBufferMemoryRequirements2;
+									//vmaFuncs.vkGetImageMemoryRequirements2KHR        = vkGetImageMemoryRequirements2;
+									//vmaFuncs.vkBindBufferMemory2KHR                  = vkBindBufferMemory2;
+									//vmaFuncs.vkBindImageMemory2KHR                   = vkBindImageMemory2;
+									//vmaFuncs.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2;
 									
 									VmaAllocatorCreateInfo vmaInfo{};
 									vmaInfo.physicalDevice   = m_vkDeviceContext.GetPhysicalDevice();
 									vmaInfo.device           = m_vkDeviceContext.GetDevice();
 									vmaInfo.instance         = m_vkInstance.GetHandle();
-									vmaInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+									vmaInfo.vulkanApiVersion = VK_API_VERSION_1_0;
 									vmaInfo.pVulkanFunctions = &vmaFuncs;
 									if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
 									{

@@ -573,7 +573,11 @@ namespace engine::render
 			VmaAllocationCreateInfo allocCreateInfo{};
 			allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 			VmaAllocation allocation = VK_NULL_HANDLE;
+			
+			std::fprintf(stderr, "[EIR] avant vmaCreateImage[%zu] usage=0x%x\n", resIdx, (unsigned)usage); std::fflush(stderr);
 			VkResult result = vmaCreateImage(static_cast<VmaAllocator>(vmaAllocator), &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
+			std::fprintf(stderr, "[EIR] apres vmaCreateImage result=%d\n", (int)result); std::fflush(stderr);
+			
 			if (result != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "FrameGraph: vmaCreateImage failed for '{}': {}", res.name, static_cast<int>(result));

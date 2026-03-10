@@ -225,6 +225,12 @@ namespace engine
 									}
 									std::fprintf(stderr, "[ENGINE] AD: vmaCreateAllocator OK ptr=%p\n", m_vmaAllocator); std::fflush(stderr);
 
+									// Vérification VmaAllocatorInfo
+									VmaAllocatorInfo vmaAllocInfo{};
+									vmaGetAllocatorInfo(reinterpret_cast<VmaAllocator>(m_vmaAllocator), &vmaAllocInfo);
+									std::fprintf(stderr, "[ENGINE] AD2: vmaGetAllocatorInfo device=%p physDev=%p instance=%p\n",
+									    (void*)vmaAllocInfo.device, (void*)vmaAllocInfo.physicalDevice, (void*)vmaAllocInfo.instance); std::fflush(stderr);
+									
 									if (m_vmaAllocator)
 									{
 										// Test raw Vulkan — vérifie que le device est fonctionnel

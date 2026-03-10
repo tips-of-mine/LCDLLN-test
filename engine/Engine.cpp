@@ -208,9 +208,9 @@ namespace engine
 								if (m_vkSwapchain.IsValid())
 								{
 									std::fprintf(stderr, "[ENGINE] AC: avant vmaCreateAllocator\n"); std::fflush(stderr);
-									//VmaVulkanFunctions vmaFuncs{};
-									//vmaFuncs.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-									//vmaFuncs.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
+									VmaVulkanFunctions vmaFuncs{};
+									vmaFuncs.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+									vmaFuncs.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
 									
 									VmaAllocatorCreateInfo vmaInfo{};
 									vmaInfo.physicalDevice   = m_vkDeviceContext.GetPhysicalDevice();

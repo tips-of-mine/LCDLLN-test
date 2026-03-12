@@ -139,6 +139,16 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
   )
 endif()
 
+# Copie config.json à côté de l'exécutable si présent
+if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
+  add_custom_command(TARGET engine_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/config.json"
+            "$<TARGET_FILE_DIR:engine_app>/config.json"
+    COMMENT "Copie de config.json..."
+  )
+endif()
+
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)

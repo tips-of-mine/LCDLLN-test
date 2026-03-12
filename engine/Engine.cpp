@@ -266,10 +266,20 @@ namespace engine
 										VkResult testResult = vkCreateBuffer(m_vkDeviceContext.GetDevice(), &testBuf, nullptr, &tmpBuf);
 										std::fprintf(stderr, "[ENGINE] vkCreateBuffer test result=%d buf=%p\n", (int)testResult, (void*)tmpBuf); std::fflush(stderr);
 										if (tmpBuf != VK_NULL_HANDLE) vkDestroyBuffer(m_vkDeviceContext.GetDevice(), tmpBuf, nullptr);
-										
-										std::fprintf(stderr, "[ENGINE] AE: StagingAllocator::Init SKIPPED\n"); std::fflush(stderr);
-										// Temporairement désactivé — vmaCreateBuffer crash à investiguer séparément
-										// if (!m_stagingAllocator.Init(...))
+
+										// M10.4: réactivation du StagingAllocator avec budget streaming.
+										const size_t stagingBudget = m_gpuUploadQueue.GetBudgetBytes();
+										std::fprintf(stderr, "[ENGINE] AE: StagingAllocator::Init device=%p vma=%p budget=%zu\n",
+											(void*)m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget); std::fflush(stderr);
+										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget))
+										{
+											std::fprintf(stderr, "[ENGINE] AE2: StagingAllocator::Init FAILED (staging désactivé)\n"); std::fflush(stderr);
+										}
+										else
+										{
+											std::fprintf(stderr, "[ENGINE] AE3: StagingAllocator::Init OK\n"); std::fflush(stderr);
+										}
+
 										std::fprintf(stderr, "[ENGINE] AF: avant make_unique DeferredPipeline\n"); std::fflush(stderr);
 
 										m_pipeline = std::make_unique<engine::render::DeferredPipeline>();

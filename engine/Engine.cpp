@@ -403,6 +403,7 @@ namespace engine
 
 										auto loadSpirv = [&](const char* spvPath) -> std::vector<uint32_t>
 										{
+											// 1) Essaye de charger directement le .spv depuis game/data
 											std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, spvPath);
 											if (bytes.size() % 4 == 0 && !bytes.empty())
 											{
@@ -410,21 +411,25 @@ namespace engine
 												std::memcpy(out.data(), bytes.data(), bytes.size());
 												return out;
 											}
-											engine::render::ShaderCompiler compiler;
-											if (!compiler.LocateCompiler()) return {};
-											std::string base(spvPath);
-											if (base.size() > 4 && base.compare(base.size() - 4, 4, ".spv") == 0)
-												base.resize(base.size() - 4);
-											std::filesystem::path srcPath = engine::platform::FileSystem::ResolveContentPath(m_cfg, base);
-											engine::render::ShaderStage stage = engine::render::ShaderStage::Vertex;
-											if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".comp") == 0)
-												stage = engine::render::ShaderStage::Compute;
-											else if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".vert") == 0)
-												stage = engine::render::ShaderStage::Vertex;
-											else if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".frag") == 0)
-												stage = engine::render::ShaderStage::Fragment;
-											auto c = compiler.CompileGlslToSpirv(srcPath, stage);
-											if (c.has_value() && !c->empty()) return std::move(*c);
+
+											// 2) Pas de .spv valide → pas de fallback GLSL (pour éviter les crashes glslangValidator)
+											// engine::render::ShaderCompiler compiler;
+											// if (!compiler.LocateCompiler()) return {};
+											// std::string base(spvPath);
+											// if (base.size() > 4 && base.compare(base.size() - 4, 4, ".spv") == 0)
+											// 	base.resize(base.size() - 4);
+											// std::filesystem::path srcPath = engine::platform::FileSystem::ResolveContentPath(m_cfg, base);
+											// engine::render::ShaderStage stage = engine::render::ShaderStage::Vertex;
+											// if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".comp") == 0)
+											// 	stage = engine::render::ShaderStage::Compute;
+											// else if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".vert") == 0)
+											// 	stage = engine::render::ShaderStage::Vertex;
+											// else if (base.size() >= 5 && base.compare(base.size() - 5, 5, ".frag") == 0)
+											// 	stage = engine::render::ShaderStage::Fragment;
+											// auto c = compiler.CompileGlslToSpirv(srcPath, stage);
+											// if (c.has_value() && !c->empty()) return std::move(*c);
+
+											LOG_WARN(Render, "Shader SPIR-V not found or invalid: {}", spvPath);
 											return {};
 										};
 

@@ -1,0 +1,52 @@
+{
+    "render": {
+        "vsync": true,
+        "present_mode": "fifo"
+    },
+    "time": {
+        "fixed_dt": 0.0
+    },
+    "camera": {
+        "mouse_sensitivity": 0.002
+    },
+    "shadows": {
+        "resolution": 1024,
+        "depth_bias_constant": 1.25,
+        "depth_bias_slope": 1.75,
+        "cull_front_faces": false
+    },
+    "bloom": {
+        "threshold": 1.0,
+        "knee": 0.5,
+        "intensity": 1.0
+    },
+    "tonemap": {
+        "exposure": 1.0
+    },
+    "color_grading": {
+        "enable": false,
+        "lut_path": "",
+        "strength": 1.0
+    },
+    "exposure": {
+        "key": 0.18,
+        "speed": 2.0
+    },
+    "world": {
+        "max_draw_distance_m": 0.0
+    },
+    "paths": {
+        "content": ""
+    }
+}
+```
+
+---
+
+### Résumé de la chaîne de bugs
+```
+config.json manquant
+    → Config::Load() plante
+        → Engine() ne démarre pas
+            → Log::Init() jamais appelé
+                → aucun fichier de log créé

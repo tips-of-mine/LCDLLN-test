@@ -81,6 +81,19 @@ jobs:
             Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
           }
 
+          # game/data
+          $gameDataSource = "$env:GITHUB_WORKSPACE\game\data"
+          if (Test-Path $gameDataSource) {
+            Copy-Item -Recurse -Path $gameDataSource `
+              -Destination "$env:GITHUB_WORKSPACE\artifacts\game\data" -Force
+          }
+          
+          # config.json à la racine (si présent)
+          $config = "$env:GITHUB_WORKSPACE\config.json"
+          if (Test-Path $config) {
+            Copy-Item $config -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+          }
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

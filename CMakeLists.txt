@@ -129,6 +129,16 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
   )
 endif()
 
+# Copie game/data (contenu) à côté de l'exécutable si présent
+if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
+  add_custom_command(TARGET engine_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/game/data"
+            "$<TARGET_FILE_DIR:engine_app>/game/data"
+    COMMENT "Copie du dossier game/data..."
+  )
+endif()
+
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)

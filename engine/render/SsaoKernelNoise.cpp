@@ -3,7 +3,6 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
-#include <vk_mem_alloc.h>
 #include <cmath>
 #include <cstring>
 #include <cstdio>
@@ -43,7 +42,7 @@ namespace engine::render
 	{
 		std::fprintf(stderr, "[SSAO] Init enter vma=%p\n", vmaAllocator); std::fflush(stderr);
 		
-		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || vmaAllocator == nullptr)
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "SsaoKernelNoise::Init: invalid device");
 			return false;
@@ -84,45 +83,97 @@ namespace engine::render
 
 		std::fprintf(stderr, "[SSAO] kernel gen OK\n"); std::fflush(stderr);
 
-		std::fprintf(stderr, "[SSAO] avant vmaCreateBuffer kernel\n"); std::fflush(stderr);
-		m_vmaAllocator = vmaAllocator;
-		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
+		std::fprintf(stderr, "[SSAO] avant createBuffer kernel\n"); std::fflush(stderr);
+		m_vmaAllocator = vmaAllocator; // conservé pour compat, non utilisé pour l'alloc actuelle.
+
+		// Helpers mémoire
+		VkPhysicalDeviceMemoryProperties memProps{};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+
+		auto findMemoryType = [&](uint32_t typeBits, VkMemoryPropertyFlags desiredFlags) -> uint32_t
+		{
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+				if ((typeBits & (1u << i)) &&
+					(memProps.memoryTypes[i].propertyFlags & desiredFlags) == desiredFlags)
+				{
+					return i;
+				}
+			}
+			return UINT32_MAX;
+		};
+
+		auto createBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage,
+			VkMemoryPropertyFlags memFlags,
+			VkBuffer& outBuffer, void*& outAlloc) -> bool
+		{
+			VkBufferCreateInfo bufInfo{};
+			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufInfo.size = size;
+			bufInfo.usage = usage;
+			bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			if (vkCreateBuffer(device, &bufInfo, nullptr, &outBuffer) != VK_SUCCESS || outBuffer == VK_NULL_HANDLE)
+			{
+				LOG_ERROR(Render, "SsaoKernelNoise: vkCreateBuffer failed (usage=0x{:x})", usage);
+				return false;
+			}
+
+			VkMemoryRequirements memReq{};
+			vkGetBufferMemoryRequirements(device, outBuffer, &memReq);
+			uint32_t memTypeIdx = findMemoryType(memReq.memoryTypeBits, memFlags);
+			if (memTypeIdx == UINT32_MAX)
+			{
+				LOG_ERROR(Render, "SsaoKernelNoise: no suitable memory type (flags=0x{:x})", memFlags);
+				vkDestroyBuffer(device, outBuffer, nullptr);
+				outBuffer = VK_NULL_HANDLE;
+				return false;
+			}
+
+			VkMemoryAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memReq.size;
+			allocInfo.memoryTypeIndex = memTypeIdx;
+
+			VkDeviceMemory mem = VK_NULL_HANDLE;
+			if (vkAllocateMemory(device, &allocInfo, nullptr, &mem) != VK_SUCCESS || mem == VK_NULL_HANDLE)
+			{
+				LOG_ERROR(Render, "SsaoKernelNoise: vkAllocateMemory failed");
+				vkDestroyBuffer(device, outBuffer, nullptr);
+				outBuffer = VK_NULL_HANDLE;
+				return false;
+			}
+
+			if (vkBindBufferMemory(device, outBuffer, mem, 0) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "SsaoKernelNoise: vkBindBufferMemory failed");
+				vkFreeMemory(device, mem, nullptr);
+				vkDestroyBuffer(device, outBuffer, nullptr);
+				outBuffer = VK_NULL_HANDLE;
+				return false;
+			}
+
+			outAlloc = reinterpret_cast<void*>(mem);
+			return true;
+		};
 
 		// ---- Create kernel UBO (host-visible for upload) ----
-		VkBufferCreateInfo bufInfo{};
-		bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufInfo.size  = kKernelUboSize;
-		bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		VmaAllocationCreateInfo allocCreateInfo{};
-		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
-		std::fprintf(stderr, "[SSAO] avant vmaCreateBuffer kernel alloc=%p\n", (void*)alloc); std::fflush(stderr);
-
-		// TEST raw vkCreateBuffer
-		VkBuffer testBuf = VK_NULL_HANDLE;
-		VkResult rawRes = vkCreateBuffer(device, &bufInfo, nullptr, &testBuf);
-		std::fprintf(stderr, "[SSAO] raw vkCreateBuffer result=%d buf=%p\n", (int)rawRes, (void*)testBuf); std::fflush(stderr);
-		if (testBuf != VK_NULL_HANDLE) vkDestroyBuffer(device, testBuf, nullptr);
-
-		VmaAllocation kernelAlloc = VK_NULL_HANDLE;
-		VkResult vmaRes = vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, &m_kernelBuffer, &kernelAlloc, nullptr);
-
-		std::fprintf(stderr, "[SSAO] vmaCreateBuffer kernel result=%d buf=%p\n", (int)vmaRes, (void*)m_kernelBuffer); std::fflush(stderr);
-		if (vmaRes != VK_SUCCESS)
+		if (!createBuffer(kKernelUboSize,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				m_kernelBuffer, m_kernelAlloc))
 		{
-		    LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateBuffer (kernel UBO) failed");
-		    return false;
+			return false;
 		}
-		std::fprintf(stderr, "[SSAO] avant vmaMapMemory\n"); std::fflush(stderr);
-		m_kernelAlloc = kernelAlloc;
 		void* mapped = nullptr;
-		if (vmaMapMemory(alloc, kernelAlloc, &mapped) != VK_SUCCESS)
 		{
-		    std::fprintf(stderr, "[SSAO] vmaMapMemory FAILED\n"); std::fflush(stderr);
-		    Destroy(device);
-		    return false;
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_kernelAlloc);
+			if (vkMapMemory(device, mem, 0, kKernelUboSize, 0, &mapped) != VK_SUCCESS)
+			{
+				Destroy(device);
+				return false;
+			}
 		}
-		std::fprintf(stderr, "[SSAO] vmaMapMemory OK mapped=%p\n", mapped); std::fflush(stderr);
 
 		std::fprintf(stderr, "[SSAO] avant memcpy kernel\n"); std::fflush(stderr);
 		std::memcpy(mapped, kernelData, 32u * 4u * sizeof(float));
@@ -130,7 +181,10 @@ namespace engine::render
 		
 		std::memcpy(static_cast<char*>(mapped) + 512, &radius, sizeof(float));
 		std::memcpy(static_cast<char*>(mapped) + 516, &bias, sizeof(float));
-		vmaUnmapMemory(alloc, kernelAlloc);
+		{
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_kernelAlloc);
+			vkUnmapMemory(device, mem);
+		}
 
 		// ---- Generate 4x4 noise (RG16F: random XY for TBN rotation) ----
 		uint16_t noisePixels[4 * 4 * 2];
@@ -154,40 +208,64 @@ namespace engine::render
 		imgInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
 		imgInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		VmaAllocationCreateInfo imgAllocInfo{};
-		imgAllocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-		VmaAllocation noiseAlloc = VK_NULL_HANDLE;
-		if (vmaCreateImage(alloc, &imgInfo, &imgAllocInfo, &m_noiseImage, &noiseAlloc, nullptr) != VK_SUCCESS)
+		if (vkCreateImage(device, &imgInfo, nullptr, &m_noiseImage) != VK_SUCCESS || m_noiseImage == VK_NULL_HANDLE)
 		{
-			LOG_ERROR(Render, "SsaoKernelNoise: vmaCreateImage (noise) failed");
+			LOG_ERROR(Render, "SsaoKernelNoise: vkCreateImage (noise) failed");
 			Destroy(device);
 			return false;
 		}
-		m_noiseAlloc = noiseAlloc;
+
+		VkMemoryRequirements imgMemReq{};
+		vkGetImageMemoryRequirements(device, m_noiseImage, &imgMemReq);
+		uint32_t imgMemTypeIdx = findMemoryType(imgMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		if (imgMemTypeIdx == UINT32_MAX)
+		{
+			LOG_ERROR(Render, "SsaoKernelNoise: no suitable DEVICE_LOCAL memory type for noise image");
+			Destroy(device);
+			return false;
+		}
+
+		VkMemoryAllocateInfo imgAllocInfo{};
+		imgAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		imgAllocInfo.allocationSize = imgMemReq.size;
+		imgAllocInfo.memoryTypeIndex = imgMemTypeIdx;
+		VkDeviceMemory noiseMem = VK_NULL_HANDLE;
+		if (vkAllocateMemory(device, &imgAllocInfo, nullptr, &noiseMem) != VK_SUCCESS || noiseMem == VK_NULL_HANDLE)
+		{
+			LOG_ERROR(Render, "SsaoKernelNoise: vkAllocateMemory (noise image) failed");
+			Destroy(device);
+			return false;
+		}
+		if (vkBindImageMemory(device, m_noiseImage, noiseMem, 0) != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "SsaoKernelNoise: vkBindImageMemory (noise) failed");
+			vkFreeMemory(device, noiseMem, nullptr);
+			Destroy(device);
+			return false;
+		}
+		m_noiseAlloc = reinterpret_cast<void*>(noiseMem);
 
 		// ---- Staging buffer + upload noise ----
 		VkBuffer stagingBuf = VK_NULL_HANDLE;
-		VmaAllocation stagingAlloc = VK_NULL_HANDLE;
-		VkBufferCreateInfo stagingInfo{};
-		stagingInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		stagingInfo.size  = 64u;
-		stagingInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_UNKNOWN;
-		allocCreateInfo.flags = 0;
-		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		if (vmaCreateBuffer(alloc, &stagingInfo, &allocCreateInfo, &stagingBuf, &stagingAlloc, nullptr) != VK_SUCCESS)
+		void* stagingMemVoid = nullptr;
+		if (!createBuffer(64u,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				stagingBuf, stagingMemVoid))
 		{
 			Destroy(device);
 			return false;
 		}
-		if (vmaMapMemory(alloc, stagingAlloc, &mapped) != VK_SUCCESS)
+		VkDeviceMemory stagingMem = reinterpret_cast<VkDeviceMemory>(stagingMemVoid);
+		if (vkMapMemory(device, stagingMem, 0, 64u, 0, &mapped) != VK_SUCCESS)
 		{
-			vmaDestroyBuffer(alloc, stagingBuf, stagingAlloc);
+			vkDestroyBuffer(device, stagingBuf, nullptr);
+			vkFreeMemory(device, stagingMem, nullptr);
 			Destroy(device);
 			return false;
 		}
 		std::memcpy(mapped, noisePixels, 64);
-		vmaUnmapMemory(alloc, stagingAlloc);
+		vkUnmapMemory(device, stagingMem);
 
 		// One-time copy: command pool + buffer, transition image, copy, transition to SHADER_READ_ONLY.
 		if (queue != VK_NULL_HANDLE)
@@ -259,7 +337,8 @@ namespace engine::render
 			// No queue: leave image in UNDEFINED; view/sampler still created for later upload.
 		}
 
-		vmaDestroyBuffer(alloc, stagingBuf, stagingAlloc);
+		vkDestroyBuffer(device, stagingBuf, nullptr);
+		vkFreeMemory(device, stagingMem, nullptr);
 
 		// ---- Image view (4x4 RG16F) ----
 		VkImageViewCreateInfo viewInfo{};
@@ -298,8 +377,6 @@ namespace engine::render
 	void SsaoKernelNoise::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;
-		if (m_vmaAllocator == nullptr) return;
-		VmaAllocator alloc = static_cast<VmaAllocator>(m_vmaAllocator);
 		if (m_noiseSampler != VK_NULL_HANDLE)
 		{
 			vkDestroySampler(device, m_noiseSampler, nullptr);
@@ -312,13 +389,17 @@ namespace engine::render
 		}
 		if (m_noiseImage != VK_NULL_HANDLE && m_noiseAlloc != nullptr)
 		{
-			vmaDestroyImage(alloc, m_noiseImage, static_cast<VmaAllocation>(m_noiseAlloc));
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_noiseAlloc);
+			vkDestroyImage(device, m_noiseImage, nullptr);
+			vkFreeMemory(device, mem, nullptr);
 			m_noiseImage = VK_NULL_HANDLE;
 			m_noiseAlloc = nullptr;
 		}
 		if (m_kernelBuffer != VK_NULL_HANDLE && m_kernelAlloc != nullptr)
 		{
-			vmaDestroyBuffer(alloc, m_kernelBuffer, static_cast<VmaAllocation>(m_kernelAlloc));
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_kernelAlloc);
+			vkDestroyBuffer(device, m_kernelBuffer, nullptr);
+			vkFreeMemory(device, mem, nullptr);
 			m_kernelBuffer = VK_NULL_HANDLE;
 			m_kernelAlloc = nullptr;
 		}

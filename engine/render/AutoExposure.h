@@ -23,7 +23,8 @@ namespace engine::render
 		AutoExposure& operator=(const AutoExposure&) = delete;
 
 		/// Creates compute pipeline, luminance buffer, staging buffer, exposure buffer.
-		/// vmaAllocator = centralised GPU allocator (VMA); cast to VmaAllocator in implementation.
+		/// vmaAllocator est conservé pour compat (branches VMA), mais l'implémentation
+		/// actuelle utilise du Vulkan brut pour les buffers.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
 			void* vmaAllocator,
 			const uint32_t* compSpirv, size_t compWordCount);
@@ -54,13 +55,13 @@ namespace engine::render
 		VkPipeline            m_pipeline            = VK_NULL_HANDLE;
 		VkSampler             m_sampler             = VK_NULL_HANDLE;
 
-		void*   m_vmaAllocator     = nullptr;
-		VkBuffer m_luminanceBuffer   = VK_NULL_HANDLE;
-		void*   m_luminanceAlloc   = nullptr; ///< VmaAllocation
-		VkBuffer m_stagingBuffer     = VK_NULL_HANDLE;
-		void*   m_stagingAlloc     = nullptr; ///< VmaAllocation
-		VkBuffer m_exposureBuffer    = VK_NULL_HANDLE;
-		void*   m_exposureAlloc    = nullptr; ///< VmaAllocation
+		void*        m_vmaAllocator   = nullptr;
+		VkBuffer     m_luminanceBuffer = VK_NULL_HANDLE;
+		void*        m_luminanceAlloc  = nullptr; ///< stocke VkDeviceMemory (cast)
+		VkBuffer     m_stagingBuffer   = VK_NULL_HANDLE;
+		void*        m_stagingAlloc    = nullptr; ///< stocke VkDeviceMemory (cast)
+		VkBuffer     m_exposureBuffer  = VK_NULL_HANDLE;
+		void*        m_exposureAlloc   = nullptr; ///< stocke VkDeviceMemory (cast)
 
 		float m_exposure = 1.0f;
 	};

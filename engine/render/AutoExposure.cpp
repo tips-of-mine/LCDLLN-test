@@ -1,7 +1,7 @@
 #include "engine/render/AutoExposure.h"
 #include "engine/core/Log.h"
 
-#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 #include <cmath>
 #include <cstring>
 
@@ -11,78 +11,128 @@ namespace engine::render
 		void* vmaAllocator,
 		const uint32_t* compSpirv, size_t compWordCount)
 	{
-		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || vmaAllocator == nullptr || !compSpirv || compWordCount == 0)
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !compSpirv || compWordCount == 0)
 		{
 			LOG_ERROR(Render, "AutoExposure::Init: invalid parameters");
 			return false;
 		}
 
-		m_vmaAllocator = vmaAllocator;
-		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
+		m_vmaAllocator = vmaAllocator; // conservé pour compat, non utilisé pour l'alloc actuelle.
 		const VkDeviceSize luminanceBytes = kLuminanceSampleCount * sizeof(float);
+		// Helpers mémoire (comme BrdfLutPass / SpecularPrefilter / StagingAllocator)
+		VkPhysicalDeviceMemoryProperties memProps{};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
 
-		VmaAllocationCreateInfo devAllocInfo{};
-		devAllocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-		VmaAllocationCreateInfo hostAllocInfo{};
-		hostAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		auto findMemoryType = [&](uint32_t typeBits, VkMemoryPropertyFlags desiredFlags) -> uint32_t
+		{
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+				if ((typeBits & (1u << i)) &&
+					(memProps.memoryTypes[i].propertyFlags & desiredFlags) == desiredFlags)
+				{
+					return i;
+				}
+			}
+			return UINT32_MAX;
+		};
+
+		auto createBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage,
+			VkMemoryPropertyFlags memFlags,
+			VkBuffer& outBuffer, void*& outAlloc) -> bool
+		{
+			VkBufferCreateInfo bufInfo{};
+			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufInfo.size = size;
+			bufInfo.usage = usage;
+			bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			if (vkCreateBuffer(device, &bufInfo, nullptr, &outBuffer) != VK_SUCCESS || outBuffer == VK_NULL_HANDLE)
+			{
+				LOG_ERROR(Render, "AutoExposure: vkCreateBuffer failed (usage=0x{:x})", usage);
+				return false;
+			}
+
+			VkMemoryRequirements memReq{};
+			vkGetBufferMemoryRequirements(device, outBuffer, &memReq);
+			uint32_t memTypeIdx = findMemoryType(memReq.memoryTypeBits, memFlags);
+			if (memTypeIdx == UINT32_MAX)
+			{
+				LOG_ERROR(Render, "AutoExposure: no suitable memory type (flags=0x{:x})", memFlags);
+				vkDestroyBuffer(device, outBuffer, nullptr);
+				outBuffer = VK_NULL_HANDLE;
+				return false;
+			}
+
+			VkMemoryAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memReq.size;
+			allocInfo.memoryTypeIndex = memTypeIdx;
+
+			VkDeviceMemory mem = VK_NULL_HANDLE;
+			if (vkAllocateMemory(device, &allocInfo, nullptr, &mem) != VK_SUCCESS || mem == VK_NULL_HANDLE)
+			{
+				LOG_ERROR(Render, "AutoExposure: vkAllocateMemory failed");
+				vkDestroyBuffer(device, outBuffer, nullptr);
+				outBuffer = VK_NULL_HANDLE;
+				return false;
+			}
+
+			if (vkBindBufferMemory(device, outBuffer, mem, 0) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "AutoExposure: vkBindBufferMemory failed");
+				vkFreeMemory(device, mem, nullptr);
+				vkDestroyBuffer(device, outBuffer, nullptr);
+				outBuffer = VK_NULL_HANDLE;
+				return false;
+			}
+
+			outAlloc = reinterpret_cast<void*>(mem);
+			return true;
+		};
 
 		// ---------------------------------------------------------------------
 		// Luminance buffer (device local, compute write, transfer src)
 		// ---------------------------------------------------------------------
+		if (!createBuffer(luminanceBytes,
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				m_luminanceBuffer, m_luminanceAlloc))
 		{
-			VkBufferCreateInfo bufInfo{};
-			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufInfo.size = luminanceBytes;
-			bufInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-			VmaAllocation lumAlloc = VK_NULL_HANDLE;
-			if (vmaCreateBuffer(alloc, &bufInfo, &devAllocInfo, &m_luminanceBuffer, &lumAlloc, nullptr) != VK_SUCCESS)
-			{
-				LOG_ERROR(Render, "AutoExposure: vmaCreateBuffer (luminance) failed");
-				return false;
-			}
-			m_luminanceAlloc = lumAlloc;
+			return false;
 		}
 
 		// ---------------------------------------------------------------------
 		// Staging buffer (host visible, transfer dst, for readback)
 		// ---------------------------------------------------------------------
+		if (!createBuffer(luminanceBytes,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				m_stagingBuffer, m_stagingAlloc))
 		{
-			VkBufferCreateInfo bufInfo{};
-			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufInfo.size = luminanceBytes;
-			bufInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-			VmaAllocation stgAlloc = VK_NULL_HANDLE;
-			if (vmaCreateBuffer(alloc, &bufInfo, &hostAllocInfo, &m_stagingBuffer, &stgAlloc, nullptr) != VK_SUCCESS)
-			{
-				LOG_ERROR(Render, "AutoExposure: vmaCreateBuffer (staging) failed");
-				Destroy(device);
-				return false;
-			}
-			m_stagingAlloc = stgAlloc;
+			Destroy(device);
+			return false;
 		}
 
 		// ---------------------------------------------------------------------
 		// Exposure buffer (host visible, persistent, 1 float)
 		// ---------------------------------------------------------------------
+		if (!createBuffer(sizeof(float),
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				m_exposureBuffer, m_exposureAlloc))
 		{
-			VkBufferCreateInfo bufInfo{};
-			bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufInfo.size = sizeof(float);
-			bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-			VmaAllocation expAlloc = VK_NULL_HANDLE;
-			if (vmaCreateBuffer(alloc, &bufInfo, &hostAllocInfo, &m_exposureBuffer, &expAlloc, nullptr) != VK_SUCCESS)
-			{
-				LOG_ERROR(Render, "AutoExposure: vmaCreateBuffer (exposure) failed");
-				Destroy(device);
-				return false;
-			}
-			m_exposureAlloc = expAlloc;
+			Destroy(device);
+			return false;
+		}
+		// init exposure à 1.0 dans le buffer
+		{
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_exposureAlloc);
 			void* ptr = nullptr;
-			if (vmaMapMemory(alloc, expAlloc, &ptr) == VK_SUCCESS)
+			if (vkMapMemory(device, mem, 0, sizeof(float), 0, &ptr) == VK_SUCCESS)
 			{
 				m_exposure = 1.0f;
 				std::memcpy(ptr, &m_exposure, sizeof(float));
-				vmaUnmapMemory(alloc, expAlloc);
+				vkUnmapMemory(device, mem);
 			}
 		}
 
@@ -300,19 +350,19 @@ namespace engine::render
 
 	void AutoExposure::Update(VkDevice device, float dt, float key, float speed)
 	{
-		(void)device;
-		if (m_stagingAlloc == nullptr || m_vmaAllocator == nullptr) return;
-		VmaAllocator alloc = static_cast<VmaAllocator>(m_vmaAllocator);
+		if (device == VK_NULL_HANDLE || m_stagingAlloc == nullptr)
+			return;
 
+		VkDeviceMemory stgMem = reinterpret_cast<VkDeviceMemory>(m_stagingAlloc);
 		void* ptr = nullptr;
-		if (vmaMapMemory(alloc, static_cast<VmaAllocation>(m_stagingAlloc), &ptr) != VK_SUCCESS)
+		if (vkMapMemory(device, stgMem, 0, VK_WHOLE_SIZE, 0, &ptr) != VK_SUCCESS)
 			return;
 
 		const float* samples = static_cast<const float*>(ptr);
 		double sum = 0.0;
 		for (uint32_t i = 0; i < kLuminanceSampleCount; ++i)
 			sum += static_cast<double>(samples[i]);
-		vmaUnmapMemory(alloc, static_cast<VmaAllocation>(m_stagingAlloc));
+		vkUnmapMemory(device, stgMem);
 
 		float avgLog = static_cast<float>(sum / static_cast<double>(kLuminanceSampleCount));
 		float logAvgLuminance = std::exp(avgLog);
@@ -326,13 +376,13 @@ namespace engine::render
 		m_exposure = std::max(0.001f, std::min(10.0f, m_exposure));
 
 		// Write to persistent exposure buffer
-		if (m_exposureAlloc != nullptr && m_vmaAllocator != nullptr)
+		if (m_exposureAlloc != nullptr)
 		{
-			VmaAllocator a = static_cast<VmaAllocator>(m_vmaAllocator);
-			if (vmaMapMemory(a, static_cast<VmaAllocation>(m_exposureAlloc), &ptr) == VK_SUCCESS)
+			VkDeviceMemory expMem = reinterpret_cast<VkDeviceMemory>(m_exposureAlloc);
+			if (vkMapMemory(device, expMem, 0, sizeof(float), 0, &ptr) == VK_SUCCESS)
 			{
 				std::memcpy(ptr, &m_exposure, sizeof(float));
-				vmaUnmapMemory(a, static_cast<VmaAllocation>(m_exposureAlloc));
+				vkUnmapMemory(device, expMem);
 			}
 		}
 	}
@@ -352,15 +402,29 @@ namespace engine::render
 		if (m_sampler != VK_NULL_HANDLE)
 			{ vkDestroySampler(device, m_sampler, nullptr); m_sampler = VK_NULL_HANDLE; }
 
-		if (m_vmaAllocator != nullptr)
+		if (m_luminanceBuffer != VK_NULL_HANDLE && m_luminanceAlloc != nullptr)
 		{
-			VmaAllocator alloc = static_cast<VmaAllocator>(m_vmaAllocator);
-			if (m_luminanceBuffer != VK_NULL_HANDLE && m_luminanceAlloc != nullptr)
-				{ vmaDestroyBuffer(alloc, m_luminanceBuffer, static_cast<VmaAllocation>(m_luminanceAlloc)); m_luminanceBuffer = VK_NULL_HANDLE; m_luminanceAlloc = nullptr; }
-			if (m_stagingBuffer != VK_NULL_HANDLE && m_stagingAlloc != nullptr)
-				{ vmaDestroyBuffer(alloc, m_stagingBuffer, static_cast<VmaAllocation>(m_stagingAlloc)); m_stagingBuffer = VK_NULL_HANDLE; m_stagingAlloc = nullptr; }
-			if (m_exposureBuffer != VK_NULL_HANDLE && m_exposureAlloc != nullptr)
-				{ vmaDestroyBuffer(alloc, m_exposureBuffer, static_cast<VmaAllocation>(m_exposureAlloc)); m_exposureBuffer = VK_NULL_HANDLE; m_exposureAlloc = nullptr; }
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_luminanceAlloc);
+			vkDestroyBuffer(device, m_luminanceBuffer, nullptr);
+			vkFreeMemory(device, mem, nullptr);
+			m_luminanceBuffer = VK_NULL_HANDLE;
+			m_luminanceAlloc = nullptr;
+		}
+		if (m_stagingBuffer != VK_NULL_HANDLE && m_stagingAlloc != nullptr)
+		{
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_stagingAlloc);
+			vkDestroyBuffer(device, m_stagingBuffer, nullptr);
+			vkFreeMemory(device, mem, nullptr);
+			m_stagingBuffer = VK_NULL_HANDLE;
+			m_stagingAlloc = nullptr;
+		}
+		if (m_exposureBuffer != VK_NULL_HANDLE && m_exposureAlloc != nullptr)
+		{
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_exposureAlloc);
+			vkDestroyBuffer(device, m_exposureBuffer, nullptr);
+			vkFreeMemory(device, mem, nullptr);
+			m_exposureBuffer = VK_NULL_HANDLE;
+			m_exposureAlloc = nullptr;
 		}
 		m_vmaAllocator = nullptr;
 	}

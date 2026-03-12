@@ -214,8 +214,25 @@ namespace engine::render
 
 		// M08.3: Auto-exposure
 		std::fprintf(stderr, "[PIPELINE] 12 AutoExposure\n"); std::fflush(stderr);
-		// TEMP: désactivé sur cette branche (VMA/staging AutoExposure à stabiliser).
-		LOG_WARN(Render, "M08.3: AutoExposure SKIPPED (disabled on this branch)");
+		{
+			std::vector<uint32_t> aeComp = loadSpirv("shaders/luminance_reduce.comp.spv");
+			if (!aeComp.empty())
+			{
+				if (m_autoExposure.Init(device, physicalDevice, vmaAllocator,
+						aeComp.data(), aeComp.size()))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline AutoExposure OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "M08.3: AutoExposure init failed — disabled");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "M08.3: AutoExposure shader not found — disabled");
+			}
+		}
 
 		// M07.4: TAA
 		std::fprintf(stderr, "[PIPELINE] 13 TAA\n"); std::fflush(stderr);

@@ -178,14 +178,8 @@ namespace engine::render
 
 		// M08.3: Auto-exposure
 		std::fprintf(stderr, "[PIPELINE] 12 AutoExposure\n"); std::fflush(stderr);
-		{
-			std::vector<uint32_t> lumComp = loadSpirv("shaders/luminance_reduce.comp.spv");
-			if (!lumComp.empty())
-			{
-				if (m_autoExposure.Init(device, physicalDevice, vmaAllocator, lumComp.data(), lumComp.size()))
-					LOG_INFO(Render, "M08.3: Auto-exposure ready");
-			}
-		}
+		// TEMP: désactivé sur cette branche (VMA/staging AutoExposure à stabiliser).
+		LOG_WARN(Render, "M08.3: AutoExposure SKIPPED (disabled on this branch)");
 
 		// M07.4: TAA
 		std::fprintf(stderr, "[PIPELINE] 13 TAA\n"); std::fflush(stderr);

@@ -23,8 +23,23 @@ namespace engine::render
 
 		// M05.1: BRDF LUT
 		std::fprintf(stderr, "[PIPELINE] 1 BRDF LUT\n"); std::fflush(stderr);
-		// TEMP: désactivé sur cette branche (vmaCreateImage instable comme pour SSAO).
-		LOG_WARN(Render, "M05.1: BRDF LUT SKIPPED (VMA image disabled)");
+		{
+			std::vector<uint32_t> brdfComp = loadSpirv("shaders/brdf_lut.comp.spv");
+			if (!brdfComp.empty())
+			{
+				const uint32_t lutSize = 256u;
+				if (m_brdfLutPass.Init(device, physicalDevice, vmaAllocator, lutSize,
+						brdfComp.data(), brdfComp.size(), graphicsQueueFamilyIndex))
+				{
+					m_brdfLutPass.Generate(device, graphicsQueue);
+					LOG_INFO(Render, "[Boot] DeferredPipeline BRDF LUT OK");
+				}
+				else
+					LOG_WARN(Render, "M05.1: BRDF LUT init failed — LUT disabled");
+			}
+			else
+				LOG_WARN(Render, "M05.1: BRDF LUT shader not found — LUT disabled");
+		}
 
 		// M05.3: Specular prefilter
 		std::fprintf(stderr, "[PIPELINE] 2 SpecularPrefilter\n"); std::fflush(stderr);

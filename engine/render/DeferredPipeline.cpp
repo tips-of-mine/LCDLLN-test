@@ -43,8 +43,29 @@ namespace engine::render
 
 		// M05.3: Specular prefilter
 		std::fprintf(stderr, "[PIPELINE] 2 SpecularPrefilter\n"); std::fflush(stderr);
-		// TEMP: désactivé sur cette branche (VMA image path déconseillé, comme BRDF/SSAO).
-		LOG_WARN(Render, "M05.3: SpecularPrefilter SKIPPED (VMA image disabled)");
+		{
+			std::vector<uint32_t> specComp = loadSpirv("shaders/specular_prefilter.comp.spv");
+			if (!specComp.empty())
+			{
+				const uint32_t cubeSize = 256u;
+				const uint32_t mipCount = 5u;
+				if (m_specularPrefilterPass.Init(device, physicalDevice, vmaAllocator,
+						cubeSize, mipCount,
+						specComp.data(), specComp.size(),
+						graphicsQueueFamilyIndex))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline SpecularPrefilter OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "M05.3: SpecularPrefilter init failed — disabled");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "M05.3: SpecularPrefilter shader not found — disabled");
+			}
+		}
 
 		// M06.1: SSAO kernel + noise
 		std::fprintf(stderr, "[PIPELINE] 3 SSAO kernel+noise\n"); std::fflush(stderr);

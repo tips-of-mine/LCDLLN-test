@@ -3,7 +3,6 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
-#include <vk_mem_alloc.h>
 #include <cstring>
 
 namespace engine::render
@@ -26,7 +25,7 @@ namespace engine::render
 		const uint32_t* compSpirv, size_t compWordCount,
 		uint32_t queueFamilyIndex)
 	{
-		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || vmaAllocator == nullptr
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
 			|| !compSpirv || compWordCount == 0 || size == 0 || mipCount == 0)
 		{
 			LOG_ERROR(Render, "SpecularPrefilterPass::Init: invalid arguments");
@@ -35,11 +34,10 @@ namespace engine::render
 
 		m_size = size;
 		m_mipCount = mipCount;
-		m_vmaAllocator = vmaAllocator;
-		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
+		m_vmaAllocator = vmaAllocator; // conservé pour compat, plus utilisé pour l'alloc.
 
 		// ---------------------------------------------------------------------
-		// Cubemap image (6 layers, mipCount levels) — VMA
+		// Cubemap image (6 layers, mipCount levels) — Vulkan brut + DEVICE_LOCAL
 		// ---------------------------------------------------------------------
 		VkImageCreateInfo imgInfo{};
 		imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -56,15 +54,66 @@ namespace engine::render
 		imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-		VmaAllocationCreateInfo allocCreateInfo{};
-		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-		VmaAllocation imgAlloc = VK_NULL_HANDLE;
-		if (vmaCreateImage(alloc, &imgInfo, &allocCreateInfo, &m_image, &imgAlloc, nullptr) != VK_SUCCESS)
+		if (vkCreateImage(device, &imgInfo, nullptr, &m_image) != VK_SUCCESS || m_image == VK_NULL_HANDLE)
 		{
-			LOG_ERROR(Render, "SpecularPrefilterPass: vmaCreateImage failed");
+			LOG_ERROR(Render, "SpecularPrefilterPass: vkCreateImage failed");
 			return false;
 		}
-		m_allocation = imgAlloc;
+
+		VkMemoryRequirements memReq{};
+		vkGetImageMemoryRequirements(device, m_image, &memReq);
+
+		VkPhysicalDeviceMemoryProperties memProps{};
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+
+		auto findMemoryType = [&](uint32_t typeBits, VkMemoryPropertyFlags desiredFlags) -> uint32_t
+		{
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+				if ((typeBits & (1u << i)) &&
+					(memProps.memoryTypes[i].propertyFlags & desiredFlags) == desiredFlags)
+				{
+					return i;
+				}
+			}
+			return UINT32_MAX;
+		};
+
+		const VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		uint32_t memTypeIdx = findMemoryType(memReq.memoryTypeBits, flags);
+		if (memTypeIdx == UINT32_MAX)
+		{
+			LOG_ERROR(Render, "SpecularPrefilterPass: no suitable DEVICE_LOCAL memory type");
+			vkDestroyImage(device, m_image, nullptr);
+			m_image = VK_NULL_HANDLE;
+			return false;
+		}
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memReq.size;
+		allocInfo.memoryTypeIndex = memTypeIdx;
+
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+		if (vkAllocateMemory(device, &allocInfo, nullptr, &memory) != VK_SUCCESS || memory == VK_NULL_HANDLE)
+		{
+			LOG_ERROR(Render, "SpecularPrefilterPass: vkAllocateMemory failed");
+			vkDestroyImage(device, m_image, nullptr);
+			m_image = VK_NULL_HANDLE;
+			return false;
+		}
+
+		if (vkBindImageMemory(device, m_image, memory, 0) != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "SpecularPrefilterPass: vkBindImageMemory failed");
+			vkFreeMemory(device, memory, nullptr);
+			vkDestroyImage(device, m_image, nullptr);
+			m_image = VK_NULL_HANDLE;
+			return false;
+		}
+
+		// On stocke VkDeviceMemory dans m_allocation (void*).
+		m_allocation = reinterpret_cast<void*>(memory);
 
 		// ---------------------------------------------------------------------
 		// Full cubemap view (sampling) + per-face-per-mip views (storage write)
@@ -425,9 +474,11 @@ namespace engine::render
 			vkDestroyImageView(device, m_cubeView, nullptr);
 			m_cubeView = VK_NULL_HANDLE;
 		}
-		if (m_image != VK_NULL_HANDLE && m_allocation != nullptr && m_vmaAllocator != nullptr)
+		if (m_image != VK_NULL_HANDLE && m_allocation != nullptr)
 		{
-			vmaDestroyImage(static_cast<VmaAllocator>(m_vmaAllocator), m_image, static_cast<VmaAllocation>(m_allocation));
+			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_allocation);
+			vkDestroyImage(device, m_image, nullptr);
+			vkFreeMemory(device, mem, nullptr);
 			m_image = VK_NULL_HANDLE;
 			m_allocation = nullptr;
 		}

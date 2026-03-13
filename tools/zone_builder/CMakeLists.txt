@@ -11,6 +11,7 @@ add_executable(zone_builder
   ${CMAKE_SOURCE_DIR}/engine/world/OutputVersion.cpp
   ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
   ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
+  ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
 )
 target_include_directories(zone_builder PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}

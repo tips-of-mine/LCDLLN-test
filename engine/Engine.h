@@ -23,6 +23,7 @@
 #include "engine/world/ChunkBudgetStats.h"
 #include "engine/world/LodConfig.h"
 #include "engine/world/HlodRuntime.h"
+#include "engine/world/ProbeData.h"
 #include "engine/world/StreamingScheduler.h"
 #include "engine/world/StreamCache.h"
 #include "engine/render/vk/DeferredDestroyQueue.h"
@@ -95,6 +96,8 @@ namespace engine
 
 		void OnResize(int w, int h);
 		void OnQuit();
+		/// Load optional zone probe and atmosphere assets from content-relative paths.
+		void LoadZoneProbeAssets();
 
 		engine::core::Config m_cfg;
 
@@ -164,6 +167,8 @@ namespace engine
 		engine::world::ChunkBudgetStats m_chunkStats;
 		engine::world::LodConfig m_lodConfig;
 		engine::world::HlodRuntime m_hlodRuntime;
+		engine::world::ProbeSet m_zoneProbes;
+		engine::world::AtmosphereSettings m_zoneAtmosphere;
 		std::vector<engine::world::ChunkDrawDecision> m_chunkDrawDecisions;
 
 		std::array<RenderState, 2> m_renderStates{};

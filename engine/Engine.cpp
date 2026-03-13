@@ -23,6 +23,46 @@
 
 namespace engine
 {
+	namespace
+	{
+		/// Return the first probe intensity parameter, or 1.0 when no probe exists.
+		float GetGlobalProbeIntensity(const engine::world::ProbeSet& probeSet)
+		{
+			if (probeSet.probes.empty())
+			{
+				return 1.0f;
+			}
+
+			return probeSet.probes.front().params[0];
+		}
+	}
+
+	void Engine::LoadZoneProbeAssets()
+	{
+		const std::string probesPath = m_cfg.GetString("world.probes_path", "probes.bin");
+		const std::string atmospherePath = m_cfg.GetString("world.atmosphere_path", "atmosphere.json");
+		std::string error;
+
+		if (engine::world::LoadProbeSet(m_cfg, probesPath, m_zoneProbes, error))
+		{
+			LOG_INFO(Core, "[ZoneProbes] Runtime probes ready (path={}, count={})", probesPath, m_zoneProbes.probes.size());
+		}
+		else
+		{
+			LOG_WARN(Core, "[ZoneProbes] Runtime probes fallback sky (path={}, reason={})", probesPath, error);
+		}
+
+		error.clear();
+		if (engine::world::LoadAtmosphereSettings(m_cfg, atmospherePath, m_zoneAtmosphere, error))
+		{
+			LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
+		}
+		else
+		{
+			LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
+		}
+	}
+
 	Engine::Engine(int argc, char** argv)
 		: m_cfg(engine::core::Config::Load("config.json", argc, argv))
 		, m_time(120)
@@ -74,6 +114,7 @@ namespace engine
 		std::fprintf(stderr, "[ENGINE] G: hlodRuntime.Init\n"); std::fflush(stderr);
 
 		m_hlodRuntime.Init(m_cfg);
+		LoadZoneProbeAssets();
 		std::fprintf(stderr, "[ENGINE] H: streamCache.Init\n"); std::fflush(stderr);
 
 		m_streamCache.Init(m_cfg);
@@ -677,9 +718,13 @@ namespace engine
 												lp.cameraPos[1] = rs.camera.position.y;
 												lp.cameraPos[2] = rs.camera.position.z;
 												lp.cameraPos[3] = 0.0f;
-												lp.lightDir[0] = 0.5774f; lp.lightDir[1] = 0.5774f; lp.lightDir[2] = 0.5774f; lp.lightDir[3] = 0.0f;
-												lp.lightColor[0] = 1.0f; lp.lightColor[1] = 0.95f; lp.lightColor[2] = 0.85f; lp.lightColor[3] = 0.0f;
-												lp.ambientColor[0] = 0.03f; lp.ambientColor[1] = 0.03f; lp.ambientColor[2] = 0.05f; lp.ambientColor[3] = 0.0f;
+												lp.lightDir[0] = m_zoneAtmosphere.sunDirection[0]; lp.lightDir[1] = m_zoneAtmosphere.sunDirection[1]; lp.lightDir[2] = m_zoneAtmosphere.sunDirection[2]; lp.lightDir[3] = 0.0f;
+												lp.lightColor[0] = m_zoneAtmosphere.sunColor[0]; lp.lightColor[1] = m_zoneAtmosphere.sunColor[1]; lp.lightColor[2] = m_zoneAtmosphere.sunColor[2]; lp.lightColor[3] = 0.0f;
+												const float probeIntensity = GetGlobalProbeIntensity(m_zoneProbes);
+												lp.ambientColor[0] = m_zoneAtmosphere.ambientColor[0] * probeIntensity;
+												lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;
+												lp.ambientColor[2] = m_zoneAtmosphere.ambientColor[2] * probeIntensity;
+												lp.ambientColor[3] = 0.0f;
 												VkImageView irrView       = VK_NULL_HANDLE;
 												VkSampler   irrSamp       = VK_NULL_HANDLE;
 												VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;

@@ -9,6 +9,7 @@ add_executable(hlod_builder
   Clustering.cpp
   MeshMerge.cpp
   PakWriter.cpp
+  ScanManifest.cpp
 )
 target_include_directories(hlod_builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

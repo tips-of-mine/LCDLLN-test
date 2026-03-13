@@ -28,7 +28,12 @@ namespace engine::world
 		}
 	}
 
-	bool LoadProbeSet(const engine::core::Config& cfg, std::string_view relativePath, ProbeSet& outProbeSet, std::string& outError)
+	bool LoadProbeSet(const engine::core::Config& cfg,
+		std::string_view relativePath,
+		uint64_t expectedContentHash,
+		bool validateContentHash,
+		ProbeSet& outProbeSet,
+		std::string& outError)
 	{
 		outProbeSet = ProbeSet{};
 		const std::filesystem::path fullPath = engine::platform::FileSystem::ResolveContentPath(cfg, relativePath);
@@ -42,32 +47,31 @@ namespace engine::world
 			return false;
 		}
 
-		if (bytes.size() < sizeof(uint32_t) * 3u)
+		OutputVersionHeader header;
+		if (!ReadOutputVersionHeader(bytes, header, outError))
+		{
+			LOG_ERROR(Core, "[ZoneProbes] Load probes FAILED (path={}, reason={})", fullPath.string(), outError);
+			return false;
+		}
+
+		if (!ValidateOutputVersionHeader(header, kProbeSetMagic, kProbeSetVersion, expectedContentHash, validateContentHash, outError))
+		{
+			LOG_ERROR(Core, "[ZoneProbes] Load probes FAILED (path={}, reason={})", fullPath.string(), outError);
+			return false;
+		}
+
+		const size_t headerSize = sizeof(OutputVersionHeader);
+		if (bytes.size() < headerSize + sizeof(uint32_t))
 		{
 			outError = "probe file too small";
 			LOG_ERROR(Core, "[ZoneProbes] Load probes FAILED (path={}, reason={})", fullPath.string(), outError);
 			return false;
 		}
 
-		const uint32_t* header = reinterpret_cast<const uint32_t*>(bytes.data());
-		const uint32_t magic = header[0];
-		const uint32_t version = header[1];
-		const uint32_t count = header[2];
-		if (magic != kProbeSetMagic)
-		{
-			outError = "invalid probe magic";
-			LOG_ERROR(Core, "[ZoneProbes] Load probes FAILED (path={}, reason={})", fullPath.string(), outError);
-			return false;
-		}
+		uint32_t count = 0;
+		std::memcpy(&count, bytes.data() + headerSize, sizeof(count));
 
-		if (version != kProbeSetVersion)
-		{
-			outError = "unsupported probe version";
-			LOG_ERROR(Core, "[ZoneProbes] Load probes FAILED (path={}, reason={})", fullPath.string(), outError);
-			return false;
-		}
-
-		const size_t payloadSize = sizeof(uint32_t) * 3u + static_cast<size_t>(count) * sizeof(ProbeRecord);
+		const size_t payloadSize = headerSize + sizeof(uint32_t) + static_cast<size_t>(count) * sizeof(ProbeRecord);
 		if (bytes.size() != payloadSize)
 		{
 			outError = "unexpected probe payload size";
@@ -78,10 +82,13 @@ namespace engine::world
 		outProbeSet.probes.resize(count);
 		if (count > 0)
 		{
-			std::memcpy(outProbeSet.probes.data(), bytes.data() + sizeof(uint32_t) * 3u, sizeof(ProbeRecord) * count);
+			std::memcpy(outProbeSet.probes.data(), bytes.data() + headerSize + sizeof(uint32_t), sizeof(ProbeRecord) * count);
 		}
 
-		LOG_INFO(Core, "[ZoneProbes] Load probes OK (path={}, count={})", fullPath.string(), outProbeSet.probes.size());
+		LOG_INFO(Core, "[ZoneProbes] Load probes OK (path={}, count={}, hash=0x{:016X})",
+			fullPath.string(),
+			outProbeSet.probes.size(),
+			header.contentHash);
 		return true;
 	}
 

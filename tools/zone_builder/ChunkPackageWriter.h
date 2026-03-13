@@ -18,9 +18,11 @@ namespace tools::zone_builder
 	/// Builds one zone output tree from a layout by chunking instances with floor(x/256), floor(z/256).
 	/// Writes `zone.meta`, `probes.bin`, `atmosphere.json`, then `chunks/chunk_i_j/chunk.meta` and `instances.bin` under `outputRootDir`.
 	/// `assetId` values written to `instances.bin` are deterministic hashes of the relative glTF path.
+	/// Output headers store builder/runtime compatibility plus a shared xxHash64 content fingerprint.
 	/// \param outputRootDir Root directory for the zone output (e.g. "build/zone_0").
+	/// \param config Runtime config used to resolve `paths.content` while computing the content hash.
 	/// \param layout Loaded layout document to split into chunks.
 	/// \param outError Receives a human-readable error on failure.
 	/// \return true on success.
-	bool WriteChunkedZoneOutputs(std::string_view outputRootDir, const LayoutDocument& layout, std::string& outError);
+	bool WriteChunkedZoneOutputs(std::string_view outputRootDir, const engine::core::Config& config, const LayoutDocument& layout, std::string& outError);
 }

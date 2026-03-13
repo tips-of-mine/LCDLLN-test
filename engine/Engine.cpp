@@ -39,11 +39,21 @@ namespace engine
 
 	void Engine::LoadZoneProbeAssets()
 	{
+		const std::string zoneMetaPath = m_cfg.GetString("world.zone_meta_path", "zone.meta");
 		const std::string probesPath = m_cfg.GetString("world.probes_path", "probes.bin");
 		const std::string atmospherePath = m_cfg.GetString("world.atmosphere_path", "atmosphere.json");
 		std::string error;
+		engine::world::OutputVersionHeader zoneHeader;
 
-		if (engine::world::LoadProbeSet(m_cfg, probesPath, m_zoneProbes, error))
+		if (!engine::world::LoadVersionedFileHeader(m_cfg, zoneMetaPath,
+			engine::world::kZoneMetaMagic,
+			engine::world::kZoneMetaVersion,
+			zoneHeader,
+			error))
+		{
+			LOG_WARN(Core, "[ZoneProbes] Runtime manifest fallback sky (path={}, reason={})", zoneMetaPath, error);
+		}
+		else if (engine::world::LoadProbeSet(m_cfg, probesPath, zoneHeader.contentHash, true, m_zoneProbes, error))
 		{
 			LOG_INFO(Core, "[ZoneProbes] Runtime probes ready (path={}, count={})", probesPath, m_zoneProbes.probes.size());
 		}

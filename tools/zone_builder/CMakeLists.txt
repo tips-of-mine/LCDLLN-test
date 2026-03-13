@@ -8,6 +8,7 @@ add_executable(zone_builder
   JsonDocument.cpp
   LayoutImporter.cpp
   GltfImporter.cpp
+  ${CMAKE_SOURCE_DIR}/engine/world/OutputVersion.cpp
   ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
   ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
 )
@@ -17,7 +18,7 @@ target_include_directories(zone_builder PRIVATE
 )
 
 if(MSVC)
-  target_compile_options(zone_builder PRIVATE /W4 /permissive-)
+  target_compile_options(zone_builder PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
   target_compile_options(zone_builder PRIVATE -Wall -Wextra -Wpedantic)
 endif()

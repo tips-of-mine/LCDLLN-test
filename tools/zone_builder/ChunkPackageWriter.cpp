@@ -2,6 +2,7 @@
 
 #include "engine/core/Log.h"
 #include "engine/world/ChunkPackageLayout.h"
+#include "engine/world/OutputVersion.h"
 #include "engine/world/ProbeData.h"
 #include "engine/world/WorldModel.h"
 
@@ -15,11 +16,6 @@ namespace tools::zone_builder
 {
 	namespace
 	{
-		constexpr uint32_t kZoneMetaMagic = 0x454E4F5Au; // ZONE
-		constexpr uint32_t kZoneMetaVersion = 1u;
-		constexpr uint32_t kInstancesMagic = 0x54534E49u; // INST
-		constexpr uint32_t kInstancesVersion = 1u;
-
 		struct ChunkKey
 		{
 			int32_t x = 0;
@@ -71,8 +67,10 @@ namespace tools::zone_builder
 			};
 		}
 
-		/// Write the binary zone metadata: header + ordered chunk coordinate list.
-		bool WriteZoneMeta(const std::filesystem::path& path, const std::map<ChunkKey, std::vector<ChunkedInstanceRecord>>& chunkInstances)
+		/// Write the binary zone metadata: version header + ordered chunk coordinate list.
+		bool WriteZoneMeta(const std::filesystem::path& path,
+			const std::map<ChunkKey, std::vector<ChunkedInstanceRecord>>& chunkInstances,
+			uint64_t contentHash)
 		{
 			LOG_INFO(Core, "[ZoneBuilder] Writing zone meta {}", path.string());
 
@@ -84,8 +82,19 @@ namespace tools::zone_builder
 			}
 
 			const uint32_t chunkCount = static_cast<uint32_t>(chunkInstances.size());
-			stream.write(reinterpret_cast<const char*>(&kZoneMetaMagic), sizeof(kZoneMetaMagic));
-			stream.write(reinterpret_cast<const char*>(&kZoneMetaVersion), sizeof(kZoneMetaVersion));
+			const engine::world::OutputVersionHeader header{
+				engine::world::kZoneMetaMagic,
+				engine::world::kZoneMetaVersion,
+				engine::world::kZoneBuilderVersion,
+				engine::world::kZoneEngineVersion,
+				contentHash
+			};
+			if (!engine::world::WriteOutputVersionHeader(stream, header))
+			{
+				LOG_ERROR(Core, "[ZoneBuilder] Write zone meta FAILED (path={})", path.string());
+				return false;
+			}
+
 			stream.write(reinterpret_cast<const char*>(&chunkCount), sizeof(chunkCount));
 			for (const auto& [chunkKey, _] : chunkInstances)
 			{
@@ -131,7 +140,7 @@ namespace tools::zone_builder
 		}
 
 		/// Write the MVP `probes.bin` payload with one global probe.
-		bool WriteProbesBin(const std::filesystem::path& path, const LayoutDocument& layout)
+		bool WriteProbesBin(const std::filesystem::path& path, const LayoutDocument& layout, uint64_t contentHash)
 		{
 			LOG_INFO(Core, "[ZoneBuilder] Writing probes {}", path.string());
 
@@ -144,8 +153,19 @@ namespace tools::zone_builder
 
 			const uint32_t probeCount = 1u;
 			const engine::world::ProbeRecord probe = BuildGlobalProbe(layout);
-			stream.write(reinterpret_cast<const char*>(&engine::world::kProbeSetMagic), sizeof(engine::world::kProbeSetMagic));
-			stream.write(reinterpret_cast<const char*>(&engine::world::kProbeSetVersion), sizeof(engine::world::kProbeSetVersion));
+			const engine::world::OutputVersionHeader header{
+				engine::world::kProbeSetMagic,
+				engine::world::kProbeSetVersion,
+				engine::world::kZoneBuilderVersion,
+				engine::world::kZoneEngineVersion,
+				contentHash
+			};
+			if (!engine::world::WriteOutputVersionHeader(stream, header))
+			{
+				LOG_ERROR(Core, "[ZoneBuilder] Write probes FAILED (path={})", path.string());
+				return false;
+			}
+
 			stream.write(reinterpret_cast<const char*>(&probeCount), sizeof(probeCount));
 			stream.write(reinterpret_cast<const char*>(&probe), sizeof(probe));
 			if (!stream.good())
@@ -217,8 +237,8 @@ namespace tools::zone_builder
 			return true;
 		}
 
-		/// Write one binary `chunk.meta` record aligned with `engine::world::ChunkMeta`.
-		bool WriteChunkMeta(const std::filesystem::path& path, int32_t cx, int32_t cz, uint32_t flags)
+		/// Write one binary `chunk.meta` payload preceded by the common version header.
+		bool WriteChunkMeta(const std::filesystem::path& path, int32_t cx, int32_t cz, uint32_t flags, uint64_t contentHash)
 		{
 			LOG_INFO(Core, "[ZoneBuilder] Writing chunk meta {} for chunk ({},{})", path.string(), cx, cz);
 
@@ -235,17 +255,30 @@ namespace tools::zone_builder
 				return false;
 			}
 
-			f.write(reinterpret_cast<const char*>(&cx), 4);
-			f.write(reinterpret_cast<const char*>(&cz), 4);
+			const engine::world::OutputVersionHeader header{
+				engine::world::kChunkMetaMagic,
+				engine::world::kChunkMetaVersion,
+				engine::world::kZoneBuilderVersion,
+				engine::world::kZoneEngineVersion,
+				contentHash
+			};
+			if (!engine::world::WriteOutputVersionHeader(f, header))
+			{
+				LOG_ERROR(Core, "[ZoneBuilder] Write chunk meta FAILED (path={})", path.string());
+				return false;
+			}
+
+			f.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
+			f.write(reinterpret_cast<const char*>(&cz), sizeof(cz));
 			uint32_t boundsMinX = static_cast<uint32_t>(cx * 256);
 			uint32_t boundsMinZ = static_cast<uint32_t>(cz * 256);
 			uint32_t boundsMaxX = boundsMinX + 256;
 			uint32_t boundsMaxZ = boundsMinZ + 256;
-			f.write(reinterpret_cast<const char*>(&boundsMinX), 4);
-			f.write(reinterpret_cast<const char*>(&boundsMinZ), 4);
-			f.write(reinterpret_cast<const char*>(&boundsMaxX), 4);
-			f.write(reinterpret_cast<const char*>(&boundsMaxZ), 4);
-			f.write(reinterpret_cast<const char*>(&flags), 4);
+			f.write(reinterpret_cast<const char*>(&boundsMinX), sizeof(boundsMinX));
+			f.write(reinterpret_cast<const char*>(&boundsMinZ), sizeof(boundsMinZ));
+			f.write(reinterpret_cast<const char*>(&boundsMaxX), sizeof(boundsMaxX));
+			f.write(reinterpret_cast<const char*>(&boundsMaxZ), sizeof(boundsMaxZ));
+			f.write(reinterpret_cast<const char*>(&flags), sizeof(flags));
 			if (!f.good())
 			{
 				LOG_ERROR(Core, "[ZoneBuilder] Write chunk meta FAILED (path={})", path.string());
@@ -256,8 +289,8 @@ namespace tools::zone_builder
 			return true;
 		}
 
-		/// Write binary instance records: header + transform + assetId + flags.
-		bool WriteInstancesBin(const std::filesystem::path& path, const std::vector<ChunkedInstanceRecord>& instances)
+		/// Write binary instance records: version header + count + transform + assetId + flags.
+		bool WriteInstancesBin(const std::filesystem::path& path, const std::vector<ChunkedInstanceRecord>& instances, uint64_t contentHash)
 		{
 			LOG_INFO(Core, "[ZoneBuilder] Writing instances {}", path.string());
 
@@ -269,8 +302,19 @@ namespace tools::zone_builder
 			}
 
 			const uint32_t instanceCount = static_cast<uint32_t>(instances.size());
-			stream.write(reinterpret_cast<const char*>(&kInstancesMagic), sizeof(kInstancesMagic));
-			stream.write(reinterpret_cast<const char*>(&kInstancesVersion), sizeof(kInstancesVersion));
+			const engine::world::OutputVersionHeader header{
+				engine::world::kInstancesMagic,
+				engine::world::kInstancesVersion,
+				engine::world::kZoneBuilderVersion,
+				engine::world::kZoneEngineVersion,
+				contentHash
+			};
+			if (!engine::world::WriteOutputVersionHeader(stream, header))
+			{
+				LOG_ERROR(Core, "[ZoneBuilder] Write instances FAILED (path={})", path.string());
+				return false;
+			}
+
 			stream.write(reinterpret_cast<const char*>(&instanceCount), sizeof(instanceCount));
 			for (const ChunkedInstanceRecord& instance : instances)
 			{
@@ -325,7 +369,7 @@ namespace tools::zone_builder
 			engine::world::kChunkMetaHasProbes;
 
 		std::string metaPath = outputDir + "/chunk.meta";
-		if (!WriteChunkMeta(metaPath, chunkX, chunkZ, legacyFlags))
+		if (!WriteChunkMeta(metaPath, chunkX, chunkZ, legacyFlags, 0))
 			return false;
 		if (!WriteEmptyPak(outputDir + "/geo.pak"))
 			return false;
@@ -342,13 +386,15 @@ namespace tools::zone_builder
 		return true;
 	}
 
-	bool WriteChunkedZoneOutputs(std::string_view outputRootDir, const LayoutDocument& layout, std::string& outError)
+	bool WriteChunkedZoneOutputs(std::string_view outputRootDir, const engine::core::Config& config, const LayoutDocument& layout, std::string& outError)
 	{
 		LOG_INFO(Core, "[ZoneBuilder] Build chunked zone requested (output={}, instances={})",
 			std::string(outputRootDir),
 			layout.instances.size());
 
 		std::map<ChunkKey, std::vector<ChunkedInstanceRecord>> chunkInstances;
+		std::vector<std::string> referencedAssetPaths;
+		referencedAssetPaths.reserve(layout.instances.size());
 		for (const LayoutInstance& instance : layout.instances)
 		{
 			const int32_t chunkX = static_cast<int32_t>(std::floor(instance.positionX / static_cast<double>(engine::world::kChunkSize)));
@@ -365,6 +411,14 @@ namespace tools::zone_builder
 			record.assetId = HashAssetPath(instance.gltfPath);
 			record.flags = 0u;
 			chunkInstances[ChunkKey{ chunkX, chunkZ }].push_back(record);
+			referencedAssetPaths.push_back(instance.gltfPath);
+		}
+
+		uint64_t contentHash = 0;
+		if (!engine::world::ComputeZoneContentHash(config, layout.relativePath, referencedAssetPaths, contentHash, outError))
+		{
+			LOG_ERROR(Core, "[ZoneBuilder] Build chunked zone FAILED (reason={})", outError);
+			return false;
 		}
 
 		const std::filesystem::path rootPath(outputRootDir);
@@ -378,13 +432,13 @@ namespace tools::zone_builder
 			return false;
 		}
 
-		if (!WriteZoneMeta(rootPath / "zone.meta", chunkInstances))
+		if (!WriteZoneMeta(rootPath / "zone.meta", chunkInstances, contentHash))
 		{
 			outError = "failed to write zone.meta";
 			return false;
 		}
 
-		if (!WriteProbesBin(rootPath / "probes.bin", layout))
+		if (!WriteProbesBin(rootPath / "probes.bin", layout, contentHash))
 		{
 			outError = "failed to write probes.bin";
 			return false;
@@ -408,22 +462,23 @@ namespace tools::zone_builder
 				return false;
 			}
 
-			if (!WriteChunkMeta(chunkDir / "chunk.meta", chunkKey.x, chunkKey.z, engine::world::kChunkMetaHasInstances))
+			if (!WriteChunkMeta(chunkDir / "chunk.meta", chunkKey.x, chunkKey.z, engine::world::kChunkMetaHasInstances, contentHash))
 			{
 				outError = "failed to write chunk.meta";
 				return false;
 			}
 
-			if (!WriteInstancesBin(chunkDir / "instances.bin", instances))
+			if (!WriteInstancesBin(chunkDir / "instances.bin", instances, contentHash))
 			{
 				outError = "failed to write instances.bin";
 				return false;
 			}
 		}
 
-		LOG_INFO(Core, "[ZoneBuilder] Build chunked zone OK (output={}, chunks={})",
+		LOG_INFO(Core, "[ZoneBuilder] Build chunked zone OK (output={}, chunks={}, hash=0x{:016X})",
 			rootPath.string(),
-			chunkInstances.size());
+			chunkInstances.size(),
+			contentHash);
 		return true;
 	}
 }

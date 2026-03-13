@@ -71,6 +71,7 @@ add_library(engine_core
   engine/render/DeferredPipeline.cpp
   engine/math/Frustum.cpp
   engine/world/WorldModel.cpp
+  engine/world/OutputVersion.cpp
   engine/world/ProbeData.cpp
   engine/world/PakReader.cpp
   engine/world/ChunkPackageLayout.cpp

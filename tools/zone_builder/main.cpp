@@ -195,7 +195,7 @@ namespace tools::zone_builder
 			}
 
 			const std::string outputRootDir = options.outputPath.empty() ? "build/zone_0" : options.outputPath;
-			if (!WriteChunkedZoneOutputs(outputRootDir, layout, error))
+			if (!WriteChunkedZoneOutputs(outputRootDir, config, layout, error))
 			{
 				LOG_ERROR(Core, "[ZoneBuilder] Layout import FAILED (layout={}, output={}, reason={})",
 					options.layoutPath,

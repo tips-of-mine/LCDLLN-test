@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/world/OutputVersion.h"
 
 #include <array>
 #include <cstdint>
@@ -12,7 +13,7 @@ namespace engine::world
 {
 	/// Binary file magic for `probes.bin` ("PROB" little-endian).
 	constexpr uint32_t kProbeSetMagic = 0x424F5250u;
-	/// Current binary file version for `probes.bin`.
+	/// Current payload version for `probes.bin`.
 	constexpr uint32_t kProbeSetVersion = 1u;
 
 	/// One global/local IBL probe description used by the MVP runtime fallback.
@@ -40,7 +41,13 @@ namespace engine::world
 	};
 
 	/// Load `probes.bin` from a content-relative path resolved via `paths.content`.
-	bool LoadProbeSet(const engine::core::Config& cfg, std::string_view relativePath, ProbeSet& outProbeSet, std::string& outError);
+	/// When `validateContentHash` is true, the file header must match `expectedContentHash`.
+	bool LoadProbeSet(const engine::core::Config& cfg,
+		std::string_view relativePath,
+		uint64_t expectedContentHash,
+		bool validateContentHash,
+		ProbeSet& outProbeSet,
+		std::string& outError);
 
 	/// Load `atmosphere.json` from a content-relative path resolved via `paths.content`.
 	bool LoadAtmosphereSettings(const engine::core::Config& cfg, std::string_view relativePath, AtmosphereSettings& outSettings, std::string& outError);

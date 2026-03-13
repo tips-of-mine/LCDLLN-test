@@ -1,0 +1,113 @@
+#version 450
+
+// M08.6: Reduce a 256-bin histogram into one average log luminance
+// while discarding low/high outliers using configured percentiles.
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) readonly buffer HistogramBuffer
+{
+    uint histogram[256];
+};
+
+layout(set = 0, binding = 1) writeonly buffer AvgLogBuffer
+{
+    float avgLog;
+};
+
+layout(push_constant) uniform PushConstants
+{
+    float percentileLow;
+    float percentileHigh;
+    float logMin;
+    float logMax;
+} pc;
+
+shared uint scanA[256];
+shared uint scanB[256];
+shared uint lowBin;
+shared uint highBin;
+shared float weighted[256];
+shared uint retained[256];
+
+void main()
+{
+    uint idx = gl_LocalInvocationIndex;
+    scanA[idx] = histogram[idx];
+    barrier();
+
+    for (uint offset = 1u; offset < 256u; offset <<= 1u)
+    {
+        uint value = scanA[idx];
+        if (idx >= offset)
+            value += scanA[idx - offset];
+        scanB[idx] = value;
+        barrier();
+        scanA[idx] = scanB[idx];
+        barrier();
+    }
+
+    if (idx == 0u)
+    {
+        uint totalCount = scanA[255];
+        uint lowCut = uint(float(totalCount) * pc.percentileLow);
+        uint highCut = uint(ceil(float(totalCount) * pc.percentileHigh));
+        lowBin = 0u;
+        highBin = 255u;
+
+        if (totalCount > 0u)
+        {
+            for (uint i = 0u; i < 256u; ++i)
+            {
+                if (scanA[i] > lowCut)
+                {
+                    lowBin = i;
+                    break;
+                }
+            }
+
+            for (uint i = lowBin; i < 256u; ++i)
+            {
+                if (scanA[i] >= highCut)
+                {
+                    highBin = i;
+                    break;
+                }
+            }
+        }
+    }
+    barrier();
+
+    uint count = histogram[idx];
+    if (idx >= lowBin && idx <= highBin && count > 0u)
+    {
+        float binCenter = (float(idx) + 0.5) / 256.0;
+        float logLuminance = mix(pc.logMin, pc.logMax, binCenter);
+        weighted[idx] = logLuminance * float(count);
+        retained[idx] = count;
+    }
+    else
+    {
+        weighted[idx] = 0.0;
+        retained[idx] = 0u;
+    }
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u)
+    {
+        if (idx < stride)
+        {
+            weighted[idx] += weighted[idx + stride];
+            retained[idx] += retained[idx + stride];
+        }
+        barrier();
+    }
+
+    if (idx == 0u)
+    {
+        if (retained[0] > 0u)
+            avgLog = weighted[0] / float(retained[0]);
+        else
+            avgLog = 0.0;
+    }
+}

@@ -480,11 +480,31 @@ namespace engine
 												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 												const engine::RenderState& rs = m_renderStates[readIdx];
 												engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
-												const engine::world::ChunkCoord chunk = engine::world::WorldToChunkCoord(rs.camera.position.x, rs.camera.position.z);
+												const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 												const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
 												const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
 												m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
-												const int lodLevel = m_lodConfig.GetLodLevel(0.0f);
+												// Provisoire pour le mesh de test unique a l'origine monde; un ticket dedie
+												// remplacera ce calcul par une distance par instance/objet.
+												float distCam = 0.0f;
+												if (!m_chunkDrawDecisions.empty())
+												{
+													distCam = m_chunkDrawDecisions[0].distanceMeters;
+												}
+												else
+												{
+													const float dx = rs.camera.position.x;
+													const float dy = rs.camera.position.y;
+													const float dz = rs.camera.position.z;
+													distCam = std::sqrt(dx * dx + dy * dy + dz * dz);
+												}
+												const int lodLevel = m_lodConfig.GetLodLevel(distCam);
+												static int s_lastLoggedLod = -1;
+												if (lodLevel != s_lastLoggedLod)
+												{
+													LOG_DEBUG(Render, "[LOD] Geometry test mesh lod={} dist_m={:.2f}", lodLevel, distCam);
+													s_lastLoggedLod = lodLevel;
+												}
 												m_pipeline->GetGeometryPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
@@ -507,7 +527,7 @@ namespace engine
 													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 													const engine::RenderState& rs = m_renderStates[readIdx];
 													engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
-													const engine::world::ChunkCoord chunk = engine::world::WorldToChunkCoord(rs.camera.position.x, rs.camera.position.z);
+													const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 													const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
 													const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
 													m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
@@ -762,7 +782,10 @@ namespace engine
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												if (!m_pipeline->GetAutoExposure().IsValid()) return;
-												m_pipeline->GetAutoExposure().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_fgSceneColorHDRWithBloomId, m_vkSwapchain.GetExtent());
+												const uint32_t frameIdx = m_currentFrame % 2u;
+												m_pipeline->GetAutoExposure().Record(
+													m_vkDeviceContext.GetDevice(), cmd, reg,
+													m_fgSceneColorHDRWithBloomId, m_vkSwapchain.GetExtent(), frameIdx);
 											});
 
 										m_frameGraph.addPass("Tonemap",
@@ -1151,7 +1174,7 @@ namespace engine
 	        const float dt    = static_cast<float>(m_time.DeltaSeconds());
 	        const float key   = static_cast<float>(m_cfg.GetDouble("exposure.key", 0.18));
 	        const float speed = static_cast<float>(m_cfg.GetDouble("exposure.speed", 2.0));
-	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed);
+	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, frameIndex);
 	    }
 	
 	    std::fprintf(stderr, "[RENDER] avant vkAcquireNextImageKHR\n"); std::fflush(stderr);

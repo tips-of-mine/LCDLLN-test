@@ -17,7 +17,7 @@ namespace engine::world
 	/// Per-chunk draw decision: use HLOD vs instances, and culled. M09.5.
 	struct ChunkDrawDecision
 	{
-		ChunkCoord coord{ 0, 0 };
+		GlobalChunkCoord coord{ 0, 0 };
 		bool useHlod = false;
 		bool culled = false;
 		float distanceMeters = 0.0f;
@@ -32,7 +32,7 @@ namespace engine::world
 	/// Builds chunk draw list decisions: for each requested chunk, applies frustum + distance culling and HLOD switch by distance.
 	/// \param requestedChunks Pointer to chunk requests (from World::GetPendingChunkRequests().data()).
 	/// \param requestedChunksCount Number of requests (from World::GetPendingChunkRequests().size()).
-	/// \param cameraPosition Zone-local camera position.
+	/// \param cameraPosition Absolute world-space camera position.
 	/// \param frustum View frustum for culling.
 	/// \param hlod HlodRuntime for threshold and culling.
 	/// \param maxDrawDistanceMeters Max distance to draw (0 = no distance cull).
@@ -60,6 +60,10 @@ namespace engine::world
 		/// Beyond threshold we use HLOD; at or below we use individual instances.
 		bool ShouldUseHlod(float distanceMeters) const;
 
+		/// Returns true if we should use HLOD for the given squared distance from camera.
+		/// Uses the threshold squared precomputed at init time to avoid sqrt on hot paths.
+		bool ShouldUseHlodSq(float distSq) const;
+
 		/// Returns the HLOD switch threshold in meters.
 		float GetThresholdMeters() const { return m_thresholdMeters; }
 
@@ -73,5 +77,6 @@ namespace engine::world
 
 	private:
 		float m_thresholdMeters = 200.0f;
+		float m_thresholdSq = 0.0f;
 	};
 }

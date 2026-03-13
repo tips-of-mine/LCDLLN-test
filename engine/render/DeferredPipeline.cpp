@@ -221,25 +221,30 @@ namespace engine::render
 					bcVert.data(), bcVert.size(), bcFrag.data(), bcFrag.size(), 2u);
 		}
 
-		// M08.3: Auto-exposure
+		// M08.6: Auto-exposure histogram
 		std::fprintf(stderr, "[PIPELINE] 12 AutoExposure\n"); std::fflush(stderr);
 		{
-			std::vector<uint32_t> aeComp = loadSpirv("shaders/luminance_reduce.comp.spv");
-			if (!aeComp.empty())
+			std::vector<uint32_t> histogramComp = loadSpirv("shaders/luminance_histogram.comp.spv");
+			std::vector<uint32_t> histogramAvgComp = loadSpirv("shaders/luminance_histogram_avg.comp.spv");
+			if (!histogramComp.empty() && !histogramAvgComp.empty())
 			{
+				const float percentileLow = static_cast<float>(config.GetDouble("exposure.histogram_percentile_low", 0.10));
+				const float percentileHigh = static_cast<float>(config.GetDouble("exposure.histogram_percentile_high", 0.90));
 				if (m_autoExposure.Init(device, physicalDevice, vmaAllocator,
-						aeComp.data(), aeComp.size()))
+						histogramComp.data(), histogramComp.size(),
+						histogramAvgComp.data(), histogramAvgComp.size(),
+						percentileLow, percentileHigh))
 				{
 					LOG_INFO(Render, "[Boot] DeferredPipeline AutoExposure OK");
 				}
 				else
 				{
-					LOG_WARN(Render, "M08.3: AutoExposure init failed — disabled");
+					LOG_WARN(Render, "M08.6: AutoExposure histogram init failed — disabled");
 				}
 			}
 			else
 			{
-				LOG_WARN(Render, "M08.3: AutoExposure shader not found — disabled");
+				LOG_WARN(Render, "M08.6: AutoExposure histogram shaders not found — disabled");
 			}
 		}
 

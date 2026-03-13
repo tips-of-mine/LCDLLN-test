@@ -1,0 +1,49 @@
+#version 450
+
+// M08.6: Build a 256-bin luminance histogram from the HDR scene color.
+// Histogram reset is handled by vkCmdFillBuffer before dispatch.
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler2D texHDR;
+
+layout(set = 0, binding = 1) buffer HistogramBuffer
+{
+    uint histogram[256];
+};
+
+layout(push_constant) uniform PushConstants
+{
+    float percentileLow;
+    float percentileHigh;
+    float logMin;
+    float logMax;
+} pc;
+
+shared uint localHistogram[256];
+
+const float kEpsilon = 1e-5;
+
+void main()
+{
+    uint localIndex = gl_LocalInvocationIndex;
+    localHistogram[localIndex] = 0u;
+    barrier();
+
+    ivec2 sourceSize = textureSize(texHDR, 0);
+    ivec2 reducedSize = max((sourceSize + ivec2(3)) / 4, ivec2(1));
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    if (id.x < reducedSize.x && id.y < reducedSize.y)
+    {
+        vec2 uv = (vec2(id) + vec2(0.5)) / vec2(reducedSize);
+        vec3 color = texture(texHDR, uv).rgb;
+        float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
+        float logLuminance = log2(max(luminance, kEpsilon));
+        float normalized = clamp((logLuminance - pc.logMin) / max(pc.logMax - pc.logMin, 1e-5), 0.0, 1.0);
+        uint bin = uint(clamp(normalized * 255.0, 0.0, 255.0));
+        atomicAdd(localHistogram[bin], 1u);
+    }
+
+    barrier();
+    atomicAdd(histogram[localIndex], localHistogram[localIndex]);
+}

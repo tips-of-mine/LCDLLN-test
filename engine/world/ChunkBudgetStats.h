@@ -24,8 +24,8 @@ namespace engine::world
 		/// Config keys: world.budget_active_drawcalls (default 1000), world.budget_visible_drawcalls (300), world.budget_far_drawcalls (50).
 		void Init(const engine::core::Config& config);
 
-		/// Records one or more draws for the given chunk and ring (call from renderer for each tagged draw).
-		void RecordDraw(ChunkCoord chunkId, ChunkRing ring, uint32_t drawcallCount, uint32_t triangleCount);
+		/// Records one or more draws for the given global chunk and ring (call from renderer for each tagged draw).
+		void RecordDraw(GlobalChunkCoord chunkId, ChunkRing ring, uint32_t drawcallCount, uint32_t triangleCount);
 
 		/// Resets per-ring stats for the next frame. Call at start of frame (e.g. BeginFrame).
 		void ResetPerFrame();

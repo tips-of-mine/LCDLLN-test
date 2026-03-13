@@ -12,13 +12,19 @@ namespace engine::world
 		constexpr int kFarRadius = 5;      // 11x11 (Far HLOD)
 	}
 
-	ChunkCoord World::WorldToChunkCoord(float worldX, float worldZ)
+	GlobalChunkCoord World::WorldToGlobalChunkCoord(float worldX, float worldZ)
 	{
-		const int cx = static_cast<int>(std::floor(worldX / static_cast<float>(kChunkSize)));
-		const int cz = static_cast<int>(std::floor(worldZ / static_cast<float>(kChunkSize)));
-		const int clampedX = std::clamp(cx, 0, kChunksPerZoneAxis - 1);
-		const int clampedZ = std::clamp(cz, 0, kChunksPerZoneAxis - 1);
-		return ChunkCoord{ clampedX, clampedZ };
+		const int32_t cx = static_cast<int32_t>(std::floor(worldX / static_cast<float>(kChunkSize)));
+		const int32_t cz = static_cast<int32_t>(std::floor(worldZ / static_cast<float>(kChunkSize)));
+		return GlobalChunkCoord{ cx, cz };
+	}
+
+	void World::GlobalToZoneAndLocal(GlobalChunkCoord g, ZoneCoord& zone, LocalChunkCoord& local)
+	{
+		zone.x = static_cast<int32_t>(std::floor(static_cast<float>(g.x) / static_cast<float>(kChunksPerZoneAxis)));
+		zone.z = static_cast<int32_t>(std::floor(static_cast<float>(g.z) / static_cast<float>(kChunksPerZoneAxis)));
+		local.x = g.x - zone.x * kChunksPerZoneAxis;
+		local.z = g.z - zone.z * kChunksPerZoneAxis;
 	}
 
 	struct ChunkBounds World::ChunkBounds(ChunkCoord c)
@@ -31,9 +37,9 @@ namespace engine::world
 		return b;
 	}
 
-	void World::Update(const engine::math::Vec3& playerPositionZoneLocal)
+	void World::Update(const engine::math::Vec3& playerPositionWorld)
 	{
-		const ChunkCoord center = WorldToChunkCoord(playerPositionZoneLocal.x, playerPositionZoneLocal.z);
+		const GlobalChunkCoord center = WorldToGlobalChunkCoord(playerPositionWorld.x, playerPositionWorld.z);
 
 		// Hysteresis: only recompute when player has moved to a different chunk.
 		if (m_hasLastCenter && center == m_lastCenterChunk)
@@ -50,8 +56,6 @@ namespace engine::world
 			{
 				const int cx = center.x + dx;
 				const int cz = center.z + dz;
-				if (cx < 0 || cx >= kChunksPerZoneAxis || cz < 0 || cz >= kChunksPerZoneAxis)
-					continue;
 
 				const int dist = std::max(std::abs(dx), std::abs(dz));
 				ChunkRing ring;
@@ -62,7 +66,7 @@ namespace engine::world
 				else
 					ring = ChunkRing::Far;
 
-				m_pendingRequests.push_back(ChunkRequest{ ChunkCoord{ cx, cz }, ring });
+				m_pendingRequests.push_back(ChunkRequest{ GlobalChunkCoord{ cx, cz }, ring });
 			}
 		}
 	}
@@ -72,7 +76,7 @@ namespace engine::world
 		return std::span<const ChunkRequest>(m_pendingRequests.data(), m_pendingRequests.size());
 	}
 
-	ChunkRing World::GetRingForChunk(ChunkCoord chunk) const
+	ChunkRing World::GetRingForChunk(GlobalChunkCoord chunk) const
 	{
 		if (!m_hasLastCenter)
 			return ChunkRing::Far;

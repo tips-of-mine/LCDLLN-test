@@ -2,23 +2,56 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
 namespace engine::render
 {
+	VkShaderModule AutoExposure::CreateShaderModule(VkDevice device, const uint32_t* spirv, size_t wordCount)
+	{
+		if (device == VK_NULL_HANDLE || !spirv || wordCount == 0)
+			return VK_NULL_HANDLE;
+
+		VkShaderModuleCreateInfo smInfo{};
+		smInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		smInfo.codeSize = wordCount * sizeof(uint32_t);
+		smInfo.pCode = spirv;
+
+		VkShaderModule shaderModule = VK_NULL_HANDLE;
+		if (vkCreateShaderModule(device, &smInfo, nullptr, &shaderModule) != VK_SUCCESS)
+			return VK_NULL_HANDLE;
+		return shaderModule;
+	}
+
 	bool AutoExposure::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 		void* vmaAllocator,
-		const uint32_t* compSpirv, size_t compWordCount)
+		const uint32_t* histogramCompSpirv, size_t histogramCompWordCount,
+		const uint32_t* histogramAvgCompSpirv, size_t histogramAvgCompWordCount,
+		float histogramPercentileLow,
+		float histogramPercentileHigh)
 	{
-		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !compSpirv || compWordCount == 0)
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE ||
+			!histogramCompSpirv || histogramCompWordCount == 0 ||
+			!histogramAvgCompSpirv || histogramAvgCompWordCount == 0)
 		{
-			LOG_ERROR(Render, "AutoExposure::Init: invalid parameters");
+			LOG_ERROR(Render, "[AutoExposure] Init FAILED: invalid parameters");
 			return false;
 		}
 
 		m_vmaAllocator = vmaAllocator; // conservé pour compat, non utilisé pour l'alloc actuelle.
-		const VkDeviceSize luminanceBytes = kLuminanceSampleCount * sizeof(float);
+		m_histogramParams.percentileLow  = std::max(0.0f, std::min(histogramPercentileLow, 1.0f));
+		m_histogramParams.percentileHigh = std::max(m_histogramParams.percentileLow, std::min(histogramPercentileHigh, 1.0f));
+		const VkDeviceSize histogramBytes = kHistogramBinCount * sizeof(uint32_t);
+		const VkDeviceSize stagingBytes = sizeof(float);
+
+		if (m_histogramParams.percentileHigh <= m_histogramParams.percentileLow)
+		{
+			LOG_ERROR(Render, "[AutoExposure] Init FAILED: invalid histogram percentiles low={} high={}",
+				m_histogramParams.percentileLow, m_histogramParams.percentileHigh);
+			return false;
+		}
+
 		// Helpers mémoire (comme BrdfLutPass / SpecularPrefilter / StagingAllocator)
 		VkPhysicalDeviceMemoryProperties memProps{};
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
@@ -90,27 +123,35 @@ namespace engine::render
 			return true;
 		};
 
-		// ---------------------------------------------------------------------
-		// Luminance buffer (device local, compute write, transfer src)
-		// ---------------------------------------------------------------------
-		if (!createBuffer(luminanceBytes,
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				m_luminanceBuffer, m_luminanceAlloc))
+		for (uint32_t slot = 0; slot < kAESlots; ++slot)
 		{
-			return false;
-		}
+			// -----------------------------------------------------------------
+			// Histogram buffer (device local, compute read/write, transfer dst for reset)
+			// -----------------------------------------------------------------
+			if (!createBuffer(histogramBytes,
+					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					m_histogramBuffer[slot], m_histogramAlloc[slot]))
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram buffer slot {} creation failed", slot);
+				Destroy(device);
+				return false;
+			}
 
-		// ---------------------------------------------------------------------
-		// Staging buffer (host visible, transfer dst, for readback)
-		// ---------------------------------------------------------------------
-		if (!createBuffer(luminanceBytes,
-				VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				m_stagingBuffer, m_stagingAlloc))
-		{
-			Destroy(device);
-			return false;
+			// -----------------------------------------------------------------
+			// Staging buffer (host visible, compute write, for readback)
+			// -----------------------------------------------------------------
+			if (!createBuffer(stagingBytes,
+					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					m_stagingBuffer[slot], m_stagingAlloc[slot]))
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: staging buffer slot {} creation failed", slot);
+				Destroy(device);
+				return false;
+			}
+
+			LOG_INFO(Render, "[AutoExposure] Slot {} buffers created (histogramBins={})", slot, kHistogramBinCount);
 		}
 
 		// ---------------------------------------------------------------------
@@ -158,27 +199,51 @@ namespace engine::render
 		}
 
 		// ---------------------------------------------------------------------
-		// Descriptor set layout: image sampler + storage buffer
+		// Descriptor set layouts:
+		// - histogram pass: image sampler + histogram buffer
+		// - average pass: histogram buffer + staging output
 		// ---------------------------------------------------------------------
 		{
-			VkDescriptorSetLayoutBinding bindings[2]{};
-			bindings[0].binding = 0;
-			bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			bindings[0].descriptorCount = 1;
-			bindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-			bindings[1].binding = 1;
-			bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-			bindings[1].descriptorCount = 1;
-			bindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			VkDescriptorSetLayoutBinding histogramBindings[2]{};
+			histogramBindings[0].binding = 0;
+			histogramBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			histogramBindings[0].descriptorCount = 1;
+			histogramBindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			histogramBindings[1].binding = 1;
+			histogramBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			histogramBindings[1].descriptorCount = 1;
+			histogramBindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
-			VkDescriptorSetLayoutCreateInfo layoutInfo{};
-			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = 2;
-			layoutInfo.pBindings = bindings;
+			VkDescriptorSetLayoutCreateInfo histogramLayoutInfo{};
+			histogramLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			histogramLayoutInfo.bindingCount = 2;
+			histogramLayoutInfo.pBindings = histogramBindings;
 
-			if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_descriptorSetLayout) != VK_SUCCESS)
+			if (vkCreateDescriptorSetLayout(device, &histogramLayoutInfo, nullptr, &m_histogramDescriptorSetLayout) != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "AutoExposure: vkCreateDescriptorSetLayout failed");
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram descriptor set layout creation failed");
+				Destroy(device);
+				return false;
+			}
+
+			VkDescriptorSetLayoutBinding averageBindings[2]{};
+			averageBindings[0].binding = 0;
+			averageBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			averageBindings[0].descriptorCount = 1;
+			averageBindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			averageBindings[1].binding = 1;
+			averageBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			averageBindings[1].descriptorCount = 1;
+			averageBindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+			VkDescriptorSetLayoutCreateInfo averageLayoutInfo{};
+			averageLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			averageLayoutInfo.bindingCount = 2;
+			averageLayoutInfo.pBindings = averageBindings;
+
+			if (vkCreateDescriptorSetLayout(device, &averageLayoutInfo, nullptr, &m_averageDescriptorSetLayout) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average descriptor set layout creation failed");
 				Destroy(device);
 				return false;
 			}
@@ -187,110 +252,177 @@ namespace engine::render
 		{
 			VkDescriptorPoolSize poolSizes[2]{};
 			poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSizes[0].descriptorCount = 1;
+			poolSizes[0].descriptorCount = kAESlots;
 			poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-			poolSizes[1].descriptorCount = 1;
+			poolSizes[1].descriptorCount = kAESlots * 3u;
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 			poolInfo.poolSizeCount = 2;
 			poolInfo.pPoolSizes = poolSizes;
-			poolInfo.maxSets = 1;
+			poolInfo.maxSets = kAESlots * 2u;
 
 			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "AutoExposure: vkCreateDescriptorPool failed");
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: descriptor pool creation failed");
 				Destroy(device);
 				return false;
 			}
 		}
 
 		{
+			VkDescriptorSetLayout layouts[kAESlots]{};
+			for (uint32_t slot = 0; slot < kAESlots; ++slot)
+				layouts[slot] = m_histogramDescriptorSetLayout;
+
 			VkDescriptorSetAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			allocInfo.descriptorPool = m_descriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &m_descriptorSetLayout;
+			allocInfo.descriptorSetCount = kAESlots;
+			allocInfo.pSetLayouts = layouts;
 
-			if (vkAllocateDescriptorSets(device, &allocInfo, &m_descriptorSet) != VK_SUCCESS)
+			if (vkAllocateDescriptorSets(device, &allocInfo, m_histogramDescriptorSets) != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "AutoExposure: vkAllocateDescriptorSets failed");
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram descriptor set allocation failed");
+				Destroy(device);
+				return false;
+			}
+		}
+
+		{
+			VkDescriptorSetLayout layouts[kAESlots]{};
+			for (uint32_t slot = 0; slot < kAESlots; ++slot)
+				layouts[slot] = m_averageDescriptorSetLayout;
+
+			VkDescriptorSetAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = m_descriptorPool;
+			allocInfo.descriptorSetCount = kAESlots;
+			allocInfo.pSetLayouts = layouts;
+
+			if (vkAllocateDescriptorSets(device, &allocInfo, m_averageDescriptorSets) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average descriptor set allocation failed");
 				Destroy(device);
 				return false;
 			}
 		}
 
 		// ---------------------------------------------------------------------
-		// Pipeline layout (push constant: gridSize uint)
+		// Pipeline layouts
 		// ---------------------------------------------------------------------
 		{
 			VkPushConstantRange pushRange{};
 			pushRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 			pushRange.offset = 0;
-			pushRange.size = sizeof(uint32_t);
+			pushRange.size = sizeof(HistogramPushConstants);
 
-			VkPipelineLayoutCreateInfo plInfo{};
-			plInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			plInfo.setLayoutCount = 1;
-			plInfo.pSetLayouts = &m_descriptorSetLayout;
-			plInfo.pushConstantRangeCount = 1;
-			plInfo.pPushConstantRanges = &pushRange;
+			VkPipelineLayoutCreateInfo histogramPipelineLayoutInfo{};
+			histogramPipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			histogramPipelineLayoutInfo.setLayoutCount = 1;
+			histogramPipelineLayoutInfo.pSetLayouts = &m_histogramDescriptorSetLayout;
+			histogramPipelineLayoutInfo.pushConstantRangeCount = 1;
+			histogramPipelineLayoutInfo.pPushConstantRanges = &pushRange;
 
-			if (vkCreatePipelineLayout(device, &plInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
+			if (vkCreatePipelineLayout(device, &histogramPipelineLayoutInfo, nullptr, &m_histogramPipelineLayout) != VK_SUCCESS)
 			{
-				LOG_ERROR(Render, "AutoExposure: vkCreatePipelineLayout failed");
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram pipeline layout creation failed");
+				Destroy(device);
+				return false;
+			}
+
+			VkPipelineLayoutCreateInfo averagePipelineLayoutInfo{};
+			averagePipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			averagePipelineLayoutInfo.setLayoutCount = 1;
+			averagePipelineLayoutInfo.pSetLayouts = &m_averageDescriptorSetLayout;
+			averagePipelineLayoutInfo.pushConstantRangeCount = 1;
+			averagePipelineLayoutInfo.pPushConstantRanges = &pushRange;
+
+			if (vkCreatePipelineLayout(device, &averagePipelineLayoutInfo, nullptr, &m_averagePipelineLayout) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average pipeline layout creation failed");
 				Destroy(device);
 				return false;
 			}
 		}
 
 		// ---------------------------------------------------------------------
-		// Compute pipeline
+		// Compute pipelines
 		// ---------------------------------------------------------------------
 		{
-			VkShaderModuleCreateInfo smInfo{};
-			smInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			smInfo.codeSize = compWordCount * sizeof(uint32_t);
-			smInfo.pCode = compSpirv;
-
-			VkShaderModule compModule = VK_NULL_HANDLE;
-			if (vkCreateShaderModule(device, &smInfo, nullptr, &compModule) != VK_SUCCESS)
+			VkShaderModule histogramModule = CreateShaderModule(device, histogramCompSpirv, histogramCompWordCount);
+			if (histogramModule == VK_NULL_HANDLE)
 			{
-				LOG_ERROR(Render, "AutoExposure: vkCreateShaderModule failed");
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram shader module creation failed");
 				Destroy(device);
 				return false;
 			}
 
-			VkPipelineShaderStageCreateInfo stageInfo{};
-			stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			stageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-			stageInfo.module = compModule;
-			stageInfo.pName = "main";
-
-			VkComputePipelineCreateInfo cpInfo{};
-			cpInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-			cpInfo.stage = stageInfo;
-			cpInfo.layout = m_pipelineLayout;
-
-			if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &cpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+			VkShaderModule averageModule = CreateShaderModule(device, histogramAvgCompSpirv, histogramAvgCompWordCount);
+			if (averageModule == VK_NULL_HANDLE)
 			{
-				LOG_ERROR(Render, "AutoExposure: vkCreateComputePipelines failed");
-				vkDestroyShaderModule(device, compModule, nullptr);
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average shader module creation failed");
+				vkDestroyShaderModule(device, histogramModule, nullptr);
 				Destroy(device);
 				return false;
 			}
-			vkDestroyShaderModule(device, compModule, nullptr);
+
+			VkPipelineShaderStageCreateInfo histogramStageInfo{};
+			histogramStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			histogramStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+			histogramStageInfo.module = histogramModule;
+			histogramStageInfo.pName = "main";
+
+			VkComputePipelineCreateInfo histogramPipelineInfo{};
+			histogramPipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+			histogramPipelineInfo.stage = histogramStageInfo;
+			histogramPipelineInfo.layout = m_histogramPipelineLayout;
+
+			if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &histogramPipelineInfo, nullptr, &m_histogramPipeline) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram compute pipeline creation failed");
+				vkDestroyShaderModule(device, averageModule, nullptr);
+				vkDestroyShaderModule(device, histogramModule, nullptr);
+				Destroy(device);
+				return false;
+			}
+
+			VkPipelineShaderStageCreateInfo averageStageInfo{};
+			averageStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			averageStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+			averageStageInfo.module = averageModule;
+			averageStageInfo.pName = "main";
+
+			VkComputePipelineCreateInfo averagePipelineInfo{};
+			averagePipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+			averagePipelineInfo.stage = averageStageInfo;
+			averagePipelineInfo.layout = m_averagePipelineLayout;
+
+			if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &averagePipelineInfo, nullptr, &m_averagePipeline) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average compute pipeline creation failed");
+				vkDestroyShaderModule(device, averageModule, nullptr);
+				vkDestroyShaderModule(device, histogramModule, nullptr);
+				Destroy(device);
+				return false;
+			}
+
+			vkDestroyShaderModule(device, averageModule, nullptr);
+			vkDestroyShaderModule(device, histogramModule, nullptr);
 		}
 
-		// Descriptor set is updated each frame in Record with current image view and luminance buffer.
+		LOG_INFO(Render, "[AutoExposure] Init OK (slots={}, percentileLow={}, percentileHigh={})",
+			kAESlots, m_histogramParams.percentileLow, m_histogramParams.percentileHigh);
 		return true;
 	}
 
 	void AutoExposure::Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
 		ResourceId idSceneColorHDR,
-		VkExtent2D /*extent*/)
+		VkExtent2D extent,
+		uint32_t frameIndex)
 	{
 		if (!IsValid()) return;
+		const uint32_t slot = frameIndex % kAESlots;
 
 		VkImageView hdrView = registry.getImageView(idSceneColorHDR);
 		if (hdrView == VK_NULL_HANDLE) return;
@@ -300,74 +432,126 @@ namespace engine::render
 		imgInfo.imageView = hdrView;
 		imgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		VkDescriptorBufferInfo bufInfo{};
-		bufInfo.buffer = m_luminanceBuffer;
-		bufInfo.offset = 0;
-		bufInfo.range = kLuminanceSampleCount * sizeof(float);
+		VkDescriptorBufferInfo histogramBufferInfo{};
+		histogramBufferInfo.buffer = m_histogramBuffer[slot];
+		histogramBufferInfo.offset = 0;
+		histogramBufferInfo.range = kHistogramBinCount * sizeof(uint32_t);
 
-		VkWriteDescriptorSet writes[2]{};
-		writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writes[0].dstSet = m_descriptorSet;
-		writes[0].dstBinding = 0;
-		writes[0].dstArrayElement = 0;
-		writes[0].descriptorCount = 1;
-		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writes[0].pImageInfo = &imgInfo;
-		writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writes[1].dstSet = m_descriptorSet;
-		writes[1].dstBinding = 1;
-		writes[1].dstArrayElement = 0;
-		writes[1].descriptorCount = 1;
-		writes[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		writes[1].pBufferInfo = &bufInfo;
+		VkDescriptorBufferInfo stagingBufferInfo{};
+		stagingBufferInfo.buffer = m_stagingBuffer[slot];
+		stagingBufferInfo.offset = 0;
+		stagingBufferInfo.range = sizeof(float);
 
-		vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
+		VkWriteDescriptorSet histogramWrites[2]{};
+		histogramWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		histogramWrites[0].dstSet = m_histogramDescriptorSets[slot];
+		histogramWrites[0].dstBinding = 0;
+		histogramWrites[0].dstArrayElement = 0;
+		histogramWrites[0].descriptorCount = 1;
+		histogramWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		histogramWrites[0].pImageInfo = &imgInfo;
+		histogramWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		histogramWrites[1].dstSet = m_histogramDescriptorSets[slot];
+		histogramWrites[1].dstBinding = 1;
+		histogramWrites[1].dstArrayElement = 0;
+		histogramWrites[1].descriptorCount = 1;
+		histogramWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		histogramWrites[1].pBufferInfo = &histogramBufferInfo;
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline);
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
+		VkWriteDescriptorSet averageWrites[2]{};
+		averageWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		averageWrites[0].dstSet = m_averageDescriptorSets[slot];
+		averageWrites[0].dstBinding = 0;
+		averageWrites[0].dstArrayElement = 0;
+		averageWrites[0].descriptorCount = 1;
+		averageWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		averageWrites[0].pBufferInfo = &histogramBufferInfo;
+		averageWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		averageWrites[1].dstSet = m_averageDescriptorSets[slot];
+		averageWrites[1].dstBinding = 1;
+		averageWrites[1].dstArrayElement = 0;
+		averageWrites[1].descriptorCount = 1;
+		averageWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		averageWrites[1].pBufferInfo = &stagingBufferInfo;
 
-		uint32_t gridSize = kLuminanceGridSize;
-		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(uint32_t), &gridSize);
+		VkWriteDescriptorSet writes[4]{ histogramWrites[0], histogramWrites[1], averageWrites[0], averageWrites[1] };
+		vkUpdateDescriptorSets(device, 4, writes, 0, nullptr);
 
-		vkCmdDispatch(cmd, kLuminanceGridSize / 8, kLuminanceGridSize / 8, 1);
+		vkCmdFillBuffer(cmd, m_histogramBuffer[slot], 0, histogramBufferInfo.range, 0u);
 
-		// Barrier: compute write -> transfer read
-		VkMemoryBarrier memBarrier{};
-		memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-		memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		VkBufferMemoryBarrier resetBarrier{};
+		resetBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		resetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		resetBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+		resetBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		resetBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		resetBarrier.buffer = m_histogramBuffer[slot];
+		resetBarrier.offset = 0;
+		resetBarrier.size = histogramBufferInfo.range;
+		vkCmdPipelineBarrier(cmd,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			0, 0, nullptr, 1, &resetBarrier, 0, nullptr);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_histogramPipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_histogramPipelineLayout, 0, 1, &m_histogramDescriptorSets[slot], 0, nullptr);
+		vkCmdPushConstants(cmd, m_histogramPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(HistogramPushConstants), &m_histogramParams);
+
+		const uint32_t reducedWidth = std::max(1u, (extent.width + 3u) / 4u);
+		const uint32_t reducedHeight = std::max(1u, (extent.height + 3u) / 4u);
+		vkCmdDispatch(cmd, (reducedWidth + 15u) / 16u, (reducedHeight + 15u) / 16u, 1u);
+
+		VkBufferMemoryBarrier histogramBarrier{};
+		histogramBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		histogramBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		histogramBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		histogramBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		histogramBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		histogramBarrier.buffer = m_histogramBuffer[slot];
+		histogramBarrier.offset = 0;
+		histogramBarrier.size = histogramBufferInfo.range;
 		vkCmdPipelineBarrier(cmd,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			0, 0, nullptr, 1, &histogramBarrier, 0, nullptr);
 
-		VkBufferCopy copyRegion{};
-		copyRegion.srcOffset = 0;
-		copyRegion.dstOffset = 0;
-		copyRegion.size = kLuminanceSampleCount * sizeof(float);
-		vkCmdCopyBuffer(cmd, m_luminanceBuffer, m_stagingBuffer, 1, &copyRegion);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_averagePipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_averagePipelineLayout, 0, 1, &m_averageDescriptorSets[slot], 0, nullptr);
+		vkCmdPushConstants(cmd, m_averagePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(HistogramPushConstants), &m_histogramParams);
+		vkCmdDispatch(cmd, 1u, 1u, 1u);
+
+		VkBufferMemoryBarrier stagingBarrier{};
+		stagingBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		stagingBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		stagingBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+		stagingBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		stagingBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		stagingBarrier.buffer = m_stagingBuffer[slot];
+		stagingBarrier.offset = 0;
+		stagingBarrier.size = stagingBufferInfo.range;
+		vkCmdPipelineBarrier(cmd,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_PIPELINE_STAGE_HOST_BIT,
+			0, 0, nullptr, 1, &stagingBarrier, 0, nullptr);
 	}
 
-	void AutoExposure::Update(VkDevice device, float dt, float key, float speed)
+	void AutoExposure::Update(VkDevice device, float dt, float key, float speed, uint32_t frameIndex)
 	{
-		if (device == VK_NULL_HANDLE || m_stagingAlloc == nullptr)
+		const uint32_t slot = (frameIndex + 1u) % kAESlots;
+		if (device == VK_NULL_HANDLE || m_stagingAlloc[slot] == nullptr)
 			return;
 
-		VkDeviceMemory stgMem = reinterpret_cast<VkDeviceMemory>(m_stagingAlloc);
+		VkDeviceMemory stgMem = reinterpret_cast<VkDeviceMemory>(m_stagingAlloc[slot]);
 		void* ptr = nullptr;
 		if (vkMapMemory(device, stgMem, 0, VK_WHOLE_SIZE, 0, &ptr) != VK_SUCCESS)
 			return;
 
-		const float* samples = static_cast<const float*>(ptr);
-		double sum = 0.0;
-		for (uint32_t i = 0; i < kLuminanceSampleCount; ++i)
-			sum += static_cast<double>(samples[i]);
+		const float avgLog = *static_cast<const float*>(ptr);
 		vkUnmapMemory(device, stgMem);
 
-		float avgLog = static_cast<float>(sum / static_cast<double>(kLuminanceSampleCount));
-		float logAvgLuminance = std::exp(avgLog);
+		float avgLuminance = std::exp2(avgLog);
 		const float kEpsilon = 1e-6f;
-		float targetExposure = key / (logAvgLuminance + kEpsilon);
+		float targetExposure = key / (avgLuminance + kEpsilon);
 		targetExposure = std::max(0.001f, std::min(10.0f, targetExposure));
 
 		// exposure = lerp(prev, target, 1 - exp(-dt*speed))
@@ -391,32 +575,41 @@ namespace engine::render
 	{
 		if (device == VK_NULL_HANDLE) return;
 
-		if (m_pipeline != VK_NULL_HANDLE)
-			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
-		if (m_pipelineLayout != VK_NULL_HANDLE)
-			{ vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
+		if (m_averagePipeline != VK_NULL_HANDLE)
+			{ vkDestroyPipeline(device, m_averagePipeline, nullptr); m_averagePipeline = VK_NULL_HANDLE; }
+		if (m_histogramPipeline != VK_NULL_HANDLE)
+			{ vkDestroyPipeline(device, m_histogramPipeline, nullptr); m_histogramPipeline = VK_NULL_HANDLE; }
+		if (m_averagePipelineLayout != VK_NULL_HANDLE)
+			{ vkDestroyPipelineLayout(device, m_averagePipelineLayout, nullptr); m_averagePipelineLayout = VK_NULL_HANDLE; }
+		if (m_histogramPipelineLayout != VK_NULL_HANDLE)
+			{ vkDestroyPipelineLayout(device, m_histogramPipelineLayout, nullptr); m_histogramPipelineLayout = VK_NULL_HANDLE; }
 		if (m_descriptorPool != VK_NULL_HANDLE)
 			{ vkDestroyDescriptorPool(device, m_descriptorPool, nullptr); m_descriptorPool = VK_NULL_HANDLE; }
-		if (m_descriptorSetLayout != VK_NULL_HANDLE)
-			{ vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }
+		if (m_averageDescriptorSetLayout != VK_NULL_HANDLE)
+			{ vkDestroyDescriptorSetLayout(device, m_averageDescriptorSetLayout, nullptr); m_averageDescriptorSetLayout = VK_NULL_HANDLE; }
+		if (m_histogramDescriptorSetLayout != VK_NULL_HANDLE)
+			{ vkDestroyDescriptorSetLayout(device, m_histogramDescriptorSetLayout, nullptr); m_histogramDescriptorSetLayout = VK_NULL_HANDLE; }
 		if (m_sampler != VK_NULL_HANDLE)
 			{ vkDestroySampler(device, m_sampler, nullptr); m_sampler = VK_NULL_HANDLE; }
 
-		if (m_luminanceBuffer != VK_NULL_HANDLE && m_luminanceAlloc != nullptr)
+		for (uint32_t slot = 0; slot < kAESlots; ++slot)
 		{
-			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_luminanceAlloc);
-			vkDestroyBuffer(device, m_luminanceBuffer, nullptr);
-			vkFreeMemory(device, mem, nullptr);
-			m_luminanceBuffer = VK_NULL_HANDLE;
-			m_luminanceAlloc = nullptr;
-		}
-		if (m_stagingBuffer != VK_NULL_HANDLE && m_stagingAlloc != nullptr)
-		{
-			VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_stagingAlloc);
-			vkDestroyBuffer(device, m_stagingBuffer, nullptr);
-			vkFreeMemory(device, mem, nullptr);
-			m_stagingBuffer = VK_NULL_HANDLE;
-			m_stagingAlloc = nullptr;
+			if (m_histogramBuffer[slot] != VK_NULL_HANDLE && m_histogramAlloc[slot] != nullptr)
+			{
+				VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_histogramAlloc[slot]);
+				vkDestroyBuffer(device, m_histogramBuffer[slot], nullptr);
+				vkFreeMemory(device, mem, nullptr);
+				m_histogramBuffer[slot] = VK_NULL_HANDLE;
+				m_histogramAlloc[slot] = nullptr;
+			}
+			if (m_stagingBuffer[slot] != VK_NULL_HANDLE && m_stagingAlloc[slot] != nullptr)
+			{
+				VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_stagingAlloc[slot]);
+				vkDestroyBuffer(device, m_stagingBuffer[slot], nullptr);
+				vkFreeMemory(device, mem, nullptr);
+				m_stagingBuffer[slot] = VK_NULL_HANDLE;
+				m_stagingAlloc[slot] = nullptr;
+			}
 		}
 		if (m_exposureBuffer != VK_NULL_HANDLE && m_exposureAlloc != nullptr)
 		{
@@ -427,5 +620,6 @@ namespace engine::render
 			m_exposureAlloc = nullptr;
 		}
 		m_vmaAllocator = nullptr;
+		LOG_INFO(Render, "[AutoExposure] Destroyed");
 	}
 }

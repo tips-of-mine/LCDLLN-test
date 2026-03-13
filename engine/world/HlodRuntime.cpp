@@ -1,5 +1,6 @@
 #include "engine/world/HlodRuntime.h"
 #include "engine/core/Config.h"
+#include "engine/core/Log.h"
 #include "engine/math/Frustum.h"
 #include "engine/world/WorldModel.h"
 
@@ -16,12 +17,22 @@ namespace engine::world
 	{
 		m_thresholdMeters = static_cast<float>(config.GetDouble("world.hlod_distance_threshold_m", 200.0));
 		if (m_thresholdMeters < 0.0f)
+		{
+			LOG_WARN(World, "[HlodRuntime] Init invalid threshold {}; fallback to 200", m_thresholdMeters);
 			m_thresholdMeters = 200.0f;
+		}
+		m_thresholdSq = m_thresholdMeters * m_thresholdMeters;
+		LOG_INFO(World, "[HlodRuntime] Init OK (threshold_m={})", m_thresholdMeters);
 	}
 
 	bool HlodRuntime::ShouldUseHlod(float distanceMeters) const
 	{
 		return distanceMeters > m_thresholdMeters;
+	}
+
+	bool HlodRuntime::ShouldUseHlodSq(float distSq) const
+	{
+		return distSq > m_thresholdSq;
 	}
 
 	bool HlodRuntime::IsVisible(const engine::math::Frustum& frustum,
@@ -68,14 +79,14 @@ namespace engine::world
 			float dx = cx - cameraPosition.x;
 			float dy = cy - cameraPosition.y;
 			float dz = cz - cameraPosition.z;
-			float distanceMeters = std::sqrt(dx * dx + dy * dy + dz * dz);
+			float distSq = dx * dx + dy * dy + dz * dz;
 			bool visible = HlodRuntime::IsVisible(frustum, aabbMin, aabbMax, cameraPosition, maxDrawDistanceMeters);
-			bool useHlod = hlod.ShouldUseHlod(distanceMeters);
+			bool useHlod = hlod.ShouldUseHlodSq(distSq);
 			ChunkDrawDecision dec;
 			dec.coord = req.chunkId;
 			dec.useHlod = useHlod;
 			dec.culled = !visible;
-			dec.distanceMeters = distanceMeters;
+			dec.distanceMeters = dec.culled ? 0.0f : std::sqrt(distSq);
 			decisionsOut.push_back(dec);
 			if (dec.culled)
 				++countCulled;

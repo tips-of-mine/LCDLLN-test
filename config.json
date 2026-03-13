@@ -30,7 +30,9 @@
     },
     "exposure": {
         "key": 0.18,
-        "speed": 2.0
+        "speed": 2.0,
+        "histogram_percentile_low": 0.10,
+        "histogram_percentile_high": 0.90
     },
     "world": {
         "max_draw_distance_m": 0.0
@@ -39,14 +41,3 @@
         "content": ""
     }
 }
-```
-
----
-
-### Résumé de la chaîne de bugs
-```
-config.json manquant
-    → Config::Load() plante
-        → Engine() ne démarre pas
-            → Log::Init() jamais appelé
-                → aucun fichier de log créé

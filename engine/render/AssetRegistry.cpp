@@ -11,12 +11,13 @@
 namespace engine::render
 {
 	// --- Mesh/Texture binary format (no external deps) ---
-	// .mesh: magic "MESH" (4), version (4), numVertices (4), numIndices (4), vertices (numVertices*32), indices (numIndices*4)
+	// .mesh: magic bytes "MESH" (4), version (4), numVertices (4), numIndices (4), vertices (numVertices*32), indices (numIndices*4)
 	//        vertex = position float3, normal float3, uv float2 = 32 bytes
-	// .texr: magic "TEXR" (4), width (4), height (4), sRGB (4), pixels (width*height*4) RGBA
+	// .texr: magic bytes "TEXR" (4), width (4), height (4), sRGB (4), pixels (width*height*4) RGBA
 
-	static constexpr uint32_t kMeshMagic = 0x4D455348u; // "MESH"
-	static constexpr uint32_t kTexrMagic = 0x54455852u; // "TEXR"
+	// Values as read into a uint32_t on little-endian platforms from ASCII byte headers.
+	static constexpr uint32_t kMeshMagic = 0x4853454Du; // bytes "MESH"
+	static constexpr uint32_t kTexrMagic = 0x52584554u; // bytes "TEXR"
 	static constexpr size_t kMeshVertexStride = 32u;    // 3+3+2 floats
 
 	// --- Handles ---

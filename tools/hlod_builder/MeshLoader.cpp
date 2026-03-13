@@ -7,7 +7,7 @@ namespace tools::hlod_builder
 {
 	namespace
 	{
-		constexpr uint32_t kMeshMagic = 0x4D455348u; // "MESH"
+		constexpr uint32_t kMeshMagic = 0x4853454Du; // bytes "MESH"
 		constexpr size_t kVertexStride = 32u;
 	}
 

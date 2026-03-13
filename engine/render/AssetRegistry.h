@@ -20,14 +20,15 @@ namespace engine::render
 	/// Maximum LOD levels in the chain (M09.3).
 	constexpr uint32_t kMeshLodLevelCount = 4;
 
-	/// GPU mesh data: vertex and index buffers (owned by registry). Allocations are VMA (opaque void*).
+	/// GPU mesh data: vertex and index buffers (owned by registry). Allocations store
+	/// VkDeviceMemory as opaque void* for compatibility with older VMA-based code.
 	/// M09.3: optional LOD chain — when lodLevelCount > 0, each LOD has indexOffset/indexCount in the same index buffer.
 	struct MeshAsset
 	{
 		VkBuffer vertexBuffer = VK_NULL_HANDLE;
 		VkBuffer indexBuffer = VK_NULL_HANDLE;
-		void* vertexAlloc = nullptr; ///< VmaAllocation
-		void* indexAlloc = nullptr; ///< VmaAllocation
+		void* vertexAlloc = nullptr; ///< VkDeviceMemory
+		void* indexAlloc = nullptr; ///< VkDeviceMemory
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
 
@@ -54,12 +55,13 @@ namespace engine::render
 		}
 	};
 
-	/// GPU texture data: image and view (owned by registry). Allocation is VMA (opaque void*).
+	/// GPU texture data: image and view (owned by registry). Allocation stores
+	/// VkDeviceMemory as opaque void* for compatibility with older VMA-based code.
 	struct TextureAsset
 	{
 		VkImage image = VK_NULL_HANDLE;
 		VkImageView view = VK_NULL_HANDLE;
-		void* allocation = nullptr; ///< VmaAllocation
+		void* allocation = nullptr; ///< VkDeviceMemory
 		uint32_t width = 0;
 		uint32_t height = 0;
 	};

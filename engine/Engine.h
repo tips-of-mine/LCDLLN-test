@@ -3,6 +3,7 @@
 #include "engine/core/Config.h"
 #include "engine/core/Time.h"
 #include "engine/core/memory/FrameArena.h"
+#include "engine/audio/AudioEngine.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
 #include "engine/render/AssetRegistry.h"
@@ -167,6 +168,7 @@ namespace engine
 		engine::render::TextureHandle m_colorGradingLutHandle;
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;
+		engine::audio::AudioEngine m_audioEngine;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

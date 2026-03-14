@@ -369,6 +369,14 @@ namespace engine
 
 										m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
 										std::fprintf(stderr, "[ENGINE] AH: assetRegistry OK\n"); std::fflush(stderr);
+										if (!m_audioEngine.Init(m_cfg))
+										{
+											LOG_WARN(Core, "[Engine] AudioEngine init failed - audio disabled");
+										}
+										else
+										{
+											m_audioEngine.SetZone(0);
+										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
 										{
 											engine::render::DecalComponent decal{};
@@ -1182,6 +1190,7 @@ namespace engine
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
 				m_pipeline.reset();
 			}
+			m_audioEngine.Shutdown();
 			m_decalSystem.Shutdown();
 			m_assetRegistry.Destroy();
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
@@ -1274,6 +1283,17 @@ namespace engine
 		if (m_width > 0 && m_height > 0)
 			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
 
+		engine::math::Vec3 listenerVelocity{};
+		if (dt > 0.0)
+		{
+			const float invDt = static_cast<float>(1.0 / dt);
+			listenerVelocity = engine::math::Vec3(
+				(out.camera.position.x - readState.camera.position.x) * invDt,
+				(out.camera.position.y - readState.camera.position.y) * invDt,
+				(out.camera.position.z - readState.camera.position.z) * invDt);
+		}
+		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
+		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();

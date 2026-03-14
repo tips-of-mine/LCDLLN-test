@@ -42,6 +42,7 @@ add_library(engine_core
   engine/core/jobs/JobSystem.cpp
   engine/core/Log.cpp
   engine/core/Time.cpp
+  engine/audio/AudioEngine.cpp
   engine/client/CombatHud.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp

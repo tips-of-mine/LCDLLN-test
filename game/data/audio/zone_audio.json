@@ -1,0 +1,41 @@
+{
+  "buses": [
+    {
+      "id": "SFX",
+      "volume": 1.0
+    },
+    {
+      "id": "Music",
+      "volume": 0.8
+    },
+    {
+      "id": "UI",
+      "volume": 0.9
+    }
+  ],
+  "sounds": [
+    {
+      "id": "zone_0_ambience",
+      "path": "audio/zone_0_ambience.wav",
+      "bus": "Music",
+      "minDistance": 8.0,
+      "maxDistance": 96.0,
+      "loop": true
+    },
+    {
+      "id": "zone_0_sfx_test",
+      "path": "audio/zone_0_sfx_test.wav",
+      "bus": "SFX",
+      "minDistance": 2.0,
+      "maxDistance": 32.0,
+      "loop": false
+    }
+  ],
+  "zones": [
+    {
+      "zoneId": 0,
+      "ambienceSoundId": "zone_0_ambience",
+      "position": [0.0, 0.0, 0.0]
+    }
+  ]
+}

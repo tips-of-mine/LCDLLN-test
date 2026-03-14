@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/server/CharacterPersistence.h"
 #include "engine/core/Config.h"
 #include "engine/server/ReplicationTypes.h"
 #include "engine/server/SpatialPartition.h"
@@ -8,11 +9,45 @@
 #include "engine/server/ZoneTransitions.h"
 
 #include <cstdint>
+#include <cstddef>
+#include <span>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 namespace engine::server
 {
+	/// Minimal mob AI states required by the authoritative aggro ticket.
+	enum class MobAiState : uint8_t
+	{
+		Idle = 0,
+		Patrol = 1,
+		Aggro = 2,
+		Return = 3
+	};
+
+	/// One threat contribution stored on the mob authoritative table.
+	struct ThreatEntry
+	{
+		EntityId entityId = 0;
+		uint32_t threat = 0;
+	};
+
+	/// Visibility mode applied to one authoritative loot bag.
+	enum class LootVisibility : uint8_t
+	{
+		Owner = 0,
+		Public = 1
+	};
+
+	/// One row loaded from the loot table data file.
+	struct LootTableEntry
+	{
+		uint32_t sourceArchetypeId = 0;
+		ItemStack item{};
+		LootVisibility visibility = LootVisibility::Owner;
+	};
+
 	/// One connected client tracked by endpoint and assigned server id.
 	struct ConnectedClient
 	{
@@ -23,6 +58,7 @@ namespace engine::server
 		uint32_t archetypeId = 1;
 		uint32_t lastInputSequence = 0;
 		uint32_t helloNonce = 0;
+		uint32_t persistenceCharacterKey = 0;
 		float positionMetersX = 0.0f;
 		float positionMetersY = 0.0f;
 		float positionMetersZ = 0.0f;
@@ -39,6 +75,7 @@ namespace engine::server
 		std::vector<CellCoord> interestCells;
 		std::vector<EntityId> interestEntityIds;
 		std::vector<EntityId> replicatedEntityIds;
+		std::vector<ItemStack> inventory;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -57,6 +94,39 @@ namespace engine::server
 		uint32_t stateFlags = 0;
 		StatsComponent stats{};
 		CombatComponent combat{};
+		float homePositionMetersX = 0.0f;
+		float homePositionMetersY = 0.0f;
+		float homePositionMetersZ = 0.0f;
+		float patrolTargetMetersX = 0.0f;
+		float patrolTargetMetersZ = 0.0f;
+		float leashDistanceMeters = 0.0f;
+		float moveSpeedMetersPerSecond = 0.0f;
+		MobAiState aiState = MobAiState::Idle;
+		EntityId aggroTargetEntityId = 0;
+		uint32_t nextAiTick = 0;
+		uint32_t nextPatrolTick = 0;
+		bool patrolForward = true;
+		std::vector<ThreatEntry> threatTable;
+		bool hasSpawnedLoot = false;
+	};
+
+	/// Minimal authoritative loot bag spawned from a mob death.
+	struct LootBagEntity
+	{
+		EntityId entityId = 0;
+		uint32_t zoneId = 1;
+		uint32_t archetypeId = 0;
+		float positionMetersX = 0.0f;
+		float positionMetersY = 0.0f;
+		float positionMetersZ = 0.0f;
+		float yawRadians = 0.0f;
+		float velocityMetersPerSecondX = 0.0f;
+		float velocityMetersPerSecondY = 0.0f;
+		float velocityMetersPerSecondZ = 0.0f;
+		uint32_t stateFlags = 0;
+		LootVisibility visibility = LootVisibility::Owner;
+		EntityId ownerEntityId = 0;
+		std::vector<ItemStack> items;
 	};
 
 	/// Headless authoritative server skeleton with fixed ticks, replication and minimal combat.
@@ -109,6 +179,27 @@ namespace engine::server
 		/// Seed the minimal authoritative combat entities required by the ticket.
 		bool InitCombatMobs();
 
+		/// Resolve the autosave cadence required by the persistence ticket.
+		uint32_t ResolveCharacterAutosaveIntervalTicks() const;
+
+		/// Persist every connected character when the autosave timer elapses.
+		void MaybeAutosaveCharacters();
+
+		/// Persist one connected character to the current runtime store.
+		void SaveConnectedClient(const ConnectedClient& client, std::string_view reason);
+
+		/// Load the authoritative loot table data required by the ticket.
+		bool InitLootTables();
+
+		/// Update the mob AI state machine at a reduced fixed cadence.
+		void UpdateMobAi();
+
+		/// Advance one mob through the authoritative AI state machine.
+		void UpdateMobAi(MobEntity& mob);
+
+		/// Return the number of server ticks between two AI updates.
+		uint32_t ResolveMobAiIntervalTicks() const;
+
 		/// Build and send empty snapshots according to the snapshot cadence.
 		void MaybeSendSnapshots();
 
@@ -120,6 +211,39 @@ namespace engine::server
 
 		/// Validate one attack request, apply damage and broadcast the authoritative event.
 		void HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId);
+
+		/// Validate one pickup request, update the inventory and despawn the bag.
+		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);
+
+		/// Update one mob threat table from an authoritative combat event.
+		void UpdateThreatFromCombatEvent(const CombatEventMessage& message);
+
+		/// Spawn one authoritative loot bag from a dead mob using the loaded loot tables.
+		void SpawnLootBagForMob(const MobEntity& mob, EntityId ownerEntityId);
+
+		/// Refresh the mob aggro target from the current threat table.
+		void RefreshMobAggroTarget(MobEntity& mob);
+
+		/// Move one mob toward a target point and update its replicated transform.
+		bool MoveMobTowards(MobEntity& mob, float targetPositionX, float targetPositionZ);
+
+		/// Synchronize one mob position with the zone spatial partition.
+		bool UpdateMobSpatialState(MobEntity& mob);
+
+		/// Transition one mob to a new authoritative AI state.
+		void SetMobAiState(MobEntity& mob, MobAiState newState);
+
+		/// Clear one mob threat table and active aggro target.
+		void ResetMobThreat(MobEntity& mob);
+
+		/// Apply one mob attack against its current target when in range.
+		bool TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target);
+
+		/// Add one item stack to the player's authoritative inventory.
+		void AddItemToInventory(ConnectedClient& client, const ItemStack& item);
+
+		/// Send one inventory delta after a successful pickup.
+		bool SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items);
 
 		/// Refresh spawn/despawn replication for every connected client.
 		void RefreshReplication();
@@ -135,6 +259,9 @@ namespace engine::server
 
 		/// Convert one replicated mob to the minimal replicated entity state.
 		EntityState BuildEntityState(const MobEntity& mob) const;
+
+		/// Convert one replicated loot bag to the minimal replicated entity state.
+		EntityState BuildEntityState(const LootBagEntity& lootBag) const;
 
 		/// Fill a spawn payload for a replicated player or mob entity.
 		bool TryBuildSpawnEntity(EntityId entityId, SpawnEntity& outEntity) const;
@@ -173,6 +300,9 @@ namespace engine::server
 		const ConnectedClient* FindClient(const Endpoint& endpoint) const;
 
 		/// Find a connected client by replicated entity id.
+		ConnectedClient* FindClientByEntityId(EntityId entityId);
+
+		/// Find a connected client by replicated entity id.
 		const ConnectedClient* FindClientByEntityId(EntityId entityId) const;
 
 		/// Find a mob by replicated entity id.
@@ -181,24 +311,36 @@ namespace engine::server
 		/// Find a mob by replicated entity id.
 		const MobEntity* FindMobByEntityId(EntityId entityId) const;
 
+		/// Find a loot bag by replicated entity id.
+		LootBagEntity* FindLootBagByEntityId(EntityId entityId);
+
+		/// Find a loot bag by replicated entity id.
+		const LootBagEntity* FindLootBagByEntityId(EntityId entityId) const;
+
 		/// Return the cell grid attached to the requested zone, creating it on first use.
 		CellGrid* GetOrCreateZoneGrid(uint32_t zoneId);
 
 		engine::core::Config m_config;
+		CharacterPersistenceStore m_characterPersistence;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;
 		std::vector<Datagram> m_pendingDatagrams;
 		std::vector<ConnectedClient> m_clients;
 		std::vector<MobEntity> m_mobs;
+		std::vector<LootBagEntity> m_lootBags;
+		std::vector<LootTableEntry> m_lootTableEntries;
 		std::unordered_map<uint32_t, CellGrid> m_zoneGrids;
 		std::vector<EntityId> m_relevantEntityScratch;
 		std::vector<SnapshotEntity> m_snapshotEntitiesScratch;
+		EntityId m_nextServerEntityId = 0x200000000ull;
 		uint16_t m_listenPort = 0;
 		uint16_t m_tickHz = 0;
 		uint16_t m_snapshotHz = 0;
 		uint32_t m_nextClientId = 1;
 		uint32_t m_currentTick = 0;
+		uint32_t m_characterAutosaveIntervalTicks = 0;
+		uint32_t m_nextCharacterAutosaveTick = 0;
 		uint32_t m_snapshotAccumulator = 0;
 		bool m_initialized = false;
 		bool m_stopRequested = false;

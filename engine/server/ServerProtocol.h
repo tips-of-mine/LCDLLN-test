@@ -23,7 +23,9 @@ namespace engine::server
 		Despawn = 6,
 		ZoneChange = 7,
 		AttackRequest = 8,
-		CombatEvent = 9
+		CombatEvent = 9,
+		PickupRequest = 10,
+		InventoryDelta = 11
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -89,6 +91,19 @@ namespace engine::server
 		uint32_t targetStateFlags = 0;
 	};
 
+	/// Client request asking the authoritative server to pick up one loot bag entity.
+	struct PickupRequestMessage
+	{
+		uint32_t clientId = 0;
+		EntityId lootBagEntityId = 0;
+	};
+
+	/// Inventory delta emitted after a successful authoritative pickup.
+	struct InventoryDeltaMessage
+	{
+		uint32_t clientId = 0;
+	};
+
 	/// Decode a hello packet and validate the protocol header.
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage);
 
@@ -118,4 +133,10 @@ namespace engine::server
 
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);
+
+	/// Decode a pickup request packet and validate the protocol header.
+	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage);
+
+	/// Encode an inventory delta packet with the protocol header.
+	std::vector<std::byte> EncodeInventoryDelta(const InventoryDeltaMessage& message, std::span<const ItemStack> items);
 }

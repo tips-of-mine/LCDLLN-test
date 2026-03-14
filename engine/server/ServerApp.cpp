@@ -1,11 +1,15 @@
 #include "engine/server/ServerApp.h"
 
 #include "engine/core/Log.h"
+#include "engine/platform/FileSystem.h"
 #include "engine/server/ServerProtocol.h"
 
 #include <algorithm>
 #include <cmath>
+#include <sstream>
 #include <span>
+#include <string>
+#include <string_view>
 #include <utility>
 
 namespace engine::server
@@ -16,9 +20,15 @@ namespace engine::server
 		inline constexpr uint32_t kDefaultPlayerHealth = 100;
 		inline constexpr uint32_t kDefaultMobHealth = 60;
 		inline constexpr uint32_t kDefaultPlayerDamage = 10;
+		inline constexpr uint32_t kDefaultMobDamage = 6;
 		inline constexpr uint32_t kDefaultMobArchetypeId = 100;
+		inline constexpr uint32_t kDefaultLootBagArchetypeId = 200;
 		inline constexpr EntityId kDefaultMobEntityId = 0x100000000ull;
 		inline constexpr float kDefaultAttackRangeMeters = 4.0f;
+		inline constexpr float kDefaultMobLeashDistanceMeters = 24.0f;
+		inline constexpr float kDefaultMobMoveSpeedMetersPerSecond = 3.0f;
+		inline constexpr float kDefaultMobPatrolDistanceMeters = 6.0f;
+		inline constexpr float kDefaultLootPickupRangeMeters = 3.0f;
 		inline constexpr float kDefaultMobSpawnX = 128.0f;
 		inline constexpr float kDefaultMobSpawnY = 0.0f;
 		inline constexpr float kDefaultMobSpawnZ = 128.0f;
@@ -61,10 +71,47 @@ namespace engine::server
 			const float dz = az - bz;
 			return (dx * dx) + (dz * dz);
 		}
+
+		/// Return a readable name for one mob AI state.
+		const char* GetMobAiStateName(MobAiState state)
+		{
+			switch (state)
+			{
+			case MobAiState::Idle:
+				return "Idle";
+			case MobAiState::Patrol:
+				return "Patrol";
+			case MobAiState::Aggro:
+				return "Aggro";
+			case MobAiState::Return:
+				return "Return";
+			}
+
+			return "Idle";
+		}
+
+		/// Parse the loot visibility token found in the data file.
+		bool TryParseLootVisibility(std::string_view text, LootVisibility& outVisibility)
+		{
+			if (text == "owner")
+			{
+				outVisibility = LootVisibility::Owner;
+				return true;
+			}
+
+			if (text == "public")
+			{
+				outVisibility = LootVisibility::Public;
+				return true;
+			}
+
+			return false;
+		}
 	}
 
 	ServerApp::ServerApp(engine::core::Config config)
 		: m_config(std::move(config))
+		, m_characterPersistence(m_config)
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -87,12 +134,17 @@ namespace engine::server
 		m_snapshotHz = ResolveSnapshotHz(m_tickHz);
 		m_nextClientId = 1;
 		m_currentTick = 0;
+		m_characterAutosaveIntervalTicks = 0;
+		m_nextCharacterAutosaveTick = 0;
 		m_snapshotAccumulator = 0;
 		m_stopRequested = false;
 		m_clients.clear();
 		m_mobs.clear();
+		m_lootBags.clear();
+		m_lootTableEntries.clear();
 		m_pendingDatagrams.clear();
 		m_zoneGrids.clear();
+		m_nextServerEntityId = 0x200000000ull;
 		if (!m_zoneTransitionMap.Init())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: zone transition map startup failed");
@@ -111,6 +163,23 @@ namespace engine::server
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: tick scheduler startup failed");
 			m_transport.Shutdown();
 			m_zoneTransitionMap.Shutdown();
+			return false;
+		}
+
+		if (!m_characterPersistence.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: character persistence startup failed");
+			Shutdown();
+			return false;
+		}
+
+		m_characterAutosaveIntervalTicks = ResolveCharacterAutosaveIntervalTicks();
+		m_nextCharacterAutosaveTick = m_characterAutosaveIntervalTicks;
+
+		if (!InitLootTables())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: loot tables startup failed");
+			Shutdown();
 			return false;
 		}
 
@@ -165,6 +234,8 @@ namespace engine::server
 			&& !m_transport.IsValid()
 			&& m_clients.empty()
 			&& m_mobs.empty()
+			&& m_lootBags.empty()
+			&& m_lootTableEntries.empty()
 			&& m_zoneGrids.empty()
 			&& m_pendingDatagrams.empty())
 		{
@@ -174,6 +245,7 @@ namespace engine::server
 		m_initialized = false;
 		for (const ConnectedClient& client : m_clients)
 		{
+			SaveConnectedClient(client, "shutdown");
 			if (client.hasCell)
 			{
 				const auto zoneIt = m_zoneGrids.find(client.zoneId);
@@ -193,6 +265,16 @@ namespace engine::server
 			}
 		}
 		m_mobs.clear();
+		for (const LootBagEntity& lootBag : m_lootBags)
+		{
+			const auto zoneIt = m_zoneGrids.find(lootBag.zoneId);
+			if (zoneIt != m_zoneGrids.end())
+			{
+				(void)zoneIt->second.RemoveEntity(lootBag.entityId);
+			}
+		}
+		m_lootBags.clear();
+		m_lootTableEntries.clear();
 		for (auto& [zoneId, zoneGrid] : m_zoneGrids)
 		{
 			(void)zoneId;
@@ -203,6 +285,7 @@ namespace engine::server
 		m_tickScheduler.Shutdown();
 		m_transport.Shutdown();
 		m_zoneTransitionMap.Shutdown();
+		m_characterPersistence.Shutdown();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -232,6 +315,13 @@ namespace engine::server
 			LOG_WARN(Core, "[ServerApp] server.snapshot_hz={} adjusted to {}", configuredSnapshotHz, clampedSnapshotHz);
 		}
 		return clampedSnapshotHz;
+	}
+
+	uint32_t ServerApp::ResolveCharacterAutosaveIntervalTicks() const
+	{
+		const uint32_t autosaveSeconds = static_cast<uint32_t>(std::max<int64_t>(1, m_config.GetInt("server.character_autosave_seconds", 30)));
+		const uint32_t autosaveTicks = autosaveSeconds * static_cast<uint32_t>(m_tickHz);
+		return std::max<uint32_t>(1u, autosaveTicks);
 	}
 
 	void ServerApp::ProcessIncomingPackets()
@@ -268,6 +358,13 @@ namespace engine::server
 			return;
 		}
 
+		PickupRequestMessage pickupRequest{};
+		if (DecodePickupRequest(packetBytes, pickupRequest))
+		{
+			HandlePickupRequest(datagram.endpoint, pickupRequest.clientId, pickupRequest.lootBagEntityId);
+			return;
+		}
+
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
@@ -291,10 +388,38 @@ namespace engine::server
 		client.zoneId = 1;
 		client.entityId = static_cast<EntityId>(client.clientId);
 		client.helloNonce = helloNonce;
+		client.persistenceCharacterKey = helloNonce != 0 ? helloNonce : client.clientId;
 		client.stats.currentHealth = kDefaultPlayerHealth;
 		client.stats.maxHealth = kDefaultPlayerHealth;
 		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
 		ConnectedClient& acceptedClient = m_clients.emplace_back(std::move(client));
+		PersistedCharacterState persistedState{};
+		if (m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState))
+		{
+			acceptedClient.zoneId = persistedState.zoneId;
+			acceptedClient.positionMetersX = persistedState.positionMetersX;
+			acceptedClient.positionMetersY = persistedState.positionMetersY;
+			acceptedClient.positionMetersZ = persistedState.positionMetersZ;
+			acceptedClient.stats = persistedState.stats;
+			acceptedClient.inventory = persistedState.inventory;
+			acceptedClient.hasReplicatedState = true;
+			LOG_INFO(Net,
+				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={})",
+				acceptedClient.clientId,
+				acceptedClient.persistenceCharacterKey,
+				acceptedClient.zoneId,
+				acceptedClient.inventory.size());
+		}
+		else
+		{
+			acceptedClient.hasReplicatedState = true;
+			LOG_INFO(Net,
+				"[ServerApp] Character state defaults active (client_id={}, character_key={})",
+				acceptedClient.clientId,
+				acceptedClient.persistenceCharacterKey);
+		}
+
+		UpdateClientInterest(acceptedClient);
 		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
 			acceptedClient.clientId,
 			acceptedClient.entityId,
@@ -353,6 +478,7 @@ namespace engine::server
 	{
 		++m_currentTick;
 		Simulate();
+		MaybeAutosaveCharacters();
 		RefreshReplication();
 		MaybeSendSnapshots();
 		if ((m_currentTick % m_tickHz) == 0)
@@ -367,6 +493,7 @@ namespace engine::server
 
 	void ServerApp::Simulate()
 	{
+		UpdateMobAi();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -390,7 +517,17 @@ namespace engine::server
 		mob.positionMetersZ = kDefaultMobSpawnZ;
 		mob.stats.currentHealth = kDefaultMobHealth;
 		mob.stats.maxHealth = kDefaultMobHealth;
-		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
+		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		mob.homePositionMetersX = mob.positionMetersX;
+		mob.homePositionMetersY = mob.positionMetersY;
+		mob.homePositionMetersZ = mob.positionMetersZ;
+		mob.patrolTargetMetersX = mob.positionMetersX + kDefaultMobPatrolDistanceMeters;
+		mob.patrolTargetMetersZ = mob.positionMetersZ;
+		mob.leashDistanceMeters = static_cast<float>(m_config.GetDouble("server.mob_leash_distance_meters", kDefaultMobLeashDistanceMeters));
+		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		mob.aiState = MobAiState::Idle;
+		mob.nextAiTick = ResolveMobAiIntervalTicks();
+		mob.nextPatrolTick = ResolveMobAiIntervalTicks() * 2u;
 
 		CellCoord cell{};
 		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, cell))
@@ -401,15 +538,243 @@ namespace engine::server
 
 		m_mobs.push_back(mob);
 		LOG_INFO(Net,
-			"[ServerApp] Combat mob ready (entity_id={}, zone_id={}, archetype_id={}, hp={}, pos=({:.2f}, {:.2f}, {:.2f}))",
+			"[ServerApp] Combat mob ready (entity_id={}, zone_id={}, archetype_id={}, hp={}, leash_m={:.2f}, pos=({:.2f}, {:.2f}, {:.2f}))",
 			mob.entityId,
 			mob.zoneId,
 			mob.archetypeId,
 			mob.stats.currentHealth,
+			mob.leashDistanceMeters,
 			mob.positionMetersX,
 			mob.positionMetersY,
 			mob.positionMetersZ);
 		return true;
+	}
+
+	bool ServerApp::InitLootTables()
+	{
+		m_lootTableEntries.clear();
+
+		const std::string relativePath = m_config.GetString("server.loot_table_path", "loot/loot_tables.txt");
+		const std::string lootTableText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
+		if (lootTableText.empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: empty or missing file (path={})", relativePath);
+			return false;
+		}
+
+		std::istringstream input(lootTableText);
+		std::string line;
+		uint32_t lineNumber = 0;
+		while (std::getline(input, line))
+		{
+			++lineNumber;
+			std::string_view lineView(line);
+			if (lineView.empty() || lineView.front() == '#')
+			{
+				continue;
+			}
+
+			std::istringstream lineStream(line);
+			LootTableEntry entry{};
+			std::string visibilityToken;
+			if (!(lineStream >> entry.sourceArchetypeId >> entry.item.itemId >> entry.item.quantity >> visibilityToken))
+			{
+				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: invalid line {} in {}", lineNumber, relativePath);
+				m_lootTableEntries.clear();
+				return false;
+			}
+
+			if (!TryParseLootVisibility(visibilityToken, entry.visibility))
+			{
+				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: invalid visibility '{}' at line {}", visibilityToken, lineNumber);
+				m_lootTableEntries.clear();
+				return false;
+			}
+
+			if (entry.sourceArchetypeId == 0 || entry.item.itemId == 0 || entry.item.quantity == 0)
+			{
+				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: zero value at line {}", lineNumber);
+				m_lootTableEntries.clear();
+				return false;
+			}
+
+			m_lootTableEntries.push_back(entry);
+		}
+
+		if (m_lootTableEntries.empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: no entries loaded (path={})", relativePath);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Loot table init OK (path={}, entries={})", relativePath, m_lootTableEntries.size());
+		return true;
+	}
+
+	void ServerApp::MaybeAutosaveCharacters()
+	{
+		if (m_clients.empty() || m_characterAutosaveIntervalTicks == 0 || m_currentTick < m_nextCharacterAutosaveTick)
+		{
+			return;
+		}
+
+		for (const ConnectedClient& client : m_clients)
+		{
+			SaveConnectedClient(client, "autosave");
+		}
+
+		m_nextCharacterAutosaveTick = m_currentTick + m_characterAutosaveIntervalTicks;
+		LOG_INFO(Net, "[ServerApp] Character autosave complete (clients={}, next_tick={})",
+			m_clients.size(),
+			m_nextCharacterAutosaveTick);
+	}
+
+	void ServerApp::SaveConnectedClient(const ConnectedClient& client, std::string_view reason)
+	{
+		if (client.persistenceCharacterKey == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] Character save skipped: missing persistence key (client_id={}, reason={})",
+				client.clientId,
+				reason);
+			return;
+		}
+
+		PersistedCharacterState state{};
+		state.characterKey = client.persistenceCharacterKey;
+		state.zoneId = client.zoneId;
+		state.positionMetersX = client.positionMetersX;
+		state.positionMetersY = client.positionMetersY;
+		state.positionMetersZ = client.positionMetersZ;
+		state.stats = client.stats;
+		state.inventory = client.inventory;
+		if (!m_characterPersistence.SaveCharacter(state))
+		{
+			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
+				client.clientId,
+				client.persistenceCharacterKey,
+				reason);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Character save OK (client_id={}, character_key={}, reason={})",
+			client.clientId,
+			client.persistenceCharacterKey,
+			reason);
+	}
+
+	uint32_t ServerApp::ResolveMobAiIntervalTicks() const
+	{
+		const uint32_t configuredAiHz = static_cast<uint32_t>(std::clamp<int64_t>(
+			m_config.GetInt("server.mob_ai_hz", 10),
+			1,
+			static_cast<int64_t>(m_tickHz)));
+		return std::max<uint32_t>(1u, static_cast<uint32_t>(m_tickHz) / configuredAiHz);
+	}
+
+	void ServerApp::UpdateMobAi()
+	{
+		if (m_mobs.empty())
+		{
+			return;
+		}
+
+		for (MobEntity& mob : m_mobs)
+		{
+			if ((mob.stateFlags & kEntityStateDead) != 0u)
+			{
+				continue;
+			}
+
+			if (m_currentTick < mob.nextAiTick)
+			{
+				continue;
+			}
+
+			mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+			UpdateMobAi(mob);
+		}
+	}
+
+	void ServerApp::UpdateMobAi(MobEntity& mob)
+	{
+		RefreshMobAggroTarget(mob);
+		if (mob.aggroTargetEntityId != 0)
+		{
+			SetMobAiState(mob, MobAiState::Aggro);
+		}
+
+		switch (mob.aiState)
+		{
+		case MobAiState::Idle:
+			if (mob.aggroTargetEntityId == 0 && m_currentTick >= mob.nextPatrolTick)
+			{
+				SetMobAiState(mob, MobAiState::Patrol);
+			}
+			break;
+
+		case MobAiState::Patrol:
+		{
+			const float targetX = mob.patrolForward ? mob.patrolTargetMetersX : mob.homePositionMetersX;
+			const float targetZ = mob.patrolForward ? mob.patrolTargetMetersZ : mob.homePositionMetersZ;
+			if (MoveMobTowards(mob, targetX, targetZ))
+			{
+				mob.patrolForward = !mob.patrolForward;
+				mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+				SetMobAiState(mob, MobAiState::Idle);
+			}
+			break;
+		}
+
+		case MobAiState::Aggro:
+		{
+			ConnectedClient* target = FindClientByEntityId(mob.aggroTargetEntityId);
+			if (target == nullptr
+				|| !target->hasReplicatedState
+				|| target->zoneId != mob.zoneId
+				|| target->stats.currentHealth == 0
+				|| (target->stateFlags & kEntityStateDead) != 0u)
+			{
+				LOG_INFO(Net, "[ServerApp] Mob aggro target lost (mob_entity_id={}, target_entity_id={})",
+					mob.entityId,
+					mob.aggroTargetEntityId);
+				ResetMobThreat(mob);
+				SetMobAiState(mob, MobAiState::Return);
+				break;
+			}
+
+			const float homeDistanceSquared = DistanceSquaredXZ(
+				target->positionMetersX,
+				target->positionMetersZ,
+				mob.homePositionMetersX,
+				mob.homePositionMetersZ);
+			const float leashDistanceSquared = mob.leashDistanceMeters * mob.leashDistanceMeters;
+			if (homeDistanceSquared > leashDistanceSquared)
+			{
+				LOG_INFO(Net, "[ServerApp] Mob leash triggered (mob_entity_id={}, target_entity_id={}, distance_sq={:.2f}, leash_sq={:.2f})",
+					mob.entityId,
+					target->entityId,
+					homeDistanceSquared,
+					leashDistanceSquared);
+				ResetMobThreat(mob);
+				SetMobAiState(mob, MobAiState::Return);
+				break;
+			}
+
+			if (!TryMobAttackPlayer(mob, *target))
+			{
+				(void)MoveMobTowards(mob, target->positionMetersX, target->positionMetersZ);
+			}
+			break;
+		}
+
+		case MobAiState::Return:
+			if (MoveMobTowards(mob, mob.homePositionMetersX, mob.homePositionMetersZ))
+			{
+				mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+				SetMobAiState(mob, MobAiState::Idle);
+			}
+			break;
+		}
 	}
 
 	void ServerApp::MaybeSendSnapshots()
@@ -512,6 +877,7 @@ namespace engine::server
 			client.positionMetersX,
 			client.positionMetersY,
 			client.positionMetersZ);
+		SaveConnectedClient(client, "zone_transition");
 		(void)SendZoneChange(client, zoneChange);
 	}
 
@@ -614,6 +980,11 @@ namespace engine::server
 		{
 			target->stateFlags |= kEntityStateDead;
 			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target->entityId, client->entityId);
+			if (!target->hasSpawnedLoot)
+			{
+				target->hasSpawnedLoot = true;
+				SpawnLootBagForMob(*target, client->entityId);
+			}
 		}
 
 		CombatEventMessage combatEvent{};
@@ -632,6 +1003,445 @@ namespace engine::server
 			combatEvent.targetMaxHealth,
 			client->combat.nextAttackTick);
 		BroadcastCombatEvent(combatEvent);
+	}
+
+	void ServerApp::HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		LootBagEntity* lootBag = FindLootBagByEntityId(lootBagEntityId);
+		if (lootBag == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: invalid loot bag (client_id={}, loot_bag_entity_id={})",
+				client->clientId,
+				lootBagEntityId);
+			return;
+		}
+
+		if (lootBag->zoneId != client->zoneId)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: cross-zone bag (client_id={}, client_zone={}, bag_zone={})",
+				client->clientId,
+				client->zoneId,
+				lootBag->zoneId);
+			return;
+		}
+
+		if (lootBag->visibility == LootVisibility::Owner && lootBag->ownerEntityId != client->entityId)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: ownership mismatch (client_id={}, loot_bag_entity_id={}, owner_entity_id={})",
+				client->clientId,
+				lootBag->entityId,
+				lootBag->ownerEntityId);
+			return;
+		}
+
+		const float pickupRangeMeters = static_cast<float>(m_config.GetDouble("server.loot_pickup_range_meters", kDefaultLootPickupRangeMeters));
+		const float distanceSquared = DistanceSquaredXZ(
+			client->positionMetersX,
+			client->positionMetersZ,
+			lootBag->positionMetersX,
+			lootBag->positionMetersZ);
+		const float pickupRangeSquared = pickupRangeMeters * pickupRangeMeters;
+		if (distanceSquared > pickupRangeSquared)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: loot bag out of range (client_id={}, loot_bag_entity_id={}, distance_sq={:.2f}, range_sq={:.2f})",
+				client->clientId,
+				lootBag->entityId,
+				distanceSquared,
+				pickupRangeSquared);
+			return;
+		}
+
+		if (lootBag->items.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: empty loot bag (client_id={}, loot_bag_entity_id={})",
+				client->clientId,
+				lootBag->entityId);
+			return;
+		}
+
+		const std::vector<ItemStack> pickedItems = lootBag->items;
+		for (const ItemStack& item : pickedItems)
+		{
+			AddItemToInventory(*client, item);
+		}
+
+		if (CellGrid* zoneGrid = GetOrCreateZoneGrid(lootBag->zoneId); zoneGrid != nullptr)
+		{
+			(void)zoneGrid->RemoveEntity(lootBag->entityId);
+		}
+		m_lootBags.erase(
+			std::remove_if(
+				m_lootBags.begin(),
+				m_lootBags.end(),
+				[lootBagEntityId](const LootBagEntity& lootBagEntry)
+				{
+					return lootBagEntry.entityId == lootBagEntityId;
+				}),
+			m_lootBags.end());
+
+		LOG_INFO(Net, "[ServerApp] Loot bag picked up (client_id={}, loot_bag_entity_id={}, item_count={})",
+			client->clientId,
+			lootBagEntityId,
+			pickedItems.size());
+		SaveConnectedClient(*client, "pickup");
+		(void)SendInventoryDelta(*client, pickedItems);
+	}
+
+	void ServerApp::SpawnLootBagForMob(const MobEntity& mob, EntityId ownerEntityId)
+	{
+		std::vector<ItemStack> droppedItems;
+		LootVisibility visibility = LootVisibility::Owner;
+		bool foundLoot = false;
+		for (const LootTableEntry& entry : m_lootTableEntries)
+		{
+			if (entry.sourceArchetypeId != mob.archetypeId)
+			{
+				continue;
+			}
+
+			if (!foundLoot)
+			{
+				visibility = entry.visibility;
+				foundLoot = true;
+			}
+			else if (visibility != entry.visibility)
+			{
+				LOG_WARN(Net, "[ServerApp] Loot bag spawn ignored mixed visibility entries (mob_entity_id={}, archetype_id={})",
+					mob.entityId,
+					mob.archetypeId);
+				return;
+			}
+
+			droppedItems.push_back(entry.item);
+		}
+
+		if (!foundLoot)
+		{
+			LOG_WARN(Net, "[ServerApp] Loot bag spawn skipped: no loot table entry (mob_entity_id={}, archetype_id={})",
+				mob.entityId,
+				mob.archetypeId);
+			return;
+		}
+
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(mob.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot bag spawn FAILED: zone grid unavailable (mob_entity_id={}, zone_id={})",
+				mob.entityId,
+				mob.zoneId);
+			return;
+		}
+
+		LootBagEntity lootBag{};
+		lootBag.entityId = m_nextServerEntityId++;
+		lootBag.zoneId = mob.zoneId;
+		lootBag.archetypeId = kDefaultLootBagArchetypeId;
+		lootBag.positionMetersX = mob.positionMetersX;
+		lootBag.positionMetersY = mob.positionMetersY;
+		lootBag.positionMetersZ = mob.positionMetersZ;
+		lootBag.visibility = visibility;
+		lootBag.ownerEntityId = visibility == LootVisibility::Owner ? ownerEntityId : 0;
+		lootBag.items = droppedItems;
+
+		CellCoord cell{};
+		if (!zoneGrid->UpsertEntity(lootBag.entityId, lootBag.positionMetersX, lootBag.positionMetersZ, cell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot bag spawn FAILED: spatial insert failed (loot_bag_entity_id={})", lootBag.entityId);
+			return;
+		}
+
+		m_lootBags.push_back(lootBag);
+		LOG_INFO(Net, "[ServerApp] Loot bag spawned (loot_bag_entity_id={}, mob_entity_id={}, owner_entity_id={}, item_count={}, visibility={})",
+			lootBag.entityId,
+			mob.entityId,
+			lootBag.ownerEntityId,
+			lootBag.items.size(),
+			lootBag.visibility == LootVisibility::Owner ? "owner" : "public");
+	}
+
+	void ServerApp::UpdateThreatFromCombatEvent(const CombatEventMessage& message)
+	{
+		MobEntity* targetMob = FindMobByEntityId(message.targetEntityId);
+		if (targetMob == nullptr || message.damage == 0 || (targetMob->stateFlags & kEntityStateDead) != 0u)
+		{
+			return;
+		}
+
+		const ConnectedClient* attacker = FindClientByEntityId(message.attackerEntityId);
+		if (attacker == nullptr)
+		{
+			return;
+		}
+
+		for (ThreatEntry& entry : targetMob->threatTable)
+		{
+			if (entry.entityId == attacker->entityId)
+			{
+				entry.threat += message.damage;
+				LOG_INFO(Net, "[ServerApp] Threat updated (mob_entity_id={}, attacker_entity_id={}, threat={})",
+					targetMob->entityId,
+					attacker->entityId,
+					entry.threat);
+				RefreshMobAggroTarget(*targetMob);
+				if (targetMob->aggroTargetEntityId != 0)
+				{
+					SetMobAiState(*targetMob, MobAiState::Aggro);
+				}
+				return;
+			}
+		}
+
+		ThreatEntry entry{};
+		entry.entityId = attacker->entityId;
+		entry.threat = message.damage;
+		targetMob->threatTable.push_back(entry);
+		LOG_INFO(Net, "[ServerApp] Threat added (mob_entity_id={}, attacker_entity_id={}, threat={})",
+			targetMob->entityId,
+			attacker->entityId,
+			entry.threat);
+		RefreshMobAggroTarget(*targetMob);
+		if (targetMob->aggroTargetEntityId != 0)
+		{
+			SetMobAiState(*targetMob, MobAiState::Aggro);
+		}
+	}
+
+	void ServerApp::RefreshMobAggroTarget(MobEntity& mob)
+	{
+		mob.threatTable.erase(
+			std::remove_if(
+				mob.threatTable.begin(),
+				mob.threatTable.end(),
+				[this, &mob](const ThreatEntry& entry)
+				{
+					const ConnectedClient* target = FindClientByEntityId(entry.entityId);
+					return target == nullptr
+						|| !target->hasReplicatedState
+						|| target->zoneId != mob.zoneId
+						|| target->stats.currentHealth == 0
+						|| (target->stateFlags & kEntityStateDead) != 0u
+						|| entry.threat == 0;
+				}),
+			mob.threatTable.end());
+
+		EntityId bestEntityId = 0;
+		uint32_t bestThreat = 0;
+		for (const ThreatEntry& entry : mob.threatTable)
+		{
+			if (entry.threat > bestThreat)
+			{
+				bestThreat = entry.threat;
+				bestEntityId = entry.entityId;
+			}
+		}
+
+		if (mob.aggroTargetEntityId != bestEntityId)
+		{
+			LOG_INFO(Net, "[ServerApp] Mob target updated (mob_entity_id={}, target_entity_id={}, threat={})",
+				mob.entityId,
+				bestEntityId,
+				bestThreat);
+			mob.aggroTargetEntityId = bestEntityId;
+		}
+	}
+
+	bool ServerApp::MoveMobTowards(MobEntity& mob, float targetPositionX, float targetPositionZ)
+	{
+		const float dx = targetPositionX - mob.positionMetersX;
+		const float dz = targetPositionZ - mob.positionMetersZ;
+		const float distanceSquared = (dx * dx) + (dz * dz);
+		if (distanceSquared <= 0.0001f)
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			return true;
+		}
+
+		const uint32_t intervalTicks = ResolveMobAiIntervalTicks();
+		const float simulationDt = static_cast<float>(intervalTicks) / static_cast<float>(m_tickHz);
+		const float maxStep = mob.moveSpeedMetersPerSecond * simulationDt;
+		const float distance = std::sqrt(distanceSquared);
+		if (distance <= maxStep)
+		{
+			mob.velocityMetersPerSecondX = dx / simulationDt;
+			mob.velocityMetersPerSecondZ = dz / simulationDt;
+			mob.positionMetersX = targetPositionX;
+			mob.positionMetersZ = targetPositionZ;
+			mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+			return UpdateMobSpatialState(mob);
+		}
+
+		const float stepScale = maxStep / distance;
+		mob.velocityMetersPerSecondX = (dx * stepScale) / simulationDt;
+		mob.velocityMetersPerSecondZ = (dz * stepScale) / simulationDt;
+		mob.positionMetersX += dx * stepScale;
+		mob.positionMetersZ += dz * stepScale;
+		mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+		return UpdateMobSpatialState(mob);
+	}
+
+	bool ServerApp::UpdateMobSpatialState(MobEntity& mob)
+	{
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(mob.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Mob spatial update FAILED: zone grid unavailable (mob_entity_id={}, zone_id={})",
+				mob.entityId,
+				mob.zoneId);
+			return false;
+		}
+
+		CellCoord cell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, cell))
+		{
+			LOG_WARN(Net, "[ServerApp] Mob spatial update skipped (mob_entity_id={}, pos=({:.2f}, {:.2f}))",
+				mob.entityId,
+				mob.positionMetersX,
+				mob.positionMetersZ);
+			return false;
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] Mob spatial update OK (mob_entity_id={}, cell={}, {})",
+			mob.entityId,
+			cell.x,
+			cell.z);
+		return true;
+	}
+
+	void ServerApp::SetMobAiState(MobEntity& mob, MobAiState newState)
+	{
+		if (mob.aiState == newState)
+		{
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Mob state changed (mob_entity_id={}, {} -> {})",
+			mob.entityId,
+			GetMobAiStateName(mob.aiState),
+			GetMobAiStateName(newState));
+		mob.aiState = newState;
+	}
+
+	void ServerApp::ResetMobThreat(MobEntity& mob)
+	{
+		const size_t clearedCount = mob.threatTable.size();
+		mob.threatTable.clear();
+		mob.aggroTargetEntityId = 0;
+		LOG_INFO(Net, "[ServerApp] Mob threat reset (mob_entity_id={}, cleared_entries={})",
+			mob.entityId,
+			clearedCount);
+	}
+
+	bool ServerApp::TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target)
+	{
+		if (m_currentTick < mob.combat.nextAttackTick)
+		{
+			return false;
+		}
+
+		const float distanceSquared = DistanceSquaredXZ(
+			mob.positionMetersX,
+			mob.positionMetersZ,
+			target.positionMetersX,
+			target.positionMetersZ);
+		const float attackRangeSquared = mob.combat.attackRangeMeters * mob.combat.attackRangeMeters;
+		if (distanceSquared > attackRangeSquared)
+		{
+			return false;
+		}
+
+		const uint32_t appliedDamage = std::min(mob.combat.damagePerHit, target.stats.currentHealth);
+		if (appliedDamage == 0)
+		{
+			return false;
+		}
+
+		mob.combat.nextAttackTick = m_currentTick + mob.combat.cooldownTicks;
+		target.stats.currentHealth -= appliedDamage;
+		if (target.stats.currentHealth == 0)
+		{
+			target.stateFlags |= kEntityStateDead;
+			LOG_INFO(Net, "[ServerApp] Player died (entity_id={}, attacker_entity_id={})",
+				target.entityId,
+				mob.entityId);
+			SaveConnectedClient(target, "player_death");
+		}
+
+		CombatEventMessage combatEvent{};
+		combatEvent.attackerEntityId = mob.entityId;
+		combatEvent.targetEntityId = target.entityId;
+		combatEvent.damage = appliedDamage;
+		combatEvent.targetCurrentHealth = target.stats.currentHealth;
+		combatEvent.targetMaxHealth = target.stats.maxHealth;
+		combatEvent.targetStateFlags = target.stateFlags;
+		LOG_INFO(Net,
+			"[ServerApp] Mob attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
+			combatEvent.attackerEntityId,
+			combatEvent.targetEntityId,
+			combatEvent.damage,
+			combatEvent.targetCurrentHealth,
+			combatEvent.targetMaxHealth,
+			mob.combat.nextAttackTick);
+		BroadcastCombatEvent(combatEvent);
+		return true;
+	}
+
+	void ServerApp::AddItemToInventory(ConnectedClient& client, const ItemStack& item)
+	{
+		for (ItemStack& inventoryItem : client.inventory)
+		{
+			if (inventoryItem.itemId == item.itemId)
+			{
+				inventoryItem.quantity += item.quantity;
+				LOG_INFO(Net, "[ServerApp] Inventory stack updated (client_id={}, item_id={}, quantity={})",
+					client.clientId,
+					item.itemId,
+					inventoryItem.quantity);
+				return;
+			}
+		}
+
+		client.inventory.push_back(item);
+		LOG_INFO(Net, "[ServerApp] Inventory item added (client_id={}, item_id={}, quantity={})",
+			client.clientId,
+			item.itemId,
+			item.quantity);
+	}
+
+	bool ServerApp::SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items)
+	{
+		InventoryDeltaMessage message{};
+		message.clientId = receiver.clientId;
+		const std::vector<std::byte> packet = EncodeInventoryDelta(message, items);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] InventoryDelta send failed (client_id={}, item_count={})",
+				receiver.clientId,
+				items.size());
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] InventoryDelta sent (client_id={}, item_count={})",
+			receiver.clientId,
+			items.size());
+		return true;
 	}
 
 	void ServerApp::RefreshReplication()
@@ -693,6 +1503,16 @@ namespace engine::server
 			if (FindMobByEntityId(entityId) != nullptr)
 			{
 				outEntityIds.push_back(entityId);
+				continue;
+			}
+
+			const LootBagEntity* lootBag = FindLootBagByEntityId(entityId);
+			if (lootBag != nullptr)
+			{
+				if (lootBag->visibility == LootVisibility::Public || lootBag->ownerEntityId == client.entityId)
+				{
+					outEntityIds.push_back(entityId);
+				}
 			}
 		}
 	}
@@ -729,6 +1549,22 @@ namespace engine::server
 		return state;
 	}
 
+	EntityState ServerApp::BuildEntityState(const LootBagEntity& lootBag) const
+	{
+		EntityState state{};
+		state.positionX = lootBag.positionMetersX;
+		state.positionY = lootBag.positionMetersY;
+		state.positionZ = lootBag.positionMetersZ;
+		state.yawRadians = lootBag.yawRadians;
+		state.velocityX = lootBag.velocityMetersPerSecondX;
+		state.velocityY = lootBag.velocityMetersPerSecondY;
+		state.velocityZ = lootBag.velocityMetersPerSecondZ;
+		state.currentHealth = 0;
+		state.maxHealth = 0;
+		state.stateFlags = lootBag.stateFlags;
+		return state;
+	}
+
 	bool ServerApp::TryBuildSpawnEntity(EntityId entityId, SpawnEntity& outEntity) const
 	{
 		if (const ConnectedClient* client = FindClientByEntityId(entityId))
@@ -744,6 +1580,14 @@ namespace engine::server
 			outEntity.entityId = mob->entityId;
 			outEntity.archetypeId = mob->archetypeId;
 			outEntity.state = BuildEntityState(*mob);
+			return true;
+		}
+
+		if (const LootBagEntity* lootBag = FindLootBagByEntityId(entityId))
+		{
+			outEntity.entityId = lootBag->entityId;
+			outEntity.archetypeId = lootBag->archetypeId;
+			outEntity.state = BuildEntityState(*lootBag);
 			return true;
 		}
 
@@ -767,6 +1611,13 @@ namespace engine::server
 			return true;
 		}
 
+		if (const LootBagEntity* lootBag = FindLootBagByEntityId(entityId))
+		{
+			outEntity.entityId = lootBag->entityId;
+			outEntity.state = BuildEntityState(*lootBag);
+			return true;
+		}
+
 		LOG_WARN(Net, "[ServerApp] Snapshot build ignored: unknown entity_id={}", entityId);
 		return false;
 	}
@@ -784,6 +1635,8 @@ namespace engine::server
 
 	void ServerApp::BroadcastCombatEvent(const CombatEventMessage& message)
 	{
+		UpdateThreatFromCombatEvent(message);
+
 		size_t recipientCount = 0;
 		for (const ConnectedClient& client : m_clients)
 		{
@@ -973,6 +1826,18 @@ namespace engine::server
 		return nullptr;
 	}
 
+	ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.entityId == entityId)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
 	const ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId) const
 	{
 		for (const ConnectedClient& client : m_clients)
@@ -1004,6 +1869,30 @@ namespace engine::server
 			if (mob.entityId == entityId)
 			{
 				return &mob;
+			}
+		}
+		return nullptr;
+	}
+
+	LootBagEntity* ServerApp::FindLootBagByEntityId(EntityId entityId)
+	{
+		for (LootBagEntity& lootBag : m_lootBags)
+		{
+			if (lootBag.entityId == entityId)
+			{
+				return &lootBag;
+			}
+		}
+		return nullptr;
+	}
+
+	const LootBagEntity* ServerApp::FindLootBagByEntityId(EntityId entityId) const
+	{
+		for (const LootBagEntity& lootBag : m_lootBags)
+		{
+			if (lootBag.entityId == entityId)
+			{
+				return &lootBag;
 			}
 		}
 		return nullptr;

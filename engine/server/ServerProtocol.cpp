@@ -168,6 +168,19 @@ namespace engine::server
 		return true;
 	}
 
+	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PickupRequest, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.lootBagEntityId = ReadU64(payload, 4);
+		return true;
+	}
+
 	std::vector<std::byte> EncodeWelcome(const WelcomeMessage& message)
 	{
 		std::vector<std::byte> packet = BeginPacket(MessageKind::Welcome, 8);
@@ -229,6 +242,19 @@ namespace engine::server
 		WriteU32(packet, message.targetCurrentHealth);
 		WriteU32(packet, message.targetMaxHealth);
 		WriteU32(packet, message.targetStateFlags);
+		return packet;
+	}
+
+	std::vector<std::byte> EncodeInventoryDelta(const InventoryDeltaMessage& message, std::span<const ItemStack> items)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::InventoryDelta, 6 + (items.size() * 8));
+		WriteU32(packet, message.clientId);
+		WriteU16(packet, static_cast<uint16_t>(items.size()));
+		for (const ItemStack& item : items)
+		{
+			WriteU32(packet, item.itemId);
+			WriteU32(packet, item.quantity);
+		}
 		return packet;
 	}
 }

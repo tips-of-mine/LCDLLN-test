@@ -1,0 +1,3 @@
+# source_archetype_id item_id quantity visibility
+100 2001 1 owner
+100 2002 3 owner

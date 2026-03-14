@@ -26,6 +26,13 @@ namespace engine::server
 		uint32_t nextAttackTick = 0;
 	};
 
+	/// Minimal item stack used by loot bags and player inventory.
+	struct ItemStack
+	{
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+	};
+
 	/// Minimal replicated entity state shared by spawn and snapshot messages.
 	struct EntityState
 	{

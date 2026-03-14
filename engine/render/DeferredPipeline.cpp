@@ -124,6 +124,11 @@ namespace engine::render
 			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
 			std::vector<uint32_t> cullCompSpirv = loadSpirv("shaders/gpu_cull.comp.spv");
 			std::vector<uint32_t> hiZCompSpirv = loadSpirv("shaders/hiz_build.comp.spv");
+			const bool bindlessMaterialsReady = m_materialDescriptorCache.Init(device, physicalDevice);
+			if (!bindlessMaterialsReady)
+				LOG_WARN(Render, "[Boot] DeferredPipeline bindless material cache init failed");
+			else
+				LOG_INFO(Render, "[Boot] DeferredPipeline bindless material cache OK");
 			if (!vertSpirv.empty() && !fragSpirv.empty())
 			{
 				if (m_geometryPass.Init(device, physicalDevice,
@@ -133,7 +138,8 @@ namespace engine::render
 						VK_FORMAT_R16G16_SFLOAT,
 						VK_FORMAT_D32_SFLOAT,
 						vertSpirv.data(), vertSpirv.size(),
-						fragSpirv.data(), fragSpirv.size()))
+						fragSpirv.data(), fragSpirv.size(),
+						bindlessMaterialsReady ? m_materialDescriptorCache.GetLayout() : VK_NULL_HANDLE))
 					LOG_INFO(Render, "[Boot] DeferredPipeline GeometryPass OK");
 				else
 					LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass init failed");
@@ -346,6 +352,7 @@ namespace engine::render
 		m_shadowMapPass.Destroy(device);
 		m_hiZPyramidPass.Destroy(device);
 		m_gpuDrivenCullingPass.Destroy(device);
+		m_materialDescriptorCache.Destroy(device);
 		m_geometryPass.Destroy(device);
 		m_ssaoBlurPass.Destroy(device);
 		m_ssaoPass.Destroy(device);

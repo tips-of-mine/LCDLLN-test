@@ -44,7 +44,8 @@ namespace engine::render
 		            const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 		            uint32_t lodLevel = 0,
 		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE,
-		            const float* instanceMatrix = nullptr);
+		            const float* instanceMatrix = nullptr,
+		            uint32_t materialIndex = 0);
 
 		/// M09.3: Records instanced draws for batches (mesh+material key). instanceBuffer holds mat4s at each batch's instanceBufferOffset.
 		void RecordInstanced(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
@@ -59,7 +60,8 @@ namespace engine::render
 		            const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 		            VkBuffer indirectBuffer, uint32_t indirectDrawCount,
 		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE,
-		            const float* instanceMatrix = nullptr);
+		            const float* instanceMatrix = nullptr,
+		            uint32_t materialIndex = 0);
 
 		/// Releases render pass and pipeline. Safe to call when not initialized.
 		void Destroy(VkDevice device);

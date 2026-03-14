@@ -722,6 +722,7 @@ namespace engine
 													s_lastLoggedLod = lodLevel;
 												}
 												auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
+												auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
 												if (cullingPass.IsValid())
 												{
 													m_pipeline->GetGeometryPass().RecordIndirect(
@@ -731,8 +732,9 @@ namespace engine
 														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
 														cullingPass.GetIndirectBuffer(m_currentFrame),
 														cullingPass.GetDrawItemCount(m_currentFrame),
-														VK_NULL_HANDLE,
-														rs.objectModelMatrix);
+														materialCache.GetDescriptorSet(),
+														rs.objectModelMatrix,
+														materialCache.GetDefaultMaterialIndex());
 												}
 												else
 												{
@@ -742,8 +744,9 @@ namespace engine
 														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
 														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
 														static_cast<uint32_t>(lodLevel),
-														VK_NULL_HANDLE,
-														rs.objectModelMatrix);
+														materialCache.GetDescriptorSet(),
+														rs.objectModelMatrix,
+														materialCache.GetDefaultMaterialIndex());
 												}
 											});
 										std::fprintf(stderr, "[ENGINE] AR: addPass Geometry OK\n"); std::fflush(stderr);

@@ -11,8 +11,18 @@ namespace engine::render
 {
 	namespace
 	{
-		/// M07.3: prevViewProj (64) + viewProj (64) for motion vectors.
-		constexpr uint32_t kPushConstantSize = 128u;
+		/// M07.3 + M18.4: prevViewProj (64) + viewProj (64) + material index (16 aligned bytes).
+		constexpr uint32_t kPushConstantSize = 144u;
+
+		struct GeometryPushConstants
+		{
+			float prevViewProj[16]{};
+			float viewProj[16]{};
+			uint32_t materialIndex = 0;
+			uint32_t padding0 = 0;
+			uint32_t padding1 = 0;
+			uint32_t padding2 = 0;
+		};
 
 		void UploadIdentityInstanceMatrix(VkDevice device, VkDeviceMemory memory, const float* instanceMatrix)
 		{
@@ -151,10 +161,10 @@ namespace engine::render
 		// -------------------------------------------------------------------------
 		// Pipeline layout:
 		//   - set 0 (optional): material descriptor set layout (BaseColor/Normal/ORM)
-		//   - push constant: prevViewProj + viewProj (vertex stage, 128 bytes, M07.3)
+		//   - push constant: prevViewProj + viewProj + material index (vertex/fragment)
 		// -------------------------------------------------------------------------
 		VkPushConstantRange pushRange = {};
-		pushRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		pushRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		pushRange.offset     = 0;
 		pushRange.size       = kPushConstantSize;
 
@@ -407,7 +417,8 @@ namespace engine::render
 	    const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 	    uint32_t lodLevel,
 	    VkDescriptorSet materialDescriptorSet,
-	    const float* instanceMatrix)
+	    const float* instanceMatrix,
+	    uint32_t materialIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
@@ -476,13 +487,14 @@ namespace engine::render
 		VkRect2D scissor = { { 0, 0 }, extent };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		// M07.3: push prevViewProj (64 bytes) then viewProj (64 bytes).
-		if (prevViewProjMat4 && viewProjMat4)
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-			                   kPushConstantSize, prevViewProjMat4);
+		GeometryPushConstants pushConstants{};
+		if (prevViewProjMat4)
+			std::memcpy(pushConstants.prevViewProj, prevViewProjMat4, sizeof(pushConstants.prevViewProj));
 		if (viewProjMat4)
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64,
-			                   64u, viewProjMat4);
+			std::memcpy(pushConstants.viewProj, viewProjMat4, sizeof(pushConstants.viewProj));
+		pushConstants.materialIndex = materialIndex;
+		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+			kPushConstantSize, &pushConstants);
 
 		// Bind material descriptor set (set = 0) if the pass was initialised with one.
 		if (m_hasMaterialLayout && materialDescriptorSet != VK_NULL_HANDLE)
@@ -520,7 +532,8 @@ namespace engine::render
 	    const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 	    VkBuffer indirectBuffer, uint32_t indirectDrawCount,
 	    VkDescriptorSet materialDescriptorSet,
-	    const float* instanceMatrix)
+	    const float* instanceMatrix,
+	    uint32_t materialIndex)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
@@ -589,10 +602,14 @@ namespace engine::render
 		VkRect2D scissor = { { 0, 0 }, extent };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		if (prevViewProjMat4 && viewProjMat4)
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, kPushConstantSize, prevViewProjMat4);
+		GeometryPushConstants pushConstants{};
+		if (prevViewProjMat4)
+			std::memcpy(pushConstants.prevViewProj, prevViewProjMat4, sizeof(pushConstants.prevViewProj));
 		if (viewProjMat4)
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64, 64u, viewProjMat4);
+			std::memcpy(pushConstants.viewProj, viewProjMat4, sizeof(pushConstants.viewProj));
+		pushConstants.materialIndex = materialIndex;
+		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+			kPushConstantSize, &pushConstants);
 
 		if (m_hasMaterialLayout && materialDescriptorSet != VK_NULL_HANDLE)
 		{
@@ -732,10 +749,11 @@ namespace engine::render
 		VkRect2D scissor = { { 0, 0 }, extent };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		if (prevViewProjMat4 && viewProjMat4)
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, kPushConstantSize, prevViewProjMat4);
+		GeometryPushConstants pushConstants{};
+		if (prevViewProjMat4)
+			std::memcpy(pushConstants.prevViewProj, prevViewProjMat4, sizeof(pushConstants.prevViewProj));
 		if (viewProjMat4)
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64, 64u, viewProjMat4);
+			std::memcpy(pushConstants.viewProj, viewProjMat4, sizeof(pushConstants.viewProj));
 
 		for (uint32_t i = 0; i < batchCount; ++i)
 		{
@@ -749,6 +767,10 @@ namespace engine::render
 
 			if (m_hasMaterialLayout && batch.materialDescriptorSet != VK_NULL_HANDLE)
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &batch.materialDescriptorSet, 0, nullptr);
+
+			pushConstants.materialIndex = batch.materialIndex;
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+				kPushConstantSize, &pushConstants);
 
 			VkBuffer vb[2] = { batch.mesh->vertexBuffer, instanceBuffer };
 			VkDeviceSize vbOffsets[2] = { 0, static_cast<VkDeviceSize>(batch.instanceBufferOffset) };

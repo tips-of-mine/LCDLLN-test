@@ -12,6 +12,10 @@ layout(location = 6) in vec4 instanceRow3;
 layout(push_constant) uniform PushConstants {
 	mat4 prevViewProj;  // 0..63
 	mat4 viewProj;      // 64..127
+	uint materialIndex;
+	uint _pad0;
+	uint _pad1;
+	uint _pad2;
 } pc;
 
 layout(location = 0) out vec3 vNormal;

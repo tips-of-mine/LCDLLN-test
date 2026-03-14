@@ -50,6 +50,8 @@ namespace engine::render
 
 		/// Returns true if VK_KHR_synchronization2 (or Vulkan 1.3 core) is enabled; use vkCmdPipelineBarrier2 when true.
 		bool SupportsSynchronization2() const { return m_sync2Supported; }
+		/// Returns true if descriptor indexing features were enabled on the logical device.
+		bool SupportsDescriptorIndexing() const { return m_descriptorIndexingSupported; }
 
 	private:
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
@@ -59,5 +61,6 @@ namespace engine::render
 		uint32_t m_graphicsQueueFamilyIndex = kInvalidQueueFamily;
 		uint32_t m_presentQueueFamilyIndex = kInvalidQueueFamily;
 		bool m_sync2Supported = false;
+		bool m_descriptorIndexingSupported = false;
 	};
 }

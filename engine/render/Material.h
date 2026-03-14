@@ -5,6 +5,8 @@
 #include <vulkan/vulkan_core.h>
 
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 
 namespace engine::render
 {
@@ -32,19 +34,28 @@ namespace engine::render
 		MaterialFlags flags     = MaterialFlags::None;
 	};
 
-	/// Manages Vulkan descriptor set layout, pool, samplers, and fallback 1x1 textures
-	/// for per-material descriptor sets.
+	/// GPU-side material payload used by the bindless geometry shader path.
+	struct MaterialGpuData
+	{
+		uint32_t baseColorIndex = 0;
+		uint32_t normalIndex = 1;
+		uint32_t ormIndex = 2;
+		uint32_t flags = 0;
+		float tiling[2] = { 1.0f, 1.0f };
+		float padding[2] = { 0.0f, 0.0f };
+	};
+
+	/// Manages a global bindless texture array and a material buffer storing texture indices.
 	///
 	/// Descriptor set layout (set = 0):
-	///   binding 0 : combined image sampler — BaseColor (sRGB-compatible sampler)
-	///   binding 1 : combined image sampler — Normal    (linear sampler)
-	///   binding 2 : combined image sampler — ORM       (linear sampler)
+	///   binding 0 : combined image sampler array — global textures[]
+	///   binding 1 : storage buffer — MaterialGpuData materials[]
 	///
 	/// Usage:
 	///   1. Init(device, physicalDevice)
 	///   2. Pass GetLayout() to GeometryPass::Init as the material descriptor set layout.
-	///   3. For each material: set = CreateDescriptorSet(device, mat)
-	///   4. Pass set to GeometryPass::Record each frame.
+	///   3. Bind GetDescriptorSet() once per draw path.
+	///   4. Pass CreateMaterial(device, mat) result as material index.
 	///   5. Destroy(device) on shutdown.
 	class MaterialDescriptorCache
 	{
@@ -53,18 +64,21 @@ namespace engine::render
 		MaterialDescriptorCache(const MaterialDescriptorCache&) = delete;
 		MaterialDescriptorCache& operator=(const MaterialDescriptorCache&) = delete;
 
-		/// Creates samplers, fallback 1×1 textures, descriptor set layout, and pool.
-		/// \param maxMaterials  Maximum number of descriptor sets that can be allocated.
+		/// Creates samplers, fallback textures, the global descriptor set, and the material buffer.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
+		          uint32_t maxTextures = 64,
 		          uint32_t maxMaterials = 64);
 
-		/// Allocates and writes one descriptor set for the given material.
-		/// Uses internal fallback textures for any invalid handles in mat.
-		/// Returns VK_NULL_HANDLE on failure.
-		VkDescriptorSet CreateDescriptorSet(VkDevice device, const Material& mat);
+		/// Allocates a material slot, resolves its texture slots in the global array, and writes it into the GPU material buffer.
+		/// Returns material index 0 on failure or when the default fallback material is requested.
+		uint32_t CreateMaterial(VkDevice device, const Material& mat);
 
 		/// Returns the descriptor set layout for use in pipeline layout creation.
 		VkDescriptorSetLayout GetLayout() const { return m_layout; }
+		/// Returns the global descriptor set to bind before geometry draws.
+		VkDescriptorSet GetDescriptorSet() const { return m_descriptorSet; }
+		/// Returns the default material index (fallback textures only).
+		uint32_t GetDefaultMaterialIndex() const { return 0u; }
 
 		/// Releases all owned Vulkan resources. Safe to call multiple times.
 		void Destroy(VkDevice device);
@@ -75,8 +89,13 @@ namespace engine::render
 	private:
 		VkDescriptorSetLayout m_layout        = VK_NULL_HANDLE;
 		VkDescriptorPool      m_pool          = VK_NULL_HANDLE;
+		VkDescriptorSet       m_descriptorSet = VK_NULL_HANDLE;
 		VkSampler             m_samplerSrgb   = VK_NULL_HANDLE; ///< Linear filter, repeat — BaseColor.
 		VkSampler             m_samplerLinear = VK_NULL_HANDLE; ///< Linear filter, repeat — Normal/ORM.
+		VkBuffer              m_materialBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory        m_materialMemory = VK_NULL_HANDLE;
+		uint32_t              m_maxTextures = 0;
+		uint32_t              m_maxMaterials = 0;
 
 		/// Fallback 1×1 GPU textures (owned by cache, not by AssetRegistry):
 		///   [0] = white   R8G8B8A8_SRGB  (default BaseColor)
@@ -90,6 +109,21 @@ namespace engine::render
 		bool createFallbackTexture(VkDevice device, VkPhysicalDevice physDev,
 		                           uint32_t idx, const uint8_t rgba[4],
 		                           VkFormat format);
+		bool createMaterialBuffer(VkDevice device, VkPhysicalDevice physicalDevice);
+		bool writeTextureDescriptors(VkDevice device);
+		uint32_t acquireTextureSlot(const TextureHandle& texture, VkSampler sampler, VkImageView fallbackView);
+		bool writeMaterialData(VkDevice device, uint32_t materialIndex, const MaterialGpuData& gpuData);
+
+		struct TextureSlot
+		{
+			AssetId assetId = kInvalidAssetId;
+			VkImageView view = VK_NULL_HANDLE;
+			VkSampler sampler = VK_NULL_HANDLE;
+		};
+
+		std::vector<TextureSlot> m_textureSlots;
+		std::vector<MaterialGpuData> m_materials;
+		std::unordered_map<uint64_t, uint32_t> m_textureKeyToSlot;
 	};
 
 } // namespace engine::render

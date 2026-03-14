@@ -14,6 +14,7 @@ namespace engine::render
 	{
 		const char* const kSwapchainExtensionName = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 		const char* const kSynchronization2ExtensionName = VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
+		const char* const kDescriptorIndexingExtensionName = VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME;
 
 		/// Scores a physical device for suitability (higher = better). Returns 0 if unsuitable.
 		int ScorePhysicalDevice(VkPhysicalDevice phys, VkSurfaceKHR surface)
@@ -216,16 +217,22 @@ namespace engine::render
 		std::vector<VkExtensionProperties> deviceExts(extCount);
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, deviceExts.data());
 		bool hasSync2Ext = false;
+		bool hasDescriptorIndexingExt = false;
 		for (const auto& e : deviceExts)
 		{
 			if (std::strcmp(e.extensionName, kSynchronization2ExtensionName) == 0)
 			{
 				hasSync2Ext = true;
-				break;
+			}
+			if (std::strcmp(e.extensionName, kDescriptorIndexingExtensionName) == 0)
+			{
+				hasDescriptorIndexingExt = true;
 			}
 		}
 		bool wantSync2 = (VK_VERSION_MAJOR(apiVersion) > 1 || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 3))
 			|| hasSync2Ext;
+		const bool descriptorIndexingInCore = (VK_VERSION_MAJOR(apiVersion) > 1) || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 2);
+		const bool canUseDescriptorIndexing = descriptorIndexingInCore || hasDescriptorIndexingExt;
 
 		std::vector<const char*> enabledExtensions;
 		enabledExtensions.push_back(kSwapchainExtensionName);
@@ -234,14 +241,50 @@ namespace engine::render
 		{
 			enabledExtensions.push_back(kSynchronization2ExtensionName);
 		}
+		if (canUseDescriptorIndexing && !descriptorIndexingInCore && hasDescriptorIndexingExt)
+		{
+			enabledExtensions.push_back(kDescriptorIndexingExtensionName);
+		}
+
+		VkPhysicalDeviceFeatures2 featureQuery{};
+		featureQuery.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+		featureQuery.pNext = &descriptorIndexingFeatures;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &featureQuery);
 
 		VkPhysicalDeviceSynchronization2FeaturesKHR sync2Features{};
 		sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
 		sync2Features.synchronization2 = VK_TRUE;
 
+		deviceFeatures.robustBufferAccess = featureQuery.features.robustBufferAccess;
+
+		void* featureChain = nullptr;
+		if (canUseDescriptorIndexing
+			&& descriptorIndexingFeatures.runtimeDescriptorArray
+			&& descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
+			&& descriptorIndexingFeatures.descriptorBindingPartiallyBound)
+		{
+			descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+			descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+			descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+			featureChain = &descriptorIndexingFeatures;
+			m_descriptorIndexingSupported = true;
+		}
+		else
+		{
+			m_descriptorIndexingSupported = false;
+		}
+
+		if (wantSync2)
+		{
+			sync2Features.pNext = featureChain;
+			featureChain = &sync2Features;
+		}
+
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		createInfo.pNext = wantSync2 ? &sync2Features : nullptr;
+		createInfo.pNext = featureChain;
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 		createInfo.pEnabledFeatures = &deviceFeatures;
@@ -261,8 +304,14 @@ namespace engine::render
 		vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 		vkGetDeviceQueue(m_device, m_presentQueueFamilyIndex, 0, &m_presentQueue);
 
-		LOG_INFO(Render, "VkDeviceContext created (graphics queue family {}, present queue family {}, sync2: {})",
-			m_graphicsQueueFamilyIndex, m_presentQueueFamilyIndex, m_sync2Supported ? "yes" : "no");
+		LOG_INFO(Render, "VkDeviceContext created (graphics queue family {}, present queue family {}, sync2: {}, descriptor_indexing: {}, robust_buffer_access: {})",
+			m_graphicsQueueFamilyIndex,
+			m_presentQueueFamilyIndex,
+			m_sync2Supported ? "yes" : "no",
+			m_descriptorIndexingSupported ? "yes" : "no",
+			deviceFeatures.robustBufferAccess ? "yes" : "no");
+		if (!m_descriptorIndexingSupported)
+			LOG_WARN(Render, "[VkDeviceContext] Descriptor indexing unavailable; bindless path may be limited");
 		return true;
 	}
 
@@ -270,6 +319,7 @@ namespace engine::render
 	{
 		if (m_device == VK_NULL_HANDLE)
 		{
+			LOG_INFO(Render, "VkDeviceContext destroyed");
 			return;
 		}
 		vkDestroyDevice(m_device, nullptr);
@@ -280,6 +330,7 @@ namespace engine::render
 		m_graphicsQueueFamilyIndex = kInvalidQueueFamily;
 		m_presentQueueFamilyIndex = kInvalidQueueFamily;
 		m_sync2Supported = false;
+		m_descriptorIndexingSupported = false;
 		LOG_INFO(Render, "VkDeviceContext destroyed");
 	}
 }

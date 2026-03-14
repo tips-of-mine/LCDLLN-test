@@ -13,6 +13,23 @@ namespace engine::render
 	{
 		/// M07.3: prevViewProj (64) + viewProj (64) for motion vectors.
 		constexpr uint32_t kPushConstantSize = 128u;
+
+		void UploadIdentityInstanceMatrix(VkDevice device, VkDeviceMemory memory, const float* instanceMatrix)
+		{
+			if (device == VK_NULL_HANDLE || memory == VK_NULL_HANDLE || !instanceMatrix)
+				return;
+
+			void* mapped = nullptr;
+			if (vkMapMemory(device, memory, 0, 64u, 0, &mapped) == VK_SUCCESS && mapped)
+			{
+				std::memcpy(mapped, instanceMatrix, 64u);
+				vkUnmapMemory(device, memory);
+			}
+			else
+			{
+				LOG_WARN(Render, "[GeometryPass] Instance matrix upload failed");
+			}
+		}
 	}
 
 	bool GeometryPass::FramebufferKey::operator==(const FramebufferKey& o) const
@@ -480,18 +497,7 @@ namespace engine::render
 			&& m_identityInstanceBuffer != VK_NULL_HANDLE)
 		{
 			if (instanceMatrix && m_identityInstanceMemory != VK_NULL_HANDLE)
-			{
-				void* mapped = nullptr;
-				if (vkMapMemory(device, m_identityInstanceMemory, 0, 64u, 0, &mapped) == VK_SUCCESS && mapped)
-				{
-					std::memcpy(mapped, instanceMatrix, 64u);
-					vkUnmapMemory(device, m_identityInstanceMemory);
-				}
-				else
-				{
-					LOG_WARN(Render, "[GeometryPass] Instance matrix upload failed");
-				}
-			}
+				UploadIdentityInstanceMatrix(device, m_identityInstanceMemory, instanceMatrix);
 
 			const uint32_t indexCount = mesh->GetLodIndexCount(lodLevel);
 			if (indexCount > 0)
@@ -503,6 +509,113 @@ namespace engine::render
 				vkCmdBindIndexBuffer(cmd, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 				vkCmdDrawIndexed(cmd, indexCount, 1, indexOffset, 0, 0);
 			}
+		}
+
+		vkCmdEndRenderPass(cmd);
+	}
+
+	void GeometryPass::RecordIndirect(VkDevice device, VkCommandBuffer cmd,
+	    Registry& registry, VkExtent2D extent,
+	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+	    const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
+	    VkBuffer indirectBuffer, uint32_t indirectDrawCount,
+	    VkDescriptorSet materialDescriptorSet,
+	    const float* instanceMatrix)
+	{
+		if (!IsValid() || extent.width == 0 || extent.height == 0)
+			return;
+
+		VkImageView viewA      = registry.getImageView(idA);
+		VkImageView viewB      = registry.getImageView(idB);
+		VkImageView viewC      = registry.getImageView(idC);
+		VkImageView viewVel    = registry.getImageView(idVelocity);
+		VkImageView viewDepth  = registry.getImageView(idDepth);
+		if (!viewA || !viewB || !viewC || !viewVel || !viewDepth)
+			return;
+
+		FramebufferKey key{};
+		key.renderPass = m_renderPass;
+		key.views[0]   = viewA;
+		key.views[1]   = viewB;
+		key.views[2]   = viewC;
+		key.views[3]   = viewVel;
+		key.views[4]   = viewDepth;
+		key.width      = extent.width;
+		key.height     = extent.height;
+
+		auto it = m_fbCache.find(key);
+		if (it == m_fbCache.end())
+		{
+			VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
+			VkFramebufferCreateInfo fbInfo = {};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPass;
+			fbInfo.attachmentCount = 5;
+			fbInfo.pAttachments    = views;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			VkFramebuffer created  = VK_NULL_HANDLE;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &created) != VK_SUCCESS)
+				return;
+			it = m_fbCache.emplace(key, created).first;
+		}
+		VkFramebuffer fb = it->second;
+
+		VkClearValue clearValues[5] = {};
+		clearValues[0].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[1].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[2].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[3].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clearValues[4].depthStencil = { 1.0f, 0 };
+
+		VkRenderPassBeginInfo rpBegin = {};
+		rpBegin.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		rpBegin.renderPass      = m_renderPass;
+		rpBegin.framebuffer     = fb;
+		rpBegin.renderArea      = { { 0, 0 }, extent };
+		rpBegin.clearValueCount = 5;
+		rpBegin.pClearValues    = clearValues;
+
+		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+
+		VkViewport viewport = {};
+		viewport.width = static_cast<float>(extent.width);
+		viewport.height = static_cast<float>(extent.height);
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = { { 0, 0 }, extent };
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		if (prevViewProjMat4 && viewProjMat4)
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, kPushConstantSize, prevViewProjMat4);
+		if (viewProjMat4)
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64, 64u, viewProjMat4);
+
+		if (m_hasMaterialLayout && materialDescriptorSet != VK_NULL_HANDLE)
+		{
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_pipelineLayout, 0, 1, &materialDescriptorSet, 0, nullptr);
+		}
+
+		if (mesh
+			&& mesh->vertexBuffer != VK_NULL_HANDLE
+			&& mesh->indexBuffer != VK_NULL_HANDLE
+			&& m_identityInstanceBuffer != VK_NULL_HANDLE
+			&& indirectBuffer != VK_NULL_HANDLE
+			&& indirectDrawCount > 0)
+		{
+			if (instanceMatrix && m_identityInstanceMemory != VK_NULL_HANDLE)
+				UploadIdentityInstanceMatrix(device, m_identityInstanceMemory, instanceMatrix);
+
+			VkBuffer vb[2] = { mesh->vertexBuffer, m_identityInstanceBuffer };
+			VkDeviceSize vbOffsets[2] = { 0, 0 };
+			vkCmdBindVertexBuffers(cmd, 0, 2, vb, vbOffsets);
+			vkCmdBindIndexBuffer(cmd, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdDrawIndexedIndirect(cmd, indirectBuffer, 0,
+				indirectDrawCount, sizeof(VkDrawIndexedIndirectCommand));
 		}
 
 		vkCmdEndRenderPass(cmd);

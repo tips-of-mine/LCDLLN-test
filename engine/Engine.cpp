@@ -13,6 +13,7 @@
 #include <vk_mem_alloc.h>
 
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -47,6 +48,72 @@ namespace engine
 			}
 
 			return probeSet.probes.front().params[0];
+		}
+
+		float GetTestMeshDistanceMeters(const engine::RenderState& rs,
+			const std::vector<engine::world::ChunkDrawDecision>& chunkDrawDecisions)
+		{
+			if (!chunkDrawDecisions.empty())
+				return chunkDrawDecisions[0].distanceMeters;
+
+			const float dx = rs.camera.position.x;
+			const float dy = rs.camera.position.y;
+			const float dz = rs.camera.position.z;
+			return std::sqrt(dx * dx + dy * dy + dz * dz);
+		}
+
+		engine::render::GpuDrawItem BuildGpuDrawItem(const engine::render::MeshAsset& mesh,
+			uint32_t meshId,
+			const float* modelMatrix,
+			uint32_t lodLevel)
+		{
+			engine::render::GpuDrawItem item{};
+			item.meshId = meshId;
+			item.materialId = 0;
+			item.lodLevel = lodLevel;
+			std::memcpy(item.modelMatrix, modelMatrix, sizeof(item.modelMatrix));
+
+			engine::math::Vec3 localMin(-0.5f, -0.5f, -0.5f);
+			engine::math::Vec3 localMax(0.5f, 0.5f, 0.5f);
+			if (mesh.hasLocalBounds)
+			{
+				localMin = mesh.localBoundsMin;
+				localMax = mesh.localBoundsMax;
+			}
+			else
+			{
+				static bool s_loggedMissingBounds = false;
+				if (!s_loggedMissingBounds)
+				{
+					LOG_WARN(Render, "[GpuDrivenCulling] Mesh local bounds missing, using unit bounds fallback");
+					s_loggedMissingBounds = true;
+				}
+			}
+
+			const engine::math::Vec3 localCenter = (localMin + localMax) * 0.5f;
+			const engine::math::Vec3 localExtents = (localMax - localMin) * 0.5f;
+			const float* m = modelMatrix;
+
+			const float worldCenterX = m[0] * localCenter.x + m[4] * localCenter.y + m[8] * localCenter.z + m[12];
+			const float worldCenterY = m[1] * localCenter.x + m[5] * localCenter.y + m[9] * localCenter.z + m[13];
+			const float worldCenterZ = m[2] * localCenter.x + m[6] * localCenter.y + m[10] * localCenter.z + m[14];
+			const float worldExtentX = std::fabs(m[0]) * localExtents.x + std::fabs(m[4]) * localExtents.y + std::fabs(m[8]) * localExtents.z;
+			const float worldExtentY = std::fabs(m[1]) * localExtents.x + std::fabs(m[5]) * localExtents.y + std::fabs(m[9]) * localExtents.z;
+			const float worldExtentZ = std::fabs(m[2]) * localExtents.x + std::fabs(m[6]) * localExtents.y + std::fabs(m[10]) * localExtents.z;
+
+			item.boundsCenter[0] = worldCenterX;
+			item.boundsCenter[1] = worldCenterY;
+			item.boundsCenter[2] = worldCenterZ;
+			item.boundsCenter[3] = 1.0f;
+			item.boundsExtents[0] = worldExtentX;
+			item.boundsExtents[1] = worldExtentY;
+			item.boundsExtents[2] = worldExtentZ;
+			item.boundsExtents[3] = 0.0f;
+			item.indexCount = mesh.GetLodIndexCount(lodLevel);
+			item.firstIndex = mesh.GetLodIndexOffset(lodLevel);
+			item.vertexOffset = 0;
+			item.firstInstance = 0;
+			return item;
 		}
 	}
 
@@ -588,6 +655,41 @@ namespace engine
 										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
 										std::fprintf(stderr, "[ENGINE] AP: LoadMesh OK\n"); std::fflush(stderr);
 
+										std::fprintf(stderr, "[ENGINE] AQ: avant addPass GPU_Cull\n"); std::fflush(stderr);
+										m_frameGraph.addPass("GPU_Cull",
+											[](engine::render::PassBuilder&) {},
+											[this](VkCommandBuffer cmd, engine::render::Registry&) {
+												auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
+												if (!cullingPass.IsValid())
+													return;
+
+												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+												const engine::RenderState& rs = m_renderStates[readIdx];
+												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
+												uint32_t drawItemCount = 0;
+												engine::render::GpuDrawItem drawItem{};
+
+												if (mesh && mesh->vertexBuffer != VK_NULL_HANDLE && mesh->indexBuffer != VK_NULL_HANDLE)
+												{
+													const float distCam = GetTestMeshDistanceMeters(rs, m_chunkDrawDecisions);
+													const uint32_t lodLevel = static_cast<uint32_t>(m_lodConfig.GetLodLevel(distCam));
+													drawItem = BuildGpuDrawItem(*mesh, m_geometryMeshHandle.Id(), rs.objectModelMatrix, lodLevel);
+													if (drawItem.indexCount > 0)
+														drawItemCount = 1;
+												}
+
+												if (!cullingPass.UploadDrawItems(m_vkDeviceContext.GetDevice(), m_currentFrame,
+														drawItemCount > 0 ? &drawItem : nullptr, drawItemCount))
+												{
+													LOG_WARN(Render, "[GpuDrivenCulling] Draw-item upload failed");
+													return;
+												}
+
+												if (drawItemCount > 0)
+													cullingPass.Record(cmd, rs.viewProjMatrix.m, m_currentFrame);
+											});
+										std::fprintf(stderr, "[ENGINE] AQ1: addPass GPU_Cull OK\n"); std::fflush(stderr);
+
 										std::fprintf(stderr, "[ENGINE] AQ: avant addPass Geometry\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Geometry",
 											[this](engine::render::PassBuilder& b) {
@@ -607,18 +709,7 @@ namespace engine
 												m_chunkStats.RecordDraw(chunk, ring, 1, triCount);
 												// Provisoire pour le mesh de test unique a l'origine monde; un ticket dedie
 												// remplacera ce calcul par une distance par instance/objet.
-												float distCam = 0.0f;
-												if (!m_chunkDrawDecisions.empty())
-												{
-													distCam = m_chunkDrawDecisions[0].distanceMeters;
-												}
-												else
-												{
-													const float dx = rs.camera.position.x;
-													const float dy = rs.camera.position.y;
-													const float dz = rs.camera.position.z;
-													distCam = std::sqrt(dx * dx + dy * dy + dz * dz);
-												}
+												const float distCam = GetTestMeshDistanceMeters(rs, m_chunkDrawDecisions);
 												const int lodLevel = m_lodConfig.GetLodLevel(distCam);
 												static int s_lastLoggedLod = -1;
 												if (lodLevel != s_lastLoggedLod)
@@ -626,14 +717,30 @@ namespace engine
 													LOG_DEBUG(Render, "[LOD] Geometry test mesh lod={} dist_m={:.2f}", lodLevel, distCam);
 													s_lastLoggedLod = lodLevel;
 												}
-												m_pipeline->GetGeometryPass().Record(
-													m_vkDeviceContext.GetDevice(), cmd, reg,
-													m_vkSwapchain.GetExtent(),
-													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-													rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-													static_cast<uint32_t>(lodLevel),
-													VK_NULL_HANDLE,
-													rs.objectModelMatrix);
+												auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
+												if (cullingPass.IsValid())
+												{
+													m_pipeline->GetGeometryPass().RecordIndirect(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+														cullingPass.GetIndirectBuffer(m_currentFrame),
+														cullingPass.GetDrawItemCount(m_currentFrame),
+														VK_NULL_HANDLE,
+														rs.objectModelMatrix);
+												}
+												else
+												{
+													m_pipeline->GetGeometryPass().Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+														static_cast<uint32_t>(lodLevel),
+														VK_NULL_HANDLE,
+														rs.objectModelMatrix);
+												}
 											});
 										std::fprintf(stderr, "[ENGINE] AR: addPass Geometry OK\n"); std::fflush(stderr);
 

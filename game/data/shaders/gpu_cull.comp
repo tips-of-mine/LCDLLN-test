@@ -1,0 +1,117 @@
+#version 450
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+struct DrawItem
+{
+    uint meshId;
+    uint materialId;
+    uint lodLevel;
+    uint reserved0;
+    mat4 modelMatrix;
+    vec4 boundsCenter;
+    vec4 boundsExtents;
+    uint indexCount;
+    uint firstIndex;
+    int vertexOffset;
+    uint firstInstance;
+};
+
+struct IndirectCommand
+{
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int vertexOffset;
+    uint firstInstance;
+};
+
+layout(std430, set = 0, binding = 0) readonly buffer DrawItemBuffer
+{
+    DrawItem items[];
+} gDrawItems;
+
+layout(std430, set = 0, binding = 1) buffer VisibleIndexBuffer
+{
+    uint indices[];
+} gVisibleIndices;
+
+layout(std430, set = 0, binding = 2) buffer VisibleCountBuffer
+{
+    uint count;
+} gVisibleCount;
+
+layout(std430, set = 0, binding = 3) buffer IndirectBuffer
+{
+    IndirectCommand commands[];
+} gIndirect;
+
+layout(push_constant) uniform PushConstants
+{
+    mat4 viewProj;
+    uint drawItemCount;
+    uint maxDrawItems;
+    uint reserved0;
+    uint reserved1;
+} pc;
+
+bool isVisibleAabb(vec3 center, vec3 extents)
+{
+    vec3 minCorner = center - extents;
+    vec3 maxCorner = center + extents;
+
+    vec3 corners[8] = vec3[8](
+        vec3(minCorner.x, minCorner.y, minCorner.z),
+        vec3(maxCorner.x, minCorner.y, minCorner.z),
+        vec3(minCorner.x, maxCorner.y, minCorner.z),
+        vec3(maxCorner.x, maxCorner.y, minCorner.z),
+        vec3(minCorner.x, minCorner.y, maxCorner.z),
+        vec3(maxCorner.x, minCorner.y, maxCorner.z),
+        vec3(minCorner.x, maxCorner.y, maxCorner.z),
+        vec3(maxCorner.x, maxCorner.y, maxCorner.z)
+    );
+
+    bool outsideLeft = true;
+    bool outsideRight = true;
+    bool outsideBottom = true;
+    bool outsideTop = true;
+    bool outsideNear = true;
+    bool outsideFar = true;
+
+    for (int i = 0; i < 8; ++i)
+    {
+        vec4 clip = pc.viewProj * vec4(corners[i], 1.0);
+        outsideLeft = outsideLeft && (clip.x < -clip.w);
+        outsideRight = outsideRight && (clip.x > clip.w);
+        outsideBottom = outsideBottom && (clip.y < -clip.w);
+        outsideTop = outsideTop && (clip.y > clip.w);
+        outsideNear = outsideNear && (clip.z < 0.0);
+        outsideFar = outsideFar && (clip.z > clip.w);
+    }
+
+    return !(outsideLeft || outsideRight || outsideBottom || outsideTop || outsideNear || outsideFar);
+}
+
+void main()
+{
+    uint itemIndex = gl_GlobalInvocationID.x;
+    if (itemIndex >= pc.drawItemCount || itemIndex >= pc.maxDrawItems)
+    {
+        return;
+    }
+
+    DrawItem item = gDrawItems.items[itemIndex];
+    bool visible = isVisibleAabb(item.boundsCenter.xyz, item.boundsExtents.xyz);
+
+    if (visible)
+    {
+        uint visibleIndex = atomicAdd(gVisibleCount.count, 1u);
+        gVisibleIndices.indices[visibleIndex] = itemIndex;
+    }
+
+    gIndirect.commands[itemIndex].indexCount = item.indexCount;
+    gIndirect.commands[itemIndex].instanceCount = visible ? 1u : 0u;
+    gIndirect.commands[itemIndex].firstIndex = item.firstIndex;
+    gIndirect.commands[itemIndex].vertexOffset = item.vertexOffset;
+    gIndirect.commands[itemIndex].firstInstance = item.firstInstance;
+}

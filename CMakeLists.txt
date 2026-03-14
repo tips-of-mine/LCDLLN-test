@@ -77,6 +77,7 @@ add_library(engine_core
   engine/render/SsaoBlurPass.cpp
   engine/render/ShadowMapPass.cpp
   engine/render/GeometryPass.cpp
+  engine/render/GpuDrivenCullingPass.cpp
   engine/render/LightingPass.cpp
   engine/render/TonemapPass.cpp
   engine/render/BloomPass.cpp

@@ -122,6 +122,7 @@ namespace engine::render
 		{
 			std::vector<uint32_t> vertSpirv = loadSpirv("shaders/gbuffer_geometry.vert.spv");
 			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
+			std::vector<uint32_t> cullCompSpirv = loadSpirv("shaders/gpu_cull.comp.spv");
 			if (!vertSpirv.empty() && !fragSpirv.empty())
 			{
 				if (m_geometryPass.Init(device, physicalDevice,
@@ -138,6 +139,23 @@ namespace engine::render
 			}
 			else
 				LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass shaders not found");
+
+			if (!cullCompSpirv.empty())
+			{
+				if (m_gpuDrivenCullingPass.Init(device, physicalDevice,
+						cullCompSpirv.data(), cullCompSpirv.size()))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline GPU-driven culling OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] DeferredPipeline GPU-driven culling init failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] DeferredPipeline GPU-driven culling shader not found");
+			}
 		}
 
 		// Shadow map pass
@@ -309,12 +327,14 @@ namespace engine::render
 		m_lightingPass.Destroy(device);
 		m_decalPass.Destroy(device);
 		m_shadowMapPass.Destroy(device);
+		m_gpuDrivenCullingPass.Destroy(device);
 		m_geometryPass.Destroy(device);
 		m_ssaoBlurPass.Destroy(device);
 		m_ssaoPass.Destroy(device);
 		m_ssaoKernelNoise.Destroy(device);
 		m_specularPrefilterPass.Destroy(device);
 		m_brdfLutPass.Destroy(device);
+		LOG_INFO(Render, "[DeferredPipeline] Destroyed");
 	}
 
 	void DeferredPipeline::InvalidateFramebufferCaches(VkDevice device)

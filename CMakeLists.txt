@@ -102,6 +102,10 @@ add_library(engine_core
   engine/render/vk/StagingAllocator.cpp
   engine/world/LodConfig.cpp
   engine/world/HlodRuntime.cpp
+  engine/network/ByteWriter.cpp
+  engine/network/ByteReader.cpp
+  engine/network/PacketBuilder.cpp
+  engine/network/PacketView.cpp
 )
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -174,6 +178,12 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
     COMMENT "Copie de config.json..."
   )
 endif()
+
+# M19.2: Protocol v1 serialization unit tests
+add_executable(protocol_v1_tests engine/network/ProtocolV1Tests.cpp)
+target_link_libraries(protocol_v1_tests PRIVATE engine_core)
+enable_testing()
+add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)

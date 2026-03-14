@@ -1237,7 +1237,7 @@ namespace engine
 
 	void Engine::BeginFrame()
 	{
-		PROFILE_FUNCTION();
+		// PROFILE_FUNCTION();
 		std::fprintf(stderr, "[BF] input.BeginFrame\n"); std::fflush(stderr);
 		m_input.BeginFrame();
 		std::fprintf(stderr, "[BF] window.PollEvents\n"); std::fflush(stderr);
@@ -1284,7 +1284,7 @@ namespace engine
 
 	void Engine::Update()
 	{
-		PROFILE_FUNCTION();
+		// PROFILE_FUNCTION();
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -1380,7 +1380,7 @@ namespace engine
 
 	void Engine::Render()
 	{
-	    PROFILE_FUNCTION();
+	    // PROFILE_FUNCTION();
 	    std::fprintf(stderr, "[RENDER] debut\n"); std::fflush(stderr);
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
@@ -1491,7 +1491,7 @@ namespace engine
 
 	void Engine::EndFrame()
 	{
-		PROFILE_FUNCTION();
+		// PROFILE_FUNCTION();
 		if (m_profiler.IsInitialized())
 		{
 			m_profiler.EndFrame();

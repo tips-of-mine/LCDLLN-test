@@ -1,6 +1,7 @@
 #include "engine/core/Log.h"
 
 #include <chrono>
+#include <cstring>
 #include <cstdio>
 #include <ctime>
 #include <fstream>

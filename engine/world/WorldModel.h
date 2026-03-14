@@ -98,7 +98,7 @@ namespace engine::world
 		static void GlobalToZoneAndLocal(GlobalChunkCoord g, ZoneCoord& zone, LocalChunkCoord& local);
 
 		/// Returns chunk bounds in absolute world-space meters (min/max X and Z).
-		static ChunkBounds ChunkBounds(GlobalChunkCoord c);
+		static struct ChunkBounds ChunkBounds(GlobalChunkCoord c);
 
 		/// Updates required chunks from absolute player position.
 		/// Uses hysteresis: only recomputes when player moves to a different chunk.
@@ -127,7 +127,7 @@ namespace engine::world
 	}
 
 	/// Returns chunk bounds in absolute world-space meters.
-	inline ChunkBounds ChunkBounds(ChunkCoord c)
+	inline struct ChunkBounds ChunkBounds(ChunkCoord c)
 	{
 		return World::ChunkBounds(c);
 	}

@@ -1158,6 +1158,7 @@ namespace engine
 	int Engine::Run()
 	{
 		std::fprintf(stderr, "[RUN] debut Run\n"); std::fflush(stderr);
+		LOG_DEBUG(Core, "[Engine] Entering render loop");
 
 		auto lastFpsLog  = std::chrono::steady_clock::now();
 		auto lastPresent = lastFpsLog;
@@ -1197,6 +1198,7 @@ namespace engine
 		}
 
 		std::fprintf(stderr, "[RUN] sortie loop\n"); std::fflush(stderr);
+		LOG_INFO(Core, "[Engine] Render loop exited cleanly");
 
 		if (m_vkDeviceContext.IsValid())
 		{

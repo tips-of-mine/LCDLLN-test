@@ -2,6 +2,7 @@
 
 #include "engine/server/CharacterPersistence.h"
 #include "engine/server/QuestRuntime.h"
+#include "engine/server/SpawnerRuntime.h"
 #include "engine/core/Config.h"
 #include "engine/server/ReplicationTypes.h"
 #include "engine/server/SpatialPartition.h"
@@ -11,6 +12,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <string>
 #include <span>
 #include <string_view>
 #include <unordered_map>
@@ -109,9 +111,28 @@ namespace engine::server
 		EntityId aggroTargetEntityId = 0;
 		uint32_t nextAiTick = 0;
 		uint32_t nextPatrolTick = 0;
+		uint32_t owningSpawnerIndex = 0;
+		uint32_t owningSpawnerSlot = 0;
 		bool patrolForward = true;
+		bool pendingDespawn = false;
 		std::vector<ThreatEntry> threatTable;
 		bool hasSpawnedLoot = false;
+	};
+
+	/// One spawn slot tracked by the authoritative spawner runtime.
+	struct SpawnerSlotState
+	{
+		EntityId mobEntityId = 0;
+		uint32_t nextRespawnTick = 0;
+	};
+
+	/// One loaded spawner with runtime activation and respawn state.
+	struct SpawnerRuntimeState
+	{
+		SpawnerDefinition definition{};
+		CellCoord centerCell{};
+		bool isActive = false;
+		std::vector<SpawnerSlotState> slots;
 	};
 
 	/// Minimal authoritative loot bag spawned from a mob death.
@@ -180,8 +201,8 @@ namespace engine::server
 		/// Run the placeholder simulation step for the current tick.
 		void Simulate();
 
-		/// Seed the minimal authoritative combat entities required by the ticket.
-		bool InitCombatMobs();
+		/// Load the data-driven spawners and prepare their runtime state.
+		bool InitSpawners();
 
 		/// Resolve the autosave cadence required by the persistence ticket.
 		uint32_t ResolveCharacterAutosaveIntervalTicks() const;
@@ -198,11 +219,26 @@ namespace engine::server
 		/// Load the data-driven quest definitions required by M15.1.
 		bool InitQuests();
 
+		/// Refresh spawner activation, despawn inactive mobs and process respawns.
+		void UpdateSpawners();
+
 		/// Update the mob AI state machine at a reduced fixed cadence.
 		void UpdateMobAi();
 
 		/// Advance one mob through the authoritative AI state machine.
 		void UpdateMobAi(MobEntity& mob);
+
+		/// Return true when at least one player is close enough to activate the spawner.
+		bool IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const;
+
+		/// Return true when one living spawned mob is still in combat.
+		bool SpawnerHasCombat(const SpawnerRuntimeState& spawner) const;
+
+		/// Spawn one authoritative mob for the requested spawner slot.
+		bool SpawnMobFromSpawner(SpawnerRuntimeState& spawner, uint32_t slotIndex);
+
+		/// Despawn one authoritative mob and optionally arm its respawn timer.
+		bool DespawnSpawnerMob(SpawnerRuntimeState& spawner, uint32_t slotIndex, std::string_view reason, bool scheduleRespawn);
 
 		/// Return the number of server ticks between two AI updates.
 		uint32_t ResolveMobAiIntervalTicks() const;
@@ -342,6 +378,7 @@ namespace engine::server
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
 		QuestRuntime m_questRuntime;
+		SpawnerRuntime m_spawnerRuntime;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;
@@ -350,6 +387,7 @@ namespace engine::server
 		std::vector<MobEntity> m_mobs;
 		std::vector<LootBagEntity> m_lootBags;
 		std::vector<LootTableEntry> m_lootTableEntries;
+		std::vector<SpawnerRuntimeState> m_spawners;
 		std::unordered_map<uint32_t, CellGrid> m_zoneGrids;
 		std::vector<EntityId> m_relevantEntityScratch;
 		std::vector<SnapshotEntity> m_snapshotEntitiesScratch;

@@ -21,17 +21,12 @@ namespace engine::server
 		inline constexpr uint32_t kDefaultMobHealth = 60;
 		inline constexpr uint32_t kDefaultPlayerDamage = 10;
 		inline constexpr uint32_t kDefaultMobDamage = 6;
-		inline constexpr uint32_t kDefaultMobArchetypeId = 100;
 		inline constexpr uint32_t kDefaultLootBagArchetypeId = 200;
-		inline constexpr EntityId kDefaultMobEntityId = 0x100000000ull;
 		inline constexpr float kDefaultAttackRangeMeters = 4.0f;
 		inline constexpr float kDefaultMobLeashDistanceMeters = 24.0f;
 		inline constexpr float kDefaultMobMoveSpeedMetersPerSecond = 3.0f;
 		inline constexpr float kDefaultMobPatrolDistanceMeters = 6.0f;
 		inline constexpr float kDefaultLootPickupRangeMeters = 3.0f;
-		inline constexpr float kDefaultMobSpawnX = 128.0f;
-		inline constexpr float kDefaultMobSpawnY = 0.0f;
-		inline constexpr float kDefaultMobSpawnZ = 128.0f;
 
 		/// Clamp a signed config integer into an unsigned 16-bit range.
 		uint16_t ClampToU16(int64_t value, uint16_t minValue, uint16_t maxValue)
@@ -113,6 +108,7 @@ namespace engine::server
 		: m_config(std::move(config))
 		, m_characterPersistence(m_config)
 		, m_questRuntime(m_config)
+		, m_spawnerRuntime(m_config)
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -143,6 +139,7 @@ namespace engine::server
 		m_mobs.clear();
 		m_lootBags.clear();
 		m_lootTableEntries.clear();
+		m_spawners.clear();
 		m_pendingDatagrams.clear();
 		m_zoneGrids.clear();
 		m_nextServerEntityId = 0x200000000ull;
@@ -191,9 +188,9 @@ namespace engine::server
 			return false;
 		}
 
-		if (!InitCombatMobs())
+		if (!InitSpawners())
 		{
-			LOG_ERROR(Core, "[ServerApp] Init FAILED: combat mob bootstrap failed");
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: spawner bootstrap failed");
 			Shutdown();
 			return false;
 		}
@@ -293,8 +290,10 @@ namespace engine::server
 		m_tickScheduler.Shutdown();
 		m_transport.Shutdown();
 		m_zoneTransitionMap.Shutdown();
+		m_spawnerRuntime.Shutdown();
 		m_questRuntime.Shutdown();
 		m_characterPersistence.Shutdown();
+		m_spawners.clear();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -532,59 +531,53 @@ namespace engine::server
 	void ServerApp::Simulate()
 	{
 		UpdateMobAi();
+		UpdateSpawners();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
-	bool ServerApp::InitCombatMobs()
+	bool ServerApp::InitSpawners()
 	{
 		m_mobs.clear();
-
-		CellGrid* zoneGrid = GetOrCreateZoneGrid(1);
-		if (zoneGrid == nullptr)
+		m_spawners.clear();
+		if (!m_spawnerRuntime.Init())
 		{
-			LOG_ERROR(Net, "[ServerApp] Combat mob init FAILED: missing zone grid");
+			LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: runtime load failed");
 			return false;
 		}
 
-		MobEntity mob{};
-		mob.entityId = kDefaultMobEntityId;
-		mob.zoneId = 1;
-		mob.archetypeId = kDefaultMobArchetypeId;
-		mob.positionMetersX = kDefaultMobSpawnX;
-		mob.positionMetersY = kDefaultMobSpawnY;
-		mob.positionMetersZ = kDefaultMobSpawnZ;
-		mob.stats.currentHealth = kDefaultMobHealth;
-		mob.stats.maxHealth = kDefaultMobHealth;
-		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
-		mob.homePositionMetersX = mob.positionMetersX;
-		mob.homePositionMetersY = mob.positionMetersY;
-		mob.homePositionMetersZ = mob.positionMetersZ;
-		mob.patrolTargetMetersX = mob.positionMetersX + kDefaultMobPatrolDistanceMeters;
-		mob.patrolTargetMetersZ = mob.positionMetersZ;
-		mob.leashDistanceMeters = static_cast<float>(m_config.GetDouble("server.mob_leash_distance_meters", kDefaultMobLeashDistanceMeters));
-		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
-		mob.aiState = MobAiState::Idle;
-		mob.nextAiTick = ResolveMobAiIntervalTicks();
-		mob.nextPatrolTick = ResolveMobAiIntervalTicks() * 2u;
-
-		CellCoord cell{};
-		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, cell))
+		for (const SpawnerDefinition& definition : m_spawnerRuntime.GetDefinitions())
 		{
-			LOG_ERROR(Net, "[ServerApp] Combat mob init FAILED: grid mapping failed (entity_id={})", mob.entityId);
-			return false;
+			CellGrid* zoneGrid = GetOrCreateZoneGrid(definition.zoneId);
+			if (zoneGrid == nullptr)
+			{
+				LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: missing zone grid (spawner_id={}, zone_id={})",
+					definition.spawnerId,
+					definition.zoneId);
+				m_spawners.clear();
+				return false;
+			}
+
+			SpawnerRuntimeState runtimeState{};
+			runtimeState.definition = definition;
+			runtimeState.slots.resize(definition.count);
+			if (!zoneGrid->TryWorldToCellCoord(definition.positionMetersX, definition.positionMetersZ, runtimeState.centerCell))
+			{
+				LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: invalid spawn position (spawner_id={}, zone_id={})",
+					definition.spawnerId,
+					definition.zoneId);
+				m_spawners.clear();
+				return false;
+			}
+
+			m_spawners.push_back(std::move(runtimeState));
+			LOG_INFO(Net, "[ServerApp] Spawner ready (id={}, zone_id={}, count={}, respawn_sec={})",
+				definition.spawnerId,
+				definition.zoneId,
+				definition.count,
+				definition.respawnSeconds);
 		}
 
-		m_mobs.push_back(mob);
-		LOG_INFO(Net,
-			"[ServerApp] Combat mob ready (entity_id={}, zone_id={}, archetype_id={}, hp={}, leash_m={:.2f}, pos=({:.2f}, {:.2f}, {:.2f}))",
-			mob.entityId,
-			mob.zoneId,
-			mob.archetypeId,
-			mob.stats.currentHealth,
-			mob.leashDistanceMeters,
-			mob.positionMetersX,
-			mob.positionMetersY,
-			mob.positionMetersZ);
+		LOG_INFO(Net, "[ServerApp] Spawner init OK (spawners={})", m_spawners.size());
 		return true;
 	}
 
@@ -830,6 +823,243 @@ namespace engine::server
 		}
 	}
 
+	bool ServerApp::IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const
+	{
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!client.hasReplicatedState || !client.hasCell || client.zoneId != spawner.definition.zoneId)
+			{
+				continue;
+			}
+
+			const int dx = std::abs(static_cast<int>(client.currentCell.x) - static_cast<int>(spawner.centerCell.x));
+			const int dz = std::abs(static_cast<int>(client.currentCell.z) - static_cast<int>(spawner.centerCell.z));
+			if (dx <= kBaseInterestRadiusCells && dz <= kBaseInterestRadiusCells)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool ServerApp::SpawnerHasCombat(const SpawnerRuntimeState& spawner) const
+	{
+		for (const SpawnerSlotState& slot : spawner.slots)
+		{
+			if (slot.mobEntityId == 0)
+			{
+				continue;
+			}
+
+			const MobEntity* mob = FindMobByEntityId(slot.mobEntityId);
+			if (mob == nullptr || (mob->stateFlags & kEntityStateDead) != 0u)
+			{
+				continue;
+			}
+
+			if (mob->aggroTargetEntityId != 0 || !mob->threatTable.empty() || mob->aiState == MobAiState::Aggro)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool ServerApp::SpawnMobFromSpawner(SpawnerRuntimeState& spawner, uint32_t slotIndex)
+	{
+		if (slotIndex >= spawner.slots.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob spawn FAILED: invalid slot (spawner_id={}, slot={})",
+				spawner.definition.spawnerId,
+				slotIndex);
+			return false;
+		}
+
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(spawner.definition.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob spawn FAILED: zone grid unavailable (spawner_id={}, zone_id={})",
+				spawner.definition.spawnerId,
+				spawner.definition.zoneId);
+			return false;
+		}
+
+		MobEntity mob{};
+		mob.entityId = m_nextServerEntityId++;
+		mob.zoneId = spawner.definition.zoneId;
+		mob.archetypeId = spawner.definition.archetypeId;
+		mob.positionMetersX = spawner.definition.positionMetersX;
+		mob.positionMetersY = spawner.definition.positionMetersY;
+		mob.positionMetersZ = spawner.definition.positionMetersZ;
+		mob.stats.currentHealth = kDefaultMobHealth;
+		mob.stats.maxHealth = kDefaultMobHealth;
+		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		mob.homePositionMetersX = mob.positionMetersX;
+		mob.homePositionMetersY = mob.positionMetersY;
+		mob.homePositionMetersZ = mob.positionMetersZ;
+		mob.patrolTargetMetersX = mob.positionMetersX + kDefaultMobPatrolDistanceMeters;
+		mob.patrolTargetMetersZ = mob.positionMetersZ;
+		mob.leashDistanceMeters = spawner.definition.leashDistanceMeters;
+		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		mob.aiState = MobAiState::Idle;
+		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+		mob.owningSpawnerIndex = static_cast<uint32_t>(&spawner - m_spawners.data());
+		mob.owningSpawnerSlot = slotIndex;
+
+		CellCoord mappedCell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob spawn FAILED: grid mapping failed (spawner_id={}, slot={}, entity_id={})",
+				spawner.definition.spawnerId,
+				slotIndex,
+				mob.entityId);
+			return false;
+		}
+
+		spawner.slots[slotIndex].mobEntityId = mob.entityId;
+		spawner.slots[slotIndex].nextRespawnTick = 0;
+		m_mobs.push_back(mob);
+		LOG_INFO(Net,
+			"[ServerApp] Spawner mob spawned (spawner_id={}, slot={}, entity_id={}, zone_id={}, archetype_id={})",
+			spawner.definition.spawnerId,
+			slotIndex,
+			mob.entityId,
+			mob.zoneId,
+			mob.archetypeId);
+		return true;
+	}
+
+	bool ServerApp::DespawnSpawnerMob(SpawnerRuntimeState& spawner, uint32_t slotIndex, std::string_view reason, bool scheduleRespawn)
+	{
+		if (slotIndex >= spawner.slots.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob despawn FAILED: invalid slot (spawner_id={}, slot={})",
+				spawner.definition.spawnerId,
+				slotIndex);
+			return false;
+		}
+
+		SpawnerSlotState& slot = spawner.slots[slotIndex];
+		if (slot.mobEntityId == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] Spawner mob despawn ignored: empty slot (spawner_id={}, slot={}, reason={})",
+				spawner.definition.spawnerId,
+				slotIndex,
+				reason);
+			return false;
+		}
+
+		const EntityId entityId = slot.mobEntityId;
+		if (MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr)
+		{
+			if (CellGrid* zoneGrid = GetOrCreateZoneGrid(mob->zoneId); zoneGrid != nullptr)
+			{
+				(void)zoneGrid->RemoveEntity(entityId);
+			}
+		}
+
+		m_mobs.erase(
+			std::remove_if(
+				m_mobs.begin(),
+				m_mobs.end(),
+				[entityId](const MobEntity& mob)
+				{
+					return mob.entityId == entityId;
+				}),
+			m_mobs.end());
+
+		slot.mobEntityId = 0;
+		slot.nextRespawnTick = scheduleRespawn
+			? (m_currentTick + std::max<uint32_t>(1u, spawner.definition.respawnSeconds * static_cast<uint32_t>(m_tickHz)))
+			: 0u;
+		LOG_INFO(Net,
+			"[ServerApp] Spawner mob despawned (spawner_id={}, slot={}, entity_id={}, reason={}, next_respawn_tick={})",
+			spawner.definition.spawnerId,
+			slotIndex,
+			entityId,
+			reason,
+			slot.nextRespawnTick);
+		return true;
+	}
+
+	void ServerApp::UpdateSpawners()
+	{
+		if (m_spawners.empty())
+		{
+			return;
+		}
+
+		for (SpawnerRuntimeState& spawner : m_spawners)
+		{
+			const bool shouldBeActive = IsSpawnerActivatedByPlayers(spawner);
+			if (spawner.isActive != shouldBeActive)
+			{
+				spawner.isActive = shouldBeActive;
+				LOG_INFO(Net, "[ServerApp] Spawner activation updated (spawner_id={}, active={})",
+					spawner.definition.spawnerId,
+					spawner.isActive ? "true" : "false");
+			}
+
+			for (uint32_t slotIndex = 0; slotIndex < spawner.slots.size(); ++slotIndex)
+			{
+				SpawnerSlotState& slot = spawner.slots[slotIndex];
+				if (slot.mobEntityId == 0)
+				{
+					continue;
+				}
+
+				MobEntity* mob = FindMobByEntityId(slot.mobEntityId);
+				if (mob == nullptr)
+				{
+					slot.mobEntityId = 0;
+					continue;
+				}
+
+				if (mob->pendingDespawn)
+				{
+					(void)DespawnSpawnerMob(spawner, slotIndex, "death", true);
+					continue;
+				}
+
+				if (!spawner.isActive)
+				{
+					if (mob->aggroTargetEntityId != 0 || !mob->threatTable.empty() || mob->aiState == MobAiState::Aggro)
+					{
+						LOG_DEBUG(Net, "[ServerApp] Spawner despawn delayed: mob still in combat (spawner_id={}, entity_id={})",
+							spawner.definition.spawnerId,
+							mob->entityId);
+						continue;
+					}
+
+					(void)DespawnSpawnerMob(spawner, slotIndex, "inactive", false);
+				}
+			}
+
+			if (!spawner.isActive || SpawnerHasCombat(spawner))
+			{
+				continue;
+			}
+
+			for (uint32_t slotIndex = 0; slotIndex < spawner.slots.size(); ++slotIndex)
+			{
+				SpawnerSlotState& slot = spawner.slots[slotIndex];
+				if (slot.mobEntityId != 0)
+				{
+					continue;
+				}
+				if (slot.nextRespawnTick != 0 && m_currentTick < slot.nextRespawnTick)
+				{
+					continue;
+				}
+
+				(void)SpawnMobFromSpawner(spawner, slotIndex);
+			}
+		}
+	}
+
 	void ServerApp::MaybeSendSnapshots()
 	{
 		if (m_clients.empty())
@@ -1033,6 +1263,9 @@ namespace engine::server
 		if (target->stats.currentHealth == 0)
 		{
 			target->stateFlags |= kEntityStateDead;
+			target->pendingDespawn = true;
+			target->aggroTargetEntityId = 0;
+			target->threatTable.clear();
 			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target->entityId, client->entityId);
 			if (!target->hasSpawnedLoot)
 			{
@@ -1663,6 +1896,18 @@ namespace engine::server
 	{
 		if (!client.hasCell || !client.hasReplicatedState)
 		{
+			return;
+		}
+
+		if (CellGrid* zoneGrid = GetOrCreateZoneGrid(client.zoneId); zoneGrid != nullptr)
+		{
+			zoneGrid->GatherEntityIds(client.interestCells, client.interestEntityIds);
+		}
+		else
+		{
+			LOG_WARN(Net, "[ServerApp] Replication refresh skipped: zone grid unavailable (client_id={}, zone_id={})",
+				client.clientId,
+				client.zoneId);
 			return;
 		}
 

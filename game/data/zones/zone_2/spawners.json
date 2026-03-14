@@ -1,0 +1,13 @@
+{
+  "zoneId": 2,
+  "spawners": [
+    {
+      "id": "zone_2_spawn_01",
+      "archetypeId": 100,
+      "position": [192.0, 0.0, 192.0],
+      "count": 1,
+      "respawnSec": 8,
+      "leashDistanceMeters": 24.0
+    }
+  ]
+}

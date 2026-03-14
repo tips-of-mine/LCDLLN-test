@@ -483,9 +483,19 @@ namespace engine::render
 				}
 				if (h.image != VK_NULL_HANDLE && h.allocation != nullptr)
 				{
-					vmaDestroyImage(alloc, h.image, static_cast<VmaAllocation>(h.allocation));
+					if (h.allocatedWithVma)
+					{
+						vmaDestroyImage(alloc, h.image, static_cast<VmaAllocation>(h.allocation));
+					}
+					else
+					{
+						VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(h.allocation);
+						vkDestroyImage(device, h.image, nullptr);
+						vkFreeMemory(device, mem, nullptr);
+					}
 					h.image = VK_NULL_HANDLE;
 					h.allocation = nullptr;
+					h.allocatedWithVma = false;
 				}
 			}
 		}
@@ -503,12 +513,14 @@ namespace engine::render
 		}
 		m_lastExtent = { 0, 0 };
 		m_lastFramesInFlight = 0;
+		m_loggedImageVmaBypass = false;
 	}
 
 	void FrameGraph::ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator,
     	uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
 	{
 		if (vmaAllocator == nullptr) return;
+		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
 
 		std::fprintf(stderr, "[EIR] debut nImages=%zu extent=%ux%u framesInFlight=%u lastExtent=%ux%u\n",
 		    m_imageResources.size(), extent.width, extent.height, framesInFlight,
@@ -585,63 +597,103 @@ namespace engine::render
 			VmaAllocationCreateInfo allocCreateInfo{};
 			allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			VmaAllocation allocation = VK_NULL_HANDLE;
+#ifndef NDEBUG
+			VmaAllocatorInfo allocatorInfo{};
+			vmaGetAllocatorInfo(alloc, &allocatorInfo);
+			LOG_DEBUG(Render, "[VMA] Version: {}, physicalDevice: {:p}, device: {:p}",
+				VMA_VERSION,
+				static_cast<void*>(allocatorInfo.physicalDevice),
+				static_cast<void*>(allocatorInfo.device));
+#endif
 
-			// TEST direct
+			VkResult vmaResult = vmaCreateImage(alloc, &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
+#ifndef NDEBUG
+			LOG_DEBUG(Render, "[VMA] vmaCreateImage resource='{}' result={}", res.name, static_cast<int>(vmaResult));
+#endif
+			if (vmaResult == VK_SUCCESS && h.image != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE)
 			{
-			    VkImage testImg = VK_NULL_HANDLE;
-			    VkResult tr = vkCreateImage(device, &imageInfo, nullptr, &testImg);
-			    std::fprintf(stderr, "[EIR] vkCreateImage direct result=%d img=%p\n", (int)tr, (void*)testImg); std::fflush(stderr);
-			    if (testImg != VK_NULL_HANDLE) vkDestroyImage(device, testImg, nullptr);
+				h.allocation = allocation;
+				h.allocatedWithVma = true;
+				LOG_INFO(Render, "[FrameGraph] Image allocated via VMA: {}", res.name);
 			}
-			
-			std::fprintf(stderr, "[EIR] vmaAllocator=%p allocCreateInfo.usage=%d\n",
-			    vmaAllocator, (int)allocCreateInfo.usage); std::fflush(stderr);
-			std::fprintf(stderr, "[EIR] avant vmaCreateImage[%zu] usage=0x%x\n", resIdx, (unsigned)usage); std::fflush(stderr);
-			
-			VkImage newImage = VK_NULL_HANDLE;
-			VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
-			std::fprintf(stderr, "[EIR] step1 vkCreateImage r1=%d img=%p\n", (int)r1, (void*)newImage); std::fflush(stderr);
-			
-			VkMemoryRequirements memReq{};
-			vkGetImageMemoryRequirements(device, newImage, &memReq);
-			std::fprintf(stderr, "[EIR] step2 memReq size=%llu align=%llu bits=0x%x\n",
-			    (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits); std::fflush(stderr);
-			
-			VkPhysicalDeviceMemoryProperties memProps{};
-			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
-			uint32_t memTypeIndex = UINT32_MAX;
-			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			else
 			{
-			    if ((memReq.memoryTypeBits & (1u << i)) &&
-			        (memProps.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-			    {
-			        memTypeIndex = i;
-			        break;
-			    }
-			}
-			std::fprintf(stderr, "[EIR] step3 memTypeIndex=%u\n", memTypeIndex); std::fflush(stderr);
-			
-			VkMemoryAllocateInfo allocInfo{};
-			allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize  = memReq.size;
-			allocInfo.memoryTypeIndex = memTypeIndex;
-			VkDeviceMemory memory = VK_NULL_HANDLE;
-			VkResult r2 = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
-			std::fprintf(stderr, "[EIR] step4 vkAllocateMemory r2=%d mem=%p\n", (int)r2, (void*)memory); std::fflush(stderr);
-			
-			VkResult r3 = VK_SUCCESS;
-			if (memory != VK_NULL_HANDLE)
-			{
-			    r3 = vkBindImageMemory(device, newImage, memory, 0);
-			    std::fprintf(stderr, "[EIR] step5 vkBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
-			}
-			h.image      = newImage;
-			h.allocation = nullptr;
-			
-			if (r1 != VK_SUCCESS || r2 != VK_SUCCESS || r3 != VK_SUCCESS)
-			{
-			    LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': r1={} r2={} r3={}", res.name, (int)r1, (int)r2, (int)r3);
-			    continue;
+				if (!m_loggedImageVmaBypass)
+				{
+					LOG_WARN(Render, "[FrameGraph] VMA unavailable for images, using raw Vulkan allocation (STAB.7)");
+					m_loggedImageVmaBypass = true;
+				}
+				h.image = VK_NULL_HANDLE;
+				h.allocation = nullptr;
+				h.allocatedWithVma = false;
+
+				// [STAB.7] VMA BYPASS — Raw Vulkan allocation
+				// Raison : vmaCreateImage échoue sur cette configuration (SDK/MSVC/VMA version mismatch ?).
+				// Toutes les approches VMA testées (static/dynamic/manual function pointers) ont échoué.
+				// Ce bypass utilise vkAllocateMemory + vkBindImageMemory directement.
+				// TODO STAB.7 : Investiguer la cause racine et restaurer VMA si possible.
+				VkImage newImage = VK_NULL_HANDLE;
+				VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
+				std::fprintf(stderr, "[EIR] step1 vkCreateImage r1=%d img=%p\n", (int)r1, (void*)newImage); std::fflush(stderr);
+
+				VkMemoryRequirements memReq{};
+				vkGetImageMemoryRequirements(device, newImage, &memReq);
+				std::fprintf(stderr, "[EIR] step2 memReq size=%llu align=%llu bits=0x%x\n",
+					(unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits); std::fflush(stderr);
+
+				VkPhysicalDeviceMemoryProperties memProps{};
+				vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+				uint32_t memTypeIndex = UINT32_MAX;
+				for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+				{
+					if ((memReq.memoryTypeBits & (1u << i)) &&
+						(memProps.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+					{
+						memTypeIndex = i;
+						break;
+					}
+				}
+				std::fprintf(stderr, "[EIR] step3 memTypeIndex=%u\n", memTypeIndex); std::fflush(stderr);
+
+				VkMemoryAllocateInfo allocInfo{};
+				allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+				allocInfo.allocationSize = memReq.size;
+				allocInfo.memoryTypeIndex = memTypeIndex;
+				VkDeviceMemory memory = VK_NULL_HANDLE;
+				VkResult r2 = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
+				std::fprintf(stderr, "[EIR] step4 vkAllocateMemory r2=%d mem=%p\n", (int)r2, (void*)memory); std::fflush(stderr);
+
+				VkResult r3 = VK_SUCCESS;
+				if (memory != VK_NULL_HANDLE)
+				{
+					r3 = vkBindImageMemory(device, newImage, memory, 0);
+					std::fprintf(stderr, "[EIR] step5 vkBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
+				}
+				h.image = newImage;
+				h.allocation = reinterpret_cast<void*>(memory);
+				h.allocatedWithVma = false;
+
+				if (r1 != VK_SUCCESS || r2 != VK_SUCCESS || r3 != VK_SUCCESS)
+				{
+					if (memory != VK_NULL_HANDLE)
+					{
+						vkFreeMemory(device, memory, nullptr);
+					}
+					if (newImage != VK_NULL_HANDLE)
+					{
+						vkDestroyImage(device, newImage, nullptr);
+					}
+					h.image = VK_NULL_HANDLE;
+					h.allocation = nullptr;
+					h.allocatedWithVma = false;
+					LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': vma={} r1={} r2={} r3={}",
+						res.name,
+						static_cast<int>(vmaResult),
+						static_cast<int>(r1),
+						static_cast<int>(r2),
+						static_cast<int>(r3));
+					continue;
+				}
 			}
 
 			VkImageViewCreateInfo viewInfo{};
@@ -664,11 +716,19 @@ namespace engine::render
 			if (result != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "FrameGraph: vkCreateImageView failed for '{}': {}", res.name, static_cast<int>(result));
-				//vmaDestroyImage(static_cast<VmaAllocator>(vmaAllocator), h.image, static_cast<VmaAllocation>(h.allocation));
-				vkDestroyImage(device, h.image, nullptr);
-				vmaFreeMemory(static_cast<VmaAllocator>(vmaAllocator), static_cast<VmaAllocation>(h.allocation));
+				if (h.allocatedWithVma)
+				{
+					vmaDestroyImage(alloc, h.image, static_cast<VmaAllocation>(h.allocation));
+				}
+				else if (h.image != VK_NULL_HANDLE && h.allocation != nullptr)
+				{
+					VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(h.allocation);
+					vkDestroyImage(device, h.image, nullptr);
+					vkFreeMemory(device, mem, nullptr);
+				}
 				h.image = VK_NULL_HANDLE;
 				h.allocation = nullptr;
+				h.allocatedWithVma = false;
 			}
 		}
 	}

@@ -191,6 +191,7 @@ namespace engine::render
 			VkImage image = VK_NULL_HANDLE;
 			void* allocation = nullptr; ///< VmaAllocation (opaque to avoid including vk_mem_alloc.h here).
 			VkImageView view = VK_NULL_HANDLE;
+			bool allocatedWithVma = false;
 		};
 		struct PerFrameBufferHandles
 		{
@@ -220,6 +221,7 @@ namespace engine::render
 
 		std::vector<size_t> m_compiledOrder;
 		bool m_compiled = false;
+		bool m_loggedImageVmaBypass = false;
 
 		void ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator,
 			uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight);

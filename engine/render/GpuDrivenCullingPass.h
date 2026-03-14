@@ -53,7 +53,9 @@ namespace engine::render
 
 		/// Resets the visible counter, dispatches frustum culling, and makes indirect
 		/// commands visible to subsequent draw-indirect reads on the same command buffer.
-		void Record(VkCommandBuffer cmd, const float* viewProjMatrix4x4, uint32_t frameIndex);
+		/// When Hi-Z data is not available, the pass falls back to frustum-only culling.
+		void Record(VkDevice device, VkCommandBuffer cmd, const float* viewProjMatrix4x4, uint32_t frameIndex,
+			VkImageView hiZImageView, VkExtent2D hiZExtent, uint32_t hiZMipCount);
 
 		/// Releases all GPU resources. Safe to call when not initialized.
 		void Destroy(VkDevice device);
@@ -68,8 +70,10 @@ namespace engine::render
 			float viewProj[16] = {};
 			uint32_t drawItemCount = 0;
 			uint32_t maxDrawItems = 0;
-			uint32_t reserved0 = 0;
-			uint32_t reserved1 = 0;
+			uint32_t hiZMipCount = 0;
+			uint32_t occlusionEnabled = 0;
+			float hiZWidth = 1.0f;
+			float hiZHeight = 1.0f;
 		};
 
 		struct FrameSlot
@@ -90,12 +94,18 @@ namespace engine::render
 		bool CreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice,
 			VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryFlags,
 			VkBuffer& outBuffer, VkDeviceMemory& outMemory);
+		bool CreateFallbackImage(VkDevice device, VkPhysicalDevice physicalDevice);
 		void DestroyFrameSlot(VkDevice device, FrameSlot& slot);
 
 		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_pipeline = VK_NULL_HANDLE;
+		VkSampler m_hiZSampler = VK_NULL_HANDLE;
+		VkImage m_fallbackHiZImage = VK_NULL_HANDLE;
+		VkDeviceMemory m_fallbackHiZMemory = VK_NULL_HANDLE;
+		VkImageView m_fallbackHiZView = VK_NULL_HANDLE;
+		bool m_fallbackHiZReady = false;
 		uint32_t m_framesInFlight = 0;
 		uint32_t m_maxDrawItems = 0;
 		FrameSlot* m_slots = nullptr;

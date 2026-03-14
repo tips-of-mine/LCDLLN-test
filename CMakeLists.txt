@@ -78,6 +78,7 @@ add_library(engine_core
   engine/render/ShadowMapPass.cpp
   engine/render/GeometryPass.cpp
   engine/render/GpuDrivenCullingPass.cpp
+  engine/render/HiZPyramidPass.cpp
   engine/render/LightingPass.cpp
   engine/render/TonemapPass.cpp
   engine/render/BloomPass.cpp

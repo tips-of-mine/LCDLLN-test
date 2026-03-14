@@ -2,6 +2,7 @@
 
 #include "engine/render/GeometryPass.h"
 #include "engine/render/GpuDrivenCullingPass.h"
+#include "engine/render/HiZPyramidPass.h"
 #include "engine/render/ShadowMapPass.h"
 #include "engine/render/BrdfLutPass.h"
 #include "engine/render/SpecularPrefilterPass.h"
@@ -61,6 +62,8 @@ namespace engine::render
 		const GeometryPass&   GetGeometryPass() const   { return m_geometryPass; }
 		GpuDrivenCullingPass& GetGpuDrivenCullingPass() { return m_gpuDrivenCullingPass; }
 		const GpuDrivenCullingPass& GetGpuDrivenCullingPass() const { return m_gpuDrivenCullingPass; }
+		HiZPyramidPass&       GetHiZPyramidPass()       { return m_hiZPyramidPass; }
+		const HiZPyramidPass& GetHiZPyramidPass() const { return m_hiZPyramidPass; }
 		ShadowMapPass&        GetShadowMapPass()        { return m_shadowMapPass; }
 		const ShadowMapPass&  GetShadowMapPass() const  { return m_shadowMapPass; }
 		BrdfLutPass&          GetBrdfLutPass()          { return m_brdfLutPass; }
@@ -91,6 +94,7 @@ namespace engine::render
 	private:
 		GeometryPass          m_geometryPass;
 		GpuDrivenCullingPass  m_gpuDrivenCullingPass;
+		HiZPyramidPass        m_hiZPyramidPass;
 		ShadowMapPass         m_shadowMapPass;
 		BrdfLutPass           m_brdfLutPass;
 		SpecularPrefilterPass m_specularPrefilterPass;

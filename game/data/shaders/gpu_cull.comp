@@ -46,16 +46,20 @@ layout(std430, set = 0, binding = 3) buffer IndirectBuffer
     IndirectCommand commands[];
 } gIndirect;
 
+layout(set = 0, binding = 4) uniform sampler2D gHiZTexture;
+
 layout(push_constant) uniform PushConstants
 {
     mat4 viewProj;
     uint drawItemCount;
     uint maxDrawItems;
-    uint reserved0;
-    uint reserved1;
+    uint hiZMipCount;
+    uint occlusionEnabled;
+    float hiZWidth;
+    float hiZHeight;
 } pc;
 
-bool isVisibleAabb(vec3 center, vec3 extents)
+bool projectAabb(vec3 center, vec3 extents, out vec2 uvMin, out vec2 uvMax, out float nearestDepth)
 {
     vec3 minCorner = center - extents;
     vec3 maxCorner = center + extents;
@@ -77,6 +81,9 @@ bool isVisibleAabb(vec3 center, vec3 extents)
     bool outsideTop = true;
     bool outsideNear = true;
     bool outsideFar = true;
+    vec2 ndcMin = vec2(1.0, 1.0);
+    vec2 ndcMax = vec2(-1.0, -1.0);
+    nearestDepth = 1.0;
 
     for (int i = 0; i < 8; ++i)
     {
@@ -87,9 +94,58 @@ bool isVisibleAabb(vec3 center, vec3 extents)
         outsideTop = outsideTop && (clip.y > clip.w);
         outsideNear = outsideNear && (clip.z < 0.0);
         outsideFar = outsideFar && (clip.z > clip.w);
+
+        float invW = (abs(clip.w) > 1e-5) ? (1.0 / clip.w) : 0.0;
+        vec3 ndc = clip.xyz * invW;
+        ndcMin = min(ndcMin, ndc.xy);
+        ndcMax = max(ndcMax, ndc.xy);
+        nearestDepth = min(nearestDepth, clamp(ndc.z, 0.0, 1.0));
     }
 
-    return !(outsideLeft || outsideRight || outsideBottom || outsideTop || outsideNear || outsideFar);
+    if (outsideLeft || outsideRight || outsideBottom || outsideTop || outsideNear || outsideFar)
+    {
+        uvMin = vec2(0.0);
+        uvMax = vec2(0.0);
+        return false;
+    }
+
+    uvMin = clamp(ndcMin * 0.5 + 0.5, vec2(0.0), vec2(1.0));
+    uvMax = clamp(ndcMax * 0.5 + 0.5, vec2(0.0), vec2(1.0));
+    return all(greaterThanEqual(uvMax, uvMin));
+}
+
+bool isOccludedByHiZ(vec2 uvMin, vec2 uvMax, float nearestDepth)
+{
+    if (pc.occlusionEnabled == 0u || pc.hiZMipCount == 0u)
+    {
+        return false;
+    }
+
+    vec2 rectPixels = max((uvMax - uvMin) * vec2(pc.hiZWidth, pc.hiZHeight), vec2(1.0));
+    float maxDim = max(rectPixels.x, rectPixels.y);
+    if (maxDim > 32.0)
+    {
+        return false;
+    }
+
+    float mip = clamp(floor(log2(max(maxDim, 1.0))), 0.0, float(pc.hiZMipCount - 1u));
+    vec2 centerUv = mix(uvMin, uvMax, 0.5);
+    vec2 sampleUvs[5] = vec2[5](
+        uvMin,
+        vec2(uvMax.x, uvMin.y),
+        vec2(uvMin.x, uvMax.y),
+        uvMax,
+        centerUv
+    );
+
+    bool occluded = true;
+    const float depthBias = 0.01;
+    for (int i = 0; i < 5; ++i)
+    {
+        float sampledDepth = textureLod(gHiZTexture, sampleUvs[i], mip).r;
+        occluded = occluded && (nearestDepth > sampledDepth + depthBias);
+    }
+    return occluded;
 }
 
 void main()
@@ -101,7 +157,14 @@ void main()
     }
 
     DrawItem item = gDrawItems.items[itemIndex];
-    bool visible = isVisibleAabb(item.boundsCenter.xyz, item.boundsExtents.xyz);
+    vec2 uvMin = vec2(0.0);
+    vec2 uvMax = vec2(0.0);
+    float nearestDepth = 1.0;
+    bool visible = projectAabb(item.boundsCenter.xyz, item.boundsExtents.xyz, uvMin, uvMax, nearestDepth);
+    if (visible && isOccludedByHiZ(uvMin, uvMax, nearestDepth))
+    {
+        visible = false;
+    }
 
     if (visible)
     {

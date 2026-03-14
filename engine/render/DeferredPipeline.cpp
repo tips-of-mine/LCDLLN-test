@@ -123,6 +123,7 @@ namespace engine::render
 			std::vector<uint32_t> vertSpirv = loadSpirv("shaders/gbuffer_geometry.vert.spv");
 			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
 			std::vector<uint32_t> cullCompSpirv = loadSpirv("shaders/gpu_cull.comp.spv");
+			std::vector<uint32_t> hiZCompSpirv = loadSpirv("shaders/hiz_build.comp.spv");
 			if (!vertSpirv.empty() && !fragSpirv.empty())
 			{
 				if (m_geometryPass.Init(device, physicalDevice,
@@ -155,6 +156,22 @@ namespace engine::render
 			else
 			{
 				LOG_WARN(Render, "[Boot] DeferredPipeline GPU-driven culling shader not found");
+			}
+
+			if (!hiZCompSpirv.empty())
+			{
+				if (m_hiZPyramidPass.Init(device, physicalDevice, hiZCompSpirv.data(), hiZCompSpirv.size()))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline Hi-Z pyramid OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] DeferredPipeline Hi-Z pyramid init failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] DeferredPipeline Hi-Z pyramid shader not found");
 			}
 		}
 
@@ -327,6 +344,7 @@ namespace engine::render
 		m_lightingPass.Destroy(device);
 		m_decalPass.Destroy(device);
 		m_shadowMapPass.Destroy(device);
+		m_hiZPyramidPass.Destroy(device);
 		m_gpuDrivenCullingPass.Destroy(device);
 		m_geometryPass.Destroy(device);
 		m_ssaoBlurPass.Destroy(device);

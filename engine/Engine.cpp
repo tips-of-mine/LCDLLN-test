@@ -685,8 +685,12 @@ namespace engine
 													return;
 												}
 
-												if (drawItemCount > 0)
-													cullingPass.Record(cmd, rs.viewProjMatrix.m, m_currentFrame);
+												const auto& hiZPass = m_pipeline->GetHiZPyramidPass();
+												cullingPass.Record(
+													m_vkDeviceContext.GetDevice(), cmd, rs.viewProjMatrix.m, m_currentFrame,
+													hiZPass.GetImageView(m_currentFrame),
+													hiZPass.GetExtent(),
+													hiZPass.GetMipCount());
 											});
 										std::fprintf(stderr, "[ENGINE] AQ1: addPass GPU_Cull OK\n"); std::fflush(stderr);
 
@@ -743,6 +747,21 @@ namespace engine
 												}
 											});
 										std::fprintf(stderr, "[ENGINE] AR: addPass Geometry OK\n"); std::fflush(stderr);
+
+										m_frameGraph.addPass("HiZ_Build",
+											[this](engine::render::PassBuilder& b) {
+												b.read(m_fgDepthId, engine::render::ImageUsage::SampledRead);
+											},
+											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+												auto& hiZPass = m_pipeline->GetHiZPyramidPass();
+												if (!hiZPass.IsValid())
+													return;
+
+												hiZPass.Record(
+													m_vkDeviceContext.GetDevice(), cmd,
+													reg.getImage(m_fgDepthId), reg.getImageView(m_fgDepthId),
+													m_vkSwapchain.GetExtent(), m_currentFrame);
+											});
 
 										std::fprintf(stderr, "[ENGINE] AS: avant addPass ShadowMap\n"); std::fflush(stderr);
 										for (uint32_t cascade = 0; cascade < engine::render::kCascadeCount; ++cascade)

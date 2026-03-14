@@ -1,0 +1,41 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler2D gSourceTexture;
+layout(set = 0, binding = 1, r32f) uniform writeonly image2D gDestinationImage;
+
+layout(push_constant) uniform PushConstants
+{
+    uint srcWidth;
+    uint srcHeight;
+    uint srcMipLevel;
+    uint reserved0;
+} pc;
+
+void main()
+{
+    ivec2 dstCoord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 dstSize = imageSize(gDestinationImage);
+    if (dstCoord.x >= dstSize.x || dstCoord.y >= dstSize.y)
+    {
+        return;
+    }
+
+    ivec2 srcSize = ivec2(int(pc.srcWidth), int(pc.srcHeight));
+    ivec2 baseCoord = dstCoord * 2;
+
+    float minDepth = 1.0;
+    for (int y = 0; y < 2; ++y)
+    {
+        for (int x = 0; x < 2; ++x)
+        {
+            ivec2 srcCoord = min(baseCoord + ivec2(x, y), srcSize - ivec2(1));
+            vec2 uv = (vec2(srcCoord) + vec2(0.5)) / vec2(srcSize);
+            float depthValue = textureLod(gSourceTexture, uv, float(pc.srcMipLevel)).r;
+            minDepth = min(minDepth, depthValue);
+        }
+    }
+
+    imageStore(gDestinationImage, dstCoord, vec4(minDepth, 0.0, 0.0, 1.0));
+}

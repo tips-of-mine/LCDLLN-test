@@ -1,0 +1,16 @@
+{
+  "emitters": [
+    {
+      "id": "explosion_mvp",
+      "atlasTexturePath": "textures/test.texr",
+      "maxParticles": 64,
+      "emissionRate": 48.0,
+      "lifetimeSeconds": 0.85,
+      "startSize": 1.25,
+      "endSize": 0.10,
+      "spawnPosition": [0.0, 0.0, 0.0],
+      "velocityMin": [-2.0, 1.5, -2.0],
+      "velocityMax": [2.0, 4.0, 2.0]
+    }
+  ]
+}

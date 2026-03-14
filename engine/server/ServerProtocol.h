@@ -158,11 +158,20 @@ namespace engine::server
 	/// Decode an input packet and validate the protocol header.
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage);
 
+	/// Read only the packet kind after validating the shared protocol header.
+	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind);
+
 	/// Encode a welcome packet with the protocol header.
 	std::vector<std::byte> EncodeWelcome(const WelcomeMessage& message);
 
+	/// Decode a welcome packet and validate the protocol header.
+	bool DecodeWelcome(std::span<const std::byte> packet, WelcomeMessage& outMessage);
+
 	/// Encode a snapshot packet with the protocol header.
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities);
+
+	/// Decode a snapshot packet and reuse the provided entity buffer for the payload entities.
+	bool DecodeSnapshot(std::span<const std::byte> packet, SnapshotMessage& outMessage, std::vector<SnapshotEntity>& outEntities);
 
 	/// Encode a spawn packet with the protocol header.
 	std::vector<std::byte> EncodeSpawn(const SpawnEntity& entity);
@@ -182,11 +191,17 @@ namespace engine::server
 	/// Encode a combat event packet with the protocol header.
 	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);
 
+	/// Decode a combat event packet and validate the protocol header.
+	bool DecodeCombatEvent(std::span<const std::byte> packet, CombatEventMessage& outMessage);
+
 	/// Decode a pickup request packet and validate the protocol header.
 	bool DecodePickupRequest(std::span<const std::byte> packet, PickupRequestMessage& outMessage);
 
 	/// Encode an inventory delta packet with the protocol header.
 	std::vector<std::byte> EncodeInventoryDelta(const InventoryDeltaMessage& message, std::span<const ItemStack> items);
+
+	/// Decode an inventory delta packet and reuse the provided item buffer for the payload items.
+	bool DecodeInventoryDelta(std::span<const std::byte> packet, InventoryDeltaMessage& outMessage, std::vector<ItemStack>& outItems);
 
 	/// Decode a talk request packet and validate the protocol header.
 	bool DecodeTalkRequest(std::span<const std::byte> packet, TalkRequestMessage& outMessage);
@@ -194,6 +209,12 @@ namespace engine::server
 	/// Encode a quest delta packet with the protocol header.
 	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message);
 
+	/// Decode a quest delta packet and validate the protocol header.
+	bool DecodeQuestDelta(std::span<const std::byte> packet, QuestDeltaMessage& outMessage);
+
 	/// Encode a dynamic event state packet with the protocol header.
 	std::vector<std::byte> EncodeEventState(const EventStateMessage& message);
+
+	/// Decode a dynamic event state packet and validate the protocol header.
+	bool DecodeEventState(std::span<const std::byte> packet, EventStateMessage& outMessage);
 }

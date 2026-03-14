@@ -35,6 +35,12 @@ namespace engine::server
 				| (static_cast<uint64_t>(ReadU32(bytes, offset + 4)) << 32);
 		}
 
+		/// Read one IEEE-754 float from a packet buffer.
+		float ReadF32(std::span<const std::byte> bytes, size_t offset)
+		{
+			return std::bit_cast<float>(ReadU32(bytes, offset));
+		}
+
 		/// Append a little-endian 16-bit value to an output buffer.
 		void WriteU16(std::vector<std::byte>& outBytes, uint16_t value)
 		{
@@ -109,6 +115,28 @@ namespace engine::server
 			WriteU32(outBytes, state.stateFlags);
 		}
 
+		/// Read one entity state payload from the packet buffer.
+		bool ReadEntityState(std::span<const std::byte> bytes, size_t& offset, EntityState& outState)
+		{
+			if ((offset + 40) > bytes.size())
+			{
+				return false;
+			}
+
+			outState.positionX = ReadF32(bytes, offset + 0);
+			outState.positionY = ReadF32(bytes, offset + 4);
+			outState.positionZ = ReadF32(bytes, offset + 8);
+			outState.yawRadians = ReadF32(bytes, offset + 12);
+			outState.velocityX = ReadF32(bytes, offset + 16);
+			outState.velocityY = ReadF32(bytes, offset + 20);
+			outState.velocityZ = ReadF32(bytes, offset + 24);
+			outState.currentHealth = ReadU32(bytes, offset + 28);
+			outState.maxHealth = ReadU32(bytes, offset + 32);
+			outState.stateFlags = ReadU32(bytes, offset + 36);
+			offset += 40;
+			return true;
+		}
+
 		/// Validate the common header and return the remaining payload span.
 		bool DecodeHeader(std::span<const std::byte> packet, MessageKind expectedKind, std::span<const std::byte>& outPayload)
 		{
@@ -167,6 +195,78 @@ namespace engine::server
 		outMessage.inputSequence = ReadU32(payload, 4);
 		outMessage.positionMetersX = std::bit_cast<float>(ReadU32(payload, 8));
 		outMessage.positionMetersZ = std::bit_cast<float>(ReadU32(payload, 12));
+		return true;
+	}
+
+	bool PeekMessageKind(std::span<const std::byte> packet, MessageKind& outKind)
+	{
+		if (packet.size() < kHeaderSize)
+		{
+			return false;
+		}
+
+		const uint32_t magic = ReadU32(packet, 0);
+		const uint16_t version = ReadU16(packet, 4);
+		if (magic != kWireMagic || version != kProtocolVersion)
+		{
+			return false;
+		}
+
+		outKind = static_cast<MessageKind>(ReadU16(packet, 6));
+		return true;
+	}
+
+	bool DecodeWelcome(std::span<const std::byte> packet, WelcomeMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::Welcome, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.tickHz = ReadU16(payload, 4);
+		outMessage.snapshotHz = ReadU16(payload, 6);
+		return true;
+	}
+
+	bool DecodeSnapshot(std::span<const std::byte> packet, SnapshotMessage& outMessage, std::vector<SnapshotEntity>& outEntities)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::Snapshot, payload) || payload.size() < 20)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.serverTick = ReadU32(payload, 4);
+		outMessage.connectedClients = ReadU16(payload, 8);
+		outMessage.entityCount = ReadU16(payload, 10);
+		outMessage.receivedPackets = ReadU32(payload, 12);
+		outMessage.sentPackets = ReadU32(payload, 16);
+
+		const size_t entityCount = static_cast<size_t>(outMessage.entityCount);
+		const size_t expectedPayloadSize = 20 + (entityCount * 48);
+		if (payload.size() != expectedPayloadSize)
+		{
+			return false;
+		}
+
+		outEntities.clear();
+		outEntities.resize(entityCount);
+		size_t offset = 20;
+		for (size_t index = 0; index < entityCount; ++index)
+		{
+			SnapshotEntity& entity = outEntities[index];
+			entity.entityId = ReadU64(payload, offset);
+			offset += 8;
+			if (!ReadEntityState(payload, offset, entity.state))
+			{
+				outEntities.clear();
+				return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -293,6 +393,23 @@ namespace engine::server
 		return packet;
 	}
 
+	bool DecodeCombatEvent(std::span<const std::byte> packet, CombatEventMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CombatEvent, payload) || payload.size() != 32)
+		{
+			return false;
+		}
+
+		outMessage.attackerEntityId = ReadU64(payload, 0);
+		outMessage.targetEntityId = ReadU64(payload, 8);
+		outMessage.damage = ReadU32(payload, 16);
+		outMessage.targetCurrentHealth = ReadU32(payload, 20);
+		outMessage.targetMaxHealth = ReadU32(payload, 24);
+		outMessage.targetStateFlags = ReadU32(payload, 28);
+		return true;
+	}
+
 	std::vector<std::byte> EncodeInventoryDelta(const InventoryDeltaMessage& message, std::span<const ItemStack> items)
 	{
 		std::vector<std::byte> packet = BeginPacket(MessageKind::InventoryDelta, 6 + (items.size() * 8));
@@ -304,6 +421,36 @@ namespace engine::server
 			WriteU32(packet, item.quantity);
 		}
 		return packet;
+	}
+
+	bool DecodeInventoryDelta(std::span<const std::byte> packet, InventoryDeltaMessage& outMessage, std::vector<ItemStack>& outItems)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::InventoryDelta, payload) || payload.size() < 6)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		const size_t itemCount = static_cast<size_t>(ReadU16(payload, 4));
+		const size_t expectedPayloadSize = 6 + (itemCount * 8);
+		if (payload.size() != expectedPayloadSize)
+		{
+			return false;
+		}
+
+		outItems.clear();
+		outItems.resize(itemCount);
+		size_t offset = 6;
+		for (size_t index = 0; index < itemCount; ++index)
+		{
+			ItemStack& item = outItems[index];
+			item.itemId = ReadU32(payload, offset + 0);
+			item.quantity = ReadU32(payload, offset + 4);
+			offset += 8;
+		}
+
+		return true;
 	}
 
 	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message)
@@ -338,6 +485,89 @@ namespace engine::server
 		return packet;
 	}
 
+	bool DecodeQuestDelta(std::span<const std::byte> packet, QuestDeltaMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::QuestDelta, payload) || payload.size() < 16)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.status = static_cast<uint8_t>(payload[offset]);
+		offset += 1;
+		if (!ReadSizedString(payload, offset, outMessage.questId))
+		{
+			return false;
+		}
+
+		if ((offset + 9) > payload.size())
+		{
+			return false;
+		}
+
+		outMessage.rewardExperience = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.rewardGold = ReadU32(payload, offset);
+		offset += 4;
+
+		const size_t stepCount = static_cast<size_t>(static_cast<uint8_t>(payload[offset]));
+		offset += 1;
+		outMessage.steps.clear();
+		outMessage.steps.reserve(stepCount);
+		for (size_t index = 0; index < stepCount; ++index)
+		{
+			if (offset >= payload.size())
+			{
+				outMessage.steps.clear();
+				return false;
+			}
+
+			QuestDeltaStep step{};
+			step.stepType = static_cast<uint8_t>(payload[offset]);
+			offset += 1;
+			if (!ReadSizedString(payload, offset, step.targetId) || (offset + 8) > payload.size())
+			{
+				outMessage.steps.clear();
+				return false;
+			}
+
+			step.currentCount = ReadU32(payload, offset);
+			offset += 4;
+			step.requiredCount = ReadU32(payload, offset);
+			offset += 4;
+			outMessage.steps.push_back(std::move(step));
+		}
+
+		if ((offset + 2) > payload.size())
+		{
+			outMessage.steps.clear();
+			return false;
+		}
+
+		const size_t rewardItemCount = static_cast<size_t>(ReadU16(payload, offset));
+		offset += 2;
+		if ((offset + (rewardItemCount * 8)) != payload.size())
+		{
+			outMessage.steps.clear();
+			return false;
+		}
+
+		outMessage.rewardItems.clear();
+		outMessage.rewardItems.resize(rewardItemCount);
+		for (size_t index = 0; index < rewardItemCount; ++index)
+		{
+			ItemStack& item = outMessage.rewardItems[index];
+			item.itemId = ReadU32(payload, offset + 0);
+			item.quantity = ReadU32(payload, offset + 4);
+			offset += 8;
+		}
+
+		return true;
+	}
+
 	std::vector<std::byte> EncodeEventState(const EventStateMessage& message)
 	{
 		size_t payloadSize = 4 + 1 + 2 + 2 + 4 + 4 + 2 + message.eventId.size() + 2 + message.notificationText.size() + 4 + 4 + 2;
@@ -361,5 +591,62 @@ namespace engine::server
 			WriteU32(packet, item.quantity);
 		}
 		return packet;
+	}
+
+	bool DecodeEventState(std::span<const std::byte> packet, EventStateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::EventState, payload) || payload.size() < 25)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.zoneId = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.status = static_cast<uint8_t>(payload[offset]);
+		offset += 1;
+		if ((offset + 12) > payload.size())
+		{
+			return false;
+		}
+
+		outMessage.phaseIndex = ReadU16(payload, offset);
+		offset += 2;
+		outMessage.phaseCount = ReadU16(payload, offset);
+		offset += 2;
+		outMessage.progressCurrent = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.progressRequired = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.eventId)
+			|| !ReadSizedString(payload, offset, outMessage.notificationText)
+			|| (offset + 10) > payload.size())
+		{
+			return false;
+		}
+
+		outMessage.rewardExperience = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.rewardGold = ReadU32(payload, offset);
+		offset += 4;
+		const size_t rewardItemCount = static_cast<size_t>(ReadU16(payload, offset));
+		offset += 2;
+		if ((offset + (rewardItemCount * 8)) != payload.size())
+		{
+			return false;
+		}
+
+		outMessage.rewardItems.clear();
+		outMessage.rewardItems.resize(rewardItemCount);
+		for (size_t index = 0; index < rewardItemCount; ++index)
+		{
+			ItemStack& item = outMessage.rewardItems[index];
+			item.itemId = ReadU32(payload, offset + 0);
+			item.quantity = ReadU32(payload, offset + 4);
+			offset += 8;
+		}
+
+		return true;
 	}
 }

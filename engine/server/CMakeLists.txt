@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_CXX_STANDARD 20)
 
+if(NOT WIN32)
+  message(STATUS "M15.4: skipping server_app on non-Windows host")
+  return()
+endif()
+
 add_executable(server_app
   main_server.cpp
   ServerApp.cpp
@@ -36,9 +41,7 @@ else()
   target_compile_options(server_app PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-if(WIN32)
-  target_link_libraries(server_app PRIVATE ws2_32)
-endif()
+target_link_libraries(server_app PRIVATE ws2_32)
 
 # Copie config.json à côté du binaire serveur si présent
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")

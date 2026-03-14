@@ -600,10 +600,18 @@ namespace engine::render
 #ifndef NDEBUG
 			VmaAllocatorInfo allocatorInfo{};
 			vmaGetAllocatorInfo(alloc, &allocatorInfo);
-			LOG_DEBUG(Render, "[VMA] Version: {}, physicalDevice: {:p}, device: {:p}",
-				VMA_VERSION,
+#if defined(VMA_VERSION_MAJOR) && defined(VMA_VERSION_MINOR) && defined(VMA_VERSION_PATCH)
+			LOG_DEBUG(Render, "[VMA] Version: {}.{}.{} physicalDevice: {:p}, device: {:p}",
+				VMA_VERSION_MAJOR,
+				VMA_VERSION_MINOR,
+				VMA_VERSION_PATCH,
 				static_cast<void*>(allocatorInfo.physicalDevice),
 				static_cast<void*>(allocatorInfo.device));
+#else
+			LOG_DEBUG(Render, "[VMA] Version: unknown physicalDevice: {:p}, device: {:p}",
+				static_cast<void*>(allocatorInfo.physicalDevice),
+				static_cast<void*>(allocatorInfo.device));
+#endif
 #endif
 
 			VkResult vmaResult = vmaCreateImage(alloc, &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);

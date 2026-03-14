@@ -113,7 +113,12 @@ endif()
 add_executable(engine_app
   engine/app/main.cpp
 )
-set_target_properties(engine_app PROPERTIES OUTPUT_NAME "lcdlln")
+set_target_properties(engine_app PROPERTIES
+  OUTPUT_NAME "lcdlln"
+  RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/game"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/pkg/game"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/pkg/game"
+)
 if(MSVC)
   target_compile_options(engine_app PRIVATE /Zc:preprocessor)
 endif()

@@ -41,6 +41,9 @@ namespace engine::world
 		/// Resets hit/miss counters (e.g. for periodic stats).
 		void ResetStats() { m_hitCount = 0; m_missCount = 0; }
 
+		/// Clears the whole cache, used by client zone preload when switching to another zone.
+		void Clear();
+
 	private:
 		struct Entry
 		{

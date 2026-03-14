@@ -68,6 +68,9 @@ namespace engine::world
 		/// Drops stale jobs from all three stage queues (IO, CPU, GPU upload). Call once per frame before processing.
 		void DropStaleFromAllQueues();
 
+		/// Clears queues and request state for a server-authoritative zone transition on the client.
+		void ResetForZoneChange();
+
 		/// Returns total number of jobs dropped as stale (cancelled) since last reset.
 		uint32_t GetCancelledJobCount() const { return m_cancelledJobCount; }
 		/// Resets the cancelled-job counter (e.g. for stats reporting).

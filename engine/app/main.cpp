@@ -20,8 +20,10 @@
 #include <cstdio>
 #include <memory>
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#if defined(_WIN32)
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
 
 static std::unique_ptr<engine::Engine> g_engine;
 static int g_result = 1;
@@ -111,6 +113,7 @@ int main(int argc, char** argv)
     std::fprintf(stderr, "[MAIN] avant Engine()\n");
     std::fflush(stderr);
 
+#if defined(_WIN32)
     __try
     {
         CreateAndRun(argc, argv);
@@ -121,5 +124,8 @@ int main(int argc, char** argv)
             (unsigned int)GetExceptionCode());
         std::fflush(stderr);
     }
+#else
+    CreateAndRun(argc, argv);
+#endif
     return g_result;
 }

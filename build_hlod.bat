@@ -91,9 +91,10 @@ for /d %%Z in ("%ZONES_DIR%\*") do (
         echo [build_hlod]   layout  : !LAYOUT!
         echo [build_hlod]   output  : !ZONE_OUT!
 
-        :: Step 1: zone_builder
+        :: Step 1: zone_builder (stderr → log file, terminal reste propre)
         echo [build_hlod]   Step 1/2 -- zone_builder ...
-        "%ZONE_BUILDER%" --layout "!LAYOUT!" --output "build/!ZONE_NAME!" --config config.json
+        if not exist "!ZONE_OUT!" mkdir "!ZONE_OUT!"
+        "%ZONE_BUILDER%" --layout "!LAYOUT!" --output "build/!ZONE_NAME!" --config config.json 2>"!ZONE_OUT!\zone_builder.log"
         if errorlevel 1 (
             echo [build_hlod]   ERROR: zone_builder failed for !ZONE_NAME!
             set /a FAIL_COUNT+=1
@@ -122,9 +123,9 @@ if %ZONE_COUNT%==0 (
 )
 
 if %FAIL_COUNT%==0 (
-    echo [build_hlod] Done. %ZONE_COUNT% zone(s) built successfully.
+    echo [build_hlod] Done. %ZONE_COUNT% zone^(s^) built successfully.
 ) else (
-    echo [build_hlod] Done with errors: %FAIL_COUNT% zone(s) failed out of %ZONE_COUNT%.
+    echo [build_hlod] Done with errors: %FAIL_COUNT% zone^(s^) failed out of %ZONE_COUNT%.
     exit /b 1
 )
 

@@ -1,6 +1,7 @@
 #include "engine/world/StreamingScheduler.h"
 #include "engine/world/StreamCache.h"
 #include "engine/world/ChunkPackageLayout.h"
+#include "engine/core/Log.h"
 
 #include <algorithm>
 
@@ -96,6 +97,27 @@ namespace engine::world
 		DropStaleFromIoQueue();
 		DropStaleFromCpuQueue();
 		DropStaleFromGpuUploadQueue();
+	}
+
+	void StreamingScheduler::ResetForZoneChange()
+	{
+		const size_t requestCount = m_requestQueue.size();
+		const size_t ioCount = m_ioQueue.size();
+		const size_t cpuCount = m_cpuQueue.size();
+		const size_t gpuCount = m_gpuUploadQueue.size();
+		m_requestQueue.clear();
+		m_ioQueue = {};
+		m_cpuQueue = {};
+		m_gpuUploadQueue = {};
+		++m_streamVersion;
+		m_cancelledJobCount = 0;
+		LOG_INFO(World,
+			"[StreamingScheduler] Zone transition reset OK (requests={}, io_jobs={}, cpu_jobs={}, gpu_jobs={}, stream_version={})",
+			requestCount,
+			ioCount,
+			cpuCount,
+			gpuCount,
+			m_streamVersion);
 	}
 
 	std::span<const ChunkRequest> StreamingScheduler::GetPrioritizedRequests() const

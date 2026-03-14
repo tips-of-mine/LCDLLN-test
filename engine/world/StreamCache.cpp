@@ -1,5 +1,6 @@
 #include "engine/world/StreamCache.h"
 #include "engine/core/Config.h"
+#include "engine/core/Log.h"
 
 #include <algorithm>
 #include <cstring>
@@ -24,6 +25,7 @@ namespace engine::world
 		m_lruOrder.clear();
 		m_hitCount = 0;
 		m_missCount = 0;
+		LOG_INFO(World, "[StreamCache] Init OK (capacity_mb={})", clampedMb);
 	}
 
 	void StreamCache::TouchLru(std::string_view key)
@@ -90,5 +92,16 @@ namespace engine::world
 	void StreamCache::Insert(std::string_view key, const std::vector<uint8_t>& blob)
 	{
 		Insert(key, blob.data(), blob.size());
+	}
+
+	void StreamCache::Clear()
+	{
+		const size_t entryCount = m_map.size();
+		m_map.clear();
+		m_lruOrder.clear();
+		m_currentSizeBytes = 0;
+		m_hitCount = 0;
+		m_missCount = 0;
+		LOG_INFO(World, "[StreamCache] Cleared (entries={})", entryCount);
 	}
 }

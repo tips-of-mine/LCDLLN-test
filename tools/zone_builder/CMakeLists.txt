@@ -18,6 +18,12 @@ target_include_directories(zone_builder PRIVATE
   ${CMAKE_SOURCE_DIR}
 )
 
+set_target_properties(zone_builder PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/zone_builder"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/pkg/zone_builder"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/pkg/zone_builder"
+)
+
 if(MSVC)
   target_compile_options(zone_builder PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()

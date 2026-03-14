@@ -20,7 +20,8 @@ namespace engine::client
 		UIModelChangeInventory = 1u << 1,
 		UIModelChangeQuests = 1u << 2,
 		UIModelChangeEvents = 1u << 3,
-		UIModelChangeDebugDump = 1u << 4
+		UIModelChangeCombat = 1u << 4,
+		UIModelChangeDebugDump = 1u << 5
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -35,8 +36,32 @@ namespace engine::client
 		uint32_t sentPackets = 0;
 		uint32_t currentHealth = 0;
 		uint32_t maxHealth = 0;
+		uint32_t currentMana = 0;
+		uint32_t maxMana = 0;
 		uint32_t stateFlags = 0;
+		bool hasMana = false;
 		bool hasSnapshot = false;
+	};
+
+	/// Current combat target resolved from the latest player-originated combat event.
+	struct UITargetStats
+	{
+		engine::server::EntityId entityId = 0;
+		uint32_t currentHealth = 0;
+		uint32_t maxHealth = 0;
+		uint32_t stateFlags = 0;
+		bool hasTarget = false;
+	};
+
+	/// One recent combat event retained for the HUD combat log.
+	struct UICombatLogEntry
+	{
+		engine::server::EntityId attackerEntityId = 0;
+		engine::server::EntityId targetEntityId = 0;
+		uint32_t damage = 0;
+		bool playerWasAttacker = false;
+		bool playerWasTarget = false;
+		uint64_t sequence = 0;
 	};
 
 	/// One quest step displayed by the UI model.
@@ -79,9 +104,11 @@ namespace engine::client
 	struct UIModel
 	{
 		UIPlayerStats playerStats{};
+		UITargetStats targetStats{};
 		std::vector<engine::server::ItemStack> inventory;
 		std::vector<UIQuestEntry> quests;
 		std::vector<UIEventEntry> events;
+		std::vector<UICombatLogEntry> combatLog;
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.

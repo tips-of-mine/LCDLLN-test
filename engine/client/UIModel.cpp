@@ -10,6 +10,8 @@ namespace engine::client
 {
 	namespace
 	{
+		inline constexpr size_t kMaxCombatLogEntries = 5;
+
 		/// Return the quest entry matching the given id, or null when missing.
 		UIQuestEntry* FindQuest(std::vector<UIQuestEntry>& quests, std::string_view questId)
 		{
@@ -57,6 +59,26 @@ namespace engine::client
 			}
 			outText += "]";
 		}
+
+		/// Append one combat event to the retained HUD combat log.
+		void PushCombatLogEntry(
+			std::vector<UICombatLogEntry>& combatLog,
+			const engine::server::CombatEventMessage& message,
+			engine::server::EntityId playerEntityId)
+		{
+			UICombatLogEntry entry{};
+			entry.attackerEntityId = message.attackerEntityId;
+			entry.targetEntityId = message.targetEntityId;
+			entry.damage = message.damage;
+			entry.playerWasAttacker = (message.attackerEntityId == playerEntityId);
+			entry.playerWasTarget = (message.targetEntityId == playerEntityId);
+			entry.sequence = combatLog.empty() ? 1u : (combatLog.back().sequence + 1u);
+			combatLog.push_back(entry);
+			if (combatLog.size() > kMaxCombatLogEntries)
+			{
+				combatLog.erase(combatLog.begin(), combatLog.begin() + static_cast<std::ptrdiff_t>(combatLog.size() - kMaxCombatLogEntries));
+			}
+		}
 	}
 
 	std::string UIModel::BuildDebugDump() const
@@ -72,6 +94,10 @@ namespace engine::client
 		dump += std::to_string(playerStats.currentHealth);
 		dump += "/";
 		dump += std::to_string(playerStats.maxHealth);
+		dump += " mana=";
+		dump += std::to_string(playerStats.currentMana);
+		dump += "/";
+		dump += std::to_string(playerStats.maxMana);
 		dump += " tick=";
 		dump += std::to_string(playerStats.serverTick);
 		dump += " clients=";
@@ -123,6 +149,45 @@ namespace engine::client
 			dump += std::to_string(eventEntry.progressRequired);
 			dump += " rewards=";
 			AppendItemStacks(dump, eventEntry.rewardItems);
+			dump += "\n";
+		}
+
+		dump += "target: id=";
+		dump += std::to_string(targetStats.entityId);
+		dump += " hp=";
+		dump += std::to_string(targetStats.currentHealth);
+		dump += "/";
+		dump += std::to_string(targetStats.maxHealth);
+		dump += " active=";
+		dump += targetStats.hasTarget ? "true" : "false";
+		dump += "\n";
+
+		dump += "combat(";
+		dump += std::to_string(combatLog.size());
+		dump += ")\n";
+		for (const UICombatLogEntry& entry : combatLog)
+		{
+			dump += " - seq=";
+			dump += std::to_string(entry.sequence);
+			dump += " attacker=";
+			dump += std::to_string(entry.attackerEntityId);
+			dump += " target=";
+			dump += std::to_string(entry.targetEntityId);
+			dump += " damage=";
+			dump += std::to_string(entry.damage);
+			dump += " player_role=";
+			if (entry.playerWasAttacker)
+			{
+				dump += "attacker";
+			}
+			else if (entry.playerWasTarget)
+			{
+				dump += "target";
+			}
+			else
+			{
+				dump += "other";
+			}
 			dump += "\n";
 		}
 
@@ -178,10 +243,12 @@ namespace engine::client
 		}
 
 		m_model.playerStats = {};
+		m_model.targetStats = {};
 		m_model.inventory.clear();
 		m_model.quests.clear();
 		m_model.events.clear();
-		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents);
+		m_model.combatLog.clear();
+		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
 		return true;
 	}
@@ -361,21 +428,46 @@ namespace engine::client
 			return false;
 		}
 
-		if (m_model.playerStats.playerEntityId == 0 || m_combatEventMessage.targetEntityId != m_model.playerStats.playerEntityId)
+		const engine::server::EntityId playerEntityId = m_model.playerStats.playerEntityId;
+		if (playerEntityId == 0)
+		{
+			LOG_DEBUG(Net, "[UIModelBinding] CombatEvent ignored: player entity not known yet");
+			return true;
+		}
+
+		const bool playerWasAttacker = (m_combatEventMessage.attackerEntityId == playerEntityId);
+		const bool playerWasTarget = (m_combatEventMessage.targetEntityId == playerEntityId);
+		if (!playerWasAttacker && !playerWasTarget)
 		{
 			LOG_DEBUG(Net, "[UIModelBinding] CombatEvent ignored: unrelated target {}", m_combatEventMessage.targetEntityId);
 			return true;
 		}
 
-		m_model.playerStats.currentHealth = m_combatEventMessage.targetCurrentHealth;
-		m_model.playerStats.maxHealth = m_combatEventMessage.targetMaxHealth;
-		m_model.playerStats.stateFlags = m_combatEventMessage.targetStateFlags;
-		NotifyObservers(UIModelChangeStats);
-		LOG_INFO(Net, "[UIModelBinding] CombatEvent applied (target={}, hp={}/{}, damage={})",
+		uint32_t changeMask = UIModelChangeCombat;
+		if (playerWasTarget)
+		{
+			m_model.playerStats.currentHealth = m_combatEventMessage.targetCurrentHealth;
+			m_model.playerStats.maxHealth = m_combatEventMessage.targetMaxHealth;
+			m_model.playerStats.stateFlags = m_combatEventMessage.targetStateFlags;
+			changeMask |= UIModelChangeStats;
+		}
+
+		if (playerWasAttacker && m_combatEventMessage.targetEntityId != playerEntityId)
+		{
+			m_model.targetStats.entityId = m_combatEventMessage.targetEntityId;
+			m_model.targetStats.currentHealth = m_combatEventMessage.targetCurrentHealth;
+			m_model.targetStats.maxHealth = m_combatEventMessage.targetMaxHealth;
+			m_model.targetStats.stateFlags = m_combatEventMessage.targetStateFlags;
+			m_model.targetStats.hasTarget = true;
+		}
+
+		PushCombatLogEntry(m_model.combatLog, m_combatEventMessage, playerEntityId);
+		NotifyObservers(changeMask);
+		LOG_INFO(Net, "[UIModelBinding] CombatEvent applied (attacker={}, target={}, damage={}, player_role={})",
+			m_combatEventMessage.attackerEntityId,
 			m_combatEventMessage.targetEntityId,
-			m_model.playerStats.currentHealth,
-			m_model.playerStats.maxHealth,
-			m_combatEventMessage.damage);
+			m_combatEventMessage.damage,
+			playerWasAttacker ? "attacker" : "target");
 		return true;
 	}
 

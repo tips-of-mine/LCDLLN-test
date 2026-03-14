@@ -28,7 +28,8 @@ namespace engine::server
 		PickupRequest = 10,
 		InventoryDelta = 11,
 		TalkRequest = 12,
-		QuestDelta = 13
+		QuestDelta = 13,
+		EventState = 14
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -135,6 +136,22 @@ namespace engine::server
 		std::vector<ItemStack> rewardItems;
 	};
 
+	/// Dynamic event state message emitted after one event state or phase change.
+	struct EventStateMessage
+	{
+		uint32_t zoneId = 0;
+		uint8_t status = 0;
+		uint16_t phaseIndex = 0;
+		uint16_t phaseCount = 0;
+		uint32_t progressCurrent = 0;
+		uint32_t progressRequired = 0;
+		std::string eventId;
+		std::string notificationText;
+		uint32_t rewardExperience = 0;
+		uint32_t rewardGold = 0;
+		std::vector<ItemStack> rewardItems;
+	};
+
 	/// Decode a hello packet and validate the protocol header.
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage);
 
@@ -176,4 +193,7 @@ namespace engine::server
 
 	/// Encode a quest delta packet with the protocol header.
 	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message);
+
+	/// Encode a dynamic event state packet with the protocol header.
+	std::vector<std::byte> EncodeEventState(const EventStateMessage& message);
 }

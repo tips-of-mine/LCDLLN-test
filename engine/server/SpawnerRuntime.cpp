@@ -495,9 +495,9 @@ namespace engine::server
 			const JsonValue* zoneIdValue = FindObjectMember(root, "zoneId");
 			const JsonValue* spawnersValue = FindObjectMember(root, "spawners");
 			uint32_t zoneId = 0;
-			if (zoneIdValue == nullptr || !TryGetUint(*zoneIdValue, zoneId) || zoneId == 0)
+			if (zoneIdValue == nullptr || !TryGetUint(*zoneIdValue, zoneId))
 			{
-				LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: {} must define a positive root.zoneId", relativePath);
+				LOG_ERROR(Net, "[SpawnerRuntime] Definition load FAILED: {} must define a valid root.zoneId", relativePath);
 				m_definitions.clear();
 				return false;
 			}

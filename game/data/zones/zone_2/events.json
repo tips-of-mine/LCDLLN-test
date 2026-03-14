@@ -1,0 +1,35 @@
+{
+  "zoneId": 2,
+  "events": [
+    {
+      "id": "zone_2_random_boss",
+      "trigger": {
+        "type": "random",
+        "seconds": 20
+      },
+      "cooldownSec": 45,
+      "startText": "A roaming boss has appeared",
+      "completionText": "Roaming boss defeated",
+      "phases": [
+        {
+          "id": "boss",
+          "text": "Roaming boss in progress",
+          "progressRequired": 1,
+          "spawns": [
+            {
+              "archetypeId": 100,
+              "position": [256.0, 0.0, 256.0],
+              "count": 1,
+              "leashDistanceMeters": 32.0
+            }
+          ]
+        }
+      ],
+      "rewards": {
+        "xp": 100,
+        "gold": 25,
+        "items": []
+      }
+    }
+  ]
+}

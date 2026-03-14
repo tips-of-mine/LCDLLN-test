@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/server/CharacterPersistence.h"
+#include "engine/server/EventRuntime.h"
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/SpawnerRuntime.h"
 #include "engine/core/Config.h"
@@ -41,6 +42,14 @@ namespace engine::server
 	{
 		Owner = 0,
 		Public = 1
+	};
+
+	/// Runtime status stored for one dynamic zone event.
+	enum class DynamicEventStatus : uint8_t
+	{
+		Idle = 0,
+		Active = 1,
+		Cooldown = 2
 	};
 
 	/// One row loaded from the loot table data file.
@@ -113,8 +122,11 @@ namespace engine::server
 		uint32_t nextPatrolTick = 0;
 		uint32_t owningSpawnerIndex = 0;
 		uint32_t owningSpawnerSlot = 0;
+		uint32_t owningEventIndex = 0;
+		uint32_t owningEventPhaseIndex = 0;
 		bool patrolForward = true;
 		bool pendingDespawn = false;
+		bool isDynamicEventMob = false;
 		std::vector<ThreatEntry> threatTable;
 		bool hasSpawnedLoot = false;
 	};
@@ -133,6 +145,19 @@ namespace engine::server
 		CellCoord centerCell{};
 		bool isActive = false;
 		std::vector<SpawnerSlotState> slots;
+	};
+
+	/// One dynamic event runtime state advanced by the authoritative server tick.
+	struct DynamicEventState
+	{
+		DynamicEventDefinition definition{};
+		DynamicEventStatus status = DynamicEventStatus::Idle;
+		uint32_t currentPhaseIndex = 0;
+		uint32_t currentPhaseProgress = 0;
+		uint32_t nextTriggerTick = 0;
+		uint32_t cooldownUntilTick = 0;
+		std::vector<EntityId> phaseMobEntityIds;
+		std::vector<uint32_t> participantClientIds;
 	};
 
 	/// Minimal authoritative loot bag spawned from a mob death.
@@ -219,8 +244,14 @@ namespace engine::server
 		/// Load the data-driven quest definitions required by M15.1.
 		bool InitQuests();
 
+		/// Load the data-driven dynamic event definitions required by M15.3.
+		bool InitDynamicEvents();
+
 		/// Refresh spawner activation, despawn inactive mobs and process respawns.
 		void UpdateSpawners();
+
+		/// Advance event triggers, phases, rewards and notifications.
+		void UpdateDynamicEvents();
 
 		/// Update the mob AI state machine at a reduced fixed cadence.
 		void UpdateMobAi();
@@ -239,6 +270,37 @@ namespace engine::server
 
 		/// Despawn one authoritative mob and optionally arm its respawn timer.
 		bool DespawnSpawnerMob(SpawnerRuntimeState& spawner, uint32_t slotIndex, std::string_view reason, bool scheduleRespawn);
+
+		/// Schedule the next activation tick for one dynamic event.
+		void ScheduleDynamicEventTrigger(DynamicEventState& eventState, bool fromCooldown);
+
+		/// Start one dynamic event and spawn its first phase.
+		bool StartDynamicEvent(DynamicEventState& eventState);
+
+		/// Spawn the currently active phase mobs for one dynamic event.
+		bool SpawnDynamicEventPhase(DynamicEventState& eventState);
+
+		/// Spawn one authoritative mob for one dynamic event phase.
+		bool SpawnMobForDynamicEvent(
+			DynamicEventState& eventState,
+			uint32_t phaseIndex,
+			const DynamicEventSpawnDefinition& spawnDefinition,
+			uint32_t spawnOrdinal);
+
+		/// Despawn one authoritative mob currently owned by a dynamic event.
+		bool DespawnDynamicEventMob(DynamicEventState& eventState, EntityId entityId, std::string_view reason);
+
+		/// Advance one event to the next phase or finish it when every phase completed.
+		bool AdvanceDynamicEventPhase(DynamicEventState& eventState);
+
+		/// Complete one dynamic event and grant rewards to recorded participants.
+		void CompleteDynamicEvent(DynamicEventState& eventState);
+
+		/// Record one player as participant of the given dynamic event.
+		void AddDynamicEventParticipant(DynamicEventState& eventState, const ConnectedClient& client);
+
+		/// Return true when at least one active player is present in the requested zone.
+		bool HasPlayersInZone(uint32_t zoneId) const;
 
 		/// Return the number of server ticks between two AI updates.
 		uint32_t ResolveMobAiIntervalTicks() const;
@@ -294,11 +356,32 @@ namespace engine::server
 		/// Send the current quest journal state after the client handshake succeeds.
 		void SendQuestStateBootstrap(const ConnectedClient& receiver);
 
+		/// Send the current event state snapshot for the receiver's zone.
+		void SendDynamicEventBootstrap(const ConnectedClient& receiver);
+
 		/// Send one inventory delta after a successful pickup.
 		bool SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items);
 
 		/// Send one quest delta after a successful quest state update.
 		bool SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta);
+
+		/// Send one dynamic event state update to one client.
+		bool SendDynamicEventState(
+			const ConnectedClient& receiver,
+			const DynamicEventState& eventState,
+			std::string_view notificationText,
+			uint32_t rewardExperience,
+			uint32_t rewardGold,
+			std::span<const ItemStack> rewardItems);
+
+		/// Broadcast one dynamic event state update to clients in the same zone.
+		void BroadcastDynamicEventState(
+			const DynamicEventState& eventState,
+			std::string_view notificationText,
+			uint32_t rewardedClientId,
+			uint32_t rewardExperience,
+			uint32_t rewardGold,
+			std::span<const ItemStack> rewardItems);
 
 		/// Refresh spawn/despawn replication for every connected client.
 		void RefreshReplication();
@@ -377,6 +460,7 @@ namespace engine::server
 
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
+		EventRuntime m_eventRuntime;
 		QuestRuntime m_questRuntime;
 		SpawnerRuntime m_spawnerRuntime;
 		ZoneTransitionMap m_zoneTransitionMap;
@@ -387,6 +471,7 @@ namespace engine::server
 		std::vector<MobEntity> m_mobs;
 		std::vector<LootBagEntity> m_lootBags;
 		std::vector<LootTableEntry> m_lootTableEntries;
+		std::vector<DynamicEventState> m_dynamicEvents;
 		std::vector<SpawnerRuntimeState> m_spawners;
 		std::unordered_map<uint32_t, CellGrid> m_zoneGrids;
 		std::vector<EntityId> m_relevantEntityScratch;

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <sstream>
 #include <span>
 #include <string>
@@ -85,6 +86,22 @@ namespace engine::server
 			return "Idle";
 		}
 
+		/// Return a readable name for one dynamic event status.
+		const char* GetDynamicEventStatusName(DynamicEventStatus status)
+		{
+			switch (status)
+			{
+			case DynamicEventStatus::Idle:
+				return "idle";
+			case DynamicEventStatus::Active:
+				return "active";
+			case DynamicEventStatus::Cooldown:
+				return "cooldown";
+			}
+
+			return "idle";
+		}
+
 		/// Parse the loot visibility token found in the data file.
 		bool TryParseLootVisibility(std::string_view text, LootVisibility& outVisibility)
 		{
@@ -107,6 +124,7 @@ namespace engine::server
 	ServerApp::ServerApp(engine::core::Config config)
 		: m_config(std::move(config))
 		, m_characterPersistence(m_config)
+		, m_eventRuntime(m_config)
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
 	{
@@ -139,6 +157,7 @@ namespace engine::server
 		m_mobs.clear();
 		m_lootBags.clear();
 		m_lootTableEntries.clear();
+		m_dynamicEvents.clear();
 		m_spawners.clear();
 		m_pendingDatagrams.clear();
 		m_zoneGrids.clear();
@@ -191,6 +210,13 @@ namespace engine::server
 		if (!InitSpawners())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: spawner bootstrap failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!InitDynamicEvents())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: dynamic event bootstrap failed");
 			Shutdown();
 			return false;
 		}
@@ -291,8 +317,10 @@ namespace engine::server
 		m_transport.Shutdown();
 		m_zoneTransitionMap.Shutdown();
 		m_spawnerRuntime.Shutdown();
+		m_eventRuntime.Shutdown();
 		m_questRuntime.Shutdown();
 		m_characterPersistence.Shutdown();
+		m_dynamicEvents.clear();
 		m_spawners.clear();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
@@ -394,6 +422,7 @@ namespace engine::server
 				UdpTransport::EndpointToString(endpoint),
 				helloNonce);
 			(void)SendWelcome(*existingClient);
+			SendDynamicEventBootstrap(*existingClient);
 			SendQuestStateBootstrap(*existingClient);
 			return;
 		}
@@ -464,6 +493,7 @@ namespace engine::server
 			UdpTransport::EndpointToString(endpoint),
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
+		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
 	}
 
@@ -532,6 +562,7 @@ namespace engine::server
 	{
 		UpdateMobAi();
 		UpdateSpawners();
+		UpdateDynamicEvents();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -651,6 +682,32 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net, "[ServerApp] Quest init OK");
+		return true;
+	}
+
+	bool ServerApp::InitDynamicEvents()
+	{
+		m_dynamicEvents.clear();
+		if (!m_eventRuntime.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event init FAILED: runtime load failed");
+			return false;
+		}
+
+		for (const DynamicEventDefinition& definition : m_eventRuntime.GetDefinitions())
+		{
+			DynamicEventState state{};
+			state.definition = definition;
+			ScheduleDynamicEventTrigger(state, false);
+			m_dynamicEvents.push_back(std::move(state));
+			LOG_INFO(Net, "[ServerApp] Dynamic event ready (event_id={}, zone_id={}, trigger={}, cooldown_sec={})",
+				definition.eventId,
+				definition.zoneId,
+				GetDynamicEventTriggerTypeName(definition.triggerType),
+				definition.cooldownSeconds);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event init OK (events={})", m_dynamicEvents.size());
 		return true;
 	}
 
@@ -1060,6 +1117,338 @@ namespace engine::server
 		}
 	}
 
+	void ServerApp::ScheduleDynamicEventTrigger(DynamicEventState& eventState, bool fromCooldown)
+	{
+		const uint32_t triggerDelayTicksBase = std::max<uint32_t>(1u, eventState.definition.triggerSeconds * static_cast<uint32_t>(m_tickHz));
+		uint32_t triggerDelayTicks = triggerDelayTicksBase;
+		if (eventState.definition.triggerType == DynamicEventTriggerType::Random)
+		{
+			const size_t hashValue = std::hash<std::string>{}(eventState.definition.eventId)
+				^ static_cast<size_t>(m_currentTick + eventState.definition.cooldownSeconds);
+			triggerDelayTicks = 1u + static_cast<uint32_t>(hashValue % triggerDelayTicksBase);
+		}
+
+		if (fromCooldown)
+		{
+			eventState.status = DynamicEventStatus::Cooldown;
+			eventState.cooldownUntilTick = m_currentTick + std::max<uint32_t>(1u, eventState.definition.cooldownSeconds * static_cast<uint32_t>(m_tickHz));
+			eventState.nextTriggerTick = eventState.cooldownUntilTick + triggerDelayTicks;
+		}
+		else
+		{
+			eventState.status = DynamicEventStatus::Idle;
+			eventState.cooldownUntilTick = 0;
+			eventState.nextTriggerTick = m_currentTick + triggerDelayTicks;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event trigger scheduled (event_id={}, status={}, next_trigger_tick={})",
+			eventState.definition.eventId,
+			GetDynamicEventStatusName(eventState.status),
+			eventState.nextTriggerTick);
+	}
+
+	bool ServerApp::StartDynamicEvent(DynamicEventState& eventState)
+	{
+		if (eventState.definition.phases.empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event start FAILED: no phases (event_id={})", eventState.definition.eventId);
+			return false;
+		}
+
+		eventState.status = DynamicEventStatus::Active;
+		eventState.currentPhaseIndex = 0;
+		eventState.currentPhaseProgress = 0;
+		eventState.phaseMobEntityIds.clear();
+		eventState.participantClientIds.clear();
+		LOG_INFO(Net, "[ServerApp] Dynamic event started (event_id={}, zone_id={})",
+			eventState.definition.eventId,
+			eventState.definition.zoneId);
+		BroadcastDynamicEventState(eventState, eventState.definition.startNotificationText, 0, 0, 0, {});
+		return SpawnDynamicEventPhase(eventState);
+	}
+
+	bool ServerApp::SpawnDynamicEventPhase(DynamicEventState& eventState)
+	{
+		if (eventState.currentPhaseIndex >= eventState.definition.phases.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event phase spawn FAILED: invalid phase index (event_id={}, phase={})",
+				eventState.definition.eventId,
+				eventState.currentPhaseIndex);
+			return false;
+		}
+
+		eventState.currentPhaseProgress = 0;
+		eventState.phaseMobEntityIds.clear();
+		const DynamicEventPhaseDefinition& phase = eventState.definition.phases[eventState.currentPhaseIndex];
+		for (const DynamicEventSpawnDefinition& spawn : phase.spawns)
+		{
+			for (uint32_t spawnOrdinal = 0; spawnOrdinal < spawn.count; ++spawnOrdinal)
+			{
+				if (!SpawnMobForDynamicEvent(eventState, eventState.currentPhaseIndex, spawn, spawnOrdinal))
+				{
+					LOG_ERROR(Net, "[ServerApp] Dynamic event phase spawn FAILED (event_id={}, phase_id={})",
+						eventState.definition.eventId,
+						phase.phaseId);
+					return false;
+				}
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event phase started (event_id={}, phase_id={}, mobs={})",
+			eventState.definition.eventId,
+			phase.phaseId,
+			eventState.phaseMobEntityIds.size());
+		BroadcastDynamicEventState(eventState, phase.notificationText, 0, 0, 0, {});
+		return true;
+	}
+
+	bool ServerApp::SpawnMobForDynamicEvent(
+		DynamicEventState& eventState,
+		uint32_t phaseIndex,
+		const DynamicEventSpawnDefinition& spawnDefinition,
+		uint32_t spawnOrdinal)
+	{
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(eventState.definition.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event mob spawn FAILED: zone grid unavailable (event_id={}, zone_id={})",
+				eventState.definition.eventId,
+				eventState.definition.zoneId);
+			return false;
+		}
+
+		MobEntity mob{};
+		mob.entityId = m_nextServerEntityId++;
+		mob.zoneId = eventState.definition.zoneId;
+		mob.archetypeId = spawnDefinition.archetypeId;
+		mob.positionMetersX = spawnDefinition.positionMetersX;
+		mob.positionMetersY = spawnDefinition.positionMetersY;
+		mob.positionMetersZ = spawnDefinition.positionMetersZ;
+		mob.stats.currentHealth = kDefaultMobHealth;
+		mob.stats.maxHealth = kDefaultMobHealth;
+		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		mob.homePositionMetersX = mob.positionMetersX;
+		mob.homePositionMetersY = mob.positionMetersY;
+		mob.homePositionMetersZ = mob.positionMetersZ;
+		mob.patrolTargetMetersX = mob.positionMetersX + kDefaultMobPatrolDistanceMeters;
+		mob.patrolTargetMetersZ = mob.positionMetersZ;
+		mob.leashDistanceMeters = spawnDefinition.leashDistanceMeters;
+		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		mob.aiState = MobAiState::Idle;
+		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+		mob.isDynamicEventMob = true;
+		mob.owningEventIndex = static_cast<uint32_t>(&eventState - m_dynamicEvents.data());
+		mob.owningEventPhaseIndex = phaseIndex;
+
+		CellCoord mappedCell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event mob spawn FAILED: grid mapping failed (event_id={}, entity_id={})",
+				eventState.definition.eventId,
+				mob.entityId);
+			return false;
+		}
+
+		m_mobs.push_back(mob);
+		eventState.phaseMobEntityIds.push_back(mob.entityId);
+		LOG_INFO(Net,
+			"[ServerApp] Dynamic event mob spawned (event_id={}, phase={}, entity_id={}, archetype_id={}, ordinal={})",
+			eventState.definition.eventId,
+			phaseIndex,
+			mob.entityId,
+			mob.archetypeId,
+			spawnOrdinal);
+		return true;
+	}
+
+	bool ServerApp::DespawnDynamicEventMob(DynamicEventState& eventState, EntityId entityId, std::string_view reason)
+	{
+		if (MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr)
+		{
+			if (CellGrid* zoneGrid = GetOrCreateZoneGrid(mob->zoneId); zoneGrid != nullptr)
+			{
+				(void)zoneGrid->RemoveEntity(entityId);
+			}
+		}
+
+		m_mobs.erase(
+			std::remove_if(
+				m_mobs.begin(),
+				m_mobs.end(),
+				[entityId](const MobEntity& mob)
+				{
+					return mob.entityId == entityId;
+				}),
+			m_mobs.end());
+
+		eventState.phaseMobEntityIds.erase(
+			std::remove(eventState.phaseMobEntityIds.begin(), eventState.phaseMobEntityIds.end(), entityId),
+			eventState.phaseMobEntityIds.end());
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event mob despawned (event_id={}, entity_id={}, reason={})",
+			eventState.definition.eventId,
+			entityId,
+			reason);
+		return true;
+	}
+
+	bool ServerApp::AdvanceDynamicEventPhase(DynamicEventState& eventState)
+	{
+		if ((eventState.currentPhaseIndex + 1u) >= eventState.definition.phases.size())
+		{
+			CompleteDynamicEvent(eventState);
+			return true;
+		}
+
+		++eventState.currentPhaseIndex;
+		eventState.currentPhaseProgress = 0;
+		eventState.phaseMobEntityIds.clear();
+		LOG_INFO(Net, "[ServerApp] Dynamic event phase advanced (event_id={}, phase_index={})",
+			eventState.definition.eventId,
+			eventState.currentPhaseIndex);
+		return SpawnDynamicEventPhase(eventState);
+	}
+
+	void ServerApp::CompleteDynamicEvent(DynamicEventState& eventState)
+	{
+		const DynamicEventReward rewards = eventState.definition.rewards;
+		eventState.status = DynamicEventStatus::Cooldown;
+		BroadcastDynamicEventState(eventState, eventState.definition.completionNotificationText, 0, 0, 0, {});
+		for (uint32_t participantClientId : eventState.participantClientIds)
+		{
+			for (ConnectedClient& client : m_clients)
+			{
+				if (client.clientId != participantClientId)
+				{
+					continue;
+				}
+
+				client.experiencePoints += rewards.experience;
+				client.gold += rewards.gold;
+				for (const ItemStack& rewardItem : rewards.items)
+				{
+					AddItemToInventory(client, rewardItem);
+				}
+				if (!rewards.items.empty())
+				{
+					(void)SendInventoryDelta(client, rewards.items);
+				}
+				(void)SendDynamicEventState(
+					client,
+					eventState,
+					eventState.definition.completionNotificationText,
+					rewards.experience,
+					rewards.gold,
+					rewards.items);
+				SaveConnectedClient(client, "dynamic_event_reward");
+				LOG_INFO(Net, "[ServerApp] Dynamic event rewards granted (event_id={}, client_id={}, xp={}, gold={}, items={})",
+					eventState.definition.eventId,
+					client.clientId,
+					rewards.experience,
+					rewards.gold,
+					rewards.items.size());
+				break;
+			}
+		}
+
+		eventState.phaseMobEntityIds.clear();
+		eventState.participantClientIds.clear();
+		eventState.currentPhaseIndex = 0;
+		eventState.currentPhaseProgress = 0;
+		ScheduleDynamicEventTrigger(eventState, true);
+		LOG_INFO(Net, "[ServerApp] Dynamic event completed (event_id={}, next_trigger_tick={})",
+			eventState.definition.eventId,
+			eventState.nextTriggerTick);
+	}
+
+	void ServerApp::AddDynamicEventParticipant(DynamicEventState& eventState, const ConnectedClient& client)
+	{
+		if (std::find(eventState.participantClientIds.begin(), eventState.participantClientIds.end(), client.clientId)
+			!= eventState.participantClientIds.end())
+		{
+			return;
+		}
+
+		eventState.participantClientIds.push_back(client.clientId);
+		LOG_INFO(Net, "[ServerApp] Dynamic event participant added (event_id={}, client_id={})",
+			eventState.definition.eventId,
+			client.clientId);
+	}
+
+	bool ServerApp::HasPlayersInZone(uint32_t zoneId) const
+	{
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (client.hasReplicatedState && client.zoneId == zoneId)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void ServerApp::UpdateDynamicEvents()
+	{
+		if (m_dynamicEvents.empty())
+		{
+			return;
+		}
+
+		for (DynamicEventState& eventState : m_dynamicEvents)
+		{
+			if (eventState.status == DynamicEventStatus::Active)
+			{
+				for (size_t index = 0; index < eventState.phaseMobEntityIds.size();)
+				{
+					const EntityId entityId = eventState.phaseMobEntityIds[index];
+					MobEntity* mob = FindMobByEntityId(entityId);
+					if (mob == nullptr)
+					{
+						eventState.phaseMobEntityIds.erase(eventState.phaseMobEntityIds.begin() + static_cast<std::ptrdiff_t>(index));
+						continue;
+					}
+
+					if (mob->pendingDespawn)
+					{
+						(void)DespawnDynamicEventMob(eventState, entityId, "phase_kill");
+						continue;
+					}
+
+					++index;
+				}
+
+				const DynamicEventPhaseDefinition& phase = eventState.definition.phases[eventState.currentPhaseIndex];
+				if (eventState.currentPhaseProgress >= phase.progressRequired && eventState.phaseMobEntityIds.empty())
+				{
+					(void)AdvanceDynamicEventPhase(eventState);
+				}
+				continue;
+			}
+
+			if (m_currentTick < eventState.nextTriggerTick)
+			{
+				continue;
+			}
+
+			if (!HasPlayersInZone(eventState.definition.zoneId))
+			{
+				LOG_DEBUG(Net, "[ServerApp] Dynamic event start delayed: no players in zone (event_id={}, zone_id={})",
+					eventState.definition.eventId,
+					eventState.definition.zoneId);
+				continue;
+			}
+
+			if (!StartDynamicEvent(eventState))
+			{
+				ScheduleDynamicEventTrigger(eventState, true);
+				LOG_WARN(Net, "[ServerApp] Dynamic event start rescheduled after failure (event_id={})",
+					eventState.definition.eventId);
+			}
+		}
+	}
+
 	void ServerApp::MaybeSendSnapshots()
 	{
 		if (m_clients.empty())
@@ -1162,6 +1551,7 @@ namespace engine::server
 			client.positionMetersZ);
 		SaveConnectedClient(client, "zone_transition");
 		(void)SendZoneChange(client, zoneChange);
+		SendDynamicEventBootstrap(client);
 		ApplyQuestEvent(client, QuestStepType::Enter, std::string("zone:") + std::to_string(client.zoneId), 1, "zone_enter");
 	}
 
@@ -1260,12 +1650,32 @@ namespace engine::server
 
 		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
 		target->stats.currentHealth -= appliedDamage;
+		if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
+		{
+			DynamicEventState& eventState = m_dynamicEvents[target->owningEventIndex];
+			AddDynamicEventParticipant(eventState, *client);
+		}
 		if (target->stats.currentHealth == 0)
 		{
 			target->stateFlags |= kEntityStateDead;
 			target->pendingDespawn = true;
 			target->aggroTargetEntityId = 0;
 			target->threatTable.clear();
+			if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
+			{
+				DynamicEventState& eventState = m_dynamicEvents[target->owningEventIndex];
+				if (eventState.currentPhaseIndex < eventState.definition.phases.size())
+				{
+					++eventState.currentPhaseProgress;
+					const DynamicEventPhaseDefinition& phase = eventState.definition.phases[eventState.currentPhaseIndex];
+					LOG_INFO(Net, "[ServerApp] Dynamic event progress updated (event_id={}, phase_id={}, progress={}/{})",
+						eventState.definition.eventId,
+						phase.phaseId,
+						eventState.currentPhaseProgress,
+						phase.progressRequired);
+					BroadcastDynamicEventState(eventState, phase.notificationText, 0, 0, 0, {});
+				}
+			}
 			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target->entityId, client->entityId);
 			if (!target->hasSpawnedLoot)
 			{
@@ -1815,6 +2225,26 @@ namespace engine::server
 			receiver.questStates.size());
 	}
 
+	void ServerApp::SendDynamicEventBootstrap(const ConnectedClient& receiver)
+	{
+		size_t eventCount = 0;
+		for (const DynamicEventState& eventState : m_dynamicEvents)
+		{
+			if (eventState.definition.zoneId != receiver.zoneId || eventState.status == DynamicEventStatus::Idle)
+			{
+				continue;
+			}
+
+			++eventCount;
+			(void)SendDynamicEventState(receiver, eventState, eventState.definition.startNotificationText, 0, 0, {});
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event bootstrap sent (client_id={}, zone_id={}, events={})",
+			receiver.clientId,
+			receiver.zoneId,
+			eventCount);
+	}
+
 	bool ServerApp::SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items)
 	{
 		InventoryDeltaMessage message{};
@@ -1832,6 +2262,83 @@ namespace engine::server
 			receiver.clientId,
 			items.size());
 		return true;
+	}
+
+	bool ServerApp::SendDynamicEventState(
+		const ConnectedClient& receiver,
+		const DynamicEventState& eventState,
+		std::string_view notificationText,
+		uint32_t rewardExperience,
+		uint32_t rewardGold,
+		std::span<const ItemStack> rewardItems)
+	{
+		EventStateMessage message{};
+		message.zoneId = eventState.definition.zoneId;
+		message.status = static_cast<uint8_t>(eventState.status);
+		message.phaseIndex = static_cast<uint16_t>(eventState.status == DynamicEventStatus::Active ? (eventState.currentPhaseIndex + 1u) : 0u);
+		message.phaseCount = static_cast<uint16_t>(eventState.definition.phases.size());
+		message.progressCurrent = eventState.currentPhaseProgress;
+		if (eventState.status == DynamicEventStatus::Active && eventState.currentPhaseIndex < eventState.definition.phases.size())
+		{
+			message.progressRequired = eventState.definition.phases[eventState.currentPhaseIndex].progressRequired;
+		}
+		message.eventId = eventState.definition.eventId;
+		message.notificationText = std::string(notificationText);
+		message.rewardExperience = rewardExperience;
+		message.rewardGold = rewardGold;
+		message.rewardItems.assign(rewardItems.begin(), rewardItems.end());
+
+		const std::vector<std::byte> packet = EncodeEventState(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] EventState send failed (client_id={}, event_id={})",
+				receiver.clientId,
+				eventState.definition.eventId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] EventState sent (client_id={}, event_id={}, status={}, phase={}/{}, progress={}/{})",
+			receiver.clientId,
+			eventState.definition.eventId,
+			GetDynamicEventStatusName(eventState.status),
+			message.phaseIndex,
+			message.phaseCount,
+			message.progressCurrent,
+			message.progressRequired);
+		return true;
+	}
+
+	void ServerApp::BroadcastDynamicEventState(
+		const DynamicEventState& eventState,
+		std::string_view notificationText,
+		uint32_t rewardedClientId,
+		uint32_t rewardExperience,
+		uint32_t rewardGold,
+		std::span<const ItemStack> rewardItems)
+	{
+		size_t recipientCount = 0;
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!client.hasReplicatedState || client.zoneId != eventState.definition.zoneId)
+			{
+				continue;
+			}
+
+			const bool rewardedReceiver = rewardedClientId != 0 && client.clientId == rewardedClientId;
+			++recipientCount;
+			(void)SendDynamicEventState(
+				client,
+				eventState,
+				notificationText,
+				rewardedReceiver ? rewardExperience : 0u,
+				rewardedReceiver ? rewardGold : 0u,
+				rewardedReceiver ? rewardItems : std::span<const ItemStack>{});
+		}
+
+		LOG_INFO(Net, "[ServerApp] EventState broadcast (event_id={}, zone_id={}, recipients={})",
+			eventState.definition.eventId,
+			eventState.definition.zoneId,
+			recipientCount);
 	}
 
 	bool ServerApp::SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta)

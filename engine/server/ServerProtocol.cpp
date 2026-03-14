@@ -337,4 +337,29 @@ namespace engine::server
 		}
 		return packet;
 	}
+
+	std::vector<std::byte> EncodeEventState(const EventStateMessage& message)
+	{
+		size_t payloadSize = 4 + 1 + 2 + 2 + 4 + 4 + 2 + message.eventId.size() + 2 + message.notificationText.size() + 4 + 4 + 2;
+		payloadSize += message.rewardItems.size() * 8;
+
+		std::vector<std::byte> packet = BeginPacket(MessageKind::EventState, payloadSize);
+		WriteU32(packet, message.zoneId);
+		packet.push_back(static_cast<std::byte>(message.status));
+		WriteU16(packet, message.phaseIndex);
+		WriteU16(packet, message.phaseCount);
+		WriteU32(packet, message.progressCurrent);
+		WriteU32(packet, message.progressRequired);
+		WriteSizedString(packet, message.eventId);
+		WriteSizedString(packet, message.notificationText);
+		WriteU32(packet, message.rewardExperience);
+		WriteU32(packet, message.rewardGold);
+		WriteU16(packet, static_cast<uint16_t>(message.rewardItems.size()));
+		for (const ItemStack& item : message.rewardItems)
+		{
+			WriteU32(packet, item.itemId);
+			WriteU32(packet, item.quantity);
+		}
+		return packet;
+	}
 }

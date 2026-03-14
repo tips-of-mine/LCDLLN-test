@@ -1269,6 +1269,8 @@ namespace engine
 
 		std::fprintf(stderr, "[BF] time.BeginFrame\n"); std::fflush(stderr);
 		m_time.BeginFrame();
+		std::fprintf(stderr, "[BF] time.BeginFrame OK - profiler=%d\n", 
+    		(int)m_profiler.IsInitialized()); std::fflush(stderr);  // ← AJOUTE CETTE LIGNE
 		if (m_profiler.IsInitialized())
 		{
 			m_profiler.BeginFrame(m_currentFrame);

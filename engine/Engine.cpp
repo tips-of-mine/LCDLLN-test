@@ -1040,6 +1040,8 @@ namespace engine
 																               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 																               1, &region);
 																m_taaHistoryEverFilled = true;
+																LOG_INFO(Render, "[TAA] History initialized at frame 0");
+																return;
 															}
 														}
 														else

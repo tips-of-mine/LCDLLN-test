@@ -77,6 +77,8 @@ namespace engine::render
 			}
 			else
 			{
+				LOG_INFO(Render, "[SSAO] Kernel and noise texture initialized ({} samples)",
+					static_cast<size_t>(SsaoKernelNoise::kKernelSize));
 				LOG_INFO(Render, "M06.1: SSAO kernel+noise ready");
 			}
 		}

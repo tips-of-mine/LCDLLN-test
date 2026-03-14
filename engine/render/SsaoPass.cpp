@@ -1,4 +1,5 @@
 #include "engine/render/SsaoPass.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
@@ -25,7 +26,8 @@ namespace engine::render
 		VkFormat outputFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
-		uint32_t maxFrames)
+		uint32_t maxFrames,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv || vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -230,7 +232,9 @@ namespace engine::render
 		gpInfo.layout = m_pipelineLayout;
 		gpInfo.renderPass = m_renderPass;
 		gpInfo.subpass = 0;
-		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, outputFormat, VK_FORMAT_UNDEFINED));
+		if (vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "SsaoPass: vkCreateGraphicsPipelines failed");
 			vkDestroyShaderModule(device, vertMod, nullptr);

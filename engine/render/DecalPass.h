@@ -36,7 +36,8 @@ namespace engine::render
 			VkFormat decalOverlayFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Render all visible decals into the decal overlay target.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,

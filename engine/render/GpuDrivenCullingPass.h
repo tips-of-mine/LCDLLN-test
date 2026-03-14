@@ -46,7 +46,8 @@ namespace engine::render
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
 			const uint32_t* computeSpirv, size_t computeWordCount,
 			uint32_t framesInFlight = kDefaultFramesInFlight,
-			uint32_t maxDrawItems = kDefaultMaxDrawItems);
+			uint32_t maxDrawItems = kDefaultMaxDrawItems,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Uploads the draw items for the current frame slot into the storage buffer.
 		bool UploadDrawItems(VkDevice device, uint32_t frameIndex, const GpuDrawItem* items, uint32_t itemCount);

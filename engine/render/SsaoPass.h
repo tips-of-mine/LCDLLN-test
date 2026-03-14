@@ -33,7 +33,8 @@ namespace engine::render
 			VkFormat outputFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records the SSAO fullscreen pass. Binds depth, normal, kernel buffer, noise view/sampler.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,

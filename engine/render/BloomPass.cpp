@@ -1,4 +1,5 @@
 #include "engine/render/BloomPass.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <cstring>
@@ -28,7 +29,8 @@ namespace engine::render
 		VkFormat bloomFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
-		uint32_t maxFrames)
+		uint32_t maxFrames,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
@@ -264,7 +266,9 @@ namespace engine::render
 			gpInfo.renderPass           = m_renderPass;
 			gpInfo.subpass              = 0;
 
-			VkResult res = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline);
+			AssertPipelineCreationAllowed();
+			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, bloomFormat, VK_FORMAT_UNDEFINED));
+			VkResult res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
 			vkDestroyShaderModule(device, vertMod, nullptr);
 			vkDestroyShaderModule(device, fragMod, nullptr);
 			if (res != VK_SUCCESS)
@@ -376,7 +380,8 @@ namespace engine::render
 		VkFormat bloomFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
-		uint32_t maxFrames)
+		uint32_t maxFrames,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
@@ -605,7 +610,9 @@ namespace engine::render
 			gpInfo.renderPass           = m_renderPass;
 			gpInfo.subpass              = 0;
 
-			VkResult res = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline);
+			AssertPipelineCreationAllowed();
+			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, bloomFormat, VK_FORMAT_UNDEFINED));
+			VkResult res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
 			vkDestroyShaderModule(device, vertMod, nullptr);
 			vkDestroyShaderModule(device, fragMod, nullptr);
 			if (res != VK_SUCCESS)
@@ -715,7 +722,8 @@ namespace engine::render
 		VkFormat bloomFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
-		uint32_t maxFrames)
+		uint32_t maxFrames,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
@@ -950,7 +958,9 @@ namespace engine::render
 			gpInfo.renderPass           = m_renderPass;
 			gpInfo.subpass              = 0;
 
-			VkResult res = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline);
+			AssertPipelineCreationAllowed();
+			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, bloomFormat, VK_FORMAT_UNDEFINED));
+			VkResult res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
 			vkDestroyShaderModule(device, vertMod, nullptr);
 			vkDestroyShaderModule(device, fragMod, nullptr);
 			if (res != VK_SUCCESS)
@@ -1058,7 +1068,8 @@ namespace engine::render
 		VkFormat hdrFormat,
 		const uint32_t* vertSpirv, size_t vertWordCount,
 		const uint32_t* fragSpirv, size_t fragWordCount,
-		uint32_t maxFrames)
+		uint32_t maxFrames,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
@@ -1297,7 +1308,9 @@ namespace engine::render
 			gpInfo.renderPass           = m_renderPass;
 			gpInfo.subpass              = 0;
 
-			VkResult res = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline);
+			AssertPipelineCreationAllowed();
+			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, hdrFormat, VK_FORMAT_UNDEFINED));
+			VkResult res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
 			vkDestroyShaderModule(device, vertMod, nullptr);
 			vkDestroyShaderModule(device, fragMod, nullptr);
 			if (res != VK_SUCCESS)

@@ -21,6 +21,14 @@ namespace engine::render
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !loadSpirv)
 			return false;
 
+		// M18.5: Pipeline cache + warmup phase (PSO creation only during this phase).
+		const std::string contentPath = config.GetString("paths.content", "game/data");
+		const std::string cachePath = contentPath + "/cache/pipeline_cache.bin";
+		if (!m_pipelineCache.Init(device, cachePath))
+			LOG_WARN(Render, "[Boot] Pipeline cache init failed — pipelines will still be created without cache");
+		VkPipelineCache pipelineCacheHandle = m_pipelineCache.IsValid() ? m_pipelineCache.GetHandle() : VK_NULL_HANDLE;
+		PipelineCache::BeginWarmup();
+
 		// M05.1: BRDF LUT
 		std::fprintf(stderr, "[PIPELINE] 1 BRDF LUT\n"); std::fflush(stderr);
 		{
@@ -29,7 +37,7 @@ namespace engine::render
 			{
 				const uint32_t lutSize = 256u;
 				if (m_brdfLutPass.Init(device, physicalDevice, vmaAllocator, lutSize,
-						brdfComp.data(), brdfComp.size(), graphicsQueueFamilyIndex))
+						brdfComp.data(), brdfComp.size(), graphicsQueueFamilyIndex, pipelineCacheHandle))
 				{
 					m_brdfLutPass.Generate(device, graphicsQueue);
 					LOG_INFO(Render, "[Boot] DeferredPipeline BRDF LUT OK");
@@ -52,7 +60,7 @@ namespace engine::render
 				if (m_specularPrefilterPass.Init(device, physicalDevice, vmaAllocator,
 						cubeSize, mipCount,
 						specComp.data(), specComp.size(),
-						graphicsQueueFamilyIndex))
+						graphicsQueueFamilyIndex, pipelineCacheHandle))
 				{
 					LOG_INFO(Render, "[Boot] DeferredPipeline SpecularPrefilter OK");
 				}
@@ -91,7 +99,7 @@ namespace engine::render
 			if (!ssaoVert.empty() && !ssaoFrag.empty() && m_ssaoKernelNoise.IsValid())
 			{
 				if (!m_ssaoPass.Init(device, physicalDevice, VK_FORMAT_R16_SFLOAT,
-						ssaoVert.data(), ssaoVert.size(), ssaoFrag.data(), ssaoFrag.size(), 2))
+						ssaoVert.data(), ssaoVert.size(), ssaoFrag.data(), ssaoFrag.size(), 2, pipelineCacheHandle))
 					LOG_WARN(Render, "M06.2: SSAO pass init failed");
 				else
 					LOG_INFO(Render, "M06.2: SSAO generate pass ready");
@@ -108,7 +116,7 @@ namespace engine::render
 			if (!blurVert.empty() && !blurFrag.empty())
 			{
 				if (m_ssaoBlurPass.Init(device, physicalDevice, VK_FORMAT_R16_SFLOAT,
-						blurVert.data(), blurVert.size(), blurFrag.data(), blurFrag.size(), 2))
+						blurVert.data(), blurVert.size(), blurFrag.data(), blurFrag.size(), 2, pipelineCacheHandle))
 					LOG_INFO(Render, "M06.3: SSAO bilateral blur pass ready");
 				else
 					LOG_WARN(Render, "M06.3: SSAO blur pass init failed");
@@ -139,7 +147,8 @@ namespace engine::render
 						VK_FORMAT_D32_SFLOAT,
 						vertSpirv.data(), vertSpirv.size(),
 						fragSpirv.data(), fragSpirv.size(),
-						bindlessMaterialsReady ? m_materialDescriptorCache.GetLayout() : VK_NULL_HANDLE))
+						bindlessMaterialsReady ? m_materialDescriptorCache.GetLayout() : VK_NULL_HANDLE,
+						pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline GeometryPass OK");
 				else
 					LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass init failed");
@@ -150,7 +159,10 @@ namespace engine::render
 			if (!cullCompSpirv.empty())
 			{
 				if (m_gpuDrivenCullingPass.Init(device, physicalDevice,
-						cullCompSpirv.data(), cullCompSpirv.size()))
+						cullCompSpirv.data(), cullCompSpirv.size(),
+						GpuDrivenCullingPass::kDefaultFramesInFlight,
+						GpuDrivenCullingPass::kDefaultMaxDrawItems,
+						pipelineCacheHandle))
 				{
 					LOG_INFO(Render, "[Boot] DeferredPipeline GPU-driven culling OK");
 				}
@@ -166,7 +178,8 @@ namespace engine::render
 
 			if (!hiZCompSpirv.empty())
 			{
-				if (m_hiZPyramidPass.Init(device, physicalDevice, hiZCompSpirv.data(), hiZCompSpirv.size()))
+				if (m_hiZPyramidPass.Init(device, physicalDevice, hiZCompSpirv.data(), hiZCompSpirv.size(),
+						HiZPyramidPass::kDefaultFramesInFlight, pipelineCacheHandle))
 				{
 					LOG_INFO(Render, "[Boot] DeferredPipeline Hi-Z pyramid OK");
 				}
@@ -189,7 +202,7 @@ namespace engine::render
 			if (!smVert.empty() && !smFrag.empty())
 			{
 				if (m_shadowMapPass.Init(device, physicalDevice, VK_FORMAT_D32_SFLOAT, shadowMapResolution,
-						smVert.data(), smVert.size(), smFrag.data(), smFrag.size()))
+						smVert.data(), smVert.size(), smFrag.data(), smFrag.size(), pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline ShadowMapPass OK");
 				else
 					LOG_WARN(Render, "M04.2: shadow map pass init failed — disabled");
@@ -206,7 +219,7 @@ namespace engine::render
 			if (!decalVert.empty() && !decalFrag.empty())
 			{
 				if (m_decalPass.Init(device, physicalDevice, VK_FORMAT_R8G8B8A8_SRGB,
-						decalVert.data(), decalVert.size(), decalFrag.data(), decalFrag.size(), 2u))
+						decalVert.data(), decalVert.size(), decalFrag.data(), decalFrag.size(), 2u, pipelineCacheHandle))
 				{
 					LOG_INFO(Render, "[Boot] DeferredPipeline DecalPass OK");
 				}
@@ -229,7 +242,7 @@ namespace engine::render
 			if (!litVert.empty() && !litFrag.empty())
 			{
 				if (m_lightingPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
-						litVert.data(), litVert.size(), litFrag.data(), litFrag.size(), 2u))
+						litVert.data(), litVert.size(), litFrag.data(), litFrag.size(), 2u, pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline LightingPass OK");
 				else
 					LOG_WARN(Render, "M03.2: lighting pass init failed — disabled");
@@ -246,7 +259,7 @@ namespace engine::render
 			if (!tmVert.empty() && !tmFrag.empty())
 			{
 				if (m_tonemapPass.Init(device, physicalDevice, sceneColorLDRFormat,
-						tmVert.data(), tmVert.size(), tmFrag.data(), tmFrag.size(), 2u))
+						tmVert.data(), tmVert.size(), tmFrag.data(), tmFrag.size(), 2u, pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline TonemapPass OK");
 				else
 					LOG_WARN(Render, "M03.4: tonemap pass init failed — disabled");
@@ -265,10 +278,10 @@ namespace engine::render
 			const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
 			if (!bpVert.empty() && !bpFrag.empty())
 				m_bloomPrefilterPass.Init(device, physicalDevice, bloomFmt,
-					bpVert.data(), bpVert.size(), bpFrag.data(), bpFrag.size(), 2u);
+					bpVert.data(), bpVert.size(), bpFrag.data(), bpFrag.size(), 2u, pipelineCacheHandle);
 			if (!bdVert.empty() && !bdFrag.empty())
 				m_bloomDownsamplePass.Init(device, physicalDevice, bloomFmt,
-					bdVert.data(), bdVert.size(), bdFrag.data(), bdFrag.size(), 2u);
+					bdVert.data(), bdVert.size(), bdFrag.data(), bdFrag.size(), 2u, pipelineCacheHandle);
 		}
 
 		// Bloom upsample + combine
@@ -281,10 +294,10 @@ namespace engine::render
 			const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
 			if (!buVert.empty() && !buFrag.empty())
 				m_bloomUpsamplePass.Init(device, physicalDevice, bloomFmt,
-					buVert.data(), buVert.size(), buFrag.data(), buFrag.size(), 2u);
+					buVert.data(), buVert.size(), buFrag.data(), buFrag.size(), 2u, pipelineCacheHandle);
 			if (!bcVert.empty() && !bcFrag.empty())
 				m_bloomCombinePass.Init(device, physicalDevice, bloomFmt,
-					bcVert.data(), bcVert.size(), bcFrag.data(), bcFrag.size(), 2u);
+					bcVert.data(), bcVert.size(), bcFrag.data(), bcFrag.size(), 2u, pipelineCacheHandle);
 		}
 
 		// M08.6: Auto-exposure histogram
@@ -299,7 +312,7 @@ namespace engine::render
 				if (m_autoExposure.Init(device, physicalDevice, vmaAllocator,
 						histogramComp.data(), histogramComp.size(),
 						histogramAvgComp.data(), histogramAvgComp.size(),
-						percentileLow, percentileHigh))
+						percentileLow, percentileHigh, pipelineCacheHandle))
 				{
 					LOG_INFO(Render, "[Boot] DeferredPipeline AutoExposure OK");
 				}
@@ -322,7 +335,7 @@ namespace engine::render
 			if (!taaVert.empty() && !taaFrag.empty())
 			{
 				if (m_taaPass.Init(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM,
-						taaVert.data(), taaVert.size(), taaFrag.data(), taaFrag.size(), 2u))
+						taaVert.data(), taaVert.size(), taaFrag.data(), taaFrag.size(), 2u, pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline TAA OK");
 				else
 					LOG_WARN(Render, "M07.4: TAA pass init failed");
@@ -330,6 +343,8 @@ namespace engine::render
 			else
 				LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
 		}
+
+		PipelineCache::EndWarmup();
 
 		std::fprintf(stderr, "[PIPELINE] done\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[Boot] DeferredPipeline all passes init done");
@@ -359,6 +374,7 @@ namespace engine::render
 		m_ssaoKernelNoise.Destroy(device);
 		m_specularPrefilterPass.Destroy(device);
 		m_brdfLutPass.Destroy(device);
+		m_pipelineCache.Destroy(device);
 		LOG_INFO(Render, "[DeferredPipeline] Destroyed");
 	}
 

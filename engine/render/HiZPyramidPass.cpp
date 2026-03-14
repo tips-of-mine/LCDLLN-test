@@ -1,4 +1,5 @@
 #include "engine/render/HiZPyramidPass.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
@@ -226,7 +227,8 @@ namespace engine::render
 
 	bool HiZPyramidPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 		const uint32_t* computeSpirv, size_t computeWordCount,
-		uint32_t framesInFlight)
+		uint32_t framesInFlight,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !computeSpirv || computeWordCount == 0 || framesInFlight == 0)
 		{
@@ -321,7 +323,9 @@ namespace engine::render
 		pipelineInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 		pipelineInfo.stage.module = shaderModule;
 		pipelineInfo.stage.pName = "main";
-		if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_pipelineLayout, computeWordCount));
+		if (vkCreateComputePipelines(device, pipelineCache, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS)
 		{
 			vkDestroyShaderModule(device, shaderModule, nullptr);
 			LOG_ERROR(Render, "[HiZPyramidPass] Init FAILED: compute pipeline creation failed");

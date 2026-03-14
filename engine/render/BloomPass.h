@@ -30,7 +30,8 @@ namespace engine::render
 			VkFormat bloomFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records prefilter: read idSceneColorHDR, write idBloomMip0. Extent = full resolution.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
@@ -65,7 +66,8 @@ namespace engine::render
 			VkFormat bloomFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records downsample: read idSrc (larger mip), write idDst (smaller). extentDst = output size.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
@@ -101,7 +103,8 @@ namespace engine::render
 			VkFormat bloomFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records upsample: read idSrc (smaller mip), add into idDst (larger mip). extentDst = output size. Uses LOAD + additive blend.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
@@ -141,7 +144,8 @@ namespace engine::render
 			VkFormat hdrFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records combine: read idSceneColorHDR and idBloom, write idSceneColorHDRWithBloom.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,

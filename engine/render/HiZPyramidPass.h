@@ -22,7 +22,8 @@ namespace engine::render
 		/// Creates the compute pipeline and the sampler used to read depth / Hi-Z mips.
 		bool Init(VkDevice device, VkPhysicalDevice physicalDevice,
 			const uint32_t* computeSpirv, size_t computeWordCount,
-			uint32_t framesInFlight = kDefaultFramesInFlight);
+			uint32_t framesInFlight = kDefaultFramesInFlight,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Builds the pyramid for the current frame slot from the provided depth image.
 		void Record(VkDevice device, VkCommandBuffer cmd,

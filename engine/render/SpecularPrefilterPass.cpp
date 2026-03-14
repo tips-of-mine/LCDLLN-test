@@ -1,4 +1,5 @@
 #include "engine/render/SpecularPrefilterPass.h"
+#include "engine/render/PipelineCache.h"
 
 #include "engine/core/Log.h"
 
@@ -23,7 +24,8 @@ namespace engine::render
 		void* vmaAllocator,
 		uint32_t size, uint32_t mipCount,
 		const uint32_t* compSpirv, size_t compWordCount,
-		uint32_t queueFamilyIndex)
+		uint32_t queueFamilyIndex,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
 			|| !compSpirv || compWordCount == 0 || size == 0 || mipCount == 0)
@@ -273,7 +275,9 @@ namespace engine::render
 		cpInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 		cpInfo.stage = stageInfo;
 		cpInfo.layout = m_pipelineLayout;
-		if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &cpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_pipelineLayout, compWordCount));
+		if (vkCreateComputePipelines(device, pipelineCache, 1, &cpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "SpecularPrefilterPass: vkCreateComputePipelines failed");
 			vkDestroyShaderModule(device, compModule, nullptr);

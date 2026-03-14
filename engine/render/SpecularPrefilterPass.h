@@ -34,7 +34,8 @@ namespace engine::render
 			void* vmaAllocator,
 			uint32_t size, uint32_t mipCount,
 			const uint32_t* compSpirv, size_t compWordCount,
-			uint32_t queueFamilyIndex);
+			uint32_t queueFamilyIndex,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Runs the prefilter: for each mip (roughness), dispatches compute per
 		/// face, then transitions the cubemap to SHADER_READ_ONLY_OPTIMAL.

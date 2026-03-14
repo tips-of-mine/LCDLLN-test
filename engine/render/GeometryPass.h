@@ -33,7 +33,8 @@ namespace engine::render
 		          VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 		          const uint32_t* vertSpirv, size_t vertWordCount,
 		          const uint32_t* fragSpirv, size_t fragWordCount,
-		          VkDescriptorSetLayout materialLayout = VK_NULL_HANDLE);
+		          VkDescriptorSetLayout materialLayout = VK_NULL_HANDLE,
+		          VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records the geometry pass: begin render pass, bind pipeline (and material descriptor
 		/// set if provided), draw mesh at given LOD, end pass.

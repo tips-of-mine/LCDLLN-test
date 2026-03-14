@@ -29,7 +29,8 @@ namespace engine::render
 			const uint32_t* histogramCompSpirv, size_t histogramCompWordCount,
 			const uint32_t* histogramAvgCompSpirv, size_t histogramAvgCompWordCount,
 			float histogramPercentileLow = 0.10f,
-			float histogramPercentileHigh = 0.90f);
+			float histogramPercentileHigh = 0.90f,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records the 2 histogram passes for the given frame slot:
 		/// 1) reset + accumulate histogram from HDR,

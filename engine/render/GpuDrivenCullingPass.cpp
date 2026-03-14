@@ -1,4 +1,5 @@
 #include "engine/render/GpuDrivenCullingPass.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
@@ -229,7 +230,8 @@ namespace engine::render
 
 	bool GpuDrivenCullingPass::Init(VkDevice device, VkPhysicalDevice physicalDevice,
 		const uint32_t* computeSpirv, size_t computeWordCount,
-		uint32_t framesInFlight, uint32_t maxDrawItems)
+		uint32_t framesInFlight, uint32_t maxDrawItems,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
 			|| !computeSpirv || computeWordCount == 0
@@ -333,7 +335,9 @@ namespace engine::render
 		pipelineInfo.stage.module = shaderModule;
 		pipelineInfo.stage.pName = "main";
 
-		if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_pipelineLayout, computeWordCount));
+		if (vkCreateComputePipelines(device, pipelineCache, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS)
 		{
 			vkDestroyShaderModule(device, shaderModule, nullptr);
 			LOG_ERROR(Render, "[GpuDrivenCullingPass] Init FAILED: compute pipeline creation failed");

@@ -1,4 +1,5 @@
 #include "engine/render/BrdfLutPass.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
@@ -9,7 +10,8 @@ namespace engine::render
 		void* vmaAllocator,
 		uint32_t size,
 		const uint32_t* compSpirv, size_t compWordCount,
-		uint32_t queueFamilyIndex)
+		uint32_t queueFamilyIndex,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
 			|| !compSpirv || compWordCount == 0 || size == 0)
@@ -241,7 +243,9 @@ namespace engine::render
 		cpInfo.stage = stageInfo;
 		cpInfo.layout = m_pipelineLayout;
 
-		if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &cpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_pipelineLayout, compWordCount));
+		if (vkCreateComputePipelines(device, pipelineCache, 1, &cpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "BrdfLutPass: vkCreateComputePipelines failed");
 			vkDestroyShaderModule(device, compModule, nullptr);

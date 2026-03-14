@@ -16,6 +16,7 @@
 #include "engine/render/BloomPass.h"
 #include "engine/render/AutoExposure.h"
 #include "engine/render/TaaPass.h"
+#include "engine/render/PipelineCache.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -114,5 +115,6 @@ namespace engine::render
 		BloomCombinePass      m_bloomCombinePass;
 		AutoExposure          m_autoExposure;
 		TaaPass               m_taaPass;
+		PipelineCache        m_pipelineCache;
 	};
 }

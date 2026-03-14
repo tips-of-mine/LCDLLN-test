@@ -39,7 +39,8 @@ namespace engine::render
 			VkFormat depthFormat,
 			uint32_t resolution,
 			const uint32_t* vertSpirv, size_t vertWordCount,
-			const uint32_t* fragSpirv, size_t fragWordCount);
+			const uint32_t* fragSpirv, size_t fragWordCount,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records the shadow pass:
 		/// - creates a temporary framebuffer using the given shadow map image view,

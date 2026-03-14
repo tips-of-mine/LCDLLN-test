@@ -1,4 +1,5 @@
 #include "engine/render/ShadowMapPass.h"
+#include "engine/render/PipelineCache.h"
 
 #include "engine/core/Log.h"
 
@@ -33,7 +34,8 @@ namespace engine::render
 		VkFormat depthFormat,
 		uint32_t resolution,
 		const uint32_t* vertSpirv, size_t vertWordCount,
-		const uint32_t* fragSpirv, size_t fragWordCount)
+		const uint32_t* fragSpirv, size_t fragWordCount,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || !vertSpirv || vertWordCount == 0)
 		{
@@ -238,7 +240,9 @@ namespace engine::render
 		gpInfo.renderPass          = m_renderPass;
 		gpInfo.subpass             = 0;
 
-		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, VK_FORMAT_UNDEFINED, depthFormat));
+		if (vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline) != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "ShadowMapPass: vkCreateGraphicsPipelines failed");
 			if (fragModule != VK_NULL_HANDLE)

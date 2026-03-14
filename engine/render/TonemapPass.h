@@ -44,7 +44,8 @@ namespace engine::render
 			VkFormat sceneColorLDRFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records the tonemap pass into cmd.
 		/// Updates the frame descriptor set with the current HDR image view,

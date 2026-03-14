@@ -51,7 +51,8 @@ namespace engine::render
 			VkFormat sceneColorHDRFormat,
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragSpirv, size_t fragWordCount,
-			uint32_t maxFrames = 2);
+			uint32_t maxFrames = 2,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Records the lighting pass into cmd.
 		/// Updates the frame's descriptor set with the current GBuffer and IBL image views,

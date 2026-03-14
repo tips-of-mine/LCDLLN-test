@@ -1,4 +1,5 @@
 #include "engine/render/GeometryPass.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
@@ -65,7 +66,8 @@ namespace engine::render
 	    VkFormat formatA, VkFormat formatB, VkFormat formatC, VkFormat formatVelocity, VkFormat depthFormat,
 	    const uint32_t* vertSpirv, size_t vertWordCount,
 	    const uint32_t* fragSpirv, size_t fragWordCount,
-	    VkDescriptorSetLayout materialLayout)
+	    VkDescriptorSetLayout materialLayout,
+	    VkPipelineCache pipelineCache)
 	{
 		if (!device || !vertSpirv || vertWordCount == 0 || !fragSpirv || fragWordCount == 0)
 			return false;
@@ -321,7 +323,9 @@ namespace engine::render
 		gpInfo.renderPass          = m_renderPass;
 		gpInfo.subpass             = 0;
 
-		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &gpInfo, nullptr, &m_pipeline);
+		AssertPipelineCreationAllowed();
+		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, formatA, depthFormat));
+		result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
 		vkDestroyShaderModule(device, vertModule, nullptr);
 		vkDestroyShaderModule(device, fragModule, nullptr);
 		if (result != VK_SUCCESS)

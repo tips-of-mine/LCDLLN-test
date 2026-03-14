@@ -30,7 +30,8 @@ namespace engine::render
 			void* vmaAllocator,
 			uint32_t size,
 			const uint32_t* compSpirv, size_t compWordCount,
-			uint32_t queueFamilyIndex);
+			uint32_t queueFamilyIndex,
+			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
 		/// Generates the LUT once by recording and submitting a compute dispatch
 		/// on the given queue. The function waits for completion before returning.

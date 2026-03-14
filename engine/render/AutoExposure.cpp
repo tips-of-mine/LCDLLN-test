@@ -1,4 +1,5 @@
 #include "engine/render/AutoExposure.h"
+#include "engine/render/PipelineCache.h"
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
@@ -29,7 +30,8 @@ namespace engine::render
 		const uint32_t* histogramCompSpirv, size_t histogramCompWordCount,
 		const uint32_t* histogramAvgCompSpirv, size_t histogramAvgCompWordCount,
 		float histogramPercentileLow,
-		float histogramPercentileHigh)
+		float histogramPercentileHigh,
+		VkPipelineCache pipelineCache)
 	{
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE ||
 			!histogramCompSpirv || histogramCompWordCount == 0 ||
@@ -378,7 +380,9 @@ namespace engine::render
 			histogramPipelineInfo.stage = histogramStageInfo;
 			histogramPipelineInfo.layout = m_histogramPipelineLayout;
 
-			if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &histogramPipelineInfo, nullptr, &m_histogramPipeline) != VK_SUCCESS)
+			AssertPipelineCreationAllowed();
+			PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_histogramPipelineLayout, histogramCompWordCount));
+			if (vkCreateComputePipelines(device, pipelineCache, 1, &histogramPipelineInfo, nullptr, &m_histogramPipeline) != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram compute pipeline creation failed");
 				vkDestroyShaderModule(device, averageModule, nullptr);
@@ -398,7 +402,8 @@ namespace engine::render
 			averagePipelineInfo.stage = averageStageInfo;
 			averagePipelineInfo.layout = m_averagePipelineLayout;
 
-			if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &averagePipelineInfo, nullptr, &m_averagePipeline) != VK_SUCCESS)
+			PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_averagePipelineLayout, histogramAvgCompWordCount));
+			if (vkCreateComputePipelines(device, pipelineCache, 1, &averagePipelineInfo, nullptr, &m_averagePipeline) != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average compute pipeline creation failed");
 				vkDestroyShaderModule(device, averageModule, nullptr);

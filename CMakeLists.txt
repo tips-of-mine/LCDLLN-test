@@ -77,6 +77,8 @@ add_library(engine_core
   engine/render/SsaoPass.cpp
   engine/render/SsaoBlurPass.cpp
   engine/render/ShadowMapPass.cpp
+  engine/render/PsoKey.cpp
+  engine/render/PipelineCache.cpp
   engine/render/GeometryPass.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp

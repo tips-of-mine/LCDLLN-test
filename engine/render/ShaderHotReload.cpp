@@ -9,7 +9,14 @@ namespace engine::render
 	ShaderHotReload::ShaderHotReload()
 	{
 		std::fprintf(stderr, "[SHR] ctor this=%p mutex=%p\n", (void*)this, (void*)&m_pendingMutex); std::fflush(stderr);
-		m_compiler.LocateCompiler();
+		if (m_compiler.LocateCompiler())
+		{
+			LOG_INFO(Render, "[ShaderHotReload] Init OK (worker_thread={})", m_worker.joinable() ? "on" : "off");
+		}
+		else
+		{
+			LOG_WARN(Render, "[ShaderHotReload] Init fallback: shader compiler not found");
+		}
 		// m_worker = std::thread(&ShaderHotReload::WorkerThread, this);
 	}
 
@@ -21,6 +28,7 @@ namespace engine::render
 		{
 			m_worker.join();
 		}
+		LOG_INFO(Render, "[ShaderHotReload] Destroyed");
 	}
 
 	void ShaderHotReload::Watch(std::string_view relativePath, ShaderStage stage, std::string_view defines)
@@ -93,33 +101,15 @@ namespace engine::render
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)
 	{
 		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
-
-		// Cas 1: worker thread non démarré (build actuel) → on garde un chemin simple, sans mutex.
-		if (!m_worker.joinable())
-		{
-			if (m_pending.empty())
-			{
-				std::fprintf(stderr, "[AP] pending empty, return (no worker)\n"); std::fflush(stderr);
-				return;
-			}
-			std::vector<PendingReloadResult> results;
-			results.swap(m_pending);
-			for (PendingReloadResult& r : results)
-			{
-				if (r.spirv.has_value())
-					cache.Set(r.cacheKey, std::move(r.spirv.value()));
-			}
-			std::fprintf(stderr, "[AP] done (no worker)\n"); std::fflush(stderr);
-			return;
-		}
-
-		// Cas 2: worker thread actif → chemin thread-safe avec mutex.
 		std::vector<PendingReloadResult> results;
 		{
 			std::lock_guard<std::mutex> lock(m_pendingMutex);
+#if !defined(NDEBUG)
+			LOG_DEBUG(Render, "[Engine] ApplyPending: mutex acquired, {} pending ops", m_pending.size());
+#endif
 			if (m_pending.empty())
 			{
-				std::fprintf(stderr, "[AP] pending empty, return (worker)\n"); std::fflush(stderr);
+				std::fprintf(stderr, "[AP] pending empty, return (%s)\n", m_worker.joinable() ? "worker" : "no worker"); std::fflush(stderr);
 				return;
 			}
 			results.swap(m_pending);
@@ -130,7 +120,7 @@ namespace engine::render
 			if (r.spirv.has_value())
 				cache.Set(r.cacheKey, std::move(r.spirv.value()));
 		}
-		std::fprintf(stderr, "[AP] done (worker)\n"); std::fflush(stderr);
+		std::fprintf(stderr, "[AP] done (%s)\n", m_worker.joinable() ? "worker" : "no worker"); std::fflush(stderr);
 	}
 
 	void ShaderHotReload::WorkerThread()

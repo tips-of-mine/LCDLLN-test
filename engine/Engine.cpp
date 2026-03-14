@@ -355,10 +355,12 @@ namespace engine
 											(void*)m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget); std::fflush(stderr);
 										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget))
 										{
+											LOG_WARN(Render, "[StagingAllocator] Init FAILED (pool_size_bytes={})", stagingBudget);
 											std::fprintf(stderr, "[ENGINE] AE2: StagingAllocator::Init FAILED (staging désactivé)\n"); std::fflush(stderr);
 										}
 										else
 										{
+											LOG_INFO(Render, "[StagingAllocator] Initialized. Pool size: {} bytes", stagingBudget);
 											std::fprintf(stderr, "[ENGINE] AE3: StagingAllocator::Init OK\n"); std::fflush(stderr);
 										}
 

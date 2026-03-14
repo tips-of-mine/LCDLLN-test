@@ -1091,7 +1091,7 @@ namespace engine::editor
 		constexpr int kCellSizeMeters = 64;
 		const int cellX = static_cast<int>(std::floor(camera.position.x / static_cast<float>(kCellSizeMeters)));
 		const int cellZ = static_cast<int>(std::floor(camera.position.z / static_cast<float>(kCellSizeMeters)));
-		const engine::world::ChunkBounds bounds = engine::world::World::ChunkBounds(chunk);
+		const auto bounds = engine::world::World::ChunkBounds(chunk);
 		engine::world::World world;
 		world.Update(camera.position);
 		const engine::world::ChunkRing ring = world.GetRingForChunk(highlightChunk);

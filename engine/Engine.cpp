@@ -484,6 +484,9 @@ namespace engine
 											std::snprintf(name, sizeof(name), "BloomUp_%u", i);
 											m_fgBloomUpMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
 										}
+										LOG_INFO(Render, "[Bloom] FrameGraph resources registered: %zu down + %zu up mips",
+											m_fgBloomDownMipIds.size(),
+											m_fgBloomUpMipIds.size());
 
 										engine::render::ImageDesc sceneColorHDRWithBloomDesc{};
 										sceneColorHDRWithBloomDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -948,7 +951,7 @@ namespace engine
 										m_frameGraph.addPass("Bloom_Combine",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::SampledRead);
-												b.read(m_fgBloomDownMipIds[0],            engine::render::ImageUsage::SampledRead);
+												b.read(m_fgBloomUpMipIds[0],         engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -956,7 +959,7 @@ namespace engine
 												engine::render::BloomCombinePass::CombineParams cp{};
 												cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRId, m_fgBloomDownMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
+												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
 										std::fprintf(stderr, "[ENGINE] BA: addPass Bloom OK\n"); std::fflush(stderr);
 

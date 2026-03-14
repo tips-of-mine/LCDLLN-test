@@ -53,6 +53,11 @@ namespace engine::core
 		m_framesInFlight = framesInFlight;
 		m_maxGpuPasses = maxGpuPasses;
 		m_history.resize(kProfilerHistoryFrames);
+		for (ProfilerFrameSnapshot& frame : m_history)
+		{
+			frame.cpuScopes.reserve(64);
+			frame.gpuPasses.reserve(maxGpuPasses);
+		}
 		m_gpuFrames.resize(framesInFlight);
 		for (GpuFrameSlot& slot : m_gpuFrames)
 		{
@@ -120,12 +125,19 @@ namespace engine::core
 			return false;
 		}
 
-		std::scoped_lock lock(m_mutex);
+		if (m_history.empty())
+		{
+			LOG_ERROR(Core, "[Profiler] BeginFrame FAILED: history buffer is empty");
+			return false;
+		}
+
 		m_historyIndex = (m_historyIndex + 1u) % static_cast<uint32_t>(m_history.size());
 		ProfilerFrameSnapshot& frame = m_history[m_historyIndex];
-		frame = {};
 		frame.frameIndex = frameIndex;
-		frame.cpuScopes.reserve(64);
+		frame.cpuTotalMs = 0.0;
+		frame.gpuTotalMs = 0.0;
+		frame.cpuScopes.clear();
+		frame.gpuPasses.clear();
 		m_frameStartTime = std::chrono::steady_clock::now();
 		m_frameOpen = true;
 		return true;
@@ -138,7 +150,6 @@ namespace engine::core
 			return;
 		}
 
-		std::scoped_lock lock(m_mutex);
 		ProfilerFrameSnapshot& frame = m_history[m_historyIndex];
 		const auto now = std::chrono::steady_clock::now();
 		frame.cpuTotalMs = std::chrono::duration<double, std::milli>(now - m_frameStartTime).count();
@@ -219,7 +230,6 @@ namespace engine::core
 		GpuFrameSlot& slot = m_gpuFrames[frameSlot];
 		if (slot.usedQueryCount == 0)
 		{
-			std::scoped_lock lock(m_mutex);
 			ProfilerFrameSnapshot& frame = m_history[slot.historyIndex];
 			frame.gpuPasses.clear();
 			frame.gpuTotalMs = 0.0;
@@ -244,7 +254,6 @@ namespace engine::core
 			return false;
 		}
 
-		std::scoped_lock lock(m_mutex);
 		ProfilerFrameSnapshot& frame = m_history[slot.historyIndex];
 		frame.gpuPasses.clear();
 		frame.gpuPasses.reserve(slot.passes.size());
@@ -282,7 +291,6 @@ namespace engine::core
 			return;
 		}
 
-		std::scoped_lock lock(m_mutex);
 		ProfilerFrameSnapshot& frame = m_history[m_historyIndex];
 		frame.cpuScopes.push_back({ std::string(name), GetCurrentThreadId(), durationMs });
 	}

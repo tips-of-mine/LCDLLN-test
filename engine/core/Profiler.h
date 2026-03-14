@@ -4,7 +4,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <mutex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -111,7 +110,6 @@ namespace engine::core
 		uint32_t m_maxGpuPasses = 0;
 		bool m_frameOpen = false;
 		bool m_initialized = false;
-		mutable std::mutex m_mutex;
 	};
 
 	/// RAII helper used by PROFILE_SCOPE macros to record one CPU scope duration.

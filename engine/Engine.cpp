@@ -376,6 +376,9 @@ namespace engine
 										if (!m_profilerHud.Init())
 										{
 											LOG_WARN(Core, "[Engine] ProfilerHud init failed - overlay disabled");
+										    m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
+											std::fprintf(stderr, "[ENGINE] PROFILER FORCE DISABLED (STAB.9)\n");
+											std::fflush(stderr);
 										}
 										if (!m_audioEngine.Init(m_cfg))
 										{

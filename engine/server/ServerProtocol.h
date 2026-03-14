@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <span>
 #include <vector>
 
@@ -25,7 +26,9 @@ namespace engine::server
 		AttackRequest = 8,
 		CombatEvent = 9,
 		PickupRequest = 10,
-		InventoryDelta = 11
+		InventoryDelta = 11,
+		TalkRequest = 12,
+		QuestDelta = 13
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -104,6 +107,34 @@ namespace engine::server
 		uint32_t clientId = 0;
 	};
 
+	/// Client request asking the authoritative server to validate one quest talk target.
+	struct TalkRequestMessage
+	{
+		uint32_t clientId = 0;
+		std::string targetId;
+	};
+
+	/// One step payload attached to a quest delta message.
+	struct QuestDeltaStep
+	{
+		uint8_t stepType = 0;
+		std::string targetId;
+		uint32_t currentCount = 0;
+		uint32_t requiredCount = 0;
+	};
+
+	/// Quest journal delta emitted after one quest state change.
+	struct QuestDeltaMessage
+	{
+		uint32_t clientId = 0;
+		uint8_t status = 0;
+		std::string questId;
+		uint32_t rewardExperience = 0;
+		uint32_t rewardGold = 0;
+		std::vector<QuestDeltaStep> steps;
+		std::vector<ItemStack> rewardItems;
+	};
+
 	/// Decode a hello packet and validate the protocol header.
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage);
 
@@ -139,4 +170,10 @@ namespace engine::server
 
 	/// Encode an inventory delta packet with the protocol header.
 	std::vector<std::byte> EncodeInventoryDelta(const InventoryDeltaMessage& message, std::span<const ItemStack> items);
+
+	/// Decode a talk request packet and validate the protocol header.
+	bool DecodeTalkRequest(std::span<const std::byte> packet, TalkRequestMessage& outMessage);
+
+	/// Encode a quest delta packet with the protocol header.
+	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message);
 }

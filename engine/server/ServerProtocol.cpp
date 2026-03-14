@@ -58,10 +58,40 @@ namespace engine::server
 			WriteU32(outBytes, static_cast<uint32_t>((value >> 32) & 0xFFFFFFFFull));
 		}
 
+		/// Read a sized UTF-8 string from a packet buffer.
+		bool ReadSizedString(std::span<const std::byte> bytes, size_t& offset, std::string& outValue)
+		{
+			if ((offset + 2) > bytes.size())
+			{
+				return false;
+			}
+
+			const uint16_t length = ReadU16(bytes, offset);
+			offset += 2;
+			if ((offset + length) > bytes.size())
+			{
+				return false;
+			}
+
+			outValue.assign(reinterpret_cast<const char*>(bytes.data() + offset), length);
+			offset += length;
+			return true;
+		}
+
 		/// Append a float to an output buffer using IEEE-754 bit representation.
 		void WriteF32(std::vector<std::byte>& outBytes, float value)
 		{
 			WriteU32(outBytes, std::bit_cast<uint32_t>(value));
+		}
+
+		/// Append one sized UTF-8 string to a packet buffer.
+		void WriteSizedString(std::vector<std::byte>& outBytes, std::string_view value)
+		{
+			WriteU16(outBytes, static_cast<uint16_t>(value.size()));
+			for (const char ch : value)
+			{
+				outBytes.push_back(static_cast<std::byte>(static_cast<uint8_t>(ch)));
+			}
 		}
 
 		/// Append the minimal entity state fields to a packet buffer.
@@ -181,6 +211,24 @@ namespace engine::server
 		return true;
 	}
 
+	bool DecodeTalkRequest(std::span<const std::byte> packet, TalkRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TalkRequest, payload) || payload.size() < 6)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.targetId) || offset != payload.size())
+		{
+			return false;
+		}
+
+		return !outMessage.targetId.empty();
+	}
+
 	std::vector<std::byte> EncodeWelcome(const WelcomeMessage& message)
 	{
 		std::vector<std::byte> packet = BeginPacket(MessageKind::Welcome, 8);
@@ -251,6 +299,38 @@ namespace engine::server
 		WriteU32(packet, message.clientId);
 		WriteU16(packet, static_cast<uint16_t>(items.size()));
 		for (const ItemStack& item : items)
+		{
+			WriteU32(packet, item.itemId);
+			WriteU32(packet, item.quantity);
+		}
+		return packet;
+	}
+
+	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message)
+	{
+		size_t payloadSize = 4 + 1 + 2 + message.questId.size() + 4 + 4 + 1 + 2;
+		for (const QuestDeltaStep& step : message.steps)
+		{
+			payloadSize += 1 + 2 + step.targetId.size() + 4 + 4;
+		}
+		payloadSize += message.rewardItems.size() * 8;
+
+		std::vector<std::byte> packet = BeginPacket(MessageKind::QuestDelta, payloadSize);
+		WriteU32(packet, message.clientId);
+		packet.push_back(static_cast<std::byte>(message.status));
+		WriteSizedString(packet, message.questId);
+		WriteU32(packet, message.rewardExperience);
+		WriteU32(packet, message.rewardGold);
+		packet.push_back(static_cast<std::byte>(static_cast<uint8_t>(message.steps.size())));
+		for (const QuestDeltaStep& step : message.steps)
+		{
+			packet.push_back(static_cast<std::byte>(step.stepType));
+			WriteSizedString(packet, step.targetId);
+			WriteU32(packet, step.currentCount);
+			WriteU32(packet, step.requiredCount);
+		}
+		WriteU16(packet, static_cast<uint16_t>(message.rewardItems.size()));
+		for (const ItemStack& item : message.rewardItems)
 		{
 			WriteU32(packet, item.itemId);
 			WriteU32(packet, item.quantity);

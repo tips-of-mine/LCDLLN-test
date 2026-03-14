@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/server/QuestRuntime.h"
 #include "engine/server/ReplicationTypes.h"
 
 #include <cstdint>
@@ -17,8 +18,11 @@ namespace engine::server
 		float positionMetersX = 0.0f;
 		float positionMetersY = 0.0f;
 		float positionMetersZ = 0.0f;
+		uint32_t experiencePoints = 0;
+		uint32_t gold = 0;
 		StatsComponent stats{};
 		std::vector<ItemStack> inventory;
+		std::vector<QuestState> questStates;
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

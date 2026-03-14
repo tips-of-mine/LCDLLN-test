@@ -112,6 +112,7 @@ namespace engine::server
 	ServerApp::ServerApp(engine::core::Config config)
 		: m_config(std::move(config))
 		, m_characterPersistence(m_config)
+		, m_questRuntime(m_config)
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -179,6 +180,13 @@ namespace engine::server
 		if (!InitLootTables())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: loot tables startup failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!InitQuests())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: quest runtime startup failed");
 			Shutdown();
 			return false;
 		}
@@ -285,6 +293,7 @@ namespace engine::server
 		m_tickScheduler.Shutdown();
 		m_transport.Shutdown();
 		m_zoneTransitionMap.Shutdown();
+		m_questRuntime.Shutdown();
 		m_characterPersistence.Shutdown();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
@@ -365,6 +374,13 @@ namespace engine::server
 			return;
 		}
 
+		TalkRequestMessage talkRequest{};
+		if (DecodeTalkRequest(packetBytes, talkRequest))
+		{
+			HandleTalkRequest(datagram.endpoint, talkRequest.clientId, talkRequest.targetId);
+			return;
+		}
+
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
@@ -379,6 +395,7 @@ namespace engine::server
 				UdpTransport::EndpointToString(endpoint),
 				helloNonce);
 			(void)SendWelcome(*existingClient);
+			SendQuestStateBootstrap(*existingClient);
 			return;
 		}
 
@@ -400,15 +417,19 @@ namespace engine::server
 			acceptedClient.positionMetersX = persistedState.positionMetersX;
 			acceptedClient.positionMetersY = persistedState.positionMetersY;
 			acceptedClient.positionMetersZ = persistedState.positionMetersZ;
+			acceptedClient.experiencePoints = persistedState.experiencePoints;
+			acceptedClient.gold = persistedState.gold;
 			acceptedClient.stats = persistedState.stats;
 			acceptedClient.inventory = persistedState.inventory;
+			acceptedClient.questStates = persistedState.questStates;
 			acceptedClient.hasReplicatedState = true;
 			LOG_INFO(Net,
-				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={})",
+				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={})",
 				acceptedClient.clientId,
 				acceptedClient.persistenceCharacterKey,
 				acceptedClient.zoneId,
-				acceptedClient.inventory.size());
+				acceptedClient.inventory.size(),
+				acceptedClient.questStates.size());
 		}
 		else
 		{
@@ -417,6 +438,22 @@ namespace engine::server
 				"[ServerApp] Character state defaults active (client_id={}, character_key={})",
 				acceptedClient.clientId,
 				acceptedClient.persistenceCharacterKey);
+		}
+
+		std::vector<QuestProgressDelta> questSyncDeltas;
+		if (m_questRuntime.SyncQuestStates(acceptedClient.questStates, questSyncDeltas))
+		{
+			if (!questSyncDeltas.empty())
+			{
+				LOG_INFO(Net, "[ServerApp] Quest state bootstrap updated (client_id={}, deltas={})",
+					acceptedClient.clientId,
+					questSyncDeltas.size());
+			}
+		}
+		else
+		{
+			LOG_WARN(Net, "[ServerApp] Quest state bootstrap skipped: runtime sync failed (client_id={})",
+				acceptedClient.clientId);
 		}
 
 		UpdateClientInterest(acceptedClient);
@@ -428,6 +465,7 @@ namespace engine::server
 			UdpTransport::EndpointToString(endpoint),
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
+		SendQuestStateBootstrap(acceptedClient);
 	}
 
 	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersZ)
@@ -611,6 +649,18 @@ namespace engine::server
 		return true;
 	}
 
+	bool ServerApp::InitQuests()
+	{
+		if (!m_questRuntime.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] Quest init FAILED");
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Quest init OK");
+		return true;
+	}
+
 	void ServerApp::MaybeAutosaveCharacters()
 	{
 		if (m_clients.empty() || m_characterAutosaveIntervalTicks == 0 || m_currentTick < m_nextCharacterAutosaveTick)
@@ -645,8 +695,11 @@ namespace engine::server
 		state.positionMetersX = client.positionMetersX;
 		state.positionMetersY = client.positionMetersY;
 		state.positionMetersZ = client.positionMetersZ;
+		state.experiencePoints = client.experiencePoints;
+		state.gold = client.gold;
 		state.stats = client.stats;
 		state.inventory = client.inventory;
+		state.questStates = client.questStates;
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
@@ -879,6 +932,7 @@ namespace engine::server
 			client.positionMetersZ);
 		SaveConnectedClient(client, "zone_transition");
 		(void)SendZoneChange(client, zoneChange);
+		ApplyQuestEvent(client, QuestStepType::Enter, std::string("zone:") + std::to_string(client.zoneId), 1, "zone_enter");
 	}
 
 	void ServerApp::HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId)
@@ -985,6 +1039,7 @@ namespace engine::server
 				target->hasSpawnedLoot = true;
 				SpawnLootBagForMob(*target, client->entityId);
 			}
+			ApplyQuestEvent(*client, QuestStepType::Kill, std::string("mob:") + std::to_string(target->archetypeId), 1, "kill");
 		}
 
 		CombatEventMessage combatEvent{};
@@ -1100,8 +1155,41 @@ namespace engine::server
 			client->clientId,
 			lootBagEntityId,
 			pickedItems.size());
+		for (const ItemStack& item : pickedItems)
+		{
+			ApplyQuestEvent(*client, QuestStepType::Collect, std::string("item:") + std::to_string(item.itemId), item.quantity, "pickup");
+		}
 		SaveConnectedClient(*client, "pickup");
 		(void)SendInventoryDelta(*client, pickedItems);
+	}
+
+	void ServerApp::HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TalkRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] TalkRequest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (targetId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] TalkRequest ignored: empty target (client_id={})", client->clientId);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] TalkRequest accepted (client_id={}, target={})", client->clientId, targetId);
+		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
 	}
 
 	void ServerApp::SpawnLootBagForMob(const MobEntity& mob, EntityId ownerEntityId)
@@ -1425,6 +1513,75 @@ namespace engine::server
 			item.quantity);
 	}
 
+	void ServerApp::ApplyQuestEvent(
+		ConnectedClient& client,
+		QuestStepType eventType,
+		std::string_view targetId,
+		uint32_t amount,
+		std::string_view reason)
+	{
+		std::vector<QuestProgressDelta> deltas;
+		if (!m_questRuntime.ApplyEvent(client.questStates, eventType, targetId, amount, deltas))
+		{
+			return;
+		}
+
+		std::vector<ItemStack> rewardedItems;
+		for (const QuestProgressDelta& delta : deltas)
+		{
+			if (delta.rewardExperience != 0 || delta.rewardGold != 0 || !delta.rewardItems.empty())
+			{
+				client.experiencePoints += delta.rewardExperience;
+				client.gold += delta.rewardGold;
+				for (const ItemStack& rewardItem : delta.rewardItems)
+				{
+					AddItemToInventory(client, rewardItem);
+					rewardedItems.push_back(rewardItem);
+				}
+
+				LOG_INFO(Net,
+					"[ServerApp] Quest rewards granted (client_id={}, quest_id={}, xp={}, gold={}, items={})",
+					client.clientId,
+					delta.questId,
+					delta.rewardExperience,
+					delta.rewardGold,
+					delta.rewardItems.size());
+			}
+
+			(void)SendQuestDelta(client, delta);
+		}
+
+		if (!rewardedItems.empty())
+		{
+			(void)SendInventoryDelta(client, rewardedItems);
+		}
+
+		SaveConnectedClient(client, reason);
+		LOG_INFO(Net,
+			"[ServerApp] Quest event applied (client_id={}, type={}, target={}, deltas={}, reason={})",
+			client.clientId,
+			GetQuestStepTypeName(eventType),
+			targetId,
+			deltas.size(),
+			reason);
+	}
+
+	void ServerApp::SendQuestStateBootstrap(const ConnectedClient& receiver)
+	{
+		for (const QuestState& state : receiver.questStates)
+		{
+			QuestProgressDelta delta{};
+			delta.questId = state.questId;
+			delta.status = state.status;
+			delta.stepProgressCounts = state.stepProgressCounts;
+			(void)SendQuestDelta(receiver, delta);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Quest bootstrap sent (client_id={}, quests={})",
+			receiver.clientId,
+			receiver.questStates.size());
+	}
+
 	bool ServerApp::SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items)
 	{
 		InventoryDeltaMessage message{};
@@ -1441,6 +1598,56 @@ namespace engine::server
 		LOG_INFO(Net, "[ServerApp] InventoryDelta sent (client_id={}, item_count={})",
 			receiver.clientId,
 			items.size());
+		return true;
+	}
+
+	bool ServerApp::SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta)
+	{
+		const QuestDefinition* definition = m_questRuntime.FindQuestDefinition(delta.questId);
+		if (definition == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] QuestDelta skipped: missing definition (client_id={}, quest_id={})",
+				receiver.clientId,
+				delta.questId);
+			return false;
+		}
+
+		QuestDeltaMessage message{};
+		message.clientId = receiver.clientId;
+		message.status = static_cast<uint8_t>(delta.status);
+		message.questId = delta.questId;
+		message.rewardExperience = delta.rewardExperience;
+		message.rewardGold = delta.rewardGold;
+		message.rewardItems = delta.rewardItems;
+		message.steps.reserve(definition->steps.size());
+		for (size_t stepIndex = 0; stepIndex < definition->steps.size(); ++stepIndex)
+		{
+			const QuestStepDefinition& definitionStep = definition->steps[stepIndex];
+			QuestDeltaStep messageStep{};
+			messageStep.stepType = static_cast<uint8_t>(definitionStep.type);
+			messageStep.targetId = definitionStep.targetId;
+			messageStep.requiredCount = definitionStep.requiredCount;
+			if (stepIndex < delta.stepProgressCounts.size())
+			{
+				messageStep.currentCount = delta.stepProgressCounts[stepIndex];
+			}
+			message.steps.push_back(std::move(messageStep));
+		}
+
+		const std::vector<std::byte> packet = EncodeQuestDelta(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] QuestDelta send failed (client_id={}, quest_id={})",
+				receiver.clientId,
+				delta.questId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] QuestDelta sent (client_id={}, quest_id={}, status={}, steps={})",
+			receiver.clientId,
+			delta.questId,
+			GetQuestStatusName(delta.status),
+			message.steps.size());
 		return true;
 	}
 

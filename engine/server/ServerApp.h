@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/server/CharacterPersistence.h"
+#include "engine/server/QuestRuntime.h"
 #include "engine/core/Config.h"
 #include "engine/server/ReplicationTypes.h"
 #include "engine/server/SpatialPartition.h"
@@ -59,6 +60,8 @@ namespace engine::server
 		uint32_t lastInputSequence = 0;
 		uint32_t helloNonce = 0;
 		uint32_t persistenceCharacterKey = 0;
+		uint32_t experiencePoints = 0;
+		uint32_t gold = 0;
 		float positionMetersX = 0.0f;
 		float positionMetersY = 0.0f;
 		float positionMetersZ = 0.0f;
@@ -76,6 +79,7 @@ namespace engine::server
 		std::vector<EntityId> interestEntityIds;
 		std::vector<EntityId> replicatedEntityIds;
 		std::vector<ItemStack> inventory;
+		std::vector<QuestState> questStates;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -191,6 +195,9 @@ namespace engine::server
 		/// Load the authoritative loot table data required by the ticket.
 		bool InitLootTables();
 
+		/// Load the data-driven quest definitions required by M15.1.
+		bool InitQuests();
+
 		/// Update the mob AI state machine at a reduced fixed cadence.
 		void UpdateMobAi();
 
@@ -214,6 +221,9 @@ namespace engine::server
 
 		/// Validate one pickup request, update the inventory and despawn the bag.
 		void HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId);
+
+		/// Validate one talk request and forward it to the quest runtime.
+		void HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId);
 
 		/// Update one mob threat table from an authoritative combat event.
 		void UpdateThreatFromCombatEvent(const CombatEventMessage& message);
@@ -242,8 +252,17 @@ namespace engine::server
 		/// Add one item stack to the player's authoritative inventory.
 		void AddItemToInventory(ConnectedClient& client, const ItemStack& item);
 
+		/// Apply one authoritative quest event and emit any resulting deltas.
+		void ApplyQuestEvent(ConnectedClient& client, QuestStepType eventType, std::string_view targetId, uint32_t amount, std::string_view reason);
+
+		/// Send the current quest journal state after the client handshake succeeds.
+		void SendQuestStateBootstrap(const ConnectedClient& receiver);
+
 		/// Send one inventory delta after a successful pickup.
 		bool SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items);
+
+		/// Send one quest delta after a successful quest state update.
+		bool SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta);
 
 		/// Refresh spawn/despawn replication for every connected client.
 		void RefreshReplication();
@@ -322,6 +341,7 @@ namespace engine::server
 
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
+		QuestRuntime m_questRuntime;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;

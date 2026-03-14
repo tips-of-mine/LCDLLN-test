@@ -1,0 +1,32 @@
+{
+  "quests": [
+    {
+      "id": "hunt_collect_enter",
+      "prereqs": [],
+      "steps": [
+        { "type": "kill", "target": "mob:100", "requiredCount": 1 },
+        { "type": "collect", "target": "item:2001", "requiredCount": 1 },
+        { "type": "enter", "target": "zone:2", "requiredCount": 1 }
+      ],
+      "rewards": {
+        "xp": 100,
+        "gold": 25,
+        "items": [
+          { "itemId": 3001, "quantity": 1 }
+        ]
+      }
+    },
+    {
+      "id": "report_to_guard",
+      "prereqs": ["hunt_collect_enter"],
+      "steps": [
+        { "type": "talk", "target": "npc:guard_captain", "requiredCount": 1 }
+      ],
+      "rewards": {
+        "xp": 25,
+        "gold": 5,
+        "items": []
+      }
+    }
+  ]
+}

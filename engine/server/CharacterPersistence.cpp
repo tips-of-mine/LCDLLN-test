@@ -84,9 +84,12 @@ namespace engine::server
 		outState.positionMetersX = static_cast<float>(persisted.GetDouble("character.position_x", 0.0));
 		outState.positionMetersY = static_cast<float>(persisted.GetDouble("character.position_y", 0.0));
 		outState.positionMetersZ = static_cast<float>(persisted.GetDouble("character.position_z", 0.0));
+		outState.experiencePoints = static_cast<uint32_t>(persisted.GetInt("character.experience_points", 0));
+		outState.gold = static_cast<uint32_t>(persisted.GetInt("character.gold", 0));
 		outState.stats.currentHealth = static_cast<uint32_t>(persisted.GetInt("character.current_health", 100));
 		outState.stats.maxHealth = static_cast<uint32_t>(persisted.GetInt("character.max_health", 100));
 		outState.inventory.clear();
+		outState.questStates.clear();
 
 		const uint32_t inventoryCount = static_cast<uint32_t>(persisted.GetInt("inventory.count", 0));
 		for (uint32_t index = 0; index < inventoryCount; ++index)
@@ -102,11 +105,49 @@ namespace engine::server
 			outState.inventory.push_back(item);
 		}
 
+		const uint32_t questCount = static_cast<uint32_t>(persisted.GetInt("quests.count", 0));
+		for (uint32_t questIndex = 0; questIndex < questCount; ++questIndex)
+		{
+			QuestState questState{};
+			questState.questId = persisted.GetString("quests." + std::to_string(questIndex) + ".id", "");
+			if (questState.questId.empty())
+			{
+				continue;
+			}
+
+			const int64_t persistedStatus = persisted.GetInt("quests." + std::to_string(questIndex) + ".status", 0);
+			if (persistedStatus <= 0)
+			{
+				questState.status = QuestStatus::Locked;
+			}
+			else if (persistedStatus == 1)
+			{
+				questState.status = QuestStatus::Active;
+			}
+			else
+			{
+				questState.status = QuestStatus::Completed;
+			}
+
+			const uint32_t stepCount = static_cast<uint32_t>(persisted.GetInt("quests." + std::to_string(questIndex) + ".step_count", 0));
+			questState.stepProgressCounts.reserve(stepCount);
+			for (uint32_t stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+			{
+				questState.stepProgressCounts.push_back(
+					static_cast<uint32_t>(persisted.GetInt(
+						"quests." + std::to_string(questIndex) + ".step." + std::to_string(stepIndex) + ".progress",
+						0)));
+			}
+
+			outState.questStates.push_back(std::move(questState));
+		}
+
 		LOG_INFO(Net,
-			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={})",
+			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={})",
 			characterKey,
 			outState.zoneId,
-			outState.inventory.size());
+			outState.inventory.size(),
+			outState.questStates.size());
 		return true;
 	}
 
@@ -124,6 +165,8 @@ namespace engine::server
 		output << "character.position_x=" << state.positionMetersX << "\n";
 		output << "character.position_y=" << state.positionMetersY << "\n";
 		output << "character.position_z=" << state.positionMetersZ << "\n";
+		output << "character.experience_points=" << state.experiencePoints << "\n";
+		output << "character.gold=" << state.gold << "\n";
 		output << "character.current_health=" << state.stats.currentHealth << "\n";
 		output << "character.max_health=" << state.stats.maxHealth << "\n";
 		output << "inventory.count=" << state.inventory.size() << "\n";
@@ -131,6 +174,18 @@ namespace engine::server
 		{
 			output << "inventory." << index << ".item_id=" << state.inventory[index].itemId << "\n";
 			output << "inventory." << index << ".quantity=" << state.inventory[index].quantity << "\n";
+		}
+		output << "quests.count=" << state.questStates.size() << "\n";
+		for (size_t questIndex = 0; questIndex < state.questStates.size(); ++questIndex)
+		{
+			output << "quests." << questIndex << ".id=" << state.questStates[questIndex].questId << "\n";
+			output << "quests." << questIndex << ".status=" << static_cast<uint32_t>(state.questStates[questIndex].status) << "\n";
+			output << "quests." << questIndex << ".step_count=" << state.questStates[questIndex].stepProgressCounts.size() << "\n";
+			for (size_t stepIndex = 0; stepIndex < state.questStates[questIndex].stepProgressCounts.size(); ++stepIndex)
+			{
+				output << "quests." << questIndex << ".step." << stepIndex << ".progress="
+					<< state.questStates[questIndex].stepProgressCounts[stepIndex] << "\n";
+			}
 		}
 
 		if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
@@ -142,10 +197,11 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net,
-			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={})",
+			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={})",
 			state.characterKey,
 			state.zoneId,
-			state.inventory.size());
+			state.inventory.size(),
+			state.questStates.size());
 		return true;
 	}
 

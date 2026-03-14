@@ -39,6 +39,7 @@ add_library(engine_core
   engine/render/vk/VmaAllocator.cpp
   engine/render/vk/VkUtils.cpp
   engine/core/Config.cpp
+  engine/core/Profiler.cpp
   engine/core/jobs/JobSystem.cpp
   engine/core/Log.cpp
   engine/core/Time.cpp
@@ -46,6 +47,7 @@ add_library(engine_core
   engine/client/CombatHud.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
+  engine/client/ProfilerHud.cpp
   engine/client/QuestUi.cpp
   engine/client/ThemeManager.cpp
   engine/client/UIModel.cpp

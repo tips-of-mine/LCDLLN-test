@@ -1,5 +1,6 @@
 #include "engine/render/FrameGraph.h"
 #include "engine/core/Log.h"
+#include "engine/core/Profiler.h"
 
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
@@ -432,8 +433,10 @@ namespace engine::render
 	}
 
 	void FrameGraph::execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
-	    Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported)
+	    Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported,
+		engine::core::Profiler* profiler)
 	{
+	    engine::core::ProfilerScope scope("FrameGraph::execute");
 	    std::fprintf(stderr, "[FG] execute debut\n"); std::fflush(stderr);
 	    if (!m_compiled) { compile(); }
 	    std::fprintf(stderr, "[FG] ensureImageResources\n"); std::fflush(stderr);
@@ -448,11 +451,17 @@ namespace engine::render
 	    for (size_t passIdx : m_compiledOrder)
 	    {
 	        const Pass& pass = m_passes[passIdx];
+	        engine::core::ProfilerScope passScope(pass.name);
 	        std::fprintf(stderr, "[FG] pass[%zu]='%s' barriers\n", passIdx, pass.name.c_str()); std::fflush(stderr);
 	        emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
 	        std::fprintf(stderr, "[FG] pass[%zu]='%s' execute\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	        const bool gpuPassRecorded = profiler != nullptr && profiler->BeginGpuPass(cmd, frameIndex, pass.name);
 	        if (pass.execute)
 	            pass.execute(cmd, registry);
+	        if (gpuPassRecorded)
+	        {
+	            profiler->EndGpuPass(cmd, frameIndex);
+	        }
 	        std::fprintf(stderr, "[FG] pass[%zu]='%s' done\n", passIdx, pass.name.c_str()); std::fflush(stderr);
 	    }
 	    std::fprintf(stderr, "[FG] execute done\n"); std::fflush(stderr);

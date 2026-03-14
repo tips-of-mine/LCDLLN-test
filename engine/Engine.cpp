@@ -369,6 +369,14 @@ namespace engine
 
 										m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
 										std::fprintf(stderr, "[ENGINE] AH: assetRegistry OK\n"); std::fflush(stderr);
+										if (!m_profiler.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), 2u))
+										{
+											LOG_WARN(Core, "[Engine] Profiler init failed - profiling disabled");
+										}
+										if (!m_profilerHud.Init())
+										{
+											LOG_WARN(Core, "[Engine] ProfilerHud init failed - overlay disabled");
+										}
 										if (!m_audioEngine.Init(m_cfg))
 										{
 											LOG_WARN(Core, "[Engine] AudioEngine init failed - audio disabled");
@@ -1190,6 +1198,8 @@ namespace engine
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
 				m_pipeline.reset();
 			}
+			m_profilerHud.Shutdown();
+			m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
 			m_audioEngine.Shutdown();
 			m_decalSystem.Shutdown();
 			m_assetRegistry.Destroy();
@@ -1224,6 +1234,7 @@ namespace engine
 
 	void Engine::BeginFrame()
 	{
+		PROFILE_FUNCTION();
 		std::fprintf(stderr, "[BF] input.BeginFrame\n"); std::fflush(stderr);
 		m_input.BeginFrame();
 		std::fprintf(stderr, "[BF] window.PollEvents\n"); std::fflush(stderr);
@@ -1255,6 +1266,10 @@ namespace engine
 
 		std::fprintf(stderr, "[BF] time.BeginFrame\n"); std::fflush(stderr);
 		m_time.BeginFrame();
+		if (m_profiler.IsInitialized())
+		{
+			m_profiler.BeginFrame(m_currentFrame);
+		}
 		std::fprintf(stderr, "[BF] frameArena.BeginFrame\n"); std::fflush(stderr);
 		m_frameArena.BeginFrame(m_time.FrameIndex());
 		std::fprintf(stderr, "[BF] chunkStats.ResetPerFrame\n"); std::fflush(stderr);
@@ -1264,6 +1279,7 @@ namespace engine
 
 	void Engine::Update()
 	{
+		PROFILE_FUNCTION();
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -1273,6 +1289,7 @@ namespace engine
 		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 
 		out.camera = readState.camera;
+		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
 		if (!m_editorEnabled)
 		{
 			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
@@ -1340,6 +1357,8 @@ namespace engine
 			out.hlodDebugText = engine::world::BuildChunkDrawList(pending.data(), pending.size(), out.camera.position, out.frustum, m_hlodRuntime, maxDrawDist, m_chunkDrawDecisions);
 			if ((m_currentFrame % 60) == 0 && !out.hlodDebugText.empty())
 				LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
+			if ((m_currentFrame % 60) == 0 && !out.profilerDebugText.empty())
+				LOG_DEBUG(Core, "M18.1 {}", out.profilerDebugText);
 		}
 
 		{
@@ -1356,6 +1375,7 @@ namespace engine
 
 	void Engine::Render()
 	{
+	    PROFILE_FUNCTION();
 	    std::fprintf(stderr, "[RENDER] debut\n"); std::fflush(stderr);
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
@@ -1373,6 +1393,15 @@ namespace engine
 	
 	    std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+	    if (m_profiler.IsInitialized() && m_profiler.ResolveGpuFrame(device, frameIndex))
+	    {
+	        if (m_profilerHud.IsInitialized())
+	        {
+	            m_profilerHud.ApplySnapshot(m_profiler.GetLatestSnapshot());
+	            m_renderStates[0].profilerDebugText = m_profilerHud.GetState().debugText;
+	            m_renderStates[1].profilerDebugText = m_profilerHud.GetState().debugText;
+	        }
+	    }
 	    std::fprintf(stderr, "[RENDER] Collect\n"); std::fflush(stderr);
 	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
 	    std::fprintf(stderr, "[RENDER] stagingAllocator.BeginFrame\n"); std::fflush(stderr);
@@ -1404,6 +1433,10 @@ namespace engine
 	    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	    if (vkBeginCommandBuffer(fr.cmdBuffer, &beginInfo) != VK_SUCCESS) return;
+	    if (m_profiler.IsInitialized())
+	    {
+	        m_profiler.BeginGpuFrame(fr.cmdBuffer, frameIndex);
+	    }
 	
 	    std::fprintf(stderr, "[RENDER] avant frameGraph.execute\n"); std::fflush(stderr);
 	    if (m_fgSceneColorHDRId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
@@ -1411,7 +1444,7 @@ namespace engine
 	        VkImage     backbufferImage = m_vkSwapchain.GetImage(imageIndex);
 	        VkImageView backbufferView  = m_vkSwapchain.GetImageView(imageIndex);
 	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
-	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2());
+	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2(), m_profiler.IsInitialized() ? &m_profiler : nullptr);
 	    }
 	    std::fprintf(stderr, "[RENDER] frameGraph.execute OK\n"); std::fflush(stderr);
 	
@@ -1453,6 +1486,11 @@ namespace engine
 
 	void Engine::EndFrame()
 	{
+		PROFILE_FUNCTION();
+		if (m_profiler.IsInitialized())
+		{
+			m_profiler.EndFrame();
+		}
 		if (m_currentFrame > 0 && (m_currentFrame % 60) == 0)
 			m_chunkStats.LogStats();
 	}

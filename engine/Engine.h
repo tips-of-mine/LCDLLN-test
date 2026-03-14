@@ -1,9 +1,11 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/core/Profiler.h"
 #include "engine/core/Time.h"
 #include "engine/core/memory/FrameArena.h"
 #include "engine/audio/AudioEngine.h"
+#include "engine/client/ProfilerHud.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
 #include "engine/render/AssetRegistry.h"
@@ -71,6 +73,8 @@ namespace engine
 		uint32_t drawItemCount = 0;
 		/// M09.5: Debug overlay HLOD state (e.g. "HLOD: 3 inst: 5 culled: 2").
 		std::string hlodDebugText;
+		/// M18.1: Debug overlay profiler state (CPU totals + GPU pass breakdown).
+		std::string profilerDebugText;
 	};
 
 	/// Engine loop: BeginFrame/Update/Render/EndFrame with double-buffered RenderState.
@@ -169,6 +173,8 @@ namespace engine
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;
 		engine::audio::AudioEngine m_audioEngine;
+		engine::core::Profiler m_profiler;
+		engine::client::ProfilerHudPresenter m_profilerHud;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

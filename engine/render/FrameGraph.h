@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+namespace engine::core { class Profiler; }
+
 namespace engine::render
 {
 	/// Frame Graph resource ID (0 = invalid).
@@ -163,7 +165,8 @@ namespace engine::render
 		/// \param framesInFlight Number of frame slots (e.g. 2).
 		/// \param sync2Supported When true, use vkCmdPipelineBarrier2; otherwise use legacy vkCmdPipelineBarrier.
 		void execute(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, VkCommandBuffer cmd,
-			Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported = true);
+			Registry& registry, uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight, bool sync2Supported = true,
+			engine::core::Profiler* profiler = nullptr);
 
 		/// Releases all allocated Vulkan resources (call on shutdown or before resize).
 		void destroy(VkDevice device, void* vmaAllocator);

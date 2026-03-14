@@ -1,4 +1,5 @@
 #include "engine/core/jobs/JobSystem.h"
+#include "engine/core/Profiler.h"
 
 #include <algorithm>
 #include <chrono>
@@ -111,6 +112,7 @@ namespace engine::core::jobs
 
 		void Execute(Job& job)
 		{
+			PROFILE_SCOPE("Jobs::Execute");
 			if (job.fn.Valid())
 			{
 				job.fn.Invoke();

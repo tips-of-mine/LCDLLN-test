@@ -1,0 +1,8 @@
+{
+  "mappings": [
+    {
+      "eventType": "CombatEvent",
+      "fxId": "combat_hit_default"
+    }
+  ]
+}

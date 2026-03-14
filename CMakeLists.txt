@@ -43,6 +43,7 @@ add_library(engine_core
   engine/core/Log.cpp
   engine/core/Time.cpp
   engine/client/CombatHud.cpp
+  engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
   engine/client/QuestUi.cpp
   engine/client/ThemeManager.cpp

@@ -1,0 +1,12 @@
+{
+  "effects": [
+    {
+      "id": "combat_hit_default",
+      "particleId": "particles/hit_spark",
+      "decalId": "decals/hit_mark",
+      "soundId": "sounds/hit_01",
+      "scale": 1.0,
+      "durationSeconds": 0.35
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "zone": "zone_2",
+    "instances": [
+        {
+            "guid": "00000000-0000-0000-0000-000000000003",
+            "gltf": "zones/zone_2/zone_2.gltf",
+            "mesh": "meshes/test.mesh",
+            "materialId": 0,
+            "position": [0.0, 0.0, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+        }
+    ]
+}

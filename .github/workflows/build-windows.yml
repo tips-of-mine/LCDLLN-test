@@ -94,6 +94,12 @@ jobs:
             Copy-Item $config -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
           }
 
+          # build_hlod.bat à la racine du package de livraison (si présent)
+          $buildHlod = "$env:GITHUB_WORKSPACE\build_hlod.bat"
+          if (Test-Path $buildHlod) {
+            Copy-Item $buildHlod -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+          }
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

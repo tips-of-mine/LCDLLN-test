@@ -38,6 +38,6 @@
         "max_draw_distance_m": 0.0
     },
     "paths": {
-        "content": ""
+        "content": "game/data"
     }
 }

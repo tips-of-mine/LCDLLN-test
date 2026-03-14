@@ -1,0 +1,5 @@
+# item_id|icon_path|display_name|description
+2001|ui/icons/item_2001.png|Rusty Sword|Basic melee loot dropped by early enemies.
+2002|ui/icons/item_2002.png|Minor Potion|Consumable stack used for pickup and inventory UI tests.
+3001|ui/icons/item_3001.png|Quest Relic|Quest reward item shown in the inventory tooltip.
+4001|ui/icons/item_4001.png|Event Sigil|Dynamic event reward item used by the MVP inventory panel.

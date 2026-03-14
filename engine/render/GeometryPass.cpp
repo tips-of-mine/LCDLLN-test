@@ -389,7 +389,8 @@ namespace engine::render
 	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
 	    const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 	    uint32_t lodLevel,
-	    VkDescriptorSet materialDescriptorSet)
+	    VkDescriptorSet materialDescriptorSet,
+	    const float* instanceMatrix)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
@@ -478,6 +479,20 @@ namespace engine::render
 			&& mesh->indexBuffer  != VK_NULL_HANDLE
 			&& m_identityInstanceBuffer != VK_NULL_HANDLE)
 		{
+			if (instanceMatrix && m_identityInstanceMemory != VK_NULL_HANDLE)
+			{
+				void* mapped = nullptr;
+				if (vkMapMemory(device, m_identityInstanceMemory, 0, 64u, 0, &mapped) == VK_SUCCESS && mapped)
+				{
+					std::memcpy(mapped, instanceMatrix, 64u);
+					vkUnmapMemory(device, m_identityInstanceMemory);
+				}
+				else
+				{
+					LOG_WARN(Render, "[GeometryPass] Instance matrix upload failed");
+				}
+			}
+
 			const uint32_t indexCount = mesh->GetLodIndexCount(lodLevel);
 			if (indexCount > 0)
 			{
@@ -538,6 +553,7 @@ namespace engine::render
 			m_renderPass = VK_NULL_HANDLE;
 		}
 		m_hasMaterialLayout = false;
+		LOG_INFO(Render, "[GeometryPass] Destroyed");
 	}
 
 	// -------------------------------------------------------------------------

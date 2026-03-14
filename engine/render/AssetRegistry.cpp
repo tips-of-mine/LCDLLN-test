@@ -64,6 +64,7 @@ namespace engine::render
 		m_physicalDevice = physicalDevice;
 		m_vmaAllocator = vmaAllocator;
 		m_config = &config;
+		LOG_INFO(Render, "[AssetRegistry] Init OK");
 	}
 
 	MeshHandle AssetRegistry::LoadMesh(std::string_view relativePath)
@@ -106,7 +107,11 @@ namespace engine::render
 
 	void AssetRegistry::Destroy()
 	{
-		if (m_device == VK_NULL_HANDLE) return;
+		if (m_device == VK_NULL_HANDLE)
+		{
+			LOG_INFO(Render, "[AssetRegistry] Destroyed");
+			return;
+		}
 		for (auto& p : m_meshes)
 		{
 			if (p.second.vertexBuffer != VK_NULL_HANDLE && p.second.vertexAlloc)
@@ -142,6 +147,7 @@ namespace engine::render
 		m_config = nullptr;
 		m_nextMeshId = 1;
 		m_nextTextureId = 1;
+		LOG_INFO(Render, "[AssetRegistry] Destroyed");
 	}
 
 	AssetId AssetRegistry::loadMeshInternal(std::string_view relativePath)
@@ -164,6 +170,23 @@ namespace engine::render
 		MeshAsset asset{};
 		asset.vertexCount = numVertices;
 		asset.indexCount = numIndices;
+		if (numVertices > 0)
+		{
+			const float* first = reinterpret_cast<const float*>(vertexData);
+			asset.localBoundsMin = { first[0], first[1], first[2] };
+			asset.localBoundsMax = asset.localBoundsMin;
+			for (uint32_t vertexIndex = 1; vertexIndex < numVertices; ++vertexIndex)
+			{
+				const float* position = reinterpret_cast<const float*>(vertexData + static_cast<size_t>(vertexIndex) * kMeshVertexStride);
+				asset.localBoundsMin.x = std::min(asset.localBoundsMin.x, position[0]);
+				asset.localBoundsMin.y = std::min(asset.localBoundsMin.y, position[1]);
+				asset.localBoundsMin.z = std::min(asset.localBoundsMin.z, position[2]);
+				asset.localBoundsMax.x = std::max(asset.localBoundsMax.x, position[0]);
+				asset.localBoundsMax.y = std::max(asset.localBoundsMax.y, position[1]);
+				asset.localBoundsMax.z = std::max(asset.localBoundsMax.z, position[2]);
+			}
+			asset.hasLocalBounds = true;
+		}
 
 		auto createBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage,
 			VkBuffer& outBuffer, void*& outAlloc) -> bool
@@ -253,6 +276,10 @@ namespace engine::render
 		AssetId id = m_nextMeshId++;
 		m_meshes[id] = std::move(asset);
 		LOG_INFO(Render, "AssetRegistry: loaded mesh {} ({} vertices, {} indices)", relativePath, numVertices, numIndices);
+		LOG_INFO(Render, "[AssetRegistry] Mesh bounds ready (path={}, min=({}, {}, {}), max=({}, {}, {}))",
+			relativePath,
+			asset.localBoundsMin.x, asset.localBoundsMin.y, asset.localBoundsMin.z,
+			asset.localBoundsMax.x, asset.localBoundsMax.y, asset.localBoundsMax.z);
 		return id;
 	}
 

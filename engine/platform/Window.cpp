@@ -85,7 +85,7 @@ namespace engine::platform
 
 		if (!hwnd)
 		{
-			LOG_ERROR(Platform, "CreateWindowExW failed");
+			LOG_ERROR(Platform, "[Window] Create FAILED: CreateWindowExW");
 			return false;
 		}
 
@@ -96,6 +96,7 @@ namespace engine::platform
 		UpdateWindow(hwnd);
 
 		m_shouldClose = false;
+		LOG_INFO(Platform, "[Window] Create OK (title={}, size={}x{})", desc.title, desc.width, desc.height);
 		return true;
 	}
 
@@ -106,6 +107,7 @@ namespace engine::platform
 			DestroyWindow(AsHwnd(m_hwnd));
 			m_hwnd = nullptr;
 		}
+		LOG_INFO(Platform, "[Window] Destroyed");
 	}
 
 	void Window::PollEvents()
@@ -145,6 +147,17 @@ namespace engine::platform
 		GetClientRect(AsHwnd(m_hwnd), &rc);
 		outWidth = static_cast<int>(rc.right - rc.left);
 		outHeight = static_cast<int>(rc.bottom - rc.top);
+	}
+
+	void Window::SetTitle(std::string_view title)
+	{
+		if (!m_hwnd)
+		{
+			return;
+		}
+
+		const std::wstring titleW = ToWide(title);
+		SetWindowTextW(AsHwnd(m_hwnd), titleW.c_str());
 	}
 
 	void Window::ToggleFullscreen()

@@ -98,5 +98,52 @@ namespace engine::platform
 	{
 		return ReadAllText(ResolveContentPath(cfg, relativeContentPath));
 	}
+
+	bool FileSystem::WriteAllText(const std::filesystem::path& path, std::string_view text)
+	{
+		std::error_code ec;
+		const std::filesystem::path parent = path.parent_path();
+		if (!parent.empty())
+		{
+			std::filesystem::create_directories(parent, ec);
+			if (ec)
+			{
+				LOG_ERROR(Platform, "[FileSystem] WriteAllText FAILED: create_directories({}, {})", parent.string(), ec.message());
+				return false;
+			}
+		}
+
+		std::ofstream out(path, std::ios::binary | std::ios::trunc);
+		if (!out.is_open())
+		{
+			LOG_ERROR(Platform, "[FileSystem] WriteAllText FAILED: open {}", path.string());
+			return false;
+		}
+
+		out.write(text.data(), static_cast<std::streamsize>(text.size()));
+		if (!out.good())
+		{
+			LOG_ERROR(Platform, "[FileSystem] WriteAllText FAILED: write {}", path.string());
+			return false;
+		}
+
+		LOG_INFO(Platform, "[FileSystem] WriteAllText OK (path={}, bytes={})", path.string(), text.size());
+		return true;
+	}
+
+	bool FileSystem::WriteAllTextContent(const engine::core::Config& cfg, std::string_view relativeContentPath, std::string_view text)
+	{
+		const std::filesystem::path path = ResolveContentPath(cfg, relativeContentPath);
+		const bool ok = WriteAllText(path, text);
+		if (ok)
+		{
+			LOG_INFO(Platform, "[FileSystem] WriteAllTextContent OK (relative_path={})", relativeContentPath);
+		}
+		else
+		{
+			LOG_ERROR(Platform, "[FileSystem] WriteAllTextContent FAILED (relative_path={})", relativeContentPath);
+		}
+		return ok;
+	}
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/math/Math.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -36,6 +37,9 @@ namespace engine::render
 		uint32_t lodLevelCount = 0;
 		uint32_t lodIndexOffset[kMeshLodLevelCount] = { 0, 0, 0, 0 };
 		uint32_t lodIndexCount[kMeshLodLevelCount] = { 0, 0, 0, 0 };
+		engine::math::Vec3 localBoundsMin{ 0.0f, 0.0f, 0.0f };
+		engine::math::Vec3 localBoundsMax{ 0.0f, 0.0f, 0.0f };
+		bool hasLocalBounds = false;
 
 		/// Returns index count for the given LOD level (0..3). When lodLevelCount==0, returns indexCount for LOD0 only.
 		uint32_t GetLodIndexCount(uint32_t lodLevel) const

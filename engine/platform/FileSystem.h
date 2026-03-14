@@ -36,6 +36,12 @@ namespace engine::platform
 
 		/// Read a content file as text (relative to `paths.content`).
 		static std::string ReadAllTextContent(const engine::core::Config& cfg, std::string_view relativeContentPath);
+
+		/// Write the entire file as text (UTF-8 assumed). Returns true on success.
+		static bool WriteAllText(const std::filesystem::path& path, std::string_view text);
+
+		/// Write a content file as text (relative to `paths.content`). Creates parent directories if needed.
+		static bool WriteAllTextContent(const engine::core::Config& cfg, std::string_view relativeContentPath, std::string_view text);
 	};
 }
 

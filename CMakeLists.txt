@@ -42,6 +42,7 @@ add_library(engine_core
   engine/core/jobs/JobSystem.cpp
   engine/core/Log.cpp
   engine/core/Time.cpp
+  engine/editor/EditorMode.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp

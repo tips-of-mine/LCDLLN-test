@@ -1,6 +1,7 @@
 #include "engine/Engine.h"
 
 #include "engine/core/Log.h"
+#include "engine/editor/EditorMode.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/render/DeferredPipeline.h"
@@ -25,6 +26,18 @@ namespace engine
 {
 	namespace
 	{
+		bool HasCliFlag(int argc, char** argv, std::string_view flag)
+		{
+			for (int i = 1; i < argc; ++i)
+			{
+				if (argv[i] && std::string_view(argv[i]) == flag)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		/// Return the first probe intensity parameter, or 1.0 when no probe exists.
 		float GetGlobalProbeIntensity(const engine::world::ProbeSet& probeSet)
 		{
@@ -112,9 +125,27 @@ namespace engine
 		// ------------------------------------------------------------------
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
+		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);
 		std::fprintf(stderr, "[ENGINE] D: config OK\n"); std::fflush(stderr);
 
 		LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
+		if (m_editorEnabled)
+		{
+			m_editorMode = std::make_unique<engine::editor::EditorMode>();
+			if (!m_editorMode->Init(m_cfg))
+			{
+				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
+				m_editorMode.reset();
+				m_editorEnabled = false;
+			}
+			else
+			{
+				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
+				m_renderStates[0].camera = editorCamera;
+				m_renderStates[1].camera = editorCamera;
+				LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
+			}
+		}
 		std::fprintf(stderr, "[ENGINE] E: chunkStats.Init\n"); std::fflush(stderr);
 
 		m_chunkStats.Init(m_cfg);
@@ -530,7 +561,7 @@ namespace engine
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 												const engine::RenderState& rs = m_renderStates[readIdx];
-												engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
 												const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 												const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
 												const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
@@ -561,7 +592,9 @@ namespace engine
 													m_vkSwapchain.GetExtent(),
 													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
 													rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-													static_cast<uint32_t>(lodLevel));
+													static_cast<uint32_t>(lodLevel),
+													VK_NULL_HANDLE,
+													rs.objectModelMatrix);
 											});
 										std::fprintf(stderr, "[ENGINE] AR: addPass Geometry OK\n"); std::fflush(stderr);
 
@@ -577,7 +610,7 @@ namespace engine
 													if (!m_pipeline->GetShadowMapPass().IsValid()) return;
 													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 													const engine::RenderState& rs = m_renderStates[readIdx];
-													engine::render::MeshAsset* mesh = m_geometryMeshHandle.Get();
+													engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
 													const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 													const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
 													const uint32_t triCount = (mesh && mesh->indexCount > 0) ? (mesh->indexCount / 3) : 0;
@@ -1088,7 +1121,13 @@ namespace engine
 		}
 		glfwTerminate();
 
+		if (m_editorMode)
+		{
+			m_editorMode->Shutdown(m_window);
+			m_editorMode.reset();
+		}
 		m_window.Destroy();
+		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
 	}
 
@@ -1100,7 +1139,7 @@ namespace engine
 		m_window.PollEvents();
 		std::fprintf(stderr, "[BF] WasPressed\n"); std::fflush(stderr);
 
-		if (m_input.WasPressed(engine::platform::Key::Escape))
+		if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
 			OnQuit();
 
 		std::fprintf(stderr, "[BF] shaderHotReload.Poll\n"); std::fflush(stderr);
@@ -1143,7 +1182,10 @@ namespace engine
 		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 
 		out.camera = readState.camera;
-		m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+		if (!m_editorEnabled)
+		{
+			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+		}
 
 		m_world.Update(out.camera.position);
 
@@ -1174,6 +1216,17 @@ namespace engine
 		out.jitterCurrNdc[1] = jitterY;
 		out.prevViewProjMatrix = m_taaHistoryInvalid ? out.viewProjMatrix : readState.viewProjMatrix;
 		if (m_taaHistoryInvalid) m_taaHistoryInvalid = false;
+
+		if (m_editorMode)
+		{
+			m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
+			std::memcpy(out.objectModelMatrix, m_editorMode->GetObjectModelMatrix(), sizeof(out.objectModelMatrix));
+			out.objectVisible = m_editorMode->IsObjectVisible();
+		}
+		else
+		{
+			out.objectVisible = true;
+		}
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
 

@@ -33,6 +33,7 @@
 struct GLFWwindow;
 
 namespace engine::render { class DeferredPipeline; }
+namespace engine::editor { class EditorMode; }
 
 #include <array>
 #include <atomic>
@@ -56,6 +57,13 @@ namespace engine
 		float jitterCurrNdc[2]{ 0.0f, 0.0f };
 		engine::math::Frustum frustum;
 		engine::render::CascadesUniform cascades;
+		float objectModelMatrix[16] = {
+			1.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		};
+		bool objectVisible = true;
 
 		// Placeholder draw-list marker.
 		uint32_t drawItemCount = 0;
@@ -150,6 +158,7 @@ namespace engine
 		engine::render::MeshHandle m_geometryMeshHandle;
 
 		engine::render::AssetRegistry m_assetRegistry;
+		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
@@ -175,6 +184,7 @@ namespace engine
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };
 
 		bool m_quitRequested = false;
+		bool m_editorEnabled = false;
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;
 		int m_width = 0;

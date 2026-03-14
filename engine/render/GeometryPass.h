@@ -38,11 +38,13 @@ namespace engine::render
 		/// Records the geometry pass: begin render pass, bind pipeline (and material descriptor
 		/// set if provided), draw mesh at given LOD, end pass.
 		/// \param lodLevel  M09.3: LOD level 0..3; mesh LOD chain used when mesh has lodLevelCount > 0.
+		/// \param instanceMatrix  Optional single-object transform uploaded into the identity instance buffer.
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
 		            ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
 		            const float* prevViewProjMat4, const float* viewProjMat4, const MeshAsset* mesh,
 		            uint32_t lodLevel = 0,
-		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE);
+		            VkDescriptorSet materialDescriptorSet = VK_NULL_HANDLE,
+		            const float* instanceMatrix = nullptr);
 
 		/// M09.3: Records instanced draws for batches (mesh+material key). instanceBuffer holds mat4s at each batch's instanceBufferOffset.
 		void RecordInstanced(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,

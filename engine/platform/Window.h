@@ -42,6 +42,9 @@ namespace engine::platform
 		/// Returns current client size in pixels.
 		void GetClientSize(int& outWidth, int& outHeight) const;
 
+		/// Updates the native window title.
+		void SetTitle(std::string_view title);
+
 		/// Toggle fullscreen (optional; Win32 implementation).
 		void ToggleFullscreen();
 

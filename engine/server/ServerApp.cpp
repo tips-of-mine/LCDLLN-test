@@ -12,6 +12,17 @@ namespace engine::server
 {
 	namespace
 	{
+		/// Fixed authoritative combat numbers for the MVP ticket.
+		inline constexpr uint32_t kDefaultPlayerHealth = 100;
+		inline constexpr uint32_t kDefaultMobHealth = 60;
+		inline constexpr uint32_t kDefaultPlayerDamage = 10;
+		inline constexpr uint32_t kDefaultMobArchetypeId = 100;
+		inline constexpr EntityId kDefaultMobEntityId = 0x100000000ull;
+		inline constexpr float kDefaultAttackRangeMeters = 4.0f;
+		inline constexpr float kDefaultMobSpawnX = 128.0f;
+		inline constexpr float kDefaultMobSpawnY = 0.0f;
+		inline constexpr float kDefaultMobSpawnZ = 128.0f;
+
 		/// Clamp a signed config integer into an unsigned 16-bit range.
 		uint16_t ClampToU16(int64_t value, uint16_t minValue, uint16_t maxValue)
 		{
@@ -30,6 +41,25 @@ namespace engine::server
 		bool ContainsEntityId(const std::vector<EntityId>& entityIds, EntityId entityId)
 		{
 			return std::find(entityIds.begin(), entityIds.end(), entityId) != entityIds.end();
+		}
+
+		/// Build the fixed MVP combat component using the current server tick rate.
+		CombatComponent BuildDefaultCombatComponent(uint16_t tickHz, uint32_t damagePerHit)
+		{
+			CombatComponent component{};
+			component.damagePerHit = damagePerHit;
+			component.attackRangeMeters = kDefaultAttackRangeMeters;
+			component.cooldownTicks = std::max<uint32_t>(1u, static_cast<uint32_t>(tickHz / 2u));
+			component.nextAttackTick = 0;
+			return component;
+		}
+
+		/// Return the squared XZ distance used by the range validation.
+		float DistanceSquaredXZ(float ax, float az, float bx, float bz)
+		{
+			const float dx = ax - bx;
+			const float dz = az - bz;
+			return (dx * dx) + (dz * dz);
 		}
 	}
 
@@ -60,6 +90,7 @@ namespace engine::server
 		m_snapshotAccumulator = 0;
 		m_stopRequested = false;
 		m_clients.clear();
+		m_mobs.clear();
 		m_pendingDatagrams.clear();
 		m_zoneGrids.clear();
 		if (!m_zoneTransitionMap.Init())
@@ -80,6 +111,13 @@ namespace engine::server
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: tick scheduler startup failed");
 			m_transport.Shutdown();
 			m_zoneTransitionMap.Shutdown();
+			return false;
+		}
+
+		if (!InitCombatMobs())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: combat mob bootstrap failed");
+			Shutdown();
 			return false;
 		}
 
@@ -123,7 +161,12 @@ namespace engine::server
 
 	void ServerApp::Shutdown()
 	{
-		if (!m_initialized && !m_transport.IsValid())
+		if (!m_initialized
+			&& !m_transport.IsValid()
+			&& m_clients.empty()
+			&& m_mobs.empty()
+			&& m_zoneGrids.empty()
+			&& m_pendingDatagrams.empty())
 		{
 			return;
 		}
@@ -133,14 +176,23 @@ namespace engine::server
 		{
 			if (client.hasCell)
 			{
-				CellGrid* zoneGrid = GetOrCreateZoneGrid(client.zoneId);
-				if (zoneGrid != nullptr)
+				const auto zoneIt = m_zoneGrids.find(client.zoneId);
+				if (zoneIt != m_zoneGrids.end())
 				{
-					(void)zoneGrid->RemoveEntity(client.entityId);
+					(void)zoneIt->second.RemoveEntity(client.entityId);
 				}
 			}
 		}
 		m_clients.clear();
+		for (const MobEntity& mob : m_mobs)
+		{
+			const auto zoneIt = m_zoneGrids.find(mob.zoneId);
+			if (zoneIt != m_zoneGrids.end())
+			{
+				(void)zoneIt->second.RemoveEntity(mob.entityId);
+			}
+		}
+		m_mobs.clear();
 		for (auto& [zoneId, zoneGrid] : m_zoneGrids)
 		{
 			(void)zoneId;
@@ -209,6 +261,13 @@ namespace engine::server
 			return;
 		}
 
+		AttackRequestMessage attackRequest{};
+		if (DecodeAttackRequest(packetBytes, attackRequest))
+		{
+			HandleAttackRequest(datagram.endpoint, attackRequest.clientId, attackRequest.targetEntityId);
+			return;
+		}
+
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
@@ -232,11 +291,15 @@ namespace engine::server
 		client.zoneId = 1;
 		client.entityId = static_cast<EntityId>(client.clientId);
 		client.helloNonce = helloNonce;
+		client.stats.currentHealth = kDefaultPlayerHealth;
+		client.stats.maxHealth = kDefaultPlayerHealth;
+		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
 		ConnectedClient& acceptedClient = m_clients.emplace_back(std::move(client));
-		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, endpoint={}, total_clients={})",
+		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
 			acceptedClient.clientId,
 			acceptedClient.entityId,
 			acceptedClient.zoneId,
+			acceptedClient.stats.currentHealth,
 			UdpTransport::EndpointToString(endpoint),
 			m_clients.size());
 		(void)SendWelcome(acceptedClient);
@@ -305,6 +368,48 @@ namespace engine::server
 	void ServerApp::Simulate()
 	{
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
+	}
+
+	bool ServerApp::InitCombatMobs()
+	{
+		m_mobs.clear();
+
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(1);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Combat mob init FAILED: missing zone grid");
+			return false;
+		}
+
+		MobEntity mob{};
+		mob.entityId = kDefaultMobEntityId;
+		mob.zoneId = 1;
+		mob.archetypeId = kDefaultMobArchetypeId;
+		mob.positionMetersX = kDefaultMobSpawnX;
+		mob.positionMetersY = kDefaultMobSpawnY;
+		mob.positionMetersZ = kDefaultMobSpawnZ;
+		mob.stats.currentHealth = kDefaultMobHealth;
+		mob.stats.maxHealth = kDefaultMobHealth;
+		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
+
+		CellCoord cell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, cell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Combat mob init FAILED: grid mapping failed (entity_id={})", mob.entityId);
+			return false;
+		}
+
+		m_mobs.push_back(mob);
+		LOG_INFO(Net,
+			"[ServerApp] Combat mob ready (entity_id={}, zone_id={}, archetype_id={}, hp={}, pos=({:.2f}, {:.2f}, {:.2f}))",
+			mob.entityId,
+			mob.zoneId,
+			mob.archetypeId,
+			mob.stats.currentHealth,
+			mob.positionMetersX,
+			mob.positionMetersY,
+			mob.positionMetersZ);
+		return true;
 	}
 
 	void ServerApp::MaybeSendSnapshots()
@@ -410,6 +515,125 @@ namespace engine::server
 		(void)SendZoneChange(client, zoneChange);
 	}
 
+	void ServerApp::HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (!client->hasReplicatedState)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: attacker has no replicated state (client_id={})", client->clientId);
+			return;
+		}
+
+		if ((client->stateFlags & kEntityStateDead) != 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: attacker is dead (client_id={}, entity_id={})",
+				client->clientId,
+				client->entityId);
+			return;
+		}
+
+		MobEntity* target = FindMobByEntityId(targetEntityId);
+		if (target == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: invalid mob target (client_id={}, target_entity_id={})",
+				client->clientId,
+				targetEntityId);
+			return;
+		}
+
+		if (target->zoneId != client->zoneId)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: cross-zone target (client_id={}, attacker_zone={}, target_zone={})",
+				client->clientId,
+				client->zoneId,
+				target->zoneId);
+			return;
+		}
+
+		if ((target->stateFlags & kEntityStateDead) != 0u || target->stats.currentHealth == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: target already dead (client_id={}, target_entity_id={})",
+				client->clientId,
+				target->entityId);
+			return;
+		}
+
+		if (m_currentTick < client->combat.nextAttackTick)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: cooldown active (client_id={}, tick={}, next_attack_tick={})",
+				client->clientId,
+				m_currentTick,
+				client->combat.nextAttackTick);
+			return;
+		}
+
+		const float distanceSquared = DistanceSquaredXZ(
+			client->positionMetersX,
+			client->positionMetersZ,
+			target->positionMetersX,
+			target->positionMetersZ);
+		const float attackRangeSquared = client->combat.attackRangeMeters * client->combat.attackRangeMeters;
+		if (distanceSquared > attackRangeSquared)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: target out of range (client_id={}, target_entity_id={}, distance_sq={:.2f}, range_sq={:.2f})",
+				client->clientId,
+				target->entityId,
+				distanceSquared,
+				attackRangeSquared);
+			return;
+		}
+
+		const uint32_t appliedDamage = std::min(client->combat.damagePerHit, target->stats.currentHealth);
+		if (appliedDamage == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: zero damage after validation (client_id={}, target_entity_id={})",
+				client->clientId,
+				target->entityId);
+			return;
+		}
+
+		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
+		target->stats.currentHealth -= appliedDamage;
+		if (target->stats.currentHealth == 0)
+		{
+			target->stateFlags |= kEntityStateDead;
+			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target->entityId, client->entityId);
+		}
+
+		CombatEventMessage combatEvent{};
+		combatEvent.attackerEntityId = client->entityId;
+		combatEvent.targetEntityId = target->entityId;
+		combatEvent.damage = appliedDamage;
+		combatEvent.targetCurrentHealth = target->stats.currentHealth;
+		combatEvent.targetMaxHealth = target->stats.maxHealth;
+		combatEvent.targetStateFlags = target->stateFlags;
+		LOG_INFO(Net,
+			"[ServerApp] Attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
+			combatEvent.attackerEntityId,
+			combatEvent.targetEntityId,
+			combatEvent.damage,
+			combatEvent.targetCurrentHealth,
+			combatEvent.targetMaxHealth,
+			client->combat.nextAttackTick);
+		BroadcastCombatEvent(combatEvent);
+	}
+
 	void ServerApp::RefreshReplication()
 	{
 		for (ConnectedClient& client : m_clients)
@@ -430,11 +654,7 @@ namespace engine::server
 		{
 			if (!ContainsEntityId(client.replicatedEntityIds, entityId))
 			{
-				const ConnectedClient* subject = FindClientByEntityId(entityId);
-				if (subject != nullptr)
-				{
-					(void)SendSpawn(client, *subject);
-				}
+				(void)SendSpawn(client, entityId);
 			}
 		}
 
@@ -459,13 +679,21 @@ namespace engine::server
 				continue;
 			}
 
-			const ConnectedClient* subject = FindClientByEntityId(entityId);
-			if (subject == nullptr || !subject->hasReplicatedState)
+			const ConnectedClient* subjectClient = FindClientByEntityId(entityId);
+			if (subjectClient != nullptr)
 			{
+				if (!subjectClient->hasReplicatedState)
+				{
+					continue;
+				}
+				outEntityIds.push_back(entityId);
 				continue;
 			}
 
-			outEntityIds.push_back(entityId);
+			if (FindMobByEntityId(entityId) != nullptr)
+			{
+				outEntityIds.push_back(entityId);
+			}
 		}
 	}
 
@@ -479,29 +707,125 @@ namespace engine::server
 		state.velocityX = client.velocityMetersPerSecondX;
 		state.velocityY = client.velocityMetersPerSecondY;
 		state.velocityZ = client.velocityMetersPerSecondZ;
+		state.currentHealth = client.stats.currentHealth;
+		state.maxHealth = client.stats.maxHealth;
 		state.stateFlags = client.stateFlags;
 		return state;
 	}
 
-	bool ServerApp::SendSpawn(const ConnectedClient& receiver, const ConnectedClient& subject)
+	EntityState ServerApp::BuildEntityState(const MobEntity& mob) const
+	{
+		EntityState state{};
+		state.positionX = mob.positionMetersX;
+		state.positionY = mob.positionMetersY;
+		state.positionZ = mob.positionMetersZ;
+		state.yawRadians = mob.yawRadians;
+		state.velocityX = mob.velocityMetersPerSecondX;
+		state.velocityY = mob.velocityMetersPerSecondY;
+		state.velocityZ = mob.velocityMetersPerSecondZ;
+		state.currentHealth = mob.stats.currentHealth;
+		state.maxHealth = mob.stats.maxHealth;
+		state.stateFlags = mob.stateFlags;
+		return state;
+	}
+
+	bool ServerApp::TryBuildSpawnEntity(EntityId entityId, SpawnEntity& outEntity) const
+	{
+		if (const ConnectedClient* client = FindClientByEntityId(entityId))
+		{
+			outEntity.entityId = client->entityId;
+			outEntity.archetypeId = client->archetypeId;
+			outEntity.state = BuildEntityState(*client);
+			return true;
+		}
+
+		if (const MobEntity* mob = FindMobByEntityId(entityId))
+		{
+			outEntity.entityId = mob->entityId;
+			outEntity.archetypeId = mob->archetypeId;
+			outEntity.state = BuildEntityState(*mob);
+			return true;
+		}
+
+		LOG_WARN(Net, "[ServerApp] Spawn build ignored: unknown entity_id={}", entityId);
+		return false;
+	}
+
+	bool ServerApp::TryBuildSnapshotEntity(EntityId entityId, SnapshotEntity& outEntity) const
+	{
+		if (const ConnectedClient* client = FindClientByEntityId(entityId))
+		{
+			outEntity.entityId = client->entityId;
+			outEntity.state = BuildEntityState(*client);
+			return true;
+		}
+
+		if (const MobEntity* mob = FindMobByEntityId(entityId))
+		{
+			outEntity.entityId = mob->entityId;
+			outEntity.state = BuildEntityState(*mob);
+			return true;
+		}
+
+		LOG_WARN(Net, "[ServerApp] Snapshot build ignored: unknown entity_id={}", entityId);
+		return false;
+	}
+
+	bool ServerApp::ShouldBroadcastCombatEventToClient(const ConnectedClient& receiver, EntityId attackerEntityId, EntityId targetEntityId) const
+	{
+		if (receiver.entityId == attackerEntityId || receiver.entityId == targetEntityId)
+		{
+			return true;
+		}
+
+		return ContainsEntityId(receiver.interestEntityIds, attackerEntityId)
+			|| ContainsEntityId(receiver.interestEntityIds, targetEntityId);
+	}
+
+	void ServerApp::BroadcastCombatEvent(const CombatEventMessage& message)
+	{
+		size_t recipientCount = 0;
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!ShouldBroadcastCombatEventToClient(client, message.attackerEntityId, message.targetEntityId))
+			{
+				continue;
+			}
+
+			++recipientCount;
+			(void)SendCombatEvent(client, message);
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] CombatEvent broadcast (attacker_entity_id={}, target_entity_id={}, damage={}, recipients={})",
+			message.attackerEntityId,
+			message.targetEntityId,
+			message.damage,
+			recipientCount);
+	}
+
+	bool ServerApp::SendSpawn(const ConnectedClient& receiver, EntityId subjectEntityId)
 	{
 		SpawnEntity entity{};
-		entity.entityId = subject.entityId;
-		entity.archetypeId = subject.archetypeId;
-		entity.state = BuildEntityState(subject);
+		if (!TryBuildSpawnEntity(subjectEntityId, entity))
+		{
+			LOG_WARN(Net, "[ServerApp] Spawn send skipped: unresolved entity_id={}", subjectEntityId);
+			return false;
+		}
+
 		const std::vector<std::byte> packet = EncodeSpawn(entity);
 		if (!m_transport.Send(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] Spawn send failed (receiver_client_id={}, entity_id={})",
 				receiver.clientId,
-				subject.entityId);
+				entity.entityId);
 			return false;
 		}
 
 		LOG_INFO(Net, "[ServerApp] Spawn sent (receiver_client_id={}, entity_id={}, archetype_id={})",
 			receiver.clientId,
-			subject.entityId,
-			subject.archetypeId);
+			entity.entityId,
+			entity.archetypeId);
 		return true;
 	}
 
@@ -545,6 +869,28 @@ namespace engine::server
 		return true;
 	}
 
+	bool ServerApp::SendCombatEvent(const ConnectedClient& receiver, const CombatEventMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeCombatEvent(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net,
+				"[ServerApp] CombatEvent send failed (client_id={}, attacker_entity_id={}, target_entity_id={})",
+				receiver.clientId,
+				message.attackerEntityId,
+				message.targetEntityId);
+			return false;
+		}
+
+		LOG_DEBUG(Net,
+			"[ServerApp] CombatEvent sent (client_id={}, attacker_entity_id={}, target_entity_id={}, damage={})",
+			receiver.clientId,
+			message.attackerEntityId,
+			message.targetEntityId,
+			message.damage);
+		return true;
+	}
+
 	bool ServerApp::SendWelcome(const ConnectedClient& client)
 	{
 		WelcomeMessage welcome{};
@@ -573,15 +919,12 @@ namespace engine::server
 		m_snapshotEntitiesScratch.clear();
 		for (EntityId entityId : client.replicatedEntityIds)
 		{
-			const ConnectedClient* subject = FindClientByEntityId(entityId);
-			if (subject == nullptr || !subject->hasReplicatedState)
+			SnapshotEntity snapshotEntity{};
+			if (!TryBuildSnapshotEntity(entityId, snapshotEntity))
 			{
 				continue;
 			}
 
-			SnapshotEntity snapshotEntity{};
-			snapshotEntity.entityId = subject->entityId;
-			snapshotEntity.state = BuildEntityState(*subject);
 			m_snapshotEntitiesScratch.push_back(snapshotEntity);
 		}
 
@@ -637,6 +980,30 @@ namespace engine::server
 			if (client.entityId == entityId)
 			{
 				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	MobEntity* ServerApp::FindMobByEntityId(EntityId entityId)
+	{
+		for (MobEntity& mob : m_mobs)
+		{
+			if (mob.entityId == entityId)
+			{
+				return &mob;
+			}
+		}
+		return nullptr;
+	}
+
+	const MobEntity* ServerApp::FindMobByEntityId(EntityId entityId) const
+	{
+		for (const MobEntity& mob : m_mobs)
+		{
+			if (mob.entityId == entityId)
+			{
+				return &mob;
 			}
 		}
 		return nullptr;

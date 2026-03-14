@@ -36,6 +36,10 @@ namespace engine::platform
 		outHeight = 720;
 	}
 
+	void Window::SetTitle(std::string_view)
+	{
+	}
+
 	void Window::ToggleFullscreen()
 	{
 	}

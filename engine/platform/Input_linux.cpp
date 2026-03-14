@@ -34,6 +34,21 @@ namespace engine::platform
 		return false;
 	}
 
+	bool Input::IsMouseDown(MouseButton) const
+	{
+		return false;
+	}
+
+	bool Input::WasMousePressed(MouseButton) const
+	{
+		return false;
+	}
+
+	bool Input::WasMouseReleased(MouseButton) const
+	{
+		return false;
+	}
+
 	void Input::SetCursorCaptured(bool)
 	{
 		m_cursorCaptured = false;

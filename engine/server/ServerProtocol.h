@@ -21,7 +21,9 @@ namespace engine::server
 		Snapshot = 4,
 		Spawn = 5,
 		Despawn = 6,
-		ZoneChange = 7
+		ZoneChange = 7,
+		AttackRequest = 8,
+		CombatEvent = 9
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -69,6 +71,24 @@ namespace engine::server
 		float spawnPositionZ = 0.0f;
 	};
 
+	/// Client request asking the authoritative server to attack one target entity.
+	struct AttackRequestMessage
+	{
+		uint32_t clientId = 0;
+		EntityId targetEntityId = 0;
+	};
+
+	/// Authoritative combat result broadcast to interested clients.
+	struct CombatEventMessage
+	{
+		EntityId attackerEntityId = 0;
+		EntityId targetEntityId = 0;
+		uint32_t damage = 0;
+		uint32_t targetCurrentHealth = 0;
+		uint32_t targetMaxHealth = 0;
+		uint32_t targetStateFlags = 0;
+	};
+
 	/// Decode a hello packet and validate the protocol header.
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage);
 
@@ -92,4 +112,10 @@ namespace engine::server
 
 	/// Encode a zone change packet with the protocol header.
 	std::vector<std::byte> EncodeZoneChange(const ZoneChangeMessage& message);
+
+	/// Decode an attack request packet and validate the protocol header.
+	bool DecodeAttackRequest(std::span<const std::byte> packet, AttackRequestMessage& outMessage);
+
+	/// Encode a combat event packet with the protocol header.
+	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message);
 }

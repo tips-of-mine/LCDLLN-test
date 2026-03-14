@@ -28,6 +28,13 @@ namespace engine::server
 				| (static_cast<uint32_t>(static_cast<uint8_t>(bytes[offset + 3])) << 24);
 		}
 
+		/// Read a little-endian 64-bit value from a packet buffer.
+		uint64_t ReadU64(std::span<const std::byte> bytes, size_t offset)
+		{
+			return static_cast<uint64_t>(ReadU32(bytes, offset))
+				| (static_cast<uint64_t>(ReadU32(bytes, offset + 4)) << 32);
+		}
+
 		/// Append a little-endian 16-bit value to an output buffer.
 		void WriteU16(std::vector<std::byte>& outBytes, uint16_t value)
 		{
@@ -67,6 +74,8 @@ namespace engine::server
 			WriteF32(outBytes, state.velocityX);
 			WriteF32(outBytes, state.velocityY);
 			WriteF32(outBytes, state.velocityZ);
+			WriteU32(outBytes, state.currentHealth);
+			WriteU32(outBytes, state.maxHealth);
 			WriteU32(outBytes, state.stateFlags);
 		}
 
@@ -146,6 +155,19 @@ namespace engine::server
 		return true;
 	}
 
+	bool DecodeAttackRequest(std::span<const std::byte> packet, AttackRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AttackRequest, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.targetEntityId = ReadU64(payload, 4);
+		return true;
+	}
+
 	std::vector<std::byte> EncodeWelcome(const WelcomeMessage& message)
 	{
 		std::vector<std::byte> packet = BeginPacket(MessageKind::Welcome, 8);
@@ -157,7 +179,7 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSnapshot(const SnapshotMessage& message, std::span<const SnapshotEntity> entities)
 	{
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 20 + (entities.size() * 40));
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Snapshot, 20 + (entities.size() * 48));
 		WriteU32(packet, message.clientId);
 		WriteU32(packet, message.serverTick);
 		WriteU16(packet, message.connectedClients);
@@ -174,7 +196,7 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeSpawn(const SpawnEntity& entity)
 	{
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Spawn, 44);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Spawn, 52);
 		WriteU64(packet, entity.entityId);
 		WriteU32(packet, entity.archetypeId);
 		WriteEntityState(packet, entity.state);
@@ -195,6 +217,18 @@ namespace engine::server
 		WriteF32(packet, message.spawnPositionX);
 		WriteF32(packet, message.spawnPositionY);
 		WriteF32(packet, message.spawnPositionZ);
+		return packet;
+	}
+
+	std::vector<std::byte> EncodeCombatEvent(const CombatEventMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CombatEvent, 32);
+		WriteU64(packet, message.attackerEntityId);
+		WriteU64(packet, message.targetEntityId);
+		WriteU32(packet, message.damage);
+		WriteU32(packet, message.targetCurrentHealth);
+		WriteU32(packet, message.targetMaxHealth);
+		WriteU32(packet, message.targetStateFlags);
 		return packet;
 	}
 }

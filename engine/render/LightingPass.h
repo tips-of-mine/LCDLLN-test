@@ -18,8 +18,8 @@ namespace engine::render
 	/// ambient fallback, and writes SceneColor_HDR (R16G16B16A16_SFLOAT). M05.4.
 	///
 	/// Pipeline: fullscreen triangle (3 vertices, no vertex buffer).
-	/// Descriptor set 0: 8 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
-	/// prefiltered specular, BRDF LUT, SSAO_Blur). Push constants (132 bytes): invVP, cameraPos,
+		/// Descriptor set 0: 9 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
+		/// prefiltered specular, BRDF LUT, SSAO_Blur, DecalOverlay). Push constants (132 bytes): invVP, cameraPos,
 	/// lightDir, lightColor, ambientColor, useIBL.
 	class LightingPass
 	{
@@ -58,13 +58,14 @@ namespace engine::render
 		/// creates a temporary framebuffer, begins the render pass, draws the fullscreen triangle,
 		/// and ends the render pass (framebuffer is destroyed immediately after).
 		/// When irradianceView is VK_NULL_HANDLE, IBL is disabled (useIBL=0, constant ambient).
+		/// \param idDecalOverlay  M17.3 decal overlay texture written after geometry and composited into albedo.
 		/// \param irradianceView / irradianceSampler  Irradiance cubemap (M05.2); may be null.
 		/// \param prefilterView / prefilterSampler     Prefiltered specular cubemap (M05.3).
 		/// \param brdfLutView / brdfLutSampler         BRDF LUT 2D (M05.1).
 		/// \param frameIndex  Current in-flight frame index (0 .. maxFrames-1).
 		void Record(VkDevice device, VkCommandBuffer cmd, Registry& registry, VkExtent2D extent,
 			ResourceId idGBufA, ResourceId idGBufB, ResourceId idGBufC, ResourceId idDepth,
-			ResourceId idSceneColorHDR, ResourceId idSsaoBlur,
+			ResourceId idSceneColorHDR, ResourceId idSsaoBlur, ResourceId idDecalOverlay,
 			VkImageView irradianceView, VkSampler irradianceSampler,
 			VkImageView prefilterView, VkSampler prefilterSampler,
 			VkImageView brdfLutView, VkSampler brdfLutSampler,

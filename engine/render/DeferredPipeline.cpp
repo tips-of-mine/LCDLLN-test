@@ -155,6 +155,29 @@ namespace engine::render
 				LOG_WARN(Render, "M04.2: shadow map shaders not found — shadow pass disabled");
 		}
 
+		// Deferred decal pass
+		std::fprintf(stderr, "[PIPELINE] 7b DecalPass\n"); std::fflush(stderr);
+		{
+			std::vector<uint32_t> decalVert = loadSpirv("shaders/decal.vert.spv");
+			std::vector<uint32_t> decalFrag = loadSpirv("shaders/decal.frag.spv");
+			if (!decalVert.empty() && !decalFrag.empty())
+			{
+				if (m_decalPass.Init(device, physicalDevice, VK_FORMAT_R8G8B8A8_SRGB,
+						decalVert.data(), decalVert.size(), decalFrag.data(), decalFrag.size(), 2u))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline DecalPass OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "M17.3: decal pass init failed — decals disabled");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "M17.3: decal shaders not found — decals disabled");
+			}
+		}
+
 		// Lighting pass
 		std::fprintf(stderr, "[PIPELINE] 8 LightingPass\n"); std::fflush(stderr);
 		{
@@ -273,7 +296,7 @@ namespace engine::render
 	void DeferredPipeline::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE) return;
-		// Reverse init order: TAA → auto-exposure → bloom → tonemap → lighting → shadow → geometry → SSAO → specular/BRDF.
+		// Reverse init order: TAA → auto-exposure → bloom → tonemap → lighting → decals → shadow → geometry → SSAO → specular/BRDF.
 		m_taaPass.Destroy(device);
 		m_autoExposure.Destroy(device);
 		m_bloomCombinePass.Destroy(device);
@@ -282,6 +305,7 @@ namespace engine::render
 		m_bloomPrefilterPass.Destroy(device);
 		m_tonemapPass.Destroy(device);
 		m_lightingPass.Destroy(device);
+		m_decalPass.Destroy(device);
 		m_shadowMapPass.Destroy(device);
 		m_geometryPass.Destroy(device);
 		m_ssaoBlurPass.Destroy(device);

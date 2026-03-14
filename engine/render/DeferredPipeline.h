@@ -7,6 +7,7 @@
 #include "engine/render/SsaoKernelNoise.h"
 #include "engine/render/SsaoPass.h"
 #include "engine/render/SsaoBlurPass.h"
+#include "engine/render/DecalPass.h"
 #include "engine/render/LightingPass.h"
 #include "engine/render/TonemapPass.h"
 #include "engine/render/BloomPass.h"
@@ -69,6 +70,8 @@ namespace engine::render
 		const SsaoPass&       GetSsaoPass() const       { return m_ssaoPass; }
 		SsaoBlurPass&         GetSsaoBlurPass()         { return m_ssaoBlurPass; }
 		const SsaoBlurPass&   GetSsaoBlurPass() const   { return m_ssaoBlurPass; }
+		DecalPass&            GetDecalPass()            { return m_decalPass; }
+		const DecalPass&      GetDecalPass() const      { return m_decalPass; }
 		LightingPass&         GetLightingPass()         { return m_lightingPass; }
 		const LightingPass&  GetLightingPass() const    { return m_lightingPass; }
 		TonemapPass&          GetTonemapPass()          { return m_tonemapPass; }
@@ -90,6 +93,7 @@ namespace engine::render
 		SsaoKernelNoise       m_ssaoKernelNoise;
 		SsaoPass              m_ssaoPass;
 		SsaoBlurPass          m_ssaoBlurPass;
+		DecalPass             m_decalPass;
 		LightingPass          m_lightingPass;
 		TonemapPass           m_tonemapPass;
 		BloomPrefilterPass    m_bloomPrefilterPass;

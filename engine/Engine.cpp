@@ -369,6 +369,16 @@ namespace engine
 
 										m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
 										std::fprintf(stderr, "[ENGINE] AH: assetRegistry OK\n"); std::fflush(stderr);
+										m_decalSystem.Init(m_cfg, m_assetRegistry);
+										{
+											engine::render::DecalComponent decal{};
+											decal.center = { 0.0f, 0.05f, 0.0f };
+											decal.halfExtents = { 2.0f, 1.0f, 2.0f };
+											decal.albedoTexturePath = "textures/test.texr";
+											decal.lifetimeSeconds = 30.0f;
+											decal.fadeDurationSeconds = 5.0f;
+											m_decalSystem.Spawn(decal);
+										}
 
 										{
 											std::string lutPath = m_cfg.GetString("color_grading.lut_path", "");
@@ -389,6 +399,11 @@ namespace engine
 										gbufADesc.format = VK_FORMAT_R8G8B8A8_SRGB;
 										gbufADesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 										m_fgGBufferAId   = m_frameGraph.createImage("GBufferA", gbufADesc);
+
+										engine::render::ImageDesc decalOverlayDesc{};
+										decalOverlayDesc.format = VK_FORMAT_R8G8B8A8_SRGB;
+										decalOverlayDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+										m_fgDecalOverlayId = m_frameGraph.createImage("DecalOverlay", decalOverlayDesc);
 
 										engine::render::ImageDesc gbufBDesc{};
 										gbufBDesc.format = VK_FORMAT_A2B10G10R10_UNORM_PACK32;
@@ -712,6 +727,71 @@ namespace engine
 											});
 										std::fprintf(stderr, "[ENGINE] AW: addPass SSAO_Blur OK\n"); std::fflush(stderr);
 
+										if (m_pipeline->GetDecalPass().IsValid())
+										{
+											m_frameGraph.addPass("Decals",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgDepthId,           engine::render::ImageUsage::SampledRead);
+													b.write(m_fgDecalOverlayId,   engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+													const float* vp = rs.viewProjMatrix.m;
+													float invViewProj[16]{};
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float inv = 1.0f / det;
+														invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*inv;
+														invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*inv;
+														invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*inv;
+														invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*inv;
+														invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*inv;
+														invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*inv;
+														invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*inv;
+														invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*inv;
+														invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*inv;
+														invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*inv;
+														invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*inv;
+														invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*inv;
+														invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*inv;
+														invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*inv;
+														invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*inv;
+														invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*inv;
+													}
+													m_decalSystem.BuildVisibleList(rs.camera, m_visibleDecals);
+													const uint32_t frameIdx = m_currentFrame % 2;
+													m_pipeline->GetDecalPass().Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+														m_fgDepthId, m_fgDecalOverlayId, invViewProj, m_visibleDecals, frameIdx);
+												});
+											LOG_INFO(Render, "[Engine] Decal frame-graph pass registered");
+										}
+										else
+										{
+											m_frameGraph.addPass("DecalOverlay_Clear",
+												[this](engine::render::PassBuilder& b) {
+													b.write(m_fgDecalOverlayId, engine::render::ImageUsage::TransferDst);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													VkImage img = reg.getImage(m_fgDecalOverlayId);
+													if (img == VK_NULL_HANDLE) return;
+													VkClearColorValue clearColor = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+													VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
+												});
+											LOG_WARN(Render, "[Engine] Decal pass disabled, overlay clear fallback registered");
+										}
+
 										std::fprintf(stderr, "[ENGINE] AX: avant addPass Lighting\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Lighting",
 											[this](engine::render::PassBuilder& b) {
@@ -720,6 +800,7 @@ namespace engine
 												b.read(m_fgGBufferCId,       engine::render::ImageUsage::SampledRead);
 												b.read(m_fgDepthId,          engine::render::ImageUsage::SampledRead);
 												b.read(m_fgSsaoBlurId,       engine::render::ImageUsage::SampledRead);
+												b.read(m_fgDecalOverlayId,   engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRId, engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -780,7 +861,7 @@ namespace engine
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
 													m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgDepthId,
-													m_fgSceneColorHDRId, m_fgSsaoBlurId,
+													m_fgSceneColorHDRId, m_fgSsaoBlurId, m_fgDecalOverlayId,
 													irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
 													lp, frameIdx);
 											});
@@ -1101,6 +1182,7 @@ namespace engine
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
 				m_pipeline.reset();
 			}
+			m_decalSystem.Shutdown();
 			m_assetRegistry.Destroy();
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 			m_stagingAllocator.Destroy(m_vkDeviceContext.GetDevice());
@@ -1191,6 +1273,8 @@ namespace engine
 
 		if (m_width > 0 && m_height > 0)
 			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
+
+		m_decalSystem.Tick(static_cast<float>(dt));
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();
 		{

@@ -148,11 +148,11 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 2. Descriptor set layout: 8 combined image samplers (GBufA/B/C, Depth, irradiance, prefilter, BRDF LUT, SSAO_Blur)
+		// 2. Descriptor set layout: 9 combined image samplers (GBufA/B/C, Depth, irradiance, prefilter, BRDF LUT, SSAO_Blur, DecalOverlay)
 		// -----------------------------------------------------------------
 		{
-			std::array<VkDescriptorSetLayoutBinding, 8> bindings{};
-			for (uint32_t i = 0; i < 8; ++i)
+			std::array<VkDescriptorSetLayoutBinding, 9> bindings{};
+			for (size_t i = 0; i < bindings.size(); ++i)
 			{
 				bindings[i].binding            = i;
 				bindings[i].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -163,7 +163,7 @@ namespace engine::render
 
 			VkDescriptorSetLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = 8;
+			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 			layoutInfo.pBindings    = bindings.data();
 
 			VkResult res = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &m_descriptorSetLayout);
@@ -176,12 +176,12 @@ namespace engine::render
 		}
 
 		// -----------------------------------------------------------------
-		// 3. Descriptor pool: maxFrames sets, 8 combined image samplers each
+		// 3. Descriptor pool: maxFrames sets, 9 combined image samplers each
 		// -----------------------------------------------------------------
 		{
 			VkDescriptorPoolSize poolSize{};
 			poolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 8 * m_maxFrames;
+			poolSize.descriptorCount = 9 * m_maxFrames;
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -388,7 +388,7 @@ namespace engine::render
 	void LightingPass::Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
 		VkExtent2D extent,
 		ResourceId idGBufA, ResourceId idGBufB, ResourceId idGBufC, ResourceId idDepth,
-		ResourceId idSceneColorHDR, ResourceId idSsaoBlur,
+		ResourceId idSceneColorHDR, ResourceId idSsaoBlur, ResourceId idDecalOverlay,
 		VkImageView irradianceView, VkSampler irradianceSampler,
 		VkImageView prefilterView, VkSampler prefilterSampler,
 		VkImageView brdfLutView, VkSampler brdfLutSampler,
@@ -402,12 +402,13 @@ namespace engine::render
 		VkImageView viewB    = registry.getImageView(idGBufB);
 		VkImageView viewC    = registry.getImageView(idGBufC);
 		VkImageView viewD    = registry.getImageView(idDepth);
-		VkImageView viewHDR  = registry.getImageView(idSceneColorHDR);
+		VkImageView viewHDR   = registry.getImageView(idSceneColorHDR);
 		VkImageView viewSsao  = registry.getImageView(idSsaoBlur);
+		VkImageView viewDecal = registry.getImageView(idDecalOverlay);
 
 		if (viewA == VK_NULL_HANDLE || viewB == VK_NULL_HANDLE
 			|| viewC == VK_NULL_HANDLE || viewD == VK_NULL_HANDLE
-			|| viewHDR == VK_NULL_HANDLE || viewSsao == VK_NULL_HANDLE)
+			|| viewHDR == VK_NULL_HANDLE || viewSsao == VK_NULL_HANDLE || viewDecal == VK_NULL_HANDLE)
 		{
 			LOG_WARN(Render, "LightingPass::Record: missing image views, skipping");
 			return;
@@ -426,7 +427,7 @@ namespace engine::render
 		const uint32_t setIdx = frameIndex % m_maxFrames;
 		VkDescriptorSet ds = m_descriptorSets[setIdx];
 
-		std::array<VkDescriptorImageInfo, 8> imageInfos{};
+		std::array<VkDescriptorImageInfo, 9> imageInfos{};
 		imageInfos[0] = { m_sampler,         viewA,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[1] = { m_sampler,         viewB,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[2] = { m_sampler,         viewC,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
@@ -435,9 +436,10 @@ namespace engine::render
 		imageInfos[5] = { prefilterSampler,  prefilterView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[6] = { brdfLutSampler,    brdfLutView,   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 		imageInfos[7] = { m_sampler,         viewSsao, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		imageInfos[8] = { m_sampler,         viewDecal, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 
-		std::array<VkWriteDescriptorSet, 8> writes{};
-		for (uint32_t i = 0; i < 8; ++i)
+		std::array<VkWriteDescriptorSet, 9> writes{};
+		for (size_t i = 0; i < writes.size(); ++i)
 		{
 			writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writes[i].dstSet          = ds;
@@ -447,7 +449,7 @@ namespace engine::render
 			writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[i].pImageInfo      = &imageInfos[i];
 		}
-		vkUpdateDescriptorSets(device, 8, writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 
 		// ------------------------------------------------------------------
 		// Create a temporary framebuffer for this frame.
@@ -518,7 +520,10 @@ namespace engine::render
 	void LightingPass::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE)
+		{
+			LOG_INFO(Render, "[LightingPass] Destroyed");
 			return;
+		}
 
 		if (m_pipeline != VK_NULL_HANDLE)
 		{
@@ -557,6 +562,7 @@ namespace engine::render
 			vkDestroyRenderPass(device, m_renderPass, nullptr);
 			m_renderPass = VK_NULL_HANDLE;
 		}
+		LOG_INFO(Render, "[LightingPass] Destroyed");
 	}
 
 } // namespace engine::render

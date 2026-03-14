@@ -9,6 +9,7 @@
 //   Depth    (binding 3) – scene depth, D32_SFLOAT, sampled as float in .r
 //   (M05.4)  binding 4 – irradiance cubemap, 5 – prefiltered specular cubemap, 6 – BRDF LUT
 //   (M06.4)  binding 7 – SSAO_Blur (R16F, .r = screen-space AO)
+//   (M17.3)  binding 8 – DecalOverlay (RGBA, rgb = decal albedo, a = blend)
 //
 // Outputs:
 //   outSceneColorHDR (location 0) – SceneColor_HDR, R16G16B16A16_SFLOAT
@@ -33,6 +34,7 @@ layout(set = 0, binding = 4) uniform samplerCube irradianceMap;  // M05.4 diffus
 layout(set = 0, binding = 5) uniform samplerCube prefilterMap;  // M05.4 specular IBL
 layout(set = 0, binding = 6) uniform sampler2D   brdfLut;       // M05.4 BRDF LUT (scale, bias)
 layout(set = 0, binding = 7) uniform sampler2D   ssaoTex;       // M06.4 SSAO_Blur (R16F, .r = AO)
+layout(set = 0, binding = 8) uniform sampler2D   decalOverlayTex;
 
 // ---- Push constants ---------------------------------------------------------
 layout(push_constant) uniform PC
@@ -85,7 +87,9 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 void main()
 {
     // ---- Sample GBuffer ------------------------------------------------
-    vec3  albedo    = texture(gbufA, inUV).rgb;              // linear albedo
+    vec4  baseAlbedo = texture(gbufA, inUV);
+    vec4  decalOverlay = texture(decalOverlayTex, inUV);
+    vec3  albedo    = mix(baseAlbedo.rgb, decalOverlay.rgb, decalOverlay.a);
     vec3  gbufBsamp = texture(gbufB, inUV).rgb;
     vec3  normalW   = normalize(gbufBsamp * 2.0 - 1.0);     // decode [0,1]->[-1,1]
     vec4  orm       = texture(gbufC, inUV);

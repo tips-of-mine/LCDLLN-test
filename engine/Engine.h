@@ -6,6 +6,7 @@
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
 #include "engine/render/AssetRegistry.h"
+#include "engine/render/DecalSystem.h"
 #include "engine/render/FrameGraph.h"
 #include "engine/render/vk/VkDeviceContext.h"
 #include "engine/render/vk/VkFrameSync.h"
@@ -127,6 +128,7 @@ namespace engine
 		engine::render::ResourceId m_fgSceneColorId      = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgBackbufferId      = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgGBufferAId        = engine::render::kInvalidResourceId;
+		engine::render::ResourceId m_fgDecalOverlayId    = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgGBufferBId        = engine::render::kInvalidResourceId;
 		engine::render::ResourceId m_fgGBufferCId        = engine::render::kInvalidResourceId;
 		/// M07.3: velocity buffer (currNDC - prevNDC), R16G16F.
@@ -156,6 +158,8 @@ namespace engine
 		/// All deferred passes (geometry, shadow, SSAO, lighting, bloom, tonemap, TAA). Init/Destroy in Engine.cpp.
 		std::unique_ptr<engine::render::DeferredPipeline> m_pipeline;
 		engine::render::MeshHandle m_geometryMeshHandle;
+		engine::render::DecalSystem m_decalSystem;
+		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 
 		engine::render::AssetRegistry m_assetRegistry;
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;

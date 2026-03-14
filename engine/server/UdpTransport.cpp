@@ -118,7 +118,7 @@ namespace engine::server
 		}
 
 		outDatagrams.clear();
-		outDatagrams.reserve(std::max(outDatagrams.capacity(), maxDatagrams));
+		outDatagrams.reserve((std::max)(outDatagrams.capacity(), maxDatagrams));
 		for (size_t i = 0; i < maxDatagrams; ++i)
 		{
 			Datagram datagram{};

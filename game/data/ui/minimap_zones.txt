@@ -1,0 +1,4 @@
+# zone_id|texture_path|zone_size_meters
+0|textures/test.texr|4096
+1|textures/test.texr|4096
+2|textures/test.texr|4096

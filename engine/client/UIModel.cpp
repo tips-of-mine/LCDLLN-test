@@ -98,6 +98,15 @@ namespace engine::client
 		dump += std::to_string(playerStats.currentMana);
 		dump += "/";
 		dump += std::to_string(playerStats.maxMana);
+		dump += " zone=";
+		dump += std::to_string(playerStats.zoneId);
+		dump += " pos=(";
+		dump += std::to_string(playerStats.positionX);
+		dump += ", ";
+		dump += std::to_string(playerStats.positionY);
+		dump += ", ";
+		dump += std::to_string(playerStats.positionZ);
+		dump += ")";
 		dump += " tick=";
 		dump += std::to_string(playerStats.serverTick);
 		dump += " clients=";
@@ -160,6 +169,13 @@ namespace engine::client
 		dump += std::to_string(targetStats.maxHealth);
 		dump += " active=";
 		dump += targetStats.hasTarget ? "true" : "false";
+		dump += " pos=(";
+		dump += std::to_string(targetStats.positionX);
+		dump += ", ";
+		dump += std::to_string(targetStats.positionY);
+		dump += ", ";
+		dump += std::to_string(targetStats.positionZ);
+		dump += ")";
 		dump += "\n";
 
 		dump += "combat(";
@@ -248,7 +264,7 @@ namespace engine::client
 		m_model.quests.clear();
 		m_model.events.clear();
 		m_model.combatLog.clear();
-		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat);
+		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
 		return true;
 	}
@@ -333,6 +349,8 @@ namespace engine::client
 			return ApplySnapshot(packet);
 		case engine::server::MessageKind::CombatEvent:
 			return ApplyCombatEvent(packet);
+		case engine::server::MessageKind::ZoneChange:
+			return ApplyZoneChange(packet);
 		case engine::server::MessageKind::InventoryDelta:
 			return ApplyInventoryDelta(packet);
 		case engine::server::MessageKind::QuestDelta:
@@ -397,8 +415,29 @@ namespace engine::client
 			stats.currentHealth = entity.state.currentHealth;
 			stats.maxHealth = entity.state.maxHealth;
 			stats.stateFlags = entity.state.stateFlags;
+			stats.positionX = entity.state.positionX;
+			stats.positionY = entity.state.positionY;
+			stats.positionZ = entity.state.positionZ;
 			stats.hasSnapshot = true;
 			break;
+		}
+
+		if (m_model.targetStats.hasTarget)
+		{
+			m_model.targetStats.hasPosition = false;
+			for (const engine::server::SnapshotEntity& entity : m_snapshotScratch)
+			{
+				if (entity.entityId != m_model.targetStats.entityId)
+				{
+					continue;
+				}
+
+				m_model.targetStats.positionX = entity.state.positionX;
+				m_model.targetStats.positionY = entity.state.positionY;
+				m_model.targetStats.positionZ = entity.state.positionZ;
+				m_model.targetStats.hasPosition = true;
+				break;
+			}
 		}
 
 		if (!stats.hasSnapshot)
@@ -416,7 +455,7 @@ namespace engine::client
 				m_snapshotScratch.size());
 		}
 
-		NotifyObservers(UIModelChangeStats);
+		NotifyObservers(UIModelChangeStats | UIModelChangeWorld);
 		return true;
 	}
 
@@ -459,6 +498,7 @@ namespace engine::client
 			m_model.targetStats.maxHealth = m_combatEventMessage.targetMaxHealth;
 			m_model.targetStats.stateFlags = m_combatEventMessage.targetStateFlags;
 			m_model.targetStats.hasTarget = true;
+			m_model.targetStats.hasPosition = false;
 		}
 
 		PushCombatLogEntry(m_model.combatLog, m_combatEventMessage, playerEntityId);
@@ -468,6 +508,28 @@ namespace engine::client
 			m_combatEventMessage.targetEntityId,
 			m_combatEventMessage.damage,
 			playerWasAttacker ? "attacker" : "target");
+		return true;
+	}
+
+	bool UIModelBinding::ApplyZoneChange(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeZoneChange(packet, m_zoneChangeMessage))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ZoneChange FAILED: decode error");
+			return false;
+		}
+
+		m_model.playerStats.zoneId = m_zoneChangeMessage.zoneId;
+		m_model.playerStats.positionX = m_zoneChangeMessage.spawnPositionX;
+		m_model.playerStats.positionY = m_zoneChangeMessage.spawnPositionY;
+		m_model.playerStats.positionZ = m_zoneChangeMessage.spawnPositionZ;
+		m_model.targetStats.hasPosition = false;
+		NotifyObservers(UIModelChangeWorld);
+		LOG_INFO(Net, "[UIModelBinding] ZoneChange applied (zone_id={}, spawn=({:.2f}, {:.2f}, {:.2f}))",
+			m_zoneChangeMessage.zoneId,
+			m_zoneChangeMessage.spawnPositionX,
+			m_zoneChangeMessage.spawnPositionY,
+			m_zoneChangeMessage.spawnPositionZ);
 		return true;
 	}
 

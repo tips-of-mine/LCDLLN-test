@@ -21,7 +21,8 @@ namespace engine::client
 		UIModelChangeQuests = 1u << 2,
 		UIModelChangeEvents = 1u << 3,
 		UIModelChangeCombat = 1u << 4,
-		UIModelChangeDebugDump = 1u << 5
+		UIModelChangeWorld = 1u << 5,
+		UIModelChangeDebugDump = 1u << 6
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -39,6 +40,10 @@ namespace engine::client
 		uint32_t currentMana = 0;
 		uint32_t maxMana = 0;
 		uint32_t stateFlags = 0;
+		uint32_t zoneId = 0;
+		float positionX = 0.0f;
+		float positionY = 0.0f;
+		float positionZ = 0.0f;
 		bool hasMana = false;
 		bool hasSnapshot = false;
 	};
@@ -50,7 +55,11 @@ namespace engine::client
 		uint32_t currentHealth = 0;
 		uint32_t maxHealth = 0;
 		uint32_t stateFlags = 0;
+		float positionX = 0.0f;
+		float positionY = 0.0f;
+		float positionZ = 0.0f;
 		bool hasTarget = false;
+		bool hasPosition = false;
 	};
 
 	/// One recent combat event retained for the HUD combat log.
@@ -168,6 +177,9 @@ namespace engine::client
 		/// Apply one decoded combat event to the stats section of the UI model.
 		bool ApplyCombatEvent(std::span<const std::byte> packet);
 
+		/// Apply one decoded zone change packet to the world section of the UI model.
+		bool ApplyZoneChange(std::span<const std::byte> packet);
+
 		/// Apply one decoded inventory delta to the inventory section of the UI model.
 		bool ApplyInventoryDelta(std::span<const std::byte> packet);
 
@@ -184,6 +196,7 @@ namespace engine::client
 		std::vector<engine::server::ItemStack> m_inventoryScratch;
 		engine::server::SnapshotMessage m_snapshotMessage{};
 		engine::server::CombatEventMessage m_combatEventMessage{};
+		engine::server::ZoneChangeMessage m_zoneChangeMessage{};
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};
 		engine::server::EventStateMessage m_eventMessage{};

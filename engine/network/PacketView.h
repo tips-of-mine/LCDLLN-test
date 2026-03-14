@@ -35,8 +35,10 @@ namespace engine::network
 		/// Payload size in bytes (Size() - 18).
 		size_t PayloadSize() const noexcept { return m_payloadSize; }
 
-	private:
+		/// Default constructor; use Parse() to populate.
 		PacketView() = default;
+
+	private:
 		uint16_t m_size = 0;
 		uint16_t m_opcode = 0;
 		uint16_t m_flags = 0;

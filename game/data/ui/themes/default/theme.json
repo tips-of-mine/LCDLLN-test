@@ -1,0 +1,31 @@
+{
+  "id": "default",
+  "displayName": "Default",
+  "palette": {
+    "primary": "#3A6EA5",
+    "secondary": "#5A7FA8",
+    "accent": "#D9A441",
+    "background": "#10161D",
+    "surface": "#16202B",
+    "panel": "#1B2836",
+    "text": "#E8EDF3",
+    "mutedText": "#AAB6C3",
+    "border": "#314456"
+  },
+  "typography": {
+    "fontFamily": "Inter",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 20
+  },
+  "metrics": {
+    "radius": 8,
+    "padding": 10
+  },
+  "assets": {
+    "iconHud": "textures/test.texr",
+    "iconButton": "textures/test.texr",
+    "iconTooltip": "textures/test.texr",
+    "fontRegular": "fonts/default.ttf"
+  }
+}

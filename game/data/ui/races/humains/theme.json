@@ -1,0 +1,31 @@
+{
+  "id": "humains",
+  "displayName": "Humains",
+  "palette": {
+    "primary": "#1E4B7A",
+    "secondary": "#8B6B2E",
+    "accent": "#C21B1B",
+    "background": "#0E131A",
+    "surface": "#141E2A",
+    "panel": "#172233",
+    "text": "#E9EDF2",
+    "mutedText": "#A9B4C0",
+    "border": "#2B3A4F"
+  },
+  "typography": {
+    "fontFamily": "Cinzel",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 22
+  },
+  "metrics": {
+    "radius": 10,
+    "padding": 10
+  },
+  "assets": {
+    "iconHud": "textures/test.texr",
+    "iconButton": "textures/test.texr",
+    "iconTooltip": "textures/test.texr",
+    "fontRegular": "fonts/default.ttf"
+  }
+}

@@ -1,0 +1,29 @@
+QWidget[uiClass="hud"] {
+  background: ${palette.background};
+  color: ${palette.text};
+  font-family: "${typography.uiFontFamily}";
+  font-size: ${typography.baseSize}px;
+}
+
+QWidget[uiClass="panel"] {
+  background: ${palette.panel};
+  border: 1px solid ${palette.border};
+  border-radius: ${metrics.radius}px;
+  padding: ${metrics.padding}px;
+}
+
+QPushButton[uiClass="button"] {
+  background: ${palette.primary};
+  color: ${palette.text};
+  border: 1px solid ${palette.border};
+  border-radius: ${metrics.radius}px;
+  padding: ${metrics.padding}px;
+}
+
+QWidget[uiClass="tooltip"] {
+  background: ${palette.surface};
+  color: ${palette.text};
+  border: 1px solid ${palette.accent};
+  border-radius: ${metrics.radius}px;
+  padding: ${metrics.padding}px;
+}

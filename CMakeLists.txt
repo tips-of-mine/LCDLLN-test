@@ -45,6 +45,7 @@ add_library(engine_core
   engine/client/CombatHud.cpp
   engine/client/InventoryUi.cpp
   engine/client/QuestUi.cpp
+  engine/client/ThemeManager.cpp
   engine/client/UIModel.cpp
   engine/editor/EditorMode.cpp
   engine/Engine.cpp

@@ -254,6 +254,8 @@ add_test(NAME security_tests COMMAND security_tests)
 add_subdirectory(tools/hlod_builder)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)
 add_subdirectory(tools/zone_builder)
+# M21.2: Migration checksum tool (SHA-256 of db/migrations/*.sql)
+add_subdirectory(tools/migration_checksum)
 # M15.4: Server app (headless, no Vulkan)
 add_subdirectory(engine/server)
 

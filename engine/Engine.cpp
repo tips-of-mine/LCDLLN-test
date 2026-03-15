@@ -176,7 +176,7 @@ namespace engine
 		engine::core::LogSettings logSettings;
 		logSettings.filePath    = logToFile
 			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
-			: "";
+			: m_cfg.GetString("log.file", "engine.log");
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;

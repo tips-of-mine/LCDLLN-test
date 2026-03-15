@@ -61,6 +61,9 @@ message(STATUS "M20.2: Argon2 using ref implementation at ${phc-winner-argon2_SO
 add_library(engine_auth STATIC engine/auth/Argon2Hash.cpp)
 target_include_directories(engine_auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(engine_auth PUBLIC argon2_ref OpenSSL::SSL)
+if(MSVC)
+  target_compile_options(engine_auth PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
 
 set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
     COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=0"
@@ -223,9 +226,9 @@ target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 
-# M20.2: Argon2 hashing wrapper unit tests (engine_core provides Log used by engine_auth)
+# M20.2: Argon2 hashing wrapper unit tests (engine_auth first so linker resolves Log from engine_core)
 add_executable(argon2_hash_tests engine/auth/Argon2HashTests.cpp)
-target_link_libraries(argon2_hash_tests PRIVATE engine_core)
+target_link_libraries(argon2_hash_tests PRIVATE engine_auth engine_core)
 add_test(NAME argon2_hash_tests COMMAND argon2_hash_tests)
 
 # M09.4: HLOD builder (offline tool, no Vulkan)

@@ -1,0 +1,557 @@
+{
+  "meta": {
+    "source": "Conversation - Les Chroniques de la Lune Noire (MMORPG)",
+    "version": "0.1.0",
+    "notes": [
+      "Ce JSON contient uniquement ce que tu as explicitement décrit jusqu’ici.",
+      "Quand une info n’a pas été définie, la valeur est laissée vide, null, ou une liste vide."
+    ]
+  },
+  "factions": [
+    {
+      "id": "faction_light",
+      "name": "Chevaliers de la Lumière",
+      "type": "religious_order_branch",
+      "playable": true,
+      "alignment": "ordre_humain",
+      "notes": [
+        "Régis par le même ordre religieux que les Chevaliers de la Justice.",
+        "Plus militaires / combat.",
+        "Peut être infiltré partiellement par des démons (contrairement à Justice)."
+      ]
+    },
+    {
+      "id": "faction_justice",
+      "name": "Chevaliers de la Justice",
+      "type": "religious_order_branch",
+      "playable": true,
+      "alignment": "ordre_humain",
+      "notes": [
+        "Régis par le même ordre religieux que les Chevaliers de la Lumière.",
+        "Mix combat + magie (via prêtres / don sacré).",
+        "Immunité à l’infiltration démoniaque (don type paladin).",
+        "Certaines classes peuvent soigner et même ressusciter."
+      ]
+    },
+    {
+      "id": "faction_black_moon",
+      "name": "La Lune Noire",
+      "type": "theocracy_dark",
+      "playable": true,
+      "alignment": "hostile_ordre_humain",
+      "notes": [
+        "En guerre ouverte contre l’Ordre (Lumière/Justice).",
+        "Principalement magie (prêtrise), peu de classes de combat autorisées.",
+        "Leader suprême : Haazheel (demi-dieu, fils du diable).",
+        "Objectifs : renverser l’ordre religieux, détruire les tablettes de Lhynn, tuer les dieux humains."
+      ]
+    },
+    {
+      "id": "faction_orcs",
+      "name": "Orcs (alliés de la Lune Noire)",
+      "type": "allied_faction",
+      "playable": true,
+      "alignment": "allied_black_moon",
+      "notes": [
+        "Alliés exclusivement de la Lune Noire (pacte ancien via leur chef).",
+        "Chef : Greldinard (loyal sincèrement à Haazheel, ignore le plan de destruction des dieux)."
+      ]
+    },
+    {
+      "id": "faction_demons",
+      "name": "Démons",
+      "type": "hidden_faction",
+      "playable": true,
+      "alignment": "chaotic_evil",
+      "notes": [
+        "Faction cachée + ville cachée (accès via portails).",
+        "Téléportation + vol (ailes), aucune monture.",
+        "Civilisation structurée, hiérarchie, maisons/lignées.",
+        "5 portails disposés comme un pentagramme menant vers une unique ville souterraine au centre."
+      ]
+    },
+    {
+      "id": "faction_dragon_knights",
+      "name": "Chevaliers-Dragons",
+      "type": "mercenary_kingdom",
+      "playable": true,
+      "alignment": "neutral_self_interest",
+      "notes": [
+        "Mercenaires se déplaçant sur dragons volants.",
+        "Royaume de montagnes, gorges profondes, ponts suspendus, neiges éternelles.",
+        "Accès à zones isolées, mobilité/air combat."
+      ]
+    },
+    {
+      "id": "faction_undead",
+      "name": "Mort-vivants (Der Hem Shelbem)",
+      "type": "isolated_undead_kingdom",
+      "playable": true,
+      "alignment": "hostile_to_living",
+      "notes": [
+        "Royaume nécropole, pyramides (style maya/aztèque/inca).",
+        "Dirigé par un prince archimage extrêmement puissant.",
+        "Ne peut pas quitter Der Hem Shelbem (contrainte géographique/montagnes + grande pyramide)."
+      ]
+    },
+    {
+      "id": "faction_dwarves",
+      "name": "Nains",
+      "type": "unified_faction",
+      "playable": true,
+      "alignment": "neutral",
+      "notes": [
+        "Faction unifiée.",
+        "Domaines : Draakh Peaks et Scorched Mountains."
+      ]
+    },
+    {
+      "id": "faction_neutral",
+      "name": "Neutres",
+      "type": "neutral_alignment",
+      "playable": true,
+      "notes": [
+        "Oracle est une zone neutre : conflits normalement interdits, mais parfois des incidents arrivent."
+      ]
+    }
+  ],
+  "classes": [
+    {
+      "id": "class_warrior",
+      "name": "Guerrier",
+      "type": "combat",
+      "notes": []
+    },
+    {
+      "id": "class_thief",
+      "name": "Voleur",
+      "type": "combat_stealth",
+      "notes": []
+    },
+    {
+      "id": "class_mage",
+      "name": "Mage",
+      "type": "arcane",
+      "notes": [
+        "Des mages de haut niveau peuvent forcer un démon à apparaître (sans le soumettre)."
+      ]
+    },
+    {
+      "id": "class_archer",
+      "name": "Archer",
+      "type": "ranged",
+      "notes": []
+    },
+    {
+      "id": "class_crossbowman",
+      "name": "Arbalétrier",
+      "type": "ranged",
+      "notes": [
+        "Chez la Lune Noire, l’humain est arbalétrier (pas archer)."
+      ]
+    },
+    {
+      "id": "class_shaman",
+      "name": "Chaman",
+      "type": "spiritual_magic",
+      "notes": []
+    },
+    {
+      "id": "class_black_moon_priest",
+      "name": "Prêtre de la Lune Noire",
+      "type": "dark_priesthood",
+      "variants": [
+        {
+          "id": "variant_ranged",
+          "name": "Prêtre (sorts à distance)",
+          "notes": []
+        },
+        {
+          "id": "variant_companion_master",
+          "name": "Prêtre (contrôle de compagnon mort-vivant)",
+          "notes": [
+            "Seuls ceux qui ont un compagnon peuvent soigner / rendre la vie.",
+            "Peuvent aussi soigner des alliés vivants et des compagnons."
+          ]
+        }
+      ],
+      "notes": [
+        "Pas de mage chez la Lune Noire : la magie passe par les prêtres."
+      ]
+    },
+    {
+      "id": "class_light_order_special",
+      "name": "Classe spécifique (Lumière)",
+      "type": "faction_specific",
+      "notes": [
+        "À définir : tu as demandé une classe spécifique à la Lumière mais sans la nommer encore."
+      ]
+    },
+    {
+      "id": "class_justice_holy_champion",
+      "name": "Champion Sacré",
+      "type": "faction_specific",
+      "notes": [
+        "Classe type 'Paladin' sans utiliser le terme.",
+        "Liée au don sacré qui protège des démons, et à la capacité de soins/résurrection pour certaines classes."
+      ]
+    },
+    {
+      "id": "class_dragon_rider",
+      "name": "Cavalier-Dragon",
+      "type": "mounted_aerial",
+      "notes": [
+        "Classe montée (dragon) + combat aérien + mobilité."
+      ]
+    }
+  ],
+  "races": [
+    {
+      "id": "race_human",
+      "name": "Humains",
+      "playable": true,
+      "origins": {
+        "summary": "Race majeure de l’Empire, liée à l’Ordre religieux (Lhynn) mais peut basculer chez la Lune Noire.",
+        "homeland_notes": [
+          "Lhynn (capitale impériale) gouverne l’ordre Lumière/Justice (trône + tablettes sacrées).",
+          "Altenberg : ville principale Lumière.",
+          "Sysigie : ville principale Justice."
+        ]
+      },
+      "faction_affiliations": [
+        {
+          "faction_id": "faction_light",
+          "status": "member",
+          "notes": [
+            "Chevaux comme monture principale (Lumière/Justice)."
+          ]
+        },
+        {
+          "faction_id": "faction_justice",
+          "status": "member",
+          "notes": [
+            "Chevaux comme monture principale (Lumière/Justice)."
+          ]
+        },
+        {
+          "faction_id": "faction_black_moon",
+          "status": "possible_member",
+          "notes": [
+            "Entrée en zones ennemies possible en furtif (symétrique avec Lhynn/Altenberg/Sysigie)."
+          ]
+        },
+        {
+          "faction_id": "faction_neutral",
+          "status": "possible_member",
+          "notes": [
+            "Oracle est accessible (zone neutre)."
+          ]
+        }
+      ],
+      "abilities_traits": [
+        "Polyvalence (combat, furtif, magie selon classes)"
+      ],
+      "class_access": [
+        {
+          "class_id": "class_thief",
+          "allowed": true,
+          "constraints": []
+        },
+        {
+          "class_id": "class_warrior",
+          "allowed": true,
+          "constraints": []
+        },
+        {
+          "class_id": "class_mage",
+          "allowed": true,
+          "constraints": [
+            "Interdit chez la Lune Noire (magie via prêtres uniquement)."
+          ]
+        },
+        {
+          "class_id": "class_archer",
+          "allowed": true,
+          "constraints": [
+            "Utilisé chez Lumière/Justice."
+          ]
+        },
+        {
+          "class_id": "class_crossbowman",
+          "allowed": true,
+          "constraints": [
+            "Utilisé chez la Lune Noire (humain = arbalétrier)."
+          ]
+        },
+        {
+          "class_id": "class_black_moon_priest",
+          "allowed": true,
+          "constraints": [
+            "Uniquement si humain affilié à la Lune Noire."
+          ]
+        },
+        {
+          "class_id": "class_light_order_special",
+          "allowed": true,
+          "constraints": [
+            "Uniquement si humain affilié à la Lumière.",
+            "Nom/kit à définir."
+          ]
+        },
+        {
+          "class_id": "class_justice_holy_champion",
+          "allowed": true,
+          "constraints": [
+            "Uniquement si humain affilié à la Justice."
+          ]
+        }
+      ],
+      "notes": [
+        "Les prêtres Lumière/Justice peuvent détruire les compagnons mort-vivants créés par les prêtres de la Lune Noire."
+      ]
+    },
+    {
+      "id": "race_elf",
+      "name": "Elfes",
+      "playable": true,
+      "origins": {
+        "summary": "Race ancienne, position politique flexible (alliés multiples ou neutres).",
+        "homeland_notes": [
+          "Capitale elfique : à définir.",
+          "Conflit ancien avec les Nains : cause non définie (événement ancien)."
+        ]
+      },
+      "faction_affiliations": [
+        { "faction_id": "faction_light", "status": "possible_member", "notes": [] },
+        { "faction_id": "faction_justice", "status": "possible_member", "notes": [] },
+        { "faction_id": "faction_black_moon", "status": "possible_member", "notes": [] },
+        { "faction_id": "faction_neutral", "status": "possible_member", "notes": [] }
+      ],
+      "abilities_traits": [
+        "Équilibrés : magie et combat (les deux)",
+        "Pas forcément forestiers (incertain selon ton lore actuel)"
+      ],
+      "class_access": [
+        { "class_id": "class_archer", "allowed": true, "constraints": [] },
+        { "class_id": "class_warrior", "allowed": true, "constraints": [] },
+        { "class_id": "class_thief", "allowed": true, "constraints": [] },
+        {
+          "class_id": "class_mage",
+          "allowed": true,
+          "constraints": [
+            "Tu as mentionné une école de magie elfique (1)."
+          ]
+        }
+      ],
+      "exclusive_class": {
+        "exists": true,
+        "class_id": "",
+        "notes": [
+          "Tu as dit 'oui' pour une classe exclusive, mais elle n’est pas définie."
+        ]
+      },
+      "notes": [
+        "Alliés naturels des humains : non.",
+        "Ne s’entendent pas avec les nains (conflit ancien)."
+      ]
+    },
+    {
+      "id": "race_dwarf",
+      "name": "Nains",
+      "playable": true,
+      "origins": {
+        "summary": "Race/faction unifiée, domaines montagneux.",
+        "homeland_notes": [
+          "Draakh Peaks",
+          "Scorched Mountains"
+        ]
+      },
+      "faction_affiliations": [
+        { "faction_id": "faction_dwarves", "status": "member", "notes": [] }
+      ],
+      "abilities_traits": [],
+      "class_access": [],
+      "notes": [
+        "Pas de sous-factions définies (pas Pics vs Brûlées).",
+        "Pas de guerre civile / pas de division tradition/industrialisation (selon tes réponses)."
+      ]
+    },
+    {
+      "id": "race_orc",
+      "name": "Orcs",
+      "playable": true,
+      "origins": {
+        "summary": "Race alliée exclusivement à la Lune Noire par pacte ancien.",
+        "homeland_notes": [
+          "Chef : Greldinard",
+          "Alliance : pacte ancien avec la Lune Noire"
+        ]
+      },
+      "faction_affiliations": [
+        { "faction_id": "faction_orcs", "status": "member", "notes": [] },
+        { "faction_id": "faction_black_moon", "status": "exclusive_allies", "notes": [] }
+      ],
+      "abilities_traits": [],
+      "class_access": [
+        { "class_id": "class_archer", "allowed": true, "constraints": [] },
+        {
+          "class_id": "class_warrior",
+          "allowed": true,
+          "constraints": [
+            "Tu as aussi utilisé le terme 'soldat' pour les orcs : à harmoniser."
+          ]
+        },
+        { "class_id": "class_shaman", "allowed": true, "constraints": [] }
+      ],
+      "notes": [
+        "Pas liés à Der Hem Shelbem.",
+        "Peuvent infiltrer Lhynn/Altenberg/Sysigie en furtif mais sinon tués à vue (et inversement)."
+      ]
+    },
+    {
+      "id": "race_demon",
+      "name": "Démons",
+      "playable": true,
+      "origins": {
+        "summary": "Race d’une civilisation souterraine structurée, reliée au monde via 5 portails (pentagramme).",
+        "homeland_notes": [
+          "Ville unique au centre du pentagramme (souterraine).",
+          "Chaque porte est protégée par un représentant d’une maison démoniaque (blason au-dessus).",
+          "Le Roi des Démons (Lucifer) est intouchable, seulement scellable.",
+          "Pazuzu existe, rival direct (puissance comparable), maison composée de lui seul."
+        ]
+      },
+      "faction_affiliations": [
+        { "faction_id": "faction_demons", "status": "member", "notes": [] }
+      ],
+      "abilities_traits": [
+        "Vol (ailes) — cachées quand pouvoir inactif",
+        "Téléportation",
+        "Camouflage possible (infiltration)",
+        "Aucune monture (jamais)"
+      ],
+      "class_access": [],
+      "special_rules": [
+        {
+          "id": "rule_female_demon_seduction",
+          "name": "Camouflage de séduction (PNJ)",
+          "notes": [
+            "Une démon femelle peut séduire certains PNJ si camouflage proche d’une compagne.",
+            "La cible meurt ensuite.",
+            "Fonctionne sur hommes humains/elfes/orcs/nains.",
+            "Ne fonctionne pas sur prêtres faibles."
+          ]
+        }
+      ],
+      "notes": [
+        "Ennemis de Der Hem Shelbem.",
+        "Le portail principal est déjà ouvert ; la Justice + alliés ont pour rôle de fermer le(s) portail(s)."
+      ]
+    },
+    {
+      "id": "race_undead",
+      "name": "Mort-vivants",
+      "playable": true,
+      "origins": {
+        "summary": "Race/faction issue d’une civilisation disparue transformée par magie des morts après cataclysme.",
+        "homeland_notes": [
+          "Der Hem Shelbem : nécropole du désert, pyramides, entrée unique gardée par deux sphinx inertes indestructibles.",
+          "Prince archimage : puissance majeure, veut dominer le monde mais ne peut pas quitter le royaume."
+        ]
+      },
+      "faction_affiliations": [
+        { "faction_id": "faction_undead", "status": "member", "notes": [] }
+      ],
+      "abilities_traits": [
+        "Magie des morts (royaume)",
+        "Restriction géographique : le pouvoir ne rayonne pas au-delà des montagnes, pyramide centrale nécessaire"
+      ],
+      "class_access": [],
+      "notes": [
+        "Zone hostile : diplomatie possible essentiellement pour les mort-vivants."
+      ]
+    },
+    {
+      "id": "race_dragon_knight",
+      "name": "Chevaliers-Dragons (race gris-peau)",
+      "playable": true,
+      "origins": {
+        "summary": "Humanoïdes taille humaine, peau grise, royaume montagneux enneigé ; culture de mercenaires montés sur dragons.",
+        "homeland_notes": [
+          "Accès par 'Atmosphère' (porte de montagne) vers leur royaume.",
+          "Ville : Palais des Maîtres des Dragons."
+        ]
+      },
+      "faction_affiliations": [
+        { "faction_id": "faction_dragon_knights", "status": "member", "notes": [] }
+      ],
+      "abilities_traits": [
+        "Affinité/monture dragon (classes montées)",
+        "Mobilité aérienne et accès zones isolées"
+      ],
+      "class_access": [
+        { "class_id": "class_dragon_rider", "allowed": true, "constraints": [] }
+      ],
+      "notes": [
+        "Dragons standards : non parlants, semi-intelligents (lien surtout avec chevaliers-dragons ou joueurs très haut niveau).",
+        "Dragons très anciens (3–5 max) : intelligents/parlants, endormis et réveillables sous conditions à définir."
+      ]
+    },
+    {
+      "id": "race_giant",
+      "name": "Géants",
+      "playable": false,
+      "origins": {
+        "summary": "Race non jouable, 10 mètres, présence surtout sur champs de bataille sous contrôle d’Haazheel et prêtres de la Lune Noire.",
+        "homeland_notes": [
+          "Territoire à prévoir au-delà (plus à l’est) de la Tour Carrée de la Lune Noire."
+        ]
+      },
+      "faction_affiliations": [
+        {
+          "faction_id": "faction_black_moon",
+          "status": "controlled_allies",
+          "notes": [
+            "Plutôt isolés et sous contrôle / influence directe.",
+            "Vénèrent la Lune Noire."
+          ]
+        }
+      ],
+      "abilities_traits": [
+        "Taille ~10m",
+        "Forces de choc sur champs de bataille"
+      ],
+      "class_access": [],
+      "notes": [
+        "Pas contrôlés par magie au sens strict ; loyauté via Haazheel + prêtres.",
+        "Hostiles à certains seulement (pas à tout le monde).",
+        "Pas de culture indépendante / chef propre : vénération de la Lune Noire."
+      ]
+    }
+  ],
+  "cross_rules": {
+    "mounts_and_mobility": [
+      {
+        "applies_to": ["faction_light", "faction_justice"],
+        "rule": "Déplacement principal à cheval"
+      },
+      {
+        "applies_to": ["race_demon"],
+        "rule": "Aucune monture ; déplacement par vol (ailes) ou téléportation"
+      }
+    ],
+    "war_and_access": [
+      {
+        "rule": "Moork et zones Lune Noire/Orcs sont mortelles pour Lumière/Justice/Lhynn hors furtif ; inversement idem à Lhynn/Altenberg/Sysigie pour Lune Noire/Orcs."
+      },
+      {
+        "rule": "Oracle est neutre : combats non censés avoir lieu mais incidents possibles."
+      }
+    ],
+    "magic_interactions": [
+      {
+        "rule": "Les prêtres Lumière/Justice peuvent tuer par magie les compagnons mort-vivants créés par les prêtres de la Lune Noire."
+      }
+    ]
+  }
+}

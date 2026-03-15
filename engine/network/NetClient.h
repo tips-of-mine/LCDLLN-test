@@ -41,12 +41,19 @@ namespace engine::network
 
 	/// Non-blocking TCP client with dedicated network thread, protocol v1 framing, and event queue.
 	/// Connect has a 10s timeout; RX uses partial reads and PacketView framing; TX uses a non-blocking write queue.
+	/// Optional TLS (M19.6): set expected server fingerprint before Connect(); pinning is mandatory unless allow_insecure_dev.
 	/// Counters: bytes in/out, packets in/out. Do not invoke user callbacks from the network thread.
 	class NetClient
 	{
 	public:
 		NetClient();
 		~NetClient();
+
+		/// Set expected server certificate fingerprint (SHA-256 of DER, hex string). If non-empty, TLS is used and pinning is mandatory unless SetAllowInsecureDev(true). Call before Connect().
+		void SetExpectedServerFingerprint(std::string hexFingerprint);
+
+		/// Allow insecure dev mode (skip fingerprint verification). Only when explicitly set via config.
+		void SetAllowInsecureDev(bool allow);
 
 		/// Start connecting to host:port. Returns immediately; result via PollEvents(). Timeout 10s.
 		void Connect(const std::string& host, uint16_t port);
@@ -84,6 +91,8 @@ namespace engine::network
 		bool m_pendingConnect = false;
 		bool m_requestDisconnect = false;
 		std::string m_disconnectReason;
+		std::string m_expectedServerFingerprintHex;
+		bool m_allowInsecureDev = false;
 
 		std::vector<std::vector<uint8_t>> m_writeQueue;
 		std::vector<NetClientEvent> m_eventQueue;

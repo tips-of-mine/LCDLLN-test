@@ -11,6 +11,9 @@ endif()
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
+if(WIN32)
+  find_package(OpenSSL REQUIRED)
+endif()
 
 # Vulkan Memory Allocator (VMA): centralised GPU allocations to avoid maxMemoryAllocationCount limit.
 # Prefer vendored copy (submodule or CI cache) so build works without network; else FetchContent.
@@ -116,7 +119,7 @@ target_link_libraries(engine_core PUBLIC
   glfw
 )
 if(WIN32)
-  target_link_libraries(engine_core PRIVATE ws2_32)
+  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL)
 endif()
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)

@@ -1,0 +1,106 @@
+# M24.2 — Gitea CI: build + unit/integration tests + artefacts (Linux)
+name: Build, test and artifacts (Linux)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees
+            ${{ github.workspace }}/vcpkg/packages
+            ${{ github.workspace }}/build/linux-x64-release/vcpkg_installed
+          key: vcpkg-x64-linux-${{ hashFiles('**/vcpkg.json', '**/vcpkg.lock') }}
+          restore-keys: vcpkg-x64-linux-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            libvulkan-dev vulkan-utility-libraries-dev \
+            libx11-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxi-dev libgl1-mesa-dev \
+            pkg-config
+
+      - name: Clone vcpkg
+        run: |
+          if [ ! -d "${{ github.workspace }}/vcpkg/.git" ]; then
+            git clone https://github.com/Microsoft/vcpkg.git "${{ github.workspace }}/vcpkg"
+          fi
+
+      - name: Bootstrap vcpkg
+        run: bash "${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          VCPKG_DEFAULT_TRIPLET: x64-linux
+        run: cmake --preset linux-x64-release
+
+      - name: Build (Release)
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --build --preset linux-x64-release
+
+      - name: Unit tests
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: |
+          cd "${{ github.workspace }}/build/linux-x64-release"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests" || exit 1
+
+      - name: Integration tests
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: |
+          cd "${{ github.workspace }}/build/linux-x64-release"
+          ctest --output-on-failure --no-compress-output -R "network_integration_tests" || exit 1
+
+      - name: Prepare package (tar.gz)
+        id: package
+        run: |
+          WORKSPACE="${{ github.workspace }}"
+          BUILD_DIR="$WORKSPACE/build/linux-x64-release"
+          OUT="$WORKSPACE/out"
+          mkdir -p "$OUT/pkg"
+          # Binaires serveur (pkg/server)
+          if [ -d "$BUILD_DIR/pkg/server" ]; then
+            cp -r "$BUILD_DIR/pkg/server" "$OUT/pkg/"
+          fi
+          # config.json
+          if [ -f "$WORKSPACE/config.json" ]; then
+            cp "$WORKSPACE/config.json" "$OUT/"
+          fi
+          # game/data
+          if [ -d "$WORKSPACE/game/data" ]; then
+            mkdir -p "$OUT/game/data"
+            cp -r "$WORKSPACE/game/data/." "$OUT/game/data/"
+          fi
+          # Version: semver from git describe ou 0.0.0 + commit
+          VERSION=$(git -C "$WORKSPACE" describe --tags --always 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+          SHORT_SHA=$(git -C "$WORKSPACE" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          ARTIFACT_NAME="lcdlln-linux-${VERSION}-${SHORT_SHA}.tar.gz"
+          ARTIFACT_PATH="$WORKSPACE/$ARTIFACT_NAME"
+          tar -czf "$ARTIFACT_PATH" -C "$OUT" .
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.artifact_path }}
+          if-no-files-found: error
+          retention-days: 7

@@ -4,6 +4,7 @@
 #include "engine/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 
 #include <cstdlib>
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
 	logSettings.filePath = HasCliFlag(argc, argv, "-log")
 		? engine::core::Log::MakeTimestampedFilename("lcdlln_server")
 		: config.GetString("log.file", "lcdlln_server.log");
-	logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
+	logSettings.rotation_size_mb = static_cast<size_t>((std::max)(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
 	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
 	engine::core::Log::Init(logSettings);
 

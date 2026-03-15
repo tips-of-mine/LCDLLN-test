@@ -100,7 +100,12 @@ namespace engine::render
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)
 	{
-		std::fprintf(stderr, "[AP] debut\n"); std::fflush(stderr);
+		// Worker never started => nothing can be in m_pending; skip lock to avoid
+		// potential crash on mutex (e.g. MSVC Release / SEH).
+		if (!m_worker.joinable())
+		{
+			return;
+		}
 		std::vector<PendingReloadResult> results;
 		{
 			std::lock_guard<std::mutex> lock(m_pendingMutex);

@@ -27,6 +27,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 namespace engine::server
 {
 	namespace
@@ -47,6 +50,14 @@ namespace engine::server
 		}
 	}
 
+	/// TLS handshake state per connection (when TLS enabled).
+	enum class TlsHandshakeState
+	{
+		InProgress,
+		Ready,
+		Failed
+	};
+
 	struct NetServer::Impl
 	{
 		NetServerConfig config;
@@ -56,6 +67,9 @@ namespace engine::server
 		std::atomic<bool> running{ false };
 		std::thread ioThread;
 
+		bool tlsEnabled = false;
+		SSL_CTX* sslCtx = nullptr;
+
 		std::atomic<uint32_t> connectionCount{ 0 };
 		std::atomic<uint32_t> nextConnId{ 1 };
 		std::mutex connMutex;
@@ -63,6 +77,8 @@ namespace engine::server
 		{
 			int fd = -1;
 			uint32_t connId = 0;
+			SSL* ssl = nullptr;
+			TlsHandshakeState handshakeState = TlsHandshakeState::Ready;
 			std::vector<uint8_t> rxBuffer;
 			size_t rxConsumed = 0;
 			std::deque<std::vector<uint8_t>> txQueue;
@@ -90,23 +106,34 @@ namespace engine::server
 		void WorkerThreadRun();
 		void CloseConnection(int fd, const char* reason);
 		void MaybeModifyEpollOut(int fd, bool wantOut);
+		/// Set epoll events for client fd (EPOLLIN/EPOLLOUT). Call with connMutex held.
+		void SetEpollEvents(int fd, uint32_t events);
+		/// Log OpenSSL error queue for the current thread (handshake/read/write errors).
+		void LogSslErrors(const char* context);
 	};
 
-	/// Call without holding connMutex (locks internally).
+	/// Call without holding connMutex (locks internally). Frees SSL if present (SSL_shutdown + SSL_free), then closes fd.
 	void NetServer::Impl::CloseConnection(int fd, const char* reason)
 	{
-		LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={})", fd, reason);
-		epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, nullptr);
-		close(fd);
+		SSL* sslToFree = nullptr;
 		{
 			std::lock_guard lock(connMutex);
 			auto it = connections.find(fd);
 			if (it != connections.end())
 			{
+				sslToFree = it->second.ssl;
 				connections.erase(it);
 				connectionCount.store(static_cast<uint32_t>(connections.size()));
 			}
 		}
+		if (sslToFree != nullptr)
+		{
+			SSL_shutdown(sslToFree);
+			SSL_free(sslToFree);
+		}
+		epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, nullptr);
+		close(fd);
+		LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={})", fd, reason);
 	}
 
 	/// Call with connMutex held (same thread).
@@ -119,11 +146,28 @@ namespace engine::server
 		if (c.wantEpollOut == wantOut)
 			return;
 		c.wantEpollOut = wantOut;
+		uint32_t ev = EPOLLIN | (wantOut ? EPOLLOUT : 0);
+		SetEpollEvents(fd, ev);
+	}
+
+	void NetServer::Impl::SetEpollEvents(int fd, uint32_t events)
+	{
 		epoll_event ev{};
-		ev.events = EPOLLIN | (wantOut ? EPOLLOUT : 0);
+		ev.events = events;
 		ev.data.fd = fd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) != 0)
 			LOG_WARN(Net, "[NetServer] epoll_ctl MOD failed (fd={})", fd);
+	}
+
+	void NetServer::Impl::LogSslErrors(const char* context)
+	{
+		unsigned long err;
+		while ((err = ERR_get_error()) != 0)
+		{
+			char buf[256];
+			ERR_error_string_n(err, buf, sizeof(buf));
+			LOG_ERROR(Net, "[NetServer] {}: {}", context, buf);
+		}
 	}
 
 	void NetServer::Impl::IoThreadRun()
@@ -187,7 +231,42 @@ namespace engine::server
 							c.fd = clientFd;
 							c.connId = connId;
 							c.rxBuffer.reserve(kRxBufferCapacity);
+							if (tlsEnabled && sslCtx != nullptr)
+							{
+								c.ssl = SSL_new(sslCtx);
+								SSL_set_fd(c.ssl, clientFd);
+								c.handshakeState = TlsHandshakeState::InProgress;
+							}
 							connectionCount.store(static_cast<uint32_t>(connections.size()));
+						}
+						if (tlsEnabled && sslCtx != nullptr)
+						{
+							std::unique_lock lock(connMutex);
+							auto it = connections.find(clientFd);
+							if (it != connections.end() && it->second.ssl != nullptr)
+							{
+								Conn& c = it->second;
+								int ret = SSL_accept(c.ssl);
+								if (ret == 1)
+								{
+									c.handshakeState = TlsHandshakeState::Ready;
+									SetEpollEvents(clientFd, EPOLLIN);
+								}
+								else
+								{
+									int err = SSL_get_error(c.ssl, ret);
+									if (err == SSL_ERROR_WANT_READ)
+										SetEpollEvents(clientFd, EPOLLIN);
+									else if (err == SSL_ERROR_WANT_WRITE)
+										SetEpollEvents(clientFd, EPOLLOUT);
+									else
+									{
+										LogSslErrors("TLS handshake");
+										lock.unlock();
+										CloseConnection(clientFd, "TLS handshake failed");
+									}
+								}
+							}
 						}
 						LOG_DEBUG(Net, "[NetServer] Accepted connection (fd={}, connId={})", clientFd, connId);
 					}
@@ -206,6 +285,33 @@ namespace engine::server
 				if (it == connections.end())
 					continue;
 				Conn& c = it->second;
+
+				// TLS handshake in progress: advance and set epoll interests from WANT_READ/WANT_WRITE
+				if (c.handshakeState == TlsHandshakeState::InProgress && c.ssl != nullptr)
+				{
+					int ret = SSL_accept(c.ssl);
+					if (ret == 1)
+					{
+						c.handshakeState = TlsHandshakeState::Ready;
+						SetEpollEvents(fd, EPOLLIN | (c.wantEpollOut ? EPOLLOUT : 0));
+					}
+					else
+					{
+						int err = SSL_get_error(c.ssl, ret);
+						if (err == SSL_ERROR_WANT_READ)
+							SetEpollEvents(fd, EPOLLIN);
+						else if (err == SSL_ERROR_WANT_WRITE)
+							SetEpollEvents(fd, EPOLLOUT);
+						else
+						{
+							LogSslErrors("TLS handshake");
+							lock.unlock();
+							CloseConnection(fd, "TLS handshake failed");
+							goto next_event;
+						}
+					}
+					goto next_event;
+				}
 
 				// RX
 				if (evFlags & EPOLLIN)
@@ -226,7 +332,11 @@ namespace engine::server
 					for (;;)
 					{
 						char tmp[4096];
-						ssize_t received = recv(fd, tmp, sizeof(tmp), 0);
+						ssize_t received;
+						if (c.ssl != nullptr)
+							received = static_cast<ssize_t>(SSL_read(c.ssl, tmp, sizeof(tmp)));
+						else
+							received = recv(fd, tmp, sizeof(tmp), 0);
 						if (received > 0)
 						{
 							size_t prev = c.rxBuffer.size();
@@ -241,6 +351,24 @@ namespace engine::server
 						}
 						else
 						{
+							if (c.ssl != nullptr)
+							{
+								int err = SSL_get_error(c.ssl, static_cast<int>(received));
+								if (err == SSL_ERROR_WANT_READ)
+								{
+									SetEpollEvents(fd, EPOLLIN | (c.wantEpollOut ? EPOLLOUT : 0));
+									break;
+								}
+								if (err == SSL_ERROR_WANT_WRITE)
+								{
+									SetEpollEvents(fd, EPOLLOUT | EPOLLIN);
+									break;
+								}
+								LogSslErrors("SSL_read");
+								lock.unlock();
+								CloseConnection(fd, "SSL read error");
+								goto next_event;
+							}
 							if (errno == EAGAIN || errno == EWOULDBLOCK)
 								break;
 							lock.unlock();
@@ -282,7 +410,11 @@ namespace engine::server
 					while (!c.txQueue.empty())
 					{
 						std::vector<uint8_t>& front = c.txQueue.front();
-						ssize_t sent = send(fd, front.data(), front.size(), MSG_NOSIGNAL);
+						int sent;
+						if (c.ssl != nullptr)
+							sent = SSL_write(c.ssl, front.data(), static_cast<int>(front.size()));
+						else
+							sent = static_cast<int>(send(fd, front.data(), front.size(), MSG_NOSIGNAL));
 						if (sent > 0)
 						{
 							c.txQueuedBytes -= static_cast<size_t>(sent);
@@ -293,6 +425,24 @@ namespace engine::server
 						}
 						else
 						{
+							if (c.ssl != nullptr)
+							{
+								int err = SSL_get_error(c.ssl, sent);
+								if (err == SSL_ERROR_WANT_WRITE)
+								{
+									SetEpollEvents(fd, EPOLLOUT | EPOLLIN);
+									break;
+								}
+								if (err == SSL_ERROR_WANT_READ)
+								{
+									SetEpollEvents(fd, EPOLLIN);
+									break;
+								}
+								LogSslErrors("SSL_write");
+								lock.unlock();
+								CloseConnection(fd, "SSL write error");
+								goto next_event;
+							}
 							if (errno == EAGAIN || errno == EWOULDBLOCK)
 								break;
 							LOG_WARN(Net, "[NetServer] send failed (fd={}): {}", fd, strerror(errno));
@@ -308,11 +458,17 @@ namespace engine::server
 			}
 		}
 
-		// Cleanup all connections on exit
+		// Cleanup all connections on exit (SSL_shutdown + SSL_free + close)
 		{
 			std::lock_guard lock(connMutex);
 			for (auto& [f, conn] : connections)
 			{
+				if (conn.ssl != nullptr)
+				{
+					SSL_shutdown(conn.ssl);
+					SSL_free(conn.ssl);
+					conn.ssl = nullptr;
+				}
 				epoll_ctl(epollFd, EPOLL_CTL_DEL, f, nullptr);
 				close(f);
 			}
@@ -432,13 +588,59 @@ namespace engine::server
 			return false;
 		}
 
+		if (!config.tlsCertPath.empty() && !config.tlsKeyPath.empty())
+		{
+			SSL_library_init();
+			SSL_load_error_strings();
+			OpenSSL_add_all_algorithms();
+			const SSL_METHOD* method = TLS_server_method();
+			m_impl->sslCtx = SSL_CTX_new(method);
+			if (m_impl->sslCtx == nullptr)
+			{
+				m_impl->LogSslErrors("SSL_CTX_new");
+				LOG_ERROR(Net, "[NetServer] Init FAILED: SSL_CTX_new failed");
+				close(m_impl->epollFd);
+				close(m_impl->listenFd);
+				delete m_impl;
+				m_impl = nullptr;
+				return false;
+			}
+			SSL_CTX_set_min_proto_version(m_impl->sslCtx, TLS1_2_VERSION);
+			if (SSL_CTX_use_certificate_file(m_impl->sslCtx, config.tlsCertPath.c_str(), SSL_FILETYPE_PEM) <= 0)
+			{
+				m_impl->LogSslErrors("SSL_CTX_use_certificate_file");
+				LOG_ERROR(Net, "[NetServer] Init FAILED: certificate file ({})", config.tlsCertPath);
+				SSL_CTX_free(m_impl->sslCtx);
+				m_impl->sslCtx = nullptr;
+				close(m_impl->epollFd);
+				close(m_impl->listenFd);
+				delete m_impl;
+				m_impl = nullptr;
+				return false;
+			}
+			if (SSL_CTX_use_PrivateKey_file(m_impl->sslCtx, config.tlsKeyPath.c_str(), SSL_FILETYPE_PEM) <= 0)
+			{
+				m_impl->LogSslErrors("SSL_CTX_use_PrivateKey_file");
+				LOG_ERROR(Net, "[NetServer] Init FAILED: private key file ({})", config.tlsKeyPath);
+				SSL_CTX_free(m_impl->sslCtx);
+				m_impl->sslCtx = nullptr;
+				close(m_impl->epollFd);
+				close(m_impl->listenFd);
+				delete m_impl;
+				m_impl = nullptr;
+				return false;
+			}
+			m_impl->tlsEnabled = true;
+			LOG_INFO(Net, "[NetServer] TLS enabled (cert={}, key={}, min=TLS1.2)", config.tlsCertPath, config.tlsKeyPath);
+		}
+
 		m_impl->running.store(true);
 		for (uint32_t i = 0; i < config.workerThreadCount; ++i)
 			m_impl->workers.emplace_back(&Impl::WorkerThreadRun, m_impl);
 		m_impl->ioThread = std::thread(&Impl::IoThreadRun, m_impl);
 
-		LOG_INFO(Net, "[NetServer] Init OK (port={}, max_connections={}, workers={})",
-			listenPort, config.maxConnections, config.workerThreadCount);
+		LOG_INFO(Net, "[NetServer] Init OK (port={}, max_connections={}, workers={}, tls={})",
+			listenPort, config.maxConnections, config.workerThreadCount, m_impl->tlsEnabled ? "on" : "off");
 		return true;
 	}
 
@@ -458,6 +660,11 @@ namespace engine::server
 				w.join();
 		m_impl->workers.clear();
 
+		if (m_impl->sslCtx != nullptr)
+		{
+			SSL_CTX_free(m_impl->sslCtx);
+			m_impl->sslCtx = nullptr;
+		}
 		if (m_impl->epollFd != -1)
 		{
 			close(m_impl->epollFd);
@@ -490,16 +697,22 @@ namespace engine::server
 			if (c.txQueuedBytes + packet.size() > m_impl->config.maxQueuedTxBytesPerConnection)
 			{
 				LOG_WARN(Net, "[NetServer] Backpressure: connId={} TX queue cap exceeded, closing", connId);
-				// Close from IO thread by posting or we close here and remove from map
-				epoll_ctl(m_impl->epollFd, EPOLL_CTL_DEL, fd, nullptr);
-				close(fd);
+				SSL* sslToFree = c.ssl;
+				c.ssl = nullptr;
 				m_impl->connections.erase(fd);
 				m_impl->connectionCount.store(static_cast<uint32_t>(m_impl->connections.size()));
+				if (sslToFree != nullptr)
+				{
+					SSL_shutdown(sslToFree);
+					SSL_free(sslToFree);
+				}
+				epoll_ctl(m_impl->epollFd, EPOLL_CTL_DEL, fd, nullptr);
+				close(fd);
 				return false;
 			}
 			c.txQueuedBytes += packet.size();
 			c.txQueue.push_back(std::move(copy));
-			MaybeModifyEpollOut(fd, true);
+			m_impl->MaybeModifyEpollOut(fd, true);
 			return true;
 		}
 		return false;

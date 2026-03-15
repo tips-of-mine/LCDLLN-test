@@ -22,6 +22,7 @@ if(WIN32)
   )
   target_link_libraries(server_app PRIVATE ws2_32)
 elseif(UNIX)
+  find_package(OpenSSL REQUIRED)
   add_executable(server_app
     main_server_linux.cpp
     NetServer.cpp
@@ -31,7 +32,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/PacketView.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
   )
-  target_link_libraries(server_app PRIVATE pthread)
+  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL)
 else()
   message(STATUS "M15.4: server_app not configured for this platform (WIN32/UNIX only)")
   return()

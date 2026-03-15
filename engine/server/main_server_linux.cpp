@@ -42,6 +42,8 @@ int main(int argc, char** argv)
 	netConfig.maxConnections = static_cast<uint32_t>(config.GetInt("server.tcp.max_connections", 1000));
 	netConfig.maxQueuedTxBytesPerConnection = static_cast<size_t>(config.GetInt("server.tcp.max_queued_tx_bytes", 262144));
 	netConfig.workerThreadCount = static_cast<uint32_t>(config.GetInt("server.tcp.worker_threads", 4));
+	netConfig.tlsCertPath = config.GetString("server.tls.cert", "");
+	netConfig.tlsKeyPath = config.GetString("server.tls.key", "");
 
 	uint16_t port = static_cast<uint16_t>(config.GetInt("server.tcp.port", 3840));
 	if (!server.Init(port, netConfig))

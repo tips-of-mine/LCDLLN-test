@@ -3,10 +3,12 @@
 #include <cstdint>
 #include <functional>
 #include <span>
+#include <string>
 
 namespace engine::server
 {
 	/// Configuration for the TCP NetServer (Linux epoll). Limits and worker pool size.
+	/// When tlsCertPath and tlsKeyPath are both non-empty, TLS is enabled (TLS 1.2+ only); no plain mode on that port.
 	struct NetServerConfig
 	{
 		/// Maximum number of concurrent connections. New connections beyond this are closed.
@@ -15,6 +17,10 @@ namespace engine::server
 		size_t maxQueuedTxBytesPerConnection = 256 * 1024u;
 		/// Number of worker threads for packet processing (must not block IO).
 		uint32_t workerThreadCount = 4u;
+		/// Path to TLS server certificate file (PEM). If non-empty with tlsKeyPath, TLS is enabled.
+		std::string tlsCertPath;
+		/// Path to TLS server private key file (PEM). If non-empty with tlsCertPath, TLS is enabled.
+		std::string tlsKeyPath;
 	};
 
 	/// Callback invoked from worker threads when a full packet is received. Do not run DB/game logic that blocks.

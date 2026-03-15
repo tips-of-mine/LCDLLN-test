@@ -46,6 +46,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/AuthRegisterPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ShardPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
     AccountValidation.cpp

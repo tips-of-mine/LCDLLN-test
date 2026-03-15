@@ -4,6 +4,7 @@
 #include "engine/network/ProtocolV1Constants.h"
 
 #include <cstdint>
+#include <span>
 #include <vector>
 
 namespace engine::network
@@ -28,4 +29,8 @@ namespace engine::network
 	private:
 		std::vector<uint8_t> m_buffer;
 	};
+
+	/// Builds a server-push packet (request_id == 0). For use by server to send push messages.
+	/// \return Packet bytes ready to send via NetServer::Send, or empty if payload too large.
+	std::vector<uint8_t> BuildPushPacket(uint16_t opcode, std::span<const uint8_t> payload);
 }

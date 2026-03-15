@@ -1,5 +1,7 @@
 #include "engine/network/PacketBuilder.h"
 
+#include <algorithm>
+
 namespace engine::network
 {
 	PacketBuilder::PacketBuilder()
@@ -26,5 +28,18 @@ namespace engine::network
 			|| !header.WriteU32(requestId) || !header.WriteU64(sessionId))
 			return false;
 		return true;
+	}
+
+	std::vector<uint8_t> BuildPushPacket(uint16_t opcode, std::span<const uint8_t> payload)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (w.Remaining() < payload.size())
+			return {};
+		if (!w.WriteBytes(payload.data(), payload.size()))
+			return {};
+		if (!builder.Finalize(opcode, 0, 0, 0, payload.size()))
+			return {};
+		return builder.Data();
 	}
 }

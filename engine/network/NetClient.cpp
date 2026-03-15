@@ -40,7 +40,7 @@ namespace engine::network
 			}
 		}
 
-		/// Normalize hex fingerprint: remove non-hex chars, lowercase. Returns empty if result length is not 64 (SHA-256 hex).
+		/// Normalize hex fingerprint (lowercase, strip non-hex). Empty if not 64 chars (SHA-256).
 		std::string NormalizeFingerprintHex(const std::string& hex)
 		{
 			std::string out;
@@ -82,6 +82,79 @@ namespace engine::network
 				ERR_error_string_n(err, buf, sizeof(buf));
 				LOG_ERROR(Net, "[NetClient] {}: {}", context, buf);
 			}
+		}
+
+		/// select() for read with timeout. Returns true if data available.
+		bool TlsWaitRead(SOCKET s, int timeoutSec)
+		{
+			fd_set rfds;
+			FD_ZERO(&rfds);
+			FD_SET(s, &rfds);
+			timeval tv{};
+			tv.tv_sec = timeoutSec;
+			tv.tv_usec = 0;
+			return select(0, &rfds, nullptr, nullptr, &tv) > 0;
+		}
+
+		/// select() for write with timeout. Returns true if writable.
+		bool TlsWaitWrite(SOCKET s, int timeoutSec)
+		{
+			fd_set wfds;
+			FD_ZERO(&wfds);
+			FD_SET(s, &wfds);
+			timeval tv{};
+			tv.tv_sec = timeoutSec;
+			tv.tv_usec = 0;
+			return select(0, nullptr, &wfds, nullptr, &tv) > 0;
+		}
+
+		/// SSL_connect loop with WANT_READ/WANT_WRITE handling. Returns true on success.
+		bool TlsHandshakeLoop(SSL* ssl, SOCKET s, int timeoutSec)
+		{
+			for (;;)
+			{
+				int r = SSL_connect(ssl);
+				if (r == 1)
+					return true;
+				int err = SSL_get_error(ssl, r);
+				if (err == SSL_ERROR_WANT_READ)
+				{
+					if (!TlsWaitRead(s, timeoutSec))
+						return false;
+				}
+				else if (err == SSL_ERROR_WANT_WRITE)
+				{
+					if (!TlsWaitWrite(s, timeoutSec))
+						return false;
+				}
+				else
+				{
+					LogSslErrors("TLS handshake");
+					return false;
+				}
+			}
+		}
+
+		/// Verify server cert fingerprint. Returns true if OK or allowInsecure accepted. Logs on mismatch.
+		bool TlsVerifyFingerprint(SSL* ssl, std::string_view expected, bool allowInsecure)
+		{
+			X509* cert = SSL_get_peer_certificate(ssl);
+			std::string serverFp = X509FingerprintSha256Hex(cert);
+			if (cert)
+				X509_free(cert);
+			if (serverFp != expected && !allowInsecure)
+			{
+				LOG_ERROR(Net, "[NetClient] TLS pinning: certificate fingerprint mismatch (got {}), connection refused",
+					serverFp);
+				return false;
+			}
+			if (serverFp != expected && allowInsecure)
+			{
+				LOG_WARN(Net, "[NetClient] TLS allow_insecure_dev: accepting unverified fingerprint");
+				return true;
+			}
+			LOG_INFO(Net, "[NetClient] Certificate fingerprint verified");
+			return true;
 		}
 	}
 
@@ -179,6 +252,26 @@ namespace engine::network
 	uint64_t NetClient::GetPacketsIn() const { return m_packetsIn.load(); }
 	uint64_t NetClient::GetPacketsOut() const { return m_packetsOut.load(); }
 
+	void NetClient::TlsCleanupAndDisconnect(void* ssl, void* ctx, uintptr_t& socketHandle, std::string_view reason)
+	{
+		SSL* s = static_cast<SSL*>(ssl);
+		SSL_CTX* c = static_cast<SSL_CTX*>(ctx);
+		if (s != nullptr)
+		{
+			int shut = SSL_shutdown(s);
+			if (shut < 0)
+				LOG_ERROR(Net, "[NetClient] TLS cleanup: SSL_shutdown error");
+			SSL_free(s);
+		}
+		if (c != nullptr)
+			SSL_CTX_free(c);
+		CloseSocket(socketHandle);
+		m_state.store(NetClientState::Disconnected);
+		std::lock_guard lock(m_mutex);
+		m_eventQueue.push_back(
+			{ NetClientEventType::Disconnected, std::string(reason), {} });
+	}
+
 	void NetClient::NetworkThreadRun()
 	{
 		WSADATA wsaData{};
@@ -273,36 +366,53 @@ namespace engine::network
 						{ std::lock_guard lock(m_mutex); useTls = !m_expectedServerFingerprintHex.empty(); }
 						if (useTls)
 						{
+							LOG_INFO(Net, "[NetClient] TLS handshake started (host={}:{})", host, port);
 							SSL_library_init();
 							SSL_load_error_strings();
 							SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
-							if (!ctx) { LogSslErrors("SSL_CTX_new"); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS init failed", {} }); continue; }
+							if (!ctx)
+							{
+								LogSslErrors("SSL_CTX_new");
+								TlsCleanupAndDisconnect(nullptr, nullptr, socketHandle, "TLS init failed");
+								continue;
+							}
 							SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
 							SSL* mySsl = SSL_new(ctx);
-							if (!mySsl) { LogSslErrors("SSL_new"); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS init failed", {} }); continue; }
-							SSL_set_fd(mySsl, static_cast<int>(s));
-							for (;;)
+							if (!mySsl)
 							{
-								int r = SSL_connect(mySsl);
-								if (r == 1) break;
-								int err = SSL_get_error(mySsl, r);
-								if (err == SSL_ERROR_WANT_READ) { fd_set rfds; FD_ZERO(&rfds); FD_SET(s, &rfds); timeval tv{ kConnectTimeoutSeconds, 0 }; if (select(0, &rfds, nullptr, nullptr, &tv) <= 0) { LOG_WARN(Net, "[NetClient] TLS handshake timeout"); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS handshake timeout", {} }); goto next_connect; } }
-								else if (err == SSL_ERROR_WANT_WRITE) { fd_set wfds; FD_ZERO(&wfds); FD_SET(s, &wfds); timeval tv{ kConnectTimeoutSeconds, 0 }; if (select(0, nullptr, &wfds, nullptr, &tv) <= 0) { LOG_WARN(Net, "[NetClient] TLS handshake timeout"); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS handshake timeout", {} }); goto next_connect; } }
-								else { LogSslErrors("TLS handshake"); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS handshake failed", {} }); goto next_connect; }
+								LogSslErrors("SSL_new");
+								TlsCleanupAndDisconnect(nullptr, ctx, socketHandle, "TLS init failed");
+								continue;
 							}
-							X509* cert = SSL_get_peer_certificate(mySsl);
-							std::string serverFp = X509FingerprintSha256Hex(cert);
-							if (cert) X509_free(cert);
+							SSL_set_fd(mySsl, static_cast<int>(s));
+							if (!TlsHandshakeLoop(mySsl, s, kConnectTimeoutSeconds))
+							{
+								LOG_WARN(Net, "[NetClient] TLS handshake timeout");
+								TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "TLS handshake timeout");
+								continue;
+							}
 							std::string expectedNorm;
 							bool allowInsecure = false;
-							{ std::lock_guard lock(m_mutex); expectedNorm = NormalizeFingerprintHex(m_expectedServerFingerprintHex); allowInsecure = m_allowInsecureDev; }
-							if (expectedNorm.empty()) { LOG_ERROR(Net, "[NetClient] TLS pinning: expected fingerprint invalid (must be 64 hex chars)"); SSL_shutdown(mySsl); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS fingerprint config invalid", {} }); goto next_connect; }
-							if (serverFp != expectedNorm && !allowInsecure) { LOG_ERROR(Net, "[NetClient] TLS pinning: certificate fingerprint mismatch (got {}), connection refused", serverFp); SSL_shutdown(mySsl); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "certificate fingerprint mismatch", {} }); goto next_connect; }
-							if (serverFp != expectedNorm && allowInsecure) LOG_WARN(Net, "[NetClient] TLS allow_insecure_dev: fingerprint mismatch accepted");
+							{
+								std::lock_guard lock(m_mutex);
+								expectedNorm = NormalizeFingerprintHex(m_expectedServerFingerprintHex);
+								allowInsecure = m_allowInsecureDev;
+							}
+							if (expectedNorm.empty())
+							{
+								LOG_ERROR(Net, "[NetClient] TLS pinning: expected fingerprint invalid (must be 64 hex chars)");
+								TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "TLS fingerprint config invalid");
+								continue;
+							}
+							if (!TlsVerifyFingerprint(mySsl, expectedNorm, allowInsecure))
+							{
+								TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "certificate fingerprint mismatch");
+								continue;
+							}
+							LOG_INFO(Net, "[NetClient] TLS handshake completed OK");
 							ssl = mySsl;
 							SSL_CTX_free(ctx);
 							tlsHandshakeDone = true;
-							LOG_INFO(Net, "[NetClient] TLS handshake OK, pinning verified for {}:{}", host, port);
 							std::lock_guard lock(m_mutex);
 							m_eventQueue.push_back({ NetClientEventType::Connected, "", {} });
 						}
@@ -311,7 +421,6 @@ namespace engine::network
 							std::lock_guard lock(m_mutex);
 							m_eventQueue.push_back({ NetClientEventType::Connected, "", {} });
 						}
-					next_connect:;
 					}
 					else
 					{
@@ -349,36 +458,53 @@ namespace engine::network
 									{ std::lock_guard lock(m_mutex); useTlsAsync = !m_expectedServerFingerprintHex.empty(); }
 									if (useTlsAsync)
 									{
+										LOG_INFO(Net, "[NetClient] TLS handshake started (host={}:{})", host, port);
 										SSL_library_init();
 										SSL_load_error_strings();
 										SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
-										if (!ctx) { LogSslErrors("SSL_CTX_new"); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS init failed", {} }); break; }
+										if (!ctx)
+										{
+											LogSslErrors("SSL_CTX_new");
+											TlsCleanupAndDisconnect(nullptr, nullptr, socketHandle, "TLS init failed");
+											continue;
+										}
 										SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
 										SSL* mySsl = SSL_new(ctx);
-										if (!mySsl) { LogSslErrors("SSL_new"); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS init failed", {} }); break; }
-										SSL_set_fd(mySsl, static_cast<int>(s));
-										for (;;)
+										if (!mySsl)
 										{
-											int r = SSL_connect(mySsl);
-											if (r == 1) break;
-											int err = SSL_get_error(mySsl, r);
-											if (err == SSL_ERROR_WANT_READ) { fd_set rfds; FD_ZERO(&rfds); FD_SET(s, &rfds); timeval tv{ kConnectTimeoutSeconds, 0 }; if (select(0, &rfds, nullptr, nullptr, &tv) <= 0) { LOG_WARN(Net, "[NetClient] TLS handshake timeout"); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS handshake timeout", {} }); goto next_async; } }
-											else if (err == SSL_ERROR_WANT_WRITE) { fd_set wfds; FD_ZERO(&wfds); FD_SET(s, &wfds); timeval tv{ kConnectTimeoutSeconds, 0 }; if (select(0, nullptr, &wfds, nullptr, &tv) <= 0) { LOG_WARN(Net, "[NetClient] TLS handshake timeout"); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS handshake timeout", {} }); goto next_async; } }
-											else { LogSslErrors("TLS handshake"); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS handshake failed", {} }); goto next_async; }
+											LogSslErrors("SSL_new");
+											TlsCleanupAndDisconnect(nullptr, ctx, socketHandle, "TLS init failed");
+											continue;
 										}
-										X509* cert = SSL_get_peer_certificate(mySsl);
-										std::string serverFp = X509FingerprintSha256Hex(cert);
-										if (cert) X509_free(cert);
+										SSL_set_fd(mySsl, static_cast<int>(s));
+										if (!TlsHandshakeLoop(mySsl, s, kConnectTimeoutSeconds))
+										{
+											LOG_WARN(Net, "[NetClient] TLS handshake timeout");
+											TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "TLS handshake timeout");
+											continue;
+										}
 										std::string expectedNorm;
 										bool allowInsecure = false;
-										{ std::lock_guard lock(m_mutex); expectedNorm = NormalizeFingerprintHex(m_expectedServerFingerprintHex); allowInsecure = m_allowInsecureDev; }
-										if (expectedNorm.empty()) { LOG_ERROR(Net, "[NetClient] TLS pinning: expected fingerprint invalid (must be 64 hex chars)"); SSL_shutdown(mySsl); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "TLS fingerprint config invalid", {} }); goto next_async; }
-										if (serverFp != expectedNorm && !allowInsecure) { LOG_ERROR(Net, "[NetClient] TLS pinning: certificate fingerprint mismatch (got {}), connection refused", serverFp); SSL_shutdown(mySsl); SSL_free(mySsl); SSL_CTX_free(ctx); CloseSocket(socketHandle); m_state.store(NetClientState::Disconnected); std::lock_guard lock(m_mutex); m_eventQueue.push_back({ NetClientEventType::Disconnected, "certificate fingerprint mismatch", {} }); goto next_async; }
-										if (serverFp != expectedNorm && allowInsecure) LOG_WARN(Net, "[NetClient] TLS allow_insecure_dev: fingerprint mismatch accepted");
+										{
+											std::lock_guard lock(m_mutex);
+											expectedNorm = NormalizeFingerprintHex(m_expectedServerFingerprintHex);
+											allowInsecure = m_allowInsecureDev;
+										}
+										if (expectedNorm.empty())
+										{
+											LOG_ERROR(Net, "[NetClient] TLS pinning: expected fingerprint invalid (must be 64 hex chars)");
+											TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "TLS fingerprint config invalid");
+											continue;
+										}
+										if (!TlsVerifyFingerprint(mySsl, expectedNorm, allowInsecure))
+										{
+											TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "certificate fingerprint mismatch");
+											continue;
+										}
+										LOG_INFO(Net, "[NetClient] TLS handshake completed OK");
 										ssl = mySsl;
 										SSL_CTX_free(ctx);
 										tlsHandshakeDone = true;
-										LOG_INFO(Net, "[NetClient] TLS handshake OK, pinning verified for {}:{}", host, port);
 										std::lock_guard lock(m_mutex);
 										m_eventQueue.push_back({ NetClientEventType::Connected, "", {} });
 									}
@@ -387,7 +513,6 @@ namespace engine::network
 										std::lock_guard lock(m_mutex);
 										m_eventQueue.push_back({ NetClientEventType::Connected, "", {} });
 									}
-								next_async:;
 								}
 								else
 								{
@@ -537,7 +662,8 @@ namespace engine::network
 					size_t remaining = currentSend.size() - currentSendOffset;
 					int sent = (ssl != nullptr)
 						? SSL_write(ssl, ptr, static_cast<int>(remaining))
-						: static_cast<int>(send(ToNativeSocket(socketHandle), reinterpret_cast<const char*>(ptr), static_cast<int>(remaining), 0));
+						: static_cast<int>(send(ToNativeSocket(socketHandle),
+							reinterpret_cast<const char*>(ptr), static_cast<int>(remaining), 0));
 					if (sent > 0)
 					{
 						m_bytesOut.fetch_add(static_cast<uint64_t>(sent));

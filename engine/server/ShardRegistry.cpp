@@ -35,20 +35,64 @@ namespace engine::server
 	bool ShardRegistry::UpdateHeartbeat(uint32_t shard_id, uint32_t current_load)
 	{
 		auto now = std::chrono::steady_clock::now();
-		std::lock_guard<std::mutex> lock(m_mutex);
-		auto it = m_shards.find(shard_id);
-		if (it == m_shards.end())
+		bool log_degraded = false;
+		bool log_recovered = false;
+		uint32_t log_load = 0;
+		uint32_t log_cap = 0;
+		double log_ratio = 0.0;
+		std::function<void(uint32_t)> degraded_cb;
+		uint32_t degraded_shard_id = 0;
 		{
-			LOG_WARN(Core, "[ShardRegistry] UpdateHeartbeat: shard_id {} not found", shard_id);
-			return false;
+			std::lock_guard<std::mutex> lock(m_mutex);
+			auto it = m_shards.find(shard_id);
+			if (it == m_shards.end())
+			{
+				LOG_WARN(Core, "[ShardRegistry] UpdateHeartbeat: shard_id {} not found", shard_id);
+				return false;
+			}
+			it->second.last_heartbeat = now;
+			it->second.current_load = current_load;
+			bool became_online = (it->second.state == ShardState::Registering);
+			if (became_online)
+				it->second.state = ShardState::Online;
+			if (became_online)
+				LOG_INFO(Core, "[ShardRegistry] Shard {} now online (load={})", shard_id, current_load);
+
+			// Transition Online → Degraded or Degraded → Online according to load ratio (STAB.10)
+			if (it->second.state == ShardState::Online || it->second.state == ShardState::Degraded)
+			{
+				uint32_t cap = (it->second.max_capacity > 0u) ? it->second.max_capacity : 1u;
+				double ratio = static_cast<double>(it->second.current_load) / static_cast<double>(cap);
+				if (ratio >= m_degraded_load_threshold && it->second.state == ShardState::Online)
+				{
+					it->second.state = ShardState::Degraded;
+					log_degraded = true;
+					log_load = it->second.current_load;
+					log_cap = it->second.max_capacity;
+					log_ratio = ratio;
+					degraded_cb = m_shard_degraded_callback;
+					degraded_shard_id = shard_id;
+				}
+				else if (ratio < m_degraded_load_threshold && it->second.state == ShardState::Degraded)
+				{
+					it->second.state = ShardState::Online;
+					log_recovered = true;
+					log_load = it->second.current_load;
+					log_cap = it->second.max_capacity;
+					log_ratio = ratio;
+				}
+			}
 		}
-		it->second.last_heartbeat = now;
-		it->second.current_load = current_load;
-		bool became_online = (it->second.state == ShardState::Registering);
-		if (became_online)
-			it->second.state = ShardState::Online;
-		if (became_online)
-			LOG_INFO(Core, "[ShardRegistry] Shard {} now online (load={})", shard_id, current_load);
+		if (log_degraded)
+		{
+			LOG_INFO(Core, "[ShardRegistry] Shard {} now degraded (load={}, cap={}, ratio={:.2f})",
+				shard_id, log_load, log_cap, log_ratio);
+			if (degraded_cb)
+				degraded_cb(degraded_shard_id);
+		}
+		if (log_recovered)
+			LOG_INFO(Core, "[ShardRegistry] Shard {} recovered to online (load={}, cap={}, ratio={:.2f})",
+				shard_id, log_load, log_cap, log_ratio);
 		return true;
 	}
 
@@ -70,6 +114,18 @@ namespace engine::server
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		m_shard_down_callback = std::move(cb);
+	}
+
+	void ShardRegistry::SetDegradedLoadThreshold(double threshold)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_degraded_load_threshold = threshold;
+	}
+
+	void ShardRegistry::SetShardDegradedCallback(std::function<void(uint32_t)> cb)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		m_shard_degraded_callback = std::move(cb);
 	}
 
 	void ShardRegistry::EvictStaleHeartbeats(int timeout_sec, std::optional<std::chrono::steady_clock::time_point> as_of)

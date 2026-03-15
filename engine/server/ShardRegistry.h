@@ -61,6 +61,12 @@ namespace engine::server
 		/// Callback invoked when a shard is marked offline by the watchdog (M22.3 "event interne shard_down").
 		void SetShardDownCallback(std::function<void(uint32_t shard_id)> cb);
 
+		/// Load ratio (current_load / max_capacity) above which a shard transitions to Degraded. Default 0.90.
+		void SetDegradedLoadThreshold(double threshold);
+
+		/// Callback invoked when a shard transitions to Degraded (STAB.10).
+		void SetShardDegradedCallback(std::function<void(uint32_t shard_id)> cb);
+
 		/// Returns a copy of the shard entry, or nullopt if not found.
 		std::optional<ShardInfo> GetShard(uint32_t shard_id) const;
 
@@ -87,5 +93,7 @@ namespace engine::server
 		std::unordered_map<std::string, uint32_t> m_name_to_id;
 		uint32_t m_next_id = 1;
 		std::function<void(uint32_t)> m_shard_down_callback;
+		double m_degraded_load_threshold = 0.90;
+		std::function<void(uint32_t)> m_shard_degraded_callback;
 	};
 }

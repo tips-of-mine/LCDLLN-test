@@ -7,6 +7,7 @@
 #include <mutex>
 #include <span>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -78,6 +79,9 @@ namespace engine::network
 
 	private:
 		void NetworkThreadRun();
+
+		/// TLS cleanup: SSL_shutdown + SSL_free + SSL_CTX_free + CloseSocket + push Disconnected event.
+		void TlsCleanupAndDisconnect(void* ssl, void* ctx, uintptr_t& socketHandle, std::string_view reason);
 
 		std::atomic<NetClientState> m_state{ NetClientState::Disconnected };
 		std::atomic<uint64_t> m_bytesIn{ 0 };

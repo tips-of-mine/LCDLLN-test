@@ -155,6 +155,11 @@ int main(int argc, char** argv)
 	shardRegistry.SetShardDownCallback([](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
 	});
+	double degradedLoadThreshold = config.GetDouble("shard.degraded_load_threshold", 0.90);
+	shardRegistry.SetDegradedLoadThreshold(degradedLoadThreshold);
+	shardRegistry.SetShardDegradedCallback([](uint32_t shard_id) {
+		LOG_INFO(Net, "[ServerMain] Shard degraded event: shard_id={}", shard_id);
+	});
 	LOG_INFO(Net, "[ServerMain] Auth/Register/Heartbeat/ShardTicket/ServerList and Shard register handler set (opcodes 1, 3, 7, 10, 13, 14, 19)");
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);

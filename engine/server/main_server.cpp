@@ -17,6 +17,7 @@ namespace
 	{
 		if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
 		if (text == "Debug" || text == "debug") return engine::core::LogLevel::Debug;
+		if (text == "Info" || text == "info") return engine::core::LogLevel::Info;
 		if (text == "Warn" || text == "warn") return engine::core::LogLevel::Warn;
 		if (text == "Error" || text == "error") return engine::core::LogLevel::Error;
 		if (text == "Fatal" || text == "fatal") return engine::core::LogLevel::Fatal;
@@ -107,6 +108,8 @@ int main(int argc, char** argv)
 	logSettings.filePath = HasCliFlag(argc, argv, "-log")
 		? engine::core::Log::MakeTimestampedFilename("lcdlln_server")
 		: config.GetString("log.file", "lcdlln_server.log");
+	logSettings.rotation_size_mb = static_cast<size_t>(std::max(0, config.GetInt("log.rotation_size_mb", 10)));
+	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
 	engine::core::Log::Init(logSettings);
 
 	const uint16_t port = static_cast<uint16_t>(config.GetInt("server.listen_port", 27015));

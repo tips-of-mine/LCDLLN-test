@@ -150,6 +150,18 @@ namespace engine::server
 		LOG_DEBUG(Net, "[SessionManager] SetState: session_id={} state={}", session_id, static_cast<int>(state));
 	}
 
+	size_t SessionManager::GetActiveCount() const
+	{
+		size_t n = 0;
+		for (const auto& [id, s] : m_by_session_id)
+		{
+			(void)id;
+			if (s.state == SessionState::Authenticated || s.state == SessionState::Active)
+				++n;
+		}
+		return n;
+	}
+
 	std::optional<uint64_t> SessionManager::GetAccountId(uint64_t session_id) const
 	{
 		if (session_id == kInvalidSessionId)

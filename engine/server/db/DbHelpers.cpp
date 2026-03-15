@@ -5,12 +5,17 @@
 
 #include <mysql.h>
 
+#include <chrono>
+#include <mutex>
 #include <string>
 
 namespace engine::server::db
 {
 	namespace
 	{
+		std::mutex g_latencyObserverMutex;
+		std::function<void(int)> g_latencyObserver;
+
 		bool DrainResults(MYSQL* mysql)
 		{
 			for (;;)
@@ -29,10 +34,17 @@ namespace engine::server::db
 		}
 	}
 
+	void SetDbLatencyObserver(std::function<void(int)> observer)
+	{
+		std::lock_guard<std::mutex> lock(g_latencyObserverMutex);
+		g_latencyObserver = std::move(observer);
+	}
+
 	bool DbExecute(MYSQL* mysql, std::string_view sql)
 	{
 		if (!mysql || sql.empty())
 			return false;
+		auto start = std::chrono::steady_clock::now();
 		std::string s(sql);
 		if (mysql_real_query(mysql, s.c_str(), static_cast<unsigned long>(s.size())) != 0)
 		{
@@ -44,6 +56,13 @@ namespace engine::server::db
 			LOG_ERROR(Core, "[DbHelpers] DrainResults failed: {}", mysql_error(mysql));
 			return false;
 		}
+		auto end = std::chrono::steady_clock::now();
+		int ms = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+		{
+			std::lock_guard<std::mutex> lock(g_latencyObserverMutex);
+			if (g_latencyObserver)
+				g_latencyObserver(ms);
+		}
 		return true;
 	}
 
@@ -51,6 +70,7 @@ namespace engine::server::db
 	{
 		if (!mysql || sql.empty())
 			return nullptr;
+		auto start = std::chrono::steady_clock::now();
 		std::string s(sql);
 		if (mysql_real_query(mysql, s.c_str(), static_cast<unsigned long>(s.size())) != 0)
 		{
@@ -62,6 +82,13 @@ namespace engine::server::db
 		{
 			LOG_ERROR(Core, "[DbHelpers] store_result failed: {}", mysql_error(mysql));
 			return nullptr;
+		}
+		auto end = std::chrono::steady_clock::now();
+		int ms = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+		{
+			std::lock_guard<std::mutex> lock(g_latencyObserverMutex);
+			if (g_latencyObserver)
+				g_latencyObserver(ms);
 		}
 		return res;
 	}

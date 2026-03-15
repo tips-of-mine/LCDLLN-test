@@ -180,6 +180,8 @@ namespace engine
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;
+		logSettings.rotation_size_mb = static_cast<size_t>(std::max(0, m_cfg.GetInt("log.rotation_size_mb", 10)));
+		logSettings.retention_days   = static_cast<int>(m_cfg.GetInt("log.retention_days", 7));
 
 		engine::core::Log::Init(logSettings);
 		std::fprintf(stderr, "[ENGINE] B: Log::Init OK\n"); std::fflush(stderr);

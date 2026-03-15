@@ -1,8 +1,11 @@
 #include "engine/server/SecurityAuditLog.h"
 #include "engine/core/Log.h"
-#include <cstdio>
-#include <ctime>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+
 #include <chrono>
+#include <cstring>
 #include <format>
 #include <string>
 
@@ -24,34 +27,49 @@ namespace engine::server
 
 	void SecurityAuditLog::writeLine(std::string_view event, std::string_view payload)
 	{
-		if (!m_file)
+		if (!m_logger)
 			return;
-		std::string line = std::format("{} [{}] {}\n", timestamp(), event, payload);
-		std::fputs(line.c_str(), static_cast<std::FILE*>(m_file));
-		std::fflush(static_cast<std::FILE*>(m_file));
+		m_logger->info("{} [{}] {}", timestamp(), event, payload);
 	}
 
-	bool SecurityAuditLog::Init(std::string_view filePath)
+	bool SecurityAuditLog::Init(std::string_view filePath, size_t rotationSizeMb, int retentionDays)
 	{
 		Shutdown();
 		m_filePath = std::string(filePath);
-		std::FILE* f = std::fopen(m_filePath.c_str(), "a");
-		if (!f)
+
+		const size_t max_bytes = (rotationSizeMb > 0)
+			? (rotationSizeMb * 1024u * 1024u)
+			: (10u * 1024u * 1024u);
+		const size_t max_files = (retentionDays > 0)
+			? static_cast<size_t>(std::max(1, retentionDays))
+			: 7u;
+
+		try
 		{
-			LOG_ERROR(Net, "[SecurityAuditLog] Init FAILED: cannot open file {}", m_filePath);
+			auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+				m_filePath, max_bytes, max_files);
+			m_logger = std::make_shared<spdlog::logger>("security_audit", sink);
+			m_logger->set_level(spdlog::level::info);
+			spdlog::register_logger(m_logger);
+		}
+		catch (const std::exception& e)
+		{
+			LOG_ERROR(Net, "[SecurityAuditLog] Init FAILED: cannot open file {} — {}", m_filePath, e.what());
 			return false;
 		}
-		m_file = f;
-		LOG_INFO(Net, "[SecurityAuditLog] Init OK: file={}", m_filePath);
+
+		LOG_INFO(Net, "[SecurityAuditLog] Init OK: file={} (rotation_size_mb={}, retention_days={})",
+			m_filePath, static_cast<unsigned>(rotationSizeMb), retentionDays);
 		return true;
 	}
 
 	void SecurityAuditLog::Shutdown()
 	{
-		if (m_file)
+		if (m_logger)
 		{
-			std::fclose(static_cast<std::FILE*>(m_file));
-			m_file = nullptr;
+			m_logger->flush();
+			spdlog::drop("security_audit");
+			m_logger.reset();
 			LOG_INFO(Net, "[SecurityAuditLog] Shutdown: file closed");
 		}
 	}

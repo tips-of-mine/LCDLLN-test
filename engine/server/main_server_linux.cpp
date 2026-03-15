@@ -3,6 +3,9 @@
 
 #include "engine/server/MigrationRunner.h"
 #include "engine/server/db/ConnectionPool.h"
+#include "engine/server/db/DbHelpers.h"
+#include "engine/server/HealthEndpoint.h"
+#include "engine/server/PrometheusMetrics.h"
 #include "engine/server/NetServer.h"
 #include "engine/server/ShardRegisterHandler.h"
 #include "engine/server/ShardRegistry.h"
@@ -36,6 +39,18 @@ namespace
 		g_quit = 1;
 	}
 
+	engine::core::LogLevel ParseLogLevel(std::string_view text)
+	{
+		if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
+		if (text == "Debug" || text == "debug") return engine::core::LogLevel::Debug;
+		if (text == "Info" || text == "info") return engine::core::LogLevel::Info;
+		if (text == "Warn" || text == "warn") return engine::core::LogLevel::Warn;
+		if (text == "Error" || text == "error") return engine::core::LogLevel::Error;
+		if (text == "Fatal" || text == "fatal") return engine::core::LogLevel::Fatal;
+		if (text == "Off" || text == "off") return engine::core::LogLevel::Off;
+		return engine::core::LogLevel::Info;
+	}
+
 	/// Returns true if \a argv contains --net.stats (or -net.stats).
 	bool ParseNetStatsFlag(int argc, char** argv)
 	{
@@ -62,14 +77,14 @@ int main(int argc, char** argv)
 
 	g_net_stats = ParseNetStatsFlag(argc, argv);
 
-	std::fprintf(stderr, "[MAIN_SRV] avant Log::Init\n"); std::fflush(stderr);
 	engine::core::LogSettings logSettings;
-	logSettings.level = engine::core::LogLevel::Info;
+	logSettings.level = ParseLogLevel(config.GetString("log.level", "Info"));
 	logSettings.console = true;
 	logSettings.flushAlways = true;
 	logSettings.filePath = config.GetString("log.file", "engine.log");
+	logSettings.rotation_size_mb = static_cast<size_t>(std::max(0, config.GetInt("log.rotation_size_mb", 10)));
+	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
 	engine::core::Log::Init(logSettings);
-	std::fprintf(stderr, "[MAIN_SRV] Log::Init OK\n"); std::fflush(stderr);
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");
 
@@ -82,6 +97,10 @@ int main(int argc, char** argv)
 
 	engine::server::db::ConnectionPool dbPool;
 	dbPool.Init(config);
+
+	// M23.2 — DB query latency histogram for Prometheus. Observer set before any DB use.
+	engine::server::DbLatencyHistogram dbLatencyHistogram;
+	engine::server::db::SetDbLatencyObserver([&dbLatencyHistogram](int ms) { dbLatencyHistogram.Observe(ms); });
 
 	std::fprintf(stderr, "[MAIN_SRV] avant ShardRegistry setup\n"); std::fflush(stderr);
 	engine::server::ShardRegistry shardRegistry;
@@ -126,7 +145,9 @@ int main(int argc, char** argv)
 
 	engine::server::SecurityAuditLog auditLog;
 	std::string auditPath = config.GetString("security.audit_log_path", "security_audit.log");
-	if (auditLog.Init(auditPath))
+	size_t rotationMb = static_cast<size_t>(std::max(0, config.GetInt("log.rotation_size_mb", 10)));
+	int retentionDays = static_cast<int>(config.GetInt("log.retention_days", 7));
+	if (auditLog.Init(auditPath, rotationMb, retentionDays))
 		LOG_INFO(Net, "[ServerMain] SecurityAuditLog opened: {}", auditPath);
 	else
 		LOG_WARN(Net, "[ServerMain] SecurityAuditLog Init failed (path={})", auditPath);
@@ -163,6 +184,34 @@ int main(int argc, char** argv)
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
+
+	// M23.1 + M23.2 — Health/readiness and Prometheus /metrics on same port.
+	engine::server::HealthEndpoint healthEndpoint;
+	uint16_t healthPort = static_cast<uint16_t>(config.GetInt("server.health.port", 3842));
+	std::string healthBind = config.GetString("server.health.bind", "127.0.0.1");
+	auto readyCheck = [&dbPool]() {
+		auto guard = dbPool.Acquire();
+		return guard.get() != nullptr;
+	};
+	auto metricsProvider = [&server, &sessionManager, &shardRegistry, &authHandler, &dbLatencyHistogram]() {
+		engine::server::NetServerStats netStats;
+		server.GetNetworkStats(netStats);
+		uint64_t sessionsActive = sessionManager.GetActiveCount();
+		auto shards = shardRegistry.ListShards();
+		uint64_t shardsOnline = 0;
+		for (const auto& s : shards)
+		{
+			if (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded)
+				++shardsOnline;
+		}
+		return engine::server::BuildPrometheusText(netStats, sessionsActive, shardsOnline,
+			authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), &dbLatencyHistogram);
+	};
+	if (healthEndpoint.Init(healthPort, healthBind, readyCheck, metricsProvider))
+		LOG_INFO(Net, "[ServerMain] Health endpoint listening on {}:{} (/healthz, /readyz, /metrics)", healthBind, healthPort);
+	else
+		LOG_WARN(Net, "[ServerMain] Health endpoint Init failed (port {}), continuing without health endpoint", healthPort);
+
 	std::fprintf(stderr, "[MAIN_SRV] SetPacketHandler OK\n"); std::fflush(stderr);
 	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
 	shardRegistry.SetShardDownCallback([](uint32_t shard_id) {
@@ -184,11 +233,34 @@ int main(int argc, char** argv)
 	auto lastWatchdog = std::chrono::steady_clock::now();
 	constexpr auto kWatchdogInterval = std::chrono::seconds(10);
 
+	// M23.3 — Logs résumés état cluster (throttled 60s).
+	auto lastSummaryLog = std::chrono::steady_clock::now();
+	constexpr auto kSummaryInterval = std::chrono::seconds(60);
+
 	while (server.IsRunning() && g_quit == 0)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		auto now = std::chrono::steady_clock::now();
+		if (now - lastSummaryLog >= kSummaryInterval)
+		{
+			lastSummaryLog = now;
+			engine::server::NetServerStats sumStats;
+			server.GetNetworkStats(sumStats);
+			uint64_t sumSessions = sessionManager.GetActiveCount();
+			auto sumShards = shardRegistry.ListShards();
+			uint64_t sumShardsOnline = 0;
+			for (const auto& s : sumShards)
+			{
+				if (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded)
+					++sumShardsOnline;
+			}
+			bool dbOk = readyCheck();
+			LOG_INFO(Net, "[ServerMain] cluster summary: conn_active={} sessions_active={} shards_online={} auth_success={} auth_fail={} db_ok={}",
+				sumStats.connectionsActive, sumSessions, sumShardsOnline,
+				authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), dbOk ? 1 : 0);
+		}
+
 		if (now - lastWatchdog >= kWatchdogInterval)
 		{
 			lastWatchdog = now;
@@ -236,6 +308,7 @@ int main(int argc, char** argv)
 
 	server.Shutdown();
 	std::fprintf(stderr, "[MAIN_SRV] NetServer::Shutdown OK\n"); std::fflush(stderr);
+	healthEndpoint.Shutdown();
 	dbPool.Shutdown();
 	LOG_INFO(Net, "[ServerMain] Shutdown complete");
 	std::fprintf(stderr, "[MAIN_SRV] shutdown complete\n"); std::fflush(stderr);

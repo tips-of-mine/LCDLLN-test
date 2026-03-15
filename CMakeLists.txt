@@ -58,6 +58,16 @@ if(WIN32)
 endif()
 message(STATUS "M20.2: Argon2 using ref implementation at ${phc-winner-argon2_SOURCE_DIR}")
 
+# M23.4 — spdlog for rotating/daily logger (runtime + security_audit)
+FetchContent_Declare(spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog
+  GIT_TAG        v1.12.1
+)
+set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(spdlog)
+message(STATUS "M23.4: spdlog for logging rotation")
+
 add_library(engine_auth STATIC engine/auth/Argon2Hash.cpp)
 target_include_directories(engine_auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(engine_auth PUBLIC argon2_ref OpenSSL::SSL)
@@ -153,6 +163,7 @@ target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan
   glfw
   engine_auth
+  spdlog::spdlog
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL)
@@ -231,6 +242,11 @@ add_executable(protocol_v1_tests engine/network/ProtocolV1Tests.cpp)
 target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
+
+# M23.4: Log rotation smoke test (runtime logger)
+add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)
+target_link_libraries(log_rotation_smoke_tests PRIVATE engine_core)
+add_test(NAME log_rotation_smoke_tests COMMAND log_rotation_smoke_tests)
 
 # M20.2: Argon2 hashing wrapper unit tests (engine_auth first so linker resolves Log from engine_core)
 add_executable(argon2_hash_tests engine/auth/Argon2HashTests.cpp)

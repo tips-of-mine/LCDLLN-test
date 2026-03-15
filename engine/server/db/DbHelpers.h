@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string_view>
 
@@ -9,6 +10,9 @@ struct MYSQL_RES;
 
 namespace engine::server::db
 {
+	/// M23.2: Optional. Set a callback to record query latency in ms (e.g. for Prometheus db_query_latency_ms). Call from server main once.
+	void SetDbLatencyObserver(std::function<void(int)> observer);
+
 	/// Executes a single SQL statement (or multi-statement batch). No result set expected.
 	/// Returns true on success. For user-derived input use prepared statements (see docs/db_sql_guidelines.md).
 	bool DbExecute(MYSQL* mysql, std::string_view sql);

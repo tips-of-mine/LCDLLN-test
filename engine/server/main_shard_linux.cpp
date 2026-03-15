@@ -1,5 +1,7 @@
 /// M22.6 — Shard server entry point: accepts client connections; first packet must be PRESENT_SHARD_TICKET; validates and responds TICKET_ACCEPTED/REJECTED.
 
+#include "engine/server/HealthEndpoint.h"
+#include "engine/server/PrometheusMetrics.h"
 #include "engine/server/NetServer.h"
 #include "engine/server/ShardTicketValidator.h"
 #include "engine/server/ShardTicketHandshakeHandler.h"
@@ -52,6 +54,20 @@ int main(int argc, char** argv)
 	}
 	LOG_INFO(Net, "[ShardMain] NetServer listening on port {}", port);
 
+	// M23.1 + M23.2 — Health/readiness and Prometheus /metrics (Shard: no auth/sessions/shard registry/DB).
+	engine::server::HealthEndpoint healthEndpoint;
+	uint16_t healthPort = static_cast<uint16_t>(config.GetInt("server.health.port", 3843));
+	std::string healthBind = config.GetString("server.health.bind", "127.0.0.1");
+	auto metricsProvider = [&server]() {
+		engine::server::NetServerStats netStats;
+		server.GetNetworkStats(netStats);
+		return engine::server::BuildPrometheusText(netStats, 0, 0, 0, 0, nullptr);
+	};
+	if (healthEndpoint.Init(healthPort, healthBind, []() { return true; }, metricsProvider))
+		LOG_INFO(Net, "[ShardMain] Health endpoint listening on {}:{} (/healthz, /readyz, /metrics)", healthBind, healthPort);
+	else
+		LOG_WARN(Net, "[ShardMain] Health endpoint Init failed (port {}), continuing without health endpoint", healthPort);
+
 	engine::server::ShardTicketValidator validator;
 	validator.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	validator.SetShardId(static_cast<uint32_t>(config.GetInt("shard.id", 1)));
@@ -70,6 +86,7 @@ int main(int argc, char** argv)
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 	LOG_INFO(Net, "[ShardMain] Shutdown");
+	healthEndpoint.Shutdown();
 	engine::core::Log::Shutdown();
 	return 0;
 }

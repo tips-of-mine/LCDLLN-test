@@ -172,6 +172,7 @@ namespace engine::server
 		const std::string ipKey = ConnIdToRateLimitKey(connId);
 		if (m_rateLimit && m_rateLimit->IsBanned(ipKey))
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "banned", requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
@@ -179,6 +180,7 @@ namespace engine::server
 		}
 		if (m_rateLimit && !m_rateLimit->TryConsumeAuth(ipKey))
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			LOG_WARN(Auth, "[AuthRegisterHandler] Auth rate limited (connId={})", connId);
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "rate limited", requestId, sessionIdHeader);
@@ -188,6 +190,7 @@ namespace engine::server
 		auto parsed = ParseAuthRequestPayload(payload, payloadSize);
 		if (!parsed)
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			LOG_WARN(Auth, "[AuthRegisterHandler] Auth: invalid payload");
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "invalid_payload");
@@ -199,6 +202,7 @@ namespace engine::server
 		std::string login_norm(NormaliseLoginView(parsed->login));
 		if (login_norm.empty())
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "invalid_login");
 			if (m_rateLimit) m_rateLimit->RecordAuthFailure(ipKey);
@@ -208,6 +212,7 @@ namespace engine::server
 		}
 		if (!m_accountStore || !m_sessionManager)
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			LOG_ERROR(Auth, "[AuthRegisterHandler] Auth: no store or session manager");
 			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "unavailable", requestId, sessionIdHeader);
@@ -217,6 +222,7 @@ namespace engine::server
 		auto opt = m_accountStore->FindByLogin(login_norm);
 		if (!opt)
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "account_not_found");
 			if (m_rateLimit) m_rateLimit->RecordAuthFailure(ipKey);
@@ -226,6 +232,7 @@ namespace engine::server
 		}
 		if (opt->status != AccountStatus::Active)
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "account_locked");
 			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::ACCOUNT_LOCKED, requestId, sessionIdHeader);
@@ -236,6 +243,7 @@ namespace engine::server
 		std::fprintf(stderr, "[AUTH] HandleAuth hash_ok=%d\n", (int)hashOk); std::fflush(stderr);
 		if (!hashOk)
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "invalid_credentials");
 			if (m_rateLimit) m_rateLimit->RecordAuthFailure(ipKey);
 			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::INVALID_CREDENTIALS, requestId, sessionIdHeader);
@@ -246,6 +254,7 @@ namespace engine::server
 		uint64_t session_id = m_sessionManager->CreateSession(opt->account_id);
 		if (session_id == 0)
 		{
+			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "already_logged_in");
 			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::ALREADY_LOGGED_IN, requestId, sessionIdHeader);
@@ -263,6 +272,7 @@ namespace engine::server
 			m_server->Send(connId, pkt);
 		if (m_connectionSessionMap)
 			m_connectionSessionMap->Add(connId, session_id);
+		m_authSuccessTotal.fetch_add(1, std::memory_order_relaxed);
 		std::fprintf(stderr, "[AUTH] HandleAuth result=%s session_id=%llu\n", "OK", (unsigned long long)session_id); std::fflush(stderr);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Auth success (connId={}, account_id={}, session_id={})", connId, opt->account_id, session_id);
 	}

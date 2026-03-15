@@ -23,7 +23,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
-  target_link_libraries(server_app PRIVATE ws2_32 engine_auth)
+  target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
   find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
@@ -62,9 +62,11 @@ elseif(UNIX)
     ShardTicketHandler.cpp
     ShardTicketValidator.cpp
     ServerListHandler.cpp
+    HealthEndpoint.cpp
+    PrometheusMetrics.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
-  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth ${MYSQL_LIBRARY})
+  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
 
   # M21.6: DB layer smoke tests
   add_executable(db_layer_tests db/DbLayerTests.cpp db/ConnectionPool.cpp db/DbHelpers.cpp)
@@ -109,6 +111,8 @@ elseif(UNIX)
     ShardTicketValidator.cpp
     ShardTicketHandshakeHandler.cpp
     ShardTicketCrypto.cpp
+    HealthEndpoint.cpp
+    PrometheusMetrics.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp

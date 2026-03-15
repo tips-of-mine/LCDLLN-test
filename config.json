@@ -1,4 +1,9 @@
 {
+    "log": {
+        "level": "Info",
+        "rotation_size_mb": 10,
+        "retention_days": 7
+    },
     "render": {
         "vsync": true,
         "present_mode": "fifo"

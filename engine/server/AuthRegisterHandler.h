@@ -2,6 +2,7 @@
 
 #include "engine/network/ProtocolV1Constants.h"
 
+#include <atomic>
 #include <cstdint>
 #include <string_view>
 
@@ -33,6 +34,10 @@ namespace engine::server
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
+		/// M23.2: counters for Prometheus auth_success_total / auth_fail_total. Thread-safe.
+		uint64_t GetAuthSuccessTotal() const { return m_authSuccessTotal.load(std::memory_order_relaxed); }
+		uint64_t GetAuthFailTotal() const { return m_authFailTotal.load(std::memory_order_relaxed); }
+
 	private:
 		void HandleRegister(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
@@ -45,6 +50,8 @@ namespace engine::server
 		RateLimitAndBan* m_rateLimit = nullptr;
 		SecurityAuditLog* m_auditLog = nullptr;
 		ConnectionSessionMap* m_connectionSessionMap = nullptr;
+		std::atomic<uint64_t> m_authSuccessTotal{ 0 };
+		std::atomic<uint64_t> m_authFailTotal{ 0 };
 	};
 
 }

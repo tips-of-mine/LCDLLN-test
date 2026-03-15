@@ -1,25 +1,19 @@
 #include "engine/core/Log.h"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 #include <chrono>
 #include <cstring>
-#include <cstdio>
 #include <ctime>
-#include <fstream>
-#include <mutex>
+#include <memory>
 #include <thread>
 
 namespace engine::core
 {
 	namespace
 	{
-		std::mutex* g_mutex = new std::mutex();
-		std::ofstream* g_file = new std::ofstream();
-		LogSettings* g_settings = new LogSettings();
-
-		std::mutex& GetMutex()   { return *g_mutex; }
-		std::ofstream& GetFile() { return *g_file; }
-		LogSettings& GetSettings() { return *g_settings; }
-
 		const char* ToString(LogLevel level)
 		{
 			switch (level)
@@ -35,29 +29,22 @@ namespace engine::core
 			}
 		}
 
-		std::string TimestampNow()
+		spdlog::level::level_enum ToSpdlogLevel(LogLevel level)
 		{
-			using namespace std::chrono;
-			const auto now = system_clock::now();
-			const auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-			const std::time_t t = system_clock::to_time_t(now);
-
-			std::tm tm{};
-#if defined(_WIN32)
-			localtime_s(&tm, &t);
-#else
-			localtime_r(&t, &tm);
-#endif
-
-			char buffer[32]{};
-			std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
-			return std::format("{}.{:03}", buffer, static_cast<int>(ms.count()));
+			switch (level)
+			{
+			case LogLevel::Trace: return spdlog::level::trace;
+			case LogLevel::Debug: return spdlog::level::debug;
+			case LogLevel::Info:  return spdlog::level::info;
+			case LogLevel::Warn:  return spdlog::level::warn;
+			case LogLevel::Error: return spdlog::level::err;
+			case LogLevel::Fatal: return spdlog::level::critical;
+			case LogLevel::Off:   return spdlog::level::off;
+			default:              return spdlog::level::info;
+			}
 		}
 
-		uint64_t ThreadIdNumber()
-		{
-			return static_cast<uint64_t>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
-		}
+		const char* const c_runtimeLoggerName = "runtime";
 	}
 
 	std::atomic<LogLevel> Log::s_level{ LogLevel::Info };
@@ -79,33 +66,73 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
-	    std::fprintf(stderr, "[LOG] 1 g_mutex=%p g_settings=%p g_file=%p\n",
-	        (void*)g_mutex, (void*)g_settings, (void*)g_file);
-	    std::fflush(stderr);
-	
-	    std::fprintf(stderr, "[LOG] 2 bypass mutex test\n"); std::fflush(stderr);
-	    *g_settings = settings;
-	    std::fprintf(stderr, "[LOG] 3 settings OK\n"); std::fflush(stderr);
-	
-	    s_level.store(settings.level, std::memory_order_relaxed);
-	    std::fprintf(stderr, "[LOG] 4 s_level OK\n"); std::fflush(stderr);
-	
-	    if (!settings.filePath.empty())
-	    {
-	        std::fprintf(stderr, "[LOG] 5 ouverture '%s'\n", settings.filePath.c_str()); std::fflush(stderr);
-	        g_file->open(settings.filePath, std::ios::out | std::ios::app);
-	        std::fprintf(stderr, "[LOG] 6 open=%d\n", (int)g_file->is_open()); std::fflush(stderr);
-	    }
+		Shutdown();
+		s_level.store(settings.level, std::memory_order_relaxed);
+
+		std::vector<spdlog::sink_ptr> sinks;
+		if (settings.console)
+		{
+			auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			sinks.push_back(console_sink);
+		}
+
+		if (!settings.filePath.empty())
+		{
+			const size_t max_bytes = (settings.rotation_size_mb > 0)
+				? (settings.rotation_size_mb * 1024u * 1024u)
+				: (10u * 1024u * 1024u);
+			const int max_files = (settings.retention_days > 0)
+				? std::max(1, settings.retention_days)
+				: 7;
+			try
+			{
+				auto file_sink = (settings.rotation_size_mb > 0)
+					? std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+						settings.filePath, max_bytes, static_cast<size_t>(max_files))
+					: std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+						settings.filePath, max_bytes, static_cast<size_t>(max_files));
+				sinks.push_back(file_sink);
+			}
+			catch (const std::exception& e)
+			{
+				if (settings.console)
+				{
+					spdlog::default_logger()->error("[Log] Init FAILED: cannot open file {} — {}", settings.filePath, e.what());
+				}
+				return;
+			}
+		}
+
+		if (sinks.empty())
+		{
+			return;
+		}
+
+		auto logger = std::make_shared<spdlog::logger>(c_runtimeLoggerName, sinks.begin(), sinks.end());
+		logger->set_level(ToSpdlogLevel(settings.level));
+		if (settings.flushAlways)
+		{
+			logger->flush_on(spdlog::level::trace);
+		}
+		spdlog::register_logger(logger);
+		spdlog::set_default_logger(logger);
+
+		LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",
+			settings.filePath.empty() ? "<none>" : settings.filePath,
+			ToString(settings.level),
+			static_cast<unsigned>(settings.rotation_size_mb),
+			settings.retention_days);
 	}
 
 	void Log::Shutdown()
 	{
-		std::scoped_lock lock(GetMutex());
-		if (GetFile().is_open())
+		auto logger = spdlog::get(c_runtimeLoggerName);
+		if (logger)
 		{
-			GetFile().flush();
-			GetFile().close();
+			LOG_INFO(Core, "[Log] Shutdown: runtime logger dropped");
+			logger->flush();
 		}
+		spdlog::drop(c_runtimeLoggerName);
 	}
 
 	LogLevel Log::GetLevel()
@@ -116,27 +143,26 @@ namespace engine::core
 	void Log::SetLevel(LogLevel level)
 	{
 		s_level.store(level, std::memory_order_relaxed);
+		if (auto logger = spdlog::get(c_runtimeLoggerName))
+		{
+			logger->set_level(ToSpdlogLevel(level));
+		}
 	}
 
 	void Log::WriteLine(LogLevel level, const char* subsystem, std::string_view message)
 	{
-	    if (level < s_level.load(std::memory_order_relaxed))
-	        return;
+		if (level < s_level.load(std::memory_order_relaxed))
+			return;
 
-	    // Copy message so we are safe against reentrant LOG_* overwriting the
-	    // thread_local buffer in Log::Write (which would make 'message' dangling).
-	    const std::string msgCopy(message);
+		auto logger = spdlog::get(c_runtimeLoggerName);
+		if (!logger)
+			return;
 
-	    char buf[1024];
-	    std::snprintf(buf, sizeof(buf), "[%s][%s] %s\n",
-	        subsystem ? subsystem : "?",
-	        ToString(level),
-	        msgCopy.c_str());
+		spdlog::level::level_enum spd_level = ToSpdlogLevel(level);
+		if (spd_level == spdlog::level::off)
+			return;
 
-	    if (g_file->is_open())
-	    {
-	        g_file->write(buf, static_cast<std::streamsize>(std::strlen(buf)));
-	        g_file->flush();
-	    }
+		const std::string formatted = std::string("[") + (subsystem ? subsystem : "?") + "] " + std::string(message);
+		logger->log(spd_level, "{}", formatted);
 	}
 }

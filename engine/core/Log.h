@@ -33,6 +33,12 @@ namespace engine::core
 
 		/// If true, flush file output after each line (recommended for Debug builds).
 		bool flushAlways = false;
+
+		/// Max size per log file in MB before rotation (0 = no rotation).
+		size_t rotation_size_mb = 10;
+
+		/// Number of rotated files to retain (used as max_files for rotating sink).
+		int retention_days = 7;
 	};
 
 	class Log final

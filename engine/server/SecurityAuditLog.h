@@ -1,8 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
+
+namespace spdlog
+{
+	class logger;
+}
 
 namespace engine::server
 {
@@ -13,8 +19,9 @@ namespace engine::server
 		SecurityAuditLog() = default;
 		~SecurityAuditLog();
 
-		/// Open audit log file at \a filePath. Returns true on success. Existing file is appended.
-		bool Init(std::string_view filePath);
+		/// Open audit log file at \a filePath with rotation. Returns true on success.
+		/// \a rotationSizeMb max size per file in MB before rotation; \a retentionDays number of files to retain.
+		bool Init(std::string_view filePath, size_t rotationSizeMb = 10, int retentionDays = 7);
 
 		/// Close file. Safe to call multiple times.
 		void Shutdown();
@@ -47,7 +54,7 @@ namespace engine::server
 		void writeLine(std::string_view event, std::string_view payload);
 		static std::string timestamp();
 
-		void* m_file = nullptr;
+		std::shared_ptr<spdlog::logger> m_logger;
 		std::string m_filePath;
 	};
 

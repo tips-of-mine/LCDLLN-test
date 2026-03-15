@@ -1,0 +1,12 @@
+{
+  "server": {
+    "tcp": { "port": 3843 },
+    "health": { "port": 3843, "bind": "0.0.0.0" }
+  },
+  "log": {
+    "level": "info",
+    "console": true,
+    "file": "logs/lcdlln_shard.log"
+  },
+  "paths": { "content": "game/data" }
+}

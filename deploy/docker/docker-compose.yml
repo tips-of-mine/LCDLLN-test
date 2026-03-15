@@ -1,0 +1,112 @@
+# ============================================================
+# M24.4 — LCDLLN stack locale (MySQL 8 + Master + Shard)
+# ============================================================
+# Services :
+#   mysql   — MySQL 8.0 avec schéma LCDLLN (lcdlln_master)
+#   master  — Master server (lcdlln_server, Dockerfile.master)
+#   shard   — Shard server (lcdlln_shard, Dockerfile.shard)
+#
+# Prérequis : copier les binaires Linux dans deploy/docker/bin/
+#   - bin/lcdlln_server
+#   - bin/lcdlln_shard
+#
+# Démarrage :
+#   docker compose up -d
+#
+# Arrêt :
+#   docker compose down
+#
+# Arrêt + suppression données MySQL :
+#   docker compose down -v
+# ============================================================
+
+version: "3.9"
+
+networks:
+  lcdlln-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  master-logs:
+    driver: local
+  shard-logs:
+    driver: local
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: lcdlln-mysql
+    restart: unless-stopped
+    networks:
+      - lcdlln-net
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-lcdlln_root_dev}
+      MYSQL_DATABASE:      ${MYSQL_DATABASE:-lcdlln_master}
+      MYSQL_USER:          ${MYSQL_USER:-lcdlln_user}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD:-lcdlln_pass_dev}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../../db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "${MYSQL_USER:-lcdlln_user}",
+             "-p${MYSQL_PASSWORD:-lcdlln_pass_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  master:
+    build:
+      context: .
+      dockerfile: Dockerfile.master
+    image: lcdlln-master
+    container_name: lcdlln-master
+    restart: unless-stopped
+    networks:
+      - lcdlln-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${MASTER_PORT:-3840}:3840"
+    volumes:
+      - ./config/master.config.json:/app/config.json:ro
+      - master-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3840"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    command: ["-log", "-console"]
+
+  shard:
+    build:
+      context: .
+      dockerfile: Dockerfile.shard
+    image: lcdlln-shard
+    container_name: lcdlln-shard
+    restart: unless-stopped
+    networks:
+      - lcdlln-net
+    depends_on:
+      master:
+        condition: service_healthy
+    ports:
+      - "${SHARD_PORT:-3843}:3843"
+    volumes:
+      - ./config/shard.config.json:/app/config.json:ro
+      - shard-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3843"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    command: ["-log", "-console"]

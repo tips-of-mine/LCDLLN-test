@@ -1,0 +1,24 @@
+{
+  "server": {
+    "tcp": { "port": 3840 },
+    "health": { "port": 3842, "bind": "0.0.0.0" }
+  },
+  "db": {
+    "host": "mysql",
+    "port": 3306,
+    "database": "lcdlln_master",
+    "user": "lcdlln_user",
+    "password": "lcdlln_pass_dev"
+  },
+  "shard": {
+    "heartbeat_timeout_sec": 90,
+    "ticket_validity_sec": 60,
+    "ticket_hmac_secret": "dev_secret_change_in_production"
+  },
+  "log": {
+    "level": "info",
+    "console": true,
+    "file": "logs/lcdlln_server.log"
+  },
+  "paths": { "content": "game/data" }
+}

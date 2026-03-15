@@ -1,0 +1,146 @@
+# M24.3 — Nightly build (only if changes since last nightly tag)
+name: Nightly (Linux, only if changes)
+
+on:
+  schedule:
+    # 02:00 UTC daily
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+      nightly_date: ${{ steps.check.outputs.nightly_date }}
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes since last nightly
+        id: check
+        run: |
+          # Latest tag matching nightly-YYYYMMDD (sort descending by name = by date)
+          LAST_NIGHTLY=$(git tag -l 'nightly-*' | sort -rV 2>/dev/null | head -1)
+          NIGHTLY_DATE=$(date -u +%Y%m%d)
+          echo "nightly_date=$NIGHTLY_DATE" >> $GITHUB_OUTPUT
+          if [ -z "$LAST_NIGHTLY" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "No existing nightly tag, will run build."
+            exit 0
+          fi
+          TAG_COMMIT=$(git rev-parse "$LAST_NIGHTLY" 2>/dev/null)
+          HEAD_COMMIT=$(git rev-parse HEAD)
+          if [ "$TAG_COMMIT" = "$HEAD_COMMIT" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "HEAD equals $LAST_NIGHTLY ($TAG_COMMIT), skip build."
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "New commits since $LAST_NIGHTLY, will run build."
+          fi
+
+  nightly-build:
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees
+            ${{ github.workspace }}/vcpkg/packages
+            ${{ github.workspace }}/build/linux-x64-release/vcpkg_installed
+          key: vcpkg-x64-linux-${{ hashFiles('**/vcpkg.json', '**/vcpkg.lock') }}
+          restore-keys: vcpkg-x64-linux-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            libvulkan-dev vulkan-utility-libraries-dev \
+            libx11-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxi-dev libgl1-mesa-dev \
+            pkg-config
+
+      - name: Clone vcpkg
+        run: |
+          if [ ! -d "${{ github.workspace }}/vcpkg/.git" ]; then
+            git clone https://github.com/Microsoft/vcpkg.git "${{ github.workspace }}/vcpkg"
+          fi
+
+      - name: Bootstrap vcpkg
+        run: bash "${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+
+      - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          VCPKG_DEFAULT_TRIPLET: x64-linux
+        run: cmake --preset linux-x64-release
+
+      - name: Build (Release)
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --build --preset linux-x64-release
+
+      - name: Unit tests
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: |
+          cd "${{ github.workspace }}/build/linux-x64-release"
+          ctest --output-on-failure --no-compress-output -E "network_integration_tests" || exit 1
+
+      - name: Integration tests
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: |
+          cd "${{ github.workspace }}/build/linux-x64-release"
+          ctest --output-on-failure --no-compress-output -R "network_integration_tests" || exit 1
+
+      - name: Prepare package (tar.gz)
+        id: package
+        run: |
+          WORKSPACE="${{ github.workspace }}"
+          BUILD_DIR="$WORKSPACE/build/linux-x64-release"
+          OUT="$WORKSPACE/out"
+          mkdir -p "$OUT/pkg"
+          if [ -d "$BUILD_DIR/pkg/server" ]; then
+            cp -r "$BUILD_DIR/pkg/server" "$OUT/pkg/"
+          fi
+          if [ -f "$WORKSPACE/config.json" ]; then
+            cp "$WORKSPACE/config.json" "$OUT/"
+          fi
+          if [ -d "$WORKSPACE/game/data" ]; then
+            mkdir -p "$OUT/game/data"
+            cp -r "$WORKSPACE/game/data/." "$OUT/game/data/"
+          fi
+          NIGHTLY_DATE="${{ needs.check-changes.outputs.nightly_date }}"
+          SHORT_SHA=$(git -C "$WORKSPACE" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          ARTIFACT_NAME="lcdlln-linux-nightly-${NIGHTLY_DATE}-${SHORT_SHA}.tar.gz"
+          ARTIFACT_PATH="$WORKSPACE/$ARTIFACT_NAME"
+          tar -czf "$ARTIFACT_PATH" -C "$OUT" .
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.artifact_path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create and push tag nightly-YYYYMMDD
+        run: |
+          NIGHTLY_DATE="${{ needs.check-changes.outputs.nightly_date }}"
+          TAG="nightly-$NIGHTLY_DATE"
+          git config user.name "nightly"
+          git config user.email "nightly@localhost"
+          git tag -a "$TAG" -m "Nightly build $NIGHTLY_DATE"
+          git push origin "$TAG"

@@ -1,0 +1,29 @@
+# M24.4 — Master server (dev image, binaire pré-compilé)
+# Build: depuis deploy/docker avec binaire dans bin/lcdlln_server
+#   docker build -f Dockerfile.master -t lcdlln-master .
+
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 \
+    libstdc++6 \
+    libgcc-s1 \
+    ca-certificates \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY bin/lcdlln_server /app/lcdlln_server
+RUN chmod +x /app/lcdlln_server
+
+# Config par défaut (surchargée par volume en dev)
+COPY config/master.config.json /app/config.json
+
+EXPOSE 3840
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+    CMD nc -z localhost 3840 || exit 1
+
+ENTRYPOINT ["/app/lcdlln_server"]
+CMD ["-log", "-console"]

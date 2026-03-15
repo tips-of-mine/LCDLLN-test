@@ -34,7 +34,7 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           VCPKG_DEFAULT_TRIPLET: x64-linux
-        run: cmake --preset linux-x64
+        run: cmake --preset linux-x64-release
 
       - name: Build (Release)
         env:

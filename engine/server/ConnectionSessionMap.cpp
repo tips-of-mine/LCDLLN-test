@@ -14,6 +14,15 @@ namespace engine::server
 		m_connToSession.erase(connId);
 	}
 
+	std::optional<uint64_t> ConnectionSessionMap::GetSessionId(uint32_t connId) const
+	{
+		std::lock_guard lock(m_mutex);
+		auto it = m_connToSession.find(connId);
+		if (it == m_connToSession.end())
+			return std::nullopt;
+		return it->second;
+	}
+
 	std::vector<std::pair<uint32_t, uint64_t>> ConnectionSessionMap::CollectExpired(const SessionManager& sessionManager)
 	{
 		std::vector<std::pair<uint32_t, uint64_t>> out;

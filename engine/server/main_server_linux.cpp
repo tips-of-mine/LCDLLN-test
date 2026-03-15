@@ -4,6 +4,11 @@
 #include "engine/server/MigrationRunner.h"
 #include "engine/server/db/ConnectionPool.h"
 #include "engine/server/NetServer.h"
+#include "engine/server/ShardRegisterHandler.h"
+#include "engine/server/ShardRegistry.h"
+#include "engine/server/ShardTicketHandler.h"
+#include "engine/server/ServerListHandler.h"
+#include "engine/network/ProtocolV1Constants.h"
 #include "engine/server/AuthRegisterHandler.h"
 #include "engine/server/InMemoryAccountStore.h"
 #include "engine/server/SessionManager.h"
@@ -73,6 +78,10 @@ int main(int argc, char** argv)
 	engine::server::db::ConnectionPool dbPool;
 	dbPool.Init(config);
 
+	engine::server::ShardRegistry shardRegistry;
+	engine::server::ShardRegisterHandler shardRegisterHandler;
+	shardRegisterHandler.SetShardRegistry(&shardRegistry);
+
 	engine::server::NetServer server;
 	std::signal(SIGINT, OnSignal);
 	std::signal(SIGTERM, OnSignal);
@@ -120,11 +129,33 @@ int main(int argc, char** argv)
 	authHandler.SetSecurityAuditLog(&auditLog);
 	engine::server::ConnectionSessionMap connSessionMap;
 	authHandler.SetConnectionSessionMap(&connSessionMap);
-	server.SetPacketHandler([&authHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	shardRegisterHandler.SetServer(&server);
+	engine::server::ShardTicketHandler shardTicketHandler;
+	shardTicketHandler.SetServer(&server);
+	shardTicketHandler.SetShardRegistry(&shardRegistry);
+	shardTicketHandler.SetSessionManager(&sessionManager);
+	shardTicketHandler.SetConnectionSessionMap(&connSessionMap);
+	shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
+	shardTicketHandler.SetValiditySec(static_cast<int>(config.GetInt("shard.ticket_validity_sec", 60)));
+	engine::server::ServerListHandler serverListHandler;
+	serverListHandler.SetServer(&server);
+	serverListHandler.SetShardRegistry(&shardRegistry);
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
-		authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		if (opcode == engine::network::kOpcodeShardRegister || opcode == engine::network::kOpcodeShardHeartbeat)
+			shardRegisterHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == engine::network::kOpcodeRequestShardTicket)
+			shardTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == engine::network::kOpcodeServerListRequest)
+			serverListHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else
+			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
-	LOG_INFO(Net, "[ServerMain] Auth/Register and Heartbeat handler set (opcodes 1, 3, 7)");
+	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
+	shardRegistry.SetShardDownCallback([](uint32_t shard_id) {
+		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
+	});
+	LOG_INFO(Net, "[ServerMain] Auth/Register/Heartbeat/ShardTicket/ServerList and Shard register handler set (opcodes 1, 3, 7, 10, 13, 14, 19)");
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);
 
@@ -143,6 +174,7 @@ int main(int argc, char** argv)
 		{
 			lastWatchdog = now;
 			sessionManager.EvictExpired();
+			shardRegistry.EvictStaleHeartbeats(shardHeartbeatTimeoutSec);
 			auto expired = connSessionMap.CollectExpired(sessionManager);
 			for (const auto& [connId, sessionId] : expired)
 			{

@@ -46,6 +46,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/AuthRegisterPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
     AccountValidation.cpp
     InMemoryAccountStore.cpp
     AuthRegisterHandler.cpp
@@ -54,6 +56,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
     ShardRegistry.cpp
+    ShardRegisterHandler.cpp
+    ShardTicketCrypto.cpp
+    ShardTicketHandler.cpp
+    ShardTicketValidator.cpp
+    ServerListHandler.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth ${MYSQL_LIBRARY})
@@ -64,6 +71,55 @@ elseif(UNIX)
   target_link_libraries(db_layer_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
   target_compile_options(db_layer_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME db_layer_tests COMMAND db_layer_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # M22.4: Shard ticket validation tests
+  add_executable(shard_ticket_tests
+    ShardTicketTests.cpp
+    ShardTicketValidator.cpp
+    ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
+  )
+  target_include_directories(shard_ticket_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_ticket_tests PRIVATE engine_core OpenSSL::SSL)
+  target_compile_options(shard_ticket_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME shard_ticket_tests COMMAND shard_ticket_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # M22.5: Server list and shard selection policy tests
+  add_executable(server_list_policy_tests
+    ServerListPolicyTests.cpp
+    ShardRegistry.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
+  )
+  target_include_directories(server_list_policy_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(server_list_policy_tests PRIVATE engine_core)
+  target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # M22.6: Shard server (ticket handshake only; no ShardToMasterClient on Linux)
+  add_executable(shard_app
+    main_shard_linux.cpp
+    NetServer.cpp
+    ShardTicketValidator.cpp
+    ShardTicketHandshakeHandler.cpp
+    ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
+  )
+  target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread)
+  target_compile_options(shard_app PRIVATE -Wall -Wextra -Wpedantic)
+  set_target_properties(shard_app PROPERTIES
+    OUTPUT_NAME "lcdlln_shard"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pkg/server"
+  )
 else()
   message(STATUS "M15.4: server_app not configured for this platform (WIN32/UNIX only)")
   return()

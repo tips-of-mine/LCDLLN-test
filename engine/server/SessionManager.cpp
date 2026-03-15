@@ -150,6 +150,16 @@ namespace engine::server
 		LOG_DEBUG(Net, "[SessionManager] SetState: session_id={} state={}", session_id, static_cast<int>(state));
 	}
 
+	std::optional<uint64_t> SessionManager::GetAccountId(uint64_t session_id) const
+	{
+		if (session_id == kInvalidSessionId)
+			return std::nullopt;
+		auto it = m_by_session_id.find(session_id);
+		if (it == m_by_session_id.end())
+			return std::nullopt;
+		return it->second.account_id;
+	}
+
 	void SessionManager::EvictExpired()
 	{
 		auto now = Clock::now();

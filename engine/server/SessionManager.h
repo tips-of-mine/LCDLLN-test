@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -92,6 +93,9 @@ namespace engine::server
 
 		/// Evict expired sessions (state set to Expired, then can be removed from lookups). Call periodically.
 		void EvictExpired();
+
+		/// Returns account_id for \a session_id if session exists. For M22.4 (shard ticket request).
+		std::optional<uint64_t> GetAccountId(uint64_t session_id) const;
 
 	private:
 		using Clock = std::chrono::steady_clock;

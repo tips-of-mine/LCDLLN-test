@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -21,6 +22,9 @@ namespace engine::server
 
 		/// Remove \a connId from the map (call after closing connection).
 		void Remove(uint32_t connId);
+
+		/// Returns session_id for \a connId if registered. For M22.4 (shard ticket: connId → account_id).
+		std::optional<uint64_t> GetSessionId(uint32_t connId) const;
 
 		/// Returns pairs (connId, session_id) for which the session is no longer valid (heartbeat timeout or max age).
 		/// Call after SessionManager::EvictExpired(). Caller must then close each connId and SessionManager::Close(session_id).

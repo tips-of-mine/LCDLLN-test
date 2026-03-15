@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -54,7 +55,11 @@ namespace engine::server
 		bool MarkDown(uint32_t shard_id);
 
 		/// Marks any shard as Offline when last_heartbeat is older than \a timeout_sec.
-		void EvictStaleHeartbeats(int timeout_sec);
+		/// Optional \a as_of for tests; when nullopt, uses steady_clock::now().
+		void EvictStaleHeartbeats(int timeout_sec, std::optional<std::chrono::steady_clock::time_point> as_of = std::nullopt);
+
+		/// Callback invoked when a shard is marked offline by the watchdog (M22.3 "event interne shard_down").
+		void SetShardDownCallback(std::function<void(uint32_t shard_id)> cb);
 
 		/// Returns a copy of the shard entry, or nullopt if not found.
 		std::optional<ShardInfo> GetShard(uint32_t shard_id) const;
@@ -62,7 +67,7 @@ namespace engine::server
 		/// Returns all shards (copy). Order unspecified.
 		std::vector<ShardInfo> ListShards() const;
 
-		/// Placeholder for M22.4: returns first Online shard with current_load < max_capacity, or nullopt.
+		/// M22.5: returns Online shard with lowest load ratio (current_load/max_capacity). Excludes Offline and Degraded.
 		std::optional<ShardInfo> SelectShard() const;
 
 	private:
@@ -81,5 +86,6 @@ namespace engine::server
 		std::unordered_map<uint32_t, Entry> m_shards;
 		std::unordered_map<std::string, uint32_t> m_name_to_id;
 		uint32_t m_next_id = 1;
+		std::function<void(uint32_t)> m_shard_down_callback;
 	};
 }

@@ -66,22 +66,38 @@ namespace engine::server
 		return true;
 	}
 
-	void ShardRegistry::EvictStaleHeartbeats(int timeout_sec)
+	void ShardRegistry::SetShardDownCallback(std::function<void(uint32_t)> cb)
 	{
-		auto now = std::chrono::steady_clock::now();
-		auto threshold = now - std::chrono::seconds(timeout_sec);
 		std::lock_guard<std::mutex> lock(m_mutex);
-		size_t n = 0;
-		for (auto& [id, e] : m_shards)
+		m_shard_down_callback = std::move(cb);
+	}
+
+	void ShardRegistry::EvictStaleHeartbeats(int timeout_sec, std::optional<std::chrono::steady_clock::time_point> as_of)
+	{
+		auto now = as_of.value_or(std::chrono::steady_clock::now());
+		auto threshold = now - std::chrono::seconds(timeout_sec);
+		std::vector<uint32_t> marked;
+		std::function<void(uint32_t)> cb;
 		{
-			if (e.state != ShardState::Offline && e.last_heartbeat < threshold)
+			std::lock_guard<std::mutex> lock(m_mutex);
+			cb = m_shard_down_callback;
+			for (auto& [id, e] : m_shards)
 			{
-				e.state = ShardState::Offline;
-				++n;
+				if (e.state != ShardState::Offline && e.last_heartbeat < threshold)
+				{
+					e.state = ShardState::Offline;
+					marked.push_back(id);
+				}
 			}
 		}
-		if (n > 0)
-			LOG_INFO(Core, "[ShardRegistry] EvictStaleHeartbeats: {} shard(s) marked offline (timeout={}s)", n, timeout_sec);
+		for (uint32_t id : marked)
+		{
+			LOG_INFO(Core, "[ShardRegistry] shard_down (shard_id={})", id);
+			if (cb)
+				cb(id);
+		}
+		if (!marked.empty())
+			LOG_INFO(Core, "[ShardRegistry] EvictStaleHeartbeats: {} shard(s) marked offline (timeout={}s)", marked.size(), timeout_sec);
 	}
 
 	std::optional<ShardInfo> ShardRegistry::GetShard(uint32_t shard_id) const
@@ -127,22 +143,31 @@ namespace engine::server
 	std::optional<ShardInfo> ShardRegistry::SelectShard() const
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
+		const Entry* best = nullptr;
+		double best_ratio = 2.0; // > 1 so any Online shard is better
 		for (const auto& [id, e] : m_shards)
 		{
-			if (e.state == ShardState::Online && e.current_load < e.max_capacity)
+			if (e.state != ShardState::Online)
+				continue;
+			uint32_t cap = (e.max_capacity > 0u) ? e.max_capacity : 1u;
+			double ratio = static_cast<double>(e.current_load) / static_cast<double>(cap);
+			if (ratio < best_ratio)
 			{
-				ShardInfo info;
-				info.shard_id = e.shard_id;
-				info.name = e.name;
-				info.endpoint = e.endpoint;
-				info.region = e.region;
-				info.max_capacity = e.max_capacity;
-				info.current_load = e.current_load;
-				info.last_heartbeat = e.last_heartbeat;
-				info.state = e.state;
-				return info;
+				best_ratio = ratio;
+				best = &e;
 			}
 		}
-		return std::nullopt;
+		if (best == nullptr)
+			return std::nullopt;
+		ShardInfo info;
+		info.shard_id = best->shard_id;
+		info.name = best->name;
+		info.endpoint = best->endpoint;
+		info.region = best->region;
+		info.max_capacity = best->max_capacity;
+		info.current_load = best->current_load;
+		info.last_heartbeat = best->last_heartbeat;
+		info.state = best->state;
+		return info;
 	}
 }

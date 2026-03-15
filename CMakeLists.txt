@@ -143,6 +143,7 @@ add_library(engine_core
   engine/network/RequestResponseDispatcher.cpp
   engine/network/ErrorPacket.cpp
   engine/network/AuthRegisterPayloads.cpp
+  engine/network/ShardPayloads.cpp
 )
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -166,6 +167,10 @@ if(WIN32)
     engine/platform/Input.cpp
     engine/platform/Window.cpp
     engine/network/NetClient.cpp
+    engine/network/ShardToMasterClient.cpp
+    engine/network/ServerListPayloads.cpp
+    engine/network/ShardTicketPayloads.cpp
+    engine/network/MasterShardClientFlow.cpp
   )
 else()
   target_sources(engine_core PRIVATE
@@ -249,6 +254,28 @@ if(MSVC)
   target_compile_options(security_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME security_tests COMMAND security_tests)
+
+# M22.3: Shard down detection integration test (EvictStaleHeartbeats + callback)
+add_executable(shard_down_detection_tests engine/server/ShardDownDetectionTests.cpp engine/server/ShardRegistry.cpp)
+target_include_directories(shard_down_detection_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(shard_down_detection_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(shard_down_detection_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME shard_down_detection_tests COMMAND shard_down_detection_tests)
+
+# M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
+if(WIN32)
+  add_executable(client_flow_app engine/network/ClientFlowMain.cpp)
+  target_link_libraries(client_flow_app PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(client_flow_app PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  set_target_properties(client_flow_app PROPERTIES
+    OUTPUT_NAME "client_flow_app"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pkg/client"
+  )
+endif()
 
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)

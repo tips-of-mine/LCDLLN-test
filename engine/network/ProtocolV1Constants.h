@@ -21,4 +21,22 @@ namespace engine::network
 
 	/// Official opcode for ERROR packet (see tickets/docs/protocol_v1.md).
 	constexpr uint16_t kOpcodeError = 8u;
+
+	/// Shard↔Master internal opcodes (M22.2).
+	constexpr uint16_t kOpcodeShardRegister = 10u;
+	constexpr uint16_t kOpcodeShardRegisterOk = 11u;
+	constexpr uint16_t kOpcodeShardRegisterError = 12u;
+	constexpr uint16_t kOpcodeShardHeartbeat = 13u;
+
+	/// Client→Master shard ticket (M22.4).
+	constexpr uint16_t kOpcodeRequestShardTicket = 14u;
+	constexpr uint16_t kOpcodeShardTicketResponse = 15u;
+	/// Client→Shard present ticket; Shard→Client response.
+	constexpr uint16_t kOpcodePresentShardTicket = 16u;
+	constexpr uint16_t kOpcodeShardTicketAccepted = 17u;
+	constexpr uint16_t kOpcodeShardTicketRejected = 18u;
+
+	/// Client→Master server list (M22.5).
+	constexpr uint16_t kOpcodeServerListRequest = 19u;
+	constexpr uint16_t kOpcodeServerListResponse = 20u;
 }

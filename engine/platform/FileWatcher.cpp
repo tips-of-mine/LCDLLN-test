@@ -117,8 +117,11 @@ namespace engine::platform
 	{
 		Destroy();
 #if defined(_WIN32)
-		delete m_impl;
-		m_impl = nullptr;
+		if (m_impl != nullptr)
+		{
+			delete m_impl;
+			m_impl = nullptr;
+		}
 #endif
 	}
 

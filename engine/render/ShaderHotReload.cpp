@@ -8,15 +8,8 @@ namespace engine::render
 {
 	ShaderHotReload::ShaderHotReload()
 	{
-		std::fprintf(stderr, "[SHR] ctor this=%p mutex=%p\n", (void*)this, (void*)&m_pendingMutex); std::fflush(stderr);
-		if (m_compiler.LocateCompiler())
-		{
-			LOG_INFO(Render, "[ShaderHotReload] Init OK (worker_thread={})", m_worker.joinable() ? "on" : "off");
-		}
-		else
-		{
-			LOG_WARN(Render, "[ShaderHotReload] Init fallback: shader compiler not found");
-		}
+		// Do not call LOG_* here: Engine constructs this before Log::Init() runs; logging may crash or be dropped.
+		(void)m_compiler.LocateCompiler();
 		// m_worker = std::thread(&ShaderHotReload::WorkerThread, this);
 	}
 
@@ -32,7 +25,8 @@ namespace engine::render
 		{
 			m_worker.join();
 		}
-		LOG_INFO(Render, "[ShaderHotReload] Destroyed");
+		// Avoid LOG in destructor: during stack unwinding the log system may be unusable.
+		// LOG_INFO(Render, "[ShaderHotReload] Destroyed");
 	}
 
 	void ShaderHotReload::Watch(std::string_view relativePath, ShaderStage stage, std::string_view defines)

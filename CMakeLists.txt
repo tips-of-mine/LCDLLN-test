@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(LCDLLN_Engine LANGUAGES CXX)
+project(LCDLLN_Engine LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -11,9 +11,7 @@ endif()
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
-if(WIN32)
-  find_package(OpenSSL REQUIRED)
-endif()
+find_package(OpenSSL REQUIRED)
 
 # Vulkan Memory Allocator (VMA): centralised GPU allocations to avoid maxMemoryAllocationCount limit.
 # Prefer vendored copy (submodule or CI cache) so build works without network; else FetchContent.
@@ -33,6 +31,36 @@ else()
   set(VMA_INCLUDE_DIRS "${VMA_DIR_ABS}/include" "${VMA_DIR_ABS}")
   message(STATUS "VMA: using FetchContent at ${VMA_DIR_ABS}")
 endif()
+
+# M20.2 — Argon2 (phc-winner-argon2 reference implementation)
+include(FetchContent)
+FetchContent_Declare(phc-winner-argon2
+  GIT_REPOSITORY https://github.com/P-H-C/phc-winner-argon2
+  GIT_TAG        20190702
+)
+FetchContent_Populate(phc-winner-argon2)
+set(ARGON2_SRC_DIR "${phc-winner-argon2_SOURCE_DIR}/src")
+add_library(argon2_ref STATIC
+  ${ARGON2_SRC_DIR}/argon2.c
+  ${ARGON2_SRC_DIR}/core.c
+  ${ARGON2_SRC_DIR}/ref.c
+  ${ARGON2_SRC_DIR}/encoding.c
+  ${ARGON2_SRC_DIR}/thread.c
+  ${ARGON2_SRC_DIR}/blake2/blake2b.c
+)
+target_include_directories(argon2_ref PUBLIC
+  "${phc-winner-argon2_SOURCE_DIR}/include"
+  "${phc-winner-argon2_SOURCE_DIR}/src"
+)
+set_target_properties(argon2_ref PROPERTIES C_STANDARD 99)
+if(WIN32)
+  target_compile_definitions(argon2_ref PRIVATE ARGON2_NO_THREADS)
+endif()
+message(STATUS "M20.2: Argon2 using ref implementation at ${phc-winner-argon2_SOURCE_DIR}")
+
+add_library(engine_auth STATIC engine/auth/Argon2Hash.cpp)
+target_include_directories(engine_auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_auth PUBLIC argon2_ref OpenSSL::SSL)
 
 set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
     COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=0"
@@ -119,6 +147,7 @@ target_include_directories(engine_core PUBLIC
 target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan
   glfw
+  engine_auth
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL)
@@ -193,6 +222,11 @@ add_executable(protocol_v1_tests engine/network/ProtocolV1Tests.cpp)
 target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
+
+# M20.2: Argon2 hashing wrapper unit tests (engine_core provides Log used by engine_auth)
+add_executable(argon2_hash_tests engine/auth/Argon2HashTests.cpp)
+target_link_libraries(argon2_hash_tests PRIVATE engine_core)
+add_test(NAME argon2_hash_tests COMMAND argon2_hash_tests)
 
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)

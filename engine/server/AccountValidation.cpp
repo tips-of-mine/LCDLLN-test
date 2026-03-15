@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <string>
 
 namespace engine::server
 {

@@ -20,7 +20,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
   )
-  target_link_libraries(server_app PRIVATE ws2_32)
+  target_link_libraries(server_app PRIVATE ws2_32 engine_auth)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
   add_executable(server_app
@@ -36,7 +36,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
     AccountValidation.cpp
   )
-  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL)
+  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth)
 else()
   message(STATUS "M15.4: server_app not configured for this platform (WIN32/UNIX only)")
   return()

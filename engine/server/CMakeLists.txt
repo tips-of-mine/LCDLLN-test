@@ -37,7 +37,10 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/AuthRegisterPayloads.cpp
     AccountValidation.cpp
+    InMemoryAccountStore.cpp
+    AuthRegisterHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp

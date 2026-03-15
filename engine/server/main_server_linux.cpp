@@ -1,7 +1,12 @@
 /// Minimal Linux TCP server entry point (M19.4). Uses NetServer (epoll); no game/DB logic.
-/// Build and run on Linux to validate NetServer (e.g. 1000 connexions stables).
+/// M20.5: Auth/Register handlers wired via AuthRegisterHandler.
 
 #include "engine/server/NetServer.h"
+#include "engine/server/AuthRegisterHandler.h"
+#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/SessionManager.h"
+#include "engine/server/RateLimitAndBan.h"
+#include "engine/server/SecurityAuditLog.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -77,6 +82,34 @@ int main(int argc, char** argv)
 		engine::core::Log::Shutdown();
 		return 1;
 	}
+
+	engine::server::SessionManager sessionManager;
+	sessionManager.SetConfig(engine::server::SessionManager::LoadConfig(config));
+	LOG_INFO(Net, "[ServerMain] SessionManager configured");
+
+	engine::server::RateLimitAndBan rateLimit;
+	rateLimit.SetConfig(engine::server::RateLimitAndBan::LoadConfig(config));
+	LOG_INFO(Net, "[ServerMain] RateLimitAndBan configured");
+
+	engine::server::SecurityAuditLog auditLog;
+	std::string auditPath = config.GetString("security.audit_log_path", "security_audit.log");
+	if (auditLog.Init(auditPath))
+		LOG_INFO(Net, "[ServerMain] SecurityAuditLog opened: {}", auditPath);
+	else
+		LOG_WARN(Net, "[ServerMain] SecurityAuditLog Init failed (path={})", auditPath);
+
+	engine::server::InMemoryAccountStore accountStore;
+	engine::server::AuthRegisterHandler authHandler;
+	authHandler.SetServer(&server);
+	authHandler.SetAccountStore(&accountStore);
+	authHandler.SetSessionManager(&sessionManager);
+	authHandler.SetRateLimitAndBan(&rateLimit);
+	authHandler.SetSecurityAuditLog(&auditLog);
+	server.SetPacketHandler([&authHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+		const uint8_t* payload, size_t payloadSize) {
+		authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+	});
+	LOG_INFO(Net, "[ServerMain] Auth/Register handler set (opcodes 1, 3)");
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);
 

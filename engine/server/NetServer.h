@@ -51,7 +51,8 @@ namespace engine::server
 	};
 
 	/// Callback invoked from worker threads when a full packet is received. Do not run DB/game logic that blocks.
-	using NetServerPacketHandler = std::function<void(uint32_t connId, uint16_t opcode, const uint8_t* payload, size_t payloadSize)>;
+	/// requestId and sessionId come from the packet header (for echoing in responses).
+	using NetServerPacketHandler = std::function<void(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionId, const uint8_t* payload, size_t payloadSize)>;
 
 	/// Snapshot of server network counters (M19.11). Thread-safe read via GetNetworkStats().
 	struct NetServerStats

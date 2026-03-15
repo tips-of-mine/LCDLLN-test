@@ -142,6 +142,7 @@ add_library(engine_core
   engine/network/PacketView.cpp
   engine/network/RequestResponseDispatcher.cpp
   engine/network/ErrorPacket.cpp
+  engine/network/AuthRegisterPayloads.cpp
 )
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}

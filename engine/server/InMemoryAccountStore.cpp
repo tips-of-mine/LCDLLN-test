@@ -1,0 +1,92 @@
+#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/AccountValidation.h"
+#include "engine/auth/Argon2Hash.h"
+#include "engine/core/Log.h"
+
+#include <string>
+#include <vector>
+
+namespace engine::server
+{
+	uint64_t InMemoryAccountStore::CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash)
+	{
+		std::string login_key(NormaliseLoginView(login));
+		if (login_key.empty())
+		{
+			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: empty login");
+			return 0;
+		}
+		if (engine::network::ValidateLogin(login_key) != engine::network::NetErrorCode::OK)
+		{
+			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: invalid login");
+			return 0;
+		}
+		std::string email_norm = NormaliseEmail(email);
+		if (!email_norm.empty() && engine::network::ValidateEmail(email_norm) != engine::network::NetErrorCode::OK)
+		{
+			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: invalid email");
+			return 0;
+		}
+		if (ExistsLogin(login_key))
+		{
+			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: login already taken");
+			return 0;
+		}
+		if (!email_norm.empty() && ExistsEmail(email_norm))
+		{
+			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: email already taken");
+			return 0;
+		}
+		std::vector<std::uint8_t> server_salt = engine::auth::GenerateSalt();
+		if (server_salt.empty())
+		{
+			LOG_ERROR(Auth, "[InMemoryAccountStore] CreateAccount: GenerateSalt failed");
+			return 0;
+		}
+		engine::auth::Argon2Params params;
+		std::string final_hash = engine::auth::Hash(client_hash, server_salt, params);
+		if (final_hash.empty())
+		{
+			LOG_ERROR(Auth, "[InMemoryAccountStore] CreateAccount: Hash failed");
+			return 0;
+		}
+		const uint64_t account_id = m_nextAccountId++;
+		AccountRecord rec;
+		rec.account_id = account_id;
+		rec.login = login_key;
+		rec.email = email_norm;
+		rec.final_hash = std::move(final_hash);
+		rec.status = AccountStatus::Active;
+		m_by_login[rec.login] = rec;
+		if (!rec.email.empty())
+			m_by_email[rec.email] = rec.account_id;
+		LOG_INFO(Auth, "[InMemoryAccountStore] CreateAccount OK (account_id={}, login={})", account_id, rec.login);
+		return account_id;
+	}
+
+	std::optional<AccountRecord> InMemoryAccountStore::FindByLogin(std::string_view normalisedLogin) const
+	{
+		auto it = m_by_login.find(std::string(normalisedLogin));
+		if (it == m_by_login.end())
+			return std::nullopt;
+		return it->second;
+	}
+
+	std::optional<AccountRecord> InMemoryAccountStore::FindByAccountId(uint64_t account_id) const
+	{
+		for (const auto& [_, rec] : m_by_login)
+			if (rec.account_id == account_id)
+				return rec;
+		return std::nullopt;
+	}
+
+	bool InMemoryAccountStore::ExistsEmail(std::string_view normalisedEmail) const
+	{
+		return m_by_email.find(std::string(normalisedEmail)) != m_by_email.end();
+	}
+
+	bool InMemoryAccountStore::ExistsLogin(std::string_view normalisedLogin) const
+	{
+		return m_by_login.find(std::string(normalisedLogin)) != m_by_login.end();
+	}
+}

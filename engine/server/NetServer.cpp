@@ -124,6 +124,8 @@ namespace engine::server
 		{
 			uint32_t connId = 0;
 			uint16_t opcode = 0;
+			uint32_t requestId = 0;
+			uint64_t sessionId = 0;
 			std::vector<uint8_t> payload;
 		};
 		std::queue<PacketJob> jobQueue;
@@ -499,7 +501,7 @@ namespace engine::server
 						std::vector<uint8_t> payload(view.Payload(), view.Payload() + payloadSize);
 						{
 							std::lock_guard jobLock(jobMutex);
-							jobQueue.push({ c.connId, view.Opcode(), std::move(payload) });
+							jobQueue.push({ c.connId, view.Opcode(), view.RequestId(), view.SessionId(), std::move(payload) });
 						}
 						packetsIn.fetch_add(1, std::memory_order_relaxed);
 						jobCv.notify_one();
@@ -605,7 +607,7 @@ namespace engine::server
 				h = packetHandler;
 			}
 			if (h)
-				h(job.connId, job.opcode, job.payload.data(), job.payload.size());
+				h(job.connId, job.opcode, job.requestId, job.sessionId, job.payload.data(), job.payload.size());
 		}
 	}
 

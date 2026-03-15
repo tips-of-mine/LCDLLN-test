@@ -4,6 +4,7 @@
 
 #if defined(__linux__)
 
+#include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/ByteWriter.h"
 #include "engine/network/ErrorPacket.h"
 #include "engine/network/PacketBuilder.h"
@@ -404,7 +405,9 @@ int main(int argc, char** argv)
 		<< "      \"packet_rate_per_sec\": 200, \"packet_burst\": 400, \"decode_failure_threshold\": 5,\n"
 		<< "      \"handshake_timeout_sec\": 10, \"max_queued_tx_bytes\": 262144 },\n"
 		<< "    \"tls\": { \"cert\": \"test_server_cert.pem\", \"key\": \"test_server_key.pem\" }\n"
-		<< "  }\n"
+		<< "  },\n"
+		<< "  \"session\": { \"max_age_sec\": 86400, \"heartbeat_timeout_sec\": 300, \"reconnection_window_sec\": 300, \"duplicate_login_policy\": \"kick\" },\n"
+		<< "  \"security\": { \"auth_per_minute\": 60, \"register_per_hour\": 10, \"max_failures_before_ban\": 10, \"ban_duration_sec\": 60, \"audit_log_path\": \"security_audit.log\" }\n"
 		<< "}\n";
 	config.close();
 
@@ -580,6 +583,100 @@ int main(int argc, char** argv)
 				Fail("flood → disconnect", "expected server to disconnect offender (rate limit)");
 			else
 				Ok("flood → disconnect offender");
+			c.Close();
+		}
+	}
+
+	// --- Scenario: register then auth (M20.5) ---
+	{
+		TlsTestClient c;
+		if (!c.Connect("127.0.0.1", port, ""))
+			Fail("register then auth", "connect failed");
+		else
+		{
+			const std::string login = "testuser";
+			const std::string email = "test@example.com";
+			const std::string client_hash = "test_client_hash_placeholder";
+			std::vector<uint8_t> regPayload = BuildRegisterRequestPayload(login, email, client_hash);
+			if (regPayload.empty())
+				Fail("register then auth", "BuildRegisterRequestPayload failed");
+			else
+			{
+				std::vector<uint8_t> regPkt = BuildPacket(kOpcodeRegisterRequest, 100, regPayload);
+				if (regPkt.empty() || !c.Send(regPkt))
+					Fail("register then auth", "send REGISTER_REQUEST failed");
+				else
+				{
+					uint8_t hdrBuf[kProtocolV1HeaderSize];
+					if (!c.RecvExact(hdrBuf, kProtocolV1HeaderSize))
+						Fail("register then auth", "recv REGISTER_RESPONSE header failed");
+					else
+					{
+						PacketView view;
+						if (PacketView::Parse(hdrBuf, kProtocolV1HeaderSize, view) != PacketParseResult::Ok)
+							Fail("register then auth", "parse REGISTER_RESPONSE header failed");
+						else
+						{
+							size_t payloadSize = view.PayloadSize();
+							std::vector<uint8_t> respPayload(payloadSize, 0);
+							if (payloadSize > 0 && !c.RecvExact(respPayload.data(), payloadSize))
+								Fail("register then auth", "recv REGISTER_RESPONSE payload failed");
+							else if (view.Opcode() == kOpcodeError)
+								Fail("register then auth", "server sent ERROR instead of REGISTER_RESPONSE");
+							else if (view.Opcode() != kOpcodeRegisterResponse)
+								Fail("register then auth", "unexpected opcode");
+							else
+							{
+								auto regResp = ParseRegisterResponsePayload(respPayload.data(), respPayload.size());
+								if (!regResp || regResp->success == 0)
+									Fail("register then auth", "register failed");
+								else
+								{
+									std::vector<uint8_t> authPayload = BuildAuthRequestPayload(login, client_hash);
+									if (authPayload.empty())
+										Fail("register then auth", "BuildAuthRequestPayload failed");
+									else
+									{
+										std::vector<uint8_t> authPkt = BuildPacket(kOpcodeAuthRequest, 101, authPayload);
+										if (authPkt.empty() || !c.Send(authPkt))
+											Fail("register then auth", "send AUTH_REQUEST failed");
+										else
+										{
+											if (!c.RecvExact(hdrBuf, kProtocolV1HeaderSize))
+												Fail("register then auth", "recv AUTH_RESPONSE header failed");
+											else if (PacketView::Parse(hdrBuf, kProtocolV1HeaderSize, view) != PacketParseResult::Ok)
+												Fail("register then auth", "parse AUTH_RESPONSE header failed");
+											else
+											{
+												payloadSize = view.PayloadSize();
+												respPayload.resize(payloadSize, 0);
+												if (payloadSize > 0 && !c.RecvExact(respPayload.data(), payloadSize))
+													Fail("register then auth", "recv AUTH_RESPONSE payload failed");
+												else if (view.Opcode() == kOpcodeError)
+													Fail("register then auth", "server sent ERROR for auth");
+												else if (view.Opcode() != kOpcodeAuthResponse)
+													Fail("register then auth", "unexpected auth opcode");
+												else
+												{
+													auto authResp = ParseAuthResponsePayload(respPayload.data(), respPayload.size());
+													if (!authResp)
+														Fail("register then auth", "ParseAuthResponsePayload failed");
+													else if (authResp->success == 0)
+														Fail("register then auth", "auth failed");
+													else if (authResp->session_id == 0)
+														Fail("register then auth", "auth success but session_id is 0");
+													else
+														Ok("register then auth");
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 			c.Close();
 		}
 	}

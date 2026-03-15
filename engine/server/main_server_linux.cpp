@@ -2,6 +2,7 @@
 /// M20.5: Auth/Register handlers wired via AuthRegisterHandler.
 
 #include "engine/server/MigrationRunner.h"
+#include "engine/server/db/ConnectionPool.h"
 #include "engine/server/NetServer.h"
 #include "engine/server/AuthRegisterHandler.h"
 #include "engine/server/InMemoryAccountStore.h"
@@ -68,6 +69,9 @@ int main(int argc, char** argv)
 		engine::core::Log::Shutdown();
 		return 1;
 	}
+
+	engine::server::db::ConnectionPool dbPool;
+	dbPool.Init(config);
 
 	engine::server::NetServer server;
 	std::signal(SIGINT, OnSignal);
@@ -178,6 +182,7 @@ int main(int argc, char** argv)
 	}
 
 	server.Shutdown();
+	dbPool.Shutdown();
 	LOG_INFO(Net, "[ServerMain] Shutdown complete");
 	engine::core::Log::Shutdown();
 	return 0;

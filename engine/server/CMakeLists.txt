@@ -34,6 +34,8 @@ elseif(UNIX)
   add_executable(server_app
     main_server_linux.cpp
     MigrationRunner.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
     NetServer.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
@@ -52,8 +54,15 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
-  target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR})
+  target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth ${MYSQL_LIBRARY})
+
+  # M21.6: DB layer smoke tests
+  add_executable(db_layer_tests db/DbLayerTests.cpp db/ConnectionPool.cpp db/DbHelpers.cpp)
+  target_include_directories(db_layer_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(db_layer_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(db_layer_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME db_layer_tests COMMAND db_layer_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 else()
   message(STATUS "M15.4: server_app not configured for this platform (WIN32/UNIX only)")
   return()

@@ -12,6 +12,7 @@ namespace engine::server
 	class SessionManager;
 	class RateLimitAndBan;
 	class SecurityAuditLog;
+	class ConnectionSessionMap;
 
 	/// Handles AUTH_REQUEST and REGISTER_REQUEST opcodes: validate, store/session, rate-limit, audit, send response.
 	/// Uses request_id and session_id from packet header for responses. Single-threaded worker use.
@@ -26,6 +27,7 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sessionManager);
 		void SetRateLimitAndBan(RateLimitAndBan* rateLimit);
 		void SetSecurityAuditLog(SecurityAuditLog* auditLog);
+		void SetConnectionSessionMap(ConnectionSessionMap* map);
 
 		/// Handle one packet. Dispatches by opcode; sends response via NetServer::Send. Ignores unknown opcodes.
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -42,6 +44,7 @@ namespace engine::server
 		SessionManager* m_sessionManager = nullptr;
 		RateLimitAndBan* m_rateLimit = nullptr;
 		SecurityAuditLog* m_auditLog = nullptr;
+		ConnectionSessionMap* m_connectionSessionMap = nullptr;
 	};
 
 }

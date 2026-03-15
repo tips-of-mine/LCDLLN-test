@@ -16,6 +16,9 @@ namespace engine::network
 	constexpr uint16_t kOpcodeRegisterRequest = 3u;
 	constexpr uint16_t kOpcodeRegisterResponse = 4u;
 
+	/// Heartbeat keep-alive (see tickets/docs/protocol_v1.md).
+	constexpr uint16_t kOpcodeHeartbeat = 7u;
+
 	/// Official opcode for ERROR packet (see tickets/docs/protocol_v1.md).
 	constexpr uint16_t kOpcodeError = 8u;
 }

@@ -33,4 +33,7 @@ namespace engine::network
 	/// Builds a server-push packet (request_id == 0). For use by server to send push messages.
 	/// \return Packet bytes ready to send via NetServer::Send, or empty if payload too large.
 	std::vector<uint8_t> BuildPushPacket(uint16_t opcode, std::span<const uint8_t> payload);
+
+	/// Builds a HEARTBEAT packet (opcode 7, request_id 0, minimal payload). Client sends with session_id in header after auth.
+	std::vector<uint8_t> BuildHeartbeatPacket(uint64_t sessionId);
 }

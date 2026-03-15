@@ -41,6 +41,7 @@ elseif(UNIX)
     AccountValidation.cpp
     InMemoryAccountStore.cpp
     AuthRegisterHandler.cpp
+    ConnectionSessionMap.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp

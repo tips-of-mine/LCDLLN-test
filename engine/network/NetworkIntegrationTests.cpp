@@ -406,7 +406,7 @@ int main(int argc, char** argv)
 		<< "      \"handshake_timeout_sec\": 10, \"max_queued_tx_bytes\": 262144 },\n"
 		<< "    \"tls\": { \"cert\": \"test_server_cert.pem\", \"key\": \"test_server_key.pem\" }\n"
 		<< "  },\n"
-		<< "  \"session\": { \"max_age_sec\": 86400, \"heartbeat_timeout_sec\": 300, \"reconnection_window_sec\": 300, \"duplicate_login_policy\": \"kick\" },\n"
+		<< "  \"session\": { \"max_age_sec\": 86400, \"heartbeat_timeout_sec\": 5, \"reconnection_window_sec\": 300, \"duplicate_login_policy\": \"kick\" },\n"
 		<< "  \"security\": { \"auth_per_minute\": 60, \"register_per_hour\": 10, \"max_failures_before_ban\": 10, \"ban_duration_sec\": 60, \"audit_log_path\": \"security_audit.log\" }\n"
 		<< "}\n";
 	config.close();
@@ -671,6 +671,78 @@ int main(int argc, char** argv)
 											}
 										}
 									}
+								}
+							}
+						}
+					}
+				}
+			}
+			c.Close();
+		}
+	}
+
+	// --- Scenario: client offline → session expired (M20.6 heartbeat timeout) ---
+	{
+		TlsTestClient c;
+		if (!c.Connect("127.0.0.1", port, ""))
+			Fail("client offline → session close", "connect failed");
+		else
+		{
+			const std::string login = "hbuser";
+			const std::string email = "hb@example.com";
+			const std::string client_hash = "hb_client_hash";
+			std::vector<uint8_t> regPayload = BuildRegisterRequestPayload(login, email, client_hash);
+			std::vector<uint8_t> regPkt = BuildPacket(kOpcodeRegisterRequest, 200, regPayload);
+			if (regPayload.empty() || regPkt.empty() || !c.Send(regPkt))
+				Fail("client offline → session close", "register send failed");
+			else
+			{
+				uint8_t hdrBuf[kProtocolV1HeaderSize];
+				if (!c.RecvExact(hdrBuf, kProtocolV1HeaderSize))
+					Fail("client offline → session close", "register response header failed");
+				else
+				{
+					PacketView view;
+					if (PacketView::Parse(hdrBuf, kProtocolV1HeaderSize, view) != PacketParseResult::Ok)
+						Fail("client offline → session close", "parse register response failed");
+					size_t payloadSize = view.PayloadSize();
+					std::vector<uint8_t> respPayload(payloadSize, 0);
+					if (payloadSize > 0 && !c.RecvExact(respPayload.data(), payloadSize))
+						Fail("client offline → session close", "register payload failed");
+					auto regResp = ParseRegisterResponsePayload(respPayload.data(), respPayload.size());
+					if (!regResp || regResp->success == 0)
+						Fail("client offline → session close", "register failed");
+					else
+					{
+						std::vector<uint8_t> authPayload = BuildAuthRequestPayload(login, client_hash);
+						std::vector<uint8_t> authPkt = BuildPacket(kOpcodeAuthRequest, 201, authPayload);
+						if (authPayload.empty() || authPkt.empty() || !c.Send(authPkt))
+							Fail("client offline → session close", "auth send failed");
+						else if (!c.RecvExact(hdrBuf, kProtocolV1HeaderSize))
+							Fail("client offline → session close", "auth response header failed");
+						else if (PacketView::Parse(hdrBuf, kProtocolV1HeaderSize, view) != PacketParseResult::Ok)
+							Fail("client offline → session close", "parse auth response failed");
+						else
+						{
+							payloadSize = view.PayloadSize();
+							respPayload.resize(payloadSize, 0);
+							if (payloadSize > 0 && !c.RecvExact(respPayload.data(), payloadSize))
+								Fail("client offline → session close", "auth payload failed");
+							else
+							{
+								auto authResp = ParseAuthResponsePayload(respPayload.data(), respPayload.size());
+								if (!authResp || authResp->success == 0 || authResp->session_id == 0)
+									Fail("client offline → session close", "auth failed");
+								else
+								{
+									// Do NOT send heartbeat; wait for server to expire session (heartbeat_timeout_sec=5, watchdog every 10s).
+									std::this_thread::sleep_for(std::chrono::seconds(15));
+									uint8_t buf[1];
+									bool readFailed = !c.RecvExact(buf, 1, 1);
+									if (readFailed)
+										Ok("client offline → session close");
+									else
+										Fail("client offline → session close", "expected server to close connection after heartbeat timeout");
 								}
 							}
 						}

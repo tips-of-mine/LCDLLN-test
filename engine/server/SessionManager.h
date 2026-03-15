@@ -42,8 +42,8 @@ namespace engine::server
 	{
 		/// Max session lifetime in seconds (e.g. 24h = 86400). Enforced regardless of Touch.
 		int64_t max_session_age_sec = 86400;
-		/// Seconds without Touch before session is considered expired (heartbeat timeout).
-		int64_t heartbeat_timeout_sec = 300;
+		/// Seconds without Touch before session is considered expired (heartbeat timeout; default 120 = 3–4 pings at 30s).
+		int64_t heartbeat_timeout_sec = 120;
 		/// Reconnection window: within this many seconds after last_seen, session can be resumed (same as heartbeat for v1).
 		int64_t reconnection_window_sec = 300;
 		/// How to handle duplicate login for the same account.

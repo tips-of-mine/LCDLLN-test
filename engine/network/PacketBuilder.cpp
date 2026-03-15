@@ -42,4 +42,12 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	std::vector<uint8_t> BuildHeartbeatPacket(uint64_t sessionId)
+	{
+		PacketBuilder builder;
+		if (!builder.Finalize(kOpcodeHeartbeat, 0, 0, sessionId, 0))
+			return {};
+		return builder.Data();
+	}
 }

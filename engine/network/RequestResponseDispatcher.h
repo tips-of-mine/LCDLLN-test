@@ -46,9 +46,19 @@ namespace engine::network
 		/// Process received packets and dispatch callbacks. Call from main thread only. Cleans expired pending (TIMEOUT).
 		void Pump();
 
+		/// Set heartbeat interval in seconds (default 30). Call before TickHeartbeat().
+		void SetHeartbeatInterval(int64_t intervalSec);
+		/// Set session id after auth success. Heartbeat packets will use this in the header.
+		void SetSessionId(uint64_t sessionId);
+		/// Send HEARTBEAT if interval elapsed since last send. Call from main thread (e.g. each frame or after Pump()). No-op if session id is 0 or not connected.
+		void TickHeartbeat();
+
 	private:
 		NetClient* m_client;
 		std::atomic<uint32_t> m_nextRequestId{ 1u };
+		std::atomic<uint64_t> m_sessionId{ 0u };
+		int64_t m_heartbeatIntervalSec = 30;
+		std::chrono::steady_clock::time_point m_lastHeartbeatSent{};
 		std::mutex m_mutex;
 		struct PendingEntry
 		{

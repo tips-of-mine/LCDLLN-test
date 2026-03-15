@@ -4,6 +4,7 @@
 #include "engine/server/SessionManager.h"
 #include "engine/server/RateLimitAndBan.h"
 #include "engine/server/SecurityAuditLog.h"
+#include "engine/server/ConnectionSessionMap.h"
 #include "engine/server/AccountValidation.h"
 #include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/ErrorPacket.h"
@@ -37,6 +38,7 @@ namespace engine::server
 	void AuthRegisterHandler::SetSessionManager(SessionManager* sessionManager) { m_sessionManager = sessionManager; }
 	void AuthRegisterHandler::SetRateLimitAndBan(RateLimitAndBan* rateLimit) { m_rateLimit = rateLimit; }
 	void AuthRegisterHandler::SetSecurityAuditLog(SecurityAuditLog* auditLog) { m_auditLog = auditLog; }
+	void AuthRegisterHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connectionSessionMap = map; }
 
 	void AuthRegisterHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -44,6 +46,12 @@ namespace engine::server
 		if (!m_server)
 		{
 			LOG_WARN(Auth, "[AuthRegisterHandler] HandlePacket: no server set");
+			return;
+		}
+		if (opcode == engine::network::kOpcodeHeartbeat)
+		{
+			if (sessionIdHeader != 0 && m_sessionManager)
+				m_sessionManager->Touch(sessionIdHeader);
 			return;
 		}
 		if (opcode == engine::network::kOpcodeRegisterRequest)
@@ -230,6 +238,8 @@ namespace engine::server
 		auto pkt = BuildAuthResponsePacket(one, session_id, server_time, version_gate, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
+		if (m_connectionSessionMap)
+			m_connectionSessionMap->Add(connId, session_id);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Auth success (connId={}, account_id={}, session_id={})", connId, opt->account_id, session_id);
 	}
 }

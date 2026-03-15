@@ -182,4 +182,35 @@ namespace engine::network
 				p.second(p.first, true, {});
 		}
 	}
+
+	void RequestResponseDispatcher::SetHeartbeatInterval(int64_t intervalSec)
+	{
+		m_heartbeatIntervalSec = (intervalSec > 0) ? intervalSec : 30;
+	}
+
+	void RequestResponseDispatcher::SetSessionId(uint64_t sessionId)
+	{
+		m_sessionId.store(sessionId);
+	}
+
+	void RequestResponseDispatcher::TickHeartbeat()
+	{
+		if (m_client == nullptr)
+			return;
+		uint64_t sid = m_sessionId.load();
+		if (sid == 0)
+			return;
+		auto now = std::chrono::steady_clock::now();
+		auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - m_lastHeartbeatSent).count();
+		if (elapsed < m_heartbeatIntervalSec)
+			return;
+		std::vector<uint8_t> pkt = BuildHeartbeatPacket(sid);
+		if (pkt.empty())
+			return;
+		if (m_client->Send(std::span<const uint8_t>(pkt.data(), pkt.size())))
+		{
+			m_lastHeartbeatSent = now;
+			LOG_DEBUG(Net, "[RequestResponseDispatcher] Heartbeat sent (session_id={})", sid);
+		}
+	}
 }

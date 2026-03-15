@@ -99,6 +99,7 @@ namespace engine::server
 			std::chrono::steady_clock::time_point handshakeDeadline{};
 		};
 		std::unordered_map<int, Conn> connections;
+		std::unordered_map<uint32_t, int> connIdToFd;
 
 		static constexpr size_t kDisconnectReasonCount = static_cast<size_t>(DisconnectReason::Count);
 		std::atomic<uint64_t> disconnectCounts[kDisconnectReasonCount]{};
@@ -159,9 +160,10 @@ namespace engine::server
 		case DisconnectReason::RecvError: return "recv_error";
 		case DisconnectReason::SendError: return "send_error";
 		case DisconnectReason::TxQueueCap: return "tx_queue_cap";
+		case DisconnectReason::HeartbeatTimeout: return "heartbeat_timeout";
 		default: return "unknown";
-		}
 	}
+}
 
 	/// Call without holding connMutex (locks internally). Frees SSL if present (SSL_shutdown + SSL_free), then closes fd.
 	void NetServer::Impl::CloseConnection(int fd, DisconnectReason reason)
@@ -175,6 +177,7 @@ namespace engine::server
 			auto it = connections.find(fd);
 			if (it != connections.end())
 			{
+				connIdToFd.erase(it->second.connId);
 				sslToFree = it->second.ssl;
 				connections.erase(it);
 				connectionCount.store(static_cast<uint32_t>(connections.size()));
@@ -284,6 +287,7 @@ namespace engine::server
 							Conn& c = connections[clientFd];
 							c.fd = clientFd;
 							c.connId = connId;
+							connIdToFd[connId] = clientFd;
 							c.rxBuffer.reserve(kRxBufferCapacity);
 							c.tokenBucketTokens = config.packetBurst;
 							c.tokenBucketLastRefill = std::chrono::steady_clock::now();
@@ -808,6 +812,7 @@ namespace engine::server
 			{
 				m_impl->disconnectCounts[static_cast<size_t>(DisconnectReason::TxQueueCap)].fetch_add(1, std::memory_order_relaxed);
 				LOG_WARN(Net, "[NetServer] Backpressure: connId={} TX queue cap exceeded, closing (reason={})", connId, Impl::DisconnectReasonString(DisconnectReason::TxQueueCap));
+				m_impl->connIdToFd.erase(connId);
 				SSL* sslToFree = c.ssl;
 				c.ssl = nullptr;
 				m_impl->connections.erase(fd);
@@ -827,6 +832,21 @@ namespace engine::server
 			return true;
 		}
 		return false;
+	}
+
+	void NetServer::CloseConnection(uint32_t connId, DisconnectReason reason)
+	{
+		if (m_impl == nullptr)
+			return;
+		int fd = -1;
+		{
+			std::lock_guard lock(m_impl->connMutex);
+			auto it = m_impl->connIdToFd.find(connId);
+			if (it == m_impl->connIdToFd.end())
+				return;
+			fd = it->second;
+		}
+		m_impl->CloseConnection(fd, reason);
 	}
 
 	void NetServer::SetPacketHandler(NetServerPacketHandler handler)
@@ -897,6 +917,8 @@ namespace engine::server
 	void NetServer::Shutdown() {}
 
 	bool NetServer::Send(uint32_t /*connId*/, std::span<const uint8_t> /*packet*/) { return false; }
+
+	void NetServer::CloseConnection(uint32_t /*connId*/, DisconnectReason /*reason*/) {}
 
 	void NetServer::SetPacketHandler(NetServerPacketHandler /*handler*/) {}
 

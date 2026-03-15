@@ -1,0 +1,34 @@
+#pragma once
+
+#include "engine/server/SessionManager.h"
+
+#include <cstdint>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
+
+namespace engine::server
+{
+	/// Maps connection id to session id for heartbeat liveness (M20.6). Thread-safe.
+	/// Register after auth success; watchdog uses CollectExpired to close stale connections.
+	class ConnectionSessionMap
+	{
+	public:
+		ConnectionSessionMap() = default;
+
+		/// Register \a connId as having \a sessionId (call after auth success).
+		void Add(uint32_t connId, uint64_t sessionId);
+
+		/// Remove \a connId from the map (call after closing connection).
+		void Remove(uint32_t connId);
+
+		/// Returns pairs (connId, session_id) for which the session is no longer valid (heartbeat timeout or max age).
+		/// Call after SessionManager::EvictExpired(). Caller must then close each connId and SessionManager::Close(session_id).
+		std::vector<std::pair<uint32_t, uint64_t>> CollectExpired(const SessionManager& sessionManager);
+
+	private:
+		std::mutex m_mutex;
+		std::unordered_map<uint32_t, uint64_t> m_connToSession;
+	};
+
+}

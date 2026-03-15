@@ -23,6 +23,7 @@ namespace engine::server
 		RecvError,
 		SendError,
 		TxQueueCap,
+		HeartbeatTimeout,
 		Count
 	};
 
@@ -86,6 +87,9 @@ namespace engine::server
 
 		/// Enqueue \a packet to send to connection \a connId. Returns false if conn not found or backpressure would be exceeded (connection closed).
 		bool Send(uint32_t connId, std::span<const uint8_t> packet);
+
+		/// Close connection by \a connId (e.g. after heartbeat timeout). No-op if connId not found.
+		void CloseConnection(uint32_t connId, DisconnectReason reason);
 
 		/// Set handler called from worker threads for each received packet. Optional; not called if unset.
 		void SetPacketHandler(NetServerPacketHandler handler);

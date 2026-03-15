@@ -22,7 +22,7 @@ namespace engine::server
 	{
 		SessionManagerConfig c;
 		c.max_session_age_sec = config.GetInt("session.max_age_sec", 86400);
-		c.heartbeat_timeout_sec = config.GetInt("session.heartbeat_timeout_sec", 300);
+		c.heartbeat_timeout_sec = config.GetInt("session.heartbeat_timeout_sec", 120);
 		c.reconnection_window_sec = config.GetInt("session.reconnection_window_sec", 300);
 		std::string policy = config.GetString("session.duplicate_login_policy", "kick");
 		if (policy == "refuse")

@@ -4,6 +4,7 @@
 #include "engine/core/Log.h"
 
 #include <vulkan/vulkan.h>
+#include <cstdio>
 #include <cstring>
 
 namespace engine::render
@@ -27,6 +28,7 @@ namespace engine::render
 		uint32_t queueFamilyIndex,
 		VkPipelineCache pipelineCache)
 	{
+		std::fprintf(stderr, "[SPECPF] Init enter size=%u mips=%u\n", size, mipCount); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
 			|| !compSpirv || compWordCount == 0 || size == 0 || mipCount == 0)
 		{
@@ -56,7 +58,9 @@ namespace engine::render
 		imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-		if (vkCreateImage(device, &imgInfo, nullptr, &m_image) != VK_SUCCESS || m_image == VK_NULL_HANDLE)
+		VkResult r = vkCreateImage(device, &imgInfo, nullptr, &m_image);
+		std::fprintf(stderr, "[SPECPF] vkCreateImage r=%d img=%p\n", (int)r, (void*)m_image); std::fflush(stderr);
+		if (r != VK_SUCCESS || m_image == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "SpecularPrefilterPass: vkCreateImage failed");
 			return false;
@@ -297,6 +301,7 @@ namespace engine::render
 			return false;
 		}
 
+		std::fprintf(stderr, "[SPECPF] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "SpecularPrefilterPass: initialised (size={}, mips={})", m_size, m_mipCount);
 		return true;
 	}
@@ -304,6 +309,7 @@ namespace engine::render
 	bool SpecularPrefilterPass::Generate(VkDevice device, VkQueue queue,
 		VkImageView sourceCubemapView, VkSampler sourceCubemapSampler)
 	{
+		std::fprintf(stderr, "[SPECPF] Generate enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE || queue == VK_NULL_HANDLE || m_cmdPool == VK_NULL_HANDLE
 			|| sourceCubemapView == VK_NULL_HANDLE || sourceCubemapSampler == VK_NULL_HANDLE)
 			return false;
@@ -429,12 +435,14 @@ namespace engine::render
 		vkQueueWaitIdle(queue);
 		vkFreeCommandBuffers(device, m_cmdPool, 1, &cmd);
 
+		std::fprintf(stderr, "[SPECPF] Generate OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "SpecularPrefilterPass: prefiltered cubemap generated");
 		return true;
 	}
 
 	void SpecularPrefilterPass::Destroy(VkDevice device)
 	{
+		std::fprintf(stderr, "[SPECPF] Destroy enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE)
 			return;
 		for (VkImageView v : m_faceMipViews)
@@ -489,5 +497,6 @@ namespace engine::render
 		m_vmaAllocator = nullptr;
 		m_size = 0;
 		m_mipCount = 0;
+		std::fprintf(stderr, "[SPECPF] Destroy OK\n"); std::fflush(stderr);
 	}
 }

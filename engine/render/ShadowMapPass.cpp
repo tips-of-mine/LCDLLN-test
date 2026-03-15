@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 #include <cstdint>
+#include <cstdio>
 #include <functional>
 
 namespace engine::render
@@ -37,6 +38,7 @@ namespace engine::render
 		const uint32_t* fragSpirv, size_t fragWordCount,
 		VkPipelineCache pipelineCache)
 	{
+		std::fprintf(stderr, "[SHADOW] Init enter device=%p\n", (void*)device); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE || !vertSpirv || vertWordCount == 0)
 		{
 			LOG_ERROR(Render, "ShadowMapPass::Init: invalid arguments");
@@ -259,6 +261,7 @@ namespace engine::render
 			vkDestroyShaderModule(device, fragModule, nullptr);
 		vkDestroyShaderModule(device, vertModule, nullptr);
 
+		std::fprintf(stderr, "[SHADOW] Init OK\n"); std::fflush(stderr);
 		return true;
 	}
 
@@ -364,6 +367,7 @@ namespace engine::render
 
 	void ShadowMapPass::Destroy(VkDevice device)
 	{
+		std::fprintf(stderr, "[SHADOW] Destroy enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE)
 			return;
 		InvalidateFramebufferCache(device);
@@ -383,6 +387,7 @@ namespace engine::render
 			m_renderPass = VK_NULL_HANDLE;
 		}
 		m_resolution = 0;
+		std::fprintf(stderr, "[SHADOW] Destroy OK\n"); std::fflush(stderr);
 	}
 }
 

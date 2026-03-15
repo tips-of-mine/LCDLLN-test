@@ -57,7 +57,7 @@ namespace engine::render
 				std::fprintf(stderr, "[POLL] avant watcher.Init\n"); std::fflush(stderr);
 				m_watcher.Init(contentPath.string());
 
-				std::fprintf(stderr, "[POLL] watcher.Init OK\n"); std::fflush(stderr);
+				std::fprintf(stderr, "[POLL] watcher.Init retourne\n"); std::fflush(stderr);
 				m_watcherInited = true;
 			}
 		}
@@ -107,8 +107,10 @@ namespace engine::render
 			return;
 		}
 		std::vector<PendingReloadResult> results;
+		std::fprintf(stderr, "[AP] avant lock pendingMutex\n"); std::fflush(stderr);
 		{
 			std::lock_guard<std::mutex> lock(m_pendingMutex);
+			std::fprintf(stderr, "[AP] lock OK pending=%zu\n", m_pending.size()); std::fflush(stderr);
 #if !defined(NDEBUG)
 			LOG_DEBUG(Render, "[Engine] ApplyPending: mutex acquired, {} pending ops", m_pending.size());
 #endif

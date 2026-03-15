@@ -5,15 +5,19 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 
 namespace engine::server
 {
 	std::optional<uint32_t> ShardRegistry::RegisterShard(std::string name, std::string endpoint, uint32_t max_capacity, std::string region)
 	{
+		std::fprintf(stderr, "[SREG_REG] RegisterShard name='%s' endpoint='%s' cap=%u\n",
+			name.c_str(), endpoint.c_str(), max_capacity); std::fflush(stderr);
 		std::lock_guard<std::mutex> lock(m_mutex);
 		if (m_name_to_id.count(name) != 0)
 		{
 			LOG_WARN(Core, "[ShardRegistry] RegisterShard failed: duplicate name '{}'", name);
+			std::fprintf(stderr, "[SREG_REG] RegisterShard result id=0\n"); std::fflush(stderr);
 			return std::nullopt;
 		}
 		uint32_t id = m_next_id++;
@@ -56,7 +60,10 @@ namespace engine::server
 			if (became_online)
 				it->second.state = ShardState::Online;
 			if (became_online)
+			{
+				std::fprintf(stderr, "[SREG_REG] UpdateHeartbeat shard_id=%u became_online=%d\n", shard_id, (int)became_online); std::fflush(stderr);
 				LOG_INFO(Core, "[ShardRegistry] Shard {} now online (load={})", shard_id, current_load);
+			}
 
 			// Transition Online → Degraded or Degraded → Online according to load ratio (STAB.10)
 			if (it->second.state == ShardState::Online || it->second.state == ShardState::Degraded)
@@ -146,6 +153,8 @@ namespace engine::server
 				}
 			}
 		}
+		std::fprintf(stderr, "[SREG_REG] EvictStaleHeartbeats timeout=%ds marked=%zu\n",
+			timeout_sec, marked.size()); std::fflush(stderr);
 		for (uint32_t id : marked)
 		{
 			LOG_INFO(Core, "[ShardRegistry] shard_down (shard_id={})", id);

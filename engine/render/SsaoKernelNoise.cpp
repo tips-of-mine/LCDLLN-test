@@ -376,6 +376,7 @@ namespace engine::render
 
 	void SsaoKernelNoise::Destroy(VkDevice device)
 	{
+		std::fprintf(stderr, "[SSAO] Destroy enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE) return;
 		if (m_noiseSampler != VK_NULL_HANDLE)
 		{
@@ -404,5 +405,6 @@ namespace engine::render
 			m_kernelAlloc = nullptr;
 		}
 		m_vmaAllocator = nullptr;
+		std::fprintf(stderr, "[SSAO] Destroy OK\n"); std::fflush(stderr);
 	}
 }

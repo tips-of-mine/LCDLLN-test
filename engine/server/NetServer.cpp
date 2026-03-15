@@ -13,6 +13,7 @@
 #include <cerrno>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <cstring>
 #include <deque>
 #include <mutex>
@@ -177,6 +178,8 @@ namespace engine::server
 			auto it = connections.find(fd);
 			if (it != connections.end())
 			{
+				uint32_t connId = it->second.connId;
+				std::fprintf(stderr, "[NETSRV] CloseConnection connId=%u reason=%s\n", connId, DisconnectReasonString(reason)); std::fflush(stderr);
 				connIdToFd.erase(it->second.connId);
 				sslToFree = it->second.ssl;
 				connections.erase(it);
@@ -229,6 +232,7 @@ namespace engine::server
 
 	void NetServer::Impl::IoThreadRun()
 	{
+		std::fprintf(stderr, "[NETSRV] IoThread started\n"); std::fflush(stderr);
 		epoll_event events[kEpollMaxEvents];
 
 		while (running.load())
@@ -301,6 +305,7 @@ namespace engine::server
 							connectionCount.store(static_cast<uint32_t>(connections.size()));
 							connectionsTotal.fetch_add(1, std::memory_order_relaxed);
 						}
+						std::fprintf(stderr, "[NETSRV] accept connId=%u fd=%d\n", connId, clientFd); std::fflush(stderr);
 						if (tlsEnabled && sslCtx != nullptr)
 						{
 							std::unique_lock lock(connMutex);
@@ -571,6 +576,7 @@ namespace engine::server
 			}
 		}
 
+		std::fprintf(stderr, "[NETSRV] IoThread exiting\n"); std::fflush(stderr);
 		// Cleanup all connections on exit (SSL_shutdown + SSL_free + close)
 		{
 			std::lock_guard lock(connMutex);
@@ -592,6 +598,7 @@ namespace engine::server
 
 	void NetServer::Impl::WorkerThreadRun()
 	{
+		std::fprintf(stderr, "[NETSRV] WorkerThread started\n"); std::fflush(stderr);
 		while (!workersQuit.load())
 		{
 			PacketJob job;
@@ -613,6 +620,7 @@ namespace engine::server
 			if (h)
 				h(job.connId, job.opcode, job.requestId, job.sessionId, job.payload.data(), job.payload.size());
 		}
+		std::fprintf(stderr, "[NETSRV] WorkerThread exiting\n"); std::fflush(stderr);
 	}
 
 	NetServer::~NetServer()
@@ -622,6 +630,7 @@ namespace engine::server
 
 	bool NetServer::Init(uint16_t listenPort, const NetServerConfig& config)
 	{
+		std::fprintf(stderr, "[NETSRV] Init enter port=%u\n", listenPort); std::fflush(stderr);
 		if (m_impl != nullptr)
 		{
 			LOG_WARN(Net, "[NetServer] Init ignored: already initialized");
@@ -633,6 +642,7 @@ namespace engine::server
 		m_impl->listenPort = listenPort;
 
 		m_impl->listenFd = socket(AF_INET, SOCK_STREAM, 0);
+		std::fprintf(stderr, "[NETSRV] socket() fd=%d\n", m_impl->listenFd); std::fflush(stderr);
 		if (m_impl->listenFd == -1)
 		{
 			LOG_ERROR(Net, "[NetServer] Init FAILED: socket() failed: {}", strerror(errno));
@@ -668,6 +678,7 @@ namespace engine::server
 			m_impl = nullptr;
 			return false;
 		}
+		std::fprintf(stderr, "[NETSRV] bind() OK\n"); std::fflush(stderr);
 
 		if (listen(m_impl->listenFd, kListenBacklog) != 0)
 		{
@@ -677,8 +688,10 @@ namespace engine::server
 			m_impl = nullptr;
 			return false;
 		}
+		std::fprintf(stderr, "[NETSRV] listen() OK\n"); std::fflush(stderr);
 
 		m_impl->epollFd = epoll_create1(EPOLL_CLOEXEC);
+		std::fprintf(stderr, "[NETSRV] epoll_create1 epollFd=%d\n", m_impl->epollFd); std::fflush(stderr);
 		if (m_impl->epollFd == -1)
 		{
 			LOG_ERROR(Net, "[NetServer] Init FAILED: epoll_create1 failed: {}", strerror(errno));
@@ -744,6 +757,7 @@ namespace engine::server
 				return false;
 			}
 			m_impl->tlsEnabled = true;
+			std::fprintf(stderr, "[NETSRV] SSL_CTX_new OK tls=1\n"); std::fflush(stderr);
 			LOG_INFO(Net, "[NetServer] TLS enabled (cert={}, key={}, min=TLS1.2)", config.tlsCertPath, config.tlsKeyPath);
 		}
 
@@ -751,6 +765,7 @@ namespace engine::server
 		for (uint32_t i = 0; i < config.workerThreadCount; ++i)
 			m_impl->workers.emplace_back(&Impl::WorkerThreadRun, m_impl);
 		m_impl->ioThread = std::thread(&Impl::IoThreadRun, m_impl);
+		std::fprintf(stderr, "[NETSRV] Init OK workers=%u ioThread started\n", config.workerThreadCount); std::fflush(stderr);
 
 		LOG_INFO(Net, "[NetServer] Init OK (port={}, max_connections={}, workers={}, tls={}, rate_limit={}/s burst={}, decode_threshold={}, handshake_timeout_s={}, tx_cap={})",
 			listenPort, config.maxConnections, config.workerThreadCount, m_impl->tlsEnabled ? "on" : "off",
@@ -760,24 +775,29 @@ namespace engine::server
 
 	void NetServer::Shutdown()
 	{
+		std::fprintf(stderr, "[NETSRV] Shutdown enter\n"); std::fflush(stderr);
 		if (m_impl == nullptr)
 			return;
 
 		m_impl->running.store(false);
+		std::fprintf(stderr, "[NETSRV] running=false, avant ioThread.join\n"); std::fflush(stderr);
 		if (m_impl->ioThread.joinable())
 			m_impl->ioThread.join();
+		std::fprintf(stderr, "[NETSRV] ioThread joined\n"); std::fflush(stderr);
 
 		m_impl->workersQuit.store(true);
 		m_impl->jobCv.notify_all();
 		for (auto& w : m_impl->workers)
 			if (w.joinable())
 				w.join();
+		std::fprintf(stderr, "[NETSRV] workers joined count=%zu\n", m_impl->workers.size()); std::fflush(stderr);
 		m_impl->workers.clear();
 
 		if (m_impl->sslCtx != nullptr)
 		{
 			SSL_CTX_free(m_impl->sslCtx);
 			m_impl->sslCtx = nullptr;
+			std::fprintf(stderr, "[NETSRV] SSL_CTX_free OK\n"); std::fflush(stderr);
 		}
 		if (m_impl->epollFd != -1)
 		{
@@ -790,6 +810,7 @@ namespace engine::server
 			m_impl->listenFd = -1;
 		}
 
+		std::fprintf(stderr, "[NETSRV] Shutdown OK\n"); std::fflush(stderr);
 		LOG_INFO(Net, "[NetServer] Destroyed (port={})", m_impl->listenPort);
 		delete m_impl;
 		m_impl = nullptr;

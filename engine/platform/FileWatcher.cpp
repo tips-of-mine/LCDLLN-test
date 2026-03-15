@@ -1,6 +1,8 @@
 #include "engine/platform/FileWatcher.h"
+#include "engine/core/Log.h"
 
 #include <chrono>
+#include <cstdio>
 #include <thread>
 
 #if defined(_WIN32)
@@ -29,6 +31,7 @@ namespace engine::platform
 
 		void Destroy()
 		{
+			std::fprintf(stderr, "[FW] Impl::Destroy enter hDir=%p pending=%d\n", (void*)hDir, (int)pending); std::fflush(stderr);
 			stopSignalled = true;
 			if (hStopEvent)
 			{
@@ -36,18 +39,25 @@ namespace engine::platform
 			}
 			if (hDir != INVALID_HANDLE_VALUE)
 			{
-				CancelIoEx(hDir, &overlapped);
+				// Passer nullptr annule toutes les I/O en cours sur ce handle.
+				// Ne passer &overlapped que si une I/O est réellement en cours (pending==true),
+				// sinon UB sur certaines versions de Windows.
+				CancelIoEx(hDir, pending ? &overlapped : nullptr);
+				std::fprintf(stderr, "[FW] Impl::Destroy CancelIoEx done\n"); std::fflush(stderr);
 				CloseHandle(hDir);
+				std::fprintf(stderr, "[FW] Impl::Destroy hDir closed\n"); std::fflush(stderr);
 				hDir = INVALID_HANDLE_VALUE;
 			}
 			if (hEvent)
 			{
 				CloseHandle(hEvent);
+				std::fprintf(stderr, "[FW] Impl::Destroy hEvent closed\n"); std::fflush(stderr);
 				hEvent = nullptr;
 			}
 			if (hStopEvent)
 			{
 				CloseHandle(hStopEvent);
+				std::fprintf(stderr, "[FW] Impl::Destroy hStopEvent closed\n"); std::fflush(stderr);
 				hStopEvent = nullptr;
 			}
 			pending = false;
@@ -75,6 +85,7 @@ namespace engine::platform
 
 	bool FileWatcher::StartReadDirectoryChanges(Impl* impl)
 	{
+		std::fprintf(stderr, "[FW] StartRDC enter hDir=%p\n", (void*)impl->hDir); std::fflush(stderr);
 		if (impl->hDir == INVALID_HANDLE_VALUE || impl->stopSignalled)
 		{
 			return false;
@@ -92,6 +103,7 @@ namespace engine::platform
 			&impl->overlapped,
 			nullptr
 		);
+		std::fprintf(stderr, "[FW] StartRDC ReadDirectoryChangesW ok=%d\n", (int)ok); std::fflush(stderr);
 		if (!ok)
 		{
 			impl->pending = false;
@@ -112,6 +124,7 @@ namespace engine::platform
 
 	void FileWatcher::Init(const std::string& directory)
 	{
+		std::fprintf(stderr, "[FW] Init enter dir='%s'\n", directory.c_str()); std::fflush(stderr);
 #if defined(_WIN32)
 		if (m_impl && m_impl->hDir != INVALID_HANDLE_VALUE)
 		{
@@ -122,6 +135,8 @@ namespace engine::platform
 			m_impl = new Impl();
 		}
 		m_impl->Destroy();
+
+		LOG_INFO(Core, "[FileWatcher] Init: opening directory '{}'", directory);
 
 		std::wstring wpath = Utf8ToWide(directory);
 		if (wpath.empty())
@@ -138,21 +153,45 @@ namespace engine::platform
 			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
 			nullptr
 		);
+		std::fprintf(stderr, "[FW] CreateFileW r=%p\n", (void*)m_impl->hDir); std::fflush(stderr);
 		if (m_impl->hDir == INVALID_HANDLE_VALUE)
 		{
+			LOG_ERROR(Core, "[FileWatcher] Init FAILED: CreateFileW returned INVALID_HANDLE_VALUE"
+				" (error={})", static_cast<uint32_t>(GetLastError()));
+			return;
+		}
+		LOG_INFO(Core, "[FileWatcher] Init: directory opened OK (hDir={})",
+			reinterpret_cast<uintptr_t>(m_impl->hDir));
+
+		// Auto-reset : le kernel remet l'événement à non-signalé après WaitForMultipleObjects.
+		m_impl->hEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+		std::fprintf(stderr, "[FW] CreateEventW hEvent r=%p\n", (void*)m_impl->hEvent); std::fflush(stderr);
+		if (!m_impl->hEvent)
+		{
+			LOG_ERROR(Core, "[FileWatcher] Init FAILED: CreateEventW(hEvent) failed"
+				" (error={})", static_cast<uint32_t>(GetLastError()));
+			m_impl->Destroy();
 			return;
 		}
 
-		m_impl->hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
 		m_impl->hStopEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
-		if (!m_impl->hEvent || !m_impl->hStopEvent)
+		std::fprintf(stderr, "[FW] CreateEventW hStopEvent r=%p\n", (void*)m_impl->hStopEvent); std::fflush(stderr);
+		if (!m_impl->hStopEvent)
 		{
+			LOG_ERROR(Core, "[FileWatcher] Init FAILED: CreateEventW(hStopEvent) failed"
+				" (error={})", static_cast<uint32_t>(GetLastError()));
 			m_impl->Destroy();
 			return;
 		}
 
 		m_impl->buffer.resize(4096);
 		m_impl->stopSignalled = false;
+		LOG_INFO(Core, "[FileWatcher] Init OK (dir='{}', hDir={}, hEvent={}, hStopEvent={})",
+			directory,
+			reinterpret_cast<uintptr_t>(m_impl->hDir),
+			reinterpret_cast<uintptr_t>(m_impl->hEvent),
+			reinterpret_cast<uintptr_t>(m_impl->hStopEvent));
+		std::fprintf(stderr, "[FW] Init OK\n"); std::fflush(stderr);
 #else
 		(void)directory;
 #endif
@@ -161,6 +200,7 @@ namespace engine::platform
 	bool FileWatcher::WaitForChange(uint32_t timeoutMs)
 	{
 #if defined(_WIN32)
+		std::fprintf(stderr, "[FW] WaitForChange timeout=%u pending=%d\n", timeoutMs, m_impl ? (int)m_impl->pending : -1); std::fflush(stderr);
 		if (!m_impl || m_impl->hDir == INVALID_HANDLE_VALUE)
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(16));
@@ -178,6 +218,7 @@ namespace engine::platform
 
 		HANDLE handles[2] = { m_impl->hStopEvent, m_impl->hEvent };
 		DWORD wait = WaitForMultipleObjectsEx(2, handles, FALSE, timeoutMs, FALSE);
+		std::fprintf(stderr, "[FW] WaitForMultipleObjects wait=%lu\n", (unsigned long)wait); std::fflush(stderr);
 
 		if (wait == WAIT_OBJECT_0)
 		{
@@ -186,6 +227,7 @@ namespace engine::platform
 		if (wait == WAIT_OBJECT_0 + 1)
 		{
 			m_impl->pending = false;
+			ResetEvent(m_impl->hEvent);          // défense en profondeur
 			StartReadDirectoryChanges(m_impl);
 			return true;
 		}
@@ -199,11 +241,13 @@ namespace engine::platform
 
 	void FileWatcher::Destroy()
 	{
+		std::fprintf(stderr, "[FW] Destroy enter\n"); std::fflush(stderr);
 #if defined(_WIN32)
 		if (m_impl)
 		{
 			m_impl->Destroy();
 		}
 #endif
+		std::fprintf(stderr, "[FW] Destroy OK\n"); std::fflush(stderr);
 	}
 }

@@ -4,6 +4,7 @@
 #include "engine/platform/FileSystem.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <filesystem>
 
 namespace engine::audio
@@ -45,6 +46,7 @@ namespace engine::audio
 
 	bool AudioEngine::Init(const engine::core::Config& config)
 	{
+		std::fprintf(stderr, "[AUDIO] Init enter\n"); std::fflush(stderr);
 		Shutdown();
 		m_config = &config;
 		m_zoneAudioRelativePath = config.GetString("audio.zone_audio_path", "audio/zone_audio.json");
@@ -55,6 +57,7 @@ namespace engine::audio
 		}
 
 		m_initialized = true;
+		std::fprintf(stderr, "[AUDIO] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Core, "[AudioEngine] Init OK (backend=NullAudioBackend, buses={}, sounds={}, zones={})",
 			static_cast<uint32_t>(m_buses.size()),
 			static_cast<uint32_t>(m_sounds.size()),
@@ -64,6 +67,7 @@ namespace engine::audio
 
 	void AudioEngine::Shutdown()
 	{
+		std::fprintf(stderr, "[AUDIO] Shutdown enter\n"); std::fflush(stderr);
 		m_activeSounds.clear();
 		m_zoneAmbience.clear();
 		m_sounds.clear();
@@ -75,6 +79,7 @@ namespace engine::audio
 		m_nextInstanceId = 1;
 		m_config = nullptr;
 		m_initialized = false;
+		std::fprintf(stderr, "[AUDIO] Shutdown OK\n"); std::fflush(stderr);
 		LOG_INFO(Core, "[AudioEngine] Shutdown complete");
 	}
 

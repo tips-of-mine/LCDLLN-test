@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cctype>
+#include <cstdio>
 #include <cstring>
 #include <deque>
 #include <iomanip>
@@ -186,6 +187,7 @@ namespace engine::network
 
 	void NetClient::Connect(const std::string& host, uint16_t port)
 	{
+		std::fprintf(stderr, "[NETCLI] Connect called host=%s port=%u\n", host.c_str(), (unsigned)port); std::fflush(stderr);
 		if (m_state.load() != NetClientState::Disconnected)
 		{
 			LOG_WARN(Net, "[NetClient] Connect ignored: state is not Disconnected");
@@ -205,6 +207,7 @@ namespace engine::network
 
 	void NetClient::Disconnect(std::string reason)
 	{
+		std::fprintf(stderr, "[NETCLI] Disconnect called reason='%s'\n", reason.c_str()); std::fflush(stderr);
 		m_requestDisconnect = true;
 		{
 			std::lock_guard lock(m_mutex);
@@ -254,6 +257,7 @@ namespace engine::network
 
 	void NetClient::TlsCleanupAndDisconnect(void* ssl, void* ctx, uintptr_t& socketHandle, std::string_view reason)
 	{
+		std::fprintf(stderr, "[NETCLI] disconnect reason='%.*s'\n", static_cast<int>(reason.size()), reason.data()); std::fflush(stderr);
 		SSL* s = static_cast<SSL*>(ssl);
 		SSL_CTX* c = static_cast<SSL_CTX*>(ctx);
 		if (s != nullptr)
@@ -274,6 +278,7 @@ namespace engine::network
 
 	void NetClient::NetworkThreadRun()
 	{
+		std::fprintf(stderr, "[NETCLI] NetworkThread started\n"); std::fflush(stderr);
 		WSADATA wsaData{};
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		{
@@ -283,6 +288,7 @@ namespace engine::network
 			m_eventQueue.push_back({ NetClientEventType::Disconnected, "WSAStartup failed", {} });
 			return;
 		}
+		std::fprintf(stderr, "[NETCLI] WSAStartup OK\n"); std::fflush(stderr);
 
 		uintptr_t socketHandle = 0;
 		SSL* ssl = nullptr;
@@ -313,6 +319,7 @@ namespace engine::network
 				if (doConnect)
 				{
 					m_state.store(NetClientState::Connecting);
+					std::fprintf(stderr, "[NETCLI] avant connect host=%s port=%u\n", host.c_str(), (unsigned)port); std::fflush(stderr);
 					LOG_INFO(Net, "[NetClient] Connecting to {}:{}...", host, port);
 
 					addrinfo hints{};
@@ -359,6 +366,7 @@ namespace engine::network
 					{
 						socketHandle = static_cast<uintptr_t>(s);
 						m_state.store(NetClientState::Connected);
+						std::fprintf(stderr, "[NETCLI] TCP connect OK\n"); std::fflush(stderr);
 						LOG_INFO(Net, "[NetClient] TCP connected to {}:{}", host, port);
 						rxBuffer.clear();
 						rxConsumed = 0;
@@ -366,6 +374,7 @@ namespace engine::network
 						{ std::lock_guard lock(m_mutex); useTls = !m_expectedServerFingerprintHex.empty(); }
 						if (useTls)
 						{
+							std::fprintf(stderr, "[NETCLI] avant TLS handshake\n"); std::fflush(stderr);
 							LOG_INFO(Net, "[NetClient] TLS handshake started (host={}:{})", host, port);
 							SSL_library_init();
 							SSL_load_error_strings();
@@ -409,6 +418,7 @@ namespace engine::network
 								TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "certificate fingerprint mismatch");
 								continue;
 							}
+							std::fprintf(stderr, "[NETCLI] TLS handshake OK fingerprint_check=%d\n", (int)useTls); std::fflush(stderr);
 							LOG_INFO(Net, "[NetClient] TLS handshake completed OK");
 							ssl = mySsl;
 							SSL_CTX_free(ctx);
@@ -451,6 +461,7 @@ namespace engine::network
 								{
 									socketHandle = static_cast<uintptr_t>(s);
 									m_state.store(NetClientState::Connected);
+									std::fprintf(stderr, "[NETCLI] TCP connect OK\n"); std::fflush(stderr);
 									LOG_INFO(Net, "[NetClient] TCP connected to {}:{} (async)", host, port);
 									rxBuffer.clear();
 									rxConsumed = 0;
@@ -458,6 +469,7 @@ namespace engine::network
 									{ std::lock_guard lock(m_mutex); useTlsAsync = !m_expectedServerFingerprintHex.empty(); }
 									if (useTlsAsync)
 									{
+										std::fprintf(stderr, "[NETCLI] avant TLS handshake\n"); std::fflush(stderr);
 										LOG_INFO(Net, "[NetClient] TLS handshake started (host={}:{})", host, port);
 										SSL_library_init();
 										SSL_load_error_strings();
@@ -501,6 +513,7 @@ namespace engine::network
 											TlsCleanupAndDisconnect(mySsl, ctx, socketHandle, "certificate fingerprint mismatch");
 											continue;
 										}
+										std::fprintf(stderr, "[NETCLI] TLS handshake OK fingerprint_check=%d\n", (int)useTlsAsync); std::fflush(stderr);
 										LOG_INFO(Net, "[NetClient] TLS handshake completed OK");
 										ssl = mySsl;
 										SSL_CTX_free(ctx);
@@ -544,6 +557,7 @@ namespace engine::network
 					std::lock_guard lock(m_mutex);
 					reason = m_disconnectReason;
 				}
+				std::fprintf(stderr, "[NETCLI] disconnect reason='%s'\n", reason.empty() ? "requested" : reason.c_str()); std::fflush(stderr);
 				if (ssl != nullptr) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; tlsHandshakeDone = false; }
 				CloseSocket(socketHandle);
 				m_state.store(NetClientState::Disconnected);
@@ -697,6 +711,7 @@ namespace engine::network
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		}
 
+		std::fprintf(stderr, "[NETCLI] NetworkThread exiting\n"); std::fflush(stderr);
 		if (ssl != nullptr) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
 		CloseSocket(socketHandle);
 		WSACleanup();

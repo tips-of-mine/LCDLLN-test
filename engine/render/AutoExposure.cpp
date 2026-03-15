@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 
 namespace engine::render
@@ -33,6 +34,7 @@ namespace engine::render
 		float histogramPercentileHigh,
 		VkPipelineCache pipelineCache)
 	{
+		std::fprintf(stderr, "[AUTOEXP] Init enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE ||
 			!histogramCompSpirv || histogramCompWordCount == 0 ||
 			!histogramAvgCompSpirv || histogramAvgCompWordCount == 0)
@@ -155,6 +157,7 @@ namespace engine::render
 
 			LOG_INFO(Render, "[AutoExposure] Slot {} buffers created (histogramBins={})", slot, kHistogramBinCount);
 		}
+		std::fprintf(stderr, "[AUTOEXP] vkCreateBuffer histogram r=0\n"); std::fflush(stderr);
 
 		// ---------------------------------------------------------------------
 		// Exposure buffer (host visible, persistent, 1 float)
@@ -382,7 +385,9 @@ namespace engine::render
 
 			AssertPipelineCreationAllowed();
 			PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_histogramPipelineLayout, histogramCompWordCount));
-			if (vkCreateComputePipelines(device, pipelineCache, 1, &histogramPipelineInfo, nullptr, &m_histogramPipeline) != VK_SUCCESS)
+			VkResult histResult = vkCreateComputePipelines(device, pipelineCache, 1, &histogramPipelineInfo, nullptr, &m_histogramPipeline);
+			std::fprintf(stderr, "[AUTOEXP] vkCreateComputePipelines histogram r=%d\n", (int)histResult); std::fflush(stderr);
+			if (histResult != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "[AutoExposure] Init FAILED: histogram compute pipeline creation failed");
 				vkDestroyShaderModule(device, averageModule, nullptr);
@@ -403,7 +408,9 @@ namespace engine::render
 			averagePipelineInfo.layout = m_averagePipelineLayout;
 
 			PipelineCache::RegisterWarmupKey(HashComputePsoKey(m_averagePipelineLayout, histogramAvgCompWordCount));
-			if (vkCreateComputePipelines(device, pipelineCache, 1, &averagePipelineInfo, nullptr, &m_averagePipeline) != VK_SUCCESS)
+			VkResult avgResult = vkCreateComputePipelines(device, pipelineCache, 1, &averagePipelineInfo, nullptr, &m_averagePipeline);
+			std::fprintf(stderr, "[AUTOEXP] vkCreateComputePipelines average r=%d\n", (int)avgResult); std::fflush(stderr);
+			if (avgResult != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "[AutoExposure] Init FAILED: average compute pipeline creation failed");
 				vkDestroyShaderModule(device, averageModule, nullptr);
@@ -416,6 +423,7 @@ namespace engine::render
 			vkDestroyShaderModule(device, histogramModule, nullptr);
 		}
 
+		std::fprintf(stderr, "[AUTOEXP] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[AutoExposure] Init OK (slots={}, percentileLow={}, percentileHigh={})",
 			kAESlots, m_histogramParams.percentileLow, m_histogramParams.percentileHigh);
 		return true;
@@ -578,6 +586,7 @@ namespace engine::render
 
 	void AutoExposure::Destroy(VkDevice device)
 	{
+		std::fprintf(stderr, "[AUTOEXP] Destroy enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE) return;
 
 		if (m_averagePipeline != VK_NULL_HANDLE)
@@ -625,6 +634,7 @@ namespace engine::render
 			m_exposureAlloc = nullptr;
 		}
 		m_vmaAllocator = nullptr;
+		std::fprintf(stderr, "[AUTOEXP] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[AutoExposure] Destroyed");
 	}
 }

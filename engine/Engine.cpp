@@ -1334,34 +1334,52 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			std::fprintf(stderr, "[RUN] vkDeviceWaitIdle OK\n"); std::fflush(stderr);
 			if (m_pipeline)
 			{
+				std::fprintf(stderr, "[RUN] avant pipeline->Destroy\n"); std::fflush(stderr);
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
+				std::fprintf(stderr, "[RUN] pipeline->Destroy OK\n"); std::fflush(stderr);
 				m_pipeline.reset();
 			}
+			std::fprintf(stderr, "[RUN] avant profilerHud.Shutdown\n"); std::fflush(stderr);
 			m_profilerHud.Shutdown();
+			std::fprintf(stderr, "[RUN] avant profiler.Shutdown\n"); std::fflush(stderr);
 			m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
+			std::fprintf(stderr, "[RUN] avant audioEngine.Shutdown\n"); std::fflush(stderr);
 			m_audioEngine.Shutdown();
+			std::fprintf(stderr, "[RUN] avant decalSystem.Shutdown\n"); std::fflush(stderr);
 			m_decalSystem.Shutdown();
+			std::fprintf(stderr, "[RUN] avant assetRegistry.Destroy\n"); std::fflush(stderr);
 			m_assetRegistry.Destroy();
+			std::fprintf(stderr, "[RUN] avant frameGraph.destroy\n"); std::fflush(stderr);
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+			std::fprintf(stderr, "[RUN] avant stagingAllocator.Destroy\n"); std::fflush(stderr);
 			m_stagingAllocator.Destroy(m_vkDeviceContext.GetDevice());
+			std::fprintf(stderr, "[RUN] avant DestroyFrameResources\n"); std::fflush(stderr);
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
 			if (m_vmaAllocator)
 			{
+				std::fprintf(stderr, "[RUN] avant vmaDestroyAllocator\n"); std::fflush(stderr);
 				vmaDestroyAllocator(reinterpret_cast<VmaAllocator>(m_vmaAllocator));
 				m_vmaAllocator = nullptr;
 			}
 		}
+		std::fprintf(stderr, "[RUN] avant vkSwapchain.Destroy\n"); std::fflush(stderr);
 		m_vkSwapchain.Destroy();
+		std::fprintf(stderr, "[RUN] avant vkDeviceContext.Destroy\n"); std::fflush(stderr);
 		m_vkDeviceContext.Destroy();
+		std::fprintf(stderr, "[RUN] avant vkInstance.Destroy\n"); std::fflush(stderr);
 		m_vkInstance.Destroy();
 		if (m_glfwWindowForVk)
 		{
+			std::fprintf(stderr, "[RUN] avant glfwDestroyWindow\n"); std::fflush(stderr);
 			glfwDestroyWindow(m_glfwWindowForVk);
 			m_glfwWindowForVk = nullptr;
 		}
+		std::fprintf(stderr, "[RUN] avant glfwTerminate\n"); std::fflush(stderr);
 		glfwTerminate();
+		std::fprintf(stderr, "[RUN] shutdown complete\n"); std::fflush(stderr);
 
 		if (m_editorMode)
 		{
@@ -1594,7 +1612,7 @@ namespace engine
 	    std::fprintf(stderr, "[RENDER] avant vkEndCommandBuffer\n"); std::fflush(stderr);
 	    if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) return;
 	
-	    std::fprintf(stderr, "[RENDER] avant vkQueueSubmit\n"); std::fflush(stderr);
+	    std::fprintf(stderr, "[RENDER] avant vkQueueSubmit frame=%u\n", m_currentFrame); std::fflush(stderr);
 	    VkSemaphore          waitSemaphores[]   = { fr.imageAvailable };
 	    VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	    VkSemaphore          signalSemaphores[] = { fr.renderFinished };
@@ -1608,8 +1626,10 @@ namespace engine
 	    submitInfo.signalSemaphoreCount = 1;
 	    submitInfo.pSignalSemaphores    = signalSemaphores;
 	    vkResetFences(device, 1, &fr.fence);
-	    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence) != VK_SUCCESS) return;
-	
+	    VkResult submitResult = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence);
+	    std::fprintf(stderr, "[RENDER] vkQueueSubmit r=%d\n", (int)submitResult); std::fflush(stderr);
+	    if (submitResult != VK_SUCCESS) return;
+
 	    std::fprintf(stderr, "[RENDER] avant vkQueuePresentKHR\n"); std::fflush(stderr);
 	    VkPresentInfoKHR presentInfo{};
 	    presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1619,7 +1639,7 @@ namespace engine
 	    presentInfo.pSwapchains        = &swapchain;
 	    presentInfo.pImageIndices      = &imageIndex;
 	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
-	    std::fprintf(stderr, "[RENDER] vkQueuePresentKHR result=%d\n", (int)result); std::fflush(stderr);
+	    std::fprintf(stderr, "[RENDER] vkQueuePresentKHR r=%d\n", (int)result); std::fflush(stderr);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	        m_swapchainResizeRequested = true;
 	

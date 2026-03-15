@@ -4,8 +4,9 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include <cstring>
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
 
 namespace engine::render
 {
@@ -60,10 +61,12 @@ namespace engine::render
 
 	void AssetRegistry::Init(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator, const engine::core::Config& config)
 	{
+		std::fprintf(stderr, "[ASSET] Init enter device=%p vma=%p\n", (void*)device, vmaAllocator); std::fflush(stderr);
 		m_device = device;
 		m_physicalDevice = physicalDevice;
 		m_vmaAllocator = vmaAllocator;
 		m_config = &config;
+		std::fprintf(stderr, "[ASSET] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[AssetRegistry] Init OK");
 	}
 
@@ -107,8 +110,10 @@ namespace engine::render
 
 	void AssetRegistry::Destroy()
 	{
+		std::fprintf(stderr, "[ASSET] Destroy enter meshes=%zu textures=%zu\n", m_meshes.size(), m_textures.size()); std::fflush(stderr);
 		if (m_device == VK_NULL_HANDLE)
 		{
+			std::fprintf(stderr, "[ASSET] Destroy OK\n"); std::fflush(stderr);
 			LOG_INFO(Render, "[AssetRegistry] Destroyed");
 			return;
 		}
@@ -147,11 +152,13 @@ namespace engine::render
 		m_config = nullptr;
 		m_nextMeshId = 1;
 		m_nextTextureId = 1;
+		std::fprintf(stderr, "[ASSET] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[AssetRegistry] Destroyed");
 	}
 
 	AssetId AssetRegistry::loadMeshInternal(std::string_view relativePath)
 	{
+		std::fprintf(stderr, "[ASSET] loadMesh '%.*s'\n", static_cast<int>(relativePath.size()), relativePath.data()); std::fflush(stderr);
 		if (!m_config || m_device == VK_NULL_HANDLE) return kInvalidAssetId;
 		std::vector<uint8_t> data = engine::platform::FileSystem::ReadAllBytesContent(*m_config, relativePath);
 		if (data.size() < 16) { LOG_ERROR(Render, "AssetRegistry: mesh file too small: {}", relativePath); return kInvalidAssetId; }
@@ -285,6 +292,7 @@ namespace engine::render
 
 	AssetId AssetRegistry::loadTextureInternal(std::string_view relativePath, bool useSrgb)
 	{
+		std::fprintf(stderr, "[ASSET] loadTexture '%.*s'\n", static_cast<int>(relativePath.size()), relativePath.data()); std::fflush(stderr);
 		if (!m_config || m_device == VK_NULL_HANDLE) return kInvalidAssetId;
 		std::vector<uint8_t> data = engine::platform::FileSystem::ReadAllBytesContent(*m_config, relativePath);
 		if (data.size() < 16) { LOG_ERROR(Render, "AssetRegistry: texture file too small: {}", relativePath); return kInvalidAssetId; }

@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <vector>
 
@@ -60,6 +61,7 @@ namespace engine::render
 		uint32_t requestedWidth, uint32_t requestedHeight,
 		VkPresentModeKHR requestedPresentMode)
 	{
+		std::fprintf(stderr, "[SWAPCHAIN] Create enter w=%u h=%u\n", requestedWidth, requestedHeight); std::fflush(stderr);
 		if (physicalDevice == VK_NULL_HANDLE || device == VK_NULL_HANDLE || surface == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "VkSwapchain::Create: invalid physical device, device, or surface");
@@ -125,6 +127,7 @@ namespace engine::render
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 		result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_swapchain);
+		std::fprintf(stderr, "[SWAPCHAIN] vkCreateSwapchainKHR r=%d\n", (int)result); std::fflush(stderr);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "vkCreateSwapchainKHR failed: {}", static_cast<int>(result));
@@ -234,6 +237,7 @@ namespace engine::render
 		m_graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
 		m_presentQueueFamilyIndex = presentQueueFamilyIndex;
 
+		std::fprintf(stderr, "[SWAPCHAIN] Create OK images=%u\n", swapchainImageCount); std::fflush(stderr);
 		const char* modeName = (m_presentMode == VK_PRESENT_MODE_FIFO_KHR) ? "FIFO" :
 			(m_presentMode == VK_PRESENT_MODE_MAILBOX_KHR) ? "MAILBOX" :
 			(m_presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) ? "IMMEDIATE" : "OTHER";
@@ -243,6 +247,7 @@ namespace engine::render
 
 	void VkSwapchain::Destroy()
 	{
+		std::fprintf(stderr, "[SWAPCHAIN] Destroy enter\n"); std::fflush(stderr);
 		if (m_device == VK_NULL_HANDLE)
 		{
 			return;
@@ -281,6 +286,7 @@ namespace engine::render
 
 		m_imageFormat = VK_FORMAT_UNDEFINED;
 		m_extent = { 0, 0 };
+		std::fprintf(stderr, "[SWAPCHAIN] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "VkSwapchain destroyed");
 	}
 

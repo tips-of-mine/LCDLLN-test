@@ -21,6 +21,7 @@
 
 #include <csignal>
 #include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <string_view>
 #include <thread>
@@ -55,16 +56,20 @@ namespace
 
 int main(int argc, char** argv)
 {
+	std::fprintf(stderr, "[MAIN_SRV] boot start\n"); std::fflush(stderr);
+	std::fprintf(stderr, "[MAIN_SRV] avant config load\n"); std::fflush(stderr);
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
 
 	g_net_stats = ParseNetStatsFlag(argc, argv);
 
+	std::fprintf(stderr, "[MAIN_SRV] avant Log::Init\n"); std::fflush(stderr);
 	engine::core::LogSettings logSettings;
 	logSettings.level = engine::core::LogLevel::Info;
 	logSettings.console = true;
 	logSettings.flushAlways = true;
 	logSettings.filePath = config.GetString("log.file", "engine.log");
 	engine::core::Log::Init(logSettings);
+	std::fprintf(stderr, "[MAIN_SRV] Log::Init OK\n"); std::fflush(stderr);
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");
 
@@ -78,9 +83,11 @@ int main(int argc, char** argv)
 	engine::server::db::ConnectionPool dbPool;
 	dbPool.Init(config);
 
+	std::fprintf(stderr, "[MAIN_SRV] avant ShardRegistry setup\n"); std::fflush(stderr);
 	engine::server::ShardRegistry shardRegistry;
 	engine::server::ShardRegisterHandler shardRegisterHandler;
 	shardRegisterHandler.SetShardRegistry(&shardRegistry);
+	std::fprintf(stderr, "[MAIN_SRV] ShardRegistry setup OK\n"); std::fflush(stderr);
 
 	engine::server::NetServer server;
 	std::signal(SIGINT, OnSignal);
@@ -98,7 +105,11 @@ int main(int argc, char** argv)
 	netConfig.handshakeTimeoutSec = static_cast<uint32_t>(config.GetInt("server.tcp.handshake_timeout_sec", 10));
 
 	uint16_t port = static_cast<uint16_t>(config.GetInt("server.tcp.port", 3840));
-	if (!server.Init(port, netConfig))
+	std::fprintf(stderr, "[MAIN_SRV] config OK port=%u\n", static_cast<unsigned>(port)); std::fflush(stderr);
+	std::fprintf(stderr, "[MAIN_SRV] avant NetServer::Init port=%u\n", static_cast<unsigned>(port)); std::fflush(stderr);
+	bool initOk = server.Init(port, netConfig);
+	std::fprintf(stderr, "[MAIN_SRV] NetServer::Init r=%d\n", (int)initOk); std::fflush(stderr);
+	if (!initOk)
 	{
 		LOG_ERROR(Net, "[ServerMain] NetServer Init failed");
 		engine::core::Log::Shutdown();
@@ -140,6 +151,7 @@ int main(int argc, char** argv)
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
+	std::fprintf(stderr, "[MAIN_SRV] avant SetPacketHandler\n"); std::fflush(stderr);
 	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		if (opcode == engine::network::kOpcodeShardRegister || opcode == engine::network::kOpcodeShardHeartbeat)
@@ -151,6 +163,7 @@ int main(int argc, char** argv)
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
+	std::fprintf(stderr, "[MAIN_SRV] SetPacketHandler OK\n"); std::fflush(stderr);
 	int shardHeartbeatTimeoutSec = static_cast<int>(config.GetInt("shard.heartbeat_timeout_sec", 90));
 	shardRegistry.SetShardDownCallback([](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard down event: shard_id={}", shard_id);
@@ -164,6 +177,7 @@ int main(int argc, char** argv)
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);
 
+	std::fprintf(stderr, "[MAIN_SRV] entering main loop\n"); std::fflush(stderr);
 	auto lastStatsDump = std::chrono::steady_clock::now();
 	constexpr auto kStatsInterval = std::chrono::seconds(10);
 
@@ -179,6 +193,7 @@ int main(int argc, char** argv)
 		{
 			lastWatchdog = now;
 			sessionManager.EvictExpired();
+			std::fprintf(stderr, "[MAIN_SRV] EvictStaleHeartbeats timeout=%d\n", shardHeartbeatTimeoutSec); std::fflush(stderr);
 			shardRegistry.EvictStaleHeartbeats(shardHeartbeatTimeoutSec);
 			auto expired = connSessionMap.CollectExpired(sessionManager);
 			for (const auto& [connId, sessionId] : expired)
@@ -202,6 +217,7 @@ int main(int argc, char** argv)
 		}
 	}
 
+	std::fprintf(stderr, "[MAIN_SRV] main loop exited, avant Shutdown\n"); std::fflush(stderr);
 	if (g_net_stats)
 	{
 		engine::server::NetServerStats stats;
@@ -219,8 +235,10 @@ int main(int argc, char** argv)
 	}
 
 	server.Shutdown();
+	std::fprintf(stderr, "[MAIN_SRV] NetServer::Shutdown OK\n"); std::fflush(stderr);
 	dbPool.Shutdown();
 	LOG_INFO(Net, "[ServerMain] Shutdown complete");
+	std::fprintf(stderr, "[MAIN_SRV] shutdown complete\n"); std::fflush(stderr);
 	engine::core::Log::Shutdown();
 	return 0;
 }

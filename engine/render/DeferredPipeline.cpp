@@ -353,28 +353,50 @@ namespace engine::render
 
 	void DeferredPipeline::Destroy(VkDevice device)
 	{
+		std::fprintf(stderr, "[PIPELINE] Destroy enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE) return;
 		// Reverse init order: TAA → auto-exposure → bloom → tonemap → lighting → decals → shadow → geometry → SSAO → specular/BRDF.
+		std::fprintf(stderr, "[PIPELINE] Destroy taaPass\n"); std::fflush(stderr);
 		m_taaPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy autoExposure\n"); std::fflush(stderr);
 		m_autoExposure.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy bloomCombine\n"); std::fflush(stderr);
 		m_bloomCombinePass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy bloomUpsample\n"); std::fflush(stderr);
 		m_bloomUpsamplePass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy bloomDownsample\n"); std::fflush(stderr);
 		m_bloomDownsamplePass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy bloomPrefilter\n"); std::fflush(stderr);
 		m_bloomPrefilterPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy tonemap\n"); std::fflush(stderr);
 		m_tonemapPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy lighting\n"); std::fflush(stderr);
 		m_lightingPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy decal\n"); std::fflush(stderr);
 		m_decalPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy shadow\n"); std::fflush(stderr);
 		m_shadowMapPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy hiZ\n"); std::fflush(stderr);
 		m_hiZPyramidPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy gpuCull\n"); std::fflush(stderr);
 		m_gpuDrivenCullingPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy materialDescCache\n"); std::fflush(stderr);
 		m_materialDescriptorCache.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy geometry\n"); std::fflush(stderr);
 		m_geometryPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy ssaoBlur\n"); std::fflush(stderr);
 		m_ssaoBlurPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy ssao\n"); std::fflush(stderr);
 		m_ssaoPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy ssaoKernelNoise\n"); std::fflush(stderr);
 		m_ssaoKernelNoise.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy specularPrefilter\n"); std::fflush(stderr);
 		m_specularPrefilterPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy brdfLut\n"); std::fflush(stderr);
 		m_brdfLutPass.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy pipelineCache\n"); std::fflush(stderr);
 		m_pipelineCache.Destroy(device);
+		std::fprintf(stderr, "[PIPELINE] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[DeferredPipeline] Destroyed");
 	}
 

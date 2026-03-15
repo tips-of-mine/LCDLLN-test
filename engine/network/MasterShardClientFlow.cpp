@@ -9,6 +9,7 @@
 #include "engine/core/Log.h"
 
 #include <chrono>
+#include <cstdio>
 #include <thread>
 
 namespace engine::network
@@ -67,6 +68,7 @@ namespace engine::network
 
 	MasterShardFlowResult MasterShardClientFlow::Run(NetClient* masterClient)
 	{
+		std::fprintf(stderr, "[FLOW] Run start host=%s port=%u\n", m_masterHost.c_str(), (unsigned)m_masterPort); std::fflush(stderr);
 		MasterShardFlowResult result;
 		if (!masterClient || m_masterHost.empty())
 		{
@@ -83,13 +85,15 @@ namespace engine::network
 
 		LOG_INFO(Net, "[MasterShardClientFlow] Connecting to Master {}:{}", m_masterHost, m_masterPort);
 		masterClient->Connect(m_masterHost, m_masterPort);
-		if (!WaitConnected(masterClient, m_timeoutMs + 2000u))
+		bool connected = WaitConnected(masterClient, m_timeoutMs + 2000u);
+		std::fprintf(stderr, "[FLOW] Master connected=%d\n", (int)connected); std::fflush(stderr);
+		if (!connected)
 		{
 			result.errorMessage = "Master connect timeout or disconnected";
 			return result;
 		}
 		LOG_INFO(Net, "[MasterShardClientFlow] Master connected, sending AUTH");
-
+		std::fprintf(stderr, "[FLOW] avant AUTH login='%s'\n", m_login.c_str()); std::fflush(stderr);
 		RequestResponseDispatcher disp(masterClient);
 		std::vector<uint8_t> authResponsePayload;
 		bool authTimeout = true;
@@ -122,13 +126,16 @@ namespace engine::network
 			if (!authDone || authTimeout || !authOk)
 			{
 				result.errorMessage = authTimeout ? "AUTH timeout" : "AUTH failed";
+				std::fprintf(stderr, "[FLOW] AUTH result=%s account_id=%llu\n", "FAIL", (unsigned long long)0); std::fflush(stderr);
 				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 				return result;
 			}
 			disp.SetSessionId(sessionId);
+			std::fprintf(stderr, "[FLOW] AUTH result=%s account_id=%llu\n", authOk ? "OK" : "FAIL", (unsigned long long)sessionId); std::fflush(stderr);
 			LOG_INFO(Net, "[MasterShardClientFlow] AUTH OK (session_id={})", sessionId);
 		}
 
+		std::fprintf(stderr, "[FLOW] avant SERVER_LIST\n"); std::fflush(stderr);
 		LOG_INFO(Net, "[MasterShardClientFlow] Requesting SERVER_LIST");
 		std::vector<ServerListEntry> list;
 		{
@@ -157,6 +164,7 @@ namespace engine::network
 				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 				return result;
 			}
+			std::fprintf(stderr, "[FLOW] SERVER_LIST shards=%zu\n", list.size()); std::fflush(stderr);
 			LOG_INFO(Net, "[MasterShardClientFlow] SERVER_LIST OK ({} entries)", list.size());
 		}
 
@@ -177,6 +185,7 @@ namespace engine::network
 		}
 		uint32_t targetShardId = chosen->shard_id;
 		std::string shardEndpoint = chosen->endpoint;
+		std::fprintf(stderr, "[FLOW] avant SHARD_TICKET shard_id=%u\n", targetShardId); std::fflush(stderr);
 		LOG_INFO(Net, "[MasterShardClientFlow] Requesting ticket for shard_id={}", targetShardId);
 
 		std::vector<uint8_t> ticketPayload;
@@ -207,12 +216,14 @@ namespace engine::network
 				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 				return result;
 			}
+			std::fprintf(stderr, "[FLOW] SHARD_TICKET received len=%zu\n", ticketPayload.size()); std::fflush(stderr);
 			LOG_INFO(Net, "[MasterShardClientFlow] Ticket received ({} bytes)", ticketPayload.size());
 		}
 
 		std::string shardHost;
 		uint16_t shardPort = 3841;
 		ParseEndpoint(shardEndpoint, shardHost, shardPort);
+		std::fprintf(stderr, "[FLOW] avant Shard connect endpoint='%s'\n", shardEndpoint.c_str()); std::fflush(stderr);
 		LOG_INFO(Net, "[MasterShardClientFlow] Connecting to Shard {}:{}", shardHost, shardPort);
 
 		NetClient shardClient;
@@ -274,13 +285,16 @@ namespace engine::network
 		}
 		if (!shardAccepted)
 		{
+			std::fprintf(stderr, "[FLOW] PRESENT_SHARD_TICKET result=%s\n", "REJECTED"); std::fflush(stderr);
 			result.errorMessage = "Shard response timeout or no TICKET_ACCEPTED";
 			LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 			return result;
 		}
+		std::fprintf(stderr, "[FLOW] PRESENT_SHARD_TICKET result=%s\n", "ACCEPTED"); std::fflush(stderr);
 
 		result.success = true;
 		result.shard_id = targetShardId;
+		std::fprintf(stderr, "[FLOW] Run end success=%d\n", (int)result.success); std::fflush(stderr);
 		LOG_INFO(Net, "[MasterShardClientFlow] Flow complete (shard_id={})", result.shard_id);
 		return result;
 	}

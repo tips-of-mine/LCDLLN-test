@@ -3,6 +3,7 @@
 #include "engine/core/Log.h"
 
 #include <array>
+#include <cstdio>
 #include <cstring>
 
 namespace engine::render
@@ -90,6 +91,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
+		std::fprintf(stderr, "[LIGHT] Init enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -142,6 +144,7 @@ namespace engine::render
 			rpInfo.pDependencies   = &dep;
 
 			VkResult res = vkCreateRenderPass(device, &rpInfo, nullptr, &m_renderPass);
+			std::fprintf(stderr, "[LIGHT] vkCreateRenderPass r=%d\n", (int)res); std::fflush(stderr);
 			if (res != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "LightingPass: vkCreateRenderPass failed: {}", static_cast<int>(res));
@@ -273,6 +276,7 @@ namespace engine::render
 			layoutInfo.pPushConstantRanges    = &pushRange;
 
 			VkResult res = vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_pipelineLayout);
+			std::fprintf(stderr, "[LIGHT] vkCreatePipelineLayout r=%d\n", (int)res); std::fflush(stderr);
 			if (res != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "LightingPass: vkCreatePipelineLayout failed: {}", static_cast<int>(res));
@@ -371,6 +375,7 @@ namespace engine::render
 			AssertPipelineCreationAllowed();
 			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, sceneColorHDRFormat, VK_FORMAT_UNDEFINED));
 			VkResult res = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
+			std::fprintf(stderr, "[LIGHT] vkCreateGraphicsPipelines r=%d\n", (int)res); std::fflush(stderr);
 			vkDestroyShaderModule(device, vertMod, nullptr);
 			vkDestroyShaderModule(device, fragMod, nullptr);
 			if (res != VK_SUCCESS)
@@ -381,6 +386,7 @@ namespace engine::render
 			}
 		}
 
+		std::fprintf(stderr, "[LIGHT] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "LightingPass: initialized (maxFrames={})", m_maxFrames);
 		return true;
 	}
@@ -566,6 +572,7 @@ namespace engine::render
 			vkDestroyRenderPass(device, m_renderPass, nullptr);
 			m_renderPass = VK_NULL_HANDLE;
 		}
+		std::fprintf(stderr, "[LIGHT] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[LightingPass] Destroyed");
 	}
 

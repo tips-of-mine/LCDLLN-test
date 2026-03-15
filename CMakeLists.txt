@@ -237,6 +237,12 @@ target_include_directories(session_manager_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(session_manager_tests PRIVATE engine_core)
 add_test(NAME session_manager_tests COMMAND session_manager_tests)
 
+# M20.4: Rate limiting, IP ban, audit log unit tests
+add_executable(security_tests engine/server/SecurityTests.cpp engine/server/RateLimitAndBan.cpp engine/server/SecurityAuditLog.cpp)
+target_include_directories(security_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(security_tests PRIVATE engine_core)
+add_test(NAME security_tests COMMAND security_tests)
+
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)

@@ -23,7 +23,11 @@ namespace engine::render
 	ShaderHotReload::~ShaderHotReload()
 	{
 		m_workerRunning = false;
-		m_watcher.Destroy();
+		if (m_watcherInited)
+		{
+			m_watcher.Destroy();
+			m_watcherInited = false;
+		}
 		if (m_worker.joinable())
 		{
 			m_worker.join();

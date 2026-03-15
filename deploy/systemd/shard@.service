@@ -1,0 +1,27 @@
+[Unit]
+Description=LCDLLN Shard server (instance %i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lcdlln
+Group=lcdlln
+
+# Working directory per instance (e.g. /opt/lcdlln/shard-1 for shard@1)
+WorkingDirectory=/opt/lcdlln/shard-%i
+
+# Shard binary (adjust path to your install)
+ExecStart=/opt/lcdlln/bin/lcdlln_shard
+
+# Optional: override path and env per instance (e.g. /etc/lcdlln/shard-1.env)
+EnvironmentFile=-/etc/lcdlln/shard-%i.env
+
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

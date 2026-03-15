@@ -1,0 +1,28 @@
+[Unit]
+Description=LCDLLN Master server (auth, shard registry, tickets)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lcdlln
+Group=lcdlln
+
+# Working directory (config.json, logs, etc.)
+WorkingDirectory=/opt/lcdlln
+
+# Master binary (adjust path to your install)
+ExecStart=/opt/lcdlln/bin/lcdlln_server
+
+# Optional: override ExecStart path and env (e.g. /etc/lcdlln/master.env)
+EnvironmentFile=-/etc/lcdlln/master.env
+
+Restart=on-failure
+RestartSec=5
+
+# Security: no new privileges, private /tmp
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

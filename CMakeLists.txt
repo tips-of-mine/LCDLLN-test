@@ -61,7 +61,7 @@ message(STATUS "M20.2: Argon2 using ref implementation at ${phc-winner-argon2_SO
 # M23.4 — spdlog for rotating/daily logger (runtime + security_audit)
 FetchContent_Declare(spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog
-  GIT_TAG        v1.12.1
+  GIT_TAG        v1.12.0
 )
 set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)

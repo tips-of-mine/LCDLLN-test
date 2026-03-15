@@ -1,0 +1,86 @@
+# ============================================================
+# LCDLLN — Dockerfile.server.build (build depuis les sources)
+# ============================================================
+# Build multi-stage : compile le serveur Linux depuis les sources
+# puis crée une image runtime minimale.
+#
+# Usage:
+#   docker build -f Dockerfile.server.build -t lcdlln-server \
+#     --build-context src=.. .
+#
+# Ou via docker-compose :
+#   docker-compose --profile build up --build
+# ============================================================
+
+# ---- Stage 1 : Build ----------------------------------------
+FROM ubuntu:22.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    ninja-build \
+    git \
+    curl \
+    zip \
+    unzip \
+    tar \
+    pkg-config \
+    libssl-dev \
+    libmysqlclient-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# vcpkg pour les dépendances (fmt, nlohmann-json, etc.)
+ENV VCPKG_ROOT=/opt/vcpkg
+RUN git clone https://github.com/microsoft/vcpkg.git $VCPKG_ROOT \
+    && $VCPKG_ROOT/bootstrap-vcpkg.sh -disableMetrics
+
+WORKDIR /src
+
+# Copier les sources
+COPY . .
+
+# Installer les dépendances vcpkg
+RUN $VCPKG_ROOT/vcpkg install \
+    fmt \
+    nlohmann-json \
+    --triplet=x64-linux
+
+# Build du serveur Linux
+RUN cmake -S . -B build/linux \
+    -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+    -DVCPKG_TARGET_TRIPLET=x64-linux \
+    -DLCDLLN_BUILD_SERVER=ON \
+    -DLCDLLN_BUILD_CLIENT=OFF \
+    && cmake --build build/linux --target lcdlln_server
+
+# ---- Stage 2 : Runtime --------------------------------------
+FROM ubuntu:22.04 AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 \
+    libstdc++6 \
+    libgcc-s1 \
+    libmysqlclient21 \
+    ca-certificates \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /src/build/linux/pkg/server/lcdlln_server /app/lcdlln_server
+COPY --from=builder /src/docker/server-config/config.json /app/config.json
+COPY --from=builder /src/db/schema.sql /app/db/schema.sql
+RUN chmod +x /app/lcdlln_server
+
+EXPOSE 3840
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+    CMD nc -z localhost 3840 || exit 1
+
+ENTRYPOINT ["/app/lcdlln_server"]
+CMD ["--port", "3840", "-log", "-console"]

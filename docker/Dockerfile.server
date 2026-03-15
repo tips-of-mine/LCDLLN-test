@@ -1,0 +1,48 @@
+# ============================================================
+# LCDLLN — Dockerfile.server (runtime, binaire pré-compilé)
+# ============================================================
+# Utilise un binaire lcdlln_server pré-compilé (CI artifact).
+# Placer le binaire dans docker/bin/lcdlln_server avant de build.
+#
+# Usage:
+#   docker build -f Dockerfile.server -t lcdlln-server .
+# ============================================================
+
+FROM ubuntu:22.04
+
+LABEL maintainer="LCDLLN"
+LABEL description="LCDLLN Master Server"
+
+# Dépendances runtime uniquement (pas de compilateur)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 \
+    libstdc++6 \
+    libgcc-s1 \
+    ca-certificates \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Répertoire de travail du serveur
+WORKDIR /app
+
+# Copier le binaire pré-compilé
+# Le binaire doit être dans docker/bin/lcdlln_server
+COPY bin/lcdlln_server /app/lcdlln_server
+RUN chmod +x /app/lcdlln_server
+
+# Copier la config serveur (sera overridée par volume en dev)
+COPY server-config/config.json /app/config.json
+
+# Copier le schéma DB (pour référence, non exécuté ici)
+COPY ../db/schema.sql /app/db/schema.sql
+
+# Port d'écoute du serveur
+EXPOSE 3840
+
+# Healthcheck : vérifie que le port est en écoute
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+    CMD nc -z localhost 3840 || exit 1
+
+# Point d'entrée
+ENTRYPOINT ["/app/lcdlln_server"]
+CMD ["--port", "3840", "-log", "-console"]

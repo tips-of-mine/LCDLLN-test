@@ -1,6 +1,7 @@
 /// Minimal Linux TCP server entry point (M19.4). Uses NetServer (epoll); no game/DB logic.
 /// M20.5: Auth/Register handlers wired via AuthRegisterHandler.
 
+#include "engine/server/MigrationRunner.h"
 #include "engine/server/NetServer.h"
 #include "engine/server/AuthRegisterHandler.h"
 #include "engine/server/InMemoryAccountStore.h"
@@ -60,6 +61,13 @@ int main(int argc, char** argv)
 	engine::core::Log::Init(logSettings);
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");
+
+	if (!engine::server::MigrationRunnerRun(config))
+	{
+		LOG_ERROR(Core, "[ServerMain] Migrations failed, exiting");
+		engine::core::Log::Shutdown();
+		return 1;
+	}
 
 	engine::server::NetServer server;
 	std::signal(SIGINT, OnSignal);

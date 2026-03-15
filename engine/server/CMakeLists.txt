@@ -26,8 +26,14 @@ if(WIN32)
   target_link_libraries(server_app PRIVATE ws2_32 engine_auth)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
+  find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
+  find_library(MYSQL_LIBRARY NAMES mysqlclient)
+  if(NOT MYSQL_INCLUDE_DIR OR NOT MYSQL_LIBRARY)
+    message(FATAL_ERROR "MySQL client not found. Install libmysqlclient-dev (or mariadb-dev) and ensure mysql.h is available.")
+  endif()
   add_executable(server_app
     main_server_linux.cpp
+    MigrationRunner.cpp
     NetServer.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
@@ -46,7 +52,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
-  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth)
+  target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth ${MYSQL_LIBRARY})
 else()
   message(STATUS "M15.4: server_app not configured for this platform (WIN32/UNIX only)")
   return()

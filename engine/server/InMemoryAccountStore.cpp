@@ -16,13 +16,13 @@ namespace engine::server
 			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: empty login");
 			return 0;
 		}
-		if (engine::network::ValidateLogin(login_key) != engine::network::NetErrorCode::OK)
+		if (engine::server::ValidateLogin(login_key) != engine::network::NetErrorCode::OK)
 		{
 			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: invalid login");
 			return 0;
 		}
 		std::string email_norm = NormaliseEmail(email);
-		if (!email_norm.empty() && engine::network::ValidateEmail(email_norm) != engine::network::NetErrorCode::OK)
+		if (!email_norm.empty() && engine::server::ValidateEmail(email_norm) != engine::network::NetErrorCode::OK)
 		{
 			LOG_WARN(Auth, "[InMemoryAccountStore] CreateAccount: invalid email");
 			return 0;

@@ -19,6 +19,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
   )
   target_link_libraries(server_app PRIVATE ws2_32 engine_auth)
 elseif(UNIX)
@@ -35,6 +36,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
     AccountValidation.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
   )
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth)
 else()

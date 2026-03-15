@@ -1,4 +1,4 @@
-# Build engine (Windows + Linux, CMake + vcpkg + Ninja)
+# Build engine (Linux, CMake + vcpkg + Ninja)
 name: Build Linux
 
 on:
@@ -36,7 +36,51 @@ jobs:
           VCPKG_DEFAULT_TRIPLET: x64-linux
         run: cmake --preset linux-x64
 
-      - name: Build (Debug)
+      - name: Build (Release)
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: cmake --build --preset linux-x64-debug
+        run: cmake --build --preset linux-x64-release
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+
+          # Copie les binaires produits (exécutables et .so, hors vcpkg et hors debug)
+          find "$GITHUB_WORKSPACE" \
+            \( -name "*.so" -o -name "*.so.*" -o -type f -executable \) \
+            -not -path "*/vcpkg/*" \
+            -not -path "*/debug/*" \
+            -not -path "*/.git/*" \
+            -not -name "*.sh" \
+            | while read f; do
+                cp -f "$f" "$GITHUB_WORKSPACE/artifacts/" 2>/dev/null || true
+              done
+
+          # Assets
+          if [ -d "$GITHUB_WORKSPACE/assets" ]; then
+            cp -r "$GITHUB_WORKSPACE/assets" "$GITHUB_WORKSPACE/artifacts/assets"
+          fi
+
+          # game/data
+          if [ -d "$GITHUB_WORKSPACE/game/data" ]; then
+            mkdir -p "$GITHUB_WORKSPACE/artifacts/game/data"
+            cp -r "$GITHUB_WORKSPACE/game/data/." "$GITHUB_WORKSPACE/artifacts/game/data/"
+          fi
+
+          # config.json à la racine
+          if [ -f "$GITHUB_WORKSPACE/config.json" ]; then
+            cp "$GITHUB_WORKSPACE/config.json" "$GITHUB_WORKSPACE/artifacts/"
+          fi
+
+          # build_hlod.sh à la racine du package de livraison (si présent)
+          if [ -f "$GITHUB_WORKSPACE/build_hlod.sh" ]; then
+            cp "$GITHUB_WORKSPACE/build_hlod.sh" "$GITHUB_WORKSPACE/artifacts/"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: linux-release-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7

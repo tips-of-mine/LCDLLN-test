@@ -231,6 +231,12 @@ add_executable(argon2_hash_tests engine/auth/Argon2HashTests.cpp)
 target_link_libraries(argon2_hash_tests PRIVATE engine_auth engine_core)
 add_test(NAME argon2_hash_tests COMMAND argon2_hash_tests)
 
+# M20.3: Session manager state transitions unit tests
+add_executable(session_manager_tests engine/server/SessionManagerTests.cpp engine/server/SessionManager.cpp)
+target_include_directories(session_manager_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(session_manager_tests PRIVATE engine_core)
+add_test(NAME session_manager_tests COMMAND session_manager_tests)
+
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)

@@ -41,7 +41,7 @@ namespace engine::network
 						return true;
 					if (ev.type == NetClientEventType::Disconnected)
 					{
-						LOG_ERROR(Net, "[MasterShardClientFlow] Disconnected before connected: {}", ev.message);
+						LOG_ERROR(Net, "[MasterShardClientFlow] Disconnected before connected: {}", ev.reason);
 						return false;
 					}
 				}
@@ -244,7 +244,7 @@ namespace engine::network
 			{
 				if (ev.type == NetClientEventType::Disconnected)
 				{
-					result.errorMessage = "Shard disconnected: " + ev.message;
+					result.errorMessage = "Shard disconnected: " + ev.reason;
 					LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 					return result;
 				}

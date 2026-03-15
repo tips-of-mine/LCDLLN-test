@@ -31,7 +31,7 @@ namespace engine::server
 		std::vector<std::pair<uint32_t, uint64_t>> CollectExpired(const SessionManager& sessionManager);
 
 	private:
-		std::mutex m_mutex;
+		mutable std::mutex m_mutex;
 		std::unordered_map<uint32_t, uint64_t> m_connToSession;
 	};
 

@@ -603,32 +603,19 @@ namespace engine::render
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-			VmaAllocationCreateInfo allocCreateInfo{};
-			allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-			VmaAllocation allocation = VK_NULL_HANDLE;
-
-			VkResult vmaResult = vmaCreateImage(alloc, &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
-#ifndef NDEBUG
-			LOG_DEBUG(Render, "[VMA] vmaCreateImage resource='{}' result={}", res.name, static_cast<int>(vmaResult));
-#endif
-			if (vmaResult == VK_SUCCESS && h.image != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE)
+			// [STAB.7] Skip vmaCreateImage for FrameGraph images: it causes SEH 0xC0000005 on Windows Release
+			// (e.g. ABI/CRT mismatch or invalid allocator context). Use raw Vulkan allocation path only.
+			(void)alloc;
+			if (!m_loggedImageVmaBypass)
 			{
-				h.allocation = allocation;
-				h.allocatedWithVma = true;
-				LOG_INFO(Render, "[FrameGraph] Image allocated via VMA: {}", res.name);
+				LOG_WARN(Render, "[FrameGraph] Using raw Vulkan allocation for images (STAB.7, VMA skipped)");
+				m_loggedImageVmaBypass = true;
 			}
-			else
-			{
-				if (!m_loggedImageVmaBypass)
-				{
-					LOG_WARN(Render, "[FrameGraph] VMA unavailable for images, using raw Vulkan allocation (STAB.7)");
-					m_loggedImageVmaBypass = true;
-				}
-				h.image = VK_NULL_HANDLE;
-				h.allocation = nullptr;
-				h.allocatedWithVma = false;
+			h.image = VK_NULL_HANDLE;
+			h.allocation = nullptr;
+			h.allocatedWithVma = false;
 
-				// [STAB.7] VMA BYPASS — Raw Vulkan allocation
+			// [STAB.7] VMA BYPASS — Raw Vulkan allocation
 				// Raison : vmaCreateImage échoue sur cette configuration (SDK/MSVC/VMA version mismatch ?).
 				// Toutes les approches VMA testées (static/dynamic/manual function pointers) ont échoué.
 				// Ce bypass utilise vkAllocateMemory + vkBindImageMemory directement.
@@ -687,15 +674,13 @@ namespace engine::render
 					h.image = VK_NULL_HANDLE;
 					h.allocation = nullptr;
 					h.allocatedWithVma = false;
-					LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': vma={} r1={} r2={} r3={}",
+					LOG_ERROR(Render, "FrameGraph: image alloc failed for '{}': r1={} r2={} r3={}",
 						res.name,
-						static_cast<int>(vmaResult),
 						static_cast<int>(r1),
 						static_cast<int>(r2),
 						static_cast<int>(r3));
 					continue;
 				}
-			}
 
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <cerrno>
+#include <chrono>
 #include <condition_variable>
 #include <cstring>
 #include <deque>
@@ -89,8 +90,18 @@ namespace engine::server
 			size_t txQueuedBytes = 0;
 			bool wantEpollOut = false;
 			uint32_t errorPacketsSent = 0;
+			// Token bucket (packet rate limit per connection).
+			double tokenBucketTokens = 0.0;
+			std::chrono::steady_clock::time_point tokenBucketLastRefill{ std::chrono::steady_clock::now() };
+			// Decode failure count; disconnect when >= threshold.
+			uint32_t decodeFailureCount = 0;
+			// TLS handshake deadline (only meaningful when handshakeState == InProgress).
+			std::chrono::steady_clock::time_point handshakeDeadline{};
 		};
 		std::unordered_map<int, Conn> connections;
+
+		static constexpr size_t kDisconnectReasonCount = static_cast<size_t>(DisconnectReason::Count);
+		std::atomic<uint64_t> disconnectCounts[kDisconnectReasonCount]{};
 
 		std::mutex handlerMutex;
 		NetServerPacketHandler packetHandler;
@@ -109,17 +120,43 @@ namespace engine::server
 
 		void IoThreadRun();
 		void WorkerThreadRun();
-		void CloseConnection(int fd, const char* reason);
+		void CloseConnection(int fd, DisconnectReason reason);
 		void MaybeModifyEpollOut(int fd, bool wantOut);
 		/// Set epoll events for client fd (EPOLLIN/EPOLLOUT). Call with connMutex held.
 		void SetEpollEvents(int fd, uint32_t events);
 		/// Log OpenSSL error queue for the current thread (handshake/read/write errors).
 		void LogSslErrors(const char* context);
+		/// Returns standardised string for logging. Call with connMutex not held.
+		static const char* DisconnectReasonString(DisconnectReason r);
 	};
 
-	/// Call without holding connMutex (locks internally). Frees SSL if present (SSL_shutdown + SSL_free), then closes fd.
-	void NetServer::Impl::CloseConnection(int fd, const char* reason)
+	inline const char* NetServer::Impl::DisconnectReasonString(DisconnectReason r)
 	{
+		switch (r)
+		{
+		case DisconnectReason::PeerClosed: return "peer_closed";
+		case DisconnectReason::EpollErr: return "EPOLLERR";
+		case DisconnectReason::EpollHup: return "EPOLLHUP";
+		case DisconnectReason::InvalidPacket: return "invalid_packet";
+		case DisconnectReason::DecodeFailures: return "decode_failures";
+		case DisconnectReason::RateLimit: return "rate_limit";
+		case DisconnectReason::HandshakeTimeout: return "handshake_timeout";
+		case DisconnectReason::TlsHandshakeFailed: return "TLS_handshake_failed";
+		case DisconnectReason::SslReadError: return "SSL_read_error";
+		case DisconnectReason::SslWriteError: return "SSL_write_error";
+		case DisconnectReason::RecvError: return "recv_error";
+		case DisconnectReason::SendError: return "send_error";
+		case DisconnectReason::TxQueueCap: return "tx_queue_cap";
+		default: return "unknown";
+		}
+	}
+
+	/// Call without holding connMutex (locks internally). Frees SSL if present (SSL_shutdown + SSL_free), then closes fd.
+	void NetServer::Impl::CloseConnection(int fd, DisconnectReason reason)
+	{
+		uint32_t idx = static_cast<uint32_t>(reason);
+		if (idx < kDisconnectReasonCount)
+			disconnectCounts[idx].fetch_add(1, std::memory_order_relaxed);
 		SSL* sslToFree = nullptr;
 		{
 			std::lock_guard lock(connMutex);
@@ -138,7 +175,7 @@ namespace engine::server
 		}
 		epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, nullptr);
 		close(fd);
-		LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={})", fd, reason);
+		LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={})", fd, DisconnectReasonString(reason));
 	}
 
 	/// Call with connMutex held (same thread).
@@ -236,11 +273,14 @@ namespace engine::server
 							c.fd = clientFd;
 							c.connId = connId;
 							c.rxBuffer.reserve(kRxBufferCapacity);
+							c.tokenBucketTokens = config.packetBurst;
+							c.tokenBucketLastRefill = std::chrono::steady_clock::now();
 							if (tlsEnabled && sslCtx != nullptr)
 							{
 								c.ssl = SSL_new(sslCtx);
 								SSL_set_fd(c.ssl, clientFd);
 								c.handshakeState = TlsHandshakeState::InProgress;
+								c.handshakeDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(config.handshakeTimeoutSec);
 							}
 							connectionCount.store(static_cast<uint32_t>(connections.size()));
 						}
@@ -268,7 +308,7 @@ namespace engine::server
 									{
 										LogSslErrors("TLS handshake");
 										lock.unlock();
-										CloseConnection(clientFd, "TLS handshake failed");
+										CloseConnection(clientFd, DisconnectReason::TlsHandshakeFailed);
 									}
 								}
 							}
@@ -281,7 +321,7 @@ namespace engine::server
 				// Client fd
 				if (evFlags & (EPOLLERR | EPOLLHUP))
 				{
-					CloseConnection(fd, (evFlags & EPOLLERR) ? "EPOLLERR" : "EPOLLHUP");
+					CloseConnection(fd, (evFlags & EPOLLERR) ? DisconnectReason::EpollErr : DisconnectReason::EpollHup);
 					continue;
 				}
 
@@ -311,9 +351,17 @@ namespace engine::server
 						{
 							LogSslErrors("TLS handshake");
 							lock.unlock();
-							CloseConnection(fd, "TLS handshake failed");
+							CloseConnection(fd, DisconnectReason::TlsHandshakeFailed);
 							goto next_event;
 						}
+					}
+					// Handshake timeout: close if deadline passed
+					if (std::chrono::steady_clock::now() > c.handshakeDeadline)
+					{
+						LOG_WARN(Net, "[NetServer] TLS handshake timeout (fd={}, connId={})", fd, c.connId);
+						lock.unlock();
+						CloseConnection(fd, DisconnectReason::HandshakeTimeout);
+						goto next_event;
 					}
 					goto next_event;
 				}
@@ -351,7 +399,7 @@ namespace engine::server
 						else if (received == 0)
 						{
 							lock.unlock();
-							CloseConnection(fd, "peer closed");
+							CloseConnection(fd, DisconnectReason::PeerClosed);
 							goto next_event;
 						}
 						else
@@ -371,13 +419,13 @@ namespace engine::server
 								}
 								LogSslErrors("SSL_read");
 								lock.unlock();
-								CloseConnection(fd, "SSL read error");
+								CloseConnection(fd, DisconnectReason::SslReadError);
 								goto next_event;
 							}
 							if (errno == EAGAIN || errno == EWOULDBLOCK)
 								break;
 							lock.unlock();
-							CloseConnection(fd, "recv error");
+							CloseConnection(fd, DisconnectReason::RecvError);
 							goto next_event;
 						}
 					}
@@ -392,35 +440,42 @@ namespace engine::server
 							break;
 						if (res == engine::network::PacketParseResult::Invalid)
 						{
-							uint16_t announcedSize = 0;
-							if (c.rxBuffer.size() >= 2u)
-								announcedSize = static_cast<uint16_t>(c.rxBuffer[0]) | (static_cast<uint16_t>(c.rxBuffer[1]) << 8);
-							engine::network::NetErrorCode errCode = (announcedSize > engine::network::kProtocolV1MaxPacketSize)
-								? engine::network::NetErrorCode::PACKET_OVERSIZE
-								: engine::network::NetErrorCode::INVALID_PACKET;
-							LOG_WARN(Net, "[NetServer] Invalid packet from connId={} (code={}), sending ERROR then closing", c.connId, static_cast<uint32_t>(errCode));
-							if (c.errorPacketsSent < kMaxErrorPacketsPerConnection)
+							c.decodeFailureCount++;
+							if (c.decodeFailureCount >= config.decodeFailureThreshold)
 							{
-								std::vector<uint8_t> errPkt = engine::network::BuildErrorPacket(errCode, "", 0u, 0u);
-								if (!errPkt.empty())
-								{
+								LOG_WARN(Net, "[NetServer] Decode failures threshold (connId={}, count={}), closing", c.connId, c.decodeFailureCount);
+								if (lock.owns_lock())
 									lock.unlock();
-									if (Send(c.connId, errPkt))
-									{
-										lock.lock();
-										auto it2 = connections.find(fd);
-										if (it2 != connections.end())
-											it2->second.errorPacketsSent++;
-										lock.unlock();
-									}
-								}
+								CloseConnection(fd, DisconnectReason::DecodeFailures);
+								goto next_event;
 							}
-							if (lock.owns_lock())
-								lock.unlock();
-							CloseConnection(fd, "invalid packet");
-							goto next_event;
+							// Skip 1 byte to make progress; compact buffer so next iteration advances.
+							if (c.rxConsumed + 1 >= c.rxBuffer.size())
+								c.rxBuffer.clear();
+							else
+							{
+								std::memmove(c.rxBuffer.data(), c.rxBuffer.data() + c.rxConsumed + 1, c.rxBuffer.size() - c.rxConsumed - 1);
+								c.rxBuffer.resize(c.rxBuffer.size() - c.rxConsumed - 1);
+							}
+							c.rxConsumed = 0;
+							continue;
 						}
-						// Ok: push job to workers
+						// Ok: token bucket then push job to workers
+						{
+							auto now = std::chrono::steady_clock::now();
+							double elapsed = std::chrono::duration<double>(now - c.tokenBucketLastRefill).count();
+							c.tokenBucketTokens = (std::min)(config.packetBurst, c.tokenBucketTokens + elapsed * config.packetRatePerSec);
+							c.tokenBucketLastRefill = now;
+							if (c.tokenBucketTokens < 1.0)
+							{
+								LOG_WARN(Net, "[NetServer] Rate limit exceeded (connId={}), closing", c.connId);
+								if (lock.owns_lock())
+									lock.unlock();
+								CloseConnection(fd, DisconnectReason::RateLimit);
+								goto next_event;
+							}
+							c.tokenBucketTokens -= 1.0;
+						}
 						size_t payloadSize = view.PayloadSize();
 						std::vector<uint8_t> payload(view.Payload(), view.Payload() + payloadSize);
 						{
@@ -468,14 +523,14 @@ namespace engine::server
 								}
 								LogSslErrors("SSL_write");
 								lock.unlock();
-								CloseConnection(fd, "SSL write error");
+								CloseConnection(fd, DisconnectReason::SslWriteError);
 								goto next_event;
 							}
 							if (errno == EAGAIN || errno == EWOULDBLOCK)
 								break;
 							LOG_WARN(Net, "[NetServer] send failed (fd={}): {}", fd, strerror(errno));
 							lock.unlock();
-							CloseConnection(fd, "send error");
+							CloseConnection(fd, DisconnectReason::SendError);
 							goto next_event;
 						}
 					}
@@ -667,8 +722,9 @@ namespace engine::server
 			m_impl->workers.emplace_back(&Impl::WorkerThreadRun, m_impl);
 		m_impl->ioThread = std::thread(&Impl::IoThreadRun, m_impl);
 
-		LOG_INFO(Net, "[NetServer] Init OK (port={}, max_connections={}, workers={}, tls={})",
-			listenPort, config.maxConnections, config.workerThreadCount, m_impl->tlsEnabled ? "on" : "off");
+		LOG_INFO(Net, "[NetServer] Init OK (port={}, max_connections={}, workers={}, tls={}, rate_limit={}/s burst={}, decode_threshold={}, handshake_timeout_s={}, tx_cap={})",
+			listenPort, config.maxConnections, config.workerThreadCount, m_impl->tlsEnabled ? "on" : "off",
+			config.packetRatePerSec, config.packetBurst, config.decodeFailureThreshold, config.handshakeTimeoutSec, config.maxQueuedTxBytesPerConnection);
 		return true;
 	}
 
@@ -724,7 +780,8 @@ namespace engine::server
 				continue;
 			if (c.txQueuedBytes + packet.size() > m_impl->config.maxQueuedTxBytesPerConnection)
 			{
-				LOG_WARN(Net, "[NetServer] Backpressure: connId={} TX queue cap exceeded, closing", connId);
+				m_impl->disconnectCounts[static_cast<size_t>(DisconnectReason::TxQueueCap)].fetch_add(1, std::memory_order_relaxed);
+				LOG_WARN(Net, "[NetServer] Backpressure: connId={} TX queue cap exceeded, closing (reason={})", connId, Impl::DisconnectReasonString(DisconnectReason::TxQueueCap));
 				SSL* sslToFree = c.ssl;
 				c.ssl = nullptr;
 				m_impl->connections.erase(fd);
@@ -764,6 +821,16 @@ namespace engine::server
 	{
 		return m_impl != nullptr && m_impl->running.load();
 	}
+
+	uint64_t NetServer::GetDisconnectCount(DisconnectReason reason) const
+	{
+		if (m_impl == nullptr)
+			return 0;
+		uint32_t idx = static_cast<uint32_t>(reason);
+		if (idx >= static_cast<uint32_t>(DisconnectReason::Count))
+			return 0;
+		return m_impl->disconnectCounts[idx].load(std::memory_order_relaxed);
+	}
 }
 
 #else
@@ -791,6 +858,8 @@ namespace engine::server
 	uint32_t NetServer::GetConnectionCount() const { return 0; }
 
 	bool NetServer::IsRunning() const { return false; }
+
+	uint64_t NetServer::GetDisconnectCount(DisconnectReason /*reason*/) const { return 0; }
 }
 
 #endif

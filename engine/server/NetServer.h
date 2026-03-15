@@ -7,6 +7,25 @@
 
 namespace engine::server
 {
+	/// Standardised disconnect reason for transport hardening stats. Stable for logging/observability.
+	enum class DisconnectReason : uint32_t
+	{
+		PeerClosed,
+		EpollErr,
+		EpollHup,
+		InvalidPacket,
+		DecodeFailures,
+		RateLimit,
+		HandshakeTimeout,
+		TlsHandshakeFailed,
+		SslReadError,
+		SslWriteError,
+		RecvError,
+		SendError,
+		TxQueueCap,
+		Count
+	};
+
 	/// Configuration for the TCP NetServer (Linux epoll). Limits and worker pool size.
 	/// When tlsCertPath and tlsKeyPath are both non-empty, TLS is enabled (TLS 1.2+ only); no plain mode on that port.
 	struct NetServerConfig
@@ -21,6 +40,14 @@ namespace engine::server
 		std::string tlsCertPath;
 		/// Path to TLS server private key file (PEM). If non-empty with tlsCertPath, TLS is enabled.
 		std::string tlsKeyPath;
+		/// Token bucket: sustained packet rate (packets per second) per connection. Ex: 200.
+		double packetRatePerSec = 200.0;
+		/// Token bucket: max burst (tokens). Ex: 400.
+		double packetBurst = 400.0;
+		/// Decode (invalid packet) failure threshold; after this many, connection is closed.
+		uint32_t decodeFailureThreshold = 5u;
+		/// TLS handshake timeout in seconds. Connection closed if handshake not completed in time.
+		uint32_t handshakeTimeoutSec = 10u;
 	};
 
 	/// Callback invoked from worker threads when a full packet is received. Do not run DB/game logic that blocks.
@@ -52,6 +79,9 @@ namespace engine::server
 
 		/// True after a successful Init() and before Shutdown().
 		bool IsRunning() const;
+
+		/// Returns disconnect count for \a reason. Thread-safe (atomics). Only valid while server is running.
+		uint64_t GetDisconnectCount(DisconnectReason reason) const;
 
 	private:
 		struct Impl;

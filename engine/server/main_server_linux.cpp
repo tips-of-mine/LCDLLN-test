@@ -44,6 +44,10 @@ int main(int argc, char** argv)
 	netConfig.workerThreadCount = static_cast<uint32_t>(config.GetInt("server.tcp.worker_threads", 4));
 	netConfig.tlsCertPath = config.GetString("server.tls.cert", "");
 	netConfig.tlsKeyPath = config.GetString("server.tls.key", "");
+	netConfig.packetRatePerSec = static_cast<double>(config.GetInt("server.tcp.packet_rate_per_sec", 200));
+	netConfig.packetBurst = static_cast<double>(config.GetInt("server.tcp.packet_burst", 400));
+	netConfig.decodeFailureThreshold = static_cast<uint32_t>(config.GetInt("server.tcp.decode_failure_threshold", 5));
+	netConfig.handshakeTimeoutSec = static_cast<uint32_t>(config.GetInt("server.tcp.handshake_timeout_sec", 10));
 
 	uint16_t port = static_cast<uint16_t>(config.GetInt("server.tcp.port", 3840));
 	if (!server.Init(port, netConfig))

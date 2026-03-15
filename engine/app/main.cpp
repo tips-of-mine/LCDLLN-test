@@ -1,21 +1,4 @@
 #include "engine/Engine.h"
-#include "engine/platform/Input.h"
-#include "engine/render/vk/VkSwapchain.h"
-#include "engine/render/ShaderCache.h"
-#include "engine/world/WorldModel.h"
-#include "engine/world/StreamCache.h"
-#include "engine/render/GpuUploadQueue.h"
-#include "engine/world/ChunkBudgetStats.h"
-#include "engine/world/LodConfig.h"
-#include "engine/world/HlodRuntime.h"
-#include "engine/render/ShaderHotReload.h"
-#include "engine/render/FrameGraph.h"
-#include "engine/render/vk/DeferredDestroyQueue.h"
-#include "engine/render/vk/StagingAllocator.h"
-#include "engine/world/StreamingScheduler.h"
-#include "engine/render/Camera.h"
-#include "engine/platform/FileWatcher.h"
-#include "engine/render/ShaderCompiler.h"
 
 #include <cstdio>
 #include <memory>
@@ -28,104 +11,23 @@
 static std::unique_ptr<engine::Engine> g_engine;
 static int g_result = 1;
 
-static void CreateAndRun(int argc, char** argv)
-{
-    std::fprintf(stderr, "[T] Input\n");              std::fflush(stderr);
-    { engine::platform::Input v; }
-    std::fprintf(stderr, "[T] Input OK\n");           std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] VkSwapchain\n");        std::fflush(stderr);
-    { engine::render::VkSwapchain v; }
-    std::fprintf(stderr, "[T] VkSwapchain OK\n");     std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] ShaderCache\n");        std::fflush(stderr);
-    { engine::render::ShaderCache v; }
-    std::fprintf(stderr, "[T] ShaderCache OK\n");     std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] World\n");              std::fflush(stderr);
-    { engine::world::World v; }
-    std::fprintf(stderr, "[T] World OK\n");           std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] StreamCache\n");        std::fflush(stderr);
-    { engine::world::StreamCache v; }
-    std::fprintf(stderr, "[T] StreamCache OK\n");     std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] GpuUploadQueue\n");     std::fflush(stderr);
-    { engine::render::GpuUploadQueue v; }
-    std::fprintf(stderr, "[T] GpuUploadQueue OK\n");  std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] ChunkBudgetStats\n");   std::fflush(stderr);
-    { engine::world::ChunkBudgetStats v; }
-    std::fprintf(stderr, "[T] ChunkBudgetStats OK\n");std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] LodConfig\n");          std::fflush(stderr);
-    { engine::world::LodConfig v; }
-    std::fprintf(stderr, "[T] LodConfig OK\n");       std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] HlodRuntime\n");        std::fflush(stderr);
-    { engine::world::HlodRuntime v; }
-    std::fprintf(stderr, "[T] HlodRuntime OK\n");     std::fflush(stderr);
-
-	std::fprintf(stderr, "[T] FileWatcher\n");        std::fflush(stderr);
-    { engine::platform::FileWatcher v; }
-    std::fprintf(stderr, "[T] FileWatcher OK\n");     std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] ShaderCompiler\n");     std::fflush(stderr);
-    { engine::render::ShaderCompiler v; v.LocateCompiler(); }
-    std::fprintf(stderr, "[T] ShaderCompiler OK\n");  std::fflush(stderr);
-
-	std::fprintf(stderr, "[T] ShaderHotReload\n");    std::fflush(stderr);
-    { engine::render::ShaderHotReload v; }
-    std::fprintf(stderr, "[T] ShaderHotReload OK\n"); std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] Registry\n");           std::fflush(stderr);
-    { engine::render::Registry v; }
-    std::fprintf(stderr, "[T] Registry OK\n");        std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] DeferredDestroyQueue\n");    std::fflush(stderr);
-    { engine::render::DeferredDestroyQueue v; }
-    std::fprintf(stderr, "[T] DeferredDestroyQueue OK\n"); std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] StagingAllocator\n");   std::fflush(stderr);
-    { engine::render::StagingAllocator v; }
-    std::fprintf(stderr, "[T] StagingAllocator OK\n");std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] StreamingScheduler\n"); std::fflush(stderr);
-    { engine::world::StreamingScheduler v; }
-    std::fprintf(stderr, "[T] StreamingScheduler OK\n");std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] FpsCameraController\n");std::fflush(stderr);
-    { engine::render::FpsCameraController v; }
-    std::fprintf(stderr, "[T] FpsCameraController OK\n");std::fflush(stderr);
-
-    std::fprintf(stderr, "[T] Engine()\n");           std::fflush(stderr);
-    g_engine = std::make_unique<engine::Engine>(argc, argv);
-    std::fprintf(stderr, "[T] Engine OK\n");          std::fflush(stderr);
-    
-    g_result = g_engine->Run();
-}
-
 int main(int argc, char** argv)
 {
-    std::fprintf(stderr, "[MAIN] main() atteint\n");
-    std::fflush(stderr);
-
-    std::fprintf(stderr, "[MAIN] avant Engine()\n");
-    std::fflush(stderr);
-
 #if defined(_WIN32)
-    __try
-    {
-        CreateAndRun(argc, argv);
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER)
-    {
-        std::fprintf(stderr, "[MAIN] SEH EXCEPTION code=0x%08X\n",
-            (unsigned int)GetExceptionCode());
-        std::fflush(stderr);
-    }
+	__try
+	{
+		g_engine = std::make_unique<engine::Engine>(argc, argv);
+		g_result = g_engine->Run();
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER)
+	{
+		std::fprintf(stderr, "[MAIN] SEH EXCEPTION code=0x%08X\n",
+			(unsigned int)GetExceptionCode());
+		std::fflush(stderr);
+	}
 #else
-    CreateAndRun(argc, argv);
+	g_engine = std::make_unique<engine::Engine>(argc, argv);
+	g_result = g_engine->Run();
 #endif
-    return g_result;
+	return g_result;
 }

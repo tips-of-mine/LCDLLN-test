@@ -17,6 +17,7 @@ target_include_directories(zone_builder PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}
 )
+target_link_libraries(zone_builder PRIVATE spdlog::spdlog)
 
 set_target_properties(zone_builder PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/zone_builder"

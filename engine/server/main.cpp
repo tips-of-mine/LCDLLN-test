@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 	logSettings.filePath = HasCliFlag(argc, argv, "-log")
 		? engine::core::Log::MakeTimestampedFilename("lcdlln_server.exe")
 		: config.GetString("log.file", "engine.log");
-	logSettings.rotation_size_mb = static_cast<size_t>(std::max(0, config.GetInt("log.rotation_size_mb", 10)));
+	logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
 	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
 	engine::core::Log::Init(logSettings);
 	LOG_INFO(Core, "[ServerMain] Log initialized (console={}, file={})",

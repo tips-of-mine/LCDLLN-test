@@ -115,6 +115,9 @@ target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan
   glfw
 )
+if(WIN32)
+  target_link_libraries(engine_core PRIVATE ws2_32)
+endif()
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
@@ -124,6 +127,7 @@ if(WIN32)
   target_sources(engine_core PRIVATE
     engine/platform/Input.cpp
     engine/platform/Window.cpp
+    engine/network/NetClient.cpp
   )
 else()
   target_sources(engine_core PRIVATE

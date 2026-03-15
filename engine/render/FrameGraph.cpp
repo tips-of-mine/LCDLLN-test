@@ -543,6 +543,13 @@ namespace engine::render
 			}
 		}
 
+		if (m_perFrameImageHandles.size() != m_imageResources.size())
+		{
+			std::fprintf(stderr, "[EIR] FATAL size mismatch m_perFrameImageHandles=%zu m_imageResources=%zu\n",
+			    m_perFrameImageHandles.size(), m_imageResources.size()); std::fflush(stderr);
+			return;
+		}
+
 		for (size_t resIdx = 0; resIdx < m_imageResources.size(); ++resIdx)
 		{
 			const ImageResource& res = m_imageResources[resIdx];
@@ -561,6 +568,8 @@ namespace engine::render
 				width = res.desc.width != 0 ? res.desc.width : extent.width;
 				height = res.desc.height != 0 ? res.desc.height : extent.height;
 			}
+			if (width < 1) width = 1;
+			if (height < 1) height = 1;
 
 			std::vector<PerFrameImageHandles>& perFrame = m_perFrameImageHandles[resIdx];
 			if (frameIndex >= perFrame.size()) perFrame.resize(frameIndex + 1);
@@ -597,22 +606,6 @@ namespace engine::render
 			VmaAllocationCreateInfo allocCreateInfo{};
 			allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			VmaAllocation allocation = VK_NULL_HANDLE;
-#ifndef NDEBUG
-			VmaAllocatorInfo allocatorInfo{};
-			vmaGetAllocatorInfo(alloc, &allocatorInfo);
-#if defined(VMA_VERSION_MAJOR) && defined(VMA_VERSION_MINOR) && defined(VMA_VERSION_PATCH)
-			LOG_DEBUG(Render, "[VMA] Version: {}.{}.{} physicalDevice: {:p}, device: {:p}",
-				VMA_VERSION_MAJOR,
-				VMA_VERSION_MINOR,
-				VMA_VERSION_PATCH,
-				static_cast<void*>(allocatorInfo.physicalDevice),
-				static_cast<void*>(allocatorInfo.device));
-#else
-			LOG_DEBUG(Render, "[VMA] Version: unknown physicalDevice: {:p}, device: {:p}",
-				static_cast<void*>(allocatorInfo.physicalDevice),
-				static_cast<void*>(allocatorInfo.device));
-#endif
-#endif
 
 			VkResult vmaResult = vmaCreateImage(alloc, &imageInfo, &allocCreateInfo, &h.image, &allocation, nullptr);
 #ifndef NDEBUG

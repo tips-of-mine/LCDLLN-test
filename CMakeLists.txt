@@ -110,6 +110,7 @@ add_library(engine_core
   engine/network/PacketBuilder.cpp
   engine/network/PacketView.cpp
   engine/network/RequestResponseDispatcher.cpp
+  engine/network/ErrorPacket.cpp
 )
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}

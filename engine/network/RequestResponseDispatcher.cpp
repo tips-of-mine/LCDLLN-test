@@ -1,7 +1,9 @@
 #include "engine/network/RequestResponseDispatcher.h"
+#include "engine/network/ErrorPacket.h"
 #include "engine/network/NetClient.h"
 #include "engine/network/PacketBuilder.h"
 #include "engine/network/PacketView.h"
+#include "engine/network/ProtocolV1Constants.h"
 
 #include "engine/core/Log.h"
 
@@ -29,6 +31,12 @@ namespace engine::network
 	{
 		std::lock_guard lock(m_mutex);
 		m_pushHandler = std::move(handler);
+	}
+
+	void RequestResponseDispatcher::SetErrorHandler(ErrorHandler handler)
+	{
+		std::lock_guard lock(m_mutex);
+		m_errorHandler = std::move(handler);
 	}
 
 	bool RequestResponseDispatcher::SendRequest(uint16_t opcode, std::span<const uint8_t> payload, RequestResponseCallback onResponse, uint32_t timeoutMs)
@@ -92,6 +100,39 @@ namespace engine::network
 
 			uint32_t requestId = view.RequestId();
 			std::vector<uint8_t> payload(view.Payload(), view.Payload() + view.PayloadSize());
+
+			if (view.Opcode() == kOpcodeError)
+			{
+				auto parsed = ParseErrorPayload(view.Payload(), view.PayloadSize());
+				if (parsed)
+				{
+					LOG_WARN(Net, "[RequestResponseDispatcher] ERROR packet (request_id={}, code={}, message={})",
+						requestId, static_cast<uint32_t>(parsed->errorCode), parsed->message.empty() ? "(none)" : parsed->message);
+					ErrorHandler h;
+					{
+						std::lock_guard lock(m_mutex);
+						h = m_errorHandler;
+					}
+					if (h)
+						h(requestId, parsed->errorCode, std::string_view(parsed->message));
+				}
+				if (requestId != 0u)
+				{
+					RequestResponseCallback cb;
+					{
+						std::lock_guard lock(m_mutex);
+						auto it = m_pending.find(requestId);
+						if (it != m_pending.end())
+						{
+							cb = std::move(it->second.callback);
+							m_pending.erase(it);
+						}
+					}
+					if (cb)
+						cb(requestId, false, std::move(payload));
+				}
+				continue;
+			}
 
 			if (requestId != 0u)
 			{

@@ -33,6 +33,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
   )
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL)
 else()

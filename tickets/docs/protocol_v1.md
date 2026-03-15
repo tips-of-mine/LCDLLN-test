@@ -73,6 +73,9 @@ All packets start with a **18-byte** header. Fields are strictly contiguous, lit
 | Code | Name                  | Description / reaction |
 |------|------------------------|------------------------|
 | 0    | OK                    | No error (e.g. used in AUTH_RESPONSE success). |
+| 97   | PACKET_OVERSIZE       | Packet size > 16 KB; server sends ERROR then closes. |
+| 98   | UNKNOWN_OPCODE        | Opcode not recognized; server may send ERROR (policy). |
+| 99   | INVALID_PACKET        | Malformed header or invalid packet; server sends ERROR then closes. |
 | 100  | BAD_REQUEST           | Malformed packet or invalid field; close connection only if repeated. |
 | 101  | INVALID_CREDENTIALS   | Auth failed; client may retry (re-auth). |
 | 102  | ACCOUNT_LOCKED       | Account disabled; client should show message, no retry. |

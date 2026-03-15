@@ -2,6 +2,8 @@
 
 #include "engine/server/NetServer.h"
 
+#include "engine/network/ErrorPacket.h"
+#include "engine/network/NetErrorCode.h"
 #include "engine/network/PacketView.h"
 #include "engine/network/ProtocolV1Constants.h"
 
@@ -37,6 +39,8 @@ namespace engine::server
 		constexpr size_t kRxBufferCapacity = 2 * 16384u;
 		constexpr int kEpollMaxEvents = 128;
 		constexpr int kListenBacklog = 128;
+		/// Max ERROR packets sent per connection before disconnecting (anti-spam).
+		constexpr uint32_t kMaxErrorPacketsPerConnection = 10u;
 
 		/// Set fd to non-blocking. Returns false on error.
 		bool SetNonBlocking(int fd)
@@ -84,6 +88,7 @@ namespace engine::server
 			std::deque<std::vector<uint8_t>> txQueue;
 			size_t txQueuedBytes = 0;
 			bool wantEpollOut = false;
+			uint32_t errorPacketsSent = 0;
 		};
 		std::unordered_map<int, Conn> connections;
 
@@ -387,8 +392,31 @@ namespace engine::server
 							break;
 						if (res == engine::network::PacketParseResult::Invalid)
 						{
-							LOG_WARN(Net, "[NetServer] Invalid packet from connId={}, closing", c.connId);
-							lock.unlock();
+							uint16_t announcedSize = 0;
+							if (c.rxBuffer.size() >= 2u)
+								announcedSize = static_cast<uint16_t>(c.rxBuffer[0]) | (static_cast<uint16_t>(c.rxBuffer[1]) << 8);
+							engine::network::NetErrorCode errCode = (announcedSize > engine::network::kProtocolV1MaxPacketSize)
+								? engine::network::NetErrorCode::PACKET_OVERSIZE
+								: engine::network::NetErrorCode::INVALID_PACKET;
+							LOG_WARN(Net, "[NetServer] Invalid packet from connId={} (code={}), sending ERROR then closing", c.connId, static_cast<uint32_t>(errCode));
+							if (c.errorPacketsSent < kMaxErrorPacketsPerConnection)
+							{
+								std::vector<uint8_t> errPkt = engine::network::BuildErrorPacket(errCode, "", 0u, 0u);
+								if (!errPkt.empty())
+								{
+									lock.unlock();
+									if (Send(c.connId, errPkt))
+									{
+										lock.lock();
+										auto it2 = connections.find(fd);
+										if (it2 != connections.end())
+											it2->second.errorPacketsSent++;
+										lock.unlock();
+									}
+								}
+							}
+							if (lock.owns_lock())
+								lock.unlock();
 							CloseConnection(fd, "invalid packet");
 							goto next_event;
 						}

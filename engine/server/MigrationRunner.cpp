@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -103,7 +104,7 @@ namespace engine::server
 			return false;
 		}
 
-		my_bool reconnect = 0;
+		bool reconnect = false;
 		mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
 
 		if (!mysql_real_connect(mysql, host.c_str(), user.c_str(), password.empty() ? nullptr : password.c_str(),

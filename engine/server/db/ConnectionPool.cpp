@@ -88,7 +88,7 @@ namespace engine::server::db
 				LOG_ERROR(Core, "[ConnectionPool] mysql_init failed for slot {}", i);
 				continue;
 			}
-			my_bool reconnect = 0;
+			bool reconnect = false;
 			mysql_options(mysql, MYSQL_OPT_RECONNECT, &reconnect);
 			if (!ConnectOne(mysql))
 			{
@@ -155,7 +155,7 @@ namespace engine::server::db
 							e.mysql = mysql_init(nullptr);
 							if (e.mysql)
 							{
-								my_bool reconnect = 0;
+								bool reconnect = false;
 								mysql_options(e.mysql, MYSQL_OPT_RECONNECT, &reconnect);
 								if (!ConnectOne(e.mysql))
 								{

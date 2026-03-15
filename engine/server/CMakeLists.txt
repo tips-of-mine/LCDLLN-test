@@ -53,6 +53,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
+    ShardRegistry.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth ${MYSQL_LIBRARY})

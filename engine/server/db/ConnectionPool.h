@@ -68,7 +68,7 @@ namespace engine::server::db
 		void Release(MYSQL* mysql);
 		bool ConnectOne(MYSQL* mysql) const;
 
-		std::mutex m_mutex;
+		mutable std::mutex m_mutex;
 		std::vector<Entry> m_connections;
 		std::string m_host;
 		std::string m_user;

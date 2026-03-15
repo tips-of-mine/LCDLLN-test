@@ -8,22 +8,43 @@
 
 #include <csignal>
 #include <chrono>
+#include <cstring>
 #include <string_view>
 #include <thread>
 
 namespace
 {
 	volatile sig_atomic_t g_quit = 0;
+	bool g_net_stats = false;
 
 	void OnSignal(int)
 	{
 		g_quit = 1;
+	}
+
+	/// Returns true if \a argv contains --net.stats (or -net.stats).
+	bool ParseNetStatsFlag(int argc, char** argv)
+	{
+		for (int i = 1; i < argc; ++i)
+			if (argv[i] != nullptr && (std::strcmp(argv[i], "--net.stats") == 0 || std::strcmp(argv[i], "-net.stats") == 0))
+				return true;
+		return false;
+	}
+
+	/// Logs a single line with network stats (throttled; do not call per packet).
+	void LogNetworkStats(const engine::server::NetServerStats& s)
+	{
+		LOG_INFO(Net, "[NetServer] stats: conn_active={} conn_total={} handshake_ok={} handshake_fail={} bytes_in={} bytes_out={} pkt_in={} pkt_out={} pkt_dropped={}",
+			s.connectionsActive, s.connectionsTotal, s.handshakeSuccess, s.handshakeFail,
+			s.bytesIn, s.bytesOut, s.packetsIn, s.packetsOut, s.packetsDropped);
 	}
 }
 
 int main(int argc, char** argv)
 {
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
+
+	g_net_stats = ParseNetStatsFlag(argc, argv);
 
 	engine::core::LogSettings logSettings;
 	logSettings.level = engine::core::LogLevel::Info;
@@ -59,8 +80,41 @@ int main(int argc, char** argv)
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);
 
+	auto lastStatsDump = std::chrono::steady_clock::now();
+	constexpr auto kStatsInterval = std::chrono::seconds(10);
+
 	while (server.IsRunning() && g_quit == 0)
+	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		if (g_net_stats)
+		{
+			auto now = std::chrono::steady_clock::now();
+			if (now - lastStatsDump >= kStatsInterval)
+			{
+				engine::server::NetServerStats stats;
+				server.GetNetworkStats(stats);
+				LogNetworkStats(stats);
+				lastStatsDump = now;
+			}
+		}
+	}
+
+	if (g_net_stats)
+	{
+		engine::server::NetServerStats stats;
+		server.GetNetworkStats(stats);
+		LOG_INFO(Net, "[ServerMain] Final network stats:");
+		LogNetworkStats(stats);
+		uint64_t totalDisconnects = 0;
+		for (size_t i = 0; i < static_cast<size_t>(engine::server::DisconnectReason::Count); ++i)
+			totalDisconnects += stats.disconnectByReason[i];
+		if (totalDisconnects > 0)
+			LOG_INFO(Net, "[ServerMain] Disconnect histogram: peer_closed={} EPOLLERR={} EPOLLHUP={} invalid_pkt={} decode_fail={} rate_limit={} handshake_timeout={} tls_fail={} ssl_r={} ssl_w={} recv={} send={} tx_cap={}",
+				stats.disconnectByReason[0], stats.disconnectByReason[1], stats.disconnectByReason[2], stats.disconnectByReason[3], stats.disconnectByReason[4],
+				stats.disconnectByReason[5], stats.disconnectByReason[6], stats.disconnectByReason[7], stats.disconnectByReason[8], stats.disconnectByReason[9],
+				stats.disconnectByReason[10], stats.disconnectByReason[11], stats.disconnectByReason[12]);
+	}
 
 	server.Shutdown();
 	LOG_INFO(Net, "[ServerMain] Shutdown complete");

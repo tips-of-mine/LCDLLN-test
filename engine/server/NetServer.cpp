@@ -103,6 +103,16 @@ namespace engine::server
 		static constexpr size_t kDisconnectReasonCount = static_cast<size_t>(DisconnectReason::Count);
 		std::atomic<uint64_t> disconnectCounts[kDisconnectReasonCount]{};
 
+		/// M19.11 network counters (updated from IO thread; read via GetNetworkStats).
+		std::atomic<uint64_t> connectionsTotal{ 0 };
+		std::atomic<uint64_t> handshakeSuccess{ 0 };
+		std::atomic<uint64_t> handshakeFail{ 0 };
+		std::atomic<uint64_t> bytesIn{ 0 };
+		std::atomic<uint64_t> bytesOut{ 0 };
+		std::atomic<uint64_t> packetsIn{ 0 };
+		std::atomic<uint64_t> packetsOut{ 0 };
+		std::atomic<uint64_t> packetsDropped{ 0 };
+
 		std::mutex handlerMutex;
 		NetServerPacketHandler packetHandler;
 
@@ -283,6 +293,7 @@ namespace engine::server
 								c.handshakeDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(config.handshakeTimeoutSec);
 							}
 							connectionCount.store(static_cast<uint32_t>(connections.size()));
+							connectionsTotal.fetch_add(1, std::memory_order_relaxed);
 						}
 						if (tlsEnabled && sslCtx != nullptr)
 						{
@@ -295,6 +306,7 @@ namespace engine::server
 								if (ret == 1)
 								{
 									c.handshakeState = TlsHandshakeState::Ready;
+									handshakeSuccess.fetch_add(1, std::memory_order_relaxed);
 									SetEpollEvents(clientFd, EPOLLIN);
 								}
 								else
@@ -307,6 +319,7 @@ namespace engine::server
 									else
 									{
 										LogSslErrors("TLS handshake");
+										handshakeFail.fetch_add(1, std::memory_order_relaxed);
 										lock.unlock();
 										CloseConnection(clientFd, DisconnectReason::TlsHandshakeFailed);
 									}
@@ -338,6 +351,7 @@ namespace engine::server
 					if (ret == 1)
 					{
 						c.handshakeState = TlsHandshakeState::Ready;
+						handshakeSuccess.fetch_add(1, std::memory_order_relaxed);
 						SetEpollEvents(fd, EPOLLIN | (c.wantEpollOut ? EPOLLOUT : 0));
 					}
 					else
@@ -350,6 +364,7 @@ namespace engine::server
 						else
 						{
 							LogSslErrors("TLS handshake");
+							handshakeFail.fetch_add(1, std::memory_order_relaxed);
 							lock.unlock();
 							CloseConnection(fd, DisconnectReason::TlsHandshakeFailed);
 							goto next_event;
@@ -359,6 +374,7 @@ namespace engine::server
 					if (std::chrono::steady_clock::now() > c.handshakeDeadline)
 					{
 						LOG_WARN(Net, "[NetServer] TLS handshake timeout (fd={}, connId={})", fd, c.connId);
+						handshakeFail.fetch_add(1, std::memory_order_relaxed);
 						lock.unlock();
 						CloseConnection(fd, DisconnectReason::HandshakeTimeout);
 						goto next_event;
@@ -392,6 +408,7 @@ namespace engine::server
 							received = recv(fd, tmp, sizeof(tmp), 0);
 						if (received > 0)
 						{
+							bytesIn.fetch_add(static_cast<size_t>(received), std::memory_order_relaxed);
 							size_t prev = c.rxBuffer.size();
 							c.rxBuffer.resize(prev + static_cast<size_t>(received));
 							std::memcpy(c.rxBuffer.data() + prev, tmp, static_cast<size_t>(received));
@@ -441,6 +458,7 @@ namespace engine::server
 						if (res == engine::network::PacketParseResult::Invalid)
 						{
 							c.decodeFailureCount++;
+							packetsDropped.fetch_add(1, std::memory_order_relaxed);
 							if (c.decodeFailureCount >= config.decodeFailureThreshold)
 							{
 								LOG_WARN(Net, "[NetServer] Decode failures threshold (connId={}, count={}), closing", c.connId, c.decodeFailureCount);
@@ -468,6 +486,7 @@ namespace engine::server
 							c.tokenBucketLastRefill = now;
 							if (c.tokenBucketTokens < 1.0)
 							{
+								packetsDropped.fetch_add(1, std::memory_order_relaxed);
 								LOG_WARN(Net, "[NetServer] Rate limit exceeded (connId={}), closing", c.connId);
 								if (lock.owns_lock())
 									lock.unlock();
@@ -482,6 +501,7 @@ namespace engine::server
 							std::lock_guard jobLock(jobMutex);
 							jobQueue.push({ c.connId, view.Opcode(), std::move(payload) });
 						}
+						packetsIn.fetch_add(1, std::memory_order_relaxed);
 						jobCv.notify_one();
 						c.rxConsumed += view.Size();
 					}
@@ -500,9 +520,13 @@ namespace engine::server
 							sent = static_cast<int>(send(fd, front.data(), front.size(), MSG_NOSIGNAL));
 						if (sent > 0)
 						{
+							bytesOut.fetch_add(static_cast<size_t>(sent), std::memory_order_relaxed);
 							c.txQueuedBytes -= static_cast<size_t>(sent);
 							if (static_cast<size_t>(sent) >= front.size())
+							{
+								packetsOut.fetch_add(1, std::memory_order_relaxed);
 								c.txQueue.pop_front();
+							}
 							else
 								front.erase(front.begin(), front.begin() + sent);
 						}
@@ -831,6 +855,25 @@ namespace engine::server
 			return 0;
 		return m_impl->disconnectCounts[idx].load(std::memory_order_relaxed);
 	}
+
+	void NetServer::GetNetworkStats(NetServerStats& out) const
+	{
+		out = NetServerStats{};
+		if (m_impl == nullptr)
+			return;
+		out.connectionsActive = m_impl->connectionCount.load(std::memory_order_relaxed);
+		out.connectionsTotal = m_impl->connectionsTotal.load(std::memory_order_relaxed);
+		out.handshakeSuccess = m_impl->handshakeSuccess.load(std::memory_order_relaxed);
+		out.handshakeFail = m_impl->handshakeFail.load(std::memory_order_relaxed);
+		out.bytesIn = m_impl->bytesIn.load(std::memory_order_relaxed);
+		out.bytesOut = m_impl->bytesOut.load(std::memory_order_relaxed);
+		out.packetsIn = m_impl->packetsIn.load(std::memory_order_relaxed);
+		out.packetsOut = m_impl->packetsOut.load(std::memory_order_relaxed);
+		out.packetsDropped = m_impl->packetsDropped.load(std::memory_order_relaxed);
+		const size_t n = static_cast<size_t>(DisconnectReason::Count);
+		for (size_t i = 0; i < n; ++i)
+			out.disconnectByReason[i] = m_impl->disconnectCounts[i].load(std::memory_order_relaxed);
+	}
 }
 
 #else
@@ -860,6 +903,8 @@ namespace engine::server
 	bool NetServer::IsRunning() const { return false; }
 
 	uint64_t NetServer::GetDisconnectCount(DisconnectReason /*reason*/) const { return 0; }
+
+	void NetServer::GetNetworkStats(NetServerStats& out) const { out = NetServerStats{}; }
 }
 
 #endif

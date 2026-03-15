@@ -53,6 +53,21 @@ namespace engine::server
 	/// Callback invoked from worker threads when a full packet is received. Do not run DB/game logic that blocks.
 	using NetServerPacketHandler = std::function<void(uint32_t connId, uint16_t opcode, const uint8_t* payload, size_t payloadSize)>;
 
+	/// Snapshot of server network counters (M19.11). Thread-safe read via GetNetworkStats().
+	struct NetServerStats
+	{
+		uint64_t connectionsActive = 0;
+		uint64_t connectionsTotal = 0;
+		uint64_t handshakeSuccess = 0;
+		uint64_t handshakeFail = 0;
+		uint64_t bytesIn = 0;
+		uint64_t bytesOut = 0;
+		uint64_t packetsIn = 0;
+		uint64_t packetsOut = 0;
+		uint64_t packetsDropped = 0;
+		uint64_t disconnectByReason[static_cast<size_t>(DisconnectReason::Count)] = {};
+	};
+
 	/// Linux-only TCP server: non-blocking epoll, acceptor thread, connection objects (fd, buffers, state),
 	/// RX framing (protocol v1 header), TX queue with backpressure, worker pool for packet handling.
 	/// EPOLLERR/EPOLLHUP are always handled; never run game/DB logic in the IO thread.
@@ -82,6 +97,9 @@ namespace engine::server
 
 		/// Returns disconnect count for \a reason. Thread-safe (atomics). Only valid while server is running.
 		uint64_t GetDisconnectCount(DisconnectReason reason) const;
+
+		/// Fills \a out with a snapshot of all network counters. Thread-safe. Call when server is running or after Shutdown for final stats.
+		void GetNetworkStats(NetServerStats& out) const;
 
 	private:
 		struct Impl;

@@ -19,10 +19,13 @@ namespace engine::network
 		ACCOUNT_LOCKED = 102,
 		ACCOUNT_NOT_FOUND = 103,
 		ALREADY_LOGGED_IN = 104,
-		// Registration (200–202)
+		// Registration (200–205)
 		REGISTRATION_DISABLED = 200,
 		REGISTRATION_INVALID = 201,
 		LOGIN_ALREADY_TAKEN = 202,
+		INVALID_EMAIL = 203,
+		WEAK_PASSWORD = 204,
+		INVALID_LOGIN = 205,
 		// Server list (300)
 		SERVER_LIST_UNAVAILABLE = 300,
 		// Internal / timeout (500–501)

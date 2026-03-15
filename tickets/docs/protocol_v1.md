@@ -84,6 +84,9 @@ All packets start with a **18-byte** header. Fields are strictly contiguous, lit
 | 200  | REGISTRATION_DISABLED | Register not allowed. |
 | 201  | REGISTRATION_INVALID  | Invalid login/password/email format. |
 | 202  | LOGIN_ALREADY_TAKEN   | Duplicate registration. |
+| 203  | INVALID_EMAIL         | Email format invalid or over max length. |
+| 204  | WEAK_PASSWORD         | Password length or complexity not met. |
+| 205  | INVALID_LOGIN         | Login charset or length invalid. |
 | 300  | SERVER_LIST_UNAVAILABLE | Server list temporarily unavailable; retry later. |
 | 500  | INTERNAL_ERROR       | Server error; client may retry or disconnect. |
 | 501  | TIMEOUT              | Request timed out; client may retry. |

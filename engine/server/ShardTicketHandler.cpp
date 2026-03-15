@@ -46,7 +46,7 @@ namespace engine::server
 		if (!sessionOpt)
 		{
 			LOG_WARN(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET rejected: not authenticated (connId={})", connId);
-			auto pkt = BuildErrorPacket(NetErrorCode::UNAUTHORIZED, "login required", requestId, sessionIdHeader);
+			auto pkt = BuildErrorPacket(NetErrorCode::INVALID_CREDENTIALS, "login required", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
 			return;
@@ -55,7 +55,7 @@ namespace engine::server
 		if (!accountOpt)
 		{
 			LOG_WARN(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET rejected: session invalid (connId={})", connId);
-			auto pkt = BuildErrorPacket(NetErrorCode::UNAUTHORIZED, "session invalid", requestId, sessionIdHeader);
+			auto pkt = BuildErrorPacket(NetErrorCode::INVALID_CREDENTIALS, "session invalid", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
 			return;

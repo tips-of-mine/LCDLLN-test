@@ -122,23 +122,21 @@ namespace engine::core
 	{
 	    if (level < s_level.load(std::memory_order_relaxed))
 	        return;
-	
-	    std::fprintf(stderr, "[LOG] WriteLine entree\n"); std::fflush(stderr);
-	
+
+	    // Copy message so we are safe against reentrant LOG_* overwriting the
+	    // thread_local buffer in Log::Write (which would make 'message' dangling).
+	    const std::string msgCopy(message);
+
 	    char buf[1024];
-	    std::snprintf(buf, sizeof(buf), "[%s][%s] %.*s\n",
+	    std::snprintf(buf, sizeof(buf), "[%s][%s] %s\n",
 	        subsystem ? subsystem : "?",
 	        ToString(level),
-	        static_cast<int>(message.size()), message.data());
-	
-	    std::fprintf(stderr, "[LOG] snprintf OK\n"); std::fflush(stderr);
-	
+	        msgCopy.c_str());
+
 	    if (g_file->is_open())
 	    {
 	        g_file->write(buf, static_cast<std::streamsize>(std::strlen(buf)));
 	        g_file->flush();
 	    }
-	
-	    std::fprintf(stderr, "[LOG] WriteLine OK\n"); std::fflush(stderr);
 	}
 }

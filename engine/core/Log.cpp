@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include <chrono>
 #include <cstring>
@@ -101,7 +102,8 @@ namespace engine::core
 			try
 			{
 				auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            		settings.filePath, max_bytes, static_cast<size_t>(max_files));
+            		//settings.filePath, max_bytes, static_cast<size_t>(max_files));
+					settings.filePath, true);
 				std::fprintf(stderr, "[LOG::INIT] file_sink OK\n"); std::fflush(stderr);
 				sinks.push_back(file_sink);
 			}

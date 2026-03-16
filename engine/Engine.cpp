@@ -179,7 +179,8 @@ namespace engine
 		std::fprintf(stderr, "[ENGINE] A3: before GetString log.file\n"); std::fflush(stderr);
 		logSettings.filePath    = logToFile
 			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
-			: m_cfg.GetString("log.file", "engine.log");
+			: "";
+			// : m_cfg.GetString("log.file", "engine.log");
 		std::fprintf(stderr, "[ENGINE] A4: after GetString log.file='%s'\n", logSettings.filePath.c_str()); std::fflush(stderr);
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;

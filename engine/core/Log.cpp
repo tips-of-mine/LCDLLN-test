@@ -66,8 +66,11 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
+		std::fprintf(stderr, "[LOG::INIT] debut\n"); std::fflush(stderr);
 		Shutdown();
+		std::fprintf(stderr, "[LOG::INIT] apres Shutdown\n"); std::fflush(stderr);
 		s_level.store(settings.level, std::memory_order_relaxed);
+		std::fprintf(stderr, "[LOG::INIT] apres s_level.store\n"); std::fflush(stderr);
 
 		std::vector<spdlog::sink_ptr> sinks;
 		if (settings.console)

@@ -23,7 +23,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
-  target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
+  target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog_header_only)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
   find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
@@ -66,7 +66,7 @@ elseif(UNIX)
     PrometheusMetrics.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
-  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
+  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog_header_only ${MYSQL_LIBRARY})
 
   # M21.6: DB layer smoke tests
   add_executable(db_layer_tests db/DbLayerTests.cpp db/ConnectionPool.cpp db/DbHelpers.cpp)

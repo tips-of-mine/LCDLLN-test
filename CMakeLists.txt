@@ -64,8 +64,11 @@ FetchContent_Declare(spdlog
   GIT_TAG        v1.12.0
 )
 set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_TESTS  OFF CACHE BOOL "" FORCE)
+set(_saved_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(spdlog)
+set(BUILD_SHARED_LIBS ${_saved_BUILD_SHARED_LIBS})
 message(STATUS "M23.4: spdlog for logging rotation")
 
 add_library(engine_auth STATIC engine/auth/Argon2Hash.cpp)
@@ -163,7 +166,7 @@ target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan
   glfw
   engine_auth
-  spdlog::spdlog
+  spdlog::spdlog_header_only
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL)

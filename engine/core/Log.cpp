@@ -115,20 +115,28 @@ namespace engine::core
 			}
 		}
 
+		std::fprintf(stderr, "[LOG::INIT] avant sinks.empty check\n"); std::fflush(stderr);
 		if (sinks.empty())
 		{
 			return;
 		}
 
+		std::fprintf(stderr, "[LOG::INIT] avant make_shared logger\n"); std::fflush(stderr);
 		auto logger = std::make_shared<spdlog::logger>(c_runtimeLoggerName, sinks.begin(), sinks.end());
+		std::fprintf(stderr, "[LOG::INIT] avant set_level\n"); std::fflush(stderr)
 		logger->set_level(ToSpdlogLevel(settings.level));
 		if (settings.flushAlways)
 		{
+			std::fprintf(stderr, "[LOG::INIT] avant flush_on\n"); std::fflush(stderr);
 			logger->flush_on(spdlog::level::trace);
 		}
+		std::fprintf(stderr, "[LOG::INIT] avant register_logger\n"); std::fflush(stderr);
 		spdlog::register_logger(logger);
+		std::fprintf(stderr, "[LOG::INIT] avant set_default_logger\n"); std::fflush(stderr);
 		spdlog::set_default_logger(logger);
+		std::fprintf(stderr, "[LOG::INIT] avant s_loggerActive store\n"); std::fflush(stderr);
 		s_loggerActive.store(true, std::memory_order_release);
+		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
 
 		LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",
 			settings.filePath.empty() ? "<none>" : settings.filePath,

@@ -194,7 +194,10 @@ namespace engine
 		engine::core::Log::Init(logSettings);
 		std::fprintf(stderr, "[ENGINE] B: Log::Init OK\n"); std::fflush(stderr);
 
-		LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+		if (!logSettings.filePath.empty() || logSettings.console)
+		{
+			LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+		}
 		std::fprintf(stderr, "[ENGINE] C: LOG_INFO OK\n"); std::fflush(stderr);
 
 		// ------------------------------------------------------------------

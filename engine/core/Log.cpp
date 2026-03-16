@@ -123,7 +123,7 @@ namespace engine::core
 
 		std::fprintf(stderr, "[LOG::INIT] avant make_shared logger\n"); std::fflush(stderr);
 		auto logger = std::make_shared<spdlog::logger>(c_runtimeLoggerName, sinks.begin(), sinks.end());
-		std::fprintf(stderr, "[LOG::INIT] avant set_level\n"); std::fflush(stderr)
+		std::fprintf(stderr, "[LOG::INIT] avant set_level\n"); std::fflush(stderr);
 		logger->set_level(ToSpdlogLevel(settings.level));
 		if (settings.flushAlways)
 		{

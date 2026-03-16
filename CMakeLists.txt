@@ -166,7 +166,7 @@ target_link_libraries(engine_core PUBLIC
   Vulkan::Vulkan
   glfw
   engine_auth
-  spdlog::spdlog_header_only
+  spdlog::spdlog
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL)

@@ -45,10 +45,10 @@ namespace engine::core
 		}
 
 		const char* const c_runtimeLoggerName = "runtime";
-		std::atomic<bool> s_loggerActive{ false }; 
 	}
 
 	std::atomic<LogLevel> Log::s_level{ LogLevel::Info };
+	std::atomic<bool>     Log::s_active{ false };
 
 	std::string Log::MakeTimestampedFilename(std::string_view prefix)
 	{
@@ -131,11 +131,12 @@ namespace engine::core
 			logger->flush_on(spdlog::level::trace);
 		}
 		std::fprintf(stderr, "[LOG::INIT] avant register_logger\n"); std::fflush(stderr);
+		spdlog::drop_all();
 		spdlog::register_logger(logger);
 		std::fprintf(stderr, "[LOG::INIT] avant set_default_logger\n"); std::fflush(stderr);
 		spdlog::set_default_logger(logger);
 		std::fprintf(stderr, "[LOG::INIT] avant s_loggerActive store\n"); std::fflush(stderr);
-		s_loggerActive.store(true, std::memory_order_release);
+		s_active.store(true, std::memory_order_release);
 		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
 
 		LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",
@@ -147,7 +148,7 @@ namespace engine::core
 
 	void Log::Shutdown()
 	{
-		if (!s_loggerActive.exchange(false, std::memory_order_acq_rel))
+		if (!s_active.exchange(false, std::memory_order_acq_rel))
 			return;   // jamais initialisé, rien à faire
 
 		auto logger = spdlog::get(c_runtimeLoggerName);
@@ -156,6 +157,11 @@ namespace engine::core
 			logger->flush();
 		}
 		spdlog::drop(c_runtimeLoggerName);
+	}
+
+	bool Log::IsActive()
+	{
+		return s_active.load(std::memory_order_acquire);
 	}
 
 	LogLevel Log::GetLevel()

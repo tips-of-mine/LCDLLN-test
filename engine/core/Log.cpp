@@ -45,6 +45,7 @@ namespace engine::core
 		}
 
 		const char* const c_runtimeLoggerName = "runtime";
+		std::shared_ptr<spdlog::logger> s_logger;
 	}
 
 	std::atomic<LogLevel> Log::s_level{ LogLevel::Info };
@@ -130,20 +131,10 @@ namespace engine::core
 			std::fprintf(stderr, "[LOG::INIT] avant flush_on\n"); std::fflush(stderr);
 			logger->flush_on(spdlog::level::trace);
 		}
-		std::fprintf(stderr, "[LOG::INIT] avant register_logger\n"); std::fflush(stderr);
-		try
-		{
-			spdlog::drop_all();
-			spdlog::register_logger(logger);
-			std::fprintf(stderr, "[LOG::INIT] avant set_default_logger\n"); std::fflush(stderr);
-			spdlog::set_default_logger(logger);
-			std::fprintf(stderr, "[LOG::INIT] avant s_loggerActive store\n"); std::fflush(stderr);
-		}
-		catch (const std::exception& e)
-		{
-			std::fprintf(stderr, "[LOG::INIT] EXCEPTION in register: %s\n", e.what()); std::fflush(stderr);
-			return;
-		}
+
+		std::fprintf(stderr, "[LOG::INIT] avant s_logger assign\n"); std::fflush(stderr);
+		s_logger = logger;
+		std::fprintf(stderr, "[LOG::INIT] s_logger assign OK\n"); std::fflush(stderr);
 
 		s_active.store(true, std::memory_order_release);
 		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
@@ -158,14 +149,13 @@ namespace engine::core
 	void Log::Shutdown()
 	{
 		if (!s_active.exchange(false, std::memory_order_acq_rel))
-			return;   // jamais initialisé, rien à faire
+			return;
 
-		auto logger = spdlog::get(c_runtimeLoggerName);
-		if (logger)
+		if (s_logger)
 		{
-			logger->flush();
+			s_logger->flush();
+			s_logger.reset();
 		}
-		spdlog::drop(c_runtimeLoggerName);
 	}
 
 	bool Log::IsActive()
@@ -181,9 +171,9 @@ namespace engine::core
 	void Log::SetLevel(LogLevel level)
 	{
 		s_level.store(level, std::memory_order_relaxed);
-		if (auto logger = spdlog::get(c_runtimeLoggerName))
+		if (s_logger)
 		{
-			logger->set_level(ToSpdlogLevel(level));
+			s_logger->set_level(ToSpdlogLevel(level));
 		}
 	}
 
@@ -192,8 +182,7 @@ namespace engine::core
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
 
-		auto logger = spdlog::get(c_runtimeLoggerName);
-		if (!logger)
+		if (!s_logger)
 			return;
 
 		spdlog::level::level_enum spd_level = ToSpdlogLevel(level);
@@ -201,6 +190,6 @@ namespace engine::core
 			return;
 
 		const std::string formatted = std::string("[") + (subsystem ? subsystem : "?") + "] " + std::string(message);
-		logger->log(spd_level, "{}", formatted);
+		s_logger->log(spd_level, "{}", formatted);
 	}
 }

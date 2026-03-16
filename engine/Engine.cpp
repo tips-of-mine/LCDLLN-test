@@ -165,6 +165,7 @@ namespace engine
 		// ------------------------------------------------------------------
 		bool logToFile    = false;
 		bool logToConsole = false;
+		std::fprintf(stderr, "[ENGINE] A1: before arg parse argc=%d\n", argc); std::fflush(stderr);
 		for (int i = 1; i < argc; ++i)
 		{
 			if (!argv[i]) continue;
@@ -172,17 +173,26 @@ namespace engine
 			if (arg == "-log")     logToFile    = true;
 			if (arg == "-console") logToConsole = true;
 		}
+		std::fprintf(stderr, "[ENGINE] A2: after arg parse logToFile=%d logToConsole=%d\n",
+			(int)logToFile, (int)logToConsole); std::fflush(stderr);
 
 		engine::core::LogSettings logSettings;
+		std::fprintf(stderr, "[ENGINE] A3: before GetString log.file\n"); std::fflush(stderr);
 		logSettings.filePath    = logToFile
 			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
 			: m_cfg.GetString("log.file", "engine.log");
+		std::fprintf(stderr, "[ENGINE] A4: after GetString log.file='%s'\n",
+			logSettings.filePath.c_str()); std::fflush(stderr);
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;
+		std::fprintf(stderr, "[ENGINE] A5: before GetInt rotation/retention\n"); std::fflush(stderr);
 		logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), m_cfg.GetInt("log.rotation_size_mb", 10)));
 		logSettings.retention_days   = static_cast<int>(m_cfg.GetInt("log.retention_days", 7));
+		std::fprintf(stderr, "[ENGINE] A6: after GetInt rotation=%zu retention=%d\n",
+			logSettings.rotation_size_mb, logSettings.retention_days); std::fflush(stderr);
 
+		std::fprintf(stderr, "[ENGINE] A7: before Log::Init\n"); std::fflush(stderr);
 		engine::core::Log::Init(logSettings);
 		std::fprintf(stderr, "[ENGINE] B: Log::Init OK\n"); std::fflush(stderr);
 

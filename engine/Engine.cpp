@@ -452,7 +452,7 @@ namespace engine
 											(void*)m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget); std::fflush(stderr);
 										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget))
 										{
-											if (engine::core::Log::IsActive()) WARN(Render, "[StagingAllocator] Init FAILED (pool_size_bytes={})", stagingBudget);
+											if (engine::core::Log::IsActive()) LOG_WARN(Render, "[StagingAllocator] Init FAILED (pool_size_bytes={})", stagingBudget);
 											std::fprintf(stderr, "[ENGINE] R18: StagingAllocator::Init FAILED (staging désactivé)\n"); std::fflush(stderr);
 										}
 										else

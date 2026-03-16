@@ -45,6 +45,7 @@ namespace engine::core
 		}
 
 		const char* const c_runtimeLoggerName = "runtime";
+		std::atomic<bool> s_loggerActive{ false }; 
 	}
 
 	std::atomic<LogLevel> Log::s_level{ LogLevel::Info };
@@ -67,17 +68,23 @@ namespace engine::core
 	void Log::Init(const LogSettings& settings)
 	{
 		std::fprintf(stderr, "[LOG::INIT] debut\n"); std::fflush(stderr);
+		std::fprintf(stderr, "[LOG::INIT] avant Shutdown\n"); std::fflush(stderr);
 		Shutdown();
 		std::fprintf(stderr, "[LOG::INIT] apres Shutdown\n"); std::fflush(stderr);
 		s_level.store(settings.level, std::memory_order_relaxed);
 		std::fprintf(stderr, "[LOG::INIT] apres s_level.store\n"); std::fflush(stderr);
 
 		std::vector<spdlog::sink_ptr> sinks;
+		std::fprintf(stderr, "[LOG::INIT] apres vector sinks\n"); std::fflush(stderr);
+
 		if (settings.console)
 		{
+			std::fprintf(stderr, "[LOG::INIT] avant console_sink\n"); std::fflush(stderr);
 			auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 			sinks.push_back(console_sink);
+			std::fprintf(stderr, "[LOG::INIT] console_sink OK\n"); std::fflush(stderr);
 		}
+		std::fprintf(stderr, "[LOG::INIT] avant file sink check filePath='%s'\n", settings.filePath.c_str()); std::fflush(stderr);
 
 		if (!settings.filePath.empty())
 		{
@@ -119,6 +126,7 @@ namespace engine::core
 		}
 		spdlog::register_logger(logger);
 		spdlog::set_default_logger(logger);
+		s_loggerActive.store(true, std::memory_order_release);
 
 		LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",
 			settings.filePath.empty() ? "<none>" : settings.filePath,
@@ -129,10 +137,12 @@ namespace engine::core
 
 	void Log::Shutdown()
 	{
+		if (!s_loggerActive.exchange(false, std::memory_order_acq_rel))
+			return;   // jamais initialisé, rien à faire
+
 		auto logger = spdlog::get(c_runtimeLoggerName);
 		if (logger)
 		{
-			LOG_INFO(Core, "[Log] Shutdown: runtime logger dropped");
 			logger->flush();
 		}
 		spdlog::drop(c_runtimeLoggerName);

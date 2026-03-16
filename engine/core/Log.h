@@ -53,6 +53,10 @@ namespace engine::core
         template <typename... Args>
         static void Write(LogLevel level, const char* subsystem, std::string_view format, Args&&... args)
         {
+            if (!s_active.load(std::memory_order_acquire))
+            {
+                return;
+            }
             if (level < s_level.load(std::memory_order_relaxed))
             {
                 return;

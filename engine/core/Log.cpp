@@ -131,11 +131,20 @@ namespace engine::core
 			logger->flush_on(spdlog::level::trace);
 		}
 		std::fprintf(stderr, "[LOG::INIT] avant register_logger\n"); std::fflush(stderr);
-		spdlog::drop_all();
-		spdlog::register_logger(logger);
-		std::fprintf(stderr, "[LOG::INIT] avant set_default_logger\n"); std::fflush(stderr);
-		spdlog::set_default_logger(logger);
-		std::fprintf(stderr, "[LOG::INIT] avant s_loggerActive store\n"); std::fflush(stderr);
+		try
+		{
+			spdlog::drop_all();
+			spdlog::register_logger(logger);
+			std::fprintf(stderr, "[LOG::INIT] avant set_default_logger\n"); std::fflush(stderr);
+			spdlog::set_default_logger(logger);
+			std::fprintf(stderr, "[LOG::INIT] avant s_loggerActive store\n"); std::fflush(stderr);
+		}
+		catch (const std::exception& e)
+		{
+			std::fprintf(stderr, "[LOG::INIT] EXCEPTION in register: %s\n", e.what()); std::fflush(stderr);
+			return;
+		}
+
 		s_active.store(true, std::memory_order_release);
 		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
 

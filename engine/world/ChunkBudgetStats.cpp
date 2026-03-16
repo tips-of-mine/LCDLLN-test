@@ -25,8 +25,7 @@ namespace engine::world
 		m_budgetActiveDrawcalls  = static_cast<uint32_t>(config.GetInt("world.budget_active_drawcalls", 1000));
 		m_budgetVisibleDrawcalls = static_cast<uint32_t>(config.GetInt("world.budget_visible_drawcalls", 300));
 		m_budgetFarDrawcalls     = static_cast<uint32_t>(config.GetInt("world.budget_far_drawcalls", 50));
-		LOG_INFO(World, "[ChunkBudgetStats] Init OK (active={}, visible={}, far={})",
-			m_budgetActiveDrawcalls, m_budgetVisibleDrawcalls, m_budgetFarDrawcalls);
+		if (engine::core::Log::IsActive()) LOG_INFO(World, "[ChunkBudgetStats] Init OK (active={}, visible={}, far={})", m_budgetActiveDrawcalls, m_budgetVisibleDrawcalls, m_budgetFarDrawcalls);
 	}
 
 	void ChunkBudgetStats::RecordDraw(GlobalChunkCoord /*chunkId*/, ChunkRing ring, uint32_t drawcallCount, uint32_t triangleCount)
@@ -71,7 +70,7 @@ namespace engine::world
 			const RingStats s = GetRingStats(ring);
 			const uint32_t budget = GetBudgetDrawcalls(ring);
 			const char* over = (budget > 0 && s.drawcalls > budget) ? " OVER" : "";
-			LOG_INFO(World, "M09.2 {}: drawcalls={} (budget {}), triangles={}{}", name, s.drawcalls, budget, s.triangles, over);
+			if (engine::core::Log::IsActive()) LOG_INFO(World, "M09.2 {}: drawcalls={} (budget {}), triangles={}{}", name, s.drawcalls, budget, s.triangles, over);
 		};
 		logRing("Active",  ChunkRing::Active);
 		logRing("Visible", ChunkRing::Visible);

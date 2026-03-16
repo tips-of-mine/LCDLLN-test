@@ -139,11 +139,10 @@ namespace engine::core
 		s_active.store(true, std::memory_order_release);
 		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
 
-		LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",
-			settings.filePath.empty() ? "<none>" : settings.filePath,
-			ToString(settings.level),
-			static_cast<unsigned>(settings.rotation_size_mb),
-			settings.retention_days);
+		//LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",	settings.filePath.empty() ? "<none>" : settings.filePath, ToString(settings.level),	static_cast<unsigned>(settings.rotation_size_mb), settings.retention_days);
+		std::fprintf(stderr, "[LOG::INIT] avant WriteLine test\n"); std::fflush(stderr);
+		WriteLine(LogLevel::Info, "Core", "[Log] Init OK");
+		std::fprintf(stderr, "[LOG::INIT] apres WriteLine test\n"); std::fflush(stderr);
 	}
 
 	void Log::Shutdown()
@@ -179,17 +178,23 @@ namespace engine::core
 
 	void Log::WriteLine(LogLevel level, const char* subsystem, std::string_view message)
 	{
+		std::fprintf(stderr, "[WRITELINE] debut\n"); std::fflush(stderr);
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
 
+		std::fprintf(stderr, "[WRITELINE] apres level check\n"); std::fflush(stderr);
 		if (!s_logger)
 			return;
 
+		std::fprintf(stderr, "[WRITELINE] apres s_logger check\n"); std::fflush(stderr);
 		spdlog::level::level_enum spd_level = ToSpdlogLevel(level);
 		if (spd_level == spdlog::level::off)
 			return;
 
+		std::fprintf(stderr, "[WRITELINE] avant log()\n"); std::fflush(stderr);
 		const std::string formatted = std::string("[") + (subsystem ? subsystem : "?") + "] " + std::string(message);
 		s_logger->log(spd_level, "{}", formatted);
+
+		std::fprintf(stderr, "[WRITELINE] apres log()\n"); std::fflush(stderr);
 	}
 }

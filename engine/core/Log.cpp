@@ -1,7 +1,7 @@
 #include "engine/core/Log.h"
 
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/rotating_file_sink.h>
+//#include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -91,18 +91,19 @@ namespace engine::core
 		if (!settings.filePath.empty())
 		{
 			std::fprintf(stderr, "[LOG::INIT] avant max_bytes\n"); std::fflush(stderr);
-			const size_t max_bytes = (settings.rotation_size_mb > 0)
-				? (settings.rotation_size_mb * 1024u * 1024u)
-				: (10u * 1024u * 1024u);
+			//const size_t max_bytes = (settings.rotation_size_mb > 0)
+			//	? (settings.rotation_size_mb * 1024u * 1024u)
+			//	: (10u * 1024u * 1024u);
 			std::fprintf(stderr, "[LOG::INIT] avant max_files\n"); std::fflush(stderr);
-			const int max_files = (settings.retention_days > 0)
-				? std::max(1, settings.retention_days)
-				: 7;
+			//const int max_files = (settings.retention_days > 0)
+			//	? std::max(1, settings.retention_days)
+			//	: 7;
 			std::fprintf(stderr, "[LOG::INIT] avant make_shared file_sink\n"); std::fflush(stderr);
 			try
 			{
-				auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+				//auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
             		//settings.filePath, max_bytes, static_cast<size_t>(max_files));
+				auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
 					settings.filePath, true);
 				std::fprintf(stderr, "[LOG::INIT] file_sink OK\n"); std::fflush(stderr);
 				sinks.push_back(file_sink);

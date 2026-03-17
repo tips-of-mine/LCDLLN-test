@@ -85,7 +85,7 @@ namespace engine
 				static bool s_loggedMissingBounds = false;
 				if (!s_loggedMissingBounds)
 				{
-					if (engine::core::Log::IsActive()) LOG_WARN(Render, "[GpuDrivenCulling] Mesh local bounds missing, using unit bounds fallback");
+					LOG_WARN(Render, "[GpuDrivenCulling] Mesh local bounds missing, using unit bounds fallback");
 					s_loggedMissingBounds = true;
 				}
 			}
@@ -131,25 +131,25 @@ namespace engine
 			zoneHeader,
 			error))
 		{
-			if (engine::core::Log::IsActive()) LOG_WARN(Core, "[ZoneProbes] Runtime manifest fallback sky (path={}, reason={})", zoneMetaPath, error);
+			LOG_WARN(Core, "[ZoneProbes] Runtime manifest fallback sky (path={}, reason={})", zoneMetaPath, error);
 		}
 		else if (engine::world::LoadProbeSet(m_cfg, probesPath, zoneHeader.contentHash, true, m_zoneProbes, error))
 		{
-			if (engine::core::Log::IsActive()) LOG_INFO(Core, "[ZoneProbes] Runtime probes ready (path={}, count={})", probesPath, m_zoneProbes.probes.size());
+			LOG_INFO(Core, "[ZoneProbes] Runtime probes ready (path={}, count={})", probesPath, m_zoneProbes.probes.size());
 		}
 		else
 		{
-			if (engine::core::Log::IsActive()) LOG_WARN(Core, "[ZoneProbes] Runtime probes fallback sky (path={}, reason={})", probesPath, error);
+			LOG_WARN(Core, "[ZoneProbes] Runtime probes fallback sky (path={}, reason={})", probesPath, error);
 		}
 
 		error.clear();
 		if (engine::world::LoadAtmosphereSettings(m_cfg, atmospherePath, m_zoneAtmosphere, error))
 		{
-			if (engine::core::Log::IsActive()) LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
+			LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
 		}
 		else
 		{
-			if (engine::core::Log::IsActive()) LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
+			LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
 		}
 	}
 
@@ -196,7 +196,7 @@ namespace engine
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
-			if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+			LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
 		}
 		std::fprintf(stderr, "[ENGINE] B1: LOG_INFO OK\n"); std::fflush(stderr);
 
@@ -210,7 +210,7 @@ namespace engine
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
-			if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
+			LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
 		}
 		std::fprintf(stderr, "[ENGINE] D: LOG_INFO config OK\n"); std::fflush(stderr);
 
@@ -223,7 +223,7 @@ namespace engine
 			if (!m_editorMode->Init(m_cfg))
 			{
 				std::fprintf(stderr, "[ENGINE] E3: avant \n"); std::fflush(stderr);
-				if (engine::core::Log::IsActive()) LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
+				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
 				m_editorMode.reset();
 				m_editorEnabled = false;
 				std::fprintf(stderr, "[ENGINE] E4: après \n"); std::fflush(stderr);
@@ -233,7 +233,7 @@ namespace engine
 				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
 				m_renderStates[0].camera = editorCamera;
 				m_renderStates[1].camera = editorCamera;
-				if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
+				LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
 			}
 		}
 		std::fprintf(stderr, "[ENGINE] F: apres editor mode block\n"); std::fflush(stderr);
@@ -260,7 +260,7 @@ namespace engine
 		m_gpuUploadQueue.Init(m_cfg);
 
 		std::fprintf(stderr, "[ENGINE] N: subsystems OK\n"); std::fflush(stderr);
-		if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] FrameArena init OK");
+		LOG_INFO(Core, "[Boot] FrameArena init OK");
 
 		// ------------------------------------------------------------------
 		// Window
@@ -273,10 +273,10 @@ namespace engine
 		std::fprintf(stderr, "[ENGINE] O: avant Window::Create\n"); std::fflush(stderr);
 		if (!m_window.Create(desc))
 		{
-			if (engine::core::Log::IsActive()) LOG_FATAL(Platform, "[Boot] Window::Create failed");
+			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
 		std::fprintf(stderr, "[ENGINE] P: Window::Create OK\n"); std::fflush(stderr);
-		if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] Window::Create OK");
+		LOG_INFO(Core, "[Boot] Window::Create OK");
 
 		m_window.SetOnResize([this](int w, int h) { OnResize(w, h); });
 		m_window.SetOnClose([this]() { OnQuit(); });
@@ -294,12 +294,12 @@ namespace engine
 		std::fprintf(stderr, "[ENGINE] R: avant glfwInit\n"); std::fflush(stderr);
 		if (glfwInit() != GLFW_TRUE)
 		{
-			if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] glfwInit failed");
+			LOG_WARN(Platform, "[Boot] glfwInit failed");
 		}
 		else
 		{
 			std::fprintf(stderr, "[ENGINE] R1: glfwInit OK\n"); std::fflush(stderr);
-			if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] glfwInit OK");
+			LOG_INFO(Core, "[Boot] glfwInit OK");
 			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -308,7 +308,7 @@ namespace engine
 			std::fprintf(stderr, "[ENGINE] R3: glfwCreateWindow ptr=%p\n", (void*)m_glfwWindowForVk); std::fflush(stderr);
 			if (!m_glfwWindowForVk)
 			{
-				if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] glfwCreateWindow returned null");
+				LOG_WARN(Platform, "[Boot] glfwCreateWindow returned null");
 			}
 			else
 			{
@@ -319,28 +319,28 @@ namespace engine
 			if (m_glfwWindowForVk && m_vkInstance.Create())
 			{
 				std::fprintf(stderr, "[ENGINE] R5: VkInstance::Create OK\n"); std::fflush(stderr);
-				if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] VkInstance::Create OK");
+				LOG_INFO(Core, "[Boot] VkInstance::Create OK");
 
 				std::fprintf(stderr, "[ENGINE] R6: avant CreateSurface\n"); std::fflush(stderr);
 				if (!m_vkInstance.CreateSurface(m_glfwWindowForVk))
 				{
-					if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] VkInstance::CreateSurface failed");
+					LOG_WARN(Platform, "[Boot] VkInstance::CreateSurface failed");
 				}
 				else
 				{
 					std::fprintf(stderr, "[ENGINE] R7: CreateSurface OK\n"); std::fflush(stderr);
-					if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] VkInstance::CreateSurface OK");
+					LOG_INFO(Core, "[Boot] VkInstance::CreateSurface OK");
 					std::fprintf(stderr, "[ENGINE] R8: avant VkDeviceContext::Create\n"); std::fflush(stderr);
 					if (!m_vkDeviceContext.Create(m_vkInstance.GetHandle(), m_vkInstance.GetSurface()))
 					{
-						if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] VkDeviceContext::Create failed");
+						LOG_WARN(Platform, "[Boot] VkDeviceContext::Create failed");
 					}
 					else
 					{
 						std::fprintf(stderr, "[ENGINE] R9: VkDeviceContext::Create OK\n"); std::fflush(stderr);
 						VkPhysicalDeviceProperties physProps{};
 						vkGetPhysicalDeviceProperties(m_vkDeviceContext.GetPhysicalDevice(), &physProps);
-						if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] VkDeviceContext::Create OK (GPU: {})", physProps.deviceName);
+						LOG_INFO(Core, "[Boot] VkDeviceContext::Create OK (GPU: {})", physProps.deviceName);
 
 						VkPresentModeKHR requestedMode = VK_PRESENT_MODE_FIFO_KHR;
 						if (!m_vsync)
@@ -362,13 +362,13 @@ namespace engine
 							static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height),
 							requestedMode))
 						{
-							if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] VkSwapchain::Create failed");
+							LOG_WARN(Platform, "[Boot] VkSwapchain::Create failed");
 						}
 						else
 						{
 							std::fprintf(stderr, "[ENGINE] R11: VkSwapchain::Create OK\n"); std::fflush(stderr);
 							VkExtent2D swapExtent = m_vkSwapchain.GetExtent();
-							if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] VkSwapchain::Create OK (extent={}x{}, images={})",
+							LOG_INFO(Core, "[Boot] VkSwapchain::Create OK (extent={}x{}, images={})",
 								swapExtent.width, swapExtent.height, m_vkSwapchain.GetImageCount());
 
 							std::fprintf(stderr, "[ENGINE] R12: avant CreateFrameResources\n"); std::fflush(stderr);
@@ -377,12 +377,12 @@ namespace engine
 								m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 								m_frameResources))
 							{
-								if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] FrameSync::Init failed");
+								LOG_WARN(Platform, "[Boot] FrameSync::Init failed");
 							}
 							else
 							{
 								std::fprintf(stderr, "[ENGINE] R13: CreateFrameResources OK\n"); std::fflush(stderr);
-								if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] FrameSync::Init OK");
+								LOG_INFO(Core, "[Boot] FrameSync::Init OK");
 
 								if (m_vkSwapchain.IsValid())
 								{
@@ -422,7 +422,7 @@ namespace engine
 									vmaInfo.pVulkanFunctions = &vmaFuncs;
 									if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
 									{
-										if (engine::core::Log::IsActive()) LOG_ERROR(Render, "VMA allocator creation failed");
+										LOG_ERROR(Render, "VMA allocator creation failed");
 										m_vmaAllocator = nullptr;
 									}
 									std::fprintf(stderr, "[ENGINE] R15: vmaCreateAllocator OK ptr=%p\n", m_vmaAllocator); std::fflush(stderr);
@@ -452,12 +452,12 @@ namespace engine
 											(void*)m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget); std::fflush(stderr);
 										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget))
 										{
-											if (engine::core::Log::IsActive()) LOG_WARN(Render, "[StagingAllocator] Init FAILED (pool_size_bytes={})", stagingBudget);
+											LOG_WARN(Render, "[StagingAllocator] Init FAILED (pool_size_bytes={})", stagingBudget);
 											std::fprintf(stderr, "[ENGINE] R18: StagingAllocator::Init FAILED (staging désactivé)\n"); std::fflush(stderr);
 										}
 										else
 										{
-											if (engine::core::Log::IsActive()) LOG_INFO(Render, "[StagingAllocator] Initialized. Pool size: {} bytes", stagingBudget);
+											LOG_INFO(Render, "[StagingAllocator] Initialized. Pool size: {} bytes", stagingBudget);
 											std::fprintf(stderr, "[ENGINE] R19: StagingAllocator::Init OK\n"); std::fflush(stderr);
 										}
 
@@ -470,18 +470,18 @@ namespace engine
 										std::fprintf(stderr, "[ENGINE] R22: assetRegistry OK\n"); std::fflush(stderr);
 										if (!m_profiler.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), 2u))
 										{
-											if (engine::core::Log::IsActive()) LOG_WARN(Core, "[Engine] Profiler init failed - profiling disabled");
+											LOG_WARN(Core, "[Engine] Profiler init failed - profiling disabled");
 										}
 										if (!m_profilerHud.Init())
 										{
-											if (engine::core::Log::IsActive()) LOG_WARN(Core, "[Engine] ProfilerHud init failed - overlay disabled");
+											LOG_WARN(Core, "[Engine] ProfilerHud init failed - overlay disabled");
 										    m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
 											std::fprintf(stderr, "[ENGINE] PROFILER FORCE DISABLED (STAB.9)\n");
 											std::fflush(stderr);
 										}
 										if (!m_audioEngine.Init(m_cfg))
 										{
-											if (engine::core::Log::IsActive()) LOG_WARN(Core, "[Engine] AudioEngine init failed - audio disabled");
+											LOG_WARN(Core, "[Engine] AudioEngine init failed - audio disabled");
 										}
 										else
 										{
@@ -586,7 +586,7 @@ namespace engine
 											std::snprintf(name, sizeof(name), "BloomUp_%u", i);
 											m_fgBloomUpMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
 										}
-										if (engine::core::Log::IsActive()) LOG_INFO(Render, "[Bloom] FrameGraph resources registered: %zu down + %zu up mips",
+										LOG_INFO(Render, "[Bloom] FrameGraph resources registered: %zu down + %zu up mips",
 											m_fgBloomDownMipIds.size(),
 											m_fgBloomUpMipIds.size());
 
@@ -613,9 +613,9 @@ namespace engine
 										{
 											engine::render::ShaderCompiler sc;
 											if (sc.LocateCompiler())
-												if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] ShaderCompiler OK");
+												LOG_INFO(Core, "[Boot] ShaderCompiler OK");
 											else
-												if (engine::core::Log::IsActive()) LOG_WARN(Render, "[Boot] ShaderCompiler glslangValidator not found");
+												LOG_WARN(Render, "[Boot] ShaderCompiler glslangValidator not found");
 										}
 										std::fprintf(stderr, "[ENGINE] R25: ShaderCompiler check OK\n"); std::fflush(stderr);
 
@@ -647,7 +647,7 @@ namespace engine
 											// auto c = compiler.CompileGlslToSpirv(srcPath, stage);
 											// if (c.has_value() && !c->empty()) return std::move(*c);
 
-											if (engine::core::Log::IsActive()) LOG_WARN(Render, "Shader SPIR-V not found or invalid: {}", spvPath);
+											LOG_WARN(Render, "Shader SPIR-V not found or invalid: {}", spvPath);
 											return {};
 										};
 
@@ -666,7 +666,7 @@ namespace engine
 										);
 										std::fprintf(stderr, "[ENGINE] R28: Init retourne %d\n", (int)pipelineOk); std::fflush(stderr);
 										std::fprintf(stderr, "[ENGINE] R29: pipeline->Init OK\n"); std::fflush(stderr);
-										if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
+										LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
 										std::fprintf(stderr, "[ENGINE] R30: avant addPass Clear\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Clear",
@@ -712,7 +712,7 @@ namespace engine
 												if (!cullingPass.UploadDrawItems(m_vkDeviceContext.GetDevice(), m_currentFrame,
 														drawItemCount > 0 ? &drawItem : nullptr, drawItemCount))
 												{
-													if (engine::core::Log::IsActive()) LOG_WARN(Render, "[GpuDrivenCulling] Draw-item upload failed");
+													LOG_WARN(Render, "[GpuDrivenCulling] Draw-item upload failed");
 													return;
 												}
 
@@ -749,7 +749,7 @@ namespace engine
 												static int s_lastLoggedLod = -1;
 												if (lodLevel != s_lastLoggedLod)
 												{
-													if (engine::core::Log::IsActive()) LOG_DEBUG(Render, "[LOD] Geometry test mesh lod={} dist_m={:.2f}", lodLevel, distCam);
+													LOG_DEBUG(Render, "[LOD] Geometry test mesh lod={} dist_m={:.2f}", lodLevel, distCam);
 													s_lastLoggedLod = lodLevel;
 												}
 												auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
@@ -958,7 +958,7 @@ namespace engine
 														m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 														m_fgDepthId, m_fgDecalOverlayId, invViewProj, m_visibleDecals, frameIdx);
 												});
-											if (engine::core::Log::IsActive()) LOG_INFO(Render, "[Engine] Decal frame-graph pass registered");
+											LOG_INFO(Render, "[Engine] Decal frame-graph pass registered");
 										}
 										else
 										{
@@ -973,7 +973,7 @@ namespace engine
 													VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 													vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 												});
-											if (engine::core::Log::IsActive()) LOG_WARN(Render, "[Engine] Decal pass disabled, overlay clear fallback registered");
+											LOG_WARN(Render, "[Engine] Decal pass disabled, overlay clear fallback registered");
 										}
 
 										std::fprintf(stderr, "[ENGINE] R42: avant addPass Lighting\n"); std::fflush(stderr);
@@ -1202,7 +1202,7 @@ namespace engine
 																               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 																               1, &region);
 																m_taaHistoryEverFilled = true;
-																if (engine::core::Log::IsActive()) LOG_INFO(Render, "[TAA] History initialized at frame 0");
+																LOG_INFO(Render, "[TAA] History initialized at frame 0");
 																return;
 															}
 														}
@@ -1294,9 +1294,9 @@ namespace engine
 			else
 			{
 				if (m_glfwWindowForVk)
-					if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] VkInstance::Create failed");
+					LOG_WARN(Platform, "[Boot] VkInstance::Create failed");
 				else
-					if (engine::core::Log::IsActive()) LOG_WARN(Platform, "[Boot] Vulkan instance or GLFW window for surface failed");
+					LOG_WARN(Platform, "[Boot] Vulkan instance or GLFW window for surface failed");
 			}
 		}
 
@@ -1304,14 +1304,14 @@ namespace engine
 		std::fprintf(stderr, "[ENGINE] S: avant FS smoke\n"); std::fflush(stderr);
 		{
 			const auto cfgText = engine::platform::FileSystem::ReadAllText("config.json");
-			if (engine::core::Log::IsActive()) LOG_INFO(Platform, "FS ReadAllText('config.json'): {} bytes", cfgText.size());
+			LOG_INFO(Platform, "FS ReadAllText('config.json'): {} bytes", cfgText.size());
 			const auto contentCfgText = engine::platform::FileSystem::ReadAllTextContent(m_cfg, "config.json");
-			if (engine::core::Log::IsActive()) LOG_INFO(Platform, "FS ReadAllTextContent(paths.content/'config.json'): {} bytes", contentCfgText.size());
+			LOG_INFO(Platform, "FS ReadAllTextContent(paths.content/'config.json'): {} bytes", contentCfgText.size());
 		}
 		std::fprintf(stderr, "[ENGINE] T: FS smoke OK\n"); std::fflush(stderr);
 
-		if (engine::core::Log::IsActive()) LOG_INFO(Core, "Engine init: vsync={} (present mode from swapchain)", m_vsync ? "on" : "off");
-		if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Boot] Engine boot COMPLETE");
+		LOG_INFO(Core, "Engine init: vsync={} (present mode from swapchain)", m_vsync ? "on" : "off");
+		LOG_INFO(Core, "[Boot] Engine boot COMPLETE");
 		std::fprintf(stderr, "[ENGINE] U: constructeur COMPLETE\n"); std::fflush(stderr);
 	}
 
@@ -1320,7 +1320,7 @@ namespace engine
 	int Engine::Run()
 	{
 		std::fprintf(stderr, "[RUN] debut Run\n"); std::fflush(stderr);
-		if (engine::core::Log::IsActive()) LOG_DEBUG(Core, "[Engine] Entering render loop");
+		LOG_DEBUG(Core, "[Engine] Entering render loop");
 
 		auto lastFpsLog  = std::chrono::steady_clock::now();
 		auto lastPresent = lastFpsLog;
@@ -1345,7 +1345,7 @@ namespace engine
 			const auto now = std::chrono::steady_clock::now();
 			if (now - lastFpsLog >= std::chrono::seconds(1))
 			{
-				if (engine::core::Log::IsActive()) LOG_INFO(Core, "fps={:.1f} dt_ms={:.3f} frame={}", m_time.FPS(), m_time.DeltaSeconds() * 1000.0, m_time.FrameIndex());
+				LOG_INFO(Core, "fps={:.1f} dt_ms={:.3f} frame={}", m_time.FPS(), m_time.DeltaSeconds() * 1000.0, m_time.FrameIndex());
 				lastFpsLog = now;
 			}
 
@@ -1360,7 +1360,7 @@ namespace engine
 		}
 
 		std::fprintf(stderr, "[RUN] sortie loop\n"); std::fflush(stderr);
-		if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Engine] Render loop exited cleanly");
+		LOG_INFO(Core, "[Engine] Render loop exited cleanly");
 
 		if (m_vkDeviceContext.IsValid())
 		{
@@ -1418,7 +1418,7 @@ namespace engine
 			m_editorMode.reset();
 		}
 		m_window.Destroy();
-		if (engine::core::Log::IsActive()) LOG_INFO(Core, "[Engine] Shutdown complete");
+		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
 	}
 
@@ -1450,7 +1450,7 @@ namespace engine
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				if (m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
-					if (engine::core::Log::IsActive()) LOG_INFO(Platform, "Swapchain recreated {}x{}", m_width, m_height);
+					LOG_INFO(Platform, "Swapchain recreated {}x{}", m_width, m_height);
 			}
 		}
 
@@ -1548,9 +1548,9 @@ namespace engine
 			std::span<const engine::world::ChunkRequest> pending = m_streamingScheduler.GetPrioritizedRequests();
 			out.hlodDebugText = engine::world::BuildChunkDrawList(pending.data(), pending.size(), out.camera.position, out.frustum, m_hlodRuntime, maxDrawDist, m_chunkDrawDecisions);
 			if ((m_currentFrame % 60) == 0 && !out.hlodDebugText.empty())
-				if (engine::core::Log::IsActive()) LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
+				LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
 			if ((m_currentFrame % 60) == 0 && !out.profilerDebugText.empty())
-				if (engine::core::Log::IsActive()) LOG_DEBUG(Core, "M18.1 {}", out.profilerDebugText);
+				LOG_DEBUG(Core, "M18.1 {}", out.profilerDebugText);
 		}
 
 		{

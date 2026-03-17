@@ -56,7 +56,7 @@ namespace engine::core
                 return;
             if (level < s_level.load(std::memory_order_relaxed))
                 return;
-            const std::string formatted = std::format(fmt, std::forward<Args>(args)...);
+            const std::string_view raw = fmt.get();
             WriteLine(level, subsystem, formatted);
         }
     private:

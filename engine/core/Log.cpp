@@ -1,21 +1,22 @@
 #include "engine/core/Log.h"
 
-#include <spdlog/spdlog.h>
-//#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
-
 #include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
-#include <memory>
-#include <thread>
+#include <fstream>
+#include <mutex>
+#include <string>
 
 namespace engine::core
 {
 	namespace
 	{
-		const char* ToString(LogLevel level)
+		std::ofstream s_file;
+		std::mutex    s_mutex;
+		bool          s_consoleEnabled = false;
+
+		const char* LevelToString(LogLevel level)
 		{
 			switch (level)
 			{
@@ -29,24 +30,6 @@ namespace engine::core
 			default:              return "UNKNOWN";
 			}
 		}
-
-		spdlog::level::level_enum ToSpdlogLevel(LogLevel level)
-		{
-			switch (level)
-			{
-			case LogLevel::Trace: return spdlog::level::trace;
-			case LogLevel::Debug: return spdlog::level::debug;
-			case LogLevel::Info:  return spdlog::level::info;
-			case LogLevel::Warn:  return spdlog::level::warn;
-			case LogLevel::Error: return spdlog::level::err;
-			case LogLevel::Fatal: return spdlog::level::critical;
-			case LogLevel::Off:   return spdlog::level::off;
-			default:              return spdlog::level::info;
-			}
-		}
-
-		const char* const c_runtimeLoggerName = "runtime";
-		std::shared_ptr<spdlog::logger> s_logger;
 	}
 
 	std::atomic<LogLevel> Log::s_level{ LogLevel::Info };
@@ -70,82 +53,36 @@ namespace engine::core
 	void Log::Init(const LogSettings& settings)
 	{
 		std::fprintf(stderr, "[LOG::INIT] debut\n"); std::fflush(stderr);
-		std::fprintf(stderr, "[LOG::INIT] avant Shutdown\n"); std::fflush(stderr);
 		Shutdown();
 		std::fprintf(stderr, "[LOG::INIT] apres Shutdown\n"); std::fflush(stderr);
+
 		s_level.store(settings.level, std::memory_order_relaxed);
-		std::fprintf(stderr, "[LOG::INIT] apres s_level.store\n"); std::fflush(stderr);
-
-		std::vector<spdlog::sink_ptr> sinks;
-		std::fprintf(stderr, "[LOG::INIT] apres vector sinks\n"); std::fflush(stderr);
-
-		if (settings.console)
-		{
-			std::fprintf(stderr, "[LOG::INIT] avant console_sink\n"); std::fflush(stderr);
-			auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-			sinks.push_back(console_sink);
-			std::fprintf(stderr, "[LOG::INIT] console_sink OK\n"); std::fflush(stderr);
-		}
-		std::fprintf(stderr, "[LOG::INIT] avant file sink check filePath='%s'\n", settings.filePath.c_str()); std::fflush(stderr);
+		s_consoleEnabled = settings.console;
 
 		if (!settings.filePath.empty())
 		{
-			std::fprintf(stderr, "[LOG::INIT] avant max_bytes\n"); std::fflush(stderr);
-			//const size_t max_bytes = (settings.rotation_size_mb > 0)
-			//	? (settings.rotation_size_mb * 1024u * 1024u)
-			//	: (10u * 1024u * 1024u);
-			std::fprintf(stderr, "[LOG::INIT] avant max_files\n"); std::fflush(stderr);
-			//const int max_files = (settings.retention_days > 0)
-			//	? std::max(1, settings.retention_days)
-			//	: 7;
-			std::fprintf(stderr, "[LOG::INIT] avant make_shared file_sink\n"); std::fflush(stderr);
-			try
+			std::fprintf(stderr, "[LOG::INIT] avant ofstream open path='%s'\n", settings.filePath.c_str()); std::fflush(stderr);
+			s_file.open(settings.filePath, std::ios::out | std::ios::app);
+			if (!s_file.is_open())
 			{
-				//auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-            		//settings.filePath, max_bytes, static_cast<size_t>(max_files));
-				auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-					settings.filePath, true);
-				std::fprintf(stderr, "[LOG::INIT] file_sink OK\n"); std::fflush(stderr);
-				sinks.push_back(file_sink);
-			}
-			catch (const std::exception& e)
-			{
-				std::fprintf(stderr, "[LOG::INIT] file_sink EXCEPTION: %s\n", e.what()); std::fflush(stderr);
-				if (settings.console)
-				{
-					spdlog::default_logger()->error("[Log] Init FAILED: cannot open file {} — {}", settings.filePath, e.what());
-				}
+				std::fprintf(stderr, "[LOG::INIT] ofstream open FAILED\n"); std::fflush(stderr);
 				return;
 			}
+			std::fprintf(stderr, "[LOG::INIT] ofstream open OK\n"); std::fflush(stderr);
 		}
 
-		std::fprintf(stderr, "[LOG::INIT] avant sinks.empty check\n"); std::fflush(stderr);
-		if (sinks.empty())
+		if (!s_file.is_open() && !s_consoleEnabled)
 		{
+			std::fprintf(stderr, "[LOG::INIT] no sink active, return\n"); std::fflush(stderr);
 			return;
 		}
-
-		std::fprintf(stderr, "[LOG::INIT] avant make_shared logger\n"); std::fflush(stderr);
-		auto logger = std::make_shared<spdlog::logger>(c_runtimeLoggerName, sinks.begin(), sinks.end());
-		std::fprintf(stderr, "[LOG::INIT] avant set_level\n"); std::fflush(stderr);
-		logger->set_level(ToSpdlogLevel(settings.level));
-		if (settings.flushAlways)
-		{
-			std::fprintf(stderr, "[LOG::INIT] avant flush_on\n"); std::fflush(stderr);
-			logger->flush_on(spdlog::level::trace);
-		}
-
-		std::fprintf(stderr, "[LOG::INIT] avant s_logger assign\n"); std::fflush(stderr);
-		s_logger = logger;
-		std::fprintf(stderr, "[LOG::INIT] s_logger assign OK\n"); std::fflush(stderr);
 
 		s_active.store(true, std::memory_order_release);
 		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
 
-		//LOG_INFO(Core, "[Log] Init OK (file={}, level={}, rotation_size_mb={}, retention_days={})",	settings.filePath.empty() ? "<none>" : settings.filePath, ToString(settings.level),	static_cast<unsigned>(settings.rotation_size_mb), settings.retention_days);
-		std::fprintf(stderr, "[LOG::INIT] avant WriteLine test\n"); std::fflush(stderr);
-		WriteLine(LogLevel::Info, "Core", "[Log] Init OK");
-		std::fprintf(stderr, "[LOG::INIT] apres WriteLine test\n"); std::fflush(stderr);
+		LOG_INFO(Core, "[Log] Init OK (file={}, console={})",
+			settings.filePath.empty() ? "<none>" : settings.filePath,
+			settings.console ? "on" : "off");
 	}
 
 	void Log::Shutdown()
@@ -153,11 +90,13 @@ namespace engine::core
 		if (!s_active.exchange(false, std::memory_order_acq_rel))
 			return;
 
-		if (s_logger)
+		std::lock_guard<std::mutex> lock(s_mutex);
+		if (s_file.is_open())
 		{
-			s_logger->flush();
-			s_logger.reset();
+			s_file.flush();
+			s_file.close();
 		}
+		s_consoleEnabled = false;
 	}
 
 	bool Log::IsActive()
@@ -173,31 +112,25 @@ namespace engine::core
 	void Log::SetLevel(LogLevel level)
 	{
 		s_level.store(level, std::memory_order_relaxed);
-		if (s_logger)
-		{
-			s_logger->set_level(ToSpdlogLevel(level));
-		}
 	}
 
 	void Log::WriteLine(LogLevel level, const char* subsystem, std::string_view message)
 	{
-		std::fprintf(stderr, "[WRITELINE] debut\n"); std::fflush(stderr);
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
 
-		std::fprintf(stderr, "[WRITELINE] apres level check\n"); std::fflush(stderr);
-		if (!s_logger)
-			return;
+		const std::string line =
+			std::string("[") + LevelToString(level) + "][" +
+			(subsystem ? subsystem : "?") + "] " +
+			std::string(message) + "\n";
 
-		std::fprintf(stderr, "[WRITELINE] apres s_logger check\n"); std::fflush(stderr);
-		spdlog::level::level_enum spd_level = ToSpdlogLevel(level);
-		if (spd_level == spdlog::level::off)
-			return;
-
-		std::fprintf(stderr, "[WRITELINE] avant log()\n"); std::fflush(stderr);
-		const std::string formatted = std::string("[") + (subsystem ? subsystem : "?") + "] " + std::string(message);
-		s_logger->log(spd_level, "{}", formatted);
-
-		std::fprintf(stderr, "[WRITELINE] apres log()\n"); std::fflush(stderr);
+		std::lock_guard<std::mutex> lock(s_mutex);
+		if (s_file.is_open())
+		{
+			s_file << line;
+			s_file.flush();
+		}
+		if (s_consoleEnabled)
+			std::fputs(line.c_str(), stdout);
 	}
 }

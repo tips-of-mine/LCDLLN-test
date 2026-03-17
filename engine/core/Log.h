@@ -1,10 +1,11 @@
 #pragma once
+
 #include <atomic>
 #include <cstdlib>
 #include <format>
-#include <iterator>
 #include <string>
 #include <string_view>
+
 namespace engine::core
 {
     enum class LogLevel : int
@@ -61,9 +62,7 @@ namespace engine::core
             {
                 return;
             }
-            thread_local std::string formatted;
-            formatted.clear();
-            std::vformat_to(std::back_inserter(formatted), format, std::make_format_args(args...));
+            const std::string formatted = std::vformat(format, std::make_format_args(args...));
             WriteLine(level, subsystem, formatted);
         }
     private:

@@ -79,10 +79,6 @@ namespace engine::core
 
 		s_active.store(true, std::memory_order_release);
 		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
-
-		LOG_INFO(Core, "[Log] Init OK (file={}, console={})",
-			settings.filePath.empty() ? "<none>" : settings.filePath,
-			settings.console ? "on" : "off");
 	}
 
 	void Log::Shutdown()

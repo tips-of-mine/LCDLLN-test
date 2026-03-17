@@ -13,8 +13,13 @@ namespace engine::core
 	namespace
 	{
 		std::ofstream s_file;
-		std::mutex    s_mutex;
 		bool          s_consoleEnabled = false;
+
+		std::mutex& GetMutex()
+		{
+			static std::mutex m;
+			return m;
+		}
 
 		const char* LevelToString(LogLevel level)
 		{
@@ -86,7 +91,7 @@ namespace engine::core
 		if (!s_active.exchange(false, std::memory_order_acq_rel))
 			return;
 
-		std::lock_guard<std::mutex> lock(s_mutex);
+		std::lock_guard<std::mutex> lock(GetMutex());
 		if (s_file.is_open())
 		{
 			s_file.flush();
@@ -123,7 +128,7 @@ namespace engine::core
 			std::string(message) + "\n";
 		std::fprintf(stderr, "[WRITELINE] apres string build\n"); std::fflush(stderr);
 
-		std::lock_guard<std::mutex> lock(s_mutex);
+		std::lock_guard<std::mutex> lock(GetMutex());
 		std::fprintf(stderr, "[WRITELINE] apres lock\n"); std::fflush(stderr);
 		if (s_file.is_open())
 		{

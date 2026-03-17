@@ -34,7 +34,7 @@ namespace engine::core
     class Log final
     {
     public:
-        /// Returns a filename with timestamp suffix: prefix-YYYYMMDD-HHMMSS.log (e.g. "lcdlln.exe-20250308-143022.log").
+        /// Returns a filename with timestamp suffix: prefix-YYYYMMDD-HHMMSS.log
         static std::string MakeTimestampedFilename(std::string_view prefix);
         /// Initialize logging. Safe to call once; subsequent calls overwrite settings.
         static void Init(const LogSettings& settings);
@@ -56,7 +56,7 @@ namespace engine::core
                 return;
             if (level < s_level.load(std::memory_order_relaxed))
                 return;
-            const std::string_view raw = fmt.get();
+            const std::string formatted = std::format(fmt, std::forward<Args>(args)...);
             WriteLine(level, subsystem, formatted);
         }
     private:
@@ -70,8 +70,8 @@ namespace engine::core
 #define LOG_WARN(subsystem, format, ...)  ::engine::core::Log::Write(::engine::core::LogLevel::Warn,  #subsystem, format __VA_OPT__(,) __VA_ARGS__)
 #define LOG_ERROR(subsystem, format, ...) ::engine::core::Log::Write(::engine::core::LogLevel::Error, #subsystem, format __VA_OPT__(,) __VA_ARGS__)
 #define LOG_FATAL(subsystem, format, ...)                    \
-    do                                                      \
-    {                                                       \
+    do                                                       \
+    {                                                        \
         ::engine::core::Log::Write(::engine::core::LogLevel::Fatal, #subsystem, format __VA_OPT__(,) __VA_ARGS__); \
         ::std::abort();                                      \
     } while (false)

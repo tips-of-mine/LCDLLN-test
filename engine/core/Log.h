@@ -48,23 +48,15 @@ namespace engine::core
         static void SetLevel(LogLevel level);
         /// Write a log line for the given level/subsystem and already-formatted message.
         static void WriteLine(LogLevel level, const char* subsystem, std::string_view message);
-        /// Format + write a log line. Formatting uses C++20 `std::format`.
+        /// Format + write a log line. Formatting uses C++20 std::format.
         template <typename... Args>
-        static void Write(LogLevel level, const char* subsystem, std::string_view fmt, Args&&... args)
+        static void Write(LogLevel level, const char* subsystem, std::format_string<Args...> fmt, Args&&... args)
         {
             if (!s_active.load(std::memory_order_acquire))
                 return;
             if (level < s_level.load(std::memory_order_relaxed))
                 return;
-            std::string formatted;
-            try
-            {
-                formatted = std::vformat(fmt, std::make_format_args(args...));
-            }
-            catch (...)
-            {
-                formatted = std::string(fmt);
-            }
+            const std::string formatted = std::format(fmt, std::forward<Args>(args)...);
             WriteLine(level, subsystem, formatted);
         }
     private:

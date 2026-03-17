@@ -1,11 +1,9 @@
 #pragma once
-
 #include <atomic>
 #include <cstdlib>
 #include <format>
 #include <string>
 #include <string_view>
-
 namespace engine::core
 {
     enum class LogLevel : int
@@ -52,17 +50,21 @@ namespace engine::core
         static void WriteLine(LogLevel level, const char* subsystem, std::string_view message);
         /// Format + write a log line. Formatting uses C++20 `std::format`.
         template <typename... Args>
-        static void Write(LogLevel level, const char* subsystem, std::string_view format, Args&&... args)
+        static void Write(LogLevel level, const char* subsystem, std::string_view fmt, Args&&... args)
         {
             if (!s_active.load(std::memory_order_acquire))
-            {
                 return;
-            }
             if (level < s_level.load(std::memory_order_relaxed))
-            {
                 return;
+            std::string formatted;
+            try
+            {
+                formatted = std::vformat(fmt, std::make_format_args(args...));
             }
-            const std::string formatted = std::vformat(format, std::make_format_args(args...));
+            catch (...)
+            {
+                formatted = std::string(fmt);
+            }
             WriteLine(level, subsystem, formatted);
         }
     private:

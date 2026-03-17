@@ -112,21 +112,27 @@ namespace engine::core
 
 	void Log::WriteLine(LogLevel level, const char* subsystem, std::string_view message)
 	{
+		std::fprintf(stderr, "[WRITELINE] debut\n"); std::fflush(stderr);
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
+		std::fprintf(stderr, "[WRITELINE] apres level\n"); std::fflush(stderr);
 
 		const std::string line =
 			std::string("[") + LevelToString(level) + "][" +
 			(subsystem ? subsystem : "?") + "] " +
 			std::string(message) + "\n";
+		std::fprintf(stderr, "[WRITELINE] apres string build\n"); std::fflush(stderr);
 
 		std::lock_guard<std::mutex> lock(s_mutex);
+		std::fprintf(stderr, "[WRITELINE] apres lock\n"); std::fflush(stderr);
 		if (s_file.is_open())
 		{
 			s_file << line;
 			s_file.flush();
+			std::fprintf(stderr, "[WRITELINE] apres file write\n"); std::fflush(stderr);
 		}
 		if (s_consoleEnabled)
 			std::fputs(line.c_str(), stdout);
+		std::fprintf(stderr, "[WRITELINE] done\n"); std::fflush(stderr);
 	}
 }

@@ -10,6 +10,8 @@
 #if defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
+#else
+#  include <mutex>
 #endif
 
 namespace engine::core
@@ -23,29 +25,14 @@ namespace engine::core
 		CRITICAL_SECTION s_cs;
 		bool             s_csInit = false;
 
-		void LockLog()
-		{
-			if (s_csInit) EnterCriticalSection(&s_cs);
-		}
-		void UnlockLog()
-		{
-			if (s_csInit) LeaveCriticalSection(&s_cs);
-		}
-		void InitLock()
-		{
-			InitializeCriticalSection(&s_cs);
-			s_csInit = true;
-		}
+		void LockLog()   { if (s_csInit) EnterCriticalSection(&s_cs); }
+		void UnlockLog() { if (s_csInit) LeaveCriticalSection(&s_cs); }
+		void InitLock()  { InitializeCriticalSection(&s_cs); s_csInit = true; }
 		void DestroyLock()
 		{
-			if (s_csInit)
-			{
-				DeleteCriticalSection(&s_cs);
-				s_csInit = false;
-			}
+			if (s_csInit) { DeleteCriticalSection(&s_cs); s_csInit = false; }
 		}
 #else
-		#include <mutex>
 		std::mutex& GetMutex() { static std::mutex m; return m; }
 		void LockLog()    { GetMutex().lock(); }
 		void UnlockLog()  { GetMutex().unlock(); }

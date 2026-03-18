@@ -1509,8 +1509,18 @@ namespace engine
 
 		m_world.Update(out.camera.position);
 
-		if (m_width > 0 && m_height > 0)
+		// On aligne l'aspect sur la taille réelle de la swapchain, pas sur le size "client" du window.
+		// Sinon on obtient des barres noires / RT non alignés après resize/DPI.
+		if (m_vkSwapchain.IsValid())
+		{
+			const VkExtent2D ext = m_vkSwapchain.GetExtent();
+			if (ext.width > 0 && ext.height > 0)
+				out.camera.aspect = static_cast<float>(ext.width) / static_cast<float>(ext.height);
+		}
+		else if (m_width > 0 && m_height > 0)
+		{
 			out.camera.aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
+		}
 
 		engine::math::Vec3 listenerVelocity{};
 		if (dt > 0.0)
@@ -1601,7 +1611,9 @@ namespace engine
 	    VkQueue        graphicsQueue       = m_vkDeviceContext.GetGraphicsQueue();
 	    VkQueue        presentQueue        = m_vkDeviceContext.GetPresentQueue();
 	    VkSwapchainKHR swapchain           = m_vkSwapchain.GetSwapchain();
-	    VkExtent2D extent{ static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height) };
+	    // Utiliser l'extent réel de la swapchain pour que le FrameGraph alloue/recrée
+	    // ses rendertargets avec les bonnes dimensions.
+	    VkExtent2D extent = m_vkSwapchain.GetExtent();
 	
 	    std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);

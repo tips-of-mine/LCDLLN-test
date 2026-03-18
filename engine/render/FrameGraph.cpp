@@ -6,6 +6,7 @@
 #include <vk_mem_alloc.h>
 
 #include <algorithm>
+#include <cstdio>
 
 namespace engine::render
 {
@@ -544,6 +545,18 @@ namespace engine::render
 		const bool framesChanged = m_lastFramesInFlight != framesInFlight;
 		if (extentChanged || framesChanged)
 		{
+			{
+				char msg[256]{};
+				std::snprintf(msg, sizeof(msg),
+					"FG ensureImageResources extentChanged=%d framesChanged=%d extent=%ux%u lastExtent=%ux%u vmaAllocatorNull=%d",
+					extentChanged ? 1 : 0,
+					framesChanged ? 1 : 0,
+					extent.width, extent.height,
+					m_lastExtent.width, m_lastExtent.height,
+					(vmaAllocator == nullptr) ? 1 : 0);
+				::engine::core::Log::WriteLine(::engine::core::LogLevel::Warn, "Render", msg);
+			}
+
 			destroy(device, vmaAllocator);
 			m_lastExtent = extent;
 			m_lastFramesInFlight = framesInFlight;
@@ -594,6 +607,18 @@ namespace engine::render
 			std::fprintf(stderr, "[EIR] image[%zu]='%s' fmt=%d w=%u h=%u mips=%u layers=%u\n",
 			    resIdx, res.name.c_str(), (int)res.desc.format, width, height,
 			    res.desc.mipLevels, res.desc.layers); std::fflush(stderr);
+
+			// Trace log ciblée pour confirmer que le TAA history suit bien le resize.
+			if (res.name == "HistoryA" || res.name == "HistoryB")
+			{
+				char msg[160]{};
+				std::snprintf(msg, sizeof(msg),
+					"FG alloc %s w=%u h=%u (frameIndex=%u)",
+					res.name.c_str(),
+					width, height,
+					frameIndex);
+				::engine::core::Log::WriteLine(::engine::core::LogLevel::Info, "Render", msg);
+			}
 			
 			VkImageUsageFlags usage = res.desc.usage;
 			if (res.desc.isDepthAttachment)

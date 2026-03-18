@@ -1442,15 +1442,32 @@ namespace engine
 
 		if (m_swapchainResizeRequested)
 		{
+			std::fprintf(stderr, "[RESIZE] swapchain recreate requested w=%d h=%d\n", m_width, m_height); std::fflush(stderr);
+    		LOG_INFO(Platform, "[Resize] Swapchain recreate requested");
+
+			std::fprintf(stderr, "[RESIZE] avant frameGraph.destroy\n"); std::fflush(stderr);
 			m_swapchainResizeRequested = false;
 			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
 			{
+				std::fprintf(stderr, "[RESIZE] avant vkDeviceWaitIdle\n"); std::fflush(stderr);
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
-				if (m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)))
-					LOG_INFO(Platform, "Swapchain recreated {}x{}", m_width, m_height);
+				
+				std::fprintf(stderr, "[RESIZE] avant Swapchain.Recreate\n"); std::fflush(stderr);
+				bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
+				std::fprintf(stderr, "[RESIZE] Swapchain.Recreate result=%d\n", (int)ok); std::fflush(stderr);
+				if (ok)
+					LOG_INFO(Platform, "[Resize] Swapchain recreated OK");
+				else
+					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED");
+			}
+			else
+			{
+				std::fprintf(stderr, "[RESIZE] conditions non remplies: valid=%d swapchain=%d w=%d h=%d\n",
+					(int)m_vkDeviceContext.IsValid(), (int)m_vkSwapchain.IsValid(), m_width, m_height); std::fflush(stderr);
 			}
 		}
 
@@ -1711,6 +1728,8 @@ namespace engine
 
 	void Engine::OnResize(int w, int h)
 	{
+		std::fprintf(stderr, "[RESIZE] OnResize called w=%d h=%d\n", w, h); std::fflush(stderr);
+    	LOG_INFO(Platform, "[Resize] OnResize w={} h={}");
 		m_width  = w;
 		m_height = h;
 		m_taaHistoryInvalid        = true;

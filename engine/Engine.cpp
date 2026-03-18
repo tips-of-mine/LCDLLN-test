@@ -1434,7 +1434,7 @@ namespace engine
 		if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
 			OnQuit();
 
-		if (m_input.WasPressed(engine::platform::Key::F11))
+		if (m_input.WasPressed(engine::platform::Key::F_11))
     		m_window.ToggleFullscreen();
 
 		std::fprintf(stderr, "[BF] shaderHotReload.Poll\n"); std::fflush(stderr);

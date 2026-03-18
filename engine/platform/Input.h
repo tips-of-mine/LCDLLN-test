@@ -39,7 +39,9 @@ namespace engine::platform
 		Left = 0x25,
 		Up = 0x26,
 		Right = 0x27,
-		Down = 0x28
+		Down = 0x28,
+		// Win32 VK_* codes for function keys (used by hotkeys like fullscreen toggle).
+		F_11 = 0x7Au
 	};
 
 	/// Mouse buttons used by the editor/runtime input system.

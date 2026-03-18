@@ -1729,7 +1729,7 @@ namespace engine
 	void Engine::OnResize(int w, int h)
 	{
 		std::fprintf(stderr, "[RESIZE] OnResize called w=%d h=%d\n", w, h); std::fflush(stderr);
-    	LOG_INFO(Platform, "[Resize] OnResize w={} h={}");
+    	LOG_INFO(Platform, "[Resize] OnResize");
 		m_width  = w;
 		m_height = h;
 		m_taaHistoryInvalid        = true;

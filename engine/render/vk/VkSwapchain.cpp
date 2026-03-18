@@ -46,8 +46,29 @@ namespace engine::render
 			// Sur certaines plateformes/états de fenêtre, caps.currentExtent peut rapporter une valeur
 			// incohérente (ex: height=1) alors que l'extent demandée correspond à la taille réelle.
 			// On ne l'utilise que si elle correspond vraiment aux dimensions demandées.
+			//
+			// Cas très dégénéré observé côté user: min=max=currentExtent et height=1
+			// -> dans ce cas, le clamp force l'extent à 120x1, ce qui casse tout le resize.
 			const bool currentFixed =
 				caps.currentExtent.width != UINT32_MAX && caps.currentExtent.height != UINT32_MAX;
+			const bool capsDegenerateHeight1 =
+				caps.minImageExtent.height <= 1 &&
+				caps.maxImageExtent.height <= 1 &&
+				caps.minImageExtent.height == caps.maxImageExtent.height &&
+				requestedHeight > 1;
+
+			if (capsDegenerateHeight1)
+			{
+				std::fprintf(stderr,
+					"[SWAPCHAIN] Degenerate caps detected -> bypass clamp requested=%ux%u caps min=%ux%u max=%ux%u current=%ux%u\n",
+					requestedWidth, requestedHeight,
+					caps.minImageExtent.width, caps.minImageExtent.height,
+					caps.maxImageExtent.width, caps.maxImageExtent.height,
+					caps.currentExtent.width, caps.currentExtent.height);
+				std::fflush(stderr);
+				return VkExtent2D{ requestedWidth, requestedHeight };
+			}
+
 			if (currentFixed &&
 				caps.currentExtent.width == requestedWidth &&
 				caps.currentExtent.height == requestedHeight)

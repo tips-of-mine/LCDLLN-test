@@ -43,7 +43,14 @@ namespace engine::render
 		VkExtent2D ClampExtent(uint32_t requestedWidth, uint32_t requestedHeight,
 			const VkSurfaceCapabilitiesKHR& caps)
 		{
-			if (caps.currentExtent.width != UINT32_MAX)
+			// Sur certaines plateformes/états de fenêtre, caps.currentExtent peut rapporter une valeur
+			// incohérente (ex: height=1) alors que l'extent demandée correspond à la taille réelle.
+			// On ne l'utilise que si elle correspond vraiment aux dimensions demandées.
+			const bool currentFixed =
+				caps.currentExtent.width != UINT32_MAX && caps.currentExtent.height != UINT32_MAX;
+			if (currentFixed &&
+				caps.currentExtent.width == requestedWidth &&
+				caps.currentExtent.height == requestedHeight)
 			{
 				return caps.currentExtent;
 			}
@@ -74,6 +81,18 @@ namespace engine::render
 		{
 			LOG_ERROR(Render, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed: {}", static_cast<int>(result));
 			return false;
+		}
+
+		// Debug: on veut comprendre quand l'extent "currentExtent" des caps est incohérente.
+		if (caps.currentExtent.height == 1 && requestedHeight > 1)
+		{
+			std::fprintf(stderr,
+				"[SWAPCHAIN] caps currentExtent=%ux%u min=%ux%u max=%ux%u requested=%ux%u\n",
+				caps.currentExtent.width, caps.currentExtent.height,
+				caps.minImageExtent.width, caps.minImageExtent.height,
+				caps.maxImageExtent.width, caps.maxImageExtent.height,
+				requestedWidth, requestedHeight);
+			std::fflush(stderr);
 		}
 
 		uint32_t formatCount = 0;

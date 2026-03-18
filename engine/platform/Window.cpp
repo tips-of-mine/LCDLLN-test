@@ -236,11 +236,15 @@ namespace engine::platform
 			PostQuitMessage(0);
 			return 0;
 		case WM_SIZE:
-			if (m_onResize)
+		    std::fprintf(stderr, "[WINDOW] WM_SIZE wparam=%llu w=%d h=%d\n",
+        		(unsigned long long)wparam, LOWORD((LPARAM)lparam), HIWORD((LPARAM)lparam));
+    		std::fflush(stderr);
+   			if (wparam != SIZE_MINIMIZED && m_onResize)
 			{
 				const int w = LOWORD(static_cast<LPARAM>(lparam));
 				const int h = HIWORD(static_cast<LPARAM>(lparam));
-				m_onResize(w, h);
+				if (w > 0 && h > 0)
+					m_onResize(w, h);
 			}
 			break;
 		default:

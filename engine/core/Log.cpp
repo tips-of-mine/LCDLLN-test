@@ -5,8 +5,12 @@
 #include <cstring>
 #include <ctime>
 #include <fstream>
-#include <mutex>
 #include <string>
+
+#if defined(_WIN32)
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
 
 namespace engine::core
 {
@@ -15,11 +19,39 @@ namespace engine::core
 		std::ofstream s_file;
 		bool          s_consoleEnabled = false;
 
-		std::mutex& GetMutex()
+#if defined(_WIN32)
+		CRITICAL_SECTION s_cs;
+		bool             s_csInit = false;
+
+		void LockLog()
 		{
-			static std::mutex m;
-			return m;
+			if (s_csInit) EnterCriticalSection(&s_cs);
 		}
+		void UnlockLog()
+		{
+			if (s_csInit) LeaveCriticalSection(&s_cs);
+		}
+		void InitLock()
+		{
+			InitializeCriticalSection(&s_cs);
+			s_csInit = true;
+		}
+		void DestroyLock()
+		{
+			if (s_csInit)
+			{
+				DeleteCriticalSection(&s_cs);
+				s_csInit = false;
+			}
+		}
+#else
+		#include <mutex>
+		std::mutex& GetMutex() { static std::mutex m; return m; }
+		void LockLog()    { GetMutex().lock(); }
+		void UnlockLog()  { GetMutex().unlock(); }
+		void InitLock()   {}
+		void DestroyLock(){}
+#endif
 
 		const char* LevelToString(LogLevel level)
 		{
@@ -61,6 +93,8 @@ namespace engine::core
 		Shutdown();
 		std::fprintf(stderr, "[LOG::INIT] apres Shutdown\n"); std::fflush(stderr);
 
+		InitLock();
+
 		s_level.store(settings.level, std::memory_order_relaxed);
 		s_consoleEnabled = settings.console;
 
@@ -91,13 +125,15 @@ namespace engine::core
 		if (!s_active.exchange(false, std::memory_order_acq_rel))
 			return;
 
-		std::lock_guard<std::mutex> lock(GetMutex());
+		LockLog();
 		if (s_file.is_open())
 		{
 			s_file.flush();
 			s_file.close();
 		}
 		s_consoleEnabled = false;
+		UnlockLog();
+		DestroyLock();
 	}
 
 	bool Log::IsActive()
@@ -117,28 +153,22 @@ namespace engine::core
 
 	void Log::WriteLine(LogLevel level, const char* subsystem, std::string_view message)
 	{
-		std::fprintf(stderr, "[WRITELINE] debut\n"); std::fflush(stderr);
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
-		std::fprintf(stderr, "[WRITELINE] apres level\n"); std::fflush(stderr);
 
 		const std::string line =
 			std::string("[") + LevelToString(level) + "][" +
 			(subsystem ? subsystem : "?") + "] " +
 			std::string(message) + "\n";
-		std::fprintf(stderr, "[WRITELINE] apres string build\n"); std::fflush(stderr);
 
-		//std::lock_guard<std::mutex> lock(GetMutex());
-		std::fprintf(stderr, "[WRITELINE] apres lock\n"); std::fflush(stderr);
+		LockLog();
 		if (s_file.is_open())
 		{
 			s_file << line;
-			s_file << line;
 			s_file.flush();
-			std::fprintf(stderr, "[WRITELINE] apres file write\n"); std::fflush(stderr);
 		}
 		if (s_consoleEnabled)
 			std::fputs(line.c_str(), stdout);
-		std::fprintf(stderr, "[WRITELINE] done\n"); std::fflush(stderr);
+		UnlockLog();
 	}
 }

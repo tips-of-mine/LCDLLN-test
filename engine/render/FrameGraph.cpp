@@ -469,8 +469,12 @@ namespace engine::render
 
 	void FrameGraph::destroy(VkDevice device, void* vmaAllocator)
 	{
-		if (device == VK_NULL_HANDLE || vmaAllocator == nullptr) return;
-		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
+		if (device == VK_NULL_HANDLE)
+			return;
+		// vmaAllocator peut être nullptr quand on utilise un bypass "raw Vulkan" pour les images.
+		// Dans ce cas on ne peut pas appeler vmaDestroy* (buffers/images VMA), mais on doit quand même
+		// pouvoir libérer les images allouées "raw" afin que le resize suive le nouvel extent.
+		VmaAllocator alloc = (vmaAllocator != nullptr) ? static_cast<VmaAllocator>(vmaAllocator) : VK_NULL_HANDLE;
 
 		for (auto& perFrame : m_perFrameImageHandles)
 		{
@@ -485,7 +489,10 @@ namespace engine::render
 				{
 					if (h.allocatedWithVma)
 					{
-						vmaDestroyImage(alloc, h.image, static_cast<VmaAllocation>(h.allocation));
+						// Si alloc==VK_NULL_HANDLE, on ne détruit pas (le handle sera recréé en raw),
+						// pour éviter un crash côté VMA.
+						if (alloc != VK_NULL_HANDLE)
+							vmaDestroyImage(alloc, h.image, static_cast<VmaAllocation>(h.allocation));
 					}
 					else
 					{
@@ -499,15 +506,21 @@ namespace engine::render
 				}
 			}
 		}
-		for (auto& perFrame : m_perFrameBufferHandles)
+		// Buffers : le FrameGraph ne possède pas de bypass raw Vulkan ici (les buffers sont gérés via VMA).
+		// Donc si VMA n'est pas disponible, on skip la destruction des buffers pour ne pas invalider
+		// des allocations potentiellement actives.
+		if (alloc != VK_NULL_HANDLE)
 		{
-			for (PerFrameBufferHandles& h : perFrame)
+			for (auto& perFrame : m_perFrameBufferHandles)
 			{
-				if (h.buffer != VK_NULL_HANDLE && h.allocation != nullptr)
+				for (PerFrameBufferHandles& h : perFrame)
 				{
-					vmaDestroyBuffer(alloc, h.buffer, static_cast<VmaAllocation>(h.allocation));
-					h.buffer = VK_NULL_HANDLE;
-					h.allocation = nullptr;
+					if (h.buffer != VK_NULL_HANDLE && h.allocation != nullptr)
+					{
+						vmaDestroyBuffer(alloc, h.buffer, static_cast<VmaAllocation>(h.allocation));
+						h.buffer = VK_NULL_HANDLE;
+						h.allocation = nullptr;
+					}
 				}
 			}
 		}
@@ -519,8 +532,9 @@ namespace engine::render
 	void FrameGraph::ensureImageResources(VkDevice device, VkPhysicalDevice physicalDevice, void* vmaAllocator,
     	uint32_t frameIndex, VkExtent2D extent, uint32_t framesInFlight)
 	{
-		if (vmaAllocator == nullptr) return;
-		VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator);
+		// vmaAllocator peut être nullptr si on n'a pas réussi à initialiser VMA.
+		// Le bypass "raw Vulkan" est justement là pour continuer les alloc/recreate d'images.
+		VmaAllocator alloc = (vmaAllocator != nullptr) ? static_cast<VmaAllocator>(vmaAllocator) : VK_NULL_HANDLE;
 
 		std::fprintf(stderr, "[EIR] debut nImages=%zu extent=%ux%u framesInFlight=%u lastExtent=%ux%u\n",
 		    m_imageResources.size(), extent.width, extent.height, framesInFlight,

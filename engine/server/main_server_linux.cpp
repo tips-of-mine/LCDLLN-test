@@ -120,8 +120,33 @@ int main(int argc, char** argv)
 	netConfig.tlsKeyPath = config.GetString("server.tls.key", "");
 	netConfig.packetRatePerSec = static_cast<double>(config.GetInt("server.tcp.packet_rate_per_sec", 200));
 	netConfig.packetBurst = static_cast<double>(config.GetInt("server.tcp.packet_burst", 400));
+	double capKBps = config.GetDouble("server.bandwidth.max_bandwidth_per_player", -1.0);
+	if (capKBps <= 0.0)
+		capKBps = config.GetDouble("server.max_bandwidth_per_player", -1.0);
+	if (capKBps <= 0.0)
+	{
+		// Default derived from current packet-rate limit: worst-case bytes/sec.
+		const double derivedKBps = netConfig.packetRatePerSec
+			* static_cast<double>(engine::network::kProtocolV1MaxPacketSize) / 1024.0;
+		capKBps = std::max(derivedKBps, 1.0);
+		LOG_WARN(Net,
+			"[ServerMain] max_bandwidth_per_player missing -> using derived default {} KB/s",
+			capKBps);
+	}
+	netConfig.maxBandwidthPerPlayerBytesPerSec = capKBps * 1024.0;
+	LOG_INFO(Net,
+		"[ServerMain] TX bandwidth cap per player (bytes/sec={})",
+		static_cast<uint64_t>(netConfig.maxBandwidthPerPlayerBytesPerSec));
 	netConfig.decodeFailureThreshold = static_cast<uint32_t>(config.GetInt("server.tcp.decode_failure_threshold", 5));
 	netConfig.handshakeTimeoutSec = static_cast<uint32_t>(config.GetInt("server.tcp.handshake_timeout_sec", 10));
+	netConfig.maxConnectionsPerIp = static_cast<uint32_t>(config.GetInt("server.tcp.max_connections_per_ip", 20));
+	netConfig.maxAcceptsPerSec = config.GetDouble("server.tcp.accept_throttle_max_accepts_per_sec", 200.0);
+	netConfig.handshakeFailuresBeforeDeny = static_cast<uint32_t>(config.GetInt("server.tcp.handshake_failures_before_deny", 5));
+	netConfig.handshakeDenyDurationSec = static_cast<uint32_t>(config.GetInt("server.tcp.handshake_deny_duration_sec", 60));
+	LOG_INFO(Net,
+		"[ServerMain] DDoS connection throttle cfg (maxConnectionsPerIp={} maxAcceptsPerSec={} handshakeFailuresBeforeDeny={} handshakeDenyDurationSec={})",
+		netConfig.maxConnectionsPerIp, netConfig.maxAcceptsPerSec,
+		netConfig.handshakeFailuresBeforeDeny, netConfig.handshakeDenyDurationSec);
 
 	uint16_t port = static_cast<uint16_t>(config.GetInt("server.tcp.port", 3840));
 	std::fprintf(stderr, "[MAIN_SRV] config OK port=%u\n", static_cast<unsigned>(port)); std::fflush(stderr);

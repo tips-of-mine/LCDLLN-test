@@ -35,6 +35,10 @@ namespace engine::server
 		uint32_t maxConnections = 1000u;
 		/// Maximum queued TX bytes per connection. Connection is closed if exceeded (backpressure).
 		size_t maxQueuedTxBytesPerConnection = 256 * 1024u;
+		/// Token bucket for TX bytes: sustained max bytes/sec per player/connection.
+		/// Config is provided as `max_bandwidth_per_player` in KB/s (server_config.ini),
+		/// converted by the entry point to bytes/sec.
+		double maxBandwidthPerPlayerBytesPerSec = 0.0;
 		/// Number of worker threads for packet processing (must not block IO).
 		uint32_t workerThreadCount = 4u;
 		/// Path to TLS server certificate file (PEM). If non-empty with tlsKeyPath, TLS is enabled.
@@ -45,6 +49,14 @@ namespace engine::server
 		double packetRatePerSec = 200.0;
 		/// Token bucket: max burst (tokens). Ex: 400.
 		double packetBurst = 400.0;
+		/// DDoS mitigation: max concurrent connections allowed per IP. 0 disables.
+		uint32_t maxConnectionsPerIp = 0u;
+		/// DDoS mitigation: throttle accept rate (max accepts/sec). 0 disables.
+		double maxAcceptsPerSec = 0.0;
+		/// DDoS mitigation: deny an IP temporarily after N handshake failures. 0 disables.
+		uint32_t handshakeFailuresBeforeDeny = 0u;
+		/// DDoS mitigation: temporary deny duration in seconds.
+		uint32_t handshakeDenyDurationSec = 0u;
 		/// Decode (invalid packet) failure threshold; after this many, connection is closed.
 		uint32_t decodeFailureThreshold = 5u;
 		/// TLS handshake timeout in seconds. Connection closed if handshake not completed in time.

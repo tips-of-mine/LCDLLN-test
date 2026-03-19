@@ -6,6 +6,9 @@
 #include "engine/network/NetErrorCode.h"
 #include "engine/network/PacketView.h"
 #include "engine/network/ProtocolV1Constants.h"
+#include "engine/network/NetworkBufferPool.h"
+#include "engine/server/ServerProtocol.h"
+#include "engine/server/ConnectionDDoSProtector.h"
 
 #include "engine/core/Log.h"
 
@@ -41,6 +44,11 @@ namespace engine::server
 		constexpr size_t kRxBufferCapacity = 2 * 16384u;
 		constexpr int kEpollMaxEvents = 128;
 		constexpr int kListenBacklog = 128;
+		// Simple v1: Snapshot messages are considered "state" (lower priority).
+		inline bool IsStateMessageOpcode(uint16_t opcode)
+		{
+			return opcode == static_cast<uint16_t>(MessageKind::Snapshot);
+		}
 		/// Max ERROR packets sent per connection before disconnecting (anti-spam).
 		constexpr uint32_t kMaxErrorPacketsPerConnection = 10u;
 
@@ -72,6 +80,11 @@ namespace engine::server
 		int epollFd = -1;
 		std::atomic<bool> running{ false };
 		std::thread ioThread;
+		// M25.4: per-IP / accept-throttle + temporary deny helper (used from IO thread only).
+		ConnectionDDoSProtector ddosProtector;
+		std::chrono::steady_clock::time_point ipPurgeLast = std::chrono::steady_clock::now();
+		std::chrono::steady_clock::time_point acceptThrottleLastLog = std::chrono::steady_clock::now();
+		uint64_t acceptThrottleRejects = 0;
 
 		bool tlsEnabled = false;
 		SSL_CTX* sslCtx = nullptr;
@@ -83,14 +96,26 @@ namespace engine::server
 		{
 			int fd = -1;
 			uint32_t connId = 0;
+			// Remote IPv4 address in host byte order (for DDoS tracking).
+			uint32_t ipHostOrder = 0u;
 			SSL* ssl = nullptr;
 			TlsHandshakeState handshakeState = TlsHandshakeState::Ready;
 			std::vector<uint8_t> rxBuffer;
 			size_t rxConsumed = 0;
-			std::deque<std::vector<uint8_t>> txQueue;
+			// Simple v1 priority: control queue first, state queue second.
+			struct QueuedTxPacket
+			{
+				engine::network::NetworkBufferPool::PooledBuffer packet;
+				size_t offset = 0u; // bytes already written
+			};
+			std::deque<QueuedTxPacket> txQueueControl;
+			std::deque<QueuedTxPacket> txQueueState;
 			size_t txQueuedBytes = 0;
 			bool wantEpollOut = false;
 			uint32_t errorPacketsSent = 0;
+			// Token bucket (bytes/sec) for TX throttling.
+			double txTokenBucketTokensBytes = 0.0;
+			std::chrono::steady_clock::time_point txTokenBucketLastRefill{};
 			// Token bucket (packet rate limit per connection).
 			double tokenBucketTokens = 0.0;
 			std::chrono::steady_clock::time_point tokenBucketLastRefill{ std::chrono::steady_clock::now() };
@@ -128,7 +153,7 @@ namespace engine::server
 			uint16_t opcode = 0;
 			uint32_t requestId = 0;
 			uint64_t sessionId = 0;
-			std::vector<uint8_t> payload;
+			engine::network::NetworkBufferPool::PooledBuffer payload;
 		};
 		std::queue<PacketJob> jobQueue;
 
@@ -173,12 +198,14 @@ namespace engine::server
 		if (idx < kDisconnectReasonCount)
 			disconnectCounts[idx].fetch_add(1, std::memory_order_relaxed);
 		SSL* sslToFree = nullptr;
+		uint32_t ipHostOrder = 0u;
 		{
 			std::lock_guard lock(connMutex);
 			auto it = connections.find(fd);
 			if (it != connections.end())
 			{
 				uint32_t connId = it->second.connId;
+				ipHostOrder = it->second.ipHostOrder;
 				std::fprintf(stderr, "[NETSRV] CloseConnection connId=%u reason=%s\n", connId, DisconnectReasonString(reason)); std::fflush(stderr);
 				connIdToFd.erase(it->second.connId);
 				sslToFree = it->second.ssl;
@@ -186,6 +213,11 @@ namespace engine::server
 				connectionCount.store(static_cast<uint32_t>(connections.size()));
 			}
 		}
+
+		// M25.4: update DDoS tracking regardless of other close causes.
+		if (ipHostOrder != 0u)
+			ddosProtector.OnConnectionClosed(ipHostOrder, reason, std::chrono::steady_clock::now());
+
 		if (sslToFree != nullptr)
 		{
 			SSL_shutdown(sslToFree);
@@ -246,6 +278,17 @@ namespace engine::server
 				break;
 			}
 
+			// M25.4: periodic purge of IP tracking structures.
+			{
+				const auto now = std::chrono::steady_clock::now();
+				constexpr auto kIpPurgePeriod = std::chrono::seconds(10);
+				if (now - ipPurgeLast >= kIpPurgePeriod)
+				{
+					ddosProtector.PurgeExpired(now);
+					ipPurgeLast = now;
+				}
+			}
+
 			for (int i = 0; i < n && running.load(); ++i)
 			{
 				int fd = events[i].data.fd;
@@ -256,7 +299,23 @@ namespace engine::server
 					// Accept
 					for (;;)
 					{
-						int clientFd = accept(listenFd, nullptr, nullptr);
+						auto now = std::chrono::steady_clock::now();
+						if (!ddosProtector.TryConsumeAcceptToken(now))
+						{
+							// Rate limited log to avoid flooding during accept storms.
+							if (now - acceptThrottleLastLog >= std::chrono::seconds(1))
+							{
+								acceptThrottleLastLog = now;
+								LOG_WARN(Net,
+									"[DDoS] accept throttle engaged (maxAcceptsPerSec={})",
+									config.maxAcceptsPerSec);
+							}
+							break;
+						}
+
+						sockaddr_in clientAddr{};
+						socklen_t clientLen = sizeof(clientAddr);
+						int clientFd = accept(listenFd, reinterpret_cast<sockaddr*>(&clientAddr), &clientLen);
 						if (clientFd == -1)
 						{
 							if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -264,15 +323,26 @@ namespace engine::server
 							LOG_WARN(Net, "[NetServer] accept failed: {}", strerror(errno));
 							break;
 						}
+						const uint32_t ipHostOrder = ntohl(clientAddr.sin_addr.s_addr);
+
 						if (connectionCount.load() >= config.maxConnections)
 						{
 							LOG_WARN(Net, "[NetServer] Rejecting connection (max_connections={})", config.maxConnections);
 							close(clientFd);
 							continue;
 						}
+
+						// Apply DDoS accept protection before expensive TLS setup.
+						if (!ddosProtector.TryAcceptForIp(ipHostOrder, now))
+						{
+							close(clientFd);
+							continue;
+						}
+
 						if (!SetNonBlocking(clientFd))
 						{
 							LOG_ERROR(Net, "[NetServer] SetNonBlocking failed for new fd {}", clientFd);
+							ddosProtector.OnConnectionClosed(ipHostOrder, DisconnectReason::PeerClosed, now);
 							close(clientFd);
 							continue;
 						}
@@ -283,6 +353,7 @@ namespace engine::server
 						if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) != 0)
 						{
 							LOG_ERROR(Net, "[NetServer] epoll_ctl ADD failed (fd={})", clientFd);
+							ddosProtector.OnConnectionClosed(ipHostOrder, DisconnectReason::PeerClosed, now);
 							close(clientFd);
 							continue;
 						}
@@ -291,10 +362,13 @@ namespace engine::server
 							Conn& c = connections[clientFd];
 							c.fd = clientFd;
 							c.connId = connId;
+							c.ipHostOrder = ipHostOrder;
 							connIdToFd[connId] = clientFd;
 							c.rxBuffer.reserve(kRxBufferCapacity);
 							c.tokenBucketTokens = config.packetBurst;
 							c.tokenBucketLastRefill = std::chrono::steady_clock::now();
+							c.txTokenBucketTokensBytes = config.maxBandwidthPerPlayerBytesPerSec;
+							c.txTokenBucketLastRefill = std::chrono::steady_clock::now();
 							if (tlsEnabled && sslCtx != nullptr)
 							{
 								c.ssl = SSL_new(sslCtx);
@@ -507,7 +581,20 @@ namespace engine::server
 							c.tokenBucketTokens -= 1.0;
 						}
 						size_t payloadSize = view.PayloadSize();
-						std::vector<uint8_t> payload(view.Payload(), view.Payload() + payloadSize);
+						engine::network::NetworkBufferPool::PooledBuffer payload;
+						if (payloadSize > 0)
+						{
+							payload = engine::network::NetworkBufferPool::AcquireBuffer(payloadSize);
+							if (!payload)
+							{
+								LOG_ERROR(Net, "[NetServer] RX payload buffer alloc FAILED (payloadSize={}) connId={}",
+									payloadSize, c.connId);
+								lock.unlock();
+								CloseConnection(fd, DisconnectReason::DecodeFailures);
+								goto next_event;
+							}
+							std::memcpy(payload.data(), view.Payload(), payloadSize);
+						}
 						{
 							std::lock_guard jobLock(jobMutex);
 							jobQueue.push({ c.connId, view.Opcode(), view.RequestId(), view.SessionId(), std::move(payload) });
@@ -519,27 +606,54 @@ namespace engine::server
 				}
 
 				// TX
-				if (evFlags & EPOLLOUT && !c.txQueue.empty())
+				if (evFlags & EPOLLOUT && (!c.txQueueControl.empty() || !c.txQueueState.empty()))
 				{
-					while (!c.txQueue.empty())
+					while (!c.txQueueControl.empty() || !c.txQueueState.empty())
 					{
-						std::vector<uint8_t>& front = c.txQueue.front();
+						// Refill TX token bucket (bytes/sec). Capacity is ~1s burst.
+						{
+							const auto now = std::chrono::steady_clock::now();
+							const double elapsed =
+								std::chrono::duration<double>(now - c.txTokenBucketLastRefill).count();
+							const double capBytes = config.maxBandwidthPerPlayerBytesPerSec;
+							if (capBytes > 0.0)
+							{
+								c.txTokenBucketTokensBytes =
+									(std::min)(capBytes, c.txTokenBucketTokensBytes + elapsed * capBytes);
+								c.txTokenBucketLastRefill = now;
+							}
+						}
+
+						if (c.txTokenBucketTokensBytes < 1.0)
+							break;
+
+						auto& activeQueue =
+							!c.txQueueControl.empty() ? c.txQueueControl : c.txQueueState;
+						auto& front = activeQueue.front();
+
+						const size_t remaining = front.packet.size() - front.offset;
+						const size_t allowed =
+							(std::min)(remaining, static_cast<size_t>(c.txTokenBucketTokensBytes));
+						if (allowed == 0)
+							break;
 						int sent;
 						if (c.ssl != nullptr)
-							sent = SSL_write(c.ssl, front.data(), static_cast<int>(front.size()));
+							sent = SSL_write(c.ssl, front.packet.data() + front.offset, static_cast<int>(allowed));
 						else
-							sent = static_cast<int>(send(fd, front.data(), front.size(), MSG_NOSIGNAL));
+							sent = static_cast<int>(send(fd,
+								front.packet.data() + front.offset,
+								allowed, MSG_NOSIGNAL));
 						if (sent > 0)
 						{
 							bytesOut.fetch_add(static_cast<size_t>(sent), std::memory_order_relaxed);
 							c.txQueuedBytes -= static_cast<size_t>(sent);
-							if (static_cast<size_t>(sent) >= front.size())
+							c.txTokenBucketTokensBytes -= static_cast<double>(sent);
+							front.offset += static_cast<size_t>(sent);
+							if (front.offset >= front.packet.size())
 							{
 								packetsOut.fetch_add(1, std::memory_order_relaxed);
-								c.txQueue.pop_front();
+								activeQueue.pop_front();
 							}
-							else
-								front.erase(front.begin(), front.begin() + sent);
 						}
 						else
 						{
@@ -569,7 +683,7 @@ namespace engine::server
 							goto next_event;
 						}
 					}
-					if (c.txQueue.empty())
+					if (c.txQueueControl.empty() && c.txQueueState.empty())
 						MaybeModifyEpollOut(fd, false);
 				}
 			next_event:;
@@ -639,6 +753,40 @@ namespace engine::server
 
 		m_impl = new Impl();
 		m_impl->config = config;
+		if (m_impl->config.maxBandwidthPerPlayerBytesPerSec <= 0.0)
+		{
+			const double derivedBytesPerSec =
+				m_impl->config.packetRatePerSec * static_cast<double>(engine::network::kProtocolV1MaxPacketSize);
+			m_impl->config.maxBandwidthPerPlayerBytesPerSec = derivedBytesPerSec < 1.0 ? 1.0 : derivedBytesPerSec;
+			LOG_WARN(Net,
+				"[NetServer] max_bandwidth_per_player disabled/invalid -> using derived TX cap (bytes/sec={})",
+				m_impl->config.maxBandwidthPerPlayerBytesPerSec);
+		}
+
+		// M25.3: Init the shared RX/TX buffer pool (4KB/16KB).
+		if (!engine::network::NetworkBufferPool::Init())
+		{
+			LOG_ERROR(Net, "[NetServer] BufferPool Init FAILED");
+			delete m_impl;
+			m_impl = nullptr;
+			return false;
+		}
+
+		// M25.4: Init per-IP connection throttle + handshake deny helper.
+		{
+			ConnectionDDoSProtector::Config ddosCfg;
+			ddosCfg.maxConnectionsPerIp = m_impl->config.maxConnectionsPerIp;
+			ddosCfg.maxAcceptsPerSec = m_impl->config.maxAcceptsPerSec;
+			ddosCfg.handshakeFailuresBeforeDeny = m_impl->config.handshakeFailuresBeforeDeny;
+			ddosCfg.handshakeDenyDurationSec = m_impl->config.handshakeDenyDurationSec;
+			if (!m_impl->ddosProtector.Init(ddosCfg))
+			{
+				LOG_ERROR(Net, "[NetServer] DDoS Protector init FAILED");
+				delete m_impl;
+				m_impl = nullptr;
+				return false;
+			}
+		}
 		m_impl->listenPort = listenPort;
 
 		m_impl->listenFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -770,6 +918,9 @@ namespace engine::server
 		LOG_INFO(Net, "[NetServer] Init OK (port={}, max_connections={}, workers={}, tls={}, rate_limit={}/s burst={}, decode_threshold={}, handshake_timeout_s={}, tx_cap={})",
 			listenPort, config.maxConnections, config.workerThreadCount, m_impl->tlsEnabled ? "on" : "off",
 			config.packetRatePerSec, config.packetBurst, config.decodeFailureThreshold, config.handshakeTimeoutSec, config.maxQueuedTxBytesPerConnection);
+
+		LOG_INFO(Net, "[NetServer] TX bandwidth cap enabled (bytes/sec={})",
+			config.maxBandwidthPerPlayerBytesPerSec);
 		return true;
 	}
 
@@ -814,6 +965,16 @@ namespace engine::server
 		LOG_INFO(Net, "[NetServer] Destroyed (port={})", m_impl->listenPort);
 		delete m_impl;
 		m_impl = nullptr;
+
+		// M25.3 metrics: buffer-pool allocations saved (estimate).
+		{
+			engine::network::NetworkBufferPool::Metrics m =
+				engine::network::NetworkBufferPool::ConsumeMetrics();
+			const uint64_t allocSavedEst = m.reuseHits; // reused buffers avoided "new allocation" events.
+			LOG_INFO(Net,
+				"[NetServer][BufferPool] metrics acquires={} reuseHits={} newAllocs={} releases={} allocSavedEst={}",
+				m.acquires, m.reuseHits, m.newAllocs, m.releases, allocSavedEst);
+		}
 	}
 
 	bool NetServer::Send(uint32_t connId, std::span<const uint8_t> packet)
@@ -823,7 +984,11 @@ namespace engine::server
 		if (packet.size() < engine::network::kProtocolV1HeaderSize || packet.size() > engine::network::kProtocolV1MaxPacketSize)
 			return false;
 
-		std::vector<uint8_t> copy(packet.begin(), packet.end());
+		// TX priority classification based on protocol v1 opcode (MessageKind in ServerProtocol).
+		// Packet header layout: [u16 size][u16 opcode][u16 flags][u32 requestId][u64 sessionId]
+		const uint16_t opcode =
+			static_cast<uint16_t>(packet[2] | (static_cast<uint16_t>(packet[3]) << 8));
+		const bool isStateMessage = IsStateMessageOpcode(opcode);
 		std::lock_guard lock(m_impl->connMutex);
 		for (auto& [fd, c] : m_impl->connections)
 		{
@@ -847,8 +1012,36 @@ namespace engine::server
 				close(fd);
 				return false;
 			}
+
+			// M25.3: Pool RX/TX packet storage to avoid per-send heap allocations.
+			engine::network::NetworkBufferPool::PooledBuffer pooledPacket =
+				engine::network::NetworkBufferPool::AcquireBuffer(packet.size());
+			if (!pooledPacket)
+			{
+				m_impl->disconnectCounts[static_cast<size_t>(DisconnectReason::SendError)].fetch_add(1, std::memory_order_relaxed);
+				LOG_ERROR(Net, "[NetServer] TX pooled buffer alloc FAILED (size={}) connId={}",
+					packet.size(), connId);
+				m_impl->connIdToFd.erase(connId);
+				SSL* sslToFree = c.ssl;
+				c.ssl = nullptr;
+				m_impl->connections.erase(fd);
+				m_impl->connectionCount.store(static_cast<uint32_t>(m_impl->connections.size()));
+				if (sslToFree != nullptr)
+				{
+					SSL_shutdown(sslToFree);
+					SSL_free(sslToFree);
+				}
+				epoll_ctl(m_impl->epollFd, EPOLL_CTL_DEL, fd, nullptr);
+				close(fd);
+				return false;
+			}
+			std::memcpy(pooledPacket.data(), packet.data(), packet.size());
+
 			c.txQueuedBytes += packet.size();
-			c.txQueue.push_back(std::move(copy));
+			if (isStateMessage)
+				c.txQueueState.push_back({ std::move(pooledPacket), 0u });
+			else
+				c.txQueueControl.push_back({ std::move(pooledPacket), 0u });
 			m_impl->MaybeModifyEpollOut(fd, true);
 			return true;
 		}

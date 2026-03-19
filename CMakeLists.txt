@@ -286,6 +286,24 @@ if(MSVC)
 endif()
 add_test(NAME shard_down_detection_tests COMMAND shard_down_detection_tests)
 
+# M25.2: NetServer bandwidth caps + backpressure unit tests
+add_executable(netserver_bandwidth_tests engine/server/NetServerBandwidthThrottleTests.cpp)
+target_include_directories(netserver_bandwidth_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(netserver_bandwidth_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(netserver_bandwidth_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME netserver_bandwidth_tests COMMAND netserver_bandwidth_tests)
+
+# M25.4: DDoS basic mitigation (connection throttle) unit tests
+add_executable(ddos_connection_protector_tests engine/server/ConnectionDDoSProtectorTests.cpp)
+target_include_directories(ddos_connection_protector_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ddos_connection_protector_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(ddos_connection_protector_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME ddos_connection_protector_tests COMMAND ddos_connection_protector_tests)
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
   add_executable(client_flow_app engine/network/ClientFlowMain.cpp)
@@ -316,3 +334,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   add_dependencies(network_integration_tests server_app)
   add_test(NAME network_integration_tests COMMAND network_integration_tests pkg/server/lcdlln_server ${CMAKE_BINARY_DIR} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
+
+# M25.1: Load tester (TLS multi-connection) - Windows only (reuses NetClient TLS)
+add_subdirectory(tools/load_tester)

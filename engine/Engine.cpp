@@ -376,7 +376,6 @@ namespace engine
 										else
 										{
 											LOG_INFO(Render, "[Boot] VMA allocator created OK");
-										m_vmaAllocator = nullptr;
 									}
 
 									// Vérification VmaAllocatorInfo

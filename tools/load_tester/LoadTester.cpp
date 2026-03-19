@@ -14,6 +14,13 @@
 
 namespace tools::load_tester
 {
+	using engine::network::BuildAuthRequestPayload;
+	using engine::network::ParseAuthResponsePayload;
+	using engine::network::NetClient;
+	using engine::network::NetClientState;
+	using engine::network::RequestResponseDispatcher;
+	using engine::network::kOpcodeAuthRequest;
+
 	namespace
 	{
 		double ToMs(const std::chrono::steady_clock::duration& d)

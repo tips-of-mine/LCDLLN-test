@@ -18,6 +18,8 @@ namespace engine::server
 	class ConnectionDDoSProtector final
 	{
 	public:
+		using Clock = std::chrono::steady_clock;
+
 		struct Config
 		{
 			// Max concurrent connections allowed per IP. 0 disables.
@@ -169,8 +171,6 @@ namespace engine::server
 		}
 
 	private:
-		using Clock = std::chrono::steady_clock;
-
 		struct IpFail
 		{
 			uint32_t failCount = 0u;

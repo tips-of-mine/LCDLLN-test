@@ -11,6 +11,10 @@
 
 namespace tools::load_tester
 {
+	using engine::network::NetClient;
+	using engine::network::NetClientState;
+	using engine::network::RequestResponseDispatcher;
+
 	enum class Scenario
 	{
 		ConnectOnly,

@@ -89,7 +89,7 @@ namespace engine::core
 			{
 				std::fprintf(stderr, "[Log] Cannot open log file: %s\n", settings.filePath.c_str());
 				std::fflush(stderr);
-				return;
+				// Ne pas retourner : si la console est active on continue sans fichier.
 			}
 		}
 

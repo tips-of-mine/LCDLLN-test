@@ -173,10 +173,15 @@ namespace engine
 		}
 
 		engine::core::LogSettings logSettings;
-		logSettings.filePath    = logToFile
-			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
-			: "";
-			// : m_cfg.GetString("log.file", "engine.log");
+		if (logToFile)
+		{
+			const std::string relPath = engine::core::Log::MakeTimestampedFilename("lcdlln.exe");
+			std::error_code ec;
+			const auto absPath = std::filesystem::absolute(relPath, ec);
+			logSettings.filePath = ec ? relPath : absPath.string();
+			std::fprintf(stderr, "[Log] Log file: %s\n", logSettings.filePath.c_str());
+			std::fflush(stderr);
+		}
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;

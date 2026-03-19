@@ -14,18 +14,17 @@ namespace engine::render
 
 	bool StagingAllocator::Init(VkDevice device, void* vmaAllocator, size_t budgetBytesPerFrame)
 	{
-		std::fprintf(stderr, "[STAGING] Init enter device=%p vma=%p budget=%zu\n",
-			(void*)device, vmaAllocator, budgetBytesPerFrame); std::fflush(stderr);
+LOG_INFO(Render, "[STAGING] Init enter device={} vma={} budget={}", (void*)device, vmaAllocator, budgetBytesPerFrame);
 
 		if (device == VK_NULL_HANDLE || vmaAllocator == nullptr || budgetBytesPerFrame == 0)
 		{
-			std::fprintf(stderr, "[STAGING] Init: invalid params\n"); std::fflush(stderr);
+			LOG_WARN(Render, "[STAGING] Init: invalid params");
 			return false;
 		}
 
-		std::fprintf(stderr, "[STAGING] avant Destroy\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[STAGING] avant Destroy");
 		Destroy(device);
-		std::fprintf(stderr, "[STAGING] Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[STAGING] Destroy OK");
 
 		m_device       = device;
 		m_vmaAllocator = vmaAllocator; // conservé pour info, plus utilisé pour l’alloc.
@@ -54,8 +53,7 @@ namespace engine::render
 
 		for (uint32_t i = 0; i < kRingSize; ++i)
 		{
-			std::fprintf(stderr, "[STAGING] slot %u: create buffer size=%zu\n",
-				i, budgetBytesPerFrame); std::fflush(stderr);
+LOG_DEBUG(Render, "[STAGING] slot {}: create buffer size={}", i, budgetBytesPerFrame);
 
 			VkBufferCreateInfo bufInfo{};
 			bufInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -65,31 +63,25 @@ namespace engine::render
 
 			VkBuffer buffer = VK_NULL_HANDLE;
 			VkResult rBuf   = vkCreateBuffer(device, &bufInfo, nullptr, &buffer);
-			std::fprintf(stderr, "[STAGING] slot %u: vkCreateBuffer r=%d buf=%p\n",
-				i, (int)rBuf, (void*)buffer); std::fflush(stderr);
+LOG_INFO(Render, "[STAGING] slot {}: vkCreateBuffer r={} buf={}", i, (int)rBuf, (void*)buffer);
 			if (rBuf != VK_SUCCESS || buffer == VK_NULL_HANDLE)
 			{
-				std::fprintf(stderr, "[STAGING] slot %u: vkCreateBuffer FAILED\n", i); std::fflush(stderr);
+				LOG_WARN(Render, "[STAGING] slot {}: vkCreateBuffer FAILED", i);
 				Destroy(device);
 				return false;
 			}
 
 			VkMemoryRequirements memReq{};
 			vkGetBufferMemoryRequirements(device, buffer, &memReq);
-			std::fprintf(stderr, "[STAGING] slot %u: memReq size=%llu align=%llu bits=0x%x\n",
-				i,
-				(unsigned long long)memReq.size,
-				(unsigned long long)memReq.alignment,
-				memReq.memoryTypeBits); std::fflush(stderr);
+LOG_DEBUG(Render, "[STAGING] slot {}: memReq size={} align={} bits=0x{}", i, (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits);
 
 			const VkMemoryPropertyFlags flags =
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 			uint32_t memTypeIdx = findMemoryType(memReq.memoryTypeBits, flags);
-			std::fprintf(stderr, "[STAGING] slot %u: memTypeIdx=%u\n", i, memTypeIdx); std::fflush(stderr);
+			LOG_DEBUG(Render, "[STAGING] slot {}: memTypeIdx={}", i, memTypeIdx);
 			if (memTypeIdx == UINT32_MAX)
 			{
-				std::fprintf(stderr, "[STAGING] slot %u: no suitable HOST_VISIBLE|COHERENT memory type\n",
-					i); std::fflush(stderr);
+LOG_DEBUG(Render, "[STAGING] slot {}: no suitable HOST_VISIBLE|COHERENT memory type", i);
 				vkDestroyBuffer(device, buffer, nullptr);
 				Destroy(device);
 				return false;
@@ -102,22 +94,20 @@ namespace engine::render
 
 			VkDeviceMemory memory = VK_NULL_HANDLE;
 			VkResult rMem = vkAllocateMemory(device, &allocVk, nullptr, &memory);
-			std::fprintf(stderr, "[STAGING] slot %u: vkAllocateMemory r=%d mem=%p\n",
-				i, (int)rMem, (void*)memory); std::fflush(stderr);
+LOG_INFO(Render, "[STAGING] slot {}: vkAllocateMemory r={} mem={}", i, (int)rMem, (void*)memory);
 			if (rMem != VK_SUCCESS || memory == VK_NULL_HANDLE)
 			{
-				std::fprintf(stderr, "[STAGING] slot %u: vkAllocateMemory FAILED\n", i); std::fflush(stderr);
+				LOG_WARN(Render, "[STAGING] slot {}: vkAllocateMemory FAILED", i);
 				vkDestroyBuffer(device, buffer, nullptr);
 				Destroy(device);
 				return false;
 			}
 
 			VkResult rBind = vkBindBufferMemory(device, buffer, memory, 0);
-			std::fprintf(stderr, "[STAGING] slot %u: vkBindBufferMemory r=%d\n",
-				i, (int)rBind); std::fflush(stderr);
+LOG_INFO(Render, "[STAGING] slot {}: vkBindBufferMemory r={}", i, (int)rBind);
 			if (rBind != VK_SUCCESS)
 			{
-				std::fprintf(stderr, "[STAGING] slot %u: vkBindBufferMemory FAILED\n", i); std::fflush(stderr);
+				LOG_WARN(Render, "[STAGING] slot {}: vkBindBufferMemory FAILED", i);
 				vkFreeMemory(device, memory, nullptr);
 				vkDestroyBuffer(device, buffer, nullptr);
 				Destroy(device);
@@ -132,7 +122,7 @@ namespace engine::render
 
 		m_currentSlot   = 0;
 		m_currentOffset = 0;
-		std::fprintf(stderr, "[STAGING] Init OK (raw Vulkan buffers)\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[STAGING] Init OK (raw Vulkan buffers)");
 		return true;
 	}
 
@@ -182,8 +172,7 @@ namespace engine::render
 			if (m_ring[i].buffer != VK_NULL_HANDLE && m_ring[i].vmaAllocation != nullptr)
 			{
 				VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_ring[i].vmaAllocation);
-				std::fprintf(stderr, "[STAGING] Destroy slot %u buffer=%p mem=%p\n",
-					i, (void*)m_ring[i].buffer, (void*)mem); std::fflush(stderr);
+LOG_DEBUG(Render, "[STAGING] Destroy slot {} buffer={} mem={}", i, (void*)m_ring[i].buffer, (void*)mem);
 				vkDestroyBuffer(device, m_ring[i].buffer, nullptr);
 				vkFreeMemory(device, mem, nullptr);
 				m_ring[i].buffer        = VK_NULL_HANDLE;

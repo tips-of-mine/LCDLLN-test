@@ -22,9 +22,7 @@ namespace engine::core
 	void Time::BeginFrame()
 	{
 		// DEBUG STAB
-		std::fprintf(stderr, "[TIME] BeginFrame enter windowDeltas.size=%zu cursor=%u count=%u\n",
-			m_windowDeltas.size(), m_windowCursor, m_windowCount);
-		std::fflush(stderr);
+LOG_DEBUG(Core, "[TIME] BeginFrame enter windowDeltas.size={} cursor={} count={}", m_windowDeltas.size(), m_windowCursor, m_windowCount);
 		// FIN DEBUG
 
 		const uint64_t nowTicks = NowTicks();

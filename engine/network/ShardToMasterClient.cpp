@@ -16,14 +16,13 @@ namespace engine::network
 
 	ShardToMasterClient::~ShardToMasterClient()
 	{
-		std::fprintf(stderr, "[STMC] destructor enter state=%d\n", (int)m_state); std::fflush(stderr);
+		LOG_INFO(Net, "[STMC] destructor enter state={}", (int)m_state);
 		if (m_client && m_client->GetState() != NetClientState::Disconnected)
 		{
 			m_client->Disconnect("ShardToMasterClient destroy");
 			while (m_client->GetState() != NetClientState::Disconnected)
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
-		std::fprintf(stderr, "[STMC] destructor OK\n"); std::fflush(stderr);
 		LOG_INFO(Core, "[ShardToMasterClient] Destroyed");
 	}
 
@@ -53,7 +52,7 @@ namespace engine::network
 
 	void ShardToMasterClient::Start()
 	{
-		std::fprintf(stderr, "[STMC] Start host=%s port=%u\n", m_host.c_str(), (unsigned)m_port); std::fflush(stderr);
+		LOG_DEBUG(Net, "[STMC] Start host={} port={}", m_host.c_str(), (unsigned)m_port);
 		if (m_host.empty())
 		{
 			LOG_ERROR(Core, "[ShardToMasterClient] Start failed: no master address");
@@ -74,10 +73,7 @@ namespace engine::network
 	{
 		if (!m_client)
 			return;
-		std::fprintf(stderr, "[STMC] Pump state=%d reconnect_in=%llds\n",
-			(int)m_state,
-			(long long)std::chrono::duration_cast<std::chrono::seconds>(m_reconnect_after - std::chrono::steady_clock::now()).count());
-		std::fflush(stderr);
+LOG_DEBUG(Net, "[STMC] Pump state={} reconnect_in={}s", (int)m_state, (long long)std::chrono::duration_cast<std::chrono::seconds>(m_reconnect_after - std::chrono::steady_clock::now()).count());
 		auto now = std::chrono::steady_clock::now();
 
 		if (m_state == State::Disconnected && now >= m_reconnect_after)
@@ -115,8 +111,7 @@ namespace engine::network
 
 	void ShardToMasterClient::SendRegister()
 	{
-		std::fprintf(stderr, "[STMC] SendRegister name='%s' endpoint='%s' cap=%u\n",
-			m_name.c_str(), m_endpoint.c_str(), m_max_capacity); std::fflush(stderr);
+LOG_DEBUG(Net, "[STMC] SendRegister name='{}' endpoint='{}' cap={}", m_name.c_str(), m_endpoint.c_str(), m_max_capacity);
 		auto payload = BuildShardRegisterPayload(m_name, m_endpoint, m_max_capacity, m_current_load, m_build_version);
 		if (payload.empty())
 		{
@@ -143,7 +138,7 @@ namespace engine::network
 
 	void ShardToMasterClient::SendHeartbeat()
 	{
-		std::fprintf(stderr, "[STMC] SendHeartbeat shard_id=%u load=%u\n", m_shard_id, m_current_load); std::fflush(stderr);
+		LOG_DEBUG(Net, "[STMC] SendHeartbeat shard_id={} load={}", m_shard_id, m_current_load);
 		uint64_t timestamp = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(
 			std::chrono::steady_clock::now().time_since_epoch()).count());
 		auto payload = BuildShardHeartbeatPayload(m_shard_id, m_current_load, timestamp);
@@ -160,7 +155,7 @@ namespace engine::network
 
 	void ShardToMasterClient::OnConnected()
 	{
-		std::fprintf(stderr, "[STMC] OnConnected -> Registering\n"); std::fflush(stderr);
+		LOG_INFO(Net, "[STMC] OnConnected -> Registering");
 		m_state = State::Registering;
 		m_reconnect_backoff_sec = 1;
 		LOG_INFO(Core, "[ShardToMasterClient] Connected, sending register");
@@ -169,8 +164,7 @@ namespace engine::network
 
 	void ShardToMasterClient::OnDisconnected(std::string_view reason)
 	{
-		std::fprintf(stderr, "[STMC] OnDisconnected reason='%.*s' next_backoff=%ds\n",
-			static_cast<int>(reason.size()), reason.data(), m_reconnect_backoff_sec); std::fflush(stderr);
+LOG_INFO(Net, "[STMC] OnDisconnected reason='%.*s' next_backoff={}s", static_cast<int>(reason.size()), reason.data(), m_reconnect_backoff_sec);
 		m_state = State::Disconnected;
 		m_shard_id = 0;
 		ScheduleReconnect();
@@ -191,13 +185,11 @@ namespace engine::network
 				m_shard_id = parsed->shard_id;
 				m_state = State::Registered;
 				m_last_heartbeat_sent = std::chrono::steady_clock::now();
-				std::fprintf(stderr, "[STMC] RegisterOK shard_id=%u\n", m_shard_id); std::fflush(stderr);
 				LOG_INFO(Core, "[ShardToMasterClient] Register OK (shard_id={})", m_shard_id);
 			}
 		}
 		else if (opcode == kOpcodeShardRegisterError)
 		{
-			std::fprintf(stderr, "[STMC] RegisterERROR from Master\n"); std::fflush(stderr);
 			LOG_ERROR(Core, "[ShardToMasterClient] Register ERROR from Master");
 			m_client->Disconnect("register error");
 		}
@@ -205,7 +197,7 @@ namespace engine::network
 
 	void ShardToMasterClient::ScheduleReconnect()
 	{
-		std::fprintf(stderr, "[STMC] ScheduleReconnect backoff=%ds\n", m_reconnect_backoff_sec); std::fflush(stderr);
+		LOG_DEBUG(Net, "[STMC] ScheduleReconnect backoff={}s", m_reconnect_backoff_sec);
 		m_reconnect_after = std::chrono::steady_clock::now() + std::chrono::seconds(m_reconnect_backoff_sec);
 		if (m_reconnect_backoff_sec < 60)
 			m_reconnect_backoff_sec = std::min(60, m_reconnect_backoff_sec * 2);

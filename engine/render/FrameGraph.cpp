@@ -165,7 +165,7 @@ namespace engine::render
 
 	void FrameGraph::compile()
 	{
-		std::fprintf(stderr, "[FG-COMPILE] debut passes=%zu\n", m_passes.size()); std::fflush(stderr);
+		LOG_DEBUG(Render, "[FG-COMPILE] debut passes={}", m_passes.size());
 		m_compiledOrder.clear();
 		const size_t n = m_passes.size();
 		if (n == 0) { m_compiled = true; return; }
@@ -181,14 +181,13 @@ namespace engine::render
 				auto it = lastWriter.find(rid);
 				if (it != lastWriter.end())
 				{
-					std::fprintf(stderr, "[FG-COMPILE] MULTI-WRITER resource=%u pass1='%s' pass2='%s'\n", rid, m_passes[it->second].name.c_str(), m_passes[i].name.c_str()); std::fflush(stderr);
 					//LOG_FATAL(Render, "FrameGraph: multi-writer on resource {} (passes '{}' and '{}'); MVP forbids multi-writer",	rid, m_passes[it->second].name, m_passes[i].name);
 					LOG_ERROR(Render, "FrameGraph: multi-writer on resource {} (passes '{}' and '{}'); MVP forbids multi-writer", rid, m_passes[it->second].name, m_passes[i].name);
 				}
 				lastWriter[rid] = i;
 			}
 		}
-		std::fprintf(stderr, "[FG-COMPILE] topo sort\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[FG-COMPILE] topo sort");
 		
 		// Edges: writer -> reader (writer must run before reader). Adjacency: successors[i] = passes that must run after i.
 		std::vector<std::vector<size_t>> successors(n);
@@ -236,10 +235,9 @@ namespace engine::render
 		}
 		if (m_compiledOrder.size() != n)
 		{
-			std::fprintf(stderr, "[FG-COMPILE] CYCLE DETECTED compiled=%zu total=%zu\n", m_compiledOrder.size(), n); std::fflush(stderr);
 			LOG_ERROR(Render, "FrameGraph: cycle detected in pass dependencies (topological sort produced {} of {} passes)", m_compiledOrder.size(), n);
 		}
-		std::fprintf(stderr, "[FG-COMPILE] done order=%zu\n", m_compiledOrder.size()); std::fflush(stderr);
+		LOG_INFO(Render, "[FG-COMPILE] done order={}", m_compiledOrder.size());
 		m_compiled = true;
 	}
 
@@ -438,24 +436,24 @@ namespace engine::render
 		engine::core::Profiler* profiler)
 	{
 	    engine::core::ProfilerScope scope("FrameGraph::execute");
-	    std::fprintf(stderr, "[FG] execute debut\n"); std::fflush(stderr);
+	    LOG_DEBUG(Render, "[FG] execute debut");
 	    if (!m_compiled) { compile(); }
-	    std::fprintf(stderr, "[FG] ensureImageResources\n"); std::fflush(stderr);
+	    LOG_DEBUG(Render, "[FG] ensureImageResources");
 	    ensureImageResources(device, physicalDevice, vmaAllocator, frameIndex, extent, framesInFlight);
-	    std::fprintf(stderr, "[FG] ensureBufferResources\n"); std::fflush(stderr);
+	    LOG_DEBUG(Render, "[FG] ensureBufferResources");
 	    ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
-	    std::fprintf(stderr, "[FG] fillRegistry\n"); std::fflush(stderr);
+	    LOG_DEBUG(Render, "[FG] fillRegistry");
 	    fillRegistry(registry, frameIndex);
 	
 	    std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
-	    std::fprintf(stderr, "[FG] loop passes=%zu\n", m_compiledOrder.size()); std::fflush(stderr);
+	    LOG_DEBUG(Render, "[FG] loop passes={}", m_compiledOrder.size());
 	    for (size_t passIdx : m_compiledOrder)
 	    {
 	        const Pass& pass = m_passes[passIdx];
 	        engine::core::ProfilerScope passScope(pass.name);
-	        std::fprintf(stderr, "[FG] pass[%zu]='%s' barriers\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	        LOG_DEBUG(Render, "[FG] pass[{}]='{}' barriers", passIdx, pass.name.c_str());
 	        emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
-	        std::fprintf(stderr, "[FG] pass[%zu]='%s' execute\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	        LOG_DEBUG(Render, "[FG] pass[{}]='{}' execute", passIdx, pass.name.c_str());
 	        const bool gpuPassRecorded = profiler != nullptr && profiler->BeginGpuPass(cmd, frameIndex, pass.name);
 	        if (pass.execute)
 	            pass.execute(cmd, registry);
@@ -463,9 +461,9 @@ namespace engine::render
 	        {
 	            profiler->EndGpuPass(cmd, frameIndex);
 	        }
-	        std::fprintf(stderr, "[FG] pass[%zu]='%s' done\n", passIdx, pass.name.c_str()); std::fflush(stderr);
+	        LOG_INFO(Render, "[FG] pass[{}]='{}' done", passIdx, pass.name.c_str());
 	    }
-	    std::fprintf(stderr, "[FG] execute done\n"); std::fflush(stderr);
+	    LOG_INFO(Render, "[FG] execute done");
 	}
 
 	void FrameGraph::destroy(VkDevice device, void* vmaAllocator)
@@ -537,9 +535,7 @@ namespace engine::render
 		// Le bypass "raw Vulkan" est justement là pour continuer les alloc/recreate d'images.
 		VmaAllocator alloc = (vmaAllocator != nullptr) ? static_cast<VmaAllocator>(vmaAllocator) : VK_NULL_HANDLE;
 
-		std::fprintf(stderr, "[EIR] debut nImages=%zu extent=%ux%u framesInFlight=%u lastExtent=%ux%u\n",
-		    m_imageResources.size(), extent.width, extent.height, framesInFlight,
-		    m_lastExtent.width, m_lastExtent.height); std::fflush(stderr);
+LOG_DEBUG(Render, "[EIR] debut nImages={} extent={}x{} framesInFlight={} lastExtent={}x{}", m_imageResources.size(), extent.width, extent.height, framesInFlight, m_lastExtent.width, m_lastExtent.height);
 		
 		const bool extentChanged = m_lastExtent.width != extent.width || m_lastExtent.height != extent.height;
 		const bool framesChanged = m_lastFramesInFlight != framesInFlight;
@@ -572,8 +568,7 @@ namespace engine::render
 
 		if (m_perFrameImageHandles.size() != m_imageResources.size())
 		{
-			std::fprintf(stderr, "[EIR] FATAL size mismatch m_perFrameImageHandles=%zu m_imageResources=%zu\n",
-			    m_perFrameImageHandles.size(), m_imageResources.size()); std::fflush(stderr);
+LOG_DEBUG(Render, "[EIR] FATAL size mismatch m_perFrameImageHandles={} m_imageResources={}", m_perFrameImageHandles.size(), m_imageResources.size());
 			return;
 		}
 
@@ -604,9 +599,7 @@ namespace engine::render
 
 			if (h.image != VK_NULL_HANDLE) continue;
 
-			std::fprintf(stderr, "[EIR] image[%zu]='%s' fmt=%d w=%u h=%u mips=%u layers=%u\n",
-			    resIdx, res.name.c_str(), (int)res.desc.format, width, height,
-			    res.desc.mipLevels, res.desc.layers); std::fflush(stderr);
+LOG_DEBUG(Render, "[EIR] image[{}]='{}' fmt={} w={} h={} mips={} layers={}", resIdx, res.name.c_str(), (int)res.desc.format, width, height, res.desc.mipLevels, res.desc.layers);
 
 			// Trace log ciblée pour confirmer que le TAA history suit bien le resize.
 			if (res.name == "HistoryA" || res.name == "HistoryB")
@@ -661,12 +654,11 @@ namespace engine::render
 				// TODO STAB.7 : Investiguer la cause racine et restaurer VMA si possible.
 				VkImage newImage = VK_NULL_HANDLE;
 				VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
-				std::fprintf(stderr, "[EIR] step1 vkCreateImage r1=%d img=%p\n", (int)r1, (void*)newImage); std::fflush(stderr);
+				LOG_DEBUG(Render, "[EIR] step1 vkCreateImage r1={} img={}", (int)r1, (void*)newImage);
 
 				VkMemoryRequirements memReq{};
 				vkGetImageMemoryRequirements(device, newImage, &memReq);
-				std::fprintf(stderr, "[EIR] step2 memReq size=%llu align=%llu bits=0x%x\n",
-					(unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits); std::fflush(stderr);
+LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits);
 
 				VkPhysicalDeviceMemoryProperties memProps{};
 				vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
@@ -680,7 +672,7 @@ namespace engine::render
 						break;
 					}
 				}
-				std::fprintf(stderr, "[EIR] step3 memTypeIndex=%u\n", memTypeIndex); std::fflush(stderr);
+				LOG_DEBUG(Render, "[EIR] step3 memTypeIndex={}", memTypeIndex);
 
 				VkMemoryAllocateInfo allocInfo{};
 				allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -688,13 +680,13 @@ namespace engine::render
 				allocInfo.memoryTypeIndex = memTypeIndex;
 				VkDeviceMemory memory = VK_NULL_HANDLE;
 				VkResult r2 = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
-				std::fprintf(stderr, "[EIR] step4 vkAllocateMemory r2=%d mem=%p\n", (int)r2, (void*)memory); std::fflush(stderr);
+				LOG_INFO(Render, "[EIR] step4 vkAllocateMemory r2={} mem={}", (int)r2, (void*)memory);
 
 				VkResult r3 = VK_SUCCESS;
 				if (memory != VK_NULL_HANDLE)
 				{
 					r3 = vkBindImageMemory(device, newImage, memory, 0);
-					std::fprintf(stderr, "[EIR] step5 vkBindImageMemory r3=%d\n", (int)r3); std::fflush(stderr);
+					LOG_DEBUG(Render, "[EIR] step5 vkBindImageMemory r3={}", (int)r3);
 				}
 				h.image = newImage;
 				h.allocation = reinterpret_cast<void*>(memory);

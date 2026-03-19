@@ -70,7 +70,7 @@ namespace engine::render
 	    VkDescriptorSetLayout materialLayout,
 	    VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[GEOM] Init enter device=%p\n", (void*)device); std::fflush(stderr);
+		LOG_INFO(Render, "[GEOM] Init enter device={}", (void*)device);
 		if (!device || !vertSpirv || vertWordCount == 0 || !fragSpirv || fragWordCount == 0)
 			return false;
 
@@ -156,7 +156,7 @@ namespace engine::render
 		rpInfo.pDependencies   = &dep;
 
 		VkResult result = vkCreateRenderPass(device, &rpInfo, nullptr, &m_renderPass);
-		std::fprintf(stderr, "[GEOM] vkCreateRenderPass r=%d\n", (int)result); std::fflush(stderr);
+		LOG_INFO(Render, "[GEOM] vkCreateRenderPass r={}", (int)result);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "GeometryPass: vkCreateRenderPass failed: {}", static_cast<int>(result));
@@ -187,7 +187,7 @@ namespace engine::render
 		}
 
 		result = vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_pipelineLayout);
-		std::fprintf(stderr, "[GEOM] vkCreatePipelineLayout r=%d\n", (int)result); std::fflush(stderr);
+		LOG_INFO(Render, "[GEOM] vkCreatePipelineLayout r={}", (int)result);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "GeometryPass: vkCreatePipelineLayout failed: {}", static_cast<int>(result));
@@ -330,7 +330,7 @@ namespace engine::render
 		AssertPipelineCreationAllowed();
 		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, formatA, depthFormat));
 		result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
-		std::fprintf(stderr, "[GEOM] vkCreateGraphicsPipelines r=%d\n", (int)result); std::fflush(stderr);
+		LOG_DEBUG(Render, "[GEOM] vkCreateGraphicsPipelines r={}", (int)result);
 		vkDestroyShaderModule(device, vertModule, nullptr);
 		vkDestroyShaderModule(device, fragModule, nullptr);
 		if (result != VK_SUCCESS)
@@ -412,7 +412,6 @@ namespace engine::render
 			vkMapMemory(device, m_identityInstanceMemory, 0, kIdentityBufferSize, 0, &ptr);
 			if (ptr) { std::memcpy(ptr, identity, 64); vkUnmapMemory(device, m_identityInstanceMemory); }
 		}
-		std::fprintf(stderr, "[GEOM] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[Boot] GeometryPass init OK");
 		return true;
 	}
@@ -665,7 +664,7 @@ namespace engine::render
 
 	void GeometryPass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[GEOM] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[GEOM] Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_identityInstanceBuffer != VK_NULL_HANDLE)
 		{
@@ -694,7 +693,6 @@ namespace engine::render
 			m_renderPass = VK_NULL_HANDLE;
 		}
 		m_hasMaterialLayout = false;
-		std::fprintf(stderr, "[GEOM] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[GeometryPass] Destroyed");
 	}
 

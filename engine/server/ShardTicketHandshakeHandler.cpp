@@ -21,7 +21,7 @@ namespace engine::server
 		const uint8_t* payload, size_t payloadSize)
 	{
 		using namespace engine::network;
-		std::fprintf(stderr, "[TICKET_HS] HandlePacket connId=%u opcode=%u\n", connId, opcode); std::fflush(stderr);
+		LOG_DEBUG(Server, "[TICKET_HS] HandlePacket connId={} opcode={}", connId, opcode);
 		if (!m_server || !m_validator)
 		{
 			LOG_WARN(Core, "[ShardTicketHandshakeHandler] HandlePacket: server or validator not set");
@@ -39,7 +39,7 @@ namespace engine::server
 			return;
 		}
 		auto accept = m_validator->VerifyAndConsume(payload, payloadSize);
-		std::fprintf(stderr, "[TICKET_HS] VerifyAndConsume result=%s\n", accept ? "ACCEPTED" : "REJECTED"); std::fflush(stderr);
+		LOG_DEBUG(Server, "[TICKET_HS] VerifyAndConsume result={}", accept ? "ACCEPTED" : "REJECTED");
 		if (!accept)
 		{
 			LOG_WARN(Core, "[ShardTicketHandshakeHandler] Conn {} ticket invalid or expired, rejecting", connId);

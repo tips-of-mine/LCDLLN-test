@@ -132,7 +132,7 @@ namespace engine::render
 
 	bool VkDeviceContext::Create(::VkInstance instance, VkSurfaceKHR surface)
 	{
-		std::fprintf(stderr, "[VKDEV] Create enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[VKDEV] Create enter");
 		if (instance == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "VkDeviceContext::Create: invalid instance");
@@ -294,7 +294,7 @@ namespace engine::render
 		createInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
 		result = vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device);
-		std::fprintf(stderr, "[VKDEV] vkCreateDevice r=%d device=%p\n", (int)result, (void*)m_device); std::fflush(stderr);
+		LOG_INFO(Render, "[VKDEV] vkCreateDevice r={} device={}", (int)result, (void*)m_device);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "vkCreateDevice failed: {}", static_cast<int>(result));
@@ -307,7 +307,6 @@ namespace engine::render
 		vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 		vkGetDeviceQueue(m_device, m_presentQueueFamilyIndex, 0, &m_presentQueue);
 
-		std::fprintf(stderr, "[VKDEV] Create OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "VkDeviceContext created (graphics queue family {}, present queue family {}, sync2: {}, descriptor_indexing: {}, robust_buffer_access: {})",
 			m_graphicsQueueFamilyIndex,
 			m_presentQueueFamilyIndex,
@@ -321,14 +320,14 @@ namespace engine::render
 
 	void VkDeviceContext::Destroy()
 	{
-		std::fprintf(stderr, "[VKDEV] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[VKDEV] Destroy enter");
 		if (m_device == VK_NULL_HANDLE)
 		{
 			LOG_INFO(Render, "VkDeviceContext destroyed");
 			return;
 		}
 		vkDestroyDevice(m_device, nullptr);
-		std::fprintf(stderr, "[VKDEV] Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[VKDEV] Destroy OK");
 		m_device = VK_NULL_HANDLE;
 		m_physicalDevice = VK_NULL_HANDLE;
 		m_graphicsQueue = VK_NULL_HANDLE;

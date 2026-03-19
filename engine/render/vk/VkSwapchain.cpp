@@ -59,13 +59,7 @@ namespace engine::render
 
 			if (capsDegenerateHeight1)
 			{
-				std::fprintf(stderr,
-					"[SWAPCHAIN] Degenerate caps detected -> bypass clamp requested=%ux%u caps min=%ux%u max=%ux%u current=%ux%u\n",
-					requestedWidth, requestedHeight,
-					caps.minImageExtent.width, caps.minImageExtent.height,
-					caps.maxImageExtent.width, caps.maxImageExtent.height,
-					caps.currentExtent.width, caps.currentExtent.height);
-				std::fflush(stderr);
+				LOG_WARN(Render, "[SWAPCHAIN] Degenerate caps detected -> bypass clamp requested={}x{} caps min={}x{} max={}x{} current={}x{}", requestedWidth, requestedHeight, caps.minImageExtent.width, caps.minImageExtent.height, caps.maxImageExtent.width, caps.maxImageExtent.height, caps.currentExtent.width, caps.currentExtent.height);
 				return VkExtent2D{ requestedWidth, requestedHeight };
 			}
 
@@ -89,7 +83,7 @@ namespace engine::render
 		uint32_t requestedWidth, uint32_t requestedHeight,
 		VkPresentModeKHR requestedPresentMode)
 	{
-		std::fprintf(stderr, "[SWAPCHAIN] Create enter w=%u h=%u\n", requestedWidth, requestedHeight); std::fflush(stderr);
+		LOG_DEBUG(Render, "[SWAPCHAIN] Create enter w={} h={}", requestedWidth, requestedHeight);
 		if (physicalDevice == VK_NULL_HANDLE || device == VK_NULL_HANDLE || surface == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "VkSwapchain::Create: invalid physical device, device, or surface");
@@ -107,13 +101,7 @@ namespace engine::render
 		// Debug: on veut comprendre quand l'extent "currentExtent" des caps est incohérente.
 		if (caps.currentExtent.height == 1 && requestedHeight > 1)
 		{
-			std::fprintf(stderr,
-				"[SWAPCHAIN] caps currentExtent=%ux%u min=%ux%u max=%ux%u requested=%ux%u\n",
-				caps.currentExtent.width, caps.currentExtent.height,
-				caps.minImageExtent.width, caps.minImageExtent.height,
-				caps.maxImageExtent.width, caps.maxImageExtent.height,
-				requestedWidth, requestedHeight);
-			std::fflush(stderr);
+				LOG_DEBUG(Render, "[SWAPCHAIN] caps currentExtent={}x{} min={}x{} max={}x{} requested={}x{}", caps.currentExtent.width, caps.currentExtent.height, caps.minImageExtent.width, caps.minImageExtent.height, caps.maxImageExtent.width, caps.maxImageExtent.height, requestedWidth, requestedHeight);
 		}
 
 		uint32_t formatCount = 0;
@@ -167,7 +155,7 @@ namespace engine::render
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 		result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &m_swapchain);
-		std::fprintf(stderr, "[SWAPCHAIN] vkCreateSwapchainKHR r=%d\n", (int)result); std::fflush(stderr);
+		LOG_INFO(Render, "[SWAPCHAIN] vkCreateSwapchainKHR r={}", (int)result);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "vkCreateSwapchainKHR failed: {}", static_cast<int>(result));
@@ -277,7 +265,7 @@ namespace engine::render
 		m_graphicsQueueFamilyIndex = graphicsQueueFamilyIndex;
 		m_presentQueueFamilyIndex = presentQueueFamilyIndex;
 
-		std::fprintf(stderr, "[SWAPCHAIN] Create OK images=%u\n", swapchainImageCount); std::fflush(stderr);
+		LOG_INFO(Render, "[SWAPCHAIN] Create OK images={}", swapchainImageCount);
 		const char* modeName = (m_presentMode == VK_PRESENT_MODE_FIFO_KHR) ? "FIFO" :
 			(m_presentMode == VK_PRESENT_MODE_MAILBOX_KHR) ? "MAILBOX" :
 			(m_presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) ? "IMMEDIATE" : "OTHER";
@@ -287,7 +275,7 @@ namespace engine::render
 
 	void VkSwapchain::Destroy()
 	{
-		std::fprintf(stderr, "[SWAPCHAIN] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[SWAPCHAIN] Destroy enter");
 		if (m_device == VK_NULL_HANDLE)
 		{
 			return;
@@ -326,7 +314,6 @@ namespace engine::render
 
 		m_imageFormat = VK_FORMAT_UNDEFINED;
 		m_extent = { 0, 0 };
-		std::fprintf(stderr, "[SWAPCHAIN] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "VkSwapchain destroyed");
 	}
 

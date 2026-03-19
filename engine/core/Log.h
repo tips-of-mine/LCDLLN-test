@@ -48,27 +48,15 @@ namespace engine::core
         static void SetLevel(LogLevel level);
         /// Write a log line for the given level/subsystem and already-formatted message.
         static void WriteLine(LogLevel level, const char* subsystem, std::string_view message);
-        /// Format + write a log line. Temporarily bypasses std::format to isolate SEH crash.
+        /// Format + write a log line.
         template <typename... Args>
         static void Write(LogLevel level, const char* subsystem, std::format_string<Args...> fmt, Args&&... args)
         {
-            std::fprintf(stderr, "[WRITE] debut\n"); std::fflush(stderr);
             if (!s_active.load(std::memory_order_acquire))
-            {
-                std::fprintf(stderr, "[WRITE] not active\n"); std::fflush(stderr);
                 return;
-            }
-
-            std::fprintf(stderr, "[WRITE] active OK\n"); std::fflush(stderr);
             if (level < s_level.load(std::memory_order_relaxed))
-            {
-                std::fprintf(stderr, "[WRITE] level filtered\n"); std::fflush(stderr);
                 return;
-            }
-
-            std::fprintf(stderr, "[WRITE] avant WriteLine\n"); std::fflush(stderr);
-            WriteLine(level, subsystem, fmt.get());
-            std::fprintf(stderr, "[WRITE] apres WriteLine\n"); std::fflush(stderr);
+            WriteLine(level, subsystem, std::format(fmt, std::forward<Args>(args)...));
         }
     private:
         static std::atomic<LogLevel> s_level;

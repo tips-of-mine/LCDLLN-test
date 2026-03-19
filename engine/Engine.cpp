@@ -1189,34 +1189,75 @@ namespace engine
 														region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 														region.extent        = { ext.width, ext.height, 1 };
 
-														if (!m_taaHistoryEverFilled)
+														// Helper: COLOR_ATTACHMENT_OPTIMAL -> TRANSFER_DST_OPTIMAL
+													auto toTransferDst = [&](VkImage img) {
+														VkImageMemoryBarrier bar{};
+														bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														bar.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+														bar.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+														bar.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+														bar.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+														bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bar.image = img;
+														bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														vkCmdPipelineBarrier(cmd,
+															VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+															VK_PIPELINE_STAGE_TRANSFER_BIT,
+															0, 0, nullptr, 0, nullptr, 1, &bar);
+													};
+													// Helper: TRANSFER_DST_OPTIMAL -> COLOR_ATTACHMENT_OPTIMAL
+													auto toColorAttachment = [&](VkImage img) {
+														VkImageMemoryBarrier bar{};
+														bar.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														bar.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+														bar.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+														bar.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+														bar.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+														bar.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bar.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bar.image = img;
+														bar.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														vkCmdPipelineBarrier(cmd,
+															VK_PIPELINE_STAGE_TRANSFER_BIT,
+															VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+															0, 0, nullptr, 0, nullptr, 1, &bar);
+													};
+
+													if (!m_taaHistoryEverFilled)
+													{
+														VkImage dstA = reg.getImage(m_fgHistoryAId);
+														VkImage dstB = reg.getImage(m_fgHistoryBId);
+														if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
 														{
-															VkImage dstA = reg.getImage(m_fgHistoryAId);
-															VkImage dstB = reg.getImage(m_fgHistoryBId);
-															if (dstA != VK_NULL_HANDLE && dstB != VK_NULL_HANDLE)
-															{
-																vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-																               dstA,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-																               1, &region);
-																vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-																               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-																               1, &region);
-																m_taaHistoryEverFilled = true;
-																LOG_INFO(Render, "[TAA] History initialized at frame 0");
-																return;
-															}
+															toTransferDst(dstA);
+															toTransferDst(dstB);
+															vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+															               dstA,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+															               1, &region);
+															vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+															               dstB,   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+															               1, &region);
+															toColorAttachment(dstA);
+															toColorAttachment(dstB);
+															m_taaHistoryEverFilled = true;
+															LOG_INFO(Render, "[TAA] History initialized at frame 0");
+															return;
 														}
-														else
+													}
+													else
+													{
+														engine::render::ResourceId nextId = GetTaaHistoryNextId();
+														VkImage dstNext = reg.getImage(nextId);
+														if (dstNext != VK_NULL_HANDLE)
 														{
-															engine::render::ResourceId nextId = GetTaaHistoryNextId();
-															VkImage dstNext = reg.getImage(nextId);
-															if (dstNext != VK_NULL_HANDLE)
-															{
-																vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-																               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-																               1, &region);
-															}
+															toTransferDst(dstNext);
+															vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+															               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+															               1, &region);
+															toColorAttachment(dstNext);
 														}
+													}
 													}
 												}
 

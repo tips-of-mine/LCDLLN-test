@@ -40,26 +40,26 @@ namespace engine::render
 
 	void ShaderHotReload::Poll(const engine::core::Config& config)
 	{
-		std::fprintf(stderr, "[POLL] debut\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[POLL] debut");
 
 		if (!m_watcherInited)
 		{
-			std::fprintf(stderr, "[POLL] init watcher\n"); std::fflush(stderr);
+			LOG_WARN(Render, "[POLL] init watcher");
 			std::filesystem::path contentPath(config.GetString("paths.content", "game/data"));
 			std::error_code ec;
 			contentPath = std::filesystem::absolute(contentPath, ec);
-			std::fprintf(stderr, "[POLL] absolute path=%s ec=%d\n", contentPath.string().c_str(), (int)ec.value()); std::fflush(stderr);
+			LOG_DEBUG(Render, "[POLL] absolute path={} ec={}", contentPath.string().c_str(), (int)ec.value());
 
 			if (!ec)
 			{
-				std::fprintf(stderr, "[POLL] avant watcher.Init\n"); std::fflush(stderr);
+				LOG_INFO(Render, "[POLL] avant watcher.Init");
 				m_watcher.Init(contentPath.string());
 
-				std::fprintf(stderr, "[POLL] watcher.Init retourne\n"); std::fflush(stderr);
+				LOG_INFO(Render, "[POLL] watcher.Init retourne");
 				m_watcherInited = true;
 			}
 		}
-		std::fprintf(stderr, "[POLL] loop watched=%zu\n", m_watched.size()); std::fflush(stderr);
+		LOG_DEBUG(Render, "[POLL] loop watched={}", m_watched.size());
 
 		for (WatchedShader& w : m_watched)
 		{
@@ -93,7 +93,7 @@ namespace engine::render
 				}
 			}
 		}
-		std::fprintf(stderr, "[POLL] done\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[POLL] done");
 	}
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)
@@ -105,16 +105,15 @@ namespace engine::render
 			return;
 		}
 		std::vector<PendingReloadResult> results;
-		std::fprintf(stderr, "[AP] avant lock pendingMutex\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[AP] avant lock pendingMutex");
 		{
 			std::lock_guard<std::mutex> lock(m_pendingMutex);
-			std::fprintf(stderr, "[AP] lock OK pending=%zu\n", m_pending.size()); std::fflush(stderr);
 #if !defined(NDEBUG)
 			LOG_DEBUG(Render, "[Engine] ApplyPending: mutex acquired, {} pending ops", m_pending.size());
 #endif
 			if (m_pending.empty())
 			{
-				std::fprintf(stderr, "[AP] pending empty, return (%s)\n", m_worker.joinable() ? "worker" : "no worker"); std::fflush(stderr);
+				LOG_DEBUG(Render, "[AP] pending empty, return ({})", m_worker.joinable() ? "worker" : "no worker");
 				return;
 			}
 			results.swap(m_pending);
@@ -125,7 +124,7 @@ namespace engine::render
 			if (r.spirv.has_value())
 				cache.Set(r.cacheKey, std::move(r.spirv.value()));
 		}
-		std::fprintf(stderr, "[AP] done (%s)\n", m_worker.joinable() ? "worker" : "no worker"); std::fflush(stderr);
+		LOG_INFO(Render, "[AP] done ({})", m_worker.joinable() ? "worker" : "no worker");
 	}
 
 	void ShaderHotReload::WorkerThread()

@@ -37,7 +37,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[TONEMAP] Init enter\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[TONEMAP] Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -318,7 +318,6 @@ namespace engine::render
 			}
 		}
 
-		std::fprintf(stderr, "[TONEMAP] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "TonemapPass: initialized (maxFrames={})", m_maxFrames);
 		return true;
 	}
@@ -442,7 +441,7 @@ namespace engine::render
 
 	void TonemapPass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[TONEMAP] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[TONEMAP] Destroy enter");
 		if (device == VK_NULL_HANDLE)
 			return;
 
@@ -478,7 +477,7 @@ namespace engine::render
 			vkDestroyRenderPass(device, m_renderPass, nullptr);
 			m_renderPass = VK_NULL_HANDLE;
 		}
-		std::fprintf(stderr, "[TONEMAP] Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[TONEMAP] Destroy OK");
 	}
 
 } // namespace engine::render

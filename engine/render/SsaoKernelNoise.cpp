@@ -40,7 +40,7 @@ namespace engine::render
 		const engine::core::Config& config,
 		VkQueue queue, uint32_t queueFamilyIndex)
 	{
-		std::fprintf(stderr, "[SSAO] Init enter vma=%p\n", vmaAllocator); std::fflush(stderr);
+		LOG_INFO(Render, "[SSAO] Init enter vma={}", vmaAllocator);
 		
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE)
 		{
@@ -48,7 +48,7 @@ namespace engine::render
 			return false;
 		}
 
-		std::fprintf(stderr, "[SSAO] avant kernel gen\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[SSAO] avant kernel ge");
 		
 		// Radius and bias from config, clamped (notes: clamper radius/bias via config).
 		float radius = static_cast<float>(config.GetDouble("ssao.radius", 0.5));
@@ -81,9 +81,9 @@ namespace engine::render
 			kernelData[i * 4 + 3] = 0.0f;
 		}
 
-		std::fprintf(stderr, "[SSAO] kernel gen OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[SSAO] kernel gen OK");
 
-		std::fprintf(stderr, "[SSAO] avant createBuffer kernel\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[SSAO] avant createBuffer kernel");
 		m_vmaAllocator = vmaAllocator; // conservé pour compat, non utilisé pour l'alloc actuelle.
 
 		// Helpers mémoire
@@ -175,9 +175,9 @@ namespace engine::render
 			}
 		}
 
-		std::fprintf(stderr, "[SSAO] avant memcpy kernel\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[SSAO] avant memcpy kernel");
 		std::memcpy(mapped, kernelData, 32u * 4u * sizeof(float));
-		std::fprintf(stderr, "[SSAO] memcpy kernel OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[SSAO] memcpy kernel OK");
 		
 		std::memcpy(static_cast<char*>(mapped) + 512, &radius, sizeof(float));
 		std::memcpy(static_cast<char*>(mapped) + 516, &bias, sizeof(float));
@@ -376,7 +376,7 @@ namespace engine::render
 
 	void SsaoKernelNoise::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[SSAO] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[SSAO] Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_noiseSampler != VK_NULL_HANDLE)
 		{
@@ -405,6 +405,6 @@ namespace engine::render
 			m_kernelAlloc = nullptr;
 		}
 		m_vmaAllocator = nullptr;
-		std::fprintf(stderr, "[SSAO] Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[SSAO] Destroy OK");
 	}
 }

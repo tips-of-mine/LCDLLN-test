@@ -33,7 +33,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomPrefilterPass::Init enter\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomPrefilterPass::Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -280,7 +280,7 @@ namespace engine::render
 				return false;
 			}
 		}
-		std::fprintf(stderr, "[BLOOM] BloomPrefilterPass::Init OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomPrefilterPass::Init OK");
 		return true;
 	}
 
@@ -359,7 +359,7 @@ namespace engine::render
 
 	void BloomPrefilterPass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomPrefilterPass::Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[BLOOM] BloomPrefilterPass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
@@ -374,7 +374,7 @@ namespace engine::render
 			{ vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }
 		if (m_renderPass != VK_NULL_HANDLE)
 			{ vkDestroyRenderPass(device, m_renderPass, nullptr); m_renderPass = VK_NULL_HANDLE; }
-		std::fprintf(stderr, "[BLOOM] BloomPrefilterPass::Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomPrefilterPass::Destroy OK");
 	}
 
 	// -------------------------------------------------------------------------
@@ -388,7 +388,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomDownsamplePass::Init enter\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomDownsamplePass::Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -628,7 +628,7 @@ namespace engine::render
 				return false;
 			}
 		}
-		std::fprintf(stderr, "[BLOOM] BloomDownsamplePass::Init OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomDownsamplePass::Init OK");
 		return true;
 	}
 
@@ -705,7 +705,7 @@ namespace engine::render
 
 	void BloomDownsamplePass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomDownsamplePass::Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[BLOOM] BloomDownsamplePass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
@@ -720,7 +720,7 @@ namespace engine::render
 			{ vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }
 		if (m_renderPass != VK_NULL_HANDLE)
 			{ vkDestroyRenderPass(device, m_renderPass, nullptr); m_renderPass = VK_NULL_HANDLE; }
-		std::fprintf(stderr, "[BLOOM] BloomDownsamplePass::Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomDownsamplePass::Destroy OK");
 	}
 
 	// -------------------------------------------------------------------------
@@ -734,7 +734,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomUpsamplePass::Init enter\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomUpsamplePass::Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -980,7 +980,7 @@ namespace engine::render
 				return false;
 			}
 		}
-		std::fprintf(stderr, "[BLOOM] BloomUpsamplePass::Init OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomUpsamplePass::Init OK");
 		return true;
 	}
 
@@ -1055,7 +1055,7 @@ namespace engine::render
 
 	void BloomUpsamplePass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomUpsamplePass::Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[BLOOM] BloomUpsamplePass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
@@ -1070,7 +1070,7 @@ namespace engine::render
 			{ vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }
 		if (m_renderPass != VK_NULL_HANDLE)
 			{ vkDestroyRenderPass(device, m_renderPass, nullptr); m_renderPass = VK_NULL_HANDLE; }
-		std::fprintf(stderr, "[BLOOM] BloomUpsamplePass::Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomUpsamplePass::Destroy OK");
 	}
 
 	// -------------------------------------------------------------------------
@@ -1084,7 +1084,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomCombinePass::Init enter\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomCombinePass::Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv
 			|| vertWordCount == 0 || fragWordCount == 0)
 		{
@@ -1334,7 +1334,7 @@ namespace engine::render
 				return false;
 			}
 		}
-		std::fprintf(stderr, "[BLOOM] BloomCombinePass::Init OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomCombinePass::Init OK");
 		return true;
 	}
 
@@ -1425,7 +1425,7 @@ namespace engine::render
 
 	void BloomCombinePass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[BLOOM] BloomCombinePass::Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[BLOOM] BloomCombinePass::Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_pipeline != VK_NULL_HANDLE)
 			{ vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
@@ -1440,6 +1440,6 @@ namespace engine::render
 			{ vkDestroyDescriptorSetLayout(device, m_descriptorSetLayout, nullptr); m_descriptorSetLayout = VK_NULL_HANDLE; }
 		if (m_renderPass != VK_NULL_HANDLE)
 			{ vkDestroyRenderPass(device, m_renderPass, nullptr); m_renderPass = VK_NULL_HANDLE; }
-		std::fprintf(stderr, "[BLOOM] BloomCombinePass::Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BLOOM] BloomCombinePass::Destroy OK");
 	}
 }

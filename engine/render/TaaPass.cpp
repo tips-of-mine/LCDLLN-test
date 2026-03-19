@@ -29,7 +29,7 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[TAA] Init enter\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[TAA] Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv || vertWordCount == 0 || fragWordCount == 0)
 		{
 			LOG_ERROR(Render, "TaaPass::Init: invalid arguments");
@@ -225,7 +225,7 @@ namespace engine::render
 		AssertPipelineCreationAllowed();
 		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, outputFormat, VK_FORMAT_UNDEFINED));
 		VkResult result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
-		std::fprintf(stderr, "[TAA] vkCreateGraphicsPipelines r=%d\n", (int)result); std::fflush(stderr);
+		LOG_INFO(Render, "[TAA] vkCreateGraphicsPipelines r={}", (int)result);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "TaaPass: vkCreateGraphicsPipelines failed");
@@ -237,7 +237,6 @@ namespace engine::render
 		vkDestroyShaderModule(device, vertMod, nullptr);
 		vkDestroyShaderModule(device, fragMod, nullptr);
 
-		std::fprintf(stderr, "[TAA] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "TaaPass: initialised");
 		return true;
 	}
@@ -318,7 +317,7 @@ namespace engine::render
 
 	void TaaPass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[TAA] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[TAA] Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_pipeline != VK_NULL_HANDLE) { vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
@@ -327,6 +326,6 @@ namespace engine::render
 		if (m_setLayout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr); m_setLayout = VK_NULL_HANDLE; }
 		if (m_renderPass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, m_renderPass, nullptr); m_renderPass = VK_NULL_HANDLE; }
 		m_descriptorSets.clear();
-		std::fprintf(stderr, "[TAA] Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[TAA] Destroy OK");
 	}
 }

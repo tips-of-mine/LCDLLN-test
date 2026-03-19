@@ -16,7 +16,6 @@ namespace engine::render
 		uint32_t graphicsQueueFamilyIndex,
 		ShaderLoaderFn loadSpirv)
 	{
-		std::fprintf(stderr, "[PIPELINE] Init enter\n"); std::fflush(stderr);
 
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !loadSpirv)
 			return false;
@@ -30,7 +29,6 @@ namespace engine::render
 		PipelineCache::BeginWarmup();
 
 		// M05.1: BRDF LUT
-		std::fprintf(stderr, "[PIPELINE] 1 BRDF LUT\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> brdfComp = loadSpirv("shaders/brdf_lut.comp.spv");
 			if (!brdfComp.empty())
@@ -50,7 +48,6 @@ namespace engine::render
 		}
 
 		// M05.3: Specular prefilter
-		std::fprintf(stderr, "[PIPELINE] 2 SpecularPrefilter\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> specComp = loadSpirv("shaders/specular_prefilter.comp.spv");
 			if (!specComp.empty())
@@ -76,7 +73,6 @@ namespace engine::render
 		}
 
 		// M06.1: SSAO kernel + noise
-		std::fprintf(stderr, "[PIPELINE] 3 SSAO kernel+noise\n"); std::fflush(stderr);
 		{
 			if (!m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator,
 					config, graphicsQueue, graphicsQueueFamilyIndex))
@@ -92,7 +88,6 @@ namespace engine::render
 		}
 
 		// M06.2: SSAO generate
-		std::fprintf(stderr, "[PIPELINE] 4 SSAO pass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> ssaoVert = loadSpirv("shaders/ssao.vert.spv");
 			std::vector<uint32_t> ssaoFrag = loadSpirv("shaders/ssao.frag.spv");
@@ -109,7 +104,6 @@ namespace engine::render
 		}
 
 		// M06.3: SSAO blur
-		std::fprintf(stderr, "[PIPELINE] 5 SSAO blur\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> blurVert = loadSpirv("shaders/ssao_blur.vert.spv");
 			std::vector<uint32_t> blurFrag = loadSpirv("shaders/ssao_blur.frag.spv");
@@ -126,7 +120,6 @@ namespace engine::render
 		}
 
 		// Geometry pass
-		std::fprintf(stderr, "[PIPELINE] 6 GeometryPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> vertSpirv = loadSpirv("shaders/gbuffer_geometry.vert.spv");
 			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
@@ -195,7 +188,6 @@ namespace engine::render
 		}
 
 		// Shadow map pass
-		std::fprintf(stderr, "[PIPELINE] 7 ShadowMapPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> smVert = loadSpirv("shaders/shadow_depth.vert.spv");
 			std::vector<uint32_t> smFrag = loadSpirv("shaders/shadow_depth.frag.spv");
@@ -212,7 +204,6 @@ namespace engine::render
 		}
 
 		// Deferred decal pass
-		std::fprintf(stderr, "[PIPELINE] 7b DecalPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> decalVert = loadSpirv("shaders/decal.vert.spv");
 			std::vector<uint32_t> decalFrag = loadSpirv("shaders/decal.frag.spv");
@@ -235,7 +226,6 @@ namespace engine::render
 		}
 
 		// Lighting pass
-		std::fprintf(stderr, "[PIPELINE] 8 LightingPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> litVert = loadSpirv("shaders/lighting.vert.spv");
 			std::vector<uint32_t> litFrag = loadSpirv("shaders/lighting.frag.spv");
@@ -252,7 +242,6 @@ namespace engine::render
 		}
 
 		// Tonemap pass
-		std::fprintf(stderr, "[PIPELINE] 9 TonemapPass\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");
 			std::vector<uint32_t> tmFrag = loadSpirv("shaders/tonemap.frag.spv");
@@ -269,7 +258,6 @@ namespace engine::render
 		}
 
 		// Bloom prefilter + downsample
-		std::fprintf(stderr, "[PIPELINE] 10 Bloom prefilter+downsample\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> bpVert = loadSpirv("shaders/bloom_prefilter.vert.spv");
 			std::vector<uint32_t> bpFrag = loadSpirv("shaders/bloom_prefilter.frag.spv");
@@ -285,7 +273,6 @@ namespace engine::render
 		}
 
 		// Bloom upsample + combine
-		std::fprintf(stderr, "[PIPELINE] 11 Bloom upsample+combine\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> buVert = loadSpirv("shaders/bloom_upsample.vert.spv");
 			std::vector<uint32_t> buFrag = loadSpirv("shaders/bloom_upsample.frag.spv");
@@ -301,7 +288,6 @@ namespace engine::render
 		}
 
 		// M08.6: Auto-exposure histogram
-		std::fprintf(stderr, "[PIPELINE] 12 AutoExposure\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> histogramComp = loadSpirv("shaders/luminance_histogram.comp.spv");
 			std::vector<uint32_t> histogramAvgComp = loadSpirv("shaders/luminance_histogram_avg.comp.spv");
@@ -328,7 +314,6 @@ namespace engine::render
 		}
 
 		// M07.4: TAA
-		std::fprintf(stderr, "[PIPELINE] 13 TAA\n"); std::fflush(stderr);
 		{
 			std::vector<uint32_t> taaVert = loadSpirv("shaders/taa.vert.spv");
 			std::vector<uint32_t> taaFrag = loadSpirv("shaders/taa.frag.spv");
@@ -346,57 +331,34 @@ namespace engine::render
 
 		PipelineCache::EndWarmup();
 
-		std::fprintf(stderr, "[PIPELINE] done\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[Boot] DeferredPipeline all passes init done");
 		return true;
 	}
 
 	void DeferredPipeline::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[PIPELINE] Destroy enter\n"); std::fflush(stderr);
 		if (device == VK_NULL_HANDLE) return;
 		// Reverse init order: TAA → auto-exposure → bloom → tonemap → lighting → decals → shadow → geometry → SSAO → specular/BRDF.
-		std::fprintf(stderr, "[PIPELINE] Destroy taaPass\n"); std::fflush(stderr);
 		m_taaPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy autoExposure\n"); std::fflush(stderr);
 		m_autoExposure.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy bloomCombine\n"); std::fflush(stderr);
 		m_bloomCombinePass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy bloomUpsample\n"); std::fflush(stderr);
 		m_bloomUpsamplePass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy bloomDownsample\n"); std::fflush(stderr);
 		m_bloomDownsamplePass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy bloomPrefilter\n"); std::fflush(stderr);
 		m_bloomPrefilterPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy tonemap\n"); std::fflush(stderr);
 		m_tonemapPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy lighting\n"); std::fflush(stderr);
 		m_lightingPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy decal\n"); std::fflush(stderr);
 		m_decalPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy shadow\n"); std::fflush(stderr);
 		m_shadowMapPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy hiZ\n"); std::fflush(stderr);
 		m_hiZPyramidPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy gpuCull\n"); std::fflush(stderr);
 		m_gpuDrivenCullingPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy materialDescCache\n"); std::fflush(stderr);
 		m_materialDescriptorCache.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy geometry\n"); std::fflush(stderr);
 		m_geometryPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy ssaoBlur\n"); std::fflush(stderr);
 		m_ssaoBlurPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy ssao\n"); std::fflush(stderr);
 		m_ssaoPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy ssaoKernelNoise\n"); std::fflush(stderr);
 		m_ssaoKernelNoise.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy specularPrefilter\n"); std::fflush(stderr);
 		m_specularPrefilterPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy brdfLut\n"); std::fflush(stderr);
 		m_brdfLutPass.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy pipelineCache\n"); std::fflush(stderr);
 		m_pipelineCache.Destroy(device);
-		std::fprintf(stderr, "[PIPELINE] Destroy OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "[DeferredPipeline] Destroyed");
 	}
 

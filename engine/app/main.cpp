@@ -28,9 +28,7 @@ int main(int argc, char** argv)
 	}
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
-		std::fprintf(stderr, "[MAIN] SEH EXCEPTION code=0x%08X\n",
-			(unsigned int)GetExceptionCode());
-		std::fflush(stderr);
+LOG_ERROR(Core, "[MAIN] SEH EXCEPTION code=0x{:08X}", static_cast<unsigned int>(GetExceptionCode()));
 	}
 #else
 	g_result = CreateAndRun(argc, argv);

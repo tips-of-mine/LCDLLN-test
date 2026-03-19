@@ -21,12 +21,6 @@ namespace engine::core
 
 	void Time::BeginFrame()
 	{
-		// DEBUG STAB
-		std::fprintf(stderr, "[TIME] BeginFrame enter windowDeltas.size=%zu cursor=%u count=%u\n",
-			m_windowDeltas.size(), m_windowCursor, m_windowCount);
-		std::fflush(stderr);
-		// FIN DEBUG
-
 		const uint64_t nowTicks = NowTicks();
 		uint64_t diff = (nowTicks >= m_lastTicks) ? (nowTicks - m_lastTicks) : 0;
 		m_lastTicks = nowTicks;

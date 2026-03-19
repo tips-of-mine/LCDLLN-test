@@ -236,9 +236,7 @@ namespace engine::platform
 			PostQuitMessage(0);
 			return 0;
 		case WM_SIZE:
-		    std::fprintf(stderr, "[WINDOW] WM_SIZE wparam=%llu w=%d h=%d\n",
-        		(unsigned long long)wparam, LOWORD((LPARAM)lparam), HIWORD((LPARAM)lparam));
-    		std::fflush(stderr);
+LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)wparam, LOWORD((LPARAM)lparam), HIWORD((LPARAM)lparam));
    			if (wparam != SIZE_MINIMIZED && m_onResize)
 			{
 				const int w = LOWORD(static_cast<LPARAM>(lparam));

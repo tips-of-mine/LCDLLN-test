@@ -158,14 +158,12 @@ namespace engine
 		, m_time(120)
 		, m_frameArena(/*framesInFlight*/ 2, /*perFrameCapacityBytes*/ 1024 * 1024)
 	{
-		std::fprintf(stderr, "[ENGINE] A: debut constructeur\n"); std::fflush(stderr);
 
 		// ------------------------------------------------------------------
 		// Logging
 		// ------------------------------------------------------------------
 		bool logToFile    = false;
 		bool logToConsole = false;
-		std::fprintf(stderr, "[ENGINE] A1: before arg parse argc=%d\n", argc); std::fflush(stderr);
 		for (int i = 1; i < argc; ++i)
 		{
 			if (!argv[i]) continue;
@@ -173,32 +171,29 @@ namespace engine
 			if (arg == "-log")     logToFile    = true;
 			if (arg == "-console") logToConsole = true;
 		}
-		std::fprintf(stderr, "[ENGINE] A2: after arg parse logToFile=%d logToConsole=%d\n",	(int)logToFile, (int)logToConsole); std::fflush(stderr);
 
 		engine::core::LogSettings logSettings;
-		std::fprintf(stderr, "[ENGINE] A3: before GetString log.file\n"); std::fflush(stderr);
-		logSettings.filePath    = logToFile
-			? engine::core::Log::MakeTimestampedFilename("lcdlln.exe")
-			: "";
-			// : m_cfg.GetString("log.file", "engine.log");
-		std::fprintf(stderr, "[ENGINE] A4: after GetString log.file='%s'\n", logSettings.filePath.c_str()); std::fflush(stderr);
+		if (logToFile)
+		{
+			const std::string relPath = engine::core::Log::MakeTimestampedFilename("lcdlln.exe");
+			std::error_code ec;
+			const auto absPath = std::filesystem::absolute(relPath, ec);
+			logSettings.filePath = ec ? relPath : absPath.string();
+			std::fprintf(stderr, "[Log] Log file: %s\n", logSettings.filePath.c_str());
+			std::fflush(stderr);
+		}
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
 		logSettings.level       = engine::core::LogLevel::Info;
-		std::fprintf(stderr, "[ENGINE] A5: before GetInt rotation/retention\n"); std::fflush(stderr);
 		logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), m_cfg.GetInt("log.rotation_size_mb", 10)));
 		logSettings.retention_days   = static_cast<int>(m_cfg.GetInt("log.retention_days", 7));
-		std::fprintf(stderr, "[ENGINE] A6: after GetInt rotation=%zu retention=%d\n", logSettings.rotation_size_mb, logSettings.retention_days); std::fflush(stderr);
 
-		std::fprintf(stderr, "[ENGINE] A7: before Log::Init\n"); std::fflush(stderr);
 		engine::core::Log::Init(logSettings);
-		std::fprintf(stderr, "[ENGINE] B: Log::Init OK\n"); std::fflush(stderr);
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
 			LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
 		}
-		std::fprintf(stderr, "[ENGINE] B1: LOG_INFO OK\n"); std::fflush(stderr);
 
 		// ------------------------------------------------------------------
 		// Config + subsystems
@@ -206,27 +201,20 @@ namespace engine
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);
-		std::fprintf(stderr, "[ENGINE] C: config OK\n"); std::fflush(stderr);
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
 			LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
 		}
-		std::fprintf(stderr, "[ENGINE] D: LOG_INFO config OK\n"); std::fflush(stderr);
 
-		std::fprintf(stderr, "[ENGINE] E: avant editor mode check\n"); std::fflush(stderr);
 		if (m_editorEnabled)
 		{
-			std::fprintf(stderr, "[ENGINE] E1: avant editor::EditorMod\n"); std::fflush(stderr);
 			m_editorMode = std::make_unique<engine::editor::EditorMode>();
-			std::fprintf(stderr, "[ENGINE] E2: après editor::EditorMod\n"); std::fflush(stderr);
 			if (!m_editorMode->Init(m_cfg))
 			{
-				std::fprintf(stderr, "[ENGINE] E3: avant \n"); std::fflush(stderr);
 				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
 				m_editorMode.reset();
 				m_editorEnabled = false;
-				std::fprintf(stderr, "[ENGINE] E4: après \n"); std::fflush(stderr);
 			}
 			else
 			{
@@ -236,31 +224,15 @@ namespace engine
 				LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
 			}
 		}
-		std::fprintf(stderr, "[ENGINE] F: apres editor mode block\n"); std::fflush(stderr);
 
-		std::fprintf(stderr, "[ENGINE] G: chunkStats.Init\n"); std::fflush(stderr);
 		m_chunkStats.Init(m_cfg);
-
-		std::fprintf(stderr, "[ENGINE] H: lodConfig.Init\n"); std::fflush(stderr);
 		m_lodConfig.Init(m_cfg);
-
-		std::fprintf(stderr, "[ENGINE] I: hlodRuntime.Init\n"); std::fflush(stderr);
 		m_hlodRuntime.Init(m_cfg);
-
-		std::fprintf(stderr, "[ENGINE] J: LoadZoneProbeAssets\n"); std::fflush(stderr);
 		LoadZoneProbeAssets();
-
-		std::fprintf(stderr, "[ENGINE] K: streamCache.Init\n"); std::fflush(stderr);
 		m_streamCache.Init(m_cfg);
-
-		std::fprintf(stderr, "[ENGINE] L: streamingScheduler.SetStreamCache\n"); std::fflush(stderr);
 		m_streamingScheduler.SetStreamCache(&m_streamCache);
-
-		std::fprintf(stderr, "[ENGINE] M: gpuUploadQueue.Init\n"); std::fflush(stderr);
 		m_gpuUploadQueue.Init(m_cfg);
-
-		std::fprintf(stderr, "[ENGINE] N: subsystems OK\n"); std::fflush(stderr);
-		LOG_INFO(Core, "[Boot] FrameArena init OK");
+		LOG_INFO(Core, "[Boot] Streaming subsystems ready (ChunkStats, LOD, HLOD, StreamCache, GpuUploadQueue)");
 
 		// ------------------------------------------------------------------
 		// Window
@@ -270,12 +242,10 @@ namespace engine
 		desc.width  = 1280;
 		desc.height = 720;
 
-		std::fprintf(stderr, "[ENGINE] O: avant Window::Create\n"); std::fflush(stderr);
 		if (!m_window.Create(desc))
 		{
 			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
-		std::fprintf(stderr, "[ENGINE] P: Window::Create OK\n"); std::fflush(stderr);
 		LOG_INFO(Core, "[Boot] Window::Create OK");
 
 		m_window.SetOnResize([this](int w, int h) { OnResize(w, h); });
@@ -286,26 +256,21 @@ namespace engine
 		});
 		m_window.GetClientSize(m_width, m_height);
 
-		std::fprintf(stderr, "[ENGINE] Q: window setup OK w=%d h=%d\n", m_width, m_height); std::fflush(stderr);
 
 		// -----------------------------------------------------------------
 		// Vulkan init
 		// -----------------------------------------------------------------
-		std::fprintf(stderr, "[ENGINE] R: avant glfwInit\n"); std::fflush(stderr);
 		if (glfwInit() != GLFW_TRUE)
 		{
 			LOG_WARN(Platform, "[Boot] glfwInit failed");
 		}
 		else
 		{
-			std::fprintf(stderr, "[ENGINE] R1: glfwInit OK\n"); std::fflush(stderr);
 			LOG_INFO(Core, "[Boot] glfwInit OK");
 			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-			std::fprintf(stderr, "[ENGINE] R2: avant glfwCreateWindow\n"); std::fflush(stderr);
 			m_glfwWindowForVk = glfwCreateWindow(1, 1, "VkSurface", nullptr, nullptr);
-			std::fprintf(stderr, "[ENGINE] R3: glfwCreateWindow ptr=%p\n", (void*)m_glfwWindowForVk); std::fflush(stderr);
 			if (!m_glfwWindowForVk)
 			{
 				LOG_WARN(Platform, "[Boot] glfwCreateWindow returned null");
@@ -315,29 +280,23 @@ namespace engine
 				LOG_INFO(Core, "[Boot] glfwCreateWindow OK");
 			}
 
-			std::fprintf(stderr, "[ENGINE] R4: avant VkInstance::Create\n"); std::fflush(stderr);
 			if (m_glfwWindowForVk && m_vkInstance.Create())
 			{
-				std::fprintf(stderr, "[ENGINE] R5: VkInstance::Create OK\n"); std::fflush(stderr);
 				LOG_INFO(Core, "[Boot] VkInstance::Create OK");
 
-				std::fprintf(stderr, "[ENGINE] R6: avant CreateSurface\n"); std::fflush(stderr);
 				if (!m_vkInstance.CreateSurface(m_glfwWindowForVk))
 				{
 					LOG_WARN(Platform, "[Boot] VkInstance::CreateSurface failed");
 				}
 				else
 				{
-					std::fprintf(stderr, "[ENGINE] R7: CreateSurface OK\n"); std::fflush(stderr);
 					LOG_INFO(Core, "[Boot] VkInstance::CreateSurface OK");
-					std::fprintf(stderr, "[ENGINE] R8: avant VkDeviceContext::Create\n"); std::fflush(stderr);
 					if (!m_vkDeviceContext.Create(m_vkInstance.GetHandle(), m_vkInstance.GetSurface()))
 					{
 						LOG_WARN(Platform, "[Boot] VkDeviceContext::Create failed");
 					}
 					else
 					{
-						std::fprintf(stderr, "[ENGINE] R9: VkDeviceContext::Create OK\n"); std::fflush(stderr);
 						VkPhysicalDeviceProperties physProps{};
 						vkGetPhysicalDeviceProperties(m_vkDeviceContext.GetPhysicalDevice(), &physProps);
 						LOG_INFO(Core, "[Boot] VkDeviceContext::Create OK (GPU: {})", physProps.deviceName);
@@ -352,7 +311,6 @@ namespace engine
 								requestedMode = VK_PRESENT_MODE_MAILBOX_KHR;
 						}
 
-						std::fprintf(stderr, "[ENGINE] R10: avant VkSwapchain::Create\n"); std::fflush(stderr);
 						if (!m_vkSwapchain.Create(
 							m_vkDeviceContext.GetPhysicalDevice(),
 							m_vkDeviceContext.GetDevice(),
@@ -366,12 +324,10 @@ namespace engine
 						}
 						else
 						{
-							std::fprintf(stderr, "[ENGINE] R11: VkSwapchain::Create OK\n"); std::fflush(stderr);
 							VkExtent2D swapExtent = m_vkSwapchain.GetExtent();
 							LOG_INFO(Core, "[Boot] VkSwapchain::Create OK (extent={}x{}, images={})",
 								swapExtent.width, swapExtent.height, m_vkSwapchain.GetImageCount());
 
-							std::fprintf(stderr, "[ENGINE] R12: avant CreateFrameResources\n"); std::fflush(stderr);
 							if (!engine::render::CreateFrameResources(
 								m_vkDeviceContext.GetDevice(),
 								m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
@@ -381,12 +337,10 @@ namespace engine
 							}
 							else
 							{
-								std::fprintf(stderr, "[ENGINE] R13: CreateFrameResources OK\n"); std::fflush(stderr);
 								LOG_INFO(Core, "[Boot] FrameSync::Init OK");
 
 								if (m_vkSwapchain.IsValid())
 								{
-									std::fprintf(stderr, "[ENGINE] R14: avant vmaCreateAllocator\n"); std::fflush(stderr);
 									VmaVulkanFunctions vmaFuncs{};
 									vmaFuncs.vkGetInstanceProcAddr               = vkGetInstanceProcAddr;
 									vmaFuncs.vkGetDeviceProcAddr                 = vkGetDeviceProcAddr;
@@ -422,16 +376,14 @@ namespace engine
 									vmaInfo.pVulkanFunctions = &vmaFuncs;
 									if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
 									{
-										LOG_ERROR(Render, "VMA allocator creation failed");
-										m_vmaAllocator = nullptr;
+										LOG_ERROR(Render, "[Boot] VMA allocator creation failed — GPU memory unavailable");
+										}
+										else
+										{
+											LOG_INFO(Render, "[Boot] VMA allocator created OK");
 									}
-									std::fprintf(stderr, "[ENGINE] R15: vmaCreateAllocator OK ptr=%p\n", m_vmaAllocator); std::fflush(stderr);
 
 									// Vérification VmaAllocatorInfo
-									VmaAllocatorInfo vmaAllocInfo{};
-									vmaGetAllocatorInfo(reinterpret_cast<VmaAllocator>(m_vmaAllocator), &vmaAllocInfo);
-									std::fprintf(stderr, "[ENGINE] R16: vmaGetAllocatorInfo device=%p physDev=%p instance=%p\n",
-									    (void*)vmaAllocInfo.device, (void*)vmaAllocInfo.physicalDevice, (void*)vmaAllocInfo.instance); std::fflush(stderr);
 									
 									if (m_vmaAllocator)
 									{
@@ -443,45 +395,35 @@ namespace engine
 										testBuf.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 										VkBuffer tmpBuf = VK_NULL_HANDLE;
 										VkResult testResult = vkCreateBuffer(m_vkDeviceContext.GetDevice(), &testBuf, nullptr, &tmpBuf);
-										std::fprintf(stderr, "[ENGINE] vkCreateBuffer test result=%d buf=%p\n", (int)testResult, (void*)tmpBuf); std::fflush(stderr);
 										if (tmpBuf != VK_NULL_HANDLE) vkDestroyBuffer(m_vkDeviceContext.GetDevice(), tmpBuf, nullptr);
 
 										// M10.4: réactivation du StagingAllocator avec budget streaming.
 										const size_t stagingBudget = m_gpuUploadQueue.GetBudgetBytes();
-										std::fprintf(stderr, "[ENGINE] R17: StagingAllocator::Init device=%p vma=%p budget=%zu\n",
-											(void*)m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget); std::fflush(stderr);
 										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget))
 										{
-											LOG_WARN(Render, "[StagingAllocator] Init FAILED (pool_size_bytes={})", stagingBudget);
-											std::fprintf(stderr, "[ENGINE] R18: StagingAllocator::Init FAILED (staging désactivé)\n"); std::fflush(stderr);
+											LOG_WARN(Render, "[Boot] StagingAllocator init FAILED (budget={} bytes) — streaming GPU uploads disabled", stagingBudget);
 										}
 										else
 										{
-											LOG_INFO(Render, "[StagingAllocator] Initialized. Pool size: {} bytes", stagingBudget);
-											std::fprintf(stderr, "[ENGINE] R19: StagingAllocator::Init OK\n"); std::fflush(stderr);
+											LOG_INFO(Render, "[Boot] StagingAllocator ready (budget={} bytes)", stagingBudget);
 										}
 
-										std::fprintf(stderr, "[ENGINE] R20: avant make_unique DeferredPipeline\n"); std::fflush(stderr);
 										m_pipeline = std::make_unique<engine::render::DeferredPipeline>();
 
-										std::fprintf(stderr, "[ENGINE] R21: avant assetRegistry.Init\n"); std::fflush(stderr);
 										m_assetRegistry.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, m_cfg);
 
-										std::fprintf(stderr, "[ENGINE] R22: assetRegistry OK\n"); std::fflush(stderr);
 										if (!m_profiler.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), 2u))
 										{
-											LOG_WARN(Core, "[Engine] Profiler init failed - profiling disabled");
+											LOG_WARN(Core, "[Boot] Profiler init failed — GPU timestamp profiling disabled");
 										}
 										if (!m_profilerHud.Init())
 										{
-											LOG_WARN(Core, "[Engine] ProfilerHud init failed - overlay disabled");
+											LOG_WARN(Core, "[Boot] ProfilerHud init failed — in-game profiler overlay disabled");
 										    m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
-											std::fprintf(stderr, "[ENGINE] PROFILER FORCE DISABLED (STAB.9)\n");
-											std::fflush(stderr);
 										}
 										if (!m_audioEngine.Init(m_cfg))
 										{
-											LOG_WARN(Core, "[Engine] AudioEngine init failed - audio disabled");
+											LOG_WARN(Core, "[Boot] AudioEngine init failed — no sound");
 										}
 										else
 										{
@@ -504,7 +446,6 @@ namespace engine
 												m_colorGradingLutHandle = m_assetRegistry.LoadTexture(lutPath, true);
 										}
 
-										std::fprintf(stderr, "[ENGINE] R23: avant createImage SceneColor\n"); std::fflush(stderr);
 										engine::render::ImageDesc sceneColorDesc{};
 										sceneColorDesc.format    = m_vkSwapchain.GetImageFormat();
 										sceneColorDesc.usage     = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -586,7 +527,7 @@ namespace engine
 											std::snprintf(name, sizeof(name), "BloomUp_%u", i);
 											m_fgBloomUpMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
 										}
-										LOG_INFO(Render, "[Bloom] FrameGraph resources registered: %zu down + %zu up mips",
+										LOG_INFO(Render, "[Bloom] FrameGraph resources registered: {} down + {} up mips",
 											m_fgBloomDownMipIds.size(),
 											m_fgBloomUpMipIds.size());
 
@@ -608,7 +549,6 @@ namespace engine
 											std::snprintf(name, sizeof(name), "ShadowMap_%u", i);
 											m_fgShadowMapIds[i] = m_frameGraph.createImage(name, shadowDesc);
 										}
-										std::fprintf(stderr, "[ENGINE] R24: frame graph images OK\n"); std::fflush(stderr);
 
 										{
 											engine::render::ShaderCompiler sc;
@@ -617,7 +557,6 @@ namespace engine
 											else
 												LOG_WARN(Render, "[Boot] ShaderCompiler glslangValidator not found");
 										}
-										std::fprintf(stderr, "[ENGINE] R25: ShaderCompiler check OK\n"); std::fflush(stderr);
 
 										auto loadSpirv = [&](const char* spvPath) -> std::vector<uint32_t>
 										{
@@ -651,8 +590,6 @@ namespace engine
 											return {};
 										};
 
-										std::fprintf(stderr, "[ENGINE] R26: avant pipeline->Init\n"); std::fflush(stderr);
-										std::fprintf(stderr, "[ENGINE] R27: appel Init...\n"); std::fflush(stderr);
 										bool pipelineOk = m_pipeline->Init(
 										    m_vkDeviceContext.GetDevice(),
 										    m_vkDeviceContext.GetPhysicalDevice(),
@@ -664,11 +601,8 @@ namespace engine
 										    m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 										    loadSpirv
 										);
-										std::fprintf(stderr, "[ENGINE] R28: Init retourne %d\n", (int)pipelineOk); std::fflush(stderr);
-										std::fprintf(stderr, "[ENGINE] R29: pipeline->Init OK\n"); std::fflush(stderr);
 										LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
-										std::fprintf(stderr, "[ENGINE] R30: avant addPass Clear\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Clear",
 											[this](engine::render::PassBuilder& b) {
 												b.write(m_fgSceneColorId, engine::render::ImageUsage::TransferDst);
@@ -681,12 +615,9 @@ namespace engine
 												vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 											});
 
-										std::fprintf(stderr, "[ENGINE] R31: avant LoadMesh\n"); std::fflush(stderr);
 										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
 
-										std::fprintf(stderr, "[ENGINE] R32: LoadMesh OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R33: avant addPass GPU_Cull\n"); std::fflush(stderr);
 										m_frameGraph.addPass("GPU_Cull",
 											[](engine::render::PassBuilder&) {},
 											[this](VkCommandBuffer cmd, engine::render::Registry&) {
@@ -723,9 +654,7 @@ namespace engine
 													hiZPass.GetExtent(),
 													hiZPass.GetMipCount());
 											});
-										std::fprintf(stderr, "[ENGINE] R34: addPass GPU_Cull OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R35: avant addPass Geometry\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Geometry",
 											[this](engine::render::PassBuilder& b) {
 												b.write(m_fgGBufferAId,        engine::render::ImageUsage::ColorWrite);
@@ -780,7 +709,6 @@ namespace engine
 														materialCache.GetDefaultMaterialIndex());
 												}
 											});
-										std::fprintf(stderr, "[ENGINE] R36: addPass Geometry OK\n"); std::fflush(stderr);
 
 										m_frameGraph.addPass("HiZ_Build",
 											[this](engine::render::PassBuilder& b) {
@@ -797,7 +725,6 @@ namespace engine
 													m_vkSwapchain.GetExtent(), m_currentFrame);
 											});
 
-										std::fprintf(stderr, "[ENGINE] R37: avant addPass ShadowMap\n"); std::fflush(stderr);
 										for (uint32_t cascade = 0; cascade < engine::render::kCascadeCount; ++cascade)
 										{
 											const std::string passName = std::string("ShadowMap_") + std::to_string(cascade);
@@ -824,9 +751,7 @@ namespace engine
 														mesh, depthBiasConstant, depthBiasSlope, cullFrontFaces);
 												});
 										}
-										std::fprintf(stderr, "[ENGINE] R38: addPass ShadowMap OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R39: avant addPass SSAO_Generate\n"); std::fflush(stderr);
 										m_frameGraph.addPass("SSAO_Generate",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgDepthId,    engine::render::ImageUsage::SampledRead);
@@ -880,7 +805,6 @@ namespace engine
 													m_pipeline->GetSsaoKernelNoise().GetNoiseSampler(),
 													sp, frameIdx);
 											});
-										std::fprintf(stderr, "[ENGINE] R40: addPass SSAO_Generate OK\n"); std::fflush(stderr);
 
 										m_frameGraph.addPass("SSAO_BlurH",
 											[this](engine::render::PassBuilder& b) {
@@ -909,7 +833,6 @@ namespace engine
 													m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
 													m_fgSsaoBlurTempId, m_fgDepthId, m_fgSsaoBlurId, false, frameIdx);
 											});
-										std::fprintf(stderr, "[ENGINE] R41: addPass SSAO_Blur OK\n"); std::fflush(stderr);
 
 										if (m_pipeline->GetDecalPass().IsValid())
 										{
@@ -976,7 +899,6 @@ namespace engine
 											LOG_WARN(Render, "[Engine] Decal pass disabled, overlay clear fallback registered");
 										}
 
-										std::fprintf(stderr, "[ENGINE] R42: avant addPass Lighting\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Lighting",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgGBufferAId,       engine::render::ImageUsage::SampledRead);
@@ -1049,9 +971,7 @@ namespace engine
 													irrView, irrSamp, prefilterView, prefilterSamp, brdfView, brdfSamp,
 													lp, frameIdx);
 											});
-										std::fprintf(stderr, "[ENGINE] R43: addPass Lighting OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R44: avant addPass Bloom\n"); std::fflush(stderr);
 										m_frameGraph.addPass("Bloom_Prefilter",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgSceneColorHDRId, engine::render::ImageUsage::SampledRead);
@@ -1126,9 +1046,7 @@ namespace engine
 												const uint32_t frameIdx = m_currentFrame % 2;
 												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
-										std::fprintf(stderr, "[ENGINE] R45: addPass Bloom OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R46: avant addPass AutoExposure+Tonemap\n"); std::fflush(stderr);
 										m_frameGraph.addPass("AutoExposure_Luminance",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::SampledRead);
@@ -1159,9 +1077,7 @@ namespace engine
 												const uint32_t frameIdx = m_currentFrame % 2;
 												m_pipeline->GetTonemapPass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRWithBloomId, m_fgSceneColorLDRId, tp, lutView, frameIdx);
 											});
-										std::fprintf(stderr, "[ENGINE] R47: addPass Tonemap OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R48: avant addPass TAA\n"); std::fflush(stderr);
 										m_frameGraph.addPass("TAA",
 											[this](engine::render::PassBuilder& b) {
 												// Lecture pour TAA
@@ -1275,9 +1191,7 @@ namespace engine
 													tp,
 													frameIdx);
 											});
-										std::fprintf(stderr, "[ENGINE] R48: addPass TAA OK\n"); std::fflush(stderr);
 
-										std::fprintf(stderr, "[ENGINE] R49: avant addPass CopyPresent\n"); std::fflush(stderr);
 										m_frameGraph.addPass("CopyPresent",
 											[this](engine::render::PassBuilder& b) {
 												b.read(m_fgHistoryAId,      engine::render::ImageUsage::TransferSrc);
@@ -1311,7 +1225,6 @@ namespace engine
 												barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 												vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 											});
-										std::fprintf(stderr, "[ENGINE] R50: addPass CopyPresent OK\n"); std::fflush(stderr);
 
 										m_frameGraph.addPass("PostRead",
 											[this](engine::render::PassBuilder& b) {
@@ -1324,7 +1237,6 @@ namespace engine
 										engine::render::TextureHandle t2 = m_assetRegistry.LoadTexture("textures/test.texr", false);
 										if (m_geometryMeshHandle.IsValid() && h2.IsValid() && m_geometryMeshHandle.Id() == h2.Id()) { /* cache OK */ }
 										if (t1.IsValid() && t2.IsValid() && t1.Id() == t2.Id()) { /* cache OK */ }
-										std::fprintf(stderr, "[ENGINE] BH: all passes registered OK\n"); std::fflush(stderr);
 									}
 								}
 							}
@@ -1342,25 +1254,21 @@ namespace engine
 		}
 
 		// FS smoke test
-		std::fprintf(stderr, "[ENGINE] S: avant FS smoke\n"); std::fflush(stderr);
 		{
 			const auto cfgText = engine::platform::FileSystem::ReadAllText("config.json");
 			LOG_INFO(Platform, "FS ReadAllText('config.json'): {} bytes", cfgText.size());
 			const auto contentCfgText = engine::platform::FileSystem::ReadAllTextContent(m_cfg, "config.json");
 			LOG_INFO(Platform, "FS ReadAllTextContent(paths.content/'config.json'): {} bytes", contentCfgText.size());
 		}
-		std::fprintf(stderr, "[ENGINE] T: FS smoke OK\n"); std::fflush(stderr);
 
 		LOG_INFO(Core, "Engine init: vsync={} (present mode from swapchain)", m_vsync ? "on" : "off");
 		LOG_INFO(Core, "[Boot] Engine boot COMPLETE");
-		std::fprintf(stderr, "[ENGINE] U: constructeur COMPLETE\n"); std::fflush(stderr);
 	}
 
 	Engine::~Engine() = default;
 
 	int Engine::Run()
 	{
-		std::fprintf(stderr, "[RUN] debut Run\n"); std::fflush(stderr);
 		LOG_DEBUG(Core, "[Engine] Entering render loop");
 
 		auto lastFpsLog  = std::chrono::steady_clock::now();
@@ -1368,20 +1276,13 @@ namespace engine
 
 		while (!m_quitRequested && !m_window.ShouldClose())
 		{
-			std::fprintf(stderr, "[RUN] BeginFrame\n"); std::fflush(stderr);
 			BeginFrame();
-			std::fprintf(stderr, "[RUN] Update\n"); std::fflush(stderr);
 			Update();
-			std::fprintf(stderr, "[RUN] SwapRenderState\n"); std::fflush(stderr);
 			SwapRenderState();
-			std::fprintf(stderr, "[RUN] Render\n"); std::fflush(stderr);
-			//std::fprintf(stderr, "[RENDER] frameGraph extent=%ux%u framesInFlight=%u\n", m_swapchainExtent.width, m_swapchainExtent.height, m_framesInFlight); std::fflush(stderr);
-			
+			//			
 			Render();
 
-			std::fprintf(stderr, "[RUN] EndFrame\n"); std::fflush(stderr);
 			EndFrame();
-			std::fprintf(stderr, "[RUN] frame done\n"); std::fflush(stderr);
 
 			const auto now = std::chrono::steady_clock::now();
 			if (now - lastFpsLog >= std::chrono::seconds(1))
@@ -1400,58 +1301,39 @@ namespace engine
 			lastPresent = std::chrono::steady_clock::now();
 		}
 
-		std::fprintf(stderr, "[RUN] sortie loop\n"); std::fflush(stderr);
 		LOG_INFO(Core, "[Engine] Render loop exited cleanly");
 
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
-			std::fprintf(stderr, "[RUN] vkDeviceWaitIdle OK\n"); std::fflush(stderr);
 			if (m_pipeline)
 			{
-				std::fprintf(stderr, "[RUN] avant pipeline->Destroy\n"); std::fflush(stderr);
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
-				std::fprintf(stderr, "[RUN] pipeline->Destroy OK\n"); std::fflush(stderr);
 				m_pipeline.reset();
 			}
-			std::fprintf(stderr, "[RUN] avant profilerHud.Shutdown\n"); std::fflush(stderr);
 			m_profilerHud.Shutdown();
-			std::fprintf(stderr, "[RUN] avant profiler.Shutdown\n"); std::fflush(stderr);
 			m_profiler.Shutdown(m_vkDeviceContext.GetDevice());
-			std::fprintf(stderr, "[RUN] avant audioEngine.Shutdown\n"); std::fflush(stderr);
 			m_audioEngine.Shutdown();
-			std::fprintf(stderr, "[RUN] avant decalSystem.Shutdown\n"); std::fflush(stderr);
 			m_decalSystem.Shutdown();
-			std::fprintf(stderr, "[RUN] avant assetRegistry.Destroy\n"); std::fflush(stderr);
 			m_assetRegistry.Destroy();
-			std::fprintf(stderr, "[RUN] avant frameGraph.destroy\n"); std::fflush(stderr);
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
-			std::fprintf(stderr, "[RUN] avant stagingAllocator.Destroy\n"); std::fflush(stderr);
 			m_stagingAllocator.Destroy(m_vkDeviceContext.GetDevice());
-			std::fprintf(stderr, "[RUN] avant DestroyFrameResources\n"); std::fflush(stderr);
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
 			if (m_vmaAllocator)
 			{
-				std::fprintf(stderr, "[RUN] avant vmaDestroyAllocator\n"); std::fflush(stderr);
 				vmaDestroyAllocator(reinterpret_cast<VmaAllocator>(m_vmaAllocator));
 				m_vmaAllocator = nullptr;
 			}
 		}
-		std::fprintf(stderr, "[RUN] avant vkSwapchain.Destroy\n"); std::fflush(stderr);
 		m_vkSwapchain.Destroy();
-		std::fprintf(stderr, "[RUN] avant vkDeviceContext.Destroy\n"); std::fflush(stderr);
 		m_vkDeviceContext.Destroy();
-		std::fprintf(stderr, "[RUN] avant vkInstance.Destroy\n"); std::fflush(stderr);
 		m_vkInstance.Destroy();
 		if (m_glfwWindowForVk)
 		{
-			std::fprintf(stderr, "[RUN] avant glfwDestroyWindow\n"); std::fflush(stderr);
 			glfwDestroyWindow(m_glfwWindowForVk);
 			m_glfwWindowForVk = nullptr;
 		}
-		std::fprintf(stderr, "[RUN] avant glfwTerminate\n"); std::fflush(stderr);
 		glfwTerminate();
-		std::fprintf(stderr, "[RUN] shutdown complete\n"); std::fflush(stderr);
 
 		if (m_editorMode)
 		{
@@ -1466,11 +1348,8 @@ namespace engine
 	void Engine::BeginFrame()
 	{
 		// PROFILE_FUNCTION();
-		std::fprintf(stderr, "[BF] input.BeginFrame\n"); std::fflush(stderr);
 		m_input.BeginFrame();
-		std::fprintf(stderr, "[BF] window.PollEvents\n"); std::fflush(stderr);
 		m_window.PollEvents();
-		std::fprintf(stderr, "[BF] WasPressed\n"); std::fflush(stderr);
 
 		if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
 			OnQuit();
@@ -1478,31 +1357,23 @@ namespace engine
 		if (m_input.WasPressed(engine::platform::Key::F_11))
     		m_window.ToggleFullscreen();
 
-		std::fprintf(stderr, "[BF] shaderHotReload.Poll\n"); std::fflush(stderr);
 		m_shaderHotReload.Poll(m_cfg);
-		std::fprintf(stderr, "[BF] shaderHotReload.ApplyPending\n"); std::fflush(stderr);
 		m_shaderHotReload.ApplyPending(m_shaderCache);
-		std::fprintf(stderr, "[BF] swapchainResizeCheck\n"); std::fflush(stderr);
 
 		if (m_swapchainResizeRequested)
 		{
-			std::fprintf(stderr, "[RESIZE] swapchain recreate requested w=%d h=%d\n", m_width, m_height); std::fflush(stderr);
     		LOG_INFO(Platform, "[Resize] Swapchain recreate requested");
 
-			std::fprintf(stderr, "[RESIZE] avant frameGraph.destroy\n"); std::fflush(stderr);
 			m_swapchainResizeRequested = false;
 			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
 			{
-				std::fprintf(stderr, "[RESIZE] avant vkDeviceWaitIdle\n"); std::fflush(stderr);
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				
-				std::fprintf(stderr, "[RESIZE] avant Swapchain.Recreate\n"); std::fflush(stderr);
 				bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
-				std::fprintf(stderr, "[RESIZE] Swapchain.Recreate result=%d\n", (int)ok); std::fflush(stderr);
 				if (ok)
 					LOG_INFO(Platform, "[Resize] Swapchain recreated OK");
 				else
@@ -1510,24 +1381,17 @@ namespace engine
 			}
 			else
 			{
-				std::fprintf(stderr, "[RESIZE] conditions non remplies: valid=%d swapchain=%d w=%d h=%d\n",
-					(int)m_vkDeviceContext.IsValid(), (int)m_vkSwapchain.IsValid(), m_width, m_height); std::fflush(stderr);
+				LOG_WARN(Platform, "[Resize] Swapchain recreate skipped — device/swapchain not ready or invalid size");
 			}
 		}
 
-		std::fprintf(stderr, "[BF] time.BeginFrame\n"); std::fflush(stderr);
 		m_time.BeginFrame();
-		std::fprintf(stderr, "[BF] time.BeginFrame OK - profiler=%d\n", 
-    		(int)m_profiler.IsInitialized()); std::fflush(stderr);  // ← AJOUTE CETTE LIGNE
 		if (m_profiler.IsInitialized())
 		{
 			m_profiler.BeginFrame(m_currentFrame);
 		}
-		std::fprintf(stderr, "[BF] frameArena.BeginFrame\n"); std::fflush(stderr);
 		m_frameArena.BeginFrame(m_time.FrameIndex());
-		std::fprintf(stderr, "[BF] chunkStats.ResetPerFrame\n"); std::fflush(stderr);
 		m_chunkStats.ResetPerFrame();
-		std::fprintf(stderr, "[BF] done\n"); std::fflush(stderr);
 	}
 
 	void Engine::Update()
@@ -1639,10 +1503,8 @@ namespace engine
 	void Engine::Render()
 	{
 	    // PROFILE_FUNCTION();
-	    std::fprintf(stderr, "[RENDER] debut\n"); std::fflush(stderr);
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
-	        std::fprintf(stderr, "[RENDER] early return\n"); std::fflush(stderr);
 	        return;
 	    }
 	
@@ -1656,7 +1518,6 @@ namespace engine
 	    // ses rendertargets avec les bonnes dimensions.
 	    VkExtent2D extent = m_vkSwapchain.GetExtent();
 	
-	    std::fprintf(stderr, "[RENDER] avant vkWaitForFences\n"); std::fflush(stderr);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
 	    if (m_profiler.IsInitialized() && m_profiler.ResolveGpuFrame(device, frameIndex))
 	    {
@@ -1667,14 +1528,10 @@ namespace engine
 	            m_renderStates[1].profilerDebugText = m_profilerHud.GetState().debugText;
 	        }
 	    }
-	    std::fprintf(stderr, "[RENDER] Collect\n"); std::fflush(stderr);
 	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
-	    std::fprintf(stderr, "[RENDER] stagingAllocator.BeginFrame\n"); std::fflush(stderr);
 	    m_stagingAllocator.BeginFrame(frameIndex);
-	    std::fprintf(stderr, "[RENDER] gpuUploadQueue\n"); std::fflush(stderr);
 	    (void)m_gpuUploadQueue.PlanFrameUploads();
 	
-	    std::fprintf(stderr, "[RENDER] autoExposure\n"); std::fflush(stderr);
 	    if (m_pipeline->GetAutoExposure().IsValid())
 	    {
 	        const float dt    = static_cast<float>(m_time.DeltaSeconds());
@@ -1683,17 +1540,13 @@ namespace engine
 	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, frameIndex);
 	    }
 	
-	    std::fprintf(stderr, "[RENDER] avant vkAcquireNextImageKHR\n"); std::fflush(stderr);
 	    uint32_t imageIndex = 0;
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
-	    std::fprintf(stderr, "[RENDER] vkAcquireNextImageKHR result=%d imageIndex=%u\n", (int)result, imageIndex); std::fflush(stderr);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
 	    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) return;
 	
-	    std::fprintf(stderr, "[RENDER] avant vkResetCommandPool\n"); std::fflush(stderr);
 	    vkResetCommandPool(device, fr.cmdPool, 0);
 	
-	    std::fprintf(stderr, "[RENDER] avant vkBeginCommandBuffer\n"); std::fflush(stderr);
 	    VkCommandBufferBeginInfo beginInfo{};
 	    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -1703,7 +1556,6 @@ namespace engine
 	        m_profiler.BeginGpuFrame(fr.cmdBuffer, frameIndex);
 	    }
 	
-	    std::fprintf(stderr, "[RENDER] avant frameGraph.execute\n"); std::fflush(stderr);
 	    if (m_fgSceneColorHDRId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
 	    {
 	        VkImage     backbufferImage = m_vkSwapchain.GetImage(imageIndex);
@@ -1711,12 +1563,9 @@ namespace engine
 	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
 	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2(), m_profiler.IsInitialized() ? &m_profiler : nullptr);
 	    }
-	    std::fprintf(stderr, "[RENDER] frameGraph.execute OK\n"); std::fflush(stderr);
 	
-	    std::fprintf(stderr, "[RENDER] avant vkEndCommandBuffer\n"); std::fflush(stderr);
 	    if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) return;
 	
-	    std::fprintf(stderr, "[RENDER] avant vkQueueSubmit frame=%u\n", m_currentFrame); std::fflush(stderr);
 	    VkSemaphore          waitSemaphores[]   = { fr.imageAvailable };
 	    VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	    VkSemaphore          signalSemaphores[] = { fr.renderFinished };
@@ -1731,10 +1580,8 @@ namespace engine
 	    submitInfo.pSignalSemaphores    = signalSemaphores;
 	    vkResetFences(device, 1, &fr.fence);
 	    VkResult submitResult = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence);
-	    std::fprintf(stderr, "[RENDER] vkQueueSubmit r=%d\n", (int)submitResult); std::fflush(stderr);
 	    if (submitResult != VK_SUCCESS) return;
 
-	    std::fprintf(stderr, "[RENDER] avant vkQueuePresentKHR\n"); std::fflush(stderr);
 	    VkPresentInfoKHR presentInfo{};
 	    presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	    presentInfo.waitSemaphoreCount = 1;
@@ -1743,12 +1590,10 @@ namespace engine
 	    presentInfo.pSwapchains        = &swapchain;
 	    presentInfo.pImageIndices      = &imageIndex;
 	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
-	    std::fprintf(stderr, "[RENDER] vkQueuePresentKHR r=%d\n", (int)result); std::fflush(stderr);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	        m_swapchainResizeRequested = true;
 	
 	    m_currentFrame++;
-	    std::fprintf(stderr, "[RENDER] done\n"); std::fflush(stderr);
 	}
 
 	void Engine::EndFrame()
@@ -1784,7 +1629,6 @@ namespace engine
 
 	void Engine::OnResize(int w, int h)
 	{
-		std::fprintf(stderr, "[RESIZE] OnResize called w=%d h=%d\n", w, h); std::fflush(stderr);
     	LOG_INFO(Platform, "[Resize] OnResize");
 		m_width  = w;
 		m_height = h;

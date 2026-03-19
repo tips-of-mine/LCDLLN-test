@@ -76,10 +76,7 @@ namespace engine::core
 
 	void Log::Init(const LogSettings& settings)
 	{
-		std::fprintf(stderr, "[LOG::INIT] debut\n"); std::fflush(stderr);
 		Shutdown();
-		std::fprintf(stderr, "[LOG::INIT] apres Shutdown\n"); std::fflush(stderr);
-
 		InitLock();
 
 		s_level.store(settings.level, std::memory_order_relaxed);
@@ -87,24 +84,19 @@ namespace engine::core
 
 		if (!settings.filePath.empty())
 		{
-			std::fprintf(stderr, "[LOG::INIT] avant ofstream open path='%s'\n", settings.filePath.c_str()); std::fflush(stderr);
 			s_file.open(settings.filePath, std::ios::out | std::ios::app);
 			if (!s_file.is_open())
 			{
-				std::fprintf(stderr, "[LOG::INIT] ofstream open FAILED\n"); std::fflush(stderr);
-				return;
+				std::fprintf(stderr, "[Log] Cannot open log file: %s\n", settings.filePath.c_str());
+				std::fflush(stderr);
+				// Ne pas retourner : si la console est active on continue sans fichier.
 			}
-			std::fprintf(stderr, "[LOG::INIT] ofstream open OK\n"); std::fflush(stderr);
 		}
 
 		if (!s_file.is_open() && !s_consoleEnabled)
-		{
-			std::fprintf(stderr, "[LOG::INIT] no sink active, return\n"); std::fflush(stderr);
 			return;
-		}
 
 		s_active.store(true, std::memory_order_release);
-		std::fprintf(stderr, "[LOG::INIT] tout OK\n"); std::fflush(stderr);
 	}
 
 	void Log::Shutdown()
@@ -143,10 +135,27 @@ namespace engine::core
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
 
-		const std::string line =
-			std::string("[") + LevelToString(level) + "][" +
-			(subsystem ? subsystem : "?") + "] " +
-			std::string(message) + "\n";
+		// Timestamp HH:MM:SS.mmm
+		const auto now    = std::chrono::system_clock::now();
+		const auto ms     = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+		const std::time_t t = std::chrono::system_clock::to_time_t(now);
+		std::tm tm{};
+#if defined(_WIN32)
+		localtime_s(&tm, &t);
+#else
+		localtime_r(&t, &tm);
+#endif
+		char timeBuf[16]{};
+		std::snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:%02d.%03d",
+			tm.tm_hour, tm.tm_min, tm.tm_sec, static_cast<int>(ms.count()));
+
+		// Format: [HH:MM:SS.mmm][LEVEL][Subsystem] message
+		const char* lvlStr = LevelToString(level);
+		const char* sys    = subsystem ? subsystem : "?";
+		char header[64]{};
+		std::snprintf(header, sizeof(header), "[%s][%-5s][%s] ", timeBuf, lvlStr, sys);
+
+		const std::string line = std::string(header) + std::string(message) + "\n";
 
 		LockLog();
 		if (s_file.is_open())

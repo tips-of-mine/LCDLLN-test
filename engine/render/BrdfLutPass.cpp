@@ -14,7 +14,7 @@ namespace engine::render
 		uint32_t queueFamilyIndex,
 		VkPipelineCache pipelineCache)
 	{
-		std::fprintf(stderr, "[BRDF] Init enter size=%u\n", size); std::fflush(stderr);
+		LOG_INFO(Render, "[BRDF] Init enter size={}", size);
 		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE
 			|| !compSpirv || compWordCount == 0 || size == 0)
 		{
@@ -43,7 +43,7 @@ namespace engine::render
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		VkResult r = vkCreateImage(device, &imgInfo, nullptr, &m_image);
-		std::fprintf(stderr, "[BRDF] vkCreateImage r=%d img=%p\n", (int)r, (void*)m_image); std::fflush(stderr);
+		LOG_INFO(Render, "[BRDF] vkCreateImage r={} img={}", (int)r, (void*)m_image);
 		if (r != VK_SUCCESS || m_image == VK_NULL_HANDLE)
 		{
 			LOG_ERROR(Render, "BrdfLutPass: vkCreateImage failed");
@@ -274,14 +274,13 @@ namespace engine::render
 			return false;
 		}
 
-		std::fprintf(stderr, "[BRDF] Init OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "BrdfLutPass: initialised (size={}x{})", m_size, m_size);
 		return true;
 	}
 
 	bool BrdfLutPass::Generate(VkDevice device, VkQueue queue)
 	{
-		std::fprintf(stderr, "[BRDF] Generate enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[BRDF] Generate enter");
 		if (device == VK_NULL_HANDLE || queue == VK_NULL_HANDLE || m_cmdPool == VK_NULL_HANDLE)
 			return false;
 
@@ -383,14 +382,13 @@ namespace engine::render
 		vkQueueWaitIdle(queue);
 		vkFreeCommandBuffers(device, m_cmdPool, 1, &cmd);
 
-		std::fprintf(stderr, "[BRDF] Generate OK\n"); std::fflush(stderr);
 		LOG_INFO(Render, "BrdfLutPass: BRDF LUT generated");
 		return true;
 	}
 
 	void BrdfLutPass::Destroy(VkDevice device)
 	{
-		std::fprintf(stderr, "[BRDF] Destroy enter\n"); std::fflush(stderr);
+		LOG_DEBUG(Render, "[BRDF] Destroy enter");
 		if (device == VK_NULL_HANDLE)
 			return;
 
@@ -439,7 +437,7 @@ namespace engine::render
 		}
 		m_vmaAllocator = nullptr;
 		m_size = 0;
-		std::fprintf(stderr, "[BRDF] Destroy OK\n"); std::fflush(stderr);
+		LOG_INFO(Render, "[BRDF] Destroy OK");
 	}
 }
 

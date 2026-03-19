@@ -523,7 +523,7 @@ namespace engine
 											std::snprintf(name, sizeof(name), "BloomUp_%u", i);
 											m_fgBloomUpMipIds[i] = m_frameGraph.createImage(name, bloomMipDesc);
 										}
-										LOG_INFO(Render, "[Bloom] FrameGraph resources registered: %zu down + %zu up mips",
+										LOG_INFO(Render, "[Bloom] FrameGraph resources registered: {} down + {} up mips",
 											m_fgBloomDownMipIds.size(),
 											m_fgBloomUpMipIds.size());
 

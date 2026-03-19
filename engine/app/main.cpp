@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	}
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
-LOG_DEBUG(Core, "[MAIN] SEH EXCEPTION code=0x%08X", (unsigned int)GetExceptionCode());
+LOG_ERROR(Core, "[MAIN] SEH EXCEPTION code=0x{:08X}", static_cast<unsigned int>(GetExceptionCode()));
 	}
 #else
 	g_result = CreateAndRun(argc, argv);

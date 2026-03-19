@@ -40,7 +40,7 @@ namespace engine::render
 
 	void ShaderHotReload::Poll(const engine::core::Config& config)
 	{
-		LOG_INFO(Render, "[POLL] debut");
+		LOG_DEBUG(Render, "[POLL] debut");
 
 		if (!m_watcherInited)
 		{
@@ -93,7 +93,7 @@ namespace engine::render
 				}
 			}
 		}
-		LOG_INFO(Render, "[POLL] done");
+		LOG_DEBUG(Render, "[POLL] done");
 	}
 
 	void ShaderHotReload::ApplyPending(ShaderCache& cache)

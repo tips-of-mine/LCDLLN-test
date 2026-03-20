@@ -92,6 +92,7 @@ add_library(engine_core
   engine/core/Time.cpp
   engine/audio/AudioEngine.cpp
   engine/client/CombatHud.cpp
+  engine/client/AoEPreviewSystem.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
   engine/client/ProfilerHud.cpp
@@ -138,6 +139,7 @@ add_library(engine_core
   engine/math/Frustum.cpp
   engine/gameplay/CharacterController.cpp
   engine/gameplay/ThirdPersonCamera.cpp
+  engine/gameplay/SkillSystem.cpp
   engine/world/WorldModel.cpp
   engine/world/OutputVersion.cpp
   engine/world/ProbeData.cpp

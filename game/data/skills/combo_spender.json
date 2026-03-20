@@ -1,0 +1,12 @@
+{
+  "id": "combo_spender",
+  "name": "Combo Spender",
+  "cooldown": 1.5,
+  "castTime": 0.0,
+  "range": 12.0,
+  "cost": { "comboPoints": 3 },
+  "effects": [
+    { "type": "damage", "amount": 45, "damageType": "physical", "consumeCombo": true }
+  ]
+}
+

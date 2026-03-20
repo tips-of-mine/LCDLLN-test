@@ -51,6 +51,9 @@ namespace engine::client
 		HudRect panelBounds{};
 		HudBarWidget playerHealthBar{};
 		HudBarWidget playerManaBar{};
+		uint32_t playerComboPoints = 0;
+		uint32_t playerMaxComboPoints = 0;
+		bool playerHasCombo = false;
 		HudRect targetFrameBounds{};
 		HudBarWidget targetHealthBar{};
 		bool targetVisible = false;

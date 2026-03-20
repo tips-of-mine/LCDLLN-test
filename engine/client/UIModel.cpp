@@ -98,6 +98,10 @@ namespace engine::client
 		dump += std::to_string(playerStats.currentMana);
 		dump += "/";
 		dump += std::to_string(playerStats.maxMana);
+		dump += " combo=";
+		dump += playerStats.hasCombo ? std::to_string(playerStats.comboPoints) : "n/a";
+		dump += "/";
+		dump += playerStats.hasCombo ? std::to_string(playerStats.maxCombo) : "n/a";
 		dump += " zone=";
 		dump += std::to_string(playerStats.zoneId);
 		dump += " pos=(";

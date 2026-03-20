@@ -210,6 +210,10 @@ namespace engine::client
 		m_state.playerManaBar.currentValue = model.playerStats.hasMana ? model.playerStats.currentMana : 0u;
 		m_state.playerManaBar.maxValue = model.playerStats.hasMana ? model.playerStats.maxMana : 0u;
 		m_state.playerManaBar.visible = model.playerStats.hasSnapshot;
+
+		m_state.playerHasCombo = model.playerStats.hasCombo;
+		m_state.playerComboPoints = model.playerStats.hasCombo ? model.playerStats.comboPoints : 0u;
+		m_state.playerMaxComboPoints = model.playerStats.hasCombo ? model.playerStats.maxCombo : 0u;
 	}
 
 	void CombatHudPresenter::UpdateTargetFrame(const UIModel& model)
@@ -288,6 +292,10 @@ namespace engine::client
 		m_state.debugText += std::to_string(m_state.playerManaBar.currentValue);
 		m_state.debugText += "/";
 		m_state.debugText += std::to_string(m_state.playerManaBar.maxValue);
+		m_state.debugText += " combo=";
+		m_state.debugText += m_state.playerHasCombo ? std::to_string(m_state.playerComboPoints) : "n/a";
+		m_state.debugText += "/";
+		m_state.debugText += m_state.playerHasCombo ? std::to_string(m_state.playerMaxComboPoints) : "n/a";
 		m_state.debugText += "\n";
 		m_state.debugText += "target visible=";
 		m_state.debugText += m_state.targetVisible ? "true" : "false";

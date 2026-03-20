@@ -39,12 +39,15 @@ namespace engine::client
 		uint32_t maxHealth = 0;
 		uint32_t currentMana = 0;
 		uint32_t maxMana = 0;
+		uint32_t comboPoints = 0;
+		uint32_t maxCombo = 0;
 		uint32_t stateFlags = 0;
 		uint32_t zoneId = 0;
 		float positionX = 0.0f;
 		float positionY = 0.0f;
 		float positionZ = 0.0f;
 		bool hasMana = false;
+		bool hasCombo = false;
 		bool hasSnapshot = false;
 	};
 

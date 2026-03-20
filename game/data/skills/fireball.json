@@ -1,0 +1,14 @@
+{
+  "id": "fireball",
+  "name": "Fireball",
+  "cooldown": 4.0,
+  "castTime": 1.5,
+  "cost": { "mana": 50 },
+  "range": 30.0,
+  "aoeShape": "circle",
+  "aoeRadius": 8.0,
+  "effects": [
+    { "type": "damage", "amount": 100, "damageType": "fire" }
+  ]
+}
+

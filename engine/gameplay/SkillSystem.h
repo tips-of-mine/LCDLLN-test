@@ -213,6 +213,7 @@ namespace engine::gameplay
 			uint64_t nowTicks);
 		void CompleteCast(uint32_t playerId, const SkillDefinition& def, EntityId targetId, uint64_t nowTicks, bool interrupted);
 		void ApplySkillEffectsOnPlayer(uint32_t playerId, const SkillDefinition& def, bool tick);
+		struct ActiveCast;
 		void ApplySkillEffectsOnAoETargets(uint32_t casterPlayerId, const SkillDefinition& def, const ActiveCast& active, bool tick);
 
 		struct InterruptInputs

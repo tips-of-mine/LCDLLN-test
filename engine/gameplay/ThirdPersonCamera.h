@@ -55,10 +55,26 @@ namespace engine::gameplay
 			float targetOffsetY = 1.5f;
 			/// Spring stiffness for smooth distance interpolation (higher = snappier).
 			float springStiffness = 10.0f;
+			/// Spring stiffness for smooth follow of the focus point (higher = snappier).
+			float followStiffness = 35.0f;
+			/// Damping coefficient for smooth follow of the focus point (higher = less overshoot).
+			float followDamping = 12.0f;
+			/// Look-ahead time multiplier: lookAhead = velocityProjected * lookAheadSeconds.
+			/// Expected range from ticket: 0.5..1.0 seconds.
+			float lookAheadSeconds = 0.75f;
+			/// Clamp look-ahead distance to avoid extreme camera offsets (ticket: 2..3m).
+			float lookAheadMaxMeters = 2.75f;
 			/// Zoom speed in metres per scroll tick.
 			float zoomSpeed = 1.0f;
 			/// Radius of the sphere used in the collision sweep in metres.
 			float sphereCastRadius = 0.2f;
+
+			/// Combat mode: override orbit distance to tighten camera.
+			float combatDistance = 3.5f;
+			/// Combat mode: override pitch so the target stays framed.
+			float combatPitchDeg = 25.0f;
+			/// If true, ignore mouse orbit rotation while in combat.
+			bool lockTargetInCombat = false;
 		};
 
 		ThirdPersonCamera();
@@ -82,6 +98,10 @@ namespace engine::gameplay
 			const ICameraCollider* collider,
 			engine::render::Camera& outCamera);
 
+		/// Sets camera combat/exploration state.
+		/// \param combat true -> tighten distance and override pitch.
+		void SetCombatMode(bool combat);
+
 		/// Returns current yaw angle in radians.
 		float GetYaw()             const { return m_yaw; }
 		/// Returns current pitch angle in radians.
@@ -95,6 +115,12 @@ namespace engine::gameplay
 		float  m_pitch           = 0.0f; ///< current pitch (radians)
 		float  m_desiredDistance = 5.0f; ///< zoom target before collision (metres)
 		float  m_currentDistance = 5.0f; ///< smoothed distance after collision (metres)
+		engine::math::Vec3 m_focusPos{};  ///< Smoothed focus point (character pos + look-ahead + up offset)
+		engine::math::Vec3 m_focusVel{};  ///< Follow spring velocity
+		engine::math::Vec3 m_prevTargetPos{};
+		bool m_prevTargetValid = false;
+		bool m_focusInitialized = false;
+		bool m_combatMode = false;
 		bool   m_initialized     = false;
 	};
 }

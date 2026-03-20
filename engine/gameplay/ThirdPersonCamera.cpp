@@ -38,22 +38,71 @@ namespace engine::gameplay
 		}
 	}
 
+	void ThirdPersonCamera::SetCombatMode(bool combat)
+	{
+		if (m_combatMode == combat)
+			return;
+
+		m_combatMode = combat;
+		LOG_INFO(Gameplay, "[ThirdPersonCamera] CombatMode {}", combat ? "ON" : "OFF");
+	}
+
 	void ThirdPersonCamera::Init(const Config& cfg)
 	{
-		m_cfg            = cfg;
-		m_desiredDistance = cfg.defaultDistance;
-		m_currentDistance = cfg.defaultDistance;
-		m_yaw             = 0.0f;
+		m_cfg = cfg;
+
+		// Validate and clamp configuration (avoid broken camera math).
+		if (m_cfg.springStiffness <= 0.0f)
+		{
+			LOG_WARN(Gameplay, "[ThirdPersonCamera] springStiffness invalid ({:.3f}) — fallback to 10.0", m_cfg.springStiffness);
+			m_cfg.springStiffness = 10.0f;
+		}
+		if (m_cfg.followStiffness <= 0.0f)
+		{
+			LOG_WARN(Gameplay, "[ThirdPersonCamera] followStiffness invalid ({:.3f}) — fallback to 35.0", m_cfg.followStiffness);
+			m_cfg.followStiffness = 35.0f;
+		}
+		if (m_cfg.followDamping < 0.0f)
+		{
+			LOG_WARN(Gameplay, "[ThirdPersonCamera] followDamping invalid ({:.3f}) — fallback to 12.0", m_cfg.followDamping);
+			m_cfg.followDamping = 12.0f;
+		}
+		m_cfg.lookAheadSeconds = Clamp(m_cfg.lookAheadSeconds, 0.5f, 1.0f);
+		if (m_cfg.lookAheadSeconds != cfg.lookAheadSeconds)
+			LOG_WARN(Gameplay, "[ThirdPersonCamera] lookAheadSeconds out of range ({:.3f}) — clamped to {:.3f}", cfg.lookAheadSeconds, m_cfg.lookAheadSeconds);
+		m_cfg.lookAheadMaxMeters = Clamp(m_cfg.lookAheadMaxMeters, 2.0f, 3.0f);
+		if (m_cfg.lookAheadMaxMeters != cfg.lookAheadMaxMeters)
+			LOG_WARN(Gameplay, "[ThirdPersonCamera] lookAheadMaxMeters out of range ({:.3f}) — clamped to {:.3f}", cfg.lookAheadMaxMeters, m_cfg.lookAheadMaxMeters);
+
+		m_cfg.defaultDistance = Clamp(m_cfg.defaultDistance, m_cfg.minDistance, m_cfg.maxDistance);
+		m_desiredDistance = m_cfg.defaultDistance;
+		m_currentDistance = m_cfg.defaultDistance;
+		m_yaw = 0.0f;
 		// Start pitch at mid-range between min and max.
-		m_pitch           = DegToRad((cfg.pitchMinDeg + cfg.pitchMaxDeg) * 0.5f);
-		m_initialized     = true;
+		m_pitch = DegToRad((m_cfg.pitchMinDeg + m_cfg.pitchMaxDeg) * 0.5f);
+
+		m_focusPos           = engine::math::Vec3{};
+		m_focusVel           = engine::math::Vec3{};
+		m_prevTargetPos      = engine::math::Vec3{};
+		m_prevTargetValid    = false;
+		m_focusInitialized   = false;
+		m_combatMode         = false;
+
+		m_initialized = true;
 
 		LOG_INFO(Gameplay,
 			"[ThirdPersonCamera] Init OK (dist={:.1f}m, zoom=[{:.1f},{:.1f}]m, "
 			"pitch=[{:.0f},{:.0f}]deg, spring={:.1f}, sphereR={:.2f}m)",
-			cfg.defaultDistance, cfg.minDistance, cfg.maxDistance,
-			cfg.pitchMinDeg, cfg.pitchMaxDeg,
-			cfg.springStiffness, cfg.sphereCastRadius);
+			m_cfg.defaultDistance, m_cfg.minDistance, m_cfg.maxDistance,
+			m_cfg.pitchMinDeg, m_cfg.pitchMaxDeg,
+			m_cfg.springStiffness, m_cfg.sphereCastRadius);
+
+		LOG_INFO(Gameplay,
+			"[ThirdPersonCamera] Follow&lookAhead (stiff={:.1f}, damp={:.1f}, lookAhead={:.2f}s, max={:.2f}m, combatDist={:.1f}m, combatPitch={:.0f}deg, lock={})",
+			m_cfg.followStiffness, m_cfg.followDamping,
+			m_cfg.lookAheadSeconds, m_cfg.lookAheadMaxMeters,
+			m_cfg.combatDistance, m_cfg.combatPitchDeg,
+			m_cfg.lockTargetInCombat ? "true" : "false");
 	}
 
 	void ThirdPersonCamera::Update(
@@ -72,7 +121,8 @@ namespace engine::gameplay
 
 		// ── 1. Rotate yaw/pitch from mouse delta ─────────────────────────────
 		// Only rotate when right mouse button is held (MMO standard).
-		if (input.IsMouseDown(engine::platform::MouseButton::Right))
+		const bool allowOrbitRotation = !(m_combatMode && m_cfg.lockTargetInCombat);
+		if (allowOrbitRotation && input.IsMouseDown(engine::platform::MouseButton::Right))
 		{
 			const float sens = mouseSensitivityRadPerPixel;
 			m_yaw   += static_cast<float>(input.MouseDeltaX()) * sens;
@@ -90,7 +140,7 @@ namespace engine::gameplay
 
 		// ── 2. Zoom via mouse scroll wheel ────────────────────────────────────
 		const int scrollDelta = input.MouseScrollDelta();
-		if (scrollDelta != 0)
+		if (!m_combatMode && scrollDelta != 0)
 		{
 			// Positive scroll = wheel up = zoom in (decrease distance).
 			m_desiredDistance -= static_cast<float>(scrollDelta) * m_cfg.zoomSpeed;
@@ -98,11 +148,71 @@ namespace engine::gameplay
 			LOG_DEBUG(Gameplay, "[ThirdPersonCamera] Zoom -> desiredDist={:.2f}m", m_desiredDistance);
 		}
 
-		// ── 3. Compute focus point (character feet + vertical offset) ─────────
-		const engine::math::Vec3 focusPoint(
-			targetPos.x,
+		// Combat mode override: tighten distance and force pitch.
+		if (m_combatMode)
+		{
+			m_desiredDistance = Clamp(m_cfg.combatDistance, m_cfg.minDistance, m_cfg.maxDistance);
+			const float combatPitchRad = DegToRad(m_cfg.combatPitchDeg);
+			m_pitch = Clamp(combatPitchRad, pitchMin, pitchMax);
+		}
+
+		// ── 3. Look-ahead + spring-damper follow for focus point ─────────────
+		engine::math::Vec3 projectedVelocityXZ{};
+		if (dt > 0.0f && m_prevTargetValid)
+		{
+			const float invDt = 1.0f / dt;
+			const engine::math::Vec3 rawVel = (targetPos - m_prevTargetPos) * invDt;
+			projectedVelocityXZ = engine::math::Vec3(rawVel.x, 0.0f, rawVel.z);
+		}
+
+		// Look-ahead offset based on projected velocity.
+		engine::math::Vec3 lookAheadOffset = projectedVelocityXZ * m_cfg.lookAheadSeconds;
+		const float maxLookAheadSq = m_cfg.lookAheadMaxMeters * m_cfg.lookAheadMaxMeters;
+		const float lookAheadLenSq = lookAheadOffset.LengthSq();
+		if (lookAheadLenSq > maxLookAheadSq)
+		{
+			// Clamp look-ahead to avoid camera jumping too far ahead.
+			const float lookAheadLen = std::sqrt(lookAheadLenSq);
+			if (lookAheadLen > 0.0f)
+			{
+				const float scale = m_cfg.lookAheadMaxMeters / lookAheadLen;
+				lookAheadOffset = lookAheadOffset * scale;
+				LOG_DEBUG(Gameplay, "[ThirdPersonCamera] Look-ahead clamped to {:.2f}m", m_cfg.lookAheadMaxMeters);
+			}
+		}
+
+		const engine::math::Vec3 followTarget(
+			targetPos.x + lookAheadOffset.x,
 			targetPos.y + m_cfg.targetOffsetY,
-			targetPos.z);
+			targetPos.z + lookAheadOffset.z);
+
+		if (!m_focusInitialized)
+		{
+			m_focusPos = followTarget;
+			m_focusVel = engine::math::Vec3{};
+			m_focusInitialized = true;
+		}
+		else
+		{
+			if (dt > 0.0f)
+			{
+				const engine::math::Vec3 delta = followTarget - m_focusPos;
+				const engine::math::Vec3 accel = delta * m_cfg.followStiffness - m_focusVel * m_cfg.followDamping;
+				m_focusVel = m_focusVel + accel * dt;
+				m_focusPos = m_focusPos + m_focusVel * dt;
+			}
+			else
+			{
+				// No time step: avoid NaNs, snap focus.
+				m_focusPos = followTarget;
+				m_focusVel = engine::math::Vec3{};
+			}
+		}
+
+		m_prevTargetPos = targetPos;
+		m_prevTargetValid = true;
+
+		const engine::math::Vec3 focusPoint = m_focusPos;
 
 		// ── 4. Compute camera direction offset (spherical coordinates) ─────────
 		// Convention from Camera.cpp: forward = (-sin(yaw)*cos(pitch), -sin(pitch), -cos(yaw)*cos(pitch))

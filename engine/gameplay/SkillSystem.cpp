@@ -441,13 +441,19 @@ namespace engine::gameplay
 		: m_config(config)
 	{
 		// Keep default resources high enough for MVP skill validation.
-		m_defaultPlayerResources.health = static_cast<uint32_t>(std::max(0.0, m_config.GetInt("skills.default_health", 100)));
-		m_defaultPlayerResources.mana = static_cast<uint32_t>(std::max(0.0, m_config.GetInt("skills.default_mana", 1000)));
-		m_defaultPlayerResources.energy = static_cast<uint32_t>(std::max(0.0, m_config.GetInt("skills.default_energy", 1000)));
-		m_defaultPlayerResources.rage = static_cast<uint32_t>(std::max(0.0, m_config.GetInt("skills.default_rage", 1000)));
-		m_defaultPlayerResources.comboPoints = static_cast<uint32_t>(std::max(0.0, m_config.GetInt("skills.default_combo_points", 3)));
-		m_defaultPlayerResources.maxComboPoints = static_cast<uint32_t>(
-			std::max(1.0, m_config.GetInt("skills.default_max_combo_points", 5)));
+		const int64_t health = std::max<int64_t>(0, m_config.GetInt("skills.default_health", 100));
+		const int64_t mana = std::max<int64_t>(0, m_config.GetInt("skills.default_mana", 1000));
+		const int64_t energy = std::max<int64_t>(0, m_config.GetInt("skills.default_energy", 1000));
+		const int64_t rage = std::max<int64_t>(0, m_config.GetInt("skills.default_rage", 1000));
+		const int64_t comboPoints = std::max<int64_t>(0, m_config.GetInt("skills.default_combo_points", 3));
+		const int64_t maxComboPoints = std::max<int64_t>(1, m_config.GetInt("skills.default_max_combo_points", 5));
+
+		m_defaultPlayerResources.health = static_cast<uint32_t>(health);
+		m_defaultPlayerResources.mana = static_cast<uint32_t>(mana);
+		m_defaultPlayerResources.energy = static_cast<uint32_t>(energy);
+		m_defaultPlayerResources.rage = static_cast<uint32_t>(rage);
+		m_defaultPlayerResources.comboPoints = static_cast<uint32_t>(comboPoints);
+		m_defaultPlayerResources.maxComboPoints = static_cast<uint32_t>(maxComboPoints);
 
 		LOG_INFO(Gameplay, "[SkillSystem] Constructed (defaults hp={}, mana={}, energy={}, rage={}, cp={}/{})",
 			m_defaultPlayerResources.health,

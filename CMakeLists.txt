@@ -99,6 +99,10 @@ add_library(engine_core
   engine/client/QuestUi.cpp
   engine/client/ThemeManager.cpp
   engine/client/UIModel.cpp
+  engine/client/ChatUi.cpp
+  engine/client/ChatWorldVisualPresenter.cpp
+  engine/net/ChatSystem.cpp
+  engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp

@@ -23,6 +23,10 @@ namespace engine::server
 		StatsComponent stats{};
 		std::vector<ItemStack> inventory;
 		std::vector<QuestState> questStates;
+		/// M29.2: persisted `/ignore` targets (display names, e.g. P12).
+		std::vector<std::string> chatIgnoredDisplayNames;
+		/// M29.2: when true, client may use admin chat commands (`/kick`, `/ban`, …).
+		bool chatModeratorRole = false;
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

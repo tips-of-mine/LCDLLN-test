@@ -11,6 +11,17 @@ namespace engine::client
 	namespace
 	{
 		inline constexpr size_t kMaxCombatLogEntries = 5;
+		inline constexpr size_t kMaxUiChatLines = 500;
+
+		/// Append one chat line and keep a bounded ring (oldest dropped).
+		void PushUiChatLine(std::vector<UIChatLineEntry>& lines, const UIChatLineEntry& entry)
+		{
+			lines.push_back(entry);
+			if (lines.size() > kMaxUiChatLines)
+			{
+				lines.erase(lines.begin(), lines.begin() + static_cast<std::ptrdiff_t>(lines.size() - kMaxUiChatLines));
+			}
+		}
 
 		/// Return the quest entry matching the given id, or null when missing.
 		UIQuestEntry* FindQuest(std::vector<UIQuestEntry>& quests, std::string_view questId)
@@ -211,6 +222,54 @@ namespace engine::client
 			dump += "\n";
 		}
 
+		dump += "chat(";
+		dump += std::to_string(chatLines.size());
+		dump += ")\n";
+		for (const UIChatLineEntry& chatLine : chatLines)
+		{
+			dump += " - ch=";
+			dump += std::to_string(static_cast<unsigned>(chatLine.channelWire));
+			dump += " ts=";
+			dump += std::to_string(chatLine.timestampUnixMs);
+			dump += " ";
+			dump += chatLine.sender;
+			dump += ": ";
+			dump += chatLine.text;
+			dump += "\n";
+		}
+
+		dump += "chat_bubbles3d(";
+		dump += std::to_string(chatBubbleBillboards.size());
+		dump += ")\n";
+		for (const UIChatBubbleBillboard& bubble : chatBubbleBillboards)
+		{
+			dump += " - entity=";
+			dump += std::to_string(bubble.entityId);
+			dump += " ndc=(";
+			dump += std::to_string(bubble.ndcX);
+			dump += ",";
+			dump += std::to_string(bubble.ndcY);
+			dump += ") alpha=";
+			dump += std::to_string(bubble.alpha);
+			dump += " text=";
+			dump += bubble.text;
+			dump += "\n";
+		}
+
+		dump += "emotes(";
+		dump += std::to_string(activeEmotes.size());
+		dump += ")\n";
+		for (const UIActiveEmoteEntry& emote : activeEmotes)
+		{
+			dump += " - entity=";
+			dump += std::to_string(emote.entityId);
+			dump += " wire=";
+			dump += std::to_string(static_cast<unsigned>(emote.emoteWireId));
+			dump += " loop=";
+			dump += emote.loop ? "true" : "false";
+			dump += "\n";
+		}
+
 		return dump;
 	}
 
@@ -229,6 +288,13 @@ namespace engine::client
 
 		m_ownerThread = std::this_thread::get_id();
 		m_initialized = true;
+		if (!m_chatWorld.Init())
+		{
+			m_initialized = false;
+			LOG_ERROR(Net, "[UIModelBinding] Init FAILED: ChatWorldVisualPresenter");
+			return false;
+		}
+
 		m_model.debugDump = m_model.BuildDebugDump();
 		LOG_INFO(Net, "[UIModelBinding] Init OK");
 		return true;
@@ -268,7 +334,11 @@ namespace engine::client
 		m_model.quests.clear();
 		m_model.events.clear();
 		m_model.combatLog.clear();
-		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld);
+		m_model.chatLines.clear();
+		m_model.chatBubbleBillboards.clear();
+		m_model.activeEmotes.clear();
+		m_chatWorld.Reset();
+		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
 		return true;
 	}
@@ -361,6 +431,8 @@ namespace engine::client
 			return ApplyQuestDelta(packet);
 		case engine::server::MessageKind::EventState:
 			return ApplyEventState(packet);
+		case engine::server::MessageKind::ChatRelay:
+			return ApplyChatRelay(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -398,6 +470,9 @@ namespace engine::client
 			LOG_WARN(Net, "[UIModelBinding] Snapshot FAILED: decode error");
 			return false;
 		}
+
+		PumpWorldPresenterAge();
+		m_chatWorld.SyncEntityPositions(m_snapshotScratch);
 
 		UIPlayerStats& stats = m_model.playerStats;
 		stats.clientId = m_snapshotMessage.clientId;
@@ -626,5 +701,97 @@ namespace engine::client
 			eventEntry->phaseIndex,
 			eventEntry->phaseCount);
 		return true;
+	}
+
+	bool UIModelBinding::ApplyChatRelay(std::span<const std::byte> packet)
+	{
+		PumpWorldPresenterAge();
+		if (!engine::server::DecodeChatRelay(packet, m_chatRelayScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ChatRelay FAILED: decode error");
+			return false;
+		}
+
+		UIChatLineEntry entry{};
+		entry.channelWire = m_chatRelayScratch.channel;
+		entry.timestampUnixMs = m_chatRelayScratch.timestampUnixMs;
+		entry.sender = m_chatRelayScratch.senderDisplay;
+		entry.text = m_chatRelayScratch.text;
+		PushUiChatLine(m_model.chatLines, entry);
+
+		m_chatWorld.OnChatRelay(
+			m_chatRelayScratch.channel,
+			m_chatRelayScratch.senderEntityId,
+			m_chatRelayScratch.text);
+
+		NotifyObservers(UIModelChangeChat | UIModelChangeChatWorld);
+		LOG_INFO(Net,
+			"[UIModelBinding] ChatRelay applied (channel_wire={}, sender_entity_id={}, lines={})",
+			m_chatRelayScratch.channel,
+			m_chatRelayScratch.senderEntityId,
+			m_model.chatLines.size());
+		return true;
+	}
+
+	void UIModelBinding::PumpWorldPresenterAge()
+	{
+		if (!m_initialized)
+		{
+			return;
+		}
+
+		m_chatWorld.PumpAge();
+	}
+
+	bool UIModelBinding::ApplyEmoteRelay(std::span<const std::byte> packet)
+	{
+		PumpWorldPresenterAge();
+		if (!engine::server::DecodeEmoteRelay(packet, m_emoteRelayScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] EmoteRelay FAILED: decode error");
+			return false;
+		}
+
+		m_chatWorld.OnEmoteRelay(m_emoteRelayScratch);
+		m_chatWorld.ExportActiveEmotes(m_model.activeEmotes);
+		NotifyObservers(UIModelChangeChatWorld);
+		LOG_INFO(Net,
+			"[UIModelBinding] EmoteRelay applied (actor_entity_id={}, emote_id={}, flags={})",
+			m_emoteRelayScratch.actorEntityId,
+			m_emoteRelayScratch.emoteId,
+			m_emoteRelayScratch.flags);
+		return true;
+	}
+
+	void UIModelBinding::TickChatWorldVisuals(
+		const engine::math::Vec3& cameraWorld,
+		const engine::math::Frustum& frustum,
+		const engine::math::Mat4& viewProj,
+		uint32_t viewportWidth,
+		uint32_t viewportHeight)
+	{
+		if (!m_initialized)
+		{
+			LOG_WARN(Net, "[UIModelBinding] TickChatWorldVisuals ignored: not initialized");
+			return;
+		}
+
+		if (!ValidateMainThread("TickChatWorldVisuals"))
+		{
+			return;
+		}
+
+		m_chatWorld.RebuildBillboards(
+			cameraWorld,
+			frustum,
+			viewProj,
+			viewportWidth,
+			viewportHeight,
+			m_model.chatBubbleBillboards);
+		m_chatWorld.ExportActiveEmotes(m_model.activeEmotes);
+		LOG_TRACE(Net,
+			"[UIModelBinding] TickChatWorldVisuals OK (bubbles={}, emotes={})",
+			m_model.chatBubbleBillboards.size(),
+			m_model.activeEmotes.size());
 	}
 }

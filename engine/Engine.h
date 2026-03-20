@@ -5,6 +5,7 @@
 #include "engine/core/Time.h"
 #include "engine/core/memory/FrameArena.h"
 #include "engine/audio/AudioEngine.h"
+#include "engine/client/ChatUi.h"
 #include "engine/client/ProfilerHud.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
@@ -75,6 +76,8 @@ namespace engine
 		std::string hlodDebugText;
 		/// M18.1: Debug overlay profiler state (CPU totals + GPU pass breakdown).
 		std::string profilerDebugText;
+		/// M29.1: Chat panel text (history + input) for debug overlay / future HUD renderer.
+		std::string chatDebugText;
 	};
 
 	/// Engine loop: BeginFrame/Update/Render/EndFrame with double-buffered RenderState.
@@ -175,6 +178,7 @@ namespace engine
 		engine::audio::AudioEngine m_audioEngine;
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
+		engine::client::ChatUiPresenter m_chatUi;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

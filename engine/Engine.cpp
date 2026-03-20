@@ -12,6 +12,7 @@
 
 #include <vk_mem_alloc.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -256,6 +257,14 @@ namespace engine
 		});
 		m_window.GetClientSize(m_width, m_height);
 
+		if (!m_chatUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] ChatUiPresenter init FAILED — M29.1 chat panel disabled");
+		}
+		else if (!m_chatUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
+		{
+			LOG_WARN(Core, "[Boot] ChatUiPresenter viewport FAILED — using fallback layout");
+		}
 
 		// -----------------------------------------------------------------
 		// Vulkan init
@@ -1340,6 +1349,7 @@ namespace engine
 			m_editorMode->Shutdown(m_window);
 			m_editorMode.reset();
 		}
+		m_chatUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -1351,8 +1361,17 @@ namespace engine
 		m_input.BeginFrame();
 		m_window.PollEvents();
 
-		if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
+		if (m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive())
+		{
+			if (m_input.WasPressed(engine::platform::Key::Escape))
+			{
+				m_chatUi.SetChatFocus(false);
+			}
+		}
+		else if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
+		{
 			OnQuit();
+		}
 
 		if (m_input.WasPressed(engine::platform::Key::F_11))
     		m_window.ToggleFullscreen();
@@ -1407,9 +1426,18 @@ namespace engine
 
 		out.camera = readState.camera;
 		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
+		out.chatDebugText = m_chatUi.IsInitialized() ? m_chatUi.BuildPanelText() : std::string{};
 		if (!m_editorEnabled)
 		{
-			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+			if (!m_chatUi.IsChatFocusActive())
+			{
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+			}
+
+			if (m_chatUi.IsInitialized())
+			{
+				m_chatUi.Update(m_input, static_cast<float>(dt));
+			}
 		}
 
 		m_world.Update(out.camera.position);
@@ -1486,6 +1514,8 @@ namespace engine
 				LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
 			if ((m_currentFrame % 60) == 0 && !out.profilerDebugText.empty())
 				LOG_DEBUG(Core, "M18.1 {}", out.profilerDebugText);
+			if ((m_currentFrame % 60) == 0 && !out.chatDebugText.empty())
+				LOG_DEBUG(Core, "M29.1 {}", out.chatDebugText);
 		}
 
 		{
@@ -1634,6 +1664,10 @@ namespace engine
 		m_height = h;
 		m_taaHistoryInvalid        = true;
 		m_swapchainResizeRequested = true;
+		if (m_chatUi.IsInitialized())
+		{
+			(void)m_chatUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
+		}
 	}
 
 	void Engine::OnQuit()

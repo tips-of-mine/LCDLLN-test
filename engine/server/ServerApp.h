@@ -5,7 +5,11 @@
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/SpawnerRuntime.h"
 #include "engine/core/Config.h"
+#include "engine/net/ChatSystem.h"
+#include "engine/server/ChatCommandParser.h"
 #include "engine/server/ReplicationTypes.h"
+#include "engine/server/SecurityAuditLog.h"
+#include "engine/server/ServerProtocol.h"
 #include "engine/server/SpatialPartition.h"
 #include "engine/server/TickScheduler.h"
 #include "engine/server/UdpTransport.h"
@@ -17,6 +21,7 @@
 #include <span>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace engine::server
@@ -91,6 +96,12 @@ namespace engine::server
 		std::vector<EntityId> replicatedEntityIds;
 		std::vector<ItemStack> inventory;
 		std::vector<QuestState> questStates;
+		/// M29.2: ignored chat senders (display names, persisted).
+		std::vector<std::string> chatIgnoredDisplayNames;
+		/// M29.2: may use `/kick`, `/ban`, `/mute`, `/announce`.
+		bool chatModeratorRole = false;
+		/// M29.2: block chat sends until this tick (0 = not muted).
+		uint32_t chatMutedUntilServerTick = 0;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -323,6 +334,9 @@ namespace engine::server
 		/// Validate one talk request and forward it to the quest runtime.
 		void HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId);
 
+		/// Validate one chat send request, apply rate limiting, route by channel, emit relays.
+		void HandleChatSend(const Endpoint& endpoint, const ChatSendRequestMessage& request);
+
 		/// Update one mob threat table from an authoritative combat event.
 		void UpdateThreatFromCombatEvent(const CombatEventMessage& message);
 
@@ -422,6 +436,12 @@ namespace engine::server
 		/// Send a combat event packet to one interested client.
 		bool SendCombatEvent(const ConnectedClient& receiver, const CombatEventMessage& message);
 
+		/// Send one chat relay line to one client (M29.1).
+		bool SendChatRelay(const ConnectedClient& receiver, const ChatRelayMessage& message);
+
+		/// Send one emote relay event to one client (M29.3).
+		bool SendEmoteRelay(const ConnectedClient& receiver, const EmoteRelayMessage& message);
+
 		/// Send a zone change packet after a validated authoritative transition.
 		bool SendZoneChange(const ConnectedClient& receiver, const ZoneChangeMessage& message);
 
@@ -458,6 +478,39 @@ namespace engine::server
 		/// Return the cell grid attached to the requested zone, creating it on first use.
 		CellGrid* GetOrCreateZoneGrid(uint32_t zoneId);
 
+		/// Initialize moderation audit log (M29.2).
+		void InitModerationAuditSubsystem();
+
+		/// Load banned character keys from content-relative ban list file.
+		void LoadChatBanFile();
+
+		/// Persist banned character keys to content-relative ban list file.
+		void SaveChatBanFile();
+
+		/// Send one system line to a single client (M29.2).
+		void SendChatSystemNotice(ConnectedClient& receiver, std::string_view text);
+
+		/// Broadcast a global moderation announcement (M29.2).
+		void BroadcastModerationAnnouncement(std::string_view text);
+
+		/// Handle one parsed slash command; returns true when handled (no normal chat relay).
+		bool HandleChatSlashCommand(ConnectedClient& sender, const ParsedChatSlashCommand& command);
+
+		/// Resolve `P<id>` style display token to a connected client, or nullptr.
+		ConnectedClient* FindConnectedClientByChatDisplayName(std::string_view displayToken);
+
+		/// Disconnect and persist one client (e.g. `/kick`).
+		void DisconnectConnectedClient(uint32_t clientId, std::string_view persistenceReason);
+
+		/// True when \p receiver has ignored \p senderDisplay (case-insensitive ASCII).
+		bool IsChatSenderIgnoredBy(const ConnectedClient& receiver, std::string_view senderDisplay) const;
+
+		/// Report line to audit file or main log fallback.
+		void AuditLogChatReport(std::string_view reporterDisplay, std::string_view targetDisplay, std::string_view reason);
+
+		/// Moderation action to audit file or main log fallback.
+		void AuditLogModeration(std::string_view action, std::string_view actorDisplay, std::string_view targetDisplay, std::string_view detail);
+
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
 		EventRuntime m_eventRuntime;
@@ -487,5 +540,14 @@ namespace engine::server
 		uint32_t m_snapshotAccumulator = 0;
 		bool m_initialized = false;
 		bool m_stopRequested = false;
+
+		/// Per-player chat send rate limiting (M29.1).
+		engine::net::ChatRateLimiter m_chatRateLimiter;
+
+		/// M29.2: moderation audit file (chat reports + admin actions).
+		SecurityAuditLog m_moderationAuditLog;
+		bool m_moderationAuditLogReady = false;
+		/// M29.2: character keys rejected at handshake after `/ban`.
+		std::unordered_set<uint32_t> m_bannedCharacterKeys;
 	};
 }

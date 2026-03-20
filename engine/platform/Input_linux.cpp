@@ -57,6 +57,11 @@ namespace engine::platform
 		m_mouseDx = 0;
 		m_mouseDy = 0;
 	}
+
+	void Input::ConsumePendingTextUtf8(std::string&)
+	{
+		m_pendingTextUtf8.clear();
+	}
 }
 
 #endif

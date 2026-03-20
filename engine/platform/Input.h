@@ -1,8 +1,9 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
+#include <string>
 
 namespace engine::platform
 {
@@ -12,6 +13,10 @@ namespace engine::platform
 		Digit1 = '1',
 		Digit2 = '2',
 		Digit3 = '3',
+		Digit4 = '4',
+		Digit5 = '5',
+		Digit6 = '6',
+		Digit7 = '7',
 		C = 'C',
 		B = 'B',
 		M = 'M',
@@ -35,11 +40,17 @@ namespace engine::platform
 		Tab = 0x09,
 		Control = 0x11,
 		Space = 0x20,
+		Enter = 0x0D,
+		Backspace = 0x08,
+		/// US keyboard OEM_2 ('/'); used as chat focus toggle (M29.1).
+		Slash = 0xBF,
 		Shift = 0x10,
 		Left = 0x25,
 		Up = 0x26,
 		Right = 0x27,
 		Down = 0x28,
+		PageUp = 0x21,
+		PageDown = 0x22,
 		// Win32 VK_* codes for function keys (used by hotkeys like fullscreen toggle).
 		F_11 = 0x7Au
 	};
@@ -92,6 +103,9 @@ namespace engine::platform
 		/// Mouse wheel scroll delta since last `BeginFrame()` (positive = scroll up/zoom out).
 		int MouseScrollDelta() const { return m_scrollDelta; }
 
+		/// Move pending UTF-8 text (from WM_CHAR) into \p out and clear the internal buffer.
+		void ConsumePendingTextUtf8(std::string& out);
+
 		/// Capture/release cursor for mouse-look style control.
 		void SetCursorCaptured(bool captured);
 		bool IsCursorCaptured() const { return m_cursorCaptured; }
@@ -115,6 +129,9 @@ namespace engine::platform
 		int m_mouseX = 0;
 		int m_mouseY = 0;
 		int m_scrollDelta = 0;
+
+		/// Pending UTF-8 text collected between WM_CHAR events (Windows).
+		std::string m_pendingTextUtf8;
 	};
 }
 

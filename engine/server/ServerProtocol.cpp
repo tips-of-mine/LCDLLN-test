@@ -12,6 +12,18 @@ namespace engine::server
 		/// Fixed packet header size shared by all protocol messages.
 		inline constexpr size_t kHeaderSize = 8;
 
+		/// Read one raw byte from a packet buffer.
+		uint8_t ReadU8(std::span<const std::byte> bytes, size_t offset)
+		{
+			return static_cast<uint8_t>(bytes[offset]);
+		}
+
+		/// Append one raw byte to a packet buffer.
+		void WriteU8(std::vector<std::byte>& outBytes, uint8_t value)
+		{
+			outBytes.push_back(static_cast<std::byte>(value));
+		}
+
 		/// Read a little-endian 16-bit value from a packet buffer.
 		uint16_t ReadU16(std::span<const std::byte> bytes, size_t offset)
 		{
@@ -645,6 +657,142 @@ namespace engine::server
 			item.itemId = ReadU32(payload, offset + 0);
 			item.quantity = ReadU32(payload, offset + 4);
 			offset += 8;
+		}
+
+		return true;
+	}
+
+	inline constexpr uint16_t kMaxChatPayloadUtf8Bytes = 256;
+	inline constexpr uint16_t kMaxChatSenderDisplayUtf8Bytes = 48;
+
+	std::vector<std::byte> EncodeChatSend(const ChatSendRequestMessage& message)
+	{
+		const uint16_t textLength = static_cast<uint16_t>(message.text.size());
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ChatSend, 4 + 1 + 8 + 2 + textLength);
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.channel);
+		WriteU64(packet, message.whisperTargetEntityId);
+		WriteSizedString(packet, message.text);
+		return packet;
+	}
+
+	bool DecodeChatSend(std::span<const std::byte> packet, ChatSendRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ChatSend, payload) || payload.size() < 15)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.channel = ReadU8(payload, offset);
+		offset += 1;
+		outMessage.whisperTargetEntityId = ReadU64(payload, offset);
+		offset += 8;
+		if (!ReadSizedString(payload, offset, outMessage.text))
+		{
+			return false;
+		}
+
+		if (outMessage.text.size() > kMaxChatPayloadUtf8Bytes)
+		{
+			return false;
+		}
+
+		if (offset != payload.size())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	std::vector<std::byte> EncodeChatRelay(const ChatRelayMessage& message)
+	{
+		const uint16_t senderLength = static_cast<uint16_t>(message.senderDisplay.size());
+		const uint16_t textLength = static_cast<uint16_t>(message.text.size());
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ChatRelay, 1 + 8 + 8 + 2 + senderLength + 2 + textLength);
+		WriteU8(packet, message.channel);
+		WriteU64(packet, message.senderEntityId);
+		WriteU64(packet, message.timestampUnixMs);
+		WriteSizedString(packet, message.senderDisplay);
+		WriteSizedString(packet, message.text);
+		return packet;
+	}
+
+	bool DecodeChatRelay(std::span<const std::byte> packet, ChatRelayMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ChatRelay, payload) || payload.size() < 18)
+		{
+			return false;
+		}
+
+		size_t offset = 0;
+		outMessage.channel = ReadU8(payload, offset);
+		offset += 1;
+		outMessage.senderEntityId = ReadU64(payload, offset);
+		offset += 8;
+		outMessage.timestampUnixMs = ReadU64(payload, offset);
+		offset += 8;
+		if (!ReadSizedString(payload, offset, outMessage.senderDisplay))
+		{
+			return false;
+		}
+
+		if (outMessage.senderDisplay.size() > kMaxChatSenderDisplayUtf8Bytes)
+		{
+			return false;
+		}
+
+		if (!ReadSizedString(payload, offset, outMessage.text))
+		{
+			return false;
+		}
+
+		if (outMessage.text.size() > kMaxChatPayloadUtf8Bytes)
+		{
+			return false;
+		}
+
+		if (offset != payload.size())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	inline constexpr uint8_t kMinEmoteWireId = 1;
+	inline constexpr uint8_t kMaxEmoteWireId = 8;
+
+	std::vector<std::byte> EncodeEmoteRelay(const EmoteRelayMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::EmoteRelay, 14);
+		WriteU64(packet, message.actorEntityId);
+		WriteU8(packet, message.emoteId);
+		WriteU8(packet, message.flags);
+		WriteU32(packet, message.serverTick);
+		return packet;
+	}
+
+	bool DecodeEmoteRelay(std::span<const std::byte> packet, EmoteRelayMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::EmoteRelay, payload) || payload.size() != 14)
+		{
+			return false;
+		}
+
+		outMessage.actorEntityId = ReadU64(payload, 0);
+		outMessage.emoteId = ReadU8(payload, 8);
+		outMessage.flags = ReadU8(payload, 9);
+		outMessage.serverTick = ReadU32(payload, 10);
+		if (outMessage.emoteId < kMinEmoteWireId || outMessage.emoteId > kMaxEmoteWireId)
+		{
+			return false;
 		}
 
 		return true;

@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
+#include "engine/core/Log.h"
+
 #include <algorithm>
 #include <cctype>
 
@@ -111,6 +113,27 @@ namespace engine::platform
 			m_scrollDelta += delta / WHEEL_DELTA;
 			break;
 		}
+		case WM_CHAR:
+		{
+			const wchar_t wc = static_cast<wchar_t>(wparam);
+			if (wc < 32 && wc != '\t')
+			{
+				break;
+			}
+
+			char utf8[8]{};
+			const int converted = WideCharToMultiByte(CP_UTF8, 0, &wc, 1, utf8, sizeof(utf8), nullptr, nullptr);
+			if (converted <= 0)
+			{
+				LOG_WARN(Platform, "[Input] WM_CHAR WideCharToMultiByte FAILED (wc=0x{:04X}, gle={})",
+					static_cast<unsigned>(wc),
+					static_cast<unsigned>(GetLastError()));
+				break;
+			}
+
+			m_pendingTextUtf8.append(utf8, static_cast<size_t>(converted));
+			break;
+		}
 		default:
 			break;
 		}
@@ -144,6 +167,17 @@ namespace engine::platform
 	bool Input::WasMouseReleased(MouseButton button) const
 	{
 		return m_mouseReleased[static_cast<size_t>(button)];
+	}
+
+	void Input::ConsumePendingTextUtf8(std::string& out)
+	{
+		if (m_pendingTextUtf8.empty())
+		{
+			return;
+		}
+
+		out += m_pendingTextUtf8;
+		m_pendingTextUtf8.clear();
 	}
 
 	void Input::SetCursorCaptured(bool captured)

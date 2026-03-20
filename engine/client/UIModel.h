@@ -1,5 +1,8 @@
 #pragma once
 
+#include "engine/client/ChatWorldVisualPresenter.h"
+#include "engine/math/Frustum.h"
+#include "engine/math/Math.h"
 #include "engine/server/ServerProtocol.h"
 
 #include <cstddef>
@@ -22,7 +25,8 @@ namespace engine::client
 		UIModelChangeEvents = 1u << 3,
 		UIModelChangeCombat = 1u << 4,
 		UIModelChangeWorld = 1u << 5,
-		UIModelChangeDebugDump = 1u << 6
+		UIModelChangeDebugDump = 1u << 6,
+		UIModelChangeChat = 1u << 7
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -96,6 +100,15 @@ namespace engine::client
 		std::vector<engine::server::ItemStack> rewardItems;
 	};
 
+	/// One chat line mirrored from \ref engine::server::ChatRelayMessage (M29.1).
+	struct UIChatLineEntry
+	{
+		uint8_t channelWire = 0;
+		uint64_t timestampUnixMs = 0;
+		std::string sender;
+		std::string text;
+	};
+
 	/// One dynamic event entry displayed by the UI model.
 	struct UIEventEntry
 	{
@@ -121,6 +134,11 @@ namespace engine::client
 		std::vector<UIQuestEntry> quests;
 		std::vector<UIEventEntry> events;
 		std::vector<UICombatLogEntry> combatLog;
+		std::vector<UIChatLineEntry> chatLines;
+		/// M29.3: Say/Yell bubbles projected for HUD / billboard renderer.
+		std::vector<UIChatBubbleBillboard> chatBubbleBillboards;
+		/// M29.3: Active emote rows — `emoteWireId` maps to future skeletal clips when an animation stack exists.
+		std::vector<UIActiveEmoteEntry> activeEmotes;
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -161,6 +179,14 @@ namespace engine::client
 		/// Return the current immutable UI model snapshot.
 		const UIModel& GetModel() const { return m_model; }
 
+		/// M29.3: Refresh billboard projections (call from render/game thread with camera + viewport).
+		void TickChatWorldVisuals(
+			const engine::math::Vec3& cameraWorld,
+			const engine::math::Frustum& frustum,
+			const engine::math::Mat4& viewProj,
+			uint32_t viewportWidth,
+			uint32_t viewportHeight);
+
 	private:
 		struct ObserverSlot
 		{
@@ -192,6 +218,9 @@ namespace engine::client
 		/// Apply one decoded dynamic event state message to the event section of the UI model.
 		bool ApplyEventState(std::span<const std::byte> packet);
 
+		/// Apply one decoded chat relay message to the chat log (M29.1).
+		bool ApplyChatRelay(std::span<const std::byte> packet);
+
 		UIModel m_model{};
 		std::thread::id m_ownerThread{};
 		std::vector<ObserverSlot> m_observers;
@@ -203,6 +232,9 @@ namespace engine::client
 		engine::server::InventoryDeltaMessage m_inventoryMessage{};
 		engine::server::QuestDeltaMessage m_questMessage{};
 		engine::server::EventStateMessage m_eventMessage{};
+		engine::server::ChatRelayMessage m_chatRelayScratch{};
+		engine::server::EmoteRelayMessage m_emoteRelayScratch{};
+		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;
 	};

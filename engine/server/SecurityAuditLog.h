@@ -50,6 +50,12 @@ namespace engine::server
 		/// Log session closed.
 		void LogSessionClosed(uint64_t session_id, std::string_view reason);
 
+		/// Log one player chat report for moderation (M29.2).
+		void LogChatReport(std::string_view reporter_display, std::string_view target_display, std::string_view reason);
+
+		/// Log one moderation action with free-form detail (M29.2 audit trail).
+		void LogModerationAction(std::string_view action, std::string_view actor_display, std::string_view target_display, std::string_view detail);
+
 	private:
 		void writeLine(std::string_view event, std::string_view payload);
 		static std::string timestamp();

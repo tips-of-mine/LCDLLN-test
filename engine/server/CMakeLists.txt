@@ -7,7 +7,10 @@ if(WIN32)
   add_executable(server_app
     main_server.cpp
     ServerApp.cpp
+    ChatCommandParser.cpp
     ServerProtocol.cpp
+    ${CMAKE_SOURCE_DIR}/engine/net/ChatSystem.cpp
+    ${CMAKE_SOURCE_DIR}/engine/net/ChatEmotes.cpp
     CharacterPersistence.cpp
     QuestRuntime.cpp
     SpawnerRuntime.cpp

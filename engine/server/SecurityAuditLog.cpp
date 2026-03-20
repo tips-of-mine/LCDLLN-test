@@ -113,4 +113,14 @@ namespace engine::server
 	{
 		writeLine("SESSION_CLOSED", std::format("session_id={} reason={}", session_id, reason));
 	}
+
+	void SecurityAuditLog::LogChatReport(std::string_view reporter_display, std::string_view target_display, std::string_view reason)
+	{
+		writeLine("CHAT_REPORT", std::format("reporter={} target={} reason={}", reporter_display, target_display, reason));
+	}
+
+	void SecurityAuditLog::LogModerationAction(std::string_view action, std::string_view actor_display, std::string_view target_display, std::string_view detail)
+	{
+		writeLine("MODERATION", std::format("action={} actor={} target={} detail={}", action, actor_display, target_display, detail));
+	}
 }

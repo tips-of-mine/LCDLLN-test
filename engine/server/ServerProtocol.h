@@ -29,7 +29,13 @@ namespace engine::server
 		InventoryDelta = 11,
 		TalkRequest = 12,
 		QuestDelta = 13,
-		EventState = 14
+		EventState = 14,
+		/// Client-authored chat line routed by the authoritative server (M29.1).
+		ChatSend = 15,
+		/// Server relay of one chat line to interested clients (M29.1).
+		ChatRelay = 16,
+		/// Server relay of one emote gesture to nearby clients (M29.3).
+		EmoteRelay = 17
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -136,6 +142,35 @@ namespace engine::server
 		std::vector<ItemStack> rewardItems;
 	};
 
+	/// Client chat send request (parsed prefixes applied client-side; server validates + routes).
+	struct ChatSendRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint8_t channel = 0;
+		EntityId whisperTargetEntityId = 0;
+		std::string text;
+	};
+
+	/// One chat line replicated from server to clients.
+	struct ChatRelayMessage
+	{
+		uint8_t channel = 0;
+		EntityId senderEntityId = 0;
+		uint64_t timestampUnixMs = 0;
+		std::string senderDisplay;
+		std::string text;
+	};
+
+	/// One emote playback event replicated from server to nearby clients (M29.3).
+	struct EmoteRelayMessage
+	{
+		EntityId actorEntityId = 0;
+		uint8_t emoteId = 0;
+		/// Bit 0: loop posture (e.g. sit). Remaining bits reserved.
+		uint8_t flags = 0;
+		uint32_t serverTick = 0;
+	};
+
 	/// Dynamic event state message emitted after one event state or phase change.
 	struct EventStateMessage
 	{
@@ -217,4 +252,22 @@ namespace engine::server
 
 	/// Decode a dynamic event state packet and validate the protocol header.
 	bool DecodeEventState(std::span<const std::byte> packet, EventStateMessage& outMessage);
+
+	/// Encode one chat send request packet with the protocol header.
+	std::vector<std::byte> EncodeChatSend(const ChatSendRequestMessage& message);
+
+	/// Decode a chat send request packet and validate the protocol header.
+	bool DecodeChatSend(std::span<const std::byte> packet, ChatSendRequestMessage& outMessage);
+
+	/// Encode one chat relay packet with the protocol header.
+	std::vector<std::byte> EncodeChatRelay(const ChatRelayMessage& message);
+
+	/// Decode a chat relay packet and validate the protocol header.
+	bool DecodeChatRelay(std::span<const std::byte> packet, ChatRelayMessage& outMessage);
+
+	/// Encode one emote relay packet with the protocol header.
+	std::vector<std::byte> EncodeEmoteRelay(const EmoteRelayMessage& message);
+
+	/// Decode an emote relay packet and validate the protocol header.
+	bool DecodeEmoteRelay(std::span<const std::byte> packet, EmoteRelayMessage& outMessage);
 }

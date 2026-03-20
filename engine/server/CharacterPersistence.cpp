@@ -142,12 +142,27 @@ namespace engine::server
 			outState.questStates.push_back(std::move(questState));
 		}
 
+		outState.chatModeratorRole = persisted.GetBool("character.chat_moderator_role", false);
+		outState.chatIgnoredDisplayNames.clear();
+		const uint32_t ignoreCount = static_cast<uint32_t>(persisted.GetInt("chat.ignore.count", 0));
+		constexpr uint32_t kMaxIgnoredChatNames = 32;
+		for (uint32_t ignoreIndex = 0; ignoreIndex < ignoreCount && ignoreIndex < kMaxIgnoredChatNames; ++ignoreIndex)
+		{
+			const std::string entry = persisted.GetString("chat.ignore." + std::to_string(ignoreIndex) + ".name", "");
+			if (!entry.empty())
+			{
+				outState.chatIgnoredDisplayNames.push_back(entry);
+			}
+		}
+
 		LOG_INFO(Net,
-			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={})",
+			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
 			characterKey,
 			outState.zoneId,
 			outState.inventory.size(),
-			outState.questStates.size());
+			outState.questStates.size(),
+			outState.chatIgnoredDisplayNames.size(),
+			outState.chatModeratorRole ? "true" : "false");
 		return true;
 	}
 
@@ -169,6 +184,7 @@ namespace engine::server
 		output << "character.gold=" << state.gold << "\n";
 		output << "character.current_health=" << state.stats.currentHealth << "\n";
 		output << "character.max_health=" << state.stats.maxHealth << "\n";
+		output << "character.chat_moderator_role=" << (state.chatModeratorRole ? 1 : 0) << "\n";
 		output << "inventory.count=" << state.inventory.size() << "\n";
 		for (size_t index = 0; index < state.inventory.size(); ++index)
 		{
@@ -188,6 +204,13 @@ namespace engine::server
 			}
 		}
 
+		const size_t ignoreCountToSave = std::min<size_t>(state.chatIgnoredDisplayNames.size(), 32u);
+		output << "chat.ignore.count=" << ignoreCountToSave << "\n";
+		for (size_t ignoreIndex = 0; ignoreIndex < ignoreCountToSave; ++ignoreIndex)
+		{
+			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
+		}
+
 		if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
 		{
 			LOG_ERROR(Net, "[CharacterPersistence] Save FAILED (character_key={}, path={})",
@@ -197,11 +220,12 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net,
-			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={})",
+			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={})",
 			state.characterKey,
 			state.zoneId,
 			state.inventory.size(),
-			state.questStates.size());
+			state.questStates.size(),
+			ignoreCountToSave);
 		return true;
 	}
 

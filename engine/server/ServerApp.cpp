@@ -1,11 +1,17 @@
 #include "engine/server/ServerApp.h"
 
 #include "engine/core/Log.h"
+#include "engine/net/ChatEmotes.h"
+#include "engine/net/ChatSystem.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/server/ChatCommandParser.h"
 #include "engine/server/ServerProtocol.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstdlib>
+#include <sstream>
 #include <functional>
 #include <sstream>
 #include <span>
@@ -100,6 +106,13 @@ namespace engine::server
 			}
 
 			return "idle";
+		}
+
+		/// Wall-clock milliseconds since Unix epoch (UTC) for chat relay timestamps.
+		uint64_t NowUnixEpochMsUtc()
+		{
+			using namespace std::chrono;
+			return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 		}
 
 		/// Parse the loot visibility token found in the data file.
@@ -222,9 +235,14 @@ namespace engine::server
 		}
 
 		m_tickScheduler.Start();
+		m_chatRateLimiter.Reset();
+		InitModerationAuditSubsystem();
+		LoadChatBanFile();
 		m_initialized = true;
 		LOG_INFO(Core, "[ServerApp] Init OK (port={}, tick_hz={}, snapshot_hz={})",
 			m_listenPort, m_tickHz, m_snapshotHz);
+		LOG_INFO(Net, "[ServerApp] Chat routing ready (rate_limit_msgs_per_sec={})",
+			engine::net::ChatRateLimiter::kMaxMessagesPerSecond);
 		return true;
 	}
 
@@ -261,6 +279,8 @@ namespace engine::server
 
 	void ServerApp::Shutdown()
 	{
+		m_chatRateLimiter.Reset();
+
 		if (!m_initialized
 			&& !m_transport.IsValid()
 			&& m_clients.empty()
@@ -270,6 +290,8 @@ namespace engine::server
 			&& m_zoneGrids.empty()
 			&& m_pendingDatagrams.empty())
 		{
+			m_moderationAuditLog.Shutdown();
+			m_moderationAuditLogReady = false;
 			return;
 		}
 
@@ -322,6 +344,8 @@ namespace engine::server
 		m_characterPersistence.Shutdown();
 		m_dynamicEvents.clear();
 		m_spawners.clear();
+		m_moderationAuditLog.Shutdown();
+		m_moderationAuditLogReady = false;
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -408,11 +432,28 @@ namespace engine::server
 			return;
 		}
 
+		ChatSendRequestMessage chatSend{};
+		if (DecodeChatSend(packetBytes, chatSend))
+		{
+			HandleChatSend(datagram.endpoint, chatSend);
+			return;
+		}
+
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
 	void ServerApp::HandleHello(const Endpoint& endpoint, uint32_t helloNonce)
 	{
+		const uint32_t tentativeCharacterKey = helloNonce != 0 ? helloNonce : m_nextClientId;
+		if (m_bannedCharacterKeys.find(tentativeCharacterKey) != m_bannedCharacterKeys.end())
+		{
+			LOG_WARN(Net,
+				"[ServerApp] Hello rejected: banned character_key={} (endpoint={})",
+				tentativeCharacterKey,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
 		ConnectedClient* existingClient = FindClient(endpoint);
 		if (existingClient != nullptr)
 		{
@@ -450,14 +491,18 @@ namespace engine::server
 			acceptedClient.stats = persistedState.stats;
 			acceptedClient.inventory = persistedState.inventory;
 			acceptedClient.questStates = persistedState.questStates;
+			acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
+			acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
 			acceptedClient.hasReplicatedState = true;
 			LOG_INFO(Net,
-				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={})",
+				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
 				acceptedClient.clientId,
 				acceptedClient.persistenceCharacterKey,
 				acceptedClient.zoneId,
 				acceptedClient.inventory.size(),
-				acceptedClient.questStates.size());
+				acceptedClient.questStates.size(),
+				acceptedClient.chatIgnoredDisplayNames.size(),
+				acceptedClient.chatModeratorRole ? "true" : "false");
 		}
 		else
 		{
@@ -750,6 +795,8 @@ namespace engine::server
 		state.stats = client.stats;
 		state.inventory = client.inventory;
 		state.questStates = client.questStates;
+		state.chatIgnoredDisplayNames = client.chatIgnoredDisplayNames;
+		state.chatModeratorRole = client.chatModeratorRole;
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
@@ -1835,6 +1882,222 @@ namespace engine::server
 		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
 	}
 
+	void ServerApp::HandleChatSend(const Endpoint& endpoint, const ChatSendRequestMessage& request)
+	{
+		ConnectedClient* sender = FindClient(endpoint);
+		if (sender == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (sender->clientId != request.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatSend ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				sender->clientId,
+				request.clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (request.text.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: empty text (client_id={})", sender->clientId);
+			return;
+		}
+
+		if (!m_chatRateLimiter.Allow(sender->clientId, std::chrono::steady_clock::now()))
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend dropped: rate limited (client_id={})", sender->clientId);
+			return;
+		}
+
+		if (sender->chatMutedUntilServerTick != 0 && m_currentTick < sender->chatMutedUntilServerTick)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatSend blocked: sender muted (client_id={}, until_tick={}, current_tick={})",
+				sender->clientId,
+				sender->chatMutedUntilServerTick,
+				m_currentTick);
+			SendChatSystemNotice(*sender, "You are muted.");
+			return;
+		}
+
+		ParsedChatSlashCommand slashCommand{};
+		if (TryParseChatSlashCommand(request.text, slashCommand))
+		{
+			(void)HandleChatSlashCommand(*sender, slashCommand);
+			return;
+		}
+
+		engine::net::ChatChannel logicalChannel{};
+		if (!engine::net::TryDecodeChannelWire(request.channel, logicalChannel))
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: invalid channel wire ({})", request.channel);
+			return;
+		}
+
+		ChatRelayMessage relay{};
+		relay.channel = request.channel;
+		relay.senderEntityId = sender->entityId;
+		relay.timestampUnixMs = NowUnixEpochMsUtc();
+		relay.senderDisplay = "P" + std::to_string(sender->clientId);
+		if (relay.senderDisplay.size() > 48)
+		{
+			relay.senderDisplay.resize(48);
+		}
+
+		relay.text = request.text;
+
+		std::vector<ConnectedClient*> recipients;
+		const auto addUnique = [&recipients](ConnectedClient* clientPtr)
+		{
+			if (clientPtr == nullptr)
+			{
+				return;
+			}
+
+			if (std::find(recipients.begin(), recipients.end(), clientPtr) == recipients.end())
+			{
+				recipients.push_back(clientPtr);
+			}
+		};
+
+		const auto addAllInZone = [this, &addUnique](uint32_t zoneId)
+		{
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (peer.zoneId == zoneId)
+				{
+					addUnique(&peer);
+				}
+			}
+		};
+
+		switch (logicalChannel)
+		{
+		case engine::net::ChatChannel::Say:
+		{
+			const float radius = engine::net::kChatSayRadiusMeters;
+			const float radiusSq = radius * radius;
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (peer.zoneId != sender->zoneId)
+				{
+					continue;
+				}
+
+				if (DistanceSquaredXZ(
+						sender->positionMetersX,
+						sender->positionMetersZ,
+						peer.positionMetersX,
+						peer.positionMetersZ) <= radiusSq)
+				{
+					addUnique(&peer);
+				}
+			}
+
+			break;
+		}
+		case engine::net::ChatChannel::Yell:
+		{
+			const float radius = engine::net::kChatYellRadiusMeters;
+			const float radiusSq = radius * radius;
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (peer.zoneId != sender->zoneId)
+				{
+					continue;
+				}
+
+				if (DistanceSquaredXZ(
+						sender->positionMetersX,
+						sender->positionMetersZ,
+						peer.positionMetersX,
+						peer.positionMetersZ) <= radiusSq)
+				{
+					addUnique(&peer);
+				}
+			}
+
+			break;
+		}
+		case engine::net::ChatChannel::Whisper:
+		{
+			ConnectedClient* target = FindClientByEntityId(request.whisperTargetEntityId);
+			if (target == nullptr)
+			{
+				LOG_WARN(Net,
+					"[ServerApp] ChatSend whisper FAILED: target not connected (client_id={}, target_entity_id={})",
+					sender->clientId,
+					request.whisperTargetEntityId);
+				return;
+			}
+
+			addUnique(sender);
+			addUnique(target);
+			break;
+		}
+		case engine::net::ChatChannel::Party:
+		case engine::net::ChatChannel::Guild:
+			LOG_INFO(Net,
+				"[ServerApp] ChatSend party/guild routing stub -> zone broadcast (client_id={}, channel_wire={})",
+				sender->clientId,
+				request.channel);
+			addAllInZone(sender->zoneId);
+			break;
+		case engine::net::ChatChannel::Zone:
+			addAllInZone(sender->zoneId);
+			break;
+		case engine::net::ChatChannel::Global:
+			for (ConnectedClient& peer : m_clients)
+			{
+				addUnique(&peer);
+			}
+
+			break;
+		default:
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: unhandled channel enum (client_id={})", sender->clientId);
+			return;
+		}
+
+		if (recipients.empty())
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatSend produced zero recipients (client_id={}, channel_wire={})",
+				sender->clientId,
+				request.channel);
+			return;
+		}
+
+		size_t sentOk = 0;
+		for (ConnectedClient* receiver : recipients)
+		{
+			if (receiver->clientId != sender->clientId && IsChatSenderIgnoredBy(*receiver, relay.senderDisplay))
+			{
+				LOG_DEBUG(Net,
+					"[ServerApp] ChatRelay skipped for ignored sender (receiver_client_id={}, sender_display={})",
+					receiver->clientId,
+					relay.senderDisplay);
+				continue;
+			}
+
+			if (SendChatRelay(*receiver, relay))
+			{
+				++sentOk;
+			}
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] ChatSend routed (client_id={}, channel_wire={}, recipients={}, sent_ok={})",
+			sender->clientId,
+			request.channel,
+			recipients.size(),
+			sentOk);
+	}
+
 	void ServerApp::SpawnLootBagForMob(const MobEntity& mob, EntityId ownerEntityId)
 	{
 		std::vector<ItemStack> droppedItems;
@@ -2703,6 +2966,46 @@ namespace engine::server
 		return true;
 	}
 
+	bool ServerApp::SendChatRelay(const ConnectedClient& receiver, const ChatRelayMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeChatRelay(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatRelay send FAILED (receiver_client_id={}, sender_entity_id={})",
+				receiver.clientId,
+				message.senderEntityId);
+			return false;
+		}
+
+		LOG_DEBUG(Net,
+			"[ServerApp] ChatRelay sent (receiver_client_id={}, sender_entity_id={}, channel_wire={})",
+			receiver.clientId,
+			message.senderEntityId,
+			message.channel);
+		return true;
+	}
+
+	bool ServerApp::SendEmoteRelay(const ConnectedClient& receiver, const EmoteRelayMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeEmoteRelay(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net,
+				"[ServerApp] EmoteRelay send FAILED (receiver_client_id={}, actor_entity_id={})",
+				receiver.clientId,
+				message.actorEntityId);
+			return false;
+		}
+
+		LOG_DEBUG(Net,
+			"[ServerApp] EmoteRelay sent (receiver_client_id={}, actor_entity_id={}, emote_id={})",
+			receiver.clientId,
+			message.actorEntityId,
+			message.emoteId);
+		return true;
+	}
+
 	bool ServerApp::SendWelcome(const ConnectedClient& client)
 	{
 		WelcomeMessage welcome{};
@@ -2873,5 +3176,491 @@ namespace engine::server
 		}
 
 		return &it->second;
+	}
+
+	namespace
+	{
+		/// Trim ASCII spaces for chat command argument splitting.
+		std::string_view TrimChatArg(std::string_view text)
+		{
+			while (!text.empty() && (text.front() == ' ' || text.front() == '\t'))
+			{
+				text.remove_prefix(1);
+			}
+
+			while (!text.empty() && (text.back() == ' ' || text.back() == '\t'))
+			{
+				text.remove_suffix(1);
+			}
+
+			return text;
+		}
+
+		/// Split `first rest` from one argument line.
+		std::pair<std::string, std::string> SplitFirstChatArg(std::string_view line)
+		{
+			line = TrimChatArg(line);
+			if (line.empty())
+			{
+				return {{}, {}};
+			}
+
+			const size_t spacePos = line.find(' ');
+			if (spacePos == std::string_view::npos)
+			{
+				return {std::string(line), {}};
+			}
+
+			return {
+				std::string(TrimChatArg(line.substr(0, spacePos))),
+				std::string(TrimChatArg(line.substr(spacePos + 1)))};
+		}
+	}
+
+	void ServerApp::InitModerationAuditSubsystem()
+	{
+		const std::string relativeLog = m_config.GetString("server.moderation_audit_log", "logs/moderation_audit.log");
+		const auto absolutePath = engine::platform::FileSystem::ResolveContentPath(m_config, relativeLog);
+		const size_t rotationMb = static_cast<size_t>((std::max)(static_cast<int64_t>(1), m_config.GetInt("server.moderation_audit_rotation_mb", 10)));
+		const int retentionDays = static_cast<int>(m_config.GetInt("server.moderation_audit_retention_days", 7));
+		if (!m_moderationAuditLog.Init(absolutePath.string(), rotationMb, retentionDays))
+		{
+			LOG_WARN(Net, "[ServerApp] Moderation audit log Init FAILED (path={})", absolutePath.string());
+			m_moderationAuditLogReady = false;
+			return;
+		}
+
+		m_moderationAuditLogReady = true;
+		LOG_INFO(Net, "[ServerApp] Moderation audit subsystem Init OK (path={})", absolutePath.string());
+	}
+
+	void ServerApp::LoadChatBanFile()
+	{
+		m_bannedCharacterKeys.clear();
+		const std::string relativePath = m_config.GetString("server.chat_ban_list_path", "persistence/server/chat_bans.ini");
+		const auto fullPath = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
+		if (!engine::platform::FileSystem::Exists(fullPath))
+		{
+			LOG_INFO(Net, "[ServerApp] Chat ban list not present — starting empty (path={})", relativePath);
+			return;
+		}
+
+		engine::core::Config banConfig;
+		if (!banConfig.LoadFromFile(fullPath.string()))
+		{
+			LOG_WARN(Net, "[ServerApp] Chat ban list load FAILED (path={})", relativePath);
+			return;
+		}
+
+		const uint32_t banCount = static_cast<uint32_t>(banConfig.GetInt("ban.count", 0));
+		for (uint32_t banIndex = 0; banIndex < banCount && banIndex < 4096u; ++banIndex)
+		{
+			const uint32_t key = static_cast<uint32_t>(banConfig.GetInt("ban." + std::to_string(banIndex) + ".key", 0));
+			if (key != 0u)
+			{
+				m_bannedCharacterKeys.insert(key);
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Chat ban list loaded (path={}, keys={})", relativePath, m_bannedCharacterKeys.size());
+	}
+
+	void ServerApp::SaveChatBanFile()
+	{
+		std::vector<uint32_t> keys(m_bannedCharacterKeys.begin(), m_bannedCharacterKeys.end());
+		std::sort(keys.begin(), keys.end());
+		std::ostringstream output;
+		output << "ban.count=" << keys.size() << "\n";
+		for (size_t banIndex = 0; banIndex < keys.size(); ++banIndex)
+		{
+			output << "ban." << banIndex << ".key=" << keys[banIndex] << "\n";
+		}
+
+		const std::string relativePath = m_config.GetString("server.chat_ban_list_path", "persistence/server/chat_bans.ini");
+		if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
+		{
+			LOG_ERROR(Net, "[ServerApp] Chat ban list save FAILED (path={})", relativePath);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Chat ban list saved (path={}, keys={})", relativePath, keys.size());
+	}
+
+	void ServerApp::SendChatSystemNotice(ConnectedClient& receiver, std::string_view text)
+	{
+		ChatRelayMessage notice{};
+		notice.channel = static_cast<uint8_t>(engine::net::ChatChannel::Say);
+		notice.senderEntityId = 0;
+		notice.timestampUnixMs = NowUnixEpochMsUtc();
+		notice.senderDisplay = "System";
+		notice.text.assign(text.begin(), text.end());
+		if (!SendChatRelay(receiver, notice))
+		{
+			LOG_WARN(Net, "[ServerApp] System chat notice send FAILED (client_id={})", receiver.clientId);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] System chat notice sent (client_id={}, len={})", receiver.clientId, notice.text.size());
+	}
+
+	void ServerApp::BroadcastModerationAnnouncement(std::string_view text)
+	{
+		ChatRelayMessage notice{};
+		notice.channel = static_cast<uint8_t>(engine::net::ChatChannel::Global);
+		notice.senderEntityId = 0;
+		notice.timestampUnixMs = NowUnixEpochMsUtc();
+		notice.senderDisplay = "Moderation";
+		notice.text.assign(text.begin(), text.end());
+		size_t sentOk = 0;
+		for (ConnectedClient& client : m_clients)
+		{
+			if (SendChatRelay(client, notice))
+			{
+				++sentOk;
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Moderation announce broadcast (recipients_ok={}, text_len={})", sentOk, notice.text.size());
+	}
+
+	void ServerApp::AuditLogChatReport(std::string_view reporterDisplay, std::string_view targetDisplay, std::string_view reason)
+	{
+		if (m_moderationAuditLogReady)
+		{
+			m_moderationAuditLog.LogChatReport(reporterDisplay, targetDisplay, reason);
+		}
+		else
+		{
+			LOG_INFO(Net,
+				"[Moderation/Audit] CHAT_REPORT reporter={} target={} reason={}",
+				reporterDisplay,
+				targetDisplay,
+				reason);
+		}
+	}
+
+	void ServerApp::AuditLogModeration(std::string_view action, std::string_view actorDisplay, std::string_view targetDisplay, std::string_view detail)
+	{
+		if (m_moderationAuditLogReady)
+		{
+			m_moderationAuditLog.LogModerationAction(action, actorDisplay, targetDisplay, detail);
+		}
+		else
+		{
+			LOG_INFO(Net,
+				"[Moderation/Audit] action={} actor={} target={} detail={}",
+				action,
+				actorDisplay,
+				targetDisplay,
+				detail);
+		}
+	}
+
+	bool ServerApp::IsChatSenderIgnoredBy(const ConnectedClient& receiver, std::string_view senderDisplay) const
+	{
+		for (const std::string& ignoredName : receiver.chatIgnoredDisplayNames)
+		{
+			if (ChatNameEqualsAsciiI(ignoredName, senderDisplay))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	ConnectedClient* ServerApp::FindConnectedClientByChatDisplayName(std::string_view displayToken)
+	{
+		const std::string_view token = TrimChatArg(displayToken);
+		if (token.empty())
+		{
+			return nullptr;
+		}
+
+		for (ConnectedClient& client : m_clients)
+		{
+			const std::string selfLabel = "P" + std::to_string(client.clientId);
+			if (ChatNameEqualsAsciiI(token, selfLabel))
+			{
+				return &client;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void ServerApp::DisconnectConnectedClient(uint32_t clientId, std::string_view persistenceReason)
+	{
+		const auto clientIt = std::find_if(
+			m_clients.begin(),
+			m_clients.end(),
+			[clientId](const ConnectedClient& client) { return client.clientId == clientId; });
+		if (clientIt == m_clients.end())
+		{
+			LOG_WARN(Net, "[ServerApp] Disconnect skipped: client_id not found ({})", clientId);
+			return;
+		}
+
+		SaveConnectedClient(*clientIt, persistenceReason);
+		if (clientIt->hasCell)
+		{
+			const auto zoneIt = m_zoneGrids.find(clientIt->zoneId);
+			if (zoneIt != m_zoneGrids.end())
+			{
+				(void)zoneIt->second.RemoveEntity(clientIt->entityId);
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);
+		m_clients.erase(clientIt);
+	}
+
+	bool ServerApp::HandleChatSlashCommand(ConnectedClient& sender, const ParsedChatSlashCommand& command)
+	{
+		const std::string actorLabel = "P" + std::to_string(sender.clientId);
+
+		switch (command.kind)
+		{
+		case ChatSlashCommandKind::Who:
+		{
+			const bool globalWho = ChatNameEqualsAsciiI(TrimChatArg(command.argsRemainder), "global");
+			std::ostringstream list;
+			list << (globalWho ? "ONLINE (global): " : "ONLINE (zone): ");
+			bool first = true;
+			for (const ConnectedClient& peer : m_clients)
+			{
+				if (!globalWho && peer.zoneId != sender.zoneId)
+				{
+					continue;
+				}
+
+				if (!first)
+				{
+					list << ' ';
+				}
+
+				first = false;
+				list << 'P' << peer.clientId;
+			}
+
+			if (first)
+			{
+				list << "(none)";
+			}
+
+			SendChatSystemNotice(sender, list.str());
+			LOG_INFO(Net, "[ServerApp] /who handled (client_id={}, global={})", sender.clientId, globalWho ? "true" : "false");
+			return true;
+		}
+		case ChatSlashCommandKind::Ignore:
+		{
+			const auto [targetName, extra] = SplitFirstChatArg(command.argsRemainder);
+			(void)extra;
+			if (targetName.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /ignore <player>");
+				LOG_WARN(Net, "[ServerApp] /ignore rejected: missing target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			const std::string selfLabel = "P" + std::to_string(sender.clientId);
+			if (ChatNameEqualsAsciiI(targetName, selfLabel))
+			{
+				SendChatSystemNotice(sender, "Cannot ignore yourself.");
+				LOG_WARN(Net, "[ServerApp] /ignore rejected: self-target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			if (sender.chatIgnoredDisplayNames.size() >= 32)
+			{
+				SendChatSystemNotice(sender, "Ignore list full (max 32).");
+				LOG_WARN(Net, "[ServerApp] /ignore rejected: list full (client_id={})", sender.clientId);
+				return true;
+			}
+
+			for (const std::string& existing : sender.chatIgnoredDisplayNames)
+			{
+				if (ChatNameEqualsAsciiI(existing, targetName))
+				{
+					SendChatSystemNotice(sender, "Already ignoring that player.");
+					LOG_INFO(Net, "[ServerApp] /ignore duplicate ignored (client_id={})", sender.clientId);
+					return true;
+				}
+			}
+
+			sender.chatIgnoredDisplayNames.push_back(targetName);
+			SaveConnectedClient(sender, "chat_ignore");
+			SendChatSystemNotice(sender, "Ignored " + targetName + ".");
+			LOG_INFO(Net, "[ServerApp] /ignore applied (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+		case ChatSlashCommandKind::Unignore:
+		{
+			const auto [targetName, extra] = SplitFirstChatArg(command.argsRemainder);
+			(void)extra;
+			if (targetName.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /unignore <player>");
+				LOG_WARN(Net, "[ServerApp] /unignore rejected: missing target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			const auto it = std::find_if(
+				sender.chatIgnoredDisplayNames.begin(),
+				sender.chatIgnoredDisplayNames.end(),
+				[&](const std::string& entry) { return ChatNameEqualsAsciiI(entry, targetName); });
+			if (it == sender.chatIgnoredDisplayNames.end())
+			{
+				SendChatSystemNotice(sender, "Not ignoring that player.");
+				LOG_WARN(Net, "[ServerApp] /unignore rejected: not found (client_id={})", sender.clientId);
+				return true;
+			}
+
+			sender.chatIgnoredDisplayNames.erase(it);
+			SaveConnectedClient(sender, "chat_unignore");
+			SendChatSystemNotice(sender, "Unignored " + targetName + ".");
+			LOG_INFO(Net, "[ServerApp] /unignore applied (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+		case ChatSlashCommandKind::Report:
+		{
+			const auto [targetName, reason] = SplitFirstChatArg(command.argsRemainder);
+			if (targetName.empty() || reason.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /report <player> <reason>");
+				LOG_WARN(Net, "[ServerApp] /report rejected: bad args (client_id={})", sender.clientId);
+				return true;
+			}
+
+			AuditLogChatReport(actorLabel, targetName, reason);
+			SendChatSystemNotice(sender, "Report recorded. Thank you.");
+			LOG_INFO(Net, "[ServerApp] /report recorded (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+		case ChatSlashCommandKind::Kick:
+		case ChatSlashCommandKind::Ban:
+		case ChatSlashCommandKind::Mute:
+		case ChatSlashCommandKind::Announce:
+		{
+			if (!sender.chatModeratorRole)
+			{
+				SendChatSystemNotice(sender, "Permission denied.");
+				LOG_WARN(Net,
+					"[ServerApp] Admin chat command denied (client_id={}, cmd={})",
+					sender.clientId,
+					ChatSlashCommandLabel(command.kind));
+				return true;
+			}
+
+			if (command.kind == ChatSlashCommandKind::Announce)
+			{
+				const std::string_view announcement = TrimChatArg(command.argsRemainder);
+				if (announcement.empty())
+				{
+					SendChatSystemNotice(sender, "Usage: /announce <message>");
+					LOG_WARN(Net, "[ServerApp] /announce rejected: empty (client_id={})", sender.clientId);
+					return true;
+				}
+
+				BroadcastModerationAnnouncement(announcement);
+				AuditLogModeration("ANNOUNCE", actorLabel, "*", announcement);
+				SendChatSystemNotice(sender, "Announcement broadcast.");
+				LOG_INFO(Net, "[ServerApp] /announce executed (client_id={})", sender.clientId);
+				return true;
+			}
+
+			const auto [targetName, detail] = SplitFirstChatArg(command.argsRemainder);
+			if (targetName.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /kick|/ban|/mute <player> [detail]");
+				LOG_WARN(Net, "[ServerApp] Admin chat command rejected: missing target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+			if (target == nullptr)
+			{
+				SendChatSystemNotice(sender, "Target not online.");
+				LOG_WARN(Net, "[ServerApp] Admin chat command rejected: target offline (client_id={})", sender.clientId);
+				return true;
+			}
+
+			if (target->clientId == sender.clientId)
+			{
+				SendChatSystemNotice(sender, "Cannot target yourself.");
+				return true;
+			}
+
+			const std::string targetLabel = "P" + std::to_string(target->clientId);
+
+			if (command.kind == ChatSlashCommandKind::Mute)
+			{
+				uint32_t durationSeconds = 60;
+				if (!detail.empty())
+				{
+					char* endPtr = nullptr;
+					const unsigned long parsed = std::strtoul(detail.c_str(), &endPtr, 10);
+					if (endPtr != detail.c_str() && parsed > 0ul && parsed < 604800ul)
+					{
+						durationSeconds = static_cast<uint32_t>(parsed);
+					}
+					else
+					{
+						SendChatSystemNotice(sender, "Mute duration invalid; using 60s.");
+						LOG_WARN(Net, "[ServerApp] /mute duration fallback 60s (client_id={})", sender.clientId);
+					}
+				}
+
+				const uint32_t deltaTicks = durationSeconds * static_cast<uint32_t>(m_tickHz > 0 ? m_tickHz : 20u);
+				target->chatMutedUntilServerTick = m_currentTick + deltaTicks;
+				AuditLogModeration("MUTE", actorLabel, targetLabel, std::to_string(durationSeconds) + "s");
+				SendChatSystemNotice(*target, "You have been muted.");
+				SendChatSystemNotice(sender, "Mute applied.");
+				LOG_INFO(Net,
+					"[ServerApp] /mute applied (actor_client_id={}, target_client_id={}, seconds={})",
+					sender.clientId,
+					target->clientId,
+					durationSeconds);
+				return true;
+			}
+
+			if (command.kind == ChatSlashCommandKind::Kick)
+			{
+				AuditLogModeration("KICK", actorLabel, targetLabel, detail);
+				SendChatSystemNotice(*target, "You were kicked from the server.");
+				DisconnectConnectedClient(target->clientId, "moderation_kick");
+				SendChatSystemNotice(sender, "Kick executed.");
+				LOG_INFO(Net, "[ServerApp] /kick executed (actor_client_id={}, target={})", sender.clientId, targetLabel);
+				return true;
+			}
+
+			if (command.kind == ChatSlashCommandKind::Ban)
+			{
+				const uint32_t characterKey = target->persistenceCharacterKey;
+				if (characterKey == 0)
+				{
+					SendChatSystemNotice(sender, "Ban failed: target has no persistence key.");
+					LOG_WARN(Net, "[ServerApp] /ban rejected: no persistence key (target_client_id={})", target->clientId);
+					return true;
+				}
+
+				m_bannedCharacterKeys.insert(characterKey);
+				SaveChatBanFile();
+				AuditLogModeration("BAN", actorLabel, targetLabel, detail);
+				SendChatSystemNotice(*target, "You are banned from this server.");
+				DisconnectConnectedClient(target->clientId, "moderation_ban");
+				SendChatSystemNotice(sender, "Ban applied.");
+				LOG_INFO(Net,
+					"[ServerApp] /ban executed (actor_client_id={}, character_key={})",
+					sender.clientId,
+					characterKey);
+				return true;
+			}
+		}
+		case ChatSlashCommandKind::None:
+		default:
+			LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
+			return true;
+		}
 	}
 }

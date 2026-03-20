@@ -26,7 +26,9 @@ namespace engine::client
 		UIModelChangeCombat = 1u << 4,
 		UIModelChangeWorld = 1u << 5,
 		UIModelChangeDebugDump = 1u << 6,
-		UIModelChangeChat = 1u << 7
+		UIModelChangeChat = 1u << 7,
+		/// M29.3: world-space chat bubbles + emote playback state.
+		UIModelChangeChatWorld = 1u << 8
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -220,6 +222,12 @@ namespace engine::client
 
 		/// Apply one decoded chat relay message to the chat log (M29.1).
 		bool ApplyChatRelay(std::span<const std::byte> packet);
+
+		/// Apply one decoded emote relay message (M29.3).
+		bool ApplyEmoteRelay(std::span<const std::byte> packet);
+
+		/// Advance world presenter ages (wall clock clamped).
+		void PumpWorldPresenterAge();
 
 		UIModel m_model{};
 		std::thread::id m_ownerThread{};

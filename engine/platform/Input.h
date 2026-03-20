@@ -89,6 +89,8 @@ namespace engine::platform
 		int MouseX() const { return m_mouseX; }
 		/// Current mouse Y position in client coordinates.
 		int MouseY() const { return m_mouseY; }
+		/// Mouse wheel scroll delta since last `BeginFrame()` (positive = scroll up/zoom out).
+		int MouseScrollDelta() const { return m_scrollDelta; }
 
 		/// Capture/release cursor for mouse-look style control.
 		void SetCursorCaptured(bool captured);
@@ -112,6 +114,7 @@ namespace engine::platform
 		int m_mouseDy = 0;
 		int m_mouseX = 0;
 		int m_mouseY = 0;
+		int m_scrollDelta = 0;
 	};
 }
 

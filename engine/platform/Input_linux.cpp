@@ -12,6 +12,7 @@ namespace engine::platform
 		std::fill(m_released.begin(), m_released.end(), false);
 		m_mouseDx = 0;
 		m_mouseDy = 0;
+		m_scrollDelta = 0;
 	}
 
 	void Input::HandleMessage(uint32_t, uint64_t, int64_t)

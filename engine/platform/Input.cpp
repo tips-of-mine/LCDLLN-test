@@ -17,6 +17,7 @@ namespace engine::platform
 		std::fill(m_mouseReleased.begin(), m_mouseReleased.end(), false);
 		m_mouseDx = 0;
 		m_mouseDy = 0;
+		m_scrollDelta = 0;
 	}
 
 	void Input::HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam)
@@ -103,6 +104,13 @@ namespace engine::platform
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Middle)] = false;
 			break;
+		case WM_MOUSEWHEEL:
+		{
+			// GET_WHEEL_DELTA_WPARAM returns the delta in multiples of WHEEL_DELTA (120).
+			const int delta = GET_WHEEL_DELTA_WPARAM(static_cast<WPARAM>(wparam));
+			m_scrollDelta += delta / WHEEL_DELTA;
+			break;
+		}
 		default:
 			break;
 		}

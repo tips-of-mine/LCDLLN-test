@@ -137,6 +137,7 @@ add_library(engine_core
   engine/render/DeferredPipeline.cpp
   engine/math/Frustum.cpp
   engine/gameplay/CharacterController.cpp
+  engine/gameplay/ThirdPersonCamera.cpp
   engine/world/WorldModel.cpp
   engine/world/OutputVersion.cpp
   engine/world/ProbeData.cpp

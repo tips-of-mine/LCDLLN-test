@@ -19,7 +19,10 @@ namespace engine::net
 		Party = 3,
 		Guild = 4,
 		Zone = 5,
-		Global = 6
+		Global = 6,
+		/// Messages broadcast by the hosting game server (e.g. events, restarts, zone notices).
+		/// Clients cannot write to this channel; senderEntityId is always 0.
+		Server = 7
 	};
 
 	/// One chat line stored client- or server-side (history / relay).

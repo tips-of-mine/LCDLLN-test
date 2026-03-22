@@ -93,6 +93,8 @@ add_library(engine_core
   engine/audio/AudioEngine.cpp
   engine/client/CombatHud.cpp
   engine/client/AoEPreviewSystem.cpp
+  engine/client/BuffBarPresenter.cpp
+  engine/client/AuraFXSystem.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
   engine/client/ProfilerHud.cpp
@@ -101,6 +103,7 @@ add_library(engine_core
   engine/client/UIModel.cpp
   engine/client/ChatUi.cpp
   engine/client/ChatWorldVisualPresenter.cpp
+  engine/client/ZonePreloadHook.cpp
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp
@@ -144,6 +147,8 @@ add_library(engine_core
   engine/gameplay/CharacterController.cpp
   engine/gameplay/ThirdPersonCamera.cpp
   engine/gameplay/SkillSystem.cpp
+  engine/gameplay/ClientPrediction.cpp
+  engine/gameplay/StatusEffect.cpp
   engine/world/WorldModel.cpp
   engine/world/OutputVersion.cpp
   engine/world/ProbeData.cpp

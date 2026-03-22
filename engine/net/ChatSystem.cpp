@@ -99,6 +99,15 @@ namespace engine::net
 		case static_cast<uint8_t>(ChatChannel::Global):
 			outChannel = ChatChannel::Global;
 			return true;
+		case static_cast<uint8_t>(ChatChannel::Server):
+			outChannel = ChatChannel::Server;
+			return true;
+		case static_cast<uint8_t>(ChatChannel::Raid):
+			outChannel = ChatChannel::Raid;
+			return true;
+		case static_cast<uint8_t>(ChatChannel::Friends):
+			outChannel = ChatChannel::Friends;
+			return true;
 		default:
 			return false;
 		}
@@ -127,6 +136,12 @@ namespace engine::net
 			return 0xFF00CED1u;
 		case ChatChannel::Global:
 			return 0xFFFFD700u;
+		case ChatChannel::Server:
+			return 0xFFFF8800u;
+		case ChatChannel::Raid:
+			return 0xFFFF4500u;
+		case ChatChannel::Friends:
+			return 0xFF90EE90u;
 		}
 
 		return 0xFFFFFFFFu;
@@ -254,6 +269,28 @@ namespace engine::net
 		}
 
 		if (TryApplySimplePrefix(line, "/z", ChatChannel::Zone, outParsed))
+		{
+			return true;
+		}
+
+		// /raid or /ra — canal raid (tester le préfixe le plus long en premier)
+		if (TryApplySimplePrefix(line, "/raid", ChatChannel::Raid, outParsed))
+		{
+			return true;
+		}
+
+		if (TryApplySimplePrefix(line, "/ra", ChatChannel::Raid, outParsed))
+		{
+			return true;
+		}
+
+		// /amis or /am — canal amis
+		if (TryApplySimplePrefix(line, "/amis", ChatChannel::Friends, outParsed))
+		{
+			return true;
+		}
+
+		if (TryApplySimplePrefix(line, "/am", ChatChannel::Friends, outParsed))
 		{
 			return true;
 		}

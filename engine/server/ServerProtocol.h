@@ -262,6 +262,10 @@ namespace engine::server
 	/// Encode one chat relay packet with the protocol header.
 	std::vector<std::byte> EncodeChatRelay(const ChatRelayMessage& message);
 
+	/// Convenience: encode a server-authored broadcast on the Server channel (wire=7).
+	/// senderEntityId is always 0 and senderDisplay is fixed to "[Serveur]".
+	std::vector<std::byte> EncodeServerNotify(const std::string& text, uint64_t timestampUnixMs);
+
 	/// Decode a chat relay packet and validate the protocol header.
 	bool DecodeChatRelay(std::span<const std::byte> packet, ChatRelayMessage& outMessage);
 

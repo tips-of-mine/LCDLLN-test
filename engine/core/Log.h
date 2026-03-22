@@ -21,7 +21,8 @@ namespace engine::core
         /// Minimum level that will be emitted.
         LogLevel level = LogLevel::Info;
         /// Relative path to the log file to append to (created if missing).
-        std::string filePath = "engine.log";
+        /// Empty string means no file output.
+        std::string filePath;
         /// If true, also write logs to stdout/stderr.
         bool console = true;
         /// If true, flush file output after each line (recommended for Debug builds).

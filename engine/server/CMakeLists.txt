@@ -19,6 +19,7 @@ if(WIN32)
     TickScheduler.cpp
     SpatialPartition.cpp
     ZoneTransitions.cpp
+    LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
@@ -40,6 +41,7 @@ elseif(UNIX)
     db/ConnectionPool.cpp
     db/DbHelpers.cpp
     NetServer.cpp
+    LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
     ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp

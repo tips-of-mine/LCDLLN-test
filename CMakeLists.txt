@@ -145,6 +145,7 @@ add_library(engine_core
   engine/gameplay/CharacterController.cpp
   engine/gameplay/ThirdPersonCamera.cpp
   engine/gameplay/SkillSystem.cpp
+  engine/gameplay/ClientPrediction.cpp
   engine/world/WorldModel.cpp
   engine/world/OutputVersion.cpp
   engine/world/ProbeData.cpp

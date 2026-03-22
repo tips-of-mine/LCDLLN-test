@@ -93,6 +93,8 @@ add_library(engine_core
   engine/audio/AudioEngine.cpp
   engine/client/CombatHud.cpp
   engine/client/AoEPreviewSystem.cpp
+  engine/client/BuffBarPresenter.cpp
+  engine/client/AuraFXSystem.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
   engine/client/ProfilerHud.cpp

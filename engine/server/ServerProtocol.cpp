@@ -1,5 +1,7 @@
 #include "engine/server/ServerProtocol.h"
 
+#include "engine/net/ChatSystem.h"
+
 #include <bit>
 
 namespace engine::server
@@ -720,6 +722,17 @@ namespace engine::server
 		WriteSizedString(packet, message.senderDisplay);
 		WriteSizedString(packet, message.text);
 		return packet;
+	}
+
+	std::vector<std::byte> EncodeServerNotify(const std::string& text, uint64_t timestampUnixMs)
+	{
+		ChatRelayMessage msg{};
+		msg.channel = engine::net::ToWire(engine::net::ChatChannel::Server);
+		msg.senderEntityId = 0;
+		msg.timestampUnixMs = timestampUnixMs;
+		msg.senderDisplay = "[Serveur]";
+		msg.text = text;
+		return EncodeChatRelay(msg);
 	}
 
 	bool DecodeChatRelay(std::span<const std::byte> packet, ChatRelayMessage& outMessage)

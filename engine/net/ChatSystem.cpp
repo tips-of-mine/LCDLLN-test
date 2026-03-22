@@ -99,6 +99,9 @@ namespace engine::net
 		case static_cast<uint8_t>(ChatChannel::Global):
 			outChannel = ChatChannel::Global;
 			return true;
+		case static_cast<uint8_t>(ChatChannel::Server):
+			outChannel = ChatChannel::Server;
+			return true;
 		default:
 			return false;
 		}
@@ -127,6 +130,8 @@ namespace engine::net
 			return 0xFF00CED1u;
 		case ChatChannel::Global:
 			return 0xFFFFD700u;
+		case ChatChannel::Server:
+			return 0xFFFF8800u;
 		}
 
 		return 0xFFFFFFFFu;

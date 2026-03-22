@@ -51,8 +51,8 @@ namespace engine::client
 		std::string m_inputLine{};
 		uint32_t m_viewportWidth = 0;
 		uint32_t m_viewportHeight = 0;
-		/// Bitmask over \ref engine::net::ChatChannel raw values 0..6 (1 = visible).
-		uint8_t m_channelFilterMask = 0x7Fu;
+		/// Bitmask over \ref engine::net::ChatChannel raw values 0..7 (1 = visible).
+		uint8_t m_channelFilterMask = 0xFFu;
 		uint32_t m_scrollLinesFromEnd = 0;
 		static constexpr uint32_t kMaxVisibleLines = 18u;
 		static constexpr size_t kMaxInputUtf8Bytes = 256u;

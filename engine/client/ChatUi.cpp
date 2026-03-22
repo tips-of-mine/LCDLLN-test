@@ -37,6 +37,8 @@ namespace engine::client
 				return "ZON";
 			case engine::net::ChatChannel::Global:
 				return "GLB";
+			case engine::net::ChatChannel::Server:
+				return "SRV";
 			}
 
 			return "???";
@@ -64,7 +66,7 @@ namespace engine::client
 
 		m_inputLine.clear();
 		m_chatFocus = false;
-		m_channelFilterMask = 0x7Fu;
+		m_channelFilterMask = 0xFFu;
 		m_scrollLinesFromEnd = 0;
 		m_initialized = true;
 		LOG_INFO(Core, "[ChatUiPresenter] Init OK (history_cap={})", engine::net::ChatHistoryRing::kMaxLines);
@@ -140,16 +142,17 @@ namespace engine::client
 				LOG_INFO(Core, "[ChatUiPresenter] Chat focus ON (toggle=Slash)");
 			}
 
-			for (uint32_t ch = 0; ch < 7; ++ch)
+			for (uint32_t ch = 0; ch < 8; ++ch)
 			{
-				const engine::platform::Key digitKeys[7] = {
+				const engine::platform::Key digitKeys[8] = {
 					engine::platform::Key::Digit1,
 					engine::platform::Key::Digit2,
 					engine::platform::Key::Digit3,
 					engine::platform::Key::Digit4,
 					engine::platform::Key::Digit5,
 					engine::platform::Key::Digit6,
-					engine::platform::Key::Digit7
+					engine::platform::Key::Digit7,
+					engine::platform::Key::Digit8
 				};
 				if (input.WasPressed(digitKeys[ch]))
 				{
@@ -298,7 +301,7 @@ namespace engine::client
 		char hex[3]{};
 		std::snprintf(hex, sizeof(hex), "%02X", static_cast<unsigned>(m_channelFilterMask));
 		out += hex;
-		out += " [1-7 toggles when unfocused] ";
+		out += " [1-8 toggles when unfocused] ";
 	}
 
 	void ChatUiPresenter::SetChatFocus(bool focused)
@@ -319,7 +322,7 @@ namespace engine::client
 		panel += "scroll_end=";
 		panel += std::to_string(m_scrollLinesFromEnd);
 		panel += "\n";
-		panel += "colors=#AARRGGBB prefix (SAY=white,YELL=red,WSP=pink,PTY=blue,GLD=green,ZON=cyan,GLB=gold)\n";
+		panel += "colors=#AARRGGBB prefix (SAY=white,YELL=red,WSP=pink,PTY=blue,GLD=green,ZON=cyan,GLB=gold,SRV=orange)\n";
 
 		std::vector<const engine::net::ChatMessage*> filtered;
 		filtered.reserve(m_history.Lines().size());

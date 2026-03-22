@@ -18,6 +18,8 @@ namespace engine::platform
 		Digit6 = '6',
 		Digit7 = '7',
 		Digit8 = '8',
+		Digit9 = '9',
+		Digit0 = '0',
 		C = 'C',
 		B = 'B',
 		M = 'M',

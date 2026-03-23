@@ -810,4 +810,209 @@ namespace engine::server
 
 		return true;
 	}
+
+	// -------------------------------------------------------------------------
+	// M32.1 — Friend system encode / decode
+	// -------------------------------------------------------------------------
+
+	/// Maximum byte length accepted for a player name field in friend packets.
+	inline constexpr size_t kMaxFriendNameUtf8Bytes = 64u;
+
+	std::vector<std::byte> EncodeFriendRequest(const FriendRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendRequest, 4 + 2 + message.targetName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.targetName);
+		return packet;
+	}
+
+	bool DecodeFriendRequest(std::span<const std::byte> packet, FriendRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendRequest, payload) || payload.size() < 6)
+			return false;
+
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.targetName))
+			return false;
+		if (outMessage.targetName.empty() || outMessage.targetName.size() > kMaxFriendNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeFriendRequestNotify(const FriendRequestNotifyMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendRequestNotify, 2 + message.requesterName.size());
+		WriteSizedString(packet, message.requesterName);
+		return packet;
+	}
+
+	bool DecodeFriendRequestNotify(std::span<const std::byte> packet, FriendRequestNotifyMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendRequestNotify, payload) || payload.size() < 2)
+			return false;
+
+		size_t offset = 0;
+		if (!ReadSizedString(payload, offset, outMessage.requesterName))
+			return false;
+		if (outMessage.requesterName.empty() || outMessage.requesterName.size() > kMaxFriendNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeFriendAccept(const FriendAcceptMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendAccept, 4 + 2 + message.requesterName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.requesterName);
+		return packet;
+	}
+
+	bool DecodeFriendAccept(std::span<const std::byte> packet, FriendAcceptMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendAccept, payload) || payload.size() < 6)
+			return false;
+
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.requesterName))
+			return false;
+		if (outMessage.requesterName.empty() || outMessage.requesterName.size() > kMaxFriendNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeFriendDecline(const FriendDeclineMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendDecline, 4 + 2 + message.requesterName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.requesterName);
+		return packet;
+	}
+
+	bool DecodeFriendDecline(std::span<const std::byte> packet, FriendDeclineMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendDecline, payload) || payload.size() < 6)
+			return false;
+
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.requesterName))
+			return false;
+		if (outMessage.requesterName.empty() || outMessage.requesterName.size() > kMaxFriendNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeFriendRemove(const FriendRemoveMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendRemove, 4 + 2 + message.friendName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.friendName);
+		return packet;
+	}
+
+	bool DecodeFriendRemove(std::span<const std::byte> packet, FriendRemoveMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendRemove, payload) || payload.size() < 6)
+			return false;
+
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.friendName))
+			return false;
+		if (outMessage.friendName.empty() || outMessage.friendName.size() > kMaxFriendNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeFriendListSync(const FriendListSyncMessage& message)
+	{
+		// Per entry: u16 name length + name bytes + u8 presenceStatus + u8 isPendingInbound
+		size_t payloadSize = 2; // u16 entry count
+		for (const auto& e : message.friends)
+			payloadSize += 2 + e.name.size() + 1 + 1;
+
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendListSync, payloadSize);
+		WriteU16(packet, static_cast<uint16_t>(message.friends.size()));
+		for (const auto& e : message.friends)
+		{
+			WriteSizedString(packet, e.name);
+			WriteU8(packet, static_cast<uint8_t>(e.presenceStatus));
+			WriteU8(packet, e.isPendingInbound ? 1u : 0u);
+		}
+		return packet;
+	}
+
+	bool DecodeFriendListSync(std::span<const std::byte> packet, FriendListSyncMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendListSync, payload) || payload.size() < 2)
+			return false;
+
+		const uint16_t count = ReadU16(payload, 0);
+		size_t offset = 2;
+		outMessage.friends.clear();
+		outMessage.friends.reserve(count);
+		for (uint16_t i = 0; i < count; ++i)
+		{
+			FriendListEntry entry;
+			if (!ReadSizedString(payload, offset, entry.name))
+				return false;
+			if (entry.name.empty() || entry.name.size() > kMaxFriendNameUtf8Bytes)
+				return false;
+			if ((offset + 2) > payload.size())
+				return false;
+			entry.presenceStatus     = static_cast<PresenceStatus>(ReadU8(payload, offset));
+			entry.isPendingInbound   = ReadU8(payload, offset + 1) != 0;
+			offset += 2;
+			outMessage.friends.push_back(std::move(entry));
+		}
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeFriendStatusUpdate(const FriendStatusUpdateMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::FriendStatusUpdate, 2 + message.friendName.size() + 1);
+		WriteSizedString(packet, message.friendName);
+		WriteU8(packet, static_cast<uint8_t>(message.presenceStatus));
+		return packet;
+	}
+
+	bool DecodeFriendStatusUpdate(std::span<const std::byte> packet, FriendStatusUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::FriendStatusUpdate, payload) || payload.size() < 3)
+			return false;
+
+		size_t offset = 0;
+		if (!ReadSizedString(payload, offset, outMessage.friendName))
+			return false;
+		if (outMessage.friendName.empty() || outMessage.friendName.size() > kMaxFriendNameUtf8Bytes)
+			return false;
+		if (offset >= payload.size())
+			return false;
+		outMessage.presenceStatus = static_cast<PresenceStatus>(ReadU8(payload, offset));
+		++offset;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
 }

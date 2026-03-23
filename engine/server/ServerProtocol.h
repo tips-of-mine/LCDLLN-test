@@ -35,7 +35,21 @@ namespace engine::server
 		/// Server relay of one chat line to interested clients (M29.1).
 		ChatRelay = 16,
 		/// Server relay of one emote gesture to nearby clients (M29.3).
-		EmoteRelay = 17
+		EmoteRelay = 17,
+		/// Client requests to add a friend by name (M32.1).
+		FriendRequest = 18,
+		/// Server notifies target player of an incoming friend request (M32.1).
+		FriendRequestNotify = 19,
+		/// Client accepts a pending friend request by requester name (M32.1).
+		FriendAccept = 20,
+		/// Client declines a pending friend request by requester name (M32.1).
+		FriendDecline = 21,
+		/// Client removes an accepted friend by name (M32.1).
+		FriendRemove = 22,
+		/// Server sends the full friends list to a client on login (M32.1).
+		FriendListSync = 23,
+		/// Server notifies a client of a friend's presence status change (M32.1).
+		FriendStatusUpdate = 24
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -274,4 +288,115 @@ namespace engine::server
 
 	/// Decode an emote relay packet and validate the protocol header.
 	bool DecodeEmoteRelay(std::span<const std::byte> packet, EmoteRelayMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M32.1 — Friend system messages
+	// -------------------------------------------------------------------------
+
+	/// Presence status values used by the friend system (wire-stable).
+	enum class PresenceStatus : uint8_t
+	{
+		Offline = 0,
+		Online  = 1,
+		Away    = 2,
+		Busy    = 3
+	};
+
+	/// Client request to add a friend by display name (/friend add <name>).
+	struct FriendRequestMessage
+	{
+		uint32_t    clientId = 0;
+		std::string targetName;
+	};
+
+	/// Server notification pushed to the target player of an incoming request.
+	struct FriendRequestNotifyMessage
+	{
+		std::string requesterName;
+	};
+
+	/// Client acceptance of a pending friend request (/friend accept <name>).
+	struct FriendAcceptMessage
+	{
+		uint32_t    clientId = 0;
+		std::string requesterName;
+	};
+
+	/// Client decline of a pending friend request (/friend decline <name>).
+	struct FriendDeclineMessage
+	{
+		uint32_t    clientId = 0;
+		std::string requesterName;
+	};
+
+	/// Client removal of an accepted friend (/friend remove <name>).
+	struct FriendRemoveMessage
+	{
+		uint32_t    clientId = 0;
+		std::string friendName;
+	};
+
+	/// One entry in the friends list sent on login.
+	struct FriendListEntry
+	{
+		std::string    name;
+		PresenceStatus presenceStatus = PresenceStatus::Offline;
+		/// True when this entry is a pending inbound request (awaiting local player acceptance).
+		bool           isPendingInbound = false;
+	};
+
+	/// Server-sent full friends list delivered once after successful login.
+	struct FriendListSyncMessage
+	{
+		std::vector<FriendListEntry> friends;
+	};
+
+	/// Server notification of one friend's presence change (login, logout, status change).
+	struct FriendStatusUpdateMessage
+	{
+		std::string    friendName;
+		PresenceStatus presenceStatus = PresenceStatus::Offline;
+	};
+
+	/// Encode a client friend request packet.
+	std::vector<std::byte> EncodeFriendRequest(const FriendRequestMessage& message);
+
+	/// Decode a client friend request packet.
+	bool DecodeFriendRequest(std::span<const std::byte> packet, FriendRequestMessage& outMessage);
+
+	/// Encode a server friend request notification packet.
+	std::vector<std::byte> EncodeFriendRequestNotify(const FriendRequestNotifyMessage& message);
+
+	/// Decode a server friend request notification packet.
+	bool DecodeFriendRequestNotify(std::span<const std::byte> packet, FriendRequestNotifyMessage& outMessage);
+
+	/// Encode a client friend accept packet.
+	std::vector<std::byte> EncodeFriendAccept(const FriendAcceptMessage& message);
+
+	/// Decode a client friend accept packet.
+	bool DecodeFriendAccept(std::span<const std::byte> packet, FriendAcceptMessage& outMessage);
+
+	/// Encode a client friend decline packet.
+	std::vector<std::byte> EncodeFriendDecline(const FriendDeclineMessage& message);
+
+	/// Decode a client friend decline packet.
+	bool DecodeFriendDecline(std::span<const std::byte> packet, FriendDeclineMessage& outMessage);
+
+	/// Encode a client friend remove packet.
+	std::vector<std::byte> EncodeFriendRemove(const FriendRemoveMessage& message);
+
+	/// Decode a client friend remove packet.
+	bool DecodeFriendRemove(std::span<const std::byte> packet, FriendRemoveMessage& outMessage);
+
+	/// Encode a server friend list sync packet (sent on login).
+	std::vector<std::byte> EncodeFriendListSync(const FriendListSyncMessage& message);
+
+	/// Decode a server friend list sync packet.
+	bool DecodeFriendListSync(std::span<const std::byte> packet, FriendListSyncMessage& outMessage);
+
+	/// Encode a server friend status update packet.
+	std::vector<std::byte> EncodeFriendStatusUpdate(const FriendStatusUpdateMessage& message);
+
+	/// Decode a server friend status update packet.
+	bool DecodeFriendStatusUpdate(std::span<const std::byte> packet, FriendStatusUpdateMessage& outMessage);
 }

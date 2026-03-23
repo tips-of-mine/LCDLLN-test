@@ -103,6 +103,7 @@ add_library(engine_core
   engine/client/UIModel.cpp
   engine/client/ChatUi.cpp
   engine/client/ChatWorldVisualPresenter.cpp
+  engine/client/FriendsUi.cpp
   engine/client/ZonePreloadHook.cpp
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp

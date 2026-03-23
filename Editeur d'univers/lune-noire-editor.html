@@ -1224,6 +1224,9 @@
         <span class="count-badge" id="cnt-creatures">0</span>
         <span class="sidebar-health health-empty" id="health-creatures"></span>
       </div>
+      <div class="sidebar-item" onclick="showSection('carte')" id="nav-carte">
+        <span class="nav-icon">🗺</span> Carte
+      </div>
     </div>
 
     <!-- ══ Scénarios ══ -->
@@ -1373,6 +1376,7 @@ var db = {
     {id:"t22",label:"Tome 22",color:"#c85028"},
   ],
   villes: [], exploits: [], quests: [], mounts: [], raids: [],
+  map: null,
   cross_rules: { mounts_and_mobility: [], war_and_access: [], magic_interactions: [] },
   timeline: [], skill_trees: []
 };
@@ -1872,6 +1876,7 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       if (!db.loots)       db.loots      = [];
       if (!db.dialogues)   db.dialogues  = [];
       if (!db.cross_rules) db.cross_rules = { mounts_and_mobility:[], war_and_access:[], magic_interactions:[], special_items:[] };
+      if (!db.map) db.map = null;
       if (!db.quest_categories) db.quest_categories = [];
       sanitizeDb();
       updateCounts();
@@ -1937,7 +1942,8 @@ function showSection(section) {
     zones: renderZones,
     lore: renderLore,
     competences: renderCompetences,
-    regles_transverses: renderReglesTransverses
+    regles_transverses: renderReglesTransverses,
+    carte: renderCarte
   };
   if (renders[section]) renders[section](el);
 }

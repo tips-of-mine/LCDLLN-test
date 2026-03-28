@@ -1,8 +1,11 @@
 #pragma once
 // M32.3 — Server-side guild system: creation, roster, ranks, permissions, guild chat routing.
+// M32.4 — Extended with guild emblem data (GuildEmblem stored in GuildRecord).
 // Depends on M13.1 (server core) and M14.4 (character persistence).
 // On platforms without MySQL (WIN32 game shard) the system operates in no-DB mode:
 // all data is in-memory only; DB operations are skipped.
+
+#include "engine/server/GuildTabard.h"
 
 #include <cstdint>
 #include <string>
@@ -52,7 +55,7 @@ namespace engine::server
 		uint8_t     rankId     = static_cast<uint8_t>(DefaultGuildRank::Recruit);
 	};
 
-	/// In-memory representation of one live guild (M32.3).
+	/// In-memory representation of one live guild (M32.3 + M32.4).
 	struct GuildRecord
 	{
 		uint64_t                       guildId        = 0;
@@ -61,6 +64,9 @@ namespace engine::server
 		uint64_t                       masterPlayerId = 0;
 		std::vector<GuildMemberRecord> members;
 		std::vector<GuildRankRecord>   ranks;
+		/// M32.4: Visual emblem (background color, border color, symbol atlas index).
+		/// Serialized via SerializeEmblem / ParseEmblem when persisting to DB.
+		GuildEmblem                    emblem{};
 	};
 
 	/// Server-side guild manager (M32.3).
@@ -156,6 +162,19 @@ namespace engine::server
 		             MYSQL*           mysql);
 
 		// ------------------------------------------------------------------
+		// Emblem (M32.4)
+		// ------------------------------------------------------------------
+
+		/// Set the guild emblem (background color, border color, symbol).
+		/// Only the Guild Master may change the emblem.
+		/// Persists the serialized emblem JSON to DB when available.
+		/// Returns true on success.
+		bool SetEmblem(uint64_t           guildId,
+		               uint64_t           playerId,
+		               const GuildEmblem& emblem,
+		               MYSQL*             mysql);
+
+		// ------------------------------------------------------------------
 		// Online presence (for guild chat routing)
 		// ------------------------------------------------------------------
 
@@ -240,6 +259,9 @@ namespace engine::server
 
 		/// UPDATE guilds SET motd=… WHERE id=…
 		bool DbUpdateMotd(uint64_t guildId, std::string_view motd, MYSQL* mysql);
+
+		/// UPDATE guilds SET emblem=… WHERE id=… (M32.4).
+		bool DbUpdateEmblem(uint64_t guildId, std::string_view emblemJson, MYSQL* mysql);
 
 		/// INSERT the four default rank rows into guild_ranks for \p guildId.
 		void DbInsertDefaultRanks(uint64_t guildId, MYSQL* mysql);

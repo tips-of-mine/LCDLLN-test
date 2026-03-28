@@ -1,4 +1,5 @@
 // M32.3 — Server-side guild system implementation.
+// M32.4 — Extended with SetEmblem and DbUpdateEmblem.
 // Handles creation, roster management, ranks, permissions and guild chat routing.
 // On platforms without MySQL (WIN32 game shard) the system operates in no-DB mode:
 // presence tracking and in-memory state are fully functional; DB operations are skipped.
@@ -542,6 +543,50 @@ namespace engine::server
 	}
 
 	// =========================================================================
+	// Emblem (M32.4)
+	// =========================================================================
+
+	bool GuildSystem::SetEmblem(uint64_t           guildId,
+	                             uint64_t           playerId,
+	                             const GuildEmblem& emblem,
+	                             MYSQL*             mysql)
+	{
+		GuildRecord* guild = FindGuild(guildId);
+		if (!guild)
+		{
+			LOG_WARN(Server, "[GuildSystem] SetEmblem: guild {} not found", guildId);
+			return false;
+		}
+
+		// Only the Guild Master may change the emblem.
+		const GuildMemberRecord* member = FindMember(*guild, playerId);
+		if (!member ||
+		    member->rankId != static_cast<uint8_t>(DefaultGuildRank::GuildMaster))
+		{
+			LOG_WARN(Server, "[GuildSystem] SetEmblem: player {} is not Guild Master of guild {}",
+			         playerId, guildId);
+			return false;
+		}
+
+#if ENGINE_HAS_MYSQL
+		if (mysql)
+		{
+			const std::string emblemJson = SerializeEmblem(emblem);
+			if (!DbUpdateEmblem(guildId, emblemJson, mysql))
+				return false;
+		}
+#else
+		(void)mysql;
+#endif
+
+		guild->emblem = emblem;
+		LOG_INFO(Server, "[GuildSystem] SetEmblem: guild {} emblem updated by player {} "
+		         "(bg={:#010x}, border={:#010x}, sym={})",
+		         guildId, playerId, emblem.bgColor, emblem.borderColor, emblem.symbolId);
+		return true;
+	}
+
+	// =========================================================================
 	// DB helpers (UNIX + ENGINE_HAS_MYSQL only)
 	// =========================================================================
 
@@ -654,6 +699,30 @@ namespace engine::server
 		if (mysql_query(mysql, sql.c_str()) != 0)
 		{
 			LOG_ERROR(Server, "[GuildSystem] DbUpdateMotd failed: {}", mysql_error(mysql));
+			return false;
+		}
+		return true;
+	}
+
+	bool GuildSystem::DbUpdateEmblem(uint64_t guildId, std::string_view emblemJson, MYSQL* mysql)
+	{
+		// emblemJson is produced by SerializeEmblem and contains only digits, braces,
+		// colons and commas — no characters that need SQL escaping.
+		// We still escape defensively via mysql_real_escape_string.
+		std::string escaped(emblemJson.size() * 2u + 1u, '\0');
+		unsigned long written = mysql_real_escape_string(
+			mysql, escaped.data(), emblemJson.data(),
+			static_cast<unsigned long>(emblemJson.size()));
+		escaped.resize(static_cast<size_t>(written));
+
+		std::string sql =
+			"UPDATE guilds SET emblem = '"
+			+ escaped
+			+ "' WHERE id = " + std::to_string(guildId);
+
+		if (mysql_query(mysql, sql.c_str()) != 0)
+		{
+			LOG_ERROR(Server, "[GuildSystem] DbUpdateEmblem failed: {}", mysql_error(mysql));
 			return false;
 		}
 		return true;

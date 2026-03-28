@@ -1,7 +1,7 @@
 #pragma once
 // M32.2 — Party frame HUD presenter: up to 5 member HP/mana bars + class icons.
 
-#include "engine/client/UIModel.h"
+#include "engine/client/CombatHud.h"
 
 #include <cstdint>
 #include <string>

@@ -31,6 +31,9 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/UserRateLimiter.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/CaptchaVerifier.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/BotDetector.cpp
   )
   # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
   # Do NOT define ENGINE_HAS_MYSQL so #if ENGINE_HAS_MYSQL evaluates to false.
@@ -78,6 +81,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/UserRateLimiter.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/CaptchaVerifier.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/BotDetector.cpp
     ShardRegistry.cpp
     ShardRegisterHandler.cpp
     ShardTicketCrypto.cpp
@@ -91,6 +97,20 @@ elseif(UNIX)
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
   target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=1)
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
+
+  # M33.3: Anti-bot unit tests (UserRateLimiter, CaptchaVerifier bypass, BotDetector).
+  add_executable(anti_bot_tests
+    AntiBotTests.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/UserRateLimiter.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/CaptchaVerifier.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/BotDetector.cpp
+    ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
+    ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
+  )
+  target_include_directories(anti_bot_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(anti_bot_tests PRIVATE OpenSSL::SSL spdlog::spdlog pthread)
+  target_compile_options(anti_bot_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME anti_bot_tests COMMAND anti_bot_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M21.6: DB layer smoke tests
   add_executable(db_layer_tests db/DbLayerTests.cpp db/ConnectionPool.cpp db/DbHelpers.cpp)

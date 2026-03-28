@@ -15,6 +15,7 @@ namespace engine::server
 	class SecurityAuditLog;
 	class ConnectionSessionMap;
 	class PasswordResetStore;
+	class CaptchaVerifier;   ///< M33.3
 	struct SmtpConfig;
 
 	/// Handles AUTH_REQUEST and REGISTER_REQUEST opcodes: validate, store/session, rate-limit, audit, send response.
@@ -35,6 +36,8 @@ namespace engine::server
 		void SetPasswordResetStore(PasswordResetStore* resetStore);
 		/// M33.2: Set SMTP configuration (optional; if null or host empty, emails are not sent).
 		void SetSmtpConfig(const SmtpConfig* smtpConfig);
+		/// M33.3: Set CAPTCHA verifier (optional; if null or not enabled, CAPTCHA check is skipped).
+		void SetCaptchaVerifier(CaptchaVerifier* captchaVerifier);
 
 		/// Handle one packet. Dispatches by opcode; sends response via NetServer::Send. Ignores unknown opcodes.
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -56,8 +59,9 @@ namespace engine::server
 		RateLimitAndBan* m_rateLimit = nullptr;
 		SecurityAuditLog* m_auditLog = nullptr;
 		ConnectionSessionMap* m_connectionSessionMap = nullptr;
-		PasswordResetStore* m_resetStore = nullptr;   ///< M33.2
-		const SmtpConfig*   m_smtpConfig = nullptr;  ///< M33.2
+		PasswordResetStore* m_resetStore = nullptr;        ///< M33.2
+		const SmtpConfig*   m_smtpConfig = nullptr;       ///< M33.2
+		CaptchaVerifier*    m_captchaVerifier = nullptr;  ///< M33.3
 		std::atomic<uint64_t> m_authSuccessTotal{ 0 };
 		std::atomic<uint64_t> m_authFailTotal{ 0 };
 	};

@@ -32,6 +32,12 @@ namespace engine::network
 			if (!r.ReadString(out.email))
 				return std::nullopt;
 		}
+		// M33.3: optional 4th field — CAPTCHA response token (backward-compatible).
+		if (r.Remaining() >= 2u)
+		{
+			if (!r.ReadString(out.captcha_token))
+				return std::nullopt;
+		}
 		return out;
 	}
 

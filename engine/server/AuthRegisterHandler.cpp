@@ -8,6 +8,7 @@
 #include "engine/server/AccountValidation.h"
 #include "engine/server/PasswordResetStore.h"
 #include "engine/server/SmtpMailer.h"
+#include "engine/server/CaptchaVerifier.h"    // M33.3
 #include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/ErrorPacket.h"
 #include "engine/network/NetErrorCode.h"
@@ -44,6 +45,7 @@ namespace engine::server
 	void AuthRegisterHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connectionSessionMap = map; }
 	void AuthRegisterHandler::SetPasswordResetStore(PasswordResetStore* rs) { m_resetStore = rs; }
 	void AuthRegisterHandler::SetSmtpConfig(const SmtpConfig* cfg) { m_smtpConfig = cfg; }
+	void AuthRegisterHandler::SetCaptchaVerifier(CaptchaVerifier* cv) { m_captchaVerifier = cv; } // M33.3
 
 	void AuthRegisterHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -93,6 +95,22 @@ namespace engine::server
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
 			return;
+		}
+
+		// M33.3: CAPTCHA verification on registration.
+		if (m_captchaVerifier && m_captchaVerifier->IsEnabled())
+		{
+			const bool captchaOk = m_captchaVerifier->Verify(parsed->captcha_token, "");
+			if (!captchaOk)
+			{
+				LOG_WARN(Auth, "[AuthRegisterHandler] Register: CAPTCHA verification failed (connId={})", connId);
+				if (m_auditLog) m_auditLog->LogRegisterFail(ipKey, "captcha_failed");
+				auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "captcha failed", requestId, sessionIdHeader);
+				if (!pkt.empty())
+					m_server->Send(connId, pkt);
+				return;
+			}
+			LOG_DEBUG(Auth, "[AuthRegisterHandler] Register: CAPTCHA OK (connId={})", connId);
 		}
 		std::string login_norm(NormaliseLoginView(parsed->login));
 		if (login_norm.empty())

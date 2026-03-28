@@ -19,11 +19,13 @@ namespace engine::network
 	};
 
 	/// Parsed REGISTER_REQUEST payload: login, optional email, client_hash (password field).
+	/// M33.3: optional captcha_token appended as a 4th length-prefixed string (backward-compatible).
 	struct RegisterRequestPayload
 	{
 		std::string login;
 		std::string email;
 		std::string client_hash;
+		std::string captcha_token; ///< M33.3: CAPTCHA response token from client widget. Empty when absent.
 	};
 
 	/// Parses AUTH_REQUEST payload. Returns nullopt if truncated or invalid.

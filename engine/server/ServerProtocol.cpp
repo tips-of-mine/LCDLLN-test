@@ -1015,4 +1015,213 @@ namespace engine::server
 			return false;
 		return true;
 	}
+
+	// -------------------------------------------------------------------------
+	// M32.2 — Party system encode / decode
+	// -------------------------------------------------------------------------
+
+	namespace
+	{
+		/// Maximum byte length of a party member display name (e.g. "P65535\0" safety cap).
+		inline constexpr size_t kMaxPartyNameUtf8Bytes = 64;
+	}
+
+	std::vector<std::byte> EncodePartyInvite(const PartyInviteMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyInvite,
+		    4 + 2 + message.targetName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.targetName);
+		return packet;
+	}
+
+	bool DecodePartyInvite(std::span<const std::byte> packet, PartyInviteMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyInvite, payload) || payload.size() < 6)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.targetName))
+			return false;
+		if (outMessage.targetName.empty() || outMessage.targetName.size() > kMaxPartyNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyInviteNotify(const PartyInviteNotifyMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyInviteNotify,
+		    2 + message.inviterName.size());
+		WriteSizedString(packet, message.inviterName);
+		return packet;
+	}
+
+	bool DecodePartyInviteNotify(std::span<const std::byte> packet, PartyInviteNotifyMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyInviteNotify, payload) || payload.size() < 2)
+			return false;
+		size_t offset = 0;
+		if (!ReadSizedString(payload, offset, outMessage.inviterName))
+			return false;
+		if (outMessage.inviterName.empty() || outMessage.inviterName.size() > kMaxPartyNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyAccept(const PartyAcceptMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyAccept, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodePartyAccept(std::span<const std::byte> packet, PartyAcceptMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyAccept, payload) || payload.size() != 4)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyDecline(const PartyDeclineMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyDecline, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodePartyDecline(std::span<const std::byte> packet, PartyDeclineMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyDecline, payload) || payload.size() != 4)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyKick(const PartyKickMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyKick,
+		    4 + 2 + message.targetName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.targetName);
+		return packet;
+	}
+
+	bool DecodePartyKick(std::span<const std::byte> packet, PartyKickMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyKick, payload) || payload.size() < 6)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.targetName))
+			return false;
+		if (outMessage.targetName.empty() || outMessage.targetName.size() > kMaxPartyNameUtf8Bytes)
+			return false;
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyUpdate(const PartyUpdateMessage& message)
+	{
+		// Layout: u32 partyId + u32 leaderId + u8 lootMode + u8 memberCount
+		//         + for each member: u32 clientId + u32 hp + u32 maxHp + u32 mana + u32 maxMana
+		//                            + u16 nameLen + name
+		size_t payloadSize = 4 + 4 + 1 + 1;
+		for (const auto& m : message.members)
+			payloadSize += 4 + 4 + 4 + 4 + 4 + 2 + m.displayName.size();
+
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyUpdate, payloadSize);
+		WriteU32(packet, message.partyId);
+		WriteU32(packet, message.leaderId);
+		WriteU8(packet, static_cast<uint8_t>(message.lootMode));
+		WriteU8(packet, static_cast<uint8_t>(message.members.size()));
+		for (const auto& m : message.members)
+		{
+			WriteU32(packet, m.clientId);
+			WriteU32(packet, m.currentHealth);
+			WriteU32(packet, m.maxHealth);
+			WriteU32(packet, m.currentMana);
+			WriteU32(packet, m.maxMana);
+			WriteSizedString(packet, m.displayName);
+		}
+		return packet;
+	}
+
+	bool DecodePartyUpdate(std::span<const std::byte> packet, PartyUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyUpdate, payload) || payload.size() < 10)
+			return false;
+
+		outMessage.partyId  = ReadU32(payload, 0);
+		outMessage.leaderId = ReadU32(payload, 4);
+		outMessage.lootMode = static_cast<WireLootMode>(ReadU8(payload, 8));
+		const uint8_t memberCount = ReadU8(payload, 9);
+		size_t offset = 10;
+		outMessage.members.clear();
+		outMessage.members.reserve(memberCount);
+		for (uint8_t i = 0; i < memberCount; ++i)
+		{
+			if (offset + 4 + 4 + 4 + 4 + 4 + 2 > payload.size())
+				return false;
+			PartyMemberEntry e{};
+			e.clientId      = ReadU32(payload, offset);      offset += 4;
+			e.currentHealth = ReadU32(payload, offset);      offset += 4;
+			e.maxHealth     = ReadU32(payload, offset);      offset += 4;
+			e.currentMana   = ReadU32(payload, offset);      offset += 4;
+			e.maxMana       = ReadU32(payload, offset);      offset += 4;
+			if (!ReadSizedString(payload, offset, e.displayName))
+				return false;
+			if (e.displayName.size() > kMaxPartyNameUtf8Bytes)
+				return false;
+			outMessage.members.push_back(std::move(e));
+		}
+		if (offset != payload.size())
+			return false;
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyLootMode(const PartyLootModeMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyLootMode, 4 + 1);
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, static_cast<uint8_t>(message.lootMode));
+		return packet;
+	}
+
+	bool DecodePartyLootMode(std::span<const std::byte> packet, PartyLootModeMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyLootMode, payload) || payload.size() != 5)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.lootMode = static_cast<WireLootMode>(ReadU8(payload, 4));
+		return true;
+	}
+
+	std::vector<std::byte> EncodePartyLeave(const PartyLeaveMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::PartyLeave, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodePartyLeave(std::span<const std::byte> packet, PartyLeaveMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::PartyLeave, payload) || payload.size() != 4)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
 }

@@ -28,7 +28,9 @@ namespace engine::client
 		UIModelChangeDebugDump = 1u << 6,
 		UIModelChangeChat = 1u << 7,
 		/// M29.3: world-space chat bubbles + emote playback state.
-		UIModelChangeChatWorld = 1u << 8
+		UIModelChangeChatWorld = 1u << 8,
+		/// M32.2: party composition, member HP/mana, loot mode.
+		UIModelChangeParty     = 1u << 9
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -111,6 +113,18 @@ namespace engine::client
 		std::string text;
 	};
 
+	/// One party member entry mirrored from a PartyUpdate server packet (M32.2).
+	struct UIPartyMemberEntry
+	{
+		uint32_t    clientId      = 0;
+		uint32_t    currentHealth = 0;
+		uint32_t    maxHealth     = 0;
+		uint32_t    currentMana   = 0;
+		uint32_t    maxMana       = 0;
+		std::string displayName;
+		bool        isLeader      = false;
+	};
+
 	/// One dynamic event entry displayed by the UI model.
 	struct UIEventEntry
 	{
@@ -141,6 +155,14 @@ namespace engine::client
 		std::vector<UIChatBubbleBillboard> chatBubbleBillboards;
 		/// M29.3: Active emote rows — `emoteWireId` maps to future skeletal clips when an animation stack exists.
 		std::vector<UIActiveEmoteEntry> activeEmotes;
+		/// M32.2: Party member entries (up to 5), populated from PartyUpdate packets.
+		std::vector<UIPartyMemberEntry> partyMembers;
+		/// M32.2: True when the local player is currently in a party.
+		bool        inParty          = false;
+		/// M32.2: Human-readable loot mode label received in the last PartyUpdate (e.g. "FreeForAll").
+		std::string partyLootModeLabel;
+		/// M32.2: party leader clientId (0 when not in a party).
+		uint32_t    partyLeaderId    = 0;
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -225,6 +247,9 @@ namespace engine::client
 
 		/// Apply one decoded emote relay message (M29.3).
 		bool ApplyEmoteRelay(std::span<const std::byte> packet);
+
+		/// Apply one decoded PartyUpdate message to the party section of the UI model (M32.2).
+		bool ApplyPartyUpdate(std::span<const std::byte> packet);
 
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();

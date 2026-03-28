@@ -67,6 +67,14 @@ namespace engine::server
 			return "/announce";
 		case ChatSlashCommandKind::Friend:
 			return "/friend";
+		case ChatSlashCommandKind::Invite:
+			return "/invite";
+		case ChatSlashCommandKind::Leave:
+			return "/leave";
+		case ChatSlashCommandKind::Loot:
+			return "/loot";
+		case ChatSlashCommandKind::PartyKick:
+			return "/pkick";
 		case ChatSlashCommandKind::None:
 			break;
 		}
@@ -187,6 +195,67 @@ namespace engine::server
 			return true;
 		}
 
+		// M32.2 — Party commands
+		if (cmdToken == "/invite")
+		{
+			set(ChatSlashCommandKind::Invite, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Invite), remainder.size());
+			return true;
+		}
+
+		if (cmdToken == "/leave")
+		{
+			set(ChatSlashCommandKind::Leave, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {}", ChatSlashCommandLabel(ChatSlashCommandKind::Leave));
+			return true;
+		}
+
+		if (cmdToken == "/loot")
+		{
+			set(ChatSlashCommandKind::Loot, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Loot), remainder.size());
+			return true;
+		}
+
+		if (cmdToken == "/pkick")
+		{
+			set(ChatSlashCommandKind::PartyKick, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::PartyKick), remainder.size());
+			return true;
+		}
+
 		return false;
+	}
+
+	// -------------------------------------------------------------------------
+	// M32.2 — Party command argument parsers
+	// -------------------------------------------------------------------------
+
+	bool ParseLootCommandToken(std::string_view argsRemainder, std::string& outToken)
+	{
+		outToken.clear();
+		const std::string_view trimmed = TrimAscii(argsRemainder);
+		if (trimmed.empty())
+			return false;
+
+		// Take the first word and lowercase it.
+		const size_t spacePos = trimmed.find(' ');
+		const std::string_view word = (spacePos == std::string_view::npos)
+		    ? trimmed : trimmed.substr(0, spacePos);
+
+		outToken.reserve(word.size());
+		for (const char c : word)
+			outToken.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+		return true;
+	}
+
+	bool ParsePartyTargetName(std::string_view argsRemainder, std::string& outTargetName)
+	{
+		outTargetName.clear();
+		const std::string_view trimmed = TrimAscii(argsRemainder);
+		if (trimmed.empty())
+			return false;
+		outTargetName.assign(trimmed.begin(), trimmed.end());
+		return true;
 	}
 }

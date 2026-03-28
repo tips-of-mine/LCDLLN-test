@@ -35,6 +35,12 @@ namespace engine::server
 		inline constexpr float kDefaultMobPatrolDistanceMeters = 6.0f;
 		inline constexpr float kDefaultLootPickupRangeMeters = 3.0f;
 
+		/// M32.2 — Base XP granted per mob kill (shared among party members in range).
+		inline constexpr uint32_t kBaseXpPerMobKill = 10;
+
+		/// M32.2 — Maximum range (metres) for party XP and loot sharing.
+		inline constexpr float kPartyShareRangeMeters = 40.0f;
+
 		/// Clamp a signed config integer into an unsigned 16-bit range.
 		uint16_t ClampToU16(int64_t value, uint16_t minValue, uint16_t maxValue)
 		{
@@ -242,6 +248,9 @@ namespace engine::server
 		// M32.1 — FriendSystem runs in no-DB mode on WIN32 (presence tracking only).
 		m_friendSystem.Init(nullptr);
 
+		// M32.2 — PartySystem (in-memory, no DB dependency).
+		m_partySystem.Init();
+
 		m_initialized = true;
 		LOG_INFO(Core, "[ServerApp] Init OK (port={}, tick_hz={}, snapshot_hz={})",
 			m_listenPort, m_tickHz, m_snapshotHz);
@@ -351,6 +360,7 @@ namespace engine::server
 		m_moderationAuditLog.Shutdown();
 		m_moderationAuditLogReady = false;
 		m_friendSystem.Shutdown();
+		m_partySystem.Shutdown();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -502,6 +512,85 @@ namespace engine::server
 					friendRemove.friendName,
 					nullptr);
 			}
+			return;
+		}
+
+		// M32.2 — Party accept packet (invitee replies to a pending invite).
+		PartyAcceptMessage partyAccept{};
+		if (DecodePartyAccept(packetBytes, partyAccept))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender && m_partySystem.IsInitialized())
+			{
+				const std::string inviteeLabel = "P" + std::to_string(sender->clientId);
+				const uint32_t partyId = m_partySystem.AcceptInvite(
+				    sender->clientId,
+				    inviteeLabel,
+				    sender->entityId,
+				    m_currentTick);
+				if (partyId != 0)
+				{
+					const Party* party = m_partySystem.FindPartyById(partyId);
+					if (party != nullptr)
+					{
+						BroadcastPartyUpdate(*party);
+						// Notify all members.
+						for (const PartyMember& m : party->members)
+						{
+							ConnectedClient* member = FindClientByEntityId(m.entityId);
+							if (member != nullptr)
+								SendChatSystemNotice(*member, inviteeLabel + " has joined the party.");
+						}
+					}
+					LOG_INFO(Net, "[ServerApp] Party invite accepted via packet (client_id={}, party_id={})",
+					    sender->clientId, partyId);
+				}
+				else
+				{
+					SendChatSystemNotice(*sender, "Party invite expired or invalid.");
+					LOG_WARN(Net, "[ServerApp] Party invite accept failed (client_id={})", sender->clientId);
+				}
+			}
+			return;
+		}
+
+		// M32.2 — Party decline packet (invitee declines a pending invite).
+		PartyDeclineMessage partyDecline{};
+		if (DecodePartyDecline(packetBytes, partyDecline))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender && m_partySystem.IsInitialized())
+			{
+				const PendingPartyInvite* invite = m_partySystem.GetPendingInvite(sender->clientId);
+				const uint32_t inviterClientId   = invite ? invite->inviterClientId : 0;
+				m_partySystem.DeclineInvite(sender->clientId);
+
+				SendChatSystemNotice(*sender, "Party invite declined.");
+
+				if (inviterClientId != 0)
+				{
+					for (ConnectedClient& c : m_clients)
+					{
+						if (c.clientId == inviterClientId)
+						{
+							const std::string senderLabel = "P" + std::to_string(sender->clientId);
+							SendChatSystemNotice(c, "'" + senderLabel + "' declined your party invite.");
+							break;
+						}
+					}
+				}
+				LOG_INFO(Net, "[ServerApp] Party invite declined via packet (client_id={})", sender->clientId);
+			}
+			return;
+		}
+
+		// M32.2 — Party leave packet (client explicitly leaves).
+		PartyLeaveMessage partyLeave{};
+		if (DecodePartyLeave(packetBytes, partyLeave))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender && m_partySystem.IsInitialized())
+				HandleLeaveCommand(*sender);
 			return;
 		}
 
@@ -675,6 +764,9 @@ namespace engine::server
 		UpdateMobAi();
 		UpdateSpawners();
 		UpdateDynamicEvents();
+		// M32.2 — Expire stale party invites once per tick.
+		if (m_partySystem.IsInitialized())
+			m_partySystem.ExpireInvites(m_currentTick);
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -1794,8 +1886,15 @@ namespace engine::server
 			if (!target->hasSpawnedLoot)
 			{
 				target->hasSpawnedLoot = true;
-				SpawnLootBagForMob(*target, client->entityId);
+				// M32.2 — Resolve loot owner based on party loot mode.
+				const EntityId looterEntityId = ResolvePartyLooterEntityId(*client);
+				SpawnLootBagForMob(*target, looterEntityId != 0 ? looterEntityId : client->entityId);
 			}
+			// M32.2 — Distribute XP to party members in range.
+			DistributePartyXp(*client,
+			    target->positionMetersX,
+			    target->positionMetersZ,
+			    kBaseXpPerMobKill);
 			ApplyQuestEvent(*client, QuestStepType::Kill, std::string("mob:") + std::to_string(target->archetypeId), 1, "kill");
 		}
 
@@ -3728,6 +3827,19 @@ namespace engine::server
 		case ChatSlashCommandKind::Friend:
 			return HandleFriendCommand(sender, command.argsRemainder);
 
+		// M32.2 — Party commands
+		case ChatSlashCommandKind::Invite:
+			return HandleInviteCommand(sender, command.argsRemainder);
+
+		case ChatSlashCommandKind::Leave:
+			return HandleLeaveCommand(sender);
+
+		case ChatSlashCommandKind::Loot:
+			return HandleLootCommand(sender, command.argsRemainder);
+
+		case ChatSlashCommandKind::PartyKick:
+			return HandlePartyKickCommand(sender, command.argsRemainder);
+
 		case ChatSlashCommandKind::None:
 		default:
 			LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
@@ -3758,6 +3870,21 @@ namespace engine::server
 
 	void ServerApp::OnClientLogout(const ConnectedClient& client)
 	{
+		// M32.2 — Remove the leaving client from their party (promotes leader or disbands).
+		if (m_partySystem.IsInitialized())
+		{
+			const uint32_t partyId = m_partySystem.LeaveParty(client.clientId);
+			if (partyId != 0)
+			{
+				// Broadcast updated party state to remaining members (if party still alive).
+				const Party* party = m_partySystem.FindPartyById(partyId);
+				if (party != nullptr)
+					BroadcastPartyUpdate(*party);
+				LOG_INFO(Net, "[ServerApp] OnClientLogout: party updated on disconnect (client_id={}, party_id={})",
+				    client.clientId, partyId);
+			}
+		}
+
 		if (!m_friendSystem.IsInitialized())
 			return;
 
@@ -3881,5 +4008,423 @@ namespace engine::server
 		}
 
 		return true;
+	}
+
+	// =========================================================================
+	// M32.2 — Party system helpers
+	// =========================================================================
+
+	bool ServerApp::HandleInviteCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		std::string targetName;
+		if (!ParsePartyTargetName(argsRemainder, targetName))
+		{
+			SendChatSystemNotice(sender, "Usage: /invite <player_name>");
+			return true;
+		}
+
+		// Resolve target by display-name token (format "P<clientId>").
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player '" + targetName + "' not found.");
+			LOG_WARN(Net, "[ServerApp] /invite target not found (client_id={}, target='{}')",
+			    sender.clientId, targetName);
+			return true;
+		}
+
+		if (target->clientId == sender.clientId)
+		{
+			SendChatSystemNotice(sender, "You cannot invite yourself.");
+			return true;
+		}
+
+		const std::string senderLabel = "P" + std::to_string(sender.clientId);
+		if (!m_partySystem.SendInvite(sender.clientId, target->clientId, targetName, m_currentTick))
+		{
+			SendChatSystemNotice(sender, "Cannot invite '" + targetName + "' (already in party or invite pending).");
+			return true;
+		}
+
+		// Notify the target.
+		PartyInviteNotifyMessage notify{};
+		notify.inviterName = senderLabel;
+		const std::vector<std::byte> notifyPacket = EncodePartyInviteNotify(notify);
+		if (!m_transport.Send(target->endpoint, notifyPacket))
+		{
+			LOG_WARN(Net, "[ServerApp] PartyInviteNotify send failed (target_client_id={})", target->clientId);
+		}
+
+		SendChatSystemNotice(sender, "Party invite sent to '" + targetName + "'.");
+		SendChatSystemNotice(*target, "'" + senderLabel + "' has invited you to a party. Type /accept to join.");
+		LOG_INFO(Net, "[ServerApp] /invite sent (inviter_client_id={}, invitee_client_id={})",
+		    sender.clientId, target->clientId);
+		return true;
+	}
+
+	bool ServerApp::HandleLeaveCommand(ConnectedClient& sender)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		const uint32_t partyId = m_partySystem.LeaveParty(sender.clientId);
+		if (partyId == 0)
+		{
+			SendChatSystemNotice(sender, "You are not in a party.");
+			return true;
+		}
+
+		SendChatSystemNotice(sender, "You have left the party.");
+
+		// Broadcast updated state to remaining members.
+		const Party* party = m_partySystem.FindPartyById(partyId);
+		if (party != nullptr)
+		{
+			BroadcastPartyUpdate(*party);
+			// Notify remaining members.
+			const std::string senderLabel = "P" + std::to_string(sender.clientId);
+			for (const PartyMember& m : party->members)
+			{
+				ConnectedClient* member = FindClientByEntityId(m.entityId);
+				if (member != nullptr)
+					SendChatSystemNotice(*member, "'" + senderLabel + "' has left the party.");
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] /leave handled (client_id={}, party_id={})", sender.clientId, partyId);
+		return true;
+	}
+
+	bool ServerApp::HandleLootCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		const Party* party = m_partySystem.FindPartyByMember(sender.clientId);
+		if (party == nullptr)
+		{
+			SendChatSystemNotice(sender, "You are not in a party.");
+			return true;
+		}
+
+		if (!m_partySystem.IsPartyLeader(sender.clientId))
+		{
+			SendChatSystemNotice(sender, "Only the party leader can change the loot mode.");
+			return true;
+		}
+
+		std::string token;
+		if (!ParseLootCommandToken(argsRemainder, token))
+		{
+			SendChatSystemNotice(sender, "Usage: /loot <ffa|roundrobin|master|needgreed>");
+			return true;
+		}
+
+		LootMode mode = LootMode::FreeForAll;
+		if (!ParseLootModeToken(token, mode))
+		{
+			SendChatSystemNotice(sender, "Unknown loot mode '" + token + "'. Use: ffa, roundrobin, master, needgreed.");
+			return true;
+		}
+
+		if (!m_partySystem.SetLootMode(party->partyId, sender.clientId, mode))
+		{
+			SendChatSystemNotice(sender, "Failed to change loot mode.");
+			return true;
+		}
+
+		// Refresh party pointer after modification.
+		const Party* updatedParty = m_partySystem.FindPartyById(party->partyId);
+		if (updatedParty != nullptr)
+		{
+			BroadcastPartyUpdate(*updatedParty);
+			const std::string notice = std::string("Loot mode changed to: ") + LootModeLabel(mode);
+			for (const PartyMember& m : updatedParty->members)
+			{
+				ConnectedClient* member = FindClientByEntityId(m.entityId);
+				if (member != nullptr)
+					SendChatSystemNotice(*member, notice);
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] /loot handled (client_id={}, mode={})", sender.clientId, LootModeLabel(mode));
+		return true;
+	}
+
+	bool ServerApp::HandlePartyKickCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		const Party* party = m_partySystem.FindPartyByMember(sender.clientId);
+		if (party == nullptr)
+		{
+			SendChatSystemNotice(sender, "You are not in a party.");
+			return true;
+		}
+
+		if (!m_partySystem.IsPartyLeader(sender.clientId))
+		{
+			SendChatSystemNotice(sender, "Only the party leader can kick members.");
+			return true;
+		}
+
+		std::string targetName;
+		if (!ParsePartyTargetName(argsRemainder, targetName))
+		{
+			SendChatSystemNotice(sender, "Usage: /pkick <player_name>");
+			return true;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player '" + targetName + "' not found.");
+			return true;
+		}
+
+		const uint32_t savedPartyId = party->partyId;
+		if (!m_partySystem.KickMember(savedPartyId, sender.clientId, target->clientId))
+		{
+			SendChatSystemNotice(sender, "Could not kick '" + targetName + "' (not in party or not leader).");
+			return true;
+		}
+
+		const std::string senderLabel = "P" + std::to_string(sender.clientId);
+		SendChatSystemNotice(*target, "You have been kicked from the party by '" + senderLabel + "'.");
+		SendChatSystemNotice(sender, "'" + targetName + "' has been kicked from the party.");
+
+		// Broadcast updated party state to remaining members.
+		const Party* updatedParty = m_partySystem.FindPartyById(savedPartyId);
+		if (updatedParty != nullptr)
+			BroadcastPartyUpdate(*updatedParty);
+
+		LOG_INFO(Net, "[ServerApp] /pkick handled (leader_client_id={}, kicked_client_id={})",
+		    sender.clientId, target->clientId);
+		return true;
+	}
+
+	void ServerApp::BroadcastPartyUpdate(const Party& party)
+	{
+		const std::vector<std::byte> packet = [&]
+		{
+			PartyUpdateMessage msg{};
+			msg.partyId  = party.partyId;
+			msg.leaderId = party.leaderId;
+			msg.lootMode = static_cast<WireLootMode>(party.lootMode);
+			msg.members.reserve(party.members.size());
+			for (const PartyMember& m : party.members)
+			{
+				PartyMemberEntry entry{};
+				entry.clientId      = m.clientId;
+				entry.currentHealth = m.currentHealth;
+				entry.maxHealth     = m.maxHealth;
+				entry.currentMana   = m.currentMana;
+				entry.maxMana       = m.maxMana;
+				entry.displayName   = m.displayName;
+				msg.members.push_back(std::move(entry));
+			}
+			return EncodePartyUpdate(msg);
+		}();
+
+		for (const PartyMember& m : party.members)
+		{
+			const ConnectedClient* member = FindClientByEntityId(m.entityId);
+			if (member == nullptr)
+				continue;
+			if (!m_transport.Send(member->endpoint, packet))
+			{
+				LOG_WARN(Net, "[ServerApp] BroadcastPartyUpdate send failed (client_id={})", m.clientId);
+			}
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] PartyUpdate broadcast (party_id={}, members={})",
+		    party.partyId, party.members.size());
+	}
+
+	bool ServerApp::SendPartyUpdate(const ConnectedClient& receiver, const Party& party)
+	{
+		PartyUpdateMessage msg{};
+		msg.partyId  = party.partyId;
+		msg.leaderId = party.leaderId;
+		msg.lootMode = static_cast<WireLootMode>(party.lootMode);
+		msg.members.reserve(party.members.size());
+		for (const PartyMember& m : party.members)
+		{
+			PartyMemberEntry entry{};
+			entry.clientId      = m.clientId;
+			entry.currentHealth = m.currentHealth;
+			entry.maxHealth     = m.maxHealth;
+			entry.currentMana   = m.currentMana;
+			entry.maxMana       = m.maxMana;
+			entry.displayName   = m.displayName;
+			msg.members.push_back(std::move(entry));
+		}
+		const std::vector<std::byte> packet = EncodePartyUpdate(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendPartyUpdate send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	void ServerApp::DistributePartyXp(ConnectedClient& attacker,
+	                                   float            killPosX,
+	                                   float            killPosZ,
+	                                   uint32_t         baseXp)
+	{
+		const Party* party = m_partySystem.FindPartyByMember(attacker.clientId);
+		if (party == nullptr || party->members.size() <= 1)
+		{
+			// Solo player: grant full XP.
+			attacker.experiencePoints += baseXp;
+			LOG_DEBUG(Net, "[ServerApp] XP granted solo (client_id={}, xp={}, total_xp={})",
+			    attacker.clientId, baseXp, attacker.experiencePoints);
+			return;
+		}
+
+		// Collect members within range.
+		const std::vector<uint32_t> inRange = m_partySystem.GetMembersInRange(
+		    party->partyId,
+		    attacker.clientId,
+		    killPosX,
+		    killPosZ,
+		    kPartyShareRangeMeters,
+		    [this](uint32_t clientId, float& outX, float& outZ) -> bool
+		    {
+			    for (const ConnectedClient& c : m_clients)
+			    {
+				    if (c.clientId == clientId)
+				    {
+					    outX = c.positionMetersX;
+					    outZ = c.positionMetersZ;
+					    return true;
+				    }
+			    }
+			    return false;
+		    });
+
+		if (inRange.empty())
+		{
+			attacker.experiencePoints += baseXp;
+			return;
+		}
+
+		// Split XP evenly; always at least 1 XP per member.
+		const uint32_t share = std::max(1u, baseXp / static_cast<uint32_t>(inRange.size()));
+
+		for (const uint32_t memberId : inRange)
+		{
+			for (ConnectedClient& c : m_clients)
+			{
+				if (c.clientId == memberId)
+				{
+					c.experiencePoints += share;
+					LOG_DEBUG(Net, "[ServerApp] Party XP share granted (client_id={}, share={}, total_xp={})",
+					    c.clientId, share, c.experiencePoints);
+					break;
+				}
+			}
+		}
+	}
+
+	EntityId ServerApp::ResolvePartyLooterEntityId(const ConnectedClient& killerClient)
+	{
+		const Party* party = m_partySystem.FindPartyByMember(killerClient.clientId);
+		if (party == nullptr || party->members.size() <= 1)
+			return 0; // Solo or not in party — caller uses killer's entityId.
+
+		switch (party->lootMode)
+		{
+		case LootMode::FreeForAll:
+			return 0; // Public loot bag — anyone can pick up.
+
+		case LootMode::RoundRobin:
+		{
+			// GetNextLooterEntityId advances the round-robin index.
+			Party* mutableParty = m_partySystem.FindPartyById(party->partyId);
+			if (mutableParty == nullptr)
+				return killerClient.entityId;
+			const EntityId looter = m_partySystem.GetNextLooterEntityId(mutableParty->partyId);
+			return (looter != 0) ? looter : killerClient.entityId;
+		}
+		case LootMode::MasterLooter:
+		{
+			Party* mutableParty = m_partySystem.FindPartyById(party->partyId);
+			if (mutableParty == nullptr)
+				return killerClient.entityId;
+			const EntityId looter = m_partySystem.GetNextLooterEntityId(mutableParty->partyId);
+			return (looter != 0) ? looter : killerClient.entityId;
+		}
+		case LootMode::NeedGreed:
+		{
+			// Auto-roll for all members in range; highest roll wins.
+			const std::vector<uint32_t> inRange = m_partySystem.GetMembersInRange(
+			    party->partyId,
+			    killerClient.clientId,
+			    killerClient.positionMetersX,
+			    killerClient.positionMetersZ,
+			    kPartyShareRangeMeters,
+			    [this](uint32_t clientId, float& outX, float& outZ) -> bool
+			    {
+				    for (const ConnectedClient& c : m_clients)
+				    {
+					    if (c.clientId == clientId)
+					    {
+						    outX = c.positionMetersX;
+						    outZ = c.positionMetersZ;
+						    return true;
+					    }
+				    }
+				    return false;
+			    });
+
+			if (inRange.empty())
+				return killerClient.entityId;
+
+			// Deterministic roll using clientId + current tick as seed.
+			uint32_t bestRoll   = 0;
+			uint32_t winnerClientId = killerClient.clientId;
+			for (const uint32_t memberId : inRange)
+			{
+				// Simple LCG hash: reproducible per tick, varies per member.
+				const uint32_t roll = ((memberId * 1664525u) + m_currentTick * 1013904223u) % 100u + 1u;
+				if (roll > bestRoll)
+				{
+					bestRoll = roll;
+					winnerClientId = memberId;
+				}
+			}
+
+			for (const ConnectedClient& c : m_clients)
+			{
+				if (c.clientId == winnerClientId)
+				{
+					LOG_INFO(Net, "[ServerApp] NeedGreed roll winner (client_id={}, roll={}, party_id={})",
+					    winnerClientId, bestRoll, party->partyId);
+					return c.entityId;
+				}
+			}
+			return killerClient.entityId;
+		}
+		default:
+			return 0;
+		}
 	}
 }

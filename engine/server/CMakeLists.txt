@@ -10,6 +10,7 @@ if(WIN32)
     ChatCommandParser.cpp
     ServerProtocol.cpp
     FriendSystem.cpp
+    PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatEmotes.cpp
     CharacterPersistence.cpp
@@ -60,6 +61,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
     FriendSystem.cpp
+    PartySystem.cpp
     AccountValidation.cpp
     InMemoryAccountStore.cpp
     AuthRegisterHandler.cpp

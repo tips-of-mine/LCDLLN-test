@@ -2,6 +2,7 @@
 
 #include "engine/server/CharacterPersistence.h"
 #include "engine/server/EventRuntime.h"
+#include "engine/server/FriendSystem.h"
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/SpawnerRuntime.h"
 #include "engine/core/Config.h"
@@ -511,6 +512,27 @@ namespace engine::server
 		/// Moderation action to audit file or main log fallback.
 		void AuditLogModeration(std::string_view action, std::string_view actorDisplay, std::string_view targetDisplay, std::string_view detail);
 
+		// ------------------------------------------------------------------
+		// M32.1 — Friend system helpers
+		// ------------------------------------------------------------------
+
+		/// Set a player online in the friend presence system and send FriendListSync.
+		/// Call on successful client handshake (HandleHello, new client only).
+		void OnClientLogin(ConnectedClient& client);
+
+		/// Set a player offline in the friend presence system and notify online friends.
+		/// Call before removing the client from m_clients.
+		void OnClientLogout(const ConnectedClient& client);
+
+		/// Send FriendListSync packet to \p receiver containing all friends with presence status.
+		void SendFriendListSync(const ConnectedClient& receiver);
+
+		/// Broadcast a FriendStatusUpdate to all online friends of \p subject.
+		void BroadcastFriendStatusUpdate(const ConnectedClient& subject, PresenceStatus status);
+
+		/// Handle /friend sub-command dispatched from HandleChatSlashCommand.
+		bool HandleFriendCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
 		EventRuntime m_eventRuntime;
@@ -549,5 +571,8 @@ namespace engine::server
 		bool m_moderationAuditLogReady = false;
 		/// M29.2: character keys rejected at handshake after `/ban`.
 		std::unordered_set<uint32_t> m_bannedCharacterKeys;
+
+		/// M32.1: friend system (presence tracking + DB-backed requests when ENGINE_HAS_MYSQL).
+		FriendSystem m_friendSystem;
 	};
 }

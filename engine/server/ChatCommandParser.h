@@ -17,8 +17,24 @@ namespace engine::server
 		Kick,
 		Ban,
 		Mute,
-		Announce
+		Announce,
+		/// M32.1 — Friend system commands: /friend add|accept|decline|remove <name>
+		Friend
 	};
+
+	/// Sub-command for ChatSlashCommandKind::Friend (M32.1).
+	enum class FriendSubCommand : uint8_t
+	{
+		Unknown = 0,
+		Add,
+		Accept,
+		Decline,
+		Remove
+	};
+
+	/// Parse a friend sub-command and extract the target name from argsRemainder.
+	/// Returns FriendSubCommand::Unknown when argsRemainder does not match.
+	FriendSubCommand ParseFriendSubCommand(std::string_view argsRemainder, std::string& outTargetName);
 
 	/// Result of parsing one `/command ...` line from chat input.
 	struct ParsedChatSlashCommand final

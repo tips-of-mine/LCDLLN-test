@@ -1,11 +1,15 @@
 // M32.1 — Server-side friend system implementation.
 // Handles bilateral friend requests, DB persistence and in-memory presence tracking.
+// On platforms without MySQL (e.g. WIN32 game shard), the system operates in no-DB
+// mode: presence tracking is fully functional; persistent DB operations are skipped.
 
 #include "engine/server/FriendSystem.h"
 #include "engine/core/Log.h"
-#include "engine/server/db/DbHelpers.h"
 
-#include <mysql.h>
+#ifdef ENGINE_HAS_MYSQL
+#  include "engine/server/db/DbHelpers.h"
+#  include <mysql.h>
+#endif
 
 #include <algorithm>
 #include <cstdio>
@@ -20,6 +24,7 @@ namespace engine::server
 
 	namespace
 	{
+#ifdef ENGINE_HAS_MYSQL
 		/// Build a NULL-terminated SQL string with \p input escaped via the MySQL API.
 		/// Returns false when the connection handle is null or the string is too long.
 		bool EscapeString(MYSQL* mysql, std::string_view input, std::string& outEscaped)
@@ -48,6 +53,7 @@ namespace engine::server
 				return 0;
 			return static_cast<uint64_t>(std::strtoull(row[0], nullptr, 10));
 		}
+#endif // ENGINE_HAS_MYSQL
 	} // namespace
 
 	// -------------------------------------------------------------------------
@@ -111,6 +117,7 @@ namespace engine::server
 
 	uint64_t FriendSystem::LookupPlayerIdByName(std::string_view name, MYSQL* mysql) const
 	{
+#ifdef ENGINE_HAS_MYSQL
 		if (!mysql || name.empty())
 			return 0;
 
@@ -132,10 +139,15 @@ namespace engine::server
 		uint64_t id = FetchFirstU64(res);
 		db::DbFreeResult(res);
 		return id;
+#else
+		(void)mysql; (void)name;
+		return 0;
+#endif
 	}
 
 	size_t FriendSystem::CountAcceptedFriends(uint64_t playerId, MYSQL* mysql) const
 	{
+#ifdef ENGINE_HAS_MYSQL
 		if (!mysql)
 			return 0;
 
@@ -150,6 +162,10 @@ namespace engine::server
 		uint64_t count = FetchFirstU64(res);
 		db::DbFreeResult(res);
 		return static_cast<size_t>(count);
+#else
+		(void)playerId; (void)mysql;
+		return 0;
+#endif
 	}
 
 	// -------------------------------------------------------------------------
@@ -179,6 +195,7 @@ namespace engine::server
 			return 0;
 		}
 
+#ifdef ENGINE_HAS_MYSQL
 		uint64_t targetId = LookupPlayerIdByName(targetName, mysql);
 		if (targetId == 0)
 		{
@@ -236,6 +253,10 @@ namespace engine::server
 		LOG_INFO(Core, "[FriendSystem] Friend request sent: {} ('{}') → {} ('{}')",
 			requesterId, requesterName, targetId, targetName);
 		return targetId;
+#else
+		(void)requesterName; (void)targetName;
+		return 0;
+#endif
 	}
 
 	uint64_t FriendSystem::AcceptFriendRequest(uint64_t         accepterId,
@@ -254,6 +275,7 @@ namespace engine::server
 			return 0;
 		}
 
+#ifdef ENGINE_HAS_MYSQL
 		uint64_t requesterId = LookupPlayerIdByName(requesterName, mysql);
 		if (requesterId == 0)
 		{
@@ -300,6 +322,10 @@ namespace engine::server
 		tx.Commit();
 		LOG_INFO(Core, "[FriendSystem] Friend request accepted: {} ← '{}'", accepterId, requesterName);
 		return requesterId;
+#else
+		(void)accepterId; (void)requesterName;
+		return 0;
+#endif
 	}
 
 	uint64_t FriendSystem::DeclineFriendRequest(uint64_t         declinerId,
@@ -318,6 +344,7 @@ namespace engine::server
 			return 0;
 		}
 
+#ifdef ENGINE_HAS_MYSQL
 		uint64_t requesterId = LookupPlayerIdByName(requesterName, mysql);
 		if (requesterId == 0)
 		{
@@ -339,6 +366,10 @@ namespace engine::server
 
 		LOG_INFO(Core, "[FriendSystem] Friend request declined by {}: requester '{}'", declinerId, requesterName);
 		return requesterId;
+#else
+		(void)declinerId; (void)requesterName;
+		return 0;
+#endif
 	}
 
 	bool FriendSystem::RemoveFriend(uint64_t         playerId,
@@ -357,6 +388,7 @@ namespace engine::server
 			return false;
 		}
 
+#ifdef ENGINE_HAS_MYSQL
 		uint64_t friendId = LookupPlayerIdByName(friendName, mysql);
 		if (friendId == 0)
 		{
@@ -384,6 +416,10 @@ namespace engine::server
 		tx.Commit();
 		LOG_INFO(Core, "[FriendSystem] Friend removed: player {} removed '{}'", playerId, friendName);
 		return true;
+#else
+		(void)playerId; (void)friendName;
+		return false;
+#endif
 	}
 
 	// -------------------------------------------------------------------------
@@ -432,6 +468,7 @@ namespace engine::server
 			return result;
 		}
 
+#ifdef ENGINE_HAS_MYSQL
 		// Join friends with characters to get display names, include pending inbound requests.
 		char sql[512];
 		std::snprintf(sql, sizeof(sql),
@@ -463,6 +500,9 @@ namespace engine::server
 		db::DbFreeResult(res);
 
 		LOG_DEBUG(Core, "[FriendSystem] GetFriendList: {} entries for player {}", result.size(), playerId);
+#else
+		(void)playerId;
+#endif
 		return result;
 	}
 
@@ -473,6 +513,7 @@ namespace engine::server
 		if (!mysql)
 			return result;
 
+#ifdef ENGINE_HAS_MYSQL
 		char sql[256];
 		std::snprintf(sql, sizeof(sql),
 			"SELECT friend_id FROM friends WHERE player_id = %llu AND status = 1",
@@ -493,6 +534,9 @@ namespace engine::server
 				result.push_back(fid);
 		}
 		db::DbFreeResult(res);
+#else
+		(void)playerId;
+#endif
 		return result;
 	}
 }

@@ -238,6 +238,10 @@ namespace engine::server
 		m_chatRateLimiter.Reset();
 		InitModerationAuditSubsystem();
 		LoadChatBanFile();
+
+		// M32.1 — FriendSystem runs in no-DB mode on WIN32 (presence tracking only).
+		m_friendSystem.Init(nullptr);
+
 		m_initialized = true;
 		LOG_INFO(Core, "[ServerApp] Init OK (port={}, tick_hz={}, snapshot_hz={})",
 			m_listenPort, m_tickHz, m_snapshotHz);
@@ -346,6 +350,7 @@ namespace engine::server
 		m_spawners.clear();
 		m_moderationAuditLog.Shutdown();
 		m_moderationAuditLogReady = false;
+		m_friendSystem.Shutdown();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -436,6 +441,67 @@ namespace engine::server
 		if (DecodeChatSend(packetBytes, chatSend))
 		{
 			HandleChatSend(datagram.endpoint, chatSend);
+			return;
+		}
+
+		// M32.1 — Friend request packets (client-initiated via dedicated packet type).
+		FriendRequestMessage friendReq{};
+		if (DecodeFriendRequest(packetBytes, friendReq))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				const std::string playerLabel = "P" + std::to_string(sender->clientId);
+				const uint64_t targetId = m_friendSystem.SendFriendRequest(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					playerLabel,
+					friendReq.targetName,
+					nullptr);
+				if (targetId != 0)
+					LOG_DEBUG(Net, "[ServerApp] FriendRequest routed (client_id={}, target_id={})", sender->clientId, targetId);
+			}
+			return;
+		}
+
+		FriendAcceptMessage friendAccept{};
+		if (DecodeFriendAccept(packetBytes, friendAccept))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				m_friendSystem.AcceptFriendRequest(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					friendAccept.requesterName,
+					nullptr);
+			}
+			return;
+		}
+
+		FriendDeclineMessage friendDecline{};
+		if (DecodeFriendDecline(packetBytes, friendDecline))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				m_friendSystem.DeclineFriendRequest(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					friendDecline.requesterName,
+					nullptr);
+			}
+			return;
+		}
+
+		FriendRemoveMessage friendRemove{};
+		if (DecodeFriendRemove(packetBytes, friendRemove))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				m_friendSystem.RemoveFriend(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					friendRemove.friendName,
+					nullptr);
+			}
 			return;
 		}
 
@@ -540,6 +606,7 @@ namespace engine::server
 		(void)SendWelcome(acceptedClient);
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
+		OnClientLogin(acceptedClient);
 	}
 
 	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersZ)
@@ -3411,6 +3478,7 @@ namespace engine::server
 			}
 		}
 
+		OnClientLogout(*clientIt);
 		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);
 		m_clients.erase(clientIt);
 	}
@@ -3657,10 +3725,161 @@ namespace engine::server
 				return true;
 			}
 		}
+		case ChatSlashCommandKind::Friend:
+			return HandleFriendCommand(sender, command.argsRemainder);
+
 		case ChatSlashCommandKind::None:
 		default:
 			LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
 			return true;
 		}
+	}
+
+	// -------------------------------------------------------------------------
+	// M32.1 — Friend system helpers
+	// -------------------------------------------------------------------------
+
+	void ServerApp::OnClientLogin(ConnectedClient& client)
+	{
+		if (!m_friendSystem.IsInitialized())
+			return;
+
+		const std::string playerLabel = "P" + std::to_string(client.clientId);
+		m_friendSystem.SetPresence(
+			static_cast<uint64_t>(client.persistenceCharacterKey),
+			playerLabel,
+			PresenceStatus::Online);
+
+		SendFriendListSync(client);
+		BroadcastFriendStatusUpdate(client, PresenceStatus::Online);
+
+		LOG_INFO(Net, "[ServerApp] OnClientLogin: friend presence set online (client_id={})", client.clientId);
+	}
+
+	void ServerApp::OnClientLogout(const ConnectedClient& client)
+	{
+		if (!m_friendSystem.IsInitialized())
+			return;
+
+		BroadcastFriendStatusUpdate(client, PresenceStatus::Offline);
+		m_friendSystem.SetOffline(static_cast<uint64_t>(client.persistenceCharacterKey));
+
+		LOG_INFO(Net, "[ServerApp] OnClientLogout: friend presence cleared (client_id={})", client.clientId);
+	}
+
+	void ServerApp::SendFriendListSync(const ConnectedClient& receiver)
+	{
+		// In no-DB mode, GetFriendList returns an empty list; we still send the packet
+		// so the client is aware the sync occurred.
+		const auto records = m_friendSystem.GetFriendList(
+			static_cast<uint64_t>(receiver.persistenceCharacterKey), nullptr);
+
+		FriendListSyncMessage msg{};
+		msg.friends.reserve(records.size());
+		for (const auto& rec : records)
+		{
+			FriendListEntry entry;
+			entry.name              = rec.friendName;
+			entry.presenceStatus    = m_friendSystem.GetPresence(rec.friendId);
+			entry.isPendingInbound  = (rec.status == 0);
+			msg.friends.push_back(std::move(entry));
+		}
+
+		const std::vector<std::byte> packet = EncodeFriendListSync(msg);
+		if (!m_transport.Send(receiver.endpoint, packet.data(), packet.size()))
+		{
+			LOG_WARN(Net, "[ServerApp] SendFriendListSync send failed (client_id={})", receiver.clientId);
+			return;
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] FriendListSync sent (client_id={}, friends={})",
+			receiver.clientId, msg.friends.size());
+	}
+
+	void ServerApp::BroadcastFriendStatusUpdate(const ConnectedClient& subject, PresenceStatus status)
+	{
+		// Collect online friend ids from the in-memory presence map.
+		// In no-DB mode GetOnlineFriendIds returns empty; we iterate all clients and check if
+		// they have the subject in their (in-memory-only) presence map instead.
+		// This is best-effort: bilateral DB relationships are not available in no-DB mode.
+		const std::string subjectLabel = "P" + std::to_string(subject.clientId);
+
+		FriendStatusUpdateMessage msg{};
+		msg.friendName     = subjectLabel;
+		msg.presenceStatus = status;
+
+		const std::vector<std::byte> packet = EncodeFriendStatusUpdate(msg);
+
+		for (const ConnectedClient& peer : m_clients)
+		{
+			if (peer.clientId == subject.clientId)
+				continue;
+
+			if (!m_transport.Send(peer.endpoint, packet.data(), packet.size()))
+			{
+				LOG_WARN(Net, "[ServerApp] BroadcastFriendStatusUpdate send failed (peer_client_id={})", peer.clientId);
+			}
+		}
+	}
+
+	bool ServerApp::HandleFriendCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		std::string targetName;
+		const FriendSubCommand sub = ParseFriendSubCommand(argsRemainder, targetName);
+
+		if (sub == FriendSubCommand::Unknown || targetName.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /friend add|accept|decline|remove <name>");
+			LOG_WARN(Net, "[ServerApp] /friend unknown sub-command (client_id={}, args='{}')",
+				sender.clientId, argsRemainder);
+			return true;
+		}
+
+		const uint64_t playerId = static_cast<uint64_t>(sender.persistenceCharacterKey);
+		const std::string playerLabel = "P" + std::to_string(sender.clientId);
+
+		switch (sub)
+		{
+		case FriendSubCommand::Add:
+		{
+			const uint64_t targetId = m_friendSystem.SendFriendRequest(playerId, playerLabel, targetName, nullptr);
+			if (targetId == 0)
+				SendChatSystemNotice(sender, "Friend request failed (no-DB mode or target not found).");
+			else
+				SendChatSystemNotice(sender, "Friend request sent to '" + targetName + "'.");
+			break;
+		}
+		case FriendSubCommand::Accept:
+		{
+			const uint64_t requesterId = m_friendSystem.AcceptFriendRequest(playerId, targetName, nullptr);
+			if (requesterId == 0)
+				SendChatSystemNotice(sender, "Accept failed (no-DB mode or request not found).");
+			else
+				SendChatSystemNotice(sender, "Friend request from '" + targetName + "' accepted.");
+			break;
+		}
+		case FriendSubCommand::Decline:
+		{
+			const uint64_t requesterId = m_friendSystem.DeclineFriendRequest(playerId, targetName, nullptr);
+			if (requesterId == 0)
+				SendChatSystemNotice(sender, "Decline failed (no-DB mode or request not found).");
+			else
+				SendChatSystemNotice(sender, "Friend request from '" + targetName + "' declined.");
+			break;
+		}
+		case FriendSubCommand::Remove:
+		{
+			const bool ok = m_friendSystem.RemoveFriend(playerId, targetName, nullptr);
+			if (!ok)
+				SendChatSystemNotice(sender, "Remove failed (no-DB mode or friend not found).");
+			else
+				SendChatSystemNotice(sender, "'" + targetName + "' removed from friends.");
+			break;
+		}
+		default:
+			break;
+		}
+
+		return true;
 	}
 }

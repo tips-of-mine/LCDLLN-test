@@ -9,6 +9,7 @@ if(WIN32)
     ServerApp.cpp
     ChatCommandParser.cpp
     ServerProtocol.cpp
+    FriendSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatEmotes.cpp
     CharacterPersistence.cpp
@@ -27,6 +28,8 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
+  # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
+  target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=0)
   target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
@@ -74,6 +77,8 @@ elseif(UNIX)
     PrometheusMetrics.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+  # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
+  target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=1)
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
 
   # M21.6: DB layer smoke tests

@@ -65,11 +65,40 @@ namespace engine::server
 			return "/mute";
 		case ChatSlashCommandKind::Announce:
 			return "/announce";
+		case ChatSlashCommandKind::Friend:
+			return "/friend";
 		case ChatSlashCommandKind::None:
 			break;
 		}
 
 		return "/?";
+	}
+
+	FriendSubCommand ParseFriendSubCommand(std::string_view argsRemainder, std::string& outTargetName)
+	{
+		outTargetName.clear();
+		const std::string_view trimmed = TrimAscii(argsRemainder);
+		if (trimmed.empty())
+			return FriendSubCommand::Unknown;
+
+		const size_t spacePos = trimmed.find(' ');
+		const std::string_view sub = (spacePos == std::string_view::npos) ? trimmed : trimmed.substr(0, spacePos);
+
+		FriendSubCommand kind = FriendSubCommand::Unknown;
+		if (sub == "add")         kind = FriendSubCommand::Add;
+		else if (sub == "accept") kind = FriendSubCommand::Accept;
+		else if (sub == "decline")kind = FriendSubCommand::Decline;
+		else if (sub == "remove") kind = FriendSubCommand::Remove;
+		else
+			return FriendSubCommand::Unknown;
+
+		if (spacePos != std::string_view::npos && spacePos + 1 < trimmed.size())
+		{
+			const std::string_view nameView = TrimAscii(trimmed.substr(spacePos + 1));
+			outTargetName.assign(nameView.begin(), nameView.end());
+		}
+
+		return kind;
 	}
 
 	bool TryParseChatSlashCommand(std::string_view text, ParsedChatSlashCommand& outCommand)
@@ -148,6 +177,13 @@ namespace engine::server
 		{
 			set(ChatSlashCommandKind::Announce, remainder);
 			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {}", ChatSlashCommandLabel(ChatSlashCommandKind::Announce));
+			return true;
+		}
+
+		if (cmdToken == "/friend")
+		{
+			set(ChatSlashCommandKind::Friend, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Friend), remainder.size());
 			return true;
 		}
 

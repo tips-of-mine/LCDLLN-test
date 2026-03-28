@@ -29,7 +29,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
   # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
-  target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=0)
+  # Do NOT define ENGINE_HAS_MYSQL so #if ENGINE_HAS_MYSQL evaluates to false.
   target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)

@@ -3786,7 +3786,7 @@ namespace engine::server
 		}
 
 		const std::vector<std::byte> packet = EncodeFriendListSync(msg);
-		if (!m_transport.Send(receiver.endpoint, packet.data(), packet.size()))
+		if (!m_transport.Send(receiver.endpoint, packet))
 		{
 			LOG_WARN(Net, "[ServerApp] SendFriendListSync send failed (client_id={})", receiver.clientId);
 			return;
@@ -3815,7 +3815,7 @@ namespace engine::server
 			if (peer.clientId == subject.clientId)
 				continue;
 
-			if (!m_transport.Send(peer.endpoint, packet.data(), packet.size()))
+			if (!m_transport.Send(peer.endpoint, packet))
 			{
 				LOG_WARN(Net, "[ServerApp] BroadcastFriendStatusUpdate send failed (peer_client_id={})", peer.clientId);
 			}

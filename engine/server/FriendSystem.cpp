@@ -6,7 +6,7 @@
 #include "engine/server/FriendSystem.h"
 #include "engine/core/Log.h"
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 #  include "engine/server/db/DbHelpers.h"
 #  include <mysql.h>
 #endif
@@ -24,7 +24,7 @@ namespace engine::server
 
 	namespace
 	{
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		/// Build a NULL-terminated SQL string with \p input escaped via the MySQL API.
 		/// Returns false when the connection handle is null or the string is too long.
 		bool EscapeString(MYSQL* mysql, std::string_view input, std::string& outEscaped)
@@ -117,7 +117,7 @@ namespace engine::server
 
 	uint64_t FriendSystem::LookupPlayerIdByName(std::string_view name, MYSQL* mysql) const
 	{
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		if (!mysql || name.empty())
 			return 0;
 
@@ -147,7 +147,7 @@ namespace engine::server
 
 	size_t FriendSystem::CountAcceptedFriends(uint64_t playerId, MYSQL* mysql) const
 	{
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		if (!mysql)
 			return 0;
 
@@ -195,7 +195,7 @@ namespace engine::server
 			return 0;
 		}
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		uint64_t targetId = LookupPlayerIdByName(targetName, mysql);
 		if (targetId == 0)
 		{
@@ -275,7 +275,7 @@ namespace engine::server
 			return 0;
 		}
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		uint64_t requesterId = LookupPlayerIdByName(requesterName, mysql);
 		if (requesterId == 0)
 		{
@@ -344,7 +344,7 @@ namespace engine::server
 			return 0;
 		}
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		uint64_t requesterId = LookupPlayerIdByName(requesterName, mysql);
 		if (requesterId == 0)
 		{
@@ -388,7 +388,7 @@ namespace engine::server
 			return false;
 		}
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		uint64_t friendId = LookupPlayerIdByName(friendName, mysql);
 		if (friendId == 0)
 		{
@@ -468,7 +468,7 @@ namespace engine::server
 			return result;
 		}
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		// Join friends with characters to get display names, include pending inbound requests.
 		char sql[512];
 		std::snprintf(sql, sizeof(sql),
@@ -513,7 +513,7 @@ namespace engine::server
 		if (!mysql)
 			return result;
 
-#ifdef ENGINE_HAS_MYSQL
+#if ENGINE_HAS_MYSQL
 		char sql[256];
 		std::snprintf(sql, sizeof(sql),
 			"SELECT friend_id FROM friends WHERE player_id = %llu AND status = 1",

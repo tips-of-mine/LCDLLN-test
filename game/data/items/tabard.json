@@ -1,0 +1,9 @@
+{
+  "itemId": 9001,
+  "name": "Guild Tabard",
+  "description": "A tabard bearing your guild's emblem. Displays the guild colors and symbol on the chest.",
+  "type": "tabard",
+  "equipSlot": "chest",
+  "stackable": false,
+  "iconPath": "items/tabard_icon.png"
+}

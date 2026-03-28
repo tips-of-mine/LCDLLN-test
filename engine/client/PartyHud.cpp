@@ -24,7 +24,7 @@ namespace engine::client
 			return true;
 		}
 
-		m_state       = {};
+		m_state       = PartyHudState{};
 		m_initialized = true;
 		LOG_INFO(Render, "[PartyHud] Init OK");
 		return true;
@@ -32,7 +32,7 @@ namespace engine::client
 
 	void PartyHudPresenter::Shutdown()
 	{
-		m_state       = {};
+		m_state       = PartyHudState{};
 		m_initialized = false;
 		LOG_INFO(Render, "[PartyHud] Destroyed");
 	}

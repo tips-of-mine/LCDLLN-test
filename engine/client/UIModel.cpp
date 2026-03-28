@@ -433,6 +433,9 @@ namespace engine::client
 			return ApplyEventState(packet);
 		case engine::server::MessageKind::ChatRelay:
 			return ApplyChatRelay(packet);
+		// M32.2 — Party system
+		case engine::server::MessageKind::PartyUpdate:
+			return ApplyPartyUpdate(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -793,5 +796,52 @@ namespace engine::client
 			"[UIModelBinding] TickChatWorldVisuals OK (bubbles={}, emotes={})",
 			m_model.chatBubbleBillboards.size(),
 			m_model.activeEmotes.size());
+	}
+
+	// -------------------------------------------------------------------------
+	// M32.2 — Party update
+	// -------------------------------------------------------------------------
+
+	bool UIModelBinding::ApplyPartyUpdate(std::span<const std::byte> packet)
+	{
+		engine::server::PartyUpdateMessage msg{};
+		if (!engine::server::DecodePartyUpdate(packet, msg))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ApplyPartyUpdate: decode failed");
+			return false;
+		}
+
+		m_model.partyMembers.clear();
+		m_model.partyMembers.reserve(msg.members.size());
+		m_model.partyLeaderId = msg.leaderId;
+		m_model.inParty       = !msg.members.empty();
+
+		switch (msg.lootMode)
+		{
+		case engine::server::WireLootMode::FreeForAll:   m_model.partyLootModeLabel = "FreeForAll";   break;
+		case engine::server::WireLootMode::RoundRobin:   m_model.partyLootModeLabel = "RoundRobin";   break;
+		case engine::server::WireLootMode::MasterLooter: m_model.partyLootModeLabel = "MasterLooter"; break;
+		case engine::server::WireLootMode::NeedGreed:    m_model.partyLootModeLabel = "NeedGreed";    break;
+		default:                                         m_model.partyLootModeLabel = "Unknown";      break;
+		}
+
+		for (const engine::server::PartyMemberEntry& e : msg.members)
+		{
+			UIPartyMemberEntry entry{};
+			entry.clientId      = e.clientId;
+			entry.currentHealth = e.currentHealth;
+			entry.maxHealth     = e.maxHealth;
+			entry.currentMana   = e.currentMana;
+			entry.maxMana       = e.maxMana;
+			entry.displayName   = e.displayName;
+			entry.isLeader      = (e.clientId == msg.leaderId);
+			m_model.partyMembers.push_back(std::move(entry));
+		}
+
+		LOG_DEBUG(Net, "[UIModelBinding] PartyUpdate applied (party_id={}, members={}, loot_mode={})",
+		    msg.partyId, msg.members.size(), m_model.partyLootModeLabel);
+
+		NotifyObservers(UIModelChangeParty);
+		return true;
 	}
 }

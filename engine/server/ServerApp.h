@@ -3,6 +3,7 @@
 #include "engine/server/CharacterPersistence.h"
 #include "engine/server/EventRuntime.h"
 #include "engine/server/FriendSystem.h"
+#include "engine/server/PartySystem.h"
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/SpawnerRuntime.h"
 #include "engine/core/Config.h"
@@ -524,6 +525,39 @@ namespace engine::server
 		/// Call before removing the client from m_clients.
 		void OnClientLogout(const ConnectedClient& client);
 
+		// ------------------------------------------------------------------
+		// M32.2 — Party system helpers
+		// ------------------------------------------------------------------
+
+		/// Handle /invite <name> slash command dispatched from HandleChatSlashCommand.
+		bool HandleInviteCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
+		/// Handle /leave slash command dispatched from HandleChatSlashCommand.
+		bool HandleLeaveCommand(ConnectedClient& sender);
+
+		/// Handle /loot <mode> slash command dispatched from HandleChatSlashCommand (leader only).
+		bool HandleLootCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
+		/// Handle /pkick <name> slash command dispatched from HandleChatSlashCommand (leader only).
+		bool HandlePartyKickCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
+		/// Broadcast a full PartyUpdate packet to every member of \p party.
+		void BroadcastPartyUpdate(const Party& party);
+
+		/// Send a single PartyUpdate packet to one client.
+		bool SendPartyUpdate(const ConnectedClient& receiver, const Party& party);
+
+		/// Distribute \p baseXp evenly among party members in range of the kill position.
+		/// Falls back to granting \p baseXp only to the attacker when not in a party.
+		void DistributePartyXp(ConnectedClient& attacker,
+		                       float killPosX,
+		                       float killPosZ,
+		                       uint32_t baseXp);
+
+		/// Apply the current party loot mode when spawning a loot bag for \p killerClient.
+		/// Returns the entityId that should own the bag (0 = public/FFA).
+		EntityId ResolvePartyLooterEntityId(const ConnectedClient& killerClient);
+
 		/// Send FriendListSync packet to \p receiver containing all friends with presence status.
 		void SendFriendListSync(const ConnectedClient& receiver);
 
@@ -574,5 +608,8 @@ namespace engine::server
 
 		/// M32.1: friend system (presence tracking + DB-backed requests when ENGINE_HAS_MYSQL).
 		FriendSystem m_friendSystem;
+
+		/// M32.2: party system (formation, loot modes, XP sharing).
+		PartySystem m_partySystem;
 	};
 }

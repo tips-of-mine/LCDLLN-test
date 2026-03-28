@@ -19,7 +19,15 @@ namespace engine::server
 		Mute,
 		Announce,
 		/// M32.1 — Friend system commands: /friend add|accept|decline|remove <name>
-		Friend
+		Friend,
+		/// M32.2 — Party invite command: /invite <name>
+		Invite,
+		/// M32.2 — Voluntary party leave: /leave
+		Leave,
+		/// M32.2 — Party loot mode change (leader only): /loot <mode>
+		Loot,
+		/// M32.2 — Party kick (leader only): /pkick <name>
+		PartyKick
 	};
 
 	/// Sub-command for ChatSlashCommandKind::Friend (M32.1).
@@ -52,4 +60,17 @@ namespace engine::server
 
 	/// ASCII case-insensitive equality for chat names like `P12`.
 	bool ChatNameEqualsAsciiI(std::string_view a, std::string_view b);
+
+	// -------------------------------------------------------------------------
+	// M32.2 — Party command helpers
+	// -------------------------------------------------------------------------
+
+	/// Parse a loot mode token from /loot argsRemainder.
+	/// Returns the raw token (lowercase) in \p outToken.
+	/// Returns false when argsRemainder is empty.
+	bool ParseLootCommandToken(std::string_view argsRemainder, std::string& outToken);
+
+	/// Parse a target name from /invite or /pkick argsRemainder.
+	/// Returns false when argsRemainder is empty after trimming.
+	bool ParsePartyTargetName(std::string_view argsRemainder, std::string& outTargetName);
 }

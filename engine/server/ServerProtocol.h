@@ -49,7 +49,26 @@ namespace engine::server
 		/// Server sends the full friends list to a client on login (M32.1).
 		FriendListSync = 23,
 		/// Server notifies a client of a friend's presence status change (M32.1).
-		FriendStatusUpdate = 24
+		FriendStatusUpdate = 24,
+
+		// M32.2 — Party system messages ----------------------------------------
+
+		/// Client sends /invite <name> to the server (M32.2).
+		PartyInvite = 25,
+		/// Server pushes an incoming invite notification to the target client (M32.2).
+		PartyInviteNotify = 26,
+		/// Invitee accepts the pending invite (M32.2).
+		PartyAccept = 27,
+		/// Invitee declines the pending invite (M32.2).
+		PartyDecline = 28,
+		/// Leader kicks a member from the party via /pkick (M32.2).
+		PartyKick = 29,
+		/// Server broadcasts full party state to all members after any change (M32.2).
+		PartyUpdate = 30,
+		/// Leader changes the party loot mode via /loot (M32.2).
+		PartyLootMode = 31,
+		/// Client voluntarily leaves their party via /leave (M32.2).
+		PartyLeave = 32
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -399,4 +418,130 @@ namespace engine::server
 
 	/// Decode a server friend status update packet.
 	bool DecodeFriendStatusUpdate(std::span<const std::byte> packet, FriendStatusUpdateMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M32.2 — Party system messages
+	// -------------------------------------------------------------------------
+
+	/// Wire value for LootMode (must stay in sync with engine::server::LootMode).
+	enum class WireLootMode : uint8_t
+	{
+		FreeForAll   = 0,
+		RoundRobin   = 1,
+		MasterLooter = 2,
+		NeedGreed    = 3
+	};
+
+	/// One party member entry carried inside a PartyUpdate packet.
+	struct PartyMemberEntry
+	{
+		uint32_t    clientId      = 0;
+		uint32_t    currentHealth = 0;
+		uint32_t    maxHealth     = 0;
+		uint32_t    currentMana   = 0;
+		uint32_t    maxMana       = 0;
+		std::string displayName;
+	};
+
+	/// Client /invite <name> request (M32.2).
+	struct PartyInviteMessage
+	{
+		uint32_t    clientId   = 0;
+		std::string targetName; ///< Display name of the player to invite (e.g. "P12").
+	};
+
+	/// Server notification pushed to the invite target (M32.2).
+	struct PartyInviteNotifyMessage
+	{
+		std::string inviterName;
+	};
+
+	/// Client acceptance of a pending party invite (M32.2).
+	struct PartyAcceptMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Client decline of a pending party invite (M32.2).
+	struct PartyDeclineMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Leader request to kick a member from the party (M32.2).
+	struct PartyKickMessage
+	{
+		uint32_t    clientId   = 0; ///< Leader's clientId.
+		std::string targetName;     ///< Display name of the member to kick.
+	};
+
+	/// Full party state broadcast to all members after any change (M32.2).
+	struct PartyUpdateMessage
+	{
+		uint32_t partyId  = 0;
+		uint32_t leaderId = 0;
+		WireLootMode lootMode = WireLootMode::FreeForAll;
+		std::vector<PartyMemberEntry> members;
+	};
+
+	/// Leader request to change the party loot mode (M32.2).
+	struct PartyLootModeMessage
+	{
+		uint32_t     clientId = 0;
+		WireLootMode lootMode = WireLootMode::FreeForAll;
+	};
+
+	/// Client voluntary leave request (M32.2).
+	struct PartyLeaveMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Encode a client party invite request packet.
+	std::vector<std::byte> EncodePartyInvite(const PartyInviteMessage& message);
+
+	/// Decode a client party invite request packet.
+	bool DecodePartyInvite(std::span<const std::byte> packet, PartyInviteMessage& outMessage);
+
+	/// Encode a server party invite notification packet.
+	std::vector<std::byte> EncodePartyInviteNotify(const PartyInviteNotifyMessage& message);
+
+	/// Decode a server party invite notification packet.
+	bool DecodePartyInviteNotify(std::span<const std::byte> packet, PartyInviteNotifyMessage& outMessage);
+
+	/// Encode a client party accept packet.
+	std::vector<std::byte> EncodePartyAccept(const PartyAcceptMessage& message);
+
+	/// Decode a client party accept packet.
+	bool DecodePartyAccept(std::span<const std::byte> packet, PartyAcceptMessage& outMessage);
+
+	/// Encode a client party decline packet.
+	std::vector<std::byte> EncodePartyDecline(const PartyDeclineMessage& message);
+
+	/// Decode a client party decline packet.
+	bool DecodePartyDecline(std::span<const std::byte> packet, PartyDeclineMessage& outMessage);
+
+	/// Encode a leader party kick request packet.
+	std::vector<std::byte> EncodePartyKick(const PartyKickMessage& message);
+
+	/// Decode a leader party kick request packet.
+	bool DecodePartyKick(std::span<const std::byte> packet, PartyKickMessage& outMessage);
+
+	/// Encode a full party state update packet (server → all party members).
+	std::vector<std::byte> EncodePartyUpdate(const PartyUpdateMessage& message);
+
+	/// Decode a full party state update packet.
+	bool DecodePartyUpdate(std::span<const std::byte> packet, PartyUpdateMessage& outMessage);
+
+	/// Encode a leader loot-mode change request packet.
+	std::vector<std::byte> EncodePartyLootMode(const PartyLootModeMessage& message);
+
+	/// Decode a leader loot-mode change request packet.
+	bool DecodePartyLootMode(std::span<const std::byte> packet, PartyLootModeMessage& outMessage);
+
+	/// Encode a client party leave packet.
+	std::vector<std::byte> EncodePartyLeave(const PartyLeaveMessage& message);
+
+	/// Decode a client party leave packet.
+	bool DecodePartyLeave(std::span<const std::byte> packet, PartyLeaveMessage& outMessage);
 }

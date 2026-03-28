@@ -68,7 +68,30 @@ namespace engine::server
 		/// Leader changes the party loot mode via /loot (M32.2).
 		PartyLootMode = 31,
 		/// Client voluntarily leaves their party via /leave (M32.2).
-		PartyLeave = 32
+		PartyLeave = 32,
+
+		// M32.3 — Guild system messages ----------------------------------------
+
+		/// Client sends /guild create <name> to the server (M32.3).
+		GuildCreate = 33,
+		/// Server result of a guild creation attempt (M32.3).
+		GuildCreateResult = 34,
+		/// Client sends /ginvite <name> to the server (M32.3).
+		GuildInvite = 35,
+		/// Server pushes an incoming guild invite notification to the target (M32.3).
+		GuildInviteNotify = 36,
+		/// Target accepts a pending guild invite (M32.3).
+		GuildInviteAccept = 37,
+		/// Target declines a pending guild invite (M32.3).
+		GuildInviteDecline = 38,
+		/// Leader kicks a member from the guild via /gkick (M32.3).
+		GuildKick = 39,
+		/// Leader/Officer promotes a member via /gpromote (M32.3).
+		GuildPromote = 40,
+		/// Server broadcasts full guild roster to all members after any change (M32.3).
+		GuildRosterSync = 41,
+		/// Client or Officer updates the guild MOTD (M32.3).
+		GuildMotdUpdate = 42
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -544,4 +567,90 @@ namespace engine::server
 
 	/// Decode a client party leave packet.
 	bool DecodePartyLeave(std::span<const std::byte> packet, PartyLeaveMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M32.3 — Guild system messages
+	// -------------------------------------------------------------------------
+
+	/// Client request to create a new guild via /guild create <name> (M32.3).
+	struct GuildCreateMessage
+	{
+		uint32_t    clientId  = 0;
+		std::string guildName; ///< Desired guild name, 3-20 chars.
+	};
+
+	/// Server result of a guild creation attempt (M32.3).
+	struct GuildCreateResultMessage
+	{
+		uint8_t     success  = 0; ///< 1 = created, 0 = failed.
+		uint64_t    guildId  = 0; ///< New guild id on success; 0 on failure.
+		std::string guildName;
+		std::string errorReason; ///< Human-readable reason on failure.
+	};
+
+	/// Client /ginvite <name> request (M32.3).
+	struct GuildInviteMessage
+	{
+		uint32_t    clientId   = 0;
+		std::string targetName; ///< Display name of the player to invite.
+	};
+
+	/// Server notification pushed to the invite target (M32.3).
+	struct GuildInviteNotifyMessage
+	{
+		std::string inviterName;
+		std::string guildName;
+	};
+
+	/// Target accepts a pending guild invite (M32.3).
+	struct GuildInviteAcceptMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Target declines a pending guild invite (M32.3).
+	struct GuildInviteDeclineMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Leader request to kick a member from the guild via /gkick (M32.3).
+	struct GuildKickMessage
+	{
+		uint32_t    clientId   = 0; ///< Kicker's clientId.
+		std::string targetName; ///< Display name of the member to kick.
+	};
+
+	/// Officer/Leader request to promote a member via /gpromote (M32.3).
+	struct GuildPromoteMessage
+	{
+		uint32_t    clientId   = 0; ///< Promoter's clientId.
+		std::string targetName; ///< Display name of the member to promote.
+	};
+
+	/// One entry in the guild roster sync packet (M32.3).
+	struct GuildRosterEntry
+	{
+		uint64_t    playerId = 0;
+		uint8_t     rankId   = 3; ///< 0=GM, 1=Officer, 2=Member, 3=Recruit.
+		uint8_t     online   = 0; ///< 1 when the member is currently online.
+		std::string playerName;
+		std::string rankName;
+	};
+
+	/// Full guild roster broadcast to all members after any change (M32.3).
+	struct GuildRosterSyncMessage
+	{
+		uint64_t                   guildId  = 0;
+		std::string                guildName;
+		std::string                motd;
+		std::vector<GuildRosterEntry> members;
+	};
+
+	/// Client/Officer MOTD update request (M32.3).
+	struct GuildMotdUpdateMessage
+	{
+		uint32_t    clientId = 0;
+		std::string motd;
+	};
 }

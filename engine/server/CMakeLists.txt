@@ -11,6 +11,7 @@ if(WIN32)
     ServerProtocol.cpp
     FriendSystem.cpp
     PartySystem.cpp
+    GuildSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatEmotes.cpp
     CharacterPersistence.cpp
@@ -62,6 +63,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
     FriendSystem.cpp
     PartySystem.cpp
+    GuildSystem.cpp
     AccountValidation.cpp
     InMemoryAccountStore.cpp
     AuthRegisterHandler.cpp

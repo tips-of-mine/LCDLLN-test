@@ -146,4 +146,104 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	// -------------------------------------------------------------------------
+	// M33.2 — Password reset + email verification payloads
+	// -------------------------------------------------------------------------
+
+	std::optional<ForgotPasswordRequestPayload> ParseForgotPasswordRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		ForgotPasswordRequestPayload out;
+		if (!r.ReadString(out.email))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildForgotPasswordResponsePacket(uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		const uint8_t one = 1;
+		if (!w.WriteBytes(&one, 1))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeForgotPasswordResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<ResetPasswordRequestPayload> ParseResetPasswordRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		ResetPasswordRequestPayload out;
+		if (!r.ReadString(out.token) || !r.ReadString(out.new_client_hash))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildResetPasswordResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteBytes(&success, 1))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeResetPasswordResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::vector<uint8_t> BuildResetPasswordResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		const uint8_t zero = 0;
+		if (!w.WriteBytes(&zero, 1) || !w.WriteU32(static_cast<uint32_t>(errorCode)))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeResetPasswordResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::optional<VerifyEmailRequestPayload> ParseVerifyEmailRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (payload == nullptr || payloadSize < 8u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		VerifyEmailRequestPayload out;
+		if (!r.ReadU64(out.account_id) || !r.ReadString(out.code))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildVerifyEmailResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteBytes(&success, 1))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeVerifyEmailResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
+
+	std::vector<uint8_t> BuildVerifyEmailResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		const uint8_t zero = 0;
+		if (!w.WriteBytes(&zero, 1) || !w.WriteU32(static_cast<uint32_t>(errorCode)))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeVerifyEmailResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
 }

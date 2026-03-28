@@ -25,6 +25,7 @@ namespace engine::server
 		std::string email;
 		std::string final_hash;  // Argon2 encoded (contains salt)
 		AccountStatus status = AccountStatus::Active;
+		bool email_verified = false; ///< M33.2: set to true after email verification code confirmed.
 	};
 
 	/// In-memory account store for Master auth/register (M20.5). No persistence; no characters.
@@ -50,6 +51,15 @@ namespace engine::server
 
 		/// Returns true if an account with this normalised login already exists.
 		bool ExistsLogin(std::string_view normalisedLogin) const;
+
+		/// M33.2: Lookup account by normalised email. Returns nullopt if not found.
+		std::optional<AccountRecord> FindByEmail(std::string_view normalisedEmail) const;
+
+		/// M33.2: Marks the account email as verified. Returns false if account_id not found.
+		bool SetEmailVerified(uint64_t account_id);
+
+		/// M33.2: Replaces the stored password hash. Returns false if account_id not found.
+		bool UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash);
 
 	private:
 		uint64_t m_nextAccountId = 1;

@@ -72,6 +72,9 @@ elseif(UNIX)
     InMemoryAccountStore.cpp
     AuthRegisterHandler.cpp
     ConnectionSessionMap.cpp
+    SmtpMailer.cpp
+    PasswordResetStore.cpp
+    PasswordResetHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp

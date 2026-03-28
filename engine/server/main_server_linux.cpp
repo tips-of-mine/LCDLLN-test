@@ -1,5 +1,6 @@
 /// Minimal Linux TCP server entry point (M19.4). Uses NetServer (epoll); no game/DB logic.
 /// M20.5: Auth/Register handlers wired via AuthRegisterHandler.
+/// M33.2: PasswordResetHandler wired for password reset + email verification opcodes.
 
 #include "engine/server/MigrationRunner.h"
 #include "engine/server/db/ConnectionPool.h"
@@ -18,6 +19,9 @@
 #include "engine/server/RateLimitAndBan.h"
 #include "engine/server/SecurityAuditLog.h"
 #include "engine/server/ConnectionSessionMap.h"
+#include "engine/server/PasswordResetStore.h"
+#include "engine/server/PasswordResetHandler.h"
+#include "engine/server/SmtpMailer.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -177,6 +181,11 @@ int main(int argc, char** argv)
 	else
 		LOG_WARN(Net, "[ServerMain] SecurityAuditLog Init failed (path={})", auditPath);
 
+	// M33.2: SMTP config + password reset / email verification stores.
+	engine::server::SmtpConfig smtpConfig = engine::server::SmtpConfig::Load(config);
+	engine::server::PasswordResetStore passwordResetStore;
+	engine::server::PasswordResetHandler passwordResetHandler;
+
 	engine::server::InMemoryAccountStore accountStore;
 	engine::server::AuthRegisterHandler authHandler;
 	authHandler.SetServer(&server);
@@ -184,8 +193,19 @@ int main(int argc, char** argv)
 	authHandler.SetSessionManager(&sessionManager);
 	authHandler.SetRateLimitAndBan(&rateLimit);
 	authHandler.SetSecurityAuditLog(&auditLog);
+	authHandler.SetPasswordResetStore(&passwordResetStore);
+	authHandler.SetSmtpConfig(&smtpConfig);
 	engine::server::ConnectionSessionMap connSessionMap;
 	authHandler.SetConnectionSessionMap(&connSessionMap);
+
+	// Wire PasswordResetHandler dependencies.
+	passwordResetHandler.SetServer(&server);
+	passwordResetHandler.SetAccountStore(&accountStore);
+	passwordResetHandler.SetPasswordResetStore(&passwordResetStore);
+	passwordResetHandler.SetSmtpConfig(&smtpConfig);
+	passwordResetHandler.SetRateLimitAndBan(&rateLimit);
+	passwordResetHandler.SetSecurityAuditLog(&auditLog);
+	LOG_INFO(Auth, "[ServerMain] PasswordResetHandler configured (M33.2)");
 	shardRegisterHandler.SetServer(&server);
 	engine::server::ShardTicketHandler shardTicketHandler;
 	shardTicketHandler.SetServer(&server);
@@ -198,14 +218,19 @@ int main(int argc, char** argv)
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
-		if (opcode == engine::network::kOpcodeShardRegister || opcode == engine::network::kOpcodeShardHeartbeat)
+		using namespace engine::network;
+		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
 			shardRegisterHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == engine::network::kOpcodeRequestShardTicket)
+		else if (opcode == kOpcodeRequestShardTicket)
 			shardTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
-		else if (opcode == engine::network::kOpcodeServerListRequest)
+		else if (opcode == kOpcodeServerListRequest)
 			serverListHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeForgotPasswordRequest
+		      || opcode == kOpcodeResetPasswordRequest
+		      || opcode == kOpcodeVerifyEmailRequest)
+			passwordResetHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
@@ -247,7 +272,7 @@ int main(int argc, char** argv)
 	shardRegistry.SetShardDegradedCallback([](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard degraded event: shard_id={}", shard_id);
 	});
-	LOG_INFO(Net, "[ServerMain] Auth/Register/Heartbeat/ShardTicket/ServerList and Shard register handler set (opcodes 1, 3, 7, 10, 13, 14, 19)");
+	LOG_INFO(Net, "[ServerMain] Handlers set: Auth/Register(1,3,7) Shard(10,13,14) ServerList(19) PasswordReset(21,23,25)");
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);
 

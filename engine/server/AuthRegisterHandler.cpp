@@ -6,6 +6,8 @@
 #include "engine/server/SecurityAuditLog.h"
 #include "engine/server/ConnectionSessionMap.h"
 #include "engine/server/AccountValidation.h"
+#include "engine/server/PasswordResetStore.h"
+#include "engine/server/SmtpMailer.h"
 #include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/ErrorPacket.h"
 #include "engine/network/NetErrorCode.h"
@@ -40,6 +42,8 @@ namespace engine::server
 	void AuthRegisterHandler::SetRateLimitAndBan(RateLimitAndBan* rateLimit) { m_rateLimit = rateLimit; }
 	void AuthRegisterHandler::SetSecurityAuditLog(SecurityAuditLog* auditLog) { m_auditLog = auditLog; }
 	void AuthRegisterHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connectionSessionMap = map; }
+	void AuthRegisterHandler::SetPasswordResetStore(PasswordResetStore* rs) { m_resetStore = rs; }
+	void AuthRegisterHandler::SetSmtpConfig(const SmtpConfig* cfg) { m_smtpConfig = cfg; }
 
 	void AuthRegisterHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -159,6 +163,43 @@ namespace engine::server
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Register success (connId={}, account_id={})", connId, account_id);
+
+		// M33.2: If email is provided, generate a verification code and send it.
+		if (!email_norm.empty() && m_resetStore && m_smtpConfig && !m_smtpConfig->host.empty())
+		{
+			if (m_resetStore->CanSendEmail(account_id))
+			{
+				std::string code = m_resetStore->CreateVerificationCode(account_id);
+				if (!code.empty())
+				{
+					const std::string subject = "Email Verification Code";
+					const std::string body    =
+						"Your verification code is: " + code + "\r\n\r\n"
+						"Enter this code in the game client to verify your email address.\r\n"
+						"The code is valid for 24 hours.\r\n";
+					bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body);
+					if (sent)
+						m_resetStore->RecordEmailSent(account_id);
+					else
+						LOG_WARN(Auth, "[AuthRegisterHandler] Email verification send failed (account_id={})", account_id);
+				}
+				else
+				{
+					LOG_WARN(Auth, "[AuthRegisterHandler] CreateVerificationCode failed (account_id={})", account_id);
+				}
+			}
+			else
+			{
+				LOG_WARN(Auth, "[AuthRegisterHandler] Email verification rate limit hit (account_id={})", account_id);
+			}
+		}
+		else if (!email_norm.empty() && m_resetStore)
+		{
+			// SMTP not configured: generate code, log it (dev mode only).
+			std::string code = m_resetStore->CreateVerificationCode(account_id);
+			if (!code.empty())
+				LOG_WARN(Auth, "[AuthRegisterHandler] SMTP disabled — verification code for account_id={}: {}", account_id, code);
+		}
 	}
 
 	void AuthRegisterHandler::HandleAuth(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,

@@ -68,4 +68,45 @@ namespace engine::network
 	/// Builds REGISTER_RESPONSE packet. success: 1=ok, 0=fail. If fail, error_code in payload.
 	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
 	std::vector<uint8_t> BuildRegisterResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
+
+	// -------------------------------------------------------------------------
+	// M33.2 — Password reset + email verification payloads
+	// -------------------------------------------------------------------------
+
+	/// Client→Master FORGOT_PASSWORD_REQUEST payload: email to send reset link to.
+	struct ForgotPasswordRequestPayload
+	{
+		std::string email;
+	};
+	/// Parses FORGOT_PASSWORD_REQUEST payload. Returns nullopt if truncated/invalid.
+	std::optional<ForgotPasswordRequestPayload> ParseForgotPasswordRequestPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// Builds FORGOT_PASSWORD_RESPONSE packet. Always success=1 (avoid email enumeration).
+	std::vector<uint8_t> BuildForgotPasswordResponsePacket(uint32_t requestId, uint64_t sessionIdHeader);
+
+	/// Client→Master RESET_PASSWORD_REQUEST payload: reset token + new client_hash.
+	struct ResetPasswordRequestPayload
+	{
+		std::string token;        ///< 32-char hex reset token from email link.
+		std::string new_client_hash; ///< Argon2-encoded new password hash from client.
+	};
+	/// Parses RESET_PASSWORD_REQUEST payload. Returns nullopt if truncated/invalid.
+	std::optional<ResetPasswordRequestPayload> ParseResetPasswordRequestPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// Builds RESET_PASSWORD_RESPONSE packet. success=1 OK, 0=error.
+	std::vector<uint8_t> BuildResetPasswordResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
+	std::vector<uint8_t> BuildResetPasswordResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
+
+	/// Client→Master VERIFY_EMAIL_REQUEST payload: account_id + 6-digit code.
+	struct VerifyEmailRequestPayload
+	{
+		uint64_t account_id = 0;
+		std::string code; ///< 6-digit numeric code as string.
+	};
+	/// Parses VERIFY_EMAIL_REQUEST payload. Returns nullopt if truncated/invalid.
+	std::optional<VerifyEmailRequestPayload> ParseVerifyEmailRequestPayload(const uint8_t* payload, size_t payloadSize);
+
+	/// Builds VERIFY_EMAIL_RESPONSE packet. success=1 OK, 0=error.
+	std::vector<uint8_t> BuildVerifyEmailResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
+	std::vector<uint8_t> BuildVerifyEmailResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
 }

@@ -39,4 +39,16 @@ namespace engine::network
 	/// Client→Master server list (M22.5).
 	constexpr uint16_t kOpcodeServerListRequest = 19u;
 	constexpr uint16_t kOpcodeServerListResponse = 20u;
+
+	/// Password reset flow (M33.2).
+	/// Client→Master: request reset link for email; Master→Client: ack (always success to avoid enumeration).
+	constexpr uint16_t kOpcodeForgotPasswordRequest = 21u;
+	constexpr uint16_t kOpcodeForgotPasswordResponse = 22u;
+	/// Client→Master: submit reset token + new client_hash; Master→Client: success or error.
+	constexpr uint16_t kOpcodeResetPasswordRequest = 23u;
+	constexpr uint16_t kOpcodeResetPasswordResponse = 24u;
+	/// Email verification flow (M33.2).
+	/// Client→Master: submit account_id + 6-digit code; Master→Client: success or error.
+	constexpr uint16_t kOpcodeVerifyEmailRequest = 25u;
+	constexpr uint16_t kOpcodeVerifyEmailResponse = 26u;
 }

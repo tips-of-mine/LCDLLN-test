@@ -26,6 +26,11 @@ namespace engine::network
 		INVALID_EMAIL = 203,
 		WEAK_PASSWORD = 204,
 		INVALID_LOGIN = 205,
+		// Password reset / email verification (210–213)
+		TOKEN_INVALID = 210,
+		TOKEN_EXPIRED = 211,
+		EMAIL_ALREADY_VERIFIED = 212,
+		VERIFICATION_CODE_INVALID = 213,
 		// Server list (300)
 		SERVER_LIST_UNAVAILABLE = 300,
 		// Internal / timeout (500–501)

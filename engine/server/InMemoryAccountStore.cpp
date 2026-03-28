@@ -89,4 +89,42 @@ namespace engine::server
 	{
 		return m_by_login.find(std::string(normalisedLogin)) != m_by_login.end();
 	}
+
+	std::optional<AccountRecord> InMemoryAccountStore::FindByEmail(std::string_view normalisedEmail) const
+	{
+		auto it = m_by_email.find(std::string(normalisedEmail));
+		if (it == m_by_email.end())
+			return std::nullopt;
+		return FindByAccountId(it->second);
+	}
+
+	bool InMemoryAccountStore::SetEmailVerified(uint64_t account_id)
+	{
+		for (auto& [key, rec] : m_by_login)
+		{
+			if (rec.account_id == account_id)
+			{
+				rec.email_verified = true;
+				LOG_INFO(Auth, "[InMemoryAccountStore] SetEmailVerified OK (account_id={})", account_id);
+				return true;
+			}
+		}
+		LOG_WARN(Auth, "[InMemoryAccountStore] SetEmailVerified: account_id={} not found", account_id);
+		return false;
+	}
+
+	bool InMemoryAccountStore::UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash)
+	{
+		for (auto& [key, rec] : m_by_login)
+		{
+			if (rec.account_id == account_id)
+			{
+				rec.final_hash = std::string(new_final_hash);
+				LOG_INFO(Auth, "[InMemoryAccountStore] UpdatePasswordHash OK (account_id={})", account_id);
+				return true;
+			}
+		}
+		LOG_WARN(Auth, "[InMemoryAccountStore] UpdatePasswordHash: account_id={} not found", account_id);
+		return false;
+	}
 }

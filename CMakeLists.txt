@@ -167,7 +167,10 @@ add_library(engine_core
   engine/render/terrain/HeightmapLoader.cpp
   engine/render/terrain/TerrainMesh.cpp
   engine/render/terrain/TerrainSplatting.cpp
+  engine/render/terrain/TerrainHoleMask.cpp
+  engine/render/terrain/TerrainCliffMesh.cpp
   engine/render/terrain/TerrainRenderer.cpp
+  engine/render/terrain/TerrainEditingTools.cpp
   engine/network/ByteWriter.cpp
   engine/network/ByteReader.cpp
   engine/network/PacketBuilder.cpp

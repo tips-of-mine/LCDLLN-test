@@ -1,9 +1,13 @@
 #version 450
-// M34.2: Terrain fragment shader — texture splatting with triplanar projection.
+// M34.2/M34.3: Terrain fragment shader — texture splatting with triplanar projection
+//              + hole mask discard (M34.3).
 //
 // Reads per-layer weights from the splat map (R=grass, G=dirt, B=rock, A=snow),
 // samples albedo/normal/ORM from 2D texture arrays using triplanar projection
 // (avoids UV stretching on steep slopes), and blends by normalised splat weights.
+//
+// M34.3 addition: samples hole mask (R8_UNORM, binding 7). Fragments where the
+// mask value < 0.5 are discarded (holes / cave entrances).
 //
 // Outputs into 4 GBuffer attachments compatible with GeometryPass layout:
 //   location 0 (GBufferA)        : albedo RGBA8
@@ -30,6 +34,8 @@ layout(set = 0, binding = 3) uniform sampler2D      uSplatMap;    // RGBA8: R=gr
 layout(set = 0, binding = 4) uniform sampler2DArray uAlbedoArray; // 4 layers RGBA8
 layout(set = 0, binding = 5) uniform sampler2DArray uNormalArray; // 4 layers RGBA8 tangent-space
 layout(set = 0, binding = 6) uniform sampler2DArray uORMArray;    // 4 layers RGBA8 (R=AO,G=rough,B=metal)
+// M34.3: hole mask (R8_UNORM). 0.0 = hole (fragment discarded), 1.0 = solid.
+layout(set = 0, binding = 7) uniform sampler2D      uHoleMask;
 
 // ── Push constants ────────────────────────────────────────────────────────────
 layout(push_constant) uniform PC {
@@ -80,6 +86,13 @@ vec4 triplanarSample(sampler2DArray arr, float layer,
 // ─────────────────────────────────────────────────────────────────────────────
 void main()
 {
+    // ── M34.3: Hole mask discard ──────────────────────────────────────────────
+    // Sample the R8 hole mask. Value 0 = hole (discard), 1 = solid (keep).
+    // Uses NEAREST sampler so each texel maps exactly to one terrain quad.
+    float holeSolid = texture(uHoleMask, vUV).r;
+    if (holeSolid < 0.5)
+        discard;
+
     // ── Decode terrain macro normal ───────────────────────────────────────────
     vec3 macroN = normalize(texture(uNormalMap, vUV).rgb * 2.0 - 1.0);
 

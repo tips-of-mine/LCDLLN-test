@@ -164,6 +164,9 @@ add_library(engine_core
   engine/render/vk/StagingAllocator.cpp
   engine/world/LodConfig.cpp
   engine/world/HlodRuntime.cpp
+  engine/render/terrain/HeightmapLoader.cpp
+  engine/render/terrain/TerrainMesh.cpp
+  engine/render/terrain/TerrainRenderer.cpp
   engine/network/ByteWriter.cpp
   engine/network/ByteReader.cpp
   engine/network/PacketBuilder.cpp

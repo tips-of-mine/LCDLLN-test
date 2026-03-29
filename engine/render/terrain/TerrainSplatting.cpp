@@ -343,6 +343,11 @@ namespace engine::render::terrain
         LOG_DEBUG(Render, "[TerrainSplatting] Generated default splat map ({}x{}, all grass)",
                   kSplatW, kSplatH);
 
+        // ── Keep CPU copy for M34.4 editing tools ─────────────────────────────────
+        m_cpuData   = splatData;
+        m_cpuWidth  = kSplatW;
+        m_cpuHeight = kSplatH;
+
         // ── Upload splat map ──────────────────────────────────────────────────────
         if (!UploadSplatMap(device, physDev, splatData, kSplatW, kSplatH,
                             queue, queueFamilyIndex, m_splatMap))
@@ -447,7 +452,168 @@ namespace engine::render::terrain
         DestroyTextureArray(device, m_albedoArray);
         DestroyTextureArray(device, m_normalArray);
         DestroyTextureArray(device, m_ormArray);
+        m_cpuData.clear();
+        m_cpuWidth  = 0;
+        m_cpuHeight = 0;
         LOG_INFO(Render, "[TerrainSplatting] Destroyed");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::ReuploadSplatMap  (M34.4)
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainSplatting::ReuploadSplatMap(VkDevice device, VkPhysicalDevice physDev,
+                                             VkQueue queue, uint32_t queueFamilyIndex)
+    {
+        if (m_cpuData.empty() || m_cpuWidth == 0 || m_cpuHeight == 0)
+        {
+            LOG_WARN(Render, "[TerrainSplatting] ReuploadSplatMap: no CPU data available");
+            return false;
+        }
+        if (m_splatMap.image == VK_NULL_HANDLE)
+        {
+            LOG_WARN(Render, "[TerrainSplatting] ReuploadSplatMap: GPU image not initialised");
+            return false;
+        }
+
+        const VkDeviceSize dataBytes =
+            static_cast<VkDeviceSize>(m_cpuWidth) * m_cpuHeight * 4u;
+
+        // ── Staging buffer ────────────────────────────────────────────────────────
+        VkBuffer stagingBuf = VK_NULL_HANDLE;
+        VkDeviceMemory stagingMem = VK_NULL_HANDLE;
+        if (!CreateStagingBuffer(device, physDev, dataBytes, stagingBuf, stagingMem))
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] ReuploadSplatMap: staging buffer failed");
+            return false;
+        }
+
+        void* mapped = nullptr;
+        if (vkMapMemory(device, stagingMem, 0, dataBytes, 0, &mapped) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] ReuploadSplatMap: vkMapMemory failed");
+            vkFreeMemory(device, stagingMem, nullptr);
+            vkDestroyBuffer(device, stagingBuf, nullptr);
+            return false;
+        }
+        std::memcpy(mapped, m_cpuData.data(), static_cast<size_t>(dataBytes));
+        vkUnmapMemory(device, stagingMem);
+
+        // ── One-time command buffer ───────────────────────────────────────────────
+        VkCommandPool pool = VK_NULL_HANDLE;
+        {
+            VkCommandPoolCreateInfo poolCI{};
+            poolCI.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            poolCI.queueFamilyIndex = queueFamilyIndex;
+            poolCI.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+            if (vkCreateCommandPool(device, &poolCI, nullptr, &pool) != VK_SUCCESS ||
+                pool == VK_NULL_HANDLE)
+            {
+                LOG_ERROR(Render, "[TerrainSplatting] ReuploadSplatMap: vkCreateCommandPool failed");
+                vkFreeMemory(device, stagingMem, nullptr);
+                vkDestroyBuffer(device, stagingBuf, nullptr);
+                return false;
+            }
+        }
+
+        VkCommandBuffer cmd = VK_NULL_HANDLE;
+        {
+            VkCommandBufferAllocateInfo allocCI{};
+            allocCI.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocCI.commandPool        = pool;
+            allocCI.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocCI.commandBufferCount = 1;
+            if (vkAllocateCommandBuffers(device, &allocCI, &cmd) != VK_SUCCESS ||
+                cmd == VK_NULL_HANDLE)
+            {
+                LOG_ERROR(Render, "[TerrainSplatting] ReuploadSplatMap: vkAllocateCommandBuffers failed");
+                vkDestroyCommandPool(device, pool, nullptr);
+                vkFreeMemory(device, stagingMem, nullptr);
+                vkDestroyBuffer(device, stagingBuf, nullptr);
+                return false;
+            }
+        }
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        if (vkBeginCommandBuffer(cmd, &beginInfo) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] ReuploadSplatMap: vkBeginCommandBuffer failed");
+            vkDestroyCommandPool(device, pool, nullptr);
+            vkFreeMemory(device, stagingMem, nullptr);
+            vkDestroyBuffer(device, stagingBuf, nullptr);
+            return false;
+        }
+
+        // Barrier: SHADER_READ_ONLY_OPTIMAL → TRANSFER_DST_OPTIMAL
+        {
+            VkImageMemoryBarrier b{};
+            b.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            b.oldLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            b.newLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.image               = m_splatMap.image;
+            b.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+            b.srcAccessMask       = VK_ACCESS_SHADER_READ_BIT;
+            b.dstAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+            vkCmdPipelineBarrier(cmd,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                0, 0, nullptr, 0, nullptr, 1, &b);
+        }
+
+        // Copy staging → image
+        {
+            VkBufferImageCopy region{};
+            region.bufferOffset                    = 0;
+            region.bufferRowLength                 = 0;
+            region.bufferImageHeight               = 0;
+            region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            region.imageSubresource.mipLevel       = 0;
+            region.imageSubresource.baseArrayLayer = 0;
+            region.imageSubresource.layerCount     = 1;
+            region.imageOffset                     = { 0, 0, 0 };
+            region.imageExtent                     = { m_cpuWidth, m_cpuHeight, 1 };
+            vkCmdCopyBufferToImage(cmd, stagingBuf, m_splatMap.image,
+                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        }
+
+        // Barrier: TRANSFER_DST_OPTIMAL → SHADER_READ_ONLY_OPTIMAL
+        {
+            VkImageMemoryBarrier b{};
+            b.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            b.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            b.newLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.image               = m_splatMap.image;
+            b.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+            b.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+            b.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT;
+            vkCmdPipelineBarrier(cmd,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                0, 0, nullptr, 0, nullptr, 1, &b);
+        }
+
+        vkEndCommandBuffer(cmd);
+
+        VkSubmitInfo si{};
+        si.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        si.commandBufferCount = 1;
+        si.pCommandBuffers    = &cmd;
+        vkQueueSubmit(queue, 1, &si, VK_NULL_HANDLE);
+        vkQueueWaitIdle(queue);
+
+        vkDestroyCommandPool(device, pool, nullptr);
+        vkFreeMemory(device, stagingMem, nullptr);
+        vkDestroyBuffer(device, stagingBuf, nullptr);
+
+        LOG_DEBUG(Render, "[TerrainSplatting] ReuploadSplatMap OK ({}x{})",
+                  m_cpuWidth, m_cpuHeight);
+        return true;
     }
 
     // ─────────────────────────────────────────────────────────────────────────────

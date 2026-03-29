@@ -131,6 +131,28 @@ namespace engine::render::terrain
         /// IsHole(qx, qz) returns true when quad (qx, qz) is a hole (unwalkable).
         const HoleMaskData& GetHoleMaskData() const { return m_holeMaskData; }
 
+        // ── M34.4: terrain editing accessors ─────────────────────────────────────
+
+        /// Returns a mutable reference to the CPU heightmap.
+        /// Used by TerrainEditingTools to apply brush operations.
+        HeightmapData& GetMutableHeightmapData() { return m_heightmapData; }
+
+        /// Returns the GPU heightmap resources.
+        /// Pass HeightmapGpu::image to TerrainEditingTools::FlushHeightmap().
+        const HeightmapGpu& GetHeightmapGpu() const { return m_heightmapGpu; }
+
+        /// Returns the TerrainSplatting instance for editing and re-upload.
+        TerrainSplatting& GetSplatting() { return m_splatting; }
+
+        /// Returns the world X origin of the terrain (config: terrain.origin_x).
+        float GetTerrainOriginX()   const { return m_terrainOriginX;   }
+        /// Returns the world Z origin of the terrain (config: terrain.origin_z).
+        float GetTerrainOriginZ()   const { return m_terrainOriginZ;   }
+        /// Returns the total world extent of the terrain in metres (config: terrain.world_size).
+        float GetTerrainWorldSize() const { return m_terrainWorldSize; }
+        /// Returns the maximum height in world units (config: terrain.height_scale).
+        float GetHeightScale()      const { return m_heightScale;      }
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
         // All stages, 16 bytes total.

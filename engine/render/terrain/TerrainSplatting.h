@@ -75,6 +75,9 @@ namespace engine::render::terrain
         /// Returns true if Init succeeded and Destroy has not been called.
         bool IsValid() const { return m_splatMap.image != VK_NULL_HANDLE; }
 
+        /// Returns true when a CPU copy of the splat map is available (after Init).
+        bool HasCpuData() const { return !m_cpuData.empty(); }
+
         const SplatMapGpu&    GetSplatMap()    const { return m_splatMap;    }
         const TextureArrayGpu& GetAlbedoArray() const { return m_albedoArray; }
         const TextureArrayGpu& GetNormalArray() const { return m_normalArray; }
@@ -83,6 +86,30 @@ namespace engine::render::terrain
         /// Returns the tiling scale (metres per tile) for a given layer index [0, kSplatLayerCount).
         float GetLayerTiling(uint32_t layer) const;
 
+        // ── CPU data accessors (M34.4 editing tools) ──────────────────────────────
+
+        /// Returns a mutable reference to the CPU RGBA8 splat map buffer.
+        /// The buffer is row-major, width × height × 4 bytes (R=grass,G=dirt,B=rock,A=snow).
+        /// Call ReuploadSplatMap() to push changes to the GPU.
+        std::vector<uint8_t>& GetMutableSplatMapCpu() { return m_cpuData; }
+
+        /// Returns a read-only reference to the CPU splat map buffer.
+        const std::vector<uint8_t>& GetSplatMapCpu() const { return m_cpuData; }
+
+        /// Returns the width of the CPU splat map in pixels.
+        uint32_t GetSplatMapCpuWidth()  const { return m_cpuWidth;  }
+
+        /// Returns the height of the CPU splat map in pixels.
+        uint32_t GetSplatMapCpuHeight() const { return m_cpuHeight; }
+
+        /// Re-uploads the full CPU splat map to the existing GPU image via staging.
+        ///
+        /// The GPU splat map image must be in SHADER_READ_ONLY_OPTIMAL layout before the call.
+        /// It is returned to that layout on success.
+        /// \return true on success.
+        bool ReuploadSplatMap(VkDevice device, VkPhysicalDevice physDev,
+                              VkQueue queue, uint32_t queueFamilyIndex);
+
     private:
         SplatMapGpu    m_splatMap;
         TextureArrayGpu m_albedoArray;
@@ -90,6 +117,11 @@ namespace engine::render::terrain
         TextureArrayGpu m_ormArray;
 
         float m_layerTiling[kSplatLayerCount] = { 8.0f, 8.0f, 16.0f, 12.0f };
+
+        /// CPU copy of the splat map retained after Init for editing (M34.4).
+        std::vector<uint8_t> m_cpuData;
+        uint32_t             m_cpuWidth  = 0;
+        uint32_t             m_cpuHeight = 0;
 
         // ── Internal upload helpers ───────────────────────────────────────────────
 

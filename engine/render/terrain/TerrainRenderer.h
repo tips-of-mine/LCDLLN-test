@@ -2,6 +2,7 @@
 
 #include "engine/render/terrain/HeightmapLoader.h"
 #include "engine/render/terrain/TerrainMesh.h"
+#include "engine/render/terrain/TerrainSplatting.h"
 #include "engine/render/FrameGraph.h"
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
@@ -58,19 +59,26 @@ namespace engine::render::terrain
         /// Initialises the terrain renderer.
         ///
         /// Config keys read:
-        ///   terrain.world_size    (float, default 1024.0) – total terrain world extent (metres)
-        ///   terrain.height_scale  (float, default 200.0)  – max height in world units
-        ///   terrain.origin_x      (float, default -512.0) – world X of terrain corner
-        ///   terrain.origin_z      (float, default -512.0) – world Z of terrain corner
+        ///   terrain.world_size             (float, default 1024.0) – total terrain world extent (metres)
+        ///   terrain.height_scale           (float, default 200.0)  – max height in world units
+        ///   terrain.origin_x               (float, default -512.0) – world X of terrain corner
+        ///   terrain.origin_z               (float, default -512.0) – world Z of terrain corner
+        ///   terrain.splat.tiling_grass     (float, default 8.0)    – metres per tile, grass layer
+        ///   terrain.splat.tiling_dirt      (float, default 8.0)    – metres per tile, dirt layer
+        ///   terrain.splat.tiling_rock      (float, default 16.0)   – metres per tile, rock layer
+        ///   terrain.splat.tiling_snow      (float, default 12.0)   – metres per tile, snow layer
         ///
         /// \param heightmapRelPath  Content-relative path to the .r16h file
         ///                          (e.g. "terrain/heightmap.r16h"). If the file is absent,
         ///                          Init returns false gracefully (no crash).
+        /// \param splatmapRelPath   Content-relative path to the splat map (reserved for future
+        ///                          use; a default map is generated if empty or missing).
         /// \param fmtA/B/C/Vel/Depth  GBuffer attachment formats (must match GeometryPass).
         /// \param queue              Graphics queue used for one-time GPU uploads.
         bool Init(VkDevice device, VkPhysicalDevice physDev,
                   const engine::core::Config& config,
                   const std::string& heightmapRelPath,
+                  const std::string& splatmapRelPath,
                   VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                   VkFormat fmtVelocity, VkFormat fmtDepth,
                   VkQueue queue, uint32_t queueFamilyIndex,
@@ -125,13 +133,14 @@ namespace engine::render::terrain
         };
 
         // ── Per-frame UBO (set=0, binding=2) ─────────────────────────────────────
-        // std140 layout using vec4 packing (no scalar arrays), 176 bytes total.
+        // std140 layout using vec4 packing (no scalar arrays), 192 bytes total.
         //   mat4  viewProj        offset   0  (64 bytes)
         //   mat4  prevViewProj    offset  64  (64 bytes)
         //   vec4  cameraPos       offset 128  (xyz = position, w = unused)
         //   vec4  terrainParams   offset 144  (x=terrainSize, y=heightScale, z=vertStepWorld, w=unused)
         //   vec4  terrainOrigin   offset 160  (x=originX, y=originZ, z=unused, w=unused)
-        //                         total  176
+        //   vec4  layerTiling     offset 176  (x=grass, y=dirt, z=rock, w=snow tiling metres/tile)
+        //                         total  192
         struct FrameUbo
         {
             float viewProj[16];      // offset   0
@@ -139,7 +148,8 @@ namespace engine::render::terrain
             float cameraPos[4];      // offset 128  (xyz + w=0)
             float terrainParams[4];  // offset 144  (x=size, y=heightScale, z=vertStepWorld, w=0)
             float terrainOrigin[4];  // offset 160  (x=originX, y=originZ, z=0, w=0)
-        };                           //         176
+            float layerTiling[4];    // offset 176  (x=grass, y=dirt, z=rock, w=snow tiling)
+        };                           //         192
 
         // ── Framebuffer cache ─────────────────────────────────────────────────────
         struct FramebufferKey
@@ -171,6 +181,7 @@ namespace engine::render::terrain
         NormalMapGpu          m_normalMapGpu;
         TerrainMeshGpu        m_meshGpu;
         HeightmapData         m_heightmapData; ///< CPU copy for patch bound calculation
+        TerrainSplatting      m_splatting;     ///< Splat map + texture arrays (M34.2)
 
         std::vector<TerrainPatchInfo> m_patches;
         std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_fbCache;

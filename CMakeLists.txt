@@ -166,6 +166,7 @@ add_library(engine_core
   engine/world/HlodRuntime.cpp
   engine/render/terrain/HeightmapLoader.cpp
   engine/render/terrain/TerrainMesh.cpp
+  engine/render/terrain/TerrainSplatting.cpp
   engine/render/terrain/TerrainRenderer.cpp
   engine/network/ByteWriter.cpp
   engine/network/ByteReader.cpp

@@ -1,13 +1,17 @@
 #version 450
-// M34.1: Terrain vertex shader — heightmap displacement + geomorphing.
+// M34.1/M34.2: Terrain vertex shader — heightmap displacement + geomorphing.
 //
 // Vertex input:
 //   location 0: vec2 inPatchLocal  — local XZ position in [0, kPatchQuads] (raw grid index)
 //
 // Descriptor set 0:
-//   binding 0: sampler2D uHeightmap  (R16_UNORM)
-//   binding 1: sampler2D uNormalMap  (RGBA8_UNORM, unused in vert)
+//   binding 0: sampler2D uHeightmap      (R16_UNORM)
+//   binding 1: sampler2D uNormalMap      (RGBA8_UNORM, unused in vert)
 //   binding 2: TerrainFrameUbo
+//   binding 3: sampler2D uSplatMap       (RGBA8_UNORM, unused in vert)
+//   binding 4: sampler2DArray uAlbedoArray (RGBA8_UNORM, unused in vert)
+//   binding 5: sampler2DArray uNormalArray (RGBA8_UNORM, unused in vert)
+//   binding 6: sampler2DArray uORMArray    (RGBA8_UNORM, unused in vert)
 //
 // Push constants (16 bytes):
 //   vec2  patchOriginXZ  — world XZ of patch corner
@@ -26,6 +30,7 @@ layout(set = 0, binding = 2) uniform TerrainFrameUbo {
     vec4  cameraPos;      // world camera position (xyz, w=unused)
     vec4  terrainParams;  // x=terrainSize, y=heightScale, z=vertStepWorld, w=unused
     vec4  terrainOrigin;  // x=originX, y=originZ, z=unused, w=unused
+    vec4  layerTiling;    // x=grass, y=dirt, z=rock, w=snow tiling (metres per tile)
 } ubo;
 
 layout(push_constant) uniform PC {

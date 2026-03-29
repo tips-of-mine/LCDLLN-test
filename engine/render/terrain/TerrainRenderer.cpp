@@ -62,12 +62,14 @@ namespace engine::render::terrain
     bool TerrainRenderer::Init(VkDevice device, VkPhysicalDevice physDev,
                                const engine::core::Config& config,
                                const std::string& heightmapRelPath,
+                               const std::string& splatmapRelPath,
                                VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                                VkFormat fmtVelocity, VkFormat fmtDepth,
                                VkQueue queue, uint32_t queueFamilyIndex,
                                ShaderLoaderFn loadSpirv)
     {
-        LOG_INFO(Render, "[TerrainRenderer] Init begin (heightmap='{}')", heightmapRelPath);
+        LOG_INFO(Render, "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}')",
+                 heightmapRelPath, splatmapRelPath);
 
         if (device == VK_NULL_HANDLE || physDev == VK_NULL_HANDLE || !loadSpirv)
         {
@@ -132,6 +134,15 @@ namespace engine::render::terrain
         if (!TerrainMesh::Generate(device, physDev, m_meshGpu))
         {
             LOG_ERROR(Render, "[TerrainRenderer] Failed to generate terrain mesh");
+            Destroy(device);
+            return false;
+        }
+
+        // ── Initialise texture splatting (M34.2) ─────────────────────────────────
+        if (!m_splatting.Init(device, physDev, config, splatmapRelPath, queue, queueFamilyIndex))
+        {
+            LOG_WARN(Render,
+                "[TerrainRenderer] TerrainSplatting Init failed — terrain disabled");
             Destroy(device);
             return false;
         }
@@ -252,7 +263,7 @@ namespace engine::render::terrain
 
         // ── Descriptor set layout ─────────────────────────────────────────────────
         {
-            VkDescriptorSetLayoutBinding bindings[3]{};
+            VkDescriptorSetLayoutBinding bindings[7]{};
             // binding 0: heightmap sampler (vertex + fragment)
             bindings[0].binding            = 0;
             bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -268,10 +279,30 @@ namespace engine::render::terrain
             bindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             bindings[2].descriptorCount    = 1;
             bindings[2].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+            // binding 3: splat map sampler (fragment) — R=grass,G=dirt,B=rock,A=snow
+            bindings[3].binding            = 3;
+            bindings[3].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[3].descriptorCount    = 1;
+            bindings[3].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+            // binding 4: albedo texture array (fragment) — 4 layers
+            bindings[4].binding            = 4;
+            bindings[4].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[4].descriptorCount    = 1;
+            bindings[4].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+            // binding 5: normal texture array (fragment) — 4 layers
+            bindings[5].binding            = 5;
+            bindings[5].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[5].descriptorCount    = 1;
+            bindings[5].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+            // binding 6: ORM texture array (fragment) — 4 layers (R=AO, G=Roughness, B=Metallic)
+            bindings[6].binding            = 6;
+            bindings[6].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[6].descriptorCount    = 1;
+            bindings[6].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
             VkDescriptorSetLayoutCreateInfo dslCI{};
             dslCI.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            dslCI.bindingCount = 3;
+            dslCI.bindingCount = 7;
             dslCI.pBindings    = bindings;
 
             if (vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &m_descSetLayout) != VK_SUCCESS)
@@ -453,7 +484,7 @@ namespace engine::render::terrain
         {
             VkDescriptorPoolSize poolSizes[2]{};
             poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            poolSizes[0].descriptorCount = 2; // heightmap + normalmap
+            poolSizes[0].descriptorCount = 6; // heightmap + normalmap + splatmap + albedoArr + normalArr + ormArr
             poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             poolSizes[1].descriptorCount = 1;
 
@@ -549,7 +580,27 @@ namespace engine::render::terrain
             uboInfo.offset = 0;
             uboInfo.range  = sizeof(FrameUbo);
 
-            VkWriteDescriptorSet writes[3]{};
+            VkDescriptorImageInfo splatmapInfo{};
+            splatmapInfo.sampler     = m_splatting.GetSplatMap().sampler;
+            splatmapInfo.imageView   = m_splatting.GetSplatMap().view;
+            splatmapInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkDescriptorImageInfo albedoArrayInfo{};
+            albedoArrayInfo.sampler     = m_splatting.GetAlbedoArray().sampler;
+            albedoArrayInfo.imageView   = m_splatting.GetAlbedoArray().view;
+            albedoArrayInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkDescriptorImageInfo normalArrayInfo{};
+            normalArrayInfo.sampler     = m_splatting.GetNormalArray().sampler;
+            normalArrayInfo.imageView   = m_splatting.GetNormalArray().view;
+            normalArrayInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkDescriptorImageInfo ormArrayInfo{};
+            ormArrayInfo.sampler     = m_splatting.GetORMArray().sampler;
+            ormArrayInfo.imageView   = m_splatting.GetORMArray().view;
+            ormArrayInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkWriteDescriptorSet writes[7]{};
             writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writes[0].dstSet          = m_descSet;
             writes[0].dstBinding      = 0;
@@ -571,7 +622,35 @@ namespace engine::render::terrain
             writes[2].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             writes[2].pBufferInfo     = &uboInfo;
 
-            vkUpdateDescriptorSets(device, 3, writes, 0, nullptr);
+            writes[3].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[3].dstSet          = m_descSet;
+            writes[3].dstBinding      = 3;
+            writes[3].descriptorCount = 1;
+            writes[3].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[3].pImageInfo      = &splatmapInfo;
+
+            writes[4].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[4].dstSet          = m_descSet;
+            writes[4].dstBinding      = 4;
+            writes[4].descriptorCount = 1;
+            writes[4].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[4].pImageInfo      = &albedoArrayInfo;
+
+            writes[5].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[5].dstSet          = m_descSet;
+            writes[5].dstBinding      = 5;
+            writes[5].descriptorCount = 1;
+            writes[5].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[5].pImageInfo      = &normalArrayInfo;
+
+            writes[6].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[6].dstSet          = m_descSet;
+            writes[6].dstBinding      = 6;
+            writes[6].descriptorCount = 1;
+            writes[6].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[6].pImageInfo      = &ormArrayInfo;
+
+            vkUpdateDescriptorSets(device, 7, writes, 0, nullptr);
         }
 
         LOG_INFO(Render, "[TerrainRenderer] Init OK ({}×{} patches, worldSize={} heightScale={})",
@@ -599,6 +678,7 @@ namespace engine::render::terrain
         HeightmapLoader::DestroyHeightmap(device, m_heightmapGpu);
         HeightmapLoader::DestroyNormalMap(device, m_normalMapGpu);
         TerrainMesh::Destroy(device, m_meshGpu);
+        m_splatting.Destroy(device);
 
         m_patches.clear();
         m_heightmapData.heights.clear();
@@ -654,6 +734,10 @@ namespace engine::render::terrain
             ubo.terrainOrigin[1] = m_terrainOriginZ;
             ubo.terrainOrigin[2] = 0.0f;
             ubo.terrainOrigin[3] = 0.0f;
+            ubo.layerTiling[0]   = m_splatting.GetLayerTiling(0); // grass
+            ubo.layerTiling[1]   = m_splatting.GetLayerTiling(1); // dirt
+            ubo.layerTiling[2]   = m_splatting.GetLayerTiling(2); // rock
+            ubo.layerTiling[3]   = m_splatting.GetLayerTiling(3); // snow
 
             void* mapped = nullptr;
             if (vkMapMemory(device, m_uboMemory, 0, sizeof(FrameUbo), 0, &mapped) == VK_SUCCESS)

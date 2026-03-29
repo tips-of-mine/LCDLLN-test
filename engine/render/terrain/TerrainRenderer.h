@@ -3,6 +3,8 @@
 #include "engine/render/terrain/HeightmapLoader.h"
 #include "engine/render/terrain/TerrainMesh.h"
 #include "engine/render/terrain/TerrainSplatting.h"
+#include "engine/render/terrain/TerrainHoleMask.h"
+#include "engine/render/terrain/TerrainCliffMesh.h"
 #include "engine/render/FrameGraph.h"
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
@@ -68,17 +70,25 @@ namespace engine::render::terrain
         ///   terrain.splat.tiling_rock      (float, default 16.0)   – metres per tile, rock layer
         ///   terrain.splat.tiling_snow      (float, default 12.0)   – metres per tile, snow layer
         ///
-        /// \param heightmapRelPath  Content-relative path to the .r16h file
-        ///                          (e.g. "terrain/heightmap.r16h"). If the file is absent,
-        ///                          Init returns false gracefully (no crash).
-        /// \param splatmapRelPath   Content-relative path to the splat map (reserved for future
-        ///                          use; a default map is generated if empty or missing).
-        /// \param fmtA/B/C/Vel/Depth  GBuffer attachment formats (must match GeometryPass).
+        /// \param heightmapRelPath   Content-relative path to the .r16h file
+        ///                           (e.g. "terrain/heightmap.r16h"). If the file is absent,
+        ///                           Init returns false gracefully (no crash).
+        /// \param splatmapRelPath    Content-relative path to the splat map (reserved for future
+        ///                           use; a default map is generated if empty or missing).
+        /// \param holeMaskRelPath    Content-relative path to the .hmask file
+        ///                           (e.g. "terrain/holemask.hmask"). If absent, a fully-solid
+        ///                           fallback is used (no holes, no change to visible terrain).
+        /// \param cliffMeshRelPaths  Content-relative paths to .cliff mesh files
+        ///                           (e.g. {"terrain/cliff_a.cliff", "terrain/cliff_b.cliff"}).
+        ///                           May be empty. Missing files are skipped with a warning.
+        /// \param fmtA/B/C/Vel/Depth GBuffer attachment formats (must match GeometryPass).
         /// \param queue              Graphics queue used for one-time GPU uploads.
         bool Init(VkDevice device, VkPhysicalDevice physDev,
                   const engine::core::Config& config,
                   const std::string& heightmapRelPath,
                   const std::string& splatmapRelPath,
+                  const std::string& holeMaskRelPath,
+                  const std::vector<std::string>& cliffMeshRelPaths,
                   VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                   VkFormat fmtVelocity, VkFormat fmtDepth,
                   VkQueue queue, uint32_t queueFamilyIndex,
@@ -117,6 +127,10 @@ namespace engine::render::terrain
         /// Returns true if Init succeeded and Destroy has not been called.
         bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
+        /// Returns the CPU hole mask data for navmesh / collision queries (M34.3).
+        /// IsHole(qx, qz) returns true when quad (qx, qz) is a hole (unwalkable).
+        const HoleMaskData& GetHoleMaskData() const { return m_holeMaskData; }
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
         // All stages, 16 bytes total.
@@ -151,6 +165,17 @@ namespace engine::render::terrain
             float layerTiling[4];    // offset 176  (x=grass, y=dirt, z=rock, w=snow tiling)
         };                           //         192
 
+        // ── Cliff per-frame UBO (cliff pipeline, set=0, binding=0) ───────────
+        // Minimal UBO for cliff pipeline: only view-proj matrices.
+        //   mat4  viewProj      offset  0  (64 bytes)
+        //   mat4  prevViewProj  offset 64  (64 bytes)
+        //                       total 128
+        struct CliffFrameUbo
+        {
+            float viewProj[16];     // offset  0
+            float prevViewProj[16]; // offset 64
+        };                          //       128
+
         // ── Framebuffer cache ─────────────────────────────────────────────────────
         struct FramebufferKey
         {
@@ -165,7 +190,7 @@ namespace engine::render::terrain
             size_t operator()(const FramebufferKey& k) const;
         };
 
-        // ── Vulkan objects ────────────────────────────────────────────────────────
+        // ── Vulkan objects — terrain pipeline ─────────────────────────────────────
         VkRenderPass          m_renderPass    = VK_NULL_HANDLE;
         VkDescriptorSetLayout m_descSetLayout = VK_NULL_HANDLE;
         VkDescriptorPool      m_descPool      = VK_NULL_HANDLE;
@@ -182,6 +207,28 @@ namespace engine::render::terrain
         TerrainMeshGpu        m_meshGpu;
         HeightmapData         m_heightmapData; ///< CPU copy for patch bound calculation
         TerrainSplatting      m_splatting;     ///< Splat map + texture arrays (M34.2)
+
+        // ── M34.3: Hole mask ──────────────────────────────────────────────────────
+        HoleMaskData          m_holeMaskData; ///< CPU hole mask for navmesh queries
+        HoleMaskGpu           m_holeMaskGpu;  ///< GPU R8_UNORM texture (binding 7)
+
+        // ── M34.3: Cliff pipeline ─────────────────────────────────────────────────
+        VkDescriptorSetLayout m_cliffDescSetLayout = VK_NULL_HANDLE;
+        VkDescriptorPool      m_cliffDescPool      = VK_NULL_HANDLE;
+        VkDescriptorSet       m_cliffDescSet       = VK_NULL_HANDLE;
+        VkPipelineLayout      m_cliffPipelineLayout = VK_NULL_HANDLE;
+        VkPipeline            m_cliffPipeline      = VK_NULL_HANDLE;
+        VkBuffer              m_cliffUboBuffer     = VK_NULL_HANDLE;
+        VkDeviceMemory        m_cliffUboMemory     = VK_NULL_HANDLE;
+
+        /// Cliff albedo placeholder texture (1×1 solid rock colour).
+        VkImage               m_cliffAlbedoImage   = VK_NULL_HANDLE;
+        VkImageView           m_cliffAlbedoView    = VK_NULL_HANDLE;
+        VkDeviceMemory        m_cliffAlbedoMemory  = VK_NULL_HANDLE;
+        VkSampler             m_cliffAlbedoSampler = VK_NULL_HANDLE;
+
+        /// Loaded and uploaded cliff meshes (one entry per .cliff file).
+        std::vector<CliffMeshGpu> m_cliffMeshes;
 
         std::vector<TerrainPatchInfo> m_patches;
         std::unordered_map<FramebufferKey, VkFramebuffer, FramebufferKeyHash> m_fbCache;

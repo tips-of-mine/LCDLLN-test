@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <functional>
 
 namespace engine::render::terrain
 {
@@ -63,13 +64,17 @@ namespace engine::render::terrain
                                const engine::core::Config& config,
                                const std::string& heightmapRelPath,
                                const std::string& splatmapRelPath,
+                               const std::string& holeMaskRelPath,
+                               const std::vector<std::string>& cliffMeshRelPaths,
                                VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                                VkFormat fmtVelocity, VkFormat fmtDepth,
                                VkQueue queue, uint32_t queueFamilyIndex,
                                ShaderLoaderFn loadSpirv)
     {
-        LOG_INFO(Render, "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}')",
-                 heightmapRelPath, splatmapRelPath);
+        LOG_INFO(Render,
+                 "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}' holemask='{}' cliffs={})",
+                 heightmapRelPath, splatmapRelPath, holeMaskRelPath,
+                 static_cast<uint32_t>(cliffMeshRelPaths.size()));
 
         if (device == VK_NULL_HANDLE || physDev == VK_NULL_HANDLE || !loadSpirv)
         {
@@ -145,6 +150,32 @@ namespace engine::render::terrain
                 "[TerrainRenderer] TerrainSplatting Init failed — terrain disabled");
             Destroy(device);
             return false;
+        }
+
+        // ── M34.3: Load hole mask (graceful fallback if absent) ───────────────────
+        {
+            const std::string contentPath = config.GetString("paths.content", "game/data");
+            const std::string fullPath    = contentPath + "/" + holeMaskRelPath;
+
+            if (holeMaskRelPath.empty() ||
+                !TerrainHoleMask::LoadFromFile(fullPath, m_holeMaskData))
+            {
+                LOG_WARN(Render,
+                    "[TerrainRenderer] Hole mask '{}' not found — using fully-solid fallback",
+                    holeMaskRelPath);
+                // Fallback: one entry per terrain quad, all solid (no holes).
+                const uint32_t quadW = (m_heightmapData.width  > 0u) ? m_heightmapData.width  - 1u : 0u;
+                const uint32_t quadH = (m_heightmapData.height > 0u) ? m_heightmapData.height - 1u : 0u;
+                TerrainHoleMask::GenerateSolid(quadW, quadH, m_holeMaskData);
+            }
+
+            if (!TerrainHoleMask::UploadToGpu(device, physDev, m_holeMaskData,
+                                               queue, queueFamilyIndex, m_holeMaskGpu))
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] Hole mask GPU upload failed");
+                Destroy(device);
+                return false;
+            }
         }
 
         // ── Build patch list ──────────────────────────────────────────────────────
@@ -263,7 +294,7 @@ namespace engine::render::terrain
 
         // ── Descriptor set layout ─────────────────────────────────────────────────
         {
-            VkDescriptorSetLayoutBinding bindings[7]{};
+            VkDescriptorSetLayoutBinding bindings[8]{};
             // binding 0: heightmap sampler (vertex + fragment)
             bindings[0].binding            = 0;
             bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -299,10 +330,15 @@ namespace engine::render::terrain
             bindings[6].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             bindings[6].descriptorCount    = 1;
             bindings[6].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+            // binding 7: hole mask (fragment) — R8_UNORM, 0=hole, 1=solid (M34.3)
+            bindings[7].binding            = 7;
+            bindings[7].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[7].descriptorCount    = 1;
+            bindings[7].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
             VkDescriptorSetLayoutCreateInfo dslCI{};
             dslCI.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            dslCI.bindingCount = 7;
+            dslCI.bindingCount = 8;
             dslCI.pBindings    = bindings;
 
             if (vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &m_descSetLayout) != VK_SUCCESS)
@@ -484,7 +520,8 @@ namespace engine::render::terrain
         {
             VkDescriptorPoolSize poolSizes[2]{};
             poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            poolSizes[0].descriptorCount = 6; // heightmap + normalmap + splatmap + albedoArr + normalArr + ormArr
+            // heightmap + normalmap + splatmap + albedoArr + normalArr + ormArr + holeMask (M34.3)
+            poolSizes[0].descriptorCount = 7;
             poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             poolSizes[1].descriptorCount = 1;
 
@@ -600,7 +637,13 @@ namespace engine::render::terrain
             ormArrayInfo.imageView   = m_splatting.GetORMArray().view;
             ormArrayInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-            VkWriteDescriptorSet writes[7]{};
+            // M34.3: hole mask descriptor info (binding 7)
+            VkDescriptorImageInfo holeMaskInfo{};
+            holeMaskInfo.sampler     = m_holeMaskGpu.sampler;
+            holeMaskInfo.imageView   = m_holeMaskGpu.view;
+            holeMaskInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkWriteDescriptorSet writes[8]{};
             writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writes[0].dstSet          = m_descSet;
             writes[0].dstBinding      = 0;
@@ -650,7 +693,474 @@ namespace engine::render::terrain
             writes[6].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             writes[6].pImageInfo      = &ormArrayInfo;
 
-            vkUpdateDescriptorSets(device, 7, writes, 0, nullptr);
+            // binding 7: hole mask (M34.3)
+            writes[7].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[7].dstSet          = m_descSet;
+            writes[7].dstBinding      = 7;
+            writes[7].descriptorCount = 1;
+            writes[7].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[7].pImageInfo      = &holeMaskInfo;
+
+            vkUpdateDescriptorSets(device, 8, writes, 0, nullptr);
+        }
+
+        // ── M34.3: Load cliff meshes ──────────────────────────────────────────────
+        {
+            const std::string contentPath = config.GetString("paths.content", "game/data");
+            for (const std::string& relPath : cliffMeshRelPaths)
+            {
+                const std::string fullPath = contentPath + "/" + relPath;
+                CliffMeshData data;
+                if (!TerrainCliffMesh::LoadFromFile(fullPath, data))
+                {
+                    LOG_WARN(Render, "[TerrainRenderer] Cliff mesh '{}' skipped (load failed)", relPath);
+                    continue;
+                }
+
+                CliffMeshGpu gpu;
+                if (!TerrainCliffMesh::UploadToGpu(device, physDev, data, gpu))
+                {
+                    LOG_WARN(Render, "[TerrainRenderer] Cliff mesh '{}' skipped (GPU upload failed)", relPath);
+                    continue;
+                }
+
+                m_cliffMeshes.push_back(gpu);
+                LOG_DEBUG(Render, "[TerrainRenderer] Cliff mesh '{}' loaded (slot {})",
+                          relPath, static_cast<uint32_t>(m_cliffMeshes.size()) - 1u);
+            }
+            LOG_INFO(Render, "[TerrainRenderer] Cliff meshes loaded: {}/{} OK",
+                     static_cast<uint32_t>(m_cliffMeshes.size()),
+                     static_cast<uint32_t>(cliffMeshRelPaths.size()));
+        }
+
+        // ── M34.3: Create cliff pipeline ─────────────────────────────────────────
+        // Only create the cliff pipeline when there are cliff meshes to render.
+        if (!m_cliffMeshes.empty())
+        {
+            // Descriptor set layout for cliff pipeline:
+            //   binding 0: CliffFrameUbo (vert + frag)
+            //   binding 1: cliff albedo sampler2D (frag)
+            VkDescriptorSetLayoutBinding cliffBindings[2]{};
+            cliffBindings[0].binding            = 0;
+            cliffBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            cliffBindings[0].descriptorCount    = 1;
+            cliffBindings[0].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+            cliffBindings[1].binding            = 1;
+            cliffBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            cliffBindings[1].descriptorCount    = 1;
+            cliffBindings[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+            VkDescriptorSetLayoutCreateInfo cliffDslCI{};
+            cliffDslCI.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            cliffDslCI.bindingCount = 2;
+            cliffDslCI.pBindings    = cliffBindings;
+
+            if (vkCreateDescriptorSetLayout(device, &cliffDslCI, nullptr, &m_cliffDescSetLayout) != VK_SUCCESS)
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] vkCreateDescriptorSetLayout (cliff) failed");
+                Destroy(device);
+                return false;
+            }
+
+            // Pipeline layout (no push constants for cliff pipeline)
+            VkPipelineLayoutCreateInfo cliffPlCI{};
+            cliffPlCI.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            cliffPlCI.setLayoutCount = 1;
+            cliffPlCI.pSetLayouts    = &m_cliffDescSetLayout;
+
+            if (vkCreatePipelineLayout(device, &cliffPlCI, nullptr, &m_cliffPipelineLayout) != VK_SUCCESS)
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] vkCreatePipelineLayout (cliff) failed");
+                Destroy(device);
+                return false;
+            }
+
+            // Descriptor pool for cliff pipeline
+            VkDescriptorPoolSize cliffPoolSizes[2]{};
+            cliffPoolSizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            cliffPoolSizes[0].descriptorCount = 1;
+            cliffPoolSizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            cliffPoolSizes[1].descriptorCount = 1;
+
+            VkDescriptorPoolCreateInfo cliffDpCI{};
+            cliffDpCI.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            cliffDpCI.maxSets       = 1;
+            cliffDpCI.poolSizeCount = 2;
+            cliffDpCI.pPoolSizes    = cliffPoolSizes;
+
+            if (vkCreateDescriptorPool(device, &cliffDpCI, nullptr, &m_cliffDescPool) != VK_SUCCESS)
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] vkCreateDescriptorPool (cliff) failed");
+                Destroy(device);
+                return false;
+            }
+
+            VkDescriptorSetAllocateInfo cliffDsAI{};
+            cliffDsAI.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            cliffDsAI.descriptorPool     = m_cliffDescPool;
+            cliffDsAI.descriptorSetCount = 1;
+            cliffDsAI.pSetLayouts        = &m_cliffDescSetLayout;
+
+            if (vkAllocateDescriptorSets(device, &cliffDsAI, &m_cliffDescSet) != VK_SUCCESS)
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] vkAllocateDescriptorSets (cliff) failed");
+                Destroy(device);
+                return false;
+            }
+
+            // Cliff UBO (CliffFrameUbo: 128 bytes)
+            {
+                const VkDeviceSize uboSize = sizeof(CliffFrameUbo);
+                VkBufferCreateInfo bi{};
+                bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+                bi.size        = uboSize;
+                bi.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+                bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+                if (vkCreateBuffer(device, &bi, nullptr, &m_cliffUboBuffer) != VK_SUCCESS)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] vkCreateBuffer (cliff UBO) failed");
+                    Destroy(device);
+                    return false;
+                }
+
+                VkMemoryRequirements req{};
+                vkGetBufferMemoryRequirements(device, m_cliffUboBuffer, &req);
+                const uint32_t mt = FindMemType(physDev, req.memoryTypeBits,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                if (mt == UINT32_MAX)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] No HOST_VISIBLE memory for cliff UBO");
+                    Destroy(device);
+                    return false;
+                }
+
+                VkMemoryAllocateInfo ai{};
+                ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+                ai.allocationSize  = req.size;
+                ai.memoryTypeIndex = mt;
+                if (vkAllocateMemory(device, &ai, nullptr, &m_cliffUboMemory) != VK_SUCCESS)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] vkAllocateMemory (cliff UBO) failed");
+                    Destroy(device);
+                    return false;
+                }
+                vkBindBufferMemory(device, m_cliffUboBuffer, m_cliffUboMemory, 0);
+            }
+
+            // Cliff albedo placeholder: 1×1 grey-brown R8G8B8A8_UNORM texture (solid cliff rock)
+            {
+                // Create image
+                VkImageCreateInfo ici{};
+                ici.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+                ici.imageType     = VK_IMAGE_TYPE_2D;
+                ici.format        = VK_FORMAT_R8G8B8A8_UNORM;
+                ici.extent        = { 1u, 1u, 1u };
+                ici.mipLevels     = 1u;
+                ici.arrayLayers   = 1u;
+                ici.samples       = VK_SAMPLE_COUNT_1_BIT;
+                ici.tiling        = VK_IMAGE_TILING_LINEAR; // 1×1 can be LINEAR for simplicity
+                ici.usage         = VK_IMAGE_USAGE_SAMPLED_BIT;
+                ici.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+                ici.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+
+                if (vkCreateImage(device, &ici, nullptr, &m_cliffAlbedoImage) != VK_SUCCESS)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] vkCreateImage (cliff albedo) failed");
+                    Destroy(device);
+                    return false;
+                }
+
+                VkMemoryRequirements req{};
+                vkGetImageMemoryRequirements(device, m_cliffAlbedoImage, &req);
+                const uint32_t mt = FindMemType(physDev, req.memoryTypeBits,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                if (mt == UINT32_MAX)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] No HOST_VISIBLE memory for cliff albedo");
+                    Destroy(device);
+                    return false;
+                }
+
+                VkMemoryAllocateInfo ai{};
+                ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+                ai.allocationSize  = req.size;
+                ai.memoryTypeIndex = mt;
+                if (vkAllocateMemory(device, &ai, nullptr, &m_cliffAlbedoMemory) != VK_SUCCESS)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] vkAllocateMemory (cliff albedo) failed");
+                    Destroy(device);
+                    return false;
+                }
+                vkBindImageMemory(device, m_cliffAlbedoImage, m_cliffAlbedoMemory, 0);
+
+                // Write grey-brown pixel: R=120, G=110, B=100, A=255
+                VkImageSubresource sub{};
+                sub.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                VkSubresourceLayout layout{};
+                vkGetImageSubresourceLayout(device, m_cliffAlbedoImage, &sub, &layout);
+
+                void* mapped = nullptr;
+                vkMapMemory(device, m_cliffAlbedoMemory, layout.offset, 4u, 0, &mapped);
+                const uint8_t pixel[4] = { 120u, 110u, 100u, 255u };
+                std::memcpy(mapped, pixel, 4u);
+                vkUnmapMemory(device, m_cliffAlbedoMemory);
+
+                // Transition PREINITIALIZED → SHADER_READ_ONLY_OPTIMAL via one-time cmd
+                // (reuse the OneTimeSubmit helper from TerrainHoleMask — but it's in an anon ns)
+                // We do a simple manual submit here.
+                {
+                    VkCommandPoolCreateInfo poolCI{};
+                    poolCI.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+                    poolCI.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+                    poolCI.queueFamilyIndex = queueFamilyIndex;
+                    VkCommandPool tmpPool = VK_NULL_HANDLE;
+                    vkCreateCommandPool(device, &poolCI, nullptr, &tmpPool);
+
+                    VkCommandBufferAllocateInfo cbAI{};
+                    cbAI.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                    cbAI.commandPool        = tmpPool;
+                    cbAI.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                    cbAI.commandBufferCount = 1u;
+                    VkCommandBuffer tmpCmd = VK_NULL_HANDLE;
+                    vkAllocateCommandBuffers(device, &cbAI, &tmpCmd);
+
+                    VkCommandBufferBeginInfo beg{};
+                    beg.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                    beg.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                    vkBeginCommandBuffer(tmpCmd, &beg);
+
+                    VkImageMemoryBarrier barrier{};
+                    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                    barrier.oldLayout                       = VK_IMAGE_LAYOUT_PREINITIALIZED;
+                    barrier.newLayout                       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                    barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                    barrier.image                           = m_cliffAlbedoImage;
+                    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                    barrier.subresourceRange.baseMipLevel   = 0u;
+                    barrier.subresourceRange.levelCount     = 1u;
+                    barrier.subresourceRange.baseArrayLayer = 0u;
+                    barrier.subresourceRange.layerCount     = 1u;
+                    barrier.srcAccessMask                   = VK_ACCESS_HOST_WRITE_BIT;
+                    barrier.dstAccessMask                   = VK_ACCESS_SHADER_READ_BIT;
+                    vkCmdPipelineBarrier(tmpCmd,
+                        VK_PIPELINE_STAGE_HOST_BIT,
+                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                        0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+                    vkEndCommandBuffer(tmpCmd);
+                    VkSubmitInfo si{};
+                    si.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                    si.commandBufferCount = 1u;
+                    si.pCommandBuffers    = &tmpCmd;
+                    vkQueueSubmit(queue, 1u, &si, VK_NULL_HANDLE);
+                    vkQueueWaitIdle(queue);
+                    vkDestroyCommandPool(device, tmpPool, nullptr);
+                }
+
+                // Image view
+                VkImageViewCreateInfo vci{};
+                vci.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                vci.image                           = m_cliffAlbedoImage;
+                vci.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+                vci.format                          = VK_FORMAT_R8G8B8A8_UNORM;
+                vci.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                vci.subresourceRange.baseMipLevel   = 0u;
+                vci.subresourceRange.levelCount     = 1u;
+                vci.subresourceRange.baseArrayLayer = 0u;
+                vci.subresourceRange.layerCount     = 1u;
+                if (vkCreateImageView(device, &vci, nullptr, &m_cliffAlbedoView) != VK_SUCCESS)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] vkCreateImageView (cliff albedo) failed");
+                    Destroy(device);
+                    return false;
+                }
+
+                // Sampler
+                VkSamplerCreateInfo sci{};
+                sci.sType        = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+                sci.magFilter    = VK_FILTER_LINEAR;
+                sci.minFilter    = VK_FILTER_LINEAR;
+                sci.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+                sci.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                sci.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                sci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                if (vkCreateSampler(device, &sci, nullptr, &m_cliffAlbedoSampler) != VK_SUCCESS)
+                {
+                    LOG_ERROR(Render, "[TerrainRenderer] vkCreateSampler (cliff albedo) failed");
+                    Destroy(device);
+                    return false;
+                }
+            }
+
+            // Write cliff descriptor set
+            {
+                VkDescriptorBufferInfo cliffUboInfo{};
+                cliffUboInfo.buffer = m_cliffUboBuffer;
+                cliffUboInfo.offset = 0;
+                cliffUboInfo.range  = sizeof(CliffFrameUbo);
+
+                VkDescriptorImageInfo cliffAlbedoInfo{};
+                cliffAlbedoInfo.sampler     = m_cliffAlbedoSampler;
+                cliffAlbedoInfo.imageView   = m_cliffAlbedoView;
+                cliffAlbedoInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+                VkWriteDescriptorSet cliffWrites[2]{};
+                cliffWrites[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                cliffWrites[0].dstSet          = m_cliffDescSet;
+                cliffWrites[0].dstBinding      = 0;
+                cliffWrites[0].descriptorCount = 1;
+                cliffWrites[0].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                cliffWrites[0].pBufferInfo     = &cliffUboInfo;
+
+                cliffWrites[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                cliffWrites[1].dstSet          = m_cliffDescSet;
+                cliffWrites[1].dstBinding      = 1;
+                cliffWrites[1].descriptorCount = 1;
+                cliffWrites[1].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                cliffWrites[1].pImageInfo      = &cliffAlbedoInfo;
+
+                vkUpdateDescriptorSets(device, 2, cliffWrites, 0, nullptr);
+            }
+
+            // Load cliff shaders and create pipeline
+            std::vector<uint32_t> cliffVertSpirv = loadSpirv("shaders/terrain_cliff.vert.spv");
+            std::vector<uint32_t> cliffFragSpirv = loadSpirv("shaders/terrain_cliff.frag.spv");
+
+            if (cliffVertSpirv.empty() || cliffFragSpirv.empty())
+            {
+                LOG_WARN(Render,
+                    "[TerrainRenderer] Cliff shaders not found (vert={} frag={}) — cliff rendering disabled",
+                    cliffVertSpirv.empty() ? "MISSING" : "OK",
+                    cliffFragSpirv.empty() ? "MISSING" : "OK");
+                // Cliff pipeline optional: no fatal error, meshes are loaded but won't draw.
+            }
+            else
+            {
+                VkShaderModule cliffVert = VK_NULL_HANDLE, cliffFrag = VK_NULL_HANDLE;
+                {
+                    VkShaderModuleCreateInfo smCI{};
+                    smCI.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                    smCI.codeSize = cliffVertSpirv.size() * sizeof(uint32_t);
+                    smCI.pCode    = cliffVertSpirv.data();
+                    vkCreateShaderModule(device, &smCI, nullptr, &cliffVert);
+
+                    smCI.codeSize = cliffFragSpirv.size() * sizeof(uint32_t);
+                    smCI.pCode    = cliffFragSpirv.data();
+                    vkCreateShaderModule(device, &smCI, nullptr, &cliffFrag);
+                }
+
+                // Vertex input: CliffVertex layout (36 bytes per vertex)
+                // location 0: vec3 position    (offset 0)
+                // location 1: vec3 normal      (offset 12)
+                // location 2: vec2 uv          (offset 24)
+                // location 3: float blendWeight (offset 32)
+                VkVertexInputBindingDescription cliffBinding{};
+                cliffBinding.binding   = 0;
+                cliffBinding.stride    = sizeof(CliffVertex); // 36 bytes
+                cliffBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+                VkVertexInputAttributeDescription cliffAttribs[4]{};
+                cliffAttribs[0] = { 0u, 0u, VK_FORMAT_R32G32B32_SFLOAT,  0u  }; // position
+                cliffAttribs[1] = { 1u, 0u, VK_FORMAT_R32G32B32_SFLOAT,  12u }; // normal
+                cliffAttribs[2] = { 2u, 0u, VK_FORMAT_R32G32_SFLOAT,     24u }; // uv
+                cliffAttribs[3] = { 3u, 0u, VK_FORMAT_R32_SFLOAT,        32u }; // blendWeight
+
+                VkPipelineVertexInputStateCreateInfo cliffVisCI{};
+                cliffVisCI.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                cliffVisCI.vertexBindingDescriptionCount   = 1;
+                cliffVisCI.pVertexBindingDescriptions      = &cliffBinding;
+                cliffVisCI.vertexAttributeDescriptionCount = 4;
+                cliffVisCI.pVertexAttributeDescriptions    = cliffAttribs;
+
+                VkPipelineShaderStageCreateInfo cliffStages[2]{};
+                cliffStages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                cliffStages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
+                cliffStages[0].module = cliffVert;
+                cliffStages[0].pName  = "main";
+                cliffStages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                cliffStages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+                cliffStages[1].module = cliffFrag;
+                cliffStages[1].pName  = "main";
+
+                VkPipelineInputAssemblyStateCreateInfo cliffIas{};
+                cliffIas.sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+                cliffIas.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+                VkPipelineViewportStateCreateInfo cliffVp{};
+                cliffVp.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+                cliffVp.viewportCount = 1;
+                cliffVp.scissorCount  = 1;
+
+                VkPipelineRasterizationStateCreateInfo cliffRas{};
+                cliffRas.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+                cliffRas.polygonMode = VK_POLYGON_MODE_FILL;
+                cliffRas.cullMode    = VK_CULL_MODE_BACK_BIT;
+                cliffRas.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+                cliffRas.lineWidth   = 1.0f;
+
+                VkPipelineMultisampleStateCreateInfo cliffMs{};
+                cliffMs.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+                cliffMs.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+                VkPipelineDepthStencilStateCreateInfo cliffDs{};
+                cliffDs.sType            = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+                cliffDs.depthTestEnable  = VK_TRUE;
+                cliffDs.depthWriteEnable = VK_TRUE;
+                cliffDs.depthCompareOp   = VK_COMPARE_OP_LESS;
+
+                VkPipelineColorBlendAttachmentState cliffBlendAtts[4]{};
+                for (int i = 0; i < 4; ++i)
+                {
+                    cliffBlendAtts[i].colorWriteMask =
+                        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+                    cliffBlendAtts[i].blendEnable = VK_FALSE;
+                }
+                VkPipelineColorBlendStateCreateInfo cliffCb{};
+                cliffCb.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+                cliffCb.attachmentCount = 4;
+                cliffCb.pAttachments    = cliffBlendAtts;
+
+                VkDynamicState cliffDynStates[2] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+                VkPipelineDynamicStateCreateInfo cliffDyn{};
+                cliffDyn.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+                cliffDyn.dynamicStateCount = 2;
+                cliffDyn.pDynamicStates    = cliffDynStates;
+
+                VkGraphicsPipelineCreateInfo cliffGpCI{};
+                cliffGpCI.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+                cliffGpCI.stageCount          = 2;
+                cliffGpCI.pStages             = cliffStages;
+                cliffGpCI.pVertexInputState   = &cliffVisCI;
+                cliffGpCI.pInputAssemblyState = &cliffIas;
+                cliffGpCI.pViewportState      = &cliffVp;
+                cliffGpCI.pRasterizationState = &cliffRas;
+                cliffGpCI.pMultisampleState   = &cliffMs;
+                cliffGpCI.pDepthStencilState  = &cliffDs;
+                cliffGpCI.pColorBlendState    = &cliffCb;
+                cliffGpCI.pDynamicState       = &cliffDyn;
+                cliffGpCI.layout              = m_cliffPipelineLayout;
+                cliffGpCI.renderPass          = m_renderPass;
+                cliffGpCI.subpass             = 0;
+
+                const VkResult cliffRes = vkCreateGraphicsPipelines(
+                    device, VK_NULL_HANDLE, 1, &cliffGpCI, nullptr, &m_cliffPipeline);
+
+                vkDestroyShaderModule(device, cliffVert, nullptr);
+                vkDestroyShaderModule(device, cliffFrag, nullptr);
+
+                if (cliffRes != VK_SUCCESS)
+                {
+                    LOG_WARN(Render, "[TerrainRenderer] vkCreateGraphicsPipelines (cliff) failed — cliff rendering disabled");
+                    // Non-fatal: cliff meshes loaded but not rendered.
+                }
+                else
+                {
+                    LOG_INFO(Render, "[TerrainRenderer] Cliff pipeline OK");
+                }
+            }
         }
 
         LOG_INFO(Render, "[TerrainRenderer] Init OK ({}×{} patches, worldSize={} heightScale={})",
@@ -666,6 +1176,29 @@ namespace engine::render::terrain
     {
         InvalidateFramebufferCache(device);
 
+        // ── M34.3: Cliff pipeline & resources ────────────────────────────────────
+        for (CliffMeshGpu& gpu : m_cliffMeshes)
+            TerrainCliffMesh::DestroyGpu(device, gpu);
+        m_cliffMeshes.clear();
+
+        if (m_cliffPipeline       != VK_NULL_HANDLE) { vkDestroyPipeline(device, m_cliffPipeline, nullptr);              m_cliffPipeline       = VK_NULL_HANDLE; }
+        if (m_cliffPipelineLayout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, m_cliffPipelineLayout, nullptr);  m_cliffPipelineLayout = VK_NULL_HANDLE; }
+        if (m_cliffDescPool       != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, m_cliffDescPool, nullptr);        m_cliffDescPool       = VK_NULL_HANDLE; m_cliffDescSet = VK_NULL_HANDLE; }
+        if (m_cliffDescSetLayout  != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, m_cliffDescSetLayout, nullptr); m_cliffDescSetLayout = VK_NULL_HANDLE; }
+
+        if (m_cliffUboBuffer != VK_NULL_HANDLE) { vkDestroyBuffer(device, m_cliffUboBuffer, nullptr); m_cliffUboBuffer = VK_NULL_HANDLE; }
+        if (m_cliffUboMemory != VK_NULL_HANDLE) { vkFreeMemory(device, m_cliffUboMemory, nullptr);    m_cliffUboMemory = VK_NULL_HANDLE; }
+
+        if (m_cliffAlbedoSampler != VK_NULL_HANDLE) { vkDestroySampler(device, m_cliffAlbedoSampler, nullptr);   m_cliffAlbedoSampler = VK_NULL_HANDLE; }
+        if (m_cliffAlbedoView    != VK_NULL_HANDLE) { vkDestroyImageView(device, m_cliffAlbedoView, nullptr);    m_cliffAlbedoView    = VK_NULL_HANDLE; }
+        if (m_cliffAlbedoImage   != VK_NULL_HANDLE) { vkDestroyImage(device, m_cliffAlbedoImage, nullptr);       m_cliffAlbedoImage   = VK_NULL_HANDLE; }
+        if (m_cliffAlbedoMemory  != VK_NULL_HANDLE) { vkFreeMemory(device, m_cliffAlbedoMemory, nullptr);        m_cliffAlbedoMemory  = VK_NULL_HANDLE; }
+
+        // ── M34.3: Hole mask ──────────────────────────────────────────────────────
+        TerrainHoleMask::DestroyGpu(device, m_holeMaskGpu);
+        m_holeMaskData.mask.clear();
+
+        // ── Terrain pipeline & resources ──────────────────────────────────────────
         if (m_pipeline       != VK_NULL_HANDLE) { vkDestroyPipeline(device, m_pipeline, nullptr);             m_pipeline       = VK_NULL_HANDLE; }
         if (m_pipelineLayout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
         if (m_descPool       != VK_NULL_HANDLE) { vkDestroyDescriptorPool(device, m_descPool, nullptr);       m_descPool       = VK_NULL_HANDLE; m_descSet = VK_NULL_HANDLE; }
@@ -899,6 +1432,41 @@ namespace engine::render::terrain
                                    0, sizeof(PushConstants), &pc);
 
                 vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
+            }
+        }
+
+        // ── M34.3: Draw cliff meshes (same render pass, separate pipeline) ─────────
+        if (m_cliffPipeline != VK_NULL_HANDLE && !m_cliffMeshes.empty())
+        {
+            // Update cliff UBO (viewProj + prevViewProj)
+            {
+                CliffFrameUbo cliffUbo{};
+                std::memcpy(cliffUbo.viewProj,     viewProjMat4,     sizeof(cliffUbo.viewProj));
+                std::memcpy(cliffUbo.prevViewProj, prevViewProjMat4, sizeof(cliffUbo.prevViewProj));
+
+                void* mapped = nullptr;
+                if (vkMapMemory(device, m_cliffUboMemory, 0, sizeof(CliffFrameUbo), 0, &mapped) == VK_SUCCESS)
+                {
+                    std::memcpy(mapped, &cliffUbo, sizeof(CliffFrameUbo));
+                    vkUnmapMemory(device, m_cliffUboMemory);
+                }
+            }
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_cliffPipeline);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    m_cliffPipelineLayout, 0, 1, &m_cliffDescSet, 0, nullptr);
+
+            // Viewport/scissor already set from terrain pass above
+
+            for (const CliffMeshGpu& cliff : m_cliffMeshes)
+            {
+                if (cliff.vertexBuffer == VK_NULL_HANDLE || cliff.indexBuffer == VK_NULL_HANDLE)
+                    continue;
+
+                VkDeviceSize vbOffset = 0;
+                vkCmdBindVertexBuffers(cmd, 0, 1, &cliff.vertexBuffer, &vbOffset);
+                vkCmdBindIndexBuffer(cmd, cliff.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+                vkCmdDrawIndexed(cmd, cliff.indexCount, 1, 0, 0, 0);
             }
         }
 

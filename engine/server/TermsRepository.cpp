@@ -1,5 +1,4 @@
 #include "engine/server/TermsRepository.h"
-#include "engine/server/db/ConnectionPool.h"
 #include "engine/core/Log.h"
 
 #include <mysql.h>

@@ -1,16 +1,12 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/server/db/ConnectionPool.h"
 
 #include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
-
-namespace engine::server::db
-{
-	class ConnectionPool;
-}
 
 namespace engine::server
 {

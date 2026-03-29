@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace engine::server
@@ -26,7 +27,7 @@ namespace engine::server
 		void SetSmtpConfig(const SmtpConfig* cfg);
 
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
-		                  const uint8_t* payload, size_t payloadSize);
+		                  const uint8_t* payload, std::size_t payloadSize);
 
 	private:
 		NetServer*               m_server   = nullptr;

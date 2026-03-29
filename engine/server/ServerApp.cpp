@@ -209,6 +209,13 @@ namespace engine::server
 			return false;
 		}
 
+		if (!m_currencyConfig.Load(m_config))
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: currency config load failed");
+			Shutdown();
+			return false;
+		}
+
 		m_characterAutosaveIntervalTicks = ResolveCharacterAutosaveIntervalTicks();
 		m_nextCharacterAutosaveTick = m_characterAutosaveIntervalTicks;
 
@@ -620,6 +627,7 @@ namespace engine::server
 			(void)SendWelcome(*existingClient);
 			SendDynamicEventBootstrap(*existingClient);
 			SendQuestStateBootstrap(*existingClient);
+			(void)SendWalletUpdate(*existingClient);
 			return;
 		}
 
@@ -643,6 +651,9 @@ namespace engine::server
 			acceptedClient.positionMetersZ = persistedState.positionMetersZ;
 			acceptedClient.experiencePoints = persistedState.experiencePoints;
 			acceptedClient.gold = persistedState.gold;
+			acceptedClient.honor = persistedState.honor;
+			acceptedClient.badges = persistedState.badges;
+			acceptedClient.premiumCurrency = persistedState.premiumCurrency;
 			acceptedClient.stats = persistedState.stats;
 			acceptedClient.inventory = persistedState.inventory;
 			acceptedClient.questStates = persistedState.questStates;
@@ -695,6 +706,7 @@ namespace engine::server
 		(void)SendWelcome(acceptedClient);
 		SendDynamicEventBootstrap(acceptedClient);
 		SendQuestStateBootstrap(acceptedClient);
+		(void)SendWalletUpdate(acceptedClient);
 		OnClientLogin(acceptedClient);
 	}
 
@@ -951,6 +963,9 @@ namespace engine::server
 		state.positionMetersZ = client.positionMetersZ;
 		state.experiencePoints = client.experiencePoints;
 		state.gold = client.gold;
+		state.honor = client.honor;
+		state.badges = client.badges;
+		state.premiumCurrency = client.premiumCurrency;
 		state.stats = client.stats;
 		state.inventory = client.inventory;
 		state.questStates = client.questStates;
@@ -1531,7 +1546,17 @@ namespace engine::server
 				}
 
 				client.experiencePoints += rewards.experience;
-				client.gold += rewards.gold;
+				if (rewards.gold != 0u)
+				{
+					std::string walletErr;
+					if (!m_playerWallet.AddCurrency(client, kCurrencyGold, rewards.gold, walletErr))
+					{
+						LOG_WARN(Net,
+							"[ServerApp] Dynamic event gold grant blocked (client_id={}, err={})",
+							client.clientId,
+							walletErr);
+					}
+				}
 				for (const ItemStack& rewardItem : rewards.items)
 				{
 					AddItemToInventory(client, rewardItem);
@@ -1547,6 +1572,7 @@ namespace engine::server
 					rewards.experience,
 					rewards.gold,
 					rewards.items);
+				(void)SendWalletUpdate(client);
 				SaveConnectedClient(client, "dynamic_event_reward");
 				LOG_INFO(Net, "[ServerApp] Dynamic event rewards granted (event_id={}, client_id={}, xp={}, gold={}, items={})",
 					eventState.definition.eventId,
@@ -2604,7 +2630,17 @@ namespace engine::server
 			if (delta.rewardExperience != 0 || delta.rewardGold != 0 || !delta.rewardItems.empty())
 			{
 				client.experiencePoints += delta.rewardExperience;
-				client.gold += delta.rewardGold;
+				if (delta.rewardGold != 0u)
+				{
+					std::string walletErr;
+					if (!m_playerWallet.AddCurrency(client, kCurrencyGold, delta.rewardGold, walletErr))
+					{
+						LOG_WARN(Net,
+							"[ServerApp] Quest gold grant blocked (client_id={}, err={})",
+							client.clientId,
+							walletErr);
+					}
+				}
 				for (const ItemStack& rewardItem : delta.rewardItems)
 				{
 					AddItemToInventory(client, rewardItem);
@@ -2628,6 +2664,7 @@ namespace engine::server
 			(void)SendInventoryDelta(client, rewardedItems);
 		}
 
+		(void)SendWalletUpdate(client);
 		SaveConnectedClient(client, reason);
 		LOG_INFO(Net,
 			"[ServerApp] Quest event applied (client_id={}, type={}, target={}, deltas={}, reason={})",
@@ -2690,6 +2727,107 @@ namespace engine::server
 		LOG_INFO(Net, "[ServerApp] InventoryDelta sent (client_id={}, item_count={})",
 			receiver.clientId,
 			items.size());
+		return true;
+	}
+
+	bool ServerApp::SendWalletUpdate(const ConnectedClient& receiver)
+	{
+		WalletUpdateMessage message{};
+		message.clientId = receiver.clientId;
+		message.gold = receiver.gold;
+		message.honor = receiver.honor;
+		message.badges = receiver.badges;
+		message.premiumCurrency = receiver.premiumCurrency;
+		const std::vector<std::byte> packet = EncodeWalletUpdate(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] WalletUpdate send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net,
+			"[ServerApp] WalletUpdate sent (client_id={}, gold={}, honor={}, badges={}, premium={})",
+			receiver.clientId,
+			message.gold,
+			message.honor,
+			message.badges,
+			message.premiumCurrency);
+		return true;
+	}
+
+	ConnectedClient* ServerApp::FindConnectedClient(uint32_t clientId)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.clientId == clientId)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	bool ServerApp::TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError)
+	{
+		ConnectedClient* client = FindConnectedClient(clientId);
+		if (client == nullptr)
+		{
+			outError = "client_not_found";
+			LOG_WARN(Net, "[ServerApp] TryAddCurrency FAILED: unknown client_id={}", clientId);
+			return false;
+		}
+		if (!m_playerWallet.AddCurrency(*client, currencyId, amount, outError))
+		{
+			return false;
+		}
+		(void)SendWalletUpdate(*client);
+		SaveConnectedClient(*client, "wallet_add");
+		return true;
+	}
+
+	bool ServerApp::TrySubtractCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError)
+	{
+		ConnectedClient* client = FindConnectedClient(clientId);
+		if (client == nullptr)
+		{
+			outError = "client_not_found";
+			LOG_WARN(Net, "[ServerApp] TrySubtractCurrency FAILED: unknown client_id={}", clientId);
+			return false;
+		}
+		if (!m_playerWallet.SubtractCurrency(*client, currencyId, amount, outError))
+		{
+			return false;
+		}
+		(void)SendWalletUpdate(*client);
+		SaveConnectedClient(*client, "wallet_subtract");
+		return true;
+	}
+
+	bool ServerApp::TryTransferCurrency(
+		uint32_t fromClientId,
+		uint32_t toClientId,
+		uint8_t currencyId,
+		uint64_t amount,
+		std::string& outError)
+	{
+		ConnectedClient* from = FindConnectedClient(fromClientId);
+		ConnectedClient* to = FindConnectedClient(toClientId);
+		if (from == nullptr || to == nullptr)
+		{
+			outError = "client_not_found";
+			LOG_WARN(Net,
+				"[ServerApp] TryTransferCurrency FAILED: from={} to={} (missing client)",
+				fromClientId,
+				toClientId);
+			return false;
+		}
+		if (!m_playerWallet.Transfer(*from, *to, currencyId, amount, outError))
+		{
+			return false;
+		}
+		(void)SendWalletUpdate(*from);
+		(void)SendWalletUpdate(*to);
+		SaveConnectedClient(*from, "wallet_transfer_from");
+		SaveConnectedClient(*to, "wallet_transfer_to");
 		return true;
 	}
 

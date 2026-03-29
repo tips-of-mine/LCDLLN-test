@@ -106,6 +106,7 @@ namespace engine::client
 		UpdatePlayerBars(model);
 		UpdateTargetFrame(model);
 		UpdateCombatLog(model);
+		UpdateWalletFromModel(model);
 		RefreshCooldowns(model);
 		RebuildDebugText();
 		LOG_DEBUG(Core, "[CombatHudPresenter] Model applied (change_mask={}, target_visible={}, combat_lines={})",
@@ -196,6 +197,13 @@ namespace engine::client
 			}
 		}
 
+		// M35.1 — wallet strip (top-right): gold icon placeholder + amount.
+		{
+			const float walletW = std::clamp(viewportWidth * 0.22f, 180.0f, 360.0f);
+			const float walletH = 32.0f;
+			m_state.walletBounds = { viewportWidth - margin - walletW, margin, walletW, walletH };
+		}
+
 		m_state.layoutValid = true;
 	}
 
@@ -226,6 +234,19 @@ namespace engine::client
 		m_state.targetHealthBar.currentValue = model.targetStats.currentHealth;
 		m_state.targetHealthBar.maxValue = model.targetStats.maxHealth;
 		m_state.targetHealthBar.visible = model.targetStats.hasTarget;
+	}
+
+	void CombatHudPresenter::UpdateWalletFromModel(const UIModel& model)
+	{
+		if (!model.wallet.hasWallet)
+		{
+			m_state.walletVisible = false;
+			m_state.walletGoldLine.clear();
+			return;
+		}
+
+		m_state.walletVisible = true;
+		m_state.walletGoldLine = "[G] " + std::to_string(model.wallet.gold);
 	}
 
 	void CombatHudPresenter::UpdateCombatLog(const UIModel& model)
@@ -277,6 +298,9 @@ namespace engine::client
 	{
 		m_state.debugText.clear();
 		m_state.debugText += "[CombatHud]\n";
+		m_state.debugText += "wallet: ";
+		m_state.debugText += m_state.walletVisible ? m_state.walletGoldLine : "(n/a)";
+		m_state.debugText += "\n";
 		m_state.debugText += "viewport=";
 		m_state.debugText += std::to_string(m_viewportWidth);
 		m_state.debugText += "x";

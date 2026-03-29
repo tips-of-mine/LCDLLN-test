@@ -1,6 +1,8 @@
 #pragma once
 
 #include "engine/server/CharacterPersistence.h"
+#include "engine/server/CurrencyConfig.h"
+#include "engine/server/PlayerWalletService.h"
 #include "engine/server/EventRuntime.h"
 #include "engine/server/FriendSystem.h"
 #include "engine/server/PartySystem.h"
@@ -80,6 +82,10 @@ namespace engine::server
 		uint32_t persistenceCharacterKey = 0;
 		uint32_t experiencePoints = 0;
 		uint32_t gold = 0;
+		/// M35.1 — additional currencies (wallet); gold remains primary trade currency.
+		uint32_t honor = 0;
+		uint32_t badges = 0;
+		uint32_t premiumCurrency = 0;
 		float positionMetersX = 0.0f;
 		float positionMetersY = 0.0f;
 		float positionMetersZ = 0.0f;
@@ -214,7 +220,23 @@ namespace engine::server
 		/// Release transport resources and emit shutdown logs.
 		void Shutdown();
 
+		/// M35.1 — add currency to a connected player (caps enforced).
+		bool TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError);
+
+		/// M35.1 — subtract currency from a connected player (overdraft prevented).
+		bool TrySubtractCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError);
+
+		/// M35.1 — transfer currency between two connected players (atomic single-threaded).
+		bool TryTransferCurrency(
+			uint32_t fromClientId,
+			uint32_t toClientId,
+			uint8_t currencyId,
+			uint64_t amount,
+			std::string& outError);
+
 	private:
+		/// Return a mutable connected client by stable client id, or nullptr.
+		ConnectedClient* FindConnectedClient(uint32_t clientId);
 		/// Clamp and validate the configured fixed tick rate.
 		uint16_t ResolveTickHz() const;
 
@@ -377,6 +399,9 @@ namespace engine::server
 
 		/// Send one inventory delta after a successful pickup.
 		bool SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items);
+
+		/// M35.1 — replicate wallet balances to the owning client (CurrencyChanged UI).
+		bool SendWalletUpdate(const ConnectedClient& receiver);
 
 		/// Send one quest delta after a successful quest state update.
 		bool SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta);
@@ -569,6 +594,9 @@ namespace engine::server
 
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
+		/// M35.1 — currency definitions + validation caps (config/currencies.json).
+		CurrencyConfig m_currencyConfig{};
+		PlayerWalletService m_playerWallet{m_currencyConfig};
 		EventRuntime m_eventRuntime;
 		QuestRuntime m_questRuntime;
 		SpawnerRuntime m_spawnerRuntime;

@@ -30,7 +30,19 @@ namespace engine::client
 		/// M29.3: world-space chat bubbles + emote playback state.
 		UIModelChangeChatWorld = 1u << 8,
 		/// M32.2: party composition, member HP/mana, loot mode.
-		UIModelChangeParty     = 1u << 9
+		UIModelChangeParty     = 1u << 9,
+		/// M35.1 — wallet balances (gold, honor, badges, premium).
+		UIModelChangeWallet    = 1u << 10
+	};
+
+	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
+	struct UIWalletState
+	{
+		uint32_t gold = 0;
+		uint32_t honor = 0;
+		uint32_t badges = 0;
+		uint32_t premiumCurrency = 0;
+		bool hasWallet = false;
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -163,6 +175,8 @@ namespace engine::client
 		std::string partyLootModeLabel;
 		/// M32.2: party leader clientId (0 when not in a party).
 		uint32_t    partyLeaderId    = 0;
+		/// M35.1 — multi-currency wallet snapshot for HUD/debug.
+		UIWalletState wallet{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -251,6 +265,9 @@ namespace engine::client
 		/// Apply one decoded PartyUpdate message to the party section of the UI model (M32.2).
 		bool ApplyPartyUpdate(std::span<const std::byte> packet);
 
+		/// Apply one decoded WalletUpdate message (M35.1).
+		bool ApplyWalletUpdate(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -267,6 +284,7 @@ namespace engine::client
 		engine::server::EventStateMessage m_eventMessage{};
 		engine::server::ChatRelayMessage m_chatRelayScratch{};
 		engine::server::EmoteRelayMessage m_emoteRelayScratch{};
+		engine::server::WalletUpdateMessage m_walletScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

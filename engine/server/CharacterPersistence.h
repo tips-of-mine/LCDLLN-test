@@ -20,6 +20,10 @@ namespace engine::server
 		float positionMetersZ = 0.0f;
 		uint32_t experiencePoints = 0;
 		uint32_t gold = 0;
+		/// M35.1 — additional wallet currencies (mirrors MySQL player_wallet when present).
+		uint32_t honor = 0;
+		uint32_t badges = 0;
+		uint32_t premiumCurrency = 0;
 		StatsComponent stats{};
 		std::vector<ItemStack> inventory;
 		std::vector<QuestState> questStates;

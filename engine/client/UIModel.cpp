@@ -132,6 +132,18 @@ namespace engine::client
 		dump += playerStats.hasSnapshot ? "true" : "false";
 		dump += "\n";
 
+		dump += "wallet: active=";
+		dump += wallet.hasWallet ? "true" : "false";
+		dump += " gold=";
+		dump += std::to_string(wallet.gold);
+		dump += " honor=";
+		dump += std::to_string(wallet.honor);
+		dump += " badges=";
+		dump += std::to_string(wallet.badges);
+		dump += " premium=";
+		dump += std::to_string(wallet.premiumCurrency);
+		dump += "\n";
+
 		dump += "inventory(";
 		dump += std::to_string(inventory.size());
 		dump += ")=";
@@ -337,8 +349,9 @@ namespace engine::client
 		m_model.chatLines.clear();
 		m_model.chatBubbleBillboards.clear();
 		m_model.activeEmotes.clear();
+		m_model.wallet = {};
 		m_chatWorld.Reset();
-		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld);
+		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld | UIModelChangeWallet);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
 		return true;
 	}
@@ -436,6 +449,8 @@ namespace engine::client
 		// M32.2 — Party system
 		case engine::server::MessageKind::PartyUpdate:
 			return ApplyPartyUpdate(packet);
+		case engine::server::MessageKind::WalletUpdate:
+			return ApplyWalletUpdate(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -842,6 +857,32 @@ namespace engine::client
 		    msg.partyId, msg.members.size(), m_model.partyLootModeLabel);
 
 		NotifyObservers(UIModelChangeParty);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyWalletUpdate(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeWalletUpdate(packet, m_walletScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] WalletUpdate FAILED: decode error");
+			return false;
+		}
+
+		m_model.wallet.gold = m_walletScratch.gold;
+		m_model.wallet.honor = m_walletScratch.honor;
+		m_model.wallet.badges = m_walletScratch.badges;
+		m_model.wallet.premiumCurrency = m_walletScratch.premiumCurrency;
+		m_model.wallet.hasWallet = true;
+
+		LOG_INFO(Net,
+			"[UIModelBinding] WalletUpdate applied (client_id={}, gold={}, honor={}, badges={}, premium={})",
+			m_walletScratch.clientId,
+			m_walletScratch.gold,
+			m_walletScratch.honor,
+			m_walletScratch.badges,
+			m_walletScratch.premiumCurrency);
+
+		NotifyObservers(UIModelChangeWallet);
 		return true;
 	}
 }

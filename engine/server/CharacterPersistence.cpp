@@ -86,6 +86,9 @@ namespace engine::server
 		outState.positionMetersZ = static_cast<float>(persisted.GetDouble("character.position_z", 0.0));
 		outState.experiencePoints = static_cast<uint32_t>(persisted.GetInt("character.experience_points", 0));
 		outState.gold = static_cast<uint32_t>(persisted.GetInt("character.gold", 0));
+		outState.honor = static_cast<uint32_t>(persisted.GetInt("character.honor", 0));
+		outState.badges = static_cast<uint32_t>(persisted.GetInt("character.badges", 0));
+		outState.premiumCurrency = static_cast<uint32_t>(persisted.GetInt("character.premium_currency", 0));
 		outState.stats.currentHealth = static_cast<uint32_t>(persisted.GetInt("character.current_health", 100));
 		outState.stats.maxHealth = static_cast<uint32_t>(persisted.GetInt("character.max_health", 100));
 		outState.inventory.clear();
@@ -182,6 +185,9 @@ namespace engine::server
 		output << "character.position_z=" << state.positionMetersZ << "\n";
 		output << "character.experience_points=" << state.experiencePoints << "\n";
 		output << "character.gold=" << state.gold << "\n";
+		output << "character.honor=" << state.honor << "\n";
+		output << "character.badges=" << state.badges << "\n";
+		output << "character.premium_currency=" << state.premiumCurrency << "\n";
 		output << "character.current_health=" << state.stats.currentHealth << "\n";
 		output << "character.max_health=" << state.stats.maxHealth << "\n";
 		output << "character.chat_moderator_role=" << (state.chatModeratorRole ? 1 : 0) << "\n";

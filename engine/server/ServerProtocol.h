@@ -91,7 +91,12 @@ namespace engine::server
 		/// Server broadcasts full guild roster to all members after any change (M32.3).
 		GuildRosterSync = 41,
 		/// Client or Officer updates the guild MOTD (M32.3).
-		GuildMotdUpdate = 42
+		GuildMotdUpdate = 42,
+
+		// M35.1 — Multi-currency wallet ----------------------------------------
+
+		/// Server pushes current wallet balances to the owning client.
+		WalletUpdate = 43
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -653,4 +658,24 @@ namespace engine::server
 		uint32_t    clientId = 0;
 		std::string motd;
 	};
+
+	// -------------------------------------------------------------------------
+	// M35.1 — Wallet replication
+	// -------------------------------------------------------------------------
+
+	/// Server → client wallet snapshot (gold, honor, badges, premium).
+	struct WalletUpdateMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t gold = 0;
+		uint32_t honor = 0;
+		uint32_t badges = 0;
+		uint32_t premiumCurrency = 0;
+	};
+
+	/// Encode a wallet update packet (server authoritative).
+	std::vector<std::byte> EncodeWalletUpdate(const WalletUpdateMessage& message);
+
+	/// Decode a wallet update packet.
+	bool DecodeWalletUpdate(std::span<const std::byte> packet, WalletUpdateMessage& outMessage);
 }

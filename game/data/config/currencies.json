@@ -1,0 +1,36 @@
+{
+  "currencies": [
+    {
+      "id": 1,
+      "key": "gold",
+      "name": "Gold",
+      "max_amount": 999999999,
+      "icon": "textures/ui/currency_gold.texr"
+    },
+    {
+      "id": 2,
+      "key": "honor",
+      "name": "Honor",
+      "max_amount": 100000,
+      "icon": "textures/ui/currency_honor.texr"
+    },
+    {
+      "id": 3,
+      "key": "badges",
+      "name": "Badges",
+      "max_amount": 999999,
+      "icon": "textures/ui/currency_badges.texr"
+    },
+    {
+      "id": 4,
+      "key": "premium_currency",
+      "name": "Premium",
+      "max_amount": 999999999,
+      "icon": "textures/ui/currency_premium.texr"
+    }
+  ],
+  "conversion": {
+    "copper_per_silver": 100,
+    "silver_per_gold": 100
+  }
+}

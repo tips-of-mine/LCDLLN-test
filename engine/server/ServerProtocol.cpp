@@ -1224,4 +1224,30 @@ namespace engine::server
 		outMessage.clientId = ReadU32(payload, 0);
 		return true;
 	}
+
+	std::vector<std::byte> EncodeWalletUpdate(const WalletUpdateMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::WalletUpdate, 20);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.gold);
+		WriteU32(packet, message.honor);
+		WriteU32(packet, message.badges);
+		WriteU32(packet, message.premiumCurrency);
+		return packet;
+	}
+
+	bool DecodeWalletUpdate(std::span<const std::byte> packet, WalletUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::WalletUpdate, payload) || payload.size() != 20)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.gold = ReadU32(payload, 4);
+		outMessage.honor = ReadU32(payload, 8);
+		outMessage.badges = ReadU32(payload, 12);
+		outMessage.premiumCurrency = ReadU32(payload, 16);
+		return true;
+	}
 }

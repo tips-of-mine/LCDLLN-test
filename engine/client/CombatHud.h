@@ -61,6 +61,10 @@ namespace engine::client
 		HudRect combatLogBounds{};
 		std::vector<HudCombatLogLine> combatLogLines;
 		std::vector<HudCooldownWidget> cooldowns;
+		/// M35.1 — top-right wallet strip (gold icon label + amount).
+		HudRect walletBounds{};
+		std::string walletGoldLine;
+		bool walletVisible = false;
 		std::string debugText;
 		bool layoutValid = false;
 	};
@@ -111,6 +115,9 @@ namespace engine::client
 
 		/// Rebuild the human-readable HUD dump.
 		void RebuildDebugText();
+
+		/// Copy wallet label from the UI model (M35.1).
+		void UpdateWalletFromModel(const UIModel& model);
 
 		CombatHudState m_state{};
 		uint32_t m_viewportWidth = 0;

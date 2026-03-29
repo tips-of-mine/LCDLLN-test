@@ -6,24 +6,67 @@
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 
+#include <filesystem>
+#include <string_view>
+
 namespace engine::server
 {
-	SmtpConfig SmtpConfig::Load(const engine::core::Config& config)
+	namespace
+	{
+		/// Resolves \a relative next to the directory of \a primaryConfigPath when relative.
+		static std::string ResolveSmtpSecretsPath(std::string_view primaryConfigPath, std::string_view relative)
+		{
+			namespace fs = std::filesystem;
+			fs::path rel(relative);
+			if (rel.is_absolute())
+				return rel.lexically_normal().string();
+			fs::path primary(primaryConfigPath);
+			if (primary.has_parent_path())
+				return (primary.parent_path() / rel).lexically_normal().string();
+			return rel.lexically_normal().string();
+		}
+	} // namespace
+
+	SmtpConfig SmtpConfig::Load(const engine::core::Config& mainConfig, std::string_view primaryConfigPath)
 	{
 		SmtpConfig cfg;
-		cfg.host           = config.GetString("smtp.host", "");
-		cfg.port           = static_cast<uint16_t>(config.GetInt("smtp.port", 587));
-		cfg.user           = config.GetString("smtp.user", "");
-		cfg.password       = config.GetString("smtp.password", "");
-		cfg.from_address   = config.GetString("smtp.from", "noreply@game.com");
-		cfg.use_starttls   = (config.GetInt("smtp.starttls", 1) != 0);
-		cfg.timeout_sec    = static_cast<int>(config.GetInt("smtp.timeout_sec", 10));
-		cfg.reset_url_base = config.GetString("smtp.reset_url_base", "https://game.com/reset");
-		if (!cfg.host.empty())
-			LOG_INFO(Core, "[SmtpMailer] Config loaded (host={}:{} starttls={} from={})",
-				cfg.host, cfg.port, cfg.use_starttls ? 1 : 0, cfg.from_address);
-		else
-			LOG_WARN(Core, "[SmtpMailer] smtp.host not configured — email sending disabled");
+		const std::string smtpFileRel = mainConfig.GetString("smtp.config_file", "smtp.local.json");
+		const std::string resolved    = ResolveSmtpSecretsPath(primaryConfigPath, smtpFileRel);
+
+		engine::core::Config secrets;
+		if (!secrets.LoadFromFile(resolved))
+		{
+			LOG_WARN(Core, "[SmtpMailer] SMTP secrets file missing or unreadable (path={}) — email disabled", resolved);
+			return cfg;
+		}
+
+		cfg.host           = secrets.GetString("smtp.host", "");
+		cfg.port           = static_cast<uint16_t>(secrets.GetInt("smtp.port", 0));
+		cfg.user           = secrets.GetString("smtp.user", "");
+		cfg.password       = secrets.GetString("smtp.password", "");
+		cfg.from_address   = secrets.GetString("smtp.from", "");
+		cfg.use_starttls   = secrets.Has("smtp.starttls") ? (secrets.GetInt("smtp.starttls", 0) != 0) : true;
+		cfg.timeout_sec    = static_cast<int>(secrets.GetInt("smtp.timeout_sec", 10));
+		cfg.reset_url_base = secrets.GetString("smtp.reset_url_base", "");
+
+		if (cfg.host.empty())
+		{
+			LOG_WARN(Core, "[SmtpMailer] smtp.host empty in {} — email disabled", resolved);
+			return cfg;
+		}
+		if (cfg.port == 0)
+		{
+			LOG_ERROR(Core, "[SmtpMailer] smtp.port missing or zero in {} — email disabled", resolved);
+			cfg = SmtpConfig{};
+			return cfg;
+		}
+		if (cfg.from_address.empty())
+			LOG_WARN(Core, "[SmtpMailer] smtp.from empty in {} — sending may fail", resolved);
+		if (cfg.reset_url_base.empty())
+			LOG_WARN(Core, "[SmtpMailer] smtp.reset_url_base empty in {} — reset links may be invalid", resolved);
+
+		LOG_INFO(Core, "[SmtpMailer] Config loaded from sidecar (path={} host={}:{} starttls={} from={})",
+			resolved, cfg.host, cfg.port, cfg.use_starttls ? 1 : 0, cfg.from_address);
 		return cfg;
 	}
 } // namespace engine::server

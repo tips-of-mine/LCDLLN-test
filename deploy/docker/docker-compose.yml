@@ -10,6 +10,8 @@
 #   - bin/lcdlln_server
 #   - bin/lcdlln_shard
 #
+#   web-portal — Next.js (port 3000), labels Traefik d'exemple (adapter le hostname)
+#
 # Démarrage :
 #   docker compose up -d
 #
@@ -110,3 +112,33 @@ services:
       retries: 5
       start_period: 20s
     command: ["-log", "-console"]
+
+  # -----------------------------------------------------------------
+  # Portail web (Next.js) — réseau lcdlln-net ; Traefik en amont (externe au repo)
+  # -----------------------------------------------------------------
+  web-portal:
+    build:
+      context: ../../web-portal
+      dockerfile: Dockerfile
+    image: lcdlln-web-portal
+    container_name: lcdlln-web-portal
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - lcdlln-net
+    environment:
+      NODE_ENV: production
+      # Même base que le master (migrations exploits / vues stats). Adapter user/mot de passe avec le service mysql.
+      DATABASE_URL: mysql://lcdlln_user:lcdlln_pass_dev@mysql:3306/lcdlln_master
+    expose:
+      - "3000"
+    # ports:
+    #   - "127.0.0.1:3000:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lcdlln-net"
+      - "traefik.http.routers.lcdlln-portal.rule=Host(`lcdlln-portal.localhost`)"
+      - "traefik.http.routers.lcdlln-portal.entrypoints=web"
+      - "traefik.http.services.lcdlln-portal.loadbalancer.server.port=3000"

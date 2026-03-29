@@ -66,6 +66,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/ShardPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/TermsPayloads.cpp
     FriendSystem.cpp
     PartySystem.cpp
     GuildSystem.cpp
@@ -76,6 +77,9 @@ elseif(UNIX)
     AuthRegisterHandler.cpp
     ConnectionSessionMap.cpp
     SmtpMailer.cpp
+    LocalizedEmail.cpp
+    TermsRepository.cpp
+    TermsHandler.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp

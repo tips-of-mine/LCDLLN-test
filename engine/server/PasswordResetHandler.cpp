@@ -8,6 +8,7 @@
 #include "engine/server/RateLimitAndBan.h"
 #include "engine/server/SecurityAuditLog.h"
 #include "engine/server/AccountValidation.h"
+#include "engine/server/LocalizedEmail.h"
 #include "engine/auth/Argon2Hash.h"
 #include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/NetErrorCode.h"
@@ -116,12 +117,9 @@ namespace engine::server
 		if (m_smtpConfig && !m_smtpConfig->host.empty())
 		{
 			const std::string resetUrl = m_smtpConfig->reset_url_base + "?token=" + token;
-			const std::string subject  = "Password Reset Request";
-			const std::string body     =
-				"You requested a password reset for your account.\r\n\r\n"
-				"Click the link below to set a new password (valid for 1 hour):\r\n"
-				+ resetUrl + "\r\n\r\n"
-				"If you did not request this, please ignore this email.\r\n";
+			std::string subject;
+			std::string body;
+			BuildPasswordResetEmail(optAccount->email_locale, resetUrl, subject, body);
 			bool sent = SmtpMailer::Send(*m_smtpConfig, email, subject, body);
 			if (!sent)
 				LOG_WARN(Auth, "[PasswordResetHandler] ForgotPassword: email send failed (account_id={})", account_id);

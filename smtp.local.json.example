@@ -1,0 +1,12 @@
+{
+    "smtp": {
+        "host": "",
+        "port": 587,
+        "user": "",
+        "password": "",
+        "from": "",
+        "reset_url_base": "",
+        "starttls": 1,
+        "timeout_sec": 10
+    }
+}

@@ -10,7 +10,7 @@
   "db": {
     "host": "mysql",
     "port": 3306,
-    "name": "lcdlln",
+    "database": "lcdlln",
     "user": "lcdlln_user",
     "password": "lcdlln_pass_dev"
   },

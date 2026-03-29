@@ -51,4 +51,12 @@ namespace engine::network
 	/// Client→Master: submit account_id + 6-digit code; Master→Client: success or error.
 	constexpr uint16_t kOpcodeVerifyEmailRequest = 25u;
 	constexpr uint16_t kOpcodeVerifyEmailResponse = 26u;
+
+	/// CGU / Terms of Service (session required for content + accept).
+	constexpr uint16_t kOpcodeTermsStatusRequest = 27u;
+	constexpr uint16_t kOpcodeTermsStatusResponse = 28u;
+	constexpr uint16_t kOpcodeTermsContentRequest = 29u;
+	constexpr uint16_t kOpcodeTermsContentResponse = 30u;
+	constexpr uint16_t kOpcodeTermsAcceptRequest = 31u;
+	constexpr uint16_t kOpcodeTermsAcceptResponse = 32u;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/network/NetErrorCode.h"
+#include "engine/server/LocalizedEmail.h"
 
 #include <cstdint>
 #include <optional>
@@ -26,6 +27,7 @@ namespace engine::server
 		std::string final_hash;  // Argon2 encoded (contains salt)
 		AccountStatus status = AccountStatus::Active;
 		bool email_verified = false; ///< M33.2: set to true after email verification code confirmed.
+		AccountEmailLocale email_locale = AccountEmailLocale::English; ///< UI / email language chosen at registration.
 	};
 
 	/// In-memory account store for Master auth/register (M20.5). No persistence; no characters.
@@ -38,7 +40,8 @@ namespace engine::server
 		/// Create account: validates login and email (if non-empty), checks login/email not taken,
 		/// computes final_hash = Argon2(client_hash, server_salt) and stores. Returns account_id or 0 on failure.
 		/// \param client_hash Argon2-encoded client hash (from client); never stored as-is, only hashed again.
-		uint64_t CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash);
+		uint64_t CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
+		                       AccountEmailLocale email_locale = AccountEmailLocale::English);
 
 		/// Lookup by normalised login. Returns nullopt if not found.
 		std::optional<AccountRecord> FindByLogin(std::string_view normalisedLogin) const;

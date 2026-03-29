@@ -9,6 +9,7 @@
 #include "engine/server/PasswordResetStore.h"
 #include "engine/server/SmtpMailer.h"
 #include "engine/server/CaptchaVerifier.h"    // M33.3
+#include "engine/server/LocalizedEmail.h"
 #include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/ErrorPacket.h"
 #include "engine/network/NetErrorCode.h"
@@ -166,7 +167,8 @@ namespace engine::server
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
-		uint64_t account_id = m_accountStore->CreateAccount(login_norm, email_norm, parsed->client_hash);
+		const AccountEmailLocale emailLocale = ParseAccountEmailLocale(parsed->locale_tag);
+		uint64_t account_id = m_accountStore->CreateAccount(login_norm, email_norm, parsed->client_hash, emailLocale);
 		if (account_id == 0)
 		{
 			LOG_WARN(Auth, "[AUTH] HandleRegister result={}", "FAIL");
@@ -190,11 +192,9 @@ namespace engine::server
 				std::string code = m_resetStore->CreateVerificationCode(account_id);
 				if (!code.empty())
 				{
-					const std::string subject = "Email Verification Code";
-					const std::string body    =
-						"Your verification code is: " + code + "\r\n\r\n"
-						"Enter this code in the game client to verify your email address.\r\n"
-						"The code is valid for 24 hours.\r\n";
+					std::string subject;
+					std::string body;
+					BuildVerificationEmail(emailLocale, code, subject, body);
 					bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body);
 					if (sent)
 						m_resetStore->RecordEmailSent(account_id);

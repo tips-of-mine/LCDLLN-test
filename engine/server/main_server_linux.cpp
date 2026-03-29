@@ -22,6 +22,8 @@
 #include "engine/server/PasswordResetStore.h"
 #include "engine/server/PasswordResetHandler.h"
 #include "engine/server/SmtpMailer.h"
+#include "engine/server/TermsRepository.h"
+#include "engine/server/TermsHandler.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -182,7 +184,7 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[ServerMain] SecurityAuditLog Init failed (path={})", auditPath);
 
 	// M33.2: SMTP config + password reset / email verification stores.
-	engine::server::SmtpConfig smtpConfig = engine::server::SmtpConfig::Load(config);
+	engine::server::SmtpConfig smtpConfig = engine::server::SmtpConfig::Load(config, "config.json");
 	engine::server::PasswordResetStore passwordResetStore;
 	engine::server::PasswordResetHandler passwordResetHandler;
 
@@ -198,6 +200,16 @@ int main(int argc, char** argv)
 	engine::server::ConnectionSessionMap connSessionMap;
 	authHandler.SetConnectionSessionMap(&connSessionMap);
 
+	engine::server::TermsRepository termsRepository;
+	termsRepository.Init(config, &dbPool);
+	engine::server::TermsHandler termsHandler;
+	termsHandler.SetServer(&server);
+	termsHandler.SetSessionManager(&sessionManager);
+	termsHandler.SetConnectionSessionMap(&connSessionMap);
+	termsHandler.SetAccountStore(&accountStore);
+	termsHandler.SetTermsRepository(&termsRepository);
+	termsHandler.SetSmtpConfig(&smtpConfig);
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(&accountStore);
@@ -212,13 +224,15 @@ int main(int argc, char** argv)
 	shardTicketHandler.SetShardRegistry(&shardRegistry);
 	shardTicketHandler.SetSessionManager(&sessionManager);
 	shardTicketHandler.SetConnectionSessionMap(&connSessionMap);
+	shardTicketHandler.SetAccountStore(&accountStore);
+	shardTicketHandler.SetTermsRepository(&termsRepository);
 	shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	shardTicketHandler.SetValiditySec(static_cast<int>(config.GetInt("shard.ticket_validity_sec", 60)));
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -231,6 +245,8 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeResetPasswordRequest
 		      || opcode == kOpcodeVerifyEmailRequest)
 			passwordResetHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeTermsStatusRequest || opcode == kOpcodeTermsContentRequest || opcode == kOpcodeTermsAcceptRequest)
+			termsHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
@@ -272,7 +288,7 @@ int main(int argc, char** argv)
 	shardRegistry.SetShardDegradedCallback([](uint32_t shard_id) {
 		LOG_INFO(Net, "[ServerMain] Shard degraded event: shard_id={}", shard_id);
 	});
-	LOG_INFO(Net, "[ServerMain] Handlers set: Auth/Register(1,3,7) Shard(10,13,14) ServerList(19) PasswordReset(21,23,25)");
+	LOG_INFO(Net, "[ServerMain] Handlers set: Auth/Register(1,3,7) Shard(10,13,14) ServerList(19) PasswordReset(21,23,25) Terms(27,29,31)");
 
 	LOG_INFO(Net, "[ServerMain] NetServer running on port {} (Ctrl+C to stop)", port);
 

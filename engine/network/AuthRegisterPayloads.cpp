@@ -38,6 +38,12 @@ namespace engine::network
 			if (!r.ReadString(out.captcha_token))
 				return std::nullopt;
 		}
+		// Optional 5th field — locale tag for account / emails (backward-compatible).
+		if (r.Remaining() >= 2u)
+		{
+			if (!r.ReadString(out.locale_tag))
+				return std::nullopt;
+		}
 		return out;
 	}
 
@@ -51,12 +57,21 @@ namespace engine::network
 		return buf;
 	}
 
-	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash)
+	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash,
+	                                                 std::string_view captcha_token, std::string_view locale_tag)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteString(login) || !w.WriteString(client_hash) || !w.WriteString(email))
 			return {};
+		// If captcha or locale is set, emit captcha (possibly empty) so locale can follow.
+		if (!captcha_token.empty() || !locale_tag.empty())
+		{
+			if (!w.WriteString(captcha_token))
+				return {};
+			if (!locale_tag.empty() && !w.WriteString(locale_tag))
+				return {};
+		}
 		buf.resize(w.Offset());
 		return buf;
 	}

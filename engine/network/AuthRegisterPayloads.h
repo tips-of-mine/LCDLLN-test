@@ -20,12 +20,14 @@ namespace engine::network
 
 	/// Parsed REGISTER_REQUEST payload: login, optional email, client_hash (password field).
 	/// M33.3: optional captcha_token appended as a 4th length-prefixed string (backward-compatible).
+	/// Optional 5th string: locale tag (e.g. "en", "fr") for transactional emails; empty = English.
 	struct RegisterRequestPayload
 	{
 		std::string login;
 		std::string email;
 		std::string client_hash;
 		std::string captcha_token; ///< M33.3: CAPTCHA response token from client widget. Empty when absent.
+		std::string locale_tag;    ///< ISO-style language code for account email locale.
 	};
 
 	/// Parses AUTH_REQUEST payload. Returns nullopt if truncated or invalid.
@@ -37,8 +39,10 @@ namespace engine::network
 	/// Builds AUTH_REQUEST payload (for client). Protocol: username_len, username_utf8, password_len, password_utf8 (client_hash).
 	std::vector<uint8_t> BuildAuthRequestPayload(std::string_view login, std::string_view client_hash);
 
-	/// Builds REGISTER_REQUEST payload (for client): login, email, client_hash (each as length-prefixed string).
-	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash);
+	/// Builds REGISTER_REQUEST payload: login, client_hash, email; optional captcha and locale (see implementation).
+	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash,
+	                                                 std::string_view captcha_token = {},
+	                                                 std::string_view locale_tag = {});
 
 	/// Parsed AUTH_RESPONSE payload: success, session_id (if success), server_time_sec, version_gate, error_code (if fail).
 	struct AuthResponsePayload

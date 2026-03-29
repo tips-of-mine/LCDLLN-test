@@ -3,6 +3,8 @@
 #include "engine/server/ShardRegistry.h"
 #include "engine/server/SessionManager.h"
 #include "engine/server/ConnectionSessionMap.h"
+#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/TermsRepository.h"
 #include "engine/server/ShardTicketCrypto.h"
 #include "engine/network/ShardTicketPayloads.h"
 #include "engine/network/ProtocolV1Constants.h"
@@ -22,6 +24,8 @@ namespace engine::server
 	void ShardTicketHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
 	void ShardTicketHandler::SetSessionManager(SessionManager* sessionManager) { m_sessionManager = sessionManager; }
 	void ShardTicketHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connSessionMap = map; }
+	void ShardTicketHandler::SetAccountStore(InMemoryAccountStore* store) { m_accountStore = store; }
+	void ShardTicketHandler::SetTermsRepository(TermsRepository* repo) { m_termsRepository = repo; }
 	void ShardTicketHandler::SetSecret(std::string secret) { m_secret = std::move(secret); }
 
 	void ShardTicketHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -58,6 +62,26 @@ namespace engine::server
 		{
 			LOG_WARN(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET rejected: session invalid (connId={})", connId);
 			auto pkt = BuildErrorPacket(NetErrorCode::INVALID_CREDENTIALS, "session invalid", requestId, sessionIdHeader);
+			if (!pkt.empty())
+				m_server->Send(connId, pkt);
+			return;
+		}
+		if (m_accountStore)
+		{
+			auto rec = m_accountStore->FindByAccountId(*accountOpt);
+			if (rec && !rec->email.empty() && !rec->email_verified)
+			{
+				LOG_WARN(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET rejected: email not verified (connId={} account={})", connId, *accountOpt);
+				auto pkt = BuildErrorPacket(NetErrorCode::EMAIL_VERIFICATION_REQUIRED, "email verification required", requestId, sessionIdHeader);
+				if (!pkt.empty())
+					m_server->Send(connId, pkt);
+				return;
+			}
+		}
+		if (m_termsRepository && m_termsRepository->IsEnforced() && m_termsRepository->HasPendingTerms(*accountOpt))
+		{
+			LOG_WARN(Core, "[ShardTicketHandler] REQUEST_SHARD_TICKET rejected: CGU / terms not accepted (connId={} account={})", connId, *accountOpt);
+			auto pkt = BuildErrorPacket(NetErrorCode::TERMS_ACCEPTANCE_REQUIRED, "terms acceptance required", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
 			return;

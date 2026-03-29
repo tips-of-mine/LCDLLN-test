@@ -8,7 +8,8 @@
 
 namespace engine::server
 {
-	uint64_t InMemoryAccountStore::CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash)
+	uint64_t InMemoryAccountStore::CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
+	                                             AccountEmailLocale email_locale)
 	{
 		std::string login_key(NormaliseLoginView(login));
 		if (login_key.empty())
@@ -56,7 +57,8 @@ namespace engine::server
 		rec.login = login_key;
 		rec.email = email_norm;
 		rec.final_hash = std::move(final_hash);
-		rec.status = AccountStatus::Active;
+		rec.status      = AccountStatus::Active;
+		rec.email_locale = email_locale;
 		m_by_login[rec.login] = rec;
 		if (!rec.email.empty())
 			m_by_email[rec.email] = rec.account_id;

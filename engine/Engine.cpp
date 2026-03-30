@@ -1824,8 +1824,9 @@ namespace engine
 		}
 
 		const std::string host = m_cfg.GetString("client.gameplay_udp.host", "127.0.0.1");
-		const int portInt = m_cfg.GetInt("client.gameplay_udp.port", 27015);
-		const uint16_t port = static_cast<uint16_t>(std::clamp(portInt, 1, 65535));
+		const int64_t portCfg = m_cfg.GetInt("client.gameplay_udp.port", 27015);
+		const uint16_t port = static_cast<uint16_t>(
+			std::clamp(portCfg, static_cast<int64_t>(1), static_cast<int64_t>(65535)));
 		m_gameplayVendorTalkTarget = m_cfg.GetString("client.gameplay_udp.vendor_talk_target", "vendor:1");
 		m_gameplayAuctionTalkTarget = m_cfg.GetString("client.gameplay_udp.auction_talk_target", "auction");
 		if (!m_gameplayUdp.Init(host, port))
@@ -1840,9 +1841,15 @@ namespace engine
 			return;
 		}
 
-		const uint16_t reqTick = static_cast<uint16_t>(std::clamp(m_cfg.GetInt("client.gameplay_udp.request_tick_hz", 20), 1, 120));
-		const uint16_t reqSnap = static_cast<uint16_t>(std::clamp(m_cfg.GetInt("client.gameplay_udp.request_snapshot_hz", 10), 1, 60));
-		const uint32_t charKey = static_cast<uint32_t>(std::max(1, m_cfg.GetInt("client.gameplay_udp.character_key", 1)));
+		const int64_t tickHzCfg = m_cfg.GetInt("client.gameplay_udp.request_tick_hz", 20);
+		const uint16_t reqTick = static_cast<uint16_t>(
+			std::clamp(tickHzCfg, static_cast<int64_t>(1), static_cast<int64_t>(120)));
+		const int64_t snapHzCfg = m_cfg.GetInt("client.gameplay_udp.request_snapshot_hz", 10);
+		const uint16_t reqSnap = static_cast<uint16_t>(
+			std::clamp(snapHzCfg, static_cast<int64_t>(1), static_cast<int64_t>(60)));
+		const int64_t charKeyCfg = m_cfg.GetInt("client.gameplay_udp.character_key", 1);
+		const uint32_t charKey =
+			static_cast<uint32_t>(std::max(static_cast<int64_t>(1), charKeyCfg));
 		(void)m_gameplayUdp.SendHello(reqTick, reqSnap, charKey);
 
 		m_gameplayNetInitialized = true;

@@ -1081,7 +1081,8 @@ namespace engine::client
 		}
 		else if (m_model.auction.selectedRow >= m_model.auction.listings.size())
 		{
-			m_model.auction.selectedRow = m_model.auction.listings.size() - 1u;
+			m_model.auction.selectedRow =
+				static_cast<uint32_t>(m_model.auction.listings.size() - 1u);
 		}
 
 		LOG_INFO(Net,

@@ -36,6 +36,7 @@ namespace engine::platform
 		A = 'A',
 		S = 'S',
 		D = 'D',
+		E = 'E',
 		X = 'X',
 		Y = 'Y',
 		Z = 'Z',

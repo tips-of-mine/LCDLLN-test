@@ -451,6 +451,11 @@ namespace engine::client
 			return ApplyPartyUpdate(packet);
 		case engine::server::MessageKind::WalletUpdate:
 			return ApplyWalletUpdate(packet);
+		// M35.2 — Vendor shop
+		case engine::server::MessageKind::VendorShopSync:
+			return ApplyVendorShopSync(packet);
+		case engine::server::MessageKind::VendorTransactionResult:
+			return ApplyVendorTransactionResult(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -883,6 +888,67 @@ namespace engine::client
 			m_walletScratch.premiumCurrency);
 
 		NotifyObservers(UIModelChangeWallet);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.2 — Vendor shop
+	// -------------------------------------------------------------------------
+
+	bool UIModelBinding::ApplyVendorShopSync(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeVendorShopSync(packet, m_vendorShopScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] VendorShopSync FAILED: decode error");
+			return false;
+		}
+
+		m_model.shop.vendorId = m_vendorShopScratch.vendorId;
+		m_model.shop.items.clear();
+		m_model.shop.items.reserve(m_vendorShopScratch.items.size());
+		for (const engine::server::VendorShopItemEntry& entry : m_vendorShopScratch.items)
+		{
+			UIShopItemEntry item{};
+			item.itemId    = entry.itemId;
+			item.buyPrice  = entry.buyPrice;
+			item.sellPrice = entry.sellPrice;
+			item.stock     = entry.stock;
+			m_model.shop.items.push_back(item);
+		}
+		m_model.shop.isOpen = true;
+
+		LOG_INFO(Net, "[UIModelBinding] VendorShopSync applied (client_id={}, vendor={}, items={})",
+			m_vendorShopScratch.clientId,
+			m_vendorShopScratch.vendorId,
+			m_vendorShopScratch.items.size());
+
+		NotifyObservers(UIModelChangeShop);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyVendorTransactionResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeVendorTransactionResult(packet, m_vendorTxScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] VendorTransactionResult FAILED: decode error");
+			return false;
+		}
+
+		if (m_vendorTxScratch.success != 0u)
+		{
+			// Update the wallet gold balance from the transaction result.
+			m_model.wallet.gold = m_vendorTxScratch.newGold;
+			m_model.wallet.hasWallet = true;
+			LOG_INFO(Net, "[UIModelBinding] VendorTransactionResult: success, new_gold={}",
+				m_vendorTxScratch.newGold);
+			NotifyObservers(UIModelChangeShop | UIModelChangeWallet);
+		}
+		else
+		{
+			LOG_WARN(Net, "[UIModelBinding] VendorTransactionResult: failed (reason={})",
+				m_vendorTxScratch.errorReason);
+			NotifyObservers(UIModelChangeShop);
+		}
 		return true;
 	}
 }

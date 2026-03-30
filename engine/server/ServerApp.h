@@ -8,6 +8,7 @@
 #include "engine/server/PartySystem.h"
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/SpawnerRuntime.h"
+#include "engine/server/VendorRuntime.h"
 #include "engine/core/Config.h"
 #include "engine/net/ChatSystem.h"
 #include "engine/server/ChatCommandParser.h"
@@ -358,6 +359,26 @@ namespace engine::server
 		/// Validate one talk request and forward it to the quest runtime.
 		void HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId);
 
+		// M35.2 — Vendor shop handlers --------------------------------------------
+
+		/// Load vendor definitions from content and prepare runtime stock tables.
+		bool InitVendors();
+
+		/// Validate and open a vendor shop for the requesting client.
+		void HandleVendorOpen(const Endpoint& endpoint, const VendorOpenMessage& request);
+
+		/// Validate gold, deduct cost, add item to inventory and update stock.
+		void HandleVendorBuy(const Endpoint& endpoint, const VendorBuyMessage& request);
+
+		/// Validate item ownership, credit sell price and remove item from inventory.
+		void HandleVendorSell(const Endpoint& endpoint, const VendorSellMessage& request);
+
+		/// Build and send a VendorShopSync packet for the given vendor to the client.
+		bool SendVendorShopSync(const ConnectedClient& receiver, std::string_view vendorId);
+
+		/// Build and send a VendorTransactionResult packet to the client.
+		bool SendVendorTransactionResult(const ConnectedClient& receiver, bool success, uint32_t newGold, std::string_view errorReason);
+
 		/// Validate one chat send request, apply rate limiting, route by channel, emit relays.
 		void HandleChatSend(const Endpoint& endpoint, const ChatSendRequestMessage& request);
 
@@ -600,6 +621,10 @@ namespace engine::server
 		EventRuntime m_eventRuntime;
 		QuestRuntime m_questRuntime;
 		SpawnerRuntime m_spawnerRuntime;
+		/// M35.2 — vendor definitions (loaded at Init).
+		VendorRuntime m_vendorRuntime;
+		/// M35.2 — per-vendor mutable stock: map vendorId → per-item stock array (index matches definition order).
+		std::unordered_map<std::string, std::vector<int32_t>> m_vendorStocks;
 		ZoneTransitionMap m_zoneTransitionMap;
 		TickScheduler m_tickScheduler;
 		UdpTransport m_transport;

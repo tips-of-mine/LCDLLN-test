@@ -21,6 +21,7 @@ if(WIN32)
     PlayerWalletService.cpp
     QuestRuntime.cpp
     SpawnerRuntime.cpp
+    VendorRuntime.cpp
     EventRuntime.cpp
     UdpTransport.cpp
     TickScheduler.cpp

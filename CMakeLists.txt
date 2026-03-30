@@ -183,6 +183,8 @@ add_library(engine_core
   engine/network/AuthRegisterPayloads.cpp
   engine/network/ShardPayloads.cpp
 )
+# Shared gameplay wire codec (Encode*/Decode*); linked into client — must not be server-only.
+target_sources(engine_core PRIVATE engine/server/ServerProtocol.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${VMA_INCLUDE_DIRS}

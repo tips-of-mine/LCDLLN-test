@@ -54,7 +54,7 @@ namespace engine::client
 			{
 				return startBid;
 			}
-			const uint64_t increment = std::max(1ull, (currentBid * 5u) / 100u);
+			const uint64_t increment = std::max(uint64_t{1}, (currentBid * uint64_t{5}) / uint64_t{100});
 			return currentBid + increment;
 		}
 	}

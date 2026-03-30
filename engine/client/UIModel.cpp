@@ -491,6 +491,21 @@ namespace engine::client
 			NotifyObservers(UIModelChangeTrade);
 			return true;
 		}
+		// M35.4 — Auction house
+		case engine::server::MessageKind::AHPostListingResult:
+			return ApplyAHPostListingResult(packet);
+		case engine::server::MessageKind::AHSearchResult:
+			return ApplyAHSearchResult(packet);
+		case engine::server::MessageKind::AHBidResult:
+			return ApplyAHBidResult(packet);
+		case engine::server::MessageKind::AHBuyoutResult:
+			return ApplyAHBuyoutResult(packet);
+		case engine::server::MessageKind::AHMyListingsResult:
+			return ApplyAHMyListingsResult(packet);
+		case engine::server::MessageKind::AHCancelResult:
+			return ApplyAHCancelResult(packet);
+		case engine::server::MessageKind::AHDeliverySync:
+			return ApplyAHDeliverySync(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -1063,6 +1078,214 @@ namespace engine::client
 		}
 
 		NotifyObservers(UIModelChangeTrade);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.4 — Auction house handlers
+	// -------------------------------------------------------------------------
+
+	namespace
+	{
+		/// Convert one wire AHListingEntry to a UIAHListingEntry.
+		UIAHListingEntry ToUIAHListing(const engine::server::AHListingEntry& e)
+		{
+			UIAHListingEntry ui{};
+			ui.listingId    = e.listingId;
+			ui.itemId       = e.sellerItemId;
+			ui.itemQuantity = e.itemQuantity;
+			ui.startBid     = e.startBid;
+			ui.buyout       = e.buyout;
+			ui.currentBid   = e.currentBid;
+			ui.expiresInSec = e.expiresInSec;
+			ui.hasBid       = (e.hasBid != 0u);
+			return ui;
+		}
+	}
+
+	bool UIModelBinding::ApplyAHPostListingResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHPostListingResult(packet, m_ahPostResultScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHPostListingResult FAILED: decode error");
+			return false;
+		}
+
+		UIAHState& ah = m_model.auctionHouse;
+		ah.lastActionSuccess   = (m_ahPostResultScratch.success != 0u);
+		ah.lastActionListingId = m_ahPostResultScratch.listingId;
+		ah.lastActionError     = m_ahPostResultScratch.errorReason;
+
+		if (ah.lastActionSuccess)
+		{
+			LOG_INFO(Net, "[UIModelBinding] AHPostListingResult: OK (listing={})",
+				m_ahPostResultScratch.listingId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHPostListingResult: FAILED (reason={})",
+				m_ahPostResultScratch.errorReason);
+		}
+
+		NotifyObservers(UIModelChangeAH);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAHSearchResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHSearchResult(packet, m_ahSearchResultScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHSearchResult FAILED: decode error");
+			return false;
+		}
+
+		UIAHState& ah = m_model.auctionHouse;
+		ah.searchTotalCount = m_ahSearchResultScratch.totalCount;
+		ah.searchPageIndex  = m_ahSearchResultScratch.pageIndex;
+		ah.searchResults.clear();
+		ah.searchResults.reserve(m_ahSearchResultScratch.listings.size());
+		for (const engine::server::AHListingEntry& entry : m_ahSearchResultScratch.listings)
+		{
+			ah.searchResults.push_back(ToUIAHListing(entry));
+		}
+
+		LOG_INFO(Net, "[UIModelBinding] AHSearchResult applied (page={}, total={}, returned={})",
+			ah.searchPageIndex, ah.searchTotalCount, ah.searchResults.size());
+
+		NotifyObservers(UIModelChangeAH);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAHBidResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHBidResult(packet, m_ahBidResultScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHBidResult FAILED: decode error");
+			return false;
+		}
+
+		UIAHState& ah = m_model.auctionHouse;
+		ah.lastActionSuccess   = (m_ahBidResultScratch.success != 0u);
+		ah.lastActionListingId = m_ahBidResultScratch.listingId;
+		ah.lastActionError     = m_ahBidResultScratch.errorReason;
+
+		if (ah.lastActionSuccess)
+		{
+			LOG_INFO(Net, "[UIModelBinding] AHBidResult: OK (listing={}, newBid={})",
+				m_ahBidResultScratch.listingId, m_ahBidResultScratch.newBid);
+		}
+		else
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHBidResult: FAILED (listing={}, reason={})",
+				m_ahBidResultScratch.listingId, m_ahBidResultScratch.errorReason);
+		}
+
+		NotifyObservers(UIModelChangeAH);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAHBuyoutResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHBuyoutResult(packet, m_ahBuyoutResultScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHBuyoutResult FAILED: decode error");
+			return false;
+		}
+
+		UIAHState& ah = m_model.auctionHouse;
+		ah.lastActionSuccess   = (m_ahBuyoutResultScratch.success != 0u);
+		ah.lastActionListingId = m_ahBuyoutResultScratch.listingId;
+		ah.lastActionError     = m_ahBuyoutResultScratch.errorReason;
+
+		if (ah.lastActionSuccess)
+		{
+			LOG_INFO(Net, "[UIModelBinding] AHBuyoutResult: OK (listing={})",
+				m_ahBuyoutResultScratch.listingId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHBuyoutResult: FAILED (listing={}, reason={})",
+				m_ahBuyoutResultScratch.listingId, m_ahBuyoutResultScratch.errorReason);
+		}
+
+		NotifyObservers(UIModelChangeAH);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAHMyListingsResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHMyListingsResult(packet, m_ahMyListingsScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHMyListingsResult FAILED: decode error");
+			return false;
+		}
+
+		UIAHState& ah = m_model.auctionHouse;
+		ah.myListings.clear();
+		ah.myListings.reserve(m_ahMyListingsScratch.listings.size());
+		for (const engine::server::AHListingEntry& entry : m_ahMyListingsScratch.listings)
+		{
+			ah.myListings.push_back(ToUIAHListing(entry));
+		}
+
+		LOG_INFO(Net, "[UIModelBinding] AHMyListingsResult applied ({} listings)",
+			ah.myListings.size());
+
+		NotifyObservers(UIModelChangeAH);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAHCancelResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHCancelResult(packet, m_ahCancelResultScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHCancelResult FAILED: decode error");
+			return false;
+		}
+
+		UIAHState& ah = m_model.auctionHouse;
+		ah.lastActionSuccess   = (m_ahCancelResultScratch.success != 0u);
+		ah.lastActionListingId = m_ahCancelResultScratch.listingId;
+		ah.lastActionError     = m_ahCancelResultScratch.errorReason;
+
+		if (ah.lastActionSuccess)
+		{
+			LOG_INFO(Net, "[UIModelBinding] AHCancelResult: OK (listing={})",
+				m_ahCancelResultScratch.listingId);
+		}
+		else
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHCancelResult: FAILED (listing={}, reason={})",
+				m_ahCancelResultScratch.listingId, m_ahCancelResultScratch.errorReason);
+		}
+
+		NotifyObservers(UIModelChangeAH);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAHDeliverySync(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAHDeliverySync(packet, m_ahDeliveryScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AHDeliverySync FAILED: decode error");
+			return false;
+		}
+
+		// AHDeliverySync carries items/gold already applied server-side.
+		// The client only needs to know deliveries arrived so it can refresh
+		// inventory and wallet (already notified by separate InventoryDelta /
+		// WalletUpdate packets). Log them for audit/debug purposes.
+		for (const engine::server::AHDeliveryEntry& entry : m_ahDeliveryScratch.deliveries)
+		{
+			LOG_INFO(Net,
+				"[UIModelBinding] AHDeliverySync entry (delivery={}, gold={}, item={}, qty={}, reason={})",
+				entry.deliveryId, entry.goldAmount, entry.itemId, entry.itemQuantity, entry.reason);
+		}
+
+		LOG_INFO(Net, "[UIModelBinding] AHDeliverySync applied ({} deliveries)",
+			m_ahDeliveryScratch.deliveries.size());
+
+		NotifyObservers(UIModelChangeAH);
 		return true;
 	}
 }

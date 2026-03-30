@@ -36,7 +36,9 @@ namespace engine::client
 		/// M35.2 — vendor shop catalog opened or closed.
 		UIModelChangeShop      = 1u << 11,
 		/// M35.3 — direct trade window state changed.
-		UIModelChangeTrade     = 1u << 12
+		UIModelChangeTrade     = 1u << 12,
+		/// M35.4 — auction house search results or my-listings changed.
+		UIModelChangeAH        = 1u << 13
 	};
 
 	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
@@ -92,6 +94,33 @@ namespace engine::client
 		bool             isOpen               = false;
 		bool             lastResultSuccess    = false;
 		std::string      lastResultError;
+	};
+
+	/// M35.4 — one listing entry shown in the AH search panel or my-listings panel.
+	struct UIAHListingEntry
+	{
+		uint64_t listingId    = 0;
+		uint32_t itemId       = 0;
+		uint32_t itemQuantity = 1;
+		uint64_t startBid     = 0;
+		uint64_t buyout       = 0;   ///< 0 = no buyout price.
+		uint64_t currentBid   = 0;
+		uint32_t expiresInSec = 0;
+		bool     hasBid       = false;
+	};
+
+	/// M35.4 — full AH panel state pushed by AHSearchResult and AHMyListingsResult.
+	struct UIAHState
+	{
+		std::vector<UIAHListingEntry> searchResults;  ///< Current search result page.
+		std::vector<UIAHListingEntry> myListings;     ///< Caller's active listings.
+		uint32_t searchTotalCount = 0;  ///< Total matching listings (all pages).
+		uint32_t searchPageIndex  = 0;  ///< Current page index.
+		/// Last post/bid/buyout/cancel outcome (reset to empty on next request).
+		bool     lastActionSuccess = false;
+		uint64_t lastActionListingId = 0;
+		std::string lastActionError;
+		bool     isOpen = false; ///< True while the AH window is displayed.
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -230,6 +259,8 @@ namespace engine::client
 		UIShopState shop{};
 		/// M35.3 — active trade window state (isOpen=false when no trade is in progress).
 		UITradeState trade{};
+		/// M35.4 — auction house panel state (isOpen=false when not displayed).
+		UIAHState auctionHouse{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -333,6 +364,27 @@ namespace engine::client
 		/// Apply one decoded TradeResult message and record the outcome (M35.3).
 		bool ApplyTradeResult(std::span<const std::byte> packet);
 
+		/// Apply one decoded AHPostListingResult and record the outcome (M35.4).
+		bool ApplyAHPostListingResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded AHSearchResult and populate the search panel (M35.4).
+		bool ApplyAHSearchResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded AHBidResult and record the outcome (M35.4).
+		bool ApplyAHBidResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded AHBuyoutResult and record the outcome (M35.4).
+		bool ApplyAHBuyoutResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded AHMyListingsResult and populate the my-listings panel (M35.4).
+		bool ApplyAHMyListingsResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded AHCancelResult and record the outcome (M35.4).
+		bool ApplyAHCancelResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded AHDeliverySync and trigger gold/item delivery (M35.4).
+		bool ApplyAHDeliverySync(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -354,6 +406,13 @@ namespace engine::client
 		engine::server::VendorTransactionResultMessage m_vendorTxScratch{};
 		engine::server::TradeWindowSyncMessage m_tradeWindowScratch{};
 		engine::server::TradeResultMessage m_tradeResultScratch{};
+		engine::server::AHPostListingResultMessage m_ahPostResultScratch{};
+		engine::server::AHSearchResultMessage      m_ahSearchResultScratch{};
+		engine::server::AHBidResultMessage         m_ahBidResultScratch{};
+		engine::server::AHBuyoutResultMessage      m_ahBuyoutResultScratch{};
+		engine::server::AHMyListingsResultMessage  m_ahMyListingsScratch{};
+		engine::server::AHCancelResultMessage      m_ahCancelResultScratch{};
+		engine::server::AHDeliverySyncMessage      m_ahDeliveryScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

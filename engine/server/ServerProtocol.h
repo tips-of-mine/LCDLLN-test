@@ -136,7 +136,36 @@ namespace engine::server
 		/// Server pushes the full trade window state to both clients (M35.3).
 		TradeWindowSync = 59,
 		/// Server sends the final trade outcome to both clients (M35.3).
-		TradeResult = 60
+		TradeResult = 60,
+
+		// M35.4 — Auction house messages ----------------------------------------
+
+		/// Client requests to post a new auction listing (M35.4).
+		AHPostListing = 61,
+		/// Server sends the result of an auction post attempt (M35.4).
+		AHPostListingResult = 62,
+		/// Client requests a search of active listings with optional filters (M35.4).
+		AHSearchRequest = 63,
+		/// Server sends the search result page to the requesting client (M35.4).
+		AHSearchResult = 64,
+		/// Client places a bid on an active auction listing (M35.4).
+		AHBid = 65,
+		/// Server sends the bid outcome to the bidder (M35.4).
+		AHBidResult = 66,
+		/// Client requests an instant buyout of an active listing (M35.4).
+		AHBuyout = 67,
+		/// Server sends the buyout outcome to the buyer (M35.4).
+		AHBuyoutResult = 68,
+		/// Client requests the list of its own active auction listings (M35.4).
+		AHMyListings = 69,
+		/// Server sends the requesting client's active listings (M35.4).
+		AHMyListingsResult = 70,
+		/// Client requests to cancel one of its own active listings (M35.4).
+		AHCancelListing = 71,
+		/// Server sends the cancel outcome to the seller (M35.4).
+		AHCancelResult = 72,
+		/// Server pushes pending AH deliveries (items/gold) to a client on login (M35.4).
+		AHDeliverySync = 73
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -970,4 +999,237 @@ namespace engine::server
 
 	/// Decode a server trade result packet.
 	bool DecodeTradeResult(std::span<const std::byte> packet, TradeResultMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M35.4 — Auction house messages
+	// -------------------------------------------------------------------------
+
+	/// Auction listing duration choices (wire-stable, hours).
+	enum class AHDuration : uint8_t
+	{
+		Hours12 = 12,
+		Hours24 = 24,
+		Hours48 = 48
+	};
+
+	/// Sort order applied to AH search results (wire-stable).
+	enum class AHSortOrder : uint8_t
+	{
+		PriceAsc  = 0, ///< Current bid / buyout ascending.
+		PriceDesc = 1, ///< Current bid / buyout descending.
+		TimeAsc   = 2, ///< Soonest expiry first.
+		TimeDesc  = 3  ///< Latest expiry first.
+	};
+
+	/// Client request to post a new auction listing (M35.4).
+	struct AHPostListingMessage
+	{
+		uint32_t   clientId     = 0;
+		uint32_t   itemId       = 0;
+		uint32_t   itemQuantity = 1;
+		uint64_t   startBid     = 0;   ///< Minimum starting bid (gold).
+		uint64_t   buyout       = 0;   ///< 0 = no buyout price.
+		AHDuration duration     = AHDuration::Hours24;
+	};
+
+	/// Server result of a post-listing attempt (M35.4).
+	struct AHPostListingResultMessage
+	{
+		uint32_t    clientId  = 0;
+		uint8_t     success   = 0;    ///< 1 on success, 0 on failure.
+		uint64_t    listingId = 0;    ///< Assigned listing id on success; 0 on failure.
+		std::string errorReason;      ///< Human-readable reason on failure.
+	};
+
+	/// Client search request with optional filters and sort (M35.4).
+	struct AHSearchRequestMessage
+	{
+		uint32_t    clientId    = 0;
+		uint32_t    itemId      = 0;    ///< 0 = any item.
+		uint64_t    maxPrice    = 0;    ///< 0 = no upper price limit.
+		uint32_t    pageIndex   = 0;    ///< 0-based page index.
+		AHSortOrder sortOrder   = AHSortOrder::PriceAsc;
+	};
+
+	/// One listing entry inside an AHSearchResult packet (M35.4).
+	struct AHListingEntry
+	{
+		uint64_t listingId    = 0;
+		uint32_t sellerItemId = 0;
+		uint32_t itemQuantity = 1;
+		uint64_t startBid     = 0;
+		uint64_t buyout       = 0;    ///< 0 = no buyout.
+		uint64_t currentBid   = 0;
+		uint32_t expiresInSec = 0;    ///< Seconds until auction expires (clamped to 0).
+		uint8_t  hasBid       = 0;    ///< 1 when at least one bid exists.
+	};
+
+	/// Server search result page pushed to the requesting client (M35.4).
+	struct AHSearchResultMessage
+	{
+		uint32_t                   clientId    = 0;
+		uint32_t                   totalCount  = 0; ///< Total matching listings (all pages).
+		uint32_t                   pageIndex   = 0;
+		std::vector<AHListingEntry> listings;
+	};
+
+	/// Client bid request on one active listing (M35.4).
+	struct AHBidMessage
+	{
+		uint32_t clientId   = 0;
+		uint64_t listingId  = 0;
+		uint64_t bidAmount  = 0; ///< Must be > current_bid and >= current_bid * 1.05.
+	};
+
+	/// Server bid outcome pushed to the bidder (M35.4).
+	struct AHBidResultMessage
+	{
+		uint32_t    clientId    = 0;
+		uint64_t    listingId   = 0;
+		uint8_t     success     = 0;  ///< 1 on success.
+		uint64_t    newBid      = 0;  ///< Accepted bid amount on success.
+		std::string errorReason;      ///< Human-readable reason on failure.
+	};
+
+	/// Client buyout request for one active listing (M35.4).
+	struct AHBuyoutMessage
+	{
+		uint32_t clientId  = 0;
+		uint64_t listingId = 0;
+	};
+
+	/// Server buyout outcome pushed to the buyer (M35.4).
+	struct AHBuyoutResultMessage
+	{
+		uint32_t    clientId    = 0;
+		uint64_t    listingId   = 0;
+		uint8_t     success     = 0;  ///< 1 on success.
+		std::string errorReason;      ///< Human-readable reason on failure.
+	};
+
+	/// Client request to list its own active auctions (M35.4).
+	struct AHMyListingsMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Server response to AHMyListings (M35.4).
+	struct AHMyListingsResultMessage
+	{
+		uint32_t                    clientId = 0;
+		std::vector<AHListingEntry> listings;
+	};
+
+	/// Client request to cancel one of its own active listings (M35.4).
+	struct AHCancelListingMessage
+	{
+		uint32_t clientId  = 0;
+		uint64_t listingId = 0;
+	};
+
+	/// Server cancel outcome pushed to the seller (M35.4).
+	struct AHCancelResultMessage
+	{
+		uint32_t    clientId    = 0;
+		uint64_t    listingId   = 0;
+		uint8_t     success     = 0;
+		std::string errorReason;
+	};
+
+	/// One pending item/gold delivery pushed to a client on login (M35.4).
+	struct AHDeliveryEntry
+	{
+		uint64_t deliveryId   = 0;
+		uint64_t goldAmount   = 0;  ///< Gold credited; 0 when item-only.
+		uint32_t itemId       = 0;  ///< Item delivered; 0 when gold-only.
+		uint32_t itemQuantity = 0;
+		std::string reason;         ///< "sold", "outbid", "expired_no_bid", "cancelled"
+	};
+
+	/// Server pushes all pending AH deliveries to the client on login (M35.4).
+	struct AHDeliverySyncMessage
+	{
+		uint32_t                     clientId = 0;
+		std::vector<AHDeliveryEntry> deliveries;
+	};
+
+	// M35.4 — encode / decode declarations ------------------------------------
+
+	/// Encode a client AH post-listing request packet.
+	std::vector<std::byte> EncodeAHPostListing(const AHPostListingMessage& message);
+
+	/// Decode a client AH post-listing request packet.
+	bool DecodeAHPostListing(std::span<const std::byte> packet, AHPostListingMessage& outMessage);
+
+	/// Encode a server AH post-listing result packet.
+	std::vector<std::byte> EncodeAHPostListingResult(const AHPostListingResultMessage& message);
+
+	/// Decode a server AH post-listing result packet.
+	bool DecodeAHPostListingResult(std::span<const std::byte> packet, AHPostListingResultMessage& outMessage);
+
+	/// Encode a client AH search request packet.
+	std::vector<std::byte> EncodeAHSearchRequest(const AHSearchRequestMessage& message);
+
+	/// Decode a client AH search request packet.
+	bool DecodeAHSearchRequest(std::span<const std::byte> packet, AHSearchRequestMessage& outMessage);
+
+	/// Encode a server AH search result packet.
+	std::vector<std::byte> EncodeAHSearchResult(const AHSearchResultMessage& message);
+
+	/// Decode a server AH search result packet.
+	bool DecodeAHSearchResult(std::span<const std::byte> packet, AHSearchResultMessage& outMessage);
+
+	/// Encode a client AH bid request packet.
+	std::vector<std::byte> EncodeAHBid(const AHBidMessage& message);
+
+	/// Decode a client AH bid request packet.
+	bool DecodeAHBid(std::span<const std::byte> packet, AHBidMessage& outMessage);
+
+	/// Encode a server AH bid result packet.
+	std::vector<std::byte> EncodeAHBidResult(const AHBidResultMessage& message);
+
+	/// Decode a server AH bid result packet.
+	bool DecodeAHBidResult(std::span<const std::byte> packet, AHBidResultMessage& outMessage);
+
+	/// Encode a client AH buyout request packet.
+	std::vector<std::byte> EncodeAHBuyout(const AHBuyoutMessage& message);
+
+	/// Decode a client AH buyout request packet.
+	bool DecodeAHBuyout(std::span<const std::byte> packet, AHBuyoutMessage& outMessage);
+
+	/// Encode a server AH buyout result packet.
+	std::vector<std::byte> EncodeAHBuyoutResult(const AHBuyoutResultMessage& message);
+
+	/// Decode a server AH buyout result packet.
+	bool DecodeAHBuyoutResult(std::span<const std::byte> packet, AHBuyoutResultMessage& outMessage);
+
+	/// Encode a client AH my-listings request packet.
+	std::vector<std::byte> EncodeAHMyListings(const AHMyListingsMessage& message);
+
+	/// Decode a client AH my-listings request packet.
+	bool DecodeAHMyListings(std::span<const std::byte> packet, AHMyListingsMessage& outMessage);
+
+	/// Encode a server AH my-listings result packet.
+	std::vector<std::byte> EncodeAHMyListingsResult(const AHMyListingsResultMessage& message);
+
+	/// Decode a server AH my-listings result packet.
+	bool DecodeAHMyListingsResult(std::span<const std::byte> packet, AHMyListingsResultMessage& outMessage);
+
+	/// Encode a client AH cancel-listing request packet.
+	std::vector<std::byte> EncodeAHCancelListing(const AHCancelListingMessage& message);
+
+	/// Decode a client AH cancel-listing request packet.
+	bool DecodeAHCancelListing(std::span<const std::byte> packet, AHCancelListingMessage& outMessage);
+
+	/// Encode a server AH cancel result packet.
+	std::vector<std::byte> EncodeAHCancelResult(const AHCancelResultMessage& message);
+
+	/// Decode a server AH cancel result packet.
+	bool DecodeAHCancelResult(std::span<const std::byte> packet, AHCancelResultMessage& outMessage);
+
+	/// Encode a server AH delivery sync packet pushed to a client on login.
+	std::vector<std::byte> EncodeAHDeliverySync(const AHDeliverySyncMessage& message);
+
+	/// Decode a server AH delivery sync packet.
+	bool DecodeAHDeliverySync(std::span<const std::byte> packet, AHDeliverySyncMessage& outMessage);
 }

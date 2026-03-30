@@ -1750,4 +1750,503 @@ namespace engine::server
 		outMessage.success  = ReadU8(payload, offset);  offset += 1;
 		return ReadSizedString(payload, offset, outMessage.errorReason);
 	}
+
+	// -------------------------------------------------------------------------
+	// M35.4 — Auction house encode / decode helpers
+	// -------------------------------------------------------------------------
+
+	namespace
+	{
+		/// AHListingEntry wire size (fixed fields only; no variable-length strings).
+		/// listingId(8) + sellerItemId(4) + itemQuantity(4) + startBid(8) + buyout(8)
+		/// + currentBid(8) + expiresInSec(4) + hasBid(1) = 45 bytes.
+		inline constexpr size_t kAHListingEntrySize = 45u;
+
+		/// Append one AHListingEntry to a packet buffer.
+		void WriteAHListingEntry(std::vector<std::byte>& out, const AHListingEntry& e)
+		{
+			WriteU64(out, e.listingId);
+			WriteU32(out, e.sellerItemId);
+			WriteU32(out, e.itemQuantity);
+			WriteU64(out, e.startBid);
+			WriteU64(out, e.buyout);
+			WriteU64(out, e.currentBid);
+			WriteU32(out, e.expiresInSec);
+			WriteU8(out, e.hasBid);
+		}
+
+		/// Read one AHListingEntry from a payload buffer; advances \p offset by kAHListingEntrySize.
+		bool ReadAHListingEntry(std::span<const std::byte> payload, size_t& offset, AHListingEntry& out)
+		{
+			if ((offset + kAHListingEntrySize) > payload.size())
+			{
+				return false;
+			}
+			out.listingId    = ReadU64(payload, offset); offset += 8;
+			out.sellerItemId = ReadU32(payload, offset); offset += 4;
+			out.itemQuantity = ReadU32(payload, offset); offset += 4;
+			out.startBid     = ReadU64(payload, offset); offset += 8;
+			out.buyout       = ReadU64(payload, offset); offset += 8;
+			out.currentBid   = ReadU64(payload, offset); offset += 8;
+			out.expiresInSec = ReadU32(payload, offset); offset += 4;
+			out.hasBid       = ReadU8(payload, offset);  offset += 1;
+			return true;
+		}
+
+		/// Append a list of AHListingEntry (count u32 + entries).
+		void WriteAHListingList(std::vector<std::byte>& out, const std::vector<AHListingEntry>& entries)
+		{
+			WriteU32(out, static_cast<uint32_t>(entries.size()));
+			for (const AHListingEntry& e : entries)
+			{
+				WriteAHListingEntry(out, e);
+			}
+		}
+
+		/// Read a list of AHListingEntry from a payload buffer.
+		bool ReadAHListingList(std::span<const std::byte> payload, size_t& offset, std::vector<AHListingEntry>& out)
+		{
+			if ((offset + 4) > payload.size())
+			{
+				return false;
+			}
+			const uint32_t count = ReadU32(payload, offset);
+			offset += 4;
+			out.clear();
+			out.reserve(count);
+			for (uint32_t i = 0; i < count; ++i)
+			{
+				AHListingEntry entry{};
+				if (!ReadAHListingEntry(payload, offset, entry))
+				{
+					return false;
+				}
+				out.push_back(entry);
+			}
+			return true;
+		}
+
+		/// AHDeliveryEntry min wire size: deliveryId(8)+gold(8)+itemId(4)+itemQty(4)+reason_len(2)=26.
+		inline constexpr size_t kAHDeliveryEntryMinSize = 26u;
+
+		/// Append one AHDeliveryEntry to a packet buffer.
+		void WriteAHDeliveryEntry(std::vector<std::byte>& out, const AHDeliveryEntry& e)
+		{
+			WriteU64(out, e.deliveryId);
+			WriteU64(out, e.goldAmount);
+			WriteU32(out, e.itemId);
+			WriteU32(out, e.itemQuantity);
+			WriteSizedString(out, e.reason);
+		}
+
+		/// Read one AHDeliveryEntry from a payload buffer.
+		bool ReadAHDeliveryEntry(std::span<const std::byte> payload, size_t& offset, AHDeliveryEntry& out)
+		{
+			if ((offset + kAHDeliveryEntryMinSize) > payload.size())
+			{
+				return false;
+			}
+			out.deliveryId   = ReadU64(payload, offset); offset += 8;
+			out.goldAmount   = ReadU64(payload, offset); offset += 8;
+			out.itemId       = ReadU32(payload, offset); offset += 4;
+			out.itemQuantity = ReadU32(payload, offset); offset += 4;
+			return ReadSizedString(payload, offset, out.reason);
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// AHPostListing (client → server)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHPostListing(const AHPostListingMessage& message)
+	{
+		// clientId(4)+itemId(4)+itemQty(4)+startBid(8)+buyout(8)+duration(1) = 29
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHPostListing, 29);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.itemQuantity);
+		WriteU64(packet, message.startBid);
+		WriteU64(packet, message.buyout);
+		WriteU8(packet, static_cast<uint8_t>(message.duration));
+		return packet;
+	}
+
+	bool DecodeAHPostListing(std::span<const std::byte> packet, AHPostListingMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHPostListing, payload) || payload.size() < 29)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId      = ReadU32(payload, offset); offset += 4;
+		outMessage.itemId        = ReadU32(payload, offset); offset += 4;
+		outMessage.itemQuantity  = ReadU32(payload, offset); offset += 4;
+		outMessage.startBid      = ReadU64(payload, offset); offset += 8;
+		outMessage.buyout        = ReadU64(payload, offset); offset += 8;
+		outMessage.duration      = static_cast<AHDuration>(ReadU8(payload, offset));
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// AHPostListingResult (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHPostListingResult(const AHPostListingResultMessage& message)
+	{
+		// clientId(4)+success(1)+listingId(8)+reason_len(2)+reason = 15+reason
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHPostListingResult,
+			15 + message.errorReason.size());
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.success);
+		WriteU64(packet, message.listingId);
+		WriteSizedString(packet, message.errorReason);
+		return packet;
+	}
+
+	bool DecodeAHPostListingResult(std::span<const std::byte> packet, AHPostListingResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHPostListingResult, payload) || payload.size() < 15)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.success   = ReadU8(payload, offset);  offset += 1;
+		outMessage.listingId = ReadU64(payload, offset); offset += 8;
+		return ReadSizedString(payload, offset, outMessage.errorReason);
+	}
+
+	// -------------------------------------------------------------------------
+	// AHSearchRequest (client → server)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHSearchRequest(const AHSearchRequestMessage& message)
+	{
+		// clientId(4)+itemId(4)+maxPrice(8)+pageIndex(4)+sortOrder(1) = 21
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHSearchRequest, 21);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		WriteU64(packet, message.maxPrice);
+		WriteU32(packet, message.pageIndex);
+		WriteU8(packet, static_cast<uint8_t>(message.sortOrder));
+		return packet;
+	}
+
+	bool DecodeAHSearchRequest(std::span<const std::byte> packet, AHSearchRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHSearchRequest, payload) || payload.size() < 21)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.itemId    = ReadU32(payload, offset); offset += 4;
+		outMessage.maxPrice  = ReadU64(payload, offset); offset += 8;
+		outMessage.pageIndex = ReadU32(payload, offset); offset += 4;
+		outMessage.sortOrder = static_cast<AHSortOrder>(ReadU8(payload, offset));
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// AHSearchResult (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHSearchResult(const AHSearchResultMessage& message)
+	{
+		// clientId(4)+totalCount(4)+pageIndex(4)+entries_count(4)+entries = 16+n*45
+		const size_t listingsBytes = 4u + message.listings.size() * kAHListingEntrySize;
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHSearchResult,
+			12 + listingsBytes);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.totalCount);
+		WriteU32(packet, message.pageIndex);
+		WriteAHListingList(packet, message.listings);
+		return packet;
+	}
+
+	bool DecodeAHSearchResult(std::span<const std::byte> packet, AHSearchResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHSearchResult, payload) || payload.size() < 16)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId   = ReadU32(payload, offset); offset += 4;
+		outMessage.totalCount = ReadU32(payload, offset); offset += 4;
+		outMessage.pageIndex  = ReadU32(payload, offset); offset += 4;
+		return ReadAHListingList(payload, offset, outMessage.listings);
+	}
+
+	// -------------------------------------------------------------------------
+	// AHBid (client → server)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHBid(const AHBidMessage& message)
+	{
+		// clientId(4)+listingId(8)+bidAmount(8) = 20
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHBid, 20);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.listingId);
+		WriteU64(packet, message.bidAmount);
+		return packet;
+	}
+
+	bool DecodeAHBid(std::span<const std::byte> packet, AHBidMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHBid, payload) || payload.size() < 20)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.listingId = ReadU64(payload, offset); offset += 8;
+		outMessage.bidAmount = ReadU64(payload, offset);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// AHBidResult (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHBidResult(const AHBidResultMessage& message)
+	{
+		// clientId(4)+listingId(8)+success(1)+newBid(8)+reason_len(2)+reason
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHBidResult,
+			23 + message.errorReason.size());
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.listingId);
+		WriteU8(packet, message.success);
+		WriteU64(packet, message.newBid);
+		WriteSizedString(packet, message.errorReason);
+		return packet;
+	}
+
+	bool DecodeAHBidResult(std::span<const std::byte> packet, AHBidResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHBidResult, payload) || payload.size() < 23)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.listingId = ReadU64(payload, offset); offset += 8;
+		outMessage.success   = ReadU8(payload, offset);  offset += 1;
+		outMessage.newBid    = ReadU64(payload, offset); offset += 8;
+		return ReadSizedString(payload, offset, outMessage.errorReason);
+	}
+
+	// -------------------------------------------------------------------------
+	// AHBuyout (client → server)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHBuyout(const AHBuyoutMessage& message)
+	{
+		// clientId(4)+listingId(8) = 12
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHBuyout, 12);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.listingId);
+		return packet;
+	}
+
+	bool DecodeAHBuyout(std::span<const std::byte> packet, AHBuyoutMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHBuyout, payload) || payload.size() < 12)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.listingId = ReadU64(payload, offset);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// AHBuyoutResult (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHBuyoutResult(const AHBuyoutResultMessage& message)
+	{
+		// clientId(4)+listingId(8)+success(1)+reason_len(2)+reason
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHBuyoutResult,
+			15 + message.errorReason.size());
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.listingId);
+		WriteU8(packet, message.success);
+		WriteSizedString(packet, message.errorReason);
+		return packet;
+	}
+
+	bool DecodeAHBuyoutResult(std::span<const std::byte> packet, AHBuyoutResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHBuyoutResult, payload) || payload.size() < 15)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.listingId = ReadU64(payload, offset); offset += 8;
+		outMessage.success   = ReadU8(payload, offset);  offset += 1;
+		return ReadSizedString(payload, offset, outMessage.errorReason);
+	}
+
+	// -------------------------------------------------------------------------
+	// AHMyListings (client → server)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHMyListings(const AHMyListingsMessage& message)
+	{
+		// clientId(4)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHMyListings, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeAHMyListings(std::span<const std::byte> packet, AHMyListingsMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHMyListings, payload) || payload.size() < 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// AHMyListingsResult (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHMyListingsResult(const AHMyListingsResultMessage& message)
+	{
+		// clientId(4)+entries_count(4)+entries
+		const size_t listingsBytes = 4u + message.listings.size() * kAHListingEntrySize;
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHMyListingsResult,
+			4 + listingsBytes);
+		WriteU32(packet, message.clientId);
+		WriteAHListingList(packet, message.listings);
+		return packet;
+	}
+
+	bool DecodeAHMyListingsResult(std::span<const std::byte> packet, AHMyListingsResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHMyListingsResult, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset); offset += 4;
+		return ReadAHListingList(payload, offset, outMessage.listings);
+	}
+
+	// -------------------------------------------------------------------------
+	// AHCancelListing (client → server)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHCancelListing(const AHCancelListingMessage& message)
+	{
+		// clientId(4)+listingId(8) = 12
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHCancelListing, 12);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.listingId);
+		return packet;
+	}
+
+	bool DecodeAHCancelListing(std::span<const std::byte> packet, AHCancelListingMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHCancelListing, payload) || payload.size() < 12)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.listingId = ReadU64(payload, offset);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// AHCancelResult (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHCancelResult(const AHCancelResultMessage& message)
+	{
+		// clientId(4)+listingId(8)+success(1)+reason_len(2)+reason
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHCancelResult,
+			15 + message.errorReason.size());
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.listingId);
+		WriteU8(packet, message.success);
+		WriteSizedString(packet, message.errorReason);
+		return packet;
+	}
+
+	bool DecodeAHCancelResult(std::span<const std::byte> packet, AHCancelResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHCancelResult, payload) || payload.size() < 15)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.listingId = ReadU64(payload, offset); offset += 8;
+		outMessage.success   = ReadU8(payload, offset);  offset += 1;
+		return ReadSizedString(payload, offset, outMessage.errorReason);
+	}
+
+	// -------------------------------------------------------------------------
+	// AHDeliverySync (server → client)
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeAHDeliverySync(const AHDeliverySyncMessage& message)
+	{
+		// clientId(4) + count(4) + entries(variable)
+		size_t entriesSize = 4u; // count field
+		for (const AHDeliveryEntry& e : message.deliveries)
+		{
+			entriesSize += kAHDeliveryEntryMinSize + e.reason.size();
+		}
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AHDeliverySync,
+			4 + entriesSize);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, static_cast<uint32_t>(message.deliveries.size()));
+		for (const AHDeliveryEntry& e : message.deliveries)
+		{
+			WriteAHDeliveryEntry(packet, e);
+		}
+		return packet;
+	}
+
+	bool DecodeAHDeliverySync(std::span<const std::byte> packet, AHDeliverySyncMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AHDeliverySync, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset); offset += 4;
+		const uint32_t count = ReadU32(payload, offset); offset += 4;
+		outMessage.deliveries.clear();
+		outMessage.deliveries.reserve(count);
+		for (uint32_t i = 0; i < count; ++i)
+		{
+			AHDeliveryEntry entry{};
+			if (!ReadAHDeliveryEntry(payload, offset, entry))
+			{
+				return false;
+			}
+			outMessage.deliveries.push_back(std::move(entry));
+		}
+		return true;
+	}
 }

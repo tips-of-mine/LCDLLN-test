@@ -29,6 +29,8 @@ namespace engine::client
 
 	bool AuthUiPresenter::Init(std::string masterHost, uint16_t masterPort)
 	{
+		LOG_DEBUG(Core, "[AuthUiPresenter] Init enter");
+
 		if (m_initialized)
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] Init ignored: already initialized");
@@ -43,7 +45,7 @@ namespace engine::client
 
 		m_masterHost  = std::move(masterHost);
 		m_masterPort  = masterPort;
-		m_state.store(AuthUiState::Login);
+		m_state.store(static_cast<uint8_t>(AuthUiState::Login));
 		m_preSubmitState  = AuthUiState::Login;
 		m_resultReady.store(false);
 		m_resultSuccess.store(false);
@@ -107,8 +109,8 @@ namespace engine::client
 
 	void AuthUiPresenter::SwitchToRegister()
 	{
-		AuthUiState expected = AuthUiState::Login;
-		if (!m_state.compare_exchange_strong(expected, AuthUiState::Register))
+		uint8_t expected = static_cast<uint8_t>(AuthUiState::Login);
+		if (!m_state.compare_exchange_strong(expected, static_cast<uint8_t>(AuthUiState::Register)))
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] SwitchToRegister ignored: state is not Login");
 			return;
@@ -118,13 +120,13 @@ namespace engine::client
 
 	void AuthUiPresenter::SwitchToLogin()
 	{
-		const AuthUiState cur = m_state.load();
+		const AuthUiState cur = static_cast<AuthUiState>(m_state.load());
 		if (cur != AuthUiState::Register && cur != AuthUiState::Error)
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] SwitchToLogin ignored: state is not Register or Error");
 			return;
 		}
-		m_state.store(AuthUiState::Login);
+		m_state.store(static_cast<uint8_t>(AuthUiState::Login));
 		LOG_INFO(Core, "[AuthUiPresenter] Switched to Login screen");
 	}
 
@@ -134,8 +136,8 @@ namespace engine::client
 
 	void AuthUiPresenter::SubmitLogin()
 	{
-		AuthUiState expected = AuthUiState::Login;
-		if (!m_state.compare_exchange_strong(expected, AuthUiState::Submitting))
+		uint8_t expected = static_cast<uint8_t>(AuthUiState::Login);
+		if (!m_state.compare_exchange_strong(expected, static_cast<uint8_t>(AuthUiState::Submitting)))
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] SubmitLogin ignored: state is not Login");
 			return;
@@ -154,8 +156,8 @@ namespace engine::client
 
 	void AuthUiPresenter::SubmitRegister()
 	{
-		AuthUiState expected = AuthUiState::Register;
-		if (!m_state.compare_exchange_strong(expected, AuthUiState::Submitting))
+		uint8_t expected = static_cast<uint8_t>(AuthUiState::Register);
+		if (!m_state.compare_exchange_strong(expected, static_cast<uint8_t>(AuthUiState::Submitting)))
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] SubmitRegister ignored: state is not Register");
 			return;
@@ -173,8 +175,9 @@ namespace engine::client
 
 	void AuthUiPresenter::DismissError()
 	{
-		AuthUiState expected = AuthUiState::Error;
-		if (!m_state.compare_exchange_strong(expected, m_preSubmitState))
+		uint8_t expected = static_cast<uint8_t>(AuthUiState::Error);
+		uint8_t desired  = static_cast<uint8_t>(m_preSubmitState);
+		if (!m_state.compare_exchange_strong(expected, desired))
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] DismissError ignored: state is not Error");
 			return;
@@ -188,7 +191,7 @@ namespace engine::client
 
 	bool AuthUiPresenter::Poll()
 	{
-		if (m_state.load() != AuthUiState::Submitting)
+		if (static_cast<AuthUiState>(m_state.load()) != AuthUiState::Submitting)
 			return false;
 
 		if (!m_resultReady.load())
@@ -199,7 +202,7 @@ namespace engine::client
 
 		if (m_resultSuccess.load())
 		{
-			m_state.store(AuthUiState::Success);
+			m_state.store(static_cast<uint8_t>(AuthUiState::Success));
 			LOG_INFO(Core, "[AuthUiPresenter] Poll → Success (account_id={}, shard_id={})",
 				m_resultAccountId.load(), m_resultShardId.load());
 			return true;
@@ -210,7 +213,7 @@ namespace engine::client
 			std::lock_guard<std::mutex> lk(m_resultMutex);
 			LOG_WARN(Core, "[AuthUiPresenter] Poll → Error ({})", m_resultError);
 		}
-		m_state.store(AuthUiState::Error);
+		m_state.store(static_cast<uint8_t>(AuthUiState::Error));
 		return true;
 	}
 
@@ -236,7 +239,7 @@ namespace engine::client
 
 	std::string AuthUiPresenter::BuildPanelText() const
 	{
-		const AuthUiState state = m_state.load();
+		const AuthUiState state = static_cast<AuthUiState>(m_state.load());
 
 		std::string login;
 		{

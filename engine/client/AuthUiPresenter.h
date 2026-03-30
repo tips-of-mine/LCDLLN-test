@@ -109,7 +109,7 @@ namespace engine::client
 		// -----------------------------------------------------------------------
 
 		/// Current UI state (atomic read; safe from any thread).
-		AuthUiState GetState() const { return m_state.load(); }
+		AuthUiState GetState() const { return static_cast<AuthUiState>(m_state.load()); }
 
 		/// Human-readable error message; valid when state == Error.
 		std::string GetErrorMessage() const;
@@ -169,8 +169,10 @@ namespace engine::client
 		std::string        m_emailField;
 
 		// ---- State machine ----
-		std::atomic<AuthUiState> m_state{ AuthUiState::Login };
-		AuthUiState              m_preSubmitState = AuthUiState::Login; ///< State to restore on error.
+		/// State stored as uint8_t for guaranteed lock-free atomic support on all MSVC/x86-64 targets.
+		/// Use GetState() / SetState() helpers to convert to/from AuthUiState.
+		std::atomic<uint8_t> m_state{ static_cast<uint8_t>(AuthUiState::Login) };
+		AuthUiState          m_preSubmitState = AuthUiState::Login; ///< State to restore on error.
 
 		// ---- Background result (written by network thread, read by Poll()) ----
 		std::atomic<bool>     m_resultReady{ false };

@@ -44,5 +44,9 @@
     },
     "paths": {
         "content": "game/data"
+    },
+    "client": {
+        "master_host": "localhost",
+        "master_port": 3840
     }
 }

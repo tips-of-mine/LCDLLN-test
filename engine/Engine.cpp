@@ -266,6 +266,17 @@ namespace engine
 			LOG_WARN(Core, "[Boot] ChatUiPresenter viewport FAILED — using fallback layout");
 		}
 
+		// STAB.13: Auth/login screen — shown at boot before the player enters the game.
+		{
+			const std::string masterHost = m_cfg.GetString("client.master_host", "localhost");
+			const uint16_t    masterPort = static_cast<uint16_t>(
+				m_cfg.GetInt("client.master_port", 3840));
+			if (!m_authUi.Init(masterHost, masterPort))
+			{
+				LOG_WARN(Core, "[Boot] AuthUiPresenter init FAILED — login screen disabled");
+			}
+		}
+
 		// -----------------------------------------------------------------
 		// Vulkan init
 		// -----------------------------------------------------------------
@@ -1350,6 +1361,7 @@ namespace engine
 			m_editorMode.reset();
 		}
 		m_chatUi.Shutdown();
+		m_authUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -1427,6 +1439,9 @@ namespace engine
 		out.camera = readState.camera;
 		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
 		out.chatDebugText = m_chatUi.IsInitialized() ? m_chatUi.BuildPanelText() : std::string{};
+		// STAB.13: poll network result and refresh auth screen panel text each frame.
+		m_authUi.Poll();
+		out.authUiText = m_authUi.IsInitialized() ? m_authUi.BuildPanelText() : std::string{};
 		if (!m_editorEnabled)
 		{
 			if (!m_chatUi.IsChatFocusActive())

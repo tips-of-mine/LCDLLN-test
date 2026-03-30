@@ -109,6 +109,7 @@ add_library(engine_core
   engine/client/ShopUi.cpp
   engine/client/TradeUi.cpp
   engine/client/AuctionHouseUi.cpp
+  engine/client/AuthUiPresenter.cpp
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp

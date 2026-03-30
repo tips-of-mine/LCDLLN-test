@@ -22,6 +22,7 @@ if(WIN32)
     QuestRuntime.cpp
     SpawnerRuntime.cpp
     VendorRuntime.cpp
+    AuctionHouseRuntime.cpp
     EventRuntime.cpp
     UdpTransport.cpp
     TickScheduler.cpp
@@ -81,6 +82,7 @@ elseif(UNIX)
     ConnectionSessionMap.cpp
     SmtpMailer.cpp
     LocalizedEmail.cpp
+    AuctionHouseRuntime.cpp
     TermsRepository.cpp
     TermsHandler.cpp
     PasswordResetStore.cpp

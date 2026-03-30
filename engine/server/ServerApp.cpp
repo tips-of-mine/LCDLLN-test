@@ -167,6 +167,8 @@ namespace engine::server
 		m_listenPort = ClampToU16(m_config.GetInt("server.listen_port", 27015), 1, 65535);
 		m_tickHz = ResolveTickHz();
 		m_snapshotHz = ResolveSnapshotHz(m_tickHz);
+		// M35.3 — Review window is 5 seconds expressed in server ticks.
+		m_tradeReviewTicks = static_cast<uint32_t>(m_tickHz) * 5u;
 		m_nextClientId = 1;
 		m_currentTick = 0;
 		m_characterAutosaveIntervalTicks = 0;
@@ -482,6 +484,63 @@ namespace engine::server
 		if (DecodeVendorSell(packetBytes, vendorSell))
 		{
 			HandleVendorSell(datagram.endpoint, vendorSell);
+			return;
+		}
+
+		// M35.3 — Trade packets (client-initiated)
+		TradeAcceptMessage tradeAccept{};
+		if (DecodeTradeAccept(packetBytes, tradeAccept))
+		{
+			HandleTradeAccept(datagram.endpoint, tradeAccept);
+			return;
+		}
+
+		TradeDeclineMessage tradeDecline{};
+		if (DecodeTradeDecline(packetBytes, tradeDecline))
+		{
+			HandleTradeDecline(datagram.endpoint, tradeDecline);
+			return;
+		}
+
+		TradeAddItemMessage tradeAddItem{};
+		if (DecodeTradeAddItem(packetBytes, tradeAddItem))
+		{
+			HandleTradeAddItem(datagram.endpoint, tradeAddItem);
+			return;
+		}
+
+		TradeRemoveItemMessage tradeRemoveItem{};
+		if (DecodeTradeRemoveItem(packetBytes, tradeRemoveItem))
+		{
+			HandleTradeRemoveItem(datagram.endpoint, tradeRemoveItem);
+			return;
+		}
+
+		TradeSetGoldMessage tradeSetGold{};
+		if (DecodeTradeSetGold(packetBytes, tradeSetGold))
+		{
+			HandleTradeSetGold(datagram.endpoint, tradeSetGold);
+			return;
+		}
+
+		TradeLockMessage tradeLock{};
+		if (DecodeTradeLock(packetBytes, tradeLock))
+		{
+			HandleTradeLock(datagram.endpoint, tradeLock);
+			return;
+		}
+
+		TradeConfirmMessage tradeConfirmMsg{};
+		if (DecodeTradeConfirm(packetBytes, tradeConfirmMsg))
+		{
+			HandleTradeConfirm(datagram.endpoint, tradeConfirmMsg);
+			return;
+		}
+
+		TradeCancelMessage tradeCancelMsg{};
+		if (DecodeTradeCancel(packetBytes, tradeCancelMsg))
+		{
+			HandleTradeCancel(datagram.endpoint, tradeCancelMsg);
 			return;
 		}
 
@@ -810,6 +869,8 @@ namespace engine::server
 		// M32.2 — Expire stale party invites once per tick.
 		if (m_partySystem.IsInitialized())
 			m_partySystem.ExpireInvites(m_currentTick);
+		// M35.3 — Advance trade review timers.
+		UpdateTradeSessions();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -4079,6 +4140,9 @@ namespace engine::server
 			return;
 		}
 
+		// M35.3 — Cancel any open trade before removing the client.
+		CancelTradeForClient(clientId, "player_disconnect");
+
 		SaveConnectedClient(*clientIt, persistenceReason);
 		if (clientIt->hasCell)
 		{
@@ -4351,6 +4415,10 @@ namespace engine::server
 
 		case ChatSlashCommandKind::PartyKick:
 			return HandlePartyKickCommand(sender, command.argsRemainder);
+
+		// M35.3 — Direct player trade
+		case ChatSlashCommandKind::Trade:
+			return HandleTradeCommand(sender, command.argsRemainder);
 
 		case ChatSlashCommandKind::None:
 		default:
@@ -4938,5 +5006,751 @@ namespace engine::server
 		default:
 			return 0;
 		}
+	}
+
+	// =========================================================================
+	// M35.3 — Player direct trade system
+	// =========================================================================
+
+	TradeSession* ServerApp::FindTradeSessionForClient(uint32_t clientId)
+	{
+		for (TradeSession& session : m_tradeSessions)
+		{
+			if (session.initiatorClientId == clientId || session.responderClientId == clientId)
+			{
+				return &session;
+			}
+		}
+		return nullptr;
+	}
+
+	bool ServerApp::ValidateTradeRange(
+		const ConnectedClient& a,
+		const ConnectedClient& b,
+		std::string& outError) const
+	{
+		const float dx = a.positionMetersX - b.positionMetersX;
+		const float dz = a.positionMetersZ - b.positionMetersZ;
+		const float distSq = dx * dx + dz * dz;
+		const float maxDistSq = kTradeMaxRangeMeters * kTradeMaxRangeMeters;
+		if (distSq > maxDistSq)
+		{
+			outError = "out_of_range";
+			return false;
+		}
+		return true;
+	}
+
+	bool ServerApp::ValidateTradeOffer(
+		const ConnectedClient& client,
+		const TradeOffer& offer,
+		std::string& outError) const
+	{
+		for (const ItemStack& offered : offer.items)
+		{
+			uint32_t available = 0;
+			for (const ItemStack& held : client.inventory)
+			{
+				if (held.itemId == offered.itemId)
+				{
+					available = held.quantity;
+					break;
+				}
+			}
+			if (available < offered.quantity)
+			{
+				outError = "item_not_in_inventory";
+				LOG_WARN(Net, "[ServerApp] ValidateTradeOffer FAILED: insufficient item (client_id={}, item_id={}, have={}, need={})",
+					client.clientId, offered.itemId, available, offered.quantity);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool ServerApp::ValidateTradeGold(
+		const ConnectedClient& client,
+		const TradeOffer& offer,
+		std::string& outError) const
+	{
+		if (static_cast<uint64_t>(client.gold) < static_cast<uint64_t>(offer.gold))
+		{
+			outError = "insufficient_gold";
+			LOG_WARN(Net, "[ServerApp] ValidateTradeGold FAILED: overdraft (client_id={}, have={}, need={})",
+				client.clientId, client.gold, offer.gold);
+			return false;
+		}
+		return true;
+	}
+
+	bool ServerApp::HandleTradeCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		// Trim target name.
+		std::string targetName;
+		if (!ParsePartyTargetName(argsRemainder, targetName))
+		{
+			SendChatSystemNotice(sender, "Usage: /trade <player>");
+			LOG_WARN(Net, "[ServerApp] /trade rejected: missing target (client_id={})", sender.clientId);
+			return true;
+		}
+
+		const std::string senderLabel = "P" + std::to_string(sender.clientId);
+
+		// Reject self-trade.
+		if (ChatNameEqualsAsciiI(targetName, senderLabel))
+		{
+			SendChatSystemNotice(sender, "Cannot trade with yourself.");
+			LOG_WARN(Net, "[ServerApp] /trade rejected: self-target (client_id={})", sender.clientId);
+			return true;
+		}
+
+		// Sender must not already be in a trade.
+		if (FindTradeSessionForClient(sender.clientId) != nullptr)
+		{
+			SendChatSystemNotice(sender, "Already in a trade.");
+			LOG_WARN(Net, "[ServerApp] /trade rejected: sender already trading (client_id={})", sender.clientId);
+			return true;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player not found: " + targetName);
+			LOG_WARN(Net, "[ServerApp] /trade rejected: target not found (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+
+		// Target must not already be in a trade.
+		if (FindTradeSessionForClient(target->clientId) != nullptr)
+		{
+			SendChatSystemNotice(sender, targetName + " is busy trading.");
+			LOG_WARN(Net, "[ServerApp] /trade rejected: target already trading (target_id={})", target->clientId);
+			return true;
+		}
+
+		// Range check.
+		std::string rangeError;
+		if (!ValidateTradeRange(sender, *target, rangeError))
+		{
+			SendChatSystemNotice(sender, "You must be closer to trade (max 10m).");
+			LOG_WARN(Net, "[ServerApp] /trade rejected: out_of_range (client_id={}, target_id={})",
+				sender.clientId, target->clientId);
+			return true;
+		}
+
+		// Create Pending session.
+		TradeSession session{};
+		session.sessionId         = m_nextTradeSessionId++;
+		session.initiatorClientId = sender.clientId;
+		session.responderClientId = target->clientId;
+		session.state             = TradeState::Pending;
+		m_tradeSessions.push_back(std::move(session));
+
+		// Notify target.
+		TradeRequestNotifyMessage notify{};
+		notify.requesterName = senderLabel;
+		const auto notifyPacket = EncodeTradeRequestNotify(notify);
+		m_transport.Send(target->endpoint, notifyPacket);
+
+		SendChatSystemNotice(sender, "Trade request sent to " + targetName + ".");
+		SendChatSystemNotice(*target, senderLabel + " wants to trade with you. Type /trade accept or /trade decline.");
+
+		LOG_INFO(Net, "[ServerApp] Trade request created (session_id={}, initiator={}, responder={})",
+			m_tradeSessions.back().sessionId, sender.clientId, target->clientId);
+		return true;
+	}
+
+	void ServerApp::HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeAccept ignored: unknown endpoint");
+			return;
+		}
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Pending)
+		{
+			SendChatSystemNotice(*client, "No pending trade request.");
+			LOG_WARN(Net, "[ServerApp] TradeAccept ignored: no pending session (client_id={})", client->clientId);
+			return;
+		}
+
+		// Only the responder may accept.
+		if (session->responderClientId != client->clientId)
+		{
+			SendChatSystemNotice(*client, "No pending trade request.");
+			LOG_WARN(Net, "[ServerApp] TradeAccept ignored: not responder (client_id={})", client->clientId);
+			return;
+		}
+
+		// Range check again at accept time.
+		ConnectedClient* initiator = FindConnectedClient(session->initiatorClientId);
+		if (initiator == nullptr)
+		{
+			// Initiator disconnected.
+			m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+				[session](const TradeSession& s) { return s.sessionId == session->sessionId; }),
+				m_tradeSessions.end());
+			SendChatSystemNotice(*client, "Trade partner disconnected.");
+			LOG_WARN(Net, "[ServerApp] TradeAccept ignored: initiator gone (session_id={})", session->sessionId);
+			return;
+		}
+
+		std::string rangeError;
+		if (!ValidateTradeRange(*client, *initiator, rangeError))
+		{
+			CancelTradeForClient(client->clientId, "out_of_range");
+			SendChatSystemNotice(*client, "Too far away to trade.");
+			LOG_WARN(Net, "[ServerApp] TradeAccept rejected: out_of_range");
+			return;
+		}
+
+		session->state = TradeState::Open;
+		BroadcastTradeWindowSync(*session);
+
+		const std::string responderLabel = "P" + std::to_string(client->clientId);
+		SendChatSystemNotice(*initiator, responderLabel + " accepted the trade.");
+		LOG_INFO(Net, "[ServerApp] Trade accepted (session_id={}, responder={})", session->sessionId, client->clientId);
+	}
+
+	void ServerApp::HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeDecline ignored: unknown endpoint");
+			return;
+		}
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Pending)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeDecline ignored: no pending session (client_id={})", client->clientId);
+			return;
+		}
+
+		const uint32_t sessionId = session->sessionId;
+		const uint32_t initiatorId = session->initiatorClientId;
+
+		m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+			[sessionId](const TradeSession& s) { return s.sessionId == sessionId; }),
+			m_tradeSessions.end());
+
+		SendChatSystemNotice(*client, "Trade declined.");
+		ConnectedClient* initiator = FindConnectedClient(initiatorId);
+		if (initiator != nullptr)
+		{
+			const std::string label = "P" + std::to_string(client->clientId);
+			SendChatSystemNotice(*initiator, label + " declined the trade.");
+		}
+		LOG_INFO(Net, "[ServerApp] Trade declined (session_id={}, decliner={})", sessionId, client->clientId);
+	}
+
+	void ServerApp::HandleTradeAddItem(const Endpoint& endpoint, const TradeAddItemMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr) return;
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Open)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeAddItem ignored: no open session (client_id={})", client->clientId);
+			return;
+		}
+
+		TradeOffer& offer = (session->initiatorClientId == client->clientId)
+			? session->initiatorOffer
+			: session->responderOffer;
+
+		if (offer.locked)
+		{
+			SendChatSystemNotice(*client, "Cannot modify offer while locked.");
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: offer locked (client_id={})", client->clientId);
+			return;
+		}
+
+		// Validate item exists in inventory.
+		bool found = false;
+		for (const ItemStack& held : client->inventory)
+		{
+			if (held.itemId == request.itemId && held.quantity >= request.quantity)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+		{
+			SendChatSystemNotice(*client, "Item not available in inventory.");
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: item not found (client_id={}, item_id={})",
+				client->clientId, request.itemId);
+			return;
+		}
+
+		// Add or merge.
+		bool merged = false;
+		for (ItemStack& entry : offer.items)
+		{
+			if (entry.itemId == request.itemId)
+			{
+				entry.quantity += request.quantity;
+				merged = true;
+				break;
+			}
+		}
+		if (!merged)
+		{
+			offer.items.push_back({ request.itemId, request.quantity });
+		}
+
+		// Reset both locks when offer changes.
+		session->initiatorOffer.locked  = false;
+		session->responderOffer.locked  = false;
+
+		BroadcastTradeWindowSync(*session);
+		LOG_DEBUG(Net, "[ServerApp] TradeAddItem (client_id={}, item_id={}, qty={})",
+			client->clientId, request.itemId, request.quantity);
+	}
+
+	void ServerApp::HandleTradeRemoveItem(const Endpoint& endpoint, const TradeRemoveItemMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr) return;
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Open)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeRemoveItem ignored: no open session (client_id={})", client->clientId);
+			return;
+		}
+
+		TradeOffer& offer = (session->initiatorClientId == client->clientId)
+			? session->initiatorOffer
+			: session->responderOffer;
+
+		if (offer.locked)
+		{
+			SendChatSystemNotice(*client, "Cannot modify offer while locked.");
+			LOG_WARN(Net, "[ServerApp] TradeRemoveItem rejected: offer locked (client_id={})", client->clientId);
+			return;
+		}
+
+		const auto it = std::find_if(offer.items.begin(), offer.items.end(),
+			[&](const ItemStack& s) { return s.itemId == request.itemId; });
+		if (it != offer.items.end())
+		{
+			offer.items.erase(it);
+		}
+
+		// Reset both locks when offer changes.
+		session->initiatorOffer.locked  = false;
+		session->responderOffer.locked  = false;
+
+		BroadcastTradeWindowSync(*session);
+		LOG_DEBUG(Net, "[ServerApp] TradeRemoveItem (client_id={}, item_id={})", client->clientId, request.itemId);
+	}
+
+	void ServerApp::HandleTradeSetGold(const Endpoint& endpoint, const TradeSetGoldMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr) return;
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Open)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeSetGold ignored: no open session (client_id={})", client->clientId);
+			return;
+		}
+
+		TradeOffer& offer = (session->initiatorClientId == client->clientId)
+			? session->initiatorOffer
+			: session->responderOffer;
+
+		if (offer.locked)
+		{
+			SendChatSystemNotice(*client, "Cannot modify offer while locked.");
+			LOG_WARN(Net, "[ServerApp] TradeSetGold rejected: offer locked (client_id={})", client->clientId);
+			return;
+		}
+
+		if (request.gold > client->gold)
+		{
+			SendChatSystemNotice(*client, "Insufficient gold.");
+			LOG_WARN(Net, "[ServerApp] TradeSetGold rejected: insufficient gold (client_id={}, have={}, requested={})",
+				client->clientId, client->gold, request.gold);
+			return;
+		}
+
+		offer.gold = request.gold;
+
+		// Reset both locks when offer changes.
+		session->initiatorOffer.locked  = false;
+		session->responderOffer.locked  = false;
+
+		BroadcastTradeWindowSync(*session);
+		LOG_DEBUG(Net, "[ServerApp] TradeSetGold (client_id={}, gold={})", client->clientId, request.gold);
+	}
+
+	void ServerApp::HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr) return;
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Open)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeLock ignored: no open session (client_id={})", client->clientId);
+			return;
+		}
+
+		TradeOffer& offer = (session->initiatorClientId == client->clientId)
+			? session->initiatorOffer
+			: session->responderOffer;
+
+		offer.locked = true;
+
+		// If both locked: enter review phase with 5-second timer.
+		if (session->initiatorOffer.locked && session->responderOffer.locked)
+		{
+			session->state         = TradeState::Reviewing;
+			session->reviewEndTick = m_currentTick + m_tradeReviewTicks;
+			LOG_INFO(Net, "[ServerApp] Trade entering review (session_id={}, review_end_tick={})",
+				session->sessionId, session->reviewEndTick);
+		}
+
+		BroadcastTradeWindowSync(*session);
+		LOG_INFO(Net, "[ServerApp] TradeLock (client_id={}, session_id={}, state={})",
+			client->clientId, session->sessionId, static_cast<uint8_t>(session->state));
+	}
+
+	void ServerApp::HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr) return;
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr || session->state != TradeState::Reviewing)
+		{
+			SendChatSystemNotice(*client, "Review phase not active.");
+			LOG_WARN(Net, "[ServerApp] TradeConfirm ignored: not in reviewing state (client_id={})", client->clientId);
+			return;
+		}
+
+		TradeOffer& offer = (session->initiatorClientId == client->clientId)
+			? session->initiatorOffer
+			: session->responderOffer;
+
+		offer.confirmed = true;
+		LOG_INFO(Net, "[ServerApp] TradeConfirm received (client_id={}, session_id={})",
+			client->clientId, session->sessionId);
+
+		// Both confirmed: execute swap immediately.
+		if (session->initiatorOffer.confirmed && session->responderOffer.confirmed)
+		{
+			ExecuteTradeSwap(*session);
+		}
+		else
+		{
+			BroadcastTradeWindowSync(*session);
+		}
+	}
+
+	void ServerApp::HandleTradeCancel(const Endpoint& endpoint, const TradeCancelMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr) return;
+
+		TradeSession* session = FindTradeSessionForClient(client->clientId);
+		if (session == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeCancel ignored: no session (client_id={})", client->clientId);
+			return;
+		}
+
+		if (session->state == TradeState::Complete)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeCancel ignored: already complete (client_id={})", client->clientId);
+			return;
+		}
+
+		const uint32_t sessionId = session->sessionId;
+		CancelTradeForClient(client->clientId, "player_cancel");
+		LOG_INFO(Net, "[ServerApp] TradeCancel (client_id={}, session_id={})", client->clientId, sessionId);
+	}
+
+	void ServerApp::UpdateTradeSessions()
+	{
+		for (auto it = m_tradeSessions.begin(); it != m_tradeSessions.end(); )
+		{
+			TradeSession& session = *it;
+			if (session.state == TradeState::Reviewing && m_currentTick >= session.reviewEndTick)
+			{
+				// Review timer expired without both confirming — cancel.
+				LOG_WARN(Net, "[ServerApp] Trade review expired (session_id={}, tick={})",
+					session.sessionId, m_currentTick);
+				const uint32_t initId = session.initiatorClientId;
+				const uint32_t respId = session.responderClientId;
+				LogTradeAudit(session, "review_expired");
+
+				ConnectedClient* initiator = FindConnectedClient(initId);
+				ConnectedClient* responder = FindConnectedClient(respId);
+				if (initiator) { SendTradeResult(*initiator, false, "review_expired"); SendChatSystemNotice(*initiator, "Trade cancelled: review timed out."); }
+				if (responder) { SendTradeResult(*responder, false, "review_expired"); SendChatSystemNotice(*responder, "Trade cancelled: review timed out."); }
+
+				it = m_tradeSessions.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
+
+	void ServerApp::ExecuteTradeSwap(TradeSession& session)
+	{
+		ConnectedClient* initiator = FindConnectedClient(session.initiatorClientId);
+		ConnectedClient* responder = FindConnectedClient(session.responderClientId);
+
+		if (initiator == nullptr || responder == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] ExecuteTradeSwap FAILED: participant disconnected (session_id={})", session.sessionId);
+			const uint32_t sessionId = session.sessionId;
+			ConnectedClient* present = (initiator != nullptr) ? initiator : responder;
+			if (present) { SendTradeResult(*present, false, "partner_disconnected"); }
+			m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+				[sessionId](const TradeSession& s) { return s.sessionId == sessionId; }),
+				m_tradeSessions.end());
+			return;
+		}
+
+		// Final validation: re-check items and gold.
+		std::string errInit, errResp;
+		if (!ValidateTradeOffer(*initiator, session.initiatorOffer, errInit)
+			|| !ValidateTradeGold(*initiator, session.initiatorOffer, errInit))
+		{
+			LogTradeAudit(session, "swap_failed_initiator");
+			SendTradeResult(*initiator, false, errInit);
+			SendTradeResult(*responder, false, "partner_validation_failed");
+			m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+				[&](const TradeSession& s) { return s.sessionId == session.sessionId; }),
+				m_tradeSessions.end());
+			LOG_WARN(Net, "[ServerApp] Trade swap aborted: initiator validation failed (session_id={}, err={})",
+				session.sessionId, errInit);
+			return;
+		}
+		if (!ValidateTradeOffer(*responder, session.responderOffer, errResp)
+			|| !ValidateTradeGold(*responder, session.responderOffer, errResp))
+		{
+			LogTradeAudit(session, "swap_failed_responder");
+			SendTradeResult(*initiator, false, "partner_validation_failed");
+			SendTradeResult(*responder, false, errResp);
+			m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+				[&](const TradeSession& s) { return s.sessionId == session.sessionId; }),
+				m_tradeSessions.end());
+			LOG_WARN(Net, "[ServerApp] Trade swap aborted: responder validation failed (session_id={}, err={})",
+				session.sessionId, errResp);
+			return;
+		}
+
+		// Atomic swap: deduct gold from both, then credit the other.
+		std::string wErr;
+		(void)m_playerWallet.SubtractCurrency(*initiator, kCurrencyGold, session.initiatorOffer.gold, wErr);
+		(void)m_playerWallet.SubtractCurrency(*responder, kCurrencyGold, session.responderOffer.gold, wErr);
+		(void)m_playerWallet.AddCurrency(*initiator, kCurrencyGold, session.responderOffer.gold, wErr);
+		(void)m_playerWallet.AddCurrency(*responder, kCurrencyGold, session.initiatorOffer.gold, wErr);
+
+		// Swap items: remove offered items, add received items.
+		auto removeItems = [](ConnectedClient& client, const std::vector<ItemStack>& toRemove)
+		{
+			for (const ItemStack& rem : toRemove)
+			{
+				for (ItemStack& held : client.inventory)
+				{
+					if (held.itemId == rem.itemId)
+					{
+						if (held.quantity > rem.quantity)
+							held.quantity -= rem.quantity;
+						else
+							held.quantity = 0;
+						break;
+					}
+				}
+				client.inventory.erase(std::remove_if(client.inventory.begin(), client.inventory.end(),
+					[](const ItemStack& s) { return s.quantity == 0; }),
+					client.inventory.end());
+			}
+		};
+
+		removeItems(*initiator, session.initiatorOffer.items);
+		removeItems(*responder, session.responderOffer.items);
+
+		for (const ItemStack& item : session.responderOffer.items)
+			AddItemToInventory(*initiator, item);
+		for (const ItemStack& item : session.initiatorOffer.items)
+			AddItemToInventory(*responder, item);
+
+		// Persist both characters.
+		SaveConnectedClient(*initiator, "trade_swap");
+		SaveConnectedClient(*responder, "trade_swap");
+
+		// Replicate wallet updates.
+		(void)SendWalletUpdate(*initiator);
+		(void)SendWalletUpdate(*responder);
+
+		// Replicate inventory deltas.
+		(void)SendInventoryDelta(*initiator, initiator->inventory);
+		(void)SendInventoryDelta(*responder, responder->inventory);
+
+		// Log audit.
+		session.state = TradeState::Complete;
+		LogTradeAudit(session, "complete");
+
+		// Notify both clients of success.
+		SendTradeResult(*initiator, true, "");
+		SendTradeResult(*responder, true, "");
+
+		const uint32_t sessionId = session.sessionId;
+		m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+			[sessionId](const TradeSession& s) { return s.sessionId == sessionId; }),
+			m_tradeSessions.end());
+
+		LOG_INFO(Net, "[ServerApp] Trade swap complete (session_id={}, initiator={}, responder={})",
+			sessionId, initiator->clientId, responder->clientId);
+	}
+
+	void ServerApp::CancelTradeForClient(uint32_t clientId, std::string_view reason)
+	{
+		TradeSession* session = FindTradeSessionForClient(clientId);
+		if (session == nullptr)
+		{
+			return;
+		}
+
+		if (session->state == TradeState::Complete)
+		{
+			return;
+		}
+
+		const uint32_t initId    = session->initiatorClientId;
+		const uint32_t respId    = session->responderClientId;
+		const uint32_t sessionId = session->sessionId;
+
+		LogTradeAudit(*session, reason);
+
+		ConnectedClient* initiator = FindConnectedClient(initId);
+		ConnectedClient* responder = FindConnectedClient(respId);
+
+		if (initiator != nullptr)
+		{
+			SendTradeResult(*initiator, false, std::string(reason));
+			SendChatSystemNotice(*initiator, "Trade cancelled.");
+		}
+		if (responder != nullptr)
+		{
+			SendTradeResult(*responder, false, std::string(reason));
+			SendChatSystemNotice(*responder, "Trade cancelled.");
+		}
+
+		m_tradeSessions.erase(std::remove_if(m_tradeSessions.begin(), m_tradeSessions.end(),
+			[sessionId](const TradeSession& s) { return s.sessionId == sessionId; }),
+			m_tradeSessions.end());
+
+		LOG_INFO(Net, "[ServerApp] Trade cancelled (session_id={}, reason={})", sessionId, reason);
+	}
+
+	void ServerApp::BroadcastTradeWindowSync(const TradeSession& session)
+	{
+		ConnectedClient* initiator = FindConnectedClient(session.initiatorClientId);
+		ConnectedClient* responder = FindConnectedClient(session.responderClientId);
+
+		if (initiator != nullptr) (void)SendTradeWindowSync(*initiator, session);
+		if (responder != nullptr) (void)SendTradeWindowSync(*responder, session);
+	}
+
+	bool ServerApp::SendTradeWindowSync(const ConnectedClient& receiver, const TradeSession& session)
+	{
+		const bool isInitiator = (receiver.clientId == session.initiatorClientId);
+
+		const TradeOffer& myOffer    = isInitiator ? session.initiatorOffer : session.responderOffer;
+		const TradeOffer& theirOffer = isInitiator ? session.responderOffer : session.initiatorOffer;
+
+		const uint32_t otherClientId = isInitiator ? session.responderClientId : session.initiatorClientId;
+
+		TradeWindowSyncMessage msg{};
+		msg.clientId    = receiver.clientId;
+		msg.tradeState  = static_cast<uint8_t>(session.state);
+		msg.myItems     = myOffer.items;
+		msg.myGold      = myOffer.gold;
+		msg.myLocked    = myOffer.locked;
+		msg.otherPlayerName = "P" + std::to_string(otherClientId);
+		msg.otherItems  = theirOffer.items;
+		msg.otherGold   = theirOffer.gold;
+		msg.otherLocked = theirOffer.locked;
+
+		if (session.state == TradeState::Reviewing && m_currentTick < session.reviewEndTick)
+		{
+			msg.reviewTicksRemaining = session.reviewEndTick - m_currentTick;
+		}
+		else
+		{
+			msg.reviewTicksRemaining = 0;
+		}
+
+		const auto packet = EncodeTradeWindowSync(msg);
+		m_transport.Send(receiver.endpoint, packet);
+		LOG_DEBUG(Net, "[ServerApp] TradeWindowSync sent (receiver={}, session_id={}, state={})",
+			receiver.clientId, session.sessionId, static_cast<uint8_t>(session.state));
+		return true;
+	}
+
+	bool ServerApp::SendTradeResult(const ConnectedClient& receiver, bool success, std::string_view errorReason)
+	{
+		TradeResultMessage msg{};
+		msg.clientId    = receiver.clientId;
+		msg.success     = success ? 1u : 0u;
+		msg.errorReason = std::string(errorReason);
+		const auto packet = EncodeTradeResult(msg);
+		m_transport.Send(receiver.endpoint, packet);
+		LOG_INFO(Net, "[ServerApp] TradeResult sent (receiver={}, success={}, reason={})",
+			receiver.clientId, success ? "true" : "false", errorReason);
+		return true;
+	}
+
+	void ServerApp::LogTradeAudit(const TradeSession& session, std::string_view outcome)
+	{
+		// Initiator offer summary.
+		std::string initItems;
+		for (const ItemStack& item : session.initiatorOffer.items)
+		{
+			initItems += "id=";
+			initItems += std::to_string(item.itemId);
+			initItems += " qty=";
+			initItems += std::to_string(item.quantity);
+			initItems += " ";
+		}
+		// Responder offer summary.
+		std::string respItems;
+		for (const ItemStack& item : session.responderOffer.items)
+		{
+			respItems += "id=";
+			respItems += std::to_string(item.itemId);
+			respItems += " qty=";
+			respItems += std::to_string(item.quantity);
+			respItems += " ";
+		}
+
+		LOG_INFO(Net,
+			"[TradeAudit] session_id={} initiator={} responder={} outcome={} "
+			"init_gold={} init_items=[{}] resp_gold={} resp_items=[{}]",
+			session.sessionId,
+			session.initiatorClientId,
+			session.responderClientId,
+			outcome,
+			session.initiatorOffer.gold,
+			initItems,
+			session.responderOffer.gold,
+			respItems);
 	}
 }

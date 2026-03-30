@@ -282,6 +282,26 @@ namespace engine::client
 			dump += "\n";
 		}
 
+		dump += "trade: open=";
+		dump += trade.isOpen ? "true" : "false";
+		dump += " state=";
+		dump += std::to_string(trade.tradeState);
+		dump += " other=";
+		dump += trade.theirPlayerName.empty() ? "(none)" : trade.theirPlayerName;
+		dump += " my_items=";
+		dump += std::to_string(trade.myOffer.items.size());
+		dump += " my_gold=";
+		dump += std::to_string(trade.myOffer.gold);
+		dump += " my_locked=";
+		dump += trade.myOffer.locked ? "true" : "false";
+		dump += " their_items=";
+		dump += std::to_string(trade.theirOffer.items.size());
+		dump += " their_gold=";
+		dump += std::to_string(trade.theirOffer.gold);
+		dump += " their_locked=";
+		dump += trade.theirOffer.locked ? "true" : "false";
+		dump += "\n";
+
 		return dump;
 	}
 
@@ -456,6 +476,21 @@ namespace engine::client
 			return ApplyVendorShopSync(packet);
 		case engine::server::MessageKind::VendorTransactionResult:
 			return ApplyVendorTransactionResult(packet);
+		// M35.3 — Trade window
+		case engine::server::MessageKind::TradeWindowSync:
+			return ApplyTradeWindowSync(packet);
+		case engine::server::MessageKind::TradeResult:
+			return ApplyTradeResult(packet);
+		// M35.3 — TradeRequestNotify is informational; the client UI reads it as trade open notification
+		case engine::server::MessageKind::TradeRequestNotify:
+		{
+			// Mark trade as pending-open so UI can display the accept/decline prompt.
+			m_model.trade.isOpen       = false;
+			m_model.trade.tradeState   = 0; // Pending
+			m_model.trade.lastResultError.clear();
+			NotifyObservers(UIModelChangeTrade);
+			return true;
+		}
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -949,6 +984,85 @@ namespace engine::client
 				m_vendorTxScratch.errorReason);
 			NotifyObservers(UIModelChangeShop);
 		}
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Trade window apply methods
+	// -------------------------------------------------------------------------
+
+	bool UIModelBinding::ApplyTradeWindowSync(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeTradeWindowSync(packet, m_tradeWindowScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] TradeWindowSync FAILED: decode error");
+			return false;
+		}
+
+		UITradeState& trade = m_model.trade;
+		trade.isOpen      = true;
+		trade.tradeState  = m_tradeWindowScratch.tradeState;
+		trade.theirPlayerName = m_tradeWindowScratch.otherPlayerName;
+		trade.reviewTicksRemaining = m_tradeWindowScratch.reviewTicksRemaining;
+
+		trade.myOffer.gold   = m_tradeWindowScratch.myGold;
+		trade.myOffer.locked = m_tradeWindowScratch.myLocked;
+		trade.myOffer.items.clear();
+		for (const engine::server::ItemStack& item : m_tradeWindowScratch.myItems)
+		{
+			trade.myOffer.items.push_back({ item.itemId, item.quantity });
+		}
+
+		trade.theirOffer.gold   = m_tradeWindowScratch.otherGold;
+		trade.theirOffer.locked = m_tradeWindowScratch.otherLocked;
+		trade.theirOffer.items.clear();
+		for (const engine::server::ItemStack& item : m_tradeWindowScratch.otherItems)
+		{
+			trade.theirOffer.items.push_back({ item.itemId, item.quantity });
+		}
+
+		LOG_INFO(Net, "[UIModelBinding] TradeWindowSync applied (state={}, other={}, my_items={}, their_items={}, review_ticks={})",
+			trade.tradeState,
+			trade.theirPlayerName,
+			trade.myOffer.items.size(),
+			trade.theirOffer.items.size(),
+			trade.reviewTicksRemaining);
+
+		NotifyObservers(UIModelChangeTrade);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyTradeResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeTradeResult(packet, m_tradeResultScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] TradeResult FAILED: decode error");
+			return false;
+		}
+
+		UITradeState& trade = m_model.trade;
+		trade.lastResultSuccess = (m_tradeResultScratch.success != 0u);
+		trade.lastResultError   = m_tradeResultScratch.errorReason;
+
+		// Close the trade window regardless of outcome.
+		trade.isOpen     = false;
+		trade.tradeState = 0;
+		trade.myOffer    = {};
+		trade.theirOffer = {};
+		trade.theirPlayerName.clear();
+		trade.reviewTicksRemaining = 0;
+
+		if (trade.lastResultSuccess)
+		{
+			LOG_INFO(Net, "[UIModelBinding] TradeResult: success");
+		}
+		else
+		{
+			LOG_WARN(Net, "[UIModelBinding] TradeResult: failed (reason={})",
+				m_tradeResultScratch.errorReason);
+		}
+
+		NotifyObservers(UIModelChangeTrade);
 		return true;
 	}
 }

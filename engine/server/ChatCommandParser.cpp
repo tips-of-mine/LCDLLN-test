@@ -75,6 +75,8 @@ namespace engine::server
 			return "/loot";
 		case ChatSlashCommandKind::PartyKick:
 			return "/pkick";
+		case ChatSlashCommandKind::Trade:
+			return "/trade";
 		case ChatSlashCommandKind::None:
 			break;
 		}
@@ -221,6 +223,14 @@ namespace engine::server
 		{
 			set(ChatSlashCommandKind::PartyKick, remainder);
 			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::PartyKick), remainder.size());
+			return true;
+		}
+
+		// M35.3 — Direct player trade
+		if (cmdToken == "/trade")
+		{
+			set(ChatSlashCommandKind::Trade, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Trade), remainder.size());
 			return true;
 		}
 

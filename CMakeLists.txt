@@ -107,6 +107,7 @@ add_library(engine_core
   engine/client/PartyHud.cpp
   engine/client/ZonePreloadHook.cpp
   engine/client/ShopUi.cpp
+  engine/client/TradeUi.cpp
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp

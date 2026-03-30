@@ -13,6 +13,40 @@ find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 
+# Windows + vcpkg (dynamic OpenSSL): runtime DLLs must sit next to the .exe or be on PATH.
+if(WIN32)
+	set(LCDLLN_OPENSSL_DLL_DIR "")
+	if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
+		set(_lcdlln_ossl_bin "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
+		if(EXISTS "${_lcdlln_ossl_bin}/libcrypto-3-x64.dll")
+			set(LCDLLN_OPENSSL_DLL_DIR "${_lcdlln_ossl_bin}")
+		endif()
+	endif()
+	if(LCDLLN_OPENSSL_DLL_DIR STREQUAL "" AND EXISTS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/libcrypto-3-x64.dll")
+		set(LCDLLN_OPENSSL_DLL_DIR "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin")
+	endif()
+	if(LCDLLN_OPENSSL_DLL_DIR STREQUAL "" AND EXISTS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-release/bin/libcrypto-3-x64.dll")
+		set(LCDLLN_OPENSSL_DLL_DIR "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-release/bin")
+	endif()
+	if(LCDLLN_OPENSSL_DLL_DIR STREQUAL "" AND DEFINED OPENSSL_ROOT_DIR AND EXISTS "${OPENSSL_ROOT_DIR}/bin/libcrypto-3-x64.dll")
+		set(LCDLLN_OPENSSL_DLL_DIR "${OPENSSL_ROOT_DIR}/bin")
+	endif()
+	if(LCDLLN_OPENSSL_DLL_DIR STREQUAL "" AND DEFINED ENV{VCPKG_ROOT})
+		foreach(_lcdlln_ossl_triplet IN ITEMS "x64-windows-release" "x64-windows")
+			set(_lcdlln_ossl_classic "$ENV{VCPKG_ROOT}/installed/${_lcdlln_ossl_triplet}/bin")
+			if(EXISTS "${_lcdlln_ossl_classic}/libcrypto-3-x64.dll")
+				set(LCDLLN_OPENSSL_DLL_DIR "${_lcdlln_ossl_classic}")
+				break()
+			endif()
+		endforeach()
+	endif()
+	if(NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
+		message(STATUS "OpenSSL runtime DLLs will be copied from: ${LCDLLN_OPENSSL_DLL_DIR}")
+	else()
+		message(STATUS "OpenSSL DLL folder not detected — ensure libssl/libcrypto are on PATH or copy them next to the exe")
+	endif()
+endif()
+
 # Vulkan Memory Allocator (VMA): centralised GPU allocations to avoid maxMemoryAllocationCount limit.
 # Prefer vendored copy (submodule or CI cache) so build works without network; else FetchContent.
 set(VMA_INCLUDE_DIRS "")
@@ -268,6 +302,18 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   )
 endif()
 
+if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
+  add_custom_command(TARGET engine_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libssl-3-x64.dll"
+            "$<TARGET_FILE_DIR:engine_app>/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
+            "$<TARGET_FILE_DIR:engine_app>/"
+    COMMENT "Copie des DLL OpenSSL (libssl / libcrypto) à côté de lcdlln.exe..."
+  )
+endif()
+
 # M19.2: Protocol v1 serialization unit tests
 add_executable(protocol_v1_tests engine/network/ProtocolV1Tests.cpp)
 target_link_libraries(protocol_v1_tests PRIVATE engine_core)
@@ -343,6 +389,17 @@ if(WIN32)
     OUTPUT_NAME "client_flow_app"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pkg/client"
   )
+  if(NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
+    add_custom_command(TARGET client_flow_app POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+              "${LCDLLN_OPENSSL_DLL_DIR}/libssl-3-x64.dll"
+              "$<TARGET_FILE_DIR:client_flow_app>/"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+              "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
+              "$<TARGET_FILE_DIR:client_flow_app>/"
+      COMMENT "Copie des DLL OpenSSL à côté de client_flow_app.exe..."
+    )
+  endif()
 endif()
 
 # M09.4: HLOD builder (offline tool, no Vulkan)

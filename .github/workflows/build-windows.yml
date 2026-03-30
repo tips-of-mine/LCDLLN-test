@@ -38,6 +38,9 @@ jobs:
 
       - name: Collect artifacts
         shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_DEFAULT_TRIPLET: x64-windows-release
         run: |
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
 
@@ -79,6 +82,15 @@ jobs:
           $ucrt = "C:\Windows\System32\ucrtbase.dll"
           if (Test-Path $ucrt) {
             Copy-Item $ucrt -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+          }
+
+          # OpenSSL (vcpkg, lien dynamique) — même principe que les redist MSVC
+          $osslBin = Join-Path $env:VCPKG_ROOT "installed\$env:VCPKG_DEFAULT_TRIPLET\bin"
+          foreach ($dll in @("libssl-3-x64.dll", "libcrypto-3-x64.dll")) {
+            $src = Join-Path $osslBin $dll
+            if (Test-Path $src) {
+              Copy-Item $src -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+            }
           }
 
           # game/data

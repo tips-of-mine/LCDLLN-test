@@ -208,3 +208,16 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
     COMMENT "Copie de config.json pour server_app..."
   )
 endif()
+
+# Windows: engine_auth pulls OpenSSL DLLs — copy next to server exe (same as engine_app).
+if(WIN32 AND DEFINED LCDLLN_OPENSSL_DLL_DIR AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
+  add_custom_command(TARGET server_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libssl-3-x64.dll"
+            "$<TARGET_FILE_DIR:server_app>/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
+            "$<TARGET_FILE_DIR:server_app>/"
+    COMMENT "Copie des DLL OpenSSL à côté de lcdlln_server.exe..."
+  )
+endif()

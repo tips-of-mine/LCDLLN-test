@@ -26,12 +26,6 @@ namespace engine::server
 			const auto secs = duration_cast<seconds>(expiresAt - now).count();
 			return secs > 0xFFFFFFFFLL ? 0xFFFFFFFFu : static_cast<uint32_t>(secs);
 		}
-
-		/// True when \p status is a terminal state (no longer active).
-		bool IsTerminal(AHListingStatus s)
-		{
-			return s != AHListingStatus::Active;
-		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -52,7 +46,7 @@ namespace engine::server
 		{
 			return startBid;
 		}
-		const uint64_t increment = std::max(1ull,
+		const uint64_t increment = std::max(uint64_t{1},
 			(currentBid * kAHMinBidIncrementNumerator) / kAHMinBidIncrementDenominator);
 		return currentBid + increment;
 	}

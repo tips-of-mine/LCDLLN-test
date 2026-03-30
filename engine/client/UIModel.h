@@ -34,7 +34,9 @@ namespace engine::client
 		/// M35.1 — wallet balances (gold, honor, badges, premium).
 		UIModelChangeWallet    = 1u << 10,
 		/// M35.2 — vendor shop catalog opened or closed.
-		UIModelChangeShop      = 1u << 11
+		UIModelChangeShop      = 1u << 11,
+		/// M35.3 — direct trade window state changed.
+		UIModelChangeTrade     = 1u << 12
 	};
 
 	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
@@ -62,6 +64,34 @@ namespace engine::client
 		std::string                   vendorId;
 		std::vector<UIShopItemEntry>  items;
 		bool                          isOpen = false; ///< True while a vendor shop is displayed.
+	};
+
+	/// M35.3 — one item entry inside the active trade window.
+	struct UITradeItemEntry
+	{
+		uint32_t itemId   = 0;
+		uint32_t quantity = 0;
+	};
+
+	/// M35.3 — one side's offer inside the trade window.
+	struct UITradeSideState
+	{
+		std::vector<UITradeItemEntry> items;
+		uint32_t gold   = 0;
+		bool     locked = false;
+	};
+
+	/// M35.3 — full trade window state replicated from TradeWindowSyncMessage.
+	struct UITradeState
+	{
+		UITradeSideState myOffer;
+		UITradeSideState theirOffer;
+		std::string      theirPlayerName;
+		uint8_t          tradeState           = 0;  ///< Wire value of TradeState (0=closed).
+		uint32_t         reviewTicksRemaining = 0;
+		bool             isOpen               = false;
+		bool             lastResultSuccess    = false;
+		std::string      lastResultError;
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -198,6 +228,8 @@ namespace engine::client
 		UIWalletState wallet{};
 		/// M35.2 — currently open vendor shop catalog (isOpen=false when no shop is active).
 		UIShopState shop{};
+		/// M35.3 — active trade window state (isOpen=false when no trade is in progress).
+		UITradeState trade{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -295,6 +327,12 @@ namespace engine::client
 		/// Apply one decoded VendorTransactionResult and refresh the wallet gold (M35.2).
 		bool ApplyVendorTransactionResult(std::span<const std::byte> packet);
 
+		/// Apply one decoded TradeWindowSync message and populate the trade state (M35.3).
+		bool ApplyTradeWindowSync(std::span<const std::byte> packet);
+
+		/// Apply one decoded TradeResult message and record the outcome (M35.3).
+		bool ApplyTradeResult(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -314,6 +352,8 @@ namespace engine::client
 		engine::server::WalletUpdateMessage m_walletScratch{};
 		engine::server::VendorShopSyncMessage m_vendorShopScratch{};
 		engine::server::VendorTransactionResultMessage m_vendorTxScratch{};
+		engine::server::TradeWindowSyncMessage m_tradeWindowScratch{};
+		engine::server::TradeResultMessage m_tradeResultScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

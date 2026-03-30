@@ -8,6 +8,7 @@
 #include "engine/server/PartySystem.h"
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/SpawnerRuntime.h"
+#include "engine/server/TradeSession.h"
 #include "engine/server/VendorRuntime.h"
 #include "engine/core/Config.h"
 #include "engine/net/ChatSystem.h"
@@ -379,6 +380,68 @@ namespace engine::server
 		/// Build and send a VendorTransactionResult packet to the client.
 		bool SendVendorTransactionResult(const ConnectedClient& receiver, bool success, uint32_t newGold, std::string_view errorReason);
 
+		// M35.3 — Direct player trade handlers -----------------------------------
+
+		/// Handle /trade <name> command dispatched from HandleChatSlashCommand.
+		bool HandleTradeCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
+		/// Accept the pending trade request targeting this client.
+		void HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& request);
+
+		/// Decline the pending trade request targeting this client.
+		void HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& request);
+
+		/// Add one item stack to the client's own trade offer.
+		void HandleTradeAddItem(const Endpoint& endpoint, const TradeAddItemMessage& request);
+
+		/// Remove one item from the client's own trade offer.
+		void HandleTradeRemoveItem(const Endpoint& endpoint, const TradeRemoveItemMessage& request);
+
+		/// Update the gold amount in the client's own trade offer.
+		void HandleTradeSetGold(const Endpoint& endpoint, const TradeSetGoldMessage& request);
+
+		/// Lock the client's offer and enter the review phase when both sides are ready.
+		void HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& request);
+
+		/// Final confirm — execute atomic swap when both clients have confirmed.
+		void HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& request);
+
+		/// Cancel an active trade session and return any offered items.
+		void HandleTradeCancel(const Endpoint& endpoint, const TradeCancelMessage& request);
+
+		/// Advance review timers; complete trades where both confirmed.
+		void UpdateTradeSessions();
+
+		/// Send TradeWindowSync to both participants of the given session.
+		void BroadcastTradeWindowSync(const TradeSession& session);
+
+		/// Send TradeWindowSync to one client with its perspective of the session.
+		bool SendTradeWindowSync(const ConnectedClient& receiver, const TradeSession& session);
+
+		/// Send TradeResult to one client.
+		bool SendTradeResult(const ConnectedClient& receiver, bool success, std::string_view errorReason);
+
+		/// Execute the atomic item + gold swap for a completed trade session.
+		void ExecuteTradeSwap(TradeSession& session);
+
+		/// Cancel any pending or open trade for clientId, notifying the other side.
+		void CancelTradeForClient(uint32_t clientId, std::string_view reason);
+
+		/// Find the active TradeSession that involves the given clientId, or nullptr.
+		TradeSession* FindTradeSessionForClient(uint32_t clientId);
+
+		/// Write one trade audit record to the main log (player_trade_log).
+		void LogTradeAudit(const TradeSession& session, std::string_view outcome);
+
+		/// Validate that items in the offer actually exist in the player's inventory.
+		bool ValidateTradeOffer(const ConnectedClient& client, const TradeOffer& offer, std::string& outError) const;
+
+		/// Validate that a player has enough gold for the offer.
+		bool ValidateTradeGold(const ConnectedClient& client, const TradeOffer& offer, std::string& outError) const;
+
+		/// Validate both players are within kTradeMaxRangeMeters of each other.
+		bool ValidateTradeRange(const ConnectedClient& a, const ConnectedClient& b, std::string& outError) const;
+
 		/// Validate one chat send request, apply rate limiting, route by channel, emit relays.
 		void HandleChatSend(const Endpoint& endpoint, const ChatSendRequestMessage& request);
 
@@ -664,5 +727,18 @@ namespace engine::server
 
 		/// M32.2: party system (formation, loot modes, XP sharing).
 		PartySystem m_partySystem;
+
+		/// M35.3 — Active player-to-player trade sessions.
+		std::vector<TradeSession> m_tradeSessions;
+
+		/// M35.3 — Monotonic session id counter.
+		uint32_t m_nextTradeSessionId = 1;
+
+		/// M35.3 — Maximum range (metres) within which a trade can be initiated.
+		static constexpr float kTradeMaxRangeMeters = 10.0f;
+
+		/// M35.3 — Server ticks equivalent to the 5-second review window.
+		/// Computed at Init as tickHz * 5; default 150 (30Hz * 5).
+		uint32_t m_tradeReviewTicks = 150;
 	};
 }

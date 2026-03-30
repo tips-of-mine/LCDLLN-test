@@ -1441,4 +1441,313 @@ namespace engine::server
 		}
 		return offset == payload.size();
 	}
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Player direct trade messages
+	// -------------------------------------------------------------------------
+
+	/// Helper: append one ItemStack list (count u32 + count*(itemId u32 + qty u32)) to a buffer.
+	static void WriteItemList(std::vector<std::byte>& out, const std::vector<ItemStack>& items)
+	{
+		WriteU32(out, static_cast<uint32_t>(items.size()));
+		for (const ItemStack& item : items)
+		{
+			WriteU32(out, item.itemId);
+			WriteU32(out, item.quantity);
+		}
+	}
+
+	/// Helper: read one ItemStack list from a payload buffer.
+	static bool ReadItemList(std::span<const std::byte> payload, size_t& offset, std::vector<ItemStack>& outItems)
+	{
+		if ((offset + 4) > payload.size())
+		{
+			return false;
+		}
+		const uint32_t count = ReadU32(payload, offset);
+		offset += 4;
+		outItems.clear();
+		outItems.reserve(count);
+		for (uint32_t i = 0; i < count; ++i)
+		{
+			if ((offset + 8) > payload.size())
+			{
+				return false;
+			}
+			ItemStack item{};
+			item.itemId   = ReadU32(payload, offset);
+			item.quantity = ReadU32(payload, offset + 4);
+			offset += 8;
+			outItems.push_back(item);
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeRequest(const TradeRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeRequest,
+			4 + 2 + message.targetName.size());
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.targetName);
+		return packet;
+	}
+
+	bool DecodeTradeRequest(std::span<const std::byte> packet, TradeRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeRequest, payload) || payload.size() < 6)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		return ReadSizedString(payload, offset, outMessage.targetName);
+	}
+
+	std::vector<std::byte> EncodeTradeRequestNotify(const TradeRequestNotifyMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeRequestNotify,
+			2 + message.requesterName.size());
+		WriteSizedString(packet, message.requesterName);
+		return packet;
+	}
+
+	bool DecodeTradeRequestNotify(std::span<const std::byte> packet, TradeRequestNotifyMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeRequestNotify, payload) || payload.size() < 2)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		return ReadSizedString(payload, offset, outMessage.requesterName);
+	}
+
+	std::vector<std::byte> EncodeTradeAccept(const TradeAcceptMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeAccept, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeAccept(std::span<const std::byte> packet, TradeAcceptMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeAccept, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeDecline(const TradeDeclineMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeDecline, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeDecline(std::span<const std::byte> packet, TradeDeclineMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeDecline, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeAddItem(const TradeAddItemMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeAddItem, 4 + 4 + 4);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		return packet;
+	}
+
+	bool DecodeTradeAddItem(std::span<const std::byte> packet, TradeAddItemMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeAddItem, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.itemId   = ReadU32(payload, 4);
+		outMessage.quantity = ReadU32(payload, 8);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeRemoveItem(const TradeRemoveItemMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeRemoveItem, 4 + 4);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		return packet;
+	}
+
+	bool DecodeTradeRemoveItem(std::span<const std::byte> packet, TradeRemoveItemMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeRemoveItem, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.itemId   = ReadU32(payload, 4);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeSetGold(const TradeSetGoldMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeSetGold, 4 + 4);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.gold);
+		return packet;
+	}
+
+	bool DecodeTradeSetGold(std::span<const std::byte> packet, TradeSetGoldMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeSetGold, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.gold     = ReadU32(payload, 4);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeLock(const TradeLockMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeLock, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeLock(std::span<const std::byte> packet, TradeLockMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeLock, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeConfirm(const TradeConfirmMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeConfirm, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeConfirm(std::span<const std::byte> packet, TradeConfirmMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeConfirm, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeCancel(const TradeCancelMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeCancel, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeCancel(std::span<const std::byte> packet, TradeCancelMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeCancel, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeWindowSync(const TradeWindowSyncMessage& message)
+	{
+		// Fixed: clientId(4) + state(1) + myGold(4) + myLocked(1) + otherGold(4) + otherLocked(1) + reviewTicks(4)
+		// Variable: myItems list, otherPlayerName string, otherItems list
+		const size_t fixedSize = 4 + 1 + 4 + 1 + 4 + 1 + 4;
+		const size_t myItemsSize = 4 + message.myItems.size() * 8;
+		const size_t otherNameSize = 2 + message.otherPlayerName.size();
+		const size_t otherItemsSize = 4 + message.otherItems.size() * 8;
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeWindowSync,
+			fixedSize + myItemsSize + otherNameSize + otherItemsSize);
+
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.tradeState);
+		WriteItemList(packet, message.myItems);
+		WriteU32(packet, message.myGold);
+		WriteU8(packet, message.myLocked ? 1u : 0u);
+		WriteSizedString(packet, message.otherPlayerName);
+		WriteItemList(packet, message.otherItems);
+		WriteU32(packet, message.otherGold);
+		WriteU8(packet, message.otherLocked ? 1u : 0u);
+		WriteU32(packet, message.reviewTicksRemaining);
+		return packet;
+	}
+
+	bool DecodeTradeWindowSync(std::span<const std::byte> packet, TradeWindowSyncMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		// Minimum: clientId(4) + state(1) + myItems count(4) + myGold(4) + myLocked(1)
+		//        + otherName len(2) + otherItems count(4) + otherGold(4) + otherLocked(1) + reviewTicks(4)
+		if (!DecodeHeader(packet, MessageKind::TradeWindowSync, payload) || payload.size() < 29)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId  = ReadU32(payload, offset); offset += 4;
+		outMessage.tradeState = ReadU8(payload, offset); offset += 1;
+		if (!ReadItemList(payload, offset, outMessage.myItems)) return false;
+		if ((offset + 4) > payload.size()) return false;
+		outMessage.myGold  = ReadU32(payload, offset); offset += 4;
+		if ((offset + 1) > payload.size()) return false;
+		outMessage.myLocked = (ReadU8(payload, offset) != 0); offset += 1;
+		if (!ReadSizedString(payload, offset, outMessage.otherPlayerName)) return false;
+		if (!ReadItemList(payload, offset, outMessage.otherItems)) return false;
+		if ((offset + 4) > payload.size()) return false;
+		outMessage.otherGold   = ReadU32(payload, offset); offset += 4;
+		if ((offset + 1) > payload.size()) return false;
+		outMessage.otherLocked = (ReadU8(payload, offset) != 0); offset += 1;
+		if ((offset + 4) > payload.size()) return false;
+		outMessage.reviewTicksRemaining = ReadU32(payload, offset); offset += 4;
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeResult(const TradeResultMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeResult,
+			4 + 1 + 2 + message.errorReason.size());
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.success);
+		WriteSizedString(packet, message.errorReason);
+		return packet;
+	}
+
+	bool DecodeTradeResult(std::span<const std::byte> packet, TradeResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeResult, payload) || payload.size() < 7)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset); offset += 4;
+		outMessage.success  = ReadU8(payload, offset);  offset += 1;
+		return ReadSizedString(payload, offset, outMessage.errorReason);
+	}
 }

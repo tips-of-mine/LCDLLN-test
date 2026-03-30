@@ -109,7 +109,34 @@ namespace engine::server
 		/// Client requests to sell one item to a vendor (M35.2).
 		VendorSell = 47,
 		/// Server acknowledges a buy/sell transaction with result + new gold balance (M35.2).
-		VendorTransactionResult = 48
+		VendorTransactionResult = 48,
+
+		// M35.3 — Player direct trade messages ----------------------------------------
+
+		/// Client sends /trade <name> to initiate a direct trade (M35.3).
+		TradeRequest = 49,
+		/// Server pushes an incoming trade request notification to the target (M35.3).
+		TradeRequestNotify = 50,
+		/// Target accepts the pending trade request (M35.3).
+		TradeAccept = 51,
+		/// Target declines the pending trade request (M35.3).
+		TradeDecline = 52,
+		/// Client adds one item stack to its own trade offer (M35.3).
+		TradeAddItem = 53,
+		/// Client removes one item from its own trade offer (M35.3).
+		TradeRemoveItem = 54,
+		/// Client sets the gold amount in its own trade offer (M35.3).
+		TradeSetGold = 55,
+		/// Client locks its offer, entering the review phase (M35.3).
+		TradeLock = 56,
+		/// Client confirms the final trade after both sides are locked (M35.3).
+		TradeConfirm = 57,
+		/// Client cancels the trade at any open/reviewing stage (M35.3).
+		TradeCancel = 58,
+		/// Server pushes the full trade window state to both clients (M35.3).
+		TradeWindowSync = 59,
+		/// Server sends the final trade outcome to both clients (M35.3).
+		TradeResult = 60
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -776,4 +803,171 @@ namespace engine::server
 
 	/// Decode a server vendor transaction result packet.
 	bool DecodeVendorTransactionResult(std::span<const std::byte> packet, VendorTransactionResultMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Player direct trade messages
+	// -------------------------------------------------------------------------
+
+	/// Client initiates a trade with a named player via /trade <name>.
+	struct TradeRequestMessage
+	{
+		uint32_t    clientId   = 0;
+		std::string targetName; ///< Display name of the player to trade with (e.g. "P12").
+	};
+
+	/// Server notification pushed to the trade target (M35.3).
+	struct TradeRequestNotifyMessage
+	{
+		std::string requesterName; ///< Display name of the player requesting the trade.
+	};
+
+	/// Target accepts the pending trade request (M35.3).
+	struct TradeAcceptMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Target declines the pending trade request (M35.3).
+	struct TradeDeclineMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Client adds one item stack to its own trade offer (M35.3).
+	struct TradeAddItemMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t itemId   = 0;
+		uint32_t quantity = 1;
+	};
+
+	/// Client removes one item from its own trade offer (M35.3).
+	struct TradeRemoveItemMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t itemId   = 0;
+	};
+
+	/// Client sets the gold amount offered in the trade (M35.3).
+	struct TradeSetGoldMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t gold     = 0;
+	};
+
+	/// Client locks its offer, signalling readiness for review (M35.3).
+	struct TradeLockMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Client confirms the final trade after both sides locked and reviewed (M35.3).
+	struct TradeConfirmMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Client cancels the active trade (M35.3).
+	struct TradeCancelMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Full trade window snapshot pushed by the server to both clients after any change (M35.3).
+	struct TradeWindowSyncMessage
+	{
+		uint32_t clientId = 0;
+		uint8_t  tradeState = 0;        ///< Wire value of engine::server::TradeState.
+		/// Receiving client's own offer.
+		std::vector<ItemStack> myItems;
+		uint32_t myGold   = 0;
+		bool     myLocked = false;
+		/// Other side's offer.
+		std::string            otherPlayerName;
+		std::vector<ItemStack> otherItems;
+		uint32_t otherGold   = 0;
+		bool     otherLocked = false;
+		/// Ticks remaining in 5-second review phase; 0 outside the review state.
+		uint32_t reviewTicksRemaining = 0;
+	};
+
+	/// Server trade outcome sent to both clients after completion or failure (M35.3).
+	struct TradeResultMessage
+	{
+		uint32_t    clientId    = 0;
+		uint8_t     success     = 0;   ///< 1 on success, 0 on failure.
+		std::string errorReason;       ///< Human-readable reason on failure.
+	};
+
+	/// Encode a client trade request packet.
+	std::vector<std::byte> EncodeTradeRequest(const TradeRequestMessage& message);
+
+	/// Decode a client trade request packet.
+	bool DecodeTradeRequest(std::span<const std::byte> packet, TradeRequestMessage& outMessage);
+
+	/// Encode a server trade request notification packet.
+	std::vector<std::byte> EncodeTradeRequestNotify(const TradeRequestNotifyMessage& message);
+
+	/// Decode a server trade request notification packet.
+	bool DecodeTradeRequestNotify(std::span<const std::byte> packet, TradeRequestNotifyMessage& outMessage);
+
+	/// Encode a client trade accept packet.
+	std::vector<std::byte> EncodeTradeAccept(const TradeAcceptMessage& message);
+
+	/// Decode a client trade accept packet.
+	bool DecodeTradeAccept(std::span<const std::byte> packet, TradeAcceptMessage& outMessage);
+
+	/// Encode a client trade decline packet.
+	std::vector<std::byte> EncodeTradeDecline(const TradeDeclineMessage& message);
+
+	/// Decode a client trade decline packet.
+	bool DecodeTradeDecline(std::span<const std::byte> packet, TradeDeclineMessage& outMessage);
+
+	/// Encode a client trade add-item packet.
+	std::vector<std::byte> EncodeTradeAddItem(const TradeAddItemMessage& message);
+
+	/// Decode a client trade add-item packet.
+	bool DecodeTradeAddItem(std::span<const std::byte> packet, TradeAddItemMessage& outMessage);
+
+	/// Encode a client trade remove-item packet.
+	std::vector<std::byte> EncodeTradeRemoveItem(const TradeRemoveItemMessage& message);
+
+	/// Decode a client trade remove-item packet.
+	bool DecodeTradeRemoveItem(std::span<const std::byte> packet, TradeRemoveItemMessage& outMessage);
+
+	/// Encode a client trade set-gold packet.
+	std::vector<std::byte> EncodeTradeSetGold(const TradeSetGoldMessage& message);
+
+	/// Decode a client trade set-gold packet.
+	bool DecodeTradeSetGold(std::span<const std::byte> packet, TradeSetGoldMessage& outMessage);
+
+	/// Encode a client trade lock packet.
+	std::vector<std::byte> EncodeTradeLock(const TradeLockMessage& message);
+
+	/// Decode a client trade lock packet.
+	bool DecodeTradeLock(std::span<const std::byte> packet, TradeLockMessage& outMessage);
+
+	/// Encode a client trade confirm packet.
+	std::vector<std::byte> EncodeTradeConfirm(const TradeConfirmMessage& message);
+
+	/// Decode a client trade confirm packet.
+	bool DecodeTradeConfirm(std::span<const std::byte> packet, TradeConfirmMessage& outMessage);
+
+	/// Encode a client trade cancel packet.
+	std::vector<std::byte> EncodeTradeCancel(const TradeCancelMessage& message);
+
+	/// Decode a client trade cancel packet.
+	bool DecodeTradeCancel(std::span<const std::byte> packet, TradeCancelMessage& outMessage);
+
+	/// Encode a server trade window sync packet pushed to both clients after any change.
+	std::vector<std::byte> EncodeTradeWindowSync(const TradeWindowSyncMessage& message);
+
+	/// Decode a server trade window sync packet.
+	bool DecodeTradeWindowSync(std::span<const std::byte> packet, TradeWindowSyncMessage& outMessage);
+
+	/// Encode a server trade result packet.
+	std::vector<std::byte> EncodeTradeResult(const TradeResultMessage& message);
+
+	/// Decode a server trade result packet.
+	bool DecodeTradeResult(std::span<const std::byte> packet, TradeResultMessage& outMessage);
 }

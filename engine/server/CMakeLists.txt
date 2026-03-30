@@ -82,6 +82,8 @@ elseif(UNIX)
     ConnectionSessionMap.cpp
     SmtpMailer.cpp
     LocalizedEmail.cpp
+    CurrencyConfig.cpp
+    PlayerWalletService.cpp
     AuctionHouseRuntime.cpp
     TermsRepository.cpp
     TermsHandler.cpp

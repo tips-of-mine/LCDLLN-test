@@ -6,6 +6,7 @@
 #include "engine/platform/FileSystem.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
+#include "engine/server/ServerProtocol.h"
 
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
@@ -15,8 +16,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <filesystem>
 #include <span>
 #include <string>
@@ -49,6 +52,18 @@ namespace engine
 			}
 
 			return probeSet.probes.front().params[0];
+		}
+
+		/// Match \ref engine::server::VendorCatalog::ComputeSellPrice (client-side preview only).
+		uint32_t ClientVendorSellUnitGold(uint32_t buyPrice)
+		{
+			if (buyPrice == 0u)
+			{
+				return 0u;
+			}
+			const uint64_t sp = (static_cast<uint64_t>(buyPrice) * 25ull) / 100ull;
+			const uint32_t out = static_cast<uint32_t>(std::min<uint64_t>(sp, static_cast<uint64_t>(0xFFFFFFFFu)));
+			return out > 0u ? out : 1u;
 		}
 
 		float GetTestMeshDistanceMeters(const engine::RenderState& rs,
@@ -265,6 +280,8 @@ namespace engine
 		{
 			LOG_WARN(Core, "[Boot] ChatUiPresenter viewport FAILED — using fallback layout");
 		}
+
+		InitGameplayNet();
 
 		// -----------------------------------------------------------------
 		// Vulkan init
@@ -1349,6 +1366,7 @@ namespace engine
 			m_editorMode->Shutdown(m_window);
 			m_editorMode.reset();
 		}
+		ShutdownGameplayNet();
 		m_chatUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
@@ -1367,6 +1385,22 @@ namespace engine
 			{
 				m_chatUi.SetChatFocus(false);
 			}
+		}
+		else if (m_gameplayNetInitialized && m_uiModelBinding.GetModel().auction.isOpen
+			&& m_input.WasPressed(engine::platform::Key::Escape))
+		{
+			(void)m_uiModelBinding.CloseAuction();
+			m_invUi.CancelDrag();
+			m_pendingSellActive = false;
+			LOG_INFO(Core, "[GameplayNet] Auction closed (Escape)");
+		}
+		else if (m_gameplayNetInitialized && m_uiModelBinding.GetModel().shop.isOpen
+			&& m_input.WasPressed(engine::platform::Key::Escape))
+		{
+			(void)m_uiModelBinding.CloseShop();
+			m_invUi.CancelDrag();
+			m_pendingSellActive = false;
+			LOG_INFO(Core, "[GameplayNet] Shop closed (Escape)");
 		}
 		else if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
 		{
@@ -1411,6 +1445,7 @@ namespace engine
 		}
 		m_frameArena.BeginFrame(m_time.FrameIndex());
 		m_chunkStats.ResetPerFrame();
+		PumpGameplayPackets();
 	}
 
 	void Engine::Update()
@@ -1427,6 +1462,27 @@ namespace engine
 		out.camera = readState.camera;
 		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
 		out.chatDebugText = m_chatUi.IsInitialized() ? m_chatUi.BuildPanelText() : std::string{};
+		out.gameplayHudDebugText.clear();
+		if (m_gameplayNetInitialized)
+		{
+			out.gameplayHudDebugText += m_shopUi.GetState().debugText;
+			out.gameplayHudDebugText += '\n';
+			out.gameplayHudDebugText += m_auctionUi.GetState().debugText;
+			out.gameplayHudDebugText += '\n';
+			out.gameplayHudDebugText += m_invUi.GetState().debugText;
+			if (m_pendingSellActive)
+			{
+				out.gameplayHudDebugText += "\n[PENDING SELL] vendor=";
+				out.gameplayHudDebugText += std::to_string(m_pendingSellVendorId);
+				out.gameplayHudDebugText += " item=";
+				out.gameplayHudDebugText += std::to_string(m_pendingSellItemId);
+				out.gameplayHudDebugText += " qty=";
+				out.gameplayHudDebugText += std::to_string(m_pendingSellQty);
+				out.gameplayHudDebugText += " unit_gold=";
+				out.gameplayHudDebugText += std::to_string(m_pendingSellUnitGold);
+				out.gameplayHudDebugText += "  -> Y confirm / N cancel\n";
+			}
+		}
 		if (!m_editorEnabled)
 		{
 			if (!m_chatUi.IsChatFocusActive())
@@ -1438,6 +1494,11 @@ namespace engine
 			{
 				m_chatUi.Update(m_input, static_cast<float>(dt));
 			}
+		}
+
+		if (m_gameplayNetInitialized)
+		{
+			UpdateGameplayNet(static_cast<float>(dt));
 		}
 
 		m_world.Update(out.camera.position);
@@ -1516,6 +1577,8 @@ namespace engine
 				LOG_DEBUG(Core, "M18.1 {}", out.profilerDebugText);
 			if ((m_currentFrame % 60) == 0 && !out.chatDebugText.empty())
 				LOG_DEBUG(Core, "M29.1 {}", out.chatDebugText);
+			if ((m_currentFrame % 60) == 0 && !out.gameplayHudDebugText.empty())
+				LOG_DEBUG(Core, "M35.2 {}", out.gameplayHudDebugText);
 		}
 
 		{
@@ -1668,6 +1731,16 @@ namespace engine
 		{
 			(void)m_chatUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		}
+		if (m_gameplayNetInitialized)
+		{
+			(void)m_shopUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
+			(void)m_auctionUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
+			(void)m_invUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
+			const engine::client::UIModel& mdl = m_uiModelBinding.GetModel();
+			(void)m_shopUi.ApplyModel(mdl, engine::client::UIModelChangeShop);
+			(void)m_auctionUi.ApplyModel(mdl, engine::client::UIModelChangeAuction);
+			(void)m_invUi.ApplyModel(mdl, engine::client::UIModelChangeInventory);
+		}
 	}
 
 	void Engine::OnQuit()
@@ -1678,6 +1751,498 @@ namespace engine
 	void Engine::WatchShader(std::string_view relativePath, engine::render::ShaderStage stage, std::string_view defines)
 	{
 		m_shaderHotReload.Watch(relativePath, stage, defines);
+	}
+
+	void Engine::InitGameplayNet()
+	{
+		if (!m_cfg.GetBool("client.gameplay_udp.enabled", false))
+		{
+			LOG_INFO(Core, "[GameplayNet] Disabled (set client.gameplay_udp.enabled=true with shard server running)");
+			return;
+		}
+
+		if (!m_uiModelBinding.Init())
+		{
+			LOG_ERROR(Core, "[GameplayNet] Init FAILED: UIModelBinding");
+			return;
+		}
+
+		if (!m_shopUi.Init())
+		{
+			LOG_ERROR(Core, "[GameplayNet] Init FAILED: ShopUiPresenter");
+			m_uiModelBinding.Shutdown();
+			return;
+		}
+
+		if (!m_auctionUi.Init())
+		{
+			LOG_ERROR(Core, "[GameplayNet] Init FAILED: AuctionUiPresenter");
+			m_shopUi.Shutdown();
+			m_uiModelBinding.Shutdown();
+			return;
+		}
+
+		if (!m_invUi.Init(m_cfg))
+		{
+			LOG_ERROR(Core, "[GameplayNet] Init FAILED: InventoryUiPresenter");
+			m_auctionUi.Shutdown();
+			m_shopUi.Shutdown();
+			m_uiModelBinding.Shutdown();
+			return;
+		}
+
+		const uint32_t vw = static_cast<uint32_t>(std::max(1, m_width));
+		const uint32_t vh = static_cast<uint32_t>(std::max(1, m_height));
+		if (!m_shopUi.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] ShopUiPresenter viewport FAILED — using fallback layout");
+		}
+		if (!m_auctionUi.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] AuctionUiPresenter viewport FAILED — using fallback layout");
+		}
+		if (!m_invUi.SetViewportSize(vw, vh))
+		{
+			LOG_WARN(Core, "[GameplayNet] InventoryUiPresenter viewport FAILED — using fallback layout");
+		}
+
+		m_uiObserverHandle = m_uiModelBinding.AddObserver(
+			[this](const engine::client::UIModel& model, uint32_t changeMask)
+			{
+				(void)m_shopUi.ApplyModel(model, changeMask);
+				(void)m_auctionUi.ApplyModel(model, changeMask);
+				(void)m_invUi.ApplyModel(model, changeMask);
+			});
+		if (m_uiObserverHandle == 0u)
+		{
+			LOG_ERROR(Core, "[GameplayNet] Init FAILED: UI observer not registered");
+			m_invUi.Shutdown();
+			m_auctionUi.Shutdown();
+			m_shopUi.Shutdown();
+			m_uiModelBinding.Shutdown();
+			return;
+		}
+
+		const std::string host = m_cfg.GetString("client.gameplay_udp.host", "127.0.0.1");
+		const int portInt = m_cfg.GetInt("client.gameplay_udp.port", 27015);
+		const uint16_t port = static_cast<uint16_t>(std::clamp(portInt, 1, 65535));
+		m_gameplayVendorTalkTarget = m_cfg.GetString("client.gameplay_udp.vendor_talk_target", "vendor:1");
+		m_gameplayAuctionTalkTarget = m_cfg.GetString("client.gameplay_udp.auction_talk_target", "auction");
+		if (!m_gameplayUdp.Init(host, port))
+		{
+			LOG_ERROR(Core, "[GameplayNet] Init FAILED: UDP connect {}", host);
+			(void)m_uiModelBinding.RemoveObserver(m_uiObserverHandle);
+			m_uiObserverHandle = 0;
+			m_invUi.Shutdown();
+			m_auctionUi.Shutdown();
+			m_shopUi.Shutdown();
+			m_uiModelBinding.Shutdown();
+			return;
+		}
+
+		const uint16_t reqTick = static_cast<uint16_t>(std::clamp(m_cfg.GetInt("client.gameplay_udp.request_tick_hz", 20), 1, 120));
+		const uint16_t reqSnap = static_cast<uint16_t>(std::clamp(m_cfg.GetInt("client.gameplay_udp.request_snapshot_hz", 10), 1, 60));
+		const uint32_t charKey = static_cast<uint32_t>(std::max(1, m_cfg.GetInt("client.gameplay_udp.character_key", 1)));
+		(void)m_gameplayUdp.SendHello(reqTick, reqSnap, charKey);
+
+		m_gameplayNetInitialized = true;
+		LOG_INFO(Core,
+			"[GameplayNet] Init OK (host={}, port={}, vendor_target='{}', auction_target='{}')",
+			host,
+			port,
+			m_gameplayVendorTalkTarget,
+			m_gameplayAuctionTalkTarget);
+	}
+
+	void Engine::ShutdownGameplayNet()
+	{
+		if (!m_gameplayNetInitialized)
+		{
+			return;
+		}
+
+		if (m_uiObserverHandle != 0u)
+		{
+			(void)m_uiModelBinding.RemoveObserver(m_uiObserverHandle);
+			m_uiObserverHandle = 0;
+		}
+
+		m_invUi.Shutdown();
+		m_auctionUi.Shutdown();
+		m_shopUi.Shutdown();
+		m_uiModelBinding.Shutdown();
+		m_gameplayUdp.Shutdown();
+		m_gameplayNetInitialized = false;
+		m_pendingSellActive = false;
+		m_pendingSellVendorId = 0;
+		m_pendingSellItemId = 0;
+		m_pendingSellQty = 0;
+		m_pendingSellUnitGold = 0;
+		m_gameplayVendorTalkTarget.clear();
+		m_gameplayAuctionTalkTarget.clear();
+		LOG_INFO(Core, "[GameplayNet] Shutdown complete");
+	}
+
+	void Engine::PumpGameplayPackets()
+	{
+		if (!m_gameplayNetInitialized || !m_gameplayUdp.IsActive())
+		{
+			return;
+		}
+
+		std::vector<std::vector<std::byte>> packets = m_gameplayUdp.PollIncoming();
+		for (std::vector<std::byte>& packet : packets)
+		{
+			engine::server::MessageKind kind{};
+			if (engine::server::PeekMessageKind(packet, kind) && kind == engine::server::MessageKind::Welcome)
+			{
+				continue;
+			}
+			(void)m_uiModelBinding.ApplyPacket(packet);
+		}
+	}
+
+	void Engine::UpdateGameplayNet(float deltaSeconds)
+	{
+		(void)deltaSeconds;
+		if (!m_gameplayNetInitialized || m_editorEnabled)
+		{
+			return;
+		}
+
+		const uint32_t clientId = m_gameplayUdp.ServerClientId();
+		if (clientId == 0u)
+		{
+			return;
+		}
+
+		const float mx = static_cast<float>(m_input.MouseX());
+		const float my = static_cast<float>(m_input.MouseY());
+		(void)m_invUi.UpdateHover(mx, my);
+
+		const engine::client::UIModel& ui = m_uiModelBinding.GetModel();
+		const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+
+		if (m_pendingSellActive && !chatBlocks)
+		{
+			if (m_input.WasPressed(engine::platform::Key::Y))
+			{
+				(void)m_gameplayUdp.SendShopSellRequest(
+					clientId,
+					m_pendingSellVendorId,
+					m_pendingSellItemId,
+					m_pendingSellQty);
+				m_pendingSellActive = false;
+				LOG_INFO(Core,
+					"[GameplayNet] Shop sell confirmed (vendor_id={}, item_id={}, qty={})",
+					m_pendingSellVendorId,
+					m_pendingSellItemId,
+					m_pendingSellQty);
+			}
+			else if (m_input.WasPressed(engine::platform::Key::N))
+			{
+				m_pendingSellActive = false;
+				LOG_INFO(Core, "[GameplayNet] Shop sell cancelled by player");
+			}
+			return;
+		}
+
+		auto sendAuctionBrowseFromModel = [&]()
+		{
+			const engine::client::UIModel& m = m_uiModelBinding.GetModel();
+			engine::server::AuctionBrowseRequestMessage req{};
+			req.clientId = clientId;
+			req.minPrice = m.auction.filterMinPrice;
+			req.maxPrice = m.auction.filterMaxPrice;
+			req.itemIdFilter = m.auction.filterItemId;
+			req.sortMode = m.auction.sortMode;
+			req.maxRows = engine::server::kMaxAuctionBrowseRowsWire;
+			(void)m_gameplayUdp.SendAuctionBrowseRequest(req);
+		};
+
+		auto clientAuctionMinNextBid = [](uint32_t startBid, uint32_t currentBid) -> uint32_t
+		{
+			if (currentBid == 0u)
+			{
+				return startBid;
+			}
+			const uint32_t inc = std::max(1u, (currentBid * 5u) / 100u);
+			const uint64_t sum = static_cast<uint64_t>(currentBid) + static_cast<uint64_t>(inc);
+			return static_cast<uint32_t>(std::min<uint64_t>(
+				sum,
+				static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+		};
+
+		if (!chatBlocks && m_input.WasPressed(engine::platform::Key::V))
+		{
+			(void)m_gameplayUdp.SendTalkRequest(clientId, m_gameplayVendorTalkTarget);
+			LOG_INFO(Core, "[GameplayNet] Vendor talk requested ({})", m_gameplayVendorTalkTarget);
+		}
+
+		if (!chatBlocks && m_input.WasPressed(engine::platform::Key::H))
+		{
+			(void)m_gameplayUdp.SendTalkRequest(clientId, m_gameplayAuctionTalkTarget);
+			LOG_INFO(Core, "[GameplayNet] Auction talk requested ({})", m_gameplayAuctionTalkTarget);
+		}
+
+		auto tryBuyIndex = [&](size_t offerIndex)
+		{
+			if (!ui.shop.isOpen || offerIndex >= ui.shop.offers.size())
+			{
+				return;
+			}
+			const uint32_t itemId = ui.shop.offers[offerIndex].itemId;
+			const uint32_t vendorId = ui.shop.vendorId;
+			(void)m_gameplayUdp.SendShopBuyRequest(clientId, vendorId, itemId, 1u);
+		};
+
+		const engine::platform::Key digitKeys[9] = {
+			engine::platform::Key::Digit1,
+			engine::platform::Key::Digit2,
+			engine::platform::Key::Digit3,
+			engine::platform::Key::Digit4,
+			engine::platform::Key::Digit5,
+			engine::platform::Key::Digit6,
+			engine::platform::Key::Digit7,
+			engine::platform::Key::Digit8,
+			engine::platform::Key::Digit9
+		};
+
+		if (!chatBlocks && ui.auction.isOpen && !ui.auction.listings.empty())
+		{
+			for (int d = 0; d < 9; ++d)
+			{
+				if (m_input.WasPressed(digitKeys[d]))
+				{
+					const size_t idx = static_cast<size_t>(d);
+					if (idx < ui.auction.listings.size())
+					{
+						(void)m_uiModelBinding.SelectAuctionRow(static_cast<uint32_t>(idx));
+						LOG_INFO(Core, "[GameplayNet] Auction row selected ({})", idx);
+					}
+					break;
+				}
+			}
+		}
+
+		if (!chatBlocks && ui.auction.isOpen)
+		{
+			if (m_input.WasPressed(engine::platform::Key::G))
+			{
+				sendAuctionBrowseFromModel();
+				LOG_INFO(Core, "[GameplayNet] Auction browse refresh (G)");
+			}
+			if (m_input.WasPressed(engine::platform::Key::F))
+			{
+				const uint32_t nextSort = (ui.auction.sortMode + 1u) % 3u;
+				(void)m_uiModelBinding.ConfigureAuctionBrowse(
+					ui.auction.filterMinPrice,
+					ui.auction.filterMaxPrice,
+					ui.auction.filterItemId,
+					nextSort);
+				sendAuctionBrowseFromModel();
+				LOG_INFO(Core, "[GameplayNet] Auction sort mode -> {}", nextSort);
+			}
+			if (m_input.WasPressed(engine::platform::Key::Q))
+			{
+				const uint32_t nmin =
+					ui.auction.filterMinPrice > 100u ? ui.auction.filterMinPrice - 100u : 0u;
+				(void)m_uiModelBinding.ConfigureAuctionBrowse(
+					nmin,
+					ui.auction.filterMaxPrice,
+					ui.auction.filterItemId,
+					ui.auction.sortMode);
+				sendAuctionBrowseFromModel();
+			}
+			if (m_input.WasPressed(engine::platform::Key::E))
+			{
+				const uint32_t nmin = ui.auction.filterMinPrice + 100u;
+				(void)m_uiModelBinding.ConfigureAuctionBrowse(
+					nmin,
+					ui.auction.filterMaxPrice,
+					ui.auction.filterItemId,
+					ui.auction.sortMode);
+				sendAuctionBrowseFromModel();
+			}
+			if (m_input.WasPressed(engine::platform::Key::PageUp))
+			{
+				const uint32_t nmax = ui.auction.filterMaxPrice + 500u;
+				(void)m_uiModelBinding.ConfigureAuctionBrowse(
+					ui.auction.filterMinPrice,
+					nmax,
+					ui.auction.filterItemId,
+					ui.auction.sortMode);
+				sendAuctionBrowseFromModel();
+			}
+			if (m_input.WasPressed(engine::platform::Key::PageDown))
+			{
+				const uint32_t nmax =
+					ui.auction.filterMaxPrice > 500u ? ui.auction.filterMaxPrice - 500u : 0u;
+				(void)m_uiModelBinding.ConfigureAuctionBrowse(
+					ui.auction.filterMinPrice,
+					nmax,
+					ui.auction.filterItemId,
+					ui.auction.sortMode);
+				sendAuctionBrowseFromModel();
+			}
+			if (m_input.WasPressed(engine::platform::Key::M))
+			{
+				const uint32_t nextFilter = ui.auction.filterItemId == 0u ? 1u : 0u;
+				(void)m_uiModelBinding.ConfigureAuctionBrowse(
+					ui.auction.filterMinPrice,
+					ui.auction.filterMaxPrice,
+					nextFilter,
+					ui.auction.sortMode);
+				sendAuctionBrowseFromModel();
+				LOG_INFO(Core, "[GameplayNet] Auction item_id filter -> {}", nextFilter);
+			}
+			if (m_input.WasPressed(engine::platform::Key::B) && !ui.auction.listings.empty())
+			{
+				const uint32_t sel = std::min(ui.auction.selectedRow,
+					static_cast<uint32_t>(ui.auction.listings.size() - 1u));
+				const engine::client::UIAuctionListingLine& line = ui.auction.listings[sel];
+				const uint32_t bidAmt = clientAuctionMinNextBid(line.startBid, line.currentBid);
+				engine::server::AuctionBidRequestMessage msg{};
+				msg.clientId = clientId;
+				msg.listingId = line.listingId;
+				msg.bidAmount = bidAmt;
+				(void)m_gameplayUdp.SendAuctionBidRequest(msg);
+			}
+			if (m_input.WasPressed(engine::platform::Key::O) && !ui.auction.listings.empty())
+			{
+				const uint32_t sel = std::min(ui.auction.selectedRow,
+					static_cast<uint32_t>(ui.auction.listings.size() - 1u));
+				const engine::client::UIAuctionListingLine& line = ui.auction.listings[sel];
+				if (line.buyoutPrice == 0u)
+				{
+					LOG_WARN(Core, "[GameplayNet] Buyout ignored: no buyout on row");
+				}
+				else
+				{
+					engine::server::AuctionBuyoutRequestMessage msg{};
+					msg.clientId = clientId;
+					msg.listingId = line.listingId;
+					(void)m_gameplayUdp.SendAuctionBuyoutRequest(msg);
+				}
+			}
+			if (m_input.WasPressed(engine::platform::Key::L))
+			{
+				for (const engine::client::InventorySlotState& slot : m_invUi.GetState().slots)
+				{
+					if (slot.hovered && slot.occupied && slot.itemId != 0u && slot.quantity > 0u)
+					{
+						engine::server::AuctionListItemRequestMessage msg{};
+						msg.clientId = clientId;
+						msg.itemId = slot.itemId;
+						msg.quantity = 1u;
+						msg.startBid = 10u;
+						msg.buyoutPrice = 0u;
+						msg.durationHours = 24u;
+						(void)m_gameplayUdp.SendAuctionListItemRequest(msg);
+						LOG_INFO(Core, "[GameplayNet] Auction list from hover (item_id={}, qty=1)", slot.itemId);
+						break;
+					}
+				}
+			}
+		}
+
+		if (!chatBlocks && ui.shop.isOpen)
+		{
+			for (int d = 0; d < 9; ++d)
+			{
+				if (m_input.WasPressed(digitKeys[d]))
+				{
+					tryBuyIndex(static_cast<size_t>(d));
+					break;
+				}
+			}
+		}
+
+		if ((ui.shop.isOpen || ui.auction.isOpen) && m_input.WasMousePressed(engine::platform::MouseButton::Right))
+		{
+			(void)m_invUi.TryBeginDrag(mx, my);
+		}
+
+		if (m_input.WasMouseReleased(engine::platform::MouseButton::Left))
+		{
+			if (m_invUi.IsDragging() && ui.shop.isOpen && m_shopUi.HitSellDropZone(mx, my))
+			{
+				uint32_t slot = 0;
+				uint32_t itemId = 0;
+				uint32_t qty = 0;
+				if (m_invUi.GetDragSource(slot, itemId, qty))
+				{
+					uint32_t buyPrice = 0;
+					bool offerFound = false;
+					for (const engine::client::UIShopOfferLine& line : ui.shop.offers)
+					{
+						if (line.itemId == itemId)
+						{
+							buyPrice = line.buyPrice;
+							offerFound = true;
+							break;
+						}
+					}
+					if (!offerFound)
+					{
+						LOG_WARN(Core, "[GameplayNet] Sell-back rejected: item_id={} not listed by vendor", itemId);
+					}
+					else
+					{
+						m_pendingSellVendorId = ui.shop.vendorId;
+						m_pendingSellItemId = itemId;
+						m_pendingSellQty = qty;
+						m_pendingSellUnitGold = ClientVendorSellUnitGold(buyPrice);
+						m_pendingSellActive = true;
+						LOG_INFO(Core,
+							"[GameplayNet] Pending sell (item_id={}, qty={}, unit_gold={}) — confirm Y/N",
+							itemId,
+							qty,
+							m_pendingSellUnitGold);
+					}
+				}
+				m_invUi.CancelDrag();
+			}
+			else if (m_invUi.IsDragging() && ui.auction.isOpen && m_auctionUi.HitPostDropZone(mx, my))
+			{
+				uint32_t slot = 0;
+				uint32_t itemId = 0;
+				uint32_t qty = 0;
+				if (m_invUi.GetDragSource(slot, itemId, qty) && itemId != 0u && qty > 0u)
+				{
+					engine::server::AuctionListItemRequestMessage msg{};
+					msg.clientId = clientId;
+					msg.itemId = itemId;
+					msg.quantity = std::min(qty, 100u);
+					msg.startBid = 10u;
+					msg.buyoutPrice = 0u;
+					msg.durationHours = 24u;
+					(void)m_gameplayUdp.SendAuctionListItemRequest(msg);
+					LOG_INFO(Core, "[GameplayNet] Auction list drag-drop (item_id={}, qty={})", itemId, msg.quantity);
+				}
+				m_invUi.CancelDrag();
+			}
+			else if (m_invUi.IsDragging())
+			{
+				m_invUi.CancelDrag();
+			}
+			else if (ui.auction.isOpen)
+			{
+				const int ahHit = m_auctionUi.HitTestRow(mx, my);
+				if (ahHit >= 0)
+				{
+					(void)m_uiModelBinding.SelectAuctionRow(static_cast<uint32_t>(ahHit));
+				}
+			}
+			else if (ui.shop.isOpen)
+			{
+				const int hit = m_shopUi.HitTestOfferLine(mx, my);
+				if (hit >= 0)
+				{
+					tryBuyIndex(static_cast<size_t>(hit));
+				}
+			}
+		}
 	}
 
 } // namespace engine

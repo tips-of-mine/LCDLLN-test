@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/server/AuctionHouse.h"
 #include "engine/server/CharacterPersistence.h"
 #include "engine/server/CurrencyConfig.h"
 #include "engine/server/PlayerWalletService.h"
@@ -413,6 +414,27 @@ namespace engine::server
 		/// M35.2 — authoritative sell-back at 25% buy price.
 		void HandleShopSellRequest(const Endpoint& endpoint, const ShopSellRequestMessage& message);
 
+		/// M35.4 — auction browse snapshot to one client.
+		bool SendAuctionBrowseResult(const ConnectedClient& receiver, const AuctionBrowseRequestMessage& query);
+
+		void HandleAuctionBrowseRequest(const Endpoint& endpoint, const AuctionBrowseRequestMessage& message);
+		void HandleAuctionListItemRequest(const Endpoint& endpoint, const AuctionListItemRequestMessage& message);
+		void HandleAuctionBidRequest(const Endpoint& endpoint, const AuctionBidRequestMessage& message);
+		void HandleAuctionBuyoutRequest(const Endpoint& endpoint, const AuctionBuyoutRequestMessage& message);
+
+		/// Advance expired auctions and apply mailed / live wallet + inventory updates.
+		void ProcessAuctionHouseTick();
+
+		void ApplyAuctionSettlement(const AuctionSettlement& settlement);
+
+		/// Refund gold to an online player or queue to persisted mailbox when offline.
+		void RefundGoldToCharacter(uint32_t characterKey, uint32_t amountGold, std::string_view reason);
+
+		/// Append gold and/or one item stack to a character persistence file (offline delivery).
+		bool DepositMailboxDelivery(uint32_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional);
+
+		ConnectedClient* FindConnectedClientByCharacterKey(uint32_t characterKey);
+
 		/// Remove \p quantity of \p itemId from bags (merge stacks); fails if insufficient.
 		bool RemoveStackFromInventory(ConnectedClient& client, uint32_t itemId, uint32_t quantity, std::string& outError);
 
@@ -607,6 +629,7 @@ namespace engine::server
 
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
+		AuctionHouseService m_auctionHouse;
 		/// M35.1 — currency definitions + validation caps (config/currencies.json).
 		CurrencyConfig m_currencyConfig{};
 		PlayerWalletService m_playerWallet{m_currencyConfig};

@@ -3,6 +3,7 @@
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"
 
+#include <algorithm>
 #include <sstream>
 
 namespace engine::server
@@ -158,14 +159,32 @@ namespace engine::server
 			}
 		}
 
+		outState.mailboxGold = static_cast<uint32_t>(persisted.GetInt("mailbox.gold", 0));
+		outState.mailboxItems.clear();
+		const uint32_t mailboxItemCount = static_cast<uint32_t>(persisted.GetInt("mailbox.item_count", 0));
+		constexpr uint32_t kMaxMailboxItems = 64;
+		const uint32_t maxLoad = std::min(mailboxItemCount, kMaxMailboxItems);
+		for (uint32_t mi = 0; mi < maxLoad; ++mi)
+		{
+			ItemStack m{};
+			m.itemId = static_cast<uint32_t>(persisted.GetInt("mailbox.item." + std::to_string(mi) + ".id", 0));
+			m.quantity = static_cast<uint32_t>(persisted.GetInt("mailbox.item." + std::to_string(mi) + ".qty", 0));
+			if (m.itemId != 0u && m.quantity != 0u)
+			{
+				outState.mailboxItems.push_back(m);
+			}
+		}
+
 		LOG_INFO(Net,
-			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
+			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={}, mailbox_gold={}, mailbox_items={})",
 			characterKey,
 			outState.zoneId,
 			outState.inventory.size(),
 			outState.questStates.size(),
 			outState.chatIgnoredDisplayNames.size(),
-			outState.chatModeratorRole ? "true" : "false");
+			outState.chatModeratorRole ? "true" : "false",
+			outState.mailboxGold,
+			outState.mailboxItems.size());
 		return true;
 	}
 
@@ -217,6 +236,15 @@ namespace engine::server
 			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
 		}
 
+		output << "mailbox.gold=" << state.mailboxGold << "\n";
+		const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);
+		output << "mailbox.item_count=" << mailboxToSave << "\n";
+		for (size_t mi = 0; mi < mailboxToSave; ++mi)
+		{
+			output << "mailbox.item." << mi << ".id=" << state.mailboxItems[mi].itemId << "\n";
+			output << "mailbox.item." << mi << ".qty=" << state.mailboxItems[mi].quantity << "\n";
+		}
+
 		if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
 		{
 			LOG_ERROR(Net, "[CharacterPersistence] Save FAILED (character_key={}, path={})",
@@ -226,12 +254,14 @@ namespace engine::server
 		}
 
 		LOG_INFO(Net,
-			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={})",
+			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, mailbox_gold={}, mailbox_items={})",
 			state.characterKey,
 			state.zoneId,
 			state.inventory.size(),
 			state.questStates.size(),
-			ignoreCountToSave);
+			ignoreCountToSave,
+			state.mailboxGold,
+			mailboxToSave);
 		return true;
 	}
 

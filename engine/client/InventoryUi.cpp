@@ -109,6 +109,10 @@ namespace engine::client
 		m_viewportWidth = 0;
 		m_viewportHeight = 0;
 		m_relativeMetadataPath.clear();
+		m_dragActive = false;
+		m_dragSlotIndex = 0;
+		m_dragItemId = 0;
+		m_dragQuantity = 0;
 		LOG_INFO(Core, "[InventoryUiPresenter] Destroyed");
 	}
 
@@ -158,6 +162,7 @@ namespace engine::client
 			m_previousInventory = model.inventory;
 		}
 		RebuildSlots(model);
+		SyncDragWithModel(model);
 		RefreshTooltip();
 		RebuildDebugText();
 		LOG_DEBUG(Core, "[InventoryUiPresenter] Model applied (change_mask={}, items={}, feedback={})",
@@ -469,6 +474,86 @@ namespace engine::client
 		return nullptr;
 	}
 
+	void InventoryUiPresenter::SyncDragWithModel(const UIModel& model)
+	{
+		(void)model;
+		if (!m_dragActive)
+		{
+			return;
+		}
+		if (m_dragSlotIndex >= m_state.slots.size())
+		{
+			CancelDrag();
+			return;
+		}
+		const InventorySlotState& slot = m_state.slots[m_dragSlotIndex];
+		if (!slot.occupied || slot.itemId != m_dragItemId || slot.quantity < m_dragQuantity)
+		{
+			LOG_WARN(Core, "[InventoryUiPresenter] Drag invalidated by inventory sync");
+			CancelDrag();
+		}
+	}
+
+	bool InventoryUiPresenter::TryBeginDrag(float mouseX, float mouseY)
+	{
+		if (!m_initialized)
+		{
+			LOG_WARN(Core, "[InventoryUiPresenter] TryBeginDrag FAILED: not initialized");
+			return false;
+		}
+
+		for (const InventorySlotState& slot : m_state.slots)
+		{
+			if (!slot.occupied)
+			{
+				continue;
+			}
+			if (!ContainsPoint(slot.bounds, mouseX, mouseY))
+			{
+				continue;
+			}
+
+			m_dragActive = true;
+			m_dragSlotIndex = slot.slotIndex;
+			m_dragItemId = slot.itemId;
+			m_dragQuantity = std::max(1u, slot.quantity);
+			RebuildDebugText();
+			LOG_INFO(Core,
+				"[InventoryUiPresenter] Drag started (slot={}, item_id={}, qty={})",
+				m_dragSlotIndex,
+				m_dragItemId,
+				m_dragQuantity);
+			return true;
+		}
+		return false;
+	}
+
+	void InventoryUiPresenter::CancelDrag()
+	{
+		if (!m_dragActive)
+		{
+			return;
+		}
+		LOG_INFO(Core, "[InventoryUiPresenter] Drag ended without sale");
+		m_dragActive = false;
+		m_dragSlotIndex = 0;
+		m_dragItemId = 0;
+		m_dragQuantity = 0;
+		RebuildDebugText();
+	}
+
+	bool InventoryUiPresenter::GetDragSource(uint32_t& outSlotIndex, uint32_t& outItemId, uint32_t& outQty) const
+	{
+		if (!m_dragActive)
+		{
+			return false;
+		}
+		outSlotIndex = m_dragSlotIndex;
+		outItemId = m_dragItemId;
+		outQty = m_dragQuantity;
+		return true;
+	}
+
 	void InventoryUiPresenter::RebuildDebugText()
 	{
 		m_state.debugText.clear();
@@ -509,6 +594,16 @@ namespace engine::client
 			m_state.debugText += feedback.text;
 			m_state.debugText += " remaining=";
 			m_state.debugText += std::to_string(feedback.remainingSeconds);
+			m_state.debugText += "\n";
+		}
+		if (m_dragActive)
+		{
+			m_state.debugText += "drag item=";
+			m_state.debugText += std::to_string(m_dragItemId);
+			m_state.debugText += " qty=";
+			m_state.debugText += std::to_string(m_dragQuantity);
+			m_state.debugText += " from slot=";
+			m_state.debugText += std::to_string(m_dragSlotIndex);
 			m_state.debugText += "\n";
 		}
 	}

@@ -198,6 +198,15 @@ namespace engine::server
 		return true;
 	}
 
+	std::vector<std::byte> EncodeHello(const HelloMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Hello, 8);
+		WriteU16(packet, message.requestedTickHz);
+		WriteU16(packet, message.requestedSnapshotHz);
+		WriteU32(packet, message.clientNonce);
+		return packet;
+	}
+
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage)
 	{
 		std::span<const std::byte> payload;
@@ -1368,6 +1377,169 @@ namespace engine::server
 		outMessage.vendorId = ReadU32(payload, 4);
 		outMessage.itemId = ReadU32(payload, 8);
 		outMessage.quantity = ReadU32(payload, 12);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeAuctionBrowseRequest(const AuctionBrowseRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AuctionBrowseRequest, 24);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.minPrice);
+		WriteU32(packet, message.maxPrice);
+		WriteU32(packet, message.itemIdFilter);
+		WriteU32(packet, message.sortMode);
+		WriteU32(packet, message.maxRows);
+		return packet;
+	}
+
+	bool DecodeAuctionBrowseRequest(std::span<const std::byte> packet, AuctionBrowseRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AuctionBrowseRequest, payload) || payload.size() != 24)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.minPrice = ReadU32(payload, 4);
+		outMessage.maxPrice = ReadU32(payload, 8);
+		outMessage.itemIdFilter = ReadU32(payload, 12);
+		outMessage.sortMode = ReadU32(payload, 16);
+		outMessage.maxRows = ReadU32(payload, 20);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeAuctionBrowseResult(const AuctionBrowseResultMessage& message)
+	{
+		const uint32_t rowCount = static_cast<uint32_t>(
+			std::min<size_t>(message.rows.size(), static_cast<size_t>(kMaxAuctionBrowseRowsWire)));
+		const size_t payloadSize = 8u + (static_cast<size_t>(rowCount) * 28u);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AuctionBrowseResult, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, rowCount);
+		for (uint32_t i = 0; i < rowCount; ++i)
+		{
+			const AuctionListingWireRow& r = message.rows[i];
+			WriteU32(packet, r.listingId);
+			WriteU32(packet, r.itemId);
+			WriteU32(packet, r.quantity);
+			WriteU32(packet, r.startBid);
+			WriteU32(packet, r.buyoutPrice);
+			WriteU32(packet, r.currentBid);
+			WriteU32(packet, r.expiresAtTick);
+		}
+		return packet;
+	}
+
+	bool DecodeAuctionBrowseResult(std::span<const std::byte> packet, AuctionBrowseResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AuctionBrowseResult, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		const uint32_t rowCount = ReadU32(payload, 4);
+		if (rowCount > kMaxAuctionBrowseRowsWire)
+		{
+			return false;
+		}
+		const size_t need = 8u + (static_cast<size_t>(rowCount) * 28u);
+		if (payload.size() != need)
+		{
+			return false;
+		}
+		outMessage.rows.clear();
+		outMessage.rows.reserve(rowCount);
+		size_t offset = 8;
+		for (uint32_t i = 0; i < rowCount; ++i)
+		{
+			AuctionListingWireRow r{};
+			r.listingId = ReadU32(payload, offset);
+			offset += 4;
+			r.itemId = ReadU32(payload, offset);
+			offset += 4;
+			r.quantity = ReadU32(payload, offset);
+			offset += 4;
+			r.startBid = ReadU32(payload, offset);
+			offset += 4;
+			r.buyoutPrice = ReadU32(payload, offset);
+			offset += 4;
+			r.currentBid = ReadU32(payload, offset);
+			offset += 4;
+			r.expiresAtTick = ReadU32(payload, offset);
+			offset += 4;
+			outMessage.rows.push_back(r);
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeAuctionListItemRequest(const AuctionListItemRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AuctionListItemRequest, 24);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		WriteU32(packet, message.startBid);
+		WriteU32(packet, message.buyoutPrice);
+		WriteU32(packet, message.durationHours);
+		return packet;
+	}
+
+	bool DecodeAuctionListItemRequest(std::span<const std::byte> packet, AuctionListItemRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AuctionListItemRequest, payload) || payload.size() != 24)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.itemId = ReadU32(payload, 4);
+		outMessage.quantity = ReadU32(payload, 8);
+		outMessage.startBid = ReadU32(payload, 12);
+		outMessage.buyoutPrice = ReadU32(payload, 16);
+		outMessage.durationHours = ReadU32(payload, 20);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeAuctionBidRequest(const AuctionBidRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AuctionBidRequest, 12);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.listingId);
+		WriteU32(packet, message.bidAmount);
+		return packet;
+	}
+
+	bool DecodeAuctionBidRequest(std::span<const std::byte> packet, AuctionBidRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AuctionBidRequest, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.listingId = ReadU32(payload, 4);
+		outMessage.bidAmount = ReadU32(payload, 8);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeAuctionBuyoutRequest(const AuctionBuyoutRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::AuctionBuyoutRequest, 8);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.listingId);
+		return packet;
+	}
+
+	bool DecodeAuctionBuyoutRequest(std::span<const std::byte> packet, AuctionBuyoutRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::AuctionBuyoutRequest, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.listingId = ReadU32(payload, 4);
 		return true;
 	}
 }

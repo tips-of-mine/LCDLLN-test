@@ -45,6 +45,39 @@ namespace engine::server
 		/// M35.2 — Maximum stack size per shop buy/sell request (anti-spam).
 		inline constexpr uint32_t kMaxShopQuantityPerRequest = 10000u;
 
+		/// M35.4 — merge persisted mailbox into wallet + bags before spawning the character.
+		void MergePersistedMailboxIntoState(PersistedCharacterState& state)
+		{
+			const uint64_t totalGold = static_cast<uint64_t>(state.gold) + static_cast<uint64_t>(state.mailboxGold);
+			state.gold = static_cast<uint32_t>(
+				std::min<uint64_t>(totalGold, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+			state.mailboxGold = 0;
+			for (const ItemStack& m : state.mailboxItems)
+			{
+				if (m.itemId == 0u || m.quantity == 0u)
+				{
+					continue;
+				}
+				bool merged = false;
+				for (ItemStack& inv : state.inventory)
+				{
+					if (inv.itemId == m.itemId)
+					{
+						const uint64_t q = static_cast<uint64_t>(inv.quantity) + static_cast<uint64_t>(m.quantity);
+						inv.quantity = static_cast<uint32_t>(
+							std::min<uint64_t>(q, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+						merged = true;
+						break;
+					}
+				}
+				if (!merged)
+				{
+					state.inventory.push_back(m);
+				}
+			}
+			state.mailboxItems.clear();
+		}
+
 		/// Parse \p targetId of the form `vendor:<decimal_id>` for M35.2 shop talk routing.
 		bool TryParseVendorTarget(std::string_view targetId, uint32_t& outVendorId)
 		{
@@ -181,6 +214,7 @@ namespace engine::server
 	ServerApp::ServerApp(engine::core::Config config)
 		: m_config(std::move(config))
 		, m_characterPersistence(m_config)
+		, m_auctionHouse(m_config)
 		, m_eventRuntime(m_config)
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
@@ -304,6 +338,13 @@ namespace engine::server
 		// M32.2 — PartySystem (in-memory, no DB dependency).
 		m_partySystem.Init();
 
+		if (!m_auctionHouse.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: auction house startup failed");
+			Shutdown();
+			return false;
+		}
+
 		m_initialized = true;
 		LOG_INFO(Core, "[ServerApp] Init OK (port={}, tick_hz={}, snapshot_hz={})",
 			m_listenPort, m_tickHz, m_snapshotHz);
@@ -407,6 +448,7 @@ namespace engine::server
 		m_spawnerRuntime.Shutdown();
 		m_eventRuntime.Shutdown();
 		m_questRuntime.Shutdown();
+		m_auctionHouse.Shutdown();
 		m_characterPersistence.Shutdown();
 		m_dynamicEvents.clear();
 		m_spawners.clear();
@@ -511,6 +553,34 @@ namespace engine::server
 		if (DecodeShopSellRequest(packetBytes, shopSell))
 		{
 			HandleShopSellRequest(datagram.endpoint, shopSell);
+			return;
+		}
+
+		AuctionBrowseRequestMessage ahBrowse{};
+		if (DecodeAuctionBrowseRequest(packetBytes, ahBrowse))
+		{
+			HandleAuctionBrowseRequest(datagram.endpoint, ahBrowse);
+			return;
+		}
+
+		AuctionListItemRequestMessage ahList{};
+		if (DecodeAuctionListItemRequest(packetBytes, ahList))
+		{
+			HandleAuctionListItemRequest(datagram.endpoint, ahList);
+			return;
+		}
+
+		AuctionBidRequestMessage ahBid{};
+		if (DecodeAuctionBidRequest(packetBytes, ahBid))
+		{
+			HandleAuctionBidRequest(datagram.endpoint, ahBid);
+			return;
+		}
+
+		AuctionBuyoutRequestMessage ahBuy{};
+		if (DecodeAuctionBuyoutRequest(packetBytes, ahBuy))
+		{
+			HandleAuctionBuyoutRequest(datagram.endpoint, ahBuy);
 			return;
 		}
 
@@ -705,6 +775,9 @@ namespace engine::server
 		PersistedCharacterState persistedState{};
 		if (m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState))
 		{
+			const bool hadMailbox =
+				persistedState.mailboxGold != 0u || !persistedState.mailboxItems.empty();
+			MergePersistedMailboxIntoState(persistedState);
 			acceptedClient.zoneId = persistedState.zoneId;
 			acceptedClient.positionMetersX = persistedState.positionMetersX;
 			acceptedClient.positionMetersY = persistedState.positionMetersY;
@@ -729,6 +802,11 @@ namespace engine::server
 				acceptedClient.questStates.size(),
 				acceptedClient.chatIgnoredDisplayNames.size(),
 				acceptedClient.chatModeratorRole ? "true" : "false");
+			if (hadMailbox)
+			{
+				SaveConnectedClient(acceptedClient, "mailbox_merge_login");
+				LOG_INFO(Net, "[ServerApp] Mailbox merged at login (client_id={})", acceptedClient.clientId);
+			}
 		}
 		else
 		{
@@ -839,6 +917,7 @@ namespace engine::server
 		// M32.2 — Expire stale party invites once per tick.
 		if (m_partySystem.IsInitialized())
 			m_partySystem.ExpireInvites(m_currentTick);
+		ProcessAuctionHouseTick();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -1031,6 +1110,8 @@ namespace engine::server
 		state.questStates = client.questStates;
 		state.chatIgnoredDisplayNames = client.chatIgnoredDisplayNames;
 		state.chatModeratorRole = client.chatModeratorRole;
+		state.mailboxGold = 0;
+		state.mailboxItems.clear();
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
@@ -2142,6 +2223,20 @@ namespace engine::server
 
 			LOG_WARN(Net, "[ServerApp] TalkRequest vendor not in catalog (client_id={}, vendor_id={})", client->clientId, vendorId);
 			SendChatSystemNotice(*client, "Vendor not available.");
+			return;
+		}
+
+		if (targetId == "auction" || targetId == "ah")
+		{
+			AuctionBrowseRequestMessage q{};
+			q.clientId = client->clientId;
+			q.minPrice = 0;
+			q.maxPrice = 0;
+			q.itemIdFilter = 0;
+			q.sortMode = 0;
+			q.maxRows = kMaxAuctionBrowseRowsWire;
+			LOG_INFO(Net, "[ServerApp] TalkRequest routes to auction house (client_id={})", client->clientId);
+			(void)SendAuctionBrowseResult(*client, q);
 			return;
 		}
 
@@ -4865,6 +4960,448 @@ namespace engine::server
 			message.itemId,
 			message.quantity,
 			totalGoldU64);
+	}
+
+	ConnectedClient* ServerApp::FindConnectedClientByCharacterKey(uint32_t characterKey)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.persistenceCharacterKey == characterKey)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	bool ServerApp::SendAuctionBrowseResult(const ConnectedClient& receiver, const AuctionBrowseRequestMessage& query)
+	{
+		const uint32_t maxRows = std::max(1u, std::min(query.maxRows, static_cast<uint32_t>(kMaxAuctionBrowseRowsWire)));
+		const uint8_t sortMode = static_cast<uint8_t>(std::min<uint32_t>(query.sortMode, 2u));
+		const std::vector<const AuctionListingRecord*> rows = m_auctionHouse.QueryBrowse(
+			query.minPrice,
+			query.maxPrice,
+			query.itemIdFilter,
+			sortMode,
+			maxRows);
+		AuctionBrowseResultMessage msg{};
+		msg.clientId = receiver.clientId;
+		for (const AuctionListingRecord* p : rows)
+		{
+			AuctionListingWireRow w{};
+			w.listingId = p->listingId;
+			w.itemId = p->itemId;
+			w.quantity = p->quantity;
+			w.startBid = p->startBid;
+			w.buyoutPrice = p->buyoutPrice;
+			w.currentBid = p->currentBid;
+			w.expiresAtTick = p->expiresAtTick;
+			msg.rows.push_back(w);
+		}
+		const std::vector<std::byte> packet = EncodeAuctionBrowseResult(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBrowseResult send FAILED (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] AuctionBrowseResult OK (client_id={}, rows={})", receiver.clientId, msg.rows.size());
+		return true;
+	}
+
+	void ServerApp::HandleAuctionBrowseRequest(const Endpoint& endpoint, const AuctionBrowseRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBrowse ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionBrowse ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		(void)SendAuctionBrowseResult(*client, message);
+	}
+
+	void ServerApp::HandleAuctionListItemRequest(const Endpoint& endpoint, const AuctionListItemRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionListItem ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		if (message.quantity == 0u || message.quantity > kMaxShopQuantityPerRequest)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem ignored: bad quantity ({})", message.quantity);
+			SendChatSystemNotice(*client, "Invalid quantity.");
+			return;
+		}
+		std::string verr;
+		if (!m_auctionHouse.ValidateNewListingParams(
+				message.startBid,
+				message.buyoutPrice,
+				static_cast<uint8_t>(message.durationHours),
+				verr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem blocked: {}", verr);
+			SendChatSystemNotice(*client, "Invalid auction parameters.");
+			return;
+		}
+		std::string invErr;
+		if (!RemoveStackFromInventory(*client, message.itemId, message.quantity, invErr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem blocked: {}", invErr);
+			SendChatSystemNotice(*client, "You do not have that item.");
+			return;
+		}
+		AuctionListingRecord row{};
+		row.sellerClientId = client->clientId;
+		row.sellerCharacterKey = client->persistenceCharacterKey;
+		row.itemId = message.itemId;
+		row.quantity = message.quantity;
+		row.startBid = message.startBid;
+		row.buyoutPrice = message.buyoutPrice;
+		row.expiresAtTick = m_currentTick + message.durationHours * 3600u * static_cast<uint32_t>(m_tickHz);
+		const uint32_t newId = m_auctionHouse.EmplaceListing(row);
+		SaveConnectedClient(*client, "auction_list");
+		(void)SendInventoryDelta(
+			*client,
+			std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+		SendChatSystemNotice(*client, "Item listed on auction house.");
+		LOG_INFO(Net,
+			"[ServerApp] AuctionListItem OK (client_id={}, listing_id={}, item_id={}, qty={})",
+			client->clientId,
+			newId,
+			message.itemId,
+			message.quantity);
+	}
+
+	void ServerApp::HandleAuctionBidRequest(const Endpoint& endpoint, const AuctionBidRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBid ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionBid ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		AuctionListingRecord* row = m_auctionHouse.FindListing(message.listingId);
+		if (row == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBid ignored: unknown listing_id={}", message.listingId);
+			SendChatSystemNotice(*client, "That listing is gone.");
+			return;
+		}
+		if (row->sellerCharacterKey == client->persistenceCharacterKey)
+		{
+			SendChatSystemNotice(*client, "You cannot bid on your own auction.");
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: own listing (client_id={})", client->clientId);
+			return;
+		}
+		const uint32_t minBid = m_auctionHouse.MinimumNextBid(*row);
+		if (message.bidAmount < minBid)
+		{
+			SendChatSystemNotice(*client, "Bid too low.");
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: bid {} < min {}", message.bidAmount, minBid);
+			return;
+		}
+		if (row->currentBid > 0u && message.bidAmount <= row->currentBid)
+		{
+			SendChatSystemNotice(*client, "Bid too low.");
+			return;
+		}
+		const uint32_t prevCk = row->highBidderCharacterKey;
+		const uint32_t prevBid = row->currentBid;
+		const uint32_t bidderCk = client->persistenceCharacterKey;
+		uint64_t charge = message.bidAmount;
+		if (prevCk == bidderCk && prevBid > 0u)
+		{
+			charge = static_cast<uint64_t>(message.bidAmount) - static_cast<uint64_t>(prevBid);
+		}
+		std::string werr;
+		if (charge > 0u
+			&& !m_playerWallet.SubtractCurrency(*client, kCurrencyGold, charge, werr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: wallet ({})", werr);
+			SendChatSystemNotice(*client, "Not enough gold.");
+			return;
+		}
+		if (charge > 0u)
+		{
+			(void)SendWalletUpdate(*client);
+			SaveConnectedClient(*client, "auction_bid_charge");
+		}
+		if (prevCk != 0u && prevCk != bidderCk)
+		{
+			RefundGoldToCharacter(prevCk, prevBid, "outbid");
+			ConnectedClient* prev = FindConnectedClientByCharacterKey(prevCk);
+			if (prev != nullptr)
+			{
+				SendChatSystemNotice(*prev, "You were outbid.");
+			}
+		}
+		row->currentBid = message.bidAmount;
+		row->highBidderCharacterKey = bidderCk;
+		row->highBidderClientId = client->clientId;
+		(void)m_auctionHouse.PersistListings();
+		SendChatSystemNotice(*client, "Bid accepted.");
+		LOG_INFO(Net,
+			"[ServerApp] AuctionBid OK (client_id={}, listing_id={}, bid={})",
+			client->clientId,
+			message.listingId,
+			message.bidAmount);
+	}
+
+	void ServerApp::HandleAuctionBuyoutRequest(const Endpoint& endpoint, const AuctionBuyoutRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBuyout ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionBuyout ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		AuctionListingRecord* row = m_auctionHouse.FindListing(message.listingId);
+		if (row == nullptr || row->buyoutPrice == 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBuyout ignored: invalid listing_id={}", message.listingId);
+			SendChatSystemNotice(*client, "Buyout not available.");
+			return;
+		}
+		if (row->sellerCharacterKey == client->persistenceCharacterKey)
+		{
+			SendChatSystemNotice(*client, "You cannot buy out your own auction.");
+			return;
+		}
+		const uint32_t buyerCk = client->persistenceCharacterKey;
+		uint64_t charge = row->buyoutPrice;
+		if (row->highBidderCharacterKey == buyerCk && row->currentBid > 0u)
+		{
+			charge = static_cast<uint64_t>(row->buyoutPrice) - static_cast<uint64_t>(row->currentBid);
+		}
+		std::string werr;
+		if (charge > 0u && !m_playerWallet.SubtractCurrency(*client, kCurrencyGold, charge, werr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBuyout blocked: wallet ({})", werr);
+			SendChatSystemNotice(*client, "Not enough gold.");
+			return;
+		}
+		if (charge > 0u)
+		{
+			(void)SendWalletUpdate(*client);
+			SaveConnectedClient(*client, "auction_buyout_charge");
+		}
+		const uint32_t hiCk = row->highBidderCharacterKey;
+		const uint32_t hiBid = row->currentBid;
+		if (hiCk != 0u && hiCk != buyerCk)
+		{
+			RefundGoldToCharacter(hiCk, hiBid, "buyout_refund");
+			ConnectedClient* prev = FindConnectedClientByCharacterKey(hiCk);
+			if (prev != nullptr)
+			{
+				SendChatSystemNotice(*prev, "Auction ended (buyout). Your bid was refunded.");
+			}
+		}
+		AuctionSettlement settlement{};
+		settlement.listingId = row->listingId;
+		settlement.item = ItemStack{ row->itemId, row->quantity };
+		settlement.sellerCharacterKey = row->sellerCharacterKey;
+		settlement.buyerCharacterKey = buyerCk;
+		settlement.buyerClientId = client->clientId;
+		settlement.finalPrice = row->buyoutPrice;
+		settlement.sellerProceeds =
+			(row->buyoutPrice * static_cast<uint32_t>(100u - kAuctionHouseFeePercent)) / 100u;
+		settlement.expiredWithoutBids = false;
+		const uint32_t lid = row->listingId;
+		const uint32_t buyoutPaid = row->buyoutPrice;
+		m_auctionHouse.EraseListing(lid);
+		ApplyAuctionSettlement(settlement);
+		SendChatSystemNotice(*client, "Buyout successful.");
+		LOG_INFO(Net,
+			"[ServerApp] AuctionBuyout OK (client_id={}, listing_id={}, price={})",
+			client->clientId,
+			lid,
+			buyoutPaid);
+	}
+
+	void ServerApp::ProcessAuctionHouseTick()
+	{
+		std::vector<AuctionSettlement> settlements;
+		m_auctionHouse.CollectExpired(m_currentTick, settlements);
+		for (const AuctionSettlement& s : settlements)
+		{
+			ApplyAuctionSettlement(s);
+		}
+	}
+
+	void ServerApp::RefundGoldToCharacter(uint32_t characterKey, uint32_t amountGold, std::string_view /*reason*/)
+	{
+		if (amountGold == 0u)
+		{
+			return;
+		}
+		ConnectedClient* online = FindConnectedClientByCharacterKey(characterKey);
+		if (online != nullptr)
+		{
+			std::string err;
+			if (!m_playerWallet.AddCurrency(*online, kCurrencyGold, amountGold, err))
+			{
+				LOG_WARN(Net, "[ServerApp] RefundGold AddCurrency FAILED (ck={}, {}) — mailing", characterKey, err);
+				(void)DepositMailboxDelivery(characterKey, amountGold, nullptr);
+				return;
+			}
+			(void)SendWalletUpdate(*online);
+			SaveConnectedClient(*online, "auction_refund");
+			LOG_INFO(Net, "[ServerApp] RefundGold OK online (ck={}, amount={})", characterKey, amountGold);
+			return;
+		}
+		if (!DepositMailboxDelivery(characterKey, amountGold, nullptr))
+		{
+			LOG_ERROR(Net, "[ServerApp] Refund gold mailbox FAILED (ck={}, amount={})", characterKey, amountGold);
+			return;
+		}
+		LOG_INFO(Net, "[ServerApp] RefundGold mailed (ck={}, amount={})", characterKey, amountGold);
+	}
+
+	bool ServerApp::DepositMailboxDelivery(uint32_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional)
+	{
+		PersistedCharacterState state{};
+		if (!m_characterPersistence.LoadCharacter(characterKey, state))
+		{
+			LOG_WARN(Net, "[ServerApp] DepositMailbox FAILED: cannot load character_key={}", characterKey);
+			return false;
+		}
+		const uint64_t newMailGold = static_cast<uint64_t>(state.mailboxGold) + static_cast<uint64_t>(goldDelta);
+		state.mailboxGold = static_cast<uint32_t>(std::min<uint64_t>(
+			newMailGold,
+			static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+		if (itemOptional != nullptr && itemOptional->itemId != 0u && itemOptional->quantity != 0u)
+		{
+			constexpr size_t kMaxMailboxItems = 64;
+			if (state.mailboxItems.size() >= kMaxMailboxItems)
+			{
+				LOG_WARN(Net, "[ServerApp] DepositMailbox item dropped: mailbox full (character_key={})", characterKey);
+			}
+			else
+			{
+				state.mailboxItems.push_back(*itemOptional);
+			}
+		}
+		if (!m_characterPersistence.SaveCharacter(state))
+		{
+			LOG_ERROR(Net, "[ServerApp] DepositMailbox Save FAILED (character_key={})", characterKey);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] DepositMailbox OK (character_key={}, gold_delta={}, item={})",
+			characterKey,
+			goldDelta,
+			itemOptional != nullptr);
+		return true;
+	}
+
+	void ServerApp::ApplyAuctionSettlement(const AuctionSettlement& s)
+	{
+		{
+			std::ostringstream hist;
+			hist << "listing=" << s.listingId << " final=" << s.finalPrice << " seller_ck=" << s.sellerCharacterKey
+				<< " buyer_ck=" << s.buyerCharacterKey << " no_bids=" << (s.expiredWithoutBids ? 1 : 0);
+			if (!m_auctionHouse.AppendHistoryLine(hist.str()))
+			{
+				LOG_WARN(Net, "[ServerApp] Auction history append failed (listing_id={})", s.listingId);
+			}
+		}
+
+		if (s.expiredWithoutBids)
+		{
+			ConnectedClient* seller = FindConnectedClientByCharacterKey(s.sellerCharacterKey);
+			if (seller != nullptr)
+			{
+				AddItemToInventory(*seller, s.item);
+				SaveConnectedClient(*seller, "auction_expired_return");
+				SendChatSystemNotice(*seller, "Auction expired. Item returned.");
+				(void)SendInventoryDelta(
+					*seller,
+					std::span<const ItemStack>(seller->inventory.data(), seller->inventory.size()));
+				LOG_INFO(Net, "[ServerApp] Auction expired: item returned online (seller_ck={})", s.sellerCharacterKey);
+			}
+			else
+			{
+				if (!DepositMailboxDelivery(s.sellerCharacterKey, 0, &s.item))
+				{
+					LOG_ERROR(Net, "[ServerApp] Auction expired: mailbox return FAILED (seller_ck={})", s.sellerCharacterKey);
+				}
+			}
+			return;
+		}
+
+		ConnectedClient* buyer = FindConnectedClientByCharacterKey(s.buyerCharacterKey);
+		if (buyer != nullptr)
+		{
+			AddItemToInventory(*buyer, s.item);
+			SaveConnectedClient(*buyer, "auction_won_item");
+			(void)SendInventoryDelta(
+				*buyer,
+				std::span<const ItemStack>(buyer->inventory.data(), buyer->inventory.size()));
+			SendChatSystemNotice(*buyer, "You won an auction: item received.");
+			LOG_INFO(Net, "[ServerApp] Auction won: buyer online (buyer_ck={})", s.buyerCharacterKey);
+		}
+		else if (!DepositMailboxDelivery(s.buyerCharacterKey, 0, &s.item))
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction won: item mailbox FAILED (buyer_ck={})", s.buyerCharacterKey);
+		}
+
+		if (s.sellerProceeds == 0u)
+		{
+			return;
+		}
+		ConnectedClient* seller = FindConnectedClientByCharacterKey(s.sellerCharacterKey);
+		if (seller != nullptr)
+		{
+			std::string werr;
+			if (m_playerWallet.AddCurrency(*seller, kCurrencyGold, s.sellerProceeds, werr))
+			{
+				(void)SendWalletUpdate(*seller);
+				SaveConnectedClient(*seller, "auction_seller_paid");
+				SendChatSystemNotice(*seller, "Your auction sold.");
+				LOG_INFO(Net, "[ServerApp] Auction seller paid online (ck={}, amount={})", s.sellerCharacterKey, s.sellerProceeds);
+			}
+			else
+			{
+				LOG_WARN(Net, "[ServerApp] Seller wallet full, mailing proceeds (ck={}, err={})", s.sellerCharacterKey, werr);
+				(void)DepositMailboxDelivery(s.sellerCharacterKey, s.sellerProceeds, nullptr);
+			}
+		}
+		else if (!DepositMailboxDelivery(s.sellerCharacterKey, s.sellerProceeds, nullptr))
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction seller mailbox FAILED (ck={})", s.sellerCharacterKey);
+		}
 	}
 
 	bool ServerApp::RemoveStackFromInventory(ConnectedClient& client, uint32_t itemId, uint32_t quantity, std::string& outError)

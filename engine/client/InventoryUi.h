@@ -103,6 +103,17 @@ namespace engine::client
 		/// Return the immutable resolved inventory panel state.
 		const InventoryPanelState& GetState() const { return m_state; }
 
+		/// M35.2 — begin dragging one occupied slot (e.g. for vendor sell-back drop).
+		bool TryBeginDrag(float mouseX, float mouseY);
+
+		/// Drop drag state without sending a transaction.
+		void CancelDrag();
+
+		bool IsDragging() const { return m_dragActive; }
+
+		/// Valid when \ref IsDragging.
+		bool GetDragSource(uint32_t& outSlotIndex, uint32_t& outItemId, uint32_t& outQty) const;
+
 	private:
 		/// Load item metadata from the configured content-relative path.
 		bool LoadMetadata(const engine::core::Config& config);
@@ -128,6 +139,8 @@ namespace engine::client
 		/// Rebuild a textual dump of the resolved inventory panel state.
 		void RebuildDebugText();
 
+		void SyncDragWithModel(const UIModel& model);
+
 		InventoryPanelState m_state{};
 		std::vector<InventoryItemMetadata> m_metadata;
 		std::vector<engine::server::ItemStack> m_previousInventory;
@@ -136,5 +149,9 @@ namespace engine::client
 		uint32_t m_viewportHeight = 0;
 		std::string m_relativeMetadataPath;
 		bool m_initialized = false;
+		bool m_dragActive = false;
+		uint32_t m_dragSlotIndex = 0;
+		uint32_t m_dragItemId = 0;
+		uint32_t m_dragQuantity = 0;
 	};
 }

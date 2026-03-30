@@ -31,6 +31,10 @@ namespace engine::server
 		std::vector<std::string> chatIgnoredDisplayNames;
 		/// M29.2: when true, client may use admin chat commands (`/kick`, `/ban`, …).
 		bool chatModeratorRole = false;
+		/// M35.4 — gold returned by mail when outbid/offline auction delivery; merged on login.
+		uint32_t mailboxGold = 0;
+		/// M35.4 — items attached to mailbox (e.g. won auctions while offline).
+		std::vector<ItemStack> mailboxItems;
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

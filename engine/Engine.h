@@ -6,7 +6,12 @@
 #include "engine/core/memory/FrameArena.h"
 #include "engine/audio/AudioEngine.h"
 #include "engine/client/ChatUi.h"
+#include "engine/client/AuctionUi.h"
+#include "engine/client/GameplayUdpClient.h"
+#include "engine/client/InventoryUi.h"
 #include "engine/client/ProfilerHud.h"
+#include "engine/client/ShopUi.h"
+#include "engine/client/UIModel.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
 #include "engine/render/AssetRegistry.h"
@@ -78,6 +83,8 @@ namespace engine
 		std::string profilerDebugText;
 		/// M29.1: Chat panel text (history + input) for debug overlay / future HUD renderer.
 		std::string chatDebugText;
+		/// M35.2: Vendor shop + inventory interaction debug HUD (requires `client.gameplay_udp.enabled`).
+		std::string gameplayHudDebugText;
 	};
 
 	/// Engine loop: BeginFrame/Update/Render/EndFrame with double-buffered RenderState.
@@ -113,6 +120,14 @@ namespace engine
 
 		void OnResize(int w, int h);
 		void OnQuit();
+		/// Optional UDP gameplay + shop/inventory HUD (M35.2); controlled by `client.gameplay_udp.enabled`.
+		void InitGameplayNet();
+		/// Tears down presenters, UI binding, and UDP socket created by \ref InitGameplayNet.
+		void ShutdownGameplayNet();
+		/// Handles shop open (V), buy clicks/digits, right-drag sell + Y/N confirm when enabled.
+		void UpdateGameplayNet(float deltaSeconds);
+		/// Drains non-blocking UDP packets into \ref m_uiModelBinding (Welcome excluded; client id from handshake).
+		void PumpGameplayPackets();
 		/// Load optional zone probe and atmosphere assets from content-relative paths.
 		void LoadZoneProbeAssets();
 
@@ -179,6 +194,21 @@ namespace engine
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::ChatUiPresenter m_chatUi;
+		/// M35.2 — optional UDP gameplay + vendor shop / inventory presenters.
+		bool m_gameplayNetInitialized = false;
+		engine::client::UIModelBinding m_uiModelBinding{};
+		engine::client::ShopUiPresenter m_shopUi{};
+		engine::client::AuctionUiPresenter m_auctionUi{};
+		engine::client::InventoryUiPresenter m_invUi{};
+		engine::client::GameplayUdpClient m_gameplayUdp{};
+		size_t m_uiObserverHandle = 0;
+		bool m_pendingSellActive = false;
+		uint32_t m_pendingSellVendorId = 0;
+		uint32_t m_pendingSellItemId = 0;
+		uint32_t m_pendingSellQty = 0;
+		uint32_t m_pendingSellUnitGold = 0;
+		std::string m_gameplayVendorTalkTarget;
+		std::string m_gameplayAuctionTalkTarget;
 
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;

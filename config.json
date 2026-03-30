@@ -44,5 +44,17 @@
     },
     "paths": {
         "content": "game/data"
+    },
+    "client": {
+        "gameplay_udp": {
+            "enabled": false,
+            "host": "127.0.0.1",
+            "port": 27015,
+            "character_key": 1,
+            "request_tick_hz": 20,
+            "request_snapshot_hz": 10,
+            "vendor_talk_target": "vendor:1",
+            "auction_talk_target": "auction"
+        }
     }
 }

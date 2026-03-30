@@ -302,6 +302,14 @@ namespace engine::client
 			dump += "\n";
 		}
 
+		dump += "auction: open=";
+		dump += auction.isOpen ? "true" : "false";
+		dump += " sort=";
+		dump += std::to_string(auction.sortMode);
+		dump += " listings=";
+		dump += std::to_string(auction.listings.size());
+		dump += "\n";
+
 		return dump;
 	}
 
@@ -371,8 +379,9 @@ namespace engine::client
 		m_model.activeEmotes.clear();
 		m_model.wallet = {};
 		m_model.shop = {};
+		m_model.auction = {};
 		m_chatWorld.Reset();
-		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld | UIModelChangeWallet | UIModelChangeShop);
+		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld | UIModelChangeWallet | UIModelChangeShop | UIModelChangeAuction);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
 		return true;
 	}
@@ -431,6 +440,98 @@ namespace engine::client
 		return true;
 	}
 
+	bool UIModelBinding::CloseShop()
+	{
+		if (!m_initialized)
+		{
+			LOG_ERROR(Net, "[UIModelBinding] CloseShop FAILED: binding not initialized");
+			return false;
+		}
+		if (!ValidateMainThread("CloseShop"))
+		{
+			return false;
+		}
+		if (!m_model.shop.isOpen)
+		{
+			return true;
+		}
+		m_model.shop.isOpen = false;
+		m_model.shop.offers.clear();
+		m_model.shop.displayName.clear();
+		m_model.shop.vendorId = 0;
+		LOG_INFO(Net, "[UIModelBinding] Shop closed locally");
+		NotifyObservers(UIModelChangeShop);
+		return true;
+	}
+
+	bool UIModelBinding::CloseAuction()
+	{
+		if (!m_initialized)
+		{
+			LOG_ERROR(Net, "[UIModelBinding] CloseAuction FAILED: binding not initialized");
+			return false;
+		}
+		if (!ValidateMainThread("CloseAuction"))
+		{
+			return false;
+		}
+		if (!m_model.auction.isOpen)
+		{
+			return true;
+		}
+		m_model.auction.isOpen = false;
+		m_model.auction.listings.clear();
+		m_model.auction.selectedRow = 0;
+		LOG_INFO(Net, "[UIModelBinding] Auction panel closed locally");
+		NotifyObservers(UIModelChangeAuction);
+		return true;
+	}
+
+	bool UIModelBinding::ConfigureAuctionBrowse(
+		uint32_t minPrice,
+		uint32_t maxPrice,
+		uint32_t itemIdFilter,
+		uint32_t sortMode)
+	{
+		if (!m_initialized)
+		{
+			LOG_ERROR(Net, "[UIModelBinding] ConfigureAuctionBrowse FAILED: binding not initialized");
+			return false;
+		}
+		if (!ValidateMainThread("ConfigureAuctionBrowse"))
+		{
+			return false;
+		}
+		m_model.auction.filterMinPrice = minPrice;
+		m_model.auction.filterMaxPrice = maxPrice;
+		m_model.auction.filterItemId = itemIdFilter;
+		m_model.auction.sortMode = std::min<uint32_t>(sortMode, 2u);
+		LOG_INFO(Net,
+			"[UIModelBinding] Auction browse params (min={}, max={}, item={}, sort={})",
+			minPrice,
+			maxPrice,
+			itemIdFilter,
+			m_model.auction.sortMode);
+		NotifyObservers(UIModelChangeAuction);
+		return true;
+	}
+
+	bool UIModelBinding::SelectAuctionRow(uint32_t rowIndex)
+	{
+		if (!m_initialized)
+		{
+			LOG_ERROR(Net, "[UIModelBinding] SelectAuctionRow FAILED: binding not initialized");
+			return false;
+		}
+		if (!ValidateMainThread("SelectAuctionRow"))
+		{
+			return false;
+		}
+		m_model.auction.selectedRow = rowIndex;
+		NotifyObservers(UIModelChangeAuction);
+		return true;
+	}
+
 	bool UIModelBinding::ApplyPacket(std::span<const std::byte> packet)
 	{
 		if (!m_initialized)
@@ -474,6 +575,8 @@ namespace engine::client
 			return ApplyWalletUpdate(packet);
 		case engine::server::MessageKind::ShopOpen:
 			return ApplyShopOpen(packet);
+		case engine::server::MessageKind::AuctionBrowseResult:
+			return ApplyAuctionBrowseResult(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -938,6 +1041,55 @@ namespace engine::client
 			m_model.shop.offers.size());
 
 		NotifyObservers(UIModelChangeShop);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyAuctionBrowseResult(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeAuctionBrowseResult(packet, m_auctionBrowseScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] AuctionBrowseResult FAILED: decode error");
+			return false;
+		}
+
+		if (m_model.playerStats.clientId != 0u && m_auctionBrowseScratch.clientId != m_model.playerStats.clientId)
+		{
+			LOG_WARN(Net,
+				"[UIModelBinding] AuctionBrowseResult client_id mismatch (model={}, packet={})",
+				m_model.playerStats.clientId,
+				m_auctionBrowseScratch.clientId);
+		}
+
+		m_model.auction.listings.clear();
+		m_model.auction.listings.reserve(m_auctionBrowseScratch.rows.size());
+		for (const engine::server::AuctionListingWireRow& row : m_auctionBrowseScratch.rows)
+		{
+			UIAuctionListingLine line{};
+			line.listingId = row.listingId;
+			line.itemId = row.itemId;
+			line.quantity = row.quantity;
+			line.startBid = row.startBid;
+			line.buyoutPrice = row.buyoutPrice;
+			line.currentBid = row.currentBid;
+			line.expiresAtTick = row.expiresAtTick;
+			m_model.auction.listings.push_back(line);
+		}
+		m_model.auction.isOpen = true;
+		if (m_model.auction.listings.empty())
+		{
+			m_model.auction.selectedRow = 0;
+		}
+		else if (m_model.auction.selectedRow >= m_model.auction.listings.size())
+		{
+			m_model.auction.selectedRow = m_model.auction.listings.size() - 1u;
+		}
+
+		LOG_INFO(Net,
+			"[UIModelBinding] AuctionBrowseResult applied (client_id={}, rows={})",
+			m_auctionBrowseScratch.clientId,
+			m_model.auction.listings.size());
+
+		NotifyObservers(UIModelChangeAuction);
 		return true;
 	}
 }

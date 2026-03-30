@@ -34,7 +34,9 @@ namespace engine::client
 		/// M35.1 — wallet balances (gold, honor, badges, premium).
 		UIModelChangeWallet    = 1u << 10,
 		/// M35.2 — vendor shop panel (offers, prices, stock wire).
-		UIModelChangeShop      = 1u << 11
+		UIModelChangeShop      = 1u << 11,
+		/// M35.4 — auction house browse + filters.
+		UIModelChangeAuction   = 1u << 12
 	};
 
 	/// M35.2 — one vendor offer row mirrored from \ref engine::server::ShopOfferWire.
@@ -53,6 +55,30 @@ namespace engine::client
 		std::string displayName;
 		std::vector<UIShopOfferLine> offers;
 		bool isOpen = false;
+	};
+
+	/// M35.4 — one auction listing row from \ref engine::server::AuctionListingWireRow.
+	struct UIAuctionListingLine
+	{
+		uint32_t listingId = 0;
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+		uint32_t startBid = 0;
+		uint32_t buyoutPrice = 0;
+		uint32_t currentBid = 0;
+		uint32_t expiresAtTick = 0;
+	};
+
+	/// M35.4 — client-side filters + snapshot rows (server authoritative).
+	struct UIAuctionPanel
+	{
+		bool isOpen = false;
+		uint32_t filterMinPrice = 0;
+		uint32_t filterMaxPrice = 0;
+		uint32_t filterItemId = 0;
+		uint32_t sortMode = 0;
+		uint32_t selectedRow = 0;
+		std::vector<UIAuctionListingLine> listings;
 	};
 
 	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
@@ -199,6 +225,8 @@ namespace engine::client
 		UIWalletState wallet{};
 		/// M35.2 — last opened vendor shop (debug / HUD presenter).
 		UIShopPanel shop{};
+		/// M35.4 — auction house panel (browse / filters).
+		UIAuctionPanel auction{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -235,6 +263,18 @@ namespace engine::client
 
 		/// Apply one server packet to the UI model.
 		bool ApplyPacket(std::span<const std::byte> packet);
+
+		/// Close vendor shop panel locally (M35.2); does not notify the server.
+		bool CloseShop();
+
+		/// Close auction panel locally (M35.4).
+		bool CloseAuction();
+
+		/// Update auction browse query params (client-side; used for next AuctionBrowseRequest).
+		bool ConfigureAuctionBrowse(uint32_t minPrice, uint32_t maxPrice, uint32_t itemIdFilter, uint32_t sortMode);
+
+		/// Highlight one listing row (0-based); notifies \ref UIModelChangeAuction.
+		bool SelectAuctionRow(uint32_t rowIndex);
 
 		/// Return the current immutable UI model snapshot.
 		const UIModel& GetModel() const { return m_model; }
@@ -293,6 +333,9 @@ namespace engine::client
 		/// Apply one decoded ShopOpen message (M35.2).
 		bool ApplyShopOpen(std::span<const std::byte> packet);
 
+		/// Apply one decoded AuctionBrowseResult message (M35.4).
+		bool ApplyAuctionBrowseResult(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -311,6 +354,7 @@ namespace engine::client
 		engine::server::EmoteRelayMessage m_emoteRelayScratch{};
 		engine::server::WalletUpdateMessage m_walletScratch{};
 		engine::server::ShopOpenMessage m_shopOpenScratch{};
+		engine::server::AuctionBrowseResultMessage m_auctionBrowseScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

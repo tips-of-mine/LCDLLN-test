@@ -105,7 +105,18 @@ namespace engine::server
 		/// Client buys items from the active vendor.
 		ShopBuyRequest = 45,
 		/// Client sells items back to the vendor (25% buy price server-side).
-		ShopSellRequest = 46
+		ShopSellRequest = 46,
+
+		// M35.4 — Auction house ------------------------------------------------
+
+		/// Client queries listings (filters + sort).
+		AuctionBrowseRequest = 47,
+		/// Server returns a browse snapshot for one client.
+		AuctionBrowseResult = 48,
+		/// Client posts item stack with start bid, optional buyout, duration (12/24/48 h).
+		AuctionListItemRequest = 49,
+		AuctionBidRequest = 50,
+		AuctionBuyoutRequest = 51
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -259,6 +270,9 @@ namespace engine::server
 
 	/// Decode a hello packet and validate the protocol header.
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage);
+
+	/// Encode initial client handshake (UDP gameplay client, M35.2).
+	std::vector<std::byte> EncodeHello(const HelloMessage& message);
 
 	/// Decode an input packet and validate the protocol header.
 	bool DecodeInput(std::span<const std::byte> packet, InputMessage& outMessage);
@@ -741,4 +755,79 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeShopSellRequest(const ShopSellRequestMessage& message);
 	bool DecodeShopSellRequest(std::span<const std::byte> packet, ShopSellRequestMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M35.4 — Auction house
+	// -------------------------------------------------------------------------
+
+	inline constexpr uint16_t kMaxAuctionBrowseRowsWire = 32;
+
+	/// One listing row in browse results (M35.4).
+	struct AuctionListingWireRow
+	{
+		uint32_t listingId = 0;
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+		uint32_t startBid = 0;
+		uint32_t buyoutPrice = 0;
+		uint32_t currentBid = 0;
+		uint32_t expiresAtTick = 0;
+	};
+
+	struct AuctionBrowseRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t minPrice = 0;
+		uint32_t maxPrice = 0;
+		/// 0 = any item.
+		uint32_t itemIdFilter = 0;
+		/// 0 = price asc, 1 = price desc, 2 = expiry asc.
+		uint32_t sortMode = 0;
+		uint32_t maxRows = 32;
+	};
+
+	struct AuctionBrowseResultMessage
+	{
+		uint32_t clientId = 0;
+		std::vector<AuctionListingWireRow> rows;
+	};
+
+	struct AuctionListItemRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+		uint32_t startBid = 0;
+		uint32_t buyoutPrice = 0;
+		/// Hours: 12, 24, or 48.
+		uint32_t durationHours = 24;
+	};
+
+	struct AuctionBidRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t listingId = 0;
+		uint32_t bidAmount = 0;
+	};
+
+	struct AuctionBuyoutRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t listingId = 0;
+	};
+
+	std::vector<std::byte> EncodeAuctionBrowseRequest(const AuctionBrowseRequestMessage& message);
+	bool DecodeAuctionBrowseRequest(std::span<const std::byte> packet, AuctionBrowseRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeAuctionBrowseResult(const AuctionBrowseResultMessage& message);
+	bool DecodeAuctionBrowseResult(std::span<const std::byte> packet, AuctionBrowseResultMessage& outMessage);
+
+	std::vector<std::byte> EncodeAuctionListItemRequest(const AuctionListItemRequestMessage& message);
+	bool DecodeAuctionListItemRequest(std::span<const std::byte> packet, AuctionListItemRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeAuctionBidRequest(const AuctionBidRequestMessage& message);
+	bool DecodeAuctionBidRequest(std::span<const std::byte> packet, AuctionBidRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeAuctionBuyoutRequest(const AuctionBuyoutRequestMessage& message);
+	bool DecodeAuctionBuyoutRequest(std::span<const std::byte> packet, AuctionBuyoutRequestMessage& outMessage);
 }

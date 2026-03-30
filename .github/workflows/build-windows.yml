@@ -63,7 +63,7 @@ jobs:
 
           # Copie les DLLs MSVC Release depuis VS Redist
           $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
-          $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
+          $dlls = @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll", "LIBCRYPTO-3-X64.dll", "LIBSSL-3-X64.dll")
           foreach ($dll in $dlls) {
             $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
               -ErrorAction SilentlyContinue |

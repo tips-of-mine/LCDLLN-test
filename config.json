@@ -46,6 +46,14 @@
         "content": "game/data"
     },
     "client": {
+        "master_host": "localhost",
+        "master_port": 3840,
+        "allow_insecure_dev": true,
+        "locale": "",
+        "auth_ui": {
+            "enabled": true,
+            "timeout_ms": 5000
+        },
         "gameplay_udp": {
             "enabled": false,
             "host": "127.0.0.1",

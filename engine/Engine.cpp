@@ -281,6 +281,15 @@ namespace engine
 			LOG_WARN(Core, "[Boot] ChatUiPresenter viewport FAILED — using fallback layout");
 		}
 
+		if (!m_authUi.Init(m_cfg))
+		{
+			LOG_WARN(Core, "[Boot] AuthUiPresenter init FAILED — STAB.13 gate disabled");
+		}
+		else if (!m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
+		{
+			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
+		}
+
 		InitGameplayNet();
 
 		// -----------------------------------------------------------------
@@ -1367,6 +1376,7 @@ namespace engine
 			m_editorMode.reset();
 		}
 		ShutdownGameplayNet();
+		m_authUi.Shutdown();
 		m_chatUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
@@ -1379,7 +1389,15 @@ namespace engine
 		m_input.BeginFrame();
 		m_window.PollEvents();
 
-		if (m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive())
+		if (m_authUi.IsInitialized() && !m_authUi.IsFlowComplete())
+		{
+			if (m_input.WasPressed(engine::platform::Key::Escape))
+			{
+				if (!m_authUi.OnEscape())
+					OnQuit();
+			}
+		}
+		else if (m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive())
 		{
 			if (m_input.WasPressed(engine::platform::Key::Escape))
 			{
@@ -1462,6 +1480,7 @@ namespace engine
 		out.camera = readState.camera;
 		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
 		out.chatDebugText = m_chatUi.IsInitialized() ? m_chatUi.BuildPanelText() : std::string{};
+		out.authHudText.clear();
 		out.gameplayHudDebugText.clear();
 		if (m_gameplayNetInitialized)
 		{
@@ -1483,14 +1502,22 @@ namespace engine
 				out.gameplayHudDebugText += "  -> Y confirm / N cancel\n";
 			}
 		}
+
+		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
+		if (authGateActive)
+		{
+			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
+			out.authHudText = m_authUi.BuildPanelText();
+		}
+
 		if (!m_editorEnabled)
 		{
-			if (!m_chatUi.IsChatFocusActive())
+			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
 				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
 			}
 
-			if (m_chatUi.IsInitialized())
+			if (!authGateActive && m_chatUi.IsInitialized())
 			{
 				m_chatUi.Update(m_input, static_cast<float>(dt));
 			}
@@ -1579,6 +1606,8 @@ namespace engine
 				LOG_DEBUG(Core, "M29.1 {}", out.chatDebugText);
 			if ((m_currentFrame % 60) == 0 && !out.gameplayHudDebugText.empty())
 				LOG_DEBUG(Core, "M35.2 {}", out.gameplayHudDebugText);
+			if ((m_currentFrame % 60) == 0 && !out.authHudText.empty())
+				LOG_INFO(Core, "[AuthUi] {}", out.authHudText);
 		}
 
 		{
@@ -1730,6 +1759,10 @@ namespace engine
 		if (m_chatUi.IsInitialized())
 		{
 			(void)m_chatUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
+		}
+		if (m_authUi.IsInitialized())
+		{
+			(void)m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		}
 		if (m_gameplayNetInitialized)
 		{

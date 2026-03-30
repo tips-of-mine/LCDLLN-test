@@ -92,6 +92,7 @@ add_library(engine_core
   engine/core/Time.cpp
   engine/audio/AudioEngine.cpp
   engine/client/CombatHud.cpp
+  engine/client/AuthUi.cpp
   engine/client/AoEPreviewSystem.cpp
   engine/client/BuffBarPresenter.cpp
   engine/client/AuraFXSystem.cpp

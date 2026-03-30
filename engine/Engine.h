@@ -5,6 +5,7 @@
 #include "engine/core/Time.h"
 #include "engine/core/memory/FrameArena.h"
 #include "engine/audio/AudioEngine.h"
+#include "engine/client/AuthUi.h"
 #include "engine/client/ChatUi.h"
 #include "engine/client/AuctionUi.h"
 #include "engine/client/GameplayUdpClient.h"
@@ -85,6 +86,8 @@ namespace engine
 		std::string chatDebugText;
 		/// M35.2: Vendor shop + inventory interaction debug HUD (requires `client.gameplay_udp.enabled`).
 		std::string gameplayHudDebugText;
+		/// STAB.13: Login/register panel text (until master/shard gate completes).
+		std::string authHudText;
 	};
 
 	/// Engine loop: BeginFrame/Update/Render/EndFrame with double-buffered RenderState.
@@ -193,6 +196,7 @@ namespace engine
 		engine::audio::AudioEngine m_audioEngine;
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
+		engine::client::AuthUiPresenter m_authUi;
 		engine::client::ChatUiPresenter m_chatUi;
 		/// M35.2 — optional UDP gameplay + vendor shop / inventory presenters.
 		bool m_gameplayNetInitialized = false;

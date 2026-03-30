@@ -96,7 +96,16 @@ namespace engine::server
 		// M35.1 — Multi-currency wallet ----------------------------------------
 
 		/// Server pushes current wallet balances to the owning client.
-		WalletUpdate = 43
+		WalletUpdate = 43,
+
+		// M35.2 — Vendor shop ---------------------------------------------------
+
+		/// Server opens the shop panel for one client.
+		ShopOpen = 44,
+		/// Client buys items from the active vendor.
+		ShopBuyRequest = 45,
+		/// Client sells items back to the vendor (25% buy price server-side).
+		ShopSellRequest = 46
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -301,6 +310,9 @@ namespace engine::server
 
 	/// Decode a talk request packet and validate the protocol header.
 	bool DecodeTalkRequest(std::span<const std::byte> packet, TalkRequestMessage& outMessage);
+
+	/// Encode a talk request packet (client → server).
+	std::vector<std::byte> EncodeTalkRequest(const TalkRequestMessage& message);
 
 	/// Encode a quest delta packet with the protocol header.
 	std::vector<std::byte> EncodeQuestDelta(const QuestDeltaMessage& message);
@@ -678,4 +690,55 @@ namespace engine::server
 
 	/// Decode a wallet update packet.
 	bool DecodeWalletUpdate(std::span<const std::byte> packet, WalletUpdateMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M35.2 — Vendor shop
+	// -------------------------------------------------------------------------
+
+	inline constexpr uint32_t kShopInfiniteStockWire = 0xFFFFFFFFu;
+	inline constexpr uint16_t kMaxShopOffersPerPacket = 64;
+
+	/// One row in a ShopOpen grid.
+	struct ShopOfferWire
+	{
+		uint32_t itemId = 0;
+		uint32_t buyPrice = 0;
+		/// Remaining stock for finite items; \ref kShopInfiniteStockWire when unlimited.
+		uint32_t stock = 0;
+	};
+
+	/// Server → client shop inventory snapshot.
+	struct ShopOpenMessage
+	{
+		uint32_t vendorId = 0;
+		std::string displayName;
+		std::vector<ShopOfferWire> offers;
+	};
+
+	/// Client → server buy request.
+	struct ShopBuyRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t vendorId = 0;
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+	};
+
+	/// Client → server sell request.
+	struct ShopSellRequestMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t vendorId = 0;
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+	};
+
+	std::vector<std::byte> EncodeShopOpen(const ShopOpenMessage& message);
+	bool DecodeShopOpen(std::span<const std::byte> packet, ShopOpenMessage& outMessage);
+
+	std::vector<std::byte> EncodeShopBuyRequest(const ShopBuyRequestMessage& message);
+	bool DecodeShopBuyRequest(std::span<const std::byte> packet, ShopBuyRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeShopSellRequest(const ShopSellRequestMessage& message);
+	bool DecodeShopSellRequest(std::span<const std::byte> packet, ShopSellRequestMessage& outMessage);
 }

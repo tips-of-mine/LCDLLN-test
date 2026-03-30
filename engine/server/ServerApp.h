@@ -3,6 +3,7 @@
 #include "engine/server/CharacterPersistence.h"
 #include "engine/server/CurrencyConfig.h"
 #include "engine/server/PlayerWalletService.h"
+#include "engine/server/VendorCatalog.h"
 #include "engine/server/EventRuntime.h"
 #include "engine/server/FriendSystem.h"
 #include "engine/server/PartySystem.h"
@@ -403,6 +404,18 @@ namespace engine::server
 		/// M35.1 — replicate wallet balances to the owning client (CurrencyChanged UI).
 		bool SendWalletUpdate(const ConnectedClient& receiver);
 
+		/// M35.2 — open vendor shop for one connected client.
+		bool SendShopOpen(const ConnectedClient& receiver, uint32_t vendorId);
+
+		/// M35.2 — authoritative buy from vendor stock.
+		void HandleShopBuyRequest(const Endpoint& endpoint, const ShopBuyRequestMessage& message);
+
+		/// M35.2 — authoritative sell-back at 25% buy price.
+		void HandleShopSellRequest(const Endpoint& endpoint, const ShopSellRequestMessage& message);
+
+		/// Remove \p quantity of \p itemId from bags (merge stacks); fails if insufficient.
+		bool RemoveStackFromInventory(ConnectedClient& client, uint32_t itemId, uint32_t quantity, std::string& outError);
+
 		/// Send one quest delta after a successful quest state update.
 		bool SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta);
 
@@ -597,6 +610,9 @@ namespace engine::server
 		/// M35.1 — currency definitions + validation caps (config/currencies.json).
 		CurrencyConfig m_currencyConfig{};
 		PlayerWalletService m_playerWallet{m_currencyConfig};
+		/// M35.2 — vendor definitions (`config/vendors.json`) + finite stock book.
+		VendorCatalog m_vendorCatalog{};
+		VendorStockBook m_vendorStock{};
 		EventRuntime m_eventRuntime;
 		QuestRuntime m_questRuntime;
 		SpawnerRuntime m_spawnerRuntime;

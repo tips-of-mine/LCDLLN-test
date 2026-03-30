@@ -97,6 +97,7 @@ add_library(engine_core
   engine/client/AuraFXSystem.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
+  engine/client/ShopUi.cpp
   engine/client/ProfilerHud.cpp
   engine/client/QuestUi.cpp
   engine/client/ThemeManager.cpp

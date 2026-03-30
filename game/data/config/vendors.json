@@ -1,0 +1,13 @@
+{
+  "vendors": [
+    {
+      "vendor_id": 1,
+      "display_name": "General Goods",
+      "kind": "general",
+      "items": [
+        { "item_id": 1, "buy_price": 100, "stock": 50 },
+        { "item_id": 2, "buy_price": 500, "stock": -1 }
+      ]
+    }
+  ]
+}

@@ -18,6 +18,7 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/engine/net/ChatEmotes.cpp
     CharacterPersistence.cpp
     CurrencyConfig.cpp
+    VendorCatalog.cpp
     PlayerWalletService.cpp
     QuestRuntime.cpp
     SpawnerRuntime.cpp

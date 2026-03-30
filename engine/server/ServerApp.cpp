@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 #include <sstream>
 #include <functional>
 #include <sstream>
@@ -40,6 +41,43 @@ namespace engine::server
 
 		/// M32.2 — Maximum range (metres) for party XP and loot sharing.
 		inline constexpr float kPartyShareRangeMeters = 40.0f;
+
+		/// M35.2 — Maximum stack size per shop buy/sell request (anti-spam).
+		inline constexpr uint32_t kMaxShopQuantityPerRequest = 10000u;
+
+		/// Parse \p targetId of the form `vendor:<decimal_id>` for M35.2 shop talk routing.
+		bool TryParseVendorTarget(std::string_view targetId, uint32_t& outVendorId)
+		{
+			constexpr std::string_view kPrefix = "vendor:";
+			if (!targetId.starts_with(kPrefix))
+			{
+				return false;
+			}
+			const std::string_view rest = targetId.substr(kPrefix.size());
+			if (rest.empty())
+			{
+				return false;
+			}
+			uint64_t acc = 0;
+			for (const char ch : rest)
+			{
+				if (ch < '0' || ch > '9')
+				{
+					return false;
+				}
+				acc = acc * 10ull + static_cast<uint64_t>(ch - '0');
+				if (acc > 0xFFFFFFFFull)
+				{
+					return false;
+				}
+			}
+			if (acc == 0ull)
+			{
+				return false;
+			}
+			outVendorId = static_cast<uint32_t>(acc);
+			return true;
+		}
 
 		/// Clamp a signed config integer into an unsigned 16-bit range.
 		uint16_t ClampToU16(int64_t value, uint16_t minValue, uint16_t maxValue)
@@ -215,6 +253,14 @@ namespace engine::server
 			Shutdown();
 			return false;
 		}
+
+		if (!m_vendorCatalog.Load(m_config))
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: vendor catalog load failed");
+			Shutdown();
+			return false;
+		}
+		m_vendorStock.ResetFromCatalog(m_vendorCatalog.GetVendors());
 
 		m_characterAutosaveIntervalTicks = ResolveCharacterAutosaveIntervalTicks();
 		m_nextCharacterAutosaveTick = m_characterAutosaveIntervalTicks;
@@ -451,6 +497,20 @@ namespace engine::server
 		if (DecodeTalkRequest(packetBytes, talkRequest))
 		{
 			HandleTalkRequest(datagram.endpoint, talkRequest.clientId, talkRequest.targetId);
+			return;
+		}
+
+		ShopBuyRequestMessage shopBuy{};
+		if (DecodeShopBuyRequest(packetBytes, shopBuy))
+		{
+			HandleShopBuyRequest(datagram.endpoint, shopBuy);
+			return;
+		}
+
+		ShopSellRequestMessage shopSell{};
+		if (DecodeShopSellRequest(packetBytes, shopSell))
+		{
+			HandleShopSellRequest(datagram.endpoint, shopSell);
 			return;
 		}
 
@@ -2067,6 +2127,21 @@ namespace engine::server
 		if (targetId.empty())
 		{
 			LOG_WARN(Net, "[ServerApp] TalkRequest ignored: empty target (client_id={})", client->clientId);
+			return;
+		}
+
+		uint32_t vendorId = 0;
+		if (TryParseVendorTarget(targetId, vendorId))
+		{
+			if (m_vendorCatalog.FindVendor(vendorId) != nullptr)
+			{
+				LOG_INFO(Net, "[ServerApp] TalkRequest routes to vendor shop (client_id={}, vendor_id={})", client->clientId, vendorId);
+				(void)SendShopOpen(*client, vendorId);
+				return;
+			}
+
+			LOG_WARN(Net, "[ServerApp] TalkRequest vendor not in catalog (client_id={}, vendor_id={})", client->clientId, vendorId);
+			SendChatSystemNotice(*client, "Vendor not available.");
 			return;
 		}
 
@@ -4564,5 +4639,281 @@ namespace engine::server
 		default:
 			return 0;
 		}
+	}
+
+	bool ServerApp::SendShopOpen(const ConnectedClient& receiver, uint32_t vendorId)
+	{
+		const VendorDefinition* vendor = m_vendorCatalog.FindVendor(vendorId);
+		if (vendor == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] SendShopOpen FAILED: unknown vendor_id={}", vendorId);
+			return false;
+		}
+
+		ShopOpenMessage message{};
+		message.vendorId = vendorId;
+		message.displayName = vendor->displayName;
+		message.offers.reserve(vendor->items.size());
+		for (const VendorItemDefinition& it : vendor->items)
+		{
+			ShopOfferWire row{};
+			row.itemId = it.itemId;
+			row.buyPrice = it.buyPrice;
+			if (it.stock < 0)
+			{
+				row.stock = kShopInfiniteStockWire;
+			}
+			else
+			{
+				const std::optional<uint32_t> rem = m_vendorStock.GetRemaining(vendorId, it.itemId);
+				row.stock = rem.value_or(0u);
+			}
+			message.offers.push_back(row);
+		}
+
+		const std::vector<std::byte> packet = EncodeShopOpen(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendShopOpen FAILED: transport send (client_id={})", receiver.clientId);
+			return false;
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] SendShopOpen OK (client_id={}, vendor_id={}, offers={})",
+			receiver.clientId,
+			vendorId,
+			message.offers.size());
+		return true;
+	}
+
+	void ServerApp::HandleShopBuyRequest(const Endpoint& endpoint, const ShopBuyRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopBuy ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+
+		if (message.quantity == 0u || message.quantity > kMaxShopQuantityPerRequest)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy ignored: bad quantity ({})", message.quantity);
+			SendChatSystemNotice(*client, "Invalid quantity.");
+			return;
+		}
+
+		const VendorItemDefinition* row = m_vendorCatalog.FindVendorItem(message.vendorId, message.itemId);
+		if (row == nullptr)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopBuy ignored: unknown offer (vendor_id={}, item_id={})",
+				message.vendorId,
+				message.itemId);
+			SendChatSystemNotice(*client, "Item not sold here.");
+			return;
+		}
+
+		if (row->stock >= 0)
+		{
+			const std::optional<uint32_t> rem = m_vendorStock.GetRemaining(message.vendorId, message.itemId);
+			const uint32_t have = rem.value_or(0u);
+			if (have < message.quantity)
+			{
+				LOG_WARN(Net, "[ServerApp] ShopBuy blocked: out of stock (have={}, need={})", have, message.quantity);
+				SendChatSystemNotice(*client, "Vendor is out of stock.");
+				return;
+			}
+		}
+
+		if (row->buyPrice > 0u && message.quantity > (std::numeric_limits<uint32_t>::max() / row->buyPrice))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy blocked: cost overflow");
+			SendChatSystemNotice(*client, "Invalid purchase.");
+			return;
+		}
+
+		const uint64_t totalCostU64 = static_cast<uint64_t>(row->buyPrice) * static_cast<uint64_t>(message.quantity);
+		if (totalCostU64 > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy blocked: cost overflow");
+			SendChatSystemNotice(*client, "Invalid purchase.");
+			return;
+		}
+
+		std::string walletErr;
+		if (!m_playerWallet.SubtractCurrency(*client, kCurrencyGold, totalCostU64, walletErr))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy blocked: wallet ({})", walletErr);
+			SendChatSystemNotice(*client, "Not enough gold.");
+			return;
+		}
+
+		if (row->stock >= 0)
+		{
+			std::string stockErr;
+			if (!m_vendorStock.TryConsume(message.vendorId, message.itemId, message.quantity, stockErr))
+			{
+				std::string refundErr;
+				(void)m_playerWallet.AddCurrency(*client, kCurrencyGold, totalCostU64, refundErr);
+				LOG_WARN(Net, "[ServerApp] ShopBuy rolled back: stock ({})", stockErr);
+				SendChatSystemNotice(*client, "Vendor is out of stock.");
+				return;
+			}
+		}
+
+		AddItemToInventory(*client, ItemStack{ message.itemId, message.quantity });
+		SaveConnectedClient(*client, "shop_buy");
+		(void)SendWalletUpdate(*client);
+		(void)SendInventoryDelta(
+			*client,
+			std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+		LOG_INFO(Net,
+			"[ServerApp] ShopBuy OK (client_id={}, vendor_id={}, item_id={}, qty={})",
+			client->clientId,
+			message.vendorId,
+			message.itemId,
+			message.quantity);
+	}
+
+	void ServerApp::HandleShopSellRequest(const Endpoint& endpoint, const ShopSellRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopSell ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+
+		if (message.quantity == 0u || message.quantity > kMaxShopQuantityPerRequest)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell ignored: bad quantity ({})", message.quantity);
+			SendChatSystemNotice(*client, "Invalid quantity.");
+			return;
+		}
+
+		const VendorItemDefinition* row = m_vendorCatalog.FindVendorItem(message.vendorId, message.itemId);
+		if (row == nullptr)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopSell ignored: item not in vendor table (vendor_id={}, item_id={})",
+				message.vendorId,
+				message.itemId);
+			SendChatSystemNotice(*client, "Cannot sell that here.");
+			return;
+		}
+
+		const uint32_t unitSell = VendorCatalog::ComputeSellPrice(row->buyPrice);
+		if (unitSell > 0u && message.quantity > (std::numeric_limits<uint32_t>::max() / unitSell))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell blocked: gold overflow");
+			SendChatSystemNotice(*client, "Invalid sale.");
+			return;
+		}
+
+		const uint64_t totalGoldU64 = static_cast<uint64_t>(unitSell) * static_cast<uint64_t>(message.quantity);
+		if (totalGoldU64 > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell blocked: gold overflow");
+			SendChatSystemNotice(*client, "Invalid sale.");
+			return;
+		}
+
+		std::string invErr;
+		if (!RemoveStackFromInventory(*client, message.itemId, message.quantity, invErr))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell blocked: inventory ({})", invErr);
+			SendChatSystemNotice(*client, "Not enough items.");
+			return;
+		}
+
+		std::string walletErr;
+		if (totalGoldU64 > 0u && !m_playerWallet.AddCurrency(*client, kCurrencyGold, totalGoldU64, walletErr))
+		{
+			AddItemToInventory(*client, ItemStack{ message.itemId, message.quantity });
+			LOG_WARN(Net, "[ServerApp] ShopSell rolled back: wallet ({})", walletErr);
+			SendChatSystemNotice(*client, "Cannot carry more gold.");
+			return;
+		}
+
+		SaveConnectedClient(*client, "shop_sell");
+		(void)SendWalletUpdate(*client);
+		(void)SendInventoryDelta(
+			*client,
+			std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+		LOG_INFO(Net,
+			"[ServerApp] ShopSell OK (client_id={}, vendor_id={}, item_id={}, qty={}, gold={})",
+			client->clientId,
+			message.vendorId,
+			message.itemId,
+			message.quantity,
+			totalGoldU64);
+	}
+
+	bool ServerApp::RemoveStackFromInventory(ConnectedClient& client, uint32_t itemId, uint32_t quantity, std::string& outError)
+	{
+		if (quantity == 0u)
+		{
+			outError = "zero_quantity";
+			LOG_WARN(Net, "[ServerApp] RemoveStackFromInventory FAILED: zero quantity (client_id={})", client.clientId);
+			return false;
+		}
+
+		uint32_t remaining = quantity;
+		for (size_t i = 0; i < client.inventory.size() && remaining > 0;)
+		{
+			ItemStack& stack = client.inventory[i];
+			if (stack.itemId != itemId)
+			{
+				++i;
+				continue;
+			}
+
+			if (stack.quantity <= remaining)
+			{
+				remaining -= stack.quantity;
+				client.inventory.erase(client.inventory.begin() + static_cast<std::ptrdiff_t>(i));
+				continue;
+			}
+
+			stack.quantity -= remaining;
+			remaining = 0;
+			break;
+		}
+
+		if (remaining != 0u)
+		{
+			outError = "not_enough_items";
+			LOG_WARN(Net,
+				"[ServerApp] RemoveStackFromInventory FAILED: insufficient (client_id={}, item_id={}, short_by={})",
+				client.clientId,
+				itemId,
+				remaining);
+			return false;
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] RemoveStackFromInventory OK (client_id={}, item_id={}, quantity={})",
+			client.clientId,
+			itemId,
+			quantity);
+		return true;
 	}
 }

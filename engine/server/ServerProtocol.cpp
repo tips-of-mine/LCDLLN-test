@@ -2,6 +2,7 @@
 
 #include "engine/net/ChatSystem.h"
 
+#include <algorithm>
 #include <bit>
 
 namespace engine::server
@@ -341,6 +342,15 @@ namespace engine::server
 		}
 
 		return !outMessage.targetId.empty();
+	}
+
+	std::vector<std::byte> EncodeTalkRequest(const TalkRequestMessage& message)
+	{
+		const size_t payloadSize = 4u + 2u + message.targetId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TalkRequest, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.targetId);
+		return packet;
 	}
 
 	std::vector<std::byte> EncodeWelcome(const WelcomeMessage& message)
@@ -1248,6 +1258,116 @@ namespace engine::server
 		outMessage.honor = ReadU32(payload, 8);
 		outMessage.badges = ReadU32(payload, 12);
 		outMessage.premiumCurrency = ReadU32(payload, 16);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeShopOpen(const ShopOpenMessage& message)
+	{
+		const uint16_t offerCount = static_cast<uint16_t>(
+			std::min<size_t>(message.offers.size(), static_cast<size_t>(kMaxShopOffersPerPacket)));
+		const size_t payloadSize = 4 + 2 + message.displayName.size() + 2 + (static_cast<size_t>(offerCount) * 12u);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ShopOpen, payloadSize);
+		WriteU32(packet, message.vendorId);
+		WriteSizedString(packet, message.displayName);
+		WriteU16(packet, offerCount);
+		for (uint16_t i = 0; i < offerCount; ++i)
+		{
+			WriteU32(packet, message.offers[i].itemId);
+			WriteU32(packet, message.offers[i].buyPrice);
+			WriteU32(packet, message.offers[i].stock);
+		}
+		return packet;
+	}
+
+	bool DecodeShopOpen(std::span<const std::byte> packet, ShopOpenMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ShopOpen, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+		outMessage.vendorId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.displayName))
+		{
+			return false;
+		}
+		if ((offset + 2) > payload.size())
+		{
+			return false;
+		}
+		const uint16_t offerCount = ReadU16(payload, offset);
+		offset += 2;
+		if (offerCount > kMaxShopOffersPerPacket)
+		{
+			return false;
+		}
+		const size_t need = offset + (static_cast<size_t>(offerCount) * 12u);
+		if (payload.size() != need)
+		{
+			return false;
+		}
+		outMessage.offers.clear();
+		outMessage.offers.reserve(offerCount);
+		for (uint16_t i = 0; i < offerCount; ++i)
+		{
+			ShopOfferWire row{};
+			row.itemId = ReadU32(payload, offset);
+			offset += 4;
+			row.buyPrice = ReadU32(payload, offset);
+			offset += 4;
+			row.stock = ReadU32(payload, offset);
+			offset += 4;
+			outMessage.offers.push_back(row);
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeShopBuyRequest(const ShopBuyRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ShopBuyRequest, 16);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.vendorId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		return packet;
+	}
+
+	bool DecodeShopBuyRequest(std::span<const std::byte> packet, ShopBuyRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ShopBuyRequest, payload) || payload.size() != 16)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.vendorId = ReadU32(payload, 4);
+		outMessage.itemId = ReadU32(payload, 8);
+		outMessage.quantity = ReadU32(payload, 12);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeShopSellRequest(const ShopSellRequestMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ShopSellRequest, 16);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.vendorId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		return packet;
+	}
+
+	bool DecodeShopSellRequest(std::span<const std::byte> packet, ShopSellRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ShopSellRequest, payload) || payload.size() != 16)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.vendorId = ReadU32(payload, 4);
+		outMessage.itemId = ReadU32(payload, 8);
+		outMessage.quantity = ReadU32(payload, 12);
 		return true;
 	}
 }

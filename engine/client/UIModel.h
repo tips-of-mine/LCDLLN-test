@@ -32,7 +32,27 @@ namespace engine::client
 		/// M32.2: party composition, member HP/mana, loot mode.
 		UIModelChangeParty     = 1u << 9,
 		/// M35.1 — wallet balances (gold, honor, badges, premium).
-		UIModelChangeWallet    = 1u << 10
+		UIModelChangeWallet    = 1u << 10,
+		/// M35.2 — vendor shop panel (offers, prices, stock wire).
+		UIModelChangeShop      = 1u << 11
+	};
+
+	/// M35.2 — one vendor offer row mirrored from \ref engine::server::ShopOfferWire.
+	struct UIShopOfferLine
+	{
+		uint32_t itemId = 0;
+		uint32_t buyPrice = 0;
+		/// Same semantics as wire: \ref engine::server::kShopInfiniteStockWire when unlimited.
+		uint32_t stock = 0;
+	};
+
+	/// M35.2 — vendor shop snapshot pushed by \ref engine::server::ShopOpenMessage.
+	struct UIShopPanel
+	{
+		uint32_t vendorId = 0;
+		std::string displayName;
+		std::vector<UIShopOfferLine> offers;
+		bool isOpen = false;
 	};
 
 	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
@@ -177,6 +197,8 @@ namespace engine::client
 		uint32_t    partyLeaderId    = 0;
 		/// M35.1 — multi-currency wallet snapshot for HUD/debug.
 		UIWalletState wallet{};
+		/// M35.2 — last opened vendor shop (debug / HUD presenter).
+		UIShopPanel shop{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -268,6 +290,9 @@ namespace engine::client
 		/// Apply one decoded WalletUpdate message (M35.1).
 		bool ApplyWalletUpdate(std::span<const std::byte> packet);
 
+		/// Apply one decoded ShopOpen message (M35.2).
+		bool ApplyShopOpen(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -285,6 +310,7 @@ namespace engine::client
 		engine::server::ChatRelayMessage m_chatRelayScratch{};
 		engine::server::EmoteRelayMessage m_emoteRelayScratch{};
 		engine::server::WalletUpdateMessage m_walletScratch{};
+		engine::server::ShopOpenMessage m_shopOpenScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

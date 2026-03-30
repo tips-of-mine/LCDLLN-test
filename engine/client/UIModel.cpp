@@ -282,6 +282,26 @@ namespace engine::client
 			dump += "\n";
 		}
 
+		dump += "shop: open=";
+		dump += shop.isOpen ? "true" : "false";
+		dump += " vendor_id=";
+		dump += std::to_string(shop.vendorId);
+		dump += " name=";
+		dump += shop.displayName;
+		dump += " offers=";
+		dump += std::to_string(shop.offers.size());
+		dump += "\n";
+		for (const UIShopOfferLine& line : shop.offers)
+		{
+			dump += " - item=";
+			dump += std::to_string(line.itemId);
+			dump += " buy=";
+			dump += std::to_string(line.buyPrice);
+			dump += " stock=";
+			dump += std::to_string(line.stock);
+			dump += "\n";
+		}
+
 		return dump;
 	}
 
@@ -350,8 +370,9 @@ namespace engine::client
 		m_model.chatBubbleBillboards.clear();
 		m_model.activeEmotes.clear();
 		m_model.wallet = {};
+		m_model.shop = {};
 		m_chatWorld.Reset();
-		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld | UIModelChangeWallet);
+		NotifyObservers(UIModelChangeStats | UIModelChangeInventory | UIModelChangeQuests | UIModelChangeEvents | UIModelChangeCombat | UIModelChangeWorld | UIModelChangeChat | UIModelChangeChatWorld | UIModelChangeWallet | UIModelChangeShop);
 		LOG_INFO(Net, "[UIModelBinding] Reset OK");
 		return true;
 	}
@@ -451,6 +472,8 @@ namespace engine::client
 			return ApplyPartyUpdate(packet);
 		case engine::server::MessageKind::WalletUpdate:
 			return ApplyWalletUpdate(packet);
+		case engine::server::MessageKind::ShopOpen:
+			return ApplyShopOpen(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -883,6 +906,38 @@ namespace engine::client
 			m_walletScratch.premiumCurrency);
 
 		NotifyObservers(UIModelChangeWallet);
+		return true;
+	}
+
+	bool UIModelBinding::ApplyShopOpen(std::span<const std::byte> packet)
+	{
+		if (!engine::server::DecodeShopOpen(packet, m_shopOpenScratch))
+		{
+			LOG_WARN(Net, "[UIModelBinding] ShopOpen FAILED: decode error");
+			return false;
+		}
+
+		m_model.shop.vendorId = m_shopOpenScratch.vendorId;
+		m_model.shop.displayName = m_shopOpenScratch.displayName;
+		m_model.shop.offers.clear();
+		m_model.shop.offers.reserve(m_shopOpenScratch.offers.size());
+		for (const engine::server::ShopOfferWire& row : m_shopOpenScratch.offers)
+		{
+			UIShopOfferLine line{};
+			line.itemId = row.itemId;
+			line.buyPrice = row.buyPrice;
+			line.stock = row.stock;
+			m_model.shop.offers.push_back(line);
+		}
+		m_model.shop.isOpen = true;
+
+		LOG_INFO(Net,
+			"[UIModelBinding] ShopOpen applied (vendor_id={}, name={}, offers={})",
+			m_model.shop.vendorId,
+			m_model.shop.displayName,
+			m_model.shop.offers.size());
+
+		NotifyObservers(UIModelChangeShop);
 		return true;
 	}
 }

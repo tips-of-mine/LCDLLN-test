@@ -146,6 +146,7 @@ namespace engine::server
 		, m_eventRuntime(m_config)
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
+		, m_vendorRuntime(m_config)
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -243,6 +244,13 @@ namespace engine::server
 		if (!InitDynamicEvents())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: dynamic event bootstrap failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!InitVendors())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: vendor runtime startup failed");
 			Shutdown();
 			return false;
 		}
@@ -358,6 +366,7 @@ namespace engine::server
 		m_tickScheduler.Shutdown();
 		m_transport.Shutdown();
 		m_zoneTransitionMap.Shutdown();
+		m_vendorRuntime.Shutdown();
 		m_spawnerRuntime.Shutdown();
 		m_eventRuntime.Shutdown();
 		m_questRuntime.Shutdown();
@@ -451,6 +460,28 @@ namespace engine::server
 		if (DecodeTalkRequest(packetBytes, talkRequest))
 		{
 			HandleTalkRequest(datagram.endpoint, talkRequest.clientId, talkRequest.targetId);
+			return;
+		}
+
+		// M35.2 — Vendor shop requests
+		VendorOpenMessage vendorOpen{};
+		if (DecodeVendorOpen(packetBytes, vendorOpen))
+		{
+			HandleVendorOpen(datagram.endpoint, vendorOpen);
+			return;
+		}
+
+		VendorBuyMessage vendorBuy{};
+		if (DecodeVendorBuy(packetBytes, vendorBuy))
+		{
+			HandleVendorBuy(datagram.endpoint, vendorBuy);
+			return;
+		}
+
+		VendorSellMessage vendorSell{};
+		if (DecodeVendorSell(packetBytes, vendorSell))
+		{
+			HandleVendorSell(datagram.endpoint, vendorSell);
 			return;
 		}
 
@@ -2072,6 +2103,349 @@ namespace engine::server
 
 		LOG_INFO(Net, "[ServerApp] TalkRequest accepted (client_id={}, target={})", client->clientId, targetId);
 		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.2 — Vendor shop
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::InitVendors()
+	{
+		if (!m_vendorRuntime.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] InitVendors FAILED: vendor runtime init failed");
+			return false;
+		}
+
+		// Pre-populate mutable runtime stock tables from the loaded definitions.
+		m_vendorStocks.clear();
+		for (const VendorDefinition& def : m_vendorRuntime.GetDefinitions())
+		{
+			std::vector<int32_t> stocks;
+			stocks.reserve(def.items.size());
+			for (const VendorItemDefinition& item : def.items)
+			{
+				stocks.push_back(item.stock);
+			}
+			m_vendorStocks.emplace(def.vendorId, std::move(stocks));
+		}
+
+		LOG_INFO(Net, "[ServerApp] InitVendors OK (vendors={})", m_vendorRuntime.GetDefinitions().size());
+		return true;
+	}
+
+	void ServerApp::HandleVendorOpen(const Endpoint& endpoint, const VendorOpenMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorOpen ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != request.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorOpen ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId, request.clientId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (request.vendorId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] VendorOpen rejected: empty vendor_id (client_id={})", client->clientId);
+			return;
+		}
+
+		const VendorDefinition* def = m_vendorRuntime.FindVendor(request.vendorId);
+		if (def == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorOpen rejected: unknown vendor '{}' (client_id={})",
+				request.vendorId, client->clientId);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] VendorOpen accepted (client_id={}, vendor={})", client->clientId, request.vendorId);
+		(void)SendVendorShopSync(*client, request.vendorId);
+	}
+
+	void ServerApp::HandleVendorBuy(const Endpoint& endpoint, const VendorBuyMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorBuy ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != request.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorBuy ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId, request.clientId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (request.quantity == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorBuy rejected: quantity=0 (client_id={})", client->clientId);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "invalid_quantity");
+			return;
+		}
+
+		const VendorDefinition* def = m_vendorRuntime.FindVendor(request.vendorId);
+		if (def == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorBuy rejected: unknown vendor '{}' (client_id={})",
+				request.vendorId, client->clientId);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "unknown_vendor");
+			return;
+		}
+
+		// Locate the item in the definition.
+		size_t itemIndex = def->items.size(); // sentinel: not found
+		for (size_t i = 0; i < def->items.size(); ++i)
+		{
+			if (def->items[i].itemId == request.itemId)
+			{
+				itemIndex = i;
+				break;
+			}
+		}
+		if (itemIndex == def->items.size())
+		{
+			LOG_WARN(Net, "[ServerApp] VendorBuy rejected: item_id={} not sold by vendor '{}' (client_id={})",
+				request.itemId, request.vendorId, client->clientId);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "item_not_sold");
+			return;
+		}
+
+		const VendorItemDefinition& itemDef = def->items[itemIndex];
+		const uint64_t totalCost = static_cast<uint64_t>(itemDef.buyPrice) * static_cast<uint64_t>(request.quantity);
+
+		// Validate gold (anti-overdraft).
+		if (static_cast<uint64_t>(client->gold) < totalCost)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorBuy rejected: insufficient gold (client_id={}, have={}, need={})",
+				client->clientId, client->gold, totalCost);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "insufficient_gold");
+			return;
+		}
+
+		// Check stock (anti-dupe: stock must be >0 or infinite).
+		const auto stockIt = m_vendorStocks.find(request.vendorId);
+		if (stockIt == m_vendorStocks.end() || itemIndex >= stockIt->second.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] VendorBuy FAILED: stock table missing for vendor '{}'", request.vendorId);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "server_error");
+			return;
+		}
+		int32_t& runtimeStock = stockIt->second[itemIndex];
+		if (runtimeStock != -1)
+		{
+			if (runtimeStock < static_cast<int32_t>(request.quantity))
+			{
+				LOG_WARN(Net, "[ServerApp] VendorBuy rejected: out of stock (client_id={}, vendor={}, item_id={}, stock={}, want={})",
+					client->clientId, request.vendorId, request.itemId, runtimeStock, request.quantity);
+				(void)SendVendorTransactionResult(*client, false, client->gold, "out_of_stock");
+				return;
+			}
+			runtimeStock -= static_cast<int32_t>(request.quantity);
+		}
+
+		// Deduct gold.
+		std::string walletErr;
+		if (!m_playerWallet.SubtractCurrency(*client, kCurrencyGold, totalCost, walletErr))
+		{
+			// Roll back stock decrement.
+			if (runtimeStock != -1)
+			{
+				runtimeStock += static_cast<int32_t>(request.quantity);
+			}
+			LOG_ERROR(Net, "[ServerApp] VendorBuy FAILED: wallet subtract error (client_id={}, reason={})",
+				client->clientId, walletErr);
+			(void)SendVendorTransactionResult(*client, false, client->gold, walletErr);
+			return;
+		}
+
+		// Add item to player inventory.
+		const ItemStack purchasedStack{ request.itemId, request.quantity };
+		AddItemToInventory(*client, purchasedStack);
+
+		// Persist and notify.
+		SaveConnectedClient(*client, "vendor_buy");
+		(void)SendInventoryDelta(*client, std::span<const ItemStack>(&purchasedStack, 1));
+		(void)SendWalletUpdate(*client);
+		(void)SendVendorTransactionResult(*client, true, client->gold, {});
+
+		LOG_INFO(Net, "[ServerApp] VendorBuy OK (client_id={}, vendor={}, item_id={}, qty={}, cost={}, new_gold={})",
+			client->clientId, request.vendorId, request.itemId, request.quantity, totalCost, client->gold);
+	}
+
+	void ServerApp::HandleVendorSell(const Endpoint& endpoint, const VendorSellMessage& request)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorSell ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != request.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorSell ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId, request.clientId, UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (request.quantity == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorSell rejected: quantity=0 (client_id={})", client->clientId);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "invalid_quantity");
+			return;
+		}
+
+		const VendorDefinition* def = m_vendorRuntime.FindVendor(request.vendorId);
+		if (def == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorSell rejected: unknown vendor '{}' (client_id={})",
+				request.vendorId, client->clientId);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "unknown_vendor");
+			return;
+		}
+
+		// Locate buy price for sell-back calculation (sell = 25% of buy price).
+		uint32_t buyPrice = 0;
+		for (const VendorItemDefinition& item : def->items)
+		{
+			if (item.itemId == request.itemId)
+			{
+				buyPrice = item.buyPrice;
+				break;
+			}
+		}
+		// Any item may be sold back (even if not currently in the vendor catalog), but price is 0
+		// for items the vendor doesn't know. Only items with a defined buy price yield sell gold.
+		const uint32_t sellPricePerUnit = buyPrice / 4u; // 25% of buy price.
+		const uint64_t totalSellGold    = static_cast<uint64_t>(sellPricePerUnit) * static_cast<uint64_t>(request.quantity);
+
+		// Verify the player actually has the item in sufficient quantity (anti-dupe).
+		uint32_t playerQuantity = 0;
+		for (const ItemStack& stack : client->inventory)
+		{
+			if (stack.itemId == request.itemId)
+			{
+				playerQuantity = stack.quantity;
+				break;
+			}
+		}
+		if (playerQuantity < request.quantity)
+		{
+			LOG_WARN(Net, "[ServerApp] VendorSell rejected: not enough items (client_id={}, item_id={}, have={}, want={})",
+				client->clientId, request.itemId, playerQuantity, request.quantity);
+			(void)SendVendorTransactionResult(*client, false, client->gold, "insufficient_items");
+			return;
+		}
+
+		// Remove item from inventory.
+		for (ItemStack& stack : client->inventory)
+		{
+			if (stack.itemId == request.itemId)
+			{
+				stack.quantity -= request.quantity;
+				break;
+			}
+		}
+		// Erase empty stacks.
+		client->inventory.erase(
+			std::remove_if(client->inventory.begin(), client->inventory.end(),
+				[](const ItemStack& s) { return s.quantity == 0; }),
+			client->inventory.end());
+
+		// Credit gold (capped by wallet service).
+		if (totalSellGold > 0u)
+		{
+			std::string walletErr;
+			if (!m_playerWallet.AddCurrency(*client, kCurrencyGold, totalSellGold, walletErr))
+			{
+				LOG_WARN(Net, "[ServerApp] VendorSell: gold credit failed (client_id={}, reason={}); item already removed",
+					client->clientId, walletErr);
+			}
+		}
+
+		// Persist and notify.
+		SaveConnectedClient(*client, "vendor_sell");
+		(void)SendInventoryDelta(*client, client->inventory);
+		(void)SendWalletUpdate(*client);
+		(void)SendVendorTransactionResult(*client, true, client->gold, {});
+
+		LOG_INFO(Net, "[ServerApp] VendorSell OK (client_id={}, vendor={}, item_id={}, qty={}, gold_credited={}, new_gold={})",
+			client->clientId, request.vendorId, request.itemId, request.quantity, totalSellGold, client->gold);
+	}
+
+	bool ServerApp::SendVendorShopSync(const ConnectedClient& receiver, std::string_view vendorId)
+	{
+		const VendorDefinition* def = m_vendorRuntime.FindVendor(vendorId);
+		if (def == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] SendVendorShopSync FAILED: vendor '{}' not found", vendorId);
+			return false;
+		}
+
+		const auto stockIt = m_vendorStocks.find(std::string(vendorId));
+
+		VendorShopSyncMessage msg{};
+		msg.clientId = receiver.clientId;
+		msg.vendorId = def->vendorId;
+		msg.items.reserve(def->items.size());
+		for (size_t i = 0; i < def->items.size(); ++i)
+		{
+			const VendorItemDefinition& item = def->items[i];
+			VendorShopItemEntry entry{};
+			entry.itemId    = item.itemId;
+			entry.buyPrice  = item.buyPrice;
+			entry.sellPrice = item.buyPrice / 4u; // 25% sell-back mechanic.
+			entry.stock     = (stockIt != m_vendorStocks.end() && i < stockIt->second.size())
+				? stockIt->second[i]
+				: item.stock;
+			msg.items.push_back(entry);
+		}
+
+		const std::vector<std::byte> packet = EncodeVendorShopSync(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_ERROR(Net, "[ServerApp] SendVendorShopSync FAILED: transport error (client_id={})", receiver.clientId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] SendVendorShopSync OK (client_id={}, vendor={}, items={})",
+			receiver.clientId, vendorId, msg.items.size());
+		return true;
+	}
+
+	bool ServerApp::SendVendorTransactionResult(
+		const ConnectedClient& receiver,
+		bool success,
+		uint32_t newGold,
+		std::string_view errorReason)
+	{
+		VendorTransactionResultMessage msg{};
+		msg.clientId    = receiver.clientId;
+		msg.success     = success ? 1u : 0u;
+		msg.newGold     = newGold;
+		msg.errorReason = std::string(errorReason);
+
+		const std::vector<std::byte> packet = EncodeVendorTransactionResult(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_ERROR(Net, "[ServerApp] SendVendorTransactionResult FAILED: transport error (client_id={})", receiver.clientId);
+			return false;
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] SendVendorTransactionResult (client_id={}, success={}, new_gold={})",
+			receiver.clientId, success, newGold);
+		return true;
 	}
 
 	void ServerApp::HandleChatSend(const Endpoint& endpoint, const ChatSendRequestMessage& request)

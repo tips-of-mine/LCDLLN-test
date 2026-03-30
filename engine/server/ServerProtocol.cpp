@@ -1250,4 +1250,195 @@ namespace engine::server
 		outMessage.premiumCurrency = ReadU32(payload, 16);
 		return true;
 	}
+
+	// -------------------------------------------------------------------------
+	// M35.2 — Vendor shop encode/decode
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeVendorOpen(const VendorOpenMessage& message)
+	{
+		const uint16_t vendorIdLen = static_cast<uint16_t>(message.vendorId.size());
+		std::vector<std::byte> packet = BeginPacket(MessageKind::VendorOpen, 4 + 2 + vendorIdLen);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.vendorId);
+		return packet;
+	}
+
+	bool DecodeVendorOpen(std::span<const std::byte> packet, VendorOpenMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::VendorOpen, payload) || payload.size() < 6)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.vendorId) || outMessage.vendorId.empty())
+		{
+			return false;
+		}
+		return offset == payload.size();
+	}
+
+	std::vector<std::byte> EncodeVendorShopSync(const VendorShopSyncMessage& message)
+	{
+		const uint16_t vendorIdLen = static_cast<uint16_t>(message.vendorId.size());
+		const uint16_t itemCount   = static_cast<uint16_t>(message.items.size());
+		// clientId(4) + vendorId(2+len) + itemCount(2) + per item: itemId(4) buyPrice(4) sellPrice(4) stock(4)
+		const size_t payloadSize = 4 + 2 + vendorIdLen + 2 + static_cast<size_t>(itemCount) * 16;
+		std::vector<std::byte> packet = BeginPacket(MessageKind::VendorShopSync, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.vendorId);
+		WriteU16(packet, itemCount);
+		for (const VendorShopItemEntry& item : message.items)
+		{
+			WriteU32(packet, item.itemId);
+			WriteU32(packet, item.buyPrice);
+			WriteU32(packet, item.sellPrice);
+			WriteU32(packet, static_cast<uint32_t>(item.stock));
+		}
+		return packet;
+	}
+
+	bool DecodeVendorShopSync(std::span<const std::byte> packet, VendorShopSyncMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::VendorShopSync, payload) || payload.size() < 8)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.vendorId) || outMessage.vendorId.empty())
+		{
+			return false;
+		}
+		if (offset + 2 > payload.size())
+		{
+			return false;
+		}
+		const uint16_t itemCount = ReadU16(payload, offset);
+		offset += 2;
+		if (offset + static_cast<size_t>(itemCount) * 16 > payload.size())
+		{
+			return false;
+		}
+		outMessage.items.clear();
+		outMessage.items.resize(itemCount);
+		for (uint16_t i = 0; i < itemCount; ++i)
+		{
+			outMessage.items[i].itemId    = ReadU32(payload, offset + 0);
+			outMessage.items[i].buyPrice  = ReadU32(payload, offset + 4);
+			outMessage.items[i].sellPrice = ReadU32(payload, offset + 8);
+			outMessage.items[i].stock     = static_cast<int32_t>(ReadU32(payload, offset + 12));
+			offset += 16;
+		}
+		return offset == payload.size();
+	}
+
+	std::vector<std::byte> EncodeVendorBuy(const VendorBuyMessage& message)
+	{
+		const uint16_t vendorIdLen = static_cast<uint16_t>(message.vendorId.size());
+		std::vector<std::byte> packet = BeginPacket(MessageKind::VendorBuy, 4 + 2 + vendorIdLen + 4 + 4);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.vendorId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		return packet;
+	}
+
+	bool DecodeVendorBuy(std::span<const std::byte> packet, VendorBuyMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::VendorBuy, payload) || payload.size() < 14)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.vendorId) || outMessage.vendorId.empty())
+		{
+			return false;
+		}
+		if (offset + 8 > payload.size())
+		{
+			return false;
+		}
+		outMessage.itemId   = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.quantity = ReadU32(payload, offset);
+		offset += 4;
+		return offset == payload.size();
+	}
+
+	std::vector<std::byte> EncodeVendorSell(const VendorSellMessage& message)
+	{
+		const uint16_t vendorIdLen = static_cast<uint16_t>(message.vendorId.size());
+		std::vector<std::byte> packet = BeginPacket(MessageKind::VendorSell, 4 + 2 + vendorIdLen + 4 + 4);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.vendorId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		return packet;
+	}
+
+	bool DecodeVendorSell(std::span<const std::byte> packet, VendorSellMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::VendorSell, payload) || payload.size() < 14)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.vendorId) || outMessage.vendorId.empty())
+		{
+			return false;
+		}
+		if (offset + 8 > payload.size())
+		{
+			return false;
+		}
+		outMessage.itemId   = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.quantity = ReadU32(payload, offset);
+		offset += 4;
+		return offset == payload.size();
+	}
+
+	std::vector<std::byte> EncodeVendorTransactionResult(const VendorTransactionResultMessage& message)
+	{
+		const uint16_t reasonLen = static_cast<uint16_t>(message.errorReason.size());
+		std::vector<std::byte> packet = BeginPacket(MessageKind::VendorTransactionResult, 4 + 1 + 4 + 2 + reasonLen);
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, message.success);
+		WriteU32(packet, message.newGold);
+		WriteSizedString(packet, message.errorReason);
+		return packet;
+	}
+
+	bool DecodeVendorTransactionResult(std::span<const std::byte> packet, VendorTransactionResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::VendorTransactionResult, payload) || payload.size() < 9)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		outMessage.clientId = ReadU32(payload, offset);
+		offset += 4;
+		outMessage.success = ReadU8(payload, offset);
+		offset += 1;
+		outMessage.newGold = ReadU32(payload, offset);
+		offset += 4;
+		if (!ReadSizedString(payload, offset, outMessage.errorReason))
+		{
+			return false;
+		}
+		return offset == payload.size();
+	}
 }

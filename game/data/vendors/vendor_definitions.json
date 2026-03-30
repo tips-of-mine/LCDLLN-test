@@ -1,0 +1,40 @@
+{
+  "vendors": [
+    {
+      "vendorId": "vendor_general_z0",
+      "vendorType": "general",
+      "items": [
+        { "itemId": 1001, "buyPrice": 10, "stock": -1 },
+        { "itemId": 1002, "buyPrice": 25, "stock": -1 },
+        { "itemId": 1003, "buyPrice": 50, "stock": 20 }
+      ]
+    },
+    {
+      "vendorId": "vendor_weapons_z1",
+      "vendorType": "weapons",
+      "items": [
+        { "itemId": 2001, "buyPrice": 150, "stock": -1 },
+        { "itemId": 2002, "buyPrice": 300, "stock": 10 },
+        { "itemId": 2003, "buyPrice": 500, "stock": 5 }
+      ]
+    },
+    {
+      "vendorId": "vendor_potions_z1",
+      "vendorType": "potions",
+      "items": [
+        { "itemId": 3001, "buyPrice": 5,  "stock": -1 },
+        { "itemId": 3002, "buyPrice": 15, "stock": -1 },
+        { "itemId": 3003, "buyPrice": 40, "stock": -1 }
+      ]
+    },
+    {
+      "vendorId": "vendor_armor_z2",
+      "vendorType": "armor",
+      "items": [
+        { "itemId": 4001, "buyPrice": 200, "stock": -1 },
+        { "itemId": 4002, "buyPrice": 450, "stock": 8 },
+        { "itemId": 4003, "buyPrice": 800, "stock": 3 }
+      ]
+    }
+  ]
+}

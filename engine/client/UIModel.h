@@ -32,7 +32,9 @@ namespace engine::client
 		/// M32.2: party composition, member HP/mana, loot mode.
 		UIModelChangeParty     = 1u << 9,
 		/// M35.1 — wallet balances (gold, honor, badges, premium).
-		UIModelChangeWallet    = 1u << 10
+		UIModelChangeWallet    = 1u << 10,
+		/// M35.2 — vendor shop catalog opened or closed.
+		UIModelChangeShop      = 1u << 11
 	};
 
 	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
@@ -43,6 +45,23 @@ namespace engine::client
 		uint32_t badges = 0;
 		uint32_t premiumCurrency = 0;
 		bool hasWallet = false;
+	};
+
+	/// M35.2 — one item entry inside the open vendor shop catalog.
+	struct UIShopItemEntry
+	{
+		uint32_t itemId    = 0;
+		uint32_t buyPrice  = 0; ///< Gold cost to purchase from the vendor.
+		uint32_t sellPrice = 0; ///< Gold received when selling back (25% of buyPrice).
+		int32_t  stock     = -1; ///< Remaining stock; -1 means infinite.
+	};
+
+	/// M35.2 — vendor shop state replicated from \ref VendorShopSyncMessage.
+	struct UIShopState
+	{
+		std::string                   vendorId;
+		std::vector<UIShopItemEntry>  items;
+		bool                          isOpen = false; ///< True while a vendor shop is displayed.
 	};
 
 	/// Player-focused runtime stats mirrored from server-authoritative packets.
@@ -177,6 +196,8 @@ namespace engine::client
 		uint32_t    partyLeaderId    = 0;
 		/// M35.1 — multi-currency wallet snapshot for HUD/debug.
 		UIWalletState wallet{};
+		/// M35.2 — currently open vendor shop catalog (isOpen=false when no shop is active).
+		UIShopState shop{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -268,6 +289,12 @@ namespace engine::client
 		/// Apply one decoded WalletUpdate message (M35.1).
 		bool ApplyWalletUpdate(std::span<const std::byte> packet);
 
+		/// Apply one decoded VendorShopSync message and populate the shop state (M35.2).
+		bool ApplyVendorShopSync(std::span<const std::byte> packet);
+
+		/// Apply one decoded VendorTransactionResult and refresh the wallet gold (M35.2).
+		bool ApplyVendorTransactionResult(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -285,6 +312,8 @@ namespace engine::client
 		engine::server::ChatRelayMessage m_chatRelayScratch{};
 		engine::server::EmoteRelayMessage m_emoteRelayScratch{};
 		engine::server::WalletUpdateMessage m_walletScratch{};
+		engine::server::VendorShopSyncMessage m_vendorShopScratch{};
+		engine::server::VendorTransactionResultMessage m_vendorTxScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

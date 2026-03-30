@@ -96,7 +96,20 @@ namespace engine::server
 		// M35.1 — Multi-currency wallet ----------------------------------------
 
 		/// Server pushes current wallet balances to the owning client.
-		WalletUpdate = 43
+		WalletUpdate = 43,
+
+		// M35.2 — Vendor shop messages ----------------------------------------
+
+		/// Client requests to open a vendor's shop (M35.2).
+		VendorOpen = 44,
+		/// Server pushes vendor catalog + prices to the requesting client (M35.2).
+		VendorShopSync = 45,
+		/// Client requests to buy one item from a vendor (M35.2).
+		VendorBuy = 46,
+		/// Client requests to sell one item to a vendor (M35.2).
+		VendorSell = 47,
+		/// Server acknowledges a buy/sell transaction with result + new gold balance (M35.2).
+		VendorTransactionResult = 48
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -678,4 +691,89 @@ namespace engine::server
 
 	/// Decode a wallet update packet.
 	bool DecodeWalletUpdate(std::span<const std::byte> packet, WalletUpdateMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M35.2 — Vendor shop messages
+	// -------------------------------------------------------------------------
+
+	/// Client request to open a vendor shop by vendor id.
+	struct VendorOpenMessage
+	{
+		uint32_t    clientId = 0;
+		std::string vendorId; ///< Stable vendor identifier matching vendor_definitions.json.
+	};
+
+	/// One item entry replicated inside a VendorShopSync packet.
+	struct VendorShopItemEntry
+	{
+		uint32_t itemId    = 0;
+		uint32_t buyPrice  = 0; ///< Gold cost to buy from the vendor.
+		uint32_t sellPrice = 0; ///< Gold received when selling back (25% of buyPrice).
+		int32_t  stock     = -1; ///< Remaining stock; -1 means infinite.
+	};
+
+	/// Server → client snapshot of a vendor's catalog after VendorOpen is validated.
+	struct VendorShopSyncMessage
+	{
+		uint32_t                       clientId = 0;
+		std::string                    vendorId;
+		std::vector<VendorShopItemEntry> items;
+	};
+
+	/// Client request to buy one item stack from a vendor.
+	struct VendorBuyMessage
+	{
+		uint32_t    clientId = 0;
+		std::string vendorId;
+		uint32_t    itemId   = 0;
+		uint32_t    quantity = 1;
+	};
+
+	/// Client request to sell one item stack to a vendor.
+	struct VendorSellMessage
+	{
+		uint32_t    clientId = 0;
+		std::string vendorId;
+		uint32_t    itemId   = 0;
+		uint32_t    quantity = 1;
+	};
+
+	/// Server acknowledgement of a vendor buy or sell transaction.
+	struct VendorTransactionResultMessage
+	{
+		uint32_t    clientId    = 0;
+		uint8_t     success     = 0; ///< 1 on success, 0 on failure.
+		uint32_t    newGold     = 0; ///< Player gold balance after the transaction.
+		std::string errorReason;     ///< Human-readable reason on failure.
+	};
+
+	/// Encode a client vendor-open request packet.
+	std::vector<std::byte> EncodeVendorOpen(const VendorOpenMessage& message);
+
+	/// Decode a client vendor-open request packet.
+	bool DecodeVendorOpen(std::span<const std::byte> packet, VendorOpenMessage& outMessage);
+
+	/// Encode a server vendor shop sync packet.
+	std::vector<std::byte> EncodeVendorShopSync(const VendorShopSyncMessage& message);
+
+	/// Decode a server vendor shop sync packet.
+	bool DecodeVendorShopSync(std::span<const std::byte> packet, VendorShopSyncMessage& outMessage);
+
+	/// Encode a client vendor buy request packet.
+	std::vector<std::byte> EncodeVendorBuy(const VendorBuyMessage& message);
+
+	/// Decode a client vendor buy request packet.
+	bool DecodeVendorBuy(std::span<const std::byte> packet, VendorBuyMessage& outMessage);
+
+	/// Encode a client vendor sell request packet.
+	std::vector<std::byte> EncodeVendorSell(const VendorSellMessage& message);
+
+	/// Decode a client vendor sell request packet.
+	bool DecodeVendorSell(std::span<const std::byte> packet, VendorSellMessage& outMessage);
+
+	/// Encode a server vendor transaction result packet.
+	std::vector<std::byte> EncodeVendorTransactionResult(const VendorTransactionResultMessage& message);
+
+	/// Decode a server vendor transaction result packet.
+	bool DecodeVendorTransactionResult(std::span<const std::byte> packet, VendorTransactionResultMessage& outMessage);
 }

@@ -37,7 +37,7 @@ namespace engine::client
 			return true;
 		}
 
-		bool IsValidBirthDateFields(std::string_view day, std::string_view month, std::string_view year)
+		[[maybe_unused]] bool IsValidBirthDateFields(std::string_view day, std::string_view month, std::string_view year)
 		{
 			if (!IsAsciiDigits(day) || !IsAsciiDigits(month) || !IsAsciiDigits(year))
 				return false;
@@ -53,12 +53,12 @@ namespace engine::client
 			return true;
 		}
 
-		bool IsValidVerificationCode(std::string_view code)
+		[[maybe_unused]] bool IsValidVerificationCode(std::string_view code)
 		{
 			return code.size() == 6u && IsAsciiDigits(code);
 		}
 
-		bool IsValidCharacterNameLocal(std::string_view name)
+		[[maybe_unused]] bool IsValidCharacterNameLocal(std::string_view name)
 		{
 			if (name.size() < 3u || name.size() > 32u)
 				return false;

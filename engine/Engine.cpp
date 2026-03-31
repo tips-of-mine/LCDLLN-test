@@ -228,7 +228,6 @@ namespace engine
 			const int32_t panelX = (w - panelW) / 2;
 			const int32_t panelY = (h - panelH) / 2;
 			const int32_t innerX = panelX + 28;
-			const int32_t innerW = std::max(120, panelW - 56);
 			const int32_t artW = std::clamp(panelW / 3, 150, 240);
 			const int32_t contentX = innerX + artW + 18;
 			const int32_t contentW = std::max(180, panelW - (contentX - panelX) - 28);
@@ -242,10 +241,10 @@ namespace engine
 				}
 
 				AuthUiLayer layer{};
-				layer.color.color.float32[0] = r;
-				layer.color.color.float32[1] = g;
-				layer.color.color.float32[2] = b;
-				layer.color.color.float32[3] = a;
+				layer.color.float32[0] = r;
+				layer.color.float32[1] = g;
+				layer.color.float32[2] = b;
+				layer.color.float32[3] = a;
 				layer.rect.rect.offset = { x, y };
 				layer.rect.rect.extent = { static_cast<uint32_t>(rw), static_cast<uint32_t>(rh) };
 				layer.rect.baseArrayLayer = 0;
@@ -1538,7 +1537,7 @@ namespace engine
 														VkClearAttachment clearAttachment{};
 														clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 														clearAttachment.colorAttachment = 0;
-														clearAttachment.clearValue.color = layer.color.color;
+														clearAttachment.clearValue.color = layer.color;
 														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
 													}
 													vkCmdEndRendering(cmd);

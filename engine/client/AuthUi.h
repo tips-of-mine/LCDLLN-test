@@ -9,6 +9,11 @@
 #include <thread>
 #include <vector>
 
+namespace engine::network
+{
+	class NetClient;
+}
+
 namespace engine::platform
 {
 	class Window;

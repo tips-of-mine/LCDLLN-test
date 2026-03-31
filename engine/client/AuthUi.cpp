@@ -1,6 +1,7 @@
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
+#include "engine/network/NetClient.h"
 #include "engine/platform/Window.h"
 
 #include <algorithm>
@@ -15,7 +16,6 @@
 #	include "engine/network/ErrorPacket.h"
 #	include "engine/network/CharacterPayloads.h"
 #	include "engine/network/MasterShardClientFlow.h"
-#	include "engine/network/NetClient.h"
 #	include "engine/network/ProtocolV1Constants.h"
 #	include "engine/network/RequestResponseDispatcher.h"
 #	include "engine/network/TermsPayloads.h"

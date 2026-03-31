@@ -1710,7 +1710,25 @@ namespace engine
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
 	    LOG_INFO(Core, "[Render] vkAcquireNextImageKHR result={} imageIndex={}", (int)result, imageIndex);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
-	    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) return;
+	    if (result == VK_SUBOPTIMAL_KHR)
+	    {
+	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
+	            static_cast<uint32_t>(std::max(1, m_width)),
+	            static_cast<uint32_t>(std::max(1, m_height)));
+	        if (needsResize)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Acquire returned SUBOPTIMAL with extent mismatch -> recreate requested");
+	            m_swapchainResizeRequested = true;
+	        }
+	        else
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Acquire returned SUBOPTIMAL but extent is unchanged -> keep current swapchain");
+	        }
+	    }
+	    else if (result != VK_SUCCESS)
+	    {
+	        return;
+	    }
 	
 	    vkResetCommandPool(device, fr.cmdPool, 0);
 	
@@ -1757,8 +1775,25 @@ namespace engine
 	    presentInfo.pSwapchains        = &swapchain;
 	    presentInfo.pImageIndices      = &imageIndex;
 	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
-	    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	    {
 	        m_swapchainResizeRequested = true;
+	    }
+	    else if (result == VK_SUBOPTIMAL_KHR)
+	    {
+	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
+	            static_cast<uint32_t>(std::max(1, m_width)),
+	            static_cast<uint32_t>(std::max(1, m_height)));
+	        if (needsResize)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Present returned SUBOPTIMAL with extent mismatch -> recreate requested");
+	            m_swapchainResizeRequested = true;
+	        }
+	        else
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Present returned SUBOPTIMAL but extent is unchanged -> keep current swapchain");
+	        }
+	    }
 	
 	    m_currentFrame++;
 	}

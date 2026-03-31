@@ -1822,13 +1822,10 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			if (m_chatUi.IsInitialized())
 			{
 				m_chatUi.Update(m_input, static_cast<float>(dt));
-			}
-			if (!m_chatUi.IsInitialized() || !m_chatUi.IsChatFocusActive())
-			{
-				m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			}
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();

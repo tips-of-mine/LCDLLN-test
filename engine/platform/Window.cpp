@@ -641,22 +641,22 @@ namespace engine::platform
 			m_authLogoPath, logoSize, logoSize);
 		ReplaceStaticBitmap(m_authInfoHwnd, m_authInfoBitmap, m_authInfoPath, m_authInfoWidth, m_authInfoHeight,
 			m_authInfoPath, infoSize, infoSize);
-		SetWindowPos(AsHwnd(m_authBackgroundHwnd), HWND_TOP, 0, 0, clientW, clientH, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authBackgroundHwnd), HWND_BOTTOM, 0, 0, clientW, clientH, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authLogoHwnd), HWND_TOP, 20, 20, logoSize, logoSize, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authInfoHwnd), HWND_TOPMOST, panelX + panelW - infoSize - 22, panelY + 110, infoSize, infoSize, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authTitleLine1Hwnd), HWND_TOPMOST, contentX, panelY + 24, contentW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authTitleLine2Hwnd), HWND_TOPMOST, contentX, panelY + 60, contentW, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authSectionTitleHwnd), HWND_TOPMOST, contentX, panelY + 126, contentW, 30, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authPrimaryLabelHwnd), HWND_TOPMOST, contentX, panelY + 184, contentW / 2, 24, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authPrimaryEditHwnd), HWND_TOPMOST, contentX, panelY + 212, contentW - 140, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authRememberCheckboxHwnd), HWND_TOPMOST, contentX + contentW - 128, panelY + 214, 128, 28, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authPasswordLabelHwnd), HWND_TOPMOST, contentX, panelY + 264, contentW, 24, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authPasswordEditHwnd), HWND_TOPMOST, contentX, panelY + 292, contentW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authForgotButtonHwnd), HWND_TOPMOST, contentX, panelY + 338, contentW, 28, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authRegisterButtonHwnd), HWND_TOPMOST, contentX, panelY + 374, 132, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authBackButtonHwnd), HWND_TOPMOST, contentX + 140, panelY + 374, 120, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authSubmitButtonHwnd), HWND_TOPMOST, contentX, panelY + panelH - 76, 160, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authQuitButtonHwnd), HWND_TOPMOST, contentX + 174, panelY + panelH - 76, 160, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authInfoHwnd), HWND_TOP, panelX + panelW - infoSize - 22, panelY + 110, infoSize, infoSize, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authTitleLine1Hwnd), HWND_TOP, contentX, panelY + 24, contentW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authTitleLine2Hwnd), HWND_TOP, contentX, panelY + 60, contentW, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authSectionTitleHwnd), HWND_TOP, contentX, panelY + 126, contentW, 30, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authPrimaryLabelHwnd), HWND_TOP, contentX, panelY + 184, contentW / 2, 24, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authPrimaryEditHwnd), HWND_TOP, contentX, panelY + 212, contentW - 140, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authRememberCheckboxHwnd), HWND_TOP, contentX + contentW - 128, panelY + 214, 128, 28, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authPasswordLabelHwnd), HWND_TOP, contentX, panelY + 264, contentW, 24, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authPasswordEditHwnd), HWND_TOP, contentX, panelY + 292, contentW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authForgotButtonHwnd), HWND_TOP, contentX, panelY + 338, contentW, 28, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authRegisterButtonHwnd), HWND_TOP, contentX, panelY + 374, 132, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authBackButtonHwnd), HWND_TOP, contentX + 140, panelY + 374, 120, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authSubmitButtonHwnd), HWND_TOP, contentX, panelY + panelH - 76, 160, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authQuitButtonHwnd), HWND_TOP, contentX + 174, panelY + panelH - 76, 160, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	}
 
 	void Window::ToggleFullscreen()

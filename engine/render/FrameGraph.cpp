@@ -656,6 +656,13 @@ LOG_DEBUG(Render, "[EIR] image[{}]='{}' fmt={} w={} h={} mips={} layers={}", res
 				VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
 				LOG_DEBUG(Render, "[EIR] step1 vkCreateImage r1={} img={}", (int)r1, (void*)newImage);
 
+				if (r1 != VK_SUCCESS || newImage == VK_NULL_HANDLE)
+				{
+					LOG_ERROR(Render, "FrameGraph: vkCreateImage failed for '{}' (fmt={} w={} h={} usage=0x{:x}): r1={}",
+						res.name, (int)res.desc.format, width, height, (unsigned)usage, (int)r1);
+					continue;
+				}
+
 				VkMemoryRequirements memReq{};
 				vkGetImageMemoryRequirements(device, newImage, &memReq);
 LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits);
@@ -673,6 +680,14 @@ LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned lon
 					}
 				}
 				LOG_DEBUG(Render, "[EIR] step3 memTypeIndex={}", memTypeIndex);
+
+				if (memTypeIndex == UINT32_MAX)
+				{
+					LOG_ERROR(Render, "FrameGraph: no suitable DEVICE_LOCAL memory type for '{}' (bits=0x{:x})",
+						res.name, memReq.memoryTypeBits);
+					vkDestroyImage(device, newImage, nullptr);
+					continue;
+				}
 
 				VkMemoryAllocateInfo allocInfo{};
 				allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;

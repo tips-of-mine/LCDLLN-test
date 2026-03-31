@@ -131,6 +131,245 @@ namespace engine
 			item.firstInstance = 0;
 			return item;
 		}
+
+		struct AuthUiLayer
+		{
+			VkClearColorValue color{};
+			VkClearRect rect{};
+		};
+
+		struct AuthUiTheme
+		{
+			float primary[4]{ 0.23f, 0.43f, 0.65f, 1.0f };
+			float secondary[4]{ 0.35f, 0.50f, 0.66f, 1.0f };
+			float accent[4]{ 0.85f, 0.64f, 0.25f, 1.0f };
+			float background[4]{ 0.06f, 0.09f, 0.11f, 1.0f };
+			float surface[4]{ 0.09f, 0.13f, 0.17f, 1.0f };
+			float panel[4]{ 0.10f, 0.16f, 0.21f, 1.0f };
+			float text[4]{ 0.91f, 0.93f, 0.95f, 1.0f };
+			float mutedText[4]{ 0.66f, 0.71f, 0.76f, 1.0f };
+			float border[4]{ 0.19f, 0.27f, 0.34f, 1.0f };
+		};
+
+		bool ParseHexColor(std::string_view hex, float out[4])
+		{
+			if (hex.size() != 7 || hex[0] != '#')
+			{
+				return false;
+			}
+
+			auto hexValue = [](char c) -> int
+			{
+				if (c >= '0' && c <= '9') return c - '0';
+				if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+				if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+				return -1;
+			};
+
+			for (int i = 0; i < 3; ++i)
+			{
+				const int hi = hexValue(hex[1 + i * 2]);
+				const int lo = hexValue(hex[2 + i * 2]);
+				if (hi < 0 || lo < 0)
+				{
+					return false;
+				}
+				out[i] = static_cast<float>((hi << 4) | lo) / 255.0f;
+			}
+			out[3] = 1.0f;
+			return true;
+		}
+
+		void OverrideThemeColor(const engine::core::Config& cfg, std::string_view key, float out[4])
+		{
+			const std::string value = cfg.GetString(key, {});
+			if (!value.empty())
+			{
+				ParseHexColor(value, out);
+			}
+		}
+
+		AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg)
+		{
+			AuthUiTheme theme{};
+			const std::string themeId = cfg.GetString("ui.theme.default_id", "default");
+			const std::string themePath = "ui/themes/" + themeId + "/theme.json";
+			const std::filesystem::path resolvedPath = engine::platform::FileSystem::ResolveContentPath(cfg, themePath);
+			engine::core::Config themeCfg;
+			if (!themeCfg.LoadFromFile(resolvedPath.string()))
+			{
+				return theme;
+			}
+
+			OverrideThemeColor(themeCfg, "palette.primary", theme.primary);
+			OverrideThemeColor(themeCfg, "palette.secondary", theme.secondary);
+			OverrideThemeColor(themeCfg, "palette.accent", theme.accent);
+			OverrideThemeColor(themeCfg, "palette.background", theme.background);
+			OverrideThemeColor(themeCfg, "palette.surface", theme.surface);
+			OverrideThemeColor(themeCfg, "palette.panel", theme.panel);
+			OverrideThemeColor(themeCfg, "palette.text", theme.text);
+			OverrideThemeColor(themeCfg, "palette.mutedText", theme.mutedText);
+			OverrideThemeColor(themeCfg, "palette.border", theme.border);
+			return theme;
+		}
+
+		std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state, const AuthUiTheme& theme)
+		{
+			std::vector<AuthUiLayer> layers;
+			if (extent.width == 0 || extent.height == 0 || !state.active)
+			{
+				return layers;
+			}
+
+			const int32_t w = static_cast<int32_t>(extent.width);
+			const int32_t h = static_cast<int32_t>(extent.height);
+			const int32_t panelW = std::clamp(w * 40 / 100, 520, 760);
+			const int32_t panelH = state.terms ? std::clamp(h * 74 / 100, 420, 760) : std::clamp(h * 60 / 100, 360, 620);
+			const int32_t panelX = (w - panelW) / 2;
+			const int32_t panelY = (h - panelH) / 2;
+			const int32_t innerX = panelX + 28;
+			const int32_t innerW = std::max(120, panelW - 56);
+			const int32_t artW = std::clamp(panelW / 3, 150, 240);
+			const int32_t contentX = innerX + artW + 18;
+			const int32_t contentW = std::max(180, panelW - (contentX - panelX) - 28);
+			const bool compactSingleField = state.verifyEmail || state.forgotPassword || state.characterCreate;
+
+			auto addRect = [&layers](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
+			{
+				if (rw <= 0 || rh <= 0)
+				{
+					return;
+				}
+
+				AuthUiLayer layer{};
+				layer.color.color.float32[0] = r;
+				layer.color.color.float32[1] = g;
+				layer.color.color.float32[2] = b;
+				layer.color.color.float32[3] = a;
+				layer.rect.rect.offset = { x, y };
+				layer.rect.rect.extent = { static_cast<uint32_t>(rw), static_cast<uint32_t>(rh) };
+				layer.rect.baseArrayLayer = 0;
+				layer.rect.layerCount = 1;
+				layers.push_back(layer);
+			};
+
+			auto addThemeRect = [&addRect](int32_t x, int32_t y, int32_t rw, int32_t rh, const float color[4], float alphaScale = 1.0f)
+			{
+				addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
+			};
+
+			addThemeRect(0, 0, w, h, theme.background, 0.92f);
+			addThemeRect(0, 0, w, std::max(90, h / 4), theme.primary, 0.34f);
+			addThemeRect(0, h - std::max(96, h / 5), w, std::max(96, h / 5), theme.surface, 0.28f);
+			addRect(0, 0, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
+			addRect(0, h - 28, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
+			addRect(0, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
+			addRect(w - 28, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
+			addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, 0.60f);
+			addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, 0.22f);
+			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.96f);
+			addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
+			addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
+			addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);
+			addThemeRect(panelX + 22, panelY + 40, 8, panelH - 68, theme.accent, 0.95f);
+
+			if (state.login)
+			{
+				addThemeRect(panelX + 38, panelY + 76, artW - 32, 92, theme.primary, 0.72f);
+				addThemeRect(panelX + 52, panelY + 92, artW - 62, 16, theme.accent, 0.96f);
+				addThemeRect(panelX + 52, panelY + 118, artW - 74, 10, theme.text, 0.80f);
+				addThemeRect(panelX + 52, panelY + 136, artW - 94, 10, theme.mutedText, 0.62f);
+			}
+			else if (state.registerMode)
+			{
+				addThemeRect(panelX + 38, panelY + 72, artW - 30, 126, theme.secondary, 0.56f);
+				addThemeRect(panelX + 54, panelY + 88, artW - 62, 18, theme.accent, 0.98f);
+				addThemeRect(panelX + 54, panelY + 118, artW - 74, 12, theme.primary, 0.96f);
+				addThemeRect(panelX + 54, panelY + 140, artW - 90, 12, theme.text, 0.76f);
+				addThemeRect(panelX + 54, panelY + 162, artW - 104, 12, theme.mutedText, 0.58f);
+			}
+			else
+			{
+				addThemeRect(panelX + 38, panelY + 78, artW - 34, 110, theme.secondary, 0.48f);
+				addThemeRect(panelX + 52, panelY + 96, artW - 64, 18, theme.primary, 0.95f);
+				addThemeRect(panelX + 52, panelY + 124, artW - 84, 12, theme.accent, 0.90f);
+			}
+
+			addThemeRect(contentX - 10, panelY + 60, contentW + 10, 2, theme.border, 0.90f);
+
+			if (state.submitting)
+			{
+				addThemeRect(contentX, panelY + 118, contentW, 66, theme.surface, 0.98f);
+				addThemeRect(contentX + 18, panelY + 138, contentW - 36, 10, theme.primary, 0.94f);
+				addThemeRect(contentX + 18, panelY + 156, contentW - 92, 10, theme.accent, 0.94f);
+				addThemeRect(contentX + 18, panelY + 206, contentW - 36, 38, theme.surface, 0.95f);
+				return layers;
+			}
+
+			if (state.error)
+			{
+				addRect(contentX, panelY + 108, contentW, 84, 0.28f, 0.10f, 0.10f, 0.98f);
+				addRect(contentX, panelY + 108, 10, 84, 0.82f, 0.22f, 0.18f, 1.0f);
+				addThemeRect(contentX + 22, panelY + 126, contentW - 44, 12, theme.text, 0.78f);
+				addThemeRect(contentX, panelY + 214, contentW, 58, theme.surface, 0.98f);
+				return layers;
+			}
+
+			if (state.terms)
+			{
+				addThemeRect(contentX, panelY + 92, contentW, std::max(180, panelH - 210), theme.background, 0.98f);
+				addThemeRect(contentX + 18, panelY + 108, contentW - 36, 18, theme.surface, 0.95f);
+				addThemeRect(contentX + contentW - 12, panelY + 120, 4, std::max(80, panelH - 248), theme.border, 0.98f);
+				addThemeRect(contentX + contentW - 12, panelY + 156, 4, 92, theme.accent, 1.0f);
+				addThemeRect(contentX, panelY + panelH - 92, contentW, 58, theme.surface, 0.98f);
+				addThemeRect(contentX, panelY + panelH - 26, contentW / 2 - 8, 10, theme.primary, 0.95f);
+				addThemeRect(contentX + contentW / 2 + 8, panelY + panelH - 26, contentW / 2 - 8, 10, theme.accent, 0.95f);
+				return layers;
+			}
+
+			int32_t fieldCount = 2;
+			if (state.registerMode)
+			{
+				fieldCount = 8;
+			}
+			else if (state.verifyEmail || state.forgotPassword || state.characterCreate)
+			{
+				fieldCount = 1;
+			}
+
+			for (int32_t i = 0; i < fieldCount; ++i)
+			{
+				const int32_t step = compactSingleField ? 48 : 42;
+				const int32_t y = panelY + 104 + i * step;
+				addThemeRect(contentX, y, contentW, 32, theme.surface, 0.98f);
+				addRect(contentX, y, 5, 32,
+					(i == 0) ? 0.72f : 0.26f,
+					(i == 0) ? 0.58f : 0.38f,
+					(i == 0) ? 0.24f : 0.68f,
+					1.0f);
+				addThemeRect(contentX + 18, y + 11, std::max(60, contentW - 54 - i * 10), 3, theme.text, (i == 0) ? 0.78f : 0.50f);
+			}
+
+			const int32_t fieldStep = compactSingleField ? 48 : 42;
+			const int32_t buttonY = std::min(panelY + panelH - 84, panelY + 104 + fieldCount * fieldStep + 18);
+			addThemeRect(contentX, buttonY, contentW, 42, theme.primary, 0.96f);
+			addThemeRect(contentX + 18, buttonY + 15, contentW - 36, 4, theme.text, 0.55f);
+			addThemeRect(contentX, buttonY + 50, contentW, 24, theme.surface, 0.96f);
+			if (state.registerMode)
+			{
+				addThemeRect(contentX, buttonY - 22, contentW, 8, theme.accent, 0.95f);
+			}
+			if (state.verifyEmail || state.characterCreate)
+			{
+				addThemeRect(contentX + contentW - 120, panelY + 62, 96, 10, theme.accent, 0.95f);
+			}
+			if (state.forgotPassword)
+			{
+				addThemeRect(contentX, panelY + 70, contentW / 2, 8, theme.accent, 0.92f);
+			}
+
+			return layers;
+		}
 	}
 
 	void Engine::LoadZoneProbeAssets()
@@ -1258,17 +1497,81 @@ namespace engine
 												region.dstOffsets[0] = { 0, 0, 0 };
 												region.dstOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
 												vkCmdBlitImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
-												VkImageMemoryBarrier barrier{};
-												barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-												barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-												barrier.dstAccessMask       = 0;
-												barrier.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-												barrier.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-												barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-												barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-												barrier.image               = dstImg;
-												barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-												vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
+												if (authVisualState.active)
+												{
+													const AuthUiTheme authTheme = LoadAuthUiTheme(m_cfg);
+													VkImageMemoryBarrier toColor{};
+													toColor.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+													toColor.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+													toColor.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+													toColor.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+													toColor.newLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+													toColor.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+													toColor.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+													toColor.image               = dstImg;
+													toColor.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													vkCmdPipelineBarrier(cmd,
+														VK_PIPELINE_STAGE_TRANSFER_BIT,
+														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+														0, 0, nullptr, 0, nullptr, 1, &toColor);
+
+													VkRenderingAttachmentInfo colorAttachment{};
+													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+													colorAttachment.imageView = reg.getImageView(m_fgBackbufferId);
+													colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+													colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+													VkRenderingInfo renderingInfo{};
+													renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+													renderingInfo.renderArea.offset = { 0, 0 };
+													renderingInfo.renderArea.extent = ext;
+													renderingInfo.layerCount = 1;
+													renderingInfo.colorAttachmentCount = 1;
+													renderingInfo.pColorAttachments = &colorAttachment;
+													vkCmdBeginRendering(cmd, &renderingInfo);
+
+													const std::vector<AuthUiLayer> layers = BuildAuthUiLayers(ext, authVisualState, authTheme);
+													for (const AuthUiLayer& layer : layers)
+													{
+														VkClearAttachment clearAttachment{};
+														clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+														clearAttachment.colorAttachment = 0;
+														clearAttachment.clearValue.color = layer.color.color;
+														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
+													}
+													vkCmdEndRendering(cmd);
+
+													VkImageMemoryBarrier toPresent{};
+													toPresent.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+													toPresent.srcAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+													toPresent.dstAccessMask       = 0;
+													toPresent.oldLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+													toPresent.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+													toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+													toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+													toPresent.image               = dstImg;
+													toPresent.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													vkCmdPipelineBarrier(cmd,
+														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+														0, 0, nullptr, 0, nullptr, 1, &toPresent);
+												}
+												else
+												{
+													VkImageMemoryBarrier barrier{};
+													barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+													barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+													barrier.dstAccessMask       = 0;
+													barrier.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+													barrier.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+													barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+													barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+													barrier.image               = dstImg;
+													barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+												}
 											});
 
 										m_frameGraph.addPass("PostRead",

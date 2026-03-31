@@ -25,9 +25,6 @@ namespace engine::client
 {
 	namespace
 	{
-		constexpr const char* kLoginAssetsRel = "engine/assets/ui/login";
-		constexpr const char* kRegisterAssetsRel = "engine/assets/ui/register";
-
 		bool IsAsciiDigits(std::string_view text)
 		{
 			if (text.empty())
@@ -168,6 +165,11 @@ namespace engine::client
 	}
 
 	std::string AuthUiPresenter::BuildPanelText() const
+	{
+		return {};
+	}
+
+	AuthUiPresenter::VisualState AuthUiPresenter::GetVisualState() const
 	{
 		return {};
 	}
@@ -1667,115 +1669,124 @@ namespace engine::client
 	std::string AuthUiPresenter::BuildPanelText() const
 	{
 		std::string s;
-		s += "=== AUTH (STAB.13) ===\n";
-		s += "Background assets (repo-relative): ";
-		s += kLoginAssetsRel;
-		s += " | ";
-		s += kRegisterAssetsRel;
-		s += "\n";
-		s += "Chat: Slash to focus, Escape to leave chat focus.\n";
+		s += "LCDLLN\n";
+		s += "Portail de connexion\n\n";
 		if (!m_infoBanner.empty())
 		{
-			s += "[INFO] ";
+			s += "Information\n";
 			s += m_infoBanner;
-			s += "\n";
+			s += "\n\n";
 		}
 		switch (m_phase)
 		{
 		case Phase::Login:
-			s += "[LOGIN]  R=Register  F=Forgot password\n";
-			s += "login> ";
+			s += "Connexion\n\n";
+			s += "Identifiant\n";
 			s += m_login;
 			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "pass>  ";
+			s += "\nMot de passe\n";
 			AppendPasswordStars(s, m_password.size());
 			s += (m_activeField == 1 ? "|\n" : "\n");
+			s += "\nEntrer pour se connecter\nR creer un compte\nF mot de passe oublie\n";
 			break;
 		case Phase::Register:
-			s += "[REGISTER]  L=Back to login\n";
-			s += "login> ";
+			s += "Creation de compte\n\n";
+			s += "Identifiant\n";
 			s += m_login;
 			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "pass>  ";
+			s += "\nMot de passe\n";
 			AppendPasswordStars(s, m_password.size());
 			s += (m_activeField == 1 ? "|\n" : "\n");
-			s += "email> ";
+			s += "\nEmail\n";
 			s += m_email;
 			s += (m_activeField == 2 ? "|\n" : "\n");
-			s += "first_name> ";
+			s += "\nPrenom\n";
 			s += m_firstName;
 			s += (m_activeField == 3 ? "|\n" : "\n");
-			s += "last_name>  ";
+			s += "\nNom\n";
 			s += m_lastName;
 			s += (m_activeField == 4 ? "|\n" : "\n");
-			s += "birth_day>  ";
+			s += "\nJour de naissance\n";
 			s += m_birthDay;
 			s += (m_activeField == 5 ? "|\n" : "\n");
-			s += "birth_month>";
+			s += "\nMois de naissance\n";
 			s += m_birthMonth;
 			s += (m_activeField == 6 ? "|\n" : "\n");
-			s += "birth_year> ";
+			s += "\nAnnee de naissance\n";
 			s += m_birthYear;
 			s += (m_activeField == 7 ? "|\n" : "\n");
-			s += "Birth date format: day/month/year numeric only.\n";
+			s += "\nEntrer pour valider\nL retour connexion\n";
 			break;
 		case Phase::VerifyEmail:
-			s += "[VERIFY EMAIL]  L=Back to login\n";
-			s += "account_id> ";
+			s += "Verification email\n\n";
+			s += "Compte\n";
 			s += std::to_string(m_pendingVerifyAccountId);
-			s += "\n";
-			s += "code> ";
+			s += "\n\nCode a 6 chiffres\n";
 			s += m_verifyCode;
 			s += "|\n";
-			s += "Expected format: 6 digits.\n";
+			s += "\nEntrer pour confirmer\nL retour\n";
 			break;
 		case Phase::ForgotPassword:
-			s += "[FORGOT PASSWORD]  L=Back to login\n";
-			s += "email> ";
+			s += "Recuperation du mot de passe\n\n";
+			s += "Email\n";
 			s += m_email;
 			s += "|\n";
+			s += "\nEntrer pour envoyer\nL retour\n";
 			break;
 		case Phase::Terms:
 		{
-			s += "[TERMS]  Up/Down/PageUp/PageDown=scroll  Space=check  Enter=accept\n";
-			s += "edition> ";
+			s += "Conditions d'utilisation\n\n";
+			s += "Edition ";
 			s += std::to_string(m_pendingTermsEditionId);
-			s += "  version> ";
+			s += "  Version ";
 			s += m_termsVersionLabel;
-			s += "\n";
-			s += "title> ";
+			s += "\nTitre ";
 			s += m_termsTitle;
-			s += "\n";
-			s += "locale> ";
+			s += "\nLangue ";
 			s += m_termsLocale;
 			s += "\n\n";
 			const size_t start = static_cast<size_t>(std::min<uint32_t>(m_termsScrollOffset, static_cast<uint32_t>(m_termsContent.size())));
 			const size_t count = std::min<size_t>(900u, m_termsContent.size() - start);
 			s.append(m_termsContent.data() + start, count);
 			s += "\n\n";
-			s += m_termsScrolledToBottom ? "[x] End reached. " : "[ ] Scroll to the end first. ";
-			s += m_termsAcknowledgeChecked ? "[x] I certify that I have read the terms.\n" : "[ ] I certify that I have read the terms.\n";
+			s += m_termsScrolledToBottom ? "[x] Fin atteinte. " : "[ ] Descendez jusqu'a la fin. ";
+			s += m_termsAcknowledgeChecked ? "[x] J'accepte les conditions.\n" : "[ ] J'accepte les conditions.\n";
+			s += "Fleches/PageUp/PageDown pour defiler\nEspace cocher, Entrer valider\n";
 			break;
 		}
 		case Phase::CharacterCreate:
-			s += "[CHARACTER CREATE]\n";
-			s += "name> ";
+			s += "Creation du personnage\n\n";
+			s += "Nom\n";
 			s += m_characterName;
 			s += "|\n";
-			s += "Simple mode: name only. Race/class will be added later.\n";
-			s += "Allowed: 3-32 chars, letters/digits/underscore.\n";
+			s += "\n3 a 32 caracteres. Lettres, chiffres et underscore.\n";
 			break;
 		case Phase::Submitting:
-			s += "Submitting / connecting to master…\n";
+			s += "Connexion au serveur en cours...\n";
 			break;
 		case Phase::Error:
-			s += "[ERROR]\n";
+			s += "Erreur\n\n";
 			s += m_userErrorText;
-			s += "\n(Enter to dismiss)\n";
+			s += "\n\nEntrer pour fermer\n";
 			break;
 		}
-		s += "Tab=next field  Enter=submit  Escape=back/close error\n";
+		s += "\nTab changer de champ  Echap retour\n";
 		return s;
+	}
+
+	AuthUiPresenter::VisualState AuthUiPresenter::GetVisualState() const
+	{
+		VisualState state{};
+		state.active = m_initialized && !m_flowComplete && m_authEnabled;
+		state.login = m_phase == Phase::Login;
+		state.registerMode = m_phase == Phase::Register;
+		state.verifyEmail = m_phase == Phase::VerifyEmail;
+		state.forgotPassword = m_phase == Phase::ForgotPassword;
+		state.terms = m_phase == Phase::Terms;
+		state.characterCreate = m_phase == Phase::CharacterCreate;
+		state.submitting = m_phase == Phase::Submitting;
+		state.error = m_phase == Phase::Error;
+		return state;
 	}
 
 	bool AuthUiPresenter::OnEscape()

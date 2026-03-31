@@ -97,7 +97,7 @@ namespace engine::platform
 			WS_EX_TOPMOST,
 			L"STATIC",
 			L"",
-			WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX,
+			WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX | SS_EDITCONTROL,
 			16, 16, 520, 320,
 			hwnd,
 			nullptr,
@@ -110,15 +110,15 @@ namespace engine::platform
 		else
 		{
 			HFONT font = CreateFontW(
-				20, 0, 0, 0,
-				FW_NORMAL,
+				21, 0, 0, 0,
+				FW_SEMIBOLD,
 				FALSE, FALSE, FALSE,
 				DEFAULT_CHARSET,
 				OUT_DEFAULT_PRECIS,
 				CLIP_DEFAULT_PRECIS,
 				CLEARTYPE_QUALITY,
-				FIXED_PITCH | FF_MODERN,
-				L"Consolas");
+				DEFAULT_PITCH | FF_DONTCARE,
+				L"Segoe UI");
 			m_overlayHwnd = overlay;
 			m_overlayFont = font;
 			if (font)
@@ -237,9 +237,14 @@ namespace engine::platform
 		GetClientRect(AsHwnd(m_hwnd), &rc);
 		const int clientW = static_cast<int>(rc.right - rc.left);
 		const int clientH = static_cast<int>(rc.bottom - rc.top);
-		const int width = max(420, min(clientW - 32, 720));
-		const int height = max(220, min(clientH - 32, 420));
-		SetWindowPos(AsHwnd(m_overlayHwnd), HWND_TOPMOST, 16, 16, width, height,
+		const int panelW = max(520, min((clientW * 40) / 100, 760));
+		const int panelH = max(360, min((clientH * 60) / 100, 620));
+		const int panelX = (clientW - panelW) / 2;
+		const int panelY = (clientH - panelH) / 2;
+		const int artW = max(150, min(panelW / 3, 240));
+		const int width = max(220, panelW - artW - 74);
+		const int height = max(140, panelH - 108);
+		SetWindowPos(AsHwnd(m_overlayHwnd), HWND_TOPMOST, panelX + artW + 48, panelY + 34, width, height,
 			SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	}
 
@@ -333,9 +338,9 @@ LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)
 			if (reinterpret_cast<HWND>(lparam) == AsHwnd(m_overlayHwnd))
 			{
 				HDC hdc = reinterpret_cast<HDC>(wparam);
-				SetTextColor(hdc, RGB(255, 255, 255));
-				SetBkColor(hdc, RGB(24, 24, 30));
-				static HBRUSH brush = CreateSolidBrush(RGB(24, 24, 30));
+				SetTextColor(hdc, RGB(232, 237, 243));
+				SetBkColor(hdc, RGB(27, 40, 54));
+				static HBRUSH brush = CreateSolidBrush(RGB(27, 40, 54));
 				return reinterpret_cast<intptr_t>(brush);
 			}
 			break;

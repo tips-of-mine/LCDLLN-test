@@ -22,6 +22,19 @@ namespace engine::client
 	class AuthUiPresenter final
 	{
 	public:
+		struct VisualState
+		{
+			bool active = false;
+			bool login = false;
+			bool registerMode = false;
+			bool verifyEmail = false;
+			bool forgotPassword = false;
+			bool terms = false;
+			bool characterCreate = false;
+			bool submitting = false;
+			bool error = false;
+		};
+
 		AuthUiPresenter() = default;
 		~AuthUiPresenter();
 
@@ -44,6 +57,7 @@ namespace engine::client
 
 		/// Multi-line panel for HUD / logs (full form + asset paths + errors).
 		std::string BuildPanelText() const;
+		VisualState GetVisualState() const;
 
 		/// Escape: back from register to login, or clear error; returns true if consumed.
 		bool OnEscape();

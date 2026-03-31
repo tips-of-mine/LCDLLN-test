@@ -452,25 +452,17 @@ namespace engine::render
 		engine::core::Profiler* profiler)
 	{
 	    engine::core::ProfilerScope scope("FrameGraph::execute");
-	    LOG_INFO(Render, "[FG] execute debut frame={} extent={}x{}", frameIndex, extent.width, extent.height);
 	    if (!m_compiled) { compile(); }
-	    LOG_INFO(Render, "[FG] avant ensureImageResources");
 	    ensureImageResources(device, physicalDevice, vmaAllocator, frameIndex, extent, framesInFlight);
-	    LOG_INFO(Render, "[FG] avant ensureBufferResources");
 	    ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
-	    LOG_INFO(Render, "[FG] avant fillRegistry");
 	    fillRegistry(registry, frameIndex);
-	    LOG_INFO(Render, "[FG] fillRegistry done, lancement passes");
 	
 	    std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
-	    LOG_DEBUG(Render, "[FG] loop passes={}", m_compiledOrder.size());
 	    for (size_t passIdx : m_compiledOrder)
 	    {
 	        const Pass& pass = m_passes[passIdx];
 	        engine::core::ProfilerScope passScope(pass.name);
-	        LOG_DEBUG(Render, "[FG] pass[{}]='{}' barriers", passIdx, pass.name.c_str());
 	        emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
-	        LOG_DEBUG(Render, "[FG] pass[{}]='{}' execute", passIdx, pass.name.c_str());
 	        const bool gpuPassRecorded = profiler != nullptr && profiler->BeginGpuPass(cmd, frameIndex, pass.name);
 	        if (pass.execute)
 	            pass.execute(cmd, registry);
@@ -478,9 +470,7 @@ namespace engine::render
 	        {
 	            profiler->EndGpuPass(cmd, frameIndex);
 	        }
-	        LOG_INFO(Render, "[FG] pass[{}]='{}' done", passIdx, pass.name.c_str());
 	    }
-	    LOG_INFO(Render, "[FG] execute done");
 	}
 
 	void FrameGraph::destroy(VkDevice device, void* vmaAllocator)
@@ -552,8 +542,6 @@ namespace engine::render
 		// Le bypass "raw Vulkan" est justement là pour continuer les alloc/recreate d'images.
 		VmaAllocator alloc = (vmaAllocator != nullptr) ? static_cast<VmaAllocator>(vmaAllocator) : VK_NULL_HANDLE;
 
-LOG_DEBUG(Render, "[EIR] debut nImages={} extent={}x{} framesInFlight={} lastExtent={}x{}", m_imageResources.size(), extent.width, extent.height, framesInFlight, m_lastExtent.width, m_lastExtent.height);
-		
 		const bool extentChanged = m_lastExtent.width != extent.width || m_lastExtent.height != extent.height;
 		const bool framesChanged = m_lastFramesInFlight != framesInFlight;
 		if (extentChanged || framesChanged)
@@ -585,7 +573,6 @@ LOG_DEBUG(Render, "[EIR] debut nImages={} extent={}x{} framesInFlight={} lastExt
 
 		if (m_perFrameImageHandles.size() != m_imageResources.size())
 		{
-LOG_DEBUG(Render, "[EIR] FATAL size mismatch m_perFrameImageHandles={} m_imageResources={}", m_perFrameImageHandles.size(), m_imageResources.size());
 			return;
 		}
 
@@ -617,20 +604,6 @@ LOG_DEBUG(Render, "[EIR] FATAL size mismatch m_perFrameImageHandles={} m_imageRe
 
 			if (h.image != VK_NULL_HANDLE) continue;
 
-LOG_DEBUG(Render, "[EIR] image[{}]='{}' fmt={} w={} h={} mips={} layers={}", resIdx, res.name.c_str(), (int)res.desc.format, width, height, res.desc.mipLevels, res.desc.layers);
-
-			// Trace log ciblée pour confirmer que le TAA history suit bien le resize.
-			if (res.name == "HistoryA" || res.name == "HistoryB")
-			{
-				char msg[160]{};
-				std::snprintf(msg, sizeof(msg),
-					"FG alloc %s w=%u h=%u (frameIndex=%u)",
-					res.name.c_str(),
-					width, height,
-					frameIndex);
-				::engine::core::Log::WriteLine(::engine::core::LogLevel::Info, "Render", msg);
-			}
-			
 			VkImageUsageFlags usage = res.desc.usage;
 			if (res.desc.isDepthAttachment)
 				usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -672,7 +645,6 @@ LOG_DEBUG(Render, "[EIR] image[{}]='{}' fmt={} w={} h={} mips={} layers={}", res
 				// TODO STAB.7 : Investiguer la cause racine et restaurer VMA si possible.
 				VkImage newImage = VK_NULL_HANDLE;
 				VkResult r1 = vkCreateImage(device, &imageInfo, nullptr, &newImage);
-				LOG_DEBUG(Render, "[EIR] step1 vkCreateImage r1={} img={}", (int)r1, (void*)newImage);
 
 				if (r1 != VK_SUCCESS || newImage == VK_NULL_HANDLE)
 				{
@@ -683,7 +655,6 @@ LOG_DEBUG(Render, "[EIR] image[{}]='{}' fmt={} w={} h={} mips={} layers={}", res
 
 				VkMemoryRequirements memReq{};
 				vkGetImageMemoryRequirements(device, newImage, &memReq);
-LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned long long)memReq.size, (unsigned long long)memReq.alignment, memReq.memoryTypeBits);
 
 				VkPhysicalDeviceMemoryProperties memProps{};
 				vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
@@ -697,8 +668,6 @@ LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned lon
 						break;
 					}
 				}
-				LOG_DEBUG(Render, "[EIR] step3 memTypeIndex={}", memTypeIndex);
-
 				if (memTypeIndex == UINT32_MAX)
 				{
 					LOG_ERROR(Render, "FrameGraph: no suitable DEVICE_LOCAL memory type for '{}' (bits=0x{:x})",
@@ -713,13 +682,11 @@ LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned lon
 				allocInfo.memoryTypeIndex = memTypeIndex;
 				VkDeviceMemory memory = VK_NULL_HANDLE;
 				VkResult r2 = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
-				LOG_INFO(Render, "[EIR] step4 vkAllocateMemory r2={} mem={}", (int)r2, (void*)memory);
 
 				VkResult r3 = VK_SUCCESS;
 				if (memory != VK_NULL_HANDLE)
 				{
 					r3 = vkBindImageMemory(device, newImage, memory, 0);
-					LOG_DEBUG(Render, "[EIR] step5 vkBindImageMemory r3={}", (int)r3);
 				}
 				h.image = newImage;
 				h.allocation = reinterpret_cast<void*>(memory);

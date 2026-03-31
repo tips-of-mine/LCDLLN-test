@@ -32,13 +32,26 @@ namespace engine::network
 			if (!r.ReadString(out.email))
 				return std::nullopt;
 		}
-		// M33.3: optional 4th field — CAPTCHA response token (backward-compatible).
+		if (r.Remaining() >= 2u)
+		{
+			if (!r.ReadString(out.first_name))
+				return std::nullopt;
+		}
+		if (r.Remaining() >= 2u)
+		{
+			if (!r.ReadString(out.last_name))
+				return std::nullopt;
+		}
+		if (r.Remaining() >= 2u)
+		{
+			if (!r.ReadString(out.birth_date))
+				return std::nullopt;
+		}
 		if (r.Remaining() >= 2u)
 		{
 			if (!r.ReadString(out.captcha_token))
 				return std::nullopt;
 		}
-		// Optional 5th field — locale tag for account / emails (backward-compatible).
 		if (r.Remaining() >= 2u)
 		{
 			if (!r.ReadString(out.locale_tag))
@@ -58,18 +71,20 @@ namespace engine::network
 	}
 
 	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash,
-	                                                 std::string_view captcha_token, std::string_view locale_tag)
+	                                                 std::string_view first_name, std::string_view last_name,
+	                                                 std::string_view birth_date, std::string_view captcha_token, std::string_view locale_tag)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteString(login) || !w.WriteString(client_hash) || !w.WriteString(email))
 			return {};
-		// If captcha or locale is set, emit captcha (possibly empty) so locale can follow.
-		if (!captcha_token.empty() || !locale_tag.empty())
+		if (!first_name.empty() || !last_name.empty() || !birth_date.empty() || !captcha_token.empty() || !locale_tag.empty())
 		{
+			if (!w.WriteString(first_name) || !w.WriteString(last_name) || !w.WriteString(birth_date))
+				return {};
 			if (!w.WriteString(captcha_token))
 				return {};
-			if (!locale_tag.empty() && !w.WriteString(locale_tag))
+			if (!w.WriteString(locale_tag))
 				return {};
 		}
 		buf.resize(w.Offset());
@@ -114,6 +129,11 @@ namespace engine::network
 				return std::nullopt;
 			out.error_code = static_cast<NetErrorCode>(code);
 		}
+		else if (out.success != 0 && r.Remaining() >= 8u)
+		{
+			if (!r.ReadU64(out.account_id))
+				return std::nullopt;
+		}
 		return out;
 	}
 
@@ -143,11 +163,13 @@ namespace engine::network
 		return builder.Data();
 	}
 
-	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint32_t requestId, uint64_t responseHeaderSessionId)
+	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint64_t accountId, uint32_t requestId, uint64_t responseHeaderSessionId)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
 		if (!w.WriteBytes(&success, 1))
+			return {};
+		if (success != 0 && !w.WriteU64(accountId))
 			return {};
 		const size_t payloadBytes = w.Offset();
 		if (!builder.Finalize(kOpcodeRegisterResponse, 0, requestId, responseHeaderSessionId, payloadBytes))
@@ -183,6 +205,16 @@ namespace engine::network
 		return out;
 	}
 
+	std::vector<uint8_t> BuildForgotPasswordRequestPayload(std::string_view email)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteString(email))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
+	}
+
 	std::vector<uint8_t> BuildForgotPasswordResponsePacket(uint32_t requestId, uint64_t sessionIdHeader)
 	{
 		PacketBuilder builder;
@@ -205,6 +237,16 @@ namespace engine::network
 		if (!r.ReadString(out.token) || !r.ReadString(out.new_client_hash))
 			return std::nullopt;
 		return out;
+	}
+
+	std::vector<uint8_t> BuildResetPasswordRequestPayload(std::string_view token, std::string_view new_client_hash)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteString(token) || !w.WriteString(new_client_hash))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
 	}
 
 	std::vector<uint8_t> BuildResetPasswordResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)
@@ -241,6 +283,16 @@ namespace engine::network
 		if (!r.ReadU64(out.account_id) || !r.ReadString(out.code))
 			return std::nullopt;
 		return out;
+	}
+
+	std::vector<uint8_t> BuildVerifyEmailRequestPayload(uint64_t account_id, std::string_view code)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU64(account_id) || !w.WriteString(code))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
 	}
 
 	std::vector<uint8_t> BuildVerifyEmailResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)

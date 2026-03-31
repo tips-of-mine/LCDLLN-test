@@ -259,7 +259,8 @@ namespace engine::render
 		sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
 		sync2Features.synchronization2 = VK_TRUE;
 
-		deviceFeatures.robustBufferAccess = featureQuery.features.robustBufferAccess;
+		deviceFeatures.robustBufferAccess              = featureQuery.features.robustBufferAccess;
+		deviceFeatures.shaderStorageImageExtendedFormats = featureQuery.features.shaderStorageImageExtendedFormats;
 
 		void* featureChain = nullptr;
 		if (canUseDescriptorIndexing

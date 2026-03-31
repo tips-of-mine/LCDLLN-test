@@ -45,6 +45,9 @@ namespace engine::platform
 		/// Updates the native window title.
 		void SetTitle(std::string_view title);
 
+		/// Shows or hides a native overlay panel above the swapchain.
+		void SetOverlayText(std::string_view text);
+
 		/// Toggle fullscreen (optional; Win32 implementation).
 		void ToggleFullscreen();
 
@@ -59,7 +62,11 @@ namespace engine::platform
 		intptr_t HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam);
 
 	private:
+		void UpdateOverlayLayout();
+
 		void* m_hwnd = nullptr; // HWND
+		void* m_overlayHwnd = nullptr; // HWND
+		void* m_overlayFont = nullptr; // HFONT
 		bool m_shouldClose = false;
 		bool m_fullscreen = false;
 

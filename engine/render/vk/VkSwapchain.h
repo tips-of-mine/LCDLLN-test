@@ -32,6 +32,9 @@ namespace engine::render
 		/// \return true on success.
 		bool Recreate(uint32_t requestedWidth, uint32_t requestedHeight);
 
+		/// Returns true when current surface caps imply a different swapchain extent.
+		bool NeedsRecreateForSurfaceExtent(uint32_t requestedWidth, uint32_t requestedHeight) const;
+
 		/// Returns the swapchain handle (VK_NULL_HANDLE if not created).
 		VkSwapchainKHR GetSwapchain() const { return m_swapchain; }
 

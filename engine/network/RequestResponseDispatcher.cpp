@@ -62,7 +62,8 @@ namespace engine::network
 			LOG_WARN(Net, "[RequestResponseDispatcher] SendRequest FAILED: write payload");
 			return false;
 		}
-		if (!builder.Finalize(opcode, 0, requestId, 0, payload.size()))
+		const uint64_t sessionId = m_sessionId.load();
+		if (!builder.Finalize(opcode, 0, requestId, sessionId, payload.size()))
 		{
 			LOG_WARN(Net, "[RequestResponseDispatcher] SendRequest FAILED: finalize");
 			return false;

@@ -28,6 +28,21 @@ namespace engine::render
 		// ---------------------------------------------------------------------
 		// Image + memory (Vulkan brut, DEVICE_LOCAL)
 		// ---------------------------------------------------------------------
+
+		// VK_FORMAT_R16G16_SFLOAT nécessite shaderStorageImageExtendedFormats pour STORAGE_BIT.
+		// Sur certains drivers Intel iGPU, tenter de créer cette image sans la feature activée
+		// crash le driver (SEH 0xC0000005) au lieu de retourner VK_ERROR_FORMAT_NOT_SUPPORTED.
+		// On vérifie le support avant de créer l'image pour échouer proprement.
+		{
+			VkFormatProperties fmtProps{};
+			vkGetPhysicalDeviceFormatProperties(physicalDevice, VK_FORMAT_R16G16_SFLOAT, &fmtProps);
+			if (!(fmtProps.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT))
+			{
+				LOG_ERROR(Render, "BrdfLutPass: VK_FORMAT_R16G16_SFLOAT does not support STORAGE_IMAGE on this device — BRDF LUT disabled");
+				return false;
+			}
+		}
+
 		VkImageCreateInfo imgInfo{};
 		imgInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imgInfo.imageType     = VK_IMAGE_TYPE_2D;

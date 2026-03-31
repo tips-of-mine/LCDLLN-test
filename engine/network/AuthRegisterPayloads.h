@@ -26,6 +26,9 @@ namespace engine::network
 		std::string login;
 		std::string email;
 		std::string client_hash;
+		std::string first_name;
+		std::string last_name;
+		std::string birth_date;    ///< yyyy-mm-dd
 		std::string captcha_token; ///< M33.3: CAPTCHA response token from client widget. Empty when absent.
 		std::string locale_tag;    ///< ISO-style language code for account email locale.
 	};
@@ -41,6 +44,9 @@ namespace engine::network
 
 	/// Builds REGISTER_REQUEST payload: login, client_hash, email; optional captcha and locale (see implementation).
 	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash,
+	                                                 std::string_view first_name = {},
+	                                                 std::string_view last_name = {},
+	                                                 std::string_view birth_date = {},
 	                                                 std::string_view captcha_token = {},
 	                                                 std::string_view locale_tag = {});
 
@@ -60,6 +66,7 @@ namespace engine::network
 	struct RegisterResponsePayload
 	{
 		uint8_t success = 0;
+		uint64_t account_id = 0;
 		NetErrorCode error_code = NetErrorCode::OK;
 	};
 	std::optional<RegisterResponsePayload> ParseRegisterResponsePayload(const uint8_t* payload, size_t payloadSize);
@@ -72,7 +79,7 @@ namespace engine::network
 	std::vector<uint8_t> BuildAuthResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t responseHeaderSessionId);
 
 	/// Builds REGISTER_RESPONSE packet. success: 1=ok, 0=fail. If fail, error_code in payload.
-	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
+	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint64_t accountId, uint32_t requestId, uint64_t sessionIdHeader);
 	std::vector<uint8_t> BuildRegisterResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
 
 	// -------------------------------------------------------------------------
@@ -86,6 +93,7 @@ namespace engine::network
 	};
 	/// Parses FORGOT_PASSWORD_REQUEST payload. Returns nullopt if truncated/invalid.
 	std::optional<ForgotPasswordRequestPayload> ParseForgotPasswordRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildForgotPasswordRequestPayload(std::string_view email);
 
 	/// Builds FORGOT_PASSWORD_RESPONSE packet. Always success=1 (avoid email enumeration).
 	std::vector<uint8_t> BuildForgotPasswordResponsePacket(uint32_t requestId, uint64_t sessionIdHeader);
@@ -98,6 +106,7 @@ namespace engine::network
 	};
 	/// Parses RESET_PASSWORD_REQUEST payload. Returns nullopt if truncated/invalid.
 	std::optional<ResetPasswordRequestPayload> ParseResetPasswordRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildResetPasswordRequestPayload(std::string_view token, std::string_view new_client_hash);
 
 	/// Builds RESET_PASSWORD_RESPONSE packet. success=1 OK, 0=error.
 	std::vector<uint8_t> BuildResetPasswordResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
@@ -111,6 +120,7 @@ namespace engine::network
 	};
 	/// Parses VERIFY_EMAIL_REQUEST payload. Returns nullopt if truncated/invalid.
 	std::optional<VerifyEmailRequestPayload> ParseVerifyEmailRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildVerifyEmailRequestPayload(uint64_t account_id, std::string_view code);
 
 	/// Builds VERIFY_EMAIL_RESPONSE packet. success=1 OK, 0=error.
 	std::vector<uint8_t> BuildVerifyEmailResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);

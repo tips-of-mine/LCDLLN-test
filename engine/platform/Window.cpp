@@ -59,6 +59,7 @@ namespace engine::platform
 		}
 
 		HWND AsHwnd(void* p) { return reinterpret_cast<HWND>(p); }
+		HFONT AsHfont(void* p) { return reinterpret_cast<HFONT>(p); }
 	}
 
 	bool Window::Create(const CreateDesc& desc)
@@ -92,6 +93,42 @@ namespace engine::platform
 		m_hwnd = hwnd;
 		SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
+		HWND overlay = CreateWindowExW(
+			WS_EX_TOPMOST,
+			L"STATIC",
+			L"",
+			WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX,
+			16, 16, 520, 320,
+			hwnd,
+			nullptr,
+			GetModuleHandleW(nullptr),
+			nullptr);
+		if (!overlay)
+		{
+			LOG_WARN(Platform, "[Window] Overlay create FAILED");
+		}
+		else
+		{
+			HFONT font = CreateFontW(
+				20, 0, 0, 0,
+				FW_NORMAL,
+				FALSE, FALSE, FALSE,
+				DEFAULT_CHARSET,
+				OUT_DEFAULT_PRECIS,
+				CLIP_DEFAULT_PRECIS,
+				CLEARTYPE_QUALITY,
+				FIXED_PITCH | FF_MODERN,
+				L"Consolas");
+			m_overlayHwnd = overlay;
+			m_overlayFont = font;
+			if (font)
+			{
+				SendMessageW(overlay, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+			}
+			ShowWindow(overlay, SW_HIDE);
+			UpdateOverlayLayout();
+		}
+
 		ShowWindow(hwnd, SW_SHOW);
 		UpdateWindow(hwnd);
 
@@ -107,6 +144,12 @@ namespace engine::platform
 			DestroyWindow(AsHwnd(m_hwnd));
 			m_hwnd = nullptr;
 		}
+		if (m_overlayFont)
+		{
+			DeleteObject(AsHfont(m_overlayFont));
+			m_overlayFont = nullptr;
+		}
+		m_overlayHwnd = nullptr;
 		LOG_INFO(Platform, "[Window] Destroyed");
 	}
 
@@ -158,6 +201,46 @@ namespace engine::platform
 
 		const std::wstring titleW = ToWide(title);
 		SetWindowTextW(AsHwnd(m_hwnd), titleW.c_str());
+	}
+
+	void Window::SetOverlayText(std::string_view text)
+	{
+		if (!m_overlayHwnd)
+		{
+			return;
+		}
+
+		HWND overlay = AsHwnd(m_overlayHwnd);
+		if (text.empty())
+		{
+			SetWindowTextW(overlay, L"");
+			ShowWindow(overlay, SW_HIDE);
+			return;
+		}
+
+		const std::wstring textW = ToWide(text);
+		SetWindowTextW(overlay, textW.c_str());
+		UpdateOverlayLayout();
+		ShowWindow(overlay, SW_SHOW);
+		SetWindowPos(overlay, HWND_TOPMOST, 0, 0, 0, 0,
+			SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+	}
+
+	void Window::UpdateOverlayLayout()
+	{
+		if (!m_hwnd || !m_overlayHwnd)
+		{
+			return;
+		}
+
+		RECT rc{};
+		GetClientRect(AsHwnd(m_hwnd), &rc);
+		const int clientW = static_cast<int>(rc.right - rc.left);
+		const int clientH = static_cast<int>(rc.bottom - rc.top);
+		const int width = max(420, min(clientW - 32, 720));
+		const int height = max(220, min(clientH - 32, 420));
+		SetWindowPos(AsHwnd(m_overlayHwnd), HWND_TOPMOST, 16, 16, width, height,
+			SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	}
 
 	void Window::ToggleFullscreen()
@@ -237,12 +320,23 @@ namespace engine::platform
 			return 0;
 		case WM_SIZE:
 LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)wparam, LOWORD((LPARAM)lparam), HIWORD((LPARAM)lparam));
+			UpdateOverlayLayout();
    			if (wparam != SIZE_MINIMIZED && m_onResize)
 			{
 				const int w = LOWORD(static_cast<LPARAM>(lparam));
 				const int h = HIWORD(static_cast<LPARAM>(lparam));
 				if (w > 0 && h > 0)
 					m_onResize(w, h);
+			}
+			break;
+		case WM_CTLCOLORSTATIC:
+			if (reinterpret_cast<HWND>(lparam) == AsHwnd(m_overlayHwnd))
+			{
+				HDC hdc = reinterpret_cast<HDC>(wparam);
+				SetTextColor(hdc, RGB(255, 255, 255));
+				SetBkColor(hdc, RGB(24, 24, 30));
+				static HBRUSH brush = CreateSolidBrush(RGB(24, 24, 30));
+				return reinterpret_cast<intptr_t>(brush);
 			}
 			break;
 		default:

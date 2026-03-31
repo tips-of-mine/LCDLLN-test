@@ -67,6 +67,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/network/PacketBuilder.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ErrorPacket.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/AuthRegisterPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/CharacterPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ShardPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ServerListPayloads.cpp
@@ -84,6 +85,7 @@ elseif(UNIX)
     LocalizedEmail.cpp
     TermsRepository.cpp
     TermsHandler.cpp
+    CharacterCreateHandler.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp

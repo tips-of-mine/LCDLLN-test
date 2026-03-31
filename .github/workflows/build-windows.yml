@@ -85,11 +85,32 @@ jobs:
           }
 
           # OpenSSL (vcpkg, lien dynamique) — même principe que les redist MSVC
-          $osslBin = Join-Path $env:VCPKG_ROOT "installed\$env:VCPKG_DEFAULT_TRIPLET\bin"
-          foreach ($dll in @("libssl-3-x64.dll", "libcrypto-3-x64.dll")) {
-            $src = Join-Path $osslBin $dll
-            if (Test-Path $src) {
-              Copy-Item $src -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+          $osslDlls = @("libssl-3-x64.dll", "libcrypto-3-x64.dll")
+          # vcpkg peut placer les binaires soit sous $VCPKG_ROOT/installed, soit sous le dossier vcpkg intégré au build.
+          $osslBinCandidates = @(
+            (Join-Path $env:VCPKG_ROOT "installed\$env:VCPKG_DEFAULT_TRIPLET\bin"),
+            (Join-Path $env:GITHUB_WORKSPACE "build\vs2022-x64\vcpkg_installed\$env:VCPKG_DEFAULT_TRIPLET\bin"),
+            (Join-Path $env:GITHUB_WORKSPACE "build\vs2022-x64\vcpkg_installed\x64-windows\bin")
+          )
+
+          $copiedAny = $false
+          foreach ($osslBin in $osslBinCandidates) {
+            if (-not (Test-Path $osslBin)) { continue }
+            foreach ($dll in $osslDlls) {
+              $src = Join-Path $osslBin $dll
+              if (Test-Path $src) {
+                Copy-Item $src -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
+                $copiedAny = $true
+              }
+            }
+          }
+
+          foreach ($dll in $osslDlls) {
+            $dst = Join-Path $env:GITHUB_WORKSPACE\artifacts $dll
+            if (Test-Path $dst) {
+              Write-Host "[OpenSSL] Copied $dll to artifacts/"
+            } else {
+              Write-Host "[OpenSSL] MISSING $dll in artifacts/"
             }
           }
 

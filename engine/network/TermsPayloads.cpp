@@ -2,6 +2,7 @@
 #include "engine/network/ByteReader.h"
 #include "engine/network/ByteWriter.h"
 #include "engine/network/PacketBuilder.h"
+#include "engine/network/ProtocolV1Constants.h"
 
 namespace engine::network
 {
@@ -12,6 +13,28 @@ namespace engine::network
 		ByteReader r(payload, payloadSize);
 		TermsStatusRequestPayload out;
 		if (!r.ReadString(out.locale_pref))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildTermsStatusRequestPayload(std::string_view locale_pref)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteString(locale_pref))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
+	}
+
+	std::optional<TermsStatusResponsePayload> ParseTermsStatusResponsePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		TermsStatusResponsePayload out;
+		if (!r.ReadU32(out.pending_count) || !r.ReadU64(out.next_edition_id) || !r.ReadString(out.version_label)
+			|| !r.ReadString(out.title) || !r.ReadString(out.resolved_locale))
 			return std::nullopt;
 		return out;
 	}
@@ -42,6 +65,27 @@ namespace engine::network
 		return out;
 	}
 
+	std::vector<uint8_t> BuildTermsContentRequestPayload(uint64_t edition_id, std::string_view locale_pref, uint32_t byte_offset, uint32_t max_chunk)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU64(edition_id) || !w.WriteString(locale_pref) || !w.WriteU32(byte_offset) || !w.WriteU32(max_chunk))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
+	}
+
+	std::optional<TermsContentResponsePayload> ParseTermsContentResponsePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		TermsContentResponsePayload out;
+		if (!r.ReadU64(out.edition_id) || !r.ReadU32(out.byte_offset) || !r.ReadU32(out.total_length) || !r.ReadString(out.chunk))
+			return std::nullopt;
+		return out;
+	}
+
 	std::vector<uint8_t> BuildTermsContentResponsePacket(const TermsContentResponsePayload& p, uint32_t requestId, uint64_t sessionIdHeader)
 	{
 		PacketBuilder pb;
@@ -65,6 +109,16 @@ namespace engine::network
 		if (!r.ReadBytes(reinterpret_cast<uint8_t*>(&out.acknowledged), 1u))
 			return std::nullopt;
 		return out;
+	}
+
+	std::vector<uint8_t> BuildTermsAcceptRequestPayload(uint64_t edition_id, uint8_t acknowledged)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU64(edition_id) || !w.WriteBytes(&acknowledged, 1u))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
 	}
 
 	std::vector<uint8_t> BuildTermsAcceptResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)

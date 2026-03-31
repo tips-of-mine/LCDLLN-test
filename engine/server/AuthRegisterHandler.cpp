@@ -168,7 +168,14 @@ namespace engine::server
 			return;
 		}
 		const AccountEmailLocale emailLocale = ParseAccountEmailLocale(parsed->locale_tag);
-		uint64_t account_id = m_accountStore->CreateAccount(login_norm, email_norm, parsed->client_hash, emailLocale);
+		uint64_t account_id = m_accountStore->CreateAccount(
+			login_norm,
+			email_norm,
+			parsed->client_hash,
+			parsed->first_name,
+			parsed->last_name,
+			parsed->birth_date,
+			emailLocale);
 		if (account_id == 0)
 		{
 			LOG_WARN(Auth, "[AUTH] HandleRegister result={}", "FAIL");
@@ -179,7 +186,7 @@ namespace engine::server
 		}
 		if (m_auditLog) m_auditLog->LogRegisterSuccess(ipKey, account_id);
 		uint8_t one = 1;
-		auto pkt = BuildRegisterResponsePacket(one, requestId, sessionIdHeader);
+		auto pkt = BuildRegisterResponsePacket(one, account_id, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Register success (connId={}, account_id={})", connId, account_id);

@@ -4,6 +4,7 @@
   "description": "LCDLLN MMORPG Engine dependencies",
   "dependencies": [
     "vulkan",
-    "glfw3"
+    "glfw3",
+    "openssl"
   ]
 }

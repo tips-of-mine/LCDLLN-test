@@ -24,6 +24,9 @@ namespace engine::server
 		uint64_t account_id = 0;
 		std::string login;
 		std::string email;
+		std::string first_name;
+		std::string last_name;
+		std::string birth_date;
 		std::string final_hash;  // Argon2 encoded (contains salt)
 		AccountStatus status = AccountStatus::Active;
 		bool email_verified = false; ///< M33.2: set to true after email verification code confirmed.
@@ -41,6 +44,7 @@ namespace engine::server
 		/// computes final_hash = Argon2(client_hash, server_salt) and stores. Returns account_id or 0 on failure.
 		/// \param client_hash Argon2-encoded client hash (from client); never stored as-is, only hashed again.
 		uint64_t CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
+		                       std::string_view first_name, std::string_view last_name, std::string_view birth_date,
 		                       AccountEmailLocale email_locale = AccountEmailLocale::English);
 
 		/// Lookup by normalised login. Returns nullopt if not found.

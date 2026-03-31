@@ -6,7 +6,8 @@
     },
     "render": {
         "vsync": true,
-        "present_mode": "fifo"
+        "present_mode": "fifo",
+        "fullscreen": true
     },
     "time": {
         "fixed_dt": 0.0
@@ -50,6 +51,9 @@
         "master_port": 3840,
         "allow_insecure_dev": true,
         "locale": "",
+        "character_creation": {
+            "default_server_id": 1
+        },
         "auth_ui": {
             "enabled": true,
             "timeout_ms": 5000

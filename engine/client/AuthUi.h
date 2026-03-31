@@ -4,6 +4,7 @@
 #include "engine/platform/Input.h"
 
 #include <mutex>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
@@ -53,6 +54,13 @@ namespace engine::client
 		void EnsurePasswordSalt(const engine::core::Config& cfg);
 		std::string ComputeClientHash(const engine::core::Config& cfg) const;
 		void StartRegisterWorker(const engine::core::Config& cfg);
+		void StartLoginWorker(const engine::core::Config& cfg);
+		void StartVerifyEmailWorker(const engine::core::Config& cfg);
+		void StartForgotPasswordWorker(const engine::core::Config& cfg);
+		void StartTermsStatusWorker(const engine::core::Config& cfg);
+		void StartTermsAcceptWorker(const engine::core::Config& cfg);
+		void StartCharacterCreateWorker(const engine::core::Config& cfg);
+		void ResetMasterSession();
 		void StartMasterFlowWorker(const engine::core::Config& cfg);
 		void PollAsyncResult(const engine::core::Config& cfg);
 		void UpdateWindowTitle(engine::platform::Window& window) const;
@@ -62,6 +70,10 @@ namespace engine::client
 		{
 			Login,
 			Register,
+			VerifyEmail,
+			ForgotPassword,
+			Terms,
+			CharacterCreate,
 			Submitting,
 			Error
 		};
@@ -74,9 +86,26 @@ namespace engine::client
 		std::string m_login;
 		std::string m_password;
 		std::string m_email;
+		std::string m_firstName;
+		std::string m_lastName;
+		std::string m_birthDay;
+		std::string m_birthMonth;
+		std::string m_birthYear;
+		std::string m_verifyCode;
+		std::string m_termsTitle;
+		std::string m_termsVersionLabel;
+		std::string m_termsLocale;
+		std::string m_termsContent;
+		std::string m_characterName;
 		uint32_t m_activeField = 0;
+		uint32_t m_termsScrollOffset = 0;
+		uint32_t m_termsTotalLength = 0;
 		std::string m_userErrorText;
 		std::string m_infoBanner;
+		uint64_t m_pendingVerifyAccountId = 0;
+		uint64_t m_pendingTermsEditionId = 0;
+		bool m_termsScrolledToBottom = false;
+		bool m_termsAcknowledgeChecked = false;
 
 		std::vector<uint8_t> m_argonSalt{};
 		uint32_t m_viewportW = 0;
@@ -87,11 +116,34 @@ namespace engine::client
 		{
 			bool ready = false;
 			bool success = false;
+			uint64_t accountId = 0;
+			uint64_t sessionId = 0;
+			uint64_t termsEditionId = 0;
+			uint32_t termsPendingCount = 0;
+			uint32_t totalLength = 0;
+			std::string termsTitle;
+			std::string termsVersionLabel;
+			std::string termsLocale;
+			std::string termsContent;
 			std::string message;
 		};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};
-		bool m_pendingAsyncIsRegister = false;
+		enum class AsyncKind
+		{
+			None,
+			Register,
+			AuthOnly,
+			VerifyEmail,
+			ForgotPassword,
+			TermsStatus,
+			TermsAccept,
+			CharacterCreate,
+			Login
+		};
+		AsyncKind m_pendingAsyncKind = AsyncKind::None;
+		uint64_t m_masterSessionId = 0;
+		std::unique_ptr<engine::network::NetClient> m_masterClient;
 		std::mutex m_asyncMutex{};
 	};
 

@@ -59,4 +59,8 @@ namespace engine::network
 	constexpr uint16_t kOpcodeTermsContentResponse = 30u;
 	constexpr uint16_t kOpcodeTermsAcceptRequest = 31u;
 	constexpr uint16_t kOpcodeTermsAcceptResponse = 32u;
+
+	/// Character creation (session required on Master).
+	constexpr uint16_t kOpcodeCharacterCreateRequest = 33u;
+	constexpr uint16_t kOpcodeCharacterCreateResponse = 34u;
 }

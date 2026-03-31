@@ -3,6 +3,7 @@
 #include "engine/core/Log.h"
 #include "engine/platform/Window.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <mutex>
@@ -12,10 +13,12 @@
 #	include "engine/auth/Argon2Hash.h"
 #	include "engine/network/AuthRegisterPayloads.h"
 #	include "engine/network/ErrorPacket.h"
+#	include "engine/network/CharacterPayloads.h"
 #	include "engine/network/MasterShardClientFlow.h"
 #	include "engine/network/NetClient.h"
 #	include "engine/network/ProtocolV1Constants.h"
 #	include "engine/network/RequestResponseDispatcher.h"
+#	include "engine/network/TermsPayloads.h"
 #endif
 
 namespace engine::client
@@ -24,6 +27,52 @@ namespace engine::client
 	{
 		constexpr const char* kLoginAssetsRel = "engine/assets/ui/login";
 		constexpr const char* kRegisterAssetsRel = "engine/assets/ui/register";
+
+		bool IsAsciiDigits(std::string_view text)
+		{
+			if (text.empty())
+				return false;
+			for (unsigned char c : text)
+			{
+				if (c < '0' || c > '9')
+					return false;
+			}
+			return true;
+		}
+
+		bool IsValidBirthDateFields(std::string_view day, std::string_view month, std::string_view year)
+		{
+			if (!IsAsciiDigits(day) || !IsAsciiDigits(month) || !IsAsciiDigits(year))
+				return false;
+			const int d = std::stoi(std::string(day));
+			const int m = std::stoi(std::string(month));
+			const int y = std::stoi(std::string(year));
+			if (y < 1900 || y > 2100)
+				return false;
+			if (m < 1 || m > 12)
+				return false;
+			if (d < 1 || d > 31)
+				return false;
+			return true;
+		}
+
+		bool IsValidVerificationCode(std::string_view code)
+		{
+			return code.size() == 6u && IsAsciiDigits(code);
+		}
+
+		bool IsValidCharacterNameLocal(std::string_view name)
+		{
+			if (name.size() < 3u || name.size() > 32u)
+				return false;
+			for (unsigned char c : name)
+			{
+				const bool ok = std::isalnum(c) || c == '_';
+				if (!ok)
+					return false;
+			}
+			return true;
+		}
 
 #if defined(_WIN32)
 		bool WaitConnected(engine::network::NetClient* c, uint32_t timeoutMs)
@@ -67,6 +116,12 @@ namespace engine::client
 				return "Weak password";
 			case NetErrorCode::INVALID_LOGIN:
 				return "Invalid login";
+			case NetErrorCode::EMAIL_VERIFICATION_REQUIRED:
+				return "Email verification required";
+			case NetErrorCode::EMAIL_ALREADY_VERIFIED:
+				return "Email already verified";
+			case NetErrorCode::VERIFICATION_CODE_INVALID:
+				return "Verification code invalid";
 			case NetErrorCode::REGISTRATION_DISABLED:
 				return "Registration disabled";
 			case NetErrorCode::REGISTRATION_INVALID:
@@ -133,6 +188,13 @@ namespace engine::client
 	void AuthUiPresenter::EnsurePasswordSalt(const engine::core::Config&) {}
 	std::string AuthUiPresenter::ComputeClientHash(const engine::core::Config&) const { return {}; }
 	void AuthUiPresenter::StartRegisterWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartLoginWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartVerifyEmailWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartTermsStatusWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::ResetMasterSession() {}
 	void AuthUiPresenter::StartMasterFlowWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config&) {}
 	void AuthUiPresenter::UpdateWindowTitle(engine::platform::Window&) const {}
@@ -162,11 +224,31 @@ namespace engine::client
 		m_login.clear();
 		m_password.clear();
 		m_email.clear();
+		m_firstName.clear();
+		m_lastName.clear();
+		m_birthDay.clear();
+		m_birthMonth.clear();
+		m_birthYear.clear();
+		m_verifyCode.clear();
+		m_termsTitle.clear();
+		m_termsVersionLabel.clear();
+		m_termsLocale.clear();
+		m_termsContent.clear();
+		m_characterName.clear();
 		m_activeField = 0;
+		m_termsScrollOffset = 0;
+		m_termsTotalLength = 0;
 		m_userErrorText.clear();
 		m_infoBanner.clear();
+		m_pendingVerifyAccountId = 0;
+		m_pendingTermsEditionId = 0;
+		m_termsScrolledToBottom = false;
+		m_termsAcknowledgeChecked = false;
 		m_argonSalt.clear();
 		m_asyncResult = {};
+		m_pendingAsyncKind = AsyncKind::None;
+		m_masterSessionId = 0;
+		m_masterClient.reset();
 		JoinWorker();
 
 		m_initialized = true;
@@ -179,6 +261,7 @@ namespace engine::client
 		if (!m_initialized)
 			return;
 		JoinWorker();
+		ResetMasterSession();
 		m_password.clear();
 		m_initialized = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Destroyed");
@@ -195,6 +278,16 @@ namespace engine::client
 		{
 			m_worker.join();
 			LOG_INFO(Core, "[AuthUiPresenter] Background worker joined");
+		}
+	}
+
+	void AuthUiPresenter::ResetMasterSession()
+	{
+		m_masterSessionId = 0;
+		if (m_masterClient)
+		{
+			m_masterClient->Disconnect("auth_ui_reset");
+			m_masterClient.reset();
 		}
 	}
 
@@ -239,6 +332,18 @@ namespace engine::client
 		case Phase::Register:
 			t += "Register";
 			break;
+		case Phase::VerifyEmail:
+			t += "Verify email";
+			break;
+		case Phase::ForgotPassword:
+			t += "Forgot password";
+			break;
+		case Phase::Terms:
+			t += "Terms";
+			break;
+		case Phase::CharacterCreate:
+			t += "Character creation";
+			break;
 		case Phase::Submitting:
 			t += "Connecting...";
 			break;
@@ -260,26 +365,36 @@ namespace engine::client
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
+		// Fast-path: on the initial login screen no background worker has been started yet,
+		// so there is no async state to synchronize. Avoid touching the mutex unnecessarily.
+		if (!m_worker.joinable() && !m_asyncResult.ready)
+		{
+			return;
+		}
+
 		AsyncResult copy{};
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
 			if (!m_asyncResult.ready)
+			{
 				return;
+			}
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
 		JoinWorker();
 
-		const bool wasRegister = m_pendingAsyncIsRegister;
-		m_pendingAsyncIsRegister = false;
+		const AsyncKind kind = m_pendingAsyncKind;
+		m_pendingAsyncKind = AsyncKind::None;
 
-		if (wasRegister)
+		if (kind == AsyncKind::Register)
 		{
 			if (copy.success)
 			{
-				m_phase = Phase::Login;
+				m_pendingVerifyAccountId = copy.accountId;
+				m_phase = Phase::VerifyEmail;
 				m_userErrorText.clear();
-				m_infoBanner = copy.message.empty() ? "Registration OK — press Enter to authenticate." : copy.message;
+				m_infoBanner = copy.message.empty() ? "Registration OK. Enter the verification code sent by email." : copy.message;
 				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: {}", m_infoBanner);
 			}
 			else
@@ -289,6 +404,156 @@ namespace engine::client
 				LOG_WARN(Core, "[AuthUiPresenter] Register FAILED: {}", copy.message);
 			}
 			(void)cfg;
+			return;
+		}
+
+		if (kind == AsyncKind::AuthOnly)
+		{
+			if (copy.success)
+			{
+				m_masterSessionId = copy.sessionId;
+				if (copy.termsPendingCount > 0)
+				{
+					m_pendingTermsEditionId = copy.termsEditionId;
+					m_termsTitle = copy.termsTitle;
+					m_termsVersionLabel = copy.termsVersionLabel;
+					m_termsLocale = copy.termsLocale;
+					m_termsContent = copy.termsContent;
+					m_termsTotalLength = copy.totalLength;
+					m_termsScrollOffset = 0;
+					m_termsScrolledToBottom = false;
+					m_termsAcknowledgeChecked = false;
+					m_phase = Phase::Terms;
+					m_infoBanner = copy.message.empty() ? "Terms acceptance required." : copy.message;
+				}
+				else
+				{
+					ResetMasterSession();
+					m_phase = Phase::Submitting;
+					StartMasterFlowWorker(cfg);
+				}
+			}
+			else
+			{
+				m_phase = Phase::Error;
+				m_userErrorText = copy.message;
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::VerifyEmail)
+		{
+			if (copy.success)
+			{
+				m_phase = Phase::Login;
+				m_userErrorText.clear();
+				m_infoBanner = copy.message.empty() ? "Email verified. You can now log in." : copy.message;
+				LOG_INFO(Core, "[AuthUiPresenter] VerifyEmail OK: {}", m_infoBanner);
+			}
+			else
+			{
+				m_phase = Phase::Error;
+				m_userErrorText = copy.message;
+				LOG_WARN(Core, "[AuthUiPresenter] VerifyEmail FAILED: {}", copy.message);
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::ForgotPassword)
+		{
+			m_phase = Phase::Login;
+			if (copy.success)
+			{
+				m_userErrorText.clear();
+				m_infoBanner = copy.message.empty() ? "If the email exists, a reset message has been sent." : copy.message;
+			}
+			else
+			{
+				m_infoBanner = copy.message;
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::TermsStatus)
+		{
+			if (copy.success)
+			{
+				if (copy.termsPendingCount == 0)
+				{
+					m_infoBanner = "All terms accepted. Choose your character name.";
+					m_phase = Phase::CharacterCreate;
+				}
+				else
+				{
+					m_pendingTermsEditionId = copy.termsEditionId;
+					m_termsTitle = copy.termsTitle;
+					m_termsVersionLabel = copy.termsVersionLabel;
+					m_termsLocale = copy.termsLocale;
+					m_termsContent = copy.termsContent;
+					m_termsTotalLength = copy.totalLength;
+					m_termsScrollOffset = 0;
+					m_termsScrolledToBottom = false;
+					m_termsAcknowledgeChecked = false;
+					m_phase = Phase::Terms;
+					m_infoBanner = copy.message;
+				}
+			}
+			else
+			{
+				ResetMasterSession();
+				m_phase = Phase::Error;
+				m_userErrorText = copy.message;
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::TermsAccept)
+		{
+			if (copy.success)
+			{
+				if (copy.termsPendingCount == 0)
+				{
+					m_infoBanner = "All terms accepted. Choose your character name.";
+					m_phase = Phase::CharacterCreate;
+				}
+				else
+				{
+					m_pendingTermsEditionId = copy.termsEditionId;
+					m_termsTitle = copy.termsTitle;
+					m_termsVersionLabel = copy.termsVersionLabel;
+					m_termsLocale = copy.termsLocale;
+					m_termsContent = copy.termsContent;
+					m_termsTotalLength = copy.totalLength;
+					m_termsScrollOffset = 0;
+					m_termsScrolledToBottom = false;
+					m_termsAcknowledgeChecked = false;
+					m_phase = Phase::Terms;
+					m_infoBanner = copy.message;
+				}
+			}
+			else
+			{
+				ResetMasterSession();
+				m_phase = Phase::Error;
+				m_userErrorText = copy.message;
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::CharacterCreate)
+		{
+			if (copy.success)
+			{
+				ResetMasterSession();
+				m_infoBanner = copy.message.empty() ? "Character created. Continuing login..." : copy.message;
+				m_phase = Phase::Submitting;
+				StartMasterFlowWorker(cfg);
+			}
+			else
+			{
+				m_phase = Phase::Error;
+				m_userErrorText = copy.message;
+			}
 			return;
 		}
 
@@ -326,14 +591,17 @@ namespace engine::client
 		const std::string locale = cfg.GetString("client.locale", "");
 		const std::string login = m_login;
 		const std::string email = m_email;
+		const std::string firstName = m_firstName;
+		const std::string lastName = m_lastName;
+		const std::string birthDate = m_birthYear + "-" + m_birthMonth + "-" + m_birthDay;
 
-		m_pendingAsyncIsRegister = true;
+		m_pendingAsyncKind = AsyncKind::Register;
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, email, hash, allowInsecure, locale]() {
+		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, locale]() {
 			AsyncResult local{};
 			engine::network::NetClient client;
 			client.SetAllowInsecureDev(allowInsecure);
@@ -350,7 +618,7 @@ namespace engine::client
 				return;
 			}
 			engine::network::RequestResponseDispatcher disp(&client);
-			std::vector<uint8_t> payload = engine::network::BuildRegisterRequestPayload(login, email, hash, {}, locale);
+			std::vector<uint8_t> payload = engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
 			if (payload.empty())
 			{
 				local.ready = true;
@@ -377,6 +645,7 @@ namespace engine::client
 						auto reg = engine::network::ParseRegisterResponsePayload(pl.data(), pl.size());
 						if (reg && reg->success != 0)
 						{
+							local.accountId = reg->account_id;
 							ok = true;
 							return;
 						}
@@ -415,12 +684,216 @@ namespace engine::client
 
 			local.ready = true;
 			local.success = ok;
-			local.message = ok ? std::string("Registration OK — Enter to log in (same password).") : (errMsg.empty() ? "REGISTER failed." : errMsg);
+			local.message = ok ? std::string("Registration OK. Check your email for the verification code.") : (errMsg.empty() ? "REGISTER failed." : errMsg);
 			{
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
 				m_asyncResult = local;
 			}
 			LOG_INFO(Net, "[AuthUiPresenter] Register worker finished (success={})", (int)ok);
+		});
+	}
+
+	void AuthUiPresenter::StartLoginWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		EnsurePasswordSalt(cfg);
+		const std::string hash = ComputeClientHash(cfg);
+		if (hash.empty())
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Could not hash password (Argon2).";
+			return;
+		}
+
+		ResetMasterSession();
+		m_masterClient = std::make_unique<engine::network::NetClient>();
+		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string login = m_login;
+		const std::string locale = cfg.GetString("client.locale", "");
+
+		m_pendingAsyncKind = AsyncKind::AuthOnly;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, login, hash, locale]() {
+			AsyncResult local{};
+			if (!m_masterClient)
+			{
+				local.ready = true;
+				local.message = "Internal error: master client missing.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			m_masterClient->SetAllowInsecureDev(allowInsecure);
+			m_masterClient->Connect(host, port);
+			if (!WaitConnected(m_masterClient.get(), timeoutMs + 2000u))
+			{
+				local.ready = true;
+				local.message = "Master connect failed or timeout.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+
+			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
+			bool authDone = false;
+			bool authOk = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeAuthRequest, engine::network::BuildAuthRequestPayload(login, hash),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						authDone = true;
+						if (timeout)
+						{
+							errMsg = "AUTH timeout.";
+							return;
+						}
+						auto auth = engine::network::ParseAuthResponsePayload(pl.data(), pl.size());
+						if (auth && auth->success != 0)
+						{
+							local.sessionId = auth->session_id;
+							authOk = true;
+							return;
+						}
+						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+						if (er)
+							errMsg = std::string(NetErrorLabel(er->errorCode)) + (er->message.empty() ? "" : (": " + er->message));
+						else
+							errMsg = "AUTH failed.";
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send AUTH failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!authDone && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			if (!authOk)
+			{
+				m_masterClient->Disconnect("auth_failed");
+				local.ready = true;
+				local.message = errMsg.empty() ? "AUTH failed." : errMsg;
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+
+			disp.SetSessionId(local.sessionId);
+			bool statusDone = false;
+			if (!disp.SendRequest(engine::network::kOpcodeTermsStatusRequest, engine::network::BuildTermsStatusRequestPayload(locale),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						statusDone = true;
+						if (timeout)
+						{
+							errMsg = "TERMS status timeout.";
+							return;
+						}
+						auto terms = engine::network::ParseTermsStatusResponsePayload(pl.data(), pl.size());
+						if (!terms)
+						{
+							errMsg = "TERMS status parse failed.";
+							return;
+						}
+						local.termsPendingCount = terms->pending_count;
+						local.termsEditionId = terms->next_edition_id;
+						local.termsTitle = terms->title;
+						local.termsVersionLabel = terms->version_label;
+						local.termsLocale = terms->resolved_locale;
+					},
+					timeoutMs))
+			{
+				m_masterClient->Disconnect("terms_status_send_failed");
+				local.ready = true;
+				local.message = "Send TERMS_STATUS failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!statusDone && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			if (!statusDone)
+			{
+				m_masterClient->Disconnect("terms_status_timeout");
+				local.ready = true;
+				local.message = "TERMS status timeout.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+
+			if (local.termsPendingCount > 0 && local.termsEditionId != 0)
+			{
+				bool contentDone = false;
+				if (!disp.SendRequest(engine::network::kOpcodeTermsContentRequest,
+						engine::network::BuildTermsContentRequestPayload(local.termsEditionId, local.termsLocale, 0u, 8192u),
+						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+							contentDone = true;
+							if (timeout)
+							{
+								errMsg = "TERMS content timeout.";
+								return;
+							}
+							auto content = engine::network::ParseTermsContentResponsePayload(pl.data(), pl.size());
+							if (!content)
+							{
+								errMsg = "TERMS content parse failed.";
+								return;
+							}
+							local.totalLength = content->total_length;
+							local.termsContent = content->chunk;
+						},
+						timeoutMs))
+				{
+					m_masterClient->Disconnect("terms_content_send_failed");
+					local.ready = true;
+					local.message = "Send TERMS_CONTENT failed.";
+					std::lock_guard<std::mutex> lock(m_asyncMutex);
+					m_asyncResult = local;
+					return;
+				}
+				deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+				while (!contentDone && std::chrono::steady_clock::now() < deadline)
+				{
+					disp.Pump();
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+				}
+				if (!contentDone)
+				{
+					m_masterClient->Disconnect("terms_content_timeout");
+					local.ready = true;
+					local.message = "TERMS content timeout.";
+					std::lock_guard<std::mutex> lock(m_asyncMutex);
+					m_asyncResult = local;
+					return;
+				}
+				local.message = "Terms acceptance required before entering the game.";
+			}
+			else
+			{
+				local.message = "Authentication successful.";
+			}
+
+			local.ready = true;
+			local.success = true;
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
 		});
 	}
 
@@ -443,7 +916,7 @@ namespace engine::client
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
 		const std::string login = m_login;
 
-		m_pendingAsyncIsRegister = false;
+		m_pendingAsyncKind = AsyncKind::Login;
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
 			m_asyncResult = {};
@@ -467,6 +940,461 @@ namespace engine::client
 				m_asyncResult = local;
 			}
 			LOG_INFO(Net, "[AuthUiPresenter] MasterShardClientFlow finished (success={})", (int)r.success);
+		});
+	}
+
+	void AuthUiPresenter::StartVerifyEmailWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const uint64_t accountId = m_pendingVerifyAccountId;
+		const std::string code = m_verifyCode;
+
+		m_pendingAsyncKind = AsyncKind::VerifyEmail;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, accountId, code]() {
+			AsyncResult local{};
+			engine::network::NetClient client;
+			client.SetAllowInsecureDev(allowInsecure);
+			client.Connect(host, port);
+			if (!WaitConnected(&client, timeoutMs + 2000u))
+			{
+				local.ready = true;
+				local.message = "Master connect failed or timeout.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(&client);
+			std::vector<uint8_t> payload = engine::network::BuildVerifyEmailRequestPayload(accountId, code);
+			bool done = false;
+			bool ok = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeVerifyEmailRequest, payload,
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						done = true;
+						if (timeout)
+						{
+							errMsg = "VERIFY_EMAIL timeout.";
+							return;
+						}
+						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+						if (er)
+						{
+							errMsg = std::string(NetErrorLabel(er->errorCode));
+							return;
+						}
+						ok = true;
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send VERIFY_EMAIL failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			local.ready = true;
+			local.success = ok;
+			local.message = ok ? std::string("Email verified successfully.") : (errMsg.empty() ? "VERIFY_EMAIL failed." : errMsg);
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
+		});
+	}
+
+	void AuthUiPresenter::StartTermsStatusWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		if (!m_masterClient || m_masterSessionId == 0)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Terms session is not active.";
+			return;
+		}
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const std::string locale = cfg.GetString("client.locale", "");
+
+		m_pendingAsyncKind = AsyncKind::TermsStatus;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, timeoutMs, locale]() {
+			AsyncResult local{};
+			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
+			disp.SetSessionId(m_masterSessionId);
+			bool statusDone = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeTermsStatusRequest, engine::network::BuildTermsStatusRequestPayload(locale),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						statusDone = true;
+						if (timeout)
+						{
+							errMsg = "TERMS status timeout.";
+							return;
+						}
+						auto terms = engine::network::ParseTermsStatusResponsePayload(pl.data(), pl.size());
+						if (!terms)
+						{
+							errMsg = "TERMS status parse failed.";
+							return;
+						}
+						local.termsPendingCount = terms->pending_count;
+						local.termsEditionId = terms->next_edition_id;
+						local.termsTitle = terms->title;
+						local.termsVersionLabel = terms->version_label;
+						local.termsLocale = terms->resolved_locale;
+					}, timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send TERMS_STATUS failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!statusDone && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			if (!statusDone)
+			{
+				local.ready = true;
+				local.message = "TERMS status timeout.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			if (local.termsPendingCount > 0 && local.termsEditionId != 0)
+			{
+				bool contentDone = false;
+				if (!disp.SendRequest(engine::network::kOpcodeTermsContentRequest,
+						engine::network::BuildTermsContentRequestPayload(local.termsEditionId, local.termsLocale, 0u, 8192u),
+						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+							contentDone = true;
+							if (timeout)
+							{
+								errMsg = "TERMS content timeout.";
+								return;
+							}
+							auto content = engine::network::ParseTermsContentResponsePayload(pl.data(), pl.size());
+							if (!content)
+							{
+								errMsg = "TERMS content parse failed.";
+								return;
+							}
+							local.totalLength = content->total_length;
+							local.termsContent = content->chunk;
+						}, timeoutMs))
+				{
+					local.ready = true;
+					local.message = "Send TERMS_CONTENT failed.";
+					std::lock_guard<std::mutex> lock(m_asyncMutex);
+					m_asyncResult = local;
+					return;
+				}
+				deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+				while (!contentDone && std::chrono::steady_clock::now() < deadline)
+				{
+					disp.Pump();
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+				}
+				if (!contentDone)
+				{
+					local.ready = true;
+					local.message = errMsg.empty() ? "TERMS content timeout." : errMsg;
+					std::lock_guard<std::mutex> lock(m_asyncMutex);
+					m_asyncResult = local;
+					return;
+				}
+			}
+			local.ready = true;
+			local.success = true;
+			local.message = local.termsPendingCount > 0 ? "Please review and accept the pending terms." : "No pending terms.";
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
+		});
+	}
+
+	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		if (!m_masterClient || m_masterSessionId == 0 || m_pendingTermsEditionId == 0)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Terms session is not active.";
+			return;
+		}
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const std::string locale = cfg.GetString("client.locale", "");
+		const uint64_t editionId = m_pendingTermsEditionId;
+
+		m_pendingAsyncKind = AsyncKind::TermsAccept;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, timeoutMs, locale, editionId]() {
+			AsyncResult local{};
+			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
+			disp.SetSessionId(m_masterSessionId);
+			bool acceptDone = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeTermsAcceptRequest, engine::network::BuildTermsAcceptRequestPayload(editionId, 1u),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						acceptDone = true;
+						if (timeout)
+						{
+							errMsg = "TERMS accept timeout.";
+							return;
+						}
+						if (!pl.empty() && pl[0] == 0)
+							errMsg = "TERMS accept failed.";
+					}, timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send TERMS_ACCEPT failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!acceptDone && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			if (!acceptDone || !errMsg.empty())
+			{
+				local.ready = true;
+				local.message = errMsg.empty() ? "TERMS accept timeout." : errMsg;
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+
+			bool statusDone = false;
+			if (!disp.SendRequest(engine::network::kOpcodeTermsStatusRequest, engine::network::BuildTermsStatusRequestPayload(locale),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						statusDone = true;
+						if (timeout)
+						{
+							errMsg = "TERMS status timeout.";
+							return;
+						}
+						auto terms = engine::network::ParseTermsStatusResponsePayload(pl.data(), pl.size());
+						if (!terms)
+						{
+							errMsg = "TERMS status parse failed.";
+							return;
+						}
+						local.termsPendingCount = terms->pending_count;
+						local.termsEditionId = terms->next_edition_id;
+						local.termsTitle = terms->title;
+						local.termsVersionLabel = terms->version_label;
+						local.termsLocale = terms->resolved_locale;
+					}, timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send TERMS_STATUS failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!statusDone && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			if (!statusDone)
+			{
+				local.ready = true;
+				local.message = "TERMS status timeout.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			if (local.termsPendingCount > 0 && local.termsEditionId != 0)
+			{
+				bool contentDone = false;
+				if (!disp.SendRequest(engine::network::kOpcodeTermsContentRequest,
+						engine::network::BuildTermsContentRequestPayload(local.termsEditionId, local.termsLocale, 0u, 8192u),
+						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+							contentDone = true;
+							if (timeout)
+							{
+								errMsg = "TERMS content timeout.";
+								return;
+							}
+							auto content = engine::network::ParseTermsContentResponsePayload(pl.data(), pl.size());
+							if (!content)
+							{
+								errMsg = "TERMS content parse failed.";
+								return;
+							}
+							local.totalLength = content->total_length;
+							local.termsContent = content->chunk;
+						}, timeoutMs))
+				{
+					local.ready = true;
+					local.message = "Send TERMS_CONTENT failed.";
+					std::lock_guard<std::mutex> lock(m_asyncMutex);
+					m_asyncResult = local;
+					return;
+				}
+				deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+				while (!contentDone && std::chrono::steady_clock::now() < deadline)
+				{
+					disp.Pump();
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+				}
+			}
+			local.ready = true;
+			local.success = true;
+			local.message = local.termsPendingCount > 0 ? "Next pending terms loaded." : "All terms accepted.";
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
+		});
+	}
+
+	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		if (!m_masterClient || m_masterSessionId == 0)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Character creation session is not active.";
+			return;
+		}
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const std::string characterName = m_characterName;
+
+		m_pendingAsyncKind = AsyncKind::CharacterCreate;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, timeoutMs, characterName]() {
+			AsyncResult local{};
+			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
+			disp.SetSessionId(m_masterSessionId);
+			bool done = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
+					engine::network::BuildCharacterCreateRequestPayload(characterName),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						done = true;
+						if (timeout)
+						{
+							errMsg = "CHARACTER_CREATE timeout.";
+							return;
+						}
+						auto resp = engine::network::ParseCharacterCreateResponsePayload(pl.data(), pl.size());
+						if (resp && resp->success != 0)
+						{
+							local.accountId = resp->character_id;
+							return;
+						}
+						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+						if (er)
+							errMsg = er->message.empty() ? std::string(NetErrorLabel(er->errorCode)) : er->message;
+						else
+							errMsg = "Character creation failed.";
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send CHARACTER_CREATE failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			local.ready = true;
+			local.success = done && errMsg.empty();
+			local.message = local.success ? std::string("Character created successfully.") : (errMsg.empty() ? "Character creation timeout." : errMsg);
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
+		});
+	}
+
+	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string email = m_email;
+
+		m_pendingAsyncKind = AsyncKind::ForgotPassword;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, email]() {
+			AsyncResult local{};
+			engine::network::NetClient client;
+			client.SetAllowInsecureDev(allowInsecure);
+			client.Connect(host, port);
+			if (!WaitConnected(&client, timeoutMs + 2000u))
+			{
+				local.ready = true;
+				local.message = "Master connect failed or timeout.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(&client);
+			std::vector<uint8_t> payload = engine::network::BuildForgotPasswordRequestPayload(email);
+			bool done = false;
+			if (!disp.SendRequest(engine::network::kOpcodeForgotPasswordRequest, payload,
+					[&](uint32_t, bool, std::vector<uint8_t>) {
+						done = true;
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send FORGOT_PASSWORD failed.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			local.ready = true;
+			local.success = done;
+			local.message = done ? "If the email exists, a reset message has been sent." : "FORGOT_PASSWORD timeout.";
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
 		});
 	}
 
@@ -500,29 +1428,59 @@ namespace engine::client
 			return;
 		}
 
+		auto currentField = [this]() -> std::string* {
+			switch (m_phase)
+			{
+			case Phase::Login:
+				return m_activeField == 0 ? &m_login : &m_password;
+			case Phase::Register:
+				switch (m_activeField)
+				{
+				case 0: return &m_login;
+				case 1: return &m_password;
+				case 2: return &m_email;
+				case 3: return &m_firstName;
+				case 4: return &m_lastName;
+				case 5: return &m_birthDay;
+				case 6: return &m_birthMonth;
+				default: return &m_birthYear;
+				}
+			case Phase::VerifyEmail:
+				return &m_verifyCode;
+			case Phase::ForgotPassword:
+				return &m_email;
+			case Phase::Terms:
+				return nullptr;
+			case Phase::CharacterCreate:
+				return &m_characterName;
+			default:
+				return nullptr;
+			}
+		};
+
 		std::string text;
 		input.ConsumePendingTextUtf8(text);
 		if (!text.empty())
 		{
-			for (unsigned char c : text)
+			if (std::string* field = currentField())
 			{
-				if (c < 32 && c != '\t')
-					continue;
-				if (m_phase == Phase::Login)
+				for (unsigned char c : text)
 				{
-					if (m_activeField == 0)
-						m_login.push_back(static_cast<char>(c));
-					else
-						m_password.push_back(static_cast<char>(c));
-				}
-				else
-				{
-					if (m_activeField == 0)
-						m_login.push_back(static_cast<char>(c));
-					else if (m_activeField == 1)
-						m_email.push_back(static_cast<char>(c));
-					else
-						m_password.push_back(static_cast<char>(c));
+					if (c < 32 && c != '\t')
+						continue;
+					const bool digitsOnlyField =
+						(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6 || m_activeField == 7)) ||
+						(m_phase == Phase::VerifyEmail);
+					if (digitsOnlyField && (c < '0' || c > '9'))
+						continue;
+					const size_t maxLen =
+						(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6)) ? 2u :
+						(m_phase == Phase::Register && m_activeField == 7) ? 4u :
+						(m_phase == Phase::VerifyEmail) ? 6u :
+						(m_phase == Phase::CharacterCreate) ? 32u : 256u;
+					if (field->size() >= maxLen)
+						continue;
+					field->push_back(static_cast<char>(c));
 				}
 			}
 		}
@@ -538,21 +1496,9 @@ namespace engine::client
 						break;
 				}
 			};
-			if (m_phase == Phase::Login)
+			if (std::string* field = currentField())
 			{
-				if (m_activeField == 0)
-					popLast(m_login);
-				else
-					popLast(m_password);
-			}
-			else
-			{
-				if (m_activeField == 0)
-					popLast(m_login);
-				else if (m_activeField == 1)
-					popLast(m_email);
-				else
-					popLast(m_password);
+				popLast(*field);
 			}
 		}
 
@@ -560,9 +1506,31 @@ namespace engine::client
 		{
 			if (m_phase == Phase::Login)
 				m_activeField = (m_activeField + 1u) % 2u;
+			else if (m_phase == Phase::Register)
+				m_activeField = (m_activeField + 1u) % 8u;
+			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::ForgotPassword)
+				m_activeField = 0;
 			else
-				m_activeField = (m_activeField + 1u) % 3u;
+				m_activeField = 0;
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
+		}
+
+		if (m_phase == Phase::Terms)
+		{
+			const uint32_t kStep = 12u;
+			if (input.WasPressed(engine::platform::Key::Down))
+				m_termsScrollOffset += kStep;
+			if (input.WasPressed(engine::platform::Key::PageDown))
+				m_termsScrollOffset += kStep * 2u;
+			if (input.WasPressed(engine::platform::Key::Up))
+				m_termsScrollOffset = (m_termsScrollOffset > kStep) ? (m_termsScrollOffset - kStep) : 0u;
+			if (input.WasPressed(engine::platform::Key::PageUp))
+				m_termsScrollOffset = (m_termsScrollOffset > (kStep * 2u)) ? (m_termsScrollOffset - (kStep * 2u)) : 0u;
+			const uint32_t visibleChars = 900u;
+			if (m_termsTotalLength <= visibleChars || m_termsScrollOffset + visibleChars >= m_termsTotalLength)
+				m_termsScrolledToBottom = true;
+			if (m_termsScrolledToBottom && input.WasPressed(engine::platform::Key::Space))
+				m_termsAcknowledgeChecked = !m_termsAcknowledgeChecked;
 		}
 
 		if (input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
@@ -572,8 +1540,14 @@ namespace engine::client
 			m_userErrorText.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Switched to Register screen");
 		}
+		if (input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
+		{
+			m_phase = Phase::ForgotPassword;
+			m_activeField = 0;
+			m_userErrorText.clear();
+		}
 
-		if (input.WasPressed(engine::platform::Key::L) && m_phase == Phase::Register)
+		if (input.WasPressed(engine::platform::Key::L) && (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail))
 		{
 			m_phase = Phase::Login;
 			m_activeField = 0;
@@ -600,21 +1574,89 @@ namespace engine::client
 				else
 				{
 					m_phase = Phase::Submitting;
-					StartMasterFlowWorker(cfg);
+					StartLoginWorker(cfg);
 				}
 			}
 			else if (m_phase == Phase::Register)
 			{
-				if (m_login.empty() || m_password.empty() || m_email.empty())
+				if (m_login.empty() || m_password.empty() || m_email.empty() || m_firstName.empty() || m_lastName.empty()
+					|| m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
 				{
 					m_phase = Phase::Error;
-					m_userErrorText = "Enter login, email, and password.";
+					m_userErrorText = "Enter login, password, email, first name, last name, and birth date.";
 					LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
+				}
+				else if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Birth date must use valid numeric day/month/year values.";
 				}
 				else
 				{
 					m_phase = Phase::Submitting;
 					StartRegisterWorker(cfg);
+				}
+			}
+			else if (m_phase == Phase::VerifyEmail)
+			{
+				if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Enter the verification code from the email.";
+				}
+				else if (!IsValidVerificationCode(m_verifyCode))
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Verification code must contain exactly 6 digits.";
+				}
+				else
+				{
+					m_phase = Phase::Submitting;
+					StartVerifyEmailWorker(cfg);
+				}
+			}
+			else if (m_phase == Phase::ForgotPassword)
+			{
+				if (m_email.empty())
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Enter the email address for password recovery.";
+				}
+				else
+				{
+					m_phase = Phase::Submitting;
+					StartForgotPasswordWorker(cfg);
+				}
+			}
+			else if (m_phase == Phase::Terms)
+			{
+				if (!m_termsScrolledToBottom || !m_termsAcknowledgeChecked)
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Scroll to the end of the terms, then check the acknowledgement box.";
+				}
+				else
+				{
+					m_phase = Phase::Submitting;
+					StartTermsAcceptWorker(cfg);
+				}
+			}
+			else if (m_phase == Phase::CharacterCreate)
+			{
+				if (m_characterName.empty())
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Enter a character name.";
+				}
+				else if (!IsValidCharacterNameLocal(m_characterName))
+				{
+					m_phase = Phase::Error;
+					m_userErrorText = "Character name must be 3-32 characters and use only letters, digits, or underscore.";
+				}
+				else
+				{
+					m_phase = Phase::Submitting;
+					StartCharacterCreateWorker(cfg);
 				}
 			}
 		}
@@ -631,6 +1673,7 @@ namespace engine::client
 		s += " | ";
 		s += kRegisterAssetsRel;
 		s += "\n";
+		s += "Chat: Slash to focus, Escape to leave chat focus.\n";
 		if (!m_infoBanner.empty())
 		{
 			s += "[INFO] ";
@@ -640,7 +1683,7 @@ namespace engine::client
 		switch (m_phase)
 		{
 		case Phase::Login:
-			s += "[LOGIN]  R=Register screen\n";
+			s += "[LOGIN]  R=Register  F=Forgot password\n";
 			s += "login> ";
 			s += m_login;
 			s += (m_activeField == 0 ? "|\n" : "\n");
@@ -653,12 +1696,74 @@ namespace engine::client
 			s += "login> ";
 			s += m_login;
 			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "email> ";
-			s += m_email;
-			s += (m_activeField == 1 ? "|\n" : "\n");
 			s += "pass>  ";
 			AppendPasswordStars(s, m_password.size());
+			s += (m_activeField == 1 ? "|\n" : "\n");
+			s += "email> ";
+			s += m_email;
 			s += (m_activeField == 2 ? "|\n" : "\n");
+			s += "first_name> ";
+			s += m_firstName;
+			s += (m_activeField == 3 ? "|\n" : "\n");
+			s += "last_name>  ";
+			s += m_lastName;
+			s += (m_activeField == 4 ? "|\n" : "\n");
+			s += "birth_day>  ";
+			s += m_birthDay;
+			s += (m_activeField == 5 ? "|\n" : "\n");
+			s += "birth_month>";
+			s += m_birthMonth;
+			s += (m_activeField == 6 ? "|\n" : "\n");
+			s += "birth_year> ";
+			s += m_birthYear;
+			s += (m_activeField == 7 ? "|\n" : "\n");
+			s += "Birth date format: day/month/year numeric only.\n";
+			break;
+		case Phase::VerifyEmail:
+			s += "[VERIFY EMAIL]  L=Back to login\n";
+			s += "account_id> ";
+			s += std::to_string(m_pendingVerifyAccountId);
+			s += "\n";
+			s += "code> ";
+			s += m_verifyCode;
+			s += "|\n";
+			s += "Expected format: 6 digits.\n";
+			break;
+		case Phase::ForgotPassword:
+			s += "[FORGOT PASSWORD]  L=Back to login\n";
+			s += "email> ";
+			s += m_email;
+			s += "|\n";
+			break;
+		case Phase::Terms:
+		{
+			s += "[TERMS]  Up/Down/PageUp/PageDown=scroll  Space=check  Enter=accept\n";
+			s += "edition> ";
+			s += std::to_string(m_pendingTermsEditionId);
+			s += "  version> ";
+			s += m_termsVersionLabel;
+			s += "\n";
+			s += "title> ";
+			s += m_termsTitle;
+			s += "\n";
+			s += "locale> ";
+			s += m_termsLocale;
+			s += "\n\n";
+			const size_t start = static_cast<size_t>(std::min<uint32_t>(m_termsScrollOffset, static_cast<uint32_t>(m_termsContent.size())));
+			const size_t count = std::min<size_t>(900u, m_termsContent.size() - start);
+			s.append(m_termsContent.data() + start, count);
+			s += "\n\n";
+			s += m_termsScrolledToBottom ? "[x] End reached. " : "[ ] Scroll to the end first. ";
+			s += m_termsAcknowledgeChecked ? "[x] I certify that I have read the terms.\n" : "[ ] I certify that I have read the terms.\n";
+			break;
+		}
+		case Phase::CharacterCreate:
+			s += "[CHARACTER CREATE]\n";
+			s += "name> ";
+			s += m_characterName;
+			s += "|\n";
+			s += "Simple mode: name only. Race/class will be added later.\n";
+			s += "Allowed: 3-32 chars, letters/digits/underscore.\n";
 			break;
 		case Phase::Submitting:
 			s += "Submitting / connecting to master…\n";
@@ -669,7 +1774,7 @@ namespace engine::client
 			s += "\n(Enter to dismiss)\n";
 			break;
 		}
-		s += "Tab=next field  Enter=submit\n";
+		s += "Tab=next field  Enter=submit  Escape=back/close error\n";
 		return s;
 	}
 
@@ -677,11 +1782,23 @@ namespace engine::client
 	{
 		if (m_phase == Phase::Submitting)
 			return true;
-		if (m_phase == Phase::Register)
+		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail)
 		{
 			m_phase = Phase::Login;
 			m_userErrorText.clear();
-			LOG_INFO(Core, "[AuthUiPresenter] Escape: Register -> Login");
+			LOG_INFO(Core, "[AuthUiPresenter] Escape: Auth sub-screen -> Login");
+			return true;
+		}
+		if (m_phase == Phase::Terms)
+		{
+			return true;
+		}
+		if (m_phase == Phase::CharacterCreate)
+		{
+			m_phase = Phase::Login;
+			m_userErrorText.clear();
+			m_infoBanner = "Character creation cancelled. Back to login.";
+			ResetMasterSession();
 			return true;
 		}
 		if (m_phase == Phase::Error)

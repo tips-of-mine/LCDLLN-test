@@ -48,11 +48,16 @@ namespace engine::network
 	};
 
 	std::optional<TermsStatusRequestPayload> ParseTermsStatusRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildTermsStatusRequestPayload(std::string_view locale_pref);
+	std::optional<TermsStatusResponsePayload> ParseTermsStatusResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildTermsStatusResponsePacket(const TermsStatusResponsePayload& p, uint32_t requestId, uint64_t sessionIdHeader);
 
 	std::optional<TermsContentRequestPayload> ParseTermsContentRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildTermsContentRequestPayload(uint64_t edition_id, std::string_view locale_pref, uint32_t byte_offset, uint32_t max_chunk);
+	std::optional<TermsContentResponsePayload> ParseTermsContentResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildTermsContentResponsePacket(const TermsContentResponsePayload& p, uint32_t requestId, uint64_t sessionIdHeader);
 
 	std::optional<TermsAcceptRequestPayload> ParseTermsAcceptRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildTermsAcceptRequestPayload(uint64_t edition_id, uint8_t acknowledged);
 	std::vector<uint8_t> BuildTermsAcceptResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
 }

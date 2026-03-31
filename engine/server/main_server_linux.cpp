@@ -24,6 +24,7 @@
 #include "engine/server/SmtpMailer.h"
 #include "engine/server/TermsRepository.h"
 #include "engine/server/TermsHandler.h"
+#include "engine/server/CharacterCreateHandler.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -210,6 +211,13 @@ int main(int argc, char** argv)
 	termsHandler.SetTermsRepository(&termsRepository);
 	termsHandler.SetSmtpConfig(&smtpConfig);
 
+	engine::server::CharacterCreateHandler characterCreateHandler;
+	characterCreateHandler.SetServer(&server);
+	characterCreateHandler.SetSessionManager(&sessionManager);
+	characterCreateHandler.SetConnectionSessionMap(&connSessionMap);
+	characterCreateHandler.SetConnectionPool(&dbPool);
+	characterCreateHandler.SetConfig(&config);
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(&accountStore);
@@ -232,7 +240,7 @@ int main(int argc, char** argv)
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -247,6 +255,8 @@ int main(int argc, char** argv)
 			passwordResetHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeTermsStatusRequest || opcode == kOpcodeTermsContentRequest || opcode == kOpcodeTermsAcceptRequest)
 			termsHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeCharacterCreateRequest)
+			characterCreateHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

@@ -29,7 +29,6 @@ namespace engine::render
 		uint32_t maxFrames,
 		VkPipelineCache pipelineCache)
 	{
-		LOG_INFO(Render, "[TAA] Init enter");
 		if (device == VK_NULL_HANDLE || !vertSpirv || !fragSpirv || vertWordCount == 0 || fragWordCount == 0)
 		{
 			LOG_ERROR(Render, "TaaPass::Init: invalid arguments");
@@ -225,7 +224,6 @@ namespace engine::render
 		AssertPipelineCreationAllowed();
 		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, outputFormat, VK_FORMAT_UNDEFINED));
 		VkResult result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
-		LOG_INFO(Render, "[TAA] vkCreateGraphicsPipelines r={}", (int)result);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "TaaPass: vkCreateGraphicsPipelines failed");
@@ -246,7 +244,6 @@ namespace engine::render
 		ResourceId idHistoryNext,
 		const TaaParams& params, uint32_t frameIndex)
 	{
-		LOG_INFO(Render, "[TAA] Record enter frameIndex={} extent={}x{}", frameIndex, extent.width, extent.height);
 		if (!IsValid() || extent.width == 0 || extent.height == 0) return;
 
 		VkImageView viewCurrent = registry.getImageView(idCurrentLDR);
@@ -254,8 +251,6 @@ namespace engine::render
 		VkImageView viewVel = registry.getImageView(idVelocity);
 		VkImageView viewDepth = registry.getImageView(idDepth);
 		VkImageView viewOut = registry.getImageView(idHistoryNext);
-		LOG_INFO(Render, "[TAA] views current={} history={} vel={} depth={} out={}",
-			(void*)viewCurrent, (void*)viewHistory, (void*)viewVel, (void*)viewDepth, (void*)viewOut);
 		if (viewCurrent == VK_NULL_HANDLE || viewHistory == VK_NULL_HANDLE
 			|| viewVel == VK_NULL_HANDLE || viewDepth == VK_NULL_HANDLE || viewOut == VK_NULL_HANDLE)
 			return;
@@ -279,9 +274,7 @@ namespace engine::render
 			writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[i].pImageInfo = &imageInfos[i];
 		}
-		LOG_INFO(Render, "[TAA] before vkUpdateDescriptorSets");
 		vkUpdateDescriptorSets(device, 4, writes.data(), 0, nullptr);
-		LOG_INFO(Render, "[TAA] after vkUpdateDescriptorSets");
 
 		VkFramebufferCreateInfo fbInfo{};
 		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -294,7 +287,6 @@ namespace engine::render
 		VkFramebuffer fb = VK_NULL_HANDLE;
 		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
 			return;
-		LOG_INFO(Render, "[TAA] framebuffer={}", (void*)fb);
 
 		VkRenderPassBeginInfo rpBegin{};
 		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -302,7 +294,6 @@ namespace engine::render
 		rpBegin.framebuffer = fb;
 		rpBegin.renderArea = { { 0, 0 }, extent };
 		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
-		LOG_INFO(Render, "[TAA] after vkCmdBeginRenderPass");
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &ds, 0, nullptr);
@@ -318,16 +309,12 @@ namespace engine::render
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		vkCmdDraw(cmd, 3, 1, 0, 0);
-		LOG_INFO(Render, "[TAA] after vkCmdDraw");
 		vkCmdEndRenderPass(cmd);
-		LOG_INFO(Render, "[TAA] after vkCmdEndRenderPass");
 		vkDestroyFramebuffer(device, fb, nullptr);
-		LOG_INFO(Render, "[TAA] Record done");
 	}
 
 	void TaaPass::Destroy(VkDevice device)
 	{
-		LOG_DEBUG(Render, "[TAA] Destroy enter");
 		if (device == VK_NULL_HANDLE) return;
 		if (m_pipeline != VK_NULL_HANDLE) { vkDestroyPipeline(device, m_pipeline, nullptr); m_pipeline = VK_NULL_HANDLE; }
 		if (m_pipelineLayout != VK_NULL_HANDLE) { vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr); m_pipelineLayout = VK_NULL_HANDLE; }
@@ -336,6 +323,5 @@ namespace engine::render
 		if (m_setLayout != VK_NULL_HANDLE) { vkDestroyDescriptorSetLayout(device, m_setLayout, nullptr); m_setLayout = VK_NULL_HANDLE; }
 		if (m_renderPass != VK_NULL_HANDLE) { vkDestroyRenderPass(device, m_renderPass, nullptr); m_renderPass = VK_NULL_HANDLE; }
 		m_descriptorSets.clear();
-		LOG_INFO(Render, "[TAA] Destroy OK");
 	}
 }

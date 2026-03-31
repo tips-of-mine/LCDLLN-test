@@ -1454,6 +1454,11 @@ namespace engine
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+				// All frame-graph images are recreated after a resize/out-of-date event, so the
+				// TAA history must be rebuilt from scratch on the next frame.
+				m_taaHistoryInvalid = true;
+				m_taaHistoryEverFilled = false;
+				LOG_INFO(Render, "[TAA] History invalidated after swapchain recreate");
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				

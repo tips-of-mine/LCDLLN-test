@@ -1129,10 +1129,11 @@ namespace engine
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												LOG_INFO(Render, "[TAA] pass enter");
-												// Init / reset d'historique si nécessaire
-												if (m_taaHistoryInvalid)
+												// Bootstrap the history on first use, even if Update() already cleared
+												// m_taaHistoryInvalid for this frame.
+												if (!m_taaHistoryEverFilled || m_taaHistoryInvalid)
 												{
-													LOG_INFO(Render, "[TAA] history invalid path");
+													LOG_INFO(Render, "[TAA] history bootstrap/reset path");
 													VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
 													if (srcImg != VK_NULL_HANDLE)
 													{
@@ -1194,6 +1195,7 @@ namespace engine
 															toColorAttachment(dstA);
 															toColorAttachment(dstB);
 															m_taaHistoryEverFilled = true;
+															m_taaHistoryInvalid = false;
 															LOG_INFO(Render, "[TAA] History initialized at frame 0");
 															return;
 														}
@@ -1209,6 +1211,9 @@ namespace engine
 															               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 															               1, &region);
 															toColorAttachment(dstNext);
+															m_taaHistoryInvalid = false;
+															LOG_INFO(Render, "[TAA] History reset from current frame");
+															return;
 														}
 													}
 													}

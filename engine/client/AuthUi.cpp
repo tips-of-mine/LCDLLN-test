@@ -487,21 +487,28 @@ namespace engine::client
 		const engine::core::Config& cfg)
 	{
 		(void)deltaSeconds;
+		LOG_INFO(Core, "[AuthUiPresenter] Update enter init={} flowComplete={} authEnabled={} phase={}",
+			(int)m_initialized, (int)m_flowComplete, (int)m_authEnabled, static_cast<int>(m_phase));
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
+		LOG_INFO(Core, "[AuthUiPresenter] before PollAsyncResult");
 		PollAsyncResult(cfg);
+		LOG_INFO(Core, "[AuthUiPresenter] after PollAsyncResult");
 		if (m_flowComplete)
 			return;
 
 		if (m_phase == Phase::Submitting)
 		{
+			LOG_INFO(Core, "[AuthUiPresenter] phase submitting -> UpdateWindowTitle");
 			UpdateWindowTitle(window);
 			return;
 		}
 
 		std::string text;
+		LOG_INFO(Core, "[AuthUiPresenter] before ConsumePendingTextUtf8");
 		input.ConsumePendingTextUtf8(text);
+		LOG_INFO(Core, "[AuthUiPresenter] after ConsumePendingTextUtf8 size={}", text.size());
 		if (!text.empty())
 		{
 			for (unsigned char c : text)
@@ -527,6 +534,7 @@ namespace engine::client
 			}
 		}
 
+		LOG_INFO(Core, "[AuthUiPresenter] before key handling");
 		if (input.WasPressed(engine::platform::Key::Backspace))
 		{
 			auto popLast = [](std::string& s) {
@@ -619,7 +627,9 @@ namespace engine::client
 			}
 		}
 
+		LOG_INFO(Core, "[AuthUiPresenter] before UpdateWindowTitle");
 		UpdateWindowTitle(window);
+		LOG_INFO(Core, "[AuthUiPresenter] after UpdateWindowTitle");
 	}
 
 	std::string AuthUiPresenter::BuildPanelText() const

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/network/NetClient.h"
 #include "engine/platform/Input.h"
 
 #include <mutex>
@@ -8,11 +9,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
-namespace engine::network
-{
-	class NetClient;
-}
 
 namespace engine::platform
 {

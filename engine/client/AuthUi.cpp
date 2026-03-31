@@ -264,23 +264,19 @@ namespace engine::client
 		// so there is no async state to synchronize. Avoid touching the mutex unnecessarily.
 		if (!m_worker.joinable() && !m_asyncResult.ready)
 		{
-			LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult skipped (no worker, no pending result)");
 			return;
 		}
 
 		AsyncResult copy{};
-		LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult before mutex");
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
 			if (!m_asyncResult.ready)
 			{
-				LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult no ready result");
 				return;
 			}
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
-		LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult after mutex");
 		JoinWorker();
 
 		const bool wasRegister = m_pendingAsyncIsRegister;
@@ -500,28 +496,21 @@ namespace engine::client
 		const engine::core::Config& cfg)
 	{
 		(void)deltaSeconds;
-		LOG_INFO(Core, "[AuthUiPresenter] Update enter init={} flowComplete={} authEnabled={} phase={}",
-			(int)m_initialized, (int)m_flowComplete, (int)m_authEnabled, static_cast<int>(m_phase));
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
-		LOG_INFO(Core, "[AuthUiPresenter] before PollAsyncResult");
 		PollAsyncResult(cfg);
-		LOG_INFO(Core, "[AuthUiPresenter] after PollAsyncResult");
 		if (m_flowComplete)
 			return;
 
 		if (m_phase == Phase::Submitting)
 		{
-			LOG_INFO(Core, "[AuthUiPresenter] phase submitting -> UpdateWindowTitle");
 			UpdateWindowTitle(window);
 			return;
 		}
 
 		std::string text;
-		LOG_INFO(Core, "[AuthUiPresenter] before ConsumePendingTextUtf8");
 		input.ConsumePendingTextUtf8(text);
-		LOG_INFO(Core, "[AuthUiPresenter] after ConsumePendingTextUtf8 size={}", text.size());
 		if (!text.empty())
 		{
 			for (unsigned char c : text)
@@ -547,7 +536,6 @@ namespace engine::client
 			}
 		}
 
-		LOG_INFO(Core, "[AuthUiPresenter] before key handling");
 		if (input.WasPressed(engine::platform::Key::Backspace))
 		{
 			auto popLast = [](std::string& s) {
@@ -640,9 +628,7 @@ namespace engine::client
 			}
 		}
 
-		LOG_INFO(Core, "[AuthUiPresenter] before UpdateWindowTitle");
 		UpdateWindowTitle(window);
-		LOG_INFO(Core, "[AuthUiPresenter] after UpdateWindowTitle");
 	}
 
 	std::string AuthUiPresenter::BuildPanelText() const

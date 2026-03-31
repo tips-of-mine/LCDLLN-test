@@ -40,6 +40,10 @@ namespace engine::platform
 	{
 	}
 
+	void Window::SetOverlayText(std::string_view)
+	{
+	}
+
 	void Window::ToggleFullscreen()
 	{
 	}

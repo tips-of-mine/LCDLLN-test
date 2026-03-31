@@ -266,6 +266,7 @@ add_library(engine_core
   engine/network/AuthRegisterPayloads.cpp
   engine/network/CharacterPayloads.cpp
   engine/network/ShardPayloads.cpp
+  engine/network/TermsPayloads.cpp
 )
 # Shared gameplay wire codec (Encode*/Decode*); linked into client — must not be server-only.
 target_sources(engine_core PRIVATE engine/server/ServerProtocol.cpp)
@@ -301,6 +302,7 @@ else()
   target_sources(engine_core PRIVATE
     engine/platform/Input_linux.cpp
     engine/platform/Window_linux.cpp
+    engine/network/NetClient_linux.cpp
   )
 endif()
 

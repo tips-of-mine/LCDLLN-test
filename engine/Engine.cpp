@@ -527,7 +527,9 @@ namespace engine
 
 										engine::render::ImageDesc sceneColorLDRDesc{};
 										sceneColorLDRDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
-										sceneColorLDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+										sceneColorLDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+										                         | VK_IMAGE_USAGE_SAMPLED_BIT
+										                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 										m_fgSceneColorLDRId = m_frameGraph.createImage("SceneColor_LDR", sceneColorLDRDesc);
 
 										engine::render::ImageDesc ssaoRawDesc{};
@@ -547,6 +549,7 @@ namespace engine
 										                   | VK_IMAGE_USAGE_SAMPLED_BIT
 										                   | VK_IMAGE_USAGE_TRANSFER_DST_BIT
 										                   | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+										historyDesc.transient = false;
 										m_fgHistoryAId = m_frameGraph.createImage("HistoryA", historyDesc);
 										m_fgHistoryBId = m_frameGraph.createImage("HistoryB", historyDesc);
 

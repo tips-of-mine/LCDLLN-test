@@ -1128,9 +1128,11 @@ namespace engine
 												b.write(m_fgHistoryBId,       engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+												LOG_INFO(Render, "[TAA] pass enter");
 												// Init / reset d'historique si nécessaire
 												if (m_taaHistoryInvalid)
 												{
+													LOG_INFO(Render, "[TAA] history invalid path");
 													VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
 													if (srcImg != VK_NULL_HANDLE)
 													{
@@ -1213,6 +1215,7 @@ namespace engine
 												}
 
 												if (!m_pipeline->GetTaaPass().IsValid()) return;
+												LOG_INFO(Render, "[TAA] before Record");
 												engine::render::TaaPass::TaaParams tp{};
 												tp.alpha = 0.9f; tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
 												const uint32_t frameIdx = m_currentFrame % 2u;
@@ -1225,6 +1228,7 @@ namespace engine
 													GetTaaHistoryNextId(),
 													tp,
 													frameIdx);
+												LOG_INFO(Render, "[TAA] after Record");
 											});
 
 										m_frameGraph.addPass("CopyPresent",
@@ -1235,6 +1239,7 @@ namespace engine
 												b.write(m_fgBackbufferId,   engine::render::ImageUsage::TransferDst);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+												LOG_INFO(Render, "[CopyPresent] enter");
 												engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
 												VkImage srcImg = reg.getImage(srcId);
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
@@ -1247,7 +1252,9 @@ namespace engine
 												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 												region.dstOffsets[0] = { 0, 0, 0 };
 												region.dstOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
+												LOG_INFO(Render, "[CopyPresent] before vkCmdBlitImage");
 												vkCmdBlitImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
+												LOG_INFO(Render, "[CopyPresent] after vkCmdBlitImage");
 												VkImageMemoryBarrier barrier{};
 												barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 												barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1259,6 +1266,7 @@ namespace engine
 												barrier.image               = dstImg;
 												barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 												vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+												LOG_INFO(Render, "[CopyPresent] done");
 											});
 
 										m_frameGraph.addPass("PostRead",

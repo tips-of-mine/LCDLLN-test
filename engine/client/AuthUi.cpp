@@ -260,14 +260,27 @@ namespace engine::client
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
+		// Fast-path: on the initial login screen no background worker has been started yet,
+		// so there is no async state to synchronize. Avoid touching the mutex unnecessarily.
+		if (!m_worker.joinable() && !m_asyncResult.ready)
+		{
+			LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult skipped (no worker, no pending result)");
+			return;
+		}
+
 		AsyncResult copy{};
+		LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult before mutex");
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
 			if (!m_asyncResult.ready)
+			{
+				LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult no ready result");
 				return;
+			}
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
+		LOG_INFO(Core, "[AuthUiPresenter] PollAsyncResult after mutex");
 		JoinWorker();
 
 		const bool wasRegister = m_pendingAsyncIsRegister;

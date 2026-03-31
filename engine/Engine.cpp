@@ -527,7 +527,9 @@ namespace engine
 
 										engine::render::ImageDesc sceneColorLDRDesc{};
 										sceneColorLDRDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
-										sceneColorLDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+										sceneColorLDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+										                         | VK_IMAGE_USAGE_SAMPLED_BIT
+										                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 										m_fgSceneColorLDRId = m_frameGraph.createImage("SceneColor_LDR", sceneColorLDRDesc);
 
 										engine::render::ImageDesc ssaoRawDesc{};
@@ -547,6 +549,7 @@ namespace engine
 										                   | VK_IMAGE_USAGE_SAMPLED_BIT
 										                   | VK_IMAGE_USAGE_TRANSFER_DST_BIT
 										                   | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+										historyDesc.transient = false;
 										m_fgHistoryAId = m_frameGraph.createImage("HistoryA", historyDesc);
 										m_fgHistoryBId = m_frameGraph.createImage("HistoryB", historyDesc);
 
@@ -1128,8 +1131,9 @@ namespace engine
 												b.write(m_fgHistoryBId,       engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												// Init / reset d'historique si nécessaire
-												if (m_taaHistoryInvalid)
+												// Bootstrap the history on first use, even if Update() already cleared
+												// m_taaHistoryInvalid for this frame.
+												if (!m_taaHistoryEverFilled || m_taaHistoryInvalid)
 												{
 													VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
 													if (srcImg != VK_NULL_HANDLE)
@@ -1192,7 +1196,7 @@ namespace engine
 															toColorAttachment(dstA);
 															toColorAttachment(dstB);
 															m_taaHistoryEverFilled = true;
-															LOG_INFO(Render, "[TAA] History initialized at frame 0");
+															m_taaHistoryInvalid = false;
 															return;
 														}
 													}
@@ -1207,6 +1211,8 @@ namespace engine
 															               dstNext, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 															               1, &region);
 															toColorAttachment(dstNext);
+															m_taaHistoryInvalid = false;
+															return;
 														}
 													}
 													}
@@ -1441,6 +1447,10 @@ namespace engine
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+				// All frame-graph images are recreated after a resize/out-of-date event, so the
+				// TAA history must be rebuilt from scratch on the next frame.
+				m_taaHistoryInvalid = true;
+				m_taaHistoryEverFilled = false;
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				
@@ -1527,7 +1537,6 @@ namespace engine
 		{
 			UpdateGameplayNet(static_cast<float>(dt));
 		}
-
 		m_world.Update(out.camera.position);
 
 		// On aligne l'aspect sur la taille réelle de la swapchain, pas sur le size "client" du window.
@@ -1593,7 +1602,6 @@ namespace engine
 		}
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
-
 		{
 			const float maxDrawDist = static_cast<float>(m_cfg.GetDouble("world.max_draw_distance_m", 0.0));
 			std::span<const engine::world::ChunkRequest> pending = m_streamingScheduler.GetPrioritizedRequests();
@@ -1629,7 +1637,6 @@ namespace engine
 	    {
 	        return;
 	    }
-	
 	    const uint32_t frameIndex          = m_currentFrame % 2;
 	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
 	    ::VkDevice     device              = m_vkDeviceContext.GetDevice();
@@ -1665,7 +1672,25 @@ namespace engine
 	    uint32_t imageIndex = 0;
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
-	    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) return;
+	    if (result == VK_SUBOPTIMAL_KHR)
+	    {
+	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
+	            static_cast<uint32_t>(std::max(1, m_width)),
+	            static_cast<uint32_t>(std::max(1, m_height)));
+	        if (needsResize)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Acquire returned SUBOPTIMAL with extent mismatch -> recreate requested");
+	            m_swapchainResizeRequested = true;
+	        }
+	        else
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Acquire returned SUBOPTIMAL but extent is unchanged -> keep current swapchain");
+	        }
+	    }
+	    else if (result != VK_SUCCESS)
+	    {
+	        return;
+	    }
 	
 	    vkResetCommandPool(device, fr.cmdPool, 0);
 	
@@ -1712,8 +1737,25 @@ namespace engine
 	    presentInfo.pSwapchains        = &swapchain;
 	    presentInfo.pImageIndices      = &imageIndex;
 	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
-	    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	    {
 	        m_swapchainResizeRequested = true;
+	    }
+	    else if (result == VK_SUBOPTIMAL_KHR)
+	    {
+	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
+	            static_cast<uint32_t>(std::max(1, m_width)),
+	            static_cast<uint32_t>(std::max(1, m_height)));
+	        if (needsResize)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Present returned SUBOPTIMAL with extent mismatch -> recreate requested");
+	            m_swapchainResizeRequested = true;
+	        }
+	        else
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] Present returned SUBOPTIMAL but extent is unchanged -> keep current swapchain");
+	        }
+	    }
 	
 	    m_currentFrame++;
 	}

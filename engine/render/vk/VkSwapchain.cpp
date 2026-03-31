@@ -330,6 +330,25 @@ namespace engine::render
 			requestedWidth, requestedHeight, m_requestedPresentMode);
 	}
 
+	bool VkSwapchain::NeedsRecreateForSurfaceExtent(uint32_t requestedWidth, uint32_t requestedHeight) const
+	{
+		if (m_physicalDevice == VK_NULL_HANDLE || m_surface == VK_NULL_HANDLE || m_swapchain == VK_NULL_HANDLE)
+		{
+			return true;
+		}
+
+		VkSurfaceCapabilitiesKHR caps{};
+		const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
+		if (result != VK_SUCCESS)
+		{
+			LOG_WARN(Render, "[SWAPCHAIN] Failed to query surface caps during suboptimal handling: {}", static_cast<int>(result));
+			return true;
+		}
+
+		const VkExtent2D desiredExtent = ClampExtent(requestedWidth, requestedHeight, caps);
+		return desiredExtent.width != m_extent.width || desiredExtent.height != m_extent.height;
+	}
+
 	VkFramebuffer VkSwapchain::GetFramebuffer(uint32_t imageIndex) const
 	{
 		if (imageIndex >= m_framebuffers.size())

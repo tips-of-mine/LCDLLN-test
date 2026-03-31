@@ -704,5 +704,4 @@ namespace engine::client
 	}
 
 #endif
-
 }

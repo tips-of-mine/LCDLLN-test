@@ -44,6 +44,30 @@ namespace engine::platform
 	{
 	}
 
+	void Window::SetAuthScreenState(const AuthScreenState&)
+	{
+	}
+
+	Window::AuthScreenCommand Window::ConsumeAuthScreenCommand()
+	{
+		return AuthScreenCommand::None;
+	}
+
+	std::string Window::GetAuthPrimaryValue() const
+	{
+		return {};
+	}
+
+	std::string Window::GetAuthPasswordValue() const
+	{
+		return {};
+	}
+
+	bool Window::GetAuthRememberChecked() const
+	{
+		return false;
+	}
+
 	void Window::ToggleFullscreen()
 	{
 	}

@@ -78,6 +78,10 @@ namespace engine::client
 		void ResetMasterSession();
 		void StartMasterFlowWorker(const engine::core::Config& cfg);
 		void PollAsyncResult(const engine::core::Config& cfg);
+		void LoadRememberPreference();
+		void SaveRememberPreference();
+		bool HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg);
+		void SubmitCurrentPhase(const engine::core::Config& cfg);
 		void UpdateWindowTitle(engine::platform::Window& window) const;
 		void JoinWorker();
 
@@ -121,6 +125,8 @@ namespace engine::client
 		uint64_t m_pendingTermsEditionId = 0;
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;
+		bool m_rememberLogin = false;
+		bool m_savedRememberLogin = false;
 
 		std::vector<uint8_t> m_argonSalt{};
 		uint32_t m_viewportW = 0;

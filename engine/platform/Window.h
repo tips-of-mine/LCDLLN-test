@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <string_view>
 
 namespace engine::platform
@@ -10,6 +11,41 @@ namespace engine::platform
 	class Window final
 	{
 	public:
+		struct AuthScreenState
+		{
+			bool visible = false;
+			bool showPassword = true;
+			bool showRemember = true;
+			bool showForgot = true;
+			bool showRegister = true;
+			bool showBack = false;
+			bool showQuit = true;
+			bool showInfoImage = false;
+			bool focusPrimary = false;
+			bool focusPassword = false;
+			bool rememberChecked = false;
+			std::string titleLine1;
+			std::string titleLine2;
+			std::string sectionTitle;
+			std::string primaryLabel;
+			std::string primaryValue;
+			std::string passwordValue;
+			std::string submitLabel;
+			std::string backgroundImagePath;
+			std::string logoImagePath;
+			std::string infoImagePath;
+		};
+
+		enum class AuthScreenCommand : uint8_t
+		{
+			None,
+			Submit,
+			Quit,
+			OpenRegister,
+			OpenForgotPassword,
+			BackToLogin
+		};
+
 		struct CreateDesc
 		{
 			/// Window title (UTF-8).
@@ -47,6 +83,11 @@ namespace engine::platform
 
 		/// Shows or hides a native overlay panel above the swapchain.
 		void SetOverlayText(std::string_view text);
+		void SetAuthScreenState(const AuthScreenState& state);
+		AuthScreenCommand ConsumeAuthScreenCommand();
+		std::string GetAuthPrimaryValue() const;
+		std::string GetAuthPasswordValue() const;
+		bool GetAuthRememberChecked() const;
 
 		/// Toggle fullscreen (optional; Win32 implementation).
 		void ToggleFullscreen();
@@ -63,12 +104,51 @@ namespace engine::platform
 
 	private:
 		void UpdateOverlayLayout();
+		void UpdateAuthScreenLayout();
 
 		void* m_hwnd = nullptr; // HWND
 		void* m_overlayHwnd = nullptr; // HWND
 		void* m_overlayFont = nullptr; // HFONT
+		void* m_authTitleLine1Hwnd = nullptr; // HWND
+		void* m_authTitleLine2Hwnd = nullptr; // HWND
+		void* m_authBackgroundHwnd = nullptr; // HWND
+		void* m_authLogoHwnd = nullptr; // HWND
+		void* m_authInfoHwnd = nullptr; // HWND
+		void* m_authSectionTitleHwnd = nullptr; // HWND
+		void* m_authPrimaryLabelHwnd = nullptr; // HWND
+		void* m_authPrimaryEditHwnd = nullptr; // HWND
+		void* m_authRememberCheckboxHwnd = nullptr; // HWND
+		void* m_authPasswordLabelHwnd = nullptr; // HWND
+		void* m_authPasswordEditHwnd = nullptr; // HWND
+		void* m_authForgotButtonHwnd = nullptr; // HWND
+		void* m_authRegisterButtonHwnd = nullptr; // HWND
+		void* m_authBackButtonHwnd = nullptr; // HWND
+		void* m_authSubmitButtonHwnd = nullptr; // HWND
+		void* m_authQuitButtonHwnd = nullptr; // HWND
+		void* m_authTitleFont = nullptr; // HFONT
+		void* m_authUiFont = nullptr; // HFONT
+		void* m_authBackgroundBitmap = nullptr; // HBITMAP
+		void* m_authLogoBitmap = nullptr; // HBITMAP
+		void* m_authInfoBitmap = nullptr; // HBITMAP
 		bool m_shouldClose = false;
 		bool m_fullscreen = false;
+		bool m_authVisible = false;
+		bool m_authRememberChecked = false;
+		bool m_authPrimaryDirty = false;
+		bool m_authPasswordDirty = false;
+		bool m_authSyncInProgress = false;
+		std::string m_authPrimaryValue;
+		std::string m_authPasswordValue;
+		std::string m_authBackgroundPath;
+		std::string m_authLogoPath;
+		std::string m_authInfoPath;
+		int m_authBackgroundWidth = 0;
+		int m_authBackgroundHeight = 0;
+		int m_authLogoWidth = 0;
+		int m_authLogoHeight = 0;
+		int m_authInfoWidth = 0;
+		int m_authInfoHeight = 0;
+		AuthScreenCommand m_pendingAuthCommand = AuthScreenCommand::None;
 
 		std::function<void(int, int)> m_onResize;
 		std::function<void()> m_onClose;

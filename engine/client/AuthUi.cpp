@@ -2,6 +2,7 @@
 
 #include "engine/core/Log.h"
 #include "engine/network/NetClient.h"
+#include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
 
 #include <algorithm>
@@ -25,6 +26,12 @@ namespace engine::client
 {
 	namespace
 	{
+		constexpr std::string_view kUserSettingsPath = "user_settings.json";
+		constexpr std::string_view kLoginBackgroundPath = "engine/assets/ui/login/background.png";
+		constexpr std::string_view kLoginLogoPath = "engine/assets/ui/login/logo_login.png";
+		constexpr std::string_view kRegisterBackgroundPath = "engine/assets/ui/register/background.png";
+		constexpr std::string_view kRegisterInfoPath = "engine/assets/ui/register/info.png";
+
 		bool IsAsciiDigits(std::string_view text)
 		{
 			if (text.empty())
@@ -246,12 +253,15 @@ namespace engine::client
 		m_pendingTermsEditionId = 0;
 		m_termsScrolledToBottom = false;
 		m_termsAcknowledgeChecked = false;
+		m_rememberLogin = false;
+		m_savedRememberLogin = false;
 		m_argonSalt.clear();
 		m_asyncResult = {};
 		m_pendingAsyncKind = AsyncKind::None;
 		m_masterSessionId = 0;
 		m_masterClient.reset();
 		JoinWorker();
+		LoadRememberPreference();
 
 		m_initialized = true;
 		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host / client.master_port)");
@@ -264,9 +274,38 @@ namespace engine::client
 			return;
 		JoinWorker();
 		ResetMasterSession();
+		SaveRememberPreference();
 		m_password.clear();
 		m_initialized = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Destroyed");
+	}
+
+	void AuthUiPresenter::LoadRememberPreference()
+	{
+		engine::core::Config persisted;
+		if (persisted.LoadFromFile(kUserSettingsPath))
+		{
+			m_rememberLogin = persisted.GetBool("client.auth_ui.remember_login", false);
+			m_savedRememberLogin = m_rememberLogin;
+			LOG_INFO(Core, "[AuthUiPresenter] Remember preference loaded: {}", m_rememberLogin);
+			return;
+		}
+		m_rememberLogin = false;
+		m_savedRememberLogin = false;
+		LOG_INFO(Core, "[AuthUiPresenter] Remember preference defaulted to unchecked");
+	}
+
+	void AuthUiPresenter::SaveRememberPreference()
+	{
+		const std::string json = std::string("{\n  \"client\": {\n    \"auth_ui\": {\n      \"remember_login\": ")
+			+ (m_rememberLogin ? "true" : "false")
+			+ "\n    }\n  }\n}\n";
+		if (!engine::platform::FileSystem::WriteAllText(std::string(kUserSettingsPath), json))
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] Failed to persist remember preference");
+			return;
+		}
+		m_savedRememberLogin = m_rememberLogin;
 	}
 
 	bool AuthUiPresenter::BlocksWorldInput() const
@@ -1413,6 +1452,188 @@ namespace engine::client
 		return true;
 	}
 
+bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg)
+{
+#if defined(_WIN32)
+	engine::platform::Window::AuthScreenState state{};
+	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword || m_phase == Phase::Register)
+	{
+		state.visible = true;
+		state.showPassword = m_phase == Phase::Login;
+		state.showRemember = m_phase == Phase::Login;
+		state.showForgot = m_phase == Phase::Login;
+		state.showRegister = m_phase == Phase::Login;
+		state.showBack = m_phase == Phase::ForgotPassword;
+		state.showQuit = m_phase != Phase::Register;
+		state.showInfoImage = m_phase == Phase::Register;
+		state.rememberChecked = m_rememberLogin;
+		state.focusPrimary = m_activeField == 0;
+		state.focusPassword = (m_phase == Phase::Login) && (m_activeField == 1);
+		state.titleLine1 = (m_phase == Phase::Register) ? "" : "Les Chroniques De La";
+		state.titleLine2 = (m_phase == Phase::Register) ? "" : "Lune Noire";
+		state.sectionTitle = m_phase == Phase::Login ? "Connexion" : (m_phase == Phase::ForgotPassword ? "Recuperation du mot de passe" : "");
+		state.primaryLabel = m_phase == Phase::Register ? "" : "Login / Email";
+		state.primaryValue = (m_phase == Phase::Login) ? m_login : m_email;
+		state.passwordValue = m_password;
+		state.submitLabel = m_phase == Phase::Register ? "" : "Valider";
+		state.backgroundImagePath = m_phase == Phase::Register ? std::string(kRegisterBackgroundPath) : std::string(kLoginBackgroundPath);
+		state.logoImagePath = m_phase == Phase::Login ? std::string(kLoginLogoPath) : "";
+		state.infoImagePath = m_phase == Phase::Register ? std::string(kRegisterInfoPath) : "";
+		window.SetAuthScreenState(state);
+
+		if (m_phase == Phase::Login)
+		{
+			m_login = window.GetAuthPrimaryValue();
+			m_password = window.GetAuthPasswordValue();
+			m_rememberLogin = window.GetAuthRememberChecked();
+			if (m_rememberLogin != m_savedRememberLogin)
+			{
+				SaveRememberPreference();
+			}
+		}
+		else if (m_phase == Phase::ForgotPassword)
+		{
+			m_email = window.GetAuthPrimaryValue();
+		}
+
+		switch (window.ConsumeAuthScreenCommand())
+		{
+		case engine::platform::Window::AuthScreenCommand::Submit:
+			SubmitCurrentPhase(cfg);
+			break;
+		case engine::platform::Window::AuthScreenCommand::Quit:
+			window.RequestClose();
+			break;
+		case engine::platform::Window::AuthScreenCommand::OpenRegister:
+			m_phase = Phase::Register;
+			m_activeField = 0;
+			m_userErrorText.clear();
+			break;
+		case engine::platform::Window::AuthScreenCommand::OpenForgotPassword:
+			m_phase = Phase::ForgotPassword;
+			m_activeField = 0;
+			m_userErrorText.clear();
+			break;
+		case engine::platform::Window::AuthScreenCommand::BackToLogin:
+			m_phase = Phase::Login;
+			m_activeField = 0;
+			m_userErrorText.clear();
+			break;
+		case engine::platform::Window::AuthScreenCommand::None:
+		default:
+			break;
+		}
+		return true;
+	}
+#endif
+	window.SetAuthScreenState({});
+	(void)cfg;
+	return false;
+}
+
+void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
+{
+	if (m_phase == Phase::Error)
+	{
+		m_phase = Phase::Login;
+		m_userErrorText.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged, back to Login");
+		return;
+	}
+	if (m_phase == Phase::Login)
+	{
+		if (m_login.empty() || m_password.empty())
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Enter login and password.";
+			LOG_WARN(Core, "[AuthUiPresenter] Submit rejected: empty fields");
+			return;
+		}
+		m_phase = Phase::Submitting;
+		StartLoginWorker(cfg);
+		return;
+	}
+	if (m_phase == Phase::Register)
+	{
+		if (m_login.empty() || m_password.empty() || m_email.empty() || m_firstName.empty() || m_lastName.empty()
+			|| m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Enter login, password, email, first name, last name, and birth date.";
+			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
+			return;
+		}
+		if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Birth date must use valid numeric day/month/year values.";
+			return;
+		}
+		m_phase = Phase::Submitting;
+		StartRegisterWorker(cfg);
+		return;
+	}
+	if (m_phase == Phase::VerifyEmail)
+	{
+		if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Enter the verification code from the email.";
+			return;
+		}
+		if (!IsValidVerificationCode(m_verifyCode))
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Verification code must contain exactly 6 digits.";
+			return;
+		}
+		m_phase = Phase::Submitting;
+		StartVerifyEmailWorker(cfg);
+		return;
+	}
+	if (m_phase == Phase::ForgotPassword)
+	{
+		if (m_email.empty())
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Enter the email address for password recovery.";
+			return;
+		}
+		m_phase = Phase::Submitting;
+		StartForgotPasswordWorker(cfg);
+		return;
+	}
+	if (m_phase == Phase::Terms)
+	{
+		if (!m_termsScrolledToBottom || !m_termsAcknowledgeChecked)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Scroll to the end of the terms, then check the acknowledgement box.";
+			return;
+		}
+		m_phase = Phase::Submitting;
+		StartTermsAcceptWorker(cfg);
+		return;
+	}
+	if (m_phase == Phase::CharacterCreate)
+	{
+		if (m_characterName.empty())
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Enter a character name.";
+			return;
+		}
+		if (!IsValidCharacterNameLocal(m_characterName))
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = "Character name must be 3-32 characters and use only letters, digits, or underscore.";
+			return;
+		}
+		m_phase = Phase::Submitting;
+		StartCharacterCreateWorker(cfg);
+	}
+}
+
 	void AuthUiPresenter::Update(engine::platform::Input& input, float deltaSeconds, engine::platform::Window& window,
 		const engine::core::Config& cfg)
 	{
@@ -1426,9 +1647,12 @@ namespace engine::client
 
 		if (m_phase == Phase::Submitting)
 		{
+		window.SetAuthScreenState({});
 			UpdateWindowTitle(window);
 			return;
 		}
+
+	const bool usingNativeAuth = HandleNativeAuthScreen(window, cfg);
 
 		auto currentField = [this]() -> std::string* {
 			switch (m_phase)
@@ -1460,12 +1684,14 @@ namespace engine::client
 			}
 		};
 
-		std::string text;
+	std::string text;
+	if (!usingNativeAuth)
+		{
 		input.ConsumePendingTextUtf8(text);
 		if (!text.empty())
-		{
-			if (std::string* field = currentField())
 			{
+			if (std::string* field = currentField())
+				{
 				for (unsigned char c : text)
 				{
 					if (c < 32 && c != '\t')
@@ -1484,10 +1710,11 @@ namespace engine::client
 						continue;
 					field->push_back(static_cast<char>(c));
 				}
+				}
 			}
 		}
 
-		if (input.WasPressed(engine::platform::Key::Backspace))
+	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::Backspace))
 		{
 			auto popLast = [](std::string& s) {
 				while (!s.empty())
@@ -1504,7 +1731,7 @@ namespace engine::client
 			}
 		}
 
-		if (input.WasPressed(engine::platform::Key::Tab))
+	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::Tab))
 		{
 			if (m_phase == Phase::Login)
 				m_activeField = (m_activeField + 1u) % 2u;
@@ -1535,21 +1762,21 @@ namespace engine::client
 				m_termsAcknowledgeChecked = !m_termsAcknowledgeChecked;
 		}
 
-		if (input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
+	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
 		{
 			m_phase = Phase::Register;
 			m_activeField = 0;
 			m_userErrorText.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Switched to Register screen");
 		}
-		if (input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
+	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
 		{
 			m_phase = Phase::ForgotPassword;
 			m_activeField = 0;
 			m_userErrorText.clear();
 		}
 
-		if (input.WasPressed(engine::platform::Key::L) && (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail))
+	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::L) && (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail))
 		{
 			m_phase = Phase::Login;
 			m_activeField = 0;
@@ -1557,110 +1784,10 @@ namespace engine::client
 			LOG_INFO(Core, "[AuthUiPresenter] Switched to Login screen");
 		}
 
-		if (input.WasPressed(engine::platform::Key::Enter))
+	if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
+		|| (usingNativeAuth && m_phase == Phase::Error))
 		{
-			if (m_phase == Phase::Error)
-			{
-				m_phase = Phase::Login;
-				m_userErrorText.clear();
-				LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged, back to Login");
-			}
-			else if (m_phase == Phase::Login)
-			{
-				if (m_login.empty() || m_password.empty())
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Enter login and password.";
-					LOG_WARN(Core, "[AuthUiPresenter] Submit rejected: empty fields");
-				}
-				else
-				{
-					m_phase = Phase::Submitting;
-					StartLoginWorker(cfg);
-				}
-			}
-			else if (m_phase == Phase::Register)
-			{
-				if (m_login.empty() || m_password.empty() || m_email.empty() || m_firstName.empty() || m_lastName.empty()
-					|| m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Enter login, password, email, first name, last name, and birth date.";
-					LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
-				}
-				else if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Birth date must use valid numeric day/month/year values.";
-				}
-				else
-				{
-					m_phase = Phase::Submitting;
-					StartRegisterWorker(cfg);
-				}
-			}
-			else if (m_phase == Phase::VerifyEmail)
-			{
-				if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Enter the verification code from the email.";
-				}
-				else if (!IsValidVerificationCode(m_verifyCode))
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Verification code must contain exactly 6 digits.";
-				}
-				else
-				{
-					m_phase = Phase::Submitting;
-					StartVerifyEmailWorker(cfg);
-				}
-			}
-			else if (m_phase == Phase::ForgotPassword)
-			{
-				if (m_email.empty())
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Enter the email address for password recovery.";
-				}
-				else
-				{
-					m_phase = Phase::Submitting;
-					StartForgotPasswordWorker(cfg);
-				}
-			}
-			else if (m_phase == Phase::Terms)
-			{
-				if (!m_termsScrolledToBottom || !m_termsAcknowledgeChecked)
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Scroll to the end of the terms, then check the acknowledgement box.";
-				}
-				else
-				{
-					m_phase = Phase::Submitting;
-					StartTermsAcceptWorker(cfg);
-				}
-			}
-			else if (m_phase == Phase::CharacterCreate)
-			{
-				if (m_characterName.empty())
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Enter a character name.";
-				}
-				else if (!IsValidCharacterNameLocal(m_characterName))
-				{
-					m_phase = Phase::Error;
-					m_userErrorText = "Character name must be 3-32 characters and use only letters, digits, or underscore.";
-				}
-				else
-				{
-					m_phase = Phase::Submitting;
-					StartCharacterCreateWorker(cfg);
-				}
-			}
+		SubmitCurrentPhase(cfg);
 		}
 
 		UpdateWindowTitle(window);
@@ -1668,9 +1795,15 @@ namespace engine::client
 
 	std::string AuthUiPresenter::BuildPanelText() const
 	{
+#if defined(_WIN32)
+	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword)
+	{
+		return {};
+	}
+#endif
 		std::string s;
-		s += "LCDLLN\n";
-		s += "Portail de connexion\n\n";
+	s += "Les Chroniques De La\n";
+	s += "Lune Noire\n\n";
 		if (!m_infoBanner.empty())
 		{
 			s += "Information\n";

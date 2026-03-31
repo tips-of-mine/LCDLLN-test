@@ -1831,14 +1831,8 @@ namespace engine
 				m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			}
 			out.authHudText = m_authUi.BuildPanelText();
-			out.chatDebugText = m_chatUi.IsInitialized() ? m_chatUi.BuildPanelText() : std::string{};
-			std::string overlayText = out.authHudText;
-			if (!out.chatDebugText.empty())
-			{
-				overlayText += "\n\n";
-				overlayText += out.chatDebugText;
-			}
-			m_window.SetOverlayText(overlayText);
+			out.chatDebugText.clear();
+			m_window.SetOverlayText(out.authHudText);
 		}
 		else
 		{

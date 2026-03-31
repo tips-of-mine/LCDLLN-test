@@ -1469,6 +1469,7 @@ namespace engine
 	void Engine::Update()
 	{
 		// PROFILE_FUNCTION();
+		LOG_INFO(Core, "[Update] enter frame={}", m_currentFrame);
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -1620,15 +1621,18 @@ namespace engine
 		for (int i = 0; i < 256; ++i)
 			(void)m_frameArena.alloc(64, alignof(std::max_align_t), engine::core::memory::MemTag::Temp);
 		out.drawItemCount = 256;
+		LOG_INFO(Core, "[Update] done frame={}", m_currentFrame);
 	}
 
 	void Engine::Render()
 	{
 	    // PROFILE_FUNCTION();
+	    LOG_INFO(Core, "[Render] enter frame={}", m_currentFrame);
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
 	        return;
 	    }
+	    LOG_INFO(Core, "[Render] past IsValid check");
 	
 	    const uint32_t frameIndex          = m_currentFrame % 2;
 	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
@@ -1640,7 +1644,9 @@ namespace engine
 	    // ses rendertargets avec les bonnes dimensions.
 	    VkExtent2D extent = m_vkSwapchain.GetExtent();
 	
+	    LOG_INFO(Core, "[Render] avant vkWaitForFences fence={}", (void*)fr.fence);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+	    LOG_INFO(Core, "[Render] past vkWaitForFences");
 	    if (m_profiler.IsInitialized() && m_profiler.ResolveGpuFrame(device, frameIndex))
 	    {
 	        if (m_profilerHud.IsInitialized())
@@ -1651,8 +1657,11 @@ namespace engine
 	        }
 	    }
 	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
+	    LOG_INFO(Core, "[Render] past deferredDestroyQueue");
 	    m_stagingAllocator.BeginFrame(frameIndex);
+	    LOG_INFO(Core, "[Render] past stagingAllocator.BeginFrame");
 	    (void)m_gpuUploadQueue.PlanFrameUploads();
+	    LOG_INFO(Core, "[Render] past gpuUploadQueue.PlanFrameUploads");
 	
 	    if (m_pipeline->GetAutoExposure().IsValid())
 	    {

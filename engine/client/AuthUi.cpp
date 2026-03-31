@@ -1455,32 +1455,8 @@ namespace engine::client
 bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg)
 {
 #if defined(_WIN32)
-	engine::platform::Window::AuthScreenState state{};
 	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword || m_phase == Phase::Register)
 	{
-		state.visible = true;
-		state.showPassword = m_phase == Phase::Login;
-		state.showRemember = m_phase == Phase::Login;
-		state.showForgot = m_phase == Phase::Login;
-		state.showRegister = m_phase == Phase::Login;
-		state.showBack = m_phase == Phase::ForgotPassword;
-		state.showQuit = m_phase != Phase::Register;
-		state.showInfoImage = m_phase == Phase::Register;
-		state.rememberChecked = m_rememberLogin;
-		state.focusPrimary = m_activeField == 0;
-		state.focusPassword = (m_phase == Phase::Login) && (m_activeField == 1);
-		state.titleLine1 = (m_phase == Phase::Register) ? "" : "Les Chroniques De La";
-		state.titleLine2 = (m_phase == Phase::Register) ? "" : "Lune Noire";
-		state.sectionTitle = m_phase == Phase::Login ? "Connexion" : (m_phase == Phase::ForgotPassword ? "Recuperation du mot de passe" : "");
-		state.primaryLabel = m_phase == Phase::Register ? "" : "Login / Email";
-		state.primaryValue = (m_phase == Phase::Login) ? m_login : m_email;
-		state.passwordValue = m_password;
-		state.submitLabel = m_phase == Phase::Register ? "" : "Valider";
-		state.backgroundImagePath = m_phase == Phase::Register ? std::string(kRegisterBackgroundPath) : std::string(kLoginBackgroundPath);
-		state.logoImagePath = m_phase == Phase::Login ? std::string(kLoginLogoPath) : "";
-		state.infoImagePath = m_phase == Phase::Register ? std::string(kRegisterInfoPath) : "";
-		window.SetAuthScreenState(state);
-
 		if (m_phase == Phase::Login)
 		{
 			m_login = window.GetAuthPrimaryValue();
@@ -1523,6 +1499,31 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		default:
 			break;
 		}
+
+		engine::platform::Window::AuthScreenState state{};
+		state.visible = true;
+		state.showPassword = m_phase == Phase::Login;
+		state.showRemember = m_phase == Phase::Login;
+		state.showForgot = m_phase == Phase::Login;
+		state.showRegister = m_phase == Phase::Login;
+		state.showBack = m_phase == Phase::ForgotPassword || m_phase == Phase::Register;
+		state.showQuit = true;
+		state.showInfoImage = m_phase == Phase::Register;
+		state.rememberChecked = m_rememberLogin;
+		state.focusPrimary = m_activeField == 0;
+		state.focusPassword = (m_phase == Phase::Login) && (m_activeField == 1);
+		state.titleLine1 = "Les Chroniques De La";
+		state.titleLine2 = "Lune Noire";
+		state.sectionTitle = m_phase == Phase::Login ? "Connexion"
+			: (m_phase == Phase::ForgotPassword ? "Recuperation du mot de passe" : "Inscription");
+		state.primaryLabel = m_phase == Phase::Register ? "" : "Login / Email";
+		state.primaryValue = (m_phase == Phase::Login) ? m_login : m_email;
+		state.passwordValue = m_password;
+		state.submitLabel = m_phase == Phase::Register ? "" : "Valider";
+		state.backgroundImagePath = m_phase == Phase::Register ? std::string(kRegisterBackgroundPath) : std::string(kLoginBackgroundPath);
+		state.logoImagePath = m_phase == Phase::Login ? std::string(kLoginLogoPath) : "";
+		state.infoImagePath = m_phase == Phase::Register ? std::string(kRegisterInfoPath) : "";
+		window.SetAuthScreenState(state);
 		return true;
 	}
 #endif
@@ -1796,7 +1797,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	std::string AuthUiPresenter::BuildPanelText() const
 	{
 #if defined(_WIN32)
-	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword)
+	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword || m_phase == Phase::Register)
 	{
 		return {};
 	}

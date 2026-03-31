@@ -179,16 +179,16 @@ namespace engine::platform
 			return out;
 		}
 
-		void ReplaceStaticBitmap(void* hwndHandle, void*& bitmapHandle, std::string& cachedPath, int& cachedWidth, int& cachedHeight,
+		bool ReplaceStaticBitmap(void* hwndHandle, void*& bitmapHandle, std::string& cachedPath, int& cachedWidth, int& cachedHeight,
 			std::string_view newPath, int targetWidth, int targetHeight)
 		{
 			if (!hwndHandle)
 			{
-				return;
+				return false;
 			}
 			if (cachedPath == newPath && cachedWidth == targetWidth && cachedHeight == targetHeight)
 			{
-				return;
+				return bitmapHandle != nullptr;
 			}
 			if (bitmapHandle)
 			{
@@ -201,13 +201,15 @@ namespace engine::platform
 			cachedHeight = targetHeight;
 			if (newPath.empty())
 			{
-				return;
+				return false;
 			}
 			bitmapHandle = LoadBitmapFromPng(newPath, targetWidth, targetHeight);
 			if (bitmapHandle)
 			{
 				SendMessageW(AsHwnd(hwndHandle), STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(bitmapHandle));
+				return true;
 			}
+			return false;
 		}
 	}
 
@@ -300,8 +302,8 @@ namespace engine::platform
 		m_authBackgroundHwnd = createAuthControl(0, L"STATIC", L"", SS_BITMAP, 0);
 		m_authLogoHwnd = createAuthControl(0, L"STATIC", L"", SS_BITMAP, 0);
 		m_authInfoHwnd = createAuthControl(0, L"STATIC", L"", SS_BITMAP, 0);
-		m_authTitleLine1Hwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
-		m_authTitleLine2Hwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
+		m_authTitleLine1Hwnd = createAuthControl(0, L"STATIC", L"", SS_CENTER | SS_NOPREFIX, 0);
+		m_authTitleLine2Hwnd = createAuthControl(0, L"STATIC", L"", SS_CENTER | SS_NOPREFIX, 0);
 		m_authSectionTitleHwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
 		m_authPrimaryLabelHwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
 		m_authPrimaryEditHwnd = createAuthControl(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_TABSTOP | ES_AUTOHSCROLL, kAuthPrimaryEditId);
@@ -542,9 +544,9 @@ namespace engine::platform
 		m_authBackgroundPath = state.backgroundImagePath;
 		m_authLogoPath = state.logoImagePath;
 		m_authInfoPath = state.infoImagePath;
-		setVisible(m_authBackgroundHwnd, !m_authBackgroundPath.empty());
-		setVisible(m_authLogoHwnd, !m_authLogoPath.empty());
-		setVisible(m_authInfoHwnd, state.showInfoImage && !m_authInfoPath.empty());
+		setVisible(m_authBackgroundHwnd, false);
+		setVisible(m_authLogoHwnd, false);
+		setVisible(m_authInfoHwnd, false);
 		setVisible(m_authTitleLine1Hwnd, !state.titleLine1.empty());
 		setVisible(m_authTitleLine2Hwnd, !state.titleLine2.empty());
 		setVisible(m_authSectionTitleHwnd, !state.sectionTitle.empty());
@@ -635,17 +637,20 @@ namespace engine::platform
 		const int logoSize = max(64, min(76, clientW / 20));
 		const int infoSize = 72;
 
-		ReplaceStaticBitmap(m_authBackgroundHwnd, m_authBackgroundBitmap, m_authBackgroundPath, m_authBackgroundWidth, m_authBackgroundHeight,
+		const bool hasBackgroundBitmap = ReplaceStaticBitmap(m_authBackgroundHwnd, m_authBackgroundBitmap, m_authBackgroundPath, m_authBackgroundWidth, m_authBackgroundHeight,
 			m_authBackgroundPath, clientW, clientH);
-		ReplaceStaticBitmap(m_authLogoHwnd, m_authLogoBitmap, m_authLogoPath, m_authLogoWidth, m_authLogoHeight,
+		const bool hasLogoBitmap = ReplaceStaticBitmap(m_authLogoHwnd, m_authLogoBitmap, m_authLogoPath, m_authLogoWidth, m_authLogoHeight,
 			m_authLogoPath, logoSize, logoSize);
-		ReplaceStaticBitmap(m_authInfoHwnd, m_authInfoBitmap, m_authInfoPath, m_authInfoWidth, m_authInfoHeight,
+		const bool hasInfoBitmap = ReplaceStaticBitmap(m_authInfoHwnd, m_authInfoBitmap, m_authInfoPath, m_authInfoWidth, m_authInfoHeight,
 			m_authInfoPath, infoSize, infoSize);
-		SetWindowPos(AsHwnd(m_authBackgroundHwnd), HWND_BOTTOM, 0, 0, clientW, clientH, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authLogoHwnd), HWND_TOP, 20, 20, logoSize, logoSize, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authInfoHwnd), HWND_TOP, panelX + panelW - infoSize - 22, panelY + 110, infoSize, infoSize, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authTitleLine1Hwnd), HWND_TOP, contentX, panelY + 24, contentW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authTitleLine2Hwnd), HWND_TOP, contentX, panelY + 60, contentW, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authBackgroundHwnd), HWND_BOTTOM, 0, 0, clientW, clientH,
+			SWP_NOACTIVATE | (hasBackgroundBitmap ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+		SetWindowPos(AsHwnd(m_authLogoHwnd), HWND_TOP, 20, 20, logoSize, logoSize,
+			SWP_NOACTIVATE | (hasLogoBitmap ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+		SetWindowPos(AsHwnd(m_authInfoHwnd), HWND_TOP, panelX + panelW - infoSize - 22, panelY + 110, infoSize, infoSize,
+			SWP_NOACTIVATE | (hasInfoBitmap ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+		SetWindowPos(AsHwnd(m_authTitleLine1Hwnd), HWND_TOP, panelX, panelY + 24, panelW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		SetWindowPos(AsHwnd(m_authTitleLine2Hwnd), HWND_TOP, panelX, panelY + 60, panelW, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authSectionTitleHwnd), HWND_TOP, contentX, panelY + 126, contentW, 30, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authPrimaryLabelHwnd), HWND_TOP, contentX, panelY + 184, contentW / 2, 24, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authPrimaryEditHwnd), HWND_TOP, contentX, panelY + 212, contentW - 140, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);

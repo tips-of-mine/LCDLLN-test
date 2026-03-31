@@ -1131,12 +1131,10 @@ namespace engine
 												b.write(m_fgHistoryBId,       engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												LOG_INFO(Render, "[TAA] pass enter");
 												// Bootstrap the history on first use, even if Update() already cleared
 												// m_taaHistoryInvalid for this frame.
 												if (!m_taaHistoryEverFilled || m_taaHistoryInvalid)
 												{
-													LOG_INFO(Render, "[TAA] history bootstrap/reset path");
 													VkImage srcImg = reg.getImage(m_fgSceneColorLDRId);
 													if (srcImg != VK_NULL_HANDLE)
 													{
@@ -1199,7 +1197,6 @@ namespace engine
 															toColorAttachment(dstB);
 															m_taaHistoryEverFilled = true;
 															m_taaHistoryInvalid = false;
-															LOG_INFO(Render, "[TAA] History initialized at frame 0");
 															return;
 														}
 													}
@@ -1215,7 +1212,6 @@ namespace engine
 															               1, &region);
 															toColorAttachment(dstNext);
 															m_taaHistoryInvalid = false;
-															LOG_INFO(Render, "[TAA] History reset from current frame");
 															return;
 														}
 													}
@@ -1223,7 +1219,6 @@ namespace engine
 												}
 
 												if (!m_pipeline->GetTaaPass().IsValid()) return;
-												LOG_INFO(Render, "[TAA] before Record");
 												engine::render::TaaPass::TaaParams tp{};
 												tp.alpha = 0.9f; tp._pad[0] = tp._pad[1] = tp._pad[2] = 0.0f;
 												const uint32_t frameIdx = m_currentFrame % 2u;
@@ -1236,7 +1231,6 @@ namespace engine
 													GetTaaHistoryNextId(),
 													tp,
 													frameIdx);
-												LOG_INFO(Render, "[TAA] after Record");
 											});
 
 										m_frameGraph.addPass("CopyPresent",
@@ -1247,7 +1241,6 @@ namespace engine
 												b.write(m_fgBackbufferId,   engine::render::ImageUsage::TransferDst);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												LOG_INFO(Render, "[CopyPresent] enter");
 												engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
 												VkImage srcImg = reg.getImage(srcId);
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
@@ -1260,9 +1253,7 @@ namespace engine
 												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 												region.dstOffsets[0] = { 0, 0, 0 };
 												region.dstOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
-												LOG_INFO(Render, "[CopyPresent] before vkCmdBlitImage");
 												vkCmdBlitImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
-												LOG_INFO(Render, "[CopyPresent] after vkCmdBlitImage");
 												VkImageMemoryBarrier barrier{};
 												barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 												barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1274,7 +1265,6 @@ namespace engine
 												barrier.image               = dstImg;
 												barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 												vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-												LOG_INFO(Render, "[CopyPresent] done");
 											});
 
 										m_frameGraph.addPass("PostRead",
@@ -1461,7 +1451,6 @@ namespace engine
 				// TAA history must be rebuilt from scratch on the next frame.
 				m_taaHistoryInvalid = true;
 				m_taaHistoryEverFilled = false;
-				LOG_INFO(Render, "[TAA] History invalidated after swapchain recreate");
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				
@@ -1490,7 +1479,6 @@ namespace engine
 	void Engine::Update()
 	{
 		// PROFILE_FUNCTION();
-		LOG_INFO(Core, "[Update] enter frame={}", m_currentFrame);
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -1528,26 +1516,20 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
-			LOG_INFO(Core, "[Update] before auth ui");
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			out.authHudText = m_authUi.BuildPanelText();
-			LOG_INFO(Core, "[Update] after auth ui");
 		}
 
 		if (!m_editorEnabled)
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				LOG_INFO(Core, "[Update] before fps camera");
 				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
-				LOG_INFO(Core, "[Update] after fps camera");
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())
 			{
-				LOG_INFO(Core, "[Update] before chat ui");
 				m_chatUi.Update(m_input, static_cast<float>(dt));
-				LOG_INFO(Core, "[Update] after chat ui");
 			}
 		}
 
@@ -1555,10 +1537,7 @@ namespace engine
 		{
 			UpdateGameplayNet(static_cast<float>(dt));
 		}
-		LOG_INFO(Core, "[Update] before world update");
-
 		m_world.Update(out.camera.position);
-		LOG_INFO(Core, "[Update] after world update");
 
 		// On aligne l'aspect sur la taille réelle de la swapchain, pas sur le size "client" du window.
 		// Sinon on obtient des barres noires / RT non alignés après resize/DPI.
@@ -1585,7 +1564,6 @@ namespace engine
 		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
 		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
-		LOG_INFO(Core, "[Update] after audio+decal");
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();
 		{
@@ -1593,7 +1571,6 @@ namespace engine
 			m_streamingScheduler.PushRequests(m_world.GetPendingChunkRequests(), out.camera.position, forward);
 			m_streamingScheduler.DropStaleFromAllQueues();
 		}
-		LOG_INFO(Core, "[Update] after streaming scheduler");
 
 		if (m_width > 0 && m_height > 0 && std::abs(out.camera.fovYDeg - readState.camera.fovYDeg) > 0.0001f)
 			m_taaHistoryInvalid = true;
@@ -1612,7 +1589,6 @@ namespace engine
 		out.jitterCurrNdc[1] = jitterY;
 		out.prevViewProjMatrix = m_taaHistoryInvalid ? out.viewProjMatrix : readState.viewProjMatrix;
 		if (m_taaHistoryInvalid) m_taaHistoryInvalid = false;
-		LOG_INFO(Core, "[Update] after matrices");
 
 		if (m_editorMode)
 		{
@@ -1626,14 +1602,10 @@ namespace engine
 		}
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
-		LOG_INFO(Core, "[Update] after frustum");
-
 		{
-			LOG_INFO(Core, "[Update] before draw list");
 			const float maxDrawDist = static_cast<float>(m_cfg.GetDouble("world.max_draw_distance_m", 0.0));
 			std::span<const engine::world::ChunkRequest> pending = m_streamingScheduler.GetPrioritizedRequests();
 			out.hlodDebugText = engine::world::BuildChunkDrawList(pending.data(), pending.size(), out.camera.position, out.frustum, m_hlodRuntime, maxDrawDist, m_chunkDrawDecisions);
-			LOG_INFO(Core, "[Update] after draw list");
 			if ((m_currentFrame % 60) == 0 && !out.hlodDebugText.empty())
 				LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
 			if ((m_currentFrame % 60) == 0 && !out.profilerDebugText.empty())
@@ -1647,30 +1619,24 @@ namespace engine
 		}
 
 		{
-			LOG_INFO(Core, "[Update] before cascades");
 			const engine::math::Vec3 lightDirTowardLight(0.5774f, 0.5774f, 0.5774f);
 			const float lambda = 0.7f;
 			const uint32_t shadowMapResolution = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
 			engine::render::ComputeCascades(out.camera, lightDirTowardLight, lambda, shadowMapResolution, out.cascades);
-			LOG_INFO(Core, "[Update] after cascades");
 		}
 
 		for (int i = 0; i < 256; ++i)
 			(void)m_frameArena.alloc(64, alignof(std::max_align_t), engine::core::memory::MemTag::Temp);
 		out.drawItemCount = 256;
-		LOG_INFO(Core, "[Update] done frame={}", m_currentFrame);
 	}
 
 	void Engine::Render()
 	{
 	    // PROFILE_FUNCTION();
-	    LOG_INFO(Core, "[Render] enter frame={}", m_currentFrame);
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
 	        return;
 	    }
-	    LOG_INFO(Core, "[Render] past IsValid check");
-	
 	    const uint32_t frameIndex          = m_currentFrame % 2;
 	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
 	    ::VkDevice     device              = m_vkDeviceContext.GetDevice();
@@ -1681,9 +1647,7 @@ namespace engine
 	    // ses rendertargets avec les bonnes dimensions.
 	    VkExtent2D extent = m_vkSwapchain.GetExtent();
 	
-	    LOG_INFO(Core, "[Render] avant vkWaitForFences fence={}", (void*)fr.fence);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
-	    LOG_INFO(Core, "[Render] past vkWaitForFences");
 	    if (m_profiler.IsInitialized() && m_profiler.ResolveGpuFrame(device, frameIndex))
 	    {
 	        if (m_profilerHud.IsInitialized())
@@ -1694,11 +1658,8 @@ namespace engine
 	        }
 	    }
 	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
-	    LOG_INFO(Core, "[Render] past deferredDestroyQueue");
 	    m_stagingAllocator.BeginFrame(frameIndex);
-	    LOG_INFO(Core, "[Render] past stagingAllocator.BeginFrame");
 	    (void)m_gpuUploadQueue.PlanFrameUploads();
-	    LOG_INFO(Core, "[Render] past gpuUploadQueue.PlanFrameUploads");
 	
 	    if (m_pipeline->GetAutoExposure().IsValid())
 	    {
@@ -1709,9 +1670,7 @@ namespace engine
 	    }
 	
 	    uint32_t imageIndex = 0;
-	    LOG_INFO(Core, "[Render] avant vkAcquireNextImageKHR swapchain={}", (void*)swapchain);
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
-	    LOG_INFO(Core, "[Render] vkAcquireNextImageKHR result={} imageIndex={}", (int)result, imageIndex);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
 	    if (result == VK_SUBOPTIMAL_KHR)
 	    {

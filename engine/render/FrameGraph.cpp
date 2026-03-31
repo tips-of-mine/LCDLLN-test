@@ -436,14 +436,15 @@ namespace engine::render
 		engine::core::Profiler* profiler)
 	{
 	    engine::core::ProfilerScope scope("FrameGraph::execute");
-	    LOG_DEBUG(Render, "[FG] execute debut");
+	    LOG_INFO(Render, "[FG] execute debut frame={} extent={}x{}", frameIndex, extent.width, extent.height);
 	    if (!m_compiled) { compile(); }
-	    LOG_DEBUG(Render, "[FG] ensureImageResources");
+	    LOG_INFO(Render, "[FG] avant ensureImageResources");
 	    ensureImageResources(device, physicalDevice, vmaAllocator, frameIndex, extent, framesInFlight);
-	    LOG_DEBUG(Render, "[FG] ensureBufferResources");
+	    LOG_INFO(Render, "[FG] avant ensureBufferResources");
 	    ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
-	    LOG_DEBUG(Render, "[FG] fillRegistry");
+	    LOG_INFO(Render, "[FG] avant fillRegistry");
 	    fillRegistry(registry, frameIndex);
+	    LOG_INFO(Render, "[FG] fillRegistry done, lancement passes");
 	
 	    std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
 	    LOG_DEBUG(Render, "[FG] loop passes={}", m_compiledOrder.size());

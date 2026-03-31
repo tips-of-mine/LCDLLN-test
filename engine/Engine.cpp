@@ -1663,7 +1663,9 @@ namespace engine
 	    }
 	
 	    uint32_t imageIndex = 0;
+	    LOG_INFO(Core, "[Render] avant vkAcquireNextImageKHR swapchain={}", (void*)swapchain);
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
+	    LOG_INFO(Core, "[Render] vkAcquireNextImageKHR result={} imageIndex={}", (int)result, imageIndex);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
 	    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) return;
 	

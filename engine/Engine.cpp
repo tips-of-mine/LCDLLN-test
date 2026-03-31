@@ -1507,20 +1507,26 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+			LOG_INFO(Core, "[Update] before auth ui");
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			out.authHudText = m_authUi.BuildPanelText();
+			LOG_INFO(Core, "[Update] after auth ui");
 		}
 
 		if (!m_editorEnabled)
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
+				LOG_INFO(Core, "[Update] before fps camera");
 				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+				LOG_INFO(Core, "[Update] after fps camera");
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())
 			{
+				LOG_INFO(Core, "[Update] before chat ui");
 				m_chatUi.Update(m_input, static_cast<float>(dt));
+				LOG_INFO(Core, "[Update] after chat ui");
 			}
 		}
 
@@ -1528,8 +1534,10 @@ namespace engine
 		{
 			UpdateGameplayNet(static_cast<float>(dt));
 		}
+		LOG_INFO(Core, "[Update] before world update");
 
 		m_world.Update(out.camera.position);
+		LOG_INFO(Core, "[Update] after world update");
 
 		// On aligne l'aspect sur la taille réelle de la swapchain, pas sur le size "client" du window.
 		// Sinon on obtient des barres noires / RT non alignés après resize/DPI.
@@ -1556,6 +1564,7 @@ namespace engine
 		m_audioEngine.SetListener(out.camera.position, listenerVelocity);
 		m_audioEngine.Tick(static_cast<float>(dt));
 		m_decalSystem.Tick(static_cast<float>(dt));
+		LOG_INFO(Core, "[Update] after audio+decal");
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();
 		{
@@ -1563,6 +1572,7 @@ namespace engine
 			m_streamingScheduler.PushRequests(m_world.GetPendingChunkRequests(), out.camera.position, forward);
 			m_streamingScheduler.DropStaleFromAllQueues();
 		}
+		LOG_INFO(Core, "[Update] after streaming scheduler");
 
 		if (m_width > 0 && m_height > 0 && std::abs(out.camera.fovYDeg - readState.camera.fovYDeg) > 0.0001f)
 			m_taaHistoryInvalid = true;
@@ -1581,6 +1591,7 @@ namespace engine
 		out.jitterCurrNdc[1] = jitterY;
 		out.prevViewProjMatrix = m_taaHistoryInvalid ? out.viewProjMatrix : readState.viewProjMatrix;
 		if (m_taaHistoryInvalid) m_taaHistoryInvalid = false;
+		LOG_INFO(Core, "[Update] after matrices");
 
 		if (m_editorMode)
 		{
@@ -1594,11 +1605,14 @@ namespace engine
 		}
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
+		LOG_INFO(Core, "[Update] after frustum");
 
 		{
+			LOG_INFO(Core, "[Update] before draw list");
 			const float maxDrawDist = static_cast<float>(m_cfg.GetDouble("world.max_draw_distance_m", 0.0));
 			std::span<const engine::world::ChunkRequest> pending = m_streamingScheduler.GetPrioritizedRequests();
 			out.hlodDebugText = engine::world::BuildChunkDrawList(pending.data(), pending.size(), out.camera.position, out.frustum, m_hlodRuntime, maxDrawDist, m_chunkDrawDecisions);
+			LOG_INFO(Core, "[Update] after draw list");
 			if ((m_currentFrame % 60) == 0 && !out.hlodDebugText.empty())
 				LOG_DEBUG(World, "M09.5 {}", out.hlodDebugText);
 			if ((m_currentFrame % 60) == 0 && !out.profilerDebugText.empty())
@@ -1612,10 +1626,12 @@ namespace engine
 		}
 
 		{
+			LOG_INFO(Core, "[Update] before cascades");
 			const engine::math::Vec3 lightDirTowardLight(0.5774f, 0.5774f, 0.5774f);
 			const float lambda = 0.7f;
 			const uint32_t shadowMapResolution = static_cast<uint32_t>(m_cfg.GetInt("shadows.resolution", 1024));
 			engine::render::ComputeCascades(out.camera, lightDirTowardLight, lambda, shadowMapResolution, out.cascades);
+			LOG_INFO(Core, "[Update] after cascades");
 		}
 
 		for (int i = 0; i < 256; ++i)

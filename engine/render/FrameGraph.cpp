@@ -10,6 +10,22 @@
 
 namespace engine::render
 {
+	namespace
+	{
+		uint32_t ResolveFrameResourceIndex(uint32_t frameIndex, size_t availableSlots, bool transient)
+		{
+			if (availableSlots == 0)
+			{
+				return 0;
+			}
+			if (!transient)
+			{
+				return 0;
+			}
+			return frameIndex % static_cast<uint32_t>(availableSlots);
+		}
+	}
+
 	// --- Registry ---
 
 	void Registry::bindImage(ResourceId id, VkImage image, VkImageView view)
@@ -595,8 +611,9 @@ LOG_DEBUG(Render, "[EIR] FATAL size mismatch m_perFrameImageHandles={} m_imageRe
 			if (height < 1) height = 1;
 
 			std::vector<PerFrameImageHandles>& perFrame = m_perFrameImageHandles[resIdx];
-			if (frameIndex >= perFrame.size()) perFrame.resize(frameIndex + 1);
-			PerFrameImageHandles& h = perFrame[frameIndex];
+			const uint32_t resourceIndex = ResolveFrameResourceIndex(frameIndex, perFrame.size(), res.desc.transient);
+			if (resourceIndex >= perFrame.size()) perFrame.resize(resourceIndex + 1);
+			PerFrameImageHandles& h = perFrame[resourceIndex];
 
 			if (h.image != VK_NULL_HANDLE) continue;
 
@@ -795,8 +812,9 @@ LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned lon
 			if (res.desc.size == 0) continue;
 
 			std::vector<PerFrameBufferHandles>& perFrame = m_perFrameBufferHandles[resIdx];
-			if (frameIndex >= perFrame.size()) perFrame.resize(frameIndex + 1);
-			PerFrameBufferHandles& h = perFrame[frameIndex];
+			const uint32_t resourceIndex = ResolveFrameResourceIndex(frameIndex, perFrame.size(), res.desc.transient);
+			if (resourceIndex >= perFrame.size()) perFrame.resize(resourceIndex + 1);
+			PerFrameBufferHandles& h = perFrame[resourceIndex];
 
 			if (h.buffer != VK_NULL_HANDLE) continue;
 
@@ -825,8 +843,11 @@ LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned lon
 		{
 			const ImageResource& res = m_imageResources[i];
 			if (res.external) continue;
-			if (frameIndex >= m_perFrameImageHandles[i].size()) continue;
-			const PerFrameImageHandles& h = m_perFrameImageHandles[i][frameIndex];
+			const auto& perFrame = m_perFrameImageHandles[i];
+			if (perFrame.empty()) continue;
+			const uint32_t resourceIndex = ResolveFrameResourceIndex(frameIndex, perFrame.size(), res.desc.transient);
+			if (resourceIndex >= perFrame.size()) continue;
+			const PerFrameImageHandles& h = perFrame[resourceIndex];
 			if (h.image != VK_NULL_HANDLE && h.view != VK_NULL_HANDLE)
 			{
 				registry.bindImage(res.id, h.image, h.view);
@@ -835,8 +856,11 @@ LOG_DEBUG(Render, "[EIR] step2 memReq size={} align={} bits=0x{}", (unsigned lon
 		for (size_t i = 0; i < m_bufferResources.size(); ++i)
 		{
 			const BufferResource& res = m_bufferResources[i];
-			if (frameIndex >= m_perFrameBufferHandles[i].size()) continue;
-			const PerFrameBufferHandles& h = m_perFrameBufferHandles[i][frameIndex];
+			const auto& perFrame = m_perFrameBufferHandles[i];
+			if (perFrame.empty()) continue;
+			const uint32_t resourceIndex = ResolveFrameResourceIndex(frameIndex, perFrame.size(), res.desc.transient);
+			if (resourceIndex >= perFrame.size()) continue;
+			const PerFrameBufferHandles& h = perFrame[resourceIndex];
 			if (h.buffer != VK_NULL_HANDLE)
 			{
 				registry.bindBuffer(res.id, h.buffer);

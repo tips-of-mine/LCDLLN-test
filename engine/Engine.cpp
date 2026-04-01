@@ -1488,7 +1488,6 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
-												LOG_INFO(Render, "[CopyPresent] Enter srcId={} extent={}x{}", srcId, ext.width, ext.height);
 												// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
 												// with vkCmdBlitImage here even when source and destination extents match.
 												VkImageCopy region{};
@@ -1497,12 +1496,9 @@ namespace engine
 												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 												region.dstOffset = { 0, 0, 0 };
 												region.extent = { ext.width, ext.height, 1 };
-												LOG_INFO(Render, "[CopyPresent] Before vkCmdCopyImage");
 												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-												LOG_INFO(Render, "[CopyPresent] After vkCmdCopyImage");
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
-												LOG_INFO(Render, "[CopyPresent] Auth active={}", authVisualState.active ? 1 : 0);
-												if (authVisualState.active)
+												if (authVisualState.active && m_vkDeviceContext.SupportsDynamicRendering())
 												{
 													const AuthUiTheme authTheme = LoadAuthUiTheme(m_cfg);
 													VkImageMemoryBarrier toColor{};
@@ -1515,12 +1511,10 @@ namespace engine
 													toColor.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 													toColor.image               = dstImg;
 													toColor.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													LOG_INFO(Render, "[CopyPresent] Before transfer->color barrier");
 													vkCmdPipelineBarrier(cmd,
 														VK_PIPELINE_STAGE_TRANSFER_BIT,
 														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 														0, 0, nullptr, 0, nullptr, 1, &toColor);
-													LOG_INFO(Render, "[CopyPresent] After transfer->color barrier");
 
 													VkRenderingAttachmentInfo colorAttachment{};
 													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -1536,9 +1530,7 @@ namespace engine
 													renderingInfo.layerCount = 1;
 													renderingInfo.colorAttachmentCount = 1;
 													renderingInfo.pColorAttachments = &colorAttachment;
-													LOG_INFO(Render, "[CopyPresent] Before vkCmdBeginRendering");
 													vkCmdBeginRendering(cmd, &renderingInfo);
-													LOG_INFO(Render, "[CopyPresent] After vkCmdBeginRendering");
 
 													const std::vector<AuthUiLayer> layers = BuildAuthUiLayers(ext, authVisualState, authTheme);
 													for (const AuthUiLayer& layer : layers)
@@ -1549,9 +1541,7 @@ namespace engine
 														clearAttachment.clearValue.color = layer.color;
 														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
 													}
-													LOG_INFO(Render, "[CopyPresent] Before vkCmdEndRendering");
 													vkCmdEndRendering(cmd);
-													LOG_INFO(Render, "[CopyPresent] After vkCmdEndRendering");
 
 													VkImageMemoryBarrier toPresent{};
 													toPresent.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1563,12 +1553,10 @@ namespace engine
 													toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 													toPresent.image               = dstImg;
 													toPresent.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													LOG_INFO(Render, "[CopyPresent] Before color->present barrier");
 													vkCmdPipelineBarrier(cmd,
 														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 														0, 0, nullptr, 0, nullptr, 1, &toPresent);
-													LOG_INFO(Render, "[CopyPresent] After color->present barrier");
 												}
 												else
 												{
@@ -1582,11 +1570,8 @@ namespace engine
 													barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 													barrier.image               = dstImg;
 													barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													LOG_INFO(Render, "[CopyPresent] Before transfer->present barrier");
 													vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-													LOG_INFO(Render, "[CopyPresent] After transfer->present barrier");
 												}
-												LOG_INFO(Render, "[CopyPresent] Done");
 											});
 
 										m_frameGraph.addPass("PostRead",

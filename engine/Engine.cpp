@@ -1488,14 +1488,15 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
-												VkImageBlit region{};
+												// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
+												// with vkCmdBlitImage here even when source and destination extents match.
+												VkImageCopy region{};
 												region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.srcOffsets[0] = { 0, 0, 0 };
-												region.srcOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
+												region.srcOffset = { 0, 0, 0 };
 												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.dstOffsets[0] = { 0, 0, 0 };
-												region.dstOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
-												vkCmdBlitImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR);
+												region.dstOffset = { 0, 0, 0 };
+												region.extent = { ext.width, ext.height, 1 };
+												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
 												if (authVisualState.active)
 												{

@@ -405,6 +405,7 @@ namespace engine::render
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
+		LOG_INFO(Render, "[LightingPass] Record enter");
 
 		// Retrieve image views from the frame graph registry.
 		VkImageView viewA    = registry.getImageView(idGBufA);
@@ -422,6 +423,7 @@ namespace engine::render
 			LOG_WARN(Render, "LightingPass::Record: missing image views, skipping");
 			return;
 		}
+		LOG_INFO(Render, "[LightingPass] Views resolved");
 
 		// IBL: when irradiance absent bind prefilter for slot 4 so descriptor valid; params.useIBL is 0.
 		VkImageView irrView = (irradianceView != VK_NULL_HANDLE) ? irradianceView : prefilterView;
@@ -458,7 +460,9 @@ namespace engine::render
 			writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[i].pImageInfo      = &imageInfos[i];
 		}
+		LOG_INFO(Render, "[LightingPass] Updating descriptors");
 		vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+		LOG_INFO(Render, "[LightingPass] Descriptors updated");
 
 		// ------------------------------------------------------------------
 		// Create a temporary framebuffer for this frame.
@@ -473,12 +477,14 @@ namespace engine::render
 		fbInfo.layers          = 1;
 
 		VkFramebuffer fb = VK_NULL_HANDLE;
+		LOG_INFO(Render, "[LightingPass] Creating framebuffer");
 		VkResult res = vkCreateFramebuffer(device, &fbInfo, nullptr, &fb);
 		if (res != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "LightingPass::Record: vkCreateFramebuffer failed: {}", static_cast<int>(res));
 			return;
 		}
+		LOG_INFO(Render, "[LightingPass] Framebuffer created");
 
 		// ------------------------------------------------------------------
 		// Begin render pass.
@@ -494,7 +500,9 @@ namespace engine::render
 		rpBegin.clearValueCount = 1;
 		rpBegin.pClearValues    = &clearVal;
 
+		LOG_INFO(Render, "[LightingPass] Begin render pass");
 		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+		LOG_INFO(Render, "[LightingPass] Render pass begun");
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -510,16 +518,20 @@ namespace engine::render
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		// Push constants: invVP + camera/light params (128 bytes, fragment stage).
+		LOG_INFO(Render, "[LightingPass] Push constants");
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
 			0, static_cast<uint32_t>(sizeof(LightParams)), &params);
 
 		// Draw fullscreen triangle (3 vertices, no vertex buffer).
+		LOG_INFO(Render, "[LightingPass] Draw");
 		vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		vkCmdEndRenderPass(cmd);
+		LOG_INFO(Render, "[LightingPass] Render pass ended");
 
 		// Destroy the temporary framebuffer immediately.
 		vkDestroyFramebuffer(device, fb, nullptr);
+		LOG_INFO(Render, "[LightingPass] Record done");
 	}
 
 	// -------------------------------------------------------------------------

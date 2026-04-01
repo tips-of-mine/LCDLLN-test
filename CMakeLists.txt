@@ -285,7 +285,6 @@ target_link_libraries(engine_core PUBLIC
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
-  target_compile_definitions(engine_core PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif()
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)

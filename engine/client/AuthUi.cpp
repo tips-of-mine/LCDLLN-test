@@ -312,6 +312,44 @@ namespace engine::client
 		return false;
 	}
 
+	bool AuthUiPresenter::SetViewportSize(uint32_t width, uint32_t height)
+	{
+		m_viewportW = width;
+		m_viewportH = height;
+		return width > 0 && height > 0;
+	}
+
+	void AuthUiPresenter::SaveRememberPreference()
+	{
+	}
+
+	void AuthUiPresenter::ApplyLocaleSelection(bool)
+	{
+	}
+
+	void AuthUiPresenter::OpenLanguageOptions()
+	{
+	}
+
+	std::string AuthUiPresenter::Tr(std::string_view key, const LocalizationService::Params&) const
+	{
+		return std::string(key);
+	}
+
+	std::string AuthUiPresenter::CurrentLocale() const
+	{
+		return "en";
+	}
+
+	std::string AuthUiPresenter::LocalizedLanguageName(std::string_view localeTag) const
+	{
+		return std::string(localeTag);
+	}
+
+	void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config&)
+	{
+	}
+
 	void AuthUiPresenter::AppendPasswordStars(std::string&, size_t) const {}
 	void AuthUiPresenter::EnsurePasswordSalt(const engine::core::Config&) {}
 	std::string AuthUiPresenter::ComputeClientHash(const engine::core::Config&) const { return {}; }

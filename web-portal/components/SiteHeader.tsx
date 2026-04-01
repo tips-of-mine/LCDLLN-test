@@ -10,6 +10,7 @@ export function SiteHeader() {
         <Link href="/roadmap">Roadmap</Link>
         <Link href="/contact">Contact</Link>
         <Link href="/support">Support</Link>
+        <Link href="/password-recovery">Mot de passe oublie</Link>
         <Link href="/bugs">Signaler un bug</Link>
         <Link href="/login">Connexion</Link>
         <Link href="/player">Espace joueur</Link>

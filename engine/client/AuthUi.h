@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/client/LocalizationService.h"
 #include "engine/core/Config.h"
 #include "engine/network/NetClient.h"
 #include "engine/platform/Input.h"
@@ -22,6 +23,38 @@ namespace engine::client
 	class AuthUiPresenter final
 	{
 	public:
+		struct VideoSettingsCommand
+		{
+			bool applyRequested = false;
+			bool fullscreen = false;
+			bool vsync = true;
+		};
+
+		struct AudioSettingsCommand
+		{
+			bool applyRequested = false;
+			float masterVolume = 1.0f;
+			float musicVolume = 1.0f;
+			float sfxVolume = 1.0f;
+			float uiVolume = 1.0f;
+		};
+
+		struct ControlSettingsCommand
+		{
+			bool applyRequested = false;
+			float mouseSensitivity = 0.002f;
+			bool invertY = false;
+			bool useZqsd = false;
+		};
+
+		struct GameSettingsCommand
+		{
+			bool applyRequested = false;
+			bool gameplayUdpEnabled = false;
+			bool allowInsecureDev = true;
+			uint32_t authTimeoutMs = 5000;
+		};
+
 		struct VisualState
 		{
 			bool active = false;
@@ -31,6 +64,8 @@ namespace engine::client
 			bool forgotPassword = false;
 			bool terms = false;
 			bool characterCreate = false;
+			bool languageSelection = false;
+			bool languageOptions = false;
 			bool submitting = false;
 			bool error = false;
 		};
@@ -58,6 +93,10 @@ namespace engine::client
 		/// Multi-line panel for HUD / logs (full form + asset paths + errors).
 		std::string BuildPanelText() const;
 		VisualState GetVisualState() const;
+		VideoSettingsCommand ConsumePendingVideoSettings();
+		AudioSettingsCommand ConsumePendingAudioSettings();
+		ControlSettingsCommand ConsumePendingControlSettings();
+		GameSettingsCommand ConsumePendingGameSettings();
 
 		/// Escape: back from register to login, or clear error; returns true if consumed.
 		bool OnEscape();
@@ -80,6 +119,11 @@ namespace engine::client
 		void PollAsyncResult(const engine::core::Config& cfg);
 		void LoadRememberPreference();
 		void SaveRememberPreference();
+		void ApplyLocaleSelection(bool firstRun);
+		void OpenLanguageOptions();
+		std::string Tr(std::string_view key, const LocalizationService::Params& params = {}) const;
+		std::string CurrentLocale() const;
+		std::string LocalizedLanguageName(std::string_view localeTag) const;
 		bool HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg);
 		void SubmitCurrentPhase(const engine::core::Config& cfg);
 		void UpdateWindowTitle(engine::platform::Window& window) const;
@@ -93,6 +137,8 @@ namespace engine::client
 			ForgotPassword,
 			Terms,
 			CharacterCreate,
+			LanguageSelectionFirstRun,
+			LanguageOptions,
 			Submitting,
 			Error
 		};
@@ -127,6 +173,41 @@ namespace engine::client
 		bool m_termsAcknowledgeChecked = false;
 		bool m_rememberLogin = false;
 		bool m_savedRememberLogin = false;
+		bool m_hasPersistedLocale = false;
+		uint32_t m_languageSelectionIndex = 0;
+		uint32_t m_optionsSelectionIndex = 0;
+		Phase m_phaseBeforeOptions = Phase::Login;
+		std::string m_selectedLocale;
+		std::string m_persistedLocale;
+		bool m_videoFullscreen = false;
+		bool m_videoVsync = true;
+		bool m_videoFullscreenPending = false;
+		bool m_videoVsyncPending = true;
+		VideoSettingsCommand m_pendingVideoSettings{};
+		float m_audioMasterVolume = 1.0f;
+		float m_audioMusicVolume = 1.0f;
+		float m_audioSfxVolume = 1.0f;
+		float m_audioUiVolume = 1.0f;
+		float m_audioMasterVolumePending = 1.0f;
+		float m_audioMusicVolumePending = 1.0f;
+		float m_audioSfxVolumePending = 1.0f;
+		float m_audioUiVolumePending = 1.0f;
+		AudioSettingsCommand m_pendingAudioSettings{};
+		float m_mouseSensitivity = 0.002f;
+		float m_mouseSensitivityPending = 0.002f;
+		bool m_invertY = false;
+		bool m_invertYPending = false;
+		bool m_useZqsd = false;
+		bool m_useZqsdPending = false;
+		ControlSettingsCommand m_pendingControlSettings{};
+		bool m_gameplayUdpEnabled = false;
+		bool m_gameplayUdpEnabledPending = false;
+		bool m_allowInsecureDev = true;
+		bool m_allowInsecureDevPending = true;
+		uint32_t m_authTimeoutMs = 5000u;
+		uint32_t m_authTimeoutMsPending = 5000u;
+		GameSettingsCommand m_pendingGameSettings{};
+		LocalizationService m_localization;
 
 		std::vector<uint8_t> m_argonSalt{};
 		uint32_t m_viewportW = 0;

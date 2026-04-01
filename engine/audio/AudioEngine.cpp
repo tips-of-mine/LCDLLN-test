@@ -50,6 +50,7 @@ namespace engine::audio
 		Shutdown();
 		m_config = &config;
 		m_zoneAudioRelativePath = config.GetString("audio.zone_audio_path", "audio/zone_audio.json");
+		m_masterVolume = static_cast<float>(config.GetDouble("audio.master_volume", 1.0));
 		if (!LoadZoneAudio())
 		{
 			LOG_ERROR(Core, "[AudioEngine] Init FAILED: unable to load '{}'", m_zoneAudioRelativePath);
@@ -76,6 +77,7 @@ namespace engine::audio
 		m_zoneAudioRelativePath.clear();
 		m_currentZoneId = 0;
 		m_nextInstanceId = 1;
+		m_masterVolume = 1.0f;
 		m_config = nullptr;
 		m_initialized = false;
 		LOG_INFO(Core, "[AudioEngine] Shutdown complete");
@@ -139,6 +141,19 @@ namespace engine::audio
 
 		it->second.volume = std::clamp(volume, 0.0f, 1.0f);
 		LOG_INFO(Core, "[AudioEngine] Bus volume updated (bus={}, volume={:.2f})", busId, it->second.volume);
+		return true;
+	}
+
+	bool AudioEngine::SetMasterVolume(float volume)
+	{
+		if (!m_initialized)
+		{
+			LOG_WARN(Core, "[AudioEngine] SetMasterVolume ignored: engine not initialized");
+			return false;
+		}
+
+		m_masterVolume = std::clamp(volume, 0.0f, 1.0f);
+		LOG_INFO(Core, "[AudioEngine] Master volume updated ({:.2f})", m_masterVolume);
 		return true;
 	}
 
@@ -348,6 +363,6 @@ namespace engine::audio
 			busVolume = busIt->second.volume;
 		}
 
-		return attenuation * busVolume;
+		return attenuation * busVolume * m_masterVolume;
 	}
 }

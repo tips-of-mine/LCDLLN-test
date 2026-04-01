@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/math/Math.h"
+#include <cstdint>
 
 namespace engine::platform { class Input; }
 
@@ -26,6 +27,12 @@ namespace engine::render
 	};
 
 	/// FPS-style camera controller: WASD movement and mouse look.
+	enum class MovementLayout : uint8_t
+	{
+		WASD = 0,
+		ZQSD = 1
+	};
+
 	class FpsCameraController
 	{
 	public:
@@ -38,6 +45,7 @@ namespace engine::render
 		static constexpr float kPitchMax = +89.0f * 3.14159265f / 180.0f;
 
 		/// Updates camera from input and delta time. Mouse sensitivity in rad/pixel from config.
-		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, Camera& camera);
+		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
+			MovementLayout layout, Camera& camera);
 	};
 }

@@ -3,6 +3,7 @@
 Application **séparée** du moteur (`/engine`, `/game`). Elle fournit :
 
 - **Public** : présentation, roadmap, contact, support, signalement de bugs.
+- **Public** : présentation, roadmap, contact, support, signalement de bugs, récupération web du mot de passe.
 - **Joueur** (après auth) : profil, serveurs, personnages, amis/guilde en ligne, CGU (historique, relire, accepter les nouvelles).
 - **Admin** : gestion des CGU en base, **lecture seule** des profils, suivi des acceptations CGU.
 
@@ -12,6 +13,7 @@ Règles de confidentialité : un joueur **ne doit jamais** voir les données d�
 
 - **Next.js 14** (App Router), build **standalone** pour Docker.
 - Auth / API métier : **à implémenter** (JWT, MySQL `lcdlln_master`, alignement avec le master).
+- Récupération mot de passe : pages `password-recovery`, profil d'identité enrichi, questions secrètes, e-mail avec lien 10 minutes.
 
 ## Scripts
 
@@ -29,6 +31,7 @@ Build production : `npm run build` puis `npm start` ou image Docker.
 - Exploits unifiés : `exploits`, `account_exploit_unlocks`, `character_exploit_unlocks` (migration `0008`).
 - Bugs : `bug_reports` ; la progression alimente les exploits dont `metric_source = 'bug_reports'` (seuils en base).
 - Nettoyage ancienne 0008 : migration `0009` (`DROP` de `account_bug_exploit_stats` si elle existait).
+- Récupération mot de passe : `account_recovery_profiles`, `account_recovery_secret_questions`, `account_password_reset_tokens` (migration `0010`).
 
 ## Docker & Traefik
 

@@ -74,6 +74,9 @@ namespace engine::audio
 		/// Set one named bus volume multiplier in the normalized range [0, 1].
 		bool SetBusVolume(std::string_view busId, float volume);
 
+		/// Set global master volume multiplier in the normalized range [0, 1].
+		bool SetMasterVolume(float volume);
+
 		/// Activate the ambience loop configured for the requested zone id.
 		bool SetZone(uint32_t zoneId);
 
@@ -97,6 +100,7 @@ namespace engine::audio
 		std::string m_zoneAudioRelativePath;
 		uint32_t m_currentZoneId = 0;
 		uint32_t m_nextInstanceId = 1;
+		float m_masterVolume = 1.0f;
 		bool m_initialized = false;
 	};
 }

@@ -174,6 +174,7 @@ add_library(engine_core
   engine/core/Time.cpp
   engine/audio/AudioEngine.cpp
   engine/client/CombatHud.cpp
+  engine/client/LocalizationService.cpp
   engine/client/AuthUi.cpp
   engine/client/AoEPreviewSystem.cpp
   engine/client/BuffBarPresenter.cpp
@@ -428,6 +429,14 @@ if(MSVC)
   target_compile_options(ddos_connection_protector_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME ddos_connection_protector_tests COMMAND ddos_connection_protector_tests)
+
+# STAB.14: Runtime localization service unit tests
+add_executable(localization_service_tests engine/client/LocalizationServiceTests.cpp)
+target_link_libraries(localization_service_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(localization_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME localization_service_tests COMMAND localization_service_tests)
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)

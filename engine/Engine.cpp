@@ -31,6 +31,58 @@ namespace engine
 {
 	namespace
 	{
+		void ApplyUserSettingsOverrides(engine::core::Config& cfg)
+		{
+			engine::core::Config persisted;
+			if (!persisted.LoadFromFile("user_settings.json"))
+			{
+				LOG_INFO(Core, "[Boot] user_settings.json not found — using config defaults");
+				return;
+			}
+
+			if (persisted.Has("render.vsync"))
+				cfg.SetValue("render.vsync", persisted.GetBool("render.vsync", cfg.GetBool("render.vsync", true)));
+			if (persisted.Has("render.fullscreen"))
+				cfg.SetValue("render.fullscreen", persisted.GetBool("render.fullscreen", cfg.GetBool("render.fullscreen", true)));
+			if (persisted.Has("client.locale"))
+				cfg.SetValue("client.locale", persisted.GetString("client.locale", cfg.GetString("client.locale", "")));
+			if (persisted.Has("audio.master_volume"))
+				cfg.SetValue("audio.master_volume", persisted.GetDouble("audio.master_volume", cfg.GetDouble("audio.master_volume", 1.0)));
+			if (persisted.Has("audio.music_volume"))
+				cfg.SetValue("audio.music_volume", persisted.GetDouble("audio.music_volume", cfg.GetDouble("audio.music_volume", 1.0)));
+			if (persisted.Has("audio.sfx_volume"))
+				cfg.SetValue("audio.sfx_volume", persisted.GetDouble("audio.sfx_volume", cfg.GetDouble("audio.sfx_volume", 1.0)));
+			if (persisted.Has("audio.ui_volume"))
+				cfg.SetValue("audio.ui_volume", persisted.GetDouble("audio.ui_volume", cfg.GetDouble("audio.ui_volume", 1.0)));
+			if (persisted.Has("camera.mouse_sensitivity"))
+				cfg.SetValue("camera.mouse_sensitivity", persisted.GetDouble("camera.mouse_sensitivity", cfg.GetDouble("camera.mouse_sensitivity", 0.002)));
+			if (persisted.Has("controls.invert_y"))
+				cfg.SetValue("controls.invert_y", persisted.GetBool("controls.invert_y", cfg.GetBool("controls.invert_y", false)));
+			if (persisted.Has("controls.movement_layout"))
+				cfg.SetValue("controls.movement_layout", persisted.GetString("controls.movement_layout", cfg.GetString("controls.movement_layout", "wasd")));
+			if (persisted.Has("client.gameplay_udp.enabled"))
+				cfg.SetValue("client.gameplay_udp.enabled", persisted.GetBool("client.gameplay_udp.enabled", cfg.GetBool("client.gameplay_udp.enabled", false)));
+			if (persisted.Has("client.allow_insecure_dev"))
+				cfg.SetValue("client.allow_insecure_dev", persisted.GetBool("client.allow_insecure_dev", cfg.GetBool("client.allow_insecure_dev", true)));
+			if (persisted.Has("client.auth_ui.timeout_ms"))
+				cfg.SetValue("client.auth_ui.timeout_ms", persisted.GetInt("client.auth_ui.timeout_ms", cfg.GetInt("client.auth_ui.timeout_ms", 5000)));
+
+			LOG_INFO(Core, "[Boot] user_settings.json overrides applied (fullscreen={}, vsync={}, locale={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+				cfg.GetBool("render.fullscreen", true),
+				cfg.GetBool("render.vsync", true),
+				cfg.GetString("client.locale", ""),
+				cfg.GetDouble("audio.master_volume", 1.0),
+				cfg.GetDouble("audio.music_volume", 1.0),
+				cfg.GetDouble("audio.sfx_volume", 1.0),
+				cfg.GetDouble("audio.ui_volume", 1.0),
+				cfg.GetDouble("camera.mouse_sensitivity", 0.002),
+				cfg.GetBool("controls.invert_y", false),
+				cfg.GetString("controls.movement_layout", "wasd"),
+				cfg.GetBool("client.gameplay_udp.enabled", false),
+				cfg.GetBool("client.allow_insecure_dev", true),
+				cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		}
+
 		bool HasCliFlag(int argc, char** argv, std::string_view flag)
 		{
 			for (int i = 1; i < argc; ++i)
@@ -452,6 +504,7 @@ namespace engine
 		// ------------------------------------------------------------------
 		// Config + subsystems
 		// ------------------------------------------------------------------
+		ApplyUserSettingsOverrides(m_cfg);
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);
@@ -704,6 +757,10 @@ namespace engine
 										}
 										else
 										{
+											m_audioEngine.SetMasterVolume(static_cast<float>(m_cfg.GetDouble("audio.master_volume", 1.0)));
+											m_audioEngine.SetBusVolume("Music", static_cast<float>(m_cfg.GetDouble("audio.music_volume", 1.0)));
+											m_audioEngine.SetBusVolume("SFX", static_cast<float>(m_cfg.GetDouble("audio.sfx_volume", 1.0)));
+											m_audioEngine.SetBusVolume("UI", static_cast<float>(m_cfg.GetDouble("audio.ui_volume", 1.0)));
 											m_audioEngine.SetZone(0);
 										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
@@ -1798,6 +1855,11 @@ namespace engine
 
 		const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
 		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
+		const bool invertY = m_cfg.GetBool("controls.invert_y", false);
+		const engine::render::MovementLayout movementLayout =
+			(m_cfg.GetString("controls.movement_layout", "wasd") == "zqsd")
+			? engine::render::MovementLayout::ZQSD
+			: engine::render::MovementLayout::WASD;
 
 		out.camera = readState.camera;
 		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
@@ -1829,6 +1891,70 @@ namespace engine
 		if (authGateActive)
 		{
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
+			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
+			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
+			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
+			const engine::client::AuthUiPresenter::GameSettingsCommand gameCmd = m_authUi.ConsumePendingGameSettings();
+			if (videoCmd.applyRequested)
+			{
+				const bool fullscreenChanged = (videoCmd.fullscreen != m_window.IsFullscreen());
+				const bool vsyncChanged = (videoCmd.vsync != m_vsync);
+				m_cfg.SetValue("render.fullscreen", videoCmd.fullscreen);
+				m_cfg.SetValue("render.vsync", videoCmd.vsync);
+				m_vsync = videoCmd.vsync;
+				if (fullscreenChanged)
+				{
+					m_window.ToggleFullscreen();
+					LOG_INFO(Core, "[Options] Fullscreen applied ({})", videoCmd.fullscreen ? "on" : "off");
+				}
+				if (vsyncChanged)
+				{
+					m_swapchainResizeRequested = true;
+					LOG_INFO(Core, "[Options] VSync applied ({}) -> swapchain recreate requested", videoCmd.vsync ? "on" : "off");
+				}
+				if (!fullscreenChanged && !vsyncChanged)
+				{
+					LOG_INFO(Core, "[Options] Video apply requested but values unchanged");
+				}
+			}
+			if (audioCmd.applyRequested)
+			{
+				m_cfg.SetValue("audio.master_volume", static_cast<double>(audioCmd.masterVolume));
+				m_cfg.SetValue("audio.music_volume", static_cast<double>(audioCmd.musicVolume));
+				m_cfg.SetValue("audio.sfx_volume", static_cast<double>(audioCmd.sfxVolume));
+				m_cfg.SetValue("audio.ui_volume", static_cast<double>(audioCmd.uiVolume));
+				const bool masterOk = m_audioEngine.SetMasterVolume(audioCmd.masterVolume);
+				const bool musicOk = m_audioEngine.SetBusVolume("Music", audioCmd.musicVolume);
+				const bool sfxOk = m_audioEngine.SetBusVolume("SFX", audioCmd.sfxVolume);
+				const bool uiOk = m_audioEngine.SetBusVolume("UI", audioCmd.uiVolume);
+				LOG_INFO(Core, "[Options] Audio applied (master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, ok={})",
+					audioCmd.masterVolume, audioCmd.musicVolume, audioCmd.sfxVolume, audioCmd.uiVolume,
+					(masterOk && musicOk && sfxOk && uiOk) ? "yes" : "partial");
+			}
+			if (controlCmd.applyRequested)
+			{
+				m_cfg.SetValue("camera.mouse_sensitivity", static_cast<double>(controlCmd.mouseSensitivity));
+				m_cfg.SetValue("controls.invert_y", controlCmd.invertY);
+				m_cfg.SetValue("controls.movement_layout", controlCmd.useZqsd ? std::string("zqsd") : std::string("wasd"));
+				LOG_INFO(Core, "[Options] Controls applied (sens={:.4f}, invert_y={}, layout={})",
+					controlCmd.mouseSensitivity, controlCmd.invertY, controlCmd.useZqsd ? "zqsd" : "wasd");
+			}
+			if (gameCmd.applyRequested)
+			{
+				const bool gameplayWasEnabled = m_cfg.GetBool("client.gameplay_udp.enabled", false);
+				m_cfg.SetValue("client.gameplay_udp.enabled", gameCmd.gameplayUdpEnabled);
+				m_cfg.SetValue("client.allow_insecure_dev", gameCmd.allowInsecureDev);
+				m_cfg.SetValue("client.auth_ui.timeout_ms", static_cast<int64_t>(gameCmd.authTimeoutMs));
+				if (gameplayWasEnabled != gameCmd.gameplayUdpEnabled)
+				{
+					if (gameCmd.gameplayUdpEnabled)
+						InitGameplayNet();
+					else
+						ShutdownGameplayNet();
+				}
+				LOG_INFO(Core, "[Options] Game applied (gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+					gameCmd.gameplayUdpEnabled, gameCmd.allowInsecureDev, gameCmd.authTimeoutMs);
+			}
 			if (m_chatUi.IsInitialized())
 			{
 				m_chatUi.Update(m_input, static_cast<float>(dt));
@@ -1846,7 +1972,7 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, out.camera);
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, out.camera);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())

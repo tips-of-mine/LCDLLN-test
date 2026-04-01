@@ -47,11 +47,13 @@ namespace engine::render
 		return engine::math::Mat4::PerspectiveVulkan(fovYRad, aspect, nearZ, farZ);
 	}
 
-	void FpsCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, Camera& camera)
+	void FpsCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
+		MovementLayout layout, Camera& camera)
 	{
 		const float sens = static_cast<float>(mouseSensitivityRadPerPixel);
 		camera.yaw += static_cast<float>(input.MouseDeltaX()) * sens;
-		camera.pitch += static_cast<float>(input.MouseDeltaY()) * sens;
+		const float pitchSign = invertY ? -1.0f : 1.0f;
+		camera.pitch += static_cast<float>(input.MouseDeltaY()) * sens * pitchSign;
 		if (camera.pitch < kPitchMin) camera.pitch = kPitchMin;
 		if (camera.pitch > kPitchMax) camera.pitch = kPitchMax;
 
@@ -65,22 +67,26 @@ namespace engine::render
 		const float forwardZ = -cy * cp;
 		const float rightX = cy;
 		const float rightZ = -sy;
-		if (input.IsDown(engine::platform::Key::W))
+		const engine::platform::Key forwardKey = (layout == MovementLayout::ZQSD) ? engine::platform::Key::Z : engine::platform::Key::W;
+		const engine::platform::Key backwardKey = engine::platform::Key::S;
+		const engine::platform::Key rightKey = engine::platform::Key::D;
+		const engine::platform::Key leftKey = (layout == MovementLayout::ZQSD) ? engine::platform::Key::Q : engine::platform::Key::A;
+		if (input.IsDown(forwardKey))
 		{
 			camera.position.x += forwardX * dist;
 			camera.position.z += forwardZ * dist;
 		}
-		if (input.IsDown(engine::platform::Key::S))
+		if (input.IsDown(backwardKey))
 		{
 			camera.position.x -= forwardX * dist;
 			camera.position.z -= forwardZ * dist;
 		}
-		if (input.IsDown(engine::platform::Key::D))
+		if (input.IsDown(rightKey))
 		{
 			camera.position.x += rightX * dist;
 			camera.position.z += rightZ * dist;
 		}
-		if (input.IsDown(engine::platform::Key::A))
+		if (input.IsDown(leftKey))
 		{
 			camera.position.x -= rightX * dist;
 			camera.position.z -= rightZ * dist;

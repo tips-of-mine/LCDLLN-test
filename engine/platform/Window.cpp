@@ -4,6 +4,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #include <objidl.h>
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
@@ -307,13 +308,13 @@ namespace engine::platform
 		m_authSectionTitleHwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
 		m_authPrimaryLabelHwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
 		m_authPrimaryEditHwnd = createAuthControl(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_TABSTOP | ES_AUTOHSCROLL, kAuthPrimaryEditId);
-		m_authRememberCheckboxHwnd = createAuthControl(0, L"BUTTON", L"Se souvenir", BS_AUTOCHECKBOX | WS_TABSTOP, kAuthRememberCheckboxId);
-		m_authPasswordLabelHwnd = createAuthControl(0, L"STATIC", L"Mot de passe", SS_LEFT | SS_NOPREFIX, 0);
+		m_authRememberCheckboxHwnd = createAuthControl(0, L"BUTTON", L"", BS_AUTOCHECKBOX | WS_TABSTOP, kAuthRememberCheckboxId);
+		m_authPasswordLabelHwnd = createAuthControl(0, L"STATIC", L"", SS_LEFT | SS_NOPREFIX, 0);
 		m_authPasswordEditHwnd = createAuthControl(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_TABSTOP | ES_AUTOHSCROLL | ES_PASSWORD, kAuthPasswordEditId);
-		m_authForgotButtonHwnd = createAuthControl(0, L"BUTTON", L"Recuperation du mot de passe", BS_PUSHBUTTON | WS_TABSTOP, kAuthForgotButtonId);
-		m_authRegisterButtonHwnd = createAuthControl(0, L"BUTTON", L"Inscription", BS_PUSHBUTTON | WS_TABSTOP, kAuthRegisterButtonId);
-		m_authSubmitButtonHwnd = createAuthControl(0, L"BUTTON", L"Valider", BS_DEFPUSHBUTTON | WS_TABSTOP, kAuthSubmitButtonId);
-		m_authQuitButtonHwnd = createAuthControl(0, L"BUTTON", L"Quitter", BS_PUSHBUTTON | WS_TABSTOP, kAuthQuitButtonId);
+		m_authForgotButtonHwnd = createAuthControl(0, L"BUTTON", L"", BS_PUSHBUTTON | WS_TABSTOP, kAuthForgotButtonId);
+		m_authRegisterButtonHwnd = createAuthControl(0, L"BUTTON", L"", BS_PUSHBUTTON | WS_TABSTOP, kAuthRegisterButtonId);
+		m_authSubmitButtonHwnd = createAuthControl(0, L"BUTTON", L"", BS_DEFPUSHBUTTON | WS_TABSTOP, kAuthSubmitButtonId);
+		m_authQuitButtonHwnd = createAuthControl(0, L"BUTTON", L"", BS_PUSHBUTTON | WS_TABSTOP, kAuthQuitButtonId);
 
 		void* authControls[] = {
 			m_authBackgroundHwnd, m_authLogoHwnd, m_authInfoHwnd,
@@ -451,6 +452,33 @@ namespace engine::platform
 		SetWindowTextW(AsHwnd(m_hwnd), titleW.c_str());
 	}
 
+	bool Window::OpenExternalUrl(std::string_view url) const
+	{
+		if (url.empty())
+		{
+			LOG_WARN(Platform, "[Window] OpenExternalUrl skipped: empty URL");
+			return false;
+		}
+
+		const std::wstring urlW = ToWide(url);
+		const HINSTANCE result = ShellExecuteW(
+			AsHwnd(m_hwnd),
+			L"open",
+			urlW.c_str(),
+			nullptr,
+			nullptr,
+			SW_SHOWNORMAL);
+		const auto code = reinterpret_cast<INT_PTR>(result);
+		if (code <= 32)
+		{
+			LOG_WARN(Platform, "[Window] OpenExternalUrl failed (url={}, code={})", url, static_cast<long long>(code));
+			return false;
+		}
+
+		LOG_INFO(Platform, "[Window] OpenExternalUrl OK ({})", url);
+		return true;
+	}
+
 	void Window::SetOverlayText(std::string_view text)
 	{
 		if (!m_overlayHwnd)
@@ -525,6 +553,10 @@ namespace engine::platform
 		setText(m_authTitleLine2Hwnd, state.titleLine2);
 		setText(m_authSectionTitleHwnd, state.sectionTitle);
 		setText(m_authPrimaryLabelHwnd, state.primaryLabel);
+		setText(m_authPasswordLabelHwnd, state.passwordLabel);
+		setText(m_authRememberCheckboxHwnd, state.rememberLabel);
+		setText(m_authForgotButtonHwnd, state.forgotLabel);
+		setText(m_authRegisterButtonHwnd, state.registerLabel);
 		if (m_authPrimaryValue != state.primaryValue)
 		{
 			setText(m_authPrimaryEditHwnd, state.primaryValue);
@@ -536,6 +568,7 @@ namespace engine::platform
 			m_authPasswordValue = state.passwordValue;
 		}
 		setText(m_authSubmitButtonHwnd, state.submitLabel.empty() ? std::string_view("Valider") : std::string_view(state.submitLabel));
+		setText(m_authQuitButtonHwnd, state.quitLabel);
 		SendMessageW(AsHwnd(m_authRememberCheckboxHwnd), BM_SETCHECK, state.rememberChecked ? BST_CHECKED : BST_UNCHECKED, 0);
 		m_authRememberChecked = state.rememberChecked;
 		m_authSyncInProgress = false;
@@ -781,9 +814,6 @@ LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)
 				case kAuthRegisterButtonId:
 					LOG_INFO(Core, "[AuthUi] Click bouton inscription");
 					m_pendingAuthCommand = AuthScreenCommand::OpenRegister;
-					break;
-				case kAuthBackButtonId:
-					m_pendingAuthCommand = AuthScreenCommand::BackToLogin;
 					break;
 				case kAuthSubmitButtonId:
 					LOG_INFO(Core, "[AuthUi] Click bouton validation");

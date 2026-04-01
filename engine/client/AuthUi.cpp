@@ -32,6 +32,150 @@ namespace engine::client
 		constexpr std::string_view kRegisterBackgroundPath = "engine/assets/ui/register/background.png";
 		constexpr std::string_view kRegisterInfoPath = "engine/assets/ui/register/info.png";
 
+		std::string JsonBool(bool value)
+		{
+			return value ? "true" : "false";
+		}
+
+		std::string EscapeJsonString(std::string_view value)
+		{
+			std::string out;
+			out.reserve(value.size() + 8u);
+			for (char c : value)
+			{
+				switch (c)
+				{
+				case '\\': out += "\\\\"; break;
+				case '"': out += "\\\""; break;
+				case '\n': out += "\\n"; break;
+				case '\r': out += "\\r"; break;
+				case '\t': out += "\\t"; break;
+				default: out.push_back(c); break;
+				}
+			}
+			return out;
+		}
+
+		std::string BuildUserSettingsJson(bool rememberLogin, std::string_view locale, bool fullscreen, bool vsync)
+		{
+			return std::string("{\n  \"client\": {\n    \"locale\": \"")
+				+ EscapeJsonString(locale)
+				+ "\",\n    \"auth_ui\": {\n      \"remember_login\": "
+				+ JsonBool(rememberLogin)
+				+ ",\n      \"timeout_ms\": 5000\n    },\n    \"allow_insecure_dev\": true,\n    \"gameplay_udp\": {\n      \"enabled\": false\n    }\n  },\n  \"render\": {\n    \"fullscreen\": "
+				+ JsonBool(fullscreen)
+				+ ",\n    \"vsync\": "
+				+ JsonBool(vsync)
+				+ "\n  },\n  \"audio\": {\n    \"master_volume\": 1.0,\n    \"music_volume\": 1.0,\n    \"sfx_volume\": 1.0,\n    \"ui_volume\": 1.0\n  },\n  \"camera\": {\n    \"mouse_sensitivity\": 0.002\n  },\n  \"controls\": {\n    \"invert_y\": false,\n    \"movement_layout\": \"wasd\"\n  }\n}\n";
+		}
+
+		void ReplaceAudioSettings(std::string& json, float masterVolume, float musicVolume, float sfxVolume, float uiVolume)
+		{
+			auto replaceValue = [&json](std::string_view key, float value)
+			{
+				const std::string needle = std::string("\"") + std::string(key) + "\": ";
+				const size_t start = json.find(needle);
+				if (start == std::string::npos)
+					return;
+				const size_t valueStart = start + needle.size();
+				size_t valueEnd = valueStart;
+				while (valueEnd < json.size() && (std::isdigit(static_cast<unsigned char>(json[valueEnd])) != 0 || json[valueEnd] == '.'))
+					++valueEnd;
+				json.replace(valueStart, valueEnd - valueStart, std::to_string(value));
+			};
+
+			replaceValue("master_volume", masterVolume);
+			replaceValue("music_volume", musicVolume);
+			replaceValue("sfx_volume", sfxVolume);
+			replaceValue("ui_volume", uiVolume);
+		}
+
+		float ClampOptionStep(float value)
+		{
+			const float clamped = std::clamp(value, 0.0f, 1.0f);
+			const int scaled = static_cast<int>(clamped * 10.0f + 0.5f);
+			return static_cast<float>(scaled) / 10.0f;
+		}
+
+		void ReplaceControlSettings(std::string& json, float mouseSensitivity, bool invertY, bool useZqsd)
+		{
+			auto replaceBool = [&json](std::string_view key, bool value)
+			{
+				const std::string needle = std::string("\"") + std::string(key) + "\": ";
+				const size_t start = json.find(needle);
+				if (start == std::string::npos)
+					return;
+				const size_t valueStart = start + needle.size();
+				size_t valueEnd = valueStart;
+				while (valueEnd < json.size() && std::isalpha(static_cast<unsigned char>(json[valueEnd])) != 0)
+					++valueEnd;
+				json.replace(valueStart, valueEnd - valueStart, value ? "true" : "false");
+			};
+			auto replaceString = [&json](std::string_view key, std::string_view value)
+			{
+				const std::string needle = std::string("\"") + std::string(key) + "\": \"";
+				const size_t start = json.find(needle);
+				if (start == std::string::npos)
+					return;
+				const size_t valueStart = start + needle.size();
+				const size_t valueEnd = json.find('"', valueStart);
+				if (valueEnd == std::string::npos)
+					return;
+				json.replace(valueStart, valueEnd - valueStart, value);
+			};
+			auto replaceNumber = [&json](std::string_view key, double value)
+			{
+				const std::string needle = std::string("\"") + std::string(key) + "\": ";
+				const size_t start = json.find(needle);
+				if (start == std::string::npos)
+					return;
+				const size_t valueStart = start + needle.size();
+				size_t valueEnd = valueStart;
+				while (valueEnd < json.size() && (std::isdigit(static_cast<unsigned char>(json[valueEnd])) != 0 || json[valueEnd] == '.'))
+					++valueEnd;
+				json.replace(valueStart, valueEnd - valueStart, std::to_string(value));
+			};
+
+			replaceNumber("mouse_sensitivity", mouseSensitivity);
+			replaceBool("invert_y", invertY);
+			replaceString("movement_layout", useZqsd ? "zqsd" : "wasd");
+		}
+
+		void ReplaceGameSettings(std::string& json, bool gameplayUdpEnabled, bool allowInsecureDev, uint32_t authTimeoutMs)
+		{
+			auto replaceBoolByNeedle = [&json](std::string_view needle, bool value)
+			{
+				const size_t start = json.find(needle);
+				if (start == std::string::npos)
+					return;
+				const size_t valueStart = start + needle.size();
+				size_t valueEnd = valueStart;
+				while (valueEnd < json.size() && std::isalpha(static_cast<unsigned char>(json[valueEnd])) != 0)
+					++valueEnd;
+				json.replace(valueStart, valueEnd - valueStart, value ? "true" : "false");
+			};
+			auto replaceNumberByNeedle = [&json](std::string_view needle, uint32_t value)
+			{
+				const size_t start = json.find(needle);
+				if (start == std::string::npos)
+					return;
+				const size_t valueStart = start + needle.size();
+				size_t valueEnd = valueStart;
+				while (valueEnd < json.size() && std::isdigit(static_cast<unsigned char>(json[valueEnd])) != 0)
+					++valueEnd;
+				json.replace(valueStart, valueEnd - valueStart, std::to_string(value));
+			};
+
+			replaceBoolByNeedle("\"allow_insecure_dev\": ", allowInsecureDev);
+			replaceNumberByNeedle("\"timeout_ms\": ", authTimeoutMs);
+			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
+		}
+
+		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
+		{
+			return cfg.GetString("client.web_portal_reset_url", "http://127.0.0.1:3000/password-recovery");
+		}
+
 		bool IsAsciiDigits(std::string_view text)
 		{
 			if (text.empty())
@@ -255,16 +399,71 @@ namespace engine::client
 		m_termsAcknowledgeChecked = false;
 		m_rememberLogin = false;
 		m_savedRememberLogin = false;
+		m_hasPersistedLocale = false;
+		m_languageSelectionIndex = 0;
+		m_optionsSelectionIndex = 0;
+		m_phaseBeforeOptions = Phase::Login;
+		m_selectedLocale.clear();
+		m_persistedLocale.clear();
+		m_videoFullscreen = cfg.GetBool("render.fullscreen", true);
+		m_videoVsync = cfg.GetBool("render.vsync", true);
+		m_videoFullscreenPending = m_videoFullscreen;
+		m_videoVsyncPending = m_videoVsync;
+		m_pendingVideoSettings = {};
+		m_audioMasterVolume = ClampOptionStep(static_cast<float>(cfg.GetDouble("audio.master_volume", 1.0)));
+		m_audioMusicVolume = ClampOptionStep(static_cast<float>(cfg.GetDouble("audio.music_volume", 1.0)));
+		m_audioSfxVolume = ClampOptionStep(static_cast<float>(cfg.GetDouble("audio.sfx_volume", 1.0)));
+		m_audioUiVolume = ClampOptionStep(static_cast<float>(cfg.GetDouble("audio.ui_volume", 1.0)));
+		m_audioMasterVolumePending = m_audioMasterVolume;
+		m_audioMusicVolumePending = m_audioMusicVolume;
+		m_audioSfxVolumePending = m_audioSfxVolume;
+		m_audioUiVolumePending = m_audioUiVolume;
+		m_pendingAudioSettings = {};
+		m_mouseSensitivity = static_cast<float>(cfg.GetDouble("camera.mouse_sensitivity", 0.002));
+		m_mouseSensitivityPending = m_mouseSensitivity;
+		m_invertY = cfg.GetBool("controls.invert_y", false);
+		m_invertYPending = m_invertY;
+		m_useZqsd = cfg.GetString("controls.movement_layout", "wasd") == "zqsd";
+		m_useZqsdPending = m_useZqsd;
+		m_pendingControlSettings = {};
+		m_gameplayUdpEnabled = cfg.GetBool("client.gameplay_udp.enabled", false);
+		m_gameplayUdpEnabledPending = m_gameplayUdpEnabled;
+		m_allowInsecureDev = cfg.GetBool("client.allow_insecure_dev", true);
+		m_allowInsecureDevPending = m_allowInsecureDev;
+		m_authTimeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000), 1000, 15000));
+		m_authTimeoutMsPending = m_authTimeoutMs;
+		m_pendingGameSettings = {};
 		m_argonSalt.clear();
 		m_asyncResult = {};
 		m_pendingAsyncKind = AsyncKind::None;
 		m_masterSessionId = 0;
-		m_masterClient.reset();
 		JoinWorker();
+		m_masterClient.reset();
 		LoadRememberPreference();
+		const std::string configLocale = LocalizationService::NormalizeLocaleTag(cfg.GetString("client.locale", ""));
+		const std::string requestedLocale = !m_persistedLocale.empty() ? m_persistedLocale : configLocale;
+		if (!m_localization.Init(cfg, requestedLocale.empty() ? LocalizationService::DetectSystemLocaleTag() : requestedLocale))
+		{
+			LOG_ERROR(Core, "[AuthUiPresenter] Init FAILED: localization init failed");
+			return false;
+		}
+		if (requestedLocale.empty())
+		{
+			m_selectedLocale = m_localization.GetCurrentLocale();
+			const auto& locales = m_localization.GetAvailableLocales();
+			auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
+			m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
+			m_phase = Phase::LanguageSelectionFirstRun;
+			LOG_INFO(Core, "[AuthUiPresenter] First run locale selection required (detected={})", m_selectedLocale);
+		}
+		else
+		{
+			m_selectedLocale = m_localization.GetCurrentLocale();
+			LOG_INFO(Core, "[AuthUiPresenter] Initial locale retained ({})", m_selectedLocale);
+		}
 
 		m_initialized = true;
-		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host / client.master_port)");
+		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host / client.master_port, locale={})", m_localization.GetCurrentLocale());
 		return true;
 	}
 
@@ -276,6 +475,7 @@ namespace engine::client
 		ResetMasterSession();
 		SaveRememberPreference();
 		m_password.clear();
+		m_localization.Shutdown();
 		m_initialized = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Destroyed");
 	}
@@ -287,25 +487,69 @@ namespace engine::client
 		{
 			m_rememberLogin = persisted.GetBool("client.auth_ui.remember_login", false);
 			m_savedRememberLogin = m_rememberLogin;
-			LOG_INFO(Core, "[AuthUiPresenter] Remember preference loaded: {}", m_rememberLogin);
+			m_persistedLocale = LocalizationService::NormalizeLocaleTag(persisted.GetString("client.locale", ""));
+			m_hasPersistedLocale = !m_persistedLocale.empty();
+			m_videoFullscreen = persisted.GetBool("render.fullscreen", m_videoFullscreen);
+			m_videoVsync = persisted.GetBool("render.vsync", m_videoVsync);
+			m_videoFullscreenPending = m_videoFullscreen;
+			m_videoVsyncPending = m_videoVsync;
+			m_audioMasterVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.master_volume", m_audioMasterVolume)));
+			m_audioMusicVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.music_volume", m_audioMusicVolume)));
+			m_audioSfxVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.sfx_volume", m_audioSfxVolume)));
+			m_audioUiVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.ui_volume", m_audioUiVolume)));
+			m_audioMasterVolumePending = m_audioMasterVolume;
+			m_audioMusicVolumePending = m_audioMusicVolume;
+			m_audioSfxVolumePending = m_audioSfxVolume;
+			m_audioUiVolumePending = m_audioUiVolume;
+			m_mouseSensitivity = static_cast<float>(persisted.GetDouble("camera.mouse_sensitivity", m_mouseSensitivity));
+			m_mouseSensitivityPending = m_mouseSensitivity;
+			m_invertY = persisted.GetBool("controls.invert_y", m_invertY);
+			m_invertYPending = m_invertY;
+			m_useZqsd = persisted.GetString("controls.movement_layout", m_useZqsd ? "zqsd" : "wasd") == "zqsd";
+			m_useZqsdPending = m_useZqsd;
+			m_gameplayUdpEnabled = persisted.GetBool("client.gameplay_udp.enabled", m_gameplayUdpEnabled);
+			m_gameplayUdpEnabledPending = m_gameplayUdpEnabled;
+			m_allowInsecureDev = persisted.GetBool("client.allow_insecure_dev", m_allowInsecureDev);
+			m_allowInsecureDevPending = m_allowInsecureDev;
+			m_authTimeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(persisted.GetInt("client.auth_ui.timeout_ms", m_authTimeoutMs), 1000, 15000));
+			m_authTimeoutMsPending = m_authTimeoutMs;
+			LOG_INFO(Core, "[AuthUiPresenter] Preferences loaded (remember_login={}, locale={}, fullscreen={}, vsync={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+				m_rememberLogin, m_persistedLocale, m_videoFullscreen, m_videoVsync,
+				m_audioMasterVolume, m_audioMusicVolume, m_audioSfxVolume, m_audioUiVolume,
+				m_mouseSensitivity, m_invertY, m_useZqsd ? "zqsd" : "wasd",
+				m_gameplayUdpEnabled, m_allowInsecureDev, m_authTimeoutMs);
 			return;
 		}
 		m_rememberLogin = false;
 		m_savedRememberLogin = false;
-		LOG_INFO(Core, "[AuthUiPresenter] Remember preference defaulted to unchecked");
+		m_persistedLocale.clear();
+		m_hasPersistedLocale = false;
+		LOG_INFO(Core, "[AuthUiPresenter] Preferences defaulted (remember_login=false, locale=unset, fullscreen={}, vsync={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+			m_videoFullscreen, m_videoVsync, m_audioMasterVolume, m_audioMusicVolume, m_audioSfxVolume, m_audioUiVolume,
+			m_mouseSensitivity, m_invertY, m_useZqsd ? "zqsd" : "wasd",
+			m_gameplayUdpEnabled, m_allowInsecureDev, m_authTimeoutMs);
 	}
 
 	void AuthUiPresenter::SaveRememberPreference()
 	{
-		const std::string json = std::string("{\n  \"client\": {\n    \"auth_ui\": {\n      \"remember_login\": ")
-			+ (m_rememberLogin ? "true" : "false")
-			+ "\n    }\n  }\n}\n";
+		const std::string locale = CurrentLocale();
+		std::string json = BuildUserSettingsJson(m_rememberLogin, locale, m_videoFullscreen, m_videoVsync);
+		ReplaceAudioSettings(json, m_audioMasterVolume, m_audioMusicVolume, m_audioSfxVolume, m_audioUiVolume);
+		ReplaceControlSettings(json, m_mouseSensitivity, m_invertY, m_useZqsd);
+		ReplaceGameSettings(json, m_gameplayUdpEnabled, m_allowInsecureDev, m_authTimeoutMs);
 		if (!engine::platform::FileSystem::WriteAllText(std::string(kUserSettingsPath), json))
 		{
-			LOG_WARN(Core, "[AuthUiPresenter] Failed to persist remember preference");
+			LOG_WARN(Core, "[AuthUiPresenter] Failed to persist preferences");
 			return;
 		}
 		m_savedRememberLogin = m_rememberLogin;
+		m_persistedLocale = locale;
+		m_hasPersistedLocale = !locale.empty();
+		LOG_INFO(Core, "[AuthUiPresenter] Preferences persisted (remember_login={}, locale={}, fullscreen={}, vsync={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+			m_rememberLogin, locale, m_videoFullscreen, m_videoVsync,
+			m_audioMasterVolume, m_audioMusicVolume, m_audioSfxVolume, m_audioUiVolume,
+			m_mouseSensitivity, m_invertY, m_useZqsd ? "zqsd" : "wasd",
+			m_gameplayUdpEnabled, m_allowInsecureDev, m_authTimeoutMs);
 	}
 
 	bool AuthUiPresenter::BlocksWorldInput() const
@@ -324,6 +568,7 @@ namespace engine::client
 
 	void AuthUiPresenter::ResetMasterSession()
 	{
+		JoinWorker();
 		m_masterSessionId = 0;
 		if (m_masterClient)
 		{
@@ -364,32 +609,39 @@ namespace engine::client
 
 	void AuthUiPresenter::UpdateWindowTitle(engine::platform::Window& window) const
 	{
-		std::string t = "LCDLLN | ";
+		std::string t = Tr("app.title");
+		t += " | ";
 		switch (m_phase)
 		{
 		case Phase::Login:
-			t += "Login";
+			t += Tr("auth.phase.login");
 			break;
 		case Phase::Register:
-			t += "Register";
+			t += Tr("auth.phase.register");
 			break;
 		case Phase::VerifyEmail:
-			t += "Verify email";
+			t += Tr("auth.phase.verify_email");
 			break;
 		case Phase::ForgotPassword:
-			t += "Forgot password";
+			t += Tr("auth.phase.forgot_password");
 			break;
 		case Phase::Terms:
-			t += "Terms";
+			t += Tr("auth.phase.terms");
 			break;
 		case Phase::CharacterCreate:
-			t += "Character creation";
+			t += Tr("auth.phase.character_create");
+			break;
+		case Phase::LanguageSelectionFirstRun:
+			t += Tr("language.first_run.title");
+			break;
+		case Phase::LanguageOptions:
+			t += Tr("language.options.title");
 			break;
 		case Phase::Submitting:
-			t += "Connecting...";
+			t += Tr("auth.phase.submitting");
 			break;
 		case Phase::Error:
-			t += "Error";
+			t += Tr("auth.phase.error");
 			break;
 		}
 		if (!m_userErrorText.empty() && m_phase == Phase::Error)
@@ -402,6 +654,85 @@ namespace engine::client
 				t += m_userErrorText;
 		}
 		window.SetTitle(t);
+	}
+
+	void AuthUiPresenter::ApplyLocaleSelection(bool firstRun)
+	{
+		const auto& locales = m_localization.GetAvailableLocales();
+		if (locales.empty())
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] ApplyLocaleSelection ignored: no available locales");
+			return;
+		}
+
+		if (m_languageSelectionIndex >= locales.size())
+			m_languageSelectionIndex = 0;
+		m_selectedLocale = locales[m_languageSelectionIndex];
+		if (!m_localization.SetLocale(m_selectedLocale))
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] Locale apply failed for '{}'", m_selectedLocale);
+			return;
+		}
+
+		SaveRememberPreference();
+		m_infoBanner = Tr("language.apply_success", { { "language", LocalizedLanguageName(m_selectedLocale) } });
+		LOG_INFO(Core, "[AuthUiPresenter] Locale selection applied (locale={}, first_run={})", m_selectedLocale, firstRun);
+		if (firstRun)
+		{
+			m_phase = Phase::Login;
+			m_activeField = 0;
+		}
+		else
+		{
+			m_phase = m_phaseBeforeOptions;
+		}
+	}
+
+	void AuthUiPresenter::OpenLanguageOptions()
+	{
+		const auto& locales = m_localization.GetAvailableLocales();
+		if (locales.empty())
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] OpenLanguageOptions ignored: no locales");
+			return;
+		}
+		m_phaseBeforeOptions = m_phase;
+		m_phase = Phase::LanguageOptions;
+		m_selectedLocale = CurrentLocale();
+		m_videoFullscreenPending = m_videoFullscreen;
+		m_videoVsyncPending = m_videoVsync;
+		m_audioMasterVolumePending = m_audioMasterVolume;
+		m_audioMusicVolumePending = m_audioMusicVolume;
+		m_audioSfxVolumePending = m_audioSfxVolume;
+		m_audioUiVolumePending = m_audioUiVolume;
+		m_mouseSensitivityPending = m_mouseSensitivity;
+		m_invertYPending = m_invertY;
+		m_useZqsdPending = m_useZqsd;
+		m_gameplayUdpEnabledPending = m_gameplayUdpEnabled;
+		m_allowInsecureDevPending = m_allowInsecureDev;
+		m_authTimeoutMsPending = m_authTimeoutMs;
+		m_optionsSelectionIndex = 0;
+		auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
+		m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
+		LOG_INFO(Core, "[AuthUiPresenter] Options opened (locale={}, fullscreen={}, vsync={}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+			m_selectedLocale, m_videoFullscreenPending, m_videoVsyncPending,
+			m_mouseSensitivityPending, m_invertYPending, m_useZqsdPending ? "zqsd" : "wasd",
+			m_gameplayUdpEnabledPending, m_allowInsecureDevPending, m_authTimeoutMsPending);
+	}
+
+	std::string AuthUiPresenter::Tr(std::string_view key, const LocalizationService::Params& params) const
+	{
+		return m_localization.Translate(key, params);
+	}
+
+	std::string AuthUiPresenter::CurrentLocale() const
+	{
+		return m_localization.GetCurrentLocale();
+	}
+
+	std::string AuthUiPresenter::LocalizedLanguageName(std::string_view localeTag) const
+	{
+		return Tr(std::string("language.name.") + std::string(localeTag));
 	}
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
@@ -435,7 +766,7 @@ namespace engine::client
 				m_pendingVerifyAccountId = copy.accountId;
 				m_phase = Phase::VerifyEmail;
 				m_userErrorText.clear();
-				m_infoBanner = copy.message.empty() ? "Registration OK. Enter the verification code sent by email." : copy.message;
+				m_infoBanner = copy.message.empty() ? Tr("auth.info.register_ok") : copy.message;
 				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: {}", m_infoBanner);
 			}
 			else
@@ -465,7 +796,7 @@ namespace engine::client
 					m_termsScrolledToBottom = false;
 					m_termsAcknowledgeChecked = false;
 					m_phase = Phase::Terms;
-					m_infoBanner = copy.message.empty() ? "Terms acceptance required." : copy.message;
+					m_infoBanner = copy.message.empty() ? Tr("auth.info.terms_required") : copy.message;
 				}
 				else
 				{
@@ -488,7 +819,7 @@ namespace engine::client
 			{
 				m_phase = Phase::Login;
 				m_userErrorText.clear();
-				m_infoBanner = copy.message.empty() ? "Email verified. You can now log in." : copy.message;
+				m_infoBanner = copy.message.empty() ? Tr("auth.info.email_verified") : copy.message;
 				LOG_INFO(Core, "[AuthUiPresenter] VerifyEmail OK: {}", m_infoBanner);
 			}
 			else
@@ -506,7 +837,7 @@ namespace engine::client
 			if (copy.success)
 			{
 				m_userErrorText.clear();
-				m_infoBanner = copy.message.empty() ? "If the email exists, a reset message has been sent." : copy.message;
+				m_infoBanner = copy.message.empty() ? Tr("auth.info.forgot_password") : copy.message;
 			}
 			else
 			{
@@ -521,7 +852,7 @@ namespace engine::client
 			{
 				if (copy.termsPendingCount == 0)
 				{
-					m_infoBanner = "All terms accepted. Choose your character name.";
+					m_infoBanner = Tr("auth.info.terms_done");
 					m_phase = Phase::CharacterCreate;
 				}
 				else
@@ -554,7 +885,7 @@ namespace engine::client
 			{
 				if (copy.termsPendingCount == 0)
 				{
-					m_infoBanner = "All terms accepted. Choose your character name.";
+					m_infoBanner = Tr("auth.info.terms_done");
 					m_phase = Phase::CharacterCreate;
 				}
 				else
@@ -586,7 +917,7 @@ namespace engine::client
 			if (copy.success)
 			{
 				ResetMasterSession();
-				m_infoBanner = copy.message.empty() ? "Character created. Continuing login..." : copy.message;
+				m_infoBanner = copy.message.empty() ? Tr("auth.info.character_created") : copy.message;
 				m_phase = Phase::Submitting;
 				StartMasterFlowWorker(cfg);
 			}
@@ -620,7 +951,7 @@ namespace engine::client
 		if (hash.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Could not hash password (Argon2).";
+			m_userErrorText = Tr("auth.error.hash_password_failed");
 			LOG_ERROR(Core, "[AuthUiPresenter] Register aborted: empty client_hash");
 			return;
 		}
@@ -629,7 +960,7 @@ namespace engine::client
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
-		const std::string locale = cfg.GetString("client.locale", "");
+		const std::string locale = CurrentLocale();
 		const std::string login = m_login;
 		const std::string email = m_email;
 		const std::string firstName = m_firstName;
@@ -742,7 +1073,7 @@ namespace engine::client
 		if (hash.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Could not hash password (Argon2).";
+			m_userErrorText = Tr("auth.error.hash_password_failed");
 			return;
 		}
 
@@ -753,7 +1084,7 @@ namespace engine::client
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
 		const std::string login = m_login;
-		const std::string locale = cfg.GetString("client.locale", "");
+		const std::string locale = CurrentLocale();
 
 		m_pendingAsyncKind = AsyncKind::AuthOnly;
 		{
@@ -761,9 +1092,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, login, hash, locale]() {
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+		m_worker = std::thread([this, masterClient, host, port, timeoutMs, allowInsecure, login, hash, locale]() {
 			AsyncResult local{};
-			if (!m_masterClient)
+			if (masterClient == nullptr)
 			{
 				local.ready = true;
 				local.message = "Internal error: master client missing.";
@@ -771,9 +1103,9 @@ namespace engine::client
 				m_asyncResult = local;
 				return;
 			}
-			m_masterClient->SetAllowInsecureDev(allowInsecure);
-			m_masterClient->Connect(host, port);
-			if (!WaitConnected(m_masterClient.get(), timeoutMs + 2000u))
+			masterClient->SetAllowInsecureDev(allowInsecure);
+			masterClient->Connect(host, port);
+			if (!WaitConnected(masterClient, timeoutMs + 2000u))
 			{
 				local.ready = true;
 				local.message = "Master connect failed or timeout.";
@@ -782,7 +1114,7 @@ namespace engine::client
 				return;
 			}
 
-			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
+			engine::network::RequestResponseDispatcher disp(masterClient);
 			bool authDone = false;
 			bool authOk = false;
 			std::string errMsg;
@@ -824,7 +1156,7 @@ namespace engine::client
 			}
 			if (!authOk)
 			{
-				m_masterClient->Disconnect("auth_failed");
+				masterClient->Disconnect("auth_failed");
 				local.ready = true;
 				local.message = errMsg.empty() ? "AUTH failed." : errMsg;
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
@@ -856,7 +1188,7 @@ namespace engine::client
 					},
 					timeoutMs))
 			{
-				m_masterClient->Disconnect("terms_status_send_failed");
+				masterClient->Disconnect("terms_status_send_failed");
 				local.ready = true;
 				local.message = "Send TERMS_STATUS failed.";
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
@@ -871,7 +1203,7 @@ namespace engine::client
 			}
 			if (!statusDone)
 			{
-				m_masterClient->Disconnect("terms_status_timeout");
+				masterClient->Disconnect("terms_status_timeout");
 				local.ready = true;
 				local.message = "TERMS status timeout.";
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
@@ -902,7 +1234,7 @@ namespace engine::client
 						},
 						timeoutMs))
 				{
-					m_masterClient->Disconnect("terms_content_send_failed");
+					masterClient->Disconnect("terms_content_send_failed");
 					local.ready = true;
 					local.message = "Send TERMS_CONTENT failed.";
 					std::lock_guard<std::mutex> lock(m_asyncMutex);
@@ -917,7 +1249,7 @@ namespace engine::client
 				}
 				if (!contentDone)
 				{
-					m_masterClient->Disconnect("terms_content_timeout");
+					masterClient->Disconnect("terms_content_timeout");
 					local.ready = true;
 					local.message = "TERMS content timeout.";
 					std::lock_guard<std::mutex> lock(m_asyncMutex);
@@ -946,7 +1278,7 @@ namespace engine::client
 		if (hash.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Could not hash password (Argon2).";
+			m_userErrorText = Tr("auth.error.hash_password_failed");
 			LOG_ERROR(Core, "[AuthUiPresenter] Master flow aborted: empty client_hash");
 			return;
 		}
@@ -1062,11 +1394,11 @@ namespace engine::client
 		if (!m_masterClient || m_masterSessionId == 0)
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Terms session is not active.";
+			m_userErrorText = Tr("auth.error.terms_session_inactive");
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const std::string locale = cfg.GetString("client.locale", "");
+		const std::string locale = CurrentLocale();
 
 		m_pendingAsyncKind = AsyncKind::TermsStatus;
 		{
@@ -1074,10 +1406,20 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, timeoutMs, locale]() {
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+		const uint64_t sessionId = m_masterSessionId;
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, locale]() {
 			AsyncResult local{};
-			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
-			disp.SetSessionId(m_masterSessionId);
+			if (masterClient == nullptr)
+			{
+				local.ready = true;
+				local.message = "Internal error: master client missing.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(masterClient);
+			disp.SetSessionId(sessionId);
 			bool statusDone = false;
 			std::string errMsg;
 			if (!disp.SendRequest(engine::network::kOpcodeTermsStatusRequest, engine::network::BuildTermsStatusRequestPayload(locale),
@@ -1178,11 +1520,11 @@ namespace engine::client
 		if (!m_masterClient || m_masterSessionId == 0 || m_pendingTermsEditionId == 0)
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Terms session is not active.";
+			m_userErrorText = Tr("auth.error.terms_session_inactive");
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const std::string locale = cfg.GetString("client.locale", "");
+		const std::string locale = CurrentLocale();
 		const uint64_t editionId = m_pendingTermsEditionId;
 
 		m_pendingAsyncKind = AsyncKind::TermsAccept;
@@ -1191,10 +1533,20 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, timeoutMs, locale, editionId]() {
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+		const uint64_t sessionId = m_masterSessionId;
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, locale, editionId]() {
 			AsyncResult local{};
-			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
-			disp.SetSessionId(m_masterSessionId);
+			if (masterClient == nullptr)
+			{
+				local.ready = true;
+				local.message = "Internal error: master client missing.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(masterClient);
+			disp.SetSessionId(sessionId);
 			bool acceptDone = false;
 			std::string errMsg;
 			if (!disp.SendRequest(engine::network::kOpcodeTermsAcceptRequest, engine::network::BuildTermsAcceptRequestPayload(editionId, 1u),
@@ -1321,7 +1673,7 @@ namespace engine::client
 		if (!m_masterClient || m_masterSessionId == 0)
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Character creation session is not active.";
+			m_userErrorText = Tr("auth.error.character_session_inactive");
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
@@ -1333,10 +1685,20 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, timeoutMs, characterName]() {
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+		const uint64_t sessionId = m_masterSessionId;
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName]() {
 			AsyncResult local{};
-			engine::network::RequestResponseDispatcher disp(m_masterClient.get());
-			disp.SetSessionId(m_masterSessionId);
+			if (masterClient == nullptr)
+			{
+				local.ready = true;
+				local.message = "Internal error: master client missing.";
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(masterClient);
+			disp.SetSessionId(sessionId);
 			bool done = false;
 			std::string errMsg;
 			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
@@ -1455,6 +1817,22 @@ namespace engine::client
 bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg)
 {
 #if defined(_WIN32)
+	auto phaseName = [](Phase phase) -> const char*
+	{
+		switch (phase)
+		{
+		case Phase::Login: return "Login";
+		case Phase::Register: return "Register";
+		case Phase::ForgotPassword: return "ForgotPassword";
+		case Phase::VerifyEmail: return "VerifyEmail";
+		case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
+		case Phase::LanguageOptions: return "LanguageOptions";
+		case Phase::Submitting: return "Submitting";
+		case Phase::Error: return "Error";
+		default: return "Unknown";
+		}
+	};
+
 	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword || m_phase == Phase::Register)
 	{
 		if (m_phase == Phase::Login)
@@ -1475,22 +1853,32 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		switch (window.ConsumeAuthScreenCommand())
 		{
 		case engine::platform::Window::AuthScreenCommand::Submit:
+			LOG_INFO(Core, "[AuthUiPresenter] Submit requested (phase={}, login_empty={}, password_empty={}, email_empty={})",
+				phaseName(m_phase), m_login.empty(), m_password.empty(), m_email.empty());
 			SubmitCurrentPhase(cfg);
 			break;
 		case engine::platform::Window::AuthScreenCommand::Quit:
 			window.RequestClose();
 			break;
 		case engine::platform::Window::AuthScreenCommand::OpenRegister:
+			LOG_INFO(Core, "[AuthUiPresenter] Phase change: {} -> Register", phaseName(m_phase));
 			m_phase = Phase::Register;
 			m_activeField = 0;
 			m_userErrorText.clear();
 			break;
 		case engine::platform::Window::AuthScreenCommand::OpenForgotPassword:
-			m_phase = Phase::ForgotPassword;
-			m_activeField = 0;
-			m_userErrorText.clear();
+		{
+			const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
+			LOG_INFO(Core, "[AuthUiPresenter] Open password recovery portal from phase={} url={}", phaseName(m_phase), resetUrl);
+			if (!window.OpenExternalUrl(resetUrl))
+			{
+				m_phase = Phase::Error;
+				m_userErrorText = Tr("auth.error.open_recovery_portal");
+			}
 			break;
+		}
 		case engine::platform::Window::AuthScreenCommand::BackToLogin:
+			LOG_INFO(Core, "[AuthUiPresenter] Phase change: {} -> Login", phaseName(m_phase));
 			m_phase = Phase::Login;
 			m_activeField = 0;
 			m_userErrorText.clear();
@@ -1512,14 +1900,19 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		state.rememberChecked = m_rememberLogin;
 		state.focusPrimary = m_activeField == 0;
 		state.focusPassword = (m_phase == Phase::Login) && (m_activeField == 1);
-		state.titleLine1 = "Les Chroniques De La";
-		state.titleLine2 = "Lune Noire";
-		state.sectionTitle = m_phase == Phase::Login ? "Connexion"
-			: (m_phase == Phase::ForgotPassword ? "Recuperation du mot de passe" : "Inscription");
-		state.primaryLabel = m_phase == Phase::Register ? "" : "Login / Email";
+		state.titleLine1 = Tr("auth.title_line1");
+		state.titleLine2 = Tr("auth.title_line2");
+		state.sectionTitle = m_phase == Phase::Login ? Tr("auth.section.login")
+			: (m_phase == Phase::ForgotPassword ? Tr("auth.section.forgot_password") : Tr("auth.section.register"));
+		state.primaryLabel = m_phase == Phase::Register ? "" : Tr("common.login_or_email");
 		state.primaryValue = (m_phase == Phase::Login) ? m_login : m_email;
+		state.passwordLabel = Tr("auth.label.password");
 		state.passwordValue = m_password;
-		state.submitLabel = m_phase == Phase::Register ? "" : "Valider";
+		state.rememberLabel = Tr("auth.checkbox.remember");
+		state.forgotLabel = Tr("auth.button.forgot_password");
+		state.registerLabel = Tr("auth.button.register");
+		state.submitLabel = m_phase == Phase::Register ? "" : Tr("common.submit");
+		state.quitLabel = Tr("common.quit");
 		state.backgroundImagePath = m_phase == Phase::Register ? std::string(kRegisterBackgroundPath) : std::string(kLoginBackgroundPath);
 		state.logoImagePath = m_phase == Phase::Login ? std::string(kLoginLogoPath) : "";
 		state.infoImagePath = m_phase == Phase::Register ? std::string(kRegisterInfoPath) : "";
@@ -1546,7 +1939,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_login.empty() || m_password.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Enter login and password.";
+			m_userErrorText = Tr("auth.error.enter_login_password");
 			LOG_WARN(Core, "[AuthUiPresenter] Submit rejected: empty fields");
 			return;
 		}
@@ -1560,14 +1953,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			|| m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Enter login, password, email, first name, last name, and birth date.";
+			m_userErrorText = Tr("auth.error.enter_register_fields");
 			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
 			return;
 		}
 		if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Birth date must use valid numeric day/month/year values.";
+			m_userErrorText = Tr("auth.error.invalid_birth_date");
 			return;
 		}
 		m_phase = Phase::Submitting;
@@ -1579,13 +1972,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Enter the verification code from the email.";
+			m_userErrorText = Tr("auth.error.enter_verify_code");
 			return;
 		}
 		if (!IsValidVerificationCode(m_verifyCode))
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Verification code must contain exactly 6 digits.";
+			m_userErrorText = Tr("auth.error.invalid_verify_code");
 			return;
 		}
 		m_phase = Phase::Submitting;
@@ -1597,7 +1990,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_email.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Enter the email address for password recovery.";
+			m_userErrorText = Tr("auth.error.enter_recovery_email");
 			return;
 		}
 		m_phase = Phase::Submitting;
@@ -1609,7 +2002,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (!m_termsScrolledToBottom || !m_termsAcknowledgeChecked)
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Scroll to the end of the terms, then check the acknowledgement box.";
+			m_userErrorText = Tr("auth.error.accept_terms");
 			return;
 		}
 		m_phase = Phase::Submitting;
@@ -1621,13 +2014,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_characterName.empty())
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Enter a character name.";
+			m_userErrorText = Tr("auth.error.enter_character_name");
 			return;
 		}
 		if (!IsValidCharacterNameLocal(m_characterName))
 		{
 			m_phase = Phase::Error;
-			m_userErrorText = "Character name must be 3-32 characters and use only letters, digits, or underscore.";
+			m_userErrorText = Tr("auth.error.invalid_character_name");
 			return;
 		}
 		m_phase = Phase::Submitting;
@@ -1680,6 +2073,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				return nullptr;
 			case Phase::CharacterCreate:
 				return &m_characterName;
+			case Phase::LanguageSelectionFirstRun:
+			case Phase::LanguageOptions:
 			default:
 				return nullptr;
 			}
@@ -1762,6 +2157,142 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (m_termsScrolledToBottom && input.WasPressed(engine::platform::Key::Space))
 				m_termsAcknowledgeChecked = !m_termsAcknowledgeChecked;
 		}
+		if (!usingNativeAuth && (m_phase == Phase::LanguageSelectionFirstRun || m_phase == Phase::LanguageOptions))
+		{
+			const auto& locales = m_localization.GetAvailableLocales();
+			if (m_phase == Phase::LanguageSelectionFirstRun)
+			{
+				if (!locales.empty())
+				{
+					if (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Left))
+					{
+						m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
+							? static_cast<uint32_t>(locales.size() - 1u)
+							: (m_languageSelectionIndex - 1u);
+						m_selectedLocale = locales[m_languageSelectionIndex];
+						LOG_INFO(Core, "[AuthUiPresenter] Locale selection moved to {}", m_selectedLocale);
+					}
+					if (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Right))
+					{
+						m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
+						m_selectedLocale = locales[m_languageSelectionIndex];
+						LOG_INFO(Core, "[AuthUiPresenter] Locale selection moved to {}", m_selectedLocale);
+					}
+				}
+			}
+			else
+			{
+				const uint32_t kOptionCount = 13u;
+				if (input.WasPressed(engine::platform::Key::Up))
+				{
+					m_optionsSelectionIndex = (m_optionsSelectionIndex == 0u) ? (kOptionCount - 1u) : (m_optionsSelectionIndex - 1u);
+					LOG_INFO(Core, "[AuthUiPresenter] Options selection={}", m_optionsSelectionIndex);
+				}
+				if (input.WasPressed(engine::platform::Key::Down))
+				{
+					m_optionsSelectionIndex = (m_optionsSelectionIndex + 1u) % kOptionCount;
+					LOG_INFO(Core, "[AuthUiPresenter] Options selection={}", m_optionsSelectionIndex);
+				}
+				if (!locales.empty() && m_optionsSelectionIndex == 0u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					if (input.WasPressed(engine::platform::Key::Left))
+					{
+						m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
+							? static_cast<uint32_t>(locales.size() - 1u)
+							: (m_languageSelectionIndex - 1u);
+					}
+					else
+					{
+						m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
+					}
+					m_selectedLocale = locales[m_languageSelectionIndex];
+					LOG_INFO(Core, "[AuthUiPresenter] Options locale candidate={}", m_selectedLocale);
+				}
+				if (m_optionsSelectionIndex == 1u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					m_videoFullscreenPending = !m_videoFullscreenPending;
+					LOG_INFO(Core, "[AuthUiPresenter] Options fullscreen candidate={}", m_videoFullscreenPending);
+				}
+				if (m_optionsSelectionIndex == 2u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					m_videoVsyncPending = !m_videoVsyncPending;
+					LOG_INFO(Core, "[AuthUiPresenter] Options vsync candidate={}", m_videoVsyncPending);
+				}
+				auto adjustVolume = [&](float& value, std::string_view label)
+				{
+					if (input.WasPressed(engine::platform::Key::Left))
+						value = ClampOptionStep(value - 0.1f);
+					else
+						value = ClampOptionStep(value + 0.1f);
+					LOG_INFO(Core, "[AuthUiPresenter] Options {} candidate={:.1f}", label, value);
+				};
+				if (m_optionsSelectionIndex == 3u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					adjustVolume(m_audioMasterVolumePending, "master");
+				}
+				if (m_optionsSelectionIndex == 4u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					adjustVolume(m_audioMusicVolumePending, "music");
+				}
+				if (m_optionsSelectionIndex == 5u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					adjustVolume(m_audioSfxVolumePending, "sfx");
+				}
+				if (m_optionsSelectionIndex == 6u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					adjustVolume(m_audioUiVolumePending, "ui");
+				}
+				if (m_optionsSelectionIndex == 7u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					if (input.WasPressed(engine::platform::Key::Left))
+						m_mouseSensitivityPending = std::max(0.001f, m_mouseSensitivityPending - 0.001f);
+					else
+						m_mouseSensitivityPending = std::min(0.010f, m_mouseSensitivityPending + 0.001f);
+					LOG_INFO(Core, "[AuthUiPresenter] Options mouse sensitivity candidate={:.4f}", m_mouseSensitivityPending);
+				}
+				if (m_optionsSelectionIndex == 8u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					m_invertYPending = !m_invertYPending;
+					LOG_INFO(Core, "[AuthUiPresenter] Options invert_y candidate={}", m_invertYPending);
+				}
+				if (m_optionsSelectionIndex == 9u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					m_useZqsdPending = !m_useZqsdPending;
+					LOG_INFO(Core, "[AuthUiPresenter] Options movement layout candidate={}", m_useZqsdPending ? "zqsd" : "wasd");
+				}
+				if (m_optionsSelectionIndex == 10u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending;
+					LOG_INFO(Core, "[AuthUiPresenter] Options gameplay_udp candidate={}", m_gameplayUdpEnabledPending);
+				}
+				if (m_optionsSelectionIndex == 11u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					m_allowInsecureDevPending = !m_allowInsecureDevPending;
+					LOG_INFO(Core, "[AuthUiPresenter] Options allow_insecure_dev candidate={}", m_allowInsecureDevPending);
+				}
+				if (m_optionsSelectionIndex == 12u
+					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				{
+					if (input.WasPressed(engine::platform::Key::Left))
+						m_authTimeoutMsPending = (m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u;
+					else
+						m_authTimeoutMsPending = std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u);
+					LOG_INFO(Core, "[AuthUiPresenter] Options auth timeout candidate={}ms", m_authTimeoutMsPending);
+				}
+			}
+		}
 
 	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
 		{
@@ -1772,9 +2303,21 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
 		{
-			m_phase = Phase::ForgotPassword;
-			m_activeField = 0;
-			m_userErrorText.clear();
+			const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
+			LOG_INFO(Core, "[AuthUiPresenter] Keyboard shortcut opens password recovery portal ({})", resetUrl);
+			if (!window.OpenExternalUrl(resetUrl))
+			{
+				m_phase = Phase::Error;
+				m_userErrorText = Tr("auth.error.open_recovery_portal");
+			}
+		}
+	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::O)
+		&& m_phase != Phase::LanguageSelectionFirstRun
+		&& m_phase != Phase::LanguageOptions
+		&& m_phase != Phase::Submitting
+		&& m_phase != Phase::Terms)
+		{
+			OpenLanguageOptions();
 		}
 
 	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::L) && (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail))
@@ -1788,7 +2331,46 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
 		|| (usingNativeAuth && m_phase == Phase::Error))
 		{
+		if (!usingNativeAuth && m_phase == Phase::LanguageSelectionFirstRun)
+		{
+			ApplyLocaleSelection(true);
+		}
+		else if (!usingNativeAuth && m_phase == Phase::LanguageOptions)
+		{
+			m_videoFullscreen = m_videoFullscreenPending;
+			m_videoVsync = m_videoVsyncPending;
+			m_audioMasterVolume = m_audioMasterVolumePending;
+			m_audioMusicVolume = m_audioMusicVolumePending;
+			m_audioSfxVolume = m_audioSfxVolumePending;
+			m_audioUiVolume = m_audioUiVolumePending;
+			m_mouseSensitivity = m_mouseSensitivityPending;
+			m_invertY = m_invertYPending;
+			m_useZqsd = m_useZqsdPending;
+			m_gameplayUdpEnabled = m_gameplayUdpEnabledPending;
+			m_allowInsecureDev = m_allowInsecureDevPending;
+			m_authTimeoutMs = m_authTimeoutMsPending;
+			m_pendingVideoSettings.applyRequested = true;
+			m_pendingVideoSettings.fullscreen = m_videoFullscreen;
+			m_pendingVideoSettings.vsync = m_videoVsync;
+			m_pendingAudioSettings.applyRequested = true;
+			m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
+			m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
+			m_pendingAudioSettings.sfxVolume = m_audioSfxVolume;
+			m_pendingAudioSettings.uiVolume = m_audioUiVolume;
+			m_pendingControlSettings.applyRequested = true;
+			m_pendingControlSettings.mouseSensitivity = m_mouseSensitivity;
+			m_pendingControlSettings.invertY = m_invertY;
+			m_pendingControlSettings.useZqsd = m_useZqsd;
+			m_pendingGameSettings.applyRequested = true;
+			m_pendingGameSettings.gameplayUdpEnabled = m_gameplayUdpEnabled;
+			m_pendingGameSettings.allowInsecureDev = m_allowInsecureDev;
+			m_pendingGameSettings.authTimeoutMs = m_authTimeoutMs;
+			ApplyLocaleSelection(false);
+		}
+		else
+		{
 		SubmitCurrentPhase(cfg);
+		}
 		}
 
 		UpdateWindowTitle(window);
@@ -1803,108 +2385,283 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	}
 #endif
 		std::string s;
-	s += "Les Chroniques De La\n";
-	s += "Lune Noire\n\n";
+	s += Tr("auth.title_line1");
+	s += "\n";
+	s += Tr("auth.title_line2");
+	s += "\n\n";
 		if (!m_infoBanner.empty())
 		{
-			s += "Information\n";
+			s += Tr("common.information");
+			s += "\n";
 			s += m_infoBanner;
 			s += "\n\n";
 		}
 		switch (m_phase)
 		{
+		case Phase::LanguageSelectionFirstRun:
+		case Phase::LanguageOptions:
+		{
+			s += (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.title") : Tr("language.options.title");
+			s += "\n\n";
+			s += Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } });
+			s += "\n";
+			if (!m_selectedLocale.empty())
+			{
+				s += Tr("language.first_run.message", { { "language", LocalizedLanguageName(m_selectedLocale) } });
+				s += "\n";
+			}
+			s += "\n";
+			s += Tr("language.available");
+			s += "\n";
+			const auto& locales = m_localization.GetAvailableLocales();
+			for (size_t i = 0; i < locales.size(); ++i)
+			{
+				s += ((m_phase == Phase::LanguageSelectionFirstRun && i == m_languageSelectionIndex)
+					|| (m_phase == Phase::LanguageOptions && m_optionsSelectionIndex == 0u && i == m_languageSelectionIndex)) ? "> " : "  ";
+				s += LocalizedLanguageName(locales[i]);
+				s += " (";
+				s += locales[i];
+				s += ")\n";
+			}
+			if (m_phase == Phase::LanguageOptions)
+			{
+				s += "\n";
+				s += Tr("options.video.title");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 1u) ? "> " : "  ";
+				s += Tr("options.video.fullscreen");
+				s += ": ";
+				s += Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 2u) ? "> " : "  ";
+				s += Tr("options.video.vsync");
+				s += ": ";
+				s += Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off");
+				s += "\n";
+				s += "\n";
+				s += Tr("options.audio.title");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 3u) ? "> " : "  ";
+				s += Tr("options.audio.master");
+				s += ": ";
+				s += std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f));
+				s += "%\n";
+				s += (m_optionsSelectionIndex == 4u) ? "> " : "  ";
+				s += Tr("options.audio.music");
+				s += ": ";
+				s += std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f));
+				s += "%\n";
+				s += (m_optionsSelectionIndex == 5u) ? "> " : "  ";
+				s += Tr("options.audio.sfx");
+				s += ": ";
+				s += std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f));
+				s += "%\n";
+				s += (m_optionsSelectionIndex == 6u) ? "> " : "  ";
+				s += Tr("options.audio.ui");
+				s += ": ";
+				s += std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f));
+				s += "%\n";
+				s += "\n";
+				s += Tr("options.controls.title");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 7u) ? "> " : "  ";
+				s += Tr("options.controls.mouse_sensitivity");
+				s += ": ";
+				s += std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f));
+				s += "\n";
+				s += (m_optionsSelectionIndex == 8u) ? "> " : "  ";
+				s += Tr("options.controls.invert_y");
+				s += ": ";
+				s += Tr(m_invertYPending ? "options.value.on" : "options.value.off");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 9u) ? "> " : "  ";
+				s += Tr("options.controls.movement_layout");
+				s += ": ";
+				s += Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd");
+				s += "\n";
+				s += "\n";
+				s += Tr("options.game.title");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 10u) ? "> " : "  ";
+				s += Tr("options.game.gameplay_udp");
+				s += ": ";
+				s += Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 11u) ? "> " : "  ";
+				s += Tr("options.game.allow_insecure_dev");
+				s += ": ";
+				s += Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off");
+				s += "\n";
+				s += (m_optionsSelectionIndex == 12u) ? "> " : "  ";
+				s += Tr("options.game.auth_timeout");
+				s += ": ";
+				s += std::to_string(m_authTimeoutMsPending);
+				s += " ms\n";
+			}
+			s += "\n";
+			s += (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.confirm") : Tr("language.options.apply_hint");
+			s += "\n";
+			break;
+		}
 		case Phase::Login:
-			s += "Connexion\n\n";
-			s += "Identifiant\n";
+			s += Tr("auth.section.login");
+			s += "\n\n";
+			s += Tr("auth.label.login");
+			s += "\n";
 			s += m_login;
 			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "\nMot de passe\n";
+			s += "\n";
+			s += Tr("auth.label.password");
+			s += "\n";
 			AppendPasswordStars(s, m_password.size());
 			s += (m_activeField == 1 ? "|\n" : "\n");
-			s += "\nEntrer pour se connecter\nR creer un compte\nF mot de passe oublie\n";
+			s += "\n";
+			s += Tr("auth.hint.login.submit");
+			s += "\n";
+			s += Tr("auth.hint.login.register");
+			s += "\n";
+			s += Tr("auth.hint.login.forgot");
+			s += "\n";
+			s += Tr("auth.hint.login.options");
+			s += "\n";
 			break;
 		case Phase::Register:
-			s += "Creation de compte\n\n";
-			s += "Identifiant\n";
+			s += Tr("auth.panel.register");
+			s += "\n\n";
+			s += Tr("auth.label.login");
+			s += "\n";
 			s += m_login;
 			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "\nMot de passe\n";
+			s += "\n";
+			s += Tr("auth.label.password");
+			s += "\n";
 			AppendPasswordStars(s, m_password.size());
 			s += (m_activeField == 1 ? "|\n" : "\n");
-			s += "\nEmail\n";
+			s += "\n";
+			s += Tr("common.email");
+			s += "\n";
 			s += m_email;
 			s += (m_activeField == 2 ? "|\n" : "\n");
-			s += "\nPrenom\n";
+			s += "\n";
+			s += Tr("auth.label.first_name");
+			s += "\n";
 			s += m_firstName;
 			s += (m_activeField == 3 ? "|\n" : "\n");
-			s += "\nNom\n";
+			s += "\n";
+			s += Tr("auth.label.last_name");
+			s += "\n";
 			s += m_lastName;
 			s += (m_activeField == 4 ? "|\n" : "\n");
-			s += "\nJour de naissance\n";
+			s += "\n";
+			s += Tr("auth.label.birth_day");
+			s += "\n";
 			s += m_birthDay;
 			s += (m_activeField == 5 ? "|\n" : "\n");
-			s += "\nMois de naissance\n";
+			s += "\n";
+			s += Tr("auth.label.birth_month");
+			s += "\n";
 			s += m_birthMonth;
 			s += (m_activeField == 6 ? "|\n" : "\n");
-			s += "\nAnnee de naissance\n";
+			s += "\n";
+			s += Tr("auth.label.birth_year");
+			s += "\n";
 			s += m_birthYear;
 			s += (m_activeField == 7 ? "|\n" : "\n");
-			s += "\nEntrer pour valider\nL retour connexion\n";
+			s += "\n";
+			s += Tr("auth.hint.register.submit");
+			s += "\n";
+			s += Tr("auth.hint.return_login");
+			s += "\n";
 			break;
 		case Phase::VerifyEmail:
-			s += "Verification email\n\n";
-			s += "Compte\n";
+			s += Tr("auth.phase.verify_email");
+			s += "\n\n";
+			s += Tr("auth.label.account");
+			s += "\n";
 			s += std::to_string(m_pendingVerifyAccountId);
-			s += "\n\nCode a 6 chiffres\n";
+			s += "\n\n";
+			s += Tr("auth.label.verify_code");
+			s += "\n";
 			s += m_verifyCode;
 			s += "|\n";
-			s += "\nEntrer pour confirmer\nL retour\n";
+			s += "\n";
+			s += Tr("auth.hint.verify.submit");
+			s += "\n";
+			s += Tr("auth.hint.return_login");
+			s += "\n";
 			break;
 		case Phase::ForgotPassword:
-			s += "Recuperation du mot de passe\n\n";
-			s += "Email\n";
+			s += Tr("auth.section.forgot_password");
+			s += "\n\n";
+			s += Tr("common.email");
+			s += "\n";
 			s += m_email;
 			s += "|\n";
-			s += "\nEntrer pour envoyer\nL retour\n";
+			s += "\n";
+			s += Tr("common.submit");
+			s += "\n";
+			s += Tr("auth.hint.return_login");
+			s += "\n";
 			break;
 		case Phase::Terms:
 		{
-			s += "Conditions d'utilisation\n\n";
-			s += "Edition ";
+			s += Tr("auth.panel.terms");
+			s += "\n\n";
+			s += Tr("auth.panel.edition");
+			s += " ";
 			s += std::to_string(m_pendingTermsEditionId);
-			s += "  Version ";
+			s += "  ";
+			s += Tr("auth.panel.version");
+			s += " ";
 			s += m_termsVersionLabel;
-			s += "\nTitre ";
+			s += "\n";
+			s += Tr("auth.panel.title");
+			s += " ";
 			s += m_termsTitle;
-			s += "\nLangue ";
+			s += "\n";
+			s += Tr("auth.panel.language");
+			s += " ";
 			s += m_termsLocale;
 			s += "\n\n";
 			const size_t start = static_cast<size_t>(std::min<uint32_t>(m_termsScrollOffset, static_cast<uint32_t>(m_termsContent.size())));
 			const size_t count = std::min<size_t>(900u, m_termsContent.size() - start);
 			s.append(m_termsContent.data() + start, count);
 			s += "\n\n";
-			s += m_termsScrolledToBottom ? "[x] Fin atteinte. " : "[ ] Descendez jusqu'a la fin. ";
-			s += m_termsAcknowledgeChecked ? "[x] J'accepte les conditions.\n" : "[ ] J'accepte les conditions.\n";
-			s += "Fleches/PageUp/PageDown pour defiler\nEspace cocher, Entrer valider\n";
+			s += m_termsScrolledToBottom ? Tr("auth.panel.end_reached") : Tr("auth.panel.end_not_reached");
+			s += m_termsAcknowledgeChecked ? Tr("auth.panel.accept_checked") : Tr("auth.panel.accept_unchecked");
+			s += Tr("auth.hint.terms.scroll");
+			s += "\n";
+			s += Tr("auth.hint.terms.accept");
+			s += "\n";
 			break;
 		}
 		case Phase::CharacterCreate:
-			s += "Creation du personnage\n\n";
-			s += "Nom\n";
+			s += Tr("auth.panel.character_create");
+			s += "\n\n";
+			s += Tr("auth.label.character_name");
+			s += "\n";
 			s += m_characterName;
 			s += "|\n";
-			s += "\n3 a 32 caracteres. Lettres, chiffres et underscore.\n";
+			s += "\n";
+			s += Tr("auth.hint.character.rules");
+			s += "\n";
 			break;
 		case Phase::Submitting:
-			s += "Connexion au serveur en cours...\n";
+			s += Tr("auth.panel.submitting");
+			s += "\n";
 			break;
 		case Phase::Error:
-			s += "Erreur\n\n";
+			s += Tr("auth.panel.error");
+			s += "\n\n";
 			s += m_userErrorText;
-			s += "\n\nEntrer pour fermer\n";
+			s += "\n\n";
+			s += Tr("common.continue");
+			s += "\n";
 			break;
 		}
-		s += "\nTab changer de champ  Echap retour\n";
+		s += "\n";
+		s += Tr("common.tab_escape_hint");
+		s += "\n";
 		return s;
 	}
 
@@ -1918,15 +2675,55 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		state.forgotPassword = m_phase == Phase::ForgotPassword;
 		state.terms = m_phase == Phase::Terms;
 		state.characterCreate = m_phase == Phase::CharacterCreate;
+		state.languageSelection = m_phase == Phase::LanguageSelectionFirstRun;
+		state.languageOptions = m_phase == Phase::LanguageOptions;
 		state.submitting = m_phase == Phase::Submitting;
 		state.error = m_phase == Phase::Error;
 		return state;
+	}
+
+	AuthUiPresenter::VideoSettingsCommand AuthUiPresenter::ConsumePendingVideoSettings()
+	{
+		const VideoSettingsCommand cmd = m_pendingVideoSettings;
+		m_pendingVideoSettings = {};
+		return cmd;
+	}
+
+	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()
+	{
+		const AudioSettingsCommand cmd = m_pendingAudioSettings;
+		m_pendingAudioSettings = {};
+		return cmd;
+	}
+
+	AuthUiPresenter::ControlSettingsCommand AuthUiPresenter::ConsumePendingControlSettings()
+	{
+		const ControlSettingsCommand cmd = m_pendingControlSettings;
+		m_pendingControlSettings = {};
+		return cmd;
+	}
+
+	AuthUiPresenter::GameSettingsCommand AuthUiPresenter::ConsumePendingGameSettings()
+	{
+		const GameSettingsCommand cmd = m_pendingGameSettings;
+		m_pendingGameSettings = {};
+		return cmd;
 	}
 
 	bool AuthUiPresenter::OnEscape()
 	{
 		if (m_phase == Phase::Submitting)
 			return true;
+		if (m_phase == Phase::LanguageSelectionFirstRun)
+		{
+			return true;
+		}
+		if (m_phase == Phase::LanguageOptions)
+		{
+			m_phase = m_phaseBeforeOptions;
+			LOG_INFO(Core, "[AuthUiPresenter] Escape: Language options closed");
+			return true;
+		}
 		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail)
 		{
 			m_phase = Phase::Login;
@@ -1942,7 +2739,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 			m_phase = Phase::Login;
 			m_userErrorText.clear();
-			m_infoBanner = "Character creation cancelled. Back to login.";
+			m_infoBanner = Tr("auth.info.character_cancelled");
 			ResetMasterSession();
 			return true;
 		}

@@ -29,8 +29,13 @@ namespace engine::platform
 			std::string sectionTitle;
 			std::string primaryLabel;
 			std::string primaryValue;
+			std::string passwordLabel;
 			std::string passwordValue;
+			std::string rememberLabel;
+			std::string forgotLabel;
+			std::string registerLabel;
 			std::string submitLabel;
+			std::string quitLabel;
 			std::string backgroundImagePath;
 			std::string logoImagePath;
 			std::string infoImagePath;
@@ -80,6 +85,7 @@ namespace engine::platform
 
 		/// Updates the native window title.
 		void SetTitle(std::string_view title);
+		bool OpenExternalUrl(std::string_view url) const;
 
 		/// Shows or hides a native overlay panel above the swapchain.
 		void SetOverlayText(std::string_view text);
@@ -91,6 +97,7 @@ namespace engine::platform
 
 		/// Toggle fullscreen (optional; Win32 implementation).
 		void ToggleFullscreen();
+		bool IsFullscreen() const { return m_fullscreen; }
 
 		/// Set callbacks for resize and close events.
 		void SetOnResize(std::function<void(int /*w*/, int /*h*/)> cb);

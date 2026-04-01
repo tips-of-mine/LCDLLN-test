@@ -8,6 +8,13 @@ export default function LoginPage() {
       </p>
       <div className="card">
         <p style={{ color: "var(--muted)" }}>Formulaire placeholder — implémenter auth sécurisée.</p>
+        <p>
+          Mot de passe oublié : <a href="/password-recovery">ouvrir la récupération web</a>.
+        </p>
+        <p>
+          Préparation du profil de récupération en dev :{" "}
+          <a href="/player/recovery-profile?accountId=1">/player/recovery-profile?accountId=1</a>
+        </p>
       </div>
     </>
   );

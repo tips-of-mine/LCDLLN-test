@@ -1763,7 +1763,12 @@ namespace engine
 				
 				bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
 				if (ok)
+				{
+					m_suboptimalStreak = 0;
+					m_suboptimalWidth = m_width;
+					m_suboptimalHeight = m_height;
 					LOG_INFO(Platform, "[Resize] Swapchain recreated OK");
+				}
 				else
 					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED");
 			}
@@ -1986,27 +1991,65 @@ namespace engine
 	        m_pipeline->GetAutoExposure().Update(device, dt, key, speed, frameIndex);
 	    }
 	
+	    auto handleSuboptimal = [this](const char* phase)
+	    {
+	        int clientW = 0;
+	        int clientH = 0;
+	        m_window.GetClientSize(clientW, clientH);
+	        clientW = std::max(1, clientW);
+	        clientH = std::max(1, clientH);
+	        if (clientW != m_width || clientH != m_height)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL and window client size changed {}x{} -> {}x{}",
+	                phase, m_width, m_height, clientW, clientH);
+	            m_width = clientW;
+	            m_height = clientH;
+	        }
+	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
+	            static_cast<uint32_t>(clientW),
+	            static_cast<uint32_t>(clientH));
+	        if (m_suboptimalWidth == clientW && m_suboptimalHeight == clientH)
+	        {
+	            ++m_suboptimalStreak;
+	        }
+	        else
+	        {
+	            m_suboptimalWidth = clientW;
+	            m_suboptimalHeight = clientH;
+	            m_suboptimalStreak = 1;
+	        }
+	        if (needsResize)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL with extent mismatch -> recreate requested (client={}x{}, streak={})",
+	                phase, clientW, clientH, m_suboptimalStreak);
+	            m_swapchainResizeRequested = true;
+	            return;
+	        }
+	        if (m_suboptimalStreak >= 2)
+	        {
+	            LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL {} times at stable extent {}x{} -> force recreate requested",
+	                phase, m_suboptimalStreak, clientW, clientH);
+	            m_swapchainResizeRequested = true;
+	            return;
+	        }
+	        LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL but extent is unchanged -> keep current swapchain (client={}x{}, streak={})",
+	            phase, clientW, clientH, m_suboptimalStreak);
+	    };
+
 	    uint32_t imageIndex = 0;
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
 	    if (result == VK_SUBOPTIMAL_KHR)
 	    {
-	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
-	            static_cast<uint32_t>(std::max(1, m_width)),
-	            static_cast<uint32_t>(std::max(1, m_height)));
-	        if (needsResize)
-	        {
-	            LOG_INFO(Render, "[SWAPCHAIN] Acquire returned SUBOPTIMAL with extent mismatch -> recreate requested");
-	            m_swapchainResizeRequested = true;
-	        }
-	        else
-	        {
-	            LOG_INFO(Render, "[SWAPCHAIN] Acquire returned SUBOPTIMAL but extent is unchanged -> keep current swapchain");
-	        }
+	        handleSuboptimal("Acquire");
 	    }
 	    else if (result != VK_SUCCESS)
 	    {
 	        return;
+	    }
+	    else
+	    {
+	        m_suboptimalStreak = 0;
 	    }
 	
 	    vkResetCommandPool(device, fr.cmdPool, 0);
@@ -2060,18 +2103,11 @@ namespace engine
 	    }
 	    else if (result == VK_SUBOPTIMAL_KHR)
 	    {
-	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
-	            static_cast<uint32_t>(std::max(1, m_width)),
-	            static_cast<uint32_t>(std::max(1, m_height)));
-	        if (needsResize)
-	        {
-	            LOG_INFO(Render, "[SWAPCHAIN] Present returned SUBOPTIMAL with extent mismatch -> recreate requested");
-	            m_swapchainResizeRequested = true;
-	        }
-	        else
-	        {
-	            LOG_INFO(Render, "[SWAPCHAIN] Present returned SUBOPTIMAL but extent is unchanged -> keep current swapchain");
-	        }
+	        handleSuboptimal("Present");
+	    }
+	    else
+	    {
+	        m_suboptimalStreak = 0;
 	    }
 	
 	    m_currentFrame++;
@@ -2113,6 +2149,9 @@ namespace engine
     	LOG_INFO(Platform, "[Resize] OnResize");
 		m_width  = w;
 		m_height = h;
+		m_suboptimalStreak = 0;
+		m_suboptimalWidth = w;
+		m_suboptimalHeight = h;
 		m_taaHistoryInvalid        = true;
 		m_swapchainResizeRequested = true;
 		if (m_chatUi.IsInitialized())

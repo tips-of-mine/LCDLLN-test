@@ -325,6 +325,26 @@ namespace engine::client
 		return {};
 	}
 
+	AuthUiPresenter::VideoSettingsCommand AuthUiPresenter::ConsumePendingVideoSettings()
+	{
+		return {};
+	}
+
+	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()
+	{
+		return {};
+	}
+
+	AuthUiPresenter::ControlSettingsCommand AuthUiPresenter::ConsumePendingControlSettings()
+	{
+		return {};
+	}
+
+	AuthUiPresenter::GameSettingsCommand AuthUiPresenter::ConsumePendingGameSettings()
+	{
+		return {};
+	}
+
 	bool AuthUiPresenter::OnEscape()
 	{
 		return false;

@@ -16,7 +16,6 @@ namespace engine::render
 		const char* const kSwapchainExtensionName = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 		const char* const kSynchronization2ExtensionName = VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME;
 		const char* const kDescriptorIndexingExtensionName = VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME;
-		const char* const kDynamicRenderingExtensionName = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME;
 
 		/// Scores a physical device for suitability (higher = better). Returns 0 if unsuitable.
 		int ScorePhysicalDevice(VkPhysicalDevice phys, VkSurfaceKHR surface)
@@ -221,7 +220,6 @@ namespace engine::render
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, deviceExts.data());
 		bool hasSync2Ext = false;
 		bool hasDescriptorIndexingExt = false;
-		bool hasDynamicRenderingExt = false;
 		for (const auto& e : deviceExts)
 		{
 			if (std::strcmp(e.extensionName, kSynchronization2ExtensionName) == 0)
@@ -232,17 +230,11 @@ namespace engine::render
 			{
 				hasDescriptorIndexingExt = true;
 			}
-			if (std::strcmp(e.extensionName, kDynamicRenderingExtensionName) == 0)
-			{
-				hasDynamicRenderingExt = true;
-			}
 		}
 		bool wantSync2 = (VK_VERSION_MAJOR(apiVersion) > 1 || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 3))
 			|| hasSync2Ext;
 		const bool descriptorIndexingInCore = (VK_VERSION_MAJOR(apiVersion) > 1) || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 2);
 		const bool canUseDescriptorIndexing = descriptorIndexingInCore || hasDescriptorIndexingExt;
-		const bool dynamicRenderingInCore = (VK_VERSION_MAJOR(apiVersion) > 1) || (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 3);
-		const bool canUseDynamicRendering = dynamicRenderingInCore || hasDynamicRenderingExt;
 
 		std::vector<const char*> enabledExtensions;
 		enabledExtensions.push_back(kSwapchainExtensionName);
@@ -255,18 +247,11 @@ namespace engine::render
 		{
 			enabledExtensions.push_back(kDescriptorIndexingExtensionName);
 		}
-		if (canUseDynamicRendering && !dynamicRenderingInCore && hasDynamicRenderingExt)
-		{
-			enabledExtensions.push_back(kDynamicRenderingExtensionName);
-		}
 
 		VkPhysicalDeviceFeatures2 featureQuery{};
 		featureQuery.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 		VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
 		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-		VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures{};
-		dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
-		descriptorIndexingFeatures.pNext = &dynamicRenderingFeatures;
 		featureQuery.pNext = &descriptorIndexingFeatures;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &featureQuery);
 
@@ -293,18 +278,7 @@ namespace engine::render
 		{
 			m_descriptorIndexingSupported = false;
 		}
-
-		if (canUseDynamicRendering && dynamicRenderingFeatures.dynamicRendering)
-		{
-			dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
-			dynamicRenderingFeatures.pNext = featureChain;
-			featureChain = &dynamicRenderingFeatures;
-			m_dynamicRenderingSupported = true;
-		}
-		else
-		{
-			m_dynamicRenderingSupported = false;
-		}
+		m_dynamicRenderingSupported = false;
 
 		if (wantSync2)
 		{

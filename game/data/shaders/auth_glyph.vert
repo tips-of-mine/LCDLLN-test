@@ -19,7 +19,7 @@ void main()
 {
 	vec2 ndc;
 	ndc.x = (inPos.x / pc.viewportSize.x) * 2.0 - 1.0;
-	ndc.y = 1.0 - (inPos.y / pc.viewportSize.y) * 2.0;
+	ndc.y = (inPos.y / pc.viewportSize.y) * 2.0 - 1.0;
 	gl_Position = vec4(ndc, 0.0, 1.0);
 	vUv = inUv;
 	vColor = inColor;

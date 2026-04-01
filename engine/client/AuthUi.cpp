@@ -312,53 +312,6 @@ namespace engine::client
 		return false;
 	}
 
-	void AuthUiPresenter::Update(engine::platform::Input&, float, engine::platform::Window&, const engine::core::Config&)
-	{
-		m_usingNativeAuthScreen = false;
-	}
-
-	std::string AuthUiPresenter::BuildPanelText() const
-	{
-		return {};
-	}
-
-	AuthUiPresenter::VisualState AuthUiPresenter::GetVisualState() const
-	{
-		return {};
-	}
-
-	AuthUiPresenter::VideoSettingsCommand AuthUiPresenter::ConsumePendingVideoSettings()
-	{
-		return {};
-	}
-
-	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()
-	{
-		return {};
-	}
-
-	AuthUiPresenter::ControlSettingsCommand AuthUiPresenter::ConsumePendingControlSettings()
-	{
-		return {};
-	}
-
-	AuthUiPresenter::GameSettingsCommand AuthUiPresenter::ConsumePendingGameSettings()
-	{
-		return {};
-	}
-
-	bool AuthUiPresenter::OnEscape()
-	{
-		return false;
-	}
-
-	bool AuthUiPresenter::SetViewportSize(uint32_t width, uint32_t height)
-	{
-		m_viewportW = width;
-		m_viewportH = height;
-		return width > 0 && height > 0;
-	}
-
 	void AuthUiPresenter::AppendPasswordStars(std::string&, size_t) const {}
 	void AuthUiPresenter::EnsurePasswordSalt(const engine::core::Config&) {}
 	std::string AuthUiPresenter::ComputeClientHash(const engine::core::Config&) const { return {}; }

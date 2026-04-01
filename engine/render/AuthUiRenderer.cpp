@@ -88,9 +88,9 @@ namespace engine::render
 
 		const int32_t w = static_cast<int32_t>(extent.width);
 		const int32_t h = static_cast<int32_t>(extent.height);
-		metrics.panelW = std::clamp(w * 42 / 100, 540, 820);
+		metrics.panelW = std::clamp(w * 42 / 100, 540, std::max(820, w * 24 / 100));
 		metrics.largeContent = state.terms || model.bodyLines.size() > 6u || model.fields.size() > 5u;
-		metrics.panelH = metrics.largeContent ? std::clamp(h * 74 / 100, 440, 780) : std::clamp(h * 62 / 100, 380, 660);
+		metrics.panelH = metrics.largeContent ? std::clamp(h * 74 / 100, 440, std::max(780, h * 82 / 100)) : std::clamp(h * 62 / 100, 380, std::max(660, h * 72 / 100));
 		metrics.panelX = (w - metrics.panelW) / 2;
 		metrics.panelY = (h - metrics.panelH) / 2;
 		metrics.innerX = metrics.panelX + 28;

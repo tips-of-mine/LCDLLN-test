@@ -2,6 +2,8 @@
 
 #include "engine/platform/Window.h"
 
+#include "engine/core/Log.h"
+
 namespace engine::platform
 {
 	bool Window::Create(const CreateDesc&)
@@ -38,6 +40,12 @@ namespace engine::platform
 
 	void Window::SetTitle(std::string_view)
 	{
+	}
+
+	bool Window::OpenExternalUrl(std::string_view url) const
+	{
+		LOG_WARN(Platform, "[Window] OpenExternalUrl unsupported on this platform (url={})", url);
+		return false;
 	}
 
 	void Window::SetOverlayText(std::string_view)

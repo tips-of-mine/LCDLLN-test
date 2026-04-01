@@ -553,6 +553,12 @@ namespace engine::render
 		const float errorColor[4] = { 1.0f, 0.72f, 0.72f, 1.0f };
 		const float bodyColor[4] = { theme.text[0], theme.text[1], theme.text[2], 0.94f };
 		const int32_t topOffset = layout.topOffset;
+		const int32_t bodyScale = std::clamp(panelW / 260, 2, 4);
+		const int32_t titleScale = std::clamp(bodyScale + 1, 3, 5);
+		const int32_t smallScale = std::max(2, bodyScale - 1);
+		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+		const int32_t compactFieldStep = std::max(48, bodyLineStep + 18);
+		const int32_t regularFieldStep = std::max(42, bodyLineStep + 14);
 
 		auto appendBlock = [this, &vertices](int32_t x, int32_t y, int32_t widthPx, int32_t heightPx, const float color[4])
 		{
@@ -578,13 +584,13 @@ namespace engine::render
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
 
-		AppendText(vertices, model.titleLine1, panelX + 24, panelY + 22, panelW - 48, 3, titleColor);
-		AppendText(vertices, model.titleLine2, panelX + 24, panelY + 50, panelW - 48, 2, mutedColor);
-		AppendText(vertices, model.sectionTitle, contentX, panelY + 66, contentW, 2, titleColor);
+		AppendText(vertices, model.titleLine1, panelX + 24, panelY + 22, panelW - 48, titleScale, titleColor);
+		AppendText(vertices, model.titleLine2, panelX + 24, panelY + 30 + titleScale * 10, panelW - 48, bodyScale, mutedColor);
+		AppendText(vertices, model.sectionTitle, contentX, panelY + 38 + titleScale * 14, contentW, bodyScale, titleColor);
 
 		if (!model.infoBanner.empty())
 		{
-			AppendText(vertices, model.infoBanner, contentX + 10, panelY + 79, contentW - 20, 2, titleColor);
+			AppendText(vertices, model.infoBanner, contentX + 10, panelY + 47 + titleScale * 14, contentW - 20, bodyScale, titleColor);
 		}
 
 		if (state.submitting)
@@ -592,15 +598,15 @@ namespace engine::render
 			if (!model.bodyLines.empty())
 			{
 				const int32_t submitY = panelY + (!model.infoBanner.empty() ? 128 : 118);
-				AppendText(vertices, model.bodyLines.front().text, contentX + 18, submitY + 84, contentW - 36, 2, titleColor);
+				AppendText(vertices, model.bodyLines.front().text, contentX + 18, submitY + 84, contentW - 36, bodyScale, titleColor);
 			}
 		}
 		else if (!model.errorText.empty())
 		{
-			AppendText(vertices, model.errorText, contentX + 18, panelY + 124, contentW - 36, 2, titleColor);
+			AppendText(vertices, model.errorText, contentX + 18, panelY + 124, contentW - 36, bodyScale, titleColor);
 			if (!model.actions.empty())
 			{
-				AppendText(vertices, model.actions.front().label, contentX + 12, panelY + 233, contentW - 24, 2, titleColor);
+				AppendText(vertices, model.actions.front().label, contentX + 12, panelY + 233, contentW - 24, bodyScale, titleColor);
 			}
 		}
 		else if (state.terms)
@@ -608,8 +614,8 @@ namespace engine::render
 			int32_t metaY = panelY + 110;
 			for (int32_t i = 0; i < std::min<int32_t>(4, static_cast<int32_t>(model.bodyLines.size())); ++i)
 			{
-				AppendText(vertices, model.bodyLines[static_cast<size_t>(i)].text, contentX + 10, metaY, contentW - 28, 2, mutedColor);
-				metaY += 16;
+				AppendText(vertices, model.bodyLines[static_cast<size_t>(i)].text, contentX + 10, metaY, contentW - 28, smallScale, mutedColor);
+				metaY += bodyLineStep;
 			}
 			if (model.bodyLines.size() >= 5u)
 			{
@@ -632,7 +638,7 @@ namespace engine::render
 						char ch = content[end];
 						if (ch == ' ') lastSpace = end;
 						if (ch == '\n') break;
-						width += GlyphAdvancePx(ch, 2);
+						width += GlyphAdvancePx(ch, bodyScale);
 						if (width > contentW - 32) break;
 						++end;
 					}
@@ -641,8 +647,8 @@ namespace engine::render
 					{
 						lineEnd = lastSpace;
 					}
-					AppendText(vertices, std::string_view(content).substr(start, lineEnd - start), contentX + 12, lineY, contentW - 32, 2, bodyColor);
-					lineY += 18;
+					AppendText(vertices, std::string_view(content).substr(start, lineEnd - start), contentX + 12, lineY, contentW - 32, bodyScale, bodyColor);
+					lineY += bodyLineStep;
 					++lines;
 					start = lineEnd;
 					while (start < content.size() && (content[start] == ' ' || content[start] == '\n' || content[start] == '\r'))
@@ -653,12 +659,12 @@ namespace engine::render
 			}
 			if (model.bodyLines.size() >= 6u)
 			{
-				AppendText(vertices, model.bodyLines[5].text, contentX + 12, panelY + panelH - 114, contentW - 24, 2, mutedColor);
+				AppendText(vertices, model.bodyLines[5].text, contentX + 12, panelY + panelH - 114, contentW - 24, smallScale, mutedColor);
 			}
 			if (model.bodyLines.size() >= 7u)
 			{
 				const bool activeAck = model.bodyLines[6].active;
-				AppendText(vertices, model.bodyLines[6].text, contentX + 12, panelY + panelH - 132, contentW - 24, 2, activeAck ? titleColor : bodyColor);
+				AppendText(vertices, model.bodyLines[6].text, contentX + 12, panelY + panelH - 132, contentW - 24, bodyScale, activeAck ? titleColor : bodyColor);
 			}
 			if (!model.actions.empty())
 			{
@@ -669,9 +675,9 @@ namespace engine::render
 					if (static_cast<size_t>(i) >= model.actions.size()) break;
 					const int32_t x = contentX + i * (actionW + 10);
 					const std::string& label = model.actions[static_cast<size_t>(i)].label;
-					const int32_t labelWidth = TextPixelWidth(label, 2);
+					const int32_t labelWidth = TextPixelWidth(label, bodyScale);
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
-					AppendText(vertices, label, labelX, panelY + panelH - 46, actionW - 20, 2, titleColor);
+					AppendText(vertices, label, labelX, panelY + panelH - 46, actionW - 20, bodyScale, titleColor);
 				}
 			}
 		}
@@ -679,25 +685,26 @@ namespace engine::render
 		{
 			for (int32_t i = 0; i < static_cast<int32_t>(model.fields.size()); ++i)
 			{
-				const int32_t step = layout.compactSingleField ? 48 : 42;
+				const int32_t step = layout.compactSingleField ? compactFieldStep : regularFieldStep;
 				const int32_t y = panelY + topOffset + i * step;
 				const auto& field = model.fields[static_cast<size_t>(i)];
-				AppendText(vertices, field.label, contentX + 10, y - 12, contentW / 2, 2, mutedColor);
-				AppendText(vertices, field.value, contentX + 12, y + 8, contentW - 24, 2, field.active ? titleColor : bodyColor);
+				AppendText(vertices, field.label, contentX + 10, y - (smallScale * 6), contentW / 2, smallScale, mutedColor);
+				AppendText(vertices, field.value, contentX + 12, y + 8, contentW - 24, bodyScale, field.active ? titleColor : bodyColor);
 				if (field.active)
 				{
-					const int32_t caretX = contentX + 12 + TextPixelWidth(field.value, 2) + 2;
-					appendBlock(std::min(caretX, contentX + contentW - 14), y + 7, 2, 16, accentColor);
+					const int32_t caretX = contentX + 12 + TextPixelWidth(field.value, bodyScale) + 2;
+					appendBlock(std::min(caretX, contentX + contentW - 14), y + 7, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
 				}
 			}
-			const int32_t bodyLinePitch = 28;
-			const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * (layout.compactSingleField ? 48 : 42) + 18;
+			const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
+			const int32_t fieldStep = layout.compactSingleField ? compactFieldStep : regularFieldStep;
+			const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
 			for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
 				const int32_t y = bodyStartY + i * bodyLinePitch - 4;
 				const float* lineColor = line.active ? accentColor : (line.hovered ? primaryColor : bodyColor);
-				AppendText(vertices, line.text, contentX + 2, y, contentW - 6, 2, lineColor);
+				AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 			const int32_t gap = 10;
@@ -708,17 +715,17 @@ namespace engine::render
 				if (static_cast<size_t>(i) >= model.actions.size()) break;
 				const int32_t x = contentX + i * (actionW + gap);
 				const auto& action = model.actions[static_cast<size_t>(i)];
-				const int32_t labelWidth = TextPixelWidth(action.label, 2);
+				const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
 				const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
-				AppendText(vertices, action.label, labelX, buttonY + 14, actionW - 20, 2, action.primary ? titleColor : mutedColor);
+				AppendText(vertices, action.label, labelX, buttonY + 14, actionW - 20, bodyScale, action.primary ? titleColor : mutedColor);
 			}
 			if (!model.errorText.empty())
 			{
-				AppendText(vertices, model.errorText, contentX + 14, panelY + 138, contentW - 28, 2, errorColor);
+				AppendText(vertices, model.errorText, contentX + 14, panelY + 138, contentW - 28, bodyScale, errorColor);
 			}
 			if (!model.footerHint.empty())
 			{
-				AppendText(vertices, model.footerHint, contentX, panelY + panelH - 28, contentW, 2, mutedColor);
+				AppendText(vertices, model.footerHint, contentX, panelY + panelH - 28, contentW, smallScale, mutedColor);
 			}
 		}
 

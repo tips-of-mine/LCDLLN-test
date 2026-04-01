@@ -284,7 +284,8 @@ target_link_libraries(engine_core PUBLIC
   spdlog::spdlog
 )
 if(WIN32)
-  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL)
+  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
+  target_compile_definitions(engine_core PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 endif()
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -323,7 +324,7 @@ if(MSVC)
 endif()
 target_link_libraries(engine_app PRIVATE engine_core)
 if(WIN32)
-  target_link_libraries(engine_app PRIVATE user32)
+  target_link_libraries(engine_app PRIVATE user32 shell32)
 endif()
 
 # Copie les assets uniquement si le dossier existe dans le repo

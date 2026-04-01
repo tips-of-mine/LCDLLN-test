@@ -1946,7 +1946,6 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 	return false;
 }
 #endif
-
 void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {
 	if (m_phase == Phase::Error)
@@ -2049,6 +2048,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		StartCharacterCreateWorker(cfg);
 	}
 }
+#endif
 
 	void AuthUiPresenter::Update(engine::platform::Input& input, float deltaSeconds, engine::platform::Window& window,
 		const engine::core::Config& cfg)

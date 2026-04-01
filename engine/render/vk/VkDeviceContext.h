@@ -52,6 +52,8 @@ namespace engine::render
 		bool SupportsSynchronization2() const { return m_sync2Supported; }
 		/// Returns true if descriptor indexing features were enabled on the logical device.
 		bool SupportsDescriptorIndexing() const { return m_descriptorIndexingSupported; }
+		/// Returns true if dynamic rendering is enabled on the logical device.
+		bool SupportsDynamicRendering() const { return m_dynamicRenderingSupported; }
 
 	private:
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
@@ -62,5 +64,6 @@ namespace engine::render
 		uint32_t m_presentQueueFamilyIndex = kInvalidQueueFamily;
 		bool m_sync2Supported = false;
 		bool m_descriptorIndexingSupported = false;
+		bool m_dynamicRenderingSupported = false;
 	};
 }

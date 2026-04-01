@@ -1941,11 +1941,11 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		window.SetAuthScreenState(state);
 		return true;
 	}
-#endif
 	window.SetAuthScreenState({});
 	(void)cfg;
 	return false;
 }
+#endif
 
 void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {

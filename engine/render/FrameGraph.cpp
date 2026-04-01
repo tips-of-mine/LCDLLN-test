@@ -127,7 +127,7 @@ namespace engine::render
 	ResourceId FrameGraph::createImage(std::string_view name, const ImageDesc& desc)
 	{
 		ResourceId id = m_nextId++;
-		ImageResource r;
+		ImageResource r{};
 		r.id = id;
 		r.name = std::string(name);
 		r.desc = desc;
@@ -140,7 +140,7 @@ namespace engine::render
 	ResourceId FrameGraph::createBuffer(std::string_view name, const BufferDesc& desc)
 	{
 		ResourceId id = m_nextId++;
-		BufferResource r;
+		BufferResource r{};
 		r.id = id;
 		r.name = std::string(name);
 		r.desc = desc;
@@ -153,7 +153,7 @@ namespace engine::render
 	ResourceId FrameGraph::createExternalImage(std::string_view name)
 	{
 		ResourceId id = m_nextId++;
-		ImageResource r;
+		ImageResource r{};
 		r.id = id;
 		r.name = std::string(name);
 		r.external = true;

@@ -768,7 +768,7 @@ namespace engine
 										m_fgSceneColorHDRId = m_frameGraph.createImage("SceneColor_HDR", sceneColorHDRDesc);
 
 										engine::render::ImageDesc sceneColorLDRDesc{};
-										sceneColorLDRDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+										sceneColorLDRDesc.format = m_vkSwapchain.GetImageFormat();
 										sceneColorLDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
 										                         | VK_IMAGE_USAGE_SAMPLED_BIT
 										                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -786,7 +786,7 @@ namespace engine
 										m_fgSsaoBlurId     = m_frameGraph.createImage("SSAO_Blur", ssaoBlurDesc);
 
 										engine::render::ImageDesc historyDesc{};
-										historyDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+										historyDesc.format = m_vkSwapchain.GetImageFormat();
 										historyDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
 										                   | VK_IMAGE_USAGE_SAMPLED_BIT
 										                   | VK_IMAGE_USAGE_TRANSFER_DST_BIT

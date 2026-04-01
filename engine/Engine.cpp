@@ -2008,6 +2008,9 @@ namespace engine
 	        const bool needsResize = m_vkSwapchain.NeedsRecreateForSurfaceExtent(
 	            static_cast<uint32_t>(clientW),
 	            static_cast<uint32_t>(clientH));
+	        const bool degenerateSurfaceExtent = m_vkSwapchain.HasDegenerateSurfaceExtent(
+	            static_cast<uint32_t>(clientW),
+	            static_cast<uint32_t>(clientH));
 	        if (m_suboptimalWidth == clientW && m_suboptimalHeight == clientH)
 	        {
 	            ++m_suboptimalStreak;
@@ -2025,11 +2028,10 @@ namespace engine
 	            m_swapchainResizeRequested = true;
 	            return;
 	        }
-	        if (m_suboptimalStreak >= 2)
+	        if (degenerateSurfaceExtent)
 	        {
-	            LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL {} times at stable extent {}x{} -> force recreate requested",
-	                phase, m_suboptimalStreak, clientW, clientH);
-	            m_swapchainResizeRequested = true;
+	            LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL with degenerate surface caps -> keep current swapchain (client={}x{}, streak={})",
+	                phase, clientW, clientH, m_suboptimalStreak);
 	            return;
 	        }
 	        LOG_INFO(Render, "[SWAPCHAIN] {} returned SUBOPTIMAL but extent is unchanged -> keep current swapchain (client={}x{}, streak={})",

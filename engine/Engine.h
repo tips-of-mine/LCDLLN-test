@@ -239,6 +239,10 @@ namespace engine
 		double m_fixedDt = 0.0;
 		int m_width = 0;
 		int m_height = 0;
+		/// Count repeated VK_SUBOPTIMAL_KHR returns for the same client size.
+		uint32_t m_suboptimalStreak = 0;
+		int m_suboptimalWidth = 0;
+		int m_suboptimalHeight = 0;
 		/// M07.1: When true, TAA prev history is invalid (resize/FOV/teleport); next frame prev = curr.
 		bool m_taaHistoryInvalid = true;
 		/// M07.2: True after first TAA history init (both buffers filled); on reset we copy only to next.

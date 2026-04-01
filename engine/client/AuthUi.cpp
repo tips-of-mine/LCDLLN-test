@@ -2615,7 +2615,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		model.errorText = (m_phase == Phase::Error) ? m_userErrorText : std::string{};
 		model.footerHint = Tr("common.tab_escape_hint");
 
-		auto addField = [&model](std::string label, std::string value, bool active, bool secret = false)
+		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false)
 		{
 			RenderField field{};
 			field.label = std::move(label);
@@ -2625,7 +2625,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			field.secret = secret;
 			model.fields.push_back(std::move(field));
 		};
-		auto addAction = [&model](std::string label, bool primary, bool active = true)
+		auto addAction = [this, &model](std::string label, bool primary, bool active = true)
 		{
 			RenderAction action{};
 			action.label = std::move(label);

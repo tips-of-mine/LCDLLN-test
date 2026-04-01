@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
+#include <vector>
 
 namespace engine::render
 {
@@ -40,13 +41,6 @@ namespace engine::render
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 
 	private:
-		void AppendText(std::vector<GlyphVertex>& vertices,
-			std::string_view text,
-			int32_t originX, int32_t originY,
-			int32_t maxWidthPx,
-			int32_t scale,
-			const float color[4]) const;
-
 		struct GlyphVertex
 		{
 			float pos[2];
@@ -55,6 +49,13 @@ namespace engine::render
 			uint32_t bits0 = 0;
 			uint32_t bits1 = 0;
 		};
+
+		void AppendText(std::vector<GlyphVertex>& vertices,
+			std::string_view text,
+			int32_t originX, int32_t originY,
+			int32_t maxWidthPx,
+			int32_t scale,
+			const float color[4]) const;
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_pipeline = VK_NULL_HANDLE;

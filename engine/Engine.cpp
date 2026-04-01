@@ -185,19 +185,6 @@ namespace engine
 			return item;
 		}
 
-		using AuthUiLayer = engine::render::AuthUiLayer;
-		using AuthUiTheme = engine::render::AuthUiTheme;
-
-		AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg)
-		{
-			return engine::render::LoadAuthUiTheme(cfg);
-		}
-
-		std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state,
-			const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme)
-		{
-			return engine::render::BuildAuthUiLayers(extent, state, model, theme);
-		}
 	}
 	void Engine::LoadZoneProbeAssets()
 	{
@@ -1361,7 +1348,7 @@ namespace engine
 												if (authVisualState.active && m_vkDeviceContext.SupportsDynamicRendering())
 												{
 													const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
-													const AuthUiTheme authTheme = LoadAuthUiTheme(m_cfg);
+													const engine::render::AuthUiTheme authTheme = engine::render::LoadAuthUiTheme(m_cfg);
 													VkImageMemoryBarrier toColor{};
 													toColor.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 													toColor.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1393,8 +1380,8 @@ namespace engine
 													renderingInfo.pColorAttachments = &colorAttachment;
 													vkCmdBeginRendering(cmd, &renderingInfo);
 
-													const std::vector<AuthUiLayer> layers = BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
-													for (const AuthUiLayer& layer : layers)
+													const std::vector<engine::render::AuthUiLayer> layers = engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
+													for (const engine::render::AuthUiLayer& layer : layers)
 													{
 														VkClearAttachment clearAttachment{};
 														clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

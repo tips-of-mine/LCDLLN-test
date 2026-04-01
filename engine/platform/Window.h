@@ -82,6 +82,7 @@ namespace engine::platform
 
 		/// Returns current client size in pixels.
 		void GetClientSize(int& outWidth, int& outHeight) const;
+		void* GetNativeHandle() const { return m_hwnd; }
 
 		/// Updates the native window title.
 		void SetTitle(std::string_view title);

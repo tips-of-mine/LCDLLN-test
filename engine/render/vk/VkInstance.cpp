@@ -2,6 +2,10 @@
 #include "engine/core/Log.h"
 
 #include <GLFW/glfw3.h>
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 #include <vulkan/vulkan.h>
 
 #include <cstring>
@@ -128,6 +132,37 @@ namespace engine::render
 		}
 		LOG_INFO(Render, "Vulkan surface created");
 		return true;
+	}
+
+	bool VkInstance::CreateSurface(void* nativeWindowHandle)
+	{
+		if (!nativeWindowHandle)
+		{
+			return true;
+		}
+		if (m_instance == VK_NULL_HANDLE)
+		{
+			LOG_ERROR(Render, "CreateSurface(native): instance not created");
+			return false;
+		}
+#if defined(_WIN32)
+		VkWin32SurfaceCreateInfoKHR createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		createInfo.hinstance = GetModuleHandleW(nullptr);
+		createInfo.hwnd = reinterpret_cast<HWND>(nativeWindowHandle);
+		const VkResult result = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &m_surface);
+		if (result != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "vkCreateWin32SurfaceKHR failed: {}", static_cast<int>(result));
+			return false;
+		}
+		LOG_INFO(Render, "Vulkan Win32 surface created");
+		return true;
+#else
+		(void)nativeWindowHandle;
+		LOG_ERROR(Render, "CreateSurface(native) unsupported on this platform");
+		return false;
+#endif
 	}
 
 	void VkInstance::Destroy()

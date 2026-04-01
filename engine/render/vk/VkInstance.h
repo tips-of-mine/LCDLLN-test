@@ -23,6 +23,7 @@ namespace engine::render
 		/// Must be called after Create(). Safe to call with nullptr (no surface created).
 		/// \return true on success or if window is nullptr.
 		bool CreateSurface(GLFWwindow* window);
+		bool CreateSurface(void* nativeWindowHandle);
 
 		/// Destroys surface, debug messenger (if any), then instance. Safe to call multiple times.
 		void Destroy();

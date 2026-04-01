@@ -360,9 +360,12 @@ namespace engine
 		else
 		{
 			LOG_INFO(Core, "[Boot] glfwInit OK");
+			bool surfaceReady = false;
+#if defined(_WIN32)
+			surfaceReady = true;
+#else
 			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
 			m_glfwWindowForVk = glfwCreateWindow(1, 1, "VkSurface", nullptr, nullptr);
 			if (!m_glfwWindowForVk)
 			{
@@ -371,13 +374,19 @@ namespace engine
 			else
 			{
 				LOG_INFO(Core, "[Boot] glfwCreateWindow OK");
+				surfaceReady = true;
 			}
+#endif
 
-			if (m_glfwWindowForVk && m_vkInstance.Create())
+			if (surfaceReady && m_vkInstance.Create())
 			{
 				LOG_INFO(Core, "[Boot] VkInstance::Create OK");
-
-				if (!m_vkInstance.CreateSurface(m_glfwWindowForVk))
+#if defined(_WIN32)
+				const bool surfaceOk = m_vkInstance.CreateSurface(m_window.GetNativeHandle());
+#else
+				const bool surfaceOk = m_vkInstance.CreateSurface(m_glfwWindowForVk);
+#endif
+				if (!surfaceOk)
 				{
 					LOG_WARN(Platform, "[Boot] VkInstance::CreateSurface failed");
 				}

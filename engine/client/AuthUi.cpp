@@ -2926,5 +2926,4 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		return false;
 	}
 
-#endif
 }

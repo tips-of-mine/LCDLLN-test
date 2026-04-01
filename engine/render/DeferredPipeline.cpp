@@ -319,7 +319,7 @@ namespace engine::render
 			std::vector<uint32_t> taaFrag = loadSpirv("shaders/taa.frag.spv");
 			if (!taaVert.empty() && !taaFrag.empty())
 			{
-				if (m_taaPass.Init(device, physicalDevice, VK_FORMAT_R8G8B8A8_UNORM,
+				if (m_taaPass.Init(device, physicalDevice, sceneColorLDRFormat,
 						taaVert.data(), taaVert.size(), taaFrag.data(), taaFrag.size(), 2u, pipelineCacheHandle))
 					LOG_INFO(Render, "[Boot] DeferredPipeline TAA OK");
 				else

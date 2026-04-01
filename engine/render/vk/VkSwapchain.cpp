@@ -349,6 +349,27 @@ namespace engine::render
 		return desiredExtent.width != m_extent.width || desiredExtent.height != m_extent.height;
 	}
 
+	bool VkSwapchain::HasDegenerateSurfaceExtent(uint32_t requestedWidth, uint32_t requestedHeight) const
+	{
+		if (m_physicalDevice == VK_NULL_HANDLE || m_surface == VK_NULL_HANDLE || m_swapchain == VK_NULL_HANDLE)
+		{
+			return false;
+		}
+
+		VkSurfaceCapabilitiesKHR caps{};
+		const VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
+		if (result != VK_SUCCESS)
+		{
+			LOG_WARN(Render, "[SWAPCHAIN] Failed to query surface caps for degenerate detection: {}", static_cast<int>(result));
+			return false;
+		}
+
+		return caps.minImageExtent.height <= 1 &&
+			caps.maxImageExtent.height <= 1 &&
+			caps.minImageExtent.height == caps.maxImageExtent.height &&
+			requestedHeight > 1;
+	}
+
 	VkFramebuffer VkSwapchain::GetFramebuffer(uint32_t imageIndex) const
 	{
 		if (imageIndex >= m_framebuffers.size())

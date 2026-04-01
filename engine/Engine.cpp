@@ -4,6 +4,7 @@
 #include "engine/editor/EditorMode.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/render/AuthUiRenderer.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
 #include "engine/server/ServerProtocol.h"
@@ -184,245 +185,20 @@ namespace engine
 			return item;
 		}
 
-		struct AuthUiLayer
-		{
-			VkClearColorValue color{};
-			VkClearRect rect{};
-		};
-
-		struct AuthUiTheme
-		{
-			float primary[4]{ 0.23f, 0.43f, 0.65f, 1.0f };
-			float secondary[4]{ 0.35f, 0.50f, 0.66f, 1.0f };
-			float accent[4]{ 0.85f, 0.64f, 0.25f, 1.0f };
-			float background[4]{ 0.06f, 0.09f, 0.11f, 1.0f };
-			float surface[4]{ 0.09f, 0.13f, 0.17f, 1.0f };
-			float panel[4]{ 0.10f, 0.16f, 0.21f, 1.0f };
-			float text[4]{ 0.91f, 0.93f, 0.95f, 1.0f };
-			float mutedText[4]{ 0.66f, 0.71f, 0.76f, 1.0f };
-			float border[4]{ 0.19f, 0.27f, 0.34f, 1.0f };
-		};
-
-		bool ParseHexColor(std::string_view hex, float out[4])
-		{
-			if (hex.size() != 7 || hex[0] != '#')
-			{
-				return false;
-			}
-
-			auto hexValue = [](char c) -> int
-			{
-				if (c >= '0' && c <= '9') return c - '0';
-				if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
-				if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
-				return -1;
-			};
-
-			for (int i = 0; i < 3; ++i)
-			{
-				const int hi = hexValue(hex[1 + i * 2]);
-				const int lo = hexValue(hex[2 + i * 2]);
-				if (hi < 0 || lo < 0)
-				{
-					return false;
-				}
-				out[i] = static_cast<float>((hi << 4) | lo) / 255.0f;
-			}
-			out[3] = 1.0f;
-			return true;
-		}
-
-		void OverrideThemeColor(const engine::core::Config& cfg, std::string_view key, float out[4])
-		{
-			const std::string value = cfg.GetString(key, {});
-			if (!value.empty())
-			{
-				ParseHexColor(value, out);
-			}
-		}
+		using AuthUiLayer = engine::render::AuthUiLayer;
+		using AuthUiTheme = engine::render::AuthUiTheme;
 
 		AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg)
 		{
-			AuthUiTheme theme{};
-			const std::string themeId = cfg.GetString("ui.theme.default_id", "default");
-			const std::string themePath = "ui/themes/" + themeId + "/theme.json";
-			const std::filesystem::path resolvedPath = engine::platform::FileSystem::ResolveContentPath(cfg, themePath);
-			engine::core::Config themeCfg;
-			if (!themeCfg.LoadFromFile(resolvedPath.string()))
-			{
-				return theme;
-			}
-
-			OverrideThemeColor(themeCfg, "palette.primary", theme.primary);
-			OverrideThemeColor(themeCfg, "palette.secondary", theme.secondary);
-			OverrideThemeColor(themeCfg, "palette.accent", theme.accent);
-			OverrideThemeColor(themeCfg, "palette.background", theme.background);
-			OverrideThemeColor(themeCfg, "palette.surface", theme.surface);
-			OverrideThemeColor(themeCfg, "palette.panel", theme.panel);
-			OverrideThemeColor(themeCfg, "palette.text", theme.text);
-			OverrideThemeColor(themeCfg, "palette.mutedText", theme.mutedText);
-			OverrideThemeColor(themeCfg, "palette.border", theme.border);
-			return theme;
+			return engine::render::LoadAuthUiTheme(cfg);
 		}
 
-		std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state, const AuthUiTheme& theme)
+		std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state,
+			const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme)
 		{
-			std::vector<AuthUiLayer> layers;
-			if (extent.width == 0 || extent.height == 0 || !state.active)
-			{
-				return layers;
-			}
-
-			const int32_t w = static_cast<int32_t>(extent.width);
-			const int32_t h = static_cast<int32_t>(extent.height);
-			const int32_t panelW = std::clamp(w * 40 / 100, 520, 760);
-			const int32_t panelH = state.terms ? std::clamp(h * 74 / 100, 420, 760) : std::clamp(h * 60 / 100, 360, 620);
-			const int32_t panelX = (w - panelW) / 2;
-			const int32_t panelY = (h - panelH) / 2;
-			const int32_t innerX = panelX + 28;
-			const int32_t artW = std::clamp(panelW / 3, 150, 240);
-			const int32_t contentX = innerX + artW + 18;
-			const int32_t contentW = std::max(180, panelW - (contentX - panelX) - 28);
-			const bool compactSingleField = state.verifyEmail || state.forgotPassword || state.characterCreate;
-
-			auto addRect = [&layers](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
-			{
-				if (rw <= 0 || rh <= 0)
-				{
-					return;
-				}
-
-				AuthUiLayer layer{};
-				layer.color.float32[0] = r;
-				layer.color.float32[1] = g;
-				layer.color.float32[2] = b;
-				layer.color.float32[3] = a;
-				layer.rect.rect.offset = { x, y };
-				layer.rect.rect.extent = { static_cast<uint32_t>(rw), static_cast<uint32_t>(rh) };
-				layer.rect.baseArrayLayer = 0;
-				layer.rect.layerCount = 1;
-				layers.push_back(layer);
-			};
-
-			auto addThemeRect = [&addRect](int32_t x, int32_t y, int32_t rw, int32_t rh, const float color[4], float alphaScale = 1.0f)
-			{
-				addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
-			};
-
-			addThemeRect(0, 0, w, h, theme.background, 0.92f);
-			addThemeRect(0, 0, w, std::max(90, h / 4), theme.primary, 0.34f);
-			addThemeRect(0, h - std::max(96, h / 5), w, std::max(96, h / 5), theme.surface, 0.28f);
-			addRect(0, 0, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
-			addRect(0, h - 28, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
-			addRect(0, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
-			addRect(w - 28, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
-			addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, 0.60f);
-			addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, 0.22f);
-			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.96f);
-			addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
-			addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
-			addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);
-			addThemeRect(panelX + 22, panelY + 40, 8, panelH - 68, theme.accent, 0.95f);
-
-			if (state.login)
-			{
-				addThemeRect(panelX + 38, panelY + 76, artW - 32, 92, theme.primary, 0.72f);
-				addThemeRect(panelX + 52, panelY + 92, artW - 62, 16, theme.accent, 0.96f);
-				addThemeRect(panelX + 52, panelY + 118, artW - 74, 10, theme.text, 0.80f);
-				addThemeRect(panelX + 52, panelY + 136, artW - 94, 10, theme.mutedText, 0.62f);
-			}
-			else if (state.registerMode)
-			{
-				addThemeRect(panelX + 38, panelY + 72, artW - 30, 126, theme.secondary, 0.56f);
-				addThemeRect(panelX + 54, panelY + 88, artW - 62, 18, theme.accent, 0.98f);
-				addThemeRect(panelX + 54, panelY + 118, artW - 74, 12, theme.primary, 0.96f);
-				addThemeRect(panelX + 54, panelY + 140, artW - 90, 12, theme.text, 0.76f);
-				addThemeRect(panelX + 54, panelY + 162, artW - 104, 12, theme.mutedText, 0.58f);
-			}
-			else
-			{
-				addThemeRect(panelX + 38, panelY + 78, artW - 34, 110, theme.secondary, 0.48f);
-				addThemeRect(panelX + 52, panelY + 96, artW - 64, 18, theme.primary, 0.95f);
-				addThemeRect(panelX + 52, panelY + 124, artW - 84, 12, theme.accent, 0.90f);
-			}
-
-			addThemeRect(contentX - 10, panelY + 60, contentW + 10, 2, theme.border, 0.90f);
-
-			if (state.submitting)
-			{
-				addThemeRect(contentX, panelY + 118, contentW, 66, theme.surface, 0.98f);
-				addThemeRect(contentX + 18, panelY + 138, contentW - 36, 10, theme.primary, 0.94f);
-				addThemeRect(contentX + 18, panelY + 156, contentW - 92, 10, theme.accent, 0.94f);
-				addThemeRect(contentX + 18, panelY + 206, contentW - 36, 38, theme.surface, 0.95f);
-				return layers;
-			}
-
-			if (state.error)
-			{
-				addRect(contentX, panelY + 108, contentW, 84, 0.28f, 0.10f, 0.10f, 0.98f);
-				addRect(contentX, panelY + 108, 10, 84, 0.82f, 0.22f, 0.18f, 1.0f);
-				addThemeRect(contentX + 22, panelY + 126, contentW - 44, 12, theme.text, 0.78f);
-				addThemeRect(contentX, panelY + 214, contentW, 58, theme.surface, 0.98f);
-				return layers;
-			}
-
-			if (state.terms)
-			{
-				addThemeRect(contentX, panelY + 92, contentW, std::max(180, panelH - 210), theme.background, 0.98f);
-				addThemeRect(contentX + 18, panelY + 108, contentW - 36, 18, theme.surface, 0.95f);
-				addThemeRect(contentX + contentW - 12, panelY + 120, 4, std::max(80, panelH - 248), theme.border, 0.98f);
-				addThemeRect(contentX + contentW - 12, panelY + 156, 4, 92, theme.accent, 1.0f);
-				addThemeRect(contentX, panelY + panelH - 92, contentW, 58, theme.surface, 0.98f);
-				addThemeRect(contentX, panelY + panelH - 26, contentW / 2 - 8, 10, theme.primary, 0.95f);
-				addThemeRect(contentX + contentW / 2 + 8, panelY + panelH - 26, contentW / 2 - 8, 10, theme.accent, 0.95f);
-				return layers;
-			}
-
-			int32_t fieldCount = 2;
-			if (state.registerMode)
-			{
-				fieldCount = 8;
-			}
-			else if (state.verifyEmail || state.forgotPassword || state.characterCreate)
-			{
-				fieldCount = 1;
-			}
-
-			for (int32_t i = 0; i < fieldCount; ++i)
-			{
-				const int32_t step = compactSingleField ? 48 : 42;
-				const int32_t y = panelY + 104 + i * step;
-				addThemeRect(contentX, y, contentW, 32, theme.surface, 0.98f);
-				addRect(contentX, y, 5, 32,
-					(i == 0) ? 0.72f : 0.26f,
-					(i == 0) ? 0.58f : 0.38f,
-					(i == 0) ? 0.24f : 0.68f,
-					1.0f);
-				addThemeRect(contentX + 18, y + 11, std::max(60, contentW - 54 - i * 10), 3, theme.text, (i == 0) ? 0.78f : 0.50f);
-			}
-
-			const int32_t fieldStep = compactSingleField ? 48 : 42;
-			const int32_t buttonY = std::min(panelY + panelH - 84, panelY + 104 + fieldCount * fieldStep + 18);
-			addThemeRect(contentX, buttonY, contentW, 42, theme.primary, 0.96f);
-			addThemeRect(contentX + 18, buttonY + 15, contentW - 36, 4, theme.text, 0.55f);
-			addThemeRect(contentX, buttonY + 50, contentW, 24, theme.surface, 0.96f);
-			if (state.registerMode)
-			{
-				addThemeRect(contentX, buttonY - 22, contentW, 8, theme.accent, 0.95f);
-			}
-			if (state.verifyEmail || state.characterCreate)
-			{
-				addThemeRect(contentX + contentW - 120, panelY + 62, 96, 10, theme.accent, 0.95f);
-			}
-			if (state.forgotPassword)
-			{
-				addThemeRect(contentX, panelY + 70, contentW / 2, 8, theme.accent, 0.92f);
-			}
-
-			return layers;
+			return engine::render::BuildAuthUiLayers(extent, state, model, theme);
 		}
 	}
-
 	void Engine::LoadZoneProbeAssets()
 	{
 		const std::string zoneMetaPath = m_cfg.GetString("world.zone_meta_path", "zone.meta");
@@ -939,6 +715,33 @@ namespace engine
 										    loadSpirv
 										);
 										LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
+
+										if (m_vkDeviceContext.SupportsDynamicRendering())
+										{
+											std::vector<uint32_t> authGlyphVert = loadSpirv("shaders/auth_glyph.vert.spv");
+											std::vector<uint32_t> authGlyphFrag = loadSpirv("shaders/auth_glyph.frag.spv");
+											if (!authGlyphVert.empty() && !authGlyphFrag.empty())
+											{
+												if (m_authGlyphPass.Init(
+														m_vkDeviceContext.GetDevice(),
+														m_vkDeviceContext.GetPhysicalDevice(),
+														m_vkSwapchain.GetImageFormat(),
+														authGlyphVert.data(), authGlyphVert.size(),
+														authGlyphFrag.data(), authGlyphFrag.size(),
+														8192u))
+												{
+													LOG_INFO(Render, "[Boot] AuthGlyphPass OK");
+												}
+												else
+												{
+													LOG_WARN(Render, "[Boot] AuthGlyphPass init failed");
+												}
+											}
+											else
+											{
+												LOG_WARN(Render, "[Boot] AuthGlyphPass shaders missing");
+											}
+										}
 
 										m_frameGraph.addPass("Clear",
 											[this](engine::render::PassBuilder& b) {
@@ -1557,6 +1360,7 @@ namespace engine
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
 												if (authVisualState.active && m_vkDeviceContext.SupportsDynamicRendering())
 												{
+													const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
 													const AuthUiTheme authTheme = LoadAuthUiTheme(m_cfg);
 													VkImageMemoryBarrier toColor{};
 													toColor.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1589,7 +1393,7 @@ namespace engine
 													renderingInfo.pColorAttachments = &colorAttachment;
 													vkCmdBeginRendering(cmd, &renderingInfo);
 
-													const std::vector<AuthUiLayer> layers = BuildAuthUiLayers(ext, authVisualState, authTheme);
+													const std::vector<AuthUiLayer> layers = BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
 													for (const AuthUiLayer& layer : layers)
 													{
 														VkClearAttachment clearAttachment{};
@@ -1597,6 +1401,16 @@ namespace engine
 														clearAttachment.colorAttachment = 0;
 														clearAttachment.clearValue.color = layer.color;
 														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
+													}
+													if (m_authGlyphPass.IsValid())
+													{
+														m_authGlyphPass.RecordModel(
+															m_vkDeviceContext.GetDevice(),
+															cmd,
+															ext,
+															authVisualState,
+															authRenderModel,
+															authTheme);
 													}
 													vkCmdEndRendering(cmd);
 
@@ -1711,6 +1525,7 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
 			{
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
@@ -1961,7 +1776,10 @@ namespace engine
 			}
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();
-			m_window.SetOverlayText(out.authHudText);
+			if (m_authUi.GetVisualState().active && m_vkDeviceContext.SupportsDynamicRendering())
+				m_window.SetOverlayText({});
+			else
+				m_window.SetOverlayText(out.authHudText);
 		}
 		else
 		{
@@ -2812,3 +2630,4 @@ namespace engine
 	}
 
 } // namespace engine
+

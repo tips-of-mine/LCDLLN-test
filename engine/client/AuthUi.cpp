@@ -27,10 +27,10 @@ namespace engine::client
 	namespace
 	{
 		constexpr std::string_view kUserSettingsPath = "user_settings.json";
-		constexpr std::string_view kLoginBackgroundPath = "engine/assets/ui/login/background.png";
-		constexpr std::string_view kLoginLogoPath = "engine/assets/ui/login/logo_login.png";
-		constexpr std::string_view kRegisterBackgroundPath = "engine/assets/ui/register/background.png";
-		constexpr std::string_view kRegisterInfoPath = "engine/assets/ui/register/info.png";
+		constexpr std::string_view kLoginBackgroundPath = "engine/assets/ui/loading/background.png";
+		constexpr std::string_view kLoginLogoPath = "";
+		constexpr std::string_view kRegisterBackgroundPath = "engine/assets/ui/loading/background.png";
+		constexpr std::string_view kRegisterInfoPath = "";
 
 		std::string JsonBool(bool value)
 		{
@@ -302,6 +302,7 @@ namespace engine::client
 	{
 		if (!m_initialized)
 			return;
+		m_usingNativeAuthScreen = false;
 		m_initialized = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Destroyed");
 	}
@@ -313,6 +314,7 @@ namespace engine::client
 
 	void AuthUiPresenter::Update(engine::platform::Input&, float, engine::platform::Window&, const engine::core::Config&)
 	{
+		m_usingNativeAuthScreen = false;
 	}
 
 	std::string AuthUiPresenter::BuildPanelText() const
@@ -2052,6 +2054,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const engine::core::Config& cfg)
 	{
 		(void)deltaSeconds;
+		m_usingNativeAuthScreen = false;
+		window.SetAuthScreenState({});
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
@@ -2061,12 +2065,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		if (m_phase == Phase::Submitting)
 		{
-		window.SetAuthScreenState({});
+			window.SetAuthScreenState({});
 			UpdateWindowTitle(window);
 			return;
 		}
 
-	const bool usingNativeAuth = HandleNativeAuthScreen(window, cfg);
+		const bool usingNativeAuth = false;
+		(void)cfg;
 
 		auto currentField = [this]() -> std::string* {
 			switch (m_phase)
@@ -2100,13 +2105,256 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		};
 
-	std::string text;
-	if (!usingNativeAuth)
+		auto applyPrimaryAction = [&]()
 		{
-		input.ConsumePendingTextUtf8(text);
-		if (!text.empty())
+			if (m_phase == Phase::LanguageSelectionFirstRun)
 			{
-			if (std::string* field = currentField())
+				ApplyLocaleSelection(true);
+			}
+			else if (m_phase == Phase::LanguageOptions)
+			{
+				m_videoFullscreen = m_videoFullscreenPending;
+				m_videoVsync = m_videoVsyncPending;
+				m_audioMasterVolume = m_audioMasterVolumePending;
+				m_audioMusicVolume = m_audioMusicVolumePending;
+				m_audioSfxVolume = m_audioSfxVolumePending;
+				m_audioUiVolume = m_audioUiVolumePending;
+				m_mouseSensitivity = m_mouseSensitivityPending;
+				m_invertY = m_invertYPending;
+				m_useZqsd = m_useZqsdPending;
+				m_gameplayUdpEnabled = m_gameplayUdpEnabledPending;
+				m_allowInsecureDev = m_allowInsecureDevPending;
+				m_authTimeoutMs = m_authTimeoutMsPending;
+				m_pendingVideoSettings.applyRequested = true;
+				m_pendingVideoSettings.fullscreen = m_videoFullscreen;
+				m_pendingVideoSettings.vsync = m_videoVsync;
+				m_pendingAudioSettings.applyRequested = true;
+				m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
+				m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
+				m_pendingAudioSettings.sfxVolume = m_audioSfxVolume;
+				m_pendingAudioSettings.uiVolume = m_audioUiVolume;
+				m_pendingControlSettings.applyRequested = true;
+				m_pendingControlSettings.mouseSensitivity = m_mouseSensitivity;
+				m_pendingControlSettings.invertY = m_invertY;
+				m_pendingControlSettings.useZqsd = m_useZqsd;
+				m_pendingGameSettings.applyRequested = true;
+				m_pendingGameSettings.gameplayUdpEnabled = m_gameplayUdpEnabled;
+				m_pendingGameSettings.allowInsecureDev = m_allowInsecureDev;
+				m_pendingGameSettings.authTimeoutMs = m_authTimeoutMs;
+				ApplyLocaleSelection(false);
+			}
+			else if (m_phase == Phase::Terms)
+			{
+				if (!m_termsScrolledToBottom)
+					return;
+				if (!m_termsAcknowledgeChecked)
+				{
+					m_termsAcknowledgeChecked = true;
+					return;
+				}
+				SubmitCurrentPhase(cfg);
+			}
+			else
+			{
+				SubmitCurrentPhase(cfg);
+			}
+		};
+
+		if (!usingNativeAuth)
+		{
+			const RenderModel model = BuildRenderModel();
+			if (model.visible && m_viewportW > 0 && m_viewportH > 0)
+			{
+				const int32_t w = static_cast<int32_t>(m_viewportW);
+				const int32_t h = static_cast<int32_t>(m_viewportH);
+				const int32_t panelW = std::clamp(w * 42 / 100, 540, 820);
+				const bool largeContent = (m_phase == Phase::Terms) || model.bodyLines.size() > 6u || model.fields.size() > 5u;
+				const int32_t panelH = largeContent ? std::clamp(h * 74 / 100, 440, 780) : std::clamp(h * 62 / 100, 380, 660);
+				const int32_t panelX = (w - panelW) / 2;
+				const int32_t panelY = (h - panelH) / 2;
+				const int32_t artW = std::clamp(panelW / 3, 150, 240);
+				const int32_t contentX = panelX + 28 + artW + 18;
+				const int32_t contentW = std::max(180, panelW - (contentX - panelX) - 28);
+				const bool compactSingleField = model.fields.size() <= 1u;
+				const int32_t topOffset = !model.infoBanner.empty() ? 146 : 104;
+				const int32_t fieldStep = compactSingleField ? 48 : 42;
+				const int32_t mx = input.MouseX();
+				const int32_t my = input.MouseY();
+				m_hoveredFieldIndex = -1;
+				m_hoveredBodyLineIndex = -1;
+				m_hoveredActionIndex = -1;
+
+				auto contains = [](int32_t px, int32_t py, int32_t x, int32_t y, int32_t rw, int32_t rh)
+				{
+					return px >= x && py >= y && px < (x + rw) && py < (y + rh);
+				};
+
+				if (m_phase == Phase::Terms && input.MouseScrollDelta() != 0)
+				{
+					const int scrollDir = input.MouseScrollDelta() > 0 ? -24 : 24;
+					const int next = static_cast<int>(m_termsScrollOffset) + scrollDir;
+					m_termsScrollOffset = static_cast<uint32_t>(std::max(0, next));
+				}
+
+				for (size_t i = 0; i < model.fields.size(); ++i)
+				{
+					const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
+					if (contains(mx, my, contentX, y, contentW, 32))
+					{
+						m_hoveredFieldIndex = static_cast<int32_t>(i);
+						break;
+					}
+				}
+
+				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 16;
+				for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
+				{
+					const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
+					const int32_t y = bodyStartY + localIdx * 18;
+					if (contains(mx, my, contentX - 4, y - 6, contentW, 14))
+					{
+						m_hoveredBodyLineIndex = bodyIndex;
+						break;
+					}
+				}
+				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
+				const int32_t gap = 10;
+				const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + static_cast<int32_t>(model.bodyLines.size()) * 18 + 20);
+				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
+				for (int32_t i = 0; i < actionCount; ++i)
+				{
+					const int32_t x = contentX + i * (actionW + gap);
+					if (contains(mx, my, x, buttonY, actionW, 42))
+					{
+						m_hoveredActionIndex = i;
+						break;
+					}
+				}
+
+				const bool leftClick = input.WasMousePressed(engine::platform::MouseButton::Left);
+				const bool rightClick = input.WasMousePressed(engine::platform::MouseButton::Right);
+				if (leftClick || rightClick)
+				{
+					for (size_t i = 0; i < model.fields.size(); ++i)
+					{
+						const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
+						if (contains(mx, my, contentX, y, contentW, 32))
+						{
+							m_activeField = static_cast<uint32_t>(i);
+							break;
+						}
+					}
+
+					if (m_hoveredBodyLineIndex >= 0)
+					{
+						if (m_phase == Phase::Login && m_hoveredBodyLineIndex == 0)
+						{
+							m_rememberLogin = !m_rememberLogin;
+							SaveRememberPreference();
+						}
+						else if (m_phase == Phase::LanguageSelectionFirstRun)
+						{
+							const int32_t localeIdx = m_hoveredBodyLineIndex - 1;
+							const auto& locales = m_localization.GetAvailableLocales();
+							if (localeIdx >= 0 && static_cast<size_t>(localeIdx) < locales.size())
+							{
+								m_languageSelectionIndex = static_cast<uint32_t>(localeIdx);
+								m_selectedLocale = locales[static_cast<size_t>(localeIdx)];
+							}
+							else if (rightClick && !locales.empty())
+							{
+								m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
+									? static_cast<uint32_t>(locales.size() - 1u)
+									: (m_languageSelectionIndex - 1u);
+								m_selectedLocale = locales[m_languageSelectionIndex];
+							}
+						}
+						else if (m_phase == Phase::LanguageOptions)
+						{
+							const auto& locales = m_localization.GetAvailableLocales();
+							if (m_hoveredBodyLineIndex >= 1 && static_cast<size_t>(m_hoveredBodyLineIndex - 1) < locales.size())
+							{
+								m_optionsSelectionIndex = 0u;
+								m_languageSelectionIndex = static_cast<uint32_t>(m_hoveredBodyLineIndex - 1);
+								m_selectedLocale = locales[static_cast<size_t>(m_hoveredBodyLineIndex - 1)];
+							}
+							else
+							{
+								const int32_t optionLine = m_hoveredBodyLineIndex - (1 + static_cast<int32_t>(locales.size()));
+								if (optionLine >= 0 && optionLine <= 11)
+								{
+									m_optionsSelectionIndex = static_cast<uint32_t>(optionLine + 1);
+									switch (optionLine)
+									{
+									case 0: m_videoFullscreenPending = !m_videoFullscreenPending; break;
+									case 1: m_videoVsyncPending = !m_videoVsyncPending; break;
+									case 2: m_audioMasterVolumePending = ClampOptionStep(m_audioMasterVolumePending + (rightClick ? -0.1f : 0.1f)); break;
+									case 3: m_audioMusicVolumePending = ClampOptionStep(m_audioMusicVolumePending + (rightClick ? -0.1f : 0.1f)); break;
+									case 4: m_audioSfxVolumePending = ClampOptionStep(m_audioSfxVolumePending + (rightClick ? -0.1f : 0.1f)); break;
+									case 5: m_audioUiVolumePending = ClampOptionStep(m_audioUiVolumePending + (rightClick ? -0.1f : 0.1f)); break;
+									case 6: m_mouseSensitivityPending = rightClick ? std::max(0.001f, m_mouseSensitivityPending - 0.001f) : std::min(0.010f, m_mouseSensitivityPending + 0.001f); break;
+									case 7: m_invertYPending = !m_invertYPending; break;
+									case 8: m_useZqsdPending = !m_useZqsdPending; break;
+									case 9: m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending; break;
+									case 10: m_allowInsecureDevPending = !m_allowInsecureDevPending; break;
+									case 11: m_authTimeoutMsPending = rightClick
+										? ((m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u)
+										: std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u); break;
+									default: break;
+									}
+								}
+							}
+						}
+						else if (m_phase == Phase::Terms && m_hoveredBodyLineIndex >= 0 && rightClick && m_termsScrolledToBottom)
+						{
+							m_termsAcknowledgeChecked = !m_termsAcknowledgeChecked;
+						}
+					}
+
+					for (int32_t i = 0; i < actionCount && leftClick; ++i)
+					{
+						const int32_t x = contentX + i * (actionW + gap);
+						if (!contains(mx, my, x, buttonY, actionW, 42))
+							continue;
+
+						switch (m_phase)
+						{
+						case Phase::Login:
+							if (i == 0) applyPrimaryAction();
+							else if (i == 1) { m_phase = Phase::Register; m_activeField = 0; m_userErrorText.clear(); }
+							else if (i == 2) { m_phase = Phase::ForgotPassword; m_activeField = 0; m_userErrorText.clear(); }
+							else if (i == 3) { OpenLanguageOptions(); }
+							break;
+						case Phase::Register:
+						case Phase::VerifyEmail:
+						case Phase::ForgotPassword:
+							if (i == 0) applyPrimaryAction();
+							else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
+							break;
+						case Phase::LanguageSelectionFirstRun:
+						case Phase::LanguageOptions:
+						case Phase::CharacterCreate:
+						case Phase::Submitting:
+						case Phase::Error:
+							if (i == 0) applyPrimaryAction();
+							break;
+						case Phase::Terms:
+							if (i == 0) applyPrimaryAction();
+							break;
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		std::string text;
+		if (!usingNativeAuth)
+		{
+			input.ConsumePendingTextUtf8(text);
+			if (!text.empty())
+			{
+				if (std::string* field = currentField())
 				{
 				for (unsigned char c : text)
 				{
@@ -2351,336 +2599,241 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
 		|| (usingNativeAuth && m_phase == Phase::Error))
 		{
-		if (!usingNativeAuth && m_phase == Phase::LanguageSelectionFirstRun)
-		{
-			ApplyLocaleSelection(true);
-		}
-		else if (!usingNativeAuth && m_phase == Phase::LanguageOptions)
-		{
-			m_videoFullscreen = m_videoFullscreenPending;
-			m_videoVsync = m_videoVsyncPending;
-			m_audioMasterVolume = m_audioMasterVolumePending;
-			m_audioMusicVolume = m_audioMusicVolumePending;
-			m_audioSfxVolume = m_audioSfxVolumePending;
-			m_audioUiVolume = m_audioUiVolumePending;
-			m_mouseSensitivity = m_mouseSensitivityPending;
-			m_invertY = m_invertYPending;
-			m_useZqsd = m_useZqsdPending;
-			m_gameplayUdpEnabled = m_gameplayUdpEnabledPending;
-			m_allowInsecureDev = m_allowInsecureDevPending;
-			m_authTimeoutMs = m_authTimeoutMsPending;
-			m_pendingVideoSettings.applyRequested = true;
-			m_pendingVideoSettings.fullscreen = m_videoFullscreen;
-			m_pendingVideoSettings.vsync = m_videoVsync;
-			m_pendingAudioSettings.applyRequested = true;
-			m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
-			m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
-			m_pendingAudioSettings.sfxVolume = m_audioSfxVolume;
-			m_pendingAudioSettings.uiVolume = m_audioUiVolume;
-			m_pendingControlSettings.applyRequested = true;
-			m_pendingControlSettings.mouseSensitivity = m_mouseSensitivity;
-			m_pendingControlSettings.invertY = m_invertY;
-			m_pendingControlSettings.useZqsd = m_useZqsd;
-			m_pendingGameSettings.applyRequested = true;
-			m_pendingGameSettings.gameplayUdpEnabled = m_gameplayUdpEnabled;
-			m_pendingGameSettings.allowInsecureDev = m_allowInsecureDev;
-			m_pendingGameSettings.authTimeoutMs = m_authTimeoutMs;
-			ApplyLocaleSelection(false);
-		}
-		else
-		{
-		SubmitCurrentPhase(cfg);
-		}
+			applyPrimaryAction();
 		}
 
 		UpdateWindowTitle(window);
 	}
 
-	std::string AuthUiPresenter::BuildPanelText() const
+	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel() const
 	{
-#if defined(_WIN32)
-	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword || m_phase == Phase::Register)
-	{
-		return {};
-	}
-#endif
-		std::string s;
-	s += Tr("auth.title_line1");
-	s += "\n";
-	s += Tr("auth.title_line2");
-	s += "\n\n";
-		if (!m_infoBanner.empty())
+		RenderModel model{};
+		model.visible = m_initialized && !m_flowComplete && m_authEnabled;
+		model.titleLine1 = Tr("auth.title_line1");
+		model.titleLine2 = Tr("auth.title_line2");
+		model.infoBanner = m_infoBanner;
+		model.errorText = (m_phase == Phase::Error) ? m_userErrorText : std::string{};
+		model.footerHint = Tr("common.tab_escape_hint");
+
+		auto addField = [&model](std::string label, std::string value, bool active, bool secret = false)
 		{
-			s += Tr("common.information");
-			s += "\n";
-			s += m_infoBanner;
-			s += "\n\n";
-		}
+			RenderField field{};
+			field.label = std::move(label);
+			field.value = std::move(value);
+			field.active = active;
+			field.hovered = static_cast<int32_t>(model.fields.size()) == m_hoveredFieldIndex;
+			field.secret = secret;
+			model.fields.push_back(std::move(field));
+		};
+		auto addAction = [&model](std::string label, bool primary, bool active = true)
+		{
+			RenderAction action{};
+			action.label = std::move(label);
+			action.primary = primary;
+			action.active = active;
+			action.hovered = static_cast<int32_t>(model.actions.size()) == m_hoveredActionIndex;
+			model.actions.push_back(std::move(action));
+		};
+		auto addBodyLine = [this, &model](std::string text, bool active = false)
+		{
+			RenderBodyLine line{};
+			line.text = std::move(text);
+			line.active = active;
+			line.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
+			model.bodyLines.push_back(std::move(line));
+		};
+		auto maskedPassword = [this]() -> std::string
+		{
+			std::string out;
+			AppendPasswordStars(out, m_password.size());
+			return out;
+		};
+
 		switch (m_phase)
 		{
-		case Phase::LanguageSelectionFirstRun:
-		case Phase::LanguageOptions:
-		{
-			s += (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.title") : Tr("language.options.title");
-			s += "\n\n";
-			s += Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } });
-			s += "\n";
-			if (!m_selectedLocale.empty())
-			{
-				s += Tr("language.first_run.message", { { "language", LocalizedLanguageName(m_selectedLocale) } });
-				s += "\n";
-			}
-			s += "\n";
-			s += Tr("language.available");
-			s += "\n";
-			const auto& locales = m_localization.GetAvailableLocales();
-			for (size_t i = 0; i < locales.size(); ++i)
-			{
-				s += ((m_phase == Phase::LanguageSelectionFirstRun && i == m_languageSelectionIndex)
-					|| (m_phase == Phase::LanguageOptions && m_optionsSelectionIndex == 0u && i == m_languageSelectionIndex)) ? "> " : "  ";
-				s += LocalizedLanguageName(locales[i]);
-				s += " (";
-				s += locales[i];
-				s += ")\n";
-			}
-			if (m_phase == Phase::LanguageOptions)
-			{
-				s += "\n";
-				s += Tr("options.video.title");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 1u) ? "> " : "  ";
-				s += Tr("options.video.fullscreen");
-				s += ": ";
-				s += Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 2u) ? "> " : "  ";
-				s += Tr("options.video.vsync");
-				s += ": ";
-				s += Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off");
-				s += "\n";
-				s += "\n";
-				s += Tr("options.audio.title");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 3u) ? "> " : "  ";
-				s += Tr("options.audio.master");
-				s += ": ";
-				s += std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f));
-				s += "%\n";
-				s += (m_optionsSelectionIndex == 4u) ? "> " : "  ";
-				s += Tr("options.audio.music");
-				s += ": ";
-				s += std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f));
-				s += "%\n";
-				s += (m_optionsSelectionIndex == 5u) ? "> " : "  ";
-				s += Tr("options.audio.sfx");
-				s += ": ";
-				s += std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f));
-				s += "%\n";
-				s += (m_optionsSelectionIndex == 6u) ? "> " : "  ";
-				s += Tr("options.audio.ui");
-				s += ": ";
-				s += std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f));
-				s += "%\n";
-				s += "\n";
-				s += Tr("options.controls.title");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 7u) ? "> " : "  ";
-				s += Tr("options.controls.mouse_sensitivity");
-				s += ": ";
-				s += std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f));
-				s += "\n";
-				s += (m_optionsSelectionIndex == 8u) ? "> " : "  ";
-				s += Tr("options.controls.invert_y");
-				s += ": ";
-				s += Tr(m_invertYPending ? "options.value.on" : "options.value.off");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 9u) ? "> " : "  ";
-				s += Tr("options.controls.movement_layout");
-				s += ": ";
-				s += Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd");
-				s += "\n";
-				s += "\n";
-				s += Tr("options.game.title");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 10u) ? "> " : "  ";
-				s += Tr("options.game.gameplay_udp");
-				s += ": ";
-				s += Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 11u) ? "> " : "  ";
-				s += Tr("options.game.allow_insecure_dev");
-				s += ": ";
-				s += Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off");
-				s += "\n";
-				s += (m_optionsSelectionIndex == 12u) ? "> " : "  ";
-				s += Tr("options.game.auth_timeout");
-				s += ": ";
-				s += std::to_string(m_authTimeoutMsPending);
-				s += " ms\n";
-			}
-			s += "\n";
-			s += (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.confirm") : Tr("language.options.apply_hint");
-			s += "\n";
-			break;
-		}
 		case Phase::Login:
-			s += Tr("auth.section.login");
-			s += "\n\n";
-			s += Tr("auth.label.login");
-			s += "\n";
-			s += m_login;
-			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.password");
-			s += "\n";
-			AppendPasswordStars(s, m_password.size());
-			s += (m_activeField == 1 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.hint.login.submit");
-			s += "\n";
-			s += Tr("auth.hint.login.register");
-			s += "\n";
-			s += Tr("auth.hint.login.forgot");
-			s += "\n";
-			s += Tr("auth.hint.login.options");
-			s += "\n";
+			model.sectionTitle = Tr("auth.section.login");
+			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
+			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
+			addBodyLine(Tr("auth.checkbox.remember") + ": " + Tr(m_rememberLogin ? "options.value.on" : "options.value.off"), true);
+			addAction(Tr("common.submit"), true);
+			addAction(Tr("auth.button.register"), false);
+			addAction(Tr("auth.button.forgot_password"), false);
+			addAction(Tr("language.options.title"), false);
 			break;
 		case Phase::Register:
-			s += Tr("auth.panel.register");
-			s += "\n\n";
-			s += Tr("auth.label.login");
-			s += "\n";
-			s += m_login;
-			s += (m_activeField == 0 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.password");
-			s += "\n";
-			AppendPasswordStars(s, m_password.size());
-			s += (m_activeField == 1 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("common.email");
-			s += "\n";
-			s += m_email;
-			s += (m_activeField == 2 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.first_name");
-			s += "\n";
-			s += m_firstName;
-			s += (m_activeField == 3 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.last_name");
-			s += "\n";
-			s += m_lastName;
-			s += (m_activeField == 4 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.birth_day");
-			s += "\n";
-			s += m_birthDay;
-			s += (m_activeField == 5 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.birth_month");
-			s += "\n";
-			s += m_birthMonth;
-			s += (m_activeField == 6 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.label.birth_year");
-			s += "\n";
-			s += m_birthYear;
-			s += (m_activeField == 7 ? "|\n" : "\n");
-			s += "\n";
-			s += Tr("auth.hint.register.submit");
-			s += "\n";
-			s += Tr("auth.hint.return_login");
-			s += "\n";
+			model.sectionTitle = Tr("auth.panel.register");
+			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
+			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
+			addField(Tr("common.email"), m_email, m_activeField == 2);
+			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3);
+			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4);
+			addField(Tr("auth.label.birth_day"), m_birthDay, m_activeField == 5);
+			addField(Tr("auth.label.birth_month"), m_birthMonth, m_activeField == 6);
+			addField(Tr("auth.label.birth_year"), m_birthYear, m_activeField == 7);
+			addAction(Tr("common.submit"), true);
+			addAction(Tr("auth.hint.return_login"), false);
 			break;
 		case Phase::VerifyEmail:
-			s += Tr("auth.phase.verify_email");
-			s += "\n\n";
-			s += Tr("auth.label.account");
-			s += "\n";
-			s += std::to_string(m_pendingVerifyAccountId);
-			s += "\n\n";
-			s += Tr("auth.label.verify_code");
-			s += "\n";
-			s += m_verifyCode;
-			s += "|\n";
-			s += "\n";
-			s += Tr("auth.hint.verify.submit");
-			s += "\n";
-			s += Tr("auth.hint.return_login");
-			s += "\n";
+			model.sectionTitle = Tr("auth.phase.verify_email");
+			addBodyLine(Tr("auth.label.account") + ": " + std::to_string(m_pendingVerifyAccountId));
+			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
+			addAction(Tr("common.submit"), true);
+			addAction(Tr("auth.hint.return_login"), false);
 			break;
 		case Phase::ForgotPassword:
-			s += Tr("auth.section.forgot_password");
-			s += "\n\n";
-			s += Tr("common.email");
-			s += "\n";
-			s += m_email;
-			s += "|\n";
-			s += "\n";
-			s += Tr("common.submit");
-			s += "\n";
-			s += Tr("auth.hint.return_login");
-			s += "\n";
+			model.sectionTitle = Tr("auth.section.forgot_password");
+			addField(Tr("common.email"), m_email, true);
+			addAction(Tr("common.submit"), true);
+			addAction(Tr("auth.hint.return_login"), false);
 			break;
 		case Phase::Terms:
 		{
-			s += Tr("auth.panel.terms");
-			s += "\n\n";
-			s += Tr("auth.panel.edition");
-			s += " ";
-			s += std::to_string(m_pendingTermsEditionId);
-			s += "  ";
-			s += Tr("auth.panel.version");
-			s += " ";
-			s += m_termsVersionLabel;
-			s += "\n";
-			s += Tr("auth.panel.title");
-			s += " ";
-			s += m_termsTitle;
-			s += "\n";
-			s += Tr("auth.panel.language");
-			s += " ";
-			s += m_termsLocale;
-			s += "\n\n";
+			model.sectionTitle = Tr("auth.panel.terms");
+			addBodyLine(Tr("auth.panel.edition") + " " + std::to_string(m_pendingTermsEditionId));
+			addBodyLine(Tr("auth.panel.version") + " " + m_termsVersionLabel);
+			addBodyLine(Tr("auth.panel.title") + " " + m_termsTitle);
+			addBodyLine(Tr("auth.panel.language") + " " + m_termsLocale);
 			const size_t start = static_cast<size_t>(std::min<uint32_t>(m_termsScrollOffset, static_cast<uint32_t>(m_termsContent.size())));
 			const size_t count = std::min<size_t>(900u, m_termsContent.size() - start);
-			s.append(m_termsContent.data() + start, count);
-			s += "\n\n";
-			s += m_termsScrolledToBottom ? Tr("auth.panel.end_reached") : Tr("auth.panel.end_not_reached");
-			s += m_termsAcknowledgeChecked ? Tr("auth.panel.accept_checked") : Tr("auth.panel.accept_unchecked");
-			s += Tr("auth.hint.terms.scroll");
-			s += "\n";
-			s += Tr("auth.hint.terms.accept");
-			s += "\n";
+			addBodyLine(std::string(m_termsContent.data() + start, count));
+			addBodyLine(m_termsScrolledToBottom ? Tr("auth.panel.end_reached") : Tr("auth.panel.end_not_reached"));
+			addBodyLine(m_termsAcknowledgeChecked ? Tr("auth.panel.accept_checked") : Tr("auth.panel.accept_unchecked"), true);
+			addAction(Tr("auth.hint.terms.accept"), true);
 			break;
 		}
 		case Phase::CharacterCreate:
-			s += Tr("auth.panel.character_create");
-			s += "\n\n";
-			s += Tr("auth.label.character_name");
-			s += "\n";
-			s += m_characterName;
-			s += "|\n";
-			s += "\n";
-			s += Tr("auth.hint.character.rules");
-			s += "\n";
+			model.sectionTitle = Tr("auth.panel.character_create");
+			addField(Tr("auth.label.character_name"), m_characterName, true);
+			addBodyLine(Tr("auth.hint.character.rules"));
+			addAction(Tr("common.submit"), true);
 			break;
-		case Phase::Submitting:
-			s += Tr("auth.panel.submitting");
-			s += "\n";
-			break;
-		case Phase::Error:
-			s += Tr("auth.panel.error");
-			s += "\n\n";
-			s += m_userErrorText;
-			s += "\n\n";
-			s += Tr("common.continue");
-			s += "\n";
+		case Phase::LanguageSelectionFirstRun:
+		case Phase::LanguageOptions:
+		{
+			model.sectionTitle = (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.title") : Tr("language.options.title");
+			addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } }));
+			const auto& locales = m_localization.GetAvailableLocales();
+			for (size_t i = 0; i < locales.size(); ++i)
+			{
+				const bool selected = ((m_phase == Phase::LanguageSelectionFirstRun && i == m_languageSelectionIndex)
+					|| (m_phase == Phase::LanguageOptions && m_optionsSelectionIndex == 0u && i == m_languageSelectionIndex));
+				addBodyLine(std::string(selected ? "> " : "  ") + LocalizedLanguageName(locales[i]) + " (" + locales[i] + ")",
+					m_optionsSelectionIndex == 0u && static_cast<uint32_t>(i) == m_languageSelectionIndex);
+			}
+			if (m_phase == Phase::LanguageOptions)
+			{
+				addBodyLine(Tr("options.video.fullscreen") + ": " + Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 1u);
+				addBodyLine(Tr("options.video.vsync") + ": " + Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 2u);
+				addBodyLine(Tr("options.audio.master") + ": " + std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 3u);
+				addBodyLine(Tr("options.audio.music") + ": " + std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 4u);
+				addBodyLine(Tr("options.audio.sfx") + ": " + std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 5u);
+				addBodyLine(Tr("options.audio.ui") + ": " + std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 6u);
+				addBodyLine(Tr("options.controls.mouse_sensitivity") + ": " + std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f)), m_optionsSelectionIndex == 7u);
+				addBodyLine(Tr("options.controls.invert_y") + ": " + Tr(m_invertYPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 8u);
+				addBodyLine(Tr("options.controls.movement_layout") + ": " + Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd"), m_optionsSelectionIndex == 9u);
+				addBodyLine(Tr("options.game.gameplay_udp") + ": " + Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 10u);
+				addBodyLine(Tr("options.game.allow_insecure_dev") + ": " + Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 11u);
+				addBodyLine(Tr("options.game.auth_timeout") + ": " + std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSelectionIndex == 12u);
+			}
+			addAction((m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.confirm") : Tr("language.options.apply_hint"), true);
 			break;
 		}
+		case Phase::Submitting:
+			model.sectionTitle = Tr("auth.panel.submitting");
+			addBodyLine(Tr("auth.panel.submitting"), true);
+			break;
+		case Phase::Error:
+			model.sectionTitle = Tr("auth.panel.error");
+			addBodyLine(m_userErrorText, true);
+			addAction(Tr("common.continue"), true);
+			break;
+		}
+
+		if (!model.bodyLines.empty())
+		{
+			const int32_t total = static_cast<int32_t>(model.bodyLines.size());
+			const int32_t maxVisible = 6;
+			int32_t focusIndex = 0;
+			for (int32_t i = 0; i < total; ++i)
+			{
+				if (model.bodyLines[static_cast<size_t>(i)].hovered || model.bodyLines[static_cast<size_t>(i)].active)
+				{
+					focusIndex = i;
+					break;
+				}
+			}
+			int32_t start = std::max(0, focusIndex - (maxVisible / 2));
+			if (start + maxVisible > total)
+			{
+				start = std::max(0, total - maxVisible);
+			}
+			model.visibleBodyLineStart = start;
+			model.visibleBodyLineCount = std::min(maxVisible, total - start);
+		}
+
+		return model;
+	}
+
+	std::string AuthUiPresenter::BuildPanelText() const
+	{
+		const RenderModel model = BuildRenderModel();
+		if (!model.visible)
+		{
+			return {};
+		}
+
+		std::string s;
+		s += model.titleLine1;
 		s += "\n";
-		s += Tr("common.tab_escape_hint");
+		s += model.titleLine2;
+		s += "\n\n";
+		if (!model.infoBanner.empty())
+		{
+			s += Tr("common.information");
+			s += "\n";
+			s += model.infoBanner;
+			s += "\n\n";
+		}
+		if (!model.sectionTitle.empty())
+		{
+			s += model.sectionTitle;
+			s += "\n\n";
+		}
+		for (const RenderField& field : model.fields)
+		{
+			s += field.label;
+			s += "\n";
+			s += field.value;
+			s += field.active ? "|\n" : "\n";
+			s += "\n";
+		}
+		for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
+		{
+			const RenderBodyLine& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
+			if (line.text.empty())
+				continue;
+			s += line.text;
+			s += "\n";
+		}
+		if (!model.bodyLines.empty())
+		{
+			s += "\n";
+		}
+		if (!model.errorText.empty())
+		{
+			s += "\n\n";
+			s += model.errorText;
+			s += "\n";
+		}
+		for (const RenderAction& action : model.actions)
+		{
+			s += action.primary ? "[*] " : "[ ] ";
+			s += action.label;
+			s += "\n";
+		}
+		s += "\n";
+		s += model.footerHint;
 		s += "\n";
 		return s;
 	}

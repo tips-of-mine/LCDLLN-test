@@ -70,6 +70,46 @@ namespace engine::client
 			bool error = false;
 		};
 
+		struct RenderField
+		{
+			std::string label;
+			std::string value;
+			bool active = false;
+			bool hovered = false;
+			bool secret = false;
+		};
+
+		struct RenderAction
+		{
+			std::string label;
+			bool primary = false;
+			bool active = false;
+			bool hovered = false;
+		};
+
+		struct RenderBodyLine
+		{
+			std::string text;
+			bool active = false;
+			bool hovered = false;
+		};
+
+		struct RenderModel
+		{
+			bool visible = false;
+			std::string titleLine1;
+			std::string titleLine2;
+			std::string sectionTitle;
+			std::string infoBanner;
+			std::string errorText;
+			std::string footerHint;
+			std::vector<RenderField> fields;
+			std::vector<RenderAction> actions;
+			std::vector<RenderBodyLine> bodyLines;
+			int32_t visibleBodyLineStart = 0;
+			int32_t visibleBodyLineCount = 0;
+		};
+
 		AuthUiPresenter() = default;
 		~AuthUiPresenter();
 
@@ -92,7 +132,9 @@ namespace engine::client
 
 		/// Multi-line panel for HUD / logs (full form + asset paths + errors).
 		std::string BuildPanelText() const;
+		RenderModel BuildRenderModel() const;
 		VisualState GetVisualState() const;
+		bool IsUsingNativeAuthScreen() const { return m_usingNativeAuthScreen; }
 		VideoSettingsCommand ConsumePendingVideoSettings();
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
@@ -146,6 +188,7 @@ namespace engine::client
 		bool m_initialized = false;
 		bool m_flowComplete = false;
 		bool m_authEnabled = true;
+		bool m_usingNativeAuthScreen = false;
 		Phase m_phase = Phase::Login;
 
 		std::string m_login;
@@ -163,6 +206,9 @@ namespace engine::client
 		std::string m_termsContent;
 		std::string m_characterName;
 		uint32_t m_activeField = 0;
+		int32_t m_hoveredFieldIndex = -1;
+		int32_t m_hoveredBodyLineIndex = -1;
+		int32_t m_hoveredActionIndex = -1;
 		uint32_t m_termsScrollOffset = 0;
 		uint32_t m_termsTotalLength = 0;
 		std::string m_userErrorText;

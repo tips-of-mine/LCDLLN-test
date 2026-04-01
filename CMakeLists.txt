@@ -210,6 +210,8 @@ add_library(engine_core
   engine/render/ShaderCache.cpp
   engine/render/ShaderHotReload.cpp
   engine/render/Camera.cpp
+  engine/render/AuthGlyphPass.cpp
+  engine/render/AuthUiRenderer.cpp
   engine/render/DecalSystem.cpp
   engine/render/DecalPass.cpp
   engine/render/ParticleSystem.cpp

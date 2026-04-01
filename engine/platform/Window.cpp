@@ -312,7 +312,6 @@ namespace engine::platform
 		m_authPasswordEditHwnd = createAuthControl(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_TABSTOP | ES_AUTOHSCROLL | ES_PASSWORD, kAuthPasswordEditId);
 		m_authForgotButtonHwnd = createAuthControl(0, L"BUTTON", L"Recuperation du mot de passe", BS_PUSHBUTTON | WS_TABSTOP, kAuthForgotButtonId);
 		m_authRegisterButtonHwnd = createAuthControl(0, L"BUTTON", L"Inscription", BS_PUSHBUTTON | WS_TABSTOP, kAuthRegisterButtonId);
-		m_authBackButtonHwnd = createAuthControl(0, L"BUTTON", L"Retour", BS_PUSHBUTTON | WS_TABSTOP, kAuthBackButtonId);
 		m_authSubmitButtonHwnd = createAuthControl(0, L"BUTTON", L"Valider", BS_DEFPUSHBUTTON | WS_TABSTOP, kAuthSubmitButtonId);
 		m_authQuitButtonHwnd = createAuthControl(0, L"BUTTON", L"Quitter", BS_PUSHBUTTON | WS_TABSTOP, kAuthQuitButtonId);
 
@@ -320,7 +319,7 @@ namespace engine::platform
 			m_authBackgroundHwnd, m_authLogoHwnd, m_authInfoHwnd,
 			m_authTitleLine1Hwnd, m_authTitleLine2Hwnd, m_authSectionTitleHwnd, m_authPrimaryLabelHwnd,
 			m_authPrimaryEditHwnd, m_authRememberCheckboxHwnd, m_authPasswordLabelHwnd, m_authPasswordEditHwnd,
-			m_authForgotButtonHwnd, m_authRegisterButtonHwnd, m_authBackButtonHwnd, m_authSubmitButtonHwnd, m_authQuitButtonHwnd
+			m_authForgotButtonHwnd, m_authRegisterButtonHwnd, m_authSubmitButtonHwnd, m_authQuitButtonHwnd
 		};
 		for (void* ctrl : authControls)
 		{
@@ -557,7 +556,7 @@ namespace engine::platform
 		setVisible(m_authPasswordEditHwnd, state.showPassword);
 		setVisible(m_authForgotButtonHwnd, state.showForgot);
 		setVisible(m_authRegisterButtonHwnd, state.showRegister);
-		setVisible(m_authBackButtonHwnd, state.showBack);
+		setVisible(m_authBackButtonHwnd, false);
 		setVisible(m_authSubmitButtonHwnd, !state.submitLabel.empty());
 		setVisible(m_authQuitButtonHwnd, state.showQuit);
 		UpdateAuthScreenLayout();
@@ -659,7 +658,6 @@ namespace engine::platform
 		SetWindowPos(AsHwnd(m_authPasswordEditHwnd), HWND_TOP, contentX, panelY + 292, contentW, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authForgotButtonHwnd), HWND_TOP, contentX, panelY + 338, contentW, 28, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authRegisterButtonHwnd), HWND_TOP, contentX, panelY + 374, 132, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-		SetWindowPos(AsHwnd(m_authBackButtonHwnd), HWND_TOP, contentX + 140, panelY + 374, 120, 34, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authSubmitButtonHwnd), HWND_TOP, contentX, panelY + panelH - 76, 160, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 		SetWindowPos(AsHwnd(m_authQuitButtonHwnd), HWND_TOP, contentX + 174, panelY + panelH - 76, 160, 38, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	}
@@ -777,18 +775,22 @@ LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)
 					m_authRememberChecked = SendMessageW(AsHwnd(m_authRememberCheckboxHwnd), BM_GETCHECK, 0, 0) == BST_CHECKED;
 					break;
 				case kAuthForgotButtonId:
+					LOG_INFO(Core, "[AuthUi] Click bouton recuperation du mot de passe");
 					m_pendingAuthCommand = AuthScreenCommand::OpenForgotPassword;
 					break;
 				case kAuthRegisterButtonId:
+					LOG_INFO(Core, "[AuthUi] Click bouton inscription");
 					m_pendingAuthCommand = AuthScreenCommand::OpenRegister;
 					break;
 				case kAuthBackButtonId:
 					m_pendingAuthCommand = AuthScreenCommand::BackToLogin;
 					break;
 				case kAuthSubmitButtonId:
+					LOG_INFO(Core, "[AuthUi] Click bouton validation");
 					m_pendingAuthCommand = AuthScreenCommand::Submit;
 					break;
 				case kAuthQuitButtonId:
+					LOG_INFO(Core, "[AuthUi] Click bouton quitter");
 					m_pendingAuthCommand = AuthScreenCommand::Quit;
 					break;
 				default:

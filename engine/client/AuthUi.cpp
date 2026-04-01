@@ -1506,7 +1506,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		state.showRemember = m_phase == Phase::Login;
 		state.showForgot = m_phase == Phase::Login;
 		state.showRegister = m_phase == Phase::Login;
-		state.showBack = m_phase == Phase::ForgotPassword || m_phase == Phase::Register;
+		state.showBack = false;
 		state.showQuit = true;
 		state.showInfoImage = m_phase == Phase::Register;
 		state.rememberChecked = m_rememberLogin;

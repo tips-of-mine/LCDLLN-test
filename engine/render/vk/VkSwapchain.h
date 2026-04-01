@@ -34,6 +34,8 @@ namespace engine::render
 
 		/// Returns true when current surface caps imply a different swapchain extent.
 		bool NeedsRecreateForSurfaceExtent(uint32_t requestedWidth, uint32_t requestedHeight) const;
+		/// Returns true when surface caps are known to report a bogus fixed height=1 extent.
+		bool HasDegenerateSurfaceExtent(uint32_t requestedWidth, uint32_t requestedHeight) const;
 
 		/// Returns the swapchain handle (VK_NULL_HANDLE if not created).
 		VkSwapchainKHR GetSwapchain() const { return m_swapchain; }

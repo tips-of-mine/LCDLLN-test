@@ -451,7 +451,7 @@ namespace engine::client
 		m_authMinimalChrome = cfg.GetBool("render.auth_ui.minimal_chrome", true);
 		m_authLoginArtColumn = cfg.GetBool("render.auth_ui.login_art_column", false);
 		m_masterAvailabilityUrl = cfg.GetString("client.auth_ui.master_availability_url", "");
-		m_authLogoSizePx = static_cast<int32_t>(std::clamp(cfg.GetInt("render.auth_ui.logo_size_px", 96), 32, 256));
+		m_authLogoSizePx = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.auth_ui.logo_size_px", 96), 32, 256));
 		m_authAvailabilityChecking = false;
 		m_authAvailabilityPollTimer = 0.f;
 		m_pendingGameSettings = {};

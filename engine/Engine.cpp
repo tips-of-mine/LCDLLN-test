@@ -1344,17 +1344,34 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
-												LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage begin");
-												// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
-												// with vkCmdBlitImage here even when source and destination extents match.
-												VkImageCopy region{};
-												region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.srcOffset = { 0, 0, 0 };
-												region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-												region.dstOffset = { 0, 0, 0 };
-												region.extent = { ext.width, ext.height, 1 };
-												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-												LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
+												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
+												if (presentSolidColorDebug)
+												{
+													LOG_WARN(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
+													const VkClearColorValue debugColor = { { 0.9f, 0.0f, 0.9f, 1.0f } };
+													VkImageSubresourceRange clearRange{};
+													clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													clearRange.baseMipLevel = 0;
+													clearRange.levelCount = 1;
+													clearRange.baseArrayLayer = 0;
+													clearRange.layerCount = 1;
+													vkCmdClearColorImage(cmd, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &debugColor, 1, &clearRange);
+													LOG_INFO(Render, "[CopyPresent] debug clear color applied");
+												}
+												else
+												{
+													LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage begin");
+													// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
+													// with vkCmdBlitImage here even when source and destination extents match.
+													VkImageCopy region{};
+													region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+													region.srcOffset = { 0, 0, 0 };
+													region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+													region.dstOffset = { 0, 0, 0 };
+													region.extent = { ext.width, ext.height, 1 };
+													vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+													LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
+												}
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
 												const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", false);
 												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);

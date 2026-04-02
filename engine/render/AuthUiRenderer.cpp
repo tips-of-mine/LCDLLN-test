@@ -113,6 +113,12 @@ namespace engine::render
 
 		const int32_t w = static_cast<int32_t>(extent.width);
 		const int32_t h = static_cast<int32_t>(extent.height);
+		// vkCmdClearAttachments : VkRect2D.offset en coordonnées framebuffer Vulkan (origine bas-gauche).
+		// Le layout UI reste en haut-gauche (Y vers le bas).
+		auto topDownToFramebufferY = [h](int32_t yTop, int32_t rectHeight) -> int32_t
+		{
+			return h - yTop - rectHeight;
+		};
 		const AuthUiLayoutMetrics layout = BuildAuthUiLayoutMetrics(extent, state, model);
 		const int32_t panelW = layout.panelW;
 		const int32_t panelH = layout.panelH;
@@ -124,7 +130,7 @@ namespace engine::render
 		const bool largeContent = layout.largeContent;
 		const bool compactSingleField = layout.compactSingleField;
 
-		auto addRect = [&layers](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
+		auto addRect = [&layers, topDownToFramebufferY](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
 		{
 			if (rw <= 0 || rh <= 0)
 			{
@@ -136,7 +142,8 @@ namespace engine::render
 			layer.color.float32[1] = g;
 			layer.color.float32[2] = b;
 			layer.color.float32[3] = a;
-			layer.rect.rect.offset = { x, y };
+			const int32_t fbY = topDownToFramebufferY(y, rh);
+			layer.rect.rect.offset = { x, std::max(0, fbY) };
 			layer.rect.rect.extent = { static_cast<uint32_t>(rw), static_cast<uint32_t>(rh) };
 			layer.rect.baseArrayLayer = 0;
 			layer.rect.layerCount = 1;

@@ -1390,6 +1390,7 @@ namespace engine
 													colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 													colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+													LOG_INFO(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
 
 													VkRenderingInfo renderingInfo{};
 													renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -1398,7 +1399,10 @@ namespace engine
 													renderingInfo.layerCount = 1;
 													renderingInfo.colorAttachmentCount = 1;
 													renderingInfo.pColorAttachments = &colorAttachment;
+													LOG_INFO(Render, "[CopyPresent] renderingInfo ready (ext={}x={})", ext.width, ext.height);
+													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call");
 													vkCmdBeginRendering(cmd, &renderingInfo);
+													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering returned");
 
 													LOG_INFO(Render, "[CopyPresent] building UI layers");
 													const std::vector<engine::render::AuthUiLayer> layers =

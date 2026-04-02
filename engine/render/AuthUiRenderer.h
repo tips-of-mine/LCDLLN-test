@@ -52,10 +52,12 @@ namespace engine::render
 
 	/// Si \p calibrationOverlay est true, ajoute des bandes de référence (rouge=haut, vert=bas,
 	/// bleu=gauche, jaune=droite, magenta=centre) pour diagnostiquer l’orientation sur une capture.
+	/// Si \p usePhotoBackdrop est true, n’applique pas les grands aplats plein écran (fond déjà dessiné par blit).
 	std::vector<AuthUiLayer> BuildAuthUiLayers(
 		VkExtent2D extent,
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model,
 		const AuthUiTheme& theme,
-		bool calibrationOverlay = false);
+		bool calibrationOverlay = false,
+		bool usePhotoBackdrop = false);
 }

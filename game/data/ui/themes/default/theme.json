@@ -2,15 +2,15 @@
   "id": "default",
   "displayName": "Default",
   "palette": {
-    "primary": "#3A6EA5",
-    "secondary": "#5A7FA8",
-    "accent": "#D9A441",
-    "background": "#10161D",
-    "surface": "#16202B",
-    "panel": "#1B2836",
-    "text": "#E8EDF3",
-    "mutedText": "#AAB6C3",
-    "border": "#314456"
+    "primary": "#4A7BB8",
+    "secondary": "#5C6B8C",
+    "accent": "#E8C56E",
+    "background": "#0A0D12",
+    "surface": "#121822",
+    "panel": "#141C28",
+    "text": "#F2F4F8",
+    "mutedText": "#9BA8B8",
+    "border": "#3D4F66"
   },
   "typography": {
     "fontFamily": "Inter",

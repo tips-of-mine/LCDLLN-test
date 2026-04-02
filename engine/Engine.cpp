@@ -551,6 +551,17 @@ namespace engine
 											if (!lutPath.empty())
 												m_colorGradingLutHandle = m_assetRegistry.LoadTexture(lutPath, true);
 										}
+										{
+											const std::string authBgPath = m_cfg.GetString("render.auth_ui.background_path", "ui/login/background.png");
+											if (!authBgPath.empty())
+											{
+												m_authUiBackgroundTexture = m_assetRegistry.LoadTextureForPresentBlit(authBgPath, m_vkSwapchain.GetImageFormat());
+												if (!m_authUiBackgroundTexture.IsValid())
+													LOG_WARN(Render, "[Boot] Auth UI background not loaded ({})", authBgPath);
+												else
+													LOG_INFO(Render, "[Boot] Auth UI background OK ({})", authBgPath);
+											}
+										}
 
 										engine::render::ImageDesc sceneColorDesc{};
 										sceneColorDesc.format    = m_vkSwapchain.GetImageFormat();
@@ -1344,6 +1355,7 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
+												bool authPhotoBackdrop = false;
 												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
 												if (presentSolidColorDebug)
 												{
@@ -1373,6 +1385,40 @@ namespace engine
 													LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
 												}
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
+												const bool authBgBlitWanted = authVisualState.active && m_authUiBackgroundTexture.IsValid()
+													&& m_cfg.GetBool("render.auth_ui.background_blit.enabled", true) && !presentSolidColorDebug;
+												if (authBgBlitWanted)
+												{
+													engine::render::TextureAsset* bgTex = m_authUiBackgroundTexture.Get();
+													if (bgTex && bgTex->image != VK_NULL_HANDLE && bgTex->width > 0u && bgTex->height > 0u)
+													{
+														VkImageMemoryBarrier bgSrc{};
+														bgSrc.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														bgSrc.srcAccessMask = m_authUiBackgroundLayoutReady ? VK_ACCESS_TRANSFER_READ_BIT : 0;
+														bgSrc.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+														bgSrc.oldLayout = m_authUiBackgroundLayoutReady ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PREINITIALIZED;
+														bgSrc.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+														bgSrc.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bgSrc.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														bgSrc.image = bgTex->image;
+														bgSrc.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														const VkPipelineStageFlags bgSrcStages = m_authUiBackgroundLayoutReady ? VK_PIPELINE_STAGE_TRANSFER_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+														vkCmdPipelineBarrier(cmd, bgSrcStages, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &bgSrc);
+														VkImageBlit blit{};
+														blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+														blit.srcSubresource.mipLevel = 0;
+														blit.srcSubresource.baseArrayLayer = 0;
+														blit.srcSubresource.layerCount = 1;
+														blit.srcOffsets[0] = { 0, 0, 0 };
+														blit.srcOffsets[1] = { static_cast<int32_t>(bgTex->width), static_cast<int32_t>(bgTex->height), 1 };
+														blit.dstSubresource = blit.srcSubresource;
+														blit.dstOffsets[0] = { 0, 0, 0 };
+														blit.dstOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
+														vkCmdBlitImage(cmd, bgTex->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+														m_authUiBackgroundLayoutReady = true;
+														authPhotoBackdrop = true;
+													}
+												}
 												const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", true);
 												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
 
@@ -1409,8 +1455,7 @@ namespace engine
 													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 													colorAttachment.imageView = backbufferView;
 													colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													// Use CLEAR to avoid driver issues when loadOp=LOAD on swapchain images.
-													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+													colorAttachment.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
 													colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 													colorAttachment.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 
@@ -1418,7 +1463,7 @@ namespace engine
 													colorAttachmentKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
 													colorAttachmentKHR.imageView = backbufferView;
 													colorAttachmentKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													colorAttachmentKHR.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+													colorAttachmentKHR.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
 													colorAttachmentKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 													colorAttachmentKHR.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 													LOG_INFO(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
@@ -1486,7 +1531,7 @@ namespace engine
 														LOG_INFO(Render, "[CopyPresent] building UI layers");
 														const bool authCalibOverlay = m_cfg.GetBool("render.auth_ui_calibration_overlay.enabled", false);
 														const std::vector<engine::render::AuthUiLayer> layers =
-															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay);
+															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay, authPhotoBackdrop);
 														LOG_INFO(Render, "[CopyPresent] UI layers built; clearing attachments");
 														for (const engine::render::AuthUiLayer& layer : layers)
 														{

@@ -7,6 +7,17 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <vector>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4505)
+#endif
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 namespace engine::render
 {
@@ -89,7 +100,21 @@ namespace engine::render
 		auto it = m_texturePathToId.find(key);
 		if (it != m_texturePathToId.end())
 			return TextureHandle(this, it->second);
-		AssetId id = loadTextureInternal(relativePath, useSrgb);
+		AssetId id = loadTextureInternal(relativePath, useSrgb, VK_FORMAT_UNDEFINED);
+		if (id != kInvalidAssetId)
+			m_texturePathToId[key] = id;
+		return TextureHandle(this, id);
+	}
+
+	TextureHandle AssetRegistry::LoadTextureForPresentBlit(std::string_view relativePath, VkFormat swapchainColorFormat)
+	{
+		std::string key(relativePath);
+		key += ":blit:";
+		key += std::to_string(static_cast<uint32_t>(swapchainColorFormat));
+		auto it = m_texturePathToId.find(key);
+		if (it != m_texturePathToId.end())
+			return TextureHandle(this, it->second);
+		AssetId id = loadTextureInternal(relativePath, true, swapchainColorFormat);
 		if (id != kInvalidAssetId)
 			m_texturePathToId[key] = id;
 		return TextureHandle(this, id);
@@ -287,20 +312,165 @@ namespace engine::render
 		return id;
 	}
 
-	AssetId AssetRegistry::loadTextureInternal(std::string_view relativePath, bool useSrgb)
+	namespace
+	{
+		bool IsPngFile(const uint8_t* data, size_t size)
+		{
+			return size >= 8u && data[0] == 0x89u && data[1] == 'P' && data[2] == 'N' && data[3] == 'G' && data[4] == 0x0du && data[5] == 0x0au
+				&& data[6] == 0x1au && data[7] == 0x0au;
+		}
+	}
+
+	AssetId AssetRegistry::loadTextureInternal(std::string_view relativePath, bool useSrgb, VkFormat presentBlitDstFormat)
 	{
 		LOG_WARN(Render, "[ASSET] loadTexture '%.*s'", static_cast<int>(relativePath.size()), relativePath.data());
-		if (!m_config || m_device == VK_NULL_HANDLE) return kInvalidAssetId;
+		if (!m_config || m_device == VK_NULL_HANDLE)
+			return kInvalidAssetId;
 		std::vector<uint8_t> data = engine::platform::FileSystem::ReadAllBytesContent(*m_config, relativePath);
-		if (data.size() < 16) { LOG_ERROR(Render, "AssetRegistry: texture file too small: {}", relativePath); return kInvalidAssetId; }
+		if (data.size() < 8u)
+		{
+			LOG_ERROR(Render, "AssetRegistry: texture file too small: {}", relativePath);
+			return kInvalidAssetId;
+		}
+
+		if (IsPngFile(data.data(), data.size()))
+		{
+			int w = 0;
+			int h = 0;
+			int comp = 0;
+			unsigned char* stbPixels = stbi_load_from_memory(data.data(), static_cast<int>(data.size()), &w, &h, &comp, 4);
+			if (!stbPixels || w <= 0 || h <= 0)
+			{
+				if (stbPixels)
+					stbi_image_free(stbPixels);
+				LOG_ERROR(Render, "AssetRegistry: PNG decode failed: {}", relativePath);
+				return kInvalidAssetId;
+			}
+
+			const uint32_t width = static_cast<uint32_t>(w);
+			const uint32_t height = static_cast<uint32_t>(h);
+			std::vector<uint8_t> owned(stbPixels, stbPixels + static_cast<size_t>(w) * static_cast<size_t>(h) * 4u);
+			stbi_image_free(stbPixels);
+
+			const bool matchBgraSwapchain = (presentBlitDstFormat == VK_FORMAT_B8G8R8A8_SRGB || presentBlitDstFormat == VK_FORMAT_B8G8R8A8_UNORM);
+			if (matchBgraSwapchain)
+			{
+				for (size_t i = 0; i + 3u < owned.size(); i += 4u)
+					std::swap(owned[i], owned[i + 2u]);
+			}
+
+			VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+			if (matchBgraSwapchain)
+				format = VK_FORMAT_B8G8R8A8_SRGB;
+			if (!useSrgb)
+				format = (format == VK_FORMAT_B8G8R8A8_SRGB) ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8G8B8A8_UNORM;
+
+			const uint8_t* pixels = owned.data();
+
+			TextureAsset asset{};
+			asset.width = width;
+			asset.height = height;
+			VkImageCreateInfo imgInfo{};
+			imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			imgInfo.imageType = VK_IMAGE_TYPE_2D;
+			imgInfo.format = format;
+			imgInfo.extent = { width, height, 1 };
+			imgInfo.mipLevels = 1;
+			imgInfo.arrayLayers = 1;
+			imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+			imgInfo.tiling = VK_IMAGE_TILING_LINEAR;
+			imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+			imgInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+			imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			if (vkCreateImage(m_device, &imgInfo, nullptr, &asset.image) != VK_SUCCESS || asset.image == VK_NULL_HANDLE)
+				return kInvalidAssetId;
+
+			VkMemoryRequirements memReq{};
+			vkGetImageMemoryRequirements(m_device, asset.image, &memReq);
+			uint32_t memTypeIdx = FindMemoryType(m_physicalDevice, memReq.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			if (memTypeIdx == UINT32_MAX)
+			{
+				vkDestroyImage(m_device, asset.image, nullptr);
+				return kInvalidAssetId;
+			}
+
+			VkMemoryAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memReq.size;
+			allocInfo.memoryTypeIndex = memTypeIdx;
+			VkDeviceMemory imgMem = VK_NULL_HANDLE;
+			if (vkAllocateMemory(m_device, &allocInfo, nullptr, &imgMem) != VK_SUCCESS || imgMem == VK_NULL_HANDLE)
+			{
+				vkDestroyImage(m_device, asset.image, nullptr);
+				return kInvalidAssetId;
+			}
+			if (vkBindImageMemory(m_device, asset.image, imgMem, 0) != VK_SUCCESS)
+			{
+				vkFreeMemory(m_device, imgMem, nullptr);
+				vkDestroyImage(m_device, asset.image, nullptr);
+				return kInvalidAssetId;
+			}
+			asset.allocation = reinterpret_cast<void*>(imgMem);
+
+			void* ptr = nullptr;
+			if (vkMapMemory(m_device, imgMem, 0, memReq.size, 0, &ptr) == VK_SUCCESS)
+			{
+				VkImageSubresource subres{};
+				subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				subres.mipLevel = 0;
+				subres.arrayLayer = 0;
+				VkSubresourceLayout layout{};
+				vkGetImageSubresourceLayout(m_device, asset.image, &subres, &layout);
+				uint8_t* dst = static_cast<uint8_t*>(ptr);
+				for (uint32_t y = 0; y < height; ++y)
+					memcpy(dst + y * layout.rowPitch, pixels + y * width * 4, width * 4);
+				vkUnmapMemory(m_device, imgMem);
+			}
+			VkImageViewCreateInfo viewInfo{};
+			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewInfo.image = asset.image;
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			viewInfo.format = format;
+			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewInfo.subresourceRange.baseMipLevel = 0;
+			viewInfo.subresourceRange.levelCount = 1;
+			viewInfo.subresourceRange.baseArrayLayer = 0;
+			viewInfo.subresourceRange.layerCount = 1;
+			if (vkCreateImageView(m_device, &viewInfo, nullptr, &asset.view) != VK_SUCCESS)
+			{
+				vkDestroyImage(m_device, asset.image, nullptr);
+				vkFreeMemory(m_device, imgMem, nullptr);
+				return kInvalidAssetId;
+			}
+			AssetId id = m_nextTextureId++;
+			m_textures[id] = std::move(asset);
+			LOG_INFO(Render, "AssetRegistry: loaded PNG texture {} ({}x{}, {})", relativePath, width, height, useSrgb ? "sRGB" : "linear");
+			return id;
+		}
+
+		if (data.size() < 16u)
+		{
+			LOG_ERROR(Render, "AssetRegistry: texture file too small: {}", relativePath);
+			return kInvalidAssetId;
+		}
 		uint32_t magic = 0, width = 0, height = 0, srgbFlag = 0;
 		memcpy(&magic, data.data(), 4);
 		memcpy(&width, data.data() + 4, 4);
 		memcpy(&height, data.data() + 8, 4);
 		memcpy(&srgbFlag, data.data() + 12, 4);
-		if (magic != kTexrMagic || width == 0 || height == 0) { LOG_ERROR(Render, "AssetRegistry: invalid texture format: {}", relativePath); return kInvalidAssetId; }
+		if (magic != kTexrMagic || width == 0 || height == 0)
+		{
+			LOG_ERROR(Render, "AssetRegistry: invalid texture format (expected TEXR or PNG): {}", relativePath);
+			return kInvalidAssetId;
+		}
 		size_t pixelBytes = static_cast<size_t>(width) * height * 4;
-		if (data.size() < 16 + pixelBytes) { LOG_ERROR(Render, "AssetRegistry: texture file truncated: {}", relativePath); return kInvalidAssetId; }
+		if (data.size() < 16 + pixelBytes)
+		{
+			LOG_ERROR(Render, "AssetRegistry: texture file truncated: {}", relativePath);
+			return kInvalidAssetId;
+		}
 		const uint8_t* pixels = data.data() + 16;
 
 		TextureAsset asset{};

@@ -124,8 +124,12 @@ namespace engine::render
 
 		/// Loads a texture from content path. Returns cached asset if already loaded.
 		/// \param useSrgb If true, use sRGB format; otherwise linear.
-		/// Format: raw .texr (magic, width, height, sRGB flag, RGBA pixels). Returns invalid handle on failure.
+		/// Format: raw .texr (magic, width, height, sRGB flag, RGBA pixels) ou PNG (8-bit RGBA).
 		TextureHandle LoadTexture(std::string_view relativePath, bool useSrgb = false);
+
+		/// Charge une PNG pour blit plein écran vers la swapchain (canal BGRA si la surface est B8G8R8A8).
+		/// Ignoré pour les .texr (même chargement que \ref LoadTexture).
+		TextureHandle LoadTextureForPresentBlit(std::string_view relativePath, VkFormat swapchainColorFormat);
 
 		/// Returns the mesh for the given id, or nullptr.
 		MeshAsset* GetMesh(AssetId id) const;
@@ -152,6 +156,6 @@ namespace engine::render
 		std::unordered_map<AssetId, TextureAsset> m_textures;
 
 		AssetId loadMeshInternal(std::string_view relativePath);
-		AssetId loadTextureInternal(std::string_view relativePath, bool useSrgb);
+		AssetId loadTextureInternal(std::string_view relativePath, bool useSrgb, VkFormat presentBlitDstFormat = VK_FORMAT_UNDEFINED);
 	};
 }

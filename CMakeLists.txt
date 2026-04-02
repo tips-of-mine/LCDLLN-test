@@ -275,6 +275,7 @@ add_library(engine_core
 target_sources(engine_core PRIVATE engine/server/ServerProtocol.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/external/stb
   ${VMA_INCLUDE_DIRS}
 )
 target_link_libraries(engine_core PUBLIC

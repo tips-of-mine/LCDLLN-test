@@ -103,7 +103,7 @@ namespace engine::render
 	}
 
 	std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state,
-		const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme, bool calibrationOverlay)
+		const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme, bool calibrationOverlay, bool usePhotoBackdrop)
 	{
 		std::vector<AuthUiLayer> layers;
 		if (extent.width == 0 || extent.height == 0 || !state.active || !model.visible)
@@ -149,16 +149,28 @@ namespace engine::render
 		{
 			addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
 		};
-		addThemeRect(0, 0, w, h, theme.background, 0.92f);
-		addThemeRect(0, 0, w, std::max(90, h / 4), theme.primary, 0.34f);
-		addThemeRect(0, h - std::max(96, h / 5), w, std::max(96, h / 5), theme.surface, 0.28f);
-		addRect(0, 0, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
-		addRect(0, h - 28, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
-		addRect(0, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
-		addRect(w - 28, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
-		addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, 0.60f);
-		addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, 0.22f);
-		addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.96f);
+		if (!usePhotoBackdrop)
+		{
+			addThemeRect(0, 0, w, h, theme.background, 0.92f);
+			addThemeRect(0, 0, w, std::max(90, h / 4), theme.primary, 0.34f);
+			addThemeRect(0, h - std::max(96, h / 5), w, std::max(96, h / 5), theme.surface, 0.28f);
+			addRect(0, 0, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
+			addRect(0, h - 28, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
+			addRect(0, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
+			addRect(w - 28, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
+		}
+		else
+		{
+			addRect(0, 0, w, h, 0.02f, 0.04f, 0.08f, 0.38f);
+			const int32_t vg = std::clamp(w / 28, 24, 72);
+			addRect(0, 0, vg, h, 0.0f, 0.0f, 0.0f, 0.55f);
+			addRect(w - vg, 0, vg, h, 0.0f, 0.0f, 0.0f, 0.55f);
+			addRect(0, 0, w, vg / 2, 0.0f, 0.0f, 0.0f, 0.35f);
+			addRect(0, h - vg / 2, w, vg / 2, 0.0f, 0.0f, 0.0f, 0.45f);
+		}
+		addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, usePhotoBackdrop ? 0.45f : 0.60f);
+		addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, usePhotoBackdrop ? 0.35f : 0.22f);
+		addThemeRect(panelX, panelY, panelW, panelH, theme.panel, usePhotoBackdrop ? 0.88f : 0.96f);
 		addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
 		addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
 		addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);

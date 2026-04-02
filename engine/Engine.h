@@ -193,6 +193,9 @@ namespace engine
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
+		/// Fond plein écran pour l’écran auth (PNG sous paths.content, ex. ui/login/background.png).
+		engine::render::TextureHandle m_authUiBackgroundTexture;
+		bool m_authUiBackgroundLayoutReady = false;
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;
 		engine::audio::AudioEngine m_audioEngine;

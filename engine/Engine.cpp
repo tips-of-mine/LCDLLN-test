@@ -1384,6 +1384,8 @@ namespace engine
 														0, 0, nullptr, 0, nullptr, 1, &toColor);
 
 													LOG_INFO(Render, "[CopyPresent] begin rendering attachment");
+													// IMPORTANT: If we end up calling the KHR entrypoints, we must pass the KHR
+													// structs/sType values (some drivers crash if you mix core structs with KHR fns).
 													VkRenderingAttachmentInfo colorAttachment{};
 													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 													colorAttachment.imageView = backbufferView;
@@ -1392,6 +1394,14 @@ namespace engine
 													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 													colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 													colorAttachment.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+
+													VkRenderingAttachmentInfoKHR colorAttachmentKHR{};
+													colorAttachmentKHR.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+													colorAttachmentKHR.imageView = backbufferView;
+													colorAttachmentKHR.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+													colorAttachmentKHR.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+													colorAttachmentKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+													colorAttachmentKHR.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 													LOG_INFO(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
 
 													VkRenderingInfo renderingInfo{};
@@ -1401,6 +1411,14 @@ namespace engine
 													renderingInfo.layerCount = 1;
 													renderingInfo.colorAttachmentCount = 1;
 													renderingInfo.pColorAttachments = &colorAttachment;
+
+													VkRenderingInfoKHR renderingInfoKHR{};
+													renderingInfoKHR.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+													renderingInfoKHR.renderArea.offset = { 0, 0 };
+													renderingInfoKHR.renderArea.extent = ext;
+													renderingInfoKHR.layerCount = 1;
+													renderingInfoKHR.colorAttachmentCount = 1;
+													renderingInfoKHR.pColorAttachments = &colorAttachmentKHR;
 													LOG_INFO(Render, "[CopyPresent] renderingInfo ready (ext={}x={})", ext.width, ext.height);
 													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
 
@@ -1451,7 +1469,7 @@ namespace engine
 													// with the core symbol on older Vulkan versions).
 													if (s_pfnBeginKHR && s_pfnEndKHR)
 													{
-														s_pfnBeginKHR(cmd, &renderingInfo);
+														s_pfnBeginKHR(cmd, &renderingInfoKHR);
 														didBeginRendering = true;
 														beganWithKHR = true;
 														pfnEndKHR = s_pfnEndKHR;

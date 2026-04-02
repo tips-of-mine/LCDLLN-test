@@ -75,7 +75,7 @@ namespace engine
 					persisted.GetString("render.auth_ui.background_path", cfg.GetString("render.auth_ui.background_path", "ui/login/background.png")));
 			if (persisted.Has("render.auth_ui.background_blit.fit"))
 				cfg.SetValue("render.auth_ui.background_blit.fit",
-					persisted.GetString("render.auth_ui.background_blit.fit", cfg.GetString("render.auth_ui.background_blit.fit", "cover")));
+					persisted.GetString("render.auth_ui.background_blit.fit", cfg.GetString("render.auth_ui.background_blit.fit", "cover_height")));
 
 			LOG_INFO(Core, "[Boot] user_settings.json overrides applied (fullscreen={}, vsync={}, locale={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={}, auth_bg_blit={}, auth_bg_fit={})",
 				cfg.GetBool("render.fullscreen", true),
@@ -92,7 +92,7 @@ namespace engine
 				cfg.GetBool("client.allow_insecure_dev", true),
 				cfg.GetInt("client.auth_ui.timeout_ms", 5000),
 				cfg.GetBool("render.auth_ui.background_blit.enabled", true),
-				cfg.GetString("render.auth_ui.background_blit.fit", "cover"));
+				cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));
 		}
 
 		enum class AuthBackgroundBlitFit
@@ -100,6 +100,7 @@ namespace engine
 			Stretch,
 			Contain,
 			Cover,
+			CoverHeight,
 		};
 
 		AuthBackgroundBlitFit ParseAuthBackgroundBlitFit(std::string_view s)
@@ -107,6 +108,10 @@ namespace engine
 			if (s == "contain")
 			{
 				return AuthBackgroundBlitFit::Contain;
+			}
+			if (s == "cover_height" || s == "height")
+			{
+				return AuthBackgroundBlitFit::CoverHeight;
 			}
 			if (s == "cover")
 			{
@@ -116,11 +121,12 @@ namespace engine
 			{
 				return AuthBackgroundBlitFit::Stretch;
 			}
-			return AuthBackgroundBlitFit::Cover;
+			return AuthBackgroundBlitFit::CoverHeight;
 		}
 
 		/// Remplit \p blit pour \c vkCmdBlitImage : \c stretch (étire), \c contain (image entière, bandes),
-		/// \c cover (remplit la surface, rogne l’excédent — pas d’étirement non uniforme).
+		/// \c cover (remplit la surface, rogne l’excédent au centre),
+		/// \c cover_height (remplit la hauteur, rogne la largeur de la source si l’écran est plus large ; sinon bandes latérales).
 		void BuildAuthBackgroundBlit(
 			AuthBackgroundBlitFit fit,
 			uint32_t srcW,
@@ -157,6 +163,32 @@ namespace engine
 				const int32_t dy = (static_cast<int32_t>(dstH) - outH) / 2;
 				blit.dstOffsets[0] = { dx, dy, 0 };
 				blit.dstOffsets[1] = { dx + outW, dy + outH, 1 };
+				return;
+			}
+
+			if (fit == AuthBackgroundBlitFit::CoverHeight)
+			{
+				const float scale = dh / sh;
+				const float scaledW = sw * scale;
+				if (scaledW >= dw)
+				{
+					const float cropW = dw / scale;
+					float sx0 = (sw - cropW) * 0.5f;
+					sx0 = std::clamp(sx0, 0.f, sw - 1.f);
+					float sx1 = sx0 + cropW;
+					sx1 = std::min(sx1, sw);
+					if (sx1 <= sx0)
+					{
+						sx1 = std::min(sx0 + 1.f, sw);
+					}
+					blit.srcOffsets[0] = { static_cast<int32_t>(std::floor(sx0)), 0, 0 };
+					blit.srcOffsets[1] = { static_cast<int32_t>(std::ceil(sx1)), static_cast<int32_t>(srcH), 1 };
+					return;
+				}
+				const int32_t outW = static_cast<int32_t>(std::lround(scaledW));
+				const int32_t dx = (static_cast<int32_t>(dstW) - outW) / 2;
+				blit.dstOffsets[0] = { dx, 0, 0 };
+				blit.dstOffsets[1] = { dx + outW, static_cast<int32_t>(dstH), 1 };
 				return;
 			}
 
@@ -674,8 +706,8 @@ namespace engine
 													{
 														m_authUiBackgroundLayoutReady = true;
 														LOG_INFO(Render, "[Boot] Auth UI background prêt (GPU OK): {}", authBgPath);
-														LOG_INFO(Render, "[Boot] Auth UI background_blit.fit={} (cover|contain|stretch)",
-															m_cfg.GetString("render.auth_ui.background_blit.fit", "cover"));
+														LOG_INFO(Render, "[Boot] Auth UI background_blit.fit={} (cover_height|cover|contain|stretch)",
+															m_cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));
 													}
 												}
 											}
@@ -1511,12 +1543,12 @@ namespace engine
 													if (bgTex && bgTex->image != VK_NULL_HANDLE && bgTex->width > 0u && bgTex->height > 0u)
 													{
 														const AuthBackgroundBlitFit authBgFit = ParseAuthBackgroundBlitFit(
-															m_cfg.GetString("render.auth_ui.background_blit.fit", "cover"));
+															m_cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));
 														static bool s_authBgBlitLogOnce = false;
 														if (!s_authBgBlitLogOnce)
 														{
 															s_authBgBlitLogOnce = true;
-															const char* fitName = "cover";
+															const char* fitName = "cover_height";
 															switch (authBgFit)
 															{
 															case AuthBackgroundBlitFit::Stretch:
@@ -1526,8 +1558,11 @@ namespace engine
 																fitName = "contain";
 																break;
 															case AuthBackgroundBlitFit::Cover:
-															default:
 																fitName = "cover";
+																break;
+															case AuthBackgroundBlitFit::CoverHeight:
+															default:
+																fitName = "cover_height";
 																break;
 															}
 															LOG_INFO(Render,

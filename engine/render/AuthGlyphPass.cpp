@@ -590,21 +590,23 @@ namespace engine::render
 			AppendText(vertices, text, x, y, boxW, scale, color);
 		};
 
-		AppendText(vertices, model.titleLine1, panelX + 24, panelY + 22, panelW - 48, titleScale, titleColor);
-		AppendText(vertices, model.titleLine2, panelX + 24, panelY + 30 + titleScale * 10, panelW - 48, bodyScale, mutedColor);
+		// Titres dans la colonne de contenu (pas sur la zone « art » à gauche) pour éviter le chevauchement avec le décor.
+		AppendText(vertices, model.titleLine1, contentX, panelY + 22, contentW, titleScale, titleColor);
+		AppendText(vertices, model.titleLine2, contentX, panelY + 30 + titleScale * 10, contentW, bodyScale, mutedColor);
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
+		const int32_t sectionTitleY = panelY + (centeredLanguageSelection ? 50 : 38) + titleScale * 14;
 		if (centeredLanguageSelection)
 		{
-			appendCenteredText(model.sectionTitle, contentX, panelY + 38 + titleScale * 14, contentW, bodyScale, titleColor);
+			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
 		}
 		else
 		{
-			AppendText(vertices, model.sectionTitle, contentX, panelY + 38 + titleScale * 14, contentW, bodyScale, titleColor);
+			AppendText(vertices, model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
 		}
 
 		if (!model.infoBanner.empty())
 		{
-			AppendText(vertices, model.infoBanner, contentX + 10, panelY + 47 + titleScale * 14, contentW - 20, bodyScale, titleColor);
+			AppendText(vertices, model.infoBanner, contentX + 10, sectionTitleY + 9, contentW - 20, bodyScale, titleColor);
 		}
 
 		if (state.submitting)
@@ -710,9 +712,12 @@ namespace engine::render
 					appendBlock(std::min(caretX, contentX + contentW - 14), y + 7, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
 				}
 			}
-			const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
+			const int32_t bodyLinePitch = centeredLanguageSelection
+				? std::max(36, bodyLineStep + 16)
+				: std::max(28, bodyLineStep + 10);
 			const int32_t fieldStep = layout.compactSingleField ? compactFieldStep : regularFieldStep;
-			const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
+			const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
+			const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + afterFieldsGap;
 			for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
@@ -729,7 +734,8 @@ namespace engine::render
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 			const int32_t gap = 10;
-			const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 20);
+			const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
+			const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
 			const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 			for (int32_t i = 0; i < actionCount; ++i)
 			{

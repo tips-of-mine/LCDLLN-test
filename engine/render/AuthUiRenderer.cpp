@@ -104,7 +104,8 @@ namespace engine::render
 			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
 			const int32_t titleScale = std::clamp(bodyScale + 1, 3, 5);
 			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
-			const int32_t sectionBottom = 38 + titleScale * 14 + bodyLineStep;
+			const int32_t sectionTopPad = (state.languageSelection || state.languageOptions) ? 50 : 38;
+			const int32_t sectionBottom = sectionTopPad + titleScale * 14 + bodyLineStep;
 			const int32_t minFieldAnchor = sectionBottom + 20;
 			if (!model.infoBanner.empty())
 			{

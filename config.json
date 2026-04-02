@@ -12,7 +12,7 @@
             "background_path": "ui/login/background.png",
             "background_blit": {
                 "enabled": true,
-                "fit": "cover"
+                "fit": "cover_height"
             }
         }
     },

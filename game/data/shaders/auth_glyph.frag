@@ -25,5 +25,10 @@ void main()
 	{
 		discard;
 	}
-	outColor = vColor;
+	// Adoucit les bords de chaque « pixel » de la fonte bitmap (évite l’effet bloc EGA/CGA).
+	vec2 f = fract(vUv * vec2(5.0, 7.0));
+	vec2 d = abs(f - 0.5) * 2.0;
+	float cellEdge = max(d.x, d.y);
+	float soften = 1.0 - smoothstep(0.70, 1.0, cellEdge);
+	outColor = vec4(vColor.rgb, vColor.a * soften);
 }

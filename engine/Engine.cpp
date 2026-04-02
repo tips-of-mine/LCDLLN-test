@@ -1356,10 +1356,12 @@ namespace engine
 												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 												LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
+												const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", false);
 												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
 
 												bool renderedAuthUi = false;
 												if (authVisualState.active
+													&& authUiDynamicRenderingEnabled
 													&& backbufferView != VK_NULL_HANDLE
 													&& m_vkDeviceContext.SupportsDynamicRendering())
 												{
@@ -1534,6 +1536,8 @@ namespace engine
 
 												if (!renderedAuthUi)
 												{
+													if (authVisualState.active && !authUiDynamicRenderingEnabled)
+														LOG_WARN(Render, "[CopyPresent] auth dynamic rendering disabled by config; using present-only path");
 													if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
 														LOG_WARN(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
 
@@ -1885,7 +1889,10 @@ namespace engine
 			}
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();
-			if (m_authUi.GetVisualState().active && m_vkDeviceContext.SupportsDynamicRendering())
+			const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", false);
+			if (m_authUi.GetVisualState().active
+				&& authUiDynamicRenderingEnabled
+				&& m_vkDeviceContext.SupportsDynamicRendering())
 				m_window.SetOverlayText({});
 			else
 				m_window.SetOverlayText(out.authHudText);

@@ -1446,19 +1446,9 @@ namespace engine
 														s_pfnEndKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(
 															vkGetDeviceProcAddr(device, "vkCmdEndRenderingKHR"));
 
-														// Fallback: some loader/ICD combos still expose these via instance proc addr.
-														// (We keep this inside the same one-time lookup to avoid spamming calls.)
-														const ::VkInstance instanceHandle = m_vkInstance.GetHandle();
-														if ((!s_pfnBeginCore || !s_pfnEndCore || !s_pfnBeginKHR || !s_pfnEndKHR) && instanceHandle != VK_NULL_HANDLE)
-														{
-															auto getIpa = [this](const char* name) -> PFN_vkVoidFunction {
-																return vkGetInstanceProcAddr(m_vkInstance.GetHandle(), name);
-															};
-															if (!s_pfnBeginCore) s_pfnBeginCore = reinterpret_cast<PFN_vkCmdBeginRendering>(getIpa("vkCmdBeginRendering"));
-															if (!s_pfnEndCore)   s_pfnEndCore   = reinterpret_cast<PFN_vkCmdEndRendering>(getIpa("vkCmdEndRendering"));
-															if (!s_pfnBeginKHR)  s_pfnBeginKHR  = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(getIpa("vkCmdBeginRenderingKHR"));
-															if (!s_pfnEndKHR)    s_pfnEndKHR    = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(getIpa("vkCmdEndRenderingKHR"));
-														}
+														LOG_INFO(Render,
+															"[CopyPresent] proc addresses (device): beginCore={} endCore={} beginKHR={} endKHR={}",
+															(void*)s_pfnBeginCore, (void*)s_pfnEndCore, (void*)s_pfnBeginKHR, (void*)s_pfnEndKHR);
 													}
 
 													bool didBeginRendering = false;

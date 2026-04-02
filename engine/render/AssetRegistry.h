@@ -131,6 +131,10 @@ namespace engine::render
 		/// Ignoré pour les .texr (même chargement que \ref LoadTexture).
 		TextureHandle LoadTextureForPresentBlit(std::string_view relativePath, VkFormat swapchainColorFormat);
 
+		/// Copie la PNG « pending » vers une image GPU OPTIMAL (requis pour \c vkCmdBlitImage sur la plupart des GPU).
+		/// À appeler juste après \ref LoadTextureForPresentBlit si le handle est valide.
+		bool FinalizePresentBlitTextureUpload(VkQueue graphicsQueue, uint32_t graphicsQueueFamilyIndex);
+
 		/// Returns the mesh for the given id, or nullptr.
 		MeshAsset* GetMesh(AssetId id) const;
 		/// Returns the texture for the given id, or nullptr.
@@ -157,5 +161,18 @@ namespace engine::render
 
 		AssetId loadMeshInternal(std::string_view relativePath);
 		AssetId loadTextureInternal(std::string_view relativePath, bool useSrgb, VkFormat presentBlitDstFormat = VK_FORMAT_UNDEFINED);
+
+		void ReleasePendingPresentBlitStaging();
+
+		struct PendingPresentBlitUpload
+		{
+			AssetId textureId = kInvalidAssetId;
+			VkBuffer stagingBuffer = VK_NULL_HANDLE;
+			VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
+			uint32_t width = 0;
+			uint32_t height = 0;
+			VkFormat format = VK_FORMAT_UNDEFINED;
+		};
+		PendingPresentBlitUpload m_pendingPresentBlit{};
 	};
 }

@@ -555,11 +555,27 @@ namespace engine
 											const std::string authBgPath = m_cfg.GetString("render.auth_ui.background_path", "ui/login/background.png");
 											if (!authBgPath.empty())
 											{
+												const std::filesystem::path authBgResolved = engine::platform::FileSystem::ResolveContentPath(m_cfg, authBgPath);
+												LOG_INFO(Render, "[Boot] Auth UI background file: {}", authBgResolved.string());
 												m_authUiBackgroundTexture = m_assetRegistry.LoadTextureForPresentBlit(authBgPath, m_vkSwapchain.GetImageFormat());
 												if (!m_authUiBackgroundTexture.IsValid())
-													LOG_WARN(Render, "[Boot] Auth UI background not loaded ({})", authBgPath);
+												{
+													LOG_WARN(Render, "[Boot] Auth UI background not loaded (decode/path) — check file exists: {}", authBgPath);
+												}
 												else
-													LOG_INFO(Render, "[Boot] Auth UI background OK ({})", authBgPath);
+												{
+													if (!m_assetRegistry.FinalizePresentBlitTextureUpload(
+															m_vkDeviceContext.GetGraphicsQueue(),
+															m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
+													{
+														LOG_WARN(Render, "[Boot] Auth UI background GPU upload FAILED — fond absent jusqu'à correction");
+													}
+													else
+													{
+														m_authUiBackgroundLayoutReady = true;
+														LOG_INFO(Render, "[Boot] Auth UI background prêt (GPU OK): {}", authBgPath);
+													}
+												}
 											}
 										}
 
@@ -1392,6 +1408,17 @@ namespace engine
 													engine::render::TextureAsset* bgTex = m_authUiBackgroundTexture.Get();
 													if (bgTex && bgTex->image != VK_NULL_HANDLE && bgTex->width > 0u && bgTex->height > 0u)
 													{
+														static bool s_authBgPipelineLogged = false;
+														if (!s_authBgPipelineLogged)
+														{
+															s_authBgPipelineLogged = true;
+															LOG_INFO(Render,
+																"[CopyPresent] auth fond: blit source {}x{} → framebuffer {}x{}",
+																bgTex->width,
+																bgTex->height,
+																ext.width,
+																ext.height);
+														}
 														VkImageMemoryBarrier bgSrc{};
 														bgSrc.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 														bgSrc.srcAccessMask = m_authUiBackgroundLayoutReady ? VK_ACCESS_TRANSFER_READ_BIT : 0;

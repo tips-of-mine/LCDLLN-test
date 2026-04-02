@@ -1,0 +1,34 @@
+SUBJECT
+A dark fantasy loading bar designed as an ancient magical artifact.
+
+COMPOSITION & UI CONSTRAINTS
+Horizontal bar format,
+clear progression direction.
+Designed for UI overlay.
+Background transparent or very dark.
+
+MATERIALS & DETAILS
+Ancient stone or metal frame,
+engraved runes,
+magical energy flowing inside the bar,
+worn and ancient appearance.
+
+LIGHTING & MOOD
+Soft arcane glow inside the bar,
+dark ambient lighting,
+mystical and ominous mood.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+realistic fantasy UI asset.
+
+TECHNICAL QUALITY
+Clean, readable progression,
+sharp details,
+professional UI element.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright neon colors,
+complex background,
+blur, noise, text

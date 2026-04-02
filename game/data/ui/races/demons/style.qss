@@ -1,0 +1,47 @@
+/* DEMONS — Blood crimson + abyss */
+QWidget {
+  background: #070508;
+  color: #F6E7EA;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #12060B;
+  border: 1px solid #3A0F1A;
+  border-radius: 12px;
+}
+
+QLabel#Title {
+  font-family: "UnifrakturCook";
+  font-size: 24px;
+  color: #FF3B6A;
+}
+
+QPushButton {
+  background: #B0122B;
+  border: 1px solid #3A0F1A;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #D01835; }
+QPushButton:pressed { background: #8E0E22; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #160810;
+  border: 1px solid #3A0F1A;
+  border-radius: 12px;
+  padding: 8px;
+  selection-background-color: #FF3B6A;
+}
+
+QProgressBar {
+  background: #160810;
+  border: 1px solid #3A0F1A;
+  border-radius: 12px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #FF3B6A;
+  border-radius: 12px;
+}

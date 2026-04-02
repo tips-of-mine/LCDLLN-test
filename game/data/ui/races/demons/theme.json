@@ -1,0 +1,27 @@
+{
+  "id": "demons",
+  "displayName": "Démons",
+  "mood": "Chaos, corruption, pouvoir instable",
+  "palette": {
+    "primary": "#B0122B",
+    "secondary": "#3A0A12",
+    "accent": "#FF3B6A",
+    "background": "#070508",
+    "surface": "#12060B",
+    "panel": "#160810",
+    "text": "#F6E7EA",
+    "mutedText": "#C8A2AC",
+    "border": "#3A0F1A"
+  },
+  "typography": {
+    "fontFamily": "UnifrakturCook",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 24
+  },
+  "metrics": { "radius": 12, "padding": 10 },
+  "assets": {
+    "bg": "assets/ui/races/demons/images/bg.png",
+    "emblem": "assets/ui/races/demons/images/emblem.png"
+  }
+}

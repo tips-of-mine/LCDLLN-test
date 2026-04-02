@@ -1,0 +1,33 @@
+SUBJECT
+A magical dark fantasy loading spinner
+formed by an ancient ritual circle of runes.
+
+COMPOSITION & UI CONSTRAINTS
+Perfect circular shape,
+centered composition,
+designed as an animated UI spinner.
+Transparent background.
+
+MATERIALS & DETAILS
+Stone or arcane symbols,
+engraved runes, worn surfaces,
+subtle magical energy.
+
+LIGHTING & MOOD
+Soft arcane glow,
+dark ambient lighting,
+mystical and ominous.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+minimal but atmospheric.
+
+TECHNICAL QUALITY
+Clean silhouette, high contrast,
+UI-ready asset.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright neon colors,
+complex background,
+blur, noise, text

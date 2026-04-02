@@ -1,0 +1,27 @@
+SUBJECT
+A dark fantasy UI icon indicating an offline server.
+
+COMPOSITION & UI CONSTRAINTS
+Centered icon,
+clear readable state.
+
+MATERIALS & DETAILS
+Cracked arcane orb,
+no active glow,
+dead and inert.
+
+LIGHTING & MOOD
+Dark, lifeless,
+cold shadows.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Clean icon,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text

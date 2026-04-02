@@ -1,0 +1,28 @@
+SUBJECT
+A dark fantasy UI information icon represented by an ancient glyph.
+
+COMPOSITION & UI CONSTRAINTS
+Centered icon,
+strong readable shape,
+transparent background.
+
+MATERIALS & DETAILS
+Stone or arcane symbol,
+simple carved glyph,
+slight magical glow.
+
+LIGHTING & MOOD
+Soft glow,
+neutral dark mood.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Sharp edges,
+UI-ready icon.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text

@@ -1,0 +1,34 @@
+SUBJECT
+A dark fantasy UI divider used to separate interface sections.
+
+COMPOSITION & UI CONSTRAINTS
+Horizontal ornamental line,
+clean and symmetrical,
+designed to be subtle and not distracting.
+Transparent background.
+
+MATERIALS & DETAILS
+Aged metal or dark stone,
+gothic medieval ornamentation,
+simple repeating motifs,
+light wear and erosion.
+
+LIGHTING & MOOD
+Subtle highlights,
+low contrast,
+dark and neutral tone.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+ornamental but restrained.
+
+TECHNICAL QUALITY
+Sharp edges,
+clean design,
+UI-ready asset.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+overly complex patterns,
+blur, noise, text

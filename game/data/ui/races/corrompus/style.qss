@@ -1,0 +1,48 @@
+/* CORRUPTED — Purple void + toxic lime */
+QWidget {
+  background: #07060C;
+  color: #F2EEFF;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #110E1A;
+  border: 1px solid #2D2345;
+  border-radius: 16px;
+}
+
+QLabel#Title {
+  font-family: "Space Grotesk";
+  font-size: 22px;
+  color: #B8FF4A;
+}
+
+QPushButton {
+  background: #7B2CBF;
+  border: 1px solid #2D2345;
+  border-radius: 16px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #8A3AD4; }
+QPushButton:pressed { background: #62229A; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #161125;
+  border: 1px solid #2D2345;
+  border-radius: 16px;
+  padding: 8px;
+  selection-background-color: #B8FF4A;
+  selection-color: #07060C;
+}
+
+QProgressBar {
+  background: #161125;
+  border: 1px solid #2D2345;
+  border-radius: 16px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #B8FF4A;
+  border-radius: 16px;
+}

@@ -1,0 +1,29 @@
+SUBJECT
+A simplified version of the Black Moon logo for the login screen.
+
+COMPOSITION & UI CONSTRAINTS
+Centered,
+less detailed than the main logo.
+High readability.
+
+MATERIALS & DETAILS
+Black moon symbol,
+minimal runes,
+simplified shapes.
+
+LIGHTING & MOOD
+Subtle glow,
+dark mystical mood.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+minimalistic emblem.
+
+TECHNICAL QUALITY
+Clean edges,
+UI-ready asset.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text artifacts

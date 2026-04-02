@@ -1,0 +1,27 @@
+SUBJECT
+A dark fantasy error icon represented by a broken demonic seal.
+
+COMPOSITION & UI CONSTRAINTS
+Centered icon,
+strong silhouette,
+transparent background.
+
+MATERIALS & DETAILS
+Cracked stone seal,
+dark red energy leaking out.
+
+LIGHTING & MOOD
+Harsh internal glow,
+dangerous and aggressive mood.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Sharp icon,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text

@@ -1,0 +1,25 @@
+SUBJECT
+A dark fantasy dialog info icon represented by an ancient glyph.
+
+COMPOSITION & UI CONSTRAINTS
+Centered icon,
+simple readable shape.
+
+MATERIALS & DETAILS
+Stone glyph,
+subtle blue arcane glow.
+
+LIGHTING & MOOD
+Calm, neutral, informative.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Clean icon,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text

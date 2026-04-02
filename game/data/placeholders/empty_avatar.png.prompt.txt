@@ -1,0 +1,28 @@
+SUBJECT
+A dark fantasy placeholder avatar silhouette.
+
+COMPOSITION & UI CONSTRAINTS
+Centered humanoid silhouette,
+neutral pose,
+transparent or dark background.
+
+MATERIALS & DETAILS
+Shadowy undefined figure,
+no race, no gender, no features.
+
+LIGHTING & MOOD
+Subtle rim light,
+mysterious and neutral.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Clean silhouette,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+detailed face,
+blur, noise, text

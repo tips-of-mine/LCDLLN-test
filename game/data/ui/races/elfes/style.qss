@@ -1,0 +1,47 @@
+/* ELVES — Arcane violet + teal glow */
+QWidget {
+  background: #0A0A10;
+  color: #F1EEFF;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #111125;
+  border: 1px solid #2A2740;
+  border-radius: 14px;
+}
+
+QLabel#Title {
+  font-family: "Cormorant Garamond";
+  font-size: 23px;
+  color: #C7B4FF;
+}
+
+QPushButton {
+  background: #6E46B7;
+  border: 1px solid #2A2740;
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #8158CC; }
+QPushButton:pressed { background: #5B3A9A; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #14142B;
+  border: 1px solid #2A2740;
+  border-radius: 14px;
+  padding: 8px;
+  selection-background-color: #1E8A8A;
+}
+
+QProgressBar {
+  background: #14142B;
+  border: 1px solid #2A2740;
+  border-radius: 14px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #1E8A8A;
+  border-radius: 14px;
+}

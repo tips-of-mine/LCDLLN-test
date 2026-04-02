@@ -1,0 +1,35 @@
+SUBJECT
+A dark fantasy login screen background showing
+the interior of a cursed gothic castle.
+
+COMPOSITION & UI CONSTRAINTS
+Wide composition.
+Center area kept empty for login UI.
+Environment details pushed to sides and background.
+
+MATERIALS & DETAILS
+Ancient stone walls,
+tall gothic arches,
+torches or magical light sources,
+subtle decay and dust.
+
+LIGHTING & MOOD
+Low light environment,
+cold moonlight mixed with faint torchlight,
+oppressive, intimidating atmosphere.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+cinematic matte painting.
+
+TECHNICAL QUALITY
+Ultra high resolution,
+not visually noisy,
+professional UI background.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+modern objects,
+bright colors,
+characters in foreground,
+text, watermark

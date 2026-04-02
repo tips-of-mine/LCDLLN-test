@@ -1,0 +1,47 @@
+/* ORCS — Toxic green + scarred leather */
+QWidget {
+  background: #0B0F0A;
+  color: #EAF2E6;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #111913;
+  border: 2px solid #2A3A2C;
+  border-radius: 6px;
+}
+
+QLabel#Title {
+  font-family: "Oswald";
+  font-size: 22px;
+  color: #D6E35A;
+}
+
+QPushButton {
+  background: #4F8A2B;
+  border: 2px solid #2A3A2C;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #5EA437; }
+QPushButton:pressed { background: #3E6F22; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #152016;
+  border: 2px solid #2A3A2C;
+  border-radius: 6px;
+  padding: 8px;
+  selection-background-color: #7A3B17;
+}
+
+QProgressBar {
+  background: #152016;
+  border: 2px solid #2A3A2C;
+  border-radius: 6px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #7A3B17;
+  border-radius: 6px;
+}

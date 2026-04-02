@@ -1,0 +1,27 @@
+{
+  "id": "orcs",
+  "displayName": "Orcs",
+  "mood": "Survie, rage, domination",
+  "palette": {
+    "primary": "#4F8A2B",
+    "secondary": "#7A3B17",
+    "accent": "#D6E35A",
+    "background": "#0B0F0A",
+    "surface": "#111913",
+    "panel": "#152016",
+    "text": "#EAF2E6",
+    "mutedText": "#A8B7A1",
+    "border": "#2A3A2C"
+  },
+  "typography": {
+    "fontFamily": "Oswald",
+    "uiFontFamily": "Inter",
+    "baseSize": 14,
+    "titleSize": 22
+  },
+  "metrics": { "radius": 6, "padding": 10 },
+  "assets": {
+    "bg": "assets/ui/races/orcs/images/bg.png",
+    "emblem": "assets/ui/races/orcs/images/emblem.png"
+  }
+}

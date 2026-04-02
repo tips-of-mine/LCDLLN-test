@@ -1,0 +1,28 @@
+SUBJECT
+A dark fantasy splash screen loading spinner
+formed by rotating arcane runes.
+
+COMPOSITION & UI CONSTRAINTS
+Perfect circle,
+designed for animation,
+transparent background.
+
+MATERIALS & DETAILS
+Ancient runes,
+arcane stone or energy.
+
+LIGHTING & MOOD
+Soft mystical glow,
+dark atmosphere.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Clean, readable spinner,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright neon,
+blur, noise, text

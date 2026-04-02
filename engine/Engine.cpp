@@ -1402,51 +1402,104 @@ namespace engine
 													renderingInfo.colorAttachmentCount = 1;
 													renderingInfo.pColorAttachments = &colorAttachment;
 													LOG_INFO(Render, "[CopyPresent] renderingInfo ready (ext={}x={})", ext.width, ext.height);
-													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call");
-													vkCmdBeginRendering(cmd, &renderingInfo);
-													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering returned");
+													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
 
-													LOG_INFO(Render, "[CopyPresent] building UI layers");
-													const std::vector<engine::render::AuthUiLayer> layers =
-														engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
-													LOG_INFO(Render, "[CopyPresent] UI layers built; clearing attachments");
-													for (const engine::render::AuthUiLayer& layer : layers)
-													{
-														VkClearAttachment clearAttachment{};
-														clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-														clearAttachment.colorAttachment = 0;
-														clearAttachment.clearValue.color = layer.color;
-														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
-													}
-													LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
-													if (m_authGlyphPass.IsValid())
-													{
-														m_authGlyphPass.RecordModel(
-															m_vkDeviceContext.GetDevice(),
-															cmd,
-															ext,
-															authVisualState,
-															authRenderModel,
-															authTheme);
-													}
-													vkCmdEndRendering(cmd);
-													LOG_INFO(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
+													// Some drivers / Vulkan loader combos expose dynamic rendering only via
+													// the KHR entrypoints on pre-1.3 API versions. Using vkGetDeviceProcAddr
+													// avoids calling the wrong (or stubbed) symbol and prevents SEH crashes.
+													VkDevice device = m_vkDeviceContext.GetDevice();
+													static PFN_vkCmdBeginRendering     s_pfnBeginCore = nullptr;
+													static PFN_vkCmdEndRendering       s_pfnEndCore   = nullptr;
+													static PFN_vkCmdBeginRenderingKHR  s_pfnBeginKHR  = nullptr;
+													static PFN_vkCmdEndRenderingKHR    s_pfnEndKHR    = nullptr;
 
-													VkImageMemoryBarrier toPresent{};
-													toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													toPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-													toPresent.dstAccessMask = 0;
-													toPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													toPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-													toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													toPresent.image = dstImg;
-													toPresent.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &toPresent);
-													renderedAuthUi = true;
+													// Lookup only once (or until all expected entrypoints are present).
+													if ((s_pfnBeginCore == nullptr && s_pfnBeginKHR == nullptr)
+														|| s_pfnEndCore == nullptr
+														|| s_pfnEndKHR == nullptr)
+													{
+														s_pfnBeginCore = reinterpret_cast<PFN_vkCmdBeginRendering>(
+															vkGetDeviceProcAddr(device, "vkCmdBeginRendering"));
+														s_pfnEndCore = reinterpret_cast<PFN_vkCmdEndRendering>(
+															vkGetDeviceProcAddr(device, "vkCmdEndRendering"));
+														s_pfnBeginKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(
+															vkGetDeviceProcAddr(device, "vkCmdBeginRenderingKHR"));
+														s_pfnEndKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(
+															vkGetDeviceProcAddr(device, "vkCmdEndRenderingKHR"));
+													}
+
+													bool didBeginRendering = false;
+													// Prefer the KHR entrypoints when available (some loader/ICD combos behave badly
+													// with the core symbol on older Vulkan versions).
+													if (s_pfnBeginKHR && s_pfnEndKHR)
+													{
+														s_pfnBeginKHR(cmd, &renderingInfo);
+														didBeginRendering = true;
+													}
+													else if (s_pfnBeginCore && s_pfnEndCore)
+													{
+														s_pfnBeginCore(cmd, &renderingInfo);
+														didBeginRendering = true;
+													}
+													else
+													{
+														LOG_ERROR(Render, "[CopyPresent] dynamic rendering entrypoints not found; skipping auth UI overlay");
+													}
+
+													if (!didBeginRendering)
+													{
+														// No active rendering: do not clear attachments / do not end rendering.
+													}
+													else
+													{
+														LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering returned");
+
+														LOG_INFO(Render, "[CopyPresent] building UI layers");
+														const std::vector<engine::render::AuthUiLayer> layers =
+															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
+														LOG_INFO(Render, "[CopyPresent] UI layers built; clearing attachments");
+														for (const engine::render::AuthUiLayer& layer : layers)
+														{
+															VkClearAttachment clearAttachment{};
+															clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+															clearAttachment.colorAttachment = 0;
+															clearAttachment.clearValue.color = layer.color;
+															vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
+														}
+														LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
+														if (m_authGlyphPass.IsValid())
+														{
+															m_authGlyphPass.RecordModel(
+																m_vkDeviceContext.GetDevice(),
+																cmd,
+																ext,
+																authVisualState,
+																authRenderModel,
+																authTheme);
+														}
+
+														if (s_pfnEndCore)
+															s_pfnEndCore(cmd);
+														else if (s_pfnEndKHR)
+															s_pfnEndKHR(cmd);
+														LOG_INFO(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
+
+														VkImageMemoryBarrier toPresent{};
+														toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														toPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+														toPresent.dstAccessMask = 0;
+														toPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+														toPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+														toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														toPresent.image = dstImg;
+														toPresent.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														vkCmdPipelineBarrier(cmd,
+															VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+															VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+															0, 0, nullptr, 0, nullptr, 1, &toPresent);
+														renderedAuthUi = true;
+													}
 												}
 
 												if (!renderedAuthUi)

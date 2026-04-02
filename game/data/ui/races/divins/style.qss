@@ -1,0 +1,55 @@
+/* DIVINE — Gold + midnight blue + clean white */
+QWidget {
+  background: #070B14;
+  color: #F7F4EA;
+  font-family: "Inter";
+  font-size: 14px;
+}
+
+QFrame, QWidget#Panel {
+  background: #0E1426;
+  border: 1px solid #2A3555;
+  border-radius: 18px;
+}
+
+QLabel#Title {
+  font-family: "Trajan Pro";
+  font-size: 24px;
+  color: #E7C16A;
+}
+
+QPushButton {
+  background: #1D2A4A;
+  border: 1px solid #2A3555;
+  border-radius: 18px;
+  padding: 8px 12px;
+}
+QPushButton:hover { background: #24345B; }
+QPushButton:pressed { background: #16203A; }
+
+QPushButton#Accent {
+  background: #E7C16A;
+  color: #070B14;
+  border: 1px solid #2A3555;
+}
+QPushButton#Accent:hover { background: #F0D07E; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+  background: #121B33;
+  border: 1px solid #2A3555;
+  border-radius: 18px;
+  padding: 8px;
+  selection-background-color: #FFFFFF;
+  selection-color: #070B14;
+}
+
+QProgressBar {
+  background: #121B33;
+  border: 1px solid #2A3555;
+  border-radius: 18px;
+  text-align: center;
+}
+QProgressBar::chunk {
+  background: #E7C16A;
+  border-radius: 18px;
+}

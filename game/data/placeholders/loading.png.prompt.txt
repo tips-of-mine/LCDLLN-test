@@ -1,0 +1,27 @@
+SUBJECT
+A dark fantasy loading placeholder illustration.
+
+COMPOSITION & UI CONSTRAINTS
+Abstract composition,
+centered energy movement.
+
+MATERIALS & DETAILS
+Dark magical energy,
+swirling shadows,
+arcane particles.
+
+LIGHTING & MOOD
+Subtle glow,
+sense of motion and anticipation.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+High resolution,
+clean composition.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+blur, noise, text

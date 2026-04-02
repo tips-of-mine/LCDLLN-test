@@ -1,0 +1,31 @@
+SUBJECT
+A dark fantasy world map used as a server selection background.
+
+COMPOSITION & UI CONSTRAINTS
+Wide map composition,
+clear areas reserved for server list UI.
+
+MATERIALS & DETAILS
+Ancient parchment map,
+dark continents,
+etched coastlines,
+mystical symbols.
+
+LIGHTING & MOOD
+Low saturation,
+aged parchment tones,
+ominous atmosphere.
+
+ART STYLE
+Dark fantasy, gothic medieval,
+map illustration style.
+
+TECHNICAL QUALITY
+High resolution,
+readable background.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+modern map symbols,
+text, watermark

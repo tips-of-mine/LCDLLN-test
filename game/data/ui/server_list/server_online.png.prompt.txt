@@ -1,0 +1,27 @@
+SUBJECT
+A dark fantasy UI icon indicating an online server.
+
+COMPOSITION & UI CONSTRAINTS
+Centered circular icon,
+strong silhouette,
+transparent background.
+
+MATERIALS & DETAILS
+Dark arcane orb,
+stable greenish magical glow.
+
+LIGHTING & MOOD
+Soft internal glow,
+controlled energy.
+
+ART STYLE
+Dark fantasy, gothic medieval.
+
+TECHNICAL QUALITY
+Clear icon,
+UI-ready.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+neon colors,
+blur, noise, text

@@ -1,0 +1,31 @@
+SUBJECT
+An epic dark fantasy splash screen background
+showing a devastated world under a colossal black moon.
+
+COMPOSITION & UI CONSTRAINTS
+Cinematic wide composition,
+center kept readable for logo overlay.
+
+MATERIALS & DETAILS
+Ruined landscapes,
+dark skies,
+ancient destruction.
+
+LIGHTING & MOOD
+High contrast moonlight,
+volumetric fog,
+apocalyptic atmosphere.
+
+ART STYLE
+Epic dark fantasy, gothic medieval,
+cinematic matte painting.
+
+TECHNICAL QUALITY
+Ultra high resolution,
+concept art level quality.
+
+NEGATIVE PROMPT
+cartoon, anime, sci-fi,
+bright colors,
+characters in focus,
+text, watermark

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <filesystem>
 #include <mutex>
 #include <thread>
 
@@ -27,9 +28,9 @@ namespace engine::client
 	namespace
 	{
 		constexpr std::string_view kUserSettingsPath = "user_settings.json";
-		constexpr std::string_view kLoginBackgroundPath = "engine/assets/ui/loading/background.png";
+		constexpr std::string_view kLoginBackgroundPath = "ui/loading/background.png";
 		constexpr std::string_view kLoginLogoPath = "";
-		constexpr std::string_view kRegisterBackgroundPath = "engine/assets/ui/loading/background.png";
+		constexpr std::string_view kRegisterBackgroundPath = "ui/loading/background.png";
 		constexpr std::string_view kRegisterInfoPath = "";
 
 		std::string JsonBool(bool value)
@@ -545,12 +546,19 @@ namespace engine::client
 
 	void AuthUiPresenter::SaveRememberPreference()
 	{
+		const std::filesystem::path settingsPath{ kUserSettingsPath };
+		if (engine::platform::FileSystem::Exists(settingsPath))
+		{
+			LOG_INFO(Core, "[AuthUiPresenter] Preferences persist skipped (existing user_settings.json preserved)");
+			return;
+		}
+
 		const std::string locale = CurrentLocale();
 		std::string json = BuildUserSettingsJson(m_rememberLogin, locale, m_videoFullscreen, m_videoVsync);
 		ReplaceAudioSettings(json, m_audioMasterVolume, m_audioMusicVolume, m_audioSfxVolume, m_audioUiVolume);
 		ReplaceControlSettings(json, m_mouseSensitivity, m_invertY, m_useZqsd);
 		ReplaceGameSettings(json, m_gameplayUdpEnabled, m_allowInsecureDev, m_authTimeoutMs);
-		if (!engine::platform::FileSystem::WriteAllText(std::string(kUserSettingsPath), json))
+		if (!engine::platform::FileSystem::WriteAllText(settingsPath, json))
 		{
 			LOG_WARN(Core, "[AuthUiPresenter] Failed to persist preferences");
 			return;

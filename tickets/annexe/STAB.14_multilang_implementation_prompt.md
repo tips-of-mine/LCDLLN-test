@@ -7,7 +7,7 @@ Ta mission est d’implémenter un système de localisation (i18n/l10n) **runtim
 - L’UI d’auth actuelle est gérée par `engine/client/AuthUi.*` (textes actuellement codés en dur en anglais).
 - La config runtime est chargée via `engine/core/Config` (`config.json`), avec déjà une clé `client.locale`.
 - Le moteur et les logs passent par `engine/core/Log`.
-- Il existe déjà un répertoire d’assets de localisation `engine/assets/localization/` (actuellement orienté ressources visuelles).
+- Il existe déjà un répertoire d’assets de localisation `game/data/localization/` (actuellement orienté ressources visuelles).
 
 ## Objectif fonctionnel
 Mettre en place un système où :
@@ -37,7 +37,7 @@ Implémente les éléments suivants :
 
 ### 1) Service de localisation central
 Créer un composant dédié (ex: `engine/client/LocalizationService.h/.cpp`) qui :
-- charge un catalogue de langues depuis `engine/assets/localization/text/<lang>.json` (ou chemin équivalent cohérent),
+- charge un catalogue de langues depuis `game/data/localization/<lang>/<lang>.json` (ou chemin équivalent cohérent),
 - expose:
   - `GetCurrentLocale()`
   - `GetAvailableLocales()`
@@ -78,8 +78,8 @@ Créer un composant dédié (ex: `engine/client/LocalizationService.h/.cpp`) qui
 
 ### 7) Fichiers de langue
 Créer au minimum:
-- `engine/assets/localization/text/en.json`
-- `engine/assets/localization/text/fr.json`
+- `game/data/localization/en/en.json`
+- `game/data/localization/fr/fr.json`
 
 Structure simple recommandée:
 ```json

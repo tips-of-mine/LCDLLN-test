@@ -24,7 +24,7 @@ Ajouter un écran d'identification visible dans le client, avec:
 
 ## Périmètre
 - Client UI uniquement (pas de refonte protocole).
-- Réutiliser les assets déjà présents sous `engine/assets/ui/login` et `engine/assets/ui/register`.
+- Réutiliser les assets déjà présents sous `game/data/ui/login` et `game/data/ui/register`.
 - Conserver le flow réseau actuel; exposer son état à l'UI.
 
 ## Hors périmètre

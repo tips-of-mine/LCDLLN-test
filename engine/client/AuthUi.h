@@ -19,7 +19,7 @@ namespace engine::platform
 namespace engine::client
 {
 	/// STAB.13 — Login / register UI state machine; drives M20.5/M22.6 master flow without duplicating protocol.
-	/// Assets reference: \c engine/assets/ui/login and \c engine/assets/ui/register (documented in panel text; no absolute paths).
+	/// Assets reference: \c game/data/ui/login and \c game/data/ui/register (documented in panel text; no absolute paths).
 	class AuthUiPresenter final
 	{
 	public:

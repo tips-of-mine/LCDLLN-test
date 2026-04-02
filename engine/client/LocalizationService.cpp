@@ -17,7 +17,7 @@ namespace engine::client
 {
 	namespace
 	{
-		constexpr std::string_view kLocalizationTextDir = "localization/text";
+		constexpr std::string_view kLocalizationRootDir = "localization";
 
 		bool IsHex(char c)
 		{
@@ -97,13 +97,16 @@ namespace engine::client
 		m_defaultLocale = "en";
 		m_currentLocale = "en";
 
-		const std::filesystem::path dir = engine::platform::FileSystem::ResolveContentPath(cfg, kLocalizationTextDir);
+		const std::filesystem::path dir = engine::platform::FileSystem::ResolveContentPath(cfg, kLocalizationRootDir);
 		for (const std::filesystem::path& entry : engine::platform::FileSystem::ListDirectory(dir))
 		{
-			if (entry.extension() != ".json")
+			if (!std::filesystem::is_directory(entry))
 				continue;
-			const std::string locale = NormalizeLocaleTag(entry.stem().string());
+			const std::string locale = NormalizeLocaleTag(entry.filename().string());
 			if (locale.empty())
+				continue;
+			const std::filesystem::path localeFile = entry / (locale + ".json");
+			if (!std::filesystem::exists(localeFile))
 				continue;
 			if (std::find(m_availableLocales.begin(), m_availableLocales.end(), locale) == m_availableLocales.end())
 				m_availableLocales.push_back(locale);
@@ -319,7 +322,7 @@ namespace engine::client
 	bool LocalizationService::LoadCatalog(std::string_view localeTag, Catalog& outCatalog) const
 	{
 		const std::string normalized = NormalizeLocaleTag(localeTag);
-		const std::string relativePath = std::string(kLocalizationTextDir) + "/" + normalized + ".json";
+		const std::string relativePath = std::string(kLocalizationRootDir) + "/" + normalized + "/" + normalized + ".json";
 		const std::filesystem::path path = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
 		const std::string text = engine::platform::FileSystem::ReadAllText(path);
 		if (text.empty())

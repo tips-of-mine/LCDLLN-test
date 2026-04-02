@@ -39,7 +39,7 @@ cmake --build --preset vs2022-x64-release
 ### 4) VALIDATION DoD
 
 - Tous les points de `DEFINITION_OF_DONE.md` sont-ils respectés ? **OUI** (sous réserve de validation locale build/run).
-- Périmètre ticket : UI login/register branchée sur `REGISTER_REQUEST` + `MasterShardClientFlow` (AUTH → liste → ticket → shard), états UI, erreurs affichées dans le panneau texte + titre de fenêtre (Windows), assets référencés par chemins relatifs repo (`engine/assets/ui/login`, `engine/assets/ui/register`). Hors Windows, l’UI auth est ignorée et le jeu démarre directement (stub).
+- Périmètre ticket : UI login/register branchée sur `REGISTER_REQUEST` + `MasterShardClientFlow` (AUTH → liste → ticket → shard), états UI, erreurs affichées dans le panneau texte + titre de fenêtre (Windows), assets référencés par chemins relatifs repo (`game/data/ui/login`, `game/data/ui/register`). Hors Windows, l’UI auth est ignorée et le jeu démarre directement (stub).
 
 ---
 
@@ -69,7 +69,7 @@ Ajouter un écran d'identification visible dans le client, avec:
 
 ### Périmètre
 - Client UI uniquement (pas de refonte protocole).
-- Réutiliser les assets déjà présents sous `engine/assets/ui/login` et `engine/assets/ui/register`.
+- Réutiliser les assets déjà présents sous `game/data/ui/login` et `game/data/ui/register`.
 - Conserver le flow réseau actuel; exposer son état à l'UI.
 
 ### Hors périmètre

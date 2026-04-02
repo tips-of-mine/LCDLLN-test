@@ -98,7 +98,23 @@ namespace engine::render
 		metrics.contentX = metrics.innerX + metrics.artW + 18;
 		metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
 		metrics.compactSingleField = model.fields.size() <= 1u;
-		metrics.topOffset = !model.infoBanner.empty() ? 146 : 104;
+		// Aligner le premier champ sous le bloc titre + section (RecordModel). Sur grands panels,
+		// titleScale/bodyScale augmentent : l’ancien offset fixe (104) faisait chevaucher labels et titres.
+		{
+			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
+			const int32_t titleScale = std::clamp(bodyScale + 1, 3, 5);
+			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+			const int32_t sectionBottom = 38 + titleScale * 14 + bodyLineStep;
+			const int32_t minFieldAnchor = sectionBottom + 20;
+			if (!model.infoBanner.empty())
+			{
+				metrics.topOffset = std::max(146, minFieldAnchor + 44);
+			}
+			else
+			{
+				metrics.topOffset = std::max(104, minFieldAnchor);
+			}
+		}
 		return metrics;
 	}
 
@@ -161,8 +177,9 @@ namespace engine::render
 		}
 		else
 		{
-			// Voile léger : un plein écran trop opaque (ex. 0.20) sur triple écrans écrase le PNG en bleu uni.
-			addRect(0, 0, w, h, 0.04f, 0.06f, 0.12f, 0.07f);
+			// Pas de addRect plein écran ici : vkCmdClearAttachments remplace les pixels (pas de blending).
+			// Un voile plein écran effaçait entièrement le blit du PNG → fond bleu-gris uni.
+			// On ne garde que des vignettes sur les bords pour foncer légèrement les marges.
 			const int32_t vg = std::clamp(w / 40, 18, 56);
 			const float ve = 0.03f;
 			const float vn = 0.05f;

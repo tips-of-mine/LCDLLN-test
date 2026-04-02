@@ -462,10 +462,14 @@ namespace engine::render
 	    {
 	        const Pass& pass = m_passes[passIdx];
 	        engine::core::ProfilerScope passScope(pass.name);
+	        LOG_INFO(Render, "[FrameGraph] pass '{}' begin barriers", pass.name);
 	        emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
+	        LOG_INFO(Render, "[FrameGraph] pass '{}' barriers done", pass.name);
 	        const bool gpuPassRecorded = profiler != nullptr && profiler->BeginGpuPass(cmd, frameIndex, pass.name);
+	        LOG_INFO(Render, "[FrameGraph] pass '{}' execute", pass.name);
 	        if (pass.execute)
 	            pass.execute(cmd, registry);
+	        LOG_INFO(Render, "[FrameGraph] pass '{}' execute done", pass.name);
 	        if (gpuPassRecorded)
 	        {
 	            profiler->EndGpuPass(cmd, frameIndex);

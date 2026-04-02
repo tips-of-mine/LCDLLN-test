@@ -44,9 +44,9 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
 
-          # Copie les binaires produits (hors vcpkg et hors debug)
+          # Copie les binaires produits (hors vcpkg et hors debug) "*.exe" "*.dll" "*.pdb" 
           Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
-            -Include "*.exe","*.dll","*.pdb" |
+            -Include "*.exe","*.dll" |
             Where-Object {
               $_.FullName -notlike "*\vcpkg\*" -and
               $_.FullName -notlike "*\debug\*" -and

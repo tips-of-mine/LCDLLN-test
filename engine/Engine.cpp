@@ -1484,8 +1484,9 @@ namespace engine
 														LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering returned");
 
 														LOG_INFO(Render, "[CopyPresent] building UI layers");
+														const bool authCalibOverlay = m_cfg.GetBool("render.auth_ui_calibration_overlay.enabled", false);
 														const std::vector<engine::render::AuthUiLayer> layers =
-															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
+															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay);
 														LOG_INFO(Render, "[CopyPresent] UI layers built; clearing attachments");
 														for (const engine::render::AuthUiLayer& layer : layers)
 														{

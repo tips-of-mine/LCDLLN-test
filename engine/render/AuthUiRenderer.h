@@ -50,9 +50,12 @@ namespace engine::render
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model);
 
+	/// Si \p calibrationOverlay est true, ajoute des bandes de référence (rouge=haut, vert=bas,
+	/// bleu=gauche, jaune=droite, magenta=centre) pour diagnostiquer l’orientation sur une capture.
 	std::vector<AuthUiLayer> BuildAuthUiLayers(
 		VkExtent2D extent,
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model,
-		const AuthUiTheme& theme);
+		const AuthUiTheme& theme,
+		bool calibrationOverlay = false);
 }

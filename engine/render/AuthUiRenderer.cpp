@@ -103,7 +103,7 @@ namespace engine::render
 	}
 
 	std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state,
-		const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme)
+		const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme, bool calibrationOverlay)
 	{
 		std::vector<AuthUiLayer> layers;
 		if (extent.width == 0 || extent.height == 0 || !state.active || !model.visible)
@@ -113,12 +113,8 @@ namespace engine::render
 
 		const int32_t w = static_cast<int32_t>(extent.width);
 		const int32_t h = static_cast<int32_t>(extent.height);
-		// vkCmdClearAttachments : VkRect2D.offset en coordonnées framebuffer Vulkan (origine bas-gauche).
-		// Le layout UI reste en haut-gauche (Y vers le bas).
-		auto topDownToFramebufferY = [h](int32_t yTop, int32_t rectHeight) -> int32_t
-		{
-			return h - yTop - rectHeight;
-		};
+		// vkCmdClearAttachments : VkRect2D est en coordonnées framebuffer Vulkan : origine haut-gauche,
+		// Y vers le bas (comme le layout UI). Ne pas convertir avec (h - y - rh) — cela inversait l’image.
 		const AuthUiLayoutMetrics layout = BuildAuthUiLayoutMetrics(extent, state, model);
 		const int32_t panelW = layout.panelW;
 		const int32_t panelH = layout.panelH;
@@ -130,7 +126,7 @@ namespace engine::render
 		const bool largeContent = layout.largeContent;
 		const bool compactSingleField = layout.compactSingleField;
 
-		auto addRect = [&layers, topDownToFramebufferY](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
+		auto addRect = [&layers](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
 		{
 			if (rw <= 0 || rh <= 0)
 			{
@@ -142,8 +138,7 @@ namespace engine::render
 			layer.color.float32[1] = g;
 			layer.color.float32[2] = b;
 			layer.color.float32[3] = a;
-			const int32_t fbY = topDownToFramebufferY(y, rh);
-			layer.rect.rect.offset = { x, std::max(0, fbY) };
+			layer.rect.rect.offset = { x, y };
 			layer.rect.rect.extent = { static_cast<uint32_t>(rw), static_cast<uint32_t>(rh) };
 			layer.rect.baseArrayLayer = 0;
 			layer.rect.layerCount = 1;
@@ -307,6 +302,19 @@ namespace engine::render
 				addThemeRect(x, buttonY, actionW, 3, theme.accent, 1.0f);
 			}
 			addThemeRect(x + 18, buttonY + 15, std::max(48, actionW - 36), 4, theme.text, primary ? (hovered ? 0.72f : 0.60f) : (hovered ? 0.58f : 0.42f));
+		}
+
+		if (calibrationOverlay)
+		{
+			const int32_t strip = std::clamp(h / 28, 18, 40);
+			addRect(0, 0, w, strip, 1.0f, 0.0f, 0.0f, 1.0f);
+			addRect(0, h - strip, w, strip, 0.0f, 1.0f, 0.0f, 1.0f);
+			addRect(0, 0, strip, h, 0.0f, 0.0f, 1.0f, 1.0f);
+			addRect(w - strip, 0, strip, h, 1.0f, 1.0f, 0.0f, 1.0f);
+			const int32_t box = std::clamp(std::min(w, h) / 10, 48, 120);
+			const int32_t cx = (w - box) / 2;
+			const int32_t cy = (h - box) / 2;
+			addRect(cx, cy, box, box, 1.0f, 0.0f, 1.0f, 1.0f);
 		}
 
 		return layers;

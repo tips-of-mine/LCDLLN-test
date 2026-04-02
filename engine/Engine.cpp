@@ -73,8 +73,11 @@ namespace engine
 			if (persisted.Has("render.auth_ui.background_path"))
 				cfg.SetValue("render.auth_ui.background_path",
 					persisted.GetString("render.auth_ui.background_path", cfg.GetString("render.auth_ui.background_path", "ui/login/background.png")));
+			if (persisted.Has("render.auth_ui.background_blit.fit"))
+				cfg.SetValue("render.auth_ui.background_blit.fit",
+					persisted.GetString("render.auth_ui.background_blit.fit", cfg.GetString("render.auth_ui.background_blit.fit", "cover")));
 
-			LOG_INFO(Core, "[Boot] user_settings.json overrides applied (fullscreen={}, vsync={}, locale={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={}, auth_bg_blit={})",
+			LOG_INFO(Core, "[Boot] user_settings.json overrides applied (fullscreen={}, vsync={}, locale={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={}, auth_bg_blit={}, auth_bg_fit={})",
 				cfg.GetBool("render.fullscreen", true),
 				cfg.GetBool("render.vsync", true),
 				cfg.GetString("client.locale", ""),
@@ -88,7 +91,97 @@ namespace engine
 				cfg.GetBool("client.gameplay_udp.enabled", false),
 				cfg.GetBool("client.allow_insecure_dev", true),
 				cfg.GetInt("client.auth_ui.timeout_ms", 5000),
-				cfg.GetBool("render.auth_ui.background_blit.enabled", true));
+				cfg.GetBool("render.auth_ui.background_blit.enabled", true),
+				cfg.GetString("render.auth_ui.background_blit.fit", "cover"));
+		}
+
+		enum class AuthBackgroundBlitFit
+		{
+			Stretch,
+			Contain,
+			Cover,
+		};
+
+		AuthBackgroundBlitFit ParseAuthBackgroundBlitFit(std::string_view s)
+		{
+			if (s == "contain")
+			{
+				return AuthBackgroundBlitFit::Contain;
+			}
+			if (s == "cover")
+			{
+				return AuthBackgroundBlitFit::Cover;
+			}
+			if (s == "stretch")
+			{
+				return AuthBackgroundBlitFit::Stretch;
+			}
+			return AuthBackgroundBlitFit::Cover;
+		}
+
+		/// Remplit \p blit pour \c vkCmdBlitImage : \c stretch (étire), \c contain (image entière, bandes),
+		/// \c cover (remplit la surface, rogne l’excédent — pas d’étirement non uniforme).
+		void BuildAuthBackgroundBlit(
+			AuthBackgroundBlitFit fit,
+			uint32_t srcW,
+			uint32_t srcH,
+			uint32_t dstW,
+			uint32_t dstH,
+			VkImageBlit& blit)
+		{
+			blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit.srcSubresource.mipLevel = 0;
+			blit.srcSubresource.baseArrayLayer = 0;
+			blit.srcSubresource.layerCount = 1;
+			blit.dstSubresource = blit.srcSubresource;
+			blit.srcOffsets[0] = { 0, 0, 0 };
+			blit.srcOffsets[1] = { static_cast<int32_t>(srcW), static_cast<int32_t>(srcH), 1 };
+			blit.dstOffsets[0] = { 0, 0, 0 };
+			blit.dstOffsets[1] = { static_cast<int32_t>(dstW), static_cast<int32_t>(dstH), 1 };
+
+			const float sw = static_cast<float>(srcW);
+			const float sh = static_cast<float>(srcH);
+			const float dw = static_cast<float>(dstW);
+			const float dh = static_cast<float>(dstH);
+			if (sw <= 0.f || sh <= 0.f || dw <= 0.f || dh <= 0.f || fit == AuthBackgroundBlitFit::Stretch)
+			{
+				return;
+			}
+
+			if (fit == AuthBackgroundBlitFit::Contain)
+			{
+				const float scale = std::min(dw / sw, dh / sh);
+				const int32_t outW = static_cast<int32_t>(std::lround(sw * scale));
+				const int32_t outH = static_cast<int32_t>(std::lround(sh * scale));
+				const int32_t dx = (static_cast<int32_t>(dstW) - outW) / 2;
+				const int32_t dy = (static_cast<int32_t>(dstH) - outH) / 2;
+				blit.dstOffsets[0] = { dx, dy, 0 };
+				blit.dstOffsets[1] = { dx + outW, dy + outH, 1 };
+				return;
+			}
+
+			// Cover : rogne la source au centre pour remplir le framebuffer sans étirement.
+			const float scale = std::max(dw / sw, dh / sh);
+			const float cropW = dw / scale;
+			const float cropH = dh / scale;
+			float sx0 = (sw - cropW) * 0.5f;
+			float sy0 = (sh - cropH) * 0.5f;
+			sx0 = std::clamp(sx0, 0.f, sw - 1.f);
+			sy0 = std::clamp(sy0, 0.f, sh - 1.f);
+			float sx1 = sx0 + cropW;
+			float sy1 = sy0 + cropH;
+			sx1 = std::min(sx1, sw);
+			sy1 = std::min(sy1, sh);
+			if (sx1 <= sx0)
+			{
+				sx1 = std::min(sx0 + 1.f, sw);
+			}
+			if (sy1 <= sy0)
+			{
+				sy1 = std::min(sy0 + 1.f, sh);
+			}
+			blit.srcOffsets[0] = { static_cast<int32_t>(std::floor(sx0)), static_cast<int32_t>(std::floor(sy0)), 0 };
+			blit.srcOffsets[1] = { static_cast<int32_t>(std::ceil(sx1)), static_cast<int32_t>(std::ceil(sy1)), 1 };
 		}
 
 		bool HasCliFlag(int argc, char** argv, std::string_view flag)
@@ -1415,16 +1508,33 @@ namespace engine
 													engine::render::TextureAsset* bgTex = m_authUiBackgroundTexture.Get();
 													if (bgTex && bgTex->image != VK_NULL_HANDLE && bgTex->width > 0u && bgTex->height > 0u)
 													{
-														static bool s_authBgPipelineLogged = false;
-														if (!s_authBgPipelineLogged)
+														const AuthBackgroundBlitFit authBgFit = ParseAuthBackgroundBlitFit(
+															m_cfg.GetString("render.auth_ui.background_blit.fit", "cover"));
+														static bool s_authBgBlitLogOnce = false;
+														if (!s_authBgBlitLogOnce)
 														{
-															s_authBgPipelineLogged = true;
+															s_authBgBlitLogOnce = true;
+															const char* fitName = "cover";
+															switch (authBgFit)
+															{
+															case AuthBackgroundBlitFit::Stretch:
+																fitName = "stretch";
+																break;
+															case AuthBackgroundBlitFit::Contain:
+																fitName = "contain";
+																break;
+															case AuthBackgroundBlitFit::Cover:
+															default:
+																fitName = "cover";
+																break;
+															}
 															LOG_INFO(Render,
-																"[CopyPresent] auth fond: blit source {}x{} → framebuffer {}x{}",
+																"[CopyPresent] auth fond: blit {}x{} → {}x{} fit={} (log unique; blit chaque frame)",
 																bgTex->width,
 																bgTex->height,
 																ext.width,
-																ext.height);
+																ext.height,
+																fitName);
 														}
 														VkImageMemoryBarrier bgSrc{};
 														bgSrc.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1439,15 +1549,7 @@ namespace engine
 														const VkPipelineStageFlags bgSrcStages = m_authUiBackgroundLayoutReady ? VK_PIPELINE_STAGE_TRANSFER_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 														vkCmdPipelineBarrier(cmd, bgSrcStages, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &bgSrc);
 														VkImageBlit blit{};
-														blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-														blit.srcSubresource.mipLevel = 0;
-														blit.srcSubresource.baseArrayLayer = 0;
-														blit.srcSubresource.layerCount = 1;
-														blit.srcOffsets[0] = { 0, 0, 0 };
-														blit.srcOffsets[1] = { static_cast<int32_t>(bgTex->width), static_cast<int32_t>(bgTex->height), 1 };
-														blit.dstSubresource = blit.srcSubresource;
-														blit.dstOffsets[0] = { 0, 0, 0 };
-														blit.dstOffsets[1] = { static_cast<int32_t>(ext.width), static_cast<int32_t>(ext.height), 1 };
+														BuildAuthBackgroundBlit(authBgFit, bgTex->width, bgTex->height, ext.width, ext.height, blit);
 														vkCmdBlitImage(cmd, bgTex->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 														m_authUiBackgroundLayoutReady = true;
 														authPhotoBackdrop = true;

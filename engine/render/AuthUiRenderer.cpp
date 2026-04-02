@@ -161,20 +161,20 @@ namespace engine::render
 		}
 		else
 		{
-			// Léger voile bleu-nuit (évite l’écrasage type « 16 couleurs » du PNG par du noir pur).
-			addRect(0, 0, w, h, 0.04f, 0.06f, 0.12f, 0.20f);
-			const int32_t vg = std::clamp(w / 32, 20, 64);
+			// Voile léger : un plein écran trop opaque (ex. 0.20) sur triple écrans écrase le PNG en bleu uni.
+			addRect(0, 0, w, h, 0.04f, 0.06f, 0.12f, 0.07f);
+			const int32_t vg = std::clamp(w / 40, 18, 56);
 			const float ve = 0.03f;
 			const float vn = 0.05f;
 			const float vb = 0.10f;
-			addRect(0, 0, vg, h, ve, vn, vb, 0.30f);
-			addRect(w - vg, 0, vg, h, ve, vn, vb, 0.30f);
-			addRect(0, 0, w, vg / 2, ve, vn, vb, 0.22f);
-			addRect(0, h - vg / 2, w, vg / 2, ve, vn, vb, 0.28f);
+			addRect(0, 0, vg, h, ve, vn, vb, 0.14f);
+			addRect(w - vg, 0, vg, h, ve, vn, vb, 0.14f);
+			addRect(0, 0, w, vg / 2, ve, vn, vb, 0.10f);
+			addRect(0, h - vg / 2, w, vg / 2, ve, vn, vb, 0.12f);
 		}
 		addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, usePhotoBackdrop ? 0.45f : 0.60f);
 		addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, usePhotoBackdrop ? 0.35f : 0.22f);
-		addThemeRect(panelX, panelY, panelW, panelH, theme.panel, usePhotoBackdrop ? 0.82f : 0.96f);
+		addThemeRect(panelX, panelY, panelW, panelH, theme.panel, usePhotoBackdrop ? 0.78f : 0.96f);
 		addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
 		addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
 		addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);

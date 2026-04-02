@@ -11,7 +11,8 @@
         "auth_ui": {
             "background_path": "ui/login/background.png",
             "background_blit": {
-                "enabled": true
+                "enabled": true,
+                "fit": "cover"
             }
         }
     },

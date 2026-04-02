@@ -26,6 +26,7 @@
 #include "engine/render/ShaderCompiler.h"
 #include "engine/render/ShaderHotReload.h"
 #include "engine/render/AuthGlyphPass.h"
+#include "engine/render/AuthLogoPass.h"
 #include "engine/render/TaaJitter.h"
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
@@ -185,6 +186,7 @@ namespace engine
 		/// All deferred passes (geometry, shadow, SSAO, lighting, bloom, tonemap, TAA). Init/Destroy in Engine.cpp.
 		std::unique_ptr<engine::render::DeferredPipeline> m_pipeline;
 		engine::render::AuthGlyphPass m_authGlyphPass;
+		engine::render::AuthLogoPass m_authLogoPass;
 		engine::render::MeshHandle m_geometryMeshHandle;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
@@ -196,6 +198,8 @@ namespace engine
 		/// Fond plein écran pour l’écran auth (PNG sous paths.content, ex. ui/login/background.png).
 		engine::render::TextureHandle m_authUiBackgroundTexture;
 		bool m_authUiBackgroundLayoutReady = false;
+		engine::render::TextureHandle m_authLogoTexture;
+		bool m_authLogoImageLayoutReady = false;
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;
 		engine::audio::AudioEngine m_audioEngine;

@@ -712,6 +712,17 @@ namespace engine
 												}
 											}
 										}
+										{
+											const std::string authLogoPath = m_cfg.GetString("render.auth_ui.logo_path", "ui/login/logo_login.png");
+											if (!authLogoPath.empty())
+											{
+												m_authLogoTexture = m_assetRegistry.LoadTexture(authLogoPath, true);
+												if (!m_authLogoTexture.IsValid())
+												{
+													LOG_WARN(Render, "[Boot] Auth UI logo not loaded: {}", authLogoPath);
+												}
+											}
+										}
 
 										engine::render::ImageDesc sceneColorDesc{};
 										sceneColorDesc.format    = m_vkSwapchain.GetImageFormat();
@@ -897,6 +908,29 @@ namespace engine
 											else
 											{
 												LOG_WARN(Render, "[Boot] AuthGlyphPass shaders missing");
+											}
+											std::vector<uint32_t> authLogoVert = loadSpirv("shaders/auth_logo.vert.spv");
+											std::vector<uint32_t> authLogoFrag = loadSpirv("shaders/auth_logo.frag.spv");
+											if (!authLogoVert.empty() && !authLogoFrag.empty())
+											{
+												if (m_authLogoPass.Init(
+														m_vkDeviceContext.GetDevice(),
+														m_vkSwapchain.GetImageFormat(),
+														authLogoVert.data(),
+														authLogoVert.size(),
+														authLogoFrag.data(),
+														authLogoFrag.size()))
+												{
+													LOG_INFO(Render, "[Boot] AuthLogoPass OK");
+												}
+												else
+												{
+													LOG_WARN(Render, "[Boot] AuthLogoPass init failed");
+												}
+											}
+											else
+											{
+												LOG_WARN(Render, "[Boot] AuthLogoPass shaders missing");
 											}
 										}
 
@@ -1728,6 +1762,27 @@ namespace engine
 																authRenderModel,
 																authTheme);
 														}
+														if (m_authLogoPass.IsValid() && authVisualState.login && m_authLogoTexture.IsValid())
+														{
+															engine::render::TextureAsset* logoTex = m_authLogoTexture.Get();
+															if (logoTex && logoTex->image != VK_NULL_HANDLE && logoTex->view != VK_NULL_HANDLE)
+															{
+																const float half = static_cast<float>(m_authUi.GetAuthLogoSizePx()) * 0.5f;
+																const float cx = 24.f + half;
+																const float cy = 24.f + half;
+																m_authLogoPass.Record(
+																	m_vkDeviceContext.GetDevice(),
+																	cmd,
+																	ext,
+																	logoTex->image,
+																	logoTex->view,
+																	m_authLogoImageLayoutReady,
+																	cx,
+																	cy,
+																	half,
+																	m_authUi.GetAuthLogoRotationRadians());
+															}
+														}
 
 														if (beganWithKHR && pfnEndKHR)
 															pfnEndKHR(cmd);
@@ -1858,6 +1913,7 @@ namespace engine
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
+			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
 			{
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());

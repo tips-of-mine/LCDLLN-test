@@ -590,11 +590,19 @@ namespace engine::render
 			AppendText(vertices, text, x, y, boxW, scale, color);
 		};
 
-		// Titres dans la colonne de contenu (pas sur la zone « art » à gauche) pour éviter le chevauchement avec le décor.
-		AppendText(vertices, model.titleLine1, contentX, panelY + 22, contentW, titleScale, titleColor);
-		AppendText(vertices, model.titleLine2, contentX, panelY + 30 + titleScale * 10, contentW, bodyScale, mutedColor);
+		// Titres dans la colonne de contenu (pas sur la zone « art » à gauche).
+		if (!model.titleLine2.empty())
+		{
+			AppendText(vertices, model.titleLine1, contentX, panelY + 22, contentW, titleScale, titleColor);
+			AppendText(vertices, model.titleLine2, contentX, panelY + 30 + titleScale * 10, contentW, bodyScale, mutedColor);
+		}
+		else
+		{
+			AppendText(vertices, model.titleLine1, contentX, panelY + 24, contentW, titleScale, titleColor);
+		}
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
-		const int32_t sectionTitleY = panelY + (centeredLanguageSelection ? 50 : 38) + titleScale * 14;
+		const int32_t sectionTopPad = centeredLanguageSelection ? 50 : (model.titleLine2.empty() ? 30 : 38);
+		const int32_t sectionTitleY = panelY + sectionTopPad + titleScale * 14;
 		if (centeredLanguageSelection)
 		{
 			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
@@ -722,7 +730,9 @@ namespace engine::render
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
 				const int32_t y = bodyStartY + i * bodyLinePitch - 4;
-				const float* lineColor = line.active ? accentColor : (line.hovered ? primaryColor : bodyColor);
+				const float* lineColor = line.link
+					? (line.hovered ? primaryColor : accentColor)
+					: (line.active ? accentColor : (line.hovered ? primaryColor : bodyColor));
 				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)
 				{
 					appendCenteredText(line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
@@ -734,17 +744,44 @@ namespace engine::render
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 			const int32_t gap = 10;
-			const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
-			const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
-			const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
-			for (int32_t i = 0; i < actionCount; ++i)
+			AuthLoginTwoRowLayout loginTwoRow{};
+			const bool loginTwoRows = TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
+			if (loginTwoRows)
 			{
-				if (static_cast<size_t>(i) >= model.actions.size()) break;
-				const int32_t x = contentX + i * (actionW + gap);
-				const auto& action = model.actions[static_cast<size_t>(i)];
-				const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
-				const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
-				AppendText(vertices, action.label, labelX, buttonY + 14, actionW - 20, bodyScale, action.primary ? titleColor : mutedColor);
+				for (int32_t row = 0; row < 2; ++row)
+				{
+					const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+					for (int32_t col = 0; col < 2; ++col)
+					{
+						const int32_t i = row * 2 + col;
+						if (i >= actionCount || static_cast<size_t>(i) >= model.actions.size())
+						{
+							break;
+						}
+						const int32_t x = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
+						const auto& action = model.actions[static_cast<size_t>(i)];
+						const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
+						const int32_t labelX = std::max(x + 8, x + (loginTwoRow.buttonHalfWidth - labelWidth) / 2);
+						const float* ac = action.primary ? titleColor : (action.emphasized ? accentColor : mutedColor);
+						AppendText(vertices, action.label, labelX, rowY + 12, loginTwoRow.buttonHalfWidth - 16, bodyScale, ac);
+					}
+				}
+			}
+			else
+			{
+				const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
+				const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
+				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
+				for (int32_t i = 0; i < actionCount; ++i)
+				{
+					if (static_cast<size_t>(i) >= model.actions.size()) break;
+					const int32_t x = contentX + i * (actionW + gap);
+					const auto& action = model.actions[static_cast<size_t>(i)];
+					const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
+					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
+					const float* ac = action.primary ? titleColor : (action.emphasized ? accentColor : mutedColor);
+					AppendText(vertices, action.label, labelX, buttonY + 14, actionW - 20, bodyScale, ac);
+				}
 			}
 			if (!model.errorText.empty())
 			{

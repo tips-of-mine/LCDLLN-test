@@ -95,8 +95,15 @@ namespace engine::render
 		metrics.panelY = (h - metrics.panelH) / 2;
 		metrics.innerX = metrics.panelX + 28;
 		metrics.artW = std::clamp(metrics.panelW / 3, 150, 240);
-		metrics.contentX = metrics.innerX + metrics.artW + 18;
-		metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
+		if (state.login && state.minimalChrome && !state.loginArtColumn)
+		{
+			metrics.artW = 0;
+		}
+		{
+			const int32_t artGap = metrics.artW > 0 ? 18 : 8;
+			metrics.contentX = metrics.innerX + metrics.artW + artGap;
+			metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
+		}
 		metrics.compactSingleField = model.fields.size() <= 1u;
 		// Aligner le premier champ sous le bloc titre + section (RecordModel). Sur grands panels,
 		// titleScale/bodyScale augmentent : l’ancien offset fixe (104) faisait chevaucher labels et titres.
@@ -117,6 +124,36 @@ namespace engine::render
 			}
 		}
 		return metrics;
+	}
+
+	bool TryGetLoginTwoRowLayout(
+		const AuthUiLayoutMetrics& lay,
+		const engine::client::AuthUiPresenter::VisualState& state,
+		const engine::client::AuthUiPresenter::RenderModel& model,
+		AuthLoginTwoRowLayout& out)
+	{
+		if (!state.login || model.actions.size() != 4)
+		{
+			return false;
+		}
+		const int32_t panelY = lay.panelY;
+		const int32_t panelH = lay.panelH;
+		const int32_t contentW = lay.contentW;
+		const int32_t topOffset = lay.topOffset;
+		const int32_t fieldStep = model.fields.size() <= 1u ? 48 : 42;
+		const int32_t bodyScale = std::clamp(lay.panelW / 260, 2, 4);
+		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+		const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
+		const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
+		const int32_t bodyBottom = bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 8;
+		out.primaryRowY = panelY + panelH - 68;
+		out.secondaryRowY = out.primaryRowY - 50;
+		if (out.secondaryRowY < bodyBottom)
+		{
+			out.secondaryRowY = bodyBottom;
+		}
+		out.buttonHalfWidth = std::max(120, (contentW - 10) / 2);
+		return true;
 	}
 
 	std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state,
@@ -190,37 +227,40 @@ namespace engine::render
 			addRect(0, 0, w, vg / 2, ve, vn, vb, 0.10f);
 			addRect(0, h - vg / 2, w, vg / 2, ve, vn, vb, 0.12f);
 		}
-		addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, usePhotoBackdrop ? 0.45f : 0.60f);
-		addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, usePhotoBackdrop ? 0.35f : 0.22f);
-		addThemeRect(panelX, panelY, panelW, panelH, theme.panel, usePhotoBackdrop ? 0.78f : 0.96f);
-		addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
-		addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
-		addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);
-		addThemeRect(panelX + 22, panelY + 40, 8, panelH - 68, theme.accent, 0.95f);
+		if (!state.minimalChrome)
+		{
+			addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, usePhotoBackdrop ? 0.45f : 0.60f);
+			addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, usePhotoBackdrop ? 0.35f : 0.22f);
+			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, usePhotoBackdrop ? 0.78f : 0.96f);
+			addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
+			addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
+			addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);
+			addThemeRect(panelX + 22, panelY + 40, 8, panelH - 68, theme.accent, 0.95f);
 
-		if (state.login)
-		{
-			addThemeRect(panelX + 38, panelY + 76, artW - 32, 92, theme.primary, 0.72f);
-			addThemeRect(panelX + 52, panelY + 92, artW - 62, 16, theme.accent, 0.96f);
-			addThemeRect(panelX + 52, panelY + 118, artW - 74, 10, theme.text, 0.80f);
-			addThemeRect(panelX + 52, panelY + 136, artW - 94, 10, theme.mutedText, 0.62f);
-		}
-		else if (state.registerMode)
-		{
-			addThemeRect(panelX + 38, panelY + 72, artW - 30, 126, theme.secondary, 0.56f);
-			addThemeRect(panelX + 54, panelY + 88, artW - 62, 18, theme.accent, 0.98f);
-			addThemeRect(panelX + 54, panelY + 118, artW - 74, 12, theme.primary, 0.96f);
-			addThemeRect(panelX + 54, panelY + 140, artW - 90, 12, theme.text, 0.76f);
-			addThemeRect(panelX + 54, panelY + 162, artW - 104, 12, theme.mutedText, 0.58f);
-		}
-		else
-		{
-			addThemeRect(panelX + 38, panelY + 78, artW - 34, 110, theme.secondary, 0.48f);
-			addThemeRect(panelX + 52, panelY + 96, artW - 64, 18, theme.primary, 0.95f);
-			addThemeRect(panelX + 52, panelY + 124, artW - 84, 12, theme.accent, 0.90f);
-		}
+			if (artW > 0 && state.login)
+			{
+				addThemeRect(panelX + 38, panelY + 76, artW - 32, 92, theme.primary, 0.72f);
+				addThemeRect(panelX + 52, panelY + 92, artW - 62, 16, theme.accent, 0.96f);
+				addThemeRect(panelX + 52, panelY + 118, artW - 74, 10, theme.text, 0.80f);
+				addThemeRect(panelX + 52, panelY + 136, artW - 94, 10, theme.mutedText, 0.62f);
+			}
+			else if (artW > 0 && state.registerMode)
+			{
+				addThemeRect(panelX + 38, panelY + 72, artW - 30, 126, theme.secondary, 0.56f);
+				addThemeRect(panelX + 54, panelY + 88, artW - 62, 18, theme.accent, 0.98f);
+				addThemeRect(panelX + 54, panelY + 118, artW - 74, 12, theme.primary, 0.96f);
+				addThemeRect(panelX + 54, panelY + 140, artW - 90, 12, theme.text, 0.76f);
+				addThemeRect(panelX + 54, panelY + 162, artW - 104, 12, theme.mutedText, 0.58f);
+			}
+			else if (artW > 0)
+			{
+				addThemeRect(panelX + 38, panelY + 78, artW - 34, 110, theme.secondary, 0.48f);
+				addThemeRect(panelX + 52, panelY + 96, artW - 64, 18, theme.primary, 0.95f);
+				addThemeRect(panelX + 52, panelY + 124, artW - 84, 12, theme.accent, 0.90f);
+			}
 
-		addThemeRect(contentX - 10, panelY + 60, contentW + 10, 2, theme.border, 0.90f);
+			addThemeRect(contentX - 10, panelY + 60, contentW + 10, 2, theme.border, 0.90f);
+		}
 
 		if (!model.infoBanner.empty())
 		{
@@ -300,8 +340,10 @@ namespace engine::render
 			addThemeRect(contentX + 18, y + 11, std::max(60, contentW - 54 - i * 10), 3, theme.text, activeField ? 0.78f : (hoveredField ? 0.66f : 0.50f));
 		}
 
-		const int32_t bodyLinePitch = 28;
-		const int32_t bodyStartY = panelY + topOffset + fieldCount * (compactSingleField ? 48 : 42) + 16;
+		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
+		const int32_t bodyLineStepMetrics = 7 * bodyScaleMetrics + 2 * bodyScaleMetrics;
+		const int32_t bodyLinePitch = std::max(28, bodyLineStepMetrics + 10);
+		const int32_t bodyStartY = panelY + topOffset + fieldCount * (compactSingleField ? 48 : 42) + 18;
 		for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 		{
 			const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
@@ -322,20 +364,54 @@ namespace engine::render
 		}
 
 		const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
-		const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 20);
 		const int32_t gap = 10;
-		const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
-		for (int32_t i = 0; i < actionCount; ++i)
+		AuthLoginTwoRowLayout loginTwoRow{};
+		const bool loginTwoRows = TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
+		if (loginTwoRows)
 		{
-			const int32_t x = contentX + i * (actionW + gap);
-			const bool primary = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].primary : (i == 0);
-			const bool hovered = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].hovered : false;
-			addThemeRect(x, buttonY, actionW, 42, primary ? theme.primary : theme.surface, hovered ? 1.0f : 0.96f);
-			if (hovered)
+			for (int32_t row = 0; row < 2; ++row)
 			{
-				addThemeRect(x, buttonY, actionW, 3, theme.accent, 1.0f);
+				const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+				for (int32_t col = 0; col < 2; ++col)
+				{
+					const int32_t i = row * 2 + col;
+					if (i >= actionCount)
+					{
+						break;
+					}
+					const int32_t x = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
+					const bool primary = model.actions[static_cast<size_t>(i)].primary;
+					const bool emphasized = model.actions[static_cast<size_t>(i)].emphasized;
+					const bool hovered = model.actions[static_cast<size_t>(i)].hovered;
+					const float* fill = primary ? theme.primary : (emphasized ? theme.accent : theme.surface);
+					addThemeRect(x, rowY, loginTwoRow.buttonHalfWidth, 40, fill, hovered ? 1.0f : 0.94f);
+					if (hovered)
+					{
+						addThemeRect(x, rowY, loginTwoRow.buttonHalfWidth, 3, theme.accent, 1.0f);
+					}
+					addThemeRect(x + 12, rowY + 14, std::max(48, loginTwoRow.buttonHalfWidth - 24), 4, theme.text,
+						primary ? (hovered ? 0.78f : 0.64f) : (hovered ? 0.62f : 0.48f));
+				}
 			}
-			addThemeRect(x + 18, buttonY + 15, std::max(48, actionW - 36), 4, theme.text, primary ? (hovered ? 0.72f : 0.60f) : (hovered ? 0.58f : 0.42f));
+		}
+		else
+		{
+			const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 20);
+			const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
+			for (int32_t i = 0; i < actionCount; ++i)
+			{
+				const int32_t x = contentX + i * (actionW + gap);
+				const bool primary = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].primary : (i == 0);
+				const bool emphasized = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].emphasized : false;
+				const bool hovered = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].hovered : false;
+				const float* fill = primary ? theme.primary : (emphasized ? theme.accent : theme.surface);
+				addThemeRect(x, buttonY, actionW, 42, fill, hovered ? 1.0f : 0.96f);
+				if (hovered)
+				{
+					addThemeRect(x, buttonY, actionW, 3, theme.accent, 1.0f);
+				}
+				addThemeRect(x + 18, buttonY + 15, std::max(48, actionW - 36), 4, theme.text, primary ? (hovered ? 0.72f : 0.60f) : (hovered ? 0.58f : 0.42f));
+			}
 		}
 
 		if (calibrationOverlay)

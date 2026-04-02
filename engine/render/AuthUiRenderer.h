@@ -50,6 +50,21 @@ namespace engine::render
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model);
 
+	/// Disposition deux rangées (Inscription / Options puis Valider / Quitter) pour l’écran connexion.
+	struct AuthLoginTwoRowLayout
+	{
+		int32_t secondaryRowY = 0;
+		int32_t primaryRowY = 0;
+		int32_t buttonHalfWidth = 0;
+	};
+
+	/// Remplit \p out si \p state.login et exactement 4 actions (modèle connexion deux rangées).
+	bool TryGetLoginTwoRowLayout(
+		const AuthUiLayoutMetrics& lay,
+		const engine::client::AuthUiPresenter::VisualState& state,
+		const engine::client::AuthUiPresenter::RenderModel& model,
+		AuthLoginTwoRowLayout& out);
+
 	/// Si \p calibrationOverlay est true, ajoute des bandes de référence (rouge=haut, vert=bas,
 	/// bleu=gauche, jaune=droite, magenta=centre) pour diagnostiquer l’orientation sur une capture.
 	/// Si \p usePhotoBackdrop est true, n’applique pas les grands aplats plein écran (fond déjà dessiné par blit).

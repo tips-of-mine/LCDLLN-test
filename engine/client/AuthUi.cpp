@@ -1,5 +1,7 @@
 #include "engine/client/AuthUi.h"
 
+#include "engine/render/AuthUiRenderer.h"
+
 #include "engine/core/Log.h"
 #include "engine/network/NetClient.h"
 #include "engine/platform/FileSystem.h"
@@ -446,6 +448,12 @@ namespace engine::client
 		m_allowInsecureDevPending = m_allowInsecureDev;
 		m_authTimeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000), 1000, 15000));
 		m_authTimeoutMsPending = m_authTimeoutMs;
+		m_authMinimalChrome = cfg.GetBool("render.auth_ui.minimal_chrome", true);
+		m_authLoginArtColumn = cfg.GetBool("render.auth_ui.login_art_column", false);
+		m_masterAvailabilityUrl = cfg.GetString("client.auth_ui.master_availability_url", "");
+		m_authLogoSizePx = static_cast<int32_t>(std::clamp(cfg.GetInt("render.auth_ui.logo_size_px", 96), 32, 256));
+		m_authAvailabilityChecking = false;
+		m_authAvailabilityPollTimer = 0.f;
 		m_pendingGameSettings = {};
 		m_argonSalt.clear();
 		m_asyncResult = {};
@@ -2052,7 +2060,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	void AuthUiPresenter::Update(engine::platform::Input& input, float deltaSeconds, engine::platform::Window& window,
 		const engine::core::Config& cfg)
 	{
-		(void)deltaSeconds;
 		m_usingNativeAuthScreen = false;
 		window.SetAuthScreenState({});
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
@@ -2062,6 +2069,26 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_flowComplete)
 			return;
 
+		if (!m_masterAvailabilityUrl.empty() && m_phase == Phase::Login)
+		{
+			m_authAvailabilityPollTimer += deltaSeconds;
+			m_authAvailabilityChecking = (m_authAvailabilityPollTimer < 3.0f);
+			if (m_authAvailabilityChecking)
+			{
+				m_authLogoRotationRad += deltaSeconds * 2.8f;
+			}
+			else
+			{
+				m_authLogoRotationRad = 0.f;
+			}
+		}
+		else
+		{
+			m_authAvailabilityChecking = false;
+			m_authAvailabilityPollTimer = 0.f;
+			m_authLogoRotationRad = 0.f;
+		}
+
 		if (m_phase == Phase::Submitting)
 		{
 			window.SetAuthScreenState({});
@@ -2070,7 +2097,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 
 		const bool usingNativeAuth = false;
-		(void)cfg;
 
 		auto currentField = [this]() -> std::string* {
 			switch (m_phase)
@@ -2164,19 +2190,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			const RenderModel model = BuildRenderModel();
 			if (model.visible && m_viewportW > 0 && m_viewportH > 0)
 			{
-				const int32_t w = static_cast<int32_t>(m_viewportW);
-				const int32_t h = static_cast<int32_t>(m_viewportH);
-				const int32_t panelW = std::clamp(w * 42 / 100, 540, 820);
-				const bool largeContent = (m_phase == Phase::Terms) || model.bodyLines.size() > 6u || model.fields.size() > 5u;
-				const int32_t panelH = largeContent ? std::clamp(h * 74 / 100, 440, 780) : std::clamp(h * 62 / 100, 380, 660);
-				const int32_t panelX = (w - panelW) / 2;
-				const int32_t panelY = (h - panelH) / 2;
-				const int32_t artW = std::clamp(panelW / 3, 150, 240);
-				const int32_t contentX = panelX + 28 + artW + 18;
-				const int32_t contentW = std::max(180, panelW - (contentX - panelX) - 28);
-				const bool compactSingleField = model.fields.size() <= 1u;
-				const int32_t topOffset = !model.infoBanner.empty() ? 146 : 104;
-				const int32_t fieldStep = compactSingleField ? 48 : 42;
+				const VkExtent2D ext{ m_viewportW, m_viewportH };
+				const VisualState vsLayout = GetVisualState();
+				const engine::render::AuthUiLayoutMetrics lay = engine::render::BuildAuthUiLayoutMetrics(ext, vsLayout, model);
+				const int32_t panelY = lay.panelY;
+				const int32_t panelH = lay.panelH;
+				const int32_t contentX = lay.contentX;
+				const int32_t contentW = lay.contentW;
+				const int32_t topOffset = lay.topOffset;
+				const int32_t fieldStep = lay.compactSingleField ? 48 : 42;
+				const int32_t bodyScale = std::clamp(lay.panelW / 260, 2, 4);
+				const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+				const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
+				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
 				const int32_t mx = input.MouseX();
 				const int32_t my = input.MouseY();
 				m_hoveredFieldIndex = -1;
@@ -2205,12 +2231,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					}
 				}
 
-				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 16;
 				for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 				{
 					const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
-					const int32_t y = bodyStartY + localIdx * 18;
-					if (contains(mx, my, contentX - 4, y - 6, contentW, 14))
+					const int32_t y = bodyStartY + localIdx * bodyLinePitch - 4;
+					if (contains(mx, my, contentX - 4, y - 8, contentW, 22))
 					{
 						m_hoveredBodyLineIndex = bodyIndex;
 						break;
@@ -2218,15 +2243,42 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 				const int32_t gap = 10;
-				const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + static_cast<int32_t>(model.bodyLines.size()) * 18 + 20);
-				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
-				for (int32_t i = 0; i < actionCount; ++i)
+				engine::render::AuthLoginTwoRowLayout loginTwoRow{};
+				if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
 				{
-					const int32_t x = contentX + i * (actionW + gap);
-					if (contains(mx, my, x, buttonY, actionW, 42))
+					bool foundAction = false;
+					for (int32_t row = 0; row < 2 && !foundAction; ++row)
 					{
-						m_hoveredActionIndex = i;
-						break;
+						const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+						for (int32_t col = 0; col < 2; ++col)
+						{
+							const int32_t i = row * 2 + col;
+							if (i >= actionCount)
+							{
+								break;
+							}
+							const int32_t x = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
+							if (contains(mx, my, x, rowY, loginTwoRow.buttonHalfWidth, 40))
+							{
+								m_hoveredActionIndex = i;
+								foundAction = true;
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + static_cast<int32_t>(model.bodyLines.size()) * bodyLinePitch + 20);
+					const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
+					for (int32_t i = 0; i < actionCount; ++i)
+					{
+						const int32_t x = contentX + i * (actionW + gap);
+						if (contains(mx, my, x, buttonY, actionW, 42))
+						{
+							m_hoveredActionIndex = i;
+							break;
+						}
 					}
 				}
 
@@ -2246,7 +2298,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 					if (m_hoveredBodyLineIndex >= 0)
 					{
-						if (m_phase == Phase::Login && m_hoveredBodyLineIndex == 0)
+						if (m_phase == Phase::Login && m_hoveredBodyLineIndex == 1 && leftClick)
+						{
+							const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
+							if (!window.OpenExternalUrl(resetUrl))
+							{
+								m_phase = Phase::Error;
+								m_userErrorText = Tr("auth.error.open_recovery_portal");
+							}
+						}
+						else if (m_phase == Phase::Login && m_hoveredBodyLineIndex == 0)
 						{
 							m_rememberLogin = !m_rememberLogin;
 							SaveRememberPreference();
@@ -2318,38 +2379,82 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 					}
 
-					for (int32_t i = 0; i < actionCount && leftClick; ++i)
+					if (leftClick)
 					{
-						const int32_t x = contentX + i * (actionW + gap);
-						if (!contains(mx, my, x, buttonY, actionW, 42))
-							continue;
-
-						switch (m_phase)
+						bool actionHit = false;
+						if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
 						{
-						case Phase::Login:
-							if (i == 0) applyPrimaryAction();
-							else if (i == 1) { m_phase = Phase::Register; m_activeField = 0; m_userErrorText.clear(); }
-							else if (i == 2) { m_phase = Phase::ForgotPassword; m_activeField = 0; m_userErrorText.clear(); }
-							else if (i == 3) { OpenLanguageOptions(); }
-							break;
-						case Phase::Register:
-						case Phase::VerifyEmail:
-						case Phase::ForgotPassword:
-							if (i == 0) applyPrimaryAction();
-							else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
-							break;
-						case Phase::LanguageSelectionFirstRun:
-						case Phase::LanguageOptions:
-						case Phase::CharacterCreate:
-						case Phase::Submitting:
-						case Phase::Error:
-							if (i == 0) applyPrimaryAction();
-							break;
-						case Phase::Terms:
-							if (i == 0) applyPrimaryAction();
-							break;
+							for (int32_t row = 0; row < 2 && !actionHit; ++row)
+							{
+								const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+								for (int32_t col = 0; col < 2; ++col)
+								{
+									const int32_t i = row * 2 + col;
+									if (i >= actionCount)
+									{
+										break;
+									}
+									const int32_t ax = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
+									if (!contains(mx, my, ax, rowY, loginTwoRow.buttonHalfWidth, 40))
+									{
+										continue;
+									}
+									actionHit = true;
+									switch (m_phase)
+									{
+									case Phase::Login:
+										if (i == 0) { m_phase = Phase::Register; m_activeField = 0; m_userErrorText.clear(); }
+										else if (i == 1) { OpenLanguageOptions(); }
+										else if (i == 2) { applyPrimaryAction(); }
+										else if (i == 3) { window.RequestClose(); }
+										break;
+									default:
+										break;
+									}
+									break;
+								}
+							}
 						}
-						break;
+						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
+						{
+							const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + static_cast<int32_t>(model.bodyLines.size()) * bodyLinePitch + 20);
+							const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
+							for (int32_t i = 0; i < actionCount; ++i)
+							{
+								const int32_t x = contentX + i * (actionW + gap);
+								if (!contains(mx, my, x, buttonY, actionW, 42))
+								{
+									continue;
+								}
+
+								switch (m_phase)
+								{
+								case Phase::Login:
+									if (i == 0) { m_phase = Phase::Register; m_activeField = 0; m_userErrorText.clear(); }
+									else if (i == 1) { OpenLanguageOptions(); }
+									else if (i == 2) { applyPrimaryAction(); }
+									else if (i == 3) { window.RequestClose(); }
+									break;
+								case Phase::Register:
+								case Phase::VerifyEmail:
+								case Phase::ForgotPassword:
+									if (i == 0) applyPrimaryAction();
+									else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
+									break;
+								case Phase::LanguageSelectionFirstRun:
+								case Phase::LanguageOptions:
+								case Phase::CharacterCreate:
+								case Phase::Submitting:
+								case Phase::Error:
+									if (i == 0) applyPrimaryAction();
+									break;
+								case Phase::Terms:
+									if (i == 0) applyPrimaryAction();
+									break;
+								}
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -2365,7 +2470,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				{
 				for (unsigned char c : text)
 				{
-					if (c < 32 && c != '\t')
+					// Tab / retours chariot : gérés par Key::Tab et ignorés ici (sinon Tab s’insère comme texte).
+					if (c < 32)
 						continue;
 					const bool digitsOnlyField =
 						(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6 || m_activeField == 7)) ||
@@ -2632,20 +2738,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			field.secret = secret;
 			model.fields.push_back(std::move(field));
 		};
-		auto addAction = [this, &model](std::string label, bool primary, bool active = true)
+		auto addAction = [this, &model](std::string label, bool primary, bool active = true, bool emphasized = false)
 		{
 			RenderAction action{};
 			action.label = std::move(label);
 			action.primary = primary;
 			action.active = active;
+			action.emphasized = emphasized;
 			action.hovered = static_cast<int32_t>(model.actions.size()) == m_hoveredActionIndex;
 			model.actions.push_back(std::move(action));
 		};
-		auto addBodyLine = [this, &model](std::string text, bool active = false)
+		auto addBodyLine = [this, &model](std::string text, bool active = false, bool link = false)
 		{
 			RenderBodyLine line{};
 			line.text = std::move(text);
 			line.active = active;
+			line.link = link;
 			line.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
 			model.bodyLines.push_back(std::move(line));
 		};
@@ -2663,10 +2771,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
 			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
 			addBodyLine(Tr("auth.checkbox.remember") + ": " + Tr(m_rememberLogin ? "options.value.on" : "options.value.off"), true);
-			addAction(Tr("common.submit"), true);
-			addAction(Tr("auth.button.register"), false);
-			addAction(Tr("auth.button.forgot_password"), false);
-			addAction(Tr("language.options.title"), false);
+			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
+			addAction(Tr("auth.button.register"), false, true, true);
+			addAction(Tr("language.options.title"), false, true, true);
+			addAction(Tr("common.submit"), true, true, false);
+			addAction(Tr("common.quit"), false, true, false);
 			break;
 		case Phase::Register:
 			model.sectionTitle = Tr("auth.panel.register");
@@ -2862,6 +2971,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		state.languageOptions = m_phase == Phase::LanguageOptions;
 		state.submitting = m_phase == Phase::Submitting;
 		state.error = m_phase == Phase::Error;
+		state.minimalChrome = m_authMinimalChrome;
+		state.loginArtColumn = m_authLoginArtColumn;
+		state.authLogoSpin = m_authAvailabilityChecking;
 		return state;
 	}
 

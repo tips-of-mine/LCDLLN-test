@@ -13,7 +13,11 @@
             "background_blit": {
                 "enabled": true,
                 "fit": "cover_height"
-            }
+            },
+            "minimal_chrome": true,
+            "login_art_column": false,
+            "logo_path": "ui/login/logo_login.png",
+            "logo_size_px": 96
         }
     },
     "time": {
@@ -63,7 +67,8 @@
         },
         "auth_ui": {
             "enabled": true,
-            "timeout_ms": 5000
+            "timeout_ms": 5000,
+            "master_availability_url": ""
         },
         "gameplay_udp": {
             "enabled": false,

@@ -68,6 +68,12 @@ namespace engine::client
 			bool languageOptions = false;
 			bool submitting = false;
 			bool error = false;
+			/// Pas de grand panneau bleu ni cadre opaque (fond photo visible).
+			bool minimalChrome = false;
+			/// Colonne décorative à gauche (login).
+			bool loginArtColumn = false;
+			/// Logo connexion : rotation tant que la disponibilité maître est en cours de vérification.
+			bool authLogoSpin = false;
 		};
 
 		struct RenderField
@@ -85,6 +91,8 @@ namespace engine::client
 			bool primary = false;
 			bool active = false;
 			bool hovered = false;
+			/// Mise en avant (ex. Inscription / Options sur l’écran connexion).
+			bool emphasized = false;
 		};
 
 		struct RenderBodyLine
@@ -92,6 +100,8 @@ namespace engine::client
 			std::string text;
 			bool active = false;
 			bool hovered = false;
+			/// Lien (ouvre une URL), pas un bouton d’action.
+			bool link = false;
 		};
 
 		struct RenderModel
@@ -135,6 +145,10 @@ namespace engine::client
 		RenderModel BuildRenderModel() const;
 		VisualState GetVisualState() const;
 		bool IsUsingNativeAuthScreen() const { return m_usingNativeAuthScreen; }
+
+		/// Angle du logo (rad/s accumulé) pour le rendu Vulkan ; 0 si pas de rotation.
+		float GetAuthLogoRotationRadians() const { return m_authLogoRotationRad; }
+		int32_t GetAuthLogoSizePx() const { return m_authLogoSizePx; }
 		VideoSettingsCommand ConsumePendingVideoSettings();
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
@@ -258,6 +272,14 @@ namespace engine::client
 		std::vector<uint8_t> m_argonSalt{};
 		uint32_t m_viewportW = 0;
 		uint32_t m_viewportH = 0;
+
+		bool m_authMinimalChrome = true;
+		bool m_authLoginArtColumn = false;
+		std::string m_masterAvailabilityUrl{};
+		int32_t m_authLogoSizePx = 96;
+		float m_authLogoRotationRad = 0.f;
+		bool m_authAvailabilityChecking = false;
+		float m_authAvailabilityPollTimer = 0.f;
 
 		/// Background worker for REGISTER_REQUEST or MasterShardClientFlow (TCP); join before destroy.
 		struct AsyncResult

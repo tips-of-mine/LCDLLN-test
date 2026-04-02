@@ -1344,9 +1344,7 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
-												// Temporary hard-force for black-screen diagnosis: bypass scene copy and present a solid color.
-												// This avoids relying on user_settings persistence/override behavior during investigation.
-												const bool presentSolidColorDebug = true;
+												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
 												if (presentSolidColorDebug)
 												{
 													LOG_WARN(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");

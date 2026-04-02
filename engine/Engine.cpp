@@ -1441,54 +1441,34 @@ namespace engine
 													LOG_INFO(Render, "[CopyPresent] renderingInfo ready (ext={}x={})", ext.width, ext.height);
 													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
 
-													// Some drivers / Vulkan loader combos expose dynamic rendering only via
-													// the KHR entrypoints on pre-1.3 API versions. Using vkGetDeviceProcAddr
-													// avoids calling the wrong (or stubbed) symbol and prevents SEH crashes.
-													VkDevice device = m_vkDeviceContext.GetDevice();
-													static PFN_vkCmdBeginRendering     s_pfnBeginCore = nullptr;
-													static PFN_vkCmdEndRendering       s_pfnEndCore   = nullptr;
-													static PFN_vkCmdBeginRenderingKHR  s_pfnBeginKHR  = nullptr;
-													static PFN_vkCmdEndRenderingKHR    s_pfnEndKHR    = nullptr;
-
-													// Lookup only once (or until all expected entrypoints are present).
-													if ((s_pfnBeginCore == nullptr && s_pfnBeginKHR == nullptr)
-														|| s_pfnEndCore == nullptr
-														|| s_pfnEndKHR == nullptr)
-													{
-														// First try device proc addrs (spec-preferred for device commands).
-														s_pfnBeginCore = reinterpret_cast<PFN_vkCmdBeginRendering>(
-															vkGetDeviceProcAddr(device, "vkCmdBeginRendering"));
-														s_pfnEndCore = reinterpret_cast<PFN_vkCmdEndRendering>(
-															vkGetDeviceProcAddr(device, "vkCmdEndRendering"));
-														s_pfnBeginKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(
-															vkGetDeviceProcAddr(device, "vkCmdBeginRenderingKHR"));
-														s_pfnEndKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(
-															vkGetDeviceProcAddr(device, "vkCmdEndRenderingKHR"));
-
-														LOG_INFO(Render,
-															"[CopyPresent] proc addresses (device): beginCore={} endCore={} beginKHR={} endKHR={}",
-															(void*)s_pfnBeginCore, (void*)s_pfnEndCore, (void*)s_pfnBeginKHR, (void*)s_pfnEndKHR);
-													}
+													// Pointeurs résolus à la création du device (VkDeviceContext) — évite les nullptr
+													// du loader et les incohérences avec une instance Vulkan < 1.3.
+													const PFN_vkCmdBeginRendering pfnBeginCore = m_vkDeviceContext.GetCmdBeginRenderingCore();
+													const PFN_vkCmdEndRendering pfnEndCoreStored = m_vkDeviceContext.GetCmdEndRenderingCore();
+													const PFN_vkCmdBeginRenderingKHR pfnBeginKHR = m_vkDeviceContext.GetCmdBeginRenderingKHR();
+													const PFN_vkCmdEndRenderingKHR pfnEndKHRStored = m_vkDeviceContext.GetCmdEndRenderingKHR();
+													LOG_INFO(Render,
+														"[CopyPresent] proc addresses (device ctx): beginCore={} endCore={} beginKHR={} endKHR={}",
+														(void*)pfnBeginCore, (void*)pfnEndCoreStored, (void*)pfnBeginKHR, (void*)pfnEndKHRStored);
 
 													bool didBeginRendering = false;
 													bool beganWithKHR = false;
 													PFN_vkCmdEndRendering pfnEndCore = nullptr;
 													PFN_vkCmdEndRenderingKHR pfnEndKHR = nullptr;
-													// Prefer the KHR entrypoints when available (some loader/ICD combos behave badly
-													// with the core symbol on older Vulkan versions).
-													if (s_pfnBeginKHR && s_pfnEndKHR)
+													// Préférer KHR si les deux paires sont présentes (certains loaders / ICD).
+													if (pfnBeginKHR && pfnEndKHRStored)
 													{
-														s_pfnBeginKHR(cmd, &renderingInfoKHR);
+														pfnBeginKHR(cmd, &renderingInfoKHR);
 														didBeginRendering = true;
 														beganWithKHR = true;
-														pfnEndKHR = s_pfnEndKHR;
+														pfnEndKHR = pfnEndKHRStored;
 													}
-													else if (s_pfnBeginCore && s_pfnEndCore)
+													else if (pfnBeginCore && pfnEndCoreStored)
 													{
-														s_pfnBeginCore(cmd, &renderingInfo);
+														pfnBeginCore(cmd, &renderingInfo);
 														didBeginRendering = true;
 														beganWithKHR = false;
-														pfnEndCore = s_pfnEndCore;
+														pfnEndCore = pfnEndCoreStored;
 													}
 													else
 													{

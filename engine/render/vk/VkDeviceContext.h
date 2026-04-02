@@ -55,6 +55,12 @@ namespace engine::render
 		/// Returns true if dynamic rendering is enabled on the logical device.
 		bool SupportsDynamicRendering() const { return m_dynamicRenderingSupported; }
 
+		/// Non-null when SupportsDynamicRendering(); préfère KHR si les deux paires sont présentes.
+		PFN_vkCmdBeginRendering GetCmdBeginRenderingCore() const { return m_pfnCmdBeginRendering; }
+		PFN_vkCmdEndRendering GetCmdEndRenderingCore() const { return m_pfnCmdEndRendering; }
+		PFN_vkCmdBeginRenderingKHR GetCmdBeginRenderingKHR() const { return m_pfnCmdBeginRenderingKHR; }
+		PFN_vkCmdEndRenderingKHR GetCmdEndRenderingKHR() const { return m_pfnCmdEndRenderingKHR; }
+
 	private:
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 		::VkDevice m_device = VK_NULL_HANDLE;
@@ -65,5 +71,9 @@ namespace engine::render
 		bool m_sync2Supported = false;
 		bool m_descriptorIndexingSupported = false;
 		bool m_dynamicRenderingSupported = false;
+		PFN_vkCmdBeginRendering m_pfnCmdBeginRendering = nullptr;
+		PFN_vkCmdEndRendering m_pfnCmdEndRendering = nullptr;
+		PFN_vkCmdBeginRenderingKHR m_pfnCmdBeginRenderingKHR = nullptr;
+		PFN_vkCmdEndRenderingKHR m_pfnCmdEndRenderingKHR = nullptr;
 	};
 }

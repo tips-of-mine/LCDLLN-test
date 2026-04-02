@@ -72,7 +72,10 @@ namespace engine::render
 		appInfo.applicationVersion = VK_MAKE_VERSION(0, 1, 0);
 		appInfo.pEngineName = "LCDLLN";
 		appInfo.engineVersion = VK_MAKE_VERSION(0, 1, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_2;
+		// Rester en 1.1 volontairement : des essais avec VK_API_VERSION_1_3 avaient causé
+		// des soucis côté projet ; le rendu dynamique UI est géré au niveau device
+		// (extension KHR + résolution PFN dans VkDeviceContext), pas via la version d'instance.
+		appInfo.apiVersion = VK_API_VERSION_1_1;
 
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -88,6 +91,11 @@ namespace engine::render
 			LOG_ERROR(Render, "vkCreateInstance failed: {}", static_cast<int>(result));
 			return false;
 		}
+		LOG_INFO(Render, "[VK] vkCreateInstance OK — apiVersion demandée dans appInfo = {}.{}.{} (instance={})",
+			VK_VERSION_MAJOR(appInfo.apiVersion),
+			VK_VERSION_MINOR(appInfo.apiVersion),
+			VK_VERSION_PATCH(appInfo.apiVersion),
+			(void*)m_instance);
 
 #ifndef NDEBUG
 		VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};

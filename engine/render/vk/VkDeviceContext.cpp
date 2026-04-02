@@ -255,7 +255,11 @@ namespace engine::render
 		{
 			enabledExtensions.push_back(kDescriptorIndexingExtensionName);
 		}
-		if (canUseDynamicRendering && !dynamicRenderingInCore && hasDynamicRenderingExt)
+		// Activer VK_KHR_dynamic_rendering dès que le pilote l'annonce, même si le rendu
+		// dynamique est aussi disponible en core 1.3 : avec une instance Vulkan 1.1, certains
+		// loaders n'exposent des PFN utilisables (surtout les symboles *KHR) que si
+		// l'extension figure explicitement dans ppEnabledExtensionNames.
+		if (canUseDynamicRendering && hasDynamicRenderingExt)
 		{
 			enabledExtensions.push_back(kDynamicRenderingExtensionName);
 		}
@@ -293,14 +297,15 @@ namespace engine::render
 		{
 			m_descriptorIndexingSupported = false;
 		}
-		m_dynamicRenderingSupported = canUseDynamicRendering;
+		// La prise en charge effective est fixée après vkCreateDevice (résolution des PFN).
+		const bool wantDynamicRenderingDevice = canUseDynamicRendering;
 
 		if (wantSync2)
 		{
 			sync2Features.pNext = featureChain;
 			featureChain = &sync2Features;
 		}
-		if (m_dynamicRenderingSupported)
+		if (wantDynamicRenderingDevice)
 		{
 			dynamicRenderingFeatures.pNext = featureChain;
 			featureChain = &dynamicRenderingFeatures;
@@ -329,6 +334,45 @@ namespace engine::render
 		vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 		vkGetDeviceQueue(m_device, m_presentQueueFamilyIndex, 0, &m_presentQueue);
 
+		// Résolution explicite via le pointeur du loader (vkGetInstanceProcAddr) pour cohérence
+		// avec l'instance ; repli sur le symbole global si besoin.
+		PFN_vkGetDeviceProcAddr pfnGetDeviceProcAddr = reinterpret_cast<PFN_vkGetDeviceProcAddr>(
+			vkGetInstanceProcAddr(instance, "vkGetDeviceProcAddr"));
+		if (!pfnGetDeviceProcAddr)
+		{
+			pfnGetDeviceProcAddr = vkGetDeviceProcAddr;
+		}
+		m_pfnCmdBeginRendering = reinterpret_cast<PFN_vkCmdBeginRendering>(
+			pfnGetDeviceProcAddr(m_device, "vkCmdBeginRendering"));
+		m_pfnCmdEndRendering = reinterpret_cast<PFN_vkCmdEndRendering>(
+			pfnGetDeviceProcAddr(m_device, "vkCmdEndRendering"));
+		m_pfnCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(
+			pfnGetDeviceProcAddr(m_device, "vkCmdBeginRenderingKHR"));
+		m_pfnCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(
+			pfnGetDeviceProcAddr(m_device, "vkCmdEndRenderingKHR"));
+
+		const bool haveDrCore = (m_pfnCmdBeginRendering != nullptr && m_pfnCmdEndRendering != nullptr);
+		const bool haveDrKHR = (m_pfnCmdBeginRenderingKHR != nullptr && m_pfnCmdEndRenderingKHR != nullptr);
+		m_dynamicRenderingSupported = wantDynamicRenderingDevice && (haveDrCore || haveDrKHR);
+		LOG_INFO(Render,
+			"[VKDEV] PFN rendu dynamique — core begin/end={}/{} KHR begin/end={}/{} → chemin={}",
+			(void*)m_pfnCmdBeginRendering,
+			(void*)m_pfnCmdEndRendering,
+			(void*)m_pfnCmdBeginRenderingKHR,
+			(void*)m_pfnCmdEndRenderingKHR,
+			m_dynamicRenderingSupported
+				? (haveDrKHR ? "KHR" : "core")
+				: "aucun");
+		if (wantDynamicRenderingDevice && !haveDrCore && !haveDrKHR)
+		{
+			LOG_WARN(Render,
+				"[VkDeviceContext] vkCmdBeginRendering/EndRendering introuvables (core={} end={} khrBegin={} khrEnd={}) — overlay UI désactivé",
+				(void*)m_pfnCmdBeginRendering,
+				(void*)m_pfnCmdEndRendering,
+				(void*)m_pfnCmdBeginRenderingKHR,
+				(void*)m_pfnCmdEndRenderingKHR);
+		}
+
 		LOG_INFO(Render, "VkDeviceContext created (graphics queue family {}, present queue family {}, sync2: {}, descriptor_indexing: {}, dynamic_rendering: {}, robust_buffer_access: {})",
 			m_graphicsQueueFamilyIndex,
 			m_presentQueueFamilyIndex,
@@ -338,8 +382,8 @@ namespace engine::render
 			deviceFeatures.robustBufferAccess ? "yes" : "no");
 		if (!m_descriptorIndexingSupported)
 			LOG_WARN(Render, "[VkDeviceContext] Descriptor indexing unavailable; bindless path may be limited");
-		if (!m_dynamicRenderingSupported)
-			LOG_WARN(Render, "[VkDeviceContext] Dynamic rendering unavailable; UI overlay fallback will be used");
+		if (!m_dynamicRenderingSupported && wantDynamicRenderingDevice)
+			LOG_WARN(Render, "[VkDeviceContext] Dynamic rendering indisponible (PFN); chemin overlay limité");
 		return true;
 	}
 
@@ -362,6 +406,10 @@ namespace engine::render
 		m_sync2Supported = false;
 		m_descriptorIndexingSupported = false;
 		m_dynamicRenderingSupported = false;
+		m_pfnCmdBeginRendering = nullptr;
+		m_pfnCmdEndRendering = nullptr;
+		m_pfnCmdBeginRenderingKHR = nullptr;
+		m_pfnCmdEndRenderingKHR = nullptr;
 		LOG_INFO(Render, "VkDeviceContext destroyed");
 	}
 }

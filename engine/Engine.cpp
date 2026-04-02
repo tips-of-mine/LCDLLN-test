@@ -1418,6 +1418,7 @@ namespace engine
 														|| s_pfnEndCore == nullptr
 														|| s_pfnEndKHR == nullptr)
 													{
+														// First try device proc addrs (spec-preferred for device commands).
 														s_pfnBeginCore = reinterpret_cast<PFN_vkCmdBeginRendering>(
 															vkGetDeviceProcAddr(device, "vkCmdBeginRendering"));
 														s_pfnEndCore = reinterpret_cast<PFN_vkCmdEndRendering>(
@@ -1426,20 +1427,40 @@ namespace engine
 															vkGetDeviceProcAddr(device, "vkCmdBeginRenderingKHR"));
 														s_pfnEndKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(
 															vkGetDeviceProcAddr(device, "vkCmdEndRenderingKHR"));
+
+														// Fallback: some loader/ICD combos still expose these via instance proc addr.
+														// (We keep this inside the same one-time lookup to avoid spamming calls.)
+														if ((!s_pfnBeginCore || !s_pfnEndCore || !s_pfnBeginKHR || !s_pfnEndKHR) && m_vkInstance != VK_NULL_HANDLE)
+														{
+															auto getIpa = [this](const char* name) -> PFN_vkVoidFunction {
+																return vkGetInstanceProcAddr(m_vkInstance, name);
+															};
+															if (!s_pfnBeginCore) s_pfnBeginCore = reinterpret_cast<PFN_vkCmdBeginRendering>(getIpa("vkCmdBeginRendering"));
+															if (!s_pfnEndCore)   s_pfnEndCore   = reinterpret_cast<PFN_vkCmdEndRendering>(getIpa("vkCmdEndRendering"));
+															if (!s_pfnBeginKHR)  s_pfnBeginKHR  = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(getIpa("vkCmdBeginRenderingKHR"));
+															if (!s_pfnEndKHR)    s_pfnEndKHR    = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(getIpa("vkCmdEndRenderingKHR"));
+														}
 													}
 
 													bool didBeginRendering = false;
+													bool beganWithKHR = false;
+													PFN_vkCmdEndRendering pfnEndCore = nullptr;
+													PFN_vkCmdEndRenderingKHR pfnEndKHR = nullptr;
 													// Prefer the KHR entrypoints when available (some loader/ICD combos behave badly
 													// with the core symbol on older Vulkan versions).
 													if (s_pfnBeginKHR && s_pfnEndKHR)
 													{
 														s_pfnBeginKHR(cmd, &renderingInfo);
 														didBeginRendering = true;
+														beganWithKHR = true;
+														pfnEndKHR = s_pfnEndKHR;
 													}
 													else if (s_pfnBeginCore && s_pfnEndCore)
 													{
 														s_pfnBeginCore(cmd, &renderingInfo);
 														didBeginRendering = true;
+														beganWithKHR = false;
+														pfnEndCore = s_pfnEndCore;
 													}
 													else
 													{
@@ -1478,10 +1499,10 @@ namespace engine
 																authTheme);
 														}
 
-														if (s_pfnEndCore)
-															s_pfnEndCore(cmd);
-														else if (s_pfnEndKHR)
-															s_pfnEndKHR(cmd);
+														if (beganWithKHR && pfnEndKHR)
+															pfnEndKHR(cmd);
+														else if (!beganWithKHR && pfnEndCore)
+															pfnEndCore(cmd);
 														LOG_INFO(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
 
 														VkImageMemoryBarrier toPresent{};

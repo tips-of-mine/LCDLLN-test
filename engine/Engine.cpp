@@ -674,6 +674,8 @@ namespace engine
 													{
 														m_authUiBackgroundLayoutReady = true;
 														LOG_INFO(Render, "[Boot] Auth UI background prêt (GPU OK): {}", authBgPath);
+														LOG_INFO(Render, "[Boot] Auth UI background_blit.fit={} (cover|contain|stretch)",
+															m_cfg.GetString("render.auth_ui.background_blit.fit", "cover"));
 													}
 												}
 											}
@@ -1619,7 +1621,10 @@ namespace engine
 													renderingInfoKHR.layerCount = 1;
 													renderingInfoKHR.colorAttachmentCount = 1;
 													renderingInfoKHR.pColorAttachments = &colorAttachmentKHR;
-													LOG_INFO(Render, "[CopyPresent] renderingInfo ready (ext={}x={})", ext.width, ext.height);
+													LOG_INFO(Render,
+														"[CopyPresent] renderingInfo renderArea.extent width={} height={}",
+														ext.width,
+														ext.height);
 													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
 
 													// Pointeurs résolus à la création du device (VkDeviceContext) — évite les nullptr

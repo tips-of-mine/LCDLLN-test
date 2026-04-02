@@ -1430,10 +1430,11 @@ namespace engine
 
 														// Fallback: some loader/ICD combos still expose these via instance proc addr.
 														// (We keep this inside the same one-time lookup to avoid spamming calls.)
-														if ((!s_pfnBeginCore || !s_pfnEndCore || !s_pfnBeginKHR || !s_pfnEndKHR) && m_vkInstance != VK_NULL_HANDLE)
+														const ::VkInstance instanceHandle = m_vkInstance.GetHandle();
+														if ((!s_pfnBeginCore || !s_pfnEndCore || !s_pfnBeginKHR || !s_pfnEndKHR) && instanceHandle != VK_NULL_HANDLE)
 														{
 															auto getIpa = [this](const char* name) -> PFN_vkVoidFunction {
-																return vkGetInstanceProcAddr(m_vkInstance, name);
+																return vkGetInstanceProcAddr(m_vkInstance.GetHandle(), name);
 															};
 															if (!s_pfnBeginCore) s_pfnBeginCore = reinterpret_cast<PFN_vkCmdBeginRendering>(getIpa("vkCmdBeginRendering"));
 															if (!s_pfnEndCore)   s_pfnEndCore   = reinterpret_cast<PFN_vkCmdEndRendering>(getIpa("vkCmdEndRendering"));

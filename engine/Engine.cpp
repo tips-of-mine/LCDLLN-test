@@ -1354,20 +1354,25 @@ namespace engine
 												region.extent = { ext.width, ext.height, 1 };
 												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
-												if (authVisualState.active && m_vkDeviceContext.SupportsDynamicRendering())
+												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
+
+												bool renderedAuthUi = false;
+												if (authVisualState.active
+													&& backbufferView != VK_NULL_HANDLE
+													&& m_vkDeviceContext.SupportsDynamicRendering())
 												{
 													const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
 													const engine::render::AuthUiTheme authTheme = engine::render::LoadAuthUiTheme(m_cfg);
 													VkImageMemoryBarrier toColor{};
-													toColor.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													toColor.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-													toColor.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-													toColor.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													toColor.newLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+													toColor.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+													toColor.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+													toColor.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+													toColor.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+													toColor.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 													toColor.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 													toColor.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													toColor.image               = dstImg;
-													toColor.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													toColor.image = dstImg;
+													toColor.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 													vkCmdPipelineBarrier(cmd,
 														VK_PIPELINE_STAGE_TRANSFER_BIT,
 														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -1375,7 +1380,7 @@ namespace engine
 
 													VkRenderingAttachmentInfo colorAttachment{};
 													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-													colorAttachment.imageView = reg.getImageView(m_fgBackbufferId);
+													colorAttachment.imageView = backbufferView;
 													colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 													colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1389,7 +1394,8 @@ namespace engine
 													renderingInfo.pColorAttachments = &colorAttachment;
 													vkCmdBeginRendering(cmd, &renderingInfo);
 
-													const std::vector<engine::render::AuthUiLayer> layers = engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
+													const std::vector<engine::render::AuthUiLayer> layers =
+														engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
 													for (const engine::render::AuthUiLayer& layer : layers)
 													{
 														VkClearAttachment clearAttachment{};
@@ -1411,33 +1417,41 @@ namespace engine
 													vkCmdEndRendering(cmd);
 
 													VkImageMemoryBarrier toPresent{};
-													toPresent.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													toPresent.srcAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-													toPresent.dstAccessMask       = 0;
-													toPresent.oldLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													toPresent.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+													toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+													toPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+													toPresent.dstAccessMask = 0;
+													toPresent.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+													toPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 													toPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 													toPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													toPresent.image               = dstImg;
-													toPresent.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													toPresent.image = dstImg;
+													toPresent.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 													vkCmdPipelineBarrier(cmd,
 														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 														0, 0, nullptr, 0, nullptr, 1, &toPresent);
+													renderedAuthUi = true;
 												}
-												else
+
+												if (!renderedAuthUi)
 												{
+													if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
+														LOG_WARN(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
+
 													VkImageMemoryBarrier barrier{};
-													barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-													barrier.dstAccessMask       = 0;
-													barrier.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													barrier.newLayout           = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+													barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+													barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+													barrier.dstAccessMask = 0;
+													barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+													barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 													barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 													barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.image               = dstImg;
-													barrier.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+													barrier.image = dstImg;
+													barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+													vkCmdPipelineBarrier(cmd,
+														VK_PIPELINE_STAGE_TRANSFER_BIT,
+														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+														0, 0, nullptr, 0, nullptr, 1, &barrier);
 												}
 											});
 

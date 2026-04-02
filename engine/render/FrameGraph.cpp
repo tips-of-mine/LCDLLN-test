@@ -586,6 +586,8 @@ namespace engine::render
 			if (res.external) continue;
 			uint32_t width = extent.width;
 			uint32_t height = extent.height;
+				const uint32_t mipLevels = (res.desc.mipLevels > 0) ? res.desc.mipLevels : 1u;
+				const uint32_t arrayLayers = (res.desc.layers > 0) ? res.desc.layers : 1u;
 			if (res.desc.extentScalePower > 0)
 			{
 				width = extent.width >> res.desc.extentScalePower;
@@ -620,9 +622,9 @@ namespace engine::render
 			imageInfo.extent.height = height;
 			imageInfo.extent.depth = 1;
 			//imageInfo.mipLevels = res.desc.mipLevels;
-			imageInfo.mipLevels  = res.desc.mipLevels > 0  ? res.desc.mipLevels : 1u;
+			imageInfo.mipLevels  = mipLevels;
 			//imageInfo.arrayLayers = res.desc.layers;
-			imageInfo.arrayLayers = res.desc.layers > 0     ? res.desc.layers    : 1u;
+			imageInfo.arrayLayers = arrayLayers;
 			//imageInfo.samples = res.desc.samples;
 			imageInfo.samples    = res.desc.samples != 0    ? res.desc.samples   : VK_SAMPLE_COUNT_1_BIT;
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -728,9 +730,9 @@ namespace engine::render
 			viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 			viewInfo.subresourceRange.aspectMask = res.desc.isDepthAttachment ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = res.desc.mipLevels;
+			viewInfo.subresourceRange.levelCount = mipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = 0;
-			viewInfo.subresourceRange.layerCount = res.desc.layers;
+			viewInfo.subresourceRange.layerCount = arrayLayers;
 
 			//result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);
 			VkResult result = vkCreateImageView(device, &viewInfo, nullptr, &h.view);

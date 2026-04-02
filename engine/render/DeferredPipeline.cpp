@@ -367,5 +367,6 @@ namespace engine::render
 		if (device == VK_NULL_HANDLE) return;
 		m_geometryPass.InvalidateFramebufferCache(device);
 		m_shadowMapPass.InvalidateFramebufferCache(device);
+		m_decalPass.InvalidateFramebufferCache(device);
 	}
 }

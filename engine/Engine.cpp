@@ -1620,15 +1620,15 @@ namespace engine
 			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
 			{
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+				if (m_pipeline)
+					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				// All frame-graph images are recreated after a resize/out-of-date event, so the
 				// TAA history must be rebuilt from scratch on the next frame.
 				m_taaHistoryInvalid = true;
 				m_taaHistoryEverFilled = false;
-				if (m_pipeline)
-					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
-				
+
 				bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
 				if (ok)
 				{

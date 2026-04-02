@@ -314,20 +314,32 @@ namespace engine::render
 			return;
 		}
 
-		VkFramebufferCreateInfo fbInfo{};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = m_renderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = &overlayView;
-		fbInfo.width = extent.width;
-		fbInfo.height = extent.height;
-		fbInfo.layers = 1;
-
+		const FramebufferKey fbKey{ overlayView, extent.width, extent.height };
 		VkFramebuffer fb = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS)
 		{
-			LOG_ERROR(Render, "[DecalPass] Record FAILED: vkCreateFramebuffer failed");
-			return;
+			const auto it = m_framebufferCache.find(fbKey);
+			if (it != m_framebufferCache.end())
+			{
+				fb = it->second;
+			}
+			else
+			{
+				VkFramebufferCreateInfo fbInfo{};
+				fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+				fbInfo.renderPass = m_renderPass;
+				fbInfo.attachmentCount = 1;
+				fbInfo.pAttachments = &overlayView;
+				fbInfo.width = extent.width;
+				fbInfo.height = extent.height;
+				fbInfo.layers = 1;
+
+				if (vkCreateFramebuffer(device, &fbInfo, nullptr, &fb) != VK_SUCCESS || fb == VK_NULL_HANDLE)
+				{
+					LOG_ERROR(Render, "[DecalPass] Record FAILED: vkCreateFramebuffer failed");
+					return;
+				}
+				m_framebufferCache.emplace(fbKey, fb);
+			}
 		}
 
 		VkClearValue clearValue{};
@@ -398,8 +410,21 @@ namespace engine::render
 		}
 
 		vkCmdEndRenderPass(cmd);
-		vkDestroyFramebuffer(device, fb, nullptr);
 		LOG_INFO(Render, "[DecalPass] Recorded {} decals", static_cast<uint32_t>(visibleDecals.size()));
+	}
+
+	void DecalPass::InvalidateFramebufferCache(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+		for (const auto& kv : m_framebufferCache)
+		{
+			const VkFramebuffer fb = kv.second;
+			if (fb != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device, fb, nullptr);
+			}
+		}
+		m_framebufferCache.clear();
 	}
 
 	void DecalPass::Destroy(VkDevice device)
@@ -409,6 +434,8 @@ namespace engine::render
 			LOG_INFO(Render, "[DecalPass] Destroyed");
 			return;
 		}
+
+		InvalidateFramebufferCache(device);
 
 		if (m_pipeline != VK_NULL_HANDLE)
 		{

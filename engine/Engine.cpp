@@ -1373,7 +1373,7 @@ namespace engine
 													LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
 												}
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
-												const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", false);
+												const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", true);
 												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
 
 												bool renderedAuthUi = false;
@@ -1906,7 +1906,7 @@ namespace engine
 			}
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();
-			const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", false);
+			const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", true);
 			if (m_authUi.GetVisualState().active
 				&& authUiDynamicRenderingEnabled
 				&& m_vkDeviceContext.SupportsDynamicRendering())

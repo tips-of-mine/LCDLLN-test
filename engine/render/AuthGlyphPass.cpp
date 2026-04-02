@@ -583,10 +583,24 @@ namespace engine::render
 			};
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
+		auto appendCenteredText = [this, &vertices](std::string_view text, int32_t boxX, int32_t y, int32_t boxW, int32_t scale, const float color[4])
+		{
+			const int32_t textWidth = TextPixelWidth(text, scale);
+			const int32_t x = std::max(boxX, boxX + (boxW - textWidth) / 2);
+			AppendText(vertices, text, x, y, boxW, scale, color);
+		};
 
 		AppendText(vertices, model.titleLine1, panelX + 24, panelY + 22, panelW - 48, titleScale, titleColor);
 		AppendText(vertices, model.titleLine2, panelX + 24, panelY + 30 + titleScale * 10, panelW - 48, bodyScale, mutedColor);
-		AppendText(vertices, model.sectionTitle, contentX, panelY + 38 + titleScale * 14, contentW, bodyScale, titleColor);
+		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
+		if (centeredLanguageSelection)
+		{
+			appendCenteredText(model.sectionTitle, contentX, panelY + 38 + titleScale * 14, contentW, bodyScale, titleColor);
+		}
+		else
+		{
+			AppendText(vertices, model.sectionTitle, contentX, panelY + 38 + titleScale * 14, contentW, bodyScale, titleColor);
+		}
 
 		if (!model.infoBanner.empty())
 		{
@@ -704,7 +718,14 @@ namespace engine::render
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
 				const int32_t y = bodyStartY + i * bodyLinePitch - 4;
 				const float* lineColor = line.active ? accentColor : (line.hovered ? primaryColor : bodyColor);
-				AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
+				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)
+				{
+					appendCenteredText(line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
+				}
+				else
+				{
+					AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
+				}
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 			const int32_t gap = 10;

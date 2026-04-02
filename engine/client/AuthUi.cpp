@@ -2253,12 +2253,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						else if (m_phase == Phase::LanguageSelectionFirstRun)
 						{
-							const int32_t localeIdx = m_hoveredBodyLineIndex - 1;
 							const auto& locales = m_localization.GetAvailableLocales();
-							if (localeIdx >= 0 && static_cast<size_t>(localeIdx) < locales.size())
+							if (m_hoveredBodyLineIndex == 1 && !locales.empty())
 							{
-								m_languageSelectionIndex = static_cast<uint32_t>(localeIdx);
-								m_selectedLocale = locales[static_cast<size_t>(localeIdx)];
+								m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
+								m_selectedLocale = locales[static_cast<size_t>(m_languageSelectionIndex)];
 							}
 							else if (rightClick && !locales.empty())
 							{
@@ -2271,15 +2270,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						else if (m_phase == Phase::LanguageOptions)
 						{
 							const auto& locales = m_localization.GetAvailableLocales();
-							if (m_hoveredBodyLineIndex >= 1 && static_cast<size_t>(m_hoveredBodyLineIndex - 1) < locales.size())
+							if (m_hoveredBodyLineIndex == 1 && !locales.empty())
 							{
 								m_optionsSelectionIndex = 0u;
-								m_languageSelectionIndex = static_cast<uint32_t>(m_hoveredBodyLineIndex - 1);
-								m_selectedLocale = locales[static_cast<size_t>(m_hoveredBodyLineIndex - 1)];
+								if (rightClick)
+								{
+									m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
+										? static_cast<uint32_t>(locales.size() - 1u)
+										: (m_languageSelectionIndex - 1u);
+								}
+								else
+								{
+									m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
+								}
+								m_selectedLocale = locales[static_cast<size_t>(m_languageSelectionIndex)];
 							}
 							else
 							{
-								const int32_t optionLine = m_hoveredBodyLineIndex - (1 + static_cast<int32_t>(locales.size()));
+								const int32_t optionLine = m_hoveredBodyLineIndex - 2;
 								if (optionLine >= 0 && optionLine <= 11)
 								{
 									m_optionsSelectionIndex = static_cast<uint32_t>(optionLine + 1);
@@ -2713,12 +2721,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			model.sectionTitle = (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.title") : Tr("language.options.title");
 			addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } }));
 			const auto& locales = m_localization.GetAvailableLocales();
-			for (size_t i = 0; i < locales.size(); ++i)
+			if (!locales.empty())
 			{
-				const bool selected = ((m_phase == Phase::LanguageSelectionFirstRun && i == m_languageSelectionIndex)
-					|| (m_phase == Phase::LanguageOptions && m_optionsSelectionIndex == 0u && i == m_languageSelectionIndex));
-				addBodyLine(std::string(selected ? "> " : "  ") + LocalizedLanguageName(locales[i]) + " (" + locales[i] + ")",
-					m_optionsSelectionIndex == 0u && static_cast<uint32_t>(i) == m_languageSelectionIndex);
+				const std::string& selectedLocale = locales[m_languageSelectionIndex % static_cast<uint32_t>(locales.size())];
+				const bool selectorActive = (m_phase == Phase::LanguageSelectionFirstRun) || (m_optionsSelectionIndex == 0u);
+				addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", selectorActive);
+			}
+			else
+			{
+				addBodyLine("< N/A >", false);
 			}
 			if (m_phase == Phase::LanguageOptions)
 			{

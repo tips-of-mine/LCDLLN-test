@@ -1344,6 +1344,7 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
+												LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage begin");
 												// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
 												// with vkCmdBlitImage here even when source and destination extents match.
 												VkImageCopy region{};
@@ -1353,6 +1354,7 @@ namespace engine
 												region.dstOffset = { 0, 0, 0 };
 												region.extent = { ext.width, ext.height, 1 };
 												vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+												LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
 												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
 
@@ -1361,8 +1363,11 @@ namespace engine
 													&& backbufferView != VK_NULL_HANDLE
 													&& m_vkDeviceContext.SupportsDynamicRendering())
 												{
+													LOG_INFO(Render, "[CopyPresent] auth overlay enabled; building model");
 													const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
+													LOG_INFO(Render, "[CopyPresent] auth render model built; loading theme");
 													const engine::render::AuthUiTheme authTheme = engine::render::LoadAuthUiTheme(m_cfg);
+													LOG_INFO(Render, "[CopyPresent] auth theme loaded; issuing barriers");
 													VkImageMemoryBarrier toColor{};
 													toColor.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 													toColor.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1378,6 +1383,7 @@ namespace engine
 														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 														0, 0, nullptr, 0, nullptr, 1, &toColor);
 
+													LOG_INFO(Render, "[CopyPresent] begin rendering attachment");
 													VkRenderingAttachmentInfo colorAttachment{};
 													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 													colorAttachment.imageView = backbufferView;
@@ -1394,8 +1400,10 @@ namespace engine
 													renderingInfo.pColorAttachments = &colorAttachment;
 													vkCmdBeginRendering(cmd, &renderingInfo);
 
+													LOG_INFO(Render, "[CopyPresent] building UI layers");
 													const std::vector<engine::render::AuthUiLayer> layers =
 														engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme);
+													LOG_INFO(Render, "[CopyPresent] UI layers built; clearing attachments");
 													for (const engine::render::AuthUiLayer& layer : layers)
 													{
 														VkClearAttachment clearAttachment{};
@@ -1404,6 +1412,7 @@ namespace engine
 														clearAttachment.clearValue.color = layer.color;
 														vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
 													}
+													LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
 													if (m_authGlyphPass.IsValid())
 													{
 														m_authGlyphPass.RecordModel(
@@ -1415,6 +1424,7 @@ namespace engine
 															authTheme);
 													}
 													vkCmdEndRendering(cmd);
+													LOG_INFO(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
 
 													VkImageMemoryBarrier toPresent{};
 													toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;

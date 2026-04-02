@@ -67,8 +67,14 @@ namespace engine
 				cfg.SetValue("client.allow_insecure_dev", persisted.GetBool("client.allow_insecure_dev", cfg.GetBool("client.allow_insecure_dev", true)));
 			if (persisted.Has("client.auth_ui.timeout_ms"))
 				cfg.SetValue("client.auth_ui.timeout_ms", persisted.GetInt("client.auth_ui.timeout_ms", cfg.GetInt("client.auth_ui.timeout_ms", 5000)));
+			if (persisted.Has("render.auth_ui.background_blit.enabled"))
+				cfg.SetValue("render.auth_ui.background_blit.enabled",
+					persisted.GetBool("render.auth_ui.background_blit.enabled", cfg.GetBool("render.auth_ui.background_blit.enabled", true)));
+			if (persisted.Has("render.auth_ui.background_path"))
+				cfg.SetValue("render.auth_ui.background_path",
+					persisted.GetString("render.auth_ui.background_path", cfg.GetString("render.auth_ui.background_path", "ui/login/background.png")));
 
-			LOG_INFO(Core, "[Boot] user_settings.json overrides applied (fullscreen={}, vsync={}, locale={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
+			LOG_INFO(Core, "[Boot] user_settings.json overrides applied (fullscreen={}, vsync={}, locale={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={}, auth_bg_blit={})",
 				cfg.GetBool("render.fullscreen", true),
 				cfg.GetBool("render.vsync", true),
 				cfg.GetString("client.locale", ""),
@@ -81,7 +87,8 @@ namespace engine
 				cfg.GetString("controls.movement_layout", "wasd"),
 				cfg.GetBool("client.gameplay_udp.enabled", false),
 				cfg.GetBool("client.allow_insecure_dev", true),
-				cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+				cfg.GetInt("client.auth_ui.timeout_ms", 5000),
+				cfg.GetBool("render.auth_ui.background_blit.enabled", true));
 		}
 
 		bool HasCliFlag(int argc, char** argv, std::string_view flag)

@@ -1388,8 +1388,10 @@ namespace engine
 													colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 													colorAttachment.imageView = backbufferView;
 													colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+													// Use CLEAR to avoid driver issues when loadOp=LOAD on swapchain images.
+													colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 													colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+													colorAttachment.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 													LOG_INFO(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
 
 													VkRenderingInfo renderingInfo{};

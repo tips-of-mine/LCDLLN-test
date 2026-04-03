@@ -94,7 +94,7 @@
   "auth.hint.login.forgot": "F mot de passe oublie",
   "auth.hint.login.options": "O ouvrir options",
   "auth.hint.register.submit": "Entree pour valider",
-  "auth.hint.return_login": "L retour connexion",
+  "auth.hint.return_login": "Précédent",
   "auth.hint.verify.submit": "Entree pour confirmer",
   "auth.hint.terms.scroll": "Fleches/PageUp/PageDown pour defiler",
   "auth.hint.terms.accept": "Espace cocher, Entree valider",

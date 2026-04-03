@@ -19,6 +19,10 @@ namespace engine::platform
 		/// Resolve a relative content path using `paths.content` from config.
 		static std::filesystem::path ResolveContentPath(const engine::core::Config& cfg, std::string_view relativeContentPath);
 
+		/// Resolve a relative external path using `paths.external` from config (or default: `external`).
+		/// Intended for non-game assets like service URLs / endpoints.
+		static std::filesystem::path ResolveExternalPath(const engine::core::Config& cfg, std::string_view relativeExternalPath);
+
 		/// Return true if the path exists.
 		static bool Exists(const std::filesystem::path& path);
 

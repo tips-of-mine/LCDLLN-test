@@ -1,5 +1,0 @@
-{
-  "client": {
-    "web_portal_reset_url": "http://127.0.0.1:3000/password-recovery"
-  }
-}

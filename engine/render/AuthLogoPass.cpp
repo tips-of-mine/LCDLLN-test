@@ -283,7 +283,9 @@ namespace engine::render
 		push.viewportSize[1] = static_cast<float>(extent.height);
 		push.centerPx[0] = centerXPx;
 		push.centerPx[1] = centerYPx;
-		push.halfExtentPx[0] = halfSizePx;
+		// Le logo est actuellement “miroir” horizontalement sur certaines configurations.
+		// On corrige en inversant uniquement l’extensíon X (sans changer le shader/SPIR-V).
+		push.halfExtentPx[0] = -halfSizePx;
 		push.halfExtentPx[1] = halfSizePx;
 		push.cosA = std::cos(rotationRadians);
 		push.sinA = std::sin(rotationRadians);

@@ -554,7 +554,12 @@ namespace engine::render
 		const float bodyColor[4] = { theme.text[0], theme.text[1], theme.text[2], 0.94f };
 		const int32_t topOffset = layout.topOffset;
 		const int32_t bodyScale = std::clamp(panelW / 260, 2, 4);
-		const int32_t titleScale = std::clamp(bodyScale + 1, 3, 5);
+		const bool bigTitle =
+			state.languageSelection || state.languageOptions
+			|| state.login || state.registerMode
+			|| state.verifyEmail || state.forgotPassword
+			|| state.characterCreate;
+		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 2 : 1), 4, 7);
 		const int32_t smallScale = std::max(2, bodyScale - 1);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 		const int32_t compactFieldStep = std::max(48, bodyLineStep + 18);
@@ -590,15 +595,18 @@ namespace engine::render
 			AppendText(vertices, text, x, y, boxW, scale, color);
 		};
 
-		// Titres dans la colonne de contenu (pas sur la zone « art » à gauche).
+		// Titres: sur la colonne de contenu sauf page login minimal (artW=0) où on utilise toute la largeur.
+		const bool drawTitleAcrossPanel = state.login && state.minimalChrome && !state.loginArtColumn;
+		const int32_t titleAreaX = drawTitleAcrossPanel ? (panelX + 24) : contentX;
+		const int32_t titleAreaW = drawTitleAcrossPanel ? (panelW - 48) : contentW;
 		if (!model.titleLine2.empty())
 		{
-			AppendText(vertices, model.titleLine1, contentX, panelY + 22, contentW, titleScale, titleColor);
-			AppendText(vertices, model.titleLine2, contentX, panelY + 30 + titleScale * 10, contentW, bodyScale, mutedColor);
+			AppendText(vertices, model.titleLine1, titleAreaX, panelY + 22, titleAreaW, titleScale, titleColor);
+			AppendText(vertices, model.titleLine2, titleAreaX, panelY + 30 + titleScale * 10, titleAreaW, bodyScale, mutedColor);
 		}
 		else
 		{
-			AppendText(vertices, model.titleLine1, contentX, panelY + 24, contentW, titleScale, titleColor);
+			AppendText(vertices, model.titleLine1, titleAreaX, panelY + 24, titleAreaW, titleScale, titleColor);
 		}
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
 		const int32_t sectionTopPad = centeredLanguageSelection ? 50 : (model.titleLine2.empty() ? 30 : 38);
@@ -762,7 +770,9 @@ namespace engine::render
 						const auto& action = model.actions[static_cast<size_t>(i)];
 						const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
 						const int32_t labelX = std::max(x + 8, x + (loginTwoRow.buttonHalfWidth - labelWidth) / 2);
-						const float* ac = action.primary ? titleColor : (action.emphasized ? accentColor : mutedColor);
+						// Les actions "emphasized" ont un fond de couleur proche de l’accent.
+						// Si on dessine le texte en accentColor, il devient quasi illisible.
+						const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
 						AppendText(vertices, action.label, labelX, rowY + 12, loginTwoRow.buttonHalfWidth - 16, bodyScale, ac);
 					}
 				}
@@ -779,7 +789,7 @@ namespace engine::render
 					const auto& action = model.actions[static_cast<size_t>(i)];
 					const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
-					const float* ac = action.primary ? titleColor : (action.emphasized ? accentColor : mutedColor);
+					const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
 					AppendText(vertices, action.label, labelX, buttonY + 14, actionW - 20, bodyScale, ac);
 				}
 			}

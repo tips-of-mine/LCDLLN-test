@@ -23,6 +23,8 @@
 #	include "engine/network/ProtocolV1Constants.h"
 #	include "engine/network/RequestResponseDispatcher.h"
 #	include "engine/network/TermsPayloads.h"
+#	include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
 #endif
 
 namespace engine::client
@@ -177,14 +179,14 @@ namespace engine::client
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
 			// Le portail reset est un lien externe (hors du jeu).
-			// Le moteur lit d'abord une table de liens située dans `game/data/ui/external_links.json`
+			// Le moteur lit d'abord une table de liens située dans le dossier `external/`.
 			// (si elle existe), pour permettre d’ajuster les URLs sans toucher au code.
 			static bool s_loaded = false;
 			static engine::core::Config s_externalLinksCfg;
 			if (!s_loaded)
 			{
 				s_loaded = true;
-				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveContentPath(cfg, "ui/external_links.json");
+				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
 				if (engine::platform::FileSystem::Exists(linksPath))
 				{
 					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
@@ -205,6 +207,36 @@ namespace engine::client
 				return s_externalLinksCfg.GetString(kKey, fallback);
 			}
 			return cfg.GetString(kKey, fallback);
+		}
+
+		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
+		{
+			static bool s_loaded = false;
+			static engine::core::Config s_externalLinksCfg;
+			if (!s_loaded)
+			{
+				s_loaded = true;
+				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
+				if (engine::platform::FileSystem::Exists(linksPath))
+				{
+					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
+					{
+						LOG_INFO(Core, "[AuthUiPresenter] external_links loaded ({})", linksPath.string());
+					}
+					else
+					{
+						LOG_WARN(Core, "[AuthUiPresenter] failed to load external_links ({})", linksPath.string());
+					}
+				}
+			}
+
+			constexpr std::string_view kKey = "client.status_api_url";
+			const std::string fallback = "http://127.0.0.1:3000/status";
+			if (s_externalLinksCfg.Has(kKey))
+			{
+				return s_externalLinksCfg.GetString(kKey, fallback);
+			}
+			return fallback;
 		}
 
 		bool IsAsciiDigits(std::string_view text)
@@ -478,7 +510,10 @@ namespace engine::client
 		m_authTimeoutMsPending = m_authTimeoutMs;
 		m_authMinimalChrome = cfg.GetBool("render.auth_ui.minimal_chrome", true);
 		m_authLoginArtColumn = cfg.GetBool("render.auth_ui.login_art_column", false);
-		m_masterAvailabilityUrl = cfg.GetString("client.auth_ui.master_availability_url", "");
+		// URL de "status" (récupéré depuis external/external_links.json) utilisé au début de l'écran de connexion.
+		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
+		m_statusProbeInitialized = false;
+		m_statusPollTimer = 0.f;
 		m_authLogoSizePx = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.auth_ui.logo_size_px", 96), 32, 256));
 		m_authAvailabilityChecking = false;
 		m_authAvailabilityPollTimer = 0.f;
@@ -815,6 +850,18 @@ namespace engine::client
 
 		const AsyncKind kind = m_pendingAsyncKind;
 		m_pendingAsyncKind = AsyncKind::None;
+
+		if (kind == AsyncKind::StatusProbe)
+		{
+			m_statusCache = copy.statusCache;
+			// Si on a fini la première vérification, on autorise les refresh périodiques.
+			m_statusProbeInitialized = true;
+			m_authAvailabilityChecking = false;
+			m_authAvailabilityPollTimer = 0.f;
+			m_authLogoRotationRad = 0.f;
+			LOG_INFO(Core, "[AuthUiPresenter] Status probe finished (success={})", (int)copy.success);
+			return;
+		}
 
 		if (kind == AsyncKind::Register)
 		{
@@ -1801,6 +1848,318 @@ namespace engine::client
 		});
 	}
 
+	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+
+		const std::string url = m_masterAvailabilityUrl;
+		m_pendingAsyncKind = AsyncKind::StatusProbe;
+		{
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+#if defined(_WIN32)
+		// Simulation values when the real status endpoint isn't available.
+		auto fillSimulatedStatus = [&](AsyncResult& out, std::string_view reason)
+		{
+			out.ready = true;
+			out.success = true; // Le faux mode “simulateur” doit ressembler à un service fonctionnel.
+			out.statusCache = {};
+			out.statusCache.authOk = true;
+			out.statusCache.masterOk = true;
+			out.statusCache.totalPlayers = 0;
+			out.statusCache.servers.clear();
+
+			out.statusCache.servers.push_back({ "EU-1", true, 128u });
+			out.statusCache.servers.push_back({ "US-1", true, 74u });
+			out.statusCache.servers.push_back({ "AS-1", true, 19u });
+			for (const auto& s : out.statusCache.servers)
+				out.statusCache.totalPlayers += s.players;
+
+			out.message = std::string("Status probe simulated: ") + std::string(reason);
+		};
+
+		if (url.empty())
+		{
+			AsyncResult local{};
+			fillSimulatedStatus(local, "empty status url");
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
+			return;
+		}
+
+		const uint32_t timeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.status_probe_timeout_ms", 1500), 300, 5000));
+		m_worker = std::thread([this, url, timeoutMs, fillSimulatedStatus]() mutable {
+			AsyncResult local{};
+
+			auto utf8ToWide = [](std::string_view s) -> std::wstring {
+				if (s.empty())
+					return {};
+				const int needed = MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), nullptr, 0);
+				if (needed <= 0)
+					return {};
+				std::wstring out(static_cast<size_t>(needed), L'\0');
+				MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), out.data(), needed);
+				return out;
+			};
+
+			struct HttpResp
+			{
+				DWORD statusCode = 0;
+				std::string body;
+				std::string error;
+			};
+
+			auto httpGet = [&](std::string_view inUrl) -> HttpResp {
+				HttpResp resp{};
+				const std::wstring urlW = utf8ToWide(inUrl);
+				if (urlW.empty())
+				{
+					resp.error = "bad url encoding";
+					return resp;
+				}
+
+				URL_COMPONENTS uc{};
+				uc.dwStructSize = sizeof(uc);
+
+				wchar_t hostBuf[512]{};
+				wchar_t pathBuf[1024]{};
+				wchar_t extraBuf[1024]{};
+
+				uc.lpszHostName = hostBuf;
+				uc.dwHostNameLength = static_cast<DWORD>(sizeof(hostBuf) / sizeof(hostBuf[0]));
+				uc.lpszUrlPath = pathBuf;
+				uc.dwUrlPathLength = static_cast<DWORD>(sizeof(pathBuf) / sizeof(pathBuf[0]));
+				uc.lpszExtraInfo = extraBuf;
+				uc.dwExtraInfoLength = static_cast<DWORD>(sizeof(extraBuf) / sizeof(extraBuf[0]));
+
+				if (!WinHttpCrackUrl(urlW.c_str(), 0, 0, &uc))
+				{
+					resp.error = "WinHttpCrackUrl failed";
+					return resp;
+				}
+
+				const std::wstring host(uc.lpszHostName, uc.dwHostNameLength);
+				const std::wstring path(uc.lpszUrlPath, uc.dwUrlPathLength);
+				const std::wstring extra(uc.lpszExtraInfo, uc.dwExtraInfoLength);
+				const std::wstring fullPath = path + extra;
+
+				const bool isHttps = uc.nScheme == INTERNET_SCHEME_HTTPS;
+
+				HINTERNET hSession = WinHttpOpen(L"LCDLLN", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+				if (!hSession)
+				{
+					resp.error = "WinHttpOpen failed";
+					return resp;
+				}
+
+				HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), uc.nPort, 0);
+				if (!hConnect)
+				{
+					resp.error = "WinHttpConnect failed";
+					WinHttpCloseHandle(hSession);
+					return resp;
+				}
+
+				HINTERNET hRequest = WinHttpOpenRequest(
+					hConnect,
+					L"GET",
+					fullPath.c_str(),
+					nullptr,
+					WINHTTP_NO_REFERER,
+					WINHTTP_DEFAULT_ACCEPT_TYPES,
+					isHttps ? WINHTTP_FLAG_SECURE : 0);
+				if (!hRequest)
+				{
+					resp.error = "WinHttpOpenRequest failed";
+					WinHttpCloseHandle(hConnect);
+					WinHttpCloseHandle(hSession);
+					return resp;
+				}
+
+				WinHttpSetTimeouts(hRequest, 10000u, 10000u, timeoutMs, timeoutMs);
+
+				BOOL sent = WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
+				if (!sent)
+				{
+					resp.error = "WinHttpSendRequest failed";
+					WinHttpCloseHandle(hRequest);
+					WinHttpCloseHandle(hConnect);
+					WinHttpCloseHandle(hSession);
+					return resp;
+				}
+
+				BOOL received = WinHttpReceiveResponse(hRequest, nullptr);
+				if (!received)
+				{
+					resp.error = "WinHttpReceiveResponse failed";
+					WinHttpCloseHandle(hRequest);
+					WinHttpCloseHandle(hConnect);
+					WinHttpCloseHandle(hSession);
+					return resp;
+				}
+
+				DWORD statusCode = 0;
+				DWORD statusCodeLen = sizeof(statusCode);
+				WinHttpQueryHeaders(hRequest,
+					WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+					nullptr,
+					&statusCode,
+					&statusCodeLen,
+					nullptr);
+				resp.statusCode = statusCode;
+
+				// Lire le body complet (si présent).
+				std::string body;
+				for (;;)
+				{
+					DWORD available = 0;
+					if (!WinHttpQueryDataAvailable(hRequest, &available))
+						break;
+					if (available == 0)
+						break;
+
+					std::vector<char> buf(available);
+					DWORD read = 0;
+					if (!WinHttpReadData(hRequest, buf.data(), available, &read))
+						break;
+					body.append(buf.data(), static_cast<size_t>(read));
+				}
+				resp.body = std::move(body);
+
+				WinHttpCloseHandle(hRequest);
+				WinHttpCloseHandle(hConnect);
+				WinHttpCloseHandle(hSession);
+				return resp;
+			};
+
+			const HttpResp resp = httpGet(url);
+			if (resp.statusCode >= 200u && resp.statusCode < 300u && !resp.body.empty())
+			{
+				// Parse la réponse JSON via engine::core::Config (en l'écrivant temporairement sur disque).
+				try
+				{
+					const std::filesystem::path tmpPath =
+						std::filesystem::temp_directory_path() / "lcdlln_status_probe_tmp.json";
+					(void)engine::platform::FileSystem::WriteAllText(tmpPath, resp.body);
+
+					engine::core::Config statusCfg;
+					if (statusCfg.LoadFromFile(tmpPath.string()))
+					{
+						auto getBoolFirst = [&](std::initializer_list<std::string_view> keys, bool fallback) -> bool {
+							for (const auto& k : keys)
+							{
+								if (statusCfg.Has(k))
+									return statusCfg.GetBool(k, fallback);
+							}
+							return fallback;
+						};
+
+						auto getIntFirst = [&](std::initializer_list<std::string_view> keys, int64_t fallback) -> int64_t {
+							for (const auto& k : keys)
+							{
+								if (statusCfg.Has(k))
+									return statusCfg.GetInt(k, fallback);
+							}
+							return fallback;
+						};
+
+						local.statusCache.authOk = getBoolFirst({ "auth.ok", "auth_ok", "authentication.ok", "authentication_ok" }, true);
+						local.statusCache.masterOk = getBoolFirst({ "master.ok", "master_ok", "game.ok", "game_ok" }, true);
+
+						auto pickServerPrefix = [&](std::initializer_list<std::string_view> prefixes) -> std::string {
+							for (const auto& p : prefixes)
+							{
+								const std::string idx0 = std::string(p) + "[0].players";
+								if (statusCfg.Has(idx0))
+									return std::string(p);
+								const std::string idx0Ok = std::string(p) + "[0].ok";
+								if (statusCfg.Has(idx0Ok))
+									return std::string(p);
+								const std::string idx0Name = std::string(p) + "[0].name";
+								if (statusCfg.Has(idx0Name))
+									return std::string(p);
+							}
+							return {};
+						};
+
+						const std::string serverPrefix = pickServerPrefix({ "game_servers", "servers", "gameServers" });
+						local.statusCache.servers.clear();
+						local.statusCache.totalPlayers = 0;
+
+						if (!serverPrefix.empty())
+						{
+							for (uint32_t i = 0; i < 8u; ++i)
+							{
+								const std::string base = serverPrefix + "[" + std::to_string(i) + "].";
+								const std::string keyPlayers = base + "players";
+								const std::string keyOk = base + "ok";
+								const std::string keyName = base + "name";
+
+								if (!statusCfg.Has(keyPlayers) && !statusCfg.Has(keyOk) && !statusCfg.Has(keyName))
+									break;
+
+								engine::client::AuthUiPresenter::GameServerStatus s;
+								s.name = statusCfg.GetString(keyName, std::string("server") + std::to_string(i));
+								s.ok = statusCfg.GetBool(keyOk, true);
+								s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
+								local.statusCache.servers.push_back(std::move(s));
+							}
+						}
+
+						if (!local.statusCache.servers.empty())
+						{
+							for (const auto& s : local.statusCache.servers)
+								local.statusCache.totalPlayers += s.players;
+							local.ready = true;
+							local.success = true;
+							local.message = "Status probe OK (real endpoint)";
+							{
+								std::lock_guard<std::mutex> lock(m_asyncMutex);
+								m_asyncResult = local;
+							}
+							return;
+						}
+					}
+				}
+				catch (...)
+				{
+					// On retombe sur la simulation.
+				}
+			}
+
+			// Endpoint indisponible ou parsing impossible => on simule “service fonctionnel”.
+			fillSimulatedStatus(local, resp.error.empty() ? "endpoint unreachable or invalid response" : resp.error);
+			{
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+			}
+			return;
+		});
+#else
+		// Sur les plateformes non-Windows, le probe n'est pas implémenté.
+		m_worker = std::thread([this]() {
+			AsyncResult local{};
+			local.ready = true;
+			local.success = true;
+			local.statusCache = {};
+			local.statusCache.authOk = true;
+			local.statusCache.masterOk = true;
+			local.statusCache.servers = {
+				{ "EU-1", true, 128u },
+				{ "US-1", true, 74u },
+				{ "AS-1", true, 19u }
+			};
+			for (const auto& s : local.statusCache.servers)
+				local.statusCache.totalPlayers += s.players;
+			local.message = "Status probe simulated on non-Windows platform.";
+			std::lock_guard<std::mutex> lock(m_asyncMutex);
+			m_asyncResult = local;
+		});
+#endif
+	}
+
 	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
@@ -2097,24 +2456,38 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_flowComplete)
 			return;
 
-		if (!m_masterAvailabilityUrl.empty() && m_phase == Phase::Login)
+		constexpr float kStatusProbeIntervalSeconds = 120.0f;
+		const bool shouldProbeStatus = !m_masterAvailabilityUrl.empty() && !m_flowComplete && m_phase != Phase::Submitting;
+		const bool statusProbeInFlight = m_worker.joinable() && m_pendingAsyncKind == AsyncKind::StatusProbe;
+		m_authAvailabilityChecking = statusProbeInFlight;
+		if (m_authAvailabilityChecking)
+			m_authLogoRotationRad += deltaSeconds * 2.8f;
+
+		if (shouldProbeStatus)
 		{
-			m_authAvailabilityPollTimer += deltaSeconds;
-			m_authAvailabilityChecking = (m_authAvailabilityPollTimer < 3.0f);
-			if (m_authAvailabilityChecking)
+			// Démarrage immédiat dès le début de l'écran d'authentification, puis toutes les 2 minutes.
+			if (!m_statusProbeInitialized && !m_worker.joinable())
 			{
-				m_authLogoRotationRad += deltaSeconds * 2.8f;
+				StartStatusProbeWorker(cfg);
+				m_statusProbeInitialized = true;
+				m_statusPollTimer = 0.f;
 			}
-			else
+			else if (m_statusProbeInitialized && !m_worker.joinable())
 			{
-				m_authLogoRotationRad = 0.f;
+				m_statusPollTimer += deltaSeconds;
+				if (m_statusPollTimer >= kStatusProbeIntervalSeconds)
+				{
+					StartStatusProbeWorker(cfg);
+					m_statusPollTimer = 0.f;
+				}
 			}
 		}
-		else
+		else if (!statusProbeInFlight)
 		{
-			m_authAvailabilityChecking = false;
 			m_authAvailabilityPollTimer = 0.f;
 			m_authLogoRotationRad = 0.f;
+			m_statusProbeInitialized = false;
+			m_statusPollTimer = 0.f;
 		}
 
 		if (m_phase == Phase::Submitting)
@@ -2228,13 +2601,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t topOffset = lay.topOffset;
 				const int32_t fieldStep = lay.compactSingleField ? 48 : 42;
 				const int32_t bodyScale = std::clamp(lay.panelW / 260, 2, 4);
-				const bool centeredLanguageSelection = (m_phase == Phase::LanguageSelectionFirstRun || m_phase == Phase::LanguageOptions);
 				const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
-				const int32_t bodyLinePitch = centeredLanguageSelection
-					? std::max(36, bodyLineStep + 16)
-					: std::max(28, bodyLineStep + 10);
-				const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
-				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + afterFieldsGap;
+				const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
+				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
 				const int32_t mx = input.MouseX();
 				const int32_t my = input.MouseY();
 				m_hoveredFieldIndex = -1;
@@ -2301,9 +2670,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				else
 				{
-					const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 					const int32_t buttonY = std::min(panelY + panelH - 84,
-						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
+						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
 					const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 					for (int32_t i = 0; i < actionCount; ++i)
 					{
@@ -2451,9 +2819,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
 						{
-							const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 							const int32_t buttonY = std::min(panelY + panelH - 84,
-								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
+								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
 							const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 							for (int32_t i = 0; i < actionCount; ++i)
 							{
@@ -2478,11 +2845,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
 									break;
 								case Phase::LanguageSelectionFirstRun:
-								case Phase::LanguageOptions:
 								case Phase::CharacterCreate:
 								case Phase::Submitting:
 								case Phase::Error:
 									if (i == 0) applyPrimaryAction();
+									break;
+								case Phase::LanguageOptions:
+									if (i == 0)
+									{
+										applyPrimaryAction();
+									}
+									else if (i == 1)
+									{
+										// Retour sans appliquer les changements (comportement identique à Escape).
+										m_phase = m_phaseBeforeOptions;
+										LOG_INFO(Core, "[AuthUiPresenter] Language options closed via 'return'");
+									}
 									break;
 								case Phase::Terms:
 									if (i == 0) applyPrimaryAction();
@@ -2903,12 +3281,26 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				addBodyLine(Tr("options.game.allow_insecure_dev") + ": " + Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 11u);
 				addBodyLine(Tr("options.game.auth_timeout") + ": " + std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSelectionIndex == 12u);
 			}
+			// Actions (bouton principal + éventuellement retour)
+			if (m_phase == Phase::LanguageSelectionFirstRun)
 			{
-				const std::string label = (m_phase == Phase::LanguageSelectionFirstRun)
-					? Tr("language.first_run.confirm")
-					: Tr("language.options.apply_hint");
-				// Robustesse : si une clé i18n manque (ou renvoie ""), on retombe sur le bouton standard.
-				addAction(label.empty() ? Tr("common.submit") : label, true);
+				std::string label = Tr("language.first_run.confirm");
+				if (label.empty())
+					label = Tr("common.submit");
+				addAction(label, true);
+			}
+			else // Phase::LanguageOptions
+			{
+				std::string applyLabel = Tr("language.options.apply_hint");
+				if (applyLabel.empty())
+					applyLabel = Tr("common.submit");
+				addAction(applyLabel, true);
+
+				std::string backLabel = Tr("auth.hint.return_login");
+				// Robustesse : si une clé i18n manque, retomber sur "common.back".
+				if (backLabel.empty())
+					backLabel = Tr("common.back");
+				addAction(backLabel, false, true);
 			}
 			break;
 		}

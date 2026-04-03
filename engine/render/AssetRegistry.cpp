@@ -499,7 +499,7 @@ namespace engine::render
 					|| relativePath.find("logo_login") != std::string_view::npos;
 				if (isAuthLogo)
 				{
-					constexpr uint8_t kWhite = 250u;
+					constexpr uint8_t kWhite = 220u;
 					for (size_t i = 0; i + 3u < owned.size(); i += 4u)
 					{
 						const uint8_t r = owned[i + 0u];

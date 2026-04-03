@@ -26,5 +26,6 @@ void main()
 	ndc.x = (pix.x / pc.viewportSize.x) * 2.0 - 1.0;
 	ndc.y = (pix.y / pc.viewportSize.y) * 2.0 - 1.0;
 	gl_Position = vec4(ndc, 0.0, 1.0);
-	vUv = uv;
+	// Retourner horizontalement (miroir) pour corriger l’inversion constatée.
+	vUv = vec2(1.0 - uv.x, uv.y);
 }

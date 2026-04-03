@@ -22,6 +22,25 @@ namespace engine::platform
 		return Join(base, relativeContentPath);
 	}
 
+	std::filesystem::path FileSystem::ResolveExternalPath(const engine::core::Config& cfg, std::string_view relativeExternalPath)
+	{
+		const std::string base = cfg.GetString("paths.external", "external");
+		static bool s_bootExternalPathLogged = false;
+		if (!s_bootExternalPathLogged)
+		{
+			LOG_INFO(Platform, "[Boot] FileSystem external base: {}", base);
+			s_bootExternalPathLogged = true;
+		}
+
+		std::filesystem::path basePath(base);
+		if (!basePath.is_absolute())
+		{
+			// Si le binaire est lancé depuis le projet, `external/` est relative au dossier courant.
+			basePath = std::filesystem::current_path() / basePath;
+		}
+		return basePath / std::filesystem::path(relativeExternalPath);
+	}
+
 	bool FileSystem::Exists(const std::filesystem::path& path)
 	{
 		std::error_code ec;

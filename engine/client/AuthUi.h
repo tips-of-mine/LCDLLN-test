@@ -120,6 +120,24 @@ namespace engine::client
 			int32_t visibleBodyLineCount = 0;
 		};
 
+		/// Etat de disponibilité (status) des services côté serveur.
+		/// Sert principalement aux écrans d'authentification, puis à des fonctionnalités ultérieures.
+		struct GameServerStatus
+		{
+			std::string name;
+			bool ok = false;
+			uint32_t players = 0;
+		};
+
+		struct StatusCache
+		{
+			bool authOk = false;
+			bool masterOk = false;
+			uint32_t totalPlayers = 0;
+			std::vector<GameServerStatus> servers;
+			std::string infoMessage;
+		};
+
 		AuthUiPresenter() = default;
 		~AuthUiPresenter();
 
@@ -149,6 +167,7 @@ namespace engine::client
 		/// Angle du logo (rad/s accumulé) pour le rendu Vulkan ; 0 si pas de rotation.
 		float GetAuthLogoRotationRadians() const { return m_authLogoRotationRad; }
 		int32_t GetAuthLogoSizePx() const { return m_authLogoSizePx; }
+		const StatusCache& GetStatusCache() const { return m_statusCache; }
 		VideoSettingsCommand ConsumePendingVideoSettings();
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
@@ -170,6 +189,7 @@ namespace engine::client
 		void StartTermsStatusWorker(const engine::core::Config& cfg);
 		void StartTermsAcceptWorker(const engine::core::Config& cfg);
 		void StartCharacterCreateWorker(const engine::core::Config& cfg);
+		void StartStatusProbeWorker(const engine::core::Config& cfg);
 		void ResetMasterSession();
 		void StartMasterFlowWorker(const engine::core::Config& cfg);
 		void PollAsyncResult(const engine::core::Config& cfg);
@@ -280,6 +300,12 @@ namespace engine::client
 		float m_authLogoRotationRad = 0.f;
 		bool m_authAvailabilityChecking = false;
 		float m_authAvailabilityPollTimer = 0.f;
+		// Vérifie la disponibilité des services (et éventuellement le nombre de joueurs)
+		// toutes les 2 minutes tant que l'utilisateur n'est pas authentifié.
+		bool m_statusProbeInitialized = false;
+		float m_statusPollTimer = 0.f;
+
+		StatusCache m_statusCache{};
 
 		/// Background worker for REGISTER_REQUEST or MasterShardClientFlow (TCP); join before destroy.
 		struct AsyncResult
@@ -296,6 +322,9 @@ namespace engine::client
 			std::string termsLocale;
 			std::string termsContent;
 			std::string message;
+
+			// Pour AsyncKind::StatusProbe.
+			StatusCache statusCache{};
 		};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};
@@ -309,7 +338,8 @@ namespace engine::client
 			TermsStatus,
 			TermsAccept,
 			CharacterCreate,
-			Login
+			Login,
+			StatusProbe
 		};
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;

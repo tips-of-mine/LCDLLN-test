@@ -412,27 +412,43 @@ int main(int argc, char** argv)
 		const char* statusColorMaster = masterOk ? "#35c759" : "#ff3b30";
 
 		// Page publique: pas de tokens, pas d'IP, pas d'identifiants ni de logs.
-		return std::string("<!doctype html><html><head><meta charset=\"utf-8\"/>"
-			"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>"
-			"<title>LCDLLN - Status</title>"
-			"<style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:24px}h1{font-size:20px}"
+		std::string html;
+		html.reserve(1024);
+		html += "<!doctype html><html><head><meta charset=\"utf-8\"/>";
+		html += "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>";
+		html += "<title>LCDLLN - Status</title>";
+		html += "<style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:24px}h1{font-size:20px}"
 			".card{padding:16px;border:1px solid #ddd;border-radius:12px;margin-top:12px;max-width:520px}"
 			".row{display:flex;gap:12px;align-items:baseline;justify-content:space-between;margin:6px 0}"
 			".badge{font-weight:700;padding:2px 10px;border-radius:999px;color:#fff}"
-			"</style></head><body>"
-			"<h1>LCDLLN - Statut des services</h1>"
-			"<div class=\"card\">"
-			"<div class=\"row\"><span>Auth</span><span class=\"badge\" style=\"background-color:")
-			+ statusColorAuth + ";\">"
-			+ (authOk ? "OK" : "KO") + "</span></div>"
-			+ "<div class=\"row\"><span>Master</span><span class=\"badge\" style=\"background-color:")
-			+ statusColorMaster + ";\">"
-			+ (masterOk ? "OK" : "KO") + "</span></div>"
-			"<div class=\"row\"><span>Serveurs en ligne</span><span>" + std::to_string(onlineServers) + "</span></div>"
-			"<div class=\"row\"><span>Joueurs (estimation)</span><span>" + std::to_string(totalPlayers) + "</span></div>"
-			"</div>"
-			"<p style=\"color:#666;margin-top:18px\">Données agrégées uniquement (aucune IP / token).</p>"
-			"</body></html>");
+			"</style></head><body>";
+		html += "<h1>LCDLLN - Statut des services</h1>";
+		html += "<div class=\"card\">";
+
+		html += "<div class=\"row\"><span>Auth</span><span class=\"badge\" style=\"background-color:";
+		html += statusColorAuth;
+		html += ";\">";
+		html += (authOk ? "OK" : "KO");
+		html += "</span></div>";
+
+		html += "<div class=\"row\"><span>Master</span><span class=\"badge\" style=\"background-color:";
+		html += statusColorMaster;
+		html += ";\">";
+		html += (masterOk ? "OK" : "KO");
+		html += "</span></div>";
+
+		html += "<div class=\"row\"><span>Serveurs en ligne</span><span>";
+		html += std::to_string(onlineServers);
+		html += "</span></div>";
+
+		html += "<div class=\"row\"><span>Joueurs (estimation)</span><span>";
+		html += std::to_string(totalPlayers);
+		html += "</span></div>";
+
+		html += "</div>";
+		html += "<p style=\"color:#666;margin-top:18px\">Données agrégées uniquement (aucune IP / token).</p>";
+		html += "</body></html>";
+		return html;
 	};
 
 	if (healthEndpoint.Init(healthPort, healthBind, readyCheck, metricsProvider, statusProvider, webPortalStatusHtmlProvider))

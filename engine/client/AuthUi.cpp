@@ -6,8 +6,6 @@
 #endif
 #include <winsock2.h>
 #include <windows.h>
-#include <winhttp.h>
-#pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
@@ -1902,6 +1900,7 @@ namespace engine::client
 		}
 
 		const uint32_t timeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.status_probe_timeout_ms", 1500), 300, 5000));
+		#if 0
 		m_worker = std::thread([this, url, timeoutMs, fillSimulatedStatus]() mutable {
 			AsyncResult local{};
 
@@ -2148,6 +2147,19 @@ namespace engine::client
 				m_asyncResult = local;
 			}
 			return;
+		});
+		#endif
+
+		// WinHTTP is temporarily disabled to keep Windows builds stable.
+		// We still simulate a functional status response for UI/rotation purposes.
+		m_worker = std::thread([this, timeoutMs, fillSimulatedStatus]() mutable {
+			AsyncResult local{};
+			std::this_thread::sleep_for(std::chrono::milliseconds(std::min<uint32_t>(timeoutMs, 300u)));
+			fillSimulatedStatus(local, "status probe simulated on Windows (HTTP probe disabled)");
+			{
+				std::lock_guard<std::mutex> lock(m_asyncMutex);
+				m_asyncResult = local;
+			}
 		});
 #else
 		// Sur les plateformes non-Windows, le probe n'est pas implémenté.

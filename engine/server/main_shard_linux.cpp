@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 		server.GetNetworkStats(netStats);
 		return engine::server::BuildPrometheusText(netStats, 0, 0, 0, 0, nullptr);
 	};
-	if (healthEndpoint.Init(healthPort, healthBind, []() { return true; }, metricsProvider))
+	if (healthEndpoint.Init(healthPort, healthBind, []() { return true; }, metricsProvider, nullptr, nullptr))
 		LOG_INFO(Net, "[ShardMain] Health endpoint listening on {}:{} (/healthz, /readyz, /metrics)", healthBind, healthPort);
 	else
 		LOG_WARN(Net, "[ShardMain] Health endpoint Init failed (port {}), continuing without health endpoint", healthPort);

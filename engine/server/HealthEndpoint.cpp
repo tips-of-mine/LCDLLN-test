@@ -32,11 +32,13 @@ namespace engine::server
 			}
 		}
 
-		bool ParseRequestLine(const char* line, size_t len, bool& outHealthz, bool& outReadyz, bool& outMetrics)
+		bool ParseRequestLine(const char* line, size_t len, bool& outHealthz, bool& outReadyz, bool& outMetrics, bool& outStatus, bool& outWebPortalStatus)
 		{
 			outHealthz = false;
 			outReadyz = false;
 			outMetrics = false;
+			outStatus = false;
+			outWebPortalStatus = false;
 			if (len < 14)
 				return false;
 			if (std::strncmp(line, "GET ", 4) != 0)
@@ -60,23 +62,36 @@ namespace engine::server
 				outMetrics = true;
 				return true;
 			}
+			if (pathLen == 7 && std::strncmp(path, "/status", 7) == 0)
+			{
+				outStatus = true;
+				return true;
+			}
+			if (pathLen == 18 && std::strncmp(path, "/web-portal/status", 18) == 0)
+			{
+				outWebPortalStatus = true;
+				return true;
+			}
 			return false;
 		}
 
-		void SendResponse(int fd, int statusCode, const char* statusText, const char* jsonBody)
+		void SendResponse(int fd, int statusCode, const char* statusText, const char* contentType, const char* body)
 		{
-			size_t bodyLen = std::strlen(jsonBody);
+			size_t bodyLen = std::strlen(body ? body : "");
 			std::string header;
 			header.reserve(128);
 			header += "HTTP/1.1 ";
 			header += std::to_string(statusCode);
 			header += " ";
 			header += statusText;
-			header += "\r\nContent-Type: application/json\r\nContent-Length: ";
+			header += "\r\nContent-Type: ";
+			header += contentType ? contentType : "application/json";
+			header += "\r\nContent-Length: ";
 			header += std::to_string(bodyLen);
 			header += "\r\nConnection: close\r\n\r\n";
 			::send(fd, header.data(), header.size(), MSG_NOSIGNAL);
-			::send(fd, jsonBody, bodyLen, MSG_NOSIGNAL);
+			if (bodyLen > 0)
+				::send(fd, body, bodyLen, MSG_NOSIGNAL);
 		}
 
 		void SendMetricsResponse(int fd, const std::string& body)
@@ -98,7 +113,8 @@ namespace engine::server
 	}
 
 	bool HealthEndpoint::Init(uint16_t port, const std::string& bindAddress, std::function<bool()> readyCheck,
-		std::function<std::string()> metricsProvider)
+		std::function<std::string()> metricsProvider, std::function<std::string()> statusProvider,
+		std::function<std::string()> webPortalStatusHtmlProvider)
 	{
 		if (m_running.load(std::memory_order_relaxed))
 		{
@@ -108,6 +124,8 @@ namespace engine::server
 
 		m_readyCheck = std::move(readyCheck);
 		m_metricsProvider = std::move(metricsProvider);
+		m_statusProvider = std::move(statusProvider);
+		m_webPortalStatusHtmlProvider = std::move(webPortalStatusHtmlProvider);
 
 		m_listenFd = ::socket(AF_INET, SOCK_STREAM, 0);
 		if (m_listenFd < 0)
@@ -229,9 +247,35 @@ namespace engine::server
 			bool healthz = false;
 			bool readyz = false;
 			bool metrics = false;
-			bool valid = ParseRequestLine(buf, static_cast<size_t>(n), healthz, readyz, metrics);
+			bool status = false;
+			bool webPortalStatus = false;
+			bool valid = ParseRequestLine(buf, static_cast<size_t>(n), healthz, readyz, metrics, status, webPortalStatus);
 
-			if (valid && metrics)
+			if (valid && webPortalStatus)
+			{
+				if (m_webPortalStatusHtmlProvider)
+				{
+					std::string body = m_webPortalStatusHtmlProvider();
+					SendResponse(clientFd, 200, "OK", "text/html; charset=utf-8", body.empty() ? "<html></html>" : body.c_str());
+				}
+				else
+				{
+					SendResponse(clientFd, 404, "Not Found", "text/plain; charset=utf-8", "web-portal status not configured");
+				}
+			}
+			else if (valid && status)
+			{
+				if (m_statusProvider)
+				{
+					std::string body = m_statusProvider();
+					SendResponse(clientFd, 200, "OK", "application/json", body.empty() ? "{}" : body.c_str());
+				}
+				else
+				{
+					SendResponse(clientFd, 404, "Not Found", "application/json", "{\"status\":\"error\",\"reason\":\"status not configured\"}");
+				}
+			}
+			else if (valid && metrics)
 			{
 				if (m_metricsProvider)
 				{
@@ -239,11 +283,11 @@ namespace engine::server
 					SendMetricsResponse(clientFd, body);
 				}
 				else
-					SendResponse(clientFd, 404, "Not Found", "{\"status\":\"error\",\"reason\":\"metrics not configured\"}");
+					SendResponse(clientFd, 404, "Not Found", "application/json", "{\"status\":\"error\",\"reason\":\"metrics not configured\"}");
 			}
 			else if (valid && healthz)
 			{
-				SendResponse(clientFd, 200, "OK", "{\"status\":\"ok\"}");
+				SendResponse(clientFd, 200, "OK", "application/json", "{\"status\":\"ok\"}");
 			}
 			else if (valid && readyz)
 			{
@@ -253,17 +297,17 @@ namespace engine::server
 					bool wasNotReady = !m_lastReady.exchange(true);
 					if (wasNotReady)
 						LOG_INFO(Core, "[HealthEndpoint] readiness transition: not-ready -> ready");
-					SendResponse(clientFd, 200, "OK", "{\"status\":\"ok\"}");
+					SendResponse(clientFd, 200, "OK", "application/json", "{\"status\":\"ok\"}");
 				}
 				else
 				{
 					m_lastReady.store(false);
-					SendResponse(clientFd, 503, "Service Unavailable", "{\"status\":\"not_ready\",\"reason\":\"db\"}");
+					SendResponse(clientFd, 503, "Service Unavailable", "application/json", "{\"status\":\"not_ready\",\"reason\":\"db\"}");
 				}
 			}
 			else
 			{
-				SendResponse(clientFd, 404, "Not Found", "{\"status\":\"error\",\"reason\":\"unknown path\"}");
+				SendResponse(clientFd, 404, "Not Found", "application/json", "{\"status\":\"error\",\"reason\":\"unknown path\"}");
 			}
 
 			::close(clientFd);
@@ -275,7 +319,8 @@ namespace engine::server
 	HealthEndpoint::~HealthEndpoint() = default;
 
 	bool HealthEndpoint::Init(uint16_t /*port*/, const std::string& /*bindAddress*/, std::function<bool()> /*readyCheck*/,
-		std::function<std::string()> /*metricsProvider*/)
+		std::function<std::string()> /*metricsProvider*/, std::function<std::string()> /*statusProvider*/,
+		std::function<std::string()> /*webPortalStatusHtmlProvider*/)
 	{
 		LOG_WARN(Core, "[HealthEndpoint] Init skipped: UNIX only");
 		return false;

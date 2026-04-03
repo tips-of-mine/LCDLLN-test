@@ -283,7 +283,159 @@ int main(int argc, char** argv)
 		return engine::server::BuildPrometheusText(netStats, sessionsActive, shardsOnline,
 			authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), &dbLatencyHistogram);
 	};
-	if (healthEndpoint.Init(healthPort, healthBind, readyCheck, metricsProvider))
+	auto statusProvider = [&]() -> std::string {
+		const bool dbOk = readyCheck();
+		const auto shards = shardRegistry.ListShards();
+
+		auto escapeJson = [](std::string_view s) -> std::string {
+			std::string out;
+			out.reserve(s.size() + 8);
+			for (unsigned char c : s)
+			{
+				switch (c)
+				{
+				case '"': out += "\\\""; break;
+				case '\\': out += "\\\\"; break;
+				case '\n': out += "\\n"; break;
+				case '\r': out += "\\r"; break;
+				case '\t': out += "\\t"; break;
+				default:
+					if (c < 0x20u)
+					{
+						out += "\\u00";
+						const char hex[] = "0123456789ABCDEF";
+						out += hex[(c >> 4) & 0xF];
+						out += hex[c & 0xF];
+					}
+					else
+					{
+						out.push_back(static_cast<char>(c));
+					}
+					break;
+				}
+			}
+			return out;
+		};
+
+		uint64_t totalPlayers = 0;
+		uint32_t shardsOnline = 0;
+		for (const auto& s : shards)
+		{
+			const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
+			if (ok)
+			{
+				++shardsOnline;
+				totalPlayers += s.current_load;
+			}
+		}
+
+		const bool authOk = dbOk;
+		const bool masterOk = dbOk && shardsOnline > 0;
+
+		std::string serversJson;
+		serversJson.reserve(shards.size() * 64u + 32u);
+
+		auto appendServer = [&](std::string_view name, bool ok, uint32_t players,
+			std::string_view endpoint, std::string_view region, uint32_t maxCapacity, engine::server::ShardState state) {
+			if (!serversJson.empty())
+				serversJson += ",";
+			serversJson += "{";
+			serversJson += "\"name\":\"";
+			serversJson += escapeJson(name);
+			serversJson += "\",";
+			serversJson += "\"ok\":";
+			serversJson += (ok ? "true" : "false");
+			serversJson += ",";
+			serversJson += "\"players\":";
+			serversJson += std::to_string(players);
+			serversJson += ",";
+			serversJson += "\"max_capacity\":";
+			serversJson += std::to_string(maxCapacity);
+			serversJson += ",";
+			serversJson += "\"endpoint\":\"";
+			serversJson += escapeJson(endpoint);
+			serversJson += "\",";
+			serversJson += "\"region\":\"";
+			serversJson += escapeJson(region);
+			serversJson += "\",";
+			serversJson += "\"state\":";
+			serversJson += std::to_string(static_cast<int>(state));
+			serversJson += "}";
+		};
+
+		if (shards.empty())
+		{
+			appendServer("NO_SHARD", false, 0u, "", "", 0u, engine::server::ShardState::Offline);
+		}
+		else
+		{
+			for (const auto& s : shards)
+			{
+				const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
+				appendServer(s.name, ok, s.current_load, s.endpoint, s.region, s.max_capacity, s.state);
+			}
+		}
+
+		return std::string("{")
+			+ "\"auth\":{"
+			+ "\"ok\":" + (authOk ? "true" : "false")
+			+ "},"
+			+ "\"master\":{"
+			+ "\"ok\":" + (masterOk ? "true" : "false")
+			+ "},"
+			+ "\"totalPlayers\":" + std::to_string(totalPlayers) + ","
+			+ "\"game_servers\":["
+			+ serversJson
+			+ "]}";
+	};
+
+	auto webPortalStatusHtmlProvider = [&]() -> std::string {
+		const bool dbOk = readyCheck();
+		const auto shards = shardRegistry.ListShards();
+
+		uint64_t totalPlayers = 0;
+		uint32_t onlineServers = 0;
+		for (const auto& s : shards)
+		{
+			const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
+			if (ok)
+			{
+				++onlineServers;
+				totalPlayers += s.current_load;
+			}
+		}
+
+		const bool authOk = dbOk;
+		const bool masterOk = dbOk && onlineServers > 0;
+
+		const char* statusColorAuth = authOk ? "#35c759" : "#ff3b30";
+		const char* statusColorMaster = masterOk ? "#35c759" : "#ff3b30";
+
+		// Page publique: pas de tokens, pas d'IP, pas d'identifiants ni de logs.
+		return std::string("<!doctype html><html><head><meta charset=\"utf-8\"/>"
+			"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>"
+			"<title>LCDLLN - Status</title>"
+			"<style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:24px}h1{font-size:20px}"
+			".card{padding:16px;border:1px solid #ddd;border-radius:12px;margin-top:12px;max-width:520px}"
+			".row{display:flex;gap:12px;align-items:baseline;justify-content:space-between;margin:6px 0}"
+			".badge{font-weight:700;padding:2px 10px;border-radius:999px;color:#fff}"
+			"</style></head><body>"
+			"<h1>LCDLLN - Statut des services</h1>"
+			"<div class=\"card\">"
+			"<div class=\"row\"><span>Auth</span><span class=\"badge\" style=\"background-color:")
+			+ statusColorAuth + ";\">"
+			+ (authOk ? "OK" : "KO") + "</span></div>"
+			"<div class=\"row\"><span>Master</span><span class=\"badge\" style=\"background-color:")
+			+ statusColorMaster + ";\">"
+			+ (masterOk ? "OK" : "KO") + "</span></div>"
+			"<div class=\"row\"><span>Serveurs en ligne</span><span>" + std::to_string(onlineServers) + "</span></div>"
+			"<div class=\"row\"><span>Joueurs (estimation)</span><span>" + std::to_string(totalPlayers) + "</span></div>"
+			"</div>"
+			"<p style=\"color:#666;margin-top:18px\">Données agrégées uniquement (aucune IP / token).</p>"
+			"</body></html>");
+	};
+
+	if (healthEndpoint.Init(healthPort, healthBind, readyCheck, metricsProvider, statusProvider, webPortalStatusHtmlProvider))
 		LOG_INFO(Net, "[ServerMain] Health endpoint listening on {}:{} (/healthz, /readyz, /metrics)", healthBind, healthPort);
 	else
 		LOG_WARN(Net, "[ServerMain] Health endpoint Init failed (port {}), continuing without health endpoint", healthPort);

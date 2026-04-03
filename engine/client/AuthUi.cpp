@@ -423,6 +423,7 @@ namespace engine::client
 	void AuthUiPresenter::StartTermsStatusWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::ResetMasterSession() {}
 	void AuthUiPresenter::StartMasterFlowWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config&) {}

@@ -1,6 +1,9 @@
 // WinHTTP requiert que les includes Winsock soient en place avant `windows.h`.
 // On les met tout en haut du fichier pour éviter les conflits de types (HINTERNET, INTERNET_PORT, etc.).
 #if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif

@@ -416,11 +416,8 @@ namespace engine::render
 
 		if (calibrationOverlay)
 		{
-			const int32_t strip = std::clamp(h / 28, 18, 40);
-			addRect(0, 0, w, strip, 1.0f, 0.0f, 0.0f, 1.0f);
-			addRect(0, h - strip, w, strip, 0.0f, 1.0f, 0.0f, 1.0f);
-			addRect(0, 0, strip, h, 0.0f, 0.0f, 1.0f, 1.0f);
-			addRect(w - strip, 0, strip, h, 1.0f, 1.0f, 0.0f, 1.0f);
+			// Overlay volontairement minimal : uniquement un carré magenta au centre.
+			// Objectif: diagnostique d’orientation sans “bordure” visible sur l’UI.
 			const int32_t box = std::clamp(std::min(w, h) / 10, 48, 120);
 			const int32_t cx = (w - box) / 2;
 			const int32_t cy = (h - box) / 2;

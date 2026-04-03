@@ -490,6 +490,29 @@ namespace engine::render
 			std::vector<uint8_t> owned(stbPixels, stbPixels + static_cast<size_t>(w) * static_cast<size_t>(h) * 4u);
 			stbi_image_free(stbPixels);
 
+			// Corrige le “fond blanc opaque” de certains PNG (ex: logo login).
+			// On neutralise les pixels quasi blancs en alpha=0 pour éviter l’overlay blanc.
+			// (Pas appliqué à tous les PNG, seulement au logo configuré par défaut.)
+			{
+				const bool isAuthLogo =
+					relativePath.find("logo_login.png") != std::string_view::npos
+					|| relativePath.find("logo_login") != std::string_view::npos;
+				if (isAuthLogo)
+				{
+					constexpr uint8_t kWhite = 250u;
+					for (size_t i = 0; i + 3u < owned.size(); i += 4u)
+					{
+						const uint8_t r = owned[i + 0u];
+						const uint8_t g = owned[i + 1u];
+						const uint8_t b = owned[i + 2u];
+						if (r >= kWhite && g >= kWhite && b >= kWhite)
+						{
+							owned[i + 3u] = 0u;
+						}
+					}
+				}
+			}
+
 			const bool matchBgraSwapchain = (presentBlitDstFormat == VK_FORMAT_B8G8R8A8_SRGB || presentBlitDstFormat == VK_FORMAT_B8G8R8A8_UNORM);
 			if (matchBgraSwapchain)
 			{

@@ -1752,16 +1752,7 @@ namespace engine
 															vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
 														}
 														LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
-														if (m_authGlyphPass.IsValid())
-														{
-															m_authGlyphPass.RecordModel(
-																m_vkDeviceContext.GetDevice(),
-																cmd,
-																ext,
-																authVisualState,
-																authRenderModel,
-																authTheme);
-														}
+														// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
 														if (m_authLogoPass.IsValid() && authVisualState.login && m_authLogoTexture.IsValid())
 														{
 															engine::render::TextureAsset* logoTex = m_authLogoTexture.Get();
@@ -1769,7 +1760,9 @@ namespace engine
 															{
 																const float half = static_cast<float>(m_authUi.GetAuthLogoSizePx()) * 0.5f;
 																const float cx = 24.f + half;
-																const float cy = 24.f + half;
+																// Ajustement repère vertical : le shader du logo attend un centre "haut-gauche"
+																// alors que le rendu actuel le place en bas-gauche.
+																const float cy = static_cast<float>(ext.height) - (24.f + half);
 																m_authLogoPass.Record(
 																	m_vkDeviceContext.GetDevice(),
 																	cmd,
@@ -1782,6 +1775,16 @@ namespace engine
 																	half,
 																	m_authUi.GetAuthLogoRotationRadians());
 															}
+														}
+														if (m_authGlyphPass.IsValid())
+														{
+															m_authGlyphPass.RecordModel(
+																m_vkDeviceContext.GetDevice(),
+																cmd,
+																ext,
+																authVisualState,
+																authRenderModel,
+																authTheme);
 														}
 
 														if (beganWithKHR && pfnEndKHR)

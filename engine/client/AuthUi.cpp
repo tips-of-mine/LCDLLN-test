@@ -176,7 +176,35 @@ namespace engine::client
 
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
-			return cfg.GetString("client.web_portal_reset_url", "http://127.0.0.1:3000/password-recovery");
+			// Le portail reset est un lien externe (hors du jeu).
+			// Le moteur lit d'abord une table de liens située dans `game/data/ui/external_links.json`
+			// (si elle existe), pour permettre d’ajuster les URLs sans toucher au code.
+			static bool s_loaded = false;
+			static engine::core::Config s_externalLinksCfg;
+			if (!s_loaded)
+			{
+				s_loaded = true;
+				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveContentPath(cfg, "ui/external_links.json");
+				if (engine::platform::FileSystem::Exists(linksPath))
+				{
+					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
+					{
+						LOG_INFO(Core, "[AuthUiPresenter] external_links loaded ({})", linksPath.string());
+					}
+					else
+					{
+						LOG_WARN(Core, "[AuthUiPresenter] failed to load external_links ({})", linksPath.string());
+					}
+				}
+			}
+
+			constexpr std::string_view kKey = "client.web_portal_reset_url";
+			const std::string fallback = "http://127.0.0.1:3000/password-recovery";
+			if (s_externalLinksCfg.Has(kKey))
+			{
+				return s_externalLinksCfg.GetString(kKey, fallback);
+			}
+			return cfg.GetString(kKey, fallback);
 		}
 
 		bool IsAsciiDigits(std::string_view text)
@@ -2200,9 +2228,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t topOffset = lay.topOffset;
 				const int32_t fieldStep = lay.compactSingleField ? 48 : 42;
 				const int32_t bodyScale = std::clamp(lay.panelW / 260, 2, 4);
+				const bool centeredLanguageSelection = (m_phase == Phase::LanguageSelectionFirstRun || m_phase == Phase::LanguageOptions);
 				const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
-				const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
-				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
+				const int32_t bodyLinePitch = centeredLanguageSelection
+					? std::max(36, bodyLineStep + 16)
+					: std::max(28, bodyLineStep + 10);
+				const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
+				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + afterFieldsGap;
 				const int32_t mx = input.MouseX();
 				const int32_t my = input.MouseY();
 				m_hoveredFieldIndex = -1;
@@ -2269,7 +2301,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				else
 				{
-					const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + static_cast<int32_t>(model.bodyLines.size()) * bodyLinePitch + 20);
+					const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
+					const int32_t buttonY = std::min(panelY + panelH - 84,
+						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
 					const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 					for (int32_t i = 0; i < actionCount; ++i)
 					{
@@ -2417,7 +2451,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
 						{
-							const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + static_cast<int32_t>(model.bodyLines.size()) * bodyLinePitch + 20);
+							const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
+							const int32_t buttonY = std::min(panelY + panelH - 84,
+								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
 							const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 							for (int32_t i = 0; i < actionCount; ++i)
 							{
@@ -2772,10 +2808,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
 			addBodyLine(Tr("auth.checkbox.remember") + ": " + Tr(m_rememberLogin ? "options.value.on" : "options.value.off"), true);
 			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
-			addAction(Tr("auth.button.register"), false, true, true);
-			addAction(Tr("language.options.title"), false, true, true);
-			addAction(Tr("common.submit"), true, true, false);
-			addAction(Tr("common.quit"), false, true, false);
+			// Sécurité: éviter qu’un bouton n’affiche rien si une clé i18n retourne une chaîne vide.
+			// Dans ce cas, on retombe sur la clé (string non vide).
+			{
+				std::string registerLabel = Tr("auth.button.register");
+				std::string languageLabel = Tr("language.options.title");
+				std::string submitLabel = Tr("common.submit");
+				std::string quitLabel = Tr("common.quit");
+				if (registerLabel.empty()) registerLabel = "auth.button.register";
+				if (languageLabel.empty()) languageLabel = "language.options.title";
+				if (submitLabel.empty()) submitLabel = "common.submit";
+				if (quitLabel.empty()) quitLabel = "common.quit";
+				addAction(std::move(registerLabel), false, true, true);
+				addAction(std::move(languageLabel), false, true, true);
+				addAction(std::move(submitLabel), true, true, false);
+				addAction(std::move(quitLabel), false, true, false);
+			}
 			break;
 		case Phase::Register:
 			model.sectionTitle = Tr("auth.panel.register");
@@ -2855,7 +2903,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				addBodyLine(Tr("options.game.allow_insecure_dev") + ": " + Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 11u);
 				addBodyLine(Tr("options.game.auth_timeout") + ": " + std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSelectionIndex == 12u);
 			}
-			addAction((m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.confirm") : Tr("language.options.apply_hint"), true);
+			{
+				const std::string label = (m_phase == Phase::LanguageSelectionFirstRun)
+					? Tr("language.first_run.confirm")
+					: Tr("language.options.apply_hint");
+				// Robustesse : si une clé i18n manque (ou renvoie ""), on retombe sur le bouton standard.
+				addAction(label.empty() ? Tr("common.submit") : label, true);
+			}
 			break;
 		}
 		case Phase::Submitting:
@@ -3036,6 +3090,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_userErrorText.clear();
 			m_infoBanner = Tr("auth.info.character_cancelled");
 			ResetMasterSession();
+			return true;
+		}
+		if (m_phase == Phase::Login)
+		{
+			// Sur la page connexion, Escape ne doit pas fermer le jeu :
+			// la sortie se fait uniquement via le bouton "Quitter".
 			return true;
 		}
 		if (m_phase == Phase::Error)

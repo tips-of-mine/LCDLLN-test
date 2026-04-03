@@ -425,7 +425,7 @@ int main(int argc, char** argv)
 			"<div class=\"row\"><span>Auth</span><span class=\"badge\" style=\"background-color:")
 			+ statusColorAuth + ";\">"
 			+ (authOk ? "OK" : "KO") + "</span></div>"
-			"<div class=\"row\"><span>Master</span><span class=\"badge\" style=\"background-color:")
+			+ "<div class=\"row\"><span>Master</span><span class=\"badge\" style=\"background-color:")
 			+ statusColorMaster + ";\">"
 			+ (masterOk ? "OK" : "KO") + "</span></div>"
 			"<div class=\"row\"><span>Serveurs en ligne</span><span>" + std::to_string(onlineServers) + "</span></div>"

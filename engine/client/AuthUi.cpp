@@ -1,3 +1,16 @@
+// WinHTTP requiert que les includes Winsock soient en place avant `windows.h`.
+// On les met tout en haut du fichier pour éviter les conflits de types (HINTERNET, INTERNET_PORT, etc.).
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <winsock2.h>
+#include <windows.h>
+#include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
+#pragma comment(lib, "ws2_32.lib")
+#endif
+
 #include "engine/client/AuthUi.h"
 
 #include "engine/render/AuthUiRenderer.h"
@@ -23,8 +36,6 @@
 #	include "engine/network/ProtocolV1Constants.h"
 #	include "engine/network/RequestResponseDispatcher.h"
 #	include "engine/network/TermsPayloads.h"
-#	include <winhttp.h>
-#pragma comment(lib, "winhttp.lib")
 #endif
 
 namespace engine::client

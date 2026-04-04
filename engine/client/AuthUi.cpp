@@ -452,6 +452,15 @@ namespace engine::client
 			return true;
 		}
 
+		// STAB.13 / STAB.11 fix: re-initialize the mutex explicitly.
+		// On Windows with MSVC, std::mutex (backed by SRWLOCK) may not be zeroed by its default
+		// constructor when the host object is embedded inside a large heap-allocated class — the
+		// SRWLOCK retains whatever bytes the allocator left, causing AcquireSRWLockExclusive to
+		// crash on first use.  Placement-new here guarantees a clean initial state every time
+		// Init() is called.
+		m_asyncMutex.~mutex();
+		::new (static_cast<void*>(std::addressof(m_asyncMutex))) std::mutex{};
+
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
 		if (!m_authEnabled)
 		{
@@ -1869,12 +1878,9 @@ namespace engine::client
 		LOG_INFO(Core, "[AuthUi] SPW 2: copy url");
 		const std::string url = m_masterAvailabilityUrl;
 		m_pendingAsyncKind = AsyncKind::StatusProbe;
-		LOG_INFO(Core, "[AuthUi] SPW 3: lock mutex reset asyncResult");
-		{
-			std::lock_guard<std::mutex> lock(m_asyncMutex);
-			m_asyncResult = {};
-		}
-		LOG_INFO(Core, "[AuthUi] SPW 4: mutex released, url='{}'", url);
+		LOG_INFO(Core, "[AuthUi] SPW 3: reset asyncResult (no lock: JoinWorker above ensures exclusivity)");
+		m_asyncResult = {};
+		LOG_INFO(Core, "[AuthUi] SPW 4: asyncResult reset, url='{}'", url);
 
 #if defined(_WIN32)
 		// Simulation values when the real status endpoint isn't available.

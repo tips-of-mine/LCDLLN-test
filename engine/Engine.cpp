@@ -1959,11 +1959,40 @@ namespace engine
 		return 0;
 	}
 
+	// DIAG-BF: VirtualQuery helper — prints mutex memory state at each BeginFrame checkpoint.
+#if defined(_WIN32)
+	static void DiagCheckMutex(const void* ptr, const char* tag, uint64_t frame)
+	{
+		if (!ptr)
+		{
+			LOG_ERROR(Core, "[DIAG-BF] {} frame={} mutex=NULL", tag, frame);
+			return;
+		}
+		MEMORY_BASIC_INFORMATION mbi{};
+		const SIZE_T queried = VirtualQuery(ptr, &mbi, sizeof(mbi));
+		const bool committed = (queried > 0) && (mbi.State == MEM_COMMIT);
+		LOG_INFO(Core, "[DIAG-BF] {} frame={} mutex={:p} State=0x{:X} Protect=0x{:X} {}",
+			tag, frame, ptr, mbi.State, mbi.Protect, committed ? "COMMIT-OK" : "!!! NOT-COMMIT !!!");
+	}
+#endif
+
 	void Engine::BeginFrame()
 	{
 		// PROFILE_FUNCTION();
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-START", m_currentFrame);
+#endif
 		m_input.BeginFrame();
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-after-input.BeginFrame", m_currentFrame);
+#endif
 		m_window.PollEvents();
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-after-window.PollEvents", m_currentFrame);
+#endif
 
 		if (m_authUi.IsInitialized() && !m_authUi.IsFlowComplete())
 		{
@@ -2006,6 +2035,10 @@ namespace engine
 
 		m_shaderHotReload.Poll(m_cfg);
 		m_shaderHotReload.ApplyPending(m_shaderCache);
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-after-shaderHotReload", m_currentFrame);
+#endif
 
 		if (m_swapchainResizeRequested)
 		{
@@ -2042,13 +2075,25 @@ namespace engine
 		}
 
 		m_time.BeginFrame();
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-after-time.BeginFrame", m_currentFrame);
+#endif
 		if (m_profiler.IsInitialized())
 		{
 			m_profiler.BeginFrame(m_currentFrame);
 		}
 		m_frameArena.BeginFrame(m_time.FrameIndex());
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-after-frameArena.BeginFrame", m_currentFrame);
+#endif
 		m_chunkStats.ResetPerFrame();
 		PumpGameplayPackets();
+#if defined(_WIN32)
+		if (m_authUi.IsInitialized())
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "BF-after-PumpGameplayPackets", m_currentFrame);
+#endif
 		LOG_INFO(Core, "[Engine] BeginFrame end frame={}", m_currentFrame);
 	}
 
@@ -2098,6 +2143,9 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+#if defined(_WIN32)
+			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "UPDATE-before-authUi.Update", m_currentFrame);
+#endif
 			LOG_INFO(Core, "[Engine] Update authUi.Update begin");
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
 			LOG_INFO(Core, "[Engine] Update authUi.Update end");
@@ -2298,6 +2346,10 @@ namespace engine
 	void Engine::Render()
 	{
 	    // PROFILE_FUNCTION();
+#if defined(_WIN32)
+	    if (m_authUi.IsInitialized())
+	        DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "RENDER-START", m_currentFrame);
+#endif
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
 	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
@@ -2325,6 +2377,10 @@ namespace engine
 	        }
 	    }
 	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
+#if defined(_WIN32)
+	    if (m_authUi.IsInitialized())
+	        DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "RENDER-after-deferredDestroyQueue.Collect", m_currentFrame);
+#endif
 	    m_stagingAllocator.BeginFrame(frameIndex);
 	    (void)m_gpuUploadQueue.PlanFrameUploads();
 	
@@ -2461,6 +2517,10 @@ namespace engine
 	    }
 	
 	    m_currentFrame++;
+#if defined(_WIN32)
+	    if (m_authUi.IsInitialized())
+	        DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "RENDER-END", m_currentFrame - 1);
+#endif
 	}
 
 	void Engine::EndFrame()

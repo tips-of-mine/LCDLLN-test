@@ -168,6 +168,8 @@ namespace engine::client
 		float GetAuthLogoRotationRadians() const { return m_authLogoRotationRad; }
 		int32_t GetAuthLogoSizePx() const { return m_authLogoSizePx; }
 		const StatusCache& GetStatusCache() const { return m_statusCache; }
+		/// DIAG — retourne l'adresse du mutex alloué sur le tas (pour VirtualQuery Windows).
+		const void* GetAsyncMutexAddr() const { return m_asyncMutex.get(); }
 		VideoSettingsCommand ConsumePendingVideoSettings();
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();

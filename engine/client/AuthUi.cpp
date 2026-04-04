@@ -863,6 +863,18 @@ namespace engine::client
 		LOG_INFO(Core, "[AuthUi] PAR 4: creating copy");
 		AsyncResult copy{};
 		LOG_INFO(Core, "[AuthUi] PAR 5: checking mutex ptr={:p}", static_cast<const void*>(m_asyncMutex.get()));
+#if defined(_WIN32)
+		{
+			// PAR 5b: read the raw SRWLOCK bytes to detect corruption before locking.
+			// A clean, unlocked SRWLOCK == 0. Any other value means the mutex has been overwritten.
+			const volatile uint64_t* rawSrw = reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get());
+			const uint64_t srwVal = *rawSrw;
+			LOG_INFO(Core, "[AuthUi] PAR 5b: SRWLOCK raw = 0x{:016X} (expect 0x0 if unlocked/clean)", srwVal);
+			MEMORY_BASIC_INFORMATION mbi5b{};
+			VirtualQuery(m_asyncMutex.get(), &mbi5b, sizeof(mbi5b));
+			LOG_INFO(Core, "[AuthUi] PAR 5c: VQ State=0x{:X} Protect=0x{:X} RegionSize={}", mbi5b.State, mbi5b.Protect, mbi5b.RegionSize);
+		}
+#endif
 		{
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
 			LOG_INFO(Core, "[AuthUi] PAR 6: mutex locked, checking ready");

@@ -2064,7 +2064,6 @@ namespace engine
 	void Engine::Update()
 	{
 		// PROFILE_FUNCTION();
-		LOG_INFO(Core, "[Engine] Update begin frame={}", m_currentFrame);
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -2107,12 +2106,7 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
-#if defined(_WIN32)
-			DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "UPDATE-before-authUi.Update", m_currentFrame);
-#endif
-			LOG_INFO(Core, "[Engine] Update authUi.Update begin");
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
-			LOG_INFO(Core, "[Engine] Update authUi.Update end");
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
@@ -2304,16 +2298,11 @@ namespace engine
 		for (int i = 0; i < 256; ++i)
 			(void)m_frameArena.alloc(64, alignof(std::max_align_t), engine::core::memory::MemTag::Temp);
 		out.drawItemCount = 256;
-		LOG_INFO(Core, "[Engine] Update end frame={}", m_currentFrame);
 	}
 
 	void Engine::Render()
 	{
 	    // PROFILE_FUNCTION();
-#if defined(_WIN32)
-	    if (m_authUi.IsInitialized())
-	        DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "RENDER-START", m_currentFrame);
-#endif
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
 	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
@@ -2341,10 +2330,6 @@ namespace engine
 	        }
 	    }
 	    m_deferredDestroyQueue.Collect(device, m_currentFrame > 0 ? m_currentFrame - 1 : 0);
-#if defined(_WIN32)
-	    if (m_authUi.IsInitialized())
-	        DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "RENDER-after-deferredDestroyQueue.Collect", m_currentFrame);
-#endif
 	    m_stagingAllocator.BeginFrame(frameIndex);
 	    (void)m_gpuUploadQueue.PlanFrameUploads();
 	
@@ -2481,10 +2466,6 @@ namespace engine
 	    }
 	
 	    m_currentFrame++;
-#if defined(_WIN32)
-	    if (m_authUi.IsInitialized())
-	        DiagCheckMutex(m_authUi.GetAsyncMutexAddr(), "RENDER-END", m_currentFrame - 1);
-#endif
 	}
 
 	void Engine::EndFrame()

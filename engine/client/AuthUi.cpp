@@ -458,20 +458,51 @@ namespace engine::client
 		// object being zero-initialized, which is not guaranteed for inline members of complex
 		// objects.  Allocating via make_unique gives the mutex its own dedicated heap block.
 		m_asyncMutex = std::make_unique<std::mutex>();
-		// STAB.14: MSVC 17.14 Release + LTCG elides the zero-store from the constexpr
-		// std::mutex constructor — the heap block retains stale data (e.g. 0x2 = LFH
-		// free-list bookkeeping). AcquireSRWLockExclusive on a non-zero SRWLOCK follows
-		// an embedded pointer and crashes with 0xC0000005.
-		// native_handle() is absent in MSVC STL 14.44; use memset to force SRWLOCK_INIT.
-		std::memset(m_asyncMutex.get(), 0, sizeof(std::mutex));
+		// STAB.14: MSVC 17.14 Release + LTCG may elide the constexpr constructor.
+		// Log sizeof/alignof to determine implementation (SRWLOCK=8, CRITICAL_SECTION=40).
+		// Then force proper initialization depending on the actual type.
 		{
-			// DIAG STAB14-CHECK: log raw SRWLOCK bytes after memset to confirm optimizer
-			// has not elided the zero-store. Expected: all 8 bytes = 0x00.
+			LOG_WARN(Core, "[AuthUiPresenter] STAB14-SIZEOF sizeof(mutex)={} alignof(mutex)={}",
+				sizeof(std::mutex), alignof(std::mutex));
+
+			// Zero all bytes unconditionally first.
+			std::memset(m_asyncMutex.get(), 0, sizeof(std::mutex));
+
+			// If it's a CRITICAL_SECTION (40 bytes on Win64), memset(0) leaves DebugInfo=NULL
+			// which crashes on EnterCriticalSection. Use InitializeCriticalSection instead.
+			// If it's SRWLOCK (8 bytes), memset(0) = SRWLOCK_INIT which is valid.
+#if defined(_WIN32)
+			if constexpr (sizeof(std::mutex) == sizeof(CRITICAL_SECTION))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] STAB14-CRITINIT detected CRITICAL_SECTION layout ({} bytes) — calling InitializeCriticalSection", sizeof(std::mutex));
+				InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(m_asyncMutex.get()));
+				LOG_WARN(Core, "[AuthUiPresenter] STAB14-CRITINIT done");
+			}
+			else if constexpr (sizeof(std::mutex) == sizeof(SRWLOCK))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] STAB14-SRWLINIT detected SRWLOCK layout ({} bytes) — setting SRWLOCK_INIT", sizeof(std::mutex));
+				*reinterpret_cast<SRWLOCK*>(m_asyncMutex.get()) = SRWLOCK_INIT;
+				LOG_WARN(Core, "[AuthUiPresenter] STAB14-SRWLINIT done");
+			}
+			else
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] STAB14-UNKNOWN unexpected mutex size={} (not SRWLOCK=8 nor CRITICAL_SECTION=40), memset-zero only", sizeof(std::mutex));
+			}
+#endif
+			// Dump all mutex bytes after initialization.
 			const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
-			uint64_t raw64 = 0;
-			std::memcpy(&raw64, raw, sizeof(uint64_t));
-			LOG_WARN(Core, "[AuthUiPresenter] STAB14-CHECK mutex ptr={} raw8bytes=0x{:016X}",
-				static_cast<const void*>(m_asyncMutex.get()), raw64);
+			{
+				uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+				const size_t sz = sizeof(std::mutex);
+				if (sz >= 8)  std::memcpy(&w0, raw +  0, 8);
+				if (sz >= 16) std::memcpy(&w1, raw +  8, 8);
+				if (sz >= 24) std::memcpy(&w2, raw + 16, 8);
+				if (sz >= 32) std::memcpy(&w3, raw + 24, 8);
+				if (sz >= 40) std::memcpy(&w4, raw + 32, 8);
+				LOG_WARN(Core, "[AuthUiPresenter] STAB14-CHECK ptr={} size={} bytes[0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}",
+					static_cast<const void*>(m_asyncMutex.get()), sizeof(std::mutex),
+					w0, w1, w2, w3, w4);
+			}
 		}
 
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
@@ -881,15 +912,49 @@ namespace engine::client
 
 		AsyncResult copy{};
 		{
-			// DIAG PAR-PRELK: log raw SRWLOCK bytes before acquiring
+			// DIAG PAR-PRELK: dump all mutex bytes before acquiring
 			{
 				const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
-				uint64_t raw64 = 0;
-				std::memcpy(&raw64, raw, sizeof(uint64_t));
-				LOG_WARN(Core, "[AuthUiPresenter] PAR-PRELK mutex raw8bytes=0x{:016X}", raw64);
+				uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+				const size_t sz = sizeof(std::mutex);
+				if (sz >= 8)  std::memcpy(&w0, raw +  0, 8);
+				if (sz >= 16) std::memcpy(&w1, raw +  8, 8);
+				if (sz >= 24) std::memcpy(&w2, raw + 16, 8);
+				if (sz >= 32) std::memcpy(&w3, raw + 24, 8);
+				if (sz >= 40) std::memcpy(&w4, raw + 32, 8);
+				LOG_WARN(Core, "[AuthUiPresenter] PAR-PRELK ptr={} size={} [0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}",
+					static_cast<const void*>(m_asyncMutex.get()), sz, w0, w1, w2, w3, w4);
 			}
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
-			LOG_WARN(Core, "[AuthUiPresenter] PAR-POSTLK lock acquired");
+			// Wrap in SEH to catch AV in lock() without killing the process.
+			bool lockOk = false;
+#if defined(_WIN32)
+			__try
+			{
+				m_asyncMutex->lock();
+				lockOk = true;
+			}
+			__except(EXCEPTION_EXECUTE_HANDLER)
+			{
+				LOG_ERROR(Core, "[AuthUiPresenter] PAR-SEH exception code=0x{:08X} inside mutex->lock() — mutex is corrupt",
+					static_cast<unsigned>(GetExceptionCode()));
+				// Recreate a clean mutex to recover. The worker result will be lost this frame.
+				std::memset(m_asyncMutex.get(), 0, sizeof(std::mutex));
+				if constexpr (sizeof(std::mutex) == sizeof(CRITICAL_SECTION))
+					InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(m_asyncMutex.get()));
+				else if constexpr (sizeof(std::mutex) == sizeof(SRWLOCK))
+					*reinterpret_cast<SRWLOCK*>(m_asyncMutex.get()) = SRWLOCK_INIT;
+				return;
+			}
+#else
+			m_asyncMutex->lock();
+			lockOk = true;
+#endif
+			if (!lockOk) return;
+			LOG_WARN(Core, "[AuthUiPresenter] PAR-POSTLK lock acquired OK");
+			struct UnlockGuard {
+				std::mutex* m;
+				~UnlockGuard() { m->unlock(); }
+			} unlockGuard{ m_asyncMutex.get() };
 			if (!m_asyncResult.ready)
 			{
 				LOG_WARN(Core, "[AuthUiPresenter] PAR-NOREADY return inside lock");
@@ -1902,11 +1967,14 @@ namespace engine::client
 
 	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config& cfg)
 	{
+		LOG_WARN(Core, "[AuthUiPresenter] SPW-1 StartStatusProbeWorker enter, url='{}'", m_masterAvailabilityUrl);
 		JoinWorker();
+		LOG_WARN(Core, "[AuthUiPresenter] SPW-2 JoinWorker done");
 
 		const std::string url = m_masterAvailabilityUrl;
 		m_pendingAsyncKind = AsyncKind::StatusProbe;
 		m_asyncResult = {};
+		LOG_WARN(Core, "[AuthUiPresenter] SPW-3 asyncResult reset");
 
 #if defined(_WIN32)
 		// Simulation values when the real status endpoint isn't available.
@@ -1929,12 +1997,15 @@ namespace engine::client
 			out.message = std::string("Status probe simulated: ") + std::string(reason);
 		};
 
+		LOG_WARN(Core, "[AuthUiPresenter] SPW-4 url empty={}", (int)url.empty());
 		if (url.empty())
 		{
+			LOG_WARN(Core, "[AuthUiPresenter] SPW-4a url empty path — locking mutex synchronously");
 			AsyncResult local{};
 			fillSimulatedStatus(local, "empty status url");
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
+			LOG_WARN(Core, "[AuthUiPresenter] SPW-4b url empty path done");
 			return;
 		}
 
@@ -2197,15 +2268,49 @@ namespace engine::client
 
 		// WinHTTP is temporarily disabled to keep Windows builds stable.
 		// We still simulate a functional status response for UI/rotation purposes.
+		LOG_WARN(Core, "[AuthUiPresenter] SPW-5 spawning simulation worker thread (sleeps {}ms)", std::min<uint32_t>(timeoutMs, 300u));
 		m_worker = std::thread([this, timeoutMs, fillSimulatedStatus]() mutable {
+			LOG_WARN(Core, "[AuthUiPresenter] WKR-1 worker thread started");
 			AsyncResult local{};
+			LOG_WARN(Core, "[AuthUiPresenter] WKR-2 sleeping {}ms", std::min<uint32_t>(timeoutMs, 300u));
 			std::this_thread::sleep_for(std::chrono::milliseconds(std::min<uint32_t>(timeoutMs, 300u)));
+			LOG_WARN(Core, "[AuthUiPresenter] WKR-3 sleep done, filling result");
 			fillSimulatedStatus(local, "status probe simulated on Windows (HTTP probe disabled)");
+			LOG_WARN(Core, "[AuthUiPresenter] WKR-4 result filled, acquiring mutex ptr={}", static_cast<const void*>(m_asyncMutex.get()));
 			{
+				// Dump mutex bytes from worker thread before locking
+				{
+					const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
+					uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+					const size_t sz = sizeof(std::mutex);
+					if (sz >= 8)  std::memcpy(&w0, raw +  0, 8);
+					if (sz >= 16) std::memcpy(&w1, raw +  8, 8);
+					if (sz >= 24) std::memcpy(&w2, raw + 16, 8);
+					if (sz >= 32) std::memcpy(&w3, raw + 24, 8);
+					if (sz >= 40) std::memcpy(&w4, raw + 32, 8);
+					LOG_WARN(Core, "[AuthUiPresenter] WKR-4b mutex [0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}", w0, w1, w2, w3, w4);
+				}
+#if defined(_WIN32)
+				bool wkrLockOk = false;
+				__try { m_asyncMutex->lock(); wkrLockOk = true; }
+				__except(EXCEPTION_EXECUTE_HANDLER) {
+					LOG_ERROR(Core, "[AuthUiPresenter] WKR-SEH exception code=0x{:08X} in worker mutex->lock()", static_cast<unsigned>(GetExceptionCode()));
+				}
+				if (wkrLockOk)
+				{
+					m_asyncResult = local;
+					m_asyncMutex->unlock();
+					LOG_WARN(Core, "[AuthUiPresenter] WKR-5 mutex released OK");
+				}
+#else
 				std::lock_guard<std::mutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
+				LOG_WARN(Core, "[AuthUiPresenter] WKR-5 result stored OK");
+#endif
 			}
+			LOG_WARN(Core, "[AuthUiPresenter] WKR-6 worker thread exiting");
 		});
+		LOG_WARN(Core, "[AuthUiPresenter] SPW-6 worker thread object created, joinable={}", (int)m_worker.joinable());
 #else
 		// Sur les plateformes non-Windows, le probe n'est pas implémenté.
 		m_worker = std::thread([this]() {

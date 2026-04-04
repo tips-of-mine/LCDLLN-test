@@ -344,7 +344,8 @@ namespace engine::client
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;
 		std::unique_ptr<engine::network::NetClient> m_masterClient;
-		std::mutex m_asyncMutex{};
+		// Heap-allocated in Init() — avoids SRWLOCK corruption in large heap objects (STAB.13/STAB.11).
+		std::unique_ptr<std::mutex> m_asyncMutex;
 	};
 
 }

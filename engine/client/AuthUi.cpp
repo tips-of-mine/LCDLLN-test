@@ -851,14 +851,21 @@ namespace engine::client
 	{
 		// Fast-path: on the initial login screen no background worker has been started yet,
 		// so there is no async state to synchronize. Avoid touching the mutex unnecessarily.
-		if (!m_worker.joinable() && !m_asyncResult.ready)
+		LOG_INFO(Core, "[AuthUi] PAR 1: entry this={:p}", static_cast<const void*>(this));
+		const bool workerJoinable = m_worker.joinable();
+		LOG_INFO(Core, "[AuthUi] PAR 2: workerJoinable={}", (int)workerJoinable);
+		if (!workerJoinable && !m_asyncResult.ready)
 		{
+			LOG_INFO(Core, "[AuthUi] PAR 3: early return");
 			return;
 		}
 
+		LOG_INFO(Core, "[AuthUi] PAR 4: creating copy");
 		AsyncResult copy{};
+		LOG_INFO(Core, "[AuthUi] PAR 5: checking mutex ptr={:p}", static_cast<const void*>(m_asyncMutex.get()));
 		{
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			LOG_INFO(Core, "[AuthUi] PAR 6: mutex locked, checking ready");
 			if (!m_asyncResult.ready)
 			{
 				return;
@@ -866,6 +873,7 @@ namespace engine::client
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
+		LOG_INFO(Core, "[AuthUi] PAR 7: mutex released, joining worker");
 		JoinWorker();
 
 		const AsyncKind kind = m_pendingAsyncKind;

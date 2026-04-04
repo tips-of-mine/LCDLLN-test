@@ -2147,8 +2147,14 @@ namespace engine::client
 				}
 			}
 
-			// Endpoint indisponible ou parsing impossible => on simule “service fonctionnel”.
-			fillSimulatedStatus(local, resp.error.empty() ? "endpoint unreachable or invalid response" : resp.error);
+			// Endpoint indisponible ou parsing impossible => serveurs en maintenance.
+			local.ready = true;
+			local.success = false;
+			local.statusCache = {};
+			local.statusCache.authOk = false;
+			local.statusCache.masterOk = false;
+			local.statusCache.infoMessage = resp.error.empty() ? “unreachable” : resp.error;
+			local.message = resp.error.empty() ? “endpoint unreachable or invalid response” : resp.error;
 			{
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
 				m_asyncResult = local;
@@ -3223,6 +3229,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 		case Phase::Login:
 			model.sectionTitle = Tr("auth.section.login");
+			// Bannière de statut serveur : maintenance si probe terminé et serveurs injoignables,
+			// sinon vérification en cours au premier démarrage. Ne remplace pas m_infoBanner (langue, etc.).
+			if (model.infoBanner.empty())
+			{
+				if (m_authAvailabilityChecking && !m_statusProbeInitialized)
+					model.infoBanner = Tr("auth.status.checking");
+				else if (m_statusProbeInitialized && !m_statusCache.authOk)
+					model.infoBanner = Tr("auth.status.unavailable");
+			}
 			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
 			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
 			addBodyLine(Tr("auth.checkbox.remember") + ": " + Tr(m_rememberLogin ? "options.value.on" : "options.value.off"), true);

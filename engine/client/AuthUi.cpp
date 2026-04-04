@@ -444,6 +444,21 @@ namespace engine::client
 
 #else
 
+// C2712: __try cannot be used in a function that requires C++ object unwinding.
+// Isolate SEH in a helper function that only contains POD variables.
+#if defined(_WIN32)
+namespace {
+	struct SehMutexResult { bool ok; unsigned code; };
+	static SehMutexResult TryMutexLock(std::mutex* mtx) noexcept
+	{
+		SehMutexResult r{false, 0u};
+		__try { mtx->lock(); r.ok = true; }
+		__except(r.code = GetExceptionCode(), EXCEPTION_EXECUTE_HANDLER) {}
+		return r;
+	}
+}
+#endif
+
 	bool AuthUiPresenter::Init(const engine::core::Config& cfg)
 	{
 		if (m_initialized)
@@ -493,12 +508,11 @@ namespace engine::client
 			const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
 			{
 				uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-				const size_t sz = sizeof(std::mutex);
-				if (sz >= 8)  std::memcpy(&w0, raw +  0, 8);
-				if (sz >= 16) std::memcpy(&w1, raw +  8, 8);
-				if (sz >= 24) std::memcpy(&w2, raw + 16, 8);
-				if (sz >= 32) std::memcpy(&w3, raw + 24, 8);
-				if (sz >= 40) std::memcpy(&w4, raw + 32, 8);
+				if constexpr (sizeof(std::mutex) >= 8)  std::memcpy(&w0, raw +  0, 8);
+				if constexpr (sizeof(std::mutex) >= 16) std::memcpy(&w1, raw +  8, 8);
+				if constexpr (sizeof(std::mutex) >= 24) std::memcpy(&w2, raw + 16, 8);
+				if constexpr (sizeof(std::mutex) >= 32) std::memcpy(&w3, raw + 24, 8);
+				if constexpr (sizeof(std::mutex) >= 40) std::memcpy(&w4, raw + 32, 8);
 				LOG_WARN(Core, "[AuthUiPresenter] STAB14-CHECK ptr={} size={} bytes[0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}",
 					static_cast<const void*>(m_asyncMutex.get()), sizeof(std::mutex),
 					w0, w1, w2, w3, w4);
@@ -916,28 +930,21 @@ namespace engine::client
 			{
 				const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
 				uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-				const size_t sz = sizeof(std::mutex);
-				if (sz >= 8)  std::memcpy(&w0, raw +  0, 8);
-				if (sz >= 16) std::memcpy(&w1, raw +  8, 8);
-				if (sz >= 24) std::memcpy(&w2, raw + 16, 8);
-				if (sz >= 32) std::memcpy(&w3, raw + 24, 8);
-				if (sz >= 40) std::memcpy(&w4, raw + 32, 8);
+				if constexpr (sizeof(std::mutex) >= 8)  std::memcpy(&w0, raw +  0, 8);
+				if constexpr (sizeof(std::mutex) >= 16) std::memcpy(&w1, raw +  8, 8);
+				if constexpr (sizeof(std::mutex) >= 24) std::memcpy(&w2, raw + 16, 8);
+				if constexpr (sizeof(std::mutex) >= 32) std::memcpy(&w3, raw + 24, 8);
+				if constexpr (sizeof(std::mutex) >= 40) std::memcpy(&w4, raw + 32, 8);
 				LOG_WARN(Core, "[AuthUiPresenter] PAR-PRELK ptr={} size={} [0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}",
-					static_cast<const void*>(m_asyncMutex.get()), sz, w0, w1, w2, w3, w4);
+					static_cast<const void*>(m_asyncMutex.get()), sizeof(std::mutex), w0, w1, w2, w3, w4);
 			}
-			// Wrap in SEH to catch AV in lock() without killing the process.
-			bool lockOk = false;
+			// Use SEH helper (C2712: __try cannot be in a function with C++ unwinding).
 #if defined(_WIN32)
-			__try
+			const auto sehRes = TryMutexLock(m_asyncMutex.get());
+			if (!sehRes.ok)
 			{
-				m_asyncMutex->lock();
-				lockOk = true;
-			}
-			__except(EXCEPTION_EXECUTE_HANDLER)
-			{
-				LOG_ERROR(Core, "[AuthUiPresenter] PAR-SEH exception code=0x{:08X} inside mutex->lock() — mutex is corrupt",
-					static_cast<unsigned>(GetExceptionCode()));
-				// Recreate a clean mutex to recover. The worker result will be lost this frame.
+				LOG_ERROR(Core, "[AuthUiPresenter] PAR-SEH exception code=0x{:08X} in mutex->lock() — mutex corrupt; reinitializing",
+					sehRes.code);
 				std::memset(m_asyncMutex.get(), 0, sizeof(std::mutex));
 				if constexpr (sizeof(std::mutex) == sizeof(CRITICAL_SECTION))
 					InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(m_asyncMutex.get()));
@@ -947,9 +954,7 @@ namespace engine::client
 			}
 #else
 			m_asyncMutex->lock();
-			lockOk = true;
 #endif
-			if (!lockOk) return;
 			LOG_WARN(Core, "[AuthUiPresenter] PAR-POSTLK lock acquired OK");
 			struct UnlockGuard {
 				std::mutex* m;
@@ -2282,25 +2287,25 @@ namespace engine::client
 				{
 					const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
 					uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-					const size_t sz = sizeof(std::mutex);
-					if (sz >= 8)  std::memcpy(&w0, raw +  0, 8);
-					if (sz >= 16) std::memcpy(&w1, raw +  8, 8);
-					if (sz >= 24) std::memcpy(&w2, raw + 16, 8);
-					if (sz >= 32) std::memcpy(&w3, raw + 24, 8);
-					if (sz >= 40) std::memcpy(&w4, raw + 32, 8);
+					if constexpr (sizeof(std::mutex) >= 8)  std::memcpy(&w0, raw +  0, 8);
+					if constexpr (sizeof(std::mutex) >= 16) std::memcpy(&w1, raw +  8, 8);
+					if constexpr (sizeof(std::mutex) >= 24) std::memcpy(&w2, raw + 16, 8);
+					if constexpr (sizeof(std::mutex) >= 32) std::memcpy(&w3, raw + 24, 8);
+					if constexpr (sizeof(std::mutex) >= 40) std::memcpy(&w4, raw + 32, 8);
 					LOG_WARN(Core, "[AuthUiPresenter] WKR-4b mutex [0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}", w0, w1, w2, w3, w4);
 				}
 #if defined(_WIN32)
-				bool wkrLockOk = false;
-				__try { m_asyncMutex->lock(); wkrLockOk = true; }
-				__except(EXCEPTION_EXECUTE_HANDLER) {
-					LOG_ERROR(Core, "[AuthUiPresenter] WKR-SEH exception code=0x{:08X} in worker mutex->lock()", static_cast<unsigned>(GetExceptionCode()));
-				}
-				if (wkrLockOk)
+				// Use SEH helper (C2712: __try cannot be in lambda with C++ unwinding).
+				const auto wkrSeh = TryMutexLock(m_asyncMutex.get());
+				if (wkrSeh.ok)
 				{
 					m_asyncResult = local;
 					m_asyncMutex->unlock();
 					LOG_WARN(Core, "[AuthUiPresenter] WKR-5 mutex released OK");
+				}
+				else
+				{
+					LOG_ERROR(Core, "[AuthUiPresenter] WKR-SEH exception code=0x{:08X} in worker mutex->lock()", wkrSeh.code);
 				}
 #else
 				std::lock_guard<std::mutex> lock(*m_asyncMutex);

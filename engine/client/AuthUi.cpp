@@ -458,13 +458,12 @@ namespace engine::client
 		// object being zero-initialized, which is not guaranteed for inline members of complex
 		// objects.  Allocating via make_unique gives the mutex its own dedicated heap block.
 		m_asyncMutex = std::make_unique<std::mutex>();
-		{
-			// INIT-CHECK: lire les octets bruts de la SRWLOCK juste après construction.
-			// Doit être 0x0 — toute autre valeur indique que le ctor n'a pas initialisé la mémoire.
-			const uint64_t initVal = *reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get());
-			LOG_INFO(Core, "[AuthUiPresenter] INIT-CHECK mutex={:p} SRWLOCK=0x{:016X} (expect 0x0)",
-				static_cast<const void*>(m_asyncMutex.get()), initVal);
-		}
+		// STAB.14: MSVC 17.14 Release + LTCG elides the zero-store from the constexpr
+		// std::mutex constructor — the heap block retains stale data (e.g. 0x2 = LFH
+		// free-list bookkeeping). AcquireSRWLockExclusive on a non-zero SRWLOCK follows
+		// an embedded pointer and crashes with 0xC0000005.
+		// Fix: explicitly reset the SRWLOCK to SRWLOCK_INIT via native_handle().
+		*m_asyncMutex->native_handle() = SRWLOCK_INIT;
 
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
 		if (!m_authEnabled)
@@ -858,33 +857,15 @@ namespace engine::client
 	{
 		// Fast-path: on the initial login screen no background worker has been started yet,
 		// so there is no async state to synchronize. Avoid touching the mutex unnecessarily.
-		LOG_INFO(Core, "[AuthUi] PAR 1: entry this={:p}", static_cast<const void*>(this));
 		const bool workerJoinable = m_worker.joinable();
-		LOG_INFO(Core, "[AuthUi] PAR 2: workerJoinable={}", (int)workerJoinable);
 		if (!workerJoinable && !m_asyncResult.ready)
 		{
-			LOG_INFO(Core, "[AuthUi] PAR 3: early return");
 			return;
 		}
 
-		LOG_INFO(Core, "[AuthUi] PAR 4: creating copy");
 		AsyncResult copy{};
-		LOG_INFO(Core, "[AuthUi] PAR 5: checking mutex ptr={:p}", static_cast<const void*>(m_asyncMutex.get()));
-#if defined(_WIN32)
-		{
-			// PAR 5b: read the raw SRWLOCK bytes to detect corruption before locking.
-			// A clean, unlocked SRWLOCK == 0. Any other value means the mutex has been overwritten.
-			const volatile uint64_t* rawSrw = reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get());
-			const uint64_t srwVal = *rawSrw;
-			LOG_INFO(Core, "[AuthUi] PAR 5b: SRWLOCK raw = 0x{:016X} (expect 0x0 if unlocked/clean)", srwVal);
-			MEMORY_BASIC_INFORMATION mbi5b{};
-			VirtualQuery(m_asyncMutex.get(), &mbi5b, sizeof(mbi5b));
-			LOG_INFO(Core, "[AuthUi] PAR 5c: VQ State=0x{:X} Protect=0x{:X} RegionSize={}", mbi5b.State, mbi5b.Protect, mbi5b.RegionSize);
-		}
-#endif
 		{
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
-			LOG_INFO(Core, "[AuthUi] PAR 6: mutex locked, checking ready");
 			if (!m_asyncResult.ready)
 			{
 				return;
@@ -892,7 +873,6 @@ namespace engine::client
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
-		LOG_INFO(Core, "[AuthUi] PAR 7: mutex released, joining worker");
 		JoinWorker();
 
 		const AsyncKind kind = m_pendingAsyncKind;
@@ -1897,15 +1877,11 @@ namespace engine::client
 
 	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config& cfg)
 	{
-		LOG_INFO(Core, "[AuthUi] SPW 1: JoinWorker");
 		JoinWorker();
 
-		LOG_INFO(Core, "[AuthUi] SPW 2: copy url");
 		const std::string url = m_masterAvailabilityUrl;
 		m_pendingAsyncKind = AsyncKind::StatusProbe;
-		LOG_INFO(Core, "[AuthUi] SPW 3: reset asyncResult (no lock: JoinWorker above ensures exclusivity)");
 		m_asyncResult = {};
-		LOG_INFO(Core, "[AuthUi] SPW 4: asyncResult reset, url='{}'", url);
 
 #if defined(_WIN32)
 		// Simulation values when the real status endpoint isn't available.
@@ -2196,9 +2172,7 @@ namespace engine::client
 
 		// WinHTTP is temporarily disabled to keep Windows builds stable.
 		// We still simulate a functional status response for UI/rotation purposes.
-		LOG_INFO(Core, "[AuthUi] SPW 5: before std::thread creation timeoutMs={}", timeoutMs);
 		m_worker = std::thread([this, timeoutMs, fillSimulatedStatus]() mutable {
-			LOG_INFO(Core, "[AuthUi] SPW thread: start");
 			AsyncResult local{};
 			std::this_thread::sleep_for(std::chrono::milliseconds(std::min<uint32_t>(timeoutMs, 300u)));
 			fillSimulatedStatus(local, "status probe simulated on Windows (HTTP probe disabled)");
@@ -2206,9 +2180,7 @@ namespace engine::client
 				std::lock_guard<std::mutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 			}
-			LOG_INFO(Core, "[AuthUi] SPW thread: done");
 		});
-		LOG_INFO(Core, "[AuthUi] SPW 6: std::thread created OK");
 #else
 		// Sur les plateformes non-Windows, le probe n'est pas implémenté.
 		m_worker = std::thread([this]() {
@@ -2520,26 +2492,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const engine::core::Config& cfg)
 	{
 		m_usingNativeAuthScreen = false;
-		{
-			// UPDATE-ENTRY-CHECK: lire SRWLOCK avant tout traitement pour savoir si la corruption
-			// vient d'avant Update() ou pendant Update().
-			const uint64_t srw = m_asyncMutex
-				? *reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get())
-				: uint64_t(-1);
-			LOG_INFO(Core, "[AuthUi] Update A: before SetAuthScreenState mutex={:p} SRWLOCK=0x{:016X}",
-				static_cast<const void*>(m_asyncMutex ? m_asyncMutex.get() : nullptr), srw);
-		}
 		window.SetAuthScreenState({});
-		{
-			const uint64_t srw = m_asyncMutex
-				? *reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get())
-				: uint64_t(-1);
-			LOG_INFO(Core, "[AuthUi] Update B: after SetAuthScreenState SRWLOCK=0x{:016X}", srw);
-		}
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
-		LOG_INFO(Core, "[AuthUi] Update C: before PollAsyncResult");
 		PollAsyncResult(cfg);
 		if (m_flowComplete)
 			return;
@@ -2551,15 +2507,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_authAvailabilityChecking)
 			m_authLogoRotationRad += deltaSeconds * 2.8f;
 
-		LOG_INFO(Core, "[AuthUi] Update D: shouldProbeStatus={} probeInited={}", (int)shouldProbeStatus, (int)m_statusProbeInitialized);
 		if (shouldProbeStatus)
 		{
 			// Démarrage immédiat dès le début de l'écran d'authentification, puis toutes les 2 minutes.
 			if (!m_statusProbeInitialized && !m_worker.joinable())
 			{
-				LOG_INFO(Core, "[AuthUi] Update E: before StartStatusProbeWorker");
 				StartStatusProbeWorker(cfg);
-				LOG_INFO(Core, "[AuthUi] Update F: after StartStatusProbeWorker");
 				m_statusProbeInitialized = true;
 				m_statusPollTimer = 0.f;
 			}

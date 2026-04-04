@@ -458,6 +458,13 @@ namespace engine::client
 		// object being zero-initialized, which is not guaranteed for inline members of complex
 		// objects.  Allocating via make_unique gives the mutex its own dedicated heap block.
 		m_asyncMutex = std::make_unique<std::mutex>();
+		{
+			// INIT-CHECK: lire les octets bruts de la SRWLOCK juste après construction.
+			// Doit être 0x0 — toute autre valeur indique que le ctor n'a pas initialisé la mémoire.
+			const uint64_t initVal = *reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get());
+			LOG_INFO(Core, "[AuthUiPresenter] INIT-CHECK mutex={:p} SRWLOCK=0x{:016X} (expect 0x0)",
+				static_cast<const void*>(m_asyncMutex.get()), initVal);
+		}
 
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
 		if (!m_authEnabled)
@@ -2513,9 +2520,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const engine::core::Config& cfg)
 	{
 		m_usingNativeAuthScreen = false;
-		LOG_INFO(Core, "[AuthUi] Update A: before SetAuthScreenState");
+		{
+			// UPDATE-ENTRY-CHECK: lire SRWLOCK avant tout traitement pour savoir si la corruption
+			// vient d'avant Update() ou pendant Update().
+			const uint64_t srw = m_asyncMutex
+				? *reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get())
+				: uint64_t(-1);
+			LOG_INFO(Core, "[AuthUi] Update A: before SetAuthScreenState mutex={:p} SRWLOCK=0x{:016X}",
+				static_cast<const void*>(m_asyncMutex ? m_asyncMutex.get() : nullptr), srw);
+		}
 		window.SetAuthScreenState({});
-		LOG_INFO(Core, "[AuthUi] Update B: after SetAuthScreenState");
+		{
+			const uint64_t srw = m_asyncMutex
+				? *reinterpret_cast<const volatile uint64_t*>(m_asyncMutex.get())
+				: uint64_t(-1);
+			LOG_INFO(Core, "[AuthUi] Update B: after SetAuthScreenState SRWLOCK=0x{:016X}", srw);
+		}
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 

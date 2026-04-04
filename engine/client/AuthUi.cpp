@@ -1863,14 +1863,18 @@ namespace engine::client
 
 	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config& cfg)
 	{
+		LOG_INFO(Core, "[AuthUi] SPW 1: JoinWorker");
 		JoinWorker();
 
+		LOG_INFO(Core, "[AuthUi] SPW 2: copy url");
 		const std::string url = m_masterAvailabilityUrl;
 		m_pendingAsyncKind = AsyncKind::StatusProbe;
+		LOG_INFO(Core, "[AuthUi] SPW 3: lock mutex reset asyncResult");
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
 			m_asyncResult = {};
 		}
+		LOG_INFO(Core, "[AuthUi] SPW 4: mutex released, url='{}'", url);
 
 #if defined(_WIN32)
 		// Simulation values when the real status endpoint isn't available.
@@ -2155,7 +2159,9 @@ namespace engine::client
 
 		// WinHTTP is temporarily disabled to keep Windows builds stable.
 		// We still simulate a functional status response for UI/rotation purposes.
+		LOG_INFO(Core, "[AuthUi] SPW 5: before std::thread creation timeoutMs={}", timeoutMs);
 		m_worker = std::thread([this, timeoutMs, fillSimulatedStatus]() mutable {
+			LOG_INFO(Core, "[AuthUi] SPW thread: start");
 			AsyncResult local{};
 			std::this_thread::sleep_for(std::chrono::milliseconds(std::min<uint32_t>(timeoutMs, 300u)));
 			fillSimulatedStatus(local, "status probe simulated on Windows (HTTP probe disabled)");
@@ -2163,7 +2169,9 @@ namespace engine::client
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
 				m_asyncResult = local;
 			}
+			LOG_INFO(Core, "[AuthUi] SPW thread: done");
 		});
+		LOG_INFO(Core, "[AuthUi] SPW 6: std::thread created OK");
 #else
 		// Sur les plateformes non-Windows, le probe n'est pas implémenté.
 		m_worker = std::thread([this]() {
@@ -2475,10 +2483,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const engine::core::Config& cfg)
 	{
 		m_usingNativeAuthScreen = false;
+		LOG_INFO(Core, "[AuthUi] Update A: before SetAuthScreenState");
 		window.SetAuthScreenState({});
+		LOG_INFO(Core, "[AuthUi] Update B: after SetAuthScreenState");
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
+		LOG_INFO(Core, "[AuthUi] Update C: before PollAsyncResult");
 		PollAsyncResult(cfg);
 		if (m_flowComplete)
 			return;
@@ -2490,12 +2501,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (m_authAvailabilityChecking)
 			m_authLogoRotationRad += deltaSeconds * 2.8f;
 
+		LOG_INFO(Core, "[AuthUi] Update D: shouldProbeStatus={} probeInited={}", (int)shouldProbeStatus, (int)m_statusProbeInitialized);
 		if (shouldProbeStatus)
 		{
 			// Démarrage immédiat dès le début de l'écran d'authentification, puis toutes les 2 minutes.
 			if (!m_statusProbeInitialized && !m_worker.joinable())
 			{
+				LOG_INFO(Core, "[AuthUi] Update E: before StartStatusProbeWorker");
 				StartStatusProbeWorker(cfg);
+				LOG_INFO(Core, "[AuthUi] Update F: after StartStatusProbeWorker");
 				m_statusProbeInitialized = true;
 				m_statusPollTimer = 0.f;
 			}

@@ -56,6 +56,8 @@ namespace engine::render
 		int32_t secondaryRowY = 0;
 		int32_t primaryRowY = 0;
 		int32_t buttonHalfWidth = 0;
+		int32_t primaryBtnWidth = 0;
+		int32_t secondaryBtnWidth = 0;
 	};
 
 	/// Remplit \p out si \p state.login et exactement 4 actions (modèle connexion deux rangées).

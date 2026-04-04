@@ -559,11 +559,12 @@ namespace engine::render
 			|| state.login || state.registerMode
 			|| state.verifyEmail || state.forgotPassword
 			|| state.characterCreate;
-		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 2 : 1), 4, 7);
+		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 4 : 1), 6, 9);
 		const int32_t smallScale = std::max(2, bodyScale - 1);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 		const int32_t compactFieldStep = std::max(48, bodyLineStep + 18);
-		const int32_t regularFieldStep = std::max(42, bodyLineStep + 14);
+		const int32_t manyFields = static_cast<int32_t>(model.fields.size()) > 4;
+		const int32_t regularFieldStep = manyFields ? std::max(50, bodyLineStep + 18) : std::max(42, bodyLineStep + 14);
 
 		auto appendBlock = [this, &vertices](int32_t x, int32_t y, int32_t widthPx, int32_t heightPx, const float color[4])
 		{
@@ -724,12 +725,24 @@ namespace engine::render
 				const int32_t step = layout.compactSingleField ? compactFieldStep : regularFieldStep;
 				const int32_t y = panelY + topOffset + i * step;
 				const auto& field = model.fields[static_cast<size_t>(i)];
-				AppendText(vertices, field.label, contentX + 10, y - (smallScale * 6), contentW / 2, smallScale, mutedColor);
+				AppendText(vertices, field.label, contentX + 10, y - (smallScale * 7 + 4), contentW / 2, smallScale, mutedColor);
 				AppendText(vertices, field.value, contentX + 12, y + 8, contentW - 24, bodyScale, field.active ? titleColor : bodyColor);
 				if (field.active)
 				{
 					const int32_t caretX = contentX + 12 + TextPixelWidth(field.value, bodyScale) + 2;
 					appendBlock(std::min(caretX, contentX + contentW - 14), y + 7, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
+				}
+				// Info icon "i" glyph and tooltip on hover
+				if (field.showInfoIcon)
+				{
+					const int32_t iconX = contentX + contentW - 18;
+					const int32_t iconY = y + 8;
+					AppendText(vertices, "i", iconX, iconY, 14, smallScale, titleColor);
+					if (field.hovered && !field.tooltip.empty())
+					{
+						const int32_t tooltipY = y + 38;
+						AppendText(vertices, field.tooltip, contentX + 8, tooltipY, contentW - 16, smallScale, bodyColor);
+					}
 				}
 			}
 			const int32_t bodyLinePitch = centeredLanguageSelection
@@ -763,6 +776,7 @@ namespace engine::render
 				for (int32_t row = 0; row < 2; ++row)
 				{
 					const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+					int32_t colX = contentX;
 					for (int32_t col = 0; col < 2; ++col)
 					{
 						const int32_t i = row * 2 + col;
@@ -770,14 +784,14 @@ namespace engine::render
 						{
 							break;
 						}
-						const int32_t x = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
 						const auto& action = model.actions[static_cast<size_t>(i)];
+						const int32_t btnW = (row == 1) ? (action.primary ? loginTwoRow.primaryBtnWidth : loginTwoRow.secondaryBtnWidth)
+							: loginTwoRow.buttonHalfWidth;
 						const int32_t labelWidth = TextPixelWidth(action.label, bodyScale);
-						const int32_t labelX = std::max(x + 8, x + (loginTwoRow.buttonHalfWidth - labelWidth) / 2);
-						// Les actions "emphasized" ont un fond de couleur proche de l’accent.
-						// Si on dessine le texte en accentColor, il devient quasi illisible.
+						const int32_t labelX = std::max(colX + 8, colX + (btnW - labelWidth) / 2);
 						const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
-						AppendText(vertices, action.label, labelX, rowY + 12, loginTwoRow.buttonHalfWidth - 16, bodyScale, ac);
+						AppendText(vertices, action.label, labelX, rowY + 12, btnW - 16, bodyScale, ac);
+						colX += btnW + gap;
 					}
 				}
 			}

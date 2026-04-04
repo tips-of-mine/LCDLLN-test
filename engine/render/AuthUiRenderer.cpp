@@ -95,7 +95,7 @@ namespace engine::render
 		metrics.panelY = (h - metrics.panelH) / 2;
 		metrics.innerX = metrics.panelX + 28;
 		metrics.artW = std::clamp(metrics.panelW / 3, 150, 240);
-		if (state.login && state.minimalChrome && !state.loginArtColumn)
+		if ((state.login || state.registerMode) && state.minimalChrome && !state.loginArtColumn)
 		{
 			metrics.artW = 0;
 		}
@@ -109,7 +109,7 @@ namespace engine::render
 		// titleScale/bodyScale augmentent : l’ancien offset fixe (104) faisait chevaucher labels et titres.
 		{
 			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
-			const int32_t titleScale = std::clamp(bodyScale + 1, 3, 5);
+			const int32_t titleScale = std::clamp(bodyScale + 4, 6, 9);
 			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 			const int32_t sectionTopPad = (state.languageSelection || state.languageOptions) ? 50 : 38;
 			const int32_t sectionBottom = sectionTopPad + titleScale * 14 + bodyLineStep;
@@ -153,6 +153,9 @@ namespace engine::render
 			out.secondaryRowY = bodyBottom;
 		}
 		out.buttonHalfWidth = std::max(120, (contentW - 10) / 2);
+		// Primary button (Valider) gets 60% of the row, secondary gets 40%
+		out.primaryBtnWidth = std::max(140, contentW * 60 / 100);
+		out.secondaryBtnWidth = std::max(100, contentW - out.primaryBtnWidth - gap);
 		return true;
 	}
 
@@ -215,17 +218,7 @@ namespace engine::render
 		}
 		else
 		{
-			// Pas de addRect plein écran ici : vkCmdClearAttachments remplace les pixels (pas de blending).
-			// Un voile plein écran effaçait entièrement le blit du PNG → fond bleu-gris uni.
-			// On ne garde que des vignettes sur les bords pour foncer légèrement les marges.
-			const int32_t vg = std::clamp(w / 40, 18, 56);
-			const float ve = 0.03f;
-			const float vn = 0.05f;
-			const float vb = 0.10f;
-			addRect(0, 0, vg, h, ve, vn, vb, 0.14f);
-			addRect(w - vg, 0, vg, h, ve, vn, vb, 0.14f);
-			addRect(0, 0, w, vg / 2, ve, vn, vb, 0.10f);
-			addRect(0, h - vg / 2, w, vg / 2, ve, vn, vb, 0.12f);
+			// Photo backdrop: no vignette borders - the background image fills the entire screen.
 		}
 		if (!state.minimalChrome)
 		{
@@ -268,7 +261,7 @@ namespace engine::render
 			// L'ancien hardcode panelY+72 plaçait le fond dans la zone du titre, créant un trait parasite.
 			const int32_t bannerBgY = panelY + layout.topOffset - 42;
 			addThemeRect(contentX, bannerBgY, contentW, 34, theme.secondary, 0.72f);
-			addThemeRect(contentX + 14, bannerBgY + 13, std::max(80, contentW - 28), 4, theme.text, 0.70f);
+			// Banner text bar removed to avoid "horizontal line" artifacts
 		}
 
 		if (state.submitting)
@@ -325,10 +318,10 @@ namespace engine::render
 
 		for (int32_t i = 0; i < fieldCount; ++i)
 		{
-			const int32_t step = compactSingleField ? 48 : 42;
+			const int32_t step = compactSingleField ? 48 : (fieldCount > 4 ? 50 : 42);
 			const int32_t y = panelY + topOffset + i * step;
 			addThemeRect(contentX, y, contentW, 32, theme.surface, 0.98f);
-			addThemeRect(contentX, y - 12, std::max(70, contentW / 3), 4, theme.mutedText, 0.75f);
+			// Label indicator bar removed to avoid visual "horizontal line" artifacts
 			const bool activeField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].active : false;
 			const bool hoveredField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].hovered : false;
 			if (hoveredField && !activeField)
@@ -340,13 +333,27 @@ namespace engine::render
 				activeField ? 0.58f : 0.38f,
 				activeField ? 0.24f : 0.68f,
 				1.0f);
-			addThemeRect(contentX + 18, y + 11, std::max(60, contentW - 54 - i * 10), 3, theme.text, activeField ? 0.78f : (hoveredField ? 0.66f : 0.50f));
+			// Field text indicator bar removed to avoid visual "horizontal line" artifacts
+				// Info icon indicator (small circle-like rect) for fields with tooltips
+				if (static_cast<size_t>(i) < model.fields.size() && model.fields[static_cast<size_t>(i)].showInfoIcon)
+				{
+					const int32_t iconX = contentX + contentW - 22;
+					const int32_t iconY = y + 6;
+					addThemeRect(iconX, iconY, 18, 18, theme.accent, hoveredField ? 1.0f : 0.65f);
+					// Show tooltip background when hovered
+					if (hoveredField && !model.fields[static_cast<size_t>(i)].tooltip.empty())
+					{
+						const int32_t tooltipY = y + 34;
+						addThemeRect(contentX, tooltipY, contentW, 28, theme.surface, 0.96f);
+						addThemeRect(contentX, tooltipY, contentW, 2, theme.accent, 1.0f);
+					}
+				}
 		}
 
 		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
 		const int32_t bodyLineStepMetrics = 7 * bodyScaleMetrics + 2 * bodyScaleMetrics;
 		const int32_t bodyLinePitch = std::max(28, bodyLineStepMetrics + 10);
-		const int32_t bodyStartY = panelY + topOffset + fieldCount * (compactSingleField ? 48 : 42) + 18;
+		const int32_t bodyStartY = panelY + topOffset + fieldCount * (compactSingleField ? 48 : (fieldCount > 4 ? 50 : 42)) + 18;
 		for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 		{
 			const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
@@ -362,8 +369,7 @@ namespace engine::render
 			{
 				addThemeRect(contentX - 4, y - 6, contentW, 14, theme.primary, 0.12f);
 			}
-			addThemeRect(contentX, y, std::max(120, contentW - localIdx * 12), 4, theme.text,
-				activeBodyLine ? 0.88f : (hoveredBodyLine ? 0.68f : (localIdx == 0 ? 0.76f : 0.46f)));
+			// Body line text bar removed to avoid "horizontal line" artifacts
 		}
 
 		const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
@@ -375,6 +381,7 @@ namespace engine::render
 			for (int32_t row = 0; row < 2; ++row)
 			{
 				const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+				int32_t colX = contentX;
 				for (int32_t col = 0; col < 2; ++col)
 				{
 					const int32_t i = row * 2 + col;
@@ -382,18 +389,20 @@ namespace engine::render
 					{
 						break;
 					}
-					const int32_t x = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
 					const bool primary = model.actions[static_cast<size_t>(i)].primary;
 					const bool emphasized = model.actions[static_cast<size_t>(i)].emphasized;
 					const bool hovered = model.actions[static_cast<size_t>(i)].hovered;
+					// Primary row: Valider gets wider, Retour au bureau gets narrower
+					const int32_t btnW = (row == 1) ? (primary ? loginTwoRow.primaryBtnWidth : loginTwoRow.secondaryBtnWidth)
+						: loginTwoRow.buttonHalfWidth;
 					const float* fill = primary ? theme.primary : (emphasized ? theme.accent : theme.surface);
-					addThemeRect(x, rowY, loginTwoRow.buttonHalfWidth, 40, fill, hovered ? 1.0f : 0.94f);
+					addThemeRect(colX, rowY, btnW, 40, fill, hovered ? 1.0f : 0.94f);
 					if (hovered)
 					{
-						addThemeRect(x, rowY, loginTwoRow.buttonHalfWidth, 3, theme.accent, 1.0f);
+						addThemeRect(colX, rowY, btnW, 3, theme.accent, 1.0f);
 					}
-					addThemeRect(x + 12, rowY + 14, std::max(48, loginTwoRow.buttonHalfWidth - 24), 4, theme.text,
-						primary ? (hovered ? 0.78f : 0.64f) : (hovered ? 0.62f : 0.48f));
+					// Button text bar removed
+					colX += btnW + gap;
 				}
 			}
 		}
@@ -413,7 +422,7 @@ namespace engine::render
 				{
 					addThemeRect(x, buttonY, actionW, 3, theme.accent, 1.0f);
 				}
-				addThemeRect(x + 18, buttonY + 15, std::max(48, actionW - 36), 4, theme.text, primary ? (hovered ? 0.72f : 0.60f) : (hovered ? 0.58f : 0.42f));
+				// Button text bar removed
 			}
 		}
 

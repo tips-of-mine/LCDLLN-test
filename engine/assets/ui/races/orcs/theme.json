@@ -14,12 +14,15 @@
     "border": "#2A3A2C"
   },
   "typography": {
-    "fontFamily": "Oswald",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
     "titleSize": 22
   },
-  "metrics": { "radius": 6, "padding": 10 },
+  "metrics": {
+    "radius": 6,
+    "padding": 10
+  },
   "assets": {
     "bg": "assets/ui/races/orcs/images/bg.png",
     "emblem": "assets/ui/races/orcs/images/emblem.png"

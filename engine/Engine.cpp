@@ -1763,7 +1763,7 @@ namespace engine
 														}
 														LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
 														// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
-														if (m_authLogoPass.IsValid() && authVisualState.login && m_authLogoTexture.IsValid())
+														if (m_authLogoPass.IsValid() && authVisualState.authLogoSpin && m_authLogoTexture.IsValid())
 														{
 															engine::render::TextureAsset* logoTex = m_authLogoTexture.Get();
 															if (logoTex && logoTex->image != VK_NULL_HANDLE && logoTex->view != VK_NULL_HANDLE)

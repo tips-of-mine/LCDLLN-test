@@ -2049,11 +2049,13 @@ namespace engine
 		m_frameArena.BeginFrame(m_time.FrameIndex());
 		m_chunkStats.ResetPerFrame();
 		PumpGameplayPackets();
+		LOG_INFO(Core, "[Engine] BeginFrame end frame={}", m_currentFrame);
 	}
 
 	void Engine::Update()
 	{
 		// PROFILE_FUNCTION();
+		LOG_INFO(Core, "[Engine] Update begin frame={}", m_currentFrame);
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -2096,7 +2098,9 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+			LOG_INFO(Core, "[Engine] Update authUi.Update begin");
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
+			LOG_INFO(Core, "[Engine] Update authUi.Update end");
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
@@ -2288,6 +2292,7 @@ namespace engine
 		for (int i = 0; i < 256; ++i)
 			(void)m_frameArena.alloc(64, alignof(std::max_align_t), engine::core::memory::MemTag::Temp);
 		out.drawItemCount = 256;
+		LOG_INFO(Core, "[Engine] Update end frame={}", m_currentFrame);
 	}
 
 	void Engine::Render()
@@ -2295,8 +2300,10 @@ namespace engine
 	    // PROFILE_FUNCTION();
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
+	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
 	        return;
 	    }
+	    LOG_INFO(Render, "[Engine] Render begin frame={}", m_currentFrame);
 	    const uint32_t frameIndex          = m_currentFrame % 2;
 	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
 	    ::VkDevice     device              = m_vkDeviceContext.GetDevice();
@@ -2377,21 +2384,24 @@ namespace engine
 	    };
 
 	    uint32_t imageIndex = 0;
+	    LOG_INFO(Render, "[Engine] Render vkAcquireNextImageKHR begin frame={}", m_currentFrame);
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
-	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
+	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; LOG_WARN(Render, "[Engine] Render vkAcquireNextImageKHR OUT_OF_DATE frame={}", m_currentFrame); return; }
 	    if (result == VK_SUBOPTIMAL_KHR)
 	    {
 	        handleSuboptimal("Acquire");
 	    }
 	    else if (result != VK_SUCCESS)
 	    {
+	        LOG_WARN(Render, "[Engine] Render vkAcquireNextImageKHR failed result={} frame={}", static_cast<int>(result), m_currentFrame);
 	        return;
 	    }
 	    else
 	    {
 	        m_suboptimalStreak = 0;
 	    }
-	
+	    LOG_INFO(Render, "[Engine] Render vkAcquireNextImageKHR OK imageIndex={} frame={}", imageIndex, m_currentFrame);
+
 	    vkResetCommandPool(device, fr.cmdPool, 0);
 	
 	    VkCommandBufferBeginInfo beginInfo{};

@@ -2106,7 +2106,11 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+			// DIAG ENG-UPD-PRE
+			LOG_WARN(Core, "[Engine] ENG-UPD-PRE calling authUi.Update frame={}", m_currentFrame);
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
+			// DIAG ENG-UPD-POST
+			LOG_WARN(Core, "[Engine] ENG-UPD-POST authUi.Update returned frame={}", m_currentFrame);
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();

@@ -464,6 +464,15 @@ namespace engine::client
 		// an embedded pointer and crashes with 0xC0000005.
 		// native_handle() is absent in MSVC STL 14.44; use memset to force SRWLOCK_INIT.
 		std::memset(m_asyncMutex.get(), 0, sizeof(std::mutex));
+		{
+			// DIAG STAB14-CHECK: log raw SRWLOCK bytes after memset to confirm optimizer
+			// has not elided the zero-store. Expected: all 8 bytes = 0x00.
+			const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
+			uint64_t raw64 = 0;
+			std::memcpy(&raw64, raw, sizeof(uint64_t));
+			LOG_WARN(Core, "[AuthUiPresenter] STAB14-CHECK mutex ptr={} raw8bytes=0x{:016X}",
+				static_cast<const void*>(m_asyncMutex.get()), raw64);
+		}
 
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
 		if (!m_authEnabled)
@@ -855,19 +864,35 @@ namespace engine::client
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
+		// DIAG PAR-ENTER
+		LOG_WARN(Core, "[AuthUiPresenter] PAR-ENTER workerJoinable={} asyncReady={} mutexPtr={}",
+			(int)m_worker.joinable(), (int)m_asyncResult.ready,
+			static_cast<const void*>(m_asyncMutex.get()));
 		// Fast-path: on the initial login screen no background worker has been started yet,
 		// so there is no async state to synchronize. Avoid touching the mutex unnecessarily.
 		const bool workerJoinable = m_worker.joinable();
 		if (!workerJoinable && !m_asyncResult.ready)
 		{
+			LOG_WARN(Core, "[AuthUiPresenter] PAR-FASTPATH return (no worker, no result)");
 			return;
 		}
+		LOG_WARN(Core, "[AuthUiPresenter] PAR-PAST-FASTPATH (workerJoinable={} asyncReady={})",
+			(int)workerJoinable, (int)m_asyncResult.ready);
 
 		AsyncResult copy{};
 		{
+			// DIAG PAR-PRELK: log raw SRWLOCK bytes before acquiring
+			{
+				const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
+				uint64_t raw64 = 0;
+				std::memcpy(&raw64, raw, sizeof(uint64_t));
+				LOG_WARN(Core, "[AuthUiPresenter] PAR-PRELK mutex raw8bytes=0x{:016X}", raw64);
+			}
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			LOG_WARN(Core, "[AuthUiPresenter] PAR-POSTLK lock acquired");
 			if (!m_asyncResult.ready)
 			{
+				LOG_WARN(Core, "[AuthUiPresenter] PAR-NOREADY return inside lock");
 				return;
 			}
 			copy = m_asyncResult;
@@ -2495,6 +2520,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		window.SetAuthScreenState({});
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
+
+		// DIAG UPDATE-ENTRY
+		LOG_WARN(Core, "[AuthUiPresenter] UPDATE-ENTRY phase={} initialized={} flowComplete={}",
+			(int)m_phase, (int)m_initialized, (int)m_flowComplete);
 
 		PollAsyncResult(cfg);
 		if (m_flowComplete)

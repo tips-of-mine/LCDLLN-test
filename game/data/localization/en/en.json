@@ -111,5 +111,7 @@
   "auth.panel.edition": "Edition",
   "auth.panel.version": "Version",
   "auth.panel.title": "Title",
-  "auth.panel.language": "Language"
+  "auth.panel.language": "Language",
+  "auth.status.unavailable": "Servers under maintenance. Please try again in a moment.",
+  "auth.status.checking": "Checking server status..."
 }

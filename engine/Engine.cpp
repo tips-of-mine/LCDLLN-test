@@ -28,6 +28,16 @@
 #include <thread>
 #include <vector>
 
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace engine
 {
 	namespace
@@ -2096,7 +2106,11 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+			// DIAG ENG-UPD-PRE
+			LOG_WARN(Core, "[Engine] ENG-UPD-PRE calling authUi.Update frame={}", m_currentFrame);
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
+			// DIAG ENG-UPD-POST
+			LOG_WARN(Core, "[Engine] ENG-UPD-POST authUi.Update returned frame={}", m_currentFrame);
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
@@ -2295,8 +2309,10 @@ namespace engine
 	    // PROFILE_FUNCTION();
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
+	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
 	        return;
 	    }
+	    LOG_INFO(Render, "[Engine] Render begin frame={}", m_currentFrame);
 	    const uint32_t frameIndex          = m_currentFrame % 2;
 	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
 	    ::VkDevice     device              = m_vkDeviceContext.GetDevice();
@@ -2377,21 +2393,24 @@ namespace engine
 	    };
 
 	    uint32_t imageIndex = 0;
+	    LOG_INFO(Render, "[Engine] Render vkAcquireNextImageKHR begin frame={}", m_currentFrame);
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
-	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; return; }
+	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; LOG_WARN(Render, "[Engine] Render vkAcquireNextImageKHR OUT_OF_DATE frame={}", m_currentFrame); return; }
 	    if (result == VK_SUBOPTIMAL_KHR)
 	    {
 	        handleSuboptimal("Acquire");
 	    }
 	    else if (result != VK_SUCCESS)
 	    {
+	        LOG_WARN(Render, "[Engine] Render vkAcquireNextImageKHR failed result={} frame={}", static_cast<int>(result), m_currentFrame);
 	        return;
 	    }
 	    else
 	    {
 	        m_suboptimalStreak = 0;
 	    }
-	
+	    LOG_INFO(Render, "[Engine] Render vkAcquireNextImageKHR OK imageIndex={} frame={}", imageIndex, m_currentFrame);
+
 	    vkResetCommandPool(device, fr.cmdPool, 0);
 	
 	    VkCommandBufferBeginInfo beginInfo{};

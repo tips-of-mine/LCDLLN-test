@@ -462,8 +462,8 @@ namespace engine::client
 		// std::mutex constructor — the heap block retains stale data (e.g. 0x2 = LFH
 		// free-list bookkeeping). AcquireSRWLockExclusive on a non-zero SRWLOCK follows
 		// an embedded pointer and crashes with 0xC0000005.
-		// Fix: explicitly reset the SRWLOCK to SRWLOCK_INIT via native_handle().
-		*m_asyncMutex->native_handle() = SRWLOCK_INIT;
+		// native_handle() is absent in MSVC STL 14.44; use memset to force SRWLOCK_INIT.
+		std::memset(m_asyncMutex.get(), 0, sizeof(std::mutex));
 
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
 		if (!m_authEnabled)

@@ -2153,8 +2153,8 @@ namespace engine::client
 			local.statusCache = {};
 			local.statusCache.authOk = false;
 			local.statusCache.masterOk = false;
-			local.statusCache.infoMessage = resp.error.empty() ? “unreachable” : resp.error;
-			local.message = resp.error.empty() ? “endpoint unreachable or invalid response” : resp.error;
+			local.statusCache.infoMessage = resp.error.empty() ? "unreachable" : resp.error;
+			local.message = resp.error.empty() ? "endpoint unreachable or invalid response" : resp.error;
 			{
 				std::lock_guard<std::mutex> lock(m_asyncMutex);
 				m_asyncResult = local;

@@ -622,7 +622,11 @@ namespace engine::render
 
 		if (!model.infoBanner.empty())
 		{
-			AppendText(vertices, model.infoBanner, contentX + 10, sectionTitleY + 9, contentW - 20, bodyScale, titleColor);
+			// Aligner le texte de la bannière avec son fond (AuthUiRenderer) : topOffset réserve 44px
+			// au-dessus du premier champ pour la bannière. sectionTitleY + 9 provoquait un chevauchement
+			// avec le titre de section (sectionTitle occupe sectionTitleY à sectionTitleY + 7*bodyScale).
+			const int32_t bannerY = panelY + topOffset - 38;
+			AppendText(vertices, model.infoBanner, contentX + 10, bannerY, contentW - 20, bodyScale, titleColor);
 		}
 
 		if (state.submitting)

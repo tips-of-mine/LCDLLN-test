@@ -264,8 +264,11 @@ namespace engine::render
 
 		if (!model.infoBanner.empty())
 		{
-			addThemeRect(contentX, panelY + 72, contentW, 34, theme.secondary, 0.72f);
-			addThemeRect(contentX + 14, panelY + 85, std::max(80, contentW - 28), 4, theme.text, 0.70f);
+			// Aligner le fond avec le texte de la bannière (AuthGlyphPass : panelY + topOffset - 38).
+			// L'ancien hardcode panelY+72 plaçait le fond dans la zone du titre, créant un trait parasite.
+			const int32_t bannerBgY = panelY + layout.topOffset - 42;
+			addThemeRect(contentX, bannerBgY, contentW, 34, theme.secondary, 0.72f);
+			addThemeRect(contentX + 14, bannerBgY + 13, std::max(80, contentW - 28), 4, theme.text, 0.70f);
 		}
 
 		if (state.submitting)

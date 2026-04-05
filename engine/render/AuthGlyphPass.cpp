@@ -1374,15 +1374,18 @@ namespace engine::render
 			if (!model.actions.empty())
 			{
 				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
-				const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * 10) / actionCount);
+				const int32_t gapTerms = 10;
+				const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gapTerms) / actionCount);
+				const int32_t termsBtnY = panelY + panelH - 92 + (58 - kAuthUiActionButtonHeightPx) / 2;
+				const int32_t termsLabelY = termsBtnY + (kAuthUiActionButtonHeightPx - bodyLineStep) / 2;
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size()) break;
-					const int32_t x = contentX + i * (actionW + 10);
+					const int32_t x = contentX + i * (actionW + gapTerms);
 					const std::string& label = model.actions[static_cast<size_t>(i)].label;
 					const int32_t labelWidth = MeasureTextWidthPx(label, bodyScale);
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
-					AppendText(vertices, label, labelX, panelY + panelH - 46, actionW - 20, bodyScale, titleColor);
+					AppendText(vertices, label, labelX, termsLabelY, actionW - 20, bodyScale, titleColor);
 				}
 			}
 		}
@@ -1393,8 +1396,16 @@ namespace engine::render
 				const int32_t y = panelY + topOffset + i * fieldRowStep;
 				const auto& field = model.fields[static_cast<size_t>(i)];
 				AppendText(vertices, field.label, contentX + 10, y - (smallScale * 9), contentW / 2, smallScale, mutedColor);
+				if (!field.tooltipText.empty())
+				{
+					AppendText(vertices, "(i)", std::max(contentX + 10, contentX + contentW - 36), y - (smallScale * 9), 28, smallScale, accentColor);
+				}
 				AppendText(vertices, field.value, contentX + 12, y + 8, contentW - 24, bodyScale, field.active ? titleColor : bodyColor);
-				if (field.active)
+				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
+				{
+					AppendText(vertices, field.tooltipText, contentX + 8, y + 36, contentW - 16, smallScale, bodyColor);
+				}
+				if (field.active && !field.cyclePicker)
 				{
 					const int32_t caretX = contentX + 12 + MeasureTextWidthPx(field.value, bodyScale) + 2;
 					appendBlock(std::min(caretX, contentX + contentW - 14), y + 7, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
@@ -1459,18 +1470,20 @@ namespace engine::render
 						const auto& action = model.actions[static_cast<size_t>(i)];
 						const int32_t labelWidth = MeasureTextWidthPx(action.label, bodyScale);
 						const int32_t labelX = std::max(x + 8, x + (btnW - labelWidth) / 2);
+						const int32_t labelY = rowY + (kAuthUiActionButtonHeightPx - bodyLineStep) / 2;
 						// Les actions "emphasized" ont un fond de couleur proche de l’accent.
 						// Si on dessine le texte en accentColor, il devient quasi illisible.
 						const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
-						AppendText(vertices, action.label, labelX, rowY + 12, btnW - 16, bodyScale, ac);
+						AppendText(vertices, action.label, labelX, labelY, btnW - 16, bodyScale, ac);
 					}
 				}
 			}
 			else
 			{
 				const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
-				const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
+				const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
 				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
+				const int32_t singleRowLabelY = buttonY + (kAuthUiActionButtonHeightPx - bodyLineStep) / 2;
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size()) break;
@@ -1479,7 +1492,7 @@ namespace engine::render
 					const int32_t labelWidth = MeasureTextWidthPx(action.label, bodyScale);
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
 					const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
-					AppendText(vertices, action.label, labelX, buttonY + 14, actionW - 20, bodyScale, ac);
+					AppendText(vertices, action.label, labelX, singleRowLabelY, actionW - 20, bodyScale, ac);
 				}
 			}
 			if (!model.errorText.empty())

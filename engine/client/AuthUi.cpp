@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <filesystem>
 #include <mutex>
 #include <thread>
@@ -48,7 +49,7 @@ namespace engine::client
 		constexpr std::string_view kLoginBackgroundPath = "ui/loading/background.png";
 		constexpr std::string_view kLoginLogoPath = "";
 		constexpr std::string_view kRegisterBackgroundPath = "ui/loading/background.png";
-		constexpr std::string_view kRegisterInfoPath = "";
+		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
 
 		std::string JsonBool(bool value)
 		{
@@ -294,20 +295,83 @@ namespace engine::client
 			return true;
 		}
 
+		int DaysInMonth(int year, int month)
+		{
+			static const int dim[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+			if (month < 1 || month > 12)
+			{
+				return 31;
+			}
+			int d = dim[month - 1];
+			if (month == 2)
+			{
+				const bool leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+				if (leap)
+				{
+					d = 29;
+				}
+			}
+			return d;
+		}
+
 		[[maybe_unused]] bool IsValidBirthDateFields(std::string_view day, std::string_view month, std::string_view year)
 		{
 			if (!IsAsciiDigits(day) || !IsAsciiDigits(month) || !IsAsciiDigits(year))
+			{
 				return false;
+			}
 			const int d = std::stoi(std::string(day));
 			const int m = std::stoi(std::string(month));
 			const int y = std::stoi(std::string(year));
-			if (y < 1900 || y > 2100)
+			if (y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1)
+			{
 				return false;
-			if (m < 1 || m > 12)
+			}
+			if (d > DaysInMonth(y, m))
+			{
 				return false;
-			if (d < 1 || d > 31)
-				return false;
+			}
 			return true;
+		}
+
+		std::string BirthCycleDisplay(std::string_view raw, int defaultV, int minV, int maxV)
+		{
+			int v = defaultV;
+			if (!raw.empty() && IsAsciiDigits(raw))
+			{
+				v = std::stoi(std::string(raw));
+				v = std::clamp(v, minV, maxV);
+			}
+			return std::string("< ") + std::to_string(v) + " >";
+		}
+
+		void AdjustBirthCycle(std::string& s, int delta, int minV, int maxV)
+		{
+			int v = minV;
+			if (!s.empty() && IsAsciiDigits(s))
+			{
+				v = std::stoi(s);
+				v = std::clamp(v, minV, maxV);
+			}
+			v += delta;
+			v = std::clamp(v, minV, maxV);
+			s = std::to_string(v);
+		}
+
+		std::string Pad2(int v)
+		{
+			v = std::clamp(v, 0, 99);
+			char b[8]{};
+			std::snprintf(b, sizeof(b), "%02d", v);
+			return std::string(b);
+		}
+
+		std::string Pad4Year(int y)
+		{
+			y = std::clamp(y, 1900, 2100);
+			char b[8]{};
+			std::snprintf(b, sizeof(b), "%04d", y);
+			return std::string(b);
 		}
 
 		[[maybe_unused]] bool IsValidVerificationCode(std::string_view code)
@@ -1228,7 +1292,7 @@ namespace {
 		const std::string email = m_email;
 		const std::string firstName = m_firstName;
 		const std::string lastName = m_lastName;
-		const std::string birthDate = m_birthYear + "-" + m_birthMonth + "-" + m_birthDay;
+		const std::string birthDate = Pad4Year(std::stoi(m_birthYear)) + "-" + Pad2(std::stoi(m_birthMonth)) + "-" + Pad2(std::stoi(m_birthDay));
 
 		m_pendingAsyncKind = AsyncKind::Register;
 		{
@@ -2832,6 +2896,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t mx = input.MouseX();
 				const int32_t my = input.MouseY();
 				m_hoveredFieldIndex = -1;
+				m_hoveredFieldInfoIndex = -1;
 				m_hoveredBodyLineIndex = -1;
 				m_hoveredActionIndex = -1;
 
@@ -2854,6 +2919,44 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					{
 						m_hoveredFieldIndex = static_cast<int32_t>(i);
 						break;
+					}
+				}
+				if (m_phase == Phase::Register)
+				{
+					for (int32_t fi = 5; fi <= 7; ++fi)
+					{
+						const int32_t y = panelY + topOffset + fi * fieldStep;
+						const int32_t ix = contentX + contentW - 22;
+						if (contains(mx, my, ix, y - 10, 18, 28))
+						{
+							m_hoveredFieldInfoIndex = fi;
+							break;
+						}
+					}
+				}
+
+				if (m_phase == Phase::Register && input.MouseScrollDelta() != 0)
+				{
+					int32_t f = m_hoveredFieldIndex;
+					if (f < 5 || f > 7)
+					{
+						f = static_cast<int32_t>(m_activeField);
+					}
+					if (f >= 5 && f <= 7)
+					{
+						const int d = input.MouseScrollDelta() > 0 ? 1 : -1;
+						if (f == 5)
+						{
+							AdjustBirthCycle(m_birthDay, d, 1, 31);
+						}
+						else if (f == 6)
+						{
+							AdjustBirthCycle(m_birthMonth, d, 1, 12);
+						}
+						else
+						{
+							AdjustBirthCycle(m_birthYear, d, 1900, 2100);
+						}
 					}
 				}
 
@@ -2901,7 +3004,21 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 				const int32_t gap = 10;
 				engine::render::AuthLoginTwoRowLayout loginTwoRow{};
-				if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
+				if (m_phase == Phase::Terms)
+				{
+					const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gap) / actionCount);
+					const int32_t termsBtnY = panelY + panelH - 92 + (58 - engine::render::kAuthUiActionButtonHeightPx) / 2;
+					for (int32_t i = 0; i < actionCount; ++i)
+					{
+						const int32_t x = contentX + i * (actionW + gap);
+						if (contains(mx, my, x, termsBtnY, actionW, engine::render::kAuthUiActionButtonHeightPx))
+						{
+							m_hoveredActionIndex = i;
+							break;
+						}
+					}
+				}
+				else if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
 				{
 					bool foundAction = false;
 					for (int32_t row = 0; row < 2 && !foundAction; ++row)
@@ -2921,7 +3038,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								btnW = (col == 0) ? loginTwoRow.primarySubmitWidth : loginTwoRow.primaryQuitWidth;
 								x = (col == 0) ? contentX : (contentX + loginTwoRow.primarySubmitWidth + gap);
 							}
-							if (contains(mx, my, x, rowY, btnW, 40))
+							if (contains(mx, my, x, rowY, btnW, engine::render::kAuthUiActionButtonHeightPx))
 							{
 								m_hoveredActionIndex = i;
 								foundAction = true;
@@ -2932,13 +3049,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				else
 				{
-					const int32_t buttonY = std::min(panelY + panelH - 84,
+					const int32_t buttonY = std::min(panelY + panelH - 86,
 						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
 					const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 					for (int32_t i = 0; i < actionCount; ++i)
 					{
 						const int32_t x = contentX + i * (actionW + gap);
-						if (contains(mx, my, x, buttonY, actionW, 42))
+						if (contains(mx, my, x, buttonY, actionW, engine::render::kAuthUiActionButtonHeightPx))
 						{
 							m_hoveredActionIndex = i;
 							break;
@@ -3054,7 +3171,26 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					if (leftClick)
 					{
 						bool actionHit = false;
-						if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
+						if (m_phase == Phase::Terms)
+						{
+							const int32_t termsBtnY = panelY + panelH - 92 + (58 - engine::render::kAuthUiActionButtonHeightPx) / 2;
+							const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gap) / actionCount);
+							for (int32_t i = 0; i < actionCount; ++i)
+							{
+								const int32_t x = contentX + i * (actionW + gap);
+								if (!contains(mx, my, x, termsBtnY, actionW, engine::render::kAuthUiActionButtonHeightPx))
+								{
+									continue;
+								}
+								actionHit = true;
+								if (i == 0)
+								{
+									applyPrimaryAction();
+								}
+								break;
+							}
+						}
+						else if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
 						{
 							for (int32_t row = 0; row < 2 && !actionHit; ++row)
 							{
@@ -3073,7 +3209,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 										btnW = (col == 0) ? loginTwoRow.primarySubmitWidth : loginTwoRow.primaryQuitWidth;
 										ax = (col == 0) ? contentX : (contentX + loginTwoRow.primarySubmitWidth + gap);
 									}
-									if (!contains(mx, my, ax, rowY, btnW, 40))
+									if (!contains(mx, my, ax, rowY, btnW, engine::render::kAuthUiActionButtonHeightPx))
 									{
 										continue;
 									}
@@ -3095,13 +3231,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
 						{
-							const int32_t buttonY = std::min(panelY + panelH - 84,
+							const int32_t buttonY = std::min(panelY + panelH - 86,
 								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
 							const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 							for (int32_t i = 0; i < actionCount; ++i)
 							{
 								const int32_t x = contentX + i * (actionW + gap);
-								if (!contains(mx, my, x, buttonY, actionW, 42))
+								if (!contains(mx, my, x, buttonY, actionW, engine::render::kAuthUiActionButtonHeightPx))
 								{
 									continue;
 								}
@@ -3138,8 +3274,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 										LOG_INFO(Core, "[AuthUiPresenter] Language options closed via 'return'");
 									}
 									break;
-								case Phase::Terms:
-									if (i == 0) applyPrimaryAction();
+								default:
 									break;
 								}
 								break;
@@ -3158,29 +3293,33 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				if (std::string* field = currentField())
 				{
-				for (unsigned char c : text)
-				{
-					// Tab / retours chariot : gérés par Key::Tab et ignorés ici (sinon Tab s’insère comme texte).
-					if (c < 32)
-						continue;
-					const bool digitsOnlyField =
-						(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6 || m_activeField == 7)) ||
-						(m_phase == Phase::VerifyEmail);
-					if (digitsOnlyField && (c < '0' || c > '9'))
-						continue;
-					const size_t maxLen =
-						(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6)) ? 2u :
-						(m_phase == Phase::Register && m_activeField == 7) ? 4u :
-						(m_phase == Phase::VerifyEmail) ? 6u :
-						(m_phase == Phase::CharacterCreate) ? 32u : 256u;
-					if (field->size() >= maxLen)
-						continue;
-					field->push_back(static_cast<char>(c));
-				}
-				if (m_phase == Phase::Login && m_rememberLogin && m_activeField == 0 && !text.empty())
-				{
-					PersistRememberedLoginSidecar(m_login);
-				}
+					const bool registerBirthCombo = m_phase == Phase::Register && m_activeField >= 5u && m_activeField <= 7u;
+					if (!registerBirthCombo)
+					{
+						for (unsigned char c : text)
+						{
+							// Tab / retours chariot : gérés par Key::Tab et ignorés ici (sinon Tab s’insère comme texte).
+							if (c < 32)
+								continue;
+							const bool digitsOnlyField =
+								(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6 || m_activeField == 7)) ||
+								(m_phase == Phase::VerifyEmail);
+							if (digitsOnlyField && (c < '0' || c > '9'))
+								continue;
+							const size_t maxLen =
+								(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6)) ? 2u :
+								(m_phase == Phase::Register && m_activeField == 7) ? 4u :
+								(m_phase == Phase::VerifyEmail) ? 6u :
+								(m_phase == Phase::CharacterCreate) ? 32u : 256u;
+							if (field->size() >= maxLen)
+								continue;
+							field->push_back(static_cast<char>(c));
+						}
+					}
+					if (m_phase == Phase::Login && m_rememberLogin && m_activeField == 0 && !text.empty())
+					{
+						PersistRememberedLoginSidecar(m_login);
+					}
 				}
 			}
 		}
@@ -3198,7 +3337,25 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			};
 			if (std::string* field = currentField())
 			{
-				popLast(*field);
+				if (m_phase == Phase::Register && m_activeField >= 5u && m_activeField <= 7u)
+				{
+					if (m_activeField == 5)
+					{
+						AdjustBirthCycle(m_birthDay, -1, 1, 31);
+					}
+					else if (m_activeField == 6)
+					{
+						AdjustBirthCycle(m_birthMonth, -1, 1, 12);
+					}
+					else
+					{
+						AdjustBirthCycle(m_birthYear, -1, 1900, 2100);
+					}
+				}
+				else
+				{
+					popLast(*field);
+				}
 			}
 			if (m_phase == Phase::Login && m_rememberLogin && m_activeField == 0)
 			{
@@ -3217,6 +3374,33 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			else
 				m_activeField = 0;
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
+		}
+
+		if (!usingNativeAuth && m_phase == Phase::Register && m_activeField >= 5u && m_activeField <= 7u)
+		{
+			const auto stepBirth = [this](int delta)
+			{
+				if (m_activeField == 5)
+				{
+					AdjustBirthCycle(m_birthDay, delta, 1, 31);
+				}
+				else if (m_activeField == 6)
+				{
+					AdjustBirthCycle(m_birthMonth, delta, 1, 12);
+				}
+				else
+				{
+					AdjustBirthCycle(m_birthYear, delta, 1900, 2100);
+				}
+			};
+			if (input.WasPressed(engine::platform::Key::Up))
+			{
+				stepBirth(1);
+			}
+			if (input.WasPressed(engine::platform::Key::Down))
+			{
+				stepBirth(-1);
+			}
 		}
 
 		if (m_phase == Phase::Terms)
@@ -3416,17 +3600,39 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		UpdateWindowTitle(window);
 	}
 
+	void AuthUiPresenter::ResolveActionButtonLabels(RenderModel& model) const
+	{
+		for (auto& a : model.actions)
+		{
+			if (a.labelKey.empty())
+			{
+				continue;
+			}
+			a.label = Tr(a.labelKey);
+			if (a.label.empty() && !a.labelKeyFallback.empty())
+			{
+				a.label = Tr(a.labelKeyFallback);
+			}
+			if (a.label.empty())
+			{
+				a.label = a.labelKey;
+			}
+		}
+	}
+
 	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel() const
 	{
 		RenderModel model{};
 		model.visible = m_initialized && !m_flowComplete && m_authEnabled;
+		model.hoveredFieldInfoIndex = m_hoveredFieldInfoIndex;
 		model.titleLine1 = Tr("auth.title_line1");
 		model.titleLine2 = Tr("auth.title_line2");
 		model.infoBanner = m_infoBanner;
 		model.errorText = (m_phase == Phase::Error) ? m_userErrorText : std::string{};
 		model.footerHint.clear();
 
-		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false)
+		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false, bool cyclePicker = false,
+			std::string tooltipKey = {})
 		{
 			RenderField field{};
 			field.label = std::move(label);
@@ -3434,12 +3640,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			field.active = active;
 			field.hovered = static_cast<int32_t>(model.fields.size()) == m_hoveredFieldIndex;
 			field.secret = secret;
+			field.cyclePicker = cyclePicker;
+			field.tooltipKey = std::move(tooltipKey);
 			model.fields.push_back(std::move(field));
 		};
-		auto addAction = [this, &model](std::string label, bool primary, bool active = true, bool emphasized = false)
+		auto addActionKeys = [this, &model](std::string_view labelKey, bool primary, bool active = true, bool emphasized = false,
+			std::string_view labelKeyFallback = {})
 		{
 			RenderAction action{};
-			action.label = std::move(label);
+			action.labelKey = std::string(labelKey);
+			if (!labelKeyFallback.empty())
+			{
+				action.labelKeyFallback = std::string(labelKeyFallback);
+			}
 			action.primary = primary;
 			action.active = active;
 			action.emphasized = emphasized;
@@ -3487,24 +3700,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				model.bodyLines.push_back(std::move(remember));
 			}
 			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
-			// Sécurité: éviter qu’un bouton n’affiche rien si une clé i18n retourne une chaîne vide.
-			// Dans ce cas, on retombe sur la clé (string non vide).
-			{
-				std::string registerLabel = Tr("auth.button.register");
-				std::string languageLabel = Tr("language.options.title");
-				std::string submitLabel = Tr("common.submit");
-				std::string quitLabel = Tr("common.quit_desktop");
-				if (quitLabel.empty())
-					quitLabel = Tr("common.quit");
-				if (registerLabel.empty()) registerLabel = "auth.button.register";
-				if (languageLabel.empty()) languageLabel = "language.options.title";
-				if (submitLabel.empty()) submitLabel = "common.submit";
-				if (quitLabel.empty()) quitLabel = "common.quit";
-				addAction(std::move(registerLabel), false, true, true);
-				addAction(std::move(languageLabel), false, true, true);
-				addAction(std::move(submitLabel), true, true, false);
-				addAction(std::move(quitLabel), false, true, false);
-			}
+			// Boutons : uniquement des clés i18n ; le texte affiché est résolu à la fin (changement de langue pris en compte).
+			addActionKeys("auth.button.register", false, true, true);
+			addActionKeys("language.options.title", false, true, true);
+			addActionKeys("common.submit", true, true, false);
+			addActionKeys("common.quit_desktop", false, true, false, "common.quit");
 			break;
 		case Phase::Register:
 			model.sectionTitle = Tr("auth.panel.register");
@@ -3513,24 +3713,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addField(Tr("common.email"), m_email, m_activeField == 2);
 			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3);
 			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4);
-			addField(Tr("auth.label.birth_day"), m_birthDay, m_activeField == 5);
-			addField(Tr("auth.label.birth_month"), m_birthMonth, m_activeField == 6);
-			addField(Tr("auth.label.birth_year"), m_birthYear, m_activeField == 7);
-			addAction(Tr("common.submit"), true);
-			addAction(Tr("auth.hint.return_login"), false);
+			addField(Tr("auth.label.birth_day"), BirthCycleDisplay(m_birthDay, 1, 1, 31), m_activeField == 5, false, true, "auth.tooltip.birth_day");
+			addField(Tr("auth.label.birth_month"), BirthCycleDisplay(m_birthMonth, 1, 1, 12), m_activeField == 6, false, true, "auth.tooltip.birth_month");
+			addField(Tr("auth.label.birth_year"), BirthCycleDisplay(m_birthYear, 2000, 1900, 2100), m_activeField == 7, false, true, "auth.tooltip.birth_year");
+			addActionKeys("common.submit", true);
+			addActionKeys("auth.hint.return_login", false);
 			break;
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
 			addBodyLine(Tr("auth.label.account") + ": " + std::to_string(m_pendingVerifyAccountId));
 			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
-			addAction(Tr("common.submit"), true);
-			addAction(Tr("auth.hint.return_login"), false);
+			addActionKeys("common.submit", true);
+			addActionKeys("auth.hint.return_login", false);
 			break;
 		case Phase::ForgotPassword:
 			model.sectionTitle = Tr("auth.section.forgot_password");
 			addField(Tr("common.email"), m_email, true);
-			addAction(Tr("common.submit"), true);
-			addAction(Tr("auth.hint.return_login"), false);
+			addActionKeys("common.submit", true);
+			addActionKeys("auth.hint.return_login", false);
 			break;
 		case Phase::Terms:
 		{
@@ -3544,14 +3744,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addBodyLine(std::string(m_termsContent.data() + start, count));
 			addBodyLine(m_termsScrolledToBottom ? Tr("auth.panel.end_reached") : Tr("auth.panel.end_not_reached"));
 			addBodyLine(m_termsAcknowledgeChecked ? Tr("auth.panel.accept_checked") : Tr("auth.panel.accept_unchecked"), true);
-			addAction(Tr("auth.hint.terms.accept"), true);
+			addActionKeys("auth.hint.terms.accept", true);
 			break;
 		}
 		case Phase::CharacterCreate:
 			model.sectionTitle = Tr("auth.panel.character_create");
 			addField(Tr("auth.label.character_name"), m_characterName, true);
 			addBodyLine(Tr("auth.hint.character.rules"));
-			addAction(Tr("common.submit"), true);
+			addActionKeys("common.submit", true);
 			break;
 		case Phase::LanguageSelectionFirstRun:
 		case Phase::LanguageOptions:
@@ -3587,23 +3787,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			// Actions (bouton principal + éventuellement retour)
 			if (m_phase == Phase::LanguageSelectionFirstRun)
 			{
-				std::string label = Tr("language.first_run.confirm");
-				if (label.empty())
-					label = Tr("common.submit");
-				addAction(label, true);
+				addActionKeys("language.first_run.confirm", true, true, false, "common.submit");
 			}
 			else // Phase::LanguageOptions
 			{
-				std::string applyLabel = Tr("language.options.apply_hint");
-				if (applyLabel.empty())
-					applyLabel = Tr("common.submit");
-				addAction(applyLabel, true);
-
-				std::string backLabel = Tr("auth.hint.return_login");
-				// Robustesse : si une clé i18n manque, retomber sur "common.back".
-				if (backLabel.empty())
-					backLabel = Tr("common.back");
-				addAction(backLabel, false, true);
+				addActionKeys("language.options.apply_hint", true, true, false, "common.submit");
+				addActionKeys("auth.hint.return_login", false, true, false, "common.back");
 			}
 			break;
 		}
@@ -3614,9 +3803,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		case Phase::Error:
 			model.sectionTitle = Tr("auth.panel.error");
 			addBodyLine(m_userErrorText, true);
-			addAction(Tr("common.continue"), true);
+			addActionKeys("common.continue", true);
 			break;
 		}
+
+		for (RenderField& f : model.fields)
+		{
+			if (!f.tooltipKey.empty())
+			{
+				f.tooltipText = Tr(f.tooltipKey);
+			}
+		}
+
+		ResolveActionButtonLabels(model);
 
 		if (!model.bodyLines.empty())
 		{

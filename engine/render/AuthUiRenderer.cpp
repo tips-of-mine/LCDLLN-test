@@ -90,7 +90,11 @@ namespace engine::render
 		const int32_t h = static_cast<int32_t>(extent.height);
 		metrics.panelW = std::clamp(w * 42 / 100, 540, std::max(820, w * 24 / 100));
 		metrics.largeContent = state.terms || model.bodyLines.size() > 6u || model.fields.size() > 5u;
-		metrics.panelH = metrics.largeContent ? std::clamp(h * 74 / 100, 440, std::max(780, h * 82 / 100)) : std::clamp(h * 62 / 100, 380, std::max(660, h * 72 / 100));
+		const bool tallRegister = state.registerMode && model.fields.size() >= 7u;
+		metrics.panelH = metrics.largeContent
+			? (tallRegister ? std::clamp(h * 86 / 100, 520, std::max(880, h * 92 / 100))
+				: std::clamp(h * 74 / 100, 440, std::max(780, h * 82 / 100)))
+			: std::clamp(h * 62 / 100, 380, std::max(660, h * 72 / 100));
 		metrics.panelX = (w - metrics.panelW) / 2;
 		metrics.panelY = (h - metrics.panelH) / 2;
 		metrics.innerX = metrics.panelX + 28;
@@ -216,6 +220,39 @@ namespace engine::render
 		{
 			addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
 		};
+
+		// Bouton auth unifié : cadre 1px, léger éclaircissement haut, fond, barre d’accent bas (plus marquée si primaire / survol).
+		auto addAuthActionButton = [&](int32_t x, int32_t y, int32_t bw, int32_t bh,
+			bool primary, bool emphasized, bool hovered)
+		{
+			if (bw <= 2 || bh <= 2)
+			{
+				return;
+			}
+			const float* fillBase = primary ? theme.primary : (emphasized ? theme.secondary : theme.surface);
+			const float fillAlpha = hovered ? 1.0f : (primary ? 0.97f : 0.94f);
+			const float borderA = hovered ? 0.92f : 0.78f;
+			addThemeRect(x, y, bw, 1, theme.border, borderA);
+			addThemeRect(x, y + bh - 1, bw, 1, theme.border, borderA);
+			addThemeRect(x, y, 1, bh, theme.border, borderA);
+			addThemeRect(x + bw - 1, y, 1, bh, theme.border, borderA);
+			const int32_t ix = x + 1;
+			const int32_t iy = y + 1;
+			const int32_t iw = bw - 2;
+			const int32_t ih = bh - 2;
+			const int32_t hi = 2;
+			const int32_t barH = (primary || hovered) ? 3 : 2;
+			const int32_t midH = std::max(1, ih - hi - barH);
+			const float t = 0.11f;
+			addRect(ix, iy, iw, hi,
+				fillBase[0] * (1.f - t) + t,
+				fillBase[1] * (1.f - t) + t,
+				fillBase[2] * (1.f - t) + t,
+				1.0f);
+			addThemeRect(ix, iy + hi, iw, midH, fillBase, fillAlpha);
+			const float accentA = hovered ? 1.0f : (primary ? 0.90f : 0.52f);
+			addThemeRect(ix, iy + ih - barH, iw, barH, theme.accent, accentA);
+		};
 		if (!usePhotoBackdrop)
 		{
 			addThemeRect(0, 0, w, h, theme.background, 0.92f);
@@ -311,13 +348,19 @@ namespace engine::render
 			addThemeRect(contentX + contentW - 12, termsBoxY + 28, 4, std::max(80, panelH - 248), theme.border, 0.98f);
 			addThemeRect(contentX + contentW - 12, termsBoxY + 64, 4, 92, theme.accent, 1.0f);
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
-			const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * 10) / actionCount);
-			addThemeRect(contentX, panelY + panelH - 92, contentW, 58, theme.surface, 0.98f);
+			const int32_t gapTerms = 10;
+			const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gapTerms) / actionCount);
+			const int32_t footerBarY = panelY + panelH - 92;
+			const int32_t footerBarH = 58;
+			addThemeRect(contentX, footerBarY, contentW, footerBarH, theme.surface, 0.98f);
+			const int32_t termsBtnY = footerBarY + (footerBarH - kAuthUiActionButtonHeightPx) / 2;
 			for (int32_t i = 0; i < actionCount; ++i)
 			{
-				const int32_t x = contentX + i * (actionW + 10);
+				const int32_t x = contentX + i * (actionW + gapTerms);
 				const bool primary = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].primary : false;
-				addThemeRect(x, panelY + panelH - 54, actionW, 28, primary ? theme.primary : theme.accent, 0.95f);
+				const bool emphasized = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].emphasized : false;
+				const bool hovered = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].hovered : false;
+				addAuthActionButton(x, termsBtnY, actionW, kAuthUiActionButtonHeightPx, primary, emphasized, hovered);
 			}
 			int32_t metaY = termsBoxY + 18;
 			metaY += std::min<int32_t>(4, static_cast<int32_t>(model.bodyLines.size())) * 16;
@@ -400,6 +443,7 @@ namespace engine::render
 			}
 		}
 
+		// Boutons : uniquement fond / bordure (pas de texte). Les libellés sont dessinés par AuthGlyphPass à partir du modèle i18n.
 		const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 		const int32_t gap = 10;
 		AuthLoginTwoRowLayout loginTwoRow{};
@@ -426,21 +470,13 @@ namespace engine::render
 					const bool primary = model.actions[static_cast<size_t>(i)].primary;
 					const bool emphasized = model.actions[static_cast<size_t>(i)].emphasized;
 					const bool hovered = model.actions[static_cast<size_t>(i)].hovered;
-					// Même couleur de fond pour les deux boutons secondaires (Inscription / Options).
-					const float* fill = primary ? theme.primary : (emphasized ? theme.secondary : theme.surface);
-					addThemeRect(x, rowY, btnW, 40, fill, hovered ? 1.0f : 0.94f);
-					if (hovered)
-					{
-						addThemeRect(x, rowY, btnW, 3, theme.accent, 1.0f);
-					}
-					addThemeRect(x + 12, rowY + 14, std::max(48, btnW - 24), 4, theme.text,
-						primary ? (hovered ? 0.78f : 0.64f) : (hovered ? 0.62f : 0.48f));
+					addAuthActionButton(x, rowY, btnW, kAuthUiActionButtonHeightPx, primary, emphasized, hovered);
 				}
 			}
 		}
 		else
 		{
-			const int32_t buttonY = std::min(panelY + panelH - 84, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 20);
+			const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 20);
 			const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 			for (int32_t i = 0; i < actionCount; ++i)
 			{
@@ -448,13 +484,7 @@ namespace engine::render
 				const bool primary = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].primary : (i == 0);
 				const bool emphasized = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].emphasized : false;
 				const bool hovered = static_cast<size_t>(i) < model.actions.size() ? model.actions[static_cast<size_t>(i)].hovered : false;
-				const float* fill = primary ? theme.primary : (emphasized ? theme.accent : theme.surface);
-				addThemeRect(x, buttonY, actionW, 42, fill, hovered ? 1.0f : 0.96f);
-				if (hovered)
-				{
-					addThemeRect(x, buttonY, actionW, 3, theme.accent, 1.0f);
-				}
-				addThemeRect(x + 18, buttonY + 15, std::max(48, actionW - 36), 4, theme.text, primary ? (hovered ? 0.72f : 0.60f) : (hovered ? 0.58f : 0.42f));
+				addAuthActionButton(x, buttonY, actionW, kAuthUiActionButtonHeightPx, primary, emphasized, hovered);
 			}
 		}
 

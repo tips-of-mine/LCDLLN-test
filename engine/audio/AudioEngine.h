@@ -4,10 +4,14 @@
 #include "engine/math/Math.h"
 
 #include <cstdint>
+#include <filesystem>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
+namespace engine::audio { class MaMenuMusic; }
 
 namespace engine::audio
 {
@@ -83,6 +87,10 @@ namespace engine::audio
 		/// Advance runtime audio state and refresh per-instance attenuation.
 		bool Tick(float deltaSeconds);
 
+		/// Démarre une musique menu en boucle (fichier résolu sur disque). Arrête une éventuelle piste précédente.
+		bool StartMenuMusic(const std::filesystem::path& filePathUtf8);
+		void StopMenuMusic();
+
 	private:
 		/// Load zone audio data from the configured content-relative JSON file.
 		bool LoadZoneAudio();
@@ -102,5 +110,6 @@ namespace engine::audio
 		uint32_t m_nextInstanceId = 1;
 		float m_masterVolume = 1.0f;
 		bool m_initialized = false;
+		std::unique_ptr<MaMenuMusic> m_menuMusic;
 	};
 }

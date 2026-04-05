@@ -1,11 +1,14 @@
 #include "engine/audio/AudioEngine.h"
 
+#include "engine/audio/MaMenuMusic.h"
+
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <memory>
 
 namespace engine::audio
 {
@@ -58,16 +61,40 @@ namespace engine::audio
 		}
 
 		m_initialized = true;
-		LOG_INFO(Core, "[AudioEngine] Init OK (backend=NullAudioBackend, buses={}, sounds={}, zones={})",
+		LOG_INFO(Core, "[AudioEngine] Init OK (3D=logical, menu_music=miniaudio if used, buses={}, sounds={}, zones={})",
 			static_cast<uint32_t>(m_buses.size()),
 			static_cast<uint32_t>(m_sounds.size()),
 			static_cast<uint32_t>(m_zoneAmbience.size()));
 		return true;
 	}
 
+	bool AudioEngine::StartMenuMusic(const std::filesystem::path& filePathUtf8)
+	{
+		if (!m_initialized)
+		{
+			LOG_WARN(Core, "[AudioEngine] StartMenuMusic ignored: not initialized");
+			return false;
+		}
+		if (!m_menuMusic)
+		{
+			m_menuMusic = std::make_unique<MaMenuMusic>();
+		}
+		return m_menuMusic->PlayLoop(filePathUtf8);
+	}
+
+	void AudioEngine::StopMenuMusic()
+	{
+		if (m_menuMusic)
+		{
+			m_menuMusic->Stop();
+		}
+	}
+
 	void AudioEngine::Shutdown()
 	{
 		LOG_DEBUG(Core, "[AUDIO] Shutdown enter");
+		StopMenuMusic();
+		m_menuMusic.reset();
 		m_activeSounds.clear();
 		m_zoneAmbience.clear();
 		m_sounds.clear();
@@ -235,6 +262,17 @@ namespace engine::audio
 
 			sound.gain = ComputeGain(sound);
 			++activeCount;
+		}
+
+		if (m_menuMusic && m_menuMusic->IsActive())
+		{
+			float musicBus = 1.0f;
+			const auto busIt = m_buses.find("Music");
+			if (busIt != m_buses.end())
+			{
+				musicBus = busIt->second.volume;
+			}
+			m_menuMusic->SetLinearGain(m_masterVolume * musicBus);
 		}
 
 		LOG_DEBUG(Core, "[AudioEngine] Tick OK (zone_id={}, active_sounds={}, listener=({:.2f}, {:.2f}, {:.2f}))",

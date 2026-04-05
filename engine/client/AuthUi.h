@@ -86,10 +86,22 @@ namespace engine::client
 			bool active = false;
 			bool hovered = false;
 			bool secret = false;
+			/// Molette / flèches : pas de saisie clavier chiffres (ex. jour/mois/année inscription).
+			bool cyclePicker = false;
+			/// Clé i18n pour infobulle (zone « i » à droite du champ).
+			std::string tooltipKey;
+			std::string tooltipText;
 		};
 
+		/// Bouton d’action : le fond est dessiné sans texte (AuthUiRenderer) ; le libellé vient des clés i18n,
+		/// résolu dans \c ResolveActionButtonLabels avant affichage (AuthGlyphPass utilise \c label).
 		struct RenderAction
 		{
+			/// Clé catalogue (ex. \c "common.submit"). Toujours renseignée pour les boutons standards.
+			std::string labelKey;
+			/// Si \c Tr(labelKey) est vide, essai de cette clé (ex. \c common.quit si \c common.quit_desktop manque).
+			std::string labelKeyFallback;
+			/// Texte résolu pour le rendu / accessibilité ; ne pas remplir à la main, utiliser les clés + résolution.
 			std::string label;
 			bool primary = false;
 			bool active = false;
@@ -112,6 +124,8 @@ namespace engine::client
 		struct RenderModel
 		{
 			bool visible = false;
+			/// Index champ dont la zone info (inscription) est survolée, ou -1.
+			int32_t hoveredFieldInfoIndex = -1;
 			std::string titleLine1;
 			std::string titleLine2;
 			std::string sectionTitle;
@@ -211,6 +225,8 @@ namespace engine::client
 		void SubmitCurrentPhase(const engine::core::Config& cfg);
 		void UpdateWindowTitle(engine::platform::Window& window) const;
 		void JoinWorker();
+		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).
+		void ResolveActionButtonLabels(RenderModel& model) const;
 
 		enum class Phase
 		{
@@ -248,6 +264,7 @@ namespace engine::client
 		std::string m_characterName;
 		uint32_t m_activeField = 0;
 		int32_t m_hoveredFieldIndex = -1;
+		int32_t m_hoveredFieldInfoIndex = -1;
 		int32_t m_hoveredBodyLineIndex = -1;
 		int32_t m_hoveredActionIndex = -1;
 		uint32_t m_termsScrollOffset = 0;

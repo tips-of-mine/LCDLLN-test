@@ -675,7 +675,28 @@ namespace engine
 											m_audioEngine.SetBusVolume("Music", static_cast<float>(m_cfg.GetDouble("audio.music_volume", 1.0)));
 											m_audioEngine.SetBusVolume("SFX", static_cast<float>(m_cfg.GetDouble("audio.sfx_volume", 1.0)));
 											m_audioEngine.SetBusVolume("UI", static_cast<float>(m_cfg.GetDouble("audio.ui_volume", 1.0)));
-											m_audioEngine.SetZone(0);
+											const std::string menuMusicRel = m_cfg.GetString("audio.menu_music_path", "");
+											bool menuStarted = false;
+											if (!menuMusicRel.empty())
+											{
+												const std::filesystem::path menuResolved = engine::platform::FileSystem::ResolveContentPath(m_cfg, menuMusicRel);
+												if (engine::platform::FileSystem::Exists(menuResolved))
+												{
+													menuStarted = m_audioEngine.StartMenuMusic(menuResolved);
+													if (menuStarted)
+													{
+														LOG_INFO(Core, "[Boot] Menu music (miniaudio): {}", menuResolved.string());
+													}
+												}
+												else
+												{
+													LOG_WARN(Core, "[Boot] audio.menu_music_path missing on disk: {}", menuResolved.string());
+												}
+											}
+											if (!menuStarted)
+											{
+												m_audioEngine.SetZone(0);
+											}
 										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
 										{

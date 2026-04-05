@@ -173,6 +173,7 @@ add_library(engine_core
   engine/core/Log.cpp
   engine/core/Time.cpp
   engine/audio/AudioEngine.cpp
+  engine/audio/MaMenuMusic.cpp
   engine/client/CombatHud.cpp
   engine/client/LocalizationService.cpp
   engine/client/AuthUi.cpp
@@ -278,6 +279,7 @@ target_sources(engine_core PRIVATE engine/server/ServerProtocol.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb
+  ${CMAKE_SOURCE_DIR}/external/miniaudio
   ${VMA_INCLUDE_DIRS}
 )
 target_link_libraries(engine_core PUBLIC
@@ -288,6 +290,11 @@ target_link_libraries(engine_core PUBLIC
 )
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
+elseif(UNIX)
+  target_link_libraries(engine_core PRIVATE pthread)
+  if(NOT APPLE)
+    target_link_libraries(engine_core PRIVATE dl)
+  endif()
 endif()
 if(MSVC)
   target_compile_options(engine_core PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -369,6 +376,15 @@ if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
             "$<TARGET_FILE_DIR:engine_app>/"
     COMMENT "Copie des DLL OpenSSL (libssl / libcrypto) à côté de lcdlln.exe..."
   )
+endif()
+
+# Paquet runtime : cmake --install build --prefix dist (exécutable + game/data + config)
+install(TARGETS engine_app RUNTIME DESTINATION .)
+if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/game/data" DESTINATION .)
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
+  install(FILES "${CMAKE_SOURCE_DIR}/config.json" DESTINATION .)
 endif()
 
 # M19.2: Protocol v1 serialization unit tests

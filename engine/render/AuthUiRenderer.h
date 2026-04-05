@@ -9,6 +9,9 @@
 
 namespace engine::render
 {
+	/// Hauteur commune des boutons d’action (auth) : renderer + hit-test + texte (AuthGlyphPass).
+	inline constexpr int32_t kAuthUiActionButtonHeightPx = 44;
+
 	struct AuthUiLayer
 	{
 		VkClearColorValue color{};

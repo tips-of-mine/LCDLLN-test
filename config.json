@@ -22,6 +22,14 @@
             "font_pixel_height": 28
         }
     },
+    "audio": {
+        "master_volume": 1.0,
+        "music_volume": 0.8,
+        "sfx_volume": 1.0,
+        "ui_volume": 1.0,
+        "zone_audio_path": "audio/zone_audio.json",
+        "menu_music_path": ""
+    },
     "time": {
         "fixed_dt": 0.0
     },

@@ -25,7 +25,7 @@ docker compose up -d      # ou : docker compose up --build -d
 
 Ports par défaut : **3840** (master), **3843** (shard), MySQL sur **127.0.0.1:3306**.
 
-Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker compose down -v`.
+Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysql`** (InnoDB), journaux **`./data/logs/master`** et **`./data/logs/shard`**. Pour repartir d’une base neuve : `docker compose down`, puis `rm -rf data/mysql`, puis `up` (les scripts `docker-entrypoint-initdb.d` ne s’exécutent que si le datadir est vide au premier démarrage).
 
 **Erreur OCI / bind mount** : `mount ... master.config.json ... not a directory` / monter un fichier sur un fichier alors que la source est un dossier — arrive si `config/master.config.json` **n’existait pas** sur l’hôte au premier `docker compose up` : Docker peut avoir créé un **répertoire** vide à la place du fichier.
 
@@ -35,7 +35,7 @@ Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker com
 2. Depuis **M24.5**, le compose monte **`./config`** entier sur `/app/host-config` et un script d’entrée copie `master.config.json` / `shard.config.json` vers `/app/config.json` : refaites un build des images :  
    `docker compose build --no-cache master shard && docker compose up -d`
 
-**Erreur `Checksum mismatch for version 1`** : le volume MySQL a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `db/migrations/0001_init.sql`.
+**Erreur `Checksum mismatch for version 1`** : le répertoire **`./data/mysql`** a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `db/migrations/0001_init.sql`.
 
 À partir de **M24.6**, le **master** corrige automatiquement ce seul cas au démarrage (`UPDATE schema_version` pour la v1). Reconstruisez / redéployez le binaire `lcdlln_server` puis `docker compose up --build`.
 
@@ -49,19 +49,19 @@ Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker com
   ```sql
   UPDATE schema_version SET checksum = 'e740eec07991bad0e5b8e13577ad7d0cf61ab5c652e2a9ef84b1565680cf45ae' WHERE version = 1;
   ```
-- **Ou** recréer la base : `docker compose down -v` puis `up` (**toutes les données MySQL perdues**).
+- **Ou** recréer la base : `docker compose down`, `rm -rf data/mysql`, puis `up` (**toutes les données MySQL perdues**).
 
-Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_checksum.sql` en init : sur un **nouveau** volume vide, si l’étape 01 avait encore le mauvais checksum, l’étape 02 le corrige (idempotent).
+Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_checksum.sql` en init : sur un **nouveau** datadir vide (`data/mysql`), si l’étape 01 avait encore le mauvais checksum, l’étape 02 le corrige (idempotent).
 
 (Recalculer le checksum si vous modifiez `db/migrations/0001_init.sql` : `tools/migration_checksum` ou `sha256sum`.)
 
 **Message `pull access denied for lcdlln-master`** : normal si l’image est uniquement construite en local ; le compose utilise `pull_policy: build`. Si une vieille version de Compose refuse `pull_policy`, retirez ces lignes dans `docker-compose.yml` ou mettez à jour Docker / Compose Plugin.
 
-**Erreur migration 0004** (`fk_characters_server_id`, colonnes dupliquées, `server_id` en BIGINT, ou erreur SQL du type `near IF NOT EXISTS active_session`) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** via `information_schema` et `PREPARE` (sans `ADD COLUMN IF NOT EXISTS`, refusé sur certains moteurs / parseurs malgré un affichage « 8.0.x »). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK si présentes. Après mise à jour des fichiers `db/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, `docker compose down -v` puis `up` repart d’un volume neuf.
+**Erreur migration 0004** (`fk_characters_server_id`, colonnes dupliquées, `server_id` en BIGINT, ou erreur SQL du type `near IF NOT EXISTS active_session`) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** via `information_schema` et `PREPARE` (sans `ADD COLUMN IF NOT EXISTS`, refusé sur certains moteurs / parseurs malgré un affichage « 8.0.x »). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK si présentes. Après mise à jour des fichiers `db/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, supprimez **`data/mysql`** puis relancez `up`.
 
-**Checksum mismatch sur la version 4** : si vous avez modifié le fichier `0004_*.sql` alors que `schema_version` indique déjà la v4 appliquée, le master refusera de démarrer. Mettez à jour `schema_version.checksum` pour la ligne `version = 4` (hash SHA-256 du fichier actuel via `tools/migration_checksum` ou `sha256sum`), ou repartez avec un volume neuf en dev.
+**Checksum mismatch sur la version 4** : si vous avez modifié le fichier `0004_*.sql` alors que `schema_version` indique déjà la v4 appliquée, le master refusera de démarrer. Mettez à jour `schema_version.checksum` pour la ligne `version = 4` (hash SHA-256 du fichier actuel via `tools/migration_checksum` ou `sha256sum`), ou repartez avec un **`data/mysql`** neuf en dev.
 
-**Migrations 0006, 0008, 0010, 0011 et nouvelle 0015** : ces scripts ont été rendus idempotents ou renommés ; le **checksum** en base des versions déjà appliquées ne correspond plus au fichier actuel → mettre à jour `schema_version.checksum` pour chaque version concernée, ou `down -v` en dev. **Correction historique** : deux fichiers `0010_*.sql` partageaient le même numéro de version ; un seul était exécuté. La partie « exploits / vues / is_secret » est maintenant **`0015_exploits_visibility_stats.sql`**. Après déploiement, vérifiez que les tables du portail (`account_recovery_*`, etc.) **et** la colonne `exploits.is_secret` sont bien présentes ; en cas d’écart, exécutez à la main le script manquant puis alignez les checksums.
+**Migrations 0006, 0008, 0010, 0011 et nouvelle 0015** : ces scripts ont été rendus idempotents ou renommés ; le **checksum** en base des versions déjà appliquées ne correspond plus au fichier actuel → mettre à jour `schema_version.checksum` pour chaque version concernée, ou effacer **`data/mysql`** en dev. **Correction historique** : deux fichiers `0010_*.sql` partageaient le même numéro de version ; un seul était exécuté. La partie « exploits / vues / is_secret » est maintenant **`0015_exploits_visibility_stats.sql`**. Après déploiement, vérifiez que les tables du portail (`account_recovery_*`, etc.) **et** la colonne `exploits.is_secret` sont bien présentes ; en cas d’écart, exécutez à la main le script manquant puis alignez les checksums.
 
 ## Master sans Docker (optionnel)
 

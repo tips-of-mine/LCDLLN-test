@@ -1,0 +1,2 @@
+# Données locales (bind mounts docker-compose : MySQL + logs)
+/data/

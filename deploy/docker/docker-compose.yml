@@ -22,21 +22,16 @@
 # Arrêt :
 #   docker compose down
 #
-# Arrêt + suppression données MySQL :
-#   docker compose down -v
+# Données persistantes : répertoires sous ./data/ (bind mounts), pas de volumes Docker nommés.
+# Supprimer la base : arrêter les conteneurs puis effacer ./data/mysql (ou tout ./data/).
 # ============================================================
 
 networks:
-  lcdlln-net:
+  traefik_front_network:
+    external: true
+  back_lcdlln-net:
     driver: bridge
-
-volumes:
-  mysql-data:
-    driver: local
-  master-logs:
-    driver: local
-  shard-logs:
-    driver: local
+    attachable: true
 
 services:
 
@@ -45,7 +40,7 @@ services:
     container_name: lcdlln-mysql
     restart: unless-stopped
     networks:
-      - lcdlln-net
+      - back_lcdlln-net
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-lcdlln_root_dev}
       MYSQL_DATABASE:      ${MYSQL_DATABASE:-lcdlln_master}
@@ -54,7 +49,7 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - ./data/mysql:/var/lib/mysql
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ./db/02_fix_schema_v1_checksum.sql:/docker-entrypoint-initdb.d/02_fix_schema_v1_checksum.sql:ro
     healthcheck:
@@ -77,7 +72,8 @@ services:
     container_name: lcdlln-master
     restart: unless-stopped
     networks:
-      - lcdlln-net
+      - back_lcdlln-net
+      - traefik_front_network
     depends_on:
       mysql:
         condition: service_healthy
@@ -90,7 +86,7 @@ services:
       # et qu’un répertoire homonyme avait été créé sur l’hôte.
       - ./config:/app/host-config:ro
       - ./game/data:/app/game/data:ro
-      - master-logs:/app/logs
+      - ./data/logs/master:/app/logs
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3840"]
       interval: 10s
@@ -108,7 +104,8 @@ services:
     container_name: lcdlln-shard
     restart: unless-stopped
     networks:
-      - lcdlln-net
+      - back_lcdlln-net
+      - traefik_front_network
     depends_on:
       master:
         condition: service_healthy
@@ -117,7 +114,7 @@ services:
     volumes:
       - ./config:/app/host-config:ro
       - ./game/data:/app/game/data:ro
-      - shard-logs:/app/logs
+      - ./data/logs/shard:/app/logs
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3843"]
       interval: 10s
@@ -142,7 +139,8 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - lcdlln-net
+      - back_lcdlln-net
+      - traefik_front_network
     environment:
       NODE_ENV: production
       # Même base que le master (migrations exploits / vues stats). Adapter user/mot de passe avec le service mysql.
@@ -153,7 +151,25 @@ services:
     #   - "127.0.0.1:3000:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lcdlln-net"
-      - "traefik.http.routers.lcdlln-portal.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal.entrypoints=web"
-      - "traefik.http.services.lcdlln-portal.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik_front_network"
+# HTTP
+      - "traefik.http.routers.docuseal-http.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
+      - "traefik.http.routers.docuseal-http.entrypoints=http"
+# HTTPS
+      - "traefik.http.routers.docuseal-https.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
+      - "traefik.http.routers.docuseal-https.entrypoints=https"
+      - "traefik.http.routers.docuseal-https.service=docuseal-service"
+      - "traefik.http.routers.docuseal-https.tls=true"
+      - "traefik.http.routers.docuseal-https.middlewares=docuseal-middlewares"
+# Middleware
+#      - "traefik.http.middlewares.docuseal-middlewares.headers.SSLRedirect=true"
+      - "traefik.http.middlewares.docuseal-middlewares.headers.STSSeconds=15552000"
+#      - "traefik.http.middlewares.docuseal-middlewares.headers.customResponseHeaders"
+#      - "traefik.http.middlewares.docuseal-middlewares.headers.browserXSSFilter=true"
+#      - "traefik.http.middlewares.docuseal-middlewares.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.docuseal-middlewares.headers.forceSTSHeader=true"
+#      - "traefik.http.middlewares.docuseal-middlewares.headers.SSLHost=tips-of-mine.com"
+      - "traefik.http.middlewares.docuseal-middlewares.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.docuseal-middlewares.headers.STSPreload=true"
+# Service
+      - "traefik.http.services.docuseal-service.loadbalancer.server.port=3000"

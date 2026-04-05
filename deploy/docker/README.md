@@ -57,7 +57,11 @@ Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_ch
 
 **Message `pull access denied for lcdlln-master`** : normal si l’image est uniquement construite en local ; le compose utilise `pull_policy: build`. Si une vieille version de Compose refuse `pull_policy`, retirez ces lignes dans `docker-compose.yml` ou mettez à jour Docker / Compose Plugin.
 
-**Erreur migration 0004** (`fk_characters_server_id` : colonnes incompatibles) : corrigée dans le dépôt (`server_id` aligné sur `INT UNSIGNED` comme `servers.id`). Après mise à jour des fichiers `db/migrations`, rebuild du master. Si une tentative précédente a laissé la base à moitié migrée (colonnes dupliquées, etc.), en **dev** le plus simple est `docker compose down -v` puis `up` pour repartir d’un volume MySQL neuf.
+**Erreur migration 0004** (`fk_characters_server_id` : colonnes incompatibles, `Duplicate column name 'active_session'`, ou `server_id` resté en BIGINT après une tentative ratée) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** (MySQL **8.0.29+** requis pour `ADD COLUMN IF NOT EXISTS`, `DROP FOREIGN KEY IF EXISTS`, etc.). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK éventuelles. Après mise à jour des fichiers `db/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, `docker compose down -v` puis `up` repart d’un volume neuf.
+
+**Checksum mismatch sur la version 4** : si vous avez modifié le fichier `0004_*.sql` alors que `schema_version` indique déjà la v4 appliquée, le master refusera de démarrer. Mettez à jour `schema_version.checksum` pour la ligne `version = 4` (hash SHA-256 du fichier actuel via `tools/migration_checksum` ou `sha256sum`), ou repartez avec un volume neuf en dev.
+
+**Migrations 0006, 0008, 0010, 0011 et nouvelle 0015** : ces scripts ont été rendus idempotents ou renommés ; le **checksum** en base des versions déjà appliquées ne correspond plus au fichier actuel → mettre à jour `schema_version.checksum` pour chaque version concernée, ou `down -v` en dev. **Correction historique** : deux fichiers `0010_*.sql` partageaient le même numéro de version ; un seul était exécuté. La partie « exploits / vues / is_secret » est maintenant **`0015_exploits_visibility_stats.sql`**. Après déploiement, vérifiez que les tables du portail (`account_recovery_*`, etc.) **et** la colonne `exploits.is_secret` sont bien présentes ; en cas d’écart, exécutez à la main le script manquant puis alignez les checksums.
 
 ## Master sans Docker (optionnel)
 
@@ -76,6 +80,7 @@ Les images **master** / **shard** utilisent **Ubuntu 24.04** (glibc ≥ 2.38), c
 
 - Docker Engine + plugin Compose v2
 - ~2 Go de RAM libre recommandé pour MySQL + services
+- Image **mysql:8.0** ≥ **8.0.29** pour les migrations idempotentes (notamment la 0004) ; l’image officielle `mysql:8.0` courante le satisfait en général
 
 ## Portail web (Next.js)
 

@@ -3,8 +3,8 @@
 ## Convention de nommage
 
 - Fichiers : `NNNN_nom_descriptif.sql` (ex. `0001_init.sql`, `0002_add_x.sql`).
-- `NNNN` = numéro de version sur 4 chiffres, ordre strictement croissant.
-- Ordre d’application : lexicographique sur le nom de fichier (0001, 0002, …).
+- `NNNN` = numéro de version sur 4 chiffres, **unique par fichier** : le `MigrationRunner` ne retient qu’un script par numéro ; deux `0010_*.sql` faisaient en sorte qu’une des deux migrations ne s’appliquait jamais (ordre non déterministe).
+- Ordre d’application : tri par `NNNN` (puis ordre des fichiers pour un même numéro — à éviter : un numéro = un fichier).
 
 ## Checksum
 

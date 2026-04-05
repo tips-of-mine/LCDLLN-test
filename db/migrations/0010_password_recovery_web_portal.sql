@@ -1,4 +1,4 @@
-USE lcdlln_master;
+-- La base active est celle de la connexion du master (pas de USE codé en dur).
 
 CREATE TABLE IF NOT EXISTS account_recovery_profiles (
   account_id BIGINT UNSIGNED NOT NULL,

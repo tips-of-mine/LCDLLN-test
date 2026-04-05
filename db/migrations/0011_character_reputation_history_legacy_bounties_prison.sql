@@ -3,22 +3,41 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-START TRANSACTION;
-
 -- ---------------------------------------------------------------------------
 -- characters : réputation globale, outlaw, cycle de vie suppression
+-- Idempotent (MySQL ≥ 8.0.29) + index via information_schema si absents.
 -- ---------------------------------------------------------------------------
 ALTER TABLE characters
-  ADD COLUMN global_reputation INT NOT NULL DEFAULT 0
+  ADD COLUMN IF NOT EXISTS global_reputation INT NOT NULL DEFAULT 0
     COMMENT 'réputation agrégée affichée (détail par scope dans character_reputation)',
-  ADD COLUMN is_outlaw TINYINT(1) NOT NULL DEFAULT 0
+  ADD COLUMN IF NOT EXISTS is_outlaw TINYINT(1) NOT NULL DEFAULT 0
     COMMENT '1=hors-la-loi (flag gameplay)',
-  ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL
+  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP NULL DEFAULT NULL
     COMMENT 'soft delete : horodatage effacement',
-  ADD COLUMN status ENUM('active','pending_deletion','deleted') NOT NULL DEFAULT 'active'
-    COMMENT 'active | pending_deletion | deleted',
-  ADD KEY ix_characters_status_deleted (status, deleted_at),
-  ADD KEY ix_characters_global_reputation (global_reputation);
+  ADD COLUMN IF NOT EXISTS status ENUM('active','pending_deletion','deleted') NOT NULL DEFAULT 'active'
+    COMMENT 'active | pending_deletion | deleted';
+
+SET @ix_rep_status := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'characters' AND index_name = 'ix_characters_status_deleted'
+);
+SET @sql_ix1 := IF(@ix_rep_status = 0,
+  'ALTER TABLE characters ADD KEY ix_characters_status_deleted (status, deleted_at)',
+  'SELECT 1');
+PREPARE pix1 FROM @sql_ix1;
+EXECUTE pix1;
+DEALLOCATE PREPARE pix1;
+
+SET @ix_rep_global := (
+  SELECT COUNT(*) FROM information_schema.statistics
+  WHERE table_schema = DATABASE() AND table_name = 'characters' AND index_name = 'ix_characters_global_reputation'
+);
+SET @sql_ix2 := IF(@ix_rep_global = 0,
+  'ALTER TABLE characters ADD KEY ix_characters_global_reputation (global_reputation)',
+  'SELECT 1');
+PREPARE pix2 FROM @sql_ix2;
+EXECUTE pix2;
+DEALLOCATE PREPARE pix2;
 
 -- ---------------------------------------------------------------------------
 -- character_reputation : réputation par scope (faction, région, PNJ, global)
@@ -153,8 +172,6 @@ CREATE TABLE IF NOT EXISTS prison_records (
   CONSTRAINT chk_prison_sentence CHECK (sentence_time >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Historique de peines / prison';
-
-COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

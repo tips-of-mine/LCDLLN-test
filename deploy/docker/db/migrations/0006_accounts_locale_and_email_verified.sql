@@ -8,14 +8,11 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-START TRANSACTION;
-
+-- Idempotent (MySQL ≥ 8.0.29) : reprise après échec partiel sans « Duplicate column ».
 ALTER TABLE accounts
-  ADD COLUMN email_locale TINYINT UNSIGNED NOT NULL DEFAULT 0
+  ADD COLUMN IF NOT EXISTS email_locale TINYINT UNSIGNED NOT NULL DEFAULT 0
     COMMENT 'Transactional email language: 0=en 1=fr 2=es 3=de 4=pt 5=it',
-  ADD COLUMN email_verified TINYINT UNSIGNED NOT NULL DEFAULT 0
+  ADD COLUMN IF NOT EXISTS email_verified TINYINT UNSIGNED NOT NULL DEFAULT 0
     COMMENT '0=not verified 1=verified (M33.2; source of truth may include email_verifications)';
-
-COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;

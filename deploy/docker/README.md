@@ -57,7 +57,7 @@ Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_ch
 
 **Message `pull access denied for lcdlln-master`** : normal si l’image est uniquement construite en local ; le compose utilise `pull_policy: build`. Si une vieille version de Compose refuse `pull_policy`, retirez ces lignes dans `docker-compose.yml` ou mettez à jour Docker / Compose Plugin.
 
-**Erreur migration 0004** (`fk_characters_server_id` : colonnes incompatibles, `Duplicate column name 'active_session'`, ou `server_id` resté en BIGINT après une tentative ratée) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** (MySQL **8.0.29+** requis pour `ADD COLUMN IF NOT EXISTS`, `DROP FOREIGN KEY IF EXISTS`, etc.). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK éventuelles. Après mise à jour des fichiers `db/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, `docker compose down -v` puis `up` repart d’un volume neuf.
+**Erreur migration 0004** (`fk_characters_server_id`, colonnes dupliquées, `server_id` en BIGINT, ou erreur SQL du type `near IF NOT EXISTS active_session`) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** via `information_schema` et `PREPARE` (sans `ADD COLUMN IF NOT EXISTS`, refusé sur certains moteurs / parseurs malgré un affichage « 8.0.x »). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK si présentes. Après mise à jour des fichiers `db/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, `docker compose down -v` puis `up` repart d’un volume neuf.
 
 **Checksum mismatch sur la version 4** : si vous avez modifié le fichier `0004_*.sql` alors que `schema_version` indique déjà la v4 appliquée, le master refusera de démarrer. Mettez à jour `schema_version.checksum` pour la ligne `version = 4` (hash SHA-256 du fichier actuel via `tools/migration_checksum` ou `sha256sum`), ou repartez avec un volume neuf en dev.
 
@@ -80,7 +80,7 @@ Les images **master** / **shard** utilisent **Ubuntu 24.04** (glibc ≥ 2.38), c
 
 - Docker Engine + plugin Compose v2
 - ~2 Go de RAM libre recommandé pour MySQL + services
-- Image **mysql:8.0** ≥ **8.0.29** pour les migrations idempotentes (notamment la 0004) ; l’image officielle `mysql:8.0` courante le satisfait en général
+- Image **mysql:8.0** recommandée ; les migrations idempotentes s’appuient sur `information_schema` + `PREPARE` (pas de prérequis strict 8.0.29 pour `IF NOT EXISTS` sur colonnes)
 
 ## Portail web (Next.js)
 

@@ -5,17 +5,51 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- ---------------------------------------------------------------------------
 -- characters : réputation globale, outlaw, cycle de vie suppression
--- Idempotent (MySQL ≥ 8.0.29) + index via information_schema si absents.
+-- Idempotent : colonnes via information_schema + PREPARE ; index comme ci-dessous.
 -- ---------------------------------------------------------------------------
-ALTER TABLE characters
-  ADD COLUMN IF NOT EXISTS global_reputation INT NOT NULL DEFAULT 0
-    COMMENT 'réputation agrégée affichée (détail par scope dans character_reputation)',
-  ADD COLUMN IF NOT EXISTS is_outlaw TINYINT(1) NOT NULL DEFAULT 0
-    COMMENT '1=hors-la-loi (flag gameplay)',
-  ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP NULL DEFAULT NULL
-    COMMENT 'soft delete : horodatage effacement',
-  ADD COLUMN IF NOT EXISTS status ENUM('active','pending_deletion','deleted') NOT NULL DEFAULT 'active'
-    COMMENT 'active | pending_deletion | deleted';
+SET @m11_c1 := (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'characters' AND column_name = 'global_reputation'
+);
+SET @m11_s1 := IF(@m11_c1 = 0,
+  'ALTER TABLE characters ADD COLUMN global_reputation INT NOT NULL DEFAULT 0 COMMENT ''réputation agrégée affichée (détail par scope dans character_reputation)''',
+  'SELECT 1');
+PREPARE m11_p1 FROM @m11_s1;
+EXECUTE m11_p1;
+DEALLOCATE PREPARE m11_p1;
+
+SET @m11_c2 := (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'characters' AND column_name = 'is_outlaw'
+);
+SET @m11_s2 := IF(@m11_c2 = 0,
+  'ALTER TABLE characters ADD COLUMN is_outlaw TINYINT(1) NOT NULL DEFAULT 0 COMMENT ''1=hors-la-loi (flag gameplay)''',
+  'SELECT 1');
+PREPARE m11_p2 FROM @m11_s2;
+EXECUTE m11_p2;
+DEALLOCATE PREPARE m11_p2;
+
+SET @m11_c3 := (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'characters' AND column_name = 'deleted_at'
+);
+SET @m11_s3 := IF(@m11_c3 = 0,
+  'ALTER TABLE characters ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT ''soft delete : horodatage effacement''',
+  'SELECT 1');
+PREPARE m11_p3 FROM @m11_s3;
+EXECUTE m11_p3;
+DEALLOCATE PREPARE m11_p3;
+
+SET @m11_c4 := (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'characters' AND column_name = 'status'
+);
+SET @m11_s4 := IF(@m11_c4 = 0,
+  'ALTER TABLE characters ADD COLUMN status ENUM(''active'',''pending_deletion'',''deleted'') NOT NULL DEFAULT ''active'' COMMENT ''active | pending_deletion | deleted''',
+  'SELECT 1');
+PREPARE m11_p4 FROM @m11_s4;
+EXECUTE m11_p4;
+DEALLOCATE PREPARE m11_p4;
 
 SET @ix_rep_status := (
   SELECT COUNT(*) FROM information_schema.statistics

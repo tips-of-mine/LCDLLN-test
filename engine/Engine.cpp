@@ -675,7 +675,12 @@ namespace engine
 											m_audioEngine.SetBusVolume("Music", static_cast<float>(m_cfg.GetDouble("audio.music_volume", 1.0)));
 											m_audioEngine.SetBusVolume("SFX", static_cast<float>(m_cfg.GetDouble("audio.sfx_volume", 1.0)));
 											m_audioEngine.SetBusVolume("UI", static_cast<float>(m_cfg.GetDouble("audio.ui_volume", 1.0)));
-											const std::string menuMusicRel = m_cfg.GetString("audio.menu_music_path", "");
+											std::string menuMusicRel = m_cfg.GetString("audio.menu_music_path", "");
+											if (menuMusicRel.empty())
+											{
+												// Même piste que zone_audio.json (auth_music) si la clé n’est pas renseignée.
+												menuMusicRel = "audio/Horns_of_the_Fallen_Bastion.mp3";
+											}
 											bool menuStarted = false;
 											if (!menuMusicRel.empty())
 											{
@@ -686,6 +691,8 @@ namespace engine
 													if (menuStarted)
 													{
 														LOG_INFO(Core, "[Boot] Menu music (miniaudio): {}", menuResolved.string());
+														// Applique master × bus Music avant la première frame (Tick sinon ignoré si dt==0).
+														(void)m_audioEngine.Tick(1.f / 60.f);
 													}
 												}
 												else
@@ -1861,7 +1868,7 @@ namespace engine
 																// Ajustement repère vertical : le shader du logo attend un centre "haut-gauche"
 																// alors que le rendu actuel le place en bas-gauche.
 																const float cy = static_cast<float>(ext.height) - (24.f + half);
-																constexpr float kAuthLogoOrientRad = 3.14159265f;
+																// L’orientation 180° est appliquée dans AuthLogoPass ; ici uniquement l’angle de spin chargement.
 																const float spin = authVisualState.authLogoSpin ? m_authUi.GetAuthLogoRotationRadians() : 0.f;
 																m_authLogoPass.Record(
 																	m_vkDeviceContext.GetDevice(),
@@ -1873,7 +1880,7 @@ namespace engine
 																	cx,
 																	cy,
 																	half,
-																	spin + kAuthLogoOrientRad);
+																	spin);
 															}
 														}
 														if (m_authGlyphPass.IsValid())

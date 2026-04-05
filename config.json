@@ -28,7 +28,7 @@
         "sfx_volume": 1.0,
         "ui_volume": 1.0,
         "zone_audio_path": "audio/zone_audio.json",
-        "menu_music_path": ""
+        "menu_music_path": "audio/Horns_of_the_Fallen_Bastion.mp3"
     },
     "time": {
         "fixed_dt": 0.0

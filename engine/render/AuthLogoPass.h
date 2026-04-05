@@ -24,6 +24,8 @@ namespace engine::render
 			size_t fragWordCount,
 			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
+		/// \p rotationRadians : angle d’animation « chargement » uniquement (effet 3D sur l’ampleur X) ;
+		/// l’orientation 180° du PNG est fixée dans Record.
 		void Record(VkDevice device,
 			VkCommandBuffer cmd,
 			VkExtent2D extent,

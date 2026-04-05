@@ -112,8 +112,8 @@ namespace engine::render
 		{
 			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
 			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
-			const int32_t compactFieldStep = std::max(48, bodyLineStep + 18);
-			const int32_t regularFieldStep = std::max(42, bodyLineStep + 14);
+			const int32_t compactFieldStep = std::max(52, bodyLineStep + 24);
+			const int32_t regularFieldStep = std::max(48, bodyLineStep + 22);
 			metrics.fieldRowStepPx = metrics.compactSingleField ? compactFieldStep : regularFieldStep;
 		}
 		// Aligner le premier champ sous le bloc titre + section (RecordModel). Sur grands panels,
@@ -413,20 +413,23 @@ namespace engine::render
 			if (checkboxLine)
 			{
 				const bool checked = model.bodyLines[static_cast<size_t>(bodyIndex)].checkboxChecked;
-				addThemeRect(contentX + 2, y - 4, 16, 16, theme.surface, 0.98f);
-				addThemeRect(contentX + 2, y - 4, 16, 2, theme.border, 0.85f);
-				addThemeRect(contentX + 2, y + 10, 16, 2, theme.border, 0.85f);
-				addThemeRect(contentX + 2, y - 4, 2, 16, theme.border, 0.85f);
-				addThemeRect(contentX + 16, y - 4, 2, 16, theme.border, 0.85f);
+				const int32_t cbx = contentX + 2;
+				const int32_t cby = y - 5;
+				const int32_t outer = kAuthUiCheckboxOuterPx;
+				addThemeRect(cbx, cby, outer, outer, theme.surface, 0.98f);
+				addThemeRect(cbx, cby, outer, 2, theme.border, 0.85f);
+				addThemeRect(cbx, cby + outer - 2, outer, 2, theme.border, 0.85f);
+				addThemeRect(cbx, cby, 2, outer, theme.border, 0.85f);
+				addThemeRect(cbx + outer - 2, cby, 2, outer, theme.border, 0.85f);
 				if (checked)
 				{
-					addThemeRect(contentX + 5, y - 1, 10, 10, theme.accent, 0.90f);
+					addThemeRect(cbx + 5, cby + 5, 10, 10, theme.accent, 0.90f);
 				}
 				if (hoveredBodyLine || activeBodyLine)
 				{
-					addThemeRect(contentX + 22, y - 6, contentW - 28, 18, theme.primary, 0.10f);
+					addThemeRect(contentX + kAuthUiCheckboxLabelOffsetX, y - 6, contentW - kAuthUiCheckboxLabelOffsetX - 8, 18, theme.primary, 0.10f);
 				}
-				addThemeRect(contentX + 22, y, std::max(80, contentW - 32), 4, theme.text,
+				addThemeRect(contentX + kAuthUiCheckboxLabelOffsetX, y, std::max(80, contentW - kAuthUiCheckboxLabelOffsetX - 12), 4, theme.text,
 					activeBodyLine ? 0.88f : (hoveredBodyLine ? 0.72f : 0.76f));
 			}
 			else

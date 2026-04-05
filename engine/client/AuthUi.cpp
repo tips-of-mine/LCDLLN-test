@@ -2974,9 +2974,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						if (bl.checkbox)
 						{
 							const int32_t cbX = contentX + 2;
-							const int32_t cbY = y - 6;
-							const int32_t cbS = 18;
-							if (contains(mx, my, cbX, cbY, cbS, cbS) || contains(mx, my, contentX + 24, y - 8, contentW - 32, 22))
+							const int32_t cbY = y - 5;
+							const int32_t cbS = engine::render::kAuthUiCheckboxOuterPx;
+							if (contains(mx, my, cbX, cbY, cbS, cbS)
+								|| contains(mx, my, contentX + engine::render::kAuthUiCheckboxLabelOffsetX - 2, y - 8, contentW - engine::render::kAuthUiCheckboxLabelOffsetX, 22))
 							{
 								hit = true;
 							}
@@ -3689,14 +3690,25 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 		case Phase::Login:
 			model.sectionTitle = Tr("auth.section.login");
-			// Bannière de statut serveur : maintenance si probe terminé et serveurs injoignables,
-			// sinon vérification en cours au premier démarrage. Ne remplace pas m_infoBanner (langue, etc.).
-			if (model.infoBanner.empty())
+			// Statut maître : toujours recalculé (évite un libellé « vérification » figé si m_infoBanner bloquait la branche).
 			{
+				std::string serverBanner;
 				if (m_authAvailabilityChecking)
-					model.infoBanner = Tr("auth.status.checking");
+				{
+					serverBanner = Tr("auth.status.checking");
+				}
 				else if (m_statusProbeCompletedOnce && !m_statusCache.authOk)
-					model.infoBanner = Tr("auth.status.unavailable");
+				{
+					serverBanner = Tr("auth.status.unavailable");
+				}
+				if (!serverBanner.empty())
+				{
+					model.infoBanner = std::move(serverBanner);
+				}
+				else
+				{
+					model.infoBanner = m_infoBanner;
+				}
 			}
 			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"));
 			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"));

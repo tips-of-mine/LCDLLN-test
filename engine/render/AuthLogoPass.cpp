@@ -283,13 +283,14 @@ namespace engine::render
 		push.viewportSize[1] = static_cast<float>(extent.height);
 		push.centerPx[0] = centerXPx;
 		push.centerPx[1] = centerYPx;
-		// “Rotation sur lui-même” : simule un spin 3D autour de l’axe Y en modulant
-		// l’étendue X par cos(angle). L’axe Y reste fixe (pas de rotation horaire/anti-horaire).
+		// Spin « chargement » : modulation d’ampleur X (effet type rotation Y). \p rotationRadians = angle d’animation seul.
 		const float spinFactor = std::cos(rotationRadians);
 		push.halfExtentPx[0] = -halfSizePx * spinFactor;
 		push.halfExtentPx[1] = halfSizePx;
-		push.cosA = 1.0f; // Pas de rotation 2D
-		push.sinA = 0.0f;
+		// Orientation fixe du PNG (logo_login à l’endroit) : 180° dans le plan — ne pas mélanger avec l’angle de spin ci-dessus.
+		constexpr float kLogoBaseRotationRad = 3.14159265f;
+		push.cosA = std::cos(kLogoBaseRotationRad);
+		push.sinA = std::sin(kLogoBaseRotationRad);
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
 
 		vkCmdDraw(cmd, 6, 1, 0, 0);

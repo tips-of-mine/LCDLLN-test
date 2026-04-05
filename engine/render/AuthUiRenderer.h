@@ -11,6 +11,10 @@ namespace engine::render
 {
 	/// Hauteur commune des boutons d’action (auth) : renderer + hit-test + texte (AuthGlyphPass).
 	inline constexpr int32_t kAuthUiActionButtonHeightPx = 44;
+	/// Case à cocher « se souvenir » : taille extérieure (glyphs + fond + hit-test alignés).
+	inline constexpr int32_t kAuthUiCheckboxOuterPx = 20;
+	/// Origine X du libellé à droite de la case (contentX + offset).
+	inline constexpr int32_t kAuthUiCheckboxLabelOffsetX = 30;
 
 	struct AuthUiLayer
 	{

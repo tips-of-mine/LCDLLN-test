@@ -141,23 +141,43 @@ namespace engine::render
 				{
 					out.push_back(static_cast<char>(c));
 				}
+				else if (c == 0xC2u && (i + 1u) < text.size())
+				{
+					const unsigned char d = static_cast<unsigned char>(text[++i]);
+					if (d == 0xA0u)
+					{
+						out.push_back(' ');
+					}
+					else
+					{
+						out.push_back('?');
+					}
+				}
 				else if (c == 0xC3u && (i + 1u) < text.size())
 				{
 					const unsigned char d = static_cast<unsigned char>(text[++i]);
 					switch (d)
 					{
-					case 0x80: case 0x82: case 0x84: out.push_back('A'); break;
+					case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: out.push_back('A'); break;
+					case 0x86: out += "AE"; break;
 					case 0x87: out.push_back('C'); break;
 					case 0x88: case 0x89: case 0x8A: case 0x8B: out.push_back('E'); break;
-					case 0x8E: case 0x8F: out.push_back('I'); break;
-					case 0x94: case 0x96: out.push_back('O'); break;
-					case 0x99: case 0x9B: case 0x9C: out.push_back('U'); break;
-					case 0xA0: case 0xA2: case 0xA4: out.push_back('a'); break;
+					case 0x8C: case 0x8D: case 0x8E: case 0x8F: out.push_back('I'); break;
+					case 0x91: out.push_back('N'); break;
+					case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: out.push_back('O'); break;
+					case 0x98: out.push_back('O'); break; // Ø
+					case 0x99: case 0x9A: case 0x9B: case 0x9C: out.push_back('U'); break;
+					case 0x9D: out.push_back('Y'); break;
+					case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: out.push_back('a'); break;
+					case 0xA6: out += "ae"; break;
 					case 0xA7: out.push_back('c'); break;
 					case 0xA8: case 0xA9: case 0xAA: case 0xAB: out.push_back('e'); break;
-					case 0xAE: case 0xAF: out.push_back('i'); break;
-					case 0xB4: case 0xB6: out.push_back('o'); break;
-					case 0xB9: case 0xBB: case 0xBC: out.push_back('u'); break;
+					case 0xAC: case 0xAD: case 0xAE: case 0xAF: out.push_back('i'); break;
+					case 0xB1: out.push_back('n'); break;
+					case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: out.push_back('o'); break;
+					case 0xB8: out.push_back('o'); break; // ø
+					case 0xB9: case 0xBA: case 0xBB: case 0xBC: out.push_back('u'); break;
+					case 0xBD: out.push_back('y'); break;
 					case 0xBF: out.push_back('y'); break;
 					default: out.push_back('?'); break;
 					}
@@ -981,6 +1001,9 @@ namespace engine::render
 		{
 			return;
 		}
+		// La police TTF embarquée ne couvre pas les glyphes accentués : mêmes remplacements ASCII que le fallback bitmap.
+		const std::string asciiWork = SimplifyUtf8(text);
+		const std::string_view work = asciiWork;
 		const float mul = std::max(0.35f, static_cast<float>(scale) / 4.f);
 		const int32_t maxX = originX + std::max(32, maxWidthPx);
 		int32_t lineIndex = 0;
@@ -1009,10 +1032,10 @@ namespace engine::render
 		};
 
 		size_t i = 0;
-		while (i < text.size())
+		while (i < work.size())
 		{
 			int cp = 0;
-			if (!Utf8Next(text, i, cp))
+			if (!Utf8Next(work, i, cp))
 			{
 				break;
 			}
@@ -1132,7 +1155,8 @@ namespace engine::render
 		if (m_fontGpuReady && m_uiFont.IsValid())
 		{
 			const float mul = std::max(0.35f, static_cast<float>(scale) / 4.f);
-			return static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.MeasureWidthPx(text)) * mul));
+			const std::string folded = SimplifyUtf8(text);
+			return static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.MeasureWidthPx(folded)) * mul));
 		}
 		return TextPixelWidth(text, scale);
 	}
@@ -1232,6 +1256,8 @@ namespace engine::render
 		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 4 : 1), 6, 9);
 		const int32_t smallScale = std::max(2, bodyScale - 1);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+		const int32_t actionLabelScale = std::max(2, bodyScale - 1);
+		const int32_t actionLineStep = 7 * actionLabelScale + 2 * actionLabelScale;
 		const int32_t fieldRowStep = layout.fieldRowStepPx;
 
 		auto appendBlock = [this, &vertices](int32_t x, int32_t y, int32_t widthPx, int32_t heightPx, const float color[4])
@@ -1270,12 +1296,12 @@ namespace engine::render
 		const int32_t titleAreaW = drawTitleAcrossPanel ? (panelW - 48) : contentW;
 		if (!model.titleLine2.empty())
 		{
-			AppendText(vertices, model.titleLine1, titleAreaX, panelY + 22, titleAreaW, titleScale, titleColor);
-			AppendText(vertices, model.titleLine2, titleAreaX, panelY + 30 + titleScale * 10, titleAreaW, bodyScale, mutedColor);
+			appendCenteredText(model.titleLine1, titleAreaX, panelY + 22, titleAreaW, titleScale, titleColor);
+			appendCenteredText(model.titleLine2, titleAreaX, panelY + 30 + titleScale * 10, titleAreaW, bodyScale, mutedColor);
 		}
 		else
 		{
-			AppendText(vertices, model.titleLine1, titleAreaX, panelY + 24, titleAreaW, titleScale, titleColor);
+			appendCenteredText(model.titleLine1, titleAreaX, panelY + 24, titleAreaW, titleScale, titleColor);
 		}
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
 		const int32_t sectionTopPad = centeredLanguageSelection ? 50 : (model.titleLine2.empty() ? 30 : 38);
@@ -1377,38 +1403,40 @@ namespace engine::render
 				const int32_t gapTerms = 10;
 				const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gapTerms) / actionCount);
 				const int32_t termsBtnY = panelY + panelH - 92 + (58 - kAuthUiActionButtonHeightPx) / 2;
-				const int32_t termsLabelY = termsBtnY + (kAuthUiActionButtonHeightPx - bodyLineStep) / 2;
+				const int32_t termsLabelY = termsBtnY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size()) break;
 					const int32_t x = contentX + i * (actionW + gapTerms);
 					const std::string& label = model.actions[static_cast<size_t>(i)].label;
-					const int32_t labelWidth = MeasureTextWidthPx(label, bodyScale);
+					const int32_t labelWidth = MeasureTextWidthPx(label, actionLabelScale);
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
-					AppendText(vertices, label, labelX, termsLabelY, actionW - 20, bodyScale, titleColor);
+					AppendText(vertices, label, labelX, termsLabelY, actionW - 20, actionLabelScale, titleColor);
 				}
 			}
 		}
 		else
 		{
+			const int32_t labelAboveFieldPx = smallScale * 11 + 6;
+			const int32_t valueBelowTopPx = 12;
 			for (int32_t i = 0; i < static_cast<int32_t>(model.fields.size()); ++i)
 			{
 				const int32_t y = panelY + topOffset + i * fieldRowStep;
 				const auto& field = model.fields[static_cast<size_t>(i)];
-				AppendText(vertices, field.label, contentX + 10, y - (smallScale * 9), contentW / 2, smallScale, mutedColor);
+				AppendText(vertices, field.label, contentX + 10, y - labelAboveFieldPx, contentW / 2, smallScale, mutedColor);
 				if (!field.tooltipText.empty())
 				{
-					AppendText(vertices, "(i)", std::max(contentX + 10, contentX + contentW - 36), y - (smallScale * 9), 28, smallScale, accentColor);
+					AppendText(vertices, "(i)", std::max(contentX + 10, contentX + contentW - 36), y - labelAboveFieldPx, 28, smallScale, accentColor);
 				}
-				AppendText(vertices, field.value, contentX + 12, y + 8, contentW - 24, bodyScale, field.active ? titleColor : bodyColor);
+				AppendText(vertices, field.value, contentX + 12, y + valueBelowTopPx, contentW - 24, bodyScale, field.active ? titleColor : bodyColor);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
 				{
-					AppendText(vertices, field.tooltipText, contentX + 8, y + 36, contentW - 16, smallScale, bodyColor);
+					AppendText(vertices, field.tooltipText, contentX + 8, y + 40, contentW - 16, smallScale, bodyColor);
 				}
 				if (field.active && !field.cyclePicker)
 				{
 					const int32_t caretX = contentX + 12 + MeasureTextWidthPx(field.value, bodyScale) + 2;
-					appendBlock(std::min(caretX, contentX + contentW - 14), y + 7, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
+					appendBlock(std::min(caretX, contentX + contentW - 14), y + valueBelowTopPx - 1, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
 				}
 			}
 			const int32_t bodyLinePitch = centeredLanguageSelection
@@ -1426,13 +1454,16 @@ namespace engine::render
 				if (line.checkbox)
 				{
 					const float borderMuted[4] = { mutedColor[0], mutedColor[1], mutedColor[2], 1.0f };
-					appendBlock(contentX + 4, y - 2, 14, 14, borderMuted);
-					appendBlock(contentX + 6, y, 10, 10, theme.background);
+					const int32_t cbx = contentX + 2;
+					const int32_t cby = y - 5;
+					const int32_t outer = kAuthUiCheckboxOuterPx;
+					appendBlock(cbx, cby, outer, outer, borderMuted);
+					appendBlock(cbx + 2, cby + 2, outer - 4, outer - 4, theme.background);
 					if (line.checkboxChecked)
 					{
-						appendBlock(contentX + 8, y + 2, 6, 6, accentColor);
+						appendBlock(cbx + 5, cby + 5, 10, 10, accentColor);
 					}
-					AppendText(vertices, line.text, contentX + 24, y, contentW - 30, bodyScale, lineColor);
+					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor);
 					continue;
 				}
 				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)
@@ -1469,13 +1500,13 @@ namespace engine::render
 							x = (col == 0) ? contentX : (contentX + loginTwoRow.primarySubmitWidth + gap);
 						}
 						const auto& action = model.actions[static_cast<size_t>(i)];
-						const int32_t labelWidth = MeasureTextWidthPx(action.label, bodyScale);
+						const int32_t labelWidth = MeasureTextWidthPx(action.label, actionLabelScale);
 						const int32_t labelX = std::max(x + 8, x + (btnW - labelWidth) / 2);
-						const int32_t labelY = rowY + (kAuthUiActionButtonHeightPx - bodyLineStep) / 2;
+						const int32_t labelY = rowY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
 						// Les actions "emphasized" ont un fond de couleur proche de l’accent.
 						// Si on dessine le texte en accentColor, il devient quasi illisible.
 						const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
-						AppendText(vertices, action.label, labelX, labelY, btnW - 16, bodyScale, ac);
+						AppendText(vertices, action.label, labelX, labelY, btnW - 16, actionLabelScale, ac);
 					}
 				}
 			}
@@ -1484,16 +1515,16 @@ namespace engine::render
 				const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 				const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
 				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
-				const int32_t singleRowLabelY = buttonY + (kAuthUiActionButtonHeightPx - bodyLineStep) / 2;
+				const int32_t singleRowLabelY = buttonY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size()) break;
 					const int32_t x = contentX + i * (actionW + gap);
 					const auto& action = model.actions[static_cast<size_t>(i)];
-					const int32_t labelWidth = MeasureTextWidthPx(action.label, bodyScale);
+					const int32_t labelWidth = MeasureTextWidthPx(action.label, actionLabelScale);
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
 					const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
-					AppendText(vertices, action.label, labelX, singleRowLabelY, actionW - 20, bodyScale, ac);
+					AppendText(vertices, action.label, labelX, singleRowLabelY, actionW - 20, actionLabelScale, ac);
 				}
 			}
 			if (!model.errorText.empty())

@@ -211,6 +211,7 @@ add_library(engine_core
   engine/render/ShaderHotReload.cpp
   engine/render/Camera.cpp
   engine/render/AuthGlyphPass.cpp
+  engine/render/FontAtlasTtf.cpp
   engine/render/AuthLogoPass.cpp
   engine/render/AuthUiRenderer.cpp
   engine/render/DecalSystem.cpp

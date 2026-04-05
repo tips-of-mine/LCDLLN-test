@@ -74,6 +74,9 @@ namespace engine::client
 			bool loginArtColumn = false;
 			/// Logo connexion : rotation tant que la disponibilité maître est en cours de vérification.
 			bool authLogoSpin = false;
+			/// Au moins une sonde de statut terminée (affiche succès/échec hors rotation).
+			bool authStatusKnown = false;
+			bool authStatusOk = false;
 		};
 
 		struct RenderField
@@ -104,6 +107,8 @@ namespace engine::client
 			bool hovered = false;
 			/// Lien (ouvre une URL), pas un bouton d’action.
 			bool link = false;
+			bool checkbox = false;
+			bool checkboxChecked = false;
 		};
 
 		struct RenderModel
@@ -307,6 +312,8 @@ namespace engine::client
 		// Vérifie la disponibilité des services (et éventuellement le nombre de joueurs)
 		// toutes les 2 minutes tant que l'utilisateur n'est pas authentifié.
 		bool m_statusProbeInitialized = false;
+		/// Au moins une sonde de statut a terminé (bannière maintenance / logo résultat).
+		bool m_statusProbeCompletedOnce = false;
 		float m_statusPollTimer = 0.f;
 
 		StatusCache m_statusCache{};

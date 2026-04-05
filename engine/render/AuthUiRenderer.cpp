@@ -105,6 +105,13 @@ namespace engine::render
 			metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
 		}
 		metrics.compactSingleField = model.fields.size() <= 1u;
+		{
+			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
+			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+			const int32_t compactFieldStep = std::max(48, bodyLineStep + 18);
+			const int32_t regularFieldStep = std::max(42, bodyLineStep + 14);
+			metrics.fieldRowStepPx = metrics.compactSingleField ? compactFieldStep : regularFieldStep;
+		}
 		// Aligner le premier champ sous le bloc titre + section (RecordModel). Sur grands panels,
 		// titleScale/bodyScale augmentent : l’ancien offset fixe (104) faisait chevaucher labels et titres.
 		{
@@ -140,7 +147,7 @@ namespace engine::render
 		const int32_t panelH = lay.panelH;
 		const int32_t contentW = lay.contentW;
 		const int32_t topOffset = lay.topOffset;
-		const int32_t fieldStep = model.fields.size() <= 1u ? 48 : 42;
+		const int32_t fieldStep = lay.fieldRowStepPx;
 		const int32_t bodyScale = std::clamp(lay.panelW / 260, 2, 4);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 		const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
@@ -152,11 +159,14 @@ namespace engine::render
 		{
 			out.secondaryRowY = bodyBottom;
 		}
-		constexpr int32_t gap = 10;
-		out.buttonHalfWidth = std::max(120, (contentW - gap) / 2);
-		// Primary button (Valider) gets 60% of the row, secondary gets 40%
-		out.primaryBtnWidth = std::max(140, contentW * 60 / 100);
-		out.secondaryBtnWidth = std::max(100, contentW - out.primaryBtnWidth - gap);
+		out.buttonHalfWidth = std::max(120, (contentW - 10) / 2);
+		const int32_t gap = 10;
+		out.primarySubmitWidth = std::max(168, (contentW - gap) * 62 / 100);
+		out.primaryQuitWidth = std::max(100, contentW - gap - out.primarySubmitWidth);
+		if (out.primarySubmitWidth + gap + out.primaryQuitWidth > contentW)
+		{
+			out.primaryQuitWidth = std::max(100, contentW - gap - out.primarySubmitWidth);
+		}
 		return true;
 	}
 
@@ -182,7 +192,6 @@ namespace engine::render
 		const int32_t contentW = layout.contentW;
 		const int32_t artW = layout.artW;
 		const bool largeContent = layout.largeContent;
-		const bool compactSingleField = layout.compactSingleField;
 
 		auto addRect = [&layers](int32_t x, int32_t y, int32_t rw, int32_t rh, float r, float g, float b, float a)
 		{
@@ -253,7 +262,6 @@ namespace engine::render
 				addThemeRect(panelX + 52, panelY + 124, artW - 84, 12, theme.accent, 0.90f);
 			}
 
-			addThemeRect(contentX - 10, panelY + 60, contentW + 10, 2, theme.border, 0.90f);
 		}
 
 		if (!model.infoBanner.empty())
@@ -317,12 +325,11 @@ namespace engine::render
 		const int32_t fieldCount = std::max<int32_t>(0, static_cast<int32_t>(model.fields.size()));
 		const int32_t topOffset = layout.topOffset;
 
+		const int32_t fieldRowStep = layout.fieldRowStepPx;
 		for (int32_t i = 0; i < fieldCount; ++i)
 		{
-			const int32_t step = compactSingleField ? 48 : (fieldCount > 4 ? 50 : 42);
-			const int32_t y = panelY + topOffset + i * step;
+			const int32_t y = panelY + topOffset + i * fieldRowStep;
 			addThemeRect(contentX, y, contentW, 32, theme.surface, 0.98f);
-			// Label indicator bar removed to avoid visual "horizontal line" artifacts
 			const bool activeField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].active : false;
 			const bool hoveredField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].hovered : false;
 			if (hoveredField && !activeField)
@@ -354,23 +361,47 @@ namespace engine::render
 		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
 		const int32_t bodyLineStepMetrics = 7 * bodyScaleMetrics + 2 * bodyScaleMetrics;
 		const int32_t bodyLinePitch = std::max(28, bodyLineStepMetrics + 10);
-		const int32_t bodyStartY = panelY + topOffset + fieldCount * (compactSingleField ? 48 : (fieldCount > 4 ? 50 : 42)) + 18;
+		const int32_t bodyStartY = panelY + topOffset + fieldCount * fieldRowStep + 18;
 		for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 		{
 			const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
 			const int32_t y = bodyStartY + localIdx * bodyLinePitch;
 			const bool activeBodyLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].active : false;
 			const bool hoveredBodyLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].hovered : false;
-			if (activeBodyLine)
+			const bool checkboxLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() && model.bodyLines[static_cast<size_t>(bodyIndex)].checkbox;
+			if (checkboxLine)
 			{
-				addThemeRect(contentX - 4, y - 6, contentW, 14, theme.accent, 0.18f);
-				addRect(contentX - 4, y - 6, 3, 14, 0.86f, 0.65f, 0.22f, 1.0f);
+				const bool checked = model.bodyLines[static_cast<size_t>(bodyIndex)].checkboxChecked;
+				addThemeRect(contentX + 2, y - 4, 16, 16, theme.surface, 0.98f);
+				addThemeRect(contentX + 2, y - 4, 16, 2, theme.border, 0.85f);
+				addThemeRect(contentX + 2, y + 10, 16, 2, theme.border, 0.85f);
+				addThemeRect(contentX + 2, y - 4, 2, 16, theme.border, 0.85f);
+				addThemeRect(contentX + 16, y - 4, 2, 16, theme.border, 0.85f);
+				if (checked)
+				{
+					addThemeRect(contentX + 5, y - 1, 10, 10, theme.accent, 0.90f);
+				}
+				if (hoveredBodyLine || activeBodyLine)
+				{
+					addThemeRect(contentX + 22, y - 6, contentW - 28, 18, theme.primary, 0.10f);
+				}
+				addThemeRect(contentX + 22, y, std::max(80, contentW - 32), 4, theme.text,
+					activeBodyLine ? 0.88f : (hoveredBodyLine ? 0.72f : 0.76f));
 			}
-			else if (hoveredBodyLine)
+			else
 			{
-				addThemeRect(contentX - 4, y - 6, contentW, 14, theme.primary, 0.12f);
+				if (activeBodyLine)
+				{
+					addThemeRect(contentX - 4, y - 6, contentW, 14, theme.accent, 0.18f);
+					addRect(contentX - 4, y - 6, 3, 14, 0.86f, 0.65f, 0.22f, 1.0f);
+				}
+				else if (hoveredBodyLine)
+				{
+					addThemeRect(contentX - 4, y - 6, contentW, 14, theme.primary, 0.12f);
+				}
+				addThemeRect(contentX, y, std::max(120, contentW - localIdx * 12), 4, theme.text,
+					activeBodyLine ? 0.88f : (hoveredBodyLine ? 0.68f : (localIdx == 0 ? 0.76f : 0.46f)));
 			}
-			// Body line text bar removed to avoid "horizontal line" artifacts
 		}
 
 		const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
@@ -390,20 +421,25 @@ namespace engine::render
 					{
 						break;
 					}
+					int32_t btnW = loginTwoRow.buttonHalfWidth;
+					int32_t x = contentX + col * (loginTwoRow.buttonHalfWidth + gap);
+					if (row == 1)
+					{
+						btnW = (col == 0) ? loginTwoRow.primarySubmitWidth : loginTwoRow.primaryQuitWidth;
+						x = (col == 0) ? contentX : (contentX + loginTwoRow.primarySubmitWidth + gap);
+					}
 					const bool primary = model.actions[static_cast<size_t>(i)].primary;
 					const bool emphasized = model.actions[static_cast<size_t>(i)].emphasized;
 					const bool hovered = model.actions[static_cast<size_t>(i)].hovered;
-					// Primary row: Valider gets wider, Retour au bureau gets narrower
-					const int32_t btnW = (row == 1) ? (primary ? loginTwoRow.primaryBtnWidth : loginTwoRow.secondaryBtnWidth)
-						: loginTwoRow.buttonHalfWidth;
-					const float* fill = primary ? theme.primary : (emphasized ? theme.accent : theme.surface);
-					addThemeRect(colX, rowY, btnW, 40, fill, hovered ? 1.0f : 0.94f);
+					// Même couleur de fond pour les deux boutons secondaires (Inscription / Options).
+					const float* fill = primary ? theme.primary : (emphasized ? theme.secondary : theme.surface);
+					addThemeRect(x, rowY, btnW, 40, fill, hovered ? 1.0f : 0.94f);
 					if (hovered)
 					{
-						addThemeRect(colX, rowY, btnW, 3, theme.accent, 1.0f);
+						addThemeRect(x, rowY, btnW, 3, theme.accent, 1.0f);
 					}
-					// Button text bar removed
-					colX += btnW + gap;
+					addThemeRect(x + 12, rowY + 14, std::max(48, btnW - 24), 4, theme.text,
+						primary ? (hovered ? 0.78f : 0.64f) : (hovered ? 0.62f : 0.48f));
 				}
 			}
 		}

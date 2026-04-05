@@ -3,6 +3,8 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json* ./
+# L’image node peut avoir NODE_ENV=production : npm omettrait les devDependencies (@types/*, typescript) requis pour next build.
+ENV NODE_ENV=development
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 FROM node:20-alpine AS builder
@@ -10,6 +12,8 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Next ne crée pas public/ s’il manque dans le contexte ; le stage runner COPY exige ce répertoire.
+RUN mkdir -p public
 RUN npm run build
 
 FROM node:20-alpine AS runner

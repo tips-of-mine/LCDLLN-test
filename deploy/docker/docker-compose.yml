@@ -139,6 +139,7 @@ services:
       context: ./web-portal
       dockerfile: Dockerfile
     image: lcdlln-web-portal
+    pull_policy: build
     container_name: lcdlln-web-portal
     restart: unless-stopped
     depends_on:

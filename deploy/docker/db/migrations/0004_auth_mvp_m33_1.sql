@@ -49,8 +49,8 @@ ALTER TABLE accounts
 --   - Add FK to servers and races
 -- ---------------------------------------------------------------------------
 ALTER TABLE characters
-  ADD COLUMN server_id      BIGINT UNSIGNED   NOT NULL DEFAULT 0
-    COMMENT 'references servers.id',
+  ADD COLUMN server_id      INT UNSIGNED      NOT NULL DEFAULT 0
+    COMMENT 'references servers.id (même type que servers.id)',
   ADD COLUMN race_id        INT UNSIGNED      NOT NULL DEFAULT 0
     COMMENT 'references races.id',
   ADD COLUMN class_id       SMALLINT UNSIGNED NOT NULL DEFAULT 0

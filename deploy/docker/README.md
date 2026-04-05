@@ -57,6 +57,8 @@ Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_ch
 
 **Message `pull access denied for lcdlln-master`** : normal si l’image est uniquement construite en local ; le compose utilise `pull_policy: build`. Si une vieille version de Compose refuse `pull_policy`, retirez ces lignes dans `docker-compose.yml` ou mettez à jour Docker / Compose Plugin.
 
+**Erreur migration 0004** (`fk_characters_server_id` : colonnes incompatibles) : corrigée dans le dépôt (`server_id` aligné sur `INT UNSIGNED` comme `servers.id`). Après mise à jour des fichiers `db/migrations`, rebuild du master. Si une tentative précédente a laissé la base à moitié migrée (colonnes dupliquées, etc.), en **dev** le plus simple est `docker compose down -v` puis `up` pour repartir d’un volume MySQL neuf.
+
 ## Master sans Docker (optionnel)
 
 Si vous exécutez `bin/lcdlln_server` directement sur la machine (sans conteneur), les `.so` du bundle doivent être visibles :

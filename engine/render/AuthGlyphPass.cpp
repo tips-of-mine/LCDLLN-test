@@ -1229,7 +1229,7 @@ namespace engine::render
 			|| state.login || state.registerMode
 			|| state.verifyEmail || state.forgotPassword
 			|| state.characterCreate;
-		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 2 : 1), 4, 7);
+		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 4 : 1), 6, 9);
 		const int32_t smallScale = std::max(2, bodyScale - 1);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 		const int32_t fieldRowStep = layout.fieldRowStepPx;
@@ -1453,6 +1453,7 @@ namespace engine::render
 				for (int32_t row = 0; row < 2; ++row)
 				{
 					const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+					int32_t colX = contentX;
 					for (int32_t col = 0; col < 2; ++col)
 					{
 						const int32_t i = row * 2 + col;

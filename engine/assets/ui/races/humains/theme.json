@@ -14,12 +14,15 @@
     "border": "#2B3A4F"
   },
   "typography": {
-    "fontFamily": "Cinzel",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
     "titleSize": 22
   },
-  "metrics": { "radius": 10, "padding": 10 },
+  "metrics": {
+    "radius": 10,
+    "padding": 10
+  },
   "assets": {
     "bg": "assets/ui/races/humains/images/bg.png",
     "emblem": "assets/ui/races/humains/images/emblem.png"

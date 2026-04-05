@@ -11,7 +11,7 @@
   "common.quit": "Quit",
   "common.quit_desktop": "Back to desktop",
   "common.submit": "Submit",
-  "common.tab_escape_hint": "Tab change field  Escape back",
+  "common.tab_escape_hint": "",
   "language.first_run.title": "Language selection",
   "language.first_run.message": "We detected {language}. Confirm your language before login.",
   "language.first_run.confirm": "Press Enter to confirm and continue to authentication.",
@@ -117,5 +117,13 @@
   "auth.panel.title": "Title",
   "auth.panel.language": "Language",
   "auth.status.unavailable": "Servers under maintenance. Please try again in a moment.",
-  "auth.status.checking": "Checking server status..."
+  "auth.status.checking": "Checking server status...",
+  "auth.tooltip.login": "Your unique login to connect to the game. 3 to 32 characters, letters and digits only.",
+  "auth.tooltip.password": "Your password. Minimum 6 characters, mix letters, digits and symbols.",
+  "auth.tooltip.email": "Valid email address for account verification and password recovery.",
+  "auth.tooltip.first_name": "Your first name as it will appear on your player profile.",
+  "auth.tooltip.last_name": "Your last name for account identification.",
+  "auth.tooltip.birth_day": "Birth day (1-31). Select with left/right arrows.",
+  "auth.tooltip.birth_month": "Birth month (1-12). Select with left/right arrows.",
+  "auth.tooltip.birth_year": "Birth year (e.g. 1990). Select with left/right arrows."
 }

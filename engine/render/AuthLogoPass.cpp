@@ -283,12 +283,13 @@ namespace engine::render
 		push.viewportSize[1] = static_cast<float>(extent.height);
 		push.centerPx[0] = centerXPx;
 		push.centerPx[1] = centerYPx;
-		// Le logo est actuellement “miroir” horizontalement sur certaines configurations.
-		// On corrige en inversant uniquement l’extensíon X (sans changer le shader/SPIR-V).
-		push.halfExtentPx[0] = -halfSizePx;
+		// “Rotation sur lui-même” : simule un spin 3D autour de l’axe Y en modulant
+		// l’étendue X par cos(angle). L’axe Y reste fixe (pas de rotation horaire/anti-horaire).
+		const float spinFactor = std::cos(rotationRadians);
+		push.halfExtentPx[0] = -halfSizePx * spinFactor;
 		push.halfExtentPx[1] = halfSizePx;
-		push.cosA = std::cos(rotationRadians);
-		push.sinA = std::sin(rotationRadians);
+		push.cosA = 1.0f; // Pas de rotation 2D
+		push.sinA = 0.0f;
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
 
 		vkCmdDraw(cmd, 6, 1, 0, 0);

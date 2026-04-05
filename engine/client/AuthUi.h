@@ -88,8 +88,9 @@ namespace engine::client
 			bool secret = false;
 			/// Molette / flèches : pas de saisie clavier chiffres (ex. jour/mois/année inscription).
 			bool cyclePicker = false;
-			/// Clé i18n pour infobulle (zone « i » à droite du champ).
+			/// Clé i18n pour infobulle (résolue en \c tooltipText).
 			std::string tooltipKey;
+			/// Texte d’aide affiché (Tr(tooltipKey) et/ou texte fourni à la construction du champ).
 			std::string tooltipText;
 		};
 

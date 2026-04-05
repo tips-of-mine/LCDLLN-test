@@ -1,7 +1,7 @@
 QWidget[uiClass="hud"] {
   background: ${palette.background};
   color: ${palette.text};
-  font-family: "${typography.uiFontFamily}";
+  font-family: "Windlass";
   font-size: ${typography.baseSize}px;
 }
 

@@ -25,6 +25,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <mutex>
 #include <thread>
@@ -2921,17 +2922,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						break;
 					}
 				}
-				if (m_phase == Phase::Register)
+				for (int32_t fi = 0; fi < static_cast<int32_t>(model.fields.size()); ++fi)
 				{
-					for (int32_t fi = 5; fi <= 7; ++fi)
+					const RenderField& fld = model.fields[static_cast<size_t>(fi)];
+					if (fld.tooltipText.empty())
 					{
-						const int32_t y = panelY + topOffset + fi * fieldStep;
-						const int32_t ix = contentX + contentW - 22;
-						if (contains(mx, my, ix, y - 10, 18, 28))
-						{
-							m_hoveredFieldInfoIndex = fi;
-							break;
-						}
+						continue;
+					}
+					const int32_t y = panelY + topOffset + fi * fieldStep;
+					const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
+					if (contains(mx, my, ix, y - 10, 28, 18))
+					{
+						m_hoveredFieldInfoIndex = fi;
+						break;
 					}
 				}
 
@@ -3257,6 +3260,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
 									break;
 								case Phase::LanguageSelectionFirstRun:
+									if (i == 0) applyPrimaryAction();
+									else if (i == 1) { window.RequestClose(); }
+									break;
 								case Phase::CharacterCreate:
 								case Phase::Submitting:
 								case Phase::Error:
@@ -3393,11 +3399,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					AdjustBirthCycle(m_birthYear, delta, 1900, 2100);
 				}
 			};
-			if (input.WasPressed(engine::platform::Key::Up))
+			if (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Right))
 			{
 				stepBirth(1);
 			}
-			if (input.WasPressed(engine::platform::Key::Down))
+			if (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Left))
 			{
 				stepBirth(-1);
 			}
@@ -3632,7 +3638,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		model.footerHint.clear();
 
 		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false, bool cyclePicker = false,
-			std::string tooltipKey = {})
+			std::string tooltipKey = {}, std::string tooltipTextDirect = {})
 		{
 			RenderField field{};
 			field.label = std::move(label);
@@ -3642,6 +3648,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			field.secret = secret;
 			field.cyclePicker = cyclePicker;
 			field.tooltipKey = std::move(tooltipKey);
+			if (!tooltipTextDirect.empty())
+			{
+				field.tooltipText = std::move(tooltipTextDirect);
+			}
 			model.fields.push_back(std::move(field));
 		};
 		auto addActionKeys = [this, &model](std::string_view labelKey, bool primary, bool active = true, bool emphasized = false,
@@ -3688,8 +3698,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				else if (m_statusProbeCompletedOnce && !m_statusCache.authOk)
 					model.infoBanner = Tr("auth.status.unavailable");
 			}
-			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
-			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
+			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"));
+			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"));
 			{
 				RenderBodyLine remember{};
 				remember.text = Tr("auth.checkbox.remember");
@@ -3707,18 +3717,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addActionKeys("common.quit_desktop", false, true, false, "common.quit");
 			break;
 		case Phase::Register:
+		{
 			model.sectionTitle = Tr("auth.panel.register");
-			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
-			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
-			addField(Tr("common.email"), m_email, m_activeField == 2);
-			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3);
-			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4);
+			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"));
+			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"));
+			addField(Tr("common.email"), m_email, m_activeField == 2, false, false, {}, Tr("auth.tooltip.email"));
+			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3, false, false, {}, Tr("auth.tooltip.first_name"));
+			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4, false, false, {}, Tr("auth.tooltip.last_name"));
 			addField(Tr("auth.label.birth_day"), BirthCycleDisplay(m_birthDay, 1, 1, 31), m_activeField == 5, false, true, "auth.tooltip.birth_day");
 			addField(Tr("auth.label.birth_month"), BirthCycleDisplay(m_birthMonth, 1, 1, 12), m_activeField == 6, false, true, "auth.tooltip.birth_month");
 			addField(Tr("auth.label.birth_year"), BirthCycleDisplay(m_birthYear, 2000, 1900, 2100), m_activeField == 7, false, true, "auth.tooltip.birth_year");
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
+		}
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
 			addBodyLine(Tr("auth.label.account") + ": " + std::to_string(m_pendingVerifyAccountId));
@@ -3788,6 +3800,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (m_phase == Phase::LanguageSelectionFirstRun)
 			{
 				addActionKeys("language.first_run.confirm", true, true, false, "common.submit");
+				addActionKeys("common.quit_desktop", false, true, false, "common.quit");
 			}
 			else // Phase::LanguageOptions
 			{

@@ -2282,6 +2282,10 @@ namespace engine
 		else
 		{
 			m_window.SetOverlayText({});
+			if (m_audioEngine.GetCurrentZoneId() == 9999)
+			{
+				m_audioEngine.SetZone(0);
+			}
 		}
 
 		if (!m_editorEnabled)

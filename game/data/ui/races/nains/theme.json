@@ -14,12 +14,15 @@
     "border": "#3A2A1F"
   },
   "typography": {
-    "fontFamily": "Saira Condensed",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
     "titleSize": 22
   },
-  "metrics": { "radius": 8, "padding": 10 },
+  "metrics": {
+    "radius": 8,
+    "padding": 10
+  },
   "assets": {
     "bg": "assets/ui/races/nains/images/bg.png",
     "emblem": "assets/ui/races/nains/images/emblem.png"

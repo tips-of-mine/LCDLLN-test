@@ -1,7 +1,7 @@
 {
   "id": "divins",
   "displayName": "Divins",
-  "mood": "Destin, loi cosmique, grandeur écrasante",
+  "mood": "Destin, loi cosmique, grandeur \u00e9crasante",
   "palette": {
     "primary": "#E7C16A",
     "secondary": "#1D2A4A",
@@ -14,12 +14,15 @@
     "border": "#2A3555"
   },
   "typography": {
-    "fontFamily": "Trajan Pro",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
     "titleSize": 24
   },
-  "metrics": { "radius": 18, "padding": 10 },
+  "metrics": {
+    "radius": 18,
+    "padding": 10
+  },
   "assets": {
     "bg": "assets/ui/races/divins/images/bg.png",
     "emblem": "assets/ui/races/divins/images/emblem.png"

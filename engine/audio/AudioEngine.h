@@ -81,6 +81,9 @@ namespace engine::audio
 		/// Set global master volume multiplier in the normalized range [0, 1].
 		bool SetMasterVolume(float volume);
 
+		/// Return the currently active zone id.
+		uint32_t GetCurrentZoneId() const { return m_currentZoneId; }
+
 		/// Activate the ambience loop configured for the requested zone id.
 		bool SetZone(uint32_t zoneId);
 

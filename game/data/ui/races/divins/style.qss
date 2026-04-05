@@ -2,7 +2,7 @@
 QWidget {
   background: #070B14;
   color: #F7F4EA;
-  font-family: "Inter";
+  font-family: "Windlass";
   font-size: 14px;
 }
 
@@ -13,7 +13,7 @@ QFrame, QWidget#Panel {
 }
 
 QLabel#Title {
-  font-family: "Trajan Pro";
+  font-family: "Windlass";
   font-size: 24px;
   color: #E7C16A;
 }

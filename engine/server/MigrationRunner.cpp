@@ -224,7 +224,13 @@ namespace engine::server
 			}
 			if (computed != expectedChecksum)
 			{
-				LOG_ERROR(Core, "[MigrationRunner] Checksum mismatch for version {} (file {}): expected {} got {}", version, it->second.generic_string(), expectedChecksum, computed);
+				LOG_ERROR(Core,
+					"[MigrationRunner] Checksum mismatch for version {} (file {}): en base='{}', fichier='{}'. "
+					"(souvent une base créée avec un ancien schema.sql ; voir deploy/docker/repair-schema-checksum.sh ou README)",
+					version,
+					it->second.generic_string(),
+					expectedChecksum,
+					computed);
 				mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
 				mysql_close(mysql);
 				return false;

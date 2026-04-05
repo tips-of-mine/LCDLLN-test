@@ -56,6 +56,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/02_fix_schema_v1_checksum.sql:/docker-entrypoint-initdb.d/02_fix_schema_v1_checksum.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
              "-u", "${MYSQL_USER:-lcdlln_user}",
@@ -71,6 +72,8 @@ services:
       dockerfile: Dockerfile.master
     # Tag explicite : évite de réutiliser un vieux lcdlln-master:latest encore basé sur ubuntu:22.04.
     image: lcdlln-master:ubuntu-24.04
+    # Ne pas tenter de tirer lcdlln-master depuis Docker Hub (images locales uniquement).
+    pull_policy: build
     container_name: lcdlln-master
     restart: unless-stopped
     networks:
@@ -101,6 +104,7 @@ services:
       context: .
       dockerfile: Dockerfile.shard
     image: lcdlln-shard:ubuntu-24.04
+    pull_policy: build
     container_name: lcdlln-shard
     restart: unless-stopped
     networks:

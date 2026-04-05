@@ -35,13 +35,25 @@ Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker com
 2. Depuis **M24.5**, le compose monte **`./config`** entier sur `/app/host-config` et un script d’entrée copie `master.config.json` / `shard.config.json` vers `/app/config.json` : refaites un build des images :  
    `docker compose build --no-cache master shard && docker compose up -d`
 
-**Erreur `Checksum mismatch for version 1`** : une base créée avec un ancien `schema.sql` contient encore le checksum factice dans `schema_version`. Soit recréez le volume (`docker compose down -v` puis `up`, **données perdues**), soit corrigez en SQL :
+**Erreur `Checksum mismatch for version 1`** : le volume MySQL a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `db/migrations/0001_init.sql`.
 
-```sql
-UPDATE schema_version SET checksum = 'e740eec07991bad0e5b8e13577ad7d0cf61ab5c652e2a9ef84b1565680cf45ae' WHERE version = 1;
-```
+- **Sans perdre les données** (depuis `deploy/docker`, conteneur `mysql` en marche) :
+  ```bash
+  chmod +x repair-schema-checksum.sh
+  ./repair-schema-checksum.sh
+  docker compose restart master
+  ```
+- **Ou** en SQL manuel (même effet) :
+  ```sql
+  UPDATE schema_version SET checksum = 'e740eec07991bad0e5b8e13577ad7d0cf61ab5c652e2a9ef84b1565680cf45ae' WHERE version = 1;
+  ```
+- **Ou** recréer la base : `docker compose down -v` puis `up` (**toutes les données MySQL perdues**).
 
-(À ajuster si vous modifiez `db/migrations/0001_init.sql` — recalculer avec `tools/migration_checksum` ou `sha256sum`.)
+Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_checksum.sql` en init : sur un **nouveau** volume vide, si l’étape 01 avait encore le mauvais checksum, l’étape 02 le corrige (idempotent).
+
+(Recalculer le checksum si vous modifiez `db/migrations/0001_init.sql` : `tools/migration_checksum` ou `sha256sum`.)
+
+**Message `pull access denied for lcdlln-master`** : normal si l’image est uniquement construite en local ; le compose utilise `pull_policy: build`. Si une vieille version de Compose refuse `pull_policy`, retirez ces lignes dans `docker-compose.yml` ou mettez à jour Docker / Compose Plugin.
 
 ## Master sans Docker (optionnel)
 

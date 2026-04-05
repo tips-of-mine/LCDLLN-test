@@ -44,7 +44,9 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset linux-x64-release
 
-      - name: Assemble deploy/docker bundle
+      # Copie automatique db/schema.sql + db/migrations/ → deploy/docker/db/ (Docker + MigrationRunner).
+      # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
+      - name: Assembler deploy/docker (sync db + binaires + lib MySQL + game/data)
         env:
           BUILD_DIR: ${{ github.workspace }}/build/linux-x64-release
         run: bash "${{ github.workspace }}/scripts/pack-linux-docker-bundle.sh"

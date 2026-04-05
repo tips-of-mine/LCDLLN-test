@@ -19,6 +19,10 @@ cp -n .env.example .env   # optionnel : éditer .env (mots de passe, ports)
 docker compose up -d      # ou : docker compose up --build -d
 ```
 
+**CI / CD** : le workflow Linux exécute `scripts/pack-linux-docker-bundle.sh`, qui appelle d’abord `scripts/sync-db-to-docker-deploy.sh` pour recopier **`db/schema.sql`** et **`db/migrations/`** vers **`deploy/docker/db/`** — rien à faire à la main sur l’intégration continue.
+
+**Depuis un clone Git en local** : soit lancez `./scripts/sync-db-to-docker-deploy.sh` après avoir modifié `db/`, soit le pack complet (`pack-linux-docker-bundle.sh`) refait cette copie automatiquement. Le dossier `deploy/docker/db/` versionné sert de repli pour un `docker compose build` sans avoir lancé le pack.
+
 Ports par défaut : **3840** (master), **3843** (shard), MySQL sur **127.0.0.1:3306**.
 
 Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker compose down -v`.

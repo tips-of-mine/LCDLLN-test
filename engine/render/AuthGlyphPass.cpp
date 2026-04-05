@@ -1447,7 +1447,8 @@ namespace engine::render
 				{
 					AppendText(vertices, "(i)", std::max(contentX + 10, contentX + contentW - 36), y - labelAboveFieldPx, 28, smallScale, accentColor);
 				}
-				AppendText(vertices, field.value, contentX + 12, y + valueBelowTopPx, contentW - 24, bodyScale, field.active ? titleColor : bodyColor);
+				const float* valueTint = field.active ? titleColor : (field.hovered ? primaryColor : bodyColor);
+				AppendText(vertices, field.value, contentX + 12, y + valueBelowTopPx, contentW - 24, bodyScale, valueTint);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
 				{
 					AppendText(vertices, field.tooltipText, contentX + 8, y + 40, contentW - 16, smallScale, bodyColor);

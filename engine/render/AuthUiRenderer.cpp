@@ -423,7 +423,8 @@ namespace engine::render
 				const bool activeAck = model.bodyLines[6].active;
 				if (activeAck)
 				{
-					addThemeRect(contentX + 8, panelY + panelH - 136, contentW - 16, 18, theme.accent, 0.16f);
+					const int32_t ackY = panelY + panelH - 136;
+					addThemeRect(contentX + 8, ackY, 4, 18, theme.accent, 0.75f);
 				}
 			}
 			return layers;
@@ -439,16 +440,17 @@ namespace engine::render
 			addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.surface, 0.98f);
 			const bool activeField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].active : false;
 			const bool hoveredField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].hovered : false;
+			// Survol : plus de rectangle semi-opaque sur tout le champ (effet « bande » / ligne qui masque le texte).
+			// Léger voile + barre gauche plus marquée ; le texte reste dessiné par-dessus (AuthGlyphPass).
 			if (hoveredField && !activeField)
 			{
-				addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.primary, 0.18f);
+				addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.primary, 0.045f);
 			}
-			addRect(contentX, y, 5, kAuthUiFieldBoxHeightPx,
-				activeField ? 0.72f : 0.26f,
-				activeField ? 0.58f : 0.38f,
-				activeField ? 0.24f : 0.68f,
-				1.0f);
-			// Field text indicator bar removed to avoid visual "horizontal line" artifacts
+			const int32_t stripeW = (hoveredField && !activeField) ? 7 : 5;
+			const float sr = activeField ? 0.72f : (hoveredField ? 0.52f : 0.26f);
+			const float sg = activeField ? 0.58f : (hoveredField ? 0.48f : 0.38f);
+			const float sb = activeField ? 0.24f : (hoveredField ? 0.30f : 0.68f);
+			addRect(contentX, y, stripeW, kAuthUiFieldBoxHeightPx, sr, sg, sb, 1.0f);
 			if (static_cast<size_t>(i) < model.fields.size() && !model.fields[static_cast<size_t>(i)].tooltipText.empty())
 			{
 				const int32_t iconX = std::max(contentX + 10, contentX + contentW - 36);
@@ -458,7 +460,7 @@ namespace engine::render
 				{
 					const int32_t tooltipY = y + 34;
 					addThemeRect(contentX, tooltipY, contentW, 28, theme.surface, 0.96f);
-					addThemeRect(contentX, tooltipY, contentW, 2, theme.accent, 1.0f);
+					addThemeRect(contentX, tooltipY, 3, 28, theme.accent, 0.85f);
 				}
 			}
 		}
@@ -496,24 +498,23 @@ namespace engine::render
 					addRect(cbx + 5, cby + 7, 3, 8, 0.96f, 0.94f, 0.82f, 1.0f);
 					addRect(cbx + 6, cby + 12, 9, 3, 0.96f, 0.94f, 0.82f, 1.0f);
 				}
-				if (hoveredBodyLine || activeBodyLine)
+				// Survol / focus : marqueur vertical uniquement (pas de bandeau horizontal sur le libellé).
+				if (activeBodyLine || hoveredBodyLine)
 				{
-					addThemeRect(contentX + kAuthUiCheckboxLabelOffsetX, y - 6, contentW - kAuthUiCheckboxLabelOffsetX - 8, 18, theme.primary, 0.10f);
+					const int32_t markX = contentX + kAuthUiCheckboxLabelOffsetX - 5;
+					addThemeRect(markX, y - 5, 3, 16, theme.accent, activeBodyLine ? 0.95f : 0.55f);
 				}
-				// Pas de barre 4px sous la ligne : elle traversait visuellement le libellé (effet « barré ») et la zone de clic.
 			}
 			else
 			{
 				if (activeBodyLine)
 				{
-					addThemeRect(contentX - 4, y - 6, contentW, 14, theme.accent, 0.18f);
 					addRect(contentX - 4, y - 6, 3, 14, 0.86f, 0.65f, 0.22f, 1.0f);
 				}
 				else if (hoveredBodyLine)
 				{
-					addThemeRect(contentX - 4, y - 6, contentW, 14, theme.primary, 0.12f);
+					addThemeRect(contentX - 4, y - 4, 3, 12, theme.accent, 0.55f);
 				}
-				// Idem : ancien soulignement pleine largeur coupait le texte des liens (ex. mot de passe oublié) tout en restant cliquable.
 			}
 		}
 

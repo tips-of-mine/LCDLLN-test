@@ -4,10 +4,13 @@
 #   BUILD_DIR=build/linux-x64-release ./scripts/pack-linux-docker-bundle.sh
 #
 # Prérequis pack : paquet runtime libmysqlclient21 (Debian/Ubuntu) pour copier libmysqlclient.so.21 dans lib/.
+# Schéma + migrations : voir scripts/sync-db-to-docker-deploy.sh (également exécuté en CI).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build/linux-x64-release}"
 DOCKER_DIR="$ROOT/deploy/docker"
+
+bash "$ROOT/scripts/sync-db-to-docker-deploy.sh"
 
 for bin in lcdlln_server lcdlln_shard; do
   if [[ ! -f "$BUILD_DIR/pkg/server/$bin" ]]; then
@@ -47,18 +50,10 @@ pack_mysql_client_libs() {
   fi
 }
 
-mkdir -p "$DOCKER_DIR/bin" "$DOCKER_DIR/db" "$DOCKER_DIR/game/data"
+mkdir -p "$DOCKER_DIR/bin" "$DOCKER_DIR/game/data"
 pack_mysql_client_libs
 cp -f "$BUILD_DIR/pkg/server/lcdlln_server" "$BUILD_DIR/pkg/server/lcdlln_shard" "$DOCKER_DIR/bin/"
 chmod +x "$DOCKER_DIR/bin/lcdlln_server" "$DOCKER_DIR/bin/lcdlln_shard"
-cp -f "$ROOT/db/schema.sql" "$DOCKER_DIR/db/schema.sql"
-if [[ ! -d "$ROOT/db/migrations" ]]; then
-  echo "ERROR: $ROOT/db/migrations introuvable (requis par lcdlln_server au démarrage)." >&2
-  exit 1
-fi
-rm -rf "$DOCKER_DIR/db/migrations"
-mkdir -p "$DOCKER_DIR/db/migrations"
-cp -r "$ROOT/db/migrations/." "$DOCKER_DIR/db/migrations/"
 if [[ -d "$ROOT/game/data" ]]; then
   rm -rf "$DOCKER_DIR/game/data"
   mkdir -p "$DOCKER_DIR/game/data"

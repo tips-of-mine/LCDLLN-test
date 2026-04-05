@@ -71,7 +71,8 @@ jobs:
           cd "${{ github.workspace }}/build/linux-x64-release"
           ctest --output-on-failure --no-compress-output -R "network_integration_tests" || exit 1
 
-      - name: Assemble deploy/docker bundle
+      # sync db/ → deploy/docker/db via scripts/sync-db-to-docker-deploy.sh (appelé depuis pack).
+      - name: Assembler deploy/docker (sync db + binaires + lib MySQL + game/data)
         env:
           BUILD_DIR: ${{ github.workspace }}/build/linux-x64-release
         run: bash "${{ github.workspace }}/scripts/pack-linux-docker-bundle.sh"

@@ -6,14 +6,13 @@
 #   master  — Master server (lcdlln_server, Dockerfile.master)
 #   shard   — Shard server (lcdlln_shard, Dockerfile.shard)
 #
-# Prérequis : copier les binaires Linux dans deploy/docker/bin/
-#   - bin/lcdlln_server
-#   - bin/lcdlln_shard
+# Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/).
 #
-#   web-portal — Next.js (port 3000), labels Traefik d'exemple (adapter le hostname)
-#
-# Démarrage :
+# Démarrage (depuis ce répertoire) :
 #   docker compose up -d
+#
+# Portail web (optionnel) :
+#   docker compose --profile portal up -d
 #
 # Arrêt :
 #   docker compose down
@@ -21,8 +20,6 @@
 # Arrêt + suppression données MySQL :
 #   docker compose down -v
 # ============================================================
-
-version: "3.9"
 
 networks:
   lcdlln-net:
@@ -53,7 +50,7 @@ services:
       - "127.0.0.1:3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ../../db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
              "-u", "${MYSQL_USER:-lcdlln_user}",
@@ -79,6 +76,7 @@ services:
       - "${MASTER_PORT:-3840}:3840"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
+      - ./game/data:/app/game/data:ro
       - master-logs:/app/logs
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3840"]
@@ -104,6 +102,7 @@ services:
       - "${SHARD_PORT:-3843}:3843"
     volumes:
       - ./config/shard.config.json:/app/config.json:ro
+      - ./game/data:/app/game/data:ro
       - shard-logs:/app/logs
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "3843"]
@@ -117,6 +116,8 @@ services:
   # Portail web (Next.js) — réseau lcdlln-net ; Traefik en amont (externe au repo)
   # -----------------------------------------------------------------
   web-portal:
+    profiles:
+      - portal
     build:
       context: ../../web-portal
       dockerfile: Dockerfile

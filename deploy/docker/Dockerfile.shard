@@ -1,0 +1,28 @@
+# M24.4 — Shard server (image runtime, binaire pré-compilé)
+# Build : depuis deploy/docker avec bin/lcdlln_shard
+#   docker build -f Dockerfile.shard -t lcdlln-shard .
+
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 \
+    libstdc++6 \
+    libgcc-s1 \
+    ca-certificates \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY bin/lcdlln_shard /app/lcdlln_shard
+RUN chmod +x /app/lcdlln_shard
+
+COPY config/shard.config.json /app/config.json
+
+EXPOSE 3843
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+    CMD nc -z localhost 3843 || exit 1
+
+ENTRYPOINT ["/app/lcdlln_shard"]
+CMD ["-log", "-console"]

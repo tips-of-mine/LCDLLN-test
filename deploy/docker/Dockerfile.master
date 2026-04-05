@@ -1,6 +1,8 @@
 # M24.4 — Master server (dev image, binaire pré-compilé)
 # Build: depuis deploy/docker avec binaire dans bin/lcdlln_server
 #   docker build -f Dockerfile.master -t lcdlln-master .
+#
+# libmysqlclient : fourni par le bundle CI dans lib/ (pack-linux-docker-bundle.sh), pas via apt.
 
 FROM ubuntu:22.04
 
@@ -11,6 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
+
+COPY lib/ /usr/local/lib/
+RUN ldconfig
 
 WORKDIR /app
 

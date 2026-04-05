@@ -64,10 +64,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             ninja-build \
+            libmysqlclient-dev \
+            libmysqlclient21 \
             libvulkan-dev vulkan-utility-libraries-dev \
             libx11-dev libxrandr-dev libxinerama-dev \
             libxcursor-dev libxi-dev libgl1-mesa-dev \
-            pkg-config
+            pkg-config \
+            zip
 
       - name: Clone vcpkg
         run: |
@@ -103,28 +106,24 @@ jobs:
           cd "${{ github.workspace }}/build/linux-x64-release"
           ctest --output-on-failure --no-compress-output -R "network_integration_tests" || exit 1
 
-      - name: Prepare package (tar.gz)
+      - name: Assemble deploy/docker bundle
+        env:
+          BUILD_DIR: ${{ github.workspace }}/build/linux-x64-release
+        run: bash "${{ github.workspace }}/scripts/pack-linux-docker-bundle.sh"
+
+      - name: Zip Docker stack (deploy/docker)
         id: package
         run: |
+          set -e
           WORKSPACE="${{ github.workspace }}"
-          BUILD_DIR="$WORKSPACE/build/linux-x64-release"
-          OUT="$WORKSPACE/out"
-          mkdir -p "$OUT/pkg"
-          if [ -d "$BUILD_DIR/pkg/server" ]; then
-            cp -r "$BUILD_DIR/pkg/server" "$OUT/pkg/"
-          fi
-          if [ -f "$WORKSPACE/config.json" ]; then
-            cp "$WORKSPACE/config.json" "$OUT/"
-          fi
-          if [ -d "$WORKSPACE/game/data" ]; then
-            mkdir -p "$OUT/game/data"
-            cp -r "$WORKSPACE/game/data/." "$OUT/game/data/"
-          fi
+          cd "$WORKSPACE"
           NIGHTLY_DATE="${{ needs.check-changes.outputs.nightly_date }}"
           SHORT_SHA=$(git -C "$WORKSPACE" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          ARTIFACT_NAME="lcdlln-linux-nightly-${NIGHTLY_DATE}-${SHORT_SHA}.tar.gz"
+          ARTIFACT_NAME="lcdlln-docker-linux-nightly-${NIGHTLY_DATE}-${SHORT_SHA}.zip"
           ARTIFACT_PATH="$WORKSPACE/$ARTIFACT_NAME"
-          tar -czf "$ARTIFACT_PATH" -C "$OUT" .
+          zip -r "$ARTIFACT_PATH" deploy/docker \
+            -x "*.git*" -x "*__pycache__*"
+          ls -la "$ARTIFACT_PATH"
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
           echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
 

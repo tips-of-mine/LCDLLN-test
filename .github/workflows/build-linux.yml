@@ -1,4 +1,4 @@
-# Build engine (Linux, CMake + vcpkg + Ninja)
+# Build engine (Linux, CMake + vcpkg + Ninja) + bundle Docker (MySQL + Master + Shard)
 name: Build Linux
 
 on:
@@ -19,10 +19,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             ninja-build \
+            libmysqlclient-dev \
+            libmysqlclient21 \
             libvulkan-dev vulkan-utility-libraries-dev \
             libx11-dev libxrandr-dev libxinerama-dev \
             libxcursor-dev libxi-dev libgl1-mesa-dev \
-            pkg-config
+            pkg-config \
+            zip
 
       - name: Clone vcpkg
         run: git clone https://github.com/Microsoft/vcpkg.git "$GITHUB_WORKSPACE/vcpkg"
@@ -41,46 +44,24 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset linux-x64-release
 
-      - name: Collect artifacts
+      - name: Assemble deploy/docker bundle
+        env:
+          BUILD_DIR: ${{ github.workspace }}/build/linux-x64-release
+        run: bash "${{ github.workspace }}/scripts/pack-linux-docker-bundle.sh"
+
+      - name: Zip Docker stack (deploy/docker)
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          set -e
+          cd "$GITHUB_WORKSPACE"
+          ZIP_NAME="lcdlln-docker-linux-${{ github.sha }}.zip"
+          zip -r "$ZIP_NAME" deploy/docker \
+            -x "*.git*" -x "*__pycache__*"
+          ls -la "$ZIP_NAME"
 
-          # Copie les binaires produits (exécutables et .so, hors vcpkg et hors debug)
-          find "$GITHUB_WORKSPACE" \
-            \( -name "*.so" -o -name "*.so.*" -o -type f -executable \) \
-            -not -path "*/vcpkg/*" \
-            -not -path "*/debug/*" \
-            -not -path "*/.git/*" \
-            -not -name "*.sh" \
-            | while read f; do
-                cp -f "$f" "$GITHUB_WORKSPACE/artifacts/" 2>/dev/null || true
-              done
-
-          # Assets
-          if [ -d "$GITHUB_WORKSPACE/assets" ]; then
-            cp -r "$GITHUB_WORKSPACE/assets" "$GITHUB_WORKSPACE/artifacts/assets"
-          fi
-
-          # game/data
-          if [ -d "$GITHUB_WORKSPACE/game/data" ]; then
-            mkdir -p "$GITHUB_WORKSPACE/artifacts/game/data"
-            cp -r "$GITHUB_WORKSPACE/game/data/." "$GITHUB_WORKSPACE/artifacts/game/data/"
-          fi
-
-          # config.json à la racine
-          if [ -f "$GITHUB_WORKSPACE/config.json" ]; then
-            cp "$GITHUB_WORKSPACE/config.json" "$GITHUB_WORKSPACE/artifacts/"
-          fi
-
-          # build_hlod.sh à la racine du package de livraison (si présent)
-          if [ -f "$GITHUB_WORKSPACE/build_hlod.sh" ]; then
-            cp "$GITHUB_WORKSPACE/build_hlod.sh" "$GITHUB_WORKSPACE/artifacts/"
-          fi
-
-      - name: Upload artifacts
+      - name: Upload Docker bundle artifact
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: linux-release-${{ github.sha }}
-          path: artifacts/
+          name: lcdlln-docker-linux-${{ github.sha }}
+          path: lcdlln-docker-linux-${{ github.sha }}.zip
           if-no-files-found: error
           retention-days: 7

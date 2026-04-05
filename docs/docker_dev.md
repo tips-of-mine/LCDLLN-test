@@ -4,24 +4,23 @@ Stack de développement locale : MySQL 8, Master, Shard. Images dev (pas de durc
 
 ## Prérequis
 
-- Docker et Docker Compose
-- Binaires Linux du projet : `lcdlln_server` (master) et `lcdlln_shard` (shard), par exemple issus du CI
+- Docker et Docker Compose v2
+- Soit l’**artefact CI** `lcdlln-docker-linux-*.zip` (voir `deploy/docker/README.md`) — décompresser puis `cd deploy/docker` —, soit un build Linux local.
 
-## Préparation des binaires
+## Contenu attendu dans `deploy/docker/`
 
-Les images Docker attendent les binaires dans `deploy/docker/bin/` :
+| Élément | Rôle |
+|--------|------|
+| `bin/lcdlln_server`, `bin/lcdlln_shard` | Binaires Linux (CI les copie via `scripts/pack-linux-docker-bundle.sh`) |
+| `lib/libmysqlclient.so*` | Client MySQL runtime (copié depuis `libmysqlclient21` sur l’hôte de build ; image master : `COPY lib/` + `ldconfig`) |
+| `db/schema.sql` | Init MySQL (copie de `db/schema.sql` à la racine du repo) |
+| `game/data/` | Données jeu montées dans les conteneurs (`paths.content`) |
+| `config/*.json`, `docker-compose.yml`, Dockerfiles | Config et stack |
 
-- `deploy/docker/bin/lcdlln_server` — serveur master
-- `deploy/docker/bin/lcdlln_shard` — serveur shard
+En local après `cmake --build --preset linux-x64-release` :
 
-Copier les binaires Linux (build CI ou build manuel Linux) dans ces chemins avant de construire les images.
-
-Exemple (depuis la racine du repo) :
-
-```text
-mkdir -p deploy/docker/bin
-cp /chemin/vers/lcdlln_server deploy/docker/bin/
-cp /chemin/vers/lcdlln_shard deploy/docker/bin/
+```bash
+BUILD_DIR=build/linux-x64-release ./scripts/pack-linux-docker-bundle.sh
 ```
 
 ## Démarrage de la stack
@@ -41,8 +40,12 @@ docker compose up
 
 ## Volumes
 
-- **Config** : `config/master.config.json` et `config/shard.config.json` sont montés en lecture seule ; modifier ces fichiers pour changer la config sans rebuild.
-- **Logs** : volumes nommés `master-logs` et `shard-logs` ; les logs des serveurs persistent entre redémarrages.
+- **Config** : `config/master.config.json` et `config/shard.config.json` montés en lecture seule.
+- **Contenu** : `./game/data` → `/app/game/data` (master et shard).
+- **MySQL** : `./db/schema.sql` monté dans `docker-entrypoint-initdb.d` au premier démarrage.
+- **Logs** : volumes nommés `master-logs` et `shard-logs`.
+
+Le service **web-portal** (Next.js) est sous le profil Compose `portal` ; il n’est pas dans le zip CI (sources sous `web-portal/`). Depuis un clone complet : `docker compose --profile portal up -d`.
 
 ## Arrêt
 
@@ -64,4 +67,4 @@ docker compose down -v
 | master  | lcdlln-master | 3840 |
 | shard   | lcdlln-shard  | 3843 |
 
-MySQL est initialisé au premier démarrage avec le schéma `db/schema.sql` (base `lcdlln_master`).
+MySQL est initialisé au premier démarrage avec `deploy/docker/db/schema.sql` (base `lcdlln_master`).

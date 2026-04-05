@@ -25,6 +25,25 @@ Ce document décrit l’installation et l’utilisation des unités systemd pour
 - Binaires `lcdlln_server` (Master) et `lcdlln_shard` (Shard) compilés (voir build Linux).
 - MySQL/MariaDB configuré si le Master utilise la DB (migrations, auth).
 
+### Bibliothèque cliente MySQL (Master uniquement)
+
+Le Master est lié à **`libmysqlclient`** (souvent `libmysqlclient.so.21` avec un client MySQL 8.0). Sans ce paquet **runtime**, le lancement échoue avec :
+
+`error while loading shared libraries: libmysqlclient.so.21: cannot open shared object file`
+
+**Debian / Ubuntu** (noms usuels) :
+
+```bash
+sudo apt update
+sudo apt install libmysqlclient21
+```
+
+Si ce paquet n’existe pas sur votre version, installez le paquet qui fournit `libmysqlclient.so` pour MySQL 8 (par ex. dépôt Oracle MySQL ou équivalent). Vérifier les besoins du binaire : `ldd /opt/lcdlln/bin/lcdlln_server | grep -i mysql`.
+
+**Remarque** : le binaire a été compilé contre une version donnée du client ; la machine de prod doit exposer la **même famille** de bibliothèque (idéalement même distro ou image Docker que le build).
+
+**Déploiement via zip Docker** (`lcdlln-docker-linux-*.zip`) : le dossier `deploy/docker/lib/` contient déjà `libmysqlclient.so.21` (copié au packaging CI). L’image **master** les installe via `COPY lib/` + `ldconfig` ; pour un binaire systemd hors Docker, utiliser `LD_LIBRARY_PATH` pointant vers ce `lib/` ou le script `deploy/docker/run-lcdlln-server-host.sh`.
+
 ---
 
 ## 3. Installation

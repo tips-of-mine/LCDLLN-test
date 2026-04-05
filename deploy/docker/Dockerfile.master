@@ -1,6 +1,6 @@
 # M24.4 — Master server (dev image, binaire pré-compilé)
 # Build: depuis deploy/docker avec binaire dans bin/lcdlln_server
-#   docker build -f Dockerfile.master -t lcdlln-master .
+#   docker build -f Dockerfile.master -t lcdlln-master:ubuntu-24.04 .
 #
 # libmysqlclient : fourni par le bundle CI dans lib/ (pack-linux-docker-bundle.sh), pas via apt.
 

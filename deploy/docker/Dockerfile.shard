@@ -1,6 +1,6 @@
 # M24.4 — Shard server (image runtime, binaire pré-compilé)
 # Build : depuis deploy/docker avec bin/lcdlln_shard
-#   docker build -f Dockerfile.shard -t lcdlln-shard .
+#   docker build -f Dockerfile.shard -t lcdlln-shard:ubuntu-24.04 .
 
 # Même base que le master (binaires CI = ubuntu-latest / glibc récent).
 FROM ubuntu:24.04

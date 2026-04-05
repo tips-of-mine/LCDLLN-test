@@ -9,7 +9,12 @@
 # Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/).
 #
 # Démarrage (depuis ce répertoire) :
-#   docker compose up -d
+#   docker compose up -d --build
+#
+# Si le binaire CI exige glibc ≥ 2.38, l’image doit être Ubuntu 24.04 (Dockerfile.master).
+# Erreur « GLIBC_2.38 not found » = ancienne image ou Dockerfile obsolète sur le serveur :
+#   1) Mettre à jour deploy/docker/ depuis le dépôt (Dockerfiles ubuntu:24.04).
+#   2) docker compose build --no-cache master shard && docker compose up -d
 #
 # Portail web (optionnel) :
 #   docker compose --profile portal up -d
@@ -64,7 +69,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.master
-    image: lcdlln-master
+    # Tag explicite : évite de réutiliser un vieux lcdlln-master:latest encore basé sur ubuntu:22.04.
+    image: lcdlln-master:ubuntu-24.04
     container_name: lcdlln-master
     restart: unless-stopped
     networks:
@@ -92,7 +98,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.shard
-    image: lcdlln-shard
+    image: lcdlln-shard:ubuntu-24.04
     container_name: lcdlln-shard
     restart: unless-stopped
     networks:

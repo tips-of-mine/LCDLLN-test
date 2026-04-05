@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -224,9 +225,39 @@ namespace engine::server
 			}
 			if (computed != expectedChecksum)
 			{
+				// Anciens schema.sql Docker / init inséraient ce checksum factice pour la v1 ; le volume MySQL
+				// ne repasse pas par docker-entrypoint-initdb.d. On aligne une seule fois sur le fichier actuel.
+				static constexpr std::string_view kLegacyV1Placeholder =
+					"0000000000000000000000000000000000000000000000000000000000000001";
+				if (version == 1 && expectedChecksum == kLegacyV1Placeholder)
+				{
+					char escaped[160];
+					mysql_real_escape_string(mysql, escaped, computed.c_str(), static_cast<unsigned long>(computed.size()));
+					std::string fixSql = "UPDATE schema_version SET checksum='";
+					fixSql += escaped;
+					fixSql += "' WHERE version=1";
+					if (mysql_real_query(mysql, fixSql.c_str(), static_cast<unsigned long>(fixSql.size())) != 0)
+					{
+						LOG_ERROR(Core, "[MigrationRunner] Échec réparation checksum v1 : {}", mysql_error(mysql));
+						mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
+						mysql_close(mysql);
+						return false;
+					}
+					if (!DrainResults(mysql))
+					{
+						LOG_ERROR(Core, "[MigrationRunner] Drain après réparation checksum v1 : {}", mysql_error(mysql));
+						mysql_query(mysql, "SELECT RELEASE_LOCK('lcdlln_master_migrations')");
+						mysql_close(mysql);
+						return false;
+					}
+					LOG_WARN(Core,
+						"[MigrationRunner] Checksum v1 corrigé (placeholder historique → SHA-256 actuel de {})",
+						it->second.filename().string());
+					continue;
+				}
 				LOG_ERROR(Core,
 					"[MigrationRunner] Checksum mismatch for version {} (file {}): en base='{}', fichier='{}'. "
-					"(souvent une base créée avec un ancien schema.sql ; voir deploy/docker/repair-schema-checksum.sh ou README)",
+					"(voir deploy/docker/repair-schema-checksum.sh ou README si migration légitime)",
 					version,
 					it->second.generic_string(),
 					expectedChecksum,

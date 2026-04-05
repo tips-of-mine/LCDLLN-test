@@ -37,7 +37,9 @@ Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker com
 
 **Erreur `Checksum mismatch for version 1`** : le volume MySQL a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `db/migrations/0001_init.sql`.
 
-- **Sans perdre les données** (depuis `deploy/docker`, conteneur `mysql` en marche) :
+À partir de **M24.6**, le **master** corrige automatiquement ce seul cas au démarrage (`UPDATE schema_version` pour la v1). Reconstruisez / redéployez le binaire `lcdlln_server` puis `docker compose up --build`.
+
+- **Sans rebuild** (depuis `deploy/docker`, conteneur `mysql` en marche) :
   ```bash
   chmod +x repair-schema-checksum.sh
   ./repair-schema-checksum.sh

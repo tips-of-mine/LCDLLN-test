@@ -18,9 +18,6 @@ WORKDIR /app
 COPY bin/lcdlln_shard /app/lcdlln_shard
 RUN chmod +x /app/lcdlln_shard
 
-COPY docker-entrypoint-shard.sh /app/docker-entrypoint-shard.sh
-RUN chmod +x /app/docker-entrypoint-shard.sh
-
 COPY config/shard.config.json /app/config.json
 
 EXPOSE 3843
@@ -28,5 +25,4 @@ EXPOSE 3843
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
     CMD nc -z localhost 3843 || exit 1
 
-ENTRYPOINT ["/app/docker-entrypoint-shard.sh"]
-CMD ["-log", "-console"]
+CMD ["/app/lcdlln_shard", "-log", "-console"]

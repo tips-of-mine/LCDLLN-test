@@ -1,4 +1,4 @@
-# LCDLLN — stack Docker (MySQL + Master + Shard)
+# LCDLLN — stack Docker (MySQL + Master + portail ; shard optionnel)
 
 ## Démarrage rapide (artefact CI Linux)
 
@@ -18,24 +18,21 @@
 ```bash
 cd deploy/docker
 cp -n .env.example .env   # optionnel : éditer .env (mots de passe, ports)
-docker compose up -d      # premier run : build des images master / shard / web-portal si besoin
+docker compose up -d      # premier run : mysql + master + web-portal (build images si besoin)
 ```
 
 **CI / CD** : le workflow Linux exécute `scripts/pack-linux-docker-bundle.sh`, qui enchaîne `sync-db-to-docker-deploy.sh`, **`sync-web-portal-to-docker-deploy.sh`**, puis binaires / `lib/` / `game/data/`. Le ZIP contient **`deploy/docker/`** en entier (y compris **`web-portal/`**).
 
 **Depuis un clone Git en local** : le pack refait les synchros ; pour ne mettre à jour que le portail : `./scripts/sync-web-portal-to-docker-deploy.sh`. Le dossier `deploy/docker/db/` versionné sert de repli pour un `docker compose build` sans pack complet.
 
-Ports par défaut : **3840** (master), **3843** (shard), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**.
+Ports par défaut : **3840** (master), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**. Le **shard** (3843) reste dans le compose et le zip (`bin/lcdlln_shard`, `Dockerfile.shard`, `config/shard.config.json`) mais **n’est pas lancé** par `docker compose up -d` : quand vous serez prêt, `docker compose --profile shard up -d --build`.
 
-Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysql`** (InnoDB), journaux **`./data/logs/master`** et **`./data/logs/shard`**. Pour repartir d’une base neuve : `docker compose down`, puis `rm -rf data/mysql`, puis `up` (les scripts `docker-entrypoint-initdb.d` ne s’exécutent que si le datadir est vide au premier démarrage).
+Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysql`** (InnoDB), journaux **`./data/logs/master`** (et **`./data/logs/shard`** si vous utilisez le profil shard). Pour repartir d’une base neuve : `docker compose down`, puis `rm -rf data/mysql`, puis `up` (les scripts `docker-entrypoint-initdb.d` ne s’exécutent que si le datadir est vide au premier démarrage).
 
-**Erreur OCI / bind mount** : `mount ... master.config.json ... not a directory` / monter un fichier sur un fichier alors que la source est un dossier — arrive si `config/master.config.json` **n’existait pas** sur l’hôte au premier `docker compose up` : Docker peut avoir créé un **répertoire** vide à la place du fichier.
+**Erreur OCI / bind mount (config)** : le compose monte **`./config/master.config.json`** sur le master et **`./config/shard.config.json`** sur le service shard (profil `shard`). Si un chemin monté **n’existait pas** au premier `up`, Docker peut avoir créé un **répertoire** à la place du fichier.
 
-1. Depuis `deploy/docker` : `ls -la config/master.config.json` — si c’est un dossier :  
-   `rm -rf config/master.config.json`  
-   puis recopiez le vrai `master.config.json` (depuis le dépôt ou le zip CI).
-2. Depuis **M24.5**, le compose monte **`./config`** entier sur `/app/host-config` et un script d’entrée copie `master.config.json` / `shard.config.json` vers `/app/config.json` : refaites un build des images :  
-   `docker compose build --no-cache master shard && docker compose up -d`
+1. `ls -la config/master.config.json` (et `shard.config.json` si vous lancez le shard) — si c’est un dossier : `rm -rf` puis recopiez le JSON (dépôt ou zip CI).
+2. Relancez : `docker compose up -d` (rebuild des images seulement si vous modifiez les Dockerfiles).
 
 **Erreur `Checksum mismatch for version 1`** : le répertoire **`./data/mysql`** a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `db/migrations/0001_init.sql`.
 
@@ -77,7 +74,7 @@ chmod +x run-lcdlln-server-host.sh
 ./run-lcdlln-server-host.sh -log -console
 ```
 
-Ou : `export LD_LIBRARY_PATH="$(pwd)/lib:$LD_LIBRARY_PATH"` puis `bin/lcdlln_server`. Les images **master** / **shard** restent la méthode recommandée dès que l’hôte diverge du toolchain CI.
+Ou : `export LD_LIBRARY_PATH="$(pwd)/lib:$LD_LIBRARY_PATH"` puis `bin/lcdlln_server`. L’image **master** Docker reste la méthode recommandée dès que l’hôte diverge du toolchain CI.
 
 ## Prérequis
 

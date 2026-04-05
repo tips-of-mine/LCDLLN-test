@@ -23,10 +23,7 @@ WORKDIR /app
 COPY bin/lcdlln_server /app/lcdlln_server
 RUN chmod +x /app/lcdlln_server
 
-COPY docker-entrypoint-master.sh /app/docker-entrypoint-master.sh
-RUN chmod +x /app/docker-entrypoint-master.sh
-
-# Config par défaut (écrasée au démarrage si ./config est monté sur /app/host-config)
+# Config par défaut dans l’image ; en runtime, docker-compose monte ./config/master.config.json sur /app/config.json
 COPY config/master.config.json /app/config.json
 
 # MigrationRunner (M21.3) : chemins relatifs à WORKDIR /app → db/migrations
@@ -37,5 +34,4 @@ EXPOSE 3840 3842
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
     CMD nc -z localhost 3840 || exit 1
 
-ENTRYPOINT ["/app/docker-entrypoint-master.sh"]
-CMD ["-log", "-console"]
+CMD ["/app/lcdlln_server", "-log", "-console"]

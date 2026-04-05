@@ -1,11 +1,11 @@
 # ============================================================
-# M24.4 — LCDLLN stack locale (MySQL 8 + Master + Shard)
+# M24.4 — LCDLLN stack locale (MySQL + Master + portail ; shard en option)
 # ============================================================
 # Services :
 #   mysql      — MySQL 8.0 avec schéma LCDLLN (lcdlln_master)
 #   master     — Master server (lcdlln_server, Dockerfile.master)
-#   shard      — Shard server (lcdlln_shard, Dockerfile.shard)
 #   web-portal — Next.js (sources ./web-portal dans le zip CI)
+#   shard      — Shard (profil Compose « shard », désactivé par défaut ; binaire toujours dans le zip)
 #
 # Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/, web-portal/).
 #
@@ -17,7 +17,8 @@
 # Si le binaire CI exige glibc ≥ 2.38, l’image doit être Ubuntu 24.04 (Dockerfile.master).
 # Erreur « GLIBC_2.38 not found » = ancienne image ou Dockerfile obsolète sur le serveur :
 #   1) Mettre à jour deploy/docker/ depuis le dépôt (Dockerfiles ubuntu:24.04).
-#   2) docker compose build --no-cache master shard web-portal && docker compose up -d
+#   2) docker compose build --no-cache master web-portal && docker compose up -d
+#      (shard : docker compose build shard && docker compose --profile shard up -d)
 #
 # Portail web : inclus dans up -d. Local : http://127.0.0.1:3000 — Labels Traefik : service
 # web-portal ; copie : traefik-web-portal.labels.reference.yml
@@ -89,9 +90,7 @@ services:
       # HTTP embarqué (même processus que lcdlln_server) : /status, /healthz, /readyz, /metrics
       - "${MASTER_HEALTH_PORT:-3842}:3842"
     volumes:
-      # Dossier entier : évite l’erreur « not a directory » si master.config.json manquait
-      # et qu’un répertoire homonyme avait été créé sur l’hôte.
-      - ./config:/app/host-config:ro
+      - ./config/master.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/master:/app/logs
     healthcheck:
@@ -100,9 +99,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-    command: ["-log", "-console"]
 
+  # Shard : hors stack par défaut (profil « shard ») — à réactiver quand le gameplay le nécessite.
   shard:
+    profiles:
+      - shard
     build:
       context: .
       dockerfile: Dockerfile.shard
@@ -119,7 +120,7 @@ services:
     ports:
       - "${SHARD_PORT:-3843}:3843"
     volumes:
-      - ./config:/app/host-config:ro
+      - ./config/shard.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/shard:/app/logs
     healthcheck:
@@ -128,7 +129,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-    command: ["-log", "-console"]
 
   # -----------------------------------------------------------------
   # Portail web (Next.js) — démarré avec docker compose up -d (pas de profil)

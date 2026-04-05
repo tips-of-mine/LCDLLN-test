@@ -7,6 +7,7 @@
    - `bin/` — `lcdlln_server`, `lcdlln_shard`
    - `lib/` — **client MySQL** (`libmysqlclient.so.21` et liens) copiés depuis l’hôte de build CI ; utilisés par l’image Docker du master et optionnellement pour un lancement **hors** Docker
    - `db/schema.sql` — initialisation MySQL
+   - `db/migrations/` — scripts SQL pour le **MigrationRunner** du master (copiés dans l’image Docker)
    - `config/` — `master.config.json`, `shard.config.json`
    - `game/data/` — contenu client requis par les serveurs
    - `docker-compose.yml`, `Dockerfile.master`, `Dockerfile.shard`

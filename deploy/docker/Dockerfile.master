@@ -26,6 +26,9 @@ RUN chmod +x /app/lcdlln_server
 # Config par défaut (surchargée par volume en dev)
 COPY config/master.config.json /app/config.json
 
+# MigrationRunner (M21.3) : chemins relatifs à WORKDIR /app → db/migrations
+COPY db/migrations /app/db/migrations
+
 EXPOSE 3840 3842
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \

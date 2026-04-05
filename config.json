@@ -17,7 +17,9 @@
             "minimal_chrome": true,
             "login_art_column": false,
             "logo_path": "ui/login/logo_login.png",
-            "logo_size_px": 96
+            "logo_size_px": 96,
+            "font_path": "fonts/Windlass.ttf",
+            "font_pixel_height": 28
         }
     },
     "time": {

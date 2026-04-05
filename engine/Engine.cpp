@@ -732,6 +732,16 @@ namespace engine
 													LOG_WARN(Render, "[Boot] Auth UI logo not loaded: {}", authLogoPath);
 												}
 											}
+											m_authLogoSuccessTexture = m_assetRegistry.LoadTexture("ui/login/success.png", true);
+											if (!m_authLogoSuccessTexture.IsValid())
+											{
+												LOG_WARN(Render, "[Boot] Auth UI status OK logo not loaded: ui/login/success.png");
+											}
+											m_authLogoErrorTexture = m_assetRegistry.LoadTexture("ui/login/error.png", true);
+											if (!m_authLogoErrorTexture.IsValid())
+											{
+												LOG_WARN(Render, "[Boot] Auth UI status error logo not loaded: ui/login/error.png");
+											}
 										}
 
 										engine::render::ImageDesc sceneColorDesc{};
@@ -898,17 +908,56 @@ namespace engine
 										{
 											std::vector<uint32_t> authGlyphVert = loadSpirv("shaders/auth_glyph.vert.spv");
 											std::vector<uint32_t> authGlyphFrag = loadSpirv("shaders/auth_glyph.frag.spv");
+											std::vector<uint32_t> authTtfFrag = loadSpirv("shaders/auth_ttf.frag.spv");
 											if (!authGlyphVert.empty() && !authGlyphFrag.empty())
 											{
+												const uint32_t* ttfFragPtr = authTtfFrag.empty() ? nullptr : authTtfFrag.data();
+												const size_t ttfFragWords = authTtfFrag.size();
 												if (m_authGlyphPass.Init(
 														m_vkDeviceContext.GetDevice(),
 														m_vkDeviceContext.GetPhysicalDevice(),
 														m_vkSwapchain.GetImageFormat(),
 														authGlyphVert.data(), authGlyphVert.size(),
 														authGlyphFrag.data(), authGlyphFrag.size(),
-														8192u))
+														8192u,
+														VK_NULL_HANDLE,
+														ttfFragPtr,
+														ttfFragWords))
 												{
 													LOG_INFO(Render, "[Boot] AuthGlyphPass OK");
+													const std::string uiFontPath = m_cfg.GetString("render.auth_ui.font_path", "");
+													if (!uiFontPath.empty() && ttfFragPtr != nullptr)
+													{
+														std::vector<uint8_t> fontBytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, uiFontPath);
+														if (!fontBytes.empty())
+														{
+															const float fontPx = static_cast<float>(std::clamp<int64_t>(
+																m_cfg.GetInt("render.auth_ui.font_pixel_height", 28), 12, 96));
+															if (m_authGlyphPass.UploadUiFontFromTtf(
+																	m_vkDeviceContext.GetDevice(),
+																	m_vkDeviceContext.GetPhysicalDevice(),
+																	m_vkDeviceContext.GetGraphicsQueue(),
+																	m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+																	fontBytes.data(),
+																	fontBytes.size(),
+																	fontPx))
+															{
+																LOG_INFO(Render, "[Boot] Auth UI font loaded: {}", uiFontPath);
+															}
+															else
+															{
+																LOG_WARN(Render, "[Boot] Auth UI font upload failed: {}", uiFontPath);
+															}
+														}
+														else
+														{
+															LOG_WARN(Render, "[Boot] Auth UI font file missing or empty: {}", uiFontPath);
+														}
+													}
+													else if (!uiFontPath.empty() && ttfFragPtr == nullptr)
+													{
+														LOG_WARN(Render, "[Boot] auth_ttf.frag.spv missing — place compiled SPIR-V under game/data/shaders/");
+													}
 												}
 												else
 												{
@@ -1763,9 +1812,27 @@ namespace engine
 														}
 														LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
 														// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
-														if (m_authLogoPass.IsValid() && authVisualState.login && m_authLogoTexture.IsValid())
+														const bool showAuthStatusLogo = authVisualState.login
+															&& (authVisualState.authLogoSpin || authVisualState.authStatusKnown);
+														if (m_authLogoPass.IsValid() && showAuthStatusLogo)
 														{
-															engine::render::TextureAsset* logoTex = m_authLogoTexture.Get();
+															engine::render::TextureAsset* logoTex = nullptr;
+															if (authVisualState.authLogoSpin && m_authLogoTexture.IsValid())
+															{
+																logoTex = m_authLogoTexture.Get();
+															}
+															else if (authVisualState.authStatusOk && m_authLogoSuccessTexture.IsValid())
+															{
+																logoTex = m_authLogoSuccessTexture.Get();
+															}
+															else if (!authVisualState.authStatusOk && m_authLogoErrorTexture.IsValid())
+															{
+																logoTex = m_authLogoErrorTexture.Get();
+															}
+															else if (m_authLogoTexture.IsValid())
+															{
+																logoTex = m_authLogoTexture.Get();
+															}
 															if (logoTex && logoTex->image != VK_NULL_HANDLE && logoTex->view != VK_NULL_HANDLE)
 															{
 																const float half = static_cast<float>(m_authUi.GetAuthLogoSizePx()) * 0.5f;
@@ -1773,6 +1840,8 @@ namespace engine
 																// Ajustement repère vertical : le shader du logo attend un centre "haut-gauche"
 																// alors que le rendu actuel le place en bas-gauche.
 																const float cy = static_cast<float>(ext.height) - (24.f + half);
+																constexpr float kAuthLogoOrientRad = 3.14159265f;
+																const float spin = authVisualState.authLogoSpin ? m_authUi.GetAuthLogoRotationRadians() : 0.f;
 																m_authLogoPass.Record(
 																	m_vkDeviceContext.GetDevice(),
 																	cmd,
@@ -1783,7 +1852,7 @@ namespace engine
 																	cx,
 																	cy,
 																	half,
-																	m_authUi.GetAuthLogoRotationRadians());
+																	spin + kAuthLogoOrientRad);
 															}
 														}
 														if (m_authGlyphPass.IsValid())

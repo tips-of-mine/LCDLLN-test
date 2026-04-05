@@ -41,6 +41,8 @@ namespace engine::render
 		int32_t topOffset = 0;
 		bool largeContent = false;
 		bool compactSingleField = false;
+		/// Même pas que AuthGlyphPass / hit-test souris (évite chevauchements et « traits » fantômes).
+		int32_t fieldRowStepPx = 48;
 	};
 
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg);
@@ -56,6 +58,8 @@ namespace engine::render
 		int32_t secondaryRowY = 0;
 		int32_t primaryRowY = 0;
 		int32_t buttonHalfWidth = 0;
+		int32_t primarySubmitWidth = 0;
+		int32_t primaryQuitWidth = 0;
 	};
 
 	/// Remplit \p out si \p state.login et exactement 4 actions (modèle connexion deux rangées).

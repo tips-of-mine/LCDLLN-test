@@ -9,6 +9,7 @@
   "common.language": "Language",
   "common.login_or_email": "Login / Email",
   "common.quit": "Quit",
+  "common.quit_desktop": "Back to desktop",
   "common.submit": "Submit",
   "common.tab_escape_hint": "Tab change field  Escape back",
   "language.first_run.title": "Language selection",

@@ -199,6 +199,8 @@ namespace engine
 		engine::render::TextureHandle m_authUiBackgroundTexture;
 		bool m_authUiBackgroundLayoutReady = false;
 		engine::render::TextureHandle m_authLogoTexture;
+		engine::render::TextureHandle m_authLogoSuccessTexture;
+		engine::render::TextureHandle m_authLogoErrorTexture;
 		bool m_authLogoImageLayoutReady = false;
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;

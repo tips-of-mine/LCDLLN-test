@@ -141,8 +141,8 @@ namespace engine::client
 			int32_t visibleBodyLineStart = 0;
 			int32_t visibleBodyLineCount = 0;
 			/// Ajustements layout auth (lus depuis la config à l’init, recopiés ici pour BuildAuthUiLayoutMetrics).
-			int32_t layoutAuthTitleLine1FromPanelTopPx = 10;
-			int32_t layoutAuthGapTitleToSectionPx = 12;
+			int32_t layoutAuthTitleLine1FromPanelTopPx = 4;
+			int32_t layoutAuthGapTitleToSectionPx = 8;
 			bool layoutAuthTitleCenterViewportWidth = true;
 			int32_t layoutAuthFieldRowExtraPx = 0;
 			/// Taille affichée du logo statut (px) ; pour placer le texte « vérification serveur » à sa droite.
@@ -329,8 +329,8 @@ namespace engine::client
 
 		bool m_authMinimalChrome = true;
 		bool m_authLoginArtColumn = false;
-		int32_t m_layoutAuthTitleLine1FromPanelTopPx = 10;
-		int32_t m_layoutAuthGapTitleToSectionPx = 12;
+		int32_t m_layoutAuthTitleLine1FromPanelTopPx = 4;
+		int32_t m_layoutAuthGapTitleToSectionPx = 8;
 		bool m_layoutAuthTitleCenterViewportWidth = true;
 		int32_t m_layoutAuthFieldRowExtraPx = 0;
 		std::string m_masterAvailabilityUrl{};

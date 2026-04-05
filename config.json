@@ -19,8 +19,8 @@
             "logo_path": "ui/login/logo_login.png",
             "logo_size_px": 96,
             "layout": {
-                "title_line1_from_panel_top_px": 10,
-                "gap_title_to_section_px": 12,
+                "title_line1_from_panel_top_px": 4,
+                "gap_title_to_section_px": 8,
                 "title_center_viewport_width": true,
                 "field_row_extra_px": 0
             },

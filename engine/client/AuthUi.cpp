@@ -687,9 +687,9 @@ namespace {
 		m_authMinimalChrome = cfg.GetBool("render.auth_ui.minimal_chrome", true);
 		m_authLoginArtColumn = cfg.GetBool("render.auth_ui.login_art_column", false);
 		m_layoutAuthTitleLine1FromPanelTopPx = static_cast<int32_t>(
-			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.title_line1_from_panel_top_px", 10), 0, 120));
+			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.title_line1_from_panel_top_px", 4), 0, 120));
 		m_layoutAuthGapTitleToSectionPx = static_cast<int32_t>(
-			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.gap_title_to_section_px", 12), 0, 80));
+			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.gap_title_to_section_px", 8), 0, 80));
 		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
 		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));

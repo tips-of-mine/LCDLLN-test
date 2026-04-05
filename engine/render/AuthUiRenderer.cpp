@@ -449,18 +449,18 @@ namespace engine::render
 				activeField ? 0.24f : 0.68f,
 				1.0f);
 			// Field text indicator bar removed to avoid visual "horizontal line" artifacts
-				if (static_cast<size_t>(i) < model.fields.size() && !model.fields[static_cast<size_t>(i)].tooltipText.empty())
+			if (static_cast<size_t>(i) < model.fields.size() && !model.fields[static_cast<size_t>(i)].tooltipText.empty())
+			{
+				const int32_t iconX = std::max(contentX + 10, contentX + contentW - 36);
+				const int32_t iconY = y + 6;
+				addThemeRect(iconX, iconY, 18, 18, theme.accent, model.hoveredFieldInfoIndex == i ? 1.0f : 0.65f);
+				if (model.hoveredFieldInfoIndex == i)
 				{
-					const int32_t iconX = std::max(contentX + 10, contentX + contentW - 36);
-					const int32_t iconY = y + 6;
-					addThemeRect(iconX, iconY, 18, 18, theme.accent, model.hoveredFieldInfoIndex == i ? 1.0f : 0.65f);
-					if (model.hoveredFieldInfoIndex == i)
-					{
-						const int32_t tooltipY = y + 34;
-						addThemeRect(contentX, tooltipY, contentW, 28, theme.surface, 0.96f);
-						addThemeRect(contentX, tooltipY, contentW, 2, theme.accent, 1.0f);
-					}
+					const int32_t tooltipY = y + 34;
+					addThemeRect(contentX, tooltipY, contentW, 28, theme.surface, 0.96f);
+					addThemeRect(contentX, tooltipY, contentW, 2, theme.accent, 1.0f);
 				}
+			}
 		}
 
 		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
@@ -491,14 +491,16 @@ namespace engine::render
 				addThemeRect(cbx + outer - 2, cby, 2, outer, theme.border, 0.85f);
 				if (checked)
 				{
-					addThemeRect(cbx + 5, cby + 5, 10, 10, theme.accent, 0.90f);
+					addThemeRect(cbx + 3, cby + 3, outer - 6, outer - 6, theme.accent, 0.52f);
+					// Coche claire (forme en L) plus lisible qu’un simple carré plein.
+					addRect(cbx + 5, cby + 7, 3, 8, 0.96f, 0.94f, 0.82f, 1.0f);
+					addRect(cbx + 6, cby + 12, 9, 3, 0.96f, 0.94f, 0.82f, 1.0f);
 				}
 				if (hoveredBodyLine || activeBodyLine)
 				{
 					addThemeRect(contentX + kAuthUiCheckboxLabelOffsetX, y - 6, contentW - kAuthUiCheckboxLabelOffsetX - 8, 18, theme.primary, 0.10f);
 				}
-				addThemeRect(contentX + kAuthUiCheckboxLabelOffsetX, y, std::max(80, contentW - kAuthUiCheckboxLabelOffsetX - 12), 4, theme.text,
-					activeBodyLine ? 0.88f : (hoveredBodyLine ? 0.72f : 0.76f));
+				// Pas de barre 4px sous la ligne : elle traversait visuellement le libellé (effet « barré ») et la zone de clic.
 			}
 			else
 			{
@@ -511,8 +513,7 @@ namespace engine::render
 				{
 					addThemeRect(contentX - 4, y - 6, contentW, 14, theme.primary, 0.12f);
 				}
-				addThemeRect(contentX, y, std::max(120, contentW - localIdx * 12), 4, theme.text,
-					activeBodyLine ? 0.88f : (hoveredBodyLine ? 0.68f : (localIdx == 0 ? 0.76f : 0.46f)));
+				// Idem : ancien soulignement pleine largeur coupait le texte des liens (ex. mot de passe oublié) tout en restant cliquable.
 			}
 		}
 

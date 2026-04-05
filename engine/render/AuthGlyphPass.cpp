@@ -1480,7 +1480,11 @@ namespace engine::render
 					appendBlock(cbx + 2, cby + 2, outer - 4, outer - 4, theme.background);
 					if (line.checkboxChecked)
 					{
-						appendBlock(cbx + 5, cby + 5, 10, 10, accentColor);
+						const float accentFill[4] = { accentColor[0], accentColor[1], accentColor[2], 0.52f };
+						appendBlock(cbx + 3, cby + 3, outer - 6, outer - 6, accentFill);
+						const float checkIvory[4] = { 0.96f, 0.94f, 0.82f, 1.0f };
+						appendBlock(cbx + 5, cby + 7, 3, 8, checkIvory);
+						appendBlock(cbx + 6, cby + 12, 9, 3, checkIvory);
 					}
 					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor);
 					continue;

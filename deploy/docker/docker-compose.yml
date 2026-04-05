@@ -2,22 +2,25 @@
 # M24.4 — LCDLLN stack locale (MySQL 8 + Master + Shard)
 # ============================================================
 # Services :
-#   mysql   — MySQL 8.0 avec schéma LCDLLN (lcdlln_master)
-#   master  — Master server (lcdlln_server, Dockerfile.master)
-#   shard   — Shard server (lcdlln_shard, Dockerfile.shard)
+#   mysql      — MySQL 8.0 avec schéma LCDLLN (lcdlln_master)
+#   master     — Master server (lcdlln_server, Dockerfile.master)
+#   shard      — Shard server (lcdlln_shard, Dockerfile.shard)
+#   web-portal — Next.js (sources ./web-portal dans le zip CI)
 #
-# Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/).
+# Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/, web-portal/).
 #
-# Démarrage (depuis ce répertoire) :
+# Démarrage (zip décompressé, depuis ce répertoire) :
+#   docker compose up -d
+# Premier lancement : construction des images si absentes. Après modification Docker/sources :
 #   docker compose up -d --build
 #
 # Si le binaire CI exige glibc ≥ 2.38, l’image doit être Ubuntu 24.04 (Dockerfile.master).
 # Erreur « GLIBC_2.38 not found » = ancienne image ou Dockerfile obsolète sur le serveur :
 #   1) Mettre à jour deploy/docker/ depuis le dépôt (Dockerfiles ubuntu:24.04).
-#   2) docker compose build --no-cache master shard && docker compose up -d
+#   2) docker compose build --no-cache master shard web-portal && docker compose up -d
 #
-# Portail web (optionnel) :
-#   docker compose --profile portal up -d
+# Portail web : inclus dans up -d. Local : http://127.0.0.1:3000 — Labels Traefik : service
+# web-portal ; copie : traefik-web-portal.labels.reference.yml
 #
 # Arrêt :
 #   docker compose down
@@ -27,8 +30,12 @@
 # ============================================================
 
 networks:
+  # Créé automatiquement au premier up (plus besoin de docker network create).
+  # Pour réutiliser un réseau Traefik déjà existant avec le même nom : le déclarer en external: true
+  # et supprimer la définition ci-dessous (voir README).
   traefik_front_network:
-    external: true
+    name: traefik_front_network
+    driver: bridge
   back_lcdlln-net:
     driver: bridge
     attachable: true
@@ -124,13 +131,12 @@ services:
     command: ["-log", "-console"]
 
   # -----------------------------------------------------------------
-  # Portail web (Next.js) — réseau lcdlln-net ; Traefik en amont (externe au repo)
+  # Portail web (Next.js) — démarré avec docker compose up -d (pas de profil)
   # -----------------------------------------------------------------
   web-portal:
-    profiles:
-      - portal
     build:
-      context: ../../web-portal
+      # Copié dans ce dossier par scripts/pack-linux-docker-bundle.sh (ZIP CI autonome).
+      context: ./web-portal
       dockerfile: Dockerfile
     image: lcdlln-web-portal
     container_name: lcdlln-web-portal
@@ -138,38 +144,31 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      master:
+        condition: service_healthy
     networks:
       - back_lcdlln-net
       - traefik_front_network
     environment:
       NODE_ENV: production
-      # Même base que le master (migrations exploits / vues stats). Adapter user/mot de passe avec le service mysql.
-      DATABASE_URL: mysql://lcdlln_user:lcdlln_pass_dev@mysql:3306/lcdlln_master
+      # Aligné sur MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE du service mysql
+      DATABASE_URL: mysql://${MYSQL_USER:-lcdlln_user}:${MYSQL_PASSWORD:-lcdlln_pass_dev}@mysql:3306/${MYSQL_DATABASE:-lcdlln_master}
     expose:
       - "3000"
-    # ports:
-    #   - "127.0.0.1:3000:3000"
+    ports:
+      - "127.0.0.1:${WEB_PORTAL_PORT:-3000}:3000"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_front_network"
-# HTTP
-      - "traefik.http.routers.docuseal-http.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.docuseal-http.entrypoints=http"
-# HTTPS
-      - "traefik.http.routers.docuseal-https.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.docuseal-https.entrypoints=https"
-      - "traefik.http.routers.docuseal-https.service=docuseal-service"
-      - "traefik.http.routers.docuseal-https.tls=true"
-      - "traefik.http.routers.docuseal-https.middlewares=docuseal-middlewares"
-# Middleware
-#      - "traefik.http.middlewares.docuseal-middlewares.headers.SSLRedirect=true"
-      - "traefik.http.middlewares.docuseal-middlewares.headers.STSSeconds=15552000"
-#      - "traefik.http.middlewares.docuseal-middlewares.headers.customResponseHeaders"
-#      - "traefik.http.middlewares.docuseal-middlewares.headers.browserXSSFilter=true"
-#      - "traefik.http.middlewares.docuseal-middlewares.headers.contentTypeNosniff=true"
-      - "traefik.http.middlewares.docuseal-middlewares.headers.forceSTSHeader=true"
-#      - "traefik.http.middlewares.docuseal-middlewares.headers.SSLHost=tips-of-mine.com"
-      - "traefik.http.middlewares.docuseal-middlewares.headers.STSIncludeSubdomains=true"
-      - "traefik.http.middlewares.docuseal-middlewares.headers.STSPreload=true"
-# Service
-      - "traefik.http.services.docuseal-service.loadbalancer.server.port=3000"
+      - "traefik.http.routers.lcdlln-portal-http.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
+      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http"
+      - "traefik.http.routers.lcdlln-portal-https.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
+      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https"
+      - "traefik.http.routers.lcdlln-portal-https.service=lcdlln-portal-service"
+      - "traefik.http.routers.lcdlln-portal-https.tls=true"
+      - "traefik.http.routers.lcdlln-portal-https.middlewares=lcdlln-portal-middlewares"
+      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSSeconds=15552000"
+      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSPreload=true"
+      - "traefik.http.services.lcdlln-portal-service.loadbalancer.server.port=3000"

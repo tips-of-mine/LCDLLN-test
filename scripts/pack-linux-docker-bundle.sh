@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Assemble sous deploy/docker/ un bundle prêt pour docker compose (binaires + db + game/data + lib MySQL).
+# Assemble sous deploy/docker/ un bundle prêt pour docker compose :
+#   binaires + db + game/data + lib MySQL + sources web-portal (image web-portal au docker compose up).
 # Usage : depuis la racine du dépôt, après build Release Linux :
 #   BUILD_DIR=build/linux-x64-release ./scripts/pack-linux-docker-bundle.sh
 #
@@ -11,6 +12,7 @@ BUILD_DIR="${BUILD_DIR:-$ROOT/build/linux-x64-release}"
 DOCKER_DIR="$ROOT/deploy/docker"
 
 bash "$ROOT/scripts/sync-db-to-docker-deploy.sh"
+bash "$ROOT/scripts/sync-web-portal-to-docker-deploy.sh"
 
 for bin in lcdlln_server lcdlln_shard; do
   if [[ ! -f "$BUILD_DIR/pkg/server/$bin" ]]; then

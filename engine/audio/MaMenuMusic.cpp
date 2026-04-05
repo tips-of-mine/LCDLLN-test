@@ -49,7 +49,7 @@ namespace engine::audio
 		if (er != MA_SUCCESS)
 		{
 			LOG_ERROR(Core, "[MaMenuMusic] ma_sound_init_from_file failed ({}) path={}", static_cast<int>(er), pathStr);
-			ma_engine_uninit(&m_impl->engine, nullptr);
+			ma_engine_uninit(&m_impl->engine);
 			m_impl->engineReady = false;
 			std::memset(&m_impl->engine, 0, sizeof(m_impl->engine));
 			return false;
@@ -85,7 +85,7 @@ namespace engine::audio
 		}
 		if (m_impl->engineReady)
 		{
-			ma_engine_uninit(&m_impl->engine, nullptr);
+			ma_engine_uninit(&m_impl->engine);
 			m_impl->engineReady = false;
 			std::memset(&m_impl->engine, 0, sizeof(m_impl->engine));
 		}

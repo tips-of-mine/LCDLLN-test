@@ -12,6 +12,10 @@
 
 namespace engine::audio
 {
+	AudioEngine::AudioEngine() = default;
+	AudioEngine::AudioEngine(AudioEngine&&) noexcept = default;
+	AudioEngine& AudioEngine::operator=(AudioEngine&&) noexcept = default;
+
 	namespace
 	{
 		bool HasIndexedKey(const engine::core::Config& config, std::string_view baseKey, size_t index, std::string_view field)

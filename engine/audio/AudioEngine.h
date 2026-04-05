@@ -57,8 +57,12 @@ namespace engine::audio
 	class AudioEngine final
 	{
 	public:
-		/// Construct an uninitialized audio engine wrapper.
-		AudioEngine() = default;
+		/// Construct an uninitialized audio engine wrapper (defined in .cpp: \c MaMenuMusic incomplete in headers).
+		AudioEngine();
+		AudioEngine(const AudioEngine&) = delete;
+		AudioEngine& operator=(const AudioEngine&) = delete;
+		AudioEngine(AudioEngine&&) noexcept;
+		AudioEngine& operator=(AudioEngine&&) noexcept;
 
 		/// Shutdown audio state during destruction.
 		~AudioEngine();

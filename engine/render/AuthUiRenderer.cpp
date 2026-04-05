@@ -108,6 +108,9 @@ namespace engine::render
 			metrics.contentX = metrics.innerX + metrics.artW + artGap;
 			metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
 		}
+		metrics.authStatusBannerBesideLogo =
+			state.login && state.minimalChrome && !state.loginArtColumn && (state.authLogoSpin || state.authStatusKnown)
+			&& !model.infoBanner.empty();
 		metrics.compactSingleField = model.fields.size() <= 1u;
 		const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
@@ -154,6 +157,7 @@ namespace engine::render
 		metrics.authTitleUseViewportWidth = false;
 		if (centeredLanguage)
 		{
+			metrics.authTitleUseViewportWidth = true;
 			legacyTitleAndTopOffset(50);
 		}
 		else if (state.terms)
@@ -184,7 +188,7 @@ namespace engine::render
 				metrics.authSectionTitleOffsetFromPanelTopPx = afterTitles + gapTitleSection;
 			}
 			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
-			if (!model.infoBanner.empty())
+			if (!model.infoBanner.empty() && !metrics.authStatusBannerBesideLogo)
 			{
 				// Bannière : fond à panelY + topOffset - 42, hauteur 34 ; marge sous la section avant la bannière.
 				metrics.topOffset = std::max(afterSection + 48, 146);
@@ -361,7 +365,7 @@ namespace engine::render
 
 		}
 
-		if (!model.infoBanner.empty())
+		if (!model.infoBanner.empty() && !layout.authStatusBannerBesideLogo)
 		{
 			// Aligner le fond avec le texte de la bannière (AuthGlyphPass : panelY + topOffset - 38).
 			// L'ancien hardcode panelY+72 plaçait le fond dans la zone du titre, créant un trait parasite.

@@ -3812,18 +3812,38 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			if (m_phase == Phase::LanguageOptions)
 			{
-				addBodyLine(Tr("options.video.fullscreen") + ": " + Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 1u);
-				addBodyLine(Tr("options.video.vsync") + ": " + Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 2u);
-				addBodyLine(Tr("options.audio.master") + ": " + std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 3u);
-				addBodyLine(Tr("options.audio.music") + ": " + std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 4u);
-				addBodyLine(Tr("options.audio.sfx") + ": " + std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 5u);
-				addBodyLine(Tr("options.audio.ui") + ": " + std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f)) + "%", m_optionsSelectionIndex == 6u);
-				addBodyLine(Tr("options.controls.mouse_sensitivity") + ": " + std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f)), m_optionsSelectionIndex == 7u);
-				addBodyLine(Tr("options.controls.invert_y") + ": " + Tr(m_invertYPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 8u);
-				addBodyLine(Tr("options.controls.movement_layout") + ": " + Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd"), m_optionsSelectionIndex == 9u);
-				addBodyLine(Tr("options.game.gameplay_udp") + ": " + Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 10u);
-				addBodyLine(Tr("options.game.allow_insecure_dev") + ": " + Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"), m_optionsSelectionIndex == 11u);
-				addBodyLine(Tr("options.game.auth_timeout") + ": " + std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSelectionIndex == 12u);
+				auto addOptionsRow = [this, &model](std::string label, std::string value, bool active)
+				{
+					RenderBodyLine row{};
+					row.text = std::move(label);
+					row.valueText = std::move(value);
+					row.active = active;
+					row.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
+					model.bodyLines.push_back(std::move(row));
+				};
+				addOptionsRow(Tr("options.video.fullscreen"), Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off"),
+					m_optionsSelectionIndex == 1u);
+				addOptionsRow(Tr("options.video.vsync"), Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off"),
+					m_optionsSelectionIndex == 2u);
+				addOptionsRow(Tr("options.audio.master"), std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f)) + "%",
+					m_optionsSelectionIndex == 3u);
+				addOptionsRow(Tr("options.audio.music"), std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f)) + "%",
+					m_optionsSelectionIndex == 4u);
+				addOptionsRow(Tr("options.audio.sfx"), std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f)) + "%",
+					m_optionsSelectionIndex == 5u);
+				addOptionsRow(Tr("options.audio.ui"), std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f)) + "%",
+					m_optionsSelectionIndex == 6u);
+				addOptionsRow(Tr("options.controls.mouse_sensitivity"),
+					std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f)), m_optionsSelectionIndex == 7u);
+				addOptionsRow(Tr("options.controls.invert_y"), Tr(m_invertYPending ? "options.value.on" : "options.value.off"),
+					m_optionsSelectionIndex == 8u);
+				addOptionsRow(Tr("options.controls.movement_layout"),
+					Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd"), m_optionsSelectionIndex == 9u);
+				addOptionsRow(Tr("options.game.gameplay_udp"), Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off"),
+					m_optionsSelectionIndex == 10u);
+				addOptionsRow(Tr("options.game.allow_insecure_dev"), Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"),
+					m_optionsSelectionIndex == 11u);
+				addOptionsRow(Tr("options.game.auth_timeout"), std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSelectionIndex == 12u);
 			}
 			// Actions (bouton principal + éventuellement retour)
 			if (m_phase == Phase::LanguageSelectionFirstRun)
@@ -3862,7 +3882,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (!model.bodyLines.empty())
 		{
 			const int32_t total = static_cast<int32_t>(model.bodyLines.size());
-			const int32_t maxVisible = 6;
+			const int32_t maxVisible = (m_phase == Phase::LanguageOptions) ? 10 : 6;
 			int32_t focusIndex = 0;
 			for (int32_t i = 0; i < total; ++i)
 			{
@@ -3880,6 +3900,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			model.visibleBodyLineStart = start;
 			model.visibleBodyLineCount = std::min(maxVisible, total - start);
 		}
+
+		model.authLogoSizePx = m_authLogoSizePx;
 
 		return model;
 	}
@@ -3920,9 +3942,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 		{
 			const RenderBodyLine& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
-			if (line.text.empty())
+			if (line.text.empty() && line.valueText.empty())
 				continue;
 			s += line.text;
+			if (!line.valueText.empty())
+			{
+				s += "\t";
+				s += line.valueText;
+			}
 			s += "\n";
 		}
 		if (!model.bodyLines.empty())

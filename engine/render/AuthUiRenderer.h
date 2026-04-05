@@ -18,6 +18,10 @@ namespace engine::render
 	inline constexpr int32_t kAuthUiFieldBoxHeightPx = 32;
 	/// Origine X du libellé à droite de la case (contentX + offset).
 	inline constexpr int32_t kAuthUiCheckboxLabelOffsetX = 30;
+	/// Marge coin du logo statut connexion (alignée sur \c Engine.cpp : \c 24.f + half).
+	inline constexpr int32_t kAuthUiStatusLogoCornerMarginPx = 24;
+	/// Espace entre la droite du logo et le texte de statut serveur.
+	inline constexpr int32_t kAuthUiStatusBannerAfterLogoGapPx = 12;
 
 	/// Référence dérivée de la largeur panneau (titres, espacements structurels dans les métriques).
 	inline int32_t AuthUiLayoutBodyScaleFromPanelW(int32_t panelW)
@@ -70,6 +74,8 @@ namespace engine::render
 		int32_t authTitleLine1OffsetFromPanelTopPx = 24;
 		int32_t authTitleLine2OffsetFromPanelTopPx = 0;
 		int32_t authSectionTitleOffsetFromPanelTopPx = 0;
+		/// Message \p model.infoBanner dessiné près du logo statut (haut gauche), pas dans le panneau.
+		bool authStatusBannerBesideLogo = false;
 	};
 
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg);

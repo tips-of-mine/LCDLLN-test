@@ -1864,10 +1864,12 @@ namespace engine
 															if (logoTex && logoTex->image != VK_NULL_HANDLE && logoTex->view != VK_NULL_HANDLE)
 															{
 																const float half = static_cast<float>(m_authUi.GetAuthLogoSizePx()) * 0.5f;
-																const float cx = 24.f + half;
+																const float margin =
+																	static_cast<float>(engine::render::kAuthUiStatusLogoCornerMarginPx);
+																const float cx = margin + half;
 																// Ajustement repère vertical : le shader du logo attend un centre "haut-gauche"
 																// alors que le rendu actuel le place en bas-gauche.
-																const float cy = static_cast<float>(ext.height) - (24.f + half);
+																const float cy = static_cast<float>(ext.height) - (margin + half);
 																// L’orientation 180° est appliquée dans AuthLogoPass ; ici uniquement l’angle de spin chargement.
 																const float spin = authVisualState.authLogoSpin ? m_authUi.GetAuthLogoRotationRadians() : 0.f;
 																m_authLogoPass.Record(

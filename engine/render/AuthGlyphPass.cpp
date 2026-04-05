@@ -1323,11 +1323,24 @@ namespace engine::render
 
 		if (!model.infoBanner.empty())
 		{
-			// Aligner le texte de la bannière avec son fond (AuthUiRenderer) : topOffset réserve 44px
-			// au-dessus du premier champ pour la bannière. sectionTitleY + 9 provoquait un chevauchement
-			// avec le titre de section (sectionTitle occupe sectionTitleY à sectionTitleY + 7*bodyScale).
-			const int32_t bannerY = panelY + topOffset - 38;
-			AppendText(vertices, model.infoBanner, contentX + 10, bannerY, contentW - 20, bodyScale, titleColor);
+			if (layout.authStatusBannerBesideLogo)
+			{
+				const int32_t logoSz = std::max(32, model.authLogoSizePx);
+				const int32_t textX = kAuthUiStatusLogoCornerMarginPx + logoSz + kAuthUiStatusBannerAfterLogoGapPx;
+				const int32_t lineH = 7 * bodyScale + 2 * bodyScale;
+				const int32_t textY =
+					kAuthUiStatusLogoCornerMarginPx + std::max(0, (logoSz - lineH) / 2);
+				const int32_t maxW = static_cast<int32_t>(extent.width) - textX - kAuthUiStatusLogoCornerMarginPx;
+				AppendText(vertices, model.infoBanner, textX, textY, std::max(80, maxW), bodyScale, titleColor);
+			}
+			else
+			{
+				// Aligner le texte de la bannière avec son fond (AuthUiRenderer) : topOffset réserve 44px
+				// au-dessus du premier champ pour la bannière. sectionTitleY + 9 provoquait un chevauchement
+				// avec le titre de section (sectionTitle occupe sectionTitleY à sectionTitleY + 7*bodyScale).
+				const int32_t bannerY = panelY + topOffset - 38;
+				AppendText(vertices, model.infoBanner, contentX + 10, bannerY, contentW - 20, bodyScale, titleColor);
+			}
 		}
 
 		if (state.submitting)
@@ -1470,6 +1483,19 @@ namespace engine::render
 						appendBlock(cbx + 5, cby + 5, 10, 10, accentColor);
 					}
 					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor);
+					continue;
+				}
+				if (!line.valueText.empty())
+				{
+					const int32_t gapCol = 10;
+					const int32_t valueColW = std::clamp(contentW * 42 / 100, 88, 260);
+					const int32_t labelColW = std::max(40, contentW - valueColW - gapCol - 6);
+					const int32_t valueColX = contentX + 2 + labelColW + gapCol;
+					const float* labelTint = line.active ? lineColor : mutedColor;
+					AppendText(vertices, line.text, contentX + 2, y, labelColW, bodyScale, labelTint);
+					const int32_t vw = MeasureTextWidthPx(line.valueText, bodyScale);
+					const int32_t vx = valueColX + std::max(0, valueColW - vw - 2);
+					AppendText(vertices, line.valueText, vx, y, valueColW, bodyScale, lineColor);
 					continue;
 				}
 				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)

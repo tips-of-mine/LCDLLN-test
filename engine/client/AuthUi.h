@@ -114,6 +114,8 @@ namespace engine::client
 		struct RenderBodyLine
 		{
 			std::string text;
+			/// Si non vide : \p text = libellé (colonne gauche), \p valueText = valeur éditable affichée (colonne droite) — écran options.
+			std::string valueText;
 			bool active = false;
 			bool hovered = false;
 			/// Lien (ouvre une URL), pas un bouton d’action.
@@ -143,6 +145,8 @@ namespace engine::client
 			int32_t layoutAuthGapTitleToSectionPx = 12;
 			bool layoutAuthTitleCenterViewportWidth = true;
 			int32_t layoutAuthFieldRowExtraPx = 0;
+			/// Taille affichée du logo statut (px) ; pour placer le texte « vérification serveur » à sa droite.
+			int32_t authLogoSizePx = 96;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.

@@ -4,7 +4,8 @@
 #
 # libmysqlclient : fourni par le bundle CI dans lib/ (pack-linux-docker-bundle.sh), pas via apt.
 
-FROM ubuntu:22.04
+# Aligné sur ubuntu-latest (GitHub Actions ≈ 24.04, glibc ≥ 2.38) pour les binaires Release CI.
+FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
@@ -25,7 +26,7 @@ RUN chmod +x /app/lcdlln_server
 # Config par défaut (surchargée par volume en dev)
 COPY config/master.config.json /app/config.json
 
-EXPOSE 3840
+EXPOSE 3840 3842
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
     CMD nc -z localhost 3840 || exit 1

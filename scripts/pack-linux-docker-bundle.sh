@@ -16,7 +16,7 @@ for bin in lcdlln_server lcdlln_shard; do
   fi
 done
 
-# Bibliothèques client MySQL (même ABI que l’hôte de build → image ubuntu:22.04 du Dockerfile.master).
+# Bibliothèques client MySQL (même ABI que l’hôte de build → image ubuntu:24.04 du Dockerfile.master).
 pack_mysql_client_libs() {
   local dest="$DOCKER_DIR/lib"
   rm -rf "$dest"

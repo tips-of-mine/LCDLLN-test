@@ -33,7 +33,7 @@ chmod +x run-lcdlln-server-host.sh
 ```
 
 Ou : `export LD_LIBRARY_PATH="$(pwd)/lib:$LD_LIBRARY_PATH"` puis lancer `bin/lcdlln_server`.  
-L’ABI doit rester compatible (glibc, x86_64) avec l’Ubuntu 22.04 utilisée pour le build CI.
+Les images **master** / **shard** utilisent **Ubuntu 24.04** (glibc ≥ 2.38), comme `ubuntu-latest` sur GitHub Actions : les binaires du zip CI et les `.so` dans `lib/` y sont compatibles. Si vous compilez sur une distro plus ancienne, le binaire reste en général exécutable dans ces conteneurs ; l’inverse (binaire récent + image 22.04) provoque des erreurs `GLIBC_2.38 not found`.
 
 ## Prérequis
 

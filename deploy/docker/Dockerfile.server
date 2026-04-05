@@ -8,7 +8,7 @@
 #   docker build -f Dockerfile.server -t lcdlln-server .
 # ============================================================
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL maintainer="LCDLLN"
 LABEL description="LCDLLN Master Server"

@@ -13,7 +13,7 @@
 # ============================================================
 
 # ---- Stage 1 : Build ----------------------------------------
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -59,7 +59,7 @@ RUN cmake -S . -B build/linux \
     && cmake --build build/linux --target lcdlln_server
 
 # ---- Stage 2 : Runtime --------------------------------------
-FROM ubuntu:22.04 AS runtime
+FROM ubuntu:24.04 AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \

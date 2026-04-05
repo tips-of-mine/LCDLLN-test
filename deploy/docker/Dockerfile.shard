@@ -2,7 +2,8 @@
 # Build : depuis deploy/docker avec bin/lcdlln_shard
 #   docker build -f Dockerfile.shard -t lcdlln-shard .
 
-FROM ubuntu:22.04
+# Même base que le master (binaires CI = ubuntu-latest / glibc récent).
+FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \

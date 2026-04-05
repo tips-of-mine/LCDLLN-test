@@ -74,6 +74,8 @@ services:
         condition: service_healthy
     ports:
       - "${MASTER_PORT:-3840}:3840"
+      # HTTP embarqué (même processus que lcdlln_server) : /status, /healthz, /readyz, /metrics
+      - "${MASTER_HEALTH_PORT:-3842}:3842"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
@@ -140,6 +142,6 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=lcdlln-net"
-      - "traefik.http.routers.lcdlln-portal.rule=Host(`lcdlln-portal.localhost`)"
+      - "traefik.http.routers.lcdlln-portal.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
       - "traefik.http.routers.lcdlln-portal.entrypoints=web"
       - "traefik.http.services.lcdlln-portal.loadbalancer.server.port=3000"

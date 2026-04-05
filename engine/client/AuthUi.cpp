@@ -539,6 +539,16 @@ namespace engine::client
 	void AuthUiPresenter::UpdateWindowTitle(engine::platform::Window&) const {}
 	void AuthUiPresenter::JoinWorker() {}
 
+	uint32_t AuthUiPresenter::OptionsSubmenuLineCount(OptionsSubMenu sub)
+	{
+		(void)sub;
+		return 0;
+	}
+
+	void AuthUiPresenter::EnterOptionsSubmenuFromRoot(uint32_t /*categoryIndex*/)
+	{
+	}
+
 #else
 
 // C2712: __try cannot be used in a function that requires C++ object unwinding.

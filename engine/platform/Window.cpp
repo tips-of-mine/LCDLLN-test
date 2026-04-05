@@ -182,9 +182,10 @@ namespace engine::platform
 			{
 				const double sx = static_cast<double>(targetWidth) / static_cast<double>(sw);
 				const double sy = static_cast<double>(targetHeight) / static_cast<double>(sh);
-				const double sc = std::min(sx, sy);
-				const int dw = std::max(1, static_cast<int>(static_cast<double>(sw) * sc + 0.5));
-				const int dh = std::max(1, static_cast<int>(static_cast<double>(sh) * sc + 0.5));
+				// Éviter la macro min/max de windows.h (NOMINMAX non garanti ici).
+				const double sc = (std::min)(sx, sy);
+				const int dw = (std::max)(1, static_cast<int>(static_cast<double>(sw) * sc + 0.5));
+				const int dh = (std::max)(1, static_cast<int>(static_cast<double>(sh) * sc + 0.5));
 				Gdiplus::Bitmap canvas(targetWidth, targetHeight, PixelFormat32bppARGB);
 				Gdiplus::Graphics graphics(&canvas);
 				graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);

@@ -18,6 +18,18 @@ namespace engine::platform
 
 namespace engine::client
 {
+	/// Sous-écran des options (auth) : menu racine puis catégories.
+	/// Déclaré au niveau du namespace pour éviter les soucis de parsing MSVC avec les enums imbriqués.
+	enum class OptionsSubMenu : uint8_t
+	{
+		Root,
+		Language,
+		Video,
+		Audio,
+		Controls,
+		Game
+	};
+
 	/// STAB.13 — Login / register UI state machine; drives M20.5/M22.6 master flow without duplicating protocol.
 	/// Assets reference: \c game/data/ui/login and \c game/data/ui/register (documented in panel text; no absolute paths).
 	class AuthUiPresenter final
@@ -210,6 +222,20 @@ namespace engine::client
 		bool SetViewportSize(uint32_t width, uint32_t height);
 
 	private:
+		enum class Phase
+		{
+			Login,
+			Register,
+			VerifyEmail,
+			ForgotPassword,
+			Terms,
+			CharacterCreate,
+			LanguageSelectionFirstRun,
+			LanguageOptions,
+			Submitting,
+			Error
+		};
+
 		void AppendPasswordStars(std::string& out, size_t len) const;
 		void EnsurePasswordSalt(const engine::core::Config& cfg);
 		std::string ComputeClientHash(const engine::core::Config& cfg) const;
@@ -239,31 +265,6 @@ namespace engine::client
 		void JoinWorker();
 		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).
 		void ResolveActionButtonLabels(RenderModel& model) const;
-
-		enum class Phase
-		{
-			Login,
-			Register,
-			VerifyEmail,
-			ForgotPassword,
-			Terms,
-			CharacterCreate,
-			LanguageSelectionFirstRun,
-			LanguageOptions,
-			Submitting,
-			Error
-		};
-
-		/// Sous-écran des options (auth) : menu racine puis catégories.
-		enum class OptionsSubMenu : uint8_t
-		{
-			Root,
-			Language,
-			Video,
-			Audio,
-			Controls,
-			Game
-		};
 
 		bool m_initialized = false;
 		bool m_flowComplete = false;

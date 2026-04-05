@@ -116,4 +116,18 @@ namespace engine::render
 		const AuthUiTheme& theme,
 		bool calibrationOverlay = false,
 		bool usePhotoBackdrop = false);
+
+	/// Centre (pixels, origine haut-gauche) d’une icône info à côté du libellé de champ — aligné sur AuthGlyphPass + hit-test.
+	struct AuthFieldInfoIconLayout
+	{
+		bool valid = false;
+		float centerXPx = 0.f;
+		float centerYPx = 0.f;
+		float halfExtentPx = 9.f;
+	};
+
+	std::vector<AuthFieldInfoIconLayout> BuildAuthFieldInfoIconLayouts(
+		VkExtent2D extent,
+		const engine::client::AuthUiPresenter::VisualState& state,
+		const engine::client::AuthUiPresenter::RenderModel& model);
 }

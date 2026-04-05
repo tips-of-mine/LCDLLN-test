@@ -27,6 +27,14 @@ Ports par défaut : **3840** (master), **3843** (shard), MySQL sur **127.0.0.1:3
 
 Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker compose down -v`.
 
+**Erreur OCI / bind mount** : `mount ... master.config.json ... not a directory` / monter un fichier sur un fichier alors que la source est un dossier — arrive si `config/master.config.json` **n’existait pas** sur l’hôte au premier `docker compose up` : Docker peut avoir créé un **répertoire** vide à la place du fichier.
+
+1. Depuis `deploy/docker` : `ls -la config/master.config.json` — si c’est un dossier :  
+   `rm -rf config/master.config.json`  
+   puis recopiez le vrai `master.config.json` (depuis le dépôt ou le zip CI).
+2. Depuis **M24.5**, le compose monte **`./config`** entier sur `/app/host-config` et un script d’entrée copie `master.config.json` / `shard.config.json` vers `/app/config.json` : refaites un build des images :  
+   `docker compose build --no-cache master shard && docker compose up -d`
+
 **Erreur `Checksum mismatch for version 1`** : une base créée avec un ancien `schema.sql` contient encore le checksum factice dans `schema_version`. Soit recréez le volume (`docker compose down -v` puis `up`, **données perdues**), soit corrigez en SQL :
 
 ```sql

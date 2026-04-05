@@ -2995,6 +2995,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						break;
 					}
 				}
+				const int32_t smallScaleHit = std::max(2, bodyScale - 1);
+				const int32_t labelAboveFieldPxHit = smallScaleHit * 11 + 6;
 				for (int32_t fi = 0; fi < static_cast<int32_t>(model.fields.size()); ++fi)
 				{
 					const RenderField& fld = model.fields[static_cast<size_t>(fi)];
@@ -3004,7 +3006,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					}
 					const int32_t y = panelY + topOffset + fi * fieldStep;
 					const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
-					if (contains(mx, my, ix, y - 10, 28, 18))
+					const int32_t iy = y - labelAboveFieldPxHit;
+					if (contains(mx, my, ix, iy, 18, 18))
 					{
 						m_hoveredFieldInfoIndex = fi;
 						break;

@@ -24,8 +24,8 @@ namespace engine::render
 			size_t fragWordCount,
 			VkPipelineCache pipelineCache = VK_NULL_HANDLE);
 
-		/// \p rotationRadians : angle d’animation « chargement » uniquement (effet 3D sur l’ampleur X) ;
-		/// l’orientation 180° du PNG est fixée dans Record.
+		/// \p rotationRadians : angle d’animation « chargement » uniquement (effet 3D sur l’ampleur X).
+		/// \p baseRotationRadians : rotation de base du quad (ex. π pour le logo connexion, 0 pour les petites icônes info).
 		void Record(VkDevice device,
 			VkCommandBuffer cmd,
 			VkExtent2D extent,
@@ -35,7 +35,8 @@ namespace engine::render
 			float centerXPx,
 			float centerYPx,
 			float halfSizePx,
-			float rotationRadians);
+			float rotationRadians,
+			float baseRotationRadians = 3.14159265f);
 
 		void Destroy(VkDevice device);
 

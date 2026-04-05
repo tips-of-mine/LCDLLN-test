@@ -770,6 +770,16 @@ namespace engine
 											{
 												LOG_WARN(Render, "[Boot] Auth UI status error logo not loaded: ui/login/error.png");
 											}
+											m_authUiInfoLoginTexture = m_assetRegistry.LoadTexture("ui/login/info.png", true);
+											if (!m_authUiInfoLoginTexture.IsValid())
+											{
+												LOG_WARN(Render, "[Boot] Auth UI field info icon not loaded: ui/login/info.png");
+											}
+											m_authUiInfoRegisterTexture = m_assetRegistry.LoadTexture("ui/register/info.png", true);
+											if (!m_authUiInfoRegisterTexture.IsValid())
+											{
+												LOG_WARN(Render, "[Boot] Auth UI field info icon not loaded: ui/register/info.png");
+											}
 										}
 
 										engine::render::ImageDesc sceneColorDesc{};
@@ -1883,6 +1893,40 @@ namespace engine
 																	cy,
 																	half,
 																	spin);
+															}
+														}
+														{
+															const std::vector<engine::render::AuthFieldInfoIconLayout> infoLayouts =
+																engine::render::BuildAuthFieldInfoIconLayouts(ext, authVisualState, authRenderModel);
+															for (const engine::render::AuthFieldInfoIconLayout& iconLay : infoLayouts)
+															{
+																if (!iconLay.valid)
+																{
+																	continue;
+																}
+																engine::render::TextureHandle& infoTex = authVisualState.registerMode
+																	? m_authUiInfoRegisterTexture
+																	: m_authUiInfoLoginTexture;
+																bool& infoLayoutReady = authVisualState.registerMode
+																	? m_authUiInfoRegisterLayoutReady
+																	: m_authUiInfoLoginLayoutReady;
+																engine::render::TextureAsset* it = infoTex.Get();
+																if (!it || it->image == VK_NULL_HANDLE || it->view == VK_NULL_HANDLE)
+																{
+																	continue;
+																}
+																m_authLogoPass.Record(
+																	m_vkDeviceContext.GetDevice(),
+																	cmd,
+																	ext,
+																	it->image,
+																	it->view,
+																	infoLayoutReady,
+																	iconLay.centerXPx,
+																	iconLay.centerYPx,
+																	iconLay.halfExtentPx,
+																	0.f,
+																	0.f);
 															}
 														}
 														if (m_authGlyphPass.IsValid())

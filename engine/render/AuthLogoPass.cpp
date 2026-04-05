@@ -221,7 +221,8 @@ namespace engine::render
 		float centerXPx,
 		float centerYPx,
 		float halfSizePx,
-		float rotationRadians)
+		float rotationRadians,
+		float baseRotationRadians)
 	{
 		if (!IsValid() || cmd == VK_NULL_HANDLE || logoImage == VK_NULL_HANDLE || logoView == VK_NULL_HANDLE
 			|| extent.width == 0 || extent.height == 0)
@@ -287,10 +288,8 @@ namespace engine::render
 		const float spinFactor = std::cos(rotationRadians);
 		push.halfExtentPx[0] = -halfSizePx * spinFactor;
 		push.halfExtentPx[1] = halfSizePx;
-		// Orientation fixe du PNG (logo_login à l’endroit) : 180° dans le plan — ne pas mélanger avec l’angle de spin ci-dessus.
-		constexpr float kLogoBaseRotationRad = 3.14159265f;
-		push.cosA = std::cos(kLogoBaseRotationRad);
-		push.sinA = std::sin(kLogoBaseRotationRad);
+		push.cosA = std::cos(baseRotationRadians);
+		push.sinA = std::sin(baseRotationRadians);
 		vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
 
 		vkCmdDraw(cmd, 6, 1, 0, 0);

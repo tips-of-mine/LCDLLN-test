@@ -430,7 +430,6 @@ namespace engine::render
 			constexpr int32_t kErrorFooterBarH = 58;
 			addRect(contentX, boxTop, contentW, boxH, 0.28f, 0.10f, 0.10f, 0.98f);
 			addRect(contentX, boxTop, 10, boxH, 0.82f, 0.22f, 0.18f, 1.0f);
-			addThemeRect(contentX + 22, boxTop + 18, contentW - 44, 12, theme.text, 0.78f);
 			addThemeRect(contentX, footerTop, contentW, kErrorFooterBarH, theme.surface, 0.98f);
 			if (!model.actions.empty())
 			{
@@ -514,15 +513,12 @@ namespace engine::render
 			addRect(contentX, y, stripeW, kAuthUiFieldBoxHeightPx, sr, sg, sb, 1.0f);
 			if (static_cast<size_t>(i) < model.fields.size() && !model.fields[static_cast<size_t>(i)].tooltipText.empty())
 			{
+				const int32_t bodyScaleHint = AuthUiClassicTextScaleFromPanelW(panelW);
+				const int32_t smallScaleHint = std::max(2, bodyScaleHint - 1);
+				const int32_t labelAboveFieldPx = smallScaleHint * 11 + 6;
 				const int32_t iconX = std::max(contentX + 10, contentX + contentW - 36);
-				const int32_t iconY = y + 6;
+				const int32_t iconY = y - labelAboveFieldPx;
 				addThemeRect(iconX, iconY, 18, 18, theme.accent, model.hoveredFieldInfoIndex == i ? 1.0f : 0.65f);
-				if (model.hoveredFieldInfoIndex == i)
-				{
-					const int32_t tooltipY = y + 34;
-					addThemeRect(contentX, tooltipY, contentW, 28, theme.surface, 0.96f);
-					addThemeRect(contentX, tooltipY, 3, 28, theme.accent, 0.85f);
-				}
 			}
 		}
 
@@ -638,5 +634,44 @@ namespace engine::render
 		}
 
 		return layers;
+	}
+
+	std::vector<AuthFieldInfoIconLayout> BuildAuthFieldInfoIconLayouts(
+		VkExtent2D extent,
+		const engine::client::AuthUiPresenter::VisualState& state,
+		const engine::client::AuthUiPresenter::RenderModel& model)
+	{
+		std::vector<AuthFieldInfoIconLayout> out;
+		if (extent.width == 0 || extent.height == 0 || !model.visible)
+		{
+			return out;
+		}
+
+		const AuthUiLayoutMetrics layout = BuildAuthUiLayoutMetrics(extent, state, model);
+		const int32_t panelY = layout.panelY;
+		const int32_t contentX = layout.contentX;
+		const int32_t contentW = layout.contentW;
+		const int32_t topOffset = layout.topOffset;
+		const int32_t fieldStep = layout.fieldRowStepPx;
+		const int32_t bodyScale = AuthUiClassicTextScaleFromPanelW(layout.panelW);
+		const int32_t smallScale = std::max(2, bodyScale - 1);
+		const int32_t labelAboveFieldPx = smallScale * 11 + 6;
+
+		out.resize(model.fields.size());
+		for (size_t i = 0; i < model.fields.size(); ++i)
+		{
+			if (model.fields[i].tooltipText.empty())
+			{
+				continue;
+			}
+			const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
+			const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
+			const int32_t iy = y - labelAboveFieldPx;
+			out[i].valid = true;
+			out[i].centerXPx = static_cast<float>(ix + 9);
+			out[i].centerYPx = static_cast<float>(iy + 9);
+			out[i].halfExtentPx = 9.f;
+		}
+		return out;
 	}
 }

@@ -1261,6 +1261,17 @@ namespace engine::render
 		const int32_t actionLineStep = 7 * actionLabelScale + 2 * actionLabelScale;
 		const int32_t fieldRowStep = layout.fieldRowStepPx;
 
+		const auto actionButtonLabelTopY = [this, actionLabelScale, actionLineStep](int32_t buttonRowTopPx) -> int32_t
+		{
+			if (m_fontGpuReady && m_uiFont.IsValid())
+			{
+				const float mul = std::max(0.35f, static_cast<float>(actionLabelScale) / 4.f);
+				const int32_t lineH = static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
+				return buttonRowTopPx + (kAuthUiActionButtonHeightPx - lineH) / 2;
+			}
+			return buttonRowTopPx + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
+		};
+
 		auto appendBlock = [this, &vertices](int32_t x, int32_t y, int32_t widthPx, int32_t heightPx, const float color[4])
 		{
 			if (vertices.size() + 6u > m_maxVertices || widthPx <= 0 || heightPx <= 0)
@@ -1365,7 +1376,7 @@ namespace engine::render
 				const int32_t gap = 10;
 				const int32_t actionW = std::max(120, (contentW - (actionCount - 1) * gap) / actionCount);
 				const int32_t btnY = footerTop + (kErrorFooterBarH - kAuthUiActionButtonHeightPx) / 2;
-				const int32_t labelY = btnY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
+				const int32_t labelY = actionButtonLabelTopY(btnY);
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size())
@@ -1444,7 +1455,7 @@ namespace engine::render
 				const int32_t gapTerms = 10;
 				const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gapTerms) / actionCount);
 				const int32_t termsBtnY = panelY + panelH - 92 + (58 - kAuthUiActionButtonHeightPx) / 2;
-				const int32_t termsLabelY = termsBtnY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
+				const int32_t termsLabelY = actionButtonLabelTopY(termsBtnY);
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size()) break;
@@ -1465,15 +1476,17 @@ namespace engine::render
 				const int32_t y = panelY + topOffset + i * fieldRowStep;
 				const auto& field = model.fields[static_cast<size_t>(i)];
 				AppendText(vertices, field.label, contentX + 10, y - labelAboveFieldPx, contentW / 2, smallScale, mutedColor);
-				if (!field.tooltipText.empty())
-				{
-					AppendText(vertices, "(i)", std::max(contentX + 10, contentX + contentW - 36), y - labelAboveFieldPx, 28, smallScale, accentColor);
-				}
 				const float* valueTint = field.active ? titleColor : (field.hovered ? primaryColor : bodyColor);
 				AppendText(vertices, field.value, contentX + 12, y + valueBelowTopPx, contentW - 24, bodyScale, valueTint);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
 				{
-					AppendText(vertices, field.tooltipText, contentX + 8, y + 40, contentW - 16, smallScale, bodyColor);
+					const int32_t tooltipY = y + 36;
+					const int32_t tooltipH = 58;
+					const float surf[4] = { theme.surface[0], theme.surface[1], theme.surface[2], 0.97f };
+					const float accStrip[4] = { theme.accent[0], theme.accent[1], theme.accent[2], 0.92f };
+					appendBlock(contentX + 6, tooltipY, contentW - 12, tooltipH, surf);
+					appendBlock(contentX + 6, tooltipY, 4, tooltipH, accStrip);
+					AppendText(vertices, field.tooltipText, contentX + 16, tooltipY + 10, contentW - 28, smallScale, bodyColor);
 				}
 				if (field.active && !field.cyclePicker)
 				{
@@ -1527,7 +1540,8 @@ namespace engine::render
 				}
 				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)
 				{
-					appendCenteredText(line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
+					const int32_t yLang = y + ((m_fontGpuReady && m_uiFont.IsValid()) ? 4 : 0);
+					appendCenteredText(line.text, contentX + 2, yLang, contentW - 6, bodyScale, lineColor);
 				}
 				else
 				{
@@ -1561,7 +1575,7 @@ namespace engine::render
 						const auto& action = model.actions[static_cast<size_t>(i)];
 						const int32_t labelWidth = MeasureTextWidthPx(action.label, actionLabelScale);
 						const int32_t labelX = std::max(x + 8, x + (btnW - labelWidth) / 2);
-						const int32_t labelY = rowY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
+						const int32_t labelY = actionButtonLabelTopY(rowY);
 						// Les actions "emphasized" ont un fond de couleur proche de l’accent.
 						// Si on dessine le texte en accentColor, il devient quasi illisible.
 						const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
@@ -1574,7 +1588,7 @@ namespace engine::render
 				const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 				const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
 				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
-				const int32_t singleRowLabelY = buttonY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
+				const int32_t singleRowLabelY = actionButtonLabelTopY(buttonY);
 				for (int32_t i = 0; i < actionCount; ++i)
 				{
 					if (static_cast<size_t>(i) >= model.actions.size()) break;

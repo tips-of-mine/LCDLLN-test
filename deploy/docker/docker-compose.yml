@@ -83,7 +83,9 @@ services:
       # HTTP embarqué (même processus que lcdlln_server) : /status, /healthz, /readyz, /metrics
       - "${MASTER_HEALTH_PORT:-3842}:3842"
     volumes:
-      - ./config/master.config.json:/app/config.json:ro
+      # Dossier entier : évite l’erreur « not a directory » si master.config.json manquait
+      # et qu’un répertoire homonyme avait été créé sur l’hôte.
+      - ./config:/app/host-config:ro
       - ./game/data:/app/game/data:ro
       - master-logs:/app/logs
     healthcheck:
@@ -109,7 +111,7 @@ services:
     ports:
       - "${SHARD_PORT:-3843}:3843"
     volumes:
-      - ./config/shard.config.json:/app/config.json:ro
+      - ./config:/app/host-config:ro
       - ./game/data:/app/game/data:ro
       - shard-logs:/app/logs
     healthcheck:

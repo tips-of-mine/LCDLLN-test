@@ -1244,7 +1244,6 @@ namespace engine::render
 		const float mutedColor[4] = { theme.mutedText[0], theme.mutedText[1], theme.mutedText[2], 0.92f };
 		const float accentColor[4] = { theme.accent[0], theme.accent[1], theme.accent[2], 1.0f };
 		const float primaryColor[4] = { theme.primary[0], theme.primary[1], theme.primary[2], 1.0f };
-		const float errorColor[4] = { 1.0f, 0.72f, 0.72f, 1.0f };
 		const float bodyColor[4] = { theme.text[0], theme.text[1], theme.text[2], 0.94f };
 		const int32_t topOffset = layout.topOffset;
 		const int32_t layoutBodyScale = AuthUiLayoutBodyScaleFromPanelW(panelW);
@@ -1292,8 +1291,9 @@ namespace engine::render
 			AppendText(vertices, text, x, y, boxW, scale, color);
 		};
 
-		// Titres: colonne contenu, panneau élargi, ou largeur fenêtre (login/register minimal sans colonne d’art).
-		const bool drawTitleAcrossPanel = state.login && state.minimalChrome && !state.loginArtColumn;
+		// Titres: colonne contenu, panneau élargi, ou largeur fenêtre (login/register/erreur minimal sans colonne d’art).
+		const bool drawTitleAcrossPanel =
+			(state.login || state.error) && state.minimalChrome && !state.loginArtColumn;
 		const int32_t viewportW = static_cast<int32_t>(extent.width);
 		const int32_t titleAreaX = layout.authTitleUseViewportWidth ? 24 : (drawTitleAcrossPanel ? (panelX + 24) : contentX);
 		const int32_t titleAreaW =
@@ -1353,10 +1353,32 @@ namespace engine::render
 		}
 		else if (!model.errorText.empty())
 		{
-			AppendText(vertices, model.errorText, contentX + 18, panelY + 124, contentW - 36, bodyScale, titleColor);
+			const int32_t boxTop = panelY + layout.authErrorBoxTopFromPanelTopPx;
+			const int32_t boxH = std::max(48, layout.authErrorBoxHeightPx);
+			const int32_t msgY = boxTop + 18;
+			AppendText(vertices, model.errorText, contentX + 18, msgY, contentW - 36, bodyScale, titleColor);
+			const int32_t footerTop = panelY + layout.authErrorFooterTopFromPanelTopPx;
+			constexpr int32_t kErrorFooterBarH = 58;
 			if (!model.actions.empty())
 			{
-				AppendText(vertices, model.actions.front().label, contentX + 12, panelY + 233, contentW - 24, bodyScale, titleColor);
+				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
+				const int32_t gap = 10;
+				const int32_t actionW = std::max(120, (contentW - (actionCount - 1) * gap) / actionCount);
+				const int32_t btnY = footerTop + (kErrorFooterBarH - kAuthUiActionButtonHeightPx) / 2;
+				const int32_t labelY = btnY + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
+				for (int32_t i = 0; i < actionCount; ++i)
+				{
+					if (static_cast<size_t>(i) >= model.actions.size())
+					{
+						break;
+					}
+					const int32_t x = contentX + i * (actionW + gap);
+					const auto& action = model.actions[static_cast<size_t>(i)];
+					const int32_t labelWidth = MeasureTextWidthPx(action.label, actionLabelScale);
+					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
+					const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
+					AppendText(vertices, action.label, labelX, labelY, actionW - 20, actionLabelScale, ac);
+				}
 			}
 		}
 		else if (state.terms)
@@ -1563,10 +1585,6 @@ namespace engine::render
 					const float* ac = action.primary ? titleColor : (action.emphasized ? titleColor : mutedColor);
 					AppendText(vertices, action.label, labelX, singleRowLabelY, actionW - 20, actionLabelScale, ac);
 				}
-			}
-			if (!model.errorText.empty())
-			{
-				AppendText(vertices, model.errorText, contentX + 14, panelY + 138, contentW - 28, bodyScale, errorColor);
 			}
 			if (!model.footerHint.empty())
 			{

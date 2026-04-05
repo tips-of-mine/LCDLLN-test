@@ -46,6 +46,8 @@ Résultat attendu : une ligne avec `version = 1`.
 
 Les fichiers de migration sont dans `db/migrations/` (convention : `0001_init.sql`, `0002_...`, etc.). Voir `db/migrations/README.md` pour la convention et les règles.
 
+Le fichier `schema.sql` (init Docker / nouvelle base) doit insérer dans `schema_version` le **même** SHA-256 que `db/migrations/0001_init.sql` pour la version 1, sinon le master refuse de démarrer (`Checksum mismatch`).
+
 Pour calculer le checksum SHA-256 de chaque fichier (pour vérification ou intégration avec un applicateur) :
 
 ```bash

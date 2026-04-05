@@ -9,6 +9,7 @@
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
 
+#include <algorithm>
 #include <filesystem>
 #include <string>
 
@@ -120,45 +121,51 @@ namespace engine::platform
 			}
 
 			const std::filesystem::path raw(relativePath);
-			if (raw.is_absolute() && std::filesystem::exists(raw))
+			std::error_code ec;
+			if (raw.is_absolute() && std::filesystem::exists(raw, ec))
 			{
 				return raw;
 			}
 
-			std::filesystem::path base = std::filesystem::current_path();
-			for (int i = 0; i < 6; ++i)
+			auto tryResolveFromBase = [&](std::filesystem::path base) -> std::filesystem::path
 			{
-				const std::filesystem::path candidate = base / raw;
-				if (std::filesystem::exists(candidate))
+				for (int i = 0; i < 12; ++i)
 				{
-					return candidate;
+					const std::filesystem::path direct = base / raw;
+					if (std::filesystem::exists(direct, ec))
+					{
+						return direct;
+					}
+					// Même convention que FileSystem::ResolveContentPath(cfg, relativePath) : base "game/data".
+					const std::filesystem::path underContent = base / "game" / "data" / raw;
+					if (std::filesystem::exists(underContent, ec))
+					{
+						return underContent;
+					}
+					if (!base.has_parent_path())
+					{
+						break;
+					}
+					base = base.parent_path();
 				}
-				if (!base.has_parent_path())
-				{
-					break;
-				}
-				base = base.parent_path();
-			}
+				return {};
+			};
 
-			base = GetExecutableDirectory();
-			for (int i = 0; i < 6; ++i)
+			std::filesystem::path found = tryResolveFromBase(std::filesystem::current_path());
+			if (!found.empty())
 			{
-				const std::filesystem::path candidate = base / raw;
-				if (std::filesystem::exists(candidate))
-				{
-					return candidate;
-				}
-				if (!base.has_parent_path())
-				{
-					break;
-				}
-				base = base.parent_path();
+				return found;
+			}
+			found = tryResolveFromBase(GetExecutableDirectory());
+			if (!found.empty())
+			{
+				return found;
 			}
 
 			return raw;
 		}
 
-		HBITMAP LoadBitmapFromPng(std::string_view pathUtf8, int targetWidth, int targetHeight)
+		HBITMAP LoadBitmapFromPng(std::string_view pathUtf8, int targetWidth, int targetHeight, bool fitInsideTarget = false)
 		{
 			EnsureGdiplusStarted();
 			const std::filesystem::path resolved = ResolveUiImagePath(pathUtf8);
@@ -166,10 +173,32 @@ namespace engine::platform
 			Gdiplus::Bitmap source(resolvedW.c_str());
 			if (source.GetLastStatus() != Gdiplus::Ok)
 			{
+				LOG_WARN(Platform, "[Window] LoadBitmapFromPng failed (path={})", resolved.string());
 				return nullptr;
 			}
-			const int width = targetWidth > 0 ? targetWidth : static_cast<int>(source.GetWidth());
-			const int height = targetHeight > 0 ? targetHeight : static_cast<int>(source.GetHeight());
+			const int sw = static_cast<int>(source.GetWidth());
+			const int sh = static_cast<int>(source.GetHeight());
+			if (fitInsideTarget && targetWidth > 0 && targetHeight > 0 && sw > 0 && sh > 0)
+			{
+				const double sx = static_cast<double>(targetWidth) / static_cast<double>(sw);
+				const double sy = static_cast<double>(targetHeight) / static_cast<double>(sh);
+				const double sc = std::min(sx, sy);
+				const int dw = std::max(1, static_cast<int>(static_cast<double>(sw) * sc + 0.5));
+				const int dh = std::max(1, static_cast<int>(static_cast<double>(sh) * sc + 0.5));
+				Gdiplus::Bitmap canvas(targetWidth, targetHeight, PixelFormat32bppARGB);
+				Gdiplus::Graphics graphics(&canvas);
+				graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+				graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+				graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
+				const int ox = (targetWidth - dw) / 2;
+				const int oy = (targetHeight - dh) / 2;
+				graphics.DrawImage(&source, ox, oy, dw, dh);
+				HBITMAP out = nullptr;
+				canvas.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &out);
+				return out;
+			}
+			const int width = targetWidth > 0 ? targetWidth : sw;
+			const int height = targetHeight > 0 ? targetHeight : sh;
 			Gdiplus::Bitmap scaled(width, height, PixelFormat32bppARGB);
 			Gdiplus::Graphics graphics(&scaled);
 			graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
@@ -181,7 +210,7 @@ namespace engine::platform
 		}
 
 		bool ReplaceStaticBitmap(void* hwndHandle, void*& bitmapHandle, std::string& cachedPath, int& cachedWidth, int& cachedHeight,
-			std::string_view newPath, int targetWidth, int targetHeight)
+			std::string_view newPath, int targetWidth, int targetHeight, bool fitInsideTarget = false)
 		{
 			if (!hwndHandle)
 			{
@@ -204,7 +233,7 @@ namespace engine::platform
 			{
 				return false;
 			}
-			bitmapHandle = LoadBitmapFromPng(newPath, targetWidth, targetHeight);
+			bitmapHandle = LoadBitmapFromPng(newPath, targetWidth, targetHeight, fitInsideTarget);
 			if (bitmapHandle)
 			{
 				SendMessageW(AsHwnd(hwndHandle), STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(bitmapHandle));
@@ -679,7 +708,7 @@ namespace engine::platform
 		const bool hasLogoBitmap = ReplaceStaticBitmap(m_authLogoHwnd, m_authLogoBitmap, m_authLogoPath, m_authLogoWidth, m_authLogoHeight,
 			m_authLogoPath, logoSize, logoSize);
 		const bool hasInfoBitmap = ReplaceStaticBitmap(m_authInfoHwnd, m_authInfoBitmap, m_authInfoPath, m_authInfoWidth, m_authInfoHeight,
-			m_authInfoPath, infoSize, infoSize);
+			m_authInfoPath, infoSize, infoSize, true);
 		SetWindowPos(AsHwnd(m_authBackgroundHwnd), HWND_BOTTOM, 0, 0, clientW, clientH,
 			SWP_NOACTIVATE | (hasBackgroundBitmap ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
 		SetWindowPos(AsHwnd(m_authLogoHwnd), HWND_TOP, 20, 20, logoSize, logoSize,

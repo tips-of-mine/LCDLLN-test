@@ -76,6 +76,10 @@ namespace engine::render
 		int32_t authSectionTitleOffsetFromPanelTopPx = 0;
 		/// Message \p model.infoBanner dessiné près du logo statut (haut gauche), pas dans le panneau.
 		bool authStatusBannerBesideLogo = false;
+		/// Écran d'erreur (\c state.error + \p model.errorText) : zone message et barre d'action (depuis haut panneau).
+		int32_t authErrorBoxTopFromPanelTopPx = 0;
+		int32_t authErrorBoxHeightPx = 0;
+		int32_t authErrorFooterTopFromPanelTopPx = 0;
 	};
 
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg);

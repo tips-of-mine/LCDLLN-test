@@ -99,7 +99,7 @@ namespace engine::render
 		metrics.panelY = (h - metrics.panelH) / 2;
 		metrics.innerX = metrics.panelX + 28;
 		metrics.artW = std::clamp(metrics.panelW / 3, 150, 240);
-		if ((state.login || state.registerMode) && state.minimalChrome && !state.loginArtColumn)
+		if ((state.login || state.registerMode || state.error) && state.minimalChrome && !state.loginArtColumn)
 		{
 			metrics.artW = 0;
 		}
@@ -168,11 +168,16 @@ namespace engine::render
 		else
 		{
 			const bool minimalAuthWide =
-				(state.login || state.registerMode) && state.minimalChrome && !state.loginArtColumn;
+				(state.login || state.registerMode || state.error) && state.minimalChrome && !state.loginArtColumn;
 			metrics.authTitleUseViewportWidth = minimalAuthWide && model.layoutAuthTitleCenterViewportWidth;
 
-			const int32_t t1 = model.layoutAuthTitleLine1FromPanelTopPx;
+			// Remonter le titre principal (~1 ligne) par rapport à la config.
+			constexpr int32_t kAuthMainTitleLiftFromPanelTopPx = 20;
 			const int32_t gapTitleSection = model.layoutAuthGapTitleToSectionPx;
+			const int32_t t1 = std::clamp(
+				model.layoutAuthTitleLine1FromPanelTopPx - kAuthMainTitleLiftFromPanelTopPx,
+				-40,
+				120);
 			metrics.authTitleLine1OffsetFromPanelTopPx = t1;
 			if (model.titleLine2.empty())
 			{
@@ -187,6 +192,12 @@ namespace engine::render
 				const int32_t afterTitles = line2 + bodyScale * 10;
 				metrics.authSectionTitleOffsetFromPanelTopPx = afterTitles + gapTitleSection;
 			}
+			// Connexion / création de compte / erreur : titre de section un peu plus haut.
+			if (state.login || state.registerMode || state.error)
+			{
+				constexpr int32_t kAuthLoginRegisterSectionLiftPx = 5;
+				metrics.authSectionTitleOffsetFromPanelTopPx -= kAuthLoginRegisterSectionLiftPx;
+			}
 			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
 			if (!model.infoBanner.empty() && !metrics.authStatusBannerBesideLogo)
 			{
@@ -198,6 +209,33 @@ namespace engine::render
 				metrics.topOffset = std::max(afterSection + 12, 88);
 			}
 		}
+
+		if (state.error && !model.errorText.empty())
+		{
+			const int32_t bodyScaleErr = std::clamp(metrics.panelW / 260, 2, 4);
+			const int32_t bodyLineStepErr = 7 * bodyScaleErr + 2 * bodyScaleErr;
+			const int32_t sectionBottom = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStepErr;
+			constexpr int32_t kGapAfterSection = 12;
+			constexpr int32_t kErrorBoxH = 84;
+			constexpr int32_t kGapBoxFooter = 22;
+			constexpr int32_t kErrorFooterBarH = 58;
+			int32_t boxTop = sectionBottom + kGapAfterSection;
+			int32_t footerTop = boxTop + kErrorBoxH + kGapBoxFooter;
+			const int32_t maxFooterTop = std::max(sectionBottom + 40, metrics.panelH - kErrorFooterBarH - 20);
+			if (footerTop > maxFooterTop)
+			{
+				footerTop = maxFooterTop;
+				boxTop = footerTop - kGapBoxFooter - kErrorBoxH;
+				if (boxTop < sectionBottom + 8)
+				{
+					boxTop = sectionBottom + 8;
+				}
+			}
+			metrics.authErrorBoxTopFromPanelTopPx = boxTop;
+			metrics.authErrorBoxHeightPx = kErrorBoxH;
+			metrics.authErrorFooterTopFromPanelTopPx = footerTop;
+		}
+
 		return metrics;
 	}
 
@@ -386,10 +424,33 @@ namespace engine::render
 
 		if (!model.errorText.empty())
 		{
-			addRect(contentX, panelY + 108, contentW, 84, 0.28f, 0.10f, 0.10f, 0.98f);
-			addRect(contentX, panelY + 108, 10, 84, 0.82f, 0.22f, 0.18f, 1.0f);
-			addThemeRect(contentX + 22, panelY + 126, contentW - 44, 12, theme.text, 0.78f);
-			addThemeRect(contentX, panelY + 214, contentW, 58, theme.surface, 0.98f);
+			const int32_t boxTop = panelY + layout.authErrorBoxTopFromPanelTopPx;
+			const int32_t boxH = std::max(48, layout.authErrorBoxHeightPx);
+			const int32_t footerTop = panelY + layout.authErrorFooterTopFromPanelTopPx;
+			constexpr int32_t kErrorFooterBarH = 58;
+			addRect(contentX, boxTop, contentW, boxH, 0.28f, 0.10f, 0.10f, 0.98f);
+			addRect(contentX, boxTop, 10, boxH, 0.82f, 0.22f, 0.18f, 1.0f);
+			addThemeRect(contentX + 22, boxTop + 18, contentW - 44, 12, theme.text, 0.78f);
+			addThemeRect(contentX, footerTop, contentW, kErrorFooterBarH, theme.surface, 0.98f);
+			if (!model.actions.empty())
+			{
+				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
+				const int32_t gap = 10;
+				const int32_t actionW = std::max(120, (contentW - (actionCount - 1) * gap) / actionCount);
+				const int32_t btnY = footerTop + (kErrorFooterBarH - kAuthUiActionButtonHeightPx) / 2;
+				for (int32_t i = 0; i < actionCount; ++i)
+				{
+					if (static_cast<size_t>(i) >= model.actions.size())
+					{
+						break;
+					}
+					const int32_t x = contentX + i * (actionW + gap);
+					const bool primary = model.actions[static_cast<size_t>(i)].primary;
+					const bool emphasized = model.actions[static_cast<size_t>(i)].emphasized;
+					const bool hovered = model.actions[static_cast<size_t>(i)].hovered;
+					addAuthActionButton(x, btnY, actionW, kAuthUiActionButtonHeightPx, primary, emphasized, hovered);
+				}
+			}
 			return layers;
 		}
 

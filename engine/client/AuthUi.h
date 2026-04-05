@@ -228,6 +228,8 @@ namespace engine::client
 		void SaveRememberPreference();
 		void ApplyLocaleSelection(bool firstRun);
 		void OpenLanguageOptions();
+		static uint32_t OptionsSubmenuLineCount(OptionsSubMenu sub);
+		void EnterOptionsSubmenuFromRoot(uint32_t categoryIndex);
 		std::string Tr(std::string_view key, const LocalizationService::Params& params = {}) const;
 		std::string CurrentLocale() const;
 		std::string LocalizedLanguageName(std::string_view localeTag) const;
@@ -250,6 +252,17 @@ namespace engine::client
 			LanguageOptions,
 			Submitting,
 			Error
+		};
+
+		/// Sous-écran des options (auth) : menu racine puis catégories.
+		enum class OptionsSubMenu : uint8_t
+		{
+			Root,
+			Language,
+			Video,
+			Audio,
+			Controls,
+			Game
 		};
 
 		bool m_initialized = false;
@@ -289,7 +302,9 @@ namespace engine::client
 		bool m_savedRememberLogin = false;
 		bool m_hasPersistedLocale = false;
 		uint32_t m_languageSelectionIndex = 0;
-		uint32_t m_optionsSelectionIndex = 0;
+		OptionsSubMenu m_optionsSubMenu = OptionsSubMenu::Root;
+		uint32_t m_optionsRootSelection = 0;
+		uint32_t m_optionsSubSelection = 0;
 		Phase m_phaseBeforeOptions = Phase::Login;
 		std::string m_selectedLocale;
 		std::string m_persistedLocale;

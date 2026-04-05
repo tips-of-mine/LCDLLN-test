@@ -84,8 +84,8 @@ CREATE TABLE schema_version (
   PRIMARY KEY (version)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Version initiale = 1 (checksum placeholder; en production = hash réel du script).
+-- Version 1 = contenu actuel de db/migrations/0001_init.sql (SHA-256 ; si ce fichier change, recalculer et mettre à jour).
 INSERT INTO schema_version (version, applied_at, checksum)
-VALUES (1, CURRENT_TIMESTAMP, '0000000000000000000000000000000000000000000000000000000000000001');
+VALUES (1, CURRENT_TIMESTAMP, 'e740eec07991bad0e5b8e13577ad7d0cf61ab5c652e2a9ef84b1565680cf45ae');
 
 SET FOREIGN_KEY_CHECKS = 1;

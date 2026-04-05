@@ -50,6 +50,7 @@ namespace engine::client
 		constexpr std::string_view kLoginBackgroundPath = "ui/loading/background.png";
 		constexpr std::string_view kLoginLogoPath = "";
 		constexpr std::string_view kRegisterBackgroundPath = "ui/loading/background.png";
+		// Résolu par Window::ResolveUiImagePath : aussi sous game/data/ (voir FileSystem::ResolveContentPath).
 		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
 
 		std::string JsonBool(bool value)
@@ -653,7 +654,9 @@ namespace {
 		m_savedRememberLogin = false;
 		m_hasPersistedLocale = false;
 		m_languageSelectionIndex = 0;
-		m_optionsSelectionIndex = 0;
+		m_optionsSubMenu = OptionsSubMenu::Root;
+		m_optionsRootSelection = 0;
+		m_optionsSubSelection = 0;
 		m_phaseBeforeOptions = Phase::Login;
 		m_selectedLocale.clear();
 		m_persistedLocale.clear();
@@ -991,13 +994,61 @@ namespace {
 		m_gameplayUdpEnabledPending = m_gameplayUdpEnabled;
 		m_allowInsecureDevPending = m_allowInsecureDev;
 		m_authTimeoutMsPending = m_authTimeoutMs;
-		m_optionsSelectionIndex = 0;
+		m_optionsSubMenu = OptionsSubMenu::Root;
+		m_optionsRootSelection = 0;
+		m_optionsSubSelection = 0;
 		auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
 		m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
 		LOG_INFO(Core, "[AuthUiPresenter] Options opened (locale={}, fullscreen={}, vsync={}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
 			m_selectedLocale, m_videoFullscreenPending, m_videoVsyncPending,
 			m_mouseSensitivityPending, m_invertYPending, m_useZqsdPending ? "zqsd" : "wasd",
 			m_gameplayUdpEnabledPending, m_allowInsecureDevPending, m_authTimeoutMsPending);
+	}
+
+	uint32_t AuthUiPresenter::OptionsSubmenuLineCount(OptionsSubMenu sub)
+	{
+		switch (sub)
+		{
+		case OptionsSubMenu::Root:
+			return 0;
+		case OptionsSubMenu::Language:
+			return 2;
+		case OptionsSubMenu::Video:
+			return 2;
+		case OptionsSubMenu::Audio:
+			return 4;
+		case OptionsSubMenu::Controls:
+			return 3;
+		case OptionsSubMenu::Game:
+			return 3;
+		default:
+			return 0;
+		}
+	}
+
+	void AuthUiPresenter::EnterOptionsSubmenuFromRoot(uint32_t categoryIndex)
+	{
+		switch (categoryIndex)
+		{
+		case 0:
+			m_optionsSubMenu = OptionsSubMenu::Language;
+			break;
+		case 1:
+			m_optionsSubMenu = OptionsSubMenu::Video;
+			break;
+		case 2:
+			m_optionsSubMenu = OptionsSubMenu::Audio;
+			break;
+		case 3:
+			m_optionsSubMenu = OptionsSubMenu::Controls;
+			break;
+		case 4:
+			m_optionsSubMenu = OptionsSubMenu::Game;
+			break;
+		default:
+			return;
+		}
+		m_optionsSubSelection = 0;
 	}
 
 	std::string AuthUiPresenter::Tr(std::string_view key, const LocalizationService::Params& params) const
@@ -2975,6 +3026,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					}
 				}
 
+				if (m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root && input.MouseScrollDelta() != 0)
+				{
+					const int d = input.MouseScrollDelta() > 0 ? -1 : 1;
+					const uint32_t kRootCategoryCount = 5u;
+					if (d < 0)
+					{
+						m_optionsRootSelection = (m_optionsRootSelection == 0u) ? (kRootCategoryCount - 1u) : (m_optionsRootSelection - 1u);
+					}
+					else
+					{
+						m_optionsRootSelection = (m_optionsRootSelection + 1u) % kRootCategoryCount;
+					}
+				}
+
 				for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 				{
 					const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
@@ -3066,8 +3131,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				else
 				{
 					const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
-					const int32_t buttonY = std::min(panelY + panelH - 86,
+					constexpr int32_t kAuthErrorFooterBarH = 58;
+					int32_t buttonY = std::min(panelY + panelH - 86,
 						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
+					if (m_phase == Phase::Error && lay.authErrorFooterTopFromPanelTopPx > 0)
+					{
+						buttonY = panelY + lay.authErrorFooterTopFromPanelTopPx
+							+ (kAuthErrorFooterBarH - engine::render::kAuthUiActionButtonHeightPx) / 2;
+					}
 					const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 					for (int32_t i = 0; i < actionCount; ++i)
 					{
@@ -3137,9 +3208,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						else if (m_phase == Phase::LanguageOptions)
 						{
 							const auto& locales = m_localization.GetAvailableLocales();
-							if (m_hoveredBodyLineIndex == 1 && !locales.empty())
+							if (m_optionsSubMenu == OptionsSubMenu::Root)
 							{
-								m_optionsSelectionIndex = 0u;
+								const int32_t catLine = m_hoveredBodyLineIndex - 1;
+								if (leftClick && catLine >= 0 && catLine < 5)
+								{
+									m_optionsRootSelection = static_cast<uint32_t>(catLine);
+									EnterOptionsSubmenuFromRoot(m_optionsRootSelection);
+								}
+							}
+							else if (m_optionsSubMenu == OptionsSubMenu::Language && !locales.empty()
+								&& (m_hoveredBodyLineIndex == 0 || m_hoveredBodyLineIndex == 1)
+								&& (leftClick || rightClick))
+							{
 								if (rightClick)
 								{
 									m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
@@ -3151,30 +3232,108 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
 								}
 								m_selectedLocale = locales[static_cast<size_t>(m_languageSelectionIndex)];
-							}
-							else
-							{
-								const int32_t optionLine = m_hoveredBodyLineIndex - 2;
-								if (optionLine >= 0 && optionLine <= 11)
+								if (m_hoveredBodyLineIndex >= 0)
 								{
-									m_optionsSelectionIndex = static_cast<uint32_t>(optionLine + 1);
-									switch (optionLine)
+									m_optionsSubSelection = static_cast<uint32_t>(m_hoveredBodyLineIndex);
+								}
+							}
+							else if (m_optionsSubMenu == OptionsSubMenu::Video)
+							{
+								const int32_t row = m_hoveredBodyLineIndex;
+								if (row >= 0 && row <= 1 && (leftClick || rightClick))
+								{
+									m_optionsSubSelection = static_cast<uint32_t>(row);
+									if (row == 0)
 									{
-									case 0: m_videoFullscreenPending = !m_videoFullscreenPending; break;
-									case 1: m_videoVsyncPending = !m_videoVsyncPending; break;
-									case 2: m_audioMasterVolumePending = ClampOptionStep(m_audioMasterVolumePending + (rightClick ? -0.1f : 0.1f)); break;
-									case 3: m_audioMusicVolumePending = ClampOptionStep(m_audioMusicVolumePending + (rightClick ? -0.1f : 0.1f)); break;
-									case 4: m_audioSfxVolumePending = ClampOptionStep(m_audioSfxVolumePending + (rightClick ? -0.1f : 0.1f)); break;
-									case 5: m_audioUiVolumePending = ClampOptionStep(m_audioUiVolumePending + (rightClick ? -0.1f : 0.1f)); break;
-									case 6: m_mouseSensitivityPending = rightClick ? std::max(0.001f, m_mouseSensitivityPending - 0.001f) : std::min(0.010f, m_mouseSensitivityPending + 0.001f); break;
-									case 7: m_invertYPending = !m_invertYPending; break;
-									case 8: m_useZqsdPending = !m_useZqsdPending; break;
-									case 9: m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending; break;
-									case 10: m_allowInsecureDevPending = !m_allowInsecureDevPending; break;
-									case 11: m_authTimeoutMsPending = rightClick
-										? ((m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u)
-										: std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u); break;
-									default: break;
+										m_videoFullscreenPending = !m_videoFullscreenPending;
+									}
+									else
+									{
+										m_videoVsyncPending = !m_videoVsyncPending;
+									}
+								}
+							}
+							else if (m_optionsSubMenu == OptionsSubMenu::Audio)
+							{
+								const int32_t row = m_hoveredBodyLineIndex;
+								if (row >= 0 && row <= 3 && (leftClick || rightClick))
+								{
+									m_optionsSubSelection = static_cast<uint32_t>(row);
+									const bool dec = rightClick;
+									switch (row)
+									{
+									case 0:
+										m_audioMasterVolumePending = ClampOptionStep(m_audioMasterVolumePending + (dec ? -0.1f : 0.1f));
+										break;
+									case 1:
+										m_audioMusicVolumePending = ClampOptionStep(m_audioMusicVolumePending + (dec ? -0.1f : 0.1f));
+										break;
+									case 2:
+										m_audioSfxVolumePending = ClampOptionStep(m_audioSfxVolumePending + (dec ? -0.1f : 0.1f));
+										break;
+									case 3:
+										m_audioUiVolumePending = ClampOptionStep(m_audioUiVolumePending + (dec ? -0.1f : 0.1f));
+										break;
+									default:
+										break;
+									}
+								}
+							}
+							else if (m_optionsSubMenu == OptionsSubMenu::Controls)
+							{
+								const int32_t row = m_hoveredBodyLineIndex;
+								if (row >= 0 && row <= 2 && (leftClick || rightClick))
+								{
+									m_optionsSubSelection = static_cast<uint32_t>(row);
+									switch (row)
+									{
+									case 0:
+										if (rightClick)
+										{
+											m_mouseSensitivityPending = std::max(0.001f, m_mouseSensitivityPending - 0.001f);
+										}
+										else
+										{
+											m_mouseSensitivityPending = std::min(0.010f, m_mouseSensitivityPending + 0.001f);
+										}
+										break;
+									case 1:
+										m_invertYPending = !m_invertYPending;
+										break;
+									case 2:
+										m_useZqsdPending = !m_useZqsdPending;
+										break;
+									default:
+										break;
+									}
+								}
+							}
+							else if (m_optionsSubMenu == OptionsSubMenu::Game)
+							{
+								const int32_t row = m_hoveredBodyLineIndex;
+								if (row >= 0 && row <= 2 && (leftClick || rightClick))
+								{
+									m_optionsSubSelection = static_cast<uint32_t>(row);
+									switch (row)
+									{
+									case 0:
+										m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending;
+										break;
+									case 1:
+										m_allowInsecureDevPending = !m_allowInsecureDevPending;
+										break;
+									case 2:
+										if (rightClick)
+										{
+											m_authTimeoutMsPending = (m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u;
+										}
+										else
+										{
+											m_authTimeoutMsPending = std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u);
+										}
+										break;
+									default:
+										break;
 									}
 								}
 							}
@@ -3248,8 +3407,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
 						{
-							const int32_t buttonY = std::min(panelY + panelH - 86,
+							constexpr int32_t kAuthErrorFooterBarH = 58;
+							int32_t buttonY = std::min(panelY + panelH - 86,
 								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
+							if (m_phase == Phase::Error && lay.authErrorFooterTopFromPanelTopPx > 0)
+							{
+								buttonY = panelY + lay.authErrorFooterTopFromPanelTopPx
+									+ (kAuthErrorFooterBarH - engine::render::kAuthUiActionButtonHeightPx) / 2;
+							}
 							const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 							for (int32_t i = 0; i < actionCount; ++i)
 							{
@@ -3289,9 +3454,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									}
 									else if (i == 1)
 									{
-										// Retour sans appliquer les changements (comportement identique à Escape).
-										m_phase = m_phaseBeforeOptions;
-										LOG_INFO(Core, "[AuthUiPresenter] Language options closed via 'return'");
+										if (m_optionsSubMenu != OptionsSubMenu::Root)
+										{
+											m_optionsSubMenu = OptionsSubMenu::Root;
+											LOG_INFO(Core, "[AuthUiPresenter] Language options: back to root menu");
+										}
+										else
+										{
+											m_phase = m_phaseBeforeOptions;
+											LOG_INFO(Core, "[AuthUiPresenter] Language options closed via 'return'");
+										}
 									}
 									break;
 								default:
@@ -3465,114 +3637,136 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			else
 			{
-				const uint32_t kOptionCount = 13u;
-				if (input.WasPressed(engine::platform::Key::Up))
+				const uint32_t kRootCategoryCount = 5u;
+				if (m_optionsSubMenu == OptionsSubMenu::Root)
 				{
-					m_optionsSelectionIndex = (m_optionsSelectionIndex == 0u) ? (kOptionCount - 1u) : (m_optionsSelectionIndex - 1u);
-					LOG_INFO(Core, "[AuthUiPresenter] Options selection={}", m_optionsSelectionIndex);
-				}
-				if (input.WasPressed(engine::platform::Key::Down))
-				{
-					m_optionsSelectionIndex = (m_optionsSelectionIndex + 1u) % kOptionCount;
-					LOG_INFO(Core, "[AuthUiPresenter] Options selection={}", m_optionsSelectionIndex);
-				}
-				if (!locales.empty() && m_optionsSelectionIndex == 0u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					if (input.WasPressed(engine::platform::Key::Left))
+					if (input.WasPressed(engine::platform::Key::Up))
 					{
-						m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
-							? static_cast<uint32_t>(locales.size() - 1u)
-							: (m_languageSelectionIndex - 1u);
+						m_optionsRootSelection = (m_optionsRootSelection == 0u) ? (kRootCategoryCount - 1u) : (m_optionsRootSelection - 1u);
+						LOG_INFO(Core, "[AuthUiPresenter] Options root selection={}", m_optionsRootSelection);
 					}
-					else
+					if (input.WasPressed(engine::platform::Key::Down))
 					{
-						m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
+						m_optionsRootSelection = (m_optionsRootSelection + 1u) % kRootCategoryCount;
+						LOG_INFO(Core, "[AuthUiPresenter] Options root selection={}", m_optionsRootSelection);
 					}
-					m_selectedLocale = locales[m_languageSelectionIndex];
-					LOG_INFO(Core, "[AuthUiPresenter] Options locale candidate={}", m_selectedLocale);
 				}
-				if (m_optionsSelectionIndex == 1u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+				else
 				{
-					m_videoFullscreenPending = !m_videoFullscreenPending;
-					LOG_INFO(Core, "[AuthUiPresenter] Options fullscreen candidate={}", m_videoFullscreenPending);
-				}
-				if (m_optionsSelectionIndex == 2u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					m_videoVsyncPending = !m_videoVsyncPending;
-					LOG_INFO(Core, "[AuthUiPresenter] Options vsync candidate={}", m_videoVsyncPending);
-				}
-				auto adjustVolume = [&](float& value, std::string_view label)
-				{
-					if (input.WasPressed(engine::platform::Key::Left))
-						value = ClampOptionStep(value - 0.1f);
-					else
-						value = ClampOptionStep(value + 0.1f);
-					LOG_INFO(Core, "[AuthUiPresenter] Options {} candidate={:.1f}", label, value);
-				};
-				if (m_optionsSelectionIndex == 3u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					adjustVolume(m_audioMasterVolumePending, "master");
-				}
-				if (m_optionsSelectionIndex == 4u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					adjustVolume(m_audioMusicVolumePending, "music");
-				}
-				if (m_optionsSelectionIndex == 5u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					adjustVolume(m_audioSfxVolumePending, "sfx");
-				}
-				if (m_optionsSelectionIndex == 6u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					adjustVolume(m_audioUiVolumePending, "ui");
-				}
-				if (m_optionsSelectionIndex == 7u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					if (input.WasPressed(engine::platform::Key::Left))
-						m_mouseSensitivityPending = std::max(0.001f, m_mouseSensitivityPending - 0.001f);
-					else
-						m_mouseSensitivityPending = std::min(0.010f, m_mouseSensitivityPending + 0.001f);
-					LOG_INFO(Core, "[AuthUiPresenter] Options mouse sensitivity candidate={:.4f}", m_mouseSensitivityPending);
-				}
-				if (m_optionsSelectionIndex == 8u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					m_invertYPending = !m_invertYPending;
-					LOG_INFO(Core, "[AuthUiPresenter] Options invert_y candidate={}", m_invertYPending);
-				}
-				if (m_optionsSelectionIndex == 9u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					m_useZqsdPending = !m_useZqsdPending;
-					LOG_INFO(Core, "[AuthUiPresenter] Options movement layout candidate={}", m_useZqsdPending ? "zqsd" : "wasd");
-				}
-				if (m_optionsSelectionIndex == 10u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending;
-					LOG_INFO(Core, "[AuthUiPresenter] Options gameplay_udp candidate={}", m_gameplayUdpEnabledPending);
-				}
-				if (m_optionsSelectionIndex == 11u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					m_allowInsecureDevPending = !m_allowInsecureDevPending;
-					LOG_INFO(Core, "[AuthUiPresenter] Options allow_insecure_dev candidate={}", m_allowInsecureDevPending);
-				}
-				if (m_optionsSelectionIndex == 12u
-					&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-				{
-					if (input.WasPressed(engine::platform::Key::Left))
-						m_authTimeoutMsPending = (m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u;
-					else
-						m_authTimeoutMsPending = std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u);
-					LOG_INFO(Core, "[AuthUiPresenter] Options auth timeout candidate={}ms", m_authTimeoutMsPending);
+					const uint32_t n = OptionsSubmenuLineCount(m_optionsSubMenu);
+					if (n > 0u)
+					{
+						if (input.WasPressed(engine::platform::Key::Up))
+						{
+							m_optionsSubSelection = (m_optionsSubSelection == 0u) ? (n - 1u) : (m_optionsSubSelection - 1u);
+							LOG_INFO(Core, "[AuthUiPresenter] Options sub selection={}", m_optionsSubSelection);
+						}
+						if (input.WasPressed(engine::platform::Key::Down))
+						{
+							m_optionsSubSelection = (m_optionsSubSelection + 1u) % n;
+							LOG_INFO(Core, "[AuthUiPresenter] Options sub selection={}", m_optionsSubSelection);
+						}
+					}
+
+					if (!locales.empty() && m_optionsSubMenu == OptionsSubMenu::Language
+						&& (m_optionsSubSelection == 0u || m_optionsSubSelection == 1u)
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						if (input.WasPressed(engine::platform::Key::Left))
+						{
+							m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
+								? static_cast<uint32_t>(locales.size() - 1u)
+								: (m_languageSelectionIndex - 1u);
+						}
+						else
+						{
+							m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
+						}
+						m_selectedLocale = locales[m_languageSelectionIndex];
+						LOG_INFO(Core, "[AuthUiPresenter] Options locale candidate={}", m_selectedLocale);
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Video && m_optionsSubSelection == 0u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						m_videoFullscreenPending = !m_videoFullscreenPending;
+						LOG_INFO(Core, "[AuthUiPresenter] Options fullscreen candidate={}", m_videoFullscreenPending);
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Video && m_optionsSubSelection == 1u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						m_videoVsyncPending = !m_videoVsyncPending;
+						LOG_INFO(Core, "[AuthUiPresenter] Options vsync candidate={}", m_videoVsyncPending);
+					}
+					auto adjustVolume = [&](float& value, std::string_view label)
+					{
+						if (input.WasPressed(engine::platform::Key::Left))
+							value = ClampOptionStep(value - 0.1f);
+						else
+							value = ClampOptionStep(value + 0.1f);
+						LOG_INFO(Core, "[AuthUiPresenter] Options {} candidate={:.1f}", label, value);
+					};
+					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 0u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						adjustVolume(m_audioMasterVolumePending, "master");
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 1u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						adjustVolume(m_audioMusicVolumePending, "music");
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 2u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						adjustVolume(m_audioSfxVolumePending, "sfx");
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 3u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						adjustVolume(m_audioUiVolumePending, "ui");
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Controls && m_optionsSubSelection == 0u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						if (input.WasPressed(engine::platform::Key::Left))
+							m_mouseSensitivityPending = std::max(0.001f, m_mouseSensitivityPending - 0.001f);
+						else
+							m_mouseSensitivityPending = std::min(0.010f, m_mouseSensitivityPending + 0.001f);
+						LOG_INFO(Core, "[AuthUiPresenter] Options mouse sensitivity candidate={:.4f}", m_mouseSensitivityPending);
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Controls && m_optionsSubSelection == 1u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						m_invertYPending = !m_invertYPending;
+						LOG_INFO(Core, "[AuthUiPresenter] Options invert_y candidate={}", m_invertYPending);
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Controls && m_optionsSubSelection == 2u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						m_useZqsdPending = !m_useZqsdPending;
+						LOG_INFO(Core, "[AuthUiPresenter] Options movement layout candidate={}", m_useZqsdPending ? "zqsd" : "wasd");
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Game && m_optionsSubSelection == 0u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending;
+						LOG_INFO(Core, "[AuthUiPresenter] Options gameplay_udp candidate={}", m_gameplayUdpEnabledPending);
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Game && m_optionsSubSelection == 1u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						m_allowInsecureDevPending = !m_allowInsecureDevPending;
+						LOG_INFO(Core, "[AuthUiPresenter] Options allow_insecure_dev candidate={}", m_allowInsecureDevPending);
+					}
+					if (m_optionsSubMenu == OptionsSubMenu::Game && m_optionsSubSelection == 2u
+						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
+					{
+						if (input.WasPressed(engine::platform::Key::Left))
+							m_authTimeoutMsPending = (m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u;
+						else
+							m_authTimeoutMsPending = std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u);
+						LOG_INFO(Core, "[AuthUiPresenter] Options auth timeout candidate={}ms", m_authTimeoutMsPending);
+					}
 				}
 			}
 		}
@@ -3613,9 +3807,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 	if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
 		|| (usingNativeAuth && m_phase == Phase::Error))
+	{
+		if (!usingNativeAuth && m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root)
+		{
+			EnterOptionsSubmenuFromRoot(m_optionsRootSelection);
+		}
+		else
 		{
 			applyPrimaryAction();
 		}
+	}
 
 		UpdateWindowTitle(window);
 	}
@@ -3797,65 +3998,127 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		case Phase::LanguageSelectionFirstRun:
 		case Phase::LanguageOptions:
 		{
-			model.sectionTitle = (m_phase == Phase::LanguageSelectionFirstRun) ? Tr("language.first_run.title") : Tr("language.options.title");
-			addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } }));
-			const auto& locales = m_localization.GetAvailableLocales();
-			if (!locales.empty())
+			auto addOptionsRow = [this, &model](std::string label, std::string value, bool active)
 			{
-				const std::string& selectedLocale = locales[m_languageSelectionIndex % static_cast<uint32_t>(locales.size())];
-				const bool selectorActive = (m_phase == Phase::LanguageSelectionFirstRun) || (m_optionsSelectionIndex == 0u);
-				addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", selectorActive);
+				RenderBodyLine row{};
+				row.text = std::move(label);
+				row.valueText = std::move(value);
+				row.active = active;
+				row.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
+				model.bodyLines.push_back(std::move(row));
+			};
+
+			if (m_phase == Phase::LanguageSelectionFirstRun)
+			{
+				model.sectionTitle = Tr("language.first_run.title");
+				addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } }));
+				const auto& localesFr = m_localization.GetAvailableLocales();
+				if (!localesFr.empty())
+				{
+					const std::string& selectedLocale = localesFr[m_languageSelectionIndex % static_cast<uint32_t>(localesFr.size())];
+					addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", true);
+				}
+				else
+				{
+					addBodyLine("< N/A >", false);
+				}
+				addActionKeys("language.first_run.confirm", true, true, false, "common.submit");
+				addActionKeys("common.quit_desktop", false, true, false, "common.quit");
+				break;
+			}
+
+			const auto& locales = m_localization.GetAvailableLocales();
+			if (m_optionsSubMenu == OptionsSubMenu::Root)
+			{
+				model.sectionTitle = Tr("language.options.title");
+				addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(m_selectedLocale) } }));
+				addOptionsRow(Tr("options.menu.language"), Tr("options.menu.chevron"), m_optionsRootSelection == 0u);
+				addOptionsRow(Tr("options.menu.video"), Tr("options.menu.chevron"), m_optionsRootSelection == 1u);
+				addOptionsRow(Tr("options.menu.audio"), Tr("options.menu.chevron"), m_optionsRootSelection == 2u);
+				addOptionsRow(Tr("options.menu.controls"), Tr("options.menu.chevron"), m_optionsRootSelection == 3u);
+				addOptionsRow(Tr("options.menu.game"), Tr("options.menu.chevron"), m_optionsRootSelection == 4u);
+				model.footerHint = Tr("options.menu.hint_root");
 			}
 			else
 			{
-				addBodyLine("< N/A >", false);
-			}
-			if (m_phase == Phase::LanguageOptions)
-			{
-				auto addOptionsRow = [this, &model](std::string label, std::string value, bool active)
+				std::string subLabel;
+				switch (m_optionsSubMenu)
 				{
-					RenderBodyLine row{};
-					row.text = std::move(label);
-					row.valueText = std::move(value);
-					row.active = active;
-					row.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
-					model.bodyLines.push_back(std::move(row));
-				};
-				addOptionsRow(Tr("options.video.fullscreen"), Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off"),
-					m_optionsSelectionIndex == 1u);
-				addOptionsRow(Tr("options.video.vsync"), Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off"),
-					m_optionsSelectionIndex == 2u);
-				addOptionsRow(Tr("options.audio.master"), std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f)) + "%",
-					m_optionsSelectionIndex == 3u);
-				addOptionsRow(Tr("options.audio.music"), std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f)) + "%",
-					m_optionsSelectionIndex == 4u);
-				addOptionsRow(Tr("options.audio.sfx"), std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f)) + "%",
-					m_optionsSelectionIndex == 5u);
-				addOptionsRow(Tr("options.audio.ui"), std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f)) + "%",
-					m_optionsSelectionIndex == 6u);
-				addOptionsRow(Tr("options.controls.mouse_sensitivity"),
-					std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f)), m_optionsSelectionIndex == 7u);
-				addOptionsRow(Tr("options.controls.invert_y"), Tr(m_invertYPending ? "options.value.on" : "options.value.off"),
-					m_optionsSelectionIndex == 8u);
-				addOptionsRow(Tr("options.controls.movement_layout"),
-					Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd"), m_optionsSelectionIndex == 9u);
-				addOptionsRow(Tr("options.game.gameplay_udp"), Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off"),
-					m_optionsSelectionIndex == 10u);
-				addOptionsRow(Tr("options.game.allow_insecure_dev"), Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"),
-					m_optionsSelectionIndex == 11u);
-				addOptionsRow(Tr("options.game.auth_timeout"), std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSelectionIndex == 12u);
+				case OptionsSubMenu::Language:
+					subLabel = Tr("options.menu.language");
+					break;
+				case OptionsSubMenu::Video:
+					subLabel = Tr("options.menu.video");
+					break;
+				case OptionsSubMenu::Audio:
+					subLabel = Tr("options.menu.audio");
+					break;
+				case OptionsSubMenu::Controls:
+					subLabel = Tr("options.menu.controls");
+					break;
+				case OptionsSubMenu::Game:
+					subLabel = Tr("options.menu.game");
+					break;
+				case OptionsSubMenu::Root:
+					subLabel.clear();
+					break;
+				}
+				model.sectionTitle = Tr("language.options.title") + " - " + subLabel;
+				model.footerHint = Tr("options.menu.hint_submenu");
+
+				switch (m_optionsSubMenu)
+				{
+				case OptionsSubMenu::Language:
+					addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(m_selectedLocale) } }),
+						m_optionsSubSelection == 0u);
+					if (!locales.empty())
+					{
+						const std::string& selectedLocale = locales[m_languageSelectionIndex % static_cast<uint32_t>(locales.size())];
+						addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", m_optionsSubSelection == 1u);
+					}
+					else
+					{
+						addBodyLine("< N/A >", false);
+					}
+					break;
+				case OptionsSubMenu::Video:
+					addOptionsRow(Tr("options.video.fullscreen"), Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off"),
+						m_optionsSubSelection == 0u);
+					addOptionsRow(Tr("options.video.vsync"), Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off"),
+						m_optionsSubSelection == 1u);
+					break;
+				case OptionsSubMenu::Audio:
+					addOptionsRow(Tr("options.audio.master"), std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f)) + "%",
+						m_optionsSubSelection == 0u);
+					addOptionsRow(Tr("options.audio.music"), std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f)) + "%",
+						m_optionsSubSelection == 1u);
+					addOptionsRow(Tr("options.audio.sfx"), std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f)) + "%",
+						m_optionsSubSelection == 2u);
+					addOptionsRow(Tr("options.audio.ui"), std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f)) + "%",
+						m_optionsSubSelection == 3u);
+					break;
+				case OptionsSubMenu::Controls:
+					addOptionsRow(Tr("options.controls.mouse_sensitivity"),
+						std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f)), m_optionsSubSelection == 0u);
+					addOptionsRow(Tr("options.controls.invert_y"), Tr(m_invertYPending ? "options.value.on" : "options.value.off"),
+						m_optionsSubSelection == 1u);
+					addOptionsRow(Tr("options.controls.movement_layout"),
+						Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd"), m_optionsSubSelection == 2u);
+					break;
+				case OptionsSubMenu::Game:
+					addOptionsRow(Tr("options.game.gameplay_udp"), Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off"),
+						m_optionsSubSelection == 0u);
+					addOptionsRow(Tr("options.game.allow_insecure_dev"), Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"),
+						m_optionsSubSelection == 1u);
+					addOptionsRow(Tr("options.game.auth_timeout"), std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSubSelection == 2u);
+					break;
+				case OptionsSubMenu::Root:
+					break;
+				}
 			}
-			// Actions (bouton principal + éventuellement retour)
-			if (m_phase == Phase::LanguageSelectionFirstRun)
-			{
-				addActionKeys("language.first_run.confirm", true, true, false, "common.submit");
-				addActionKeys("common.quit_desktop", false, true, false, "common.quit");
-			}
-			else // Phase::LanguageOptions
-			{
-				addActionKeys("language.options.apply_hint", true, true, false, "common.submit");
-				addActionKeys("auth.hint.return_login", false, true, false, "common.back");
-			}
+
+			addActionKeys("language.options.apply_hint", true, true, false, "common.submit");
+			addActionKeys("auth.hint.return_login", false, true, false, "common.back");
 			break;
 		}
 		case Phase::Submitting:
@@ -3864,7 +4127,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			break;
 		case Phase::Error:
 			model.sectionTitle = Tr("auth.panel.error");
-			addBodyLine(m_userErrorText, true);
 			addActionKeys("common.continue", true);
 			break;
 		}
@@ -4034,6 +4296,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		if (m_phase == Phase::LanguageOptions)
 		{
+			if (m_optionsSubMenu != OptionsSubMenu::Root)
+			{
+				m_optionsSubMenu = OptionsSubMenu::Root;
+				LOG_INFO(Core, "[AuthUiPresenter] Escape: Options -> root menu");
+				return true;
+			}
 			m_phase = m_phaseBeforeOptions;
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Language options closed");
 			return true;

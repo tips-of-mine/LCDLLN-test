@@ -27,6 +27,14 @@ Ports par défaut : **3840** (master), **3843** (shard), MySQL sur **127.0.0.1:3
 
 Arrêt : `docker compose down`. Supprimer aussi les données MySQL : `docker compose down -v`.
 
+**Erreur `Checksum mismatch for version 1`** : une base créée avec un ancien `schema.sql` contient encore le checksum factice dans `schema_version`. Soit recréez le volume (`docker compose down -v` puis `up`, **données perdues**), soit corrigez en SQL :
+
+```sql
+UPDATE schema_version SET checksum = 'e740eec07991bad0e5b8e13577ad7d0cf61ab5c652e2a9ef84b1565680cf45ae' WHERE version = 1;
+```
+
+(À ajuster si vous modifiez `db/migrations/0001_init.sql` — recalculer avec `tools/migration_checksum` ou `sha256sum`.)
+
 ## Master sans Docker (optionnel)
 
 Si vous exécutez `bin/lcdlln_server` directement sur la machine (sans conteneur), les `.so` du bundle doivent être visibles :

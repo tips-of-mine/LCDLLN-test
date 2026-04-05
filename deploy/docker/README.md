@@ -88,7 +88,11 @@ Le service **`web-portal`** est démarré avec **`docker compose up -d`** (plus 
 
 Le **ZIP CI** inclut **`deploy/docker/web-portal/`**. En clone Git sans pack : `./scripts/sync-web-portal-to-docker-deploy.sh`.
 
-**Traefik** : le compose crée le réseau **`traefik_front_network`** au premier `up` (plus besoin de `docker network create`). Les labels sont sur le service `web-portal` ; une **copie** pour documentation / publication est dans **`traefik-web-portal.labels.reference.yml`**. Pour connecter un conteneur Traefik déjà en place, rattachez-le à ce réseau : `docker network connect traefik_front_network <conteneur_traefik>`.
+**Traefik** : le compose crée le réseau Docker nommé **`traefik_front_network`** (`name:` explicite dans le YAML, pour qu’il corresponde au label `traefik.docker.network`). Sans ce nom fixe, Compose utilise `<projet>_traefik_front_network` et Traefik ne joint pas le bon réseau. Rattachez votre conteneur Traefik : `docker network connect traefik_front_network <conteneur_traefik>`. Copie des labels : **`traefik-web-portal.labels.reference.yml`**.
+
+**Dépannage** : si le routeur ne répond pas, vérifiez que Traefik apparaît dans `docker network inspect traefik_front_network` et que le DNS pointe vers Traefik pour l’host des labels (`lcdlln-portal.tips-of-mine.com` par défaut).
+
+**HTTPS** : le label `tls.certresolver` doit porter le **même nom** que `certificatesResolvers` dans la config Traefik (variable `TRAEFIK_CERT_RESOLVER` dans `.env`, défaut `letsencrypt`). Sans resolver valide, le routeur TLS ne sert pas de certificat adapté au nom d’hôte. Les entrypoints des labels (`http` / `https` par défaut) doivent correspondre à ceux définis dans Traefik (souvent `web` / `websecure` : définir `TRAEFIK_ENTRYPOINT_HTTP` et `TRAEFIK_ENTRYPOINT_HTTPS` dans `.env`). Si vous utilisez uniquement des certificats fichiers sans ACME, retirez la ligne `tls.certresolver` des labels et configurez les certificats côté Traefik (stores / fichiers dynamiques).
 
 Si un réseau du **même nom** existait déjà (ancienne config `external`) et que Compose refuse de démarrer : arrêtez les services, supprimez le réseau orphelin ou repassez ce réseau en **`external: true`** dans `docker-compose.yml` comme avant (voir commentaire dans le fichier).
 

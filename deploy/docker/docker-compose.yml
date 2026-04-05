@@ -31,13 +31,9 @@
 # ============================================================
 
 networks:
-  # Créé automatiquement au premier up (plus besoin de docker network create).
-  # Pour réutiliser un réseau Traefik déjà existant avec le même nom : le déclarer en external: true
-  # et supprimer la définition ci-dessous (voir README).
   traefik_front_network:
-    name: traefik_front_network
     driver: bridge
-  back_lcdlln-net:
+  back_lcdlln_network:
     driver: bridge
     attachable: true
 
@@ -48,7 +44,7 @@ services:
     container_name: lcdlln-mysql
     restart: unless-stopped
     networks:
-      - back_lcdlln-net
+      - back_lcdlln_network
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-lcdlln_root_dev}
       MYSQL_DATABASE:      ${MYSQL_DATABASE:-lcdlln_master}
@@ -80,7 +76,7 @@ services:
     container_name: lcdlln-master
     restart: unless-stopped
     networks:
-      - back_lcdlln-net
+      - back_lcdlln_network
       - traefik_front_network
     depends_on:
       mysql:
@@ -112,7 +108,7 @@ services:
     container_name: lcdlln-shard
     restart: unless-stopped
     networks:
-      - back_lcdlln-net
+      - back_lcdlln_network
       - traefik_front_network
     depends_on:
       master:
@@ -148,7 +144,7 @@ services:
       master:
         condition: service_healthy
     networks:
-      - back_lcdlln-net
+      - back_lcdlln_network
       - traefik_front_network
     environment:
       NODE_ENV: production
@@ -157,19 +153,22 @@ services:
     expose:
       - "3000"
     ports:
-      - "127.0.0.1:${WEB_PORTAL_PORT:-3000}:3000"
+      - "${WEB_PORTAL_PORT:-3000}:3000"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_front_network"
       - "traefik.http.routers.lcdlln-portal-http.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http"
+      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http}"
+      - "traefik.http.routers.lcdlln-portal-http.service=lcdlln-portal-service"
       - "traefik.http.routers.lcdlln-portal-https.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https"
+      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https}"
       - "traefik.http.routers.lcdlln-portal-https.service=lcdlln-portal-service"
       - "traefik.http.routers.lcdlln-portal-https.tls=true"
-      - "traefik.http.routers.lcdlln-portal-https.middlewares=lcdlln-portal-middlewares"
-      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSSeconds=15552000"
-      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.forceSTSHeader=true"
-      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSIncludeSubdomains=true"
-      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSPreload=true"
+      # Doit correspondre au nom du certificatsResolvers (ou certificates) dans la config statique Traefik.
+      #- "traefik.http.routers.lcdlln-portal-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+#      - "traefik.http.routers.lcdlln-portal-https.middlewares=lcdlln-portal-middlewares"
+#      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSSeconds=15552000"
+#      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.forceSTSHeader=true"
+#      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSIncludeSubdomains=true"
+#      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSPreload=true"
       - "traefik.http.services.lcdlln-portal-service.loadbalancer.server.port=3000"

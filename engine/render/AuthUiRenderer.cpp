@@ -109,20 +109,36 @@ namespace engine::render
 			metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
 		}
 		metrics.compactSingleField = model.fields.size() <= 1u;
+		const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
+		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
+		const int32_t smallScale = std::max(2, bodyScale - 1);
+		const int32_t labelAboveFieldPx = smallScale * 11 + 6;
+		const int32_t minStepFromOverlap = kAuthUiFieldBoxHeightPx + 8 + labelAboveFieldPx;
 		{
-			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
-			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 			const int32_t compactFieldStep = std::max(52, bodyLineStep + 24);
 			const int32_t regularFieldStep = std::max(48, bodyLineStep + 22);
-			metrics.fieldRowStepPx = metrics.compactSingleField ? compactFieldStep : regularFieldStep;
+			const int32_t baseStep = metrics.compactSingleField ? compactFieldStep : regularFieldStep;
+			metrics.fieldRowStepPx = std::max(baseStep, minStepFromOverlap) + model.layoutAuthFieldRowExtraPx;
 		}
-		// Aligner le premier champ sous le bloc titre + section (RecordModel). Sur grands panels,
-		// titleScale/bodyScale augmentent : l’ancien offset fixe (104) faisait chevaucher labels et titres.
+
+		const bool bigTitle = state.languageSelection || state.languageOptions || state.login || state.registerMode
+			|| state.verifyEmail || state.forgotPassword || state.characterCreate || state.error || state.submitting;
+		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 4 : 1), 6, 9);
+		const bool centeredLanguage = state.languageSelection || state.languageOptions;
+
+		auto legacyTitleAndTopOffset = [&](int32_t sectionTopPad)
 		{
-			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
-			const int32_t titleScale = std::clamp(bodyScale + 4, 6, 9);
-			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
-			const int32_t sectionTopPad = (state.languageSelection || state.languageOptions) ? 50 : 38;
+			if (!model.titleLine2.empty())
+			{
+				metrics.authTitleLine1OffsetFromPanelTopPx = 22;
+				metrics.authTitleLine2OffsetFromPanelTopPx = 30 + titleScale * 10;
+			}
+			else
+			{
+				metrics.authTitleLine1OffsetFromPanelTopPx = 24;
+				metrics.authTitleLine2OffsetFromPanelTopPx = 0;
+			}
+			metrics.authSectionTitleOffsetFromPanelTopPx = sectionTopPad + titleScale * 14;
 			const int32_t sectionBottom = sectionTopPad + titleScale * 14 + bodyLineStep;
 			const int32_t minFieldAnchor = sectionBottom + 20;
 			if (!model.infoBanner.empty())
@@ -132,6 +148,50 @@ namespace engine::render
 			else
 			{
 				metrics.topOffset = std::max(104, minFieldAnchor);
+			}
+		};
+
+		metrics.authTitleUseViewportWidth = false;
+		if (centeredLanguage)
+		{
+			legacyTitleAndTopOffset(50);
+		}
+		else if (state.terms)
+		{
+			const int32_t sectionTopPad = model.titleLine2.empty() ? 30 : 38;
+			legacyTitleAndTopOffset(sectionTopPad);
+		}
+		else
+		{
+			const bool minimalAuthWide =
+				(state.login || state.registerMode) && state.minimalChrome && !state.loginArtColumn;
+			metrics.authTitleUseViewportWidth = minimalAuthWide && model.layoutAuthTitleCenterViewportWidth;
+
+			const int32_t t1 = model.layoutAuthTitleLine1FromPanelTopPx;
+			const int32_t gapTitleSection = model.layoutAuthGapTitleToSectionPx;
+			metrics.authTitleLine1OffsetFromPanelTopPx = t1;
+			if (model.titleLine2.empty())
+			{
+				metrics.authTitleLine2OffsetFromPanelTopPx = 0;
+				const int32_t afterTitles = t1 + titleScale * 11;
+				metrics.authSectionTitleOffsetFromPanelTopPx = afterTitles + gapTitleSection;
+			}
+			else
+			{
+				const int32_t line2 = t1 + 8 + titleScale * 10;
+				metrics.authTitleLine2OffsetFromPanelTopPx = line2;
+				const int32_t afterTitles = line2 + bodyScale * 10;
+				metrics.authSectionTitleOffsetFromPanelTopPx = afterTitles + gapTitleSection;
+			}
+			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
+			if (!model.infoBanner.empty())
+			{
+				// Bannière : fond à panelY + topOffset - 42, hauteur 34 ; marge sous la section avant la bannière.
+				metrics.topOffset = std::max(afterSection + 48, 146);
+			}
+			else
+			{
+				metrics.topOffset = std::max(afterSection + 12, 88);
 			}
 		}
 		return metrics;
@@ -372,14 +432,14 @@ namespace engine::render
 		for (int32_t i = 0; i < fieldCount; ++i)
 		{
 			const int32_t y = panelY + topOffset + i * fieldRowStep;
-			addThemeRect(contentX, y, contentW, 32, theme.surface, 0.98f);
+			addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.surface, 0.98f);
 			const bool activeField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].active : false;
 			const bool hoveredField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].hovered : false;
 			if (hoveredField && !activeField)
 			{
-				addThemeRect(contentX, y, contentW, 32, theme.primary, 0.18f);
+				addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.primary, 0.18f);
 			}
-			addRect(contentX, y, 5, 32,
+			addRect(contentX, y, 5, kAuthUiFieldBoxHeightPx,
 				activeField ? 0.72f : 0.26f,
 				activeField ? 0.58f : 0.38f,
 				activeField ? 0.24f : 0.68f,
@@ -401,12 +461,16 @@ namespace engine::render
 
 		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
 		const int32_t bodyLineStepMetrics = 7 * bodyScaleMetrics + 2 * bodyScaleMetrics;
-		const int32_t bodyLinePitch = std::max(28, bodyLineStepMetrics + 10);
-		const int32_t bodyStartY = panelY + topOffset + fieldCount * fieldRowStep + 18;
+		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
+		const int32_t bodyLinePitch = centeredLanguageSelection
+			? std::max(36, bodyLineStepMetrics + 16)
+			: std::max(28, bodyLineStepMetrics + 10);
+		const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
+		const int32_t bodyStartY = panelY + topOffset + fieldCount * fieldRowStep + afterFieldsGap;
 		for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 		{
 			const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
-			const int32_t y = bodyStartY + localIdx * bodyLinePitch;
+			const int32_t y = bodyStartY + localIdx * bodyLinePitch - 4;
 			const bool activeBodyLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].active : false;
 			const bool hoveredBodyLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].hovered : false;
 			const bool checkboxLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() && model.bodyLines[static_cast<size_t>(bodyIndex)].checkbox;
@@ -482,7 +546,9 @@ namespace engine::render
 		}
 		else
 		{
-			const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + 20);
+			const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
+			const int32_t buttonY = std::min(panelY + panelH - 86,
+				bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
 			const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 			for (int32_t i = 0; i < actionCount; ++i)
 			{

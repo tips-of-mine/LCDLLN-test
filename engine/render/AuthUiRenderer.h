@@ -5,6 +5,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <algorithm>
 #include <vector>
 
 namespace engine::render
@@ -13,8 +14,22 @@ namespace engine::render
 	inline constexpr int32_t kAuthUiActionButtonHeightPx = 44;
 	/// Case à cocher « se souvenir » : taille extérieure (glyphs + fond + hit-test alignés).
 	inline constexpr int32_t kAuthUiCheckboxOuterPx = 20;
+	/// Hauteur du rectangle de saisie (renderer + hit-test + placement du texte dans AuthGlyphPass).
+	inline constexpr int32_t kAuthUiFieldBoxHeightPx = 32;
 	/// Origine X du libellé à droite de la case (contentX + offset).
 	inline constexpr int32_t kAuthUiCheckboxLabelOffsetX = 30;
+
+	/// Référence dérivée de la largeur panneau (titres, espacements structurels dans les métriques).
+	inline int32_t AuthUiLayoutBodyScaleFromPanelW(int32_t panelW)
+	{
+		return std::clamp(panelW / 260, 2, 4);
+	}
+
+	/// Texte courant (corps, champs, liens, libellés de boutons) : un cran plus petit que \ref AuthUiLayoutBodyScaleFromPanelW.
+	inline int32_t AuthUiClassicTextScaleFromPanelW(int32_t panelW)
+	{
+		return std::max(2, AuthUiLayoutBodyScaleFromPanelW(panelW) - 1);
+	}
 
 	struct AuthUiLayer
 	{
@@ -50,6 +65,11 @@ namespace engine::render
 		bool compactSingleField = false;
 		/// Même pas que AuthGlyphPass / hit-test souris (évite chevauchements et « traits » fantômes).
 		int32_t fieldRowStepPx = 48;
+		/// Titre principal / sous-titre / section : offsets depuis le haut du panneau (px), source unique avec AuthGlyphPass.
+		bool authTitleUseViewportWidth = false;
+		int32_t authTitleLine1OffsetFromPanelTopPx = 24;
+		int32_t authTitleLine2OffsetFromPanelTopPx = 0;
+		int32_t authSectionTitleOffsetFromPanelTopPx = 0;
 	};
 
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg);

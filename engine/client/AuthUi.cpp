@@ -686,6 +686,13 @@ namespace {
 		m_authTimeoutMsPending = m_authTimeoutMs;
 		m_authMinimalChrome = cfg.GetBool("render.auth_ui.minimal_chrome", true);
 		m_authLoginArtColumn = cfg.GetBool("render.auth_ui.login_art_column", false);
+		m_layoutAuthTitleLine1FromPanelTopPx = static_cast<int32_t>(
+			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.title_line1_from_panel_top_px", 10), 0, 120));
+		m_layoutAuthGapTitleToSectionPx = static_cast<int32_t>(
+			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.gap_title_to_section_px", 12), 0, 80));
+		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
+		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
+			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
 		// URL de "status" (récupéré depuis external/external_links.json) utilisé au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
 		m_statusProbeInitialized = false;
@@ -2890,10 +2897,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t contentW = lay.contentW;
 				const int32_t topOffset = lay.topOffset;
 				const int32_t fieldStep = lay.fieldRowStepPx;
-				const int32_t bodyScale = std::clamp(lay.panelW / 260, 2, 4);
+				const int32_t bodyScale = engine::render::AuthUiClassicTextScaleFromPanelW(lay.panelW);
 				const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
-				const int32_t bodyLinePitch = std::max(28, bodyLineStep + 10);
-				const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + 18;
+				const bool centeredLanguageSelection = vsLayout.languageSelection || vsLayout.languageOptions;
+				const int32_t bodyLinePitch = centeredLanguageSelection
+					? std::max(36, bodyLineStep + 16)
+					: std::max(28, bodyLineStep + 10);
+				const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
+				const int32_t bodyStartY =
+					panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + afterFieldsGap;
 				const int32_t mx = input.MouseX();
 				const int32_t my = input.MouseY();
 				m_hoveredFieldIndex = -1;
@@ -2916,7 +2928,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				for (size_t i = 0; i < model.fields.size(); ++i)
 				{
 					const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
-					if (contains(mx, my, contentX, y, contentW, 32))
+					if (contains(mx, my, contentX, y, contentW, engine::render::kAuthUiFieldBoxHeightPx))
 					{
 						m_hoveredFieldIndex = static_cast<int32_t>(i);
 						break;
@@ -3053,8 +3065,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				else
 				{
+					const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 					const int32_t buttonY = std::min(panelY + panelH - 86,
-						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
+						bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
 					const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 					for (int32_t i = 0; i < actionCount; ++i)
 					{
@@ -3074,7 +3087,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					for (size_t i = 0; i < model.fields.size(); ++i)
 					{
 						const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
-						if (contains(mx, my, contentX, y, contentW, 32))
+						if (contains(mx, my, contentX, y, contentW, engine::render::kAuthUiFieldBoxHeightPx))
 						{
 							m_activeField = static_cast<uint32_t>(i);
 							break;
@@ -3630,6 +3643,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel() const
 	{
 		RenderModel model{};
+		model.layoutAuthTitleLine1FromPanelTopPx = m_layoutAuthTitleLine1FromPanelTopPx;
+		model.layoutAuthGapTitleToSectionPx = m_layoutAuthGapTitleToSectionPx;
+		model.layoutAuthTitleCenterViewportWidth = m_layoutAuthTitleCenterViewportWidth;
+		model.layoutAuthFieldRowExtraPx = m_layoutAuthFieldRowExtraPx;
 		model.visible = m_initialized && !m_flowComplete && m_authEnabled;
 		model.hoveredFieldInfoIndex = m_hoveredFieldInfoIndex;
 		model.titleLine1 = Tr("auth.title_line1");

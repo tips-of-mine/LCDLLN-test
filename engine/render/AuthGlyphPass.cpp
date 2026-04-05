@@ -1247,13 +1247,15 @@ namespace engine::render
 		const float errorColor[4] = { 1.0f, 0.72f, 0.72f, 1.0f };
 		const float bodyColor[4] = { theme.text[0], theme.text[1], theme.text[2], 0.94f };
 		const int32_t topOffset = layout.topOffset;
-		const int32_t bodyScale = std::clamp(panelW / 260, 2, 4);
+		const int32_t layoutBodyScale = AuthUiLayoutBodyScaleFromPanelW(panelW);
+		const int32_t bodyScale = AuthUiClassicTextScaleFromPanelW(panelW);
 		const bool bigTitle =
 			state.languageSelection || state.languageOptions
 			|| state.login || state.registerMode
 			|| state.verifyEmail || state.forgotPassword
-			|| state.characterCreate;
-		const int32_t titleScale = std::clamp(bodyScale + (bigTitle ? 4 : 1), 6, 9);
+			|| state.characterCreate
+			|| state.error || state.submitting;
+		const int32_t titleScale = std::clamp(layoutBodyScale + (bigTitle ? 4 : 1), 6, 9);
 		const int32_t smallScale = std::max(2, bodyScale - 1);
 		const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 		const int32_t actionLabelScale = std::max(2, bodyScale - 1);
@@ -1290,22 +1292,26 @@ namespace engine::render
 			AppendText(vertices, text, x, y, boxW, scale, color);
 		};
 
-		// Titres: sur la colonne de contenu sauf page login minimal (artW=0) où on utilise toute la largeur.
+		// Titres: colonne contenu, panneau élargi, ou largeur fenêtre (login/register minimal sans colonne d’art).
 		const bool drawTitleAcrossPanel = state.login && state.minimalChrome && !state.loginArtColumn;
-		const int32_t titleAreaX = drawTitleAcrossPanel ? (panelX + 24) : contentX;
-		const int32_t titleAreaW = drawTitleAcrossPanel ? (panelW - 48) : contentW;
+		const int32_t viewportW = static_cast<int32_t>(extent.width);
+		const int32_t titleAreaX = layout.authTitleUseViewportWidth ? 24 : (drawTitleAcrossPanel ? (panelX + 24) : contentX);
+		const int32_t titleAreaW =
+			layout.authTitleUseViewportWidth ? std::max(100, viewportW - 48) : (drawTitleAcrossPanel ? (panelW - 48) : contentW);
 		if (!model.titleLine2.empty())
 		{
-			appendCenteredText(model.titleLine1, titleAreaX, panelY + 22, titleAreaW, titleScale, titleColor);
-			appendCenteredText(model.titleLine2, titleAreaX, panelY + 30 + titleScale * 10, titleAreaW, bodyScale, mutedColor);
+			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
+				titleColor);
+			appendCenteredText(model.titleLine2, titleAreaX, panelY + layout.authTitleLine2OffsetFromPanelTopPx, titleAreaW, bodyScale,
+				mutedColor);
 		}
 		else
 		{
-			appendCenteredText(model.titleLine1, titleAreaX, panelY + 24, titleAreaW, titleScale, titleColor);
+			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
+				titleColor);
 		}
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
-		const int32_t sectionTopPad = centeredLanguageSelection ? 50 : (model.titleLine2.empty() ? 30 : 38);
-		const int32_t sectionTitleY = panelY + sectionTopPad + titleScale * 14;
+		const int32_t sectionTitleY = panelY + layout.authSectionTitleOffsetFromPanelTopPx;
 		if (centeredLanguageSelection)
 		{
 			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);

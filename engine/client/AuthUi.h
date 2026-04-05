@@ -138,6 +138,11 @@ namespace engine::client
 			std::vector<RenderBodyLine> bodyLines;
 			int32_t visibleBodyLineStart = 0;
 			int32_t visibleBodyLineCount = 0;
+			/// Ajustements layout auth (lus depuis la config à l’init, recopiés ici pour BuildAuthUiLayoutMetrics).
+			int32_t layoutAuthTitleLine1FromPanelTopPx = 10;
+			int32_t layoutAuthGapTitleToSectionPx = 12;
+			bool layoutAuthTitleCenterViewportWidth = true;
+			int32_t layoutAuthFieldRowExtraPx = 0;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -320,6 +325,10 @@ namespace engine::client
 
 		bool m_authMinimalChrome = true;
 		bool m_authLoginArtColumn = false;
+		int32_t m_layoutAuthTitleLine1FromPanelTopPx = 10;
+		int32_t m_layoutAuthGapTitleToSectionPx = 12;
+		bool m_layoutAuthTitleCenterViewportWidth = true;
+		int32_t m_layoutAuthFieldRowExtraPx = 0;
 		std::string m_masterAvailabilityUrl{};
 		int32_t m_authLogoSizePx = 96;
 		float m_authLogoRotationRad = 0.f;

@@ -675,7 +675,7 @@ namespace engine
 											m_audioEngine.SetBusVolume("Music", static_cast<float>(m_cfg.GetDouble("audio.music_volume", 1.0)));
 											m_audioEngine.SetBusVolume("SFX", static_cast<float>(m_cfg.GetDouble("audio.sfx_volume", 1.0)));
 											m_audioEngine.SetBusVolume("UI", static_cast<float>(m_cfg.GetDouble("audio.ui_volume", 1.0)));
-											m_audioEngine.SetZone(0);
+											m_audioEngine.SetZone(9999);
 										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
 										{
@@ -2192,6 +2192,10 @@ namespace engine
 		else
 		{
 			m_window.SetOverlayText({});
+			if (m_audioEngine.GetCurrentZoneId() == 9999)
+			{
+				m_audioEngine.SetZone(0);
+			}
 		}
 
 		if (!m_editorEnabled)

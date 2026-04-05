@@ -152,7 +152,8 @@ namespace engine::render
 		{
 			out.secondaryRowY = bodyBottom;
 		}
-		out.buttonHalfWidth = std::max(120, (contentW - 10) / 2);
+		constexpr int32_t gap = 10;
+		out.buttonHalfWidth = std::max(120, (contentW - gap) / 2);
 		// Primary button (Valider) gets 60% of the row, secondary gets 40%
 		out.primaryBtnWidth = std::max(140, contentW * 60 / 100);
 		out.secondaryBtnWidth = std::max(100, contentW - out.primaryBtnWidth - gap);

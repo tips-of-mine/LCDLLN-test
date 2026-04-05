@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <mutex>
 #include <thread>
@@ -3121,6 +3123,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
 									break;
 								case Phase::LanguageSelectionFirstRun:
+									if (i == 0) applyPrimaryAction();
+									else if (i == 1) { window.RequestClose(); }
+									break;
 								case Phase::CharacterCreate:
 								case Phase::Submitting:
 								case Phase::Error:
@@ -3217,6 +3222,47 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			else
 				m_activeField = 0;
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
+		}
+
+		// Birth date selectable fields: left/right arrows cycle values
+		if (!usingNativeAuth && m_phase == Phase::Register && m_activeField >= 5 && m_activeField <= 7)
+		{
+			auto cycleInt = [](std::string& val, int minVal, int maxVal, int delta, int width) {
+				int current = val.empty() ? (delta > 0 ? minVal - 1 : maxVal + 1) : std::atoi(val.c_str());
+				current += delta;
+				if (current > maxVal) current = minVal;
+				if (current < minVal) current = maxVal;
+				char buf[8];
+				if (width == 2)
+					std::snprintf(buf, sizeof(buf), "%02d", current);
+				else
+					std::snprintf(buf, sizeof(buf), "%d", current);
+				val = buf;
+			};
+			if (input.WasPressed(engine::platform::Key::Left))
+			{
+				if (m_activeField == 5) cycleInt(m_birthDay, 1, 31, -1, 2);
+				else if (m_activeField == 6) cycleInt(m_birthMonth, 1, 12, -1, 2);
+				else if (m_activeField == 7) cycleInt(m_birthYear, 1920, 2025, -1, 4);
+			}
+			if (input.WasPressed(engine::platform::Key::Right))
+			{
+				if (m_activeField == 5) cycleInt(m_birthDay, 1, 31, 1, 2);
+				else if (m_activeField == 6) cycleInt(m_birthMonth, 1, 12, 1, 2);
+				else if (m_activeField == 7) cycleInt(m_birthYear, 1920, 2025, 1, 4);
+			}
+			if (input.WasPressed(engine::platform::Key::Up))
+			{
+				if (m_activeField == 5) cycleInt(m_birthDay, 1, 31, 1, 2);
+				else if (m_activeField == 6) cycleInt(m_birthMonth, 1, 12, 1, 2);
+				else if (m_activeField == 7) cycleInt(m_birthYear, 1920, 2025, 1, 4);
+			}
+			if (input.WasPressed(engine::platform::Key::Down))
+			{
+				if (m_activeField == 5) cycleInt(m_birthDay, 1, 31, -1, 2);
+				else if (m_activeField == 6) cycleInt(m_birthMonth, 1, 12, -1, 2);
+				else if (m_activeField == 7) cycleInt(m_birthYear, 1920, 2025, -1, 4);
+			}
 		}
 
 		if (m_phase == Phase::Terms)
@@ -3426,14 +3472,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		model.errorText = (m_phase == Phase::Error) ? m_userErrorText : std::string{};
 		model.footerHint.clear();
 
-		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false)
+		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false, std::string tooltip = {})
 		{
 			RenderField field{};
 			field.label = std::move(label);
 			field.value = std::move(value);
+			field.tooltip = std::move(tooltip);
 			field.active = active;
 			field.hovered = static_cast<int32_t>(model.fields.size()) == m_hoveredFieldIndex;
 			field.secret = secret;
+			field.showInfoIcon = !field.tooltip.empty();
 			model.fields.push_back(std::move(field));
 		};
 		auto addAction = [this, &model](std::string label, bool primary, bool active = true, bool emphasized = false)
@@ -3507,18 +3555,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			break;
 		case Phase::Register:
+		{
 			model.sectionTitle = Tr("auth.panel.register");
-			addField(Tr("auth.label.login"), m_login, m_activeField == 0);
-			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true);
-			addField(Tr("common.email"), m_email, m_activeField == 2);
-			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3);
-			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4);
-			addField(Tr("auth.label.birth_day"), m_birthDay, m_activeField == 5);
-			addField(Tr("auth.label.birth_month"), m_birthMonth, m_activeField == 6);
-			addField(Tr("auth.label.birth_year"), m_birthYear, m_activeField == 7);
+			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, Tr("auth.tooltip.login"));
+			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, Tr("auth.tooltip.password"));
+			addField(Tr("common.email"), m_email, m_activeField == 2, false, Tr("auth.tooltip.email"));
+			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3, false, Tr("auth.tooltip.first_name"));
+			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4, false, Tr("auth.tooltip.last_name"));
+			// Birth date fields shown as selectable: < value >
+			auto selectDisplay = [](const std::string& val, const std::string& placeholder) -> std::string {
+				return "< " + (val.empty() ? placeholder : val) + " >";
+			};
+			addField(Tr("auth.label.birth_day"), selectDisplay(m_birthDay, "--"), m_activeField == 5, false, Tr("auth.tooltip.birth_day"));
+			addField(Tr("auth.label.birth_month"), selectDisplay(m_birthMonth, "--"), m_activeField == 6, false, Tr("auth.tooltip.birth_month"));
+			addField(Tr("auth.label.birth_year"), selectDisplay(m_birthYear, "----"), m_activeField == 7, false, Tr("auth.tooltip.birth_year"));
 			addAction(Tr("common.submit"), true);
 			addAction(Tr("auth.hint.return_login"), false);
 			break;
+		}
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
 			addBodyLine(Tr("auth.label.account") + ": " + std::to_string(m_pendingVerifyAccountId));
@@ -3591,6 +3645,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				if (label.empty())
 					label = Tr("common.submit");
 				addAction(label, true);
+				std::string quitLabel = Tr("common.quit");
+				if (quitLabel.empty()) quitLabel = "common.quit";
+				addAction(std::move(quitLabel), false, true);
 			}
 			else // Phase::LanguageOptions
 			{

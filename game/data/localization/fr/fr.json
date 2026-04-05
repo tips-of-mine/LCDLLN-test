@@ -11,7 +11,7 @@
   "common.quit": "Quitter",
   "common.quit_desktop": "Retour au bureau",
   "common.submit": "Valider",
-  "common.tab_escape_hint": "Tab changer de champ  Echap retour",
+  "common.tab_escape_hint": "",
   "language.first_run.title": "Choix de la langue",
   "language.first_run.message": "Nous avons detecte {language}. Confirmez votre langue avant l'authentification.",
   "language.first_run.confirm": "Appuyez sur Entree pour confirmer puis continuer vers l'authentification.",
@@ -114,5 +114,13 @@
   "auth.panel.title": "Titre",
   "auth.panel.language": "Langue",
   "auth.status.unavailable": "Serveurs en maintenance. Réessayez dans quelques instants.",
-  "auth.status.checking": "Vérification des serveurs..."
+  "auth.status.checking": "Vérification des serveurs...",
+  "auth.tooltip.login": "Votre identifiant unique pour vous connecter au jeu. Entre 3 et 32 caracteres, lettres et chiffres uniquement.",
+  "auth.tooltip.password": "Votre mot de passe. Minimum 6 caracteres, melangez lettres, chiffres et symboles.",
+  "auth.tooltip.email": "Adresse email valide pour la verification de votre compte et la recuperation du mot de passe.",
+  "auth.tooltip.first_name": "Votre prenom tel qu'il apparaitra sur votre profil de joueur.",
+  "auth.tooltip.last_name": "Votre nom de famille pour l'identification de votre compte.",
+  "auth.tooltip.birth_day": "Jour de naissance (1-31). Selectionnez avec les fleches gauche/droite.",
+  "auth.tooltip.birth_month": "Mois de naissance (1-12). Selectionnez avec les fleches gauche/droite.",
+  "auth.tooltip.birth_year": "Annee de naissance (ex: 1990). Selectionnez avec les fleches gauche/droite."
 }

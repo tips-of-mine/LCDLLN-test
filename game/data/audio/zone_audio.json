@@ -29,12 +29,25 @@
       "minDistance": 2.0,
       "maxDistance": 32.0,
       "loop": false
+    },
+    {
+      "id": "auth_music",
+      "path": "audio/Horns_of_the_Fallen_Bastion.mp3",
+      "bus": "Music",
+      "minDistance": 0.0,
+      "maxDistance": 9999.0,
+      "loop": true
     }
   ],
   "zones": [
     {
       "zoneId": 0,
       "ambienceSoundId": "zone_0_ambience",
+      "position": [0.0, 0.0, 0.0]
+    },
+    {
+      "zoneId": 9999,
+      "ambienceSoundId": "auth_music",
       "position": [0.0, 0.0, 0.0]
     }
   ]

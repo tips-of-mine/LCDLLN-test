@@ -13,10 +13,10 @@
     "border": "#3D4F66"
   },
   "typography": {
-    "fontFamily": "Inter",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
-    "titleSize": 20
+    "titleSize": 40
   },
   "metrics": {
     "radius": 8,
@@ -26,6 +26,6 @@
     "iconHud": "textures/test.texr",
     "iconButton": "textures/test.texr",
     "iconTooltip": "textures/test.texr",
-    "fontRegular": "fonts/default.ttf"
+    "fontRegular": "fonts/Windlass.ttf"
   }
 }

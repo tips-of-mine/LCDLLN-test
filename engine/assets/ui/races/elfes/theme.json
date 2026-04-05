@@ -1,7 +1,7 @@
 {
   "id": "elfes",
   "displayName": "Elfes",
-  "mood": "Décadence, magie ancienne, élégance froide",
+  "mood": "D\u00e9cadence, magie ancienne, \u00e9l\u00e9gance froide",
   "palette": {
     "primary": "#6E46B7",
     "secondary": "#1E8A8A",
@@ -14,12 +14,15 @@
     "border": "#2A2740"
   },
   "typography": {
-    "fontFamily": "Cormorant Garamond",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
     "titleSize": 23
   },
-  "metrics": { "radius": 14, "padding": 10 },
+  "metrics": {
+    "radius": 14,
+    "padding": 10
+  },
   "assets": {
     "bg": "assets/ui/races/elfes/images/bg.png",
     "emblem": "assets/ui/races/elfes/images/emblem.png"

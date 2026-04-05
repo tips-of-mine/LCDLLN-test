@@ -95,7 +95,7 @@ namespace engine::render
 		metrics.panelY = (h - metrics.panelH) / 2;
 		metrics.innerX = metrics.panelX + 28;
 		metrics.artW = std::clamp(metrics.panelW / 3, 150, 240);
-		if (state.login && state.minimalChrome && !state.loginArtColumn)
+		if ((state.login || state.registerMode) && state.minimalChrome && !state.loginArtColumn)
 		{
 			metrics.artW = 0;
 		}
@@ -116,7 +116,7 @@ namespace engine::render
 		// titleScale/bodyScale augmentent : l’ancien offset fixe (104) faisait chevaucher labels et titres.
 		{
 			const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);
-			const int32_t titleScale = std::clamp(bodyScale + 1, 3, 5);
+			const int32_t titleScale = std::clamp(bodyScale + 4, 6, 9);
 			const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 			const int32_t sectionTopPad = (state.languageSelection || state.languageOptions) ? 50 : 38;
 			const int32_t sectionBottom = sectionTopPad + titleScale * 14 + bodyLineStep;
@@ -228,17 +228,7 @@ namespace engine::render
 		}
 		else
 		{
-			// Pas de addRect plein écran ici : vkCmdClearAttachments remplace les pixels (pas de blending).
-			// Un voile plein écran effaçait entièrement le blit du PNG → fond bleu-gris uni.
-			// On ne garde que des vignettes sur les bords pour foncer légèrement les marges.
-			const int32_t vg = std::clamp(w / 40, 18, 56);
-			const float ve = 0.03f;
-			const float vn = 0.05f;
-			const float vb = 0.10f;
-			addRect(0, 0, vg, h, ve, vn, vb, 0.14f);
-			addRect(w - vg, 0, vg, h, ve, vn, vb, 0.14f);
-			addRect(0, 0, w, vg / 2, ve, vn, vb, 0.10f);
-			addRect(0, h - vg / 2, w, vg / 2, ve, vn, vb, 0.12f);
+			// Photo backdrop: no vignette borders - the background image fills the entire screen.
 		}
 		if (!state.minimalChrome)
 		{
@@ -280,7 +270,7 @@ namespace engine::render
 			// L'ancien hardcode panelY+72 plaçait le fond dans la zone du titre, créant un trait parasite.
 			const int32_t bannerBgY = panelY + layout.topOffset - 42;
 			addThemeRect(contentX, bannerBgY, contentW, 34, theme.secondary, 0.72f);
-			addThemeRect(contentX + 14, bannerBgY + 13, std::max(80, contentW - 28), 4, theme.text, 0.70f);
+			// Banner text bar removed to avoid "horizontal line" artifacts
 		}
 
 		if (state.submitting)
@@ -351,7 +341,21 @@ namespace engine::render
 				activeField ? 0.58f : 0.38f,
 				activeField ? 0.24f : 0.68f,
 				1.0f);
-			addThemeRect(contentX + 18, y + 11, std::max(60, contentW - 54 - i * 10), 3, theme.text, activeField ? 0.78f : (hoveredField ? 0.66f : 0.50f));
+			// Field text indicator bar removed to avoid visual "horizontal line" artifacts
+				// Info icon indicator (small circle-like rect) for fields with tooltips
+				if (static_cast<size_t>(i) < model.fields.size() && model.fields[static_cast<size_t>(i)].showInfoIcon)
+				{
+					const int32_t iconX = contentX + contentW - 22;
+					const int32_t iconY = y + 6;
+					addThemeRect(iconX, iconY, 18, 18, theme.accent, hoveredField ? 1.0f : 0.65f);
+					// Show tooltip background when hovered
+					if (hoveredField && !model.fields[static_cast<size_t>(i)].tooltip.empty())
+					{
+						const int32_t tooltipY = y + 34;
+						addThemeRect(contentX, tooltipY, contentW, 28, theme.surface, 0.96f);
+						addThemeRect(contentX, tooltipY, contentW, 2, theme.accent, 1.0f);
+					}
+				}
 		}
 
 		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
@@ -409,6 +413,7 @@ namespace engine::render
 			for (int32_t row = 0; row < 2; ++row)
 			{
 				const int32_t rowY = (row == 0) ? loginTwoRow.secondaryRowY : loginTwoRow.primaryRowY;
+				int32_t colX = contentX;
 				for (int32_t col = 0; col < 2; ++col)
 				{
 					const int32_t i = row * 2 + col;
@@ -454,7 +459,7 @@ namespace engine::render
 				{
 					addThemeRect(x, buttonY, actionW, 3, theme.accent, 1.0f);
 				}
-				addThemeRect(x + 18, buttonY + 15, std::max(48, actionW - 36), 4, theme.text, primary ? (hovered ? 0.72f : 0.60f) : (hovered ? 0.58f : 0.42f));
+				// Button text bar removed
 			}
 		}
 

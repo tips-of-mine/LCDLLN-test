@@ -1,7 +1,7 @@
 {
   "id": "corrompus",
   "displayName": "Corrompus",
-  "mood": "Mutation, folie, métamorphose",
+  "mood": "Mutation, folie, m\u00e9tamorphose",
   "palette": {
     "primary": "#7B2CBF",
     "secondary": "#2B0A3D",
@@ -14,12 +14,15 @@
     "border": "#2D2345"
   },
   "typography": {
-    "fontFamily": "Space Grotesk",
-    "uiFontFamily": "Inter",
+    "fontFamily": "Windlass",
+    "uiFontFamily": "Windlass",
     "baseSize": 14,
     "titleSize": 22
   },
-  "metrics": { "radius": 16, "padding": 10 },
+  "metrics": {
+    "radius": 16,
+    "padding": 10
+  },
   "assets": {
     "bg": "assets/ui/races/corrompus/images/bg.png",
     "emblem": "assets/ui/races/corrompus/images/emblem.png"

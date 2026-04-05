@@ -284,7 +284,7 @@ namespace engine::platform
 				CLIP_DEFAULT_PRECIS,
 				CLEARTYPE_QUALITY,
 				DEFAULT_PITCH | FF_DONTCARE,
-				L"Segoe UI");
+				L"Windlass");
 			m_overlayHwnd = overlay;
 			m_overlayFont = font;
 			if (font)
@@ -295,10 +295,15 @@ namespace engine::platform
 			UpdateOverlayLayout();
 		}
 
-		m_authTitleFont = CreateFontW(34, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-			OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Segoe UI");
+		// Load custom game font (Windlass.ttf) if available
+		{
+			std::wstring fontPath = L"game\\data\\fonts\\Windlass.ttf";
+			AddFontResourceExW(fontPath.c_str(), FR_PRIVATE, nullptr);
+		}
+		m_authTitleFont = CreateFontW(40, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+			OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Windlass");
 		m_authUiFont = CreateFontW(22, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-			OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Segoe UI");
+			OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Windlass");
 
 		m_authBackgroundHwnd = createAuthControl(0, L"STATIC", L"", SS_BITMAP, 0);
 		m_authLogoHwnd = createAuthControl(0, L"STATIC", L"", SS_BITMAP, 0);

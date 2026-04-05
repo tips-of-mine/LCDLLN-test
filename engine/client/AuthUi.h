@@ -83,9 +83,11 @@ namespace engine::client
 		{
 			std::string label;
 			std::string value;
+			std::string tooltip;
 			bool active = false;
 			bool hovered = false;
 			bool secret = false;
+			bool showInfoIcon = false;
 		};
 
 		struct RenderAction

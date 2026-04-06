@@ -210,7 +210,7 @@ namespace engine::client
 		int32_t GetAuthLogoSizePx() const { return m_authLogoSizePx; }
 		const StatusCache& GetStatusCache() const { return m_statusCache; }
 		/// DIAG — retourne l'adresse du mutex alloué sur le tas (pour VirtualQuery Windows).
-		const void* GetAsyncMutexAddr() const { return m_asyncMutex.get(); }
+		const void* GetAsyncMutexAddr() const { return &m_asyncMutex; }
 		VideoSettingsCommand ConsumePendingVideoSettings();
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
@@ -382,6 +382,8 @@ namespace engine::client
 			// Pour AsyncKind::StatusProbe.
 			StatusCache statusCache{};
 		};
+		/// Placé avant \c m_asyncResult pour limiter un risque de corruption adjacente (mutex en dernier = cible d’un débordement).
+		std::mutex m_asyncMutex{};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};
 		enum class AsyncKind
@@ -400,8 +402,6 @@ namespace engine::client
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;
 		std::unique_ptr<engine::network::NetClient> m_masterClient;
-		// Heap-allocated in Init() — avoids SRWLOCK corruption in large heap objects (STAB.13/STAB.11).
-		std::unique_ptr<std::mutex> m_asyncMutex;
 	};
 
 }

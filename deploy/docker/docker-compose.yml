@@ -1,10 +1,11 @@
 # ============================================================
-# M24.4 — LCDLLN stack locale (MySQL + Master + portail ; shard en option)
+# M24.4 — LCDLLN stack locale (MySQL + Master + portail + phpMyAdmin ; shard en option)
 # ============================================================
 # Services :
 #   mysql      — MySQL 8.0 avec schéma LCDLLN (lcdlln_master)
 #   master     — Master server (lcdlln_server, Dockerfile.master)
 #   web-portal — Next.js (sources ./web-portal dans le zip CI)
+#   phpmyadmin — phpMyAdmin (visualisation / administration de la base MySQL)
 #   shard      — Shard (profil Compose « shard », désactivé par défaut ; binaire toujours dans le zip)
 #
 # Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/, web-portal/).
@@ -32,7 +33,7 @@
 
 networks:
   traefik_front_network:
-    driver: bridge
+    external: true
   back_lcdlln_network:
     driver: bridge
     attachable: true
@@ -84,7 +85,20 @@ services:
     ports:
       - "${MASTER_PORT:-3840}:3840"
       # HTTP embarqué (même processus que lcdlln_server) : /status, /healthz, /readyz, /metrics
-      - "${MASTER_HEALTH_PORT:-3842}:3842"
+      # Accès via Traefik uniquement (pas d'exposition directe) ; fallback local pour debug :
+      - "127.0.0.1:${MASTER_HEALTH_PORT:-3842}:3842"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_front_network"
+      - "traefik.http.routers.lcdlln-master-http.rule=Host(`${MASTER_HEALTH_HOST:-lcdlln-master.tips-of-mine.com}`)"
+      - "traefik.http.routers.lcdlln-master-http.entrypoints=http"
+      - "traefik.http.routers.lcdlln-master-http.service=lcdlln-master-service"
+      - "traefik.http.routers.lcdlln-master-https.rule=Host(`${MASTER_HEALTH_HOST:-lcdlln-master.tips-of-mine.com}`)"
+      - "traefik.http.routers.lcdlln-master-https.entrypoints=https"
+      - "traefik.http.routers.lcdlln-master-https.service=lcdlln-master-service"
+      - "traefik.http.routers.lcdlln-master-https.tls=true"
+      #- "traefik.http.routers.lcdlln-master-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.services.lcdlln-master-service.loadbalancer.server.port=3842"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
@@ -158,10 +172,10 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_front_network"
       - "traefik.http.routers.lcdlln-portal-http.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http}"
+      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http"
       - "traefik.http.routers.lcdlln-portal-http.service=lcdlln-portal-service"
       - "traefik.http.routers.lcdlln-portal-https.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https}"
+      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https"
       - "traefik.http.routers.lcdlln-portal-https.service=lcdlln-portal-service"
       - "traefik.http.routers.lcdlln-portal-https.tls=true"
       # Doit correspondre au nom du certificatsResolvers (ou certificates) dans la config statique Traefik.
@@ -172,3 +186,38 @@ services:
 #      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSIncludeSubdomains=true"
 #      - "traefik.http.middlewares.lcdlln-portal-middlewares.headers.STSPreload=true"
       - "traefik.http.services.lcdlln-portal-service.loadbalancer.server.port=3000"
+
+  # -----------------------------------------------------------------
+  # phpMyAdmin — visualisation / administration de la base MySQL
+  # -----------------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: lcdlln-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - back_lcdlln_network
+      - traefik_front_network
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      # Pré-remplir l'utilisateur (connexion manuelle reste nécessaire)
+      PMA_USER: ${MYSQL_USER:-lcdlln_user}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-lcdlln_pass_dev}
+      UPLOAD_LIMIT: 64M
+    expose:
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_front_network"
+      - "traefik.http.routers.lcdlln-pma-http.rule=Host(`lcdlln-phpmyadmin.tips-of-mine.com`)"
+      - "traefik.http.routers.lcdlln-pma-http.entrypoints=http"
+      - "traefik.http.routers.lcdlln-pma-http.service=lcdlln-pma-service"
+      - "traefik.http.routers.lcdlln-pma-https.rule=Host(`lcdlln-phpmyadmin.tips-of-mine.com`)"
+      - "traefik.http.routers.lcdlln-pma-https.entrypoints=https"
+      - "traefik.http.routers.lcdlln-pma-https.service=lcdlln-pma-service"
+      - "traefik.http.routers.lcdlln-pma-https.tls=true"
+      #- "traefik.http.routers.lcdlln-pma-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
+      - "traefik.http.services.lcdlln-pma-service.loadbalancer.server.port=80"

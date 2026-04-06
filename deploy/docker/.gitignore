@@ -1,5 +1,0 @@
-# Données locales (bind mounts docker-compose : MySQL + logs)
-/data/
-
-# Copie pack CI / script pack-linux-docker-bundle.sh (sources Next.js, doublon du repo)
-/web-portal/

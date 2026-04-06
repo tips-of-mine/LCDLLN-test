@@ -366,14 +366,14 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   )
 endif()
 
-# Liens externes (URLs portail / status) — lu au runtime depuis external/ (voir FileSystem::ResolveExternalPath).
+# Liens externes : toujours recopier depuis le dépôt à chaque build (pas seulement si le contenu diffère).
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
   add_custom_command(TARGET engine_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:engine_app>/external"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    COMMAND ${CMAKE_COMMAND} -E copy
             "${CMAKE_SOURCE_DIR}/external/external_links.json"
             "$<TARGET_FILE_DIR:engine_app>/external/external_links.json"
-    COMMENT "Copie de external/external_links.json..."
+    COMMENT "Copie de external/external_links.json (écrase la sortie build)..."
   )
 endif()
 

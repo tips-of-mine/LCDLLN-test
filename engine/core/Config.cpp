@@ -495,6 +495,14 @@ namespace engine::core
 		return true;
 	}
 
+	void Config::MergeFrom(const Config& other)
+	{
+		for (const auto& [k, v] : other.m_values)
+		{
+			SetValue(k, v);
+		}
+	}
+
 	void Config::ApplyCli(int argc, char** argv)
 	{
 		for (int i = 1; i < argc; ++i)

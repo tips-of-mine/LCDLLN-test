@@ -42,6 +42,27 @@ namespace engine
 {
 	namespace
 	{
+		/// Fusionne \`external/external_links.json\` (résolu via FileSystem::ResolveExternalPath) dans \p cfg.
+		/// Ainsi \`client.web_portal_reset_url\` et \`client.status_api_url\` sont disponibles partout via \`cfg.GetString\`.
+		void ApplyExternalLinksFile(engine::core::Config& cfg)
+		{
+			const std::filesystem::path path = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
+			if (!engine::platform::FileSystem::Exists(path))
+			{
+				LOG_INFO(Core, "[Boot] external_links.json introuvable (chemin attendu : {}) — URLs externes = défauts / config.json.",
+					path.string());
+				return;
+			}
+			engine::core::Config ext;
+			if (!ext.LoadFromFile(path.string()))
+			{
+				LOG_WARN(Core, "[Boot] external_links.json illisible ou JSON invalide ({})", path.string());
+				return;
+			}
+			cfg.MergeFrom(ext);
+			LOG_INFO(Core, "[Boot] external_links.json fusionné dans la config ({})", path.string());
+		}
+
 		void ApplyUserSettingsOverrides(engine::core::Config& cfg)
 		{
 			engine::core::Config persisted;
@@ -410,6 +431,7 @@ namespace engine
 		// Config + subsystems
 		// ------------------------------------------------------------------
 		ApplyUserSettingsOverrides(m_cfg);
+		ApplyExternalLinksFile(m_cfg);
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
 		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);

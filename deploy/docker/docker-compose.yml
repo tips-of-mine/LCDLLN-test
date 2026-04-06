@@ -32,7 +32,7 @@
 
 networks:
   traefik_front_network:
-    driver: bridge
+    external: true
   back_lcdlln_network:
     driver: bridge
     attachable: true
@@ -158,10 +158,10 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_front_network"
       - "traefik.http.routers.lcdlln-portal-http.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http}"
+      - "traefik.http.routers.lcdlln-portal-http.entrypoints=http"
       - "traefik.http.routers.lcdlln-portal-http.service=lcdlln-portal-service"
       - "traefik.http.routers.lcdlln-portal-https.rule=Host(`lcdlln-portal.tips-of-mine.com`)"
-      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https}"
+      - "traefik.http.routers.lcdlln-portal-https.entrypoints=https"
       - "traefik.http.routers.lcdlln-portal-https.service=lcdlln-portal-service"
       - "traefik.http.routers.lcdlln-portal-https.tls=true"
       # Doit correspondre au nom du certificatsResolvers (ou certificates) dans la config statique Traefik.

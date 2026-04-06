@@ -222,62 +222,20 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
-		/// Table unique `external/external_links.json` (chemins résolus par FileSystem::ResolveExternalPath).
-		const engine::core::Config& ExternalLinksTable(const engine::core::Config& cfg)
-		{
-			static bool s_attempted = false;
-			static engine::core::Config s_externalLinksCfg;
-			if (!s_attempted)
-			{
-				s_attempted = true;
-				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
-				if (engine::platform::FileSystem::Exists(linksPath))
-				{
-					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
-					{
-						LOG_INFO(Core, "[AuthUiPresenter] external_links loaded ({})", linksPath.string());
-					}
-					else
-					{
-						LOG_WARN(Core, "[AuthUiPresenter] external_links parse failed ({}) — vérifiez le JSON (BOM UTF-8, virgules, guillemets).",
-							linksPath.string());
-					}
-				}
-				else
-				{
-					LOG_WARN(Core, "[AuthUiPresenter] external_links.json introuvable (chemin attendu : {}). "
-						"Placez le fichier sous external/ à la racine du dépôt ou à côté de l’exécutable après build.",
-						linksPath.string());
-				}
-			}
-			return s_externalLinksCfg;
-		}
-
+		// URLs externes : fusionnées au boot (Engine::ApplyExternalLinksFile) depuis external/external_links.json
+		// dans la config principale — utiliser uniquement cfg.GetString ici.
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
-			// Le portail reset est un lien externe (hors du jeu).
-			// Le moteur lit d'abord une table de liens située dans le dossier `external/`.
-			// (si elle existe), pour permettre d’ajuster les URLs sans toucher au code.
 			constexpr std::string_view kKey = "client.web_portal_reset_url";
-			const std::string fallback = "http://127.0.0.1:3000/password-recovery";
-			const engine::core::Config& ext = ExternalLinksTable(cfg);
-			if (ext.Has(kKey))
-			{
-				return ext.GetString(kKey, fallback);
-			}
+			const std::string fallback = "https://lcdlln-portal.tips-of-mine.com/password-recovery";
 			return cfg.GetString(kKey, fallback);
 		}
 
 		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
 		{
 			constexpr std::string_view kKey = "client.status_api_url";
-			const std::string fallback = "http://127.0.0.1:3000/status";
-			const engine::core::Config& ext = ExternalLinksTable(cfg);
-			if (ext.Has(kKey))
-			{
-				return ext.GetString(kKey, fallback);
-			}
-			return fallback;
+			const std::string fallback = "http://127.0.0.1:3842/status";
+			return cfg.GetString(kKey, fallback);
 		}
 
 		bool IsAsciiDigits(std::string_view text)

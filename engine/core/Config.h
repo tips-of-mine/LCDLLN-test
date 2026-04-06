@@ -26,6 +26,9 @@ namespace engine::core
 		/// Load values from a JSON/INI file (returns false if file is missing/unreadable).
 		bool LoadFromFile(std::string_view filePath);
 
+		/// Fusionne toutes les clés d’une autre config (écrase les clés existantes).
+		void MergeFrom(const Config& other);
+
 		/// Apply CLI overrides of the form `--key=value` (highest priority).
 		void ApplyCli(int argc, char** argv);
 

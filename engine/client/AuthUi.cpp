@@ -1319,16 +1319,16 @@ namespace engine::client
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
-		// Toute lecture/écriture de m_asyncResult doit être sous mutex : le worker y assigne en parallèle.
-		// Lire .ready hors verrou était une data race (UB) et pouvait corrompre le tas → 0xC0000005 au lock.
+		// Si aucun std::thread n’est attaché, aucun worker n’écrit m_asyncResult : lecture de .ready sans mutex OK.
+		// Évite lock + gros AsyncResult sur la pile à chaque frame quand l’auth est idle (frame 0 avant sonde).
+		if (!m_worker.joinable() && !m_asyncResult.ready)
+		{
+			return;
+		}
+
 		AsyncResult copy{};
 		{
 			std::lock_guard<std::mutex> lock(m_asyncMutex);
-			const bool workerJoinable = m_worker.joinable();
-			if (!workerJoinable && !m_asyncResult.ready)
-			{
-				return;
-			}
 			if (!m_asyncResult.ready)
 			{
 				return;

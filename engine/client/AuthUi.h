@@ -382,6 +382,8 @@ namespace engine::client
 			// Pour AsyncKind::StatusProbe.
 			StatusCache statusCache{};
 		};
+		/// Placé avant \c m_asyncResult pour limiter un risque de corruption adjacente (mutex en dernier = cible d’un débordement).
+		std::mutex m_asyncMutex{};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};
 		enum class AsyncKind
@@ -400,8 +402,6 @@ namespace engine::client
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;
 		std::unique_ptr<engine::network::NetClient> m_masterClient;
-		/// Synchronise \c m_asyncResult avec les workers ; membre direct (jamais de pointeur nul).
-		std::mutex m_asyncMutex{};
 	};
 
 }

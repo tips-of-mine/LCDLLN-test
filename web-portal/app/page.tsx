@@ -5,7 +5,7 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="hero">
-        <h1>LCDLLN</h1>
+        <h1>Les Chroniques De La Lune Noire</h1>
         <p>
           Portail officiel du projet. Suivez l&apos;avancement, consultez la feuille de route,
           gérez votre profil et suivez vos exploits en jeu.

@@ -3,8 +3,8 @@ import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "LCDLLN — Portail",
-  description: "Portail joueur et administration — LCDLLN",
+  title: "Les Chroniques De La Lune Noire — Portail",
+  description: "Portail joueur et administration — Les Chroniques De La Lune Noire",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

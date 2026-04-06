@@ -2753,10 +2753,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
-		// DIAG UPDATE-ENTRY
-		LOG_WARN(Core, "[AuthUiPresenter] UPDATE-ENTRY phase={} initialized={} flowComplete={}",
-			(int)m_phase, (int)m_initialized, (int)m_flowComplete);
-
 		PollAsyncResult(cfg);
 		if (m_flowComplete)
 			return;

@@ -12,7 +12,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
-#include <vk_mem_alloc.h>
+// vk_mem_alloc.h removed: VMA is disabled (STAB.7) — all subsystems use raw Vulkan allocations.
 
 #include <algorithm>
 #include <chrono>
@@ -585,65 +585,17 @@ namespace engine
 
 								if (m_vkSwapchain.IsValid())
 								{
-									VmaVulkanFunctions vmaFuncs{};
-									vmaFuncs.vkGetInstanceProcAddr               = vkGetInstanceProcAddr;
-									vmaFuncs.vkGetDeviceProcAddr                 = vkGetDeviceProcAddr;
-									vmaFuncs.vkGetPhysicalDeviceProperties       = vkGetPhysicalDeviceProperties;
-									vmaFuncs.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
-									vmaFuncs.vkAllocateMemory                    = vkAllocateMemory;
-									vmaFuncs.vkFreeMemory                        = vkFreeMemory;
-									vmaFuncs.vkMapMemory                         = vkMapMemory;
-									vmaFuncs.vkUnmapMemory                       = vkUnmapMemory;
-									vmaFuncs.vkFlushMappedMemoryRanges           = vkFlushMappedMemoryRanges;
-									vmaFuncs.vkInvalidateMappedMemoryRanges      = vkInvalidateMappedMemoryRanges;
-									vmaFuncs.vkBindBufferMemory                  = vkBindBufferMemory;
-									vmaFuncs.vkBindImageMemory                   = vkBindImageMemory;
-									vmaFuncs.vkGetBufferMemoryRequirements       = vkGetBufferMemoryRequirements;
-									vmaFuncs.vkGetImageMemoryRequirements        = vkGetImageMemoryRequirements;
-									vmaFuncs.vkCreateBuffer                      = vkCreateBuffer;
-									vmaFuncs.vkDestroyBuffer                     = vkDestroyBuffer;
-									vmaFuncs.vkCreateImage                       = vkCreateImage;
-									vmaFuncs.vkDestroyImage                      = vkDestroyImage;
-									vmaFuncs.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
+									// STAB.7 fix: VMA is disabled entirely. vmaCreateAllocator / vmaGetAllocatorInfo
+									// corrupt the C++ heap on this MSVC build (ABI/CRT mismatch), which later
+									// causes SEH 0xC0000005 in unrelated code (e.g. std::mutex::lock).
+									// All GPU subsystems already use raw Vulkan allocations, so VMA is not needed.
+									m_vmaAllocator = nullptr;
+									LOG_INFO(Render, "[Boot] VMA allocator SKIPPED (STAB.7 — all subsystems use raw Vulkan)");
 
-									//vmaFuncs.vkGetBufferMemoryRequirements2KHR       = vkGetBufferMemoryRequirements2;
-									//vmaFuncs.vkGetImageMemoryRequirements2KHR        = vkGetImageMemoryRequirements2;
-									//vmaFuncs.vkBindBufferMemory2KHR                  = vkBindBufferMemory2;
-									//vmaFuncs.vkBindImageMemory2KHR                   = vkBindImageMemory2;
-									//vmaFuncs.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2;
-									
-									VmaAllocatorCreateInfo vmaInfo{};
-									vmaInfo.physicalDevice   = m_vkDeviceContext.GetPhysicalDevice();
-									vmaInfo.device           = m_vkDeviceContext.GetDevice();
-									vmaInfo.instance         = m_vkInstance.GetHandle();
-									vmaInfo.vulkanApiVersion = VK_API_VERSION_1_0;
-									vmaInfo.pVulkanFunctions = &vmaFuncs;
-									if (vmaCreateAllocator(&vmaInfo, reinterpret_cast<VmaAllocator*>(&m_vmaAllocator)) != VK_SUCCESS)
 									{
-										LOG_ERROR(Render, "[Boot] VMA allocator creation failed — GPU memory unavailable");
-										}
-										else
-										{
-											LOG_INFO(Render, "[Boot] VMA allocator created OK");
-									}
-
-									// Vérification VmaAllocatorInfo
-									
-									if (m_vmaAllocator)
-									{
-										// Test raw Vulkan — vérifie que le device est fonctionnel
-										VkBufferCreateInfo testBuf{};
-										testBuf.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-										testBuf.size  = 64;
-										testBuf.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-										testBuf.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-										VkBuffer tmpBuf = VK_NULL_HANDLE;
-										VkResult testResult = vkCreateBuffer(m_vkDeviceContext.GetDevice(), &testBuf, nullptr, &tmpBuf);
-										if (tmpBuf != VK_NULL_HANDLE) vkDestroyBuffer(m_vkDeviceContext.GetDevice(), tmpBuf, nullptr);
-
-										// M10.4: réactivation du StagingAllocator avec budget streaming.
+										// M10.4: StagingAllocator with raw Vulkan (no VMA dependency).
 										const size_t stagingBudget = m_gpuUploadQueue.GetBudgetBytes();
-										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator, stagingBudget))
+										if (!m_stagingAllocator.Init(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), stagingBudget))
 										{
 											LOG_WARN(Render, "[Boot] StagingAllocator init FAILED (budget={} bytes) — streaming GPU uploads disabled", stagingBudget);
 										}
@@ -2083,11 +2035,7 @@ namespace engine
 			m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 			m_stagingAllocator.Destroy(m_vkDeviceContext.GetDevice());
 			engine::render::DestroyFrameResources(m_vkDeviceContext.GetDevice(), m_frameResources);
-			if (m_vmaAllocator)
-			{
-				vmaDestroyAllocator(reinterpret_cast<VmaAllocator>(m_vmaAllocator));
-				m_vmaAllocator = nullptr;
-			}
+			// VMA is disabled (STAB.7); m_vmaAllocator is always nullptr.
 		}
 		m_vkSwapchain.Destroy();
 		m_vkDeviceContext.Destroy();
@@ -2249,11 +2197,7 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
-			// DIAG ENG-UPD-PRE
-			LOG_WARN(Core, "[Engine] ENG-UPD-PRE calling authUi.Update frame={}", m_currentFrame);
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
-			// DIAG ENG-UPD-POST
-			LOG_WARN(Core, "[Engine] ENG-UPD-POST authUi.Update returned frame={}", m_currentFrame);
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();

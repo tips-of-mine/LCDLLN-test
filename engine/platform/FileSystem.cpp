@@ -3,8 +3,55 @@
 
 #include <fstream>
 
+#if defined(_WIN32)
+#include <Windows.h>
+#elif defined(__APPLE__)
+#include <climits>
+#include <mach-o/dyld.h>
+#endif
+
 namespace engine::platform
 {
+	namespace
+	{
+		std::filesystem::path GetExecutableDirectory()
+		{
+#if defined(_WIN32)
+			wchar_t buffer[MAX_PATH]{};
+			const DWORD len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+			if (len == 0)
+			{
+				return {};
+			}
+			return std::filesystem::path(buffer).parent_path();
+#elif defined(__linux__)
+			std::error_code ec;
+			const std::filesystem::path p = std::filesystem::weakly_canonical("/proc/self/exe", ec);
+			if (ec || p.empty())
+			{
+				return {};
+			}
+			return p.parent_path();
+#elif defined(__APPLE__)
+			char buf[PATH_MAX]{};
+			uint32_t size = sizeof(buf);
+			if (_NSGetExecutablePath(buf, &size) != 0)
+			{
+				return {};
+			}
+			std::error_code ec;
+			const std::filesystem::path p = std::filesystem::weakly_canonical(buf, ec);
+			if (ec || p.empty())
+			{
+				return {};
+			}
+			return p.parent_path();
+#else
+			return {};
+#endif
+		}
+	} // namespace
+
 	std::filesystem::path FileSystem::Join(std::string_view a, std::string_view b)
 	{
 		return std::filesystem::path(a) / std::filesystem::path(b);
@@ -33,12 +80,29 @@ namespace engine::platform
 		}
 
 		std::filesystem::path basePath(base);
-		if (!basePath.is_absolute())
+		if (basePath.is_absolute())
 		{
-			// Si le binaire est lancé depuis le projet, `external/` est relative au dossier courant.
-			basePath = std::filesystem::current_path() / basePath;
+			return basePath / std::filesystem::path(relativeExternalPath);
 		}
-		return basePath / std::filesystem::path(relativeExternalPath);
+
+		const std::filesystem::path tail = basePath / std::filesystem::path(relativeExternalPath);
+		// 1) Dossier courant (développement depuis la racine du dépôt).
+		const std::filesystem::path fromCwd = std::filesystem::current_path() / tail;
+		if (Exists(fromCwd))
+		{
+			return fromCwd;
+		}
+		// 2) À côté de l’exécutable (paquet build / install : CMake copie external/external_links.json).
+		const std::filesystem::path exeDir = GetExecutableDirectory();
+		if (!exeDir.empty())
+		{
+			const std::filesystem::path fromExe = exeDir / tail;
+			if (Exists(fromExe))
+			{
+				return fromExe;
+			}
+		}
+		return fromCwd;
 	}
 
 	bool FileSystem::Exists(const std::filesystem::path& path)

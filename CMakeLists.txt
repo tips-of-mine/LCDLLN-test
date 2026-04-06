@@ -366,6 +366,17 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   )
 endif()
 
+# Liens externes (URLs portail / status) — lu au runtime depuis external/ (voir FileSystem::ResolveExternalPath).
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+  add_custom_command(TARGET engine_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:engine_app>/external"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/external/external_links.json"
+            "$<TARGET_FILE_DIR:engine_app>/external/external_links.json"
+    COMMENT "Copie de external/external_links.json..."
+  )
+endif()
+
 if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
   add_custom_command(TARGET engine_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -385,6 +396,9 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
 endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   install(FILES "${CMAKE_SOURCE_DIR}/config.json" DESTINATION .)
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+  install(FILES "${CMAKE_SOURCE_DIR}/external/external_links.json" DESTINATION external)
 endif()
 
 # M19.2: Protocol v1 serialization unit tests

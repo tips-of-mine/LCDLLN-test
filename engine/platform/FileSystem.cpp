@@ -86,21 +86,32 @@ namespace engine::platform
 		}
 
 		const std::filesystem::path tail = basePath / std::filesystem::path(relativeExternalPath);
-		// 1) Dossier courant (développement depuis la racine du dépôt).
 		const std::filesystem::path fromCwd = std::filesystem::current_path() / tail;
-		if (Exists(fromCwd))
-		{
-			return fromCwd;
-		}
-		// 2) À côté de l’exécutable (paquet build / install : CMake copie external/external_links.json).
 		const std::filesystem::path exeDir = GetExecutableDirectory();
-		if (!exeDir.empty())
+		const std::filesystem::path fromExe = exeDir.empty() ? std::filesystem::path{} : (exeDir / tail);
+
+		const bool okCwd = Exists(fromCwd);
+		const bool okExe = !fromExe.empty() && Exists(fromExe);
+		if (okCwd && okExe)
 		{
-			const std::filesystem::path fromExe = exeDir / tail;
-			if (Exists(fromExe))
+			// Deux copies (ex. racine du dépôt + sortie CMake) : prendre la plus récente pour refléter la dernière édition.
+			std::error_code ecCwd;
+			std::error_code ecExe;
+			const auto tCwd = std::filesystem::last_write_time(fromCwd, ecCwd);
+			const auto tExe = std::filesystem::last_write_time(fromExe, ecExe);
+			if (!ecCwd && !ecExe && tExe > tCwd)
 			{
 				return fromExe;
 			}
+			return fromCwd;
+		}
+		if (okCwd)
+		{
+			return fromCwd;
+		}
+		if (okExe)
+		{
+			return fromExe;
 		}
 		return fromCwd;
 	}

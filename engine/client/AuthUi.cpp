@@ -222,16 +222,14 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
-		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
+		/// Table unique `external/external_links.json` (chemins résolus par FileSystem::ResolveExternalPath).
+		const engine::core::Config& ExternalLinksTable(const engine::core::Config& cfg)
 		{
-			// Le portail reset est un lien externe (hors du jeu).
-			// Le moteur lit d'abord une table de liens située dans le dossier `external/`.
-			// (si elle existe), pour permettre d’ajuster les URLs sans toucher au code.
-			static bool s_loaded = false;
+			static bool s_attempted = false;
 			static engine::core::Config s_externalLinksCfg;
-			if (!s_loaded)
+			if (!s_attempted)
 			{
-				s_loaded = true;
+				s_attempted = true;
 				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
 				if (engine::platform::FileSystem::Exists(linksPath))
 				{
@@ -241,46 +239,43 @@ namespace engine::client
 					}
 					else
 					{
-						LOG_WARN(Core, "[AuthUiPresenter] failed to load external_links ({})", linksPath.string());
+						LOG_WARN(Core, "[AuthUiPresenter] external_links parse failed ({}) — vérifiez le JSON (BOM UTF-8, virgules, guillemets).",
+							linksPath.string());
 					}
 				}
+				else
+				{
+					LOG_WARN(Core, "[AuthUiPresenter] external_links.json introuvable (chemin attendu : {}). "
+						"Placez le fichier sous external/ à la racine du dépôt ou à côté de l’exécutable après build.",
+						linksPath.string());
+				}
 			}
+			return s_externalLinksCfg;
+		}
 
+		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
+		{
+			// Le portail reset est un lien externe (hors du jeu).
+			// Le moteur lit d'abord une table de liens située dans le dossier `external/`.
+			// (si elle existe), pour permettre d’ajuster les URLs sans toucher au code.
 			constexpr std::string_view kKey = "client.web_portal_reset_url";
 			const std::string fallback = "http://127.0.0.1:3000/password-recovery";
-			if (s_externalLinksCfg.Has(kKey))
+			const engine::core::Config& ext = ExternalLinksTable(cfg);
+			if (ext.Has(kKey))
 			{
-				return s_externalLinksCfg.GetString(kKey, fallback);
+				return ext.GetString(kKey, fallback);
 			}
 			return cfg.GetString(kKey, fallback);
 		}
 
 		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
 		{
-			static bool s_loaded = false;
-			static engine::core::Config s_externalLinksCfg;
-			if (!s_loaded)
-			{
-				s_loaded = true;
-				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
-				if (engine::platform::FileSystem::Exists(linksPath))
-				{
-					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
-					{
-						LOG_INFO(Core, "[AuthUiPresenter] external_links loaded ({})", linksPath.string());
-					}
-					else
-					{
-						LOG_WARN(Core, "[AuthUiPresenter] failed to load external_links ({})", linksPath.string());
-					}
-				}
-			}
-
 			constexpr std::string_view kKey = "client.status_api_url";
 			const std::string fallback = "http://127.0.0.1:3000/status";
-			if (s_externalLinksCfg.Has(kKey))
+			const engine::core::Config& ext = ExternalLinksTable(cfg);
+			if (ext.Has(kKey))
 			{
-				return s_externalLinksCfg.GetString(kKey, fallback);
+				return ext.GetString(kKey, fallback);
 			}
 			return fallback;
 		}

@@ -464,7 +464,13 @@ namespace engine::core
 		// Default to JSON when extension is unknown.
 		std::stringstream ss;
 		ss << in.rdbuf();
-		const std::string text = ss.str();
+		std::string text = ss.str();
+		// BOM UTF-8 (souvent ajouté par Visual Studio / Notepad) : sinon le parseur échoue (racine non « { »).
+		if (text.size() >= 3u && static_cast<unsigned char>(text[0]) == 0xEFu && static_cast<unsigned char>(text[1]) == 0xBBu &&
+		    static_cast<unsigned char>(text[2]) == 0xBFu)
+		{
+			text.erase(0, 3);
+		}
 
 		JsonValue root;
 		JsonParser parser(text);

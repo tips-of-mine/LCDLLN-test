@@ -10,7 +10,7 @@ export function SiteHeader() {
     <header className="site">
       <Link href="/" className="logo">
         <span className="logo-dot" />
-        LCDLLN
+        Les Chroniques De La Lune Noire
       </Link>
 
       <button

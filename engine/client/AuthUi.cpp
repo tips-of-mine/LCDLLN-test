@@ -9,7 +9,9 @@
 #endif
 #include <winsock2.h>
 #include <windows.h>
+#include <winhttp.h>
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "winhttp.lib")
 #endif
 
 #include "engine/client/AuthUi.h"
@@ -26,9 +28,14 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <mutex>
 #include <thread>
+#include <vector>
+#if !defined(_WIN32)
+#include <array>
+#endif
 
 #if defined(_WIN32)
 #	include "engine/auth/Argon2Hash.h"
@@ -236,6 +243,354 @@ namespace engine::client
 		{
 			return std::string(kProductionStatusApiUrl);
 		}
+
+		struct StatusHttpResponse
+		{
+			uint32_t statusCode = 0;
+			std::string body;
+			std::string transportError;
+		};
+
+		static void LogStatusProbeBodyPreview(std::string_view phase, std::string_view body)
+		{
+			constexpr size_t kMaxPreview = 512u;
+			std::string preview;
+			preview.reserve(std::min(body.size(), kMaxPreview) + 8u);
+			for (size_t i = 0; i < body.size() && preview.size() < kMaxPreview; ++i)
+			{
+				const char c = body[i];
+				if (c == '\n' || c == '\r' || c == '\t')
+					preview.push_back(' ');
+				else
+					preview.push_back(c);
+			}
+			if (body.size() > kMaxPreview)
+				preview += "…";
+			LOG_INFO(Core, "[StatusProbe] {} — corps: {} octet(s), aperçu: \"{}\"", phase, body.size(), preview);
+		}
+
+		/// Parse le JSON de /status (clés plates via Config) et remplit \p cache. \return false si rien d'exploitable.
+		static bool ParseStatusProbeJsonBody(const std::string& body, AuthUiPresenter::StatusCache& cache, std::string& detailOut)
+		{
+			LOG_INFO(Core, "[StatusProbe] parse: début (entrée {} octet(s))", body.size());
+			if (body.empty())
+			{
+				detailOut = "corps HTTP vide";
+				LOG_WARN(Core, "[StatusProbe] parse: échec — {}", detailOut);
+				return false;
+			}
+			LogStatusProbeBodyPreview("parse", body);
+
+			try
+			{
+				const std::filesystem::path tmpPath =
+					std::filesystem::temp_directory_path() / "lcdlln_status_probe_tmp.json";
+				if (!engine::platform::FileSystem::WriteAllText(tmpPath, body))
+				{
+					detailOut = "écriture fichier temporaire JSON impossible";
+					LOG_WARN(Core, "[StatusProbe] parse: {}", detailOut);
+					return false;
+				}
+				LOG_INFO(Core, "[StatusProbe] parse: JSON écrit vers {}", tmpPath.string());
+
+				engine::core::Config statusCfg;
+				if (!statusCfg.LoadFromFile(tmpPath.string()))
+				{
+					detailOut = "LoadFromFile JSON a échoué (JSON invalide ?)";
+					LOG_WARN(Core, "[StatusProbe] parse: {}", detailOut);
+					return false;
+				}
+				LOG_INFO(Core, "[StatusProbe] parse: fichier chargé dans Config (clés aplaties) OK");
+
+				auto getBoolFirst = [&](std::initializer_list<std::string_view> keys, bool fallback) -> bool {
+					for (const auto& k : keys)
+					{
+						if (statusCfg.Has(k))
+						{
+							const bool v = statusCfg.GetBool(k, fallback);
+							LOG_INFO(Core, "[StatusProbe] parse: bool '{}' = {} (présent dans JSON)", k, v ? "true" : "false");
+							return v;
+						}
+					}
+					LOG_INFO(Core, "[StatusProbe] parse: aucune des clés bool demandées — fallback {}", fallback ? "true" : "false");
+					return fallback;
+				};
+
+				cache.authOk = getBoolFirst({ "auth.ok", "auth_ok", "authentication.ok", "authentication_ok" }, true);
+				cache.masterOk = getBoolFirst({ "master.ok", "master_ok", "game.ok", "game_ok" }, true);
+
+				auto pickServerPrefix = [&](std::initializer_list<std::string_view> prefixes) -> std::string {
+					for (const auto& p : prefixes)
+					{
+						const std::string idx0 = std::string(p) + "[0].players";
+						if (statusCfg.Has(idx0))
+						{
+							LOG_INFO(Core, "[StatusProbe] parse: préfixe serveurs choisi '{}' (indice players[0])", p);
+							return std::string(p);
+						}
+						const std::string idx0Ok = std::string(p) + "[0].ok";
+						if (statusCfg.Has(idx0Ok))
+						{
+							LOG_INFO(Core, "[StatusProbe] parse: préfixe serveurs choisi '{}' (indice ok[0])", p);
+							return std::string(p);
+						}
+						const std::string idx0Name = std::string(p) + "[0].name";
+						if (statusCfg.Has(idx0Name))
+						{
+							LOG_INFO(Core, "[StatusProbe] parse: préfixe serveurs choisi '{}' (indice name[0])", p);
+							return std::string(p);
+						}
+					}
+					LOG_INFO(Core, "[StatusProbe] parse: aucun préfixe serveur reconnu (game_servers / servers / gameServers)");
+					return {};
+				};
+
+				const std::string serverPrefix = pickServerPrefix({ "game_servers", "servers", "gameServers" });
+				cache.servers.clear();
+				cache.totalPlayers = 0;
+
+				if (!serverPrefix.empty())
+				{
+					for (uint32_t i = 0; i < 8u; ++i)
+					{
+						const std::string base = serverPrefix + "[" + std::to_string(i) + "].";
+						const std::string keyPlayers = base + "players";
+						const std::string keyOk = base + "ok";
+						const std::string keyName = base + "name";
+
+						if (!statusCfg.Has(keyPlayers) && !statusCfg.Has(keyOk) && !statusCfg.Has(keyName))
+							break;
+
+						AuthUiPresenter::GameServerStatus s;
+						s.name = statusCfg.GetString(keyName, std::string("server") + std::to_string(i));
+						s.ok = statusCfg.GetBool(keyOk, true);
+						s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
+						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' ok={} players={}", i, s.name, s.ok ? "true" : "false",
+							s.players);
+						cache.servers.push_back(std::move(s));
+					}
+				}
+
+				for (const auto& s : cache.servers)
+					cache.totalPlayers += s.players;
+
+				const bool hasFlags = statusCfg.Has("auth.ok") || statusCfg.Has("auth_ok") || statusCfg.Has("authentication.ok")
+					|| statusCfg.Has("authentication_ok") || statusCfg.Has("master.ok") || statusCfg.Has("master_ok")
+					|| statusCfg.Has("game.ok") || statusCfg.Has("game_ok");
+				const bool hasServers = !cache.servers.empty();
+
+				if (!hasFlags && !hasServers)
+				{
+					detailOut = "JSON sans indicateurs auth/master ni liste de serveurs reconnue";
+					LOG_WARN(Core, "[StatusProbe] parse: {}", detailOut);
+					return false;
+				}
+
+				LOG_INFO(Core, "[StatusProbe] parse: synthèse — authOk={} masterOk={} shards={} totalJoueurs={} (flags_explicites={})",
+					cache.authOk ? "true" : "false", cache.masterOk ? "true" : "false", cache.servers.size(), cache.totalPlayers,
+					hasFlags ? "oui" : "non");
+				detailOut = std::string("Status OK — ") + std::to_string(cache.servers.size()) + " shard(s), totalPlayers="
+					+ std::to_string(cache.totalPlayers);
+				return true;
+			}
+			catch (const std::exception& ex)
+			{
+				detailOut = std::string("exception parse: ") + ex.what();
+				LOG_WARN(Core, "[StatusProbe] parse: {}", detailOut);
+				return false;
+			}
+			catch (...)
+			{
+				detailOut = "exception parse inconnue";
+				LOG_WARN(Core, "[StatusProbe] parse: {}", detailOut);
+				return false;
+			}
+		}
+
+#if defined(_WIN32)
+		static StatusHttpResponse HttpGetStatusUrlWin32(std::string_view url, uint32_t timeoutMs)
+		{
+			StatusHttpResponse resp{};
+			LOG_INFO(Core, "[StatusProbe] WinHTTP: requête GET, timeout_ms={}", timeoutMs);
+
+			auto utf8ToWide = [](std::string_view s) -> std::wstring {
+				if (s.empty())
+					return {};
+				const int needed = MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), nullptr, 0);
+				if (needed <= 0)
+					return {};
+				std::wstring out(static_cast<size_t>(needed), L'\0');
+				MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), out.data(), needed);
+				return out;
+			};
+
+			const std::wstring urlW = utf8ToWide(url);
+			if (urlW.empty())
+			{
+				resp.transportError = "encodage URL UTF-8 → wide invalide";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
+				return resp;
+			}
+
+			URL_COMPONENTS uc{};
+			uc.dwStructSize = sizeof(uc);
+			wchar_t hostBuf[512]{};
+			wchar_t pathBuf[1024]{};
+			wchar_t extraBuf[1024]{};
+			uc.lpszHostName = hostBuf;
+			uc.dwHostNameLength = static_cast<DWORD>(sizeof(hostBuf) / sizeof(hostBuf[0]));
+			uc.lpszUrlPath = pathBuf;
+			uc.dwUrlPathLength = static_cast<DWORD>(sizeof(pathBuf) / sizeof(pathBuf[0]));
+			uc.lpszExtraInfo = extraBuf;
+			uc.dwExtraInfoLength = static_cast<DWORD>(sizeof(extraBuf) / sizeof(extraBuf[0]));
+
+			if (!WinHttpCrackUrl(urlW.c_str(), 0, 0, &uc))
+			{
+				resp.transportError = "WinHttpCrackUrl a échoué";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				return resp;
+			}
+
+			const std::wstring host(uc.lpszHostName, uc.dwHostNameLength);
+			const std::wstring path(uc.lpszUrlPath, uc.dwUrlPathLength);
+			const std::wstring extra(uc.lpszExtraInfo, uc.dwExtraInfoLength);
+			const std::wstring fullPath = path + extra;
+			const bool isHttps = uc.nScheme == INTERNET_SCHEME_HTTPS;
+			LOG_INFO(Core, "[StatusProbe] WinHTTP: port={} https={} (URL déjà validée par WinHttpCrackUrl)", static_cast<unsigned>(uc.nPort),
+				isHttps ? "oui" : "non");
+
+			HINTERNET hSession = WinHttpOpen(L"LCDLLN", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+			if (!hSession)
+			{
+				resp.transportError = "WinHttpOpen a échoué";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				return resp;
+			}
+
+			HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), uc.nPort, 0);
+			if (!hConnect)
+			{
+				resp.transportError = "WinHttpConnect a échoué";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				WinHttpCloseHandle(hSession);
+				return resp;
+			}
+
+			HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", fullPath.c_str(), nullptr, WINHTTP_NO_REFERER,
+				WINHTTP_DEFAULT_ACCEPT_TYPES, isHttps ? WINHTTP_FLAG_SECURE : 0);
+			if (!hRequest)
+			{
+				resp.transportError = "WinHttpOpenRequest a échoué";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				WinHttpCloseHandle(hConnect);
+				WinHttpCloseHandle(hSession);
+				return resp;
+			}
+
+			WinHttpSetTimeouts(hRequest, 10000u, 10000u, timeoutMs, timeoutMs);
+			LOG_INFO(Core, "[StatusProbe] WinHTTP: envoi de la requête…");
+
+			if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
+			{
+				resp.transportError = "WinHttpSendRequest a échoué";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				WinHttpCloseHandle(hRequest);
+				WinHttpCloseHandle(hConnect);
+				WinHttpCloseHandle(hSession);
+				return resp;
+			}
+
+			if (!WinHttpReceiveResponse(hRequest, nullptr))
+			{
+				resp.transportError = "WinHttpReceiveResponse a échoué";
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				WinHttpCloseHandle(hRequest);
+				WinHttpCloseHandle(hConnect);
+				WinHttpCloseHandle(hSession);
+				return resp;
+			}
+
+			DWORD statusCode = 0;
+			DWORD statusCodeLen = sizeof(statusCode);
+			WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, nullptr, &statusCode, &statusCodeLen,
+				nullptr);
+			resp.statusCode = statusCode;
+			LOG_INFO(Core, "[StatusProbe] WinHTTP: en-têtes reçus — code HTTP {}", resp.statusCode);
+
+			std::string body;
+			for (;;)
+			{
+				DWORD available = 0;
+				if (!WinHttpQueryDataAvailable(hRequest, &available))
+				{
+					LOG_WARN(Core, "[StatusProbe] WinHTTP: WinHttpQueryDataAvailable a échoué (GetLastError={})", GetLastError());
+					break;
+				}
+				if (available == 0)
+					break;
+				std::vector<char> buf(available);
+				DWORD read = 0;
+				if (!WinHttpReadData(hRequest, buf.data(), available, &read))
+				{
+					LOG_WARN(Core, "[StatusProbe] WinHTTP: WinHttpReadData a échoué (GetLastError={})", GetLastError());
+					break;
+				}
+				body.append(buf.data(), static_cast<size_t>(read));
+			}
+			resp.body = std::move(body);
+			LOG_INFO(Core, "[StatusProbe] WinHTTP: lecture corps terminée — {} octet(s)", resp.body.size());
+
+			WinHttpCloseHandle(hRequest);
+			WinHttpCloseHandle(hConnect);
+			WinHttpCloseHandle(hSession);
+			return resp;
+		}
+#else
+		/// GET HTTPS via sous-processus \c curl (doit être dans le \c PATH sur Linux/macOS CI).
+		static StatusHttpResponse HttpGetStatusUrlCurl(std::string_view url, uint32_t timeoutMs)
+		{
+			StatusHttpResponse resp{};
+			const unsigned sec = std::max(1u, (timeoutMs + 999u) / 1000u);
+			const auto bodyPath = std::filesystem::temp_directory_path() / "lcdlln_status_probe_curl_body.json";
+			std::error_code ec;
+			std::filesystem::remove(bodyPath, ec);
+
+			std::string cmd = "curl -sS --max-time " + std::to_string(sec) + " -o \"" + bodyPath.string() + "\" -w \"%{http_code}\" '"
+				+ std::string(url) + "'";
+			LOG_INFO(Core, "[StatusProbe] curl: commande (timeout_s={}) — {}", sec, cmd);
+
+			FILE* pipe = popen(cmd.c_str(), "r");
+			if (!pipe)
+			{
+				resp.transportError = "popen(curl) a échoué — curl est-il installé ?";
+				LOG_WARN(Core, "[StatusProbe] {}", resp.transportError);
+				return resp;
+			}
+			std::string codeDigits;
+			std::array<char, 256> buf{};
+			while (fgets(buf.data(), static_cast<int>(buf.size()), pipe) != nullptr)
+			{
+				codeDigits += buf.data();
+			}
+			const int pcloseRc = pclose(pipe);
+			while (!codeDigits.empty() && (codeDigits.back() == '\n' || codeDigits.back() == '\r'))
+				codeDigits.pop_back();
+
+			LOG_INFO(Core, "[StatusProbe] curl: pclose rc={} brut stdout='{}'", pcloseRc, codeDigits);
+			if (!codeDigits.empty())
+				resp.statusCode = static_cast<uint32_t>(std::strtoul(codeDigits.c_str(), nullptr, 10));
+
+			if (!std::filesystem::exists(bodyPath))
+			{
+				resp.transportError = "fichier corps curl absent";
+				LOG_WARN(Core, "[StatusProbe] curl: {}", resp.transportError);
+				return resp;
+			}
+			resp.body = engine::platform::FileSystem::ReadAllText(bodyPath);
+			LOG_INFO(Core, "[StatusProbe] curl: corps lu — {} octet(s), code HTTP {}", resp.body.size(), resp.statusCode);
+			return resp;
+		}
+#endif
 
 		bool IsAsciiDigits(std::string_view text)
 		{
@@ -660,6 +1015,7 @@ namespace {
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
 		// URL de sonde "status" (voir kProductionStatusApiUrl) au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
+		LOG_INFO(Core, "[StatusProbe] Init: URL statut maître = '{}'", m_masterAvailabilityUrl);
 		m_statusProbeInitialized = false;
 		m_statusProbeCompletedOnce = false;
 		m_statusPollTimer = 0.f;
@@ -1103,7 +1459,11 @@ namespace {
 			m_authAvailabilityChecking = false;
 			m_authAvailabilityPollTimer = 0.f;
 			m_authLogoRotationRad = 0.f;
-			LOG_INFO(Core, "[AuthUiPresenter] Status probe finished (success={})", (int)copy.success);
+			LOG_INFO(Core,
+				"[StatusProbe] thread principal: résultat consommé — success={} authOk={} masterOk={} shards={} totalJoueurs={} "
+				"infoMessage='{}' workerMsg='{}' → UI: bannière indisponible si authOk=false",
+				copy.success ? 1 : 0, m_statusCache.authOk ? 1 : 0, m_statusCache.masterOk ? 1 : 0, m_statusCache.servers.size(),
+				m_statusCache.totalPlayers, m_statusCache.infoMessage, copy.message);
 			return;
 		}
 
@@ -2094,371 +2454,137 @@ namespace {
 
 	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config& cfg)
 	{
-		LOG_WARN(Core, "[AuthUiPresenter] SPW-1 StartStatusProbeWorker enter, url='{}'", m_masterAvailabilityUrl);
+		LOG_INFO(Core, "[StatusProbe] démarrage worker — url='{}'", m_masterAvailabilityUrl);
 		JoinWorker();
-		LOG_WARN(Core, "[AuthUiPresenter] SPW-2 JoinWorker done");
 
 		const std::string url = m_masterAvailabilityUrl;
 		m_pendingAsyncKind = AsyncKind::StatusProbe;
 		m_asyncResult = {};
-		LOG_WARN(Core, "[AuthUiPresenter] SPW-3 asyncResult reset");
+		LOG_INFO(Core, "[StatusProbe] état async réinitialisé, kind=StatusProbe");
 
-#if defined(_WIN32)
-		// Simulation values when the real status endpoint isn't available.
 		auto fillSimulatedStatus = [&](AsyncResult& out, std::string_view reason)
 		{
 			out.ready = true;
-			out.success = true; // Le faux mode “simulateur” doit ressembler à un service fonctionnel.
+			out.success = true;
 			out.statusCache = {};
 			out.statusCache.authOk = true;
 			out.statusCache.masterOk = true;
 			out.statusCache.totalPlayers = 0;
 			out.statusCache.servers.clear();
-
 			out.statusCache.servers.push_back({ "EU-1", true, 128u });
 			out.statusCache.servers.push_back({ "US-1", true, 74u });
 			out.statusCache.servers.push_back({ "AS-1", true, 19u });
 			for (const auto& s : out.statusCache.servers)
 				out.statusCache.totalPlayers += s.players;
-
 			out.message = std::string("Status probe simulated: ") + std::string(reason);
 		};
 
-		LOG_WARN(Core, "[AuthUiPresenter] SPW-4 url empty={}", (int)url.empty());
 		if (url.empty())
 		{
-			LOG_WARN(Core, "[AuthUiPresenter] SPW-4a url empty path — locking mutex synchronously");
+			LOG_WARN(Core, "[StatusProbe] URL vide — utilisation du jeu de données simulé (dev)");
 			AsyncResult local{};
 			fillSimulatedStatus(local, "empty status url");
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
-			LOG_WARN(Core, "[AuthUiPresenter] SPW-4b url empty path done");
 			return;
 		}
 
-		const uint32_t timeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.status_probe_timeout_ms", 1500), 300, 5000));
-		#if 0
-		m_worker = std::thread([this, url, timeoutMs, fillSimulatedStatus]() mutable {
+		const uint32_t timeoutMs =
+			static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.status_probe_timeout_ms", 1500), 300, 5000));
+		LOG_INFO(Core, "[StatusProbe] timeout HTTP configuré: {} ms", timeoutMs);
+
+		m_worker = std::thread([this, url, timeoutMs]() {
+			LOG_INFO(Core, "[StatusProbe] thread réseau: GET en cours vers {}", url);
 			AsyncResult local{};
-
-			auto utf8ToWide = [](std::string_view s) -> std::wstring {
-				if (s.empty())
-					return {};
-				const int needed = MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), nullptr, 0);
-				if (needed <= 0)
-					return {};
-				std::wstring out(static_cast<size_t>(needed), L'\0');
-				MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), out.data(), needed);
-				return out;
-			};
-
-			struct HttpResp
-			{
-				DWORD statusCode = 0;
-				std::string body;
-				std::string error;
-			};
-
-			auto httpGet = [&](std::string_view inUrl) -> HttpResp {
-				HttpResp resp{};
-				const std::wstring urlW = utf8ToWide(inUrl);
-				if (urlW.empty())
-				{
-					resp.error = "bad url encoding";
-					return resp;
-				}
-
-				URL_COMPONENTS uc{};
-				uc.dwStructSize = sizeof(uc);
-
-				wchar_t hostBuf[512]{};
-				wchar_t pathBuf[1024]{};
-				wchar_t extraBuf[1024]{};
-
-				uc.lpszHostName = hostBuf;
-				uc.dwHostNameLength = static_cast<DWORD>(sizeof(hostBuf) / sizeof(hostBuf[0]));
-				uc.lpszUrlPath = pathBuf;
-				uc.dwUrlPathLength = static_cast<DWORD>(sizeof(pathBuf) / sizeof(pathBuf[0]));
-				uc.lpszExtraInfo = extraBuf;
-				uc.dwExtraInfoLength = static_cast<DWORD>(sizeof(extraBuf) / sizeof(extraBuf[0]));
-
-				if (!WinHttpCrackUrl(urlW.c_str(), 0, 0, &uc))
-				{
-					resp.error = "WinHttpCrackUrl failed";
-					return resp;
-				}
-
-				const std::wstring host(uc.lpszHostName, uc.dwHostNameLength);
-				const std::wstring path(uc.lpszUrlPath, uc.dwUrlPathLength);
-				const std::wstring extra(uc.lpszExtraInfo, uc.dwExtraInfoLength);
-				const std::wstring fullPath = path + extra;
-
-				const bool isHttps = uc.nScheme == INTERNET_SCHEME_HTTPS;
-
-				HINTERNET hSession = WinHttpOpen(L"LCDLLN", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-				if (!hSession)
-				{
-					resp.error = "WinHttpOpen failed";
-					return resp;
-				}
-
-				HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), uc.nPort, 0);
-				if (!hConnect)
-				{
-					resp.error = "WinHttpConnect failed";
-					WinHttpCloseHandle(hSession);
-					return resp;
-				}
-
-				HINTERNET hRequest = WinHttpOpenRequest(
-					hConnect,
-					L"GET",
-					fullPath.c_str(),
-					nullptr,
-					WINHTTP_NO_REFERER,
-					WINHTTP_DEFAULT_ACCEPT_TYPES,
-					isHttps ? WINHTTP_FLAG_SECURE : 0);
-				if (!hRequest)
-				{
-					resp.error = "WinHttpOpenRequest failed";
-					WinHttpCloseHandle(hConnect);
-					WinHttpCloseHandle(hSession);
-					return resp;
-				}
-
-				WinHttpSetTimeouts(hRequest, 10000u, 10000u, timeoutMs, timeoutMs);
-
-				BOOL sent = WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
-				if (!sent)
-				{
-					resp.error = "WinHttpSendRequest failed";
-					WinHttpCloseHandle(hRequest);
-					WinHttpCloseHandle(hConnect);
-					WinHttpCloseHandle(hSession);
-					return resp;
-				}
-
-				BOOL received = WinHttpReceiveResponse(hRequest, nullptr);
-				if (!received)
-				{
-					resp.error = "WinHttpReceiveResponse failed";
-					WinHttpCloseHandle(hRequest);
-					WinHttpCloseHandle(hConnect);
-					WinHttpCloseHandle(hSession);
-					return resp;
-				}
-
-				DWORD statusCode = 0;
-				DWORD statusCodeLen = sizeof(statusCode);
-				WinHttpQueryHeaders(hRequest,
-					WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-					nullptr,
-					&statusCode,
-					&statusCodeLen,
-					nullptr);
-				resp.statusCode = statusCode;
-
-				// Lire le body complet (si présent).
-				std::string body;
-				for (;;)
-				{
-					DWORD available = 0;
-					if (!WinHttpQueryDataAvailable(hRequest, &available))
-						break;
-					if (available == 0)
-						break;
-
-					std::vector<char> buf(available);
-					DWORD read = 0;
-					if (!WinHttpReadData(hRequest, buf.data(), available, &read))
-						break;
-					body.append(buf.data(), static_cast<size_t>(read));
-				}
-				resp.body = std::move(body);
-
-				WinHttpCloseHandle(hRequest);
-				WinHttpCloseHandle(hConnect);
-				WinHttpCloseHandle(hSession);
-				return resp;
-			};
-
-			const HttpResp resp = httpGet(url);
-			if (resp.statusCode >= 200u && resp.statusCode < 300u && !resp.body.empty())
-			{
-				// Parse la réponse JSON via engine::core::Config (en l'écrivant temporairement sur disque).
-				try
-				{
-					const std::filesystem::path tmpPath =
-						std::filesystem::temp_directory_path() / "lcdlln_status_probe_tmp.json";
-					(void)engine::platform::FileSystem::WriteAllText(tmpPath, resp.body);
-
-					engine::core::Config statusCfg;
-					if (statusCfg.LoadFromFile(tmpPath.string()))
-					{
-						auto getBoolFirst = [&](std::initializer_list<std::string_view> keys, bool fallback) -> bool {
-							for (const auto& k : keys)
-							{
-								if (statusCfg.Has(k))
-									return statusCfg.GetBool(k, fallback);
-							}
-							return fallback;
-						};
-
-						auto getIntFirst = [&](std::initializer_list<std::string_view> keys, int64_t fallback) -> int64_t {
-							for (const auto& k : keys)
-							{
-								if (statusCfg.Has(k))
-									return statusCfg.GetInt(k, fallback);
-							}
-							return fallback;
-						};
-
-						local.statusCache.authOk = getBoolFirst({ "auth.ok", "auth_ok", "authentication.ok", "authentication_ok" }, true);
-						local.statusCache.masterOk = getBoolFirst({ "master.ok", "master_ok", "game.ok", "game_ok" }, true);
-
-						auto pickServerPrefix = [&](std::initializer_list<std::string_view> prefixes) -> std::string {
-							for (const auto& p : prefixes)
-							{
-								const std::string idx0 = std::string(p) + "[0].players";
-								if (statusCfg.Has(idx0))
-									return std::string(p);
-								const std::string idx0Ok = std::string(p) + "[0].ok";
-								if (statusCfg.Has(idx0Ok))
-									return std::string(p);
-								const std::string idx0Name = std::string(p) + "[0].name";
-								if (statusCfg.Has(idx0Name))
-									return std::string(p);
-							}
-							return {};
-						};
-
-						const std::string serverPrefix = pickServerPrefix({ "game_servers", "servers", "gameServers" });
-						local.statusCache.servers.clear();
-						local.statusCache.totalPlayers = 0;
-
-						if (!serverPrefix.empty())
-						{
-							for (uint32_t i = 0; i < 8u; ++i)
-							{
-								const std::string base = serverPrefix + "[" + std::to_string(i) + "].";
-								const std::string keyPlayers = base + "players";
-								const std::string keyOk = base + "ok";
-								const std::string keyName = base + "name";
-
-								if (!statusCfg.Has(keyPlayers) && !statusCfg.Has(keyOk) && !statusCfg.Has(keyName))
-									break;
-
-								engine::client::AuthUiPresenter::GameServerStatus s;
-								s.name = statusCfg.GetString(keyName, std::string("server") + std::to_string(i));
-								s.ok = statusCfg.GetBool(keyOk, true);
-								s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
-								local.statusCache.servers.push_back(std::move(s));
-							}
-						}
-
-						if (!local.statusCache.servers.empty())
-						{
-							for (const auto& s : local.statusCache.servers)
-								local.statusCache.totalPlayers += s.players;
-							local.ready = true;
-							local.success = true;
-							local.message = "Status probe OK (real endpoint)";
-							{
-								std::lock_guard<std::mutex> lock(*m_asyncMutex);
-								m_asyncResult = local;
-							}
-							return;
-						}
-					}
-				}
-				catch (...)
-				{
-					// On retombe sur la simulation.
-				}
-			}
-
-			// Endpoint indisponible ou parsing impossible => serveurs en maintenance.
-			local.ready = true;
-			local.success = false;
-			local.statusCache = {};
-			local.statusCache.authOk = false;
-			local.statusCache.masterOk = false;
-			local.statusCache.infoMessage = resp.error.empty() ? "unreachable" : resp.error;
-			local.message = resp.error.empty() ? "endpoint unreachable or invalid response" : resp.error;
-			{
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-			}
-			return;
-		});
-		#endif
-
-		// WinHTTP is temporarily disabled to keep Windows builds stable.
-		// We still simulate a functional status response for UI/rotation purposes.
-		LOG_WARN(Core, "[AuthUiPresenter] SPW-5 spawning simulation worker thread (sleeps {}ms)", std::min<uint32_t>(timeoutMs, 300u));
-		m_worker = std::thread([this, timeoutMs, fillSimulatedStatus]() mutable {
-			LOG_WARN(Core, "[AuthUiPresenter] WKR-1 worker thread started");
-			AsyncResult local{};
-			LOG_WARN(Core, "[AuthUiPresenter] WKR-2 sleeping {}ms", std::min<uint32_t>(timeoutMs, 300u));
-			std::this_thread::sleep_for(std::chrono::milliseconds(std::min<uint32_t>(timeoutMs, 300u)));
-			LOG_WARN(Core, "[AuthUiPresenter] WKR-3 sleep done, filling result");
-			fillSimulatedStatus(local, "status probe simulated on Windows (HTTP probe disabled)");
-			LOG_WARN(Core, "[AuthUiPresenter] WKR-4 result filled, acquiring mutex ptr={}", static_cast<const void*>(m_asyncMutex.get()));
-			{
-				// Dump mutex bytes from worker thread before locking
-				{
-					const unsigned char* raw = reinterpret_cast<const unsigned char*>(m_asyncMutex.get());
-					uint64_t w0 = 0, w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-					if constexpr (sizeof(std::mutex) >= 8)  std::memcpy(&w0, raw +  0, 8);
-					if constexpr (sizeof(std::mutex) >= 16) std::memcpy(&w1, raw +  8, 8);
-					if constexpr (sizeof(std::mutex) >= 24) std::memcpy(&w2, raw + 16, 8);
-					if constexpr (sizeof(std::mutex) >= 32) std::memcpy(&w3, raw + 24, 8);
-					if constexpr (sizeof(std::mutex) >= 40) std::memcpy(&w4, raw + 32, 8);
-					LOG_WARN(Core, "[AuthUiPresenter] WKR-4b mutex [0-7]=0x{:016X} [8-15]=0x{:016X} [16-23]=0x{:016X} [24-31]=0x{:016X} [32-39]=0x{:016X}", w0, w1, w2, w3, w4);
-				}
 #if defined(_WIN32)
-				// Use SEH helper (C2712: __try cannot be in lambda with C++ unwinding).
+			const StatusHttpResponse resp = HttpGetStatusUrlWin32(url, timeoutMs);
+#else
+			const StatusHttpResponse resp = HttpGetStatusUrlCurl(url, timeoutMs);
+#endif
+
+			auto publishFailure = [&](std::string_view userMessage, std::string_view transportDetail) {
+				local.ready = true;
+				local.success = false;
+				local.statusCache = {};
+				local.statusCache.authOk = false;
+				local.statusCache.masterOk = false;
+				const std::string detail = std::string(transportDetail);
+				local.statusCache.infoMessage = detail.empty() ? std::string(userMessage) : detail;
+				local.message = std::string(userMessage);
+				LOG_WARN(Core, "[StatusProbe] échec — msg='{}' transport='{}'", userMessage, detail);
+#if defined(_WIN32)
 				const auto wkrSeh = TryMutexLock(m_asyncMutex.get());
 				if (wkrSeh.ok)
 				{
 					m_asyncResult = local;
 					m_asyncMutex->unlock();
-					LOG_WARN(Core, "[AuthUiPresenter] WKR-5 mutex released OK");
 				}
 				else
 				{
-					LOG_ERROR(Core, "[AuthUiPresenter] WKR-SEH exception code=0x{:08X} in worker mutex->lock()", wkrSeh.code);
+					LOG_ERROR(Core, "[StatusProbe] mutex SEH 0x{:08X} lors de l'écriture échec", wkrSeh.code);
 				}
 #else
 				std::lock_guard<std::mutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
-				LOG_WARN(Core, "[AuthUiPresenter] WKR-5 result stored OK");
 #endif
+			};
+
+			if (!resp.transportError.empty())
+			{
+				publishFailure("erreur transport HTTP", resp.transportError);
+				return;
 			}
-			LOG_WARN(Core, "[AuthUiPresenter] WKR-6 worker thread exiting");
-		});
-		LOG_WARN(Core, "[AuthUiPresenter] SPW-6 worker thread object created, joinable={}", (int)m_worker.joinable());
-#else
-		// Sur les plateformes non-Windows, le probe n'est pas implémenté.
-		m_worker = std::thread([this]() {
-			AsyncResult local{};
+
+			LOG_INFO(Core, "[StatusProbe] réponse brute: code HTTP {} — {} octet(s)", resp.statusCode, resp.body.size());
+
+			if (resp.statusCode < 200u || resp.statusCode >= 300u)
+			{
+				publishFailure("code HTTP hors plage 2xx", std::to_string(resp.statusCode));
+				return;
+			}
+
+			if (resp.body.empty())
+			{
+				publishFailure("corps HTTP vide", {});
+				return;
+			}
+
+			std::string parseDetail;
+			if (!ParseStatusProbeJsonBody(resp.body, local.statusCache, parseDetail))
+			{
+				publishFailure(parseDetail, {});
+				return;
+			}
+
 			local.ready = true;
 			local.success = true;
-			local.statusCache = {};
-			local.statusCache.authOk = true;
-			local.statusCache.masterOk = true;
-			local.statusCache.servers = {
-				{ "EU-1", true, 128u },
-				{ "US-1", true, 74u },
-				{ "AS-1", true, 19u }
-			};
-			for (const auto& s : local.statusCache.servers)
-				local.statusCache.totalPlayers += s.players;
-			local.message = "Status probe simulated on non-Windows platform.";
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
-			m_asyncResult = local;
-		});
+			local.message = parseDetail;
+			LOG_INFO(Core,
+				"[StatusProbe] succès — authOk={} masterOk={} shards={} totalJoueurs={} message='{}'",
+				local.statusCache.authOk ? "oui" : "non", local.statusCache.masterOk ? "oui" : "non", local.statusCache.servers.size(),
+				local.statusCache.totalPlayers, local.message);
+
+#if defined(_WIN32)
+			const auto wkrSehOk = TryMutexLock(m_asyncMutex.get());
+			if (wkrSehOk.ok)
+			{
+				m_asyncResult = local;
+				m_asyncMutex->unlock();
+				LOG_INFO(Core, "[StatusProbe] résultat publié (mutex), prêt pour PollAsyncResult");
+			}
+			else
+			{
+				LOG_ERROR(Core, "[StatusProbe] mutex SEH 0x{:08X} lors de l'écriture succès", wkrSehOk.code);
+			}
+#else
+			{
+				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				LOG_INFO(Core, "[StatusProbe] résultat publié (mutex), prêt pour PollAsyncResult");
+			}
 #endif
+		});
+		LOG_INFO(Core, "[StatusProbe] worker std::thread créé, joinable={}", m_worker.joinable() ? 1 : 0);
 	}
 
 	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
@@ -2778,6 +2904,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			// Démarrage immédiat dès le début de l'écran d'authentification, puis toutes les 2 minutes.
 			if (!m_statusProbeInitialized && !m_worker.joinable())
 			{
+				LOG_INFO(Core, "[StatusProbe] Update: première sonde planifiée (écran auth)");
 				StartStatusProbeWorker(cfg);
 				m_statusProbeInitialized = true;
 				m_statusPollTimer = 0.f;
@@ -2787,6 +2914,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_statusPollTimer += deltaSeconds;
 				if (m_statusPollTimer >= kStatusProbeIntervalSeconds)
 				{
+					LOG_INFO(Core, "[StatusProbe] Update: rafraîchissement périodique (timer ≥ {} s)", kStatusProbeIntervalSeconds);
 					StartStatusProbeWorker(cfg);
 					m_statusPollTimer = 0.f;
 				}

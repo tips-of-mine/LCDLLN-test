@@ -53,6 +53,11 @@ namespace engine::client
 		// Résolu par Window::ResolveUiImagePath : aussi sous game/data/ (voir FileSystem::ResolveContentPath).
 		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
 
+		// URLs production (identiques à external/external_links.json) — embarquées pour valider portail reset + sonde statut.
+		constexpr std::string_view kProductionWebPortalResetUrl =
+			"https://lcdlln-portal.tips-of-mine.com/password-recovery";
+		constexpr std::string_view kProductionStatusApiUrl = "https://lcdlln-master.tips-of-mine.com/status";
+
 		std::string JsonBool(bool value)
 		{
 			return value ? "true" : "false";
@@ -222,67 +227,14 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
-		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
+		std::string ResolvePasswordRecoveryUrl([[maybe_unused]] const engine::core::Config& cfg)
 		{
-			// Le portail reset est un lien externe (hors du jeu).
-			// Le moteur lit d'abord une table de liens située dans le dossier `external/`.
-			// (si elle existe), pour permettre d’ajuster les URLs sans toucher au code.
-			static bool s_loaded = false;
-			static engine::core::Config s_externalLinksCfg;
-			if (!s_loaded)
-			{
-				s_loaded = true;
-				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
-				if (engine::platform::FileSystem::Exists(linksPath))
-				{
-					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
-					{
-						LOG_INFO(Core, "[AuthUiPresenter] external_links loaded ({})", linksPath.string());
-					}
-					else
-					{
-						LOG_WARN(Core, "[AuthUiPresenter] failed to load external_links ({})", linksPath.string());
-					}
-				}
-			}
-
-			constexpr std::string_view kKey = "client.web_portal_reset_url";
-			const std::string fallback = "http://127.0.0.1:3000/password-recovery";
-			if (s_externalLinksCfg.Has(kKey))
-			{
-				return s_externalLinksCfg.GetString(kKey, fallback);
-			}
-			return cfg.GetString(kKey, fallback);
+			return std::string(kProductionWebPortalResetUrl);
 		}
 
-		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
+		std::string ResolveStatusApiUrl([[maybe_unused]] const engine::core::Config& cfg)
 		{
-			static bool s_loaded = false;
-			static engine::core::Config s_externalLinksCfg;
-			if (!s_loaded)
-			{
-				s_loaded = true;
-				const std::filesystem::path linksPath = engine::platform::FileSystem::ResolveExternalPath(cfg, "external_links.json");
-				if (engine::platform::FileSystem::Exists(linksPath))
-				{
-					if (s_externalLinksCfg.LoadFromFile(linksPath.string()))
-					{
-						LOG_INFO(Core, "[AuthUiPresenter] external_links loaded ({})", linksPath.string());
-					}
-					else
-					{
-						LOG_WARN(Core, "[AuthUiPresenter] failed to load external_links ({})", linksPath.string());
-					}
-				}
-			}
-
-			constexpr std::string_view kKey = "client.status_api_url";
-			const std::string fallback = "http://127.0.0.1:3000/status";
-			if (s_externalLinksCfg.Has(kKey))
-			{
-				return s_externalLinksCfg.GetString(kKey, fallback);
-			}
-			return fallback;
+			return std::string(kProductionStatusApiUrl);
 		}
 
 		bool IsAsciiDigits(std::string_view text)
@@ -706,7 +658,7 @@ namespace {
 		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
 		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
-		// URL de "status" (récupéré depuis external/external_links.json) utilisé au début de l'écran de connexion.
+		// URL de sonde "status" (voir kProductionStatusApiUrl) au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
 		m_statusProbeInitialized = false;
 		m_statusProbeCompletedOnce = false;

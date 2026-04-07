@@ -867,9 +867,8 @@ namespace engine::client
 		}
 
 		// Mutex sur le tas (STAB.11/13) : évite un std::mutex membre d’un gros objet Engine.
-		// Ne jamais memset ni « réinitialiser » à la main après make_unique : ce n’est pas un
-		// SRWLOCK/CRITICAL_SECTION brut ; sur MSVC sizeof peut être 80 octets.
-		m_asyncMutex = std::make_unique<std::mutex>();
+		// STAB.14 — CRITICAL_SECTION wrapper instead of std::mutex (SRWLOCK crashes).
+		m_asyncMutex = std::make_unique<AuthMutex>();
 
 		m_authEnabled = cfg.GetBool("client.auth_ui.enabled", true);
 		if (!m_authEnabled)
@@ -1336,7 +1335,7 @@ namespace engine::client
 		LOG_WARN(Core, "[DIAG-POLL] before mutex lock m_asyncMutex={}", (void*)m_asyncMutex.get());
 		AsyncResult copy{};
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			LOG_WARN(Core, "[DIAG-POLL] mutex locked, asyncResult.ready={}", m_asyncResult.ready ? 1 : 0);
 			if (!m_asyncResult.ready)
 			{
@@ -1579,7 +1578,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::Register;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -1594,7 +1593,7 @@ namespace engine::client
 				local.ready = true;
 				local.success = false;
 				local.message = "Master connect failed or timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: connect FAILED");
 				return;
@@ -1606,7 +1605,7 @@ namespace engine::client
 				local.ready = true;
 				local.success = false;
 				local.message = "REGISTER payload build failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: BuildRegisterRequestPayload FAILED");
 				client.Disconnect("payload");
@@ -1647,7 +1646,7 @@ namespace engine::client
 				local.ready = true;
 				local.success = false;
 				local.message = "Send REGISTER failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				client.Disconnect("send");
 				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: SendRequest FAILED");
@@ -1668,7 +1667,7 @@ namespace engine::client
 			local.success = ok;
 			local.message = ok ? std::string("Registration OK. Check your email for the verification code.") : (errMsg.empty() ? "REGISTER failed." : errMsg);
 			{
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 			}
 			LOG_INFO(Net, "[AuthUiPresenter] Register worker finished (success={})", (int)ok);
@@ -1698,7 +1697,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::AuthOnly;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -1709,7 +1708,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Internal error: master client missing.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1719,7 +1718,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Master connect failed or timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1753,7 +1752,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send AUTH failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1769,7 +1768,7 @@ namespace engine::client
 				masterClient->Disconnect("auth_failed");
 				local.ready = true;
 				local.message = errMsg.empty() ? "AUTH failed." : errMsg;
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1801,7 +1800,7 @@ namespace engine::client
 				masterClient->Disconnect("terms_status_send_failed");
 				local.ready = true;
 				local.message = "Send TERMS_STATUS failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1816,7 +1815,7 @@ namespace engine::client
 				masterClient->Disconnect("terms_status_timeout");
 				local.ready = true;
 				local.message = "TERMS status timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1847,7 +1846,7 @@ namespace engine::client
 					masterClient->Disconnect("terms_content_send_failed");
 					local.ready = true;
 					local.message = "Send TERMS_CONTENT failed.";
-					std::lock_guard<std::mutex> lock(*m_asyncMutex);
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 					m_asyncResult = local;
 					return;
 				}
@@ -1862,7 +1861,7 @@ namespace engine::client
 					masterClient->Disconnect("terms_content_timeout");
 					local.ready = true;
 					local.message = "TERMS content timeout.";
-					std::lock_guard<std::mutex> lock(*m_asyncMutex);
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 					m_asyncResult = local;
 					return;
 				}
@@ -1875,7 +1874,7 @@ namespace engine::client
 
 			local.ready = true;
 			local.success = true;
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});
 	}
@@ -1901,7 +1900,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::Login;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -1919,7 +1918,7 @@ namespace engine::client
 			local.success = r.success;
 			local.message = r.success ? (std::string("Shard ready (shard_id=") + std::to_string(r.shard_id) + ").") : r.errorMessage;
 			{
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 			}
 			LOG_INFO(Net, "[AuthUiPresenter] MasterShardClientFlow finished (success={})", (int)r.success);
@@ -1938,7 +1937,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::VerifyEmail;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -1951,7 +1950,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Master connect failed or timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1980,7 +1979,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send VERIFY_EMAIL failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -1993,7 +1992,7 @@ namespace engine::client
 			local.ready = true;
 			local.success = ok;
 			local.message = ok ? std::string("Email verified successfully.") : (errMsg.empty() ? "VERIFY_EMAIL failed." : errMsg);
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});
 	}
@@ -2012,7 +2011,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::TermsStatus;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -2024,7 +2023,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Internal error: master client missing.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2055,7 +2054,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send TERMS_STATUS failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2069,7 +2068,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "TERMS status timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2097,7 +2096,7 @@ namespace engine::client
 				{
 					local.ready = true;
 					local.message = "Send TERMS_CONTENT failed.";
-					std::lock_guard<std::mutex> lock(*m_asyncMutex);
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 					m_asyncResult = local;
 					return;
 				}
@@ -2111,7 +2110,7 @@ namespace engine::client
 				{
 					local.ready = true;
 					local.message = errMsg.empty() ? "TERMS content timeout." : errMsg;
-					std::lock_guard<std::mutex> lock(*m_asyncMutex);
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 					m_asyncResult = local;
 					return;
 				}
@@ -2119,7 +2118,7 @@ namespace engine::client
 			local.ready = true;
 			local.success = true;
 			local.message = local.termsPendingCount > 0 ? "Please review and accept the pending terms." : "No pending terms.";
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});
 	}
@@ -2139,7 +2138,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::TermsAccept;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -2151,7 +2150,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Internal error: master client missing.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2173,7 +2172,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send TERMS_ACCEPT failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2187,7 +2186,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = errMsg.empty() ? "TERMS accept timeout." : errMsg;
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2216,7 +2215,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send TERMS_STATUS failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2230,7 +2229,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "TERMS status timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2258,7 +2257,7 @@ namespace engine::client
 				{
 					local.ready = true;
 					local.message = "Send TERMS_CONTENT failed.";
-					std::lock_guard<std::mutex> lock(*m_asyncMutex);
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 					m_asyncResult = local;
 					return;
 				}
@@ -2272,7 +2271,7 @@ namespace engine::client
 			local.ready = true;
 			local.success = true;
 			local.message = local.termsPendingCount > 0 ? "Next pending terms loaded." : "All terms accepted.";
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});
 	}
@@ -2291,7 +2290,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::CharacterCreate;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -2303,7 +2302,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Internal error: master client missing.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2336,7 +2335,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send CHARACTER_CREATE failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2349,7 +2348,7 @@ namespace engine::client
 			local.ready = true;
 			local.success = done && errMsg.empty();
 			local.message = local.success ? std::string("Character created successfully.") : (errMsg.empty() ? "Character creation timeout." : errMsg);
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});
 	}
@@ -2386,7 +2385,7 @@ namespace engine::client
 			LOG_WARN(Core, "[StatusProbe] URL vide — utilisation du jeu de données simulé (dev)");
 			AsyncResult local{};
 			fillSimulatedStatus(local, "empty status url");
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 			return;
 		}
@@ -2414,7 +2413,7 @@ namespace engine::client
 				local.statusCache.infoMessage = detail.empty() ? std::string(userMessage) : detail;
 				local.message = std::string(userMessage);
 				LOG_WARN(Core, "[StatusProbe] échec — msg='{}' transport='{}'", userMessage, detail);
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 			};
 
@@ -2454,7 +2453,7 @@ namespace engine::client
 				local.statusCache.totalPlayers, local.message);
 
 			{
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				LOG_INFO(Core, "[StatusProbe] résultat publié (mutex), prêt pour PollAsyncResult");
 			}
@@ -2473,7 +2472,7 @@ namespace engine::client
 
 		m_pendingAsyncKind = AsyncKind::ForgotPassword;
 		{
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = {};
 		}
 
@@ -2486,7 +2485,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Master connect failed or timeout.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2501,7 +2500,7 @@ namespace engine::client
 			{
 				local.ready = true;
 				local.message = "Send FORGOT_PASSWORD failed.";
-				std::lock_guard<std::mutex> lock(*m_asyncMutex);
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 				return;
 			}
@@ -2514,7 +2513,7 @@ namespace engine::client
 			local.ready = true;
 			local.success = done;
 			local.message = done ? "If the email exists, a reset message has been sent." : "FORGOT_PASSWORD timeout.";
-			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});
 	}

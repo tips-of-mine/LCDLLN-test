@@ -1,7 +1,9 @@
 {
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "lcdlln-engine",
   "version": "0.1.0",
   "description": "LCDLLN MMORPG Engine dependencies",
+  "builtin-baseline": "81e3c888ef717a026eb57bb2f3cb0dbd30246271",
   "dependencies": [
     "vulkan",
     "glfw3",

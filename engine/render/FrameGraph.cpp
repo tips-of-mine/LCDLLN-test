@@ -474,7 +474,9 @@ namespace engine::render
 	        {
 	            profiler->EndGpuPass(cmd, frameIndex);
 	        }
+	        LOG_INFO(Render, "[FrameGraph] pass '{}' fully done (profiler closed)", pass.name);
 	    }
+	    LOG_WARN(Render, "[FrameGraph] execute() ALL passes done — returning to Engine::Render");
 	}
 
 	void FrameGraph::destroy(VkDevice device, void* vmaAllocator)

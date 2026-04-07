@@ -1,7 +1,6 @@
 #include "engine/render/vk/StagingAllocator.h"
 #include "engine/core/Log.h"
 
-#include <vk_mem_alloc.h>
 #include <cstddef>
 
 namespace engine::render
@@ -12,11 +11,11 @@ namespace engine::render
 		constexpr VkDeviceSize kAlignment = 4;
 	}
 
-	bool StagingAllocator::Init(VkDevice device, void* vmaAllocator, size_t budgetBytesPerFrame)
+	bool StagingAllocator::Init(VkDevice device, VkPhysicalDevice physicalDevice, size_t budgetBytesPerFrame)
 	{
-LOG_INFO(Render, "[STAGING] Init enter device={} vma={} budget={}", (void*)device, vmaAllocator, budgetBytesPerFrame);
+LOG_INFO(Render, "[STAGING] Init enter device={} physDev={} budget={}", (void*)device, (void*)physicalDevice, budgetBytesPerFrame);
 
-		if (device == VK_NULL_HANDLE || vmaAllocator == nullptr || budgetBytesPerFrame == 0)
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || budgetBytesPerFrame == 0)
 		{
 			LOG_WARN(Render, "[STAGING] Init: invalid params");
 			return false;
@@ -27,13 +26,9 @@ LOG_INFO(Render, "[STAGING] Init enter device={} vma={} budget={}", (void*)devic
 		LOG_INFO(Render, "[STAGING] Destroy OK");
 
 		m_device       = device;
-		m_vmaAllocator = vmaAllocator; // conservé pour info, plus utilisé pour l’alloc.
+		m_vmaAllocator = nullptr;
 
-		// On récupère le physical device via VMA, mais on n’utilise plus vmaCreateBuffer.
-		VmaAllocator     alloc     = static_cast<VmaAllocator>(vmaAllocator);
-		VmaAllocatorInfo allocInfo{};
-		vmaGetAllocatorInfo(alloc, &allocInfo);
-		VkPhysicalDevice physDev = allocInfo.physicalDevice;
+		VkPhysicalDevice physDev = physicalDevice;
 
 		VkPhysicalDeviceMemoryProperties memProps{};
 		vkGetPhysicalDeviceMemoryProperties(physDev, &memProps);

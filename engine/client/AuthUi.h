@@ -5,11 +5,21 @@
 #include "engine/network/NetClient.h"
 #include "engine/platform/Input.h"
 
-#include <mutex>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <mutex>
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace engine::platform
 {
@@ -18,6 +28,29 @@ namespace engine::platform
 
 namespace engine::client
 {
+#if defined(_WIN32)
+	/// STAB.14 — Drop-in replacement for std::mutex using Win32 CRITICAL_SECTION.
+	/// std::mutex uses SRWLOCK on MSVC which crashes (SEH 0xC0000005) in certain
+	/// CRT/ABI configurations.  CRITICAL_SECTION avoids that code path entirely.
+	class CriticalSectionMutex final
+	{
+	public:
+		CriticalSectionMutex()  { InitializeCriticalSection(&m_cs); }
+		~CriticalSectionMutex() { DeleteCriticalSection(&m_cs); }
+		CriticalSectionMutex(const CriticalSectionMutex&) = delete;
+		CriticalSectionMutex& operator=(const CriticalSectionMutex&) = delete;
+
+		void lock()     { EnterCriticalSection(&m_cs); }
+		void unlock()   { LeaveCriticalSection(&m_cs); }
+		bool try_lock() { return TryEnterCriticalSection(&m_cs) != 0; }
+	private:
+		CRITICAL_SECTION m_cs{};
+	};
+	using AuthMutex = CriticalSectionMutex;
+#else
+	using AuthMutex = std::mutex;
+#endif
+
 	/// Sous-écran des options (auth) : menu racine puis catégories.
 	/// Déclaré au niveau du namespace pour éviter les soucis de parsing MSVC avec les enums imbriqués.
 	enum class OptionsSubMenu : uint8_t
@@ -400,8 +433,8 @@ namespace engine::client
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;
 		std::unique_ptr<engine::network::NetClient> m_masterClient;
-		// Heap-allocated in Init() — avoids SRWLOCK corruption in large heap objects (STAB.13/STAB.11).
-		std::unique_ptr<std::mutex> m_asyncMutex;
+		// Heap-allocated in Init() — CRITICAL_SECTION avoids SRWLOCK crash (STAB.14).
+		std::unique_ptr<AuthMutex> m_asyncMutex;
 	};
 
 }

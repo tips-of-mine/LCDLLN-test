@@ -19,9 +19,9 @@ namespace engine::render
 
 		/// Creates the staging buffer ring. budgetBytesPerFrame = size of each buffer (e.g. 32MB).
 		/// \param device Vulkan device.
-		/// \param vmaAllocator VMA allocator (cast to VmaAllocator in impl).
+		/// \param physicalDevice Vulkan physical device (for memory type queries).
 		/// \return true on success.
-		bool Init(VkDevice device, void* vmaAllocator, size_t budgetBytesPerFrame);
+		bool Init(VkDevice device, VkPhysicalDevice physicalDevice, size_t budgetBytesPerFrame);
 
 		/// Allocates a region from the current frame's staging buffer. Returns buffer and offset; 0 on failure (over budget).
 		/// \param sizeBytes Size to allocate (will be aligned for transfer).

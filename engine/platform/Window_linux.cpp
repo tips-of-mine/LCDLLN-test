@@ -95,6 +95,10 @@ namespace engine::platform
 		m_msgHook = std::move(hook);
 	}
 
+	void Window::SetAuthImageBytesLoader(std::function<std::vector<uint8_t>(std::string_view)>)
+	{
+	}
+
 	intptr_t Window::HandleMessage(uint32_t, uint64_t, int64_t)
 	{
 		// No native messages on stub backend.

@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace engine::platform
 {
@@ -106,6 +107,9 @@ namespace engine::platform
 
 		/// Provide a message handler hook (used by Input).
 		void SetMessageHook(std::function<void(uint32_t msg, uint64_t wparam, int64_t lparam)> hook);
+
+		/// Optional: resolve auth UI image paths to raw bytes (e.g. `FileSystem::ReadAllBytesContent` + `.texr`). Empty loader = file paths only.
+		void SetAuthImageBytesLoader(std::function<std::vector<uint8_t>(std::string_view)> loader);
 
 		/// Handle a native platform message (used by WndProc on Win32).
 		intptr_t HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam);

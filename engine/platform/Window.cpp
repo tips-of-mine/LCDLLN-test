@@ -8,10 +8,16 @@
 #include <objidl.h>
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "ole32.lib")
 
 #include <algorithm>
+#include <cstring>
 #include <filesystem>
+#include <functional>
 #include <string>
+#include <vector>
+
+#include <objbase.h>
 
 namespace engine::platform
 {
@@ -27,6 +33,7 @@ namespace engine::platform
 		constexpr int kAuthSubmitButtonId = 1007;
 		constexpr int kAuthQuitButtonId = 1008;
 		ULONG_PTR g_gdiplusToken = 0;
+		std::function<std::vector<uint8_t>(std::string_view)> g_authImageBytesLoader;
 
 		std::wstring ToWide(std::string_view utf8)
 		{
@@ -165,24 +172,14 @@ namespace engine::platform
 			return raw;
 		}
 
-		HBITMAP LoadBitmapFromPng(std::string_view pathUtf8, int targetWidth, int targetHeight, bool fitInsideTarget = false)
+		HBITMAP GdiplusBitmapToHbitmap(Gdiplus::Bitmap& source, int targetWidth, int targetHeight, bool fitInsideTarget)
 		{
-			EnsureGdiplusStarted();
-			const std::filesystem::path resolved = ResolveUiImagePath(pathUtf8);
-			const std::wstring resolvedW = resolved.wstring();
-			Gdiplus::Bitmap source(resolvedW.c_str());
-			if (source.GetLastStatus() != Gdiplus::Ok)
-			{
-				LOG_WARN(Platform, "[Window] LoadBitmapFromPng failed (path={})", resolved.string());
-				return nullptr;
-			}
 			const int sw = static_cast<int>(source.GetWidth());
 			const int sh = static_cast<int>(source.GetHeight());
 			if (fitInsideTarget && targetWidth > 0 && targetHeight > 0 && sw > 0 && sh > 0)
 			{
 				const double sx = static_cast<double>(targetWidth) / static_cast<double>(sw);
 				const double sy = static_cast<double>(targetHeight) / static_cast<double>(sh);
-				// Éviter la macro min/max de windows.h (NOMINMAX non garanti ici).
 				const double sc = (std::min)(sx, sy);
 				const int dw = (std::max)(1, static_cast<int>(static_cast<double>(sw) * sc + 0.5));
 				const int dh = (std::max)(1, static_cast<int>(static_cast<double>(sh) * sc + 0.5));
@@ -208,6 +205,70 @@ namespace engine::platform
 			HBITMAP out = nullptr;
 			scaled.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &out);
 			return out;
+		}
+
+		HBITMAP LoadPngFromMemory(const std::vector<uint8_t>& bytes, int targetWidth, int targetHeight, bool fitInsideTarget)
+		{
+			if (bytes.empty())
+			{
+				return nullptr;
+			}
+			EnsureGdiplusStarted();
+			HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, static_cast<SIZE_T>(bytes.size()));
+			if (!hg)
+			{
+				return nullptr;
+			}
+			{
+				void* ptr = GlobalLock(hg);
+				if (!ptr)
+				{
+					GlobalFree(hg);
+					return nullptr;
+				}
+				std::memcpy(ptr, bytes.data(), bytes.size());
+				GlobalUnlock(hg);
+			}
+			IStream* stream = nullptr;
+			if (FAILED(CreateStreamOnHGlobal(hg, TRUE, &stream)))
+			{
+				GlobalFree(hg);
+				return nullptr;
+			}
+			Gdiplus::Bitmap source(stream);
+			stream->Release();
+			if (source.GetLastStatus() != Gdiplus::Ok)
+			{
+				return nullptr;
+			}
+			return GdiplusBitmapToHbitmap(source, targetWidth, targetHeight, fitInsideTarget);
+		}
+
+		HBITMAP LoadBitmapFromPng(std::string_view pathUtf8, int targetWidth, int targetHeight, bool fitInsideTarget = false)
+		{
+			EnsureGdiplusStarted();
+			if (g_authImageBytesLoader)
+			{
+				std::vector<uint8_t> bytes = g_authImageBytesLoader(pathUtf8);
+				if (!bytes.empty())
+				{
+					HBITMAP fromMem = LoadPngFromMemory(bytes, targetWidth, targetHeight, fitInsideTarget);
+					if (fromMem)
+					{
+						return fromMem;
+					}
+					LOG_WARN(Platform, "[Window] Auth PNG from loader failed, trying disk (path={})", pathUtf8);
+				}
+			}
+			const std::filesystem::path resolved = ResolveUiImagePath(pathUtf8);
+			const std::wstring resolvedW = resolved.wstring();
+			Gdiplus::Bitmap source(resolvedW.c_str());
+			if (source.GetLastStatus() != Gdiplus::Ok)
+			{
+				LOG_WARN(Platform, "[Window] LoadBitmapFromPng failed (path={})", resolved.string());
+				return nullptr;
+			}
+			return GdiplusBitmapToHbitmap(source, targetWidth, targetHeight, fitInsideTarget);
 		}
 
 		bool ReplaceStaticBitmap(void* hwndHandle, void*& bitmapHandle, std::string& cachedPath, int& cachedWidth, int& cachedHeight,
@@ -382,6 +443,7 @@ namespace engine::platform
 
 	void Window::Destroy()
 	{
+		g_authImageBytesLoader = {};
 		if (m_hwnd)
 		{
 			DestroyWindow(AsHwnd(m_hwnd));
@@ -784,6 +846,11 @@ namespace engine::platform
 	void Window::SetMessageHook(std::function<void(uint32_t, uint64_t, int64_t)> hook)
 	{
 		m_msgHook = std::move(hook);
+	}
+
+	void Window::SetAuthImageBytesLoader(std::function<std::vector<uint8_t>(std::string_view)> loader)
+	{
+		g_authImageBytesLoader = std::move(loader);
 	}
 
 	intptr_t Window::HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam)

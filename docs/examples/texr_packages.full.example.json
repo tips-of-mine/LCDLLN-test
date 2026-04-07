@@ -1,0 +1,90 @@
+{
+  "_comment": "Exemple de configuration packages pour texr_builder — à adapter aux chemins réels du dépôt.",
+  "packages": [
+    {
+      "id": "core.ui",
+      "output": "core.ui.texr",
+      "includes": [
+        { "path": "ui/", "asset_type": 5, "glob": "**/*.qss" },
+        { "path": "ui/", "asset_type": 4, "glob": "**/theme.json" },
+        { "path": "ui/", "asset_type": 1, "glob": "**/*.png", "convert": "png_to_dds_bc7_srgb" },
+        { "path": "icons/", "asset_type": 1, "glob": "**/*.png", "convert": "png_to_dds_bc7_srgb" },
+        { "path": "placeholders/", "asset_type": 1, "glob": "**/*.png", "convert": "png_to_dds_bc7_srgb" }
+      ],
+      "excludes_globs": ["**/*.prompt.txt", "**/README.md"]
+    },
+    {
+      "id": "race.dynamic",
+      "output_pattern": "race.{race_id}.ui.texr",
+      "scan": { "path": "ui/races/", "each_subdirectory_is": "race_id" },
+      "includes": [
+        { "glob": "**/*.qss", "asset_type": 5 },
+        { "glob": "**/theme.json", "asset_type": 4 },
+        { "glob": "**/*.png", "asset_type": 1, "convert": "png_to_dds_bc7_srgb" }
+      ],
+      "excludes_globs": ["**/*.prompt.txt", "**/README.md"]
+    },
+    {
+      "id": "core.fonts",
+      "output": "core.fonts.texr",
+      "includes": [
+        { "path": "fonts/", "asset_type": 3, "glob": "**/*.{ttf,otf,ttc}" }
+      ],
+      "excludes_globs": ["**/README.md"]
+    },
+    {
+      "id": "game.loc",
+      "output": "game.loc.texr",
+      "includes": [
+        { "path": "localization/", "asset_type": 4, "glob": "**/*.json" }
+      ],
+      "excludes_globs": ["**/README.md"]
+    },
+    {
+      "id": "game.audio",
+      "output": "game.audio.texr",
+      "includes": [
+        { "path": "audio/", "asset_type": 8, "glob": "**/*.{ogg,wav}" }
+      ],
+      "excludes_globs": []
+    },
+    {
+      "id": "engine.shaders",
+      "output": "engine.shaders.texr",
+      "includes": [
+        { "path": "shaders/", "asset_type": 6, "glob": "**/*.{vert,frag,comp}" }
+      ],
+      "excludes_globs": []
+    },
+    {
+      "id": "game.data",
+      "output": "game.data.texr",
+      "includes": [
+        { "path": "config/", "asset_type": 4, "glob": "**/*.json" },
+        { "path": "items/", "asset_type": 4, "glob": "**/*.json" },
+        { "path": "loot/", "asset_type": 7, "glob": "**/*.txt" },
+        { "path": "quests/", "asset_type": 4, "glob": "**/*.json" },
+        { "path": "skills/", "asset_type": 4, "glob": "**/*.json" },
+        { "path": "fx/", "asset_type": 4, "glob": "**/*.json" },
+        { "path": "particles/", "asset_type": 4, "glob": "**/*.json" }
+      ],
+      "excludes_globs": []
+    },
+    {
+      "id": "world.dynamic",
+      "output_pattern": "{zone_id}.world.texr",
+      "scan": { "path": "zones/", "each_subdirectory_matching": "^zone_[0-9]+$", "capture_as": "zone_id" },
+      "includes": [
+        { "glob": "**/*.json", "asset_type": 4 },
+        { "glob": "**/*.gltf", "asset_type": 9 }
+      ],
+      "excludes_globs": []
+    }
+  ],
+  "png_to_dds": {
+    "tool": "texconv",
+    "profile_bc7_srgb": {
+      "_note": "Remplacer par les arguments réels texconv une fois validés sur un poste Windows."
+    }
+  }
+}

@@ -4,9 +4,15 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
+
+namespace lcdlln::texr
+{
+class TexrReader;
+}
 
 namespace engine::platform
 {
@@ -34,6 +40,9 @@ namespace engine::platform
 
 		/// Read the entire file as text (UTF-8 assumed). Returns empty string on failure.
 		static std::string ReadAllText(const std::filesystem::path& path);
+
+		/// Optional override: when set, `ReadAll*Content` tries this package first (logical path = normalized relative key).
+		static void SetContentTexrReader(std::shared_ptr<lcdlln::texr::TexrReader> reader) noexcept;
 
 		/// Read a content file as bytes (relative to `paths.content`).
 		static std::vector<uint8_t> ReadAllBytesContent(const engine::core::Config& cfg, std::string_view relativeContentPath);

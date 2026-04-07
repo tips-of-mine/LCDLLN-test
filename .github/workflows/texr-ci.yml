@@ -1,0 +1,39 @@
+# Pipeline A (partiel) : tests manifest Ed25519 + smoke texr_builder (sans texconv).
+name: texr-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  windows-texr:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: vcpkg (OpenSSL, GLFW, Vulkan)
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: vcpkg.json
+
+      - name: CMake configure
+        shell: pwsh
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows
+
+      - name: Build manifest_verify_tests + texr_builder
+        run: cmake --build build --config Release --parallel --target manifest_verify_tests texr_builder
+
+      - name: CTest (manifest)
+        run: ctest --test-dir build -C Release -R manifest_verify_tests --output-on-failure
+
+      - name: texr_builder pack + validate
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path pkg/texr_smoke | Out-Null
+          & "build/Release/texr_builder.exe" pack "tests/texr_fixture" "pkg/texr_smoke/smoke.texr"
+          & "build/Release/texr_builder.exe" validate "pkg/texr_smoke/smoke.texr"

@@ -4,6 +4,9 @@
 #include "engine/editor/EditorMode.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/texr/ManifestCrypto.h"
+#include "engine/texr/ManifestUpdater.h"
+#include "engine/texr/TexrReader.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
@@ -15,6 +18,7 @@
 // vk_mem_alloc.h removed: VMA is disabled (STAB.7) — all subsystems use raw Vulkan allocations.
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -22,6 +26,7 @@
 #include <cstring>
 #include <limits>
 #include <filesystem>
+#include <memory>
 #include <span>
 #include <string>
 #include <string_view>
@@ -419,6 +424,91 @@ namespace engine
 			LOG_INFO(Core, "[Boot] Config loaded (vsync={}, fixed_dt={})", m_vsync ? "on" : "off", m_fixedDt);
 		}
 
+		{
+			bool content_texr_mounted = false;
+			if (m_cfg.GetBool("client.manifest.enabled", false))
+			{
+				const std::string emb_hex = m_cfg.GetString("client.manifest.embedded_ed25519_pubkey_hex", "");
+				std::array<std::uint8_t, 32> emb{};
+				std::string hex_err;
+				if (emb_hex.size() != 64 || !lcdlln::manifest::HexDecode64(emb_hex, emb, hex_err))
+				{
+					LOG_WARN(Core, "[Boot] client.manifest.enabled but embedded_ed25519_pubkey_hex invalid ({})", hex_err);
+				}
+				else
+				{
+					lcdlln::manifest::ManifestUpdateConfig mc{};
+					mc.keys_url = m_cfg.GetString("client.manifest.keys_url", "");
+					mc.manifest_url = m_cfg.GetString("client.manifest.manifest_url", "");
+					mc.cdn_base = m_cfg.GetString("client.manifest.cdn_base", "");
+					mc.artifact_id = m_cfg.GetString("client.manifest.artifact_id", "");
+					const std::string fb = m_cfg.GetString("client.manifest.manifest_url_fallback", "");
+					if (!fb.empty())
+					{
+						mc.extra_manifest_urls.push_back(fb);
+					}
+					std::filesystem::path cache = m_cfg.GetString("client.manifest.cache_dir", "packages_cache");
+					if (!cache.is_absolute())
+					{
+						cache = std::filesystem::current_path() / cache;
+					}
+					mc.cache_dir = cache;
+					mc.k_embedded = emb;
+					if (mc.keys_url.empty() || mc.manifest_url.empty() || mc.cdn_base.empty() || mc.artifact_id.empty())
+					{
+						LOG_WARN(Core, "[Boot] client.manifest: keys_url, manifest_url, cdn_base ou artifact_id vide");
+					}
+					else
+					{
+						std::filesystem::path downloaded;
+						std::string merr;
+						if (lcdlln::manifest::DownloadVerifiedTexr(mc, downloaded, merr))
+						{
+							auto reader = std::make_shared<lcdlln::texr::TexrReader>();
+							if (!reader->Open(downloaded, merr))
+							{
+								LOG_WARN(Core, "[Boot] manifest .texr open failed (path={}, err={})", downloaded.string(), merr);
+							}
+							else
+							{
+								engine::platform::FileSystem::SetContentTexrReader(reader);
+								LOG_INFO(Core, "[Boot] Content .texr via manifest (path={}, entries={})", downloaded.string(),
+								         reader->EntryCount());
+								content_texr_mounted = true;
+							}
+						}
+						else
+						{
+							LOG_WARN(Core, "[Boot] client.manifest: échec ({})", merr);
+						}
+					}
+				}
+			}
+			if (!content_texr_mounted)
+			{
+				const std::string texr_pkg = m_cfg.GetString("paths.texr_package", "");
+				if (!texr_pkg.empty())
+				{
+					std::filesystem::path p(texr_pkg);
+					if (!p.is_absolute())
+					{
+						p = std::filesystem::current_path() / p;
+					}
+					auto reader = std::make_shared<lcdlln::texr::TexrReader>();
+					std::string err;
+					if (!reader->Open(p, err))
+					{
+						LOG_WARN(Core, "[Boot] paths.texr_package: open failed (path={}, err={})", p.string(), err);
+					}
+					else
+					{
+						engine::platform::FileSystem::SetContentTexrReader(reader);
+						LOG_INFO(Core, "[Boot] Content .texr mounted (path={}, entries={})", p.string(), reader->EntryCount());
+					}
+				}
+			}
+		}
+
 		if (m_editorEnabled)
 		{
 			m_editorMode = std::make_unique<engine::editor::EditorMode>();
@@ -459,6 +549,10 @@ namespace engine
 			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
 		LOG_INFO(Core, "[Boot] Window::Create OK");
+		m_window.SetAuthImageBytesLoader([this](std::string_view rel)
+		{
+			return engine::platform::FileSystem::ReadAllBytesContent(m_cfg, rel);
+		});
 		if (m_cfg.GetBool("render.fullscreen", true))
 		{
 			m_window.ToggleFullscreen();
@@ -1979,7 +2073,11 @@ namespace engine
 		LOG_INFO(Core, "[Boot] Engine boot COMPLETE");
 	}
 
-	Engine::~Engine() = default;
+	Engine::~Engine()
+	{
+		m_window.SetAuthImageBytesLoader({});
+		engine::platform::FileSystem::SetContentTexrReader(nullptr);
+	}
 
 	int Engine::Run()
 	{

@@ -153,6 +153,61 @@ FetchContent_MakeAvailable(spdlog)
 set(BUILD_SHARED_LIBS ${_saved_BUILD_SHARED_LIBS})
 message(STATUS "M23.4: spdlog for logging rotation")
 
+# LZ4 + shared .texr reader (client + texr_builder)
+FetchContent_Declare(lz4_external
+  GIT_REPOSITORY https://github.com/lz4/lz4.git
+  GIT_TAG        v1.9.4
+)
+FetchContent_GetProperties(lz4_external)
+if(NOT lz4_external_POPULATED)
+  FetchContent_Populate(lz4_external)
+endif()
+add_library(lz4_static STATIC ${lz4_external_SOURCE_DIR}/lib/lz4.c)
+target_include_directories(lz4_static PUBLIC ${lz4_external_SOURCE_DIR}/lib)
+set_target_properties(lz4_static PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
+message(STATUS "LZ4: ${lz4_external_SOURCE_DIR}")
+
+add_library(lcdlln_texr STATIC
+  engine/texr/TexrPath.cpp
+  engine/texr/TexrOuterCrypto.cpp
+  engine/texr/TexrReader.cpp
+)
+target_include_directories(lcdlln_texr PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(lcdlln_texr PUBLIC lz4_static OpenSSL::Crypto)
+if(MSVC)
+  target_compile_options(lcdlln_texr PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(lcdlln_texr PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Client manifest (HTTPS / file://, Ed25519, canonical JSON) + mise à jour .texr
+set(JSON_Install OFF CACHE BOOL "" FORCE)
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
+add_library(lcdlln_manifest STATIC
+  engine/texr/ManifestCanonicalJson.cpp
+  engine/texr/ManifestCrypto.cpp
+  engine/texr/KeysVerify.cpp
+  engine/texr/ManifestVerify.cpp
+  engine/texr/HttpFetch.cpp
+  engine/texr/ManifestUpdater.cpp
+)
+target_include_directories(lcdlln_manifest PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(lcdlln_manifest PUBLIC nlohmann_json::nlohmann_json OpenSSL::Crypto lcdlln_texr)
+if(WIN32)
+  target_link_libraries(lcdlln_manifest PRIVATE winhttp)
+endif()
+if(MSVC)
+  target_compile_options(lcdlln_manifest PRIVATE /W4 /permissive- /Zc:preprocessor)
+else()
+  target_compile_options(lcdlln_manifest PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 add_library(engine_auth STATIC engine/auth/Argon2Hash.cpp)
 target_include_directories(engine_auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(engine_auth PUBLIC argon2_ref OpenSSL::SSL)
@@ -287,9 +342,11 @@ target_link_libraries(engine_core PUBLIC
   glfw
   engine_auth
   spdlog::spdlog
+  lcdlln_texr
+  lcdlln_manifest
 )
 if(WIN32)
-  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
+  target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32 ole32)
 elseif(UNIX)
   target_link_libraries(engine_core PRIVATE pthread)
   if(NOT APPLE)
@@ -393,6 +450,17 @@ target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 
+# Manifest Ed25519 + canonical JSON (client update pipeline)
+add_executable(manifest_verify_tests tests/ManifestVerifyTests.cpp)
+target_link_libraries(manifest_verify_tests PRIVATE lcdlln_manifest)
+if(WIN32)
+  target_link_libraries(manifest_verify_tests PRIVATE winhttp)
+endif()
+if(MSVC)
+  target_compile_options(manifest_verify_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME manifest_verify_tests COMMAND manifest_verify_tests)
+
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)
 target_link_libraries(log_rotation_smoke_tests PRIVATE engine_core)
@@ -489,6 +557,8 @@ add_subdirectory(tools/hlod_builder)
 add_subdirectory(tools/zone_builder)
 # M21.2: Migration checksum tool (SHA-256 of db/migrations/*.sql)
 add_subdirectory(tools/migration_checksum)
+# TEXR asset packages (v1 writer / validate)
+add_subdirectory(tools/texr_builder)
 # M15.4: Server app (headless, no Vulkan)
 add_subdirectory(engine/server)
 

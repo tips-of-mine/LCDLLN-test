@@ -2063,6 +2063,7 @@ namespace engine
 	void Engine::BeginFrame()
 	{
 		// PROFILE_FUNCTION();
+		LOG_WARN(Render, "[DIAG] BeginFrame enter frame={}", m_currentFrame);
 		m_input.BeginFrame();
 		m_window.PollEvents();
 
@@ -2155,6 +2156,7 @@ namespace engine
 	void Engine::Update()
 	{
 		// PROFILE_FUNCTION();
+		LOG_WARN(Render, "[DIAG] Update enter frame={}", m_currentFrame);
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -2197,7 +2199,9 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
+			LOG_WARN(Render, "[DIAG] authUi.Update begin frame={}", m_currentFrame);
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
+			LOG_WARN(Render, "[DIAG] authUi.Update done frame={}", m_currentFrame);
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
@@ -2414,7 +2418,9 @@ namespace engine
 	    // ses rendertargets avec les bonnes dimensions.
 	    VkExtent2D extent = m_vkSwapchain.GetExtent();
 	
+	    LOG_WARN(Render, "[DIAG] vkWaitForFences begin frame={} frameIndex={}", m_currentFrame, frameIndex);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
+	    LOG_WARN(Render, "[DIAG] vkWaitForFences done frame={}", m_currentFrame);
 	    if (m_profiler.IsInitialized() && m_profiler.ResolveGpuFrame(device, frameIndex))
 	    {
 	        if (m_profilerHud.IsInitialized())
@@ -2520,9 +2526,12 @@ namespace engine
 	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
 	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2(), m_profiler.IsInitialized() ? &m_profiler : nullptr);
 	    }
-	
+	    LOG_WARN(Render, "[DIAG] FrameGraph execute returned frame={}", m_currentFrame);
+
+	    LOG_WARN(Render, "[DIAG] vkEndCommandBuffer begin frame={}", m_currentFrame);
 	    if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) return;
-	
+	    LOG_WARN(Render, "[DIAG] vkEndCommandBuffer OK frame={}", m_currentFrame);
+
 	    VkSemaphore          waitSemaphores[]   = { fr.imageAvailable };
 	    VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	    VkSemaphore          signalSemaphores[] = { fr.renderFinished };
@@ -2535,8 +2544,11 @@ namespace engine
 	    submitInfo.pCommandBuffers      = &fr.cmdBuffer;
 	    submitInfo.signalSemaphoreCount = 1;
 	    submitInfo.pSignalSemaphores    = signalSemaphores;
+	    LOG_WARN(Render, "[DIAG] vkResetFences begin frame={}", m_currentFrame);
 	    vkResetFences(device, 1, &fr.fence);
+	    LOG_WARN(Render, "[DIAG] vkQueueSubmit begin frame={}", m_currentFrame);
 	    VkResult submitResult = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence);
+	    LOG_WARN(Render, "[DIAG] vkQueueSubmit result={} frame={}", static_cast<int>(submitResult), m_currentFrame);
 	    if (submitResult != VK_SUCCESS) return;
 
 	    VkPresentInfoKHR presentInfo{};
@@ -2546,7 +2558,9 @@ namespace engine
 	    presentInfo.swapchainCount     = 1;
 	    presentInfo.pSwapchains        = &swapchain;
 	    presentInfo.pImageIndices      = &imageIndex;
+	    LOG_WARN(Render, "[DIAG] vkQueuePresentKHR begin frame={}", m_currentFrame);
 	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
+	    LOG_WARN(Render, "[DIAG] vkQueuePresentKHR result={} frame={}", static_cast<int>(result), m_currentFrame);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	    {
 	        m_swapchainResizeRequested = true;
@@ -2559,19 +2573,22 @@ namespace engine
 	    {
 	        m_suboptimalStreak = 0;
 	    }
-	
+
+	    LOG_WARN(Render, "[DIAG] Render() complete frame={}", m_currentFrame);
 	    m_currentFrame++;
 	}
 
 	void Engine::EndFrame()
 	{
 		// PROFILE_FUNCTION();
+		LOG_WARN(Render, "[DIAG] EndFrame enter frame={}", m_currentFrame);
 		if (m_profiler.IsInitialized())
 		{
 			m_profiler.EndFrame();
 		}
 		if (m_currentFrame > 0 && (m_currentFrame % 60) == 0)
 			m_chunkStats.LogStats();
+		LOG_WARN(Render, "[DIAG] EndFrame done frame={}", m_currentFrame);
 	}
 
 	void Engine::SwapRenderState()

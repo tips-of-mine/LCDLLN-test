@@ -1325,22 +1325,28 @@ namespace engine::client
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
 		// Écran login initial : pas de worker, rien à consommer — évite de verrouiller sans nécessité.
+		LOG_WARN(Core, "[DIAG-POLL] enter worker.joinable={} asyncResult.ready={}", m_worker.joinable() ? 1 : 0, m_asyncResult.ready ? 1 : 0);
 		const bool workerJoinable = m_worker.joinable();
 		if (!workerJoinable && !m_asyncResult.ready)
 		{
+			LOG_WARN(Core, "[DIAG-POLL] early return (no worker, no result)");
 			return;
 		}
 
+		LOG_WARN(Core, "[DIAG-POLL] before mutex lock m_asyncMutex={}", (void*)m_asyncMutex.get());
 		AsyncResult copy{};
 		{
 			std::lock_guard<std::mutex> lock(*m_asyncMutex);
+			LOG_WARN(Core, "[DIAG-POLL] mutex locked, asyncResult.ready={}", m_asyncResult.ready ? 1 : 0);
 			if (!m_asyncResult.ready)
 			{
+				LOG_WARN(Core, "[DIAG-POLL] return (result not ready)");
 				return;
 			}
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
+		LOG_WARN(Core, "[DIAG-POLL] mutex released, joining worker");
 		JoinWorker();
 
 		const AsyncKind kind = m_pendingAsyncKind;
@@ -2748,15 +2754,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	void AuthUiPresenter::Update(engine::platform::Input& input, float deltaSeconds, engine::platform::Window& window,
 		const engine::core::Config& cfg)
 	{
+		LOG_WARN(Core, "[DIAG-AUTH] Update enter this={} initialized={} flowComplete={} authEnabled={}",
+			(void*)this, m_initialized ? 1 : 0, m_flowComplete ? 1 : 0, m_authEnabled ? 1 : 0);
 		m_usingNativeAuthScreen = false;
+		LOG_WARN(Core, "[DIAG-AUTH] before SetAuthScreenState");
 		window.SetAuthScreenState({});
+		LOG_WARN(Core, "[DIAG-AUTH] after SetAuthScreenState");
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
+		LOG_WARN(Core, "[DIAG-AUTH] before PollAsyncResult m_asyncMutex={}", (void*)m_asyncMutex.get());
 		PollAsyncResult(cfg);
+		LOG_WARN(Core, "[DIAG-AUTH] after PollAsyncResult");
 		if (m_flowComplete)
 			return;
 
+		LOG_WARN(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
 		constexpr float kStatusProbeIntervalSeconds = 120.0f;
 		const bool shouldProbeStatus = !m_masterAvailabilityUrl.empty() && !m_flowComplete && m_phase != Phase::Submitting;
 		const bool statusProbeInFlight = m_worker.joinable() && m_pendingAsyncKind == AsyncKind::StatusProbe;

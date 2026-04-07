@@ -109,7 +109,7 @@ namespace engine::render
 			metrics.contentW = std::max(180, metrics.panelW - (metrics.contentX - metrics.panelX) - 28);
 		}
 		metrics.authStatusBannerBesideLogo =
-			state.login && state.minimalChrome && !state.loginArtColumn && (state.authLogoSpin || state.authStatusKnown)
+			state.login && state.minimalChrome && !state.loginArtColumn && state.authLogoSpin
 			&& !model.infoBanner.empty();
 		metrics.compactSingleField = model.fields.size() <= 1u;
 		const int32_t bodyScale = std::clamp(metrics.panelW / 260, 2, 4);

@@ -119,7 +119,7 @@ namespace engine::client
 			bool loginArtColumn = false;
 			/// Logo connexion : rotation tant que la disponibilité maître est en cours de vérification.
 			bool authLogoSpin = false;
-			/// Au moins une sonde de statut terminée (affiche succès/échec hors rotation).
+			/// Au moins une sonde de statut terminée (cache disponible ; le logo coin ne s’affiche que si \ref authLogoSpin).
 			bool authStatusKnown = false;
 			bool authStatusOk = false;
 		};

@@ -1802,8 +1802,9 @@ namespace engine
 														}
 														LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
 														// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
+														// Logo statut : uniquement pendant la requête HTTP (pas quand le cache est à jour).
 														const bool showAuthStatusLogo = authVisualState.login
-															&& (authVisualState.authLogoSpin || authVisualState.authStatusKnown);
+															&& authVisualState.authLogoSpin;
 														if (m_authLogoPass.IsValid() && showAuthStatusLogo)
 														{
 															engine::render::TextureAsset* logoTex = nullptr;

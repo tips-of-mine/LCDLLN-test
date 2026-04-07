@@ -307,6 +307,8 @@ namespace engine::client
 
 		std::string m_login;
 		std::string m_password;
+		/// Saisie inscription uniquement : doit correspondre à \ref m_password avant envoi.
+		std::string m_passwordConfirm;
 		std::string m_email;
 		std::string m_firstName;
 		std::string m_lastName;

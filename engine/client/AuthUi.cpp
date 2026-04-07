@@ -2582,6 +2582,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 			m_phase = Phase::Register;
 			m_activeField = 0;
 			m_userErrorText.clear();
+			m_passwordConfirm.clear();
 			break;
 		case engine::platform::Window::AuthScreenCommand::OpenForgotPassword:
 		{
@@ -2670,12 +2671,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	}
 	if (m_phase == Phase::Register)
 	{
-		if (m_login.empty() || m_password.empty() || m_email.empty() || m_firstName.empty() || m_lastName.empty()
-			|| m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
+		if (m_login.empty() || m_password.empty() || m_passwordConfirm.empty() || m_email.empty() || m_firstName.empty()
+			|| m_lastName.empty() || m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
 		{
 			m_phase = Phase::Error;
 			m_userErrorText = Tr("auth.error.enter_register_fields");
 			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
+			return;
+		}
+		if (m_password != m_passwordConfirm)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.password_mismatch");
+			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: password mismatch");
 			return;
 		}
 		if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
@@ -2824,11 +2832,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				{
 				case 0: return &m_login;
 				case 1: return &m_password;
-				case 2: return &m_email;
-				case 3: return &m_firstName;
-				case 4: return &m_lastName;
-				case 5: return &m_birthDay;
-				case 6: return &m_birthMonth;
+				case 2: return &m_passwordConfirm;
+				case 3: return &m_email;
+				case 4: return &m_firstName;
+				case 5: return &m_lastName;
+				case 6: return &m_birthDay;
+				case 7: return &m_birthMonth;
 				default: return &m_birthYear;
 				}
 			case Phase::VerifyEmail:
@@ -2974,18 +2983,18 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				if (m_phase == Phase::Register && input.MouseScrollDelta() != 0)
 				{
 					int32_t f = m_hoveredFieldIndex;
-					if (f < 5 || f > 7)
+					if (f < 6 || f > 8)
 					{
 						f = static_cast<int32_t>(m_activeField);
 					}
-					if (f >= 5 && f <= 7)
+					if (f >= 6 && f <= 8)
 					{
 						const int d = input.MouseScrollDelta() > 0 ? 1 : -1;
-						if (f == 5)
+						if (f == 6)
 						{
 							AdjustBirthCycle(m_birthDay, d, 1, 31);
 						}
-						else if (f == 6)
+						else if (f == 7)
 						{
 							AdjustBirthCycle(m_birthMonth, d, 1, 12);
 						}
@@ -3363,7 +3372,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									switch (m_phase)
 									{
 									case Phase::Login:
-										if (i == 0) { m_phase = Phase::Register; m_activeField = 0; m_userErrorText.clear(); }
+										if (i == 0) {
+											m_phase = Phase::Register;
+											m_activeField = 0;
+											m_userErrorText.clear();
+											m_passwordConfirm.clear();
+										}
 										else if (i == 1) { OpenLanguageOptions(); }
 										else if (i == 2) { applyPrimaryAction(); }
 										else if (i == 3) { window.RequestClose(); }
@@ -3397,7 +3411,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								switch (m_phase)
 								{
 								case Phase::Login:
-									if (i == 0) { m_phase = Phase::Register; m_activeField = 0; m_userErrorText.clear(); }
+									if (i == 0) {
+										m_phase = Phase::Register;
+										m_activeField = 0;
+										m_userErrorText.clear();
+										m_passwordConfirm.clear();
+									}
 									else if (i == 1) { OpenLanguageOptions(); }
 									else if (i == 2) { applyPrimaryAction(); }
 									else if (i == 3) { window.RequestClose(); }
@@ -3455,7 +3474,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				if (std::string* field = currentField())
 				{
-					const bool registerBirthCombo = m_phase == Phase::Register && m_activeField >= 5u && m_activeField <= 7u;
+					const bool registerBirthCombo = m_phase == Phase::Register && m_activeField >= 6u && m_activeField <= 8u;
 					if (!registerBirthCombo)
 					{
 						for (unsigned char c : text)
@@ -3464,13 +3483,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 							if (c < 32)
 								continue;
 							const bool digitsOnlyField =
-								(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6 || m_activeField == 7)) ||
+								(m_phase == Phase::Register && (m_activeField == 6 || m_activeField == 7 || m_activeField == 8)) ||
 								(m_phase == Phase::VerifyEmail);
 							if (digitsOnlyField && (c < '0' || c > '9'))
 								continue;
 							const size_t maxLen =
-								(m_phase == Phase::Register && (m_activeField == 5 || m_activeField == 6)) ? 2u :
-								(m_phase == Phase::Register && m_activeField == 7) ? 4u :
+								(m_phase == Phase::Register && (m_activeField == 6 || m_activeField == 7)) ? 2u :
+								(m_phase == Phase::Register && m_activeField == 8) ? 4u :
 								(m_phase == Phase::VerifyEmail) ? 6u :
 								(m_phase == Phase::CharacterCreate) ? 32u : 256u;
 							if (field->size() >= maxLen)
@@ -3499,13 +3518,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			};
 			if (std::string* field = currentField())
 			{
-				if (m_phase == Phase::Register && m_activeField >= 5u && m_activeField <= 7u)
+				if (m_phase == Phase::Register && m_activeField >= 6u && m_activeField <= 8u)
 				{
-					if (m_activeField == 5)
+					if (m_activeField == 6)
 					{
 						AdjustBirthCycle(m_birthDay, -1, 1, 31);
 					}
-					else if (m_activeField == 6)
+					else if (m_activeField == 7)
 					{
 						AdjustBirthCycle(m_birthMonth, -1, 1, 12);
 					}
@@ -3530,7 +3549,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (m_phase == Phase::Login)
 				m_activeField = (m_activeField + 1u) % 2u;
 			else if (m_phase == Phase::Register)
-				m_activeField = (m_activeField + 1u) % 8u;
+				m_activeField = (m_activeField + 1u) % 9u;
 			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::ForgotPassword)
 				m_activeField = 0;
 			else
@@ -3538,15 +3557,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
 		}
 
-		if (!usingNativeAuth && m_phase == Phase::Register && m_activeField >= 5u && m_activeField <= 7u)
+		if (!usingNativeAuth && m_phase == Phase::Register && m_activeField >= 6u && m_activeField <= 8u)
 		{
 			const auto stepBirth = [this](int delta)
 			{
-				if (m_activeField == 5)
+				if (m_activeField == 6)
 				{
 					AdjustBirthCycle(m_birthDay, delta, 1, 31);
 				}
-				else if (m_activeField == 6)
+				else if (m_activeField == 7)
 				{
 					AdjustBirthCycle(m_birthMonth, delta, 1, 12);
 				}
@@ -3741,14 +3760,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		}
 
-	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
+		const bool loginShortcutModifier = input.IsDown(engine::platform::Key::Control);
+		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
 		{
 			m_phase = Phase::Register;
 			m_activeField = 0;
 			m_userErrorText.clear();
+			m_passwordConfirm.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Switched to Register screen");
 		}
-	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
+		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
 		{
 			const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
 			LOG_INFO(Core, "[AuthUiPresenter] Keyboard shortcut opens password recovery portal ({})", resetUrl);
@@ -3758,35 +3779,23 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_userErrorText = Tr("auth.error.open_recovery_portal");
 			}
 		}
-	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::O)
-		&& m_phase != Phase::LanguageSelectionFirstRun
-		&& m_phase != Phase::LanguageOptions
-		&& m_phase != Phase::Submitting
-		&& m_phase != Phase::Terms)
+		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::O) && m_phase == Phase::Login)
 		{
 			OpenLanguageOptions();
 		}
 
-	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::L) && (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail))
+		if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
+			|| (usingNativeAuth && m_phase == Phase::Error))
 		{
-			m_phase = Phase::Login;
-			m_activeField = 0;
-			m_userErrorText.clear();
-			LOG_INFO(Core, "[AuthUiPresenter] Switched to Login screen");
+			if (!usingNativeAuth && m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root)
+			{
+				EnterOptionsSubmenuFromRoot(m_optionsRootSelection);
+			}
+			else
+			{
+				applyPrimaryAction();
+			}
 		}
-
-	if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
-		|| (usingNativeAuth && m_phase == Phase::Error))
-	{
-		if (!usingNativeAuth && m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root)
-		{
-			EnterOptionsSubmenuFromRoot(m_optionsRootSelection);
-		}
-		else
-		{
-			applyPrimaryAction();
-		}
-	}
 
 		UpdateWindowTitle(window);
 	}
@@ -3919,14 +3928,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		case Phase::Register:
 		{
 			model.sectionTitle = Tr("auth.panel.register");
+			auto maskedConfirm = [this]() -> std::string {
+				std::string out;
+				AppendPasswordStars(out, m_passwordConfirm.size());
+				return out;
+			};
 			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"));
 			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"));
-			addField(Tr("common.email"), m_email, m_activeField == 2, false, false, {}, Tr("auth.tooltip.email"));
-			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 3, false, false, {}, Tr("auth.tooltip.first_name"));
-			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 4, false, false, {}, Tr("auth.tooltip.last_name"));
-			addField(Tr("auth.label.birth_day"), BirthCycleDisplay(m_birthDay, 1, 1, 31), m_activeField == 5, false, true, "auth.tooltip.birth_day");
-			addField(Tr("auth.label.birth_month"), BirthCycleDisplay(m_birthMonth, 1, 1, 12), m_activeField == 6, false, true, "auth.tooltip.birth_month");
-			addField(Tr("auth.label.birth_year"), BirthCycleDisplay(m_birthYear, 2000, 1900, 2100), m_activeField == 7, false, true, "auth.tooltip.birth_year");
+			addField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2, true, false, {}, Tr("auth.tooltip.password_confirm"));
+			addField(Tr("common.email"), m_email, m_activeField == 3, false, false, {}, Tr("auth.tooltip.email"));
+			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 4, false, false, {}, Tr("auth.tooltip.first_name"));
+			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 5, false, false, {}, Tr("auth.tooltip.last_name"));
+			addField(Tr("auth.label.birth_day"), BirthCycleDisplay(m_birthDay, 1, 1, 31), m_activeField == 6, false, true, "auth.tooltip.birth_day");
+			addField(Tr("auth.label.birth_month"), BirthCycleDisplay(m_birthMonth, 1, 1, 12), m_activeField == 7, false, true, "auth.tooltip.birth_month");
+			addField(Tr("auth.label.birth_year"), BirthCycleDisplay(m_birthYear, 2000, 1900, 2100), m_activeField == 8, false, true, "auth.tooltip.birth_year");
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
@@ -4280,6 +4295,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 			m_phase = Phase::Login;
 			m_userErrorText.clear();
+			m_passwordConfirm.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Auth sub-screen -> Login");
 			return true;
 		}

@@ -38,3 +38,80 @@ jobs:
           $tb = Join-Path (Join-Path (Join-Path "build" "pkg") "texr_builder") "texr_builder.exe"
           & $tb pack "tests/texr_fixture" "pkg/texr_smoke/smoke.texr"
           & $tb validate "pkg/texr_smoke/smoke.texr"
+
+      - name: Collect artifacts (texr_builder + runtime + smoke .texr)
+        shell: pwsh
+        run: |
+          $root = $env:GITHUB_WORKSPACE
+          $out = Join-Path $root "artifacts-texr-ci"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
+          $tb = Join-Path (Join-Path (Join-Path $root "build") "pkg") "texr_builder"
+          $tb = Join-Path $tb "texr_builder.exe"
+          if (-not (Test-Path $tb)) { throw "texr_builder.exe introuvable: $tb" }
+          Copy-Item $tb $out -Force
+
+          $smoke = Join-Path (Join-Path (Join-Path $root "pkg") "texr_smoke") "smoke.texr"
+          if (-not (Test-Path $smoke)) { throw "smoke.texr introuvable: $smoke" }
+          Copy-Item $smoke $out -Force
+
+          $osslBin = Join-Path (Join-Path (Join-Path (Join-Path $root "build") "vcpkg_installed") "x64-windows") "bin"
+          foreach ($dll in @("libcrypto-3-x64.dll", "libssl-3-x64.dll")) {
+            $p = Join-Path $osslBin $dll
+            if (Test-Path $p) {
+              Copy-Item $p $out -Force
+            } else {
+              throw "DLL OpenSSL attendue introuvable: $p"
+            }
+          }
+
+          $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
+          foreach ($dll in @("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")) {
+            $found = Get-ChildItem -Recurse -Path $vcRedistBase -Filter $dll `
+              -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.FullName -like "*x64*" -and
+                $_.FullName -notlike "*debug_nonredist*" -and
+                $_.FullName -notlike "*onecore*"
+              } |
+              Select-Object -First 1
+            if ($found) {
+              Copy-Item $found.FullName -Destination $out -Force
+            }
+          }
+          $ucrt = "C:\Windows\System32\ucrtbase.dll"
+          if (Test-Path $ucrt) {
+            Copy-Item $ucrt -Destination $out -Force
+          }
+
+          $mvt = Join-Path (Join-Path (Join-Path $root "build") "Release") "manifest_verify_tests.exe"
+          if (Test-Path $mvt) {
+            Copy-Item $mvt $out -Force
+          }
+
+          $readme = @(
+            "Artefact pipeline texr-ci (Windows x64 Release).",
+            "",
+            "Contenu typique :",
+            "  - texr_builder.exe",
+            "  - smoke.texr (fixture tests/texr_fixture)",
+            "  - libcrypto / libssl (vcpkg), runtime MSVC + ucrt si copies",
+            "",
+            "Verification locale :",
+            "  .\texr_builder.exe validate .\smoke.texr",
+            "",
+            "Optionnel :",
+            "  .\manifest_verify_tests.exe (tests manifest Ed25519, si present)",
+            "",
+            "Commit : ${{ github.sha }}",
+            "Run : ${{ github.run_id }}"
+          ) -join "`n"
+          $readme | Set-Content -Path (Join-Path $out "LISEZMOI.txt") -Encoding utf8
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: windows-texr-ci-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts-texr-ci/
+          if-no-files-found: error
+          retention-days: 14

@@ -16,6 +16,8 @@
 #	include "imgui.h"
 #	include "imgui_impl_vulkan.h"
 #	include "imgui_impl_win32.h"
+	// ImGui 1.91+ : la déclaration n’est plus dans l’en-tête (#if 0) pour éviter HWND dans l’API publique.
+	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #	include <vulkan/vulkan.h>
 #endif

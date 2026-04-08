@@ -322,6 +322,9 @@ endif()
 add_executable(engine_app
   engine/app/main.cpp
 )
+if(WIN32)
+  target_sources(engine_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_client.rc")
+endif()
 set_target_properties(engine_app PROPERTIES
   OUTPUT_NAME "lcdlln"
   RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/game"
@@ -334,6 +337,71 @@ endif()
 target_link_libraries(engine_app PRIVATE engine_core)
 if(WIN32)
   target_link_libraries(engine_app PRIVATE user32 shell32)
+endif()
+
+# Dear ImGui (branche docking) — uniquement pour lcdlln_world_editor (GLFW + OpenGL 3, pas Vulkan / engine_core).
+FetchContent_Declare(
+  imgui_world_editor
+  GIT_REPOSITORY https://github.com/ocornut/imgui
+  GIT_TAG        v1.91.9-docking
+)
+FetchContent_GetProperties(imgui_world_editor)
+if(NOT imgui_world_editor_POPULATED)
+  FetchContent_Populate(imgui_world_editor)
+endif()
+set(LCDLLN_IMGUI_WE_DIR "${imgui_world_editor_SOURCE_DIR}")
+message(STATUS "LCDLLN: World Editor Dear ImGui (FetchContent): ${LCDLLN_IMGUI_WE_DIR}")
+add_library(imgui_lcdlln_world_editor STATIC
+  ${LCDLLN_IMGUI_WE_DIR}/imgui.cpp
+  ${LCDLLN_IMGUI_WE_DIR}/imgui_draw.cpp
+  ${LCDLLN_IMGUI_WE_DIR}/imgui_tables.cpp
+  ${LCDLLN_IMGUI_WE_DIR}/imgui_widgets.cpp
+  ${LCDLLN_IMGUI_WE_DIR}/backends/imgui_impl_glfw.cpp
+  ${LCDLLN_IMGUI_WE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui_lcdlln_world_editor PUBLIC
+  ${LCDLLN_IMGUI_WE_DIR}
+  ${LCDLLN_IMGUI_WE_DIR}/backends
+)
+target_link_libraries(imgui_lcdlln_world_editor PUBLIC glfw)
+target_compile_features(imgui_lcdlln_world_editor PUBLIC cxx_std_11)
+if(MSVC)
+  target_compile_options(imgui_lcdlln_world_editor PRIVATE /W0)
+endif()
+if(WIN32)
+  target_link_libraries(imgui_lcdlln_world_editor PRIVATE opengl32)
+elseif(APPLE)
+  target_link_libraries(imgui_lcdlln_world_editor PRIVATE "-framework OpenGL")
+else()
+  find_package(OpenGL REQUIRED)
+  target_link_libraries(imgui_lcdlln_world_editor PRIVATE OpenGL::GL)
+endif()
+
+# World Editor : exécutable séparé (ImGui + OpenGL) ; icône dédiée, pas de lien runtime avec lcdlln.exe.
+add_executable(world_editor_app
+  engine/app/world_editor_main.cpp
+  engine/app/WorldEditorApp.cpp
+)
+if(WIN32)
+  target_sources(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_world_editor.rc")
+endif()
+set_target_properties(world_editor_app PROPERTIES
+  OUTPUT_NAME "lcdlln_world_editor"
+  RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/world_editor"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/pkg/world_editor"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/pkg/world_editor"
+)
+target_include_directories(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}")
+if(MSVC)
+  target_compile_options(world_editor_app PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+target_link_libraries(world_editor_app PRIVATE imgui_lcdlln_world_editor glfw)
+if(WIN32)
+  target_link_libraries(world_editor_app PRIVATE user32 shell32 opengl32)
+elseif(APPLE)
+  target_link_libraries(world_editor_app PRIVATE "-framework OpenGL")
+else()
+  target_link_libraries(world_editor_app PRIVATE OpenGL::GL)
 endif()
 
 # Copie les assets uniquement si le dossier existe dans le repo
@@ -354,6 +422,12 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
             "$<TARGET_FILE_DIR:engine_app>/game/data"
     COMMENT "Copie du dossier game/data..."
   )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/game/data"
+            "$<TARGET_FILE_DIR:world_editor_app>/game/data"
+    COMMENT "Copie du dossier game/data à côté de lcdlln_world_editor.exe..."
+  )
 endif()
 
 # Copie config.json à côté de l'exécutable si présent
@@ -363,6 +437,12 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
             "${CMAKE_SOURCE_DIR}/config.json"
             "$<TARGET_FILE_DIR:engine_app>/config.json"
     COMMENT "Copie de config.json..."
+  )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/config.json"
+            "$<TARGET_FILE_DIR:world_editor_app>/config.json"
+    COMMENT "Copie de config.json à côté de lcdlln_world_editor.exe..."
   )
 endif()
 
@@ -379,7 +459,7 @@ if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
 endif()
 
 # Paquet runtime : cmake --install build --prefix dist (exécutable + game/data + config)
-install(TARGETS engine_app RUNTIME DESTINATION .)
+install(TARGETS engine_app world_editor_app RUNTIME DESTINATION .)
 if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/game/data" DESTINATION .)
 endif()

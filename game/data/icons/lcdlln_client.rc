@@ -1,0 +1,6 @@
+// Icône embarquée pour lcdlln.exe (client jeu). Fichier .ico source : lcdlln_client.ico (même dossier).
+#include <windows.h>
+
+#define IDI_LCDLLN_CLIENT_ICON 101
+
+IDI_LCDLLN_CLIENT_ICON ICON DISCARDABLE "lcdlln_client.ico"

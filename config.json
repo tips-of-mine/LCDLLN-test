@@ -74,6 +74,9 @@
         "content": "game/data",
         "texr_package": ""
     },
+    "editor": {
+        "zone_json": "zones/demo_editor_mvp/zone.json"
+    },
     "client": {
         "master_host": "localhost",
         "master_port": 3840,

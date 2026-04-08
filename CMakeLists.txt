@@ -299,6 +299,8 @@ add_library(engine_core
   engine/gameplay/ClientPrediction.cpp
   engine/gameplay/StatusEffect.cpp
   engine/world/WorldModel.cpp
+  engine/world/ZoneDescriptor.cpp
+  engine/world/MacroGridBridge.cpp
   engine/world/OutputVersion.cpp
   engine/world/ProbeData.cpp
   engine/world/PakReader.cpp
@@ -460,6 +462,28 @@ if(MSVC)
   target_compile_options(manifest_verify_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME manifest_verify_tests COMMAND manifest_verify_tests)
+
+# World Editor MVP — parse zone.json v1
+add_executable(zone_descriptor_tests tests/ZoneDescriptorTests.cpp)
+target_link_libraries(zone_descriptor_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(zone_descriptor_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME zone_descriptor_tests COMMAND zone_descriptor_tests)
+
+add_executable(macro_grid_bridge_tests tests/MacroGridBridgeTests.cpp)
+target_link_libraries(macro_grid_bridge_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(macro_grid_bridge_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME macro_grid_bridge_tests COMMAND macro_grid_bridge_tests)
+
+add_executable(zone_validate tools/zone_validate.cpp)
+target_link_libraries(zone_validate PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(zone_validate PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME zone_validate_demo COMMAND zone_validate "${CMAKE_SOURCE_DIR}/game/data/zones/demo_editor_mvp/zone.json")
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)

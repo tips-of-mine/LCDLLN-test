@@ -2,6 +2,7 @@
 
 #include "engine/math/Math.h"
 #include "engine/render/Camera.h"
+#include "engine/world/ZoneDescriptor.h"
 
 #include <array>
 #include <string>
@@ -199,6 +200,8 @@ namespace engine::editor
 		std::string m_volumeLayoutPath = "layout.json";
 		std::string m_meshPath = "meshes/test.mesh";
 		std::string m_texturePath = "textures/test.texr";
+		/// Chemin relatif à `paths.content` (ex. zones/demo_editor_mvp/zone.json), optionnel.
+		std::string m_zoneJsonRel;
 		std::string m_lastWindowTitle;
 	};
 }

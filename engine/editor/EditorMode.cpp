@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <filesystem>
 #include <format>
 #include <limits>
 
@@ -208,6 +209,38 @@ namespace engine::editor
 	bool EditorMode::Init(const engine::core::Config& config)
 	{
 		m_contentRoot = config.GetString("paths.content", "game/data");
+		m_zoneJsonRel = config.GetString("editor.zone_json", "");
+		if (!m_zoneJsonRel.empty())
+		{
+			const std::filesystem::path zonePath = engine::platform::FileSystem::ResolveContentPath(config, m_zoneJsonRel);
+			const std::string json = engine::platform::FileSystem::ReadAllText(zonePath);
+			if (json.empty())
+			{
+				LOG_WARN(Core, "[EditorMode] editor.zone_json set but file missing or empty ({})", zonePath.string());
+			}
+			else
+			{
+				engine::world::ZoneDescriptorV1 zoneDesc{};
+				std::string zerr;
+				if (!engine::world::ParseZoneDescriptorJson(json, zoneDesc, zerr))
+				{
+					LOG_WARN(Core, "[EditorMode] zone.json parse failed: {} ({})", zerr, zonePath.string());
+				}
+				else
+				{
+					const std::filesystem::path hm = engine::world::ResolveZoneHeightmapPath(zonePath, zoneDesc);
+					std::string verr;
+					if (!engine::world::ValidateZoneHeightmapAgainstFile(zonePath, zoneDesc, verr))
+					{
+						LOG_WARN(Core, "[EditorMode] Zone heightmap validation failed: {} ({})", verr, zonePath.string());
+					}
+					LOG_INFO(Core, "[EditorMode] Zone descriptor OK id={} heightmap={} seed={}",
+						zoneDesc.zone_id,
+						hm.string(),
+						zoneDesc.has_seed ? std::to_string(zoneDesc.seed) : std::string("(none)"));
+				}
+			}
+		}
 		m_mode = GizmoMode::Translate;
 		m_axis = GizmoAxis::X;
 		m_activeLayer = PlacementLayer::Props;
@@ -754,11 +787,12 @@ namespace engine::editor
 
 	std::string EditorMode::BuildAssetBrowserPanelText() const
 	{
-		return std::format("{} | {} | {} | export={} | stable_order=id/type | layers=[{}:{}:{}, {}:{}:{}, {}:{}:{}]",
+		return std::format("{} | {} | {} | export={} | zone_json={} | layers=[{}:{}:{}, {}:{}:{}, {}:{}:{}]",
 			m_contentRoot,
 			m_meshPath,
 			m_texturePath,
 			m_volumeLayoutPath,
+			m_zoneJsonRel.empty() ? "-" : m_zoneJsonRel,
 			m_layers[0].name, m_layers[0].hidden ? "hidden" : "visible", m_layers[0].locked ? "locked" : "editable",
 			m_layers[1].name, m_layers[1].hidden ? "hidden" : "visible", m_layers[1].locked ? "locked" : "editable",
 			m_layers[2].name, m_layers[2].hidden ? "hidden" : "visible", m_layers[2].locked ? "locked" : "editable");

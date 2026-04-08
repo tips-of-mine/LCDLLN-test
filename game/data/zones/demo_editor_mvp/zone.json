@@ -1,0 +1,10 @@
+{
+  "world_editor_format": 2,
+  "zone_schema": { "name": "lcdlln.zone", "version": 1 },
+  "zone_id": "demo_editor_mvp",
+  "heightmap_r16h": "terrain/flat_2x2.r16h",
+  "heightmap_width": 2,
+  "heightmap_height": 2,
+  "seed": 12345,
+  "texture_layers": []
+}

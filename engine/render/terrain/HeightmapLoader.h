@@ -55,6 +55,10 @@ namespace engine::render::terrain
     public:
         HeightmapLoader() = delete;
 
+        /// Reads only the HAMP header (magic, width, height). Does not verify pixel payload size.
+        static bool PeekR16hFileDimensions(const std::string& fullPath, uint32_t& outW, uint32_t& outH,
+                                           std::string& err);
+
         /// Loads a heightmap from a .r16h binary file.
         /// \param fullPath  Resolved filesystem path to the file.
         /// \param outData   Populated on success.

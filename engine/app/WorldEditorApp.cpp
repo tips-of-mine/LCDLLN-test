@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <string>
+#include <string_view>
 
 #if defined(_WIN32)
 #	ifndef WIN32_LEAN_AND_MEAN
@@ -35,15 +36,9 @@ namespace engine::world_editor
 {
 	namespace
 	{
-		void LogOpt(const WorldEditorRunOptions& opts, std::string_view msg)
-		{
-			if (opts.log)
-			{
-				opts.log(msg);
-			}
-		}
+		using namespace std::literals::string_view_literals;
 
-		void LogOpt(const WorldEditorRunOptions& opts, const std::string& msg)
+		void LogOpt(const WorldEditorRunOptions& opts, std::string_view msg)
 		{
 			if (opts.log)
 			{
@@ -60,11 +55,11 @@ namespace engine::world_editor
 
 	int RunWorldEditor(const WorldEditorRunOptions& opts)
 	{
-		LogOpt(opts, "GLFW: glfwSetErrorCallback + glfwInit");
+		LogOpt(opts, "GLFW: glfwSetErrorCallback + glfwInit"sv);
 		glfwSetErrorCallback(GlfwErrorCallback);
 		if (glfwInit() == GLFW_FALSE)
 		{
-			LogOpt(opts, "GLFW: glfwInit a échoué");
+			LogOpt(opts, "GLFW: glfwInit a échoué"sv);
 			return 1;
 		}
 
@@ -79,7 +74,7 @@ namespace engine::world_editor
 		glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 		glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
-		LogOpt(opts, "GLFW: création fenêtre 1280x720 (LCDLLN World Editor)");
+		LogOpt(opts, "GLFW: création fenêtre 1280x720 (LCDLLN World Editor)"sv);
 		GLFWwindow* window = glfwCreateWindow(
 			1280,
 			720,
@@ -88,7 +83,7 @@ namespace engine::world_editor
 			nullptr);
 		if (!window)
 		{
-			LogOpt(opts, "GLFW: glfwCreateWindow a échoué");
+			LogOpt(opts, "GLFW: glfwCreateWindow a échoué"sv);
 			glfwTerminate();
 			return 1;
 		}
@@ -96,7 +91,7 @@ namespace engine::world_editor
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 
-		LogOpt(opts, "OpenGL: contexte actif — vendeur / moteur / version (API 1.1)");
+		LogOpt(opts, "OpenGL: contexte actif — vendeur / moteur / version (API 1.1)"sv);
 		if (const GLubyte* v = glGetString(GL_VENDOR))
 		{
 			LogOpt(opts, std::string("OpenGL vendor: ").append(reinterpret_cast<const char*>(v)));
@@ -110,7 +105,7 @@ namespace engine::world_editor
 			LogOpt(opts, std::string("OpenGL version: ").append(reinterpret_cast<const char*>(ver)));
 		}
 
-		LogOpt(opts, "ImGui: CreateContext + backends GLFW (OpenGL) + docking");
+		LogOpt(opts, "ImGui: CreateContext + backends GLFW (OpenGL) + docking"sv);
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
@@ -122,7 +117,7 @@ namespace engine::world_editor
 
 		if (!ImGui_ImplGlfw_InitForOpenGL(window, true))
 		{
-			LogOpt(opts, "ImGui: ImGui_ImplGlfw_InitForOpenGL a échoué");
+			LogOpt(opts, "ImGui: ImGui_ImplGlfw_InitForOpenGL a échoué"sv);
 			ImGui::DestroyContext();
 			glfwDestroyWindow(window);
 			glfwTerminate();
@@ -131,7 +126,7 @@ namespace engine::world_editor
 
 		if (!ImGui_ImplOpenGL3_Init(LCDLLN_IMGUI_GLSL_VERSION))
 		{
-			LogOpt(opts, "ImGui: ImGui_ImplOpenGL3_Init a échoué");
+			LogOpt(opts, "ImGui: ImGui_ImplOpenGL3_Init a échoué"sv);
 			ImGui_ImplGlfw_Shutdown();
 			ImGui::DestroyContext();
 			glfwDestroyWindow(window);
@@ -139,7 +134,7 @@ namespace engine::world_editor
 			return 1;
 		}
 
-		LogOpt(opts, "ImGui: boucle principale (fermer la fenêtre ou Fichier → Quitter)");
+		LogOpt(opts, "ImGui: boucle principale (fermer la fenêtre ou Fichier → Quitter)"sv);
 
 		while (glfwWindowShouldClose(window) == GLFW_FALSE)
 		{
@@ -182,7 +177,7 @@ namespace engine::world_editor
 			glfwSwapBuffers(window);
 		}
 
-		LogOpt(opts, "ImGui / GLFW: arrêt propre");
+		LogOpt(opts, "ImGui / GLFW: arrêt propre"sv);
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();

@@ -7,7 +7,11 @@
 #include <nlohmann/json.hpp>
 
 #include <openssl/evp.h>
+#include <openssl/opensslv.h>
 #include <openssl/rand.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/provider.h>
+#endif
 
 #include <array>
 #include <iostream>
@@ -37,22 +41,36 @@ std::string Base64Encode(const std::vector<std::uint8_t>& raw)
 	return std::string(reinterpret_cast<const char*>(buf.data()), static_cast<std::size_t>(n));
 }
 
+/// Signature Ed25519 sur le message brut (interop avec EVP_DigestVerify* côté `ManifestCrypto`).
 bool Ed25519SignRaw(EVP_PKEY* priv, std::string_view message, std::array<std::uint8_t, 64>& sig_out)
 {
-	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-	if (!ctx)
+	const auto* mptr = reinterpret_cast<const unsigned char*>(message.data());
+	const size_t mlen = message.size();
+
+	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new(priv, nullptr);
+	if (!pctx)
 	{
 		return false;
 	}
-	if (EVP_DigestSignInit(ctx, nullptr, nullptr, nullptr, priv) != 1
-	    || EVP_DigestSignUpdate(ctx, message.data(), message.size()) != 1)
+	if (EVP_PKEY_sign_init(pctx) != 1)
 	{
-		EVP_MD_CTX_free(ctx);
+		EVP_PKEY_CTX_free(pctx);
+		return false;
+	}
+	size_t need = 0;
+	if (EVP_PKEY_sign(pctx, nullptr, &need, mptr, mlen) != 1 || need != 64)
+	{
+		EVP_PKEY_CTX_free(pctx);
+		return false;
+	}
+	if (EVP_PKEY_sign_init(pctx) != 1)
+	{
+		EVP_PKEY_CTX_free(pctx);
 		return false;
 	}
 	size_t siglen = sig_out.size();
-	const int ok = EVP_DigestSignFinal(ctx, sig_out.data(), &siglen);
-	EVP_MD_CTX_free(ctx);
+	const int ok = EVP_PKEY_sign(pctx, sig_out.data(), &siglen, mptr, mlen);
+	EVP_PKEY_CTX_free(pctx);
 	return ok == 1 && siglen == 64;
 }
 
@@ -179,6 +197,9 @@ void TestKeysAndManifestChain()
 
 int main()
 {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	(void)OSSL_PROVIDER_load(nullptr, "default");
+#endif
 	TestCanonicalOrder();
 	TestKeysAndManifestChain();
 	std::cerr << "manifest_verify_tests: OK\n";

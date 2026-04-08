@@ -35,5 +35,6 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path pkg/texr_smoke | Out-Null
-          & "build/Release/texr_builder.exe" pack "tests/texr_fixture" "pkg/texr_smoke/smoke.texr"
-          & "build/Release/texr_builder.exe" validate "pkg/texr_smoke/smoke.texr"
+          $tb = Join-Path (Join-Path (Join-Path "build" "pkg") "texr_builder") "texr_builder.exe"
+          & $tb pack "tests/texr_fixture" "pkg/texr_smoke/smoke.texr"
+          & $tb validate "pkg/texr_smoke/smoke.texr"

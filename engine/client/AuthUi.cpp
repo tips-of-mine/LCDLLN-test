@@ -846,6 +846,11 @@ namespace engine::client
 	void AuthUiPresenter::UpdateWindowTitle(engine::platform::Window&) const {}
 	void AuthUiPresenter::JoinWorker() {}
 
+	void AuthUiPresenter::BypassAuthGateForWorldEditor()
+	{
+		m_flowComplete = true;
+	}
+
 	uint32_t AuthUiPresenter::OptionsSubmenuLineCount(OptionsSubMenu sub)
 	{
 		(void)sub;
@@ -4325,6 +4330,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			return true;
 		}
 		return false;
+	}
+
+	void AuthUiPresenter::BypassAuthGateForWorldEditor()
+	{
+		if (!m_initialized)
+		{
+			return;
+		}
+		JoinWorker();
+		m_flowComplete = true;
+		m_userErrorText.clear();
+		m_infoBanner.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] World Editor : flux auth marqué complet (pas d’écran login)");
 	}
 
 }

@@ -160,6 +160,39 @@ if(MSVC)
   target_compile_options(engine_auth PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 
+# Dear ImGui (branche docking) — World Editor Windows : overlay Vulkan (dynamic rendering), pas d’OpenGL.
+if(WIN32)
+  FetchContent_Declare(imgui_lcdlln_fc
+    GIT_REPOSITORY https://github.com/ocornut/imgui
+    GIT_TAG        v1.91.9-docking
+  )
+  FetchContent_GetProperties(imgui_lcdlln_fc)
+  if(NOT imgui_lcdlln_fc_POPULATED)
+    FetchContent_Populate(imgui_lcdlln_fc)
+  endif()
+  set(IMGUI_DIR "${imgui_lcdlln_fc_SOURCE_DIR}")
+  message(STATUS "LCDLLN: Dear ImGui (world editor / Vulkan): ${IMGUI_DIR}")
+  add_library(imgui_lcdlln STATIC
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+  )
+  target_include_directories(imgui_lcdlln PUBLIC
+    "${IMGUI_DIR}"
+    "${IMGUI_DIR}/backends"
+  )
+  target_link_libraries(imgui_lcdlln PUBLIC Vulkan::Vulkan)
+  target_link_libraries(imgui_lcdlln PRIVATE user32)
+  target_compile_definitions(imgui_lcdlln PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+  target_compile_features(imgui_lcdlln PUBLIC cxx_std_11)
+  if(MSVC)
+    target_compile_options(imgui_lcdlln PRIVATE /W0)
+  endif()
+endif()
+
 set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
     COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=0"
 )
@@ -197,6 +230,7 @@ add_library(engine_core
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp
+  engine/editor/WorldEditorImGui.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
@@ -289,6 +323,9 @@ target_link_libraries(engine_core PUBLIC
   spdlog::spdlog
 )
 if(WIN32)
+  target_link_libraries(engine_core PRIVATE imgui_lcdlln)
+endif()
+if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
 elseif(UNIX)
   target_link_libraries(engine_core PRIVATE pthread)
@@ -339,48 +376,9 @@ if(WIN32)
   target_link_libraries(engine_app PRIVATE user32 shell32)
 endif()
 
-# Dear ImGui (branche docking) — uniquement pour lcdlln_world_editor (GLFW + OpenGL 3, pas Vulkan / engine_core).
-FetchContent_Declare(
-  imgui_world_editor
-  GIT_REPOSITORY https://github.com/ocornut/imgui
-  GIT_TAG        v1.91.9-docking
-)
-FetchContent_GetProperties(imgui_world_editor)
-if(NOT imgui_world_editor_POPULATED)
-  FetchContent_Populate(imgui_world_editor)
-endif()
-set(LCDLLN_IMGUI_WE_DIR "${imgui_world_editor_SOURCE_DIR}")
-message(STATUS "LCDLLN: World Editor Dear ImGui (FetchContent): ${LCDLLN_IMGUI_WE_DIR}")
-add_library(imgui_lcdlln_world_editor STATIC
-  ${LCDLLN_IMGUI_WE_DIR}/imgui.cpp
-  ${LCDLLN_IMGUI_WE_DIR}/imgui_draw.cpp
-  ${LCDLLN_IMGUI_WE_DIR}/imgui_tables.cpp
-  ${LCDLLN_IMGUI_WE_DIR}/imgui_widgets.cpp
-  ${LCDLLN_IMGUI_WE_DIR}/backends/imgui_impl_glfw.cpp
-  ${LCDLLN_IMGUI_WE_DIR}/backends/imgui_impl_opengl3.cpp
-)
-target_include_directories(imgui_lcdlln_world_editor PUBLIC
-  ${LCDLLN_IMGUI_WE_DIR}
-  ${LCDLLN_IMGUI_WE_DIR}/backends
-)
-target_link_libraries(imgui_lcdlln_world_editor PUBLIC glfw)
-target_compile_features(imgui_lcdlln_world_editor PUBLIC cxx_std_11)
-if(MSVC)
-  target_compile_options(imgui_lcdlln_world_editor PRIVATE /W0)
-endif()
-if(WIN32)
-  target_link_libraries(imgui_lcdlln_world_editor PRIVATE opengl32)
-elseif(APPLE)
-  target_link_libraries(imgui_lcdlln_world_editor PRIVATE "-framework OpenGL")
-else()
-  find_package(OpenGL REQUIRED)
-  target_link_libraries(imgui_lcdlln_world_editor PRIVATE OpenGL::GL)
-endif()
-
-# World Editor : exécutable séparé (ImGui + OpenGL) ; icône dédiée, pas de lien runtime avec lcdlln.exe.
+# World Editor : exécutable séparé, même cœur Vulkan que le jeu (flag interne --world-editor).
 add_executable(world_editor_app
   engine/app/world_editor_main.cpp
-  engine/app/WorldEditorApp.cpp
 )
 if(WIN32)
   target_sources(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_world_editor.rc")
@@ -393,15 +391,11 @@ set_target_properties(world_editor_app PROPERTIES
 )
 target_include_directories(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}")
 if(MSVC)
-  target_compile_options(world_editor_app PRIVATE /W4 /permissive- /Zc:preprocessor)
+  target_compile_options(world_editor_app PRIVATE /Zc:preprocessor)
 endif()
-target_link_libraries(world_editor_app PRIVATE imgui_lcdlln_world_editor glfw)
+target_link_libraries(world_editor_app PRIVATE engine_core)
 if(WIN32)
-  target_link_libraries(world_editor_app PRIVATE user32 shell32 opengl32)
-elseif(APPLE)
-  target_link_libraries(world_editor_app PRIVATE "-framework OpenGL")
-else()
-  target_link_libraries(world_editor_app PRIVATE OpenGL::GL)
+  target_link_libraries(world_editor_app PRIVATE user32 shell32)
 endif()
 
 # Copie les assets uniquement si le dossier existe dans le repo
@@ -455,6 +449,15 @@ if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
             "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
             "$<TARGET_FILE_DIR:engine_app>/"
     COMMENT "Copie des DLL OpenSSL (libssl / libcrypto) à côté de lcdlln.exe..."
+  )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libssl-3-x64.dll"
+            "$<TARGET_FILE_DIR:world_editor_app>/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
+            "$<TARGET_FILE_DIR:world_editor_app>/"
+    COMMENT "Copie des DLL OpenSSL à côté de lcdlln_world_editor.exe..."
   )
 endif()
 

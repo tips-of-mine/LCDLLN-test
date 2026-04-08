@@ -107,6 +107,9 @@ namespace engine::platform
 		/// Provide a message handler hook (used by Input).
 		void SetMessageHook(std::function<void(uint32_t msg, uint64_t wparam, int64_t lparam)> hook);
 
+		/// Win32 : hook invoqué en premier dans \ref HandleMessage ; si la valeur retournée est non nulle, le message est consommé (ex. ImGui).
+		void SetPreMessageInterceptor(std::function<intptr_t(uint32_t msg, uint64_t wparam, int64_t lparam)> interceptor);
+
 		/// Handle a native platform message (used by WndProc on Win32).
 		intptr_t HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam);
 
@@ -161,6 +164,7 @@ namespace engine::platform
 		std::function<void(int, int)> m_onResize;
 		std::function<void()> m_onClose;
 		std::function<void(uint32_t, uint64_t, int64_t)> m_msgHook;
+		std::function<intptr_t(uint32_t, uint64_t, int64_t)> m_preMessageInterceptor;
 
 		// Stored windowed rect/style for fullscreen toggle.
 		uint64_t m_windowedStyle = 0;

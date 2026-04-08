@@ -95,6 +95,10 @@ namespace engine::platform
 		m_msgHook = std::move(hook);
 	}
 
+	void Window::SetPreMessageInterceptor(std::function<intptr_t(uint32_t, uint64_t, int64_t)>)
+	{
+	}
+
 	intptr_t Window::HandleMessage(uint32_t, uint64_t, int64_t)
 	{
 		// No native messages on stub backend.

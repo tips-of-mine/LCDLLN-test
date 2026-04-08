@@ -86,7 +86,8 @@ namespace engine::editor
 		EditorMode& operator=(const EditorMode&) = delete;
 
 		/// Initializes editor-only state from config and prepares the shell text.
-		bool Init(const engine::core::Config& config);
+		/// \param worldEditorExe \c true pour \c lcdlln_world_editor.exe (titre court, pas de barre de titre verbeuse).
+		bool Init(const engine::core::Config& config, bool worldEditorExe = false);
 
 		/// Releases editor-only state and restores the base window title.
 		void Shutdown(engine::platform::Window& window);
@@ -172,6 +173,7 @@ namespace engine::editor
 		const char* GetVolumeTypeName(VolumeType type) const;
 		const char* GetVolumeShapeName(VolumeShape shape) const;
 
+		bool m_worldEditorExeTitle = false;
 		bool m_initialized = false;
 		bool m_selected = false;
 		bool m_dirty = false;

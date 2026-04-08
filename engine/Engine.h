@@ -46,7 +46,11 @@
 struct GLFWwindow;
 
 namespace engine::render { class DeferredPipeline; }
-namespace engine::editor { class EditorMode; }
+namespace engine::editor
+{
+	class EditorMode;
+	class WorldEditorImGui;
+}
 
 #include <array>
 #include <atomic>
@@ -193,6 +197,7 @@ namespace engine
 
 		engine::render::AssetRegistry m_assetRegistry;
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
+		std::unique_ptr<engine::editor::WorldEditorImGui> m_worldEditorImGui;
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
 		/// Fond plein écran pour l’écran auth (PNG sous paths.content, ex. ui/login/background.png).
@@ -249,6 +254,8 @@ namespace engine
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };
 
 		bool m_quitRequested = false;
+		/// \c true si la ligne de commande contient \c --world-editor (injecté par lcdlln_world_editor.exe uniquement).
+		bool m_worldEditorExe = false;
 		bool m_editorEnabled = false;
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;

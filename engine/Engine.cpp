@@ -2,6 +2,7 @@
 
 #include "engine/core/Log.h"
 #include "engine/editor/EditorMode.h"
+#include "engine/editor/WorldEditorImGui.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/render/AuthUiRenderer.h"
@@ -375,6 +376,7 @@ namespace engine
 		// ------------------------------------------------------------------
 		bool logToFile    = false;
 		bool logToConsole = false;
+		const bool worldEditorExeEarly = HasCliFlag(argc, argv, "--world-editor");
 		for (int i = 1; i < argc; ++i)
 		{
 			if (!argv[i]) continue;
@@ -386,7 +388,8 @@ namespace engine
 		engine::core::LogSettings logSettings;
 		if (logToFile)
 		{
-			const std::string relPath = engine::core::Log::MakeTimestampedFilename("lcdlln.exe");
+			const std::string relPath = engine::core::Log::MakeTimestampedFilename(
+				worldEditorExeEarly ? "lcdlln_world_editor.exe" : "lcdlln.exe");
 			std::error_code ec;
 			const auto absPath = std::filesystem::absolute(relPath, ec);
 			logSettings.filePath = ec ? relPath : absPath.string();
@@ -412,7 +415,9 @@ namespace engine
 		ApplyUserSettingsOverrides(m_cfg);
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
-		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);
+		m_worldEditorExe = HasCliFlag(argc, argv, "--world-editor");
+		m_editorEnabled = m_worldEditorExe || HasCliFlag(argc, argv, "--editor")
+			|| m_cfg.GetBool("editor.enabled", false);
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
@@ -422,7 +427,7 @@ namespace engine
 		if (m_editorEnabled)
 		{
 			m_editorMode = std::make_unique<engine::editor::EditorMode>();
-			if (!m_editorMode->Init(m_cfg))
+			if (!m_editorMode->Init(m_cfg, m_worldEditorExe))
 			{
 				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
 				m_editorMode.reset();
@@ -433,7 +438,15 @@ namespace engine
 				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
 				m_renderStates[0].camera = editorCamera;
 				m_renderStates[1].camera = editorCamera;
-				LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
+				if (m_worldEditorExe)
+				{
+					LOG_INFO(Core,
+						"[Boot] World Editor exe — mode éditeur 3D (Vulkan), pas d’auth client ; flag interne --world-editor");
+				}
+				else
+				{
+					LOG_INFO(Core, "[Boot] Editor mode enabled (--editor ou editor.enabled=true)");
+				}
 			}
 		}
 
@@ -450,7 +463,7 @@ namespace engine
 		// Window
 		// ------------------------------------------------------------------
 		engine::platform::Window::CreateDesc desc{};
-		desc.title  = "LCDLLN Engine";
+		desc.title  = m_worldEditorExe ? "LCDLLN World Editor" : "LCDLLN Engine";
 		desc.width  = 1280;
 		desc.height = 720;
 
@@ -459,7 +472,7 @@ namespace engine
 			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
 		LOG_INFO(Core, "[Boot] Window::Create OK");
-		if (m_cfg.GetBool("render.fullscreen", true))
+		if (!m_worldEditorExe && m_cfg.GetBool("render.fullscreen", true))
 		{
 			m_window.ToggleFullscreen();
 		}
@@ -488,6 +501,12 @@ namespace engine
 		else if (!m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
 		{
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
+		}
+
+		if (m_worldEditorExe && m_authUi.IsInitialized())
+		{
+			m_authUi.BypassAuthGateForWorldEditor();
+			LOG_INFO(Core, "[Boot] World Editor : saut de l’écran d’authentification");
 		}
 
 		InitGameplayNet();
@@ -1924,20 +1943,33 @@ namespace engine
 													if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
 														LOG_WARN(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
 
-													VkImageMemoryBarrier barrier{};
-													barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-													barrier.dstAccessMask = 0;
-													barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-													barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.image = dstImg;
-													barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_TRANSFER_BIT,
-														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &barrier);
+													bool worldEditorUiToPresent = false;
+#if defined(_WIN32)
+													if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady()
+														&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
+														&& !presentSolidColorDebug)
+													{
+														worldEditorUiToPresent = m_worldEditorImGui->RecordToBackbuffer(
+															cmd, dstImg, backbufferView, ext, m_vkDeviceContext);
+													}
+#endif
+													if (!worldEditorUiToPresent)
+													{
+														VkImageMemoryBarrier barrier{};
+														barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+														barrier.dstAccessMask = 0;
+														barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+														barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+														barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														barrier.image = dstImg;
+														barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														vkCmdPipelineBarrier(cmd,
+															VK_PIPELINE_STAGE_TRANSFER_BIT,
+															VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+															0, 0, nullptr, 0, nullptr, 1, &barrier);
+													}
 												}
 											});
 
@@ -2021,6 +2053,14 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+#if defined(_WIN32)
+			if (m_worldEditorImGui)
+			{
+				m_worldEditorImGui->DetachPlatformWindow(m_window);
+				m_worldEditorImGui->Shutdown(m_vkDeviceContext.GetDevice());
+				m_worldEditorImGui.reset();
+			}
+#endif
 			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
@@ -2134,6 +2174,10 @@ namespace engine
 					m_suboptimalWidth = m_width;
 					m_suboptimalHeight = m_height;
 					LOG_INFO(Platform, "[Resize] Swapchain recreated OK");
+					if (m_worldEditorImGui)
+					{
+						m_worldEditorImGui->OnSwapchainRecreate(m_vkSwapchain.GetImageCount());
+					}
 				}
 				else
 					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED");
@@ -2162,6 +2206,28 @@ namespace engine
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
 		auto& out               = m_renderStates[writeIdx];
+
+#if defined(_WIN32)
+		if (m_worldEditorExe && !m_worldEditorImGui && m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid()
+			&& m_window.GetNativeHandle() != nullptr && m_vkDeviceContext.SupportsDynamicRendering())
+		{
+			m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
+			if (m_worldEditorImGui->Init(
+				m_vkInstance.GetHandle(),
+				m_vkDeviceContext,
+				m_vkSwapchain.GetImageFormat(),
+				m_vkSwapchain.GetImageCount(),
+				VK_API_VERSION_1_1,
+				m_window.GetNativeHandle()))
+			{
+				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
+			}
+			else
+			{
+				m_worldEditorImGui.reset();
+			}
+		}
+#endif
 
 		const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
 		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
@@ -2302,6 +2368,13 @@ namespace engine
 				m_chatUi.Update(m_input, static_cast<float>(dt));
 			}
 		}
+		else if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			if (!m_worldEditorImGui->WantsCaptureMouse() && !m_worldEditorImGui->WantsCaptureKeyboard())
+			{
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, out.camera);
+			}
+		}
 
 		if (m_gameplayNetInitialized)
 		{
@@ -2370,6 +2443,25 @@ namespace engine
 		{
 			out.objectVisible = true;
 		}
+
+#if defined(_WIN32)
+		if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			float dw = static_cast<float>(std::max(1, m_width));
+			float dh = static_cast<float>(std::max(1, m_height));
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extUi = m_vkSwapchain.GetExtent();
+				if (extUi.width > 0 && extUi.height > 0)
+				{
+					dw = static_cast<float>(extUi.width);
+					dh = static_cast<float>(extUi.height);
+				}
+			}
+			m_worldEditorImGui->NewFrame(static_cast<float>(dt), dw, dh);
+			m_worldEditorImGui->BuildUi();
+		}
+#endif
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
 		{

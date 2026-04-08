@@ -88,24 +88,24 @@ bool Ed25519Verify(std::span<const std::uint8_t, 32> pubkey, std::string_view me
 		err = "EVP_PKEY_new_raw_public_key failed";
 		return false;
 	}
-	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new(pkey, nullptr);
-	if (!pctx)
+	EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+	if (!mdctx)
 	{
-		err = "EVP_PKEY_CTX_new failed";
+		err = "EVP_MD_CTX_new failed";
 		EVP_PKEY_free(pkey);
 		return false;
 	}
-	if (EVP_PKEY_verify_init(pctx) != 1)
+	if (EVP_DigestVerifyInit(mdctx, nullptr, nullptr, nullptr, pkey) != 1)
 	{
-		err = "EVP_PKEY_verify_init failed";
-		EVP_PKEY_CTX_free(pctx);
+		err = "EVP_DigestVerifyInit failed";
+		EVP_MD_CTX_free(mdctx);
 		EVP_PKEY_free(pkey);
 		return false;
 	}
 	const auto* mptr = reinterpret_cast<const unsigned char*>(message_utf8.data());
 	const int v =
-	    EVP_PKEY_verify(pctx, signature.data(), 64, mptr, message_utf8.size());
-	EVP_PKEY_CTX_free(pctx);
+	    EVP_DigestVerify(mdctx, signature.data(), 64, mptr, message_utf8.size());
+	EVP_MD_CTX_free(mdctx);
 	EVP_PKEY_free(pkey);
 	if (v != 1)
 	{

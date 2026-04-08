@@ -8,7 +8,6 @@
 
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
-#include <openssl/rand.h>
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/provider.h>
 #endif
@@ -41,12 +40,9 @@ std::string Base64Encode(const std::vector<std::uint8_t>& raw)
 	return std::string(reinterpret_cast<const char*>(buf.data()), static_cast<std::size_t>(n));
 }
 
-/// Signature Ed25519 sur le message brut (interop avec EVP_DigestVerify* côté `ManifestCrypto`).
+/// Un seul EVP_PKEY_sign (siglen = 64 en entrée) : l’appel avec buffer NULL est refusé sur certaines builds vcpkg/Windows.
 bool Ed25519SignRaw(EVP_PKEY* priv, std::string_view message, std::array<std::uint8_t, 64>& sig_out)
 {
-	const auto* mptr = reinterpret_cast<const unsigned char*>(message.data());
-	const size_t mlen = message.size();
-
 	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new(priv, nullptr);
 	if (!pctx)
 	{
@@ -57,36 +53,33 @@ bool Ed25519SignRaw(EVP_PKEY* priv, std::string_view message, std::array<std::ui
 		EVP_PKEY_CTX_free(pctx);
 		return false;
 	}
-	size_t need = 0;
-	if (EVP_PKEY_sign(pctx, nullptr, &need, mptr, mlen) != 1 || need != 64)
-	{
-		EVP_PKEY_CTX_free(pctx);
-		return false;
-	}
-	if (EVP_PKEY_sign_init(pctx) != 1)
-	{
-		EVP_PKEY_CTX_free(pctx);
-		return false;
-	}
+	const auto* mptr = reinterpret_cast<const unsigned char*>(message.data());
 	size_t siglen = sig_out.size();
-	const int ok = EVP_PKEY_sign(pctx, sig_out.data(), &siglen, mptr, mlen);
+	const int ok = EVP_PKEY_sign(pctx, sig_out.data(), &siglen, mptr, message.size());
 	EVP_PKEY_CTX_free(pctx);
 	return ok == 1 && siglen == 64;
 }
 
-/// Clé Ed25519 32 octets (seed OpenSSL) — évite EVP_PKEY_Q_keygen (comportement variable selon build).
+/// Génération OpenSSL classique (plus fiable que import raw 32o pour la signature sous Windows).
 EVP_PKEY* NewEd25519Key(std::array<std::uint8_t, 32>& pub_out)
 {
-	std::array<std::uint8_t, 32> priv{};
-	if (RAND_bytes(priv.data(), static_cast<int>(priv.size())) != 1)
+	EVP_PKEY_CTX* kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, nullptr);
+	if (!kctx)
 	{
 		return nullptr;
 	}
-	EVP_PKEY* pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, nullptr, priv.data(), priv.size());
-	if (!pkey)
+	if (EVP_PKEY_keygen_init(kctx) != 1)
 	{
+		EVP_PKEY_CTX_free(kctx);
 		return nullptr;
 	}
+	EVP_PKEY* pkey = nullptr;
+	if (EVP_PKEY_keygen(kctx, &pkey) != 1 || !pkey)
+	{
+		EVP_PKEY_CTX_free(kctx);
+		return nullptr;
+	}
+	EVP_PKEY_CTX_free(kctx);
 	size_t len = pub_out.size();
 	if (EVP_PKEY_get_raw_public_key(pkey, pub_out.data(), &len) != 1 || len != pub_out.size())
 	{

@@ -88,25 +88,31 @@ bool Ed25519Verify(std::span<const std::uint8_t, 32> pubkey, std::string_view me
 		err = "EVP_PKEY_new_raw_public_key failed";
 		return false;
 	}
-	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
-	bool ok = false;
-	if (ctx && EVP_DigestVerifyInit(ctx, nullptr, nullptr, nullptr, pkey) == 1
-	    && EVP_DigestVerifyUpdate(ctx, message_utf8.data(), message_utf8.size()) == 1)
+	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new(pkey, nullptr);
+	if (!pctx)
 	{
-		const int v = EVP_DigestVerifyFinal(ctx, signature.data(), 64);
-		ok = (v == 1);
-		if (!ok)
-		{
-			err = "Ed25519 verify failed";
-		}
+		err = "EVP_PKEY_CTX_new failed";
+		EVP_PKEY_free(pkey);
+		return false;
 	}
-	else
+	if (EVP_PKEY_verify_init(pctx) != 1)
 	{
-		err = "EVP_DigestVerifyInit/Update failed";
+		err = "EVP_PKEY_verify_init failed";
+		EVP_PKEY_CTX_free(pctx);
+		EVP_PKEY_free(pkey);
+		return false;
 	}
-	EVP_MD_CTX_free(ctx);
+	const auto* mptr = reinterpret_cast<const unsigned char*>(message_utf8.data());
+	const int v =
+	    EVP_PKEY_verify(pctx, signature.data(), 64, mptr, message_utf8.size());
+	EVP_PKEY_CTX_free(pctx);
 	EVP_PKEY_free(pkey);
-	return ok;
+	if (v != 1)
+	{
+		err = "Ed25519 verify failed";
+		return false;
+	}
+	return true;
 }
 
 bool Sha256BufferHexLower(std::span<const std::uint8_t> data, std::string& out_hex64, std::string& err)

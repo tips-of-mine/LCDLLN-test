@@ -7,9 +7,9 @@
 #include <nlohmann/json.hpp>
 
 #include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include <array>
-#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,13 +44,38 @@ bool Ed25519SignRaw(EVP_PKEY* priv, std::string_view message, std::array<std::ui
 	{
 		return false;
 	}
-	size_t siglen = 64;
-	const bool ok =
-	    (EVP_DigestSignInit(ctx, nullptr, nullptr, nullptr, priv) == 1
-	     && EVP_DigestSignUpdate(ctx, message.data(), message.size()) == 1
-	     && EVP_DigestSignFinal(ctx, sig_out.data(), &siglen) == 1 && siglen == 64);
+	if (EVP_DigestSignInit(ctx, nullptr, nullptr, nullptr, priv) != 1
+	    || EVP_DigestSignUpdate(ctx, message.data(), message.size()) != 1)
+	{
+		EVP_MD_CTX_free(ctx);
+		return false;
+	}
+	size_t siglen = sig_out.size();
+	const int ok = EVP_DigestSignFinal(ctx, sig_out.data(), &siglen);
 	EVP_MD_CTX_free(ctx);
-	return ok;
+	return ok == 1 && siglen == 64;
+}
+
+/// Clé Ed25519 32 octets (seed OpenSSL) — évite EVP_PKEY_Q_keygen (comportement variable selon build).
+EVP_PKEY* NewEd25519Key(std::array<std::uint8_t, 32>& pub_out)
+{
+	std::array<std::uint8_t, 32> priv{};
+	if (RAND_bytes(priv.data(), static_cast<int>(priv.size())) != 1)
+	{
+		return nullptr;
+	}
+	EVP_PKEY* pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, nullptr, priv.data(), priv.size());
+	if (!pkey)
+	{
+		return nullptr;
+	}
+	size_t len = pub_out.size();
+	if (EVP_PKEY_get_raw_public_key(pkey, pub_out.data(), &len) != 1 || len != pub_out.size())
+	{
+		EVP_PKEY_free(pkey);
+		return nullptr;
+	}
+	return pkey;
 }
 
 void TestCanonicalOrder()
@@ -67,25 +92,17 @@ void TestCanonicalOrder()
 
 void TestKeysAndManifestChain()
 {
-	EVP_PKEY* embedded = EVP_PKEY_Q_keygen(nullptr, nullptr, "ED25519", nullptr);
-	EVP_PKEY* delegate = EVP_PKEY_Q_keygen(nullptr, nullptr, "ED25519", nullptr);
+	std::array<std::uint8_t, 32> emb_pub_arr{};
+	std::array<std::uint8_t, 32> del_pub_arr{};
+	EVP_PKEY* embedded = NewEd25519Key(emb_pub_arr);
+	EVP_PKEY* delegate = NewEd25519Key(del_pub_arr);
 	if (!embedded || !delegate)
 	{
-		Fail("EVP_PKEY_Q_keygen");
+		Fail("NewEd25519Key");
 	}
 
-	std::array<std::uint8_t, 32> emb_pub{};
-	std::array<std::uint8_t, 32> del_pub{};
-	size_t len = 32;
-	if (EVP_PKEY_get_raw_public_key(embedded, emb_pub.data(), &len) != 1 || len != 32)
-	{
-		Fail("get embedded pubkey");
-	}
-	len = 32;
-	if (EVP_PKEY_get_raw_public_key(delegate, del_pub.data(), &len) != 1 || len != 32)
-	{
-		Fail("get delegate pubkey");
-	}
+	const std::array<std::uint8_t, 32>& emb_pub = emb_pub_arr;
+	const std::array<std::uint8_t, 32>& del_pub = del_pub_arr;
 
 	nlohmann::json del_obj;
 	del_obj["delegate_id"] = "test.signer";

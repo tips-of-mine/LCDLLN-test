@@ -219,7 +219,7 @@ set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
     COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=0"
 )
 
-add_library(engine_core
+add_library(engine_lib_common OBJECT
   engine/render/vk/VmaAllocator.cpp
   engine/render/vk/VkUtils.cpp
   engine/core/Config.cpp
@@ -251,8 +251,6 @@ add_library(engine_core
   engine/client/ZonePreloadHook.cpp
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp
-  engine/editor/EditorMode.cpp
-  engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
   engine/render/vk/VkInstance.cpp
@@ -332,14 +330,21 @@ add_library(engine_core
   engine/network/TermsPayloads.cpp
 )
 # Shared gameplay wire codec (Encode*/Decode*); linked into client — must not be server-only.
-target_sources(engine_core PRIVATE engine/server/ServerProtocol.cpp)
-target_include_directories(engine_core PUBLIC
+target_sources(engine_lib_common PRIVATE engine/server/ServerProtocol.cpp)
+
+add_library(engine_lib_game OBJECT engine/Engine.cpp)
+target_compile_definitions(engine_lib_game PRIVATE LCDLLN_WITH_EDITOR=0)
+
+add_library(engine_lib_editor OBJECT engine/Engine.cpp engine/editor/EditorMode.cpp)
+target_compile_definitions(engine_lib_editor PRIVATE LCDLLN_WITH_EDITOR=1)
+
+set(_ENGINE_CORE_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb
   ${CMAKE_SOURCE_DIR}/external/miniaudio
   ${VMA_INCLUDE_DIRS}
 )
-target_link_libraries(engine_core PUBLIC
+set(_ENGINE_CORE_LINK_PUBLIC
   Vulkan::Vulkan
   glfw
   engine_auth
@@ -347,6 +352,49 @@ target_link_libraries(engine_core PUBLIC
   lcdlln_texr
   lcdlln_manifest
 )
+
+foreach(_eng_obj IN ITEMS engine_lib_common engine_lib_game engine_lib_editor)
+  target_include_directories(${_eng_obj} PUBLIC ${_ENGINE_CORE_INCLUDES})
+  target_link_libraries(${_eng_obj} PUBLIC ${_ENGINE_CORE_LINK_PUBLIC})
+  if(WIN32)
+    target_link_libraries(${_eng_obj} PRIVATE ws2_32 OpenSSL::SSL shell32 ole32)
+  elseif(UNIX)
+    target_link_libraries(${_eng_obj} PRIVATE pthread)
+    if(NOT APPLE)
+      target_link_libraries(${_eng_obj} PRIVATE dl)
+    endif()
+  endif()
+  if(MSVC)
+    target_compile_options(${_eng_obj} PRIVATE /W4 /permissive- /Zc:preprocessor)
+  else()
+    target_compile_options(${_eng_obj} PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
+endforeach()
+
+if(WIN32)
+  target_sources(engine_lib_common PRIVATE
+    engine/platform/Input.cpp
+    engine/platform/Window.cpp
+    engine/network/NetClient.cpp
+    engine/network/ShardToMasterClient.cpp
+    engine/network/ServerListPayloads.cpp
+    engine/network/ShardTicketPayloads.cpp
+    engine/network/MasterShardClientFlow.cpp
+  )
+else()
+  target_sources(engine_lib_common PRIVATE
+    engine/platform/Input_linux.cpp
+    engine/platform/Window_linux.cpp
+    engine/network/NetClient_linux.cpp
+  )
+endif()
+
+# Client jeu (production) : pas de code EditorMode lié.
+add_library(engine_core STATIC
+  $<TARGET_OBJECTS:engine_lib_common>
+  $<TARGET_OBJECTS:engine_lib_game>)
+target_include_directories(engine_core PUBLIC ${_ENGINE_CORE_INCLUDES})
+target_link_libraries(engine_core PUBLIC ${_ENGINE_CORE_LINK_PUBLIC})
 if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32 ole32)
 elseif(UNIX)
@@ -360,22 +408,25 @@ if(MSVC)
 else()
   target_compile_options(engine_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# Outil éditeur monde : même moteur + EditorMode (binaire séparé lcdlln_editor).
+add_library(engine_core_editor STATIC
+  $<TARGET_OBJECTS:engine_lib_common>
+  $<TARGET_OBJECTS:engine_lib_editor>)
+target_include_directories(engine_core_editor PUBLIC ${_ENGINE_CORE_INCLUDES})
+target_link_libraries(engine_core_editor PUBLIC ${_ENGINE_CORE_LINK_PUBLIC})
 if(WIN32)
-  target_sources(engine_core PRIVATE
-    engine/platform/Input.cpp
-    engine/platform/Window.cpp
-    engine/network/NetClient.cpp
-    engine/network/ShardToMasterClient.cpp
-    engine/network/ServerListPayloads.cpp
-    engine/network/ShardTicketPayloads.cpp
-    engine/network/MasterShardClientFlow.cpp
-  )
+  target_link_libraries(engine_core_editor PRIVATE ws2_32 OpenSSL::SSL shell32 ole32)
+elseif(UNIX)
+  target_link_libraries(engine_core_editor PRIVATE pthread)
+  if(NOT APPLE)
+    target_link_libraries(engine_core_editor PRIVATE dl)
+  endif()
+endif()
+if(MSVC)
+  target_compile_options(engine_core_editor PRIVATE /W4 /permissive- /Zc:preprocessor)
 else()
-  target_sources(engine_core PRIVATE
-    engine/platform/Input_linux.cpp
-    engine/platform/Window_linux.cpp
-    engine/network/NetClient_linux.cpp
-  )
+  target_compile_options(engine_core_editor PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 add_executable(engine_app
@@ -393,6 +444,23 @@ endif()
 target_link_libraries(engine_app PRIVATE engine_core)
 if(WIN32)
   target_link_libraries(engine_app PRIVATE user32 shell32)
+endif()
+
+add_executable(engine_editor_app
+  engine/app/editor_main.cpp
+)
+set_target_properties(engine_editor_app PROPERTIES
+  OUTPUT_NAME "lcdlln_editor"
+  RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/game"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/pkg/game"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/pkg/game"
+)
+if(MSVC)
+  target_compile_options(engine_editor_app PRIVATE /Zc:preprocessor)
+endif()
+target_link_libraries(engine_editor_app PRIVATE engine_core_editor)
+if(WIN32)
+  target_link_libraries(engine_editor_app PRIVATE user32 shell32)
 endif()
 
 # Copie les assets uniquement si le dossier existe dans le repo
@@ -437,7 +505,44 @@ if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
   )
 endif()
 
-# Paquet runtime : cmake --install build --prefix dist (exécutable + game/data + config)
+# Même déploiement runtime à côté de lcdlln_editor (hors install production par défaut).
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+  add_custom_command(TARGET engine_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_SOURCE_DIR}/assets"
+      "$<TARGET_FILE_DIR:engine_editor_app>/assets"
+    COMMENT "Copie des assets (éditeur)..."
+  )
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
+  add_custom_command(TARGET engine_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/game/data"
+            "$<TARGET_FILE_DIR:engine_editor_app>/game/data"
+    COMMENT "Copie game/data (éditeur)..."
+  )
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
+  add_custom_command(TARGET engine_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/config.json"
+            "$<TARGET_FILE_DIR:engine_editor_app>/config.json"
+    COMMENT "Copie config.json (éditeur)..."
+  )
+endif()
+if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
+  add_custom_command(TARGET engine_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libssl-3-x64.dll"
+            "$<TARGET_FILE_DIR:engine_editor_app>/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
+            "$<TARGET_FILE_DIR:engine_editor_app>/"
+    COMMENT "Copie des DLL OpenSSL à côté de lcdlln_editor.exe..."
+  )
+endif()
+
+# Paquet runtime : cmake --install build --prefix dist (client jeu uniquement — pas lcdlln_editor)
 install(TARGETS engine_app RUNTIME DESTINATION .)
 if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/game/data" DESTINATION .)

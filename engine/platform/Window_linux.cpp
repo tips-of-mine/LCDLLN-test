@@ -2,6 +2,7 @@
 
 #include "engine/platform/Window.h"
 
+#include "engine/core/Config.h"
 #include "engine/core/Log.h"
 
 namespace engine::platform
@@ -12,6 +13,16 @@ namespace engine::platform
 		m_hwnd = nullptr;
 		m_shouldClose = false;
 		return true;
+	}
+
+	void Window::ReleasePlatformWindowIcons()
+	{
+	}
+
+	void Window::SetWindowIconFromContent(const engine::core::Config& cfg, std::string_view relativeContentPngPath)
+	{
+		(void)cfg;
+		(void)relativeContentPngPath;
 	}
 
 	void Window::Destroy()

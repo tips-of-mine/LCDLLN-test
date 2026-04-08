@@ -4,6 +4,9 @@
         "rotation_size_mb": 10,
         "retention_days": 7
     },
+    "window": {
+        "icon_png": "icons/app/lcdlln_game.png"
+    },
     "render": {
         "vsync": true,
         "present_mode": "fifo",
@@ -75,7 +78,8 @@
         "texr_package": ""
     },
     "editor": {
-        "zone_json": "zones/demo_editor_mvp/zone.json"
+        "zone_json": "zones/demo_editor_mvp/zone.json",
+        "window_icon_png": "icons/app/lcdlln_editor.png"
     },
     "client": {
         "master_host": "localhost",

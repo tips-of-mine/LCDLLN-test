@@ -6,6 +6,11 @@
 #include <string_view>
 #include <vector>
 
+namespace engine::core
+{
+	class Config;
+}
+
 namespace engine::platform
 {
 	/// Basic OS window abstraction (Win32 implementation).
@@ -69,6 +74,10 @@ namespace engine::platform
 		/// Create the OS window.
 		bool Create(const CreateDesc& desc);
 
+		/// Win32 : charge un PNG sous `paths.content` (via `FileSystem::ReadAllBytesContent`, donc .texr OK).
+		/// Autres plateformes : no-op. `relativePath` vide : retire seulement l’icône courante.
+		void SetWindowIconFromContent(const engine::core::Config& cfg, std::string_view relativeContentPngPath);
+
 		/// Destroy the OS window (safe to call multiple times).
 		void Destroy();
 
@@ -117,6 +126,7 @@ namespace engine::platform
 	private:
 		void UpdateOverlayLayout();
 		void UpdateAuthScreenLayout();
+		void ReleasePlatformWindowIcons();
 
 		void* m_hwnd = nullptr; // HWND
 		void* m_overlayHwnd = nullptr; // HWND
@@ -142,6 +152,8 @@ namespace engine::platform
 		void* m_authBackgroundBitmap = nullptr; // HBITMAP
 		void* m_authLogoBitmap = nullptr; // HBITMAP
 		void* m_authInfoBitmap = nullptr; // HBITMAP
+		void* m_windowIconSmall = nullptr; // HICON (WM_SETICON)
+		void* m_windowIconBig = nullptr;   // HICON
 		bool m_shouldClose = false;
 		bool m_fullscreen = false;
 		bool m_authVisible = false;

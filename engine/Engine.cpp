@@ -1,7 +1,9 @@
 #include "engine/Engine.h"
 
 #include "engine/core/Log.h"
-#include "engine/editor/EditorMode.h"
+#if LCDLLN_WITH_EDITOR
+#	include "engine/editor/EditorMode.h"
+#endif
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/texr/ManifestCrypto.h"
@@ -417,7 +419,14 @@ namespace engine
 		ApplyUserSettingsOverrides(m_cfg);
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
-		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);
+#if LCDLLN_WITH_EDITOR
+		m_editorEnabled = true;
+#else
+		if (HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false))
+		{
+			LOG_WARN(Core, "[Boot] Options éditeur ignorées (client jeu) — utilisez l'exécutable lcdlln_editor.");
+		}
+#endif
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
@@ -509,23 +518,22 @@ namespace engine
 			}
 		}
 
-		if (m_editorEnabled)
+#if LCDLLN_WITH_EDITOR
+		m_editorMode = std::make_unique<engine::editor::EditorMode>();
+		if (!m_editorMode->Init(m_cfg))
 		{
-			m_editorMode = std::make_unique<engine::editor::EditorMode>();
-			if (!m_editorMode->Init(m_cfg))
-			{
-				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
-				m_editorMode.reset();
-				m_editorEnabled = false;
-			}
-			else
-			{
-				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
-				m_renderStates[0].camera = editorCamera;
-				m_renderStates[1].camera = editorCamera;
-				LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
-			}
+			LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
+			m_editorMode.reset();
+			m_editorEnabled = false;
 		}
+		else
+		{
+			const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
+			m_renderStates[0].camera = editorCamera;
+			m_renderStates[1].camera = editorCamera;
+			LOG_INFO(Core, "[Boot] World editor (lcdlln_editor) initialisé");
+		}
+#endif
 
 		m_chunkStats.Init(m_cfg);
 		m_lodConfig.Init(m_cfg);
@@ -539,8 +547,17 @@ namespace engine
 		// ------------------------------------------------------------------
 		// Window
 		// ------------------------------------------------------------------
+		m_window.SetAuthImageBytesLoader([this](std::string_view rel)
+		{
+			return engine::platform::FileSystem::ReadAllBytesContent(m_cfg, rel);
+		});
+
 		engine::platform::Window::CreateDesc desc{};
-		desc.title  = "LCDLLN Engine";
+#if LCDLLN_WITH_EDITOR
+		desc.title = "LCDLLN World Editor";
+#else
+		desc.title = "LCDLLN";
+#endif
 		desc.width  = 1280;
 		desc.height = 720;
 
@@ -549,10 +566,11 @@ namespace engine
 			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
 		LOG_INFO(Core, "[Boot] Window::Create OK");
-		m_window.SetAuthImageBytesLoader([this](std::string_view rel)
-		{
-			return engine::platform::FileSystem::ReadAllBytesContent(m_cfg, rel);
-		});
+#if LCDLLN_WITH_EDITOR
+		m_window.SetWindowIconFromContent(m_cfg, m_cfg.GetString("editor.window_icon_png", "icons/app/lcdlln_editor.png"));
+#else
+		m_window.SetWindowIconFromContent(m_cfg, m_cfg.GetString("window.icon_png", "icons/app/lcdlln_game.png"));
+#endif
 		if (m_cfg.GetBool("render.fullscreen", true))
 		{
 			m_window.ToggleFullscreen();
@@ -2145,11 +2163,13 @@ namespace engine
 		}
 		glfwTerminate();
 
+#if LCDLLN_WITH_EDITOR
 		if (m_editorMode)
 		{
 			m_editorMode->Shutdown(m_window);
 			m_editorMode.reset();
 		}
+#endif
 		ShutdownGameplayNet();
 		m_authUi.Shutdown();
 		m_chatUi.Shutdown();
@@ -2196,7 +2216,11 @@ namespace engine
 			m_pendingSellActive = false;
 			LOG_INFO(Core, "[GameplayNet] Shop closed (Escape)");
 		}
-		else if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
+		else if (
+#if LCDLLN_WITH_EDITOR
+			!m_editorEnabled &&
+#endif
+			m_input.WasPressed(engine::platform::Key::Escape))
 		{
 			OnQuit();
 		}
@@ -2387,7 +2411,9 @@ namespace engine
 			}
 		}
 
+#if LCDLLN_WITH_EDITOR
 		if (!m_editorEnabled)
+#endif
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
@@ -2457,6 +2483,7 @@ namespace engine
 		out.prevViewProjMatrix = m_taaHistoryInvalid ? out.viewProjMatrix : readState.viewProjMatrix;
 		if (m_taaHistoryInvalid) m_taaHistoryInvalid = false;
 
+#if LCDLLN_WITH_EDITOR
 		if (m_editorMode)
 		{
 			m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
@@ -2464,6 +2491,7 @@ namespace engine
 			out.objectVisible = m_editorMode->IsObjectVisible();
 		}
 		else
+#endif
 		{
 			out.objectVisible = true;
 		}
@@ -2908,7 +2936,11 @@ namespace engine
 	void Engine::UpdateGameplayNet(float deltaSeconds)
 	{
 		(void)deltaSeconds;
-		if (!m_gameplayNetInitialized || m_editorEnabled)
+		if (!m_gameplayNetInitialized
+#if LCDLLN_WITH_EDITOR
+			|| m_editorEnabled
+#endif
+			)
 		{
 			return;
 		}

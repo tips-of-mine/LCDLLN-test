@@ -1,5 +1,7 @@
 #include "engine/Engine.h"
 
+#include "engine/core/Log.h"
+
 #include <cstdio>
 #include <memory>
 

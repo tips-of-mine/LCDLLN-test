@@ -44,6 +44,9 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset linux-x64-release
 
+      - name: CTest (zone + macro grid + zone_validate)
+        run: ctest --test-dir "${{ github.workspace }}/build/linux-x64-release" -R "zone_descriptor_tests|macro_grid_bridge_tests|zone_validate_demo" --output-on-failure
+
       # Copie automatique db/schema.sql + db/migrations/ → deploy/docker/db/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
       - name: Assembler deploy/docker (sync db + binaires + lib MySQL + game/data)

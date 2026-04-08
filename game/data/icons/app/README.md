@@ -1,21 +1,25 @@
-# assets/icons/app/
+# `game/data/icons/app/`
 
-🇫🇷 FRANÇAIS
-## Pourquoi ce dossier existe
-Il contient les icônes officielles de l’application, notamment l’icône Windows `.ico`
-nécessaire pour l’exécutable et l’affichage système.
+## FR
+Icônes **fenêtre / barre des tâches** (PNG) pour le client jeu et l’éditeur, chargées au runtime sous Windows.
 
-## Ce qu’il doit contenir
-- `icon.ico` : icône Windows multi-résolutions (16 à 256 px).
-- PNG optionnels par taille (`icon_16.png`, `icon_32.png`, etc.).
+| Fichier | Usage |
+|--------|--------|
+| `lcdlln_game.png` | Client `lcdlln` — clé `window.icon_png` dans `config.json` |
+| `lcdlln_editor.png` | `lcdlln_editor` — clé `editor.window_icon_png` |
 
----
+Les chemins sont relatifs à `paths.content` (souvent `game/data`). Le moteur utilise `FileSystem::ReadAllBytesContent` (fichier disque ou `.texr` monté).
 
-🇬🇧 ENGLISH
-## Why this folder exists
-It contains the official application icons, including the Windows `.ico`
-required for the executable and system display.
+Pour l’icône **de l’exécutable** Windows (explorateur, raccourci), il faut en plus un `.ico` dans les ressources du linker (hors périmètre de ces PNG).
 
-## What it must contain
-- `icon.ico` : multi-resolution Windows icon (16 to 256 px).
-- Optional size-specific PNG files (`icon_16.png`, `icon_32.png`, etc.).
+## EN
+**Window / taskbar** PNG icons for the game client and the world editor, loaded at runtime on Windows.
+
+| File | Used by |
+|------|---------|
+| `lcdlln_game.png` | `lcdlln` — `window.icon_png` in `config.json` |
+| `lcdlln_editor.png` | `lcdlln_editor` — `editor.window_icon_png` |
+
+Paths are relative to `paths.content` (typically `game/data`). The engine uses `FileSystem::ReadAllBytesContent` (disk or mounted `.texr`).
+
+For the **executable** icon in Explorer, add a `.ico` to the linker resources (separate from these PNGs).

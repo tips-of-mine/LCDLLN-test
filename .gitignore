@@ -1,2 +1,10 @@
 smtp.local.json
 .claude/
+build/
+
+# Packages .texr générés (CI / local)
+*.texr
+*.texr.meta.json
+packages_cache/
+pkg/texr_smoke/
+texr_local_secrets/

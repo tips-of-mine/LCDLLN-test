@@ -4,6 +4,12 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <vector>
+
+namespace engine::core
+{
+	class Config;
+}
 
 namespace engine::platform
 {
@@ -68,6 +74,10 @@ namespace engine::platform
 		/// Create the OS window.
 		bool Create(const CreateDesc& desc);
 
+		/// Win32 : charge un PNG sous `paths.content` (via `FileSystem::ReadAllBytesContent`, donc .texr OK).
+		/// Autres plateformes : no-op. `relativePath` vide : retire seulement l’icône courante.
+		void SetWindowIconFromContent(const engine::core::Config& cfg, std::string_view relativeContentPngPath);
+
 		/// Destroy the OS window (safe to call multiple times).
 		void Destroy();
 
@@ -107,12 +117,16 @@ namespace engine::platform
 		/// Provide a message handler hook (used by Input).
 		void SetMessageHook(std::function<void(uint32_t msg, uint64_t wparam, int64_t lparam)> hook);
 
+		/// Optional: resolve auth UI image paths to raw bytes (e.g. `FileSystem::ReadAllBytesContent` + `.texr`). Empty loader = file paths only.
+		void SetAuthImageBytesLoader(std::function<std::vector<uint8_t>(std::string_view)> loader);
+
 		/// Handle a native platform message (used by WndProc on Win32).
 		intptr_t HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam);
 
 	private:
 		void UpdateOverlayLayout();
 		void UpdateAuthScreenLayout();
+		void ReleasePlatformWindowIcons();
 
 		void* m_hwnd = nullptr; // HWND
 		void* m_overlayHwnd = nullptr; // HWND
@@ -138,6 +152,8 @@ namespace engine::platform
 		void* m_authBackgroundBitmap = nullptr; // HBITMAP
 		void* m_authLogoBitmap = nullptr; // HBITMAP
 		void* m_authInfoBitmap = nullptr; // HBITMAP
+		void* m_windowIconSmall = nullptr; // HICON (WM_SETICON)
+		void* m_windowIconBig = nullptr;   // HICON
 		bool m_shouldClose = false;
 		bool m_fullscreen = false;
 		bool m_authVisible = false;

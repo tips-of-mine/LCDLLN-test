@@ -2,6 +2,7 @@
 
 #include "engine/platform/Window.h"
 
+#include "engine/core/Config.h"
 #include "engine/core/Log.h"
 
 namespace engine::platform
@@ -12,6 +13,16 @@ namespace engine::platform
 		m_hwnd = nullptr;
 		m_shouldClose = false;
 		return true;
+	}
+
+	void Window::ReleasePlatformWindowIcons()
+	{
+	}
+
+	void Window::SetWindowIconFromContent(const engine::core::Config& cfg, std::string_view relativeContentPngPath)
+	{
+		(void)cfg;
+		(void)relativeContentPngPath;
 	}
 
 	void Window::Destroy()
@@ -93,6 +104,10 @@ namespace engine::platform
 	void Window::SetMessageHook(std::function<void(uint32_t, uint64_t, int64_t)> hook)
 	{
 		m_msgHook = std::move(hook);
+	}
+
+	void Window::SetAuthImageBytesLoader(std::function<std::vector<uint8_t>(std::string_view)>)
+	{
 	}
 
 	intptr_t Window::HandleMessage(uint32_t, uint64_t, int64_t)

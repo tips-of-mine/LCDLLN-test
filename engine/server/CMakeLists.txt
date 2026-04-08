@@ -41,7 +41,7 @@ if(WIN32)
   )
   # M32.1: no MySQL on WIN32 game shard — FriendSystem compiles in no-DB mode.
   # Do NOT define ENGINE_HAS_MYSQL so #if ENGINE_HAS_MYSQL evaluates to false.
-  target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog)
+  target_link_libraries(server_app PRIVATE ws2_32 engine_auth spdlog::spdlog lcdlln_texr)
 elseif(UNIX)
   find_package(OpenSSL REQUIRED)
   find_path(MYSQL_INCLUDE_DIR NAMES mysql.h mysql/mysql.h PATH_SUFFIXES mysql)
@@ -106,7 +106,7 @@ elseif(UNIX)
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
   target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=1)
-  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
+  target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog lcdlln_texr ${MYSQL_LIBRARY})
 
   # M33.3: Anti-bot unit tests (UserRateLimiter, CaptchaVerifier bypass, BotDetector).
   add_executable(anti_bot_tests

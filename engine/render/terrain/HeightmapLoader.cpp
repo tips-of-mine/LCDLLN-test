@@ -296,6 +296,35 @@ namespace engine::render::terrain
     } // namespace
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // HeightmapLoader::PeekR16hFileDimensions
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool HeightmapLoader::PeekR16hFileDimensions(const std::string& fullPath, uint32_t& outW, uint32_t& outH,
+                                                 std::string& err)
+    {
+        err.clear();
+        outW = outH = 0;
+        std::ifstream file(fullPath, std::ios::binary);
+        if (!file.is_open())
+        {
+            err = "heightmap file not found: " + fullPath;
+            return false;
+        }
+        uint32_t magic = 0, width = 0, height = 0;
+        file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+        file.read(reinterpret_cast<char*>(&width), sizeof(width));
+        file.read(reinterpret_cast<char*>(&height), sizeof(height));
+        if (!file || magic != kHeightmapMagic || width == 0 || height == 0)
+        {
+            err = "invalid .r16h header (magic or dimensions)";
+            return false;
+        }
+        outW = width;
+        outH = height;
+        return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // HeightmapLoader::LoadFromFile
     // ─────────────────────────────────────────────────────────────────────────────
 

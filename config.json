@@ -4,6 +4,9 @@
         "rotation_size_mb": 10,
         "retention_days": 7
     },
+    "window": {
+        "icon_png": "icons/app/lcdlln_game.png"
+    },
     "render": {
         "vsync": true,
         "present_mode": "fifo",
@@ -71,7 +74,12 @@
         "max_draw_distance_m": 0.0
     },
     "paths": {
-        "content": "game/data"
+        "content": "game/data",
+        "texr_package": ""
+    },
+    "editor": {
+        "zone_json": "zones/demo_editor_mvp/zone.json",
+        "window_icon_png": "icons/app/lcdlln_editor.png"
     },
     "client": {
         "master_host": "localhost",
@@ -85,6 +93,16 @@
             "enabled": true,
             "timeout_ms": 5000,
             "master_availability_url": ""
+        },
+        "manifest": {
+            "enabled": false,
+            "keys_url": "",
+            "manifest_url": "",
+            "manifest_url_fallback": "",
+            "cdn_base": "",
+            "artifact_id": "",
+            "cache_dir": "packages_cache",
+            "embedded_ed25519_pubkey_hex": ""
         },
         "gameplay_udp": {
             "enabled": false,

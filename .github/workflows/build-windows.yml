@@ -36,6 +36,10 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
+      - name: CTest (zone + macro grid + zone_validate)
+        shell: pwsh
+        run: ctest --test-dir "${{ github.workspace }}/build/vs2022-x64" -C Release -R "zone_descriptor_tests|macro_grid_bridge_tests|zone_validate_demo" --output-on-failure
+
       - name: Collect artifacts
         shell: pwsh
         env:

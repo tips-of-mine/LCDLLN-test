@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef LCDLLN_WITH_EDITOR
+#define LCDLLN_WITH_EDITOR 0
+#endif
+
 #include "engine/core/Config.h"
 #include "engine/core/Profiler.h"
 #include "engine/core/Time.h"
@@ -46,7 +50,9 @@
 struct GLFWwindow;
 
 namespace engine::render { class DeferredPipeline; }
+#if LCDLLN_WITH_EDITOR
 namespace engine::editor { class EditorMode; }
+#endif
 
 #include <array>
 #include <atomic>
@@ -192,7 +198,9 @@ namespace engine
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 
 		engine::render::AssetRegistry m_assetRegistry;
+#if LCDLLN_WITH_EDITOR
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
+#endif
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
 		/// Fond plein écran pour l’écran auth (PNG sous paths.content, ex. ui/login/background.png).
@@ -249,7 +257,9 @@ namespace engine
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };
 
 		bool m_quitRequested = false;
+#if LCDLLN_WITH_EDITOR
 		bool m_editorEnabled = false;
+#endif
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;
 		int m_width = 0;

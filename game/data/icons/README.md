@@ -6,7 +6,7 @@ Ce dossier regroupe toutes les icônes utilisées par l’application, séparée
 afin de faciliter leur remplacement et leur cohérence visuelle.
 
 ## Ce qu’il doit contenir
-- `app/` : icônes de l’application (exécutable, fenêtre, barre des tâches).
+- `app/` : icônes de l’application (fenêtre / barre des tâches : `lcdlln_game.png`, `lcdlln_editor.png` ; voir `app/README.md`).
 - `ui/` : petites icônes utilisées dans l’interface (boutons, états, alertes).
 
 ---

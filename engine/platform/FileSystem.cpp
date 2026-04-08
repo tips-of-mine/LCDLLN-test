@@ -1,10 +1,41 @@
 #include "engine/platform/FileSystem.h"
 #include "engine/core/Log.h"
+#include "engine/texr/TexrPath.h"
+#include "engine/texr/TexrReader.h"
 
 #include <fstream>
+#include <mutex>
 
 namespace engine::platform
 {
+namespace
+{
+	std::mutex g_content_texr_mutex;
+	std::shared_ptr<lcdlln::texr::TexrReader> g_content_texr;
+
+	bool TryReadBytesFromContentTexr(std::string_view relativeContentPath, std::vector<uint8_t>& out)
+	{
+		const std::string key = lcdlln::texr::NormalizeRelativePath(std::filesystem::path(relativeContentPath));
+		std::lock_guard<std::mutex> lock(g_content_texr_mutex);
+		if (!g_content_texr)
+		{
+			return false;
+		}
+		std::uint32_t ty = 0;
+		std::string err;
+		if (!g_content_texr->ReadAsset(key, out, ty, err) || out.empty())
+		{
+			return false;
+		}
+		return true;
+	}
+}  // namespace
+
+	void FileSystem::SetContentTexrReader(std::shared_ptr<lcdlln::texr::TexrReader> reader) noexcept
+	{
+		std::lock_guard<std::mutex> lock(g_content_texr_mutex);
+		g_content_texr = std::move(reader);
+	}
 	std::filesystem::path FileSystem::Join(std::string_view a, std::string_view b)
 	{
 		return std::filesystem::path(a) / std::filesystem::path(b);
@@ -110,11 +141,21 @@ namespace engine::platform
 
 	std::vector<uint8_t> FileSystem::ReadAllBytesContent(const engine::core::Config& cfg, std::string_view relativeContentPath)
 	{
+		std::vector<uint8_t> from_texr;
+		if (TryReadBytesFromContentTexr(relativeContentPath, from_texr))
+		{
+			return from_texr;
+		}
 		return ReadAllBytes(ResolveContentPath(cfg, relativeContentPath));
 	}
 
 	std::string FileSystem::ReadAllTextContent(const engine::core::Config& cfg, std::string_view relativeContentPath)
 	{
+		std::vector<uint8_t> from_texr;
+		if (TryReadBytesFromContentTexr(relativeContentPath, from_texr))
+		{
+			return std::string(reinterpret_cast<const char*>(from_texr.data()), from_texr.size());
+		}
 		return ReadAllText(ResolveContentPath(cfg, relativeContentPath));
 	}
 

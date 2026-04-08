@@ -40,23 +40,24 @@ std::string Base64Encode(const std::vector<std::uint8_t>& raw)
 	return std::string(reinterpret_cast<const char*>(buf.data()), static_cast<std::size_t>(n));
 }
 
-/// Un seul EVP_PKEY_sign (siglen = 64 en entrée) : l’appel avec buffer NULL est refusé sur certaines builds vcpkg/Windows.
+/// Ed25519 = PureEdDSA : il faut EVP_DigestSign* avec type NULL, pas EVP_PKEY_sign (digest pré-calculé).
 bool Ed25519SignRaw(EVP_PKEY* priv, std::string_view message, std::array<std::uint8_t, 64>& sig_out)
 {
-	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new(priv, nullptr);
-	if (!pctx)
+	EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+	if (!mdctx)
 	{
 		return false;
 	}
-	if (EVP_PKEY_sign_init(pctx) != 1)
+	if (EVP_DigestSignInit(mdctx, nullptr, nullptr, nullptr, priv) != 1)
 	{
-		EVP_PKEY_CTX_free(pctx);
+		EVP_MD_CTX_free(mdctx);
 		return false;
 	}
 	const auto* mptr = reinterpret_cast<const unsigned char*>(message.data());
 	size_t siglen = sig_out.size();
-	const int ok = EVP_PKEY_sign(pctx, sig_out.data(), &siglen, mptr, message.size());
-	EVP_PKEY_CTX_free(pctx);
+	const int ok =
+	    EVP_DigestSign(mdctx, sig_out.data(), &siglen, mptr, message.size());
+	EVP_MD_CTX_free(mdctx);
 	return ok == 1 && siglen == 64;
 }
 

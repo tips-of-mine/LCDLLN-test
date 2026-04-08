@@ -7,6 +7,9 @@
 #include <algorithm>
 
 #if defined(_WIN32)
+#	ifndef NOMINMAX
+#		define NOMINMAX
+#	endif
 #	define WIN32_LEAN_AND_MEAN
 #	include <windows.h>
 
@@ -318,7 +321,8 @@ namespace engine::editor
 		if (ImGui::Begin("WorldEditorDockSpaceHost", nullptr, hostFlags))
 		{
 			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpace");
-			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), ImGuiDockNodeFlags_PassthroughCentralNode);
+			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) — littéral pour éviter les divergences d’en-têtes.
+			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), static_cast<ImGuiDockNodeFlags>(1u << 4));
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(3);

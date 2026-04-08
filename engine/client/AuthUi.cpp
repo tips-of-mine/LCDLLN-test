@@ -846,11 +846,6 @@ namespace engine::client
 	void AuthUiPresenter::UpdateWindowTitle(engine::platform::Window&) const {}
 	void AuthUiPresenter::JoinWorker() {}
 
-	void AuthUiPresenter::BypassAuthGateForWorldEditor()
-	{
-		m_flowComplete = true;
-	}
-
 	uint32_t AuthUiPresenter::OptionsSubmenuLineCount(OptionsSubMenu sub)
 	{
 		(void)sub;

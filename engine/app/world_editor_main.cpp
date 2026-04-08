@@ -73,30 +73,34 @@ namespace
 		g_engine = std::make_unique<engine::Engine>(argc, argv);
 		return g_engine->Run();
 	}
+
+	/// Hors de \c main() : MSVC C2712 interdit \c __try dans une fonction qui a du déroulement C++ (ex. \c std::vector).
+	int RunWorldEditorBody(int argc, char** argv)
+	{
+		if (WantsHelp(argc, argv))
+		{
+			PrintHelp();
+			return 0;
+		}
+		std::vector<char*> av = BuildArgvForEngine(argc, argv);
+		const int n = static_cast<int>(av.size());
+		return CreateAndRun(n, av.data());
+	}
 } // namespace
 
 int main(int argc, char** argv)
 {
-	if (WantsHelp(argc, argv))
-	{
-		PrintHelp();
-		return 0;
-	}
-
-	std::vector<char*> av = BuildArgvForEngine(argc, argv);
-	const int n = static_cast<int>(av.size());
-
 #if defined(_WIN32)
 	__try
 	{
-		g_result = CreateAndRun(n, av.data());
+		g_result = RunWorldEditorBody(argc, argv);
 	}
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
 		LOG_ERROR(Core, "[MAIN] SEH EXCEPTION code=0x{:08X}", static_cast<unsigned int>(GetExceptionCode()));
 	}
 #else
-	g_result = CreateAndRun(n, av.data());
+	g_result = RunWorldEditorBody(argc, argv);
 #endif
 	return g_result;
 }

@@ -68,15 +68,19 @@ namespace engine::network
 			LOG_WARN(Net, "[RequestResponseDispatcher] SendRequest FAILED: finalize");
 			return false;
 		}
-		if (!m_client->Send(std::span<const uint8_t>(builder.DataPtr(), builder.DataSize())))
-		{
-			LOG_WARN(Net, "[RequestResponseDispatcher] SendRequest FAILED: send");
-			return false;
-		}
 		auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
 		{
 			std::lock_guard lock(m_mutex);
 			m_pending[requestId] = PendingEntry{ deadline, std::move(onResponse) };
+		}
+		if (!m_client->Send(std::span<const uint8_t>(builder.DataPtr(), builder.DataSize())))
+		{
+			{
+				std::lock_guard lock(m_mutex);
+				m_pending.erase(requestId);
+			}
+			LOG_WARN(Net, "[RequestResponseDispatcher] SendRequest FAILED: send");
+			return false;
 		}
 		return true;
 	}

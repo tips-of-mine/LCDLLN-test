@@ -720,6 +720,14 @@ namespace engine::client
 			return false;
 		}
 
+		/// Même clé que le load tester (`client.server_fingerprint`) : si non vide, NetClient négocie le TLS et épingle le certificat.
+		void ApplyMasterTlsConfig(engine::network::NetClient& client, const std::string& fingerprintHex, bool allowInsecure)
+		{
+			if (!fingerprintHex.empty())
+				client.SetExpectedServerFingerprint(fingerprintHex);
+			client.SetAllowInsecureDev(allowInsecure);
+		}
+
 		const char* NetErrorLabel(engine::network::NetErrorCode c)
 		{
 			using engine::network::NetErrorCode;
@@ -1604,6 +1612,7 @@ namespace engine::client
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string locale = CurrentLocale();
 		const std::string login = m_login;
 		const std::string email = m_email;
@@ -1649,14 +1658,19 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, locale]() {
+		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, serverFingerprint,
+								   locale]() {
 			LOG_INFO(Net, "[AUTH-REG] worker thread started (login_len={} email_len={})", login.size(), email.size());
 			try
 			{
 				AsyncResult local{};
 				engine::network::NetClient client;
-				client.SetAllowInsecureDev(allowInsecure);
-				LOG_INFO(Net, "[AuthUiPresenter] Register worker: connecting {}:{}", host, port);
+				ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
+				LOG_INFO(Net,
+					"[AuthUiPresenter] Register worker: connecting {}:{} (tls_fp_len={})",
+					host,
+					port,
+					serverFingerprint.size());
 				client.Connect(host, port);
 				if (!WaitConnected(&client, timeoutMs + 2000u))
 				{
@@ -1786,6 +1800,7 @@ namespace engine::client
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
 		const std::string locale = CurrentLocale();
 
@@ -1796,7 +1811,7 @@ namespace engine::client
 		}
 
 		engine::network::NetClient* const masterClient = m_masterClient.get();
-		m_worker = std::thread([this, masterClient, host, port, timeoutMs, allowInsecure, login, hash, locale]() {
+		m_worker = std::thread([this, masterClient, host, port, timeoutMs, allowInsecure, serverFingerprint, login, hash, locale]() {
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
@@ -1806,7 +1821,7 @@ namespace engine::client
 				m_asyncResult = local;
 				return;
 			}
-			masterClient->SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(*masterClient, serverFingerprint, allowInsecure);
 			masterClient->Connect(host, port);
 			if (!WaitConnected(masterClient, timeoutMs + 2000u))
 			{
@@ -1990,6 +2005,7 @@ namespace engine::client
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
 
 		m_pendingAsyncKind = AsyncKind::Login;
@@ -1998,10 +2014,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure]() {
+		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure, serverFingerprint]() {
 			AsyncResult local{};
 			engine::network::NetClient masterClient;
-			masterClient.SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(masterClient, serverFingerprint, allowInsecure);
 			engine::network::MasterShardClientFlow flow;
 			flow.SetMasterAddress(host, port);
 			flow.SetCredentials(login, hash);
@@ -2026,6 +2042,7 @@ namespace engine::client
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const uint64_t accountId = m_pendingVerifyAccountId;
 		const std::string code = m_verifyCode;
 
@@ -2035,10 +2052,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, accountId, code]() {
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, accountId, code]() {
 			AsyncResult local{};
 			engine::network::NetClient client;
-			client.SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
 			client.Connect(host, port);
 			if (!WaitConnected(&client, timeoutMs + 2000u))
 			{
@@ -2562,6 +2579,7 @@ namespace engine::client
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string email = m_email;
 
 		m_pendingAsyncKind = AsyncKind::ForgotPassword;
@@ -2570,10 +2588,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, email]() {
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, email]() {
 			AsyncResult local{};
 			engine::network::NetClient client;
-			client.SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
 			client.Connect(host, port);
 			if (!WaitConnected(&client, timeoutMs + 2000u))
 			{

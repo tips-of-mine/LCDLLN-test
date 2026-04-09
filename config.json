@@ -81,6 +81,7 @@
     "client": {
         "master_host": "localhost",
         "master_port": 3840,
+        "server_fingerprint": "",
         "allow_insecure_dev": true,
         "locale": "",
         "character_creation": {

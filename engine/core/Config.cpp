@@ -435,6 +435,7 @@ namespace engine::core
 		cfg.SetDefault("log.console", true);
 
 		cfg.LoadFromFile(filePath);
+		(void)cfg.MergeDefaultsFromJsonFile("external/external_links.json");
 		cfg.ApplyCli(argc, argv);
 		return cfg;
 	}
@@ -486,6 +487,32 @@ namespace engine::core
 			SetValue(k, v);
 		}
 
+		return true;
+	}
+
+	bool Config::MergeDefaultsFromJsonFile(std::string_view filePath)
+	{
+		std::ifstream in(std::string(filePath), std::ios::in | std::ios::binary);
+		if (!in.is_open())
+		{
+			return false;
+		}
+		std::stringstream ss;
+		ss << in.rdbuf();
+		const std::string text = ss.str();
+
+		JsonValue root;
+		JsonParser parser(text);
+		if (!parser.Parse(root))
+		{
+			return false;
+		}
+		if (root.type != JsonValue::Type::Object)
+		{
+			return false;
+		}
+
+		MergeJsonFlatten(root, "", *this);
 		return true;
 	}
 
@@ -547,6 +574,21 @@ namespace engine::core
 		if (const auto* p = std::get_if<double>(&it->second))
 		{
 			return std::to_string(*p);
+		}
+		return std::string(fallback);
+	}
+
+	std::string Config::GetEffectiveMasterHost(std::string_view fallback) const
+	{
+		const std::string explicitHost = GetString("client.master_host", "");
+		if (!explicitHost.empty())
+		{
+			return explicitHost;
+		}
+		const std::string tcpDefault = GetString("client.master_tcp_host", "");
+		if (!tcpDefault.empty())
+		{
+			return tcpDefault;
 		}
 		return std::string(fallback);
 	}

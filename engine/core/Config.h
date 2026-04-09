@@ -26,6 +26,9 @@ namespace engine::core
 		/// Load values from a JSON/INI file (returns false if file is missing/unreadable).
 		bool LoadFromFile(std::string_view filePath);
 
+		/// Fusionne un JSON aplati comme valeurs par défaut (sans écraser les clés déjà chargées) — ex. \c external/external_links.json.
+		bool MergeDefaultsFromJsonFile(std::string_view filePath);
+
 		/// Apply CLI overrides of the form `--key=value` (highest priority).
 		void ApplyCli(int argc, char** argv);
 
@@ -34,6 +37,9 @@ namespace engine::core
 
 		/// Get a string value or return `fallback` if missing/not convertible.
 		std::string GetString(std::string_view key, std::string_view fallback = {}) const;
+
+		/// Hôte TCP maître : \c client.master_host si non vide, sinon \c client.master_tcp_host (ex. défaut \c external_links.json).
+		std::string GetEffectiveMasterHost(std::string_view fallback = "localhost") const;
 
 		/// Get an int64 value or return `fallback` if missing/not convertible.
 		int64_t GetInt(std::string_view key, int64_t fallback = 0) const;

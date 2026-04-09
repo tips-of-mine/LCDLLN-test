@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 	logSettings.flushAlways = true;
 	engine::core::Log::Init(logSettings);
 
-	std::string masterHost = config.GetString("client.master_host", "localhost");
+	std::string masterHost = config.GetEffectiveMasterHost("localhost");
 	uint16_t masterPort = static_cast<uint16_t>(config.GetInt("client.master_port", 3840));
 	std::string login = config.GetString("client.login", "testuser");
 	std::string clientHash = config.GetString("client.client_hash", "");

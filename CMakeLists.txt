@@ -426,6 +426,24 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
   )
 endif()
 
+# Liens externes (défauts client : maître HTTPS / TCP / HTTP tunnel) — relatif à l’exe : external/external_links.json
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+  add_custom_command(TARGET engine_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:engine_app>/external"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/external/external_links.json"
+            "$<TARGET_FILE_DIR:engine_app>/external/external_links.json"
+    COMMENT "Copie de external/external_links.json..."
+  )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:world_editor_app>/external"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/external/external_links.json"
+            "$<TARGET_FILE_DIR:world_editor_app>/external/external_links.json"
+    COMMENT "Copie de external/external_links.json à côté de lcdlln_world_editor.exe..."
+  )
+endif()
+
 # Copie config.json à côté de l'exécutable si présent
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   add_custom_command(TARGET engine_app POST_BUILD
@@ -470,6 +488,9 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
 endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
   install(FILES "${CMAKE_SOURCE_DIR}/config.json" DESTINATION .)
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+  install(FILES "${CMAKE_SOURCE_DIR}/external/external_links.json" DESTINATION external)
 endif()
 
 # M19.2: Protocol v1 serialization unit tests
@@ -564,6 +585,15 @@ if(WIN32)
               "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
               "$<TARGET_FILE_DIR:client_flow_app>/"
       COMMENT "Copie des DLL OpenSSL à côté de client_flow_app.exe..."
+    )
+  endif()
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+    add_custom_command(TARGET client_flow_app POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:client_flow_app>/external"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+              "${CMAKE_SOURCE_DIR}/external/external_links.json"
+              "$<TARGET_FILE_DIR:client_flow_app>/external/external_links.json"
+      COMMENT "Copie de external/external_links.json (client_flow_app)..."
     )
   endif()
 endif()

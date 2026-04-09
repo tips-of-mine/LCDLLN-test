@@ -1,7 +1,10 @@
 {
   "client": {
     "web_portal_reset_url": "https://lcdlln-portal.tips-of-mine.com/password-recovery",
-    "status_api_url": "https://lcdlln-master.tips-of-mine.com/status"
+    "status_api_url": "https://lcdlln-master.tips-of-mine.com/status",
+    "master_tcp_host": "lcdlln-master-tcp.tips-of-mine.com",
+    "master_https_host": "lcdlln-master.tips-of-mine.com",
+    "master_embedded_http_origin": "https://lcdlln-master-http.tips-of-mine.com"
   }
 }
 

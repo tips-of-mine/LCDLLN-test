@@ -234,13 +234,28 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
-		std::string ResolvePasswordRecoveryUrl([[maybe_unused]] const engine::core::Config& cfg)
+		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
+			const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
+			if (!fromCfg.empty())
+			{
+				return fromCfg;
+			}
 			return std::string(kProductionWebPortalResetUrl);
 		}
 
-		std::string ResolveStatusApiUrl([[maybe_unused]] const engine::core::Config& cfg)
+		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
 		{
+			const std::string authUiUrl = cfg.GetString("client.auth_ui.master_availability_url", "");
+			if (!authUiUrl.empty())
+			{
+				return authUiUrl;
+			}
+			const std::string fromLinks = cfg.GetString("client.status_api_url", "");
+			if (!fromLinks.empty())
+			{
+				return fromLinks;
+			}
 			return std::string(kProductionStatusApiUrl);
 		}
 
@@ -998,7 +1013,7 @@ namespace engine::client
 		}
 
 		m_initialized = true;
-		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host / client.master_port, locale={})", m_localization.GetCurrentLocale());
+		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host ou client.master_tcp_host / client.master_port, locale={})", m_localization.GetCurrentLocale());
 		return true;
 	}
 
@@ -1608,7 +1623,7 @@ namespace engine::client
 			return;
 		}
 
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
@@ -1796,7 +1811,7 @@ namespace engine::client
 
 		ResetMasterSession();
 		m_masterClient = std::make_unique<engine::network::NetClient>();
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
@@ -2001,7 +2016,7 @@ namespace engine::client
 			return;
 		}
 
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
@@ -2038,7 +2053,7 @@ namespace engine::client
 	void AuthUiPresenter::StartVerifyEmailWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
@@ -2575,7 +2590,7 @@ namespace engine::client
 	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);

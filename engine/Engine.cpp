@@ -1259,32 +1259,9 @@ namespace engine
 													hiZPass.GetMipCount());
 											});
 
-										if (m_pipeline->GetGeometryPass().HasLoadPass())
-										{
-											m_frameGraph.addPass("Terrain_GBuffer",
-												[this](engine::render::PassBuilder& b) {
-													b.write(m_fgGBufferAId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgGBufferBId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgGBufferCId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgGBufferVelocityId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgDepthId, engine::render::ImageUsage::DepthWrite);
-												},
-												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-													if (!m_terrain.IsValid())
-													{
-														return;
-													}
-													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-													const engine::RenderState& rs = m_renderStates[readIdx];
-													m_terrain.Record(
-														m_vkDeviceContext.GetDevice(), cmd, reg,
-														m_vkSwapchain.GetExtent(),
-														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-														m_fgGBufferVelocityId, m_fgDepthId,
-														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-														rs.camera.position, rs.frustum);
-												});
-										}
+										// Terrain prepass must not be a separate FrameGraph pass: it targets the same
+										// G-buffer attachments as Geometry, and the MVP graph forbids multi-writer.
+										// Record terrain inside the Geometry pass before GeometryPass::Record* (LOAD path).
 
 										m_frameGraph.addPass("Geometry",
 											[this](engine::render::PassBuilder& b) {
@@ -1299,6 +1276,16 @@ namespace engine
 												const engine::RenderState& rs = m_renderStates[readIdx];
 												const bool terrainBeforeGeometry = m_terrain.IsValid()
 													&& m_pipeline->GetGeometryPass().HasLoadPass();
+												if (terrainBeforeGeometry)
+												{
+													m_terrain.Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+														m_fgGBufferVelocityId, m_fgDepthId,
+														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+														rs.camera.position, rs.frustum);
+												}
 												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
 												const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 												const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);

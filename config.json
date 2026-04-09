@@ -79,7 +79,7 @@
         "content": "game/data"
     },
     "client": {
-        "master_host": "localhost",
+        "master_host": "lcdlln-master.tips-of-mine.com",
         "master_port": 3840,
         "server_fingerprint": "",
         "allow_insecure_dev": true,
@@ -90,7 +90,7 @@
         "auth_ui": {
             "enabled": true,
             "timeout_ms": 5000,
-            "master_availability_url": ""
+            "master_availability_url": "https://lcdlln-master.tips-of-mine.com/status"
         },
         "gameplay_udp": {
             "enabled": false,

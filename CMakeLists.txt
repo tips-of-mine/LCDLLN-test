@@ -160,6 +160,39 @@ if(MSVC)
   target_compile_options(engine_auth PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 
+# Dear ImGui (branche docking) — World Editor Windows : overlay Vulkan (dynamic rendering), pas d’OpenGL.
+if(WIN32)
+  FetchContent_Declare(imgui_lcdlln_fc
+    GIT_REPOSITORY https://github.com/ocornut/imgui
+    GIT_TAG        v1.91.9-docking
+  )
+  FetchContent_GetProperties(imgui_lcdlln_fc)
+  if(NOT imgui_lcdlln_fc_POPULATED)
+    FetchContent_Populate(imgui_lcdlln_fc)
+  endif()
+  set(IMGUI_DIR "${imgui_lcdlln_fc_SOURCE_DIR}")
+  message(STATUS "LCDLLN: Dear ImGui (world editor / Vulkan): ${IMGUI_DIR}")
+  add_library(imgui_lcdlln STATIC
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+  )
+  target_include_directories(imgui_lcdlln PUBLIC
+    "${IMGUI_DIR}"
+    "${IMGUI_DIR}/backends"
+  )
+  target_link_libraries(imgui_lcdlln PUBLIC Vulkan::Vulkan)
+  target_link_libraries(imgui_lcdlln PRIVATE user32)
+  target_compile_definitions(imgui_lcdlln PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+  target_compile_features(imgui_lcdlln PUBLIC cxx_std_11)
+  if(MSVC)
+    target_compile_options(imgui_lcdlln PRIVATE /W0)
+  endif()
+endif()
+
 set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
     COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=0"
 )
@@ -197,6 +230,9 @@ add_library(engine_core
   engine/net/ChatSystem.cpp
   engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp
+  engine/editor/WorldEditorImGui.cpp
+  engine/editor/WorldMapIo.cpp
+  engine/editor/WorldEditorSession.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
@@ -289,6 +325,9 @@ target_link_libraries(engine_core PUBLIC
   spdlog::spdlog
 )
 if(WIN32)
+  target_link_libraries(engine_core PRIVATE imgui_lcdlln)
+endif()
+if(WIN32)
   target_link_libraries(engine_core PRIVATE ws2_32 OpenSSL::SSL shell32)
 elseif(UNIX)
   target_link_libraries(engine_core PRIVATE pthread)
@@ -322,6 +361,9 @@ endif()
 add_executable(engine_app
   engine/app/main.cpp
 )
+if(WIN32)
+  target_sources(engine_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_client.rc")
+endif()
 set_target_properties(engine_app PROPERTIES
   OUTPUT_NAME "lcdlln"
   RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/game"
@@ -334,6 +376,28 @@ endif()
 target_link_libraries(engine_app PRIVATE engine_core)
 if(WIN32)
   target_link_libraries(engine_app PRIVATE user32 shell32)
+endif()
+
+# World Editor : exécutable séparé, même cœur Vulkan que le jeu (flag interne --world-editor).
+add_executable(world_editor_app
+  engine/app/world_editor_main.cpp
+)
+if(WIN32)
+  target_sources(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_world_editor.rc")
+endif()
+set_target_properties(world_editor_app PROPERTIES
+  OUTPUT_NAME "lcdlln_world_editor"
+  RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_BINARY_DIR}/pkg/world_editor"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/pkg/world_editor"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/pkg/world_editor"
+)
+target_include_directories(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}")
+if(MSVC)
+  target_compile_options(world_editor_app PRIVATE /Zc:preprocessor)
+endif()
+target_link_libraries(world_editor_app PRIVATE engine_core)
+if(WIN32)
+  target_link_libraries(world_editor_app PRIVATE user32 shell32)
 endif()
 
 # Copie les assets uniquement si le dossier existe dans le repo
@@ -354,6 +418,12 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
             "$<TARGET_FILE_DIR:engine_app>/game/data"
     COMMENT "Copie du dossier game/data..."
   )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/game/data"
+            "$<TARGET_FILE_DIR:world_editor_app>/game/data"
+    COMMENT "Copie du dossier game/data à côté de lcdlln_world_editor.exe..."
+  )
 endif()
 
 # Copie config.json à côté de l'exécutable si présent
@@ -363,6 +433,12 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/config.json")
             "${CMAKE_SOURCE_DIR}/config.json"
             "$<TARGET_FILE_DIR:engine_app>/config.json"
     COMMENT "Copie de config.json..."
+  )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/config.json"
+            "$<TARGET_FILE_DIR:world_editor_app>/config.json"
+    COMMENT "Copie de config.json à côté de lcdlln_world_editor.exe..."
   )
 endif()
 
@@ -376,10 +452,19 @@ if(WIN32 AND NOT LCDLLN_OPENSSL_DLL_DIR STREQUAL "")
             "$<TARGET_FILE_DIR:engine_app>/"
     COMMENT "Copie des DLL OpenSSL (libssl / libcrypto) à côté de lcdlln.exe..."
   )
+  add_custom_command(TARGET world_editor_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libssl-3-x64.dll"
+            "$<TARGET_FILE_DIR:world_editor_app>/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${LCDLLN_OPENSSL_DLL_DIR}/libcrypto-3-x64.dll"
+            "$<TARGET_FILE_DIR:world_editor_app>/"
+    COMMENT "Copie des DLL OpenSSL à côté de lcdlln_world_editor.exe..."
+  )
 endif()
 
 # Paquet runtime : cmake --install build --prefix dist (exécutable + game/data + config)
-install(TARGETS engine_app RUNTIME DESTINATION .)
+install(TARGETS engine_app world_editor_app RUNTIME DESTINATION .)
 if(EXISTS "${CMAKE_SOURCE_DIR}/game/data")
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/game/data" DESTINATION .)
 endif()

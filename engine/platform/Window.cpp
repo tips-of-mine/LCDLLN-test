@@ -786,8 +786,21 @@ namespace engine::platform
 		m_msgHook = std::move(hook);
 	}
 
+	void Window::SetPreMessageInterceptor(std::function<intptr_t(uint32_t, uint64_t, int64_t)> interceptor)
+	{
+		m_preMessageInterceptor = std::move(interceptor);
+	}
+
 	intptr_t Window::HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam)
 	{
+		if (m_preMessageInterceptor)
+		{
+			const intptr_t consumed = m_preMessageInterceptor(msg, wparam, lparam);
+			if (consumed != 0)
+			{
+				return consumed;
+			}
+		}
 		if (m_msgHook)
 		{
 			m_msgHook(msg, wparam, lparam);

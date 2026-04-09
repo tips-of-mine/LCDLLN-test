@@ -35,6 +35,9 @@ namespace engine::render
 		/// Returns the current frame's staging buffer (for mapping/copy).
 		VkBuffer GetCurrentBuffer() const;
 
+		/// CPU pointer to the start of the current ring slot (host-coherent). Null if not mapped.
+		void* GetCurrentMappedBase() const;
+
 		/// Destroys all staging buffers. Safe to call multiple times.
 		void Destroy(VkDevice device);
 
@@ -45,6 +48,7 @@ namespace engine::render
 			VkBuffer buffer = VK_NULL_HANDLE;
 			void* vmaAllocation = nullptr;
 			VkDeviceSize sizeBytes = 0;
+			void* mappedHost = nullptr;
 		};
 		std::array<Slot, kRingSize> m_ring{};
 		void* m_vmaAllocator = nullptr;

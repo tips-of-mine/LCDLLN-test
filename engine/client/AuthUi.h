@@ -225,6 +225,9 @@ namespace engine::client
 		/// When false, the master/shard gate has passed and the world loop should run normally.
 		bool IsFlowComplete() const { return m_flowComplete; }
 
+		/// Utilisé par \c lcdlln_world_editor.exe : pas d’écran login, accès direct à la scène 3D (Vulkan).
+		void BypassAuthGateForWorldEditor();
+
 		/// While the auth gate is active, gameplay camera and chat should not consume input.
 		bool BlocksWorldInput() const;
 

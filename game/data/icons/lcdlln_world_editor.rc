@@ -1,0 +1,6 @@
+// Icône embarquée pour lcdlln_world_editor.exe. Fichier .ico source : lcdlln_world_editor.ico (même dossier).
+#include <windows.h>
+
+#define IDI_LCDLLN_WORLD_EDITOR_ICON 102
+
+IDI_LCDLLN_WORLD_EDITOR_ICON ICON DISCARDABLE "lcdlln_world_editor.ico"

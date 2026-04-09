@@ -205,8 +205,9 @@ namespace engine::editor
 		}
 	}
 
-	bool EditorMode::Init(const engine::core::Config& config)
+	bool EditorMode::Init(const engine::core::Config& config, bool worldEditorExe)
 	{
+		m_worldEditorExeTitle = worldEditorExe;
 		m_contentRoot = config.GetString("paths.content", "game/data");
 		m_mode = GizmoMode::Translate;
 		m_axis = GizmoAxis::X;
@@ -237,7 +238,7 @@ namespace engine::editor
 			return;
 		}
 
-		window.SetTitle("LCDLLN Engine");
+		window.SetTitle(m_worldEditorExeTitle ? "LCDLLN World Editor" : "LCDLLN Engine");
 		m_initialized = false;
 		m_selected = false;
 		m_lastWindowTitle.clear();
@@ -336,17 +337,30 @@ namespace engine::editor
 
 	void EditorMode::RefreshShell(engine::platform::Window& window, bool forceLog)
 	{
-		const std::string title = std::format(
-			"LCDLLN Engine --editor{} | Scene: {} | Inspector: {} | Asset Browser: {}",
-			m_dirty ? " *dirty*" : "",
-			BuildScenePanelText(),
-			BuildInspectorPanelText(),
-			BuildAssetBrowserPanelText());
-		if (title != m_lastWindowTitle)
+		if (m_worldEditorExeTitle)
 		{
-			window.SetTitle(title);
-			m_lastWindowTitle = title;
-			forceLog = true;
+			const std::string title = std::string("LCDLLN World Editor") + (m_dirty ? " *" : "");
+			if (title != m_lastWindowTitle)
+			{
+				window.SetTitle(title);
+				m_lastWindowTitle = title;
+				forceLog = true;
+			}
+		}
+		else
+		{
+			const std::string title = std::format(
+				"LCDLLN Engine --editor{} | Scene: {} | Inspector: {} | Asset Browser: {}",
+				m_dirty ? " *dirty*" : "",
+				BuildScenePanelText(),
+				BuildInspectorPanelText(),
+				BuildAssetBrowserPanelText());
+			if (title != m_lastWindowTitle)
+			{
+				window.SetTitle(title);
+				m_lastWindowTitle = title;
+				forceLog = true;
+			}
 		}
 
 		if (forceLog)

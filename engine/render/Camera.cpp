@@ -48,7 +48,7 @@ namespace engine::render
 	}
 
 	void FpsCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-		MovementLayout layout, Camera& camera)
+		MovementLayout layout, bool scrollWheelAdjustsFov, Camera& camera)
 	{
 		const float sens = static_cast<float>(mouseSensitivityRadPerPixel);
 		camera.yaw += static_cast<float>(input.MouseDeltaX()) * sens;
@@ -90,6 +90,23 @@ namespace engine::render
 		{
 			camera.position.x -= rightX * dist;
 			camera.position.z -= rightZ * dist;
+		}
+
+		if (scrollWheelAdjustsFov)
+		{
+			const int scroll = input.MouseScrollDelta();
+			if (scroll != 0)
+			{
+				camera.fovYDeg -= static_cast<float>(scroll) * 2.0f;
+				if (camera.fovYDeg < 25.0f)
+				{
+					camera.fovYDeg = 25.0f;
+				}
+				if (camera.fovYDeg > 110.0f)
+				{
+					camera.fovYDeg = 110.0f;
+				}
+			}
 		}
 	}
 }

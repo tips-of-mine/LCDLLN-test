@@ -45,7 +45,8 @@ namespace engine::render
 		static constexpr float kPitchMax = +89.0f * 3.14159265f / 180.0f;
 
 		/// Updates camera from input and delta time. Mouse sensitivity in rad/pixel from config.
+		/// Si \p scrollWheelAdjustsFov : la molette modifie le FOV vertical (éditeur monde).
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-			MovementLayout layout, Camera& camera);
+			MovementLayout layout, bool scrollWheelAdjustsFov, Camera& camera);
 	};
 }

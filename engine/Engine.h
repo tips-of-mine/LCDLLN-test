@@ -42,11 +42,20 @@
 #include "engine/render/vk/DeferredDestroyQueue.h"
 #include "engine/render/GpuUploadQueue.h"
 #include "engine/render/vk/StagingAllocator.h"
+#if defined(_WIN32)
+#include "engine/render/terrain/TerrainRenderer.h"
+#include "engine/render/terrain/TerrainEditingTools.h"
+#endif
 
 struct GLFWwindow;
 
 namespace engine::render { class DeferredPipeline; }
-namespace engine::editor { class EditorMode; }
+namespace engine::editor
+{
+	class EditorMode;
+	class WorldEditorImGui;
+	class WorldEditorSession;
+}
 
 #include <array>
 #include <atomic>
@@ -135,6 +144,11 @@ namespace engine
 		void PumpGameplayPackets();
 		/// Load optional zone probe and atmosphere assets from content-relative paths.
 		void LoadZoneProbeAssets();
+#if defined(_WIN32)
+		/// World editor: (re)charge heightmap + outils sculpt depuis le document.
+		void RebuildWorldEditorTerrainGpu();
+		std::vector<uint32_t> LoadWorldEditorSpirvWords(const char* relativeSpvPath);
+#endif
 
 		engine::core::Config m_cfg;
 
@@ -193,6 +207,13 @@ namespace engine
 
 		engine::render::AssetRegistry m_assetRegistry;
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;
+		std::unique_ptr<engine::editor::WorldEditorImGui> m_worldEditorImGui;
+		/// Données carte / import (uniquement si \c m_worldEditorExe).
+		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
+#if defined(_WIN32)
+		engine::render::terrain::TerrainRenderer m_worldEditorTerrain;
+		engine::render::terrain::TerrainEditingTools m_worldEditorTerrainTools;
+#endif
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
 		/// Fond plein écran pour l’écran auth (PNG sous paths.content, ex. ui/login/background.png).
@@ -249,6 +270,8 @@ namespace engine
 		std::atomic<uint32_t> m_renderReadIndex{ 0 };
 
 		bool m_quitRequested = false;
+		/// \c true si la ligne de commande contient \c --world-editor (injecté par lcdlln_world_editor.exe uniquement).
+		bool m_worldEditorExe = false;
 		bool m_editorEnabled = false;
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;

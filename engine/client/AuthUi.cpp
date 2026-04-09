@@ -4327,4 +4327,17 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		return false;
 	}
 
+	void AuthUiPresenter::BypassAuthGateForWorldEditor()
+	{
+		if (!m_initialized)
+		{
+			return;
+		}
+		JoinWorker();
+		m_flowComplete = true;
+		m_userErrorText.clear();
+		m_infoBanner.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] World Editor : flux auth marqué complet (pas d’écran login)");
+	}
+
 }

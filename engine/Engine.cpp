@@ -2,11 +2,15 @@
 
 #include "engine/core/Log.h"
 #include "engine/editor/EditorMode.h"
+#include "engine/editor/WorldEditorImGui.h"
+#include "engine/editor/WorldEditorSession.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
+#include "engine/render/terrain/HeightmapLoader.h"
+#include "engine/render/terrain/TerrainEditingTools.h"
 #include "engine/server/ServerProtocol.h"
 
 #include <GLFW/glfw3.h>
@@ -42,6 +46,144 @@ namespace engine
 {
 	namespace
 	{
+		constexpr float kWorldEditorPickPi = 3.14159265f;
+
+		bool CameraViewportWorldDirection(const engine::render::Camera& camera, int viewportWidth, int viewportHeight,
+			int mouseX, int mouseY, engine::math::Vec3& outDirection)
+		{
+			if (viewportWidth <= 0 || viewportHeight <= 0)
+			{
+				return false;
+			}
+			const float aspect = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+			const float halfTan = std::tan((camera.fovYDeg * kWorldEditorPickPi / 180.0f) * 0.5f);
+			const float ndcX = ((static_cast<float>(mouseX) + 0.5f) / static_cast<float>(viewportWidth)) * 2.0f - 1.0f;
+			const float ndcY = 1.0f - ((static_cast<float>(mouseY) + 0.5f) / static_cast<float>(viewportHeight)) * 2.0f;
+
+			const float cy = std::cos(camera.yaw);
+			const float sy = std::sin(camera.yaw);
+			const float cp = std::cos(camera.pitch);
+			const float sp = std::sin(camera.pitch);
+
+			engine::math::Vec3 forward(-sy * cp, -sp, -cy * cp);
+			engine::math::Vec3 right(forward.z, 0.0f, -forward.x);
+			const float rightLen = right.Length();
+			right = rightLen > 0.0f ? right * (1.0f / rightLen) : engine::math::Vec3(1.0f, 0.0f, 0.0f);
+
+			engine::math::Vec3 up(
+				forward.y * right.z - forward.z * right.y,
+				forward.z * right.x - forward.x * right.z,
+				forward.x * right.y - forward.y * right.x);
+			const float upLen = up.Length();
+			up = upLen > 0.0f ? up * (1.0f / upLen) : engine::math::Vec3(0.0f, 1.0f, 0.0f);
+
+			outDirection = (forward + right * (ndcX * aspect * halfTan) + up * (ndcY * halfTan)).Normalized();
+			return outDirection.LengthSq() > 1e-8f;
+		}
+
+		bool TryTerrainWorldY(const engine::render::terrain::HeightmapData& hm,
+			float ox, float oz, float ws, float hScale, float wx, float wz, float& yOut)
+		{
+			if (hm.width == 0 || hm.height == 0 || ws <= 0.0f)
+			{
+				return false;
+			}
+			const float u = (wx - ox) / ws;
+			const float v = (wz - oz) / ws;
+			if (u < 0.0f || u > 1.0f || v < 0.0f || v > 1.0f)
+			{
+				return false;
+			}
+			yOut = hm.SampleBilinearNorm(u, v) * hScale;
+			return true;
+		}
+
+		bool RaycastTerrainHeightmap(const engine::math::Vec3& O, const engine::math::Vec3& D,
+			const engine::render::terrain::HeightmapData& hm,
+			float ox, float oz, float ws, float hScale, float maxDistance,
+			float& outHitX, float& outHitZ)
+		{
+			if (hm.width == 0 || maxDistance <= 0.0f)
+			{
+				return false;
+			}
+			constexpr int kSegments = 192;
+			float prevT = 0.0f;
+			float prevDiff = 0.0f;
+			bool prevValid = false;
+			{
+				float h0 = 0.0f;
+				const bool ok0 = TryTerrainWorldY(hm, ox, oz, ws, hScale, O.x, O.z, h0);
+				if (ok0)
+				{
+					prevDiff = O.y - h0;
+					prevValid = true;
+				}
+			}
+			for (int i = 1; i <= kSegments; ++i)
+			{
+				const float t = maxDistance * (static_cast<float>(i) / static_cast<float>(kSegments));
+				const float px = O.x + D.x * t;
+				const float py = O.y + D.y * t;
+				const float pz = O.z + D.z * t;
+				float h = 0.0f;
+				if (!TryTerrainWorldY(hm, ox, oz, ws, hScale, px, pz, h))
+				{
+					prevValid = false;
+					continue;
+				}
+				const float diff = py - h;
+				if (prevValid && prevDiff > 0.015f && diff <= 0.015f)
+				{
+					float t0 = prevT;
+					float t1 = t;
+					for (int b = 0; b < 14; ++b)
+					{
+						const float tm = 0.5f * (t0 + t1);
+						const float mxp = O.x + D.x * tm;
+						const float myp = O.y + D.y * tm;
+						const float mzp = O.z + D.z * tm;
+						float mh = 0.0f;
+						if (!TryTerrainWorldY(hm, ox, oz, ws, hScale, mxp, mzp, mh))
+						{
+							t1 = tm;
+							continue;
+						}
+						if (myp > mh)
+						{
+							t0 = tm;
+						}
+						else
+						{
+							t1 = tm;
+						}
+					}
+					const float tf = 0.5f * (t0 + t1);
+					outHitX = O.x + D.x * tf;
+					outHitZ = O.z + D.z * tf;
+					return true;
+				}
+				prevT = t;
+				prevDiff = diff;
+				prevValid = true;
+			}
+			return false;
+		}
+
+		bool RaycastTerrainFromCamera(const engine::render::Camera& camera, int vw, int vh, int mx, int my,
+			const engine::render::terrain::HeightmapData& hm,
+			float ox, float oz, float ws, float hScale,
+			float& outX, float& outZ)
+		{
+			engine::math::Vec3 dir{};
+			if (!CameraViewportWorldDirection(camera, vw, vh, mx, my, dir))
+			{
+				return false;
+			}
+			const float maxDist = std::max(ws * 4.0f, 8192.0f);
+			return RaycastTerrainHeightmap(camera.position, dir, hm, ox, oz, ws, hScale, maxDist, outX, outZ);
+		}
+
 		void ApplyUserSettingsOverrides(engine::core::Config& cfg)
 		{
 			engine::core::Config persisted;
@@ -375,6 +517,7 @@ namespace engine
 		// ------------------------------------------------------------------
 		bool logToFile    = false;
 		bool logToConsole = false;
+		const bool worldEditorExeEarly = HasCliFlag(argc, argv, "--world-editor");
 		for (int i = 1; i < argc; ++i)
 		{
 			if (!argv[i]) continue;
@@ -386,7 +529,8 @@ namespace engine
 		engine::core::LogSettings logSettings;
 		if (logToFile)
 		{
-			const std::string relPath = engine::core::Log::MakeTimestampedFilename("lcdlln.exe");
+			const std::string relPath = engine::core::Log::MakeTimestampedFilename(
+				worldEditorExeEarly ? "lcdlln_world_editor.exe" : "lcdlln.exe");
 			std::error_code ec;
 			const auto absPath = std::filesystem::absolute(relPath, ec);
 			logSettings.filePath = ec ? relPath : absPath.string();
@@ -412,7 +556,14 @@ namespace engine
 		ApplyUserSettingsOverrides(m_cfg);
 		m_vsync   = m_cfg.GetBool("render.vsync", true);
 		m_fixedDt = m_cfg.GetDouble("time.fixed_dt", 0.0);
-		m_editorEnabled = HasCliFlag(argc, argv, "--editor") || m_cfg.GetBool("editor.enabled", false);
+		m_worldEditorExe = HasCliFlag(argc, argv, "--world-editor");
+		m_editorEnabled = m_worldEditorExe || HasCliFlag(argc, argv, "--editor")
+			|| m_cfg.GetBool("editor.enabled", false);
+
+		if (m_worldEditorExe)
+		{
+			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
+		}
 
 		if (!logSettings.filePath.empty() || logSettings.console)
 		{
@@ -422,7 +573,7 @@ namespace engine
 		if (m_editorEnabled)
 		{
 			m_editorMode = std::make_unique<engine::editor::EditorMode>();
-			if (!m_editorMode->Init(m_cfg))
+			if (!m_editorMode->Init(m_cfg, m_worldEditorExe))
 			{
 				LOG_WARN(Core, "[Boot] EditorMode init failed; editor disabled");
 				m_editorMode.reset();
@@ -433,7 +584,15 @@ namespace engine
 				const engine::render::Camera editorCamera = m_editorMode->BuildInitialCamera();
 				m_renderStates[0].camera = editorCamera;
 				m_renderStates[1].camera = editorCamera;
-				LOG_INFO(Core, "[Boot] Editor mode enabled (--editor)");
+				if (m_worldEditorExe)
+				{
+					LOG_INFO(Core,
+						"[Boot] World Editor exe — mode éditeur 3D (Vulkan), pas d’auth client ; flag interne --world-editor");
+				}
+				else
+				{
+					LOG_INFO(Core, "[Boot] Editor mode enabled (--editor ou editor.enabled=true)");
+				}
 			}
 		}
 
@@ -450,7 +609,7 @@ namespace engine
 		// Window
 		// ------------------------------------------------------------------
 		engine::platform::Window::CreateDesc desc{};
-		desc.title  = "LCDLLN Engine";
+		desc.title  = m_worldEditorExe ? "LCDLLN World Editor" : "LCDLLN Engine";
 		desc.width  = 1280;
 		desc.height = 720;
 
@@ -459,7 +618,7 @@ namespace engine
 			LOG_FATAL(Platform, "[Boot] Window::Create failed");
 		}
 		LOG_INFO(Core, "[Boot] Window::Create OK");
-		if (m_cfg.GetBool("render.fullscreen", true))
+		if (!m_worldEditorExe && m_cfg.GetBool("render.fullscreen", true))
 		{
 			m_window.ToggleFullscreen();
 		}
@@ -488,6 +647,12 @@ namespace engine
 		else if (!m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height))))
 		{
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
+		}
+
+		if (m_worldEditorExe && m_authUi.IsInitialized())
+		{
+			m_authUi.BypassAuthGateForWorldEditor();
+			LOG_INFO(Core, "[Boot] World Editor : saut de l’écran d’authentification");
 		}
 
 		InitGameplayNet();
@@ -634,7 +799,7 @@ namespace engine
 												menuMusicRel = "audio/Horns_of_the_Fallen_Bastion.mp3";
 											}
 											bool menuStarted = false;
-											if (!menuMusicRel.empty())
+											if (!m_worldEditorExe && !menuMusicRel.empty())
 											{
 												const std::filesystem::path menuResolved = engine::platform::FileSystem::ResolveContentPath(m_cfg, menuMusicRel);
 												if (engine::platform::FileSystem::Exists(menuResolved))
@@ -655,6 +820,12 @@ namespace engine
 											if (!menuStarted)
 											{
 												m_audioEngine.SetZone(0);
+											}
+											if (m_worldEditorExe)
+											{
+												m_audioEngine.StopMenuMusic();
+												m_audioEngine.SetMasterVolume(0.0f);
+												LOG_INFO(Core, "[Boot] World Editor: audio muet (pas de musique ni de lecture par défaut).");
 											}
 										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
@@ -1035,6 +1206,36 @@ namespace engine
 													hiZPass.GetMipCount());
 											});
 
+#if defined(_WIN32)
+										if (m_worldEditorExe)
+										{
+											m_frameGraph.addPass("Terrain_WorldEditor",
+												[this](engine::render::PassBuilder& b) {
+													b.write(m_fgGBufferAId, engine::render::ImageUsage::ColorWrite);
+													b.write(m_fgGBufferBId, engine::render::ImageUsage::ColorWrite);
+													b.write(m_fgGBufferCId, engine::render::ImageUsage::ColorWrite);
+													b.write(m_fgGBufferVelocityId, engine::render::ImageUsage::ColorWrite);
+													b.write(m_fgDepthId, engine::render::ImageUsage::DepthWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													if (!m_worldEditorTerrain.IsValid()
+														|| !m_pipeline->GetGeometryPass().HasLoadPass())
+													{
+														return;
+													}
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+													m_worldEditorTerrain.Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+														m_fgGBufferVelocityId, m_fgDepthId,
+														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+														rs.camera.position, rs.frustum);
+												});
+										}
+#endif
+
 										m_frameGraph.addPass("Geometry",
 											[this](engine::render::PassBuilder& b) {
 												b.write(m_fgGBufferAId,        engine::render::ImageUsage::ColorWrite);
@@ -1046,6 +1247,13 @@ namespace engine
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 												const engine::RenderState& rs = m_renderStates[readIdx];
+#if defined(_WIN32)
+												const bool worldEditTerrainChain = m_worldEditorExe
+													&& m_worldEditorTerrain.IsValid()
+													&& m_pipeline->GetGeometryPass().HasLoadPass();
+#else
+												const bool worldEditTerrainChain = false;
+#endif
 												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
 												const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 												const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
@@ -1074,7 +1282,8 @@ namespace engine
 														cullingPass.GetDrawItemCount(m_currentFrame),
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
-														materialCache.GetDefaultMaterialIndex());
+														materialCache.GetDefaultMaterialIndex(),
+														worldEditTerrainChain);
 												}
 												else
 												{
@@ -1086,7 +1295,8 @@ namespace engine
 														static_cast<uint32_t>(lodLevel),
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
-														materialCache.GetDefaultMaterialIndex());
+														materialCache.GetDefaultMaterialIndex(),
+														worldEditTerrainChain);
 												}
 											});
 
@@ -1924,20 +2134,33 @@ namespace engine
 													if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
 														LOG_WARN(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
 
-													VkImageMemoryBarrier barrier{};
-													barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-													barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-													barrier.dstAccessMask = 0;
-													barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-													barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-													barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-													barrier.image = dstImg;
-													barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-													vkCmdPipelineBarrier(cmd,
-														VK_PIPELINE_STAGE_TRANSFER_BIT,
-														VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-														0, 0, nullptr, 0, nullptr, 1, &barrier);
+													bool worldEditorUiToPresent = false;
+#if defined(_WIN32)
+													if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady()
+														&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
+														&& !presentSolidColorDebug)
+													{
+														worldEditorUiToPresent = m_worldEditorImGui->RecordToBackbuffer(
+															cmd, dstImg, backbufferView, ext, m_vkDeviceContext);
+													}
+#endif
+													if (!worldEditorUiToPresent)
+													{
+														VkImageMemoryBarrier barrier{};
+														barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+														barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+														barrier.dstAccessMask = 0;
+														barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+														barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+														barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+														barrier.image = dstImg;
+														barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+														vkCmdPipelineBarrier(cmd,
+															VK_PIPELINE_STAGE_TRANSFER_BIT,
+															VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+															0, 0, nullptr, 0, nullptr, 1, &barrier);
+													}
 												}
 											});
 
@@ -2021,6 +2244,17 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+#if defined(_WIN32)
+			if (m_worldEditorImGui)
+			{
+				m_worldEditorImGui->DetachPlatformWindow(m_window);
+				m_worldEditorImGui->Shutdown(m_vkDeviceContext.GetDevice());
+				m_worldEditorImGui.reset();
+			}
+			m_worldEditorTerrainTools.Shutdown();
+			if (m_worldEditorTerrain.IsValid())
+				m_worldEditorTerrain.Destroy(m_vkDeviceContext.GetDevice());
+#endif
 			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
@@ -2120,6 +2354,10 @@ namespace engine
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
+#if defined(_WIN32)
+				if (m_worldEditorTerrain.IsValid())
+					m_worldEditorTerrain.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
+#endif
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				// All frame-graph images are recreated after a resize/out-of-date event, so the
@@ -2134,6 +2372,10 @@ namespace engine
 					m_suboptimalWidth = m_width;
 					m_suboptimalHeight = m_height;
 					LOG_INFO(Platform, "[Resize] Swapchain recreated OK");
+					if (m_worldEditorImGui)
+					{
+						m_worldEditorImGui->OnSwapchainRecreate(m_vkSwapchain.GetImageCount());
+					}
 				}
 				else
 					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED");
@@ -2162,6 +2404,33 @@ namespace engine
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
 		auto& out               = m_renderStates[writeIdx];
+
+#if defined(_WIN32)
+		if (m_worldEditorExe && !m_worldEditorImGui && m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid()
+			&& m_window.GetNativeHandle() != nullptr && m_vkDeviceContext.SupportsDynamicRendering())
+		{
+			m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
+			if (m_worldEditorImGui->Init(
+				m_vkInstance.GetHandle(),
+				m_vkDeviceContext,
+				m_vkSwapchain.GetImageFormat(),
+				m_vkSwapchain.GetImageCount(),
+				VK_API_VERSION_1_1,
+				m_window.GetNativeHandle()))
+			{
+				m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
+			}
+			else
+			{
+				m_worldEditorImGui.reset();
+			}
+		}
+		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
+		{
+			RebuildWorldEditorTerrainGpu();
+		}
+#endif
 
 		const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
 		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
@@ -2294,12 +2563,19 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, out.camera);
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, out.camera);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())
 			{
 				m_chatUi.Update(m_input, static_cast<float>(dt));
+			}
+		}
+		else if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			if (!m_worldEditorImGui->WantsCaptureMouse() && !m_worldEditorImGui->WantsCaptureKeyboard())
+			{
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, out.camera);
 			}
 		}
 
@@ -2370,6 +2646,87 @@ namespace engine
 		{
 			out.objectVisible = true;
 		}
+
+#if defined(_WIN32)
+		if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			float dw = static_cast<float>(std::max(1, m_width));
+			float dh = static_cast<float>(std::max(1, m_height));
+			int vw = std::max(1, m_width);
+			int vh = std::max(1, m_height);
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extUi = m_vkSwapchain.GetExtent();
+				if (extUi.width > 0 && extUi.height > 0)
+				{
+					dw = static_cast<float>(extUi.width);
+					dh = static_cast<float>(extUi.height);
+					vw = static_cast<int>(extUi.width);
+					vh = static_cast<int>(extUi.height);
+				}
+			}
+			m_worldEditorImGui->NewFrame(static_cast<float>(dt), dw, dh);
+
+			engine::editor::WorldEditorViewportOverlayDesc overlay{};
+			overlay.viewProjColMajor = out.viewProjMatrix.m;
+			overlay.viewportWidth = vw;
+			overlay.viewportHeight = vh;
+
+			bool terrainPick = false;
+			float pickX = 0.f;
+			float pickZ = 0.f;
+			if (m_worldEditorTerrain.IsValid() && m_worldEditorSession)
+			{
+				const engine::render::terrain::HeightmapData& hm = m_worldEditorTerrain.GetMutableHeightmapData();
+				if (hm.width > 0u && hm.height > 0u)
+				{
+					overlay.heightmap = &hm;
+					overlay.terrainOriginX = m_worldEditorTerrain.GetTerrainOriginX();
+					overlay.terrainOriginZ = m_worldEditorTerrain.GetTerrainOriginZ();
+					overlay.terrainWorldSize = m_worldEditorTerrain.GetTerrainWorldSize();
+					overlay.heightScale = m_worldEditorTerrain.GetHeightScale();
+					overlay.showGrid = m_worldEditorSession->ShowGrid();
+					overlay.gridCellMeters = m_worldEditorSession->GridCellMeters();
+					overlay.brushRadiusMeters = m_worldEditorSession->BrushRadius();
+					const bool capBeforeUi = m_worldEditorImGui->WantsCaptureMouse();
+					terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
+						overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
+						pickX, pickZ);
+					overlay.showBrushPreview = terrainPick && !capBeforeUi;
+					if (terrainPick)
+					{
+						overlay.brushWorldX = pickX;
+						overlay.brushWorldZ = pickZ;
+					}
+				}
+			}
+
+			m_worldEditorImGui->BuildUi(&overlay);
+
+			if (m_worldEditorTerrain.IsValid() && m_worldEditorTerrainTools.IsValid() && m_worldEditorSession && terrainPick)
+			{
+				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
+				if (!cap && m_input.IsMouseDown(engine::platform::MouseButton::Left))
+				{
+					engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+					engine::render::terrain::BrushParams bp;
+					bp.radius = ws.BrushRadius();
+					bp.strength = ws.BrushStrength();
+					bp.falloff = 1.f;
+					bp.flattenTarget = 0.5f;
+					engine::render::terrain::BrushOp op = engine::render::terrain::BrushOp::Raise;
+					switch (ws.BrushOp())
+					{
+					case 1: op = engine::render::terrain::BrushOp::Lower; break;
+					case 2: op = engine::render::terrain::BrushOp::Smooth; break;
+					case 3: op = engine::render::terrain::BrushOp::Flatten; break;
+					default: break;
+					}
+					m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
+				}
+			}
+		}
+#endif
 
 		out.frustum.ExtractFromMatrix(out.viewProjMatrix);
 		{
@@ -2519,6 +2876,37 @@ namespace engine
 	    {
 	        m_profiler.BeginGpuFrame(fr.cmdBuffer, frameIndex);
 	    }
+
+#if defined(_WIN32)
+	    if (m_worldEditorExe && m_worldEditorTerrainTools.IsValid() && m_worldEditorTerrainTools.IsDirtyHeightmap()
+	        && m_worldEditorTerrain.IsValid())
+	    {
+		    const engine::render::terrain::HeightmapData& hm = m_worldEditorTerrain.GetMutableHeightmapData();
+		    const VkImage hmImg = m_worldEditorTerrain.GetHeightmapGpu().image;
+		    if (hmImg != VK_NULL_HANDLE && hm.width > 0u && hm.height > 0u && !hm.heights.empty())
+		    {
+			    const size_t bytes = static_cast<size_t>(hm.width) * static_cast<size_t>(hm.height) * sizeof(uint16_t);
+			    VkDeviceSize stagingOff = 0;
+			    const VkBuffer stBuf = m_stagingAllocator.Allocate(bytes, stagingOff);
+			    void* mappedBase = m_stagingAllocator.GetCurrentMappedBase();
+			    if (stBuf != VK_NULL_HANDLE && mappedBase != nullptr)
+			    {
+				    std::memcpy(static_cast<char*>(mappedBase) + static_cast<size_t>(stagingOff), hm.heights.data(), bytes);
+				    engine::render::terrain::RecordHeightmapR16UploadCommands(
+				        fr.cmdBuffer, stBuf, stagingOff, hmImg, hm.width, hm.height);
+				    m_worldEditorTerrainTools.AckHeightmapGpuUploaded();
+			    }
+			    else
+			    {
+				    (void)m_worldEditorTerrainTools.FlushHeightmap(device,
+				        m_vkDeviceContext.GetPhysicalDevice(),
+				        graphicsQueue,
+				        m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+				        hmImg);
+			    }
+		    }
+	    }
+#endif
 	
 	    if (m_fgSceneColorHDRId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
 	    {
@@ -3150,6 +3538,77 @@ namespace engine
 			}
 		}
 	}
+
+#if defined(_WIN32)
+	std::vector<uint32_t> Engine::LoadWorldEditorSpirvWords(const char* relativeSpvPath)
+	{
+		std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, relativeSpvPath);
+		if (bytes.size() % 4u == 0u && !bytes.empty())
+		{
+			std::vector<uint32_t> out(bytes.size() / 4u);
+			std::memcpy(out.data(), bytes.data(), bytes.size());
+			return out;
+		}
+		LOG_WARN(Render, "[WorldEditor] Shader SPIR-V missing or invalid: {}", relativeSpvPath);
+		return {};
+	}
+
+	void Engine::RebuildWorldEditorTerrainGpu()
+	{
+		if (!m_worldEditorExe || !m_vkDeviceContext.IsValid() || !m_worldEditorSession)
+		{
+			return;
+		}
+		VkDevice device = m_vkDeviceContext.GetDevice();
+		VkPhysicalDevice physDev = m_vkDeviceContext.GetPhysicalDevice();
+		vkDeviceWaitIdle(device);
+		m_worldEditorTerrainTools.Shutdown();
+		if (m_worldEditorTerrain.IsValid())
+		{
+			m_worldEditorTerrain.Destroy(device);
+		}
+
+		const std::string& hmRel = m_worldEditorSession->Doc().heightmapContentRelativePath;
+		if (hmRel.empty())
+		{
+			return;
+		}
+
+		auto loadFn = [this](const char* p) { return LoadWorldEditorSpirvWords(p); };
+		const bool ok = m_worldEditorTerrain.Init(
+			device,
+			physDev,
+			m_cfg,
+			hmRel,
+			"",
+			"",
+			{},
+			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+			VK_FORMAT_R8G8B8A8_UNORM,
+			VK_FORMAT_R16G16_SFLOAT,
+			VK_FORMAT_D32_SFLOAT,
+			m_vkDeviceContext.GetGraphicsQueue(),
+			m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+			loadFn);
+		if (!ok)
+		{
+			LOG_WARN(Render, "[WorldEditor] TerrainRenderer::Init failed for \"{}\"", hmRel);
+			return;
+		}
+		if (!m_worldEditorTerrainTools.Init(
+				&m_worldEditorTerrain.GetMutableHeightmapData(),
+				&m_worldEditorTerrain.GetSplatting(),
+				m_worldEditorTerrain.GetTerrainOriginX(),
+				m_worldEditorTerrain.GetTerrainOriginZ(),
+				m_worldEditorTerrain.GetTerrainWorldSize(),
+				m_worldEditorTerrain.GetHeightScale()))
+		{
+			LOG_WARN(Render, "[WorldEditor] TerrainEditingTools::Init failed");
+		}
+		m_worldEditorTerrain.InvalidateFramebufferCache(device);
+	}
+#endif
 
 } // namespace engine
 

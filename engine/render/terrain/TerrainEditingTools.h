@@ -12,6 +12,14 @@ namespace engine::core    { class Config; }
 
 namespace engine::render::terrain
 {
+    /// Records R16 heightmap upload into \p cmd (no submit). Image must start in \c SHADER_READ_ONLY_OPTIMAL.
+    void RecordHeightmapR16UploadCommands(VkCommandBuffer cmd,
+                                          VkBuffer stagingBuffer,
+                                          VkDeviceSize stagingBufferOffset,
+                                          VkImage dstImage,
+                                          uint32_t width,
+                                          uint32_t height);
+
     /// Brush operations supported by the terrain editor.
     enum class BrushOp : uint32_t
     {
@@ -166,6 +174,9 @@ namespace engine::render::terrain
         bool IsDirtySplatMap()  const { return m_dirtySplatMap;  }
         /// Resets both dirty flags without uploading.
         void ClearDirtyFlags()  { m_dirtyHeightmap = false; m_dirtySplatMap = false; }
+
+        /// After a heightmap upload was recorded/submitted for the current CPU data, clears height dirty only.
+        void AckHeightmapGpuUploaded() { m_dirtyHeightmap = false; }
 
     private:
         /// Returns the brush kernel weight [0, 1] for a pixel at world-distance `dist`

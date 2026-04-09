@@ -77,7 +77,7 @@ namespace engine::render
 		// -------------------------------------------------------------------------
 		// Render pass: 3 colour attachments (GBuf A/B/C) + 1 depth attachment.
 		// -------------------------------------------------------------------------
-		VkAttachmentDescription attachments[4] = {};
+		VkAttachmentDescription attachments[5] = {};
 		attachments[0].format        = formatA;
 		attachments[0].samples       = VK_SAMPLE_COUNT_1_BIT;
 		attachments[0].loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -163,6 +163,82 @@ namespace engine::render
 			return false;
 		}
 
+		// Load-op render pass: continue G-buffer after terrain prepass (world editor).
+		{
+			VkAttachmentDescription loadAtt[5] = {};
+			loadAtt[0].format         = formatA;
+			loadAtt[0].samples        = VK_SAMPLE_COUNT_1_BIT;
+			loadAtt[0].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+			loadAtt[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+			loadAtt[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			loadAtt[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			loadAtt[0].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			loadAtt[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			loadAtt[1].format         = formatB;
+			loadAtt[1].samples        = VK_SAMPLE_COUNT_1_BIT;
+			loadAtt[1].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+			loadAtt[1].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+			loadAtt[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			loadAtt[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			loadAtt[1].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			loadAtt[1].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			loadAtt[2].format         = formatC;
+			loadAtt[2].samples        = VK_SAMPLE_COUNT_1_BIT;
+			loadAtt[2].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+			loadAtt[2].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+			loadAtt[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			loadAtt[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			loadAtt[2].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			loadAtt[2].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			loadAtt[3].format         = formatVelocity;
+			loadAtt[3].samples        = VK_SAMPLE_COUNT_1_BIT;
+			loadAtt[3].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+			loadAtt[3].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+			loadAtt[3].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			loadAtt[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			loadAtt[3].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			loadAtt[3].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			loadAtt[4].format         = depthFormat;
+			loadAtt[4].samples        = VK_SAMPLE_COUNT_1_BIT;
+			loadAtt[4].loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
+			loadAtt[4].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+			loadAtt[4].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			loadAtt[4].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			loadAtt[4].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			loadAtt[4].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			VkSubpassDependency loadDep = {};
+			loadDep.srcSubpass    = VK_SUBPASS_EXTERNAL;
+			loadDep.dstSubpass    = 0;
+			loadDep.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			loadDep.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			loadDep.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+			                      | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			loadDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+			                      | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			VkRenderPassCreateInfo loadRpInfo = {};
+			loadRpInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+			loadRpInfo.attachmentCount = 5;
+			loadRpInfo.pAttachments    = loadAtt;
+			loadRpInfo.subpassCount    = 1;
+			loadRpInfo.pSubpasses      = &subpass;
+			loadRpInfo.dependencyCount = 1;
+			loadRpInfo.pDependencies   = &loadDep;
+
+			const VkResult lr = vkCreateRenderPass(device, &loadRpInfo, nullptr, &m_renderPassLoad);
+			if (lr != VK_SUCCESS)
+			{
+				LOG_WARN(Render, "GeometryPass: load vkCreateRenderPass failed: {} — world editor terrain+geometry chaining disabled",
+					static_cast<int>(lr));
+				m_renderPassLoad = VK_NULL_HANDLE;
+			}
+		}
+
 		// -------------------------------------------------------------------------
 		// Pipeline layout:
 		//   - set 0 (optional): material descriptor set layout (BaseColor/Normal/ORM)
@@ -191,6 +267,11 @@ namespace engine::render
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "GeometryPass: vkCreatePipelineLayout failed: {}", static_cast<int>(result));
+			if (m_renderPassLoad != VK_NULL_HANDLE)
+			{
+				vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+				m_renderPassLoad = VK_NULL_HANDLE;
+			}
 			vkDestroyRenderPass(device, m_renderPass, nullptr);
 			m_renderPass = VK_NULL_HANDLE;
 			return false;
@@ -211,6 +292,11 @@ namespace engine::render
 			{
 				LOG_ERROR(Render, "GeometryPass: vertex shader module failed: {}", static_cast<int>(result));
 				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+				if (m_renderPassLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+					m_renderPassLoad = VK_NULL_HANDLE;
+				}
 				vkDestroyRenderPass(device, m_renderPass, nullptr);
 				m_pipelineLayout = VK_NULL_HANDLE;
 				m_renderPass     = VK_NULL_HANDLE;
@@ -225,6 +311,11 @@ namespace engine::render
 				LOG_ERROR(Render, "GeometryPass: fragment shader module failed: {}", static_cast<int>(result));
 				vkDestroyShaderModule(device, vertModule, nullptr);
 				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
+				if (m_renderPassLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+					m_renderPassLoad = VK_NULL_HANDLE;
+				}
 				vkDestroyRenderPass(device, m_renderPass, nullptr);
 				m_pipelineLayout = VK_NULL_HANDLE;
 				m_renderPass     = VK_NULL_HANDLE;
@@ -331,11 +422,35 @@ namespace engine::render
 		PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPass, 0, m_pipelineLayout, formatA, depthFormat));
 		result = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipeline);
 		LOG_DEBUG(Render, "[GEOM] vkCreateGraphicsPipelines r={}", (int)result);
+		if (result == VK_SUCCESS && m_renderPassLoad != VK_NULL_HANDLE)
+		{
+			gpInfo.renderPass = m_renderPassLoad;
+			PipelineCache::RegisterWarmupKey(HashGraphicsPsoKey(m_renderPassLoad, 0, m_pipelineLayout, formatA, depthFormat));
+			const VkResult rLoad = vkCreateGraphicsPipelines(device, pipelineCache, 1, &gpInfo, nullptr, &m_pipelineLoad);
+			if (rLoad != VK_SUCCESS)
+			{
+				LOG_WARN(Render, "GeometryPass: load vkCreateGraphicsPipelines failed: {} — load pass disabled",
+					static_cast<int>(rLoad));
+				vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+				m_renderPassLoad = VK_NULL_HANDLE;
+				m_pipelineLoad   = VK_NULL_HANDLE;
+			}
+		}
 		vkDestroyShaderModule(device, vertModule, nullptr);
 		vkDestroyShaderModule(device, fragModule, nullptr);
 		if (result != VK_SUCCESS)
 		{
 			LOG_ERROR(Render, "GeometryPass: vkCreateGraphicsPipelines failed: {}", static_cast<int>(result));
+			if (m_pipelineLoad != VK_NULL_HANDLE)
+			{
+				vkDestroyPipeline(device, m_pipelineLoad, nullptr);
+				m_pipelineLoad = VK_NULL_HANDLE;
+			}
+			if (m_renderPassLoad != VK_NULL_HANDLE)
+			{
+				vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+				m_renderPassLoad = VK_NULL_HANDLE;
+			}
 			vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
 			vkDestroyRenderPass(device, m_renderPass, nullptr);
 			m_pipelineLayout = VK_NULL_HANDLE;
@@ -354,6 +469,16 @@ namespace engine::render
 			if (result != VK_SUCCESS)
 			{
 				LOG_ERROR(Render, "GeometryPass: identity instance buffer create failed: {}", static_cast<int>(result));
+				if (m_pipelineLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyPipeline(device, m_pipelineLoad, nullptr);
+					m_pipelineLoad = VK_NULL_HANDLE;
+				}
+				if (m_renderPassLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+					m_renderPassLoad = VK_NULL_HANDLE;
+				}
 				vkDestroyPipeline(device, m_pipeline, nullptr);
 				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
 				vkDestroyRenderPass(device, m_renderPass, nullptr);
@@ -381,6 +506,16 @@ namespace engine::render
 			{
 				vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
 				m_identityInstanceBuffer = VK_NULL_HANDLE;
+				if (m_pipelineLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyPipeline(device, m_pipelineLoad, nullptr);
+					m_pipelineLoad = VK_NULL_HANDLE;
+				}
+				if (m_renderPassLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+					m_renderPassLoad = VK_NULL_HANDLE;
+				}
 				vkDestroyPipeline(device, m_pipeline, nullptr);
 				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
 				vkDestroyRenderPass(device, m_renderPass, nullptr);
@@ -398,6 +533,16 @@ namespace engine::render
 			{
 				vkDestroyBuffer(device, m_identityInstanceBuffer, nullptr);
 				m_identityInstanceBuffer = VK_NULL_HANDLE;
+				if (m_pipelineLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyPipeline(device, m_pipelineLoad, nullptr);
+					m_pipelineLoad = VK_NULL_HANDLE;
+				}
+				if (m_renderPassLoad != VK_NULL_HANDLE)
+				{
+					vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+					m_renderPassLoad = VK_NULL_HANDLE;
+				}
 				vkDestroyPipeline(device, m_pipeline, nullptr);
 				vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
 				vkDestroyRenderPass(device, m_renderPass, nullptr);
@@ -427,10 +572,15 @@ namespace engine::render
 	    uint32_t lodLevel,
 	    VkDescriptorSet materialDescriptorSet,
 	    const float* instanceMatrix,
-	    uint32_t materialIndex)
+	    uint32_t materialIndex,
+	    bool loadExistingGbuffer)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
+
+		const bool useLoad = loadExistingGbuffer && HasLoadPass();
+		VkRenderPass activeRp = useLoad ? m_renderPassLoad : m_renderPass;
+		VkPipeline   activePl = useLoad ? m_pipelineLoad : m_pipeline;
 
 		VkImageView viewA      = registry.getImageView(idA);
 		VkImageView viewB      = registry.getImageView(idB);
@@ -441,7 +591,7 @@ namespace engine::render
 			return;
 
 		FramebufferKey key{};
-		key.renderPass = m_renderPass;
+		key.renderPass = activeRp;
 		key.views[0]   = viewA;
 		key.views[1]   = viewB;
 		key.views[2]   = viewC;
@@ -456,7 +606,7 @@ namespace engine::render
 			VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
 			VkFramebufferCreateInfo fbInfo = {};
 			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			fbInfo.renderPass      = m_renderPass;
+			fbInfo.renderPass      = activeRp;
 			fbInfo.attachmentCount = 5;
 			fbInfo.pAttachments    = views;
 			fbInfo.width           = extent.width;
@@ -478,14 +628,14 @@ namespace engine::render
 
 		VkRenderPassBeginInfo rpBegin = {};
 		rpBegin.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		rpBegin.renderPass      = m_renderPass;
+		rpBegin.renderPass      = activeRp;
 		rpBegin.framebuffer     = fb;
 		rpBegin.renderArea      = { { 0, 0 }, extent };
-		rpBegin.clearValueCount = 5;
-		rpBegin.pClearValues    = clearValues;
+		rpBegin.clearValueCount = useLoad ? 0u : 5u;
+		rpBegin.pClearValues    = useLoad ? nullptr : clearValues;
 
 		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, activePl);
 
 		VkViewport viewport = {};
 		viewport.width    = static_cast<float>(extent.width);
@@ -542,10 +692,15 @@ namespace engine::render
 	    VkBuffer indirectBuffer, uint32_t indirectDrawCount,
 	    VkDescriptorSet materialDescriptorSet,
 	    const float* instanceMatrix,
-	    uint32_t materialIndex)
+	    uint32_t materialIndex,
+	    bool loadExistingGbuffer)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0)
 			return;
+
+		const bool useLoad = loadExistingGbuffer && HasLoadPass();
+		VkRenderPass activeRp = useLoad ? m_renderPassLoad : m_renderPass;
+		VkPipeline   activePl = useLoad ? m_pipelineLoad : m_pipeline;
 
 		VkImageView viewA      = registry.getImageView(idA);
 		VkImageView viewB      = registry.getImageView(idB);
@@ -556,7 +711,7 @@ namespace engine::render
 			return;
 
 		FramebufferKey key{};
-		key.renderPass = m_renderPass;
+		key.renderPass = activeRp;
 		key.views[0]   = viewA;
 		key.views[1]   = viewB;
 		key.views[2]   = viewC;
@@ -571,7 +726,7 @@ namespace engine::render
 			VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
 			VkFramebufferCreateInfo fbInfo = {};
 			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			fbInfo.renderPass      = m_renderPass;
+			fbInfo.renderPass      = activeRp;
 			fbInfo.attachmentCount = 5;
 			fbInfo.pAttachments    = views;
 			fbInfo.width           = extent.width;
@@ -593,14 +748,14 @@ namespace engine::render
 
 		VkRenderPassBeginInfo rpBegin = {};
 		rpBegin.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		rpBegin.renderPass      = m_renderPass;
+		rpBegin.renderPass      = activeRp;
 		rpBegin.framebuffer     = fb;
 		rpBegin.renderArea      = { { 0, 0 }, extent };
-		rpBegin.clearValueCount = 5;
-		rpBegin.pClearValues    = clearValues;
+		rpBegin.clearValueCount = useLoad ? 0u : 5u;
+		rpBegin.pClearValues    = useLoad ? nullptr : clearValues;
 
 		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, activePl);
 
 		VkViewport viewport = {};
 		viewport.width = static_cast<float>(extent.width);
@@ -677,6 +832,11 @@ namespace engine::render
 			m_identityInstanceMemory = VK_NULL_HANDLE;
 		}
 		InvalidateFramebufferCache(device);
+		if (m_pipelineLoad != VK_NULL_HANDLE)
+		{
+			vkDestroyPipeline(device, m_pipelineLoad, nullptr);
+			m_pipelineLoad = VK_NULL_HANDLE;
+		}
 		if (m_pipeline != VK_NULL_HANDLE)
 		{
 			vkDestroyPipeline(device, m_pipeline, nullptr);
@@ -686,6 +846,11 @@ namespace engine::render
 		{
 			vkDestroyPipelineLayout(device, m_pipelineLayout, nullptr);
 			m_pipelineLayout = VK_NULL_HANDLE;
+		}
+		if (m_renderPassLoad != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(device, m_renderPassLoad, nullptr);
+			m_renderPassLoad = VK_NULL_HANDLE;
 		}
 		if (m_renderPass != VK_NULL_HANDLE)
 		{
@@ -705,11 +870,16 @@ namespace engine::render
 	    ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
 	    const float* prevViewProjMat4, const float* viewProjMat4,
 	    const InstanceBatch* batches, uint32_t batchCount,
-	    VkBuffer instanceBuffer)
+	    VkBuffer instanceBuffer,
+	    bool loadExistingGbuffer)
 	{
 		if (!IsValid() || extent.width == 0 || extent.height == 0 || !batches || batchCount == 0
 			|| instanceBuffer == VK_NULL_HANDLE)
 			return;
+
+		const bool useLoad = loadExistingGbuffer && HasLoadPass();
+		VkRenderPass activeRp = useLoad ? m_renderPassLoad : m_renderPass;
+		VkPipeline   activePl = useLoad ? m_pipelineLoad : m_pipeline;
 
 		VkImageView viewA = registry.getImageView(idA);
 		VkImageView viewB = registry.getImageView(idB);
@@ -722,7 +892,7 @@ namespace engine::render
 		VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
 		VkFramebufferCreateInfo fbInfo = {};
 		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = m_renderPass;
+		fbInfo.renderPass = activeRp;
 		fbInfo.attachmentCount = 5;
 		fbInfo.pAttachments = views;
 		fbInfo.width = extent.width;
@@ -742,14 +912,14 @@ namespace engine::render
 
 		VkRenderPassBeginInfo rpBegin = {};
 		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		rpBegin.renderPass = m_renderPass;
+		rpBegin.renderPass = activeRp;
 		rpBegin.framebuffer = fb;
 		rpBegin.renderArea = { { 0, 0 }, extent };
-		rpBegin.clearValueCount = 5;
-		rpBegin.pClearValues = clearValues;
+		rpBegin.clearValueCount = useLoad ? 0u : 5u;
+		rpBegin.pClearValues = useLoad ? nullptr : clearValues;
 
 		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, activePl);
 
 		VkViewport viewport = {};
 		viewport.width = static_cast<float>(extent.width);

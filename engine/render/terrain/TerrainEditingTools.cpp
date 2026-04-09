@@ -14,6 +14,62 @@
 
 namespace engine::render::terrain
 {
+    void RecordHeightmapR16UploadCommands(VkCommandBuffer cmd,
+                                          VkBuffer stagingBuffer,
+                                          VkDeviceSize stagingBufferOffset,
+                                          VkImage dstImage,
+                                          uint32_t width,
+                                          uint32_t height)
+    {
+        if (cmd == VK_NULL_HANDLE || stagingBuffer == VK_NULL_HANDLE || dstImage == VK_NULL_HANDLE || width == 0u
+            || height == 0u)
+        {
+            return;
+        }
+
+        VkImageMemoryBarrier toTransfer{};
+        toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        toTransfer.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        toTransfer.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toTransfer.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toTransfer.image = dstImage;
+        toTransfer.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+        toTransfer.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        toTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        vkCmdPipelineBarrier(cmd,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            0, 0, nullptr, 0, nullptr, 1, &toTransfer);
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = stagingBufferOffset;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = { 0, 0, 0 };
+        region.imageExtent = { width, height, 1 };
+        vkCmdCopyBufferToImage(cmd, stagingBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+        VkImageMemoryBarrier toSample{};
+        toSample.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        toSample.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        toSample.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        toSample.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toSample.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        toSample.image = dstImage;
+        toSample.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+        toSample.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        toSample.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(cmd,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            0, 0, nullptr, 0, nullptr, 1, &toSample);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
     // Internal Vulkan helpers (raw, no VMA)
     // ─────────────────────────────────────────────────────────────────────────────
@@ -581,7 +637,7 @@ namespace engine::render::terrain
         if (ok)
         {
             m_dirtyHeightmap = false;
-            LOG_INFO(Render, "[TerrainEditingTools] FlushHeightmap OK ({}x{})", w, h);
+            LOG_DEBUG(Render, "[TerrainEditingTools] FlushHeightmap OK ({}x{})", w, h);
         }
         else
         {

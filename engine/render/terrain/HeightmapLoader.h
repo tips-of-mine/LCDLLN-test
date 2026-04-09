@@ -25,6 +25,9 @@ namespace engine::render::terrain
 
         /// Returns normalized height [0.0, 1.0] at (x, z). Clamps to bounds.
         float Sample(uint32_t x, uint32_t z) const;
+
+        /// Normalized height [0, 1] with bilinear filtering. \p u and \p v in [0, 1] (edge-clamped).
+        float SampleBilinearNorm(float u, float v) const;
     };
 
     /// GPU R16_UNORM heightmap texture (DEVICE_LOCAL, OPTIMAL tiling).

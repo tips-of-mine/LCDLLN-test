@@ -231,6 +231,8 @@ add_library(engine_core
   engine/net/ChatEmotes.cpp
   engine/editor/EditorMode.cpp
   engine/editor/WorldEditorImGui.cpp
+  engine/editor/WorldMapIo.cpp
+  engine/editor/WorldEditorSession.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp

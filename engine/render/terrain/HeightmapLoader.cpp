@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <fstream>
@@ -20,6 +21,31 @@ namespace engine::render::terrain
         x = (x < width)  ? x : width  - 1;
         z = (z < height) ? z : height - 1;
         return static_cast<float>(heights[z * width + x]) / 65535.0f;
+    }
+
+    float HeightmapData::SampleBilinearNorm(float u, float v) const
+    {
+        if (width == 0 || height == 0 || heights.empty())
+        {
+            return 0.0f;
+        }
+        u = std::clamp(u, 0.0f, 1.0f);
+        v = std::clamp(v, 0.0f, 1.0f);
+        const float fx = u * static_cast<float>(width - 1u);
+        const float fz = v * static_cast<float>(height - 1u);
+        const uint32_t x0 = static_cast<uint32_t>(fx);
+        const uint32_t z0 = static_cast<uint32_t>(fz);
+        const uint32_t x1 = std::min(x0 + 1u, width - 1u);
+        const uint32_t z1 = std::min(z0 + 1u, height - 1u);
+        const float tx = fx - static_cast<float>(x0);
+        const float tz = fz - static_cast<float>(z0);
+        const float h00 = Sample(x0, z0);
+        const float h10 = Sample(x1, z0);
+        const float h01 = Sample(x0, z1);
+        const float h11 = Sample(x1, z1);
+        const float hx0 = h00 * (1.0f - tx) + h10 * tx;
+        const float hx1 = h01 * (1.0f - tx) + h11 * tx;
+        return hx0 * (1.0f - tz) + hx1 * tz;
     }
 
     // ─────────────────────────────────────────────────────────────────────────────

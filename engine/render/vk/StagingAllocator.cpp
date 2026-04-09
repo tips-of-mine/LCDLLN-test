@@ -109,10 +109,21 @@ LOG_INFO(Render, "[STAGING] slot {}: vkBindBufferMemory r={}", i, (int)rBind);
 				return false;
 			}
 
+			void* mapped = nullptr;
+			if (vkMapMemory(device, memory, 0, VK_WHOLE_SIZE, 0, &mapped) != VK_SUCCESS || mapped == nullptr)
+			{
+				LOG_WARN(Render, "[STAGING] slot {}: vkMapMemory FAILED", i);
+				vkFreeMemory(device, memory, nullptr);
+				vkDestroyBuffer(device, buffer, nullptr);
+				Destroy(device);
+				return false;
+			}
+
 			m_ring[i].buffer        = buffer;
 			// On réutilise vmaAllocation pour stocker le VkDeviceMemory.
 			m_ring[i].vmaAllocation = reinterpret_cast<void*>(memory);
 			m_ring[i].sizeBytes     = static_cast<VkDeviceSize>(budgetBytesPerFrame);
+			m_ring[i].mappedHost    = mapped;
 		}
 
 		m_currentSlot   = 0;
@@ -157,6 +168,11 @@ LOG_INFO(Render, "[STAGING] slot {}: vkBindBufferMemory r={}", i, (int)rBind);
 		return m_ring[m_currentSlot].buffer;
 	}
 
+	void* StagingAllocator::GetCurrentMappedBase() const
+	{
+		return m_ring[m_currentSlot].mappedHost;
+	}
+
 	void StagingAllocator::Destroy(VkDevice device)
 	{
 		if (device == VK_NULL_HANDLE)
@@ -168,6 +184,11 @@ LOG_INFO(Render, "[STAGING] slot {}: vkBindBufferMemory r={}", i, (int)rBind);
 			{
 				VkDeviceMemory mem = reinterpret_cast<VkDeviceMemory>(m_ring[i].vmaAllocation);
 LOG_DEBUG(Render, "[STAGING] Destroy slot {} buffer={} mem={}", i, (void*)m_ring[i].buffer, (void*)mem);
+				if (m_ring[i].mappedHost != nullptr)
+				{
+					vkUnmapMemory(device, mem);
+					m_ring[i].mappedHost = nullptr;
+				}
 				vkDestroyBuffer(device, m_ring[i].buffer, nullptr);
 				vkFreeMemory(device, mem, nullptr);
 				m_ring[i].buffer        = VK_NULL_HANDLE;

@@ -8,6 +8,7 @@
 #include "engine/core/Log.h"
 
 #include <chrono>
+#include <mutex>
 
 namespace engine::network
 {

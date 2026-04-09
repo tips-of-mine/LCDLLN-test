@@ -19,6 +19,7 @@
 #include <cstring>
 #include <deque>
 #include <iomanip>
+#include <mutex>
 #include <sstream>
 
 namespace engine::network

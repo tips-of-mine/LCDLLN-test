@@ -26,6 +26,11 @@
             },
             "font_path": "fonts/Windlass.ttf",
             "font_pixel_height": 28
+        },
+        "terrain": {
+            "heightmap": "terrain/heightmap.r16h",
+            "splatmap": "",
+            "hole_mask": ""
         }
     },
     "audio": {

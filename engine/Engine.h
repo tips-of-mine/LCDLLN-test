@@ -42,8 +42,8 @@
 #include "engine/render/vk/DeferredDestroyQueue.h"
 #include "engine/render/GpuUploadQueue.h"
 #include "engine/render/vk/StagingAllocator.h"
-#if defined(_WIN32)
 #include "engine/render/terrain/TerrainRenderer.h"
+#if defined(_WIN32)
 #include "engine/render/terrain/TerrainEditingTools.h"
 #endif
 
@@ -144,10 +144,11 @@ namespace engine
 		void PumpGameplayPackets();
 		/// Load optional zone probe and atmosphere assets from content-relative paths.
 		void LoadZoneProbeAssets();
+		/// Charge un .spv terrain (même chargeur que l’éditeur monde).
+		std::vector<uint32_t> LoadTerrainSpirvWords(const char* relativeSpvPath);
 #if defined(_WIN32)
 		/// World editor: (re)charge heightmap + outils sculpt depuis le document.
 		void RebuildWorldEditorTerrainGpu();
-		std::vector<uint32_t> LoadWorldEditorSpirvWords(const char* relativeSpvPath);
 #endif
 
 		engine::core::Config m_cfg;
@@ -210,8 +211,9 @@ namespace engine
 		std::unique_ptr<engine::editor::WorldEditorImGui> m_worldEditorImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
+		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
+		engine::render::terrain::TerrainRenderer m_terrain;
 #if defined(_WIN32)
-		engine::render::terrain::TerrainRenderer m_worldEditorTerrain;
 		engine::render::terrain::TerrainEditingTools m_worldEditorTerrainTools;
 #endif
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.

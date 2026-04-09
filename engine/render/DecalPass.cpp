@@ -410,7 +410,7 @@ namespace engine::render
 		}
 
 		vkCmdEndRenderPass(cmd);
-		LOG_INFO(Render, "[DecalPass] Recorded {} decals", static_cast<uint32_t>(visibleDecals.size()));
+		LOG_DEBUG(Render, "[DecalPass] Recorded {} decals", static_cast<uint32_t>(visibleDecals.size()));
 	}
 
 	void DecalPass::InvalidateFramebufferCache(VkDevice device)

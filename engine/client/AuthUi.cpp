@@ -1323,29 +1323,59 @@ namespace engine::client
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
+		auto pendingKindTag = [](AsyncKind k) -> const char*
+		{
+			switch (k)
+			{
+			case AsyncKind::None:
+				return "None";
+			case AsyncKind::Register:
+				return "Register";
+			case AsyncKind::AuthOnly:
+				return "AuthOnly";
+			case AsyncKind::VerifyEmail:
+				return "VerifyEmail";
+			case AsyncKind::ForgotPassword:
+				return "ForgotPassword";
+			case AsyncKind::TermsStatus:
+				return "TermsStatus";
+			case AsyncKind::TermsAccept:
+				return "TermsAccept";
+			case AsyncKind::CharacterCreate:
+				return "CharacterCreate";
+			case AsyncKind::Login:
+				return "Login";
+			case AsyncKind::StatusProbe:
+				return "StatusProbe";
+			default:
+				return "?";
+			}
+		};
 		// Écran login initial : pas de worker, rien à consommer — évite de verrouiller sans nécessité.
-		LOG_WARN(Core, "[DIAG-POLL] enter worker.joinable={} asyncResult.ready={}", m_worker.joinable() ? 1 : 0, m_asyncResult.ready ? 1 : 0);
+		LOG_DEBUG(Core, "[DIAG-POLL] enter worker.joinable={} asyncResult.ready={}", m_worker.joinable() ? 1 : 0, m_asyncResult.ready ? 1 : 0);
 		const bool workerJoinable = m_worker.joinable();
 		if (!workerJoinable && !m_asyncResult.ready)
 		{
-			LOG_WARN(Core, "[DIAG-POLL] early return (no worker, no result)");
+			LOG_DEBUG(Core, "[DIAG-POLL] early return (no worker, no result)");
 			return;
 		}
 
-		LOG_WARN(Core, "[DIAG-POLL] before mutex lock m_asyncMutex={}", (void*)m_asyncMutex.get());
+		LOG_DEBUG(Core, "[DIAG-POLL] before mutex lock m_asyncMutex={}", (void*)m_asyncMutex.get());
 		AsyncResult copy{};
 		{
 			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			LOG_WARN(Core, "[DIAG-POLL] mutex locked, asyncResult.ready={}", m_asyncResult.ready ? 1 : 0);
+			LOG_DEBUG(Core, "[DIAG-POLL] mutex locked, asyncResult.ready={}", m_asyncResult.ready ? 1 : 0);
 			if (!m_asyncResult.ready)
 			{
-				LOG_WARN(Core, "[DIAG-POLL] return (result not ready)");
+				LOG_DEBUG(Core,
+					"[DIAG-POLL] return (result not ready) pendingKind={}",
+					pendingKindTag(m_pendingAsyncKind));
 				return;
 			}
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
-		LOG_WARN(Core, "[DIAG-POLL] mutex released, joining worker");
+		LOG_DEBUG(Core, "[DIAG-POLL] mutex released, joining worker");
 		JoinWorker();
 
 		const AsyncKind kind = m_pendingAsyncKind;
@@ -1370,6 +1400,11 @@ namespace engine::client
 
 		if (kind == AsyncKind::Register)
 		{
+			LOG_INFO(Core,
+				"[AUTH-REG] PollAsyncResult: consuming register outcome success={} accountId={} msg_len={}",
+				copy.success ? 1 : 0,
+				copy.accountId,
+				copy.message.size());
 			if (copy.success)
 			{
 				m_pendingVerifyAccountId = copy.accountId;
@@ -1574,7 +1609,39 @@ namespace engine::client
 		const std::string email = m_email;
 		const std::string firstName = m_firstName;
 		const std::string lastName = m_lastName;
-		const std::string birthDate = Pad4Year(std::stoi(m_birthYear)) + "-" + Pad2(std::stoi(m_birthMonth)) + "-" + Pad2(std::stoi(m_birthDay));
+		int birthY = 0;
+		int birthM = 0;
+		int birthD = 0;
+		try
+		{
+			birthY = std::stoi(m_birthYear);
+			birthM = std::stoi(m_birthMonth);
+			birthD = std::stoi(m_birthDay);
+		}
+		catch (const std::exception& ex)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse exception: {}", ex.what());
+			return;
+		}
+		catch (...)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse unknown exception");
+			return;
+		}
+		const std::string birthDate = Pad4Year(birthY) + "-" + Pad2(birthM) + "-" + Pad2(birthD);
+
+		LOG_INFO(Core,
+			"[AUTH-REG] StartRegisterWorker: host={} port={} timeout_ms={} allow_insecure={} locale_len={} birthDate_iso_len={}",
+			host,
+			port,
+			timeoutMs,
+			allowInsecure ? 1 : 0,
+			locale.size(),
+			birthDate.size());
 
 		m_pendingAsyncKind = AsyncKind::Register;
 		{
@@ -1583,94 +1650,121 @@ namespace engine::client
 		}
 
 		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, locale]() {
-			AsyncResult local{};
-			engine::network::NetClient client;
-			client.SetAllowInsecureDev(allowInsecure);
-			LOG_INFO(Net, "[AuthUiPresenter] Register worker: connecting {}:{}", host, port);
-			client.Connect(host, port);
-			if (!WaitConnected(&client, timeoutMs + 2000u))
+			LOG_INFO(Net, "[AUTH-REG] worker thread started (login_len={} email_len={})", login.size(), email.size());
+			try
 			{
+				AsyncResult local{};
+				engine::network::NetClient client;
+				client.SetAllowInsecureDev(allowInsecure);
+				LOG_INFO(Net, "[AuthUiPresenter] Register worker: connecting {}:{}", host, port);
+				client.Connect(host, port);
+				if (!WaitConnected(&client, timeoutMs + 2000u))
+				{
+					local.ready = true;
+					local.success = false;
+					local.message = "Master connect failed or timeout.";
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: connect FAILED");
+					return;
+				}
+				engine::network::RequestResponseDispatcher disp(&client);
+				std::vector<uint8_t> payload =
+					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
+				if (payload.empty())
+				{
+					local.ready = true;
+					local.success = false;
+					local.message = "REGISTER payload build failed.";
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: BuildRegisterRequestPayload FAILED");
+					client.Disconnect("payload");
+					return;
+				}
+
+				bool done = false;
+				bool ok = false;
+				std::string errMsg;
+				if (!disp.SendRequest(engine::network::kOpcodeRegisterRequest, payload,
+						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+							done = true;
+							if (timeout)
+							{
+								errMsg = "REGISTER timeout.";
+								return;
+							}
+							auto reg = engine::network::ParseRegisterResponsePayload(pl.data(), pl.size());
+							if (reg && reg->success != 0)
+							{
+								local.accountId = reg->account_id;
+								ok = true;
+								return;
+							}
+							if (reg && reg->success == 0)
+							{
+								errMsg = NetErrorLabel(reg->error_code);
+								return;
+							}
+							auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+							if (er)
+								errMsg = std::string(NetErrorLabel(er->errorCode))
+									+ (er->message.empty() ? "" : (": " + er->message));
+							else
+								errMsg = "REGISTER response parse failed.";
+						},
+						timeoutMs))
+				{
+					local.ready = true;
+					local.success = false;
+					local.message = "Send REGISTER failed.";
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+					client.Disconnect("send");
+					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: SendRequest FAILED");
+					return;
+				}
+
+				auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+				while (!done && std::chrono::steady_clock::now() < deadline)
+				{
+					disp.Pump();
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+				}
+				if (!done)
+					errMsg = "REGISTER timeout.";
+				client.Disconnect("register_done");
+
+				local.ready = true;
+				local.success = ok;
+				local.message = ok ? std::string("Registration OK. Check your email for the verification code.")
+								   : (errMsg.empty() ? "REGISTER failed." : errMsg);
+				{
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+				}
+				LOG_INFO(Net, "[AUTH-REG] Register worker finished (success={} err_nonempty={})", (int)ok, errMsg.empty() ? 0 : 1);
+			}
+			catch (const std::exception& ex)
+			{
+				AsyncResult local{};
 				local.ready = true;
 				local.success = false;
-				local.message = "Master connect failed or timeout.";
+				local.message = std::string("Register worker exception: ") + ex.what();
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
-				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: connect FAILED");
-				return;
+				LOG_ERROR(Net, "[AUTH-REG] Register worker std::exception: {}", ex.what());
 			}
-			engine::network::RequestResponseDispatcher disp(&client);
-			std::vector<uint8_t> payload = engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
-			if (payload.empty())
+			catch (...)
 			{
+				AsyncResult local{};
 				local.ready = true;
 				local.success = false;
-				local.message = "REGISTER payload build failed.";
+				local.message = "Register worker unknown exception.";
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
-				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: BuildRegisterRequestPayload FAILED");
-				client.Disconnect("payload");
-				return;
+				LOG_ERROR(Net, "[AUTH-REG] Register worker non-std exception");
 			}
-
-			bool done = false;
-			bool ok = false;
-			std::string errMsg;
-			if (!disp.SendRequest(engine::network::kOpcodeRegisterRequest, payload,
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						done = true;
-						if (timeout)
-						{
-							errMsg = "REGISTER timeout.";
-							return;
-						}
-						auto reg = engine::network::ParseRegisterResponsePayload(pl.data(), pl.size());
-						if (reg && reg->success != 0)
-						{
-							local.accountId = reg->account_id;
-							ok = true;
-							return;
-						}
-						if (reg && reg->success == 0)
-						{
-							errMsg = NetErrorLabel(reg->error_code);
-							return;
-						}
-						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
-						if (er)
-							errMsg = std::string(NetErrorLabel(er->errorCode)) + (er->message.empty() ? "" : (": " + er->message));
-						else
-							errMsg = "REGISTER response parse failed.";
-					},
-					timeoutMs))
-			{
-				local.ready = true;
-				local.success = false;
-				local.message = "Send REGISTER failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				client.Disconnect("send");
-				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: SendRequest FAILED");
-				return;
-			}
-
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!done && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			if (!done)
-				errMsg = "REGISTER timeout.";
-			client.Disconnect("register_done");
-
-			local.ready = true;
-			local.success = ok;
-			local.message = ok ? std::string("Registration OK. Check your email for the verification code.") : (errMsg.empty() ? "REGISTER failed." : errMsg);
-			{
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-			}
-			LOG_INFO(Net, "[AuthUiPresenter] Register worker finished (success={})", (int)ok);
 		});
 	}
 
@@ -2690,8 +2784,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 			m_phase = Phase::Error;
 			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			LOG_INFO(Core,
+				"[AUTH-REG] submit rejected: invalid birth date (day_len={} month_len={} year_len={})",
+				m_birthDay.size(),
+				m_birthMonth.size(),
+				m_birthYear.size());
 			return;
 		}
+		LOG_INFO(Core,
+			"[AUTH-REG] submit accepted -> StartRegisterWorker (login_len={} email_len={} first_len={} last_len={} pwd_len={} "
+			"birth_d_len={} birth_m_len={} birth_y_len={})",
+			m_login.size(),
+			m_email.size(),
+			m_firstName.size(),
+			m_lastName.size(),
+			m_password.size(),
+			m_birthDay.size(),
+			m_birthMonth.size(),
+			m_birthYear.size());
 		m_phase = Phase::Submitting;
 		StartRegisterWorker(cfg);
 		return;
@@ -2761,22 +2871,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	void AuthUiPresenter::Update(engine::platform::Input& input, float deltaSeconds, engine::platform::Window& window,
 		const engine::core::Config& cfg)
 	{
-		LOG_WARN(Core, "[DIAG-AUTH] Update enter this={} initialized={} flowComplete={} authEnabled={}",
+		LOG_DEBUG(Core, "[DIAG-AUTH] Update enter this={} initialized={} flowComplete={} authEnabled={}",
 			(void*)this, m_initialized ? 1 : 0, m_flowComplete ? 1 : 0, m_authEnabled ? 1 : 0);
 		m_usingNativeAuthScreen = false;
-		LOG_WARN(Core, "[DIAG-AUTH] before SetAuthScreenState");
+		LOG_DEBUG(Core, "[DIAG-AUTH] before SetAuthScreenState");
 		window.SetAuthScreenState({});
-		LOG_WARN(Core, "[DIAG-AUTH] after SetAuthScreenState");
+		LOG_DEBUG(Core, "[DIAG-AUTH] after SetAuthScreenState");
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
-		LOG_WARN(Core, "[DIAG-AUTH] before PollAsyncResult m_asyncMutex={}", (void*)m_asyncMutex.get());
+		LOG_DEBUG(Core, "[DIAG-AUTH] before PollAsyncResult m_asyncMutex={}", (void*)m_asyncMutex.get());
 		PollAsyncResult(cfg);
-		LOG_WARN(Core, "[DIAG-AUTH] after PollAsyncResult");
+		LOG_DEBUG(Core, "[DIAG-AUTH] after PollAsyncResult");
 		if (m_flowComplete)
 			return;
 
-		LOG_WARN(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
+		LOG_DEBUG(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
 		constexpr float kStatusProbeIntervalSeconds = 120.0f;
 		const bool shouldProbeStatus = !m_masterAvailabilityUrl.empty() && !m_flowComplete && m_phase != Phase::Submitting;
 		const bool statusProbeInFlight = m_worker.joinable() && m_pendingAsyncKind == AsyncKind::StatusProbe;
@@ -2906,6 +3016,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			else
 			{
+				if (m_phase == Phase::Register)
+				{
+					LOG_INFO(Core, "[AUTH-REG] UI primary action (submit button / Enter) -> SubmitCurrentPhase");
+				}
 				SubmitCurrentPhase(cfg);
 			}
 		};

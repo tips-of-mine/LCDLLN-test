@@ -82,7 +82,8 @@ namespace engine::server
 		const std::string ipKey = ConnIdToRateLimitKey(connId);
 		if (m_rateLimit && !m_rateLimit->TryConsumeRegister(ipKey))
 		{
-			LOG_WARN(Auth, "[AuthRegisterHandler] Register rate limited (connId={})", connId);
+			// Peut arriver en rafale si le client renvoie l’inscription en boucle ; éviter un WARN par paquet.
+			LOG_DEBUG(Auth, "[AuthRegisterHandler] Register rate limited (connId={})", connId);
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "rate limited", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);

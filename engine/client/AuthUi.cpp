@@ -63,7 +63,7 @@ namespace engine::client
 		// URLs production (identiques à external/external_links.json) — embarquées pour valider portail reset + sonde statut.
 		constexpr std::string_view kProductionWebPortalResetUrl =
 			"https://lcdlln-portal.tips-of-mine.com/password-recovery";
-		constexpr std::string_view kProductionStatusApiUrl = "https://lcdlln-master.tips-of-mine.com/status";
+		constexpr std::string_view kProductionStatusApiUrl = "http://10.0.4.133:3842/status";
 
 		std::string JsonBool(bool value)
 		{

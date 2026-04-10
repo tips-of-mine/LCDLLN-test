@@ -1,6 +1,6 @@
 #include "engine/server/AuthRegisterHandler.h"
 #include "engine/server/NetServer.h"
-#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/AccountStore.h"
 #include "engine/server/SessionManager.h"
 #include "engine/server/RateLimitAndBan.h"
 #include "engine/server/SecurityAuditLog.h"
@@ -39,7 +39,7 @@ namespace engine::server
 	}
 
 	void AuthRegisterHandler::SetServer(NetServer* server) { m_server = server; }
-	void AuthRegisterHandler::SetAccountStore(InMemoryAccountStore* store) { m_accountStore = store; }
+	void AuthRegisterHandler::SetAccountStore(AccountStore* store) { m_accountStore = store; }
 	void AuthRegisterHandler::SetSessionManager(SessionManager* sessionManager) { m_sessionManager = sessionManager; }
 	void AuthRegisterHandler::SetRateLimitAndBan(RateLimitAndBan* rateLimit) { m_rateLimit = rateLimit; }
 	void AuthRegisterHandler::SetSecurityAuditLog(SecurityAuditLog* auditLog) { m_auditLog = auditLog; }

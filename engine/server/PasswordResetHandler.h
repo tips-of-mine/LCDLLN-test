@@ -9,7 +9,7 @@
 namespace engine::server
 {
 	class NetServer;
-	class InMemoryAccountStore;
+	class AccountStore;
 	class PasswordResetStore;
 	class RateLimitAndBan;
 	class SecurityAuditLog;
@@ -26,7 +26,7 @@ namespace engine::server
 		/// Set network server (required).
 		void SetServer(NetServer* server);
 		/// Set account store (required for all operations).
-		void SetAccountStore(InMemoryAccountStore* store);
+		void SetAccountStore(AccountStore* store);
 		/// Set password reset + verification code store (required).
 		void SetPasswordResetStore(PasswordResetStore* resetStore);
 		/// Set SMTP config for sending emails (optional; if null, emails are skipped with a warning).
@@ -54,7 +54,7 @@ namespace engine::server
 		                       const uint8_t* payload, size_t payloadSize);
 
 		NetServer*           m_server       = nullptr;
-		InMemoryAccountStore* m_accountStore = nullptr;
+		AccountStore* m_accountStore = nullptr;
 		PasswordResetStore*  m_resetStore   = nullptr;
 		const SmtpConfig*    m_smtpConfig   = nullptr;
 		RateLimitAndBan*     m_rateLimit    = nullptr;

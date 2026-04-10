@@ -3,7 +3,7 @@
 #include "engine/server/ShardRegistry.h"
 #include "engine/server/SessionManager.h"
 #include "engine/server/ConnectionSessionMap.h"
-#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/AccountStore.h"
 #include "engine/server/TermsRepository.h"
 #include "engine/server/ShardTicketCrypto.h"
 #include "engine/network/ShardTicketPayloads.h"
@@ -24,7 +24,7 @@ namespace engine::server
 	void ShardTicketHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
 	void ShardTicketHandler::SetSessionManager(SessionManager* sessionManager) { m_sessionManager = sessionManager; }
 	void ShardTicketHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connSessionMap = map; }
-	void ShardTicketHandler::SetAccountStore(InMemoryAccountStore* store) { m_accountStore = store; }
+	void ShardTicketHandler::SetAccountStore(AccountStore* store) { m_accountStore = store; }
 	void ShardTicketHandler::SetTermsRepository(TermsRepository* repo) { m_termsRepository = repo; }
 	void ShardTicketHandler::SetSecret(std::string secret) { m_secret = std::move(secret); }
 

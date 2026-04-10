@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -12,6 +13,9 @@ namespace engine::server::db
 {
 	/// M23.2: Optional. Set a callback to record query latency in ms (e.g. for Prometheus db_query_latency_ms). Call from server main once.
 	void SetDbLatencyObserver(std::function<void(int)> observer);
+
+	/// Enregistre la durée depuis \a start (pour requêtes brutes hors DbExecute/DbQuery).
+	void DbRecordLatencySince(std::chrono::steady_clock::time_point start);
 
 	/// Executes a single SQL statement (or multi-statement batch). No result set expected.
 	/// Returns true on success. For user-derived input use prepared statements (see docs/db_sql_guidelines.md).

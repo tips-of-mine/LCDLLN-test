@@ -6,7 +6,7 @@
 namespace engine::server
 {
 	class ConnectionSessionMap;
-	class InMemoryAccountStore;
+	class AccountStore;
 	class NetServer;
 	class ShardRegistry;
 	class SessionManager;
@@ -26,7 +26,7 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sessionManager);
 		void SetConnectionSessionMap(ConnectionSessionMap* map);
 		/// Optional: block ticket if e-mail not verified (M33.2) or CGU pending.
-		void SetAccountStore(InMemoryAccountStore* store);
+		void SetAccountStore(AccountStore* store);
 		void SetTermsRepository(TermsRepository* repo);
 
 		/// Secret for HMAC (shared with shards). Empty = reject all requests.
@@ -43,7 +43,7 @@ namespace engine::server
 		ShardRegistry* m_registry = nullptr;
 		SessionManager* m_sessionManager = nullptr;
 		ConnectionSessionMap* m_connSessionMap = nullptr;
-		InMemoryAccountStore* m_accountStore   = nullptr;
+		AccountStore* m_accountStore   = nullptr;
 		TermsRepository*      m_termsRepository = nullptr;
 		std::string m_secret;
 		int m_validity_sec = 60;

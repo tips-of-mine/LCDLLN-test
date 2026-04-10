@@ -2,7 +2,7 @@
 
 #include "engine/server/PasswordResetHandler.h"
 #include "engine/server/NetServer.h"
-#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/AccountStore.h"
 #include "engine/server/PasswordResetStore.h"
 #include "engine/server/SmtpMailer.h"
 #include "engine/server/RateLimitAndBan.h"
@@ -20,7 +20,7 @@
 namespace engine::server
 {
 	void PasswordResetHandler::SetServer(NetServer* server)            { m_server = server; }
-	void PasswordResetHandler::SetAccountStore(InMemoryAccountStore* store) { m_accountStore = store; }
+	void PasswordResetHandler::SetAccountStore(AccountStore* store) { m_accountStore = store; }
 	void PasswordResetHandler::SetPasswordResetStore(PasswordResetStore* rs) { m_resetStore = rs; }
 	void PasswordResetHandler::SetSmtpConfig(const SmtpConfig* cfg)   { m_smtpConfig = cfg; }
 	void PasswordResetHandler::SetRateLimitAndBan(RateLimitAndBan* rl) { m_rateLimit = rl; }

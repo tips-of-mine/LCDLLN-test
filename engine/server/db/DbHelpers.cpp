@@ -40,6 +40,15 @@ namespace engine::server::db
 		g_latencyObserver = std::move(observer);
 	}
 
+	void DbRecordLatencySince(std::chrono::steady_clock::time_point start)
+	{
+		auto end = std::chrono::steady_clock::now();
+		int ms = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+		std::lock_guard<std::mutex> lock(g_latencyObserverMutex);
+		if (g_latencyObserver)
+			g_latencyObserver(ms);
+	}
+
 	bool DbExecute(MYSQL* mysql, std::string_view sql)
 	{
 		if (!mysql || sql.empty())

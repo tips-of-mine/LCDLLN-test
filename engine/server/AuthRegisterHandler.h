@@ -9,7 +9,7 @@
 namespace engine::server
 {
 	class NetServer;
-	class InMemoryAccountStore;
+	class AccountStore;
 	class SessionManager;
 	class RateLimitAndBan;
 	class SecurityAuditLog;
@@ -27,7 +27,7 @@ namespace engine::server
 
 		/// Set dependencies. Call before HandlePacket. Null rateLimit or auditLog skips that step.
 		void SetServer(NetServer* server);
-		void SetAccountStore(InMemoryAccountStore* store);
+		void SetAccountStore(AccountStore* store);
 		void SetSessionManager(SessionManager* sessionManager);
 		void SetRateLimitAndBan(RateLimitAndBan* rateLimit);
 		void SetSecurityAuditLog(SecurityAuditLog* auditLog);
@@ -54,7 +54,7 @@ namespace engine::server
 			const uint8_t* payload, size_t payloadSize);
 
 		NetServer* m_server = nullptr;
-		InMemoryAccountStore* m_accountStore = nullptr;
+		AccountStore* m_accountStore = nullptr;
 		SessionManager* m_sessionManager = nullptr;
 		RateLimitAndBan* m_rateLimit = nullptr;
 		SecurityAuditLog* m_auditLog = nullptr;

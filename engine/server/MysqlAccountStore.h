@@ -1,22 +1,19 @@
 #pragma once
 
-#include "engine/server/AccountRecord.h"
 #include "engine/server/AccountStore.h"
 
-#include <cstdint>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
+namespace engine::server::db
+{
+	class ConnectionPool;
+}
 
 namespace engine::server
 {
-	/// Stockage comptes en RAM (tests / fallback sans pool MySQL).
-	class InMemoryAccountStore final : public AccountStore
+	/// Persistance des comptes dans la table `accounts` (pool MySQL master).
+	class MysqlAccountStore final : public AccountStore
 	{
 	public:
-		InMemoryAccountStore() = default;
+		explicit MysqlAccountStore(engine::server::db::ConnectionPool* pool);
 
 		uint64_t CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
 			std::string_view first_name, std::string_view last_name, std::string_view birth_date,
@@ -31,9 +28,6 @@ namespace engine::server
 		bool UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash) override;
 
 	private:
-		mutable std::recursive_mutex m_mutex;
-		uint64_t m_nextAccountId = 1;
-		std::unordered_map<std::string, AccountRecord> m_by_login;
-		std::unordered_map<std::string, uint64_t> m_by_email;
+		engine::server::db::ConnectionPool* m_pool = nullptr;
 	};
 }

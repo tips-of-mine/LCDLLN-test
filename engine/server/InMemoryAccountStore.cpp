@@ -3,6 +3,7 @@
 #include "engine/auth/Argon2Hash.h"
 #include "engine/core/Log.h"
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -12,6 +13,7 @@ namespace engine::server
 	                                             std::string_view first_name, std::string_view last_name, std::string_view birth_date,
 	                                             AccountEmailLocale email_locale)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		std::string login_key(NormaliseLoginView(login));
 		if (login_key.empty())
 		{
@@ -70,34 +72,39 @@ namespace engine::server
 		return account_id;
 	}
 
-	std::optional<AccountRecord> InMemoryAccountStore::FindByLogin(std::string_view normalisedLogin) const
+	std::optional<AccountRecord> InMemoryAccountStore::FindByLogin(std::string_view normalisedLogin)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		auto it = m_by_login.find(std::string(normalisedLogin));
 		if (it == m_by_login.end())
 			return std::nullopt;
 		return it->second;
 	}
 
-	std::optional<AccountRecord> InMemoryAccountStore::FindByAccountId(uint64_t account_id) const
+	std::optional<AccountRecord> InMemoryAccountStore::FindByAccountId(uint64_t account_id)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		for (const auto& [_, rec] : m_by_login)
 			if (rec.account_id == account_id)
 				return rec;
 		return std::nullopt;
 	}
 
-	bool InMemoryAccountStore::ExistsEmail(std::string_view normalisedEmail) const
+	bool InMemoryAccountStore::ExistsEmail(std::string_view normalisedEmail)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		return m_by_email.find(std::string(normalisedEmail)) != m_by_email.end();
 	}
 
-	bool InMemoryAccountStore::ExistsLogin(std::string_view normalisedLogin) const
+	bool InMemoryAccountStore::ExistsLogin(std::string_view normalisedLogin)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		return m_by_login.find(std::string(normalisedLogin)) != m_by_login.end();
 	}
 
-	std::optional<AccountRecord> InMemoryAccountStore::FindByEmail(std::string_view normalisedEmail) const
+	std::optional<AccountRecord> InMemoryAccountStore::FindByEmail(std::string_view normalisedEmail)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		auto it = m_by_email.find(std::string(normalisedEmail));
 		if (it == m_by_email.end())
 			return std::nullopt;
@@ -106,6 +113,7 @@ namespace engine::server
 
 	bool InMemoryAccountStore::SetEmailVerified(uint64_t account_id)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		for (auto& [key, rec] : m_by_login)
 		{
 			if (rec.account_id == account_id)
@@ -121,6 +129,7 @@ namespace engine::server
 
 	bool InMemoryAccountStore::UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash)
 	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		for (auto& [key, rec] : m_by_login)
 		{
 			if (rec.account_id == account_id)

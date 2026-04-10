@@ -47,3 +47,26 @@ export async function hashPasswordForGameMaster(login: string, plainPassword: st
     salt: serverSalt,
   });
 }
+
+/**
+ * Vérifie password_hash (double Argon2id) comme le maître jeu (secret = chaîne client_hash PHC).
+ */
+export async function verifyGameMasterPassword(
+  login: string,
+  plainPassword: string,
+  storedFinalHash: string,
+): Promise<boolean> {
+  if (!storedFinalHash.startsWith("$argon2id$")) {
+    return false;
+  }
+  const salt = deriveClientPasswordSalt(login);
+  const clientHash = await argon2.hash(plainPassword, {
+    ...ARGON2_GAME_OPTS,
+    salt,
+  });
+  try {
+    return await argon2.verify(storedFinalHash, clientHash);
+  } catch {
+    return false;
+  }
+}

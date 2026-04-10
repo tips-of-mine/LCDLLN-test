@@ -61,6 +61,8 @@ namespace engine::network
 
 	bool ByteWriter::WriteBytes(const uint8_t* src, size_t count) noexcept
 	{
+		if (count == 0u)
+			return true;
 		if (src == nullptr || m_offset + count > m_size)
 		{
 			m_ok = false;

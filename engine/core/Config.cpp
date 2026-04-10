@@ -1,5 +1,4 @@
 #include "engine/core/Config.h"
-#include "engine/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,9 +7,19 @@
 #include <cstdlib>
 #include <format>
 #include <fstream>
+#include <filesystem>
 #include <limits>
 #include <sstream>
 #include <vector>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
 
 namespace engine::core
 {
@@ -423,6 +432,30 @@ namespace engine::core
 			}
 			return true;
 		}
+
+		static std::filesystem::path ExecutableDirectory()
+		{
+#if defined(_WIN32)
+			wchar_t buffer[MAX_PATH]{};
+			const DWORD len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+			if (len == 0)
+			{
+				return {};
+			}
+			return std::filesystem::path(buffer).parent_path();
+#elif defined(__linux__)
+			char buf[4096]{};
+			const ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+			if (n <= 0)
+			{
+				return {};
+			}
+			buf[static_cast<size_t>(n)] = '\0';
+			return std::filesystem::path(buf).parent_path();
+#else
+			return {};
+#endif
+		}
 	}
 
 	Config Config::Load(std::string_view filePath, int argc, char** argv)
@@ -437,7 +470,7 @@ namespace engine::core
 
 		cfg.LoadFromFile(filePath);
 		(void)cfg.MergeDefaultsFromJsonFile("external/external_links.json");
-		const auto exeDir = engine::platform::FileSystem::ExecutableDirectory();
+		const auto exeDir = ExecutableDirectory();
 		if (!exeDir.empty())
 		{
 			const std::filesystem::path besideExe = exeDir / "external" / "external_links.json";

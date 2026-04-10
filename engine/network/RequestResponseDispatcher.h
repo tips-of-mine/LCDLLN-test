@@ -2,12 +2,12 @@
 
 #include "engine/network/NetErrorCode.h"
 #include "engine/network/ProtocolV1Constants.h"
+#include "engine/platform/StableMutex.h"
 
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <functional>
-#include <mutex>
 #include <span>
 #include <string_view>
 #include <unordered_map>
@@ -59,7 +59,7 @@ namespace engine::network
 		std::atomic<uint64_t> m_sessionId{ 0u };
 		int64_t m_heartbeatIntervalSec = 30;
 		std::chrono::steady_clock::time_point m_lastHeartbeatSent{};
-		std::mutex m_mutex;
+		engine::platform::StableMutex m_mutex;
 		struct PendingEntry
 		{
 			std::chrono::steady_clock::time_point deadline;

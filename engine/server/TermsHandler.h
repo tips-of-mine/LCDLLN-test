@@ -6,7 +6,7 @@
 namespace engine::server
 {
 	class ConnectionSessionMap;
-	class InMemoryAccountStore;
+	class AccountStore;
 	class NetServer;
 	class SessionManager;
 	struct SmtpConfig;
@@ -22,7 +22,7 @@ namespace engine::server
 		void SetServer(NetServer* server);
 		void SetSessionManager(SessionManager* sm);
 		void SetConnectionSessionMap(ConnectionSessionMap* map);
-		void SetAccountStore(InMemoryAccountStore* store);
+		void SetAccountStore(AccountStore* store);
 		void SetTermsRepository(TermsRepository* repo);
 		void SetSmtpConfig(const SmtpConfig* cfg);
 
@@ -33,7 +33,7 @@ namespace engine::server
 		NetServer*               m_server   = nullptr;
 		SessionManager*          m_sessions = nullptr;
 		ConnectionSessionMap*    m_connMap  = nullptr;
-		InMemoryAccountStore*    m_accounts = nullptr;
+		AccountStore*    m_accounts = nullptr;
 		TermsRepository*         m_repo     = nullptr;
 		const SmtpConfig*        m_smtp     = nullptr;
 	};

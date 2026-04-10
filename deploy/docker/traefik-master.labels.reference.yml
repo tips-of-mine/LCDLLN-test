@@ -1,0 +1,37 @@
+# Référence — labels Traefik du service « master » (copie / audit hors docker-compose).
+#
+# Dans docker-compose.yml le master a traefik.enable=false tant que l’accès se fait en IP LAN directe.
+# Coller les blocs ci-dessous dans la section labels du service master + passer traefik.enable=true.
+#
+# 1) HTTP(S) → port 3842 (health, /status, metrics) : routeurs traefik.http.* + service lcdlln-master-service.
+# 2) TCP brut (protocole jeu + TLS côté client) → port 3840 : routeurs traefik.tcp.* + service lcdlln-master-game-tcp.
+#
+# L’entrypoint TCP doit exister dans la config statique Traefik (ex. address: ":3840").
+# Si le client TLS envoie un SNI, utilisez HostSNI(`votre-sous-domaine-tcp`) ; sinon HostSNI(`*`) sur un entrypoint dédié.
+# tls.passthrough=true : Traefik ne termine pas le TLS, il forward vers le conteneur (recommandé pour le jeu).
+
+# --- HTTP embarqué (3842), host « maître public » (ex. lcdlln-master.tips-of-mine.com) — même nom de service que docker-compose ---
+#  - "traefik.http.routers.lcdlln-master-http.rule=Host(`lcdlln-master.tips-of-mine.com`)"
+#  - "traefik.http.routers.lcdlln-master-http.entrypoints=http"
+#  - "traefik.http.routers.lcdlln-master-http.service=lcdlln-master-service"
+#  - "traefik.http.routers.lcdlln-master-https.rule=Host(`lcdlln-master.tips-of-mine.com`)"
+#  - "traefik.http.routers.lcdlln-master-https.entrypoints=https"
+#  - "traefik.http.routers.lcdlln-master-https.service=lcdlln-master-service"
+#  - "traefik.http.routers.lcdlln-master-https.tls=true"
+#  - "traefik.http.services.lcdlln-master-service.loadbalancer.server.port=3842"
+
+# --- HTTP embarqué (3842), host séparé type tunnel « -http » (optionnel, même backend, dupliquer les routeurs) ---
+#  - "traefik.http.routers.lcdlln-master-embed-http.rule=Host(`lcdlln-master-http.tips-of-mine.com`)"
+#  - "traefik.http.routers.lcdlln-master-embed-http.entrypoints=http"
+#  - "traefik.http.routers.lcdlln-master-embed-http.service=lcdlln-master-service"
+#  - "traefik.http.routers.lcdlln-master-embed-https.rule=Host(`lcdlln-master-http.tips-of-mine.com`)"
+#  - "traefik.http.routers.lcdlln-master-embed-https.entrypoints=https"
+#  - "traefik.http.routers.lcdlln-master-embed-https.service=lcdlln-master-service"
+#  - "traefik.http.routers.lcdlln-master-embed-https.tls=true"
+
+# --- TCP jeu (3840), TLS passthrough ---
+#  - "traefik.tcp.routers.lcdlln-master-game.rule=HostSNI(`lcdlln-master-tcp.tips-of-mine.com`)"
+#  - "traefik.tcp.routers.lcdlln-master-game.entrypoints=master-tcp"
+#  - "traefik.tcp.routers.lcdlln-master-game.service=lcdlln-master-game-tcp"
+#  - "traefik.tcp.routers.lcdlln-master-game.tls.passthrough=true"
+#  - "traefik.tcp.services.lcdlln-master-game-tcp.loadbalancer.server.port=3840"

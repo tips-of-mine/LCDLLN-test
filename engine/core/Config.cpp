@@ -1,5 +1,7 @@
 #include "engine/core/Config.h"
 
+#include "engine/core/DefaultClientEndpoints.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cctype>
@@ -7,9 +9,19 @@
 #include <cstdlib>
 #include <format>
 #include <fstream>
+#include <filesystem>
 #include <limits>
 #include <sstream>
 #include <vector>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
 
 namespace engine::core
 {
@@ -341,6 +353,36 @@ namespace engine::core
 			size_t m_pos = 0;
 		};
 
+		/// Extrait l’hôte d’une URL absolue `http://` / `https://` (IPv4 / noms ; pas d’IPv6 bracketée).
+		static std::optional<std::string> HostFromAbsoluteHttpUrl(std::string_view url)
+		{
+			const size_t scheme = url.find("://");
+			if (scheme == std::string_view::npos)
+			{
+				return std::nullopt;
+			}
+			size_t i = scheme + 3;
+			while (i < url.size() && url[i] == '/')
+			{
+				++i;
+			}
+			const size_t hostStart = i;
+			if (hostStart >= url.size())
+			{
+				return std::nullopt;
+			}
+			const size_t delim = url.find_first_of(":/", hostStart);
+			if (delim == std::string_view::npos)
+			{
+				return std::string(url.substr(hostStart));
+			}
+			if (url[delim] == '/')
+			{
+				return std::string(url.substr(hostStart, delim - hostStart));
+			}
+			return std::string(url.substr(hostStart, delim - hostStart));
+		}
+
 		static void MergeJsonFlatten(const JsonValue& v, const std::string& prefix, Config& cfg)
 		{
 			switch (v.type)
@@ -422,6 +464,30 @@ namespace engine::core
 			}
 			return true;
 		}
+
+		static std::filesystem::path ExecutableDirectory()
+		{
+#if defined(_WIN32)
+			wchar_t buffer[MAX_PATH]{};
+			const DWORD len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+			if (len == 0)
+			{
+				return {};
+			}
+			return std::filesystem::path(buffer).parent_path();
+#elif defined(__linux__)
+			char buf[4096]{};
+			const ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+			if (n <= 0)
+			{
+				return {};
+			}
+			buf[static_cast<size_t>(n)] = '\0';
+			return std::filesystem::path(buf).parent_path();
+#else
+			return {};
+#endif
+		}
 	}
 
 	Config Config::Load(std::string_view filePath, int argc, char** argv)
@@ -435,6 +501,13 @@ namespace engine::core
 		cfg.SetDefault("log.console", true);
 
 		cfg.LoadFromFile(filePath);
+		(void)cfg.MergeDefaultsFromJsonFile("external/external_links.json");
+		const auto exeDir = ExecutableDirectory();
+		if (!exeDir.empty())
+		{
+			const std::filesystem::path besideExe = exeDir / "external" / "external_links.json";
+			(void)cfg.MergeDefaultsFromJsonFile(besideExe.string());
+		}
 		cfg.ApplyCli(argc, argv);
 		return cfg;
 	}
@@ -486,6 +559,32 @@ namespace engine::core
 			SetValue(k, v);
 		}
 
+		return true;
+	}
+
+	bool Config::MergeDefaultsFromJsonFile(std::string_view filePath)
+	{
+		std::ifstream in(std::string(filePath), std::ios::in | std::ios::binary);
+		if (!in.is_open())
+		{
+			return false;
+		}
+		std::stringstream ss;
+		ss << in.rdbuf();
+		const std::string text = ss.str();
+
+		JsonValue root;
+		JsonParser parser(text);
+		if (!parser.Parse(root))
+		{
+			return false;
+		}
+		if (root.type != JsonValue::Type::Object)
+		{
+			return false;
+		}
+
+		MergeJsonFlatten(root, "", *this);
 		return true;
 	}
 
@@ -547,6 +646,30 @@ namespace engine::core
 		if (const auto* p = std::get_if<double>(&it->second))
 		{
 			return std::to_string(*p);
+		}
+		return std::string(fallback);
+	}
+
+	std::string Config::GetEffectiveMasterHost(std::string_view fallback) const
+	{
+		const std::string explicitHost = GetString("client.master_host", "");
+		if (!explicitHost.empty())
+		{
+			return explicitHost;
+		}
+		const std::string tcpDefault = GetString("client.master_tcp_host", "");
+		if (!tcpDefault.empty())
+		{
+			return tcpDefault;
+		}
+		const std::string statusUrl = GetString("client.status_api_url", "");
+		if (const auto h = HostFromAbsoluteHttpUrl(statusUrl))
+		{
+			return *h;
+		}
+		if (const auto h = HostFromAbsoluteHttpUrl(defaults::kStatusApiUrl))
+		{
+			return *h;
 		}
 		return std::string(fallback);
 	}

@@ -23,5 +23,15 @@ if(WIN32)
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/pkg/tools"
     RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/pkg/tools"
   )
+
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
+    add_custom_command(TARGET load_tester POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:load_tester>/external"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+              "${CMAKE_SOURCE_DIR}/external/external_links.json"
+              "$<TARGET_FILE_DIR:load_tester>/external/external_links.json"
+      COMMENT "Copie de external/external_links.json (load_tester)..."
+    )
+  endif()
 endif()
 

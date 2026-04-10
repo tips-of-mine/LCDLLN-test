@@ -21,6 +21,7 @@
 #include <deque>
 #include <mutex>
 #include <queue>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -62,6 +63,17 @@ namespace engine::server
 				return false;
 			return true;
 		}
+
+		static std::string FormatIpv4Port(uint32_t ipHostOrder, uint16_t portHost)
+		{
+			char buf[48];
+			const unsigned a = (ipHostOrder >> 24) & 0xFFu;
+			const unsigned b = (ipHostOrder >> 16) & 0xFFu;
+			const unsigned c = (ipHostOrder >> 8) & 0xFFu;
+			const unsigned d = ipHostOrder & 0xFFu;
+			std::snprintf(buf, sizeof(buf), "%u.%u.%u.%u:%u", a, b, c, d, static_cast<unsigned>(portHost));
+			return std::string(buf);
+		}
 	}
 
 	/// TLS handshake state per connection (when TLS enabled).
@@ -98,6 +110,9 @@ namespace engine::server
 			uint32_t connId = 0;
 			// Remote IPv4 address in host byte order (for DDoS tracking).
 			uint32_t ipHostOrder = 0u;
+			uint16_t remotePortHost = 0u;
+			std::chrono::steady_clock::time_point connectedAt{};
+			size_t rxBytesAccum = 0;
 			SSL* ssl = nullptr;
 			TlsHandshakeState handshakeState = TlsHandshakeState::Ready;
 			std::vector<uint8_t> rxBuffer;
@@ -199,13 +214,23 @@ namespace engine::server
 			disconnectCounts[idx].fetch_add(1, std::memory_order_relaxed);
 		SSL* sslToFree = nullptr;
 		uint32_t ipHostOrder = 0u;
+		uint16_t remotePortHost = 0u;
+		uint32_t connId = 0u;
+		size_t rxBytesAccum = 0u;
+		double aliveSec = 0.0;
+		bool hadConn = false;
 		{
 			std::lock_guard lock(connMutex);
 			auto it = connections.find(fd);
 			if (it != connections.end())
 			{
-				uint32_t connId = it->second.connId;
+				hadConn = true;
+				connId = it->second.connId;
 				ipHostOrder = it->second.ipHostOrder;
+				remotePortHost = it->second.remotePortHost;
+				rxBytesAccum = it->second.rxBytesAccum;
+				const auto now = std::chrono::steady_clock::now();
+				aliveSec = std::chrono::duration<double>(now - it->second.connectedAt).count();
 				LOG_DEBUG(Server, "[NETSRV] CloseConnection connId={} reason={}", connId, DisconnectReasonString(reason));
 				connIdToFd.erase(it->second.connId);
 				sslToFree = it->second.ssl;
@@ -225,7 +250,26 @@ namespace engine::server
 		}
 		epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, nullptr);
 		close(fd);
-		LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={})", fd, DisconnectReasonString(reason));
+		if (hadConn)
+		{
+			const std::string peer = FormatIpv4Port(ipHostOrder, remotePortHost);
+			const char* zeroHint = (reason == DisconnectReason::PeerClosed && rxBytesAccum == 0u)
+				? " | note: 0 byte received then peer closed — often TCP healthcheck/scanner, or HTTP client on game port"
+				: "";
+			LOG_INFO(Net,
+				"[NetServer] Connection closed (connId={}, fd={}, peer={}, reason={}, alive_s={:.3f}, rx_bytes={}){}",
+				connId,
+				fd,
+				peer,
+				DisconnectReasonString(reason),
+				aliveSec,
+				rxBytesAccum,
+				zeroHint);
+		}
+		else
+		{
+			LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={}, peer=unknown — no connection state)", fd, DisconnectReasonString(reason));
+		}
 	}
 
 	/// Call with connMutex held (same thread).
@@ -363,6 +407,9 @@ namespace engine::server
 							c.fd = clientFd;
 							c.connId = connId;
 							c.ipHostOrder = ipHostOrder;
+							c.remotePortHost = ntohs(clientAddr.sin_port);
+							c.connectedAt = now;
+							c.rxBytesAccum = 0;
 							connIdToFd[connId] = clientFd;
 							c.rxBuffer.reserve(kRxBufferCapacity);
 							c.tokenBucketTokens = config.packetBurst;
@@ -379,7 +426,11 @@ namespace engine::server
 							connectionCount.store(static_cast<uint32_t>(connections.size()));
 							connectionsTotal.fetch_add(1, std::memory_order_relaxed);
 						}
-						LOG_DEBUG(Server, "[NETSRV] accept connId={} fd={}", connId, clientFd);
+						LOG_INFO(Net,
+							"[NetServer] TCP accept (connId={}, fd={}, peer={})",
+							connId,
+							clientFd,
+							FormatIpv4Port(ipHostOrder, ntohs(clientAddr.sin_port)));
 						if (tlsEnabled && sslCtx != nullptr)
 						{
 							std::unique_lock lock(connMutex);
@@ -411,7 +462,6 @@ namespace engine::server
 								}
 							}
 						}
-						LOG_DEBUG(Net, "[NetServer] Accepted connection (fd={}, connId={})", clientFd, connId);
 					}
 					continue;
 				}
@@ -493,6 +543,7 @@ namespace engine::server
 							received = recv(fd, tmp, sizeof(tmp), 0);
 						if (received > 0)
 						{
+							c.rxBytesAccum += static_cast<size_t>(received);
 							bytesIn.fetch_add(static_cast<size_t>(received), std::memory_order_relaxed);
 							size_t prev = c.rxBuffer.size();
 							c.rxBuffer.resize(prev + static_cast<size_t>(received));
@@ -532,76 +583,97 @@ namespace engine::server
 						}
 					}
 
-					// Parse frames
-					while (c.rxBuffer.size() >= static_cast<size_t>(engine::network::kProtocolV1HeaderSize))
+					// Parse frames — offset obligatoire : sinon chaque tour re-parse le même paquet depuis le début
+					// (rxConsumed n’était appliqué qu’au prochain EPOLLIN), ce qui duplique les jobs et déclenche le rate limit.
 					{
-						engine::network::PacketView view;
-						engine::network::PacketParseResult res = engine::network::PacketView::Parse(
-							c.rxBuffer.data(), c.rxBuffer.size(), view);
-						if (res == engine::network::PacketParseResult::Incomplete)
-							break;
-						if (res == engine::network::PacketParseResult::Invalid)
+						size_t parseOff = 0;
+						while (c.rxBuffer.size() - parseOff >= static_cast<size_t>(engine::network::kProtocolV1HeaderSize))
 						{
-							c.decodeFailureCount++;
-							packetsDropped.fetch_add(1, std::memory_order_relaxed);
-							if (c.decodeFailureCount >= config.decodeFailureThreshold)
+							engine::network::PacketView view;
+							const uint8_t* parseBase = c.rxBuffer.data() + parseOff;
+							const size_t parseAvail = c.rxBuffer.size() - parseOff;
+							engine::network::PacketParseResult res =
+								engine::network::PacketView::Parse(parseBase, parseAvail, view);
+							if (res == engine::network::PacketParseResult::Incomplete)
+								break;
+							if (res == engine::network::PacketParseResult::Invalid)
 							{
-								LOG_WARN(Net, "[NetServer] Decode failures threshold (connId={}, count={}), closing", c.connId, c.decodeFailureCount);
-								if (lock.owns_lock())
-									lock.unlock();
-								CloseConnection(fd, DisconnectReason::DecodeFailures);
-								goto next_event;
+								c.decodeFailureCount++;
+								packetsDropped.fetch_add(1, std::memory_order_relaxed);
+								if (c.decodeFailureCount >= config.decodeFailureThreshold)
+								{
+									LOG_WARN(Net, "[NetServer] Decode failures threshold (connId={}, count={}), closing", c.connId, c.decodeFailureCount);
+									if (lock.owns_lock())
+										lock.unlock();
+									CloseConnection(fd, DisconnectReason::DecodeFailures);
+									goto next_event;
+								}
+								// Sauter 1 octet depuis la position courante dans le flux non consommé.
+								if (parseOff + 1 >= c.rxBuffer.size())
+									c.rxBuffer.clear();
+								else
+								{
+									std::memmove(
+										c.rxBuffer.data() + parseOff,
+										c.rxBuffer.data() + parseOff + 1,
+										c.rxBuffer.size() - parseOff - 1);
+									c.rxBuffer.resize(c.rxBuffer.size() - 1);
+								}
+								continue;
 							}
-							// Skip 1 byte to make progress; compact buffer so next iteration advances.
-							if (c.rxConsumed + 1 >= c.rxBuffer.size())
+							// Ok: token bucket then push job to workers
+							{
+								auto now = std::chrono::steady_clock::now();
+								double elapsed = std::chrono::duration<double>(now - c.tokenBucketLastRefill).count();
+								c.tokenBucketTokens =
+									(std::min)(config.packetBurst, c.tokenBucketTokens + elapsed * config.packetRatePerSec);
+								c.tokenBucketLastRefill = now;
+								if (c.tokenBucketTokens < 1.0)
+								{
+									packetsDropped.fetch_add(1, std::memory_order_relaxed);
+									LOG_WARN(Net, "[NetServer] Rate limit exceeded (connId={}), closing", c.connId);
+									if (lock.owns_lock())
+										lock.unlock();
+									CloseConnection(fd, DisconnectReason::RateLimit);
+									goto next_event;
+								}
+								c.tokenBucketTokens -= 1.0;
+							}
+							const size_t packetBytes = view.Size();
+							size_t payloadSize = view.PayloadSize();
+							engine::network::NetworkBufferPool::PooledBuffer payload;
+							if (payloadSize > 0)
+							{
+								payload = engine::network::NetworkBufferPool::AcquireBuffer(payloadSize);
+								if (!payload)
+								{
+									LOG_ERROR(Net, "[NetServer] RX payload buffer alloc FAILED (payloadSize={}) connId={}",
+										payloadSize, c.connId);
+									lock.unlock();
+									CloseConnection(fd, DisconnectReason::DecodeFailures);
+									goto next_event;
+								}
+								std::memcpy(payload.data(), view.Payload(), payloadSize);
+							}
+							{
+								std::lock_guard jobLock(jobMutex);
+								jobQueue.push({ c.connId, view.Opcode(), view.RequestId(), view.SessionId(), std::move(payload) });
+							}
+							packetsIn.fetch_add(1, std::memory_order_relaxed);
+							jobCv.notify_one();
+							parseOff += packetBytes;
+						}
+						if (parseOff > 0)
+						{
+							if (parseOff >= c.rxBuffer.size())
 								c.rxBuffer.clear();
 							else
 							{
-								std::memmove(c.rxBuffer.data(), c.rxBuffer.data() + c.rxConsumed + 1, c.rxBuffer.size() - c.rxConsumed - 1);
-								c.rxBuffer.resize(c.rxBuffer.size() - c.rxConsumed - 1);
+								std::memmove(c.rxBuffer.data(), c.rxBuffer.data() + parseOff, c.rxBuffer.size() - parseOff);
+								c.rxBuffer.resize(c.rxBuffer.size() - parseOff);
 							}
-							c.rxConsumed = 0;
-							continue;
 						}
-						// Ok: token bucket then push job to workers
-						{
-							auto now = std::chrono::steady_clock::now();
-							double elapsed = std::chrono::duration<double>(now - c.tokenBucketLastRefill).count();
-							c.tokenBucketTokens = (std::min)(config.packetBurst, c.tokenBucketTokens + elapsed * config.packetRatePerSec);
-							c.tokenBucketLastRefill = now;
-							if (c.tokenBucketTokens < 1.0)
-							{
-								packetsDropped.fetch_add(1, std::memory_order_relaxed);
-								LOG_WARN(Net, "[NetServer] Rate limit exceeded (connId={}), closing", c.connId);
-								if (lock.owns_lock())
-									lock.unlock();
-								CloseConnection(fd, DisconnectReason::RateLimit);
-								goto next_event;
-							}
-							c.tokenBucketTokens -= 1.0;
-						}
-						size_t payloadSize = view.PayloadSize();
-						engine::network::NetworkBufferPool::PooledBuffer payload;
-						if (payloadSize > 0)
-						{
-							payload = engine::network::NetworkBufferPool::AcquireBuffer(payloadSize);
-							if (!payload)
-							{
-								LOG_ERROR(Net, "[NetServer] RX payload buffer alloc FAILED (payloadSize={}) connId={}",
-									payloadSize, c.connId);
-								lock.unlock();
-								CloseConnection(fd, DisconnectReason::DecodeFailures);
-								goto next_event;
-							}
-							std::memcpy(payload.data(), view.Payload(), payloadSize);
-						}
-						{
-							std::lock_guard jobLock(jobMutex);
-							jobQueue.push({ c.connId, view.Opcode(), view.RequestId(), view.SessionId(), std::move(payload) });
-						}
-						packetsIn.fetch_add(1, std::memory_order_relaxed);
-						jobCv.notify_one();
-						c.rxConsumed += view.Size();
+						c.rxConsumed = 0;
 					}
 				}
 

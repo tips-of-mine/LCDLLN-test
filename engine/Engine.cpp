@@ -48,6 +48,18 @@ namespace engine
 	{
 		constexpr float kWorldEditorPickPi = 3.14159265f;
 
+		engine::core::LogLevel ParseLogLevelConfig(std::string_view text)
+		{
+			if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
+			if (text == "Debug" || text == "debug") return engine::core::LogLevel::Debug;
+			if (text == "Info" || text == "info") return engine::core::LogLevel::Info;
+			if (text == "Warn" || text == "warn") return engine::core::LogLevel::Warn;
+			if (text == "Error" || text == "error") return engine::core::LogLevel::Error;
+			if (text == "Fatal" || text == "fatal") return engine::core::LogLevel::Fatal;
+			if (text == "Off" || text == "off") return engine::core::LogLevel::Off;
+			return engine::core::LogLevel::Info;
+		}
+
 		bool CameraViewportWorldDirection(const engine::render::Camera& camera, int viewportWidth, int viewportHeight,
 			int mouseX, int mouseY, engine::math::Vec3& outDirection)
 		{
@@ -539,15 +551,18 @@ namespace engine
 		}
 		logSettings.console     = logToConsole;
 		logSettings.flushAlways = true;
-		logSettings.level       = engine::core::LogLevel::Info;
+		logSettings.level       = ParseLogLevelConfig(m_cfg.GetString("log.level", "Info"));
 		logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), m_cfg.GetInt("log.rotation_size_mb", 10)));
 		logSettings.retention_days   = static_cast<int>(m_cfg.GetInt("log.retention_days", 7));
 
 		engine::core::Log::Init(logSettings);
 
-		if (!logSettings.filePath.empty() || logSettings.console)
+		if (!logSettings.filePath.empty() || logToConsole)
 		{
-			LOG_INFO(Core, "[Boot] Log initialized (console={}, file={})", logToConsole ? "on" : "off", logSettings.filePath);
+			LOG_INFO(Core, "[Boot] Log initialized (console={}, file={}, level={} — use log.level=Debug for verbose render/auth traces)",
+				logToConsole ? "on" : "off",
+				logSettings.filePath.empty() ? "<none>" : logSettings.filePath,
+				m_cfg.GetString("log.level", "Info"));
 		}
 
 		// ------------------------------------------------------------------
@@ -1065,6 +1080,44 @@ namespace engine
 										);
 										LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
+										// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
+										// chemin par défaut conventionnel si la clé est absente ou vide.
+										if (pipelineOk && !m_worldEditorExe)
+										{
+											static constexpr const char* kDefaultHeightmapRel = "terrain/heightmap.r16h";
+											std::string hmGame = m_cfg.GetString("render.terrain.heightmap", kDefaultHeightmapRel);
+											if (hmGame.empty())
+												hmGame = kDefaultHeightmapRel;
+
+											const std::string splat = m_cfg.GetString("render.terrain.splatmap", "");
+											const std::string hole = m_cfg.GetString("render.terrain.hole_mask", "");
+											const std::vector<std::string> cliffPaths;
+											auto loadFnTerrain = [this](const char* p) { return LoadTerrainSpirvWords(p); };
+											if (m_terrain.Init(
+													m_vkDeviceContext.GetDevice(),
+													m_vkDeviceContext.GetPhysicalDevice(),
+													m_cfg,
+													hmGame,
+													splat,
+													hole,
+													cliffPaths,
+													VK_FORMAT_R8G8B8A8_SRGB,
+													VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+													VK_FORMAT_R8G8B8A8_UNORM,
+													VK_FORMAT_R16G16_SFLOAT,
+													VK_FORMAT_D32_SFLOAT,
+													m_vkDeviceContext.GetGraphicsQueue(),
+													m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+													loadFnTerrain))
+											{
+												LOG_INFO(Core, "[Boot] Terrain (jeu) initialisé: {}", hmGame);
+											}
+											else
+											{
+												LOG_WARN(Render, "[Boot] TerrainRenderer::Init (jeu) échec — vérifie le fichier sous paths.content : {}", hmGame);
+											}
+										}
+
 										if (m_vkDeviceContext.SupportsDynamicRendering())
 										{
 											std::vector<uint32_t> authGlyphVert = loadSpirv("shaders/auth_glyph.vert.spv");
@@ -1206,35 +1259,9 @@ namespace engine
 													hiZPass.GetMipCount());
 											});
 
-#if defined(_WIN32)
-										if (m_worldEditorExe)
-										{
-											m_frameGraph.addPass("Terrain_WorldEditor",
-												[this](engine::render::PassBuilder& b) {
-													b.write(m_fgGBufferAId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgGBufferBId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgGBufferCId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgGBufferVelocityId, engine::render::ImageUsage::ColorWrite);
-													b.write(m_fgDepthId, engine::render::ImageUsage::DepthWrite);
-												},
-												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-													if (!m_worldEditorTerrain.IsValid()
-														|| !m_pipeline->GetGeometryPass().HasLoadPass())
-													{
-														return;
-													}
-													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
-													const engine::RenderState& rs = m_renderStates[readIdx];
-													m_worldEditorTerrain.Record(
-														m_vkDeviceContext.GetDevice(), cmd, reg,
-														m_vkSwapchain.GetExtent(),
-														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
-														m_fgGBufferVelocityId, m_fgDepthId,
-														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
-														rs.camera.position, rs.frustum);
-												});
-										}
-#endif
+										// Terrain prepass must not be a separate FrameGraph pass: it targets the same
+										// G-buffer attachments as Geometry, and the MVP graph forbids multi-writer.
+										// Record terrain inside the Geometry pass before GeometryPass::Record* (LOAD path).
 
 										m_frameGraph.addPass("Geometry",
 											[this](engine::render::PassBuilder& b) {
@@ -1247,13 +1274,18 @@ namespace engine
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
 												const engine::RenderState& rs = m_renderStates[readIdx];
-#if defined(_WIN32)
-												const bool worldEditTerrainChain = m_worldEditorExe
-													&& m_worldEditorTerrain.IsValid()
+												const bool terrainBeforeGeometry = m_terrain.IsValid()
 													&& m_pipeline->GetGeometryPass().HasLoadPass();
-#else
-												const bool worldEditTerrainChain = false;
-#endif
+												if (terrainBeforeGeometry)
+												{
+													m_terrain.Record(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+														m_fgGBufferVelocityId, m_fgDepthId,
+														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m,
+														rs.camera.position, rs.frustum);
+												}
 												engine::render::MeshAsset* mesh = rs.objectVisible ? m_geometryMeshHandle.Get() : nullptr;
 												const engine::world::GlobalChunkCoord chunk = engine::world::WorldToGlobalChunkCoord(rs.camera.position.x, rs.camera.position.z);
 												const engine::world::ChunkRing ring = m_world.GetRingForChunk(chunk);
@@ -1283,7 +1315,7 @@ namespace engine
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
 														materialCache.GetDefaultMaterialIndex(),
-														worldEditTerrainChain);
+														terrainBeforeGeometry);
 												}
 												else
 												{
@@ -1296,7 +1328,7 @@ namespace engine
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
 														materialCache.GetDefaultMaterialIndex(),
-														worldEditTerrainChain);
+														terrainBeforeGeometry);
 												}
 											});
 
@@ -1802,7 +1834,7 @@ namespace engine
 												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
 												if (presentSolidColorDebug)
 												{
-													LOG_WARN(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
+													LOG_DEBUG(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
 													const VkClearColorValue debugColor = { { 0.9f, 0.0f, 0.9f, 1.0f } };
 													VkImageSubresourceRange clearRange{};
 													clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1811,11 +1843,11 @@ namespace engine
 													clearRange.baseArrayLayer = 0;
 													clearRange.layerCount = 1;
 													vkCmdClearColorImage(cmd, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &debugColor, 1, &clearRange);
-													LOG_INFO(Render, "[CopyPresent] debug clear color applied");
+													LOG_DEBUG(Render, "[CopyPresent] debug clear color applied");
 												}
 												else
 												{
-													LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage begin");
+													LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage begin");
 													// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
 													// with vkCmdBlitImage here even when source and destination extents match.
 													VkImageCopy region{};
@@ -1825,7 +1857,7 @@ namespace engine
 													region.dstOffset = { 0, 0, 0 };
 													region.extent = { ext.width, ext.height, 1 };
 													vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-													LOG_INFO(Render, "[CopyPresent] vkCmdCopyImage done");
+													LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage done");
 												}
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
 												const bool authBgBlitWanted = authVisualState.active && m_authUiBackgroundTexture.IsValid()
@@ -1894,11 +1926,11 @@ namespace engine
 													&& backbufferView != VK_NULL_HANDLE
 													&& m_vkDeviceContext.SupportsDynamicRendering())
 												{
-													LOG_INFO(Render, "[CopyPresent] auth overlay enabled; building model");
+													LOG_DEBUG(Render, "[CopyPresent] auth overlay enabled; building model");
 													const engine::client::AuthUiPresenter::RenderModel authRenderModel = m_authUi.BuildRenderModel();
-													LOG_INFO(Render, "[CopyPresent] auth render model built; loading theme");
+													LOG_DEBUG(Render, "[CopyPresent] auth render model built; loading theme");
 													const engine::render::AuthUiTheme authTheme = engine::render::LoadAuthUiTheme(m_cfg);
-													LOG_INFO(Render, "[CopyPresent] auth theme loaded; issuing barriers");
+													LOG_DEBUG(Render, "[CopyPresent] auth theme loaded; issuing barriers");
 													VkImageMemoryBarrier toColor{};
 													toColor.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 													toColor.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1914,7 +1946,7 @@ namespace engine
 														VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 														0, 0, nullptr, 0, nullptr, 1, &toColor);
 
-													LOG_INFO(Render, "[CopyPresent] begin rendering attachment");
+													LOG_DEBUG(Render, "[CopyPresent] begin rendering attachment");
 													// IMPORTANT: If we end up calling the KHR entrypoints, we must pass the KHR
 													// structs/sType values (some drivers crash if you mix core structs with KHR fns).
 													VkRenderingAttachmentInfo colorAttachment{};
@@ -1932,7 +1964,7 @@ namespace engine
 													colorAttachmentKHR.loadOp = authPhotoBackdrop ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
 													colorAttachmentKHR.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 													colorAttachmentKHR.clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-													LOG_INFO(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
+													LOG_DEBUG(Render, "[CopyPresent] attachment info ready (view={})", (void*)backbufferView);
 
 													VkRenderingInfo renderingInfo{};
 													renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -1953,7 +1985,7 @@ namespace engine
 														"[CopyPresent] renderingInfo renderArea.extent width={} height={}",
 														ext.width,
 														ext.height);
-													LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
+													LOG_DEBUG(Render, "[CopyPresent] vkCmdBeginRendering call (proc lookup)");
 
 													// Pointeurs résolus à la création du device (VkDeviceContext) — évite les nullptr
 													// du loader et les incohérences avec une instance Vulkan < 1.3.
@@ -1995,13 +2027,13 @@ namespace engine
 													}
 													else
 													{
-														LOG_INFO(Render, "[CopyPresent] vkCmdBeginRendering returned");
+														LOG_DEBUG(Render, "[CopyPresent] vkCmdBeginRendering returned");
 
-														LOG_INFO(Render, "[CopyPresent] building UI layers");
+														LOG_DEBUG(Render, "[CopyPresent] building UI layers");
 														const bool authCalibOverlay = m_cfg.GetBool("render.auth_ui_calibration_overlay.enabled", false);
 														const std::vector<engine::render::AuthUiLayer> layers =
 															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay, authPhotoBackdrop);
-														LOG_INFO(Render, "[CopyPresent] UI layers built; clearing attachments");
+														LOG_DEBUG(Render, "[CopyPresent] UI layers built; clearing attachments");
 														for (const engine::render::AuthUiLayer& layer : layers)
 														{
 															VkClearAttachment clearAttachment{};
@@ -2010,7 +2042,7 @@ namespace engine
 															clearAttachment.clearValue.color = layer.color;
 															vkCmdClearAttachments(cmd, 1, &clearAttachment, 1, &layer.rect);
 														}
-														LOG_INFO(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
+														LOG_DEBUG(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
 														// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
 														// Logo statut : uniquement pendant la requête HTTP (pas quand le cache est à jour).
 														const bool showAuthStatusLogo = authVisualState.login
@@ -2107,7 +2139,7 @@ namespace engine
 															pfnEndKHR(cmd);
 														else if (!beganWithKHR && pfnEndCore)
 															pfnEndCore(cmd);
-														LOG_INFO(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
+														LOG_DEBUG(Render, "[CopyPresent] vkCmdEndRendering done; barrier to present");
 
 														VkImageMemoryBarrier toPresent{};
 														toPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -2130,9 +2162,9 @@ namespace engine
 												if (!renderedAuthUi)
 												{
 													if (authVisualState.active && !authUiDynamicRenderingEnabled)
-														LOG_WARN(Render, "[CopyPresent] auth dynamic rendering disabled by config; using present-only path");
+														LOG_DEBUG(Render, "[CopyPresent] auth dynamic rendering disabled by config; using present-only path");
 													if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
-														LOG_WARN(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
+														LOG_DEBUG(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
 
 													bool worldEditorUiToPresent = false;
 #if defined(_WIN32)
@@ -2252,9 +2284,9 @@ namespace engine
 				m_worldEditorImGui.reset();
 			}
 			m_worldEditorTerrainTools.Shutdown();
-			if (m_worldEditorTerrain.IsValid())
-				m_worldEditorTerrain.Destroy(m_vkDeviceContext.GetDevice());
 #endif
+			if (m_terrain.IsValid())
+				m_terrain.Destroy(m_vkDeviceContext.GetDevice());
 			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
@@ -2298,7 +2330,7 @@ namespace engine
 	void Engine::BeginFrame()
 	{
 		// PROFILE_FUNCTION();
-		LOG_WARN(Render, "[DIAG] BeginFrame enter frame={}", m_currentFrame);
+		LOG_DEBUG(Render, "[DIAG] BeginFrame enter frame={}", m_currentFrame);
 		m_input.BeginFrame();
 		m_window.PollEvents();
 
@@ -2354,10 +2386,8 @@ namespace engine
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 				if (m_pipeline)
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
-#if defined(_WIN32)
-				if (m_worldEditorTerrain.IsValid())
-					m_worldEditorTerrain.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
-#endif
+				if (m_terrain.IsValid())
+					m_terrain.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				// All frame-graph images are recreated after a resize/out-of-date event, so the
@@ -2399,7 +2429,7 @@ namespace engine
 	void Engine::Update()
 	{
 		// PROFILE_FUNCTION();
-		LOG_WARN(Render, "[DIAG] Update enter frame={}", m_currentFrame);
+		LOG_DEBUG(Render, "[DIAG] Update enter frame={}", m_currentFrame);
 		const uint32_t readIdx  = m_renderReadIndex.load(std::memory_order_acquire);
 		const uint32_t writeIdx = 1u - (readIdx & 1u);
 		const auto& readState   = m_renderStates[readIdx];
@@ -2469,9 +2499,9 @@ namespace engine
 		const bool authGateActive = m_authUi.IsInitialized() && !m_authUi.IsFlowComplete();
 		if (authGateActive)
 		{
-			LOG_WARN(Render, "[DIAG] authUi.Update begin frame={}", m_currentFrame);
+			LOG_DEBUG(Render, "[DIAG] authUi.Update begin frame={}", m_currentFrame);
 			m_authUi.Update(m_input, static_cast<float>(dt), m_window, m_cfg);
-			LOG_WARN(Render, "[DIAG] authUi.Update done frame={}", m_currentFrame);
+			LOG_DEBUG(Render, "[DIAG] authUi.Update done frame={}", m_currentFrame);
 			const engine::client::AuthUiPresenter::VideoSettingsCommand videoCmd = m_authUi.ConsumePendingVideoSettings();
 			const engine::client::AuthUiPresenter::AudioSettingsCommand audioCmd = m_authUi.ConsumePendingAudioSettings();
 			const engine::client::AuthUiPresenter::ControlSettingsCommand controlCmd = m_authUi.ConsumePendingControlSettings();
@@ -2675,16 +2705,16 @@ namespace engine
 			bool terrainPick = false;
 			float pickX = 0.f;
 			float pickZ = 0.f;
-			if (m_worldEditorTerrain.IsValid() && m_worldEditorSession)
+			if (m_terrain.IsValid() && m_worldEditorSession)
 			{
-				const engine::render::terrain::HeightmapData& hm = m_worldEditorTerrain.GetMutableHeightmapData();
+				const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
 				if (hm.width > 0u && hm.height > 0u)
 				{
 					overlay.heightmap = &hm;
-					overlay.terrainOriginX = m_worldEditorTerrain.GetTerrainOriginX();
-					overlay.terrainOriginZ = m_worldEditorTerrain.GetTerrainOriginZ();
-					overlay.terrainWorldSize = m_worldEditorTerrain.GetTerrainWorldSize();
-					overlay.heightScale = m_worldEditorTerrain.GetHeightScale();
+					overlay.terrainOriginX = m_terrain.GetTerrainOriginX();
+					overlay.terrainOriginZ = m_terrain.GetTerrainOriginZ();
+					overlay.terrainWorldSize = m_terrain.GetTerrainWorldSize();
+					overlay.heightScale = m_terrain.GetHeightScale();
 					overlay.showGrid = m_worldEditorSession->ShowGrid();
 					overlay.gridCellMeters = m_worldEditorSession->GridCellMeters();
 					overlay.brushRadiusMeters = m_worldEditorSession->BrushRadius();
@@ -2703,7 +2733,7 @@ namespace engine
 
 			m_worldEditorImGui->BuildUi(&overlay);
 
-			if (m_worldEditorTerrain.IsValid() && m_worldEditorTerrainTools.IsValid() && m_worldEditorSession && terrainPick)
+			if (m_terrain.IsValid() && m_worldEditorTerrainTools.IsValid() && m_worldEditorSession && terrainPick)
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
 				if (!cap && m_input.IsMouseDown(engine::platform::MouseButton::Left))
@@ -2765,7 +2795,7 @@ namespace engine
 	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
 	        return;
 	    }
-	    LOG_INFO(Render, "[Engine] Render begin frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[Engine] Render begin frame={}", m_currentFrame);
 	    const uint32_t frameIndex          = m_currentFrame % 2;
 	    engine::render::FrameResources& fr = m_frameResources[frameIndex];
 	    ::VkDevice     device              = m_vkDeviceContext.GetDevice();
@@ -2776,9 +2806,9 @@ namespace engine
 	    // ses rendertargets avec les bonnes dimensions.
 	    VkExtent2D extent = m_vkSwapchain.GetExtent();
 	
-	    LOG_WARN(Render, "[DIAG] vkWaitForFences begin frame={} frameIndex={}", m_currentFrame, frameIndex);
+	    LOG_DEBUG(Render, "[DIAG] vkWaitForFences begin frame={} frameIndex={}", m_currentFrame, frameIndex);
 	    vkWaitForFences(device, 1, &fr.fence, VK_TRUE, UINT64_MAX);
-	    LOG_WARN(Render, "[DIAG] vkWaitForFences done frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkWaitForFences done frame={}", m_currentFrame);
 	    if (m_profiler.IsInitialized() && m_profiler.ResolveGpuFrame(device, frameIndex))
 	    {
 	        if (m_profilerHud.IsInitialized())
@@ -2848,7 +2878,7 @@ namespace engine
 	    };
 
 	    uint32_t imageIndex = 0;
-	    LOG_INFO(Render, "[Engine] Render vkAcquireNextImageKHR begin frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[Engine] Render vkAcquireNextImageKHR begin frame={}", m_currentFrame);
 	    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, fr.imageAvailable, VK_NULL_HANDLE, &imageIndex);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR) { m_swapchainResizeRequested = true; LOG_WARN(Render, "[Engine] Render vkAcquireNextImageKHR OUT_OF_DATE frame={}", m_currentFrame); return; }
 	    if (result == VK_SUBOPTIMAL_KHR)
@@ -2864,7 +2894,7 @@ namespace engine
 	    {
 	        m_suboptimalStreak = 0;
 	    }
-	    LOG_INFO(Render, "[Engine] Render vkAcquireNextImageKHR OK imageIndex={} frame={}", imageIndex, m_currentFrame);
+	    LOG_DEBUG(Render, "[Engine] Render vkAcquireNextImageKHR OK imageIndex={} frame={}", imageIndex, m_currentFrame);
 
 	    vkResetCommandPool(device, fr.cmdPool, 0);
 	
@@ -2879,10 +2909,10 @@ namespace engine
 
 #if defined(_WIN32)
 	    if (m_worldEditorExe && m_worldEditorTerrainTools.IsValid() && m_worldEditorTerrainTools.IsDirtyHeightmap()
-	        && m_worldEditorTerrain.IsValid())
+	        && m_terrain.IsValid())
 	    {
-		    const engine::render::terrain::HeightmapData& hm = m_worldEditorTerrain.GetMutableHeightmapData();
-		    const VkImage hmImg = m_worldEditorTerrain.GetHeightmapGpu().image;
+		    const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
+		    const VkImage hmImg = m_terrain.GetHeightmapGpu().image;
 		    if (hmImg != VK_NULL_HANDLE && hm.width > 0u && hm.height > 0u && !hm.heights.empty())
 		    {
 			    const size_t bytes = static_cast<size_t>(hm.width) * static_cast<size_t>(hm.height) * sizeof(uint16_t);
@@ -2915,11 +2945,11 @@ namespace engine
 	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
 	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2(), m_profiler.IsInitialized() ? &m_profiler : nullptr);
 	    }
-	    LOG_WARN(Render, "[DIAG] FrameGraph execute returned frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] FrameGraph execute returned frame={}", m_currentFrame);
 
-	    LOG_WARN(Render, "[DIAG] vkEndCommandBuffer begin frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkEndCommandBuffer begin frame={}", m_currentFrame);
 	    if (vkEndCommandBuffer(fr.cmdBuffer) != VK_SUCCESS) return;
-	    LOG_WARN(Render, "[DIAG] vkEndCommandBuffer OK frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkEndCommandBuffer OK frame={}", m_currentFrame);
 
 	    VkSemaphore          waitSemaphores[]   = { fr.imageAvailable };
 	    VkPipelineStageFlags waitStages[]       = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -2933,11 +2963,11 @@ namespace engine
 	    submitInfo.pCommandBuffers      = &fr.cmdBuffer;
 	    submitInfo.signalSemaphoreCount = 1;
 	    submitInfo.pSignalSemaphores    = signalSemaphores;
-	    LOG_WARN(Render, "[DIAG] vkResetFences begin frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkResetFences begin frame={}", m_currentFrame);
 	    vkResetFences(device, 1, &fr.fence);
-	    LOG_WARN(Render, "[DIAG] vkQueueSubmit begin frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkQueueSubmit begin frame={}", m_currentFrame);
 	    VkResult submitResult = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fr.fence);
-	    LOG_WARN(Render, "[DIAG] vkQueueSubmit result={} frame={}", static_cast<int>(submitResult), m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkQueueSubmit result={} frame={}", static_cast<int>(submitResult), m_currentFrame);
 	    if (submitResult != VK_SUCCESS) return;
 
 	    VkPresentInfoKHR presentInfo{};
@@ -2947,9 +2977,9 @@ namespace engine
 	    presentInfo.swapchainCount     = 1;
 	    presentInfo.pSwapchains        = &swapchain;
 	    presentInfo.pImageIndices      = &imageIndex;
-	    LOG_WARN(Render, "[DIAG] vkQueuePresentKHR begin frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkQueuePresentKHR begin frame={}", m_currentFrame);
 	    result = vkQueuePresentKHR(presentQueue, &presentInfo);
-	    LOG_WARN(Render, "[DIAG] vkQueuePresentKHR result={} frame={}", static_cast<int>(result), m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] vkQueuePresentKHR result={} frame={}", static_cast<int>(result), m_currentFrame);
 	    if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	    {
 	        m_swapchainResizeRequested = true;
@@ -2963,21 +2993,21 @@ namespace engine
 	        m_suboptimalStreak = 0;
 	    }
 
-	    LOG_WARN(Render, "[DIAG] Render() complete frame={}", m_currentFrame);
+	    LOG_DEBUG(Render, "[DIAG] Render() complete frame={}", m_currentFrame);
 	    m_currentFrame++;
 	}
 
 	void Engine::EndFrame()
 	{
 		// PROFILE_FUNCTION();
-		LOG_WARN(Render, "[DIAG] EndFrame enter frame={}", m_currentFrame);
+		LOG_DEBUG(Render, "[DIAG] EndFrame enter frame={}", m_currentFrame);
 		if (m_profiler.IsInitialized())
 		{
 			m_profiler.EndFrame();
 		}
 		if (m_currentFrame > 0 && (m_currentFrame % 60) == 0)
 			m_chunkStats.LogStats();
-		LOG_WARN(Render, "[DIAG] EndFrame done frame={}", m_currentFrame);
+		LOG_DEBUG(Render, "[DIAG] EndFrame done frame={}", m_currentFrame);
 	}
 
 	void Engine::SwapRenderState()
@@ -3539,8 +3569,7 @@ namespace engine
 		}
 	}
 
-#if defined(_WIN32)
-	std::vector<uint32_t> Engine::LoadWorldEditorSpirvWords(const char* relativeSpvPath)
+	std::vector<uint32_t> Engine::LoadTerrainSpirvWords(const char* relativeSpvPath)
 	{
 		std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, relativeSpvPath);
 		if (bytes.size() % 4u == 0u && !bytes.empty())
@@ -3549,10 +3578,11 @@ namespace engine
 			std::memcpy(out.data(), bytes.data(), bytes.size());
 			return out;
 		}
-		LOG_WARN(Render, "[WorldEditor] Shader SPIR-V missing or invalid: {}", relativeSpvPath);
+		LOG_WARN(Render, "[Terrain] Shader SPIR-V manquant ou invalide: {}", relativeSpvPath);
 		return {};
 	}
 
+#if defined(_WIN32)
 	void Engine::RebuildWorldEditorTerrainGpu()
 	{
 		if (!m_worldEditorExe || !m_vkDeviceContext.IsValid() || !m_worldEditorSession)
@@ -3563,9 +3593,9 @@ namespace engine
 		VkPhysicalDevice physDev = m_vkDeviceContext.GetPhysicalDevice();
 		vkDeviceWaitIdle(device);
 		m_worldEditorTerrainTools.Shutdown();
-		if (m_worldEditorTerrain.IsValid())
+		if (m_terrain.IsValid())
 		{
-			m_worldEditorTerrain.Destroy(device);
+			m_terrain.Destroy(device);
 		}
 
 		const std::string& hmRel = m_worldEditorSession->Doc().heightmapContentRelativePath;
@@ -3574,8 +3604,8 @@ namespace engine
 			return;
 		}
 
-		auto loadFn = [this](const char* p) { return LoadWorldEditorSpirvWords(p); };
-		const bool ok = m_worldEditorTerrain.Init(
+		auto loadFn = [this](const char* p) { return LoadTerrainSpirvWords(p); };
+		const bool ok = m_terrain.Init(
 			device,
 			physDev,
 			m_cfg,
@@ -3597,16 +3627,16 @@ namespace engine
 			return;
 		}
 		if (!m_worldEditorTerrainTools.Init(
-				&m_worldEditorTerrain.GetMutableHeightmapData(),
-				&m_worldEditorTerrain.GetSplatting(),
-				m_worldEditorTerrain.GetTerrainOriginX(),
-				m_worldEditorTerrain.GetTerrainOriginZ(),
-				m_worldEditorTerrain.GetTerrainWorldSize(),
-				m_worldEditorTerrain.GetHeightScale()))
+				&m_terrain.GetMutableHeightmapData(),
+				&m_terrain.GetSplatting(),
+				m_terrain.GetTerrainOriginX(),
+				m_terrain.GetTerrainOriginZ(),
+				m_terrain.GetTerrainWorldSize(),
+				m_terrain.GetHeightScale()))
 		{
 			LOG_WARN(Render, "[WorldEditor] TerrainEditingTools::Init failed");
 		}
-		m_worldEditorTerrain.InvalidateFramebufferCache(device);
+		m_terrain.InvalidateFramebufferCache(device);
 	}
 #endif
 

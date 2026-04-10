@@ -22,7 +22,7 @@
 #      (shard : docker compose build shard && docker compose --profile shard up -d)
 #
 # Portail web : inclus dans up -d. Local : http://127.0.0.1:3000 — Labels Traefik : service
-# web-portal ; copie : traefik-web-portal.labels.reference.yml
+# web-portal ; copies réf. : traefik-web-portal.labels.reference.yml, traefik-master.labels.reference.yml
 #
 # Arrêt :
 #   docker compose down
@@ -83,28 +83,20 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "${MASTER_PORT:-3840}:3840"
-      # HTTP embarqué (même processus que lcdlln_server) : /status, /healthz, /readyz, /metrics
-      # Accès via Traefik uniquement (pas d'exposition directe) ; fallback local pour debug :
-      - "127.0.0.1:${MASTER_HEALTH_PORT:-3842}:3842"
+      # Accès LAN typique : http://<ip-hôte>:3842/status , TCP jeu <ip-hôte>:3840
+      - "${MASTER_PUBLISH_ADDR:-0.0.0.0}:${MASTER_PORT:-3840}:3840"
+      - "${MASTER_PUBLISH_ADDR:-0.0.0.0}:${MASTER_HEALTH_PORT:-3842}:3842"
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_front_network"
-      - "traefik.http.routers.lcdlln-master-http.rule=Host(`${MASTER_HEALTH_HOST:-lcdlln-master.tips-of-mine.com}`)"
-      - "traefik.http.routers.lcdlln-master-http.entrypoints=http"
-      - "traefik.http.routers.lcdlln-master-http.service=lcdlln-master-service"
-      - "traefik.http.routers.lcdlln-master-https.rule=Host(`${MASTER_HEALTH_HOST:-lcdlln-master.tips-of-mine.com}`)"
-      - "traefik.http.routers.lcdlln-master-https.entrypoints=https"
-      - "traefik.http.routers.lcdlln-master-https.service=lcdlln-master-service"
-      - "traefik.http.routers.lcdlln-master-https.tls=true"
-      #- "traefik.http.routers.lcdlln-master-https.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}"
-      - "traefik.http.services.lcdlln-master-service.loadbalancer.server.port=3842"
+      # Pas de Traefik devant le master pour l’instant (serveur joignable uniquement en IP locale, ex. 10.0.4.133).
+      # Réactiver traefik.enable=true + labels HTTP/TCP : voir traefik-master.labels.reference.yml
+      - "traefik.enable=false"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/master:/app/logs
+    # HTTP 3842 (/healthz) : le TCP 3840 est le protocole jeu ; nc -z le pollue dans les logs NetServer.
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "3840"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3842/healthz"]
       interval: 10s
       timeout: 5s
       retries: 5

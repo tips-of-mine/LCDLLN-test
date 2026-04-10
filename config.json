@@ -26,6 +26,11 @@
             },
             "font_path": "fonts/Windlass.ttf",
             "font_pixel_height": 28
+        },
+        "terrain": {
+            "heightmap": "terrain/heightmap.r16h",
+            "splatmap": "",
+            "hole_mask": ""
         }
     },
     "audio": {
@@ -74,8 +79,8 @@
         "content": "game/data"
     },
     "client": {
-        "master_host": "localhost",
         "master_port": 3840,
+        "server_fingerprint": "",
         "allow_insecure_dev": true,
         "locale": "",
         "character_creation": {
@@ -83,8 +88,7 @@
         },
         "auth_ui": {
             "enabled": true,
-            "timeout_ms": 5000,
-            "master_availability_url": ""
+            "timeout_ms": 5000
         },
         "gameplay_udp": {
             "enabled": false,

@@ -18,6 +18,7 @@
 
 #include "engine/render/AuthUiRenderer.h"
 
+#include "engine/core/DefaultClientEndpoints.h"
 #include "engine/core/Log.h"
 #include "engine/network/NetClient.h"
 #include "engine/platform/FileSystem.h"
@@ -27,6 +28,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <format>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -60,10 +62,9 @@ namespace engine::client
 		// Résolu par Window::ResolveUiImagePath : aussi sous game/data/ (voir FileSystem::ResolveContentPath).
 		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
 
-		// URLs production (identiques à external/external_links.json) — embarquées pour valider portail reset + sonde statut.
+		// URL portail reset (identique à external/external_links.json) ; la sonde statut utilise defaults::kStatusApiUrl.
 		constexpr std::string_view kProductionWebPortalResetUrl =
 			"https://lcdlln-portal.tips-of-mine.com/password-recovery";
-		constexpr std::string_view kProductionStatusApiUrl = "https://lcdlln-master.tips-of-mine.com/status";
 
 		std::string JsonBool(bool value)
 		{
@@ -234,14 +235,29 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
-		std::string ResolvePasswordRecoveryUrl([[maybe_unused]] const engine::core::Config& cfg)
+		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
+			const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
+			if (!fromCfg.empty())
+			{
+				return fromCfg;
+			}
 			return std::string(kProductionWebPortalResetUrl);
 		}
 
-		std::string ResolveStatusApiUrl([[maybe_unused]] const engine::core::Config& cfg)
+		std::string ResolveStatusApiUrl(const engine::core::Config& cfg)
 		{
-			return std::string(kProductionStatusApiUrl);
+			const std::string authUiUrl = cfg.GetString("client.auth_ui.master_availability_url", "");
+			if (!authUiUrl.empty())
+			{
+				return authUiUrl;
+			}
+			const std::string fromLinks = cfg.GetString("client.status_api_url", "");
+			if (!fromLinks.empty())
+			{
+				return fromLinks;
+			}
+			return std::string(engine::core::defaults::kStatusApiUrl);
 		}
 
 		struct StatusHttpResponse
@@ -408,6 +424,23 @@ namespace engine::client
 		}
 
 #if defined(_WIN32)
+		static const char* WinHttpErrorHint(DWORD err)
+		{
+			switch (err)
+			{
+			case 12002:
+				return "délai dépassé";
+			case 12005:
+				return "connexion refusée (port fermé ou service absent)";
+			case 12029:
+				return "connexion impossible — vérifier IP/port (ex. :3842), pare-feu Windows, route réseau, et que lcdlln_server écoute";
+			case 12152:
+				return "réponse HTTP invalide ou tronquée";
+			default:
+				return "voir codes d’erreur WinHTTP";
+			}
+		}
+
 		static StatusHttpResponse HttpGetStatusUrlWin32(std::string_view url, uint32_t timeoutMs)
 		{
 			StatusHttpResponse resp{};
@@ -446,8 +479,9 @@ namespace engine::client
 
 			if (!WinHttpCrackUrl(urlW.c_str(), 0, 0, &uc))
 			{
-				resp.transportError = "WinHttpCrackUrl a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpCrackUrl a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				return resp;
 			}
 
@@ -462,16 +496,18 @@ namespace engine::client
 			HINTERNET hSession = WinHttpOpen(L"LCDLLN", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 			if (!hSession)
 			{
-				resp.transportError = "WinHttpOpen a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpOpen a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				return resp;
 			}
 
 			HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), uc.nPort, 0);
 			if (!hConnect)
 			{
-				resp.transportError = "WinHttpConnect a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpConnect a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hSession);
 				return resp;
 			}
@@ -480,8 +516,9 @@ namespace engine::client
 				WINHTTP_DEFAULT_ACCEPT_TYPES, isHttps ? WINHTTP_FLAG_SECURE : 0);
 			if (!hRequest)
 			{
-				resp.transportError = "WinHttpOpenRequest a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpOpenRequest a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hConnect);
 				WinHttpCloseHandle(hSession);
 				return resp;
@@ -492,8 +529,9 @@ namespace engine::client
 
 			if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
 			{
-				resp.transportError = "WinHttpSendRequest a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpSendRequest a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hRequest);
 				WinHttpCloseHandle(hConnect);
 				WinHttpCloseHandle(hSession);
@@ -502,8 +540,9 @@ namespace engine::client
 
 			if (!WinHttpReceiveResponse(hRequest, nullptr))
 			{
-				resp.transportError = "WinHttpReceiveResponse a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpReceiveResponse a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hRequest);
 				WinHttpCloseHandle(hConnect);
 				WinHttpCloseHandle(hSession);
@@ -720,6 +759,14 @@ namespace engine::client
 			return false;
 		}
 
+		/// Même clé que le load tester (`client.server_fingerprint`) : si non vide, NetClient négocie le TLS et épingle le certificat.
+		void ApplyMasterTlsConfig(engine::network::NetClient& client, const std::string& fingerprintHex, bool allowInsecure)
+		{
+			if (!fingerprintHex.empty())
+				client.SetExpectedServerFingerprint(fingerprintHex);
+			client.SetAllowInsecureDev(allowInsecure);
+		}
+
 		const char* NetErrorLabel(engine::network::NetErrorCode c)
 		{
 			using engine::network::NetErrorCode;
@@ -727,6 +774,8 @@ namespace engine::client
 			{
 			case NetErrorCode::OK:
 				return "OK";
+			case NetErrorCode::BAD_REQUEST:
+				return "Bad request";
 			case NetErrorCode::INVALID_CREDENTIALS:
 				return "Invalid credentials";
 			case NetErrorCode::ACCOUNT_NOT_FOUND:
@@ -753,6 +802,8 @@ namespace engine::client
 				return "Registration disabled";
 			case NetErrorCode::REGISTRATION_INVALID:
 				return "Registration invalid";
+			case NetErrorCode::INTERNAL_ERROR:
+				return "Server error";
 			case NetErrorCode::TIMEOUT:
 				return "Timeout";
 			default:
@@ -950,11 +1001,12 @@ namespace engine::client
 		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
 		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
-		// URL de sonde "status" (voir kProductionStatusApiUrl) au début de l'écran de connexion.
+		// URL de sonde "status" (defaults::kStatusApiUrl si non fourni par la config) au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
 		LOG_INFO(Core, "[StatusProbe] Init: URL statut maître = '{}'", m_masterAvailabilityUrl);
 		m_statusProbeInitialized = false;
 		m_statusProbeCompletedOnce = false;
+		m_lastStatusProbeHttpSuccess = false;
 		m_statusPollTimer = 0.f;
 		m_authLogoSizePx = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.auth_ui.logo_size_px", 96), 32, 256));
 		m_authAvailabilityChecking = false;
@@ -990,7 +1042,7 @@ namespace engine::client
 		}
 
 		m_initialized = true;
-		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host / client.master_port, locale={})", m_localization.GetCurrentLocale());
+		LOG_INFO(Core, "[AuthUiPresenter] Init OK (master host from client.master_host ou client.master_tcp_host / client.master_port, locale={})", m_localization.GetCurrentLocale());
 		return true;
 	}
 
@@ -1123,16 +1175,15 @@ namespace engine::client
 
 	void AuthUiPresenter::EnsurePasswordSalt(const engine::core::Config& cfg)
 	{
-		if (!m_argonSalt.empty())
-			return;
-		m_argonSalt = engine::auth::GenerateSalt(engine::auth::kArgon2SaltLength);
-		if (m_argonSalt.empty())
+		(void)cfg;
+		m_argonSalt = engine::auth::DeriveClientPasswordSaltFromLogin(m_login);
+		if (m_argonSalt.size() != engine::auth::kArgon2SaltLength)
 		{
-			LOG_ERROR(Core, "[AuthUiPresenter] Password salt generation FAILED");
+			m_argonSalt.clear();
+			LOG_ERROR(Core, "[AuthUiPresenter] Client-side Argon2 salt derivation FAILED (login trim empty or crypto error)");
 			return;
 		}
-		(void)cfg;
-		LOG_INFO(Core, "[AuthUiPresenter] Client-side Argon2 salt ready (len={})", m_argonSalt.size());
+		LOG_INFO(Core, "[AuthUiPresenter] Client-side Argon2 salt derived from login (len={})", m_argonSalt.size());
 	}
 
 	std::string AuthUiPresenter::ComputeClientHash(const engine::core::Config& cfg) const
@@ -1323,29 +1374,59 @@ namespace engine::client
 
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
+		auto pendingKindTag = [](AsyncKind k) -> const char*
+		{
+			switch (k)
+			{
+			case AsyncKind::None:
+				return "None";
+			case AsyncKind::Register:
+				return "Register";
+			case AsyncKind::AuthOnly:
+				return "AuthOnly";
+			case AsyncKind::VerifyEmail:
+				return "VerifyEmail";
+			case AsyncKind::ForgotPassword:
+				return "ForgotPassword";
+			case AsyncKind::TermsStatus:
+				return "TermsStatus";
+			case AsyncKind::TermsAccept:
+				return "TermsAccept";
+			case AsyncKind::CharacterCreate:
+				return "CharacterCreate";
+			case AsyncKind::Login:
+				return "Login";
+			case AsyncKind::StatusProbe:
+				return "StatusProbe";
+			default:
+				return "?";
+			}
+		};
 		// Écran login initial : pas de worker, rien à consommer — évite de verrouiller sans nécessité.
-		LOG_WARN(Core, "[DIAG-POLL] enter worker.joinable={} asyncResult.ready={}", m_worker.joinable() ? 1 : 0, m_asyncResult.ready ? 1 : 0);
+		LOG_DEBUG(Core, "[DIAG-POLL] enter worker.joinable={} asyncResult.ready={}", m_worker.joinable() ? 1 : 0, m_asyncResult.ready ? 1 : 0);
 		const bool workerJoinable = m_worker.joinable();
 		if (!workerJoinable && !m_asyncResult.ready)
 		{
-			LOG_WARN(Core, "[DIAG-POLL] early return (no worker, no result)");
+			LOG_DEBUG(Core, "[DIAG-POLL] early return (no worker, no result)");
 			return;
 		}
 
-		LOG_WARN(Core, "[DIAG-POLL] before mutex lock m_asyncMutex={}", (void*)m_asyncMutex.get());
+		LOG_DEBUG(Core, "[DIAG-POLL] before mutex lock m_asyncMutex={}", (void*)m_asyncMutex.get());
 		AsyncResult copy{};
 		{
 			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			LOG_WARN(Core, "[DIAG-POLL] mutex locked, asyncResult.ready={}", m_asyncResult.ready ? 1 : 0);
+			LOG_DEBUG(Core, "[DIAG-POLL] mutex locked, asyncResult.ready={}", m_asyncResult.ready ? 1 : 0);
 			if (!m_asyncResult.ready)
 			{
-				LOG_WARN(Core, "[DIAG-POLL] return (result not ready)");
+				LOG_DEBUG(Core,
+					"[DIAG-POLL] return (result not ready) pendingKind={}",
+					pendingKindTag(m_pendingAsyncKind));
 				return;
 			}
 			copy = m_asyncResult;
 			m_asyncResult = {};
 		}
-		LOG_WARN(Core, "[DIAG-POLL] mutex released, joining worker");
+		LOG_DEBUG(Core, "[DIAG-POLL] mutex released, joining worker");
 		JoinWorker();
 
 		const AsyncKind kind = m_pendingAsyncKind;
@@ -1355,14 +1436,15 @@ namespace engine::client
 		{
 			m_statusCache = copy.statusCache;
 			m_statusProbeCompletedOnce = true;
+			m_lastStatusProbeHttpSuccess = copy.success;
 			// Si on a fini la première vérification, on autorise les refresh périodiques.
 			m_statusProbeInitialized = true;
 			m_authAvailabilityChecking = false;
 			m_authAvailabilityPollTimer = 0.f;
 			m_authLogoRotationRad = 0.f;
 			LOG_INFO(Core,
-				"[StatusProbe] thread principal: résultat consommé — success={} authOk={} masterOk={} shards={} totalJoueurs={} "
-				"infoMessage='{}' workerMsg='{}' → UI: bannière indisponible si authOk=false",
+				"[StatusProbe] thread principal: résultat consommé — httpLayerOk={} authOk={} masterOk={} shards={} totalJoueurs={} "
+				"infoMessage='{}' workerMsg='{}' → UI: maintenance seulement si httpLayerOk et JSON indique indisponibilité",
 				copy.success ? 1 : 0, m_statusCache.authOk ? 1 : 0, m_statusCache.masterOk ? 1 : 0, m_statusCache.servers.size(),
 				m_statusCache.totalPlayers, m_statusCache.infoMessage, copy.message);
 			return;
@@ -1370,6 +1452,11 @@ namespace engine::client
 
 		if (kind == AsyncKind::Register)
 		{
+			LOG_INFO(Core,
+				"[AUTH-REG] PollAsyncResult: consuming register outcome success={} accountId={} msg_len={}",
+				copy.success ? 1 : 0,
+				copy.accountId,
+				copy.message.size());
 			if (copy.success)
 			{
 				m_pendingVerifyAccountId = copy.accountId;
@@ -1565,16 +1652,49 @@ namespace engine::client
 			return;
 		}
 
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string locale = CurrentLocale();
 		const std::string login = m_login;
 		const std::string email = m_email;
 		const std::string firstName = m_firstName;
 		const std::string lastName = m_lastName;
-		const std::string birthDate = Pad4Year(std::stoi(m_birthYear)) + "-" + Pad2(std::stoi(m_birthMonth)) + "-" + Pad2(std::stoi(m_birthDay));
+		int birthY = 0;
+		int birthM = 0;
+		int birthD = 0;
+		try
+		{
+			birthY = std::stoi(m_birthYear);
+			birthM = std::stoi(m_birthMonth);
+			birthD = std::stoi(m_birthDay);
+		}
+		catch (const std::exception& ex)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse exception: {}", ex.what());
+			return;
+		}
+		catch (...)
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse unknown exception");
+			return;
+		}
+		const std::string birthDate = Pad4Year(birthY) + "-" + Pad2(birthM) + "-" + Pad2(birthD);
+
+		LOG_INFO(Core,
+			"[AUTH-REG] StartRegisterWorker: host={} port={} timeout_ms={} allow_insecure={} locale_len={} birthDate_iso_len={}",
+			host,
+			port,
+			timeoutMs,
+			allowInsecure ? 1 : 0,
+			locale.size(),
+			birthDate.size());
 
 		m_pendingAsyncKind = AsyncKind::Register;
 		{
@@ -1582,95 +1702,127 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, locale]() {
-			AsyncResult local{};
-			engine::network::NetClient client;
-			client.SetAllowInsecureDev(allowInsecure);
-			LOG_INFO(Net, "[AuthUiPresenter] Register worker: connecting {}:{}", host, port);
-			client.Connect(host, port);
-			if (!WaitConnected(&client, timeoutMs + 2000u))
+		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, serverFingerprint,
+								   locale]() {
+			LOG_INFO(Net, "[AUTH-REG] worker thread started (login_len={} email_len={})", login.size(), email.size());
+			try
 			{
+				AsyncResult local{};
+				engine::network::NetClient client;
+				ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
+				LOG_INFO(Net,
+					"[AuthUiPresenter] Register worker: connecting {}:{} (tls_fp_len={})",
+					host,
+					port,
+					serverFingerprint.size());
+				client.Connect(host, port);
+				if (!WaitConnected(&client, timeoutMs + 2000u))
+				{
+					local.ready = true;
+					local.success = false;
+					local.message = "Master connect failed or timeout.";
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: connect FAILED");
+					return;
+				}
+				engine::network::RequestResponseDispatcher disp(&client);
+				std::vector<uint8_t> payload =
+					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
+				if (payload.empty())
+				{
+					local.ready = true;
+					local.success = false;
+					local.message = "REGISTER payload build failed.";
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: BuildRegisterRequestPayload FAILED");
+					client.Disconnect("payload");
+					return;
+				}
+
+				bool done = false;
+				bool ok = false;
+				std::string errMsg;
+				if (!disp.SendRequest(engine::network::kOpcodeRegisterRequest, payload,
+						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+							done = true;
+							if (timeout)
+							{
+								errMsg = "REGISTER timeout.";
+								return;
+							}
+							auto reg = engine::network::ParseRegisterResponsePayload(pl.data(), pl.size());
+							if (reg && reg->success != 0)
+							{
+								local.accountId = reg->account_id;
+								ok = true;
+								return;
+							}
+							if (reg && reg->success == 0)
+							{
+								errMsg = NetErrorLabel(reg->error_code);
+								return;
+							}
+							auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+							if (er)
+								errMsg = std::string(NetErrorLabel(er->errorCode))
+									+ (er->message.empty() ? "" : (": " + er->message));
+							else
+								errMsg = "REGISTER response parse failed.";
+						},
+						timeoutMs))
+				{
+					local.ready = true;
+					local.success = false;
+					local.message = "Send REGISTER failed.";
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+					client.Disconnect("send");
+					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: SendRequest FAILED");
+					return;
+				}
+
+				auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+				while (!done && std::chrono::steady_clock::now() < deadline)
+				{
+					disp.Pump();
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+				}
+				if (!done)
+					errMsg = "REGISTER timeout.";
+				client.Disconnect("register_done");
+
+				local.ready = true;
+				local.success = ok;
+				local.message = ok ? std::string("Registration OK. Check your email for the verification code.")
+								   : (errMsg.empty() ? "REGISTER failed." : errMsg);
+				{
+					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+					m_asyncResult = local;
+				}
+				LOG_INFO(Net, "[AUTH-REG] Register worker finished (success={} err_nonempty={})", (int)ok, errMsg.empty() ? 0 : 1);
+			}
+			catch (const std::exception& ex)
+			{
+				AsyncResult local{};
 				local.ready = true;
 				local.success = false;
-				local.message = "Master connect failed or timeout.";
+				local.message = std::string("Register worker exception: ") + ex.what();
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
-				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: connect FAILED");
-				return;
+				LOG_ERROR(Net, "[AUTH-REG] Register worker std::exception: {}", ex.what());
 			}
-			engine::network::RequestResponseDispatcher disp(&client);
-			std::vector<uint8_t> payload = engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
-			if (payload.empty())
+			catch (...)
 			{
+				AsyncResult local{};
 				local.ready = true;
 				local.success = false;
-				local.message = "REGISTER payload build failed.";
+				local.message = "Register worker unknown exception.";
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
-				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: BuildRegisterRequestPayload FAILED");
-				client.Disconnect("payload");
-				return;
+				LOG_ERROR(Net, "[AUTH-REG] Register worker non-std exception");
 			}
-
-			bool done = false;
-			bool ok = false;
-			std::string errMsg;
-			if (!disp.SendRequest(engine::network::kOpcodeRegisterRequest, payload,
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						done = true;
-						if (timeout)
-						{
-							errMsg = "REGISTER timeout.";
-							return;
-						}
-						auto reg = engine::network::ParseRegisterResponsePayload(pl.data(), pl.size());
-						if (reg && reg->success != 0)
-						{
-							local.accountId = reg->account_id;
-							ok = true;
-							return;
-						}
-						if (reg && reg->success == 0)
-						{
-							errMsg = NetErrorLabel(reg->error_code);
-							return;
-						}
-						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
-						if (er)
-							errMsg = std::string(NetErrorLabel(er->errorCode)) + (er->message.empty() ? "" : (": " + er->message));
-						else
-							errMsg = "REGISTER response parse failed.";
-					},
-					timeoutMs))
-			{
-				local.ready = true;
-				local.success = false;
-				local.message = "Send REGISTER failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				client.Disconnect("send");
-				LOG_ERROR(Net, "[AuthUiPresenter] Register worker: SendRequest FAILED");
-				return;
-			}
-
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!done && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			if (!done)
-				errMsg = "REGISTER timeout.";
-			client.Disconnect("register_done");
-
-			local.ready = true;
-			local.success = ok;
-			local.message = ok ? std::string("Registration OK. Check your email for the verification code.") : (errMsg.empty() ? "REGISTER failed." : errMsg);
-			{
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-			}
-			LOG_INFO(Net, "[AuthUiPresenter] Register worker finished (success={})", (int)ok);
 		});
 	}
 
@@ -1688,10 +1840,11 @@ namespace engine::client
 
 		ResetMasterSession();
 		m_masterClient = std::make_unique<engine::network::NetClient>();
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
 		const std::string locale = CurrentLocale();
 
@@ -1702,7 +1855,7 @@ namespace engine::client
 		}
 
 		engine::network::NetClient* const masterClient = m_masterClient.get();
-		m_worker = std::thread([this, masterClient, host, port, timeoutMs, allowInsecure, login, hash, locale]() {
+		m_worker = std::thread([this, masterClient, host, port, timeoutMs, allowInsecure, serverFingerprint, login, hash, locale]() {
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
@@ -1712,7 +1865,7 @@ namespace engine::client
 				m_asyncResult = local;
 				return;
 			}
-			masterClient->SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(*masterClient, serverFingerprint, allowInsecure);
 			masterClient->Connect(host, port);
 			if (!WaitConnected(masterClient, timeoutMs + 2000u))
 			{
@@ -1740,6 +1893,11 @@ namespace engine::client
 						{
 							local.sessionId = auth->session_id;
 							authOk = true;
+							return;
+						}
+						if (auth && auth->success == 0)
+						{
+							errMsg = std::string(NetErrorLabel(auth->error_code));
 							return;
 						}
 						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
@@ -1892,10 +2050,11 @@ namespace engine::client
 			return;
 		}
 
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
 
 		m_pendingAsyncKind = AsyncKind::Login;
@@ -1904,10 +2063,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure]() {
+		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure, serverFingerprint]() {
 			AsyncResult local{};
 			engine::network::NetClient masterClient;
-			masterClient.SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(masterClient, serverFingerprint, allowInsecure);
 			engine::network::MasterShardClientFlow flow;
 			flow.SetMasterAddress(host, port);
 			flow.SetCredentials(login, hash);
@@ -1928,10 +2087,11 @@ namespace engine::client
 	void AuthUiPresenter::StartVerifyEmailWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const uint64_t accountId = m_pendingVerifyAccountId;
 		const std::string code = m_verifyCode;
 
@@ -1941,10 +2101,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, accountId, code]() {
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, accountId, code]() {
 			AsyncResult local{};
 			engine::network::NetClient client;
-			client.SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
 			client.Connect(host, port);
 			if (!WaitConnected(&client, timeoutMs + 2000u))
 			{
@@ -2464,10 +2624,11 @@ namespace engine::client
 	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
-		const std::string host = cfg.GetString("client.master_host", "localhost");
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string email = m_email;
 
 		m_pendingAsyncKind = AsyncKind::ForgotPassword;
@@ -2476,10 +2637,10 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, email]() {
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, email]() {
 			AsyncResult local{};
 			engine::network::NetClient client;
-			client.SetAllowInsecureDev(allowInsecure);
+			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
 			client.Connect(host, port);
 			if (!WaitConnected(&client, timeoutMs + 2000u))
 			{
@@ -2690,8 +2851,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 			m_phase = Phase::Error;
 			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			LOG_INFO(Core,
+				"[AUTH-REG] submit rejected: invalid birth date (day_len={} month_len={} year_len={})",
+				m_birthDay.size(),
+				m_birthMonth.size(),
+				m_birthYear.size());
 			return;
 		}
+		LOG_INFO(Core,
+			"[AUTH-REG] submit accepted -> StartRegisterWorker (login_len={} email_len={} first_len={} last_len={} pwd_len={} "
+			"birth_d_len={} birth_m_len={} birth_y_len={})",
+			m_login.size(),
+			m_email.size(),
+			m_firstName.size(),
+			m_lastName.size(),
+			m_password.size(),
+			m_birthDay.size(),
+			m_birthMonth.size(),
+			m_birthYear.size());
 		m_phase = Phase::Submitting;
 		StartRegisterWorker(cfg);
 		return;
@@ -2761,22 +2938,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	void AuthUiPresenter::Update(engine::platform::Input& input, float deltaSeconds, engine::platform::Window& window,
 		const engine::core::Config& cfg)
 	{
-		LOG_WARN(Core, "[DIAG-AUTH] Update enter this={} initialized={} flowComplete={} authEnabled={}",
+		LOG_DEBUG(Core, "[DIAG-AUTH] Update enter this={} initialized={} flowComplete={} authEnabled={}",
 			(void*)this, m_initialized ? 1 : 0, m_flowComplete ? 1 : 0, m_authEnabled ? 1 : 0);
 		m_usingNativeAuthScreen = false;
-		LOG_WARN(Core, "[DIAG-AUTH] before SetAuthScreenState");
+		LOG_DEBUG(Core, "[DIAG-AUTH] before SetAuthScreenState");
 		window.SetAuthScreenState({});
-		LOG_WARN(Core, "[DIAG-AUTH] after SetAuthScreenState");
+		LOG_DEBUG(Core, "[DIAG-AUTH] after SetAuthScreenState");
 		if (!m_initialized || m_flowComplete || !m_authEnabled)
 			return;
 
-		LOG_WARN(Core, "[DIAG-AUTH] before PollAsyncResult m_asyncMutex={}", (void*)m_asyncMutex.get());
+		LOG_DEBUG(Core, "[DIAG-AUTH] before PollAsyncResult m_asyncMutex={}", (void*)m_asyncMutex.get());
 		PollAsyncResult(cfg);
-		LOG_WARN(Core, "[DIAG-AUTH] after PollAsyncResult");
+		LOG_DEBUG(Core, "[DIAG-AUTH] after PollAsyncResult");
 		if (m_flowComplete)
 			return;
 
-		LOG_WARN(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
+		LOG_DEBUG(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
 		constexpr float kStatusProbeIntervalSeconds = 120.0f;
 		const bool shouldProbeStatus = !m_masterAvailabilityUrl.empty() && !m_flowComplete && m_phase != Phase::Submitting;
 		const bool statusProbeInFlight = m_worker.joinable() && m_pendingAsyncKind == AsyncKind::StatusProbe;
@@ -2906,6 +3083,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			else
 			{
+				if (m_phase == Phase::Register)
+				{
+					LOG_INFO(Core, "[AUTH-REG] UI primary action (submit button / Enter) -> SubmitCurrentPhase");
+				}
 				SubmitCurrentPhase(cfg);
 			}
 		};
@@ -3896,7 +4077,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				else if (m_statusProbeCompletedOnce && !m_statusCache.authOk)
 				{
-					serverBanner = Tr("auth.status.unavailable");
+					// Échec TCP/HTTP ou réponse invalide : ce n'est pas la même chose qu'une maintenance déclarée dans le JSON /status.
+					serverBanner = m_lastStatusProbeHttpSuccess ? Tr("auth.status.unavailable") : Tr("auth.status.network_error");
 				}
 				if (!serverBanner.empty())
 				{

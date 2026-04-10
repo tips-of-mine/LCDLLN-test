@@ -12,6 +12,7 @@
    - `game/data/` — contenu client requis par les serveurs
    - `web-portal/` — sources Next.js (build au premier `docker compose up -d` si l’image manque)
    - `traefik-web-portal.labels.reference.yml` — copie des labels Traefik du portail (publication / doc)
+   - `traefik-master.labels.reference.yml` — master HTTP (3842) + TCP jeu (3840)
    - `docker-compose.yml`, `Dockerfile.master`, `Dockerfile.shard`
 3. Dans un terminal :
 
@@ -88,7 +89,11 @@ Le service **`web-portal`** est démarré avec **`docker compose up -d`** (plus 
 
 Le **ZIP CI** inclut **`deploy/docker/web-portal/`**. En clone Git sans pack : `./scripts/sync-web-portal-to-docker-deploy.sh`.
 
-**Traefik** : le compose crée le réseau Docker nommé **`traefik_front_network`** (`name:` explicite dans le YAML, pour qu’il corresponde au label `traefik.docker.network`). Sans ce nom fixe, Compose utilise `<projet>_traefik_front_network` et Traefik ne joint pas le bon réseau. Rattachez votre conteneur Traefik : `docker network connect traefik_front_network <conteneur_traefik>`. Copie des labels : **`traefik-web-portal.labels.reference.yml`**.
+**Traefik** : le compose crée le réseau Docker nommé **`traefik_front_network`** (`name:` explicite dans le YAML, pour qu’il corresponde au label `traefik.docker.network`). Sans ce nom fixe, Compose utilise `<projet>_traefik_front_network` et Traefik ne joint pas le bon réseau. Rattachez votre conteneur Traefik : `docker network connect traefik_front_network <conteneur_traefik>`. Copies des labels : **`traefik-web-portal.labels.reference.yml`**, **`traefik-master.labels.reference.yml`**.
+
+**Master — accès par IP (défaut actuel)** : le service `master` publie **3840** (jeu) et **3842** (HTTP embarqué : `/status`, etc.) sur **`MASTER_PUBLISH_ADDR`** (défaut `0.0.0.0`), joignable depuis le LAN (ex. `http://10.0.4.133:3842/status`). **`traefik.enable=false`** sur le master : pas de route Traefik tant que vous n’avez pas de DNS / reverse proxy devant. Côté client, adaptez **`external/external_links.json`** (copié à côté de l’exe) si l’IP du serveur change.
+
+**Master derrière Traefik (plus tard)** : copier les labels depuis **`traefik-master.labels.reference.yml`** (HTTP vers 3842, TCP jeu vers 3840, TLS passthrough). Il faut alors des **entrypoints** Traefik adaptés et `traefik.enable=true` sur le master ; voir aussi [doc Traefik TCP](https://doc.traefik.io/traefik/routing/routers/#tcp).
 
 **Dépannage** : si le routeur ne répond pas, vérifiez que Traefik apparaît dans `docker network inspect traefik_front_network` et que le DNS pointe vers Traefik pour l’host des labels (`lcdlln-portal.tips-of-mine.com` par défaut).
 

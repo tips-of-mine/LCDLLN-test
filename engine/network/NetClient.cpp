@@ -19,6 +19,7 @@
 #include <cstring>
 #include <deque>
 #include <iomanip>
+#include <mutex>
 #include <sstream>
 
 namespace engine::network
@@ -294,7 +295,6 @@ namespace engine::network
 		SSL* ssl = nullptr;
 		std::vector<uint8_t> rxBuffer;
 		rxBuffer.reserve(kRxBufferCapacity);
-		size_t rxConsumed = 0;
 		std::vector<uint8_t> currentSend;
 		size_t currentSendOffset = 0;
 		bool tlsHandshakeDone = false;
@@ -368,7 +368,6 @@ namespace engine::network
 						m_state.store(NetClientState::Connected);
 						LOG_INFO(Net, "[NetClient] TCP connected to {}:{}", host, port);
 						rxBuffer.clear();
-						rxConsumed = 0;
 						bool useTls = false;
 						{ std::lock_guard lock(m_mutex); useTls = !m_expectedServerFingerprintHex.empty(); }
 						if (useTls)
@@ -460,7 +459,6 @@ namespace engine::network
 									m_state.store(NetClientState::Connected);
 							LOG_INFO(Net, "[NetClient] TCP connected to {}:{} (async)", host, port);
 									rxBuffer.clear();
-									rxConsumed = 0;
 									bool useTlsAsync = false;
 									{ std::lock_guard lock(m_mutex); useTlsAsync = !m_expectedServerFingerprintHex.empty(); }
 									if (useTlsAsync)
@@ -560,26 +558,12 @@ namespace engine::network
 				m_eventQueue.push_back({ NetClientEventType::Disconnected, std::move(reason), {} });
 				m_requestDisconnect = false;
 				rxBuffer.clear();
-				rxConsumed = 0;
 				continue;
 			}
 
 			// --- Read (partial reads + framing) ---
 			if (socketHandle != 0 && m_state.load() == NetClientState::Connected)
 			{
-				// Compact consumed data
-				if (rxConsumed > 0)
-				{
-					if (rxConsumed >= rxBuffer.size())
-						rxBuffer.clear();
-					else
-					{
-						std::memmove(rxBuffer.data(), rxBuffer.data() + rxConsumed, rxBuffer.size() - rxConsumed);
-						rxBuffer.resize(rxBuffer.size() - rxConsumed);
-					}
-					rxConsumed = 0;
-				}
-
 				char tmp[4096];
 				int received = (ssl != nullptr)
 					? SSL_read(ssl, tmp, sizeof(tmp))
@@ -616,7 +600,7 @@ namespace engine::network
 							std::lock_guard lock(m_mutex);
 							m_eventQueue.push_back({ NetClientEventType::PacketReceived, "", std::move(packet) });
 						}
-						rxConsumed += packetSize;
+						rxBuffer.erase(rxBuffer.begin(), rxBuffer.begin() + static_cast<std::ptrdiff_t>(packetSize));
 					}
 				}
 				else if (received == 0)

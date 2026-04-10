@@ -2,20 +2,37 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // Simulated — auth not yet implemented
-    setTimeout(() => {
-      setError("Authentification non encore implémentée. Fonctionnalité à venir.");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, password }),
+      });
+      const data = (await res.json()) as { ok?: boolean; message?: string; redirect?: string };
+      if (!res.ok || !data.ok) {
+        setError(data.message || "Connexion impossible.");
+        return;
+      }
+      router.push(data.redirect || "/player");
+      router.refresh();
+    } catch {
+      setError("Erreur réseau. Réessayez.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   }
 
   return (
@@ -34,6 +51,8 @@ export default function LoginPage() {
             <label>Identifiant ou e-mail</label>
             <input
               type="text"
+              value={identifier}
+              onChange={(ev) => setIdentifier(ev.target.value)}
               placeholder="Votre login ou adresse e-mail"
               required
               autoComplete="username"
@@ -44,6 +63,8 @@ export default function LoginPage() {
             <label>Mot de passe</label>
             <input
               type="password"
+              value={password}
+              onChange={(ev) => setPassword(ev.target.value)}
               placeholder="Votre mot de passe"
               required
               autoComplete="current-password"
@@ -63,8 +84,10 @@ export default function LoginPage() {
       </div>
 
       <p className="text-sm text-center mt-3" style={{ color: "var(--muted)" }}>
-        Pas encore de compte ? Les comptes sont créés directement en jeu
-        lors de votre première connexion.
+        Pas encore de compte ? Créez-le dans le client jeu. Le même mot de passe que
+        pour vous connecter au jeu fonctionne ici (hash Argon2). Ancien mot de passe
+        défini uniquement par le portail (scrypt) reste accepté jusqu’à une
+        réinitialisation.
       </p>
     </div>
   );

@@ -2,7 +2,7 @@
 #include "engine/server/NetServer.h"
 #include "engine/server/SessionManager.h"
 #include "engine/server/ConnectionSessionMap.h"
-#include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/AccountStore.h"
 #include "engine/server/TermsRepository.h"
 #include "engine/server/LocalizedEmail.h"
 #include "engine/network/TermsPayloads.h"
@@ -19,7 +19,7 @@ namespace engine::server
 	void TermsHandler::SetServer(NetServer* server) { m_server = server; }
 	void TermsHandler::SetSessionManager(SessionManager* sm) { m_sessions = sm; }
 	void TermsHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
-	void TermsHandler::SetAccountStore(InMemoryAccountStore* store) { m_accounts = store; }
+	void TermsHandler::SetAccountStore(AccountStore* store) { m_accounts = store; }
 	void TermsHandler::SetTermsRepository(TermsRepository* repo) { m_repo = repo; }
 	void TermsHandler::SetSmtpConfig(const SmtpConfig* cfg) { m_smtp = cfg; }
 

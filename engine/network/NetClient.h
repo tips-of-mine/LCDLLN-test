@@ -1,10 +1,10 @@
 #pragma once
 
 #include "engine/network/ProtocolV1Constants.h"
+#include "engine/platform/StableMutex.h"
 
 #include <atomic>
 #include <cstdint>
-#include <mutex>
 #include <span>
 #include <string>
 #include <string_view>
@@ -89,7 +89,7 @@ namespace engine::network
 		std::atomic<uint64_t> m_packetsIn{ 0 };
 		std::atomic<uint64_t> m_packetsOut{ 0 };
 
-		std::mutex m_mutex;
+		engine::platform::StableMutex m_mutex;
 		std::string m_pendingHost;
 		uint16_t m_pendingPort = 0;
 		bool m_pendingConnect = false;

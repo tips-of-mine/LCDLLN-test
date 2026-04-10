@@ -58,4 +58,11 @@ namespace engine::auth
 	 * @return Salt bytes, or empty vector on failure.
 	 */
 	std::vector<std::uint8_t> GenerateSalt(std::size_t byte_count = kArgon2SaltLength);
+
+	/**
+	 * Derives the client-side Argon2 password salt from the trimmed login (SHA-256 prefix, 16 bytes).
+	 * Must match web-portal `deriveClientPasswordSalt` and stay stable across sessions so AUTH matches REGISTER.
+	 * Empty input (after trim) returns an empty vector.
+	 */
+	std::vector<std::uint8_t> DeriveClientPasswordSaltFromLogin(std::string_view login);
 }

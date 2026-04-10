@@ -57,7 +57,7 @@ namespace engine::render
 		m_quads.clear();
 		if (billboards.empty())
 		{
-			LOG_INFO(Render, "[ParticleBillboardPass] No billboards to expand for transparent pass");
+			LOG_DEBUG(Render, "[ParticleBillboardPass] No billboards to expand for transparent pass");
 			return true;
 		}
 
@@ -90,7 +90,7 @@ namespace engine::render
 			m_quads.push_back(quad);
 		}
 
-		LOG_INFO(Render, "[ParticleBillboardPass] Built {} transparent quads", static_cast<uint32_t>(m_quads.size()));
+		LOG_DEBUG(Render, "[ParticleBillboardPass] Built {} transparent quads", static_cast<uint32_t>(m_quads.size()));
 		return true;
 	}
 }

@@ -79,6 +79,7 @@ elseif(UNIX)
     GuildBank.cpp
     AccountValidation.cpp
     InMemoryAccountStore.cpp
+    MysqlAccountStore.cpp
     AuthRegisterHandler.cpp
     ConnectionSessionMap.cpp
     SmtpMailer.cpp

@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
 
 	LoadTestConfig cfg;
-	cfg.masterHost = config.GetString("client.master_host", "localhost");
+	cfg.masterHost = config.GetEffectiveMasterHost("localhost");
 	cfg.masterPort = static_cast<uint16_t>(config.GetInt("client.master_port", 3840));
 	cfg.login = config.GetString("client.login", "testuser");
 	cfg.clientHash = config.GetString("client.client_hash", "");

@@ -14,7 +14,9 @@
 #include "engine/server/ServerListHandler.h"
 #include "engine/network/ProtocolV1Constants.h"
 #include "engine/server/AuthRegisterHandler.h"
+#include "engine/server/AccountStore.h"
 #include "engine/server/InMemoryAccountStore.h"
+#include "engine/server/MysqlAccountStore.h"
 #include "engine/server/SessionManager.h"
 #include "engine/server/RateLimitAndBan.h"
 #include "engine/server/SecurityAuditLog.h"
@@ -189,10 +191,22 @@ int main(int argc, char** argv)
 	engine::server::PasswordResetStore passwordResetStore;
 	engine::server::PasswordResetHandler passwordResetHandler;
 
-	engine::server::InMemoryAccountStore accountStore;
+	engine::server::InMemoryAccountStore accountStoreMem;
+	engine::server::MysqlAccountStore accountStoreMysql(&dbPool);
+	engine::server::AccountStore* accountStore = nullptr;
+	if (dbPool.IsInitialized())
+	{
+		accountStore = &accountStoreMysql;
+		LOG_INFO(Auth, "[ServerMain] AccountStore: MySQL (accounts persistés)");
+	}
+	else
+	{
+		accountStore = &accountStoreMem;
+		LOG_WARN(Auth, "[ServerMain] AccountStore: mémoire uniquement (pool MySQL indisponible — comptes non persistés)");
+	}
 	engine::server::AuthRegisterHandler authHandler;
 	authHandler.SetServer(&server);
-	authHandler.SetAccountStore(&accountStore);
+	authHandler.SetAccountStore(accountStore);
 	authHandler.SetSessionManager(&sessionManager);
 	authHandler.SetRateLimitAndBan(&rateLimit);
 	authHandler.SetSecurityAuditLog(&auditLog);
@@ -207,7 +221,7 @@ int main(int argc, char** argv)
 	termsHandler.SetServer(&server);
 	termsHandler.SetSessionManager(&sessionManager);
 	termsHandler.SetConnectionSessionMap(&connSessionMap);
-	termsHandler.SetAccountStore(&accountStore);
+	termsHandler.SetAccountStore(accountStore);
 	termsHandler.SetTermsRepository(&termsRepository);
 	termsHandler.SetSmtpConfig(&smtpConfig);
 
@@ -220,7 +234,7 @@ int main(int argc, char** argv)
 
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
-	passwordResetHandler.SetAccountStore(&accountStore);
+	passwordResetHandler.SetAccountStore(accountStore);
 	passwordResetHandler.SetPasswordResetStore(&passwordResetStore);
 	passwordResetHandler.SetSmtpConfig(&smtpConfig);
 	passwordResetHandler.SetRateLimitAndBan(&rateLimit);
@@ -232,7 +246,7 @@ int main(int argc, char** argv)
 	shardTicketHandler.SetShardRegistry(&shardRegistry);
 	shardTicketHandler.SetSessionManager(&sessionManager);
 	shardTicketHandler.SetConnectionSessionMap(&connSessionMap);
-	shardTicketHandler.SetAccountStore(&accountStore);
+	shardTicketHandler.SetAccountStore(accountStore);
 	shardTicketHandler.SetTermsRepository(&termsRepository);
 	shardTicketHandler.SetSecret(config.GetString("shard.ticket_hmac_secret", ""));
 	shardTicketHandler.SetValiditySec(static_cast<int>(config.GetInt("shard.ticket_validity_sec", 60)));
@@ -500,9 +514,12 @@ int main(int argc, char** argv)
 					++sumShardsOnline;
 			}
 			bool dbOk = readyCheck();
-			LOG_INFO(Net, "[ServerMain] cluster summary: conn_active={} sessions_active={} shards_online={} auth_success={} auth_fail={} db_ok={}",
+			const char* shardHint = (sumShardsOnline == 0)
+				? " | shards: aucun shard jeu connecté (attendu tant qu’aucun serveur de monde ne s’enregistre)"
+				: "";
+			LOG_INFO(Net, "[ServerMain] cluster summary: conn_active={} sessions_active={} shards_online={} auth_success={} auth_fail={} db_ok={}{}",
 				sumStats.connectionsActive, sumSessions, sumShardsOnline,
-				authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), dbOk ? 1 : 0);
+				authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), dbOk ? 1 : 0, shardHint);
 		}
 
 		if (now - lastWatchdog >= kWatchdogInterval)

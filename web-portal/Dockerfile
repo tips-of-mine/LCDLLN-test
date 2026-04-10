@@ -1,6 +1,8 @@
 # LCDLLN — portail web (Next.js standalone)
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+# argon2 : compilation native si aucun prebuild ne convient (node-gyp exige Python + toolchain).
+RUN apk add --no-cache libc6-compat python3 make g++
+ENV PYTHON=/usr/bin/python3
 WORKDIR /app
 COPY package.json package-lock.json* ./
 # L’image node peut avoir NODE_ENV=production : npm omettrait les devDependencies (@types/*, typescript) requis pour next build.

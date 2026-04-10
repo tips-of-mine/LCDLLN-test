@@ -113,7 +113,7 @@ namespace engine::network
 			bool expected = false;
 			if (!pool.m_initialized.compare_exchange_strong(expected, true))
 			{
-				LOG_INFO(Net, "[NetworkBufferPool] Init OK (already initialized)");
+				// Hot path : AcquireBuffer() appelle Init() à chaque allocation — ne pas journaliser.
 				return true;
 			}
 

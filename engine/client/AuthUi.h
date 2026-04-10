@@ -368,6 +368,8 @@ namespace engine::client
 		bool m_statusProbeInitialized = false;
 		/// Au moins une sonde de statut a terminé (bannière maintenance / logo résultat).
 		bool m_statusProbeCompletedOnce = false;
+		/// Dernière sonde : réponse HTTP analysée avec succès (JSON). Si faux et \a authOk faux → échec réseau / HTTP, pas « maintenance » serveur.
+		bool m_lastStatusProbeHttpSuccess = false;
 		float m_statusPollTimer = 0.f;
 
 		StatusCache m_statusCache{};

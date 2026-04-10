@@ -127,6 +127,7 @@
   "auth.panel.title": "Title",
   "auth.panel.language": "Language",
   "auth.status.unavailable": "Servers under maintenance. Please try again in a moment.",
+  "auth.status.network_error": "Cannot reach the status server (network, firewall, or URL). Check the address, port 3842, and that the master is running.",
   "auth.status.checking": "Checking server status...",
   "auth.tooltip.login": "Your unique login to connect to the game. 3 to 32 characters, letters and digits only.",
   "auth.tooltip.password": "Your password. Minimum 8 characters, at least one letter and one digit (server policy).",

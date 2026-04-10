@@ -16,6 +16,9 @@ namespace engine::platform
 		/// Join path segments (`a/b`), without normalizing to absolute paths.
 		static std::filesystem::path Join(std::string_view a, std::string_view b);
 
+		/// Répertoire du binaire en cours (vide si indisponible). Utile quand le CWD n’est pas celui de l’exe.
+		static std::filesystem::path ExecutableDirectory();
+
 		/// Resolve a relative content path using `paths.content` from config.
 		static std::filesystem::path ResolveContentPath(const engine::core::Config& cfg, std::string_view relativeContentPath);
 

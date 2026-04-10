@@ -127,6 +127,7 @@
   "auth.panel.title": "Titre",
   "auth.panel.language": "Langue",
   "auth.status.unavailable": "Serveurs en maintenance. Réessayez dans quelques instants.",
+  "auth.status.network_error": "Impossible de joindre le serveur de statut (réseau, pare-feu ou URL). Vérifiez l'IP, le port 3842 et que le maître tourne.",
   "auth.status.checking": "Vérification des serveurs...",
   "auth.tooltip.login": "Votre identifiant unique pour vous connecter au jeu. Entre 3 et 32 caracteres, lettres et chiffres uniquement.",
   "auth.tooltip.password": "Votre mot de passe. Minimum 8 caracteres, au moins une lettre et un chiffre (politique serveur).",

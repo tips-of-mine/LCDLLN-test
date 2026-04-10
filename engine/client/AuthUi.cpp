@@ -27,6 +27,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <format>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -423,6 +424,23 @@ namespace engine::client
 		}
 
 #if defined(_WIN32)
+		static const char* WinHttpErrorHint(DWORD err)
+		{
+			switch (err)
+			{
+			case 12002:
+				return "délai dépassé";
+			case 12005:
+				return "connexion refusée (port fermé ou service absent)";
+			case 12029:
+				return "connexion impossible — vérifier IP/port (ex. :3842), pare-feu Windows, route réseau, et que lcdlln_server écoute";
+			case 12152:
+				return "réponse HTTP invalide ou tronquée";
+			default:
+				return "voir codes d’erreur WinHTTP";
+			}
+		}
+
 		static StatusHttpResponse HttpGetStatusUrlWin32(std::string_view url, uint32_t timeoutMs)
 		{
 			StatusHttpResponse resp{};
@@ -461,8 +479,9 @@ namespace engine::client
 
 			if (!WinHttpCrackUrl(urlW.c_str(), 0, 0, &uc))
 			{
-				resp.transportError = "WinHttpCrackUrl a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpCrackUrl a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				return resp;
 			}
 
@@ -477,16 +496,18 @@ namespace engine::client
 			HINTERNET hSession = WinHttpOpen(L"LCDLLN", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 			if (!hSession)
 			{
-				resp.transportError = "WinHttpOpen a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpOpen a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				return resp;
 			}
 
 			HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), uc.nPort, 0);
 			if (!hConnect)
 			{
-				resp.transportError = "WinHttpConnect a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpConnect a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hSession);
 				return resp;
 			}
@@ -495,8 +516,9 @@ namespace engine::client
 				WINHTTP_DEFAULT_ACCEPT_TYPES, isHttps ? WINHTTP_FLAG_SECURE : 0);
 			if (!hRequest)
 			{
-				resp.transportError = "WinHttpOpenRequest a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpOpenRequest a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hConnect);
 				WinHttpCloseHandle(hSession);
 				return resp;
@@ -507,8 +529,9 @@ namespace engine::client
 
 			if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
 			{
-				resp.transportError = "WinHttpSendRequest a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpSendRequest a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hRequest);
 				WinHttpCloseHandle(hConnect);
 				WinHttpCloseHandle(hSession);
@@ -517,8 +540,9 @@ namespace engine::client
 
 			if (!WinHttpReceiveResponse(hRequest, nullptr))
 			{
-				resp.transportError = "WinHttpReceiveResponse a échoué";
-				LOG_WARN(Core, "[StatusProbe] WinHTTP: {} (GetLastError={})", resp.transportError, GetLastError());
+				const DWORD gle = GetLastError();
+				resp.transportError = std::format("WinHttpReceiveResponse a échoué — {} ({})", gle, WinHttpErrorHint(gle));
+				LOG_WARN(Core, "[StatusProbe] WinHTTP: {}", resp.transportError);
 				WinHttpCloseHandle(hRequest);
 				WinHttpCloseHandle(hConnect);
 				WinHttpCloseHandle(hSession);
@@ -978,6 +1002,7 @@ namespace engine::client
 		LOG_INFO(Core, "[StatusProbe] Init: URL statut maître = '{}'", m_masterAvailabilityUrl);
 		m_statusProbeInitialized = false;
 		m_statusProbeCompletedOnce = false;
+		m_lastStatusProbeHttpSuccess = false;
 		m_statusPollTimer = 0.f;
 		m_authLogoSizePx = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.auth_ui.logo_size_px", 96), 32, 256));
 		m_authAvailabilityChecking = false;
@@ -1408,14 +1433,15 @@ namespace engine::client
 		{
 			m_statusCache = copy.statusCache;
 			m_statusProbeCompletedOnce = true;
+			m_lastStatusProbeHttpSuccess = copy.success;
 			// Si on a fini la première vérification, on autorise les refresh périodiques.
 			m_statusProbeInitialized = true;
 			m_authAvailabilityChecking = false;
 			m_authAvailabilityPollTimer = 0.f;
 			m_authLogoRotationRad = 0.f;
 			LOG_INFO(Core,
-				"[StatusProbe] thread principal: résultat consommé — success={} authOk={} masterOk={} shards={} totalJoueurs={} "
-				"infoMessage='{}' workerMsg='{}' → UI: bannière indisponible si authOk=false",
+				"[StatusProbe] thread principal: résultat consommé — httpLayerOk={} authOk={} masterOk={} shards={} totalJoueurs={} "
+				"infoMessage='{}' workerMsg='{}' → UI: maintenance seulement si httpLayerOk et JSON indique indisponibilité",
 				copy.success ? 1 : 0, m_statusCache.authOk ? 1 : 0, m_statusCache.masterOk ? 1 : 0, m_statusCache.servers.size(),
 				m_statusCache.totalPlayers, m_statusCache.infoMessage, copy.message);
 			return;
@@ -4043,7 +4069,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				else if (m_statusProbeCompletedOnce && !m_statusCache.authOk)
 				{
-					serverBanner = Tr("auth.status.unavailable");
+					// Échec TCP/HTTP ou réponse invalide : ce n'est pas la même chose qu'une maintenance déclarée dans le JSON /status.
+					serverBanner = m_lastStatusProbeHttpSuccess ? Tr("auth.status.unavailable") : Tr("auth.status.network_error");
 				}
 				if (!serverBanner.empty())
 				{

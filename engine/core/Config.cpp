@@ -1,4 +1,5 @@
 #include "engine/core/Config.h"
+#include "engine/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cmath>
@@ -436,6 +437,12 @@ namespace engine::core
 
 		cfg.LoadFromFile(filePath);
 		(void)cfg.MergeDefaultsFromJsonFile("external/external_links.json");
+		const auto exeDir = engine::platform::FileSystem::ExecutableDirectory();
+		if (!exeDir.empty())
+		{
+			const std::filesystem::path besideExe = exeDir / "external" / "external_links.json";
+			(void)cfg.MergeDefaultsFromJsonFile(besideExe.string());
+		}
 		cfg.ApplyCli(argc, argv);
 		return cfg;
 	}

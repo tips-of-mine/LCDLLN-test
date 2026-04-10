@@ -21,6 +21,7 @@
 #include <deque>
 #include <mutex>
 #include <queue>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -62,6 +63,17 @@ namespace engine::server
 				return false;
 			return true;
 		}
+
+		static std::string FormatIpv4Port(uint32_t ipHostOrder, uint16_t portHost)
+		{
+			char buf[48];
+			const unsigned a = (ipHostOrder >> 24) & 0xFFu;
+			const unsigned b = (ipHostOrder >> 16) & 0xFFu;
+			const unsigned c = (ipHostOrder >> 8) & 0xFFu;
+			const unsigned d = ipHostOrder & 0xFFu;
+			std::snprintf(buf, sizeof(buf), "%u.%u.%u.%u:%u", a, b, c, d, static_cast<unsigned>(portHost));
+			return std::string(buf);
+		}
 	}
 
 	/// TLS handshake state per connection (when TLS enabled).
@@ -98,6 +110,9 @@ namespace engine::server
 			uint32_t connId = 0;
 			// Remote IPv4 address in host byte order (for DDoS tracking).
 			uint32_t ipHostOrder = 0u;
+			uint16_t remotePortHost = 0u;
+			std::chrono::steady_clock::time_point connectedAt{};
+			size_t rxBytesAccum = 0;
 			SSL* ssl = nullptr;
 			TlsHandshakeState handshakeState = TlsHandshakeState::Ready;
 			std::vector<uint8_t> rxBuffer;
@@ -199,13 +214,23 @@ namespace engine::server
 			disconnectCounts[idx].fetch_add(1, std::memory_order_relaxed);
 		SSL* sslToFree = nullptr;
 		uint32_t ipHostOrder = 0u;
+		uint16_t remotePortHost = 0u;
+		uint32_t connId = 0u;
+		size_t rxBytesAccum = 0u;
+		double aliveSec = 0.0;
+		bool hadConn = false;
 		{
 			std::lock_guard lock(connMutex);
 			auto it = connections.find(fd);
 			if (it != connections.end())
 			{
-				uint32_t connId = it->second.connId;
+				hadConn = true;
+				connId = it->second.connId;
 				ipHostOrder = it->second.ipHostOrder;
+				remotePortHost = it->second.remotePortHost;
+				rxBytesAccum = it->second.rxBytesAccum;
+				const auto now = std::chrono::steady_clock::now();
+				aliveSec = std::chrono::duration<double>(now - it->second.connectedAt).count();
 				LOG_DEBUG(Server, "[NETSRV] CloseConnection connId={} reason={}", connId, DisconnectReasonString(reason));
 				connIdToFd.erase(it->second.connId);
 				sslToFree = it->second.ssl;
@@ -225,7 +250,26 @@ namespace engine::server
 		}
 		epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, nullptr);
 		close(fd);
-		LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={})", fd, DisconnectReasonString(reason));
+		if (hadConn)
+		{
+			const std::string peer = FormatIpv4Port(ipHostOrder, remotePortHost);
+			const char* zeroHint = (reason == DisconnectReason::PeerClosed && rxBytesAccum == 0u)
+				? " | note: 0 byte received then peer closed — often TCP healthcheck/scanner, or HTTP client on game port"
+				: "";
+			LOG_INFO(Net,
+				"[NetServer] Connection closed (connId={}, fd={}, peer={}, reason={}, alive_s={:.3f}, rx_bytes={}){}",
+				connId,
+				fd,
+				peer,
+				DisconnectReasonString(reason),
+				aliveSec,
+				rxBytesAccum,
+				zeroHint);
+		}
+		else
+		{
+			LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={}, peer=unknown — no connection state)", fd, DisconnectReasonString(reason));
+		}
 	}
 
 	/// Call with connMutex held (same thread).
@@ -363,6 +407,9 @@ namespace engine::server
 							c.fd = clientFd;
 							c.connId = connId;
 							c.ipHostOrder = ipHostOrder;
+							c.remotePortHost = ntohs(clientAddr.sin_port);
+							c.connectedAt = now;
+							c.rxBytesAccum = 0;
 							connIdToFd[connId] = clientFd;
 							c.rxBuffer.reserve(kRxBufferCapacity);
 							c.tokenBucketTokens = config.packetBurst;
@@ -379,7 +426,11 @@ namespace engine::server
 							connectionCount.store(static_cast<uint32_t>(connections.size()));
 							connectionsTotal.fetch_add(1, std::memory_order_relaxed);
 						}
-						LOG_DEBUG(Server, "[NETSRV] accept connId={} fd={}", connId, clientFd);
+						LOG_INFO(Net,
+							"[NetServer] TCP accept (connId={}, fd={}, peer={})",
+							connId,
+							clientFd,
+							FormatIpv4Port(ipHostOrder, ntohs(clientAddr.sin_port)));
 						if (tlsEnabled && sslCtx != nullptr)
 						{
 							std::unique_lock lock(connMutex);
@@ -411,7 +462,6 @@ namespace engine::server
 								}
 							}
 						}
-						LOG_DEBUG(Net, "[NetServer] Accepted connection (fd={}, connId={})", clientFd, connId);
 					}
 					continue;
 				}
@@ -493,6 +543,7 @@ namespace engine::server
 							received = recv(fd, tmp, sizeof(tmp), 0);
 						if (received > 0)
 						{
+							c.rxBytesAccum += static_cast<size_t>(received);
 							bytesIn.fetch_add(static_cast<size_t>(received), std::memory_order_relaxed);
 							size_t prev = c.rxBuffer.size();
 							c.rxBuffer.resize(prev + static_cast<size_t>(received));

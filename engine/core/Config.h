@@ -38,7 +38,8 @@ namespace engine::core
 		/// Get a string value or return `fallback` if missing/not convertible.
 		std::string GetString(std::string_view key, std::string_view fallback = {}) const;
 
-		/// Hôte TCP maître : \c client.master_host si non vide, sinon \c client.master_tcp_host (ex. défaut \c external_links.json).
+		/// Hôte TCP maître : \c client.master_host, puis \c client.master_tcp_host, puis hôte extrait de \c client.status_api_url,
+		/// puis hôte extrait de l’URL de sonde embarquée (\c defaults::kStatusApiUrl), sinon \p fallback.
 		std::string GetEffectiveMasterHost(std::string_view fallback = "localhost") const;
 
 		/// Get an int64 value or return `fallback` if missing/not convertible.

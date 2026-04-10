@@ -18,6 +18,7 @@
 
 #include "engine/render/AuthUiRenderer.h"
 
+#include "engine/core/DefaultClientEndpoints.h"
 #include "engine/core/Log.h"
 #include "engine/network/NetClient.h"
 #include "engine/platform/FileSystem.h"
@@ -61,10 +62,9 @@ namespace engine::client
 		// Résolu par Window::ResolveUiImagePath : aussi sous game/data/ (voir FileSystem::ResolveContentPath).
 		constexpr std::string_view kRegisterInfoPath = "ui/register/info.png";
 
-		// URLs production (identiques à external/external_links.json) — embarquées pour valider portail reset + sonde statut.
+		// URL portail reset (identique à external/external_links.json) ; la sonde statut utilise defaults::kStatusApiUrl.
 		constexpr std::string_view kProductionWebPortalResetUrl =
 			"https://lcdlln-portal.tips-of-mine.com/password-recovery";
-		constexpr std::string_view kProductionStatusApiUrl = "http://10.0.4.133:3842/status";
 
 		std::string JsonBool(bool value)
 		{
@@ -257,7 +257,7 @@ namespace engine::client
 			{
 				return fromLinks;
 			}
-			return std::string(kProductionStatusApiUrl);
+			return std::string(engine::core::defaults::kStatusApiUrl);
 		}
 
 		struct StatusHttpResponse
@@ -997,7 +997,7 @@ namespace engine::client
 		m_layoutAuthTitleCenterViewportWidth = cfg.GetBool("render.auth_ui.layout.title_center_viewport_width", true);
 		m_layoutAuthFieldRowExtraPx = static_cast<int32_t>(
 			std::clamp<int64_t>(cfg.GetInt("render.auth_ui.layout.field_row_extra_px", 0), 0, 64));
-		// URL de sonde "status" (voir kProductionStatusApiUrl) au début de l'écran de connexion.
+		// URL de sonde "status" (defaults::kStatusApiUrl si non fourni par la config) au début de l'écran de connexion.
 		m_masterAvailabilityUrl = ResolveStatusApiUrl(cfg);
 		LOG_INFO(Core, "[StatusProbe] Init: URL statut maître = '{}'", m_masterAvailabilityUrl);
 		m_statusProbeInitialized = false;

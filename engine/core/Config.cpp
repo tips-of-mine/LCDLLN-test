@@ -1,5 +1,7 @@
 #include "engine/core/Config.h"
 
+#include "engine/core/DefaultClientEndpoints.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cctype>
@@ -351,6 +353,36 @@ namespace engine::core
 			size_t m_pos = 0;
 		};
 
+		/// Extrait l’hôte d’une URL absolue `http://` / `https://` (IPv4 / noms ; pas d’IPv6 bracketée).
+		static std::optional<std::string> HostFromAbsoluteHttpUrl(std::string_view url)
+		{
+			const size_t scheme = url.find("://");
+			if (scheme == std::string_view::npos)
+			{
+				return std::nullopt;
+			}
+			size_t i = scheme + 3;
+			while (i < url.size() && url[i] == '/')
+			{
+				++i;
+			}
+			const size_t hostStart = i;
+			if (hostStart >= url.size())
+			{
+				return std::nullopt;
+			}
+			const size_t delim = url.find_first_of(":/", hostStart);
+			if (delim == std::string_view::npos)
+			{
+				return std::string(url.substr(hostStart));
+			}
+			if (url[delim] == '/')
+			{
+				return std::string(url.substr(hostStart, delim - hostStart));
+			}
+			return std::string(url.substr(hostStart, delim - hostStart));
+		}
+
 		static void MergeJsonFlatten(const JsonValue& v, const std::string& prefix, Config& cfg)
 		{
 			switch (v.type)
@@ -629,6 +661,15 @@ namespace engine::core
 		if (!tcpDefault.empty())
 		{
 			return tcpDefault;
+		}
+		const std::string statusUrl = GetString("client.status_api_url", "");
+		if (const auto h = HostFromAbsoluteHttpUrl(statusUrl))
+		{
+			return *h;
+		}
+		if (const auto h = HostFromAbsoluteHttpUrl(defaults::kStatusApiUrl))
+		{
+			return *h;
 		}
 		return std::string(fallback);
 	}

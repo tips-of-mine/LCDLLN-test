@@ -500,9 +500,12 @@ int main(int argc, char** argv)
 					++sumShardsOnline;
 			}
 			bool dbOk = readyCheck();
-			LOG_INFO(Net, "[ServerMain] cluster summary: conn_active={} sessions_active={} shards_online={} auth_success={} auth_fail={} db_ok={}",
+			const char* shardHint = (sumShardsOnline == 0)
+				? " | shards: aucun shard jeu connecté (attendu tant qu’aucun serveur de monde ne s’enregistre)"
+				: "";
+			LOG_INFO(Net, "[ServerMain] cluster summary: conn_active={} sessions_active={} shards_online={} auth_success={} auth_fail={} db_ok={}{}",
 				sumStats.connectionsActive, sumSessions, sumShardsOnline,
-				authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), dbOk ? 1 : 0);
+				authHandler.GetAuthSuccessTotal(), authHandler.GetAuthFailTotal(), dbOk ? 1 : 0, shardHint);
 		}
 
 		if (now - lastWatchdog >= kWatchdogInterval)

@@ -774,6 +774,8 @@ namespace engine::client
 			{
 			case NetErrorCode::OK:
 				return "OK";
+			case NetErrorCode::BAD_REQUEST:
+				return "Bad request";
 			case NetErrorCode::INVALID_CREDENTIALS:
 				return "Invalid credentials";
 			case NetErrorCode::ACCOUNT_NOT_FOUND:
@@ -800,6 +802,8 @@ namespace engine::client
 				return "Registration disabled";
 			case NetErrorCode::REGISTRATION_INVALID:
 				return "Registration invalid";
+			case NetErrorCode::INTERNAL_ERROR:
+				return "Server error";
 			case NetErrorCode::TIMEOUT:
 				return "Timeout";
 			default:
@@ -1171,16 +1175,15 @@ namespace engine::client
 
 	void AuthUiPresenter::EnsurePasswordSalt(const engine::core::Config& cfg)
 	{
-		if (!m_argonSalt.empty())
-			return;
-		m_argonSalt = engine::auth::GenerateSalt(engine::auth::kArgon2SaltLength);
-		if (m_argonSalt.empty())
+		(void)cfg;
+		m_argonSalt = engine::auth::DeriveClientPasswordSaltFromLogin(m_login);
+		if (m_argonSalt.size() != engine::auth::kArgon2SaltLength)
 		{
-			LOG_ERROR(Core, "[AuthUiPresenter] Password salt generation FAILED");
+			m_argonSalt.clear();
+			LOG_ERROR(Core, "[AuthUiPresenter] Client-side Argon2 salt derivation FAILED (login trim empty or crypto error)");
 			return;
 		}
-		(void)cfg;
-		LOG_INFO(Core, "[AuthUiPresenter] Client-side Argon2 salt ready (len={})", m_argonSalt.size());
+		LOG_INFO(Core, "[AuthUiPresenter] Client-side Argon2 salt derived from login (len={})", m_argonSalt.size());
 	}
 
 	std::string AuthUiPresenter::ComputeClientHash(const engine::core::Config& cfg) const
@@ -1890,6 +1893,11 @@ namespace engine::client
 						{
 							local.sessionId = auth->session_id;
 							authOk = true;
+							return;
+						}
+						if (auth && auth->success == 0)
+						{
+							errMsg = std::string(NetErrorLabel(auth->error_code));
 							return;
 						}
 						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());

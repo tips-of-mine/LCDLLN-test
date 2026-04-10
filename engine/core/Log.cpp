@@ -164,7 +164,12 @@ namespace engine::core
 			s_file.flush();
 		}
 		if (s_consoleEnabled)
+		{
 			std::fputs(line.c_str(), stdout);
+			// Docker / pipe : stdout est souvent fully-buffered sans TTY ; sans flush les logs
+			// n'apparaissent pas dans `docker compose logs` pendant longtemps.
+			std::fflush(stdout);
+		}
 		UnlockLog();
 	}
 }

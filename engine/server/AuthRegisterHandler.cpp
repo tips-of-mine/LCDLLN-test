@@ -132,6 +132,7 @@ namespace engine::server
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
+		LOG_INFO(Auth, "[AuthRegisterHandler] Register attempt (connId={}, login={})", connId, login_norm);
 		std::string email_norm = NormaliseEmail(parsed->email);
 		if (!email_norm.empty())
 		{
@@ -238,7 +239,7 @@ namespace engine::server
 		{
 			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			LOG_WARN(Auth, "[AUTH] HandleAuth result={} session_id={}", "FAIL", (unsigned long long)0);
-			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "banned", requestId, sessionIdHeader);
+			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::BAD_REQUEST, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -246,7 +247,7 @@ namespace engine::server
 		{
 			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			LOG_WARN(Auth, "[AuthRegisterHandler] Auth rate limited (connId={})", connId);
-			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "rate limited", requestId, sessionIdHeader);
+			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::BAD_REQUEST, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -257,11 +258,12 @@ namespace engine::server
 			LOG_WARN(Auth, "[AuthRegisterHandler] Auth: invalid payload");
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "invalid_payload");
 			if (m_rateLimit) m_rateLimit->RecordAuthFailure(ipKey);
-			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "invalid payload", requestId, sessionIdHeader);
+			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::BAD_REQUEST, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
 		std::string login_norm(NormaliseLoginView(parsed->login));
+		LOG_INFO(Auth, "[AuthRegisterHandler] Auth attempt (connId={}, login={})", connId, login_norm);
 		if (login_norm.empty())
 		{
 			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
@@ -276,7 +278,7 @@ namespace engine::server
 		{
 			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			LOG_ERROR(Auth, "[AuthRegisterHandler] Auth: no store or session manager");
-			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "unavailable", requestId, sessionIdHeader);
+			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::INTERNAL_ERROR, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -301,10 +303,11 @@ namespace engine::server
 			return;
 		}
 		bool hashOk = engine::auth::Verify(parsed->client_hash, opt->final_hash);
-		LOG_INFO(Auth, "[AUTH] HandleAuth hash_ok={}", (int)hashOk);
+		LOG_INFO(Auth, "[AUTH] HandleAuth login={} hash_ok={}", login_norm, (int)hashOk);
 		if (!hashOk)
 		{
 			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
+			LOG_WARN(Auth, "[AuthRegisterHandler] Auth: invalid password hash for login={} (wrong password, ou compte créé hors client jeu / format password_hash incompatible)", login_norm);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "invalid_credentials");
 			if (m_rateLimit) m_rateLimit->RecordAuthFailure(ipKey);
 			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::INVALID_CREDENTIALS, requestId, sessionIdHeader);

@@ -1,6 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
-import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { query } from "@/lib/db";
+import { hashPasswordForGameMaster } from "@/lib/gamePasswordHash";
 
 type AccountRow = RowDataPacket & {
   id: number;
@@ -99,12 +100,6 @@ function computeAgeYears(birthDate: string): number | null {
     age -= 1;
   }
   return age >= 0 ? age : null;
-}
-
-function hashPassword(password: string): string {
-  const salt = randomBytes(16);
-  const derived = scryptSync(password, salt, 64);
-  return `scrypt$${salt.toString("hex")}$${derived.toString("hex")}`;
 }
 
 function verifyPasswordStrength(password: string): string | null {
@@ -328,8 +323,18 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
     };
   }
 
+  const accountRows = await query<Array<RowDataPacket & { login: string }>>(
+    "SELECT login FROM accounts WHERE id = ? LIMIT 1",
+    [tokenRow.account_id],
+  );
+  const accountLogin = accountRows[0]?.login?.trim();
+  if (!accountLogin) {
+    return { ok: false, message: "Compte introuvable." };
+  }
+
+  const gamePasswordHash = await hashPasswordForGameMaster(accountLogin, newPassword);
   await query<ResultSetHeader>("UPDATE accounts SET password_hash = ? WHERE id = ?", [
-    hashPassword(newPassword),
+    gamePasswordHash,
     tokenRow.account_id,
   ]);
   await query<ResultSetHeader>(

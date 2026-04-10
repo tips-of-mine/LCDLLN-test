@@ -94,8 +94,9 @@ services:
       - ./config/master.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/master:/app/logs
+    # HTTP 3842 (/healthz) : le TCP 3840 est le protocole jeu ; nc -z le pollue dans les logs NetServer.
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "3840"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3842/healthz"]
       interval: 10s
       timeout: 5s
       retries: 5

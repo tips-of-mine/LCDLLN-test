@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libstdc++6 \
     libgcc-s1 \
     ca-certificates \
-    netcat-openbsd \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 COPY lib/ /usr/local/lib/
@@ -31,7 +31,8 @@ COPY db/migrations /app/db/migrations
 
 EXPOSE 3840 3842
 
+# Sonder le HTTP embarqué (3842), pas le TCP jeu (3840) — évite un connect/close bruitant sur le port protocole.
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
-    CMD nc -z localhost 3840 || exit 1
+    CMD wget -q -O /dev/null http://127.0.0.1:3842/healthz || exit 1
 
 CMD ["/app/lcdlln_server", "-log", "-console"]

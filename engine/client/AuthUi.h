@@ -128,7 +128,7 @@ namespace engine::client
 			/// 0 = neutre, 1 = correspond, -1 = ne correspond pas.
 			int32_t passwordMatchState = 0;
 			/// Indicateur de disponibilité username (champ login uniquement).
-			/// 0 = neutre, 1 = disponible, -1 = pris, 2 = vérification en cours.
+			/// Reflète UsernameCheckState : 0=Idle, 1=Pending, 2=Available, 3=Taken.
 			int32_t usernameCheckState = 0;
 		};
 

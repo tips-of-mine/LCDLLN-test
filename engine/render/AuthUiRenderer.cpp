@@ -199,11 +199,8 @@ namespace engine::render
 				metrics.authSectionTitleOffsetFromPanelTopPx -= kAuthLoginRegisterSectionLiftPx;
 			}
 			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
-			// Le libellé du premier champ (AuthGlyphPass) est dessiné à topOffset - labelAboveFieldPxGlyph.
-			// ATTENTION : AuthGlyphPass rend le label à smallScale (pas smallScaleGlyph) — voir AppendText ligne ~1478.
-			// smallScaleGlyph est donc erroné ici ; la valeur correcte pour labelAboveFieldPxGlyph serait smallScale * 11 + 6.
-			const int32_t smallScaleGlyph = std::max(2, smallScale - 1);
-			const int32_t labelAboveFieldPxGlyph = smallScaleGlyph * 11 + 6; // TODO: devrait utiliser smallScale (label rendu à smallScale dans GlyphPass)
+			// Le libellé du premier champ est dessiné à topOffset - labelAboveFieldPxGlyph (scale = smallScale).
+			const int32_t labelAboveFieldPxGlyph = smallScale * 11 + 6;
 			const int32_t sectionTitleGlyphH = 7 * bodyScale;
 			const int32_t minTopFromSection =
 				metrics.authSectionTitleOffsetFromPanelTopPx + sectionTitleGlyphH + 6 + labelAboveFieldPxGlyph;

@@ -1471,13 +1471,38 @@ namespace engine::render
 		{
 			const int32_t labelAboveFieldPx = smallScale * 11 + 6;
 			const int32_t valueBelowTopPx = 12;
-			for (int32_t i = 0; i < static_cast<int32_t>(model.fields.size()); ++i)
+
+			// Pré-calcul lignes logiques (même logique que AuthUiRenderer).
+			const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
+			std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
 			{
-				const int32_t y = panelY + topOffset + i * fieldRowStep;
+				int32_t row = -1;
+				int32_t lastCol = kAuthUiGridColumns;
+				for (int32_t i = 0; i < fieldCount; ++i)
+				{
+					const auto& f = model.fields[static_cast<size_t>(i)];
+					if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+						++row;
+					lastCol = (f.gridColumn < 0) ? kAuthUiGridColumns : f.gridColumn;
+					fieldLogicalRow[static_cast<size_t>(i)] = row;
+				}
+			}
+
+			for (int32_t i = 0; i < fieldCount; ++i)
+			{
 				const auto& field = model.fields[static_cast<size_t>(i)];
-				AppendText(vertices, field.label, contentX + 10, y - labelAboveFieldPx, contentW / 2, smallScale, mutedColor);
+				const int32_t y = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(i)] * fieldRowStep;
+
+				int32_t fx = contentX;
+				int32_t fw = contentW;
+				if (field.gridColumn >= 0)
+				{
+					AuthUiGridFieldGeometry(contentX, contentW, field.gridColumn, field.gridSpan, fx, fw);
+				}
+
+				AppendText(vertices, field.label, fx + 10, y - labelAboveFieldPx, fw / 2, smallScale, mutedColor);
 				const float* valueTint = field.active ? titleColor : (field.hovered ? primaryColor : bodyColor);
-				AppendText(vertices, field.value, contentX + 12, y + valueBelowTopPx, contentW - 24, bodyScale, valueTint);
+				AppendText(vertices, field.value, fx + 12, y + valueBelowTopPx, fw - 24, bodyScale, valueTint);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
 				{
 					const int32_t tooltipY = y + 36;
@@ -1490,15 +1515,16 @@ namespace engine::render
 				}
 				if (field.active && !field.cyclePicker)
 				{
-					const int32_t caretX = contentX + 12 + MeasureTextWidthPx(field.value, bodyScale) + 2;
-					appendBlock(std::min(caretX, contentX + contentW - 14), y + valueBelowTopPx - 1, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
+					const int32_t caretX = fx + 12 + MeasureTextWidthPx(field.value, bodyScale) + 2;
+					appendBlock(std::min(caretX, fx + fw - 14), y + valueBelowTopPx - 1, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
 				}
 			}
 			const int32_t bodyLinePitch = centeredLanguageSelection
 				? std::max(36, bodyLineStep + 16)
 				: std::max(28, bodyLineStep + 10);
 			const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
-			const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldRowStep + afterFieldsGap;
+			const int32_t logicalRowCount = fieldCount > 0 ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1 : 0;
+			const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldRowStep + afterFieldsGap;
 			for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];

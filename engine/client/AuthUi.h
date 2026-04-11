@@ -108,6 +108,16 @@ namespace engine::client
 			std::string tooltipKey;
 			/// Texte d’aide affiché (Tr(tooltipKey) et/ou texte fourni à la construction du champ).
 			std::string tooltipText;
+			/// Colonne dans la grille d’inscription (0 = gauche, 1 = milieu, 2 = droite).
+			/// -1 = pas de grille (affichage en liste simple, comportement actuel).
+			int32_t gridColumn = -1;
+			/// Nombre de colonnes occupées (1, 2, ou 3). Ignoré si gridColumn == -1.
+			int32_t gridSpan = 1;
+			/// Message d’erreur par champ (validation partielle). Vide = pas d’erreur.
+			std::string fieldError;
+			/// Indicateur visuel de correspondance mdp (champ confirmPassword uniquement).
+			/// 0 = neutre, 1 = correspond, -1 = ne correspond pas.
+			int32_t passwordMatchState = 0;
 		};
 
 		/// Bouton d’action : le fond est dessiné sans texte (AuthUiRenderer) ; le libellé vient des clés i18n,
@@ -289,6 +299,8 @@ namespace engine::client
 		std::string m_birthDay;
 		std::string m_birthMonth;
 		std::string m_birthYear;
+		std::string m_country;        ///< Code pays ISO-2 (ex. "FR"). Champ inscription.
+		bool m_passwordsMatch = false; ///< Suivi temps-réel correspondance mdp / confirm.
 		std::string m_verifyCode;
 		std::string m_termsTitle;
 		std::string m_termsVersionLabel;

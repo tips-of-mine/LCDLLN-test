@@ -34,6 +34,15 @@ namespace engine::client
 		Game
 	};
 
+	/// État de la vérification temps-réel du nom d'utilisateur.
+	enum class UsernameCheckState : uint8_t
+	{
+		Idle       = 0, ///< Champ vide ou < 3 caractères ; aucun indicateur affiché.
+		Pending    = 1, ///< Debounce en cours ou requête envoyée, réponse attendue.
+		Available  = 2, ///< Serveur a confirmé disponibilité.
+		Taken      = 3, ///< Serveur a indiqué login déjà pris.
+	};
+
 	/// STAB.13 — Login / register UI state machine; drives M20.5/M22.6 master flow without duplicating protocol.
 	/// Assets reference: \c game/data/ui/login and \c game/data/ui/register (documented in panel text; no absolute paths).
 	class AuthUiPresenter final
@@ -118,6 +127,9 @@ namespace engine::client
 			/// Indicateur visuel de correspondance mdp (champ confirmPassword uniquement).
 			/// 0 = neutre, 1 = correspond, -1 = ne correspond pas.
 			int32_t passwordMatchState = 0;
+			/// Indicateur de disponibilité username (champ login uniquement).
+			/// 0 = neutre, 1 = disponible, -1 = pris, 2 = vérification en cours.
+			int32_t usernameCheckState = 0;
 		};
 
 		/// Bouton d’action : le fond est dessiné sans texte (AuthUiRenderer) ; le libellé vient des clés i18n,
@@ -301,6 +313,11 @@ namespace engine::client
 		std::string m_birthYear;
 		std::string m_country;        ///< Code pays ISO-2 (ex. "FR"). Champ inscription.
 		bool m_passwordsMatch = false; ///< Suivi temps-réel correspondance mdp / confirm.
+		// --- Plan C: username availability debounce ---
+		UsernameCheckState m_usernameCheckState = UsernameCheckState::Idle;
+		uint32_t  m_usernameCheckSeq     = 0;    ///< Numéro de séquence ; réponses avec seq différent sont ignorées.
+		double    m_usernameDebounceTimer = 0.0;  ///< Secondes restantes avant envoi. ≤0 = inactif.
+		std::string m_usernameLastChecked;         ///< Login envoyé au serveur pour le seq courant.
 		std::string m_verifyCode;
 		std::string m_termsTitle;
 		std::string m_termsVersionLabel;

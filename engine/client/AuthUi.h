@@ -272,6 +272,7 @@ namespace engine::client
 		void StartLoginWorker(const engine::core::Config& cfg);
 		void StartVerifyEmailWorker(const engine::core::Config& cfg);
 		void StartForgotPasswordWorker(const engine::core::Config& cfg);
+		void StartUsernameCheckWorker(const engine::core::Config& cfg);
 		void StartTermsStatusWorker(const engine::core::Config& cfg);
 		void StartTermsAcceptWorker(const engine::core::Config& cfg);
 		void StartCharacterCreateWorker(const engine::core::Config& cfg);
@@ -421,6 +422,10 @@ namespace engine::client
 
 			// Pour AsyncKind::StatusProbe.
 			StatusCache statusCache{};
+
+			// Pour AsyncKind::UsernameCheck (Plan C).
+			uint8_t  usernameAvailable = 0; ///< 1 = disponible, 0 = pris.
+			uint32_t usernameCheckSeq  = 0; ///< Seq renvoyé par le serveur.
 		};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};
@@ -435,7 +440,8 @@ namespace engine::client
 			TermsAccept,
 			CharacterCreate,
 			Login,
-			StatusProbe
+			StatusProbe,
+			UsernameCheck  ///< Plan C : vérification disponibilité username (debounce).
 		};
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;

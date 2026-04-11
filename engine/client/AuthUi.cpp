@@ -920,6 +920,7 @@ namespace engine::client
 	void AuthUiPresenter::StartLoginWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartVerifyEmailWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::StartUsernameCheckWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartTermsStatusWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config&) {}
@@ -1432,6 +1433,8 @@ namespace engine::client
 				return "Login";
 			case AsyncKind::StatusProbe:
 				return "StatusProbe";
+			case AsyncKind::UsernameCheck:
+				return "UsernameCheck";
 			default:
 				return "?";
 			}
@@ -1573,6 +1576,22 @@ namespace engine::client
 			{
 				m_infoBanner = copy.message;
 			}
+			return;
+		}
+
+		// Plan C : résultat de la vérification disponibilité username.
+		if (kind == AsyncKind::UsernameCheck)
+		{
+			if (copy.usernameCheckSeq != m_usernameCheckSeq)
+			{
+				// Réponse obsolète (une nouvelle frappe a incrémenté le seq) : ignorer.
+				LOG_DEBUG(Core, "[UsernameCheck] réponse obsolète seq={} attendu={}", copy.usernameCheckSeq, m_usernameCheckSeq);
+				return;
+			}
+			m_usernameCheckState = (copy.usernameAvailable != 0)
+				? UsernameCheckState::Available
+				: UsernameCheckState::Taken;
+			LOG_INFO(Core, "[UsernameCheck] résultat seq={} available={}", copy.usernameCheckSeq, (int)copy.usernameAvailable);
 			return;
 		}
 
@@ -2713,6 +2732,88 @@ namespace engine::client
 		});
 	}
 
+	// Plan C : worker léger de vérification disponibilité username (debounce 800 ms).
+	// N'est lancé que si aucun worker critique (Register/Login/etc.) n'est en cours.
+	void AuthUiPresenter::StartUsernameCheckWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
+		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
+		// Timeout court pour ne pas bloquer l'UX.
+		const uint32_t timeoutMs = static_cast<uint32_t>(
+			std::clamp<int64_t>(cfg.GetInt("client.auth_ui.username_check_timeout_ms", 2000), 500, 5000));
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
+		const std::string login = m_usernameLastChecked;
+		const uint32_t seq = m_usernameCheckSeq;
+
+		m_pendingAsyncKind = AsyncKind::UsernameCheck;
+		{
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, login, seq]() {
+			AsyncResult local{};
+			local.usernameCheckSeq = seq;
+			engine::network::NetClient client;
+			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
+			client.Connect(host, port);
+			if (!WaitConnected(&client, timeoutMs + 1000u))
+			{
+				local.ready = true;
+				local.success = false;
+				local.message = "UsernameCheck: connect failed.";
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				LOG_WARN(Net, "[UsernameCheck] connect FAILED host={} port={}", host, port);
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(&client);
+			const std::vector<uint8_t> payload =
+				engine::network::BuildUsernameAvailableRequestPayload(login, seq);
+			bool done = false;
+			uint8_t available = 0;
+			if (!disp.SendRequest(engine::network::kOpcodeUsernameAvailableRequest, payload,
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						done = !timeout;
+						if (!timeout)
+						{
+							auto resp = engine::network::ParseUsernameAvailableResponsePayload(pl.data(), pl.size());
+							if (resp)
+								available = resp->available;
+						}
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.success = false;
+				local.message = "UsernameCheck: SendRequest failed.";
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				client.Disconnect("send_fail");
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			client.Disconnect("username_check_done");
+			local.ready = true;
+			local.success = done;
+			local.usernameAvailable = done ? available : 0;
+			local.usernameCheckSeq = seq;
+			local.message = done ? "" : "UsernameCheck: timeout.";
+			{
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+			}
+			LOG_INFO(Net, "[UsernameCheck] done seq={} available={}", seq, (int)available);
+		});
+	}
+
 	bool AuthUiPresenter::SetViewportSize(uint32_t width, uint32_t height)
 	{
 		if (width == 0 || height == 0)
@@ -2778,6 +2879,11 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 			m_activeField = 0;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
+			// Plan C : réinitialiser état disponibilité username à l'entrée en Register.
+			m_usernameCheckState = UsernameCheckState::Idle;
+			m_usernameCheckSeq++;
+			m_usernameDebounceTimer = 0.0;
+			m_usernameLastChecked.clear();
 			break;
 		case engine::platform::Window::AuthScreenCommand::OpenForgotPassword:
 		{
@@ -3030,6 +3136,25 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			window.SetAuthScreenState({});
 			UpdateWindowTitle(window);
 			return;
+		}
+
+		// Plan C : tick debounce disponibilité username.
+		// Le worker n'est lancé que si aucun worker critique n'est actif (Register/Login/etc.).
+		if (m_usernameDebounceTimer > 0.0)
+		{
+			m_usernameDebounceTimer -= static_cast<double>(deltaSeconds);
+			if (m_usernameDebounceTimer <= 0.0)
+			{
+				m_usernameDebounceTimer = 0.0;
+				if (m_phase == Phase::Register && m_login.size() >= 3
+					&& !m_worker.joinable() && !m_asyncResult.ready)
+				{
+					m_usernameCheckState = UsernameCheckState::Pending;
+					m_usernameLastChecked = m_login;
+					StartUsernameCheckWorker(cfg);
+					LOG_DEBUG(Core, "[UsernameCheck] worker lancé pour login='{}' seq={}", m_usernameLastChecked, m_usernameCheckSeq);
+				}
+			}
 		}
 
 		const bool usingNativeAuth = false;
@@ -3596,6 +3721,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 											m_activeField = 0;
 											m_userErrorText.clear();
 											m_passwordConfirm.clear();
+											// Plan C : réinitialiser état disponibilité username à l'entrée en Register.
+											m_usernameCheckState = UsernameCheckState::Idle;
+											m_usernameCheckSeq++;
+											m_usernameDebounceTimer = 0.0;
+											m_usernameLastChecked.clear();
 										}
 										else if (i == 1) { OpenLanguageOptions(); }
 										else if (i == 2) { applyPrimaryAction(); }
@@ -3635,6 +3765,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 										m_activeField = 0;
 										m_userErrorText.clear();
 										m_passwordConfirm.clear();
+										// Plan C : réinitialiser état disponibilité username à l'entrée en Register.
+										m_usernameCheckState = UsernameCheckState::Idle;
+										m_usernameCheckSeq++;
+										m_usernameDebounceTimer = 0.0;
+										m_usernameLastChecked.clear();
 									}
 									else if (i == 1) { OpenLanguageOptions(); }
 									else if (i == 2) { applyPrimaryAction(); }
@@ -3644,7 +3779,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								case Phase::VerifyEmail:
 								case Phase::ForgotPassword:
 									if (i == 0) applyPrimaryAction();
-									else if (i == 1) { m_phase = Phase::Login; m_activeField = 0; m_userErrorText.clear(); }
+									else if (i == 1)
+									{
+										// Plan C : réinitialiser état disponibilité username à la sortie de Register.
+										if (m_phase == Phase::Register)
+										{
+											m_usernameCheckState = UsernameCheckState::Idle;
+											m_usernameCheckSeq++;
+											m_usernameDebounceTimer = 0.0;
+											m_usernameLastChecked.clear();
+										}
+										m_phase = Phase::Login;
+										m_activeField = 0;
+										m_userErrorText.clear();
+									}
 									break;
 								case Phase::LanguageSelectionFirstRun:
 									if (i == 0) applyPrimaryAction();
@@ -3765,6 +3913,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				PersistRememberedLoginSidecar(m_login);
 			}
+		}
+
+		// Plan C : réinitialiser debounce disponibilité username après toute frappe sur le champ login en inscription.
+		if (m_phase == Phase::Register && m_activeField == 0)
+		{
+			m_usernameCheckState = UsernameCheckState::Idle;
+			m_usernameCheckSeq++;
+			m_usernameDebounceTimer = (m_login.size() >= 3) ? 0.8 : 0.0;
 		}
 
 	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::Tab))
@@ -3993,6 +4149,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_activeField = 0;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
+			// Plan C : réinitialiser état disponibilité username à l'entrée en Register.
+			m_usernameCheckState = UsernameCheckState::Idle;
+			m_usernameCheckSeq++;
+			m_usernameDebounceTimer = 0.0;
+			m_usernameLastChecked.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Switched to Register screen");
 		}
 		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
@@ -4222,6 +4383,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			// Ligne 5 : passwordConfirm (col0, span3)
 			addGridField(Tr("auth.label.login"),    m_login,    m_activeField == 0,
 				false, false, Tr("auth.tooltip.login"),    0, 1);
+			// Plan C : indicateur disponibilité username sur le champ login.
+			model.fields.back().usernameCheckState = [this]() -> int32_t {
+				switch (m_usernameCheckState)
+				{
+				case UsernameCheckState::Available: return 2;
+				case UsernameCheckState::Taken:     return 3;
+				case UsernameCheckState::Pending:   return 1;
+				default:                            return 0;
+				}
+			}();
 			addGridField(Tr("auth.label.country"),  countryDisplay(m_country), m_activeField == 9,
 				false, true,  Tr("auth.tooltip.country"),  2, 1);
 			addGridField(Tr("auth.label.last_name"),  m_lastName,  m_activeField == 5,
@@ -4596,6 +4767,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail)
 		{
+			if (m_phase == Phase::Register)
+			{
+				// Plan C : réinitialiser état disponibilité username à la sortie de Register.
+				m_usernameCheckState = UsernameCheckState::Idle;
+				m_usernameCheckSeq++;
+				m_usernameDebounceTimer = 0.0;
+				m_usernameLastChecked.clear();
+			}
 			m_phase = Phase::Login;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();

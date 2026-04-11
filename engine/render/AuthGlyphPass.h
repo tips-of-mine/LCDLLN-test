@@ -49,6 +49,13 @@ namespace engine::render
 		bool IsValid() const { return m_pipeline != VK_NULL_HANDLE; }
 		bool HasUiFont() const { return m_fontGpuReady; }
 
+		/// Charge la police de valeurs de champs (ex. Morpheus.ttf). Nécessite Init() appelé avant.
+		bool UploadValueFontFromTtf(VkDevice device, VkPhysicalDevice physicalDevice,
+			VkQueue graphicsQueue, uint32_t queueFamilyIndex,
+			const uint8_t* ttfBytes, size_t ttfSize, float pixelHeight);
+
+		bool HasValueFont() const { return m_valueFontGpuReady; }
+
 		/// Largeur texte pour centrage (bitmap ou TTF selon chargement).
 		int32_t MeasureTextWidthPx(std::string_view text, int32_t scale) const;
 
@@ -67,14 +74,16 @@ namespace engine::render
 			int32_t originX, int32_t originY,
 			int32_t maxWidthPx,
 			int32_t scale,
-			const float color[4]) const;
+			const float color[4],
+			bool useValueFont = false) const;
 
 		void AppendTextTtf(std::vector<GlyphVertex>& vertices,
 			std::string_view text,
 			int32_t originX, int32_t originY,
 			int32_t maxWidthPx,
 			int32_t scale,
-			const float color[4]) const;
+			const float color[4],
+			const FontAtlasTtf& atlas) const;
 
 		void DestroyFontGpu(VkDevice device);
 
@@ -82,6 +91,18 @@ namespace engine::render
 			const uint32_t* vertSpirv, size_t vertWordCount,
 			const uint32_t* fragTtfSpirv, size_t fragTtfWordCount,
 			VkPipelineCache pipelineCache);
+
+		/// Méthode interne partagée : construit un atlas TTF, upload l'image R8 sur le GPU,
+		/// et met à jour le descriptor set fourni.
+		/// Requiert que m_fontDescriptorSetLayout, le sampler et le descriptorSet soient déjà alloués.
+		bool UploadFontAtlasToGpu(
+			FontAtlasTtf& atlas,
+			const uint8_t* ttfBytes, size_t ttfSize, float pixelHeight,
+			VkDevice device, VkPhysicalDevice physicalDevice,
+			VkQueue graphicsQueue, uint32_t queueFamilyIndex,
+			VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView,
+			VkSampler outSampler,
+			VkDescriptorSet outDescriptorSet);
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_pipeline = VK_NULL_HANDLE;
@@ -102,5 +123,17 @@ namespace engine::render
 		VkImage m_fontImage = VK_NULL_HANDLE;
 		VkDeviceMemory m_fontImageMemory = VK_NULL_HANDLE;
 		VkImageView m_fontImageView = VK_NULL_HANDLE;
+
+		// --- Second atlas TTF (police valeurs de champs, ex. Morpheus.ttf) ---
+		// Partage m_fontPipeline / m_fontPipelineLayout / m_fontDescriptorSetLayout
+		// (mêmes shaders, même vertex format). Seuls le descriptor set + image diffèrent.
+		FontAtlasTtf   m_valueFont{};
+		bool           m_valueFontGpuReady    = false;
+		VkDescriptorPool m_valueFontDescriptorPool = VK_NULL_HANDLE;
+		VkDescriptorSet  m_valueFontDescriptorSet  = VK_NULL_HANDLE;
+		VkSampler        m_valueFontSampler        = VK_NULL_HANDLE;
+		VkImage          m_valueFontImage           = VK_NULL_HANDLE;
+		VkDeviceMemory   m_valueFontImageMemory     = VK_NULL_HANDLE;
+		VkImageView      m_valueFontImageView       = VK_NULL_HANDLE;
 	};
 }

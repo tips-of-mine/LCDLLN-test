@@ -25,7 +25,9 @@
                 "field_row_extra_px": 0
             },
             "font_path": "fonts/Windlass.ttf",
-            "font_pixel_height": 28
+            "font_pixel_height": 28,
+            "value_font_path": "fonts/Morpheus.ttf",
+            "value_font_pixel_height": 24
         },
         "terrain": {
             "heightmap": "terrain/heightmap.r16h",

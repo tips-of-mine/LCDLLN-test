@@ -2898,6 +2898,13 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		}
 		case engine::platform::Window::AuthScreenCommand::BackToLogin:
 			LOG_INFO(Core, "[AuthUiPresenter] Phase change: {} -> Login", phaseName(m_phase));
+			if (m_phase == Phase::Register)
+			{
+				m_usernameCheckState = UsernameCheckState::Idle;
+				m_usernameCheckSeq++;
+				m_usernameDebounceTimer = 0.0;
+				m_usernameLastChecked.clear();
+			}
 			m_phase = Phase::Login;
 			m_activeField = 0;
 			m_userErrorText.clear();

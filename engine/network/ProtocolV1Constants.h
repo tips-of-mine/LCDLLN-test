@@ -63,4 +63,9 @@ namespace engine::network
 	/// Character creation (session required on Master).
 	constexpr uint16_t kOpcodeCharacterCreateRequest = 33u;
 	constexpr uint16_t kOpcodeCharacterCreateResponse = 34u;
+
+	/// Username availability check (Plan C).
+	/// Client→Master: check if login is already taken (unauthenticated).
+	constexpr uint16_t kOpcodeUsernameAvailableRequest  = 35u;
+	constexpr uint16_t kOpcodeUsernameAvailableResponse = 36u;
 }

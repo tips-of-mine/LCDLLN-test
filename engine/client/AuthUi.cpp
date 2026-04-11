@@ -25,9 +25,11 @@
 #include "engine/platform/Window.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <ctime>
 #include <format>
 #include <cstdlib>
 #include <cstring>
@@ -35,9 +37,6 @@
 #include <mutex>
 #include <thread>
 #include <vector>
-#if !defined(_WIN32)
-#include <array>
-#endif
 
 #if defined(_WIN32)
 #	include "engine/auth/Argon2Hash.h"
@@ -706,6 +705,40 @@ namespace engine::client
 			s = std::to_string(v);
 		}
 
+		/// Liste des codes pays ISO-2 triée alphabétiquement par code.
+		static constexpr std::array<std::string_view, 50> kCountryCodes = {
+			"AF","AL","AR","AT","AU","BE","BR","CA","CH","CL",
+			"CN","CO","CZ","DE","DK","DZ","EG","ES","FI","FR",
+			"GB","GR","HR","HU","ID","IE","IL","IN","IT","JP",
+			"KR","LU","MA","MX","NL","NO","NZ","PE","PL","PT",
+			"RO","RU","SA","SE","TN","TR","UA","US","VE","ZA"
+		};
+
+		int CountryIndexOf(std::string_view code)
+		{
+			for (int i = 0; i < static_cast<int>(kCountryCodes.size()); ++i)
+			{
+				if (kCountryCodes[static_cast<size_t>(i)] == code)
+					return i;
+			}
+			return 0;
+		}
+
+		std::string_view CountryCodeAt(int idx)
+		{
+			const int n = static_cast<int>(kCountryCodes.size());
+			if (n == 0) return "FR";
+			return kCountryCodes[static_cast<size_t>(((idx % n) + n) % n)];
+		}
+
+		void AdjustCountryCycle(std::string& code, int delta)
+		{
+			int idx = CountryIndexOf(code);
+			const int n = static_cast<int>(kCountryCodes.size());
+			idx = (((idx + delta) % n) + n) % n;
+			code = std::string(CountryCodeAt(idx));
+		}
+
 		std::string Pad2(int v)
 		{
 			v = std::clamp(v, 0, 99);
@@ -940,6 +973,7 @@ namespace engine::client
 		m_birthDay.clear();
 		m_birthMonth.clear();
 		m_birthYear.clear();
+		m_country.clear();
 		m_verifyCode.clear();
 		m_termsTitle.clear();
 		m_termsVersionLabel.clear();
@@ -2832,8 +2866,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	}
 	if (m_phase == Phase::Register)
 	{
-		if (m_login.empty() || m_password.empty() || m_passwordConfirm.empty() || m_email.empty() || m_firstName.empty()
-			|| m_lastName.empty() || m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
+		if (m_login.empty() || m_password.empty() || m_passwordConfirm.empty() || m_email.empty()
+			|| m_firstName.empty() || m_lastName.empty() || m_birthDay.empty()
+			|| m_birthMonth.empty() || m_birthYear.empty() || m_country.empty())
 		{
 			m_phase = Phase::Error;
 			m_userErrorText = Tr("auth.error.enter_register_fields");
@@ -3015,7 +3050,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				case 5: return &m_lastName;
 				case 6: return &m_birthDay;
 				case 7: return &m_birthMonth;
-				default: return &m_birthYear;
+				case 8: return &m_birthYear;
+				default: return &m_country;
 				}
 			case Phase::VerifyEmail:
 				return &m_verifyCode;
@@ -3164,11 +3200,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				if (m_phase == Phase::Register && input.MouseScrollDelta() != 0)
 				{
 					int32_t f = m_hoveredFieldIndex;
-					if (f < 6 || f > 8)
+					if ((f < 6 || f > 8) && f != 9)
 					{
 						f = static_cast<int32_t>(m_activeField);
 					}
-					if (f >= 6 && f <= 8)
+					if ((f >= 6 && f <= 8) || f == 9)
 					{
 						const int d = input.MouseScrollDelta() > 0 ? 1 : -1;
 						if (f == 6)
@@ -3179,10 +3215,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						{
 							AdjustBirthCycle(m_birthMonth, d, 1, 12);
 						}
-						else
+						else if (f == 8)
 						{
 							AdjustBirthCycle(m_birthYear, d, 1900, 2100);
 						}
+						else if (f == 9)
+							AdjustCountryCycle(m_country, d);
 					}
 				}
 
@@ -3655,7 +3693,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				if (std::string* field = currentField())
 				{
-					const bool registerBirthCombo = m_phase == Phase::Register && m_activeField >= 6u && m_activeField <= 8u;
+					const bool registerBirthCombo = m_phase == Phase::Register &&
+						((m_activeField >= 6u && m_activeField <= 8u) || m_activeField == 9u);
 					if (!registerBirthCombo)
 					{
 						for (unsigned char c : text)
@@ -3699,7 +3738,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			};
 			if (std::string* field = currentField())
 			{
-				if (m_phase == Phase::Register && m_activeField >= 6u && m_activeField <= 8u)
+				if (m_phase == Phase::Register && (
+					(m_activeField >= 6u && m_activeField <= 8u) || m_activeField == 9u))
 				{
 					if (m_activeField == 6)
 					{
@@ -3709,10 +3749,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					{
 						AdjustBirthCycle(m_birthMonth, -1, 1, 12);
 					}
-					else
+					else if (m_activeField == 8)
 					{
 						AdjustBirthCycle(m_birthYear, -1, 1900, 2100);
 					}
+					else if (m_activeField == 9)
+						AdjustCountryCycle(m_country, -1);
 				}
 				else
 				{
@@ -3730,7 +3772,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (m_phase == Phase::Login)
 				m_activeField = (m_activeField + 1u) % 2u;
 			else if (m_phase == Phase::Register)
-				m_activeField = (m_activeField + 1u) % 9u;
+				m_activeField = (m_activeField + 1u) % 10u;
 			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::ForgotPassword)
 				m_activeField = 0;
 			else
@@ -3738,9 +3780,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
 		}
 
-		if (!usingNativeAuth && m_phase == Phase::Register && m_activeField >= 6u && m_activeField <= 8u)
+		if (!usingNativeAuth && m_phase == Phase::Register && (
+				(m_activeField >= 6u && m_activeField <= 8u) || m_activeField == 9u))
 		{
-			const auto stepBirth = [this](int delta)
+			const auto stepCycle = [this](int delta)
 			{
 				if (m_activeField == 6)
 				{
@@ -3750,18 +3793,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				{
 					AdjustBirthCycle(m_birthMonth, delta, 1, 12);
 				}
-				else
+				else if (m_activeField == 8)
 				{
 					AdjustBirthCycle(m_birthYear, delta, 1900, 2100);
 				}
+				else if (m_activeField == 9)
+					AdjustCountryCycle(m_country, delta);
 			};
 			if (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Right))
 			{
-				stepBirth(1);
+				stepCycle(1);
 			}
 			if (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Left))
 			{
-				stepBirth(-1);
+				stepCycle(-1);
 			}
 		}
 
@@ -4115,15 +4160,91 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				AppendPasswordStars(out, m_passwordConfirm.size());
 				return out;
 			};
-			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"));
-			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"));
-			addField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2, true, false, {}, Tr("auth.tooltip.password_confirm"));
-			addField(Tr("common.email"), m_email, m_activeField == 3, false, false, {}, Tr("auth.tooltip.email"));
-			addField(Tr("auth.label.first_name"), m_firstName, m_activeField == 4, false, false, {}, Tr("auth.tooltip.first_name"));
-			addField(Tr("auth.label.last_name"), m_lastName, m_activeField == 5, false, false, {}, Tr("auth.tooltip.last_name"));
-			addField(Tr("auth.label.birth_day"), BirthCycleDisplay(m_birthDay, 1, 1, 31), m_activeField == 6, false, true, "auth.tooltip.birth_day");
-			addField(Tr("auth.label.birth_month"), BirthCycleDisplay(m_birthMonth, 1, 1, 12), m_activeField == 7, false, true, "auth.tooltip.birth_month");
-			addField(Tr("auth.label.birth_year"), BirthCycleDisplay(m_birthYear, 2000, 1900, 2100), m_activeField == 8, false, true, "auth.tooltip.birth_year");
+
+			// Calcul correspondance mots de passe
+			const bool pwdMatch    = !m_passwordConfirm.empty() && (m_password == m_passwordConfirm);
+			const bool pwdMismatch = !m_passwordConfirm.empty() && (m_password != m_passwordConfirm);
+
+			// Helper pour ajouter un champ de grille
+			auto addGridField = [&](std::string label, std::string value, bool active,
+				bool secret, bool cyclePicker, std::string tooltipText,
+				int32_t col, int32_t span, int32_t pwdMatchState = 0)
+			{
+				RenderField f{};
+				f.label           = std::move(label);
+				f.value           = std::move(value);
+				f.active          = active;
+				f.hovered         = static_cast<int32_t>(model.fields.size()) == m_hoveredFieldIndex;
+				f.secret          = secret;
+				f.cyclePicker     = cyclePicker;
+				f.tooltipText     = std::move(tooltipText);
+				f.gridColumn      = col;
+				f.gridSpan        = span;
+				f.passwordMatchState = pwdMatchState;
+				model.fields.push_back(std::move(f));
+			};
+
+			// Affichage mois localisé
+			auto monthDisplay = [this](std::string_view raw) -> std::string {
+				int v = 1;
+				if (!raw.empty())
+				{
+					try { v = std::clamp(std::stoi(std::string(raw)), 1, 12); }
+					catch (...) { v = 1; }
+				}
+				return std::string("< ") + Tr("month." + std::to_string(v)) + " >";
+			};
+
+			// Affichage pays localisé
+			auto countryDisplay = [this](std::string_view code) -> std::string {
+				if (code.empty()) return std::string("< ") + Tr("country.FR") + " >";
+				return std::string("< ") + Tr("country." + std::string(code)) + " >";
+			};
+
+			// Année de naissance par défaut = année courante - 25
+			static const int kDefaultYear = []() -> int {
+				const std::time_t t = std::time(nullptr);
+				struct std::tm tm{};
+#if defined(_WIN32)
+				localtime_s(&tm, &t);
+#else
+				localtime_r(&t, &tm);
+#endif
+				return 1900 + tm.tm_year - 25;
+			}();
+
+			// Disposition grille (10 champs, indices 0-9) :
+			// Ligne 0 : login (col0, span1), pays (col2, span1)
+			// Ligne 1 : lastName (col0, span1), firstName (col1, span1)
+			// Ligne 2 : email (col0, span3)
+			// Ligne 3 : birthDay (col0), birthMonth (col1), birthYear (col2)
+			// Ligne 4 : password (col0, span3)
+			// Ligne 5 : passwordConfirm (col0, span3)
+			addGridField(Tr("auth.label.login"),    m_login,    m_activeField == 0,
+				false, false, Tr("auth.tooltip.login"),    0, 1);
+			addGridField(Tr("auth.label.country"),  countryDisplay(m_country), m_activeField == 9,
+				false, true,  Tr("auth.tooltip.country"),  2, 1);
+			addGridField(Tr("auth.label.last_name"),  m_lastName,  m_activeField == 5,
+				false, false, Tr("auth.tooltip.last_name"),  0, 1);
+			addGridField(Tr("auth.label.first_name"), m_firstName, m_activeField == 4,
+				false, false, Tr("auth.tooltip.first_name"), 1, 1);
+			addGridField(Tr("common.email"),          m_email,     m_activeField == 3,
+				false, false, Tr("auth.tooltip.email"),      0, 3);
+			addGridField(Tr("auth.label.birth_day"),
+				BirthCycleDisplay(m_birthDay, 1, 1, 31),       m_activeField == 6,
+				false, true, Tr("auth.tooltip.birth_day"),   0, 1);
+			addGridField(Tr("auth.label.birth_month"),
+				monthDisplay(m_birthMonth),                     m_activeField == 7,
+				false, true, Tr("auth.tooltip.birth_month"), 1, 1);
+			addGridField(Tr("auth.label.birth_year"),
+				BirthCycleDisplay(m_birthYear, kDefaultYear, 1900, 2100), m_activeField == 8,
+				false, true, Tr("auth.tooltip.birth_year"),  2, 1);
+			addGridField(Tr("auth.label.password"),  maskedPassword(),  m_activeField == 1,
+				true,  false, Tr("auth.tooltip.password"),   0, 3);
+			addGridField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2,
+				true,  false, Tr("auth.tooltip.password_confirm"), 0, 3,
+				pwdMatch ? 1 : (pwdMismatch ? -1 : 0));
+
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;

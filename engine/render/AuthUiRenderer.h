@@ -23,6 +23,27 @@ namespace engine::render
 	/// Espace entre la droite du logo et le texte de statut serveur.
 	inline constexpr int32_t kAuthUiStatusBannerAfterLogoGapPx = 12;
 
+	/// Nombre de colonnes de la grille d'inscription.
+	inline constexpr int32_t kAuthUiGridColumns = 3;
+	/// Marge horizontale entre colonnes (px).
+	inline constexpr int32_t kAuthUiGridColGapPx = 12;
+
+	/// Calcule la position X et la largeur d'un champ dans la grille.
+	/// @param contentX     X de départ de la zone de contenu
+	/// @param contentW     Largeur totale de la zone de contenu
+	/// @param gridColumn   Index de colonne (0, 1 ou 2)
+	/// @param gridSpan     Nombre de colonnes occupées (1, 2 ou 3)
+	/// @param outX         [out] Position X du champ
+	/// @param outW         [out] Largeur du champ
+	inline void AuthUiGridFieldGeometry(int32_t contentX, int32_t contentW,
+	    int32_t gridColumn, int32_t gridSpan,
+	    int32_t& outX, int32_t& outW)
+	{
+	    const int32_t colW = (contentW - (kAuthUiGridColumns - 1) * kAuthUiGridColGapPx) / kAuthUiGridColumns;
+	    outX = contentX + gridColumn * (colW + kAuthUiGridColGapPx);
+	    outW = colW * gridSpan + kAuthUiGridColGapPx * (gridSpan - 1);
+	}
+
 	/// Référence dérivée de la largeur panneau (titres, espacements structurels dans les métriques).
 	inline int32_t AuthUiLayoutBodyScaleFromPanelW(int32_t panelW)
 	{

@@ -199,11 +199,9 @@ namespace engine::render
 				metrics.authSectionTitleOffsetFromPanelTopPx -= kAuthLoginRegisterSectionLiftPx;
 			}
 			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
-			// Le libellé du premier champ est dessiné à topOffset - labelAboveFieldPxGlyph (scale = smallScale).
-			const int32_t labelAboveFieldPxGlyph = smallScale * 11 + 6;
 			const int32_t sectionTitleGlyphH = 7 * bodyScale;
 			const int32_t minTopFromSection =
-				metrics.authSectionTitleOffsetFromPanelTopPx + sectionTitleGlyphH + 6 + labelAboveFieldPxGlyph;
+				metrics.authSectionTitleOffsetFromPanelTopPx + sectionTitleGlyphH + 6 + labelAboveFieldPx;
 			if (!model.infoBanner.empty() && !metrics.authStatusBannerBesideLogo)
 			{
 				// Bannière : fond à panelY + topOffset - 42, hauteur 34 ; marge sous la section avant la bannière.

@@ -199,14 +199,21 @@ namespace engine::render
 				metrics.authSectionTitleOffsetFromPanelTopPx -= kAuthLoginRegisterSectionLiftPx;
 			}
 			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
+			// Le libellé du premier champ (AuthGlyphPass) est dessiné à topOffset - labelAboveFieldPxGlyph.
+			// smallScaleGlyph = max(2, smallScale - 1) car le glyph pass applique un niveau supplémentaire.
+			const int32_t smallScaleGlyph = std::max(2, smallScale - 1);
+			const int32_t labelAboveFieldPxGlyph = smallScaleGlyph * 11 + 6;
+			const int32_t sectionTitleGlyphH = 7 * smallScale;
+			const int32_t minTopFromSection =
+				metrics.authSectionTitleOffsetFromPanelTopPx + sectionTitleGlyphH + 6 + labelAboveFieldPxGlyph;
 			if (!model.infoBanner.empty() && !metrics.authStatusBannerBesideLogo)
 			{
 				// Bannière : fond à panelY + topOffset - 42, hauteur 34 ; marge sous la section avant la bannière.
-				metrics.topOffset = std::max(afterSection + 48, 146);
+				metrics.topOffset = std::max({ afterSection + 48, 146, minTopFromSection });
 			}
 			else
 			{
-				metrics.topOffset = std::max(afterSection + 12, 88);
+				metrics.topOffset = std::max({ afterSection + 12, 88, minTopFromSection });
 			}
 		}
 

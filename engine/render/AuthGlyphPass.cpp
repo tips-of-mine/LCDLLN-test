@@ -751,7 +751,7 @@ namespace engine::render
 		VkDevice device, VkPhysicalDevice physicalDevice,
 		VkQueue graphicsQueue, uint32_t queueFamilyIndex,
 		VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView,
-		VkSampler outSampler,
+		VkSampler sampler,
 		VkDescriptorSet outDescriptorSet)
 	{
 		ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
@@ -972,7 +972,7 @@ namespace engine::render
 		}
 
 		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler = outSampler;
+		imageInfo.sampler = sampler;
 		imageInfo.imageView = outView;
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 

@@ -101,7 +101,7 @@ namespace engine::render
 			VkDevice device, VkPhysicalDevice physicalDevice,
 			VkQueue graphicsQueue, uint32_t queueFamilyIndex,
 			VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView,
-			VkSampler outSampler,
+			VkSampler sampler,
 			VkDescriptorSet outDescriptorSet);
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;

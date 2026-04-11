@@ -168,7 +168,9 @@ namespace engine::render
 		else
 		{
 			const bool minimalAuthWide =
-				(state.login || state.registerMode || state.error) && state.minimalChrome && !state.loginArtColumn;
+				(state.login || state.registerMode || state.verifyEmail
+				 || state.forgotPassword || state.characterCreate || state.error)
+				&& state.minimalChrome && !state.loginArtColumn;
 			metrics.authTitleUseViewportWidth = minimalAuthWide && model.layoutAuthTitleCenterViewportWidth;
 
 			// Remonter le titre principal (~1 ligne) par rapport à la config.

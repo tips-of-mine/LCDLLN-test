@@ -555,6 +555,18 @@ namespace engine::render
 				addRect(fieldX, y + kAuthUiFieldBoxHeightPx - 2, fieldW, 2, r, g, b, 1.0f);
 			}
 
+			// Plan C : indicateur disponibilite username (Idle=0 = pas de barre).
+			if (field.usernameCheckState != 0)
+			{
+				constexpr int32_t kBarH = 2;
+				const int32_t barY = y + kAuthUiFieldBoxHeightPx - kBarH;
+				// 1=Pending->gris, 2=Available->vert, 3=Taken->rouge
+				float ur = 0.53f, ug = 0.53f, ub = 0.53f;
+				if (field.usernameCheckState == 2) { ur = 0.13f; ug = 0.80f; ub = 0.27f; }
+				if (field.usernameCheckState == 3) { ur = 0.80f; ug = 0.13f; ub = 0.13f; }
+				addRect(fieldX, barY, fieldW, kBarH, ur, ug, ub, 1.0f);
+			}
+
 			if (!field.tooltipText.empty())
 			{
 				const int32_t bodyScaleHint = AuthUiClassicTextScaleFromPanelW(panelW);

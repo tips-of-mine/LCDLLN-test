@@ -168,7 +168,9 @@ namespace engine::render
 		else
 		{
 			const bool minimalAuthWide =
-				(state.login || state.registerMode || state.error) && state.minimalChrome && !state.loginArtColumn;
+				(state.login || state.registerMode || state.verifyEmail
+				 || state.forgotPassword || state.characterCreate || state.error)
+				&& state.minimalChrome && !state.loginArtColumn;
 			metrics.authTitleUseViewportWidth = minimalAuthWide && model.layoutAuthTitleCenterViewportWidth;
 
 			// Remonter le titre principal (~1 ligne) par rapport à la config.
@@ -199,14 +201,17 @@ namespace engine::render
 				metrics.authSectionTitleOffsetFromPanelTopPx -= kAuthLoginRegisterSectionLiftPx;
 			}
 			const int32_t afterSection = metrics.authSectionTitleOffsetFromPanelTopPx + bodyLineStep;
+			const int32_t sectionTitleGlyphH = 7 * bodyScale;
+			const int32_t minTopFromSection =
+				metrics.authSectionTitleOffsetFromPanelTopPx + sectionTitleGlyphH + 6 + labelAboveFieldPx;
 			if (!model.infoBanner.empty() && !metrics.authStatusBannerBesideLogo)
 			{
 				// Bannière : fond à panelY + topOffset - 42, hauteur 34 ; marge sous la section avant la bannière.
-				metrics.topOffset = std::max(afterSection + 48, 146);
+				metrics.topOffset = std::max({ afterSection + 48, 146, minTopFromSection });
 			}
 			else
 			{
-				metrics.topOffset = std::max(afterSection + 12, 88);
+				metrics.topOffset = std::max({ afterSection + 12, 88, minTopFromSection });
 			}
 		}
 
@@ -494,29 +499,80 @@ namespace engine::render
 		const int32_t topOffset = layout.topOffset;
 
 		const int32_t fieldRowStep = layout.fieldRowStepPx;
+
+		// Calcul des lignes logiques pour rendu grille.
+		// Chaque fois que gridColumn revient à 0 (ou un champ sans grille), c'est une nouvelle ligne.
+		std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
+		{
+			int32_t row = -1;
+			int32_t lastCol = kAuthUiGridColumns; // force une nouvelle ligne pour le premier champ
+			for (int32_t i = 0; i < fieldCount; ++i)
+			{
+				const auto& f = (model.fields.size() > static_cast<size_t>(i))
+				    ? model.fields[static_cast<size_t>(i)] : engine::client::AuthUiPresenter::RenderField{};
+				if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+				    ++row;
+				lastCol = (f.gridColumn < 0) ? kAuthUiGridColumns : f.gridColumn;
+				fieldLogicalRow[static_cast<size_t>(i)] = row;
+			}
+		}
+
 		for (int32_t i = 0; i < fieldCount; ++i)
 		{
-			const int32_t y = panelY + topOffset + i * fieldRowStep;
-			addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.surface, 0.98f);
-			const bool activeField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].active : false;
-			const bool hoveredField = static_cast<size_t>(i) < model.fields.size() ? model.fields[static_cast<size_t>(i)].hovered : false;
+			const auto& field = (static_cast<size_t>(i) < model.fields.size())
+			    ? model.fields[static_cast<size_t>(i)] : engine::client::AuthUiPresenter::RenderField{};
+
+			// Position grille
+			int32_t fieldX = contentX;
+			int32_t fieldW = contentW;
+			if (field.gridColumn >= 0)
+			{
+				AuthUiGridFieldGeometry(contentX, contentW, field.gridColumn, field.gridSpan, fieldX, fieldW);
+			}
+			const int32_t y = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(i)] * fieldRowStep;
+
+			addThemeRect(fieldX, y, fieldW, kAuthUiFieldBoxHeightPx, theme.surface, 0.98f);
+			const bool activeField = field.active;
+			const bool hoveredField = field.hovered;
 			// Survol : plus de rectangle semi-opaque sur tout le champ (effet « bande » / ligne qui masque le texte).
 			// Léger voile + barre gauche plus marquée ; le texte reste dessiné par-dessus (AuthGlyphPass).
 			if (hoveredField && !activeField)
 			{
-				addThemeRect(contentX, y, contentW, kAuthUiFieldBoxHeightPx, theme.primary, 0.045f);
+				addThemeRect(fieldX, y, fieldW, kAuthUiFieldBoxHeightPx, theme.primary, 0.045f);
 			}
 			const int32_t stripeW = (hoveredField && !activeField) ? 7 : 5;
 			const float sr = activeField ? 0.72f : (hoveredField ? 0.52f : 0.26f);
 			const float sg = activeField ? 0.58f : (hoveredField ? 0.48f : 0.38f);
 			const float sb = activeField ? 0.24f : (hoveredField ? 0.30f : 0.68f);
-			addRect(contentX, y, stripeW, kAuthUiFieldBoxHeightPx, sr, sg, sb, 1.0f);
-			if (static_cast<size_t>(i) < model.fields.size() && !model.fields[static_cast<size_t>(i)].tooltipText.empty())
+			addRect(fieldX, y, stripeW, kAuthUiFieldBoxHeightPx, sr, sg, sb, 1.0f);
+
+			// Indicateur correspondance mots de passe
+			if (field.passwordMatchState != 0)
+			{
+				const float r = (field.passwordMatchState > 0) ? 0.3f : 0.85f;
+				const float g = (field.passwordMatchState > 0) ? 0.72f : 0.25f;
+				const float b = (field.passwordMatchState > 0) ? 0.42f : 0.25f;
+				addRect(fieldX, y + kAuthUiFieldBoxHeightPx - 2, fieldW, 2, r, g, b, 1.0f);
+			}
+
+			// Plan C : indicateur disponibilite username (Idle=0 = pas de barre).
+			if (field.usernameCheckState != 0)
+			{
+				constexpr int32_t kBarH = 2;
+				const int32_t barY = y + kAuthUiFieldBoxHeightPx - kBarH;
+				// 1=Pending->gris, 2=Available->vert, 3=Taken->rouge
+				float ur = 0.53f, ug = 0.53f, ub = 0.53f;
+				if (field.usernameCheckState == 2) { ur = 0.13f; ug = 0.80f; ub = 0.27f; }
+				if (field.usernameCheckState == 3) { ur = 0.80f; ug = 0.13f; ub = 0.13f; }
+				addRect(fieldX, barY, fieldW, kBarH, ur, ug, ub, 1.0f);
+			}
+
+			if (!field.tooltipText.empty())
 			{
 				const int32_t bodyScaleHint = AuthUiClassicTextScaleFromPanelW(panelW);
 				const int32_t smallScaleHint = std::max(2, bodyScaleHint - 1);
 				const int32_t labelAboveFieldPx = smallScaleHint * 11 + 6;
-				const int32_t iconX = std::max(contentX + 10, contentX + contentW - 36);
+				const int32_t iconX = std::max(fieldX + 10, fieldX + fieldW - 36);
 				const int32_t iconY = y - labelAboveFieldPx;
 				addThemeRect(iconX, iconY, 18, 18, theme.accent, model.hoveredFieldInfoIndex == i ? 1.0f : 0.65f);
 			}
@@ -529,7 +585,10 @@ namespace engine::render
 			? std::max(36, bodyLineStepMetrics + 16)
 			: std::max(28, bodyLineStepMetrics + 10);
 		const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
-		const int32_t bodyStartY = panelY + topOffset + fieldCount * fieldRowStep + afterFieldsGap;
+		const int32_t logicalRowCount = fieldCount > 0
+		    ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1
+		    : 0;
+		const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldRowStep + afterFieldsGap;
 		for (int32_t localIdx = 0; localIdx < model.visibleBodyLineCount; ++localIdx)
 		{
 			const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;

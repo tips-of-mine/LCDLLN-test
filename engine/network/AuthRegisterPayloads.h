@@ -125,4 +125,26 @@ namespace engine::network
 	/// Builds VERIFY_EMAIL_RESPONSE packet. success=1 OK, 0=error.
 	std::vector<uint8_t> BuildVerifyEmailResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
 	std::vector<uint8_t> BuildVerifyEmailResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
+
+	// -------------------------------------------------------------------------
+	// Plan C — Username availability check
+	// -------------------------------------------------------------------------
+
+	/// Client→Master: check if a login is available (no session required).
+	struct UsernameAvailableRequestPayload
+	{
+		std::string login;
+		uint32_t    seq = 0; ///< Client sequence number; echoed back for stale-detection.
+	};
+	std::optional<UsernameAvailableRequestPayload> ParseUsernameAvailableRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildUsernameAvailableRequestPayload(std::string_view login, uint32_t seq);
+
+	/// Master→Client: result of availability check.
+	struct UsernameAvailableResponsePayload
+	{
+		uint8_t  available = 0; ///< 1 = available, 0 = taken or invalid.
+		uint32_t seq = 0;       ///< Echoed seq from request.
+	};
+	std::optional<UsernameAvailableResponsePayload> ParseUsernameAvailableResponsePayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildUsernameAvailableResponsePacket(uint8_t available, uint32_t seq, uint32_t requestId, uint64_t sessionIdHeader);
 }

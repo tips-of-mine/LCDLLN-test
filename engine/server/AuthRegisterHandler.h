@@ -52,6 +52,8 @@ namespace engine::server
 			const uint8_t* payload, size_t payloadSize);
 		void HandleAuth(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
+		void HandleUsernameAvailable(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
+			const uint8_t* payload, size_t payloadSize);
 
 		NetServer* m_server = nullptr;
 		AccountStore* m_accountStore = nullptr;

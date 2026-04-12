@@ -22,7 +22,11 @@ SET @m16_ti_s := IF(@m16_ti = 0,
   'SELECT 1');
 PREPARE m16_ti_p FROM @m16_ti_s; EXECUTE m16_ti_p; DEALLOCATE PREPARE m16_ti_p;
 
--- Index unique sur tag_id
+-- Index unique sur tag_id.
+-- IMPORTANT : Sur une base non vide, les lignes existantes auront tag_id = '' ce qui viole
+-- la contrainte UNIQUE. Backfiller avant de lancer sur un environnement avec des comptes :
+--   UPDATE accounts SET tag_id = LPAD(id, 10, '0') WHERE tag_id = '';
+
 SET @m16_ix := (
   SELECT COUNT(*) FROM information_schema.statistics
   WHERE table_schema = DATABASE() AND table_name = 'accounts' AND index_name = 'idx_accounts_tag_id'

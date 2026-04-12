@@ -17,6 +17,8 @@ namespace engine::server
 
 		uint64_t CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
 			std::string_view first_name, std::string_view last_name, std::string_view birth_date,
+			std::string_view country_code,
+			std::string& tag_id_out,
 			AccountEmailLocale email_locale = AccountEmailLocale::English) override;
 
 		std::optional<AccountRecord> FindByLogin(std::string_view normalisedLogin) override;

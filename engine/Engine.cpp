@@ -1,4 +1,4 @@
-#include "engine/Engine.h"
+﻿#include "engine/Engine.h"
 
 #include "engine/core/Log.h"
 #include "engine/editor/EditorMode.h"
@@ -1171,6 +1171,36 @@ namespace engine
 													else if (!uiFontPath.empty() && ttfFragPtr == nullptr)
 													{
 														LOG_WARN(Render, "[Boot] auth_ttf.frag.spv missing — place compiled SPIR-V under game/data/shaders/");
+													}
+													// --- Second atlas: valeurs de champs (ex. Morpheus.ttf) ---
+													const std::string valueFontPath = m_cfg.GetString("render.auth_ui.value_font_path", "");
+													if (!valueFontPath.empty() && ttfFragPtr != nullptr)
+													{
+														std::vector<uint8_t> valueFontBytes = engine::platform::FileSystem::ReadAllBytesContent(m_cfg, valueFontPath);
+														if (!valueFontBytes.empty())
+														{
+															const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
+																m_cfg.GetInt("render.auth_ui.value_font_pixel_height", 24), 12, 96));
+															if (m_authGlyphPass.UploadValueFontFromTtf(
+																m_vkDeviceContext.GetDevice(),
+																m_vkDeviceContext.GetPhysicalDevice(),
+																m_vkDeviceContext.GetGraphicsQueue(),
+																m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+																valueFontBytes.data(),
+																valueFontBytes.size(),
+																valueFontPx))
+															{
+																LOG_INFO(Render, "[Boot] Auth UI value font loaded: {}", valueFontPath);
+															}
+															else
+															{
+																LOG_WARN(Render, "[Boot] Auth UI value font upload failed: {}", valueFontPath);
+															}
+														}
+														else
+														{
+															LOG_WARN(Render, "[Boot] Auth UI value font file missing or empty: {}", valueFontPath);
+														}
 													}
 												}
 												else

@@ -745,32 +745,32 @@ namespace engine::render
 		}
 	}
 
-	bool AuthGlyphPass::UploadUiFontFromTtf(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, uint32_t queueFamilyIndex,
-		const uint8_t* ttfBytes, size_t ttfSize, float pixelHeight)
+	bool AuthGlyphPass::UploadFontAtlasToGpu(
+		FontAtlasTtf& atlas,
+		const uint8_t* ttfBytes, size_t ttfSize, float pixelHeight,
+		VkDevice device, VkPhysicalDevice physicalDevice,
+		VkQueue graphicsQueue, uint32_t queueFamilyIndex,
+		VkImage& outImage, VkDeviceMemory& outMemory, VkImageView& outView,
+		VkSampler sampler,
+		VkDescriptorSet outDescriptorSet)
 	{
-		if (m_fontPipeline == VK_NULL_HANDLE || m_fontDescriptorSet == VK_NULL_HANDLE || ttfBytes == nullptr || ttfSize == 0u)
-		{
-			return false;
-		}
-
-		m_fontGpuReady = false;
-		ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
+		ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
 
 		FontAtlasTtf baked{};
 		if (!baked.BuildFromMemory(ttfBytes, ttfSize, pixelHeight))
 		{
 			LOG_WARN(Render, "[AuthGlyphPass] Échec construction atlas TTF");
-			m_uiFont = FontAtlasTtf{};
+			atlas = FontAtlasTtf{};
 			return false;
 		}
-		m_uiFont = std::move(baked);
+		atlas = std::move(baked);
 
-		const uint32_t w = static_cast<uint32_t>(m_uiFont.AtlasWidth());
-		const uint32_t h = static_cast<uint32_t>(m_uiFont.AtlasHeight());
-		const std::vector<uint8_t>& pixels = m_uiFont.AtlasR8();
+		const uint32_t w = static_cast<uint32_t>(atlas.AtlasWidth());
+		const uint32_t h = static_cast<uint32_t>(atlas.AtlasHeight());
+		const std::vector<uint8_t>& pixels = atlas.AtlasR8();
 		if (w == 0u || h == 0u || pixels.size() < static_cast<size_t>(w) * static_cast<size_t>(h))
 		{
-			m_uiFont = FontAtlasTtf{};
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 
@@ -786,35 +786,35 @@ namespace engine::render
 		imgInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		if (vkCreateImage(device, &imgInfo, nullptr, &m_fontImage) != VK_SUCCESS || m_fontImage == VK_NULL_HANDLE)
+		if (vkCreateImage(device, &imgInfo, nullptr, &outImage) != VK_SUCCESS || outImage == VK_NULL_HANDLE)
 		{
-			m_uiFont = FontAtlasTtf{};
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 
 		VkMemoryRequirements memReq{};
-		vkGetImageMemoryRequirements(device, m_fontImage, &memReq);
+		vkGetImageMemoryRequirements(device, outImage, &memReq);
 		const uint32_t memTypeIdx = engine::render::vk::FindMemoryType(physicalDevice, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		if (memTypeIdx == UINT32_MAX)
 		{
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 		VkMemoryAllocateInfo allocImg{};
 		allocImg.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocImg.allocationSize = memReq.size;
 		allocImg.memoryTypeIndex = memTypeIdx;
-		if (vkAllocateMemory(device, &allocImg, nullptr, &m_fontImageMemory) != VK_SUCCESS)
+		if (vkAllocateMemory(device, &allocImg, nullptr, &outMemory) != VK_SUCCESS)
 		{
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
-		if (vkBindImageMemory(device, m_fontImage, m_fontImageMemory, 0) != VK_SUCCESS)
+		if (vkBindImageMemory(device, outImage, outMemory, 0) != VK_SUCCESS)
 		{
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 
@@ -826,8 +826,8 @@ namespace engine::render
 		VkBuffer stagingBuf = VK_NULL_HANDLE;
 		if (vkCreateBuffer(device, &bufInfo, nullptr, &stagingBuf) != VK_SUCCESS)
 		{
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 		VkMemoryRequirements bufReq{};
@@ -842,16 +842,16 @@ namespace engine::render
 		if (stagingMemIdx == UINT32_MAX || vkAllocateMemory(device, &stagingAlloc, nullptr, &stagingMem) != VK_SUCCESS)
 		{
 			vkDestroyBuffer(device, stagingBuf, nullptr);
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 		if (vkBindBufferMemory(device, stagingBuf, stagingMem, 0) != VK_SUCCESS)
 		{
 			vkFreeMemory(device, stagingMem, nullptr);
 			vkDestroyBuffer(device, stagingBuf, nullptr);
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 		void* mapPtr = nullptr;
@@ -859,8 +859,8 @@ namespace engine::render
 		{
 			vkFreeMemory(device, stagingMem, nullptr);
 			vkDestroyBuffer(device, stagingBuf, nullptr);
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 		std::memcpy(mapPtr, pixels.data(), pixels.size());
@@ -868,47 +868,47 @@ namespace engine::render
 
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_fontImage;
+		viewInfo.image = outImage;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		viewInfo.format = VK_FORMAT_R8_UNORM;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.layerCount = 1;
-		if (vkCreateImageView(device, &viewInfo, nullptr, &m_fontImageView) != VK_SUCCESS)
+		if (vkCreateImageView(device, &viewInfo, nullptr, &outView) != VK_SUCCESS)
 		{
 			vkFreeMemory(device, stagingMem, nullptr);
 			vkDestroyBuffer(device, stagingBuf, nullptr);
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 
-		VkCommandPoolCreateInfo poolInfo{};
-		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-		poolInfo.queueFamilyIndex = queueFamilyIndex;
-		VkCommandPool pool = VK_NULL_HANDLE;
-		if (vkCreateCommandPool(device, &poolInfo, nullptr, &pool) != VK_SUCCESS)
+		VkCommandPoolCreateInfo cmdPoolInfo{};
+		cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+		cmdPoolInfo.queueFamilyIndex = queueFamilyIndex;
+		VkCommandPool cmdPool = VK_NULL_HANDLE;
+		if (vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool) != VK_SUCCESS)
 		{
 			vkFreeMemory(device, stagingMem, nullptr);
 			vkDestroyBuffer(device, stagingBuf, nullptr);
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 		VkCommandBufferAllocateInfo cbAlloc{};
 		cbAlloc.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		cbAlloc.commandPool = pool;
+		cbAlloc.commandPool = cmdPool;
 		cbAlloc.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		cbAlloc.commandBufferCount = 1;
 		VkCommandBuffer cmd = VK_NULL_HANDLE;
 		if (vkAllocateCommandBuffers(device, &cbAlloc, &cmd) != VK_SUCCESS)
 		{
-			vkDestroyCommandPool(device, pool, nullptr);
+			vkDestroyCommandPool(device, cmdPool, nullptr);
 			vkFreeMemory(device, stagingMem, nullptr);
 			vkDestroyBuffer(device, stagingBuf, nullptr);
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 
@@ -925,7 +925,7 @@ namespace engine::render
 		toDst.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		toDst.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		toDst.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		toDst.image = m_fontImage;
+		toDst.image = outImage;
 		toDst.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toDst);
 
@@ -938,7 +938,7 @@ namespace engine::render
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = 1;
 		region.imageExtent = { w, h, 1 };
-		vkCmdCopyBufferToImage(cmd, stagingBuf, m_fontImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(cmd, stagingBuf, outImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 		VkImageMemoryBarrier toShader{};
 		toShader.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -948,7 +948,7 @@ namespace engine::render
 		toShader.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		toShader.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		toShader.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		toShader.image = m_fontImage;
+		toShader.image = outImage;
 		toShader.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toShader);
 
@@ -960,33 +960,114 @@ namespace engine::render
 		submit.pCommandBuffers = &cmd;
 		const VkResult sub = vkQueueSubmit(graphicsQueue, 1, &submit, VK_NULL_HANDLE);
 		vkQueueWaitIdle(graphicsQueue);
-		vkDestroyCommandPool(device, pool, nullptr);
+		vkDestroyCommandPool(device, cmdPool, nullptr);
 		vkFreeMemory(device, stagingMem, nullptr);
 		vkDestroyBuffer(device, stagingBuf, nullptr);
 
 		if (sub != VK_SUCCESS)
 		{
-			ReleaseUiFontImageOnly(device, m_fontImage, m_fontImageMemory, m_fontImageView);
-			m_uiFont = FontAtlasTtf{};
+			ReleaseUiFontImageOnly(device, outImage, outMemory, outView);
+			atlas = FontAtlasTtf{};
 			return false;
 		}
 
 		VkDescriptorImageInfo imageInfo{};
-		imageInfo.sampler = m_fontSampler;
-		imageInfo.imageView = m_fontImageView;
+		imageInfo.sampler = sampler;
+		imageInfo.imageView = outView;
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkWriteDescriptorSet write{};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet = m_fontDescriptorSet;
+		write.dstSet = outDescriptorSet;
 		write.dstBinding = 0;
 		write.descriptorCount = 1;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		write.pImageInfo = &imageInfo;
 		vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
+		LOG_INFO(Render, "[AuthGlyphPass] Atlas TTF upload OK ({}x{})", w, h);
+		return true;
+	}
+
+	bool AuthGlyphPass::UploadUiFontFromTtf(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, uint32_t queueFamilyIndex,
+		const uint8_t* ttfBytes, size_t ttfSize, float pixelHeight)
+	{
+		if (m_fontPipeline == VK_NULL_HANDLE || m_fontDescriptorSet == VK_NULL_HANDLE || ttfBytes == nullptr || ttfSize == 0u)
+		{
+			return false;
+		}
+		m_fontGpuReady = false;
+		if (!UploadFontAtlasToGpu(m_uiFont, ttfBytes, ttfSize, pixelHeight,
+				device, physicalDevice, graphicsQueue, queueFamilyIndex,
+				m_fontImage, m_fontImageMemory, m_fontImageView,
+				m_fontSampler, m_fontDescriptorSet))
+		{
+			return false;
+		}
 		m_fontGpuReady = true;
-		LOG_INFO(Render, "[AuthGlyphPass] Police UI TTF upload OK ({}x{})", w, h);
+		return true;
+	}
+
+	bool AuthGlyphPass::UploadValueFontFromTtf(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue graphicsQueue, uint32_t queueFamilyIndex,
+		const uint8_t* ttfBytes, size_t ttfSize, float pixelHeight)
+	{
+		if (m_fontPipeline == VK_NULL_HANDLE || m_fontDescriptorSetLayout == VK_NULL_HANDLE || ttfBytes == nullptr || ttfSize == 0u)
+		{
+			return false;
+		}
+		m_valueFontGpuReady = false;
+
+		// Créer le descriptor pool + set + sampler pour le second atlas (réutilise le même layout).
+		if (m_valueFontDescriptorPool == VK_NULL_HANDLE)
+		{
+			VkDescriptorPoolSize poolSize{};
+			poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			poolSize.descriptorCount = 1;
+			VkDescriptorPoolCreateInfo poolInfo{};
+			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			poolInfo.maxSets = 1;
+			poolInfo.poolSizeCount = 1;
+			poolInfo.pPoolSizes = &poolSize;
+			if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &m_valueFontDescriptorPool) != VK_SUCCESS)
+			{
+				return false;
+			}
+		}
+		if (m_valueFontDescriptorSet == VK_NULL_HANDLE)
+		{
+			VkDescriptorSetAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = m_valueFontDescriptorPool;
+			allocInfo.descriptorSetCount = 1;
+			allocInfo.pSetLayouts = &m_fontDescriptorSetLayout;
+			if (vkAllocateDescriptorSets(device, &allocInfo, &m_valueFontDescriptorSet) != VK_SUCCESS)
+			{
+				return false;
+			}
+		}
+		if (m_valueFontSampler == VK_NULL_HANDLE)
+		{
+			VkSamplerCreateInfo samp{};
+			samp.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			samp.magFilter = VK_FILTER_LINEAR;
+			samp.minFilter = VK_FILTER_LINEAR;
+			samp.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samp.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samp.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			if (vkCreateSampler(device, &samp, nullptr, &m_valueFontSampler) != VK_SUCCESS)
+			{
+				return false;
+			}
+		}
+
+		if (!UploadFontAtlasToGpu(m_valueFont, ttfBytes, ttfSize, pixelHeight,
+				device, physicalDevice, graphicsQueue, queueFamilyIndex,
+				m_valueFontImage, m_valueFontImageMemory, m_valueFontImageView,
+				m_valueFontSampler, m_valueFontDescriptorSet))
+		{
+			return false;
+		}
+		m_valueFontGpuReady = true;
 		return true;
 	}
 
@@ -995,9 +1076,10 @@ namespace engine::render
 		int32_t originX, int32_t originY,
 		int32_t maxWidthPx,
 		int32_t scale,
-		const float color[4]) const
+		const float color[4],
+		const FontAtlasTtf& atlas) const
 	{
-		if (text.empty() || !m_uiFont.IsValid())
+		if (text.empty() || !atlas.IsValid())
 		{
 			return;
 		}
@@ -1049,7 +1131,7 @@ namespace engine::render
 				++lineIndex;
 				continue;
 			}
-			const float advPx = m_uiFont.GlyphXAdvance(cp) * mul;
+			const float advPx = atlas.GlyphXAdvance(cp) * mul;
 			if (static_cast<int32_t>(std::floor(static_cast<float>(originX) + penX + advPx)) > maxX && penX > 0.f)
 			{
 				penX = 0.f;
@@ -1059,10 +1141,10 @@ namespace engine::render
 					continue;
 				}
 			}
-			const float lineBaseY = static_cast<float>(m_uiFont.LineTopToBaselinePx() + lineIndex * m_uiFont.LineHeightPx());
+			const float lineBaseY = static_cast<float>(atlas.LineTopToBaselinePx() + lineIndex * atlas.LineHeightPx());
 			float pen = penX;
 			float x0 = 0.f, y0 = 0.f, x1 = 0.f, y1 = 0.f, s0 = 0.f, t0 = 0.f, s1 = 0.f, t1 = 0.f, xadv = 0.f;
-			if (!m_uiFont.GetPackedQuad(cp, &pen, lineBaseY, &x0, &y0, &x1, &y1, &s0, &t0, &s1, &t1, &xadv))
+			if (!atlas.GetPackedQuad(cp, &pen, lineBaseY, &x0, &y0, &x1, &y1, &s0, &t0, &s1, &t1, &xadv))
 			{
 				continue;
 			}
@@ -1080,15 +1162,21 @@ namespace engine::render
 		int32_t originX, int32_t originY,
 		int32_t maxWidthPx,
 		int32_t scale,
-		const float color[4]) const
+		const float color[4],
+		bool useValueFont) const
 	{
 		if (text.empty())
 		{
 			return;
 		}
+		if (useValueFont && m_valueFontGpuReady && m_valueFont.IsValid())
+		{
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont);
+			return;
+		}
 		if (m_fontGpuReady && m_uiFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont);
 			return;
 		}
 		std::string normalized = SimplifyUtf8(text);
@@ -1231,6 +1319,8 @@ namespace engine::render
 
 		std::vector<GlyphVertex> vertices;
 		vertices.reserve(m_maxVertices);
+		// Second vertex list for value-font glyphs (Morpheus atlas, same pipeline layout, different descriptor set).
+		std::vector<GlyphVertex> verticesValue;
 
 		const AuthUiLayoutMetrics layout = BuildAuthUiLayoutMetrics(extent, state, model);
 		const int32_t panelW = layout.panelW;
@@ -1471,13 +1561,38 @@ namespace engine::render
 		{
 			const int32_t labelAboveFieldPx = smallScale * 11 + 6;
 			const int32_t valueBelowTopPx = 12;
-			for (int32_t i = 0; i < static_cast<int32_t>(model.fields.size()); ++i)
+
+			// Pré-calcul lignes logiques (même logique que AuthUiRenderer).
+			const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
+			std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
 			{
-				const int32_t y = panelY + topOffset + i * fieldRowStep;
+				int32_t row = -1;
+				int32_t lastCol = kAuthUiGridColumns;
+				for (int32_t i = 0; i < fieldCount; ++i)
+				{
+					const auto& f = model.fields[static_cast<size_t>(i)];
+					if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+						++row;
+					lastCol = (f.gridColumn < 0) ? kAuthUiGridColumns : f.gridColumn;
+					fieldLogicalRow[static_cast<size_t>(i)] = row;
+				}
+			}
+
+			for (int32_t i = 0; i < fieldCount; ++i)
+			{
 				const auto& field = model.fields[static_cast<size_t>(i)];
-				AppendText(vertices, field.label, contentX + 10, y - labelAboveFieldPx, contentW / 2, smallScale, mutedColor);
+				const int32_t y = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(i)] * fieldRowStep;
+
+				int32_t fx = contentX;
+				int32_t fw = contentW;
+				if (field.gridColumn >= 0)
+				{
+					AuthUiGridFieldGeometry(contentX, contentW, field.gridColumn, field.gridSpan, fx, fw);
+				}
+
+				AppendText(vertices, field.label, fx + 10, y - labelAboveFieldPx, fw / 2, smallScale, mutedColor);
 				const float* valueTint = field.active ? titleColor : (field.hovered ? primaryColor : bodyColor);
-				AppendText(vertices, field.value, contentX + 12, y + valueBelowTopPx, contentW - 24, bodyScale, valueTint);
+				AppendText(verticesValue, field.value, fx + 12, y + valueBelowTopPx, fw - 24, bodyScale, valueTint, /*useValueFont=*/true);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
 				{
 					const int32_t tooltipY = y + 36;
@@ -1490,15 +1605,16 @@ namespace engine::render
 				}
 				if (field.active && !field.cyclePicker)
 				{
-					const int32_t caretX = contentX + 12 + MeasureTextWidthPx(field.value, bodyScale) + 2;
-					appendBlock(std::min(caretX, contentX + contentW - 14), y + valueBelowTopPx - 1, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
+					const int32_t caretX = fx + 12 + MeasureTextWidthPx(field.value, bodyScale) + 2;
+					appendBlock(std::min(caretX, fx + fw - 14), y + valueBelowTopPx - 1, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
 				}
 			}
 			const int32_t bodyLinePitch = centeredLanguageSelection
 				? std::max(36, bodyLineStep + 16)
 				: std::max(28, bodyLineStep + 10);
 			const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
-			const int32_t bodyStartY = panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldRowStep + afterFieldsGap;
+			const int32_t logicalRowCount = fieldCount > 0 ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1 : 0;
+			const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldRowStep + afterFieldsGap;
 			for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
@@ -1606,11 +1722,34 @@ namespace engine::render
 			}
 		}
 
-		if (vertices.empty())
+		// Clamp verticesValue so total fits in the mapped buffer.
+		const uint32_t mainCount = static_cast<uint32_t>(vertices.size());
+		if (mainCount + verticesValue.size() > m_maxVertices)
+		{
+			const uint32_t available = mainCount < m_maxVertices ? m_maxVertices - mainCount : 0u;
+			if (verticesValue.size() > available)
+			{
+				verticesValue.resize(available);
+			}
+		}
+		const uint32_t valueCount = static_cast<uint32_t>(verticesValue.size());
+
+		if (mainCount == 0u && valueCount == 0u)
 		{
 			return;
 		}
-		std::memcpy(m_mappedVertices, vertices.data(), vertices.size() * sizeof(GlyphVertex));
+
+		// Upload main vertices, then value-font vertices contiguously.
+		auto* dst = static_cast<GlyphVertex*>(m_mappedVertices);
+		if (mainCount > 0u)
+		{
+			std::memcpy(dst, vertices.data(), mainCount * sizeof(GlyphVertex));
+		}
+		if (valueCount > 0u)
+		{
+			std::memcpy(dst + mainCount, verticesValue.data(), valueCount * sizeof(GlyphVertex));
+		}
+
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = static_cast<float>(extent.height);
@@ -1623,30 +1762,55 @@ namespace engine::render
 		scissor.extent = extent;
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
-		const bool useFont = m_fontGpuReady && m_fontPipeline != VK_NULL_HANDLE;
-		if (useFont)
-		{
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipeline);
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_fontDescriptorSet, 0, nullptr);
-		}
-		else
-		{
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-		}
-		VkDeviceSize offset = 0;
-		vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &offset);
+
 		PushConstants push{};
 		push.viewportSize[0] = static_cast<float>(extent.width);
 		push.viewportSize[1] = static_cast<float>(extent.height);
-		if (useFont)
+
+		const bool useFont = m_fontGpuReady && m_fontPipeline != VK_NULL_HANDLE;
+		VkDeviceSize vbOffset = 0;
+		vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &vbOffset);
+
+		// --- Pass 1 : main vertices (uiFont pipeline or bitmap pipeline) ---
+		if (mainCount > 0u)
 		{
+			if (useFont)
+			{
+				vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipeline);
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_fontDescriptorSet, 0, nullptr);
+				vkCmdPushConstants(cmd, m_fontPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+			}
+			else
+			{
+				vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+				vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+			}
+			vkCmdDraw(cmd, mainCount, 1, 0, 0);
+		}
+
+		// --- Pass 2 : value-font vertices (same pipeline layout, second descriptor set) ---
+		if (valueCount > 0u && m_valueFontGpuReady && m_fontPipeline != VK_NULL_HANDLE)
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipeline);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_valueFontDescriptorSet, 0, nullptr);
 			vkCmdPushConstants(cmd, m_fontPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+			vkCmdDraw(cmd, valueCount, 1, mainCount, 0);
 		}
-		else
+		else if (valueCount > 0u && !m_valueFontGpuReady)
 		{
-			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+			// Fallback: draw value vertices with the active pipeline (already bound from pass 1, or bind now).
+			if (useFont)
+			{
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_fontDescriptorSet, 0, nullptr);
+				vkCmdPushConstants(cmd, m_fontPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+			}
+			else
+			{
+				vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+				vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+			}
+			vkCmdDraw(cmd, valueCount, 1, mainCount, 0);
 		}
-		vkCmdDraw(cmd, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 	}
 
 	void AuthGlyphPass::Destroy(VkDevice device)
@@ -1655,6 +1819,37 @@ namespace engine::render
 		{
 			return;
 		}
+
+		// Destroy second atlas (value font) resources first (no shared pipeline/layout to destroy).
+		m_valueFontGpuReady = false;
+		m_valueFont = FontAtlasTtf{};
+		if (m_valueFontImageView != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(device, m_valueFontImageView, nullptr);
+			m_valueFontImageView = VK_NULL_HANDLE;
+		}
+		if (m_valueFontImage != VK_NULL_HANDLE)
+		{
+			vkDestroyImage(device, m_valueFontImage, nullptr);
+			m_valueFontImage = VK_NULL_HANDLE;
+		}
+		if (m_valueFontImageMemory != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(device, m_valueFontImageMemory, nullptr);
+			m_valueFontImageMemory = VK_NULL_HANDLE;
+		}
+		if (m_valueFontSampler != VK_NULL_HANDLE)
+		{
+			vkDestroySampler(device, m_valueFontSampler, nullptr);
+			m_valueFontSampler = VK_NULL_HANDLE;
+		}
+		if (m_valueFontDescriptorPool != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorPool(device, m_valueFontDescriptorPool, nullptr);
+			m_valueFontDescriptorPool = VK_NULL_HANDLE;
+		}
+		m_valueFontDescriptorSet = VK_NULL_HANDLE;
+
 		DestroyFontGpu(device);
 		if (m_vertexMemory != VK_NULL_HANDLE)
 		{

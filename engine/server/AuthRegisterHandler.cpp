@@ -72,6 +72,11 @@ namespace engine::server
 			HandleAuth(connId, requestId, sessionIdHeader, payload, payloadSize);
 			return;
 		}
+		if (opcode == engine::network::kOpcodeUsernameAvailableRequest)
+		{
+			HandleUsernameAvailable(connId, requestId, sessionIdHeader, payload, payloadSize);
+			return;
+		}
 	}
 
 	void AuthRegisterHandler::HandleRegister(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
@@ -341,5 +346,30 @@ namespace engine::server
 			m_connectionSessionMap->Add(connId, session_id);
 		m_authSuccessTotal.fetch_add(1, std::memory_order_relaxed);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Auth success (connId={}, account_id={}, session_id={})", connId, opt->account_id, session_id);
+	}
+
+	void AuthRegisterHandler::HandleUsernameAvailable(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
+		const uint8_t* payload, size_t payloadSize)
+	{
+		using namespace engine::network;
+		auto parsed = ParseUsernameAvailableRequestPayload(payload, payloadSize);
+		if (!parsed)
+		{
+			LOG_DEBUG(Auth, "[AuthRegisterHandler] UsernameAvailable: invalid payload (connId={})", connId);
+			return;
+		}
+		if (!m_accountStore)
+		{
+			LOG_WARN(Auth, "[AuthRegisterHandler] UsernameAvailable: no account store");
+			auto pkt = BuildUsernameAvailableResponsePacket(0, parsed->seq, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+		const bool taken = m_accountStore->ExistsLogin(parsed->login);
+		const uint8_t available = taken ? 0u : 1u;
+		auto pkt = BuildUsernameAvailableResponsePacket(available, parsed->seq, requestId, sessionIdHeader);
+		if (!pkt.empty())
+			m_server->Send(connId, pkt);
+		LOG_DEBUG(Auth, "[AuthRegisterHandler] UsernameAvailable: login={} available={}", parsed->login, (int)available);
 	}
 }

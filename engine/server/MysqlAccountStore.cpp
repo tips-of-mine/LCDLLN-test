@@ -136,6 +136,15 @@ namespace engine::server
 		// Uppercase the country code.
 		for (char& c : cc)
 			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+		// Validate cc is exactly 2 ASCII uppercase letters (anti-injection guard for SQL LIKE).
+		{
+			bool valid = (cc.size() == 2 && cc[0] >= 'A' && cc[0] <= 'Z' && cc[1] >= 'A' && cc[1] <= 'Z');
+			if (!valid)
+			{
+				LOG_WARN(Auth, "[MysqlAccountStore] CreateAccount: invalid country_code '{}', using XX", cc);
+				cc = "XX";
+			}
+		}
 
 		std::time_t now_t = std::time(nullptr);
 		std::tm now_tm{};
@@ -144,8 +153,8 @@ namespace engine::server
 #else
 		gmtime_r(&now_t, &now_tm);
 #endif
-		// Last digit of year (e.g. 2026 -> '6').
-		const char year_digit = static_cast<char>('0' + (now_tm.tm_year % 10));
+		// Last digit of calendar year (e.g. 2026 -> '6').
+		const char year_digit = static_cast<char>('0' + ((now_tm.tm_year + 1900) % 10));
 		// 2-digit month (01-12).
 		std::ostringstream month_ss;
 		month_ss << std::setw(2) << std::setfill('0') << (now_tm.tm_mon + 1);
@@ -175,7 +184,7 @@ namespace engine::server
 		// Build the TAG-ID: prefix (5 chars) + 5-digit zero-padded sequence.
 		std::ostringstream tag_ss;
 		tag_ss << prefix << std::setw(5) << std::setfill('0') << seq;
-		tag_id_out = tag_ss.str(); // e.g. "FR60200001"
+		const std::string local_tag_id = tag_ss.str(); // e.g. "FR60200001" — assigned to tag_id_out only on success
 
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
@@ -204,7 +213,7 @@ namespace engine::server
 		const std::string esc_email = EscapeMysql(mysql, db_email);
 		const std::string esc_hash = EscapeMysql(mysql, final_hash);
 		const std::string esc_country = EscapeMysql(mysql, cc);
-		const std::string esc_tag_id = EscapeMysql(mysql, tag_id_out);
+		const std::string esc_tag_id = EscapeMysql(mysql, local_tag_id);
 		const unsigned loc = static_cast<unsigned>(email_locale);
 
 		std::string sql = "INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified, country_code, tag_id) VALUES ('";
@@ -258,6 +267,7 @@ namespace engine::server
 			LOG_ERROR(Auth, "[MysqlAccountStore] CreateAccount: insert_id=0");
 			return 0;
 		}
+		tag_id_out = local_tag_id; // Assign only on success — caller must not use tag_id_out if return is 0.
 		LOG_INFO(Auth, "[MysqlAccountStore] CreateAccount OK (account_id={}, login={}, tag_id={})", id, login_key, tag_id_out);
 		return id;
 	}

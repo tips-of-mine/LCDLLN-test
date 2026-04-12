@@ -138,7 +138,8 @@ namespace engine::network
 			if (!r.ReadU64(out.account_id))
 				return std::nullopt;
 		}
-		(void)r.ReadString(out.tag_id); // optionnel, backward-compatible
+		if (out.success != 0)
+			(void)r.ReadString(out.tag_id); // optionnel, backward-compatible (absent sur anciens serveurs)
 		return out;
 	}
 

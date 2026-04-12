@@ -175,6 +175,7 @@ namespace engine::server
 			return;
 		}
 		const AccountEmailLocale emailLocale = ParseAccountEmailLocale(parsed->locale_tag);
+		std::string tag_id;
 		uint64_t account_id = m_accountStore->CreateAccount(
 			login_norm,
 			email_norm,
@@ -182,6 +183,8 @@ namespace engine::server
 			parsed->first_name,
 			parsed->last_name,
 			parsed->birth_date,
+			parsed->country_code,
+			tag_id,
 			emailLocale);
 		if (account_id == 0)
 		{
@@ -193,7 +196,7 @@ namespace engine::server
 		}
 		if (m_auditLog) m_auditLog->LogRegisterSuccess(ipKey, account_id);
 		uint8_t one = 1;
-		auto pkt = BuildRegisterResponsePacket(one, account_id, requestId, sessionIdHeader);
+		auto pkt = BuildRegisterResponsePacket(one, account_id, tag_id, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Register success (connId={}, account_id={})", connId, account_id);

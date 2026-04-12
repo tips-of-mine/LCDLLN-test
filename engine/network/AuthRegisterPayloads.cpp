@@ -57,6 +57,8 @@ namespace engine::network
 			if (!r.ReadString(out.locale_tag))
 				return std::nullopt;
 		}
+		// country_code : optionnel (backward-compatible ; absent dans les anciens clients).
+		(void)r.ReadString(out.country_code); // échec silencieux = chaîne vide
 		return out;
 	}
 
@@ -72,13 +74,14 @@ namespace engine::network
 
 	std::vector<uint8_t> BuildRegisterRequestPayload(std::string_view login, std::string_view email, std::string_view client_hash,
 	                                                 std::string_view first_name, std::string_view last_name,
-	                                                 std::string_view birth_date, std::string_view captcha_token, std::string_view locale_tag)
+	                                                 std::string_view birth_date, std::string_view captcha_token, std::string_view locale_tag,
+	                                                 std::string_view country_code)
 	{
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteString(login) || !w.WriteString(client_hash) || !w.WriteString(email))
 			return {};
-		if (!first_name.empty() || !last_name.empty() || !birth_date.empty() || !captcha_token.empty() || !locale_tag.empty())
+		if (!first_name.empty() || !last_name.empty() || !birth_date.empty() || !captcha_token.empty() || !locale_tag.empty() || !country_code.empty())
 		{
 			if (!w.WriteString(first_name) || !w.WriteString(last_name) || !w.WriteString(birth_date))
 				return {};
@@ -86,6 +89,7 @@ namespace engine::network
 				return {};
 			if (!w.WriteString(locale_tag))
 				return {};
+			w.WriteString(country_code);
 		}
 		buf.resize(w.Offset());
 		return buf;
@@ -134,6 +138,8 @@ namespace engine::network
 			if (!r.ReadU64(out.account_id))
 				return std::nullopt;
 		}
+		if (out.success != 0)
+			(void)r.ReadString(out.tag_id); // optionnel, backward-compatible (absent sur anciens serveurs)
 		return out;
 	}
 
@@ -163,7 +169,8 @@ namespace engine::network
 		return builder.Data();
 	}
 
-	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint64_t accountId, uint32_t requestId, uint64_t responseHeaderSessionId)
+	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint64_t accountId,
+	    std::string_view tag_id, uint32_t requestId, uint64_t responseHeaderSessionId)
 	{
 		PacketBuilder builder;
 		ByteWriter w = builder.PayloadWriter();
@@ -171,6 +178,8 @@ namespace engine::network
 			return {};
 		if (success != 0 && !w.WriteU64(accountId))
 			return {};
+		if (success != 0)
+			w.WriteString(tag_id);
 		const size_t payloadBytes = w.Offset();
 		if (!builder.Finalize(kOpcodeRegisterResponse, 0, requestId, responseHeaderSessionId, payloadBytes))
 			return {};

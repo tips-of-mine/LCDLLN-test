@@ -27,5 +27,7 @@ namespace engine::server
 		AccountStatus status = AccountStatus::Active;
 		bool email_verified = false;
 		AccountEmailLocale email_locale = AccountEmailLocale::English;
+		std::string country_code; ///< Code pays ISO-2 (ex. "FR"). Vide si inconnu.
+		std::string tag_id;       ///< Identifiant TAG-ID généré à l'inscription (ex. "FR60400123"). Vide si non généré.
 	};
 }

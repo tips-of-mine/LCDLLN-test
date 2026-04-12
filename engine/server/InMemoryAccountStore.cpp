@@ -3,6 +3,8 @@
 #include "engine/auth/Argon2Hash.h"
 #include "engine/core/Log.h"
 
+#include <chrono>
+#include <ctime>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -10,8 +12,10 @@
 namespace engine::server
 {
 	uint64_t InMemoryAccountStore::CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
-	                                             std::string_view first_name, std::string_view last_name, std::string_view birth_date,
-	                                             AccountEmailLocale email_locale)
+		std::string_view first_name, std::string_view last_name, std::string_view birth_date,
+		std::string_view country_code,
+		std::string& tag_id_out,
+		AccountEmailLocale email_locale)
 	{
 		std::lock_guard<std::recursive_mutex> lock(m_mutex);
 		std::string login_key(NormaliseLoginView(login));
@@ -65,6 +69,29 @@ namespace engine::server
 		rec.final_hash = std::move(final_hash);
 		rec.status      = AccountStatus::Active;
 		rec.email_locale = email_locale;
+		// Génération TAG-ID (stub RAM : suffixe = account_id, pas de vrai séquençage par préfixe).
+		{
+			const auto now = std::chrono::system_clock::now();
+			const std::time_t t = std::chrono::system_clock::to_time_t(now);
+			std::tm tm_val{};
+#if defined(_WIN32)
+			localtime_s(&tm_val, &t);
+#else
+			localtime_r(&t, &tm_val);
+#endif
+			const int year_digit = (tm_val.tm_year + 1900) % 10;
+			const int month      = tm_val.tm_mon + 1;
+			std::string cc = country_code.empty() ? "XX" : std::string(country_code).substr(0, 2);
+			// Mettre en majuscules.
+			for (char& c : cc) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+			char tag_buf[11];
+			std::snprintf(tag_buf, sizeof(tag_buf), "%s%1d%02d%05llu",
+				cc.c_str(), year_digit, month,
+				static_cast<unsigned long long>(account_id));
+			tag_id_out = tag_buf;
+		}
+		rec.country_code = std::string(country_code);
+		rec.tag_id       = tag_id_out;
 		m_by_login[rec.login] = rec;
 		if (!rec.email.empty())
 			m_by_email[rec.email] = rec.account_id;

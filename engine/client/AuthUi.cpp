@@ -986,6 +986,7 @@ namespace engine::client
 		m_termsTotalLength = 0;
 		m_userErrorText.clear();
 		m_infoBanner.clear();
+		m_registeredTagId.clear();
 		m_pendingVerifyAccountId = 0;
 		m_pendingTermsEditionId = 0;
 		m_termsScrolledToBottom = false;
@@ -1500,6 +1501,11 @@ namespace engine::client
 				m_phase = Phase::VerifyEmail;
 				m_userErrorText.clear();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.register_ok") : copy.message;
+				if (!copy.tagId.empty())
+				{
+					m_registeredTagId = copy.tagId;
+					m_infoBanner += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
+				}
 				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: {}", m_infoBanner);
 			}
 			else
@@ -1552,6 +1558,7 @@ namespace engine::client
 			{
 				m_phase = Phase::Login;
 				m_userErrorText.clear();
+				m_registeredTagId.clear();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.email_verified") : copy.message;
 				LOG_INFO(Core, "[AuthUiPresenter] VerifyEmail OK: {}", m_infoBanner);
 			}
@@ -1715,6 +1722,7 @@ namespace engine::client
 		const std::string email = m_email;
 		const std::string firstName = m_firstName;
 		const std::string lastName = m_lastName;
+		const std::string country = m_country;
 		int birthY = 0;
 		int birthM = 0;
 		int birthD = 0;
@@ -1756,7 +1764,7 @@ namespace engine::client
 		}
 
 		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, serverFingerprint,
-								   locale]() {
+								   locale, country]() {
 			LOG_INFO(Net, "[AUTH-REG] worker thread started (login_len={} email_len={})", login.size(), email.size());
 			try
 			{
@@ -1781,7 +1789,7 @@ namespace engine::client
 				}
 				engine::network::RequestResponseDispatcher disp(&client);
 				std::vector<uint8_t> payload =
-					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
+					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale, country);
 				if (payload.empty())
 				{
 					local.ready = true;
@@ -1809,6 +1817,8 @@ namespace engine::client
 							if (reg && reg->success != 0)
 							{
 								local.accountId = reg->account_id;
+								if (!reg->tag_id.empty())
+									local.tagId = reg->tag_id;
 								ok = true;
 								return;
 							}
@@ -3006,6 +3016,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_birthYear.size());
 			return;
 		}
+		if (m_country.size() != 2 || !std::isalpha(static_cast<unsigned char>(m_country[0])) || !std::isalpha(static_cast<unsigned char>(m_country[1])))
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.enter_country");
+			LOG_INFO(Core, "[AUTH-REG] submit rejected: invalid country ('{}')", m_country);
+			return;
+		}
 		LOG_INFO(Core,
 			"[AUTH-REG] submit accepted -> StartRegisterWorker (login_len={} email_len={} first_len={} last_len={} pwd_len={} "
 			"birth_d_len={} birth_m_len={} birth_y_len={})",
@@ -3865,6 +3882,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 							const size_t maxLen =
 								(m_phase == Phase::Register && (m_activeField == 6 || m_activeField == 7)) ? 2u :
 								(m_phase == Phase::Register && m_activeField == 8) ? 4u :
+								(m_phase == Phase::Register && m_activeField == 9) ? 2u :
 								(m_phase == Phase::VerifyEmail) ? 6u :
 								(m_phase == Phase::CharacterCreate) ? 32u : 256u;
 							if (field->size() >= maxLen)
@@ -4423,6 +4441,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				true,  false, Tr("auth.tooltip.password_confirm"), 0, 3,
 				pwdMatch ? 1 : (pwdMismatch ? -1 : 0));
 
+
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
@@ -4785,6 +4804,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_phase = Phase::Login;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
+			m_registeredTagId.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Auth sub-screen -> Login");
 			return true;
 		}

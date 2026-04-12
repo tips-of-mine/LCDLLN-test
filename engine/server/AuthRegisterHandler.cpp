@@ -188,7 +188,7 @@ namespace engine::server
 		}
 		if (m_auditLog) m_auditLog->LogRegisterSuccess(ipKey, account_id);
 		uint8_t one = 1;
-		auto pkt = BuildRegisterResponsePacket(one, account_id, requestId, sessionIdHeader);
+		auto pkt = BuildRegisterResponsePacket(one, account_id, {}, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
 		LOG_INFO(Auth, "[AuthRegisterHandler] Register success (connId={}, account_id={})", connId, account_id);

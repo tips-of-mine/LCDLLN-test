@@ -31,6 +31,7 @@ namespace engine::network
 		std::string birth_date;    ///< yyyy-mm-dd
 		std::string captcha_token; ///< M33.3: CAPTCHA response token from client widget. Empty when absent.
 		std::string locale_tag;    ///< ISO-style language code for account email locale.
+		std::string country_code; ///< Code ISO-2 pays saisi à l'inscription (ex. "FR"). Peut être vide.
 	};
 
 	/// Parses AUTH_REQUEST payload. Returns nullopt if truncated or invalid.
@@ -48,7 +49,8 @@ namespace engine::network
 	                                                 std::string_view last_name = {},
 	                                                 std::string_view birth_date = {},
 	                                                 std::string_view captcha_token = {},
-	                                                 std::string_view locale_tag = {});
+	                                                 std::string_view locale_tag = {},
+	                                                 std::string_view country_code = {});
 
 	/// Parsed AUTH_RESPONSE payload: success, session_id (if success), server_time_sec, version_gate, error_code (if fail).
 	struct AuthResponsePayload
@@ -68,6 +70,7 @@ namespace engine::network
 		uint8_t success = 0;
 		uint64_t account_id = 0;
 		NetErrorCode error_code = NetErrorCode::OK;
+		std::string tag_id; ///< TAG-ID généré (ex. "FR60400123"). Vide en cas d'erreur.
 	};
 	std::optional<RegisterResponsePayload> ParseRegisterResponsePayload(const uint8_t* payload, size_t payloadSize);
 
@@ -79,7 +82,8 @@ namespace engine::network
 	std::vector<uint8_t> BuildAuthResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t responseHeaderSessionId);
 
 	/// Builds REGISTER_RESPONSE packet. success: 1=ok, 0=fail. If fail, error_code in payload.
-	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint64_t accountId, uint32_t requestId, uint64_t sessionIdHeader);
+	std::vector<uint8_t> BuildRegisterResponsePacket(uint8_t success, uint64_t accountId,
+	    std::string_view tag_id, uint32_t requestId, uint64_t sessionIdHeader);
 	std::vector<uint8_t> BuildRegisterResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
 
 	// -------------------------------------------------------------------------

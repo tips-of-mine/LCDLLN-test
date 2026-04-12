@@ -389,6 +389,7 @@ namespace engine::client
 			std::string termsLocale;
 			std::string termsContent;
 			std::string message;
+			std::string tagId; ///< TAG-ID reçu après inscription réussie (AsyncKind::Register). Vide si absent ou erreur.
 
 			// Pour AsyncKind::StatusProbe.
 			StatusCache statusCache{};
@@ -413,6 +414,7 @@ namespace engine::client
 		std::unique_ptr<engine::network::NetClient> m_masterClient;
 		// Heap-allocated in Init() — StableMutex avoids SRWLOCK crash (STAB.14).
 		std::unique_ptr<AuthMutex> m_asyncMutex;
+		std::string m_registeredTagId; ///< TAG-ID reçu après inscription réussie. Affiché dans le bandeau de confirmation.
 	};
 
 }

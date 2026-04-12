@@ -951,6 +951,7 @@ namespace engine::client
 		m_termsTotalLength = 0;
 		m_userErrorText.clear();
 		m_infoBanner.clear();
+		m_registeredTagId.clear();
 		m_pendingVerifyAccountId = 0;
 		m_pendingTermsEditionId = 0;
 		m_termsScrolledToBottom = false;
@@ -1463,6 +1464,11 @@ namespace engine::client
 				m_phase = Phase::VerifyEmail;
 				m_userErrorText.clear();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.register_ok") : copy.message;
+				if (!copy.tagId.empty())
+				{
+					m_registeredTagId = copy.tagId;
+					m_infoBanner += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
+				}
 				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: {}", m_infoBanner);
 			}
 			else
@@ -1515,6 +1521,7 @@ namespace engine::client
 			{
 				m_phase = Phase::Login;
 				m_userErrorText.clear();
+				m_registeredTagId.clear();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.email_verified") : copy.message;
 				LOG_INFO(Core, "[AuthUiPresenter] VerifyEmail OK: {}", m_infoBanner);
 			}
@@ -1756,6 +1763,8 @@ namespace engine::client
 							if (reg && reg->success != 0)
 							{
 								local.accountId = reg->account_id;
+								if (!reg->tag_id.empty())
+									local.tagId = reg->tag_id;
 								ok = true;
 								return;
 							}
@@ -4478,6 +4487,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_phase = Phase::Login;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
+			m_registeredTagId.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Auth sub-screen -> Login");
 			return true;
 		}

@@ -940,6 +940,7 @@ namespace engine::client
 		m_birthDay.clear();
 		m_birthMonth.clear();
 		m_birthYear.clear();
+		m_country.clear();
 		m_verifyCode.clear();
 		m_termsTitle.clear();
 		m_termsVersionLabel.clear();
@@ -1669,6 +1670,7 @@ namespace engine::client
 		const std::string email = m_email;
 		const std::string firstName = m_firstName;
 		const std::string lastName = m_lastName;
+		const std::string country = m_country;
 		int birthY = 0;
 		int birthM = 0;
 		int birthD = 0;
@@ -1710,7 +1712,7 @@ namespace engine::client
 		}
 
 		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, serverFingerprint,
-								   locale]() {
+								   locale, country]() {
 			LOG_INFO(Net, "[AUTH-REG] worker thread started (login_len={} email_len={})", login.size(), email.size());
 			try
 			{
@@ -1735,7 +1737,7 @@ namespace engine::client
 				}
 				engine::network::RequestResponseDispatcher disp(&client);
 				std::vector<uint8_t> payload =
-					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale);
+					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale, country);
 				if (payload.empty())
 				{
 					local.ready = true;
@@ -2842,7 +2844,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	if (m_phase == Phase::Register)
 	{
 		if (m_login.empty() || m_password.empty() || m_passwordConfirm.empty() || m_email.empty() || m_firstName.empty()
-			|| m_lastName.empty() || m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty())
+			|| m_lastName.empty() || m_birthDay.empty() || m_birthMonth.empty() || m_birthYear.empty() || m_country.empty())
 		{
 			m_phase = Phase::Error;
 			m_userErrorText = Tr("auth.error.enter_register_fields");
@@ -2865,6 +2867,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_birthDay.size(),
 				m_birthMonth.size(),
 				m_birthYear.size());
+			return;
+		}
+		if (m_country.size() != 2 || !std::isalpha(static_cast<unsigned char>(m_country[0])) || !std::isalpha(static_cast<unsigned char>(m_country[1])))
+		{
+			m_phase = Phase::Error;
+			m_userErrorText = Tr("auth.error.enter_country");
+			LOG_INFO(Core, "[AUTH-REG] submit rejected: invalid country ('{}')", m_country);
 			return;
 		}
 		LOG_INFO(Core,
@@ -3024,7 +3033,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				case 5: return &m_lastName;
 				case 6: return &m_birthDay;
 				case 7: return &m_birthMonth;
-				default: return &m_birthYear;
+				case 8: return &m_birthYear;
+				default: return &m_country;
 				}
 			case Phase::VerifyEmail:
 				return &m_verifyCode;
@@ -3680,6 +3690,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 							const size_t maxLen =
 								(m_phase == Phase::Register && (m_activeField == 6 || m_activeField == 7)) ? 2u :
 								(m_phase == Phase::Register && m_activeField == 8) ? 4u :
+								(m_phase == Phase::Register && m_activeField == 9) ? 2u :
 								(m_phase == Phase::VerifyEmail) ? 6u :
 								(m_phase == Phase::CharacterCreate) ? 32u : 256u;
 							if (field->size() >= maxLen)
@@ -3739,7 +3750,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (m_phase == Phase::Login)
 				m_activeField = (m_activeField + 1u) % 2u;
 			else if (m_phase == Phase::Register)
-				m_activeField = (m_activeField + 1u) % 9u;
+				m_activeField = (m_activeField + 1u) % 10u;
 			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::ForgotPassword)
 				m_activeField = 0;
 			else
@@ -4133,6 +4144,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addField(Tr("auth.label.birth_day"), BirthCycleDisplay(m_birthDay, 1, 1, 31), m_activeField == 6, false, true, "auth.tooltip.birth_day");
 			addField(Tr("auth.label.birth_month"), BirthCycleDisplay(m_birthMonth, 1, 1, 12), m_activeField == 7, false, true, "auth.tooltip.birth_month");
 			addField(Tr("auth.label.birth_year"), BirthCycleDisplay(m_birthYear, 2000, 1900, 2100), m_activeField == 8, false, true, "auth.tooltip.birth_year");
+			addField(Tr("auth.label.country"), m_country, m_activeField == 9, false, false, {}, Tr("auth.tooltip.country"));
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;

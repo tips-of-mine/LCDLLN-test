@@ -289,6 +289,7 @@ namespace engine::client
 		std::string m_birthDay;
 		std::string m_birthMonth;
 		std::string m_birthYear;
+		std::string m_country;       ///< Code pays ISO-2 saisi à l'inscription (ex. "FR").
 		std::string m_verifyCode;
 		std::string m_termsTitle;
 		std::string m_termsVersionLabel;

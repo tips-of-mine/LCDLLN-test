@@ -87,7 +87,7 @@ namespace engine::server
 			char tag_buf[11];
 			std::snprintf(tag_buf, sizeof(tag_buf), "%s%1d%02d%05llu",
 				cc.c_str(), year_digit, month,
-				static_cast<unsigned long long>(m_nextAccountId));
+				static_cast<unsigned long long>(account_id));
 			tag_id_out = tag_buf;
 		}
 		rec.country_code = std::string(country_code);

@@ -10,6 +10,9 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -84,7 +87,10 @@ namespace engine::server
 	MysqlAccountStore::MysqlAccountStore(engine::server::db::ConnectionPool* pool) : m_pool(pool) {}
 
 	uint64_t MysqlAccountStore::CreateAccount(std::string_view login, std::string_view email, std::string_view client_hash,
-		std::string_view first_name, std::string_view last_name, std::string_view birth_date, AccountEmailLocale email_locale)
+		std::string_view first_name, std::string_view last_name, std::string_view birth_date,
+		std::string_view country_code,
+		std::string& tag_id_out,
+		AccountEmailLocale email_locale)
 	{
 		(void)first_name;
 		(void)last_name;
@@ -124,6 +130,53 @@ namespace engine::server
 			return 0;
 		}
 
+		// Build TAG-ID prefix: CCYMM (2-letter country code + last year digit + 2-digit month).
+		// Use current UTC time for the YMM part.
+		std::string cc(country_code.size() >= 2 ? country_code.substr(0, 2) : "XX");
+		// Uppercase the country code.
+		for (char& c : cc)
+			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+
+		std::time_t now_t = std::time(nullptr);
+		std::tm now_tm{};
+#if defined(_WIN32)
+		gmtime_s(&now_tm, &now_t);
+#else
+		gmtime_r(&now_t, &now_tm);
+#endif
+		// Last digit of year (e.g. 2026 -> '6').
+		const char year_digit = static_cast<char>('0' + (now_tm.tm_year % 10));
+		// 2-digit month (01-12).
+		std::ostringstream month_ss;
+		month_ss << std::setw(2) << std::setfill('0') << (now_tm.tm_mon + 1);
+		const std::string prefix = cc + year_digit + month_ss.str(); // e.g. "FR602"
+
+		// Sequence query — done before main Acquire to keep pool (size 1) free.
+		uint64_t seq = 1;
+		{
+			auto conn = m_pool->Acquire();
+			MYSQL* mysql_seq = conn.get();
+			if (mysql_seq)
+			{
+				const std::string sql_seq =
+					"SELECT COALESCE(MAX(CAST(SUBSTR(tag_id, 6) AS UNSIGNED)), 0) + 1 "
+					"FROM accounts WHERE tag_id LIKE '" + prefix + "%'";
+				MYSQL_RES* res_seq = engine::server::db::DbQuery(mysql_seq, sql_seq);
+				if (res_seq)
+				{
+					MYSQL_ROW row_seq = mysql_fetch_row(res_seq);
+					if (row_seq && row_seq[0])
+						seq = std::strtoull(row_seq[0], nullptr, 10);
+					mysql_free_result(res_seq);
+				}
+			}
+		}
+
+		// Build the TAG-ID: prefix (5 chars) + 5-digit zero-padded sequence.
+		std::ostringstream tag_ss;
+		tag_ss << prefix << std::setw(5) << std::setfill('0') << seq;
+		tag_id_out = tag_ss.str(); // e.g. "FR60200001"
+
 		auto guard = m_pool->Acquire();
 		MYSQL* mysql = guard.get();
 		if (!mysql)
@@ -150,9 +203,11 @@ namespace engine::server
 		const std::string esc_login = EscapeMysql(mysql, login_key);
 		const std::string esc_email = EscapeMysql(mysql, db_email);
 		const std::string esc_hash = EscapeMysql(mysql, final_hash);
+		const std::string esc_country = EscapeMysql(mysql, cc);
+		const std::string esc_tag_id = EscapeMysql(mysql, tag_id_out);
 		const unsigned loc = static_cast<unsigned>(email_locale);
 
-		std::string sql = "INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified) VALUES ('";
+		std::string sql = "INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified, country_code, tag_id) VALUES ('";
 		sql += esc_email;
 		sql += "','";
 		sql += esc_login;
@@ -160,7 +215,11 @@ namespace engine::server
 		sql += esc_hash;
 		sql += "',0,";
 		sql += std::to_string(loc);
-		sql += ",0)";
+		sql += ",0,'";
+		sql += esc_country;
+		sql += "','";
+		sql += esc_tag_id;
+		sql += "')";
 
 		auto t0 = std::chrono::steady_clock::now();
 		const int qerr = mysql_real_query(mysql, sql.c_str(), static_cast<unsigned long>(sql.size()));
@@ -199,7 +258,7 @@ namespace engine::server
 			LOG_ERROR(Auth, "[MysqlAccountStore] CreateAccount: insert_id=0");
 			return 0;
 		}
-		LOG_INFO(Auth, "[MysqlAccountStore] CreateAccount OK (account_id={}, login={})", id, login_key);
+		LOG_INFO(Auth, "[MysqlAccountStore] CreateAccount OK (account_id={}, login={}, tag_id={})", id, login_key, tag_id_out);
 		return id;
 	}
 

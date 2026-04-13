@@ -1309,7 +1309,7 @@ namespace engine::client
 		}
 		else
 		{
-			m_phase = m_phaseBeforeOptions;
+			SetPhase(m_phaseBeforeOptions);
 		}
 	}
 

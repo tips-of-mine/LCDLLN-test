@@ -7,6 +7,7 @@ namespace engine::server
 {
 	class NetServer;
 	class ShardRegistry;
+	class ServerRegistry;
 }
 
 namespace engine::server
@@ -22,6 +23,7 @@ namespace engine::server
 
 		/// Optional: per-shard character count for display (M20/M21 tables). Called with shard_id; return 0 if not available.
 		void SetCharacterCountHook(std::function<uint32_t(uint32_t shard_id)> hook);
+		void SetServerRegistry(ServerRegistry* selfRegistry);
 
 		/// Handles SERVER_LIST_REQUEST only. Ignores other opcodes.
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -30,6 +32,7 @@ namespace engine::server
 	private:
 		NetServer* m_server = nullptr;
 		ShardRegistry* m_registry = nullptr;
+		ServerRegistry* m_serverRegistry = nullptr;
 		std::function<uint32_t(uint32_t)> m_characterCountHook;
 	};
 }

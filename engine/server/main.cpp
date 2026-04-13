@@ -102,8 +102,8 @@ int main(int argc, char** argv)
 		logSettings.console ? "on" : "off",
 		logSettings.filePath.empty() ? "<disabled>" : logSettings.filePath);
 
-	engine::server::ServerRegistry serverRegistry;
 	engine::core::Config configForRegistry = config;
+	engine::server::ServerRegistry serverRegistry;
 	engine::server::ServerApp app(std::move(config));
 	g_serverApp = &app;
 	if (!SetConsoleCtrlHandler(HandleConsoleCtrl, TRUE))

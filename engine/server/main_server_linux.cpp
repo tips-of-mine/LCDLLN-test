@@ -8,6 +8,7 @@
 #include "engine/server/HealthEndpoint.h"
 #include "engine/server/PrometheusMetrics.h"
 #include "engine/server/NetServer.h"
+#include "engine/server/ServerRegistry.h"
 #include "engine/server/ShardRegisterHandler.h"
 #include "engine/server/ShardRegistry.h"
 #include "engine/server/ShardTicketHandler.h"
@@ -46,6 +47,28 @@ namespace
 	void OnSignal(int)
 	{
 		g_quit = 1;
+	}
+
+	constexpr std::string_view kServerVersion = "0.1.0";
+
+	void PrintStartupBanner()
+	{
+		std::printf(
+			"\n###############################################################\n"
+			"#\n"
+			"# Serveur\n"
+			"# Les Chroniques De La Lune Noire\n"
+			"# Version %.*s\n"
+			"#\n"
+			"###############################################################\n"
+			"# Serveur ready\n"
+			"###############################################################\n\n",
+			static_cast<int>(kServerVersion.size()), kServerVersion.data());
+		std::fflush(stdout);
+		LOG_INFO(Server, "###############################################################");
+		LOG_INFO(Server, "# Serveur — Les Chroniques De La Lune Noire — Version {}", kServerVersion);
+		LOG_INFO(Server, "# Serveur ready");
+		LOG_INFO(Server, "###############################################################");
 	}
 
 	engine::core::LogLevel ParseLogLevel(std::string_view text)
@@ -253,6 +276,12 @@ int main(int argc, char** argv)
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
+
+	engine::server::ServerRegistry serverRegistry;
+	serverRegistry.RegisterSelf(config);
+	serverListHandler.SetServerRegistry(&serverRegistry);
+	PrintStartupBanner();
+
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
 	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
@@ -550,6 +579,7 @@ int main(int argc, char** argv)
 		}
 	}
 
+	serverRegistry.SetOffline();
 	LOG_DEBUG(Server, "[MAIN_SRV] main loop exited, avant Shutdow");
 	if (g_net_stats)
 	{

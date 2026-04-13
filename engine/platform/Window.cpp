@@ -920,6 +920,11 @@ LOG_DEBUG(Platform, "[WINDOW] WM_SIZE wparam={} w={} h={}", (unsigned long long)
 				return reinterpret_cast<intptr_t>(brush);
 			}
 			break;
+		case WM_ERASEBKGND:
+			// Intercepter WM_ERASEBKGND : retourner 1 sans effacer.
+			// Empêche le fond blanc Win32 qui cause un flash blanc au démarrage
+			// avant que Vulkan prenne le contrôle du rendu.
+			return 1;
 		default:
 			break;
 		}

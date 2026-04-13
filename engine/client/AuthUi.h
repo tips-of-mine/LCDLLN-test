@@ -295,6 +295,9 @@ namespace engine::client
 		void JoinWorker();
 		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).
 		void ResolveActionButtonLabels(RenderModel& model) const;
+		/// Transition de phase avec reset des états hover et du texte d'erreur utilisateur.
+		/// Ne touche PAS m_infoBanner sauf pour Phase::Error (évite la superposition infoBanner+errorText).
+		void SetPhase(Phase p);
 
 		bool m_initialized = false;
 		bool m_flowComplete = false;

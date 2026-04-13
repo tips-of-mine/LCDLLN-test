@@ -12,6 +12,9 @@ namespace engine::server
 {
     namespace
     {
+        // Connexion directe (pas de ConnectionPool) : ServerRegistry est un singleton de cycle de vie
+        // du serveur, qui s'enregistre une seule fois au démarrage et se désenregistre à l'arrêt.
+        // Un pool de connexions serait surdimensionné pour cet usage.
         std::string EscapeMysql(MYSQL* mysql, std::string_view v)
         {
             if (!mysql)
@@ -32,14 +35,14 @@ namespace engine::server
 
         if (host.empty())
         {
-            LOG_WARN(Core, "[ServerRegistry] Connect: db.host est vide, enregistrement ignoré");
+            LOG_WARN(Server,"[ServerRegistry] Connect: db.host est vide, enregistrement ignoré");
             return false;
         }
 
         MYSQL* mysql = mysql_init(nullptr);
         if (!mysql)
         {
-            LOG_ERROR(Core, "[ServerRegistry] Connect: mysql_init échoué");
+            LOG_ERROR(Server,"[ServerRegistry] Connect: mysql_init échoué");
             return false;
         }
 
@@ -50,13 +53,13 @@ namespace engine::server
                 password.empty() ? nullptr : password.c_str(),
                 database.c_str(), port, nullptr, 0))
         {
-            LOG_ERROR(Core, "[ServerRegistry] Connect: mysql_real_connect échoué: {}", mysql_error(mysql));
+            LOG_ERROR(Server,"[ServerRegistry] Connect: mysql_real_connect échoué: {}", mysql_error(mysql));
             mysql_close(mysql);
             return false;
         }
 
         m_conn = static_cast<void*>(mysql);
-        LOG_INFO(Core, "[ServerRegistry] Connecté à {}:{}/{}", host, port, database);
+        LOG_INFO(Server,"[ServerRegistry] Connecté à {}:{}/{}", host, port, database);
         return true;
     }
 
@@ -78,7 +81,7 @@ namespace engine::server
 
         if (!Connect(cfg))
         {
-            LOG_WARN(Core, "[ServerRegistry] RegisterSelf: connexion DB échouée, le serveur continue sans enregistrement");
+            LOG_WARN(Server,"[ServerRegistry] RegisterSelf: connexion DB échouée, le serveur continue sans enregistrement");
             return false;
         }
 
@@ -102,7 +105,7 @@ namespace engine::server
 
         if (mysql_real_query(mysql, sql.c_str(), static_cast<unsigned long>(sql.size())) != 0)
         {
-            LOG_ERROR(Core, "[ServerRegistry] RegisterSelf UPSERT échoué: {}", mysql_error(mysql));
+            LOG_ERROR(Server,"[ServerRegistry] RegisterSelf UPSERT échoué: {}", mysql_error(mysql));
             return false;
         }
 
@@ -134,12 +137,19 @@ namespace engine::server
             }
             else
             {
-                LOG_WARN(Core, "[ServerRegistry] RegisterSelf SELECT id échoué: {}", mysql_error(mysql));
+                LOG_WARN(Server,"[ServerRegistry] RegisterSelf SELECT id échoué: {}", mysql_error(mysql));
             }
         }
 
+        if (m_serverId == 0)
+        {
+            LOG_WARN(Server, "[ServerRegistry] RegisterSelf: UPSERT ok mais server_id non récupéré");
+            m_registered = false;
+            Disconnect();
+            return false;
+        }
         m_registered = true;
-        LOG_INFO(Core, "[ServerRegistry] Enregistré dans game_servers (server_id={}, name='{}', host={}, port={}, max_players={})",
+        LOG_INFO(Server, "[ServerRegistry] Enregistré dans game_servers (server_id={}, name='{}', host={}, port={}, max_players={})",
             m_serverId, m_name, m_host, m_port, m_maxPlayers);
         return true;
     }
@@ -151,21 +161,18 @@ namespace engine::server
 
         MYSQL* mysql = static_cast<MYSQL*>(m_conn);
 
-        const std::string esc_host = EscapeMysql(mysql, m_host);
-        const std::string port_str = std::to_string(m_port);
-
         const std::string sql =
-            "UPDATE game_servers SET status='offline' WHERE host='"
-            + esc_host + "' AND port=" + port_str;
+            "UPDATE game_servers SET status='offline' "
+            "WHERE server_id=" + std::to_string(m_serverId);
 
         if (mysql_real_query(mysql, sql.c_str(), static_cast<unsigned long>(sql.size())) != 0)
         {
-            LOG_WARN(Core, "[ServerRegistry] SetOffline UPDATE échoué: {}", mysql_error(mysql));
+            LOG_WARN(Server, "[ServerRegistry] SetOffline UPDATE échoué: {}", mysql_error(mysql));
             return;
         }
 
         m_registered = false;
-        LOG_INFO(Core, "[ServerRegistry] Statut 'offline' enregistré pour {}:{}", m_host, m_port);
+        LOG_INFO(Server, "[ServerRegistry] Statut 'offline' enregistré pour {}:{}", m_host, m_port);
     }
 
 } // namespace engine::server

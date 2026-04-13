@@ -162,6 +162,21 @@ namespace engine::client
 			bool checkboxChecked = false;
 		};
 
+		struct DropdownOption
+		{
+			std::string label;   // Texte affiché (ex. "Janvier", "1", "2000")
+			std::string value;   // Valeur interne (ex. "01", "2000")
+		};
+
+		struct RenderDropdown
+		{
+			std::string                  label;           // Label au-dessus (ex. "Jour")
+			std::vector<DropdownOption>  options;
+			int32_t                      selectedIndex = 0;
+			bool                         isOpen        = false;
+			int32_t                      x = 0, y = 0, w = 0, h = 0;  // bounding box (remplie par renderer)
+		};
+
 		struct RenderModel
 		{
 			bool visible = false;
@@ -191,6 +206,7 @@ namespace engine::client
 		// Bounding box de l'icône "i" pour hit-testing souris.
 		int32_t     infoIconX = 0, infoIconY = 0, infoIconW = 0, infoIconH = 0;
 		bool        infoIconVisible = false;
+		std::vector<RenderDropdown> dropdowns;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -322,6 +338,10 @@ namespace engine::client
 		std::string m_birthMonth;
 		std::string m_birthYear;
 		std::string m_country;        ///< Code pays ISO-2 (ex. "FR"). Champ inscription.
+		int32_t m_birthDayIndex    = 0;   ///< Index dans options 1-31
+		int32_t m_birthMonthIndex  = 0;   ///< Index dans 1-12
+		int32_t m_birthYearIndex   = 80;  ///< Index dans 1900-2010, défaut=1980 (index 80)
+		int32_t m_openDropdownIndex = -1; ///< -1=aucun, 0=jour, 1=mois, 2=année
 		bool m_passwordsMatch = false; ///< Suivi temps-réel correspondance mdp / confirm.
 		// --- Plan C: username availability debounce ---
 		UsernameCheckState m_usernameCheckState = UsernameCheckState::Idle;

@@ -2972,6 +2972,7 @@ void AuthUiPresenter::SetPhase(Phase p)
 	m_hoveredFieldInfoIndex = -1;
 	m_hoveredBodyLineIndex = -1;
 	m_hoveredActionIndex   = -1;
+	m_openDropdownIndex    = -1;
 	m_userErrorText.clear();
 	m_infoPopupVisible = false;
 	// Pour Phase::Error, vider m_infoBanner évite la superposition infoBanner + errorText.
@@ -4459,6 +4460,64 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				true,  false, Tr("auth.tooltip.password_confirm"), 0, 3,
 				pwdMatch ? 1 : (pwdMismatch ? -1 : 0));
 
+			// --- Dropdowns date de naissance ---
+			{
+				auto makeIntOptions = [](int lo, int hi) -> std::vector<DropdownOption>
+				{
+					std::vector<DropdownOption> opts;
+					opts.reserve(static_cast<size_t>(hi - lo + 1));
+					for (int i = lo; i <= hi; ++i)
+					{
+						char buf[8]{};
+						std::snprintf(buf, sizeof(buf), "%d", i);
+						opts.push_back({ std::string(buf), std::string(buf) });
+					}
+					return opts;
+				};
+
+				// Dropdown Jour (1-31).
+				{
+					RenderDropdown dd;
+					dd.label         = Tr("auth.label.birth_day");
+					dd.options       = makeIntOptions(1, 31);
+					dd.selectedIndex = std::clamp(m_birthDayIndex, 0, 30);
+					dd.isOpen        = (m_openDropdownIndex == 0);
+					model.dropdowns.push_back(dd);
+				}
+
+				// Dropdown Mois (noms localisés).
+				{
+					RenderDropdown dd;
+					dd.label = Tr("auth.label.birth_month");
+					for (int m = 1; m <= 12; ++m)
+					{
+						char key[16]{};
+						std::snprintf(key, sizeof(key), "month.%d", m);
+						dd.options.push_back({ Tr(std::string_view(key)), std::to_string(m) });
+					}
+					dd.selectedIndex = std::clamp(m_birthMonthIndex, 0, 11);
+					dd.isOpen        = (m_openDropdownIndex == 1);
+					model.dropdowns.push_back(dd);
+				}
+
+				// Dropdown Année (1900-2010).
+				{
+					RenderDropdown dd;
+					dd.label   = Tr("auth.label.birth_year");
+					dd.options = makeIntOptions(1900, 2010);
+					dd.selectedIndex = std::clamp(m_birthYearIndex, 0, 110);
+					dd.isOpen        = (m_openDropdownIndex == 2);
+					model.dropdowns.push_back(dd);
+				}
+
+				// Synchroniser m_birthDay/Month/Year depuis les index.
+				if (m_birthDayIndex < static_cast<int32_t>(model.dropdowns[0].options.size()))
+					m_birthDay   = model.dropdowns[0].options[m_birthDayIndex].value;
+				if (m_birthMonthIndex < static_cast<int32_t>(model.dropdowns[1].options.size()))
+					m_birthMonth = model.dropdowns[1].options[m_birthMonthIndex].value;
+				if (m_birthYearIndex < static_cast<int32_t>(model.dropdowns[2].options.size()))
+					m_birthYear  = model.dropdowns[2].options[m_birthYearIndex].value;
+			}
 
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);

@@ -205,5 +205,8 @@
   "country.UA": "Ukraine",
   "country.GB": "United Kingdom",
   "country.US": "United States",
-  "country.VE": "Venezuela"
+  "country.VE": "Venezuela",
+  "auth.info.login_help": "Enter your login and password to sign in. If you forgot your password, use the \"Forgot password\" link.",
+  "auth.info.register_help": "Login must be 3 to 20 alphanumeric characters. Password must be at least 8 characters. Date of birth is required.",
+  "common.close": "Close"
 }

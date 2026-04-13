@@ -2973,6 +2973,7 @@ void AuthUiPresenter::SetPhase(Phase p)
 	m_hoveredBodyLineIndex = -1;
 	m_hoveredActionIndex   = -1;
 	m_userErrorText.clear();
+	m_infoPopupVisible = false;
 	// Pour Phase::Error, vider m_infoBanner évite la superposition infoBanner + errorText.
 	// Pour toutes les autres phases, le conserver permet d'afficher les bandeaux de confirmation
 	// (ex : inscription OK → retour Login avec le bandeau visible).
@@ -4666,6 +4667,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 
 		model.authLogoSizePx = m_authLogoSizePx;
+
+		// Popup info — propagé depuis l'état.
+		model.infoPopupVisible = m_infoPopupVisible;
+		model.infoPopupText    = m_infoPopupText;
+
+		// Texte du popup selon la phase active.
+		if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword)
+			model.infoPopupText = Tr("auth.info.login_help");
+		else if (m_phase == Phase::Register)
+			model.infoPopupText = Tr("auth.info.register_help");
+
+		// Icône "i" visible sur Login et Register.
+		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register);
 
 		return model;
 	}

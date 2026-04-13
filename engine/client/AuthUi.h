@@ -185,6 +185,12 @@ namespace engine::client
 			int32_t layoutAuthFieldRowExtraPx = 0;
 			/// Taille affichée du logo statut (px) ; pour placer le texte « vérification serveur » à sa droite.
 			int32_t authLogoSizePx = 96;
+		// Popup info (icône "i") — affiché par-dessus tout le reste quand visible.
+		bool        infoPopupVisible = false;
+		std::string infoPopupText;    // Texte localisé à afficher dans le popup.
+		// Bounding box de l'icône "i" pour hit-testing souris.
+		int32_t     infoIconX = 0, infoIconY = 0, infoIconW = 0, infoIconH = 0;
+		bool        infoIconVisible = false;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -342,6 +348,8 @@ namespace engine::client
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;
 		bool m_rememberLogin = false;
+		bool        m_infoPopupVisible = false;
+		std::string m_infoPopupText;
 		bool m_savedRememberLogin = false;
 		bool m_hasPersistedLocale = false;
 		uint32_t m_languageSelectionIndex = 0;

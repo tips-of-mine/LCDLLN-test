@@ -3797,8 +3797,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
 						{
 							constexpr int32_t kAuthErrorFooterBarH = 58;
+							const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 							int32_t buttonY = std::min(panelY + panelH - 86,
-								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
+								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
 							if (m_phase == Phase::Error && lay.authErrorFooterTopFromPanelTopPx > 0)
 							{
 								buttonY = panelY + lay.authErrorFooterTopFromPanelTopPx

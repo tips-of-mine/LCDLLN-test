@@ -4383,7 +4383,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 	}
 
-	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel() const
+	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel()
 	{
 		RenderModel model{};
 		model.layoutAuthTitleLine1FromPanelTopPx = m_layoutAuthTitleLine1FromPanelTopPx;

@@ -252,7 +252,7 @@ namespace engine::client
 
 		/// Multi-line panel for HUD / logs (full form + asset paths + errors).
 		std::string BuildPanelText() const;
-		RenderModel BuildRenderModel() const;
+		RenderModel BuildRenderModel();
 		VisualState GetVisualState() const;
 		bool IsUsingNativeAuthScreen() const { return m_usingNativeAuthScreen; }
 

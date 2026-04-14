@@ -320,7 +320,21 @@ namespace engine::client
 		void ResolveActionButtonLabels(RenderModel& model) const;
 		/// Transition de phase avec reset des états hover et du texte d'erreur utilisateur.
 		/// Ne touche PAS m_infoBanner sauf pour Phase::Error (évite la superposition infoBanner+errorText).
-		void SetPhase(Phase p);
+		void SetPhase(Phase p)
+		{
+			m_phase = p;
+			m_hoveredFieldIndex = -1;
+			m_hoveredFieldInfoIndex = -1;
+			m_hoveredBodyLineIndex = -1;
+			m_hoveredActionIndex = -1;
+			m_openDropdownIndex = -1;
+			m_userErrorText.clear();
+			m_infoPopupVisible = false;
+			if (p == Phase::Error)
+			{
+				m_infoBanner.clear();
+			}
+		}
 
 		bool m_initialized = false;
 		bool m_flowComplete = false;

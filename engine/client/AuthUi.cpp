@@ -2974,25 +2974,6 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 #endif
 }
 
-void AuthUiPresenter::SetPhase(Phase p)
-{
-	m_phase = p;
-	m_hoveredFieldIndex    = -1;
-	m_hoveredFieldInfoIndex = -1;
-	m_hoveredBodyLineIndex = -1;
-	m_hoveredActionIndex   = -1;
-	m_openDropdownIndex    = -1;
-	m_userErrorText.clear();
-	m_infoPopupVisible = false;
-	// Pour Phase::Error, vider m_infoBanner évite la superposition infoBanner + errorText.
-	// Pour toutes les autres phases, le conserver permet d'afficher les bandeaux de confirmation
-	// (ex : inscription OK → retour Login avec le bandeau visible).
-	if (p == Phase::Error)
-	{
-		m_infoBanner.clear();
-	}
-}
-
 void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {
 	if (m_phase == Phase::Error)

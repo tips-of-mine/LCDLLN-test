@@ -278,6 +278,7 @@ namespace engine::client
 			Login,
 			Register,
 			VerifyEmail,
+			EmailConfirmationPending,   // page intermédiaire post-inscription : "Vérifiez vos emails"
 			ForgotPassword,
 			Terms,
 			CharacterCreate,

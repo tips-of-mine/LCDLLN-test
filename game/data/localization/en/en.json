@@ -98,6 +98,9 @@
   "auth.error.character_session_inactive": "Character creation session is not active.",
   "auth.info.register_ok": "Registration OK. Enter the verification code sent by email.",
   "auth.info.tag_id": "Your TAG-ID:",
+  "auth.email_confirmation.title": "Registration successful",
+  "auth.email_confirmation.message": "A confirmation email has been sent to you. Please click the link in the email to activate your account.",
+  "auth.email_confirmation.back_to_login": "Back to login",
   "auth.label.country": "Country",
   "auth.tooltip.country": "Your country of residence (ISO 2-letter code). Used for your unique TAG-ID.",
   "auth.error.enter_country": "Select your country.",
@@ -208,5 +211,8 @@
   "country.VE": "Venezuela",
   "auth.info.login_help": "Enter your login and password to sign in. If you forgot your password, use the \"Forgot password\" link.",
   "auth.info.register_help": "Login must be 3 to 20 alphanumeric characters. Password must be at least 8 characters. Date of birth is required.",
-  "common.close": "Close"
+  "common.close": "Close",
+  "auth.email_confirmation.title": "Registration successful",
+  "auth.email_confirmation.message": "A confirmation email has been sent to you. Please click the link in the email to activate your account.",
+  "auth.email_confirmation.back_to_login": "Back to login"
 }

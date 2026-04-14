@@ -1247,6 +1247,9 @@ namespace engine::client
 		case Phase::VerifyEmail:
 			t += Tr("auth.phase.verify_email");
 			break;
+		case Phase::EmailConfirmationPending:
+			t += Tr("auth.email_confirmation.title");
+			break;
 		case Phase::ForgotPassword:
 			t += Tr("auth.phase.forgot_password");
 			break;
@@ -1498,15 +1501,15 @@ namespace engine::client
 			if (copy.success)
 			{
 				m_pendingVerifyAccountId = copy.accountId;
-				SetPhase(Phase::VerifyEmail);
+				SetPhase(Phase::EmailConfirmationPending);
+				// Conserver m_pendingVerifyAccountId = copy.accountId (doit rester en place)
 				m_userErrorText.clear();
-				m_infoBanner = copy.message.empty() ? Tr("auth.info.register_ok") : copy.message;
+				m_infoBanner.clear();
 				if (!copy.tagId.empty())
 				{
 					m_registeredTagId = copy.tagId;
-					m_infoBanner += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
 				}
-				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: {}", m_infoBanner);
+				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: accountId={} tagId={}", copy.accountId, m_registeredTagId);
 			}
 			else
 			{
@@ -2848,6 +2851,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		case Phase::Register: return "Register";
 		case Phase::ForgotPassword: return "ForgotPassword";
 		case Phase::VerifyEmail: return "VerifyEmail";
+		case Phase::EmailConfirmationPending: return "EmailConfirmationPending";
 		case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
 		case Phase::LanguageOptions: return "LanguageOptions";
 		case Phase::Submitting: return "Submitting";
@@ -3223,6 +3227,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 			case Phase::VerifyEmail:
 				return &m_verifyCode;
+			case Phase::EmailConfirmationPending:
+				return nullptr;
 			case Phase::ForgotPassword:
 				return &m_email;
 			case Phase::Terms:
@@ -3284,6 +3290,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					return;
 				}
 				SubmitCurrentPhase(cfg);
+			}
+			else if (m_phase == Phase::EmailConfirmationPending)
+			{
+				m_registeredTagId.clear();
+				SetPhase(Phase::Login);
+				m_activeField = 0;
+				m_userErrorText.clear();
 			}
 			else
 			{
@@ -3832,6 +3845,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 											m_usernameDebounceTimer = 0.0;
 											m_usernameLastChecked.clear();
 										}
+										SetPhase(Phase::Login);
+										m_activeField = 0;
+										m_userErrorText.clear();
+									}
+									break;
+								case Phase::EmailConfirmationPending:
+									if (i == 0)
+									{
+										m_registeredTagId.clear();
 										SetPhase(Phase::Login);
 										m_activeField = 0;
 										m_userErrorText.clear();
@@ -4530,6 +4552,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
+		case Phase::EmailConfirmationPending:
+		{
+			model.titleLine1   = Tr("auth.email_confirmation.title");
+			model.sectionTitle = "";
+			std::string msg = Tr("auth.email_confirmation.message");
+			if (!m_registeredTagId.empty())
+				msg += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
+			model.infoBanner = msg;
+			RenderAction back;
+			back.label   = Tr("auth.email_confirmation.back_to_login");
+			back.primary = true;
+			model.actions.push_back(back);
+			break;
+		}
 		case Phase::ForgotPassword:
 			model.sectionTitle = Tr("auth.section.forgot_password");
 			addField(Tr("common.email"), m_email, true);
@@ -4817,7 +4853,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		state.active = m_initialized && !m_flowComplete && m_authEnabled;
 		state.login = m_phase == Phase::Login;
 		state.registerMode = m_phase == Phase::Register;
-		state.verifyEmail = m_phase == Phase::VerifyEmail;
+		state.verifyEmail = m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending;
 		state.forgotPassword = m_phase == Phase::ForgotPassword;
 		state.terms = m_phase == Phase::Terms;
 		state.characterCreate = m_phase == Phase::CharacterCreate;
@@ -4881,7 +4917,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Language options closed");
 			return true;
 		}
-		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail)
+		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending)
 		{
 			if (m_phase == Phase::Register)
 			{

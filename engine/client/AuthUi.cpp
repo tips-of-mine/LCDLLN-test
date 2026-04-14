@@ -1550,7 +1550,12 @@ namespace engine::client
 			else
 			{
 				SetPhase(Phase::Error);
-				m_userErrorText = copy.message;
+				// Masquer la distinction identifiant/mot de passe pour ne pas révéler
+				// si c'est le login ou le mot de passe qui est incorrect.
+				if (copy.message == "Invalid credentials" || copy.message == "Account not found")
+					m_userErrorText = Tr("auth.error.invalid_credentials");
+				else
+					m_userErrorText = copy.message;
 			}
 			return;
 		}

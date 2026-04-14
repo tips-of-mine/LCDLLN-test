@@ -22,7 +22,7 @@
 #      (shard : docker compose build shard && docker compose --profile shard up -d)
 #
 # Portail web : inclus dans up -d. Local : http://127.0.0.1:3000 — Labels Traefik : service
-# web-portal ; copies réf. : traefik-web-portal.labels.reference.yml, traefik-master.labels.reference.yml
+# web-portal ; copie réf. : traefik-web-portal.labels.reference.yml
 #
 # Arrêt :
 #   docker compose down

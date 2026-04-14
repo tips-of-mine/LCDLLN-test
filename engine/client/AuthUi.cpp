@@ -2967,8 +2967,13 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 	window.SetAuthScreenState({});
 	(void)cfg;
 	return false;
-}
+#else
+	(void)window;
+	(void)cfg;
+	return false;
 #endif
+}
+
 void AuthUiPresenter::SetPhase(Phase p)
 {
 	m_phase = p;

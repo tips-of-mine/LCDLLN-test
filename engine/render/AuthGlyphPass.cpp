@@ -1722,6 +1722,35 @@ namespace engine::render
 			}
 		}
 
+		// --- Popup info --- rendu en dernier pour s'afficher par-dessus tout le reste.
+		if (model.infoPopupVisible && !model.infoPopupText.empty())
+		{
+			const int32_t vw = static_cast<int32_t>(extent.width);
+			const int32_t vh = static_cast<int32_t>(extent.height);
+
+			// Fond semi-opaque couvrant tout l'écran.
+			const float overlayColor[4] = { 0.0f, 0.0f, 0.0f, 0.78f };
+			appendBlock(0, 0, vw, vh, overlayColor);
+
+			// Cadre centré du popup.
+			const int32_t popupW = std::min(vw * 70 / 100, 640);
+			const int32_t popupH = std::min(vh * 50 / 100, 360);
+			const int32_t popupX = (vw - popupW) / 2;
+			const int32_t popupY = (vh - popupH) / 2;
+			const float panelColor[4] = { 0.08f, 0.08f, 0.10f, 0.97f };
+			appendBlock(popupX, popupY, popupW, popupH, panelColor);
+
+			// Bordure accent en haut.
+			const float borderColor[4] = { theme.accent[0], theme.accent[1], theme.accent[2], 0.9f };
+			appendBlock(popupX, popupY, popupW, 3, borderColor);
+
+			// Texte du popup.
+			const int32_t textX    = popupX + 24;
+			const int32_t textY    = popupY + 24;
+			const int32_t maxTextW = popupW - 48;
+			AppendText(vertices, model.infoPopupText, textX, textY, maxTextW, bodyScale, titleColor);
+		}
+
 		// Clamp verticesValue so total fits in the mapped buffer.
 		const uint32_t mainCount = static_cast<uint32_t>(vertices.size());
 		if (mainCount + verticesValue.size() > m_maxVertices)

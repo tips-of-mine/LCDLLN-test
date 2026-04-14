@@ -1,4 +1,5 @@
 #include "engine/server/ServerApp.h"
+#include "engine/server/ServerRegistry.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -6,6 +7,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#include <cstdio>
 #include <string_view>
 #include <utility>
 
@@ -35,6 +37,28 @@ namespace
 			}
 		}
 		return false;
+	}
+
+	constexpr std::string_view kServerVersion = "0.1.0";
+
+	void PrintStartupBanner()
+	{
+		std::printf(
+			"\n###############################################################\n"
+			"#\n"
+			"# Serveur\n"
+			"# Les Chroniques De La Lune Noire\n"
+			"# Version %.*s\n"
+			"#\n"
+			"###############################################################\n"
+			"# Serveur ready\n"
+			"###############################################################\n\n",
+			static_cast<int>(kServerVersion.size()), kServerVersion.data());
+		std::fflush(stdout);
+		LOG_INFO(Server, "###############################################################");
+		LOG_INFO(Server, "# Serveur — Les Chroniques De La Lune Noire — Version {}", kServerVersion);
+		LOG_INFO(Server, "# Serveur ready");
+		LOG_INFO(Server, "###############################################################");
 	}
 
 	engine::server::ServerApp* g_serverApp = nullptr;
@@ -78,6 +102,8 @@ int main(int argc, char** argv)
 		logSettings.console ? "on" : "off",
 		logSettings.filePath.empty() ? "<disabled>" : logSettings.filePath);
 
+	engine::core::Config configForRegistry = config;
+	engine::server::ServerRegistry serverRegistry;
 	engine::server::ServerApp app(std::move(config));
 	g_serverApp = &app;
 	if (!SetConsoleCtrlHandler(HandleConsoleCtrl, TRUE))
@@ -93,7 +119,10 @@ int main(int argc, char** argv)
 	else
 	{
 		LOG_INFO(Core, "[ServerMain] Init OK");
+		serverRegistry.RegisterSelf(configForRegistry);
+		PrintStartupBanner();
 		result = app.Run();
+		serverRegistry.SetOffline();
 	}
 
 	app.Shutdown();

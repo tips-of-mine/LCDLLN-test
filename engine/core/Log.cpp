@@ -135,9 +135,8 @@ namespace engine::core
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
 
-		// Timestamp HH:MM:SS.mmm
+		// Timestamp [JJ/MM/AAAA][HH:MM:SS]
 		const auto now    = std::chrono::system_clock::now();
-		const auto ms     = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 		const std::time_t t = std::chrono::system_clock::to_time_t(now);
 		std::tm tm{};
 #if defined(_WIN32)
@@ -145,14 +144,15 @@ namespace engine::core
 #else
 		localtime_r(&t, &tm);
 #endif
-		char timeBuf[16]{};
-		std::snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:%02d.%03d",
-			tm.tm_hour, tm.tm_min, tm.tm_sec, static_cast<int>(ms.count()));
+		char timeBuf[32]{};
+		std::snprintf(timeBuf, sizeof(timeBuf), "%02d/%02d/%04d][%02d:%02d:%02d",
+			tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
+			tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-		// Format: [HH:MM:SS.mmm][LEVEL][Subsystem] message
+		// Format: [JJ/MM/AAAA][HH:MM:SS][LEVEL][Subsystem] message
 		const char* lvlStr = LevelToString(level);
 		const char* sys    = subsystem ? subsystem : "?";
-		char header[64]{};
+		char header[72]{};
 		std::snprintf(header, sizeof(header), "[%s][%-5s][%s] ", timeBuf, lvlStr, sys);
 
 		const std::string line = std::string(header) + std::string(message) + "\n";

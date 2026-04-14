@@ -162,6 +162,21 @@ namespace engine::client
 			bool checkboxChecked = false;
 		};
 
+		struct DropdownOption
+		{
+			std::string label;   // Texte affiché (ex. "Janvier", "1", "2000")
+			std::string value;   // Valeur interne (ex. "01", "2000")
+		};
+
+		struct RenderDropdown
+		{
+			std::string                  label;           // Label au-dessus (ex. "Jour")
+			std::vector<DropdownOption>  options;
+			int32_t                      selectedIndex = 0;
+			bool                         isOpen        = false;
+			int32_t                      x = 0, y = 0, w = 0, h = 0;  // bounding box (remplie par renderer)
+		};
+
 		struct RenderModel
 		{
 			bool visible = false;
@@ -185,6 +200,13 @@ namespace engine::client
 			int32_t layoutAuthFieldRowExtraPx = 0;
 			/// Taille affichée du logo statut (px) ; pour placer le texte « vérification serveur » à sa droite.
 			int32_t authLogoSizePx = 96;
+		// Popup info (icône "i") — affiché par-dessus tout le reste quand visible.
+		bool        infoPopupVisible = false;
+		std::string infoPopupText;    // Texte localisé à afficher dans le popup.
+		// Bounding box de l'icône "i" pour hit-testing souris.
+		int32_t     infoIconX = 0, infoIconY = 0, infoIconW = 0, infoIconH = 0;
+		bool        infoIconVisible = false;
+		std::vector<RenderDropdown> dropdowns;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -256,6 +278,7 @@ namespace engine::client
 			Login,
 			Register,
 			VerifyEmail,
+			EmailConfirmationPending,   // page intermédiaire post-inscription : "Vérifiez vos emails"
 			ForgotPassword,
 			Terms,
 			CharacterCreate,
@@ -295,6 +318,23 @@ namespace engine::client
 		void JoinWorker();
 		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).
 		void ResolveActionButtonLabels(RenderModel& model) const;
+		/// Transition de phase avec reset des états hover et du texte d'erreur utilisateur.
+		/// Ne touche PAS m_infoBanner sauf pour Phase::Error (évite la superposition infoBanner+errorText).
+		void SetPhase(Phase p)
+		{
+			m_phase = p;
+			m_hoveredFieldIndex = -1;
+			m_hoveredFieldInfoIndex = -1;
+			m_hoveredBodyLineIndex = -1;
+			m_hoveredActionIndex = -1;
+			m_openDropdownIndex = -1;
+			m_userErrorText.clear();
+			m_infoPopupVisible = false;
+			if (p == Phase::Error)
+			{
+				m_infoBanner.clear();
+			}
+		}
 
 		bool m_initialized = false;
 		bool m_flowComplete = false;
@@ -313,6 +353,10 @@ namespace engine::client
 		std::string m_birthMonth;
 		std::string m_birthYear;
 		std::string m_country;        ///< Code pays ISO-2 (ex. "FR"). Champ inscription.
+		int32_t m_birthDayIndex    = 0;   ///< Index dans options 1-31
+		int32_t m_birthMonthIndex  = 0;   ///< Index dans 1-12
+		int32_t m_birthYearIndex   = 80;  ///< Index dans 1900-2010, défaut=1980 (index 80)
+		int32_t m_openDropdownIndex = -1; ///< -1=aucun, 0=jour, 1=mois, 2=année
 		bool m_passwordsMatch = false; ///< Suivi temps-réel correspondance mdp / confirm.
 		// --- Plan C: username availability debounce ---
 		UsernameCheckState m_usernameCheckState = UsernameCheckState::Idle;
@@ -339,6 +383,8 @@ namespace engine::client
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;
 		bool m_rememberLogin = false;
+		bool        m_infoPopupVisible = false;
+		std::string m_infoPopupText;
 		bool m_savedRememberLogin = false;
 		bool m_hasPersistedLocale = false;
 		uint32_t m_languageSelectionIndex = 0;

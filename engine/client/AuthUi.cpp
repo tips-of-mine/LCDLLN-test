@@ -234,6 +234,55 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
+		/// Remplace la valeur de "locale" dans un JSON déjà sérialisé (même format que BuildUserSettingsJson).
+		/// Retourne true si la clé a été trouvée et remplacée, false si absente (le JSON reste inchangé).
+		bool ReplaceLocaleInJson(std::string& json, std::string_view locale)
+		{
+			// Cherche : "locale": "
+			constexpr std::string_view kNeedle = "\"locale\": \"";
+			const size_t start = json.find(kNeedle);
+			if (start == std::string::npos)
+				return false;
+			const size_t valueStart = start + kNeedle.size();
+			const size_t valueEnd = json.find('"', valueStart);
+			if (valueEnd == std::string::npos)
+				return false;
+			json.replace(valueStart, valueEnd - valueStart, locale);
+			return true;
+		}
+
+		/// Force l'écriture de la locale dans user_settings.json :
+		/// - Si le fichier n'existe pas : le crée avec les valeurs par défaut.
+		/// - Si le fichier existe   : charge-le, remplace uniquement la clé locale, réécrit.
+		/// Utilisé au premier démarrage après que l'utilisateur a confirmé sa langue.
+		bool PatchLocaleInSettingsFile(std::string_view locale)
+		{
+			const std::filesystem::path settingsPath{ kUserSettingsPath };
+			std::string json;
+			if (engine::platform::FileSystem::Exists(settingsPath))
+			{
+				json = engine::platform::FileSystem::ReadAllText(std::filesystem::path{ kUserSettingsPath });
+				if (!ReplaceLocaleInJson(json, locale))
+				{
+					// La clé n'existe pas dans ce fichier (format inattendu) — on l'ajoute pas,
+					// on se contente de logger un avertissement sans écraser le fichier.
+					LOG_WARN(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: clé 'locale' absente dans user_settings.json existant — locale non persistée");
+					return false;
+				}
+			}
+			else
+			{
+				json = BuildUserSettingsJson(false, locale, false, true);
+			}
+			if (!engine::platform::FileSystem::WriteAllText(settingsPath, json))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: échec écriture user_settings.json");
+				return false;
+			}
+			LOG_INFO(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: locale '{}' persistée dans user_settings.json", locale);
+			return true;
+		}
+
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
 			const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
@@ -1068,7 +1117,7 @@ namespace engine::client
 			const auto& locales = m_localization.GetAvailableLocales();
 			auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
 			m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
-			m_phase = Phase::LanguageSelectionFirstRun;
+			SetPhase(Phase::LanguageSelectionFirstRun);
 			LOG_INFO(Core, "[AuthUiPresenter] First run locale selection required (detected={})", m_selectedLocale);
 		}
 		else
@@ -1247,6 +1296,9 @@ namespace engine::client
 		case Phase::VerifyEmail:
 			t += Tr("auth.phase.verify_email");
 			break;
+		case Phase::EmailConfirmationPending:
+			t += Tr("auth.email_confirmation.title");
+			break;
 		case Phase::ForgotPassword:
 			t += Tr("auth.phase.forgot_password");
 			break;
@@ -1300,16 +1352,28 @@ namespace engine::client
 		}
 
 		SaveRememberPreference();
+		// Premier démarrage : SaveRememberPreference() saute l'écriture si user_settings.json
+		// existe déjà (logique intentionnelle — ne pas écraser les réglages utilisateur).
+		// Pour garantir que la locale est persistée même dans ce cas, on force un patch
+		// ciblé sur la clé "locale" dans le fichier existant, ou on crée le fichier.
+		if (firstRun)
+		{
+			if (PatchLocaleInSettingsFile(m_selectedLocale))
+			{
+				m_persistedLocale = m_selectedLocale;
+				m_hasPersistedLocale = true;
+			}
+		}
 		m_infoBanner = Tr("language.apply_success", { { "language", LocalizedLanguageName(m_selectedLocale) } });
 		LOG_INFO(Core, "[AuthUiPresenter] Locale selection applied (locale={}, first_run={})", m_selectedLocale, firstRun);
 		if (firstRun)
 		{
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			m_activeField = 0;
 		}
 		else
 		{
-			m_phase = m_phaseBeforeOptions;
+			SetPhase(m_phaseBeforeOptions);
 		}
 	}
 
@@ -1322,7 +1386,7 @@ namespace engine::client
 			return;
 		}
 		m_phaseBeforeOptions = m_phase;
-		m_phase = Phase::LanguageOptions;
+		SetPhase(Phase::LanguageOptions);
 		m_selectedLocale = CurrentLocale();
 		m_videoFullscreenPending = m_videoFullscreen;
 		m_videoVsyncPending = m_videoVsync;
@@ -1498,19 +1562,19 @@ namespace engine::client
 			if (copy.success)
 			{
 				m_pendingVerifyAccountId = copy.accountId;
-				m_phase = Phase::VerifyEmail;
+				SetPhase(Phase::EmailConfirmationPending);
+				// Conserver m_pendingVerifyAccountId = copy.accountId (doit rester en place)
 				m_userErrorText.clear();
-				m_infoBanner = copy.message.empty() ? Tr("auth.info.register_ok") : copy.message;
+				m_infoBanner.clear();
 				if (!copy.tagId.empty())
 				{
 					m_registeredTagId = copy.tagId;
-					m_infoBanner += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
 				}
-				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: {}", m_infoBanner);
+				LOG_INFO(Core, "[AuthUiPresenter] Register finished OK: accountId={} tagId={}", copy.accountId, m_registeredTagId);
 			}
 			else
 			{
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = copy.message;
 				LOG_WARN(Core, "[AuthUiPresenter] Register FAILED: {}", copy.message);
 			}
@@ -1534,20 +1598,25 @@ namespace engine::client
 					m_termsScrollOffset = 0;
 					m_termsScrolledToBottom = false;
 					m_termsAcknowledgeChecked = false;
-					m_phase = Phase::Terms;
+					SetPhase(Phase::Terms);
 					m_infoBanner = copy.message.empty() ? Tr("auth.info.terms_required") : copy.message;
 				}
 				else
 				{
 					ResetMasterSession();
-					m_phase = Phase::Submitting;
+					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 				}
 			}
 			else
 			{
-				m_phase = Phase::Error;
-				m_userErrorText = copy.message;
+				SetPhase(Phase::Error);
+				// Masquer la distinction identifiant/mot de passe pour ne pas révéler
+				// si c'est le login ou le mot de passe qui est incorrect.
+				if (copy.message == "Invalid credentials" || copy.message == "Account not found")
+					m_userErrorText = Tr("auth.error.invalid_credentials");
+				else
+					m_userErrorText = copy.message;
 			}
 			return;
 		}
@@ -1556,7 +1625,7 @@ namespace engine::client
 		{
 			if (copy.success)
 			{
-				m_phase = Phase::Login;
+				SetPhase(Phase::Login);
 				m_userErrorText.clear();
 				m_registeredTagId.clear();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.email_verified") : copy.message;
@@ -1564,7 +1633,7 @@ namespace engine::client
 			}
 			else
 			{
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = copy.message;
 				LOG_WARN(Core, "[AuthUiPresenter] VerifyEmail FAILED: {}", copy.message);
 			}
@@ -1573,7 +1642,7 @@ namespace engine::client
 
 		if (kind == AsyncKind::ForgotPassword)
 		{
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			if (copy.success)
 			{
 				m_userErrorText.clear();
@@ -1609,7 +1678,7 @@ namespace engine::client
 				if (copy.termsPendingCount == 0)
 				{
 					m_infoBanner = Tr("auth.info.terms_done");
-					m_phase = Phase::CharacterCreate;
+					SetPhase(Phase::CharacterCreate);
 				}
 				else
 				{
@@ -1622,14 +1691,14 @@ namespace engine::client
 					m_termsScrollOffset = 0;
 					m_termsScrolledToBottom = false;
 					m_termsAcknowledgeChecked = false;
-					m_phase = Phase::Terms;
+					SetPhase(Phase::Terms);
 					m_infoBanner = copy.message;
 				}
 			}
 			else
 			{
 				ResetMasterSession();
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = copy.message;
 			}
 			return;
@@ -1642,7 +1711,7 @@ namespace engine::client
 				if (copy.termsPendingCount == 0)
 				{
 					m_infoBanner = Tr("auth.info.terms_done");
-					m_phase = Phase::CharacterCreate;
+					SetPhase(Phase::CharacterCreate);
 				}
 				else
 				{
@@ -1655,14 +1724,14 @@ namespace engine::client
 					m_termsScrollOffset = 0;
 					m_termsScrolledToBottom = false;
 					m_termsAcknowledgeChecked = false;
-					m_phase = Phase::Terms;
+					SetPhase(Phase::Terms);
 					m_infoBanner = copy.message;
 				}
 			}
 			else
 			{
 				ResetMasterSession();
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = copy.message;
 			}
 			return;
@@ -1674,12 +1743,12 @@ namespace engine::client
 			{
 				ResetMasterSession();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.character_created") : copy.message;
-				m_phase = Phase::Submitting;
+				SetPhase(Phase::Submitting);
 				StartMasterFlowWorker(cfg);
 			}
 			else
 			{
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = copy.message;
 			}
 			return;
@@ -1691,10 +1760,10 @@ namespace engine::client
 			m_infoBanner = copy.message;
 			LOG_INFO(Core, "[AuthUiPresenter] Master/shard flow OK: {}", copy.message);
 			m_flowComplete = true;
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			return;
 		}
-		m_phase = Phase::Error;
+		SetPhase(Phase::Error);
 		m_userErrorText = copy.message;
 		LOG_WARN(Core, "[AuthUiPresenter] Master/shard flow FAILED: {}", copy.message);
 	}
@@ -1706,7 +1775,7 @@ namespace engine::client
 		const std::string hash = ComputeClientHash(cfg);
 		if (hash.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.hash_password_failed");
 			LOG_ERROR(Core, "[AuthUiPresenter] Register aborted: empty client_hash");
 			return;
@@ -1734,14 +1803,14 @@ namespace engine::client
 		}
 		catch (const std::exception& ex)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.invalid_birth_date");
 			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse exception: {}", ex.what());
 			return;
 		}
 		catch (...)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.invalid_birth_date");
 			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse unknown exception");
 			return;
@@ -1896,7 +1965,7 @@ namespace engine::client
 		const std::string hash = ComputeClientHash(cfg);
 		if (hash.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.hash_password_failed");
 			return;
 		}
@@ -2107,7 +2176,7 @@ namespace engine::client
 		const std::string hash = ComputeClientHash(cfg);
 		if (hash.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.hash_password_failed");
 			LOG_ERROR(Core, "[AuthUiPresenter] Master flow aborted: empty client_hash");
 			return;
@@ -2225,7 +2294,7 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.terms_session_inactive");
 			return;
 		}
@@ -2351,7 +2420,7 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0 || m_pendingTermsEditionId == 0)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.terms_session_inactive");
 			return;
 		}
@@ -2504,7 +2573,7 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.character_session_inactive");
 			return;
 		}
@@ -2848,6 +2917,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 		case Phase::Register: return "Register";
 		case Phase::ForgotPassword: return "ForgotPassword";
 		case Phase::VerifyEmail: return "VerifyEmail";
+		case Phase::EmailConfirmationPending: return "EmailConfirmationPending";
 		case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
 		case Phase::LanguageOptions: return "LanguageOptions";
 		case Phase::Submitting: return "Submitting";
@@ -2885,7 +2955,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 			break;
 		case engine::platform::Window::AuthScreenCommand::OpenRegister:
 			LOG_INFO(Core, "[AuthUiPresenter] Phase change: {} -> Register", phaseName(m_phase));
-			m_phase = Phase::Register;
+			SetPhase(Phase::Register);
 			m_activeField = 0;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
@@ -2901,7 +2971,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 			LOG_INFO(Core, "[AuthUiPresenter] Open password recovery portal from phase={} url={}", phaseName(m_phase), resetUrl);
 			if (!window.OpenExternalUrl(resetUrl))
 			{
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = Tr("auth.error.open_recovery_portal");
 			}
 			break;
@@ -2915,7 +2985,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 				m_usernameDebounceTimer = 0.0;
 				m_usernameLastChecked.clear();
 			}
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			m_activeField = 0;
 			m_userErrorText.clear();
 			break;
@@ -2963,13 +3033,18 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 	window.SetAuthScreenState({});
 	(void)cfg;
 	return false;
-}
+#else
+	(void)window;
+	(void)cfg;
+	return false;
 #endif
+}
+
 void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {
 	if (m_phase == Phase::Error)
 	{
-		m_phase = Phase::Login;
+		SetPhase(Phase::Login);
 		m_userErrorText.clear();
 		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged, back to Login");
 		return;
@@ -2978,12 +3053,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_login.empty() || m_password.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.enter_login_password");
 			LOG_WARN(Core, "[AuthUiPresenter] Submit rejected: empty fields");
 			return;
 		}
-		m_phase = Phase::Submitting;
+		SetPhase(Phase::Submitting);
 		StartLoginWorker(cfg);
 		return;
 	}
@@ -2993,21 +3068,21 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			|| m_firstName.empty() || m_lastName.empty() || m_birthDay.empty()
 			|| m_birthMonth.empty() || m_birthYear.empty() || m_country.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.enter_register_fields");
 			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
 			return;
 		}
 		if (m_password != m_passwordConfirm)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.password_mismatch");
 			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: password mismatch");
 			return;
 		}
 		if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.invalid_birth_date");
 			LOG_INFO(Core,
 				"[AUTH-REG] submit rejected: invalid birth date (day_len={} month_len={} year_len={})",
@@ -3018,7 +3093,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		if (m_country.size() != 2 || !std::isalpha(static_cast<unsigned char>(m_country[0])) || !std::isalpha(static_cast<unsigned char>(m_country[1])))
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.enter_country");
 			LOG_INFO(Core, "[AUTH-REG] submit rejected: invalid country ('{}')", m_country);
 			return;
@@ -3034,7 +3109,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_birthDay.size(),
 			m_birthMonth.size(),
 			m_birthYear.size());
-		m_phase = Phase::Submitting;
+		SetPhase(Phase::Submitting);
 		StartRegisterWorker(cfg);
 		return;
 	}
@@ -3042,17 +3117,17 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.enter_verify_code");
 			return;
 		}
 		if (!IsValidVerificationCode(m_verifyCode))
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.invalid_verify_code");
 			return;
 		}
-		m_phase = Phase::Submitting;
+		SetPhase(Phase::Submitting);
 		StartVerifyEmailWorker(cfg);
 		return;
 	}
@@ -3060,11 +3135,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_email.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.enter_recovery_email");
 			return;
 		}
-		m_phase = Phase::Submitting;
+		SetPhase(Phase::Submitting);
 		StartForgotPasswordWorker(cfg);
 		return;
 	}
@@ -3072,11 +3147,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (!m_termsScrolledToBottom || !m_termsAcknowledgeChecked)
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.accept_terms");
 			return;
 		}
-		m_phase = Phase::Submitting;
+		SetPhase(Phase::Submitting);
 		StartTermsAcceptWorker(cfg);
 		return;
 	}
@@ -3084,17 +3159,17 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_characterName.empty())
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.enter_character_name");
 			return;
 		}
 		if (!IsValidCharacterNameLocal(m_characterName))
 		{
-			m_phase = Phase::Error;
+			SetPhase(Phase::Error);
 			m_userErrorText = Tr("auth.error.invalid_character_name");
 			return;
 		}
-		m_phase = Phase::Submitting;
+		SetPhase(Phase::Submitting);
 		StartCharacterCreateWorker(cfg);
 	}
 }
@@ -3204,6 +3279,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 			case Phase::VerifyEmail:
 				return &m_verifyCode;
+			case Phase::EmailConfirmationPending:
+				return nullptr;
 			case Phase::ForgotPassword:
 				return &m_email;
 			case Phase::Terms:
@@ -3266,6 +3343,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				}
 				SubmitCurrentPhase(cfg);
 			}
+			else if (m_phase == Phase::EmailConfirmationPending)
+			{
+				m_registeredTagId.clear();
+				SetPhase(Phase::Login);
+				m_activeField = 0;
+				m_userErrorText.clear();
+			}
 			else
 			{
 				if (m_phase == Phase::Register)
@@ -3278,7 +3362,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		if (!usingNativeAuth)
 		{
-			const RenderModel model = BuildRenderModel();
+			RenderModel model = BuildRenderModel();
 			if (model.visible && m_viewportW > 0 && m_viewportH > 0)
 			{
 				const VkExtent2D ext{ m_viewportW, m_viewportH };
@@ -3310,6 +3394,45 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				{
 					return px >= x && py >= y && px < (x + rw) && py < (y + rh);
 				};
+
+				// --- Calcul géométrie dropdowns date (phase Inscription) ---
+				// Les dropdowns jour/mois/année sont à la ligne logique 3 de la grille d'inscription,
+				// colonnes 0, 1, 2. On remplit dd.x/y/w/h ici (même logique que AuthGlyphPass).
+				if (m_phase == Phase::Register && model.dropdowns.size() == 3)
+				{
+					// Calcul de la ligne logique pour chaque champ (même algorithme que AuthGlyphPass).
+					const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
+					std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
+					{
+						int32_t row = -1;
+						int32_t lastCol = engine::render::kAuthUiGridColumns;
+						for (int32_t i = 0; i < fieldCount; ++i)
+						{
+							const auto& f = model.fields[static_cast<size_t>(i)];
+							if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+								++row;
+							lastCol = (f.gridColumn < 0) ? engine::render::kAuthUiGridColumns : f.gridColumn;
+							fieldLogicalRow[static_cast<size_t>(i)] = row;
+						}
+					}
+					// Les champs birthDay/Month/Year ont les indices 5, 6, 7 dans la liste des champs.
+					// Leurs colonnes respectives : 0, 1, 2.
+					constexpr int kBirthFieldBase = 5;
+					constexpr int kDropdownH = engine::render::kAuthUiFieldBoxHeightPx;
+					for (int di = 0; di < 3 && (kBirthFieldBase + di) < fieldCount; ++di)
+					{
+						const int32_t logRow = fieldLogicalRow[static_cast<size_t>(kBirthFieldBase + di)];
+						const int32_t ddY = panelY + topOffset + logRow * fieldStep;
+						int32_t ddX = contentX;
+						int32_t ddW = contentW;
+						engine::render::AuthUiGridFieldGeometry(contentX, contentW, di, 1, ddX, ddW);
+						auto& dd = model.dropdowns[static_cast<size_t>(di)];
+						dd.x = ddX;
+						dd.y = ddY;
+						dd.w = ddW;
+						dd.h = kDropdownH;
+					}
+				}
 
 				if (m_phase == Phase::Terms && input.MouseScrollDelta() != 0)
 				{
@@ -3519,7 +3642,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 							const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
 							if (!window.OpenExternalUrl(resetUrl))
 							{
-								m_phase = Phase::Error;
+								SetPhase(Phase::Error);
 								m_userErrorText = Tr("auth.error.open_recovery_portal");
 							}
 						}
@@ -3693,6 +3816,76 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 					if (leftClick)
 					{
+						// --- Hit-test icône "i" (avant dropdowns et boutons) ---
+						bool iconHit = false;
+						if (model.infoIconVisible)
+						{
+							for (int32_t fi = 0; fi < static_cast<int32_t>(model.fields.size()) && !iconHit; ++fi)
+							{
+								const RenderField& fld = model.fields[static_cast<size_t>(fi)];
+								if (fld.tooltipText.empty())
+								{
+									continue;
+								}
+								const int32_t y = panelY + topOffset + fi * fieldStep;
+								const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
+								const int32_t iy = y - labelAboveFieldPxHit;
+								if (contains(mx, my, ix, iy, 18, 18))
+								{
+									m_infoPopupVisible = !m_infoPopupVisible;
+									m_infoPopupText    = fld.tooltipText;
+									iconHit = true;
+								}
+							}
+						}
+						// Clic hors icône quand le popup est ouvert → fermer le popup.
+						if (!iconHit && m_infoPopupVisible)
+						{
+							m_infoPopupVisible = false;
+						}
+
+						// --- Gestion clics dropdowns date de naissance (phase Inscription) ---
+						// Traité avant les boutons d'action pour éviter qu'un clic sur un dropdown
+						// déclenche accidentellement un bouton.
+						bool dropdownHandled = false;
+						if (m_phase == Phase::Register && model.dropdowns.size() == 3)
+						{
+							constexpr int32_t kOptionH = engine::render::kAuthUiFieldBoxHeightPx;
+							for (int i = 0; i < 3 && !dropdownHandled; ++i)
+							{
+								const auto& dd = model.dropdowns[static_cast<size_t>(i)];
+								// Clic sur l'en-tête du dropdown (ouverture/fermeture).
+								if (contains(mx, my, dd.x, dd.y, dd.w, dd.h))
+								{
+									m_openDropdownIndex = (m_openDropdownIndex == i) ? -1 : i;
+									dropdownHandled = true;
+									break;
+								}
+								// Si ce dropdown est ouvert, tester les options.
+								if (m_openDropdownIndex == i && dd.isOpen)
+								{
+									const int32_t optCount = static_cast<int32_t>(dd.options.size());
+									for (int32_t j = 0; j < optCount && !dropdownHandled; ++j)
+									{
+										const int32_t optY = dd.y + dd.h + j * kOptionH;
+										if (contains(mx, my, dd.x, optY, dd.w, kOptionH))
+										{
+											if (i == 0) m_birthDayIndex   = j;
+											else if (i == 1) m_birthMonthIndex = j;
+											else if (i == 2) m_birthYearIndex  = j;
+											m_openDropdownIndex = -1; // fermer après sélection
+											dropdownHandled = true;
+										}
+									}
+								}
+							}
+							// Clic en dehors de tout dropdown : fermer le dropdown ouvert.
+							if (!dropdownHandled && m_openDropdownIndex >= 0)
+							{
+								m_openDropdownIndex = -1;
+							}
+						}
+
 						bool actionHit = false;
 						if (m_phase == Phase::Terms)
 						{
@@ -3741,7 +3934,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									{
 									case Phase::Login:
 										if (i == 0) {
-											m_phase = Phase::Register;
+											SetPhase(Phase::Register);
 											m_activeField = 0;
 											m_userErrorText.clear();
 											m_passwordConfirm.clear();
@@ -3765,8 +3958,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
 						{
 							constexpr int32_t kAuthErrorFooterBarH = 58;
+							const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
 							int32_t buttonY = std::min(panelY + panelH - 86,
-								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + 20);
+								bodyStartY + static_cast<int32_t>(model.visibleBodyLineCount) * bodyLinePitch + buttonPadAfterBody);
 							if (m_phase == Phase::Error && lay.authErrorFooterTopFromPanelTopPx > 0)
 							{
 								buttonY = panelY + lay.authErrorFooterTopFromPanelTopPx
@@ -3785,7 +3979,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								{
 								case Phase::Login:
 									if (i == 0) {
-										m_phase = Phase::Register;
+										SetPhase(Phase::Register);
 										m_activeField = 0;
 										m_userErrorText.clear();
 										m_passwordConfirm.clear();
@@ -3813,7 +4007,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 											m_usernameDebounceTimer = 0.0;
 											m_usernameLastChecked.clear();
 										}
-										m_phase = Phase::Login;
+										SetPhase(Phase::Login);
+										m_activeField = 0;
+										m_userErrorText.clear();
+									}
+									break;
+								case Phase::EmailConfirmationPending:
+									if (i == 0)
+									{
+										m_registeredTagId.clear();
+										SetPhase(Phase::Login);
 										m_activeField = 0;
 										m_userErrorText.clear();
 									}
@@ -4170,7 +4373,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const bool loginShortcutModifier = input.IsDown(engine::platform::Key::Control);
 		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
 		{
-			m_phase = Phase::Register;
+			SetPhase(Phase::Register);
 			m_activeField = 0;
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
@@ -4187,7 +4390,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_INFO(Core, "[AuthUiPresenter] Keyboard shortcut opens password recovery portal ({})", resetUrl);
 			if (!window.OpenExternalUrl(resetUrl))
 			{
-				m_phase = Phase::Error;
+				SetPhase(Phase::Error);
 				m_userErrorText = Tr("auth.error.open_recovery_portal");
 			}
 		}
@@ -4243,7 +4446,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		model.hoveredFieldInfoIndex = m_hoveredFieldInfoIndex;
 		model.titleLine1 = Tr("auth.title_line1");
 		model.titleLine2 = Tr("auth.title_line2");
-		model.infoBanner = m_infoBanner;
+		// Phase::Error : on n'affiche pas la bannière (elle serait superposée au cadre d'erreur).
+		// SetPhase(Phase::Error) efface m_infoBanner, mais cette garde défensive empêche tout
+		// chevauchement résiduel si un chemin de code atypique ne passe pas par SetPhase.
+		model.infoBanner = (m_phase == Phase::Error) ? std::string{} : m_infoBanner;
 		model.errorText = (m_phase == Phase::Error) ? m_userErrorText : std::string{};
 		model.footerHint.clear();
 
@@ -4441,6 +4647,58 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				true,  false, Tr("auth.tooltip.password_confirm"), 0, 3,
 				pwdMatch ? 1 : (pwdMismatch ? -1 : 0));
 
+			// --- Dropdowns date de naissance ---
+			{
+				auto makeIntOptions = [](int lo, int hi) -> std::vector<DropdownOption>
+				{
+					std::vector<DropdownOption> opts;
+					opts.reserve(static_cast<size_t>(hi - lo + 1));
+					for (int i = lo; i <= hi; ++i)
+					{
+						char buf[8]{};
+						std::snprintf(buf, sizeof(buf), "%d", i);
+						opts.push_back({ std::string(buf), std::string(buf) });
+					}
+					return opts;
+				};
+
+				// Dropdown Jour (1-31).
+				{
+					RenderDropdown dd;
+					dd.label         = Tr("auth.label.birth_day");
+					dd.options       = makeIntOptions(1, 31);
+					dd.selectedIndex = std::clamp(m_birthDayIndex, 0, 30);
+					dd.isOpen        = (m_openDropdownIndex == 0);
+					model.dropdowns.push_back(dd);
+				}
+
+				// Dropdown Mois (noms localisés).
+				{
+					RenderDropdown dd;
+					dd.label = Tr("auth.label.birth_month");
+					for (int m = 1; m <= 12; ++m)
+					{
+						char key[16]{};
+						std::snprintf(key, sizeof(key), "month.%d", m);
+						dd.options.push_back({ Tr(std::string_view(key)), std::to_string(m) });
+					}
+					dd.selectedIndex = std::clamp(m_birthMonthIndex, 0, 11);
+					dd.isOpen        = (m_openDropdownIndex == 1);
+					model.dropdowns.push_back(dd);
+				}
+
+				// Dropdown Année (1900-2010).
+				{
+					RenderDropdown dd;
+					dd.label   = Tr("auth.label.birth_year");
+					dd.options = makeIntOptions(1900, 2010);
+					dd.selectedIndex = std::clamp(m_birthYearIndex, 0, 110);
+					dd.isOpen        = (m_openDropdownIndex == 2);
+					model.dropdowns.push_back(dd);
+				}
+
+				// BuildRenderModel reste const : ne pas muter l'état ici.
+			}
 
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
@@ -4448,11 +4706,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
-			addBodyLine(Tr("auth.label.account") + ": " + std::to_string(m_pendingVerifyAccountId));
 			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
+		case Phase::EmailConfirmationPending:
+		{
+			model.titleLine1   = Tr("auth.email_confirmation.title");
+			model.sectionTitle = "";
+			std::string msg = Tr("auth.email_confirmation.message");
+			if (!m_registeredTagId.empty())
+				msg += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
+			model.infoBanner = msg;
+			RenderAction back;
+			back.label   = Tr("auth.email_confirmation.back_to_login");
+			back.primary = true;
+			model.actions.push_back(back);
+			break;
+		}
 		case Phase::ForgotPassword:
 			model.sectionTitle = Tr("auth.section.forgot_password");
 			addField(Tr("common.email"), m_email, true);
@@ -4650,6 +4921,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		model.authLogoSizePx = m_authLogoSizePx;
 
+		// Popup info — propagé depuis l'état.
+		model.infoPopupVisible = m_infoPopupVisible;
+		if (!m_infoPopupText.empty())
+		{
+			model.infoPopupText = m_infoPopupText;
+		}
+		else
+		{
+			// Fallback : texte générique selon la phase (utilisé quand le popup n'est pas ouvert sur un champ spécifique).
+			if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword)
+				model.infoPopupText = Tr("auth.info.login_help");
+			else if (m_phase == Phase::Register)
+				model.infoPopupText = Tr("auth.info.register_help");
+		}
+
+		// Icône "i" visible sur Login et Register.
+		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register);
+
 		return model;
 	}
 
@@ -4727,7 +5016,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		state.active = m_initialized && !m_flowComplete && m_authEnabled;
 		state.login = m_phase == Phase::Login;
 		state.registerMode = m_phase == Phase::Register;
-		state.verifyEmail = m_phase == Phase::VerifyEmail;
+		state.verifyEmail = m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending;
 		state.forgotPassword = m_phase == Phase::ForgotPassword;
 		state.terms = m_phase == Phase::Terms;
 		state.characterCreate = m_phase == Phase::CharacterCreate;
@@ -4791,7 +5080,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Language options closed");
 			return true;
 		}
-		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail)
+		if (m_phase == Phase::Register || m_phase == Phase::ForgotPassword || m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending)
 		{
 			if (m_phase == Phase::Register)
 			{
@@ -4801,7 +5090,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_usernameDebounceTimer = 0.0;
 				m_usernameLastChecked.clear();
 			}
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			m_userErrorText.clear();
 			m_passwordConfirm.clear();
 			m_registeredTagId.clear();
@@ -4814,7 +5103,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		if (m_phase == Phase::CharacterCreate)
 		{
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			m_userErrorText.clear();
 			m_infoBanner = Tr("auth.info.character_cancelled");
 			ResetMasterSession();
@@ -4828,7 +5117,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		if (m_phase == Phase::Error)
 		{
-			m_phase = Phase::Login;
+			SetPhase(Phase::Login);
 			m_userErrorText.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: Error -> Login");
 			return true;

@@ -15,7 +15,7 @@ namespace engine::render
 	/// Case à cocher « se souvenir » : taille extérieure (glyphs + fond + hit-test alignés).
 	inline constexpr int32_t kAuthUiCheckboxOuterPx = 20;
 	/// Hauteur du rectangle de saisie (renderer + hit-test + placement du texte dans AuthGlyphPass).
-	inline constexpr int32_t kAuthUiFieldBoxHeightPx = 32;
+	inline constexpr int32_t kAuthUiFieldBoxHeightPx = 36;
 	/// Origine X du libellé à droite de la case (contentX + offset).
 	inline constexpr int32_t kAuthUiCheckboxLabelOffsetX = 30;
 	/// Marge coin du logo statut connexion (alignée sur \c Engine.cpp : \c 24.f + half).

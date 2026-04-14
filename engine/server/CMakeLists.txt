@@ -96,6 +96,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/engine/server/CaptchaVerifier.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/BotDetector.cpp
     ShardRegistry.cpp
+    ServerRegistry.cpp
     ShardRegisterHandler.cpp
     ShardTicketCrypto.cpp
     ShardTicketHandler.cpp

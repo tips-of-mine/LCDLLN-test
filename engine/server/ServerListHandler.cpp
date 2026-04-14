@@ -1,6 +1,7 @@
 #include "engine/server/ServerListHandler.h"
 #include "engine/server/NetServer.h"
 #include "engine/server/ShardRegistry.h"
+#include "engine/server/ServerRegistry.h"
 #include "engine/network/ServerListPayloads.h"
 #include "engine/network/ProtocolV1Constants.h"
 #include "engine/core/Log.h"
@@ -12,6 +13,11 @@ namespace engine::server
 	void ServerListHandler::SetServer(NetServer* server) { m_server = server; }
 	void ServerListHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
 	void ServerListHandler::SetCharacterCountHook(std::function<uint32_t(uint32_t)> hook) { m_characterCountHook = std::move(hook); }
+
+	void ServerListHandler::SetServerRegistry(ServerRegistry* selfRegistry)
+	{
+		m_serverRegistry = selfRegistry;
+	}
 
 	void ServerListHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t /*sessionIdHeader*/,
 		const uint8_t* /*payload*/, size_t /*payloadSize*/)
@@ -39,6 +45,20 @@ namespace engine::server
 				e.endpoint = s.endpoint;
 				entries.push_back(e);
 			}
+		}
+		// Ajouter l'entrée du master lui-même si ServerRegistry est disponible et enregistré.
+		if (m_serverRegistry && m_serverRegistry->IsRegistered())
+		{
+			engine::network::ServerListEntry self;
+			self.shard_id        = m_serverRegistry->GetServerId();
+			self.status          = 1; // Online
+			self.current_load    = 0;
+			self.max_capacity    = m_serverRegistry->GetMaxPlayers();
+			self.character_count = m_characterCountHook
+				? m_characterCountHook(m_serverRegistry->GetServerId()) : 0u;
+			self.endpoint        = m_serverRegistry->GetHost() + ":"
+				                 + std::to_string(m_serverRegistry->GetPort());
+			entries.push_back(self);
 		}
 		auto payload = BuildServerListResponsePayload(entries);
 		if (payload.empty())

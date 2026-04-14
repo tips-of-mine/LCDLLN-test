@@ -27,7 +27,7 @@
             "font_path": "fonts/Windlass.ttf",
             "font_pixel_height": 28,
             "value_font_path": "fonts/Morpheus.ttf",
-            "value_font_pixel_height": 24
+            "value_font_pixel_height": 28
         },
         "terrain": {
             "heightmap": "terrain/heightmap.r16h",

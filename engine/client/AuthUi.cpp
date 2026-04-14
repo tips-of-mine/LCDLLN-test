@@ -234,6 +234,55 @@ namespace engine::client
 			replaceBoolByNeedle("\"gameplay_udp\": {\n      \"enabled\": ", gameplayUdpEnabled);
 		}
 
+		/// Remplace la valeur de "locale" dans un JSON déjà sérialisé (même format que BuildUserSettingsJson).
+		/// Retourne true si la clé a été trouvée et remplacée, false si absente (le JSON reste inchangé).
+		bool ReplaceLocaleInJson(std::string& json, std::string_view locale)
+		{
+			// Cherche : "locale": "
+			constexpr std::string_view kNeedle = "\"locale\": \"";
+			const size_t start = json.find(kNeedle);
+			if (start == std::string::npos)
+				return false;
+			const size_t valueStart = start + kNeedle.size();
+			const size_t valueEnd = json.find('"', valueStart);
+			if (valueEnd == std::string::npos)
+				return false;
+			json.replace(valueStart, valueEnd - valueStart, locale);
+			return true;
+		}
+
+		/// Force l'écriture de la locale dans user_settings.json :
+		/// - Si le fichier n'existe pas : le crée avec les valeurs par défaut.
+		/// - Si le fichier existe   : charge-le, remplace uniquement la clé locale, réécrit.
+		/// Utilisé au premier démarrage après que l'utilisateur a confirmé sa langue.
+		bool PatchLocaleInSettingsFile(std::string_view locale)
+		{
+			const std::filesystem::path settingsPath{ kUserSettingsPath };
+			std::string json;
+			if (engine::platform::FileSystem::Exists(settingsPath))
+			{
+				json = engine::platform::FileSystem::ReadAllText(std::filesystem::path{ kUserSettingsPath });
+				if (!ReplaceLocaleInJson(json, locale))
+				{
+					// La clé n'existe pas dans ce fichier (format inattendu) — on l'ajoute pas,
+					// on se contente de logger un avertissement sans écraser le fichier.
+					LOG_WARN(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: clé 'locale' absente dans user_settings.json existant — locale non persistée");
+					return false;
+				}
+			}
+			else
+			{
+				json = BuildUserSettingsJson(false, locale, false, true);
+			}
+			if (!engine::platform::FileSystem::WriteAllText(settingsPath, json))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: échec écriture user_settings.json");
+				return false;
+			}
+			LOG_INFO(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: locale '{}' persistée dans user_settings.json", locale);
+			return true;
+		}
+
 		std::string ResolvePasswordRecoveryUrl(const engine::core::Config& cfg)
 		{
 			const std::string fromCfg = cfg.GetString("client.web_portal_reset_url", "");
@@ -1303,6 +1352,18 @@ namespace engine::client
 		}
 
 		SaveRememberPreference();
+		// Premier démarrage : SaveRememberPreference() saute l'écriture si user_settings.json
+		// existe déjà (logique intentionnelle — ne pas écraser les réglages utilisateur).
+		// Pour garantir que la locale est persistée même dans ce cas, on force un patch
+		// ciblé sur la clé "locale" dans le fichier existant, ou on crée le fichier.
+		if (firstRun)
+		{
+			if (PatchLocaleInSettingsFile(m_selectedLocale))
+			{
+				m_persistedLocale = m_selectedLocale;
+				m_hasPersistedLocale = true;
+			}
+		}
 		m_infoBanner = Tr("language.apply_success", { { "language", LocalizedLanguageName(m_selectedLocale) } });
 		LOG_INFO(Core, "[AuthUiPresenter] Locale selection applied (locale={}, first_run={})", m_selectedLocale, firstRun);
 		if (firstRun)
@@ -4385,7 +4446,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		model.hoveredFieldInfoIndex = m_hoveredFieldInfoIndex;
 		model.titleLine1 = Tr("auth.title_line1");
 		model.titleLine2 = Tr("auth.title_line2");
-		model.infoBanner = m_infoBanner;
+		// Phase::Error : on n'affiche pas la bannière (elle serait superposée au cadre d'erreur).
+		// SetPhase(Phase::Error) efface m_infoBanner, mais cette garde défensive empêche tout
+		// chevauchement résiduel si un chemin de code atypique ne passe pas par SetPhase.
+		model.infoBanner = (m_phase == Phase::Error) ? std::string{} : m_infoBanner;
 		model.errorText = (m_phase == Phase::Error) ? m_userErrorText : std::string{};
 		model.footerHint.clear();
 

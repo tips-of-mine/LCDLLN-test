@@ -270,8 +270,10 @@ namespace engine::render
 		{
 			out.secondaryRowY = bodyBottom;
 		}
-		out.buttonHalfWidth = std::max(120, (contentW - 10) / 2);
 		const int32_t gap = 10;
+		// "Inscription" (fr) mesure ~112 px à l'échelle 2 ; les boutons utilisent btnW-16 comme largeur de texte.
+		// Le minimum de 140 garantit 124 px de texte, soit une marge de 12 px au-dessus du besoin maximal connu.
+		out.buttonHalfWidth = std::max(140, (contentW - gap) / 2);
 		out.primarySubmitWidth = std::max(168, (contentW - gap) * 62 / 100);
 		out.primaryQuitWidth = std::max(100, contentW - gap - out.primarySubmitWidth);
 		if (out.primarySubmitWidth + gap + out.primaryQuitWidth > contentW)

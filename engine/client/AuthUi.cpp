@@ -4893,7 +4893,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		return model;
 	}
 
-	std::string AuthUiPresenter::BuildPanelText() const
+	std::string AuthUiPresenter::BuildPanelText()
 	{
 		const RenderModel model = BuildRenderModel();
 		if (!model.visible)

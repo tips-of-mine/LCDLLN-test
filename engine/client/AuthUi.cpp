@@ -4874,13 +4874,18 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		// Popup info — propagé depuis l'état.
 		model.infoPopupVisible = m_infoPopupVisible;
-		model.infoPopupText    = m_infoPopupText;
-
-		// Texte du popup selon la phase active.
-		if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword)
-			model.infoPopupText = Tr("auth.info.login_help");
-		else if (m_phase == Phase::Register)
-			model.infoPopupText = Tr("auth.info.register_help");
+		if (!m_infoPopupText.empty())
+		{
+			model.infoPopupText = m_infoPopupText;
+		}
+		else
+		{
+			// Fallback : texte générique selon la phase (utilisé quand le popup n'est pas ouvert sur un champ spécifique).
+			if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword)
+				model.infoPopupText = Tr("auth.info.login_help");
+			else if (m_phase == Phase::Register)
+				model.infoPopupText = Tr("auth.info.register_help");
+		}
 
 		// Icône "i" visible sur Login et Register.
 		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register);

@@ -3764,6 +3764,34 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 					if (leftClick)
 					{
+						// --- Hit-test icône "i" (avant dropdowns et boutons) ---
+						bool iconHit = false;
+						if (model.infoIconVisible)
+						{
+							for (int32_t fi = 0; fi < static_cast<int32_t>(model.fields.size()) && !iconHit; ++fi)
+							{
+								const RenderField& fld = model.fields[static_cast<size_t>(fi)];
+								if (fld.tooltipText.empty())
+								{
+									continue;
+								}
+								const int32_t y = panelY + topOffset + fi * fieldStep;
+								const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
+								const int32_t iy = y - labelAboveFieldPxHit;
+								if (contains(mx, my, ix, iy, 18, 18))
+								{
+									m_infoPopupVisible = !m_infoPopupVisible;
+									m_infoPopupText    = fld.tooltipText;
+									iconHit = true;
+								}
+							}
+						}
+						// Clic hors icône quand le popup est ouvert → fermer le popup.
+						if (!iconHit && m_infoPopupVisible)
+						{
+							m_infoPopupVisible = false;
+						}
+
 						// --- Gestion clics dropdowns date de naissance (phase Inscription) ---
 						// Traité avant les boutons d'action pour éviter qu'un clic sur un dropdown
 						// déclenche accidentellement un bouton.

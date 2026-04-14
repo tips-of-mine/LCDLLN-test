@@ -4547,7 +4547,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
-			addBodyLine(Tr("auth.label.account") + ": " + std::to_string(m_pendingVerifyAccountId));
 			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);

@@ -3310,7 +3310,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		if (!usingNativeAuth)
 		{
-			const RenderModel model = BuildRenderModel();
+			RenderModel model = BuildRenderModel();
 			if (model.visible && m_viewportW > 0 && m_viewportH > 0)
 			{
 				const VkExtent2D ext{ m_viewportW, m_viewportH };
@@ -3342,6 +3342,45 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				{
 					return px >= x && py >= y && px < (x + rw) && py < (y + rh);
 				};
+
+				// --- Calcul géométrie dropdowns date (phase Inscription) ---
+				// Les dropdowns jour/mois/année sont à la ligne logique 3 de la grille d'inscription,
+				// colonnes 0, 1, 2. On remplit dd.x/y/w/h ici (même logique que AuthGlyphPass).
+				if (m_phase == Phase::Register && model.dropdowns.size() == 3)
+				{
+					// Calcul de la ligne logique pour chaque champ (même algorithme que AuthGlyphPass).
+					const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
+					std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
+					{
+						int32_t row = -1;
+						int32_t lastCol = engine::render::kAuthUiGridColumns;
+						for (int32_t i = 0; i < fieldCount; ++i)
+						{
+							const auto& f = model.fields[static_cast<size_t>(i)];
+							if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+								++row;
+							lastCol = (f.gridColumn < 0) ? engine::render::kAuthUiGridColumns : f.gridColumn;
+							fieldLogicalRow[static_cast<size_t>(i)] = row;
+						}
+					}
+					// Les champs birthDay/Month/Year ont les indices 5, 6, 7 dans la liste des champs.
+					// Leurs colonnes respectives : 0, 1, 2.
+					constexpr int kBirthFieldBase = 5;
+					constexpr int kDropdownH = engine::render::kAuthUiFieldBoxHeightPx;
+					for (int di = 0; di < 3 && (kBirthFieldBase + di) < fieldCount; ++di)
+					{
+						const int32_t logRow = fieldLogicalRow[static_cast<size_t>(kBirthFieldBase + di)];
+						const int32_t ddY = panelY + topOffset + logRow * fieldStep;
+						int32_t ddX = contentX;
+						int32_t ddW = contentW;
+						engine::render::AuthUiGridFieldGeometry(contentX, contentW, di, 1, ddX, ddW);
+						auto& dd = model.dropdowns[static_cast<size_t>(di)];
+						dd.x = ddX;
+						dd.y = ddY;
+						dd.w = ddW;
+						dd.h = kDropdownH;
+					}
+				}
 
 				if (m_phase == Phase::Terms && input.MouseScrollDelta() != 0)
 				{
@@ -3725,6 +3764,48 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 					if (leftClick)
 					{
+						// --- Gestion clics dropdowns date de naissance (phase Inscription) ---
+						// Traité avant les boutons d'action pour éviter qu'un clic sur un dropdown
+						// déclenche accidentellement un bouton.
+						bool dropdownHandled = false;
+						if (m_phase == Phase::Register && model.dropdowns.size() == 3)
+						{
+							constexpr int32_t kOptionH = engine::render::kAuthUiFieldBoxHeightPx;
+							for (int i = 0; i < 3 && !dropdownHandled; ++i)
+							{
+								const auto& dd = model.dropdowns[static_cast<size_t>(i)];
+								// Clic sur l'en-tête du dropdown (ouverture/fermeture).
+								if (contains(mx, my, dd.x, dd.y, dd.w, dd.h))
+								{
+									m_openDropdownIndex = (m_openDropdownIndex == i) ? -1 : i;
+									dropdownHandled = true;
+									break;
+								}
+								// Si ce dropdown est ouvert, tester les options.
+								if (m_openDropdownIndex == i && dd.isOpen)
+								{
+									const int32_t optCount = static_cast<int32_t>(dd.options.size());
+									for (int32_t j = 0; j < optCount && !dropdownHandled; ++j)
+									{
+										const int32_t optY = dd.y + dd.h + j * kOptionH;
+										if (contains(mx, my, dd.x, optY, dd.w, kOptionH))
+										{
+											if (i == 0) m_birthDayIndex   = j;
+											else if (i == 1) m_birthMonthIndex = j;
+											else if (i == 2) m_birthYearIndex  = j;
+											m_openDropdownIndex = -1; // fermer après sélection
+											dropdownHandled = true;
+										}
+									}
+								}
+							}
+							// Clic en dehors de tout dropdown : fermer le dropdown ouvert.
+							if (!dropdownHandled && m_openDropdownIndex >= 0)
+							{
+								m_openDropdownIndex = -1;
+							}
+						}
+
 						bool actionHit = false;
 						if (m_phase == Phase::Terms)
 						{

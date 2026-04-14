@@ -67,7 +67,7 @@
   "auth.section.forgot_password": "Recuperation du mot de passe",
   "auth.button.register": "Inscription",
   "auth.button.forgot_password": "Recuperation du mot de passe",
-  "auth.checkbox.remember": "Se souvenir",
+  "auth.checkbox.remember": "Mémoriser mon identifiant",
   "auth.label.password": "Mot de passe",
   "auth.label.password_confirm": "Confirmation du mot de passe",
   "auth.label.login": "Identifiant",

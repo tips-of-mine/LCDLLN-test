@@ -67,7 +67,7 @@
   "auth.section.forgot_password": "Password recovery",
   "auth.button.register": "Register",
   "auth.button.forgot_password": "Forgot password",
-  "auth.checkbox.remember": "Remember me",
+  "auth.checkbox.remember": "Remember my username",
   "auth.label.password": "Password",
   "auth.label.password_confirm": "Confirm password",
   "auth.label.login": "Login",

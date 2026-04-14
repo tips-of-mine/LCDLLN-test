@@ -4383,7 +4383,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 	}
 
-	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel()
+	AuthUiPresenter::RenderModel AuthUiPresenter::BuildRenderModel() const
 	{
 		RenderModel model{};
 		model.layoutAuthTitleLine1FromPanelTopPx = m_layoutAuthTitleLine1FromPanelTopPx;
@@ -4642,13 +4642,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					model.dropdowns.push_back(dd);
 				}
 
-				// Synchroniser m_birthDay/Month/Year depuis les index.
-				if (m_birthDayIndex < static_cast<int32_t>(model.dropdowns[0].options.size()))
-					m_birthDay   = model.dropdowns[0].options[m_birthDayIndex].value;
-				if (m_birthMonthIndex < static_cast<int32_t>(model.dropdowns[1].options.size()))
-					m_birthMonth = model.dropdowns[1].options[m_birthMonthIndex].value;
-				if (m_birthYearIndex < static_cast<int32_t>(model.dropdowns[2].options.size()))
-					m_birthYear  = model.dropdowns[2].options[m_birthYearIndex].value;
+				// BuildRenderModel reste const : ne pas muter l'état ici.
 			}
 
 			addActionKeys("common.submit", true);
@@ -4893,7 +4887,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		return model;
 	}
 
-	std::string AuthUiPresenter::BuildPanelText()
+	std::string AuthUiPresenter::BuildPanelText() const
 	{
 		const RenderModel model = BuildRenderModel();
 		if (!model.visible)

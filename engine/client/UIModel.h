@@ -36,7 +36,13 @@ namespace engine::client
 		/// M35.2 — vendor shop panel (offers, prices, stock wire).
 		UIModelChangeShop      = 1u << 11,
 		/// M35.4 — auction house browse + filters.
-		UIModelChangeAuction   = 1u << 12
+		UIModelChangeAuction   = 1u << 12,
+		/// M35.3 — trade window state (items, gold, lock/confirm flags).
+		UIModelChangeTrade     = 1u << 13,
+		/// M36.1 — harvest cast bar progress (start, fill, cancel/complete).
+		UIModelChangeHarvest   = 1u << 14,
+		/// M36.2 — crafting panel state (professions, recipe list, cast bar).
+		UIModelChangeCrafting  = 1u << 15
 	};
 
 	/// M35.2 — one vendor offer row mirrored from \ref engine::server::ShopOfferWire.
@@ -79,6 +85,86 @@ namespace engine::client
 		uint32_t sortMode = 0;
 		uint32_t selectedRow = 0;
 		std::vector<UIAuctionListingLine> listings;
+	};
+
+	/// M35.3 — one side of the trade window mirrored from \ref engine::server::TradeSideWire.
+	struct UITradeSide
+	{
+		uint32_t                              clientId   = 0;
+		uint32_t                              goldAmount = 0;
+		bool                                  locked     = false;
+		bool                                  confirmed  = false;
+		std::vector<engine::server::ItemStack> items;
+	};
+
+	/// M35.3 — full trade window snapshot from \ref engine::server::TradeWindowUpdateMessage.
+	struct UITradeWindowState
+	{
+		UITradeSide selfSide{};
+		UITradeSide otherSide{};
+		/// Ticks remaining in the 5 s anti-scam review window (0 when not in review).
+		uint32_t    reviewTicksRemaining = 0;
+		/// True while a trade session is active (window should be shown).
+		bool        isOpen  = false;
+		/// True when the local trade has been successfully completed.
+		bool        isDone  = false;
+		/// Human-readable reason when the trade was cancelled; empty otherwise.
+		std::string cancelReason;
+	};
+
+	/// M36.2 — one profession entry mirrored from ProfessionUpdate packets.
+	struct UIProfessionEntry
+	{
+		std::string professionKey;
+		uint32_t    skillLevel = 1;
+		bool        isPrimary  = false;
+	};
+
+	/// M36.2 — one recipe row from CraftRecipeListResult.
+	struct UICraftRecipeRow
+	{
+		std::string recipeId;
+		uint32_t    skillRequired  = 0;
+		uint32_t    outputItemId   = 0;
+		uint32_t    outputQuantity = 1;
+	};
+
+	/// M36.2 — full crafting panel state (professions + recipe list + active cast bar).
+	struct UICraftingState
+	{
+		/// Known professions with skill levels.
+		std::vector<UIProfessionEntry> professions;
+		/// Recipe list for the currently open profession tab.
+		std::string                    activeProfessionKey;
+		std::vector<UICraftRecipeRow>  recipes;
+		/// Index of the selected recipe in \ref recipes (UINT32_MAX = none).
+		uint32_t                       selectedRecipeIndex = UINT32_MAX;
+		/// Crafting cast bar progress (0.0-1.0); 0.0 = idle.
+		float                          craftFillFraction = 0.0f;
+		uint32_t                       craftDurationTicks = 0;
+		std::string                    craftingRecipeId;
+		/// True while a craft cast is in progress.
+		bool                           isCrafting = false;
+		/// Last skill-up result: 1 = gained, 0 = no gain.
+		uint8_t                        lastSkillGained = 0;
+		uint32_t                       lastNewSkillLevel = 0;
+		/// M36.3 — quality tier of the last completed craft (0=Normal…3=Epic).
+		uint8_t                        lastQualityTier = 0;
+	};
+
+	/// M36.1 — harvest cast bar state replicated from HarvestStart/Complete/Cancelled packets.
+	struct UIHarvestProgress
+	{
+		/// Server-assigned entity id of the resource node being harvested.
+		uint64_t nodeEntityId       = 0;
+		/// Total duration of the cast in ticks (received from HarvestStart).
+		uint32_t totalDurationTicks = 0;
+		/// Ticks elapsed since the harvest started (incremented by ApplyModel tick-ups).
+		uint32_t elapsedTicks       = 0;
+		/// Fill fraction in [0, 1] computed from elapsed/total.
+		float    fillFraction       = 0.0f;
+		/// True while a harvest cast is in progress.
+		bool     inProgress         = false;
 	};
 
 	/// M35.1 — wallet balances replicated from \ref WalletUpdateMessage.
@@ -227,6 +313,12 @@ namespace engine::client
 		UIShopPanel shop{};
 		/// M35.4 — auction house panel (browse / filters).
 		UIAuctionPanel auction{};
+		/// M35.3 — trade window state (both sides, lock/confirm, review timer).
+		UITradeWindowState tradeWindow{};
+		/// M36.1 — harvest cast bar progress state.
+		UIHarvestProgress harvest{};
+		/// M36.2 — crafting panel state (professions, recipe list, cast bar).
+		UICraftingState crafting{};
 		std::string debugDump;
 
 		/// Build a text dump suitable for a debug widget or logs.
@@ -336,6 +428,39 @@ namespace engine::client
 		/// Apply one decoded AuctionBrowseResult message (M35.4).
 		bool ApplyAuctionBrowseResult(std::span<const std::byte> packet);
 
+		/// Apply one decoded TradeWindowUpdate message (M35.3).
+		bool ApplyTradeWindowUpdate(std::span<const std::byte> packet);
+
+		/// Apply one decoded TradeComplete message (M35.3).
+		bool ApplyTradeComplete(std::span<const std::byte> packet);
+
+		/// Apply one decoded TradeCancelled message (M35.3).
+		bool ApplyTradeCancelled(std::span<const std::byte> packet);
+
+		/// Apply one decoded HarvestStart message (M36.1).
+		bool ApplyHarvestStart(std::span<const std::byte> packet);
+
+		/// Apply one decoded HarvestComplete message (M36.1).
+		bool ApplyHarvestComplete(std::span<const std::byte> packet);
+
+		/// Apply one decoded HarvestCancelled message (M36.1).
+		bool ApplyHarvestCancelled(std::span<const std::byte> packet);
+
+		/// Apply one decoded ProfessionUpdate message (M36.2).
+		bool ApplyProfessionUpdate(std::span<const std::byte> packet);
+
+		/// Apply one decoded CraftRecipeListResult message (M36.2).
+		bool ApplyCraftRecipeListResult(std::span<const std::byte> packet);
+
+		/// Apply one decoded CraftStart message (M36.2).
+		bool ApplyCraftStart(std::span<const std::byte> packet);
+
+		/// Apply one decoded CraftComplete message (M36.2).
+		bool ApplyCraftComplete(std::span<const std::byte> packet);
+
+		/// Apply one decoded CraftCancelled message (M36.2).
+		bool ApplyCraftCancelled(std::span<const std::byte> packet);
+
 		/// Advance world presenter ages (wall clock clamped).
 		void PumpWorldPresenterAge();
 
@@ -355,6 +480,17 @@ namespace engine::client
 		engine::server::WalletUpdateMessage m_walletScratch{};
 		engine::server::ShopOpenMessage m_shopOpenScratch{};
 		engine::server::AuctionBrowseResultMessage m_auctionBrowseScratch{};
+		engine::server::TradeWindowUpdateMessage   m_tradeWindowScratch{};
+		engine::server::TradeCompleteMessage       m_tradeCompleteScratch{};
+		engine::server::TradeCancelledMessage      m_tradeCancelledScratch{};
+		engine::server::HarvestStartMessage        m_harvestStartScratch{};
+		engine::server::HarvestCompleteMessage     m_harvestCompleteScratch{};
+		engine::server::HarvestCancelledMessage    m_harvestCancelledScratch{};
+		engine::server::ProfessionUpdateMessage    m_professionUpdateScratch{};
+		engine::server::CraftRecipeListResultMessage m_craftRecipeListScratch{};
+		engine::server::CraftStartMessage          m_craftStartScratch{};
+		engine::server::CraftCompleteMessage       m_craftCompleteScratch{};
+		engine::server::CraftCancelledMessage      m_craftCancelledScratch{};
 		ChatWorldVisualPresenter m_chatWorld{};
 		size_t m_nextObserverHandle = 1;
 		bool m_initialized = false;

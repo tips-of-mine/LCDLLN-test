@@ -2,8 +2,11 @@
 
 #include "engine/server/AuctionHouse.h"
 #include "engine/server/CharacterPersistence.h"
+#include "engine/server/CraftingSystem.h"
 #include "engine/server/CurrencyConfig.h"
+#include "engine/server/GatheringSystem.h"
 #include "engine/server/PlayerWalletService.h"
+#include "engine/server/TradeSystem.h"
 #include "engine/server/VendorCatalog.h"
 #include "engine/server/EventRuntime.h"
 #include "engine/server/FriendSystem.h"
@@ -112,6 +115,8 @@ namespace engine::server
 		bool chatModeratorRole = false;
 		/// M29.2: block chat sends until this tick (0 = not muted).
 		uint32_t chatMutedUntilServerTick = 0;
+		/// M36.2: known crafting professions and skill levels.
+		std::vector<ProfessionEntry> professions;
 	};
 
 	/// Minimal authoritative mob replicated through the same interest system as players.
@@ -627,6 +632,99 @@ namespace engine::server
 		/// Handle /friend sub-command dispatched from HandleChatSlashCommand.
 		bool HandleFriendCommand(ConnectedClient& sender, std::string_view argsRemainder);
 
+		// ------------------------------------------------------------------
+		// M35.3 — Direct player-to-player trade helpers
+		// ------------------------------------------------------------------
+
+		/// Handle /trade <name> slash command.
+		bool HandleTradeCommand(ConnectedClient& sender, std::string_view argsRemainder);
+
+		/// Handle an incoming TradeAccept packet from a client.
+		void HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& message);
+
+		/// Handle an incoming TradeDecline packet from a client.
+		void HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& message);
+
+		/// Handle an incoming TradeAddItem packet from a client.
+		void HandleTradeAddItem(const Endpoint& endpoint, const TradeAddItemMessage& message);
+
+		/// Handle an incoming TradeSetGold packet from a client.
+		void HandleTradeSetGold(const Endpoint& endpoint, const TradeSetGoldMessage& message);
+
+		/// Handle an incoming TradeLock packet from a client.
+		void HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& message);
+
+		/// Handle an incoming TradeConfirm packet from a client.
+		void HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& message);
+
+		/// Handle an incoming TradeCancel packet from a client.
+		void HandleTradeCancelPacket(const Endpoint& endpoint, const TradeCancelMessage& message);
+
+		/// Send a TradeWindowUpdate snapshot to both sides of the active session.
+		void BroadcastTradeWindowUpdate(uint32_t clientIdA, uint32_t clientIdB);
+
+		/// Send a TradeComplete notification to both sides.
+		void BroadcastTradeComplete(uint32_t clientIdA, uint32_t clientIdB);
+
+		/// Send a TradeCancelled notification to both sides and cancel the session.
+		void BroadcastTradeCancelled(uint32_t clientIdA, uint32_t clientIdB, std::string_view reason);
+
+		/// Write one trade audit log line (player_trade_log equivalent, runtime only).
+		void LogTradeAudit(
+			uint32_t clientIdA,
+			uint32_t clientIdB,
+			const std::string& itemsA,
+			const std::string& itemsB,
+			uint32_t goldA,
+			uint32_t goldB);
+
+		// ------------------------------------------------------------------
+		// M36.1 — Gathering / harvesting resource nodes helpers
+		// ------------------------------------------------------------------
+
+		/// Initialize the GatheringSystem from content JSON files.
+		bool InitGathering();
+
+		/// Handle a HarvestRequest packet from a client.
+		void HandleHarvestRequest(const Endpoint& endpoint, const HarvestRequestMessage& message);
+
+		/// Handle a HarvestCancelRequest packet from a client.
+		void HandleHarvestCancelRequest(const Endpoint& endpoint, const HarvestCancelRequestMessage& message);
+
+		/// Advance gathering sessions each server tick.
+		void TickGathering();
+
+		/// Send a HarvestCancelled packet to one client.
+		bool SendHarvestCancelled(const ConnectedClient& receiver, EntityId nodeEntityId, HarvestCancelReason reason);
+
+		// ------------------------------------------------------------------
+		// M36.2 — Crafting / profession skill system helpers
+		// ------------------------------------------------------------------
+
+		/// Initialize the CraftingSystem from content JSON.
+		bool InitCrafting();
+
+		/// Handle an incoming LearnProfessionRequest packet.
+		void HandleLearnProfessionRequest(const Endpoint& endpoint, const LearnProfessionRequestMessage& message);
+
+		/// Handle an incoming CraftRecipeListRequest packet.
+		void HandleCraftRecipeListRequest(const Endpoint& endpoint, const CraftRecipeListRequestMessage& message);
+
+		/// Handle an incoming CraftRequest packet.
+		void HandleCraftRequest(const Endpoint& endpoint, const CraftRequestMessage& message);
+
+		/// Handle an incoming CraftCancelRequest packet.
+		void HandleCraftCancelRequest(const Endpoint& endpoint, const CraftCancelRequestMessage& message);
+
+		/// Advance crafting sessions each server tick.
+		void TickCrafting();
+
+		/// Send a ProfessionUpdate snapshot to one client.
+		bool SendProfessionUpdate(const ConnectedClient& receiver);
+
+		/// Build ProfessionEntry list from PersistedCharacterState and push to ConnectedClient.
+		void ApplyPersistedProfessions(ConnectedClient& client, const PersistedCharacterState& state);
+
 		engine::core::Config m_config;
 		CharacterPersistenceStore m_characterPersistence;
 		AuctionHouseService m_auctionHouse;
@@ -678,5 +776,14 @@ namespace engine::server
 
 		/// M32.2: party system (formation, loot modes, XP sharing).
 		PartySystem m_partySystem;
+
+		/// M35.3: direct player-to-player trade sessions + request queue.
+		TradeSystem m_tradeSystem;
+
+		/// M36.1: resource node spawner + harvest session manager.
+		GatheringSystem m_gatheringSystem;
+
+		/// M36.2: crafting recipes + profession skill manager.
+		CraftingSystem m_craftingSystem;
 	};
 }

@@ -1,0 +1,17 @@
+{
+  "keybindings": [
+    { "action": "move_forward",    "displayName": "Move Forward",    "key": 87  },
+    { "action": "move_backward",   "displayName": "Move Backward",   "key": 83  },
+    { "action": "move_left",       "displayName": "Move Left",       "key": 65  },
+    { "action": "move_right",      "displayName": "Move Right",      "key": 68  },
+    { "action": "jump",            "displayName": "Jump",            "key": 32  },
+    { "action": "interact",        "displayName": "Interact",        "key": 70  },
+    { "action": "open_inventory",  "displayName": "Open Inventory",  "key": 73  },
+    { "action": "open_map",        "displayName": "Open Map",        "key": 77  },
+    { "action": "open_character",  "displayName": "Open Character",  "key": 67  },
+    { "action": "open_skills",     "displayName": "Open Skills",     "key": 75  },
+    { "action": "toggle_chat",     "displayName": "Toggle Chat",     "key": 13  },
+    { "action": "auto_run",        "displayName": "Auto-Run",        "key": 78  },
+    { "action": "screenshot",      "displayName": "Screenshot",      "key": 122 }
+  ]
+}

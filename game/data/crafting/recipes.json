@@ -1,0 +1,88 @@
+{
+  "recipes": [
+    {
+      "id": "iron_sword",
+      "profession": "blacksmithing",
+      "skill_required": 50,
+      "ingredients": [
+        { "item_id": 2001, "quantity": 8 },
+        { "item_id": 2030, "quantity": 2 }
+      ],
+      "output": { "item_id": 3001, "quantity": 1 },
+      "craft_time": 3.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "iron_shield",
+      "profession": "blacksmithing",
+      "skill_required": 60,
+      "ingredients": [
+        { "item_id": 2001, "quantity": 10 },
+        { "item_id": 2021, "quantity": 3 }
+      ],
+      "output": { "item_id": 3002, "quantity": 1 },
+      "craft_time": 4.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "iron_helmet",
+      "profession": "blacksmithing",
+      "skill_required": 75,
+      "ingredients": [
+        { "item_id": 2001, "quantity": 12 },
+        { "item_id": 2030, "quantity": 4 }
+      ],
+      "output": { "item_id": 3003, "quantity": 1 },
+      "craft_time": 5.0,
+      "skill_up_chance": 0.8
+    },
+    {
+      "id": "healing_potion",
+      "profession": "alchemy",
+      "skill_required": 1,
+      "ingredients": [
+        { "item_id": 2010, "quantity": 2 },
+        { "item_id": 2011, "quantity": 1 }
+      ],
+      "output": { "item_id": 4001, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "greater_healing_potion",
+      "profession": "alchemy",
+      "skill_required": 50,
+      "ingredients": [
+        { "item_id": 2010, "quantity": 4 },
+        { "item_id": 2011, "quantity": 2 }
+      ],
+      "output": { "item_id": 4002, "quantity": 1 },
+      "craft_time": 2.5,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "mana_potion",
+      "profession": "alchemy",
+      "skill_required": 30,
+      "ingredients": [
+        { "item_id": 2010, "quantity": 2 },
+        { "item_id": 2020, "quantity": 1 }
+      ],
+      "output": { "item_id": 4003, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "rough_bow",
+      "profession": "leatherworking",
+      "skill_required": 1,
+      "ingredients": [
+        { "item_id": 2020, "quantity": 6 },
+        { "item_id": 2030, "quantity": 2 }
+      ],
+      "output": { "item_id": 3010, "quantity": 1 },
+      "craft_time": 3.0,
+      "skill_up_chance": 1.0
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "lights": [
+    {
+      "id": "streetlamp_main_01",
+      "type": "streetlamp",
+      "position": [10.0, 4.5, 0.0],
+      "radius": 8.0,
+      "color": [1.0, 0.85, 0.4],
+      "intensity": 2.0,
+      "auto_night_light": true
+    },
+    {
+      "id": "streetlamp_main_02",
+      "type": "streetlamp",
+      "position": [30.0, 4.5, 0.0],
+      "radius": 8.0,
+      "color": [1.0, 0.85, 0.4],
+      "intensity": 2.0,
+      "auto_night_light": true
+    },
+    {
+      "id": "torch_tavern_01",
+      "type": "torch",
+      "position": [5.0, 2.0, 5.0],
+      "radius": 5.0,
+      "color": [1.0, 0.5, 0.1],
+      "intensity": 1.5,
+      "auto_night_light": true
+    },
+    {
+      "id": "torch_tavern_02",
+      "type": "torch",
+      "position": [-5.0, 2.0, 5.0],
+      "radius": 5.0,
+      "color": [1.0, 0.5, 0.1],
+      "intensity": 1.5,
+      "auto_night_light": true
+    },
+    {
+      "id": "window_inn_01",
+      "type": "window",
+      "position": [8.0, 3.0, 8.0],
+      "radius": 3.0,
+      "color": [1.0, 0.9, 0.7],
+      "intensity": 0.8,
+      "auto_night_light": true
+    },
+    {
+      "id": "window_inn_02",
+      "type": "window",
+      "position": [12.0, 3.0, 8.0],
+      "radius": 3.0,
+      "color": [1.0, 0.9, 0.7],
+      "intensity": 0.8,
+      "auto_night_light": true
+    }
+  ]
+}

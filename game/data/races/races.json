@@ -1,0 +1,116 @@
+{
+  "races": [
+    {
+      "id": "humains",
+      "displayName": "Humains",
+      "description": "Adaptables et ambitieux, les Humains excellent dans toutes les voies.",
+      "racials": [
+        "Diplomatie : +5% réputation",
+        "Polyvalence : +1 à tous les attributs",
+        "Endurance : régénération légèrement augmentée"
+      ],
+      "iconPath": "ui/races/humains/theme.json",
+      "defaultSkinColors": ["#C68642", "#F1C27D", "#FDBCB4", "#8D5524"],
+      "defaultHairColors": ["#1A0A00", "#4E1A00", "#B5651D", "#D2B48C", "#FFD700", "#808080"],
+      "defaultEyeColors": ["#3B5998", "#228B22", "#8B4513", "#808080"]
+    },
+    {
+      "id": "elfes",
+      "displayName": "Elfes",
+      "description": "Anciens et sages, les Elfes dominent la magie et l'agilité.",
+      "racials": [
+        "Arcane : +10% puissance des sorts",
+        "Grâce sylvestre : +5% esquive",
+        "Vision nocturne : perception nocturne"
+      ],
+      "iconPath": "ui/races/elfes/theme.json",
+      "defaultSkinColors": ["#F5DEB3", "#E8D0AA", "#C4A882", "#B8946F"],
+      "defaultHairColors": ["#F5F5DC", "#C0C0C0", "#D4AF37", "#98FB98", "#ADD8E6"],
+      "defaultEyeColors": ["#00CED1", "#32CD32", "#9370DB", "#F0E68C"]
+    },
+    {
+      "id": "orcs",
+      "displayName": "Orcs",
+      "description": "Robustes guerriers, les Orcs dominent la force brute au combat.",
+      "racials": [
+        "Furie : +15% dégâts mêlée sous 30% PV",
+        "Peau épaisse : +5% réduction dégâts physiques",
+        "Résistance : immunité courte aux effets de contrôle"
+      ],
+      "iconPath": "ui/races/orcs/theme.json",
+      "defaultSkinColors": ["#355E3B", "#556B2F", "#4B5320", "#228B22"],
+      "defaultHairColors": ["#1C1C1C", "#2F4F4F", "#8B0000", "#000000"],
+      "defaultEyeColors": ["#FF4500", "#FF6347", "#DC143C", "#8B0000"]
+    },
+    {
+      "id": "nains",
+      "displayName": "Nains",
+      "description": "Maîtres artisans et guerriers tenaces, les Nains résistent à tout.",
+      "racials": [
+        "Forge ancestrale : +10% bonus artisanat",
+        "Constitution de pierre : +10% PV max",
+        "Résistance au poison : -50% durée empoisonnement"
+      ],
+      "iconPath": "ui/races/nains/theme.json",
+      "defaultSkinColors": ["#C68642", "#A0522D", "#8B4513", "#D2691E"],
+      "defaultHairColors": ["#8B0000", "#A52A2A", "#D2691E", "#CD853F", "#F4A460", "#808080"],
+      "defaultEyeColors": ["#4169E1", "#2E8B57", "#B8860B", "#696969"]
+    },
+    {
+      "id": "morts_vivants",
+      "displayName": "Morts-Vivants",
+      "description": "Revenu des ténèbres, les Morts-Vivants résistent à la mort elle-même.",
+      "racials": [
+        "Volonté des Damnés : immunité à la peur et au charme",
+        "Toucher mortel : +5% dégâts aux sorts de mort",
+        "Respiration cadavérique : pas besoin de respirer"
+      ],
+      "iconPath": "ui/races/morts_vivants/theme.json",
+      "defaultSkinColors": ["#C8BFB0", "#A9A9A9", "#708090", "#778899"],
+      "defaultHairColors": ["#000000", "#36013F", "#2F4F4F", "#1C1C1C"],
+      "defaultEyeColors": ["#7CFC00", "#ADFF2F", "#9400D3", "#8B0000"]
+    },
+    {
+      "id": "corrompus",
+      "displayName": "Corrompus",
+      "description": "Touchés par la magie sombre, les Corrompus manient les forces interdites.",
+      "racials": [
+        "Corruption : +10% dégâts sorts corrompus",
+        "Absorption : 5% des dégâts infligés soigne",
+        "Ombre : +5% furtivité en zone sombre"
+      ],
+      "iconPath": "ui/races/corrompus/theme.json",
+      "defaultSkinColors": ["#4A0E4E", "#6B2D6B", "#8B4788", "#9932CC"],
+      "defaultHairColors": ["#000000", "#2F0033", "#4B0082", "#800080"],
+      "defaultEyeColors": ["#FF00FF", "#DA70D6", "#9400D3", "#4B0082"]
+    },
+    {
+      "id": "divins",
+      "displayName": "Divins",
+      "description": "Bénis des dieux, les Divins canalisent une lumière purificatrice.",
+      "racials": [
+        "Bénédiction divine : +10% soins prodigués",
+        "Bouclier de foi : absorption de dégâts passive",
+        "Lumière céleste : résistance aux sorts de mort"
+      ],
+      "iconPath": "ui/races/divins/theme.json",
+      "defaultSkinColors": ["#FFEFD5", "#FFE4C4", "#FFDAB9", "#FFD700"],
+      "defaultHairColors": ["#FFD700", "#FFFACD", "#FFFFFF", "#F0E68C"],
+      "defaultEyeColors": ["#87CEEB", "#FFD700", "#FFFFFF", "#87CEFA"]
+    },
+    {
+      "id": "demons",
+      "displayName": "Démons",
+      "description": "Entités infernales enchaînées dans la chair, les Démons brûlent d'une puissance destructrice.",
+      "racials": [
+        "Feu infernal : +10% dégâts de feu",
+        "Résistance au feu : -50% dégâts de feu reçus",
+        "Terreur : -10% résistance ennemie à la peur"
+      ],
+      "iconPath": "ui/races/demons/theme.json",
+      "defaultSkinColors": ["#8B0000", "#B22222", "#CC2200", "#FF4500"],
+      "defaultHairColors": ["#000000", "#8B0000", "#B8860B", "#1C1C1C"],
+      "defaultEyeColors": ["#FF4500", "#FFD700", "#FF6347", "#DC143C"]
+    }
+  ]
+}

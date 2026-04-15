@@ -1,0 +1,47 @@
+{
+  "node_types": [
+    {
+      "id": 1,
+      "node_type": "ore_vein",
+      "harvest_time_sec": 3.0,
+      "respawn_sec": 600,
+      "harvest_range_meters": 5.0,
+      "loot_table": [
+        { "item_id": 2001, "min_qty": 1, "max_qty": 3 },
+        { "item_id": 2002, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 2,
+      "node_type": "herb",
+      "harvest_time_sec": 2.0,
+      "respawn_sec": 300,
+      "harvest_range_meters": 3.5,
+      "loot_table": [
+        { "item_id": 2010, "min_qty": 1, "max_qty": 4 },
+        { "item_id": 2011, "min_qty": 1, "max_qty": 2 }
+      ]
+    },
+    {
+      "id": 3,
+      "node_type": "tree",
+      "harvest_time_sec": 5.0,
+      "respawn_sec": 900,
+      "harvest_range_meters": 6.0,
+      "loot_table": [
+        { "item_id": 2020, "min_qty": 2, "max_qty": 5 },
+        { "item_id": 2021, "min_qty": 1, "max_qty": 2 }
+      ]
+    },
+    {
+      "id": 4,
+      "node_type": "animal_corpse",
+      "harvest_time_sec": 2.5,
+      "respawn_sec": 0,
+      "harvest_range_meters": 4.0,
+      "loot_table": [
+        { "item_id": 2030, "min_qty": 1, "max_qty": 3 }
+      ]
+    }
+  ]
+}

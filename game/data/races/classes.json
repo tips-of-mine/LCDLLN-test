@@ -1,0 +1,108 @@
+{
+  "classes": [
+    {
+      "id": "warrior",
+      "displayName": "Guerrier",
+      "description": "Maître du combat au corps à corps, le Guerrier absorbe les coups et frappe fort.",
+      "role": "tank_dps",
+      "abilities": [
+        "Coup d'écu : frappe qui étourdit l'ennemi",
+        "Cri de guerre : augmente les dégâts du groupe",
+        "Maîtrise des armes : bonus aux dégâts physiques"
+      ],
+      "primaryAttribute": "force",
+      "allowedRaces": ["humains", "orcs", "nains", "morts_vivants", "demons"]
+    },
+    {
+      "id": "mage",
+      "displayName": "Mage",
+      "description": "Sorcier savant qui maîtrise les éléments et les arcanes.",
+      "role": "dps",
+      "abilities": [
+        "Boule de feu : projectile enflammé",
+        "Onde de givre : ralentit les ennemis",
+        "Téléportation : se déplace instantanément"
+      ],
+      "primaryAttribute": "intelligence",
+      "allowedRaces": ["humains", "elfes", "morts_vivants", "corrompus", "divins"]
+    },
+    {
+      "id": "rogue",
+      "displayName": "Voleur",
+      "description": "Assassin furtif qui frappe dans l'ombre et disparaît avant la riposte.",
+      "role": "dps",
+      "abilities": [
+        "Attaque sournoise : dégâts élevés depuis l'ombre",
+        "Dissimulation : entrer en furtivité",
+        "Lancer de couteau : attaque à distance"
+      ],
+      "primaryAttribute": "agilite",
+      "allowedRaces": ["humains", "elfes", "orcs", "morts_vivants", "corrompus"]
+    },
+    {
+      "id": "priest",
+      "displayName": "Prêtre",
+      "description": "Serviteur des dieux qui soigne ses alliés et repousse les forces des ténèbres.",
+      "role": "healer",
+      "abilities": [
+        "Soin de groupe : restaure les PV de tous les alliés proches",
+        "Bouclier de prière : protège la cible un instant",
+        "Lumière sacrée : dégâts aux morts-vivants"
+      ],
+      "primaryAttribute": "esprit",
+      "allowedRaces": ["humains", "elfes", "nains", "divins", "morts_vivants"]
+    },
+    {
+      "id": "paladin",
+      "displayName": "Paladin",
+      "description": "Croisé divin alliant force martiale et pouvoir sacré.",
+      "role": "tank_healer",
+      "abilities": [
+        "Jugement : frappe qui sacralise l'ennemi",
+        "Imposition des mains : soin puissant à toucher",
+        "Aura de protection : réduction des dégâts du groupe"
+      ],
+      "primaryAttribute": "force",
+      "allowedRaces": ["humains", "nains", "divins"]
+    },
+    {
+      "id": "hunter",
+      "displayName": "Chasseur",
+      "description": "Traqueur des terres sauvages expert en combat à distance.",
+      "role": "dps",
+      "abilities": [
+        "Tir rapide : attaque rapide à l'arc",
+        "Piège : immobilise l'ennemi au sol",
+        "Compagnon animal : combat accompagné d'une bête"
+      ],
+      "primaryAttribute": "agilite",
+      "allowedRaces": ["humains", "elfes", "orcs", "nains"]
+    },
+    {
+      "id": "necromancer",
+      "displayName": "Nécromancien",
+      "description": "Maître de la mort qui anime les morts et draine la vie des vivants.",
+      "role": "dps_support",
+      "abilities": [
+        "Invocation de squelette : invoquer un guerrier mort",
+        "Drain de vie : vole les PV de l'ennemi",
+        "Malédiction : réduit les résistances de la cible"
+      ],
+      "primaryAttribute": "intelligence",
+      "allowedRaces": ["morts_vivants", "corrompus", "demons"]
+    },
+    {
+      "id": "shaman",
+      "displayName": "Chaman",
+      "description": "Intermédiaire entre le monde des vivants et des esprits, maître des éléments.",
+      "role": "healer_dps",
+      "abilities": [
+        "Totem de feu : zone de dégâts de feu",
+        "Vague de guérison : soin en chaîne",
+        "Frappe des ancêtres : frappe chargée d'éclairs"
+      ],
+      "primaryAttribute": "esprit",
+      "allowedRaces": ["orcs", "nains", "divins", "demons"]
+    }
+  ]
+}

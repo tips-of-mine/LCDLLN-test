@@ -507,16 +507,41 @@ namespace engine
 			LOG_WARN(Core, "[ZoneProbes] Runtime probes fallback sky (path={}, reason={})", probesPath, error);
 		}
 
-		error.clear();
-		if (engine::world::LoadAtmosphereSettings(m_cfg, atmospherePath, m_zoneAtmosphere, error))
-		{
-			LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
-		}
-		else
-		{
-			LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
-		}
+	error.clear();
+	if (engine::world::LoadAtmosphereSettings(m_cfg, atmospherePath, m_zoneAtmosphere, error))
+	{
+		LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
 	}
+	else
+	{
+		LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
+	}
+
+	// M38.1 — Initialise day/night cycle with parameters from config.json.
+	{
+		engine::render::DayNightCycle::Params dnParams{};
+		dnParams.initialTimeOfDay = static_cast<float>(
+			m_cfg.GetDouble("world.day_night.initial_time",   8.0));
+		dnParams.timeScale        = static_cast<float>(
+			m_cfg.GetDouble("world.day_night.time_scale",    60.0));
+		m_dayNight.Init(dnParams);
+	}
+
+	// M38.2 — Initialise weather system with parameters from config.json.
+	{
+		engine::render::WeatherConfig wCfg{};
+		wCfg.transitionDuration = static_cast<float>(m_cfg.GetDouble("world.weather.transition_duration", 30.0));
+		wCfg.rainSpawnRate      = static_cast<float>(m_cfg.GetDouble("world.weather.rain_spawn_rate",    1000.0));
+		wCfg.snowSpawnRate      = static_cast<float>(m_cfg.GetDouble("world.weather.snow_spawn_rate",     500.0));
+		wCfg.fogDensityMax      = static_cast<float>(m_cfg.GetDouble("world.weather.fog_density_max",      0.05));
+		m_weatherSystem.Init(wCfg);
+	}
+
+	// M38.3 — Initialise dynamic point-light system (streetlamps, torches, windows).
+	// The definitions JSON path defaults to "lights/dynamic_lights.json" relative to
+	// paths.content, overridable via "world.dynamic_lights_path" in config.json.
+	m_dynamicLights.Init(m_cfg);
+}
 
 	Engine::Engine(int argc, char** argv)
 		: m_cfg(engine::core::Config::Load("config.json", argc, argv))
@@ -1078,9 +1103,34 @@ namespace engine
 										    m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 										    loadSpirv
 										);
-										LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
+									LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
-										// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
+									// M37.1 — Water renderer (optional: skipped if shaders not found).
+									if (pipelineOk)
+									{
+										const uint32_t w = static_cast<uint32_t>(m_width);
+										const uint32_t h = static_cast<uint32_t>(m_height);
+										std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
+										std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
+										const float waterLevel = static_cast<float>(m_cfg.GetDouble("render.water.level", 0.0));
+										engine::render::WaterParams waterParams{};
+										waterParams.waterLevel     = waterLevel;
+										waterParams.gridResolution = static_cast<uint32_t>(m_cfg.GetInt("render.water.grid_resolution", 32));
+										waterParams.gridHalfSize   = static_cast<float>(m_cfg.GetDouble("render.water.grid_half_size", 256.0));
+										if (!m_waterRenderer.Init(
+											m_vkDeviceContext.GetDevice(),
+											m_vkDeviceContext.GetPhysicalDevice(),
+											w, h,
+											VK_FORMAT_R16G16B16A16_SFLOAT,
+											waterVert.empty() ? nullptr : waterVert.data(), waterVert.size(),
+											waterFrag.empty() ? nullptr : waterFrag.data(), waterFrag.size(),
+											waterParams))
+										{
+											LOG_WARN(Render, "[Boot] WaterRenderer init failed — water surface disabled");
+										}
+									}
+
+									// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
 										// chemin par défaut conventionnel si la clé est absente ou vide.
 										if (pipelineOk && !m_worldEditorExe)
 										{
@@ -1171,7 +1221,7 @@ namespace engine
 													else if (!uiFontPath.empty() && ttfFragPtr == nullptr)
 													{
 														LOG_WARN(Render, "[Boot] auth_ttf.frag.spv missing — place compiled SPIR-V under game/data/shaders/");
-													}
+													}
 													// --- Second atlas: valeurs de champs (ex. Morpheus.ttf) ---
 													const std::string valueFontPath = m_cfg.GetString("render.auth_ui.value_font_path", "");
 													if (!valueFontPath.empty() && ttfFragPtr != nullptr)
@@ -2315,9 +2365,11 @@ namespace engine
 			}
 			m_worldEditorTerrainTools.Shutdown();
 #endif
-			if (m_terrain.IsValid())
-				m_terrain.Destroy(m_vkDeviceContext.GetDevice());
-			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
+		if (m_terrain.IsValid())
+			m_terrain.Destroy(m_vkDeviceContext.GetDevice());
+		/// M37.1 — water renderer cleanup.
+		m_waterRenderer.Destroy(m_vkDeviceContext.GetDevice());
+		m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
 			{
@@ -2492,8 +2544,45 @@ namespace engine
 		}
 #endif
 
-		const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
-		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
+	const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
+
+	// M38.1 — Advance day/night cycle and propagate results into m_zoneAtmosphere
+	// so that the existing lighting path picks them up without further changes.
+	{
+		m_dayNight.Advance(static_cast<float>(dt));
+		const engine::render::DayNightCycle::State& dnState = m_dayNight.GetState();
+		m_zoneAtmosphere.sunDirection[0] = dnState.lightDir[0];
+		m_zoneAtmosphere.sunDirection[1] = dnState.lightDir[1];
+		m_zoneAtmosphere.sunDirection[2] = dnState.lightDir[2];
+		m_zoneAtmosphere.sunColor[0]     = dnState.lightColor[0];
+		m_zoneAtmosphere.sunColor[1]     = dnState.lightColor[1];
+		m_zoneAtmosphere.sunColor[2]     = dnState.lightColor[2];
+		m_zoneAtmosphere.ambientColor[0] = dnState.ambientColor[0];
+		m_zoneAtmosphere.ambientColor[1] = dnState.ambientColor[1];
+		m_zoneAtmosphere.ambientColor[2] = dnState.ambientColor[2];
+	}
+
+	// M38.2 — Advance weather system and propagate audio volume.
+	if (m_weatherSystem.IsInitialized())
+	{
+		const engine::render::Camera& cam = readState.camera;
+		m_weatherSystem.Tick(static_cast<float>(dt),
+		                     cam.position.x, cam.position.y, cam.position.z);
+
+		// Drive the "Weather" audio bus volume from rain intensity (spec step 6).
+		// Graceful no-op if the bus is not defined in the zone audio JSON.
+		m_audioEngine.SetBusVolume("Weather", m_weatherSystem.GetAudioVolume());
+	}
+
+	// M38.3 — Advance dynamic point-light system (streetlamps, torches, windows).
+	// Reads the current time-of-day from the day/night cycle to auto-trigger lights.
+	if (m_dynamicLights.IsInitialized())
+	{
+		const float timeOfDay = m_dayNight.GetState().timeOfDay;
+		m_dynamicLights.Tick(timeOfDay, static_cast<float>(dt));
+	}
+
+	const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 		const bool invertY = m_cfg.GetBool("controls.invert_y", false);
 		const engine::render::MovementLayout movementLayout =
 			(m_cfg.GetString("controls.movement_layout", "wasd") == "zqsd")

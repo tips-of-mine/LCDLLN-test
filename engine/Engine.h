@@ -30,6 +30,11 @@
 #include "engine/render/TaaJitter.h"
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
+#include "engine/render/WaterRenderer.h"
+#include "engine/render/UnderwaterPass.h"
+#include "engine/render/DayNightCycle.h"
+#include "engine/render/WeatherSystem.h"
+#include "engine/render/DynamicLightSystem.h"
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
 #include "engine/world/WorldModel.h"
@@ -183,6 +188,8 @@ namespace engine
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.
 		engine::render::ResourceId m_fgSceneColorHDRWithBloomId = engine::render::kInvalidResourceId;
+		/// M37.3: UnderwaterHDR — output of the underwater post-effect pass (R16G16B16A16_SFLOAT).
+		engine::render::ResourceId m_fgUnderwaterHDRId = engine::render::kInvalidResourceId;
 		/// SSAO_Raw: output of SSAO generate pass (R16F). M06.2.
 		engine::render::ResourceId m_fgSsaoRawId        = engine::render::kInvalidResourceId;
 		/// SSAO_Blur_Temp: intermediate for bilateral blur H pass. M06.3.
@@ -205,6 +212,23 @@ namespace engine
 		engine::render::MeshHandle m_geometryMeshHandle;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
+
+		/// M37.1: water plane renderer (mesh + reflection/refraction RTs + forward pass).
+		engine::render::WaterRenderer m_waterRenderer;
+
+		/// M37.3: underwater post-effect pass (blue tint, depth fog, blur vignette).
+		engine::render::UnderwaterPass m_underwaterPass;
+		/// M37.3: true when camera.y < waterLevel (underwater detection result, updated each frame).
+		bool m_isUnderwater = false;
+
+		/// M38.1: day/night cycle (time-of-day, sun direction, sky gradient colours).
+		engine::render::DayNightCycle m_dayNight;
+
+		/// M38.2: weather system (state machine, rain/snow particles, fog density, audio volume).
+		engine::render::WeatherSystem m_weatherSystem;
+
+		/// M38.3: dynamic point-light system (streetlamps, torches, window emissive).
+		engine::render::DynamicLightSystem m_dynamicLights;
 
 		engine::render::AssetRegistry m_assetRegistry;
 		std::unique_ptr<engine::editor::EditorMode> m_editorMode;

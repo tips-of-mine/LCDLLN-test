@@ -215,6 +215,13 @@ add_library(engine_core
   engine/client/AuraFXSystem.cpp
   engine/client/FXManager.cpp
   engine/client/InventoryUi.cpp
+  engine/client/TradeWindowUi.cpp
+  engine/client/HarvestCastBar.cpp
+  engine/client/CraftingUi.cpp
+  engine/client/CharacterCreationUi.cpp
+  engine/client/SettingsMenuUi.cpp
+  engine/client/HudLayoutEditor.cpp
+  engine/client/AdvancedCombatUi.cpp
   engine/client/AuctionUi.cpp
   engine/client/ShopUi.cpp
   engine/client/GameplayUdpClient.cpp
@@ -255,6 +262,11 @@ add_library(engine_core
   engine/render/DecalPass.cpp
   engine/render/ParticleSystem.cpp
   engine/render/ParticleBillboardPass.cpp
+  engine/render/WaterRenderer.cpp
+  engine/render/UnderwaterPass.cpp
+  engine/render/DayNightCycle.cpp
+  engine/render/WeatherSystem.cpp
+  engine/render/DynamicLightSystem.cpp
   engine/render/CascadedShadowMaps.cpp
   engine/render/BrdfLutPass.cpp
   engine/render/SpecularPrefilterPass.cpp

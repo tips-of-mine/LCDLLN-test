@@ -1,0 +1,9 @@
+{
+  "hud": {
+    "player_frame":  { "x": 0.01, "y": 0.01, "scale": 0.7,  "locked": false },
+    "target_frame":  { "x": 0.01, "y": 0.08, "scale": 0.7,  "locked": false },
+    "minimap":       { "x": 0.86, "y": 0.01, "scale": 0.6,  "locked": false },
+    "action_bars":   { "x": 0.35, "y": 0.90, "scale": 0.75, "locked": false },
+    "chat":          { "x": 0.01, "y": 0.78, "scale": 0.65, "locked": false }
+  }
+}

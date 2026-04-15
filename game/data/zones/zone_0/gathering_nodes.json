@@ -1,0 +1,30 @@
+{
+  "zoneId": 0,
+  "nodes": [
+    {
+      "instanceId": 1001,
+      "typeId": "ore_vein",
+      "position": [64.0, 0.0, 64.0]
+    },
+    {
+      "instanceId": 1002,
+      "typeId": "herb",
+      "position": [80.0, 0.0, 48.0]
+    },
+    {
+      "instanceId": 1003,
+      "typeId": "tree",
+      "position": [48.0, 0.0, 80.0]
+    },
+    {
+      "instanceId": 1004,
+      "typeId": "ore_vein",
+      "position": [112.0, 0.0, 96.0]
+    },
+    {
+      "instanceId": 1005,
+      "typeId": "herb",
+      "position": [32.0, 0.0, 112.0]
+    }
+  ]
+}

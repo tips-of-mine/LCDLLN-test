@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/core/Config.h"
+#include "engine/server/CraftingSystem.h"
 #include "engine/server/QuestRuntime.h"
 #include "engine/server/ReplicationTypes.h"
 
@@ -35,6 +36,8 @@ namespace engine::server
 		uint32_t mailboxGold = 0;
 		/// M35.4 — items attached to mailbox (e.g. won auctions while offline).
 		std::vector<ItemStack> mailboxItems;
+		/// M36.2 — learned crafting professions with skill levels.
+		std::vector<PlayerProfessionState> professions;
 	};
 
 	/// Minimal file-backed character persistence store used by the server runtime.

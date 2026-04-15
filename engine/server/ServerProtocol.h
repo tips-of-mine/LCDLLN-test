@@ -116,7 +116,56 @@ namespace engine::server
 		/// Client posts item stack with start bid, optional buyout, duration (12/24/48 h).
 		AuctionListItemRequest = 49,
 		AuctionBidRequest = 50,
-		AuctionBuyoutRequest = 51
+		AuctionBuyoutRequest = 51,
+
+		// M35.3 — Player-to-player direct trade --------------------------------
+
+		/// Client A sends /trade <name> to initiate a trade request (M35.3).
+		TradeRequest = 52,
+		/// Server pushes an incoming trade request notification to client B (M35.3).
+		TradeRequestNotify = 53,
+		/// Client B accepts the pending trade request (M35.3).
+		TradeAccept = 54,
+		/// Either player declines or cancels the pending request or active session (M35.3).
+		TradeDecline = 55,
+		/// A player adds one item stack to their trade offer (M35.3).
+		TradeAddItem = 56,
+		/// A player removes one item stack from their trade offer (M35.3).
+		TradeRemoveItem = 57,
+		/// A player sets their gold offer (M35.3).
+		TradeSetGold = 58,
+		/// A player locks their offer — review phase begins when both lock (M35.3).
+		TradeLock = 59,
+		/// A player final-confirms after the 5-second review timer (M35.3).
+		TradeConfirm = 60,
+		/// Server pushes the full trade window state to both players (M35.3).
+		TradeUpdateNotify = 61,
+		/// Server broadcasts the trade outcome to both players (M35.3).
+		TradeResult = 62,
+
+		// M36.1 — Resource node harvesting ----------------------------------------
+
+		/// Client requests to begin harvesting a resource node (M36.1).
+		HarvestBeginRequest = 63,
+		/// Server pushes cast-bar progress (0–100) to the harvesting client (M36.1).
+		HarvestProgressNotify = 64,
+		/// Server sends the items received on successful harvest completion (M36.1).
+		HarvestResultNotify = 65,
+		/// Server notifies the client that their harvest was cancelled (M36.1).
+		HarvestCancelNotify = 66,
+
+		// M36.2 — Crafting + professions ----------------------------------------
+
+		/// Client requests to begin crafting a recipe (M36.2).
+		CraftBeginRequest = 67,
+		/// Server pushes cast-bar progress (0–100) to the crafting client (M36.2).
+		CraftProgressNotify = 68,
+		/// Server sends the craft outcome to the client (M36.2).
+		CraftResultNotify = 69,
+		/// Client requests to learn a new crafting profession (M36.2).
+		LearnProfessionRequest = 70,
+		/// Server pushes the client's full profession state (M36.2).
+		ProfessionSyncNotify = 71
 	};
 
 	/// Initial client handshake sent before any other message.
@@ -830,4 +879,274 @@ namespace engine::server
 
 	std::vector<std::byte> EncodeAuctionBuyoutRequest(const AuctionBuyoutRequestMessage& message);
 	bool DecodeAuctionBuyoutRequest(std::span<const std::byte> packet, AuctionBuyoutRequestMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Player-to-player direct trade
+	// -------------------------------------------------------------------------
+
+	/// Maximum item stacks per trade offer (wire limit, mirrors kMaxTradeItemSlots).
+	inline constexpr uint8_t kMaxTradeItemSlotsWire = 12;
+
+	/// Wire result codes for TradeResult (M35.3).
+	enum class TradeResultCode : uint8_t
+	{
+		Success = 0,
+		CancelledByA = 1,
+		CancelledByB = 2,
+		ValidationFailed = 3
+	};
+
+	/// One item slot in a trade offer (wire format).
+	struct TradeItemSlotWire
+	{
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+	};
+
+	/// One player's trade offer snapshot (wire format, max kMaxTradeItemSlotsWire items).
+	struct TradeOfferWire
+	{
+		uint32_t clientId = 0;
+		std::string displayName;
+		uint32_t offeredGold = 0;
+		bool locked = false;
+		bool confirmed = false;
+		std::vector<TradeItemSlotWire> items;
+	};
+
+	/// Client A sends /trade <name> to the server (M35.3).
+	struct TradeRequestMessage
+	{
+		uint32_t clientId = 0;
+		std::string targetName; ///< Display token of the target player (e.g. "P12").
+	};
+
+	/// Server notification pushed to client B (M35.3).
+	struct TradeRequestNotifyMessage
+	{
+		std::string initiatorName;
+	};
+
+	/// Client B accepts the pending trade request (M35.3).
+	struct TradeAcceptMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Either player declines or cancels (M35.3).
+	struct TradeDeclineMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// A player adds one item stack to their offer (M35.3).
+	struct TradeAddItemMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t itemId = 0;
+		uint32_t quantity = 0;
+	};
+
+	/// A player removes one item from their offer (M35.3).
+	struct TradeRemoveItemMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t itemId = 0;
+	};
+
+	/// A player sets their gold offer (M35.3).
+	struct TradeSetGoldMessage
+	{
+		uint32_t clientId = 0;
+		uint32_t gold = 0;
+	};
+
+	/// A player presses Lock (M35.3).
+	struct TradeLockMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// A player presses Confirm (after review timer, M35.3).
+	struct TradeConfirmMessage
+	{
+		uint32_t clientId = 0;
+	};
+
+	/// Server pushes full trade window state to both players (M35.3).
+	struct TradeUpdateNotifyMessage
+	{
+		uint32_t sessionId = 0;
+		TradeOfferWire offerSelf;
+		TradeOfferWire offerOther;
+		/// Remaining review ticks before Confirm is enabled (0 = not yet locked, or confirmed).
+		uint32_t reviewTicksRemaining = 0;
+	};
+
+	/// Server pushes trade outcome to both players (M35.3).
+	struct TradeResultMessage
+	{
+		TradeResultCode result = TradeResultCode::Success;
+		std::string detail; ///< Human-readable reason on failure.
+	};
+
+	std::vector<std::byte> EncodeTradeRequest(const TradeRequestMessage& message);
+	bool DecodeTradeRequest(std::span<const std::byte> packet, TradeRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeRequestNotify(const TradeRequestNotifyMessage& message);
+	bool DecodeTradeRequestNotify(std::span<const std::byte> packet, TradeRequestNotifyMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeAccept(const TradeAcceptMessage& message);
+	bool DecodeTradeAccept(std::span<const std::byte> packet, TradeAcceptMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeDecline(const TradeDeclineMessage& message);
+	bool DecodeTradeDecline(std::span<const std::byte> packet, TradeDeclineMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeAddItem(const TradeAddItemMessage& message);
+	bool DecodeTradeAddItem(std::span<const std::byte> packet, TradeAddItemMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeRemoveItem(const TradeRemoveItemMessage& message);
+	bool DecodeTradeRemoveItem(std::span<const std::byte> packet, TradeRemoveItemMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeSetGold(const TradeSetGoldMessage& message);
+	bool DecodeTradeSetGold(std::span<const std::byte> packet, TradeSetGoldMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeLock(const TradeLockMessage& message);
+	bool DecodeTradeLock(std::span<const std::byte> packet, TradeLockMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeConfirm(const TradeConfirmMessage& message);
+	bool DecodeTradeConfirm(std::span<const std::byte> packet, TradeConfirmMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeUpdateNotify(const TradeUpdateNotifyMessage& message);
+	bool DecodeTradeUpdateNotify(std::span<const std::byte> packet, TradeUpdateNotifyMessage& outMessage);
+
+	std::vector<std::byte> EncodeTradeResult(const TradeResultMessage& message);
+	bool DecodeTradeResult(std::span<const std::byte> packet, TradeResultMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M36.1 — Resource node harvesting
+	// -------------------------------------------------------------------------
+
+	/// Client → server: begin harvesting the specified resource node (M36.1).
+	struct HarvestBeginRequestMessage
+	{
+		uint32_t clientId = 0;
+		/// Stable server-side node instance id (from ResourceNodeInstance::instanceId).
+		uint32_t nodeInstanceId = 0;
+	};
+
+	/// Server → client: cast-bar progress notification (M36.1).
+	struct HarvestProgressNotifyMessage
+	{
+		uint32_t nodeInstanceId = 0;
+		/// 0–100 percent complete.
+		uint8_t progressPercent = 0;
+	};
+
+	/// Server → client: harvest completion with items granted (M36.1).
+	struct HarvestResultNotifyMessage
+	{
+		uint32_t nodeInstanceId = 0;
+		std::vector<ItemStack> items;
+	};
+
+	/// Server → client: harvest cancelled notification (M36.1).
+	struct HarvestCancelNotifyMessage
+	{
+		uint32_t nodeInstanceId = 0;
+		/// Human-readable cancel reason: "moved", "damaged", "node_unavailable".
+		std::string reason;
+	};
+
+	std::vector<std::byte> EncodeHarvestBeginRequest(const HarvestBeginRequestMessage& message);
+	bool DecodeHarvestBeginRequest(std::span<const std::byte> packet, HarvestBeginRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeHarvestProgressNotify(const HarvestProgressNotifyMessage& message);
+	bool DecodeHarvestProgressNotify(std::span<const std::byte> packet, HarvestProgressNotifyMessage& outMessage);
+
+	std::vector<std::byte> EncodeHarvestResultNotify(const HarvestResultNotifyMessage& message);
+	bool DecodeHarvestResultNotify(std::span<const std::byte> packet, HarvestResultNotifyMessage& outMessage);
+
+	std::vector<std::byte> EncodeHarvestCancelNotify(const HarvestCancelNotifyMessage& message);
+	bool DecodeHarvestCancelNotify(std::span<const std::byte> packet, HarvestCancelNotifyMessage& outMessage);
+
+	// -------------------------------------------------------------------------
+	// M36.2 — Crafting + professions
+	// -------------------------------------------------------------------------
+
+	/// Maximum recipe id string length on the wire (M36.2).
+	inline constexpr uint16_t kMaxRecipeIdLengthWire = 64;
+
+	/// Maximum craftable recipe ids per ProfessionSyncNotify (M36.2).
+	inline constexpr uint8_t kMaxCraftableRecipesWire = 200;
+
+	/// Maximum professions per ProfessionSyncNotify (M36.2).
+	inline constexpr uint8_t kMaxProfessionsWire = 20;
+
+	/// One profession entry in ProfessionSyncNotify (M36.2).
+	struct ProfessionWireEntry
+	{
+		std::string professionId;
+		uint32_t    skillLevel = 1;
+		bool        isPrimary  = false;
+	};
+
+	/// Client → server: begin crafting \p recipeId (M36.2).
+	struct CraftBeginRequestMessage
+	{
+		uint32_t    clientId = 0;
+		std::string recipeId;
+	};
+
+	/// Server → client: periodic cast-bar progress during craft (M36.2).
+	struct CraftProgressNotifyMessage
+	{
+		std::string recipeId;
+		uint8_t     progressPercent = 0;
+	};
+
+	/// Server → client: craft outcome (success or failure) (M36.2 / M36.3).
+	struct CraftResultNotifyMessage
+	{
+		std::string recipeId;
+		bool        success        = false;
+		uint32_t    outputItemId   = 0;
+		uint32_t    outputQuantity = 0;
+		bool        skillGained    = false;
+		uint32_t    newSkillLevel  = 0;
+		/// Quality tier of the crafted item (M36.3): 0=Normal,1=Uncommon,2=Rare,3=Epic.
+		uint8_t     qualityTier    = 0;
+		/// Human-readable failure reason: "missing_ingredients", "skill_too_low", etc.
+		std::string reason;
+	};
+
+	/// Client → server: learn a new profession (M36.2).
+	struct LearnProfessionRequestMessage
+	{
+		uint32_t    clientId     = 0;
+		std::string professionId;
+	};
+
+	/// Server → client: full profession state update (sent on login, learn, skill-up) (M36.2).
+	struct ProfessionSyncNotifyMessage
+	{
+		std::vector<ProfessionWireEntry> professions;
+		/// Recipe ids craftable by the player (union of all professions at current skill).
+		std::vector<std::string>         craftableRecipeIds;
+	};
+
+	std::vector<std::byte> EncodeCraftBeginRequest(const CraftBeginRequestMessage& message);
+	bool DecodeCraftBeginRequest(std::span<const std::byte> packet, CraftBeginRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeCraftProgressNotify(const CraftProgressNotifyMessage& message);
+	bool DecodeCraftProgressNotify(std::span<const std::byte> packet, CraftProgressNotifyMessage& outMessage);
+
+	std::vector<std::byte> EncodeCraftResultNotify(const CraftResultNotifyMessage& message);
+	bool DecodeCraftResultNotify(std::span<const std::byte> packet, CraftResultNotifyMessage& outMessage);
+
+	std::vector<std::byte> EncodeLearnProfessionRequest(const LearnProfessionRequestMessage& message);
+	bool DecodeLearnProfessionRequest(std::span<const std::byte> packet, LearnProfessionRequestMessage& outMessage);
+
+	std::vector<std::byte> EncodeProfessionSyncNotify(const ProfessionSyncNotifyMessage& message);
+	bool DecodeProfessionSyncNotify(std::span<const std::byte> packet, ProfessionSyncNotifyMessage& outMessage);
 }

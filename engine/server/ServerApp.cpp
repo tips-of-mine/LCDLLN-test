@@ -218,6 +218,8 @@ namespace engine::server
 		, m_eventRuntime(m_config)
 		, m_questRuntime(m_config)
 		, m_spawnerRuntime(m_config)
+		, m_resourceNodeRuntime(m_config)
+		, m_craftingSystem(m_config)
 	{
 		LOG_INFO(Core, "[ServerApp] Constructed");
 	}
@@ -338,6 +340,15 @@ namespace engine::server
 		// M32.2 — PartySystem (in-memory, no DB dependency).
 		m_partySystem.Init();
 
+		// M35.3 — PlayerTradeManager (in-memory, single-shard).
+		m_tradeManager.Init();
+
+		// M36.1 — Resource node runtime (non-fatal: server can run without gathering nodes).
+		(void)InitResourceNodes();
+
+		// M36.2 — Crafting system (non-fatal: server can run without crafting).
+		(void)InitCrafting();
+
 		if (!m_auctionHouse.Init())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: auction house startup failed");
@@ -456,6 +467,9 @@ namespace engine::server
 		m_moderationAuditLogReady = false;
 		m_friendSystem.Shutdown();
 		m_partySystem.Shutdown();
+		m_tradeManager.Shutdown();
+		m_resourceNodeRuntime.Shutdown();
+		m_craftingSystem.Shutdown();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -581,6 +595,79 @@ namespace engine::server
 		if (DecodeAuctionBuyoutRequest(packetBytes, ahBuy))
 		{
 			HandleAuctionBuyoutRequest(datagram.endpoint, ahBuy);
+			return;
+		}
+
+		// M36.2 — Crafting packets
+		CraftBeginRequestMessage craftBegin{};
+		if (DecodeCraftBeginRequest(packetBytes, craftBegin))
+		{
+			HandleCraftBeginRequest(datagram.endpoint, craftBegin);
+			return;
+		}
+
+		LearnProfessionRequestMessage learnProf{};
+		if (DecodeLearnProfessionRequest(packetBytes, learnProf))
+		{
+			HandleLearnProfessionRequest(datagram.endpoint, learnProf);
+			return;
+		}
+
+		// M36.1 — Harvest packets
+		HarvestBeginRequestMessage harvestBegin{};
+		if (DecodeHarvestBeginRequest(packetBytes, harvestBegin))
+		{
+			HandleHarvestBeginRequest(datagram.endpoint, harvestBegin);
+			return;
+		}
+
+		// M35.3 — Trade packets
+		TradeAcceptMessage tradeAccept{};
+		if (DecodeTradeAccept(packetBytes, tradeAccept))
+		{
+			HandleTradeAccept(datagram.endpoint, tradeAccept);
+			return;
+		}
+
+		TradeDeclineMessage tradeDecline{};
+		if (DecodeTradeDecline(packetBytes, tradeDecline))
+		{
+			HandleTradeDecline(datagram.endpoint, tradeDecline);
+			return;
+		}
+
+		TradeAddItemMessage tradeAddItem{};
+		if (DecodeTradeAddItem(packetBytes, tradeAddItem))
+		{
+			HandleTradeAddItem(datagram.endpoint, tradeAddItem);
+			return;
+		}
+
+		TradeRemoveItemMessage tradeRemoveItem{};
+		if (DecodeTradeRemoveItem(packetBytes, tradeRemoveItem))
+		{
+			HandleTradeRemoveItem(datagram.endpoint, tradeRemoveItem);
+			return;
+		}
+
+		TradeSetGoldMessage tradeSetGold{};
+		if (DecodeTradeSetGold(packetBytes, tradeSetGold))
+		{
+			HandleTradeSetGold(datagram.endpoint, tradeSetGold);
+			return;
+		}
+
+		TradeLockMessage tradeLock{};
+		if (DecodeTradeLock(packetBytes, tradeLock))
+		{
+			HandleTradeLock(datagram.endpoint, tradeLock);
+			return;
+		}
+
+		TradeConfirmMessage tradeConfirmPkt{};
+		if (DecodeTradeConfirm(packetBytes, tradeConfirmPkt))
+		{
+			HandleTradeConfirm(datagram.endpoint, tradeConfirmPkt);
 			return;
 		}
 
@@ -790,18 +877,20 @@ namespace engine::server
 			acceptedClient.stats = persistedState.stats;
 			acceptedClient.inventory = persistedState.inventory;
 			acceptedClient.questStates = persistedState.questStates;
-			acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
-			acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
-			acceptedClient.hasReplicatedState = true;
-			LOG_INFO(Net,
-				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
-				acceptedClient.clientId,
-				acceptedClient.persistenceCharacterKey,
-				acceptedClient.zoneId,
-				acceptedClient.inventory.size(),
-				acceptedClient.questStates.size(),
-				acceptedClient.chatIgnoredDisplayNames.size(),
-				acceptedClient.chatModeratorRole ? "true" : "false");
+		acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
+		acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
+		acceptedClient.professions = std::move(persistedState.professions);
+		acceptedClient.hasReplicatedState = true;
+		LOG_INFO(Net,
+			"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={}, professions={})",
+			acceptedClient.clientId,
+			acceptedClient.persistenceCharacterKey,
+			acceptedClient.zoneId,
+			acceptedClient.inventory.size(),
+			acceptedClient.questStates.size(),
+			acceptedClient.chatIgnoredDisplayNames.size(),
+			acceptedClient.chatModeratorRole ? "true" : "false",
+			acceptedClient.professions.size());
 			if (hadMailbox)
 			{
 				SaveConnectedClient(acceptedClient, "mailbox_merge_login");
@@ -883,6 +972,31 @@ namespace engine::server
 			}
 		}
 		client->hasReplicatedState = true;
+
+		// M36.1 — Cancel harvest when the player moves > kHarvestMoveToleranceMeters from start.
+		if (m_resourceNodeRuntime.IsInitialized())
+		{
+			const uint32_t harvestId = m_resourceNodeRuntime.FindHarvestingInstanceId(client->clientId);
+			if (harvestId != 0)
+			{
+				const ResourceNodeInstance* hNode = m_resourceNodeRuntime.FindInstance(harvestId);
+				if (hNode != nullptr)
+				{
+					const float dx = positionMetersX - hNode->harvesterStartX;
+					const float dz = positionMetersZ - hNode->harvesterStartZ;
+					if (dx * dx + dz * dz > kHarvestMoveToleranceMeters * kHarvestMoveToleranceMeters)
+					{
+						if (m_resourceNodeRuntime.CancelHarvest(harvestId, "moved"))
+						{
+							(void)SendHarvestCancelNotify(*client, harvestId, "moved");
+							LOG_INFO(Net, "[ServerApp] Harvest cancelled by movement (client_id={}, instance_id={})",
+								client->clientId, harvestId);
+						}
+					}
+				}
+			}
+		}
+
 		MaybeApplyZoneTransition(*client);
 		LOG_DEBUG(Net, "[ServerApp] Input accepted (client_id={}, seq={}, pos=({:.2f}, {:.2f}))",
 			client->clientId,
@@ -917,6 +1031,15 @@ namespace engine::server
 		// M32.2 — Expire stale party invites once per tick.
 		if (m_partySystem.IsInitialized())
 			m_partySystem.ExpireInvites(m_currentTick);
+		// M35.3 — Advance trade session review timers.
+		if (m_tradeManager.IsInitialized())
+			UpdateTradeSessions();
+		// M36.1 — Advance harvest timers and apply completions.
+		if (m_resourceNodeRuntime.IsInitialized())
+			UpdateResourceNodes();
+		// M36.2 — Advance craft cast timers and apply completions.
+		if (m_craftingSystem.IsInitialized())
+			UpdateCrafting();
 		ProcessAuctionHouseTick();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
@@ -1110,6 +1233,7 @@ namespace engine::server
 		state.questStates = client.questStates;
 		state.chatIgnoredDisplayNames = client.chatIgnoredDisplayNames;
 		state.chatModeratorRole = client.chatModeratorRole;
+		state.professions = client.professions;
 		state.mailboxGold = 0;
 		state.mailboxItems.clear();
 		if (!m_characterPersistence.SaveCharacter(state))
@@ -2740,6 +2864,21 @@ namespace engine::server
 			SaveConnectedClient(target, "player_death");
 		}
 
+		// M36.1 — Cancel harvest on damage.
+		if (m_resourceNodeRuntime.IsInitialized())
+		{
+			const uint32_t harvestId = m_resourceNodeRuntime.FindHarvestingInstanceId(target.clientId);
+			if (harvestId != 0)
+			{
+				if (m_resourceNodeRuntime.CancelHarvest(harvestId, "damaged"))
+				{
+					(void)SendHarvestCancelNotify(target, harvestId, "damaged");
+					LOG_INFO(Net, "[ServerApp] Harvest cancelled by damage (client_id={}, instance_id={})",
+						target.clientId, harvestId);
+				}
+			}
+		}
+
 		CombatEventMessage combatEvent{};
 		combatEvent.attackerEntityId = mob.entityId;
 		combatEvent.targetEntityId = target.entityId;
@@ -4145,15 +4284,29 @@ namespace engine::server
 		case ChatSlashCommandKind::Loot:
 			return HandleLootCommand(sender, command.argsRemainder);
 
-		case ChatSlashCommandKind::PartyKick:
-			return HandlePartyKickCommand(sender, command.argsRemainder);
+	case ChatSlashCommandKind::PartyKick:
+		return HandlePartyKickCommand(sender, command.argsRemainder);
 
-		case ChatSlashCommandKind::None:
-		default:
-			LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
-			return true;
-		}
+	// M36.2 — Learn profession command
+	case ChatSlashCommandKind::LearnProfession:
+		return HandleLearnProfessionCommand(sender, command.argsRemainder);
+
+	// M35.3 — Trade commands
+	case ChatSlashCommandKind::Trade:
+		return HandleTradeCommand(sender, command.argsRemainder);
+
+	case ChatSlashCommandKind::TradeAccept:
+		return HandleTradeAcceptCommand(sender);
+
+	case ChatSlashCommandKind::TradeDecline:
+		return HandleTradeDeclineCommand(sender);
+
+	case ChatSlashCommandKind::None:
+	default:
+		LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
+		return true;
 	}
+}
 
 	// -------------------------------------------------------------------------
 	// M32.1 — Friend system helpers
@@ -4161,6 +4314,12 @@ namespace engine::server
 
 	void ServerApp::OnClientLogin(ConnectedClient& client)
 	{
+		// M36.2 — Push current profession state to client on login.
+		if (m_craftingSystem.IsInitialized())
+		{
+			(void)SendProfessionSync(client);
+		}
+
 		if (!m_friendSystem.IsInitialized())
 			return;
 
@@ -4178,6 +4337,28 @@ namespace engine::server
 
 	void ServerApp::OnClientLogout(const ConnectedClient& client)
 	{
+		// M36.2 — Cancel active craft on disconnect.
+		if (m_craftingSystem.IsInitialized())
+			m_craftingSystem.CancelCraftsForClient(client.clientId);
+
+		// M36.1 — Cancel harvest on disconnect.
+		if (m_resourceNodeRuntime.IsInitialized())
+		{
+			m_resourceNodeRuntime.CancelHarvestsForClient(client.clientId, "disconnected");
+		}
+
+		// M35.3 — Cancel any active or pending trade when a player disconnects.
+		if (m_tradeManager.IsInitialized())
+		{
+			TradeSession* tradeSession = m_tradeManager.FindSession(client.clientId);
+			if (tradeSession != nullptr)
+			{
+				BroadcastTradeResult(*tradeSession, TradeResultCode::CancelledByA, "Opponent disconnected.");
+				m_tradeManager.RemoveSession(tradeSession->sessionId);
+			}
+			m_tradeManager.CancelSessionsForClient(client.clientId);
+		}
+
 		// M32.2 — Remove the leaving client from their party (promotes leader or disbands).
 		if (m_partySystem.IsInitialized())
 		{
@@ -5452,5 +5633,1236 @@ namespace engine::server
 			itemId,
 			quantity);
 		return true;
+	}
+
+	// =========================================================================
+	// M36.2 — Crafting + profession implementation
+	// =========================================================================
+
+	bool ServerApp::InitCrafting()
+	{
+		if (!m_craftingSystem.Init())
+		{
+			LOG_WARN(Net, "[ServerApp] InitCrafting: crafting system init failed — crafting disabled");
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] InitCrafting OK");
+		return true;
+	}
+
+	void ServerApp::UpdateCrafting()
+	{
+		static std::vector<CraftCompletionResult> s_craftResults;
+		s_craftResults.clear();
+		m_craftingSystem.Tick(m_currentTick, m_tickHz, s_craftResults);
+
+		for (const CraftCompletionResult& result : s_craftResults)
+		{
+			ConnectedClient* client = FindConnectedClient(result.clientId);
+			if (client == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] Craft result: client {} not found (recipe='{}')",
+					result.clientId, result.recipeId);
+				continue;
+			}
+
+			const RecipeDefinition* recipe = m_craftingSystem.FindRecipe(result.recipeId);
+			if (recipe == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] Craft result: recipe '{}' not found (client_id={})",
+					result.recipeId, result.clientId);
+				continue;
+			}
+
+			// Determine player skill for quality roll.
+			uint32_t playerSkillForQuality = 0;
+			for (const PlayerProfessionState& ps : client->professions)
+			{
+				if (ps.professionId == recipe->professionId)
+				{
+					playerSkillForQuality = ps.skillLevel;
+					break;
+				}
+			}
+
+			// M36.3 — Roll critical craft quality (chance = skill/300 * 10%).
+			const ItemQualityTier qualityTier =
+				m_craftingSystem.RollCriticalQuality(playerSkillForQuality);
+			const float qualityMultiplier = QualityTierMultiplier(qualityTier);
+
+			// Grant output item.
+			AddItemToInventory(*client, { recipe->outputItemId, recipe->outputQuantity });
+			const std::vector<ItemStack> outputs = { { recipe->outputItemId, recipe->outputQuantity } };
+			(void)SendInventoryDelta(*client, outputs);
+
+			// Apply skill-up.
+			const uint32_t newSkill = ApplySkillUp(*client, recipe->professionId, *recipe);
+			const bool skillGained  = (newSkill > 0);
+
+			CraftResultNotifyMessage msg{};
+			msg.recipeId       = result.recipeId;
+			msg.success        = true;
+			msg.outputItemId   = recipe->outputItemId;
+			msg.outputQuantity = recipe->outputQuantity;
+			msg.skillGained    = skillGained;
+			msg.newSkillLevel  = newSkill > 0 ? newSkill : 0;
+			msg.qualityTier    = static_cast<uint8_t>(qualityTier);
+			(void)SendCraftResultNotify(*client, msg);
+
+			if (skillGained)
+			{
+				(void)SendProfessionSync(*client);
+			}
+
+			SaveConnectedClient(*client, "craft_complete");
+			LOG_INFO(Net,
+				"[ServerApp] Craft applied (client_id={}, recipe='{}', quality={} (x{:.2f}), skill_gained={}, new_skill={})",
+				result.clientId, result.recipeId,
+				QualityTierName(qualityTier), qualityMultiplier,
+				skillGained ? "true" : "false", newSkill);
+		}
+
+		// Send craft progress notifications once per second.
+		if ((m_currentTick % static_cast<uint32_t>(m_tickHz)) == 0)
+		{
+			for (const ConnectedClient& client : m_clients)
+			{
+				const ActiveCraftSession* session = m_craftingSystem.FindSession(client.clientId);
+				if (session == nullptr) continue;
+				const uint8_t pct = m_craftingSystem.GetProgressPercent(
+					client.clientId, m_currentTick, m_tickHz);
+				(void)SendCraftProgressNotify(client, session->recipeId, pct);
+			}
+		}
+	}
+
+	void ServerApp::HandleCraftBeginRequest(
+		const Endpoint& endpoint,
+		const CraftBeginRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] CraftBegin ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] CraftBegin ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			SendChatSystemNotice(*client, "Crafting is not available.");
+			return;
+		}
+
+		// Reject if already crafting.
+		if (m_craftingSystem.FindSession(client->clientId) != nullptr)
+		{
+			SendChatSystemNotice(*client, "You are already crafting.");
+			return;
+		}
+
+		const RecipeDefinition* recipe = m_craftingSystem.FindRecipe(message.recipeId);
+		if (recipe == nullptr)
+		{
+			CraftResultNotifyMessage fail{};
+			fail.recipeId = message.recipeId;
+			fail.success  = false;
+			fail.reason   = "unknown_recipe";
+			(void)SendCraftResultNotify(*client, fail);
+			LOG_WARN(Net, "[ServerApp] CraftBegin rejected: unknown recipe '{}' (client_id={})",
+				message.recipeId, client->clientId);
+			return;
+		}
+
+		// Validate skill level.
+		const PlayerProfessionState* prof = nullptr;
+		for (const PlayerProfessionState& ps : client->professions)
+		{
+			if (ps.professionId == recipe->professionId) { prof = &ps; break; }
+		}
+		if (prof == nullptr || prof->skillLevel < recipe->skillRequired)
+		{
+			CraftResultNotifyMessage fail{};
+			fail.recipeId = message.recipeId;
+			fail.success  = false;
+			fail.reason   = "skill_too_low";
+			(void)SendCraftResultNotify(*client, fail);
+			LOG_WARN(Net,
+				"[ServerApp] CraftBegin rejected: skill_too_low (client_id={}, recipe='{}', required={}, have={})",
+				client->clientId, message.recipeId, recipe->skillRequired,
+				prof ? prof->skillLevel : 0u);
+			return;
+		}
+
+		// Validate and consume ingredients.
+		for (const RecipeIngredient& ing : recipe->ingredients)
+		{
+			if (ing.itemId == 0) continue;
+			std::string err;
+			if (!RemoveStackFromInventory(*client, ing.itemId, ing.quantity, err))
+			{
+				CraftResultNotifyMessage fail{};
+				fail.recipeId = message.recipeId;
+				fail.success  = false;
+				fail.reason   = "missing_ingredients";
+				(void)SendCraftResultNotify(*client, fail);
+				LOG_WARN(Net,
+					"[ServerApp] CraftBegin rejected: missing ingredient (client_id={}, item_id={}, qty={})",
+					client->clientId, ing.itemId, ing.quantity);
+				return;
+			}
+		}
+
+		if (!m_craftingSystem.StartCraft(client->clientId, message.recipeId, m_currentTick))
+		{
+			CraftResultNotifyMessage fail{};
+			fail.recipeId = message.recipeId;
+			fail.success  = false;
+			fail.reason   = "internal_error";
+			(void)SendCraftResultNotify(*client, fail);
+			return;
+		}
+
+		// Send initial progress (0%) to trigger the client cast bar.
+		(void)SendCraftProgressNotify(*client, message.recipeId, 0u);
+		LOG_INFO(Net, "[ServerApp] CraftBegin accepted (client_id={}, recipe='{}')",
+			client->clientId, message.recipeId);
+	}
+
+	void ServerApp::HandleLearnProfessionRequest(
+		const Endpoint& endpoint,
+		const LearnProfessionRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] LearnProfession ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+			return;
+		if (!m_craftingSystem.IsInitialized())
+		{
+			SendChatSystemNotice(*client, "Crafting is not available.");
+			return;
+		}
+
+		std::string err;
+		if (!m_craftingSystem.LearnProfession(client->professions, message.professionId, err))
+		{
+			SendChatSystemNotice(*client, "Cannot learn profession: " + err);
+			LOG_WARN(Net, "[ServerApp] LearnProfession rejected (client_id={}, profession='{}', reason={})",
+				client->clientId, message.professionId, err);
+			return;
+		}
+
+		(void)SendProfessionSync(*client);
+		SaveConnectedClient(*client, "learn_profession");
+		LOG_INFO(Net, "[ServerApp] Profession learned (client_id={}, profession='{}')",
+			client->clientId, message.professionId);
+	}
+
+	bool ServerApp::SendProfessionSync(const ConnectedClient& receiver)
+	{
+		ProfessionSyncNotifyMessage msg{};
+		for (const PlayerProfessionState& ps : receiver.professions)
+		{
+			ProfessionWireEntry e{};
+			e.professionId = ps.professionId;
+			e.skillLevel   = ps.skillLevel;
+			e.isPrimary    = ps.isPrimary;
+			msg.professions.push_back(std::move(e));
+
+			if (m_craftingSystem.IsInitialized())
+			{
+				const std::vector<std::string> craftable =
+					m_craftingSystem.GetCraftableRecipeIds(ps.professionId, ps.skillLevel);
+				for (const std::string& rid : craftable)
+					msg.craftableRecipeIds.push_back(rid);
+			}
+		}
+		const std::vector<std::byte> packet = EncodeProfessionSyncNotify(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] ProfessionSyncNotify send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_DEBUG(Net, "[ServerApp] ProfessionSyncNotify sent (client_id={}, professions={}, craftable={})",
+			receiver.clientId, msg.professions.size(), msg.craftableRecipeIds.size());
+		return true;
+	}
+
+	bool ServerApp::SendCraftProgressNotify(
+		const ConnectedClient& receiver,
+		std::string_view recipeId,
+		uint8_t progressPercent)
+	{
+		CraftProgressNotifyMessage msg{};
+		msg.recipeId        = std::string(recipeId);
+		msg.progressPercent = progressPercent;
+		const std::vector<std::byte> packet = EncodeCraftProgressNotify(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] CraftProgressNotify send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	bool ServerApp::SendCraftResultNotify(
+		const ConnectedClient& receiver,
+		const CraftResultNotifyMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeCraftResultNotify(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] CraftResultNotify send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] CraftResultNotify sent (client_id={}, recipe='{}', success={})",
+			receiver.clientId, message.recipeId, message.success ? "true" : "false");
+		return true;
+	}
+
+	uint32_t ServerApp::ApplySkillUp(
+		ConnectedClient& client,
+		std::string_view professionId,
+		const RecipeDefinition& recipe)
+	{
+		for (PlayerProfessionState& ps : client.professions)
+		{
+			if (ps.professionId == professionId)
+			{
+				if (ps.skillLevel >= kMaxCraftingSkill) return 0;
+				if (m_craftingSystem.RollSkillUp(recipe, ps.skillLevel))
+				{
+					++ps.skillLevel;
+					LOG_INFO(Net, "[ServerApp] Skill-up (client_id={}, profession='{}', new_skill={})",
+						client.clientId, professionId, ps.skillLevel);
+					return ps.skillLevel;
+				}
+				return 0;
+			}
+		}
+		return 0;
+	}
+
+	bool ServerApp::HandleLearnProfessionCommand(
+		ConnectedClient& sender,
+		std::string_view argsRemainder)
+	{
+		const std::string_view professionId = [&]() -> std::string_view {
+			auto s = argsRemainder;
+			while (!s.empty() && (s.front() == ' ' || s.front() == '\t')) s.remove_prefix(1);
+			while (!s.empty() && (s.back()  == ' ' || s.back()  == '\t')) s.remove_suffix(1);
+			return s;
+		}();
+
+		if (professionId.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /learn <profession_name>");
+			return true;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Crafting is not available.");
+			return true;
+		}
+
+		std::string err;
+		if (!m_craftingSystem.LearnProfession(sender.professions, professionId, err))
+		{
+			SendChatSystemNotice(sender, "Cannot learn profession: " + err);
+			LOG_WARN(Net, "[ServerApp] /learn rejected (client_id={}, profession='{}', reason={})",
+				sender.clientId, professionId, err);
+			return true;
+		}
+
+		(void)SendProfessionSync(sender);
+		SaveConnectedClient(sender, "learn_profession_cmd");
+		SendChatSystemNotice(sender, "You have learned '" + std::string(professionId) + "'.");
+		LOG_INFO(Net, "[ServerApp] /learn accepted (client_id={}, profession='{}')",
+			sender.clientId, professionId);
+		return true;
+	}
+
+	// =========================================================================
+	// M36.1 — Resource node harvesting implementation
+	// =========================================================================
+
+	bool ServerApp::InitResourceNodes()
+	{
+		if (!m_resourceNodeRuntime.Init())
+		{
+			LOG_WARN(Net, "[ServerApp] InitResourceNodes: resource node runtime init failed — "
+				"gathering disabled for this session");
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] InitResourceNodes OK (instances={})",
+			m_resourceNodeRuntime.GetInstances().size());
+		return true;
+	}
+
+	void ServerApp::UpdateResourceNodes()
+	{
+		static std::vector<ResourceHarvestResult> s_results;
+		s_results.clear();
+		m_resourceNodeRuntime.Tick(m_currentTick, m_tickHz, s_results);
+
+		for (const ResourceHarvestResult& result : s_results)
+		{
+			ConnectedClient* client = FindConnectedClient(result.clientId);
+			if (client == nullptr)
+			{
+				LOG_WARN(Net, "[ServerApp] Harvest result: client {} not found (instance_id={})",
+					result.clientId, result.instanceId);
+				continue;
+			}
+
+			for (const ItemStack& item : result.items)
+				AddItemToInventory(*client, item);
+
+			if (!result.items.empty())
+				(void)SendInventoryDelta(*client, result.items);
+
+			(void)SendHarvestResultNotify(*client, result.instanceId, result.items);
+			LOG_INFO(Net, "[ServerApp] Harvest applied (client_id={}, instance_id={}, items={})",
+				result.clientId, result.instanceId, result.items.size());
+		}
+
+		// Send progress notifications once per second.
+		if ((m_currentTick % static_cast<uint32_t>(m_tickHz)) == 0)
+		{
+			for (ResourceNodeInstance& node : m_resourceNodeRuntime.GetMutableInstances())
+			{
+				if (node.state != ResourceNodeState::Harvesting) continue;
+				ConnectedClient* client = FindConnectedClient(node.harvesterClientId);
+				if (client == nullptr) continue;
+				const uint8_t pct = m_resourceNodeRuntime.GetProgressPercent(
+					node.instanceId, m_currentTick, m_tickHz);
+				if (pct != node.lastSentProgressPercent)
+				{
+					node.lastSentProgressPercent = pct;
+					(void)SendHarvestProgressNotify(*client, node.instanceId, pct);
+				}
+			}
+		}
+	}
+
+	void ServerApp::HandleHarvestBeginRequest(
+		const Endpoint& endpoint,
+		const HarvestBeginRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] HarvestBegin ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] HarvestBegin ignored: client_id mismatch (expected={}, got={})",
+				client->clientId, message.clientId);
+			return;
+		}
+		if (!m_resourceNodeRuntime.IsInitialized())
+		{
+			SendChatSystemNotice(*client, "Gathering is not available.");
+			LOG_WARN(Net, "[ServerApp] HarvestBegin ignored: runtime not initialized");
+			return;
+		}
+
+		// Reject if already harvesting.
+		if (m_resourceNodeRuntime.FindHarvestingInstanceId(client->clientId) != 0)
+		{
+			SendChatSystemNotice(*client, "You are already harvesting.");
+			LOG_WARN(Net, "[ServerApp] HarvestBegin rejected: already harvesting (client_id={})",
+				client->clientId);
+			return;
+		}
+
+		const ResourceNodeInstance* node = m_resourceNodeRuntime.FindInstance(message.nodeInstanceId);
+		if (node == nullptr)
+		{
+			(void)SendHarvestCancelNotify(*client, message.nodeInstanceId, "node_unavailable");
+			LOG_WARN(Net, "[ServerApp] HarvestBegin rejected: node not found (instance_id={})",
+				message.nodeInstanceId);
+			return;
+		}
+
+		// Proximity check (prevent teleport-harvesting).
+		const float dx = client->positionMetersX - node->positionMetersX;
+		const float dz = client->positionMetersZ - node->positionMetersZ;
+		if (dx * dx + dz * dz > kHarvestMaxRangeMeters * kHarvestMaxRangeMeters)
+		{
+			(void)SendHarvestCancelNotify(*client, message.nodeInstanceId, "node_unavailable");
+			LOG_WARN(Net, "[ServerApp] HarvestBegin rejected: out of range "
+				"(client_id={}, instance_id={}, dist={:.1f}m)",
+				client->clientId, message.nodeInstanceId,
+				std::sqrt(dx * dx + dz * dz));
+			return;
+		}
+
+		if (!m_resourceNodeRuntime.StartHarvest(
+			message.nodeInstanceId,
+			client->clientId,
+			m_currentTick,
+			client->positionMetersX,
+			client->positionMetersZ))
+		{
+			(void)SendHarvestCancelNotify(*client, message.nodeInstanceId, "node_unavailable");
+			LOG_WARN(Net, "[ServerApp] HarvestBegin rejected: StartHarvest failed (instance_id={})",
+				message.nodeInstanceId);
+			return;
+		}
+
+		// Send initial progress (0%).
+		(void)SendHarvestProgressNotify(*client, message.nodeInstanceId, 0u);
+		LOG_INFO(Net, "[ServerApp] HarvestBegin accepted (client_id={}, instance_id={})",
+			client->clientId, message.nodeInstanceId);
+	}
+
+	bool ServerApp::SendHarvestProgressNotify(
+		const ConnectedClient& receiver,
+		uint32_t nodeInstanceId,
+		uint8_t progressPercent)
+	{
+		HarvestProgressNotifyMessage msg{};
+		msg.nodeInstanceId  = nodeInstanceId;
+		msg.progressPercent = progressPercent;
+		const std::vector<std::byte> packet = EncodeHarvestProgressNotify(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] HarvestProgressNotify send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	bool ServerApp::SendHarvestResultNotify(
+		const ConnectedClient& receiver,
+		uint32_t nodeInstanceId,
+		std::span<const ItemStack> items)
+	{
+		HarvestResultNotifyMessage msg{};
+		msg.nodeInstanceId = nodeInstanceId;
+		msg.items.assign(items.begin(), items.end());
+		const std::vector<std::byte> packet = EncodeHarvestResultNotify(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] HarvestResultNotify send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] HarvestResultNotify sent (client_id={}, instance_id={}, items={})",
+			receiver.clientId, nodeInstanceId, items.size());
+		return true;
+	}
+
+	bool ServerApp::SendHarvestCancelNotify(
+		const ConnectedClient& receiver,
+		uint32_t nodeInstanceId,
+		std::string_view reason)
+	{
+		HarvestCancelNotifyMessage msg{};
+		msg.nodeInstanceId = nodeInstanceId;
+		msg.reason         = std::string(reason);
+		const std::vector<std::byte> packet = EncodeHarvestCancelNotify(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] HarvestCancelNotify send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	// =========================================================================
+	// M35.3 — Player-to-player direct trade implementation
+	// =========================================================================
+
+	namespace
+	{
+		/// Euclidean distance (XZ plane) between two connected clients.
+		float TradeDistanceXZ(const ConnectedClient& a, const ConnectedClient& b)
+		{
+			const float dx = a.positionMetersX - b.positionMetersX;
+			const float dz = a.positionMetersZ - b.positionMetersZ;
+			return std::sqrt(dx * dx + dz * dz);
+		}
+
+		/// Build a human-readable item summary string for trade audit logging.
+		std::string BuildItemSummary(const std::vector<ItemStack>& items)
+		{
+			std::string result;
+			for (const ItemStack& s : items)
+			{
+				if (!result.empty())
+					result += ',';
+				result += std::to_string(s.quantity) + 'x' + std::to_string(s.itemId);
+			}
+			return result.empty() ? "(none)" : result;
+		}
+
+		/// Build the TradeOfferWire view for one slot as seen from the perspective of
+		/// \p viewerClientId (self = offerSelf, opponent = offerOther).
+		TradeOfferWire BuildOfferWire(const TradeSlot& slot)
+		{
+			TradeOfferWire w{};
+			w.clientId    = slot.clientId;
+			w.displayName = slot.displayName;
+			w.offeredGold = slot.offeredGold;
+			w.locked      = slot.locked;
+			w.confirmed   = slot.confirmed;
+			for (const ItemStack& s : slot.offeredItems)
+			{
+				TradeItemSlotWire ws{};
+				ws.itemId   = s.itemId;
+				ws.quantity = s.quantity;
+				w.items.push_back(ws);
+			}
+			return w;
+		}
+
+		/// Check that a player has enough of \p itemId in their inventory.
+		bool HasSufficientItem(const ConnectedClient& client, uint32_t itemId, uint32_t quantity)
+		{
+			uint32_t total = 0;
+			for (const ItemStack& s : client.inventory)
+			{
+				if (s.itemId == itemId)
+					total += s.quantity;
+			}
+			return total >= quantity;
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Slash command entry points
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::HandleTradeCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_tradeManager.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Trade system unavailable.");
+			return true;
+		}
+
+		std::string targetName;
+		if (!ParseTradeTargetName(argsRemainder, targetName))
+		{
+			SendChatSystemNotice(sender, "Usage: /trade <player_name>");
+			return true;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player '" + targetName + "' not found.");
+			LOG_WARN(Net, "[ServerApp] /trade target not found (client_id={}, target='{}')",
+				sender.clientId, targetName);
+			return true;
+		}
+
+		if (target->clientId == sender.clientId)
+		{
+			SendChatSystemNotice(sender, "You cannot trade with yourself.");
+			return true;
+		}
+
+		// Range check.
+		const float dist = TradeDistanceXZ(sender, *target);
+		if (dist > kTradeMaxRangeMeters)
+		{
+			SendChatSystemNotice(sender, "You are too far from " + targetName + " to trade.");
+			LOG_WARN(Net, "[ServerApp] /trade rejected: out of range (client_id={}, target={}, dist={:.1f}m)",
+				sender.clientId, targetName, dist);
+			return true;
+		}
+
+		// Prevent duplicate pending requests.
+		if (m_tradeManager.FindSession(sender.clientId) != nullptr)
+		{
+			SendChatSystemNotice(sender, "You already have an active trade session.");
+			return true;
+		}
+		if (!m_tradeManager.AddPendingRequest(sender.clientId, target->clientId))
+		{
+			SendChatSystemNotice(sender, "You already have a pending trade request.");
+			return true;
+		}
+
+		// Notify target.
+		const std::string senderLabel = "P" + std::to_string(sender.clientId);
+		TradeRequestNotifyMessage notify{};
+		notify.initiatorName = senderLabel;
+		const std::vector<std::byte> notifyPacket = EncodeTradeRequestNotify(notify);
+		if (!m_transport.Send(target->endpoint, notifyPacket))
+		{
+			LOG_WARN(Net, "[ServerApp] TradeRequestNotify send failed (target_client_id={})", target->clientId);
+		}
+
+		SendChatSystemNotice(sender, "Trade request sent to '" + targetName + "'.");
+		SendChatSystemNotice(*target, "'" + senderLabel + "' wants to trade. Type /trade accept or /trade decline.");
+		LOG_INFO(Net, "[ServerApp] Trade request sent (initiator_client_id={}, target_client_id={})",
+			sender.clientId, target->clientId);
+		return true;
+	}
+
+	bool ServerApp::HandleTradeAcceptCommand(ConnectedClient& sender)
+	{
+		if (!m_tradeManager.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Trade system unavailable.");
+			return true;
+		}
+
+		const uint32_t initiatorClientId = m_tradeManager.FindPendingRequestInitiator(sender.clientId);
+		if (initiatorClientId == 0)
+		{
+			SendChatSystemNotice(sender, "No pending trade request to accept.");
+			return true;
+		}
+
+		ConnectedClient* initiator = FindConnectedClient(initiatorClientId);
+		if (initiator == nullptr)
+		{
+			m_tradeManager.CancelPendingRequest(sender.clientId);
+			SendChatSystemNotice(sender, "The trade requester is no longer online.");
+			LOG_WARN(Net, "[ServerApp] /trade accept: initiator disconnected (initiator_client_id={})", initiatorClientId);
+			return true;
+		}
+
+		// Range check at accept time.
+		const float dist = TradeDistanceXZ(*initiator, sender);
+		if (dist > kTradeMaxRangeMeters)
+		{
+			m_tradeManager.CancelPendingRequest(sender.clientId);
+			SendChatSystemNotice(sender, "Too far to trade.");
+			SendChatSystemNotice(*initiator, "Trade request declined: target out of range.");
+			LOG_WARN(Net, "[ServerApp] /trade accept rejected: out of range (dist={:.1f}m)", dist);
+			return true;
+		}
+
+		m_tradeManager.CancelPendingRequest(sender.clientId);
+
+		const std::string labelA = "P" + std::to_string(initiator->clientId);
+		const std::string labelB = "P" + std::to_string(sender.clientId);
+		const uint32_t sessionId = m_tradeManager.CreateSession(
+			initiator->clientId, initiator->persistenceCharacterKey, labelA,
+			sender.clientId,     sender.persistenceCharacterKey,     labelB);
+
+		TradeSession* session = m_tradeManager.FindSession(initiator->clientId);
+		if (session == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] /trade accept: session not found after creation (session_id={})", sessionId);
+			return true;
+		}
+
+		SendChatSystemNotice(*initiator, "'" + labelB + "' accepted your trade request. Trade window open.");
+		SendChatSystemNotice(sender,     "Trade window open with '" + labelA + "'.");
+		BroadcastTradeUpdate(*session);
+		LOG_INFO(Net, "[ServerApp] Trade session created (session_id={}, A={}, B={})",
+			sessionId, initiator->clientId, sender.clientId);
+		return true;
+	}
+
+	bool ServerApp::HandleTradeDeclineCommand(ConnectedClient& sender)
+	{
+		if (!m_tradeManager.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Trade system unavailable.");
+			return true;
+		}
+
+		const uint32_t initiatorClientId = m_tradeManager.FindPendingRequestInitiator(sender.clientId);
+		m_tradeManager.CancelPendingRequest(sender.clientId);
+
+		if (initiatorClientId == 0)
+		{
+			SendChatSystemNotice(sender, "No pending trade request to decline.");
+			return true;
+		}
+
+		ConnectedClient* initiator = FindConnectedClient(initiatorClientId);
+		if (initiator != nullptr)
+		{
+			const std::string labelB = "P" + std::to_string(sender.clientId);
+			SendChatSystemNotice(*initiator, "'" + labelB + "' declined your trade request.");
+		}
+
+		const std::string labelA = initiatorClientId > 0
+			? ("P" + std::to_string(initiatorClientId)) : "unknown";
+		SendChatSystemNotice(sender, "Trade request from '" + labelA + "' declined.");
+		LOG_INFO(Net, "[ServerApp] Trade request declined (sender_client_id={}, initiator_client_id={})",
+			sender.clientId, initiatorClientId);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// Packet handlers (client-initiated during active trade)
+	// -------------------------------------------------------------------------
+
+	void ServerApp::HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		// Re-route to slash-command handler for unified logic.
+		(void)HandleTradeAcceptCommand(*client);
+	}
+
+	void ServerApp::HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		if (!m_tradeManager.IsInitialized())
+			return;
+
+		// Check if there is an active session to cancel.
+		TradeSession* session = m_tradeManager.FindSession(client->clientId);
+		if (session != nullptr)
+		{
+			const TradeResultCode code = (session->slotA.clientId == client->clientId)
+				? TradeResultCode::CancelledByA
+				: TradeResultCode::CancelledByB;
+			BroadcastTradeResult(*session, code, "Trade cancelled.");
+			m_tradeManager.RemoveSession(session->sessionId);
+			LOG_INFO(Net, "[ServerApp] Trade cancelled by client_id={}", client->clientId);
+			return;
+		}
+
+		// Cancel pending request (decline from B side).
+		(void)HandleTradeDeclineCommand(*client);
+	}
+
+	void ServerApp::HandleTradeAddItem(const Endpoint& endpoint, const TradeAddItemMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		if (!m_tradeManager.IsInitialized())
+			return;
+
+		TradeSession* session = m_tradeManager.FindSession(client->clientId);
+		if (session == nullptr || session->phase != TradePhase::Active)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: no active session (client_id={})", client->clientId);
+			return;
+		}
+
+		TradeSlot* slot = session->FindSlot(client->clientId);
+		if (slot == nullptr)
+			return;
+
+		// Locked slots cannot be modified.
+		if (slot->locked)
+		{
+			SendChatSystemNotice(*client, "Cannot modify offer after locking.");
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: slot locked (client_id={})", client->clientId);
+			return;
+		}
+
+		if (message.itemId == 0 || message.quantity == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: invalid item (client_id={})", client->clientId);
+			return;
+		}
+
+		// Check max slots.
+		if (slot->offeredItems.size() >= static_cast<size_t>(kMaxTradeItemSlots))
+		{
+			SendChatSystemNotice(*client, "Trade offer full (max " + std::to_string(kMaxTradeItemSlots) + " stacks).");
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: slots full (client_id={})", client->clientId);
+			return;
+		}
+
+		// Verify the player owns sufficient quantity.
+		if (!HasSufficientItem(*client, message.itemId, message.quantity))
+		{
+			SendChatSystemNotice(*client, "You do not have enough of that item.");
+			LOG_WARN(Net, "[ServerApp] TradeAddItem rejected: insufficient item (client_id={}, item_id={}, qty={})",
+				client->clientId, message.itemId, message.quantity);
+			return;
+		}
+
+		// Merge with existing stack or append.
+		bool merged = false;
+		for (ItemStack& s : slot->offeredItems)
+		{
+			if (s.itemId == message.itemId)
+			{
+				s.quantity += message.quantity;
+				merged = true;
+				break;
+			}
+		}
+		if (!merged)
+		{
+			slot->offeredItems.push_back({ message.itemId, message.quantity });
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] TradeAddItem OK (client_id={}, item_id={}, qty={})",
+			client->clientId, message.itemId, message.quantity);
+		BroadcastTradeUpdate(*session);
+	}
+
+	void ServerApp::HandleTradeRemoveItem(const Endpoint& endpoint, const TradeRemoveItemMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		if (!m_tradeManager.IsInitialized())
+			return;
+
+		TradeSession* session = m_tradeManager.FindSession(client->clientId);
+		if (session == nullptr || session->phase != TradePhase::Active)
+			return;
+
+		TradeSlot* slot = session->FindSlot(client->clientId);
+		if (slot == nullptr)
+			return;
+
+		if (slot->locked)
+		{
+			SendChatSystemNotice(*client, "Cannot modify offer after locking.");
+			return;
+		}
+
+		const auto it = std::remove_if(slot->offeredItems.begin(), slot->offeredItems.end(),
+			[&](const ItemStack& s) { return s.itemId == message.itemId; });
+		if (it != slot->offeredItems.end())
+		{
+			slot->offeredItems.erase(it, slot->offeredItems.end());
+			LOG_DEBUG(Net, "[ServerApp] TradeRemoveItem OK (client_id={}, item_id={})",
+				client->clientId, message.itemId);
+			BroadcastTradeUpdate(*session);
+		}
+	}
+
+	void ServerApp::HandleTradeSetGold(const Endpoint& endpoint, const TradeSetGoldMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		if (!m_tradeManager.IsInitialized())
+			return;
+
+		TradeSession* session = m_tradeManager.FindSession(client->clientId);
+		if (session == nullptr || session->phase != TradePhase::Active)
+			return;
+
+		TradeSlot* slot = session->FindSlot(client->clientId);
+		if (slot == nullptr)
+			return;
+
+		if (slot->locked)
+		{
+			SendChatSystemNotice(*client, "Cannot modify offer after locking.");
+			return;
+		}
+
+		// Verify the player has enough gold.
+		if (message.gold > client->gold)
+		{
+			SendChatSystemNotice(*client, "Not enough gold.");
+			LOG_WARN(Net, "[ServerApp] TradeSetGold rejected: insufficient gold (client_id={}, requested={}, have={})",
+				client->clientId, message.gold, client->gold);
+			return;
+		}
+
+		slot->offeredGold = message.gold;
+		LOG_DEBUG(Net, "[ServerApp] TradeSetGold OK (client_id={}, gold={})",
+			client->clientId, message.gold);
+		BroadcastTradeUpdate(*session);
+	}
+
+	void ServerApp::HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		if (!m_tradeManager.IsInitialized())
+			return;
+
+		TradeSession* session = m_tradeManager.FindSession(client->clientId);
+		if (session == nullptr || session->phase != TradePhase::Active)
+			return;
+
+		TradeSlot* slot = session->FindSlot(client->clientId);
+		if (slot == nullptr)
+			return;
+
+		slot->locked = true;
+		LOG_INFO(Net, "[ServerApp] TradeLock (client_id={}, session_id={})",
+			client->clientId, session->sessionId);
+
+		// If both locked, transition to Locked phase and start review timer.
+		if (session->slotA.locked && session->slotB.locked)
+		{
+			session->phase = TradePhase::Locked;
+			session->bothLockedAtTick = m_currentTick;
+			LOG_INFO(Net, "[ServerApp] Trade session {} both locked — review timer started (tick={})",
+				session->sessionId, m_currentTick);
+		}
+
+		BroadcastTradeUpdate(*session);
+	}
+
+	void ServerApp::HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr || client->clientId != message.clientId)
+			return;
+
+		if (!m_tradeManager.IsInitialized())
+			return;
+
+		TradeSession* session = m_tradeManager.FindSession(client->clientId);
+		if (session == nullptr)
+			return;
+
+		if (session->phase != TradePhase::Locked)
+		{
+			SendChatSystemNotice(*client, "Cannot confirm yet: both players must be locked and the review timer must complete.");
+			LOG_WARN(Net, "[ServerApp] TradeConfirm rejected: not in Locked phase (client_id={}, session_id={}, phase={})",
+				client->clientId, session->sessionId, static_cast<int>(session->phase));
+			return;
+		}
+
+		// Enforce the 5-second review timer.
+		const uint32_t elapsed = m_currentTick - session->bothLockedAtTick;
+		if (elapsed < kTradeLockReviewTicks)
+		{
+			SendChatSystemNotice(*client, "Please review the trade items before confirming.");
+			LOG_WARN(Net, "[ServerApp] TradeConfirm rejected: review timer not elapsed (client_id={}, elapsed_ticks={})",
+				client->clientId, elapsed);
+			return;
+		}
+
+		TradeSlot* slot = session->FindSlot(client->clientId);
+		if (slot == nullptr)
+			return;
+
+		slot->confirmed = true;
+		LOG_INFO(Net, "[ServerApp] TradeConfirm (client_id={}, session_id={})",
+			client->clientId, session->sessionId);
+
+		if (session->slotA.confirmed && session->slotB.confirmed)
+		{
+			session->phase = TradePhase::Confirmed;
+			std::string commitError;
+			if (!CommitTrade(*session, commitError))
+			{
+				BroadcastTradeResult(*session, TradeResultCode::ValidationFailed, commitError);
+				LOG_ERROR(Net, "[ServerApp] CommitTrade failed (session_id={}): {}",
+					session->sessionId, commitError);
+			}
+			else
+			{
+				BroadcastTradeResult(*session, TradeResultCode::Success, "Trade completed.");
+				LOG_INFO(Net, "[ServerApp] Trade committed (session_id={})", session->sessionId);
+			}
+			m_tradeManager.RemoveSession(session->sessionId);
+		}
+		else
+		{
+			BroadcastTradeUpdate(*session);
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Helpers
+	// -------------------------------------------------------------------------
+
+	void ServerApp::BroadcastTradeUpdate(TradeSession& session)
+	{
+		ConnectedClient* clientA = FindConnectedClient(session.slotA.clientId);
+		ConnectedClient* clientB = FindConnectedClient(session.slotB.clientId);
+
+		const uint32_t reviewTicksRemaining = (session.phase == TradePhase::Locked)
+			? ((m_currentTick - session.bothLockedAtTick) >= kTradeLockReviewTicks
+				? 0u
+				: kTradeLockReviewTicks - (m_currentTick - session.bothLockedAtTick))
+			: 0u;
+
+		if (clientA != nullptr)
+		{
+			TradeUpdateNotifyMessage msg{};
+			msg.sessionId              = session.sessionId;
+			msg.offerSelf              = BuildOfferWire(session.slotA);
+			msg.offerOther             = BuildOfferWire(session.slotB);
+			msg.reviewTicksRemaining   = reviewTicksRemaining;
+			const std::vector<std::byte> pkt = EncodeTradeUpdateNotify(msg);
+			if (!m_transport.Send(clientA->endpoint, pkt))
+			{
+				LOG_WARN(Net, "[ServerApp] TradeUpdateNotify send failed (clientA={})", clientA->clientId);
+			}
+		}
+
+		if (clientB != nullptr)
+		{
+			TradeUpdateNotifyMessage msg{};
+			msg.sessionId              = session.sessionId;
+			msg.offerSelf              = BuildOfferWire(session.slotB);
+			msg.offerOther             = BuildOfferWire(session.slotA);
+			msg.reviewTicksRemaining   = reviewTicksRemaining;
+			const std::vector<std::byte> pkt = EncodeTradeUpdateNotify(msg);
+			if (!m_transport.Send(clientB->endpoint, pkt))
+			{
+				LOG_WARN(Net, "[ServerApp] TradeUpdateNotify send failed (clientB={})", clientB->clientId);
+			}
+		}
+	}
+
+	void ServerApp::BroadcastTradeResult(TradeSession& session, TradeResultCode result, std::string_view detail)
+	{
+		TradeResultMessage msg{};
+		msg.result = result;
+		msg.detail = std::string(detail);
+		const std::vector<std::byte> pkt = EncodeTradeResult(msg);
+
+		ConnectedClient* clientA = FindConnectedClient(session.slotA.clientId);
+		ConnectedClient* clientB = FindConnectedClient(session.slotB.clientId);
+
+		if (clientA != nullptr)
+		{
+			if (!m_transport.Send(clientA->endpoint, pkt))
+			{
+				LOG_WARN(Net, "[ServerApp] TradeResult send failed (clientA={})", clientA->clientId);
+			}
+		}
+		if (clientB != nullptr)
+		{
+			if (!m_transport.Send(clientB->endpoint, pkt))
+			{
+				LOG_WARN(Net, "[ServerApp] TradeResult send failed (clientB={})", clientB->clientId);
+			}
+		}
+		LOG_INFO(Net, "[ServerApp] TradeResult broadcast (session_id={}, result={})",
+			session.sessionId, static_cast<int>(result));
+	}
+
+	bool ServerApp::CommitTrade(TradeSession& session, std::string& outError)
+	{
+		ConnectedClient* clientA = FindConnectedClient(session.slotA.clientId);
+		ConnectedClient* clientB = FindConnectedClient(session.slotB.clientId);
+
+		if (clientA == nullptr || clientB == nullptr)
+		{
+			outError = "One or both players disconnected during trade.";
+			return false;
+		}
+
+		const TradeSlot& slotA = session.slotA;
+		const TradeSlot& slotB = session.slotB;
+
+		// Validate all items still exist in each player's inventory.
+		for (const ItemStack& item : slotA.offeredItems)
+		{
+			if (!HasSufficientItem(*clientA, item.itemId, item.quantity))
+			{
+				outError = std::string(slotA.displayName) + " no longer has enough of item " + std::to_string(item.itemId);
+				LOG_WARN(Net, "[ServerApp] CommitTrade FAILED: {} missing item {} x{}",
+					slotA.displayName, item.itemId, item.quantity);
+				return false;
+			}
+		}
+		for (const ItemStack& item : slotB.offeredItems)
+		{
+			if (!HasSufficientItem(*clientB, item.itemId, item.quantity))
+			{
+				outError = std::string(slotB.displayName) + " no longer has enough of item " + std::to_string(item.itemId);
+				LOG_WARN(Net, "[ServerApp] CommitTrade FAILED: {} missing item {} x{}",
+					slotB.displayName, item.itemId, item.quantity);
+				return false;
+			}
+		}
+
+		// Validate gold.
+		if (slotA.offeredGold > clientA->gold)
+		{
+			outError = std::string(slotA.displayName) + " no longer has enough gold.";
+			return false;
+		}
+		if (slotB.offeredGold > clientB->gold)
+		{
+			outError = std::string(slotB.displayName) + " no longer has enough gold.";
+			return false;
+		}
+
+		// Atomic swap — remove offered items from A, give to B, and vice-versa.
+		for (const ItemStack& item : slotA.offeredItems)
+		{
+			std::string removeErr;
+			(void)RemoveStackFromInventory(*clientA, item.itemId, item.quantity, removeErr);
+			AddItemToInventory(*clientB, item);
+		}
+		for (const ItemStack& item : slotB.offeredItems)
+		{
+			std::string removeErr;
+			(void)RemoveStackFromInventory(*clientB, item.itemId, item.quantity, removeErr);
+			AddItemToInventory(*clientA, item);
+		}
+
+		// Gold transfer.
+		if (slotA.offeredGold > 0)
+		{
+			clientA->gold -= slotA.offeredGold;
+			clientB->gold += slotA.offeredGold;
+		}
+		if (slotB.offeredGold > 0)
+		{
+			clientB->gold -= slotB.offeredGold;
+			clientA->gold += slotB.offeredGold;
+		}
+
+		// Replicate updated wallets.
+		(void)SendWalletUpdate(*clientA);
+		(void)SendWalletUpdate(*clientB);
+
+		// Persist both characters immediately.
+		SaveConnectedClient(*clientA, "trade_commit");
+		SaveConnectedClient(*clientB, "trade_commit");
+
+		// Audit log.
+		const std::string itemSummaryA = BuildItemSummary(slotA.offeredItems);
+		const std::string itemSummaryB = BuildItemSummary(slotB.offeredItems);
+		if (m_moderationAuditLogReady)
+		{
+			m_moderationAuditLog.LogTradeCompleted(
+				slotA.displayName, slotA.offeredGold, itemSummaryA,
+				slotB.displayName, slotB.offeredGold, itemSummaryB);
+		}
+		else
+		{
+			LOG_INFO(Net,
+				"[ServerApp] TRADE_COMPLETED playerA={} goldA={} itemsA=[{}] playerB={} goldB={} itemsB=[{}]",
+				slotA.displayName, slotA.offeredGold, itemSummaryA,
+				slotB.displayName, slotB.offeredGold, itemSummaryB);
+		}
+
+		return true;
+	}
+
+	void ServerApp::UpdateTradeSessions()
+	{
+		// Nothing to do when no sessions are active.
+		// Locked sessions are handled lazily in HandleTradeConfirm (tick-based review timer).
+		// This function is a placeholder for future proactive tick logic (e.g. session expiry).
+		LOG_TRACE(Net, "[ServerApp] UpdateTradeSessions tick={}", m_currentTick);
 	}
 }

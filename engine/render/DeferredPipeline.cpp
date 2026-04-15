@@ -329,6 +329,52 @@ namespace engine::render
 				LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
 		}
 
+		// M37.1: Water pass (reflection + refraction + Fresnel surface).
+		// Non-fatal: server can run without water if shaders are absent.
+		{
+			std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
+			std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
+			if (!waterVert.empty() && !waterFrag.empty())
+			{
+				// RT dimensions: half of a typical 1920×1080 viewport (configurable).
+				const uint32_t rtW = static_cast<uint32_t>(
+					std::max<int64_t>(64, config.GetInt("render.water.reflection_width",  512)));
+				const uint32_t rtH = static_cast<uint32_t>(
+					std::max<int64_t>(64, config.GetInt("render.water.reflection_height", 256)));
+
+				if (m_waterPass.Init(device, physicalDevice,
+						VK_FORMAT_R16G16B16A16_SFLOAT,
+						waterVert.data(), waterVert.size(),
+						waterFrag.data(), waterFrag.size(),
+						rtW, rtH, 2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline WaterPass OK (rtSize={}x{})", rtW, rtH);
+				else
+					LOG_WARN(Render, "M37.1: WaterPass init failed — water disabled");
+			}
+			else
+				LOG_WARN(Render, "M37.1: Water shaders not found — water disabled (compile water.vert/.frag to water.vert.spv/.frag.spv)");
+		}
+
+		// M37.3: Underwater post-effects pass (fog, blue tint, vignette).
+		// Non-fatal: if shaders are absent the pass is simply disabled.
+		{
+			std::vector<uint32_t> uwVert = loadSpirv("shaders/underwater.vert.spv");
+			std::vector<uint32_t> uwFrag = loadSpirv("shaders/underwater.frag.spv");
+			if (!uwVert.empty() && !uwFrag.empty())
+			{
+				if (m_underwaterPass.Init(device, physicalDevice,
+						VK_FORMAT_R16G16B16A16_SFLOAT,
+						uwVert.data(), uwVert.size(),
+						uwFrag.data(), uwFrag.size(),
+						2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline UnderwaterPass OK");
+				else
+					LOG_WARN(Render, "M37.3: UnderwaterPass init failed — underwater FX disabled");
+			}
+			else
+				LOG_WARN(Render, "M37.3: Underwater shaders not found — underwater FX disabled (compile underwater.vert/.frag to .spv)");
+		}
+
 		PipelineCache::EndWarmup();
 
 		LOG_INFO(Render, "[Boot] DeferredPipeline all passes init done");
@@ -339,6 +385,8 @@ namespace engine::render
 	{
 		if (device == VK_NULL_HANDLE) return;
 		// Reverse init order: TAA → auto-exposure → bloom → tonemap → lighting → decals → shadow → geometry → SSAO → specular/BRDF.
+		m_underwaterPass.Destroy(device);
+		m_waterPass.Destroy(device);
 		m_taaPass.Destroy(device);
 		m_autoExposure.Destroy(device);
 		m_bloomCombinePass.Destroy(device);

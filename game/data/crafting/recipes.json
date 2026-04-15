@@ -1,0 +1,103 @@
+{
+  "professions": [
+    { "id": "blacksmithing", "isPrimary": true },
+    { "id": "alchemy",       "isPrimary": true },
+    { "id": "tailoring",     "isPrimary": true },
+    { "id": "cooking",       "isPrimary": false },
+    { "id": "first_aid",     "isPrimary": false }
+  ],
+  "recipes": [
+    {
+      "id": "rough_stone_statue",
+      "profession": "blacksmithing",
+      "skill_required": 1,
+      "ingredients": [
+        { "item": "rough_stone", "item_id": 4010, "quantity": 6 }
+      ],
+      "output": { "item": "rough_stone_statue", "item_id": 5001, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "copper_bar",
+      "profession": "blacksmithing",
+      "skill_required": 1,
+      "ingredients": [
+        { "item": "copper_ore", "item_id": 4001, "quantity": 2 }
+      ],
+      "output": { "item": "copper_bar", "item_id": 5002, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "copper_bracers",
+      "profession": "blacksmithing",
+      "skill_required": 25,
+      "ingredients": [
+        { "item": "copper_bar", "item_id": 5002, "quantity": 6 },
+        { "item": "coarse_thread", "item_id": 4011, "quantity": 2 }
+      ],
+      "output": { "item": "copper_bracers", "item_id": 5010, "quantity": 1 },
+      "craft_time": 3.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "iron_sword",
+      "profession": "blacksmithing",
+      "skill_required": 50,
+      "ingredients": [
+        { "item": "iron_bar",       "item_id": 5003, "quantity": 8 },
+        { "item": "leather_strap",  "item_id": 4012, "quantity": 2 }
+      ],
+      "output": { "item": "iron_sword", "item_id": 5020, "quantity": 1 },
+      "craft_time": 3.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "minor_healing_potion",
+      "profession": "alchemy",
+      "skill_required": 1,
+      "ingredients": [
+        { "item": "peacebloom",   "item_id": 4002, "quantity": 1 },
+        { "item": "empty_vial",   "item_id": 4013, "quantity": 1 }
+      ],
+      "output": { "item": "minor_healing_potion", "item_id": 5030, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "minor_mana_potion",
+      "profession": "alchemy",
+      "skill_required": 20,
+      "ingredients": [
+        { "item": "mageroyal",    "item_id": 4003, "quantity": 1 },
+        { "item": "empty_vial",   "item_id": 4013, "quantity": 1 }
+      ],
+      "output": { "item": "minor_mana_potion", "item_id": 5031, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "linen_cloth_bandage",
+      "profession": "first_aid",
+      "skill_required": 1,
+      "ingredients": [
+        { "item": "linen_cloth", "item_id": 4004, "quantity": 1 }
+      ],
+      "output": { "item": "linen_bandage", "item_id": 5040, "quantity": 1 },
+      "craft_time": 1.5,
+      "skill_up_chance": 1.0
+    },
+    {
+      "id": "roasted_boar",
+      "profession": "cooking",
+      "skill_required": 1,
+      "ingredients": [
+        { "item": "raw_boar_meat", "item_id": 4004, "quantity": 1 }
+      ],
+      "output": { "item": "roasted_boar", "item_id": 5050, "quantity": 1 },
+      "craft_time": 2.0,
+      "skill_up_chance": 1.0
+    }
+  ]
+}

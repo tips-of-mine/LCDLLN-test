@@ -1,0 +1,19 @@
+{
+  "bindings": {
+    "move_forward":  "W",
+    "move_backward": "S",
+    "move_left":     "A",
+    "move_right":    "D",
+    "jump":          "Space",
+    "interact":      "F",
+    "attack":        "Mouse1",
+    "skill_1":       "1",
+    "skill_2":       "2",
+    "skill_3":       "3",
+    "skill_4":       "4",
+    "map":           "M",
+    "inventory":     "I",
+    "quest_log":     "J",
+    "chat":          "Return"
+  }
+}

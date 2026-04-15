@@ -217,6 +217,10 @@ add_library(engine_core
   engine/client/InventoryUi.cpp
   engine/client/AuctionUi.cpp
   engine/client/ShopUi.cpp
+  engine/client/CharacterCreationUi.cpp
+  engine/client/SettingsUi.cpp
+  engine/client/HudLayoutEditor.cpp
+  engine/client/CombatAnalyticsUi.cpp
   engine/client/GameplayUdpClient.cpp
   engine/client/ProfilerHud.cpp
   engine/client/QuestUi.cpp
@@ -272,6 +276,11 @@ add_library(engine_core
   engine/render/BloomPass.cpp
   engine/render/AutoExposure.cpp
   engine/render/TaaPass.cpp
+  engine/render/WaterPass.cpp
+  engine/render/UnderwaterPass.cpp
+  engine/render/DayNightCycle.cpp
+  engine/render/WeatherSystem.cpp
+  engine/render/DynamicLightSystem.cpp
   engine/render/DeferredPipeline.cpp
   engine/math/Frustum.cpp
   engine/gameplay/CharacterController.cpp

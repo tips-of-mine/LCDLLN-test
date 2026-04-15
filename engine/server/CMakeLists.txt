@@ -21,6 +21,9 @@ if(WIN32)
     VendorCatalog.cpp
     PlayerWalletService.cpp
     AuctionHouse.cpp
+    PlayerTradeSession.cpp
+    ResourceNodeRuntime.cpp
+    CraftingSystem.cpp
     QuestRuntime.cpp
     SpawnerRuntime.cpp
     EventRuntime.cpp

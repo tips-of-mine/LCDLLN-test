@@ -17,6 +17,8 @@
 #include "engine/render/AutoExposure.h"
 #include "engine/render/TaaPass.h"
 #include "engine/render/PipelineCache.h"
+#include "engine/render/UnderwaterPass.h"
+#include "engine/render/WaterPass.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -95,6 +97,12 @@ namespace engine::render
 		TaaPass&              GetTaaPass()             { return m_taaPass; }
 		const TaaPass&        GetTaaPass() const        { return m_taaPass; }
 
+		WaterPass&            GetWaterPass()              { return m_waterPass; }
+		const WaterPass&      GetWaterPass() const        { return m_waterPass; }
+
+		UnderwaterPass&       GetUnderwaterPass()         { return m_underwaterPass; }
+		const UnderwaterPass& GetUnderwaterPass() const   { return m_underwaterPass; }
+
 	private:
 		GeometryPass          m_geometryPass;
 		MaterialDescriptorCache m_materialDescriptorCache;
@@ -115,6 +123,8 @@ namespace engine::render
 		BloomCombinePass      m_bloomCombinePass;
 		AutoExposure          m_autoExposure;
 		TaaPass               m_taaPass;
+		WaterPass             m_waterPass;
+		UnderwaterPass        m_underwaterPass;
 		PipelineCache        m_pipelineCache;
 	};
 }

@@ -175,17 +175,36 @@ namespace engine::server
 			}
 		}
 
-		LOG_INFO(Net,
-			"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={}, mailbox_gold={}, mailbox_items={})",
-			characterKey,
-			outState.zoneId,
-			outState.inventory.size(),
-			outState.questStates.size(),
-			outState.chatIgnoredDisplayNames.size(),
-			outState.chatModeratorRole ? "true" : "false",
-			outState.mailboxGold,
-			outState.mailboxItems.size());
-		return true;
+	// M36.2 — load professions
+	outState.professions.clear();
+	const uint32_t profCount = static_cast<uint32_t>(persisted.GetInt("professions.count", 0));
+	constexpr uint32_t kMaxPersistedProfessions = 20;
+	const uint32_t maxProf = std::min(profCount, kMaxPersistedProfessions);
+	for (uint32_t pi = 0; pi < maxProf; ++pi)
+	{
+		const std::string base = "professions." + std::to_string(pi) + ".";
+		const std::string profId = persisted.GetString(base + "id", "");
+		if (profId.empty()) continue;
+		PlayerProfessionState ps{};
+		ps.professionId = profId;
+		ps.skillLevel   = static_cast<uint32_t>(persisted.GetInt(base + "skill", 1));
+		ps.isPrimary    = persisted.GetBool(base + "is_primary", true);
+		if (ps.skillLevel == 0) ps.skillLevel = 1;
+		outState.professions.push_back(std::move(ps));
+	}
+
+	LOG_INFO(Net,
+		"[CharacterPersistence] Load OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={}, mailbox_gold={}, mailbox_items={}, professions={})",
+		characterKey,
+		outState.zoneId,
+		outState.inventory.size(),
+		outState.questStates.size(),
+		outState.chatIgnoredDisplayNames.size(),
+		outState.chatModeratorRole ? "true" : "false",
+		outState.mailboxGold,
+		outState.mailboxItems.size(),
+		outState.professions.size());
+	return true;
 	}
 
 	bool CharacterPersistenceStore::SaveCharacter(const PersistedCharacterState& state) const
@@ -236,16 +255,27 @@ namespace engine::server
 			output << "chat.ignore." << ignoreIndex << ".name=" << state.chatIgnoredDisplayNames[ignoreIndex] << "\n";
 		}
 
-		output << "mailbox.gold=" << state.mailboxGold << "\n";
-		const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);
-		output << "mailbox.item_count=" << mailboxToSave << "\n";
-		for (size_t mi = 0; mi < mailboxToSave; ++mi)
-		{
-			output << "mailbox.item." << mi << ".id=" << state.mailboxItems[mi].itemId << "\n";
-			output << "mailbox.item." << mi << ".qty=" << state.mailboxItems[mi].quantity << "\n";
-		}
+	output << "mailbox.gold=" << state.mailboxGold << "\n";
+	const size_t mailboxToSave = std::min<size_t>(state.mailboxItems.size(), 64u);
+	output << "mailbox.item_count=" << mailboxToSave << "\n";
+	for (size_t mi = 0; mi < mailboxToSave; ++mi)
+	{
+		output << "mailbox.item." << mi << ".id=" << state.mailboxItems[mi].itemId << "\n";
+		output << "mailbox.item." << mi << ".qty=" << state.mailboxItems[mi].quantity << "\n";
+	}
 
-		if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
+	// M36.2 — save professions
+	const size_t profToSave = std::min<size_t>(state.professions.size(), 20u);
+	output << "professions.count=" << profToSave << "\n";
+	for (size_t pi = 0; pi < profToSave; ++pi)
+	{
+		const PlayerProfessionState& ps = state.professions[pi];
+		output << "professions." << pi << ".id=" << ps.professionId << "\n";
+		output << "professions." << pi << ".skill=" << ps.skillLevel << "\n";
+		output << "professions." << pi << ".is_primary=" << (ps.isPrimary ? 1 : 0) << "\n";
+	}
+
+	if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
 		{
 			LOG_ERROR(Net, "[CharacterPersistence] Save FAILED (character_key={}, path={})",
 				state.characterKey,
@@ -253,15 +283,16 @@ namespace engine::server
 			return false;
 		}
 
-		LOG_INFO(Net,
-			"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, mailbox_gold={}, mailbox_items={})",
-			state.characterKey,
-			state.zoneId,
-			state.inventory.size(),
-			state.questStates.size(),
-			ignoreCountToSave,
-			state.mailboxGold,
-			mailboxToSave);
+	LOG_INFO(Net,
+		"[CharacterPersistence] Save OK (character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, mailbox_gold={}, mailbox_items={}, professions={})",
+		state.characterKey,
+		state.zoneId,
+		state.inventory.size(),
+		state.questStates.size(),
+		ignoreCountToSave,
+		state.mailboxGold,
+		mailboxToSave,
+		profToSave);
 		return true;
 	}
 

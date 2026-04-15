@@ -1,0 +1,52 @@
+{
+  "classes": [
+    {
+      "id": 1,
+      "key": "warrior",
+      "displayName": "Warrior",
+      "description": "A master of arms who charges into battle and protects allies through sheer resilience.",
+      "iconPath": "icons/classes/warrior.texr",
+      "roleDescription": "Tank / DPS"
+    },
+    {
+      "id": 2,
+      "key": "mage",
+      "displayName": "Mage",
+      "description": "A student of the arcane arts who unleashes devastating spells from a safe distance.",
+      "iconPath": "icons/classes/mage.texr",
+      "roleDescription": "Ranged DPS"
+    },
+    {
+      "id": 3,
+      "key": "rogue",
+      "displayName": "Rogue",
+      "description": "A cunning combatant who uses stealth and precision to eliminate high-value targets.",
+      "iconPath": "icons/classes/rogue.texr",
+      "roleDescription": "Melee DPS / Utility"
+    },
+    {
+      "id": 4,
+      "key": "priest",
+      "displayName": "Priest",
+      "description": "A devoted healer who channels holy power to mend wounds and bolster allies in battle.",
+      "iconPath": "icons/classes/priest.texr",
+      "roleDescription": "Healer / Support"
+    },
+    {
+      "id": 5,
+      "key": "hunter",
+      "displayName": "Hunter",
+      "description": "A skilled tracker and archer who excels at ranged combat and taming wild beasts.",
+      "iconPath": "icons/classes/hunter.texr",
+      "roleDescription": "Ranged DPS / Pet Master"
+    },
+    {
+      "id": 6,
+      "key": "paladin",
+      "displayName": "Paladin",
+      "description": "A holy warrior who blends martial prowess with divine magic, able to both fight and heal.",
+      "iconPath": "icons/classes/paladin.texr",
+      "roleDescription": "Tank / Healer"
+    }
+  ]
+}

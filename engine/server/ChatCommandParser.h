@@ -27,7 +27,15 @@ namespace engine::server
 		/// M32.2 — Party loot mode change (leader only): /loot <mode>
 		Loot,
 		/// M32.2 — Party kick (leader only): /pkick <name>
-		PartyKick
+		PartyKick,
+		/// M35.3 — Direct trade request: /trade <name>
+		Trade,
+		/// M35.3 — Accept incoming trade request: /trade accept
+		TradeAccept,
+		/// M35.3 — Decline incoming trade request: /trade decline
+		TradeDecline,
+		/// M36.2 — Learn a crafting profession: /learn <profession>
+		LearnProfession
 	};
 
 	/// Sub-command for ChatSlashCommandKind::Friend (M32.1).
@@ -73,4 +81,12 @@ namespace engine::server
 	/// Parse a target name from /invite or /pkick argsRemainder.
 	/// Returns false when argsRemainder is empty after trimming.
 	bool ParsePartyTargetName(std::string_view argsRemainder, std::string& outTargetName);
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Trade command helpers
+	// -------------------------------------------------------------------------
+
+	/// Parse the target name from /trade <name> argsRemainder.
+	/// Returns false when argsRemainder is empty after trimming.
+	bool ParseTradeTargetName(std::string_view argsRemainder, std::string& outTargetName);
 }

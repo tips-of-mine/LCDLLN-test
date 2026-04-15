@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "typeId": "ore_vein",
+      "archetypeId": 300,
+      "harvestTimeSec": 3.0,
+      "respawnTimeSec": 600,
+      "minItems": 1,
+      "maxItems": 3,
+      "lootTable": [
+        { "itemId": 4001, "minQty": 1, "maxQty": 2, "weight": 100 }
+      ]
+    },
+    {
+      "typeId": "herb",
+      "archetypeId": 301,
+      "harvestTimeSec": 2.0,
+      "respawnTimeSec": 300,
+      "minItems": 1,
+      "maxItems": 2,
+      "lootTable": [
+        { "itemId": 4002, "minQty": 1, "maxQty": 3, "weight": 100 }
+      ]
+    },
+    {
+      "typeId": "tree",
+      "archetypeId": 302,
+      "harvestTimeSec": 5.0,
+      "respawnTimeSec": 900,
+      "minItems": 1,
+      "maxItems": 5,
+      "lootTable": [
+        { "itemId": 4003, "minQty": 1, "maxQty": 3, "weight": 100 }
+      ]
+    },
+    {
+      "typeId": "animal_corpse",
+      "archetypeId": 303,
+      "harvestTimeSec": 2.0,
+      "respawnTimeSec": 300,
+      "minItems": 1,
+      "maxItems": 3,
+      "lootTable": [
+        { "itemId": 4004, "minQty": 1, "maxQty": 2, "weight": 100 }
+      ]
+    }
+  ]
+}

@@ -56,6 +56,14 @@ namespace engine::server
 		/// Log one moderation action with free-form detail (M29.2 audit trail).
 		void LogModerationAction(std::string_view action, std::string_view actor_display, std::string_view target_display, std::string_view detail);
 
+		/// Log one completed player-to-player direct trade (M35.3 audit trail).
+		/// \p playerA and \p playerB are display tokens (e.g. "P12").
+		/// \p goldA and \p goldB are the gold amounts offered by each side.
+		/// \p itemSummary is a human-readable list of items exchanged.
+		void LogTradeCompleted(
+			std::string_view playerA, uint32_t goldA, std::string_view itemSummaryA,
+			std::string_view playerB, uint32_t goldB, std::string_view itemSummaryB);
+
 	private:
 		void writeLine(std::string_view event, std::string_view payload);
 		static std::string timestamp();

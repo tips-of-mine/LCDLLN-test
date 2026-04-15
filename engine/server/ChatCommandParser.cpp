@@ -75,6 +75,14 @@ namespace engine::server
 			return "/loot";
 		case ChatSlashCommandKind::PartyKick:
 			return "/pkick";
+		case ChatSlashCommandKind::Trade:
+			return "/trade";
+		case ChatSlashCommandKind::TradeAccept:
+			return "/trade accept";
+		case ChatSlashCommandKind::TradeDecline:
+			return "/trade decline";
+		case ChatSlashCommandKind::LearnProfession:
+			return "/learn";
 		case ChatSlashCommandKind::None:
 			break;
 		}
@@ -224,6 +232,36 @@ namespace engine::server
 			return true;
 		}
 
+		// M36.2 — Learn profession command
+		if (cmdToken == "/learn")
+		{
+			set(ChatSlashCommandKind::LearnProfession, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})",
+				ChatSlashCommandLabel(ChatSlashCommandKind::LearnProfession), remainder.size());
+			return true;
+		}
+
+		// M35.3 — Trade commands
+		if (cmdToken == "/trade")
+		{
+			const std::string_view trimmedRemainder = TrimAscii(remainder);
+			if (trimmedRemainder == "accept")
+			{
+				set(ChatSlashCommandKind::TradeAccept, {});
+				LOG_DEBUG(Net, "[ChatCommandParser] Parsed /trade accept");
+				return true;
+			}
+			if (trimmedRemainder == "decline")
+			{
+				set(ChatSlashCommandKind::TradeDecline, {});
+				LOG_DEBUG(Net, "[ChatCommandParser] Parsed /trade decline");
+				return true;
+			}
+			set(ChatSlashCommandKind::Trade, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Trade), remainder.size());
+			return true;
+		}
+
 		return false;
 	}
 
@@ -257,5 +295,23 @@ namespace engine::server
 			return false;
 		outTargetName.assign(trimmed.begin(), trimmed.end());
 		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Trade command argument parsers
+	// -------------------------------------------------------------------------
+
+	bool ParseTradeTargetName(std::string_view argsRemainder, std::string& outTargetName)
+	{
+		outTargetName.clear();
+		const std::string_view trimmed = TrimAscii(argsRemainder);
+		if (trimmed.empty())
+			return false;
+		// Take only the first word as the target name.
+		const size_t spacePos = trimmed.find(' ');
+		const std::string_view name = (spacePos == std::string_view::npos)
+			? trimmed : trimmed.substr(0, spacePos);
+		outTargetName.assign(name.begin(), name.end());
+		return !outTargetName.empty();
 	}
 }

@@ -123,4 +123,14 @@ namespace engine::server
 	{
 		writeLine("MODERATION", std::format("action={} actor={} target={} detail={}", action, actor_display, target_display, detail));
 	}
+
+	void SecurityAuditLog::LogTradeCompleted(
+		std::string_view playerA, uint32_t goldA, std::string_view itemSummaryA,
+		std::string_view playerB, uint32_t goldB, std::string_view itemSummaryB)
+	{
+		writeLine("TRADE_COMPLETED", std::format(
+			"playerA={} goldA={} itemsA=[{}] playerB={} goldB={} itemsB=[{}]",
+			playerA, goldA, itemSummaryA,
+			playerB, goldB, itemSummaryB));
+	}
 }

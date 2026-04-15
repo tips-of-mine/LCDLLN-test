@@ -1,0 +1,44 @@
+{
+  "races": [
+    {
+      "id": 1,
+      "key": "human",
+      "displayName": "Human",
+      "description": "Versatile and adaptable, humans thrive in all disciplines and form the backbone of most civilizations.",
+      "iconPath": "icons/races/human.texr",
+      "racialBonus": "+5% XP gain, +1 to all base stats"
+    },
+    {
+      "id": 2,
+      "key": "elf",
+      "displayName": "High Elf",
+      "description": "Ancient and graceful, elves possess an innate affinity for magic and exceptional agility.",
+      "iconPath": "icons/races/elf.texr",
+      "racialBonus": "+10% magic damage, +5 Agility"
+    },
+    {
+      "id": 3,
+      "key": "dwarf",
+      "displayName": "Dwarf",
+      "description": "Stout and resilient, dwarves are master craftsmen and formidable warriors underground.",
+      "iconPath": "icons/races/dwarf.texr",
+      "racialBonus": "+10% physical defense, +10 Stamina"
+    },
+    {
+      "id": 4,
+      "key": "orc",
+      "displayName": "Orc",
+      "description": "Fearsome and powerful, orcs channel raw fury into devastating melee attacks.",
+      "iconPath": "icons/races/orc.texr",
+      "racialBonus": "+15% melee damage, Berserker stance"
+    },
+    {
+      "id": 5,
+      "key": "undead",
+      "displayName": "Undead",
+      "description": "Risen from the grave, the undead are immune to many debuffs and can consume life energy.",
+      "iconPath": "icons/races/undead.texr",
+      "racialBonus": "Undead immunity, Will of the Forsaken"
+    }
+  ]
+}

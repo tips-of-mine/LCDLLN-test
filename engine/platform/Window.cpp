@@ -793,17 +793,20 @@ namespace engine::platform
 
 	intptr_t Window::HandleMessage(uint32_t msg, uint64_t wparam, int64_t lparam)
 	{
+		intptr_t intercepted = 0;
 		if (m_preMessageInterceptor)
 		{
-			const intptr_t consumed = m_preMessageInterceptor(msg, wparam, lparam);
-			if (consumed != 0)
-			{
-				return consumed;
-			}
+			intercepted = m_preMessageInterceptor(msg, wparam, lparam);
 		}
+		// Toujours notifier le hook (ex. Input) même si ImGui a « consommé » le message.
+		// Sinon WM_MOUSEMOVE / WM_KEY* n’atteignent jamais Input : caméra WASD + souris figées (World Editor).
 		if (m_msgHook)
 		{
 			m_msgHook(msg, wparam, lparam);
+		}
+		if (intercepted != 0)
+		{
+			return intercepted;
 		}
 
 		switch (msg)

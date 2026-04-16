@@ -16,7 +16,7 @@ namespace engine::render::terrain
         std::ifstream in(fullPath, std::ios::binary);
         if (!in)
         {
-            LOG_WARN("TerrainGrassDetail::LoadFromFile: failed to open '{}'", fullPath);
+            LOG_WARN(TerrainGrass, "LoadFromFile: failed to open '{}'", fullPath);
             return false;
         }
 
@@ -28,7 +28,7 @@ namespace engine::render::terrain
         in.read(reinterpret_cast<char*>(&h), sizeof(h));
         if (!in || magic != kGrassMaskFileMagic || w == 0 || h == 0)
         {
-            LOG_WARN("TerrainGrassDetail::LoadFromFile: invalid header in '{}'", fullPath);
+            LOG_WARN(TerrainGrass, "LoadFromFile: invalid header in '{}'", fullPath);
             return false;
         }
 
@@ -37,7 +37,7 @@ namespace engine::render::terrain
         in.read(reinterpret_cast<char*>(mask.data()), static_cast<std::streamsize>(count));
         if (!in || in.gcount() != static_cast<std::streamsize>(count))
         {
-            LOG_WARN("TerrainGrassDetail::LoadFromFile: truncated data in '{}'", fullPath);
+            LOG_WARN(TerrainGrass, "LoadFromFile: truncated data in '{}'", fullPath);
             return false;
         }
 
@@ -61,14 +61,14 @@ namespace engine::render::terrain
     {
         if (data.width == 0 || data.height == 0 || data.mask.size() != static_cast<size_t>(data.width) * static_cast<size_t>(data.height))
         {
-            LOG_WARN("TerrainGrassDetail::SaveToFile: invalid mask dimensions for '{}'", fullPath);
+            LOG_WARN(TerrainGrass, "SaveToFile: invalid mask dimensions for '{}'", fullPath);
             return false;
         }
 
         std::ofstream out(fullPath, std::ios::binary | std::ios::trunc);
         if (!out)
         {
-            LOG_WARN("TerrainGrassDetail::SaveToFile: failed to open '{}'", fullPath);
+            LOG_WARN(TerrainGrass, "SaveToFile: failed to open '{}'", fullPath);
             return false;
         }
 

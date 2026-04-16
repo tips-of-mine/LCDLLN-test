@@ -604,6 +604,7 @@ namespace engine
 		if (m_worldEditorExe)
 		{
 			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
+#if defined(_WIN32)
 			m_worldEditorSession->SetTerrainSaveHook(
 				[this](const engine::core::Config& cfg, const engine::editor::WorldMapEditDocument& doc) -> bool {
 					if (!m_worldEditorTerrainTools.IsValid())
@@ -633,6 +634,11 @@ namespace engine
 					}
 					return true;
 				});
+#else
+			// `TerrainEditingTools` / flush disque ne sont branchés que sous Windows pour le WE actuel.
+			m_worldEditorSession->SetTerrainSaveHook(
+				[](const engine::core::Config&, const engine::editor::WorldMapEditDocument&) -> bool { return true; });
+#endif
 		}
 
 		if (!logSettings.filePath.empty() || logSettings.console)

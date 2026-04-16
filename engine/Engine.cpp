@@ -2804,12 +2804,20 @@ namespace engine
 		}
 		else if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
 		{
-			// Ne pas exiger les deux à la fois : sinon dès que ImGui capture la souris (dock / panneaux),
-			// WASD est bloqué alors que le clavier n’est pas utilisé par l’UI.
+			// ImGui couvre toute la fenêtre (dock + panneaux) : WantCaptureMouse/Keyboard reste souvent vrai,
+			// ce qui figeait la caméra. Clic droit maintenu = priorité navigation 3D (vue + WASD).
 			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
 			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
+			const bool rmbNav = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+			const bool applyMouseLook = !capMouse || rmbNav;
+			const bool applyKeyboardMove = !capKb || rmbNav;
 			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, out.camera,
-				!capMouse, !capKb);
+				applyMouseLook, applyKeyboardMove);
+		}
+		else if (m_worldEditorExe)
+		{
+			// ImGui non prêt (échec d’init, etc.) : garder une caméra pilotable.
+			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, out.camera, true, true);
 		}
 
 		if (m_gameplayNetInitialized)

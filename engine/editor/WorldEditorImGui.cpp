@@ -549,7 +549,9 @@ namespace engine::editor
 
 		ImGui::Begin("Scène");
 		ImGui::TextUnformatted("Vue 3D Vulkan (même moteur que le jeu).");
-		ImGui::TextUnformatted("WASD + souris : caméra si ImGui ne capture pas le clavier / la souris (clic dans la vue 3D pour orienter ; sortez d’un champ texte pour vous déplacer).");
+		ImGui::TextUnformatted(
+			"Caméra : WASD + souris quand l’UI ne les prend pas ; sinon maintenez le clic droit (priorité navigation, même au-dessus des panneaux).");
+		ImGui::TextUnformatted("Sortez d’un champ texte (Échap / clic hors champ) si WASD ne bouge pas sans clic droit.");
 		ImGui::TextUnformatted("Molette : zoom FOV (champ de vision).");
 		ImGui::End();
 

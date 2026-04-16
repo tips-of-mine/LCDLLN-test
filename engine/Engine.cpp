@@ -2709,6 +2709,25 @@ namespace engine
 			}
 		}
 
+#if defined(_WIN32)
+		// Dear ImGui : lire io.WantCapture* après NewFrame() pour la frame courante (sinon la caméra reste figée).
+		if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			float imguiDw = static_cast<float>(std::max(1, m_width));
+			float imguiDh = static_cast<float>(std::max(1, m_height));
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extImg = m_vkSwapchain.GetExtent();
+				if (extImg.width > 0 && extImg.height > 0)
+				{
+					imguiDw = static_cast<float>(extImg.width);
+					imguiDh = static_cast<float>(extImg.height);
+				}
+			}
+			m_worldEditorImGui->NewFrame(static_cast<float>(dt), imguiDw, imguiDh);
+		}
+#endif
+
 		if (!m_editorEnabled)
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
@@ -2815,7 +2834,6 @@ namespace engine
 					vh = static_cast<int>(extUi.height);
 				}
 			}
-			m_worldEditorImGui->NewFrame(static_cast<float>(dt), dw, dh);
 
 			engine::editor::WorldEditorViewportOverlayDesc overlay{};
 			overlay.viewProjColMajor = out.viewProjMatrix.m;

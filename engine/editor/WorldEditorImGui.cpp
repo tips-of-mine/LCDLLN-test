@@ -343,7 +343,7 @@ namespace engine::editor
 		ImGuiIO& io = ImGui::GetIO();
 		io.IniFilename = "world_editor_imgui.ini";
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (caméra FPS).
 		ImGui::StyleColorsDark();
 
 		ImGui_ImplWin32_Init(hwnd);
@@ -503,7 +503,7 @@ namespace engine::editor
 
 		ImGui::Begin("Scène");
 		ImGui::TextUnformatted("Vue 3D Vulkan (même moteur que le jeu).");
-		ImGui::TextUnformatted("WASD + souris : caméra si l’UI ne capture pas le pointeur.");
+		ImGui::TextUnformatted("WASD + souris : caméra si ImGui ne capture pas le clavier / la souris (clic dans la vue 3D pour orienter ; sortez d’un champ texte pour vous déplacer).");
 		ImGui::TextUnformatted("Molette : zoom FOV (champ de vision).");
 		ImGui::End();
 

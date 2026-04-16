@@ -23,7 +23,9 @@ void main()
 	// via VkViewport.height < 0 (AuthGlyphPass), pas ici.
 	ndc.y = (inPos.y / pc.viewportSize.y) * 2.0 - 1.0;
 	gl_Position = vec4(ndc, 0.0, 1.0);
-	vUv = inUv;
+	// Même correction que auth_logo.vert : sans ce retournement U, les glyphes (bitmap + TTF)
+	// apparaissent en miroir horizontal sur la swapchain (viewport Y négatif).
+	vUv = vec2(1.0 - inUv.x, inUv.y);
 	vColor = inColor;
 	vBits = uvec2(inBits0, inBits1);
 }

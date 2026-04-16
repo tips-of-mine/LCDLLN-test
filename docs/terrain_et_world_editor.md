@@ -14,7 +14,8 @@ Même logique pour le jeu et l’éditeur : un seul `TerrainRenderer` (`m_terrai
 Pour les joueurs, le moteur **tente toujours** d’initialiser le terrain au boot (pas de case à cocher « activer le terrain »). Si le fichier heightmap est introuvable ou invalide, `TerrainRenderer::Init` échoue : le jeu continue sans sol décalé jusqu’à ce que l’asset soit présent.
 
 - **`render.terrain.heightmap`** : chemin **relatif au content** (`paths.content`, souvent `game/data`). Si la clé est absente ou vide, défaut **`terrain/heightmap.r16h`**.
-- **`render.terrain.splatmap`**, **`render.terrain.hole_mask`** : optionnels ; chaînes vides = comportements par défaut côté moteur.
+- **`render.terrain.splatmap`**, **`render.terrain.grass_mask`**, **`render.terrain.hole_mask`** : optionnels ; chaînes vides = comportements par défaut côté moteur (masque herbe absent → zéros).
+- **`render.terrain.grass_mask_visual_strength`** : intensité de la teinte herbe en fragment (0 = désactivé ; défaut 0.35 si la clé est absente).
 - Paramètres d’étendue / hauteur (origine, `world_size`, `height_scale`, tiling splat, etc.) : clés **`terrain.*`** lues par `TerrainRenderer::Init` (voir commentaires dans `TerrainRenderer.h`).
 
 Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTerrainSpirvWords` (fichiers `shaders/terrain.vert.spv` / `terrain.frag.spv`, etc.). Les sources GLSL sont dans le dépôt ; pour produire les `.spv` en local, utilisez `tools/compile_game_shaders.ps1` (Vulkan SDK). Le workflow GitHub **Build Windows** compile ces shaders avant d’empaqueter `game/data`.
@@ -23,13 +24,18 @@ Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTe
 
 - **Répertoire de travail** : les heightmaps sont ouverts via `paths.content` (ex. `game/data`) **relatif au répertoire courant** au moment du lancement. Si le **répertoire de travail** au lancement ne contient pas `game/data` (ex. débogage VS avec un cwd projet), les heightmaps ne se résolvent pas. Au démarrage, l’exe **remonte** depuis son dossier (`build/.../pkg/world_editor/` typiquement) jusqu’au premier ancêtre qui contient `config.json` et `game/data/` ; le CMake copie aussi `game/data` à côté de l’exe au build. Sinon, lancez l’outil **depuis la racine du dépôt** ou fixez le cwd dans l’IDE.
 - Le document monde fixe le chemin heightmap ; **`RebuildWorldEditorTerrainGpu()`** détruit puis réinitialise `m_terrain` et les **`TerrainEditingTools`** (sculpt CPU + upload GPU).
-- **Recharger terrain GPU** (UI) : `WorldEditorSession::RequestTerrainGpuReload` → consommation dans `Update` → rebuild.
+- **Splatmap** : le JSON d’édition porte `splatmap` (chemin relatif content). Fichier binaire **SLAP** (magic `0x50414C53`, uint32 LE largeur/hauteur, puis RGBA8 ligne par ligne) — même format que `TerrainEditingTools::SaveSplatMap`. Par défaut les nouvelles cartes créent `world_editor/maps/<zone>/splat.slap` (1024×1024, herbe 100 %). Sans fichier valide au chargement, `TerrainSplatting` retombe sur la splat par défaut.
+- **Masque herbe (010)** : clé JSON `grass_mask` (défaut `grass.grms` à côté du SLAP). Format **GRMS** (`TerrainGrassDetail`, R8 même taille que la splat, UV identiques). Mode éditeur « Herbe » : brosse + option effacer ; sauvegarde écrit le GRMS via le hook terrain. Shader : binding 8, teinte albedo modulée par masque × `grass_mask_visual_strength`.
+- **Routes (011, branche A livrée)** : mode terrain « Routes » — polyligne par clics gauches (points clampés au carré terrain), largeur + couche splat, puis « Appliquer sur splat » (`PaintSplatAlongPolyline`). Métadonnées dans le JSON (`routes` : `width_m`, `splat_layer`, `points` [[x,z],…]). L’aspect après redémarrage vient du **fichier SLAP** sauvegardé avec la carte ; le JSON sert à conserver / éditer la définition des routes. **Branche B** (mesh spline dédié) : non implémentée — extension future (voir ticket `011_world_editor_routes_couches_ou_splines.md`).
+- **Recharger terrain GPU** (UI) : `WorldEditorSession::RequestTerrainGpuReload` → consommation dans `Update` → rebuild (height + splat depuis les chemins du document).
 - **Upload heightmap** : préférence pour enregistrement dans le **command buffer** de la frame (staging + `RecordHeightmapR16UploadCommands`) ; repli sur `FlushHeightmap` si besoin.
-- Overlays ImGui : grille, preview brosse, picking rayon → hauteur via `HeightmapData::SampleBilinearNorm` (CPU).
+- **Peinture splat** : mode UI « Splat » ; clic maintient `PaintSplat` puis `FlushSplatMap` pour l’aperçu GPU. **Sauvegarder l’édition** déclenche aussi l’écriture disque du SLAP (hook moteur avant le JSON).
+- **Instances (tickets 009 + 013)** : tableau `instances` dans le JSON d’édition (`guid`, `gltf`, `position` monde XYZ, optionnels `yaw_deg`, `uniform_scale`). **013** : champs optionnels `species_id` (chaîne) et `shape_variant` (entier) pour les arbres issus du catalogue `world_editor/tree_species_catalog.json` (plusieurs espèces, ≥ deux glTF par espèce, plages `scale_min` / `scale_max` ; fichiers manquants → espèce ignorée, log). Le **layout exporté** `layout_from_editor.json` pour `zone_builder` reste au schéma minimal (`guid`, `gltf`, `position`) — pas de régression consommateur. Mode « Instances » (mode terrain 3) : clic simple sur le sol (`WasMousePressed`) pose ou déplace ; aperçu disques ImGui. **Exporter runtime** écrit `layout_from_editor.json` au format `zone_builder` (positions XZ converties avec `terrain.origin_x` / `terrain.origin_z`, clamp `[0, kZoneSize)`).
+- Overlays ImGui : grille, preview brosse, marqueurs instances, picking rayon → hauteur via `HeightmapData::SampleBilinearNorm` (CPU).
 
 ## Limites / pistes
 
-- **Splat** : réservé / partiel selon assets ; voir `TerrainSplatting`.
+- **Splat** : résolution pilotée par le fichier SLAP (typ. 1024²) ; le sculpt heightmap reste à la résolution `size` du document.
 - **Falaises** : liste de meshes `.cliff` ; le jeu peut étendre la config plus tard pour des chemins multiples.
 - **Linux** : l’UI World Editor reste Windows ; le **rendu terrain jeu** utilise le même code Vulkan (init systématique côté client jeu, comme sur Windows).
 
@@ -38,5 +44,5 @@ Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTe
 - `engine/Engine.cpp` — frame graph `Terrain_GBuffer`, init jeu `render.terrain`, rebuild éditeur.
 - `engine/render/GeometryPass.{h,cpp}` — bit `loadExistingGbuffer` / passe LOAD.
 - `engine/render/terrain/TerrainRenderer.{h,cpp}` — draw terrain dans le G-buffer.
-- `engine/render/terrain/TerrainEditingTools.{h,cpp}` — sculpt + upload heightmap.
+- `engine/render/terrain/TerrainEditingTools.{h,cpp}` — sculpt heightmap + peinture splat + masque herbe GRMS + sauvegarde.
 - `engine/editor/WorldEditorImGui.{h,cpp}` — overlays et bouton reload.

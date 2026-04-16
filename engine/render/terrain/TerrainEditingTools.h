@@ -1,10 +1,13 @@
 #pragma once
 
 #include "engine/render/terrain/HeightmapLoader.h"
+#include "engine/render/terrain/TerrainHoleMask.h"
 #include "engine/render/terrain/TerrainSplatting.h"
 
 #include <cstdint>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <vulkan/vulkan_core.h>
 
@@ -12,6 +15,7 @@ namespace engine::core    { class Config; }
 
 namespace engine::render::terrain
 {
+    class TerrainRenderer;
     /// Records R16 heightmap upload into \p cmd (no submit). Image must start in \c SHADER_READ_ONLY_OPTIMAL.
     void RecordHeightmapR16UploadCommands(VkCommandBuffer cmd,
                                           VkBuffer stagingBuffer,
@@ -38,9 +42,6 @@ namespace engine::render::terrain
         float flattenTarget = 0.0f;  ///< Target normalised height [0, 1] used by Flatten.
     };
 
-    /// Binary magic for exported splat map files ("SLAP", little-endian).
-    static constexpr uint32_t kSplatFileMagic = 0x50414C53u;
-
     /// CPU-side terrain editing tools: heightmap brush and splat paint.
     ///
     /// Usage pattern:
@@ -64,6 +65,7 @@ namespace engine::render::terrain
         ///                         Must remain valid for the lifetime of this object.
         /// \param splatting        TerrainSplatting instance that holds a CPU splat copy.
         ///                         Must remain valid for the lifetime of this object.
+        /// \param grassMask        Masque herbe R8 (même taille que la splat CPU). nullptr = pas d’édition herbe.
         /// \param terrainOriginX   World X of the terrain corner (config: terrain.origin_x).
         /// \param terrainOriginZ   World Z of the terrain corner (config: terrain.origin_z).
         /// \param terrainWorldSize Total world extent in metres (config: terrain.world_size).
@@ -71,6 +73,7 @@ namespace engine::render::terrain
         /// \return true on success.
         bool Init(HeightmapData*    heightmap,
                   TerrainSplatting* splatting,
+                  HoleMaskData*     grassMask,
                   float terrainOriginX,
                   float terrainOriginZ,
                   float terrainWorldSize,
@@ -112,6 +115,16 @@ namespace engine::render::terrain
         void PaintSplat(float worldX, float worldZ,
                         uint32_t layer, const BrushParams& params);
 
+        /// Peint une bande splat le long d’une polyligne monde XZ (ticket **011** branche A).
+        /// \p widthMeters largeur totale de la bande (rayon brosse = moitié). Au moins 2 points.
+        /// Reclamp les points dans le carré terrain ; retourne false si données invalides.
+        bool PaintSplatAlongPolyline(const std::vector<std::pair<double, double>>& pointsXz,
+                                     double widthMeters, uint32_t layer, const BrushParams& params);
+
+        /// Peint le masque herbe (R8) aux UV splat. \p erase retire la densité au lieu d’ajouter.
+        void PaintGrassMask(float worldX, float worldZ,
+                            const BrushParams& params, bool erase);
+
         // ── GPU upload ────────────────────────────────────────────────────────────
 
         /// Uploads the full CPU heightmap to the provided GPU R16_UNORM image via staging.
@@ -131,6 +144,10 @@ namespace engine::render::terrain
         /// \return true on success.
         bool FlushSplatMap(VkDevice device, VkPhysicalDevice physDev,
                            VkQueue queue, uint32_t queueFamilyIndex);
+
+        /// Recrée la texture masque herbe GPU depuis le CPU (ticket 010).
+        bool FlushGrassMask(TerrainRenderer& terrain, VkDevice device, VkPhysicalDevice physDev,
+                            VkQueue queue, uint32_t queueFamilyIndex);
 
         // ── Save / export ─────────────────────────────────────────────────────────
 
@@ -153,7 +170,7 @@ namespace engine::render::terrain
         /// Exports the CPU splat map to a .rgba8 binary file.
         ///
         /// File format (all little-endian):
-        ///   magic  : uint32 = kSplatFileMagic (0x50414C53, "SLAP")
+        ///   magic  : uint32 = kTerrainSplatFileMagic (0x50414C53, "SLAP")
         ///   width  : uint32
         ///   height : uint32
         ///   data   : uint8[width * height * 4]  (RGBA, row-major)
@@ -166,14 +183,25 @@ namespace engine::render::terrain
         bool SaveSplatMap(const engine::core::Config& config,
                           const std::string& relPath);
 
+        /// Sauvegarde le masque herbe au format GRMS (voir `TerrainGrassDetail`).
+        bool SaveGrassMask(const engine::core::Config& config,
+                           const std::string& relPath);
+
         // ── Dirty flags ───────────────────────────────────────────────────────────
 
         /// Returns true if the CPU heightmap has been modified since the last flush/clear.
         bool IsDirtyHeightmap() const { return m_dirtyHeightmap; }
         /// Returns true if the CPU splat map has been modified since the last flush/clear.
         bool IsDirtySplatMap()  const { return m_dirtySplatMap;  }
+        /// Masque herbe CPU modifié depuis le dernier flush.
+        bool IsDirtyGrassMask() const { return m_dirtyGrassMask; }
         /// Resets both dirty flags without uploading.
-        void ClearDirtyFlags()  { m_dirtyHeightmap = false; m_dirtySplatMap = false; }
+        void ClearDirtyFlags()
+        {
+            m_dirtyHeightmap = false;
+            m_dirtySplatMap  = false;
+            m_dirtyGrassMask = false;
+        }
 
         /// After a heightmap upload was recorded/submitted for the current CPU data, clears height dirty only.
         void AckHeightmapGpuUploaded() { m_dirtyHeightmap = false; }
@@ -191,8 +219,11 @@ namespace engine::render::terrain
         void WorldToSplatPixel(float worldX, float worldZ,
                                int32_t& outPx, int32_t& outPz) const;
 
+        void ClampWorldXzToTerrain(double& wx, double& wz) const;
+
         HeightmapData*    m_heightmap        = nullptr;
         TerrainSplatting* m_splatting        = nullptr;
+        HoleMaskData*     m_grassMask        = nullptr;
         float             m_terrainOriginX   = 0.0f;
         float             m_terrainOriginZ   = 0.0f;
         float             m_terrainWorldSize = 0.0f;
@@ -200,6 +231,7 @@ namespace engine::render::terrain
         bool              m_initialized      = false;
         bool              m_dirtyHeightmap   = false;
         bool              m_dirtySplatMap    = false;
+        bool              m_dirtyGrassMask   = false;
     };
 
 } // namespace engine::render::terrain

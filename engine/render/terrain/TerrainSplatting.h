@@ -13,6 +13,9 @@ namespace engine::render::terrain
     /// Number of splat layers (grass, dirt, rock, snow).
     static constexpr uint32_t kSplatLayerCount = 4u;
 
+    /// Magic binaire des fichiers splat disque « SLAP » (little-endian), aligné sur `TerrainEditingTools::SaveSplatMap`.
+    inline constexpr uint32_t kTerrainSplatFileMagic = 0x50414C53u;
+
     /// GPU RGBA8_UNORM splat map texture (DEVICE_LOCAL, OPTIMAL tiling).
     /// Channel mapping: R=grass, G=dirt, B=rock, A=snow.
     struct SplatMapGpu

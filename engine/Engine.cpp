@@ -604,6 +604,35 @@ namespace engine
 		if (m_worldEditorExe)
 		{
 			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
+			m_worldEditorSession->SetTerrainSaveHook(
+				[this](const engine::core::Config& cfg, const engine::editor::WorldMapEditDocument& doc) -> bool {
+					if (!m_worldEditorTerrainTools.IsValid())
+					{
+						return true;
+					}
+					if (!doc.heightmapContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveHeightmap(cfg, doc.heightmapContentRelativePath))
+						{
+							return false;
+						}
+					}
+					if (!doc.splatmapContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveSplatMap(cfg, doc.splatmapContentRelativePath))
+						{
+							return false;
+						}
+					}
+					if (!doc.grassMaskContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveGrassMask(cfg, doc.grassMaskContentRelativePath))
+						{
+							return false;
+						}
+					}
+					return true;
+				});
 		}
 
 		if (!logSettings.filePath.empty() || logSettings.console)
@@ -1141,7 +1170,28 @@ namespace engine
 												hmGame = kDefaultHeightmapRel;
 
 											const std::string splat = m_cfg.GetString("render.terrain.splatmap", "");
+											const std::string grass = m_cfg.GetString("render.terrain.grass_mask", "");
 											const std::string hole = m_cfg.GetString("render.terrain.hole_mask", "");
+											if (splat.empty())
+											{
+												LOG_INFO(Core,
+													"[Boot] render.terrain.splatmap vide — splat CPU par défaut (herbe) ; "
+													"voir docs/world_zone_demo_checklist.md §012.");
+											}
+											else
+											{
+												LOG_INFO(Core, "[Boot] render.terrain.splatmap = '{}'", splat);
+											}
+											if (grass.empty())
+											{
+												LOG_INFO(Core,
+													"[Boot] render.terrain.grass_mask vide — masque herbe nul (ticket 010) ; "
+													"aucun fichier GRMS requis.");
+											}
+											else
+											{
+												LOG_INFO(Core, "[Boot] render.terrain.grass_mask = '{}'", grass);
+											}
 											const std::vector<std::string> cliffPaths;
 											auto loadFnTerrain = [this](const char* p) { return LoadTerrainSpirvWords(p); };
 											if (m_terrain.Init(
@@ -1150,6 +1200,7 @@ namespace engine
 													m_cfg,
 													hmGame,
 													splat,
+													grass,
 													hole,
 													cliffPaths,
 													VK_FORMAT_R8G8B8A8_SRGB,
@@ -2860,37 +2911,120 @@ namespace engine
 					terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
 						overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
 						pickX, pickZ);
-					overlay.showBrushPreview = terrainPick && !capBeforeUi;
+					overlay.showBrushPreview =
+						terrainPick && !capBeforeUi && m_worldEditorSession->TerrainEditMode() != 3
+						&& m_worldEditorSession->TerrainEditMode() != 4;
 					if (terrainPick)
 					{
 						overlay.brushWorldX = pickX;
 						overlay.brushWorldZ = pickZ;
 					}
 				}
+				overlay.layoutInstancesOverlay = &m_worldEditorSession->MutableDoc().layoutInstances;
+				overlay.selectedLayoutInstanceOverlay = m_worldEditorSession->SelectedLayoutInstanceIndex();
 			}
 
 			m_worldEditorImGui->BuildUi(&overlay);
 
-			if (m_terrain.IsValid() && m_worldEditorTerrainTools.IsValid() && m_worldEditorSession && terrainPick)
+			if (m_worldEditorExe && m_worldEditorSession && m_worldEditorTerrainTools.IsValid() && m_vkDeviceContext.IsValid()
+				&& m_worldEditorSession->ConsumeRouteApplyDraftRequest())
+			{
+				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+				if (ws.RouteDraftPoints().size() < 2u)
+				{
+					ws.SetStatus("Routes: au moins 2 points dans le brouillon (clics gauche sur le sol).");
+				}
+				else
+				{
+					engine::editor::WorldMapRoutePolyline rp{};
+					rp.pointsXz = ws.RouteDraftPoints();
+					rp.widthM = static_cast<double>(ws.RouteStripWidthM());
+					rp.splatLayer = static_cast<uint32_t>(std::clamp(ws.RouteSplatLayer(), 0, 3));
+					engine::render::terrain::BrushParams bp{};
+					bp.radius = ws.BrushRadius();
+					bp.strength = ws.BrushStrength();
+					bp.falloff = 1.f;
+					bp.flattenTarget = 0.5f;
+					if (m_worldEditorTerrainTools.PaintSplatAlongPolyline(rp.pointsXz, rp.widthM, rp.splatLayer, bp))
+					{
+						(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							m_vkDeviceContext.GetGraphicsQueue(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						ws.MutableDoc().routes.push_back(std::move(rp));
+						ws.ClearRouteDraft();
+						ws.SetStatus("Routes: bande splat appliquée — sauvegardez l’édition pour persister SLAP + JSON.");
+					}
+					else
+					{
+						ws.SetStatus("Routes: peinture splat impossible (vérifier le terrain / la splat).");
+					}
+				}
+			}
+
+			if (m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
-				if (!cap && m_input.IsMouseDown(engine::platform::MouseButton::Left))
+				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+				if (!cap && ws.TerrainEditMode() == 4 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
-					engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+					const float ox = m_terrain.GetTerrainOriginX();
+					const float oz = m_terrain.GetTerrainOriginZ();
+					const float wsiz = m_terrain.GetTerrainWorldSize();
+					const float eps = wsiz * 1e-5f;
+					const float px = std::clamp(pickX, ox + eps, ox + wsiz - eps);
+					const float pz = std::clamp(pickZ, oz + eps, oz + wsiz - eps);
+					ws.AddRouteDraftPoint(static_cast<double>(px), static_cast<double>(pz));
+				}
+				else if (!cap && ws.TerrainEditMode() == 3 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
+					float wy = 0.f;
+					if (TryTerrainWorldY(hm, overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
+							pickX, pickZ, wy))
+					{
+						ws.PlaceOrMoveLayoutInstanceAtTerrainHit(m_cfg, static_cast<double>(pickX), static_cast<double>(wy),
+							static_cast<double>(pickZ));
+					}
+				}
+				else if (m_worldEditorTerrainTools.IsValid() && !cap && m_input.IsMouseDown(engine::platform::MouseButton::Left)
+					&& ws.TerrainEditMode() != 3 && ws.TerrainEditMode() != 4)
+				{
 					engine::render::terrain::BrushParams bp;
 					bp.radius = ws.BrushRadius();
 					bp.strength = ws.BrushStrength();
 					bp.falloff = 1.f;
 					bp.flattenTarget = 0.5f;
-					engine::render::terrain::BrushOp op = engine::render::terrain::BrushOp::Raise;
-					switch (ws.BrushOp())
+					if (ws.TerrainEditMode() == 1)
 					{
-					case 1: op = engine::render::terrain::BrushOp::Lower; break;
-					case 2: op = engine::render::terrain::BrushOp::Smooth; break;
-					case 3: op = engine::render::terrain::BrushOp::Flatten; break;
-					default: break;
+						const uint32_t layer = static_cast<uint32_t>(std::clamp(ws.SplatLayer(), 0, 3));
+						m_worldEditorTerrainTools.PaintSplat(pickX, pickZ, layer, bp);
+						(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							m_vkDeviceContext.GetGraphicsQueue(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
 					}
-					m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
+					else if (ws.TerrainEditMode() == 2)
+					{
+						m_worldEditorTerrainTools.PaintGrassMask(pickX, pickZ, bp, ws.GrassMaskEraseBrush());
+						(void)m_worldEditorTerrainTools.FlushGrassMask(m_terrain,
+							m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							m_vkDeviceContext.GetGraphicsQueue(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+					}
+					else
+					{
+						engine::render::terrain::BrushOp op = engine::render::terrain::BrushOp::Raise;
+						switch (ws.BrushOp())
+						{
+						case 1: op = engine::render::terrain::BrushOp::Lower; break;
+						case 2: op = engine::render::terrain::BrushOp::Smooth; break;
+						case 3: op = engine::render::terrain::BrushOp::Flatten; break;
+						default: break;
+						}
+						m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
+					}
 				}
 			}
 		}
@@ -3749,12 +3883,15 @@ namespace engine
 		{
 			worldSizeOverride = static_cast<float>(wed.terrainWorldSizeM);
 		}
+		const std::string& splatRel = wed.splatmapContentRelativePath;
+		const std::string& grassRel = wed.grassMaskContentRelativePath;
 		const bool ok = m_terrain.Init(
 			device,
 			physDev,
 			m_cfg,
 			hmRel,
-			"",
+			splatRel,
+			grassRel,
 			"",
 			{},
 			VK_FORMAT_R8G8B8A8_SRGB,
@@ -3777,6 +3914,7 @@ namespace engine
 		if (!m_worldEditorTerrainTools.Init(
 				&m_terrain.GetMutableHeightmapData(),
 				&m_terrain.GetSplatting(),
+				&m_terrain.GetMutableGrassMaskData(),
 				m_terrain.GetTerrainOriginX(),
 				m_terrain.GetTerrainOriginZ(),
 				m_terrain.GetTerrainWorldSize(),

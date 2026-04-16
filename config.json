@@ -32,6 +32,8 @@
         "terrain": {
             "heightmap": "terrain/heightmap.r16h",
             "splatmap": "",
+            "grass_mask": "",
+            "grass_mask_visual_strength": 0.35,
             "hole_mask": ""
         }
     },

@@ -62,6 +62,7 @@ namespace engine::render::terrain
         /// Initialises the terrain renderer.
         ///
         /// Config keys read:
+        ///   render.terrain.grass_mask_visual_strength (float, default 0.35) — multiplie le masque herbe en fragment (0 = off).
         ///   terrain.world_size             (float, default 1024.0) – total terrain world extent (metres)
         ///   terrain.height_scale           (float, default 200.0)  – max height in world units
         ///   terrain.origin_x               (float, default -512.0) – world X of terrain corner
@@ -74,8 +75,10 @@ namespace engine::render::terrain
         /// \param heightmapRelPath   Content-relative path to the .r16h file
         ///                           (e.g. "terrain/heightmap.r16h"). If the file is absent,
         ///                           Init returns false gracefully (no crash).
-        /// \param splatmapRelPath    Content-relative path to the splat map (reserved for future
-        ///                           use; a default map is generated if empty or missing).
+        /// \param splatmapRelPath    Content-relative path to a SLAP splat file (`kTerrainSplatFileMagic`).
+        ///                           Empty or fichier invalide → splat par défaut (herbe) générée dans `TerrainSplatting`.
+        /// \param grassMaskRelPath   Content-relative path to a GRMS grass/detail mask (`kGrassMaskFileMagic`).
+        ///                           Même résolution que la splat CPU ; absent ou invalide → masque nul (pas d’effet).
         /// \param holeMaskRelPath    Content-relative path to the .hmask file
         ///                           (e.g. "terrain/holemask.hmask"). If absent, a fully-solid
         ///                           fallback is used (no holes, no change to visible terrain).
@@ -89,6 +92,7 @@ namespace engine::render::terrain
                   const engine::core::Config& config,
                   const std::string& heightmapRelPath,
                   const std::string& splatmapRelPath,
+                  const std::string& grassMaskRelPath,
                   const std::string& holeMaskRelPath,
                   const std::vector<std::string>& cliffMeshRelPaths,
                   VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
@@ -134,6 +138,14 @@ namespace engine::render::terrain
         /// IsHole(qx, qz) returns true when quad (qx, qz) is a hole (unwalkable).
         const HoleMaskData& GetHoleMaskData() const { return m_holeMaskData; }
 
+        /// Masque herbe / détail surface (R8, UV alignés sur la splat). Ticket 010.
+        HoleMaskData&       GetMutableGrassMaskData()       { return m_grassMaskData; }
+        const HoleMaskData& GetGrassMaskData() const        { return m_grassMaskData; }
+
+        /// Recrée la texture GPU du masque herbe à partir du buffer CPU et met à jour le descriptor (binding 8).
+        bool ReuploadGrassMaskFromCpuData(VkDevice device, VkPhysicalDevice physDev,
+                                          VkQueue queue, uint32_t queueFamilyIndex);
+
         // ── M34.4: terrain editing accessors ─────────────────────────────────────
 
         /// Returns a mutable reference to the CPU heightmap.
@@ -176,7 +188,7 @@ namespace engine::render::terrain
         //   mat4  viewProj        offset   0  (64 bytes)
         //   mat4  prevViewProj    offset  64  (64 bytes)
         //   vec4  cameraPos       offset 128  (xyz = position, w = unused)
-        //   vec4  terrainParams   offset 144  (x=terrainSize, y=heightScale, z=vertStepWorld, w=unused)
+        //   vec4  terrainParams   offset 144  (x=terrainSize, y=heightScale, z=vertStepWorld, w=grassMaskVisualStrength)
         //   vec4  terrainOrigin   offset 160  (x=originX, y=originZ, z=unused, w=unused)
         //   vec4  layerTiling     offset 176  (x=grass, y=dirt, z=rock, w=snow tiling metres/tile)
         //                         total  192
@@ -185,7 +197,7 @@ namespace engine::render::terrain
             float viewProj[16];      // offset   0
             float prevViewProj[16];  // offset  64
             float cameraPos[4];      // offset 128  (xyz + w=0)
-            float terrainParams[4];  // offset 144  (x=size, y=heightScale, z=vertStepWorld, w=0)
+            float terrainParams[4];  // offset 144  (x=size, y=heightScale, z=vertStepWorld, w=grassMaskStrength)
             float terrainOrigin[4];  // offset 160  (x=originX, y=originZ, z=0, w=0)
             float layerTiling[4];    // offset 176  (x=grass, y=dirt, z=rock, w=snow tiling)
         };                           //         192
@@ -234,8 +246,13 @@ namespace engine::render::terrain
         TerrainSplatting      m_splatting;     ///< Splat map + texture arrays (M34.2)
 
         // ── M34.3: Hole mask ──────────────────────────────────────────────────────
+        HoleMaskData          m_grassMaskData; ///< CPU grass/detail mask (same resolution as splat)
+        HoleMaskGpu           m_grassMaskGpu;   ///< GPU R8_UNORM (binding 8)
+
         HoleMaskData          m_holeMaskData; ///< CPU hole mask for navmesh queries
         HoleMaskGpu           m_holeMaskGpu;  ///< GPU R8_UNORM texture (binding 7)
+
+        float                 m_grassMaskVisualStrength = 0.0f; ///< `render.terrain.grass_mask_visual_strength` (0 = off)
 
         // ── M34.3: Cliff pipeline ─────────────────────────────────────────────────
         VkDescriptorSetLayout m_cliffDescSetLayout = VK_NULL_HANDLE;

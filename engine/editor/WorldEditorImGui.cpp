@@ -2,6 +2,7 @@
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/editor/TreeSpeciesCatalog.h"
 #include "engine/editor/WorldEditorSession.h"
 #include "engine/platform/Window.h"
 #include "engine/render/terrain/HeightmapLoader.h"
@@ -9,6 +10,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <string>
+#include <vector>
 
 #if defined(_WIN32)
 #	ifndef NOMINMAX
@@ -252,6 +256,27 @@ namespace engine::editor
 				}
 			}
 
+			if (d.layoutInstancesOverlay != nullptr)
+			{
+				const ImU32 colSel = IM_COL32(255, 90, 255, 230);
+				const ImU32 colNorm = IM_COL32(90, 255, 140, 200);
+				for (size_t ii = 0; ii < d.layoutInstancesOverlay->size(); ++ii)
+				{
+					const engine::editor::WorldMapEditLayoutInstance& inst = (*d.layoutInstancesOverlay)[ii];
+					const float wx = static_cast<float>(inst.worldX);
+					const float wy = static_cast<float>(inst.worldY);
+					const float wz = static_cast<float>(inst.worldZ);
+					float sx = 0.f;
+					float sy = 0.f;
+					if (WorldToScreen(vp, wx, wy, wz, vw, vh, sx, sy))
+					{
+						const ImU32 c = (static_cast<int>(ii) == d.selectedLayoutInstanceOverlay) ? colSel : colNorm;
+						dl->AddCircleFilled(ImVec2(sx, sy), 7.f, c, 16);
+						dl->AddCircle(ImVec2(sx, sy), 8.f, IM_COL32(255, 255, 255, 160), 16, 1.5f);
+					}
+				}
+			}
+
 			if (d.showBrushPreview && d.heightmap && d.brushRadiusMeters > 0.0f)
 			{
 				float cy = 0.f;
@@ -471,7 +496,7 @@ namespace engine::editor
 			}
 			if (ImGui::BeginMenu("Outils"))
 			{
-				ImGui::TextUnformatted("Peinture splat: à brancher TerrainSplatting.");
+				ImGui::TextUnformatted("Peinture splat : panneau « Terrain (sculpt) », mode Splat.");
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Affichage"))
@@ -535,6 +560,10 @@ namespace engine::editor
 			ImGui::Separator();
 			ImGui::TextUnformatted("Heightmap (relatif content):");
 			ImGui::TextWrapped("%s", m_session->Doc().heightmapContentRelativePath.c_str());
+			ImGui::TextUnformatted("Splatmap SLAP (relatif content):");
+			ImGui::TextWrapped("%s", m_session->Doc().splatmapContentRelativePath.c_str());
+			ImGui::TextUnformatted("Masque herbe GRMS (relatif content):");
+			ImGui::TextWrapped("%s", m_session->Doc().grassMaskContentRelativePath.c_str());
 			if (ImGui::Button("Recharger terrain GPU"))
 			{
 				m_session->RequestTerrainGpuReload();
@@ -548,11 +577,83 @@ namespace engine::editor
 			ImGui::End();
 
 			ImGui::Begin("Terrain (sculpt)");
-			const char* ops[] = { "Élever", "Abaisser", "Lisser", "Aplatir" };
-			ImGui::Combo("Opération", &m_session->BrushOp(), ops, IM_ARRAYSIZE(ops));
-			ImGui::SliderFloat("Rayon (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
-			ImGui::SliderFloat("Intensité", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
-			ImGui::TextUnformatted("Clic gauche (hors UI) : peint sur le MNT (heightmap CPU).");
+			const char* modes[] = { "Heightmap (MNT)", "Splat (matériaux)", "Herbe (masque GRMS)", "Instances (layout)",
+				"Routes (splat / 011)" };
+			ImGui::Combo("Mode", &m_session->TerrainEditMode(), modes, IM_ARRAYSIZE(modes));
+			{
+				int& tm = m_session->TerrainEditMode();
+				tm = std::clamp(tm, 0, 4);
+			}
+			if (m_session->TerrainEditMode() == 0)
+			{
+				const char* ops[] = { "Élever", "Abaisser", "Lisser", "Aplatir" };
+				ImGui::Combo("Opération", &m_session->BrushOp(), ops, IM_ARRAYSIZE(ops));
+			}
+			else if (m_session->TerrainEditMode() == 1)
+			{
+				const char* layers[] = { "Herbe (R)", "Terre (G)", "Roc (B)", "Neige (A)" };
+				ImGui::Combo("Couche splat", &m_session->SplatLayer(), layers, IM_ARRAYSIZE(layers));
+			}
+			else if (m_session->TerrainEditMode() == 2)
+			{
+				ImGui::Checkbox("Effacer (retire le masque)", &m_session->GrassMaskEraseBrush());
+			}
+			else if (m_session->TerrainEditMode() == 3)
+			{
+				ImGui::TextUnformatted("Utilisez le panneau « Instances (layout) » pour le type glTF.");
+			}
+			else
+			{
+				const char* rlayers[] = { "Herbe (R)", "Terre / macadam (G)", "Roc (B)", "Neige (A)" };
+				ImGui::Combo("Couche route (splat)", &m_session->RouteSplatLayer(), rlayers, IM_ARRAYSIZE(rlayers));
+				{
+					int& rl = m_session->RouteSplatLayer();
+					rl = std::clamp(rl, 0, 3);
+				}
+				ImGui::SliderFloat("Largeur bande (m)", &m_session->RouteStripWidthM(), 0.5f, 64.f, "%.1f");
+				if (ImGui::Button("Effacer brouillon (points)"))
+				{
+					m_session->ClearRouteDraft();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Appliquer sur splat"))
+				{
+					m_session->RequestApplyRouteDraftToSplat();
+				}
+				ImGui::Text("Points brouillon : %zu", m_session->RouteDraftPoints().size());
+				ImGui::Text("Routes enregistrées (doc) : %zu", m_session->Doc().routes.size());
+			}
+			if (m_session->TerrainEditMode() != 3 && m_session->TerrainEditMode() != 4)
+			{
+				ImGui::SliderFloat("Rayon (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
+				ImGui::SliderFloat("Intensité", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+			}
+			else if (m_session->TerrainEditMode() == 4)
+			{
+				ImGui::SliderFloat("Intensité splat (route)", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+			}
+			if (m_session->TerrainEditMode() == 0)
+			{
+				ImGui::TextUnformatted("Clic gauche maintenu (hors UI) : sculpte la heightmap.");
+			}
+			else if (m_session->TerrainEditMode() == 1)
+			{
+				ImGui::TextUnformatted("Clic gauche maintenu (hors UI) : peint la couche splat (aperçu GPU immédiat).");
+				ImGui::TextUnformatted("Sauvegarder l’édition écrit aussi le fichier SLAP (voir chemin splatmap).");
+			}
+			else if (m_session->TerrainEditMode() == 2)
+			{
+				ImGui::TextUnformatted("Clic gauche maintenu : peint le masque herbe (GRMS, UV = splat). Sauvegarde écrit grass.grms.");
+			}
+			else if (m_session->TerrainEditMode() == 3)
+			{
+				ImGui::TextUnformatted("Clic gauche (hors UI, une fois) : pose ou déplace une instance au sol.");
+			}
+			else
+			{
+				ImGui::TextUnformatted(
+					"011 branche A : clics gauches sur le sol pour enchaîner les sommets ; « Appliquer » peint une bande splat (export SLAP inchangé).");
+			}
 			ImGui::End();
 
 			ImGui::Begin("Import assets");
@@ -573,8 +674,150 @@ namespace engine::editor
 			}
 			ImGui::End();
 
+			ImGui::Begin("Instances (layout)");
+			if (m_cfg != nullptr)
+			{
+				m_session->EnsureTreeCatalogLoaded(*m_cfg);
+			}
+			const char* placeKinds[] = { "Arbre (catalogue 013)", "Rocher (legacy zone_1)" };
+			{
+				int& pk = m_session->InstancePlacementKind();
+				ImGui::Combo("Type à placer", &pk, placeKinds, IM_ARRAYSIZE(placeKinds));
+				pk = std::clamp(pk, 0, 1);
+			}
+			if (m_session->InstancePlacementKind() == 0)
+			{
+				const std::vector<TreeSpeciesSpec>& specs = m_session->TreeCatalog().Species();
+				if (specs.empty())
+				{
+					ImGui::TextColored(ImVec4(1.f, 0.6f, 0.2f, 1.f),
+						"Catalogue arbres vide ou invalide (voir world_editor/tree_species_catalog.json).");
+				}
+				else
+				{
+					std::string speciesItems;
+					for (const TreeSpeciesSpec& s : specs)
+					{
+						speciesItems += s.id;
+						speciesItems.push_back('\0');
+					}
+					speciesItems.push_back('\0');
+					int& si = m_session->TreeSpeciesUiIndex();
+					const int prevSi = si;
+					si = std::clamp(si, 0, static_cast<int>(specs.size()) - 1);
+					ImGui::Combo("Espèce", &si, speciesItems.c_str());
+					si = std::clamp(si, 0, static_cast<int>(specs.size()) - 1);
+					if (si != prevSi)
+					{
+						m_session->TreeShapeVariantUiIndex() = 0;
+					}
+					const TreeSpeciesSpec& sp = specs[static_cast<size_t>(si)];
+					std::string shapeItems;
+					for (const TreeSpeciesShapeSpec& sh : sp.shapes)
+					{
+						std::string lab = sh.gltfContentRelativePath;
+						const size_t slash = lab.find_last_of("/\\");
+						if (slash != std::string::npos)
+						{
+							lab = lab.substr(slash + 1);
+						}
+						shapeItems += lab;
+						shapeItems.push_back('\0');
+					}
+					shapeItems.push_back('\0');
+					int& shi = m_session->TreeShapeVariantUiIndex();
+					shi = std::clamp(shi, 0, static_cast<int>(sp.shapes.size()) - 1);
+					ImGui::Combo("Forme (variante glTF)", &shi, shapeItems.c_str());
+					shi = std::clamp(shi, 0, static_cast<int>(sp.shapes.size()) - 1);
+					ImGui::SliderFloat("Taille (min–max espèce)", &m_session->TreeScaleT01(), 0.f, 1.f, "%.2f");
+					ImGui::Checkbox("Échelle aléatoire à la pose", &m_session->TreeRandomizeScaleOnPlace());
+					if (m_session->TreeRandomizeScaleOnPlace())
+					{
+						ImGui::TextDisabled("Le curseur taille est ignoré si aléatoire est coché.");
+					}
+				}
+			}
+			else
+			{
+				ImGui::TextUnformatted("Pose un rocher (zones/zone_1/zone_1.gltf), sans espèce catalogue.");
+			}
+			ImGui::TextUnformatted(
+				"Sélectionnez une ligne pour déplacer au prochain clic. Sans sélection : nouvelle instance. Coordonnées monde + snap hauteur MNT.");
+			ImGui::Separator();
+			for (size_t i = 0; i < m_session->MutableDoc().layoutInstances.size(); ++i)
+			{
+				const engine::editor::WorldMapEditLayoutInstance& inst = m_session->MutableDoc().layoutInstances[i];
+				char label[256];
+				if (!inst.speciesId.empty())
+				{
+					std::snprintf(label, sizeof(label), "%s — %s #%u — scale %.3f##instrow%zu", inst.guid.c_str(), inst.speciesId.c_str(),
+						static_cast<unsigned>(inst.shapeVariantIndex), inst.uniformScale, i);
+				}
+				else
+				{
+					std::snprintf(label, sizeof(label), "%s — %s##instrow%zu", inst.guid.c_str(), inst.gltfContentRelativePath.c_str(), i);
+				}
+				const bool sel = (m_session->SelectedLayoutInstanceIndex() == static_cast<int>(i));
+				if (ImGui::Selectable(label, sel))
+				{
+					m_session->SelectedLayoutInstanceIndex() = static_cast<int>(i);
+				}
+				ImGui::SameLine();
+				char delId[48];
+				std::snprintf(delId, sizeof(delId), "Suppr##%zu", i);
+				if (ImGui::SmallButton(delId))
+				{
+					m_session->RemoveLayoutInstance(i);
+					break;
+				}
+			}
+			{
+				const int sel = m_session->SelectedLayoutInstanceIndex();
+				if (sel >= 0 && static_cast<size_t>(sel) < m_session->MutableDoc().layoutInstances.size())
+				{
+					engine::editor::WorldMapEditLayoutInstance& inst = m_session->MutableDoc().layoutInstances[static_cast<size_t>(sel)];
+					if (!inst.speciesId.empty())
+					{
+						const TreeSpeciesSpec* spec = m_session->TreeCatalog().FindById(inst.speciesId);
+						if (spec != nullptr && !spec->shapes.empty())
+						{
+							ImGui::Separator();
+							ImGui::TextUnformatted("Édition instance sélectionnée (arbre)");
+							std::string shapeItemsSel;
+							for (const TreeSpeciesShapeSpec& sh : spec->shapes)
+							{
+								std::string lab = sh.gltfContentRelativePath;
+								const size_t slash = lab.find_last_of("/\\");
+								if (slash != std::string::npos)
+								{
+									lab = lab.substr(slash + 1);
+								}
+								shapeItemsSel += lab;
+								shapeItemsSel.push_back('\0');
+							}
+							shapeItemsSel.push_back('\0');
+							int sh = static_cast<int>(inst.shapeVariantIndex);
+							sh = std::clamp(sh, 0, static_cast<int>(spec->shapes.size()) - 1);
+							(void)ImGui::Combo("Forme##edit_sel", &sh, shapeItemsSel.c_str());
+							sh = std::clamp(sh, 0, static_cast<int>(spec->shapes.size()) - 1);
+							inst.shapeVariantIndex = static_cast<uint32_t>(sh);
+							inst.gltfContentRelativePath = spec->shapes[static_cast<size_t>(sh)].gltfContentRelativePath;
+							float scf = static_cast<float>(inst.uniformScale);
+							(void)ImGui::SliderFloat("Échelle##edit_sel", &scf, static_cast<float>(spec->scaleMin), static_cast<float>(spec->scaleMax),
+								"%.3f");
+							inst.uniformScale = static_cast<double>(scf);
+						}
+					}
+				}
+			}
+			if (ImGui::Button("Aucune sélection (pose toujours une nouvelle instance)"))
+			{
+				m_session->SelectedLayoutInstanceIndex() = -1;
+			}
+			ImGui::End();
+
 			ImGui::Begin("Préfabs / objets");
-			ImGui::TextUnformatted("MVP : liste vide. Pipeline : définitions JSON + placement instancié (fichiers uniquement).");
+			ImGui::TextUnformatted("Champ JSON « objects » (préfabs) — hors périmètre placement 009.");
 			ImGui::End();
 
 			ImGui::Begin("Statut");

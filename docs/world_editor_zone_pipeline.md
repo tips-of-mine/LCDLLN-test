@@ -41,22 +41,26 @@ Racine cible : **`zones/<zone_id>/`** (avec le même `zone_id` sanitizé).
 | Fichier / dossier | Contenu |
 |-------------------|---------|
 | `terrain_height.r16h` | Copie du heightmap référencé par le document (`heightmapContentRelativePath`). |
+| `terrain_splat.slap` | Copie du splatmap SLAP référencé par `splatmapContentRelativePath` si le fichier source existe ; sinon avertissement log et pas de copie (`terrain_splatmap` = `null` dans le manifeste). |
+| `terrain_grass.grms` | Copie du masque herbe GRMS (`grassMaskContentRelativePath`) si le fichier source existe ; sinon `terrain_grass_mask` = `null` (ticket **010**). |
 | `zone.meta` | En-tête versionné binaire seul (`OutputVersionHeader` : magic zone meta, versions builder/engine) — pas d’extension binaire sans bump `kZoneMetaVersion`. |
 | `exported_textures/` | Pour chaque entrée de `textures` du JSON d’édition (chemins relatifs au content, sans `..`) : copie miroir sous `zones/<id>/exported_textures/<chemin>`. Fichier source absent → entrée listée dans le manifeste, export continue. |
-| `runtime_manifest.json` | `lcdlln_runtime_manifest_version` **2** : `zone_id`, `terrain_heightmap`, `source_edit_format_version`, `terrain_world_size_m` (nombre ou `null`), reprise des listes `texture_assets`, `exported_textures` (chemins réellement copiés), `texture_assets_source_missing`, `object_prefab_ids`, `note`. |
-| `layout_from_editor.json` | Layout minimal **005** (`version`, `instances` vide) — entrée pour `zone_builder` sans placer d’instances depuis le WE (ticket **006**). |
+| `runtime_manifest.json` | `lcdlln_runtime_manifest_version` **3** : idem v2 + `terrain_grass_mask` (`zones/<id>/terrain_grass.grms` ou `null`). Champs v2 inchangés : `zone_id`, `terrain_heightmap`, `terrain_splatmap`, `source_edit_format_version`, `terrain_world_size_m`, listes textures, `object_prefab_ids`, `note`. |
+| `layout_from_editor.json` | `version` **1** + `instances` (schéma `zone_builder` : `guid`, `gltf`, `position`) — rempli depuis l’éditeur (ticket **009**) ou stub vide (**006**). Les champs **013** (`species_id`, `shape_variant`, etc.) sont dans le **JSON d’édition** carte (`map.lcdlln_edit.json`) uniquement ; l’export runtime garde le schéma minimal pour `zone_builder`. |
 
 **Inventaire présent vs futur (contrat streaming)**
 
 | Artefact | Export WE aujourd’hui | Après zone_builder / streaming |
 |----------|----------------------|--------------------------------|
 | `terrain_height.r16h` | Oui | Réutilisé ou fusionné selon pipeline |
+| `terrain_splat.slap` | Oui (si `splatmap` défini et fichier présent) | Réutilisé côté client jeu / builder selon pipeline |
 | `zone.meta` (WE) | Header seul | Remplacé ou enrichi côté builder (`ChunkPackageWriter`) avec bump de version si binaire étendu |
 | `runtime_manifest.json` | Manifeste trace + textures exportées | Consommation optionnelle outillage |
 | `exported_textures/` | Oui (copie depuis content) | Packaging `tex.pak` / autre selon jeu |
 | `textures/*`, `audio/*` hors zone | Restent au content ; seules les refs `textureAssets` sont dupliquées ici | Idem + assets builder |
-| Splat / hole (futurs champs JSON) | Non (pas dans le document actuel) | À brancher quand le doc les portera |
-| `layout_from_editor.json` | Oui (stub vide) | Remplaçable par un layout riche (instances + glTF) avant builder |
+| Splat SLAP (`splatmap` dans le JSON) | Oui (`terrain_splat.slap` + clé `terrain_splatmap` du manifeste) | Client jeu / builder |
+| Masque herbe GRMS (`grass_mask` dans le JSON) | Oui si fichier présent (`terrain_grass.grms` + `terrain_grass_mask`) | Client jeu / builder (ticket **010**) |
+| `layout_from_editor.json` | Oui (instances WE ou stub) | Consommé par `zone_builder` |
 | `chunks/chunk_i_j/*` (générés par `zone_builder`) | Non à l’export WE | **005** / **006** : `layout_from_editor.json` + script ou commande §5 |
 
 **Non produit par l’export WE seul :** sous-dossiers `chunks/chunk_i_j/*`, glTF dédiés layout, paquets `geo.pak` / `tex.pak`, etc. → **`zone_builder`** après export (§3, §5).
@@ -211,4 +215,4 @@ Modifier ce fichier lorsque le format `zone.meta`, le manifest runtime, ou le co
 
 La suite chronologique **002 → 007** (spécifications de travail, DoD, chaînage) vit sous **`tickets/world/`** — voir **`tickets/world/README.md`**.
 
-**Zone démo & onboarding** : checklist pas à pas **[`docs/world_zone_demo_checklist.md`](world_zone_demo_checklist.md)** (`zone_id` **`demo_plains`**), liens build dans le **README** racine.
+**Zone démo & onboarding** : checklist pas à pas **[`docs/world_zone_demo_checklist.md`](world_zone_demo_checklist.md)** (`zone_id` **`demo_plains`**), incluant le **§5 (ticket 012)** — validation client terrain (SLAP/GRMS) + rappels streaming / `zone_builder` ; liens build dans le **README** racine.

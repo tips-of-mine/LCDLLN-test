@@ -6,7 +6,7 @@ Index **chronologique** des tickets (ordre d’**exécution** pour la phase impl
 
 
 
-## Chaîne d’exécution (002 → 007)
+## Chaîne d’exécution (002 → 013)
 
 
 
@@ -24,7 +24,17 @@ Index **chronologique** des tickets (ordre d’**exécution** pour la phase impl
 
 7. **007** — **Livré** : zone `demo_plains`, checklist, README World / build.
 
+8. **008** — **Livré** : peinture splat (herbe / sable / roc…), persistance SLAP + JSON, export bundle (`terrain_splat.slap`).
 
+9. **009** — **Livré** : placement d’instances (catalogue MVP 2 glTF), snap sol, JSON + export `layout_from_editor`.
+
+10. **010** — **Livré** : herbe / détail surface (masque GRMS + rendu + WE) ; **révision ticket** : tailles (plafond **1 m**), paliers **densité** / dissimulation accroupi.
+
+11. **011** — **Livré** : routes branche A (splat polyline + JSON `routes`) ; branche B spline mesh = extension.
+
+12. **012** — **Livré** : checklist client + `demo_plains` (SLAP/GRMS) + logs boot ; streaming décor = doc zone_builder.
+
+13. **013** — **Livré** : arbres dans le WE — catalogue `world_editor/tree_species_catalog.json`, **espèces** / **formes** / **tailles** (clamp + aléatoire), JSON d’édition `species_id` + `shape_variant`.
 
 **Branche recommandée :** `feature/world-00X-<slug-court>` (un ticket = une PR, voir `tickets/AGENTS.md`).
 
@@ -47,6 +57,18 @@ Index **chronologique** des tickets (ordre d’**exécution** pour la phase impl
 | 6 | `006_pont_world_editor_vers_zone_builder.md` | **Livré** — pont export WE → `zone_builder`. |
 
 | 7 | `007_zone_demo_validation_et_documentation.md` | **Livré** — `demo_plains` + `docs/world_zone_demo_checklist.md`. |
+
+| 8 | `008_world_editor_peinture_splat_persist_export.md` | **Livré** — splat auteur, sauvegarde, export. |
+
+| 9 | `009_world_editor_instances_arbres_rochers.md` | **Livré** — instances + layout export. |
+
+| 10 | `010_world_editor_herbe_detail_surface.md` | **Livré** — masque GRMS + rendu ; extension doc taille ≤ 1 m, densités. |
+
+| 11 | `011_world_editor_routes_couches_ou_splines.md` | **Livré** — routes splat polyline (011 A). |
+
+| 12 | `012_monde_complet_validation_client_streaming.md` | **Livré** — checklist §5 + démo + logs terrain. |
+
+| 13 | `013_world_editor_arbres_especes_taille_forme.md` | **Livré** — catalogue arbres (espèces, taille, formes). |
 
 
 

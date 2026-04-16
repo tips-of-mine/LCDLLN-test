@@ -1,4 +1,4 @@
-# Génère les binaires sous game/data/zones/demo_plains/ (ticket 007).
+# Génère les binaires sous game/data/zones/demo_plains/ (tickets 007 + 012 : heightmap, splat SLAP, masque GRMS, zone, chunks…).
 # Usage : depuis la racine du dépôt :
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\world\Generate-DemoPlainsAssets.ps1
 
@@ -85,6 +85,43 @@ Write-VersionHeader $bw ([uint32]0x54534E49) ([uint32]1) ([uint64]0)
 $bw.Write([uint32]0)
 $bw.Flush()
 [IO.File]::WriteAllBytes((Join-Path $Zone "chunks\chunk_0_0\instances.bin"), $ms.ToArray())
+$bw.Close(); $ms.Close()
+
+# --- terrain_splat.slap (256×256, bande « route » terre — ticket 012 / flux WE) ---
+$sw = 256; $sh = 256
+$ms = New-Object System.IO.MemoryStream
+$bw = New-Object System.IO.BinaryWriter $ms
+$bw.Write([uint32]0x50414C53)
+$bw.Write([uint32]$sw)
+$bw.Write([uint32]$sh)
+for ($iz = 0; $iz -lt $sh; $iz++) {
+  for ($ix = 0; $ix -lt $sw; $ix++) {
+    $r = [byte]255; $g = [byte]0; $b = [byte]0; $a = [byte]0
+    if ([math]::Abs($ix - 128) -le 20) { $r = [byte]60; $g = [byte]195; $b = [byte]0; $a = [byte]0 }
+    $bw.Write($r); $bw.Write($g); $bw.Write($b); $bw.Write($a)
+  }
+}
+$bw.Flush()
+[IO.File]::WriteAllBytes((Join-Path $Zone "terrain_splat.slap"), $ms.ToArray())
+$bw.Close(); $ms.Close()
+
+# --- terrain_grass.grms (256×256 R8, bande légère — ticket 010 / 012) ---
+$gw = 256; $gh = 256
+$ms = New-Object System.IO.MemoryStream
+$bw = New-Object System.IO.BinaryWriter $ms
+$bw.Write([uint32]0x47524D53)
+$bw.Write([uint32]$gw)
+$bw.Write([uint32]$gh)
+$buf = New-Object byte[] ($gw * $gh)
+for ($iz = 0; $iz -lt $gh; $iz++) {
+  for ($ix = 0; $ix -lt $gw; $ix++) {
+    $idx = $iz * $gw + $ix
+    if ([math]::Abs($ix - 128) -le 18) { $buf[$idx] = [byte]200 }
+  }
+}
+$bw.Write($buf)
+$bw.Flush()
+[IO.File]::WriteAllBytes((Join-Path $Zone "terrain_grass.grms"), $ms.ToArray())
 $bw.Close(); $ms.Close()
 
 Write-Host "OK -> $Zone"

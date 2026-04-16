@@ -1,11 +1,16 @@
 #pragma once
 
 #include "engine/editor/WorldMapEditDocument.h"
+#include "engine/editor/TreeSpeciesCatalog.h"
 
 #include <array>
 #include <cstdint>
+#include <functional>
+#include <random>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace engine::core
 {
@@ -48,6 +53,45 @@ namespace engine::editor
 		float& BrushRadius() { return m_brushRadius; }
 		float& BrushStrength() { return m_brushStrength; }
 		int& BrushOp() { return m_brushOp; } // 0 raise, 1 lower, 2 smooth, 3 flatten
+		/// 0 = sculpt heightmap, 1 = splat, 2 = masque herbe (GRMS), 3 = placement instances, 4 = routes splat (011).
+		int& TerrainEditMode() { return m_terrainEditMode; }
+		/// Couche splat active [0,3] (herbe, terre, roc, neige).
+		int& SplatLayer() { return m_splatLayer; }
+		/// 0 = arbre (catalogue **013**), 1 = rocher legacy (`zones/zone_1/zone_1.gltf`).
+		int& InstancePlacementKind() { return m_instancePlacementKind; }
+		int& TreeSpeciesUiIndex() { return m_treeSpeciesUiIndex; }
+		int& TreeShapeVariantUiIndex() { return m_treeShapeVariantUiIndex; }
+		float& TreeScaleT01() { return m_treeScaleT01; }
+		bool& TreeRandomizeScaleOnPlace() { return m_treeRandomizeScaleOnPlace; }
+		[[nodiscard]] const TreeSpeciesCatalog& TreeCatalog() const { return m_treeCatalog; }
+		/// Charge une fois `world_editor/tree_species_catalog.json` et resynchronise les instances (clamp).
+		void EnsureTreeCatalogLoaded(const engine::core::Config& cfg);
+		/// Sélection liste instances (−1 = aucune) : prochain clic pose une nouvelle instance, sinon déplace la sélectionnée.
+		int& SelectedLayoutInstanceIndex() { return m_selectedLayoutInstance; }
+
+		/// Mode herbe : si vrai, la brosse retire le masque au lieu de l’ajouter.
+		bool& GrassMaskEraseBrush() { return m_grassMaskEraseBrush; }
+
+		/// Brouillon polyligne route (011) : points monde XZ (clics terrain).
+		std::vector<std::pair<double, double>>& RouteDraftPoints() { return m_routeDraftXz; }
+		const std::vector<std::pair<double, double>>& RouteDraftPoints() const { return m_routeDraftXz; }
+		void ClearRouteDraft();
+		/// Ajoute un point (déjà clampé côté moteur aux limites du terrain).
+		void AddRouteDraftPoint(double worldX, double worldZ);
+		/// Largeur bande route (m) et couche splat cible pour l’application sur le SLAP.
+		float& RouteStripWidthM() { return m_routeStripWidthM; }
+		int& RouteSplatLayer() { return m_routeSplatLayer; }
+
+		/// UI « Appliquer sur splat » : traité par l’Engine (peinture + flush + doc.routes).
+		void RequestApplyRouteDraftToSplat();
+		[[nodiscard]] bool ConsumeRouteApplyDraftRequest();
+
+		/// Place une nouvelle instance ou déplace celle sélectionnée (coords monde, Y au sol).
+		void PlaceOrMoveLayoutInstanceAtTerrainHit(const engine::core::Config& cfg, double worldX, double worldY, double worldZ);
+		void RemoveLayoutInstance(size_t index);
+
+		/// Appelé avant l’écriture du JSON d’édition pour persister heightmap / splat sur disque (Vulkan).
+		void SetTerrainSaveHook(std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> hook);
 
 		/// Crée une carte plate sous \c world_editor/maps/<id>/ (content).
 		bool ActionNewMap(const engine::core::Config& cfg);
@@ -67,6 +111,8 @@ namespace engine::editor
 		bool ConsumeTerrainGpuReloadRequest();
 
 	private:
+		void SanitizeAllLayoutInstancesAgainstTreeCatalog();
+
 		WorldMapEditDocument m_doc;
 		std::string m_editJsonAbsolutePath;
 		std::string m_status;
@@ -86,6 +132,26 @@ namespace engine::editor
 		float m_brushRadius = 10.f;
 		float m_brushStrength = 0.1f;
 		int m_brushOp = 0;
+		int m_terrainEditMode = 0;
+		int m_splatLayer = 0;
+		int m_instancePlacementKind = 0;
+		int m_treeSpeciesUiIndex = 0;
+		int m_treeShapeVariantUiIndex = 0;
+		float m_treeScaleT01 = 0.5f;
+		bool m_treeRandomizeScaleOnPlace = false;
+		TreeSpeciesCatalog m_treeCatalog;
+		bool m_treeCatalogLoadAttempted = false;
+		std::mt19937 m_treeRng;
+
+		int m_selectedLayoutInstance = -1;
+		bool m_grassMaskEraseBrush = false;
+
+		std::vector<std::pair<double, double>> m_routeDraftXz;
+		bool   m_routeApplyDraftRequested = false;
+		float  m_routeStripWidthM         = 4.f;
+		int    m_routeSplatLayer          = 1;
+
+		std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> m_terrainSaveHook;
 
 		bool m_terrainGpuReloadRequested = false;
 	};

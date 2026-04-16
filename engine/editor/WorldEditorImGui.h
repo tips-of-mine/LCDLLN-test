@@ -2,7 +2,11 @@
 
 #include <cstdint>
 
+#include <vector>
+
 #include <vulkan/vulkan_core.h>
+
+#include "engine/editor/WorldMapEditDocument.h"
 
 namespace engine::core
 {
@@ -42,6 +46,9 @@ namespace engine::editor
 		float brushWorldX = 0.f;
 		float brushWorldZ = 0.f;
 		float brushRadiusMeters = 10.f;
+		/// Marqueurs debug instances (monde m). Nullptr = rien à dessiner.
+		const std::vector<WorldMapEditLayoutInstance>* layoutInstancesOverlay = nullptr;
+		int selectedLayoutInstanceOverlay = -1;
 	};
 
 	/// ImGui + Vulkan (rendu dynamique) pour \c lcdlln_world_editor.exe uniquement (Windows).

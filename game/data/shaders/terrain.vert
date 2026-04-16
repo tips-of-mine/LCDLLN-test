@@ -28,7 +28,7 @@ layout(set = 0, binding = 2) uniform TerrainFrameUbo {
     mat4  viewProj;       // current frame view-projection
     mat4  prevViewProj;   // previous frame view-projection (for TAA velocity)
     vec4  cameraPos;      // world camera position (xyz, w=unused)
-    vec4  terrainParams;  // x=terrainSize, y=heightScale, z=vertStepWorld, w=unused
+    vec4  terrainParams;  // x=terrainSize, y=heightScale, z=vertStepWorld, w=grassMaskVisualStrength (frag)
     vec4  terrainOrigin;  // x=originX, y=originZ, z=unused, w=unused
     vec4  layerTiling;    // x=grass, y=dirt, z=rock, w=snow tiling (metres per tile)
 } ubo;

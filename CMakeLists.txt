@@ -239,6 +239,7 @@ add_library(engine_core
   engine/editor/EditorMode.cpp
   engine/editor/WorldEditorImGui.cpp
   engine/editor/WorldMapIo.cpp
+  engine/editor/TreeSpeciesCatalog.cpp
   engine/editor/WorldEditorSession.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
@@ -308,6 +309,7 @@ add_library(engine_core
   engine/render/terrain/TerrainMesh.cpp
   engine/render/terrain/TerrainSplatting.cpp
   engine/render/terrain/TerrainHoleMask.cpp
+  engine/render/terrain/TerrainGrassDetail.cpp
   engine/render/terrain/TerrainCliffMesh.cpp
   engine/render/terrain/TerrainRenderer.cpp
   engine/render/terrain/TerrainEditingTools.cpp

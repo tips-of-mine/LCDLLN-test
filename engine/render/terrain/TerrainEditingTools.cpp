@@ -1,4 +1,6 @@
 #include "engine/render/terrain/TerrainEditingTools.h"
+#include "engine/render/terrain/TerrainRenderer.h"
+#include "engine/render/terrain/TerrainGrassDetail.h"
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"
@@ -269,6 +271,7 @@ namespace engine::render::terrain
 
     bool TerrainEditingTools::Init(HeightmapData*    heightmap,
                                    TerrainSplatting* splatting,
+                                   HoleMaskData*     grassMask,
                                    float terrainOriginX,
                                    float terrainOriginZ,
                                    float terrainWorldSize,
@@ -292,14 +295,30 @@ namespace engine::render::terrain
             return false;
         }
 
+        const uint32_t sw = splatting->GetSplatMapCpuWidth();
+        const uint32_t sh = splatting->GetSplatMapCpuHeight();
+        if (grassMask != nullptr)
+        {
+            const size_t expected = static_cast<size_t>(sw) * static_cast<size_t>(sh);
+            if (grassMask->width != sw || grassMask->height != sh || grassMask->mask.size() != expected)
+            {
+                LOG_ERROR(Render,
+                          "[TerrainEditingTools] Init: grass mask {}×{} ({} bytes) must match splat {}×{}",
+                          grassMask->width, grassMask->height, grassMask->mask.size(), sw, sh);
+                return false;
+            }
+        }
+
         m_heightmap        = heightmap;
         m_splatting        = splatting;
+        m_grassMask        = grassMask;
         m_terrainOriginX   = terrainOriginX;
         m_terrainOriginZ   = terrainOriginZ;
         m_terrainWorldSize = terrainWorldSize;
         m_heightScale      = heightScale;
         m_dirtyHeightmap   = false;
         m_dirtySplatMap    = false;
+        m_dirtyGrassMask   = false;
         m_initialized      = true;
 
         LOG_INFO(Render,
@@ -317,9 +336,11 @@ namespace engine::render::terrain
     {
         m_heightmap      = nullptr;
         m_splatting      = nullptr;
+        m_grassMask      = nullptr;
         m_initialized    = false;
         m_dirtyHeightmap = false;
         m_dirtySplatMap  = false;
+        m_dirtyGrassMask = false;
         LOG_INFO(Render, "[TerrainEditingTools] Shutdown");
     }
 
@@ -358,6 +379,67 @@ namespace engine::render::terrain
         const float normZ = relZ / m_terrainWorldSize;
         outPx = static_cast<int32_t>(normX * static_cast<float>(m_splatting->GetSplatMapCpuWidth()));
         outPz = static_cast<int32_t>(normZ * static_cast<float>(m_splatting->GetSplatMapCpuHeight()));
+    }
+
+    void TerrainEditingTools::ClampWorldXzToTerrain(double& wx, double& wz) const
+    {
+        const double minX = static_cast<double>(m_terrainOriginX);
+        const double maxX = static_cast<double>(m_terrainOriginX + m_terrainWorldSize);
+        const double minZ = static_cast<double>(m_terrainOriginZ);
+        const double maxZ = static_cast<double>(m_terrainOriginZ + m_terrainWorldSize);
+        const double eps  = static_cast<double>(m_terrainWorldSize) * 1e-5;
+        wx = std::clamp(wx, minX + eps, maxX - eps);
+        wz = std::clamp(wz, minZ + eps, maxZ - eps);
+    }
+
+    bool TerrainEditingTools::PaintSplatAlongPolyline(const std::vector<std::pair<double, double>>& pointsXz,
+                                                       double widthMeters, uint32_t layer, const BrushParams& params)
+    {
+        if (!m_initialized || !m_splatting)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] PaintSplatAlongPolyline: not initialised");
+            return false;
+        }
+        if (pointsXz.size() < 2u)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] PaintSplatAlongPolyline: need at least 2 points");
+            return false;
+        }
+        if (layer >= kSplatLayerCount)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] PaintSplatAlongPolyline: invalid layer {}", layer);
+            return false;
+        }
+
+        BrushParams bp = params;
+        bp.radius = static_cast<float>(std::max(0.25, widthMeters * 0.5));
+        const float step = std::max(0.12f, bp.radius * 0.35f);
+
+        for (size_t seg = 0; seg + 1 < pointsXz.size(); ++seg)
+        {
+            double ax = pointsXz[seg].first;
+            double az = pointsXz[seg].second;
+            double bx = pointsXz[seg + 1].first;
+            double bz = pointsXz[seg + 1].second;
+            ClampWorldXzToTerrain(ax, az);
+            ClampWorldXzToTerrain(bx, bz);
+
+            const double dx = bx - ax;
+            const double dz = bz - az;
+            const float len = static_cast<float>(std::sqrt(dx * dx + dz * dz));
+            const int nSteps = std::max(1, static_cast<int>(std::ceil(len / step)));
+            for (int i = 0; i <= nSteps; ++i)
+            {
+                const float t = static_cast<float>(i) / static_cast<float>(nSteps);
+                double wx = ax + dx * static_cast<double>(t);
+                double wz = az + dz * static_cast<double>(t);
+                ClampWorldXzToTerrain(wx, wz);
+                PaintSplat(static_cast<float>(wx), static_cast<float>(wz), layer, bp);
+            }
+        }
+
+        m_dirtySplatMap = true;
+        return true;
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -578,6 +660,64 @@ namespace engine::render::terrain
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainEditingTools::PaintGrassMask
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    void TerrainEditingTools::PaintGrassMask(float worldX, float worldZ,
+                                             const BrushParams& params, bool erase)
+    {
+        if (!m_initialized || !m_splatting || !m_grassMask)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] PaintGrassMask: not initialised or no grass mask");
+            return;
+        }
+
+        std::vector<uint8_t>& mask = m_grassMask->mask;
+        const uint32_t sw = m_splatting->GetSplatMapCpuWidth();
+        const uint32_t sh = m_splatting->GetSplatMapCpuHeight();
+        if (mask.empty() || sw == 0 || sh == 0 || m_grassMask->width != sw || m_grassMask->height != sh)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] PaintGrassMask: invalid mask / splat dimensions");
+            return;
+        }
+
+        const float worldStep = m_terrainWorldSize / static_cast<float>(sw);
+
+        int32_t cx = 0, cz = 0;
+        WorldToSplatPixel(worldX, worldZ, cx, cz);
+
+        const int32_t iRadius = static_cast<int32_t>(params.radius / worldStep) + 1;
+
+        for (int32_t iz = cz - iRadius; iz <= cz + iRadius; ++iz)
+        {
+            for (int32_t ix = cx - iRadius; ix <= cx + iRadius; ++ix)
+            {
+                if (ix < 0 || ix >= static_cast<int32_t>(sw) ||
+                    iz < 0 || iz >= static_cast<int32_t>(sh))
+                    continue;
+
+                const float dx   = static_cast<float>(ix - cx) * worldStep;
+                const float dz   = static_cast<float>(iz - cz) * worldStep;
+                const float dist = std::sqrt(dx * dx + dz * dz);
+                const float k    = ComputeKernel(dist, params.radius, params.falloff);
+                if (k <= 0.0f) continue;
+
+                const size_t idx =
+                    static_cast<size_t>(iz) * static_cast<size_t>(sw) + static_cast<size_t>(ix);
+                float v = static_cast<float>(mask[idx]) / 255.0f;
+                const float delta = params.strength * k;
+                if (erase)
+                    v = std::max(0.0f, v - delta);
+                else
+                    v = std::min(1.0f, v + delta);
+                mask[idx] = static_cast<uint8_t>(std::clamp(v * 255.0f, 0.0f, 255.0f));
+            }
+        }
+
+        m_dirtyGrassMask = true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainEditingTools::FlushHeightmap
     // ─────────────────────────────────────────────────────────────────────────────
 
@@ -668,6 +808,36 @@ namespace engine::render::terrain
         else
         {
             LOG_ERROR(Render, "[TerrainEditingTools] FlushSplatMap: ReuploadSplatMap failed");
+        }
+        return ok;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainEditingTools::FlushGrassMask
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainEditingTools::FlushGrassMask(TerrainRenderer& terrain, VkDevice device, VkPhysicalDevice physDev,
+                                             VkQueue queue, uint32_t queueFamilyIndex)
+    {
+        if (!m_initialized || !m_grassMask)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] FlushGrassMask: not initialised");
+            return false;
+        }
+        if (!m_dirtyGrassMask)
+        {
+            return true;
+        }
+
+        const bool ok = terrain.ReuploadGrassMaskFromCpuData(device, physDev, queue, queueFamilyIndex);
+        if (ok)
+        {
+            m_dirtyGrassMask = false;
+            LOG_DEBUG(Render, "[TerrainEditingTools] FlushGrassMask OK");
+        }
+        else
+        {
+            LOG_ERROR(Render, "[TerrainEditingTools] FlushGrassMask failed");
         }
         return ok;
     }
@@ -771,7 +941,7 @@ namespace engine::render::terrain
         }
 
         // Binary format: magic, width, height, RGBA8 data (little-endian)
-        const uint32_t magic = kSplatFileMagic;
+        const uint32_t magic = kTerrainSplatFileMagic;
         ofs.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
         ofs.write(reinterpret_cast<const char*>(&sw),    sizeof(sw));
         ofs.write(reinterpret_cast<const char*>(&sh),    sizeof(sh));
@@ -787,6 +957,40 @@ namespace engine::render::terrain
 
         LOG_INFO(Render, "[TerrainEditingTools] SaveSplatMap OK ('{}', {}x{})",
                  relPath, sw, sh);
+        return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainEditingTools::SaveGrassMask
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainEditingTools::SaveGrassMask(const engine::core::Config& config,
+                                            const std::string& relPath)
+    {
+        if (!m_initialized || !m_grassMask)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] SaveGrassMask: tools not initialised or no grass mask");
+            return false;
+        }
+
+        const auto fullPath = engine::platform::FileSystem::ResolveContentPath(config, relPath);
+
+        std::error_code ec;
+        std::filesystem::create_directories(fullPath.parent_path(), ec);
+        if (ec)
+        {
+            LOG_WARN(Render, "[TerrainEditingTools] SaveGrassMask: create_directories failed: {}",
+                     ec.message());
+        }
+
+        if (!TerrainGrassDetail::SaveToFile(fullPath.string(), *m_grassMask))
+        {
+            LOG_ERROR(Render, "[TerrainEditingTools] SaveGrassMask: failed '{}'", fullPath.string());
+            return false;
+        }
+
+        LOG_INFO(Render, "[TerrainEditingTools] SaveGrassMask OK ('{}', {}x{})",
+                 relPath, m_grassMask->width, m_grassMask->height);
         return true;
     }
 

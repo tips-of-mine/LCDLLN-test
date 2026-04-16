@@ -26,6 +26,7 @@
 #include <cstring>
 #include <limits>
 #include <filesystem>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -507,16 +508,41 @@ namespace engine
 			LOG_WARN(Core, "[ZoneProbes] Runtime probes fallback sky (path={}, reason={})", probesPath, error);
 		}
 
-		error.clear();
-		if (engine::world::LoadAtmosphereSettings(m_cfg, atmospherePath, m_zoneAtmosphere, error))
-		{
-			LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
-		}
-		else
-		{
-			LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
-		}
+	error.clear();
+	if (engine::world::LoadAtmosphereSettings(m_cfg, atmospherePath, m_zoneAtmosphere, error))
+	{
+		LOG_INFO(Core, "[ZoneProbes] Runtime atmosphere ready (path={})", atmospherePath);
 	}
+	else
+	{
+		LOG_WARN(Core, "[ZoneProbes] Runtime atmosphere defaults active (path={}, reason={})", atmospherePath, error);
+	}
+
+	// M38.1 — Initialise day/night cycle with parameters from config.json.
+	{
+		engine::render::DayNightCycle::Params dnParams{};
+		dnParams.initialTimeOfDay = static_cast<float>(
+			m_cfg.GetDouble("world.day_night.initial_time",   8.0));
+		dnParams.timeScale        = static_cast<float>(
+			m_cfg.GetDouble("world.day_night.time_scale",    60.0));
+		m_dayNight.Init(dnParams);
+	}
+
+	// M38.2 — Initialise weather system with parameters from config.json.
+	{
+		engine::render::WeatherConfig wCfg{};
+		wCfg.transitionDuration = static_cast<float>(m_cfg.GetDouble("world.weather.transition_duration", 30.0));
+		wCfg.rainSpawnRate      = static_cast<float>(m_cfg.GetDouble("world.weather.rain_spawn_rate",    1000.0));
+		wCfg.snowSpawnRate      = static_cast<float>(m_cfg.GetDouble("world.weather.snow_spawn_rate",     500.0));
+		wCfg.fogDensityMax      = static_cast<float>(m_cfg.GetDouble("world.weather.fog_density_max",      0.05));
+		m_weatherSystem.Init(wCfg);
+	}
+
+	// M38.3 — Initialise dynamic point-light system (streetlamps, torches, windows).
+	// The definitions JSON path defaults to "lights/dynamic_lights.json" relative to
+	// paths.content, overridable via "world.dynamic_lights_path" in config.json.
+	m_dynamicLights.Init(m_cfg);
+}
 
 	Engine::Engine(int argc, char** argv)
 		: m_cfg(engine::core::Config::Load("config.json", argc, argv))
@@ -578,6 +604,41 @@ namespace engine
 		if (m_worldEditorExe)
 		{
 			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
+#if defined(_WIN32)
+			m_worldEditorSession->SetTerrainSaveHook(
+				[this](const engine::core::Config& cfg, const engine::editor::WorldMapEditDocument& doc) -> bool {
+					if (!m_worldEditorTerrainTools.IsValid())
+					{
+						return true;
+					}
+					if (!doc.heightmapContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveHeightmap(cfg, doc.heightmapContentRelativePath))
+						{
+							return false;
+						}
+					}
+					if (!doc.splatmapContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveSplatMap(cfg, doc.splatmapContentRelativePath))
+						{
+							return false;
+						}
+					}
+					if (!doc.grassMaskContentRelativePath.empty())
+					{
+						if (!m_worldEditorTerrainTools.SaveGrassMask(cfg, doc.grassMaskContentRelativePath))
+						{
+							return false;
+						}
+					}
+					return true;
+				});
+#else
+			// `TerrainEditingTools` / flush disque ne sont branchés que sous Windows pour le WE actuel.
+			m_worldEditorSession->SetTerrainSaveHook(
+				[](const engine::core::Config&, const engine::editor::WorldMapEditDocument&) -> bool { return true; });
+#endif
 		}
 
 		if (!logSettings.filePath.empty() || logSettings.console)
@@ -1078,9 +1139,34 @@ namespace engine
 										    m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 										    loadSpirv
 										);
-										LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
+									LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
-										// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
+									// M37.1 — Water renderer (optional: skipped if shaders not found).
+									if (pipelineOk)
+									{
+										const uint32_t w = static_cast<uint32_t>(m_width);
+										const uint32_t h = static_cast<uint32_t>(m_height);
+										std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
+										std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
+										const float waterLevel = static_cast<float>(m_cfg.GetDouble("render.water.level", 0.0));
+										engine::render::WaterParams waterParams{};
+										waterParams.waterLevel     = waterLevel;
+										waterParams.gridResolution = static_cast<uint32_t>(m_cfg.GetInt("render.water.grid_resolution", 32));
+										waterParams.gridHalfSize   = static_cast<float>(m_cfg.GetDouble("render.water.grid_half_size", 256.0));
+										if (!m_waterRenderer.Init(
+											m_vkDeviceContext.GetDevice(),
+											m_vkDeviceContext.GetPhysicalDevice(),
+											w, h,
+											VK_FORMAT_R16G16B16A16_SFLOAT,
+											waterVert.empty() ? nullptr : waterVert.data(), waterVert.size(),
+											waterFrag.empty() ? nullptr : waterFrag.data(), waterFrag.size(),
+											waterParams))
+										{
+											LOG_WARN(Render, "[Boot] WaterRenderer init failed — water surface disabled");
+										}
+									}
+
+									// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
 										// chemin par défaut conventionnel si la clé est absente ou vide.
 										if (pipelineOk && !m_worldEditorExe)
 										{
@@ -1090,7 +1176,28 @@ namespace engine
 												hmGame = kDefaultHeightmapRel;
 
 											const std::string splat = m_cfg.GetString("render.terrain.splatmap", "");
+											const std::string grass = m_cfg.GetString("render.terrain.grass_mask", "");
 											const std::string hole = m_cfg.GetString("render.terrain.hole_mask", "");
+											if (splat.empty())
+											{
+												LOG_INFO(Core,
+													"[Boot] render.terrain.splatmap vide — splat CPU par défaut (herbe) ; "
+													"voir docs/world_zone_demo_checklist.md §012.");
+											}
+											else
+											{
+												LOG_INFO(Core, "[Boot] render.terrain.splatmap = '{}'", splat);
+											}
+											if (grass.empty())
+											{
+												LOG_INFO(Core,
+													"[Boot] render.terrain.grass_mask vide — masque herbe nul (ticket 010) ; "
+													"aucun fichier GRMS requis.");
+											}
+											else
+											{
+												LOG_INFO(Core, "[Boot] render.terrain.grass_mask = '{}'", grass);
+											}
 											const std::vector<std::string> cliffPaths;
 											auto loadFnTerrain = [this](const char* p) { return LoadTerrainSpirvWords(p); };
 											if (m_terrain.Init(
@@ -1099,6 +1206,7 @@ namespace engine
 													m_cfg,
 													hmGame,
 													splat,
+													grass,
 													hole,
 													cliffPaths,
 													VK_FORMAT_R8G8B8A8_SRGB,
@@ -1171,7 +1279,7 @@ namespace engine
 													else if (!uiFontPath.empty() && ttfFragPtr == nullptr)
 													{
 														LOG_WARN(Render, "[Boot] auth_ttf.frag.spv missing — place compiled SPIR-V under game/data/shaders/");
-													}
+													}
 													// --- Second atlas: valeurs de champs (ex. Morpheus.ttf) ---
 													const std::string valueFontPath = m_cfg.GetString("render.auth_ui.value_font_path", "");
 													if (!valueFontPath.empty() && ttfFragPtr != nullptr)
@@ -2315,9 +2423,11 @@ namespace engine
 			}
 			m_worldEditorTerrainTools.Shutdown();
 #endif
-			if (m_terrain.IsValid())
-				m_terrain.Destroy(m_vkDeviceContext.GetDevice());
-			m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
+		if (m_terrain.IsValid())
+			m_terrain.Destroy(m_vkDeviceContext.GetDevice());
+		/// M37.1 — water renderer cleanup.
+		m_waterRenderer.Destroy(m_vkDeviceContext.GetDevice());
+		m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)
 			{
@@ -2492,8 +2602,45 @@ namespace engine
 		}
 #endif
 
-		const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
-		const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
+	const double dt               = (m_fixedDt > 0.0) ? m_fixedDt : m_time.DeltaSeconds();
+
+	// M38.1 — Advance day/night cycle and propagate results into m_zoneAtmosphere
+	// so that the existing lighting path picks them up without further changes.
+	{
+		m_dayNight.Advance(static_cast<float>(dt));
+		const engine::render::DayNightCycle::State& dnState = m_dayNight.GetState();
+		m_zoneAtmosphere.sunDirection[0] = dnState.lightDir[0];
+		m_zoneAtmosphere.sunDirection[1] = dnState.lightDir[1];
+		m_zoneAtmosphere.sunDirection[2] = dnState.lightDir[2];
+		m_zoneAtmosphere.sunColor[0]     = dnState.lightColor[0];
+		m_zoneAtmosphere.sunColor[1]     = dnState.lightColor[1];
+		m_zoneAtmosphere.sunColor[2]     = dnState.lightColor[2];
+		m_zoneAtmosphere.ambientColor[0] = dnState.ambientColor[0];
+		m_zoneAtmosphere.ambientColor[1] = dnState.ambientColor[1];
+		m_zoneAtmosphere.ambientColor[2] = dnState.ambientColor[2];
+	}
+
+	// M38.2 — Advance weather system and propagate audio volume.
+	if (m_weatherSystem.IsInitialized())
+	{
+		const engine::render::Camera& cam = readState.camera;
+		m_weatherSystem.Tick(static_cast<float>(dt),
+		                     cam.position.x, cam.position.y, cam.position.z);
+
+		// Drive the "Weather" audio bus volume from rain intensity (spec step 6).
+		// Graceful no-op if the bus is not defined in the zone audio JSON.
+		m_audioEngine.SetBusVolume("Weather", m_weatherSystem.GetAudioVolume());
+	}
+
+	// M38.3 — Advance dynamic point-light system (streetlamps, torches, windows).
+	// Reads the current time-of-day from the day/night cycle to auto-trigger lights.
+	if (m_dynamicLights.IsInitialized())
+	{
+		const float timeOfDay = m_dayNight.GetState().timeOfDay;
+		m_dynamicLights.Tick(timeOfDay, static_cast<float>(dt));
+	}
+
+	const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 		const bool invertY = m_cfg.GetBool("controls.invert_y", false);
 		const engine::render::MovementLayout movementLayout =
 			(m_cfg.GetString("controls.movement_layout", "wasd") == "zqsd")
@@ -2619,6 +2766,25 @@ namespace engine
 			}
 		}
 
+#if defined(_WIN32)
+		// Dear ImGui : lire io.WantCapture* après NewFrame() pour la frame courante (sinon la caméra reste figée).
+		if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			float imguiDw = static_cast<float>(std::max(1, m_width));
+			float imguiDh = static_cast<float>(std::max(1, m_height));
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extImg = m_vkSwapchain.GetExtent();
+				if (extImg.width > 0 && extImg.height > 0)
+				{
+					imguiDw = static_cast<float>(extImg.width);
+					imguiDh = static_cast<float>(extImg.height);
+				}
+			}
+			m_worldEditorImGui->NewFrame(static_cast<float>(dt), imguiDw, imguiDh);
+		}
+#endif
+
 		if (!m_editorEnabled)
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
@@ -2725,7 +2891,6 @@ namespace engine
 					vh = static_cast<int>(extUi.height);
 				}
 			}
-			m_worldEditorImGui->NewFrame(static_cast<float>(dt), dw, dh);
 
 			engine::editor::WorldEditorViewportOverlayDesc overlay{};
 			overlay.viewProjColMajor = out.viewProjMatrix.m;
@@ -2752,37 +2917,120 @@ namespace engine
 					terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
 						overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
 						pickX, pickZ);
-					overlay.showBrushPreview = terrainPick && !capBeforeUi;
+					overlay.showBrushPreview =
+						terrainPick && !capBeforeUi && m_worldEditorSession->TerrainEditMode() != 3
+						&& m_worldEditorSession->TerrainEditMode() != 4;
 					if (terrainPick)
 					{
 						overlay.brushWorldX = pickX;
 						overlay.brushWorldZ = pickZ;
 					}
 				}
+				overlay.layoutInstancesOverlay = &m_worldEditorSession->MutableDoc().layoutInstances;
+				overlay.selectedLayoutInstanceOverlay = m_worldEditorSession->SelectedLayoutInstanceIndex();
 			}
 
 			m_worldEditorImGui->BuildUi(&overlay);
 
-			if (m_terrain.IsValid() && m_worldEditorTerrainTools.IsValid() && m_worldEditorSession && terrainPick)
+			if (m_worldEditorExe && m_worldEditorSession && m_worldEditorTerrainTools.IsValid() && m_vkDeviceContext.IsValid()
+				&& m_worldEditorSession->ConsumeRouteApplyDraftRequest())
+			{
+				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+				if (ws.RouteDraftPoints().size() < 2u)
+				{
+					ws.SetStatus("Routes: au moins 2 points dans le brouillon (clics gauche sur le sol).");
+				}
+				else
+				{
+					engine::editor::WorldMapRoutePolyline rp{};
+					rp.pointsXz = ws.RouteDraftPoints();
+					rp.widthM = static_cast<double>(ws.RouteStripWidthM());
+					rp.splatLayer = static_cast<uint32_t>(std::clamp(ws.RouteSplatLayer(), 0, 3));
+					engine::render::terrain::BrushParams bp{};
+					bp.radius = ws.BrushRadius();
+					bp.strength = ws.BrushStrength();
+					bp.falloff = 1.f;
+					bp.flattenTarget = 0.5f;
+					if (m_worldEditorTerrainTools.PaintSplatAlongPolyline(rp.pointsXz, rp.widthM, rp.splatLayer, bp))
+					{
+						(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							m_vkDeviceContext.GetGraphicsQueue(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						ws.MutableDoc().routes.push_back(std::move(rp));
+						ws.ClearRouteDraft();
+						ws.SetStatus("Routes: bande splat appliquée — sauvegardez l’édition pour persister SLAP + JSON.");
+					}
+					else
+					{
+						ws.SetStatus("Routes: peinture splat impossible (vérifier le terrain / la splat).");
+					}
+				}
+			}
+
+			if (m_terrain.IsValid() && m_worldEditorSession && terrainPick && m_vkDeviceContext.IsValid())
 			{
 				const bool cap = m_worldEditorImGui->WantsCaptureMouse();
-				if (!cap && m_input.IsMouseDown(engine::platform::MouseButton::Left))
+				engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+				if (!cap && ws.TerrainEditMode() == 4 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
 				{
-					engine::editor::WorldEditorSession& ws = *m_worldEditorSession;
+					const float ox = m_terrain.GetTerrainOriginX();
+					const float oz = m_terrain.GetTerrainOriginZ();
+					const float wsiz = m_terrain.GetTerrainWorldSize();
+					const float eps = wsiz * 1e-5f;
+					const float px = std::clamp(pickX, ox + eps, ox + wsiz - eps);
+					const float pz = std::clamp(pickZ, oz + eps, oz + wsiz - eps);
+					ws.AddRouteDraftPoint(static_cast<double>(px), static_cast<double>(pz));
+				}
+				else if (!cap && ws.TerrainEditMode() == 3 && m_input.WasMousePressed(engine::platform::MouseButton::Left))
+				{
+					const engine::render::terrain::HeightmapData& hm = m_terrain.GetMutableHeightmapData();
+					float wy = 0.f;
+					if (TryTerrainWorldY(hm, overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
+							pickX, pickZ, wy))
+					{
+						ws.PlaceOrMoveLayoutInstanceAtTerrainHit(m_cfg, static_cast<double>(pickX), static_cast<double>(wy),
+							static_cast<double>(pickZ));
+					}
+				}
+				else if (m_worldEditorTerrainTools.IsValid() && !cap && m_input.IsMouseDown(engine::platform::MouseButton::Left)
+					&& ws.TerrainEditMode() != 3 && ws.TerrainEditMode() != 4)
+				{
 					engine::render::terrain::BrushParams bp;
 					bp.radius = ws.BrushRadius();
 					bp.strength = ws.BrushStrength();
 					bp.falloff = 1.f;
 					bp.flattenTarget = 0.5f;
-					engine::render::terrain::BrushOp op = engine::render::terrain::BrushOp::Raise;
-					switch (ws.BrushOp())
+					if (ws.TerrainEditMode() == 1)
 					{
-					case 1: op = engine::render::terrain::BrushOp::Lower; break;
-					case 2: op = engine::render::terrain::BrushOp::Smooth; break;
-					case 3: op = engine::render::terrain::BrushOp::Flatten; break;
-					default: break;
+						const uint32_t layer = static_cast<uint32_t>(std::clamp(ws.SplatLayer(), 0, 3));
+						m_worldEditorTerrainTools.PaintSplat(pickX, pickZ, layer, bp);
+						(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							m_vkDeviceContext.GetGraphicsQueue(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
 					}
-					m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
+					else if (ws.TerrainEditMode() == 2)
+					{
+						m_worldEditorTerrainTools.PaintGrassMask(pickX, pickZ, bp, ws.GrassMaskEraseBrush());
+						(void)m_worldEditorTerrainTools.FlushGrassMask(m_terrain,
+							m_vkDeviceContext.GetDevice(),
+							m_vkDeviceContext.GetPhysicalDevice(),
+							m_vkDeviceContext.GetGraphicsQueue(),
+							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+					}
+					else
+					{
+						engine::render::terrain::BrushOp op = engine::render::terrain::BrushOp::Raise;
+						switch (ws.BrushOp())
+						{
+						case 1: op = engine::render::terrain::BrushOp::Lower; break;
+						case 2: op = engine::render::terrain::BrushOp::Smooth; break;
+						case 3: op = engine::render::terrain::BrushOp::Flatten; break;
+						default: break;
+						}
+						m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
+					}
 				}
 			}
 		}
@@ -3635,12 +3883,21 @@ namespace engine
 		}
 
 		auto loadFn = [this](const char* p) { return LoadTerrainSpirvWords(p); };
+		std::optional<float> worldSizeOverride;
+		const engine::editor::WorldMapEditDocument& wed = m_worldEditorSession->Doc();
+		if (wed.hasTerrainWorldSizeM && wed.terrainWorldSizeM > 0.0)
+		{
+			worldSizeOverride = static_cast<float>(wed.terrainWorldSizeM);
+		}
+		const std::string& splatRel = wed.splatmapContentRelativePath;
+		const std::string& grassRel = wed.grassMaskContentRelativePath;
 		const bool ok = m_terrain.Init(
 			device,
 			physDev,
 			m_cfg,
 			hmRel,
-			"",
+			splatRel,
+			grassRel,
 			"",
 			{},
 			VK_FORMAT_R8G8B8A8_SRGB,
@@ -3650,15 +3907,20 @@ namespace engine
 			VK_FORMAT_D32_SFLOAT,
 			m_vkDeviceContext.GetGraphicsQueue(),
 			m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-			loadFn);
+			loadFn,
+			worldSizeOverride);
 		if (!ok)
 		{
-			LOG_WARN(Render, "[WorldEditor] TerrainRenderer::Init failed for \"{}\"", hmRel);
+			LOG_WARN(Render,
+				"[WorldEditor] TerrainRenderer::Init failed for \"{}\" — fichier introuvable sous paths.content ? "
+				"Lancer l’éditeur avec le cwd à la racine du dépôt (config.json + game/data), ou rebuild avec la détection cwd (world_editor_main).",
+				hmRel);
 			return;
 		}
 		if (!m_worldEditorTerrainTools.Init(
 				&m_terrain.GetMutableHeightmapData(),
 				&m_terrain.GetSplatting(),
+				&m_terrain.GetMutableGrassMaskData(),
 				m_terrain.GetTerrainOriginX(),
 				m_terrain.GetTerrainOriginZ(),
 				m_terrain.GetTerrainWorldSize(),

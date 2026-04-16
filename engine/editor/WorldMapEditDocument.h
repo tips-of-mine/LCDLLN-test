@@ -2,10 +2,36 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace engine::editor
 {
+	/// Polyligne « route » (ticket **011** branche A) : points monde XZ + largeur ; peinture sur une couche splat (ex. terre = macadam).
+	struct WorldMapRoutePolyline
+	{
+		std::vector<std::pair<double, double>> pointsXz;
+		double     widthM     = 4.0;
+		uint32_t splatLayer = 1u; ///< 0–3 (R,G,B,A) — défaut 1 = terre.
+	};
+
+	/// Instance décor / prop pour export `layout_from_editor.json` (schéma minimal \c zone_builder : \c guid, \c gltf, \c position).
+	struct WorldMapEditLayoutInstance
+	{
+		std::string guid;
+		/// Chemin glTF relatif au content (ex. \c zones/zone_0/zone_0.gltf).
+		std::string gltfContentRelativePath;
+		/// Position monde mètres (snap sol) — convertie à l’export en coordonnées attendues par \c LayoutImporter.
+		double worldX = 0.0;
+		double worldY = 0.0;
+		double worldZ = 0.0;
+		double yawDegrees = 0.0;
+		double uniformScale = 1.0;
+		/// Ticket **013** : catalogue arbres (vide = prop générique type rocher / ancien combo 009).
+		std::string speciesId;
+		uint32_t shapeVariantIndex = 0u;
+	};
+
 	/// Document d’édition carte (JSON lisible, versionné). Les chemins \c heightmap* sont relatifs à \c paths.content.
 	struct WorldMapEditDocument
 	{
@@ -18,9 +44,21 @@ namespace engine::editor
 		bool hasSeed = false;
 		int64_t seed = 0;
 		std::string heightmapContentRelativePath;
+		/// Splat RGBA (fichier SLAP, voir `TerrainEditingTools::SaveSplatMap`), relatif à \c paths.content.
+		std::string splatmapContentRelativePath;
+		/// Masque herbe / détail surface R8 (fichier GRMS, ticket 010), même résolution que la splat, relatif au content.
+		std::string grassMaskContentRelativePath;
 		std::vector<std::string> textureAssets;
 		/// Identifiants de préfabs / objets (MVP : chaînes libres).
 		std::vector<std::string> objectPrefabIds;
+		/// Instances pour \c layout_from_editor.json (ticket 009).
+		std::vector<WorldMapEditLayoutInstance> layoutInstances;
+		/// Routes splat (ticket **011** A) : métadonnées ; le rendu persistant est dans le fichier SLAP.
+		std::vector<WorldMapRoutePolyline> routes;
+
+		/// Si vrai, \ref terrainWorldSizeM remplace `terrain.world_size` pour l’init terrain du World Editor (alignement zone logique).
+		bool   hasTerrainWorldSizeM = false;
+		double terrainWorldSizeM    = 10000.0;
 	};
 
 } // namespace engine::editor

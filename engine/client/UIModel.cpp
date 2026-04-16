@@ -577,6 +577,31 @@ namespace engine::client
 			return ApplyShopOpen(packet);
 		case engine::server::MessageKind::AuctionBrowseResult:
 			return ApplyAuctionBrowseResult(packet);
+		// M35.3 — Trade window
+		case engine::server::MessageKind::TradeWindowUpdate:
+			return ApplyTradeWindowUpdate(packet);
+		case engine::server::MessageKind::TradeComplete:
+			return ApplyTradeComplete(packet);
+		case engine::server::MessageKind::TradeCancelled:
+			return ApplyTradeCancelled(packet);
+		// M36.1 — Harvest cast bar
+		case engine::server::MessageKind::HarvestStart:
+			return ApplyHarvestStart(packet);
+		case engine::server::MessageKind::HarvestComplete:
+			return ApplyHarvestComplete(packet);
+		case engine::server::MessageKind::HarvestCancelled:
+			return ApplyHarvestCancelled(packet);
+		// M36.2 — Crafting / profession messages
+		case engine::server::MessageKind::ProfessionUpdate:
+			return ApplyProfessionUpdate(packet);
+		case engine::server::MessageKind::CraftRecipeListResult:
+			return ApplyCraftRecipeListResult(packet);
+		case engine::server::MessageKind::CraftStart:
+			return ApplyCraftStart(packet);
+		case engine::server::MessageKind::CraftComplete:
+			return ApplyCraftComplete(packet);
+		case engine::server::MessageKind::CraftCancelled:
+			return ApplyCraftCancelled(packet);
 		default:
 			LOG_WARN(Net, "[UIModelBinding] ApplyPacket ignored: unsupported message kind {}", static_cast<uint16_t>(kind));
 			return false;
@@ -1090,7 +1115,281 @@ namespace engine::client
 			m_auctionBrowseScratch.clientId,
 			m_model.auction.listings.size());
 
-		NotifyObservers(UIModelChangeAuction);
-		return true;
+	NotifyObservers(UIModelChangeAuction);
+	return true;
+}
+
+// -------------------------------------------------------------------------
+// M35.3 — Trade window Apply functions
+// -------------------------------------------------------------------------
+
+bool UIModelBinding::ApplyTradeWindowUpdate(std::span<const std::byte> packet)
+{
+	m_tradeWindowScratch = {};
+	if (!engine::server::DecodeTradeWindowUpdate(packet, m_tradeWindowScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyTradeWindowUpdate FAILED: decode error");
+		return false;
 	}
+
+	auto fillSide = [](UITradeSide& dst, const engine::server::TradeSideWire& src)
+	{
+		dst.clientId   = src.clientId;
+		dst.goldAmount = src.goldAmount;
+		dst.locked     = (src.locked != 0);
+		dst.confirmed  = (src.confirmed != 0);
+		dst.items      = src.items;
+	};
+
+	m_model.tradeWindow.isOpen              = true;
+	m_model.tradeWindow.isDone              = false;
+	m_model.tradeWindow.cancelReason.clear();
+	m_model.tradeWindow.reviewTicksRemaining = m_tradeWindowScratch.reviewTicksRemaining;
+	fillSide(m_model.tradeWindow.selfSide,  m_tradeWindowScratch.self);
+	fillSide(m_model.tradeWindow.otherSide, m_tradeWindowScratch.other);
+
+	LOG_DEBUG(Net, "[UIModelBinding] TradeWindowUpdate applied (self={} gold={} locked={} "
+	          "other={} gold={} locked={} reviewTicks={})",
+	          m_model.tradeWindow.selfSide.clientId,
+	          m_model.tradeWindow.selfSide.goldAmount,
+	          m_model.tradeWindow.selfSide.locked,
+	          m_model.tradeWindow.otherSide.clientId,
+	          m_model.tradeWindow.otherSide.goldAmount,
+	          m_model.tradeWindow.otherSide.locked,
+	          m_model.tradeWindow.reviewTicksRemaining);
+
+	NotifyObservers(UIModelChangeTrade);
+	return true;
+}
+
+bool UIModelBinding::ApplyTradeComplete(std::span<const std::byte> packet)
+{
+	m_tradeCompleteScratch = {};
+	if (!engine::server::DecodeTradeComplete(packet, m_tradeCompleteScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyTradeComplete FAILED: decode error");
+		return false;
+	}
+
+	m_model.tradeWindow.isDone       = true;
+	m_model.tradeWindow.isOpen       = false;
+	m_model.tradeWindow.cancelReason.clear();
+	m_model.tradeWindow.selfSide     = {};
+	m_model.tradeWindow.otherSide    = {};
+	m_model.tradeWindow.reviewTicksRemaining = 0;
+
+	LOG_INFO(Net, "[UIModelBinding] TradeComplete applied (client_id={})",
+	         m_tradeCompleteScratch.clientId);
+	NotifyObservers(UIModelChangeTrade);
+	return true;
+}
+
+bool UIModelBinding::ApplyTradeCancelled(std::span<const std::byte> packet)
+{
+	m_tradeCancelledScratch = {};
+	if (!engine::server::DecodeTradeCancelled(packet, m_tradeCancelledScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyTradeCancelled FAILED: decode error");
+		return false;
+	}
+
+	m_model.tradeWindow.isOpen       = false;
+	m_model.tradeWindow.isDone       = false;
+	m_model.tradeWindow.cancelReason = m_tradeCancelledScratch.reason;
+	m_model.tradeWindow.selfSide     = {};
+	m_model.tradeWindow.otherSide    = {};
+	m_model.tradeWindow.reviewTicksRemaining = 0;
+
+	LOG_INFO(Net, "[UIModelBinding] TradeCancelled applied (reason='{}')",
+	         m_tradeCancelledScratch.reason);
+	NotifyObservers(UIModelChangeTrade);
+	return true;
+}
+
+// -------------------------------------------------------------------------
+// M36.1 — Harvest cast bar Apply functions
+// -------------------------------------------------------------------------
+
+bool UIModelBinding::ApplyHarvestStart(std::span<const std::byte> packet)
+{
+	m_harvestStartScratch = {};
+	if (!engine::server::DecodeHarvestStart(packet, m_harvestStartScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyHarvestStart FAILED: decode error");
+		return false;
+	}
+
+	m_model.harvest.nodeEntityId       = m_harvestStartScratch.nodeEntityId;
+	m_model.harvest.totalDurationTicks = m_harvestStartScratch.harvestDurationTicks;
+	m_model.harvest.elapsedTicks       = 0;
+	m_model.harvest.fillFraction       = 0.0f;
+	m_model.harvest.inProgress         = true;
+
+	LOG_INFO(Net, "[UIModelBinding] HarvestStart applied (node={}, durationTicks={})",
+	         m_harvestStartScratch.nodeEntityId, m_harvestStartScratch.harvestDurationTicks);
+	NotifyObservers(UIModelChangeHarvest);
+	return true;
+}
+
+bool UIModelBinding::ApplyHarvestComplete(std::span<const std::byte> packet)
+{
+	m_harvestCompleteScratch = {};
+	if (!engine::server::DecodeHarvestComplete(packet, m_harvestCompleteScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyHarvestComplete FAILED: decode error");
+		return false;
+	}
+
+	m_model.harvest.fillFraction = 1.0f;
+	m_model.harvest.inProgress   = false;
+	m_model.harvest.elapsedTicks = m_model.harvest.totalDurationTicks;
+
+	LOG_INFO(Net, "[UIModelBinding] HarvestComplete applied (node={})",
+	         m_harvestCompleteScratch.nodeEntityId);
+	NotifyObservers(UIModelChangeHarvest);
+	return true;
+}
+
+bool UIModelBinding::ApplyHarvestCancelled(std::span<const std::byte> packet)
+{
+	m_harvestCancelledScratch = {};
+	if (!engine::server::DecodeHarvestCancelled(packet, m_harvestCancelledScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyHarvestCancelled FAILED: decode error");
+		return false;
+	}
+
+	m_model.harvest.inProgress   = false;
+	m_model.harvest.fillFraction = 0.0f;
+	m_model.harvest.elapsedTicks = 0;
+
+	LOG_INFO(Net, "[UIModelBinding] HarvestCancelled applied (node={}, reason={})",
+	         m_harvestCancelledScratch.nodeEntityId,
+	         static_cast<uint8_t>(m_harvestCancelledScratch.reason));
+	NotifyObservers(UIModelChangeHarvest);
+	return true;
+}
+
+// -------------------------------------------------------------------------
+// M36.2 — Crafting / profession Apply functions
+// -------------------------------------------------------------------------
+
+bool UIModelBinding::ApplyProfessionUpdate(std::span<const std::byte> packet)
+{
+	m_professionUpdateScratch = {};
+	if (!engine::server::DecodeProfessionUpdate(packet, m_professionUpdateScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyProfessionUpdate FAILED: decode error");
+		return false;
+	}
+
+	m_model.crafting.professions.clear();
+	m_model.crafting.professions.reserve(m_professionUpdateScratch.professions.size());
+	for (const engine::server::ProfessionWireEntry& e : m_professionUpdateScratch.professions)
+	{
+		UIProfessionEntry entry{};
+		entry.professionKey = e.professionKey;
+		entry.skillLevel    = e.skillLevel;
+		entry.isPrimary     = (e.isPrimary != 0);
+		m_model.crafting.professions.push_back(std::move(entry));
+	}
+
+	LOG_INFO(Net, "[UIModelBinding] ProfessionUpdate applied (professions={})",
+	         m_model.crafting.professions.size());
+	NotifyObservers(UIModelChangeCrafting);
+	return true;
+}
+
+bool UIModelBinding::ApplyCraftRecipeListResult(std::span<const std::byte> packet)
+{
+	m_craftRecipeListScratch = {};
+	if (!engine::server::DecodeCraftRecipeListResult(packet, m_craftRecipeListScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyCraftRecipeListResult FAILED: decode error");
+		return false;
+	}
+
+	m_model.crafting.activeProfessionKey = m_craftRecipeListScratch.professionKey;
+	m_model.crafting.recipes.clear();
+	m_model.crafting.recipes.reserve(m_craftRecipeListScratch.recipes.size());
+	for (const engine::server::CraftRecipeWireRow& r : m_craftRecipeListScratch.recipes)
+	{
+		UICraftRecipeRow row{};
+		row.recipeId       = r.recipeId;
+		row.skillRequired  = r.skillRequired;
+		row.outputItemId   = r.outputItemId;
+		row.outputQuantity = r.outputQuantity;
+		m_model.crafting.recipes.push_back(std::move(row));
+	}
+	m_model.crafting.selectedRecipeIndex = UINT32_MAX;
+
+	LOG_INFO(Net, "[UIModelBinding] CraftRecipeListResult applied (profession='{}' recipes={})",
+	         m_model.crafting.activeProfessionKey, m_model.crafting.recipes.size());
+	NotifyObservers(UIModelChangeCrafting);
+	return true;
+}
+
+bool UIModelBinding::ApplyCraftStart(std::span<const std::byte> packet)
+{
+	m_craftStartScratch = {};
+	if (!engine::server::DecodeCraftStart(packet, m_craftStartScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyCraftStart FAILED: decode error");
+		return false;
+	}
+
+	m_model.crafting.craftingRecipeId  = m_craftStartScratch.recipeId;
+	m_model.crafting.craftDurationTicks = m_craftStartScratch.durationTicks;
+	m_model.crafting.craftFillFraction = 0.0f;
+	m_model.crafting.isCrafting        = true;
+
+	LOG_INFO(Net, "[UIModelBinding] CraftStart applied (recipe='{}' durationTicks={})",
+	         m_craftStartScratch.recipeId, m_craftStartScratch.durationTicks);
+	NotifyObservers(UIModelChangeCrafting);
+	return true;
+}
+
+bool UIModelBinding::ApplyCraftComplete(std::span<const std::byte> packet)
+{
+	m_craftCompleteScratch = {};
+	if (!engine::server::DecodeCraftComplete(packet, m_craftCompleteScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyCraftComplete FAILED: decode error");
+		return false;
+	}
+
+	m_model.crafting.isCrafting         = false;
+	m_model.crafting.craftFillFraction  = 1.0f;
+	m_model.crafting.lastSkillGained    = m_craftCompleteScratch.skillGained;
+	m_model.crafting.lastNewSkillLevel  = m_craftCompleteScratch.newSkillLevel;
+	/// M36.3 — quality tier of the crafted item.
+	m_model.crafting.lastQualityTier    = m_craftCompleteScratch.qualityTier;
+	m_model.crafting.craftingRecipeId.clear();
+
+	LOG_INFO(Net,
+	         "[UIModelBinding] CraftComplete applied (recipe='{}' skillGained={} newLevel={} quality={})",
+	         m_craftCompleteScratch.recipeId, m_craftCompleteScratch.skillGained,
+	         m_craftCompleteScratch.newSkillLevel, m_craftCompleteScratch.qualityTier);
+	NotifyObservers(UIModelChangeCrafting);
+	return true;
+}
+
+bool UIModelBinding::ApplyCraftCancelled(std::span<const std::byte> packet)
+{
+	m_craftCancelledScratch = {};
+	if (!engine::server::DecodeCraftCancelled(packet, m_craftCancelledScratch))
+	{
+		LOG_WARN(Net, "[UIModelBinding] ApplyCraftCancelled FAILED: decode error");
+		return false;
+	}
+
+	m_model.crafting.isCrafting        = false;
+	m_model.crafting.craftFillFraction = 0.0f;
+	m_model.crafting.craftingRecipeId.clear();
+
+	LOG_INFO(Net, "[UIModelBinding] CraftCancelled applied (recipe='{}')",
+	         m_craftCancelledScratch.recipeId);
+	NotifyObservers(UIModelChangeCrafting);
+	return true;
+}
 }

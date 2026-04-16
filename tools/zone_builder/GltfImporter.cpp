@@ -70,7 +70,7 @@ namespace tools::zone_builder
 		std::ifstream gltfStream(gltfPath, std::ios::in | std::ios::binary);
 		if (!gltfStream.is_open())
 		{
-			outError = "failed to open glTF file";
+			outError = "fichier glTF introuvable ou illisible : " + gltfPath.string();
 			LOG_ERROR(Core, "[ZoneBuilder] Load glTF FAILED (path={}, reason={})", gltfPath.string(), outError);
 			return false;
 		}

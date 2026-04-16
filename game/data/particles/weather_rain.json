@@ -1,0 +1,16 @@
+{
+  "emitters": [
+    {
+      "id": "weather_rain",
+      "atlasTexturePath": "textures/missing_texture.png",
+      "maxParticles": 2048,
+      "emissionRate": 1000.0,
+      "lifetimeSeconds": 2.0,
+      "startSize": 0.08,
+      "endSize": 0.04,
+      "spawnPosition": [0.0, 0.0, 0.0],
+      "velocityMin": [-0.5, -20.0, -0.5],
+      "velocityMax": [0.5, -10.0, 0.5]
+    }
+  ]
+}

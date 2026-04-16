@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/server/ReplicationTypes.h"
+#include "engine/world/WorldModel.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -9,19 +10,22 @@
 
 namespace engine::server
 {
-	/// Zone size in meters inherited from the M09.1 world model ticket.
-	inline constexpr int kZoneSizeMeters = 4096;
+	/// Zone size in meters — same value as \ref engine::world::kZoneSize (single source of truth).
+	inline constexpr int kZoneSizeMeters = engine::world::kZoneSize;
 
-	/// Fixed spatial partition cell size in meters required by M13.2.
-	inline constexpr int kCellSizeMeters = 64;
+	/// Fixed spatial partition cell size in meters — same as \ref engine::world::kSpatialCellSizeMeters.
+	inline constexpr int kCellSizeMeters = engine::world::kSpatialCellSizeMeters;
 
 	/// Base client interest radius in cells, resulting in a 7x7 neighborhood.
 	inline constexpr int kBaseInterestRadiusCells = 3;
 
-	/// Number of cells per axis for a 4 km zone split into 64 m cells.
+	/// Number of cells per axis for the zone split into \ref kCellSizeMeters cells.
 	inline constexpr int kCellGridAxisCount = kZoneSizeMeters / kCellSizeMeters;
 
-	/// Discrete cell coordinate inside a zone-local 64 m grid.
+	static_assert(kZoneSizeMeters % kCellSizeMeters == 0,
+	              "Zone size must be a multiple of spatial cell size (interest grid)");
+
+	/// Discrete cell coordinate inside a zone-local spatial grid (\ref kCellSizeMeters m).
 	struct CellCoord
 	{
 		int16_t x = 0;
@@ -45,7 +49,7 @@ namespace engine::server
 		std::vector<CellCoord> leavingCells;
 	};
 
-	/// Zone-local 64 m cell grid maintaining cell-to-entity membership.
+	/// Zone-local cell grid (\ref kCellSizeMeters m) maintaining cell-to-entity membership.
 	class CellGrid final
 	{
 	public:
@@ -55,7 +59,7 @@ namespace engine::server
 		/// Release all cell mappings on destruction.
 		~CellGrid();
 
-		/// Allocate the fixed grid storage for a 4 km zone.
+		/// Allocate the fixed grid storage for one zone (\ref kZoneSizeMeters m side).
 		bool Init();
 
 		/// Release all entity/cell mappings.

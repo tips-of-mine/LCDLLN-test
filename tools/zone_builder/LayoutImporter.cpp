@@ -2,6 +2,7 @@
 
 #include "JsonDocument.h"
 #include "engine/core/Log.h"
+#include "engine/world/WorldModel.h"
 
 #include <cmath>
 #include <filesystem>
@@ -104,7 +105,7 @@ namespace tools::zone_builder
 		std::ifstream layoutStream(layoutPath, std::ios::in | std::ios::binary);
 		if (!layoutStream.is_open())
 		{
-			outError = "failed to open layout file";
+			outError = "fichier layout introuvable ou illisible : " + layoutPath.string();
 			LOG_ERROR(Core, "[ZoneBuilder] Load layout FAILED (path={}, reason={})", layoutPath.string(), outError);
 			return false;
 		}
@@ -161,6 +162,15 @@ namespace tools::zone_builder
 				!ReadRequiredString(instanceValue, "gltf", instance.gltfPath, outError) ||
 				!ReadRequiredNumberArray3(instanceValue, "position", instance.positionX, instance.positionY, instance.positionZ, outError))
 			{
+				LOG_ERROR(Core, "[ZoneBuilder] Load layout FAILED (path={}, index={}, reason={})", layoutPath.string(), instanceIndex, outError);
+				return false;
+			}
+
+			const double maxXZ = static_cast<double>(engine::world::kZoneSize);
+			if (instance.positionX < 0.0 || instance.positionZ < 0.0 || instance.positionX >= maxXZ || instance.positionZ >= maxXZ)
+			{
+				outError = "position XZ hors zone [0, " + std::to_string(engine::world::kZoneSize) +
+				           ") mètres (instance guid=" + instance.guid + ")";
 				LOG_ERROR(Core, "[ZoneBuilder] Load layout FAILED (path={}, index={}, reason={})", layoutPath.string(), instanceIndex, outError);
 				return false;
 			}

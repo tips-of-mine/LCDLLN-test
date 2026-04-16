@@ -27,7 +27,9 @@ namespace engine::server
 		/// M32.2 — Party loot mode change (leader only): /loot <mode>
 		Loot,
 		/// M32.2 — Party kick (leader only): /pkick <name>
-		PartyKick
+		PartyKick,
+		/// M35.3 — Initiate a direct trade with another player: /trade <name>
+		Trade
 	};
 
 	/// Sub-command for ChatSlashCommandKind::Friend (M32.1).

@@ -1,4 +1,5 @@
 #include "engine/render/terrain/TerrainRenderer.h"
+#include "engine/render/terrain/TerrainGrassDetail.h"
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"
@@ -9,6 +10,7 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <optional>
 
 namespace engine::render::terrain
 {
@@ -64,17 +66,27 @@ namespace engine::render::terrain
                                const engine::core::Config& config,
                                const std::string& heightmapRelPath,
                                const std::string& splatmapRelPath,
+                               const std::string& grassMaskRelPath,
                                const std::string& holeMaskRelPath,
                                const std::vector<std::string>& cliffMeshRelPaths,
                                VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                                VkFormat fmtVelocity, VkFormat fmtDepth,
                                VkQueue queue, uint32_t queueFamilyIndex,
-                               ShaderLoaderFn loadSpirv)
+                               ShaderLoaderFn loadSpirv,
+                               std::optional<float> terrainWorldSizeMetersOverride)
     {
+        m_grassMaskVisualStrength =
+            static_cast<float>(config.GetDouble("render.terrain.grass_mask_visual_strength", 0.35));
+
         LOG_INFO(Render,
-                 "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}' holemask='{}' cliffs={})",
-                 heightmapRelPath, splatmapRelPath, holeMaskRelPath,
+                 "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}' grassmask='{}' holemask='{}' cliffs={})",
+                 heightmapRelPath, splatmapRelPath, grassMaskRelPath, holeMaskRelPath,
                  static_cast<uint32_t>(cliffMeshRelPaths.size()));
+        if (terrainWorldSizeMetersOverride.has_value() && terrainWorldSizeMetersOverride.value() > 0.0f)
+        {
+            LOG_INFO(Render, "[TerrainRenderer] terrain.world_size overridden to {} m (World Editor / document)",
+                     terrainWorldSizeMetersOverride.value());
+        }
 
         if (device == VK_NULL_HANDLE || physDev == VK_NULL_HANDLE || !loadSpirv)
         {
@@ -83,7 +95,14 @@ namespace engine::render::terrain
         }
 
         // ── Read terrain config ───────────────────────────────────────────────────
-        m_terrainWorldSize = static_cast<float>(config.GetDouble("terrain.world_size", 1024.0));
+        if (terrainWorldSizeMetersOverride.has_value() && terrainWorldSizeMetersOverride.value() > 0.0f)
+        {
+            m_terrainWorldSize = terrainWorldSizeMetersOverride.value();
+        }
+        else
+        {
+            m_terrainWorldSize = static_cast<float>(config.GetDouble("terrain.world_size", 1024.0));
+        }
         m_heightScale      = static_cast<float>(config.GetDouble("terrain.height_scale", 200.0));
         m_terrainOriginX   = static_cast<float>(config.GetDouble("terrain.origin_x", -512.0));
         m_terrainOriginZ   = static_cast<float>(config.GetDouble("terrain.origin_z", -512.0));
@@ -150,6 +169,54 @@ namespace engine::render::terrain
                 "[TerrainRenderer] TerrainSplatting Init failed — terrain disabled");
             Destroy(device);
             return false;
+        }
+
+        // ── Ticket 010: grass / surface-detail mask (R8, aligned on splat UVs) ───
+        {
+            const uint32_t sw = m_splatting.GetSplatMapCpuWidth();
+            const uint32_t sh = m_splatting.GetSplatMapCpuHeight();
+            if (sw == 0u || sh == 0u)
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] Grass mask: splat CPU dimensions invalid");
+                Destroy(device);
+                return false;
+            }
+
+            const std::string contentPath = config.GetString("paths.content", "game/data");
+            const std::string fullGrassPath =
+                grassMaskRelPath.empty() ? std::string() : (contentPath + "/" + grassMaskRelPath);
+
+            bool loadedOk = false;
+            if (!fullGrassPath.empty() && TerrainGrassDetail::LoadFromFile(fullGrassPath, m_grassMaskData))
+            {
+                if (m_grassMaskData.width == sw && m_grassMaskData.height == sh)
+                {
+                    loadedOk = true;
+                }
+                else
+                {
+                    LOG_WARN(Render,
+                             "[TerrainRenderer] Grass mask '{}' size {}×{} ≠ splat {}×{} — resetting to zeros",
+                             grassMaskRelPath, m_grassMaskData.width, m_grassMaskData.height, sw, sh);
+                }
+            }
+            else if (!grassMaskRelPath.empty())
+            {
+                LOG_WARN(Render, "[TerrainRenderer] Grass mask '{}' not found or invalid — zeros", grassMaskRelPath);
+            }
+
+            if (!loadedOk)
+            {
+                TerrainGrassDetail::GenerateZeros(sw, sh, m_grassMaskData);
+            }
+
+            if (!TerrainHoleMask::UploadToGpu(device, physDev, m_grassMaskData,
+                                              queue, queueFamilyIndex, m_grassMaskGpu))
+            {
+                LOG_ERROR(Render, "[TerrainRenderer] Grass mask GPU upload failed");
+                Destroy(device);
+                return false;
+            }
         }
 
         // ── M34.3: Load hole mask (graceful fallback if absent) ───────────────────
@@ -294,7 +361,7 @@ namespace engine::render::terrain
 
         // ── Descriptor set layout ─────────────────────────────────────────────────
         {
-            VkDescriptorSetLayoutBinding bindings[8]{};
+            VkDescriptorSetLayoutBinding bindings[9]{};
             // binding 0: heightmap sampler (vertex + fragment)
             bindings[0].binding            = 0;
             bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -335,10 +402,15 @@ namespace engine::render::terrain
             bindings[7].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             bindings[7].descriptorCount    = 1;
             bindings[7].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+            // binding 8: grass / detail mask (fragment) — R8_UNORM, ticket 010
+            bindings[8].binding            = 8;
+            bindings[8].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            bindings[8].descriptorCount    = 1;
+            bindings[8].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
             VkDescriptorSetLayoutCreateInfo dslCI{};
             dslCI.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            dslCI.bindingCount = 8;
+            dslCI.bindingCount = 9;
             dslCI.pBindings    = bindings;
 
             if (vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &m_descSetLayout) != VK_SUCCESS)
@@ -520,8 +592,8 @@ namespace engine::render::terrain
         {
             VkDescriptorPoolSize poolSizes[2]{};
             poolSizes[0].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            // heightmap + normalmap + splatmap + albedoArr + normalArr + ormArr + holeMask (M34.3)
-            poolSizes[0].descriptorCount = 7;
+            // heightmap + normalmap + splatmap + albedoArr + normalArr + ormArr + holeMask + grassMask
+            poolSizes[0].descriptorCount = 8;
             poolSizes[1].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             poolSizes[1].descriptorCount = 1;
 
@@ -643,7 +715,12 @@ namespace engine::render::terrain
             holeMaskInfo.imageView   = m_holeMaskGpu.view;
             holeMaskInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-            VkWriteDescriptorSet writes[8]{};
+            VkDescriptorImageInfo grassMaskInfo{};
+            grassMaskInfo.sampler     = m_grassMaskGpu.sampler;
+            grassMaskInfo.imageView   = m_grassMaskGpu.view;
+            grassMaskInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkWriteDescriptorSet writes[9]{};
             writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             writes[0].dstSet          = m_descSet;
             writes[0].dstBinding      = 0;
@@ -701,7 +778,14 @@ namespace engine::render::terrain
             writes[7].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             writes[7].pImageInfo      = &holeMaskInfo;
 
-            vkUpdateDescriptorSets(device, 8, writes, 0, nullptr);
+            writes[8].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[8].dstSet          = m_descSet;
+            writes[8].dstBinding      = 8;
+            writes[8].descriptorCount = 1;
+            writes[8].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[8].pImageInfo      = &grassMaskInfo;
+
+            vkUpdateDescriptorSets(device, 9, writes, 0, nullptr);
         }
 
         // ── M34.3: Load cliff meshes ──────────────────────────────────────────────
@@ -1168,6 +1252,39 @@ namespace engine::render::terrain
         return true;
     }
 
+    bool TerrainRenderer::ReuploadGrassMaskFromCpuData(VkDevice device, VkPhysicalDevice physDev,
+                                                       VkQueue queue, uint32_t queueFamilyIndex)
+    {
+        if (m_pipeline == VK_NULL_HANDLE || m_descSet == VK_NULL_HANDLE)
+        {
+            LOG_WARN(Render, "[TerrainRenderer] ReuploadGrassMaskFromCpuData: renderer not initialised");
+            return false;
+        }
+
+        TerrainHoleMask::DestroyGpu(device, m_grassMaskGpu);
+        if (!TerrainHoleMask::UploadToGpu(device, physDev, m_grassMaskData,
+                                          queue, queueFamilyIndex, m_grassMaskGpu))
+        {
+            LOG_ERROR(Render, "[TerrainRenderer] ReuploadGrassMaskFromCpuData: GPU upload failed");
+            return false;
+        }
+
+        VkDescriptorImageInfo grassMaskInfo{};
+        grassMaskInfo.sampler     = m_grassMaskGpu.sampler;
+        grassMaskInfo.imageView   = m_grassMaskGpu.view;
+        grassMaskInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        VkWriteDescriptorSet w{};
+        w.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w.dstSet          = m_descSet;
+        w.dstBinding      = 8;
+        w.descriptorCount = 1;
+        w.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w.pImageInfo      = &grassMaskInfo;
+        vkUpdateDescriptorSets(device, 1, &w, 0, nullptr);
+        return true;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
     // TerrainRenderer::Destroy
     // ─────────────────────────────────────────────────────────────────────────────
@@ -1194,7 +1311,9 @@ namespace engine::render::terrain
         if (m_cliffAlbedoImage   != VK_NULL_HANDLE) { vkDestroyImage(device, m_cliffAlbedoImage, nullptr);       m_cliffAlbedoImage   = VK_NULL_HANDLE; }
         if (m_cliffAlbedoMemory  != VK_NULL_HANDLE) { vkFreeMemory(device, m_cliffAlbedoMemory, nullptr);        m_cliffAlbedoMemory  = VK_NULL_HANDLE; }
 
-        // ── M34.3: Hole mask ──────────────────────────────────────────────────────
+        // ── Grass mask (010) + M34.3 hole mask ────────────────────────────────────
+        TerrainHoleMask::DestroyGpu(device, m_grassMaskGpu);
+        m_grassMaskData.mask.clear();
         TerrainHoleMask::DestroyGpu(device, m_holeMaskGpu);
         m_holeMaskData.mask.clear();
 
@@ -1262,7 +1381,7 @@ namespace engine::render::terrain
             ubo.terrainParams[0] = m_terrainWorldSize;
             ubo.terrainParams[1] = m_heightScale;
             ubo.terrainParams[2] = m_vertStepWorld;
-            ubo.terrainParams[3] = 0.0f;
+            ubo.terrainParams[3] = m_grassMaskVisualStrength;
             ubo.terrainOrigin[0] = m_terrainOriginX;
             ubo.terrainOrigin[1] = m_terrainOriginZ;
             ubo.terrainOrigin[2] = 0.0f;

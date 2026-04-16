@@ -8,6 +8,7 @@
 //
 // M34.3 addition: samples hole mask (R8_UNORM, binding 7). Fragments where the
 // mask value < 0.5 are discarded (holes / cave entrances).
+// Ticket 010: grass / surface-detail mask (R8_UNORM, binding 8), UV = splat UV.
 //
 // Outputs into 4 GBuffer attachments compatible with GeometryPass layout:
 //   location 0 (GBufferA)        : albedo RGBA8
@@ -36,6 +37,8 @@ layout(set = 0, binding = 5) uniform sampler2DArray uNormalArray; // 4 layers RG
 layout(set = 0, binding = 6) uniform sampler2DArray uORMArray;    // 4 layers RGBA8 (R=AO,G=rough,B=metal)
 // M34.3: hole mask (R8_UNORM). 0.0 = hole (fragment discarded), 1.0 = solid.
 layout(set = 0, binding = 7) uniform sampler2D      uHoleMask;
+// 010: detail mask (herbe). 0 = pas d’effet. ubo.terrainParams.w = intensité globale (0 = désactivé).
+layout(set = 0, binding = 8) uniform sampler2D      uGrassMask;
 
 // ── Push constants ────────────────────────────────────────────────────────────
 layout(push_constant) uniform PC {
@@ -113,6 +116,9 @@ void main()
     albedo += triplanarSample(uAlbedoArray, 1.0, vWorldPos, macroN, tilingDirt ).rgb * w.g;
     albedo += triplanarSample(uAlbedoArray, 2.0, vWorldPos, macroN, tilingRock ).rgb * w.b;
     albedo += triplanarSample(uAlbedoArray, 3.0, vWorldPos, macroN, tilingSnow ).rgb * w.a;
+    float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
+    vec3 grassHue = vec3(0.88, 1.04, 0.82);
+    albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
     outAlbedo = vec4(albedo, 1.0);
 
     // ── Sample and blend detail normals (triplanar per layer) ─────────────────

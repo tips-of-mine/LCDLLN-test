@@ -73,14 +73,16 @@ namespace engine::server
 			return "/leave";
 		case ChatSlashCommandKind::Loot:
 			return "/loot";
-		case ChatSlashCommandKind::PartyKick:
-			return "/pkick";
-		case ChatSlashCommandKind::None:
-			break;
-		}
-
-		return "/?";
+	case ChatSlashCommandKind::PartyKick:
+		return "/pkick";
+	case ChatSlashCommandKind::Trade:
+		return "/trade";
+	case ChatSlashCommandKind::None:
+		break;
 	}
+
+	return "/?";
+}
 
 	FriendSubCommand ParseFriendSubCommand(std::string_view argsRemainder, std::string& outTargetName)
 	{
@@ -221,6 +223,14 @@ namespace engine::server
 		{
 			set(ChatSlashCommandKind::PartyKick, remainder);
 			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::PartyKick), remainder.size());
+			return true;
+		}
+
+		// M35.3 — Trade command
+		if (cmdToken == "/trade")
+		{
+			set(ChatSlashCommandKind::Trade, remainder);
+			LOG_DEBUG(Net, "[ChatCommandParser] Parsed {} (args_len={})", ChatSlashCommandLabel(ChatSlashCommandKind::Trade), remainder.size());
 			return true;
 		}
 

@@ -1,0 +1,31 @@
+{
+  "tree_species": [
+    {
+      "id": "sapin",
+      "scale_min": 0.65,
+      "scale_max": 1.1,
+      "shapes": [
+        { "gltf": "zones/zone_0/zone_0.gltf" },
+        { "gltf": "zones/zone_1/zone_1.gltf" }
+      ]
+    },
+    {
+      "id": "chene",
+      "scale_min": 0.85,
+      "scale_max": 1.35,
+      "shapes": [
+        { "gltf": "zones/zone_1/zone_1.gltf" },
+        { "gltf": "zones/zone_2/zone_2.gltf" }
+      ]
+    },
+    {
+      "id": "bouleau",
+      "scale_min": 0.55,
+      "scale_max": 0.98,
+      "shapes": [
+        { "gltf": "zones/zone_2/zone_2.gltf" },
+        { "gltf": "zones/zone_0/zone_0.gltf" }
+      ]
+    }
+  ]
+}

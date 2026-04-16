@@ -1,6 +1,7 @@
 #include "engine/render/terrain/TerrainSplatting.h"
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/platform/FileSystem.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -324,24 +325,65 @@ namespace engine::render::terrain
             "[TerrainSplatting] Tiling: grass={} dirt={} rock={} snow={}",
             m_layerTiling[0], m_layerTiling[1], m_layerTiling[2], m_layerTiling[3]);
 
-        // ── Build default splat map (all grass: R=255, G=B=A=0) ──────────────────
-        // MVP: generate a flat splat map. If splatmapRelPath is provided and the
-        // binary format is available, it could be loaded here in a future ticket.
-        (void)splatmapRelPath; // reserved for future file loading
-        constexpr uint32_t kSplatW = 1024u;
-        constexpr uint32_t kSplatH = 1024u;
+        constexpr uint32_t kDefaultSplatW = 1024u;
+        constexpr uint32_t kDefaultSplatH = 1024u;
+        constexpr uint32_t kMaxSplatDim   = 4096u;
 
-        std::vector<uint8_t> splatData(kSplatW * kSplatH * 4u, 0u);
-        for (uint32_t i = 0; i < kSplatW * kSplatH; ++i)
+        auto makeAllGrass = [](uint32_t w, uint32_t h) {
+            std::vector<uint8_t> rgba(static_cast<size_t>(w) * h * 4u, 0u);
+            for (uint32_t i = 0; i < w * h; ++i)
+            {
+                rgba[i * 4 + 0] = 255u;
+            }
+            return rgba;
+        };
+
+        uint32_t kSplatW = kDefaultSplatW;
+        uint32_t kSplatH = kDefaultSplatH;
+        std::vector<uint8_t> splatData;
+
+        if (!splatmapRelPath.empty())
         {
-            // RGBA: R=grass weight, G=dirt, B=rock, A=snow
-            splatData[i * 4 + 0] = 255u; // grass = 1.0
-            splatData[i * 4 + 1] = 0u;
-            splatData[i * 4 + 2] = 0u;
-            splatData[i * 4 + 3] = 0u;
+            const std::vector<uint8_t> fileBytes =
+                engine::platform::FileSystem::ReadAllBytesContent(config, splatmapRelPath);
+            if (fileBytes.size() >= 12u)
+            {
+                uint32_t magic = 0;
+                uint32_t fw = 0;
+                uint32_t fh = 0;
+                std::memcpy(&magic, fileBytes.data(), sizeof(magic));
+                std::memcpy(&fw, fileBytes.data() + 4u, sizeof(fw));
+                std::memcpy(&fh, fileBytes.data() + 8u, sizeof(fh));
+                const size_t expected = 12ull + static_cast<size_t>(fw) * static_cast<size_t>(fh) * 4ull;
+                if (magic == kTerrainSplatFileMagic && fw > 0u && fh > 0u && fw <= kMaxSplatDim && fh <= kMaxSplatDim
+                    && fileBytes.size() == expected)
+                {
+                    splatData.assign(fileBytes.begin() + 12, fileBytes.end());
+                    kSplatW = fw;
+                    kSplatH = fh;
+                    LOG_INFO(Render, "[TerrainSplatting] Loaded splat SLAP from '{}' ({}x{})", splatmapRelPath, fw, fh);
+                }
+                else
+                {
+                    LOG_WARN(Render,
+                        "[TerrainSplatting] Fichier splat invalide ou dimensions hors plage ('{}') — défaut herbe {}x{}",
+                        splatmapRelPath, kDefaultSplatW, kDefaultSplatH);
+                }
+            }
+            else
+            {
+                LOG_WARN(Render, "[TerrainSplatting] Fichier splat absent ou trop court ('{}') — défaut herbe {}x{}",
+                    splatmapRelPath, kDefaultSplatW, kDefaultSplatH);
+            }
         }
-        LOG_DEBUG(Render, "[TerrainSplatting] Generated default splat map ({}x{}, all grass)",
-                  kSplatW, kSplatH);
+
+        if (splatData.empty())
+        {
+            kSplatW = kDefaultSplatW;
+            kSplatH = kDefaultSplatH;
+            splatData = makeAllGrass(kSplatW, kSplatH);
+            LOG_DEBUG(Render, "[TerrainSplatting] Default splat map ({}x{}, all grass)", kSplatW, kSplatH);
+        }
 
         // ── Keep CPU copy for M34.4 editing tools ─────────────────────────────────
         m_cpuData   = splatData;

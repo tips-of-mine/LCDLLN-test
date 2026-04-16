@@ -20,6 +20,9 @@ if(WIN32)
     CurrencyConfig.cpp
     VendorCatalog.cpp
     PlayerWalletService.cpp
+    TradeSystem.cpp
+    GatheringSystem.cpp
+    CraftingSystem.cpp
     AuctionHouse.cpp
     QuestRuntime.cpp
     SpawnerRuntime.cpp

@@ -338,6 +338,21 @@ namespace engine::server
 		// M32.2 — PartySystem (in-memory, no DB dependency).
 		m_partySystem.Init();
 
+		// M35.3 — TradeSystem (in-memory, direct player-to-player trade).
+		m_tradeSystem.Init(m_tickHz);
+
+		// M36.1 — GatheringSystem (resource nodes + harvest sessions).
+		if (!InitGathering())
+		{
+			LOG_WARN(Core, "[ServerApp] GatheringSystem init skipped or partial — harvesting unavailable");
+		}
+
+		// M36.2 — CraftingSystem (recipes + profession skill leveling).
+		if (!InitCrafting())
+		{
+			LOG_WARN(Core, "[ServerApp] CraftingSystem init skipped or partial — crafting unavailable");
+		}
+
 		if (!m_auctionHouse.Init())
 		{
 			LOG_ERROR(Core, "[ServerApp] Init FAILED: auction house startup failed");
@@ -456,6 +471,11 @@ namespace engine::server
 		m_moderationAuditLogReady = false;
 		m_friendSystem.Shutdown();
 		m_partySystem.Shutdown();
+		m_tradeSystem.Shutdown();
+		if (m_gatheringSystem.IsInitialized())
+			m_gatheringSystem.Shutdown();
+		if (m_craftingSystem.IsInitialized())
+			m_craftingSystem.Shutdown();
 		LOG_INFO(Core, "[ServerApp] Destroyed");
 	}
 
@@ -581,6 +601,100 @@ namespace engine::server
 		if (DecodeAuctionBuyoutRequest(packetBytes, ahBuy))
 		{
 			HandleAuctionBuyoutRequest(datagram.endpoint, ahBuy);
+			return;
+		}
+
+		// M35.3 — Direct player-to-player trade packets.
+		TradeAcceptMessage tradeAccept{};
+		if (DecodeTradeAccept(packetBytes, tradeAccept))
+		{
+			HandleTradeAccept(datagram.endpoint, tradeAccept);
+			return;
+		}
+
+		TradeDeclineMessage tradeDecline{};
+		if (DecodeTradeDecline(packetBytes, tradeDecline))
+		{
+			HandleTradeDecline(datagram.endpoint, tradeDecline);
+			return;
+		}
+
+		TradeAddItemMessage tradeAddItem{};
+		if (DecodeTradeAddItem(packetBytes, tradeAddItem))
+		{
+			HandleTradeAddItem(datagram.endpoint, tradeAddItem);
+			return;
+		}
+
+		TradeSetGoldMessage tradeSetGold{};
+		if (DecodeTradeSetGold(packetBytes, tradeSetGold))
+		{
+			HandleTradeSetGold(datagram.endpoint, tradeSetGold);
+			return;
+		}
+
+		TradeLockMessage tradeLock{};
+		if (DecodeTradeLock(packetBytes, tradeLock))
+		{
+			HandleTradeLock(datagram.endpoint, tradeLock);
+			return;
+		}
+
+		TradeConfirmMessage tradeConfirm{};
+		if (DecodeTradeConfirm(packetBytes, tradeConfirm))
+		{
+			HandleTradeConfirm(datagram.endpoint, tradeConfirm);
+			return;
+		}
+
+		TradeCancelMessage tradeCancelMsg{};
+		if (DecodeTradeCancel(packetBytes, tradeCancelMsg))
+		{
+			HandleTradeCancelPacket(datagram.endpoint, tradeCancelMsg);
+			return;
+		}
+
+		// M36.1 — Gathering / harvesting resource node packets.
+		HarvestRequestMessage harvestReq{};
+		if (DecodeHarvestRequest(packetBytes, harvestReq))
+		{
+			HandleHarvestRequest(datagram.endpoint, harvestReq);
+			return;
+		}
+
+		HarvestCancelRequestMessage harvestCancelReq{};
+		if (DecodeHarvestCancelRequest(packetBytes, harvestCancelReq))
+		{
+			HandleHarvestCancelRequest(datagram.endpoint, harvestCancelReq);
+			return;
+		}
+
+		// M36.2 — Crafting / profession packets.
+		LearnProfessionRequestMessage learnProfReq{};
+		if (DecodeLearnProfessionRequest(packetBytes, learnProfReq))
+		{
+			HandleLearnProfessionRequest(datagram.endpoint, learnProfReq);
+			return;
+		}
+
+		CraftRecipeListRequestMessage recipeListReq{};
+		if (DecodeCraftRecipeListRequest(packetBytes, recipeListReq))
+		{
+			HandleCraftRecipeListRequest(datagram.endpoint, recipeListReq);
+			return;
+		}
+
+		CraftRequestMessage craftReq{};
+		if (DecodeCraftRequest(packetBytes, craftReq))
+		{
+			HandleCraftRequest(datagram.endpoint, craftReq);
+			return;
+		}
+
+		CraftCancelRequestMessage craftCancelReq{};
+		if (DecodeCraftCancelRequest(packetBytes, craftCancelReq))
+		{
+			HandleCraftCancelRequest(datagram.endpoint, craftCancelReq);
 			return;
 		}
 
@@ -790,9 +904,11 @@ namespace engine::server
 			acceptedClient.stats = persistedState.stats;
 			acceptedClient.inventory = persistedState.inventory;
 			acceptedClient.questStates = persistedState.questStates;
-			acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
-			acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
-			acceptedClient.hasReplicatedState = true;
+		acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
+		acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
+		/// M36.2 — restore known professions.
+		acceptedClient.professions = std::move(persistedState.professions);
+		acceptedClient.hasReplicatedState = true;
 			LOG_INFO(Net,
 				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
 				acceptedClient.clientId,
@@ -918,6 +1034,8 @@ namespace engine::server
 		if (m_partySystem.IsInitialized())
 			m_partySystem.ExpireInvites(m_currentTick);
 		ProcessAuctionHouseTick();
+		TickGathering();
+		TickCrafting();
 		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
 	}
 
@@ -1112,6 +1230,8 @@ namespace engine::server
 		state.chatModeratorRole = client.chatModeratorRole;
 		state.mailboxGold = 0;
 		state.mailboxItems.clear();
+		/// M36.2 — persist profession skill progress.
+		state.professions = client.professions;
 		if (!m_characterPersistence.SaveCharacter(state))
 		{
 			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
@@ -4148,16 +4268,20 @@ namespace engine::server
 		case ChatSlashCommandKind::PartyKick:
 			return HandlePartyKickCommand(sender, command.argsRemainder);
 
-		case ChatSlashCommandKind::None:
-		default:
-			LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
-			return true;
-		}
-	}
+	// M35.3 — Trade command
+	case ChatSlashCommandKind::Trade:
+		return HandleTradeCommand(sender, command.argsRemainder);
 
-	// -------------------------------------------------------------------------
-	// M32.1 — Friend system helpers
-	// -------------------------------------------------------------------------
+	case ChatSlashCommandKind::None:
+	default:
+		LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
+		return true;
+	}
+}
+
+// -------------------------------------------------------------------------
+// M32.1 — Friend system helpers
+// -------------------------------------------------------------------------
 
 	void ServerApp::OnClientLogin(ConnectedClient& client)
 	{
@@ -5452,5 +5576,756 @@ namespace engine::server
 			itemId,
 			quantity);
 		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Direct player-to-player trade handlers
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::HandleTradeCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		const std::string_view targetName = argsRemainder;
+		if (targetName.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /trade <player_name>");
+			return true;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player not found or not in range.");
+			LOG_WARN(Net, "[TradeSystem] /trade target not found (sender={}, target='{}')",
+			         sender.clientId, targetName);
+			return true;
+		}
+
+		if (target->clientId == sender.clientId)
+		{
+			SendChatSystemNotice(sender, "You cannot trade with yourself.");
+			return true;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.SendTradeRequest(sender, *target, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(sender, "Trade request failed: " + error);
+			return true;
+		}
+
+		/// Notify target via TradeRequestNotify packet.
+		const TradeRequestNotifyMessage notify{ "P" + std::to_string(sender.clientId) };
+		const auto packet = EncodeTradeRequestNotify(notify);
+		m_transport.Send(target->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+
+		SendChatSystemNotice(sender, "Trade request sent to " + std::string(targetName) + ".");
+		LOG_INFO(Net, "[TradeSystem] /trade request sent (sender={}, target={})",
+		         sender.clientId, target->clientId);
+		return true;
+	}
+
+	void ServerApp::HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& message)
+	{
+		ConnectedClient* acceptor = FindClient(endpoint);
+		if (acceptor == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeAccept: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.AcceptTradeRequest(*acceptor, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*acceptor, "Trade accept failed: " + error);
+			LOG_WARN(Net, "[TradeSystem] TradeAccept failed (client={}, reason={})",
+			         acceptor->clientId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(acceptor->clientId);
+		BroadcastTradeWindowUpdate(acceptor->clientId, partnerClientId);
+		LOG_INFO(Net, "[TradeSystem] TradeAccept OK (client={}, partner={})",
+		         acceptor->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& message)
+	{
+		ConnectedClient* decliner = FindClient(endpoint);
+		if (decliner == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeDecline: unknown endpoint");
+			return;
+		}
+
+		/// Find initiator before declining so we can notify them.
+		const PendingTradeRequest* req = m_tradeSystem.FindPendingRequest(decliner->clientId);
+		uint32_t initiatorClientId = req ? req->initiatorClientId : 0;
+
+		std::string error;
+		m_tradeSystem.DeclineTradeRequest(*decliner, error);
+
+		SendChatSystemNotice(*decliner, "Trade request declined.");
+		if (initiatorClientId != 0)
+		{
+			ConnectedClient* initiator = FindConnectedClient(initiatorClientId);
+			if (initiator != nullptr)
+			{
+				SendChatSystemNotice(*initiator,
+					"P" + std::to_string(decliner->clientId) + " declined your trade request.");
+			}
+		}
+		LOG_INFO(Net, "[TradeSystem] TradeDecline OK (client={})", decliner->clientId);
+	}
+
+	void ServerApp::HandleTradeAddItem(const Endpoint& endpoint, const TradeAddItemMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeAddItem: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.AddItem(*caller, message.itemId, message.quantity, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*caller, "Cannot add item: " + error);
+			LOG_WARN(Net, "[TradeSystem] AddItem failed (client={}, item={}, reason={})",
+			         caller->clientId, message.itemId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeSetGold(const Endpoint& endpoint, const TradeSetGoldMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeSetGold: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.SetGold(*caller, message.goldAmount, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*caller, "Cannot set gold: " + error);
+			LOG_WARN(Net, "[TradeSystem] SetGold failed (client={}, reason={})",
+			         caller->clientId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeLock: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.Lock(*caller, m_currentTick, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*caller, "Cannot lock trade: " + error);
+			LOG_WARN(Net, "[TradeSystem] Lock failed (client={}, reason={})",
+			         caller->clientId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeConfirm: unknown endpoint");
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		ConnectedClient* partner = FindConnectedClient(partnerClientId);
+		if (partner == nullptr)
+		{
+			/// Partner disconnected — cancel the trade.
+			std::string cancelError;
+			m_tradeSystem.Cancel(caller->clientId, cancelError);
+			SendChatSystemNotice(*caller, "Trade cancelled: partner disconnected.");
+			LOG_WARN(Net, "[TradeSystem] TradeConfirm: partner not found (caller={}, partner_id={})",
+			         caller->clientId, partnerClientId);
+			return;
+		}
+
+		/// Build audit strings before swap (items may change after ApplySwap).
+		const TradeSession* sessionSnap = m_tradeSystem.FindSession(caller->clientId);
+		std::string itemsA, itemsB;
+		uint32_t goldA = 0, goldB = 0;
+		if (sessionSnap != nullptr)
+		{
+			for (const auto& s : sessionSnap->sideA.items)
+				itemsA += std::to_string(s.itemId) + "x" + std::to_string(s.quantity) + " ";
+			for (const auto& s : sessionSnap->sideB.items)
+				itemsB += std::to_string(s.itemId) + "x" + std::to_string(s.quantity) + " ";
+			goldA = sessionSnap->sideA.goldAmount;
+			goldB = sessionSnap->sideB.goldAmount;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.Confirm(*caller, *partner, error);
+		if (result == TradeOpResult::Ok)
+		{
+			/// Check whether session was closed (both confirmed & swap applied).
+			if (m_tradeSystem.FindSession(caller->clientId) == nullptr)
+			{
+				LogTradeAudit(caller->clientId, partnerClientId, itemsA, itemsB, goldA, goldB);
+				/// Send WalletUpdate to both so gold counters refresh.
+				SendWalletUpdate(*caller);
+				SendWalletUpdate(*partner);
+				BroadcastTradeComplete(caller->clientId, partnerClientId);
+				LOG_INFO(Net, "[TradeSystem] TradeConfirm: swap completed (A={} B={})",
+				         caller->clientId, partnerClientId);
+			}
+			else
+			{
+				/// Waiting for partner — send updated window.
+				BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+			}
+		}
+		else
+		{
+			/// Validation failed — cancel trade and return items (no swap occurred).
+			BroadcastTradeCancelled(caller->clientId, partnerClientId, error);
+			LOG_WARN(Net, "[TradeSystem] TradeConfirm: validation failed (caller={}, reason={})",
+			         caller->clientId, error);
+		}
+	}
+
+	void ServerApp::HandleTradeCancelPacket(const Endpoint& endpoint, const TradeCancelMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeCancel: unknown endpoint");
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		std::string error;
+		m_tradeSystem.Cancel(caller->clientId, error);
+		BroadcastTradeCancelled(caller->clientId, partnerClientId, "Trade cancelled by player.");
+		LOG_INFO(Net, "[TradeSystem] TradeCancel by client={}", caller->clientId);
+	}
+
+	void ServerApp::BroadcastTradeWindowUpdate(uint32_t clientIdA, uint32_t clientIdB)
+	{
+		ConnectedClient* clientA = FindConnectedClient(clientIdA);
+		ConnectedClient* clientB = FindConnectedClient(clientIdB);
+
+		if (clientA != nullptr)
+		{
+			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdA, m_currentTick);
+			const auto packet = EncodeTradeWindowUpdate(msg);
+			m_transport.Send(clientA->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		}
+		if (clientB != nullptr)
+		{
+			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdB, m_currentTick);
+			const auto packet = EncodeTradeWindowUpdate(msg);
+			m_transport.Send(clientB->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		}
+	}
+
+	void ServerApp::BroadcastTradeComplete(uint32_t clientIdA, uint32_t clientIdB)
+	{
+		auto sendComplete = [&](uint32_t clientId)
+		{
+			ConnectedClient* client = FindConnectedClient(clientId);
+			if (client == nullptr)
+			{
+				return;
+			}
+			const TradeCompleteMessage msg{ clientId };
+			const auto packet = EncodeTradeComplete(msg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendChatSystemNotice(*client, "Trade completed successfully.");
+		};
+		sendComplete(clientIdA);
+		sendComplete(clientIdB);
+		LOG_INFO(Net, "[TradeSystem] BroadcastTradeComplete: A={} B={}", clientIdA, clientIdB);
+	}
+
+	void ServerApp::BroadcastTradeCancelled(uint32_t clientIdA, uint32_t clientIdB, std::string_view reason)
+	{
+		const TradeCancelledMessage msg{ std::string(reason) };
+		const auto packet = EncodeTradeCancelled(msg);
+
+		auto sendCancelled = [&](uint32_t clientId)
+		{
+			ConnectedClient* client = FindConnectedClient(clientId);
+			if (client == nullptr)
+			{
+				return;
+			}
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendChatSystemNotice(*client, "Trade cancelled: " + std::string(reason));
+		};
+		sendCancelled(clientIdA);
+		if (clientIdB != 0 && clientIdB != clientIdA)
+		{
+			sendCancelled(clientIdB);
+		}
+		LOG_INFO(Net, "[TradeSystem] BroadcastTradeCancelled: A={} B={} reason={}",
+		         clientIdA, clientIdB, reason);
+	}
+
+	void ServerApp::LogTradeAudit(
+		uint32_t clientIdA,
+		uint32_t clientIdB,
+		const std::string& itemsA,
+		const std::string& itemsB,
+		uint32_t goldA,
+		uint32_t goldB)
+	{
+		LOG_INFO(Gameplay,
+		         "[TradeAudit] TRADE A={} B={} | A_gave_gold={} A_gave_items=[{}] | "
+		         "B_gave_gold={} B_gave_items=[{}]",
+		         clientIdA, clientIdB, goldA, itemsA, goldB, itemsB);
+	}
+
+	// -------------------------------------------------------------------------
+	// M36.1 — Gathering / harvesting resource nodes handlers
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::InitGathering()
+	{
+		if (!m_gatheringSystem.Init(m_config, m_tickHz, m_nextServerEntityId))
+		{
+			LOG_WARN(Core, "[ServerApp] GatheringSystem Init FAILED — harvesting disabled");
+			return false;
+		}
+		LOG_INFO(Core, "[ServerApp] GatheringSystem Init OK (nodes={})", m_gatheringSystem.NodeCount());
+		return true;
+	}
+
+	void ServerApp::HandleHarvestRequest(const Endpoint& endpoint, const HarvestRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: unknown endpoint");
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: clientId mismatch (expected={}, got={})",
+			         client->clientId, message.clientId);
+			return;
+		}
+		if (!m_gatheringSystem.IsInitialized())
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest ignored: system not initialized");
+			return;
+		}
+
+		uint32_t durationTicks = 0;
+		const HarvestOpResult result = m_gatheringSystem.TryStartHarvest(
+			*client, message.nodeEntityId, m_currentTick, durationTicks);
+
+		switch (result)
+		{
+		case HarvestOpResult::Ok:
+		{
+			const HarvestStartMessage startMsg{ message.nodeEntityId, durationTicks };
+			const auto packet = EncodeHarvestStart(startMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			LOG_INFO(Gameplay, "[GatheringSystem] HarvestRequest OK: client={} node={} ticks={}",
+			         client->clientId, message.nodeEntityId, durationTicks);
+			break;
+		}
+		case HarvestOpResult::NodeNotFound:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: node {} not found", message.nodeEntityId);
+			break;
+		case HarvestOpResult::NodeNotAvailable:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: node {} depleted", message.nodeEntityId);
+			break;
+		case HarvestOpResult::OutOfRange:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: client {} out of range of node {}",
+			         client->clientId, message.nodeEntityId);
+			break;
+		case HarvestOpResult::AlreadyHarvesting:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: client {} already harvesting",
+			         client->clientId);
+			break;
+		}
+	}
+
+	void ServerApp::HandleHarvestCancelRequest(const Endpoint& endpoint, const HarvestCancelRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestCancelRequest: unknown endpoint");
+			return;
+		}
+		if (!m_gatheringSystem.IsInitialized())
+		{
+			return;
+		}
+
+		const EntityId nodeId = m_gatheringSystem.CancelHarvest(client->clientId);
+		if (nodeId != 0)
+		{
+			(void)SendHarvestCancelled(*client, nodeId, HarvestCancelReason::PlayerRequested);
+		}
+	}
+
+	void ServerApp::TickGathering()
+	{
+		if (!m_gatheringSystem.IsInitialized())
+		{
+			return;
+		}
+
+		std::vector<EntityId>                outCompletedNodeIds;
+		std::vector<uint32_t>                outCompletedClientIds;
+		std::vector<std::vector<ItemStack>>  outCompletedItems;
+		std::vector<EntityId>                outMoveCancelledNodeIds;
+		std::vector<uint32_t>                outMoveCancelledClientIds;
+
+		m_gatheringSystem.Tick(
+			m_currentTick,
+			m_clients,
+			outCompletedNodeIds,
+			outCompletedClientIds,
+			outCompletedItems,
+			outMoveCancelledNodeIds,
+			outMoveCancelledClientIds);
+
+		/// Handle completed harvests — grant loot + notify client.
+		for (size_t i = 0; i < outCompletedClientIds.size(); ++i)
+		{
+			ConnectedClient* client = FindConnectedClient(outCompletedClientIds[i]);
+			if (client == nullptr)
+			{
+				continue;
+			}
+
+			/// Add loot to inventory.
+			const std::vector<ItemStack>& loot = outCompletedItems[i];
+			for (const ItemStack& item : loot)
+			{
+				AddItemToInventory(*client, item);
+			}
+
+			/// Send HarvestComplete then InventoryDelta.
+			const HarvestCompleteMessage completeMsg{ outCompletedNodeIds[i] };
+			const auto completePkt = EncodeHarvestComplete(completeMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
+
+			if (!loot.empty())
+			{
+				(void)SendInventoryDelta(
+					*client,
+					std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+				SaveConnectedClient(*client, "harvest_complete");
+			}
+
+			LOG_INFO(Gameplay,
+			         "[GatheringSystem] Harvest delivered: client={} node={} items={}",
+			         client->clientId, outCompletedNodeIds[i], loot.size());
+		}
+
+		/// Handle movement cancellations.
+		for (size_t i = 0; i < outMoveCancelledClientIds.size(); ++i)
+		{
+			ConnectedClient* client = FindConnectedClient(outMoveCancelledClientIds[i]);
+			if (client == nullptr)
+			{
+				continue;
+			}
+			(void)SendHarvestCancelled(*client, outMoveCancelledNodeIds[i], HarvestCancelReason::PlayerMoved);
+		}
+	}
+
+	bool ServerApp::SendHarvestCancelled(
+		const ConnectedClient& receiver,
+		EntityId               nodeEntityId,
+		HarvestCancelReason    reason)
+	{
+		const HarvestCancelledMessage msg{ nodeEntityId, reason };
+		const auto packet = EncodeHarvestCancelled(msg);
+		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		LOG_DEBUG(Gameplay, "[GatheringSystem] HarvestCancelled sent: client={} node={} reason={}",
+		          receiver.clientId, nodeEntityId, static_cast<uint8_t>(reason));
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M36.2 — Crafting / profession skill system handlers
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::InitCrafting()
+	{
+		if (!m_craftingSystem.Init(m_config, m_tickHz))
+		{
+			LOG_WARN(Core, "[ServerApp] CraftingSystem Init FAILED — crafting disabled");
+			return false;
+		}
+		LOG_INFO(Core, "[ServerApp] CraftingSystem Init OK (recipes={})", m_craftingSystem.RecipeCount());
+		return true;
+	}
+
+	void ServerApp::HandleLearnProfessionRequest(const Endpoint& endpoint, const LearnProfessionRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession: unknown endpoint");
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession: clientId mismatch");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession: system not initialized");
+			return;
+		}
+
+		const bool asPrimary = (message.asPrimary != 0);
+		const LearnProfessionResult result = m_craftingSystem.LearnProfession(*client, message.professionKey, asPrimary);
+
+		switch (result)
+		{
+		case LearnProfessionResult::Ok:
+			(void)SendProfessionUpdate(*client);
+			SaveConnectedClient(*client, "learn_profession");
+			LOG_INFO(Gameplay, "[CraftingSystem] LearnProfession OK: client={} profession='{}'",
+			         client->clientId, message.professionKey);
+			break;
+		case LearnProfessionResult::AlreadyKnown:
+			SendChatSystemNotice(*client, "You already know that profession.");
+			break;
+		case LearnProfessionResult::TooManyPrimary:
+			SendChatSystemNotice(*client, "You already have the maximum number of primary professions.");
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession blocked: too many primary (client={})",
+			         client->clientId);
+			break;
+		}
+	}
+
+	void ServerApp::HandleCraftRecipeListRequest(const Endpoint& endpoint, const CraftRecipeListRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] RecipeListRequest: unknown endpoint");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		/// Find the player's skill level for the requested profession.
+		uint32_t playerSkill = 0;
+		for (const ProfessionEntry& e : client->professions)
+		{
+			if (e.professionKey == message.professionKey) { playerSkill = e.skillLevel; break; }
+		}
+
+		const std::vector<const RecipeDefinition*> recipes =
+			m_craftingSystem.GetVisibleRecipes(message.professionKey, playerSkill);
+
+		CraftRecipeListResultMessage result{};
+		result.clientId      = client->clientId;
+		result.professionKey = message.professionKey;
+		for (const RecipeDefinition* r : recipes)
+		{
+			CraftRecipeWireRow row{};
+			row.recipeId       = r->recipeId;
+			row.skillRequired  = r->skillRequired;
+			row.outputItemId   = r->outputItemId;
+			row.outputQuantity = r->outputQuantity;
+			result.recipes.push_back(std::move(row));
+		}
+
+		const auto packet = EncodeCraftRecipeListResult(result);
+		m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		LOG_DEBUG(Gameplay, "[CraftingSystem] RecipeListResult sent: client={} profession='{}' recipes={}",
+		          client->clientId, message.professionKey, result.recipes.size());
+	}
+
+	void ServerApp::HandleCraftRequest(const Endpoint& endpoint, const CraftRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] CraftRequest: unknown endpoint");
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] CraftRequest: clientId mismatch");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		uint32_t durationTicks = 0;
+		const CraftOpResult result = m_craftingSystem.TryStartCraft(
+			*client, message.recipeId, m_currentTick, durationTicks);
+
+		switch (result)
+		{
+		case CraftOpResult::Ok:
+		{
+			const CraftStartMessage startMsg{ message.recipeId, durationTicks };
+			const auto packet = EncodeCraftStart(startMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			LOG_INFO(Gameplay, "[CraftingSystem] CraftStart: client={} recipe='{}' ticks={}",
+			         client->clientId, message.recipeId, durationTicks);
+			break;
+		}
+		case CraftOpResult::RecipeNotFound:
+			SendChatSystemNotice(*client, "Unknown recipe.");
+			break;
+		case CraftOpResult::NoProfession:
+			SendChatSystemNotice(*client, "You don't have the required profession.");
+			break;
+		case CraftOpResult::SkillTooLow:
+			SendChatSystemNotice(*client, "Your skill level is too low for this recipe.");
+			break;
+		case CraftOpResult::MissingIngredients:
+			SendChatSystemNotice(*client, "You are missing required ingredients.");
+			break;
+		case CraftOpResult::AlreadyCrafting:
+			SendChatSystemNotice(*client, "You are already crafting something.");
+			break;
+		}
+	}
+
+	void ServerApp::HandleCraftCancelRequest(const Endpoint& endpoint, const CraftCancelRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] CraftCancelRequest: unknown endpoint");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		const std::string cancelled = m_craftingSystem.CancelCraft(client->clientId);
+		if (!cancelled.empty())
+		{
+			const CraftCancelledMessage msg{ cancelled };
+			const auto packet = EncodeCraftCancelled(msg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			LOG_INFO(Gameplay, "[CraftingSystem] CraftCancelled: client={} recipe='{}'",
+			         client->clientId, cancelled);
+		}
+	}
+
+	void ServerApp::TickCrafting()
+	{
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		std::vector<uint32_t>          completedClientIds;
+		std::vector<std::string>       completedRecipeIds;
+		std::vector<uint8_t>           skillGained;
+		std::vector<uint32_t>          newSkillLevel;
+		std::vector<CraftQualityTier>  qualityTiers;
+
+		m_craftingSystem.Tick(
+			m_currentTick,
+			m_clients,
+			completedClientIds,
+			completedRecipeIds,
+			skillGained,
+			newSkillLevel,
+			qualityTiers);
+
+		for (size_t i = 0; i < completedClientIds.size(); ++i)
+		{
+			ConnectedClient* client = FindConnectedClient(completedClientIds[i]);
+			if (client == nullptr) continue;
+
+			/// Send CraftComplete (includes quality tier from M36.3).
+			CraftCompleteMessage completeMsg{};
+			completeMsg.recipeId      = completedRecipeIds[i];
+			completeMsg.skillGained   = skillGained[i];
+			completeMsg.newSkillLevel = newSkillLevel[i];
+			completeMsg.qualityTier   = static_cast<uint8_t>(qualityTiers[i]);
+			const auto completePkt = EncodeCraftComplete(completeMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
+
+			/// Send InventoryDelta so the client refreshes its bag.
+			(void)SendInventoryDelta(
+				*client,
+				std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+
+			/// If a skill-up occurred, send ProfessionUpdate.
+			if (skillGained[i] != 0)
+			{
+				(void)SendProfessionUpdate(*client);
+			}
+
+			SaveConnectedClient(*client, "craft_complete");
+
+			LOG_INFO(Gameplay,
+			         "[CraftingSystem] Craft delivered: client={} recipe='{}' quality={} skillGained={} newLevel={}",
+			         client->clientId, completedRecipeIds[i],
+			         static_cast<uint8_t>(qualityTiers[i]), skillGained[i], newSkillLevel[i]);
+		}
+	}
+
+	bool ServerApp::SendProfessionUpdate(const ConnectedClient& receiver)
+	{
+		ProfessionUpdateMessage msg{};
+		msg.clientId = receiver.clientId;
+		for (const ProfessionEntry& e : receiver.professions)
+		{
+			ProfessionWireEntry wire{};
+			wire.professionKey = e.professionKey;
+			wire.skillLevel    = e.skillLevel;
+			wire.isPrimary     = e.isPrimary ? 1u : 0u;
+			msg.professions.push_back(std::move(wire));
+		}
+		const auto packet = EncodeProfessionUpdate(msg);
+		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		LOG_DEBUG(Gameplay, "[CraftingSystem] ProfessionUpdate sent: client={} professions={}",
+		          receiver.clientId, msg.professions.size());
+		return true;
+	}
+
+	void ServerApp::ApplyPersistedProfessions(ConnectedClient& client, const PersistedCharacterState& state)
+	{
+		client.professions = state.professions;
+		LOG_DEBUG(Gameplay, "[CraftingSystem] Professions restored: client={} count={}",
+		          client.clientId, client.professions.size());
 	}
 }

@@ -1542,4 +1542,681 @@ namespace engine::server
 		outMessage.listingId = ReadU32(payload, 4);
 		return true;
 	}
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Direct player-to-player trade codec
+	// -------------------------------------------------------------------------
+
+	namespace
+	{
+		/// Encode one TradeSideWire into an output buffer (variable-length).
+		void WriteTradeSide(std::vector<std::byte>& out, const TradeSideWire& side)
+		{
+			const uint8_t count = static_cast<uint8_t>(
+				std::min(side.items.size(), static_cast<size_t>(kMaxTradeItemSlots)));
+			WriteU32(out, side.clientId);
+			WriteU32(out, side.goldAmount);
+			WriteU8(out, side.locked);
+			WriteU8(out, side.confirmed);
+			WriteU8(out, count);
+			for (uint8_t i = 0; i < count; ++i)
+			{
+				WriteU32(out, side.items[i].itemId);
+				WriteU32(out, side.items[i].quantity);
+			}
+		}
+
+		/// Decode one TradeSideWire from an offset into a payload span (variable-length).
+		bool ReadTradeSide(std::span<const std::byte> payload, size_t& offset, TradeSideWire& outSide)
+		{
+			if ((offset + 11) > payload.size())
+			{
+				return false;
+			}
+			outSide.clientId   = ReadU32(payload, offset);     offset += 4;
+			outSide.goldAmount = ReadU32(payload, offset);     offset += 4;
+			outSide.locked     = ReadU8(payload, offset);      offset += 1;
+			outSide.confirmed  = ReadU8(payload, offset);      offset += 1;
+			const uint8_t count = ReadU8(payload, offset);     offset += 1;
+			if (count > kMaxTradeItemSlots)
+			{
+				return false;
+			}
+			if ((offset + static_cast<size_t>(count) * 8) > payload.size())
+			{
+				return false;
+			}
+			outSide.items.resize(count);
+			for (uint8_t i = 0; i < count; ++i)
+			{
+				outSide.items[i].itemId   = ReadU32(payload, offset); offset += 4;
+				outSide.items[i].quantity = ReadU32(payload, offset); offset += 4;
+			}
+			return true;
+		}
+	} // anonymous namespace
+
+	std::vector<std::byte> EncodeTradeRequest(const TradeRequestMessage& message)
+	{
+		const size_t nameLen = message.targetName.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeRequest, 4 + 2 + nameLen);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.targetName);
+		return packet;
+	}
+
+	bool DecodeTradeRequest(std::span<const std::byte> packet, TradeRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeRequest, payload) || payload.size() < 6)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		return ReadSizedString(payload, offset, outMessage.targetName);
+	}
+
+	std::vector<std::byte> EncodeTradeRequestNotify(const TradeRequestNotifyMessage& message)
+	{
+		const size_t nameLen = message.initiatorName.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeRequestNotify, 2 + nameLen);
+		WriteSizedString(packet, message.initiatorName);
+		return packet;
+	}
+
+	bool DecodeTradeRequestNotify(std::span<const std::byte> packet, TradeRequestNotifyMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeRequestNotify, payload) || payload.size() < 2)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		return ReadSizedString(payload, offset, outMessage.initiatorName);
+	}
+
+	std::vector<std::byte> EncodeTradeAccept(const TradeAcceptMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeAccept, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeAccept(std::span<const std::byte> packet, TradeAcceptMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeAccept, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeDecline(const TradeDeclineMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeDecline, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeDecline(std::span<const std::byte> packet, TradeDeclineMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeDecline, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeAddItem(const TradeAddItemMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeAddItem, 12);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.itemId);
+		WriteU32(packet, message.quantity);
+		return packet;
+	}
+
+	bool DecodeTradeAddItem(std::span<const std::byte> packet, TradeAddItemMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeAddItem, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		outMessage.itemId   = ReadU32(payload, 4);
+		outMessage.quantity = ReadU32(payload, 8);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeSetGold(const TradeSetGoldMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeSetGold, 8);
+		WriteU32(packet, message.clientId);
+		WriteU32(packet, message.goldAmount);
+		return packet;
+	}
+
+	bool DecodeTradeSetGold(std::span<const std::byte> packet, TradeSetGoldMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeSetGold, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+		outMessage.clientId   = ReadU32(payload, 0);
+		outMessage.goldAmount = ReadU32(payload, 4);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeLock(const TradeLockMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeLock, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeLock(std::span<const std::byte> packet, TradeLockMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeLock, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeConfirm(const TradeConfirmMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeConfirm, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeConfirm(std::span<const std::byte> packet, TradeConfirmMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeConfirm, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeCancel(const TradeCancelMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeCancel, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeCancel(std::span<const std::byte> packet, TradeCancelMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeCancel, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeWindowUpdate(const TradeWindowUpdateMessage& message)
+	{
+		/// Layout: [self side][other side][reviewTicksRemaining:4]
+		const uint8_t selfCount  = static_cast<uint8_t>(
+			std::min(message.self.items.size(),  static_cast<size_t>(kMaxTradeItemSlots)));
+		const uint8_t otherCount = static_cast<uint8_t>(
+			std::min(message.other.items.size(), static_cast<size_t>(kMaxTradeItemSlots)));
+		/// Side wire size: clientId(4) + goldAmount(4) + locked(1) + confirmed(1) + count(1) + items(8*n)
+		const size_t selfSize  = 11 + static_cast<size_t>(selfCount)  * 8;
+		const size_t otherSize = 11 + static_cast<size_t>(otherCount) * 8;
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeWindowUpdate, selfSize + otherSize + 4);
+		WriteTradeSide(packet, message.self);
+		WriteTradeSide(packet, message.other);
+		WriteU32(packet, message.reviewTicksRemaining);
+		return packet;
+	}
+
+	bool DecodeTradeWindowUpdate(std::span<const std::byte> packet, TradeWindowUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeWindowUpdate, payload) || payload.size() < 26)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		if (!ReadTradeSide(payload, offset, outMessage.self))
+		{
+			return false;
+		}
+		if (!ReadTradeSide(payload, offset, outMessage.other))
+		{
+			return false;
+		}
+		if ((offset + 4) > payload.size())
+		{
+			return false;
+		}
+		outMessage.reviewTicksRemaining = ReadU32(payload, offset);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeComplete(const TradeCompleteMessage& message)
+	{
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeComplete, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeTradeComplete(std::span<const std::byte> packet, TradeCompleteMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeComplete, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeTradeCancelled(const TradeCancelledMessage& message)
+	{
+		const size_t reasonLen = message.reason.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::TradeCancelled, 2 + reasonLen);
+		WriteSizedString(packet, message.reason);
+		return packet;
+	}
+
+	bool DecodeTradeCancelled(std::span<const std::byte> packet, TradeCancelledMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::TradeCancelled, payload) || payload.size() < 2)
+		{
+			return false;
+		}
+		size_t offset = 0;
+		return ReadSizedString(payload, offset, outMessage.reason);
+	}
+
+	// -------------------------------------------------------------------------
+	// M36.1 — Gathering / harvesting resource nodes codec
+	// -------------------------------------------------------------------------
+
+	std::vector<std::byte> EncodeHarvestRequest(const HarvestRequestMessage& message)
+	{
+		/// Layout: clientId(4) + nodeEntityId(8)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::HarvestRequest, 12);
+		WriteU32(packet, message.clientId);
+		WriteU64(packet, message.nodeEntityId);
+		return packet;
+	}
+
+	bool DecodeHarvestRequest(std::span<const std::byte> packet, HarvestRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::HarvestRequest, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+		outMessage.clientId     = ReadU32(payload, 0);
+		outMessage.nodeEntityId = ReadU64(payload, 4);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeHarvestStart(const HarvestStartMessage& message)
+	{
+		/// Layout: nodeEntityId(8) + harvestDurationTicks(4)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::HarvestStart, 12);
+		WriteU64(packet, message.nodeEntityId);
+		WriteU32(packet, message.harvestDurationTicks);
+		return packet;
+	}
+
+	bool DecodeHarvestStart(std::span<const std::byte> packet, HarvestStartMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::HarvestStart, payload) || payload.size() != 12)
+		{
+			return false;
+		}
+		outMessage.nodeEntityId         = ReadU64(payload, 0);
+		outMessage.harvestDurationTicks = ReadU32(payload, 8);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeHarvestComplete(const HarvestCompleteMessage& message)
+	{
+		/// Layout: nodeEntityId(8)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::HarvestComplete, 8);
+		WriteU64(packet, message.nodeEntityId);
+		return packet;
+	}
+
+	bool DecodeHarvestComplete(std::span<const std::byte> packet, HarvestCompleteMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::HarvestComplete, payload) || payload.size() != 8)
+		{
+			return false;
+		}
+		outMessage.nodeEntityId = ReadU64(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeHarvestCancelRequest(const HarvestCancelRequestMessage& message)
+	{
+		/// Layout: clientId(4)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::HarvestCancelRequest, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeHarvestCancelRequest(std::span<const std::byte> packet, HarvestCancelRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::HarvestCancelRequest, payload) || payload.size() != 4)
+		{
+			return false;
+		}
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeHarvestCancelled(const HarvestCancelledMessage& message)
+	{
+		/// Layout: nodeEntityId(8) + reason(1)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::HarvestCancelled, 9);
+		WriteU64(packet, message.nodeEntityId);
+		WriteU8(packet, static_cast<uint8_t>(message.reason));
+		return packet;
+	}
+
+	bool DecodeHarvestCancelled(std::span<const std::byte> packet, HarvestCancelledMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::HarvestCancelled, payload) || payload.size() != 9)
+		{
+			return false;
+		}
+		outMessage.nodeEntityId = ReadU64(payload, 0);
+		outMessage.reason       = static_cast<HarvestCancelReason>(ReadU8(payload, 8));
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M36.2 — Crafting / profession skill system codec
+	// -------------------------------------------------------------------------
+
+	namespace
+	{
+		/// Encode one ProfessionWireEntry into an output buffer.
+		void WriteProfessionEntry(std::vector<std::byte>& out, const ProfessionWireEntry& e)
+		{
+			WriteSizedString(out, e.professionKey);
+			WriteU32(out, e.skillLevel);
+			WriteU8(out, e.isPrimary);
+		}
+
+		/// Read one ProfessionWireEntry from \p payload at \p offset.
+		bool ReadProfessionEntry(std::span<const std::byte> payload, size_t& offset, ProfessionWireEntry& out)
+		{
+			if (!ReadSizedString(payload, offset, out.professionKey)) return false;
+			if ((offset + 5) > payload.size()) return false;
+			out.skillLevel = ReadU32(payload, offset); offset += 4;
+			out.isPrimary  = ReadU8(payload, offset);  offset += 1;
+			return true;
+		}
+
+		/// Encoded size (bytes) of one ProfessionWireEntry.
+		size_t ProfessionEntrySize(const ProfessionWireEntry& e)
+		{
+			return 2 + e.professionKey.size() + 4 + 1; // len(2) + key + skill(4) + isPrimary(1)
+		}
+
+		/// Encode one CraftRecipeWireRow into an output buffer.
+		void WriteRecipeWireRow(std::vector<std::byte>& out, const CraftRecipeWireRow& r)
+		{
+			WriteSizedString(out, r.recipeId);
+			WriteU32(out, r.skillRequired);
+			WriteU32(out, r.outputItemId);
+			WriteU32(out, r.outputQuantity);
+		}
+
+		/// Read one CraftRecipeWireRow from \p payload at \p offset.
+		bool ReadRecipeWireRow(std::span<const std::byte> payload, size_t& offset, CraftRecipeWireRow& out)
+		{
+			if (!ReadSizedString(payload, offset, out.recipeId)) return false;
+			if ((offset + 12) > payload.size()) return false;
+			out.skillRequired  = ReadU32(payload, offset); offset += 4;
+			out.outputItemId   = ReadU32(payload, offset); offset += 4;
+			out.outputQuantity = ReadU32(payload, offset); offset += 4;
+			return true;
+		}
+	} // anonymous namespace
+
+	std::vector<std::byte> EncodeLearnProfessionRequest(const LearnProfessionRequestMessage& message)
+	{
+		/// Layout: clientId(4) + professionKey(2+n) + asPrimary(1)
+		const size_t keyLen = message.professionKey.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::LearnProfessionRequest, 4 + 2 + keyLen + 1);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.professionKey);
+		WriteU8(packet, message.asPrimary);
+		return packet;
+	}
+
+	bool DecodeLearnProfessionRequest(std::span<const std::byte> packet, LearnProfessionRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::LearnProfessionRequest, payload) || payload.size() < 7)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.professionKey)) return false;
+		if (offset >= payload.size()) return false;
+		outMessage.asPrimary = ReadU8(payload, offset);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeProfessionUpdate(const ProfessionUpdateMessage& message)
+	{
+		/// Layout: clientId(4) + count(1) + entries(variable)
+		size_t payloadSize = 4 + 1;
+		for (const ProfessionWireEntry& e : message.professions)
+			payloadSize += ProfessionEntrySize(e);
+		std::vector<std::byte> packet = BeginPacket(MessageKind::ProfessionUpdate, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteU8(packet, static_cast<uint8_t>(std::min(message.professions.size(), static_cast<size_t>(255u))));
+		for (const ProfessionWireEntry& e : message.professions)
+			WriteProfessionEntry(packet, e);
+		return packet;
+	}
+
+	bool DecodeProfessionUpdate(std::span<const std::byte> packet, ProfessionUpdateMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::ProfessionUpdate, payload) || payload.size() < 5)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		const uint8_t count = ReadU8(payload, 4);
+		size_t offset = 5;
+		outMessage.professions.clear();
+		outMessage.professions.reserve(count);
+		for (uint8_t i = 0; i < count; ++i)
+		{
+			ProfessionWireEntry e;
+			if (!ReadProfessionEntry(payload, offset, e)) return false;
+			outMessage.professions.push_back(std::move(e));
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeCraftRecipeListRequest(const CraftRecipeListRequestMessage& message)
+	{
+		/// Layout: clientId(4) + professionKey(2+n)
+		const size_t keyLen = message.professionKey.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftRecipeListRequest, 4 + 2 + keyLen);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.professionKey);
+		return packet;
+	}
+
+	bool DecodeCraftRecipeListRequest(std::span<const std::byte> packet, CraftRecipeListRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftRecipeListRequest, payload) || payload.size() < 6)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		return ReadSizedString(payload, offset, outMessage.professionKey);
+	}
+
+	std::vector<std::byte> EncodeCraftRecipeListResult(const CraftRecipeListResultMessage& message)
+	{
+		/// Layout: clientId(4) + professionKey(2+n) + rowCount(2) + rows(variable)
+		size_t payloadSize = 4 + 2 + message.professionKey.size() + 2;
+		for (const CraftRecipeWireRow& r : message.recipes)
+			payloadSize += 2 + r.recipeId.size() + 12;
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftRecipeListResult, payloadSize);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.professionKey);
+		const uint16_t count = static_cast<uint16_t>(std::min(message.recipes.size(), static_cast<size_t>(kMaxCraftRecipeListRows)));
+		WriteU16(packet, count);
+		for (uint16_t i = 0; i < count; ++i)
+			WriteRecipeWireRow(packet, message.recipes[i]);
+		return packet;
+	}
+
+	bool DecodeCraftRecipeListResult(std::span<const std::byte> packet, CraftRecipeListResultMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftRecipeListResult, payload) || payload.size() < 8)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		if (!ReadSizedString(payload, offset, outMessage.professionKey)) return false;
+		if ((offset + 2) > payload.size()) return false;
+		const uint16_t count = ReadU16(payload, offset); offset += 2;
+		if (count > kMaxCraftRecipeListRows) return false;
+		outMessage.recipes.clear();
+		outMessage.recipes.reserve(count);
+		for (uint16_t i = 0; i < count; ++i)
+		{
+			CraftRecipeWireRow row;
+			if (!ReadRecipeWireRow(payload, offset, row)) return false;
+			outMessage.recipes.push_back(std::move(row));
+		}
+		return true;
+	}
+
+	std::vector<std::byte> EncodeCraftRequest(const CraftRequestMessage& message)
+	{
+		/// Layout: clientId(4) + recipeId(2+n)
+		const size_t idLen = message.recipeId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftRequest, 4 + 2 + idLen);
+		WriteU32(packet, message.clientId);
+		WriteSizedString(packet, message.recipeId);
+		return packet;
+	}
+
+	bool DecodeCraftRequest(std::span<const std::byte> packet, CraftRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftRequest, payload) || payload.size() < 6)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		size_t offset = 4;
+		return ReadSizedString(payload, offset, outMessage.recipeId);
+	}
+
+	std::vector<std::byte> EncodeCraftStart(const CraftStartMessage& message)
+	{
+		/// Layout: recipeId(2+n) + durationTicks(4)
+		const size_t idLen = message.recipeId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftStart, 2 + idLen + 4);
+		WriteSizedString(packet, message.recipeId);
+		WriteU32(packet, message.durationTicks);
+		return packet;
+	}
+
+	bool DecodeCraftStart(std::span<const std::byte> packet, CraftStartMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftStart, payload) || payload.size() < 6)
+			return false;
+		size_t offset = 0;
+		if (!ReadSizedString(payload, offset, outMessage.recipeId)) return false;
+		if ((offset + 4) > payload.size()) return false;
+		outMessage.durationTicks = ReadU32(payload, offset);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeCraftComplete(const CraftCompleteMessage& message)
+	{
+		/// Layout: recipeId(2+n) + skillGained(1) + newSkillLevel(4) + qualityTier(1) [M36.3]
+		const size_t idLen = message.recipeId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftComplete, 2 + idLen + 1 + 4 + 1);
+		WriteSizedString(packet, message.recipeId);
+		WriteU8(packet, message.skillGained);
+		WriteU32(packet, message.newSkillLevel);
+		WriteU8(packet, message.qualityTier);
+		return packet;
+	}
+
+	bool DecodeCraftComplete(std::span<const std::byte> packet, CraftCompleteMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftComplete, payload) || payload.size() < 8)
+			return false;
+		size_t offset = 0;
+		if (!ReadSizedString(payload, offset, outMessage.recipeId)) return false;
+		if ((offset + 6) > payload.size()) return false;
+		outMessage.skillGained   = ReadU8(payload, offset);  offset += 1;
+		outMessage.newSkillLevel = ReadU32(payload, offset);  offset += 4;
+		outMessage.qualityTier   = ReadU8(payload, offset);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeCraftCancelRequest(const CraftCancelRequestMessage& message)
+	{
+		/// Layout: clientId(4)
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftCancelRequest, 4);
+		WriteU32(packet, message.clientId);
+		return packet;
+	}
+
+	bool DecodeCraftCancelRequest(std::span<const std::byte> packet, CraftCancelRequestMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftCancelRequest, payload) || payload.size() != 4)
+			return false;
+		outMessage.clientId = ReadU32(payload, 0);
+		return true;
+	}
+
+	std::vector<std::byte> EncodeCraftCancelled(const CraftCancelledMessage& message)
+	{
+		/// Layout: recipeId(2+n)
+		const size_t idLen = message.recipeId.size();
+		std::vector<std::byte> packet = BeginPacket(MessageKind::CraftCancelled, 2 + idLen);
+		WriteSizedString(packet, message.recipeId);
+		return packet;
+	}
+
+	bool DecodeCraftCancelled(std::span<const std::byte> packet, CraftCancelledMessage& outMessage)
+	{
+		std::span<const std::byte> payload;
+		if (!DecodeHeader(packet, MessageKind::CraftCancelled, payload) || payload.size() < 2)
+			return false;
+		size_t offset = 0;
+		return ReadSizedString(payload, offset, outMessage.recipeId);
+	}
 }

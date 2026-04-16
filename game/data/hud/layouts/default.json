@@ -1,0 +1,10 @@
+{
+  "preset": "default",
+  "elements": [
+    { "id": "player_frame", "x": 0.01,  "y": 0.80, "scale": 1.0, "locked": false },
+    { "id": "target_frame", "x": 0.20,  "y": 0.80, "scale": 1.0, "locked": false },
+    { "id": "minimap",      "x": 0.835, "y": 0.02, "scale": 1.0, "locked": false },
+    { "id": "action_bars",  "x": 0.30,  "y": 0.92, "scale": 1.0, "locked": false },
+    { "id": "chat",         "x": 0.01,  "y": 0.60, "scale": 1.0, "locked": false }
+  ]
+}

@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <string>
 
 namespace tools::zone_builder
 {
@@ -270,10 +271,11 @@ namespace tools::zone_builder
 
 			f.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
 			f.write(reinterpret_cast<const char*>(&cz), sizeof(cz));
-			uint32_t boundsMinX = static_cast<uint32_t>(cx * 256);
-			uint32_t boundsMinZ = static_cast<uint32_t>(cz * 256);
-			uint32_t boundsMaxX = boundsMinX + 256;
-			uint32_t boundsMaxZ = boundsMinZ + 256;
+			const uint32_t cs = static_cast<uint32_t>(engine::world::kChunkSize);
+			uint32_t boundsMinX = static_cast<uint32_t>(cx) * cs;
+			uint32_t boundsMinZ = static_cast<uint32_t>(cz) * cs;
+			uint32_t boundsMaxX = boundsMinX + cs;
+			uint32_t boundsMaxZ = boundsMinZ + cs;
 			f.write(reinterpret_cast<const char*>(&boundsMinX), sizeof(boundsMinX));
 			f.write(reinterpret_cast<const char*>(&boundsMinZ), sizeof(boundsMinZ));
 			f.write(reinterpret_cast<const char*>(&boundsMaxX), sizeof(boundsMaxX));
@@ -399,10 +401,12 @@ namespace tools::zone_builder
 		{
 			const int32_t chunkX = static_cast<int32_t>(std::floor(instance.positionX / static_cast<double>(engine::world::kChunkSize)));
 			const int32_t chunkZ = static_cast<int32_t>(std::floor(instance.positionZ / static_cast<double>(engine::world::kChunkSize)));
-			if (chunkX < 0 || chunkZ < 0)
+			if (chunkX < 0 || chunkZ < 0 || chunkX >= engine::world::kChunksPerZoneAxis || chunkZ >= engine::world::kChunksPerZoneAxis)
 			{
-				outError = "negative chunk coordinates are unsupported by the current chunk.meta bounds layout";
-				LOG_ERROR(Core, "[ZoneBuilder] Build chunked zone FAILED (guid={}, reason={})", instance.guid, outError);
+				outError = "indices chunk hors plage pour guid=" + instance.guid +
+				           " (attendu [0, " + std::to_string(engine::world::kChunksPerZoneAxis - 1) +
+				           "] sur XZ ; vérifier position dans [0, " + std::to_string(engine::world::kZoneSize) + ") m)";
+				LOG_ERROR(Core, "[ZoneBuilder] Build chunked zone FAILED (guid={}, chunk=({},{}), reason={})", instance.guid, chunkX, chunkZ, outError);
 				return false;
 			}
 

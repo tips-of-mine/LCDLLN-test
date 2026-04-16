@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "instances": [
+    {
+      "guid": "demo_plains_prop_1",
+      "gltf": "zones/zone_0/zone_0.gltf",
+      "position": [120.0, 5.0, 220.0],
+      "yaw_deg": 15.0,
+      "uniform_scale": 1.0
+    }
+  ]
+}

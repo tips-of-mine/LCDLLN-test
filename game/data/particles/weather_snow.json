@@ -1,0 +1,16 @@
+{
+  "emitters": [
+    {
+      "id": "weather_snow",
+      "atlasTexturePath": "textures/missing_texture.png",
+      "maxParticles": 1024,
+      "emissionRate": 500.0,
+      "lifetimeSeconds": 5.0,
+      "startSize": 0.15,
+      "endSize": 0.10,
+      "spawnPosition": [0.0, 0.0, 0.0],
+      "velocityMin": [-1.5, -2.0, -1.5],
+      "velocityMax": [1.5, -1.0, 1.5]
+    }
+  ]
+}

@@ -1,16 +1,18 @@
-/// Zone builder (M11.1 / M11.2): imports a versioned layout.json, loads referenced glTF assets,
-/// chunks instances into `build/zone_x/chunks/chunk_i_j/*`, and keeps legacy chunk packaging mode.
-/// Usage:
-///   zone_builder --layout zones/layout.json [--config config.json]
-///   zone_builder --output build/zone_0/chunks --chunk 0 0
+/// Zone builder (M11.1 / M11.2) : import d’un layout versionné, glTF de référence, découpage par chunk ;
+/// mode legacy mono-chunk conservé.
+/// Voir `zone_builder --help` et `docs/world_editor_zone_pipeline.md` §3.
 
 #include "ChunkPackageWriter.h"
 #include "GltfImporter.h"
 #include "LayoutImporter.h"
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/platform/FileSystem.h"
 
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
+#include <filesystem>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -24,6 +26,8 @@ namespace tools::zone_builder
 			std::string configPath = "config.json";
 			std::string layoutPath;
 			std::string outputPath;
+			/// Optionnel (mode layout) : doit correspondre au dossier résolu `zones/<id>/` (même règle que Sanitize côté WE).
+			std::string zoneIdCheck;
 			int32_t chunkX = 0;
 			int32_t chunkZ = 0;
 			bool runLayoutImport = false;
@@ -32,11 +36,83 @@ namespace tools::zone_builder
 			bool hasChunkCoordinates = false;
 		};
 
-		/// Emit CLI usage for the layout import mode and the legacy chunk packaging mode.
+		std::string SanitizeZoneIdCli(std::string_view raw)
+		{
+			std::string o;
+			o.reserve(raw.size());
+			for (char c : raw)
+			{
+				const unsigned char u = static_cast<unsigned char>(c);
+				if (std::isalnum(u) != 0)
+				{
+					o.push_back(static_cast<char>(std::tolower(u)));
+				}
+				else if (c == '_' || c == '-')
+				{
+					o.push_back('_');
+				}
+			}
+			if (o.empty())
+			{
+				o = "zone";
+			}
+			return o;
+		}
+
+		void NormalizePathSlashesInPlace(std::string& s)
+		{
+			for (char& c : s)
+			{
+				if (c == '\\')
+				{
+					c = '/';
+				}
+			}
+		}
+
+		/// Racine d’écriture mode layout : défaut `<cwd>/build/zone_0` ; si `--output` commence par `zones/`, résolution via
+		/// `paths.content` + `engine::platform::FileSystem::ResolveContentPath` ; sinon chemin relatif/absolu au cwd.
+		std::filesystem::path ResolveLayoutOutputRoot(const engine::core::Config& cfg, const std::string& outputOpt)
+		{
+			if (outputOpt.empty())
+			{
+				return std::filesystem::current_path() / "build" / "zone_0";
+			}
+
+			std::string norm = outputOpt;
+			NormalizePathSlashesInPlace(norm);
+			if (norm.starts_with("zones/"))
+			{
+				return engine::platform::FileSystem::ResolveContentPath(cfg, norm);
+			}
+
+			std::filesystem::path p(outputOpt);
+			if (p.is_absolute())
+			{
+				return p.lexically_normal();
+			}
+
+			return (std::filesystem::current_path() / p).lexically_normal();
+		}
+
+		/// Aide CLI (stdout via le logger : console=true au démarrage).
 		void LogUsage()
 		{
-			LOG_INFO(Core, "[ZoneBuilder] Usage: zone_builder --layout <relative-layout.json> [--output <build/zone_x>] [--config <config.json>]");
-			LOG_INFO(Core, "[ZoneBuilder] Legacy: zone_builder --output <dir> --chunk <x> <z>");
+			LOG_INFO(Core, "[ZoneBuilder] zone_builder — outil offline (chemins layout/gltf relatifs à paths.content du config).");
+			LOG_INFO(Core, "[ZoneBuilder]");
+			LOG_INFO(Core, "[ZoneBuilder] Mode layout (recommandé) :");
+			LOG_INFO(Core, "[ZoneBuilder]   zone_builder --layout <chemin/layout.json> [--output <dir>] [--config config.json] [--zone-id <id>]");
+			LOG_INFO(Core, "[ZoneBuilder]   --layout   JSON relatif au content, ex. zones/_templates/layout_minimal.json");
+			LOG_INFO(Core, "[ZoneBuilder]   --output   défaut : build/zone_0 (sous le répertoire courant) ; pour aligner le jeu :");
+			LOG_INFO(Core, "[ZoneBuilder]              zones/<zone_id> → résolu avec paths.content (ex. game/data/zones/<zone_id>)");
+			LOG_INFO(Core, "[ZoneBuilder]   --config   défaut : config.json (à la racine du dépôt ou cwd)");
+			LOG_INFO(Core, "[ZoneBuilder]   --zone-id  optionnel : le dossier résolu par --output doit être zones/<id> avec id sanitizé.");
+			LOG_INFO(Core, "[ZoneBuilder]");
+			LOG_INFO(Core, "[ZoneBuilder] Mode legacy (un seul chunk, chemins fichiers au cwd) :");
+			LOG_INFO(Core, "[ZoneBuilder]   zone_builder --output <dossier> --chunk <x> <z>");
+			LOG_INFO(Core, "[ZoneBuilder]   x,z ≥ 0 (coordonnées chunk négatives → erreur, code de sortie 1).");
+			LOG_INFO(Core, "[ZoneBuilder]");
+			LOG_INFO(Core, "[ZoneBuilder] Positions layout : X et Z dans [0, kZoneSize) mètres (10 km zone) ; Y libre.");
 		}
 
 		/// Parse CLI arguments into one of the supported execution modes.
@@ -79,19 +155,31 @@ namespace tools::zone_builder
 					continue;
 				}
 
-				outError = "unknown or incomplete argument: " + argument;
+				if (argument == "--zone-id" && index + 1 < argc)
+				{
+					outOptions.zoneIdCheck = argv[++index];
+					continue;
+				}
+
+				outError = "argument inconnu ou incomplet : " + argument;
 				return false;
 			}
 
 			if (!outOptions.runLayoutImport && !outOptions.runChunkPackaging)
 			{
-				outError = "no command selected";
+				outError = "aucun mode sélectionné (--layout ou --output/--chunk)";
 				return false;
 			}
 
 			if (outOptions.runLayoutImport && outOptions.hasChunkCoordinates)
 			{
-				outError = "--chunk is only valid for legacy chunk packaging mode";
+				outError = "--chunk est réservé au mode legacy (--output sans --layout)";
+				return false;
+			}
+
+			if (!outOptions.zoneIdCheck.empty() && !outOptions.runLayoutImport)
+			{
+				outError = "--zone-id n’est utilisable qu’avec --layout";
 				return false;
 			}
 
@@ -101,6 +189,12 @@ namespace tools::zone_builder
 		/// Execute the legacy single-chunk package writer kept from the previous ticket flow.
 		int RunChunkPackagingMode(const CliOptions& options)
 		{
+			if (options.chunkX < 0 || options.chunkZ < 0)
+			{
+				LOG_ERROR(Core, "[ZoneBuilder] Mode legacy : coordonnées chunk négatives non supportées (chunk=({},{}))", options.chunkX, options.chunkZ);
+				return 1;
+			}
+
 			const std::string outputDir = options.outputPath.empty() ? "build/zone_0/chunks" : options.outputPath;
 			const std::string chunkDirectory = outputDir + "/chunk_" + std::to_string(options.chunkX) + "_" + std::to_string(options.chunkZ);
 			LOG_INFO(Core, "[ZoneBuilder] Writing chunk package {}", chunkDirectory);
@@ -194,7 +288,24 @@ namespace tools::zone_builder
 				}
 			}
 
-			const std::string outputRootDir = options.outputPath.empty() ? "build/zone_0" : options.outputPath;
+			const std::filesystem::path outputRootPath = ResolveLayoutOutputRoot(config, options.outputPath);
+			if (!options.zoneIdCheck.empty())
+			{
+				const std::string want = SanitizeZoneIdCli(options.zoneIdCheck);
+				const auto expectedRoot =
+					engine::platform::FileSystem::ResolveContentPath(config, std::string("zones/") + want).lexically_normal();
+				if (outputRootPath.lexically_normal() != expectedRoot)
+				{
+					LOG_ERROR(Core,
+						"[ZoneBuilder] --zone-id '{}' (attendu dossier zones/{}) ne correspond pas à --output résolu : obtenu {}",
+						options.zoneIdCheck,
+						want,
+						outputRootPath.string());
+					return 1;
+				}
+			}
+
+			const std::string outputRootDir = outputRootPath.string();
 			if (!WriteChunkedZoneOutputs(outputRootDir, config, layout, error))
 			{
 				LOG_ERROR(Core, "[ZoneBuilder] Layout import FAILED (layout={}, output={}, reason={})",
@@ -222,7 +333,7 @@ int main(int argc, char** argv)
 	std::string error;
 	if (!tools::zone_builder::ParseArguments(argc, argv, options, error))
 	{
-		LOG_ERROR(Core, "[ZoneBuilder] Init FAILED: {}", error);
+		LOG_ERROR(Core, "[ZoneBuilder] Échec arguments : {}", error);
 		tools::zone_builder::LogUsage();
 		LOG_INFO(Core, "[ZoneBuilder] Destroyed");
 		engine::core::Log::Shutdown();

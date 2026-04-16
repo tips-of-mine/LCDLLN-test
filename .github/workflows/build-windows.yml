@@ -36,6 +36,40 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
+      # Les .spv ne sont pas versionnés (sources GLSL seulement) ; le moteur charge uniquement le SPIR-V depuis game/data/shaders/.
+      - name: Cache Vulkan SDK (glslangValidator)
+        id: vk-sdk-cache
+        uses: actions/cache@v4.2.2
+        with:
+          path: C:\VulkanSDK\1.3.296.0
+          key: lunarg-vulkan-sdk-1.3.296.0-windows-x64-glslang
+
+      - name: Install Vulkan SDK (prebuilt, silent)
+        if: steps.vk-sdk-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sdkVer = "1.3.296.0"
+          $root = "C:\VulkanSDK\$sdkVer"
+          New-Item -ItemType Directory -Force -Path "C:\VulkanSDK" | Out-Null
+          $url = "https://sdk.lunarg.com/sdk/download/$sdkVer/windows/VulkanSDK-$sdkVer-Installer.exe"
+          $inst = Join-Path $env:TEMP "VulkanSDK-$sdkVer-Installer.exe"
+          Write-Host "Downloading $url"
+          Invoke-WebRequest -Uri $url -OutFile $inst -UseBasicParsing
+          Write-Host "Installing Vulkan SDK to $root ..."
+          $p = Start-Process -FilePath $inst -ArgumentList @("--root", $root, "--accept-licenses", "--default-answer", "--confirm-command", "install") -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Vulkan SDK installer exit code $($p.ExitCode)" }
+
+      - name: Compile GLSL to SPIR-V (game/data/shaders)
+        shell: pwsh
+        env:
+          VULKAN_SDK: C:\VulkanSDK\1.3.296.0
+        run: |
+          $ErrorActionPreference = "Stop"
+          $glsl = Join-Path $env:VULKAN_SDK "Bin\glslangValidator.exe"
+          if (-not (Test-Path -LiteralPath $glsl)) { throw "Missing $glsl" }
+          & "${{ github.workspace }}\tools\compile_game_shaders.ps1" -ShaderDir "${{ github.workspace }}\game\data\shaders"
+
       - name: Collect artifacts
         shell: pwsh
         env:

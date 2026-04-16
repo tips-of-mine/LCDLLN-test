@@ -3750,7 +3750,10 @@ namespace engine
 			worldSizeOverride);
 		if (!ok)
 		{
-			LOG_WARN(Render, "[WorldEditor] TerrainRenderer::Init failed for \"{}\"", hmRel);
+			LOG_WARN(Render,
+				"[WorldEditor] TerrainRenderer::Init failed for \"{}\" — fichier introuvable sous paths.content ? "
+				"Lancer l’éditeur avec le cwd à la racine du dépôt (config.json + game/data), ou rebuild avec la détection cwd (world_editor_main).",
+				hmRel);
 			return;
 		}
 		if (!m_worldEditorTerrainTools.Init(

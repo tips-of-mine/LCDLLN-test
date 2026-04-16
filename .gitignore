@@ -2,3 +2,6 @@ smtp.local.json
 .claude/
 world_editor_imgui.ini
 world_editor.log
+
+# SPIR-V généré (sources GLSL dans game/data/shaders/) — voir tools/compile_game_shaders.ps1
+game/data/shaders/*.spv

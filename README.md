@@ -16,7 +16,7 @@ Configurer le projet avec un preset du dépôt ([`CMakePresets.json`](CMakePrese
 
 ```bash
 cmake --build build/vs2022-x64 --config Release --target zone_builder
-cmake --build build/vs2022-x64 --config Release --target lcdlln_world_editor
+cmake --build build/vs2022-x64 --config Release --target world_editor_app
 ```
 
 Adapter `build/vs2022-x64` à votre répertoire binaire (`build/linux-x64`, etc.).
@@ -28,7 +28,7 @@ Chemins typiques **sous le répertoire de build CMake** (`${CMAKE_BINARY_DIR}`) 
 | Cible | Dossier (Windows / Linux) |
 |--------|---------------------------|
 | `zone_builder` | `pkg/zone_builder/zone_builder` (`.exe` sous Windows) |
-| `lcdlln_world_editor` | `pkg/lcdlln_world_editor/lcdlln_world_editor` (`.exe` sous Windows) |
+| `lcdlln_world_editor` | `pkg/world_editor/lcdlln_world_editor` (`.exe` sous Windows) |
 
 Lancer ces binaires **depuis la racine du dépôt** (là où se trouve `config.json`) pour que `paths.content` et les chemins relatifs résolvent correctement.
 

@@ -17,10 +17,11 @@ Pour les joueurs, le moteur **tente toujours** d’initialiser le terrain au boo
 - **`render.terrain.splatmap`**, **`render.terrain.hole_mask`** : optionnels ; chaînes vides = comportements par défaut côté moteur.
 - Paramètres d’étendue / hauteur (origine, `world_size`, `height_scale`, tiling splat, etc.) : clés **`terrain.*`** lues par `TerrainRenderer::Init` (voir commentaires dans `TerrainRenderer.h`).
 
-Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTerrainSpirvWords`.
+Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTerrainSpirvWords` (fichiers `shaders/terrain.vert.spv` / `terrain.frag.spv`, etc.). Les sources GLSL sont dans le dépôt ; pour produire les `.spv` en local, utilisez `tools/compile_game_shaders.ps1` (Vulkan SDK). Le workflow GitHub **Build Windows** compile ces shaders avant d’empaqueter `game/data`.
 
 ## World Editor (Windows)
 
+- **Répertoire de travail** : les heightmaps sont ouverts via `paths.content` (ex. `game/data`) **relatif au répertoire courant** au moment du lancement. Si le **répertoire de travail** au lancement ne contient pas `game/data` (ex. débogage VS avec un cwd projet), les heightmaps ne se résolvent pas. Au démarrage, l’exe **remonte** depuis son dossier (`build/.../pkg/world_editor/` typiquement) jusqu’au premier ancêtre qui contient `config.json` et `game/data/` ; le CMake copie aussi `game/data` à côté de l’exe au build. Sinon, lancez l’outil **depuis la racine du dépôt** ou fixez le cwd dans l’IDE.
 - Le document monde fixe le chemin heightmap ; **`RebuildWorldEditorTerrainGpu()`** détruit puis réinitialise `m_terrain` et les **`TerrainEditingTools`** (sculpt CPU + upload GPU).
 - **Recharger terrain GPU** (UI) : `WorldEditorSession::RequestTerrainGpuReload` → consommation dans `Update` → rebuild.
 - **Upload heightmap** : préférence pour enregistrement dans le **command buffer** de la frame (staging + `RecordHeightmapR16UploadCommands`) ; repli sur `FlushHeightmap` si besoin.

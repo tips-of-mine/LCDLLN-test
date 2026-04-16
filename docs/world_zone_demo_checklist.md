@@ -58,8 +58,8 @@ Retirer ces clés après test si l’équipe utilise d’autres chemins par déf
 
 ## 3. World Editor + export + chunks (10 min, optionnel mais recommandé)
 
-1. Lancer **`lcdlln_world_editor`** (binaire produit par la cible CMake du même nom ; sortie typique :  
-   `<build>/<preset>/pkg/lcdlln_world_editor/lcdlln_world_editor(.exe)` — voir [README racine](../README.md) section World).
+1. Lancer **`lcdlln_world_editor`** (cible CMake **`world_editor_app`** ; sortie typique :  
+   `<build>/<preset>/pkg/world_editor/lcdlln_world_editor(.exe)` — voir [README racine](../README.md) section World).
 2. Charger ou créer une carte ; **Exporter runtime** vers `zones/<votre_id>/`.
 3. Enchaîner avec **`zone_builder`** et le script **`tools/world/export_zone_with_chunks.ps1`** ou `.sh` (voir §5.1 du pipeline).
 

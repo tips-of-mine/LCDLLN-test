@@ -26,6 +26,7 @@
 #include <cstring>
 #include <limits>
 #include <filesystem>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -3724,6 +3725,12 @@ namespace engine
 		}
 
 		auto loadFn = [this](const char* p) { return LoadTerrainSpirvWords(p); };
+		std::optional<float> worldSizeOverride;
+		const engine::editor::WorldMapEditDocument& wed = m_worldEditorSession->Doc();
+		if (wed.hasTerrainWorldSizeM && wed.terrainWorldSizeM > 0.0)
+		{
+			worldSizeOverride = static_cast<float>(wed.terrainWorldSizeM);
+		}
 		const bool ok = m_terrain.Init(
 			device,
 			physDev,
@@ -3739,7 +3746,8 @@ namespace engine
 			VK_FORMAT_D32_SFLOAT,
 			m_vkDeviceContext.GetGraphicsQueue(),
 			m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-			loadFn);
+			loadFn,
+			worldSizeOverride);
 		if (!ok)
 		{
 			LOG_WARN(Render, "[WorldEditor] TerrainRenderer::Init failed for \"{}\"", hmRel);

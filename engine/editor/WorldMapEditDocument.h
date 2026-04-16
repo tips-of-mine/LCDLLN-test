@@ -21,6 +21,10 @@ namespace engine::editor
 		std::vector<std::string> textureAssets;
 		/// Identifiants de préfabs / objets (MVP : chaînes libres).
 		std::vector<std::string> objectPrefabIds;
+
+		/// Si vrai, \ref terrainWorldSizeM remplace `terrain.world_size` pour l’init terrain du World Editor (alignement zone logique).
+		bool   hasTerrainWorldSizeM = false;
+		double terrainWorldSizeM    = 10000.0;
 	};
 
 } // namespace engine::editor

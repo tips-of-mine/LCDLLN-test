@@ -9,7 +9,7 @@ namespace engine::server
 {
 	namespace
 	{
-		/// Return true when the cell coordinate is inside the fixed 64x64 grid.
+		/// Return true when the cell coordinate is inside the fixed kCellGridAxisCount × kCellGridAxisCount grid.
 		bool IsValidCell(const CellCoord& cell)
 		{
 			return cell.x >= 0 && cell.z >= 0

@@ -15,7 +15,7 @@ namespace tools::zone_builder
 	/// \return true on success.
 	bool WriteChunkPackage(const std::string& outputDir, int32_t chunkX, int32_t chunkZ);
 
-	/// Builds one zone output tree from a layout by chunking instances with floor(x/256), floor(z/256).
+	/// Builds one zone output tree from a layout by chunking instances with floor(x/kChunkSize), floor(z/kChunkSize).
 	/// Writes `zone.meta`, `probes.bin`, `atmosphere.json`, then `chunks/chunk_i_j/chunk.meta` and `instances.bin` under `outputRootDir`.
 	/// `assetId` values written to `instances.bin` are deterministic hashes of the relative glTF path.
 	/// Output headers store builder/runtime compatibility plus a shared xxHash64 content fingerprint.

@@ -8,12 +8,23 @@
 
 namespace engine::world
 {
-	/// Zone size in meters (one zone = 4 km side).
-	constexpr int kZoneSize = 4096;
-	/// Chunk size in meters (chunk = 256 m side).
-	constexpr int kChunkSize = 256;
+	/// Zone side length in meters (streaming / zone-local space). **10 km** exact.
+	constexpr int kZoneSize = 10000;
+	/// Chunk side length in meters (must divide \ref kZoneSize). **500 m** → 20×20 chunks sur 10 km.
+	/// (512 m ne divise pas 10 000 ; 500 m reste proche de la cible « ~512 ».)
+	constexpr int kChunkSize = 500;
 	/// Number of chunks per zone axis (kZoneSize / kChunkSize).
 	constexpr int kChunksPerZoneAxis = kZoneSize / kChunkSize;
+
+	/// Grille spatiale intérêt / réplication (m) côté serveur ; doit diviser \ref kZoneSize.
+	/// **100 m** → 100×100 cellules ; divise aussi \ref kChunkSize (5×5 cellules par chunk).
+	constexpr int kSpatialCellSizeMeters = 100;
+
+	static_assert(kZoneSize % kChunkSize == 0, "kZoneSize must be an integer multiple of kChunkSize");
+	static_assert(kZoneSize % kSpatialCellSizeMeters == 0,
+	              "kZoneSize must be an integer multiple of kSpatialCellSizeMeters");
+	static_assert(kChunkSize % kSpatialCellSizeMeters == 0,
+	              "kChunkSize should align with spatial cells (tooling / debug consistency)");
 
 	/// Chunk index in world space (2D, XZ plane), without clamp.
 	/// Values are signed and may be negative for zones left/below origin.
@@ -71,13 +82,13 @@ namespace engine::world
 		uint32_t streamVersion = 0;
 	};
 
-	/// One zone: 4 km x 4 km, origin-local in meters.
+	/// One zone: \ref kZoneSize m × \ref kZoneSize m, origin-local in meters.
 	struct Zone
 	{
 		static constexpr int kSize = kZoneSize;
 	};
 
-	/// One chunk: 256 m x 256 m within a zone.
+	/// One chunk: \ref kChunkSize m × \ref kChunkSize m within a zone.
 	struct Chunk
 	{
 		LocalChunkCoord coord;

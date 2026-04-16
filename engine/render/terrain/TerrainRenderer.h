@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -83,6 +84,7 @@ namespace engine::render::terrain
         ///                           May be empty. Missing files are skipped with a warning.
         /// \param fmtA/B/C/Vel/Depth GBuffer attachment formats (must match GeometryPass).
         /// \param queue              Graphics queue used for one-time GPU uploads.
+        /// \param terrainWorldSizeMetersOverride Si renseigné (>0), remplace la clé config `terrain.world_size` pour l’étendue monde (m).
         bool Init(VkDevice device, VkPhysicalDevice physDev,
                   const engine::core::Config& config,
                   const std::string& heightmapRelPath,
@@ -92,7 +94,8 @@ namespace engine::render::terrain
                   VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                   VkFormat fmtVelocity, VkFormat fmtDepth,
                   VkQueue queue, uint32_t queueFamilyIndex,
-                  ShaderLoaderFn loadSpirv);
+                  ShaderLoaderFn loadSpirv,
+                  std::optional<float> terrainWorldSizeMetersOverride = std::nullopt);
 
         /// Destroys all GPU resources. Safe to call when not initialised.
         void Destroy(VkDevice device);

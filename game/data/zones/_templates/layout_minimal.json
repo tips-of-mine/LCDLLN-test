@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "instances": [
+    {
+      "guid": "layout_minimal_demo",
+      "gltf": "zones/zone_0/zone_0.gltf",
+      "position": [250.0, 0.0, 500.0]
+    }
+  ]
+}

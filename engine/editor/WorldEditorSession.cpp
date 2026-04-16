@@ -2,6 +2,8 @@
 
 #include "engine/editor/WorldMapIo.h"
 
+#include "engine/world/WorldModel.h"
+
 #include <array>
 #include <algorithm>
 #include "engine/core/Config.h"
@@ -163,6 +165,8 @@ namespace engine::editor
 		m_doc.textureAssets.clear();
 		m_doc.objectPrefabIds.clear();
 		m_doc.formatVersion = WorldMapEditDocument::kFormatVersion;
+		m_doc.hasTerrainWorldSizeM = true;
+		m_doc.terrainWorldSizeM    = static_cast<double>(engine::world::kZoneSize);
 
 		const std::filesystem::path jsonAbs = dirAbs / "map.lcdlln_edit.json";
 		m_editJsonAbsolutePath = jsonAbs.string();

@@ -1,0 +1,12 @@
+{
+  "lcdlln_runtime_manifest_version": 2,
+  "zone_id": "demo_plains",
+  "terrain_heightmap": "zones/demo_plains/terrain_height.r16h",
+  "source_edit_format_version": 1,
+  "terrain_world_size_m": 10000,
+  "texture_assets": [],
+  "exported_textures": [],
+  "texture_assets_source_missing": [],
+  "object_prefab_ids": [],
+  "note": "Zone démo ticket 007 — bundle de référence sous contrôle de version."
+}

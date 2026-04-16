@@ -9,9 +9,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <cstdint>
 #include <fstream>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 #ifdef _MSC_VER
@@ -162,6 +164,105 @@ namespace engine::editor
 			return p + 4 <= json.size() && json.substr(p, 4) == "null";
 		}
 
+		constexpr size_t kMaxJsonStringArrayEntries = 4096;
+
+		/// Lit une chaîne JSON à partir du guillemet ouvrant (avance \p p après le guillemet fermant).
+		bool ReadJsonStringLiteral(std::string_view json, size_t& p, std::string& out, std::string& outError, std::string_view contextKey)
+		{
+			if (p >= json.size() || json[p] != '"')
+			{
+				outError = std::string(contextKey) + ": valeur chaîne attendue (guillemet ouvrant)";
+				return false;
+			}
+			++p;
+			const size_t start = p;
+			while (p < json.size())
+			{
+				if (json[p] == '\\')
+				{
+					if (p + 1 >= json.size())
+					{
+						outError = std::string(contextKey) + ": échappement '\\' incomplet";
+						return false;
+					}
+					p += 2;
+					continue;
+				}
+				if (json[p] == '"')
+				{
+					out = UnescapeJsonString(json.substr(start, p - start));
+					++p;
+					return true;
+				}
+				++p;
+			}
+			outError = std::string(contextKey) + ": chaîne JSON non terminée";
+			return false;
+		}
+
+		/// Parse un tableau JSON de chaînes uniquement pour la clé \p key. Clé absente ou valeur `null` → \p out vide, succès.
+		bool ParseJsonStringArray(std::string_view json, std::string_view key, std::vector<std::string>& out, std::string& outError)
+		{
+			out.clear();
+			const std::string needle = std::string("\"") + std::string(key) + "\"";
+			const size_t keyPos = json.find(needle);
+			if (keyPos == std::string::npos)
+			{
+				return true;
+			}
+			size_t p = json.find(':', keyPos + needle.size());
+			if (p == std::string::npos)
+			{
+				outError = std::string(key) + ": ':' manquant après la clé";
+				return false;
+			}
+			++p;
+			SkipWs(json, p);
+			if (p + 4 <= json.size() && json.substr(p, 4) == "null")
+			{
+				return true;
+			}
+			if (p >= json.size() || json[p] != '[')
+			{
+				outError = std::string(key) + ": attendu '[' ou null";
+				return false;
+			}
+			++p;
+			for (;;)
+			{
+				SkipWs(json, p);
+				if (p < json.size() && json[p] == ']')
+				{
+					++p;
+					return true;
+				}
+				std::string item;
+				if (!ReadJsonStringLiteral(json, p, item, outError, key))
+				{
+					return false;
+				}
+				if (out.size() >= kMaxJsonStringArrayEntries)
+				{
+					outError = std::string(key) + ": trop d'entrées (max " + std::to_string(kMaxJsonStringArrayEntries) + ")";
+					return false;
+				}
+				out.push_back(std::move(item));
+				SkipWs(json, p);
+				if (p < json.size() && json[p] == ',')
+				{
+					++p;
+					continue;
+				}
+				if (p < json.size() && json[p] == ']')
+				{
+					++p;
+					return true;
+				}
+				outError = std::string(key) + ": ',' ou ']' attendu après un élément";
+				return false;
+			}
+		}
+
 		std::string EscapeJson(std::string_view s)
 		{
 			std::string o;
@@ -208,6 +309,116 @@ namespace engine::editor
 			}
 			oss << "]";
 			return oss.str();
+		}
+
+		std::string NormalizeContentRelativePathTokens(std::string_view raw)
+		{
+			std::string s(raw);
+			while (!s.empty() && (s.front() == '/' || s.front() == '\\'))
+			{
+				s.erase(s.begin());
+			}
+			for (char& c : s)
+			{
+				if (c == '\\')
+				{
+					c = '/';
+				}
+			}
+			return s;
+		}
+
+		bool ContentRelativePathHasNoTraversal(const std::string& posixRel)
+		{
+			if (posixRel.empty())
+			{
+				return false;
+			}
+			if (posixRel.front() == '/')
+			{
+				return false;
+			}
+#ifdef _WIN32
+			if (posixRel.find(':') != std::string::npos)
+			{
+				return false;
+			}
+#endif
+			size_t i = 0;
+			while (i < posixRel.size())
+			{
+				const size_t j = posixRel.find('/', i);
+				const std::string_view seg = j == std::string::npos ? std::string_view(posixRel.data() + i, posixRel.size() - i)
+				                                                     : std::string_view(posixRel.data() + i, j - i);
+				if (seg.empty() || seg == "." || seg == "..")
+				{
+					return false;
+				}
+				if (j == std::string::npos)
+				{
+					break;
+				}
+				i = j + 1;
+			}
+			return true;
+		}
+
+		/// Parse `terrain_world_size_m` (nombre ou null). Clé absente → pas d’override (succès).
+		bool ParseOptionalTerrainWorldSizeM(std::string_view json, WorldMapEditDocument& d, std::string& outError)
+		{
+			constexpr std::string_view kKey = "terrain_world_size_m";
+			const std::string          needle = std::string("\"") + std::string(kKey) + "\"";
+			const size_t               keyPos = json.find(needle);
+			if (keyPos == std::string::npos)
+			{
+				d.hasTerrainWorldSizeM = false;
+				return true;
+			}
+			size_t p = json.find(':', keyPos + needle.size());
+			if (p == std::string::npos)
+			{
+				outError = std::string(kKey) + ": ':' manquant après la clé";
+				return false;
+			}
+			++p;
+			SkipWs(json, p);
+			if (p + 4 <= json.size() && json.substr(p, 4) == "null")
+			{
+				d.hasTerrainWorldSizeM = false;
+				return true;
+			}
+			std::string num;
+			while (p < json.size())
+			{
+				const char c = json[p];
+				if ((c >= '0' && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
+				{
+					num.push_back(c);
+					++p;
+					continue;
+				}
+				break;
+			}
+			if (num.empty())
+			{
+				outError = std::string(kKey) + ": nombre attendu ou null";
+				return false;
+			}
+			char* endPtr = nullptr;
+			const double v = std::strtod(num.c_str(), &endPtr);
+			if (static_cast<size_t>(endPtr - num.c_str()) != num.size())
+			{
+				outError = std::string(kKey) + ": nombre JSON invalide";
+				return false;
+			}
+			if (v <= 0.0 || v > 1.0e7)
+			{
+				outError = std::string(kKey) + ": valeur hors plage (]0, 1e7] mètres)";
+				return false;
+			}
+			d.hasTerrainWorldSizeM = true;
+			d.terrainWorldSizeM    = v;
+			return true;
 		}
 	} // namespace
 
@@ -258,7 +469,15 @@ namespace engine::editor
 		}
 		out << "  \"heightmap\": \"" << EscapeJson(doc.heightmapContentRelativePath) << "\",\n";
 		out << "  \"textures\": " << SerializeTexturesArray(doc.textureAssets) << ",\n";
-		out << "  \"objects\": " << SerializeTexturesArray(doc.objectPrefabIds) << "\n";
+		out << "  \"objects\": " << SerializeTexturesArray(doc.objectPrefabIds) << ",\n";
+		if (doc.hasTerrainWorldSizeM)
+		{
+			out << "  \"terrain_world_size_m\": " << doc.terrainWorldSizeM << "\n";
+		}
+		else
+		{
+			out << "  \"terrain_world_size_m\": null\n";
+		}
 		out << "}\n";
 		if (!out.good())
 		{
@@ -301,6 +520,12 @@ namespace engine::editor
 		{
 			d.formatVersion = static_cast<int>(ver);
 		}
+		if (d.formatVersion > WorldMapEditDocument::kFormatVersion)
+		{
+			outError = "version document non supportée: " + std::to_string(d.formatVersion) + " (max " +
+			           std::to_string(WorldMapEditDocument::kFormatVersion) + ")";
+			return false;
+		}
 		uint32_t sz = 256;
 		(void)ParseJsonUIntValue(json, "size", sz);
 		d.heightmapResolution = sz;
@@ -323,7 +548,18 @@ namespace engine::editor
 			return false;
 		}
 		d.heightmapContentRelativePath = s;
-		// textures / objects : MVP laissés vides si parsing complexe
+		if (!ParseJsonStringArray(json, "textures", d.textureAssets, outError))
+		{
+			return false;
+		}
+		if (!ParseJsonStringArray(json, "objects", d.objectPrefabIds, outError))
+		{
+			return false;
+		}
+		if (!ParseOptionalTerrainWorldSizeM(json, d, outError))
+		{
+			return false;
+		}
 		doc = std::move(d);
 		return true;
 	}
@@ -402,6 +638,46 @@ namespace engine::editor
 			}
 		}
 
+		std::vector<std::string> exportedTextureRelPosix;
+		std::vector<std::string> missingTextureRelPosix;
+		exportedTextureRelPosix.reserve(doc.textureAssets.size());
+		missingTextureRelPosix.reserve(doc.textureAssets.size());
+		for (const std::string& raw : doc.textureAssets)
+		{
+			const std::string rel = NormalizeContentRelativePathTokens(raw);
+			if (rel.empty())
+			{
+				continue;
+			}
+			if (!ContentRelativePathHasNoTraversal(rel))
+			{
+				outError = "chemin texture refusé (relatif au content, sans ..) : " + raw;
+				return false;
+			}
+			const std::filesystem::path srcTex = engine::platform::FileSystem::ResolveContentPath(cfg, rel);
+			if (!engine::platform::FileSystem::Exists(srcTex))
+			{
+				LOG_WARN(Core, "[WorldEditor] Export runtime : texture absente, ignorée → {}", rel);
+				missingTextureRelPosix.push_back(rel);
+				continue;
+			}
+			const std::string bundledRel = std::string("zones/") + zid + "/exported_textures/" + rel;
+			const std::filesystem::path dstTex = engine::platform::FileSystem::ResolveContentPath(cfg, bundledRel);
+			std::filesystem::create_directories(dstTex.parent_path(), ec);
+			if (ec)
+			{
+				outError = "création dossier export textures : " + ec.message();
+				return false;
+			}
+			std::filesystem::copy_file(srcTex, dstTex, std::filesystem::copy_options::overwrite_existing, ec);
+			if (ec)
+			{
+				outError = "copie texture export : " + ec.message();
+				return false;
+			}
+			exportedTextureRelPosix.push_back(bundledRel);
+		}
+
 		const std::filesystem::path manifestPath = zoneDir / "runtime_manifest.json";
 		{
 			std::ofstream man(manifestPath, std::ios::binary | std::ios::trunc);
@@ -411,15 +687,48 @@ namespace engine::editor
 				return false;
 			}
 			man << "{\n";
-			man << "  \"lcdlln_runtime_manifest_version\": 1,\n";
+			man << "  \"lcdlln_runtime_manifest_version\": 2,\n";
 			man << "  \"zone_id\": \"" << EscapeJson(zid) << "\",\n";
 			man << "  \"terrain_heightmap\": \"zones/" << EscapeJson(zid) << "/terrain_height.r16h\",\n";
 			man << "  \"source_edit_format_version\": " << doc.formatVersion << ",\n";
-			man << "  \"note\": \"Paquet produit par lcdlln_world_editor — brancher zone_builder / streaming selon pipeline jeu.\"\n";
+			if (doc.hasTerrainWorldSizeM)
+			{
+				man << "  \"terrain_world_size_m\": " << doc.terrainWorldSizeM << ",\n";
+			}
+			else
+			{
+				man << "  \"terrain_world_size_m\": null,\n";
+			}
+			man << "  \"texture_assets\": " << SerializeTexturesArray(doc.textureAssets) << ",\n";
+			man << "  \"exported_textures\": " << SerializeTexturesArray(exportedTextureRelPosix) << ",\n";
+			man << "  \"texture_assets_source_missing\": " << SerializeTexturesArray(missingTextureRelPosix) << ",\n";
+			man << "  \"object_prefab_ids\": " << SerializeTexturesArray(doc.objectPrefabIds) << ",\n";
+			man << "  \"note\": \"Paquet produit par lcdlln_world_editor — textures copiées sous exported_textures/ ; brancher zone_builder / streaming selon pipeline jeu.\"\n";
 			man << "}\n";
 		}
 
-		LOG_INFO(Core, "[WorldEditor] Export runtime OK → {}", zoneDir.string());
+		// Stub layout consommé par zone_builder (ticket 006) : instances vides → méta + dossier chunks/ sans instances.
+		const std::filesystem::path layoutStubPath = zoneDir / "layout_from_editor.json";
+		{
+			std::ofstream lay(layoutStubPath, std::ios::binary | std::ios::trunc);
+			if (!lay.is_open())
+			{
+				outError = "écriture layout_from_editor.json impossible";
+				return false;
+			}
+			lay << "{\n";
+			lay << "  \"version\": 1,\n";
+			lay << "  \"instances\": []\n";
+			lay << "}\n";
+			if (!lay.good())
+			{
+				outError = "écriture layout_from_editor.json incomplète";
+				return false;
+			}
+		}
+
+		LOG_INFO(Core, "[WorldEditor] Export runtime OK → {} (textures exportées: {}, absentes: {})", zoneDir.string(),
+			exportedTextureRelPosix.size(), missingTextureRelPosix.size());
 		return true;
 	}
 

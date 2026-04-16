@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <optional>
 
 namespace engine::render::terrain
 {
@@ -69,12 +70,18 @@ namespace engine::render::terrain
                                VkFormat fmtA, VkFormat fmtB, VkFormat fmtC,
                                VkFormat fmtVelocity, VkFormat fmtDepth,
                                VkQueue queue, uint32_t queueFamilyIndex,
-                               ShaderLoaderFn loadSpirv)
+                               ShaderLoaderFn loadSpirv,
+                               std::optional<float> terrainWorldSizeMetersOverride)
     {
         LOG_INFO(Render,
                  "[TerrainRenderer] Init begin (heightmap='{}' splatmap='{}' holemask='{}' cliffs={})",
                  heightmapRelPath, splatmapRelPath, holeMaskRelPath,
                  static_cast<uint32_t>(cliffMeshRelPaths.size()));
+        if (terrainWorldSizeMetersOverride.has_value() && terrainWorldSizeMetersOverride.value() > 0.0f)
+        {
+            LOG_INFO(Render, "[TerrainRenderer] terrain.world_size overridden to {} m (World Editor / document)",
+                     terrainWorldSizeMetersOverride.value());
+        }
 
         if (device == VK_NULL_HANDLE || physDev == VK_NULL_HANDLE || !loadSpirv)
         {
@@ -83,7 +90,14 @@ namespace engine::render::terrain
         }
 
         // ── Read terrain config ───────────────────────────────────────────────────
-        m_terrainWorldSize = static_cast<float>(config.GetDouble("terrain.world_size", 1024.0));
+        if (terrainWorldSizeMetersOverride.has_value() && terrainWorldSizeMetersOverride.value() > 0.0f)
+        {
+            m_terrainWorldSize = terrainWorldSizeMetersOverride.value();
+        }
+        else
+        {
+            m_terrainWorldSize = static_cast<float>(config.GetDouble("terrain.world_size", 1024.0));
+        }
         m_heightScale      = static_cast<float>(config.GetDouble("terrain.height_scale", 200.0));
         m_terrainOriginX   = static_cast<float>(config.GetDouble("terrain.origin_x", -512.0));
         m_terrainOriginZ   = static_cast<float>(config.GetDouble("terrain.origin_z", -512.0));

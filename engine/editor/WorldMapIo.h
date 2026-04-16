@@ -23,7 +23,8 @@ namespace engine::editor
 	bool WriteFlatHeightmapR16h(const std::filesystem::path& absolutePath, uint32_t width, uint32_t height, uint16_t normalizedHeight,
 		std::string& outError);
 
-	/// Copie le heightmap + écrit \c zone.meta (en-tête versionné) + manifeste JSON runtime sous \c zones/<zone_id>/.
+	/// Copie le heightmap, les textures listées (\c textureAssets) vers \c zones/<zone_id>/exported_textures/,
+	/// écrit \c zone.meta (en-tête versionné seul) + \c runtime_manifest.json + \c layout_from_editor.json (layout vide pour \c zone_builder) sous \c zones/<zone_id>/.
 	bool ExportRuntimeBundle(const engine::core::Config& cfg, const WorldMapEditDocument& doc, std::string& outError);
 
 	/// PNG → .texr (magic TEXR, RGBA8) sous \c textures/<relativeDest> (relatif au content).

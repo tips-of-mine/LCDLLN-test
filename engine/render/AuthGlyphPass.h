@@ -43,7 +43,8 @@ namespace engine::render
 			const engine::client::AuthUiPresenter::VisualState& state,
 			const engine::client::AuthUiPresenter::RenderModel& model,
 			const AuthUiTheme& theme,
-			bool calibrationOverlay);
+			bool calibrationOverlay,
+			bool cornerDebugLabels);
 
 		void Destroy(VkDevice device);
 
@@ -76,7 +77,8 @@ namespace engine::render
 			int32_t maxWidthPx,
 			int32_t scale,
 			const float color[4],
-			bool useValueFont = false) const;
+			bool useValueFont = false,
+			bool flipTextureV = false) const;
 
 		void AppendTextTtf(std::vector<GlyphVertex>& vertices,
 			std::string_view text,
@@ -84,7 +86,8 @@ namespace engine::render
 			int32_t maxWidthPx,
 			int32_t scale,
 			const float color[4],
-			const FontAtlasTtf& atlas) const;
+			const FontAtlasTtf& atlas,
+			bool flipTextureV = false) const;
 
 		void DestroyFontGpu(VkDevice device);
 

@@ -2169,6 +2169,8 @@ namespace engine
 
 														LOG_DEBUG(Render, "[CopyPresent] building UI layers");
 														const bool authCalibOverlay = m_cfg.GetBool("render.auth_ui_calibration_overlay.enabled", false);
+														const bool authCornerDebug =
+															m_cfg.GetBool("render.auth_ui_corner_debug_labels.enabled", true);
 														const std::vector<engine::render::AuthUiLayer> layers =
 															engine::render::BuildAuthUiLayers(ext, authVisualState, authRenderModel, authTheme, authCalibOverlay, authPhotoBackdrop);
 														LOG_DEBUG(Render, "[CopyPresent] UI layers built; clearing attachments");
@@ -2271,7 +2273,8 @@ namespace engine
 																authVisualState,
 																authRenderModel,
 																authTheme,
-																authCalibOverlay);
+																authCalibOverlay,
+																authCornerDebug);
 														}
 
 														if (beganWithKHR && pfnEndKHR)

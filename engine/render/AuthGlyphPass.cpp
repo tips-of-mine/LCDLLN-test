@@ -1077,7 +1077,8 @@ namespace engine::render
 		int32_t maxWidthPx,
 		int32_t scale,
 		const float color[4],
-		const FontAtlasTtf& atlas) const
+		const FontAtlasTtf& atlas,
+		bool flipTextureV) const
 	{
 		if (text.empty() || !atlas.IsValid())
 		{
@@ -1097,18 +1098,25 @@ namespace engine::render
 			{
 				return;
 			}
+			float tv0 = v0;
+			float tv1 = v1;
+			if (flipTextureV)
+			{
+				tv0 = v1;
+				tv1 = v0;
+			}
 			const uint32_t z = 0u;
 			const float sx0 = static_cast<float>(originX) + x0 * mul;
 			const float sy0 = static_cast<float>(originY) + y0 * mul;
 			const float sx1 = static_cast<float>(originX) + x1 * mul;
 			const float sy1 = static_cast<float>(originY) + y1 * mul;
 			const GlyphVertex quad[6] = {
-				{ { sx0, sy0 }, { u0, v0 }, { color[0], color[1], color[2], color[3] }, z, z },
-				{ { sx1, sy0 }, { u1, v0 }, { color[0], color[1], color[2], color[3] }, z, z },
-				{ { sx1, sy1 }, { u1, v1 }, { color[0], color[1], color[2], color[3] }, z, z },
-				{ { sx0, sy0 }, { u0, v0 }, { color[0], color[1], color[2], color[3] }, z, z },
-				{ { sx1, sy1 }, { u1, v1 }, { color[0], color[1], color[2], color[3] }, z, z },
-				{ { sx0, sy1 }, { u0, v1 }, { color[0], color[1], color[2], color[3] }, z, z }
+				{ { sx0, sy0 }, { u0, tv0 }, { color[0], color[1], color[2], color[3] }, z, z },
+				{ { sx1, sy0 }, { u1, tv0 }, { color[0], color[1], color[2], color[3] }, z, z },
+				{ { sx1, sy1 }, { u1, tv1 }, { color[0], color[1], color[2], color[3] }, z, z },
+				{ { sx0, sy0 }, { u0, tv0 }, { color[0], color[1], color[2], color[3] }, z, z },
+				{ { sx1, sy1 }, { u1, tv1 }, { color[0], color[1], color[2], color[3] }, z, z },
+				{ { sx0, sy1 }, { u0, tv1 }, { color[0], color[1], color[2], color[3] }, z, z }
 			};
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
@@ -1163,7 +1171,8 @@ namespace engine::render
 		int32_t maxWidthPx,
 		int32_t scale,
 		const float color[4],
-		bool useValueFont) const
+		bool useValueFont,
+		bool flipTextureV) const
 	{
 		if (text.empty())
 		{
@@ -1171,14 +1180,15 @@ namespace engine::render
 		}
 		if (useValueFont && m_valueFontGpuReady && m_valueFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont, flipTextureV);
 			return;
 		}
 		if (m_fontGpuReady && m_uiFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont, flipTextureV);
 			return;
 		}
+		(void)flipTextureV;
 		std::string normalized = SimplifyUtf8(text);
 		const int32_t linePitch = (7 * std::max(1, scale)) + (2 * std::max(1, scale));
 		const int32_t maxX = originX + std::max(32, maxWidthPx);
@@ -1311,7 +1321,8 @@ namespace engine::render
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model,
 		const AuthUiTheme& theme,
-		bool calibrationOverlay)
+		bool calibrationOverlay,
+		bool cornerDebugLabels)
 	{
 		if (!IsValid() || cmd == VK_NULL_HANDLE || m_mappedVertices == nullptr || extent.width == 0 || extent.height == 0 || !model.visible)
 		{
@@ -1591,7 +1602,7 @@ namespace engine::render
 					AuthUiGridFieldGeometry(contentX, contentW, field.gridColumn, field.gridSpan, fx, fw);
 				}
 
-				AppendText(vertices, field.label, fx + 10, y - labelAboveFieldPx, fw / 2, smallScale, mutedColor);
+				AppendText(vertices, field.label, fx + 10, y - labelAboveFieldPx, std::max(32, fw - 20), smallScale, mutedColor);
 				const float* valueTint = field.active ? titleColor : (field.hovered ? primaryColor : bodyColor);
 				AppendText(verticesValue, field.value, fx + 12, y + valueBelowTopPx, fw - 24, bodyScale, valueTint, /*useValueFont=*/true);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
@@ -1600,9 +1611,9 @@ namespace engine::render
 					const int32_t tooltipH = 58;
 					const float surf[4] = { theme.surface[0], theme.surface[1], theme.surface[2], 0.97f };
 					const float accStrip[4] = { theme.accent[0], theme.accent[1], theme.accent[2], 0.92f };
-					appendBlock(contentX + 6, tooltipY, contentW - 12, tooltipH, surf);
-					appendBlock(contentX + 6, tooltipY, 4, tooltipH, accStrip);
-					AppendText(vertices, field.tooltipText, contentX + 16, tooltipY + 10, contentW - 28, smallScale, bodyColor);
+					appendBlock(fx + 6, tooltipY, fw - 12, tooltipH, surf);
+					appendBlock(fx + 6, tooltipY, 4, tooltipH, accStrip);
+					AppendText(vertices, field.tooltipText, fx + 16, tooltipY + 10, std::max(32, fw - 28), smallScale, bodyColor);
 				}
 				if (field.active && !field.cyclePicker)
 				{
@@ -1764,6 +1775,33 @@ namespace engine::render
 			static constexpr std::string_view kGuide =
 				"Rep\u00e8re LCDLLN : si cette phrase est nette au milieu, glyphes + viewport sont coh\u00e9rents.";
 			appendCenteredText(kGuide, 24, guideY, std::max(100, vw - 48), guideScale, guideColor);
+		}
+
+		// Repères aux coins (écran auth) : diagnostique position / atlas TTF (V inversé en bas-droite).
+		if (cornerDebugLabels)
+		{
+			const int32_t vw = static_cast<int32_t>(extent.width);
+			const int32_t vh = static_cast<int32_t>(extent.height);
+			const int32_t kScale = std::clamp(vh / 40, 5, 10);
+			const int32_t pad = 8;
+			const int32_t lineH = [this, kScale]() -> int32_t {
+				if (m_fontGpuReady && m_uiFont.IsValid())
+				{
+					const float mul = std::max(0.35f, static_cast<float>(kScale) / 4.f);
+					return static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
+				}
+				return 7 * kScale + 2 * kScale;
+			}();
+			const int32_t maxLineW = std::max(64, vw - pad * 2);
+			const float cTL[4] = { 0.25f, 1.0f, 0.35f, 1.0f };
+			const float cBL[4] = { 0.35f, 0.65f, 1.0f, 1.0f };
+			const float cBR[4] = { 1.0f, 0.55f, 0.15f, 1.0f };
+			AppendText(vertices, "Haut-Gauche", pad, pad, maxLineW, kScale, cTL);
+			AppendText(vertices, "En bas-Gauche", pad, vh - lineH - pad, maxLineW, kScale, cBL);
+			static constexpr std::string_view kBR = "En bas-droite";
+			const int32_t brW = MeasureTextWidthPx(kBR, kScale);
+			const int32_t brX = std::max(pad, vw - brW - pad);
+			AppendText(vertices, kBR, brX, vh - lineH - pad, std::max(brW + pad, vw), kScale, cBR, false, true);
 		}
 
 		// Clamp verticesValue so total fits in the mapped buffer.

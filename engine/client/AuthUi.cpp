@@ -3381,8 +3381,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					? std::max(36, bodyLineStep + 16)
 					: std::max(28, bodyLineStep + 10);
 				const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
-				const int32_t bodyStartY =
-					panelY + topOffset + static_cast<int32_t>(model.fields.size()) * fieldStep + afterFieldsGap;
+				const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
+				std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
+				if (fieldCount > 0)
+				{
+					int32_t row = -1;
+					int32_t lastCol = engine::render::kAuthUiGridColumns;
+					for (int32_t fi = 0; fi < fieldCount; ++fi)
+					{
+						const auto& f = model.fields[static_cast<size_t>(fi)];
+						if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+							++row;
+						lastCol = (f.gridColumn < 0) ? engine::render::kAuthUiGridColumns : f.gridColumn;
+						fieldLogicalRow[static_cast<size_t>(fi)] = row;
+					}
+				}
+				const int32_t logicalRowCount =
+					fieldCount > 0 ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1 : 0;
+				const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldStep + afterFieldsGap;
 				const int32_t mx = input.MouseX();
 				const int32_t my = input.MouseY();
 				m_hoveredFieldIndex = -1;
@@ -3400,21 +3416,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				// colonnes 0, 1, 2. On remplit dd.x/y/w/h ici (même logique que AuthGlyphPass).
 				if (m_phase == Phase::Register && model.dropdowns.size() == 3)
 				{
-					// Calcul de la ligne logique pour chaque champ (même algorithme que AuthGlyphPass).
-					const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
-					std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
-					{
-						int32_t row = -1;
-						int32_t lastCol = engine::render::kAuthUiGridColumns;
-						for (int32_t i = 0; i < fieldCount; ++i)
-						{
-							const auto& f = model.fields[static_cast<size_t>(i)];
-							if (f.gridColumn < 0 || f.gridColumn <= lastCol)
-								++row;
-							lastCol = (f.gridColumn < 0) ? engine::render::kAuthUiGridColumns : f.gridColumn;
-							fieldLogicalRow[static_cast<size_t>(i)] = row;
-						}
-					}
 					// Les champs birthDay/Month/Year ont les indices 5, 6, 7 dans la liste des champs.
 					// Leurs colonnes respectives : 0, 1, 2.
 					constexpr int kBirthFieldBase = 5;
@@ -3443,8 +3444,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 				for (size_t i = 0; i < model.fields.size(); ++i)
 				{
-					const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
-					if (contains(mx, my, contentX, y, contentW, engine::render::kAuthUiFieldBoxHeightPx))
+					const auto& fldHit = model.fields[i];
+					const int32_t rowY = panelY + topOffset + fieldLogicalRow[i] * fieldStep;
+					int32_t fx = contentX;
+					int32_t fw = contentW;
+					if (fldHit.gridColumn >= 0)
+					{
+						engine::render::AuthUiGridFieldGeometry(
+						    contentX, contentW, fldHit.gridColumn, fldHit.gridSpan, fx, fw);
+					}
+					if (contains(mx, my, fx, rowY, fw, engine::render::kAuthUiFieldBoxHeightPx))
 					{
 						m_hoveredFieldIndex = static_cast<int32_t>(i);
 						break;
@@ -3459,9 +3468,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					{
 						continue;
 					}
-					const int32_t y = panelY + topOffset + fi * fieldStep;
-					const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
-					const int32_t iy = y - labelAboveFieldPxHit;
+					const int32_t rowY = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(fi)] * fieldStep;
+					int32_t fx = contentX;
+					int32_t fw = contentW;
+					if (fld.gridColumn >= 0)
+					{
+						engine::render::AuthUiGridFieldGeometry(
+						    contentX, contentW, fld.gridColumn, fld.gridSpan, fx, fw);
+					}
+					const int32_t ix = std::max(fx + 10, fx + fw - 36);
+					const int32_t iy = rowY - labelAboveFieldPxHit;
 					if (contains(mx, my, ix, iy, 18, 18))
 					{
 						m_hoveredFieldInfoIndex = fi;
@@ -3627,8 +3643,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				{
 					for (size_t i = 0; i < model.fields.size(); ++i)
 					{
-						const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
-						if (contains(mx, my, contentX, y, contentW, engine::render::kAuthUiFieldBoxHeightPx))
+						const auto& fldClick = model.fields[i];
+						const int32_t rowY = panelY + topOffset + fieldLogicalRow[i] * fieldStep;
+						int32_t fx = contentX;
+						int32_t fw = contentW;
+						if (fldClick.gridColumn >= 0)
+						{
+							engine::render::AuthUiGridFieldGeometry(
+							    contentX, contentW, fldClick.gridColumn, fldClick.gridSpan, fx, fw);
+						}
+						if (contains(mx, my, fx, rowY, fw, engine::render::kAuthUiFieldBoxHeightPx))
 						{
 							m_activeField = static_cast<uint32_t>(i);
 							break;
@@ -3827,9 +3851,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								{
 									continue;
 								}
-								const int32_t y = panelY + topOffset + fi * fieldStep;
-								const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
-								const int32_t iy = y - labelAboveFieldPxHit;
+								const int32_t rowY = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(fi)] * fieldStep;
+								int32_t fx = contentX;
+								int32_t fw = contentW;
+								if (fld.gridColumn >= 0)
+								{
+									engine::render::AuthUiGridFieldGeometry(
+									    contentX, contentW, fld.gridColumn, fld.gridSpan, fx, fw);
+								}
+								const int32_t ix = std::max(fx + 10, fx + fw - 36);
+								const int32_t iy = rowY - labelAboveFieldPxHit;
 								if (contains(mx, my, ix, iy, 18, 18))
 								{
 									m_infoPopupVisible = !m_infoPopupVisible;

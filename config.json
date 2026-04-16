@@ -29,6 +29,9 @@
             "value_font_path": "fonts/Morpheus.ttf",
             "value_font_pixel_height": 28
         },
+        "auth_ui_corner_debug_labels": {
+            "enabled": true
+        },
         "terrain": {
             "heightmap": "terrain/heightmap.r16h",
             "splatmap": "",

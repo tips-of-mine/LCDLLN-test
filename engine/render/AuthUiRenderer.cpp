@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace engine::render
 {
@@ -713,10 +714,26 @@ namespace engine::render
 		const int32_t contentX = layout.contentX;
 		const int32_t contentW = layout.contentW;
 		const int32_t topOffset = layout.topOffset;
-		const int32_t fieldStep = layout.fieldRowStepPx;
+		const int32_t fieldRowStep = layout.fieldRowStepPx;
 		const int32_t bodyScale = AuthUiClassicTextScaleFromPanelW(layout.panelW);
 		const int32_t smallScale = std::max(2, bodyScale - 1);
 		const int32_t labelAboveFieldPx = smallScale * 11 + 6;
+
+		const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
+		std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);
+		if (fieldCount > 0)
+		{
+			int32_t row = -1;
+			int32_t lastCol = kAuthUiGridColumns;
+			for (int32_t fi = 0; fi < fieldCount; ++fi)
+			{
+				const auto& f = model.fields[static_cast<size_t>(fi)];
+				if (f.gridColumn < 0 || f.gridColumn <= lastCol)
+					++row;
+				lastCol = (f.gridColumn < 0) ? kAuthUiGridColumns : f.gridColumn;
+				fieldLogicalRow[static_cast<size_t>(fi)] = row;
+			}
+		}
 
 		out.resize(model.fields.size());
 		for (size_t i = 0; i < model.fields.size(); ++i)
@@ -725,8 +742,15 @@ namespace engine::render
 			{
 				continue;
 			}
-			const int32_t y = panelY + topOffset + static_cast<int32_t>(i) * fieldStep;
-			const int32_t ix = std::max(contentX + 10, contentX + contentW - 36);
+			const auto& field = model.fields[i];
+			int32_t fieldX = contentX;
+			int32_t fieldW = contentW;
+			if (field.gridColumn >= 0)
+			{
+				AuthUiGridFieldGeometry(contentX, contentW, field.gridColumn, field.gridSpan, fieldX, fieldW);
+			}
+			const int32_t y = panelY + topOffset + fieldLogicalRow[i] * fieldRowStep;
+			const int32_t ix = std::max(fieldX + 10, fieldX + fieldW - 36);
 			const int32_t iy = y - labelAboveFieldPx;
 			out[i].valid = true;
 			out[i].centerXPx = static_cast<float>(ix + 9);

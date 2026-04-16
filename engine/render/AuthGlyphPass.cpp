@@ -1590,7 +1590,7 @@ namespace engine::render
 					AuthUiGridFieldGeometry(contentX, contentW, field.gridColumn, field.gridSpan, fx, fw);
 				}
 
-				AppendText(vertices, field.label, fx + 10, y - labelAboveFieldPx, fw / 2, smallScale, mutedColor);
+				AppendText(vertices, field.label, fx + 10, y - labelAboveFieldPx, std::max(32, fw - 20), smallScale, mutedColor);
 				const float* valueTint = field.active ? titleColor : (field.hovered ? primaryColor : bodyColor);
 				AppendText(verticesValue, field.value, fx + 12, y + valueBelowTopPx, fw - 24, bodyScale, valueTint, /*useValueFont=*/true);
 				if (i == model.hoveredFieldInfoIndex && !field.tooltipText.empty())
@@ -1599,9 +1599,9 @@ namespace engine::render
 					const int32_t tooltipH = 58;
 					const float surf[4] = { theme.surface[0], theme.surface[1], theme.surface[2], 0.97f };
 					const float accStrip[4] = { theme.accent[0], theme.accent[1], theme.accent[2], 0.92f };
-					appendBlock(contentX + 6, tooltipY, contentW - 12, tooltipH, surf);
-					appendBlock(contentX + 6, tooltipY, 4, tooltipH, accStrip);
-					AppendText(vertices, field.tooltipText, contentX + 16, tooltipY + 10, contentW - 28, smallScale, bodyColor);
+					appendBlock(fx + 6, tooltipY, fw - 12, tooltipH, surf);
+					appendBlock(fx + 6, tooltipY, 4, tooltipH, accStrip);
+					AppendText(vertices, field.tooltipText, fx + 16, tooltipY + 10, std::max(32, fw - 28), smallScale, bodyColor);
 				}
 				if (field.active && !field.cyclePicker)
 				{

@@ -10,6 +10,7 @@
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/render/terrain/HeightmapLoader.h"
 #include "engine/render/terrain/TerrainGrassDetail.h"
 #include "engine/render/terrain/TerrainHoleMask.h"
 
@@ -388,6 +389,17 @@ namespace engine::editor
 		{
 			SetStatus("Chargement: " + err);
 			return false;
+		}
+		// runtime_manifest.json n’a souvent pas « size » : aligner la résolution sur le fichier .r16h réel.
+		if (!m_doc.heightmapContentRelativePath.empty())
+		{
+			const std::filesystem::path hmAbs = engine::platform::FileSystem::ResolveContentPath(cfg, m_doc.heightmapContentRelativePath);
+			engine::render::terrain::HeightmapData hmProbe{};
+			if (engine::render::terrain::HeightmapLoader::LoadFromFile(hmAbs.string(), hmProbe) && hmProbe.width > 0u
+				&& hmProbe.height > 0u && hmProbe.width == hmProbe.height)
+			{
+				m_doc.heightmapResolution = hmProbe.width;
+			}
 		}
 		m_treeCatalogLoadAttempted = false;
 		m_editJsonAbsolutePath = path;

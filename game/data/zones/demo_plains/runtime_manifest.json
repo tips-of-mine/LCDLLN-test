@@ -1,6 +1,7 @@
 {
   "lcdlln_runtime_manifest_version": 3,
   "zone_id": "demo_plains",
+  "size": 64,
   "terrain_heightmap": "zones/demo_plains/terrain_height.r16h",
   "terrain_splatmap": "zones/demo_plains/terrain_splat.slap",
   "terrain_grass_mask": "zones/demo_plains/terrain_grass.grms",

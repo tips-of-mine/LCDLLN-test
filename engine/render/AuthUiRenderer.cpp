@@ -686,8 +686,8 @@ namespace engine::render
 
 		if (calibrationOverlay)
 		{
-			// Overlay volontairement minimal : uniquement un carré magenta au centre.
-			// Objectif: diagnostique d’orientation sans “bordure” visible sur l’UI.
+			// Carré magenta au centre + phrase jaune centrée dans AuthGlyphPass (même flag config).
+			// Objectif : repère visuel / diagnostic glyphes + viewport.
 			const int32_t box = std::clamp(std::min(w, h) / 10, 48, 120);
 			const int32_t cx = (w - box) / 2;
 			const int32_t cy = (h - box) / 2;

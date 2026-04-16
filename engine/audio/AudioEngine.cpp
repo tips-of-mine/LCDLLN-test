@@ -6,6 +6,7 @@
 #include "engine/platform/FileSystem.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
@@ -166,11 +167,18 @@ namespace engine::audio
 		auto it = m_buses.find(std::string(busId));
 		if (it == m_buses.end())
 		{
-			LOG_WARN(Core, "[AudioEngine] SetBusVolume failed: unknown bus '{}'", busId);
+			// Buses optionnels (ex. « Weather » piloté par la météo) peuvent être absents du JSON zone audio.
+			LOG_DEBUG(Core, "[AudioEngine] SetBusVolume skipped: unknown bus '{}'", busId);
 			return false;
 		}
 
-		it->second.volume = std::clamp(volume, 0.0f, 1.0f);
+		const float clamped = std::clamp(volume, 0.0f, 1.0f);
+		if (std::fabs(it->second.volume - clamped) <= 1.0e-4f)
+		{
+			return true;
+		}
+
+		it->second.volume = clamped;
 		LOG_INFO(Core, "[AudioEngine] Bus volume updated (bus={}, volume={:.2f})", busId, it->second.volume);
 		return true;
 	}

@@ -811,6 +811,20 @@ namespace engine::platform
 
 		switch (msg)
 		{
+		case WM_GETMINMAXINFO:
+		{
+			// Client minimal ~480×360 : en dessous, Vulkan + ImGui docking + passes dérivées (SSAO, bloom mips)
+			// peuvent provoquer des échecs de création d’images ou des comportements indéfinis lors du rétrécissement.
+			auto* mmi = reinterpret_cast<MINMAXINFO*>(lparam);
+			const DWORD winStyle = static_cast<DWORD>(GetWindowLongW(AsHwnd(m_hwnd), GWL_STYLE));
+			RECT rc{};
+			rc.right  = 480;
+			rc.bottom = 360;
+			AdjustWindowRect(&rc, winStyle ? winStyle : (WS_OVERLAPPEDWINDOW), FALSE);
+			mmi->ptMinTrackSize.x = std::max(mmi->ptMinTrackSize.x, static_cast<LONG>(rc.right - rc.left));
+			mmi->ptMinTrackSize.y = std::max(mmi->ptMinTrackSize.y, static_cast<LONG>(rc.bottom - rc.top));
+			return 0;
+		}
 		case WM_CLOSE:
 			m_shouldClose = true;
 			if (m_onClose)

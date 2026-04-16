@@ -42,7 +42,8 @@ namespace engine::render
 		void RecordModel(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
 			const engine::client::AuthUiPresenter::VisualState& state,
 			const engine::client::AuthUiPresenter::RenderModel& model,
-			const AuthUiTheme& theme);
+			const AuthUiTheme& theme,
+			bool calibrationOverlay);
 
 		void Destroy(VkDevice device);
 

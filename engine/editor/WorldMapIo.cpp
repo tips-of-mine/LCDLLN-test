@@ -1287,19 +1287,21 @@ namespace engine::editor
 				d.seed = sd;
 			}
 		}
-		if (!ParseJsonStringValue(json, "heightmap", s))
+		// Éditeur : map.lcdlln_edit.json utilise heightmap / splatmap / grass_mask.
+		// runtime_manifest.json (export jeu) utilise terrain_heightmap / terrain_splatmap / terrain_grass_mask.
+		if (!ParseJsonStringValue(json, "heightmap", s) && !ParseJsonStringValue(json, "terrain_heightmap", s))
 		{
-			outError = "heightmap manquant ou invalide";
+			outError = "heightmap manquant ou invalide (attendu \"heightmap\" ou \"terrain_heightmap\")";
 			return false;
 		}
 		d.heightmapContentRelativePath = s;
-		if (!ParseJsonStringValue(json, "splatmap", s))
+		if (!ParseJsonStringValue(json, "splatmap", s) && !ParseJsonStringValue(json, "terrain_splatmap", s))
 		{
 			s.clear();
 		}
 		d.splatmapContentRelativePath =
 			s.empty() ? DeriveDefaultSplatPathFromHeightmap(d.heightmapContentRelativePath) : std::move(s);
-		if (ParseJsonStringValue(json, "grass_mask", s))
+		if (ParseJsonStringValue(json, "grass_mask", s) || ParseJsonStringValue(json, "terrain_grass_mask", s))
 		{
 			d.grassMaskContentRelativePath =
 				s.empty() ? DeriveDefaultGrassPathFromSplat(d.splatmapContentRelativePath) : std::move(s);
@@ -1312,6 +1314,10 @@ namespace engine::editor
 		{
 			return false;
 		}
+		if (d.textureAssets.empty() && !ParseJsonStringArray(json, "texture_assets", d.textureAssets, outError))
+		{
+			return false;
+		}
 		if (!ParseJsonLayoutInstances(json, d.layoutInstances, outError))
 		{
 			return false;
@@ -1321,6 +1327,10 @@ namespace engine::editor
 			return false;
 		}
 		if (!ParseJsonStringArray(json, "objects", d.objectPrefabIds, outError))
+		{
+			return false;
+		}
+		if (d.objectPrefabIds.empty() && !ParseJsonStringArray(json, "object_prefab_ids", d.objectPrefabIds, outError))
 		{
 			return false;
 		}

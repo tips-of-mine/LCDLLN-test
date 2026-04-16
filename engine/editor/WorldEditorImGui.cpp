@@ -370,6 +370,27 @@ namespace engine::editor
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (caméra FPS).
 		ImGui::StyleColorsDark();
+		{
+			// StyleColorsDark laisse souvent un alpha < 1 sur WindowBg : la grille du viewport Vulkan transparaît
+			// fortement dans les panneaux dockés / flottants. On resserre l’opacité des fonds d’UI éditeur.
+			ImGuiStyle& st = ImGui::GetStyle();
+			constexpr float bgA = 0.98f;
+			const ImVec4 winBg(0.10f, 0.10f, 0.12f, bgA);
+			st.Colors[ImGuiCol_WindowBg] = winBg;
+			st.Colors[ImGuiCol_ChildBg] = ImVec4(0.09f, 0.09f, 0.11f, bgA);
+			st.Colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.10f, 0.99f);
+			st.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.12f, 0.12f, 0.14f, bgA);
+			st.Colors[ImGuiCol_TitleBg] = ImVec4(0.09f, 0.09f, 0.11f, bgA);
+			st.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.11f, 0.11f, 0.14f, bgA);
+			st.Colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.16f, 0.19f, bgA);
+			st.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.20f, 0.24f, bgA);
+			st.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.22f, 0.22f, 0.27f, bgA);
+			st.Colors[ImGuiCol_Header] = ImVec4(0.20f, 0.20f, 0.24f, bgA);
+			st.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.26f, 0.32f, bgA);
+			st.Colors[ImGuiCol_HeaderActive] = ImVec4(0.28f, 0.28f, 0.35f, bgA);
+			// Espace entre fenêtres dockées : léger voile pour réduire le contraste avec la grille du fond.
+			st.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.06f, 0.06f, 0.08f, 0.88f);
+		}
 
 		ImGui_ImplWin32_Init(hwnd);
 
@@ -543,7 +564,10 @@ namespace engine::editor
 				(void)m_session->ActionNewMap(*m_cfg);
 			}
 			ImGui::Separator();
-			ImGui::InputText("Charger JSON (chemin absolu)", m_session->BufLoadPath().data(), m_session->BufLoadPath().size());
+			ImGui::InputTextWithHint("Charger JSON (chemin absolu)",
+				"…/map.lcdlln_edit.json ou …/runtime_manifest.json (démo)",
+				m_session->BufLoadPath().data(),
+				m_session->BufLoadPath().size());
 			if (ImGui::Button("Charger"))
 			{
 				(void)m_session->ActionLoadEditJson(*m_cfg);

@@ -123,8 +123,10 @@ namespace engine::render
 		VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(formats);
 		m_requestedPresentMode = requestedPresentMode;
 		m_presentMode = ChoosePresentMode(modes, requestedPresentMode);
-		VkPresentModeKHR presentMode = m_presentMode;
 		m_extent = ClampExtent(requestedWidth, requestedHeight, caps);
+		// Vulkan exige une étendue ≥ 1 ; certains chemins de clamp surface peuvent encore rendre 0 en cas limite.
+		m_extent.width  = std::max(1u, m_extent.width);
+		m_extent.height = std::max(1u, m_extent.height);
 		m_imageFormat = surfaceFormat.format;
 
 		uint32_t imageCount = caps.minImageCount + 1;
@@ -150,7 +152,7 @@ namespace engine::render
 		createInfo.pQueueFamilyIndices = exclusive ? nullptr : queueFamilyIndices;
 		createInfo.preTransform = caps.currentTransform;
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		createInfo.presentMode = presentMode;
+		createInfo.presentMode = m_presentMode;
 		createInfo.clipped = VK_TRUE;
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 

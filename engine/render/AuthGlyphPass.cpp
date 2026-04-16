@@ -1310,7 +1310,8 @@ namespace engine::render
 	void AuthGlyphPass::RecordModel(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
 		const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model,
-		const AuthUiTheme& theme)
+		const AuthUiTheme& theme,
+		bool calibrationOverlay)
 	{
 		if (!IsValid() || cmd == VK_NULL_HANDLE || m_mappedVertices == nullptr || extent.width == 0 || extent.height == 0 || !model.visible)
 		{
@@ -1749,6 +1750,20 @@ namespace engine::render
 			const int32_t textY    = popupY + 24;
 			const int32_t maxTextW = popupW - 48;
 			AppendText(vertices, model.infoPopupText, textX, textY, maxTextW, bodyScale, titleColor);
+		}
+
+		// Texte de repère au centre (même flag que le carré magenta des couches — config
+		// render.auth_ui_calibration_overlay.enabled). Dessiné en dernier pour rester lisible par-dessus l’UI.
+		if (calibrationOverlay)
+		{
+			const int32_t vw = static_cast<int32_t>(extent.width);
+			const int32_t vh = static_cast<int32_t>(extent.height);
+			const int32_t guideScale = std::clamp(vh / 36, 5, 11);
+			const int32_t guideY = vh / 2 - guideScale * 4;
+			const float guideColor[4] = { 1.0f, 0.92f, 0.15f, 1.0f };
+			static constexpr std::string_view kGuide =
+				"Rep\u00e8re LCDLLN : si cette phrase est nette au milieu, glyphes + viewport sont coh\u00e9rents.";
+			appendCenteredText(kGuide, 24, guideY, std::max(100, vw - 48), guideScale, guideColor);
 		}
 
 		// Clamp verticesValue so total fits in the mapped buffer.

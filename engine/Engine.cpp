@@ -2270,7 +2270,8 @@ namespace engine
 																ext,
 																authVisualState,
 																authRenderModel,
-																authTheme);
+																authTheme,
+																authCalibOverlay);
 														}
 
 														if (beganWithKHR && pfnEndKHR)
@@ -2529,15 +2530,17 @@ namespace engine
 				if (m_terrain.IsValid())
 					m_terrain.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
 
-				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
-				// All frame-graph images are recreated after a resize/out-of-date event, so the
-				// TAA history must be rebuilt from scratch on the next frame.
-				m_taaHistoryInvalid = true;
-				m_taaHistoryEverFilled = false;
-
-				bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
+				// Recréer la swapchain *avant* de détruire le frame graph : si vkCreateSwapchainKHR échoue,
+				// on conserve les RT GPU existants au lieu d’un état « FG vidé + swapchain invalide » (crash au présent).
+				const bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
 				if (ok)
 				{
+					m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
+					// All frame-graph images are recreated after a resize/out-of-date event, so the
+					// TAA history must be rebuilt from scratch on the next frame.
+					m_taaHistoryInvalid = true;
+					m_taaHistoryEverFilled = false;
+
 					m_suboptimalStreak = 0;
 					m_suboptimalWidth = m_width;
 					m_suboptimalHeight = m_height;
@@ -2548,7 +2551,9 @@ namespace engine
 					}
 				}
 				else
-					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED");
+				{
+					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED — frame graph conservé (évite état incohérent)");
+				}
 			}
 			else
 			{
@@ -3316,8 +3321,8 @@ namespace engine
 	void Engine::OnResize(int w, int h)
 	{
     	LOG_INFO(Platform, "[Resize] OnResize");
-		m_width  = w;
-		m_height = h;
+		m_width  = std::max(1, w);
+		m_height = std::max(1, h);
 		m_suboptimalStreak = 0;
 		m_suboptimalWidth = w;
 		m_suboptimalHeight = h;

@@ -19,8 +19,7 @@ void main()
 {
 	vec2 ndc;
 	ndc.x = (inPos.x / pc.viewportSize.x) * 2.0 - 1.0;
-	// inPos en pixels haut-gauche, Y vers le bas. Le flip vertical est fait côté CPU
-	// via VkViewport.height < 0 (AuthGlyphPass), pas ici.
+	// inPos en pixels haut-gauche, Y vers le bas → NDC Vulkan (y croissant vers le bas à l’écran).
 	ndc.y = (inPos.y / pc.viewportSize.y) * 2.0 - 1.0;
 	gl_Position = vec4(ndc, 0.0, 1.0);
 	vUv = inUv;

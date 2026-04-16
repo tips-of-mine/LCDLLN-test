@@ -3377,9 +3377,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t bodyScale = engine::render::AuthUiClassicTextScaleFromPanelW(lay.panelW);
 				const int32_t bodyLineStep = 7 * bodyScale + 2 * bodyScale;
 				const bool centeredLanguageSelection = vsLayout.languageSelection || vsLayout.languageOptions;
-				const int32_t bodyLinePitch = centeredLanguageSelection
+				const int32_t bitmapBodyLinePitch = centeredLanguageSelection
 					? std::max(36, bodyLineStep + 16)
 					: std::max(28, bodyLineStep + 10);
+				const int32_t approxTtfLh = static_cast<int32_t>(std::lround(static_cast<float>(bodyLineStep) * 1.28f));
+				const int32_t bodyLinePitch = std::max(bitmapBodyLinePitch,
+					approxTtfLh + (centeredLanguageSelection ? 14 : 10));
 				const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
 				const int32_t fieldCount = static_cast<int32_t>(model.fields.size());
 				std::vector<int32_t> fieldLogicalRow(static_cast<size_t>(fieldCount), 0);

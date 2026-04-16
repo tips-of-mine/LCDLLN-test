@@ -1271,9 +1271,9 @@ namespace engine::render
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = static_cast<float>(extent.height);
+		viewport.y = 0.0f;
 		viewport.width = static_cast<float>(extent.width);
-		viewport.height = -static_cast<float>(extent.height);
+		viewport.height = static_cast<float>(extent.height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		VkRect2D scissor{};
@@ -1609,9 +1609,16 @@ namespace engine::render
 					appendBlock(std::min(caretX, fx + fw - 14), y + valueBelowTopPx - 1, std::max(2, bodyScale - 1), 7 * bodyScale + 2, accentColor);
 				}
 			}
-			const int32_t bodyLinePitch = centeredLanguageSelection
+			const int32_t bitmapBodyLinePitch = centeredLanguageSelection
 				? std::max(36, bodyLineStep + 16)
 				: std::max(28, bodyLineStep + 10);
+			int32_t bodyLinePitch = bitmapBodyLinePitch;
+			if (m_fontGpuReady && m_uiFont.IsValid())
+			{
+				const float mul = std::max(0.35f, static_cast<float>(bodyScale) / 4.f);
+				const int32_t lh = static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
+				bodyLinePitch = std::max(bitmapBodyLinePitch, lh + (centeredLanguageSelection ? 14 : 10));
+			}
 			const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
 			const int32_t logicalRowCount = fieldCount > 0 ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1 : 0;
 			const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldRowStep + afterFieldsGap;
@@ -1781,9 +1788,9 @@ namespace engine::render
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = static_cast<float>(extent.height);
+		viewport.y = 0.0f;
 		viewport.width = static_cast<float>(extent.width);
-		viewport.height = -static_cast<float>(extent.height);
+		viewport.height = static_cast<float>(extent.height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		VkRect2D scissor{};

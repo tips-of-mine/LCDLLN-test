@@ -16,6 +16,25 @@ namespace engine::render
 
 	namespace
 	{
+		uint32_t FindMemoryType(
+			VkPhysicalDevice          physicalDevice,
+			uint32_t                  typeFilter,
+			VkMemoryPropertyFlags     properties)
+		{
+			VkPhysicalDeviceMemoryProperties memProps{};
+			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
+
+			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+			{
+				if ((typeFilter & (1u << i)) &&
+				    (memProps.memoryTypes[i].propertyFlags & properties) == properties)
+				{
+					return i;
+				}
+			}
+			return UINT32_MAX;
+		}
+
 		/// Create a Vulkan buffer with device-local memory backed by a staging upload.
 		/// For simplicity the water mesh is small enough that we upload with a host-visible
 		/// staging buffer and copy once at init time.
@@ -45,7 +64,7 @@ namespace engine::render
 			VkMemoryRequirements stagingReq{};
 			vkGetBufferMemoryRequirements(device, stagingBuf, &stagingReq);
 
-			const uint32_t stagingMemType = WaterRenderer::FindMemoryType(
+			const uint32_t stagingMemType = FindMemoryType(
 				physicalDevice,
 				stagingReq.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -94,7 +113,7 @@ namespace engine::render
 			VkMemoryRequirements deviceReq{};
 			vkGetBufferMemoryRequirements(device, outBuffer, &deviceReq);
 
-			const uint32_t deviceMemType = WaterRenderer::FindMemoryType(
+			const uint32_t deviceMemType = FindMemoryType(
 				physicalDevice,
 				deviceReq.memoryTypeBits,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -155,7 +174,7 @@ namespace engine::render
 			VkMemoryRequirements hostReq{};
 			vkGetBufferMemoryRequirements(device, outBuffer, &hostReq);
 
-			const uint32_t hostMemType = WaterRenderer::FindMemoryType(
+			const uint32_t hostMemType = FindMemoryType(
 				physicalDevice,
 				hostReq.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

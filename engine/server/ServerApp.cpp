@@ -5617,7 +5617,7 @@ namespace engine::server
 		/// Notify target via TradeRequestNotify packet.
 		const TradeRequestNotifyMessage notify{ "P" + std::to_string(sender.clientId) };
 		const auto packet = EncodeTradeRequestNotify(notify);
-		m_transport.Send(target->endpoint, packet.data(), packet.size());
+		m_transport.Send(target->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 
 		SendChatSystemNotice(sender, "Trade request sent to " + std::string(targetName) + ".");
 		LOG_INFO(Net, "[TradeSystem] /trade request sent (sender={}, target={})",
@@ -5839,13 +5839,13 @@ namespace engine::server
 		{
 			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdA, m_currentTick);
 			const auto packet = EncodeTradeWindowUpdate(msg);
-			m_transport.Send(clientA->endpoint, packet.data(), packet.size());
+			m_transport.Send(clientA->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		}
 		if (clientB != nullptr)
 		{
 			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdB, m_currentTick);
 			const auto packet = EncodeTradeWindowUpdate(msg);
-			m_transport.Send(clientB->endpoint, packet.data(), packet.size());
+			m_transport.Send(clientB->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		}
 	}
 
@@ -5860,7 +5860,7 @@ namespace engine::server
 			}
 			const TradeCompleteMessage msg{ clientId };
 			const auto packet = EncodeTradeComplete(msg);
-			m_transport.Send(client->endpoint, packet.data(), packet.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			SendChatSystemNotice(*client, "Trade completed successfully.");
 		};
 		sendComplete(clientIdA);
@@ -5880,7 +5880,7 @@ namespace engine::server
 			{
 				return;
 			}
-			m_transport.Send(client->endpoint, packet.data(), packet.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			SendChatSystemNotice(*client, "Trade cancelled: " + std::string(reason));
 		};
 		sendCancelled(clientIdA);
@@ -5951,7 +5951,7 @@ namespace engine::server
 		{
 			const HarvestStartMessage startMsg{ message.nodeEntityId, durationTicks };
 			const auto packet = EncodeHarvestStart(startMsg);
-			m_transport.Send(client->endpoint, packet.data(), packet.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			LOG_INFO(Gameplay, "[GatheringSystem] HarvestRequest OK: client={} node={} ticks={}",
 			         client->clientId, message.nodeEntityId, durationTicks);
 			break;
@@ -6034,7 +6034,7 @@ namespace engine::server
 			/// Send HarvestComplete then InventoryDelta.
 			const HarvestCompleteMessage completeMsg{ outCompletedNodeIds[i] };
 			const auto completePkt = EncodeHarvestComplete(completeMsg);
-			m_transport.Send(client->endpoint, completePkt.data(), completePkt.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
 
 			if (!loot.empty())
 			{
@@ -6068,7 +6068,7 @@ namespace engine::server
 	{
 		const HarvestCancelledMessage msg{ nodeEntityId, reason };
 		const auto packet = EncodeHarvestCancelled(msg);
-		m_transport.Send(receiver.endpoint, packet.data(), packet.size());
+		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		LOG_DEBUG(Gameplay, "[GatheringSystem] HarvestCancelled sent: client={} node={} reason={}",
 		          receiver.clientId, nodeEntityId, static_cast<uint8_t>(reason));
 		return true;
@@ -6167,7 +6167,7 @@ namespace engine::server
 		}
 
 		const auto packet = EncodeCraftRecipeListResult(result);
-		m_transport.Send(client->endpoint, packet.data(), packet.size());
+		m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		LOG_DEBUG(Gameplay, "[CraftingSystem] RecipeListResult sent: client={} profession='{}' recipes={}",
 		          client->clientId, message.professionKey, result.recipes.size());
 	}
@@ -6200,7 +6200,7 @@ namespace engine::server
 		{
 			const CraftStartMessage startMsg{ message.recipeId, durationTicks };
 			const auto packet = EncodeCraftStart(startMsg);
-			m_transport.Send(client->endpoint, packet.data(), packet.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			LOG_INFO(Gameplay, "[CraftingSystem] CraftStart: client={} recipe='{}' ticks={}",
 			         client->clientId, message.recipeId, durationTicks);
 			break;
@@ -6241,7 +6241,7 @@ namespace engine::server
 		{
 			const CraftCancelledMessage msg{ cancelled };
 			const auto packet = EncodeCraftCancelled(msg);
-			m_transport.Send(client->endpoint, packet.data(), packet.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 			LOG_INFO(Gameplay, "[CraftingSystem] CraftCancelled: client={} recipe='{}'",
 			         client->clientId, cancelled);
 		}
@@ -6281,7 +6281,7 @@ namespace engine::server
 			completeMsg.newSkillLevel = newSkillLevel[i];
 			completeMsg.qualityTier   = static_cast<uint8_t>(qualityTiers[i]);
 			const auto completePkt = EncodeCraftComplete(completeMsg);
-			m_transport.Send(client->endpoint, completePkt.data(), completePkt.size());
+			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
 
 			/// Send InventoryDelta so the client refreshes its bag.
 			(void)SendInventoryDelta(
@@ -6316,7 +6316,7 @@ namespace engine::server
 			msg.professions.push_back(std::move(wire));
 		}
 		const auto packet = EncodeProfessionUpdate(msg);
-		m_transport.Send(receiver.endpoint, packet.data(), packet.size());
+		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
 		LOG_DEBUG(Gameplay, "[CraftingSystem] ProfessionUpdate sent: client={} professions={}",
 		          receiver.clientId, msg.professions.size());
 		return true;

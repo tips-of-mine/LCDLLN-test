@@ -1,5 +1,7 @@
 #include "engine/server/CharacterPersistence.h"
 
+#include "engine/server/ServerProtocol.h"
+
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"
 

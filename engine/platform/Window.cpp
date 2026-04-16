@@ -3,6 +3,9 @@
 #include "engine/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <shellapi.h>
 #include <objidl.h>
@@ -672,13 +675,13 @@ namespace engine::platform
 		GetClientRect(AsHwnd(m_hwnd), &rc);
 		const int clientW = static_cast<int>(rc.right - rc.left);
 		const int clientH = static_cast<int>(rc.bottom - rc.top);
-		const int panelW = max(520, min((clientW * 40) / 100, 760));
-		const int panelH = max(360, min((clientH * 60) / 100, 620));
+		const int panelW = std::max(520, std::min((clientW * 40) / 100, 760));
+		const int panelH = std::max(360, std::min((clientH * 60) / 100, 620));
 		const int panelX = (clientW - panelW) / 2;
 		const int panelY = (clientH - panelH) / 2;
-		const int artW = max(150, min(panelW / 3, 240));
-		const int width = max(220, panelW - artW - 74);
-		const int height = max(140, panelH - 108);
+		const int artW = std::max(150, std::min(panelW / 3, 240));
+		const int width = std::max(220, panelW - artW - 74);
+		const int height = std::max(140, panelH - 108);
 		SetWindowPos(AsHwnd(m_overlayHwnd), HWND_TOPMOST, panelX + artW + 48, panelY + 34, width, height,
 			SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	}
@@ -694,14 +697,14 @@ namespace engine::platform
 		GetClientRect(AsHwnd(m_hwnd), &rc);
 		const int clientW = static_cast<int>(rc.right - rc.left);
 		const int clientH = static_cast<int>(rc.bottom - rc.top);
-		const int panelW = max(520, min((clientW * 40) / 100, 760));
-		const int panelH = max(360, min((clientH * 60) / 100, 620));
+		const int panelW = std::max(520, std::min((clientW * 40) / 100, 760));
+		const int panelH = std::max(360, std::min((clientH * 60) / 100, 620));
 		const int panelX = (clientW - panelW) / 2;
 		const int panelY = (clientH - panelH) / 2;
-		const int artW = max(150, min(panelW / 3, 240));
+		const int artW = std::max(150, std::min(panelW / 3, 240));
 		const int contentX = panelX + artW + 48;
-		const int contentW = max(220, panelW - artW - 74);
-		const int logoSize = max(64, min(76, clientW / 20));
+		const int contentW = std::max(220, panelW - artW - 74);
+		const int logoSize = std::max(64, std::min(76, clientW / 20));
 		const int infoSize = 72;
 
 		const bool hasBackgroundBitmap = ReplaceStaticBitmap(m_authBackgroundHwnd, m_authBackgroundBitmap, m_authBackgroundPath, m_authBackgroundWidth, m_authBackgroundHeight,

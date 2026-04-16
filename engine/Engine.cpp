@@ -2799,10 +2799,12 @@ namespace engine
 		}
 		else if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
 		{
-			if (!m_worldEditorImGui->WantsCaptureMouse() && !m_worldEditorImGui->WantsCaptureKeyboard())
-			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, out.camera);
-			}
+			// Ne pas exiger les deux à la fois : sinon dès que ImGui capture la souris (dock / panneaux),
+			// WASD est bloqué alors que le clavier n’est pas utilisé par l’UI.
+			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
+			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
+			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, out.camera,
+				!capMouse, !capKb);
 		}
 
 		if (m_gameplayNetInitialized)
@@ -3220,6 +3222,9 @@ namespace engine
 	    {
 	        VkImage     backbufferImage = m_vkSwapchain.GetImage(imageIndex);
 	        VkImageView backbufferView  = m_vkSwapchain.GetImageView(imageIndex);
+	        // Après resize / destroy FG, ne pas réutiliser d’anciennes entrées (handles invalidés) — sinon copie
+	        // vers la swapchain peut lire des images détruites → écran noir.
+	        m_fgRegistry.clear();
 	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
 	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2(), m_profiler.IsInitialized() ? &m_profiler : nullptr);
 	    }

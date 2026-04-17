@@ -128,6 +128,11 @@ namespace engine::editor
 #if defined(_WIN32)
 	namespace
 	{
+		// Plafond du nombre de lignes de grille par axe (surimpression ImGui). Sans cela, une maille
+		// fine sur un grand terrain génère trop de primitives ; un plafond trop bas rend la maille
+		// « figée » (espacement minimal ≈ tailleTerrain / (plafond - 1)).
+		constexpr int kWorldEditorGridMaxLinesPerAxis = 2048;
+
 		bool WorldToScreen(const float vp[16], float wx, float wy, float wz, int vw, int vh, float& sx, float& sy)
 		{
 			const float cx = vp[0] * wx + vp[4] * wy + vp[8] * wz + vp[12];
@@ -219,12 +224,17 @@ namespace engine::editor
 
 			if (d.showGrid && d.heightmap && ws > 0.0f)
 			{
-				const int maxLinesPerAxis = 96;
 				int nz = static_cast<int>(std::ceil(ws / cell)) + 1;
-				if (nz > maxLinesPerAxis)
+				if (nz > kWorldEditorGridMaxLinesPerAxis)
 				{
-					nz = maxLinesPerAxis;
+					nz = kWorldEditorGridMaxLinesPerAxis;
 				}
+				int nx = static_cast<int>(std::ceil(ws / cell)) + 1;
+				if (nx > kWorldEditorGridMaxLinesPerAxis)
+				{
+					nx = kWorldEditorGridMaxLinesPerAxis;
+				}
+				const int lineSegments = std::clamp(200000 / std::max(1, nx + nz), 8, 48);
 				const float stepZ = ws / static_cast<float>(std::max(1, nz - 1));
 				for (int iz = 0; iz < nz; ++iz)
 				{
@@ -235,12 +245,7 @@ namespace engine::editor
 					{
 						continue;
 					}
-					DrawSegmentedWorldLine(dl, vp, vw, vh, gridCol, ox, y0, z, ox + ws, y1, z, 48);
-				}
-				int nx = static_cast<int>(std::ceil(ws / cell)) + 1;
-				if (nx > maxLinesPerAxis)
-				{
-					nx = maxLinesPerAxis;
+					DrawSegmentedWorldLine(dl, vp, vw, vh, gridCol, ox, y0, z, ox + ws, y1, z, lineSegments);
 				}
 				const float stepX = ws / static_cast<float>(std::max(1, nx - 1));
 				for (int ix = 0; ix < nx; ++ix)
@@ -252,7 +257,7 @@ namespace engine::editor
 					{
 						continue;
 					}
-					DrawSegmentedWorldLine(dl, vp, vw, vh, gridCol, x, y0, oz, x, y1, oz + ws, 48);
+					DrawSegmentedWorldLine(dl, vp, vw, vh, gridCol, x, y0, oz, x, y1, oz + ws, lineSegments);
 				}
 			}
 
@@ -526,10 +531,23 @@ namespace engine::editor
 		ImGui::End();
 		ImGui::PopStyleVar(3);
 
-		ImGui::Begin("Scène");
+		ImGui::Begin("Scène", nullptr, ImGuiWindowFlags_NoMouseInputs);
 		ImGui::TextUnformatted("Vue 3D Vulkan (même moteur que le jeu).");
-		ImGui::TextUnformatted("WASD + souris : caméra si ImGui ne capture pas le clavier / la souris (clic dans la vue 3D pour orienter ; sortez d’un champ texte pour vous déplacer).");
+		ImGui::TextUnformatted(
+			"WASD + souris : caméra (souris bloquée seulement au-dessus des panneaux interactifs ; WASD bloqués dans un champ texte actif).");
 		ImGui::TextUnformatted("Molette : zoom FOV (champ de vision).");
+		if (viewportOverlay != nullptr && viewportOverlay->viewProjColMajor != nullptr)
+		{
+			ImGui::Separator();
+			ImGui::Text("Caméra (monde) : (%.2f, %.2f, %.2f) m", static_cast<double>(viewportOverlay->cameraWorldX),
+				static_cast<double>(viewportOverlay->cameraWorldY), static_cast<double>(viewportOverlay->cameraWorldZ));
+			ImGui::Text("Orientation : yaw %.1f°, pitch %.1f°", static_cast<double>(viewportOverlay->cameraYawDeg),
+				static_cast<double>(viewportOverlay->cameraPitchDeg));
+			ImGui::TextDisabled(
+				"La grille et le rendu 3D utilisent la même matrice vue×projection chaque frame : ce n’est pas une grille « figée » "
+				"qui oublierait de se rafraîchir. Si ces nombres ne bougent pas avec WASD / souris, la caméra ne reçoit pas l’entrée "
+				"(focus ImGui, etc.). S’ils bougent mais l’image ne change pas, il s’agit d’un autre problème de rendu.");
+		}
 		ImGui::End();
 
 		if (m_session && m_cfg)
@@ -573,6 +591,21 @@ namespace engine::editor
 			ImGui::Begin("Affichage & grille");
 			ImGui::Checkbox("Grille (aperçu écran)", &m_session->ShowGrid());
 			ImGui::SliderFloat("Maille grille (m)", &m_session->GridCellMeters(), 1.f, 128.f, "%.1f");
+			if (viewportOverlay && viewportOverlay->heightmap && viewportOverlay->terrainWorldSize > 0.f)
+			{
+				const float ws = viewportOverlay->terrainWorldSize;
+				const float cellUi = std::max(0.5f, m_session->GridCellMeters());
+				const int desiredLines = static_cast<int>(std::ceil(ws / cellUi)) + 1;
+				if (desiredLines > kWorldEditorGridMaxLinesPerAxis)
+				{
+					const float minSpacing =
+						ws / static_cast<float>(std::max(1, kWorldEditorGridMaxLinesPerAxis - 1));
+					ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f),
+						"La grille est limitée à %d lignes par axe (performances). Avec un terrain de %.0f m, "
+						"la maille affichée ne peut pas être plus fine qu’environ %.1f m tant que ce plafond s’applique.",
+						kWorldEditorGridMaxLinesPerAxis, static_cast<double>(ws), static_cast<double>(minSpacing));
+				}
+			}
 			ImGui::TextUnformatted("La grille est dessinée en surimpression (projection caméra) lorsque le terrain GPU est chargé.");
 			ImGui::End();
 
@@ -816,17 +849,17 @@ namespace engine::editor
 			}
 			ImGui::End();
 
-			ImGui::Begin("Préfabs / objets");
+			ImGui::Begin("Préfabs / objets", nullptr, ImGuiWindowFlags_NoMouseInputs);
 			ImGui::TextUnformatted("Champ JSON « objects » (préfabs) — hors périmètre placement 009.");
 			ImGui::End();
 
-			ImGui::Begin("Statut");
+			ImGui::Begin("Statut", nullptr, ImGuiWindowFlags_NoMouseInputs);
 			ImGui::TextWrapped("%s", m_session->Status().c_str());
 			ImGui::End();
 		}
 		else
 		{
-			ImGui::Begin("Propriétés");
+			ImGui::Begin("Propriétés", nullptr, ImGuiWindowFlags_NoMouseInputs);
 			ImGui::TextUnformatted("Session éditeur non initialisée.");
 			ImGui::End();
 		}

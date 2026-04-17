@@ -2789,7 +2789,7 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, out.camera);
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, true, true, out.camera);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())
@@ -2799,10 +2799,12 @@ namespace engine
 		}
 		else if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
 		{
-			if (!m_worldEditorImGui->WantsCaptureMouse() && !m_worldEditorImGui->WantsCaptureKeyboard())
-			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, out.camera);
-			}
+			// Ne pas lier souris et clavier : un InputText actif mettait WantCaptureKeyboard à true et bloquait
+			// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
+			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
+			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
+			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, !capMouse, !capKb,
+				out.camera);
 		}
 
 		if (m_gameplayNetInitialized)
@@ -2894,6 +2896,11 @@ namespace engine
 
 			engine::editor::WorldEditorViewportOverlayDesc overlay{};
 			overlay.viewProjColMajor = out.viewProjMatrix.m;
+			overlay.cameraWorldX = out.camera.position.x;
+			overlay.cameraWorldY = out.camera.position.y;
+			overlay.cameraWorldZ = out.camera.position.z;
+			overlay.cameraYawDeg = out.camera.yaw * (180.0f / 3.14159265f);
+			overlay.cameraPitchDeg = out.camera.pitch * (180.0f / 3.14159265f);
 			overlay.viewportWidth = vw;
 			overlay.viewportHeight = vh;
 

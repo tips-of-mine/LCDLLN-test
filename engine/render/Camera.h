@@ -46,7 +46,9 @@ namespace engine::render
 
 		/// Updates camera from input and delta time. Mouse sensitivity in rad/pixel from config.
 		/// Si \p scrollWheelAdjustsFov : la molette modifie le FOV vertical (éditeur monde).
+		/// \p applyMouseLook / \p applyKeyboardMove permettent de laisser la vue réagir à la souris
+		/// tout en bloquant WASD quand ImGui capte le clavier (champs texte), etc.
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-			MovementLayout layout, bool scrollWheelAdjustsFov, Camera& camera);
+			MovementLayout layout, bool scrollWheelAdjustsFov, bool applyMouseLook, bool applyKeyboardMove, Camera& camera);
 	};
 }

@@ -33,6 +33,12 @@ namespace engine::editor
 	struct WorldEditorViewportOverlayDesc
 	{
 		const float* viewProjColMajor = nullptr;
+		/// Position / angles caméra (monde), remplis chaque frame — la grille utilise \c viewProjColMajor, pas ces champs.
+		float cameraWorldX = 0.f;
+		float cameraWorldY = 0.f;
+		float cameraWorldZ = 0.f;
+		float cameraYawDeg = 0.f;
+		float cameraPitchDeg = 0.f;
 		int viewportWidth = 0;
 		int viewportHeight = 0;
 		bool showGrid = false;

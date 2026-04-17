@@ -86,7 +86,7 @@ namespace engine::editor
 		void BuildUi(const WorldEditorViewportOverlayDesc* viewportOverlay = nullptr);
 
 		/// Contexte données éditeur (\c lcdlln_world_editor uniquement). Peut être nul.
-		void SetEditorContext(WorldEditorSession* session, const engine::core::Config* cfg);
+		void SetEditorContext(WorldEditorSession* session, engine::core::Config* cfg);
 
 		/// Win32 : branche \c ImGui_ImplWin32_WndProcHandler avant le traitement LCDLLN.
 		void AttachPlatformWindow(void* hwndNative, engine::platform::Window& window);
@@ -107,7 +107,7 @@ namespace engine::editor
 		bool m_ready = false;
 		void* m_hwnd = nullptr;
 		WorldEditorSession* m_session = nullptr;
-		const engine::core::Config* m_cfg = nullptr;
+		engine::core::Config* m_cfg = nullptr;
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 #endif

@@ -11,7 +11,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
+#include <iterator>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #if defined(_WIN32)
@@ -32,7 +35,7 @@
 
 namespace engine::editor
 {
-	void WorldEditorImGui::SetEditorContext(WorldEditorSession* session, const engine::core::Config* cfg)
+	void WorldEditorImGui::SetEditorContext(WorldEditorSession* session, engine::core::Config* cfg)
 	{
 		m_session = session;
 		m_cfg = cfg;
@@ -41,6 +44,37 @@ namespace engine::editor
 #if defined(_WIN32)
 	namespace
 	{
+		void TryPersistMovementLayoutToUserSettings(std::string_view layout)
+		{
+			const char* path = "user_settings.json";
+			std::ifstream in(path, std::ios::binary);
+			if (!in)
+			{
+				return;
+			}
+			std::string json((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+			const std::string needle = "\"movement_layout\": \"";
+			const size_t start = json.find(needle);
+			if (start == std::string::npos)
+			{
+				return;
+			}
+			const size_t valueStart = start + needle.size();
+			const size_t valueEnd = json.find('"', valueStart);
+			if (valueEnd == std::string::npos)
+			{
+				return;
+			}
+			json.replace(valueStart, valueEnd - valueStart, layout);
+			std::ofstream out(path, std::ios::binary | std::ios::trunc);
+			if (!out)
+			{
+				LOG_WARN(Core, "[WorldEditor] Écriture impossible : {} (déplacement non persisté)", path);
+				return;
+			}
+			out << json;
+		}
+
 		void CheckVk(VkResult err)
 		{
 			if (err == VK_SUCCESS)
@@ -509,6 +543,22 @@ namespace engine::editor
 				ImGui::TextUnformatted("Cycle jour/nuit: à brancher atmosphère.");
 				ImGui::EndMenu();
 			}
+			if (m_cfg && ImGui::BeginMenu("Options"))
+			{
+				const std::string cur = m_cfg->GetString("controls.movement_layout", "wasd");
+				const bool zqsdActive = (cur == "zqsd");
+				if (ImGui::MenuItem("Déplacement : QWERTY (WASD)", nullptr, !zqsdActive))
+				{
+					m_cfg->SetValue("controls.movement_layout", std::string("wasd"));
+					TryPersistMovementLayoutToUserSettings("wasd");
+				}
+				if (ImGui::MenuItem("Déplacement : AZERTY (ZQSD)", nullptr, zqsdActive))
+				{
+					m_cfg->SetValue("controls.movement_layout", std::string("zqsd"));
+					TryPersistMovementLayoutToUserSettings("zqsd");
+				}
+				ImGui::EndMenu();
+			}
 			ImGui::EndMainMenuBar();
 		}
 
@@ -534,8 +584,14 @@ namespace engine::editor
 		ImGui::Begin("Scène", nullptr, ImGuiWindowFlags_NoMouseInputs);
 		ImGui::TextUnformatted("Vue 3D Vulkan (même moteur que le jeu).");
 		ImGui::TextUnformatted(
-			"WASD + souris : caméra (souris bloquée seulement au-dessus des panneaux interactifs ; WASD bloqués dans un champ texte actif).");
-		ImGui::TextUnformatted("Molette : zoom FOV (champ de vision).");
+			"Déplacement : menu « Options » → QWERTY (WASD) ou AZERTY (ZQSD), un seul à la fois. Shift = plus rapide ; "
+			"vitesse de base augmente avec la taille du terrain chargé.");
+		ImGui::TextUnformatted(
+			"Orientation : maintenez le clic droit et déplacez la souris (même au-dessus des fenêtres ImGui) ; "
+			"sinon la souris n’oriente que lorsqu’ImGui ne la capture pas. Molette : zoom FOV.");
+		ImGui::TextUnformatted(
+			"Si la vue monte quand vous baissez la souris : dans user_settings.json ou options client, "
+			"activez controls.invert_y.");
 		if (viewportOverlay != nullptr && viewportOverlay->viewProjColMajor != nullptr)
 		{
 			ImGui::Separator();

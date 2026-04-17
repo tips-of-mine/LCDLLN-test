@@ -1,5 +1,6 @@
 #include "engine/render/Camera.h"
 #include "engine/platform/Input.h"
+#include <algorithm>
 #include <cmath>
 
 namespace engine::render
@@ -48,7 +49,8 @@ namespace engine::render
 	}
 
 	void FpsCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-		MovementLayout layout, bool scrollWheelAdjustsFov, bool applyMouseLook, bool applyKeyboardMove, Camera& camera)
+		MovementLayout layout, bool scrollWheelAdjustsFov, bool applyMouseLook, bool applyKeyboardMove,
+		float worldEditorTerrainWorldSizeM, Camera& camera)
 	{
 		if (applyMouseLook)
 		{
@@ -62,7 +64,13 @@ namespace engine::render
 
 		if (applyKeyboardMove)
 		{
-			const float speed = input.IsDown(engine::platform::Key::Shift) ? kRunSpeed : kWalkSpeed;
+			float speed = input.IsDown(engine::platform::Key::Shift) ? kRunSpeed : kWalkSpeed;
+			if (worldEditorTerrainWorldSizeM > 1.f)
+			{
+				constexpr float kRefM = 1024.f;
+				const float scale = std::sqrt(worldEditorTerrainWorldSizeM / kRefM);
+				speed *= std::clamp(scale, 1.f, 12.f);
+			}
 			const float dist = static_cast<float>(dt) * speed;
 			const float cy = std::cos(camera.yaw);
 			const float sy = std::sin(camera.yaw);
@@ -72,26 +80,32 @@ namespace engine::render
 			const float forwardZ = -cy * cp;
 			const float rightX = cy;
 			const float rightZ = -sy;
-			const engine::platform::Key forwardKey = (layout == MovementLayout::ZQSD) ? engine::platform::Key::Z : engine::platform::Key::W;
+			const engine::platform::Key forwardKey =
+				(layout == MovementLayout::ZQSD) ? engine::platform::Key::Z : engine::platform::Key::W;
 			const engine::platform::Key backwardKey = engine::platform::Key::S;
 			const engine::platform::Key rightKey = engine::platform::Key::D;
-			const engine::platform::Key leftKey = (layout == MovementLayout::ZQSD) ? engine::platform::Key::Q : engine::platform::Key::A;
-			if (input.IsDown(forwardKey))
+			const engine::platform::Key leftKey =
+				(layout == MovementLayout::ZQSD) ? engine::platform::Key::Q : engine::platform::Key::A;
+			const bool forwardDown = input.IsDown(forwardKey);
+			const bool backDown = input.IsDown(backwardKey);
+			const bool rightDown = input.IsDown(rightKey);
+			const bool leftDown = input.IsDown(leftKey);
+			if (forwardDown)
 			{
 				camera.position.x += forwardX * dist;
 				camera.position.z += forwardZ * dist;
 			}
-			if (input.IsDown(backwardKey))
+			if (backDown)
 			{
 				camera.position.x -= forwardX * dist;
 				camera.position.z -= forwardZ * dist;
 			}
-			if (input.IsDown(rightKey))
+			if (rightDown)
 			{
 				camera.position.x += rightX * dist;
 				camera.position.z += rightZ * dist;
 			}
-			if (input.IsDown(leftKey))
+			if (leftDown)
 			{
 				camera.position.x -= rightX * dist;
 				camera.position.z -= rightZ * dist;

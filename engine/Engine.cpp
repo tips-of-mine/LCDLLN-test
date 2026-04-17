@@ -2642,10 +2642,9 @@ namespace engine
 
 	const float  mouseSensitivity = static_cast<float>(m_cfg.GetDouble("camera.mouse_sensitivity", 0.002));
 		const bool invertY = m_cfg.GetBool("controls.invert_y", false);
+		const std::string moveLayoutStr = m_cfg.GetString("controls.movement_layout", "wasd");
 		const engine::render::MovementLayout movementLayout =
-			(m_cfg.GetString("controls.movement_layout", "wasd") == "zqsd")
-			? engine::render::MovementLayout::ZQSD
-			: engine::render::MovementLayout::WASD;
+			(moveLayoutStr == "zqsd") ? engine::render::MovementLayout::ZQSD : engine::render::MovementLayout::WASD;
 
 		out.camera = readState.camera;
 		out.profilerDebugText = m_profilerHud.IsInitialized() ? m_profilerHud.GetState().debugText : std::string{};
@@ -2789,7 +2788,8 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, true, true, out.camera);
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, true, true, 0.f,
+					out.camera);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())
@@ -2803,8 +2803,17 @@ namespace engine
 			// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
 			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
 			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
-			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, !capMouse, !capKb,
-				out.camera);
+			// Clic droit maintenu : orienter même au-dessus des panneaux ImGui (souris souvent « capturée »).
+			const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+			const bool applyLook = !capMouse || rmbLook;
+			const bool applyKb = !capKb;
+			float terrainWorldM = 0.f;
+			if (m_terrain.IsValid())
+			{
+				terrainWorldM = m_terrain.GetTerrainWorldSize();
+			}
+			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, applyLook, applyKb,
+				terrainWorldM, out.camera);
 		}
 
 		if (m_gameplayNetInitialized)

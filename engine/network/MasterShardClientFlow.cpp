@@ -244,10 +244,14 @@ namespace engine::network
 		ParseEndpoint(shardEndpoint, shardHost, shardPort);
 		if (IsLoopbackHost(shardHost) && !IsLoopbackHost(m_masterHost))
 		{
-			result.errorMessage =
-				"Shard endpoint is loopback (127.0.0.1) but master is remote; fix server advertised shard address";
-			LOG_ERROR(Net, "[MasterShardClientFlow] {}", result.errorMessage);
-			return result;
+			// Liste serveurs : le shard a souvent enregistré 127.0.0.1 (Docker / bind local).
+			// Si le client rejoint le master par une IP LAN, on se connecte au shard sur le même hôte.
+			LOG_WARN(Net,
+				"[MasterShardClientFlow] endpoint shard en loopback ({}) avec master distant — connexion shard via hôte maître {}:{}",
+				shardEndpoint,
+				m_masterHost,
+				static_cast<unsigned>(shardPort));
+			shardHost = m_masterHost;
 		}
 		LOG_INFO(Net, "[MasterShardClientFlow] Connecting to Shard {}:{}", shardHost, shardPort);
 

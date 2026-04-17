@@ -86,11 +86,29 @@ namespace engine::server
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 
+#include <algorithm>
+#include <cerrno>
 #include <cstring>
 #include <string>
 
 namespace
 {
+	static std::string TrimSmtpResponse(const std::string& s)
+	{
+		std::string out;
+		out.reserve(std::min<size_t>(s.size(), 240u));
+		for (char c : s)
+		{
+			if (c == '\r' || c == '\n')
+				out.push_back(' ');
+			else
+				out.push_back(c);
+			if (out.size() >= 220u)
+				break;
+		}
+		return out;
+	}
+
 	/// Base64-encodes a string using OpenSSL EVP_EncodeBlock.
 	static std::string Base64Encode(const std::string& s)
 	{
@@ -228,15 +246,26 @@ namespace engine::server
 			return false;
 		}
 
+		LOG_INFO(Net,
+			"[SmtpMailer] envoi démarré to={} subject_len={} host={}:{} starttls={} auth={} timeout_sec={}",
+			to,
+			static_cast<int>(subject.size()),
+			cfg.host,
+			cfg.port,
+			cfg.use_starttls ? 1 : 0,
+			cfg.user.empty() ? 0 : 1,
+			cfg.timeout_sec);
+
 		// Resolve + connect
 		struct addrinfo hints{};
 		hints.ai_family   = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		const std::string portStr = std::to_string(cfg.port);
 		struct addrinfo* res = nullptr;
-		if (::getaddrinfo(cfg.host.c_str(), portStr.c_str(), &hints, &res) != 0 || res == nullptr)
+		const int gai = ::getaddrinfo(cfg.host.c_str(), portStr.c_str(), &hints, &res);
+		if (gai != 0 || res == nullptr)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] getaddrinfo failed for {}:{}", cfg.host, cfg.port);
+			LOG_ERROR(Net, "[SmtpMailer] getaddrinfo échoué host={}:{} ({})", cfg.host, cfg.port, gai != 0 ? gai_strerror(gai) : "null");
 			return false;
 		}
 
@@ -245,7 +274,7 @@ namespace engine::server
 		if (conn.fd < 0)
 		{
 			::freeaddrinfo(res);
-			LOG_ERROR(Net, "[SmtpMailer] socket() failed");
+			LOG_ERROR(Net, "[SmtpMailer] socket() échoué errno={}", errno);
 			return false;
 		}
 
@@ -257,12 +286,13 @@ namespace engine::server
 
 		if (::connect(conn.fd, res->ai_addr, res->ai_addrlen) != 0)
 		{
+			const int e = errno;
 			::freeaddrinfo(res);
-			LOG_ERROR(Net, "[SmtpMailer] connect() to {}:{} failed", cfg.host, cfg.port);
+			LOG_ERROR(Net, "[SmtpMailer] connect() échoué vers {}:{} errno={} ({})", cfg.host, cfg.port, e, std::strerror(e));
 			return false;
 		}
 		::freeaddrinfo(res);
-		LOG_DEBUG(Net, "[SmtpMailer] TCP connected to {}:{}", cfg.host, cfg.port);
+		LOG_INFO(Net, "[SmtpMailer] TCP connecté à {}:{}", cfg.host, cfg.port);
 
 		std::string resp;
 		int code;
@@ -271,9 +301,10 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 220)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Unexpected banner code={} ({})", code, resp);
+			LOG_ERROR(Net, "[SmtpMailer] bannière SMTP inattendue code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
+		LOG_INFO(Net, "[SmtpMailer] bannière OK réponse='{}'", TrimSmtpResponse(resp));
 
 		// EHLO
 		if (!conn.Write("EHLO localhost\r\n"))
@@ -284,7 +315,7 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] EHLO rejected code={}", code);
+			LOG_ERROR(Net, "[SmtpMailer] EHLO refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
@@ -299,12 +330,12 @@ namespace engine::server
 			code = conn.ReadResponse(resp);
 			if (code != 220)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] STARTTLS rejected code={}", code);
+				LOG_ERROR(Net, "[SmtpMailer] STARTTLS refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
 			if (!conn.UpgradeToTLS())
 			{
-				LOG_ERROR(Net, "[SmtpMailer] TLS handshake failed");
+				LOG_ERROR(Net, "[SmtpMailer] échec handshake TLS (après STARTTLS)");
 				return false;
 			}
 			// Re-EHLO after STARTTLS
@@ -316,15 +347,16 @@ namespace engine::server
 			code = conn.ReadResponse(resp);
 			if (code != 250)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] EHLO(2) rejected code={}", code);
+				LOG_ERROR(Net, "[SmtpMailer] EHLO(2) refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
-			LOG_DEBUG(Net, "[SmtpMailer] STARTTLS + EHLO OK");
+			LOG_INFO(Net, "[SmtpMailer] STARTTLS + EHLO post-TLS OK");
 		}
 
 		// AUTH LOGIN (if credentials provided)
 		if (!cfg.user.empty())
 		{
+			LOG_INFO(Net, "[SmtpMailer] AUTH LOGIN (utilisateur non vide)");
 			if (!conn.Write("AUTH LOGIN\r\n"))
 			{
 				LOG_ERROR(Net, "[SmtpMailer] Write AUTH LOGIN failed");
@@ -333,7 +365,7 @@ namespace engine::server
 			code = conn.ReadResponse(resp);
 			if (code != 334)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] AUTH LOGIN rejected code={}", code);
+				LOG_ERROR(Net, "[SmtpMailer] AUTH LOGIN refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
 			if (!conn.Write(Base64Encode(cfg.user) + "\r\n"))
@@ -344,7 +376,7 @@ namespace engine::server
 			code = conn.ReadResponse(resp);
 			if (code != 334)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] AUTH user rejected code={}", code);
+				LOG_ERROR(Net, "[SmtpMailer] AUTH user refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
 			if (!conn.Write(Base64Encode(cfg.password) + "\r\n"))
@@ -355,10 +387,14 @@ namespace engine::server
 			code = conn.ReadResponse(resp);
 			if (code != 235)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] AUTH credentials rejected code={}", code);
+				LOG_ERROR(Net, "[SmtpMailer] AUTH mot de passe refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
-			LOG_DEBUG(Net, "[SmtpMailer] AUTH LOGIN OK");
+			LOG_INFO(Net, "[SmtpMailer] AUTH LOGIN OK");
+		}
+		else
+		{
+			LOG_INFO(Net, "[SmtpMailer] pas d'AUTH (smtp.user vide)");
 		}
 
 		// MAIL FROM
@@ -370,7 +406,7 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] MAIL FROM rejected code={}", code);
+			LOG_ERROR(Net, "[SmtpMailer] MAIL FROM refusé code={} from='{}' réponse='{}'", code, cfg.from_address, TrimSmtpResponse(resp));
 			return false;
 		}
 
@@ -383,7 +419,7 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] RCPT TO rejected code={}", code);
+			LOG_ERROR(Net, "[SmtpMailer] RCPT TO refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
@@ -396,7 +432,7 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 354)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] DATA rejected code={}", code);
+			LOG_ERROR(Net, "[SmtpMailer] DATA refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
@@ -412,6 +448,8 @@ namespace engine::server
 		msg += body;
 		msg += "\r\n.\r\n";
 
+		LOG_INFO(Net, "[SmtpMailer] envoi DATA (corps {} octets)", static_cast<int>(body.size()));
+
 		if (!conn.Write(msg))
 		{
 			LOG_ERROR(Net, "[SmtpMailer] Write message body failed");
@@ -420,14 +458,14 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Message rejected by server code={}", code);
+			LOG_ERROR(Net, "[SmtpMailer] message refusé après DATA code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
 		// QUIT (best-effort; ignore response)
 		conn.Write("QUIT\r\n");
 
-		LOG_INFO(Net, "[SmtpMailer] Email sent OK (to={} subject={})", to, subject);
+		LOG_INFO(Net, "[SmtpMailer] email envoyé OK to={} subject_len={}", to, static_cast<int>(subject.size()));
 		return true;
 	}
 } // namespace engine::server

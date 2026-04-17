@@ -212,11 +212,15 @@ namespace engine::server
 					std::string subject;
 					std::string body;
 					BuildVerificationEmail(emailLocale, code, subject, body);
-					bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body);
+					LOG_INFO(Auth, "[AuthRegisterHandler] envoi email vérification (account_id={})", account_id);
+					const bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body);
 					if (sent)
+					{
 						m_resetStore->RecordEmailSent(account_id);
+						LOG_INFO(Auth, "[AuthRegisterHandler] email vérification envoyé (account_id={})", account_id);
+					}
 					else
-						LOG_WARN(Auth, "[AuthRegisterHandler] Email verification send failed (account_id={})", account_id);
+						LOG_WARN(Auth, "[AuthRegisterHandler] échec envoi email vérification (account_id={}) — voir logs [SmtpMailer]", account_id);
 				}
 				else
 				{
@@ -230,6 +234,8 @@ namespace engine::server
 		}
 		else if (!email_norm.empty() && m_resetStore)
 		{
+			if (!m_smtpConfig || m_smtpConfig->host.empty())
+				LOG_INFO(Auth, "[AuthRegisterHandler] SMTP non configuré — pas d'email de vérification (account_id={})", account_id);
 			// SMTP not configured: generate code, log it (dev mode only).
 			std::string code = m_resetStore->CreateVerificationCode(account_id);
 			if (!code.empty())

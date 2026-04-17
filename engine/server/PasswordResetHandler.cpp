@@ -120,11 +120,15 @@ namespace engine::server
 			std::string subject;
 			std::string body;
 			BuildPasswordResetEmail(optAccount->email_locale, resetUrl, subject, body);
-			bool sent = SmtpMailer::Send(*m_smtpConfig, email, subject, body);
+			LOG_INFO(Auth, "[PasswordResetHandler] envoi email reset mot de passe (account_id={})", account_id);
+			const bool sent = SmtpMailer::Send(*m_smtpConfig, email, subject, body);
 			if (!sent)
-				LOG_WARN(Auth, "[PasswordResetHandler] ForgotPassword: email send failed (account_id={})", account_id);
+				LOG_WARN(Auth, "[PasswordResetHandler] ForgotPassword: échec envoi email (account_id={}) — voir logs [SmtpMailer]", account_id);
 			else
+			{
 				m_resetStore->RecordEmailSent(account_id);
+				LOG_INFO(Auth, "[PasswordResetHandler] email reset envoyé (account_id={})", account_id);
+			}
 		}
 		else
 		{

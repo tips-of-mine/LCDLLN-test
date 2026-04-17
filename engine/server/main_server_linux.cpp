@@ -212,6 +212,26 @@ int main(int argc, char** argv)
 
 	// M33.2: SMTP config + password reset / email verification stores.
 	engine::server::SmtpConfig smtpConfig = engine::server::SmtpConfig::Load(config, "config.json");
+	{
+		const bool smtpReady = !smtpConfig.host.empty() && smtpConfig.port != 0;
+		const std::string smtpDedicatedLog = config.GetString("log.subsystem_files.Smtp", "");
+		if (smtpReady)
+		{
+			LOG_WARN(Server,
+				"[SMTP] Courrier activé : {}:{} (STARTTLS={}, AUTH={}). Traces détaillées : sous-système « Smtp » "
+				"(log.level=Info ou Debug) ; fichier dédié : {}",
+				smtpConfig.host,
+				static_cast<unsigned>(smtpConfig.port),
+				smtpConfig.use_starttls ? "oui" : "non",
+				smtpConfig.user.empty() ? "non" : "oui",
+				smtpDedicatedLog.empty() ? std::string("(désactivé — tout dans le log principal)") : smtpDedicatedLog);
+		}
+		else
+		{
+			LOG_WARN(Server,
+				"[SMTP] Courrier désactivé (hôte/port absents ou fichier secrets illisible) — pas d’envoi reset / vérification e-mail / CGU.");
+		}
+	}
 	engine::server::PasswordResetStore passwordResetStore;
 	engine::server::PasswordResetHandler passwordResetHandler;
 

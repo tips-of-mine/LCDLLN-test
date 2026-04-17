@@ -5107,7 +5107,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				addBodyLine(line, m_shardPickChoiceShardId == e.shard_id, true);
 			}
 			addActionKeys("common.submit", true, m_shardPickChoiceShardId != 0u, false);
-			addActionKeys("auth.hint.return_login", false, true, false, "common.back");
+			addActionKeys("common.back", false, true, false);
 			break;
 		case Phase::LanguageSelectionFirstRun:
 		case Phase::LanguageOptions:

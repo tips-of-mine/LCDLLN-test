@@ -63,7 +63,7 @@
   "auth.phase.character_create": "Creation du personnage",
   "auth.phase.shard_pick": "Choisir un serveur",
   "auth.shard_pick.hint": "Plusieurs mondes sont en ligne. Cliquez sur une ligne ou utilisez les fleches, puis Valider.",
-  "auth.shard_pick.line": "Monde #{id} — charge {load} — {endpoint}",
+  "auth.shard_pick.line": "Monde #{id} - charge {load} - {endpoint}",
   "auth.shard_pick.popup_help": "Selectionnez le monde (shard) auquel vous connecter, puis Valider.",
   "auth.error.shard_pick_required": "Veuillez selectionner un serveur dans la liste.",
   "auth.phase.submitting": "Connexion...",

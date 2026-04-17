@@ -123,7 +123,9 @@ namespace engine::server
 			LOG_INFO(Auth, "[PasswordResetHandler] envoi email reset mot de passe (account_id={})", account_id);
 			const bool sent = SmtpMailer::Send(*m_smtpConfig, email, subject, body);
 			if (!sent)
-				LOG_WARN(Auth, "[PasswordResetHandler] ForgotPassword: échec envoi email (account_id={}) — voir logs [SmtpMailer]", account_id);
+				LOG_WARN(Auth,
+					"[PasswordResetHandler] ForgotPassword: échec envoi email (account_id={}) — lignes [SMTP] / sous-système Smtp (log.level Info conseillé)",
+					account_id);
 			else
 			{
 				m_resetStore->RecordEmailSent(account_id);

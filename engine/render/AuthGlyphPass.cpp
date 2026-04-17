@@ -1078,10 +1078,15 @@ namespace engine::render
 		int32_t maxWidthPx,
 		int32_t scale,
 		const float color[4],
-		const FontAtlasTtf& atlas) const
+		const FontAtlasTtf& atlas,
+		int32_t* outVisualLineCount) const
 	{
 		if (text.empty() || !atlas.IsValid())
 		{
+			if (outVisualLineCount)
+			{
+				*outVisualLineCount = 1;
+			}
 			return;
 		}
 		// La police TTF embarquée ne couvre pas les glyphes accentués : mêmes remplacements ASCII que le fallback bitmap.
@@ -1239,6 +1244,11 @@ namespace engine::render
 			penX = 0.f;
 			++lineIndex;
 		}
+		if (outVisualLineCount)
+		{
+			// lineIndex = index of the last line that received glyphs (0-based) ; +1 = nombre de lignes visuelles.
+			*outVisualLineCount = std::max(1, lineIndex + 1);
+		}
 	}
 
 	void AuthGlyphPass::AppendText(std::vector<GlyphVertex>& vertices,
@@ -1247,20 +1257,25 @@ namespace engine::render
 		int32_t maxWidthPx,
 		int32_t scale,
 		const float color[4],
-		bool useValueFont) const
+		bool useValueFont,
+		int32_t* outTtfVisualLineCount) const
 	{
 		if (text.empty())
 		{
+			if (outTtfVisualLineCount)
+			{
+				*outTtfVisualLineCount = 1;
+			}
 			return;
 		}
 		if (useValueFont && m_valueFontGpuReady && m_valueFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont, outTtfVisualLineCount);
 			return;
 		}
 		if (m_fontGpuReady && m_uiFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont, outTtfVisualLineCount);
 			return;
 		}
 		std::string normalized = SimplifyUtf8(text);
@@ -1399,6 +1414,10 @@ namespace engine::render
 			bmpSeg = nl + 1u;
 			cursorX = originX;
 			cursorY += linePitch;
+		}
+		if (outTtfVisualLineCount)
+		{
+			*outTtfVisualLineCount = std::max(1, (cursorY - originY) / linePitch + 1);
 		}
 	}
 
@@ -1551,11 +1570,11 @@ namespace engine::render
 			};
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
-		auto appendCenteredText = [this, &vertices](std::string_view text, int32_t boxX, int32_t y, int32_t boxW, int32_t scale, const float color[4])
+		auto appendCenteredText = [this, &vertices](std::string_view text, int32_t boxX, int32_t y, int32_t boxW, int32_t scale, const float color[4], int32_t* outVisualLines = nullptr)
 		{
 			const int32_t textWidth = MeasureTextWidthPx(text, scale);
 			const int32_t x = std::max(boxX, boxX + (boxW - textWidth) / 2);
-			AppendText(vertices, text, x, y, boxW, scale, color);
+			AppendText(vertices, text, x, y, boxW, scale, color, false, outVisualLines);
 		};
 
 		// Titres: colonne contenu, panneau élargi, ou largeur fenêtre (login/register/erreur minimal sans colonne d’art).
@@ -1568,20 +1587,20 @@ namespace engine::render
 		if (!model.titleLine2.empty())
 		{
 			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
-				titleColor);
+				titleColor, nullptr);
 			appendCenteredText(model.titleLine2, titleAreaX, panelY + layout.authTitleLine2OffsetFromPanelTopPx, titleAreaW, bodyScale,
-				mutedColor);
+				mutedColor, nullptr);
 		}
 		else
 		{
 			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
-				titleColor);
+				titleColor, nullptr);
 		}
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
 		const int32_t sectionTitleY = panelY + layout.authSectionTitleOffsetFromPanelTopPx;
 		if (centeredLanguageSelection)
 		{
-			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
+			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor, nullptr);
 		}
 		else
 		{
@@ -1771,19 +1790,28 @@ namespace engine::render
 				? std::max(36, bodyLineStep + 16)
 				: std::max(28, bodyLineStep + 10);
 			int32_t bodyLinePitch = bitmapBodyLinePitch;
+			int32_t lhTtfScaled = (7 * std::max(1, bodyScale)) + (2 * std::max(1, bodyScale));
 			if (m_fontGpuReady && m_uiFont.IsValid())
 			{
 				const float mul = std::max(0.35f, static_cast<float>(bodyScale) / 4.f);
 				const int32_t lh = static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
+				lhTtfScaled = lh;
 				bodyLinePitch = std::max(bitmapBodyLinePitch, lh + (centeredLanguageSelection ? 14 : 10));
 			}
+			const int32_t padAfterBodyMetrics = (centeredLanguageSelection ? 14 : 10);
+			const auto bodyRowConsumedPx = [&](int32_t visualLines) -> int32_t {
+				const int32_t n = std::max(1, visualLines);
+				const int32_t stacked = n * lhTtfScaled + padAfterBodyMetrics;
+				return std::max(bodyLinePitch, stacked);
+			};
 			const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
 			const int32_t logicalRowCount = fieldCount > 0 ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1 : 0;
 			const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldRowStep + afterFieldsGap;
+			int32_t yCursor = bodyStartY - 4;
 			for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
-				const int32_t y = bodyStartY + i * bodyLinePitch - 4;
+				const int32_t y = yCursor;
 				const float* lineColor = line.link
 					? (line.hovered ? primaryColor : accentColor)
 					: (line.active ? accentColor : (line.hovered ? primaryColor : bodyColor));
@@ -1803,7 +1831,9 @@ namespace engine::render
 						appendBlock(cbx + 5, cby + 7, 3, 8, checkIvory);
 						appendBlock(cbx + 6, cby + 12, 9, 3, checkIvory);
 					}
-					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor);
+					int32_t lineViz = 1;
+					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor, false, &lineViz);
+					yCursor += bodyRowConsumedPx(lineViz);
 					continue;
 				}
 				if (!line.valueText.empty())
@@ -1813,20 +1843,27 @@ namespace engine::render
 					const int32_t labelColW = std::max(40, contentW - valueColW - gapCol - 6);
 					const int32_t valueColX = contentX + 2 + labelColW + gapCol;
 					const float* labelTint = line.active ? lineColor : mutedColor;
-					AppendText(vertices, line.text, contentX + 2, y, labelColW, bodyScale, labelTint);
+					int32_t vLabel = 1;
+					int32_t vValue = 1;
+					AppendText(vertices, line.text, contentX + 2, y, labelColW, bodyScale, labelTint, false, &vLabel);
 					const int32_t vw = MeasureTextWidthPx(line.valueText, bodyScale);
 					const int32_t vx = valueColX + std::max(0, valueColW - vw - 2);
-					AppendText(vertices, line.valueText, vx, y, valueColW, bodyScale, lineColor);
+					AppendText(vertices, line.valueText, vx, y, valueColW, bodyScale, lineColor, false, &vValue);
+					yCursor += bodyRowConsumedPx(std::max(vLabel, vValue));
 					continue;
 				}
 				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)
 				{
 					const int32_t yLang = y + ((m_fontGpuReady && m_uiFont.IsValid()) ? 4 : 0);
-					appendCenteredText(line.text, contentX + 2, yLang, contentW - 6, bodyScale, lineColor);
+					int32_t lineViz = 1;
+					appendCenteredText(line.text, contentX + 2, yLang, contentW - 6, bodyScale, lineColor, &lineViz);
+					yCursor += bodyRowConsumedPx(lineViz);
 				}
 				else
 				{
-					AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
+					int32_t lineViz = 1;
+					AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor, false, &lineViz);
+					yCursor += bodyRowConsumedPx(lineViz);
 				}
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
@@ -1867,7 +1904,7 @@ namespace engine::render
 			else
 			{
 				const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
-				const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
+				const int32_t buttonY = std::min(panelY + panelH - 86, yCursor + 4 + buttonPadAfterBody);
 				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 				const int32_t singleRowLabelY = actionButtonLabelTopY(buttonY);
 				for (int32_t i = 0; i < actionCount; ++i)

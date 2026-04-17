@@ -7,23 +7,40 @@
 #include "engine/core/Log.h"
 
 #include <filesystem>
+#include <string>
 #include <string_view>
+
+namespace
+{
+	/// Affichage journaux sans exposer la partie locale de l’adresse.
+	std::string RedactEmailForLog(std::string_view to)
+	{
+		const size_t at = to.find('@');
+		if (at == std::string::npos || at == 0)
+			return "<adresse>";
+		return std::string("<***@") + std::string(to.substr(at + 1)) + ">";
+	}
+} // namespace
 
 namespace engine::server
 {
 	namespace
 	{
-		/// Resolves \a relative next to the directory of \a primaryConfigPath when relative.
+		/// Résout \a relative à côté du fichier de config principal (même dossier que \c config.json effectif).
+		/// Important : si \a primaryConfigPath est seulement \c "config.json" (sans « dossier/ »),
+		/// l’ancienne logique retombait sur un chemin SMTP relatif au seul CWD ; on utilise désormais
+		/// \c absolute(primary).parent_path() pour coller au répertoire réel du JSON chargé (ex. \c /app sous Docker).
 		static std::string ResolveSmtpSecretsPath(std::string_view primaryConfigPath, std::string_view relative)
 		{
 			namespace fs = std::filesystem;
 			fs::path rel(relative);
 			if (rel.is_absolute())
 				return rel.lexically_normal().string();
-			fs::path primary(primaryConfigPath);
-			if (primary.has_parent_path())
-				return (primary.parent_path() / rel).lexically_normal().string();
-			return rel.lexically_normal().string();
+			const fs::path primaryAbs = fs::absolute(fs::path(primaryConfigPath));
+			fs::path configDir = primaryAbs.parent_path();
+			if (configDir.empty())
+				configDir = fs::current_path();
+			return (configDir / rel).lexically_normal().string();
 		}
 	} // namespace
 
@@ -242,13 +259,20 @@ namespace engine::server
 	{
 		if (cfg.host.empty())
 		{
-			LOG_WARN(Smtp, "[SmtpMailer] Send skipped: smtp.host not configured (to={})", to);
+			LOG_WARN(Smtp, "[SmtpMailer] Send skipped: smtp.host not configured (to={})", RedactEmailForLog(to));
 			return false;
 		}
 
+		LOG_WARN(Smtp,
+			"[SMTP] session démarrée → {} host={}:{} starttls={} auth={} (détail niveau Info, sous-système Smtp)",
+			RedactEmailForLog(to),
+			cfg.host,
+			static_cast<unsigned>(cfg.port),
+			cfg.use_starttls ? 1 : 0,
+			cfg.user.empty() ? 0 : 1);
 		LOG_INFO(Smtp,
 			"[SmtpMailer] envoi démarré to={} subject_len={} host={}:{} starttls={} auth={} timeout_sec={}",
-			to,
+			RedactEmailForLog(to),
 			static_cast<int>(subject.size()),
 			cfg.host,
 			cfg.port,
@@ -465,7 +489,8 @@ namespace engine::server
 		// QUIT (best-effort; ignore response)
 		conn.Write("QUIT\r\n");
 
-		LOG_INFO(Smtp, "[SmtpMailer] email envoyé OK to={} subject_len={}", to, static_cast<int>(subject.size()));
+		LOG_WARN(Smtp, "[SMTP] session terminée OK → {} (sujet {} car.)", RedactEmailForLog(to), static_cast<int>(subject.size()));
+		LOG_INFO(Smtp, "[SmtpMailer] email envoyé OK to={} subject_len={}", RedactEmailForLog(to), static_cast<int>(subject.size()));
 		return true;
 	}
 } // namespace engine::server
@@ -479,7 +504,7 @@ namespace engine::server
 	                      const std::string& subject,
 	                      const std::string& /*body*/)
 	{
-		LOG_WARN(Smtp, "[SmtpMailer] SMTP not implemented on Win32 — email not sent (to={} subject={})", to, subject);
+		LOG_WARN(Smtp, "[SmtpMailer] SMTP not implemented on Win32 — email not sent (to={} subject={})", RedactEmailForLog(to), subject);
 		return false;
 	}
 } // namespace engine::server

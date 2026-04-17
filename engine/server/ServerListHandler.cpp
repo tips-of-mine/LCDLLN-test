@@ -47,18 +47,39 @@ namespace engine::server
 			}
 		}
 		// Ajouter l'entrée du master lui-même si ServerRegistry est disponible et enregistré.
+		// Ne pas dupliquer un shard déjà listé : game_servers.id peut coïncider avec shard_id (ex. 1 et 1),
+		// ce qui produisait deux lignes « monde #1 » (endpoint shard vs port master, capacités différentes).
 		if (m_serverRegistry && m_serverRegistry->IsRegistered())
 		{
-			engine::network::ServerListEntry self;
-			self.shard_id        = m_serverRegistry->GetServerId();
-			self.status          = 1; // Online
-			self.current_load    = 0;
-			self.max_capacity    = m_serverRegistry->GetMaxPlayers();
-			self.character_count = m_characterCountHook
-				? m_characterCountHook(m_serverRegistry->GetServerId()) : 0u;
-			self.endpoint        = m_serverRegistry->GetHost() + ":"
-				                 + std::to_string(m_serverRegistry->GetPort());
-			entries.push_back(self);
+			const uint32_t selfId = m_serverRegistry->GetServerId();
+			bool shardIdAlreadyListed = false;
+			for (const auto& e : entries)
+			{
+				if (e.shard_id == selfId)
+				{
+					shardIdAlreadyListed = true;
+					break;
+				}
+			}
+			if (!shardIdAlreadyListed)
+			{
+				engine::network::ServerListEntry self;
+				self.shard_id        = selfId;
+				self.status          = 1; // Online
+				self.current_load    = 0;
+				self.max_capacity    = m_serverRegistry->GetMaxPlayers();
+				self.character_count = m_characterCountHook
+					? m_characterCountHook(m_serverRegistry->GetServerId()) : 0u;
+				self.endpoint        = m_serverRegistry->GetHost() + ":"
+					                 + std::to_string(m_serverRegistry->GetPort());
+				entries.push_back(std::move(self));
+			}
+			else
+			{
+				LOG_DEBUG(Core,
+					"[ServerListHandler] Entrée master (server_id={}) omise : même shard_id déjà présent dans la liste des shards",
+					selfId);
+			}
 		}
 		auto payload = BuildServerListResponsePayload(entries);
 		if (payload.empty())

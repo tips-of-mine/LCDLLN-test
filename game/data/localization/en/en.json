@@ -63,7 +63,7 @@
   "auth.phase.character_create": "Character creation",
   "auth.phase.shard_pick": "Choose a server",
   "auth.shard_pick.hint": "Multiple worlds are online. Click a row or use the arrow keys, then Submit.",
-  "auth.shard_pick.line": "World #{id} — load {load} — {endpoint}",
+  "auth.shard_pick.line": "World #{id} - load {load} - {endpoint}",
   "auth.shard_pick.popup_help": "Select which world (shard) to join, then press Submit.",
   "auth.error.shard_pick_required": "Please select a server from the list.",
   "auth.phase.submitting": "Connecting...",

@@ -220,7 +220,9 @@ namespace engine::server
 						LOG_INFO(Auth, "[AuthRegisterHandler] email vérification envoyé (account_id={})", account_id);
 					}
 					else
-						LOG_WARN(Auth, "[AuthRegisterHandler] échec envoi email vérification (account_id={}) — voir logs [SmtpMailer]", account_id);
+						LOG_WARN(Auth,
+							"[AuthRegisterHandler] échec envoi email vérification (account_id={}) — lignes [SMTP] / sous-système Smtp (log.level Info conseillé)",
+							account_id);
 				}
 				else
 				{
@@ -234,12 +236,17 @@ namespace engine::server
 		}
 		else if (!email_norm.empty() && m_resetStore)
 		{
-			if (!m_smtpConfig || m_smtpConfig->host.empty())
-				LOG_INFO(Auth, "[AuthRegisterHandler] SMTP non configuré — pas d'email de vérification (account_id={})", account_id);
-			// SMTP not configured: generate code, log it (dev mode only).
+			// SMTP absent ou smtp.host vide : pas d'envoi ; code généré quand même (saisie manuelle en dev).
 			std::string code = m_resetStore->CreateVerificationCode(account_id);
 			if (!code.empty())
-				LOG_WARN(Auth, "[AuthRegisterHandler] SMTP disabled — verification code for account_id={}: {}", account_id, code);
+			{
+				LOG_WARN(Auth,
+					"[AuthRegisterHandler] Pas d'envoi d'e-mail de vérification : SMTP désactivé ou mal configuré "
+					"(fichier référencé par smtp.config_file dans config.json — défaut smtp.local.json au même dossier que config.json — "
+					"avec smtp.host et smtp.port valides). Code de secours (développement) account_id={} : {}",
+					account_id,
+					code);
+			}
 		}
 	}
 

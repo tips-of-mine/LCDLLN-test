@@ -134,8 +134,9 @@ namespace engine::network
 							m_pending.erase(it);
 						}
 					}
+					// Ne pas transmettre le corps du paquet ERROR comme réponse valide (ex. ticket shard).
 					if (cb)
-						cb(requestId, false, std::move(payload));
+						cb(requestId, false, {});
 				}
 				continue;
 			}

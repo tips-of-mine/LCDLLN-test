@@ -9,6 +9,7 @@
 #include "engine/core/Log.h"
 
 #include <chrono>
+#include <cctype>
 #include <cstdio>
 #include <thread>
 
@@ -28,6 +29,15 @@ namespace engine::network
 			host = endpoint.substr(0, pos);
 			try { port = static_cast<uint16_t>(std::stoul(endpoint.substr(pos + 1))); }
 			catch (...) { port = 3841; }
+		}
+
+		bool IsLoopbackHost(const std::string& h)
+		{
+			std::string lower;
+			lower.reserve(h.size());
+			for (unsigned char c : h)
+				lower.push_back(static_cast<char>(std::tolower(c)));
+			return lower == "127.0.0.1" || lower == "localhost" || lower == "::1";
 		}
 
 		bool WaitConnected(NetClient* c, uint32_t timeoutMs)
@@ -217,6 +227,13 @@ namespace engine::network
 		std::string shardHost;
 		uint16_t shardPort = 3841;
 		ParseEndpoint(shardEndpoint, shardHost, shardPort);
+		if (IsLoopbackHost(shardHost) && !IsLoopbackHost(m_masterHost))
+		{
+			result.errorMessage =
+				"Shard endpoint is loopback (127.0.0.1) but master is remote; fix server advertised shard address";
+			LOG_ERROR(Net, "[MasterShardClientFlow] {}", result.errorMessage);
+			return result;
+		}
 		LOG_INFO(Net, "[MasterShardClientFlow] Connecting to Shard {}:{}", shardHost, shardPort);
 
 		NetClient shardClient;

@@ -170,7 +170,7 @@ namespace engine::render
 		{
 			const bool minimalAuthWide =
 				(state.login || state.registerMode || state.verifyEmail
-				 || state.forgotPassword || state.characterCreate || state.error)
+				 || state.forgotPassword || state.characterCreate || state.error || state.submitting)
 				&& state.minimalChrome && !state.loginArtColumn;
 			metrics.authTitleUseViewportWidth = minimalAuthWide && model.layoutAuthTitleCenterViewportWidth;
 
@@ -195,8 +195,8 @@ namespace engine::render
 				const int32_t afterTitles = line2 + bodyScale * 10;
 				metrics.authSectionTitleOffsetFromPanelTopPx = afterTitles + gapTitleSection;
 			}
-			// Connexion / création de compte / erreur : titre de section un peu plus haut.
-			if (state.login || state.registerMode || state.error)
+			// Connexion / création de compte / erreur / attente serveur : titre de section un peu plus haut.
+			if (state.login || state.registerMode || state.error || state.submitting)
 			{
 				constexpr int32_t kAuthLoginRegisterSectionLiftPx = 5;
 				metrics.authSectionTitleOffsetFromPanelTopPx -= kAuthLoginRegisterSectionLiftPx;
@@ -422,7 +422,8 @@ namespace engine::render
 
 		if (state.submitting)
 		{
-			const int32_t submitY = panelY + (!model.infoBanner.empty() ? 128 : 118);
+			// Même ancrage vertical que les champs (topOffset), pas un Y fixe qui chevauche le titre de section.
+			const int32_t submitY = panelY + layout.topOffset;
 			addThemeRect(contentX, submitY, contentW, 66, theme.surface, 0.98f);
 			addThemeRect(contentX + 18, submitY + 20, contentW - 36, 10, theme.primary, 0.94f);
 			addThemeRect(contentX + 18, submitY + 38, std::max(96, contentW - 92), 10, theme.accent, 0.94f);

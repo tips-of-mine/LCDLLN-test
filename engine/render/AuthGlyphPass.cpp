@@ -1394,7 +1394,7 @@ namespace engine::render
 
 		// Titres: colonne contenu, panneau élargi, ou largeur fenêtre (login/register/erreur minimal sans colonne d’art).
 		const bool drawTitleAcrossPanel =
-			(state.login || state.error) && state.minimalChrome && !state.loginArtColumn;
+			(state.login || state.error || state.submitting) && state.minimalChrome && !state.loginArtColumn;
 		const int32_t viewportW = static_cast<int32_t>(extent.width);
 		const int32_t titleAreaX = layout.authTitleUseViewportWidth ? 24 : (drawTitleAcrossPanel ? (panelX + 24) : contentX);
 		const int32_t titleAreaW =
@@ -1444,15 +1444,7 @@ namespace engine::render
 			}
 		}
 
-		if (state.submitting)
-		{
-			if (!model.bodyLines.empty())
-			{
-				const int32_t submitY = panelY + (!model.infoBanner.empty() ? 128 : 118);
-				AppendText(vertices, model.bodyLines.front().text, contentX + 18, submitY + 84, contentW - 36, bodyScale, titleColor);
-			}
-		}
-		else if (!model.errorText.empty())
+		if (!state.submitting && !model.errorText.empty())
 		{
 			const int32_t boxTop = panelY + layout.authErrorBoxTopFromPanelTopPx;
 			const int32_t boxH = std::max(48, layout.authErrorBoxHeightPx);
@@ -1482,7 +1474,7 @@ namespace engine::render
 				}
 			}
 		}
-		else if (state.terms)
+		else if (!state.submitting && state.terms)
 		{
 			int32_t metaY = panelY + 110;
 			for (int32_t i = 0; i < std::min<int32_t>(4, static_cast<int32_t>(model.bodyLines.size())); ++i)
@@ -1557,7 +1549,7 @@ namespace engine::render
 				}
 			}
 		}
-		else
+		else if (!state.submitting)
 		{
 			const int32_t labelAboveFieldPx = smallScale * 11 + 6;
 			const int32_t valueBelowTopPx = 12;

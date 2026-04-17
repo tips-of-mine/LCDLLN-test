@@ -1298,7 +1298,7 @@ namespace engine::client
 			t += Tr("auth.phase.verify_email");
 			break;
 		case Phase::EmailConfirmationPending:
-			t += Tr("auth.email_confirmation.title");
+			t += Tr("auth.phase.email_confirmation");
 			break;
 		case Phase::ForgotPassword:
 			t += Tr("auth.phase.forgot_password");
@@ -4747,12 +4747,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			break;
 		case Phase::EmailConfirmationPending:
 		{
-			model.titleLine1   = Tr("auth.email_confirmation.title");
-			model.sectionTitle = "";
-			std::string msg = Tr("auth.email_confirmation.message");
+			// Titre du jeu (titleLine1) inchangé depuis les défauts du modèle.
+			model.titleLine2   = Tr("auth.email_confirmation.title");
+			model.sectionTitle = Tr("auth.panel.email_confirmation");
+			model.infoBanner.clear();
+			addBodyLine(Tr("auth.email_confirmation.message"));
 			if (!m_registeredTagId.empty())
-				msg += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
-			model.infoBanner = msg;
+			{
+				addBodyLine(Tr("auth.info.tag_id") + " " + m_registeredTagId);
+			}
 			RenderAction back;
 			back.label   = Tr("auth.email_confirmation.back_to_login");
 			back.primary = true;
@@ -4913,8 +4916,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			break;
 		}
 		case Phase::Submitting:
+			// Un seul libellé : sectionTitle (évite doublon avec l’ancienne bodyLine dessinée sur les barres).
 			model.sectionTitle = Tr("auth.panel.submitting");
-			addBodyLine(Tr("auth.panel.submitting"), true);
 			break;
 		case Phase::Error:
 			model.sectionTitle = Tr("auth.panel.error");

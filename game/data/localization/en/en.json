@@ -57,6 +57,7 @@
   "auth.phase.login": "Login",
   "auth.phase.register": "Register",
   "auth.phase.verify_email": "Verify email",
+  "auth.phase.email_confirmation": "Account confirmation",
   "auth.phase.forgot_password": "Forgot password",
   "auth.phase.terms": "Terms",
   "auth.phase.character_create": "Character creation",
@@ -122,6 +123,7 @@
   "auth.hint.terms.accept": "Space check, Enter confirm",
   "auth.hint.character.rules": "3 to 32 characters. Letters, digits, and underscore.",
   "auth.panel.register": "Account creation",
+  "auth.panel.email_confirmation": "Activate your account",
   "auth.panel.terms": "Terms of use",
   "auth.panel.character_create": "Character creation",
   "auth.panel.submitting": "Connecting to server...",
@@ -212,8 +214,5 @@
   "country.VE": "Venezuela",
   "auth.info.login_help": "Enter your login and password to sign in. If you forgot your password, use the \"Forgot password\" link.",
   "auth.info.register_help": "Login must be 3 to 20 alphanumeric characters. Password must be at least 8 characters. Date of birth is required.",
-  "common.close": "Close",
-  "auth.email_confirmation.title": "Registration successful",
-  "auth.email_confirmation.message": "A confirmation email has been sent to you. Please click the link in the email to activate your account.",
-  "auth.email_confirmation.back_to_login": "Back to login"
+  "common.close": "Close"
 }

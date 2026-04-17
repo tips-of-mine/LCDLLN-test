@@ -91,7 +91,22 @@ namespace engine::core
 				std::fflush(stderr);
 				// Ne pas retourner : si la console est active on continue sans fichier.
 			}
+			else if (s_file.tellp() == 0)
+			{
+				// BOM UTF-8 pour que les éditeurs / outils Windows détectent l'encodage (accents, tirets typographiques).
+				static const unsigned char kUtf8Bom[] = { 0xEF, 0xBB, 0xBF };
+				s_file.write(reinterpret_cast<const char*>(kUtf8Bom), sizeof(kUtf8Bom));
+				s_file.flush();
+			}
 		}
+
+#if defined(_WIN32)
+		if (s_consoleEnabled)
+		{
+			SetConsoleOutputCP(CP_UTF8);
+			SetConsoleCP(CP_UTF8);
+		}
+#endif
 
 		if (!s_file.is_open() && !s_consoleEnabled)
 			return;

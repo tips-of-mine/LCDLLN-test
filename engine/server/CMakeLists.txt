@@ -163,7 +163,7 @@ elseif(UNIX)
   target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-  # M22.6: Shard server (ticket handshake only; no ShardToMasterClient on Linux)
+  # M22.6: Shard server (ticket handshake + enregistrement TLS/TCP vers le Master via ShardToMasterClient)
   add_executable(shard_app
     main_shard_linux.cpp
     NetServer.cpp
@@ -172,6 +172,7 @@ elseif(UNIX)
     ShardTicketCrypto.cpp
     HealthEndpoint.cpp
     PrometheusMetrics.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ShardToMasterClient.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ByteWriter.cpp

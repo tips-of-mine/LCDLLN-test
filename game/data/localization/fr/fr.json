@@ -101,7 +101,7 @@
   "auth.info.register_ok": "Inscription OK. Saisissez le code de verification envoye par email.",
   "auth.info.tag_id": "Votre TAG-ID :",
   "auth.email_confirmation.title": "Inscription réussie",
-  "auth.email_confirmation.message": "Un email de confirmation vient de vous être envoyé. Veuillez cliquer sur le lien qu'il contient pour activer votre compte.",
+  "auth.email_confirmation.message": "Un email de confirmation vient de vous être envoyé.\nVeuillez cliquer sur le lien qu'il contient\npour activer votre compte.",
   "auth.email_confirmation.back_to_login": "Retour à la connexion",
   "auth.label.country": "Pays",
   "auth.tooltip.country": "Votre pays de residence (code ISO 2 lettres). Utilise pour votre TAG-ID unique.",

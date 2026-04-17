@@ -28,6 +28,7 @@
 #include <array>
 #include <cmath>
 #include <chrono>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
@@ -281,6 +282,48 @@ namespace engine::client
 				return false;
 			}
 			LOG_INFO(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: locale '{}' persistée dans user_settings.json", locale);
+			return true;
+		}
+
+		/// Met à jour uniquement `client.auth_ui.remember_login` dans un user_settings.json existant.
+		bool ReplaceRememberLoginInJson(std::string& json, bool rememberLogin)
+		{
+			constexpr std::string_view key = "\"remember_login\"";
+			size_t pos = json.find(key);
+			if (pos == std::string::npos)
+				return false;
+			pos = json.find(':', pos + key.size());
+			if (pos == std::string::npos || pos + 1u >= json.size())
+				return false;
+			size_t valueStart = pos + 1u;
+			while (valueStart < json.size() && std::isspace(static_cast<unsigned char>(json[valueStart])) != 0)
+				++valueStart;
+			size_t valueEnd = valueStart;
+			while (valueEnd < json.size() && std::isalpha(static_cast<unsigned char>(json[valueEnd])) != 0)
+				++valueEnd;
+			if (valueEnd <= valueStart)
+				return false;
+			json.replace(valueStart, valueEnd - valueStart, rememberLogin ? "true" : "false");
+			return true;
+		}
+
+		bool PatchRememberLoginInSettingsFile(bool rememberLogin)
+		{
+			const std::filesystem::path settingsPath{ kUserSettingsPath };
+			if (!engine::platform::FileSystem::Exists(settingsPath))
+				return false;
+			std::string json = engine::platform::FileSystem::ReadAllText(std::filesystem::path{ kUserSettingsPath });
+			if (!ReplaceRememberLoginInJson(json, rememberLogin))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] PatchRememberLoginInSettingsFile: clé remember_login absente ou illisible — fichier non modifié");
+				return false;
+			}
+			if (!engine::platform::FileSystem::WriteAllText(settingsPath, json))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] PatchRememberLoginInSettingsFile: échec écriture user_settings.json");
+				return false;
+			}
+			LOG_INFO(Core, "[AuthUiPresenter] remember_login={} persisté dans user_settings.json (patch)", rememberLogin);
 			return true;
 		}
 
@@ -1156,6 +1199,17 @@ namespace engine::client
 			{
 				LoadRememberedLoginSidecar(m_login);
 			}
+			else
+			{
+				std::string sideLogin;
+				LoadRememberedLoginSidecar(sideLogin);
+				if (!sideLogin.empty())
+				{
+					m_rememberLogin = true;
+					m_savedRememberLogin = true;
+					m_login = std::move(sideLogin);
+				}
+			}
 			m_persistedLocale = LocalizationService::NormalizeLocaleTag(persisted.GetString("client.locale", ""));
 			m_hasPersistedLocale = !m_persistedLocale.empty();
 			m_videoFullscreen = persisted.GetBool("render.fullscreen", m_videoFullscreen);
@@ -1191,6 +1245,16 @@ namespace engine::client
 		}
 		m_rememberLogin = false;
 		m_savedRememberLogin = false;
+		{
+			std::string sideLogin;
+			LoadRememberedLoginSidecar(sideLogin);
+			if (!sideLogin.empty())
+			{
+				m_rememberLogin = true;
+				m_savedRememberLogin = true;
+				m_login = std::move(sideLogin);
+			}
+		}
 		m_persistedLocale.clear();
 		m_hasPersistedLocale = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Preferences defaulted (remember_login=false, locale=unset, fullscreen={}, vsync={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
@@ -1204,7 +1268,10 @@ namespace engine::client
 		const std::filesystem::path settingsPath{ kUserSettingsPath };
 		if (engine::platform::FileSystem::Exists(settingsPath))
 		{
-			LOG_INFO(Core, "[AuthUiPresenter] Preferences persist skipped (existing user_settings.json preserved)");
+			if (PatchRememberLoginInSettingsFile(m_rememberLogin))
+				m_savedRememberLogin = m_rememberLogin;
+			else
+				LOG_WARN(Core, "[AuthUiPresenter] remember_login non persisté dans user_settings.json (patch absent ou échoué)");
 			return;
 		}
 
@@ -4529,6 +4596,33 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			line.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
 			model.bodyLines.push_back(std::move(line));
 		};
+		auto addBodyLinesFromNewlines = [&addBodyLine](const std::string& text)
+		{
+			if (text.empty())
+			{
+				return;
+			}
+			size_t start = 0;
+			for (;;)
+			{
+				const size_t nl = text.find('\n', start);
+				if (nl == std::string::npos)
+				{
+					const std::string chunk = text.substr(start);
+					if (!chunk.empty())
+					{
+						addBodyLine(chunk);
+					}
+					break;
+				}
+				const std::string chunk = text.substr(start, nl - start);
+				if (!chunk.empty())
+				{
+					addBodyLine(chunk);
+				}
+				start = nl + 1u;
+			}
+		};
 		auto maskedPassword = [this]() -> std::string
 		{
 			std::string out;
@@ -4751,7 +4845,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			model.titleLine2   = Tr("auth.email_confirmation.title");
 			model.sectionTitle = Tr("auth.panel.email_confirmation");
 			model.infoBanner.clear();
-			addBodyLine(Tr("auth.email_confirmation.message"));
+			addBodyLinesFromNewlines(Tr("auth.email_confirmation.message"));
 			if (!m_registeredTagId.empty())
 			{
 				addBodyLine(Tr("auth.info.tag_id") + " " + m_registeredTagId);

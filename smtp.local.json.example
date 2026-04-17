@@ -1,12 +1,12 @@
 {
     "smtp": {
-        "host": "",
+        "host": "10.0.4.52",
         "port": 587,
-        "user": "",
-        "password": "",
-        "from": "",
-        "reset_url_base": "",
+        "user": "hostinfo@tips-of-mine.fr",
+        "password": "Whf2VtLEd2QR4er",
+        "from": "hostinfo@tips-of-mine.fr",
+        "reset_url_base": "https://toto.fr",
         "starttls": 1,
-        "timeout_sec": 10
+        "timeout_sec": 30
     }
 }

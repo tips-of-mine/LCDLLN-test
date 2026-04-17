@@ -23,6 +23,6 @@ COPY config/shard.config.json /app/config.json
 EXPOSE 3843
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
-    CMD nc -z localhost 3843 || exit 1
+    CMD nc -z localhost 3844 || exit 1
 
 CMD ["/app/lcdlln_shard", "-log", "-console"]

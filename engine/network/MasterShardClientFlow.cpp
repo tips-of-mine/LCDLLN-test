@@ -6,11 +6,13 @@
 #include "engine/network/ShardTicketPayloads.h"
 #include "engine/network/ProtocolV1Constants.h"
 #include "engine/network/PacketView.h"
+#include "engine/network/NetErrorCode.h"
 #include "engine/core/Log.h"
 
 #include <chrono>
 #include <cctype>
 #include <cstdio>
+#include <string>
 #include <thread>
 
 namespace engine::network
@@ -195,6 +197,13 @@ namespace engine::network
 
 		std::vector<uint8_t> ticketPayload;
 		{
+			std::string shardTicketErrorDetail;
+			disp.SetErrorHandler([&shardTicketErrorDetail](uint32_t /*requestId*/, NetErrorCode code, std::string_view msg) {
+				if (!msg.empty())
+					shardTicketErrorDetail.assign(msg.begin(), msg.end());
+				else
+					shardTicketErrorDetail = "code " + std::to_string(static_cast<uint32_t>(code));
+			});
 			auto reqPayload = BuildRequestShardTicketPayload(targetShardId);
 			bool ticketDone = false;
 			bool ticketTimeout = true;
@@ -217,11 +226,17 @@ namespace engine::network
 			}
 			if (!ticketDone || ticketTimeout || ticketPayload.empty())
 			{
-				result.errorMessage = ticketTimeout ? "REQUEST_SHARD_TICKET timeout" : "REQUEST_SHARD_TICKET failed or empty";
+				if (ticketTimeout)
+					result.errorMessage = "REQUEST_SHARD_TICKET timeout";
+				else if (!shardTicketErrorDetail.empty())
+					result.errorMessage = std::string("REQUEST_SHARD_TICKET refusé — ") + shardTicketErrorDetail;
+				else
+					result.errorMessage = "REQUEST_SHARD_TICKET failed or empty";
 				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 				return result;
 			}
 			LOG_INFO(Net, "[MasterShardClientFlow] Ticket received ({} bytes)", ticketPayload.size());
+			disp.SetErrorHandler({});
 		}
 
 		std::string shardHost;

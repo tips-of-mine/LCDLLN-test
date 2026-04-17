@@ -1,4 +1,4 @@
-# LCDLLN — stack Docker (MySQL + Master + portail ; shard optionnel)
+# LCDLLN — stack Docker (MySQL + Master + Shard + portail)
 
 ## Démarrage rapide (artefact CI Linux)
 
@@ -19,18 +19,18 @@
 ```bash
 cd deploy/docker
 cp -n .env.example .env   # optionnel : éditer .env (mots de passe, ports)
-docker compose up -d      # premier run : mysql + master + web-portal (build images si besoin)
+docker compose up -d      # premier run : mysql + master + shard + web-portal (build images si besoin)
 ```
 
 **CI / CD** : le workflow Linux exécute `scripts/pack-linux-docker-bundle.sh`, qui enchaîne `sync-db-to-docker-deploy.sh`, **`sync-web-portal-to-docker-deploy.sh`**, puis binaires / `lib/` / `game/data/`. Le ZIP contient **`deploy/docker/`** en entier (y compris **`web-portal/`**).
 
 **Depuis un clone Git en local** : le pack refait les synchros ; pour ne mettre à jour que le portail : `./scripts/sync-web-portal-to-docker-deploy.sh`. Le dossier `deploy/docker/db/` versionné sert de repli pour un `docker compose build` sans pack complet.
 
-Ports par défaut : **3840** (master), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**. Le **shard** (3843) reste dans le compose et le zip (`bin/lcdlln_shard`, `Dockerfile.shard`, `config/shard.config.json`) mais **n’est pas lancé** par `docker compose up -d` : quand vous serez prêt, `docker compose --profile shard up -d --build`.
+Ports par défaut : **3840** (master TCP jeu), **3843** (shard TCP jeu), **3844** (shard HTTP santé), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**. Le shard s’enregistre sur le master (`master:3840`) et annonce une adresse **joignable par les clients** dans `shard.register.endpoint` (fichier `config/shard.config.json` ou variable d’environnement **`SHARD_REGISTER_ENDPOINT`** passée au conteneur, ex. `10.0.0.5:3843` pour un client sur le LAN).
 
-Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysql`** (InnoDB), journaux **`./data/logs/master`** (et **`./data/logs/shard`** si vous utilisez le profil shard). Pour repartir d’une base neuve : `docker compose down`, puis `rm -rf data/mysql`, puis `up` (les scripts `docker-entrypoint-initdb.d` ne s’exécutent que si le datadir est vide au premier démarrage).
+Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysql`** (InnoDB), journaux **`./data/logs/master`** et **`./data/logs/shard`**. Pour repartir d’une base neuve : `docker compose down`, puis `rm -rf data/mysql`, puis `up` (les scripts `docker-entrypoint-initdb.d` ne s’exécutent que si le datadir est vide au premier démarrage).
 
-**Erreur OCI / bind mount (config)** : le compose monte **`./config/master.config.json`** sur le master et **`./config/shard.config.json`** sur le service shard (profil `shard`). Si un chemin monté **n’existait pas** au premier `up`, Docker peut avoir créé un **répertoire** à la place du fichier.
+**Erreur OCI / bind mount (config)** : le compose monte **`./config/master.config.json`** sur le master et **`./config/shard.config.json`** sur le service shard. Si un chemin monté **n’existait pas** au premier `up`, Docker peut avoir créé un **répertoire** à la place du fichier.
 
 1. `ls -la config/master.config.json` (et `shard.config.json` si vous lancez le shard) — si c’est un dossier : `rm -rf` puis recopiez le JSON (dépôt ou zip CI).
 2. Relancez : `docker compose up -d` (rebuild des images seulement si vous modifiez les Dockerfiles).

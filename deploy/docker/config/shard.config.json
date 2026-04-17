@@ -1,7 +1,23 @@
 {
   "server": {
     "tcp": { "port": 3843 },
-    "health": { "port": 3843, "bind": "0.0.0.0" }
+    "health": { "port": 3844, "bind": "0.0.0.0" }
+  },
+  "shard": {
+    "id": 1,
+    "ticket_hmac_secret": "dev_secret_change_in_production",
+    "heartbeat_interval_sec": 10,
+    "master": {
+      "host": "master",
+      "port": 3840,
+      "allow_insecure_dev": false
+    },
+    "register": {
+      "name": "main-shard",
+      "endpoint": "127.0.0.1:3843",
+      "max_capacity": 500,
+      "build_version": "docker-dev"
+    }
   },
   "log": {
     "level": "info",

@@ -6,6 +6,7 @@
 #include "engine/server/ShardTicketValidator.h"
 #include "engine/server/ShardTicketHandshakeHandler.h"
 #include "engine/network/ProtocolV1Constants.h"
+#include "engine/network/ShardToMasterClient.h"
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 
@@ -71,7 +72,10 @@ int main(int argc, char** argv)
 		netConfig.maxConnectionsPerIp, netConfig.maxAcceptsPerSec,
 		netConfig.handshakeFailuresBeforeDeny, netConfig.handshakeDenyDurationSec);
 
-	uint16_t port = static_cast<uint16_t>(config.GetInt("shard.port", 3841));
+	int64_t gamePort = config.GetInt("server.tcp.port", 0);
+	if (gamePort <= 0)
+		gamePort = config.GetInt("shard.port", 3843);
+	uint16_t port = static_cast<uint16_t>(gamePort);
 	if (!server.Init(port, netConfig))
 	{
 		LOG_ERROR(Net, "[ShardMain] NetServer Init failed");
@@ -82,7 +86,7 @@ int main(int argc, char** argv)
 
 	// M23.1 + M23.2 — Health/readiness and Prometheus /metrics (Shard: no auth/sessions/shard registry/DB).
 	engine::server::HealthEndpoint healthEndpoint;
-	uint16_t healthPort = static_cast<uint16_t>(config.GetInt("server.health.port", 3843));
+	uint16_t healthPort = static_cast<uint16_t>(config.GetInt("server.health.port", 3844));
 	std::string healthBind = config.GetString("server.health.bind", "127.0.0.1");
 	auto metricsProvider = [&server]() {
 		engine::server::NetServerStats netStats;
@@ -106,10 +110,32 @@ int main(int argc, char** argv)
 		handshakeHandler.HandlePacket(connId, opcode, requestId, sessionId, payload, payloadSize);
 	});
 
-	LOG_INFO(Net, "[ShardMain] Shard server running (Ctrl+C to stop)");
+	const std::string masterHost = config.GetString("shard.master.host", config.GetString("shard.master_host", "127.0.0.1"));
+	const uint16_t masterPort = static_cast<uint16_t>(config.GetInt("shard.master.port", config.GetInt("shard.master_port", 3840)));
+	const std::string regName = config.GetString("shard.register.name", config.GetString("shard.register_name", "shard"));
+	const std::string regEndpoint = config.GetString("shard.register.endpoint", config.GetString("shard.register_endpoint", "127.0.0.1:3843"));
+	const uint32_t regCap = static_cast<uint32_t>(config.GetInt("shard.register.max_capacity", config.GetInt("shard.register_max_capacity", 500)));
+	const std::string buildVer = config.GetString("shard.register.build_version", config.GetString("shard.build_version", "dev"));
+	const std::string masterTlsFp = config.GetString("shard.master.tls_fingerprint", config.GetString("shard.master_tls_fingerprint", ""));
+	const bool masterInsecure = config.GetBool("shard.master.allow_insecure_dev", config.GetBool("shard.master_allow_insecure_dev", false));
+
+	engine::network::ShardToMasterClient toMaster;
+	toMaster.SetMasterAddress(masterHost, masterPort);
+	if (!masterTlsFp.empty())
+		toMaster.SetExpectedServerFingerprint(masterTlsFp);
+	toMaster.SetAllowInsecureDev(masterInsecure);
+	toMaster.SetShardIdentity(regName, regEndpoint, regCap, buildVer);
+	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
+	toMaster.Start();
+
+	LOG_INFO(Net, "[ShardMain] Shard server running (Ctrl+C to stop); master {}:{} register endpoint='{}'",
+		masterHost, masterPort, regEndpoint);
 
 	while (server.IsRunning() && g_quit == 0)
+	{
+		toMaster.Pump();
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
 
 	LOG_INFO(Net, "[ShardMain] Shutdown");
 	healthEndpoint.Shutdown();

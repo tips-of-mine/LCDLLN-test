@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstring>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace engine::render
@@ -1085,9 +1086,9 @@ namespace engine::render
 		}
 		// La police TTF embarquée ne couvre pas les glyphes accentués : mêmes remplacements ASCII que le fallback bitmap.
 		const std::string asciiWork = SimplifyUtf8(text);
-		const std::string_view work = asciiWork;
 		const float mul = std::max(0.35f, static_cast<float>(scale) / 4.f);
-		const int32_t maxX = originX + std::max(32, maxWidthPx);
+		const int32_t limitRight = originX + std::max(32, maxWidthPx);
+		const float lineLimit = static_cast<float>(limitRight - originX);
 		int32_t lineIndex = 0;
 		float penX = 0.f;
 
@@ -1113,32 +1114,33 @@ namespace engine::render
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
 
-		size_t i = 0;
-		while (i < work.size())
-		{
-			int cp = 0;
-			if (!Utf8Next(work, i, cp))
-			{
-				break;
-			}
+		const auto advanceCp = [&](int cp) -> float {
+			return atlas.GlyphXAdvance(cp) * mul;
+		};
+
+		const auto emitCp = [&](int cp) -> bool {
 			if (cp == '\r')
 			{
-				continue;
+				return true;
 			}
 			if (cp == '\n')
 			{
 				penX = 0.f;
 				++lineIndex;
-				continue;
+				return true;
 			}
-			const float advPx = atlas.GlyphXAdvance(cp) * mul;
-			if (static_cast<int32_t>(std::floor(static_cast<float>(originX) + penX + advPx)) > maxX && penX > 0.f)
+			if (cp == ' ' && penX <= 0.f)
+			{
+				return true;
+			}
+			const float advPx = advanceCp(cp);
+			if (static_cast<int32_t>(std::floor(static_cast<float>(originX) + penX + advPx)) > limitRight && penX > 0.f)
 			{
 				penX = 0.f;
 				++lineIndex;
 				if (cp == ' ')
 				{
-					continue;
+					return true;
 				}
 			}
 			const float lineBaseY = static_cast<float>(atlas.LineTopToBaselinePx() + lineIndex * atlas.LineHeightPx());
@@ -1146,14 +1148,96 @@ namespace engine::render
 			float x0 = 0.f, y0 = 0.f, x1 = 0.f, y1 = 0.f, s0 = 0.f, t0 = 0.f, s1 = 0.f, t1 = 0.f, xadv = 0.f;
 			if (!atlas.GetPackedQuad(cp, &pen, lineBaseY, &x0, &y0, &x1, &y1, &s0, &t0, &s1, &t1, &xadv))
 			{
-				continue;
+				return true;
 			}
 			penX = pen;
 			emitQuad(x0, y0, x1, y1, s0, t0, s1, t1);
 			if (vertices.size() + 6u > m_maxVertices || vertices.size() / 6u >= m_maxGlyphs)
 			{
+				return false;
+			}
+			return true;
+		};
+
+		const auto measureWordWidth = [&](std::string_view word) -> float {
+			float w = 0.f;
+			for (unsigned char uch : word)
+			{
+				w += advanceCp(static_cast<int>(uch));
+			}
+			return w;
+		};
+
+		auto layoutParagraph = [&](std::string_view paragraph) {
+			size_t pos = 0;
+			while (pos < paragraph.size())
+			{
+				while (pos < paragraph.size() && paragraph[pos] == ' ')
+				{
+					++pos;
+				}
+				if (pos >= paragraph.size())
+				{
+					break;
+				}
+				size_t end = pos;
+				while (end < paragraph.size() && paragraph[end] != ' ')
+				{
+					++end;
+				}
+				const std::string_view word = paragraph.substr(pos, end - pos);
+				pos = end;
+
+				const float wordW = measureWordWidth(word);
+				const float spaceW = (penX > 0.f) ? advanceCp(' ') : 0.f;
+
+				if (penX + spaceW + wordW > lineLimit && penX > 0.f)
+				{
+					penX = 0.f;
+					++lineIndex;
+				}
+				if (wordW > lineLimit)
+				{
+					for (size_t wi = 0; wi < word.size(); ++wi)
+					{
+						if (!emitCp(static_cast<unsigned char>(word[wi])))
+						{
+							return;
+						}
+					}
+				}
+				else
+				{
+					if (penX > 0.f && !emitCp(' '))
+					{
+						return;
+					}
+					for (size_t wi = 0; wi < word.size(); ++wi)
+					{
+						if (!emitCp(static_cast<unsigned char>(word[wi])))
+						{
+							return;
+						}
+					}
+				}
+			}
+		};
+
+		size_t segStart = 0;
+		while (segStart < asciiWork.size())
+		{
+			const size_t nl = asciiWork.find('\n', segStart);
+			const std::string_view paragraph(
+				asciiWork.c_str() + segStart,
+				(nl == std::string::npos) ? (asciiWork.size() - segStart) : (nl - segStart));
+			layoutParagraph(paragraph);
+			if (nl == std::string::npos)
+			{
 				break;
 			}
+			segStart = nl + 1u;
+			penX = 0.f;
+			++lineIndex;
 		}
 	}
 
@@ -1207,34 +1291,114 @@ namespace engine::render
 			};
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
-		for (char ch : normalized)
-		{
+		const auto advanceBmp = [scale](char ch) -> int32_t {
+			return GlyphAdvancePx(ch, scale);
+		};
+		auto emitBmpChar = [&](char ch) -> bool {
 			if (ch == '\r')
 			{
-				continue;
+				return true;
 			}
 			if (ch == '\n')
 			{
 				cursorX = originX;
 				cursorY += linePitch;
-				continue;
+				return true;
 			}
-			const int32_t advance = GlyphAdvancePx(ch, scale);
-			if (cursorX + advance > maxX)
+			if (ch == ' ' && cursorX <= originX)
+			{
+				return true;
+			}
+			const int32_t advance = advanceBmp(ch);
+			if (cursorX + advance > maxX && cursorX > originX)
 			{
 				cursorX = originX;
 				cursorY += linePitch;
 				if (ch == ' ')
 				{
-					continue;
+					return true;
 				}
 			}
 			appendGlyph(cursorX, cursorY, ch);
 			cursorX += advance;
-			if (vertices.size() + 6u > m_maxVertices || vertices.size() / 6u >= m_maxGlyphs)
+			return vertices.size() + 6u <= m_maxVertices && vertices.size() / 6u < m_maxGlyphs;
+		};
+		const auto measureWordBmp = [&](std::string_view word) -> int32_t {
+			int32_t w = 0;
+			for (char c : word)
+			{
+				w += advanceBmp(c);
+			}
+			return w;
+		};
+		auto layoutBmpParagraph = [&](std::string_view paragraph) {
+			size_t pos = 0;
+			while (pos < paragraph.size())
+			{
+				while (pos < paragraph.size() && paragraph[pos] == ' ')
+				{
+					++pos;
+				}
+				if (pos >= paragraph.size())
+				{
+					break;
+				}
+				size_t end = pos;
+				while (end < paragraph.size() && paragraph[end] != ' ')
+				{
+					++end;
+				}
+				const std::string_view word = paragraph.substr(pos, end - pos);
+				pos = end;
+
+				const int32_t wordW = measureWordBmp(word);
+				const int32_t spaceW = (cursorX > originX) ? advanceBmp(' ') : 0;
+				if (cursorX + spaceW + wordW > maxX && cursorX > originX)
+				{
+					cursorX = originX;
+					cursorY += linePitch;
+				}
+				if (wordW > maxX - originX)
+				{
+					for (char c : word)
+					{
+						if (!emitBmpChar(c))
+						{
+							return;
+						}
+					}
+				}
+				else
+				{
+					if (cursorX > originX && !emitBmpChar(' '))
+					{
+						return;
+					}
+					for (char c : word)
+					{
+						if (!emitBmpChar(c))
+						{
+							return;
+						}
+					}
+				}
+			}
+		};
+		size_t bmpSeg = 0;
+		while (bmpSeg < normalized.size())
+		{
+			const size_t nl = normalized.find('\n', bmpSeg);
+			const std::string_view paragraph(
+				normalized.c_str() + bmpSeg,
+				(nl == std::string::npos) ? (normalized.size() - bmpSeg) : (nl - bmpSeg));
+			layoutBmpParagraph(paragraph);
+			if (nl == std::string::npos)
 			{
 				break;
 			}
+			bmpSeg = nl + 1u;
+			cursorX = originX;
+			cursorY += linePitch;
 		}
 	}
 
@@ -1357,7 +1521,9 @@ namespace engine::render
 			{
 				const float mul = std::max(0.35f, static_cast<float>(actionLabelScale) / 4.f);
 				const int32_t lineH = static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
-				return buttonRowTopPx + (kAuthUiActionButtonHeightPx - lineH) / 2;
+				// Léger décalage vers le bas : le repère TTF (hauteur de ligne) sous-estime le centre visuel dans la barre.
+				const int32_t nudgeDown = 3;
+				return buttonRowTopPx + (kAuthUiActionButtonHeightPx - lineH) / 2 + nudgeDown;
 			}
 			return buttonRowTopPx + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
 		};

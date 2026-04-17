@@ -623,6 +623,33 @@ namespace engine::core
 		return m_values.find(ToOwnedKey(key)) != m_values.end();
 	}
 
+	std::unordered_map<std::string, std::string> Config::GetStringMapUnderPrefix(std::string_view prefix) const
+	{
+		std::string p = ToOwnedKey(prefix);
+		if (!p.empty() && p.back() != '.')
+		{
+			p.push_back('.');
+		}
+		std::unordered_map<std::string, std::string> out;
+		for (const auto& [k, v] : m_values)
+		{
+			if (k.size() <= p.size() || k.compare(0, p.size(), p) != 0)
+			{
+				continue;
+			}
+			const std::string suffix = k.substr(p.size());
+			if (suffix.empty() || suffix.find('.') != std::string::npos)
+			{
+				continue;
+			}
+			if (const auto* ps = std::get_if<std::string>(&v))
+			{
+				out.emplace(suffix, *ps);
+			}
+		}
+		return out;
+	}
+
 	std::string Config::GetString(std::string_view key, std::string_view fallback) const
 	{
 		const auto it = m_values.find(ToOwnedKey(key));

@@ -57,6 +57,10 @@ namespace engine::core
 		/// Parse a string as a scalar value (used by INI/CLI parsers).
 		static std::optional<Value> ParseScalar(std::string_view text);
 
+		/// Collecte les paires (suffixe, valeur) pour les clés \c prefix + "." + suffixe (valeur string uniquement).
+		/// Le suffixe ne doit pas contenir de point (un seul niveau sous le préfixe). Ex. préfixe \c "log.subsystem_files" et clé fichier \c "log.subsystem_files.Smtp".
+		std::unordered_map<std::string, std::string> GetStringMapUnderPrefix(std::string_view prefix) const;
+
 	private:
 		static std::string ToOwnedKey(std::string_view key);
 

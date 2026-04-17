@@ -4,8 +4,10 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <string>
+#include <unordered_map>
 
 #if defined(_WIN32)
 #  define WIN32_LEAN_AND_MEAN
@@ -20,6 +22,10 @@ namespace engine::core
 	{
 		std::ofstream s_file;
 		bool          s_consoleEnabled = false;
+		/// Chemins résolus → flux (un fichier peut servir plusieurs sous-systèmes).
+		std::unordered_map<std::string, std::ofstream> s_extraFilesByPath;
+		/// Sous-système (chaîne du macro LOG_*) → chemin résolu dans \c s_extraFilesByPath.
+		std::unordered_map<std::string, std::string> s_subsystemToResolvedPath;
 
 #if defined(_WIN32)
 		CRITICAL_SECTION s_cs;
@@ -100,6 +106,43 @@ namespace engine::core
 			}
 		}
 
+		s_extraFilesByPath.clear();
+		s_subsystemToResolvedPath.clear();
+		{
+			const std::filesystem::path mainPath(settings.filePath);
+			const std::filesystem::path baseDir =
+				settings.filePath.empty() ? std::filesystem::path(".") :
+				(mainPath.has_parent_path() ? mainPath.parent_path() : std::filesystem::path("."));
+			static const unsigned char kUtf8Bom[] = { 0xEF, 0xBB, 0xBF };
+			for (const auto& [subsystem, relName] : settings.subsystemFiles)
+			{
+				if (subsystem.empty() || relName.empty())
+				{
+					continue;
+				}
+				const std::filesystem::path relP(relName);
+				const std::filesystem::path full = relP.is_absolute() ? relP : (baseDir / relP);
+				const std::string fullStr = full.generic_string();
+				if (s_extraFilesByPath.find(fullStr) == s_extraFilesByPath.end())
+				{
+					std::ofstream ofs(fullStr, std::ios::out | std::ios::app);
+					if (!ofs.is_open())
+					{
+						std::fprintf(stderr, "[Log] Cannot open subsystem log file: %s\n", fullStr.c_str());
+						std::fflush(stderr);
+						continue;
+					}
+					if (ofs.tellp() == 0)
+					{
+						ofs.write(reinterpret_cast<const char*>(kUtf8Bom), sizeof(kUtf8Bom));
+						ofs.flush();
+					}
+					s_extraFilesByPath.emplace(fullStr, std::move(ofs));
+				}
+				s_subsystemToResolvedPath.emplace(subsystem, fullStr);
+			}
+		}
+
 #if defined(_WIN32)
 		if (s_consoleEnabled)
 		{
@@ -108,7 +151,7 @@ namespace engine::core
 		}
 #endif
 
-		if (!s_file.is_open() && !s_consoleEnabled)
+		if (!s_file.is_open() && !s_consoleEnabled && s_extraFilesByPath.empty())
 			return;
 
 		s_active.store(true, std::memory_order_release);
@@ -125,6 +168,17 @@ namespace engine::core
 			s_file.flush();
 			s_file.close();
 		}
+		for (auto& [path, stream] : s_extraFilesByPath)
+		{
+			(void)path;
+			if (stream.is_open())
+			{
+				stream.flush();
+				stream.close();
+			}
+		}
+		s_extraFilesByPath.clear();
+		s_subsystemToResolvedPath.clear();
 		s_consoleEnabled = false;
 		UnlockLog();
 		DestroyLock();
@@ -177,6 +231,14 @@ namespace engine::core
 		{
 			s_file << line;
 			s_file.flush();
+		}
+		if (const auto it = s_subsystemToResolvedPath.find(sys); it != s_subsystemToResolvedPath.end())
+		{
+			if (const auto fit = s_extraFilesByPath.find(it->second); fit != s_extraFilesByPath.end() && fit->second.is_open())
+			{
+				fit->second << line;
+				fit->second.flush();
+			}
 		}
 		if (s_consoleEnabled)
 		{

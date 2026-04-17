@@ -176,21 +176,56 @@ namespace engine::network
 			LOG_INFO(Net, "[MasterShardClientFlow] SERVER_LIST OK ({} entries)", list.size());
 		}
 
-		const ServerListEntry* chosen = nullptr;
+		std::vector<const ServerListEntry*> eligible;
+		eligible.reserve(list.size());
 		for (const auto& e : list)
 		{
 			if (e.status == 1 && !e.endpoint.empty())
 			{
-				chosen = &e;
-				break;
+				eligible.push_back(&e);
 			}
 		}
-		if (!chosen)
+		if (eligible.empty())
 		{
 			result.errorMessage = "No Online shard with endpoint in list";
 			LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 			return result;
 		}
+
+		const ServerListEntry* chosen = nullptr;
+		if (m_shardIdOverride != 0)
+		{
+			for (const ServerListEntry* p : eligible)
+			{
+				if (p->shard_id == m_shardIdOverride)
+				{
+					chosen = p;
+					break;
+				}
+			}
+			if (!chosen)
+			{
+				result.errorMessage = "Selected shard is not available or unknown";
+				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
+				return result;
+			}
+		}
+		else if (eligible.size() > 1 && m_shardPickWhenMultiple)
+		{
+			result.shard_choice_required = true;
+			result.server_list_for_pick = list;
+			result.success = false;
+			LOG_INFO(Net,
+				"[MasterShardClientFlow] Multiple online shards ({}); returning shard_choice_required for UI",
+				eligible.size());
+			masterClient->Disconnect("shard_choice_required");
+			return result;
+		}
+		else
+		{
+			chosen = eligible.front();
+		}
+
 		uint32_t targetShardId = chosen->shard_id;
 		std::string shardEndpoint = chosen->endpoint;
 		LOG_INFO(Net, "[MasterShardClientFlow] Requesting ticket for shard_id={}", targetShardId);

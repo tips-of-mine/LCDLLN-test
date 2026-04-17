@@ -2,7 +2,10 @@
     "log": {
         "level": "Info",
         "rotation_size_mb": 10,
-        "retention_days": 7
+        "retention_days": 7,
+        "subsystem_files": {
+            "Smtp": "lcdlln-SMTP.log"
+        }
     },
     "render": {
         "vsync": true,

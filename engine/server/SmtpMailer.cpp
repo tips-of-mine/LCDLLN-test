@@ -36,7 +36,7 @@ namespace engine::server
 		engine::core::Config secrets;
 		if (!secrets.LoadFromFile(resolved))
 		{
-			LOG_WARN(Core, "[SmtpMailer] SMTP secrets file missing or unreadable (path={}) — email disabled", resolved);
+			LOG_WARN(Smtp, "[SmtpMailer] SMTP secrets file missing or unreadable (path={}) — email disabled", resolved);
 			return cfg;
 		}
 
@@ -51,21 +51,21 @@ namespace engine::server
 
 		if (cfg.host.empty())
 		{
-			LOG_WARN(Core, "[SmtpMailer] smtp.host empty in {} — email disabled", resolved);
+			LOG_WARN(Smtp, "[SmtpMailer] smtp.host empty in {} — email disabled", resolved);
 			return cfg;
 		}
 		if (cfg.port == 0)
 		{
-			LOG_ERROR(Core, "[SmtpMailer] smtp.port missing or zero in {} — email disabled", resolved);
+			LOG_ERROR(Smtp, "[SmtpMailer] smtp.port missing or zero in {} — email disabled", resolved);
 			cfg = SmtpConfig{};
 			return cfg;
 		}
 		if (cfg.from_address.empty())
-			LOG_WARN(Core, "[SmtpMailer] smtp.from empty in {} — sending may fail", resolved);
+			LOG_WARN(Smtp, "[SmtpMailer] smtp.from empty in {} — sending may fail", resolved);
 		if (cfg.reset_url_base.empty())
-			LOG_WARN(Core, "[SmtpMailer] smtp.reset_url_base empty in {} — reset links may be invalid", resolved);
+			LOG_WARN(Smtp, "[SmtpMailer] smtp.reset_url_base empty in {} — reset links may be invalid", resolved);
 
-		LOG_INFO(Core, "[SmtpMailer] Config loaded from sidecar (path={} host={}:{} starttls={} from={})",
+		LOG_INFO(Smtp, "[SmtpMailer] Config loaded from sidecar (path={} host={}:{} starttls={} from={})",
 			resolved, cfg.host, cfg.port, cfg.use_starttls ? 1 : 0, cfg.from_address);
 		return cfg;
 	}
@@ -242,11 +242,11 @@ namespace engine::server
 	{
 		if (cfg.host.empty())
 		{
-			LOG_WARN(Net, "[SmtpMailer] Send skipped: smtp.host not configured (to={})", to);
+			LOG_WARN(Smtp, "[SmtpMailer] Send skipped: smtp.host not configured (to={})", to);
 			return false;
 		}
 
-		LOG_INFO(Net,
+		LOG_INFO(Smtp,
 			"[SmtpMailer] envoi démarré to={} subject_len={} host={}:{} starttls={} auth={} timeout_sec={}",
 			to,
 			static_cast<int>(subject.size()),
@@ -265,7 +265,7 @@ namespace engine::server
 		const int gai = ::getaddrinfo(cfg.host.c_str(), portStr.c_str(), &hints, &res);
 		if (gai != 0 || res == nullptr)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] getaddrinfo échoué host={}:{} ({})", cfg.host, cfg.port, gai != 0 ? gai_strerror(gai) : "null");
+			LOG_ERROR(Smtp, "[SmtpMailer] getaddrinfo échoué host={}:{} ({})", cfg.host, cfg.port, gai != 0 ? gai_strerror(gai) : "null");
 			return false;
 		}
 
@@ -274,7 +274,7 @@ namespace engine::server
 		if (conn.fd < 0)
 		{
 			::freeaddrinfo(res);
-			LOG_ERROR(Net, "[SmtpMailer] socket() échoué errno={}", errno);
+			LOG_ERROR(Smtp, "[SmtpMailer] socket() échoué errno={}", errno);
 			return false;
 		}
 
@@ -288,11 +288,11 @@ namespace engine::server
 		{
 			const int e = errno;
 			::freeaddrinfo(res);
-			LOG_ERROR(Net, "[SmtpMailer] connect() échoué vers {}:{} errno={} ({})", cfg.host, cfg.port, e, std::strerror(e));
+			LOG_ERROR(Smtp, "[SmtpMailer] connect() échoué vers {}:{} errno={} ({})", cfg.host, cfg.port, e, std::strerror(e));
 			return false;
 		}
 		::freeaddrinfo(res);
-		LOG_INFO(Net, "[SmtpMailer] TCP connecté à {}:{}", cfg.host, cfg.port);
+		LOG_INFO(Smtp, "[SmtpMailer] TCP connecté à {}:{}", cfg.host, cfg.port);
 
 		std::string resp;
 		int code;
@@ -301,21 +301,21 @@ namespace engine::server
 		code = conn.ReadResponse(resp);
 		if (code != 220)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] bannière SMTP inattendue code={} réponse='{}'", code, TrimSmtpResponse(resp));
+			LOG_ERROR(Smtp, "[SmtpMailer] bannière SMTP inattendue code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
-		LOG_INFO(Net, "[SmtpMailer] bannière OK réponse='{}'", TrimSmtpResponse(resp));
+		LOG_INFO(Smtp, "[SmtpMailer] bannière OK réponse='{}'", TrimSmtpResponse(resp));
 
 		// EHLO
 		if (!conn.Write("EHLO localhost\r\n"))
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Write EHLO failed");
+			LOG_ERROR(Smtp, "[SmtpMailer] Write EHLO failed");
 			return false;
 		}
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] EHLO refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+			LOG_ERROR(Smtp, "[SmtpMailer] EHLO refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
@@ -324,115 +324,115 @@ namespace engine::server
 		{
 			if (!conn.Write("STARTTLS\r\n"))
 			{
-				LOG_ERROR(Net, "[SmtpMailer] Write STARTTLS failed");
+				LOG_ERROR(Smtp, "[SmtpMailer] Write STARTTLS failed");
 				return false;
 			}
 			code = conn.ReadResponse(resp);
 			if (code != 220)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] STARTTLS refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+				LOG_ERROR(Smtp, "[SmtpMailer] STARTTLS refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
 			if (!conn.UpgradeToTLS())
 			{
-				LOG_ERROR(Net, "[SmtpMailer] échec handshake TLS (après STARTTLS)");
+				LOG_ERROR(Smtp, "[SmtpMailer] échec handshake TLS (après STARTTLS)");
 				return false;
 			}
 			// Re-EHLO after STARTTLS
 			if (!conn.Write("EHLO localhost\r\n"))
 			{
-				LOG_ERROR(Net, "[SmtpMailer] Write EHLO(2) failed");
+				LOG_ERROR(Smtp, "[SmtpMailer] Write EHLO(2) failed");
 				return false;
 			}
 			code = conn.ReadResponse(resp);
 			if (code != 250)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] EHLO(2) refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+				LOG_ERROR(Smtp, "[SmtpMailer] EHLO(2) refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
-			LOG_INFO(Net, "[SmtpMailer] STARTTLS + EHLO post-TLS OK");
+			LOG_INFO(Smtp, "[SmtpMailer] STARTTLS + EHLO post-TLS OK");
 		}
 
 		// AUTH LOGIN (if credentials provided)
 		if (!cfg.user.empty())
 		{
-			LOG_INFO(Net, "[SmtpMailer] AUTH LOGIN (utilisateur non vide)");
+			LOG_INFO(Smtp, "[SmtpMailer] AUTH LOGIN (utilisateur non vide)");
 			if (!conn.Write("AUTH LOGIN\r\n"))
 			{
-				LOG_ERROR(Net, "[SmtpMailer] Write AUTH LOGIN failed");
+				LOG_ERROR(Smtp, "[SmtpMailer] Write AUTH LOGIN failed");
 				return false;
 			}
 			code = conn.ReadResponse(resp);
 			if (code != 334)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] AUTH LOGIN refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+				LOG_ERROR(Smtp, "[SmtpMailer] AUTH LOGIN refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
 			if (!conn.Write(Base64Encode(cfg.user) + "\r\n"))
 			{
-				LOG_ERROR(Net, "[SmtpMailer] Write AUTH user failed");
+				LOG_ERROR(Smtp, "[SmtpMailer] Write AUTH user failed");
 				return false;
 			}
 			code = conn.ReadResponse(resp);
 			if (code != 334)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] AUTH user refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+				LOG_ERROR(Smtp, "[SmtpMailer] AUTH user refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
 			if (!conn.Write(Base64Encode(cfg.password) + "\r\n"))
 			{
-				LOG_ERROR(Net, "[SmtpMailer] Write AUTH password failed");
+				LOG_ERROR(Smtp, "[SmtpMailer] Write AUTH password failed");
 				return false;
 			}
 			code = conn.ReadResponse(resp);
 			if (code != 235)
 			{
-				LOG_ERROR(Net, "[SmtpMailer] AUTH mot de passe refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+				LOG_ERROR(Smtp, "[SmtpMailer] AUTH mot de passe refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 				return false;
 			}
-			LOG_INFO(Net, "[SmtpMailer] AUTH LOGIN OK");
+			LOG_INFO(Smtp, "[SmtpMailer] AUTH LOGIN OK");
 		}
 		else
 		{
-			LOG_INFO(Net, "[SmtpMailer] pas d'AUTH (smtp.user vide)");
+			LOG_INFO(Smtp, "[SmtpMailer] pas d'AUTH (smtp.user vide)");
 		}
 
 		// MAIL FROM
 		if (!conn.Write("MAIL FROM:<" + cfg.from_address + ">\r\n"))
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Write MAIL FROM failed");
+			LOG_ERROR(Smtp, "[SmtpMailer] Write MAIL FROM failed");
 			return false;
 		}
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] MAIL FROM refusé code={} from='{}' réponse='{}'", code, cfg.from_address, TrimSmtpResponse(resp));
+			LOG_ERROR(Smtp, "[SmtpMailer] MAIL FROM refusé code={} from='{}' réponse='{}'", code, cfg.from_address, TrimSmtpResponse(resp));
 			return false;
 		}
 
 		// RCPT TO
 		if (!conn.Write("RCPT TO:<" + to + ">\r\n"))
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Write RCPT TO failed");
+			LOG_ERROR(Smtp, "[SmtpMailer] Write RCPT TO failed");
 			return false;
 		}
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] RCPT TO refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+			LOG_ERROR(Smtp, "[SmtpMailer] RCPT TO refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
 		// DATA
 		if (!conn.Write("DATA\r\n"))
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Write DATA failed");
+			LOG_ERROR(Smtp, "[SmtpMailer] Write DATA failed");
 			return false;
 		}
 		code = conn.ReadResponse(resp);
 		if (code != 354)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] DATA refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
+			LOG_ERROR(Smtp, "[SmtpMailer] DATA refusé code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
@@ -448,24 +448,24 @@ namespace engine::server
 		msg += body;
 		msg += "\r\n.\r\n";
 
-		LOG_INFO(Net, "[SmtpMailer] envoi DATA (corps {} octets)", static_cast<int>(body.size()));
+		LOG_INFO(Smtp, "[SmtpMailer] envoi DATA (corps {} octets)", static_cast<int>(body.size()));
 
 		if (!conn.Write(msg))
 		{
-			LOG_ERROR(Net, "[SmtpMailer] Write message body failed");
+			LOG_ERROR(Smtp, "[SmtpMailer] Write message body failed");
 			return false;
 		}
 		code = conn.ReadResponse(resp);
 		if (code != 250)
 		{
-			LOG_ERROR(Net, "[SmtpMailer] message refusé après DATA code={} réponse='{}'", code, TrimSmtpResponse(resp));
+			LOG_ERROR(Smtp, "[SmtpMailer] message refusé après DATA code={} réponse='{}'", code, TrimSmtpResponse(resp));
 			return false;
 		}
 
 		// QUIT (best-effort; ignore response)
 		conn.Write("QUIT\r\n");
 
-		LOG_INFO(Net, "[SmtpMailer] email envoyé OK to={} subject_len={}", to, static_cast<int>(subject.size()));
+		LOG_INFO(Smtp, "[SmtpMailer] email envoyé OK to={} subject_len={}", to, static_cast<int>(subject.size()));
 		return true;
 	}
 } // namespace engine::server
@@ -479,7 +479,7 @@ namespace engine::server
 	                      const std::string& subject,
 	                      const std::string& /*body*/)
 	{
-		LOG_WARN(Net, "[SmtpMailer] SMTP not implemented on Win32 — email not sent (to={} subject={})", to, subject);
+		LOG_WARN(Smtp, "[SmtpMailer] SMTP not implemented on Win32 — email not sent (to={} subject={})", to, subject);
 		return false;
 	}
 } // namespace engine::server

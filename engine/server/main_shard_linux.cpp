@@ -29,6 +29,7 @@ int main(int argc, char** argv)
 	logSettings.console = true;
 	logSettings.flushAlways = true;
 	logSettings.filePath = config.GetString("log.file", "shard.log");
+	logSettings.subsystemFiles = config.GetStringMapUnderPrefix("log.subsystem_files");
 	engine::core::Log::Init(logSettings);
 
 	LOG_INFO(Net, "[ShardMain] Shard server starting...");

@@ -3,6 +3,7 @@
 #include "engine/client/LocalizationService.h"
 #include "engine/core/Config.h"
 #include "engine/network/NetClient.h"
+#include "engine/network/ServerListPayloads.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/StableMutex.h"
 
@@ -282,6 +283,7 @@ namespace engine::client
 			ForgotPassword,
 			Terms,
 			CharacterCreate,
+			ShardPick,
 			LanguageSelectionFirstRun,
 			LanguageOptions,
 			Submitting,
@@ -383,6 +385,9 @@ namespace engine::client
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;
 		bool m_rememberLogin = false;
+		std::vector<engine::network::ServerListEntry> m_shardPickEntries;
+		uint32_t m_shardPickChoiceShardId = 0;
+		uint32_t m_shardFlowOverrideId = 0;
 		bool        m_infoPopupVisible = false;
 		std::string m_infoPopupText;
 		bool m_savedRememberLogin = false;
@@ -473,6 +478,10 @@ namespace engine::client
 			// Pour AsyncKind::UsernameCheck (Plan C).
 			uint8_t  usernameAvailable = 0; ///< 1 = disponible, 0 = pris.
 			uint32_t usernameCheckSeq  = 0; ///< Seq renvoyé par le serveur.
+
+			/// AsyncKind::Login : plusieurs shards en ligne, choix utilisateur requis.
+			bool shardChoiceRequired = false;
+			std::vector<engine::network::ServerListEntry> serverListForPick;
 		};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};

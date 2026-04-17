@@ -7,8 +7,8 @@ START TRANSACTION;
 CREATE TABLE IF NOT EXISTS player_trade_log (
     id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     trade_id          CHAR(36)        NOT NULL COMMENT 'UUID shared by both rows of the same trade',
-    character_id      INT UNSIGNED    NOT NULL COMMENT 'FK → characters.id (the giving side)',
-    partner_id        INT UNSIGNED    NOT NULL COMMENT 'FK → characters.id (the receiving side)',
+    character_id      BIGINT UNSIGNED NOT NULL COMMENT 'FK → characters.id (the giving side)',
+    partner_id        BIGINT UNSIGNED NOT NULL COMMENT 'FK → characters.id (the receiving side)',
     gold_given        INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT 'Gold transferred from this character',
     items_given_json  TEXT            NOT NULL COMMENT 'JSON array [{item_id, quantity}] given by this character',
     created_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,

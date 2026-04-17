@@ -6,7 +6,7 @@ START TRANSACTION;
 
 CREATE TABLE IF NOT EXISTS player_professions (
     id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    character_id      INT UNSIGNED    NOT NULL COMMENT 'FK → characters.id',
+    character_id      BIGINT UNSIGNED NOT NULL COMMENT 'FK → characters.id',
     profession_key    VARCHAR(64)     NOT NULL COMMENT 'Stable profession identifier (e.g. blacksmithing)',
     skill_level       SMALLINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Current skill level (1-300)',
     is_primary        TINYINT(1)      NOT NULL DEFAULT 0 COMMENT '1 when this is a primary profession slot',

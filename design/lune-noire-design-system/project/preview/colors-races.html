@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Race Palettes</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:#05070A; color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:14px 16px; display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+  .race { position:relative; border-radius: var(--radius-md); border:1px solid var(--ln-border); background: var(--ln-panel); padding:10px 12px; min-height:90px; display:flex; flex-direction:column; justify-content:space-between; }
+  .race .title { font-family:var(--font-display); font-weight:700; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color: var(--ln-text); }
+  .race .mood { font-family:var(--font-body); font-style:italic; font-size:10.5px; color: var(--ln-muted); }
+  .race .chips { display:flex; gap:6px; margin-top:8px; }
+  .race .chip { width:22px; height:22px; border-radius:4px; border:1px solid rgba(255,255,255,.12); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="race" data-race="humains">
+      <div><div class="title">Humains</div><div class="mood">Polyvalence, endurance</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#1E4B7A"></div>
+        <div class="chip" style="background:#8B6B2E"></div>
+        <div class="chip" style="background:#C21B1B"></div>
+        <div class="chip" style="background:#172233"></div>
+      </div>
+    </div>
+    <div class="race" data-race="elfes">
+      <div><div class="title">Elfes</div><div class="mood">Décadence, magie ancienne</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#6E46B7"></div>
+        <div class="chip" style="background:#1E8A8A"></div>
+        <div class="chip" style="background:#C7B4FF"></div>
+        <div class="chip" style="background:#14142B"></div>
+      </div>
+    </div>
+    <div class="race" data-race="orcs">
+      <div><div class="title">Orcs</div><div class="mood">Survie, rage, domination</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#4F8A2B"></div>
+        <div class="chip" style="background:#7A3B17"></div>
+        <div class="chip" style="background:#D6E35A"></div>
+        <div class="chip" style="background:#152016"></div>
+      </div>
+    </div>
+    <div class="race" data-race="nains">
+      <div><div class="title">Nains</div><div class="mood">Forge, endurance, tradition</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#C25A1A"></div>
+        <div class="chip" style="background:#B08A2E"></div>
+        <div class="chip" style="background:#E7D18A"></div>
+        <div class="chip" style="background:#221A14"></div>
+      </div>
+    </div>
+    <div class="race" data-race="morts_vivants">
+      <div><div class="title">Morts-Vivants</div><div class="mood">Nécromancie, froideur</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#2E7D7B"></div>
+        <div class="chip" style="background:#203133"></div>
+        <div class="chip" style="background:#A6FFEF"></div>
+        <div class="chip" style="background:#111B1B"></div>
+      </div>
+    </div>
+    <div class="race" data-race="corrompus">
+      <div><div class="title">Corrompus</div><div class="mood">Mutation, folie, métamorphose</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#7B2CBF"></div>
+        <div class="chip" style="background:#2B0A3D"></div>
+        <div class="chip" style="background:#B8FF4A"></div>
+        <div class="chip" style="background:#161125"></div>
+      </div>
+    </div>
+    <div class="race" data-race="divins">
+      <div><div class="title">Divins</div><div class="mood">Destin, loi cosmique</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#E7C16A"></div>
+        <div class="chip" style="background:#1D2A4A"></div>
+        <div class="chip" style="background:#FFFFFF"></div>
+        <div class="chip" style="background:#121B33"></div>
+      </div>
+    </div>
+    <div class="race" data-race="demons">
+      <div><div class="title">Démons</div><div class="mood">Chaos, corruption, pouvoir</div></div>
+      <div class="chips">
+        <div class="chip" style="background:#B0122B"></div>
+        <div class="chip" style="background:#3A0A12"></div>
+        <div class="chip" style="background:#FF3B6A"></div>
+        <div class="chip" style="background:#160810"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

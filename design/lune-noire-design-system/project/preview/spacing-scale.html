@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Spacing</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:18px 22px; display:flex; flex-direction:column; gap:4px; }
+  .row { display:grid; grid-template-columns: 60px 90px 1fr; gap:14px; align-items:center; }
+  .tag { font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--ln-muted); }
+  .val { font-family:var(--font-mono); font-size:11px; color:var(--ln-text); }
+  .bar { height:10px; background: linear-gradient(90deg, #4A7BB8, #E8C56E); border-radius:2px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><div class="tag">sp-1</div><div class="val">4px</div><div class="bar" style="width:4px"></div></div>
+  <div class="row"><div class="tag">sp-2</div><div class="val">8px</div><div class="bar" style="width:8px"></div></div>
+  <div class="row"><div class="tag">sp-3 · base</div><div class="val">10px</div><div class="bar" style="width:10px"></div></div>
+  <div class="row"><div class="tag">sp-4</div><div class="val">14px</div><div class="bar" style="width:14px"></div></div>
+  <div class="row"><div class="tag">sp-5</div><div class="val">20px</div><div class="bar" style="width:20px"></div></div>
+  <div class="row"><div class="tag">sp-6</div><div class="val">28px</div><div class="bar" style="width:28px"></div></div>
+  <div class="row"><div class="tag">sp-7</div><div class="val">40px</div><div class="bar" style="width:40px"></div></div>
+  <div class="row"><div class="tag">sp-8</div><div class="val">56px</div><div class="bar" style="width:56px"></div></div>
+</div>
+</body>
+</html>

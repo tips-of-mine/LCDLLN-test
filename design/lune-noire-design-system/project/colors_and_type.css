@@ -1,0 +1,188 @@
+/* ==========================================================================
+   Lune Noire — Colors & Type
+   Source of truth for colour and typography tokens across the design system.
+   Extracted from: game/data/ui/themes/default/theme.json
+                   game/data/ui/races/<race>/theme.json
+   ========================================================================== */
+
+/* ---- Polices de marque (fichiers fournis par l'utilisateur) ----
+   Windlass = titres gravés / carved-stone
+   Morpheus = corps de texte / lore
+   Google Fonts conservé uniquement pour le mono technique. */
+@font-face {
+  font-family: 'Windlass';
+  src: url('fonts/Windlass.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Morpheus';
+  src: url('fonts/Morpheus.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ==== DEFAULT THEME (from game/data/ui/themes/default/theme.json) ==== */
+  --ln-primary:     #4A7BB8;   /* cold steel blue - the dominant brand colour */
+  --ln-secondary:   #5C6B8C;   /* muted slate - supporting */
+  --ln-accent:      #E8C56E;   /* antique gold - used sparingly, for carved metal */
+  --ln-bg:          #0A0D12;   /* near-black page background */
+  --ln-surface:     #121822;   /* one step above bg - panels, cards */
+  --ln-panel:       #141C28;   /* panel fill - slightly lighter, for UI chrome */
+  --ln-text:        #F2F4F8;   /* foreground text */
+  --ln-muted:       #9BA8B8;   /* muted/hint text */
+  --ln-border:      #3D4F66;   /* hairline border - cold blue-grey */
+
+  /* Semantic aliases */
+  --fg1:            var(--ln-text);
+  --fg2:            var(--ln-muted);
+  --fg3:            #6E7B8C;
+  --bg1:            var(--ln-bg);
+  --bg2:            var(--ln-surface);
+  --bg3:            var(--ln-panel);
+  --stroke1:        var(--ln-border);
+  --stroke2:        #263244;
+
+  /* Status */
+  --ln-success:     #5FB86E;
+  --ln-warning:     #E8A55C;
+  --ln-error:       #C44040;
+  --ln-info:        var(--ln-primary);
+
+  /* Elevation / shadow */
+  --shadow-1:       0 1px 0 rgba(255,255,255,.04) inset, 0 -1px 0 rgba(0,0,0,.6) inset;
+  --shadow-2:       0 4px 16px rgba(0,0,0,.5);
+  --shadow-3:       0 8px 32px rgba(0,0,0,.6);
+  --shadow-glow:    0 0 0 1px rgba(232,197,110,.18), 0 0 24px rgba(232,197,110,.12);
+
+  /* Radius (default theme = 8) */
+  --radius-xs:      4px;
+  --radius-sm:      6px;
+  --radius-md:      8px;
+  --radius-lg:      12px;
+  --radius-xl:      18px;
+
+  /* Spacing (base 10px padding per theme.json "padding": 10) */
+  --sp-1:           4px;
+  --sp-2:           8px;
+  --sp-3:           10px;   /* theme.metrics.padding */
+  --sp-4:           14px;
+  --sp-5:           20px;
+  --sp-6:           28px;
+  --sp-7:           40px;
+  --sp-8:           56px;
+
+  /* ==== TYPOGRAPHY ==== */
+  /* Display = Windlass (titres gravés / carved-stone, hero brisé).
+     UI     = Windlass.
+     Body   = Morpheus (lore, tooltips, corps de texte).
+     Mono   = JetBrains Mono (rare, pour TAG-IDs / blocs de code). */
+  --font-display-broken: 'Windlass', 'UnifrakturCook', serif;
+  --font-display:        'Windlass', 'Trajan Pro', serif;
+  --font-ui:             'Windlass', 'Trajan Pro', serif;
+  --font-body:           'Morpheus', 'EB Garamond', Georgia, serif;
+  --font-mono:           'JetBrains Mono', ui-monospace, monospace;
+
+  /* Base / title sizes from theme.json (baseSize: 14, titleSize: 22-40) */
+  --fs-xs:   12px;
+  --fs-sm:   13px;
+  --fs-base: 14px;   /* theme.typography.baseSize */
+  --fs-md:   16px;
+  --fs-lg:   20px;
+  --fs-xl:   22px;   /* race titleSize */
+  --fs-2xl:  28px;
+  --fs-3xl:  40px;   /* default titleSize */
+  --fs-4xl:  56px;
+  --fs-5xl:  72px;
+
+  --lh-tight:  1.1;
+  --lh-snug:   1.25;
+  --lh-normal: 1.45;
+  --lh-loose:  1.65;
+
+  --tracking-wide:    0.08em;   /* carved-title look */
+  --tracking-normal:  0;
+  --tracking-tight:   -0.01em;
+
+  /* ==== RACE OVERLAYS ==== */
+  /* Each race rebrands primary/secondary/accent/panel/border.
+     Apply on an ancestor: <div data-race="elfes">  */
+}
+
+[data-race="humains"]     { --ln-primary:#1E4B7A; --ln-secondary:#8B6B2E; --ln-accent:#C21B1B; --ln-bg:#0E131A; --ln-surface:#141E2A; --ln-panel:#172233; --ln-text:#E9EDF2; --ln-muted:#A9B4C0; --ln-border:#2B3A4F; --radius-md:10px; }
+[data-race="elfes"]       { --ln-primary:#6E46B7; --ln-secondary:#1E8A8A; --ln-accent:#C7B4FF; --ln-bg:#0A0A10; --ln-surface:#111125; --ln-panel:#14142B; --ln-text:#F1EEFF; --ln-muted:#B9B1D6; --ln-border:#2A2740; --radius-md:14px; }
+[data-race="orcs"]        { --ln-primary:#4F8A2B; --ln-secondary:#7A3B17; --ln-accent:#D6E35A; --ln-bg:#0B0F0A; --ln-surface:#111913; --ln-panel:#152016; --ln-text:#EAF2E6; --ln-muted:#A8B7A1; --ln-border:#2A3A2C; --radius-md:6px; }
+[data-race="nains"]       { --ln-primary:#C25A1A; --ln-secondary:#B08A2E; --ln-accent:#E7D18A; --ln-bg:#0F0C0A; --ln-surface:#19120E; --ln-panel:#221A14; --ln-text:#F3EDE7; --ln-muted:#C8B9AE; --ln-border:#3A2A1F; --radius-md:8px; }
+[data-race="morts_vivants"]{ --ln-primary:#2E7D7B; --ln-secondary:#203133; --ln-accent:#A6FFEF; --ln-bg:#060A0A; --ln-surface:#0D1414; --ln-panel:#111B1B; --ln-text:#E6F7F6; --ln-muted:#9BB7B5; --ln-border:#213434; --radius-md:12px; }
+[data-race="corrompus"]   { --ln-primary:#7B2CBF; --ln-secondary:#2B0A3D; --ln-accent:#B8FF4A; --ln-bg:#07060C; --ln-surface:#110E1A; --ln-panel:#161125; --ln-text:#F2EEFF; --ln-muted:#B5A9D6; --ln-border:#2D2345; --radius-md:16px; }
+[data-race="divins"]      { --ln-primary:#E7C16A; --ln-secondary:#1D2A4A; --ln-accent:#FFFFFF; --ln-bg:#070B14; --ln-surface:#0E1426; --ln-panel:#121B33; --ln-text:#F7F4EA; --ln-muted:#C9C3B0; --ln-border:#2A3555; --radius-md:18px; }
+[data-race="demons"]      { --ln-primary:#B0122B; --ln-secondary:#3A0A12; --ln-accent:#FF3B6A; --ln-bg:#070508; --ln-surface:#12060B; --ln-panel:#160810; --ln-text:#F6E7EA; --ln-muted:#C8A2AC; --ln-border:#3A0F1A; --radius-md:12px; }
+
+/* ========== SEMANTIC TYPE STYLES ========== */
+.ln-display, h1.ln {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-3xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-wide);
+  color: var(--ln-text);
+  text-transform: none;
+}
+
+.ln-broken {
+  font-family: var(--font-display-broken);
+  font-weight: 700;
+  font-size: var(--fs-4xl);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--ln-text);
+}
+
+.ln-h1 { font-family: var(--font-display); font-weight:700; font-size:var(--fs-3xl); letter-spacing:var(--tracking-wide); line-height:var(--lh-tight); }
+.ln-h2 { font-family: var(--font-display); font-weight:600; font-size:var(--fs-2xl); letter-spacing:var(--tracking-wide); line-height:var(--lh-snug); }
+.ln-h3 { font-family: var(--font-ui);      font-weight:600; font-size:var(--fs-xl);  letter-spacing:var(--tracking-wide); line-height:var(--lh-snug); }
+.ln-h4 { font-family: var(--font-ui);      font-weight:500; font-size:var(--fs-lg);  letter-spacing:var(--tracking-wide); line-height:var(--lh-snug); }
+
+.ln-eyebrow {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ln-muted);
+}
+
+.ln-label { font-family: var(--font-ui); font-size: var(--fs-sm); letter-spacing:0.12em; text-transform:uppercase; color:var(--ln-muted); }
+.ln-body  { font-family: var(--font-body); font-size: var(--fs-md); line-height:var(--lh-normal); color: var(--ln-text); }
+.ln-small { font-family: var(--font-body); font-size: var(--fs-sm); color: var(--ln-muted); }
+.ln-hint  { font-family: var(--font-ui); font-size: var(--fs-xs); letter-spacing:0.18em; text-transform:uppercase; color: var(--ln-muted); }
+.ln-mono  { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--ln-text); }
+.ln-value { font-family: var(--font-body); font-size: var(--fs-md); font-style: italic; color: var(--ln-text); }
+
+/* Utility helpers (opt-in) */
+.ln-scene {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 120%, rgba(74,123,184,.08), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% -10%, rgba(232,197,110,.05), transparent 60%),
+    var(--ln-bg);
+  color: var(--ln-text);
+  font-family: var(--font-body);
+}
+.ln-panel {
+  background: rgba(20, 28, 40, 0.72);
+  border: 1px solid var(--ln-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1), var(--shadow-3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.ln-fog::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0,0,0,.7), transparent 70%);
+  pointer-events: none;
+}

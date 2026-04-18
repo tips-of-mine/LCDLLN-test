@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Flux d'authentification</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-screen-label="Auth Flow">
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="Screens1to4.jsx"></script>
+<script type="text/babel" src="Screens5to7.jsx"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  const TWEAK_DEFAULS = /*EDITMODE-BEGIN*/{
+    "race": "default",
+    "animatedBg": true
+  }/*EDITMODE-END*/;
+
+  const RACES = [
+    { id: 'default',       label: 'Défaut' },
+    { id: 'humains',       label: 'Humains' },
+    { id: 'elfes',         label: 'Elfes' },
+    { id: 'nains',         label: 'Nains' },
+    { id: 'orcs',          label: 'Orcs' },
+    { id: 'morts_vivants', label: 'Morts-Vivants' },
+    { id: 'corrompus',     label: 'Corrompus' },
+    { id: 'divins',        label: 'Divins' },
+    { id: 'demons',        label: 'Démons' },
+  ];
+
+  const SCREENS = [
+    { id: 'lang',    label: '1 · Langue' },
+    { id: 'login',   label: '2 · Connexion' },
+    { id: 'register',label: '3 · Inscription' },
+    { id: 'error',   label: '4 · Erreurs' },
+    { id: 'confirm', label: '5 · Courriel' },
+    { id: 'options', label: '6 · Options' },
+    { id: 'shard',   label: '7 · Royaume' },
+  ];
+
+  function App() {
+    const [screen, setScreen] = useState(() => localStorage.getItem('ln_auth_screen') || 'lang');
+    const [race, setRace]       = useState(TWEAK_DEFAULS.race);
+    const [animBg, setAnimBg]   = useState(TWEAK_DEFAULS.animatedBg);
+    const [tweaksOpen, setTweaksOpen] = useState(true);
+
+    useEffect(() => { localStorage.setItem('ln_auth_screen', screen); }, [screen]);
+    useEffect(() => {
+      if (race === 'default') document.documentElement.removeAttribute('data-race');
+      else document.documentElement.setAttribute('data-race', race);
+    }, [race]);
+
+    // Tweaks protocol
+    useEffect(() => {
+      const handler = (e) => {
+        if (e.data?.type === '__activate_edit_mode') setTweaksOpen(true);
+        else if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+      };
+      window.addEventListener('message', handler);
+      window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+      return () => window.removeEventListener('message', handler);
+    }, []);
+
+    const persist = (k, v) => {
+      try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*'); } catch(e) {}
+    };
+
+    const go = (s) => setScreen(s);
+
+    let view;
+    if (screen === 'lang')      view = <LangSelectScreen onNext={() => go('login')} />;
+    else if (screen === 'login')    view = <LoginScreen onRegister={() => go('register')} onOptions={() => go('options')} onShard={() => go('shard')} />;
+    else if (screen === 'register') view = <RegisterScreen onBack={() => go('login')} onConfirm={() => go('confirm')} onError={() => go('error')} />;
+    else if (screen === 'error')    view = <RegisterErrorScreen onBack={() => go('register')} />;
+    else if (screen === 'confirm')  view = <ConfirmEmailScreen onBack={() => go('register')} onDone={() => go('shard')} />;
+    else if (screen === 'options')  view = <OptionsScreen onBack={() => go('login')} />;
+    else                            view = <ShardPickScreen onBack={() => go('login')} onEnter={() => alert('Entrée dans le monde — maquette')} />;
+
+    return (
+      <>
+        <Backdrop animated={animBg} />
+        {view}
+
+        {/* Flow nav (toujours visible) */}
+        <div className="ln-flow-nav">
+          <div className="ln-flow-nav-title">Écrans</div>
+          {SCREENS.map(s => (
+            <button key={s.id} className={screen === s.id ? 'on' : ''} onClick={() => go(s.id)}>{s.label}</button>
+          ))}
+        </div>
+
+        {/* Tweaks */}
+        <div className={`ln-tweaks ${tweaksOpen ? '' : 'collapsed'}`}>
+          <div className="ln-tweaks-head">
+            <div className="ln-tweaks-title" style={{ padding: 0, border: 0, margin: 0 }}>Tweaks</div>
+            <button className="ln-tweaks-toggle" onClick={() => setTweaksOpen(o => !o)} aria-label="Plier/déplier">{tweaksOpen ? '–' : '+'}</button>
+          </div>
+          {tweaksOpen && <>
+            <div className="ln-tweaks-row">
+              <span className="ln-tweaks-label">Thème de race</span>
+              <div className="ln-tweaks-chips">
+                {RACES.map(r => (
+                  <button key={r.id}
+                    className={`ln-tweaks-chip ${race === r.id ? 'on' : ''}`}
+                    onClick={() => { setRace(r.id); persist('race', r.id); }}>{r.label}</button>
+                ))}
+              </div>
+            </div>
+            <div className="ln-tweaks-row">
+              <span className="ln-tweaks-label">Fond animé</span>
+              <div className="ln-tweaks-chips binary">
+                <button className={`ln-tweaks-chip ${animBg ? 'on' : ''}`} onClick={() => { setAnimBg(true); persist('animatedBg', true); }}>Activé</button>
+                <button className={`ln-tweaks-chip ${!animBg ? 'on' : ''}`} onClick={() => { setAnimBg(false); persist('animatedBg', false); }}>Désactivé</button>
+              </div>
+            </div>
+          </>}
+        </div>
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

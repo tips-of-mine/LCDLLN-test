@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Logo Lockup</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(74,123,184,.18), transparent 60%),
+    radial-gradient(ellipse 50% 30% at 50% -10%, rgba(232,197,110,.1), transparent 70%),
+    #05070A;
+    color:var(--ln-text); font-family:var(--font-ui); display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .lockup { text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .moon { width:68px; height:68px; border-radius:50%; background:
+    radial-gradient(circle at 30% 30%, #2a2330 0%, #0B0712 55%, #000 100%);
+    box-shadow: inset -6px -8px 20px rgba(0,0,0,.9), inset 8px 8px 30px rgba(110,70,183,.15),
+      0 0 0 1px #1a1420, 0 0 34px rgba(74,123,184,.25);
+    position:relative; }
+  .moon::after { content:''; position:absolute; inset:6px; border-radius:50%; background: radial-gradient(circle at 70% 40%, rgba(199,180,255,.08), transparent 40%); }
+  .broken { font-family:var(--font-display-broken); font-size:36px; line-height:1; color:#F2F4F8; }
+  .carved { font-family:var(--font-display); font-weight:700; font-size:15px; letter-spacing:.32em; text-transform:uppercase; color:#E8C56E; }
+  .sub    { font-family:var(--font-display); font-weight:500; font-size:10px; letter-spacing:.36em; text-transform:uppercase; color:var(--ln-muted); }
+</style>
+</head>
+<body>
+<div class="lockup">
+  <div class="moon"></div>
+  <div class="broken">Les Chroniques</div>
+  <div class="carved">de la Lune Noire</div>
+  <div class="sub">Édition des morts · MMXXVI</div>
+</div>
+</body>
+</html>

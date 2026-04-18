@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Form Fields</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:20px 24px; display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field label { font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--ln-muted); }
+  .field .input { display:flex; align-items:center; gap:8px; background:rgba(10,13,18,.6); border:1px solid var(--ln-border); border-radius:var(--radius-md); padding:8px 12px; height:36px; box-sizing:border-box; }
+  .field .input input { background:transparent; border:0; outline:0; color:var(--ln-text); font-family:var(--font-body); font-size:14px; font-style:italic; width:100%; }
+  .field .input .icon { color:var(--ln-muted); font-family:var(--font-mono); font-size:11px; }
+  .field.active .input { border-color:var(--ln-primary); box-shadow: 0 0 0 2px rgba(74,123,184,.18); }
+  .field.ok .input { border-color:#5FB86E; }
+  .field.ok::after { content:'✓ disponible'; font-size:10px; color:#5FB86E; letter-spacing:.15em; text-transform:uppercase; }
+  .field.err .input { border-color:#C44040; }
+  .field.err::after { content:'✗ identifiant incorrect'; font-size:10px; color:#C44040; letter-spacing:.15em; text-transform:uppercase; }
+  .help { font-family:var(--font-body); font-style:italic; font-size:11.5px; color:var(--ln-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="field">
+    <label>Identifiant</label>
+    <div class="input"><span class="icon">◈</span><input value="bran_le_grim"></div>
+  </div>
+  <div class="field active">
+    <label>Mot de passe</label>
+    <div class="input"><span class="icon">●</span><input type="password" value="●●●●●●●●●●"></div>
+  </div>
+  <div class="field ok">
+    <label>Nom du personnage</label>
+    <div class="input"><input value="Morwen"></div>
+  </div>
+  <div class="field err">
+    <label>Email</label>
+    <div class="input"><input value="bran@"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Iconography</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:20px 22px; display:grid; grid-template-columns: repeat(8, 1fr); gap:10px; }
+  .ic { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px; background:var(--ln-panel); border:1px solid var(--ln-border); border-radius:var(--radius-md); box-shadow: var(--shadow-1); }
+  .ic svg { width:26px; height:26px; color:#E8C56E; stroke:currentColor; fill:none; stroke-width:1.4; }
+  .ic .n { font-size:9.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--ln-muted); }
+  .note { grid-column: 1/-1; font-family:var(--font-body); font-style:italic; font-size:11.5px; color:var(--ln-muted); margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 3a9 9 0 1 0 6 10c-4 0-6-4-6-10z"/></svg><div class="n">moon</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l3 6 6 1-4.5 4 1.5 7L12 17l-6 4 1.5-7L3 10l6-1z"/></svg><div class="n">star</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 14c2-4 6-6 8-6s6 2 8 6c-2 4-6 6-8 6s-6-2-8-6z"/><circle cx="12" cy="14" r="2"/></svg><div class="n">eye</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l3 5 5-1-2 5 4 3-5 1 1 5-6-3-6 3 1-5-5-1 4-3-2-5 5 1z"/></svg><div class="n">rune</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3c-1 6-5 7-5 10a5 5 0 0 0 10 0c0-3-4-4-5-10z"/></svg><div class="n">flame</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg><div class="n">shield</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 20l8-14 8 14zM9 20l3-5 3 5"/></svg><div class="n">sword</div></div>
+  <div class="ic"><svg viewBox="0 0 24 24"><path d="M6 4h10l2 3v13H6zm2 5h8m-8 4h8m-8 4h5"/></svg><div class="n">scroll</div></div>
+  <div class="note">Iconography is metallic (accent gold on panel) and monochrome. Source: game ships baked PNG textures per-category; these stand-ins are thin stroke (1.4px) for UI scale. Replace with real assets when available.</div>
+</div>
+</body>
+</html>

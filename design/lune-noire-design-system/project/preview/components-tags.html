@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Tags & Badges</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:20px 22px; display:flex; flex-direction:column; gap:12px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .label { width:100px; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ln-muted); }
+  .tag { font-family:var(--font-ui); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; padding:4px 10px; border-radius:var(--radius-sm); border:1px solid var(--ln-border); color:var(--ln-text); }
+  .tag.role-tank   { color:#AFD0F5; border-color:#2C4867; background:rgba(74,123,184,.08); }
+  .tag.role-dps    { color:#FF9A9A; border-color:#5a2020; background:rgba(196,64,64,.08); }
+  .tag.role-healer { color:#9FE3AB; border-color:#245a2c; background:rgba(95,184,110,.08); }
+  .tag.role-sup    { color:#E8C56E; border-color:#5a4a1d; background:rgba(232,197,110,.06); }
+  .dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .status { font-family:var(--font-mono); font-size:11px; padding:3px 8px; border-radius:var(--radius-xs); border:1px solid var(--ln-border); color:var(--ln-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><div class="label">Classes</div><span class="tag role-tank">Tank</span><span class="tag role-dps">DPS</span><span class="tag role-healer">Healer</span><span class="tag role-sup">Support</span></div>
+  <div class="row"><div class="label">TAG-ID</div><span class="tag" style="font-family:var(--font-mono); letter-spacing:.08em;">#FR-8A4C-0291</span><span class="tag" style="font-family:var(--font-mono); letter-spacing:.08em;">#CA-1B7E-5530</span></div>
+  <div class="row"><div class="label">Shards</div>
+    <span class="status"><i class="dot" style="background:#5FB86E"></i>Monde #1 · 342 joueurs</span>
+    <span class="status"><i class="dot" style="background:#E8A55C"></i>Monde #2 · complet</span>
+    <span class="status"><i class="dot" style="background:#6e7b8c"></i>Monde #3 · hors-ligne</span>
+  </div>
+</div>
+</body>
+</html>

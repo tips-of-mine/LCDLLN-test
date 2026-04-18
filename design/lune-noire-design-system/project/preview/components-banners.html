@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Status Banners</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:18px 22px; display:flex; flex-direction:column; gap:10px; }
+  .banner { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:var(--radius-md); border:1px solid; font-family:var(--font-body); font-size:13.5px; }
+  .icon { font-family:var(--font-mono); font-size:16px; }
+  .b-err  { color:#FF7A7A; background:rgba(196,64,64,.08); border-color:#5a2020; }
+  .b-warn { color:#FFD39A; background:rgba(232,165,92,.08); border-color:#5a3a1a; }
+  .b-info { color:#AFD0F5; background:rgba(74,123,184,.1);  border-color:#2C4867; }
+  .b-ok   { color:#9FE3AB; background:rgba(95,184,110,.08); border-color:#245a2c; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner b-err"><span class="icon">✕</span>Identifiant ou mot de passe incorrect.</div>
+  <div class="banner b-warn"><span class="icon">!</span>Serveurs en maintenance. Réessayez dans quelques instants.</div>
+  <div class="banner b-info"><span class="icon">i</span>Si l'email existe, un message de réinitialisation a été envoyé.</div>
+  <div class="banner b-ok"><span class="icon">✓</span>Email vérifié. Vous pouvez maintenant vous connecter.</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:22px 24px; display:flex; flex-direction:column; gap:14px; }
+  .row { display:flex; gap:12px; align-items:center; }
+  .row .label { width:92px; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--ln-muted); }
+  button { font-family:var(--font-ui); font-size:13px; letter-spacing:.14em; text-transform:uppercase; padding:10px 20px; border-radius:var(--radius-md); cursor:pointer; }
+  .btn-primary { background:linear-gradient(180deg, #5a8bc6 0%, #3E689E 100%); color:#F2F4F8; border:1px solid #6b9bd4; box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 4px 14px rgba(0,0,0,.45); }
+  .btn-primary:hover { filter:brightness(1.1); }
+  .btn-ghost  { background:rgba(20,28,40,.5); color:var(--ln-text); border:1px solid var(--ln-border); }
+  .btn-ghost:hover { border-color:var(--ln-primary); color:var(--ln-text); }
+  .btn-accent { background:transparent; color:#E8C56E; border:1px solid #E8C56E; box-shadow: 0 0 0 1px rgba(232,197,110,.15) inset; }
+  .btn-accent:hover { background:rgba(232,197,110,.08); }
+  .btn-danger { background:#2a0a10; color:#FF3B6A; border:1px solid #5a1a28; }
+  kbd { font-family:var(--font-mono); font-size:10px; padding:1px 4px; border:1px solid var(--ln-border); border-radius:3px; color:var(--ln-muted); margin-left:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><div class="label">Primary</div><button class="btn-primary">Connexion</button><button class="btn-primary">Valider <kbd>Entrée</kbd></button></div>
+  <div class="row"><div class="label">Ghost</div><button class="btn-ghost">Inscription</button><button class="btn-ghost">Retour <kbd>Échap</kbd></button></div>
+  <div class="row"><div class="label">Accent</div><button class="btn-accent">Choisir ce monde</button></div>
+  <div class="row"><div class="label">Danger</div><button class="btn-danger">Supprimer le personnage</button></div>
+</div>
+</body>
+</html>

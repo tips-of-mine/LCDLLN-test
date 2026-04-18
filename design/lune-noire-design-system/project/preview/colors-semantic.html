@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Semantic Colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:22px; display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
+  .tok { border:1px solid var(--ln-border); border-radius:var(--radius-md); overflow:hidden; background:var(--ln-panel); }
+  .sw { height:58px; }
+  .meta { padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--ln-border); }
+  .name { font-family:var(--font-ui); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--ln-text); }
+  .hex  { font-family:var(--font-mono); font-size:10.5px; color:var(--ln-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tok"><div class="sw" style="background:#5FB86E"></div><div class="meta"><span class="name">success</span><span class="hex">#5FB86E</span></div></div>
+  <div class="tok"><div class="sw" style="background:#E8A55C"></div><div class="meta"><span class="name">warning</span><span class="hex">#E8A55C</span></div></div>
+  <div class="tok"><div class="sw" style="background:#C44040"></div><div class="meta"><span class="name">error</span><span class="hex">#C44040</span></div></div>
+  <div class="tok"><div class="sw" style="background:#4A7BB8"></div><div class="meta"><span class="name">info</span><span class="hex">#4A7BB8</span></div></div>
+</div>
+</body>
+</html>

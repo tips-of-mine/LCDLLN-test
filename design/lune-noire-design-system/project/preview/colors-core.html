@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Core Palette</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:22px 24px; display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+  .sw { position:relative; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--ln-border); aspect-ratio: 5/2.2; display:flex; flex-direction:column; justify-content:flex-end; padding:10px 12px; box-shadow:var(--shadow-1); }
+  .sw .name { font-family:var(--font-ui); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--ln-text); opacity:.9; }
+  .sw .hex  { font-family:var(--font-mono); font-size:11px; color:var(--ln-text); opacity:.75; margin-top:2px; }
+  .sw.dark .name, .sw.dark .hex { color:#F2F4F8; }
+  .sw.light .name, .sw.light .hex { color:#1A1A1A; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="sw dark" style="background:#0A0D12"><div class="name">bg</div><div class="hex">#0A0D12</div></div>
+    <div class="sw dark" style="background:#121822"><div class="name">surface</div><div class="hex">#121822</div></div>
+    <div class="sw dark" style="background:#141C28"><div class="name">panel</div><div class="hex">#141C28</div></div>
+    <div class="sw dark" style="background:#4A7BB8"><div class="name">primary</div><div class="hex">#4A7BB8</div></div>
+    <div class="sw dark" style="background:#5C6B8C"><div class="name">secondary</div><div class="hex">#5C6B8C</div></div>
+    <div class="sw light" style="background:#E8C56E"><div class="name">accent</div><div class="hex">#E8C56E</div></div>
+    <div class="sw light" style="background:#F2F4F8"><div class="name">text</div><div class="hex">#F2F4F8</div></div>
+    <div class="sw dark" style="background:#9BA8B8"><div class="name">muted</div><div class="hex">#9BA8B8</div></div>
+    <div class="sw dark" style="background:#3D4F66"><div class="name">border</div><div class="hex">#3D4F66</div></div>
+  </div>
+</body>
+</html>

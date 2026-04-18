@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Lune Noire — Type Scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body { margin:0; padding:0; background:var(--ln-bg); color:var(--ln-text); font-family:var(--font-ui); }
+  .wrap { padding:16px 22px; display:grid; grid-template-columns: 80px 1fr 120px; gap:6px 16px; align-items:baseline; }
+  .size { font-family:var(--font-mono); font-size:11px; color:var(--ln-muted); }
+  .name { font-family:var(--font-ui); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--ln-muted); text-align:right; }
+  .sample { color: var(--ln-text); font-family:var(--font-display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="size">40px</div><div class="sample" style="font-size:40px; font-weight:700; letter-spacing:.1em;">Lune Noire</div><div class="name">h1 / 3xl</div>
+  <div class="size">28px</div><div class="sample" style="font-size:28px; font-weight:600; letter-spacing:.1em;">Création du personnage</div><div class="name">h2 / 2xl</div>
+  <div class="size">22px</div><div class="sample" style="font-size:22px; font-weight:600; letter-spacing:.1em;">Connexion au monde</div><div class="name">h3 / xl</div>
+  <div class="size">16px</div><div class="sample" style="font-size:16px; font-family:var(--font-body);">Saisissez votre identifiant et votre mot de passe.</div><div class="name">body / md</div>
+  <div class="size">13px</div><div class="sample" style="font-size:13px; font-family:var(--font-ui); letter-spacing:.16em; text-transform:uppercase; color:var(--ln-muted);">Mot de passe oublié</div><div class="name">label / sm</div>
+  <div class="size">12px</div><div class="sample" style="font-size:12px; font-family:var(--font-ui); letter-spacing:.24em; text-transform:uppercase; color:var(--ln-muted);">Entrée pour se connecter</div><div class="name">hint / xs</div>
+</div>
+</body>
+</html>

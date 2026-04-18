@@ -2954,7 +2954,7 @@ namespace engine
 
 			if (m_settingsMenu.IsInitialized())
 			{
-				if (m_input.IsKeyJustPressed(engine::platform::Key::Escape))
+				if (m_input.WasPressed(engine::platform::Key::Escape))
 				{
 					if (m_settingsMenu.IsOpen())
 						m_settingsMenu.Close();

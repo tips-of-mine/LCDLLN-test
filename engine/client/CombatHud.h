@@ -97,6 +97,8 @@ namespace engine::client
 		/// Return the current immutable HUD state snapshot.
 		const CombatHudState& GetState() const { return m_state; }
 
+		bool IsInitialized() const { return m_initialized; }
+
 	private:
 		/// Recompute widget rectangles after a viewport change.
 		void RebuildLayout();

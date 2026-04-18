@@ -28,6 +28,7 @@
 #include <array>
 #include <cmath>
 #include <chrono>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
@@ -281,6 +282,66 @@ namespace engine::client
 				return false;
 			}
 			LOG_INFO(Core, "[AuthUiPresenter] PatchLocaleInSettingsFile: locale '{}' persistée dans user_settings.json", locale);
+			return true;
+		}
+
+		/// Met à jour uniquement `client.auth_ui.remember_login` dans un user_settings.json existant.
+		bool ReplaceRememberLoginInJson(std::string& json, bool rememberLogin)
+		{
+			constexpr std::string_view key = "\"remember_login\"";
+			size_t pos = json.find(key);
+			if (pos == std::string::npos)
+				return false;
+			pos = json.find(':', pos + key.size());
+			if (pos == std::string::npos || pos + 1u >= json.size())
+				return false;
+			size_t valueStart = pos + 1u;
+			while (valueStart < json.size() && std::isspace(static_cast<unsigned char>(json[valueStart])) != 0)
+				++valueStart;
+			size_t valueEnd = valueStart;
+			while (valueEnd < json.size() && std::isalpha(static_cast<unsigned char>(json[valueEnd])) != 0)
+				++valueEnd;
+			if (valueEnd <= valueStart)
+				return false;
+			json.replace(valueStart, valueEnd - valueStart, rememberLogin ? "true" : "false");
+			return true;
+		}
+
+		bool InsertRememberLoginInAuthUiJson(std::string& json, bool rememberLogin)
+		{
+			constexpr std::string_view kAuthUiKey = "\"auth_ui\"";
+			size_t pos = json.find(kAuthUiKey);
+			if (pos == std::string::npos)
+				return false;
+			pos = json.find('{', pos + kAuthUiKey.size());
+			if (pos == std::string::npos || pos + 1u >= json.size())
+				return false;
+			const size_t insertAt = pos + 1u;
+			const std::string ins = std::string("\n      \"remember_login\": ") + (rememberLogin ? "true" : "false") + ",";
+			json.insert(insertAt, ins);
+			return true;
+		}
+
+		bool PatchRememberLoginInSettingsFile(bool rememberLogin)
+		{
+			const std::filesystem::path settingsPath{ kUserSettingsPath };
+			if (!engine::platform::FileSystem::Exists(settingsPath))
+				return false;
+			std::string json = engine::platform::FileSystem::ReadAllText(std::filesystem::path{ kUserSettingsPath });
+			if (!ReplaceRememberLoginInJson(json, rememberLogin))
+			{
+				if (!InsertRememberLoginInAuthUiJson(json, rememberLogin))
+				{
+					LOG_WARN(Core, "[AuthUiPresenter] PatchRememberLoginInSettingsFile: clé remember_login absente ou illisible — fichier non modifié");
+					return false;
+				}
+			}
+			if (!engine::platform::FileSystem::WriteAllText(settingsPath, json))
+			{
+				LOG_WARN(Core, "[AuthUiPresenter] PatchRememberLoginInSettingsFile: échec écriture user_settings.json");
+				return false;
+			}
+			LOG_INFO(Core, "[AuthUiPresenter] remember_login={} persisté dans user_settings.json (patch)", rememberLogin);
 			return true;
 		}
 
@@ -1156,6 +1217,17 @@ namespace engine::client
 			{
 				LoadRememberedLoginSidecar(m_login);
 			}
+			else
+			{
+				std::string sideLogin;
+				LoadRememberedLoginSidecar(sideLogin);
+				if (!sideLogin.empty())
+				{
+					m_rememberLogin = true;
+					m_savedRememberLogin = true;
+					m_login = std::move(sideLogin);
+				}
+			}
 			m_persistedLocale = LocalizationService::NormalizeLocaleTag(persisted.GetString("client.locale", ""));
 			m_hasPersistedLocale = !m_persistedLocale.empty();
 			m_videoFullscreen = persisted.GetBool("render.fullscreen", m_videoFullscreen);
@@ -1191,6 +1263,16 @@ namespace engine::client
 		}
 		m_rememberLogin = false;
 		m_savedRememberLogin = false;
+		{
+			std::string sideLogin;
+			LoadRememberedLoginSidecar(sideLogin);
+			if (!sideLogin.empty())
+			{
+				m_rememberLogin = true;
+				m_savedRememberLogin = true;
+				m_login = std::move(sideLogin);
+			}
+		}
 		m_persistedLocale.clear();
 		m_hasPersistedLocale = false;
 		LOG_INFO(Core, "[AuthUiPresenter] Preferences defaulted (remember_login=false, locale=unset, fullscreen={}, vsync={}, master={:.1f}, music={:.1f}, sfx={:.1f}, ui={:.1f}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
@@ -1204,7 +1286,10 @@ namespace engine::client
 		const std::filesystem::path settingsPath{ kUserSettingsPath };
 		if (engine::platform::FileSystem::Exists(settingsPath))
 		{
-			LOG_INFO(Core, "[AuthUiPresenter] Preferences persist skipped (existing user_settings.json preserved)");
+			if (PatchRememberLoginInSettingsFile(m_rememberLogin))
+				m_savedRememberLogin = m_rememberLogin;
+			else
+				LOG_WARN(Core, "[AuthUiPresenter] remember_login non persisté dans user_settings.json (patch absent ou échoué)");
 			return;
 		}
 
@@ -1298,7 +1383,7 @@ namespace engine::client
 			t += Tr("auth.phase.verify_email");
 			break;
 		case Phase::EmailConfirmationPending:
-			t += Tr("auth.email_confirmation.title");
+			t += Tr("auth.phase.email_confirmation");
 			break;
 		case Phase::ForgotPassword:
 			t += Tr("auth.phase.forgot_password");
@@ -1308,6 +1393,9 @@ namespace engine::client
 			break;
 		case Phase::CharacterCreate:
 			t += Tr("auth.phase.character_create");
+			break;
+		case Phase::ShardPick:
+			t += Tr("auth.phase.shard_pick");
 			break;
 		case Phase::LanguageSelectionFirstRun:
 			t += Tr("language.first_run.title");
@@ -1755,11 +1843,42 @@ namespace engine::client
 			return;
 		}
 
+		if (kind == AsyncKind::Login && copy.shardChoiceRequired)
+		{
+			m_shardPickEntries = std::move(copy.serverListForPick);
+			m_shardPickChoiceShardId = 0;
+			for (const auto& e : m_shardPickEntries)
+			{
+				if (e.status == 1u && !e.endpoint.empty())
+				{
+					m_shardPickChoiceShardId = e.shard_id;
+					break;
+				}
+			}
+			SetPhase(Phase::ShardPick);
+			m_userErrorText.clear();
+			m_infoBanner.clear();
+			LOG_INFO(Core, "[AuthUiPresenter] Shard choice UI ({} liste entrées)", m_shardPickEntries.size());
+			return;
+		}
+
 		if (copy.success)
 		{
 			m_userErrorText.clear();
 			m_infoBanner = copy.message;
 			LOG_INFO(Core, "[AuthUiPresenter] Master/shard flow OK: {}", copy.message);
+			if (kind == AsyncKind::Login)
+			{
+				SaveRememberPreference();
+				if (m_rememberLogin)
+				{
+					PersistRememberedLoginSidecar(m_login);
+				}
+				else
+				{
+					ClearRememberedLoginSidecar();
+				}
+			}
 			m_flowComplete = true;
 			SetPhase(Phase::Login);
 			return;
@@ -2189,6 +2308,9 @@ namespace engine::client
 		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
 		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
+		const bool shardPickWhenMultiple = cfg.GetBool("client.auth_ui.shard_pick_when_multiple", true);
+		const uint32_t shardOverride = m_shardFlowOverrideId;
+		m_shardFlowOverrideId = 0;
 
 		m_pendingAsyncKind = AsyncKind::Login;
 		{
@@ -2196,7 +2318,7 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure, serverFingerprint]() {
+		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure, serverFingerprint, shardPickWhenMultiple, shardOverride]() {
 			AsyncResult local{};
 			engine::network::NetClient masterClient;
 			ApplyMasterTlsConfig(masterClient, serverFingerprint, allowInsecure);
@@ -2204,16 +2326,28 @@ namespace engine::client
 			flow.SetMasterAddress(host, port);
 			flow.SetCredentials(login, hash);
 			flow.SetTimeoutMs(timeoutMs);
+			flow.SetShardPickWhenMultiple(shardPickWhenMultiple);
+			flow.SetShardIdOverride(shardOverride);
 			LOG_INFO(Net, "[AuthUiPresenter] MasterShardClientFlow starting (login='{}')", login);
 			engine::network::MasterShardFlowResult r = flow.Run(&masterClient);
 			local.ready = true;
-			local.success = r.success;
-			local.message = r.success ? (std::string("Shard ready (shard_id=") + std::to_string(r.shard_id) + ").") : r.errorMessage;
+			if (r.shard_choice_required)
+			{
+				local.shardChoiceRequired = true;
+				local.serverListForPick = std::move(r.server_list_for_pick);
+				local.success = false;
+				local.message.clear();
+			}
+			else
+			{
+				local.success = r.success;
+				local.message = r.success ? (std::string("Shard ready (shard_id=") + std::to_string(r.shard_id) + ").") : r.errorMessage;
+			}
 			{
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
 			}
-			LOG_INFO(Net, "[AuthUiPresenter] MasterShardClientFlow finished (success={})", (int)r.success);
+			LOG_INFO(Net, "[AuthUiPresenter] MasterShardClientFlow finished (success={} shard_pick={})", (int)r.success, (int)r.shard_choice_required);
 		});
 	}
 
@@ -3050,6 +3184,20 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged, back to Login");
 		return;
 	}
+	if (m_phase == Phase::ShardPick)
+	{
+		if (m_shardPickChoiceShardId == 0)
+		{
+			SetPhase(Phase::Error);
+			m_userErrorText = Tr("auth.error.shard_pick_required");
+			LOG_WARN(Core, "[AuthUiPresenter] ShardPick submit rejected: no shard selected");
+			return;
+		}
+		SetPhase(Phase::Submitting);
+		m_shardFlowOverrideId = m_shardPickChoiceShardId;
+		StartMasterFlowWorker(cfg);
+		return;
+	}
 	if (m_phase == Phase::Login)
 	{
 		if (m_login.empty() || m_password.empty())
@@ -3263,7 +3411,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			switch (m_phase)
 			{
 			case Phase::Login:
-				return m_activeField == 0 ? &m_login : &m_password;
+				if (m_activeField == 0)
+					return &m_login;
+				if (m_activeField == 1)
+					return &m_password;
+				return nullptr;
 			case Phase::Register:
 				switch (m_activeField)
 				{
@@ -3535,7 +3687,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					const int32_t bodyIndex = model.visibleBodyLineStart + localIdx;
 					const int32_t y = bodyStartY + localIdx * bodyLinePitch - 4;
 					bool hit = false;
-					if (m_phase == Phase::Login && static_cast<size_t>(bodyIndex) < model.bodyLines.size())
+					if (((m_phase == Phase::Login) || (m_phase == Phase::ShardPick))
+						&& static_cast<size_t>(bodyIndex) < model.bodyLines.size())
 					{
 						const RenderBodyLine& bl = model.bodyLines[static_cast<size_t>(bodyIndex)];
 						if (bl.checkbox)
@@ -3676,6 +3829,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						else if (m_phase == Phase::Login && m_hoveredBodyLineIndex == 0)
 						{
+							m_activeField = 2u;
 							m_rememberLogin = !m_rememberLogin;
 							SaveRememberPreference();
 							if (m_rememberLogin)
@@ -3685,6 +3839,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 							else
 							{
 								ClearRememberedLoginSidecar();
+							}
+						}
+						else if (m_phase == Phase::ShardPick && m_hoveredBodyLineIndex >= 1 && leftClick)
+						{
+							int32_t remaining = m_hoveredBodyLineIndex;
+							for (const auto& e : m_shardPickEntries)
+							{
+								if (e.status != 1u || e.endpoint.empty())
+								{
+									continue;
+								}
+								if (--remaining == 0)
+								{
+									m_shardPickChoiceShardId = e.shard_id;
+									break;
+								}
 							}
 						}
 						else if (m_phase == Phase::LanguageSelectionFirstRun)
@@ -3983,6 +4153,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 										else if (i == 2) { applyPrimaryAction(); }
 										else if (i == 3) { window.RequestClose(); }
 										break;
+									case Phase::ShardPick:
+										if (i == 0)
+										{
+											applyPrimaryAction();
+										}
+										else if (i == 1)
+										{
+											m_shardPickEntries.clear();
+											m_shardPickChoiceShardId = 0;
+											SetPhase(Phase::Login);
+											m_userErrorText.clear();
+										}
+										break;
 									default:
 										break;
 									}
@@ -4044,6 +4227,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 										}
 										SetPhase(Phase::Login);
 										m_activeField = 0;
+										m_userErrorText.clear();
+									}
+									break;
+								case Phase::ShardPick:
+									if (i == 0)
+									{
+										applyPrimaryAction();
+									}
+									else if (i == 1)
+									{
+										m_shardPickEntries.clear();
+										m_shardPickChoiceShardId = 0;
+										SetPhase(Phase::Login);
 										m_userErrorText.clear();
 									}
 									break;
@@ -4189,7 +4385,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::Tab))
 		{
 			if (m_phase == Phase::Login)
-				m_activeField = (m_activeField + 1u) % 2u;
+				m_activeField = (m_activeField + 1u) % 3u;
 			else if (m_phase == Phase::Register)
 				m_activeField = (m_activeField + 1u) % 10u;
 			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::ForgotPassword)
@@ -4226,6 +4422,85 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Left))
 			{
 				stepCycle(-1);
+			}
+		}
+
+		if (!usingNativeAuth && m_phase == Phase::Login && input.WasPressed(engine::platform::Key::Space) && m_activeField == 2u)
+		{
+			m_rememberLogin = !m_rememberLogin;
+			SaveRememberPreference();
+			if (m_rememberLogin)
+			{
+				PersistRememberedLoginSidecar(m_login);
+			}
+			else
+			{
+				ClearRememberedLoginSidecar();
+			}
+		}
+
+		if (m_phase == Phase::ShardPick && !usingNativeAuth)
+		{
+			const auto& entries = m_shardPickEntries;
+			auto countEligible = [&entries]() -> uint32_t {
+				uint32_t n = 0;
+				for (const auto& e : entries)
+				{
+					if (e.status == 1u && !e.endpoint.empty())
+						++n;
+				}
+				return n;
+			};
+			const uint32_t nElig = countEligible();
+			if (nElig > 0u && (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Left)))
+			{
+				uint32_t idx = 0;
+				for (const auto& e : entries)
+				{
+					if (e.status != 1u || e.endpoint.empty())
+						continue;
+					if (e.shard_id == m_shardPickChoiceShardId)
+						break;
+					++idx;
+				}
+				idx = (idx == 0u) ? (nElig - 1u) : (idx - 1u);
+				uint32_t j = 0;
+				for (const auto& e : entries)
+				{
+					if (e.status != 1u || e.endpoint.empty())
+						continue;
+					if (j == idx)
+					{
+						m_shardPickChoiceShardId = e.shard_id;
+						break;
+					}
+					++j;
+				}
+			}
+			if (nElig > 0u && (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Right)))
+			{
+				uint32_t idx = 0;
+				for (const auto& e : entries)
+				{
+					if (e.status != 1u || e.endpoint.empty())
+						continue;
+					if (e.shard_id == m_shardPickChoiceShardId)
+						break;
+					++idx;
+				}
+				idx = (idx + 1u) % nElig;
+				uint32_t j = 0;
+				for (const auto& e : entries)
+				{
+					if (e.status != 1u || e.endpoint.empty())
+						continue;
+					if (j == idx)
+					{
+						m_shardPickChoiceShardId = e.shard_id;
+						break;
+					}
+					++j;
+				}
 			}
 		}
 
@@ -4529,6 +4804,33 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			line.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
 			model.bodyLines.push_back(std::move(line));
 		};
+		auto addBodyLinesFromNewlines = [&addBodyLine](const std::string& text)
+		{
+			if (text.empty())
+			{
+				return;
+			}
+			size_t start = 0;
+			for (;;)
+			{
+				const size_t nl = text.find('\n', start);
+				if (nl == std::string::npos)
+				{
+					const std::string chunk = text.substr(start);
+					if (!chunk.empty())
+					{
+						addBodyLine(chunk);
+					}
+					break;
+				}
+				const std::string chunk = text.substr(start, nl - start);
+				if (!chunk.empty())
+				{
+					addBodyLine(chunk);
+				}
+				start = nl + 1u;
+			}
+		};
 		auto maskedPassword = [this]() -> std::string
 		{
 			std::string out;
@@ -4566,7 +4868,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				RenderBodyLine remember{};
 				remember.text = Tr("auth.checkbox.remember");
-				remember.active = true;
+				remember.active = (m_activeField == 2u);
 				remember.checkbox = true;
 				remember.checkboxChecked = m_rememberLogin;
 				remember.hovered = (m_hoveredBodyLineIndex == static_cast<int32_t>(model.bodyLines.size()));
@@ -4747,12 +5049,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			break;
 		case Phase::EmailConfirmationPending:
 		{
-			model.titleLine1   = Tr("auth.email_confirmation.title");
-			model.sectionTitle = "";
-			std::string msg = Tr("auth.email_confirmation.message");
+			// Titre du jeu (titleLine1) inchangé depuis les défauts du modèle.
+			model.titleLine2   = Tr("auth.email_confirmation.title");
+			model.sectionTitle = Tr("auth.panel.email_confirmation");
+			model.infoBanner.clear();
+			addBodyLinesFromNewlines(Tr("auth.email_confirmation.message"));
 			if (!m_registeredTagId.empty())
-				msg += "\n" + Tr("auth.info.tag_id") + " " + m_registeredTagId;
-			model.infoBanner = msg;
+			{
+				addBodyLine(Tr("auth.info.tag_id") + " " + m_registeredTagId);
+			}
 			RenderAction back;
 			back.label   = Tr("auth.email_confirmation.back_to_login");
 			back.primary = true;
@@ -4785,6 +5090,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addField(Tr("auth.label.character_name"), m_characterName, true);
 			addBodyLine(Tr("auth.hint.character.rules"));
 			addActionKeys("common.submit", true);
+			break;
+		case Phase::ShardPick:
+			model.sectionTitle = Tr("auth.phase.shard_pick");
+			addBodyLine(Tr("auth.shard_pick.hint"), false, false);
+			for (const auto& e : m_shardPickEntries)
+			{
+				if (e.status != 1u || e.endpoint.empty())
+				{
+					continue;
+				}
+				const std::string line = Tr("auth.shard_pick.line",
+					{ { "id", std::to_string(e.shard_id) },
+						{ "load", std::to_string(e.current_load) + "/" + std::to_string(e.max_capacity) },
+						{ "endpoint", e.endpoint } });
+				addBodyLine(line, m_shardPickChoiceShardId == e.shard_id, true);
+			}
+			addActionKeys("common.submit", true, m_shardPickChoiceShardId != 0u, false);
+			addActionKeys("common.back", false, true, false);
 			break;
 		case Phase::LanguageSelectionFirstRun:
 		case Phase::LanguageOptions:
@@ -4913,8 +5236,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			break;
 		}
 		case Phase::Submitting:
+			// Un seul libellé : sectionTitle (évite doublon avec l’ancienne bodyLine dessinée sur les barres).
 			model.sectionTitle = Tr("auth.panel.submitting");
-			addBodyLine(Tr("auth.panel.submitting"), true);
 			break;
 		case Phase::Error:
 			model.sectionTitle = Tr("auth.panel.error");
@@ -4935,7 +5258,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (!model.bodyLines.empty())
 		{
 			const int32_t total = static_cast<int32_t>(model.bodyLines.size());
-			const int32_t maxVisible = (m_phase == Phase::LanguageOptions) ? 10 : 6;
+			const int32_t maxVisible =
+				(m_phase == Phase::LanguageOptions || m_phase == Phase::ShardPick) ? 10 : 6;
 			int32_t focusIndex = 0;
 			for (int32_t i = 0; i < total; ++i)
 			{
@@ -4969,10 +5293,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				model.infoPopupText = Tr("auth.info.login_help");
 			else if (m_phase == Phase::Register)
 				model.infoPopupText = Tr("auth.info.register_help");
+			else if (m_phase == Phase::ShardPick)
+				model.infoPopupText = Tr("auth.shard_pick.popup_help");
 		}
 
 		// Icône "i" visible sur Login et Register.
-		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register);
+		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register || m_phase == Phase::ShardPick);
 
 		return model;
 	}
@@ -5142,6 +5468,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_userErrorText.clear();
 			m_infoBanner = Tr("auth.info.character_cancelled");
 			ResetMasterSession();
+			return true;
+		}
+		if (m_phase == Phase::ShardPick)
+		{
+			m_shardPickEntries.clear();
+			m_shardPickChoiceShardId = 0;
+			SetPhase(Phase::Login);
+			m_userErrorText.clear();
+			LOG_INFO(Core, "[AuthUiPresenter] Escape: ShardPick -> Login");
 			return true;
 		}
 		if (m_phase == Phase::Login)

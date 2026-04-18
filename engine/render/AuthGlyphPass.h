@@ -75,7 +75,8 @@ namespace engine::render
 			int32_t maxWidthPx,
 			int32_t scale,
 			const float color[4],
-			bool useValueFont = false) const;
+			bool useValueFont = false,
+			int32_t* outTtfVisualLineCount = nullptr) const;
 
 		void AppendTextTtf(std::vector<GlyphVertex>& vertices,
 			std::string_view text,
@@ -83,7 +84,8 @@ namespace engine::render
 			int32_t maxWidthPx,
 			int32_t scale,
 			const float color[4],
-			const FontAtlasTtf& atlas) const;
+			const FontAtlasTtf& atlas,
+			int32_t* outVisualLineCount = nullptr) const;
 
 		void DestroyFontGpu(VkDevice device);
 

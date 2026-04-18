@@ -18,7 +18,10 @@
   "log": {
     "level": "info",
     "console": true,
-    "file": "logs/lcdlln_server.log"
+    "file": "logs/lcdlln_server.log",
+    "subsystem_files": {
+      "Smtp": "lcdlln-SMTP.log"
+    }
   },
   "paths": { "content": "game/data" }
 }

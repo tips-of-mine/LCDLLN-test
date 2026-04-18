@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstring>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace engine::render
@@ -1077,17 +1078,22 @@ namespace engine::render
 		int32_t maxWidthPx,
 		int32_t scale,
 		const float color[4],
-		const FontAtlasTtf& atlas) const
+		const FontAtlasTtf& atlas,
+		int32_t* outVisualLineCount) const
 	{
 		if (text.empty() || !atlas.IsValid())
 		{
+			if (outVisualLineCount)
+			{
+				*outVisualLineCount = 1;
+			}
 			return;
 		}
 		// La police TTF embarquée ne couvre pas les glyphes accentués : mêmes remplacements ASCII que le fallback bitmap.
 		const std::string asciiWork = SimplifyUtf8(text);
-		const std::string_view work = asciiWork;
 		const float mul = std::max(0.35f, static_cast<float>(scale) / 4.f);
-		const int32_t maxX = originX + std::max(32, maxWidthPx);
+		const int32_t limitRight = originX + std::max(32, maxWidthPx);
+		const float lineLimit = static_cast<float>(limitRight - originX);
 		int32_t lineIndex = 0;
 		float penX = 0.f;
 
@@ -1113,32 +1119,33 @@ namespace engine::render
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
 
-		size_t i = 0;
-		while (i < work.size())
-		{
-			int cp = 0;
-			if (!Utf8Next(work, i, cp))
-			{
-				break;
-			}
+		const auto advanceCp = [&](int cp) -> float {
+			return atlas.GlyphXAdvance(cp) * mul;
+		};
+
+		const auto emitCp = [&](int cp) -> bool {
 			if (cp == '\r')
 			{
-				continue;
+				return true;
 			}
 			if (cp == '\n')
 			{
 				penX = 0.f;
 				++lineIndex;
-				continue;
+				return true;
 			}
-			const float advPx = atlas.GlyphXAdvance(cp) * mul;
-			if (static_cast<int32_t>(std::floor(static_cast<float>(originX) + penX + advPx)) > maxX && penX > 0.f)
+			if (cp == ' ' && penX <= 0.f)
+			{
+				return true;
+			}
+			const float advPx = advanceCp(cp);
+			if (static_cast<int32_t>(std::floor(static_cast<float>(originX) + penX + advPx)) > limitRight && penX > 0.f)
 			{
 				penX = 0.f;
 				++lineIndex;
 				if (cp == ' ')
 				{
-					continue;
+					return true;
 				}
 			}
 			const float lineBaseY = static_cast<float>(atlas.LineTopToBaselinePx() + lineIndex * atlas.LineHeightPx());
@@ -1146,14 +1153,101 @@ namespace engine::render
 			float x0 = 0.f, y0 = 0.f, x1 = 0.f, y1 = 0.f, s0 = 0.f, t0 = 0.f, s1 = 0.f, t1 = 0.f, xadv = 0.f;
 			if (!atlas.GetPackedQuad(cp, &pen, lineBaseY, &x0, &y0, &x1, &y1, &s0, &t0, &s1, &t1, &xadv))
 			{
-				continue;
+				return true;
 			}
 			penX = pen;
 			emitQuad(x0, y0, x1, y1, s0, t0, s1, t1);
 			if (vertices.size() + 6u > m_maxVertices || vertices.size() / 6u >= m_maxGlyphs)
 			{
+				return false;
+			}
+			return true;
+		};
+
+		const auto measureWordWidth = [&](std::string_view word) -> float {
+			float w = 0.f;
+			for (unsigned char uch : word)
+			{
+				w += advanceCp(static_cast<int>(uch));
+			}
+			return w;
+		};
+
+		auto layoutParagraph = [&](std::string_view paragraph) {
+			size_t pos = 0;
+			while (pos < paragraph.size())
+			{
+				while (pos < paragraph.size() && paragraph[pos] == ' ')
+				{
+					++pos;
+				}
+				if (pos >= paragraph.size())
+				{
+					break;
+				}
+				size_t end = pos;
+				while (end < paragraph.size() && paragraph[end] != ' ')
+				{
+					++end;
+				}
+				const std::string_view word = paragraph.substr(pos, end - pos);
+				pos = end;
+
+				const float wordW = measureWordWidth(word);
+				const float spaceW = (penX > 0.f) ? advanceCp(' ') : 0.f;
+
+				if (penX + spaceW + wordW > lineLimit && penX > 0.f)
+				{
+					penX = 0.f;
+					++lineIndex;
+				}
+				if (wordW > lineLimit)
+				{
+					for (size_t wi = 0; wi < word.size(); ++wi)
+					{
+						if (!emitCp(static_cast<unsigned char>(word[wi])))
+						{
+							return;
+						}
+					}
+				}
+				else
+				{
+					if (penX > 0.f && !emitCp(' '))
+					{
+						return;
+					}
+					for (size_t wi = 0; wi < word.size(); ++wi)
+					{
+						if (!emitCp(static_cast<unsigned char>(word[wi])))
+						{
+							return;
+						}
+					}
+				}
+			}
+		};
+
+		size_t segStart = 0;
+		while (segStart < asciiWork.size())
+		{
+			const size_t nl = asciiWork.find('\n', segStart);
+			const std::string_view paragraph(
+				asciiWork.c_str() + segStart,
+				(nl == std::string::npos) ? (asciiWork.size() - segStart) : (nl - segStart));
+			layoutParagraph(paragraph);
+			if (nl == std::string::npos)
+			{
 				break;
 			}
+			segStart = nl + 1u;
+			penX = 0.f;
+			++lineIndex;
+		}
+		if (outVisualLineCount)
+		{
+			// lineIndex = index of the last line that received glyphs (0-based) ; +1 = nombre de lignes visuelles.
+			*outVisualLineCount = std::max(1, lineIndex + 1);
 		}
 	}
 
@@ -1163,20 +1257,25 @@ namespace engine::render
 		int32_t maxWidthPx,
 		int32_t scale,
 		const float color[4],
-		bool useValueFont) const
+		bool useValueFont,
+		int32_t* outTtfVisualLineCount) const
 	{
 		if (text.empty())
 		{
+			if (outTtfVisualLineCount)
+			{
+				*outTtfVisualLineCount = 1;
+			}
 			return;
 		}
 		if (useValueFont && m_valueFontGpuReady && m_valueFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_valueFont, outTtfVisualLineCount);
 			return;
 		}
 		if (m_fontGpuReady && m_uiFont.IsValid())
 		{
-			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont);
+			AppendTextTtf(vertices, text, originX, originY, maxWidthPx, scale, color, m_uiFont, outTtfVisualLineCount);
 			return;
 		}
 		std::string normalized = SimplifyUtf8(text);
@@ -1207,34 +1306,118 @@ namespace engine::render
 			};
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
-		for (char ch : normalized)
-		{
+		const auto advanceBmp = [scale](char ch) -> int32_t {
+			return GlyphAdvancePx(ch, scale);
+		};
+		auto emitBmpChar = [&](char ch) -> bool {
 			if (ch == '\r')
 			{
-				continue;
+				return true;
 			}
 			if (ch == '\n')
 			{
 				cursorX = originX;
 				cursorY += linePitch;
-				continue;
+				return true;
 			}
-			const int32_t advance = GlyphAdvancePx(ch, scale);
-			if (cursorX + advance > maxX)
+			if (ch == ' ' && cursorX <= originX)
+			{
+				return true;
+			}
+			const int32_t advance = advanceBmp(ch);
+			if (cursorX + advance > maxX && cursorX > originX)
 			{
 				cursorX = originX;
 				cursorY += linePitch;
 				if (ch == ' ')
 				{
-					continue;
+					return true;
 				}
 			}
 			appendGlyph(cursorX, cursorY, ch);
 			cursorX += advance;
-			if (vertices.size() + 6u > m_maxVertices || vertices.size() / 6u >= m_maxGlyphs)
+			return vertices.size() + 6u <= m_maxVertices && vertices.size() / 6u < m_maxGlyphs;
+		};
+		const auto measureWordBmp = [&](std::string_view word) -> int32_t {
+			int32_t w = 0;
+			for (char c : word)
+			{
+				w += advanceBmp(c);
+			}
+			return w;
+		};
+		auto layoutBmpParagraph = [&](std::string_view paragraph) {
+			size_t pos = 0;
+			while (pos < paragraph.size())
+			{
+				while (pos < paragraph.size() && paragraph[pos] == ' ')
+				{
+					++pos;
+				}
+				if (pos >= paragraph.size())
+				{
+					break;
+				}
+				size_t end = pos;
+				while (end < paragraph.size() && paragraph[end] != ' ')
+				{
+					++end;
+				}
+				const std::string_view word = paragraph.substr(pos, end - pos);
+				pos = end;
+
+				const int32_t wordW = measureWordBmp(word);
+				const int32_t spaceW = (cursorX > originX) ? advanceBmp(' ') : 0;
+				if (cursorX + spaceW + wordW > maxX && cursorX > originX)
+				{
+					cursorX = originX;
+					cursorY += linePitch;
+				}
+				if (wordW > maxX - originX)
+				{
+					for (char c : word)
+					{
+						if (!emitBmpChar(c))
+						{
+							return;
+						}
+					}
+				}
+				else
+				{
+					if (cursorX > originX && !emitBmpChar(' '))
+					{
+						return;
+					}
+					for (char c : word)
+					{
+						if (!emitBmpChar(c))
+						{
+							return;
+						}
+					}
+				}
+			}
+		};
+		size_t bmpSeg = 0;
+		while (bmpSeg < normalized.size())
+		{
+			const size_t nl = normalized.find('\n', bmpSeg);
+			const std::string_view paragraph(
+				normalized.c_str() + bmpSeg,
+				(nl == std::string::npos) ? (normalized.size() - bmpSeg) : (nl - bmpSeg));
+			layoutBmpParagraph(paragraph);
+			if (nl == std::string::npos)
 			{
 				break;
 			}
+			bmpSeg = nl + 1u;
+			cursorX = originX;
+			cursorY += linePitch;
+		}
+		if (outTtfVisualLineCount)
+		{
+			*outTtfVisualLineCount = std::max(1, (cursorY - originY) / linePitch + 1);
 		}
 	}
 
@@ -1357,7 +1540,9 @@ namespace engine::render
 			{
 				const float mul = std::max(0.35f, static_cast<float>(actionLabelScale) / 4.f);
 				const int32_t lineH = static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
-				return buttonRowTopPx + (kAuthUiActionButtonHeightPx - lineH) / 2;
+				// Léger décalage vers le bas : le repère TTF (hauteur de ligne) sous-estime le centre visuel dans la barre.
+				const int32_t nudgeDown = 3;
+				return buttonRowTopPx + (kAuthUiActionButtonHeightPx - lineH) / 2 + nudgeDown;
 			}
 			return buttonRowTopPx + (kAuthUiActionButtonHeightPx - actionLineStep) / 2;
 		};
@@ -1385,16 +1570,16 @@ namespace engine::render
 			};
 			vertices.insert(vertices.end(), std::begin(quad), std::end(quad));
 		};
-		auto appendCenteredText = [this, &vertices](std::string_view text, int32_t boxX, int32_t y, int32_t boxW, int32_t scale, const float color[4])
+		auto appendCenteredText = [this, &vertices](std::string_view text, int32_t boxX, int32_t y, int32_t boxW, int32_t scale, const float color[4], int32_t* outVisualLines = nullptr)
 		{
 			const int32_t textWidth = MeasureTextWidthPx(text, scale);
 			const int32_t x = std::max(boxX, boxX + (boxW - textWidth) / 2);
-			AppendText(vertices, text, x, y, boxW, scale, color);
+			AppendText(vertices, text, x, y, boxW, scale, color, false, outVisualLines);
 		};
 
 		// Titres: colonne contenu, panneau élargi, ou largeur fenêtre (login/register/erreur minimal sans colonne d’art).
 		const bool drawTitleAcrossPanel =
-			(state.login || state.error) && state.minimalChrome && !state.loginArtColumn;
+			(state.login || state.error || state.submitting) && state.minimalChrome && !state.loginArtColumn;
 		const int32_t viewportW = static_cast<int32_t>(extent.width);
 		const int32_t titleAreaX = layout.authTitleUseViewportWidth ? 24 : (drawTitleAcrossPanel ? (panelX + 24) : contentX);
 		const int32_t titleAreaW =
@@ -1402,20 +1587,20 @@ namespace engine::render
 		if (!model.titleLine2.empty())
 		{
 			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
-				titleColor);
+				titleColor, nullptr);
 			appendCenteredText(model.titleLine2, titleAreaX, panelY + layout.authTitleLine2OffsetFromPanelTopPx, titleAreaW, bodyScale,
-				mutedColor);
+				mutedColor, nullptr);
 		}
 		else
 		{
 			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
-				titleColor);
+				titleColor, nullptr);
 		}
 		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
 		const int32_t sectionTitleY = panelY + layout.authSectionTitleOffsetFromPanelTopPx;
 		if (centeredLanguageSelection)
 		{
-			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
+			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor, nullptr);
 		}
 		else
 		{
@@ -1444,15 +1629,7 @@ namespace engine::render
 			}
 		}
 
-		if (state.submitting)
-		{
-			if (!model.bodyLines.empty())
-			{
-				const int32_t submitY = panelY + (!model.infoBanner.empty() ? 128 : 118);
-				AppendText(vertices, model.bodyLines.front().text, contentX + 18, submitY + 84, contentW - 36, bodyScale, titleColor);
-			}
-		}
-		else if (!model.errorText.empty())
+		if (!state.submitting && !model.errorText.empty())
 		{
 			const int32_t boxTop = panelY + layout.authErrorBoxTopFromPanelTopPx;
 			const int32_t boxH = std::max(48, layout.authErrorBoxHeightPx);
@@ -1482,7 +1659,7 @@ namespace engine::render
 				}
 			}
 		}
-		else if (state.terms)
+		else if (!state.submitting && state.terms)
 		{
 			int32_t metaY = panelY + 110;
 			for (int32_t i = 0; i < std::min<int32_t>(4, static_cast<int32_t>(model.bodyLines.size())); ++i)
@@ -1557,7 +1734,7 @@ namespace engine::render
 				}
 			}
 		}
-		else
+		else if (!state.submitting)
 		{
 			const int32_t labelAboveFieldPx = smallScale * 11 + 6;
 			const int32_t valueBelowTopPx = 12;
@@ -1613,19 +1790,28 @@ namespace engine::render
 				? std::max(36, bodyLineStep + 16)
 				: std::max(28, bodyLineStep + 10);
 			int32_t bodyLinePitch = bitmapBodyLinePitch;
+			int32_t lhTtfScaled = (7 * std::max(1, bodyScale)) + (2 * std::max(1, bodyScale));
 			if (m_fontGpuReady && m_uiFont.IsValid())
 			{
 				const float mul = std::max(0.35f, static_cast<float>(bodyScale) / 4.f);
 				const int32_t lh = static_cast<int32_t>(std::lround(static_cast<float>(m_uiFont.LineHeightPx()) * mul));
+				lhTtfScaled = lh;
 				bodyLinePitch = std::max(bitmapBodyLinePitch, lh + (centeredLanguageSelection ? 14 : 10));
 			}
+			const int32_t padAfterBodyMetrics = (centeredLanguageSelection ? 14 : 10);
+			const auto bodyRowConsumedPx = [&](int32_t visualLines) -> int32_t {
+				const int32_t n = std::max(1, visualLines);
+				const int32_t stacked = n * lhTtfScaled + padAfterBodyMetrics;
+				return std::max(bodyLinePitch, stacked);
+			};
 			const int32_t afterFieldsGap = centeredLanguageSelection ? 34 : 18;
 			const int32_t logicalRowCount = fieldCount > 0 ? fieldLogicalRow[static_cast<size_t>(fieldCount - 1)] + 1 : 0;
 			const int32_t bodyStartY = panelY + topOffset + logicalRowCount * fieldRowStep + afterFieldsGap;
+			int32_t yCursor = bodyStartY - 4;
 			for (int32_t i = 0; i < model.visibleBodyLineCount; ++i)
 			{
 				const auto& line = model.bodyLines[static_cast<size_t>(model.visibleBodyLineStart + i)];
-				const int32_t y = bodyStartY + i * bodyLinePitch - 4;
+				const int32_t y = yCursor;
 				const float* lineColor = line.link
 					? (line.hovered ? primaryColor : accentColor)
 					: (line.active ? accentColor : (line.hovered ? primaryColor : bodyColor));
@@ -1645,7 +1831,9 @@ namespace engine::render
 						appendBlock(cbx + 5, cby + 7, 3, 8, checkIvory);
 						appendBlock(cbx + 6, cby + 12, 9, 3, checkIvory);
 					}
-					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor);
+					int32_t lineViz = 1;
+					AppendText(vertices, line.text, contentX + kAuthUiCheckboxLabelOffsetX, y, contentW - kAuthUiCheckboxLabelOffsetX - 8, bodyScale, lineColor, false, &lineViz);
+					yCursor += bodyRowConsumedPx(lineViz);
 					continue;
 				}
 				if (!line.valueText.empty())
@@ -1655,20 +1843,27 @@ namespace engine::render
 					const int32_t labelColW = std::max(40, contentW - valueColW - gapCol - 6);
 					const int32_t valueColX = contentX + 2 + labelColW + gapCol;
 					const float* labelTint = line.active ? lineColor : mutedColor;
-					AppendText(vertices, line.text, contentX + 2, y, labelColW, bodyScale, labelTint);
+					int32_t vLabel = 1;
+					int32_t vValue = 1;
+					AppendText(vertices, line.text, contentX + 2, y, labelColW, bodyScale, labelTint, false, &vLabel);
 					const int32_t vw = MeasureTextWidthPx(line.valueText, bodyScale);
 					const int32_t vx = valueColX + std::max(0, valueColW - vw - 2);
-					AppendText(vertices, line.valueText, vx, y, valueColW, bodyScale, lineColor);
+					AppendText(vertices, line.valueText, vx, y, valueColW, bodyScale, lineColor, false, &vValue);
+					yCursor += bodyRowConsumedPx(std::max(vLabel, vValue));
 					continue;
 				}
 				if (centeredLanguageSelection && model.visibleBodyLineStart == 0 && i <= 1)
 				{
 					const int32_t yLang = y + ((m_fontGpuReady && m_uiFont.IsValid()) ? 4 : 0);
-					appendCenteredText(line.text, contentX + 2, yLang, contentW - 6, bodyScale, lineColor);
+					int32_t lineViz = 1;
+					appendCenteredText(line.text, contentX + 2, yLang, contentW - 6, bodyScale, lineColor, &lineViz);
+					yCursor += bodyRowConsumedPx(lineViz);
 				}
 				else
 				{
-					AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor);
+					int32_t lineViz = 1;
+					AppendText(vertices, line.text, contentX + 2, y, contentW - 6, bodyScale, lineColor, false, &lineViz);
+					yCursor += bodyRowConsumedPx(lineViz);
 				}
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
@@ -1709,7 +1904,7 @@ namespace engine::render
 			else
 			{
 				const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
-				const int32_t buttonY = std::min(panelY + panelH - 86, bodyStartY + model.visibleBodyLineCount * bodyLinePitch + buttonPadAfterBody);
+				const int32_t buttonY = std::min(panelY + panelH - 86, yCursor + 4 + buttonPadAfterBody);
 				const int32_t actionW = std::max(100, (contentW - (actionCount - 1) * gap) / actionCount);
 				const int32_t singleRowLabelY = actionButtonLabelTopY(buttonY);
 				for (int32_t i = 0; i < actionCount; ++i)

@@ -1,12 +1,12 @@
 # ============================================================
-# M24.4 — LCDLLN stack locale (MySQL + Master + portail + phpMyAdmin ; shard en option)
+# M24.4 — LCDLLN stack locale (MySQL + Master + Shard + portail + phpMyAdmin)
 # ============================================================
 # Services :
 #   mysql      — MySQL 8.0 avec schéma LCDLLN (lcdlln_master)
 #   master     — Master server (lcdlln_server, Dockerfile.master)
+#   shard      — Monde jeu (lcdlln_shard) : enregistrement + heartbeat vers le Master
 #   web-portal — Next.js (sources ./web-portal dans le zip CI)
 #   phpmyadmin — phpMyAdmin (visualisation / administration de la base MySQL)
-#   shard      — Shard (profil Compose « shard », désactivé par défaut ; binaire toujours dans le zip)
 #
 # Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/, web-portal/).
 #
@@ -19,7 +19,7 @@
 # Erreur « GLIBC_2.38 not found » = ancienne image ou Dockerfile obsolète sur le serveur :
 #   1) Mettre à jour deploy/docker/ depuis le dépôt (Dockerfiles ubuntu:24.04).
 #   2) docker compose build --no-cache master web-portal && docker compose up -d
-#      (shard : docker compose build shard && docker compose --profile shard up -d)
+#      (shard : docker compose build shard && docker compose up -d)
 #
 # Portail web : inclus dans up -d. Local : http://127.0.0.1:3000 — Labels Traefik : service
 # web-portal ; copies réf. : traefik-web-portal.labels.reference.yml, traefik-master.labels.reference.yml
@@ -92,6 +92,12 @@ services:
       - "traefik.enable=false"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
+      # SMTP : le serveur charge smtp.local.json dans le même répertoire que config.json dans le conteneur (/app).
+      # Sans cette ligne, seul l’hôte a server-config/smtp.local.json — le master ne le voit pas.
+      # Exemple si vos secrets sont dans server-config/ à côté du compose :
+      #   - ./server-config/smtp.local.json:/app/smtp.local.json:ro
+      # Ou à côté du JSON master sur l’hôte :
+      #   - ./config/smtp.local.json:/app/smtp.local.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/master:/app/logs
     # HTTP 3842 (/healthz) : le TCP 3840 est le protocole jeu ; nc -z le pollue dans les logs NetServer.
@@ -102,10 +108,7 @@ services:
       retries: 5
       start_period: 20s
 
-  # Shard : hors stack par défaut (profil « shard ») — à réactiver quand le gameplay le nécessite.
   shard:
-    profiles:
-      - shard
     build:
       context: .
       dockerfile: Dockerfile.shard
@@ -125,8 +128,14 @@ services:
       - ./config/shard.config.json:/app/config.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/shard:/app/logs
+    environment:
+      SHARD_REGISTER_ENDPOINT: ${SHARD_REGISTER_ENDPOINT:-127.0.0.1:3843}
+    command:
+      - sh
+      - -c
+      - exec /app/lcdlln_shard -log -console --shard.register.endpoint=$$SHARD_REGISTER_ENDPOINT
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "3843"]
+      test: ["CMD", "nc", "-z", "localhost", "3844"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -148,6 +157,8 @@ services:
       mysql:
         condition: service_healthy
       master:
+        condition: service_healthy
+      shard:
         condition: service_healthy
     networks:
       - back_lcdlln_network

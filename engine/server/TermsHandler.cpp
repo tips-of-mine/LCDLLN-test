@@ -150,7 +150,14 @@ namespace engine::server
 						ver = "?";
 					std::string subj, body;
 					BuildTermsAcceptanceEmail(ar->email_locale, ver, subj, body);
-					(void)SmtpMailer::Send(*m_smtp, ar->email, subj, body);
+					LOG_INFO(Auth, "[TermsHandler] envoi email acceptation CGU (account_id={} edition_id={})", *accOpt, parsed->edition_id);
+					const bool sent = SmtpMailer::Send(*m_smtp, ar->email, subj, body);
+					if (!sent)
+						LOG_WARN(Auth,
+							"[TermsHandler] échec envoi email CGU (account_id={}) — lignes [SMTP] / sous-système Smtp (log.level Info conseillé)",
+							*accOpt);
+					else
+						LOG_INFO(Auth, "[TermsHandler] email CGU envoyé (account_id={})", *accOpt);
 				}
 			}
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/network/ServerListPayloads.h"
+
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -18,6 +20,9 @@ namespace engine::network
 	struct MasterShardFlowResult
 	{
 		bool success = false;
+		/// Si vrai, \a success est faux : plusieurs shards joignables ; le client doit afficher \a server_list_for_pick puis relancer le flux avec \ref SetShardIdOverride.
+		bool shard_choice_required = false;
+		std::vector<ServerListEntry> server_list_for_pick;
 		std::string errorMessage;
 		uint64_t account_id = 0;
 		uint32_t shard_id = 0;
@@ -38,6 +43,10 @@ namespace engine::network
 		void SetCredentials(std::string login, std::string client_hash);
 		/// Request timeout in ms (default 5000). One retry on timeout.
 		void SetTimeoutMs(uint32_t ms) { m_timeoutMs = ms; }
+		/// Si non nul, sélectionne ce shard_id parmi les entrées en ligne avec endpoint (sinon comportement automatique).
+		void SetShardIdOverride(uint32_t shardId) { m_shardIdOverride = shardId; }
+		/// Si vrai (défaut) et plusieurs shards en ligne avec endpoint, \ref Run retourne \c shard_choice_required au lieu d'en choisir un.
+		void SetShardPickWhenMultiple(bool v) { m_shardPickWhenMultiple = v; }
 
 		/// Run the full flow. Uses \a masterClient for Master; creates a temporary client for Shard. Returns result with success/error and optional account_id/shard_id.
 		/// \a masterClient must be disconnected; it will be connected to Master. Caller keeps ownership of masterClient.
@@ -49,5 +58,7 @@ namespace engine::network
 		std::string m_login;
 		std::string m_clientHash;
 		uint32_t m_timeoutMs = 5000u;
+		uint32_t m_shardIdOverride = 0;
+		bool m_shardPickWhenMultiple = true;
 	};
 }

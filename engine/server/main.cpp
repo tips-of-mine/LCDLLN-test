@@ -97,6 +97,7 @@ int main(int argc, char** argv)
 		: config.GetString("log.file", "engine.log");
 	logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
 	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
+	logSettings.subsystemFiles = config.GetStringMapUnderPrefix("log.subsystem_files");
 	engine::core::Log::Init(logSettings);
 	LOG_INFO(Core, "[ServerMain] Log initialized (console={}, file={})",
 		logSettings.console ? "on" : "off",

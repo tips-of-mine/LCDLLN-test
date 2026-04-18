@@ -4,6 +4,7 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 namespace engine::core
 {
     enum class LogLevel : int
@@ -31,6 +32,8 @@ namespace engine::core
         size_t rotation_size_mb = 10;
         /// Number of rotated files to retain (used as max_files for rotating sink).
         int retention_days = 7;
+        /// Fichiers journaux additionnels : nom du sous-système (argument des macros \c LOG_* , ex. \c Smtp) → nom de fichier relatif au dossier du fichier principal \c filePath (ou \c "." si \c filePath n'a pas de dossier). Les lignes sont dupliquées : elles vont aussi dans le fichier principal et la console si actifs.
+        std::unordered_map<std::string, std::string> subsystemFiles;
     };
     class Log final
     {

@@ -1,6 +1,6 @@
 # Stack Docker locale (M24.4)
 
-Stack de développement locale : MySQL 8, Master, portail web ; **shard** optionnel (profil Compose `shard`). Images dev (pas de durcissement prod).
+Stack de développement locale : MySQL 8, Master, **shard monde**, portail web. Images dev (pas de durcissement prod).
 
 ## Prérequis
 
@@ -40,10 +40,10 @@ docker compose up
 
 ## Volumes
 
-- **Config** : `config/master.config.json` sur le master ; `config/shard.config.json` sur le shard (profil `shard`).
-- **Contenu** : `./game/data` → `/app/game/data` (master ; idem shard si profil actif).
+- **Config** : `config/master.config.json` sur le master ; `config/shard.config.json` sur le shard.
+- **Contenu** : `./game/data` → `/app/game/data` (master et shard).
 - **MySQL** : `./db/schema.sql` monté dans `docker-entrypoint-initdb.d` au premier démarrage.
-- **Logs** : `./data/logs/master` ; `./data/logs/shard` si shard actif.
+- **Logs** : `./data/logs/master` ; `./data/logs/shard`.
 - **MySQL datadir** : `./data/mysql`.
 
 Le service **web-portal** (Next.js) démarre avec **`docker compose up -d`**. Le zip CI inclut **`web-portal/`** sous `deploy/docker/` (pack).

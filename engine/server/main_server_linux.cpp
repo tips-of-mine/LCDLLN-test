@@ -116,6 +116,7 @@ int main(int argc, char** argv)
 	logSettings.filePath = config.GetString("log.file", "engine.log");
 	logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
 	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
+	logSettings.subsystemFiles = config.GetStringMapUnderPrefix("log.subsystem_files");
 	engine::core::Log::Init(logSettings);
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");
@@ -211,6 +212,26 @@ int main(int argc, char** argv)
 
 	// M33.2: SMTP config + password reset / email verification stores.
 	engine::server::SmtpConfig smtpConfig = engine::server::SmtpConfig::Load(config, "config.json");
+	{
+		const bool smtpReady = !smtpConfig.host.empty() && smtpConfig.port != 0;
+		const std::string smtpDedicatedLog = config.GetString("log.subsystem_files.Smtp", "");
+		if (smtpReady)
+		{
+			LOG_WARN(Server,
+				"[SMTP] Courrier activé : {}:{} (STARTTLS={}, AUTH={}). Traces détaillées : sous-système « Smtp » "
+				"(log.level=Info ou Debug) ; fichier dédié : {}",
+				smtpConfig.host,
+				static_cast<unsigned>(smtpConfig.port),
+				smtpConfig.use_starttls ? "oui" : "non",
+				smtpConfig.user.empty() ? "non" : "oui",
+				smtpDedicatedLog.empty() ? std::string("(désactivé — tout dans le log principal)") : smtpDedicatedLog);
+		}
+		else
+		{
+			LOG_WARN(Server,
+				"[SMTP] Courrier désactivé (hôte/port absents ou fichier secrets illisible) — pas d’envoi reset / vérification e-mail / CGU.");
+		}
+	}
 	engine::server::PasswordResetStore passwordResetStore;
 	engine::server::PasswordResetHandler passwordResetHandler;
 

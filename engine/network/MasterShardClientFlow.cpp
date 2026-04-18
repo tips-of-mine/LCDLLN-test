@@ -6,10 +6,13 @@
 #include "engine/network/ShardTicketPayloads.h"
 #include "engine/network/ProtocolV1Constants.h"
 #include "engine/network/PacketView.h"
+#include "engine/network/NetErrorCode.h"
 #include "engine/core/Log.h"
 
 #include <chrono>
+#include <cctype>
 #include <cstdio>
+#include <string>
 #include <thread>
 
 namespace engine::network
@@ -28,6 +31,15 @@ namespace engine::network
 			host = endpoint.substr(0, pos);
 			try { port = static_cast<uint16_t>(std::stoul(endpoint.substr(pos + 1))); }
 			catch (...) { port = 3841; }
+		}
+
+		bool IsLoopbackHost(const std::string& h)
+		{
+			std::string lower;
+			lower.reserve(h.size());
+			for (unsigned char c : h)
+				lower.push_back(static_cast<char>(std::tolower(c)));
+			return lower == "127.0.0.1" || lower == "localhost" || lower == "::1";
 		}
 
 		bool WaitConnected(NetClient* c, uint32_t timeoutMs)
@@ -164,27 +176,69 @@ namespace engine::network
 			LOG_INFO(Net, "[MasterShardClientFlow] SERVER_LIST OK ({} entries)", list.size());
 		}
 
-		const ServerListEntry* chosen = nullptr;
+		std::vector<const ServerListEntry*> eligible;
+		eligible.reserve(list.size());
 		for (const auto& e : list)
 		{
 			if (e.status == 1 && !e.endpoint.empty())
 			{
-				chosen = &e;
-				break;
+				eligible.push_back(&e);
 			}
 		}
-		if (!chosen)
+		if (eligible.empty())
 		{
 			result.errorMessage = "No Online shard with endpoint in list";
 			LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 			return result;
 		}
+
+		const ServerListEntry* chosen = nullptr;
+		if (m_shardIdOverride != 0)
+		{
+			for (const ServerListEntry* p : eligible)
+			{
+				if (p->shard_id == m_shardIdOverride)
+				{
+					chosen = p;
+					break;
+				}
+			}
+			if (!chosen)
+			{
+				result.errorMessage = "Selected shard is not available or unknown";
+				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
+				return result;
+			}
+		}
+		else if (eligible.size() > 1 && m_shardPickWhenMultiple)
+		{
+			result.shard_choice_required = true;
+			result.server_list_for_pick = list;
+			result.success = false;
+			LOG_INFO(Net,
+				"[MasterShardClientFlow] Multiple online shards ({}); returning shard_choice_required for UI",
+				eligible.size());
+			masterClient->Disconnect("shard_choice_required");
+			return result;
+		}
+		else
+		{
+			chosen = eligible.front();
+		}
+
 		uint32_t targetShardId = chosen->shard_id;
 		std::string shardEndpoint = chosen->endpoint;
 		LOG_INFO(Net, "[MasterShardClientFlow] Requesting ticket for shard_id={}", targetShardId);
 
 		std::vector<uint8_t> ticketPayload;
 		{
+			std::string shardTicketErrorDetail;
+			disp.SetErrorHandler([&shardTicketErrorDetail](uint32_t /*requestId*/, NetErrorCode code, std::string_view msg) {
+				if (!msg.empty())
+					shardTicketErrorDetail.assign(msg.begin(), msg.end());
+				else
+					shardTicketErrorDetail = "code " + std::to_string(static_cast<uint32_t>(code));
+			});
 			auto reqPayload = BuildRequestShardTicketPayload(targetShardId);
 			bool ticketDone = false;
 			bool ticketTimeout = true;
@@ -207,16 +261,33 @@ namespace engine::network
 			}
 			if (!ticketDone || ticketTimeout || ticketPayload.empty())
 			{
-				result.errorMessage = ticketTimeout ? "REQUEST_SHARD_TICKET timeout" : "REQUEST_SHARD_TICKET failed or empty";
+				if (ticketTimeout)
+					result.errorMessage = "REQUEST_SHARD_TICKET timeout";
+				else if (!shardTicketErrorDetail.empty())
+					result.errorMessage = std::string("REQUEST_SHARD_TICKET refusé — ") + shardTicketErrorDetail;
+				else
+					result.errorMessage = "REQUEST_SHARD_TICKET failed or empty";
 				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
 				return result;
 			}
 			LOG_INFO(Net, "[MasterShardClientFlow] Ticket received ({} bytes)", ticketPayload.size());
+			disp.SetErrorHandler({});
 		}
 
 		std::string shardHost;
 		uint16_t shardPort = 3841;
 		ParseEndpoint(shardEndpoint, shardHost, shardPort);
+		if (IsLoopbackHost(shardHost) && !IsLoopbackHost(m_masterHost))
+		{
+			// Liste serveurs : le shard a souvent enregistré 127.0.0.1 (Docker / bind local).
+			// Si le client rejoint le master par une IP LAN, on se connecte au shard sur le même hôte.
+			LOG_WARN(Net,
+				"[MasterShardClientFlow] endpoint shard en loopback ({}) avec master distant — connexion shard via hôte maître {}:{}",
+				shardEndpoint,
+				m_masterHost,
+				static_cast<unsigned>(shardPort));
+			shardHost = m_masterHost;
+		}
 		LOG_INFO(Net, "[MasterShardClientFlow] Connecting to Shard {}:{}", shardHost, shardPort);
 
 		NetClient shardClient;

@@ -8,8 +8,15 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <vector>
+
+namespace engine::client
+{
+	struct CombatHudState;
+	struct CharacterCreationState;
+}
 
 namespace engine::render
 {
@@ -42,6 +49,24 @@ namespace engine::render
 		void RecordModel(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
 			const engine::client::AuthUiPresenter::VisualState& state,
 			const engine::client::AuthUiPresenter::RenderModel& model,
+			const AuthUiTheme& theme);
+
+		/// Renders combat HUD text labels (HP/Mana values, combo points, target name, combat log, wallet).
+		void RecordCombatHud(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
+			const engine::client::CombatHudState& state,
+			const AuthUiTheme& theme);
+
+		/// Renders character-creation screen text (step labels, panel titles, card names, input text).
+		void RecordCharacterCreation(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
+			const engine::client::CharacterCreationState& state,
+			uint32_t raceCount,
+			const std::vector<std::string>& raceNames,
+			const std::vector<std::string>& classNames,
+			const AuthUiTheme& theme);
+
+		/// Renders settings menu text (panel title, tab names, section/row labels).
+		void RecordSettingsMenu(VkDevice device, VkCommandBuffer cmd, VkExtent2D extent,
+			int32_t activeTab, bool isOpen,
 			const AuthUiTheme& theme);
 
 		void Destroy(VkDevice device);

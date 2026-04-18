@@ -6,8 +6,11 @@
 #include "engine/core/memory/FrameArena.h"
 #include "engine/audio/AudioEngine.h"
 #include "engine/client/AuthUi.h"
+#include "engine/client/CharacterCreationUi.h"
 #include "engine/client/ChatUi.h"
+#include "engine/client/CombatHud.h"
 #include "engine/client/AuctionUi.h"
+#include "engine/client/SettingsMenuUi.h"
 #include "engine/client/GameplayUdpClient.h"
 #include "engine/client/InventoryUi.h"
 #include "engine/client/ProfilerHud.h"
@@ -27,6 +30,9 @@
 #include "engine/render/ShaderHotReload.h"
 #include "engine/render/AuthGlyphPass.h"
 #include "engine/render/AuthLogoPass.h"
+#include "engine/render/CharacterCreationRenderer.h"
+#include "engine/render/CombatHudRenderer.h"
+#include "engine/render/SettingsMenuRenderer.h"
 #include "engine/render/TaaJitter.h"
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
@@ -259,6 +265,9 @@ namespace engine
 		engine::core::Profiler m_profiler;
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;
+		engine::client::CombatHudPresenter m_combatHud;
+		engine::client::CharacterCreationPresenter m_charCreation;
+		engine::client::SettingsMenuPresenter m_settingsMenu;
 		engine::client::ChatUiPresenter m_chatUi;
 		/// M35.2 — optional UDP gameplay + vendor shop / inventory presenters.
 		bool m_gameplayNetInitialized = false;

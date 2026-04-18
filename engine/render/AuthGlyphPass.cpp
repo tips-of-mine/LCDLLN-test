@@ -1,6 +1,9 @@
 #include "engine/render/AuthGlyphPass.h"
 
+#include "engine/client/CombatHud.h"
+#include "engine/client/CharacterCreationUi.h"
 #include "engine/core/Log.h"
+#include "engine/render/CharacterCreationRenderer.h"
 #include "engine/render/vk/VkUtils.h"
 
 #include <algorithm>
@@ -2084,6 +2087,440 @@ namespace engine::render
 			}
 			vkCmdDraw(cmd, valueCount, 1, mainCount, 0);
 		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// RecordCombatHud — HP/Mana values, target name, combat log, wallet.
+	// ---------------------------------------------------------------------------
+	void AuthGlyphPass::RecordCombatHud(VkDevice /*device*/, VkCommandBuffer cmd, VkExtent2D extent,
+		const engine::client::CombatHudState& state,
+		const AuthUiTheme& theme)
+	{
+		if (!IsValid() || cmd == VK_NULL_HANDLE || m_mappedVertices == nullptr
+			|| extent.width == 0 || extent.height == 0 || !state.layoutValid)
+			return;
+
+		std::vector<GlyphVertex> verts;
+		verts.reserve(512u);
+
+		const float textCol[4]  = { theme.text[0],      theme.text[1],      theme.text[2],      1.00f };
+		const float mutedCol[4] = { theme.mutedText[0], theme.mutedText[1], theme.mutedText[2], 0.88f };
+		const auto  toI         = [](float v) { return static_cast<int32_t>(v); };
+
+		auto appendVal = [&](const engine::client::HudBarWidget& bar, const char* prefix)
+		{
+			if (!bar.visible) return;
+			const int32_t bx = toI(bar.bounds.x);
+			const int32_t by = toI(bar.bounds.y);
+			const int32_t bw = toI(bar.bounds.width);
+			const int32_t bh = toI(bar.bounds.height);
+			const int32_t mid = by + (bh - 7 * 2) / 2;
+			AppendText(verts, prefix, bx + 4, mid, bw / 3, 2, textCol);
+			const std::string val = std::to_string(bar.currentValue) + "/" + std::to_string(bar.maxValue);
+			AppendText(verts, val, bx + bw * 2 / 5, mid, bw * 3 / 5, 2, mutedCol);
+		};
+
+		appendVal(state.playerHealthBar, "HP");
+		appendVal(state.playerManaBar,   "MP");
+
+		// Combo points label
+		if (state.playerHasCombo && state.playerMaxComboPoints > 0u)
+		{
+			const int32_t bx = toI(state.playerManaBar.bounds.x);
+			const int32_t by = toI(state.playerManaBar.bounds.y);
+			const int32_t bh = toI(state.playerManaBar.bounds.height);
+			const std::string comboStr = std::to_string(state.playerComboPoints)
+				+ "/" + std::to_string(state.playerMaxComboPoints);
+			AppendText(verts, comboStr, bx, by + bh + 8, 80, 2, mutedCol);
+		}
+
+		// Combat log lines
+		{
+			const int32_t lx = toI(state.combatLogBounds.x);
+			const int32_t ly = toI(state.combatLogBounds.y);
+			const int32_t lw = toI(state.combatLogBounds.width);
+			constexpr int32_t kLineH = 14;
+			constexpr int32_t kMaxLines = 8;
+			const int32_t count = std::min(kMaxLines, static_cast<int32_t>(state.combatLogLines.size()));
+			for (int32_t li = 0; li < count; ++li)
+			{
+				const auto& line = state.combatLogLines[static_cast<size_t>(li)];
+				if (line.text.empty()) continue;
+				const float* lc = line.incoming ? textCol : mutedCol;
+				AppendText(verts, line.text, lx + 4, ly + 4 + li * kLineH, lw - 8, 2, lc);
+			}
+		}
+
+		// Target frame
+		if (state.targetVisible)
+		{
+			const int32_t tx = toI(state.targetFrameBounds.x);
+			const int32_t ty = toI(state.targetFrameBounds.y);
+			const int32_t tw = toI(state.targetFrameBounds.width);
+			if (!state.targetLabel.empty())
+			{
+				const int32_t nameW = MeasureTextWidthPx(state.targetLabel, 2);
+				const int32_t nameX = std::max(tx + 4, tx + (tw - nameW) / 2);
+				AppendText(verts, state.targetLabel, nameX, ty + 8, tw - 8, 2, textCol);
+			}
+			appendVal(state.targetHealthBar, "");
+		}
+
+		// Wallet
+		if (state.walletVisible && !state.walletGoldLine.empty())
+		{
+			const int32_t wx = toI(state.walletBounds.x);
+			const int32_t wy = toI(state.walletBounds.y);
+			const int32_t ww = toI(state.walletBounds.width);
+			const int32_t wh = toI(state.walletBounds.height);
+			const int32_t textY = wy + (wh - 7 * 2) / 2;
+			AppendText(verts, state.walletGoldLine, wx + 8, textY, ww - 16, 2, textCol);
+		}
+
+		if (verts.empty()) return;
+		if (verts.size() > m_maxVertices) verts.resize(m_maxVertices);
+		std::memcpy(m_mappedVertices, verts.data(), verts.size() * sizeof(GlyphVertex));
+
+		VkViewport vp{}; vp.width = static_cast<float>(extent.width); vp.height = static_cast<float>(extent.height); vp.maxDepth = 1.f;
+		VkRect2D   sc{}; sc.extent = extent;
+		vkCmdSetViewport(cmd, 0, 1, &vp);
+		vkCmdSetScissor(cmd, 0, 1, &sc);
+		PushConstants push{}; push.viewportSize[0] = vp.width; push.viewportSize[1] = vp.height;
+		VkDeviceSize off = 0;
+		vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &off);
+		const bool useFont = m_fontGpuReady && m_fontPipeline != VK_NULL_HANDLE;
+		if (useFont)
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipeline);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_fontDescriptorSet, 0, nullptr);
+			vkCmdPushConstants(cmd, m_fontPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+		}
+		else
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+		}
+		vkCmdDraw(cmd, static_cast<uint32_t>(verts.size()), 1, 0, 0);
+	}
+
+	// ---------------------------------------------------------------------------
+	// RecordCharacterCreation — step labels, panel titles, card names, input text.
+	// ---------------------------------------------------------------------------
+	void AuthGlyphPass::RecordCharacterCreation(VkDevice /*device*/, VkCommandBuffer cmd, VkExtent2D extent,
+		const engine::client::CharacterCreationState& state,
+		uint32_t raceCount,
+		const std::vector<std::string>& raceNames,
+		const std::vector<std::string>& classNames,
+		const AuthUiTheme& theme)
+	{
+		if (!IsValid() || cmd == VK_NULL_HANDLE || m_mappedVertices == nullptr
+			|| extent.width == 0 || extent.height == 0)
+			return;
+
+		std::vector<GlyphVertex> verts;
+		verts.reserve(1024u);
+
+		const float textCol[4]   = { theme.text[0],      theme.text[1],      theme.text[2],      1.00f };
+		const float mutedCol[4]  = { theme.mutedText[0], theme.mutedText[1], theme.mutedText[2], 0.88f };
+		const float accentCol[4] = { theme.accent[0],    theme.accent[1],    theme.accent[2],    1.00f };
+		const int32_t w = static_cast<int32_t>(extent.width);
+
+		const CharacterCreationLayout lay = BuildCharacterCreationLayout(extent);
+
+		// Step bar labels (centred under each dot)
+		{
+			constexpr int32_t kStepSlotW = 100;
+			constexpr int32_t kSepW      = 24;
+			constexpr int32_t kTotalSteps = 4;
+			constexpr int32_t kDotSz     = 14;
+			const int32_t totalBarW = kTotalSteps * kStepSlotW + (kTotalSteps - 1) * kSepW;
+			int32_t stepX = (w - totalBarW) / 2;
+			constexpr int32_t kStepBarMargin = 12;
+			constexpr int32_t kStepBarH      = 32;
+			const int32_t dotY   = kStepBarMargin + (kStepBarH - kDotSz) / 2;
+			const int32_t labelY = dotY + kDotSz + 2;
+
+			using Step = engine::client::CharacterCreationStep;
+			int32_t activeStep = 0;
+			switch (state.step)
+			{
+				case Step::RaceSelect:    activeStep = 0; break;
+				case Step::ClassSelect:   activeStep = 1; break;
+				case Step::Customization: activeStep = 2; break;
+				default:                  activeStep = 3; break;
+			}
+
+			static constexpr const char* kStepLabels[kTotalSteps] = { "Race", "Class", "Appearance", "Name" };
+			for (int32_t si = 0; si < kTotalSteps; ++si)
+			{
+				const float* lc = (si <= activeStep) ? accentCol : mutedCol;
+				const int32_t labelW = MeasureTextWidthPx(kStepLabels[si], 2);
+				const int32_t lx = stepX + (kStepSlotW - labelW) / 2;
+				AppendText(verts, kStepLabels[si], lx, labelY, kStepSlotW, 2, lc);
+				stepX += kStepSlotW + kSepW;
+			}
+		}
+
+		// Race column title
+		{
+			const int32_t titleW = MeasureTextWidthPx("RACE", 2);
+			const int32_t titleX = lay.raceColX + (lay.raceColW - titleW) / 2;
+			AppendText(verts, "RACE", titleX, lay.colY + 6, lay.raceColW, 2, textCol);
+		}
+
+		// Race card names
+		if (!raceNames.empty())
+		{
+			constexpr int32_t kCardH   = 64;
+			constexpr int32_t kCardGap =  8;
+			constexpr int32_t kCardCols = 2;
+			constexpr int32_t kPad     = 10;
+			const int32_t cardW = (lay.raceColW - kPad * 2 - kCardGap) / kCardCols;
+			for (size_t ri = 0; ri < raceNames.size(); ++ri)
+			{
+				const int32_t row  = static_cast<int32_t>(ri) / kCardCols;
+				const int32_t col  = static_cast<int32_t>(ri) % kCardCols;
+				const int32_t cardX = lay.raceColX + kPad + col * (cardW + kCardGap);
+				const int32_t cardY = lay.colY + kPad + row * (kCardH + kCardGap);
+				if (cardY + kCardH > lay.colY + lay.colH) break;
+				const bool sel = (static_cast<uint32_t>(ri) == state.selectedRaceIndex);
+				const float* nc = sel ? accentCol : textCol;
+				const int32_t nameW = MeasureTextWidthPx(raceNames[ri], 2);
+				const int32_t nameX = cardX + std::max(0, (cardW - nameW) / 2);
+				const int32_t nameY = cardY + (kCardH - 7 * 2) / 2;
+				AppendText(verts, raceNames[ri], nameX, nameY, cardW, 2, nc);
+			}
+		}
+
+		// Class column title + card names
+		using Step = engine::client::CharacterCreationStep;
+		if (state.step == Step::ClassSelect || state.step == Step::Customization)
+		{
+			const int32_t titleW = MeasureTextWidthPx("CLASS", 2);
+			const int32_t titleX = lay.classColX + (lay.classColW - titleW) / 2;
+			AppendText(verts, "CLASS", titleX, lay.colY + 6, lay.classColW, 2, textCol);
+
+			if (!classNames.empty())
+			{
+				constexpr int32_t kCardH   = 64;
+				constexpr int32_t kCardGap =  8;
+				constexpr int32_t kPad     = 10;
+				const int32_t cardW = lay.classColW - kPad * 2;
+				const int32_t cardX = lay.classColX + kPad;
+				for (size_t ci = 0; ci < classNames.size(); ++ci)
+				{
+					const int32_t cardY = lay.colY + kPad + static_cast<int32_t>(ci) * (kCardH + kCardGap);
+					if (cardY + kCardH > lay.colY + lay.colH) break;
+					const bool sel = (static_cast<uint32_t>(ci) == state.selectedClassIndex);
+					const float* nc = sel ? accentCol : textCol;
+					const int32_t nameW = MeasureTextWidthPx(classNames[ci], 2);
+					const int32_t nameX = cardX + std::max(0, (cardW - nameW) / 2);
+					const int32_t nameY = cardY + (kCardH - 7 * 2) / 2;
+					AppendText(verts, classNames[ci], nameX, nameY, cardW, 2, nc);
+				}
+			}
+		}
+
+		// Customization slider labels
+		if (state.step == Step::Customization)
+		{
+			constexpr int32_t kSliderCount = 5;
+			constexpr int32_t kSliderRow   = 24;
+			constexpr int32_t kPad         = 10;
+			const int32_t sliderX = lay.portraitX + kPad * 2;
+			const int32_t sliderW = lay.portraitW - kPad * 4;
+			int32_t sliderY = lay.colY + lay.colH - kSliderCount * kSliderRow - kPad;
+			static constexpr const char* kSliderLabels[kSliderCount] = { "Face", "Hair", "Skin", "Hair Color", "Eye Color" };
+			for (int32_t si = 0; si < kSliderCount; ++si)
+			{
+				AppendText(verts, kSliderLabels[si], sliderX, sliderY - 11, sliderW, 2, mutedCol);
+				sliderY += kSliderRow;
+			}
+		}
+
+		// Name input overlay text
+		const bool showName = (state.step == Step::NameInput || state.step == Step::Confirming
+			|| state.step == Step::Done || state.step == Step::Error);
+		if (showName)
+		{
+			constexpr int32_t kBoxW = 420;
+			constexpr int32_t kBoxH = 160;
+			const int32_t h = static_cast<int32_t>(extent.height);
+			const int32_t boxX = (w - kBoxW) / 2;
+			const int32_t boxY = (h - kBoxH) / 2;
+			constexpr int32_t kPad = 10;
+
+			// Title
+			const int32_t titleW = MeasureTextWidthPx("Name your character", 2);
+			AppendText(verts, "Name your character",
+				boxX + (kBoxW - titleW) / 2, boxY + 12, kBoxW, 2, textCol);
+
+			// "Name" label above field
+			AppendText(verts, "Name", boxX + kPad, boxY + 36, kBoxW - kPad * 2, 2, mutedCol);
+
+			// Typed name inside field
+			if (!state.characterName.empty())
+			{
+				AppendText(verts, state.characterName,
+					boxX + kPad + 4, boxY + 48 + 10, kBoxW - kPad * 2 - 8, 2, textCol);
+			}
+
+			// Error message
+			if (state.step == Step::Error && !state.errorMessage.empty())
+			{
+				constexpr float kErrCol[4]{ 0.90f, 0.40f, 0.40f, 1.f };
+				AppendText(verts, state.errorMessage,
+					boxX + kPad, boxY + kBoxH - 28, kBoxW - kPad * 2, 2, kErrCol);
+			}
+			else if (!state.nameValid && !state.nameErrorMessage.empty())
+			{
+				constexpr float kErrCol[4]{ 0.90f, 0.40f, 0.40f, 1.f };
+				AppendText(verts, state.nameErrorMessage,
+					boxX + kPad, boxY + 92, kBoxW - kPad * 2, 2, kErrCol);
+			}
+		}
+
+		if (verts.empty()) return;
+		if (verts.size() > m_maxVertices) verts.resize(m_maxVertices);
+		std::memcpy(m_mappedVertices, verts.data(), verts.size() * sizeof(GlyphVertex));
+		VkViewport vp{}; vp.width = static_cast<float>(extent.width); vp.height = static_cast<float>(extent.height); vp.maxDepth = 1.f;
+		VkRect2D   sc{}; sc.extent = extent;
+		vkCmdSetViewport(cmd, 0, 1, &vp);
+		vkCmdSetScissor(cmd, 0, 1, &sc);
+		PushConstants push{}; push.viewportSize[0] = vp.width; push.viewportSize[1] = vp.height;
+		VkDeviceSize off = 0;
+		vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &off);
+		const bool useFont = m_fontGpuReady && m_fontPipeline != VK_NULL_HANDLE;
+		if (useFont)
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipeline);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_fontDescriptorSet, 0, nullptr);
+			vkCmdPushConstants(cmd, m_fontPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+		}
+		else
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+		}
+		vkCmdDraw(cmd, static_cast<uint32_t>(verts.size()), 1, 0, 0);
+	}
+
+	// ---------------------------------------------------------------------------
+	// RecordSettingsMenu — panel title, tab names, section title, row labels.
+	// ---------------------------------------------------------------------------
+	void AuthGlyphPass::RecordSettingsMenu(VkDevice /*device*/, VkCommandBuffer cmd, VkExtent2D extent,
+		int32_t activeTab, bool isOpen,
+		const AuthUiTheme& theme)
+	{
+		if (!IsValid() || !isOpen || cmd == VK_NULL_HANDLE || m_mappedVertices == nullptr
+			|| extent.width == 0 || extent.height == 0)
+			return;
+
+		std::vector<GlyphVertex> verts;
+		verts.reserve(512u);
+
+		const float textCol[4]   = { theme.text[0],      theme.text[1],      theme.text[2],      1.00f };
+		const float mutedCol[4]  = { theme.mutedText[0], theme.mutedText[1], theme.mutedText[2], 0.88f };
+		const float accentCol[4] = { theme.accent[0],    theme.accent[1],    theme.accent[2],    1.00f };
+
+		constexpr int32_t kPanelW   = 720;
+		constexpr int32_t kPanelH   = 520;
+		constexpr int32_t kSidebarW = 160;
+		constexpr int32_t kPad      =  10;
+		constexpr int32_t kTabH     =  44;
+		constexpr int32_t kTabGap   =   2;
+		constexpr int32_t kHeaderH  =  32;
+		constexpr int32_t kTabCount =   4;
+		const int32_t panelX = (static_cast<int32_t>(extent.width)  - kPanelW) / 2;
+		const int32_t panelY = (static_cast<int32_t>(extent.height) - kPanelH) / 2;
+
+		// Panel title
+		{
+			const int32_t titleW = MeasureTextWidthPx("Settings", 3);
+			AppendText(verts, "Settings", panelX + kSidebarW + kPad, panelY + 7, kPanelW - kSidebarW - kPad * 2, 3, textCol);
+			(void)titleW;
+		}
+
+		// Tab names (sidebar)
+		static constexpr const char* kTabNames[kTabCount] = { "Graphics", "Audio", "Controls", "Gameplay" };
+		const int32_t tabsStartY = panelY + kHeaderH;
+		for (int32_t ti = 0; ti < kTabCount; ++ti)
+		{
+			const int32_t tabY = tabsStartY + ti * (kTabH + kTabGap);
+			const bool    active = (ti == activeTab);
+			const float*  tc = active ? accentCol : mutedCol;
+			const int32_t labelH = 7 * 2;
+			const int32_t labelY = tabY + (kTabH - labelH) / 2;
+			AppendText(verts, kTabNames[ti], panelX + kPad, labelY, kSidebarW - kPad * 2, 2, tc);
+		}
+
+		// Content area section title
+		const int32_t contentX = panelX + kSidebarW + 1;
+		const int32_t sectionY = panelY + kHeaderH - 12;
+		if (activeTab >= 0 && activeTab < kTabCount)
+			AppendText(verts, kTabNames[activeTab], contentX + kPad, sectionY, kPanelW - kSidebarW - kPad * 2, 2, textCol);
+
+		// Per-tab row labels
+		const int32_t rowsY = panelY + kHeaderH + 10 + 16;
+		const int32_t rowW  = kPanelW - kSidebarW - kPad * 2;
+
+		if (activeTab == 0) // Graphics
+		{
+			static constexpr const char* kRows[] = { "Resolution", "Quality Preset", "V-Sync", "Fullscreen", "Field of View" };
+			constexpr int32_t kRowH = 32, kRowGap = 8;
+			for (int32_t ri = 0; ri < 5; ++ri)
+				AppendText(verts, kRows[ri], contentX + kPad, rowsY + ri * (kRowH + kRowGap) + (kRowH - 14) / 2, rowW, 2, mutedCol);
+		}
+		else if (activeTab == 1) // Audio
+		{
+			static constexpr const char* kRows[] = { "Master Volume", "Music Volume", "SFX Volume", "Voice Volume" };
+			constexpr int32_t kRowH = 40, kRowGap = 12;
+			for (int32_t ri = 0; ri < 4; ++ri)
+				AppendText(verts, kRows[ri], contentX + kPad, rowsY + ri * (kRowH + kRowGap), rowW, 2, mutedCol);
+		}
+		else if (activeTab == 2) // Controls
+		{
+			AppendText(verts, "Mouse Sensitivity", contentX + kPad, rowsY, rowW, 2, mutedCol);
+			AppendText(verts, "Invert Y",          contentX + kPad, rowsY + 32, rowW, 2, mutedCol);
+		}
+		else // Gameplay
+		{
+			static constexpr const char* kRows[] = { "Auto Loot", "Combat Text", "Timestamps", "Camera Distance" };
+			constexpr int32_t kRowH = 36, kRowGap = 8;
+			for (int32_t ri = 0; ri < 4; ++ri)
+				AppendText(verts, kRows[ri], contentX + kPad, rowsY + ri * (kRowH + kRowGap) + (kRowH - 14) / 2, rowW, 2, mutedCol);
+		}
+
+		// Footer buttons
+		{
+			const int32_t footerY = panelY + kPanelH - 56 + (56 - 36) / 2;
+			AppendText(verts, "Apply",  contentX + kPad,       footerY + 10, 120, 2, textCol);
+			AppendText(verts, "Cancel", contentX + kPad + 132, footerY + 10, 120, 2, mutedCol);
+		}
+
+		if (verts.empty()) return;
+		if (verts.size() > m_maxVertices) verts.resize(m_maxVertices);
+		std::memcpy(m_mappedVertices, verts.data(), verts.size() * sizeof(GlyphVertex));
+		VkViewport vp{}; vp.width = static_cast<float>(extent.width); vp.height = static_cast<float>(extent.height); vp.maxDepth = 1.f;
+		VkRect2D   sc{}; sc.extent = extent;
+		vkCmdSetViewport(cmd, 0, 1, &vp);
+		vkCmdSetScissor(cmd, 0, 1, &sc);
+		PushConstants push{}; push.viewportSize[0] = vp.width; push.viewportSize[1] = vp.height;
+		VkDeviceSize off = 0;
+		vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &off);
+		const bool useFont = m_fontGpuReady && m_fontPipeline != VK_NULL_HANDLE;
+		if (useFont)
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipeline);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_fontPipelineLayout, 0, 1, &m_fontDescriptorSet, 0, nullptr);
+			vkCmdPushConstants(cmd, m_fontPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+		}
+		else
+		{
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+			vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+		}
+		vkCmdDraw(cmd, static_cast<uint32_t>(verts.size()), 1, 0, 0);
 	}
 
 	void AuthGlyphPass::Destroy(VkDevice device)

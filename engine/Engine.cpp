@@ -726,6 +726,19 @@ namespace engine
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
 		}
 
+		if (!m_combatHud.Init())
+		{
+			LOG_WARN(Core, "[Boot] CombatHudPresenter init FAILED");
+		}
+		else
+		{
+			(void)m_combatHud.SetViewportSize(static_cast<uint32_t>(std::max(1, m_width)), static_cast<uint32_t>(std::max(1, m_height)));
+		}
+		if (!m_charCreation.Init(m_cfg))
+			LOG_WARN(Core, "[Boot] CharacterCreationPresenter init FAILED");
+		if (!m_settingsMenu.Init(m_cfg))
+			LOG_WARN(Core, "[Boot] SettingsMenuPresenter init FAILED");
+
 		if (m_worldEditorExe && m_authUi.IsInitialized())
 		{
 			m_authUi.BypassAuthGateForWorldEditor();
@@ -2305,6 +2318,164 @@ namespace engine
 													if (authVisualState.active && backbufferView == VK_NULL_HANDLE)
 														LOG_DEBUG(Render, "[CopyPresent] backbuffer imageView is null; skipping auth UI overlay");
 
+													bool renderedGameUi = false;
+													const bool gameUiEnabled = m_authUi.IsFlowComplete()
+														&& !presentSolidColorDebug
+														&& backbufferView != VK_NULL_HANDLE
+														&& m_vkDeviceContext.SupportsDynamicRendering();
+													if (gameUiEnabled)
+													{
+														const engine::render::AuthUiTheme gameTheme = engine::render::LoadAuthUiTheme(m_cfg);
+
+														// Collect all layers
+														std::vector<engine::render::AuthUiLayer> gameLayers;
+														if (m_combatHud.IsInitialized())
+														{
+															const auto combatLayers = engine::render::BuildCombatHudLayers(
+																ext, m_combatHud.GetState(), gameTheme);
+															gameLayers.insert(gameLayers.end(), combatLayers.begin(), combatLayers.end());
+														}
+														if (m_settingsMenu.IsInitialized() && m_settingsMenu.IsOpen())
+														{
+															const auto settingsLayers = engine::render::BuildSettingsMenuLayers(
+																ext, m_settingsMenu.GetActiveTab(), true, gameTheme);
+															gameLayers.insert(gameLayers.end(), settingsLayers.begin(), settingsLayers.end());
+														}
+														const engine::client::CharacterCreationState& ccState = m_charCreation.GetState();
+														const bool showCharCreation = m_charCreation.IsInitialized()
+															&& ccState.step != engine::client::CharacterCreationStep::Done;
+														if (showCharCreation)
+														{
+															const auto& races = m_charCreation.GetRaces();
+															const auto filteredClasses = m_charCreation.GetFilteredClasses();
+															const auto ccLayers = engine::render::BuildCharacterCreationLayers(
+																ext, ccState,
+																static_cast<uint32_t>(races.size()),
+																static_cast<uint32_t>(filteredClasses.size()),
+																gameTheme);
+															gameLayers.insert(gameLayers.end(), ccLayers.begin(), ccLayers.end());
+														}
+
+														if (!gameLayers.empty() || (m_combatHud.IsInitialized() && m_authGlyphPass.IsValid()))
+														{
+															VkImageMemoryBarrier toColorGame{};
+															toColorGame.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+															toColorGame.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+															toColorGame.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+															toColorGame.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+															toColorGame.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+															toColorGame.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+															toColorGame.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+															toColorGame.image = dstImg;
+															toColorGame.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+															vkCmdPipelineBarrier(cmd,
+																VK_PIPELINE_STAGE_TRANSFER_BIT,
+																VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+																0, 0, nullptr, 0, nullptr, 1, &toColorGame);
+
+															VkRenderingAttachmentInfoKHR gameColorAttach{};
+															gameColorAttach.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+															gameColorAttach.imageView = backbufferView;
+															gameColorAttach.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+															gameColorAttach.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
+															gameColorAttach.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+															VkRenderingInfoKHR gameRenderingInfo{};
+															gameRenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+															gameRenderingInfo.renderArea.offset = { 0, 0 };
+															gameRenderingInfo.renderArea.extent = ext;
+															gameRenderingInfo.layerCount = 1;
+															gameRenderingInfo.colorAttachmentCount = 1;
+															gameRenderingInfo.pColorAttachments = &gameColorAttach;
+
+															const PFN_vkCmdBeginRenderingKHR pfnBeginKHR = m_vkDeviceContext.GetCmdBeginRenderingKHR();
+															const PFN_vkCmdEndRenderingKHR   pfnEndKHR   = m_vkDeviceContext.GetCmdEndRenderingKHR();
+															const PFN_vkCmdBeginRendering    pfnBeginCore = m_vkDeviceContext.GetCmdBeginRenderingCore();
+															const PFN_vkCmdEndRendering      pfnEndCore   = m_vkDeviceContext.GetCmdEndRenderingCore();
+
+															bool gameBeganKHR = false;
+															bool gameDidBegin = false;
+															if (pfnBeginKHR && pfnEndKHR)
+															{
+																pfnBeginKHR(cmd, &gameRenderingInfo);
+																gameBeganKHR = true;
+																gameDidBegin = true;
+															}
+															else if (pfnBeginCore && pfnEndCore)
+															{
+																VkRenderingAttachmentInfo coreAttach{};
+																coreAttach.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+																coreAttach.imageView = backbufferView;
+																coreAttach.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+																coreAttach.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
+																coreAttach.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+																VkRenderingInfo coreInfo{};
+																coreInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+																coreInfo.renderArea.offset = { 0, 0 };
+																coreInfo.renderArea.extent = ext;
+																coreInfo.layerCount = 1;
+																coreInfo.colorAttachmentCount = 1;
+																coreInfo.pColorAttachments = &coreAttach;
+																pfnBeginCore(cmd, &coreInfo);
+																gameBeganKHR = false;
+																gameDidBegin = true;
+															}
+
+															if (gameDidBegin)
+															{
+																for (const engine::render::AuthUiLayer& layer : gameLayers)
+																{
+																	VkClearAttachment ca{};
+																	ca.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+																	ca.colorAttachment = 0;
+																	ca.clearValue.color = layer.color;
+																	vkCmdClearAttachments(cmd, 1, &ca, 1, &layer.rect);
+																}
+																if (m_authGlyphPass.IsValid())
+																{
+																	if (m_combatHud.IsInitialized())
+																		m_authGlyphPass.RecordCombatHud(m_vkDeviceContext.GetDevice(), cmd, ext, m_combatHud.GetState(), gameTheme);
+																	if (m_settingsMenu.IsInitialized() && m_settingsMenu.IsOpen())
+																		m_authGlyphPass.RecordSettingsMenu(m_vkDeviceContext.GetDevice(), cmd, ext, static_cast<int32_t>(m_settingsMenu.GetActiveTab()), true, gameTheme);
+																	if (showCharCreation)
+																	{
+																		const auto& races = m_charCreation.GetRaces();
+																		std::vector<std::string> raceNamesList2;
+																		raceNamesList2.reserve(races.size());
+																		for (const auto& r : races) raceNamesList2.push_back(r.displayName);
+																		const auto filteredClasses2 = m_charCreation.GetFilteredClasses();
+																		std::vector<std::string> classNamesList2;
+																		classNamesList2.reserve(filteredClasses2.size());
+																		for (const auto* c : filteredClasses2) classNamesList2.push_back(c->displayName);
+																		m_authGlyphPass.RecordCharacterCreation(m_vkDeviceContext.GetDevice(), cmd, ext,
+																			ccState, static_cast<uint32_t>(races.size()),
+																			raceNamesList2, classNamesList2, gameTheme);
+																	}
+																}
+																if (gameBeganKHR && pfnEndKHR)
+																	pfnEndKHR(cmd);
+																else if (!gameBeganKHR && pfnEndCore)
+																	pfnEndCore(cmd);
+
+																VkImageMemoryBarrier toPresentGame{};
+																toPresentGame.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+																toPresentGame.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+																toPresentGame.dstAccessMask = 0;
+																toPresentGame.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+																toPresentGame.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+																toPresentGame.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+																toPresentGame.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+																toPresentGame.image = dstImg;
+																toPresentGame.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+																vkCmdPipelineBarrier(cmd,
+																	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+																	VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+																	0, 0, nullptr, 0, nullptr, 1, &toPresentGame);
+																renderedGameUi = true;
+															}
+														}
+													}
+
 													bool worldEditorUiToPresent = false;
 #if defined(_WIN32)
 													if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -2315,7 +2486,7 @@ namespace engine
 															cmd, dstImg, backbufferView, ext, m_vkDeviceContext);
 													}
 #endif
-													if (!worldEditorUiToPresent)
+													if (!worldEditorUiToPresent && !renderedGameUi)
 													{
 														VkImageMemoryBarrier barrier{};
 														barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -2462,6 +2633,9 @@ namespace engine
 		}
 		ShutdownGameplayNet();
 		m_authUi.Shutdown();
+		m_combatHud.Shutdown();
+		m_charCreation.Shutdown();
+		m_settingsMenu.Shutdown();
 		m_chatUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
@@ -2763,6 +2937,30 @@ namespace engine
 			if (m_audioEngine.GetCurrentZoneId() == 9999)
 			{
 				m_audioEngine.SetZone(0);
+			}
+
+			if (m_combatHud.IsInitialized())
+			{
+				if (m_gameplayNetInitialized)
+				{
+					const auto& ui = m_uiModelBinding.GetModel();
+					(void)m_combatHud.ApplyModel(ui,
+						engine::client::UIModelChangeStats
+						| engine::client::UIModelChangeCombat
+						| engine::client::UIModelChangeWallet);
+				}
+				(void)m_combatHud.Tick(static_cast<float>(dt));
+			}
+
+			if (m_settingsMenu.IsInitialized())
+			{
+				if (m_input.IsKeyJustPressed(engine::platform::Key::Escape))
+				{
+					if (m_settingsMenu.IsOpen())
+						m_settingsMenu.Close();
+					else
+						m_settingsMenu.Open();
+				}
 			}
 		}
 
@@ -3342,6 +3540,10 @@ namespace engine
 		if (m_authUi.IsInitialized())
 		{
 			(void)m_authUi.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
+		}
+		if (m_combatHud.IsInitialized())
+		{
+			(void)m_combatHud.SetViewportSize(static_cast<uint32_t>(std::max(1, w)), static_cast<uint32_t>(std::max(1, h)));
 		}
 		if (m_gameplayNetInitialized)
 		{

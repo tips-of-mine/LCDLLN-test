@@ -1607,6 +1607,48 @@ namespace engine::render
 			AppendText(vertices, model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
 		}
 
+		// Fil d'Ariane — numéros (01…) et labels d'étapes au-dessus du panneau.
+		if (!model.breadcrumbSteps.empty() && model.breadcrumbCurrent >= 0)
+		{
+			const int32_t scW       = static_cast<int32_t>(extent.width);
+			const int32_t stepCount = static_cast<int32_t>(model.breadcrumbSteps.size());
+			const int32_t totalBW   = stepCount * kAuthUiBreadcrumbSlotW + (stepCount - 1) * kAuthUiBreadcrumbSepW;
+			const int32_t crumbX0   = (scW - totalBW) / 2;
+			const int32_t crumbYTop = panelY - kAuthUiBreadcrumbRowH - 10;
+			if (crumbYTop >= 4)
+			{
+				for (int32_t ci = 0; ci < stepCount; ++ci)
+				{
+					const bool done   = ci < model.breadcrumbCurrent;
+					const bool active = (ci == model.breadcrumbCurrent);
+					const int32_t slotX = crumbX0 + ci * (kAuthUiBreadcrumbSlotW + kAuthUiBreadcrumbSepW);
+					const int32_t dotX  = slotX + (kAuthUiBreadcrumbSlotW - kAuthUiBreadcrumbDot) / 2;
+					const int32_t dotY  = crumbYTop + (kAuthUiBreadcrumbRowH - kAuthUiBreadcrumbDot) / 2;
+
+					// Numéro ("01", "02", …) centré dans le dot.
+					const std::string numStr = (ci + 1 < 10)
+						? "0" + std::to_string(ci + 1)
+						: std::to_string(ci + 1);
+					constexpr int32_t kCrumbNumScale = 2;
+					const float* numColor  = (active || done) ? titleColor : mutedColor;
+					const int32_t numW     = MeasureTextWidthPx(numStr, kCrumbNumScale);
+					const int32_t numX     = dotX + (kAuthUiBreadcrumbDot - numW) / 2;
+					const int32_t numY     = dotY + (kAuthUiBreadcrumbDot - 7 * kCrumbNumScale) / 2;
+					AppendText(vertices, numStr, numX, numY, kAuthUiBreadcrumbDot + 4, kCrumbNumScale, numColor);
+
+					// Label centré dans le slot, sous le dot.
+					if (static_cast<size_t>(ci) < model.breadcrumbSteps.size()
+						&& !model.breadcrumbSteps[static_cast<size_t>(ci)].empty())
+					{
+						const int32_t labelY = dotY + kAuthUiBreadcrumbDot + 3;
+						const float* lc = (active || done) ? accentColor : mutedColor;
+						appendCenteredText(model.breadcrumbSteps[static_cast<size_t>(ci)],
+							slotX, labelY, kAuthUiBreadcrumbSlotW, 2, lc, nullptr);
+					}
+				}
+			}
+		}
+
 		if (!model.infoBanner.empty())
 		{
 			if (layout.authStatusBannerBesideLogo)

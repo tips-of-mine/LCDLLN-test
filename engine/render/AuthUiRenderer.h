@@ -28,6 +28,15 @@ namespace engine::render
 	/// Marge horizontale entre colonnes (px).
 	inline constexpr int32_t kAuthUiGridColGapPx = 12;
 
+	/// Fil d'Ariane — largeur de la zone par étape (numéro + label, centré).
+	inline constexpr int32_t kAuthUiBreadcrumbSlotW = 80;
+	/// Fil d'Ariane — largeur de la barre de séparation entre deux étapes.
+	inline constexpr int32_t kAuthUiBreadcrumbSepW  = 28;
+	/// Fil d'Ariane — côté du dot de l'étape (px).
+	inline constexpr int32_t kAuthUiBreadcrumbDot   = 16;
+	/// Fil d'Ariane — hauteur totale de la ligne breadcrumb (dot + label).
+	inline constexpr int32_t kAuthUiBreadcrumbRowH  = 36;
+
 	/// Calcule la position X et la largeur d'un champ dans la grille.
 	/// @param contentX     X de départ de la zone de contenu
 	/// @param contentW     Largeur totale de la zone de contenu

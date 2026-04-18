@@ -414,10 +414,10 @@ namespace engine::render
 		// Fil d'Ariane — au-dessus du panneau quand present (Register, VerifyEmail, ShardPick).
 		if (!model.breadcrumbSteps.empty() && model.breadcrumbCurrent >= 0)
 		{
-			constexpr int32_t kCrumbDot  = 16;
-			constexpr int32_t kCrumbSepW = 28;
-			constexpr int32_t kCrumbSlot = 80;
-			constexpr int32_t kCrumbRowH = 36;
+			constexpr int32_t kCrumbDot  = kAuthUiBreadcrumbDot;
+			constexpr int32_t kCrumbSepW = kAuthUiBreadcrumbSepW;
+			constexpr int32_t kCrumbSlot = kAuthUiBreadcrumbSlotW;
+			constexpr int32_t kCrumbRowH = kAuthUiBreadcrumbRowH;
 			const int32_t stepCount = static_cast<int32_t>(model.breadcrumbSteps.size());
 			const int32_t totalW    = stepCount * kCrumbSlot + (stepCount - 1) * kCrumbSepW;
 			const int32_t crumbX0   = (w - totalW) / 2;

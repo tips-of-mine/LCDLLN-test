@@ -131,6 +131,9 @@ namespace engine::client
 			/// Indicateur de disponibilité username (champ login uniquement).
 			/// Reflète UsernameCheckState : 0=Idle, 1=Pending, 2=Available, 3=Taken.
 			int32_t usernameCheckState = 0;
+			/// Force du mot de passe (champ password inscription uniquement).
+			/// 0=aucune barre, 1=faible, 2=moyen, 3=fort, 4=très fort.
+			int32_t passwordStrength = 0;
 		};
 
 		/// Bouton d’action : le fond est dessiné sans texte (AuthUiRenderer) ; le libellé vient des clés i18n,
@@ -161,6 +164,10 @@ namespace engine::client
 			bool link = false;
 			bool checkbox = false;
 			bool checkboxChecked = false;
+			/// Remplissage de la barre de charge shard [0, 1]. 0 = pas de barre dessinée.
+			float barFillPct = 0.f;
+			/// Niveau de statut shard : 0=ok (vert), 1=warn (orange), 2=err (rouge).
+			int32_t statusLevel = 0;
 		};
 
 		struct DropdownOption
@@ -208,6 +215,10 @@ namespace engine::client
 		int32_t     infoIconX = 0, infoIconY = 0, infoIconW = 0, infoIconH = 0;
 		bool        infoIconVisible = false;
 		std::vector<RenderDropdown> dropdowns;
+		/// Étiquettes du fil d'Ariane (vide = pas de breadcrumb affiché).
+		std::vector<std::string> breadcrumbSteps;
+		/// Index de l'étape active dans breadcrumbSteps (-1 = non défini).
+		int32_t breadcrumbCurrent = -1;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.

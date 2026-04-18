@@ -411,6 +411,56 @@ namespace engine::render
 
 		}
 
+		// Fil d'Ariane — au-dessus du panneau quand present (Register, VerifyEmail, ShardPick).
+		if (!model.breadcrumbSteps.empty() && model.breadcrumbCurrent >= 0)
+		{
+			constexpr int32_t kCrumbDot  = 16;
+			constexpr int32_t kCrumbSepW = 28;
+			constexpr int32_t kCrumbSlot = 80;
+			constexpr int32_t kCrumbRowH = 36;
+			const int32_t stepCount = static_cast<int32_t>(model.breadcrumbSteps.size());
+			const int32_t totalW    = stepCount * kCrumbSlot + (stepCount - 1) * kCrumbSepW;
+			const int32_t crumbX0   = (w - totalW) / 2;
+			const int32_t crumbY    = panelY - kCrumbRowH - 10;
+
+			if (crumbY >= 4)
+			{
+				for (int32_t ci = 0; ci < stepCount; ++ci)
+				{
+					const bool done   = ci < model.breadcrumbCurrent;
+					const bool active = (ci == model.breadcrumbCurrent);
+					const int32_t slotX = crumbX0 + ci * (kCrumbSlot + kCrumbSepW);
+					const int32_t dotX  = slotX + (kCrumbSlot - kCrumbDot) / 2;
+					const int32_t dotY  = crumbY + (kCrumbRowH - kCrumbDot) / 2;
+
+					if (active)
+					{
+						addThemeRect(dotX, dotY, kCrumbDot, kCrumbDot, theme.primary, 1.0f);
+					}
+					else if (done)
+					{
+						addThemeRect(dotX, dotY, kCrumbDot, kCrumbDot, theme.accent, 0.85f);
+					}
+					else
+					{
+						addThemeRect(dotX, dotY,              kCrumbDot, 1,        theme.border, 0.7f);
+						addThemeRect(dotX, dotY + kCrumbDot - 1, kCrumbDot, 1,    theme.border, 0.7f);
+						addThemeRect(dotX, dotY,              1,        kCrumbDot, theme.border, 0.7f);
+						addThemeRect(dotX + kCrumbDot - 1, dotY, 1,   kCrumbDot, theme.border, 0.7f);
+					}
+
+					if (ci < stepCount - 1)
+					{
+						const int32_t sepX = slotX + kCrumbSlot;
+						const int32_t sepY = crumbY + kCrumbRowH / 2;
+						addThemeRect(sepX, sepY, kCrumbSepW, 1,
+							done ? theme.accent : theme.border,
+							done ? 0.8f : 0.4f);
+					}
+				}
+			}
+		}
+
 		if (!model.infoBanner.empty() && !layout.authStatusBannerBesideLogo)
 		{
 			// Aligner le fond avec le texte de la bannière (AuthGlyphPass : panelY + topOffset - 38).
@@ -580,6 +630,32 @@ namespace engine::render
 				const int32_t iconY = y - labelAboveFieldPx;
 				addThemeRect(iconX, iconY, 18, 18, theme.accent, model.hoveredFieldInfoIndex == i ? 1.0f : 0.65f);
 			}
+
+			// Barres de force mot de passe (4 segments, couleur sémantique).
+			if (field.passwordStrength > 0)
+			{
+				constexpr int32_t kSegH   = 3;
+				constexpr int32_t kSegGap = 3;
+				constexpr int32_t kSegCount = 4;
+				const int32_t segW = std::max(4, (fieldW - (kSegCount - 1) * kSegGap) / kSegCount);
+				const int32_t barY = y + kAuthUiFieldBoxHeightPx + 5;
+				for (int32_t seg = 0; seg < kSegCount; ++seg)
+				{
+					const int32_t bx = fieldX + seg * (segW + kSegGap);
+					if (seg < field.passwordStrength)
+					{
+						float pr, pg, pb;
+						if (field.passwordStrength <= 1)      { pr = 0.80f; pg = 0.18f; pb = 0.18f; }
+						else if (field.passwordStrength == 2) { pr = 0.85f; pg = 0.55f; pb = 0.12f; }
+						else                                  { pr = 0.18f; pg = 0.72f; pb = 0.32f; }
+						addRect(bx, barY, segW, kSegH, pr, pg, pb, 0.95f);
+					}
+					else
+					{
+						addThemeRect(bx, barY, segW, kSegH, theme.surface, 0.75f);
+					}
+				}
+			}
 		}
 
 		const int32_t bodyScaleMetrics = std::clamp(panelW / 260, 2, 4);
@@ -600,6 +676,8 @@ namespace engine::render
 			const bool activeBodyLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].active : false;
 			const bool hoveredBodyLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].hovered : false;
 			const bool checkboxLine = static_cast<size_t>(bodyIndex) < model.bodyLines.size() && model.bodyLines[static_cast<size_t>(bodyIndex)].checkbox;
+			const float   shardBarPct = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].barFillPct  : 0.f;
+			const int32_t shardStatus = static_cast<size_t>(bodyIndex) < model.bodyLines.size() ? model.bodyLines[static_cast<size_t>(bodyIndex)].statusLevel : 0;
 			if (checkboxLine)
 			{
 				const bool checked = model.bodyLines[static_cast<size_t>(bodyIndex)].checkboxChecked;
@@ -635,6 +713,30 @@ namespace engine::render
 				{
 					addThemeRect(contentX - 4, y - 4, 3, 12, theme.accent, 0.55f);
 				}
+			}
+
+			// Barre de charge + badge statut (lignes shard uniquement, barFillPct > 0).
+			if (shardBarPct > 0.f)
+			{
+				constexpr int32_t kBarW = 60;
+				constexpr int32_t kBarH = 4;
+				constexpr int32_t kDot  = 6;
+				const int32_t barX = contentX + contentW - kBarW - kDot - 10;
+				const int32_t barY = y + 6;
+				addThemeRect(barX, barY, kBarW, kBarH, theme.surface, 0.85f);
+				const int32_t fillW = std::max(1, static_cast<int32_t>(kBarW * std::min(1.f, shardBarPct)));
+				if (shardStatus == 1)
+					addRect(barX, barY, fillW, kBarH, 0.85f, 0.55f, 0.12f, 0.95f);
+				else
+					addRect(barX, barY, fillW, kBarH, 0.20f, 0.70f, 0.32f, 0.95f);
+				const int32_t dotX = barX + kBarW + 4;
+				const int32_t dotY = barY - 1;
+				if (shardStatus == 0)
+					addRect(dotX, dotY, kDot, kDot, 0.20f, 0.70f, 0.32f, 1.0f);
+				else if (shardStatus == 1)
+					addRect(dotX, dotY, kDot, kDot, 0.85f, 0.55f, 0.12f, 1.0f);
+				else
+					addRect(dotX, dotY, kDot, kDot, 0.80f, 0.18f, 0.18f, 1.0f);
 			}
 		}
 
@@ -694,6 +796,19 @@ namespace engine::render
 			const int32_t cx = (w - box) / 2;
 			const int32_t cy = (h - box) / 2;
 			addRect(cx, cy, box, box, 1.0f, 0.0f, 1.0f, 1.0f);
+		}
+
+		// Popup info — voile sombre + panneau centré par-dessus tout le reste.
+		if (model.infoPopupVisible)
+		{
+			addRect(0, 0, w, h, 0.0f, 0.0f, 0.0f, 0.55f);
+			constexpr int32_t kPopW = 380;
+			constexpr int32_t kPopH = 120;
+			const int32_t popX = (w - kPopW) / 2;
+			const int32_t popY = (h - kPopH) / 2;
+			addThemeRect(popX - 2, popY - 2, kPopW + 4, kPopH + 4, theme.border, 0.9f);
+			addThemeRect(popX, popY, kPopW, kPopH, theme.panel, 0.98f);
+			addThemeRect(popX, popY, kPopW, 3, theme.accent, 1.0f);
 		}
 
 		return layers;

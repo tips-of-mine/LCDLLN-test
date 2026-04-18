@@ -4980,6 +4980,22 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				false, true, Tr("auth.tooltip.birth_year"),  2, 1);
 			addGridField(Tr("auth.label.password"),  maskedPassword(),  m_activeField == 1,
 				true,  false, Tr("auth.tooltip.password"),   0, 3);
+			{
+				// Force mot de passe : ≥8 car, maj, chiffre, spécial (règles design system).
+				int32_t s = 0;
+				if (m_password.size() >= 8u) ++s;
+				bool hasUp = false, hasDig = false, hasSpc = false;
+				for (unsigned char c : m_password)
+				{
+					if (std::isupper(c) != 0)       hasUp  = true;
+					else if (std::isdigit(c) != 0)  hasDig = true;
+					else if (std::isalnum(c) == 0)  hasSpc = true;
+				}
+				if (hasUp)  ++s;
+				if (hasDig) ++s;
+				if (hasSpc) ++s;
+				model.fields.back().passwordStrength = s;
+			}
 			addGridField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2,
 				true,  false, Tr("auth.tooltip.password_confirm"), 0, 3,
 				pwdMatch ? 1 : (pwdMismatch ? -1 : 0));
@@ -5039,6 +5055,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
+			model.breadcrumbSteps = {
+				Tr("auth.breadcrumb.lang"),
+				Tr("auth.breadcrumb.account"),
+				Tr("auth.breadcrumb.email"),
+				Tr("auth.breadcrumb.world"),
+			};
+			model.breadcrumbCurrent = 1;
 			break;
 		}
 		case Phase::VerifyEmail:
@@ -5046,6 +5069,13 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
+			model.breadcrumbSteps = {
+				Tr("auth.breadcrumb.lang"),
+				Tr("auth.breadcrumb.account"),
+				Tr("auth.breadcrumb.email"),
+				Tr("auth.breadcrumb.world"),
+			};
+			model.breadcrumbCurrent = 2;
 			break;
 		case Phase::EmailConfirmationPending:
 		{
@@ -5105,7 +5135,21 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						{ "load", std::to_string(e.current_load) + "/" + std::to_string(e.max_capacity) },
 						{ "endpoint", e.endpoint } });
 				addBodyLine(line, m_shardPickChoiceShardId == e.shard_id, true);
+				{
+					const float pct = (e.max_capacity > 0u)
+						? std::min(1.f, static_cast<float>(e.current_load) / static_cast<float>(e.max_capacity))
+						: 0.f;
+					model.bodyLines.back().barFillPct  = pct;
+					model.bodyLines.back().statusLevel = (pct > 0.85f) ? 1 : 0;
+				}
 			}
+			model.breadcrumbSteps = {
+				Tr("auth.breadcrumb.account"),
+				Tr("auth.breadcrumb.realm"),
+				Tr("auth.breadcrumb.character"),
+				Tr("auth.breadcrumb.entry"),
+			};
+			model.breadcrumbCurrent = 1;
 			addActionKeys("common.submit", true, m_shardPickChoiceShardId != 0u, false);
 			addActionKeys("common.back", false, true, false);
 			break;

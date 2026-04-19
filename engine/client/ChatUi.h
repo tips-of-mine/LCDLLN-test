@@ -5,9 +5,42 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace engine::client
 {
+	/// Four UI tabs shown in the bottom-left chat panel (design system — HudOverlay).
+	enum class ChatUiTab : uint8_t
+	{
+		General = 0, ///< SAY / YELL / PARTY / ZONE / GLOBAL / SERVER / RAID / FRIENDS
+		Trade   = 1, ///< ZONE + GLOBAL (commerce)
+		Guild   = 2, ///< GUILD only
+		Whisper = 3, ///< WHISPER / MP only
+	};
+
+	/// One rendered chat line: bracketed sender name with ARGB color + italic body.
+	struct ChatMessageLine
+	{
+		std::string senderLabel;                   ///< e.g. "[Aldric]"; empty for server lines.
+		std::string messageText;
+		uint32_t    senderColorArgb = 0xFFFFFFFFu; ///< ARGB32 applied to senderLabel.
+	};
+
+	/// Fully resolved chat panel state ready for a renderer to consume.
+	struct ChatPanelState
+	{
+		ChatUiTab                    activeTab = ChatUiTab::General;
+		std::vector<ChatMessageLine> visibleLines; ///< Scrolled + filtered window.
+		std::string                  inputDraft;
+		bool                         focused    = false;
+		// Pixel-space bounds (bottom-left anchor, 360 px wide per design spec).
+		float panelX      = 18.f;
+		float panelY      = 0.f;
+		float panelWidth  = 360.f;
+		float panelHeight = 200.f;
+		bool  layoutValid = false;
+	};
+
 	/// Presents M29.1 chat history + input buffer as a text panel (scroll, filters, slash commands).
 	class ChatUiPresenter final
 	{
@@ -40,10 +73,26 @@ namespace engine::client
 
 		bool IsInitialized() const { return m_initialized; }
 
+		// ---- Design system: tab selection + panel state ----
+
+		/// Switch the active chat tab (updates visible line set immediately).
+		void SetActiveTab(ChatUiTab tab);
+		ChatUiTab             GetActiveTab()   const { return m_activeTab;   }
+		const ChatPanelState& GetPanelState()  const { return m_panelState;  }
+
 	private:
 		void SubmitInputLine();
 		void RebuildFilterLegend(std::string& out) const;
 		static void PopLastUtf8Codepoint(std::string& utf8);
+
+		/// Recompute m_panelState from current history, tab, scroll and input buffer.
+		void RebuildPanelState();
+
+		/// Channel bitmask for a given UI tab.
+		static uint16_t TabChannelMask(ChatUiTab tab);
+
+		/// ARGB32 color for the sender label of one message (design system palette).
+		static uint32_t SenderColorArgb(const engine::net::ChatMessage& msg);
 
 		engine::net::ChatHistoryRing m_history{};
 		bool m_initialized = false;
@@ -56,5 +105,8 @@ namespace engine::client
 		uint32_t m_scrollLinesFromEnd = 0;
 		static constexpr uint32_t kMaxVisibleLines = 18u;
 		static constexpr size_t kMaxInputUtf8Bytes = 256u;
+
+		ChatUiTab      m_activeTab  = ChatUiTab::General;
+		ChatPanelState m_panelState{};
 	};
 }

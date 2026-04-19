@@ -105,8 +105,15 @@ namespace engine::client
 			return false;
 		}
 
-		m_viewportWidth = width;
+		m_viewportWidth  = width;
 		m_viewportHeight = height;
+
+		m_panelState.panelX      = 18.f;
+		m_panelState.panelWidth  = 360.f;
+		m_panelState.panelHeight = 200.f;
+		m_panelState.panelY      = static_cast<float>(height) - 18.f - m_panelState.panelHeight;
+		m_panelState.layoutValid = true;
+
 		LOG_INFO(Core, "[ChatUiPresenter] Viewport updated ({}x{})", width, height);
 		return true;
 	}
@@ -238,6 +245,8 @@ namespace engine::client
 				LOG_DEBUG(Core, "[ChatUiPresenter] PageDown scroll (lines_from_end={})", m_scrollLinesFromEnd);
 			}
 		}
+
+		RebuildPanelState();
 	}
 
 	void ChatUiPresenter::PushNetworkLine(const engine::net::ChatMessage& message)
@@ -253,6 +262,7 @@ namespace engine::client
 			static_cast<unsigned>(engine::net::ToWire(message.channel)),
 			message.sender.size(),
 			message.text.size());
+		RebuildPanelState();
 	}
 
 	void ChatUiPresenter::SubmitInputLine()
@@ -314,6 +324,90 @@ namespace engine::client
 	{
 		m_chatFocus = focused;
 		LOG_INFO(Core, "[ChatUiPresenter] Chat focus set ({})", focused ? "true" : "false");
+	}
+
+	// =========================================================================
+	// Design system: tab selection + panel state
+	// =========================================================================
+
+	void ChatUiPresenter::SetActiveTab(ChatUiTab tab)
+	{
+		m_activeTab = tab;
+		m_scrollLinesFromEnd = 0;
+		RebuildPanelState();
+		LOG_INFO(Core, "[ChatUiPresenter] Active tab set ({})", static_cast<uint8_t>(tab));
+	}
+
+	/*static*/ uint16_t ChatUiPresenter::TabChannelMask(ChatUiTab tab)
+	{
+		switch (tab)
+		{
+		case ChatUiTab::General:
+			// All channels except Guild(4) and Whisper(2)
+			return static_cast<uint16_t>(0x3FFu & ~(1u << 4u) & ~(1u << 2u));
+		case ChatUiTab::Trade:
+			// Zone(5) + Global(6)
+			return static_cast<uint16_t>((1u << 5u) | (1u << 6u));
+		case ChatUiTab::Guild:
+			return static_cast<uint16_t>(1u << 4u);
+		case ChatUiTab::Whisper:
+			return static_cast<uint16_t>(1u << 2u);
+		}
+		return 0x3FFu;
+	}
+
+	/*static*/ uint32_t ChatUiPresenter::SenderColorArgb(const engine::net::ChatMessage& msg)
+	{
+		if (msg.channel == engine::net::ChatChannel::Server)
+			return 0xFFE8A55Cu; // --ln-warning: system / server messages
+		if (msg.sender == "Local")
+			return 0xFFC4A0E8u; // soft purple: local player (self)
+		return 0xFF8AB4E5u;     // light blue: other players
+	}
+
+	void ChatUiPresenter::RebuildPanelState()
+	{
+		m_panelState.activeTab  = m_activeTab;
+		m_panelState.inputDraft = m_inputLine;
+		m_panelState.focused    = m_chatFocus;
+
+		const uint16_t tabMask = TabChannelMask(m_activeTab);
+
+		std::vector<const engine::net::ChatMessage*> filtered;
+		filtered.reserve(m_history.Lines().size());
+		for (const engine::net::ChatMessage& line : m_history.Lines())
+		{
+			const uint32_t bit = 1u << static_cast<uint32_t>(line.channel);
+			if ((static_cast<uint32_t>(tabMask) & bit) != 0u)
+				filtered.push_back(&line);
+		}
+
+		const uint32_t total = static_cast<uint32_t>(filtered.size());
+		uint32_t begin = 0;
+		if (total > kMaxVisibleLines)
+		{
+			const uint32_t maxStart    = total - kMaxVisibleLines;
+			const uint32_t scrollClamp = std::min(m_scrollLinesFromEnd, maxStart);
+			begin = maxStart - scrollClamp;
+		}
+		const uint32_t end = std::min<uint32_t>(total, begin + kMaxVisibleLines);
+
+		m_panelState.visibleLines.clear();
+		m_panelState.visibleLines.reserve(end - begin);
+		for (uint32_t i = begin; i < end; ++i)
+		{
+			const engine::net::ChatMessage& msg = *filtered[i];
+			ChatMessageLine cl;
+			if (!msg.sender.empty())
+			{
+				cl.senderLabel  = "[";
+				cl.senderLabel += msg.sender;
+				cl.senderLabel += "]";
+			}
+			cl.messageText     = msg.text;
+			cl.senderColorArgb = SenderColorArgb(msg);
+			m_panelState.visibleLines.push_back(std::move(cl));
+		}
 	}
 
 	std::string ChatUiPresenter::BuildPanelText() const

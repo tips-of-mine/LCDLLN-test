@@ -1584,7 +1584,44 @@ namespace engine::render
 		const int32_t titleAreaX = layout.authTitleUseViewportWidth ? 24 : (drawTitleAcrossPanel ? (panelX + 24) : contentX);
 		const int32_t titleAreaW =
 			layout.authTitleUseViewportWidth ? std::max(100, viewportW - 48) : (drawTitleAcrossPanel ? (panelW - 48) : contentW);
-		if (!model.titleLine2.empty())
+		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
+		if (model.languageFirstRunLayout)
+		{
+			appendCenteredText(model.titleLine1, titleAreaX, layout.languageHeroTitle1YPx, titleAreaW, titleScale, titleColor, nullptr);
+			appendCenteredText(model.titleLine2, titleAreaX, layout.languageHeroTitle2YPx, titleAreaW, bodyScale, accentColor, nullptr);
+			AppendText(vertices, model.sectionTitle, contentX + 2, layout.languagePanelSectionTitleYPx, contentW - 12, bodyScale,
+				titleColor);
+			if (!model.languageVersionLabel.empty())
+			{
+				const int32_t vwLab = MeasureTextWidthPx(model.languageVersionLabel, smallScale);
+				const int32_t vxLab = layout.languageVersionTextRightXPx - vwLab;
+				const int32_t minX = layout.languageProgressPlatePresent ? (layout.languageProgressPlateX + 8) : (contentX + 2);
+				AppendText(vertices, model.languageVersionLabel, std::max(minX, vxLab), layout.languageVersionTextYPx,
+					std::max(32, vwLab + 4), smallScale, titleColor);
+			}
+			appendCenteredText("i", layout.languageInfoIconX, layout.languageInfoIconY + 2, layout.languageInfoIconW, smallScale,
+				titleColor, nullptr);
+			if (!model.languagePanelSubtitle.empty())
+			{
+				AppendText(verticesValue, model.languagePanelSubtitle, contentX + 2, layout.languagePanelSubtitleYPx, contentW - 8,
+					bodyScale, mutedColor, /*useValueFont=*/true);
+			}
+			for (int32_t ci = 0; ci < layout.languageCardCount; ++ci)
+			{
+				if (static_cast<size_t>(ci) >= model.languageFirstRunCards.size())
+				{
+					break;
+				}
+				const auto& card = model.languageFirstRunCards[static_cast<size_t>(ci)];
+				const int32_t cax = layout.languageCardX[ci];
+				const int32_t cay = layout.languageCardY[ci];
+				const int32_t caw = layout.languageCardW[ci];
+				const int32_t nameY = layout.languageFlagCenterY[ci] + layout.languageFlagHalfExtentPx[ci] + 8;
+				appendCenteredText(card.nameAllCaps, cax, nameY, caw, smallScale,
+					(card.selected || card.hovered) ? accentColor : titleColor, nullptr);
+			}
+		}
+		else if (!model.titleLine2.empty())
 		{
 			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
 				titleColor, nullptr);
@@ -1596,15 +1633,17 @@ namespace engine::render
 			appendCenteredText(model.titleLine1, titleAreaX, panelY + layout.authTitleLine1OffsetFromPanelTopPx, titleAreaW, titleScale,
 				titleColor, nullptr);
 		}
-		const bool centeredLanguageSelection = state.languageSelection || state.languageOptions;
 		const int32_t sectionTitleY = panelY + layout.authSectionTitleOffsetFromPanelTopPx;
-		if (centeredLanguageSelection)
+		if (!model.languageFirstRunLayout)
 		{
-			appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor, nullptr);
-		}
-		else
-		{
-			AppendText(vertices, model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
+			if (centeredLanguageSelection)
+			{
+				appendCenteredText(model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor, nullptr);
+			}
+			else
+			{
+				AppendText(vertices, model.sectionTitle, contentX, sectionTitleY, contentW, bodyScale, titleColor);
+			}
 		}
 
 		if (!model.infoBanner.empty())
@@ -1732,6 +1771,38 @@ namespace engine::render
 					const int32_t labelX = std::max(x + 10, x + (actionW - labelWidth) / 2);
 					AppendText(vertices, label, labelX, termsLabelY, actionW - 20, actionLabelScale, titleColor);
 				}
+			}
+		}
+		else if (!state.submitting && model.languageFirstRunLayout)
+		{
+			const int32_t actionLabelScaleLf = std::max(2, bodyScale - 1);
+			for (size_t ai = 0; ai < model.actions.size(); ++ai)
+			{
+				if (!model.actions[ai].primary)
+				{
+					continue;
+				}
+				const int32_t btnYLf = layout.languagePanelPrimaryButtonY;
+				const int32_t labelYLf = actionButtonLabelTopY(btnYLf);
+				const int32_t lwLf = MeasureTextWidthPx(model.actions[ai].label, actionLabelScaleLf);
+				const int32_t lxLf = layout.languagePanelPrimaryButtonX
+					+ std::max(8, (layout.languagePanelPrimaryButtonW - lwLf) / 2);
+				AppendText(vertices, model.actions[ai].label, lxLf, labelYLf, layout.languagePanelPrimaryButtonW - 16, actionLabelScaleLf,
+					titleColor);
+				break;
+			}
+			if (!model.languageFooterLeft.empty())
+			{
+				const int32_t footY = layout.languagePanelFooterYPx;
+				const int32_t footMargin = 28;
+				AppendText(vertices, model.languageFooterLeft, footMargin, footY, viewportW / 2 - footMargin, smallScale, titleColor);
+			}
+			if (!model.languageFooterRight.empty())
+			{
+				const int32_t footY = layout.languagePanelFooterYPx;
+				const int32_t footMargin = 28;
+				const int32_t rwFr = MeasureTextWidthPx(model.languageFooterRight, smallScale);
+				AppendText(vertices, model.languageFooterRight, viewportW - rwFr - footMargin, footY, rwFr + 8, smallScale, titleColor);
 			}
 		}
 		else if (!state.submitting)
@@ -1868,9 +1939,68 @@ namespace engine::render
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 			const int32_t gap = 10;
+			const bool loginMaquetteGlyph =
+				layout.loginMaquetteLayout && state.login && model.actions.size() >= 4u;
 			AuthLoginTwoRowLayout loginTwoRow{};
-			const bool loginTwoRows = TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
-			if (loginTwoRows)
+			const bool loginTwoRows = !loginMaquetteGlyph && TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
+			if (loginMaquetteGlyph)
+			{
+				const int32_t yBtn = layout.loginPairRowY;
+				const int32_t badgeScale = std::max(2, actionLabelScale - 1);
+				constexpr int32_t kBadgeSlot = 44;
+				if (model.actions.size() >= 3u)
+				{
+					const auto& regAct = model.actions[0];
+					const auto& subAct = model.actions[2];
+					const int32_t regX = layout.loginRegisterBtnX;
+					const int32_t regW = layout.loginRegisterBtnW;
+					const int32_t subX = layout.loginSubmitBtnX;
+					const int32_t subW = layout.loginSubmitBtnW;
+					const int32_t ly = actionButtonLabelTopY(yBtn);
+					{
+						const int32_t labelMax = std::max(40, regW - 18 - kBadgeSlot);
+						const int32_t lw = MeasureTextWidthPx(regAct.label, actionLabelScale);
+						const int32_t lx = std::min(regX + 10, regX + regW - kBadgeSlot - 8 - lw);
+						const float* ac = regAct.emphasized ? titleColor : mutedColor;
+						AppendText(vertices, regAct.label, lx, ly, labelMax, actionLabelScale, ac);
+						if (!regAct.actionBadge.empty())
+						{
+							const int32_t bw = MeasureTextWidthPx(regAct.actionBadge, badgeScale);
+							const int32_t bx = regX + regW - kBadgeSlot + (kBadgeSlot - bw) / 2;
+							AppendText(vertices, regAct.actionBadge, bx, ly, kBadgeSlot, badgeScale, titleColor);
+						}
+					}
+					{
+						const int32_t labelMax = std::max(40, subW - 18 - kBadgeSlot);
+						const int32_t lw = MeasureTextWidthPx(subAct.label, actionLabelScale);
+						const int32_t lx = std::min(subX + 10, subX + subW - kBadgeSlot - 8 - lw);
+						const float* ac = subAct.primary ? titleColor : mutedColor;
+						AppendText(vertices, subAct.label, lx, ly, labelMax, actionLabelScale, ac);
+						if (!subAct.actionBadge.empty())
+						{
+							const int32_t bw = MeasureTextWidthPx(subAct.actionBadge, badgeScale);
+							const int32_t bx = subX + subW - kBadgeSlot + (kBadgeSlot - bw) / 2;
+							AppendText(vertices, subAct.actionBadge, bx, ly, kBadgeSlot, badgeScale, titleColor);
+						}
+					}
+				}
+				if (model.actions.size() >= 4u)
+				{
+					const int32_t linkY = layout.loginOutLinksY;
+					const auto& optA = model.actions[1];
+					const auto& quitA = model.actions[3];
+					const float* optC = optA.hovered ? primaryColor : accentColor;
+					const float* quitC = quitA.hovered ? primaryColor : accentColor;
+					appendCenteredText(optA.label, layout.loginOutLinkOptsX, linkY, layout.loginOutLinkOptsW, bodyScale, optC, nullptr);
+					appendCenteredText(quitA.label, layout.loginOutLinkQuitX, linkY, layout.loginOutLinkQuitW, bodyScale, quitC, nullptr);
+				}
+				if (!model.footerHint.empty())
+				{
+					appendCenteredText(model.footerHint, contentX, layout.loginFooterHintY + 2, contentW, smallScale, titleColor,
+						nullptr);
+				}
+			}
+			else if (loginTwoRows)
 			{
 				for (int32_t row = 0; row < 2; ++row)
 				{
@@ -1918,7 +2048,7 @@ namespace engine::render
 					AppendText(vertices, action.label, labelX, singleRowLabelY, actionW - 20, actionLabelScale, ac);
 				}
 			}
-			if (!model.footerHint.empty())
+			if (!loginMaquetteGlyph && !model.footerHint.empty())
 			{
 				AppendText(vertices, model.footerHint, contentX, panelY + panelH - 28, contentW, smallScale, mutedColor);
 			}

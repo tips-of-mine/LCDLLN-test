@@ -148,6 +148,8 @@ namespace engine::client
 			bool hovered = false;
 			/// Mise en avant (ex. Inscription / Options sur l’écran connexion).
 			bool emphasized = false;
+			/// Texte court affiché à droite dans le bouton (ex. raccourci, pictogramme) — écran connexion maquette.
+			std::string actionBadge;
 		};
 
 		struct RenderBodyLine
@@ -176,6 +178,16 @@ namespace engine::client
 			int32_t                      selectedIndex = 0;
 			bool                         isOpen        = false;
 			int32_t                      x = 0, y = 0, w = 0, h = 0;  // bounding box (remplie par renderer)
+		};
+
+		/// Carte langue (écran premier lancement) — aligné sur la maquette Lune Noire.
+		struct LanguageFirstRunCard
+		{
+			std::string localeTag;
+			std::string nameAllCaps;
+			std::string nativeLine;
+			bool selected = false;
+			bool hovered = false;
 		};
 
 		struct RenderModel
@@ -208,6 +220,13 @@ namespace engine::client
 		int32_t     infoIconX = 0, infoIconY = 0, infoIconW = 0, infoIconH = 0;
 		bool        infoIconVisible = false;
 		std::vector<RenderDropdown> dropdowns;
+			/// Premier lancement : panneau central type « maquette » (cartes + pied).
+			bool languageFirstRunLayout = false;
+			std::string languagePanelSubtitle;
+			std::string languageVersionLabel;
+			std::vector<LanguageFirstRunCard> languageFirstRunCards;
+			std::string languageFooterLeft;
+			std::string languageFooterRight;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -329,6 +348,8 @@ namespace engine::client
 			m_hoveredFieldInfoIndex = -1;
 			m_hoveredBodyLineIndex = -1;
 			m_hoveredActionIndex = -1;
+			m_hoveredLanguageCardIndex = -1;
+			m_authPrevMouseLeftDown = false;
 			m_openDropdownIndex = -1;
 			m_userErrorText.clear();
 			m_infoPopupVisible = false;
@@ -376,6 +397,10 @@ namespace engine::client
 		int32_t m_hoveredFieldInfoIndex = -1;
 		int32_t m_hoveredBodyLineIndex = -1;
 		int32_t m_hoveredActionIndex = -1;
+		/// Phase \c LanguageSelectionFirstRun : carte sous le curseur, ou -1.
+		int32_t m_hoveredLanguageCardIndex = -1;
+		/// Front descendant du clic gauche (WasMousePressed ou première frame « bouton enfoncé »).
+		bool m_authPrevMouseLeftDown = false;
 		uint32_t m_termsScrollOffset = 0;
 		uint32_t m_termsTotalLength = 0;
 		std::string m_userErrorText;

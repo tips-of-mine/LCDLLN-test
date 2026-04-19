@@ -65,47 +65,103 @@ namespace engine::platform
 			break;
 		}
 		case WM_LBUTTONDOWN:
+		{
+			// Même coordonnées clientes que WM_MOUSEMOVE : sans cela, un clic sans mouvement
+			// intermédiaire garde une position obsolète et le hit-test UI (auth, etc.) échoue.
+			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
+			const int y = GET_Y_LPARAM(static_cast<LPARAM>(lparam));
+			m_mouseX = x;
+			m_mouseY = y;
+			m_lastMouseX = x;
+			m_lastMouseY = y;
+			m_haveLastMouse = true;
 			if (!m_mouseDown[static_cast<size_t>(MouseButton::Left)])
 			{
 				m_mousePressed[static_cast<size_t>(MouseButton::Left)] = true;
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Left)] = true;
 			break;
+		}
 		case WM_LBUTTONUP:
+		{
+			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
+			const int y = GET_Y_LPARAM(static_cast<LPARAM>(lparam));
+			m_mouseX = x;
+			m_mouseY = y;
+			m_lastMouseX = x;
+			m_lastMouseY = y;
+			m_haveLastMouse = true;
 			if (m_mouseDown[static_cast<size_t>(MouseButton::Left)])
 			{
 				m_mouseReleased[static_cast<size_t>(MouseButton::Left)] = true;
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Left)] = false;
 			break;
+		}
 		case WM_RBUTTONDOWN:
+		{
+			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
+			const int y = GET_Y_LPARAM(static_cast<LPARAM>(lparam));
+			m_mouseX = x;
+			m_mouseY = y;
+			m_lastMouseX = x;
+			m_lastMouseY = y;
+			m_haveLastMouse = true;
 			if (!m_mouseDown[static_cast<size_t>(MouseButton::Right)])
 			{
 				m_mousePressed[static_cast<size_t>(MouseButton::Right)] = true;
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Right)] = true;
 			break;
+		}
 		case WM_RBUTTONUP:
+		{
+			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
+			const int y = GET_Y_LPARAM(static_cast<LPARAM>(lparam));
+			m_mouseX = x;
+			m_mouseY = y;
+			m_lastMouseX = x;
+			m_lastMouseY = y;
+			m_haveLastMouse = true;
 			if (m_mouseDown[static_cast<size_t>(MouseButton::Right)])
 			{
 				m_mouseReleased[static_cast<size_t>(MouseButton::Right)] = true;
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Right)] = false;
 			break;
+		}
 		case WM_MBUTTONDOWN:
+		{
+			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
+			const int y = GET_Y_LPARAM(static_cast<LPARAM>(lparam));
+			m_mouseX = x;
+			m_mouseY = y;
+			m_lastMouseX = x;
+			m_lastMouseY = y;
+			m_haveLastMouse = true;
 			if (!m_mouseDown[static_cast<size_t>(MouseButton::Middle)])
 			{
 				m_mousePressed[static_cast<size_t>(MouseButton::Middle)] = true;
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Middle)] = true;
 			break;
+		}
 		case WM_MBUTTONUP:
+		{
+			const int x = GET_X_LPARAM(static_cast<LPARAM>(lparam));
+			const int y = GET_Y_LPARAM(static_cast<LPARAM>(lparam));
+			m_mouseX = x;
+			m_mouseY = y;
+			m_lastMouseX = x;
+			m_lastMouseY = y;
+			m_haveLastMouse = true;
 			if (m_mouseDown[static_cast<size_t>(MouseButton::Middle)])
 			{
 				m_mouseReleased[static_cast<size_t>(MouseButton::Middle)] = true;
 			}
 			m_mouseDown[static_cast<size_t>(MouseButton::Middle)] = false;
 			break;
+		}
 		case WM_MOUSEWHEEL:
 		{
 			// GET_WHEEL_DELTA_WPARAM returns the delta in multiples of WHEEL_DELTA (120).

@@ -73,6 +73,9 @@ namespace engine::render
 		float text[4]{ 0.91f, 0.93f, 0.95f, 1.0f };
 		float mutedText[4]{ 0.66f, 0.71f, 0.76f, 1.0f };
 		float border[4]{ 0.19f, 0.27f, 0.34f, 1.0f };
+		/// Lus depuis \c theme.json (\c metrics.radius, \c metrics.padding).
+		int32_t uiCornerRadiusPx = 8;
+		int32_t uiContentPaddingPx = 10;
 	};
 
 	struct AuthUiLayoutMetrics
@@ -101,6 +104,54 @@ namespace engine::render
 		int32_t authErrorBoxTopFromPanelTopPx = 0;
 		int32_t authErrorBoxHeightPx = 0;
 		int32_t authErrorFooterTopFromPanelTopPx = 0;
+		/// Écran choix langue (premier lancement) : géométrie partagée renderer / glyphes / hit-test.
+		bool languageFirstRunPanel = false;
+		int32_t languageHeroTitle1YPx = 0;
+		int32_t languageHeroTitle2YPx = 0;
+		int32_t languagePanelSectionTitleYPx = 0;
+		int32_t languagePanelSubtitleYPx = 0;
+		int32_t languagePanelCardsRowYPx = 0;
+		int32_t languagePanelCardHeightPx = 0;
+		int32_t languagePanelPrimaryButtonX = 0;
+		int32_t languagePanelPrimaryButtonY = 0;
+		int32_t languagePanelPrimaryButtonW = 0;
+		int32_t languagePanelPrimaryButtonH = 0;
+		int32_t languagePanelFooterYPx = 0;
+		int32_t languageInfoIconX = 0;
+		int32_t languageInfoIconY = 0;
+		int32_t languageInfoIconW = 0;
+		int32_t languageInfoIconH = 0;
+		int32_t languageVersionTextRightXPx = 0;
+		int32_t languageVersionTextYPx = 0;
+		/// Petit panneau bas-droit (progression + « i »), rendu avant le texte.
+		bool languageProgressPlatePresent = false;
+		int32_t languageProgressPlateX = 0;
+		int32_t languageProgressPlateY = 0;
+		int32_t languageProgressPlateW = 0;
+		int32_t languageProgressPlateH = 0;
+		/// Par carte : x, y, w, h (drapeau + texte), jusqu’à 8 langues.
+		static constexpr int32_t kLanguageFirstRunMaxCards = 8;
+		int32_t languageCardCount = 0;
+		int32_t languageCardX[kLanguageFirstRunMaxCards]{};
+		int32_t languageCardY[kLanguageFirstRunMaxCards]{};
+		int32_t languageCardW[kLanguageFirstRunMaxCards]{};
+		int32_t languageCardH[kLanguageFirstRunMaxCards]{};
+		int32_t languageFlagCenterX[kLanguageFirstRunMaxCards]{};
+		int32_t languageFlagCenterY[kLanguageFirstRunMaxCards]{};
+		int32_t languageFlagHalfExtentPx[kLanguageFirstRunMaxCards]{};
+		/// Connexion minimal (4 actions) : paire principale + liens sous le panneau + bandeau raccourcis (maquette).
+		bool loginMaquetteLayout = false;
+		int32_t loginFooterHintY = 0;
+		int32_t loginPairRowY = 0;
+		int32_t loginRegisterBtnX = 0;
+		int32_t loginRegisterBtnW = 0;
+		int32_t loginSubmitBtnX = 0;
+		int32_t loginSubmitBtnW = 0;
+		int32_t loginOutLinksY = 0;
+		int32_t loginOutLinkOptsX = 0;
+		int32_t loginOutLinkOptsW = 0;
+		int32_t loginOutLinkQuitX = 0;
+		int32_t loginOutLinkQuitW = 0;
 	};
 
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg);

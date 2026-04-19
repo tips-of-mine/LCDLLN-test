@@ -365,17 +365,14 @@ namespace engine::render
 		};
 		if (!usePhotoBackdrop)
 		{
-			addThemeRect(0, 0, w, h, theme.background, 0.92f);
-			addThemeRect(0, 0, w, std::max(90, h / 4), theme.primary, 0.34f);
-			addThemeRect(0, h - std::max(96, h / 5), w, std::max(96, h / 5), theme.surface, 0.28f);
-			addRect(0, 0, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
-			addRect(0, h - 28, w, 28, 0.01f, 0.02f, 0.03f, 0.55f);
-			addRect(0, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
-			addRect(w - 28, 0, 28, h, 0.01f, 0.02f, 0.03f, 0.50f);
-		}
-		else
-		{
-			// Photo backdrop: no vignette borders - the background image fills the entire screen.
+			// Design: linear-gradient(180deg,#05070A 0%,#0A0D12 60%,#06080C 100%)
+			addThemeRect(0, 0, w, h, theme.background, 0.96f);
+			// Design: radial-gradient(ellipse 80% 60% at 50% 110%, rgba(74,123,184,.15), transparent 60%)
+			addThemeRect(0, h * 6 / 10, w, h * 5 / 10, theme.primary, 0.12f);
+			// Design: radial-gradient(ellipse 60% 40% at 50% -10%, rgba(232,197,110,.08), transparent 70%)
+			addThemeRect(0, 0, w, h / 5, theme.accent, 0.06f);
+			// Bottom fog veil (radial-gradient ellipse at bottom)
+			addThemeRect(0, h * 85 / 100, w, h * 15 / 100, theme.background, 0.55f);
 		}
 		if (!state.minimalChrome)
 		{
@@ -383,6 +380,7 @@ namespace engine::render
 			addThemeRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, theme.border, usePhotoBackdrop ? 0.35f : 0.22f);
 			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, usePhotoBackdrop ? 0.78f : 0.96f);
 			addThemeRect(panelX, panelY, panelW, 4, theme.accent, 1.0f);
+
 			addThemeRect(panelX + 22, panelY + 24, std::max(80, panelW / 3), 6, theme.primary, 0.86f);
 			addThemeRect(panelX + 22, panelY + 40, artW, panelH - 68, theme.surface, 0.98f);
 			addThemeRect(panelX + 22, panelY + 40, 8, panelH - 68, theme.accent, 0.95f);
@@ -409,6 +407,20 @@ namespace engine::render
 				addThemeRect(panelX + 52, panelY + 124, artW - 84, 12, theme.accent, 0.90f);
 			}
 
+		}
+		else
+		{
+			// Minimal chrome (new design): glass panel — .ln-auth-panel / rgba(20,28,40,.72)
+			addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44,
+				0.0f, 0.01f, 0.02f, usePhotoBackdrop ? 0.45f : 0.50f);
+			addThemeRect(panelX - 1, panelY - 1, panelW + 2, panelH + 2, theme.border, 0.35f);
+			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.72f);
+			// inset top highlight: box-shadow inset 0 1px 0 rgba(255,255,255,.05)
+			addRect(panelX + 1, panelY + 1, panelW - 2, 1, 1.f, 1.f, 1.f, 0.05f);
+			// inset bottom shadow: box-shadow inset 0 -1px 0 rgba(0,0,0,.6)
+			addRect(panelX + 1, panelY + panelH - 2, panelW - 2, 1, 0.f, 0.f, 0.f, 0.60f);
+			// Panel header bottom border (.ln-auth-panel-header border-bottom)
+			addThemeRect(panelX, panelY + 54, panelW, 1, theme.border, 0.65f);
 		}
 
 		// Fil d'Ariane — au-dessus du panneau quand present (Register, VerifyEmail, ShardPick).
@@ -705,19 +717,84 @@ namespace engine::render
 			}
 			else
 			{
-				if (activeBodyLine)
+				if (centeredLanguageSelection)
 				{
-					addRect(contentX - 4, y - 6, 3, 14, 0.86f, 0.65f, 0.22f, 1.0f);
+					// Design: .ln-lang-card — side-by-side cards with flag placeholder
+					const int32_t cardW = std::max(160, (contentW - 12) / 2);
+					const int32_t cardH = std::max(80, bodyLinePitch * 2 - 8);
+					const int32_t langCardY = bodyStartY - 4;
+					const int32_t cardX = contentX + localIdx * (cardW + 12);
+					if (activeBodyLine)
+					{
+						addThemeRect(cardX, langCardY, cardW, cardH, theme.accent, 0.06f);
+						addThemeRect(cardX, langCardY, cardW, 1, theme.accent, 0.70f);
+						addThemeRect(cardX, langCardY + cardH, cardW, 1, theme.accent, 0.70f);
+						addThemeRect(cardX, langCardY, 1, cardH, theme.accent, 0.70f);
+						addThemeRect(cardX + cardW, langCardY, 1, cardH, theme.accent, 0.70f);
+					}
+					else if (hoveredBodyLine)
+					{
+						addThemeRect(cardX, langCardY, cardW, cardH, theme.primary, 0.07f);
+						addThemeRect(cardX, langCardY, cardW, 1, theme.primary, 0.55f);
+						addThemeRect(cardX, langCardY + cardH, cardW, 1, theme.primary, 0.55f);
+						addThemeRect(cardX, langCardY, 1, cardH, theme.primary, 0.55f);
+						addThemeRect(cardX + cardW, langCardY, 1, cardH, theme.primary, 0.55f);
+					}
+					else
+					{
+						addThemeRect(cardX, langCardY, cardW, cardH, theme.surface, 0.40f);
+						addThemeRect(cardX, langCardY, cardW, 1, theme.border, 0.50f);
+						addThemeRect(cardX, langCardY + cardH, cardW, 1, theme.border, 0.50f);
+						addThemeRect(cardX, langCardY, 1, cardH, theme.border, 0.50f);
+						addThemeRect(cardX + cardW, langCardY, 1, cardH, theme.border, 0.50f);
+					}
+					// Flag placeholder box (54×38, vertically centered in card)
+					constexpr int32_t kFlagW = 54, kFlagH = 38;
+					const int32_t flagX = cardX + (cardW - kFlagW) / 2;
+					const int32_t flagY = langCardY + (cardH - kFlagH) / 2 - 10;
+					addThemeRect(flagX, flagY, kFlagW, kFlagH, theme.surface, 0.80f);
+					addThemeRect(flagX, flagY, kFlagW, 1, theme.border, 0.55f);
+					addThemeRect(flagX, flagY, 1, kFlagH, theme.border, 0.55f);
+					addThemeRect(flagX + kFlagW, flagY, 1, kFlagH, theme.border, 0.55f);
+					addThemeRect(flagX, flagY + kFlagH, kFlagW, 1, theme.border, 0.55f);
 				}
-				else if (hoveredBodyLine)
+				else
 				{
-					addThemeRect(contentX - 4, y - 4, 3, 12, theme.accent, 0.55f);
+					if (activeBodyLine)
+					{
+						addRect(contentX - 4, y - 6, 3, 14, 0.86f, 0.65f, 0.22f, 1.0f);
+					}
+					else if (hoveredBodyLine)
+					{
+						addThemeRect(contentX - 4, y - 4, 3, 12, theme.accent, 0.55f);
+					}
 				}
 			}
 
 			// Barre de charge + badge statut (lignes shard uniquement, barFillPct > 0).
 			if (shardBarPct > 0.f)
 			{
+				// Design: .ln-shard-row — bordered card per row
+				const int32_t cardH = bodyLinePitch - 2;
+				const int32_t cardY = y - 8;
+				if (activeBodyLine)
+				{
+					addThemeRect(contentX - 4, cardY, contentW + 8, cardH, theme.accent, 0.06f);
+					addThemeRect(contentX - 4, cardY, contentW + 8, 1, theme.accent, 0.70f);
+					addThemeRect(contentX - 4, cardY + cardH, contentW + 8, 1, theme.accent, 0.70f);
+					addThemeRect(contentX - 4, cardY, 1, cardH, theme.accent, 0.70f);
+					addThemeRect(contentX + contentW + 4, cardY, 1, cardH, theme.accent, 0.70f);
+				}
+				else
+				{
+					const float rowA = (shardStatus == 2) ? 0.20f : 0.40f;
+					addThemeRect(contentX - 4, cardY, contentW + 8, cardH, theme.surface, rowA);
+					addThemeRect(contentX - 4, cardY, contentW + 8, 1, theme.border, 0.50f);
+					addThemeRect(contentX - 4, cardY + cardH, contentW + 8, 1, theme.border, 0.50f);
+					addThemeRect(contentX - 4, cardY, 1, cardH, theme.border, 0.50f);
+					addThemeRect(contentX + contentW + 4, cardY, 1, cardH, theme.border, 0.50f);
+				}
+
 				constexpr int32_t kBarW = 60;
 				constexpr int32_t kBarH = 4;
 				constexpr int32_t kDot  = 6;

@@ -2356,6 +2356,12 @@ namespace engine
 																gameTheme);
 															gameLayers.insert(gameLayers.end(), ccLayers.begin(), ccLayers.end());
 														}
+														if (m_chatUi.IsInitialized())
+														{
+															const auto chatLayers = engine::render::BuildChatUiLayers(
+																ext, m_chatUi.GetPanelState(), gameTheme);
+															gameLayers.insert(gameLayers.end(), chatLayers.begin(), chatLayers.end());
+														}
 
 														if (!gameLayers.empty() || (m_combatHud.IsInitialized() && m_authGlyphPass.IsValid()))
 														{

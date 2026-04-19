@@ -73,15 +73,16 @@ namespace engine::render
 
 	struct AuthUiTheme
 	{
-		float primary[4]{ 0.23f, 0.43f, 0.65f, 1.0f };
-		float secondary[4]{ 0.35f, 0.50f, 0.66f, 1.0f };
-		float accent[4]{ 0.85f, 0.64f, 0.25f, 1.0f };
-		float background[4]{ 0.06f, 0.09f, 0.11f, 1.0f };
-		float surface[4]{ 0.09f, 0.13f, 0.17f, 1.0f };
-		float panel[4]{ 0.10f, 0.16f, 0.21f, 1.0f };
-		float text[4]{ 0.91f, 0.93f, 0.95f, 1.0f };
-		float mutedText[4]{ 0.66f, 0.71f, 0.76f, 1.0f };
-		float border[4]{ 0.19f, 0.27f, 0.34f, 1.0f };
+		// Default palette from design/lune-noire-design-system/project/colors_and_type.css
+		float primary[4]{ 0.29f, 0.48f, 0.72f, 1.0f };    ///< #4A7BB8 cold steel blue
+		float secondary[4]{ 0.36f, 0.42f, 0.55f, 1.0f };   ///< #5C6B8C muted slate
+		float accent[4]{ 0.91f, 0.77f, 0.43f, 1.0f };      ///< #E8C56E antique gold
+		float background[4]{ 0.04f, 0.05f, 0.07f, 1.0f };  ///< #0A0D12 near-black
+		float surface[4]{ 0.07f, 0.09f, 0.13f, 1.0f };     ///< #121822
+		float panel[4]{ 0.08f, 0.11f, 0.16f, 1.0f };       ///< #141C28
+		float text[4]{ 0.95f, 0.96f, 0.97f, 1.0f };        ///< #F2F4F8
+		float mutedText[4]{ 0.61f, 0.66f, 0.72f, 1.0f };   ///< #9BA8B8
+		float border[4]{ 0.24f, 0.31f, 0.40f, 1.0f };      ///< #3D4F66
 	};
 
 	struct AuthUiLayoutMetrics

@@ -31,6 +31,7 @@
 #include "engine/render/AuthGlyphPass.h"
 #include "engine/render/AuthLogoPass.h"
 #include "engine/render/CharacterCreationRenderer.h"
+#include "engine/render/ChatUiRenderer.h"
 #include "engine/render/CombatHudRenderer.h"
 #include "engine/render/SettingsMenuRenderer.h"
 #include "engine/render/TaaJitter.h"

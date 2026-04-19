@@ -45,6 +45,25 @@ namespace engine::client
 		bool active = false;
 	};
 
+	/// One entity blip on the HUD minimap (design system — HudOverlay).
+	struct HudMinimapBlip
+	{
+		float   xPct = 0.5f; ///< Normalised horizontal position [0, 1]; 0.5 = centre.
+		float   yPct = 0.5f; ///< Normalised vertical position [0, 1].
+		uint8_t kind = 0;    ///< 0=hostile, 1=friendly/NPC, 2=quest marker.
+	};
+
+	/// One keyed action slot in the bottom-centre action bar (10 slots, keys 1-0).
+	struct HudActionSlot
+	{
+		HudRect     bounds{};
+		uint8_t     slotIndex   = 0;   ///< 0-9 → keys 1,2,…,9,0.
+		std::string actionId;          ///< Bound action id; empty = unbound.
+		float       cooldownPct = 0.f; ///< [0, 1]; 0 = ready.
+		bool        hasAbility  = false;
+		bool        active      = false; ///< Slot is currently active (pressed / triggered).
+	};
+
 	/// Fully resolved MVP combat HUD state ready for a UI layer to render.
 	struct CombatHudState
 	{
@@ -65,6 +84,25 @@ namespace engine::client
 		HudRect walletBounds{};
 		std::string walletGoldLine;
 		bool walletVisible = false;
+
+		// ---- Design system — HudOverlay: player identity (driven by SetPlayerIdentity/SetPlayerXp) ----
+		std::string playerName;        ///< Displayed as "Name · Niv. N".
+		uint32_t    playerLevel   = 0;
+		float       playerXpPct   = 0.f; ///< XP bar fill [0, 1].
+		HudRect     portraitBounds{};    ///< 52×52 portrait thumbnail area inside panelBounds.
+		HudRect     playerXpBarBounds{}; ///< Thin XP bar row below the mana bar.
+
+		// ---- Design system — HudOverlay: minimap (top-right) ----
+		std::string                  zoneName;
+		std::string                  zoneDirection;
+		HudRect                      minimapBounds{};
+		std::vector<HudMinimapBlip>  minimapBlips;
+		bool                         minimapVisible = false;
+
+		// ---- Design system — HudOverlay: action bar (bottom-centre, 10 slots) ----
+		HudRect                     actionBarBounds{};
+		std::vector<HudActionSlot>  actionSlots;
+
 		std::string debugText;
 		bool layoutValid = false;
 	};
@@ -99,6 +137,17 @@ namespace engine::client
 
 		bool IsInitialized() const { return m_initialized; }
 
+		// ---- Design system setters (driven externally, not from UIModel) ----
+
+		/// Set the displayed player name and level (call after character creation succeeds).
+		void SetPlayerIdentity(const std::string& name, uint32_t level);
+
+		/// Set the XP fill fraction [0, 1] (call when the server sends an XP update).
+		void SetPlayerXp(float xpPct);
+
+		/// Set the minimap zone label and compass direction (call on zone change).
+		void SetZoneInfo(const std::string& zoneName, const std::string& direction);
+
 	private:
 		/// Recompute widget rectangles after a viewport change.
 		void RebuildLayout();
@@ -120,6 +169,12 @@ namespace engine::client
 
 		/// Copy wallet label from the UI model (M35.1).
 		void UpdateWalletFromModel(const UIModel& model);
+
+		/// Populate minimapBlips from player and target positions.
+		void UpdateMinimap(const UIModel& model);
+
+		/// Compute action bar slot bounds (called from RebuildLayout).
+		void RebuildActionBar();
 
 		CombatHudState m_state{};
 		uint32_t m_viewportWidth = 0;

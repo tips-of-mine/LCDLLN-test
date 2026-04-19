@@ -318,6 +318,46 @@ namespace engine::render
 			}
 		}
 
+		if (state.login && state.minimalChrome && !state.loginArtColumn && model.actions.size() == 4u)
+		{
+			metrics.loginMaquetteLayout = true;
+			const int32_t cx = metrics.contentX;
+			const int32_t cw = metrics.contentW;
+			const int32_t py = metrics.panelY;
+			const int32_t ph = metrics.panelH;
+			const int32_t bodyScaleM = std::clamp(metrics.panelW / 260, 2, 4);
+			const int32_t bodyLineStepM = 7 * bodyScaleM + 2 * bodyScaleM;
+			const int32_t bodyLinePitchM = std::max(28, bodyLineStepM + 10);
+			const int32_t bodyStartYM = py + metrics.topOffset + static_cast<int32_t>(model.fields.size()) * metrics.fieldRowStepPx + 18;
+			const int32_t bodyBottomM = bodyStartYM + model.visibleBodyLineCount * bodyLinePitchM + 8;
+			constexpr int32_t kHintStripH = 20;
+			constexpr int32_t kGapPairHint = 8;
+			constexpr int32_t kBtnGap = 12;
+			metrics.loginFooterHintY = py + ph - kHintStripH - 2;
+			metrics.loginPairRowY = metrics.loginFooterHintY - kGapPairHint - kAuthUiActionButtonHeightPx;
+			if (metrics.loginPairRowY < bodyBottomM)
+			{
+				metrics.loginPairRowY = bodyBottomM;
+				metrics.loginFooterHintY = metrics.loginPairRowY + kGapPairHint + kAuthUiActionButtonHeightPx + 2;
+				if (metrics.loginFooterHintY + kHintStripH > py + ph - 2)
+				{
+					metrics.loginFooterHintY = py + ph - kHintStripH - 2;
+					metrics.loginPairRowY = metrics.loginFooterHintY - kGapPairHint - kAuthUiActionButtonHeightPx;
+				}
+			}
+			const int32_t availBtns = cw - kBtnGap;
+			metrics.loginRegisterBtnW = availBtns / 2;
+			metrics.loginSubmitBtnW = availBtns - metrics.loginRegisterBtnW;
+			metrics.loginRegisterBtnX = cx;
+			metrics.loginSubmitBtnX = cx + metrics.loginRegisterBtnW + kBtnGap;
+			metrics.loginOutLinksY = py + ph + 12;
+			const int32_t half = (cw - kBtnGap) / 2;
+			metrics.loginOutLinkOptsX = cx;
+			metrics.loginOutLinkOptsW = half;
+			metrics.loginOutLinkQuitX = cx + half + kBtnGap;
+			metrics.loginOutLinkQuitW = cw - half - kBtnGap;
+		}
+
 		if (state.error && !model.errorText.empty())
 		{
 			const int32_t bodyScaleErr = std::clamp(metrics.panelW / 260, 2, 4);
@@ -353,6 +393,10 @@ namespace engine::render
 		const engine::client::AuthUiPresenter::RenderModel& model,
 		AuthLoginTwoRowLayout& out)
 	{
+		if (lay.loginMaquetteLayout)
+		{
+			return false;
+		}
 		if (!state.login || model.actions.size() != 4)
 		{
 			return false;
@@ -504,9 +548,10 @@ namespace engine::render
 
 		const bool langFirstPanel =
 			state.languageSelection && model.languageFirstRunLayout && layout.languageFirstRunPanel;
-		if (langFirstPanel)
+		const bool showAuthMoonDisc = !usePhotoBackdrop
+			&& (langFirstPanel || (state.login && state.minimalChrome && !state.loginArtColumn));
+		if (showAuthMoonDisc)
 		{
-			// Lune : disque rempli (scanlines) + reflet intérieur décalé.
 			const int32_t moonR = std::clamp(std::min(w, h) / 20, 20, 42);
 			const int32_t cxMoon = w - moonR - std::max(24, w / 22);
 			const int32_t cyMoon = std::max(moonR + 10, h / 26 + moonR);
@@ -515,7 +560,9 @@ namespace engine::render
 				const int32_t rIn = std::max(6, moonR * 52 / 100);
 				addFilledDisc(cxMoon - moonR / 5, cyMoon - moonR / 6, rIn, theme.secondary, 0.72f);
 			}
-
+		}
+		if (langFirstPanel)
+		{
 			addThemeRect(panelX - 1, panelY - 1, panelW + 2, panelH + 2, theme.border, 0.5f);
 			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.74f);
 			addThemeRect(panelX, panelY, panelW, 1, theme.border, 0.88f);
@@ -568,6 +615,20 @@ namespace engine::render
 					addRect(x, y, 1, hh, b[0], b[1], b[2], ba);
 					addRect(x + ww - 1, y, 1, hh, b[0], b[1], b[2], ba);
 				}
+			}
+		}
+		else if (layout.loginMaquetteLayout && state.login && !usePhotoBackdrop)
+		{
+			addThemeRect(panelX - 1, panelY - 1, panelW + 2, panelH + 2, theme.border, 0.5f);
+			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.74f);
+			addThemeRect(panelX, panelY, panelW, 1, theme.border, 0.88f);
+			addThemeRect(panelX, panelY + panelH - 1, panelW, 1, theme.border, 0.88f);
+			addThemeRect(panelX, panelY, 1, panelH, theme.border, 0.45f);
+			addThemeRect(panelX + panelW - 1, panelY, 1, panelH, theme.border, 0.45f);
+			if (layout.loginFooterHintY > panelY && layout.loginFooterHintY + 18 < panelY + panelH)
+			{
+				addThemeRect(contentX, layout.loginFooterHintY, contentW, 18, theme.surface, 0.32f);
+				addThemeRect(contentX, layout.loginFooterHintY, contentW, 1, theme.border, 0.55f);
 			}
 		}
 
@@ -836,7 +897,9 @@ namespace engine::render
 		const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 		const int32_t gap = 10;
 		AuthLoginTwoRowLayout loginTwoRow{};
-		const bool loginTwoRows = TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
+		const bool loginMaquetteDraw =
+			layout.loginMaquetteLayout && state.login && model.actions.size() >= 4u;
+		const bool loginTwoRows = !loginMaquetteDraw && TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
 		if (langFirstPanel)
 		{
 			for (size_t ai = 0; ai < model.actions.size(); ++ai)
@@ -849,6 +912,29 @@ namespace engine::render
 					layout.languagePanelPrimaryButtonW, layout.languagePanelPrimaryButtonH, true, false,
 					model.actions[ai].hovered);
 				break;
+			}
+		}
+		else if (loginMaquetteDraw)
+		{
+			const int32_t yBtn = layout.loginPairRowY;
+			if (model.actions.size() >= 3u)
+			{
+				addAuthActionButton(layout.loginRegisterBtnX, yBtn, layout.loginRegisterBtnW, kAuthUiActionButtonHeightPx,
+					false, true, model.actions[0].hovered);
+				addAuthActionButton(layout.loginSubmitBtnX, yBtn, layout.loginSubmitBtnW, kAuthUiActionButtonHeightPx,
+					true, false, model.actions[2].hovered);
+			}
+			constexpr int32_t kBadgeSlotW = 44;
+			constexpr int32_t kBadgeSlotH = kAuthUiActionButtonHeightPx - 14;
+			const int32_t badgeY = yBtn + 7;
+			if (model.actions.size() >= 3u)
+			{
+				const int32_t brx = layout.loginRegisterBtnX + layout.loginRegisterBtnW - kBadgeSlotW - 6;
+				const int32_t bsx = layout.loginSubmitBtnX + layout.loginSubmitBtnW - kBadgeSlotW - 6;
+				addThemeRect(brx - 1, badgeY - 1, kBadgeSlotW + 2, kBadgeSlotH + 2, theme.border, 0.72f);
+				addThemeRect(brx, badgeY, kBadgeSlotW, kBadgeSlotH, theme.surface, 0.58f);
+				addThemeRect(bsx - 1, badgeY - 1, kBadgeSlotW + 2, kBadgeSlotH + 2, theme.border, 0.72f);
+				addThemeRect(bsx, badgeY, kBadgeSlotW, kBadgeSlotH, theme.surface, 0.58f);
 			}
 		}
 		else if (loginTwoRows)

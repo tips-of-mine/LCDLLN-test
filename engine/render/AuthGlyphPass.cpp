@@ -1939,9 +1939,68 @@ namespace engine::render
 			}
 			const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 			const int32_t gap = 10;
+			const bool loginMaquetteGlyph =
+				layout.loginMaquetteLayout && state.login && model.actions.size() >= 4u;
 			AuthLoginTwoRowLayout loginTwoRow{};
-			const bool loginTwoRows = TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
-			if (loginTwoRows)
+			const bool loginTwoRows = !loginMaquetteGlyph && TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
+			if (loginMaquetteGlyph)
+			{
+				const int32_t yBtn = layout.loginPairRowY;
+				const int32_t badgeScale = std::max(2, actionLabelScale - 1);
+				constexpr int32_t kBadgeSlot = 44;
+				if (model.actions.size() >= 3u)
+				{
+					const auto& regAct = model.actions[0];
+					const auto& subAct = model.actions[2];
+					const int32_t regX = layout.loginRegisterBtnX;
+					const int32_t regW = layout.loginRegisterBtnW;
+					const int32_t subX = layout.loginSubmitBtnX;
+					const int32_t subW = layout.loginSubmitBtnW;
+					const int32_t ly = actionButtonLabelTopY(yBtn);
+					{
+						const int32_t labelMax = std::max(40, regW - 18 - kBadgeSlot);
+						const int32_t lw = MeasureTextWidthPx(regAct.label, actionLabelScale);
+						const int32_t lx = std::min(regX + 10, regX + regW - kBadgeSlot - 8 - lw);
+						const float* ac = regAct.emphasized ? titleColor : mutedColor;
+						AppendText(vertices, regAct.label, lx, ly, labelMax, actionLabelScale, ac);
+						if (!regAct.actionBadge.empty())
+						{
+							const int32_t bw = MeasureTextWidthPx(regAct.actionBadge, badgeScale);
+							const int32_t bx = regX + regW - kBadgeSlot + (kBadgeSlot - bw) / 2;
+							AppendText(vertices, regAct.actionBadge, bx, ly, kBadgeSlot, badgeScale, titleColor);
+						}
+					}
+					{
+						const int32_t labelMax = std::max(40, subW - 18 - kBadgeSlot);
+						const int32_t lw = MeasureTextWidthPx(subAct.label, actionLabelScale);
+						const int32_t lx = std::min(subX + 10, subX + subW - kBadgeSlot - 8 - lw);
+						const float* ac = subAct.primary ? titleColor : mutedColor;
+						AppendText(vertices, subAct.label, lx, ly, labelMax, actionLabelScale, ac);
+						if (!subAct.actionBadge.empty())
+						{
+							const int32_t bw = MeasureTextWidthPx(subAct.actionBadge, badgeScale);
+							const int32_t bx = subX + subW - kBadgeSlot + (kBadgeSlot - bw) / 2;
+							AppendText(vertices, subAct.actionBadge, bx, ly, kBadgeSlot, badgeScale, titleColor);
+						}
+					}
+				}
+				if (model.actions.size() >= 4u)
+				{
+					const int32_t linkY = layout.loginOutLinksY;
+					const auto& optA = model.actions[1];
+					const auto& quitA = model.actions[3];
+					const float* optC = optA.hovered ? primaryColor : accentColor;
+					const float* quitC = quitA.hovered ? primaryColor : accentColor;
+					appendCenteredText(optA.label, layout.loginOutLinkOptsX, linkY, layout.loginOutLinkOptsW, bodyScale, optC, nullptr);
+					appendCenteredText(quitA.label, layout.loginOutLinkQuitX, linkY, layout.loginOutLinkQuitW, bodyScale, quitC, nullptr);
+				}
+				if (!model.footerHint.empty())
+				{
+					appendCenteredText(model.footerHint, contentX, layout.loginFooterHintY + 2, contentW, smallScale, titleColor,
+						nullptr);
+				}
+			}
+			else if (loginTwoRows)
 			{
 				for (int32_t row = 0; row < 2; ++row)
 				{
@@ -1989,7 +2048,7 @@ namespace engine::render
 					AppendText(vertices, action.label, labelX, singleRowLabelY, actionW - 20, actionLabelScale, ac);
 				}
 			}
-			if (!model.footerHint.empty())
+			if (!loginMaquetteGlyph && !model.footerHint.empty())
 			{
 				AppendText(vertices, model.footerHint, contentX, panelY + panelH - 28, contentW, smallScale, mutedColor);
 			}

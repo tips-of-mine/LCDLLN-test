@@ -3784,6 +3784,26 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 					}
 				}
+				else if (m_phase == Phase::Login && lay.loginMaquetteLayout && actionCount == 4)
+				{
+					const int32_t yBtn = lay.loginPairRowY;
+					if (contains(mx, my, lay.loginRegisterBtnX, yBtn, lay.loginRegisterBtnW, engine::render::kAuthUiActionButtonHeightPx))
+					{
+						m_hoveredActionIndex = 0;
+					}
+					else if (contains(mx, my, lay.loginSubmitBtnX, yBtn, lay.loginSubmitBtnW, engine::render::kAuthUiActionButtonHeightPx))
+					{
+						m_hoveredActionIndex = 2;
+					}
+					else if (contains(mx, my, lay.loginOutLinkOptsX, lay.loginOutLinksY - 4, lay.loginOutLinkOptsW, 26))
+					{
+						m_hoveredActionIndex = 1;
+					}
+					else if (contains(mx, my, lay.loginOutLinkQuitX, lay.loginOutLinksY - 4, lay.loginOutLinkQuitW, 26))
+					{
+						m_hoveredActionIndex = 3;
+					}
+				}
 				else if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
 				{
 					bool foundAction = false;
@@ -4204,6 +4224,37 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								break;
 							}
 						}
+						else if (m_phase == Phase::Login && lay.loginMaquetteLayout && actionCount == 4)
+						{
+							const int32_t yBtn = lay.loginPairRowY;
+							if (contains(mx, my, lay.loginRegisterBtnX, yBtn, lay.loginRegisterBtnW, engine::render::kAuthUiActionButtonHeightPx))
+							{
+								actionHit = true;
+								SetPhase(Phase::Register);
+								m_activeField = 0;
+								m_userErrorText.clear();
+								m_passwordConfirm.clear();
+								m_usernameCheckState = UsernameCheckState::Idle;
+								m_usernameCheckSeq++;
+								m_usernameDebounceTimer = 0.0;
+								m_usernameLastChecked.clear();
+							}
+							else if (contains(mx, my, lay.loginSubmitBtnX, yBtn, lay.loginSubmitBtnW, engine::render::kAuthUiActionButtonHeightPx))
+							{
+								actionHit = true;
+								applyPrimaryAction();
+							}
+							else if (contains(mx, my, lay.loginOutLinkOptsX, lay.loginOutLinksY - 4, lay.loginOutLinkOptsW, 26))
+							{
+								actionHit = true;
+								OpenLanguageOptions();
+							}
+							else if (contains(mx, my, lay.loginOutLinkQuitX, lay.loginOutLinksY - 4, lay.loginOutLinkQuitW, 26))
+							{
+								actionHit = true;
+								window.RequestClose();
+							}
+						}
 						else if (engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))
 						{
 							for (int32_t row = 0; row < 2 && !actionHit; ++row)
@@ -4266,7 +4317,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								}
 							}
 						}
-						if (!actionHit && !(m_phase == Phase::Login && actionCount == 4))
+						if (!actionHit
+							&& !(m_phase == Phase::Login && actionCount == 4
+								&& (lay.loginMaquetteLayout
+									|| engine::render::TryGetLoginTwoRowLayout(lay, vsLayout, model, loginTwoRow))))
 						{
 							constexpr int32_t kAuthErrorFooterBarH = 58;
 							const int32_t buttonPadAfterBody = centeredLanguageSelection ? 28 : 20;
@@ -4972,10 +5026,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
 			// Boutons : uniquement des clés i18n ; le texte affiché est résolu à la fin (changement de langue pris en compte).
-			addActionKeys("auth.button.register", false, true, true);
+			addActionKeys("auth.login.maquette_create", false, true, true);
 			addActionKeys("language.options.title", false, true, true);
-			addActionKeys("common.submit", true, true, false);
+			addActionKeys("auth.login.maquette_submit", true, true, false);
 			addActionKeys("common.quit_desktop", false, true, false, "common.quit");
+			model.footerHint = Tr("auth.footer_hint.login_bar");
 			break;
 		case Phase::Register:
 		{
@@ -5364,6 +5419,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 
 		ResolveActionButtonLabels(model);
+
+		if (m_phase == Phase::Login && model.actions.size() == 4u)
+		{
+			model.actions[0].actionBadge = Tr("auth.badge.ctrl_r");
+			model.actions[2].actionBadge = Tr("auth.badge.submit");
+		}
 
 		if (!model.bodyLines.empty())
 		{

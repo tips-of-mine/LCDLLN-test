@@ -148,6 +148,8 @@ namespace engine::client
 			bool hovered = false;
 			/// Mise en avant (ex. Inscription / Options sur l’écran connexion).
 			bool emphasized = false;
+			/// Texte court affiché à droite dans le bouton (ex. raccourci, pictogramme) — écran connexion maquette.
+			std::string actionBadge;
 		};
 
 		struct RenderBodyLine

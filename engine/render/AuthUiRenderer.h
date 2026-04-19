@@ -139,6 +139,19 @@ namespace engine::render
 		int32_t languageFlagCenterX[kLanguageFirstRunMaxCards]{};
 		int32_t languageFlagCenterY[kLanguageFirstRunMaxCards]{};
 		int32_t languageFlagHalfExtentPx[kLanguageFirstRunMaxCards]{};
+		/// Connexion minimal (4 actions) : paire principale + liens sous le panneau + bandeau raccourcis (maquette).
+		bool loginMaquetteLayout = false;
+		int32_t loginFooterHintY = 0;
+		int32_t loginPairRowY = 0;
+		int32_t loginRegisterBtnX = 0;
+		int32_t loginRegisterBtnW = 0;
+		int32_t loginSubmitBtnX = 0;
+		int32_t loginSubmitBtnW = 0;
+		int32_t loginOutLinksY = 0;
+		int32_t loginOutLinkOptsX = 0;
+		int32_t loginOutLinkOptsW = 0;
+		int32_t loginOutLinkQuitX = 0;
+		int32_t loginOutLinkQuitW = 0;
 	};
 
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg);

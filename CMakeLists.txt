@@ -262,6 +262,7 @@ add_library(engine_core
   engine/render/CombatHudRenderer.cpp
   engine/render/CharacterCreationRenderer.cpp
   engine/render/SettingsMenuRenderer.cpp
+  engine/render/ChatUiRenderer.cpp
   engine/render/DecalSystem.cpp
   engine/render/DecalPass.cpp
   engine/render/ParticleSystem.cpp

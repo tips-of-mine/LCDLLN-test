@@ -16,10 +16,14 @@ namespace engine::client
 
 	enum class SettingsTab : uint8_t
 	{
-		Graphics = 0,
-		Audio    = 1,
-		Controls = 2,
-		Gameplay = 3,
+		Graphics  = 0,
+		Audio     = 1,
+		Controls  = 2,
+		Gameplay  = 3,
+		Language  = 4,
+		Interface = 5,
+		Network   = 6,
+		Account   = 7,
 	};
 
 	// =========================================================================
@@ -82,6 +86,39 @@ namespace engine::client
 		float cameraDistance  = 5.0f;
 	};
 
+	/// Language settings — locale selection (design system: lang tab).
+	struct LanguageSettings
+	{
+		std::string localeTag      = "fr"; ///< BCP-47 tag, e.g. "fr" or "en".
+		bool        requiresRestart = false;
+	};
+
+	/// Interface / HUD display settings (design system: ui tab).
+	struct InterfaceSettings
+	{
+		/// UI scale in percent [80, 140]; 100 = 1:1.
+		int  uiScalePct      = 100;
+		/// HUD panel background opacity in percent [40, 100].
+		int  panelOpacityPct = 90;
+		bool showTooltips    = true;
+	};
+
+	/// Network connection preferences (design system: net tab).
+	struct NetworkSettings
+	{
+		/// Preferred server id from the server list; empty = auto-select.
+		std::string preferredServerId;
+		/// Use UDP for gameplay traffic when true; fall back to TCP when false.
+		bool gameplayUdp = false;
+	};
+
+	/// Read-only account identity (design system: account tab).
+	struct AccountInfo
+	{
+		std::string login; ///< Account login / e-mail displayed in the UI.
+		std::string tagId; ///< Unique TAG-ID displayed next to the login.
+	};
+
 	// =========================================================================
 	// Pending-apply command structs (consumed by Engine)
 	// =========================================================================
@@ -113,6 +150,28 @@ namespace engine::client
 	{
 		bool applyRequested = false;
 		GameplaySettings settings;
+	};
+
+	/// Command produced when the player applies language settings.
+	struct LanguageSettingsCmd
+	{
+		bool applyRequested  = false;
+		bool requiresRestart = false;
+		LanguageSettings settings;
+	};
+
+	/// Command produced when the player applies interface settings.
+	struct InterfaceSettingsCmd
+	{
+		bool applyRequested = false;
+		InterfaceSettings settings;
+	};
+
+	/// Command produced when the player applies network settings.
+	struct NetworkSettingsCmd
+	{
+		bool applyRequested = false;
+		NetworkSettings settings;
 	};
 
 	// =========================================================================
@@ -214,12 +273,45 @@ namespace engine::client
 		void SetTimestamps(bool v);
 		void SetCameraDistance(float metres);  ///< Clamped to [2, 10].
 
+		// ---- Language setters ----
+
+		/// Set the active locale tag (e.g. "fr", "en").
+		void SetLocaleTag(const std::string& tag);
+
+		// ---- Interface setters ----
+
+		void SetUiScalePct(int v);       ///< Clamped to [80, 140].
+		void SetPanelOpacityPct(int v);  ///< Clamped to [40, 100].
+		void SetShowTooltips(bool v);
+
+		// ---- Network setters ----
+
+		void SetPreferredServerId(const std::string& id);
+		void SetGameplayUdp(bool v);
+
+		// ---- Account (read-only identity, injected from session) ----
+
+		/// Populate the account info panel (call after login succeeds).
+		void SetAccountInfo(const std::string& login, const std::string& tagId);
+
 		// ---- State accessors (read-only) ----
 
-		const GraphicsSettings& GetGraphics() const { return m_graphics; }
-		const AudioSettings&    GetAudio()    const { return m_audio; }
-		const ControlsSettings& GetControls() const { return m_controls; }
-		const GameplaySettings& GetGameplay() const { return m_gameplay; }
+		const GraphicsSettings&  GetGraphics()  const { return m_graphics;  }
+		const AudioSettings&     GetAudio()     const { return m_audio;     }
+		const ControlsSettings&  GetControls()  const { return m_controls;  }
+		const GameplaySettings&  GetGameplay()  const { return m_gameplay;  }
+		const LanguageSettings&  GetLanguage()  const { return m_language;  }
+		const InterfaceSettings& GetInterface() const { return m_interface; }
+		const NetworkSettings&   GetNetwork()   const { return m_network;   }
+		const AccountInfo&       GetAccount()   const { return m_account;   }
+
+		// ---- Dirty flag ----
+
+		/// True when any tab has unsaved (pending) changes.
+		bool HasUnsavedChanges() const;
+
+		/// Clear all pending-apply flags without applying (revert UI to clean state).
+		void CancelPending();
 
 		// ---- Apply / consume ----
 
@@ -231,15 +323,27 @@ namespace engine::client
 		void ApplyControls();
 		/// Mark current gameplay settings as pending application.
 		void ApplyGameplay();
+		/// Mark current language settings as pending application.
+		void ApplyLanguage();
+		/// Mark current interface settings as pending application.
+		void ApplyInterface();
+		/// Mark current network settings as pending application.
+		void ApplyNetwork();
 
 		/// Consume the pending graphics command (clears the pending flag).
-		GraphicsSettingsCmd ConsumePendingGraphics();
+		GraphicsSettingsCmd  ConsumePendingGraphics();
 		/// Consume the pending audio command.
-		AudioSettingsCmd    ConsumePendingAudio();
+		AudioSettingsCmd     ConsumePendingAudio();
 		/// Consume the pending controls command.
-		ControlsSettingsCmd ConsumePendingControls();
+		ControlsSettingsCmd  ConsumePendingControls();
 		/// Consume the pending gameplay command.
-		GameplaySettingsCmd ConsumePendingGameplay();
+		GameplaySettingsCmd  ConsumePendingGameplay();
+		/// Consume the pending language command.
+		LanguageSettingsCmd  ConsumePendingLanguage();
+		/// Consume the pending interface command.
+		InterfaceSettingsCmd ConsumePendingInterface();
+		/// Consume the pending network command.
+		NetworkSettingsCmd   ConsumePendingNetwork();
 
 		// ---- Persistence ----
 
@@ -269,10 +373,14 @@ namespace engine::client
 
 		// ---- State ----
 
-		GraphicsSettings m_graphics;
-		AudioSettings    m_audio;
-		ControlsSettings m_controls;
-		GameplaySettings m_gameplay;
+		GraphicsSettings  m_graphics;
+		AudioSettings     m_audio;
+		ControlsSettings  m_controls;
+		GameplaySettings  m_gameplay;
+		LanguageSettings  m_language;
+		InterfaceSettings m_interface;
+		NetworkSettings   m_network;
+		AccountInfo       m_account;
 
 		SettingsTab  m_activeTab = SettingsTab::Graphics;
 		bool         m_isOpen   = false;
@@ -285,10 +393,13 @@ namespace engine::client
 
 		// ---- Pending apply flags ----
 
-		bool m_graphicsPending  = false;
-		bool m_audioPending     = false;
-		bool m_controlsPending  = false;
-		bool m_gameplayPending  = false;
+		bool m_graphicsPending   = false;
+		bool m_audioPending      = false;
+		bool m_controlsPending   = false;
+		bool m_gameplayPending   = false;
+		bool m_languagePending   = false;
+		bool m_interfacePending  = false;
+		bool m_networkPending    = false;
 
 		bool m_initialized = false;
 	};

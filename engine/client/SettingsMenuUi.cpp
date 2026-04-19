@@ -48,6 +48,15 @@ namespace engine::client
 		m_gameplay.cameraDistance = static_cast<float>(
 			config.GetDouble("gameplay.camera_distance", 5.0));
 
+		m_language.localeTag = config.GetString("locale.tag", "fr");
+
+		m_interface.uiScalePct      = static_cast<int>(config.GetInt("ui.scale_pct",       100));
+		m_interface.panelOpacityPct = static_cast<int>(config.GetInt("ui.panel_opacity",    90));
+		m_interface.showTooltips    = config.GetBool("ui.show_tooltips", true);
+
+		m_network.preferredServerId = config.GetString("network.preferred_server", "");
+		m_network.gameplayUdp       = config.GetBool  ("network.gameplay_udp",     false);
+
 		// ---- Load keybindings from content-relative JSON ----
 		const bool bindingsOk = LoadKeybindings(config);
 		if (!bindingsOk)
@@ -75,6 +84,10 @@ namespace engine::client
 		m_audioPending     = false;
 		m_controlsPending  = false;
 		m_gameplayPending  = false;
+		m_languagePending  = false;
+		m_interfacePending = false;
+		m_networkPending   = false;
+		m_account          = {};
 		m_isOpen           = false;
 		m_initialized      = false;
 		LOG_INFO(Core, "[SettingsMenu] Shutdown complete");
@@ -241,6 +254,82 @@ namespace engine::client
 	}
 
 	// =========================================================================
+	// Language setters
+	// =========================================================================
+
+	void SettingsMenuPresenter::SetLocaleTag(const std::string& tag)
+	{
+		if (!tag.empty())
+			m_language.localeTag = tag;
+	}
+
+	// =========================================================================
+	// Interface setters
+	// =========================================================================
+
+	void SettingsMenuPresenter::SetUiScalePct(int v)
+	{
+		m_interface.uiScalePct = std::clamp(v, 80, 140);
+	}
+
+	void SettingsMenuPresenter::SetPanelOpacityPct(int v)
+	{
+		m_interface.panelOpacityPct = std::clamp(v, 40, 100);
+	}
+
+	void SettingsMenuPresenter::SetShowTooltips(bool v)
+	{
+		m_interface.showTooltips = v;
+	}
+
+	// =========================================================================
+	// Network setters
+	// =========================================================================
+
+	void SettingsMenuPresenter::SetPreferredServerId(const std::string& id)
+	{
+		m_network.preferredServerId = id;
+	}
+
+	void SettingsMenuPresenter::SetGameplayUdp(bool v)
+	{
+		m_network.gameplayUdp = v;
+	}
+
+	// =========================================================================
+	// Account
+	// =========================================================================
+
+	void SettingsMenuPresenter::SetAccountInfo(const std::string& login, const std::string& tagId)
+	{
+		m_account.login = login;
+		m_account.tagId = tagId;
+	}
+
+	// =========================================================================
+	// Dirty flag
+	// =========================================================================
+
+	bool SettingsMenuPresenter::HasUnsavedChanges() const
+	{
+		return m_graphicsPending  || m_audioPending    || m_controlsPending ||
+		       m_gameplayPending  || m_languagePending || m_interfacePending ||
+		       m_networkPending;
+	}
+
+	void SettingsMenuPresenter::CancelPending()
+	{
+		m_graphicsPending  = false;
+		m_audioPending     = false;
+		m_controlsPending  = false;
+		m_gameplayPending  = false;
+		m_languagePending  = false;
+		m_interfacePending = false;
+		m_networkPending   = false;
+		LOG_INFO(Core, "[SettingsMenu] All pending changes cancelled");
+	}
+
+	// =========================================================================
 	// Apply / consume
 	// =========================================================================
 
@@ -321,6 +410,64 @@ namespace engine::client
 		return cmd;
 	}
 
+	void SettingsMenuPresenter::ApplyLanguage()
+	{
+		m_languagePending          = true;
+		m_language.requiresRestart = true;
+		LOG_INFO(Core, "[SettingsMenu] Language apply pending (locale={})", m_language.localeTag);
+	}
+
+	void SettingsMenuPresenter::ApplyInterface()
+	{
+		m_interfacePending = true;
+		LOG_INFO(Core, "[SettingsMenu] Interface apply pending (scale={}%, opacity={}%, tooltips={})",
+		         m_interface.uiScalePct, m_interface.panelOpacityPct, m_interface.showTooltips);
+	}
+
+	void SettingsMenuPresenter::ApplyNetwork()
+	{
+		m_networkPending = true;
+		LOG_INFO(Core, "[SettingsMenu] Network apply pending (server='{}', udp={})",
+		         m_network.preferredServerId, m_network.gameplayUdp);
+	}
+
+	LanguageSettingsCmd SettingsMenuPresenter::ConsumePendingLanguage()
+	{
+		LanguageSettingsCmd cmd;
+		if (m_languagePending)
+		{
+			cmd.applyRequested  = true;
+			cmd.requiresRestart = m_language.requiresRestart;
+			cmd.settings        = m_language;
+			m_languagePending   = false;
+		}
+		return cmd;
+	}
+
+	InterfaceSettingsCmd SettingsMenuPresenter::ConsumePendingInterface()
+	{
+		InterfaceSettingsCmd cmd;
+		if (m_interfacePending)
+		{
+			cmd.applyRequested = true;
+			cmd.settings       = m_interface;
+			m_interfacePending = false;
+		}
+		return cmd;
+	}
+
+	NetworkSettingsCmd SettingsMenuPresenter::ConsumePendingNetwork()
+	{
+		NetworkSettingsCmd cmd;
+		if (m_networkPending)
+		{
+			cmd.applyRequested = true;
+			cmd.settings       = m_network;
+			m_networkPending   = false;
+		}
+		return cmd;
+	}
+
 	// =========================================================================
 	// Persistence
 	// =========================================================================
@@ -361,7 +508,19 @@ namespace engine::client
 		json << "    \"gameplay.auto_loot\": "     << (m_gameplay.autoLoot    ? "true" : "false") << ",\n";
 		json << "    \"gameplay.combat_text\": "   << (m_gameplay.combatText  ? "true" : "false") << ",\n";
 		json << "    \"gameplay.timestamps\": "    << (m_gameplay.timestamps  ? "true" : "false") << ",\n";
-		json << "    \"gameplay.camera_distance\": " << m_gameplay.cameraDistance << "\n";
+		json << "    \"gameplay.camera_distance\": " << m_gameplay.cameraDistance << ",\n";
+
+		// Language
+		json << "    \"locale.tag\": \"" << m_language.localeTag << "\",\n";
+
+		// Interface
+		json << "    \"ui.scale_pct\": "    << m_interface.uiScalePct      << ",\n";
+		json << "    \"ui.panel_opacity\": " << m_interface.panelOpacityPct << ",\n";
+		json << "    \"ui.show_tooltips\": " << (m_interface.showTooltips ? "true" : "false") << ",\n";
+
+		// Network
+		json << "    \"network.preferred_server\": \"" << m_network.preferredServerId << "\",\n";
+		json << "    \"network.gameplay_udp\": " << (m_network.gameplayUdp ? "true" : "false") << "\n";
 
 		json << "}\n";
 
@@ -404,6 +563,16 @@ namespace engine::client
 		   << " combatText=" << m_gameplay.combatText
 		   << " timestamps=" << m_gameplay.timestamps
 		   << " camDist=" << m_gameplay.cameraDistance << "\n";
+		ss << "  Language: locale=" << m_language.localeTag
+		   << " restart=" << m_language.requiresRestart << "\n";
+		ss << "  Interface: scale=" << m_interface.uiScalePct
+		   << "% opacity=" << m_interface.panelOpacityPct
+		   << "% tooltips=" << m_interface.showTooltips << "\n";
+		ss << "  Network: server='" << m_network.preferredServerId
+		   << "' udp=" << m_network.gameplayUdp << "\n";
+		if (!m_account.login.empty())
+			ss << "  Account: " << m_account.login << " [" << m_account.tagId << "]\n";
+		ss << "  dirty=" << HasUnsavedChanges() << "\n";
 		return ss.str();
 	}
 

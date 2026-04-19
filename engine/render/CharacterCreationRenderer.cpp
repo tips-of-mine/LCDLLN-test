@@ -7,14 +7,18 @@ namespace engine::render
 {
 	namespace
 	{
-		constexpr int32_t kColGap        = 12; ///< Horizontal gap between the three columns.
-		constexpr int32_t kPanelPad      = 10; ///< Inner padding inside each column panel.
-		constexpr int32_t kCardH         = 64; ///< Height of a single race/class card row.
-		constexpr int32_t kCardGap       =  8; ///< Vertical gap between cards.
-		constexpr int32_t kCardCols      =  2; ///< Race grid: 2-column layout within the left panel.
-		constexpr int32_t kStepBarH      = 32; ///< Height of the step indicator dot row.
-		constexpr int32_t kStepBarMargin = 12; ///< Vertical margin above/below the step bar.
-		constexpr int32_t kTotalSteps    =  4; ///< Race → Class → Customization → Name.
+		// Design spec (CharacterAndHud.jsx):
+		// gridTemplateColumns: '280px 1fr 320px', gap: 24, padding: 28
+		constexpr int32_t kOuterPad   = 28; ///< Outer grid padding.
+		constexpr int32_t kColGap     = 24; ///< Gap between the three columns.
+		constexpr int32_t kRaceColW   = 280; ///< Fixed race list column width.
+		constexpr int32_t kClassColW  = 320; ///< Fixed class list column width.
+		constexpr int32_t kPanelPad   = 12; ///< Inner padding inside each column panel.
+		constexpr int32_t kCardH      = 54; ///< Height of a single race/class card row (10+12px padding).
+		constexpr int32_t kCardGap    =  4; ///< Vertical gap between cards.
+		// Portrait dimensions (design: 340×420, centred in middle column)
+		constexpr int32_t kPortraitW  = 340;
+		constexpr int32_t kPortraitH  = 420;
 	}
 
 	CharacterCreationLayout BuildCharacterCreationLayout(VkExtent2D extent)
@@ -23,16 +27,16 @@ namespace engine::render
 		const int32_t h = static_cast<int32_t>(extent.height);
 
 		CharacterCreationLayout lay{};
-		lay.colY = kStepBarH + kStepBarMargin * 2;
-		lay.colH = h - lay.colY - kStepBarMargin;
+		// No step bar — all 3 columns fill the viewport with outer padding.
+		lay.colY  = kOuterPad;
+		lay.colH  = h - kOuterPad * 2;
 
-		const int32_t totalW = std::min(w - 40, 1200);
-		const int32_t startX = (w - totalW) / 2;
-		lay.raceColW  = totalW * 28 / 100;
-		lay.portraitW = totalW * 38 / 100;
-		lay.classColW = totalW - lay.raceColW - lay.portraitW - kColGap * 2;
-		lay.raceColX  = startX;
-		lay.portraitX = startX + lay.raceColW + kColGap;
+		// Fixed widths from design; centre column fills remaining space.
+		lay.raceColW  = kRaceColW;
+		lay.classColW = kClassColW;
+		lay.portraitW = std::max(100, w - kRaceColW - kClassColW - kColGap * 2 - kOuterPad * 2);
+		lay.raceColX  = kOuterPad;
+		lay.portraitX = kOuterPad + kRaceColW + kColGap;
 		lay.classColX = lay.portraitX + lay.portraitW + kColGap;
 		return lay;
 	}
@@ -74,51 +78,8 @@ namespace engine::render
 			addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
 		};
 
-		// Background
+		// Background (radial gradient simulation — dark blue-green)
 		addThemeRect(0, 0, w, h, theme.background, 0.96f);
-
-		// Step bar background strip
-		addThemeRect(0, 0, w, kStepBarH + kStepBarMargin * 2, theme.surface, 0.85f);
-
-		// Step indicator dots + separators
-		{
-			constexpr int32_t kStepSlotW = 100;
-			constexpr int32_t kSepW      = 24;
-			constexpr int32_t kDotSz     = 14;
-			const int32_t totalBarW = kTotalSteps * kStepSlotW + (kTotalSteps - 1) * kSepW;
-			int32_t stepX = (w - totalBarW) / 2;
-			const int32_t dotY = kStepBarMargin + (kStepBarH - kDotSz) / 2;
-
-			using Step = engine::client::CharacterCreationStep;
-			int32_t activeStep = 0;
-			switch (state.step)
-			{
-				case Step::RaceSelect:    activeStep = 0; break;
-				case Step::ClassSelect:   activeStep = 1; break;
-				case Step::Customization: activeStep = 2; break;
-				default:                  activeStep = 3; break;
-			}
-
-			for (int32_t si = 0; si < kTotalSteps; ++si)
-			{
-				const int32_t dotX = stepX + (kStepSlotW - kDotSz) / 2;
-				if (si < activeStep)
-					addThemeRect(dotX, dotY, kDotSz, kDotSz, theme.accent, 0.85f);
-				else if (si == activeStep)
-					addThemeRect(dotX, dotY, kDotSz, kDotSz, theme.primary, 1.0f);
-				else
-					addThemeRect(dotX, dotY, kDotSz, kDotSz, theme.border, 0.60f);
-
-				if (si < kTotalSteps - 1)
-				{
-					const int32_t sepX = stepX + kStepSlotW;
-					const int32_t sepY = dotY + kDotSz / 2;
-					const float*  sc   = (si < activeStep) ? theme.accent : theme.border;
-					addThemeRect(sepX, sepY, kSepW, 1, sc, 0.70f);
-				}
-				stepX += kStepSlotW + kSepW;
-			}
-		}
 
 		// Column visibility: race always shown, class dimmed when not on ClassSelect
 		using Step = engine::client::CharacterCreationStep;
@@ -162,42 +123,35 @@ namespace engine::render
 			}
 		}
 
-		// Portrait / center column
-		addThemeRect(lay.portraitX, lay.colY, lay.portraitW, lay.colH, theme.surface, 0.72f);
+		// Centre column — flex column, centered
+		addThemeRect(lay.portraitX, lay.colY, lay.portraitW, lay.colH, theme.surface, 0.20f);
+		// Portrait (340×420 or fit in column, vertically centred)
 		{
-			constexpr int32_t kPortraitH = 280;
-			const int32_t portW = std::min(lay.portraitW - kPanelPad * 2, 200);
+			const int32_t portW = std::min(kPortraitW, lay.portraitW - kPanelPad * 2);
+			const int32_t portH = std::min(kPortraitH, lay.colH - 80); // leave room for name field
 			const int32_t portX = lay.portraitX + (lay.portraitW - portW) / 2;
-			const int32_t portY = lay.colY + kPanelPad + 24;
-			addThemeRect(portX, portY, portW, kPortraitH, theme.border, 0.45f);
-		}
-
-		// Gender toggle (F / M) — two side-by-side buttons in the portrait column
-		if (showCustom || state.step == engine::client::CharacterCreationStep::RaceSelect
-			|| state.step == engine::client::CharacterCreationStep::ClassSelect)
-		{
-			constexpr int32_t kToggleW  = 52;
-			constexpr int32_t kToggleH  = 24;
-			constexpr int32_t kToggleGap = 4;
-			const int32_t toggleTotalW = kToggleW * 2 + kToggleGap;
-			const int32_t toggleX = lay.portraitX + (lay.portraitW - toggleTotalW) / 2;
-			const int32_t toggleY = lay.colY + kPanelPad + 6;
-
+			const int32_t portY = lay.colY + (lay.colH - portH - 50) / 2; // 50 = name field
+			addThemeRect(portX, portY, portW, portH, theme.surface, 0.72f);
+			addThemeRect(portX, portY, portW, 1, theme.border, 0.70f);
+			addThemeRect(portX, portY, 1, portH, theme.border, 0.70f);
+			addThemeRect(portX + portW - 1, portY, 1, portH, theme.border, 0.70f);
+			addThemeRect(portX, portY + portH - 1, portW, 1, theme.border, 0.70f);
+			// Name input field below portrait (width=340, height=36)
+			const int32_t nameY = portY + portH + 16;
+			addThemeRect(portX, nameY, portW, 36, theme.surface, 0.60f);
+			addThemeRect(portX, nameY + 35, portW, 1, theme.border, 0.65f);
+			// Gender toggle (F/M) at bottom-right of portrait — 28×28 each, gap 6
+			const int32_t tgY = portY + portH - 28 - 12;
+			const int32_t tgX = portX + portW - 28 * 2 - 6 - 12;
 			const bool femaleActive = (state.gender == 'F');
 			// F button
-			addThemeRect(toggleX, toggleY, kToggleW, kToggleH,
+			addThemeRect(tgX, tgY, 28, 28,
 				femaleActive ? theme.primary : theme.surface,
-				femaleActive ? 0.90f : 0.40f);
-			addThemeRect(toggleX, toggleY + kToggleH - 2, kToggleW, 2,
-				femaleActive ? theme.accent : theme.border,
-				femaleActive ? 0.85f : 0.30f);
+				femaleActive ? 0.90f : 0.60f);
 			// M button
-			addThemeRect(toggleX + kToggleW + kToggleGap, toggleY, kToggleW, kToggleH,
+			addThemeRect(tgX + 28 + 6, tgY, 28, 28,
 				femaleActive ? theme.surface : theme.primary,
-				femaleActive ? 0.40f : 0.90f);
-			addThemeRect(toggleX + kToggleW + kToggleGap, toggleY + kToggleH - 2, kToggleW, 2,
-				femaleActive ? theme.border : theme.accent,
-				femaleActive ? 0.30f : 0.85f);
+				femaleActive ? 0.60f : 0.90f);
 		}
 
 		// Customization sliders (face / hair / skin / hair color / eye color)

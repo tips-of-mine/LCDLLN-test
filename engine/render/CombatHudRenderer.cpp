@@ -39,9 +39,10 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 
 	auto addBar = [&](int32_t barX, int32_t barY, int32_t barW, int32_t barH,
 		uint32_t cur, uint32_t maxVal,
-		const float fillColor[4], const float trackColor[4])
+		const float fillColor[4])
 	{
-		addThemeRect(barX, barY, barW, barH, trackColor, 0.82f);
+		// Track: rgba(255,255,255,.05) — design spec
+		addRect(barX, barY, barW, barH, 1.f, 1.f, 1.f, 0.05f);
 		if (maxVal > 0u)
 		{
 			const int32_t fillW = static_cast<int32_t>(
@@ -73,7 +74,7 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 		constexpr float kHpFill[4]{ 0.545f, 0.118f, 0.176f, 1.f };
 		addBar(bx, by, bw, bh,
 			state.playerHealthBar.currentValue, state.playerHealthBar.maxValue,
-			kHpFill, theme.surface);
+			kHpFill);
 	}
 
 	// Mana bar (semantic blue)
@@ -86,7 +87,7 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 		constexpr float kManaFill[4]{ 0.243f, 0.408f, 0.620f, 1.f };
 		addBar(bx, by, bw, bh,
 			state.playerManaBar.currentValue, state.playerManaBar.maxValue,
-			kManaFill, theme.surface);
+			kManaFill);
 	}
 
 	// Combo point dots (below mana bar)
@@ -136,7 +137,7 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 			constexpr float kTgtFill[4]{ 0.545f, 0.118f, 0.176f, 1.f };
 			addBar(bx, by, bw, bh,
 				state.targetHealthBar.currentValue, state.targetHealthBar.maxValue,
-				kTgtFill, theme.surface);
+				kTgtFill);
 		}
 	}
 
@@ -193,15 +194,16 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 		const int32_t bh = toI(state.playerXpBarBounds.height);
 		if (bw > 0 && bh > 0)
 		{
-			addThemeRect(bx, by, bw, bh, theme.surface, 0.70f);
+			// Track: near-transparent white (rgba(255,255,255,.05))
+			addRect(bx, by, bw, bh, 1.f, 1.f, 1.f, 0.05f);
 			if (state.playerXpPct > 0.f)
 			{
 				const int32_t fillW = static_cast<int32_t>(
 					static_cast<float>(bw) * std::min(1.f, state.playerXpPct));
 				if (fillW > 0)
 				{
-					constexpr float kXpFill[4]{ 0.38f, 0.72f, 0.45f, 1.f };
-					addRect(bx, by, fillW, bh, kXpFill[0], kXpFill[1], kXpFill[2], 0.85f);
+					// #E8A55C — warning/accent orange matching design spec Bar color
+					addRect(bx, by, fillW, bh, 0.910f, 0.647f, 0.361f, 0.88f);
 				}
 			}
 		}
@@ -222,10 +224,13 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 			constexpr int32_t kBlipSz = 4;
 			const int32_t bx = mx + static_cast<int32_t>(blip.xPct * static_cast<float>(mw));
 			const int32_t by = my + static_cast<int32_t>(blip.yPct * static_cast<float>(mh));
-			const float*  col = (blip.kind == 0) ? theme.secondary
-			                  : (blip.kind == 2)  ? theme.accent
-			                  :                     theme.primary;
-			addThemeRect(bx - kBlipSz / 2, by - kBlipSz / 2, kBlipSz, kBlipSz, col, 0.90f);
+			// kind 0 = hostile → #C44040 (red), kind 2 = quest → accent, kind 1 = friendly → primary
+			if (blip.kind == 0)
+				addRect(bx - kBlipSz / 2, by - kBlipSz / 2, kBlipSz, kBlipSz, 0.769f, 0.251f, 0.251f, 0.90f);
+			else if (blip.kind == 2)
+				addThemeRect(bx - kBlipSz / 2, by - kBlipSz / 2, kBlipSz, kBlipSz, theme.accent, 0.90f);
+			else
+				addThemeRect(bx - kBlipSz / 2, by - kBlipSz / 2, kBlipSz, kBlipSz, theme.primary, 0.90f);
 		}
 
 		// Player dot at centre

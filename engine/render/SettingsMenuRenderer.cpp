@@ -7,15 +7,18 @@ namespace engine::render
 {
 	namespace
 	{
-		constexpr int32_t kPanelW   = 720;
-		constexpr int32_t kPanelH   = 520;
-		constexpr int32_t kSidebarW = 160; ///< Width of the left tab sidebar.
-		constexpr int32_t kPad      =  10; ///< Inner content padding.
-		constexpr int32_t kTabH     =  44; ///< Height of each sidebar tab button.
-		constexpr int32_t kTabGap   =   2; ///< Vertical gap between tab buttons.
-		constexpr int32_t kTabCount =   8; ///< Graphics / Audio / Controls / Gameplay / Language / Interface / Network / Account.
-		constexpr int32_t kHeaderH  =  32; ///< Reserved height at top of sidebar for a title.
-		constexpr int32_t kFooterH  =  56; ///< Reserved height at bottom for Apply / Cancel buttons.
+		// Design spec (styles.css .ln-options): width min(1100px, 96vw), height min(680px, 88vh)
+		constexpr int32_t kPanelW   = 1100;
+		constexpr int32_t kPanelH   =  680;
+		constexpr int32_t kSidebarW =  240; ///< .ln-options-sidebar width.
+		constexpr int32_t kGap      =   20; ///< Gap between sidebar and main panel.
+		constexpr int32_t kPad      =   14; ///< Inner content padding (.ln-options-sidebar padding: 14px 10px).
+		constexpr int32_t kTabH     =   46; ///< .ln-options-tab height (~11px font + 11px*2 padding).
+		constexpr int32_t kTabGap   =    2; ///< Vertical gap between tab buttons.
+		constexpr int32_t kTabCount =    8; ///< Graphics / Audio / Controls / Gameplay / Language / Interface / Network / Account.
+		constexpr int32_t kHeaderH  =   58; ///< .ln-options-main-header: padding 18+border.
+		constexpr int32_t kFooterH  =   58; ///< .ln-options-footer height.
+		constexpr int32_t kMainW    = kPanelW - kSidebarW - kGap; ///< Main panel width.
 	}
 
 	std::vector<AuthUiLayer> BuildSettingsMenuLayers(
@@ -54,46 +57,61 @@ namespace engine::render
 			addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
 		};
 
-		// Dark modal veil
-		addRect(0, 0, w, h, 0.f, 0.f, 0.f, 0.55f);
+		// Dark backdrop veil (full screen)
+		addRect(0, 0, w, h, 0.f, 0.f, 0.f, 0.60f);
 
-		// Outer panel
-		const int32_t panelX = (w - kPanelW) / 2;
-		const int32_t panelY = (h - kPanelH) / 2;
-		addThemeRect(panelX - 2, panelY - 2, kPanelW + 4, kPanelH + 4, theme.border, 0.85f);
-		addThemeRect(panelX, panelY, kPanelW, kPanelH, theme.panel, 0.97f);
-		addThemeRect(panelX, panelY, kPanelW, 3, theme.accent, 1.0f);
+		// Grid origin: centered, width min(1100,vw*0.96), height min(680,vh*0.88)
+		const int32_t gridW = std::min(kPanelW, w * 96 / 100);
+		const int32_t gridH = std::min(kPanelH, h * 88 / 100);
+		const int32_t gridX = (w - gridW) / 2;
+		const int32_t gridY = (h - gridH) / 2;
 
-		// Left sidebar background + right divider
-		addThemeRect(panelX, panelY, kSidebarW, kPanelH, theme.surface, 0.90f);
-		addThemeRect(panelX + kSidebarW, panelY, 1, kPanelH, theme.border, 0.65f);
+		// Sidebar panel (.ln-options-sidebar)
+		const int32_t sideW = std::min(kSidebarW, gridW / 4);
+		addThemeRect(gridX, gridY, sideW, gridH, theme.panel, 0.97f);
+		addThemeRect(gridX, gridY, sideW, gridH, theme.surface, 0.72f); // extra depth tint
+		// Sidebar title bar
+		const int32_t sideTitleH = 44;
+		addThemeRect(gridX, gridY + sideTitleH, sideW, 1, theme.border, 0.65f);
 
 		// Sidebar tab buttons
-		const int32_t tabX       = panelX;
-		const int32_t tabsStartY = panelY + kHeaderH;
+		const int32_t tabsStartY = gridY + sideTitleH + 8;
 		for (int32_t ti = 0; ti < kTabCount; ++ti)
 		{
-			const int32_t tabY  = tabsStartY + ti * (kTabH + kTabGap);
+			const int32_t tabY   = tabsStartY + ti * (kTabH + kTabGap);
 			const bool    active = (static_cast<int32_t>(activeTab) == ti);
 			if (active)
 			{
-				addThemeRect(tabX, tabY, kSidebarW, kTabH, theme.primary, 0.85f);
-				addThemeRect(tabX + kSidebarW - 3, tabY, 3, kTabH, theme.accent, 1.0f);
+				// Active tab: rgba(74,123,184,.12) bg + accent text color marker
+				addThemeRect(gridX + 4, tabY, sideW - 8, kTabH, theme.primary, 0.12f);
+				addThemeRect(gridX + sideW - 5, tabY, 3, kTabH, theme.accent, 1.0f);
+				// Icon box accent border
+				addThemeRect(gridX + kPad, tabY + (kTabH - 24) / 2, 24, 24, theme.accent, 0.08f);
+				addThemeRect(gridX + kPad, tabY + (kTabH - 24) / 2, 24, 1, theme.accent, 0.45f);
+				addThemeRect(gridX + kPad, tabY + (kTabH - 24) / 2 + 23, 24, 1, theme.accent, 0.45f);
 			}
 			else
 			{
-				addThemeRect(tabX, tabY + kTabH - 1, kSidebarW, 1, theme.border, 0.35f);
+				addThemeRect(gridX + kPad, tabY + (kTabH - 24) / 2, 24, 24, theme.surface, 0.40f);
+				addThemeRect(gridX + kPad, tabY + (kTabH - 24) / 2, 24, 1, theme.border, 0.40f);
 			}
 		}
 
-		// Content area geometry
-		const int32_t contentX = panelX + kSidebarW + 1;
-		const int32_t contentY = panelY + 3;
-		const int32_t contentW = kPanelW - kSidebarW - 1;
-		const int32_t rowsStartY = contentY + kHeaderH + 10;
+		// Main panel (.ln-options-main): sidebar + gap
+		const int32_t mainX  = gridX + sideW + kGap;
+		const int32_t mainW  = gridW - sideW - kGap;
+		addThemeRect(mainX, gridY, mainW, gridH, theme.panel, 0.97f);
+
+		// Main panel header
+		addThemeRect(mainX, gridY + kHeaderH, mainW, 1, theme.border, 0.65f);
+
+		// Content area
+		const int32_t contentX   = mainX + kPad;
+		const int32_t contentW   = mainW - kPad * 2;
+		const int32_t rowsStartY = gridY + kHeaderH + 24; // 24px padding below header
 
 		// Section title underline
-		addThemeRect(contentX + kPad, contentY + kHeaderH + 4, contentW - kPad * 2, 1, theme.border, 0.55f);
+		addThemeRect(contentX, rowsStartY + 22, contentW, 1, theme.border, 0.40f);
 
 		// Per-tab content rows
 		using Tab = engine::client::SettingsTab;
@@ -225,29 +243,34 @@ namespace engine::render
 			}
 		}
 
-		// Footer: Apply (primary) + Cancel (surface) buttons + optional dirty banner
+		// Footer (.ln-options-footer): separator + Back / Cancel / Apply
 		{
-			const int32_t footerY = panelY + kPanelH - kFooterH;
-			addThemeRect(contentX, footerY, contentW, 1, theme.border, 0.40f);
+			const int32_t footerY = gridY + gridH - kFooterH;
+			addThemeRect(mainX, footerY, mainW, 1, theme.border, 0.40f);
 
 			constexpr int32_t kBtnW = 120;
-			constexpr int32_t kBtnH =  36;
+			constexpr int32_t kBtnH =  38;
 			const int32_t btnY = footerY + (kFooterH - kBtnH) / 2;
-			addThemeRect(contentX + kPad, btnY, kBtnW, kBtnH, theme.primary, 0.90f);
-			addThemeRect(contentX + kPad, btnY + kBtnH - 2, kBtnW, 2, theme.accent, 0.85f);
-			addThemeRect(contentX + kPad + kBtnW + 12, btnY, kBtnW, kBtnH, theme.surface, 0.80f);
-			addThemeRect(contentX + kPad + kBtnW + 12, btnY + kBtnH - 2, kBtnW, 2, theme.border, 0.55f);
 
-			// Dirty banner ("Modifications non enregistrées") — right-aligned in footer
+			// Back (ghost, left)
+			addThemeRect(mainX + kPad, btnY, kBtnW, kBtnH, theme.surface, 0.80f);
+			addThemeRect(mainX + kPad, btnY + kBtnH - 2, kBtnW, 2, theme.border, 0.55f);
+
+			// Apply (primary, right)
+			const int32_t applyX = mainX + mainW - kPad - kBtnW;
+			addThemeRect(applyX, btnY, kBtnW, kBtnH, theme.primary, 0.90f);
+			addThemeRect(applyX, btnY + kBtnH - 2, kBtnW, 2, theme.accent, 0.85f);
+
+			// Dirty banner ("Modifications non enregistrées") — between Back and Apply
 			if (hasUnsavedChanges)
 			{
-				constexpr float kDirtyColor[4]{ 0.85f, 0.64f, 0.25f, 1.f };
-				const int32_t bannerX = contentX + kPad + kBtnW * 2 + 24;
-				const int32_t bannerW = contentX + contentW - kPad - bannerX;
+				constexpr float kDirtyColor[4]{ 0.91f, 0.83f, 0.43f, 1.f }; // --ln-warning
+				const int32_t bannerX = mainX + kPad + kBtnW + 16;
+				const int32_t bannerW = applyX - 16 - bannerX;
 				if (bannerW > 20)
 				{
 					addRect(bannerX, btnY, bannerW, kBtnH,
-						kDirtyColor[0], kDirtyColor[1], kDirtyColor[2], 0.10f);
+						kDirtyColor[0], kDirtyColor[1], kDirtyColor[2], 0.08f);
 					addRect(bannerX, btnY, bannerW, 2,
 						kDirtyColor[0], kDirtyColor[1], kDirtyColor[2], 0.80f);
 				}

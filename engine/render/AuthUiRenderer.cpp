@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <filesystem>
 #include <string>
 #include <string_view>
@@ -147,14 +148,25 @@ namespace engine::render
 		m.languagePanelPrimaryButtonX = cx + cw - m.languagePanelPrimaryButtonW;
 		m.languagePanelPrimaryButtonY = m.panelY + panelH - 36 - m.languagePanelPrimaryButtonH;
 		// Raccourcis clavier : bas de la fenêtre (hors panneau), comme la maquette.
-		m.languagePanelFooterYPx = h - std::max(22, h / 42);
+		constexpr int32_t kFooterBandH = 30;
+		m.languagePanelFooterYPx = h - std::max(22, kFooterBandH);
 
 		const int32_t panelBottom = m.panelY + panelH;
+		const int32_t plateW = std::clamp(268, 200, std::max(160, panelW - innerPad * 2));
+		const int32_t plateH = 42;
+		const int32_t maxPlateY = h - kFooterBandH - plateH - 6;
+		const int32_t idealPlateY = panelBottom + 10;
+		const int32_t plateY = std::max(8, std::min(idealPlateY, maxPlateY));
+		m.languageProgressPlatePresent = true;
+		m.languageProgressPlateX = m.panelX + panelW - innerPad - plateW;
+		m.languageProgressPlateY = plateY;
+		m.languageProgressPlateW = plateW;
+		m.languageProgressPlateH = plateH;
+
 		m.languageInfoIconW = 22;
 		m.languageInfoIconH = 22;
-		m.languageInfoIconX = m.panelX + panelW - innerPad - m.languageInfoIconW;
-		// « i » + progression : sous le panneau, alignés à droite.
-		m.languageInfoIconY = std::min(panelBottom + 10, m.languagePanelFooterYPx - m.languageInfoIconH - 18);
+		m.languageInfoIconX = m.languageProgressPlateX + plateW - 10 - m.languageInfoIconW;
+		m.languageInfoIconY = plateY + (plateH - m.languageInfoIconH) / 2;
 		m.languageVersionTextRightXPx = m.languageInfoIconX - 8;
 		m.languageVersionTextYPx = m.languageInfoIconY + 3;
 
@@ -421,6 +433,28 @@ namespace engine::render
 			addRect(x, y, rw, rh, color[0], color[1], color[2], color[3] * alphaScale);
 		};
 
+		auto addFilledDisc = [&addRect](int32_t cx, int32_t cy, int32_t r, const float color[4], float alphaScale)
+		{
+			if (r <= 0)
+			{
+				return;
+			}
+			const int32_t r2 = r * r;
+			for (int32_t dy = -r; dy <= r; ++dy)
+			{
+				const int32_t dy2 = dy * dy;
+				if (dy2 > r2)
+				{
+					continue;
+				}
+				const int32_t halfW = static_cast<int32_t>(std::sqrt(static_cast<double>(r2 - dy2)));
+				const int32_t rowW = halfW * 2 + 1;
+				const int32_t x = cx - halfW;
+				const int32_t y = cy + dy;
+				addRect(x, y, rowW, 1, color[0], color[1], color[2], color[3] * alphaScale);
+			}
+		};
+
 		// Bouton auth unifié : cadre 1px, léger éclaircissement haut, fond, barre d’accent bas (plus marquée si primaire / survol).
 		auto addAuthActionButton = [&](int32_t x, int32_t y, int32_t bw, int32_t bh,
 			bool primary, bool emphasized, bool hovered)
@@ -472,16 +506,14 @@ namespace engine::render
 			state.languageSelection && model.languageFirstRunLayout && layout.languageFirstRunPanel;
 		if (langFirstPanel)
 		{
-			// Placeholder « lune » maquette : cadre bleu clair + carré intérieur décalé.
-			const int32_t moonS = std::clamp(std::min(w, h) / 10, 44, 88);
-			const int32_t mx = w - moonS - std::max(20, w / 24);
-			const int32_t my = std::max(14, h / 28);
-			addThemeRect(mx, my, moonS, moonS, theme.primary, 0.42f);
+			// Lune : disque rempli (scanlines) + reflet intérieur décalé.
+			const int32_t moonR = std::clamp(std::min(w, h) / 20, 20, 42);
+			const int32_t cxMoon = w - moonR - std::max(24, w / 22);
+			const int32_t cyMoon = std::max(moonR + 10, h / 26 + moonR);
+			addFilledDisc(cxMoon, cyMoon, moonR, theme.primary, 0.48f);
 			{
-				const int32_t in = moonS * 58 / 100;
-				const int32_t ox = moonS / 5;
-				const int32_t oy = moonS / 7;
-				addThemeRect(mx + ox, my + oy, in, in, theme.secondary, 0.88f);
+				const int32_t rIn = std::max(6, moonR * 52 / 100);
+				addFilledDisc(cxMoon - moonR / 5, cyMoon - moonR / 6, rIn, theme.secondary, 0.72f);
 			}
 
 			addThemeRect(panelX - 1, panelY - 1, panelW + 2, panelH + 2, theme.border, 0.5f);
@@ -491,14 +523,24 @@ namespace engine::render
 			addThemeRect(panelX, panelY, 1, panelH, theme.border, 0.45f);
 			addThemeRect(panelX + panelW - 1, panelY, 1, panelH, theme.border, 0.45f);
 
-			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY, layout.languageInfoIconW, layout.languageInfoIconH,
-				theme.surface, 0.92f);
-			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY, layout.languageInfoIconW, 1, theme.border, 0.82f);
-			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY + layout.languageInfoIconH - 1, layout.languageInfoIconW,
-				1, theme.border, 0.82f);
-			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY, 1, layout.languageInfoIconH, theme.border, 0.82f);
-			addThemeRect(layout.languageInfoIconX + layout.languageInfoIconW - 1, layout.languageInfoIconY, 1, layout.languageInfoIconH,
-				theme.border, 0.82f);
+			if (layout.languageProgressPlatePresent && layout.languageProgressPlateW > 4 && layout.languageProgressPlateH > 4)
+			{
+				const int32_t px = layout.languageProgressPlateX;
+				const int32_t py = layout.languageProgressPlateY;
+				const int32_t pw = layout.languageProgressPlateW;
+				const int32_t ph = layout.languageProgressPlateH;
+				addThemeRect(px - 1, py - 1, pw + 2, ph + 2, theme.border, 0.55f);
+				addThemeRect(px, py, pw, ph, theme.surface, 0.82f);
+				addThemeRect(px, py, pw, 1, theme.primary, 0.35f);
+			}
+
+			{
+				const int32_t icx = layout.languageInfoIconX + layout.languageInfoIconW / 2;
+				const int32_t icy = layout.languageInfoIconY + layout.languageInfoIconH / 2;
+				const int32_t ir = std::max(9, layout.languageInfoIconW / 2);
+				addFilledDisc(icx, icy, ir + 1, theme.border, 0.72f);
+				addFilledDisc(icx, icy, ir, theme.surface, 0.94f);
+			}
 
 			constexpr float kLangCardSelectedBorder[4] = { 0.96f, 0.84f, 0.22f, 1.0f };
 			for (int32_t ci = 0; ci < layout.languageCardCount; ++ci)

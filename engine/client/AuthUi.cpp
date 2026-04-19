@@ -3836,7 +3836,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					}
 				}
 
-				const bool leftClick = input.WasMousePressed(engine::platform::MouseButton::Left);
+				const bool leftClickRaw = input.WasMousePressed(engine::platform::MouseButton::Left);
+				const bool leftClick = leftClickRaw
+					|| (input.IsMouseDown(engine::platform::MouseButton::Left) && !m_authPrevMouseLeftDown);
 				const bool rightClick = input.WasMousePressed(engine::platform::MouseButton::Right);
 				if (leftClick || rightClick)
 				{
@@ -4062,8 +4064,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						{
 							if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
 							{
-								if (contains(mx, my, lay.languageInfoIconX, lay.languageInfoIconY, lay.languageInfoIconW,
-										lay.languageInfoIconH))
+								const bool hitIcon = contains(mx, my, lay.languageInfoIconX, lay.languageInfoIconY, lay.languageInfoIconW,
+									lay.languageInfoIconH);
+								const bool hitPlate = lay.languageProgressPlatePresent
+									&& contains(mx, my, lay.languageProgressPlateX, lay.languageProgressPlateY, lay.languageProgressPlateW,
+										lay.languageProgressPlateH);
+								if (hitIcon || hitPlate)
 								{
 									m_infoPopupVisible = !m_infoPopupVisible;
 									if (m_infoPopupVisible)
@@ -4378,6 +4384,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					}
 				}
 			}
+			m_authPrevMouseLeftDown = input.IsMouseDown(engine::platform::MouseButton::Left);
 		}
 
 		std::string text;

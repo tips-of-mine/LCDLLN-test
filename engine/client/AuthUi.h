@@ -347,6 +347,7 @@ namespace engine::client
 			m_hoveredBodyLineIndex = -1;
 			m_hoveredActionIndex = -1;
 			m_hoveredLanguageCardIndex = -1;
+			m_authPrevMouseLeftDown = false;
 			m_openDropdownIndex = -1;
 			m_userErrorText.clear();
 			m_infoPopupVisible = false;
@@ -396,6 +397,8 @@ namespace engine::client
 		int32_t m_hoveredActionIndex = -1;
 		/// Phase \c LanguageSelectionFirstRun : carte sous le curseur, ou -1.
 		int32_t m_hoveredLanguageCardIndex = -1;
+		/// Front descendant du clic gauche (WasMousePressed ou première frame « bouton enfoncé »).
+		bool m_authPrevMouseLeftDown = false;
 		uint32_t m_termsScrollOffset = 0;
 		uint32_t m_termsTotalLength = 0;
 		std::string m_userErrorText;

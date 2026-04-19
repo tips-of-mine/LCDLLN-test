@@ -123,6 +123,12 @@ namespace engine::render
 		int32_t languageInfoIconH = 0;
 		int32_t languageVersionTextRightXPx = 0;
 		int32_t languageVersionTextYPx = 0;
+		/// Petit panneau bas-droit (progression + « i »), rendu avant le texte.
+		bool languageProgressPlatePresent = false;
+		int32_t languageProgressPlateX = 0;
+		int32_t languageProgressPlateY = 0;
+		int32_t languageProgressPlateW = 0;
+		int32_t languageProgressPlateH = 0;
 		/// Par carte : x, y, w, h (drapeau + texte), jusqu’à 8 langues.
 		static constexpr int32_t kLanguageFirstRunMaxCards = 8;
 		int32_t languageCardCount = 0;

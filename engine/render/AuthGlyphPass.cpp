@@ -1595,11 +1595,12 @@ namespace engine::render
 			{
 				const int32_t vwLab = MeasureTextWidthPx(model.languageVersionLabel, smallScale);
 				const int32_t vxLab = layout.languageVersionTextRightXPx - vwLab;
-				AppendText(vertices, model.languageVersionLabel, std::max(contentX + 2, vxLab), layout.languageVersionTextYPx,
-					std::max(32, vwLab + 4), smallScale, mutedColor);
+				const int32_t minX = layout.languageProgressPlatePresent ? (layout.languageProgressPlateX + 8) : (contentX + 2);
+				AppendText(vertices, model.languageVersionLabel, std::max(minX, vxLab), layout.languageVersionTextYPx,
+					std::max(32, vwLab + 4), smallScale, titleColor);
 			}
 			appendCenteredText("i", layout.languageInfoIconX, layout.languageInfoIconY + 2, layout.languageInfoIconW, smallScale,
-				mutedColor, nullptr);
+				titleColor, nullptr);
 			if (!model.languagePanelSubtitle.empty())
 			{
 				AppendText(verticesValue, model.languagePanelSubtitle, contentX + 2, layout.languagePanelSubtitleYPx, contentW - 8,
@@ -1794,14 +1795,14 @@ namespace engine::render
 			{
 				const int32_t footY = layout.languagePanelFooterYPx;
 				const int32_t footMargin = 28;
-				AppendText(vertices, model.languageFooterLeft, footMargin, footY, viewportW / 2 - footMargin, smallScale, mutedColor);
+				AppendText(vertices, model.languageFooterLeft, footMargin, footY, viewportW / 2 - footMargin, smallScale, titleColor);
 			}
 			if (!model.languageFooterRight.empty())
 			{
 				const int32_t footY = layout.languagePanelFooterYPx;
 				const int32_t footMargin = 28;
 				const int32_t rwFr = MeasureTextWidthPx(model.languageFooterRight, smallScale);
-				AppendText(vertices, model.languageFooterRight, viewportW - rwFr - footMargin, footY, rwFr + 8, smallScale, mutedColor);
+				AppendText(vertices, model.languageFooterRight, viewportW - rwFr - footMargin, footY, rwFr + 8, smallScale, titleColor);
 			}
 		}
 		else if (!state.submitting)

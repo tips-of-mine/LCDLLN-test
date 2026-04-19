@@ -137,6 +137,20 @@ namespace engine::render
 		if (raceCount > 0u)
 		{
 			const int32_t cardW = (lay.raceColW - kPanelPad * 2 - kCardGap) / kCardCols;
+
+			// Hover highlight (lighter, no accent border)
+			if (state.hoveredRaceIndex >= 0
+				&& static_cast<uint32_t>(state.hoveredRaceIndex) != state.selectedRaceIndex)
+			{
+				const int32_t hr  = state.hoveredRaceIndex / kCardCols;
+				const int32_t hc  = state.hoveredRaceIndex % kCardCols;
+				const int32_t hcX = lay.raceColX + kPanelPad + hc * (cardW + kCardGap);
+				const int32_t hcY = lay.colY + kPanelPad + hr * (kCardH + kCardGap);
+				if (hcY + kCardH <= lay.colY + lay.colH)
+					addThemeRect(hcX, hcY, cardW, kCardH, theme.primary, 0.15f);
+			}
+
+			// Selection highlight
 			const int32_t row   = static_cast<int32_t>(state.selectedRaceIndex) / kCardCols;
 			const int32_t col   = static_cast<int32_t>(state.selectedRaceIndex) % kCardCols;
 			const int32_t cardX = lay.raceColX + kPanelPad + col * (cardW + kCardGap);
@@ -156,6 +170,34 @@ namespace engine::render
 			const int32_t portX = lay.portraitX + (lay.portraitW - portW) / 2;
 			const int32_t portY = lay.colY + kPanelPad + 24;
 			addThemeRect(portX, portY, portW, kPortraitH, theme.border, 0.45f);
+		}
+
+		// Gender toggle (F / M) — two side-by-side buttons in the portrait column
+		if (showCustom || state.step == engine::client::CharacterCreationStep::RaceSelect
+			|| state.step == engine::client::CharacterCreationStep::ClassSelect)
+		{
+			constexpr int32_t kToggleW  = 52;
+			constexpr int32_t kToggleH  = 24;
+			constexpr int32_t kToggleGap = 4;
+			const int32_t toggleTotalW = kToggleW * 2 + kToggleGap;
+			const int32_t toggleX = lay.portraitX + (lay.portraitW - toggleTotalW) / 2;
+			const int32_t toggleY = lay.colY + kPanelPad + 6;
+
+			const bool femaleActive = (state.gender == 'F');
+			// F button
+			addThemeRect(toggleX, toggleY, kToggleW, kToggleH,
+				femaleActive ? theme.primary : theme.surface,
+				femaleActive ? 0.90f : 0.40f);
+			addThemeRect(toggleX, toggleY + kToggleH - 2, kToggleW, 2,
+				femaleActive ? theme.accent : theme.border,
+				femaleActive ? 0.85f : 0.30f);
+			// M button
+			addThemeRect(toggleX + kToggleW + kToggleGap, toggleY, kToggleW, kToggleH,
+				femaleActive ? theme.surface : theme.primary,
+				femaleActive ? 0.40f : 0.90f);
+			addThemeRect(toggleX + kToggleW + kToggleGap, toggleY + kToggleH - 2, kToggleW, 2,
+				femaleActive ? theme.border : theme.accent,
+				femaleActive ? 0.30f : 0.85f);
 		}
 
 		// Customization sliders (face / hair / skin / hair color / eye color)
@@ -197,6 +239,18 @@ namespace engine::render
 		{
 			const int32_t cardW = lay.classColW - kPanelPad * 2;
 			const int32_t cardX = lay.classColX + kPanelPad;
+
+			// Hover highlight
+			if (state.hoveredClassIndex >= 0
+				&& static_cast<uint32_t>(state.hoveredClassIndex) != state.selectedClassIndex)
+			{
+				const int32_t hcY = lay.colY + kPanelPad
+					+ state.hoveredClassIndex * (kCardH + kCardGap);
+				if (hcY + kCardH <= lay.colY + lay.colH)
+					addThemeRect(cardX, hcY, cardW, kCardH, theme.primary, 0.15f);
+			}
+
+			// Selection highlight
 			const int32_t cardY = lay.colY + kPanelPad
 				+ static_cast<int32_t>(state.selectedClassIndex) * (kCardH + kCardGap);
 			if (cardY + kCardH <= lay.colY + lay.colH)

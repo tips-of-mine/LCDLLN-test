@@ -169,6 +169,104 @@ std::vector<AuthUiLayer> BuildCombatHudLayers(
 		addThemeRect(wx, wy + wh - 2, ww, 2, theme.accent, 0.60f);
 	}
 
+	// Portrait area (52×52 inside player panel, top-left)
+	{
+		const int32_t px = toI(state.portraitBounds.x);
+		const int32_t py = toI(state.portraitBounds.y);
+		const int32_t pw = toI(state.portraitBounds.width);
+		const int32_t ph = toI(state.portraitBounds.height);
+		if (pw > 0 && ph > 0)
+		{
+			addThemeRect(px, py, pw, ph, theme.surface, 0.70f);
+			addThemeRect(px, py, pw, 1, theme.border, 0.65f);
+			addThemeRect(px, py, 1, ph, theme.border, 0.65f);
+			addThemeRect(px + pw - 1, py, 1, ph, theme.border, 0.65f);
+			addThemeRect(px, py + ph - 1, pw, 1, theme.border, 0.65f);
+		}
+	}
+
+	// XP bar (thin bar below mana bar)
+	{
+		const int32_t bx = toI(state.playerXpBarBounds.x);
+		const int32_t by = toI(state.playerXpBarBounds.y);
+		const int32_t bw = toI(state.playerXpBarBounds.width);
+		const int32_t bh = toI(state.playerXpBarBounds.height);
+		if (bw > 0 && bh > 0)
+		{
+			addThemeRect(bx, by, bw, bh, theme.surface, 0.70f);
+			if (state.playerXpPct > 0.f)
+			{
+				const int32_t fillW = static_cast<int32_t>(
+					static_cast<float>(bw) * std::min(1.f, state.playerXpPct));
+				if (fillW > 0)
+				{
+					constexpr float kXpFill[4]{ 0.38f, 0.72f, 0.45f, 1.f };
+					addRect(bx, by, fillW, bh, kXpFill[0], kXpFill[1], kXpFill[2], 0.85f);
+				}
+			}
+		}
+	}
+
+	// Minimap (top-right)
+	if (state.minimapVisible)
+	{
+		const int32_t mx = toI(state.minimapBounds.x);
+		const int32_t my = toI(state.minimapBounds.y);
+		const int32_t mw = toI(state.minimapBounds.width);
+		const int32_t mh = toI(state.minimapBounds.height);
+		addThemeRect(mx - 1, my - 1, mw + 2, mh + 2, theme.border, 0.70f);
+		addThemeRect(mx, my, mw, mh, theme.surface, 0.82f);
+
+		for (const auto& blip : state.minimapBlips)
+		{
+			constexpr int32_t kBlipSz = 4;
+			const int32_t bx = mx + static_cast<int32_t>(blip.xPct * static_cast<float>(mw));
+			const int32_t by = my + static_cast<int32_t>(blip.yPct * static_cast<float>(mh));
+			const float*  col = (blip.kind == 0) ? theme.secondary
+			                  : (blip.kind == 2)  ? theme.accent
+			                  :                     theme.primary;
+			addThemeRect(bx - kBlipSz / 2, by - kBlipSz / 2, kBlipSz, kBlipSz, col, 0.90f);
+		}
+
+		// Player dot at centre
+		constexpr int32_t kPlayerDot = 6;
+		addThemeRect(mx + mw / 2 - kPlayerDot / 2, my + mh / 2 - kPlayerDot / 2,
+			kPlayerDot, kPlayerDot, theme.accent, 1.0f);
+	}
+
+	// Action bar (bottom-centre, 10 slots)
+	if (!state.actionSlots.empty())
+	{
+		const int32_t abx = toI(state.actionBarBounds.x);
+		const int32_t aby = toI(state.actionBarBounds.y);
+		const int32_t abw = toI(state.actionBarBounds.width);
+		const int32_t abh = toI(state.actionBarBounds.height);
+		addThemeRect(abx - 4, aby - 4, abw + 8, abh + 8, theme.border, 0.45f);
+		addThemeRect(abx, aby, abw, abh, theme.panel, 0.85f);
+
+		for (const auto& slot : state.actionSlots)
+		{
+			const int32_t sx = toI(slot.bounds.x);
+			const int32_t sy = toI(slot.bounds.y);
+			const int32_t sw = toI(slot.bounds.width);
+			const int32_t sh = toI(slot.bounds.height);
+			const float   bgA = slot.hasAbility ? 0.85f : 0.40f;
+			addThemeRect(sx, sy, sw, sh, theme.surface, bgA);
+			addThemeRect(sx, sy, sw, 1, theme.border, 0.50f);
+			addThemeRect(sx, sy, 1, sh, theme.border, 0.50f);
+			addThemeRect(sx + sw - 1, sy, 1, sh, theme.border, 0.50f);
+			addThemeRect(sx, sy + sh - 1, sw, 1, theme.border, 0.50f);
+			if (slot.cooldownPct > 0.f && slot.cooldownPct < 1.f)
+			{
+				const int32_t coolH = static_cast<int32_t>(static_cast<float>(sh) * slot.cooldownPct);
+				if (coolH > 0)
+					addRect(sx, sy, sw, coolH, 0.f, 0.f, 0.f, 0.55f);
+			}
+			if (slot.active)
+				addThemeRect(sx, sy, sw, 2, theme.accent, 1.0f);
+		}
+	}
+
 	return layers;
 }
 

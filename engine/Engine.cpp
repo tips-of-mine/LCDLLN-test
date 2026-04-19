@@ -2338,7 +2338,8 @@ namespace engine
 														if (m_settingsMenu.IsInitialized() && m_settingsMenu.IsOpen())
 														{
 															const auto settingsLayers = engine::render::BuildSettingsMenuLayers(
-																ext, m_settingsMenu.GetActiveTab(), true, gameTheme);
+																ext, m_settingsMenu.GetActiveTab(), true,
+																m_settingsMenu.HasUnsavedChanges(), gameTheme);
 															gameLayers.insert(gameLayers.end(), settingsLayers.begin(), settingsLayers.end());
 														}
 														const engine::client::CharacterCreationState& ccState = m_charCreation.GetState();

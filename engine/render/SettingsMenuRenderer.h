@@ -11,9 +11,11 @@ namespace engine::render
 {
 	/// Builds Vulkan clear-rect layers for the in-game settings menu overlay.
 	/// Returns an empty vector when \p isOpen is false.
+	/// \p hasUnsavedChanges drives the "Modifications non enregistrées" dirty banner.
 	std::vector<AuthUiLayer> BuildSettingsMenuLayers(
 		VkExtent2D extent,
 		engine::client::SettingsTab activeTab,
 		bool isOpen,
+		bool hasUnsavedChanges,
 		const AuthUiTheme& theme);
 }

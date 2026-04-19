@@ -6,6 +6,7 @@
 #include "engine/editor/WorldEditorSession.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
@@ -41,6 +42,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#	include "imgui.h"
 #endif
 
 namespace engine
@@ -2070,8 +2072,11 @@ namespace engine
 												const VkImageView backbufferView = reg.getImageView(m_fgBackbufferId);
 
 												bool renderedAuthUi = false;
+												const bool authImguiSkipsVkOverlay = m_authImGui != nullptr
+													&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
 												if (authVisualState.active
 													&& authUiDynamicRenderingEnabled
+													&& !authImguiSkipsVkOverlay
 													&& backbufferView != VK_NULL_HANDLE
 													&& m_vkDeviceContext.SupportsDynamicRendering())
 												{
@@ -2362,7 +2367,10 @@ namespace engine
 
 													bool worldEditorUiToPresent = false;
 #if defined(_WIN32)
-													if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady()
+													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
+														&& (m_worldEditorExe
+															|| (m_authImGui && authVisualState.active
+																&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false)))
 														&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
 														&& !presentSolidColorDebug)
 													{
@@ -2477,6 +2485,7 @@ namespace engine
 				m_worldEditorImGui->Shutdown(m_vkDeviceContext.GetDevice());
 				m_worldEditorImGui.reset();
 			}
+			m_authImGui.reset();
 			m_worldEditorTerrainTools.Shutdown();
 #endif
 		if (m_terrain.IsValid())
@@ -2632,7 +2641,7 @@ namespace engine
 		auto& out               = m_renderStates[writeIdx];
 
 #if defined(_WIN32)
-		if (m_worldEditorExe && !m_worldEditorImGui && m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid()
+		if (!m_worldEditorImGui && m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid()
 			&& m_window.GetNativeHandle() != nullptr && m_vkDeviceContext.SupportsDynamicRendering())
 		{
 			m_worldEditorImGui = std::make_unique<engine::editor::WorldEditorImGui>();
@@ -2644,8 +2653,13 @@ namespace engine
 				VK_API_VERSION_1_1,
 				m_window.GetNativeHandle()))
 			{
-				m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+				if (m_worldEditorExe)
+				{
+					m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+				}
 				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
+				m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
+				m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);
 			}
 			else
 			{
@@ -2805,9 +2819,10 @@ namespace engine
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();
 			const bool authUiDynamicRenderingEnabled = m_cfg.GetBool("render.auth_ui_dynamic_rendering.enabled", true);
+			const bool authImguiClearsHud = m_authImGui && m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
 			if (m_authUi.GetVisualState().active
-				&& authUiDynamicRenderingEnabled
-				&& m_vkDeviceContext.SupportsDynamicRendering())
+				&& m_vkDeviceContext.SupportsDynamicRendering()
+				&& (authUiDynamicRenderingEnabled || authImguiClearsHud))
 				m_window.SetOverlayText({});
 			else
 				m_window.SetOverlayText(out.authHudText);
@@ -2823,7 +2838,9 @@ namespace engine
 
 #if defined(_WIN32)
 		// Dear ImGui : lire io.WantCapture* après NewFrame() pour la frame courante (sinon la caméra reste figée).
-		if (m_worldEditorExe && m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		const bool authImguiOverlayNewFrame = m_authImGui && m_authUi.GetVisualState().active
+			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
+		if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && (m_worldEditorExe || authImguiOverlayNewFrame))
 		{
 			float imguiDw = static_cast<float>(std::max(1, m_width));
 			float imguiDh = static_cast<float>(std::max(1, m_height));
@@ -3105,6 +3122,25 @@ namespace engine
 					}
 				}
 			}
+		}
+		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_authImGui
+			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false) && m_authUi.GetVisualState().active)
+		{
+			float dw = static_cast<float>(std::max(1, m_width));
+			float dh = static_cast<float>(std::max(1, m_height));
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extUi = m_vkSwapchain.GetExtent();
+				if (extUi.width > 0 && extUi.height > 0)
+				{
+					dw = static_cast<float>(extUi.width);
+					dh = static_cast<float>(extUi.height);
+				}
+			}
+			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
+			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
+			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
+			ImGui::Render();
 		}
 #endif
 

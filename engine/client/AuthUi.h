@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -103,6 +104,12 @@ namespace engine::client
 			/// Au moins une sonde de statut terminée (cache disponible ; le logo coin ne s’affiche que si \ref authLogoSpin).
 			bool authStatusKnown = false;
 			bool authStatusOk = false;
+			/// Écran Options (auth) — aligné sur la phase \c LanguageOptions pour l’overlay ImGui.
+			bool options = false;
+			/// Choix du royaume / shard.
+			bool shardPick = false;
+			/// \c true uniquement si \c Phase::EmailConfirmationPending (écran « vérifiez vos e-mails »).
+			bool emailConfirmationPending = false;
 		};
 
 		struct RenderField
@@ -292,6 +299,92 @@ namespace engine::client
 
 		bool SetViewportSize(uint32_t width, uint32_t height);
 
+		/// Pont \c AuthImGuiRenderer (voir \c render.auth_ui.imgui.enabled) — évite de dupliquer la logique de phase.
+		void ImGuiApplyFirstRunLanguageContinue(const engine::core::Config& cfg, std::string_view localeTag);
+		void ImGuiSubmitLogin(const engine::core::Config& cfg, const char* loginUtf8, const char* passwordUtf8, bool rememberMe);
+		void ImGuiNavigateToRegisterFromLogin();
+		void ImGuiBackFromRegisterToLogin();
+		void ImGuiOpenForgotPasswordPortal(const engine::core::Config& cfg, engine::platform::Window& window);
+		void ImGuiOpenLanguageOptionsMenu();
+		void ImGuiRequestClose(engine::platform::Window& window);
+
+		/// Miroir des réglages \c *Pending pour l’overlay options ImGui (même sémantique que le menu classique).
+		struct LanguageOptionsImGuiMirror
+		{
+			bool videoFullscreen{};
+			bool videoVsync{};
+			float audioMaster01 = 1.f;
+			float audioMusic01 = 1.f;
+			float audioSfx01 = 1.f;
+			float audioUi01 = 1.f;
+			float mouseSensitivity = 0.002f;
+			bool invertY{};
+			bool useZqsd{};
+			bool gameplayUdpEnabled{};
+			bool allowInsecureDev = true;
+			uint32_t authTimeoutMs = 5000u;
+			uint32_t languageSelectionIndex{};
+		};
+
+		LanguageOptionsImGuiMirror BuildLanguageOptionsImGuiMirror() const;
+		void ImGuiApplyLanguageOptionsMenu(const engine::core::Config& cfg, const LanguageOptionsImGuiMirror& mirror);
+		void ImGuiCloseLanguageOptionsWithoutApply();
+
+		struct RegisterImGuiSubmit
+		{
+			const char* login = nullptr;
+			const char* email = nullptr;
+			const char* password = nullptr;
+			const char* passwordConfirm = nullptr;
+			const char* firstName = nullptr;
+			const char* lastName = nullptr;
+			const char* birthDay = nullptr;
+			const char* birthMonth = nullptr;
+			const char* birthYear = nullptr;
+			const char* countryIso2 = nullptr;
+		};
+		void ImGuiSubmitRegister(const engine::core::Config& cfg, const RegisterImGuiSubmit& form);
+
+		struct RegisterFieldsMirrorForImGui
+		{
+			std::string login;
+			std::string email;
+			std::string firstName;
+			std::string lastName;
+			std::string countryIso2;
+			int32_t birthDayIndex{};
+			int32_t birthMonthIndex{};
+			int32_t birthYearIndex{};
+		};
+		RegisterFieldsMirrorForImGui BuildRegisterFieldsMirrorForImGui() const;
+
+		void ImGuiNavigateToForgotFromLogin();
+		void ImGuiSubmitForgotPassword(const engine::core::Config& cfg, const char* emailUtf8);
+		void ImGuiBackFromForgotToLogin();
+
+		void ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8);
+		void ImGuiBackFromVerifyToLogin();
+		void ImGuiEmailConfirmationBackToLogin();
+
+		void ImGuiAcknowledgeErrorScreen(const engine::core::Config& cfg);
+
+		uint32_t ShardPickChoiceShardId() const { return m_shardPickChoiceShardId; }
+		void ImGuiSetShardPickChoiceShardId(uint32_t shardId);
+		const std::vector<engine::network::ServerListEntry>& ShardPickEntries() const { return m_shardPickEntries; }
+		void ImGuiSubmitShardPick(const engine::core::Config& cfg);
+		void ImGuiBackFromShardPickToLogin();
+
+		void ImGuiNotifyTermsScrollReachedBottom(bool reached);
+		void ImGuiSetTermsAcknowledgeChecked(bool on);
+		void ImGuiTermsPrimaryClick(const engine::core::Config& cfg);
+		void ImGuiTermsDecline(engine::platform::Window& window);
+
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8);
+		void ImGuiCancelCharacterCreateReturnToLogin();
+
+		const std::string& TermsFullTextForImGui() const { return m_termsContent; }
+		const std::vector<std::string>& GetAvailableLocales() const { return m_localization.GetAvailableLocales(); }
+
 	private:
 		enum class Phase
 		{
@@ -335,6 +428,7 @@ namespace engine::client
 		std::string LocalizedLanguageName(std::string_view localeTag) const;
 		bool HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg);
 		void SubmitCurrentPhase(const engine::core::Config& cfg);
+		void CommitLanguageOptionsMenuApply(const engine::core::Config& cfg);
 		void UpdateWindowTitle(engine::platform::Window& window) const;
 		void JoinWorker();
 		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).

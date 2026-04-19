@@ -1070,6 +1070,51 @@ namespace engine::client
 	{
 	}
 
+	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config&, std::string_view) {}
+	void AuthUiPresenter::ImGuiSubmitLogin(const engine::core::Config&, const char*, const char*, bool) {}
+	void AuthUiPresenter::ImGuiNavigateToRegisterFromLogin() {}
+	void AuthUiPresenter::ImGuiBackFromRegisterToLogin() {}
+	void AuthUiPresenter::ImGuiOpenForgotPasswordPortal(const engine::core::Config&, engine::platform::Window&) {}
+	void AuthUiPresenter::ImGuiOpenLanguageOptionsMenu() {}
+	void AuthUiPresenter::ImGuiRequestClose(engine::platform::Window& window)
+	{
+		window.RequestClose();
+	}
+
+	AuthUiPresenter::LanguageOptionsImGuiMirror AuthUiPresenter::BuildLanguageOptionsImGuiMirror() const
+	{
+		return {};
+	}
+
+	void AuthUiPresenter::ImGuiApplyLanguageOptionsMenu(const engine::core::Config&, const LanguageOptionsImGuiMirror&) {}
+	void AuthUiPresenter::ImGuiCloseLanguageOptionsWithoutApply() {}
+
+	AuthUiPresenter::RegisterFieldsMirrorForImGui AuthUiPresenter::BuildRegisterFieldsMirrorForImGui() const
+	{
+		return {};
+	}
+
+	void AuthUiPresenter::ImGuiSubmitRegister(const engine::core::Config&, const RegisterImGuiSubmit&) {}
+	void AuthUiPresenter::ImGuiNavigateToForgotFromLogin() {}
+	void AuthUiPresenter::ImGuiSubmitForgotPassword(const engine::core::Config&, const char*) {}
+	void AuthUiPresenter::ImGuiBackFromForgotToLogin() {}
+	void AuthUiPresenter::ImGuiSubmitVerifyEmailCode(const engine::core::Config&, const char*) {}
+	void AuthUiPresenter::ImGuiBackFromVerifyToLogin() {}
+	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin() {}
+	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config&) {}
+	void AuthUiPresenter::ImGuiSetShardPickChoiceShardId(uint32_t) {}
+	void AuthUiPresenter::ImGuiSubmitShardPick(const engine::core::Config&) {}
+	void AuthUiPresenter::ImGuiBackFromShardPickToLogin() {}
+	void AuthUiPresenter::ImGuiNotifyTermsScrollReachedBottom(bool) {}
+	void AuthUiPresenter::ImGuiSetTermsAcknowledgeChecked(bool) {}
+	void AuthUiPresenter::ImGuiTermsPrimaryClick(const engine::core::Config&) {}
+	void AuthUiPresenter::ImGuiTermsDecline(engine::platform::Window& window)
+	{
+		window.RequestClose();
+	}
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*) {}
+	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
+
 #else
 
 	bool AuthUiPresenter::Init(const engine::core::Config& cfg)
@@ -1482,6 +1527,374 @@ namespace engine::client
 		{
 			SetPhase(m_phaseBeforeOptions);
 		}
+	}
+
+	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config& cfg, std::string_view localeTag)
+	{
+		(void)cfg;
+		if (m_phase != Phase::LanguageSelectionFirstRun || localeTag.empty())
+		{
+			return;
+		}
+		const auto& locales = m_localization.GetAvailableLocales();
+		if (locales.empty())
+		{
+			return;
+		}
+		const std::string tag(localeTag);
+		const auto it = std::find(locales.begin(), locales.end(), tag);
+		if (it == locales.end())
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] ImGui: locale '{}' absente des locales disponibles", tag);
+			return;
+		}
+		m_languageSelectionIndex = static_cast<uint32_t>(std::distance(locales.begin(), it));
+		m_selectedLocale = *it;
+		ApplyLocaleSelection(true);
+	}
+
+	void AuthUiPresenter::ImGuiSubmitLogin(const engine::core::Config& cfg, const char* loginUtf8, const char* passwordUtf8,
+		bool rememberMe)
+	{
+		if (m_phase != Phase::Login)
+		{
+			return;
+		}
+		m_login = loginUtf8 ? loginUtf8 : "";
+		m_password = passwordUtf8 ? passwordUtf8 : "";
+		m_rememberLogin = rememberMe;
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiNavigateToRegisterFromLogin()
+	{
+		if (m_phase != Phase::Login)
+		{
+			return;
+		}
+		SetPhase(Phase::Register);
+		m_activeField = 0;
+		m_userErrorText.clear();
+		m_passwordConfirm.clear();
+		m_usernameCheckState = UsernameCheckState::Idle;
+		m_usernameCheckSeq++;
+		m_usernameDebounceTimer = 0.0;
+		m_usernameLastChecked.clear();
+	}
+
+	void AuthUiPresenter::ImGuiBackFromRegisterToLogin()
+	{
+		if (m_phase != Phase::Register)
+		{
+			return;
+		}
+		m_usernameCheckState = UsernameCheckState::Idle;
+		m_usernameCheckSeq++;
+		m_usernameDebounceTimer = 0.0;
+		m_usernameLastChecked.clear();
+		SetPhase(Phase::Login);
+		m_activeField = 0;
+		m_userErrorText.clear();
+		m_passwordConfirm.clear();
+		m_registeredTagId.clear();
+	}
+
+	void AuthUiPresenter::ImGuiOpenForgotPasswordPortal(const engine::core::Config& cfg, engine::platform::Window& window)
+	{
+		if (m_phase != Phase::Login)
+		{
+			return;
+		}
+		const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
+		LOG_INFO(Core, "[AuthUiPresenter] ImGui: ouverture portail recuperation ({})", resetUrl);
+		if (!window.OpenExternalUrl(resetUrl))
+		{
+			SetPhase(Phase::Error);
+			m_userErrorText = Tr("auth.error.open_recovery_portal");
+		}
+	}
+
+	void AuthUiPresenter::ImGuiOpenLanguageOptionsMenu()
+	{
+		OpenLanguageOptions();
+	}
+
+	void AuthUiPresenter::ImGuiRequestClose(engine::platform::Window& window)
+	{
+		window.RequestClose();
+	}
+
+	AuthUiPresenter::LanguageOptionsImGuiMirror AuthUiPresenter::BuildLanguageOptionsImGuiMirror() const
+	{
+		LanguageOptionsImGuiMirror m{};
+		m.videoFullscreen = m_videoFullscreenPending;
+		m.videoVsync = m_videoVsyncPending;
+		m.audioMaster01 = m_audioMasterVolumePending;
+		m.audioMusic01 = m_audioMusicVolumePending;
+		m.audioSfx01 = m_audioSfxVolumePending;
+		m.audioUi01 = m_audioUiVolumePending;
+		m.mouseSensitivity = m_mouseSensitivityPending;
+		m.invertY = m_invertYPending;
+		m.useZqsd = m_useZqsdPending;
+		m.gameplayUdpEnabled = m_gameplayUdpEnabledPending;
+		m.allowInsecureDev = m_allowInsecureDevPending;
+		m.authTimeoutMs = m_authTimeoutMsPending;
+		m.languageSelectionIndex = m_languageSelectionIndex;
+		return m;
+	}
+
+	void AuthUiPresenter::ImGuiApplyLanguageOptionsMenu(const engine::core::Config& cfg, const LanguageOptionsImGuiMirror& mirror)
+	{
+		if (m_phase != Phase::LanguageOptions)
+		{
+			return;
+		}
+		const auto& locales = m_localization.GetAvailableLocales();
+		if (!locales.empty())
+		{
+			const uint32_t maxIdx = static_cast<uint32_t>(locales.size() - 1u);
+			m_languageSelectionIndex = mirror.languageSelectionIndex > maxIdx ? maxIdx : mirror.languageSelectionIndex;
+		}
+		m_videoFullscreenPending = mirror.videoFullscreen;
+		m_videoVsyncPending = mirror.videoVsync;
+		m_audioMasterVolumePending = mirror.audioMaster01;
+		m_audioMusicVolumePending = mirror.audioMusic01;
+		m_audioSfxVolumePending = mirror.audioSfx01;
+		m_audioUiVolumePending = mirror.audioUi01;
+		m_mouseSensitivityPending = mirror.mouseSensitivity;
+		m_invertYPending = mirror.invertY;
+		m_useZqsdPending = mirror.useZqsd;
+		m_gameplayUdpEnabledPending = mirror.gameplayUdpEnabled;
+		m_allowInsecureDevPending = mirror.allowInsecureDev;
+		m_authTimeoutMsPending = mirror.authTimeoutMs;
+		CommitLanguageOptionsMenuApply(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiCloseLanguageOptionsWithoutApply()
+	{
+		if (m_phase != Phase::LanguageOptions)
+		{
+			return;
+		}
+		m_phase = m_phaseBeforeOptions;
+		LOG_INFO(Core, "[AuthUiPresenter] ImGui: options fermees sans appliquer");
+	}
+
+	AuthUiPresenter::RegisterFieldsMirrorForImGui AuthUiPresenter::BuildRegisterFieldsMirrorForImGui() const
+	{
+		RegisterFieldsMirrorForImGui s{};
+		s.login = m_login;
+		s.email = m_email;
+		s.firstName = m_firstName;
+		s.lastName = m_lastName;
+		s.countryIso2 = m_country;
+		s.birthDayIndex = m_birthDayIndex;
+		s.birthMonthIndex = m_birthMonthIndex;
+		s.birthYearIndex = m_birthYearIndex;
+		return s;
+	}
+
+	void AuthUiPresenter::ImGuiSubmitRegister(const engine::core::Config& cfg, const RegisterImGuiSubmit& form)
+	{
+		if (m_phase != Phase::Register)
+		{
+			return;
+		}
+		auto pull = [](std::string& dst, const char* p) { dst = p ? std::string(p) : std::string(); };
+		pull(m_login, form.login);
+		pull(m_email, form.email);
+		pull(m_password, form.password);
+		pull(m_passwordConfirm, form.passwordConfirm);
+		pull(m_firstName, form.firstName);
+		pull(m_lastName, form.lastName);
+		pull(m_birthDay, form.birthDay);
+		pull(m_birthMonth, form.birthMonth);
+		pull(m_birthYear, form.birthYear);
+		pull(m_country, form.countryIso2);
+		if (m_country.size() >= 2u)
+		{
+			m_country[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(m_country[0])));
+			m_country[1] = static_cast<char>(std::toupper(static_cast<unsigned char>(m_country[1])));
+			if (m_country.size() > 2u)
+			{
+				m_country.resize(2u);
+			}
+		}
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiNavigateToForgotFromLogin()
+	{
+		if (m_phase != Phase::Login)
+		{
+			return;
+		}
+		SetPhase(Phase::ForgotPassword);
+		m_activeField = 0;
+		m_userErrorText.clear();
+	}
+
+	void AuthUiPresenter::ImGuiSubmitForgotPassword(const engine::core::Config& cfg, const char* emailUtf8)
+	{
+		if (m_phase != Phase::ForgotPassword)
+		{
+			return;
+		}
+		m_email = emailUtf8 ? std::string(emailUtf8) : std::string();
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiBackFromForgotToLogin()
+	{
+		if (m_phase != Phase::ForgotPassword)
+		{
+			return;
+		}
+		SetPhase(Phase::Login);
+		m_activeField = 0;
+		m_userErrorText.clear();
+	}
+
+	void AuthUiPresenter::ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8)
+	{
+		if (m_phase != Phase::VerifyEmail)
+		{
+			return;
+		}
+		m_verifyCode = codeSixUtf8 ? std::string(codeSixUtf8) : std::string();
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiBackFromVerifyToLogin()
+	{
+		if (m_phase != Phase::VerifyEmail)
+		{
+			return;
+		}
+		SetPhase(Phase::Login);
+		m_activeField = 0;
+		m_userErrorText.clear();
+		m_passwordConfirm.clear();
+		m_registeredTagId.clear();
+	}
+
+	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin()
+	{
+		if (m_phase != Phase::EmailConfirmationPending)
+		{
+			return;
+		}
+		m_registeredTagId.clear();
+		SetPhase(Phase::Login);
+		m_activeField = 0;
+		m_userErrorText.clear();
+	}
+
+	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config& cfg)
+	{
+		if (m_phase != Phase::Error)
+		{
+			return;
+		}
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiSetShardPickChoiceShardId(uint32_t shardId)
+	{
+		if (m_phase != Phase::ShardPick)
+		{
+			return;
+		}
+		m_shardPickChoiceShardId = shardId;
+	}
+
+	void AuthUiPresenter::ImGuiSubmitShardPick(const engine::core::Config& cfg)
+	{
+		if (m_phase != Phase::ShardPick)
+		{
+			return;
+		}
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiBackFromShardPickToLogin()
+	{
+		if (m_phase != Phase::ShardPick)
+		{
+			return;
+		}
+		m_shardPickEntries.clear();
+		m_shardPickChoiceShardId = 0;
+		SetPhase(Phase::Login);
+		m_userErrorText.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] ImGui: ShardPick -> Login");
+	}
+
+	void AuthUiPresenter::ImGuiNotifyTermsScrollReachedBottom(bool reached)
+	{
+		if (m_phase != Phase::Terms)
+		{
+			return;
+		}
+		m_termsScrolledToBottom = reached;
+	}
+
+	void AuthUiPresenter::ImGuiSetTermsAcknowledgeChecked(bool on)
+	{
+		if (m_phase != Phase::Terms)
+		{
+			return;
+		}
+		m_termsAcknowledgeChecked = on;
+	}
+
+	void AuthUiPresenter::ImGuiTermsPrimaryClick(const engine::core::Config& cfg)
+	{
+		if (m_phase != Phase::Terms)
+		{
+			return;
+		}
+		if (!m_termsScrolledToBottom)
+		{
+			return;
+		}
+		if (!m_termsAcknowledgeChecked)
+		{
+			m_termsAcknowledgeChecked = true;
+			return;
+		}
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiTermsDecline(engine::platform::Window& window)
+	{
+		if (m_phase != Phase::Terms)
+		{
+			return;
+		}
+		window.RequestClose();
+	}
+
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8)
+	{
+		if (m_phase != Phase::CharacterCreate)
+		{
+			return;
+		}
+		m_characterName = nameUtf8 ? std::string(nameUtf8) : std::string();
+		SubmitCurrentPhase(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin()
+	{
+		if (m_phase != Phase::CharacterCreate)
+		{
+			return;
+		}
+		SetPhase(Phase::Login);
+		m_userErrorText.clear();
+		m_infoBanner = Tr("auth.info.character_cancelled");
+		ResetMasterSession();
 	}
 
 	void AuthUiPresenter::OpenLanguageOptions()
@@ -3193,6 +3606,40 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 #endif
 }
 
+void AuthUiPresenter::CommitLanguageOptionsMenuApply(const engine::core::Config& cfg)
+{
+	(void)cfg;
+	m_videoFullscreen = m_videoFullscreenPending;
+	m_videoVsync = m_videoVsyncPending;
+	m_audioMasterVolume = m_audioMasterVolumePending;
+	m_audioMusicVolume = m_audioMusicVolumePending;
+	m_audioSfxVolume = m_audioSfxVolumePending;
+	m_audioUiVolume = m_audioUiVolumePending;
+	m_mouseSensitivity = m_mouseSensitivityPending;
+	m_invertY = m_invertYPending;
+	m_useZqsd = m_useZqsdPending;
+	m_gameplayUdpEnabled = m_gameplayUdpEnabledPending;
+	m_allowInsecureDev = m_allowInsecureDevPending;
+	m_authTimeoutMs = m_authTimeoutMsPending;
+	m_pendingVideoSettings.applyRequested = true;
+	m_pendingVideoSettings.fullscreen = m_videoFullscreen;
+	m_pendingVideoSettings.vsync = m_videoVsync;
+	m_pendingAudioSettings.applyRequested = true;
+	m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
+	m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
+	m_pendingAudioSettings.sfxVolume = m_audioSfxVolume;
+	m_pendingAudioSettings.uiVolume = m_audioUiVolume;
+	m_pendingControlSettings.applyRequested = true;
+	m_pendingControlSettings.mouseSensitivity = m_mouseSensitivity;
+	m_pendingControlSettings.invertY = m_invertY;
+	m_pendingControlSettings.useZqsd = m_useZqsd;
+	m_pendingGameSettings.applyRequested = true;
+	m_pendingGameSettings.gameplayUdpEnabled = m_gameplayUdpEnabled;
+	m_pendingGameSettings.allowInsecureDev = m_allowInsecureDev;
+	m_pendingGameSettings.authTimeoutMs = m_authTimeoutMs;
+	ApplyLocaleSelection(false);
+}
+
 void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {
 	if (m_phase == Phase::Error)
@@ -3424,6 +3871,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 
 		const bool usingNativeAuth = false;
+		const bool authUiImguiMode = cfg.GetBool("render.auth_ui.imgui.enabled", false);
 
 		auto currentField = [this]() -> std::string* {
 			switch (m_phase)
@@ -3473,35 +3921,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 			else if (m_phase == Phase::LanguageOptions)
 			{
-				m_videoFullscreen = m_videoFullscreenPending;
-				m_videoVsync = m_videoVsyncPending;
-				m_audioMasterVolume = m_audioMasterVolumePending;
-				m_audioMusicVolume = m_audioMusicVolumePending;
-				m_audioSfxVolume = m_audioSfxVolumePending;
-				m_audioUiVolume = m_audioUiVolumePending;
-				m_mouseSensitivity = m_mouseSensitivityPending;
-				m_invertY = m_invertYPending;
-				m_useZqsd = m_useZqsdPending;
-				m_gameplayUdpEnabled = m_gameplayUdpEnabledPending;
-				m_allowInsecureDev = m_allowInsecureDevPending;
-				m_authTimeoutMs = m_authTimeoutMsPending;
-				m_pendingVideoSettings.applyRequested = true;
-				m_pendingVideoSettings.fullscreen = m_videoFullscreen;
-				m_pendingVideoSettings.vsync = m_videoVsync;
-				m_pendingAudioSettings.applyRequested = true;
-				m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
-				m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
-				m_pendingAudioSettings.sfxVolume = m_audioSfxVolume;
-				m_pendingAudioSettings.uiVolume = m_audioUiVolume;
-				m_pendingControlSettings.applyRequested = true;
-				m_pendingControlSettings.mouseSensitivity = m_mouseSensitivity;
-				m_pendingControlSettings.invertY = m_invertY;
-				m_pendingControlSettings.useZqsd = m_useZqsd;
-				m_pendingGameSettings.applyRequested = true;
-				m_pendingGameSettings.gameplayUdpEnabled = m_gameplayUdpEnabled;
-				m_pendingGameSettings.allowInsecureDev = m_allowInsecureDev;
-				m_pendingGameSettings.authTimeoutMs = m_authTimeoutMs;
-				ApplyLocaleSelection(false);
+				CommitLanguageOptionsMenuApply(cfg);
 			}
 			else if (m_phase == Phase::Terms)
 			{
@@ -3534,7 +3954,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		if (!usingNativeAuth)
 		{
 			RenderModel model = BuildRenderModel();
-			if (model.visible && m_viewportW > 0 && m_viewportH > 0)
+			if (model.visible && m_viewportW > 0 && m_viewportH > 0 && !authUiImguiMode)
 			{
 				const VkExtent2D ext{ m_viewportW, m_viewportH };
 				const VisualState vsLayout = GetVisualState();
@@ -4442,7 +4862,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 
 		std::string text;
-		if (!usingNativeAuth)
+		if (!usingNativeAuth && !authUiImguiMode)
 		{
 			input.ConsumePendingTextUtf8(text);
 			if (!text.empty())
@@ -4482,7 +4902,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		}
 
-	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::Backspace))
+	if (!usingNativeAuth && !authUiImguiMode && input.WasPressed(engine::platform::Key::Backspace))
 		{
 			auto popLast = [](std::string& s) {
 				while (!s.empty())
@@ -4532,7 +4952,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_usernameDebounceTimer = (m_login.size() >= 3) ? 0.8 : 0.0;
 		}
 
-	if (!usingNativeAuth && input.WasPressed(engine::platform::Key::Tab))
+	if (!usingNativeAuth && !authUiImguiMode && input.WasPressed(engine::platform::Key::Tab))
 		{
 			if (m_phase == Phase::Login)
 				m_activeField = (m_activeField + 1u) % 3u;
@@ -4545,7 +4965,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
 		}
 
-		if (!usingNativeAuth && m_phase == Phase::Register && (
+		if (!usingNativeAuth && !authUiImguiMode && m_phase == Phase::Register && (
 				(m_activeField >= 6u && m_activeField <= 8u) || m_activeField == 9u))
 		{
 			const auto stepCycle = [this](int delta)
@@ -4575,7 +4995,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		}
 
-		if (!usingNativeAuth && m_phase == Phase::Login && input.WasPressed(engine::platform::Key::Space) && m_activeField == 2u)
+		if (!usingNativeAuth && !authUiImguiMode && m_phase == Phase::Login && input.WasPressed(engine::platform::Key::Space) && m_activeField == 2u)
 		{
 			m_rememberLogin = !m_rememberLogin;
 			SaveRememberPreference();
@@ -4589,7 +5009,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		}
 
-		if (m_phase == Phase::ShardPick && !usingNativeAuth)
+		if (m_phase == Phase::ShardPick && !usingNativeAuth && !authUiImguiMode)
 		{
 			const auto& entries = m_shardPickEntries;
 			auto countEligible = [&entries]() -> uint32_t {
@@ -4654,7 +5074,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		}
 
-		if (m_phase == Phase::Terms)
+		if (m_phase == Phase::Terms && !authUiImguiMode)
 		{
 			const uint32_t kStep = 12u;
 			if (input.WasPressed(engine::platform::Key::Down))
@@ -4671,7 +5091,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			if (m_termsScrolledToBottom && input.WasPressed(engine::platform::Key::Space))
 				m_termsAcknowledgeChecked = !m_termsAcknowledgeChecked;
 		}
-		if (!usingNativeAuth && (m_phase == Phase::LanguageSelectionFirstRun || m_phase == Phase::LanguageOptions))
+		if (!usingNativeAuth && !authUiImguiMode
+			&& (m_phase == Phase::LanguageSelectionFirstRun || m_phase == Phase::LanguageOptions))
 		{
 			const auto& locales = m_localization.GetAvailableLocales();
 			if (m_phase == Phase::LanguageSelectionFirstRun)
@@ -4831,7 +5252,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 
 		const bool loginShortcutModifier = input.IsDown(engine::platform::Key::Control);
-		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
+		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
 		{
 			SetPhase(Phase::Register);
 			m_activeField = 0;
@@ -4844,7 +5265,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_usernameLastChecked.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Switched to Register screen");
 		}
-		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
+		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
 		{
 			const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
 			LOG_INFO(Core, "[AuthUiPresenter] Keyboard shortcut opens password recovery portal ({})", resetUrl);
@@ -4854,15 +5275,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_userErrorText = Tr("auth.error.open_recovery_portal");
 			}
 		}
-		if (!usingNativeAuth && loginShortcutModifier && input.WasPressed(engine::platform::Key::O) && m_phase == Phase::Login)
+		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::O) && m_phase == Phase::Login)
 		{
 			OpenLanguageOptions();
 		}
 
-		if ((!usingNativeAuth && input.WasPressed(engine::platform::Key::Enter))
+		if ((!usingNativeAuth && !authUiImguiMode && input.WasPressed(engine::platform::Key::Enter))
 			|| (usingNativeAuth && m_phase == Phase::Error))
 		{
-			if (!usingNativeAuth && m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root)
+			if (!usingNativeAuth && !authUiImguiMode && m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root)
 			{
 				EnterOptionsSubmenuFromRoot(m_optionsRootSelection);
 			}
@@ -5569,6 +5990,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		state.characterCreate = m_phase == Phase::CharacterCreate;
 		state.languageSelection = m_phase == Phase::LanguageSelectionFirstRun;
 		state.languageOptions = m_phase == Phase::LanguageOptions;
+		state.options = m_phase == Phase::LanguageOptions;
+		state.shardPick = m_phase == Phase::ShardPick;
+		state.emailConfirmationPending = m_phase == Phase::EmailConfirmationPending;
 		state.submitting = m_phase == Phase::Submitting;
 		state.error = m_phase == Phase::Error;
 		state.minimalChrome = m_authMinimalChrome;

@@ -19,6 +19,7 @@ namespace engine::render
 		// Portrait dimensions (design: 340×420, centred in middle column)
 		constexpr int32_t kPortraitW  = 340;
 		constexpr int32_t kPortraitH  = 420;
+		constexpr int32_t kCardCols   =  1; ///< Single-column race/class list (flex column layout).
 	}
 
 	CharacterCreationLayout BuildCharacterCreationLayout(VkExtent2D extent)

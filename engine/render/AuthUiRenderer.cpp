@@ -91,7 +91,10 @@ namespace engine::render
 		m.languageCardCount = n;
 
 		const int32_t panelW = std::clamp(std::min(720, w * 94 / 100), 440, std::max(320, w - 48));
-		const int32_t panelH = std::clamp(292, 248, std::max(200, h - 120));
+		// Panneau un peu moins haut : pas de sous-titre de bienvenue dans le cadre (maquette).
+		const int32_t panelHMax = std::max(188, h - 140);
+		const int32_t panelHLo = std::min(228, panelHMax);
+		const int32_t panelH = std::clamp(268, panelHLo, panelHMax);
 
 		const int32_t kHeroBlockPx = 76;
 		const int32_t kGapHeroPanelPx = 22;
@@ -121,10 +124,10 @@ namespace engine::render
 
 		const int32_t cx = m.contentX;
 		const int32_t cw = m.contentW;
-		m.languagePanelSectionTitleYPx = m.panelY + 18;
-		m.languagePanelSubtitleYPx = m.panelY + 46;
-		m.languagePanelCardsRowYPx = m.panelY + 76;
-		m.languagePanelCardHeightPx = 104;
+		m.languagePanelSectionTitleYPx = m.panelY + 16;
+		m.languagePanelSubtitleYPx = m.panelY + 40;
+		m.languagePanelCardsRowYPx = m.panelY + 44;
+		m.languagePanelCardHeightPx = 96;
 		const int32_t gap = 12;
 		const int32_t cardW = (n > 0 && cw > gap * (n - 1)) ? (cw - gap * (n - 1)) / n : cw;
 		for (int32_t i = 0; i < n; ++i)
@@ -135,22 +138,25 @@ namespace engine::render
 			m.languageCardH[i] = m.languagePanelCardHeightPx;
 			const int32_t flagHalf = std::clamp(cardW / 5, 20, 30);
 			m.languageFlagCenterX[i] = m.languageCardX[i] + cardW / 2;
-			m.languageFlagCenterY[i] = m.languageCardY[i] + 30;
+			m.languageFlagCenterY[i] = m.languageCardY[i] + 28;
 			m.languageFlagHalfExtentPx[i] = flagHalf;
 		}
 
 		m.languagePanelPrimaryButtonH = kAuthUiActionButtonHeightPx;
 		m.languagePanelPrimaryButtonW = std::min(228, std::max(160, cw * 42 / 100));
 		m.languagePanelPrimaryButtonX = cx + cw - m.languagePanelPrimaryButtonW;
-		m.languagePanelPrimaryButtonY = m.panelY + panelH - 40 - m.languagePanelPrimaryButtonH;
-		m.languagePanelFooterYPx = m.panelY + panelH - 26;
+		m.languagePanelPrimaryButtonY = m.panelY + panelH - 36 - m.languagePanelPrimaryButtonH;
+		// Raccourcis clavier : bas de la fenêtre (hors panneau), comme la maquette.
+		m.languagePanelFooterYPx = h - std::max(22, h / 42);
 
+		const int32_t panelBottom = m.panelY + panelH;
 		m.languageInfoIconW = 22;
 		m.languageInfoIconH = 22;
 		m.languageInfoIconX = m.panelX + panelW - innerPad - m.languageInfoIconW;
-		m.languageInfoIconY = m.panelY + 16;
-		m.languageVersionTextRightXPx = m.languageInfoIconX - 10;
-		m.languageVersionTextYPx = m.panelY + 18;
+		// « i » + progression : sous le panneau, alignés à droite.
+		m.languageInfoIconY = std::min(panelBottom + 10, m.languagePanelFooterYPx - m.languageInfoIconH - 18);
+		m.languageVersionTextRightXPx = m.languageInfoIconX - 8;
+		m.languageVersionTextYPx = m.languageInfoIconY + 3;
 
 		return m;
 	}
@@ -466,13 +472,17 @@ namespace engine::render
 			state.languageSelection && model.languageFirstRunLayout && layout.languageFirstRunPanel;
 		if (langFirstPanel)
 		{
-			const int32_t rMoon = std::clamp(std::min(w, h) / 5, 96, 220);
-			const int32_t mx = w - rMoon - std::max(24, w / 14);
-			const int32_t my = std::max(16, h / 14);
-			addThemeRect(mx, my, rMoon, rMoon, theme.primary, 0.16f);
-			addThemeRect(mx + rMoon / 6, my + rMoon / 6, rMoon * 5 / 6, rMoon * 5 / 6, theme.background, 0.72f);
-			addThemeRect(mx + rMoon / 5, my + rMoon / 5, rMoon * 3 / 5, rMoon * 3 / 5, theme.secondary, 0.22f);
-			addThemeRect(mx + rMoon / 4, my + rMoon / 4, rMoon / 2, rMoon / 2, theme.accent, 0.10f);
+			// Placeholder « lune » maquette : cadre bleu clair + carré intérieur décalé.
+			const int32_t moonS = std::clamp(std::min(w, h) / 10, 44, 88);
+			const int32_t mx = w - moonS - std::max(20, w / 24);
+			const int32_t my = std::max(14, h / 28);
+			addThemeRect(mx, my, moonS, moonS, theme.primary, 0.42f);
+			{
+				const int32_t in = moonS * 58 / 100;
+				const int32_t ox = moonS / 5;
+				const int32_t oy = moonS / 7;
+				addThemeRect(mx + ox, my + oy, in, in, theme.secondary, 0.88f);
+			}
 
 			addThemeRect(panelX - 1, panelY - 1, panelW + 2, panelH + 2, theme.border, 0.5f);
 			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.74f);
@@ -490,6 +500,7 @@ namespace engine::render
 			addThemeRect(layout.languageInfoIconX + layout.languageInfoIconW - 1, layout.languageInfoIconY, 1, layout.languageInfoIconH,
 				theme.border, 0.82f);
 
+			constexpr float kLangCardSelectedBorder[4] = { 0.96f, 0.84f, 0.22f, 1.0f };
 			for (int32_t ci = 0; ci < layout.languageCardCount; ++ci)
 			{
 				const int32_t cx = layout.languageCardX[ci];
@@ -501,15 +512,21 @@ namespace engine::render
 				const bool hov = static_cast<size_t>(ci) < model.languageFirstRunCards.size()
 					&& model.languageFirstRunCards[static_cast<size_t>(ci)].hovered;
 				addThemeRect(cx, cy, cw, ch, theme.surface, (sel || hov) ? 0.55f : 0.42f);
-				const float* b = (sel || hov) ? theme.accent : theme.border;
-				const float ba = (sel || hov) ? 0.95f : 0.72f;
-				addThemeRect(cx, cy, cw, 1, b, ba);
-				addThemeRect(cx, cy + ch - 1, cw, 1, b, ba);
-				addThemeRect(cx, cy, 1, ch, b, ba);
-				addThemeRect(cx + cw - 1, cy, 1, ch, b, ba);
+				const float* b = sel ? kLangCardSelectedBorder : (hov ? theme.accent : theme.border);
+				const float ba = sel ? 1.0f : (hov ? 0.9f : 0.72f);
+				const int32_t rings = sel ? 2 : 1;
+				for (int32_t k = 0; k < rings; ++k)
+				{
+					const int32_t x = cx - k;
+					const int32_t y = cy - k;
+					const int32_t ww = cw + 2 * k;
+					const int32_t hh = ch + 2 * k;
+					addRect(x, y, ww, 1, b[0], b[1], b[2], ba);
+					addRect(x, y + hh - 1, ww, 1, b[0], b[1], b[2], ba);
+					addRect(x, y, 1, hh, b[0], b[1], b[2], ba);
+					addRect(x + ww - 1, y, 1, hh, b[0], b[1], b[2], ba);
+				}
 			}
-
-			addThemeRect(contentX, layout.languagePanelFooterYPx - 6, contentW, 1, theme.border, 0.35f);
 		}
 
 		if (!state.minimalChrome)

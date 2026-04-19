@@ -4150,7 +4150,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 
 						bool actionHit = false;
-						if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
+						if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout
+							&& (leftClick || rightClick))
 						{
 							for (int32_t ci = 0; ci < lay.languageCardCount; ++ci)
 							{
@@ -4171,7 +4172,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									break;
 								}
 							}
-							if (!actionHit && contains(mx, my, lay.languagePanelPrimaryButtonX, lay.languagePanelPrimaryButtonY,
+							if (!actionHit && leftClick && contains(mx, my, lay.languagePanelPrimaryButtonX, lay.languagePanelPrimaryButtonY,
 									lay.languagePanelPrimaryButtonW, lay.languagePanelPrimaryButtonH))
 							{
 								actionHit = true;
@@ -5217,8 +5218,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const auto& localesFr = m_localization.GetAvailableLocales();
 				if (!localesFr.empty())
 				{
-					const std::string& selectedLocale = localesFr[m_languageSelectionIndex % static_cast<uint32_t>(localesFr.size())];
-					model.languagePanelSubtitle = Tr(std::string("language.first_run.welcome.") + selectedLocale);
 					model.languageVersionLabel =
 						Tr("language.first_run.progress", { { "current", "1" }, { "total", "2" } });
 					for (size_t li = 0; li < localesFr.size(); ++li)

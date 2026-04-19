@@ -1589,7 +1589,8 @@ namespace engine::render
 		{
 			appendCenteredText(model.titleLine1, titleAreaX, layout.languageHeroTitle1YPx, titleAreaW, titleScale, titleColor, nullptr);
 			appendCenteredText(model.titleLine2, titleAreaX, layout.languageHeroTitle2YPx, titleAreaW, bodyScale, accentColor, nullptr);
-			AppendText(vertices, model.sectionTitle, contentX + 2, layout.languagePanelSectionTitleYPx, contentW - 128, bodyScale, titleColor);
+			AppendText(vertices, model.sectionTitle, contentX + 2, layout.languagePanelSectionTitleYPx, contentW - 12, bodyScale,
+				titleColor);
 			if (!model.languageVersionLabel.empty())
 			{
 				const int32_t vwLab = MeasureTextWidthPx(model.languageVersionLabel, smallScale);
@@ -1617,10 +1618,6 @@ namespace engine::render
 				const int32_t nameY = layout.languageFlagCenterY[ci] + layout.languageFlagHalfExtentPx[ci] + 8;
 				appendCenteredText(card.nameAllCaps, cax, nameY, caw, smallScale,
 					(card.selected || card.hovered) ? accentColor : titleColor, nullptr);
-				const int32_t natY = nameY + smallScale * 10 + 4;
-				const int32_t natW = MeasureTextWidthPx(card.nativeLine, smallScale);
-				const int32_t natX = std::max(cax, cax + (caw - natW) / 2);
-				AppendText(verticesValue, card.nativeLine, natX, natY, caw, smallScale, mutedColor, /*useValueFont=*/true);
 			}
 		}
 		else if (!model.titleLine2.empty())
@@ -1795,14 +1792,16 @@ namespace engine::render
 			}
 			if (!model.languageFooterLeft.empty())
 			{
-				AppendText(vertices, model.languageFooterLeft, contentX + 2, layout.languagePanelFooterYPx, contentW / 2 - 8, smallScale,
-					mutedColor);
+				const int32_t footY = layout.languagePanelFooterYPx;
+				const int32_t footMargin = 28;
+				AppendText(vertices, model.languageFooterLeft, footMargin, footY, viewportW / 2 - footMargin, smallScale, mutedColor);
 			}
 			if (!model.languageFooterRight.empty())
 			{
+				const int32_t footY = layout.languagePanelFooterYPx;
+				const int32_t footMargin = 28;
 				const int32_t rwFr = MeasureTextWidthPx(model.languageFooterRight, smallScale);
-				AppendText(vertices, model.languageFooterRight, contentX + contentW - rwFr - 4, layout.languagePanelFooterYPx, rwFr + 8,
-					smallScale, mutedColor);
+				AppendText(vertices, model.languageFooterRight, viewportW - rwFr - footMargin, footY, rwFr + 8, smallScale, mutedColor);
 			}
 		}
 		else if (!state.submitting)

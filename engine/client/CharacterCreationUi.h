@@ -61,6 +61,9 @@ namespace engine::client
 		uint32_t selectedRaceIndex  = 0; ///< Index into m_races.
 		uint32_t selectedClassIndex = 0; ///< Index into the filtered class list.
 
+		// ---- Genre (design system : 'F' | 'M') ----
+		char gender = 'F';
+
 		// ---- Customization (M39.1 spec: face, hair, skin, hair color, eye color) ----
 		uint8_t faceType     = 0;
 		uint8_t hairStyle    = 0;
@@ -75,6 +78,10 @@ namespace engine::client
 
 		// ---- 3-D preview rotation (degrees, [0, 360)) ----
 		float previewRotationDeg = 0.0f;
+
+		// ---- Hover (driven by the renderer for hit-testing; -1 = none) ----
+		int32_t hoveredRaceIndex  = -1;
+		int32_t hoveredClassIndex = -1;
 
 		// ---- Result ----
 		std::string errorMessage; ///< Set on step == Error.
@@ -174,6 +181,18 @@ namespace engine::client
 		/// \p deltaPixels  Pixels moved horizontally since last frame.
 		/// \p sensitivity  Degrees per pixel (default 0.5°/px).
 		void ApplyPreviewDrag(float deltaPixels, float sensitivity = 0.5f);
+
+		// ---- Genre (design system) ----
+
+		/// Toggle entre 'F' et 'M'. Les valeurs invalides sont ignorées.
+		void SetGender(char g);
+
+		// ---- Hover (transmis par le renderer depuis le hit-testing souris) ----
+
+		/// -1 = aucune rangée race survolée.
+		void SetHoveredRaceIndex(int32_t index);
+		/// -1 = aucune rangée classe survolée.
+		void SetHoveredClassIndex(int32_t index);
 
 		// ---- Name input + validation ----
 

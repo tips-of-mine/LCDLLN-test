@@ -293,6 +293,30 @@ namespace engine::client
 	}
 
 	// =========================================================================
+	// Genre
+	// =========================================================================
+
+	void CharacterCreationPresenter::SetGender(char g)
+	{
+		if (g == 'F' || g == 'M')
+			m_state.gender = g;
+	}
+
+	// =========================================================================
+	// Hover (renderer-driven hit-testing)
+	// =========================================================================
+
+	void CharacterCreationPresenter::SetHoveredRaceIndex(int32_t index)
+	{
+		m_state.hoveredRaceIndex = index;
+	}
+
+	void CharacterCreationPresenter::SetHoveredClassIndex(int32_t index)
+	{
+		m_state.hoveredClassIndex = index;
+	}
+
+	// =========================================================================
 	// 3-D preview rotation
 	// =========================================================================
 
@@ -418,9 +442,10 @@ namespace engine::client
 
 		const RaceDefinition*  race = GetSelectedRace();
 		const ClassDefinition* cls  = GetSelectedClass();
-		ss << "  race="  << (race ? race->displayName  : "(none)") << "\n";
-		ss << "  class=" << (cls  ? cls->displayName   : "(none)") << "\n";
-		ss << "  skin="  << static_cast<uint32_t>(m_state.skinColorIdx)
+		ss << "  race="   << (race ? race->displayName  : "(none)") << "\n";
+		ss << "  class="  << (cls  ? cls->displayName   : "(none)") << "\n";
+		ss << "  gender=" << m_state.gender << "\n";
+		ss << "  skin="   << static_cast<uint32_t>(m_state.skinColorIdx)
 		   << " hair="   << static_cast<uint32_t>(m_state.hairColorIdx)
 		   << " eye="    << static_cast<uint32_t>(m_state.eyeColorIdx)  << "\n";
 		ss << "  face="  << static_cast<uint32_t>(m_state.faceType)

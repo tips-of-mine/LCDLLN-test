@@ -4875,6 +4875,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				model.bodyLines.push_back(std::move(remember));
 			}
 			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
+			model.infoText = Tr("auth.info.login_help");
 			// Boutons : uniquement des clés i18n ; le texte affiché est résolu à la fin (changement de langue pris en compte).
 			addActionKeys("auth.button.register", false, true, true);
 			addActionKeys("language.options.title", false, true, true);
@@ -5062,10 +5063,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				Tr("auth.breadcrumb.world"),
 			};
 			model.breadcrumbCurrent = 1;
+			model.subtitle  = Tr("auth.register.subtitle");
+			model.infoText  = Tr("auth.register.info_note");
 			break;
 		}
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
+			model.subtitle     = Tr("auth.verify.subtitle", { { "email", m_email } });
+			model.infoText     = Tr("auth.verify.info_note");
 			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
@@ -5168,19 +5173,40 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 			if (m_phase == Phase::LanguageSelectionFirstRun)
 			{
-				model.sectionTitle = Tr("language.first_run.title");
-				addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } }));
+				model.sectionTitle  = Tr("language.first_run.title");
+				model.subtitle      = Tr("language.first_run.subtitle");
+				model.infoText      = Tr("language.first_run.info_note");
+				model.footerHint    = Tr("language.first_run.keycap_hint");
+				model.breadcrumbSteps = {
+					Tr("auth.breadcrumb.lang"),
+					Tr("auth.breadcrumb.account"),
+					Tr("auth.breadcrumb.email"),
+					Tr("auth.breadcrumb.world"),
+				};
+				model.breadcrumbCurrent = 0;
 				const auto& localesFr = m_localization.GetAvailableLocales();
-				if (!localesFr.empty())
+				for (uint32_t i = 0; i < static_cast<uint32_t>(localesFr.size()); ++i)
 				{
-					const std::string& selectedLocale = localesFr[m_languageSelectionIndex % static_cast<uint32_t>(localesFr.size())];
-					addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", true);
+					const auto& lc = localesFr[i];
+					RenderLanguageCard card;
+					card.localeCode = lc;
+					card.name       = Tr("language.name." + lc);
+					card.nativeName = Tr("language." + lc + ".native_name");
+					card.welcome    = Tr("language." + lc + ".native_welcome");
+					card.selected   = (i == m_languageSelectionIndex);
+					card.hovered    = (static_cast<int32_t>(i) == m_hoveredBodyLineIndex);
+					// Save before move for the legacy body line.
+					const std::string nativeNameCopy = card.nativeName;
+					const bool        selectedCopy    = card.selected;
+					model.languageCards.push_back(std::move(card));
+					// Ligne de repli pour renderer Vulkan legacy.
+					addBodyLine(nativeNameCopy + " (" + lc + ")", selectedCopy);
 				}
-				else
+				if (model.languageCards.empty())
 				{
-					addBodyLine("< N/A >", false);
+					addBodyLine("N/A", false);
 				}
-				addActionKeys("language.first_run.confirm", true, true, false, "common.submit");
+				addActionKeys("common.continue", true, true, false, "common.submit");
 				addActionKeys("common.quit_desktop", false, true, false, "common.quit");
 				break;
 			}

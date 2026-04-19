@@ -185,6 +185,17 @@ namespace engine::client
 			int32_t                      x = 0, y = 0, w = 0, h = 0;  // bounding box (remplie par renderer)
 		};
 
+		/// Carte de sélection de langue (design system — Phase::LanguageSelectionFirstRun).
+		struct RenderLanguageCard
+		{
+			std::string localeCode;   ///< Code locale court (ex. "fr", "en").
+			std::string name;         ///< Nom dans la locale courante (ex. "Français", "Anglais").
+			std::string nativeName;   ///< Nom natif invariant (ex. "Français", "English").
+			std::string welcome;      ///< Message de bienvenue dans la langue de la carte.
+			bool selected = false;
+			bool hovered  = false;
+		};
+
 		struct RenderModel
 		{
 			bool visible = false;
@@ -193,9 +204,13 @@ namespace engine::client
 			std::string titleLine1;
 			std::string titleLine2;
 			std::string sectionTitle;
+			/// Sous-titre affiché sous le titre de section (ex. "Forger votre identité dans les terres de la Lune Noire.").
+			std::string subtitle;
 			std::string infoBanner;
 			std::string errorText;
 			std::string footerHint;
+			/// Texte informatif statique affiché via l’icône "i" du panneau (différent de infoBanner qui est dynamique).
+			std::string infoText;
 			std::vector<RenderField> fields;
 			std::vector<RenderAction> actions;
 			std::vector<RenderBodyLine> bodyLines;
@@ -211,14 +226,16 @@ namespace engine::client
 		// Popup info (icône "i") — affiché par-dessus tout le reste quand visible.
 		bool        infoPopupVisible = false;
 		std::string infoPopupText;    // Texte localisé à afficher dans le popup.
-		// Bounding box de l'icône "i" pour hit-testing souris.
+		// Bounding box de l’icône "i" pour hit-testing souris.
 		int32_t     infoIconX = 0, infoIconY = 0, infoIconW = 0, infoIconH = 0;
 		bool        infoIconVisible = false;
 		std::vector<RenderDropdown> dropdowns;
-		/// Étiquettes du fil d'Ariane (vide = pas de breadcrumb affiché).
+		/// Étiquettes du fil d’Ariane (vide = pas de breadcrumb affiché).
 		std::vector<std::string> breadcrumbSteps;
-		/// Index de l'étape active dans breadcrumbSteps (-1 = non défini).
+		/// Index de l’étape active dans breadcrumbSteps (-1 = non défini).
 		int32_t breadcrumbCurrent = -1;
+		/// Cartes de sélection de langue (remplies uniquement pour Phase::LanguageSelectionFirstRun).
+		std::vector<RenderLanguageCard> languageCards;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.

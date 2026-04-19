@@ -980,6 +980,16 @@ namespace engine
 											{
 												LOG_WARN(Render, "[Boot] Auth UI field info icon not loaded: ui/register/info.png");
 											}
+											m_authFlagFrTexture = m_assetRegistry.LoadTexture("localization/fr/images/drapeau.png", true);
+											if (!m_authFlagFrTexture.IsValid())
+											{
+												LOG_WARN(Render, "[Boot] Auth flag FR not loaded: localization/fr/images/drapeau.png");
+											}
+											m_authFlagEnTexture = m_assetRegistry.LoadTexture("localization/en/images/drapeau.png", true);
+											if (!m_authFlagEnTexture.IsValid())
+											{
+												LOG_WARN(Render, "[Boot] Auth flag EN not loaded: localization/en/images/drapeau.png");
+											}
 										}
 
 										engine::render::ImageDesc sceneColorDesc{};
@@ -2261,6 +2271,51 @@ namespace engine
 																	iconLay.halfExtentPx,
 																	0.f,
 																	0.f);
+															}
+														}
+														{
+															if (authRenderModel.languageFirstRunLayout && m_authLogoPass.IsValid())
+															{
+																const engine::render::AuthUiLayoutMetrics layLang =
+																	engine::render::BuildAuthUiLayoutMetrics(ext, authVisualState, authRenderModel);
+																for (int32_t ci = 0; ci < layLang.languageCardCount; ++ci)
+																{
+																	if (static_cast<size_t>(ci) >= authRenderModel.languageFirstRunCards.size())
+																	{
+																		break;
+																	}
+																	const std::string& tag =
+																		authRenderModel.languageFirstRunCards[static_cast<size_t>(ci)].localeTag;
+																	engine::render::TextureAsset* flagTex = nullptr;
+																	bool* flagLayoutReady = nullptr;
+																	if (tag == "fr")
+																	{
+																		flagTex = m_authFlagFrTexture.Get();
+																		flagLayoutReady = &m_authFlagFrLayoutReady;
+																	}
+																	else if (tag == "en")
+																	{
+																		flagTex = m_authFlagEnTexture.Get();
+																		flagLayoutReady = &m_authFlagEnLayoutReady;
+																	}
+																	if (flagTex == nullptr || flagTex->image == VK_NULL_HANDLE || flagTex->view == VK_NULL_HANDLE
+																		|| flagLayoutReady == nullptr)
+																	{
+																		continue;
+																	}
+																	m_authLogoPass.Record(
+																		m_vkDeviceContext.GetDevice(),
+																		cmd,
+																		ext,
+																		flagTex->image,
+																		flagTex->view,
+																		*flagLayoutReady,
+																		static_cast<float>(layLang.languageFlagCenterX[ci]),
+																		static_cast<float>(layLang.languageFlagCenterY[ci]),
+																		static_cast<float>(layLang.languageFlagHalfExtentPx[ci]),
+																		0.f,
+																		0.f);
+																}
 															}
 														}
 														if (m_authGlyphPass.IsValid())

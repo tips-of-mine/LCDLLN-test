@@ -72,6 +72,24 @@ namespace engine::client
 			return value ? "true" : "false";
 		}
 
+		std::string ToUpperAscii(std::string_view s)
+		{
+			std::string o;
+			o.reserve(s.size());
+			for (unsigned char ch : s)
+			{
+				if (ch >= 'a' && ch <= 'z')
+				{
+					o.push_back(static_cast<char>(ch - 32u));
+				}
+				else
+				{
+					o.push_back(static_cast<char>(ch));
+				}
+			}
+			return o;
+		}
+
 		std::string EscapeJsonString(std::string_view value)
 		{
 			std::string out;
@@ -3561,6 +3579,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_hoveredFieldInfoIndex = -1;
 				m_hoveredBodyLineIndex = -1;
 				m_hoveredActionIndex = -1;
+				m_hoveredLanguageCardIndex = -1;
 
 				auto contains = [](int32_t px, int32_t py, int32_t x, int32_t y, int32_t rw, int32_t rh)
 				{
@@ -3728,7 +3747,30 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				const int32_t actionCount = std::max<int32_t>(1, static_cast<int32_t>(model.actions.size()));
 				const int32_t gap = 10;
 				engine::render::AuthLoginTwoRowLayout loginTwoRow{};
-				if (m_phase == Phase::Terms)
+				if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
+				{
+					for (int32_t ci = 0; ci < lay.languageCardCount; ++ci)
+					{
+						if (contains(mx, my, lay.languageCardX[ci], lay.languageCardY[ci], lay.languageCardW[ci], lay.languageCardH[ci]))
+						{
+							m_hoveredLanguageCardIndex = ci;
+							break;
+						}
+					}
+					if (contains(mx, my, lay.languagePanelPrimaryButtonX, lay.languagePanelPrimaryButtonY,
+							lay.languagePanelPrimaryButtonW, lay.languagePanelPrimaryButtonH))
+					{
+						for (int32_t ai = 0; ai < actionCount; ++ai)
+						{
+							if (model.actions[static_cast<size_t>(ai)].primary)
+							{
+								m_hoveredActionIndex = ai;
+								break;
+							}
+						}
+					}
+				}
+				else if (m_phase == Phase::Terms)
 				{
 					const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gap) / actionCount);
 					const int32_t termsBtnY = panelY + panelH - 92 + (58 - engine::render::kAuthUiActionButtonHeightPx) / 2;
@@ -4018,28 +4060,44 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						bool iconHit = false;
 						if (model.infoIconVisible)
 						{
-							for (int32_t fi = 0; fi < static_cast<int32_t>(model.fields.size()) && !iconHit; ++fi)
+							if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
 							{
-								const RenderField& fld = model.fields[static_cast<size_t>(fi)];
-								if (fld.tooltipText.empty())
-								{
-									continue;
-								}
-								const int32_t rowY = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(fi)] * fieldStep;
-								int32_t fx = contentX;
-								int32_t fw = contentW;
-								if (fld.gridColumn >= 0)
-								{
-									engine::render::AuthUiGridFieldGeometry(
-									    contentX, contentW, fld.gridColumn, fld.gridSpan, fx, fw);
-								}
-								const int32_t ix = std::max(fx + 10, fx + fw - 36);
-								const int32_t iy = rowY - labelAboveFieldPxHit;
-								if (contains(mx, my, ix, iy, 18, 18))
+								if (contains(mx, my, lay.languageInfoIconX, lay.languageInfoIconY, lay.languageInfoIconW,
+										lay.languageInfoIconH))
 								{
 									m_infoPopupVisible = !m_infoPopupVisible;
-									m_infoPopupText    = fld.tooltipText;
+									if (m_infoPopupVisible)
+									{
+										m_infoPopupText = Tr("language.first_run.info_popup");
+									}
 									iconHit = true;
+								}
+							}
+							else
+							{
+								for (int32_t fi = 0; fi < static_cast<int32_t>(model.fields.size()) && !iconHit; ++fi)
+								{
+									const RenderField& fld = model.fields[static_cast<size_t>(fi)];
+									if (fld.tooltipText.empty())
+									{
+										continue;
+									}
+									const int32_t rowY = panelY + topOffset + fieldLogicalRow[static_cast<size_t>(fi)] * fieldStep;
+									int32_t fx = contentX;
+									int32_t fw = contentW;
+									if (fld.gridColumn >= 0)
+									{
+										engine::render::AuthUiGridFieldGeometry(
+										    contentX, contentW, fld.gridColumn, fld.gridSpan, fx, fw);
+									}
+									const int32_t ix = std::max(fx + 10, fx + fw - 36);
+									const int32_t iy = rowY - labelAboveFieldPxHit;
+									if (contains(mx, my, ix, iy, 18, 18))
+									{
+										m_infoPopupVisible = !m_infoPopupVisible;
+										m_infoPopupText    = fld.tooltipText;
+										iconHit = true;
+									}
 								}
 							}
 						}
@@ -4092,7 +4150,35 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 
 						bool actionHit = false;
-						if (m_phase == Phase::Terms)
+						if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
+						{
+							for (int32_t ci = 0; ci < lay.languageCardCount; ++ci)
+							{
+								if (contains(mx, my, lay.languageCardX[ci], lay.languageCardY[ci], lay.languageCardW[ci], lay.languageCardH[ci]))
+								{
+									actionHit = true;
+									const auto& localesPick = m_localization.GetAvailableLocales();
+									if (!localesPick.empty() && static_cast<size_t>(ci) < model.languageFirstRunCards.size())
+									{
+										const std::string& tagPick = model.languageFirstRunCards[static_cast<size_t>(ci)].localeTag;
+										const auto itPick = std::find(localesPick.begin(), localesPick.end(), tagPick);
+										if (itPick != localesPick.end())
+										{
+											m_languageSelectionIndex = static_cast<uint32_t>(std::distance(localesPick.begin(), itPick));
+											m_selectedLocale = *itPick;
+										}
+									}
+									break;
+								}
+							}
+							if (!actionHit && contains(mx, my, lay.languagePanelPrimaryButtonX, lay.languagePanelPrimaryButtonY,
+									lay.languagePanelPrimaryButtonW, lay.languagePanelPrimaryButtonH))
+							{
+								actionHit = true;
+								applyPrimaryAction();
+							}
+						}
+						else if (m_phase == Phase::Terms)
 						{
 							const int32_t termsBtnY = panelY + panelH - 92 + (58 - engine::render::kAuthUiActionButtonHeightPx) / 2;
 							const int32_t actionW = std::max(110, (contentW - (actionCount - 1) * gap) / actionCount);
@@ -4253,8 +4339,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									}
 									break;
 								case Phase::LanguageSelectionFirstRun:
-									if (i == 0) applyPrimaryAction();
-									else if (i == 1) { window.RequestClose(); }
+									if (i == 0)
+									{
+										applyPrimaryAction();
+									}
 									break;
 								case Phase::CharacterCreate:
 								case Phase::Submitting:
@@ -5124,20 +5212,36 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 			if (m_phase == Phase::LanguageSelectionFirstRun)
 			{
-				model.sectionTitle = Tr("language.first_run.title");
-				addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(CurrentLocale()) } }));
+				model.languageFirstRunLayout = true;
+				model.sectionTitle = Tr("language.first_run.panel_title");
 				const auto& localesFr = m_localization.GetAvailableLocales();
 				if (!localesFr.empty())
 				{
 					const std::string& selectedLocale = localesFr[m_languageSelectionIndex % static_cast<uint32_t>(localesFr.size())];
-					addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", true);
+					model.languagePanelSubtitle = Tr(std::string("language.first_run.welcome.") + selectedLocale);
+					model.languageVersionLabel =
+						Tr("language.first_run.progress", { { "current", "1" }, { "total", "2" } });
+					for (size_t li = 0; li < localesFr.size(); ++li)
+					{
+						const std::string& locTag = localesFr[li];
+						LanguageFirstRunCard card{};
+						card.localeTag = locTag;
+						const std::string disp = LocalizedLanguageName(locTag);
+						card.nameAllCaps = ToUpperAscii(disp);
+						const std::string nativeKey = std::string("language.native_line.") + locTag;
+						card.nativeLine = Tr(nativeKey);
+						if (card.nativeLine.empty() || card.nativeLine == nativeKey)
+						{
+							card.nativeLine = disp;
+						}
+						card.selected = (static_cast<uint32_t>(li) == m_languageSelectionIndex);
+						card.hovered = (static_cast<int32_t>(li) == m_hoveredLanguageCardIndex);
+						model.languageFirstRunCards.push_back(std::move(card));
+					}
 				}
-				else
-				{
-					addBodyLine("< N/A >", false);
-				}
-				addActionKeys("language.first_run.confirm", true, true, false, "common.submit");
-				addActionKeys("common.quit_desktop", false, true, false, "common.quit");
+				model.languageFooterLeft = Tr("language.first_run.footer_left");
+				model.languageFooterRight = Tr("language.first_run.footer_right");
+				addActionKeys("common.continue", true, true, false);
 				break;
 			}
 
@@ -5295,10 +5399,25 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				model.infoPopupText = Tr("auth.info.register_help");
 			else if (m_phase == Phase::ShardPick)
 				model.infoPopupText = Tr("auth.shard_pick.popup_help");
+			else if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
+				model.infoPopupText = Tr("language.first_run.info_popup");
 		}
 
 		// Icône "i" visible sur Login et Register.
-		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register || m_phase == Phase::ShardPick);
+		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register || m_phase == Phase::ShardPick
+			|| (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout));
+
+		if (model.languageFirstRunLayout && m_viewportW > 0u && m_viewportH > 0u)
+		{
+			const VkExtent2D extPatch{ m_viewportW, m_viewportH };
+			const VisualState vsPatch = GetVisualState();
+			const engine::render::AuthUiLayoutMetrics layPatch =
+				engine::render::BuildAuthUiLayoutMetrics(extPatch, vsPatch, model);
+			model.infoIconX = layPatch.languageInfoIconX;
+			model.infoIconY = layPatch.languageInfoIconY;
+			model.infoIconW = layPatch.languageInfoIconW;
+			model.infoIconH = layPatch.languageInfoIconH;
+		}
 
 		return model;
 	}

@@ -250,9 +250,13 @@ namespace engine
 		engine::render::TextureHandle m_authLogoErrorTexture;
 		engine::render::TextureHandle m_authUiInfoLoginTexture;
 		engine::render::TextureHandle m_authUiInfoRegisterTexture;
+		engine::render::TextureHandle m_authFlagFrTexture;
+		engine::render::TextureHandle m_authFlagEnTexture;
 		bool m_authLogoImageLayoutReady = false;
 		bool m_authUiInfoLoginLayoutReady = false;
 		bool m_authUiInfoRegisterLayoutReady = false;
+		bool m_authFlagFrLayoutReady = false;
+		bool m_authFlagEnLayoutReady = false;
 		/// Centralised GPU allocator (VMA). Opaque pointer; cast to VmaAllocator in Engine.cpp.
 		void* m_vmaAllocator = nullptr;
 		engine::audio::AudioEngine m_audioEngine;

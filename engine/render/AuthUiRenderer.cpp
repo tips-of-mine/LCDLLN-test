@@ -73,7 +73,86 @@ namespace engine::render
 		OverrideThemeColor(themeCfg, "palette.text", theme.text);
 		OverrideThemeColor(themeCfg, "palette.mutedText", theme.mutedText);
 		OverrideThemeColor(themeCfg, "palette.border", theme.border);
+		theme.uiCornerRadiusPx = static_cast<int32_t>(themeCfg.GetInt("metrics.radius", theme.uiCornerRadiusPx));
+		theme.uiContentPaddingPx = static_cast<int32_t>(themeCfg.GetInt("metrics.padding", theme.uiContentPaddingPx));
 		return theme;
+	}
+
+	AuthUiLayoutMetrics BuildLanguageFirstRunLayoutMetrics(
+		VkExtent2D extent,
+		const engine::client::AuthUiPresenter::RenderModel& model)
+	{
+		AuthUiLayoutMetrics m{};
+		const int32_t w = static_cast<int32_t>(extent.width);
+		const int32_t h = static_cast<int32_t>(extent.height);
+		m.languageFirstRunPanel = true;
+		const int32_t n = std::min(static_cast<int32_t>(model.languageFirstRunCards.size()),
+			AuthUiLayoutMetrics::kLanguageFirstRunMaxCards);
+		m.languageCardCount = n;
+
+		const int32_t panelW = std::clamp(std::min(720, w * 94 / 100), 440, std::max(320, w - 48));
+		const int32_t panelH = std::clamp(292, 248, std::max(200, h - 120));
+
+		const int32_t kHeroBlockPx = 76;
+		const int32_t kGapHeroPanelPx = 22;
+		const int32_t columnH = kHeroBlockPx + kGapHeroPanelPx + panelH;
+		const int32_t columnTop = std::max(12, (h - columnH) / 2);
+
+		m.languageHeroTitle1YPx = columnTop;
+		m.languageHeroTitle2YPx = columnTop + 44;
+		m.panelW = panelW;
+		m.panelH = panelH;
+		m.panelX = (w - panelW) / 2;
+		m.panelY = columnTop + kHeroBlockPx + kGapHeroPanelPx;
+
+		const int32_t innerPad = 22;
+		m.innerX = m.panelX + innerPad;
+		m.artW = 0;
+		m.contentX = m.panelX + innerPad;
+		m.contentW = panelW - innerPad * 2;
+		m.largeContent = false;
+		m.compactSingleField = true;
+		m.fieldRowStepPx = 48;
+		m.authTitleUseViewportWidth = true;
+		m.authTitleLine1OffsetFromPanelTopPx = 0;
+		m.authTitleLine2OffsetFromPanelTopPx = 0;
+		m.authSectionTitleOffsetFromPanelTopPx = 20;
+		m.topOffset = 4000;
+
+		const int32_t cx = m.contentX;
+		const int32_t cw = m.contentW;
+		m.languagePanelSectionTitleYPx = m.panelY + 18;
+		m.languagePanelSubtitleYPx = m.panelY + 46;
+		m.languagePanelCardsRowYPx = m.panelY + 76;
+		m.languagePanelCardHeightPx = 104;
+		const int32_t gap = 12;
+		const int32_t cardW = (n > 0 && cw > gap * (n - 1)) ? (cw - gap * (n - 1)) / n : cw;
+		for (int32_t i = 0; i < n; ++i)
+		{
+			m.languageCardX[i] = cx + i * (cardW + gap);
+			m.languageCardY[i] = m.languagePanelCardsRowYPx;
+			m.languageCardW[i] = cardW;
+			m.languageCardH[i] = m.languagePanelCardHeightPx;
+			const int32_t flagHalf = std::clamp(cardW / 5, 20, 30);
+			m.languageFlagCenterX[i] = m.languageCardX[i] + cardW / 2;
+			m.languageFlagCenterY[i] = m.languageCardY[i] + 30;
+			m.languageFlagHalfExtentPx[i] = flagHalf;
+		}
+
+		m.languagePanelPrimaryButtonH = kAuthUiActionButtonHeightPx;
+		m.languagePanelPrimaryButtonW = std::min(228, std::max(160, cw * 42 / 100));
+		m.languagePanelPrimaryButtonX = cx + cw - m.languagePanelPrimaryButtonW;
+		m.languagePanelPrimaryButtonY = m.panelY + panelH - 40 - m.languagePanelPrimaryButtonH;
+		m.languagePanelFooterYPx = m.panelY + panelH - 26;
+
+		m.languageInfoIconW = 22;
+		m.languageInfoIconH = 22;
+		m.languageInfoIconX = m.panelX + panelW - innerPad - m.languageInfoIconW;
+		m.languageInfoIconY = m.panelY + 16;
+		m.languageVersionTextRightXPx = m.languageInfoIconX - 10;
+		m.languageVersionTextYPx = m.panelY + 18;
+
+		return m;
 	}
 
 	AuthUiLayoutMetrics BuildAuthUiLayoutMetrics(
@@ -85,6 +164,11 @@ namespace engine::render
 		if (extent.width == 0 || extent.height == 0)
 		{
 			return metrics;
+		}
+
+		if (state.languageSelection && model.languageFirstRunLayout)
+		{
+			return BuildLanguageFirstRunLayoutMetrics(extent, model);
 		}
 
 		const int32_t w = static_cast<int32_t>(extent.width);
@@ -377,6 +461,57 @@ namespace engine::render
 		{
 			// Photo backdrop: no vignette borders - the background image fills the entire screen.
 		}
+
+		const bool langFirstPanel =
+			state.languageSelection && model.languageFirstRunLayout && layout.languageFirstRunPanel;
+		if (langFirstPanel)
+		{
+			const int32_t rMoon = std::clamp(std::min(w, h) / 5, 96, 220);
+			const int32_t mx = w - rMoon - std::max(24, w / 14);
+			const int32_t my = std::max(16, h / 14);
+			addThemeRect(mx, my, rMoon, rMoon, theme.primary, 0.16f);
+			addThemeRect(mx + rMoon / 6, my + rMoon / 6, rMoon * 5 / 6, rMoon * 5 / 6, theme.background, 0.72f);
+			addThemeRect(mx + rMoon / 5, my + rMoon / 5, rMoon * 3 / 5, rMoon * 3 / 5, theme.secondary, 0.22f);
+			addThemeRect(mx + rMoon / 4, my + rMoon / 4, rMoon / 2, rMoon / 2, theme.accent, 0.10f);
+
+			addThemeRect(panelX - 1, panelY - 1, panelW + 2, panelH + 2, theme.border, 0.5f);
+			addThemeRect(panelX, panelY, panelW, panelH, theme.panel, 0.74f);
+			addThemeRect(panelX, panelY, panelW, 1, theme.border, 0.88f);
+			addThemeRect(panelX, panelY + panelH - 1, panelW, 1, theme.border, 0.88f);
+			addThemeRect(panelX, panelY, 1, panelH, theme.border, 0.45f);
+			addThemeRect(panelX + panelW - 1, panelY, 1, panelH, theme.border, 0.45f);
+
+			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY, layout.languageInfoIconW, layout.languageInfoIconH,
+				theme.surface, 0.92f);
+			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY, layout.languageInfoIconW, 1, theme.border, 0.82f);
+			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY + layout.languageInfoIconH - 1, layout.languageInfoIconW,
+				1, theme.border, 0.82f);
+			addThemeRect(layout.languageInfoIconX, layout.languageInfoIconY, 1, layout.languageInfoIconH, theme.border, 0.82f);
+			addThemeRect(layout.languageInfoIconX + layout.languageInfoIconW - 1, layout.languageInfoIconY, 1, layout.languageInfoIconH,
+				theme.border, 0.82f);
+
+			for (int32_t ci = 0; ci < layout.languageCardCount; ++ci)
+			{
+				const int32_t cx = layout.languageCardX[ci];
+				const int32_t cy = layout.languageCardY[ci];
+				const int32_t cw = layout.languageCardW[ci];
+				const int32_t ch = layout.languageCardH[ci];
+				const bool sel = static_cast<size_t>(ci) < model.languageFirstRunCards.size()
+					&& model.languageFirstRunCards[static_cast<size_t>(ci)].selected;
+				const bool hov = static_cast<size_t>(ci) < model.languageFirstRunCards.size()
+					&& model.languageFirstRunCards[static_cast<size_t>(ci)].hovered;
+				addThemeRect(cx, cy, cw, ch, theme.surface, (sel || hov) ? 0.55f : 0.42f);
+				const float* b = (sel || hov) ? theme.accent : theme.border;
+				const float ba = (sel || hov) ? 0.95f : 0.72f;
+				addThemeRect(cx, cy, cw, 1, b, ba);
+				addThemeRect(cx, cy + ch - 1, cw, 1, b, ba);
+				addThemeRect(cx, cy, 1, ch, b, ba);
+				addThemeRect(cx + cw - 1, cy, 1, ch, b, ba);
+			}
+
+			addThemeRect(contentX, layout.languagePanelFooterYPx - 6, contentW, 1, theme.border, 0.35f);
+		}
+
 		if (!state.minimalChrome)
 		{
 			addRect(panelX - 22, panelY - 22, panelW + 44, panelH + 44, 0.01f, 0.02f, 0.03f, usePhotoBackdrop ? 0.45f : 0.60f);
@@ -643,7 +778,21 @@ namespace engine::render
 		const int32_t gap = 10;
 		AuthLoginTwoRowLayout loginTwoRow{};
 		const bool loginTwoRows = TryGetLoginTwoRowLayout(layout, state, model, loginTwoRow);
-		if (loginTwoRows)
+		if (langFirstPanel)
+		{
+			for (size_t ai = 0; ai < model.actions.size(); ++ai)
+			{
+				if (!model.actions[ai].primary)
+				{
+					continue;
+				}
+				addAuthActionButton(layout.languagePanelPrimaryButtonX, layout.languagePanelPrimaryButtonY,
+					layout.languagePanelPrimaryButtonW, layout.languagePanelPrimaryButtonH, true, false,
+					model.actions[ai].hovered);
+				break;
+			}
+		}
+		else if (loginTwoRows)
 		{
 			for (int32_t row = 0; row < 2; ++row)
 			{

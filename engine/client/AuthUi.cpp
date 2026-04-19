@@ -1115,6 +1115,10 @@ namespace engine::client
 	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*) {}
 	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
 
+	void AuthUiPresenter::CommitLanguageOptionsMenuApply(const engine::core::Config&)
+	{
+	}
+
 #else
 
 	bool AuthUiPresenter::Init(const engine::core::Config& cfg)

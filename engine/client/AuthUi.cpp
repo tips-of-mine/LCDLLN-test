@@ -3737,7 +3737,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const Phase target = m_errorReturnPhase;
 		SetPhase(target);
 		m_activeField = 0;
-		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged -> {}", PhaseLogName(target));
+		const char* const phaseLabel = AuthUiPresenter::PhaseLogName(target);
+		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged -> {}", phaseLabel);
 		return;
 	}
 	if (m_phase == Phase::ShardPick)

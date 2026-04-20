@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "engine/client/AuthUi.h"
 
@@ -52,6 +55,7 @@ namespace engine::render
 		int m_regBirthDayIdx = 0;
 		int m_regBirthMonthIdx = 0;
 		int m_regBirthYearIdx = 20;
+		int m_regCountryComboIdx = 0;
 		int m_optionsTab = 0;
 		uint32_t m_lastSyncedPhaseToken = 0xffffffffu;
 
@@ -72,10 +76,16 @@ namespace engine::render
 		bool m_optAllowInsecureDev = true;
 		uint32_t m_optAuthTimeoutMs = 5000u;
 		int m_optLangIndex = 0;
+		int m_optResIdx = 2;
+		int m_optQualityPreset = 2;
+		float m_optFovDegrees = 70.f;
 
 		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement — décoratif pour l’instant.
 		int m_langTweakRace = 0;
 		bool m_langTweakAnimBg = true;
+		bool m_authTweakPanelMinimized = false;
+		/// Écran erreur inscription : pastille active (maquette) ; -1 = suivre le modèle classifié.
+		int m_authErrorPillPreview = -1;
 
 		engine::client::AuthUiPresenter* m_authPresenter = nullptr;
 		const engine::core::Config* m_authCfg = nullptr;
@@ -98,8 +108,14 @@ namespace engine::render
 			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false);
 		void EndPanel();
 		int DrawLanguageFirstRunCards(const RenderModel& rm, int selected);
-		void DrawLangScreenTweaks(float vpW, float vpH);
+		void DrawAuthTweaksPanel(float vpW, float vpH);
 		void DrawLangFooterHints(std::string_view left, std::string_view right);
+		void DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz, bool password);
+		void DrawLoginRememberRow(const RenderModel& rm);
+		void DrawLoginFooterChips(const RenderModel& rm);
+		void DrawFooterChipRow(const std::vector<std::pair<std::string, std::string>>& chips);
+		void DrawRegisterFlowHeader(const RenderModel& rm, float vpW);
+		void DrawRegisterFooterChips(const RenderModel& rm);
 		void DrawField(std::string_view label, char* buf, int bufSz, bool password = false);
 		void DrawBanner(std::string_view title, std::string_view msg, float r, float g, float b);
 		void DrawKeycapHints(std::initializer_list<std::pair<const char*, const char*>> hints);
@@ -107,6 +123,7 @@ namespace engine::render
 		bool DrawGhostButton(std::string_view label, bool disabled = false);
 		void DrawSeparator();
 		void DrawBreadcrumb(std::initializer_list<const char*> steps, int current);
+		void DrawBreadcrumb(const std::vector<std::string>& steps, int current);
 
 		void SyncTransientFromModel(const VisualState& vs, const RenderModel& rm);
 		void PullLanguageOptionsFromPresenter();

@@ -37,6 +37,7 @@
 #include <cstring>
 #include <filesystem>
 #include <mutex>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -88,6 +89,26 @@ namespace engine::client
 				}
 			}
 			return o;
+		}
+
+		const char* AuthPhaseLogName(Phase phase)
+		{
+			switch (phase)
+			{
+			case Phase::Login: return "Login";
+			case Phase::Register: return "Register";
+			case Phase::Submitting: return "Submitting";
+			case Phase::ForgotPassword: return "ForgotPassword";
+			case Phase::VerifyEmail: return "VerifyEmail";
+			case Phase::EmailConfirmationPending: return "EmailConfirmationPending";
+			case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
+			case Phase::LanguageOptions: return "LanguageOptions";
+			case Phase::Terms: return "Terms";
+			case Phase::CharacterCreate: return "CharacterCreate";
+			case Phase::ShardPick: return "ShardPick";
+			case Phase::Error: return "Error";
+			default: return "Unknown";
+			}
 		}
 
 		std::string EscapeJsonString(std::string_view value)
@@ -1100,6 +1121,9 @@ namespace engine::client
 	void AuthUiPresenter::ImGuiBackFromForgotToLogin() {}
 	void AuthUiPresenter::ImGuiSubmitVerifyEmailCode(const engine::core::Config&, const char*) {}
 	void AuthUiPresenter::ImGuiBackFromVerifyToLogin() {}
+	void AuthUiPresenter::ImGuiVerifyEmailClearDigits() {}
+	void AuthUiPresenter::ImGuiVerifyEmailBackToEditRegisterEmail() {}
+	void AuthUiPresenter::ImGuiSetVerifyEmailPartialCode(std::string_view) {}
 	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin() {}
 	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config&) {}
 	void AuthUiPresenter::ImGuiSetShardPickChoiceShardId(uint32_t) {}
@@ -1144,6 +1168,7 @@ namespace engine::client
 
 		m_flowComplete = false;
 		m_phase = Phase::Login;
+		m_errorReturnPhase = Phase::Login;
 		m_login.clear();
 		m_password.clear();
 		m_email.clear();
@@ -1181,8 +1206,16 @@ namespace engine::client
 		m_persistedLocale.clear();
 		m_videoFullscreen = cfg.GetBool("render.fullscreen", true);
 		m_videoVsync = cfg.GetBool("render.vsync", true);
+		m_videoResWidth = static_cast<int32_t>(std::max<int64_t>(640, cfg.GetInt("render.resolution_width", 1920)));
+		m_videoResHeight = static_cast<int32_t>(std::max<int64_t>(480, cfg.GetInt("render.resolution_height", 1080)));
+		m_videoQualityPreset = static_cast<int32_t>(std::clamp<int64_t>(cfg.GetInt("render.quality_preset", 2), 0, 3));
+		m_videoFovDegrees = static_cast<float>(std::clamp(cfg.GetDouble("render.fov", 70.0), 60.0, 120.0));
 		m_videoFullscreenPending = m_videoFullscreen;
 		m_videoVsyncPending = m_videoVsync;
+		m_videoResWidthPending = m_videoResWidth;
+		m_videoResHeightPending = m_videoResHeight;
+		m_videoQualityPresetPending = m_videoQualityPreset;
+		m_videoFovDegreesPending = m_videoFovDegrees;
 		m_pendingVideoSettings = {};
 		m_audioMasterVolume = ClampOptionStep(static_cast<float>(cfg.GetDouble("audio.master_volume", 1.0)));
 		m_audioMusicVolume = ClampOptionStep(static_cast<float>(cfg.GetDouble("audio.music_volume", 1.0)));
@@ -1299,8 +1332,20 @@ namespace engine::client
 			m_hasPersistedLocale = !m_persistedLocale.empty();
 			m_videoFullscreen = persisted.GetBool("render.fullscreen", m_videoFullscreen);
 			m_videoVsync = persisted.GetBool("render.vsync", m_videoVsync);
+			if (persisted.Has("render.resolution_width"))
+				m_videoResWidth = static_cast<int32_t>(std::max<int64_t>(640, persisted.GetInt("render.resolution_width", m_videoResWidth)));
+			if (persisted.Has("render.resolution_height"))
+				m_videoResHeight = static_cast<int32_t>(std::max<int64_t>(480, persisted.GetInt("render.resolution_height", m_videoResHeight)));
+			if (persisted.Has("render.quality_preset"))
+				m_videoQualityPreset = static_cast<int32_t>(std::clamp<int64_t>(persisted.GetInt("render.quality_preset", m_videoQualityPreset), 0, 3));
+			if (persisted.Has("render.fov"))
+				m_videoFovDegrees = static_cast<float>(std::clamp(persisted.GetDouble("render.fov", m_videoFovDegrees), 60.0, 120.0));
 			m_videoFullscreenPending = m_videoFullscreen;
 			m_videoVsyncPending = m_videoVsync;
+			m_videoResWidthPending = m_videoResWidth;
+			m_videoResHeightPending = m_videoResHeight;
+			m_videoQualityPresetPending = m_videoQualityPreset;
+			m_videoFovDegreesPending = m_videoFovDegrees;
 			m_audioMasterVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.master_volume", m_audioMasterVolume)));
 			m_audioMusicVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.music_volume", m_audioMusicVolume)));
 			m_audioSfxVolume = ClampOptionStep(static_cast<float>(persisted.GetDouble("audio.sfx_volume", m_audioSfxVolume)));
@@ -1613,8 +1658,7 @@ namespace engine::client
 		LOG_INFO(Core, "[AuthUiPresenter] ImGui: ouverture portail recuperation ({})", resetUrl);
 		if (!window.OpenExternalUrl(resetUrl))
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.open_recovery_portal");
+			EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
 		}
 	}
 
@@ -1633,6 +1677,10 @@ namespace engine::client
 		LanguageOptionsImGuiMirror m{};
 		m.videoFullscreen = m_videoFullscreenPending;
 		m.videoVsync = m_videoVsyncPending;
+		m.videoResWidth = m_videoResWidthPending;
+		m.videoResHeight = m_videoResHeightPending;
+		m.videoQualityPreset = m_videoQualityPresetPending;
+		m.videoFovDegrees = m_videoFovDegreesPending;
 		m.audioMaster01 = m_audioMasterVolumePending;
 		m.audioMusic01 = m_audioMusicVolumePending;
 		m.audioSfx01 = m_audioSfxVolumePending;
@@ -1661,6 +1709,10 @@ namespace engine::client
 		}
 		m_videoFullscreenPending = mirror.videoFullscreen;
 		m_videoVsyncPending = mirror.videoVsync;
+		m_videoResWidthPending = mirror.videoResWidth > 0 ? mirror.videoResWidth : m_videoResWidthPending;
+		m_videoResHeightPending = mirror.videoResHeight > 0 ? mirror.videoResHeight : m_videoResHeightPending;
+		m_videoQualityPresetPending = static_cast<int32_t>(std::clamp<int32_t>(mirror.videoQualityPreset, 0, 3));
+		m_videoFovDegreesPending = std::clamp(mirror.videoFovDegrees, 60.f, 120.f);
 		m_audioMasterVolumePending = mirror.audioMaster01;
 		m_audioMusicVolumePending = mirror.audioMusic01;
 		m_audioSfxVolumePending = mirror.audioSfx01;
@@ -1780,6 +1832,40 @@ namespace engine::client
 		m_userErrorText.clear();
 		m_passwordConfirm.clear();
 		m_registeredTagId.clear();
+	}
+
+	void AuthUiPresenter::ImGuiVerifyEmailClearDigits()
+	{
+		if (m_phase != Phase::VerifyEmail)
+		{
+			return;
+		}
+		m_verifyCode.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] ImGui: code de vérification effacé (renvoi / nouvelle saisie)");
+	}
+
+	void AuthUiPresenter::ImGuiVerifyEmailBackToEditRegisterEmail()
+	{
+		if (m_phase != Phase::VerifyEmail)
+		{
+			return;
+		}
+		m_verifyCode.clear();
+		m_pendingVerifyAccountId = 0;
+		m_registeredTagId.clear();
+		SetPhase(Phase::Register);
+		m_activeField = 3u;
+		m_userErrorText.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] ImGui: retour inscription pour modifier le courriel");
+	}
+
+	void AuthUiPresenter::ImGuiSetVerifyEmailPartialCode(std::string_view s)
+	{
+		if (m_phase != Phase::VerifyEmail)
+		{
+			return;
+		}
+		m_verifyCode.assign(s.data(), s.size());
 	}
 
 	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin()
@@ -1914,6 +2000,10 @@ namespace engine::client
 		m_selectedLocale = CurrentLocale();
 		m_videoFullscreenPending = m_videoFullscreen;
 		m_videoVsyncPending = m_videoVsync;
+		m_videoResWidthPending = m_videoResWidth;
+		m_videoResHeightPending = m_videoResHeight;
+		m_videoQualityPresetPending = m_videoQualityPreset;
+		m_videoFovDegreesPending = m_videoFovDegrees;
 		m_audioMasterVolumePending = m_audioMasterVolume;
 		m_audioMusicVolumePending = m_audioMusicVolume;
 		m_audioSfxVolumePending = m_audioSfxVolume;
@@ -2098,8 +2188,7 @@ namespace engine::client
 			}
 			else
 			{
-				SetPhase(Phase::Error);
-				m_userErrorText = copy.message;
+				EnterAuthErrorPhase(Phase::Register, copy.message);
 				LOG_WARN(Core, "[AuthUiPresenter] Register FAILED: {}", copy.message);
 			}
 			(void)cfg;
@@ -2134,13 +2223,16 @@ namespace engine::client
 			}
 			else
 			{
-				SetPhase(Phase::Error);
 				// Masquer la distinction identifiant/mot de passe pour ne pas révéler
 				// si c'est le login ou le mot de passe qui est incorrect.
 				if (copy.message == "Invalid credentials" || copy.message == "Account not found")
-					m_userErrorText = Tr("auth.error.invalid_credentials");
+				{
+					EnterAuthErrorPhase(Phase::Login, Tr("auth.error.invalid_credentials"));
+				}
 				else
-					m_userErrorText = copy.message;
+				{
+					EnterAuthErrorPhase(Phase::Login, copy.message);
+				}
 			}
 			return;
 		}
@@ -2157,8 +2249,7 @@ namespace engine::client
 			}
 			else
 			{
-				SetPhase(Phase::Error);
-				m_userErrorText = copy.message;
+				EnterAuthErrorPhase(Phase::VerifyEmail, copy.message);
 				LOG_WARN(Core, "[AuthUiPresenter] VerifyEmail FAILED: {}", copy.message);
 			}
 			return;
@@ -2222,8 +2313,7 @@ namespace engine::client
 			else
 			{
 				ResetMasterSession();
-				SetPhase(Phase::Error);
-				m_userErrorText = copy.message;
+				EnterAuthErrorPhase(Phase::Terms, copy.message);
 			}
 			return;
 		}
@@ -2255,8 +2345,7 @@ namespace engine::client
 			else
 			{
 				ResetMasterSession();
-				SetPhase(Phase::Error);
-				m_userErrorText = copy.message;
+				EnterAuthErrorPhase(Phase::Terms, copy.message);
 			}
 			return;
 		}
@@ -2272,8 +2361,7 @@ namespace engine::client
 			}
 			else
 			{
-				SetPhase(Phase::Error);
-				m_userErrorText = copy.message;
+				EnterAuthErrorPhase(Phase::CharacterCreate, copy.message);
 			}
 			return;
 		}
@@ -2318,8 +2406,7 @@ namespace engine::client
 			SetPhase(Phase::Login);
 			return;
 		}
-		SetPhase(Phase::Error);
-		m_userErrorText = copy.message;
+		EnterAuthErrorPhase(Phase::Login, copy.message);
 		LOG_WARN(Core, "[AuthUiPresenter] Master/shard flow FAILED: {}", copy.message);
 	}
 
@@ -2330,8 +2417,7 @@ namespace engine::client
 		const std::string hash = ComputeClientHash(cfg);
 		if (hash.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.hash_password_failed");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.hash_password_failed"));
 			LOG_ERROR(Core, "[AuthUiPresenter] Register aborted: empty client_hash");
 			return;
 		}
@@ -2358,15 +2444,13 @@ namespace engine::client
 		}
 		catch (const std::exception& ex)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.invalid_birth_date"));
 			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse exception: {}", ex.what());
 			return;
 		}
 		catch (...)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.invalid_birth_date"));
 			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse unknown exception");
 			return;
 		}
@@ -2520,8 +2604,7 @@ namespace engine::client
 		const std::string hash = ComputeClientHash(cfg);
 		if (hash.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.hash_password_failed");
+			EnterAuthErrorPhase(Phase::Login, Tr("auth.error.hash_password_failed"));
 			return;
 		}
 
@@ -2731,8 +2814,7 @@ namespace engine::client
 		const std::string hash = ComputeClientHash(cfg);
 		if (hash.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.hash_password_failed");
+			EnterAuthErrorPhase(Phase::Login, Tr("auth.error.hash_password_failed"));
 			LOG_ERROR(Core, "[AuthUiPresenter] Master flow aborted: empty client_hash");
 			return;
 		}
@@ -2864,8 +2946,7 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.terms_session_inactive");
+			EnterAuthErrorPhase(Phase::Terms, Tr("auth.error.terms_session_inactive"));
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
@@ -2990,8 +3071,7 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0 || m_pendingTermsEditionId == 0)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.terms_session_inactive");
+			EnterAuthErrorPhase(Phase::Terms, Tr("auth.error.terms_session_inactive"));
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
@@ -3143,8 +3223,7 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.character_session_inactive");
+			EnterAuthErrorPhase(Phase::CharacterCreate, Tr("auth.error.character_session_inactive"));
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
@@ -3541,8 +3620,7 @@ bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, c
 			LOG_INFO(Core, "[AuthUiPresenter] Open password recovery portal from phase={} url={}", phaseName(m_phase), resetUrl);
 			if (!window.OpenExternalUrl(resetUrl))
 			{
-				SetPhase(Phase::Error);
-				m_userErrorText = Tr("auth.error.open_recovery_portal");
+				EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
 			}
 			break;
 		}
@@ -3615,6 +3693,10 @@ void AuthUiPresenter::CommitLanguageOptionsMenuApply(const engine::core::Config&
 	(void)cfg;
 	m_videoFullscreen = m_videoFullscreenPending;
 	m_videoVsync = m_videoVsyncPending;
+	m_videoResWidth = m_videoResWidthPending;
+	m_videoResHeight = m_videoResHeightPending;
+	m_videoQualityPreset = m_videoQualityPresetPending;
+	m_videoFovDegrees = m_videoFovDegreesPending;
 	m_audioMasterVolume = m_audioMasterVolumePending;
 	m_audioMusicVolume = m_audioMusicVolumePending;
 	m_audioSfxVolume = m_audioSfxVolumePending;
@@ -3628,6 +3710,10 @@ void AuthUiPresenter::CommitLanguageOptionsMenuApply(const engine::core::Config&
 	m_pendingVideoSettings.applyRequested = true;
 	m_pendingVideoSettings.fullscreen = m_videoFullscreen;
 	m_pendingVideoSettings.vsync = m_videoVsync;
+	m_pendingVideoSettings.resolutionWidth = m_videoResWidth;
+	m_pendingVideoSettings.resolutionHeight = m_videoResHeight;
+	m_pendingVideoSettings.qualityPreset = m_videoQualityPreset;
+	m_pendingVideoSettings.fovDegrees = m_videoFovDegrees;
 	m_pendingAudioSettings.applyRequested = true;
 	m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
 	m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
@@ -3648,17 +3734,17 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {
 	if (m_phase == Phase::Error)
 	{
-		SetPhase(Phase::Login);
-		m_userErrorText.clear();
-		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged, back to Login");
+		const Phase target = m_errorReturnPhase;
+		SetPhase(target);
+		m_activeField = 0;
+		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged -> {}", AuthPhaseLogName(target));
 		return;
 	}
 	if (m_phase == Phase::ShardPick)
 	{
 		if (m_shardPickChoiceShardId == 0)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.shard_pick_required");
+			EnterAuthErrorPhase(Phase::ShardPick, Tr("auth.error.shard_pick_required"));
 			LOG_WARN(Core, "[AuthUiPresenter] ShardPick submit rejected: no shard selected");
 			return;
 		}
@@ -3671,8 +3757,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_login.empty() || m_password.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.enter_login_password");
+			EnterAuthErrorPhase(Phase::Login, Tr("auth.error.enter_login_password"));
 			LOG_WARN(Core, "[AuthUiPresenter] Submit rejected: empty fields");
 			return;
 		}
@@ -3686,22 +3771,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			|| m_firstName.empty() || m_lastName.empty() || m_birthDay.empty()
 			|| m_birthMonth.empty() || m_birthYear.empty() || m_country.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.enter_register_fields");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.enter_register_fields"));
 			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: empty fields");
 			return;
 		}
 		if (m_password != m_passwordConfirm)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.password_mismatch");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.password_mismatch"));
 			LOG_WARN(Core, "[AuthUiPresenter] Register submit rejected: password mismatch");
 			return;
 		}
 		if (!IsValidBirthDateFields(m_birthDay, m_birthMonth, m_birthYear))
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.invalid_birth_date");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.invalid_birth_date"));
 			LOG_INFO(Core,
 				"[AUTH-REG] submit rejected: invalid birth date (day_len={} month_len={} year_len={})",
 				m_birthDay.size(),
@@ -3711,8 +3793,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		}
 		if (m_country.size() != 2 || !std::isalpha(static_cast<unsigned char>(m_country[0])) || !std::isalpha(static_cast<unsigned char>(m_country[1])))
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.enter_country");
+			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.enter_country"));
 			LOG_INFO(Core, "[AUTH-REG] submit rejected: invalid country ('{}')", m_country);
 			return;
 		}
@@ -3735,14 +3816,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.enter_verify_code");
+			EnterAuthErrorPhase(Phase::VerifyEmail, Tr("auth.error.enter_verify_code"));
 			return;
 		}
 		if (!IsValidVerificationCode(m_verifyCode))
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.invalid_verify_code");
+			EnterAuthErrorPhase(Phase::VerifyEmail, Tr("auth.error.invalid_verify_code"));
 			return;
 		}
 		SetPhase(Phase::Submitting);
@@ -3753,8 +3832,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_email.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.enter_recovery_email");
+			EnterAuthErrorPhase(Phase::ForgotPassword, Tr("auth.error.enter_recovery_email"));
 			return;
 		}
 		SetPhase(Phase::Submitting);
@@ -3765,8 +3843,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (!m_termsScrolledToBottom || !m_termsAcknowledgeChecked)
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.accept_terms");
+			EnterAuthErrorPhase(Phase::Terms, Tr("auth.error.accept_terms"));
 			return;
 		}
 		SetPhase(Phase::Submitting);
@@ -3777,14 +3854,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 	{
 		if (m_characterName.empty())
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.enter_character_name");
+			EnterAuthErrorPhase(Phase::CharacterCreate, Tr("auth.error.enter_character_name"));
 			return;
 		}
 		if (!IsValidCharacterNameLocal(m_characterName))
 		{
-			SetPhase(Phase::Error);
-			m_userErrorText = Tr("auth.error.invalid_character_name");
+			EnterAuthErrorPhase(Phase::CharacterCreate, Tr("auth.error.invalid_character_name"));
 			return;
 		}
 		SetPhase(Phase::Submitting);
@@ -4311,8 +4386,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 							const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
 							if (!window.OpenExternalUrl(resetUrl))
 							{
-								SetPhase(Phase::Error);
-								m_userErrorText = Tr("auth.error.open_recovery_portal");
+								EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
 							}
 						}
 						else if (m_phase == Phase::Login && m_hoveredBodyLineIndex == 0)
@@ -5275,8 +5349,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_INFO(Core, "[AuthUiPresenter] Keyboard shortcut opens password recovery portal ({})", resetUrl);
 			if (!window.OpenExternalUrl(resetUrl))
 			{
-				SetPhase(Phase::Error);
-				m_userErrorText = Tr("auth.error.open_recovery_portal");
+				EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
 			}
 		}
 		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::O) && m_phase == Phase::Login)
@@ -5339,7 +5412,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		model.footerHint.clear();
 
 		auto addField = [this, &model](std::string label, std::string value, bool active, bool secret = false, bool cyclePicker = false,
-			std::string tooltipKey = {}, std::string tooltipTextDirect = {})
+			std::string tooltipKey = {}, std::string tooltipTextDirect = {}, std::string inputPlaceholder = {})
 		{
 			RenderField field{};
 			field.label = std::move(label);
@@ -5353,6 +5426,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				field.tooltipText = std::move(tooltipTextDirect);
 			}
+			field.inputPlaceholder = std::move(inputPlaceholder);
 			model.fields.push_back(std::move(field));
 		};
 		auto addActionKeys = [this, &model](std::string_view labelKey, bool primary, bool active = true, bool emphasized = false,
@@ -5438,11 +5512,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					model.infoBanner = m_infoBanner;
 				}
 			}
-			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"));
-			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"));
+			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"),
+				Tr("auth.placeholder.login"));
+			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"),
+				Tr("auth.placeholder.password"));
+			model.authLoginVersionBadge = Tr("auth.login.version_badge");
+			model.authRememberDetailLine = Tr("auth.login.remember_detail");
+			model.authLoginFooterChips.clear();
+			model.authLoginFooterChips.push_back({Tr("auth.footer.chip.tab.key"), Tr("auth.footer.chip.tab.desc")});
+			model.authLoginFooterChips.push_back({Tr("auth.footer.chip.enter.key"), Tr("auth.footer.chip.enter.desc")});
+			model.authLoginFooterChips.push_back({Tr("auth.footer.chip.esc.key"), Tr("auth.footer.chip.esc.desc")});
 			{
 				RenderBodyLine remember{};
-				remember.text = Tr("auth.checkbox.remember");
+				remember.text = Tr("auth.login.remember_title");
 				remember.active = (m_activeField == 2u);
 				remember.checkbox = true;
 				remember.checkboxChecked = m_rememberLogin;
@@ -5452,7 +5534,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
 			// Boutons : uniquement des clés i18n ; le texte affiché est résolu à la fin (changement de langue pris en compte).
 			addActionKeys("auth.login.maquette_create", false, true, true);
-			addActionKeys("language.options.title", false, true, true);
+			addActionKeys("auth.login.footer_options", false, true, true);
 			addActionKeys("auth.login.maquette_submit", true, true, false);
 			addActionKeys("common.quit_desktop", false, true, false, "common.quit");
 			model.footerHint = Tr("auth.footer_hint.login_bar");
@@ -5473,7 +5555,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			// Helper pour ajouter un champ de grille
 			auto addGridField = [&](std::string label, std::string value, bool active,
 				bool secret, bool cyclePicker, std::string tooltipText,
-				int32_t col, int32_t span, int32_t pwdMatchState = 0)
+				int32_t col, int32_t span, int32_t pwdMatchState = 0, std::string inputPlaceholder = {})
 			{
 				RenderField f{};
 				f.label           = std::move(label);
@@ -5486,6 +5568,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				f.gridColumn      = col;
 				f.gridSpan        = span;
 				f.passwordMatchState = pwdMatchState;
+				f.inputPlaceholder = std::move(inputPlaceholder);
 				model.fields.push_back(std::move(f));
 			};
 
@@ -5525,8 +5608,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			// Ligne 3 : birthDay (col0), birthMonth (col1), birthYear (col2)
 			// Ligne 4 : password (col0, span3)
 			// Ligne 5 : passwordConfirm (col0, span3)
-			addGridField(Tr("auth.label.login"),    m_login,    m_activeField == 0,
-				false, false, Tr("auth.tooltip.login"),    0, 1);
+			addGridField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, Tr("auth.tooltip.login"), 0, 1, 0,
+				Tr("auth.placeholder.register_login"));
 			// Plan C : indicateur disponibilité username sur le champ login.
 			model.fields.back().usernameCheckState = [this]() -> int32_t {
 				switch (m_usernameCheckState)
@@ -5537,14 +5620,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				default:                            return 0;
 				}
 			}();
-			addGridField(Tr("auth.label.country"),  countryDisplay(m_country), m_activeField == 9,
-				false, true,  Tr("auth.tooltip.country"),  2, 1);
+			addGridField(Tr("auth.label.country"), countryDisplay(m_country), m_activeField == 9, false, true,
+				Tr("auth.tooltip.country"), 2, 1);
 			addGridField(Tr("auth.label.last_name"),  m_lastName,  m_activeField == 5,
 				false, false, Tr("auth.tooltip.last_name"),  0, 1);
 			addGridField(Tr("auth.label.first_name"), m_firstName, m_activeField == 4,
 				false, false, Tr("auth.tooltip.first_name"), 1, 1);
-			addGridField(Tr("common.email"),          m_email,     m_activeField == 3,
-				false, false, Tr("auth.tooltip.email"),      0, 3);
+			addGridField(Tr("common.email"), m_email, m_activeField == 3, false, false, Tr("auth.tooltip.email"), 0, 3, 0,
+				Tr("auth.placeholder.register_email"));
 			addGridField(Tr("auth.label.birth_day"),
 				BirthCycleDisplay(m_birthDay, 1, 1, 31),       m_activeField == 6,
 				false, true, Tr("auth.tooltip.birth_day"),   0, 1);
@@ -5554,11 +5637,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addGridField(Tr("auth.label.birth_year"),
 				BirthCycleDisplay(m_birthYear, kDefaultYear, 1900, 2100), m_activeField == 8,
 				false, true, Tr("auth.tooltip.birth_year"),  2, 1);
-			addGridField(Tr("auth.label.password"),  maskedPassword(),  m_activeField == 1,
-				true,  false, Tr("auth.tooltip.password"),   0, 3);
-			addGridField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2,
-				true,  false, Tr("auth.tooltip.password_confirm"), 0, 3,
-				pwdMatch ? 1 : (pwdMismatch ? -1 : 0));
+			addGridField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, Tr("auth.tooltip.password"),
+				0, 3, 0, Tr("auth.placeholder.register_password"));
+			addGridField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2, true, false,
+				Tr("auth.tooltip.password_confirm"), 0, 3, pwdMatch ? 1 : (pwdMismatch ? -1 : 0),
+				Tr("auth.placeholder.register_password_confirm"));
 
 			// --- Dropdowns date de naissance ---
 			{
@@ -5613,13 +5696,51 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				// BuildRenderModel reste const : ne pas muter l'état ici.
 			}
 
-			addActionKeys("common.submit", true);
+			model.authRegisterPanelBadge = Tr("auth.register.panel_badge");
+			model.authRegisterPanelSubtitle = Tr("auth.register.panel_subtitle");
+			model.authRegisterEmailHint = Tr("auth.register.email_hint");
+			model.authRegisterCrumbLabels.clear();
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.lang"));
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.account"));
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.email"));
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.world"));
+			model.authRegisterCrumbCurrent = 1;
+			model.authRegisterCountryPick.clear();
+			for (std::string_view codeView : kCountryCodes)
+			{
+				const std::string code(codeView);
+				model.authRegisterCountryPick.push_back({ code, Tr(std::string("country.") + code) });
+			}
+			model.authRegisterFooterChips.clear();
+			model.authRegisterFooterChips.push_back({ Tr("auth.footer.chip.enter.key"), Tr("auth.register.footer.validate") });
+			model.authRegisterFooterChips.push_back({ Tr("auth.footer.chip.esc.key"), Tr("auth.register.footer.back") });
+			model.authRegisterShowErrorsLabel = Tr("auth.register.show_errors");
+
+			addActionKeys("auth.register.submit_create", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
 		}
 		case Phase::VerifyEmail:
 			model.sectionTitle = Tr("auth.phase.verify_email");
 			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
+			model.authRegisterCrumbLabels.clear();
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.lang"));
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.account"));
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.email"));
+			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.world"));
+			model.authRegisterCrumbCurrent = 2;
+			model.authVerifyPanelTitle = Tr("auth.verify.panel_title");
+			model.authVerifyPanelSubtitle = Tr("auth.verify.subtitle", { { "email", m_email } });
+			model.authVerifyPanelBadge = Tr("auth.verify.panel_badge");
+			model.authVerifyInfoPopupText = Tr("auth.verify.info_popup");
+			model.authVerifyDigitLabel = Tr("auth.verify.digit_label");
+			model.authVerifyResendLabel = Tr("auth.verify.resend");
+			model.authVerifyChangeEmailLabel = Tr("auth.verify.change_email");
+			model.authVerifySubmitLabel = Tr("auth.verify.submit");
+			model.authVerifyBackLabel = Tr("auth.verify.back");
+			model.authVerifyBackKeycap = Tr("auth.verify.back_keycap");
+			model.authVerifySubmitKeycap = Tr("auth.verify.submit_keycap");
+			model.authVerifyDevHint = Tr("auth.verify.dev_hint");
 			addActionKeys("common.submit", true);
 			addActionKeys("auth.hint.return_login", false);
 			break;
@@ -5672,15 +5793,12 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			addBodyLine(Tr("auth.shard_pick.hint"), false, false);
 			for (const auto& e : m_shardPickEntries)
 			{
-				if (e.status != 1u || e.endpoint.empty())
-				{
-					continue;
-				}
 				const std::string line = Tr("auth.shard_pick.line",
 					{ { "id", std::to_string(e.shard_id) },
 						{ "load", std::to_string(e.current_load) + "/" + std::to_string(e.max_capacity) },
-						{ "endpoint", e.endpoint } });
-				addBodyLine(line, m_shardPickChoiceShardId == e.shard_id, true);
+						{ "endpoint", e.endpoint.empty() ? std::string("-") : e.endpoint } });
+				const bool rowSelectable = (e.status == 1u && !e.endpoint.empty());
+				addBodyLine(line, m_shardPickChoiceShardId == e.shard_id, rowSelectable);
 			}
 			addActionKeys("common.submit", true, m_shardPickChoiceShardId != 0u, false);
 			addActionKeys("common.back", false, true, false);
@@ -5840,9 +5958,117 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			model.sectionTitle = Tr("auth.panel.submitting");
 			break;
 		case Phase::Error:
+		{
 			model.sectionTitle = Tr("auth.panel.error");
-			addActionKeys("common.continue", true);
+			const bool rich = (m_errorReturnPhase == Phase::Register);
+			model.authErrorRichRegisterLayout = rich;
+			model.authErrorPanelTitle = rich ? Tr("auth.error.register_impossible_title") : Tr("auth.error.generic_title");
+			model.authErrorPanelSubtitle.clear();
+			model.authErrorVersionBadge = Tr("auth.error.version_badge");
+			model.infoPopupText = rich ? Tr("auth.error.register_info_popup") : std::string();
+			model.authErrorFieldSectionLabel = Tr("auth.error.field_to_fix");
+			model.authErrorFixSectionLabel = Tr("auth.error.how_to_fix");
+			model.authErrorBackButtonLabel = Tr("auth.error.back_to_form");
+			model.authErrorBackKeycap = Tr("auth.error.keycap_escape");
+			model.authErrorRetryButtonLabel = Tr("auth.error.retry");
+			model.authRegisterErrorVariants.clear();
+			if (rich)
+			{
+				auto addVariant = [&model, this](const char* pillKey, const char* titleKey, const char* msgKey, const char* fieldKey,
+									   const char* fixKey, bool warn) {
+					AuthUiPresenter::AuthRegisterErrorVariantRow row{};
+					row.pillLabel = Tr(std::string_view(pillKey));
+					row.bannerTitle = Tr(std::string_view(titleKey));
+					row.bannerMessage = Tr(std::string_view(msgKey));
+					row.fieldLabel = Tr(std::string_view(fieldKey));
+					row.fixHint = Tr(std::string_view(fixKey));
+					row.warningBanner = warn;
+					model.authRegisterErrorVariants.push_back(std::move(row));
+				};
+				addVariant("auth.error.variant.taken.pill", "auth.error.variant.taken.banner_title", "auth.error.variant.taken.banner_msg",
+					"auth.error.variant.taken.field", "auth.error.variant.taken.fix", false);
+				addVariant("auth.error.variant.weak.pill", "auth.error.variant.weak.banner_title", "auth.error.variant.weak.banner_msg",
+					"auth.error.variant.weak.field", "auth.error.variant.weak.fix", false);
+				addVariant("auth.error.variant.email.pill", "auth.error.variant.email.banner_title", "auth.error.variant.email.banner_msg",
+					"auth.error.variant.email.field", "auth.error.variant.email.fix", false);
+				addVariant("auth.error.variant.network.pill", "auth.error.variant.network.banner_title", "auth.error.variant.network.banner_msg",
+					"auth.error.variant.network.field", "auth.error.variant.network.fix", true);
+				if (!model.authRegisterErrorVariants.empty())
+				{
+					model.authRegisterErrorVariants.back().fieldLabel.clear();
+				}
+
+				const std::string& err = m_userErrorText;
+				auto lower = err;
+				for (char& c : lower)
+				{
+					c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+				}
+				auto hasSub = [&lower](std::string_view s) -> bool { return lower.find(s) != std::string::npos; };
+
+				int classified = 3;
+				if (err == Tr("auth.error.password_mismatch"))
+				{
+					classified = 1;
+				}
+				else if (err == Tr("auth.error.enter_register_fields") || err == Tr("auth.error.invalid_birth_date")
+					|| err == Tr("auth.error.enter_country"))
+				{
+					classified = 0;
+				}
+				else if (hasSub("login already taken") || hasSub("already taken") || hasSub("invalid login"))
+				{
+					classified = 0;
+				}
+				else if (hasSub("weak password"))
+				{
+					classified = 1;
+				}
+				else if (hasSub("invalid email"))
+				{
+					classified = 2;
+				}
+				else if (hasSub("timeout") || hasSub("network error") || hasSub("connect failed") || hasSub("register worker")
+					|| hasSub("send verify") || hasSub("send register") || hasSub("server error") || hasSub("internal error"))
+				{
+					classified = 3;
+				}
+				else if (hasSub("failed") || hasSub("exception"))
+				{
+					classified = 3;
+				}
+				else
+				{
+					classified = 3;
+				}
+
+				const bool bulkFieldHint = (err == Tr("auth.error.enter_register_fields"));
+				const bool inferredNetwork = hasSub("timeout") || hasSub("network error") || hasSub("connect failed")
+					|| hasSub("register worker") || hasSub("server error") || hasSub("internal error");
+				model.authRegisterErrorClassifiedIndex = std::clamp(classified, 0, 3);
+				model.authErrorBannerBodyFromUserMessage =
+					(classified == 0 && (bulkFieldHint || err == Tr("auth.error.invalid_birth_date") || err == Tr("auth.error.enter_country")))
+					|| (classified == 3 && !inferredNetwork);
+				model.authErrorHideFieldBox = model.authErrorBannerBodyFromUserMessage && classified == 0;
+				model.authErrorShowRetryButton = (classified == 3 && inferredNetwork);
+
+				model.authRegisterCrumbLabels.clear();
+				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.lang"));
+				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.account"));
+				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.email"));
+				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.world"));
+				model.authRegisterCrumbCurrent = 1;
+			}
+			else
+			{
+				model.authRegisterErrorClassifiedIndex = 0;
+				model.authErrorBannerBodyFromUserMessage = false;
+				model.authErrorHideFieldBox = false;
+				model.authErrorShowRetryButton = false;
+			}
+			addActionKeys("auth.error.back_to_form", true);
 			break;
+		}
 		}
 
 		for (RenderField& f : model.fields)
@@ -5859,6 +6085,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 			model.actions[0].actionBadge = Tr("auth.badge.ctrl_r");
 			model.actions[2].actionBadge = Tr("auth.badge.submit");
+		}
+		if (m_phase == Phase::Register && model.actions.size() >= 2u)
+		{
+			model.actions[0].actionBadge = Tr("auth.badge.submit_enter");
+			model.actions[1].actionBadge = Tr("auth.badge.esc_back");
 		}
 
 		if (!model.bodyLines.empty())
@@ -5901,12 +6132,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				model.infoPopupText = Tr("auth.info.register_help");
 			else if (m_phase == Phase::ShardPick)
 				model.infoPopupText = Tr("auth.shard_pick.popup_help");
+			else if (m_phase == Phase::VerifyEmail)
+				model.infoPopupText = Tr("auth.verify.info_popup");
 			else if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
 				model.infoPopupText = Tr("language.first_run.info_popup");
 		}
 
 		// Icône "i" visible sur Login et Register.
 		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register || m_phase == Phase::ShardPick
+			|| m_phase == Phase::VerifyEmail
 			|| (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout));
 
 		if (model.languageFirstRunLayout && m_viewportW > 0u && m_viewportH > 0u)

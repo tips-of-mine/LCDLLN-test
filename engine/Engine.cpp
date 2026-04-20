@@ -212,6 +212,14 @@ namespace engine
 				cfg.SetValue("render.vsync", persisted.GetBool("render.vsync", cfg.GetBool("render.vsync", true)));
 			if (persisted.Has("render.fullscreen"))
 				cfg.SetValue("render.fullscreen", persisted.GetBool("render.fullscreen", cfg.GetBool("render.fullscreen", true)));
+			if (persisted.Has("render.resolution_width"))
+				cfg.SetValue("render.resolution_width", persisted.GetInt("render.resolution_width", cfg.GetInt("render.resolution_width", 1920)));
+			if (persisted.Has("render.resolution_height"))
+				cfg.SetValue("render.resolution_height", persisted.GetInt("render.resolution_height", cfg.GetInt("render.resolution_height", 1080)));
+			if (persisted.Has("render.quality_preset"))
+				cfg.SetValue("render.quality_preset", persisted.GetInt("render.quality_preset", cfg.GetInt("render.quality_preset", 2)));
+			if (persisted.Has("render.fov"))
+				cfg.SetValue("render.fov", persisted.GetDouble("render.fov", cfg.GetDouble("render.fov", 70.0)));
 			if (persisted.Has("client.locale"))
 				cfg.SetValue("client.locale", persisted.GetString("client.locale", cfg.GetString("client.locale", "")));
 			if (persisted.Has("audio.master_volume"))
@@ -2758,6 +2766,10 @@ namespace engine
 				const bool vsyncChanged = (videoCmd.vsync != m_vsync);
 				m_cfg.SetValue("render.fullscreen", videoCmd.fullscreen);
 				m_cfg.SetValue("render.vsync", videoCmd.vsync);
+				m_cfg.SetValue("render.resolution_width", static_cast<int64_t>(videoCmd.resolutionWidth));
+				m_cfg.SetValue("render.resolution_height", static_cast<int64_t>(videoCmd.resolutionHeight));
+				m_cfg.SetValue("render.quality_preset", static_cast<int64_t>(videoCmd.qualityPreset));
+				m_cfg.SetValue("render.fov", static_cast<double>(videoCmd.fovDegrees));
 				m_vsync = videoCmd.vsync;
 				if (fullscreenChanged)
 				{
@@ -2769,9 +2781,19 @@ namespace engine
 					m_swapchainResizeRequested = true;
 					LOG_INFO(Core, "[Options] VSync applied ({}) -> swapchain recreate requested", videoCmd.vsync ? "on" : "off");
 				}
-				if (!fullscreenChanged && !vsyncChanged)
+				int cw = 0, ch = 0;
+				m_window.GetClientSize(cw, ch);
+				const bool resChanged = (videoCmd.resolutionWidth > 0 && videoCmd.resolutionHeight > 0
+					&& (videoCmd.resolutionWidth != cw || videoCmd.resolutionHeight != ch));
+				if (resChanged)
 				{
-					LOG_INFO(Core, "[Options] Video apply requested but values unchanged");
+					m_swapchainResizeRequested = true;
+					LOG_INFO(Core, "[Options] Resolution persisted {}x{} (fenêtre actuelle {}x{} ; redimensionnement natif à brancher)",
+						videoCmd.resolutionWidth, videoCmd.resolutionHeight, cw, ch);
+				}
+				if (!fullscreenChanged && !vsyncChanged && !resChanged)
+				{
+					LOG_INFO(Core, "[Options] Video apply requested but window flags unchanged (qualité / FOV enregistrés dans la config)");
 				}
 			}
 			if (audioCmd.applyRequested)

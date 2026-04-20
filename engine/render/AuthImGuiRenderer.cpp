@@ -1081,7 +1081,9 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border, bd);
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##banner", ImVec2(-FLT_MIN, 0.f), true, ImGuiWindowFlags_NoScrollbar);
+		std::string bannerId = "##banner_";
+		bannerId.append(title.data(), title.size());
+		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f), true, ImGuiWindowFlags_NoScrollbar);
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(2);
 
@@ -1313,6 +1315,18 @@ namespace engine::render
 
 	void AuthImGuiRenderer::RenderLoginScreen(const RenderModel& rm, float vpW, float vpH)
 	{
+		const auto tr = [this](const char* key, const char* fallback) -> std::string {
+			if (m_authPresenter != nullptr)
+			{
+				std::string s = m_authPresenter->UiTranslate(key);
+				if (!s.empty())
+				{
+					return s;
+				}
+			}
+			return std::string(fallback);
+		};
+
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
 		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
 
@@ -1364,8 +1378,8 @@ namespace engine::render
 		}
 		else
 		{
-			DrawField("Identifiant", m_loginId, static_cast<int>(sizeof(m_loginId)), false);
-			DrawField("Mot de passe", m_loginPw, static_cast<int>(sizeof(m_loginPw)), true);
+			DrawField(tr("auth.label.login", "Login").c_str(), m_loginId, static_cast<int>(sizeof(m_loginId)), false);
+			DrawField(tr("auth.label.password", "Password").c_str(), m_loginPw, static_cast<int>(sizeof(m_loginPw)), true);
 		}
 
 		DrawLoginRememberRow(rm);
@@ -1421,7 +1435,7 @@ namespace engine::render
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			std::string createLabel = actCreate->label.empty() ? std::string("CRÉER UN COMPTE") : actCreate->label;
+			std::string createLabel = actCreate->label.empty() ? tr("auth.login.maquette_create", "CREATE ACCOUNT") : actCreate->label;
 			createLabel += "##login_create";
 			if (ImGui::Button(createLabel.c_str(), ImVec2(createW, rowBtnH)) && m_authPresenter != nullptr)
 			{
@@ -1444,7 +1458,7 @@ namespace engine::render
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.38f, 0.62f, 1.f));
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			std::string submitLabel = actSubmit->label.empty() ? std::string("SE CONNECTER") : actSubmit->label;
+			std::string submitLabel = actSubmit->label.empty() ? tr("auth.login.maquette_submit", "SIGN IN") : actSubmit->label;
 			submitLabel += "##login_submit";
 			if (ImGui::Button(submitLabel.c_str(), ImVec2(submitW, rowBtnH)) && m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
@@ -1462,7 +1476,7 @@ namespace engine::render
 				ImGui::PopStyleColor();
 			}
 		}
-		else if (DrawPrimaryButton("Se connecter") && m_authPresenter != nullptr && m_authCfg != nullptr)
+		else if (DrawPrimaryButton(tr("auth.login.maquette_submit", "SIGN IN").c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}
@@ -1477,7 +1491,7 @@ namespace engine::render
 		if (actOpts != nullptr && actQuit != nullptr && m_authPresenter != nullptr)
 		{
 			const std::string lo = actOpts->label.empty() ? std::string("OPTIONS") : actOpts->label;
-			const std::string lq = actQuit->label.empty() ? std::string("QUITTER") : actQuit->label;
+			const std::string lq = actQuit->label.empty() ? tr("auth.footer.chip.esc.desc", "QUIT") : actQuit->label;
 			const float tw = ImGui::CalcTextSize(lo.c_str()).x + ImGui::CalcTextSize(lq.c_str()).x + 48.f;
 			ImGui::SetCursorPos(ImVec2((vpW - tw) * 0.5f, ImGui::GetCursorPosY() + 14.f));
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
@@ -1496,6 +1510,18 @@ namespace engine::render
 
 	void AuthImGuiRenderer::RenderRegisterScreen(const RenderModel& rm, float vpW, float vpH)
 	{
+		const auto tr = [this](const char* key, const char* fallback) -> std::string {
+			if (m_authPresenter != nullptr)
+			{
+				std::string s = m_authPresenter->UiTranslate(key);
+				if (!s.empty())
+				{
+					return s;
+				}
+			}
+			return std::string(fallback);
+		};
+
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
 		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
 
@@ -1517,7 +1543,7 @@ namespace engine::render
 
 		DrawRegisterFlowHeader(rm, vpW);
 
-		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CRÉER UN COMPTE") : rm.sectionTitle;
+		std::string panelTitle = rm.sectionTitle.empty() ? tr("auth.panel.register", "CREATE ACCOUNT") : rm.sectionTitle;
 		for (char& ch : panelTitle)
 		{
 			if (ch >= 'a' && ch <= 'z')
@@ -1654,7 +1680,7 @@ namespace engine::render
 				}
 				else
 				{
-					DrawField("Pays (ISO2)", m_regCountry, static_cast<int>(sizeof(m_regCountry)), false);
+					DrawField(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)), false);
 				}
 				ImGui::Spacing();
 			}
@@ -1670,11 +1696,11 @@ namespace engine::render
 		}
 		else
 		{
-			DrawField("Identifiant", m_regId, static_cast<int>(sizeof(m_regId)));
-			DrawField("Courriel", m_regEmail, static_cast<int>(sizeof(m_regEmail)));
-			DrawField("Prenom", m_regFirstName, static_cast<int>(sizeof(m_regFirstName)));
-			DrawField("Nom", m_regLastName, static_cast<int>(sizeof(m_regLastName)));
-			DrawField("Pays", m_regCountry, static_cast<int>(sizeof(m_regCountry)));
+			DrawField(tr("auth.label.login", "Login").c_str(), m_regId, static_cast<int>(sizeof(m_regId)));
+			DrawField(tr("common.email", "Email").c_str(), m_regEmail, static_cast<int>(sizeof(m_regEmail)));
+			DrawField(tr("auth.label.first_name", "First name").c_str(), m_regFirstName, static_cast<int>(sizeof(m_regFirstName)));
+			DrawField(tr("auth.label.last_name", "Last name").c_str(), m_regLastName, static_cast<int>(sizeof(m_regLastName)));
+			DrawField(tr("auth.label.country", "Country").c_str(), m_regCountry, static_cast<int>(sizeof(m_regCountry)));
 		}
 
 		int strength = 0;
@@ -1795,7 +1821,7 @@ namespace engine::render
 				rowRight = leftEndX + 12.f;
 			}
 			ImGui::SetCursorPosX(rowRight);
-			std::string subLab = actSubmit->label.empty() ? std::string("CRÉER LE COMPTE") : actSubmit->label;
+			std::string subLab = actSubmit->label.empty() ? tr("auth.register.submit_create", "CREATE ACCOUNT") : actSubmit->label;
 			subLab += "##reg_submit";
 			ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.39f, 0.58f, 0.82f, 1.f));
@@ -1832,12 +1858,12 @@ namespace engine::render
 		}
 		else
 		{
-			if (DrawGhostButton("Retour") && m_authPresenter != nullptr)
+			if (DrawGhostButton(tr("auth.register.footer.back", "Back").c_str()) && m_authPresenter != nullptr)
 			{
 				m_authPresenter->ImGuiBackFromRegisterToLogin();
 			}
 			ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.55f);
-			if (DrawPrimaryButton("Creer le compte", !canSubmit) && m_authPresenter != nullptr && m_authCfg != nullptr)
+			if (DrawPrimaryButton(tr("auth.register.submit_create", "CREATE ACCOUNT").c_str(), !canSubmit) && m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
 				engine::client::AuthUiPresenter::RegisterImGuiSubmit form{};
 				form.login = m_regId;
@@ -3082,19 +3108,47 @@ namespace engine::render
 
 	void AuthImGuiRenderer::RenderForgotScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string title = rm.sectionTitle.empty() ? std::string("Mot de passe oublie") : rm.sectionTitle;
+		const auto tr = [this](const char* key, const char* fallback) -> std::string {
+			if (m_authPresenter != nullptr)
+			{
+				std::string s = m_authPresenter->UiTranslate(key);
+				if (!s.empty())
+				{
+					return s;
+				}
+			}
+			return std::string(fallback);
+		};
+
+		const std::string title = rm.sectionTitle.empty() ? tr("auth.section.forgot_password", "Password recovery") : rm.sectionTitle;
 		if (!BeginPanel(460.f, vpW, vpH, title.c_str(), "", ""))
 		{
 			EndPanel();
 			return;
 		}
-		DrawField("Adresse courriel", m_forgotEmail, static_cast<int>(sizeof(m_forgotEmail)));
-		if (DrawPrimaryButton("Envoyer la demande") && m_authPresenter != nullptr && m_authCfg != nullptr)
+		const std::string emailLabel = rm.fields.empty() ? tr("common.email", "Email") : rm.fields[0].label;
+		DrawField(emailLabel.c_str(), m_forgotEmail, static_cast<int>(sizeof(m_forgotEmail)));
+
+		std::string submitLabel = tr("common.submit", "Submit");
+		std::string backLabel = tr("common.back", "Back");
+		for (const auto& a : rm.actions)
+		{
+			if (a.primary)
+			{
+				submitLabel = a.label;
+			}
+			else
+			{
+				backLabel = a.label;
+			}
+		}
+
+		if (DrawPrimaryButton(submitLabel.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiSubmitForgotPassword(*m_authCfg, m_forgotEmail);
 		}
 		ImGui::SameLine(0.f, 8.f);
-		if (DrawGhostButton("Retour") && m_authPresenter != nullptr)
+		if (DrawGhostButton(backLabel.c_str()) && m_authPresenter != nullptr)
 		{
 			m_authPresenter->ImGuiBackFromForgotToLogin();
 		}
@@ -3104,7 +3158,19 @@ namespace engine::render
 	void AuthImGuiRenderer::RenderTermsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		(void)vpW;
-		const std::string title = rm.sectionTitle.empty() ? std::string("Conditions d'utilisation") : rm.sectionTitle;
+		const auto tr = [this](const char* key, const char* fallback) -> std::string {
+			if (m_authPresenter != nullptr)
+			{
+				std::string s = m_authPresenter->UiTranslate(key);
+				if (!s.empty())
+				{
+					return s;
+				}
+			}
+			return std::string(fallback);
+		};
+
+		const std::string title = rm.sectionTitle.empty() ? tr("auth.panel.terms", "Terms of use") : rm.sectionTitle;
 		if (!BeginPanel(560.f, vpW, vpH, title.c_str(), "", ""))
 		{
 			EndPanel();

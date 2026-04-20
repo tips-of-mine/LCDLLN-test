@@ -29,6 +29,37 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
+		void DrawLocaleFlagMini(ImDrawList* dl, const ImVec2& p0, const ImVec2& p1, std::string_view tag)
+		{
+			const float w = p1.x - p0.x;
+			const float h = p1.y - p0.y;
+			(void)h;
+			if (tag == "fr")
+			{
+				const float third = w / 3.f;
+				dl->AddRectFilled(p0, ImVec2(p0.x + third, p1.y), IM_COL32(0, 85, 164, 255));
+				dl->AddRectFilled(ImVec2(p0.x + third, p0.y), ImVec2(p0.x + 2.f * third, p1.y), IM_COL32(255, 255, 255, 255));
+				dl->AddRectFilled(ImVec2(p0.x + 2.f * third, p0.y), p1, IM_COL32(239, 65, 53, 255));
+			}
+			else if (tag == "en" || tag == "en-GB" || tag == "en_US")
+			{
+				dl->AddRectFilled(p0, p1, IM_COL32(0, 36, 125, 255));
+				const float cx = (p0.x + p1.x) * 0.5f;
+				const float cy = (p0.y + p1.y) * 0.5f;
+				const float t = h * 0.10f;
+				const float u = w * 0.10f;
+				dl->AddRectFilled(ImVec2(p0.x, cy - t), ImVec2(p1.x, cy + t), IM_COL32(255, 255, 255, 255));
+				dl->AddRectFilled(ImVec2(cx - u, p0.y), ImVec2(cx + u, p1.y), IM_COL32(255, 255, 255, 255));
+				dl->AddRectFilled(ImVec2(p0.x, cy - t * 0.45f), ImVec2(p1.x, cy + t * 0.45f), IM_COL32(204, 0, 0, 255));
+				dl->AddRectFilled(ImVec2(cx - u * 0.45f, p0.y), ImVec2(cx + u * 0.45f, p1.y), IM_COL32(204, 0, 0, 255));
+			}
+			else
+			{
+				dl->AddRectFilled(p0, p1, U32(LnTheme::kSurface));
+			}
+			dl->AddRect(p0, p1, U32(LnTheme::kBorder), 0.f, 0, 1.f);
+		}
+
 		void StrCopyTrunc(char* dst, size_t dstSz, const std::string& s)
 		{
 			if (dst == nullptr || dstSz == 0u)
@@ -124,6 +155,8 @@ namespace engine::render
 		std::memset(m_verifyCode, 0, sizeof(m_verifyCode));
 		std::memset(m_forgotEmail, 0, sizeof(m_forgotEmail));
 		std::memset(m_charName, 0, sizeof(m_charName));
+		m_langTweakRace = 0;
+		m_langTweakAnimBg = true;
 	}
 
 	void AuthImGuiRenderer::BindAuthUiBridge(engine::client::AuthUiPresenter* presenter, const engine::core::Config* cfg,
@@ -225,6 +258,17 @@ namespace engine::render
 		{
 			StrCopyTrunc(m_forgotEmail, sizeof(m_forgotEmail), rm.fields[0].value);
 		}
+		if (vs.languageSelection)
+		{
+			for (size_t i = 0; i < rm.languageFirstRunCards.size(); ++i)
+			{
+				if (rm.languageFirstRunCards[i].selected)
+				{
+					m_selectedLang = static_cast<int>(i);
+					break;
+				}
+			}
+		}
 		if (vs.options || vs.languageOptions)
 		{
 			PullLanguageOptionsFromPresenter();
@@ -250,7 +294,8 @@ namespace engine::render
 		}
 		SyncTransientFromModel(vs, rm);
 
-		BeginFullscreenOverlay(viewportW, viewportH);
+		const float overlayAlpha = vs.languageSelection ? 0.22f : 1.f;
+		BeginFullscreenOverlay(viewportW, viewportH, overlayAlpha);
 
 		if (vs.languageSelection)
 		{
@@ -313,12 +358,14 @@ namespace engine::render
 		ImGui::End();
 	}
 
-	void AuthImGuiRenderer::BeginFullscreenOverlay(float vpW, float vpH)
+	void AuthImGuiRenderer::BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha)
 	{
 		ImGui::SetNextWindowPos(ImVec2(0.f, 0.f));
 		ImGui::SetNextWindowSize(ImVec2(vpW, vpH));
 		ImGui::SetNextWindowBgAlpha(1.f);
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::kBackground));
+		ImVec4 bg = IV(LnTheme::kBackground);
+		bg.w = windowBgAlpha;
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, bg);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
 		ImGui::Begin("##ln_auth_overlay",
@@ -330,7 +377,7 @@ namespace engine::render
 	}
 
 	bool AuthImGuiRenderer::BeginPanel(float width, float vpW, float vpH, std::string_view title,
-		std::string_view subtitle, std::string_view versionLabel)
+		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent)
 	{
 		const float panelX = (vpW - width) * 0.5f;
 		const float panelY = vpH * 0.28f;
@@ -363,16 +410,44 @@ namespace engine::render
 		if (!versionLabel.empty())
 		{
 			const float vw = ImGui::CalcTextSize(versionLabel.data(), versionLabel.data() + versionLabel.size()).x;
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - vw);
+			const float badge = versionLeadingInfoGlyph ? (ImGui::GetFontSize() + 6.f) : 0.f;
+			const float gap = 4.f;
+			const float slack = ImGui::GetContentRegionAvail().x - vw - badge - gap;
+			ImGui::SameLine(0.f, (slack > 0.f) ? slack : 4.f);
+			if (versionLeadingInfoGlyph)
+			{
+				const ImVec2 ip = ImGui::GetCursorScreenPos();
+				const float side = ImGui::GetFontSize() * 0.92f;
+				const float r = side * 0.42f;
+				const ImVec2 center(ip.x + side * 0.5f, ip.y + side * 0.5f);
+				ImDrawList* dl = ImGui::GetWindowDrawList();
+				dl->AddCircle(center, r, U32(LnTheme::kMuted), 0, 1.25f);
+				dl->AddText(ImVec2(center.x - ImGui::CalcTextSize("i").x * 0.5f, ip.y + 1.f), U32(LnTheme::kMuted), "i");
+				ImGui::Dummy(ImVec2(side, side));
+				ImGui::SameLine(0.f, gap);
+			}
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 			ImGui::TextUnformatted(versionLabel.data(), versionLabel.data() + static_cast<int>(versionLabel.size()));
 			ImGui::PopStyleColor();
 		}
 		if (!subtitle.empty())
 		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-			ImGui::TextWrapped("%.*s", static_cast<int>(subtitle.size()), subtitle.data());
-			ImGui::PopStyleColor();
+			if (subtitleWelcomeAccent)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
+				ImGui::SetWindowFontScale(0.95f);
+				ImGui::TextWrapped("%.*s", static_cast<int>(subtitle.size()), subtitle.data());
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::PopStyleVar(1);
+				ImGui::PopStyleColor();
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::TextWrapped("%.*s", static_cast<int>(subtitle.size()), subtitle.data());
+				ImGui::PopStyleColor();
+			}
 		}
 		ImGui::PushStyleColor(ImGuiCol_Separator, IV(LnTheme::kBorder));
 		ImGui::Separator();
@@ -386,66 +461,213 @@ namespace engine::render
 		ImGui::EndChild();
 	}
 
-	int AuthImGuiRenderer::DrawLangCards(int selected)
+	int AuthImGuiRenderer::DrawLanguageFirstRunCards(const RenderModel& rm, int selected)
 	{
 		int clicked = -1;
-		const ImVec2 cardSize(160.f, 110.f);
-		const float spacing = 16.f;
-		const float totalW = cardSize.x * 2.f + spacing;
+		const size_t n = rm.languageFirstRunCards.empty() ? 2u : rm.languageFirstRunCards.size();
+		const float spacing = 18.f;
+		const float avail = ImGui::GetContentRegionAvail().x;
+		const float cardW = (avail - spacing * static_cast<float>(n > 1u ? n - 1u : 0u)) / static_cast<float>((n < 1u) ? 1u : n);
+		const ImVec2 cardSize((cardW > 120.f) ? cardW : 120.f, 128.f);
+		const float totalW = cardSize.x * static_cast<float>(n) + spacing * static_cast<float>(n > 1u ? n - 1u : 0u);
 		const float startX = (ImGui::GetContentRegionAvail().x - totalW) * 0.5f + ImGui::GetCursorPosX();
 
-		for (int i = 0; i < 2; ++i)
+		for (size_t i = 0; i < n; ++i)
 		{
-			if (i == 0)
+			if (i == 0u)
 			{
 				ImGui::SetCursorPosX(startX);
 			}
-			const bool isSelected = (selected == i);
-			const ImVec4 borderCol = isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder);
+			std::string_view locTag = "fr";
+			std::string_view nameCaps = (i == 0u) ? "FRANCAIS" : "ENGLISH";
+			std::string_view nativeLn = (i == 0u) ? "Francais" : "English";
+			if (!rm.languageFirstRunCards.empty() && i < rm.languageFirstRunCards.size())
+			{
+				const auto& c = rm.languageFirstRunCards[i];
+				locTag = c.localeTag;
+				if (!c.nameAllCaps.empty())
+				{
+					nameCaps = c.nameAllCaps;
+				}
+				if (!c.nativeLine.empty())
+				{
+					nativeLn = c.nativeLine;
+				}
+			}
+
+			const bool isSelected = (static_cast<int>(i) == selected);
+			const ImVec4 borderCol = isSelected ? IV(LnTheme::BorderActive()) : IV(LnTheme::kBorder);
 
 			ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kSurface));
 			ImGui::PushStyleColor(ImGuiCol_Border, borderCol);
-			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, isSelected ? 2.f : 1.f);
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.f);
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, isSelected ? 1.5f : 1.f);
 
-			char childId[24];
-			std::snprintf(childId, sizeof(childId), "##lcard%d", i);
+			char childId[32];
+			std::snprintf(childId, sizeof(childId), "##lcard%zu", i);
 			ImGui::BeginChild(childId, cardSize, true);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(2);
 
-			const ImVec2 flagPos((cardSize.x - 54.f) * 0.5f, 14.f);
+			const float flagW = 58.f;
+			const float flagH = 40.f;
+			const ImVec2 flagPos((cardSize.x - flagW) * 0.5f, 12.f);
 			ImGui::SetCursorPos(flagPos);
 			const ImVec2 wpos = ImGui::GetWindowPos();
-			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(wpos.x + flagPos.x, wpos.y + flagPos.y),
-				ImVec2(wpos.x + flagPos.x + 54.f, wpos.y + flagPos.y + 38.f),
-				U32(LnTheme::kSurface));
-			ImGui::GetWindowDrawList()->AddRect(ImVec2(wpos.x + flagPos.x, wpos.y + flagPos.y),
-				ImVec2(wpos.x + flagPos.x + 54.f, wpos.y + flagPos.y + 38.f),
-				U32(LnTheme::kBorder));
+			const ImVec2 fp0(wpos.x + flagPos.x, wpos.y + flagPos.y);
+			const ImVec2 fp1(fp0.x + flagW, fp0.y + flagH);
+			DrawLocaleFlagMini(ImGui::GetWindowDrawList(), fp0, fp1, locTag);
 
-			const char* lab = (i == 0) ? "Français" : "English";
-			ImGui::SetCursorPos(ImVec2(0.f, 60.f));
-			const float lw = ImGui::CalcTextSize(lab).x;
-			ImGui::SetCursorPosX((cardSize.x - lw) * 0.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
-			ImGui::TextUnformatted(lab);
+			ImGui::SetCursorPos(ImVec2(8.f, flagPos.y + flagH + 10.f));
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+			ImGui::SetWindowFontScale(1.05f);
+			ImGui::PushTextWrapPos(wpos.x + cardSize.x - 8.f);
+			ImGui::TextUnformatted(nameCaps.data(), nameCaps.data() + static_cast<int>(nameCaps.size()));
+			ImGui::PopTextWrapPos();
+			ImGui::SetWindowFontScale(1.f);
+			ImGui::PopStyleColor();
+
+			ImGui::SetCursorPos(ImVec2(8.f, ImGui::GetCursorPosY() + 2.f));
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::SetWindowFontScale(0.9f);
+			ImGui::PushTextWrapPos(wpos.x + cardSize.x - 8.f);
+			ImGui::TextUnformatted(nativeLn.data(), nativeLn.data() + static_cast<int>(nativeLn.size()));
+			ImGui::PopTextWrapPos();
+			ImGui::SetWindowFontScale(1.f);
 			ImGui::PopStyleColor();
 
 			ImGui::SetCursorPos(ImVec2(0.f, 0.f));
 			ImGui::InvisibleButton(childId, cardSize);
 			if (ImGui::IsItemClicked())
 			{
-				clicked = i;
+				clicked = static_cast<int>(i);
 			}
 
 			ImGui::EndChild();
-			if (i == 0)
+			if (i + 1u < n)
 			{
 				ImGui::SameLine(0.f, spacing);
 			}
 		}
 		return clicked;
+	}
+
+	void AuthImGuiRenderer::DrawLangFooterHints(std::string_view left, std::string_view right)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::SetWindowFontScale(0.88f);
+		if (!left.empty() && !right.empty())
+		{
+			ImGui::TextUnformatted(left.data(), left.data() + static_cast<int>(left.size()));
+			const float rw = ImGui::CalcTextSize(right.data(), right.data() + right.size()).x;
+			ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - rw - ImGui::GetScrollX());
+			ImGui::TextUnformatted(right.data(), right.data() + static_cast<int>(right.size()));
+		}
+		else if (!left.empty())
+		{
+			ImGui::TextUnformatted(left.data(), left.data() + static_cast<int>(left.size()));
+		}
+		else if (!right.empty())
+		{
+			ImGui::TextUnformatted(right.data(), right.data() + static_cast<int>(right.size()));
+		}
+		ImGui::SetWindowFontScale(1.f);
+		ImGui::PopStyleColor();
+	}
+
+	void AuthImGuiRenderer::DrawLangScreenTweaks(float vpW, float vpH)
+	{
+		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "MORTS-V.", "CORROM.",
+			"DIVINS", "DEMONS"};
+		const float winW = 272.f;
+		ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - 228.f), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(winW, 218.f), ImGuiCond_Always);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.f, 12.f));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::Begin("##ln_lang_tweaks",
+			nullptr,
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
+
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		ImGui::TextUnformatted("Tweaks");
+		ImGui::PopStyleColor();
+		ImGui::Spacing();
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::TextUnformatted("Theme de race");
+		ImGui::PopStyleColor();
+		ImGui::Spacing();
+
+		const float btnW = (ImGui::GetContentRegionAvail().x - 8.f) / 3.f;
+		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+		for (int r = 0; r < 3; ++r)
+		{
+			for (int c = 0; c < 3; ++c)
+			{
+				if (c > 0)
+				{
+					ImGui::SameLine(0.f, 4.f);
+				}
+				const int idx = r * 3 + c;
+				const bool sel = (m_langTweakRace == idx);
+				ImGui::PushStyleColor(ImGuiCol_Border, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, sel ? 1.5f : 1.f);
+				char id[40];
+				std::snprintf(id, sizeof(id), "%s##race_%d", kRaceLabels[idx], idx);
+				if (ImGui::Button(id, ImVec2(btnW, 0.f)))
+				{
+					m_langTweakRace = idx;
+				}
+				ImGui::PopStyleVar(1);
+				ImGui::PopStyleColor(1);
+			}
+		}
+		ImGui::PopStyleVar(1);
+		ImGui::PopStyleColor(3);
+
+		ImGui::Spacing();
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::TextUnformatted("Fond anime");
+		ImGui::PopStyleColor();
+		ImGui::Spacing();
+		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+		{
+			const float half = (ImGui::GetContentRegionAvail().x - 6.f) * 0.5f;
+			const bool on = m_langTweakAnimBg;
+			ImGui::PushStyleColor(ImGuiCol_Border, on ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, on ? 1.5f : 1.f);
+			if (ImGui::Button("ACTIVE##lang_bg_on", ImVec2(half, 0.f)))
+			{
+				m_langTweakAnimBg = true;
+			}
+			ImGui::PopStyleVar(1);
+			ImGui::PopStyleColor(1);
+			ImGui::SameLine(0.f, 6.f);
+			const bool off = !m_langTweakAnimBg;
+			ImGui::PushStyleColor(ImGuiCol_Border, off ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, off ? 1.5f : 1.f);
+			if (ImGui::Button("DESACTIVE##lang_bg_off", ImVec2(half, 0.f)))
+			{
+				m_langTweakAnimBg = false;
+			}
+			ImGui::PopStyleVar(1);
+			ImGui::PopStyleColor(1);
+		}
+		ImGui::PopStyleVar(1);
+		ImGui::PopStyleColor(3);
+
+		ImGui::End();
+		ImGui::PopStyleColor(2);
+		ImGui::PopStyleVar(3);
 	}
 
 	void AuthImGuiRenderer::DrawField(std::string_view label, char* buf, int bufSz, bool password)
@@ -604,41 +826,73 @@ namespace engine::render
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
 		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
 
-		ImGui::SetWindowFontScale(1.5f);
+		ImGui::SetWindowFontScale(1.62f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.08f));
+		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.07f));
 		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY()));
+		ImGui::SetWindowFontScale(1.f);
+		ImGui::PopStyleColor();
+
+		ImGui::SetWindowFontScale(1.12f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
+		ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
 		ImGui::TextUnformatted(h2.c_str());
 		ImGui::PopStyleColor();
 		ImGui::SetWindowFontScale(1.f);
 
-		const std::string subtitle =
-			rm.sectionTitle.empty() ? std::string("Bienvenue, voyageur.") : rm.sectionTitle;
+		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CHOISISSEZ VOTRE LANGUE") : rm.sectionTitle;
+		for (char& ch : panelTitle)
+		{
+			if (ch >= 'a' && ch <= 'z')
+			{
+				ch = static_cast<char>(ch - 'a' + 'A');
+			}
+		}
+		const std::string& welcome =
+			rm.languagePanelSubtitle.empty() ? std::string("Bienvenue, voyageur.") : rm.languagePanelSubtitle;
 		const std::string ver = rm.languageVersionLabel.empty() ? std::string("1 / 2") : rm.languageVersionLabel;
-		if (!BeginPanel(720.f, vpW, vpH, "Choisissez votre langue", subtitle, ver))
+		if (!BeginPanel(720.f, vpW, vpH, panelTitle, welcome, ver, true, true))
 		{
 			EndPanel();
 			return;
 		}
 
 		ImGui::Spacing();
-		const int clicked = DrawLangCards(m_selectedLang);
+		const int clicked = DrawLanguageFirstRunCards(rm, m_selectedLang);
 		if (clicked >= 0)
 		{
 			m_selectedLang = clicked;
 		}
+		if (!rm.languageFirstRunCards.empty())
+		{
+			m_selectedLang =
+				(std::min)(static_cast<int>(rm.languageFirstRunCards.size()) - 1, (std::max)(0, m_selectedLang));
+		}
 		ImGui::Spacing();
 
-		const float btnW = 160.f;
+		std::string contLabel = "Continuer";
+		for (const auto& a : rm.actions)
+		{
+			if (a.primary && a.active && !a.label.empty())
+			{
+				contLabel = a.label;
+				break;
+			}
+		}
+		contLabel += "  >";
+
+		const float btnW = 200.f;
 		ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - btnW + ImGui::GetCursorPosX());
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.39f, 0.58f, 0.82f, 1.f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.38f, 0.62f, 1.f));
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-		if (ImGui::Button("Continuer ->##lang_continue", ImVec2(btnW, 32.f)) && m_authPresenter != nullptr && m_authCfg != nullptr)
+		char contId[256];
+		std::snprintf(contId, sizeof(contId), "%s##lang_continue", contLabel.c_str());
+		if (ImGui::Button(contId, ImVec2(btnW, 34.f)) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			std::string_view tag = "fr";
 			if (m_selectedLang >= 0 && static_cast<size_t>(m_selectedLang) < rm.languageFirstRunCards.size())
@@ -648,12 +902,17 @@ namespace engine::render
 			m_authPresenter->ImGuiApplyFirstRunLanguageContinue(*m_authCfg, tag);
 		}
 		ImGui::PopStyleVar(1);
-		ImGui::PopStyleColor(3);
+		ImGui::PopStyleColor(4);
 
 		DrawSeparator();
-		DrawKeycapHints({{"<- ->", "naviguer"}, {"Entree", "valider"}});
+		const std::string& footL =
+			rm.languageFooterLeft.empty() ? std::string("<- -> naviguer") : rm.languageFooterLeft;
+		const std::string& footR = rm.languageFooterRight.empty() ? std::string("Entree valider") : rm.languageFooterRight;
+		DrawLangFooterHints(footL, footR);
 
 		EndPanel();
+
+		DrawLangScreenTweaks(vpW, vpH);
 	}
 
 	void AuthImGuiRenderer::RenderLoginScreen(const RenderModel& rm, float vpW, float vpH)

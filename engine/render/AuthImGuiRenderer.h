@@ -73,6 +73,10 @@ namespace engine::render
 		uint32_t m_optAuthTimeoutMs = 5000u;
 		int m_optLangIndex = 0;
 
+		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement — décoratif pour l’instant.
+		int m_langTweakRace = 0;
+		bool m_langTweakAnimBg = true;
+
 		engine::client::AuthUiPresenter* m_authPresenter = nullptr;
 		const engine::core::Config* m_authCfg = nullptr;
 		engine::platform::Window* m_authWindow = nullptr;
@@ -89,11 +93,13 @@ namespace engine::render
 		void RenderTermsScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH);
 
-		void BeginFullscreenOverlay(float vpW, float vpH);
+		void BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha = 1.f);
 		bool BeginPanel(float width, float vpW, float vpH, std::string_view title, std::string_view subtitle,
-			std::string_view versionLabel = {});
+			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false);
 		void EndPanel();
-		int DrawLangCards(int selected);
+		int DrawLanguageFirstRunCards(const RenderModel& rm, int selected);
+		void DrawLangScreenTweaks(float vpW, float vpH);
+		void DrawLangFooterHints(std::string_view left, std::string_view right);
 		void DrawField(std::string_view label, char* buf, int bufSz, bool password = false);
 		void DrawBanner(std::string_view title, std::string_view msg, float r, float g, float b);
 		void DrawKeycapHints(std::initializer_list<std::pair<const char*, const char*>> hints);

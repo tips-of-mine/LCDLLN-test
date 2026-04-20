@@ -5702,6 +5702,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			{
 				model.languageFirstRunLayout = true;
 				model.sectionTitle = Tr("language.first_run.panel_title");
+				{
+					const std::string loc = m_localization.GetCurrentLocale();
+					const std::string welcomeKey = std::string("language.first_run.welcome.") + loc;
+					std::string sub = Tr(welcomeKey);
+					if (sub.empty() || sub == welcomeKey)
+					{
+						sub = Tr("language.first_run.welcome.fr");
+					}
+					model.languagePanelSubtitle = std::move(sub);
+				}
 				const auto& localesFr = m_localization.GetAvailableLocales();
 				if (!localesFr.empty())
 				{

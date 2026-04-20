@@ -10,7 +10,9 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace engine::platform
@@ -54,6 +56,11 @@ namespace engine::client
 			bool applyRequested = false;
 			bool fullscreen = false;
 			bool vsync = true;
+			int32_t resolutionWidth = 1920;
+			int32_t resolutionHeight = 1080;
+			/// 0 = basse … 3 = ultra (aligné \c SettingsMenuPresenter).
+			int32_t qualityPreset = 2;
+			float fovDegrees = 70.f;
 		};
 
 		struct AudioSettingsCommand
@@ -103,6 +110,12 @@ namespace engine::client
 			/// Au moins une sonde de statut terminée (cache disponible ; le logo coin ne s’affiche que si \ref authLogoSpin).
 			bool authStatusKnown = false;
 			bool authStatusOk = false;
+			/// Écran Options (auth) — aligné sur la phase \c LanguageOptions pour l’overlay ImGui.
+			bool options = false;
+			/// Choix du royaume / shard.
+			bool shardPick = false;
+			/// \c true uniquement si \c Phase::EmailConfirmationPending (écran « vérifiez vos e-mails »).
+			bool emailConfirmationPending = false;
 		};
 
 		struct RenderField
@@ -118,6 +131,8 @@ namespace engine::client
 			std::string tooltipKey;
 			/// Texte d’aide affiché (Tr(tooltipKey) et/ou texte fourni à la construction du champ).
 			std::string tooltipText;
+			/// Texte indicatif ImGui (\c InputTextWithHint) lorsque le buffer est vide (connexion, etc.).
+			std::string inputPlaceholder;
 			/// Colonne dans la grille d’inscription (0 = gauche, 1 = milieu, 2 = droite).
 			/// -1 = pas de grille (affichage en liste simple, comportement actuel).
 			int32_t gridColumn = -1;
@@ -190,6 +205,17 @@ namespace engine::client
 			bool hovered = false;
 		};
 
+		/// Variante d'erreur d'inscription (maquette auth_flow — pastilles + bandeau).
+		struct AuthRegisterErrorVariantRow
+		{
+			std::string pillLabel;
+			std::string bannerTitle;
+			std::string bannerMessage;
+			std::string fieldLabel;
+			std::string fixHint;
+			bool warningBanner = false;
+		};
+
 		struct RenderModel
 		{
 			bool visible = false;
@@ -227,6 +253,55 @@ namespace engine::client
 			std::vector<LanguageFirstRunCard> languageFirstRunCards;
 			std::string languageFooterLeft;
 			std::string languageFooterRight;
+			/// Connexion (ImGui maquette) : pastille de version à droite du titre (ex. « v8.8.4 »).
+			std::string authLoginVersionBadge;
+			/// Sous-texte sous la bascule « se souvenir » (connexion).
+			std::string authRememberDetailLine;
+			/// Puces pied de panneau connexion : paire (touche / libellé court).
+			std::vector<std::pair<std::string, std::string>> authLoginFooterChips;
+			/// Inscription (ImGui) : pastille d’étape (ex. « 2 / 4 »), sous-titre panneau, aide courriel.
+			std::string authRegisterPanelBadge;
+			std::string authRegisterPanelSubtitle;
+			std::string authRegisterEmailHint;
+			/// Étapes du fil d’inscription (Langue, Compte, …) — texte déjà localisé.
+			std::vector<std::string> authRegisterCrumbLabels;
+			int authRegisterCrumbCurrent = 1;
+			/// Liste pays (code ISO-2, libellé) pour combo ImGui.
+			std::vector<std::pair<std::string, std::string>> authRegisterCountryPick;
+			/// Puces pied panneau inscription.
+			std::vector<std::pair<std::string, std::string>> authRegisterFooterChips;
+			/// Libellé du lien « voir les erreurs » (inscription ImGui).
+			std::string authRegisterShowErrorsLabel;
+			/// Erreur : écran riche type « inscription impossible » (pastilles + détails).
+			bool authErrorRichRegisterLayout = false;
+			std::string authErrorPanelTitle;
+			std::string authErrorPanelSubtitle;
+			std::string authErrorVersionBadge;
+			std::vector<AuthRegisterErrorVariantRow> authRegisterErrorVariants;
+			int authRegisterErrorClassifiedIndex = 0;
+			/// Si vrai, le corps du bandeau utilise \c errorText (message serveur ou validation) au lieu du texte de la variante.
+			bool authErrorBannerBodyFromUserMessage = false;
+			/// Masque l’encart « champ à corriger » (message global ex. champs obligatoires manquants).
+			bool authErrorHideFieldBox = false;
+			std::string authErrorFieldSectionLabel;
+			std::string authErrorFixSectionLabel;
+			std::string authErrorBackButtonLabel;
+			std::string authErrorBackKeycap;
+			std::string authErrorRetryButtonLabel;
+			bool authErrorShowRetryButton = false;
+			/// Vérification courriel (ImGui) — aligné maquette \c ConfirmEmailScreen (auth_flow).
+			std::string authVerifyPanelTitle;
+			std::string authVerifyPanelSubtitle;
+			std::string authVerifyPanelBadge;
+			std::string authVerifyInfoPopupText;
+			std::string authVerifyDigitLabel;
+			std::string authVerifyResendLabel;
+			std::string authVerifyChangeEmailLabel;
+			std::string authVerifySubmitLabel;
+			std::string authVerifyBackLabel;
+			std::string authVerifyBackKeycap;
+			std::string authVerifySubmitKeycap;
+			std::string authVerifyDevHint;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -292,6 +367,108 @@ namespace engine::client
 
 		bool SetViewportSize(uint32_t width, uint32_t height);
 
+		/// Pont \c AuthImGuiRenderer (voir \c render.auth_ui.imgui.enabled) — évite de dupliquer la logique de phase.
+		void ImGuiApplyFirstRunLanguageContinue(const engine::core::Config& cfg, std::string_view localeTag);
+		void ImGuiSubmitLogin(const engine::core::Config& cfg, const char* loginUtf8, const char* passwordUtf8, bool rememberMe);
+		void ImGuiNavigateToRegisterFromLogin();
+		void ImGuiBackFromRegisterToLogin();
+		void ImGuiOpenForgotPasswordPortal(const engine::core::Config& cfg, engine::platform::Window& window);
+		void ImGuiOpenLanguageOptionsMenu();
+		void ImGuiRequestClose(engine::platform::Window& window);
+
+		/// Miroir des réglages \c *Pending pour l’overlay options ImGui (même sémantique que le menu classique).
+		struct LanguageOptionsImGuiMirror
+		{
+			bool videoFullscreen{};
+			bool videoVsync{};
+			int32_t videoResWidth = 1920;
+			int32_t videoResHeight = 1080;
+			int32_t videoQualityPreset = 2;
+			float videoFovDegrees = 70.f;
+			float audioMaster01 = 1.f;
+			float audioMusic01 = 1.f;
+			float audioSfx01 = 1.f;
+			float audioUi01 = 1.f;
+			float mouseSensitivity = 0.002f;
+			bool invertY{};
+			bool useZqsd{};
+			bool gameplayUdpEnabled{};
+			bool allowInsecureDev = true;
+			uint32_t authTimeoutMs = 5000u;
+			uint32_t languageSelectionIndex{};
+		};
+
+		LanguageOptionsImGuiMirror BuildLanguageOptionsImGuiMirror() const;
+		void ImGuiApplyLanguageOptionsMenu(const engine::core::Config& cfg, const LanguageOptionsImGuiMirror& mirror);
+		void ImGuiCloseLanguageOptionsWithoutApply();
+
+		struct RegisterImGuiSubmit
+		{
+			const char* login = nullptr;
+			const char* email = nullptr;
+			const char* password = nullptr;
+			const char* passwordConfirm = nullptr;
+			const char* firstName = nullptr;
+			const char* lastName = nullptr;
+			const char* birthDay = nullptr;
+			const char* birthMonth = nullptr;
+			const char* birthYear = nullptr;
+			const char* countryIso2 = nullptr;
+		};
+		void ImGuiSubmitRegister(const engine::core::Config& cfg, const RegisterImGuiSubmit& form);
+
+		struct RegisterFieldsMirrorForImGui
+		{
+			std::string login;
+			std::string email;
+			std::string firstName;
+			std::string lastName;
+			std::string countryIso2;
+			int32_t birthDayIndex{};
+			int32_t birthMonthIndex{};
+			int32_t birthYearIndex{};
+		};
+		RegisterFieldsMirrorForImGui BuildRegisterFieldsMirrorForImGui() const;
+
+		void ImGuiNavigateToForgotFromLogin();
+		void ImGuiSubmitForgotPassword(const engine::core::Config& cfg, const char* emailUtf8);
+		void ImGuiBackFromForgotToLogin();
+
+		void ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8);
+		void ImGuiBackFromVerifyToLogin();
+		/// Efface les 6 chiffres saisis (lien « renvoyer » côté maquette ; pas d’appel serveur dédié pour l’instant).
+		void ImGuiVerifyEmailClearDigits();
+		/// Retour au formulaire d’inscription sur le champ courriel.
+		void ImGuiVerifyEmailBackToEditRegisterEmail();
+		/// Saisie ImGui : met à jour le code partiel (affichage / validation locale).
+		void ImGuiSetVerifyEmailPartialCode(std::string_view codeDigitsInOrder);
+		void ImGuiEmailConfirmationBackToLogin();
+
+		void ImGuiAcknowledgeErrorScreen(const engine::core::Config& cfg);
+
+		uint32_t ShardPickChoiceShardId() const { return m_shardPickChoiceShardId; }
+		void ImGuiSetShardPickChoiceShardId(uint32_t shardId);
+		const std::vector<engine::network::ServerListEntry>& ShardPickEntries() const { return m_shardPickEntries; }
+		void ImGuiSubmitShardPick(const engine::core::Config& cfg);
+		void ImGuiBackFromShardPickToLogin();
+
+		void ImGuiNotifyTermsScrollReachedBottom(bool reached);
+		void ImGuiSetTermsAcknowledgeChecked(bool on);
+		void ImGuiTermsPrimaryClick(const engine::core::Config& cfg);
+		void ImGuiTermsDecline(engine::platform::Window& window);
+
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8);
+		void ImGuiCancelCharacterCreateReturnToLogin();
+
+		const std::string& TermsFullTextForImGui() const { return m_termsContent; }
+		const std::vector<std::string>& GetAvailableLocales() const { return m_localization.GetAvailableLocales(); }
+
+		/// Libellés ImGui auth : même résolution que \ref Tr (clés \c options.imgui.*, etc.).
+		std::string UiTranslate(std::string_view key, const LocalizationService::Params& params = {}) const
+		{
+			return Tr(key, params);
+		}
+
 	private:
 		enum class Phase
 		{
@@ -308,6 +485,8 @@ namespace engine::client
 			Submitting,
 			Error
 		};
+
+		static const char* PhaseLogName(Phase p);
 
 		void AppendPasswordStars(std::string& out, size_t len) const;
 		void EnsurePasswordSalt(const engine::core::Config& cfg);
@@ -335,6 +514,7 @@ namespace engine::client
 		std::string LocalizedLanguageName(std::string_view localeTag) const;
 		bool HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg);
 		void SubmitCurrentPhase(const engine::core::Config& cfg);
+		void CommitLanguageOptionsMenuApply(const engine::core::Config& cfg);
 		void UpdateWindowTitle(engine::platform::Window& window) const;
 		void JoinWorker();
 		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).
@@ -359,11 +539,21 @@ namespace engine::client
 			}
 		}
 
+		/// Passe en Phase::Error en mémorisant l'écran de retour (ImGui « retour au formulaire »).
+		void EnterAuthErrorPhase(Phase returnTo, std::string userMessage)
+		{
+			m_errorReturnPhase = returnTo;
+			SetPhase(Phase::Error);
+			m_userErrorText = std::move(userMessage);
+		}
+
 		bool m_initialized = false;
 		bool m_flowComplete = false;
 		bool m_authEnabled = true;
 		bool m_usingNativeAuthScreen = false;
 		Phase m_phase = Phase::Login;
+		/// Cible de \c SubmitCurrentPhase / ImGuiAcknowledgeErrorScreen lorsque \c m_phase == Phase::Error.
+		Phase m_errorReturnPhase = Phase::Login;
 
 		std::string m_login;
 		std::string m_password;
@@ -428,6 +618,14 @@ namespace engine::client
 		bool m_videoVsync = true;
 		bool m_videoFullscreenPending = false;
 		bool m_videoVsyncPending = true;
+		int32_t m_videoResWidth = 1920;
+		int32_t m_videoResHeight = 1080;
+		int32_t m_videoResWidthPending = 1920;
+		int32_t m_videoResHeightPending = 1080;
+		int32_t m_videoQualityPreset = 2;
+		int32_t m_videoQualityPresetPending = 2;
+		float m_videoFovDegrees = 70.f;
+		float m_videoFovDegreesPending = 70.f;
 		VideoSettingsCommand m_pendingVideoSettings{};
 		float m_audioMasterVolume = 1.0f;
 		float m_audioMusicVolume = 1.0f;

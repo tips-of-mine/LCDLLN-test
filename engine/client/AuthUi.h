@@ -486,6 +486,8 @@ namespace engine::client
 			Error
 		};
 
+		static const char* PhaseLogName(Phase p);
+
 		void AppendPasswordStars(std::string& out, size_t len) const;
 		void EnsurePasswordSalt(const engine::core::Config& cfg);
 		std::string ComputeClientHash(const engine::core::Config& cfg) const;

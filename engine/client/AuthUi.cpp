@@ -91,26 +91,6 @@ namespace engine::client
 			return o;
 		}
 
-		const char* AuthPhaseLogName(Phase phase)
-		{
-			switch (phase)
-			{
-			case Phase::Login: return "Login";
-			case Phase::Register: return "Register";
-			case Phase::Submitting: return "Submitting";
-			case Phase::ForgotPassword: return "ForgotPassword";
-			case Phase::VerifyEmail: return "VerifyEmail";
-			case Phase::EmailConfirmationPending: return "EmailConfirmationPending";
-			case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
-			case Phase::LanguageOptions: return "LanguageOptions";
-			case Phase::Terms: return "Terms";
-			case Phase::CharacterCreate: return "CharacterCreate";
-			case Phase::ShardPick: return "ShardPick";
-			case Phase::Error: return "Error";
-			default: return "Unknown";
-			}
-		}
-
 		std::string EscapeJsonString(std::string_view value)
 		{
 			std::string out;
@@ -994,6 +974,26 @@ namespace engine::client
 			}
 		}
 #endif
+	}
+
+	const char* AuthUiPresenter::PhaseLogName(Phase phase)
+	{
+		switch (phase)
+		{
+		case Phase::Login: return "Login";
+		case Phase::Register: return "Register";
+		case Phase::Submitting: return "Submitting";
+		case Phase::ForgotPassword: return "ForgotPassword";
+		case Phase::VerifyEmail: return "VerifyEmail";
+		case Phase::EmailConfirmationPending: return "EmailConfirmationPending";
+		case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
+		case Phase::LanguageOptions: return "LanguageOptions";
+		case Phase::Terms: return "Terms";
+		case Phase::CharacterCreate: return "CharacterCreate";
+		case Phase::ShardPick: return "ShardPick";
+		case Phase::Error: return "Error";
+		default: return "Unknown";
+		}
 	}
 
 	AuthUiPresenter::~AuthUiPresenter()
@@ -3737,7 +3737,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		const Phase target = m_errorReturnPhase;
 		SetPhase(target);
 		m_activeField = 0;
-		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged -> {}", AuthPhaseLogName(target));
+		LOG_INFO(Core, "[AuthUiPresenter] Error acknowledged -> {}", PhaseLogName(target));
 		return;
 	}
 	if (m_phase == Phase::ShardPick)

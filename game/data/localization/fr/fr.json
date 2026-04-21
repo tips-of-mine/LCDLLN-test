@@ -216,6 +216,8 @@
   "auth.email_confirmation.back_to_login": "Retour à la connexion",
   "auth.email_confirmation.banner_ok_title": "Compte cree",
   "auth.email_confirmation.banner_ok_body": "Verifiez votre courriel et cliquez sur le lien de confirmation, ou saisissez le code recu ci-dessous.",
+  "auth.email_confirmation.code_expired": "Le code de verification a expire. Cliquez ci-dessous pour en recevoir un nouveau.",
+  "auth.info.email_resent": "Un nouveau code de verification a ete envoye a votre adresse email.",
   "auth.label.country": "Pays",
   "auth.tooltip.country": "Votre pays de residence (code ISO 2 lettres). Utilise pour votre TAG-ID unique.",
   "auth.error.enter_country": "Selectionnez votre pays.",

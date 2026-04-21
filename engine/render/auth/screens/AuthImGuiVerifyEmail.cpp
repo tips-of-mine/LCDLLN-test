@@ -406,6 +406,35 @@ namespace engine::render
 
 		ImGui::Spacing();
 
+		if (rm.authVerifyCanResend)
+		{
+			if (!rm.authVerifyCodeExpiredMessage.empty())
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kErrorCol));
+				ImGui::SetWindowFontScale(0.88f);
+				const float msgW = ImGui::CalcTextSize(rm.authVerifyCodeExpiredMessage.c_str()).x;
+				ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - msgW) * 0.5f + ImGui::GetCursorPosX());
+				ImGui::TextUnformatted(rm.authVerifyCodeExpiredMessage.c_str());
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::PopStyleColor();
+				ImGui::Spacing();
+			}
+			const std::string resendLbl = rm.authVerifyResendLabel.empty() ? std::string("Renvoyer le code") : rm.authVerifyResendLabel;
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.06f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.10f)));
+			const float resendW = ImGui::CalcTextSize(resendLbl.c_str()).x + 16.f;
+			ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - resendW) * 0.5f + ImGui::GetCursorPosX());
+			if (ImGui::SmallButton((resendLbl + "##resend_conf").c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
+			{
+				std::memset(m_verifyCode, 0, sizeof(m_verifyCode));
+				m_authPresenter->ImGuiResendVerificationEmail(*m_authCfg);
+			}
+			ImGui::PopStyleColor(4);
+			ImGui::Spacing();
+		}
+
 		const bool codeComplete = VerifySlotsAllSixDigits(m_verifyCode);
 		const std::string& backLbl =
 			rm.authVerifyBackLabel.empty() ? std::string("RETOUR A LA CONNEXION") : rm.authVerifyBackLabel;

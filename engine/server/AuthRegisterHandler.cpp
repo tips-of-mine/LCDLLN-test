@@ -213,6 +213,7 @@ namespace engine::server
 					std::string body;
 					BuildVerificationEmail(emailLocale, code, subject, body);
 					LOG_INFO(Auth, "[AuthRegisterHandler] envoi email vérification (account_id={})", account_id);
+					m_accountStore->PersistEmailVerificationCode(account_id, code);
 					const bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body);
 					if (sent)
 					{
@@ -236,10 +237,11 @@ namespace engine::server
 		}
 		else if (!email_norm.empty() && m_resetStore)
 		{
-			// SMTP absent ou smtp.host vide : pas d'envoi ; code généré quand même (saisie manuelle en dev).
+			// SMTP absent ou smtp.host vide : pas d'envoi ; code généré et persisté quand même (saisie manuelle en dev).
 			std::string code = m_resetStore->CreateVerificationCode(account_id);
 			if (!code.empty())
 			{
+				m_accountStore->PersistEmailVerificationCode(account_id, code);
 				LOG_WARN(Auth,
 					"[AuthRegisterHandler] Pas d'envoi d'e-mail de vérification : SMTP désactivé ou mal configuré "
 					"(fichier référencé par smtp.config_file dans config.json — défaut smtp.local.json au même dossier que config.json — "

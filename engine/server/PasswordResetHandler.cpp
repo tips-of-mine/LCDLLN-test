@@ -46,6 +46,11 @@ namespace engine::server
 			HandleVerifyEmail(connId, requestId, sessionIdHeader, payload, payloadSize);
 			return;
 		}
+		if (opcode == kOpcodeResendVerificationRequest)
+		{
+			HandleResendVerification(connId, requestId, sessionIdHeader, payload, payloadSize);
+			return;
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -282,6 +287,104 @@ namespace engine::server
 		if (!pkt.empty()) m_server->Send(connId, pkt);
 
 		LOG_INFO(Auth, "[PasswordResetHandler] Email verified (account_id={} connId={})", account_id, connId);
+	}
+
+	// ---------------------------------------------------------------------------
+	// ResendVerification: generate a new 6-digit code and send a new verification email.
+	// ---------------------------------------------------------------------------
+	void PasswordResetHandler::HandleResendVerification(uint32_t connId, uint32_t requestId,
+	                                                    uint64_t sessionIdHeader,
+	                                                    const uint8_t* payload, size_t payloadSize)
+	{
+		using namespace engine::network;
+		LOG_DEBUG(Auth, "[PasswordResetHandler] HandleResendVerification connId={}", connId);
+
+		if (!m_server || !m_accountStore || !m_resetStore)
+		{
+			LOG_ERROR(Auth, "[PasswordResetHandler] ResendVerification: missing required dependency");
+			return;
+		}
+
+		auto parsed = ParseResendVerificationRequestPayload(payload, payloadSize);
+		if (!parsed || parsed->account_id == 0)
+		{
+			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: invalid payload (connId={})", connId);
+			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::BAD_REQUEST, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
+		const uint64_t account_id = parsed->account_id;
+
+		auto optAccount = m_accountStore->FindByAccountId(account_id);
+		if (!optAccount)
+		{
+			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: account not found (account_id={})", account_id);
+			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::ACCOUNT_NOT_FOUND, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
+		if (optAccount->email_verified)
+		{
+			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: already verified (account_id={})", account_id);
+			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::EMAIL_ALREADY_VERIFIED, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
+		if (optAccount->email.empty())
+		{
+			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: account has no email (account_id={})", account_id);
+			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::BAD_REQUEST, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
+		if (!m_resetStore->CanSendEmail(account_id))
+		{
+			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: rate limit hit (account_id={})", account_id);
+			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::BAD_REQUEST, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
+		const std::string code = m_resetStore->CreateVerificationCode(account_id);
+		if (code.empty())
+		{
+			LOG_ERROR(Auth, "[PasswordResetHandler] ResendVerification: code generation failed (account_id={})", account_id);
+			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::INTERNAL_ERROR, requestId, sessionIdHeader);
+			if (!pkt.empty()) m_server->Send(connId, pkt);
+			return;
+		}
+
+		m_accountStore->PersistEmailVerificationCode(account_id, code);
+
+		if (m_smtpConfig && !m_smtpConfig->host.empty())
+		{
+			std::string subject, body;
+			BuildVerificationEmail(optAccount->email_locale, code, subject, body);
+			const bool sent = SmtpMailer::Send(*m_smtpConfig, optAccount->email, subject, body);
+			if (sent)
+			{
+				m_resetStore->RecordEmailSent(account_id);
+				LOG_INFO(Auth, "[PasswordResetHandler] ResendVerification: email sent (account_id={})", account_id);
+			}
+			else
+			{
+				LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: SMTP send failed (account_id={})", account_id);
+			}
+		}
+		else
+		{
+			LOG_WARN(Auth,
+				"[PasswordResetHandler] ResendVerification: SMTP absent — code de secours (dev) account_id={} : {}",
+				account_id, code);
+		}
+
+		auto pkt = BuildResendVerificationResponsePacket(requestId, sessionIdHeader);
+		if (!pkt.empty()) m_server->Send(connId, pkt);
+		LOG_INFO(Auth, "[PasswordResetHandler] ResendVerification OK (account_id={} connId={})", account_id, connId);
 	}
 
 } // namespace engine::server

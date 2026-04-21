@@ -1548,6 +1548,8 @@ namespace engine::client
 				return "AuthOnly";
 			case AsyncKind::VerifyEmail:
 				return "VerifyEmail";
+			case AsyncKind::ResendVerification:
+				return "ResendVerification";
 			case AsyncKind::ForgotPassword:
 				return "ForgotPassword";
 			case AsyncKind::TermsStatus:
@@ -1624,6 +1626,7 @@ namespace engine::client
 			if (copy.success)
 			{
 				m_pendingVerifyAccountId = copy.accountId;
+				m_verifyCodeSentAt = std::chrono::steady_clock::now();
 				SetPhase(Phase::EmailConfirmationPending);
 				// Conserver m_pendingVerifyAccountId = copy.accountId (doit rester en place)
 				m_userErrorText.clear();
@@ -1699,6 +1702,26 @@ namespace engine::client
 			{
 				EnterAuthErrorPhase(Phase::VerifyEmail, copy.message);
 				LOG_WARN(Core, "[AuthUiPresenter] VerifyEmail FAILED: {}", copy.message);
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::ResendVerification)
+		{
+			if (copy.success)
+			{
+				// Réinitialiser le timer : le nouveau code expire dans 15 min.
+				m_verifyCodeSentAt = std::chrono::steady_clock::now();
+				m_userErrorText.clear();
+				m_infoBanner = Tr("auth.info.email_resent");
+				LOG_INFO(Core, "[AuthUiPresenter] ResendVerification OK");
+			}
+			else
+			{
+				const Phase returnTo = (m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending)
+					? m_phase : Phase::EmailConfirmationPending;
+				EnterAuthErrorPhase(returnTo, copy.message);
+				LOG_WARN(Core, "[AuthUiPresenter] ResendVerification FAILED: {}", copy.message);
 			}
 			return;
 		}
@@ -2197,6 +2220,78 @@ namespace engine::client
 			local.ready = true;
 			local.success = ok;
 			local.message = ok ? std::string("Email verified successfully.") : (errMsg.empty() ? "VERIFY_EMAIL failed." : errMsg);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = local;
+		});
+	}
+
+	void AuthUiPresenter::StartResendVerificationWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
+		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
+		const uint64_t accountId = m_pendingVerifyAccountId;
+
+		m_pendingAsyncKind = AsyncKind::ResendVerification;
+		{
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, accountId]() {
+			AsyncResult local{};
+			engine::network::NetClient client;
+			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
+			client.Connect(host, port);
+			if (!WaitConnected(&client, timeoutMs + 2000u))
+			{
+				local.ready = true;
+				local.message = "Master connect failed or timeout.";
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(&client);
+			std::vector<uint8_t> payload = engine::network::BuildResendVerificationRequestPayload(accountId);
+			bool done = false;
+			bool ok = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeResendVerificationRequest, payload,
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						done = true;
+						if (timeout)
+						{
+							errMsg = "RESEND_VERIFICATION timeout.";
+							return;
+						}
+						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+						if (er)
+						{
+							errMsg = std::string(NetErrorLabel(er->errorCode));
+							return;
+						}
+						ok = true;
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send RESEND_VERIFICATION failed.";
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			local.ready = true;
+			local.success = ok;
+			local.message = ok ? std::string("Verification email resent.") : (errMsg.empty() ? "RESEND_VERIFICATION failed." : errMsg);
 			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});

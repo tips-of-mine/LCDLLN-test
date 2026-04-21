@@ -216,6 +216,8 @@
   "auth.email_confirmation.back_to_login": "Back to login",
   "auth.email_confirmation.banner_ok_title": "Account created",
   "auth.email_confirmation.banner_ok_body": "Check your email and click the confirmation link, or enter the code you received below.",
+  "auth.email_confirmation.code_expired": "The verification code has expired. Click below to receive a new one.",
+  "auth.info.email_resent": "A new verification code has been sent to your email address.",
   "auth.label.country": "Country",
   "auth.tooltip.country": "Your country of residence (ISO 2-letter code). Used for your unique TAG-ID.",
   "auth.error.enter_country": "Select your country.",

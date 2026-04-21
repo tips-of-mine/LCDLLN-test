@@ -7,6 +7,7 @@
 #include "engine/platform/Input.h"
 #include "engine/platform/StableMutex.h"
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -306,6 +307,10 @@ namespace engine::client
 			bool authEmailConfirmationPendingPanel = false;
 			std::string authEmailConfirmationOkTitle;
 			std::string authEmailConfirmationOkBody;
+			/// \c true quand 15 min se sont écoulées : le bouton "Renvoyer le code" doit être affiché.
+			bool authVerifyCanResend = false;
+			/// Message affiché en bas du panneau lorsque le code a expiré.
+			std::string authVerifyCodeExpiredMessage;
 			/// AUTH-UI.6 — encart compte (overlay Options ImGui).
 			std::string authOptionsAccountLogin;
 			std::string authOptionsAccountTagId;
@@ -460,6 +465,8 @@ namespace engine::client
 		void ImGuiBackFromForgotToLogin();
 
 		void ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8);
+		/// Demande l'envoi d'un nouveau code de vérification (après expiration des 15 min).
+		void ImGuiResendVerificationEmail(const engine::core::Config& cfg);
 		void ImGuiBackFromVerifyToLogin();
 		/// Efface les 6 chiffres saisis (lien « renvoyer » côté maquette ; pas d’appel serveur dédié pour l’instant).
 		void ImGuiVerifyEmailClearDigits();
@@ -521,6 +528,8 @@ namespace engine::client
 		void StartRegisterWorker(const engine::core::Config& cfg);
 		void StartLoginWorker(const engine::core::Config& cfg);
 		void StartVerifyEmailWorker(const engine::core::Config& cfg);
+		/// Lance le worker de renvoi de code de vérification (opcode 37).
+		void StartResendVerificationWorker(const engine::core::Config& cfg);
 		void StartForgotPasswordWorker(const engine::core::Config& cfg);
 		void StartUsernameCheckWorker(const engine::core::Config& cfg);
 		void StartTermsStatusWorker(const engine::core::Config& cfg);
@@ -669,6 +678,9 @@ namespace engine::client
 		std::string m_userErrorText;
 		std::string m_infoBanner;
 		uint64_t m_pendingVerifyAccountId = 0;
+		/// Instant auquel le dernier code de vérification a été envoyé (steady_clock).
+		/// Vaut time_point{} si aucun code n'a encore été envoyé dans cette session.
+		std::chrono::steady_clock::time_point m_verifyCodeSentAt{};
 		uint64_t m_pendingTermsEditionId = 0;
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;
@@ -795,6 +807,7 @@ namespace engine::client
 			Register,
 			AuthOnly,
 			VerifyEmail,
+			ResendVerification, ///< M33.2-bis : renvoi d'un nouveau code de vérification.
 			ForgotPassword,
 			TermsStatus,
 			TermsAccept,

@@ -169,4 +169,9 @@ namespace engine::server
 		LOG_WARN(Auth, "[InMemoryAccountStore] UpdatePasswordHash: account_id={} not found", account_id);
 		return false;
 	}
+
+	void InMemoryAccountStore::PersistEmailVerificationCode(uint64_t, const std::string&)
+	{
+		// No-op: in-memory store relies on PasswordResetStore for verification code management.
+	}
 }

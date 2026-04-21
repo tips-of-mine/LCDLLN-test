@@ -67,12 +67,19 @@ namespace engine::client
 
 	void AuthUiPresenter::BuildModel_EmailConfirmationPending(RenderModel& model) const
 	{
+		using namespace std::chrono;
+		const bool timerStarted = m_verifyCodeSentAt != steady_clock::time_point{};
+		const bool codeExpired  = timerStarted
+			&& (steady_clock::now() - m_verifyCodeSentAt) >= minutes(15);
+
 		model.titleLine2 = Tr("auth.email_confirmation.title");
 		model.sectionTitle = Tr("auth.panel.email_confirmation");
 		model.infoBanner.clear();
 		model.authEmailConfirmationPendingPanel = true;
 		model.authEmailConfirmationOkTitle = Tr("auth.email_confirmation.banner_ok_title");
 		model.authEmailConfirmationOkBody = Tr("auth.email_confirmation.banner_ok_body");
+		model.authVerifyCanResend = codeExpired;
+		model.authVerifyCodeExpiredMessage = codeExpired ? Tr("auth.email_confirmation.code_expired") : std::string{};
 		{
 			RenderField field{};
 			field.label = Tr("auth.label.verify_code");
@@ -262,6 +269,19 @@ namespace engine::client
 		SetPhase(Phase::Login);
 	}
 
+	void AuthUiPresenter::ImGuiResendVerificationEmail(const engine::core::Config& cfg)
+	{
+		if (m_phase != Phase::EmailConfirmationPending && m_phase != Phase::VerifyEmail)
+		{
+			return;
+		}
+		if (m_pendingVerifyAccountId == 0)
+		{
+			return;
+		}
+		StartResendVerificationWorker(cfg);
+	}
+
 #else
 
 	void AuthUiPresenter::BuildModel_VerifyEmail(RenderModel&) const {}
@@ -281,6 +301,8 @@ namespace engine::client
 	void AuthUiPresenter::ImGuiSetVerifyEmailPartialCode(std::string_view) {}
 
 	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin() {}
+
+	void AuthUiPresenter::ImGuiResendVerificationEmail(const engine::core::Config&) {}
 
 #endif
 } // namespace engine::client

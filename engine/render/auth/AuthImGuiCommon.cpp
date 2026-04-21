@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <string>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -222,6 +223,7 @@ namespace engine::render
 		const ImVec2 p1(posX + sizeW, posY + sizeH);
 		const ImU32 navy = IM_COL32(1, 33, 105, 255);
 		const ImU32 white = IM_COL32(255, 255, 255, 255);
+		const ImU32 red = IM_COL32(207, 20, 43, 255);
 		dl->AddRectFilled(p0, p1, navy);
 		const float cx = (p0.x + p1.x) * 0.5f;
 		const float cy = (p0.y + p1.y) * 0.5f;

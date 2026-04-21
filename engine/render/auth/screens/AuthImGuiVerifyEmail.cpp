@@ -45,6 +45,8 @@ namespace engine::render
 		}
 
 		static int g_verifyDigitFocusSlot = -1;
+		static bool g_verifySlotFocused[6]{};
+		static bool g_confSlotFocused[6]{};
 	}
 
 	void AuthImGuiRenderer::RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH)
@@ -121,8 +123,7 @@ namespace engine::render
 				ImGui::SameLine(0.f, gap);
 			}
 			ImGui::PushID(i);
-			const ImGuiID digitId = ImGui::GetID("##vd");
-			const bool borderActive = (ImGui::GetFocusID() == digitId);
+			const bool borderActive = g_verifySlotFocused[i];
 			char one[8]{};
 			if (m_verifyCode[i] >= '0' && m_verifyCode[i] <= '9')
 			{
@@ -138,6 +139,7 @@ namespace engine::render
 			ImGui::SetWindowFontScale((std::min)(1.28f, (std::max)(1.f, vpW * 0.0022f)));
 			const bool edited = ImGui::InputText("##vd", one, sizeof(one),
 				ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_AutoSelectAll);
+			g_verifySlotFocused[i] = ImGui::IsItemFocused();
 			ImGui::SetWindowFontScale(1.f);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(4);
@@ -358,8 +360,7 @@ namespace engine::render
 				ImGui::SameLine(0.f, gap);
 			}
 			ImGui::PushID(i + 100);
-			const ImGuiID digitId = ImGui::GetID("##vd");
-			const bool borderActive = (ImGui::GetFocusID() == digitId);
+			const bool borderActive = g_confSlotFocused[i];
 			char one[8]{};
 			if (m_verifyCode[i] >= '0' && m_verifyCode[i] <= '9')
 			{
@@ -375,6 +376,7 @@ namespace engine::render
 			ImGui::SetWindowFontScale((std::min)(1.28f, (std::max)(1.f, vpW * 0.0022f)));
 			const bool edited = ImGui::InputText("##vd", one, sizeof(one),
 				ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_AutoSelectAll);
+			g_confSlotFocused[i] = ImGui::IsItemFocused();
 			ImGui::SetWindowFontScale(1.f);
 			ImGui::PopStyleVar(2);
 			ImGui::PopStyleColor(4);

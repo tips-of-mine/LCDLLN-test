@@ -68,4 +68,10 @@ namespace engine::network
 	/// Client→Master: check if login is already taken (unauthenticated).
 	constexpr uint16_t kOpcodeUsernameAvailableRequest  = 35u;
 	constexpr uint16_t kOpcodeUsernameAvailableResponse = 36u;
+
+	/// Email verification resend (M33.2-bis).
+	/// Client→Master: request a new 6-digit code for an account pending verification.
+	/// Master→Client: success (always if rate limit not hit) or error.
+	constexpr uint16_t kOpcodeResendVerificationRequest  = 37u;
+	constexpr uint16_t kOpcodeResendVerificationResponse = 38u;
 }

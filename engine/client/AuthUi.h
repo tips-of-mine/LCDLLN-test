@@ -7,6 +7,7 @@
 #include "engine/platform/Input.h"
 #include "engine/platform/StableMutex.h"
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -302,6 +303,17 @@ namespace engine::client
 			std::string authVerifyBackKeycap;
 			std::string authVerifySubmitKeycap;
 			std::string authVerifyDevHint;
+			/// \c Phase::EmailConfirmationPending — layout ImGui fusionné (bandeau OK + mêmes 6 cases).
+			bool authEmailConfirmationPendingPanel = false;
+			std::string authEmailConfirmationOkTitle;
+			std::string authEmailConfirmationOkBody;
+			/// \c true quand 15 min se sont écoulées : le bouton "Renvoyer le code" doit être affiché.
+			bool authVerifyCanResend = false;
+			/// Message affiché en bas du panneau lorsque le code a expiré.
+			std::string authVerifyCodeExpiredMessage;
+			/// AUTH-UI.6 — encart compte (overlay Options ImGui).
+			std::string authOptionsAccountLogin;
+			std::string authOptionsAccountTagId;
 		};
 
 		/// Etat de disponibilité (status) des services côté serveur.
@@ -369,11 +381,21 @@ namespace engine::client
 
 		/// Pont \c AuthImGuiRenderer (voir \c render.auth_ui.imgui.enabled) — évite de dupliquer la logique de phase.
 		void ImGuiApplyFirstRunLanguageContinue(const engine::core::Config& cfg, std::string_view localeTag);
+		/// Sélection d'une carte langue (ImGui) sans valider — met à jour \c m_languageSelectionIndex pour le sous-titre.
+		void ImGuiSelectFirstRunLanguageCard(uint32_t cardIndex);
 		void ImGuiSubmitLogin(const engine::core::Config& cfg, const char* loginUtf8, const char* passwordUtf8, bool rememberMe);
 		void ImGuiNavigateToRegisterFromLogin();
 		void ImGuiBackFromRegisterToLogin();
 		void ImGuiOpenForgotPasswordPortal(const engine::core::Config& cfg, engine::platform::Window& window);
 		void ImGuiOpenLanguageOptionsMenu();
+		/// AUTH-UI.6 — actions menu Compte (overlay Options).
+		enum class OptionsAccountMenuAction : uint8_t
+		{
+			ChangePassword = 0,
+			ChangeEmail = 1,
+			SignOut = 2,
+		};
+		void ImGuiOptionsAccountMenuAction(OptionsAccountMenuAction action);
 		void ImGuiRequestClose(engine::platform::Window& window);
 
 		/// Miroir des réglages \c *Pending pour l’overlay options ImGui (même sémantique que le menu classique).
@@ -396,6 +418,12 @@ namespace engine::client
 			bool allowInsecureDev = true;
 			uint32_t authTimeoutMs = 5000u;
 			uint32_t languageSelectionIndex{};
+			/// AUTH-UI.6 — interface / réseau (session locale jusqu’à Appliquer).
+			float uiScalePercent = 100.f;
+			float panelOpacityPercent = 70.f;
+			bool showTooltipUi = true;
+			/// 0 = Europe (Morneplaine), 1 = Europe (Korvath), 2 = Automatique.
+			uint32_t preferredServerIndex = 2u;
 		};
 
 		LanguageOptionsImGuiMirror BuildLanguageOptionsImGuiMirror() const;
@@ -416,6 +444,8 @@ namespace engine::client
 			const char* countryIso2 = nullptr;
 		};
 		void ImGuiSubmitRegister(const engine::core::Config& cfg, const RegisterImGuiSubmit& form);
+		/// AUTH-UI.3 — maquette : ouvre l’écran d’erreur riche (retour Phase::Register) pour prévisualiser les messages de validation.
+		void ImGuiRegisterPreviewValidationErrors(const engine::core::Config& cfg);
 
 		struct RegisterFieldsMirrorForImGui
 		{
@@ -435,6 +465,8 @@ namespace engine::client
 		void ImGuiBackFromForgotToLogin();
 
 		void ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8);
+		/// Demande l'envoi d'un nouveau code de vérification (après expiration des 15 min).
+		void ImGuiResendVerificationEmail(const engine::core::Config& cfg);
 		void ImGuiBackFromVerifyToLogin();
 		/// Efface les 6 chiffres saisis (lien « renvoyer » côté maquette ; pas d’appel serveur dédié pour l’instant).
 		void ImGuiVerifyEmailClearDigits();
@@ -462,6 +494,8 @@ namespace engine::client
 
 		const std::string& TermsFullTextForImGui() const { return m_termsContent; }
 		const std::vector<std::string>& GetAvailableLocales() const { return m_localization.GetAvailableLocales(); }
+		/// Index carte sélectionnée sur \c Phase::LanguageSelectionFirstRun (clavier / modèle).
+		uint32_t FirstRunLanguageSelectionIndex() const { return m_languageSelectionIndex; }
 
 		/// Libellés ImGui auth : même résolution que \ref Tr (clés \c options.imgui.*, etc.).
 		std::string UiTranslate(std::string_view key, const LocalizationService::Params& params = {}) const
@@ -494,6 +528,8 @@ namespace engine::client
 		void StartRegisterWorker(const engine::core::Config& cfg);
 		void StartLoginWorker(const engine::core::Config& cfg);
 		void StartVerifyEmailWorker(const engine::core::Config& cfg);
+		/// Lance le worker de renvoi de code de vérification (opcode 37).
+		void StartResendVerificationWorker(const engine::core::Config& cfg);
 		void StartForgotPasswordWorker(const engine::core::Config& cfg);
 		void StartUsernameCheckWorker(const engine::core::Config& cfg);
 		void StartTermsStatusWorker(const engine::core::Config& cfg);
@@ -506,6 +542,8 @@ namespace engine::client
 		void LoadRememberPreference();
 		void SaveRememberPreference();
 		void ApplyLocaleSelection(bool firstRun);
+		/// Persistance ciblée de \c client.locale dans user_settings.json (utilisé par \c ApplyLocaleSelection au premier lancement).
+		bool PatchPersistedLocaleKey(std::string_view locale);
 		void OpenLanguageOptions();
 		static uint32_t OptionsSubmenuLineCount(OptionsSubMenu sub);
 		void EnterOptionsSubmenuFromRoot(uint32_t categoryIndex);
@@ -519,6 +557,50 @@ namespace engine::client
 		void JoinWorker();
 		/// Remplit \c RenderAction::label à partir de \c labelKey / \c labelKeyFallback (locale courante).
 		void ResolveActionButtonLabels(RenderModel& model) const;
+		/// AUTH-UI.2 — remplit \p model pour \c Phase::Login (appelé depuis \c BuildRenderModel).
+		void BuildModel_Login(RenderModel& model) const;
+		/// AUTH-UI.2 — raccourcis Ctrl+R / Ctrl+F / Ctrl+O sur l'écran connexion.
+		void Update_LoginShortcuts(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.3 — remplit \p model pour \c Phase::Register (appelé depuis \c BuildRenderModel).
+		void BuildModel_Register(RenderModel& model) const;
+		/// AUTH-UI.3 — Tab / flèches sur la grille inscription (hors ImGui).
+		void Update_Register(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.5 — remplit \p model pour \c Phase::VerifyEmail.
+		void BuildModel_VerifyEmail(RenderModel& model) const;
+		/// AUTH-UI.5 — remplit \p model pour \c Phase::EmailConfirmationPending.
+		void BuildModel_EmailConfirmationPending(RenderModel& model) const;
+		/// AUTH-UI.5 — Tab / saisie code hors ImGui (raccourcis communs avec confirmation courriel).
+		void Update_VerifyEmail(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.6 — menu options classique (clavier / molette) et modèle rendu options.
+		void Update_Options(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.4 — remplit \p model pour \c Phase::Error (appelé depuis \c BuildRenderModel).
+		void BuildModel_Error(RenderModel& model) const;
+		/// AUTH-UI.6 — \c Phase::LanguageOptions (menu classique + données compte pour ImGui).
+		void BuildModel_Options(RenderModel& model) const;
+		/// AUTH-UI.7 — \c Phase::LanguageSelectionFirstRun (premier lancement).
+		void BuildModel_LanguageSelect(RenderModel& model) const;
+		void Update_LanguageSelect(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.8 — \c Phase::ShardPick (liste classique + navigation clavier ImGui).
+		void BuildModel_ShardPick(RenderModel& model) const;
+		void Update_ShardPick(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.9 — \c Phase::ForgotPassword (split uniquement, pas de maquette).
+		void BuildModel_ForgotPassword(RenderModel& model) const;
+		void Update_ForgotPassword(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.10 — \c Phase::Terms (split uniquement).
+		void BuildModel_Terms(RenderModel& model) const;
+		void Update_Terms(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// AUTH-UI.11 — \c Phase::CharacterCreate (split uniquement).
+		void BuildModel_CharacterCreate(RenderModel& model) const;
+		void Update_CharacterCreate(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
 		/// Transition de phase avec reset des états hover et du texte d'erreur utilisateur.
 		/// Ne touche PAS m_infoBanner sauf pour Phase::Error (évite la superposition infoBanner+errorText).
 		void SetPhase(Phase p)
@@ -596,6 +678,9 @@ namespace engine::client
 		std::string m_userErrorText;
 		std::string m_infoBanner;
 		uint64_t m_pendingVerifyAccountId = 0;
+		/// Instant auquel le dernier code de vérification a été envoyé (steady_clock).
+		/// Vaut time_point{} si aucun code n'a encore été envoyé dans cette session.
+		std::chrono::steady_clock::time_point m_verifyCodeSentAt{};
 		uint64_t m_pendingTermsEditionId = 0;
 		bool m_termsScrolledToBottom = false;
 		bool m_termsAcknowledgeChecked = false;
@@ -649,6 +734,14 @@ namespace engine::client
 		bool m_allowInsecureDevPending = true;
 		uint32_t m_authTimeoutMs = 5000u;
 		uint32_t m_authTimeoutMsPending = 5000u;
+		float m_uiScalePercent = 100.f;
+		float m_uiScalePercentPending = 100.f;
+		float m_panelOpacityPercent = 70.f;
+		float m_panelOpacityPercentPending = 70.f;
+		bool m_showTooltipUi = true;
+		bool m_showTooltipUiPending = true;
+		uint32_t m_preferredServerIndex = 2u;
+		uint32_t m_preferredServerIndexPending = 2u;
 		GameSettingsCommand m_pendingGameSettings{};
 		LocalizationService m_localization;
 
@@ -714,6 +807,7 @@ namespace engine::client
 			Register,
 			AuthOnly,
 			VerifyEmail,
+			ResendVerification, ///< M33.2-bis : renvoi d'un nouveau code de vérification.
 			ForgotPassword,
 			TermsStatus,
 			TermsAccept,

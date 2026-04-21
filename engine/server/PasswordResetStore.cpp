@@ -107,7 +107,7 @@ namespace engine::server
 		using namespace std::chrono;
 		VerificationEntry entry;
 		entry.code       = code;
-		entry.expires_at = Clock::now() + hours(24);
+		entry.expires_at = Clock::now() + minutes(15);
 		entry.verified   = false;
 		m_verifications[account_id] = std::move(entry);
 		LOG_INFO(Auth, "[PasswordResetStore] Verification code created (account_id={})", account_id);

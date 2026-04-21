@@ -13,7 +13,7 @@ namespace engine::server
 {
 	/// In-memory store for password reset tokens and email verification codes (M33.2).
 	/// - Reset tokens: 32-char hex (16 random bytes), 1-hour expiry, single-use.
-	/// - Verification codes: 6-digit decimal string, 24-hour expiry.
+	/// - Verification codes: 6-digit decimal string, 15-minute expiry.
 	/// - Email rate limiting: max kMaxEmailsPerHour sends per account per rolling hour.
 	class PasswordResetStore
 	{
@@ -33,7 +33,7 @@ namespace engine::server
 		/// Marks a reset token as used (single-use). Returns false if token not found.
 		bool MarkResetTokenUsed(const std::string& token);
 
-		/// Generates a new 6-digit verification code for the given account and stores it (24-hour expiry).
+		/// Generates a new 6-digit verification code for the given account and stores it (15-minute expiry).
 		/// Overwrites any existing code for the account.
 		/// Returns the code string, or empty on generation failure.
 		std::string CreateVerificationCode(uint64_t account_id);

@@ -209,7 +209,19 @@ add_library(engine_core
   engine/audio/MaMenuMusic.cpp
   engine/client/CombatHud.cpp
   engine/client/LocalizationService.cpp
-  engine/client/AuthUi.cpp
+  engine/client/auth/AuthUiPresenterCore.cpp
+  engine/client/auth/AuthUiPresenterSettings.cpp
+  engine/client/auth/AuthUiPresenterNative.cpp
+  engine/client/auth/screens/AuthScreenLanguageSelect.cpp
+  engine/client/auth/screens/AuthScreenLogin.cpp
+  engine/client/auth/screens/AuthScreenRegister.cpp
+  engine/client/auth/screens/AuthScreenForgotPassword.cpp
+  engine/client/auth/screens/AuthScreenVerifyEmail.cpp
+  engine/client/auth/screens/AuthScreenOptions.cpp
+  engine/client/auth/screens/AuthScreenError.cpp
+  engine/client/auth/screens/AuthScreenShardPick.cpp
+  engine/client/auth/screens/AuthScreenTerms.cpp
+  engine/client/auth/screens/AuthScreenCharacterCreate.cpp
   engine/client/AoEPreviewSystem.cpp
   engine/client/BuffBarPresenter.cpp
   engine/client/AuraFXSystem.cpp
@@ -258,7 +270,18 @@ add_library(engine_core
   engine/render/AuthGlyphPass.cpp
   engine/render/FontAtlasTtf.cpp
   engine/render/AuthLogoPass.cpp
-  engine/render/AuthUiRenderer.cpp
+  engine/render/auth/AuthUiRendererCore.cpp
+  engine/render/auth/AuthImGuiCommon.cpp
+  engine/render/auth/screens/AuthImGuiLanguageSelect.cpp
+  engine/render/auth/screens/AuthImGuiLogin.cpp
+  engine/render/auth/screens/AuthImGuiRegister.cpp
+  engine/render/auth/screens/AuthImGuiError.cpp
+  engine/render/auth/screens/AuthImGuiVerifyEmail.cpp
+  engine/render/auth/screens/AuthImGuiForgotPassword.cpp
+  engine/render/auth/screens/AuthImGuiOptions.cpp
+  engine/render/auth/screens/AuthImGuiShardPick.cpp
+  engine/render/auth/screens/AuthImGuiTerms.cpp
+  engine/render/auth/screens/AuthImGuiCharacterCreate.cpp
   engine/render/LnTheme.h
   engine/render/AuthImGuiRenderer.cpp
   engine/render/DecalSystem.cpp

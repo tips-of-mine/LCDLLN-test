@@ -28,6 +28,7 @@ namespace engine::server
 		std::optional<AccountRecord> FindByEmail(std::string_view normalisedEmail) override;
 		bool SetEmailVerified(uint64_t account_id) override;
 		bool UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash) override;
+		void PersistEmailVerificationCode(uint64_t account_id, const std::string& code) override;
 
 	private:
 		engine::server::db::ConnectionPool* m_pool = nullptr;

@@ -30,5 +30,10 @@ namespace engine::server
 		virtual std::optional<AccountRecord> FindByEmail(std::string_view normalisedEmail) = 0;
 		virtual bool SetEmailVerified(uint64_t account_id) = 0;
 		virtual bool UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash) = 0;
+
+		/// Persists a 6-digit verification code for the given account to the email_verifications table
+		/// with a 15-minute expiry. Replaces any existing unverified entry for the account.
+		/// No-op on non-MySQL stores (in-memory store uses PasswordResetStore instead).
+		virtual void PersistEmailVerificationCode(uint64_t account_id, const std::string& code) = 0;
 	};
 }

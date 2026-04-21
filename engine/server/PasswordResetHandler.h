@@ -53,6 +53,10 @@ namespace engine::server
 		void HandleVerifyEmail(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
 		                       const uint8_t* payload, size_t payloadSize);
 
+		/// Handles kOpcodeResendVerificationRequest: generate a new code and send a new email.
+		void HandleResendVerification(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
+		                              const uint8_t* payload, size_t payloadSize);
+
 		NetServer*           m_server       = nullptr;
 		AccountStore* m_accountStore = nullptr;
 		PasswordResetStore*  m_resetStore   = nullptr;

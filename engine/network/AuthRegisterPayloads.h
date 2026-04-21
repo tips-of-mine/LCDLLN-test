@@ -131,6 +131,22 @@ namespace engine::network
 	std::vector<uint8_t> BuildVerifyEmailResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
 
 	// -------------------------------------------------------------------------
+	// M33.2-bis — Resend verification email
+	// -------------------------------------------------------------------------
+
+	/// Client→Master RESEND_VERIFICATION_REQUEST payload: account_id of the pending account.
+	struct ResendVerificationRequestPayload
+	{
+		uint64_t account_id = 0;
+	};
+	std::optional<ResendVerificationRequestPayload> ParseResendVerificationRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildResendVerificationRequestPayload(uint64_t account_id);
+
+	/// Master→Client: success=1 (code sent) or error packet.
+	std::vector<uint8_t> BuildResendVerificationResponsePacket(uint32_t requestId, uint64_t sessionIdHeader);
+	std::vector<uint8_t> BuildResendVerificationResponseErrorPacket(NetErrorCode errorCode, uint32_t requestId, uint64_t sessionIdHeader);
+
+	// -------------------------------------------------------------------------
 	// Plan C — Username availability check
 	// -------------------------------------------------------------------------
 

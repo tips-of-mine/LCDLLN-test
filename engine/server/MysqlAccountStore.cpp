@@ -367,6 +367,27 @@ namespace engine::server
 		return true;
 	}
 
+	void MysqlAccountStore::PersistEmailVerificationCode(uint64_t account_id, const std::string& code)
+	{
+		if (!m_pool || !m_pool->IsInitialized())
+			return;
+		auto guard = m_pool->Acquire();
+		MYSQL* mysql = guard.get();
+		if (!mysql)
+			return;
+		const std::string esc_code = EscapeMysql(mysql, code);
+		// Delete any previous unverified entry for this account, then insert the new one.
+		const std::string del = "DELETE FROM email_verifications WHERE account_id=" + std::to_string(account_id)
+			+ " AND verified_at IS NULL";
+		engine::server::db::DbExecute(mysql, del);
+		const std::string ins = "INSERT INTO email_verifications (account_id, code, expires_at) VALUES ("
+			+ std::to_string(account_id) + ", '" + esc_code + "', NOW() + INTERVAL 15 MINUTE)";
+		if (!engine::server::db::DbExecute(mysql, ins))
+			LOG_WARN(Auth, "[MysqlAccountStore] PersistEmailVerificationCode: INSERT failed (account_id={})", account_id);
+		else
+			LOG_INFO(Auth, "[MysqlAccountStore] PersistEmailVerificationCode OK (account_id={})", account_id);
+	}
+
 	bool MysqlAccountStore::UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash)
 	{
 		if (!m_pool || !m_pool->IsInitialized())

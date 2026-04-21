@@ -79,6 +79,10 @@ namespace engine::render
 		int m_optResIdx = 2;
 		int m_optQualityPreset = 2;
 		float m_optFovDegrees = 70.f;
+		float m_optUiScalePct = 100.f;
+		float m_optPanelOpacityPct = 70.f;
+		bool m_optShowTooltipsUi = true;
+		int m_optPreferredServer = 2;
 
 		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement — décoratif pour l’instant.
 		int m_langTweakRace = 0;
@@ -92,7 +96,7 @@ namespace engine::render
 		engine::platform::Window* m_authWindow = nullptr;
 
 		void RenderLangScreen(const RenderModel& rm, float vpW, float vpH);
-		void RenderLoginScreen(const RenderModel& rm, float vpW, float vpH);
+		void RenderLoginScreen(const VisualState& vs, const RenderModel& rm, float vpW, float vpH);
 		void RenderRegisterScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderErrorScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH);

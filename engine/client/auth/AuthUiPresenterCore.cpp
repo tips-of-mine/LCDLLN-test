@@ -73,24 +73,6 @@ namespace engine::client
 			return value ? "true" : "false";
 		}
 
-		std::string ToUpperAscii(std::string_view s)
-		{
-			std::string o;
-			o.reserve(s.size());
-			for (unsigned char ch : s)
-			{
-				if (ch >= 'a' && ch <= 'z')
-				{
-					o.push_back(static_cast<char>(ch - 32u));
-				}
-				else
-				{
-					o.push_back(static_cast<char>(ch));
-				}
-			}
-			return o;
-		}
-
 		std::string EscapeJsonString(std::string_view value)
 		{
 			std::string out;
@@ -1040,6 +1022,11 @@ namespace engine::client
 	{
 	}
 
+	bool AuthUiPresenter::PatchPersistedLocaleKey(std::string_view)
+	{
+		return false;
+	}
+
 	void AuthUiPresenter::OpenLanguageOptions()
 	{
 	}
@@ -1092,11 +1079,11 @@ namespace engine::client
 	}
 
 	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config&, std::string_view) {}
+	void AuthUiPresenter::ImGuiSelectFirstRunLanguageCard(uint32_t) {}
 	void AuthUiPresenter::ImGuiSubmitLogin(const engine::core::Config&, const char*, const char*, bool) {}
 	void AuthUiPresenter::ImGuiNavigateToRegisterFromLogin() {}
 	void AuthUiPresenter::ImGuiBackFromRegisterToLogin() {}
 	void AuthUiPresenter::ImGuiOpenForgotPasswordPortal(const engine::core::Config&, engine::platform::Window&) {}
-	void AuthUiPresenter::ImGuiOpenLanguageOptionsMenu() {}
 	void AuthUiPresenter::ImGuiRequestClose(engine::platform::Window& window)
 	{
 		window.RequestClose();
@@ -1534,542 +1521,23 @@ namespace engine::client
 		window.SetTitle(t);
 	}
 
-	void AuthUiPresenter::ApplyLocaleSelection(bool firstRun)
+	bool AuthUiPresenter::PatchPersistedLocaleKey(std::string_view locale)
 	{
-		const auto& locales = m_localization.GetAvailableLocales();
-		if (locales.empty())
-		{
-			LOG_WARN(Core, "[AuthUiPresenter] ApplyLocaleSelection ignored: no available locales");
-			return;
-		}
-
-		if (m_languageSelectionIndex >= locales.size())
-			m_languageSelectionIndex = 0;
-		m_selectedLocale = locales[m_languageSelectionIndex];
-		if (!m_localization.SetLocale(m_selectedLocale))
-		{
-			LOG_WARN(Core, "[AuthUiPresenter] Locale apply failed for '{}'", m_selectedLocale);
-			return;
-		}
-
-		SaveRememberPreference();
-		// Premier démarrage : SaveRememberPreference() saute l'écriture si user_settings.json
-		// existe déjà (logique intentionnelle — ne pas écraser les réglages utilisateur).
-		// Pour garantir que la locale est persistée même dans ce cas, on force un patch
-		// ciblé sur la clé "locale" dans le fichier existant, ou on crée le fichier.
-		if (firstRun)
-		{
-			if (PatchLocaleInSettingsFile(m_selectedLocale))
-			{
-				m_persistedLocale = m_selectedLocale;
-				m_hasPersistedLocale = true;
-			}
-		}
-		m_infoBanner = Tr("language.apply_success", { { "language", LocalizedLanguageName(m_selectedLocale) } });
-		LOG_INFO(Core, "[AuthUiPresenter] Locale selection applied (locale={}, first_run={})", m_selectedLocale, firstRun);
-		if (firstRun)
-		{
-			SetPhase(Phase::Login);
-			m_activeField = 0;
-		}
-		else
-		{
-			SetPhase(m_phaseBeforeOptions);
-		}
+		return PatchLocaleInSettingsFile(locale);
 	}
 
-	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config& cfg, std::string_view localeTag)
-	{
-		(void)cfg;
-		if (m_phase != Phase::LanguageSelectionFirstRun || localeTag.empty())
-		{
-			return;
-		}
-		const auto& locales = m_localization.GetAvailableLocales();
-		if (locales.empty())
-		{
-			return;
-		}
-		const std::string tag(localeTag);
-		const auto it = std::find(locales.begin(), locales.end(), tag);
-		if (it == locales.end())
-		{
-			LOG_WARN(Core, "[AuthUiPresenter] ImGui: locale '{}' absente des locales disponibles", tag);
-			return;
-		}
-		m_languageSelectionIndex = static_cast<uint32_t>(std::distance(locales.begin(), it));
-		m_selectedLocale = *it;
-		ApplyLocaleSelection(true);
-	}
 
-	void AuthUiPresenter::ImGuiSubmitLogin(const engine::core::Config& cfg, const char* loginUtf8, const char* passwordUtf8,
-		bool rememberMe)
-	{
-		if (m_phase != Phase::Login)
-		{
-			return;
-		}
-		m_login = loginUtf8 ? loginUtf8 : "";
-		m_password = passwordUtf8 ? passwordUtf8 : "";
-		m_rememberLogin = rememberMe;
-		SubmitCurrentPhase(cfg);
-	}
 
-	void AuthUiPresenter::ImGuiNavigateToRegisterFromLogin()
-	{
-		if (m_phase != Phase::Login)
-		{
-			return;
-		}
-		SetPhase(Phase::Register);
-		m_activeField = 0;
-		m_userErrorText.clear();
-		m_passwordConfirm.clear();
-		m_usernameCheckState = UsernameCheckState::Idle;
-		m_usernameCheckSeq++;
-		m_usernameDebounceTimer = 0.0;
-		m_usernameLastChecked.clear();
-	}
 
-	void AuthUiPresenter::ImGuiBackFromRegisterToLogin()
-	{
-		if (m_phase != Phase::Register)
-		{
-			return;
-		}
-		m_usernameCheckState = UsernameCheckState::Idle;
-		m_usernameCheckSeq++;
-		m_usernameDebounceTimer = 0.0;
-		m_usernameLastChecked.clear();
-		SetPhase(Phase::Login);
-		m_activeField = 0;
-		m_userErrorText.clear();
-		m_passwordConfirm.clear();
-		m_registeredTagId.clear();
-	}
 
-	void AuthUiPresenter::ImGuiOpenForgotPasswordPortal(const engine::core::Config& cfg, engine::platform::Window& window)
-	{
-		if (m_phase != Phase::Login)
-		{
-			return;
-		}
-		const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
-		LOG_INFO(Core, "[AuthUiPresenter] ImGui: ouverture portail recuperation ({})", resetUrl);
-		if (!window.OpenExternalUrl(resetUrl))
-		{
-			EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
-		}
-	}
 
-	void AuthUiPresenter::ImGuiOpenLanguageOptionsMenu()
-	{
-		OpenLanguageOptions();
-	}
 
-	void AuthUiPresenter::ImGuiRequestClose(engine::platform::Window& window)
-	{
-		window.RequestClose();
-	}
 
-	AuthUiPresenter::LanguageOptionsImGuiMirror AuthUiPresenter::BuildLanguageOptionsImGuiMirror() const
-	{
-		LanguageOptionsImGuiMirror m{};
-		m.videoFullscreen = m_videoFullscreenPending;
-		m.videoVsync = m_videoVsyncPending;
-		m.videoResWidth = m_videoResWidthPending;
-		m.videoResHeight = m_videoResHeightPending;
-		m.videoQualityPreset = m_videoQualityPresetPending;
-		m.videoFovDegrees = m_videoFovDegreesPending;
-		m.audioMaster01 = m_audioMasterVolumePending;
-		m.audioMusic01 = m_audioMusicVolumePending;
-		m.audioSfx01 = m_audioSfxVolumePending;
-		m.audioUi01 = m_audioUiVolumePending;
-		m.mouseSensitivity = m_mouseSensitivityPending;
-		m.invertY = m_invertYPending;
-		m.useZqsd = m_useZqsdPending;
-		m.gameplayUdpEnabled = m_gameplayUdpEnabledPending;
-		m.allowInsecureDev = m_allowInsecureDevPending;
-		m.authTimeoutMs = m_authTimeoutMsPending;
-		m.languageSelectionIndex = m_languageSelectionIndex;
-		return m;
-	}
 
-	void AuthUiPresenter::ImGuiApplyLanguageOptionsMenu(const engine::core::Config& cfg, const LanguageOptionsImGuiMirror& mirror)
-	{
-		if (m_phase != Phase::LanguageOptions)
-		{
-			return;
-		}
-		const auto& locales = m_localization.GetAvailableLocales();
-		if (!locales.empty())
-		{
-			const uint32_t maxIdx = static_cast<uint32_t>(locales.size() - 1u);
-			m_languageSelectionIndex = mirror.languageSelectionIndex > maxIdx ? maxIdx : mirror.languageSelectionIndex;
-		}
-		m_videoFullscreenPending = mirror.videoFullscreen;
-		m_videoVsyncPending = mirror.videoVsync;
-		m_videoResWidthPending = mirror.videoResWidth > 0 ? mirror.videoResWidth : m_videoResWidthPending;
-		m_videoResHeightPending = mirror.videoResHeight > 0 ? mirror.videoResHeight : m_videoResHeightPending;
-		m_videoQualityPresetPending = static_cast<int32_t>(std::clamp<int32_t>(mirror.videoQualityPreset, 0, 3));
-		m_videoFovDegreesPending = std::clamp(mirror.videoFovDegrees, 60.f, 120.f);
-		m_audioMasterVolumePending = mirror.audioMaster01;
-		m_audioMusicVolumePending = mirror.audioMusic01;
-		m_audioSfxVolumePending = mirror.audioSfx01;
-		m_audioUiVolumePending = mirror.audioUi01;
-		m_mouseSensitivityPending = mirror.mouseSensitivity;
-		m_invertYPending = mirror.invertY;
-		m_useZqsdPending = mirror.useZqsd;
-		m_gameplayUdpEnabledPending = mirror.gameplayUdpEnabled;
-		m_allowInsecureDevPending = mirror.allowInsecureDev;
-		m_authTimeoutMsPending = mirror.authTimeoutMs;
-		CommitLanguageOptionsMenuApply(cfg);
-	}
 
-	void AuthUiPresenter::ImGuiCloseLanguageOptionsWithoutApply()
-	{
-		if (m_phase != Phase::LanguageOptions)
-		{
-			return;
-		}
-		m_phase = m_phaseBeforeOptions;
-		LOG_INFO(Core, "[AuthUiPresenter] ImGui: options fermees sans appliquer");
-	}
 
-	AuthUiPresenter::RegisterFieldsMirrorForImGui AuthUiPresenter::BuildRegisterFieldsMirrorForImGui() const
-	{
-		RegisterFieldsMirrorForImGui s{};
-		s.login = m_login;
-		s.email = m_email;
-		s.firstName = m_firstName;
-		s.lastName = m_lastName;
-		s.countryIso2 = m_country;
-		s.birthDayIndex = m_birthDayIndex;
-		s.birthMonthIndex = m_birthMonthIndex;
-		s.birthYearIndex = m_birthYearIndex;
-		return s;
-	}
 
-	void AuthUiPresenter::ImGuiSubmitRegister(const engine::core::Config& cfg, const RegisterImGuiSubmit& form)
-	{
-		if (m_phase != Phase::Register)
-		{
-			return;
-		}
-		auto pull = [](std::string& dst, const char* p) { dst = p ? std::string(p) : std::string(); };
-		pull(m_login, form.login);
-		pull(m_email, form.email);
-		pull(m_password, form.password);
-		pull(m_passwordConfirm, form.passwordConfirm);
-		pull(m_firstName, form.firstName);
-		pull(m_lastName, form.lastName);
-		pull(m_birthDay, form.birthDay);
-		pull(m_birthMonth, form.birthMonth);
-		pull(m_birthYear, form.birthYear);
-		pull(m_country, form.countryIso2);
-		if (m_country.size() >= 2u)
-		{
-			m_country[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(m_country[0])));
-			m_country[1] = static_cast<char>(std::toupper(static_cast<unsigned char>(m_country[1])));
-			if (m_country.size() > 2u)
-			{
-				m_country.resize(2u);
-			}
-		}
-		SubmitCurrentPhase(cfg);
-	}
 
-	void AuthUiPresenter::ImGuiNavigateToForgotFromLogin()
-	{
-		if (m_phase != Phase::Login)
-		{
-			return;
-		}
-		SetPhase(Phase::ForgotPassword);
-		m_activeField = 0;
-		m_userErrorText.clear();
-	}
-
-	void AuthUiPresenter::ImGuiSubmitForgotPassword(const engine::core::Config& cfg, const char* emailUtf8)
-	{
-		if (m_phase != Phase::ForgotPassword)
-		{
-			return;
-		}
-		m_email = emailUtf8 ? std::string(emailUtf8) : std::string();
-		SubmitCurrentPhase(cfg);
-	}
-
-	void AuthUiPresenter::ImGuiBackFromForgotToLogin()
-	{
-		if (m_phase != Phase::ForgotPassword)
-		{
-			return;
-		}
-		SetPhase(Phase::Login);
-		m_activeField = 0;
-		m_userErrorText.clear();
-	}
-
-	void AuthUiPresenter::ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8)
-	{
-		if (m_phase != Phase::VerifyEmail)
-		{
-			return;
-		}
-		m_verifyCode = codeSixUtf8 ? std::string(codeSixUtf8) : std::string();
-		SubmitCurrentPhase(cfg);
-	}
-
-	void AuthUiPresenter::ImGuiBackFromVerifyToLogin()
-	{
-		if (m_phase != Phase::VerifyEmail)
-		{
-			return;
-		}
-		SetPhase(Phase::Login);
-		m_activeField = 0;
-		m_userErrorText.clear();
-		m_passwordConfirm.clear();
-		m_registeredTagId.clear();
-	}
-
-	void AuthUiPresenter::ImGuiVerifyEmailClearDigits()
-	{
-		if (m_phase != Phase::VerifyEmail)
-		{
-			return;
-		}
-		m_verifyCode.clear();
-		LOG_INFO(Core, "[AuthUiPresenter] ImGui: code de vérification effacé (renvoi / nouvelle saisie)");
-	}
-
-	void AuthUiPresenter::ImGuiVerifyEmailBackToEditRegisterEmail()
-	{
-		if (m_phase != Phase::VerifyEmail)
-		{
-			return;
-		}
-		m_verifyCode.clear();
-		m_pendingVerifyAccountId = 0;
-		m_registeredTagId.clear();
-		SetPhase(Phase::Register);
-		m_activeField = 3u;
-		m_userErrorText.clear();
-		LOG_INFO(Core, "[AuthUiPresenter] ImGui: retour inscription pour modifier le courriel");
-	}
-
-	void AuthUiPresenter::ImGuiSetVerifyEmailPartialCode(std::string_view s)
-	{
-		if (m_phase != Phase::VerifyEmail)
-		{
-			return;
-		}
-		m_verifyCode.assign(s.data(), s.size());
-	}
-
-	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin()
-	{
-		if (m_phase != Phase::EmailConfirmationPending)
-		{
-			return;
-		}
-		m_registeredTagId.clear();
-		SetPhase(Phase::Login);
-		m_activeField = 0;
-		m_userErrorText.clear();
-	}
-
-	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config& cfg)
-	{
-		if (m_phase != Phase::Error)
-		{
-			return;
-		}
-		SubmitCurrentPhase(cfg);
-	}
-
-	void AuthUiPresenter::ImGuiSetShardPickChoiceShardId(uint32_t shardId)
-	{
-		if (m_phase != Phase::ShardPick)
-		{
-			return;
-		}
-		m_shardPickChoiceShardId = shardId;
-	}
-
-	void AuthUiPresenter::ImGuiSubmitShardPick(const engine::core::Config& cfg)
-	{
-		if (m_phase != Phase::ShardPick)
-		{
-			return;
-		}
-		SubmitCurrentPhase(cfg);
-	}
-
-	void AuthUiPresenter::ImGuiBackFromShardPickToLogin()
-	{
-		if (m_phase != Phase::ShardPick)
-		{
-			return;
-		}
-		m_shardPickEntries.clear();
-		m_shardPickChoiceShardId = 0;
-		SetPhase(Phase::Login);
-		m_userErrorText.clear();
-		LOG_INFO(Core, "[AuthUiPresenter] ImGui: ShardPick -> Login");
-	}
-
-	void AuthUiPresenter::ImGuiNotifyTermsScrollReachedBottom(bool reached)
-	{
-		if (m_phase != Phase::Terms)
-		{
-			return;
-		}
-		m_termsScrolledToBottom = reached;
-	}
-
-	void AuthUiPresenter::ImGuiSetTermsAcknowledgeChecked(bool on)
-	{
-		if (m_phase != Phase::Terms)
-		{
-			return;
-		}
-		m_termsAcknowledgeChecked = on;
-	}
-
-	void AuthUiPresenter::ImGuiTermsPrimaryClick(const engine::core::Config& cfg)
-	{
-		if (m_phase != Phase::Terms)
-		{
-			return;
-		}
-		if (!m_termsScrolledToBottom)
-		{
-			return;
-		}
-		if (!m_termsAcknowledgeChecked)
-		{
-			m_termsAcknowledgeChecked = true;
-			return;
-		}
-		SubmitCurrentPhase(cfg);
-	}
-
-	void AuthUiPresenter::ImGuiTermsDecline(engine::platform::Window& window)
-	{
-		if (m_phase != Phase::Terms)
-		{
-			return;
-		}
-		window.RequestClose();
-	}
-
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8)
-	{
-		if (m_phase != Phase::CharacterCreate)
-		{
-			return;
-		}
-		m_characterName = nameUtf8 ? std::string(nameUtf8) : std::string();
-		SubmitCurrentPhase(cfg);
-	}
-
-	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin()
-	{
-		if (m_phase != Phase::CharacterCreate)
-		{
-			return;
-		}
-		SetPhase(Phase::Login);
-		m_userErrorText.clear();
-		m_infoBanner = Tr("auth.info.character_cancelled");
-		ResetMasterSession();
-	}
-
-	void AuthUiPresenter::OpenLanguageOptions()
-	{
-		const auto& locales = m_localization.GetAvailableLocales();
-		if (locales.empty())
-		{
-			LOG_WARN(Core, "[AuthUiPresenter] OpenLanguageOptions ignored: no locales");
-			return;
-		}
-		m_phaseBeforeOptions = m_phase;
-		SetPhase(Phase::LanguageOptions);
-		m_selectedLocale = CurrentLocale();
-		m_videoFullscreenPending = m_videoFullscreen;
-		m_videoVsyncPending = m_videoVsync;
-		m_videoResWidthPending = m_videoResWidth;
-		m_videoResHeightPending = m_videoResHeight;
-		m_videoQualityPresetPending = m_videoQualityPreset;
-		m_videoFovDegreesPending = m_videoFovDegrees;
-		m_audioMasterVolumePending = m_audioMasterVolume;
-		m_audioMusicVolumePending = m_audioMusicVolume;
-		m_audioSfxVolumePending = m_audioSfxVolume;
-		m_audioUiVolumePending = m_audioUiVolume;
-		m_mouseSensitivityPending = m_mouseSensitivity;
-		m_invertYPending = m_invertY;
-		m_useZqsdPending = m_useZqsd;
-		m_gameplayUdpEnabledPending = m_gameplayUdpEnabled;
-		m_allowInsecureDevPending = m_allowInsecureDev;
-		m_authTimeoutMsPending = m_authTimeoutMs;
-		m_optionsSubMenu = OptionsSubMenu::Root;
-		m_optionsRootSelection = 0;
-		m_optionsSubSelection = 0;
-		auto it = std::find(locales.begin(), locales.end(), m_selectedLocale);
-		m_languageSelectionIndex = it != locales.end() ? static_cast<uint32_t>(std::distance(locales.begin(), it)) : 0u;
-		LOG_INFO(Core, "[AuthUiPresenter] Options opened (locale={}, fullscreen={}, vsync={}, sens={:.4f}, invert_y={}, layout={}, gameplay_udp={}, allow_insecure_dev={}, timeout_ms={})",
-			m_selectedLocale, m_videoFullscreenPending, m_videoVsyncPending,
-			m_mouseSensitivityPending, m_invertYPending, m_useZqsdPending ? "zqsd" : "wasd",
-			m_gameplayUdpEnabledPending, m_allowInsecureDevPending, m_authTimeoutMsPending);
-	}
-
-	uint32_t AuthUiPresenter::OptionsSubmenuLineCount(OptionsSubMenu sub)
-	{
-		switch (sub)
-		{
-		case OptionsSubMenu::Root:
-			return 0;
-		case OptionsSubMenu::Language:
-			return 2;
-		case OptionsSubMenu::Video:
-			return 2;
-		case OptionsSubMenu::Audio:
-			return 4;
-		case OptionsSubMenu::Controls:
-			return 3;
-		case OptionsSubMenu::Game:
-			return 3;
-		default:
-			return 0;
-		}
-	}
-
-	void AuthUiPresenter::EnterOptionsSubmenuFromRoot(uint32_t categoryIndex)
-	{
-		switch (categoryIndex)
-		{
-		case 0:
-			m_optionsSubMenu = OptionsSubMenu::Language;
-			break;
-		case 1:
-			m_optionsSubMenu = OptionsSubMenu::Video;
-			break;
-		case 2:
-			m_optionsSubMenu = OptionsSubMenu::Audio;
-			break;
-		case 3:
-			m_optionsSubMenu = OptionsSubMenu::Controls;
-			break;
-		case 4:
-			m_optionsSubMenu = OptionsSubMenu::Game;
-			break;
-		default:
-			return;
-		}
-		m_optionsSubSelection = 0;
-	}
 
 	std::string AuthUiPresenter::Tr(std::string_view key, const LocalizationService::Params& params) const
 	{
@@ -2408,193 +1876,6 @@ namespace engine::client
 		}
 		EnterAuthErrorPhase(Phase::Login, copy.message);
 		LOG_WARN(Core, "[AuthUiPresenter] Master/shard flow FAILED: {}", copy.message);
-	}
-
-	void AuthUiPresenter::StartRegisterWorker(const engine::core::Config& cfg)
-	{
-		JoinWorker();
-		EnsurePasswordSalt(cfg);
-		const std::string hash = ComputeClientHash(cfg);
-		if (hash.empty())
-		{
-			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.hash_password_failed"));
-			LOG_ERROR(Core, "[AuthUiPresenter] Register aborted: empty client_hash");
-			return;
-		}
-
-		const std::string host = cfg.GetEffectiveMasterHost("localhost");
-		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
-		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
-		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
-		const std::string locale = CurrentLocale();
-		const std::string login = m_login;
-		const std::string email = m_email;
-		const std::string firstName = m_firstName;
-		const std::string lastName = m_lastName;
-		const std::string country = m_country;
-		int birthY = 0;
-		int birthM = 0;
-		int birthD = 0;
-		try
-		{
-			birthY = std::stoi(m_birthYear);
-			birthM = std::stoi(m_birthMonth);
-			birthD = std::stoi(m_birthDay);
-		}
-		catch (const std::exception& ex)
-		{
-			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.invalid_birth_date"));
-			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse exception: {}", ex.what());
-			return;
-		}
-		catch (...)
-		{
-			EnterAuthErrorPhase(Phase::Register, Tr("auth.error.invalid_birth_date"));
-			LOG_ERROR(Core, "[AUTH-REG] StartRegisterWorker aborted: birth date parse unknown exception");
-			return;
-		}
-		const std::string birthDate = Pad4Year(birthY) + "-" + Pad2(birthM) + "-" + Pad2(birthD);
-
-		LOG_INFO(Core,
-			"[AUTH-REG] StartRegisterWorker: host={} port={} timeout_ms={} allow_insecure={} locale_len={} birthDate_iso_len={}",
-			host,
-			port,
-			timeoutMs,
-			allowInsecure ? 1 : 0,
-			locale.size(),
-			birthDate.size());
-
-		m_pendingAsyncKind = AsyncKind::Register;
-		{
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = {};
-		}
-
-		m_worker = std::thread([this, host, port, timeoutMs, login, email, firstName, lastName, birthDate, hash, allowInsecure, serverFingerprint,
-								   locale, country]() {
-			LOG_INFO(Net, "[AUTH-REG] worker thread started (login_len={} email_len={})", login.size(), email.size());
-			try
-			{
-				AsyncResult local{};
-				engine::network::NetClient client;
-				ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
-				LOG_INFO(Net,
-					"[AuthUiPresenter] Register worker: connecting {}:{} (tls_fp_len={})",
-					host,
-					port,
-					serverFingerprint.size());
-				client.Connect(host, port);
-				if (!WaitConnected(&client, timeoutMs + 2000u))
-				{
-					local.ready = true;
-					local.success = false;
-					local.message = "Master connect failed or timeout.";
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: connect FAILED");
-					return;
-				}
-				engine::network::RequestResponseDispatcher disp(&client);
-				std::vector<uint8_t> payload =
-					engine::network::BuildRegisterRequestPayload(login, email, hash, firstName, lastName, birthDate, {}, locale, country);
-				if (payload.empty())
-				{
-					local.ready = true;
-					local.success = false;
-					local.message = "REGISTER payload build failed.";
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: BuildRegisterRequestPayload FAILED");
-					client.Disconnect("payload");
-					return;
-				}
-
-				bool done = false;
-				bool ok = false;
-				std::string errMsg;
-				if (!disp.SendRequest(engine::network::kOpcodeRegisterRequest, payload,
-						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-							done = true;
-							if (timeout)
-							{
-								errMsg = "REGISTER timeout.";
-								return;
-							}
-							auto reg = engine::network::ParseRegisterResponsePayload(pl.data(), pl.size());
-							if (reg && reg->success != 0)
-							{
-								local.accountId = reg->account_id;
-								if (!reg->tag_id.empty())
-									local.tagId = reg->tag_id;
-								ok = true;
-								return;
-							}
-							if (reg && reg->success == 0)
-							{
-								errMsg = NetErrorLabel(reg->error_code);
-								return;
-							}
-							auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
-							if (er)
-								errMsg = std::string(NetErrorLabel(er->errorCode))
-									+ (er->message.empty() ? "" : (": " + er->message));
-							else
-								errMsg = "REGISTER response parse failed.";
-						},
-						timeoutMs))
-				{
-					local.ready = true;
-					local.success = false;
-					local.message = "Send REGISTER failed.";
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-					client.Disconnect("send");
-					LOG_ERROR(Net, "[AuthUiPresenter] Register worker: SendRequest FAILED");
-					return;
-				}
-
-				auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-				while (!done && std::chrono::steady_clock::now() < deadline)
-				{
-					disp.Pump();
-					std::this_thread::sleep_for(std::chrono::milliseconds(20));
-				}
-				if (!done)
-					errMsg = "REGISTER timeout.";
-				client.Disconnect("register_done");
-
-				local.ready = true;
-				local.success = ok;
-				local.message = ok ? std::string("Registration OK. Check your email for the verification code.")
-								   : (errMsg.empty() ? "REGISTER failed." : errMsg);
-				{
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-				}
-				LOG_INFO(Net, "[AUTH-REG] Register worker finished (success={} err_nonempty={})", (int)ok, errMsg.empty() ? 0 : 1);
-			}
-			catch (const std::exception& ex)
-			{
-				AsyncResult local{};
-				local.ready = true;
-				local.success = false;
-				local.message = std::string("Register worker exception: ") + ex.what();
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				LOG_ERROR(Net, "[AUTH-REG] Register worker std::exception: {}", ex.what());
-			}
-			catch (...)
-			{
-				AsyncResult local{};
-				local.ready = true;
-				local.success = false;
-				local.message = "Register worker unknown exception.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				LOG_ERROR(Net, "[AUTH-REG] Register worker non-std exception");
-			}
-		});
 	}
 
 	void AuthUiPresenter::StartLoginWorker(const engine::core::Config& cfg)
@@ -2941,359 +2222,6 @@ namespace engine::client
 		});
 	}
 
-	void AuthUiPresenter::StartTermsStatusWorker(const engine::core::Config& cfg)
-	{
-		JoinWorker();
-		if (!m_masterClient || m_masterSessionId == 0)
-		{
-			EnterAuthErrorPhase(Phase::Terms, Tr("auth.error.terms_session_inactive"));
-			return;
-		}
-		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const std::string locale = CurrentLocale();
-
-		m_pendingAsyncKind = AsyncKind::TermsStatus;
-		{
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = {};
-		}
-
-		engine::network::NetClient* const masterClient = m_masterClient.get();
-		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, locale]() {
-			AsyncResult local{};
-			if (masterClient == nullptr)
-			{
-				local.ready = true;
-				local.message = "Internal error: master client missing.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			engine::network::RequestResponseDispatcher disp(masterClient);
-			disp.SetSessionId(sessionId);
-			bool statusDone = false;
-			std::string errMsg;
-			if (!disp.SendRequest(engine::network::kOpcodeTermsStatusRequest, engine::network::BuildTermsStatusRequestPayload(locale),
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						statusDone = true;
-						if (timeout)
-						{
-							errMsg = "TERMS status timeout.";
-							return;
-						}
-						auto terms = engine::network::ParseTermsStatusResponsePayload(pl.data(), pl.size());
-						if (!terms)
-						{
-							errMsg = "TERMS status parse failed.";
-							return;
-						}
-						local.termsPendingCount = terms->pending_count;
-						local.termsEditionId = terms->next_edition_id;
-						local.termsTitle = terms->title;
-						local.termsVersionLabel = terms->version_label;
-						local.termsLocale = terms->resolved_locale;
-					}, timeoutMs))
-			{
-				local.ready = true;
-				local.message = "Send TERMS_STATUS failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!statusDone && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			if (!statusDone)
-			{
-				local.ready = true;
-				local.message = "TERMS status timeout.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			if (local.termsPendingCount > 0 && local.termsEditionId != 0)
-			{
-				bool contentDone = false;
-				if (!disp.SendRequest(engine::network::kOpcodeTermsContentRequest,
-						engine::network::BuildTermsContentRequestPayload(local.termsEditionId, local.termsLocale, 0u, 8192u),
-						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-							contentDone = true;
-							if (timeout)
-							{
-								errMsg = "TERMS content timeout.";
-								return;
-							}
-							auto content = engine::network::ParseTermsContentResponsePayload(pl.data(), pl.size());
-							if (!content)
-							{
-								errMsg = "TERMS content parse failed.";
-								return;
-							}
-							local.totalLength = content->total_length;
-							local.termsContent = content->chunk;
-						}, timeoutMs))
-				{
-					local.ready = true;
-					local.message = "Send TERMS_CONTENT failed.";
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-					return;
-				}
-				deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-				while (!contentDone && std::chrono::steady_clock::now() < deadline)
-				{
-					disp.Pump();
-					std::this_thread::sleep_for(std::chrono::milliseconds(20));
-				}
-				if (!contentDone)
-				{
-					local.ready = true;
-					local.message = errMsg.empty() ? "TERMS content timeout." : errMsg;
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-					return;
-				}
-			}
-			local.ready = true;
-			local.success = true;
-			local.message = local.termsPendingCount > 0 ? "Please review and accept the pending terms." : "No pending terms.";
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = local;
-		});
-	}
-
-	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config& cfg)
-	{
-		JoinWorker();
-		if (!m_masterClient || m_masterSessionId == 0 || m_pendingTermsEditionId == 0)
-		{
-			EnterAuthErrorPhase(Phase::Terms, Tr("auth.error.terms_session_inactive"));
-			return;
-		}
-		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const std::string locale = CurrentLocale();
-		const uint64_t editionId = m_pendingTermsEditionId;
-
-		m_pendingAsyncKind = AsyncKind::TermsAccept;
-		{
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = {};
-		}
-
-		engine::network::NetClient* const masterClient = m_masterClient.get();
-		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, locale, editionId]() {
-			AsyncResult local{};
-			if (masterClient == nullptr)
-			{
-				local.ready = true;
-				local.message = "Internal error: master client missing.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			engine::network::RequestResponseDispatcher disp(masterClient);
-			disp.SetSessionId(sessionId);
-			bool acceptDone = false;
-			std::string errMsg;
-			if (!disp.SendRequest(engine::network::kOpcodeTermsAcceptRequest, engine::network::BuildTermsAcceptRequestPayload(editionId, 1u),
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						acceptDone = true;
-						if (timeout)
-						{
-							errMsg = "TERMS accept timeout.";
-							return;
-						}
-						if (!pl.empty() && pl[0] == 0)
-							errMsg = "TERMS accept failed.";
-					}, timeoutMs))
-			{
-				local.ready = true;
-				local.message = "Send TERMS_ACCEPT failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!acceptDone && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			if (!acceptDone || !errMsg.empty())
-			{
-				local.ready = true;
-				local.message = errMsg.empty() ? "TERMS accept timeout." : errMsg;
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-
-			bool statusDone = false;
-			if (!disp.SendRequest(engine::network::kOpcodeTermsStatusRequest, engine::network::BuildTermsStatusRequestPayload(locale),
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						statusDone = true;
-						if (timeout)
-						{
-							errMsg = "TERMS status timeout.";
-							return;
-						}
-						auto terms = engine::network::ParseTermsStatusResponsePayload(pl.data(), pl.size());
-						if (!terms)
-						{
-							errMsg = "TERMS status parse failed.";
-							return;
-						}
-						local.termsPendingCount = terms->pending_count;
-						local.termsEditionId = terms->next_edition_id;
-						local.termsTitle = terms->title;
-						local.termsVersionLabel = terms->version_label;
-						local.termsLocale = terms->resolved_locale;
-					}, timeoutMs))
-			{
-				local.ready = true;
-				local.message = "Send TERMS_STATUS failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!statusDone && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			if (!statusDone)
-			{
-				local.ready = true;
-				local.message = "TERMS status timeout.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			if (local.termsPendingCount > 0 && local.termsEditionId != 0)
-			{
-				bool contentDone = false;
-				if (!disp.SendRequest(engine::network::kOpcodeTermsContentRequest,
-						engine::network::BuildTermsContentRequestPayload(local.termsEditionId, local.termsLocale, 0u, 8192u),
-						[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-							contentDone = true;
-							if (timeout)
-							{
-								errMsg = "TERMS content timeout.";
-								return;
-							}
-							auto content = engine::network::ParseTermsContentResponsePayload(pl.data(), pl.size());
-							if (!content)
-							{
-								errMsg = "TERMS content parse failed.";
-								return;
-							}
-							local.totalLength = content->total_length;
-							local.termsContent = content->chunk;
-						}, timeoutMs))
-				{
-					local.ready = true;
-					local.message = "Send TERMS_CONTENT failed.";
-					std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-					m_asyncResult = local;
-					return;
-				}
-				deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-				while (!contentDone && std::chrono::steady_clock::now() < deadline)
-				{
-					disp.Pump();
-					std::this_thread::sleep_for(std::chrono::milliseconds(20));
-				}
-			}
-			local.ready = true;
-			local.success = true;
-			local.message = local.termsPendingCount > 0 ? "Next pending terms loaded." : "All terms accepted.";
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = local;
-		});
-	}
-
-	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config& cfg)
-	{
-		JoinWorker();
-		if (!m_masterClient || m_masterSessionId == 0)
-		{
-			EnterAuthErrorPhase(Phase::CharacterCreate, Tr("auth.error.character_session_inactive"));
-			return;
-		}
-		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const std::string characterName = m_characterName;
-
-		m_pendingAsyncKind = AsyncKind::CharacterCreate;
-		{
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = {};
-		}
-
-		engine::network::NetClient* const masterClient = m_masterClient.get();
-		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName]() {
-			AsyncResult local{};
-			if (masterClient == nullptr)
-			{
-				local.ready = true;
-				local.message = "Internal error: master client missing.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			engine::network::RequestResponseDispatcher disp(masterClient);
-			disp.SetSessionId(sessionId);
-			bool done = false;
-			std::string errMsg;
-			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
-					engine::network::BuildCharacterCreateRequestPayload(characterName),
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						done = true;
-						if (timeout)
-						{
-							errMsg = "CHARACTER_CREATE timeout.";
-							return;
-						}
-						auto resp = engine::network::ParseCharacterCreateResponsePayload(pl.data(), pl.size());
-						if (resp && resp->success != 0)
-						{
-							local.accountId = resp->character_id;
-							return;
-						}
-						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
-						if (er)
-							errMsg = er->message.empty() ? std::string(NetErrorLabel(er->errorCode)) : er->message;
-						else
-							errMsg = "Character creation failed.";
-					},
-					timeoutMs))
-			{
-				local.ready = true;
-				local.message = "Send CHARACTER_CREATE failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!done && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			local.ready = true;
-			local.success = done && errMsg.empty();
-			local.message = local.success ? std::string("Character created successfully.") : (errMsg.empty() ? "Character creation timeout." : errMsg);
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = local;
-		});
-	}
-
 	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config& cfg)
 	{
 		LOG_INFO(Core, "[StatusProbe] démarrage worker — url='{}'", m_masterAvailabilityUrl);
@@ -3402,146 +2330,6 @@ namespace engine::client
 		LOG_INFO(Core, "[StatusProbe] worker std::thread créé, joinable={}", m_worker.joinable() ? 1 : 0);
 	}
 
-	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
-	{
-		JoinWorker();
-		const std::string host = cfg.GetEffectiveMasterHost("localhost");
-		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
-		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
-		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
-		const std::string email = m_email;
-
-		m_pendingAsyncKind = AsyncKind::ForgotPassword;
-		{
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = {};
-		}
-
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, email]() {
-			AsyncResult local{};
-			engine::network::NetClient client;
-			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
-			client.Connect(host, port);
-			if (!WaitConnected(&client, timeoutMs + 2000u))
-			{
-				local.ready = true;
-				local.message = "Master connect failed or timeout.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			engine::network::RequestResponseDispatcher disp(&client);
-			std::vector<uint8_t> payload = engine::network::BuildForgotPasswordRequestPayload(email);
-			bool done = false;
-			if (!disp.SendRequest(engine::network::kOpcodeForgotPasswordRequest, payload,
-					[&](uint32_t, bool, std::vector<uint8_t>) {
-						done = true;
-					},
-					timeoutMs))
-			{
-				local.ready = true;
-				local.message = "Send FORGOT_PASSWORD failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				return;
-			}
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!done && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			local.ready = true;
-			local.success = done;
-			local.message = done ? "If the email exists, a reset message has been sent." : "FORGOT_PASSWORD timeout.";
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = local;
-		});
-	}
-
-	// Plan C : worker léger de vérification disponibilité username (debounce 800 ms).
-	// N'est lancé que si aucun worker critique (Register/Login/etc.) n'est en cours.
-	void AuthUiPresenter::StartUsernameCheckWorker(const engine::core::Config& cfg)
-	{
-		JoinWorker();
-		const std::string host = cfg.GetEffectiveMasterHost("localhost");
-		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
-		// Timeout court pour ne pas bloquer l'UX.
-		const uint32_t timeoutMs = static_cast<uint32_t>(
-			std::clamp<int64_t>(cfg.GetInt("client.auth_ui.username_check_timeout_ms", 2000), 500, 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
-		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
-		const std::string login = m_usernameLastChecked;
-		const uint32_t seq = m_usernameCheckSeq;
-
-		m_pendingAsyncKind = AsyncKind::UsernameCheck;
-		{
-			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-			m_asyncResult = {};
-		}
-
-		m_worker = std::thread([this, host, port, timeoutMs, allowInsecure, serverFingerprint, login, seq]() {
-			AsyncResult local{};
-			local.usernameCheckSeq = seq;
-			engine::network::NetClient client;
-			ApplyMasterTlsConfig(client, serverFingerprint, allowInsecure);
-			client.Connect(host, port);
-			if (!WaitConnected(&client, timeoutMs + 1000u))
-			{
-				local.ready = true;
-				local.success = false;
-				local.message = "UsernameCheck: connect failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				LOG_WARN(Net, "[UsernameCheck] connect FAILED host={} port={}", host, port);
-				return;
-			}
-			engine::network::RequestResponseDispatcher disp(&client);
-			const std::vector<uint8_t> payload =
-				engine::network::BuildUsernameAvailableRequestPayload(login, seq);
-			bool done = false;
-			uint8_t available = 0;
-			if (!disp.SendRequest(engine::network::kOpcodeUsernameAvailableRequest, payload,
-					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
-						done = !timeout;
-						if (!timeout)
-						{
-							auto resp = engine::network::ParseUsernameAvailableResponsePayload(pl.data(), pl.size());
-							if (resp)
-								available = resp->available;
-						}
-					},
-					timeoutMs))
-			{
-				local.ready = true;
-				local.success = false;
-				local.message = "UsernameCheck: SendRequest failed.";
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-				client.Disconnect("send_fail");
-				return;
-			}
-			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
-			while (!done && std::chrono::steady_clock::now() < deadline)
-			{
-				disp.Pump();
-				std::this_thread::sleep_for(std::chrono::milliseconds(20));
-			}
-			client.Disconnect("username_check_done");
-			local.ready = true;
-			local.success = done;
-			local.usernameAvailable = done ? available : 0;
-			local.usernameCheckSeq = seq;
-			local.message = done ? "" : "UsernameCheck: timeout.";
-			{
-				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
-				m_asyncResult = local;
-			}
-			LOG_INFO(Net, "[UsernameCheck] done seq={} available={}", seq, (int)available);
-		});
-	}
-
 	bool AuthUiPresenter::SetViewportSize(uint32_t width, uint32_t height)
 	{
 		if (width == 0 || height == 0)
@@ -3555,180 +2343,6 @@ namespace engine::client
 		return true;
 	}
 
-bool AuthUiPresenter::HandleNativeAuthScreen(engine::platform::Window& window, const engine::core::Config& cfg)
-{
-#if defined(_WIN32)
-	auto phaseName = [](Phase phase) -> const char*
-	{
-		switch (phase)
-		{
-		case Phase::Login: return "Login";
-		case Phase::Register: return "Register";
-		case Phase::ForgotPassword: return "ForgotPassword";
-		case Phase::VerifyEmail: return "VerifyEmail";
-		case Phase::EmailConfirmationPending: return "EmailConfirmationPending";
-		case Phase::LanguageSelectionFirstRun: return "LanguageSelectionFirstRun";
-		case Phase::LanguageOptions: return "LanguageOptions";
-		case Phase::Submitting: return "Submitting";
-		case Phase::Error: return "Error";
-		default: return "Unknown";
-		}
-	};
-
-	if (m_phase == Phase::Login || m_phase == Phase::ForgotPassword || m_phase == Phase::Register)
-	{
-		if (m_phase == Phase::Login)
-		{
-			m_login = window.GetAuthPrimaryValue();
-			m_password = window.GetAuthPasswordValue();
-			m_rememberLogin = window.GetAuthRememberChecked();
-			if (m_rememberLogin != m_savedRememberLogin)
-			{
-				SaveRememberPreference();
-			}
-		}
-		else if (m_phase == Phase::ForgotPassword)
-		{
-			m_email = window.GetAuthPrimaryValue();
-		}
-
-		switch (window.ConsumeAuthScreenCommand())
-		{
-		case engine::platform::Window::AuthScreenCommand::Submit:
-			LOG_INFO(Core, "[AuthUiPresenter] Submit requested (phase={}, login_empty={}, password_empty={}, email_empty={})",
-				phaseName(m_phase), m_login.empty(), m_password.empty(), m_email.empty());
-			SubmitCurrentPhase(cfg);
-			break;
-		case engine::platform::Window::AuthScreenCommand::Quit:
-			window.RequestClose();
-			break;
-		case engine::platform::Window::AuthScreenCommand::OpenRegister:
-			LOG_INFO(Core, "[AuthUiPresenter] Phase change: {} -> Register", phaseName(m_phase));
-			SetPhase(Phase::Register);
-			m_activeField = 0;
-			m_userErrorText.clear();
-			m_passwordConfirm.clear();
-			// Plan C : réinitialiser état disponibilité username à l'entrée en Register.
-			m_usernameCheckState = UsernameCheckState::Idle;
-			m_usernameCheckSeq++;
-			m_usernameDebounceTimer = 0.0;
-			m_usernameLastChecked.clear();
-			break;
-		case engine::platform::Window::AuthScreenCommand::OpenForgotPassword:
-		{
-			const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
-			LOG_INFO(Core, "[AuthUiPresenter] Open password recovery portal from phase={} url={}", phaseName(m_phase), resetUrl);
-			if (!window.OpenExternalUrl(resetUrl))
-			{
-				EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
-			}
-			break;
-		}
-		case engine::platform::Window::AuthScreenCommand::BackToLogin:
-			LOG_INFO(Core, "[AuthUiPresenter] Phase change: {} -> Login", phaseName(m_phase));
-			if (m_phase == Phase::Register)
-			{
-				m_usernameCheckState = UsernameCheckState::Idle;
-				m_usernameCheckSeq++;
-				m_usernameDebounceTimer = 0.0;
-				m_usernameLastChecked.clear();
-			}
-			SetPhase(Phase::Login);
-			m_activeField = 0;
-			m_userErrorText.clear();
-			break;
-		case engine::platform::Window::AuthScreenCommand::None:
-		default:
-			break;
-		}
-
-		engine::platform::Window::AuthScreenState state{};
-		state.visible = true;
-		state.showPassword = m_phase == Phase::Login;
-		state.showRemember = m_phase == Phase::Login;
-		state.showForgot = m_phase == Phase::Login;
-		state.showRegister = m_phase == Phase::Login;
-		state.showBack = false;
-		state.showQuit = true;
-		state.showInfoImage = m_phase == Phase::Register;
-		state.rememberChecked = m_rememberLogin;
-		state.focusPrimary = m_activeField == 0;
-		state.focusPassword = (m_phase == Phase::Login) && (m_activeField == 1);
-		state.titleLine1 = Tr("auth.title_line1");
-		state.titleLine2 = Tr("auth.title_line2");
-		state.sectionTitle = m_phase == Phase::Login ? Tr("auth.section.login")
-			: (m_phase == Phase::ForgotPassword ? Tr("auth.section.forgot_password") : Tr("auth.section.register"));
-		state.primaryLabel = m_phase == Phase::Register ? "" : Tr("common.login_or_email");
-		state.primaryValue = (m_phase == Phase::Login) ? m_login : m_email;
-		state.passwordLabel = Tr("auth.label.password");
-		state.passwordValue = m_password;
-		state.rememberLabel = Tr("auth.checkbox.remember");
-		state.forgotLabel = Tr("auth.button.forgot_password");
-		state.registerLabel = Tr("auth.button.register");
-		state.submitLabel = m_phase == Phase::Register ? "" : Tr("common.submit");
-		{
-			std::string q = Tr("common.quit_desktop");
-			if (q.empty())
-				q = Tr("common.quit");
-			state.quitLabel = std::move(q);
-		}
-		state.backgroundImagePath = m_phase == Phase::Register ? std::string(kRegisterBackgroundPath) : std::string(kLoginBackgroundPath);
-		state.logoImagePath = m_phase == Phase::Login ? std::string(kLoginLogoPath) : "";
-		state.infoImagePath = m_phase == Phase::Register ? std::string(kRegisterInfoPath) : "";
-		window.SetAuthScreenState(state);
-		return true;
-	}
-	window.SetAuthScreenState({});
-	(void)cfg;
-	return false;
-#else
-	(void)window;
-	(void)cfg;
-	return false;
-#endif
-}
-
-void AuthUiPresenter::CommitLanguageOptionsMenuApply(const engine::core::Config& cfg)
-{
-	(void)cfg;
-	m_videoFullscreen = m_videoFullscreenPending;
-	m_videoVsync = m_videoVsyncPending;
-	m_videoResWidth = m_videoResWidthPending;
-	m_videoResHeight = m_videoResHeightPending;
-	m_videoQualityPreset = m_videoQualityPresetPending;
-	m_videoFovDegrees = m_videoFovDegreesPending;
-	m_audioMasterVolume = m_audioMasterVolumePending;
-	m_audioMusicVolume = m_audioMusicVolumePending;
-	m_audioSfxVolume = m_audioSfxVolumePending;
-	m_audioUiVolume = m_audioUiVolumePending;
-	m_mouseSensitivity = m_mouseSensitivityPending;
-	m_invertY = m_invertYPending;
-	m_useZqsd = m_useZqsdPending;
-	m_gameplayUdpEnabled = m_gameplayUdpEnabledPending;
-	m_allowInsecureDev = m_allowInsecureDevPending;
-	m_authTimeoutMs = m_authTimeoutMsPending;
-	m_pendingVideoSettings.applyRequested = true;
-	m_pendingVideoSettings.fullscreen = m_videoFullscreen;
-	m_pendingVideoSettings.vsync = m_videoVsync;
-	m_pendingVideoSettings.resolutionWidth = m_videoResWidth;
-	m_pendingVideoSettings.resolutionHeight = m_videoResHeight;
-	m_pendingVideoSettings.qualityPreset = m_videoQualityPreset;
-	m_pendingVideoSettings.fovDegrees = m_videoFovDegrees;
-	m_pendingAudioSettings.applyRequested = true;
-	m_pendingAudioSettings.masterVolume = m_audioMasterVolume;
-	m_pendingAudioSettings.musicVolume = m_audioMusicVolume;
-	m_pendingAudioSettings.sfxVolume = m_audioSfxVolume;
-	m_pendingAudioSettings.uiVolume = m_audioUiVolume;
-	m_pendingControlSettings.applyRequested = true;
-	m_pendingControlSettings.mouseSensitivity = m_mouseSensitivity;
-	m_pendingControlSettings.invertY = m_invertY;
-	m_pendingControlSettings.useZqsd = m_useZqsd;
-	m_pendingGameSettings.applyRequested = true;
-	m_pendingGameSettings.gameplayUdpEnabled = m_gameplayUdpEnabled;
-	m_pendingGameSettings.allowInsecureDev = m_allowInsecureDev;
-	m_pendingGameSettings.authTimeoutMs = m_authTimeoutMs;
-	ApplyLocaleSelection(false);
-}
 
 void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 {
@@ -3813,7 +2427,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		StartRegisterWorker(cfg);
 		return;
 	}
-	if (m_phase == Phase::VerifyEmail)
+	if (m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending)
 	{
 		if (m_pendingVerifyAccountId == 0 || m_verifyCode.empty())
 		{
@@ -3977,9 +2591,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				default: return &m_country;
 				}
 			case Phase::VerifyEmail:
-				return &m_verifyCode;
 			case Phase::EmailConfirmationPending:
-				return nullptr;
+				return &m_verifyCode;
 			case Phase::ForgotPassword:
 				return &m_email;
 			case Phase::Terms:
@@ -4013,13 +2626,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					return;
 				}
 				SubmitCurrentPhase(cfg);
-			}
-			else if (m_phase == Phase::EmailConfirmationPending)
-			{
-				m_registeredTagId.clear();
-				SetPhase(Phase::Login);
-				m_activeField = 0;
-				m_userErrorText.clear();
 			}
 			else
 			{
@@ -4110,13 +2716,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 					}
 				}
 
-				if (m_phase == Phase::Terms && input.MouseScrollDelta() != 0)
-				{
-					const int scrollDir = input.MouseScrollDelta() > 0 ? -24 : 24;
-					const int next = static_cast<int>(m_termsScrollOffset) + scrollDir;
-					m_termsScrollOffset = static_cast<uint32_t>(std::max(0, next));
-				}
-
 				for (size_t i = 0; i < model.fields.size(); ++i)
 				{
 					const auto& fldHit = model.fields[i];
@@ -4184,20 +2783,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 						}
 						else if (f == 9)
 							AdjustCountryCycle(m_country, d);
-					}
-				}
-
-				if (m_phase == Phase::LanguageOptions && m_optionsSubMenu == OptionsSubMenu::Root && input.MouseScrollDelta() != 0)
-				{
-					const int d = input.MouseScrollDelta() > 0 ? -1 : 1;
-					const uint32_t kRootCategoryCount = 5u;
-					if (d < 0)
-					{
-						m_optionsRootSelection = (m_optionsRootSelection == 0u) ? (kRootCategoryCount - 1u) : (m_optionsRootSelection - 1u);
-					}
-					else
-					{
-						m_optionsRootSelection = (m_optionsRootSelection + 1u) % kRootCategoryCount;
 					}
 				}
 
@@ -4859,6 +3444,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 									break;
 								case Phase::Register:
 								case Phase::VerifyEmail:
+								case Phase::EmailConfirmationPending:
 								case Phase::ForgotPassword:
 									if (i == 0) applyPrimaryAction();
 									else if (i == 1)
@@ -4871,9 +3457,19 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 											m_usernameDebounceTimer = 0.0;
 											m_usernameLastChecked.clear();
 										}
-										SetPhase(Phase::Login);
-										m_activeField = 0;
-										m_userErrorText.clear();
+										if (m_phase == Phase::EmailConfirmationPending)
+										{
+											m_registeredTagId.clear();
+											m_userErrorText.clear();
+											m_activeField = 0;
+											SetPhase(Phase::Login);
+										}
+										else
+										{
+											SetPhase(Phase::Login);
+											m_activeField = 0;
+											m_userErrorText.clear();
+										}
 									}
 									break;
 								case Phase::ShardPick:
@@ -4886,15 +3482,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 										m_shardPickEntries.clear();
 										m_shardPickChoiceShardId = 0;
 										SetPhase(Phase::Login);
-										m_userErrorText.clear();
-									}
-									break;
-								case Phase::EmailConfirmationPending:
-									if (i == 0)
-									{
-										m_registeredTagId.clear();
-										SetPhase(Phase::Login);
-										m_activeField = 0;
 										m_userErrorText.clear();
 									}
 									break;
@@ -4959,14 +3546,14 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 								continue;
 							const bool digitsOnlyField =
 								(m_phase == Phase::Register && (m_activeField == 6 || m_activeField == 7 || m_activeField == 8)) ||
-								(m_phase == Phase::VerifyEmail);
+								(m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending);
 							if (digitsOnlyField && (c < '0' || c > '9'))
 								continue;
 							const size_t maxLen =
 								(m_phase == Phase::Register && (m_activeField == 6 || m_activeField == 7)) ? 2u :
 								(m_phase == Phase::Register && m_activeField == 8) ? 4u :
 								(m_phase == Phase::Register && m_activeField == 9) ? 2u :
-								(m_phase == Phase::VerifyEmail) ? 6u :
+								(m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending) ? 6u :
 								(m_phase == Phase::CharacterCreate) ? 32u : 256u;
 							if (field->size() >= maxLen)
 								continue;
@@ -5037,41 +3624,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				m_activeField = (m_activeField + 1u) % 3u;
 			else if (m_phase == Phase::Register)
 				m_activeField = (m_activeField + 1u) % 10u;
-			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::ForgotPassword)
+			else if (m_phase == Phase::ForgotPassword)
 				m_activeField = 0;
 			else
 				m_activeField = 0;
 			LOG_DEBUG(Core, "[AuthUiPresenter] Focus field={}", m_activeField);
-		}
-
-		if (!usingNativeAuth && !authUiImguiMode && m_phase == Phase::Register && (
-				(m_activeField >= 6u && m_activeField <= 8u) || m_activeField == 9u))
-		{
-			const auto stepCycle = [this](int delta)
-			{
-				if (m_activeField == 6)
-				{
-					AdjustBirthCycle(m_birthDay, delta, 1, 31);
-				}
-				else if (m_activeField == 7)
-				{
-					AdjustBirthCycle(m_birthMonth, delta, 1, 12);
-				}
-				else if (m_activeField == 8)
-				{
-					AdjustBirthCycle(m_birthYear, delta, 1900, 2100);
-				}
-				else if (m_activeField == 9)
-					AdjustCountryCycle(m_country, delta);
-			};
-			if (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Right))
-			{
-				stepCycle(1);
-			}
-			if (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Left))
-			{
-				stepCycle(-1);
-			}
 		}
 
 		if (!usingNativeAuth && !authUiImguiMode && m_phase == Phase::Login && input.WasPressed(engine::platform::Key::Space) && m_activeField == 2u)
@@ -5088,275 +3645,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			}
 		}
 
-		if (m_phase == Phase::ShardPick && !usingNativeAuth && !authUiImguiMode)
-		{
-			const auto& entries = m_shardPickEntries;
-			auto countEligible = [&entries]() -> uint32_t {
-				uint32_t n = 0;
-				for (const auto& e : entries)
-				{
-					if (e.status == 1u && !e.endpoint.empty())
-						++n;
-				}
-				return n;
-			};
-			const uint32_t nElig = countEligible();
-			if (nElig > 0u && (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Left)))
-			{
-				uint32_t idx = 0;
-				for (const auto& e : entries)
-				{
-					if (e.status != 1u || e.endpoint.empty())
-						continue;
-					if (e.shard_id == m_shardPickChoiceShardId)
-						break;
-					++idx;
-				}
-				idx = (idx == 0u) ? (nElig - 1u) : (idx - 1u);
-				uint32_t j = 0;
-				for (const auto& e : entries)
-				{
-					if (e.status != 1u || e.endpoint.empty())
-						continue;
-					if (j == idx)
-					{
-						m_shardPickChoiceShardId = e.shard_id;
-						break;
-					}
-					++j;
-				}
-			}
-			if (nElig > 0u && (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Right)))
-			{
-				uint32_t idx = 0;
-				for (const auto& e : entries)
-				{
-					if (e.status != 1u || e.endpoint.empty())
-						continue;
-					if (e.shard_id == m_shardPickChoiceShardId)
-						break;
-					++idx;
-				}
-				idx = (idx + 1u) % nElig;
-				uint32_t j = 0;
-				for (const auto& e : entries)
-				{
-					if (e.status != 1u || e.endpoint.empty())
-						continue;
-					if (j == idx)
-					{
-						m_shardPickChoiceShardId = e.shard_id;
-						break;
-					}
-					++j;
-				}
-			}
-		}
+		Update_Terms(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_CharacterCreate(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_LanguageSelect(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_ShardPick(input, cfg, window, usingNativeAuth, authUiImguiMode);
 
-		if (m_phase == Phase::Terms && !authUiImguiMode)
-		{
-			const uint32_t kStep = 12u;
-			if (input.WasPressed(engine::platform::Key::Down))
-				m_termsScrollOffset += kStep;
-			if (input.WasPressed(engine::platform::Key::PageDown))
-				m_termsScrollOffset += kStep * 2u;
-			if (input.WasPressed(engine::platform::Key::Up))
-				m_termsScrollOffset = (m_termsScrollOffset > kStep) ? (m_termsScrollOffset - kStep) : 0u;
-			if (input.WasPressed(engine::platform::Key::PageUp))
-				m_termsScrollOffset = (m_termsScrollOffset > (kStep * 2u)) ? (m_termsScrollOffset - (kStep * 2u)) : 0u;
-			const uint32_t visibleChars = 900u;
-			if (m_termsTotalLength <= visibleChars || m_termsScrollOffset + visibleChars >= m_termsTotalLength)
-				m_termsScrolledToBottom = true;
-			if (m_termsScrolledToBottom && input.WasPressed(engine::platform::Key::Space))
-				m_termsAcknowledgeChecked = !m_termsAcknowledgeChecked;
-		}
-		if (!usingNativeAuth && !authUiImguiMode
-			&& (m_phase == Phase::LanguageSelectionFirstRun || m_phase == Phase::LanguageOptions))
-		{
-			const auto& locales = m_localization.GetAvailableLocales();
-			if (m_phase == Phase::LanguageSelectionFirstRun)
-			{
-				if (!locales.empty())
-				{
-					if (input.WasPressed(engine::platform::Key::Up) || input.WasPressed(engine::platform::Key::Left))
-					{
-						m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
-							? static_cast<uint32_t>(locales.size() - 1u)
-							: (m_languageSelectionIndex - 1u);
-						m_selectedLocale = locales[m_languageSelectionIndex];
-						LOG_INFO(Core, "[AuthUiPresenter] Locale selection moved to {}", m_selectedLocale);
-					}
-					if (input.WasPressed(engine::platform::Key::Down) || input.WasPressed(engine::platform::Key::Right))
-					{
-						m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
-						m_selectedLocale = locales[m_languageSelectionIndex];
-						LOG_INFO(Core, "[AuthUiPresenter] Locale selection moved to {}", m_selectedLocale);
-					}
-				}
-			}
-			else
-			{
-				const uint32_t kRootCategoryCount = 5u;
-				if (m_optionsSubMenu == OptionsSubMenu::Root)
-				{
-					if (input.WasPressed(engine::platform::Key::Up))
-					{
-						m_optionsRootSelection = (m_optionsRootSelection == 0u) ? (kRootCategoryCount - 1u) : (m_optionsRootSelection - 1u);
-						LOG_INFO(Core, "[AuthUiPresenter] Options root selection={}", m_optionsRootSelection);
-					}
-					if (input.WasPressed(engine::platform::Key::Down))
-					{
-						m_optionsRootSelection = (m_optionsRootSelection + 1u) % kRootCategoryCount;
-						LOG_INFO(Core, "[AuthUiPresenter] Options root selection={}", m_optionsRootSelection);
-					}
-				}
-				else
-				{
-					const uint32_t n = OptionsSubmenuLineCount(m_optionsSubMenu);
-					if (n > 0u)
-					{
-						if (input.WasPressed(engine::platform::Key::Up))
-						{
-							m_optionsSubSelection = (m_optionsSubSelection == 0u) ? (n - 1u) : (m_optionsSubSelection - 1u);
-							LOG_INFO(Core, "[AuthUiPresenter] Options sub selection={}", m_optionsSubSelection);
-						}
-						if (input.WasPressed(engine::platform::Key::Down))
-						{
-							m_optionsSubSelection = (m_optionsSubSelection + 1u) % n;
-							LOG_INFO(Core, "[AuthUiPresenter] Options sub selection={}", m_optionsSubSelection);
-						}
-					}
-
-					if (!locales.empty() && m_optionsSubMenu == OptionsSubMenu::Language
-						&& (m_optionsSubSelection == 0u || m_optionsSubSelection == 1u)
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						if (input.WasPressed(engine::platform::Key::Left))
-						{
-							m_languageSelectionIndex = (m_languageSelectionIndex == 0u)
-								? static_cast<uint32_t>(locales.size() - 1u)
-								: (m_languageSelectionIndex - 1u);
-						}
-						else
-						{
-							m_languageSelectionIndex = (m_languageSelectionIndex + 1u) % static_cast<uint32_t>(locales.size());
-						}
-						m_selectedLocale = locales[m_languageSelectionIndex];
-						LOG_INFO(Core, "[AuthUiPresenter] Options locale candidate={}", m_selectedLocale);
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Video && m_optionsSubSelection == 0u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						m_videoFullscreenPending = !m_videoFullscreenPending;
-						LOG_INFO(Core, "[AuthUiPresenter] Options fullscreen candidate={}", m_videoFullscreenPending);
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Video && m_optionsSubSelection == 1u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						m_videoVsyncPending = !m_videoVsyncPending;
-						LOG_INFO(Core, "[AuthUiPresenter] Options vsync candidate={}", m_videoVsyncPending);
-					}
-					auto adjustVolume = [&](float& value, std::string_view label)
-					{
-						if (input.WasPressed(engine::platform::Key::Left))
-							value = ClampOptionStep(value - 0.1f);
-						else
-							value = ClampOptionStep(value + 0.1f);
-						LOG_INFO(Core, "[AuthUiPresenter] Options {} candidate={:.1f}", label, value);
-					};
-					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 0u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						adjustVolume(m_audioMasterVolumePending, "master");
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 1u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						adjustVolume(m_audioMusicVolumePending, "music");
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 2u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						adjustVolume(m_audioSfxVolumePending, "sfx");
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Audio && m_optionsSubSelection == 3u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						adjustVolume(m_audioUiVolumePending, "ui");
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Controls && m_optionsSubSelection == 0u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						if (input.WasPressed(engine::platform::Key::Left))
-							m_mouseSensitivityPending = std::max(0.001f, m_mouseSensitivityPending - 0.001f);
-						else
-							m_mouseSensitivityPending = std::min(0.010f, m_mouseSensitivityPending + 0.001f);
-						LOG_INFO(Core, "[AuthUiPresenter] Options mouse sensitivity candidate={:.4f}", m_mouseSensitivityPending);
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Controls && m_optionsSubSelection == 1u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						m_invertYPending = !m_invertYPending;
-						LOG_INFO(Core, "[AuthUiPresenter] Options invert_y candidate={}", m_invertYPending);
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Controls && m_optionsSubSelection == 2u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						m_useZqsdPending = !m_useZqsdPending;
-						LOG_INFO(Core, "[AuthUiPresenter] Options movement layout candidate={}", m_useZqsdPending ? "zqsd" : "wasd");
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Game && m_optionsSubSelection == 0u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						m_gameplayUdpEnabledPending = !m_gameplayUdpEnabledPending;
-						LOG_INFO(Core, "[AuthUiPresenter] Options gameplay_udp candidate={}", m_gameplayUdpEnabledPending);
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Game && m_optionsSubSelection == 1u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						m_allowInsecureDevPending = !m_allowInsecureDevPending;
-						LOG_INFO(Core, "[AuthUiPresenter] Options allow_insecure_dev candidate={}", m_allowInsecureDevPending);
-					}
-					if (m_optionsSubMenu == OptionsSubMenu::Game && m_optionsSubSelection == 2u
-						&& (input.WasPressed(engine::platform::Key::Left) || input.WasPressed(engine::platform::Key::Right)))
-					{
-						if (input.WasPressed(engine::platform::Key::Left))
-							m_authTimeoutMsPending = (m_authTimeoutMsPending > 1000u) ? (m_authTimeoutMsPending - 1000u) : 1000u;
-						else
-							m_authTimeoutMsPending = std::min<uint32_t>(15000u, m_authTimeoutMsPending + 1000u);
-						LOG_INFO(Core, "[AuthUiPresenter] Options auth timeout candidate={}ms", m_authTimeoutMsPending);
-					}
-				}
-			}
-		}
-
-		const bool loginShortcutModifier = input.IsDown(engine::platform::Key::Control);
-		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::R) && m_phase == Phase::Login)
-		{
-			SetPhase(Phase::Register);
-			m_activeField = 0;
-			m_userErrorText.clear();
-			m_passwordConfirm.clear();
-			// Plan C : réinitialiser état disponibilité username à l'entrée en Register.
-			m_usernameCheckState = UsernameCheckState::Idle;
-			m_usernameCheckSeq++;
-			m_usernameDebounceTimer = 0.0;
-			m_usernameLastChecked.clear();
-			LOG_INFO(Core, "[AuthUiPresenter] Switched to Register screen");
-		}
-		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::F) && m_phase == Phase::Login)
-		{
-			const std::string resetUrl = ResolvePasswordRecoveryUrl(cfg);
-			LOG_INFO(Core, "[AuthUiPresenter] Keyboard shortcut opens password recovery portal ({})", resetUrl);
-			if (!window.OpenExternalUrl(resetUrl))
-			{
-				EnterAuthErrorPhase(Phase::Login, Tr("auth.error.open_recovery_portal"));
-			}
-		}
-		if (!usingNativeAuth && !authUiImguiMode && loginShortcutModifier && input.WasPressed(engine::platform::Key::O) && m_phase == Phase::Login)
-		{
-			OpenLanguageOptions();
-		}
+		Update_LoginShortcuts(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_Register(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_ForgotPassword(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_VerifyEmail(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_Options(input, cfg, window, usingNativeAuth, authUiImguiMode);
 
 		if ((!usingNativeAuth && !authUiImguiMode && input.WasPressed(engine::platform::Key::Enter))
 			|| (usingNativeAuth && m_phase == Phase::Error))
@@ -5491,585 +3789,45 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		switch (m_phase)
 		{
 		case Phase::Login:
-			model.sectionTitle = Tr("auth.section.login");
-			// Statut maître : toujours recalculé (évite un libellé « vérification » figé si m_infoBanner bloquait la branche).
-			{
-				std::string serverBanner;
-				if (m_authAvailabilityChecking)
-				{
-					serverBanner = Tr("auth.status.checking");
-				}
-				else if (m_statusProbeCompletedOnce && !m_statusCache.authOk)
-				{
-					// Échec TCP/HTTP ou réponse invalide : ce n'est pas la même chose qu'une maintenance déclarée dans le JSON /status.
-					serverBanner = m_lastStatusProbeHttpSuccess ? Tr("auth.status.unavailable") : Tr("auth.status.network_error");
-				}
-				if (!serverBanner.empty())
-				{
-					model.infoBanner = std::move(serverBanner);
-				}
-				else
-				{
-					model.infoBanner = m_infoBanner;
-				}
-			}
-			addField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, {}, Tr("auth.tooltip.login"),
-				Tr("auth.placeholder.login"));
-			addField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, {}, Tr("auth.tooltip.password"),
-				Tr("auth.placeholder.password"));
-			model.authLoginVersionBadge = Tr("auth.login.version_badge");
-			model.authRememberDetailLine = Tr("auth.login.remember_detail");
-			model.authLoginFooterChips.clear();
-			model.authLoginFooterChips.push_back({Tr("auth.footer.chip.tab.key"), Tr("auth.footer.chip.tab.desc")});
-			model.authLoginFooterChips.push_back({Tr("auth.footer.chip.enter.key"), Tr("auth.footer.chip.enter.desc")});
-			model.authLoginFooterChips.push_back({Tr("auth.footer.chip.esc.key"), Tr("auth.footer.chip.esc.desc")});
-			{
-				RenderBodyLine remember{};
-				remember.text = Tr("auth.login.remember_title");
-				remember.active = (m_activeField == 2u);
-				remember.checkbox = true;
-				remember.checkboxChecked = m_rememberLogin;
-				remember.hovered = (m_hoveredBodyLineIndex == static_cast<int32_t>(model.bodyLines.size()));
-				model.bodyLines.push_back(std::move(remember));
-			}
-			addBodyLine(Tr("auth.link.forgot_password_short"), false, true);
-			// Boutons : uniquement des clés i18n ; le texte affiché est résolu à la fin (changement de langue pris en compte).
-			addActionKeys("auth.login.maquette_create", false, true, true);
-			addActionKeys("auth.login.footer_options", false, true, true);
-			addActionKeys("auth.login.maquette_submit", true, true, false);
-			addActionKeys("common.quit_desktop", false, true, false, "common.quit");
-			model.footerHint = Tr("auth.footer_hint.login_bar");
+			BuildModel_Login(model);
 			break;
 		case Phase::Register:
-		{
-			model.sectionTitle = Tr("auth.panel.register");
-			auto maskedConfirm = [this]() -> std::string {
-				std::string out;
-				AppendPasswordStars(out, m_passwordConfirm.size());
-				return out;
-			};
-
-			// Calcul correspondance mots de passe
-			const bool pwdMatch    = !m_passwordConfirm.empty() && (m_password == m_passwordConfirm);
-			const bool pwdMismatch = !m_passwordConfirm.empty() && (m_password != m_passwordConfirm);
-
-			// Helper pour ajouter un champ de grille
-			auto addGridField = [&](std::string label, std::string value, bool active,
-				bool secret, bool cyclePicker, std::string tooltipText,
-				int32_t col, int32_t span, int32_t pwdMatchState = 0, std::string inputPlaceholder = {})
-			{
-				RenderField f{};
-				f.label           = std::move(label);
-				f.value           = std::move(value);
-				f.active          = active;
-				f.hovered         = static_cast<int32_t>(model.fields.size()) == m_hoveredFieldIndex;
-				f.secret          = secret;
-				f.cyclePicker     = cyclePicker;
-				f.tooltipText     = std::move(tooltipText);
-				f.gridColumn      = col;
-				f.gridSpan        = span;
-				f.passwordMatchState = pwdMatchState;
-				f.inputPlaceholder = std::move(inputPlaceholder);
-				model.fields.push_back(std::move(f));
-			};
-
-			// Affichage mois localisé
-			auto monthDisplay = [this](std::string_view raw) -> std::string {
-				int v = 1;
-				if (!raw.empty())
-				{
-					try { v = std::clamp(std::stoi(std::string(raw)), 1, 12); }
-					catch (...) { v = 1; }
-				}
-				return std::string("< ") + Tr("month." + std::to_string(v)) + " >";
-			};
-
-			// Affichage pays localisé
-			auto countryDisplay = [this](std::string_view code) -> std::string {
-				if (code.empty()) return std::string("< ") + Tr("country.FR") + " >";
-				return std::string("< ") + Tr("country." + std::string(code)) + " >";
-			};
-
-			// Année de naissance par défaut = année courante - 25
-			static const int kDefaultYear = []() -> int {
-				const std::time_t t = std::time(nullptr);
-				struct std::tm tm{};
-#if defined(_WIN32)
-				localtime_s(&tm, &t);
-#else
-				localtime_r(&t, &tm);
-#endif
-				return 1900 + tm.tm_year - 25;
-			}();
-
-			// Disposition grille (10 champs, indices 0-9) :
-			// Ligne 0 : login (col0, span1), pays (col2, span1)
-			// Ligne 1 : lastName (col0, span1), firstName (col1, span1)
-			// Ligne 2 : email (col0, span3)
-			// Ligne 3 : birthDay (col0), birthMonth (col1), birthYear (col2)
-			// Ligne 4 : password (col0, span3)
-			// Ligne 5 : passwordConfirm (col0, span3)
-			addGridField(Tr("auth.label.login"), m_login, m_activeField == 0, false, false, Tr("auth.tooltip.login"), 0, 1, 0,
-				Tr("auth.placeholder.register_login"));
-			// Plan C : indicateur disponibilité username sur le champ login.
-			model.fields.back().usernameCheckState = [this]() -> int32_t {
-				switch (m_usernameCheckState)
-				{
-				case UsernameCheckState::Available: return 2;
-				case UsernameCheckState::Taken:     return 3;
-				case UsernameCheckState::Pending:   return 1;
-				default:                            return 0;
-				}
-			}();
-			addGridField(Tr("auth.label.country"), countryDisplay(m_country), m_activeField == 9, false, true,
-				Tr("auth.tooltip.country"), 2, 1);
-			addGridField(Tr("auth.label.last_name"),  m_lastName,  m_activeField == 5,
-				false, false, Tr("auth.tooltip.last_name"),  0, 1);
-			addGridField(Tr("auth.label.first_name"), m_firstName, m_activeField == 4,
-				false, false, Tr("auth.tooltip.first_name"), 1, 1);
-			addGridField(Tr("common.email"), m_email, m_activeField == 3, false, false, Tr("auth.tooltip.email"), 0, 3, 0,
-				Tr("auth.placeholder.register_email"));
-			addGridField(Tr("auth.label.birth_day"),
-				BirthCycleDisplay(m_birthDay, 1, 1, 31),       m_activeField == 6,
-				false, true, Tr("auth.tooltip.birth_day"),   0, 1);
-			addGridField(Tr("auth.label.birth_month"),
-				monthDisplay(m_birthMonth),                     m_activeField == 7,
-				false, true, Tr("auth.tooltip.birth_month"), 1, 1);
-			addGridField(Tr("auth.label.birth_year"),
-				BirthCycleDisplay(m_birthYear, kDefaultYear, 1900, 2100), m_activeField == 8,
-				false, true, Tr("auth.tooltip.birth_year"),  2, 1);
-			addGridField(Tr("auth.label.password"), maskedPassword(), m_activeField == 1, true, false, Tr("auth.tooltip.password"),
-				0, 3, 0, Tr("auth.placeholder.register_password"));
-			addGridField(Tr("auth.label.password_confirm"), maskedConfirm(), m_activeField == 2, true, false,
-				Tr("auth.tooltip.password_confirm"), 0, 3, pwdMatch ? 1 : (pwdMismatch ? -1 : 0),
-				Tr("auth.placeholder.register_password_confirm"));
-
-			// --- Dropdowns date de naissance ---
-			{
-				auto makeIntOptions = [](int lo, int hi) -> std::vector<DropdownOption>
-				{
-					std::vector<DropdownOption> opts;
-					opts.reserve(static_cast<size_t>(hi - lo + 1));
-					for (int i = lo; i <= hi; ++i)
-					{
-						char buf[8]{};
-						std::snprintf(buf, sizeof(buf), "%d", i);
-						opts.push_back({ std::string(buf), std::string(buf) });
-					}
-					return opts;
-				};
-
-				// Dropdown Jour (1-31).
-				{
-					RenderDropdown dd;
-					dd.label         = Tr("auth.label.birth_day");
-					dd.options       = makeIntOptions(1, 31);
-					dd.selectedIndex = std::clamp(m_birthDayIndex, 0, 30);
-					dd.isOpen        = (m_openDropdownIndex == 0);
-					model.dropdowns.push_back(dd);
-				}
-
-				// Dropdown Mois (noms localisés).
-				{
-					RenderDropdown dd;
-					dd.label = Tr("auth.label.birth_month");
-					for (int m = 1; m <= 12; ++m)
-					{
-						char key[16]{};
-						std::snprintf(key, sizeof(key), "month.%d", m);
-						dd.options.push_back({ Tr(std::string_view(key)), std::to_string(m) });
-					}
-					dd.selectedIndex = std::clamp(m_birthMonthIndex, 0, 11);
-					dd.isOpen        = (m_openDropdownIndex == 1);
-					model.dropdowns.push_back(dd);
-				}
-
-				// Dropdown Année (1900-2010).
-				{
-					RenderDropdown dd;
-					dd.label   = Tr("auth.label.birth_year");
-					dd.options = makeIntOptions(1900, 2010);
-					dd.selectedIndex = std::clamp(m_birthYearIndex, 0, 110);
-					dd.isOpen        = (m_openDropdownIndex == 2);
-					model.dropdowns.push_back(dd);
-				}
-
-				// BuildRenderModel reste const : ne pas muter l'état ici.
-			}
-
-			model.authRegisterPanelBadge = Tr("auth.register.panel_badge");
-			model.authRegisterPanelSubtitle = Tr("auth.register.panel_subtitle");
-			model.authRegisterEmailHint = Tr("auth.register.email_hint");
-			model.authRegisterCrumbLabels.clear();
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.lang"));
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.account"));
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.email"));
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.world"));
-			model.authRegisterCrumbCurrent = 1;
-			model.authRegisterCountryPick.clear();
-			for (std::string_view codeView : kCountryCodes)
-			{
-				const std::string code(codeView);
-				model.authRegisterCountryPick.push_back({ code, Tr(std::string("country.") + code) });
-			}
-			model.authRegisterFooterChips.clear();
-			model.authRegisterFooterChips.push_back({ Tr("auth.footer.chip.enter.key"), Tr("auth.register.footer.validate") });
-			model.authRegisterFooterChips.push_back({ Tr("auth.footer.chip.esc.key"), Tr("auth.register.footer.back") });
-			model.authRegisterShowErrorsLabel = Tr("auth.register.show_errors");
-
-			addActionKeys("auth.register.submit_create", true);
-			addActionKeys("auth.hint.return_login", false);
+			BuildModel_Register(model);
 			break;
-		}
 		case Phase::VerifyEmail:
-			model.sectionTitle = Tr("auth.phase.verify_email");
-			addField(Tr("auth.label.verify_code"), m_verifyCode, true);
-			model.authRegisterCrumbLabels.clear();
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.lang"));
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.account"));
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.email"));
-			model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.world"));
-			model.authRegisterCrumbCurrent = 2;
-			model.authVerifyPanelTitle = Tr("auth.verify.panel_title");
-			model.authVerifyPanelSubtitle = Tr("auth.verify.subtitle", { { "email", m_email } });
-			model.authVerifyPanelBadge = Tr("auth.verify.panel_badge");
-			model.authVerifyInfoPopupText = Tr("auth.verify.info_popup");
-			model.authVerifyDigitLabel = Tr("auth.verify.digit_label");
-			model.authVerifyResendLabel = Tr("auth.verify.resend");
-			model.authVerifyChangeEmailLabel = Tr("auth.verify.change_email");
-			model.authVerifySubmitLabel = Tr("auth.verify.submit");
-			model.authVerifyBackLabel = Tr("auth.verify.back");
-			model.authVerifyBackKeycap = Tr("auth.verify.back_keycap");
-			model.authVerifySubmitKeycap = Tr("auth.verify.submit_keycap");
-			model.authVerifyDevHint = Tr("auth.verify.dev_hint");
-			addActionKeys("common.submit", true);
-			addActionKeys("auth.hint.return_login", false);
+			BuildModel_VerifyEmail(model);
 			break;
 		case Phase::EmailConfirmationPending:
-		{
-			// Titre du jeu (titleLine1) inchangé depuis les défauts du modèle.
-			model.titleLine2   = Tr("auth.email_confirmation.title");
-			model.sectionTitle = Tr("auth.panel.email_confirmation");
-			model.infoBanner.clear();
-			addBodyLinesFromNewlines(Tr("auth.email_confirmation.message"));
-			if (!m_registeredTagId.empty())
-			{
-				addBodyLine(Tr("auth.info.tag_id") + " " + m_registeredTagId);
-			}
-			RenderAction back;
-			back.label   = Tr("auth.email_confirmation.back_to_login");
-			back.primary = true;
-			model.actions.push_back(back);
+			BuildModel_EmailConfirmationPending(model);
 			break;
-		}
 		case Phase::ForgotPassword:
-			model.sectionTitle = Tr("auth.section.forgot_password");
-			addField(Tr("common.email"), m_email, true);
-			addActionKeys("common.submit", true);
-			addActionKeys("auth.hint.return_login", false);
+			BuildModel_ForgotPassword(model);
 			break;
 		case Phase::Terms:
-		{
-			model.sectionTitle = Tr("auth.panel.terms");
-			addBodyLine(Tr("auth.panel.edition") + " " + std::to_string(m_pendingTermsEditionId));
-			addBodyLine(Tr("auth.panel.version") + " " + m_termsVersionLabel);
-			addBodyLine(Tr("auth.panel.title") + " " + m_termsTitle);
-			addBodyLine(Tr("auth.panel.language") + " " + m_termsLocale);
-			const size_t start = static_cast<size_t>(std::min<uint32_t>(m_termsScrollOffset, static_cast<uint32_t>(m_termsContent.size())));
-			const size_t count = std::min<size_t>(900u, m_termsContent.size() - start);
-			addBodyLine(std::string(m_termsContent.data() + start, count));
-			addBodyLine(m_termsScrolledToBottom ? Tr("auth.panel.end_reached") : Tr("auth.panel.end_not_reached"));
-			addBodyLine(m_termsAcknowledgeChecked ? Tr("auth.panel.accept_checked") : Tr("auth.panel.accept_unchecked"), true);
-			addActionKeys("auth.hint.terms.accept", true);
+			BuildModel_Terms(model);
 			break;
-		}
 		case Phase::CharacterCreate:
-			model.sectionTitle = Tr("auth.panel.character_create");
-			addField(Tr("auth.label.character_name"), m_characterName, true);
-			addBodyLine(Tr("auth.hint.character.rules"));
-			addActionKeys("common.submit", true);
+			BuildModel_CharacterCreate(model);
 			break;
 		case Phase::ShardPick:
-			model.sectionTitle = Tr("auth.phase.shard_pick");
-			addBodyLine(Tr("auth.shard_pick.hint"), false, false);
-			for (const auto& e : m_shardPickEntries)
-			{
-				const std::string line = Tr("auth.shard_pick.line",
-					{ { "id", std::to_string(e.shard_id) },
-						{ "load", std::to_string(e.current_load) + "/" + std::to_string(e.max_capacity) },
-						{ "endpoint", e.endpoint.empty() ? std::string("-") : e.endpoint } });
-				const bool rowSelectable = (e.status == 1u && !e.endpoint.empty());
-				addBodyLine(line, m_shardPickChoiceShardId == e.shard_id, rowSelectable);
-			}
-			addActionKeys("common.submit", true, m_shardPickChoiceShardId != 0u, false);
-			addActionKeys("common.back", false, true, false);
+			BuildModel_ShardPick(model);
 			break;
 		case Phase::LanguageSelectionFirstRun:
-		case Phase::LanguageOptions:
 		{
-			auto addOptionsRow = [this, &model](std::string label, std::string value, bool active)
-			{
-				RenderBodyLine row{};
-				row.text = std::move(label);
-				row.valueText = std::move(value);
-				row.active = active;
-				row.hovered = static_cast<int32_t>(model.bodyLines.size()) == m_hoveredBodyLineIndex;
-				model.bodyLines.push_back(std::move(row));
-			};
-
-			if (m_phase == Phase::LanguageSelectionFirstRun)
-			{
-				model.languageFirstRunLayout = true;
-				model.sectionTitle = Tr("language.first_run.panel_title");
-				{
-					const std::string loc = m_localization.GetCurrentLocale();
-					const std::string welcomeKey = std::string("language.first_run.welcome.") + loc;
-					std::string sub = Tr(welcomeKey);
-					if (sub.empty() || sub == welcomeKey)
-					{
-						sub = Tr("language.first_run.welcome.fr");
-					}
-					model.languagePanelSubtitle = std::move(sub);
-				}
-				const auto& localesFr = m_localization.GetAvailableLocales();
-				if (!localesFr.empty())
-				{
-					model.languageVersionLabel =
-						Tr("language.first_run.progress", { { "current", "1" }, { "total", "2" } });
-					for (size_t li = 0; li < localesFr.size(); ++li)
-					{
-						const std::string& locTag = localesFr[li];
-						LanguageFirstRunCard card{};
-						card.localeTag = locTag;
-						const std::string disp = LocalizedLanguageName(locTag);
-						card.nameAllCaps = ToUpperAscii(disp);
-						const std::string nativeKey = std::string("language.native_line.") + locTag;
-						card.nativeLine = Tr(nativeKey);
-						if (card.nativeLine.empty() || card.nativeLine == nativeKey)
-						{
-							card.nativeLine = disp;
-						}
-						card.selected = (static_cast<uint32_t>(li) == m_languageSelectionIndex);
-						card.hovered = (static_cast<int32_t>(li) == m_hoveredLanguageCardIndex);
-						model.languageFirstRunCards.push_back(std::move(card));
-					}
-				}
-				model.languageFooterLeft = Tr("language.first_run.footer_left");
-				model.languageFooterRight = Tr("language.first_run.footer_right");
-				addActionKeys("common.continue", true, true, false);
-				break;
-			}
-
-			const auto& locales = m_localization.GetAvailableLocales();
-			if (m_optionsSubMenu == OptionsSubMenu::Root)
-			{
-				model.sectionTitle = Tr("language.options.title");
-				addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(m_selectedLocale) } }));
-				addOptionsRow(Tr("options.menu.language"), Tr("options.menu.chevron"), m_optionsRootSelection == 0u);
-				addOptionsRow(Tr("options.menu.video"), Tr("options.menu.chevron"), m_optionsRootSelection == 1u);
-				addOptionsRow(Tr("options.menu.audio"), Tr("options.menu.chevron"), m_optionsRootSelection == 2u);
-				addOptionsRow(Tr("options.menu.controls"), Tr("options.menu.chevron"), m_optionsRootSelection == 3u);
-				addOptionsRow(Tr("options.menu.game"), Tr("options.menu.chevron"), m_optionsRootSelection == 4u);
-				model.footerHint = Tr("options.menu.hint_root");
-			}
-			else
-			{
-				std::string subLabel;
-				switch (m_optionsSubMenu)
-				{
-				case OptionsSubMenu::Language:
-					subLabel = Tr("options.menu.language");
-					break;
-				case OptionsSubMenu::Video:
-					subLabel = Tr("options.menu.video");
-					break;
-				case OptionsSubMenu::Audio:
-					subLabel = Tr("options.menu.audio");
-					break;
-				case OptionsSubMenu::Controls:
-					subLabel = Tr("options.menu.controls");
-					break;
-				case OptionsSubMenu::Game:
-					subLabel = Tr("options.menu.game");
-					break;
-				case OptionsSubMenu::Root:
-					subLabel.clear();
-					break;
-				}
-				model.sectionTitle = Tr("language.options.title") + " - " + subLabel;
-				model.footerHint = Tr("options.menu.hint_submenu");
-
-				switch (m_optionsSubMenu)
-				{
-				case OptionsSubMenu::Language:
-					addBodyLine(Tr("language.current", { { "language", LocalizedLanguageName(m_selectedLocale) } }),
-						m_optionsSubSelection == 0u);
-					if (!locales.empty())
-					{
-						const std::string& selectedLocale = locales[m_languageSelectionIndex % static_cast<uint32_t>(locales.size())];
-						addBodyLine("< " + LocalizedLanguageName(selectedLocale) + " (" + selectedLocale + ") >", m_optionsSubSelection == 1u);
-					}
-					else
-					{
-						addBodyLine("< N/A >", false);
-					}
-					break;
-				case OptionsSubMenu::Video:
-					addOptionsRow(Tr("options.video.fullscreen"), Tr(m_videoFullscreenPending ? "options.value.on" : "options.value.off"),
-						m_optionsSubSelection == 0u);
-					addOptionsRow(Tr("options.video.vsync"), Tr(m_videoVsyncPending ? "options.value.on" : "options.value.off"),
-						m_optionsSubSelection == 1u);
-					break;
-				case OptionsSubMenu::Audio:
-					addOptionsRow(Tr("options.audio.master"), std::to_string(static_cast<int>(m_audioMasterVolumePending * 100.0f + 0.5f)) + "%",
-						m_optionsSubSelection == 0u);
-					addOptionsRow(Tr("options.audio.music"), std::to_string(static_cast<int>(m_audioMusicVolumePending * 100.0f + 0.5f)) + "%",
-						m_optionsSubSelection == 1u);
-					addOptionsRow(Tr("options.audio.sfx"), std::to_string(static_cast<int>(m_audioSfxVolumePending * 100.0f + 0.5f)) + "%",
-						m_optionsSubSelection == 2u);
-					addOptionsRow(Tr("options.audio.ui"), std::to_string(static_cast<int>(m_audioUiVolumePending * 100.0f + 0.5f)) + "%",
-						m_optionsSubSelection == 3u);
-					break;
-				case OptionsSubMenu::Controls:
-					addOptionsRow(Tr("options.controls.mouse_sensitivity"),
-						std::to_string(static_cast<int>(m_mouseSensitivityPending * 10000.0f + 0.5f)), m_optionsSubSelection == 0u);
-					addOptionsRow(Tr("options.controls.invert_y"), Tr(m_invertYPending ? "options.value.on" : "options.value.off"),
-						m_optionsSubSelection == 1u);
-					addOptionsRow(Tr("options.controls.movement_layout"),
-						Tr(m_useZqsdPending ? "options.controls.layout.zqsd" : "options.controls.layout.wasd"), m_optionsSubSelection == 2u);
-					break;
-				case OptionsSubMenu::Game:
-					addOptionsRow(Tr("options.game.gameplay_udp"), Tr(m_gameplayUdpEnabledPending ? "options.value.on" : "options.value.off"),
-						m_optionsSubSelection == 0u);
-					addOptionsRow(Tr("options.game.allow_insecure_dev"), Tr(m_allowInsecureDevPending ? "options.value.on" : "options.value.off"),
-						m_optionsSubSelection == 1u);
-					addOptionsRow(Tr("options.game.auth_timeout"), std::to_string(m_authTimeoutMsPending) + " ms", m_optionsSubSelection == 2u);
-					break;
-				case OptionsSubMenu::Root:
-					break;
-				}
-			}
-
-			addActionKeys("language.options.apply_hint", true, true, false, "common.submit");
-			addActionKeys("auth.hint.return_login", false, true, false, "common.back");
+			BuildModel_LanguageSelect(model);
+			addActionKeys("common.continue", true, true, false);
 			break;
 		}
+		case Phase::LanguageOptions:
+			BuildModel_Options(model);
+			break;
 		case Phase::Submitting:
 			// Un seul libellé : sectionTitle (évite doublon avec l’ancienne bodyLine dessinée sur les barres).
 			model.sectionTitle = Tr("auth.panel.submitting");
 			break;
 		case Phase::Error:
-		{
-			model.sectionTitle = Tr("auth.panel.error");
-			const bool rich = (m_errorReturnPhase == Phase::Register);
-			model.authErrorRichRegisterLayout = rich;
-			model.authErrorPanelTitle = rich ? Tr("auth.error.register_impossible_title") : Tr("auth.error.generic_title");
-			model.authErrorPanelSubtitle.clear();
-			model.authErrorVersionBadge = Tr("auth.error.version_badge");
-			model.infoPopupText = rich ? Tr("auth.error.register_info_popup") : std::string();
-			model.authErrorFieldSectionLabel = Tr("auth.error.field_to_fix");
-			model.authErrorFixSectionLabel = Tr("auth.error.how_to_fix");
-			model.authErrorBackButtonLabel = Tr("auth.error.back_to_form");
-			model.authErrorBackKeycap = Tr("auth.error.keycap_escape");
-			model.authErrorRetryButtonLabel = Tr("auth.error.retry");
-			model.authRegisterErrorVariants.clear();
-			if (rich)
-			{
-				auto addVariant = [&model, this](const char* pillKey, const char* titleKey, const char* msgKey, const char* fieldKey,
-									   const char* fixKey, bool warn) {
-					AuthUiPresenter::AuthRegisterErrorVariantRow row{};
-					row.pillLabel = Tr(std::string_view(pillKey));
-					row.bannerTitle = Tr(std::string_view(titleKey));
-					row.bannerMessage = Tr(std::string_view(msgKey));
-					row.fieldLabel = Tr(std::string_view(fieldKey));
-					row.fixHint = Tr(std::string_view(fixKey));
-					row.warningBanner = warn;
-					model.authRegisterErrorVariants.push_back(std::move(row));
-				};
-				addVariant("auth.error.variant.taken.pill", "auth.error.variant.taken.banner_title", "auth.error.variant.taken.banner_msg",
-					"auth.error.variant.taken.field", "auth.error.variant.taken.fix", false);
-				addVariant("auth.error.variant.weak.pill", "auth.error.variant.weak.banner_title", "auth.error.variant.weak.banner_msg",
-					"auth.error.variant.weak.field", "auth.error.variant.weak.fix", false);
-				addVariant("auth.error.variant.email.pill", "auth.error.variant.email.banner_title", "auth.error.variant.email.banner_msg",
-					"auth.error.variant.email.field", "auth.error.variant.email.fix", false);
-				addVariant("auth.error.variant.network.pill", "auth.error.variant.network.banner_title", "auth.error.variant.network.banner_msg",
-					"auth.error.variant.network.field", "auth.error.variant.network.fix", true);
-				if (!model.authRegisterErrorVariants.empty())
-				{
-					model.authRegisterErrorVariants.back().fieldLabel.clear();
-				}
-
-				const std::string& err = m_userErrorText;
-				auto lower = err;
-				for (char& c : lower)
-				{
-					c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-				}
-				auto hasSub = [&lower](std::string_view s) -> bool { return lower.find(s) != std::string::npos; };
-
-				int classified = 3;
-				if (err == Tr("auth.error.password_mismatch"))
-				{
-					classified = 1;
-				}
-				else if (err == Tr("auth.error.enter_register_fields") || err == Tr("auth.error.invalid_birth_date")
-					|| err == Tr("auth.error.enter_country"))
-				{
-					classified = 0;
-				}
-				else if (hasSub("login already taken") || hasSub("already taken") || hasSub("invalid login"))
-				{
-					classified = 0;
-				}
-				else if (hasSub("weak password"))
-				{
-					classified = 1;
-				}
-				else if (hasSub("invalid email"))
-				{
-					classified = 2;
-				}
-				else if (hasSub("timeout") || hasSub("network error") || hasSub("connect failed") || hasSub("register worker")
-					|| hasSub("send verify") || hasSub("send register") || hasSub("server error") || hasSub("internal error"))
-				{
-					classified = 3;
-				}
-				else if (hasSub("failed") || hasSub("exception"))
-				{
-					classified = 3;
-				}
-				else
-				{
-					classified = 3;
-				}
-
-				const bool bulkFieldHint = (err == Tr("auth.error.enter_register_fields"));
-				const bool inferredNetwork = hasSub("timeout") || hasSub("network error") || hasSub("connect failed")
-					|| hasSub("register worker") || hasSub("server error") || hasSub("internal error");
-				model.authRegisterErrorClassifiedIndex = std::clamp(classified, 0, 3);
-				model.authErrorBannerBodyFromUserMessage =
-					(classified == 0 && (bulkFieldHint || err == Tr("auth.error.invalid_birth_date") || err == Tr("auth.error.enter_country")))
-					|| (classified == 3 && !inferredNetwork);
-				model.authErrorHideFieldBox = model.authErrorBannerBodyFromUserMessage && classified == 0;
-				model.authErrorShowRetryButton = (classified == 3 && inferredNetwork);
-
-				model.authRegisterCrumbLabels.clear();
-				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.lang"));
-				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.account"));
-				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.email"));
-				model.authRegisterCrumbLabels.push_back(Tr("auth.register.crumb.world"));
-				model.authRegisterCrumbCurrent = 1;
-			}
-			else
-			{
-				model.authRegisterErrorClassifiedIndex = 0;
-				model.authErrorBannerBodyFromUserMessage = false;
-				model.authErrorHideFieldBox = false;
-				model.authErrorShowRetryButton = false;
-			}
-			addActionKeys("auth.error.back_to_form", true);
+			BuildModel_Error(model);
 			break;
-		}
 		}
 
 		for (RenderField& f : model.fields)
@@ -6088,6 +3846,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			model.actions[2].actionBadge = Tr("auth.badge.submit");
 		}
 		if (m_phase == Phase::Register && model.actions.size() >= 2u)
+		{
+			model.actions[0].actionBadge = Tr("auth.badge.submit_enter");
+			model.actions[1].actionBadge = Tr("auth.badge.esc_back");
+		}
+		if ((m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending) && model.actions.size() >= 2u)
 		{
 			model.actions[0].actionBadge = Tr("auth.badge.submit_enter");
 			model.actions[1].actionBadge = Tr("auth.badge.esc_back");
@@ -6133,7 +3896,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 				model.infoPopupText = Tr("auth.info.register_help");
 			else if (m_phase == Phase::ShardPick)
 				model.infoPopupText = Tr("auth.shard_pick.popup_help");
-			else if (m_phase == Phase::VerifyEmail)
+			else if (m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending)
 				model.infoPopupText = Tr("auth.verify.info_popup");
 			else if (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout)
 				model.infoPopupText = Tr("language.first_run.info_popup");
@@ -6141,7 +3904,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		// Icône "i" visible sur Login et Register.
 		model.infoIconVisible = (m_phase == Phase::Login || m_phase == Phase::Register || m_phase == Phase::ShardPick
-			|| m_phase == Phase::VerifyEmail
+			|| m_phase == Phase::VerifyEmail || m_phase == Phase::EmailConfirmationPending
 			|| (m_phase == Phase::LanguageSelectionFirstRun && model.languageFirstRunLayout));
 
 		if (model.languageFirstRunLayout && m_viewportW > 0u && m_viewportH > 0u)
@@ -6252,33 +4015,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		return state;
 	}
 
-	AuthUiPresenter::VideoSettingsCommand AuthUiPresenter::ConsumePendingVideoSettings()
-	{
-		const VideoSettingsCommand cmd = m_pendingVideoSettings;
-		m_pendingVideoSettings = {};
-		return cmd;
-	}
-
-	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()
-	{
-		const AudioSettingsCommand cmd = m_pendingAudioSettings;
-		m_pendingAudioSettings = {};
-		return cmd;
-	}
-
-	AuthUiPresenter::ControlSettingsCommand AuthUiPresenter::ConsumePendingControlSettings()
-	{
-		const ControlSettingsCommand cmd = m_pendingControlSettings;
-		m_pendingControlSettings = {};
-		return cmd;
-	}
-
-	AuthUiPresenter::GameSettingsCommand AuthUiPresenter::ConsumePendingGameSettings()
-	{
-		const GameSettingsCommand cmd = m_pendingGameSettings;
-		m_pendingGameSettings = {};
-		return cmd;
-	}
 
 	bool AuthUiPresenter::OnEscape()
 	{

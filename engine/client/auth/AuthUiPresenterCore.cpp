@@ -1078,8 +1078,6 @@ namespace engine::client
 	{
 	}
 
-	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config&, std::string_view) {}
-	void AuthUiPresenter::ImGuiSelectFirstRunLanguageCard(uint32_t) {}
 	void AuthUiPresenter::ImGuiSubmitLogin(const engine::core::Config&, const char*, const char*, bool) {}
 	void AuthUiPresenter::ImGuiNavigateToRegisterFromLogin() {}
 	void AuthUiPresenter::ImGuiBackFromRegisterToLogin() {}
@@ -1104,27 +1102,9 @@ namespace engine::client
 
 	void AuthUiPresenter::ImGuiSubmitRegister(const engine::core::Config&, const RegisterImGuiSubmit&) {}
 	void AuthUiPresenter::ImGuiNavigateToForgotFromLogin() {}
-	void AuthUiPresenter::ImGuiSubmitForgotPassword(const engine::core::Config&, const char*) {}
-	void AuthUiPresenter::ImGuiBackFromForgotToLogin() {}
-	void AuthUiPresenter::ImGuiSubmitVerifyEmailCode(const engine::core::Config&, const char*) {}
-	void AuthUiPresenter::ImGuiBackFromVerifyToLogin() {}
-	void AuthUiPresenter::ImGuiVerifyEmailClearDigits() {}
-	void AuthUiPresenter::ImGuiVerifyEmailBackToEditRegisterEmail() {}
-	void AuthUiPresenter::ImGuiSetVerifyEmailPartialCode(std::string_view) {}
-	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin() {}
-	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config&) {}
 	void AuthUiPresenter::ImGuiSetShardPickChoiceShardId(uint32_t) {}
 	void AuthUiPresenter::ImGuiSubmitShardPick(const engine::core::Config&) {}
 	void AuthUiPresenter::ImGuiBackFromShardPickToLogin() {}
-	void AuthUiPresenter::ImGuiNotifyTermsScrollReachedBottom(bool) {}
-	void AuthUiPresenter::ImGuiSetTermsAcknowledgeChecked(bool) {}
-	void AuthUiPresenter::ImGuiTermsPrimaryClick(const engine::core::Config&) {}
-	void AuthUiPresenter::ImGuiTermsDecline(engine::platform::Window& window)
-	{
-		window.RequestClose();
-	}
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*) {}
-	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
 
 	void AuthUiPresenter::CommitLanguageOptionsMenuApply(const engine::core::Config&)
 	{

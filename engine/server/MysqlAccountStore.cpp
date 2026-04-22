@@ -1,3 +1,11 @@
+/// @file MysqlAccountStore.cpp
+/// @brief Implémentation de MysqlAccountStore — opérations CRUD MySQL sur la table `accounts`.
+///
+/// Toutes les chaînes interpolées dans les requêtes SQL passent par EscapeMysql() (mysql_real_escape_string)
+/// pour prévenir les injections SQL. Le code pays utilisé dans le TAG-ID est également validé
+/// (2 lettres ASCII majuscules) avant d'être inclus dans un LIKE. Aucun mot de passe en clair
+/// ni hash intermédiaire n'est loggué ou persisté — seul le hash Argon2 final est écrit.
+
 #include "engine/server/MysqlAccountStore.h"
 #include "engine/server/AccountValidation.h"
 #include "engine/server/db/ConnectionPool.h"
@@ -21,10 +29,20 @@ namespace engine::server
 {
 	namespace
 	{
+		/// Suffixe utilisé comme placeholder d'e-mail pour les comptes sans adresse réelle.
+		/// Format : "<login_normalisé>@lcdlln.no-email.local".
+		/// Permet de satisfaire la contrainte UNIQUE(email) en base sans exposer de vraie adresse.
 		constexpr std::string_view kNoEmailPlaceholderSuffix = "@lcdlln.no-email.local";
-		/// MySQL ER_DUP_ENTRY — évite la dépendance à mysqld_error.h selon les installs.
+
+		/// Code d'erreur MySQL ER_DUP_ENTRY (violation de clé unique ou primaire).
+		/// Évite la dépendance à mysqld_error.h dont la disponibilité varie selon l'installation.
 		constexpr unsigned kMysqlDupKey = 1062;
 
+		/// Échappe une chaîne pour une insertion sûre dans une requête SQL MySQL.
+		/// Utilise mysql_real_escape_string() qui tient compte du jeu de caractères de la connexion.
+		/// @param mysql Handle MySQL actif. Si nullptr, retourne une chaîne vide.
+		/// @param v     Valeur brute à échapper.
+		/// @return Chaîne échappée prête à être insérée entre guillemets simples dans un SQL.
 		std::string EscapeMysql(MYSQL* mysql, std::string_view v)
 		{
 			if (!mysql)
@@ -34,6 +52,13 @@ namespace engine::server
 			return std::string(buf.data(), w);
 		}
 
+		/// Convertit une ligne MySQL (MYSQL_ROW) en AccountRecord.
+		/// Ordre des colonnes attendu : id, email, login, password_hash, account_status,
+		///                              email_verified, email_locale.
+		/// Les e-mails placeholder (@lcdlln.no-email.local) sont silencieusement remplacés par
+		/// une chaîne vide dans AccountRecord.email (transparence vis-à-vis de l'appelant).
+		/// @param row Ligne renvoyée par mysql_fetch_row(). Ne doit pas être nullptr.
+		/// @return AccountRecord partiellement ou entièrement rempli selon les colonnes non-NULL.
 		AccountRecord RowToRecord(MYSQL_ROW row)
 		{
 			AccountRecord r;
@@ -59,6 +84,11 @@ namespace engine::server
 			return r;
 		}
 
+		/// Exécute \a sql et retourne le premier AccountRecord trouvé, ou nullopt.
+		/// Libère le résultat MySQL avant de retourner (pas de fuite).
+		/// @param mysql Handle MySQL actif.
+		/// @param sql   Requête SELECT complète, déjà échappée.
+		/// @return Premier enregistrement ou nullopt si résultat vide ou erreur.
 		std::optional<AccountRecord> QueryOneAccount(MYSQL* mysql, const std::string& sql)
 		{
 			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
@@ -72,6 +102,11 @@ namespace engine::server
 			return out;
 		}
 
+		/// Exécute \a sql et retourne true si au moins une ligne est renvoyée.
+		/// Utilisé pour les vérifications d'existence (SELECT 1 ... LIMIT 1).
+		/// @param mysql Handle MySQL actif.
+		/// @param sql   Requête SELECT, déjà échappée.
+		/// @return true si au moins une ligne existe, false si vide ou erreur.
 		bool QueryExists(MYSQL* mysql, const std::string& sql)
 		{
 			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);

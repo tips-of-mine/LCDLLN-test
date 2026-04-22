@@ -1,3 +1,10 @@
+/// @file NetServer.h
+/// @brief Serveur TCP non-bloquant Linux (epoll) avec chiffrement TLS optionnel (OpenSSL ≥ TLS 1.2).
+/// Gère l'acceptation de connexions, le framage RX selon le protocole v1, la file d'envoi TX avec
+/// contrôle de flux (token bucket bande passante + taux paquets), et délègue le traitement des
+/// paquets complets à un pool de threads workers. Thread-safety : l'ensemble des accès aux
+/// connexions est protégé par connMutex ; les méthodes publiques sont sûres depuis n'importe quel
+/// thread. Dépendances : OpenSSL (TLS), epoll Linux, engine::network::NetworkBufferPool.
 #pragma once
 
 #include <cstdint>
@@ -7,7 +14,8 @@
 
 namespace engine::server
 {
-	/// Standardised disconnect reason for transport hardening stats. Stable for logging/observability.
+	/// Raison normalisée de déconnexion, stable pour les logs et les compteurs d'observabilité.
+	/// Chaque valeur correspond à un compteur atomique dans NetServerStats::disconnectByReason.
 	enum class DisconnectReason : uint32_t
 	{
 		PeerClosed,
@@ -27,44 +35,62 @@ namespace engine::server
 		Count
 	};
 
-	/// Configuration for the TCP NetServer (Linux epoll). Limits and worker pool size.
-	/// When tlsCertPath and tlsKeyPath are both non-empty, TLS is enabled (TLS 1.2+ only); no plain mode on that port.
+	/// Paramètres de configuration du NetServer TCP (epoll Linux).
+	/// Quand tlsCertPath et tlsKeyPath sont tous deux non-vides, TLS est activé (TLS 1.2 minimum) ;
+	/// aucun mode texte clair n'est alors disponible sur ce port.
 	struct NetServerConfig
 	{
-		/// Maximum number of concurrent connections. New connections beyond this are closed.
+		/// Nombre maximum de connexions simultanées. Toute connexion supplémentaire est rejetée (close immédiat).
 		uint32_t maxConnections = 1000u;
-		/// Maximum queued TX bytes per connection. Connection is closed if exceeded (backpressure).
+		/// Capacité maximale de la file TX par connexion en octets.
+		/// Si ce plafond est dépassé lors d'un Send(), la connexion est fermée (backpressure).
 		size_t maxQueuedTxBytesPerConnection = 256 * 1024u;
-		/// Token bucket for TX bytes: sustained max bytes/sec per player/connection.
-		/// Config is provided as `max_bandwidth_per_player` in KB/s (server_config.ini),
-		/// converted by the entry point to bytes/sec.
+		/// Token bucket TX : débit soutenu maximal en octets/seconde par connexion/joueur.
+		/// Configuré via `max_bandwidth_per_player` en Ko/s dans server_config.ini,
+		/// converti en octets/s par le point d'entrée. 0 → valeur dérivée automatiquement.
 		double maxBandwidthPerPlayerBytesPerSec = 0.0;
-		/// Number of worker threads for packet processing (must not block IO).
+		/// Nombre de threads workers chargés du décodage et du dispatch des paquets.
+		/// Ces threads ne doivent jamais bloquer l'I/O ; toute opération BDD doit être
+		/// effectuée de manière asynchrone ou dans un thread dédié.
 		uint32_t workerThreadCount = 4u;
-		/// Path to TLS server certificate file (PEM). If non-empty with tlsKeyPath, TLS is enabled.
+		/// Chemin vers le certificat TLS du serveur (format PEM).
+		/// Si non-vide et que tlsKeyPath est aussi renseigné, TLS est activé.
 		std::string tlsCertPath;
-		/// Path to TLS server private key file (PEM). If non-empty with tlsCertPath, TLS is enabled.
+		/// Chemin vers la clé privée TLS du serveur (format PEM).
+		/// Si non-vide et que tlsCertPath est aussi renseigné, TLS est activé.
 		std::string tlsKeyPath;
-		/// Token bucket: sustained packet rate (packets per second) per connection. Ex: 200.
+		/// Token bucket RX : taux de paquets soutenu autorisé par connexion (paquets/seconde).
+		/// Ex : 200 — un joueur enverrait au maximum 200 paquets complets par seconde.
 		double packetRatePerSec = 200.0;
-		/// Token bucket: max burst (tokens). Ex: 400.
+		/// Token bucket RX : capacité maximale du seau (burst initial en tokens).
+		/// Ex : 400 — autorise un burst de 400 paquets avant que la limite ne s'applique.
 		double packetBurst = 400.0;
-		/// DDoS mitigation: max concurrent connections allowed per IP. 0 disables.
+		/// Anti-DDoS : nombre maximum de connexions simultanées acceptées depuis la même IP. 0 = désactivé.
 		uint32_t maxConnectionsPerIp = 0u;
-		/// DDoS mitigation: throttle accept rate (max accepts/sec). 0 disables.
+		/// Anti-DDoS : taux maximal d'acceptation global (accepts/sec via token bucket). 0 = désactivé.
 		double maxAcceptsPerSec = 0.0;
-		/// DDoS mitigation: deny an IP temporarily after N handshake failures. 0 disables.
+		/// Anti-DDoS : nombre d'échecs de handshake TLS avant de bannir temporairement l'IP. 0 = désactivé.
 		uint32_t handshakeFailuresBeforeDeny = 0u;
-		/// DDoS mitigation: temporary deny duration in seconds.
+		/// Anti-DDoS : durée du bannissement temporaire après dépassement du seuil d'échecs (en secondes).
 		uint32_t handshakeDenyDurationSec = 0u;
-		/// Decode (invalid packet) failure threshold; after this many, connection is closed.
+		/// Nombre maximal d'échecs de décodage de paquet autorisés avant fermeture de la connexion.
+		/// Protège contre les connexions envoyant des données corrompues ou malformées en boucle.
 		uint32_t decodeFailureThreshold = 5u;
-		/// TLS handshake timeout in seconds. Connection closed if handshake not completed in time.
+		/// Délai maximal pour compléter le handshake TLS (en secondes).
+		/// La connexion est fermée avec la raison HandshakeTimeout si le délai est dépassé.
 		uint32_t handshakeTimeoutSec = 10u;
 	};
 
-	/// Callback invoked from worker threads when a full packet is received. Do not run DB/game logic that blocks.
-	/// requestId and sessionId come from the packet header (for echoing in responses).
+	/// Callback appelé depuis les threads workers lorsqu'un paquet complet est reçu et validé.
+	/// NE PAS effectuer d'opérations bloquantes (BDD, I/O fichier) directement dans ce callback :
+	/// cela bloquerait le worker et dégaderait le débit. requestId et sessionId proviennent de
+	/// l'en-tête du paquet v1 et doivent être réémis dans les réponses correspondantes.
+	/// @param connId      Identifiant opaque de la connexion TCP source.
+	/// @param opcode      Opcode du message (cf. MessageKind dans ServerProtocol.h).
+	/// @param requestId   Identifiant de requête du paquet, à réinjecter dans la réponse.
+	/// @param sessionId   Identifiant de session du paquet (post-authentification), ou 0.
+	/// @param payload     Pointeur vers les octets du payload (durée de vie : scope du callback uniquement).
+	/// @param payloadSize Taille du payload en octets.
 	using NetServerPacketHandler = std::function<void(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionId, const uint8_t* payload, size_t payloadSize)>;
 
 	/// Snapshot of server network counters (M19.11). Thread-safe read via GetNetworkStats().

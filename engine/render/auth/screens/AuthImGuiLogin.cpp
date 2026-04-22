@@ -1,3 +1,4 @@
+// AUTH-UI.1 — rendu ImGui de l'écran de connexion (identifiant + mot de passe).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -12,14 +13,17 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur thème en ImVec4 pour ImGui::PushStyleColor.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 	}
 
+	/// Affiche le panneau de connexion centré : titre du jeu, champs identifiant/mot de passe, boutons Créer un compte et Se connecter.
 	void AuthImGuiRenderer::RenderLoginScreen(const VisualState& vs, const RenderModel& rm, float vpW, float vpH)
 	{
+		/// Résout une clé de traduction via le présentateur ; retombe sur le fallback si absent.
 		const auto tr = [this](const char* key, const char* fallback) -> std::string {
 			if (m_authPresenter != nullptr)
 			{

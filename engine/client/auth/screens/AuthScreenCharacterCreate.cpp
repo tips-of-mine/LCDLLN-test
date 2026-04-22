@@ -1,3 +1,6 @@
+// AUTH-UI.11 — Couche modèle pour l'écran de création de personnage.
+
+// Couche modèle : BuildModel_CharacterCreate expose le champ nom, StartCharacterCreateWorker envoie la requête réseau.
 #include "engine/client/AuthUi.h"
 
 #include "engine/network/CharacterPayloads.h"
@@ -21,6 +24,7 @@ namespace engine::client
 
 	namespace
 	{
+		/// Traduit un code d'erreur réseau en libellé lisible pour les messages d'erreur de création de personnage.
 		const char* NetErrorLabel(engine::network::NetErrorCode c)
 		{
 			using engine::network::NetErrorCode;
@@ -48,6 +52,7 @@ namespace engine::client
 		}
 	} // namespace
 
+	/// Soumet le nom de personnage saisi depuis le renderer ImGui et lance la création.
 	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8)
 	{
 		if (m_phase != Phase::CharacterCreate)
@@ -58,6 +63,7 @@ namespace engine::client
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Annule la création et retourne à la connexion (le compte reste valide mais sans personnage).
 	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin()
 	{
 		if (m_phase != Phase::CharacterCreate)
@@ -70,6 +76,7 @@ namespace engine::client
 		SetPhase(Phase::Login);
 	}
 
+	/// Peuple le modèle avec le champ nom de personnage et les règles de nommage.
 	void AuthUiPresenter::BuildModel_CharacterCreate(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.panel.character_create");
@@ -109,6 +116,7 @@ namespace engine::client
 		}
 	}
 
+	/// Lance le worker réseau qui envoie la requête de création de personnage au serveur maître.
 	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
@@ -190,6 +198,7 @@ namespace engine::client
 		});
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*) {}

@@ -1,3 +1,6 @@
+// AUTH-UI.7 — Couche modèle pour l'écran de sélection de langue au premier lancement.
+
+// Couche modèle : BuildModel_LanguageSelect peuple les cartes langue, ApplyLocaleSelection persiste le choix.
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
@@ -16,6 +19,7 @@ namespace engine::client
 #if defined(_WIN32)
 	namespace
 	{
+		/// Convertit une chaîne ASCII en majuscules pour l'affichage des noms de langue en toutes lettres.
 		std::string ToUpperAscii(std::string_view s)
 		{
 			std::string o;
@@ -32,6 +36,7 @@ namespace engine::client
 		}
 	} // namespace
 
+	/// Applique la locale sélectionnée : charge les traductions, persiste dans user_settings.json si premier lancement, passe à Login.
 	void AuthUiPresenter::ApplyLocaleSelection(bool firstRun)
 	{
 		const auto& locales = m_localization.GetAvailableLocales();
@@ -74,6 +79,7 @@ namespace engine::client
 		}
 	}
 
+	/// Valide la sélection de langue depuis le renderer ImGui (carte cliquée) et applique la locale.
 	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config& cfg, std::string_view localeTag)
 	{
 		(void)cfg;
@@ -98,6 +104,7 @@ namespace engine::client
 		ApplyLocaleSelection(true);
 	}
 
+	/// Prévisualise une langue (survol de carte) sans valider — met à jour l'index de sélection pour le sous-titre.
 	void AuthUiPresenter::ImGuiSelectFirstRunLanguageCard(uint32_t cardIndex)
 	{
 		if (m_phase != Phase::LanguageSelectionFirstRun)
@@ -113,6 +120,7 @@ namespace engine::client
 		m_selectedLocale = locales[cardIndex];
 	}
 
+	/// Peuple les cartes langue (tag, nom majuscules, ligne native, état sélectionné/survolé) pour le rendu premier lancement.
 	void AuthUiPresenter::BuildModel_LanguageSelect(RenderModel& model) const
 	{
 		model.languageFirstRunLayout = true;
@@ -158,6 +166,7 @@ namespace engine::client
 		model.languageFooterRight = Tr("language.first_run.footer_right");
 	}
 
+	/// Gère les flèches directionnelles pour naviguer entre les cartes langue et Entrée pour valider (hors ImGui).
 	void AuthUiPresenter::Update_LanguageSelect(engine::platform::Input& input, const engine::core::Config& cfg,
 		engine::platform::Window& window, bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -190,6 +199,7 @@ namespace engine::client
 		}
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::ImGuiApplyFirstRunLanguageContinue(const engine::core::Config&, std::string_view) {}

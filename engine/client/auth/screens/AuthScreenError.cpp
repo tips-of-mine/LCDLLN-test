@@ -1,3 +1,6 @@
+// AUTH-UI.4 — Couche modèle pour l'écran d'erreur d'authentification.
+
+// BuildModel_Error peuple le RenderModel avec le layout riche (inscription) ou générique selon la phase d'origine.
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
@@ -11,6 +14,7 @@ namespace engine::client
 {
 #if defined(_WIN32)
 
+	/// Acquitte l'écran d'erreur et relance la soumission de la phase d'origine (ex. retour au formulaire d'inscription).
 	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config& cfg)
 	{
 		if (m_phase != Phase::Error)
@@ -20,6 +24,8 @@ namespace engine::client
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Peuple le modèle d'erreur : layout riche (variantes pastilles) si l'erreur vient de l'inscription, générique sinon.
+	/// Classifie automatiquement le message d'erreur (login pris, mot de passe faible, e-mail, réseau) pour choisir la variante affichée.
 	void AuthUiPresenter::BuildModel_Error(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.panel.error");
@@ -139,6 +145,7 @@ namespace engine::client
 		model.actions.push_back(std::move(action));
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::ImGuiAcknowledgeErrorScreen(const engine::core::Config&) {}

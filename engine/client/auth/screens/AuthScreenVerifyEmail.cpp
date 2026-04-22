@@ -1,3 +1,7 @@
+// AUTH-UI.5 — Couche modèle pour les écrans de vérification d'e-mail et de confirmation d'inscription.
+
+// BuildModel_VerifyEmail : saisie du code pendant l'inscription.
+// BuildModel_EmailConfirmationPending : page post-inscription avec bouton de renvoi après 15 min.
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
@@ -10,6 +14,7 @@ namespace engine::client
 {
 #if defined(_WIN32)
 
+	/// Peuple le modèle pour la phase de saisie du code à 6 chiffres (pendant l'inscription).
 	void AuthUiPresenter::BuildModel_VerifyEmail(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.phase.verify_email");
@@ -65,6 +70,7 @@ namespace engine::client
 		}
 	}
 
+	/// Peuple le modèle pour la page post-inscription : affiche le bandeau "vérifiez vos e-mails" et active le bouton de renvoi après 15 min.
 	void AuthUiPresenter::BuildModel_EmailConfirmationPending(RenderModel& model) const
 	{
 		using namespace std::chrono;
@@ -170,6 +176,7 @@ namespace engine::client
 		}
 	}
 
+	/// Gère Tab hors ImGui pour réinitialiser le focus sur les écrans de vérification / confirmation.
 	void AuthUiPresenter::Update_VerifyEmail(engine::platform::Input& input, const engine::core::Config&, engine::platform::Window&,
 		bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -188,6 +195,7 @@ namespace engine::client
 		}
 	}
 
+	/// Soumet le code de vérification (6 chiffres) depuis le renderer ImGui.
 	void AuthUiPresenter::ImGuiSubmitVerifyEmailCode(const engine::core::Config& cfg, const char* codeSixUtf8)
 	{
 		if (m_phase != Phase::VerifyEmail && m_phase != Phase::EmailConfirmationPending)
@@ -201,6 +209,7 @@ namespace engine::client
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Retour à l'écran de connexion depuis la phase VerifyEmail (abandon de la vérification en cours d'inscription).
 	void AuthUiPresenter::ImGuiBackFromVerifyToLogin()
 	{
 		if (m_phase != Phase::VerifyEmail)
@@ -215,6 +224,7 @@ namespace engine::client
 		SetPhase(Phase::Login);
 	}
 
+	/// Efface les 6 chiffres saisis (lien « renvoyer » dans la maquette, sans appel réseau immédiat).
 	void AuthUiPresenter::ImGuiVerifyEmailClearDigits()
 	{
 		if (m_phase != Phase::VerifyEmail)
@@ -225,6 +235,7 @@ namespace engine::client
 		LOG_INFO(Core, "[AuthUiPresenter] ImGui: code de verification efface (renvoi / nouvelle saisie)");
 	}
 
+	/// Retourne au formulaire d'inscription positionné sur le champ e-mail (correction de l'adresse).
 	void AuthUiPresenter::ImGuiVerifyEmailBackToEditRegisterEmail()
 	{
 		if (m_phase != Phase::VerifyEmail)
@@ -240,6 +251,7 @@ namespace engine::client
 		m_verifyCode.clear();
 	}
 
+	/// Met à jour le code partiel depuis le renderer ImGui (filtre chiffres 0-9, max 6 caractères).
 	void AuthUiPresenter::ImGuiSetVerifyEmailPartialCode(std::string_view s)
 	{
 		if (m_phase != Phase::VerifyEmail && m_phase != Phase::EmailConfirmationPending)
@@ -256,6 +268,7 @@ namespace engine::client
 		}
 	}
 
+	/// Retour à la connexion depuis la phase EmailConfirmationPending.
 	void AuthUiPresenter::ImGuiEmailConfirmationBackToLogin()
 	{
 		if (m_phase != Phase::EmailConfirmationPending)
@@ -269,6 +282,7 @@ namespace engine::client
 		SetPhase(Phase::Login);
 	}
 
+	/// Déclenche le renvoi d'un nouveau code de vérification (opcode 37) — uniquement si le compte est en attente et l'ID connu.
 	void AuthUiPresenter::ImGuiResendVerificationEmail(const engine::core::Config& cfg)
 	{
 		if (m_phase != Phase::EmailConfirmationPending && m_phase != Phase::VerifyEmail)

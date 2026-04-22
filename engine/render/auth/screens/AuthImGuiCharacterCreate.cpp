@@ -1,4 +1,5 @@
-// AUTH-UI.11 — rendu ImGui création de personnage (split depuis AuthImGuiRenderer.cpp).
+// AUTH-UI.11 — rendu ImGui écran de création de personnage avec saisie du nom et confirmation (split depuis AuthImGuiRenderer.cpp).
+// Contient RenderCharCreateScreen : panneau avec champ de nom, lignes d'information issues du modèle, et boutons Annuler / Créer.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -12,12 +13,14 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 	} // namespace
 
+	/// Affiche l'écran de création de personnage : champ de saisie du nom, lignes d'information issues du modèle, puis boutons Annuler et Créer.
 	void AuthImGuiRenderer::RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		const std::string title = rm.titleLine1.empty() ? std::string("Creation de personnage") : rm.titleLine1;
@@ -40,7 +43,7 @@ namespace engine::render
 			m_authPresenter->ImGuiCancelCharacterCreateReturnToLogin();
 		}
 		ImGui::SameLine(0.f, 8.f);
-		std::string submitLabel = "Creer";
+		std::string submitLabel = "Creer"; ///< Libellé du bouton de confirmation, surchargé par l'action primaire du modèle si présente.
 		for (const auto& a : rm.actions)
 		{
 			if (a.primary)

@@ -1,3 +1,6 @@
+// AUTH-UI.0 — Helpers ImGui réutilisés par tous les écrans d'authentification
+
+// Fournit les primitives communes : bannières, toggle, boutons (primaire, fantôme, danger, texte), drapeaux vectoriels et indicateurs de raccourcis clavier.
 #include "engine/render/auth/AuthImGuiCommon.h"
 
 #include "engine/render/LnTheme.h"
@@ -14,12 +17,14 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur thème en ImVec4 pour ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 	}
 
+	/// Dessine une bannière colorée avec un titre accentué et un message de corps enroulé.
 	void DrawAuthBanner(std::string_view title, std::string_view message, float r, float g, float b)
 	{
 		ImVec4 bg(r, g, b, 0.12f);
@@ -50,6 +55,7 @@ namespace engine::render
 		ImGui::Spacing();
 	}
 
+	/// Affiche un toggle on/off avec libellé et texte d'aide optionnel ; met à jour *checked si cliqué.
 	bool DrawAuthToggle(std::string_view label, bool* checked, std::string_view hint)
 	{
 		if (checked == nullptr)
@@ -97,6 +103,7 @@ namespace engine::render
 		return false;
 	}
 
+	/// Dessine un bouton de style texte atténué (lien secondaire).
 	bool DrawAuthButtonText(std::string_view label, std::string_view idSuffix)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
@@ -109,6 +116,7 @@ namespace engine::render
 		return pressed;
 	}
 
+	/// Dessine le bouton d'action principal (couleur primaire) avec état désactivé optionnel.
 	bool DrawAuthButtonPrimary(std::string_view label, std::string_view idSuffix, bool disabled)
 	{
 		if (disabled)
@@ -133,6 +141,7 @@ namespace engine::render
 		return pressed;
 	}
 
+	/// Dessine un bouton fantôme (fond surface, bordure texte) occupant toute la largeur disponible.
 	bool DrawAuthButtonGhost(std::string_view label, std::string_view idSuffix)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
@@ -151,6 +160,7 @@ namespace engine::render
 		return pressed;
 	}
 
+	/// Affiche une ligne de trois raccourcis clavier formatés [touche] description en couleur atténuée.
 	void DrawAuthKeycapRow(std::string_view leftKey, std::string_view leftDesc, std::string_view midKey, std::string_view midDesc,
 		std::string_view rightKey, std::string_view rightDesc)
 	{
@@ -163,6 +173,7 @@ namespace engine::render
 		ImGui::PopStyleColor();
 	}
 
+	/// Dessine une ligne action / touche sur deux colonnes avec séparateur, utilisée dans les panneaux de réglages.
 	void DrawAuthKeybind(std::string_view actionName, std::string_view keyLabel)
 	{
 		ImGui::PushID(static_cast<int>(reinterpret_cast<std::uintptr_t>(actionName.data()) ^ (actionName.size() << 3)));
@@ -183,6 +194,7 @@ namespace engine::render
 		ImGui::PopID();
 	}
 
+	/// Dessine un bouton d'action destructrice (fond rouge erreur) pleine largeur.
 	bool DrawAuthButtonDanger(std::string_view label, std::string_view idSuffix)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kErrorCol));
@@ -199,6 +211,7 @@ namespace engine::render
 		return pressed;
 	}
 
+	/// Dessine le drapeau tricolore français (bleu-blanc-rouge) en trois bandes verticales via ImDrawList.
 	void DrawFlagFR(ImDrawList* dl, float posX, float posY, float sizeW, float sizeH)
 	{
 		if (dl == nullptr)
@@ -213,6 +226,7 @@ namespace engine::render
 		dl->AddRectFilled(ImVec2(pos.x + 2.f * w3, pos.y), ImVec2(pos.x + size.x, pos.y + size.y), IM_COL32(237, 41, 57, 255));
 	}
 
+	/// Dessine le drapeau britannique (Union Jack) simplifié avec croix de Saint-Georges et diagonales via ImDrawList.
 	void DrawFlagEN(ImDrawList* dl, float posX, float posY, float sizeW, float sizeH)
 	{
 		if (dl == nullptr)

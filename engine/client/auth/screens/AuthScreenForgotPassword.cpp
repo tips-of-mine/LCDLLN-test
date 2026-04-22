@@ -1,3 +1,6 @@
+// AUTH-UI.3 — Écran de récupération de mot de passe : saisie de l'e-mail et envoi de la demande de réinitialisation.
+//
+// Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
@@ -53,6 +56,7 @@ namespace engine::client
 		}
 	} // namespace
 
+	/// Bascule vers l'écran de récupération de mot de passe depuis la connexion.
 	void AuthUiPresenter::ImGuiNavigateToForgotFromLogin()
 	{
 		if (m_phase != Phase::Login)
@@ -64,6 +68,7 @@ namespace engine::client
 		m_activeField = 0;
 	}
 
+	/// Reçoit l'adresse e-mail depuis ImGui et déclenche l'envoi de la demande de réinitialisation.
 	void AuthUiPresenter::ImGuiSubmitForgotPassword(const engine::core::Config& cfg, const char* emailUtf8)
 	{
 		if (m_phase != Phase::ForgotPassword)
@@ -74,6 +79,7 @@ namespace engine::client
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Retourne à l'écran de connexion depuis la récupération de mot de passe.
 	void AuthUiPresenter::ImGuiBackFromForgotToLogin()
 	{
 		if (m_phase != Phase::ForgotPassword)
@@ -85,6 +91,7 @@ namespace engine::client
 		SetPhase(Phase::Login);
 	}
 
+	/// Peuple le RenderModel avec le champ e-mail et les actions de l'écran de récupération de mot de passe.
 	void AuthUiPresenter::BuildModel_ForgotPassword(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.section.forgot_password");
@@ -118,6 +125,7 @@ namespace engine::client
 		}
 	}
 
+	/// Gère les entrées clavier de l'écran de récupération de mot de passe (actuellement sans action spécifique).
 	void AuthUiPresenter::Update_ForgotPassword(engine::platform::Input&, const engine::core::Config&, engine::platform::Window&,
 		bool usingNativeAuth, bool /*authUiImguiMode*/)
 	{
@@ -127,6 +135,7 @@ namespace engine::client
 		}
 	}
 
+	/// Lance le worker asynchrone qui envoie la requête de récupération de mot de passe au serveur maître.
 	void AuthUiPresenter::StartForgotPasswordWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();

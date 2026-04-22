@@ -1,3 +1,4 @@
+// AUTH-UI.4 — rendu ImGui de l'écran d'erreur d'authentification (erreur simple ou erreur enrichie d'inscription).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -14,11 +15,13 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur thème en ImVec4 pour ImGui::PushStyleColor.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
+		/// Convertit une couleur thème en ImU32 pour les primitives du DrawList (AddRectFilled, etc.).
 		ImU32 U32(const LnTheme::Rgba& c)
 		{
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
@@ -28,8 +31,10 @@ namespace engine::render
 		constexpr bool kAuthErrorVariantPillsDemo = false;
 	}
 
+	/// Affiche l'écran d'erreur : bannière d'erreur, indice de correction et bouton retour ; gère le layout enrichi d'inscription ou le layout simple.
 	void AuthImGuiRenderer::RenderErrorScreen(const RenderModel& rm, float vpW, float vpH)
 	{
+		/// Déclenche l'acquittement de l'erreur et retourne à l'écran précédent.
 		auto acknowledge = [this]() {
 			if (m_authPresenter != nullptr && m_authCfg != nullptr)
 			{

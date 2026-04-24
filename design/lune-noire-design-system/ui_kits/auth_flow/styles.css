@@ -375,6 +375,60 @@ kbd { font-family: var(--font-mono); }
 .ln-toggle.on { background: rgba(74,123,184,.3); border-color: var(--ln-primary); }
 .ln-toggle.on .ln-toggle-thumb { left: 22px; background: var(--ln-accent); box-shadow: 0 0 8px rgba(232,197,110,.5); }
 
+/* ============ TRANSITIONS ENTRE ÉCRANS ============ */
+@keyframes screen-in {
+  0%   { opacity: 0; transform: translateY(18px) scale(.985); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes screen-out {
+  0%   { opacity: 1; transform: translateY(0)     scale(1); }
+  100% { opacity: 0; transform: translateY(-14px) scale(.985); }
+}
+.ln-screen-enter { animation: screen-in  320ms cubic-bezier(.2,.6,.2,1) both; }
+.ln-screen-exit  { animation: screen-out 200ms cubic-bezier(.4,0,1,1) both; }
+
+/* ============ SPINNER (bouton chargement) ============ */
+@keyframes spin { to { transform: rotate(360deg); } }
+.ln-spinner {
+  display: inline-block;
+  width: 14px; height: 14px; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.ln-btn-primary .ln-spinner { border-top-color: #F2F4F8; }
+.ln-btn-ghost   .ln-spinner { border-top-color: var(--ln-text); }
+
+/* ============ SKELETON LOADER ============ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.ln-skeleton {
+  background: linear-gradient(90deg, rgba(61,79,102,.18) 25%, rgba(61,79,102,.35) 50%, rgba(61,79,102,.18) 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: var(--radius-sm);
+}
+.ln-skeleton-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: clamp(10px, 1.5vw, 20px);
+  align-items: center;
+  padding: clamp(12px, 1.2vw, 16px) clamp(14px, 1.4vw, 18px);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ln-border);
+  background: rgba(10,13,18,.5);
+}
+.ln-skeleton-flag  { width: 42px; height: 42px; border-radius: var(--radius-sm); }
+.ln-skeleton-text-lg { height: 14px; width: 120px; }
+.ln-skeleton-text-sm { height: 11px; width: 180px; margin-top: 6px; }
+.ln-skeleton-text-xs { height: 9px; width: 80px; margin-top: 5px; }
+.ln-skeleton-bar-wrap { display: flex; flex-direction: column; gap: 6px; width: 120px; }
+.ln-skeleton-bar  { height: 4px; width: 100%; }
+.ln-skeleton-pill { height: 12px; width: 60px; border-radius: 6px; }
+
 /* ============ LAYOUT STAGES ============ */
 .ln-stage {
   position: absolute; inset: 0;

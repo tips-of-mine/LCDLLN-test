@@ -146,14 +146,16 @@ function Dropdown({ label, value, options, onChange, tooltip }) {
 }
 
 // =============== BOUTONS ===============
-function Button({ kind = 'primary', children, onClick, keycap, fullWidth, disabled, size = 'md' }) {
+// ============ BOUTON AVEC SPINNER ============
+function Button({ kind = 'primary', children, onClick, keycap, fullWidth, disabled, size = 'md', loading }) {
   return (
     <button
       className={`ln-btn ln-btn-${kind} ln-btn-${size} ${fullWidth ? 'full' : ''}`}
-      onClick={onClick} disabled={disabled}
+      onClick={onClick} disabled={disabled || loading}
     >
+      {loading && <span className="ln-spinner" />}
       <span>{children}</span>
-      {keycap && <kbd>{keycap}</kbd>}
+      {keycap && !loading && <kbd>{keycap}</kbd>}
     </button>
   );
 }

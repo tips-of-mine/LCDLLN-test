@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personnage — Les Chroniques de la Lune Noire</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="../auth_flow/styles.css">
+<link rel="stylesheet" href="portal.css">
+<style>
+  /* ---- Transitions race ---- */
+  .race-transition { transition: background .4s, border-color .4s, color .4s, box-shadow .4s; }
+
+  /* ---- Portrait ---- */
+  .char-portrait {
+    position: relative; border-radius: var(--radius-lg);
+    border: 1px solid var(--ln-border);
+    overflow: hidden; aspect-ratio: 3/4;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    box-shadow: inset 0 0 80px rgba(0,0,0,.7), 0 20px 60px rgba(0,0,0,.6);
+    transition: border-color .4s;
+  }
+  .char-portrait-bg {
+    position: absolute; inset: 0;
+    transition: background .5s;
+  }
+  .char-portrait-silhouette {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: .5;
+  }
+  .char-portrait-info {
+    position: relative; z-index: 2; width: 100%;
+    padding: 14px 16px; background: linear-gradient(to top, rgba(5,7,10,.95), transparent);
+  }
+
+  /* ---- Palette de couleurs ---- */
+  .color-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .color-swatch {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid transparent; cursor: pointer;
+    transition: transform .18s, border-color .18s;
+    flex-shrink: 0;
+  }
+  .color-swatch:hover { transform: scale(1.2); }
+  .color-swatch.selected { border-color: var(--ln-accent); transform: scale(1.15); }
+
+  /* ---- Stat bar ---- */
+  .stat-bar-row { display: flex; flex-direction: column; gap: 4px; }
+  .stat-bar-head { display: flex; justify-content: space-between; }
+  .stat-bar-name { font-family: var(--font-ui); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--ln-muted); }
+  .stat-bar-val  { font-family: var(--font-mono); font-size: 10px; color: var(--ln-accent); }
+  .stat-bar-track { height: 4px; background: rgba(61,79,102,.3); border-radius: 2px; overflow: hidden; }
+  .stat-bar-fill  { height: 100%; border-radius: 2px; transition: width .5s cubic-bezier(.2,.6,.2,1); }
+
+  /* ---- Racial ability ---- */
+  .racial-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(61,79,102,.2);
+  }
+  .racial-item:last-child { border-bottom: 0; }
+  .racial-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+
+  /* ---- Faction banner ---- */
+  .faction-banner {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 20px; border-radius: var(--radius-md);
+    border: 1px solid; transition: all .4s;
+  }
+  .faction-emblem {
+    font-size: 28px; line-height: 1; width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); border: 1px solid; flex-shrink: 0;
+    transition: all .4s;
+  }
+
+  /* ---- Classe card ---- */
+  .class-card {
+    padding: 12px 14px; border-radius: var(--radius-sm); cursor: pointer;
+    border: 1px solid transparent; transition: all .2s;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .class-card:hover { border-color: var(--ln-primary); background: rgba(74,123,184,.06); }
+  .class-card.selected { background: rgba(74,123,184,.12); }
+  .class-card.disabled { opacity: .35; cursor: not-allowed; }
+  .class-card.disabled:hover { border-color: transparent; background: transparent; }
+
+  /* ---- Layout 3 colonnes ---- */
+  .char-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .char-layout { grid-template-columns: 220px 1fr; }
+    .char-col-right { grid-column: 1 / -1; }
+  }
+  @media (max-width: 720px) {
+    .char-layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="../auth_flow/primitives.jsx"></script>
+<script type="text/babel" src="portal-template.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+/* ---- Stats par classe ---- */
+const CLASS_STATS = {
+  guerrier:  { force: 90, agilite: 55, intelligence: 25, esprit: 30 },
+  mage:      { force: 20, agilite: 45, intelligence: 95, esprit: 70 },
+  voleur:    { force: 55, agilite: 90, intelligence: 45, esprit: 35 },
+  pretre:    { force: 30, agilite: 40, intelligence: 60, esprit: 95 },
+  paladin:   { force: 80, agilite: 40, intelligence: 50, esprit: 75 },
+  chasseur:  { force: 50, agilite: 88, intelligence: 55, esprit: 50 },
+  necromant: { force: 25, agilite: 40, intelligence: 85, esprit: 65 },
+  chaman:    { force: 55, agilite: 50, intelligence: 65, esprit: 88 },
+};
+
+const STAT_COLORS = {
+  force:       '#C25A1A',
+  agilite:     '#4F8A2B',
+  intelligence:'#6E46B7',
+  esprit:      '#E7C16A',
+};
+
+/* ---- Silhouette SVG par genre ---- */
+function Silhouette({ gender }) {
+  return (
+    <svg viewBox="0 0 100 140" className="char-portrait-silhouette" preserveAspectRatio="xMidYMax meet">
+      <ellipse cx="50" cy={gender === 'F' ? 30 : 32} rx={gender === 'F' ? 13 : 14} ry={gender === 'F' ? 16 : 17} fill="rgba(0,0,0,.7)" />
+      {gender === 'F'
+        ? <path d="M24,140 Q24,78 50,68 Q76,78 76,140 Z" fill="rgba(0,0,0,.7)" />
+        : <path d="M20,140 Q20,72 50,62 Q80,72 80,140 Z" fill="rgba(0,0,0,.7)" />
+      }
+    </svg>
+  );
+}
+
+/* ---- Badge faction ---- */
+function FactionBadge({ faction }) {
+  if (!faction) return null;
+  return (
+    <div className="faction-banner race-transition"
+      style={{ background: faction.bg, borderColor: faction.border }}>
+      <div className="faction-emblem race-transition"
+        style={{ background: faction.bg, borderColor: faction.border, color: faction.color }}>
+        {faction.emblem}
+      </div>
+      <div>
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '.18em', textTransform: 'uppercase', color: faction.color }}>{faction.name}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12.5, color: 'var(--ln-muted)', marginTop: 4, lineHeight: 1.5 }}>{faction.desc}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Stat bar ---- */
+function StatBar({ name, value, color }) {
+  return (
+    <div className="stat-bar-row">
+      <div className="stat-bar-head">
+        <span className="stat-bar-name">{name}</span>
+        <span className="stat-bar-val">{value}</span>
+      </div>
+      <div className="stat-bar-track">
+        <div className="stat-bar-fill" style={{ width: `${value}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+/* ============ PAGE PERSONNAGE ============ */
+function CharacterPage({ player, setPlayer }) {
+  const [raceId, setRaceId]     = useState(player?.race || 'humains');
+  const [classId, setClassId]   = useState(player?.class || 'guerrier');
+  const [gender, setGender]     = useState('M');
+  const [skinIdx, setSkinIdx]   = useState(0);
+  const [hairIdx, setHairIdx]   = useState(0);
+  const [charName, setCharName] = useState(player?.charName || 'Morwenna');
+  const [saved, setSaved]       = useState(false);
+  const [saving, setSaving]     = useState(false);
+
+  const race    = RACES.find(r => r.id === raceId);
+  const faction = FACTIONS[race?.faction];
+  const cls     = CLASSES.find(c => c.id === classId);
+  const stats   = CLASS_STATS[classId] || CLASS_STATS.guerrier;
+
+  // Synchronise le thème sur l'élément <html>
+  useEffect(() => {
+    document.documentElement.setAttribute('data-race', raceId);
+  }, [raceId]);
+
+  // Classes disponibles pour cette race
+  const availableClasses = CLASSES.map(c => ({ ...c, available: c.roles.includes(raceId) }));
+
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false); setSaved(true);
+      setPlayer && setPlayer(p => ({ ...p, race: raceId, class: classId, charName }));
+      setTimeout(() => setSaved(false), 3000);
+    }, 900);
+  };
+
+  const skinColors = SKIN_COLORS[raceId] || [];
+  const hairColors = HAIR_COLORS[raceId] || [];
+  const racials    = RACIALS[raceId] || [];
+
+  return (
+    <div>
+      <PageHeader
+        title="Personnage"
+        subtitle="Choisissez votre race, votre faction et personnalisez votre apparence."
+        breadcrumb={['Espace joueur', 'Personnage']}
+      />
+
+      {saved && (
+        <div className="wp-alert success" style={{ marginBottom: 20 }}>
+          <span className="wp-alert-icon">✓</span>
+          <div>Personnage enregistré. Le thème sera appliqué à votre prochain lancement du jeu.</div>
+        </div>
+      )}
+
+      <div className="char-layout">
+
+        {/* ── COLONNE GAUCHE : portrait ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+          {/* Sélecteur de race */}
+          <SectionTitle sub="Votre lignée détermine vos capacités raciales et votre faction.">Race</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 4 }}>
+            {RACES.map(r => (
+              <div key={r.id} onClick={() => { setRaceId(r.id); setSkinIdx(0); setHairIdx(0); }}
+                style={{
+                  padding: '8px 10px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                  border: `1px solid ${raceId === r.id ? r.border : 'var(--ln-border)'}`,
+                  background: raceId === r.id ? `${r.primary}22` : 'rgba(10,13,18,.5)',
+                  transition: 'all .2s',
+                }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: raceId === r.id ? r.accent : 'var(--ln-muted)' }}>{r.name}</div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 8.5, letterSpacing: '.16em', textTransform: 'uppercase', color: FACTIONS[r.faction]?.color, marginTop: 2, opacity: .8 }}>{FACTIONS[r.faction]?.shortName}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Portrait */}
+          <div className="char-portrait race-transition" style={{ borderColor: race?.border }}>
+            <div className="char-portrait-bg" style={{
+              background: `radial-gradient(ellipse 70% 80% at 50% 30%, ${race?.primary}88, transparent 70%), radial-gradient(ellipse 100% 60% at 50% 100%, rgba(5,7,10,.9), transparent 50%), linear-gradient(180deg, rgba(20,28,40,.3), #05070A 100%)`,
+            }} />
+            <Silhouette gender={gender} />
+            <div className="char-portrait-info">
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ln-text)' }}>{charName}</div>
+              <div style={{ fontFamily: 'var(--font-ui)', fontSize: 9.5, letterSpacing: '.22em', textTransform: 'uppercase', color: race?.accent, marginTop: 2 }}>{race?.name} · {cls?.name}</div>
+              <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                {['M','F'].map(g => (
+                  <button key={g} onClick={() => setGender(g)} style={{
+                    width: 28, height: 22, border: `1px solid ${gender === g ? 'var(--ln-accent)' : 'var(--ln-border)'}`,
+                    background: gender === g ? 'rgba(232,197,110,.15)' : 'rgba(10,13,18,.6)',
+                    color: gender === g ? 'var(--ln-accent)' : 'var(--ln-muted)',
+                    fontFamily: 'var(--font-ui)', fontSize: 10, borderRadius: 'var(--radius-xs)', cursor: 'pointer',
+                  }}>{g}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Nom */}
+          <Field label="Nom du personnage" value={charName} onChange={setCharName} tooltip="3 à 32 caractères. Visible par tous les joueurs." />
+        </div>
+
+        {/* ── COLONNE CENTRALE ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Faction */}
+          <FactionBadge faction={faction} />
+
+          {/* Apparence */}
+          <div className="wp-card">
+            <SectionTitle sub="Couleurs de peau et de cheveux disponibles pour cette race.">Apparence</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, letterSpacing: '.22em', textTransform: 'uppercase', color: 'var(--ln-muted)', marginBottom: 8 }}>Carnation</div>
+                <div className="color-swatches">
+                  {skinColors.map((c, i) => (
+                    <div key={c} className={`color-swatch ${skinIdx === i ? 'selected' : ''}`}
+                      style={{ background: c }} onClick={() => setSkinIdx(i)} />
+                  ))}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ln-muted)', marginTop: 6 }}>{skinColors[skinIdx]}</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, letterSpacing: '.22em', textTransform: 'uppercase', color: 'var(--ln-muted)', marginBottom: 8 }}>Cheveux</div>
+                <div className="color-swatches">
+                  {hairColors.map((c, i) => (
+                    <div key={c} className={`color-swatch ${hairIdx === i ? 'selected' : ''}`}
+                      style={{ background: c }} onClick={() => setHairIdx(i)} />
+                  ))}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ln-muted)', marginTop: 6 }}>{hairColors[hairIdx]}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Capacités raciales */}
+          <div className="wp-card">
+            <SectionTitle sub={race?.mood}>Capacités raciales</SectionTitle>
+            {racials.map((r, i) => (
+              <div key={i} className="racial-item">
+                <div className="racial-dot race-transition" style={{ background: race?.accent }} />
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, color: 'var(--ln-text)', lineHeight: 1.5 }}>{r}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Boutons d'action */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
+            <Button kind="ghost" size="md" onClick={() => { setRaceId('humains'); setClassId('guerrier'); setGender('M'); setSkinIdx(0); setHairIdx(0); }}>Réinitialiser</Button>
+            <Button kind="primary" size="md" loading={saving} onClick={handleSave}>Enregistrer le personnage</Button>
+          </div>
+        </div>
+
+        {/* ── COLONNE DROITE ── */}
+        <div className="char-col-right" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Classe */}
+          <div className="wp-card">
+            <SectionTitle sub="Seules les classes compatibles avec votre race sont disponibles.">Classe</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {availableClasses.map(c => (
+                <div key={c.id} onClick={() => c.available && setClassId(c.id)}
+                  className={`class-card ${classId === c.id ? 'selected' : ''} ${!c.available ? 'disabled' : ''}`}
+                  style={{ borderColor: classId === c.id ? 'var(--ln-primary)' : 'transparent' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 12, letterSpacing: '.14em', textTransform: 'uppercase', color: classId === c.id ? 'var(--ln-accent)' : 'var(--ln-text)' }}>{c.name}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 11, color: 'var(--ln-muted)' }}>{c.role}</div>
+                  </div>
+                  {!c.available && <span style={{ fontFamily: 'var(--font-ui)', fontSize: 9, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ln-muted)', flexShrink: 0 }}>Indispo.</span>}
+                  {classId === c.id && <span style={{ color: 'var(--ln-accent)', fontSize: 12, flexShrink: 0 }}>✓</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Statistiques */}
+          <div className="wp-card">
+            <SectionTitle sub="Valeurs de base liées à la classe sélectionnée.">Statistiques</SectionTitle>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { key: 'force',        label: 'Force' },
+                { key: 'agilite',      label: 'Agilité' },
+                { key: 'intelligence', label: 'Intelligence' },
+                { key: 'esprit',       label: 'Esprit' },
+              ].map(s => (
+                <StatBar key={s.key} name={s.label} value={stats[s.key]} color={STAT_COLORS[s.key]} />
+              ))}
+            </div>
+          </div>
+
+          {/* Infos complémentaires */}
+          <div className="wp-card" style={{ background: `${race?.primary}0e`, borderColor: race?.border }}>
+            <SectionTitle>Niveau & expérience</SectionTitle>
+            <StatRow label="Niveau"         value="12"       color="var(--ln-accent)" />
+            <StatRow label="Expérience"     value="14 820 XP" />
+            <StatRow label="Prochain niveau" value="20 000 XP" />
+            <StatRow label="Royaume"        value="Morneplaine" />
+            <StatRow label="Jeu en ligne"   value="47h 32m" />
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+/* ============ PAGES PLACEHOLDER ============ */
+function PlaceholderPage({ title, subtitle }) {
+  return (
+    <div>
+      <PageHeader title={title} subtitle={subtitle} breadcrumb={['Espace joueur', title]} />
+      <div className="wp-card" style={{ padding: 40, textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 14, color: 'var(--ln-muted)' }}>
+          Cette page est en cours de développement. Utilisez ce template comme base.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ APPLICATION ============ */
+function App() {
+  const [page, setPage] = useState(() => localStorage.getItem('char_page') || 'character');
+  const [player, setPlayer] = useState({
+    name: 'Morwenna',
+    tagId: 'FR-MRWN-4F2A-81C7',
+    race: 'humains',
+    class: 'guerrier',
+    charName: 'Morwenna',
+    level: 12,
+  });
+  const [animKey, setAnimKey] = useState(0);
+
+  const go = (p) => { setPage(p); setAnimKey(k => k + 1); localStorage.setItem('char_page', p); };
+
+  const renderPage = () => {
+    switch (page) {
+      case 'character': return <CharacterPage player={player} setPlayer={setPlayer} />;
+      case 'exploits':  return <PlaceholderPage title="Exploits"          subtitle="Vos succès et progressions en jeu." />;
+      case 'bugs':      return <PlaceholderPage title="Signaler un bug"   subtitle="Contribuez à l'amélioration du jeu." />;
+      case 'recovery':  return <PlaceholderPage title="Récupération"      subtitle="Configurez vos questions secrètes." />;
+      case 'support':   return <PlaceholderPage title="Support"           subtitle="Besoin d'aide ? Nous sommes là." />;
+      default:          return <PlaceholderPage title="Tableau de bord"   subtitle="Vue d'ensemble de votre compte." />;
+    }
+  };
+
+  return (
+    <AuthLayout player={player} page={page} setPage={go} onLogout={() => window.location.reload()}>
+      <div key={animKey} className="ln-screen-enter">
+        {renderPage()}
+      </div>
+    </AuthLayout>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

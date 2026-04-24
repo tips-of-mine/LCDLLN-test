@@ -74,10 +74,11 @@
       try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*'); } catch(e) {}
     };
 
-    const go = (s) => setScreen(s);
+    const [animKey, setAnimKey] = useState(0);
+    const go = (s) => { setAnimKey(k => k + 1); setScreen(s); };
 
     let view;
-    if (screen === 'lang')      view = <LangSelectScreen onNext={() => go('login')} />;
+    if (screen === 'lang')          view = <LangSelectScreen onNext={() => go('login')} />;
     else if (screen === 'login')    view = <LoginScreen onRegister={() => go('register')} onOptions={() => go('options')} onShard={() => go('shard')} />;
     else if (screen === 'register') view = <RegisterScreen onBack={() => go('login')} onConfirm={() => go('confirm')} onError={() => go('error')} />;
     else if (screen === 'error')    view = <RegisterErrorScreen onBack={() => go('register')} />;
@@ -88,7 +89,9 @@
     return (
       <>
         <Backdrop animated={animBg} />
-        {view}
+        <div key={animKey} className="ln-screen-enter" style={{ position:'absolute', inset:0 }}>
+          {view}
+        </div>
 
         {/* Flow nav (toujours visible) */}
         <div className="ln-flow-nav">

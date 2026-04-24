@@ -213,35 +213,84 @@ function OptionsScreen({ onBack }) {
   );
 }
 
+// ============ SKELETON SHARD ============
+function ShardSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {[1,2,3,4].map(i => (
+        <div key={i} className="ln-skeleton-row">
+          <div className="ln-skeleton ln-skeleton-flag" />
+          <div>
+            <div className="ln-skeleton ln-skeleton-text-lg" />
+            <div className="ln-skeleton ln-skeleton-text-sm" />
+            <div className="ln-skeleton ln-skeleton-text-xs" />
+          </div>
+          <div className="ln-skeleton-bar-wrap">
+            <div className="ln-skeleton ln-skeleton-text-xs" />
+            <div className="ln-skeleton ln-skeleton-bar" />
+            <div className="ln-skeleton ln-skeleton-pill" />
+          </div>
+          <div className="ln-skeleton ln-skeleton-pill" />
+          <div className="ln-skeleton ln-skeleton-pill" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ============ ÉCRAN 7 — CHOIX DU SERVEUR ============
 function ShardPickScreen({ onBack, onEnter }) {
+  const [loading, setLoading] = React.useState(true);
+  React.useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 1400);
+    return () => clearTimeout(t);
+  }, []);
+
   const shards = [
     { id: 'MORNE', name: 'Morneplaine', desc: 'Terres brumeuses, PvE coopératif.', players: 1842, cap: 3000, status: 'ok',   ping: 28, event: 'Chasse de la lune noire' },
     { id: 'KORVA', name: 'Korvath',     desc: 'Forteresse orc, PvP ouvert.',      players: 2734, cap: 3000, status: 'warn', ping: 42, event: null },
     { id: 'CENDR', name: 'Cendrebois',  desc: 'Forêt maudite, RP semi-hardcore.', players: 612,  cap: 2000, status: 'ok',   ping: 35, event: 'Festival des âmes' },
-    { id: 'SOUOM', name: 'Sous-Ombre',  desc: 'Maintenance en cours — retour à 21h.', players: 0, cap: 2000, status: 'err',   ping: null, event: null },
+    { id: 'SOUOM', name: 'Sous-Ombre',  desc: 'Maintenance en cours — retour à 21h.', players: 0, cap: 2000, status: 'err', ping: null, event: null },
   ];
   const [selected, setSelected] = useS2('MORNE');
   const breadcrumb = [
-    { key: 'auth',   label: 'Compte' },
-    { key: 'shard',  label: 'Royaume' },
-    { key: 'char',   label: 'Personnage' },
-    { key: 'world',  label: 'Entrée' },
+    { key: 'auth',  label: 'Compte' },
+    { key: 'shard', label: 'Royaume' },
+    { key: 'char',  label: 'Personnage' },
+    { key: 'world', label: 'Entrée' },
   ];
   const pingClass = (p) => p == null ? 'bad' : p < 40 ? 'ok' : p < 80 ? 'med' : 'bad';
 
   return (
-    <div className="ln-stage" style={{ padding: 'clamp(12px, 2vh, 24px)' }}>
-      <div className="ln-stage-col" style={{ width: 'min(820px, 96vw)' }}>
+    <div className="ln-stage" style={{ padding: 'clamp(12px, 2vh, 24px)', alignItems: 'stretch' }}>
+      {/* Colonne centrale avec hauteur fixe */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 14,
+        width: 'min(820px, 96vw)', margin: '0 auto',
+        height: '100%', maxHeight: 'calc(100vh - 48px)',
+      }}>
+        {/* Fil d'Ariane — figé */}
         <Breadcrumb steps={breadcrumb} current={1} />
-        <Panel
-          title="Choisissez votre royaume"
-          subtitle="Chaque monde possède sa population, ses règles et ses événements."
-          versionLabel={`${shards.filter(s => s.status !== 'err').length} / ${shards.length} en ligne`}
-          infoText="Vous pourrez changer de royaume plus tard via le portail de voyage inter-mondes (frais en or)."
-        >
-          <div className="ln-shard-list">
-            {shards.map(s => (
+
+        {/* Panel avec titre figé + liste scrollable */}
+        <div className="ln-auth-panel" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+
+          {/* En-tête fixe */}
+          <div className="ln-auth-panel-header">
+            <div>
+              <h2 className="ln-auth-title">Choisissez votre royaume</h2>
+              <p className="ln-auth-subtitle">Chaque monde possède sa population, ses règles et ses événements.</p>
+            </div>
+            <div className="ln-auth-panel-header-right">
+              <ShardInfoIcon />
+              <span className="ln-version">{shards.filter(s => s.status !== 'err').length} / {shards.length} en ligne</span>
+            </div>
+          </div>
+
+          {/* Liste scrollable */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px,1.8vw,24px) clamp(18px,2vw,28px)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {loading && <ShardSkeleton />}
+            {!loading && shards.map(s => (
               <div key={s.id} onClick={() => s.status !== 'err' && setSelected(s.id)}
                 className={`ln-shard-row ${selected === s.id ? 'selected' : ''} ${s.status === 'err' ? 'disabled' : ''}`}>
                 <div className="ln-shard-flag">{s.id.slice(0,1)}</div>
@@ -257,27 +306,41 @@ function ShardPickScreen({ onBack, onEnter }) {
                   </div>
                   <div className="ln-shard-players">{s.players.toLocaleString('fr-FR')} / {s.cap.toLocaleString('fr-FR')}</div>
                 </div>
-                <div className={`ln-shard-ping ${pingClass(s.ping)}`}>
-                  {s.ping != null ? `${s.ping} ms` : '—'}
-                </div>
+                <div className={`ln-shard-ping ${pingClass(s.ping)}`}>{s.ping != null ? `${s.ping} ms` : '—'}</div>
                 <div className={`ln-shard-status ${s.status}`}>
                   {s.status === 'ok' ? 'En ligne' : s.status === 'warn' ? 'Saturé' : 'Hors ligne'}
                 </div>
               </div>
             ))}
           </div>
-          <div className="ln-actions">
+
+          {/* Pied de page fixe */}
+          <div className="ln-auth-panel-footer">
             <Button kind="ghost" size="md" onClick={onBack} keycap="Échap">Retour</Button>
             <div className="ln-actions-right">
               <KeycapHint keyLabel="↑↓">naviguer</KeycapHint>
-              <Button kind="primary" size="md" keycap="↵" onClick={onEnter}
-                disabled={!selected || shards.find(s => s.id === selected)?.status === 'err'}>
-                Entrer dans le monde
+              <Button kind="primary" size="md" keycap="↵" onClick={onEnter} loading={loading}
+                disabled={loading || !selected || shards.find(s => s.id === selected)?.status === 'err'}>
+                {loading ? 'Chargement…' : 'Entrer dans le monde'}
               </Button>
             </div>
           </div>
-        </Panel>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function ShardInfoIcon() {
+  const [show, setShow] = React.useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <button className="ln-info-icon" onClick={() => setShow(s => !s)} aria-label="Aide">i</button>
+      {show && (
+        <div className="ln-info-popup" style={{ position: 'absolute', right: 0, top: 30, width: 280, zIndex: 50 }}>
+          <p>Vous pourrez changer de royaume plus tard via le portail de voyage inter-mondes (frais en or).</p>
+        </div>
+      )}
     </div>
   );
 }

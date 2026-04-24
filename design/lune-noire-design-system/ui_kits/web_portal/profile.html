@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portail — Les Chroniques de la Lune Noire</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="../auth_flow/styles.css">
+<style>
+  html, body, #root { height: 100%; }
+  body { overflow-y: auto; }
+  .portal-wrap {
+    min-height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    padding: clamp(24px, 4vh, 56px) clamp(16px, 4vw, 40px) 60px;
+    gap: clamp(20px, 3vh, 32px);
+  }
+  .portal-header {
+    width: min(720px, 100%);
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 16px; border-bottom: 1px solid var(--ln-border);
+  }
+  .portal-logo { display: flex; align-items: center; gap: 14px; }
+  .portal-moon {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #2a2330 0%, #0B0712 55%, #000 100%);
+    border: 1px solid #1a1420;
+    box-shadow: 0 0 20px rgba(74,123,184,.35);
+    flex-shrink: 0;
+  }
+  .portal-logo-text { font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: .28em; text-transform: uppercase; color: var(--ln-text); }
+  .portal-logo-sub { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--ln-muted); margin-top: 2px; }
+  .portal-step-badge {
+    font-family: var(--font-ui); font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--ln-accent); padding: 5px 12px; border: 1px solid rgba(232,197,110,.4);
+    border-radius: var(--radius-xl); background: rgba(232,197,110,.06);
+  }
+  .save-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(10,13,18,.95); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--ln-border);
+    padding: 14px clamp(16px, 4vw, 40px);
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    z-index: 100;
+  }
+  .save-bar-hint { font-family: var(--font-body); font-style: italic; font-size: 13px; color: var(--ln-muted); }
+  .tag-preview {
+    padding: 14px 18px;
+    background: rgba(232,197,110,.06); border: 1px solid rgba(232,197,110,.3);
+    border-radius: var(--radius-md); display: flex; align-items: center; gap: 16px;
+  }
+  .tag-label { font-family: var(--font-ui); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--ln-muted); }
+  .tag-value { font-family: var(--font-mono); font-size: 18px; letter-spacing: .14em; color: var(--ln-accent); margin-top: 4px; }
+  .tag-hint { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--ln-muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="../auth_flow/primitives.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function Portal() {
+  const [f, setF] = useState({ firstName: '', lastName: '', bio: '', discord: '', lang: 'fr' });
+  const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const set = (k) => (v) => { setF(s => ({ ...s, [k]: v })); setDirty(true); setSaved(false); };
+
+  const tagId = 'FR-MRWN-4F2A-81C7';
+
+  const handleSave = () => { setDirty(false); setSaved(true); };
+
+  return (
+    <>
+      <Backdrop animated={false} />
+      <div className="portal-wrap">
+
+        {/* En-tête */}
+        <div className="portal-header">
+          <div className="portal-logo">
+            <div className="portal-moon"></div>
+            <div>
+              <div className="portal-logo-text">Portail du joueur</div>
+              <div className="portal-logo-sub">Les Chroniques de la Lune Noire</div>
+            </div>
+          </div>
+          <div className="portal-step-badge">Complétion du profil</div>
+        </div>
+
+        {/* Contenu principal */}
+        <div style={{ width: 'min(720px, 100%)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* TAG-ID */}
+          <div className="tag-preview">
+            <div style={{ flex: 1 }}>
+              <div className="tag-label">Votre TAG-ID unique</div>
+              <div className="tag-value">{tagId}</div>
+              <div className="tag-hint">Ce code vous identifie dans tous les royaumes. Il ne peut pas être modifié.</div>
+            </div>
+            <Button kind="ghost" size="sm" onClick={() => navigator.clipboard?.writeText(tagId)}>Copier</Button>
+          </div>
+
+          {/* Identité civile */}
+          <div className="ln-auth-panel">
+            <div className="ln-auth-panel-header">
+              <div>
+                <h2 className="ln-auth-title">Identité</h2>
+                <p className="ln-auth-subtitle">Ces informations restent privées et servent uniquement à l'identification de votre compte.</p>
+              </div>
+            </div>
+            <div className="ln-auth-panel-body">
+              {saved && <Banner kind="ok" title="Profil enregistré">Vos modifications ont été sauvegardées avec succès.</Banner>}
+              <div className="ln-form-grid cols-2">
+                <Field
+                  label="Prénom"
+                  value={f.firstName}
+                  onChange={set('firstName')}
+                  placeholder="Votre prénom"
+                  tooltip="Utilisé uniquement pour l'identification du compte. Non affiché en jeu."
+                  autoFocus
+                />
+                <Field
+                  label="Nom de famille"
+                  value={f.lastName}
+                  onChange={set('lastName')}
+                  placeholder="Votre nom"
+                  tooltip="Non affiché en jeu. Requis pour la récupération de compte."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Profil public */}
+          <div className="ln-auth-panel">
+            <div className="ln-auth-panel-header">
+              <h2 className="ln-auth-title">Profil public</h2>
+            </div>
+            <div className="ln-auth-panel-body">
+              <Field
+                label="Biographie"
+                value={f.bio}
+                onChange={set('bio')}
+                placeholder="Quelques mots sur votre aventurier…"
+                tooltip="Visible par les autres joueurs sur votre fiche de personnage."
+              />
+              <Field
+                label="Discord (optionnel)"
+                value={f.discord}
+                onChange={set('discord')}
+                placeholder="NomUtilisateur#0000"
+                tooltip="Permet aux autres joueurs de vous contacter en dehors du jeu."
+              />
+              <Dropdown
+                label="Langue préférée"
+                value={f.lang}
+                onChange={set('lang')}
+                options={[{ value: 'fr', label: 'Français' }, { value: 'en', label: 'English' }]}
+                tooltip="Détermine la langue des communications officielles."
+              />
+            </div>
+          </div>
+
+          {/* Sécurité */}
+          <div className="ln-auth-panel">
+            <div className="ln-auth-panel-header">
+              <h2 className="ln-auth-title">Sécurité du compte</h2>
+            </div>
+            <div className="ln-auth-panel-body tight">
+              <div className="ln-toggle-row" style={{ cursor: 'default' }}>
+                <div>
+                  <div className="ln-toggle-label">Adresse courriel</div>
+                  <div className="ln-field-tooltip">morwenna@exemple.fr · <span style={{ color: 'var(--ln-success)' }}>Vérifiée</span></div>
+                </div>
+                <Button kind="ghost" size="sm">Modifier</Button>
+              </div>
+              <div className="ln-toggle-row" style={{ cursor: 'default' }}>
+                <div>
+                  <div className="ln-toggle-label">Mot de passe</div>
+                  <div className="ln-field-tooltip">Dernière modification : il y a 3 jours.</div>
+                </div>
+                <Button kind="ghost" size="sm">Changer</Button>
+              </div>
+              <div className="ln-toggle-row" style={{ cursor: 'default' }}>
+                <div>
+                  <div className="ln-toggle-label">Authentification à deux facteurs</div>
+                  <div className="ln-field-tooltip">Non activée — recommandée pour protéger votre compte.</div>
+                </div>
+                <Button kind="accent" size="sm">Activer</Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Danger zone */}
+          <div className="ln-auth-panel">
+            <div className="ln-auth-panel-header">
+              <h2 className="ln-auth-title" style={{ color: 'var(--ln-error)' }}>Zone dangereuse</h2>
+            </div>
+            <div className="ln-auth-panel-body tight">
+              <div className="ln-toggle-row" style={{ cursor: 'default' }}>
+                <div>
+                  <div className="ln-toggle-label">Supprimer le compte</div>
+                  <div className="ln-field-tooltip">Action irréversible. Tous vos personnages seront définitivement perdus.</div>
+                </div>
+                <Button kind="danger" size="sm">Supprimer</Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Espace pour la barre de sauvegarde */}
+          <div style={{ height: 20 }} />
+        </div>
+      </div>
+
+      {/* Barre de sauvegarde fixe */}
+      <div className="save-bar">
+        <div className="save-bar-hint">
+          {dirty ? 'Des modifications sont en attente d\'enregistrement.' : 'Profil à jour.'}
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Button kind="ghost" size="md" onClick={() => { setDirty(false); setSaved(false); setF({ firstName: '', lastName: '', bio: '', discord: '', lang: 'fr' }); }}>Annuler</Button>
+          <Button kind="primary" size="md" disabled={!dirty} onClick={handleSave}>Enregistrer</Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Portal />);
+</script>
+</body>
+</html>

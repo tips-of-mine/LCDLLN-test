@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portail — Les Chroniques de la Lune Noire</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="../auth_flow/styles.css">
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="../auth_flow/primitives.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ======================================================
+   ICÔNES SVG (remplacent les emoji du portail actuel)
+====================================================== */
+const Icon = ({ name, size = 20 }) => {
+  const s = { width: size, height: size, stroke: 'currentColor', fill: 'none', strokeWidth: 1.4, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  const icons = {
+    moon:    <svg viewBox="0 0 24 24" style={s}><path d="M15 3a9 9 0 1 0 6 10c-4 0-6-4-6-10z"/></svg>,
+    trophy:  <svg viewBox="0 0 24 24" style={s}><path d="M6 2h12v8a6 6 0 0 1-12 0V2zM4 2h2M18 2h2M12 14v4M8 22h8M12 18v4"/></svg>,
+    shield:  <svg viewBox="0 0 24 24" style={s}><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg>,
+    scroll:  <svg viewBox="0 0 24 24" style={s}><path d="M6 4h10l2 3v13H6zM9 9h8M9 13h8M9 17h5"/></svg>,
+    bug:     <svg viewBox="0 0 24 24" style={s}><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M9 7a3 3 0 0 1 6 0M4 11h3M17 11h3M4 16h3M17 16h3M4 21h3v-2M17 21h-3v-2"/></svg>,
+    chat:    <svg viewBox="0 0 24 24" style={s}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+    mail:    <svg viewBox="0 0 24 24" style={s}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>,
+    user:    <svg viewBox="0 0 24 24" style={s}><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
+    key:     <svg viewBox="0 0 24 24" style={s}><circle cx="8" cy="15" r="4"/><path d="M12 11l8-8M18 6l2 2M16 8l2 2"/></svg>,
+    map:     <svg viewBox="0 0 24 24" style={s}><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/></svg>,
+    sword:   <svg viewBox="0 0 24 24" style={s}><path d="M3 21l6-6M9 3l12 12-3 3L6 6 9 3zM12 6l3 3"/></svg>,
+    server:  <svg viewBox="0 0 24 24" style={s}><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="6" cy="18" r="1" fill="currentColor" stroke="none"/></svg>,
+    check:   <svg viewBox="0 0 24 24" style={s}><polyline points="20,6 9,17 4,12"/></svg>,
+    lock:    <svg viewBox="0 0 24 24" style={s}><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>,
+    bell:    <svg viewBox="0 0 24 24" style={s}><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21a2 2 0 0 0 4 0"/></svg>,
+    arrow:   <svg viewBox="0 0 24 24" style={s}><path d="M5 12h14M13 6l6 6-6 6"/></svg>,
+    info:    <svg viewBox="0 0 24 24" style={s}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>,
+  };
+  return icons[name] || null;
+};
+
+/* ======================================================
+   HEADER
+====================================================== */
+function Header({ page, setPage, loggedIn, setLoggedIn }) {
+  const [open, setOpen] = useState(false);
+  const navLinks = [
+    { id: 'roadmap', label: 'Roadmap' },
+    { id: 'support', label: 'Support' },
+    { id: 'bugs',    label: 'Bugs' },
+    { id: 'player',  label: 'Espace joueur' },
+  ];
+  return (
+    <header className="wp-header">
+      <a className="wp-logo" onClick={() => { setPage('home'); setOpen(false); }} style={{ cursor: 'pointer' }}>
+        <div className="wp-logo-moon" />
+        <span className="wp-logo-text">Les Chroniques de la Lune Noire</span>
+      </a>
+      <button className="wp-nav-toggle" onClick={() => setOpen(o => !o)}>{open ? '✕' : '☰'}</button>
+      <nav className={`wp-nav ${open ? 'open' : ''}`} onClick={() => setOpen(false)}>
+        {navLinks.map(l => (
+          <a key={l.id} className={page === l.id ? 'active' : ''} onClick={() => setPage(l.id)} style={{ cursor: 'pointer' }}>{l.label}</a>
+        ))}
+        {loggedIn
+          ? <a onClick={() => setLoggedIn(false)} style={{ cursor: 'pointer' }}>Déconnexion</a>
+          : <a className="cta" onClick={() => setPage('login')} style={{ cursor: 'pointer' }}>Connexion</a>
+        }
+      </nav>
+    </header>
+  );
+}
+
+/* ======================================================
+   FOOTER
+====================================================== */
+function Footer({ setPage }) {
+  return (
+    <footer className="wp-footer">
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 11, letterSpacing: '.24em', textTransform: 'uppercase', color: 'var(--ln-muted)' }}>
+        © 2026 · Les Chroniques de la Lune Noire
+      </div>
+      <div className="wp-footer-links">
+        <a onClick={() => setPage('support')} style={{ cursor: 'pointer' }}>Support</a>
+        <a onClick={() => setPage('bugs')} style={{ cursor: 'pointer' }}>Signaler un bug</a>
+        <a style={{ cursor: 'pointer' }}>Confidentialité</a>
+        <a style={{ cursor: 'pointer' }}>CGU</a>
+        <a href="https://discord.gg/" target="_blank">Discord</a>
+      </div>
+    </footer>
+  );
+}
+
+/* ======================================================
+   PAGE ACCUEIL
+====================================================== */
+function HomePage({ setPage, loggedIn }) {
+  const features = [
+    { icon: 'trophy', title: 'Exploits & Succès', desc: 'Suivez votre progression, débloquez des succès secrets et observez vos paliers.', link: 'exploits' },
+    { icon: 'key',    title: 'Récupération sécurisée', desc: 'Questions secrètes et token temporaire pour retrouver l\'accès à votre compte.', link: 'recovery' },
+    { icon: 'bug',    title: 'Signalement de bugs', desc: 'Contribuez au jeu et gagnez des exploits exclusifs à chaque palier atteint.', link: 'bugs' },
+    { icon: 'scroll', title: 'CGU & Conformité', desc: 'Consultez et acceptez les conditions générales directement depuis le portail.', link: 'player' },
+  ];
+  const quickLinks = [
+    { icon: 'chat',  label: 'Support & FAQ', page: 'support' },
+    { icon: 'mail',  label: 'Contact',        page: 'home' },
+    { icon: 'user',  label: 'Mon espace',     page: 'player' },
+  ];
+  return (
+    <main className="wp-main">
+      {/* Hero */}
+      <div className="wp-hero">
+        <p className="wp-hero-eyebrow">Portail officiel</p>
+        <h1>Les Chroniques</h1>
+        <p className="wp-hero-sub">de la Lune Noire</p>
+        <p className="wp-hero-desc">Suivez l'avancement du projet, gérez votre profil, consultez la feuille de route et suivez vos exploits en jeu.</p>
+        <div className="wp-hero-actions">
+          {loggedIn
+            ? <Button kind="primary" size="lg" onClick={() => setPage('player')}>Espace joueur</Button>
+            : <Button kind="primary" size="lg" onClick={() => setPage('login')}>Se connecter</Button>
+          }
+          <Button kind="ghost" size="lg" onClick={() => setPage('roadmap')}>Voir la roadmap</Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="wp-stats">
+        {[['20', 'Paliers d\'exploits'], ['3', 'Modules actifs'], ['100%', 'Open source'], ['24/7', 'Portail en ligne']].map(([v, l]) => (
+          <div key={l} className="wp-stat"><div className="wp-stat-val">{v}</div><div className="wp-stat-label">{l}</div></div>
+        ))}
+      </div>
+
+      {/* Features */}
+      <p className="wp-section-title">Fonctionnalités du portail</p>
+      <p className="wp-section-sub">Tout ce dont vous avez besoin pour gérer votre expérience de jeu.</p>
+      <div className="wp-grid wp-grid-2" style={{ marginBottom: 36 }}>
+        {features.map(f => (
+          <div key={f.icon} className="wp-card interactive" onClick={() => setPage(f.link)}>
+            <div className="wp-card-icon"><Icon name={f.icon} /></div>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
+            <span className="wp-card-badge">Accéder</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick links */}
+      <p className="wp-section-title">Accès rapide</p>
+      <div className="wp-grid wp-grid-3">
+        {quickLinks.map(q => (
+          <div key={q.label} className="wp-card interactive" onClick={() => setPage(q.page)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '24px 16px', textAlign: 'center' }}>
+            <div style={{ color: 'var(--ln-accent)' }}><Icon name={q.icon} size={26} /></div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 12.5, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ln-text)' }}>{q.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Server status */}
+      <p className="wp-section-title" style={{ marginTop: 32 }}>État des royaumes</p>
+      <div className="wp-card">
+        {[
+          { name: 'Morneplaine', meta: 'PvE · 1 842 joueurs · 28 ms', status: 'ok',   label: 'En ligne' },
+          { name: 'Korvath',     meta: 'PvP · 2 734 joueurs · 42 ms', status: 'warn', label: 'Saturé' },
+          { name: 'Cendrebois',  meta: 'RP · 612 joueurs · 35 ms',    status: 'ok',   label: 'En ligne' },
+          { name: 'Sous-Ombre',  meta: 'Maintenance — retour à 21h',  status: 'err',  label: 'Hors ligne' },
+        ].map(s => (
+          <div key={s.name} className="wp-server-row">
+            <div>
+              <div className="wp-server-name">{s.name}</div>
+              <div className="wp-server-meta">{s.meta}</div>
+            </div>
+            <div className={`wp-server-status ${s.status}`}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE CONNEXION
+====================================================== */
+function LoginPage({ setPage, setLoggedIn }) {
+  const [id, setId] = useState('');
+  const [pw, setPw] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const submit = () => {
+    if (!id || !pw) { setErr('Veuillez remplir tous les champs.'); return; }
+    setErr(''); setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      if (pw === 'wrong') { setErr('Identifiant ou mot de passe incorrect.'); return; }
+      setLoggedIn(true); setPage('player');
+    }, 1200);
+  };
+
+  return (
+    <main className="wp-main narrow" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 48 }}>
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'radial-gradient(circle at 32% 30%, #2a2330 0%, #0B0712 55%, #000 100%)', border: '1px solid #1a1420', boxShadow: '0 0 30px rgba(74,123,184,.4)', margin: '0 auto 18px' }} />
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--ln-text)', marginBottom: 6 }}>Connexion</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 14, color: 'var(--ln-muted)' }}>Accédez à votre espace joueur</div>
+      </div>
+
+      <div className="wp-card" style={{ width: '100%', maxWidth: 440, padding: 28 }}>
+        {err && <div className="wp-alert error" style={{ marginBottom: 16 }}><span className="wp-alert-icon">✕</span>{err}</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Field label="Identifiant ou courriel" value={id} onChange={setId} placeholder="votre login ou adresse" autoFocus />
+          <Field label="Mot de passe" type="password" value={pw} onChange={setPw} placeholder="votre mot de passe" />
+          <Button kind="primary" fullWidth loading={loading} onClick={submit}>
+            {loading ? 'Connexion…' : 'Se connecter'}
+          </Button>
+        </div>
+        <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid var(--ln-border)', textAlign: 'center' }}>
+          <a onClick={() => setPage('recovery')} style={{ cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 10.5, letterSpacing: '.2em', textTransform: 'uppercase' }}>Mot de passe oublié ?</a>
+        </div>
+      </div>
+      <p style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12.5, color: 'var(--ln-muted)', textAlign: 'center', maxWidth: 400, marginTop: 20 }}>
+        Utilisez le même identifiant et mot de passe que pour le client jeu. Le compte est créé dans le jeu lors de la première connexion.
+      </p>
+      <div style={{ marginTop: 12 }}>
+        <span style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12, color: 'var(--ln-muted)' }}>Démo : mot de passe = « wrong » pour voir l'erreur, n'importe quel autre mot de passe se connecte.</span>
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE ROADMAP
+====================================================== */
+function RoadmapPage() {
+  const items = [
+    { state: 'done',    title: 'Infrastructure de base',        desc: 'Serveur master, base MySQL, Docker, pipeline CI/CD.' },
+    { state: 'done',    title: 'Système d\'exploits',           desc: 'Catalogue global, déblocage par compte/personnage, paliers bug reports.' },
+    { state: 'done',    title: 'Récupération de mot de passe',  desc: 'Questions secrètes, tokens temporaires, envoi SMTP.' },
+    { state: 'done',    title: 'Portail web v1',                desc: 'Next.js 14, pages publiques, exploits, administration CGU.' },
+    { state: 'active',  title: 'Authentification complète',     desc: 'JWT / sessions sécurisées, middleware de protection, rôles joueur / admin.' },
+    { state: 'active',  title: 'Refonte UI/UX',                 desc: 'Design en continuité avec l\'univers du jeu, navigation responsive.' },
+    { state: 'active',  title: 'API CGU (CRUD)',                desc: 'Créer, modifier, publier et retirer des CGU ; suivi des acceptations.' },
+    { state: 'planned', title: 'Formulaire bug reports',        desc: 'Soumission authentifiée, catégorisation, déblocage auto des exploits.' },
+    { state: 'planned', title: 'Profil joueur complet',         desc: 'Personnages, serveurs, amis & guilde, suppression de compte.' },
+    { state: 'planned', title: 'Monitoring temps réel',         desc: 'État des serveurs, joueurs connectés, événements planifiés.' },
+    { state: 'planned', title: 'Système de tickets',            desc: 'Ouverture de tickets, suivi, réponse admin, historique.' },
+    { state: 'planned', title: 'Notifications & annonces',      desc: 'Alertes maintenance, annonces globales, notifications par compte.' },
+  ];
+  const labelMap = { done: 'Terminé', active: 'En cours', planned: 'Planifié' };
+  const stats = [
+    ['4', 'Complétés'], ['3', 'En cours'], ['5', 'Planifiés'],
+  ];
+  return (
+    <main className="wp-main narrow">
+      <div className="wp-page-header">
+        <h1>Feuille de route</h1>
+        <p>Avancement indicatif du projet. Les priorités évoluent selon les retours de la communauté.</p>
+      </div>
+      <div className="wp-stats">
+        {stats.map(([v, l]) => <div key={l} className="wp-stat"><div className="wp-stat-val">{v}</div><div className="wp-stat-label">{l}</div></div>)}
+      </div>
+      <div className="wp-timeline">
+        {items.map((item, i) => (
+          <div key={i} className={`wp-tl-item ${item.state}`}>
+            <div className="wp-tl-dot" />
+            <div className="wp-card" style={{ margin: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ln-text)' }}>{item.title}</div>
+                <span className={`wp-badge ${item.state}`}>{labelMap[item.state]}</span>
+              </div>
+              <p style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 13.5, color: 'var(--ln-muted)', margin: 0, lineHeight: 1.55 }}>{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE SUPPORT / FAQ
+====================================================== */
+const FAQ = [
+  { q: 'Comment créer un compte ?', a: 'Les comptes sont créés dans le client jeu lors de la première connexion. Vous pouvez ensuite vous connecter au portail avec les mêmes identifiants.' },
+  { q: 'Comment récupérer mon mot de passe ?', a: 'Rendez-vous sur la page de récupération. Vous devrez répondre aux questions secrètes configurées dans votre profil de récupération. Un lien sera envoyé par courriel.' },
+  { q: 'Comment configurer mon profil de récupération ?', a: 'Connectez-vous à l\'espace joueur, puis accédez à « Profil de récupération ». Renseignez vos informations et définissez 3 questions secrètes.' },
+  { q: 'Que sont les exploits ?', a: 'Des succès débloqués en accomplissant des objectifs en jeu. Certains sont publics, d\'autres secrets (révélés après déblocage). Signaler des bugs débloque des exploits spéciaux.' },
+  { q: 'Comment signaler un bug ?', a: 'Utilisez la page « Signaler un bug ». Connexion requise. Chaque signalement contribue à vos paliers d\'exploits.' },
+  { q: 'Les données des autres joueurs sont-elles visibles ?', a: 'Non. Le portail applique une isolation stricte par compte. Vous ne voyez que vos propres données.' },
+];
+
+function AccordionItem({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="wp-acc-item">
+      <button className={`wp-acc-trigger ${open ? 'open' : ''}`} onClick={() => setOpen(o => !o)}>
+        <span>{q}</span>
+        <span className="wp-acc-chevron">▼</span>
+      </button>
+      {open && <div className="wp-acc-body">{a}</div>}
+    </div>
+  );
+}
+
+function SupportPage({ setPage }) {
+  return (
+    <main className="wp-main narrow">
+      <div className="wp-page-header">
+        <h1>Support & FAQ</h1>
+        <p>Réponses aux questions fréquentes. Si le problème persiste, contactez-nous.</p>
+      </div>
+      <div className="wp-grid wp-grid-3" style={{ marginBottom: 32 }}>
+        {[
+          { icon: 'key',  label: 'Mot de passe oublié', sub: 'Récupérer l\'accès', page: 'recovery' },
+          { icon: 'bug',  label: 'Signaler un bug',     sub: 'Améliorer le jeu',   page: 'bugs' },
+          { icon: 'mail', label: 'Contacter l\'équipe', sub: 'Support direct',     page: 'support' },
+        ].map(l => (
+          <div key={l.label} className="wp-card interactive" onClick={() => setPage(l.page)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '20px 14px', textAlign: 'center' }}>
+            <div style={{ color: 'var(--ln-accent)' }}><Icon name={l.icon} size={24} /></div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ln-text)' }}>{l.label}</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12, color: 'var(--ln-muted)' }}>{l.sub}</div>
+          </div>
+        ))}
+      </div>
+      <p className="wp-section-title">Questions fréquentes</p>
+      <p className="wp-section-sub">Cliquez sur une question pour afficher la réponse.</p>
+      <div className="wp-accordion">
+        {FAQ.map(f => <AccordionItem key={f.q} q={f.q} a={f.a} />)}
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE BUGS
+====================================================== */
+function BugsPage({ loggedIn, setPage }) {
+  const tiers = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+  const [form, setForm] = useState({ title: '', cat: 'gameplay', desc: '', steps: '' });
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const set = k => v => setForm(s => ({ ...s, [k]: v }));
+
+  const submit = () => {
+    setLoading(true);
+    setTimeout(() => { setLoading(false); setSent(true); }, 1000);
+  };
+
+  return (
+    <main className="wp-main narrow">
+      <div className="wp-page-header">
+        <h1>Signaler un bug</h1>
+        <p>Chaque signalement améliore le jeu et vous rapproche d'un nouvel exploit.</p>
+      </div>
+
+      <div className="wp-grid wp-grid-3" style={{ marginBottom: 32 }}>
+        {[
+          { icon: 'info',   title: '1. Identifier', desc: 'Notez les étapes pour reproduire le comportement.' },
+          { icon: 'scroll', title: '2. Décrire',    desc: 'Titre clair, description détaillée, étapes de reproduction.' },
+          { icon: 'trophy', title: '3. Progresser', desc: 'Chaque palier atteint débloque un exploit exclusif.' },
+        ].map(s => (
+          <div key={s.title} className="wp-card">
+            <div className="wp-card-icon"><Icon name={s.icon} /></div>
+            <h3>{s.title}</h3>
+            <p>{s.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <p className="wp-section-title">Soumettre un rapport</p>
+      {!loggedIn ? (
+        <div className="wp-card" style={{ textAlign: 'center', padding: 32 }}>
+          <div style={{ color: 'var(--ln-muted)', marginBottom: 16 }}><Icon name="lock" size={36} /></div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ln-text)', marginBottom: 8 }}>Connexion requise</div>
+          <p style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 13.5, color: 'var(--ln-muted)', marginBottom: 20 }}>Vous devez être connecté pour soumettre un rapport.</p>
+          <Button kind="primary" onClick={() => setPage('login')}>Se connecter</Button>
+        </div>
+      ) : sent ? (
+        <div className="wp-alert success"><span className="wp-alert-icon">✓</span><div><strong>Rapport envoyé.</strong> Merci pour votre contribution. Il a été enregistré et sera examiné.</div></div>
+      ) : (
+        <div className="wp-card" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
+          <Field label="Titre du bug" value={form.title} onChange={set('title')} placeholder="Ex. : L'écran de connexion reste figé après timeout" autoFocus />
+          <Dropdown label="Catégorie" value={form.cat} onChange={set('cat')} options={[
+            { value: 'gameplay', label: 'Gameplay' },
+            { value: 'ui', label: 'Interface' },
+            { value: 'reseau', label: 'Réseau / Connexion' },
+            { value: 'crash', label: 'Crash' },
+            { value: 'autre', label: 'Autre' },
+          ]} />
+          <div className="ln-field">
+            <label style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, letterSpacing: '.22em', textTransform: 'uppercase', color: 'var(--ln-muted)' }}>Description</label>
+            <textarea value={form.desc} onChange={e => set('desc')(e.target.value)} placeholder="Décrivez le comportement observé…" rows={4}
+              style={{ background: 'rgba(10,13,18,.6)', border: '1px solid var(--ln-border)', borderRadius: 'var(--radius-md)', color: 'var(--ln-text)', fontFamily: 'var(--font-body)', fontSize: 14, fontStyle: 'italic', padding: '10px 14px', width: '100%', resize: 'vertical', outline: 0 }} />
+          </div>
+          <div className="ln-field">
+            <label style={{ fontFamily: 'var(--font-ui)', fontSize: 10.5, letterSpacing: '.22em', textTransform: 'uppercase', color: 'var(--ln-muted)' }}>Étapes de reproduction</label>
+            <textarea value={form.steps} onChange={e => set('steps')(e.target.value)} placeholder="1. Ouvrir le jeu&#10;2. Aller sur l'écran de connexion&#10;3. Attendre 5 minutes…" rows={3}
+              style={{ background: 'rgba(10,13,18,.6)', border: '1px solid var(--ln-border)', borderRadius: 'var(--radius-md)', color: 'var(--ln-text)', fontFamily: 'var(--font-body)', fontSize: 14, fontStyle: 'italic', padding: '10px 14px', width: '100%', resize: 'vertical', outline: 0 }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button kind="primary" loading={loading} disabled={!form.title || !form.desc} onClick={submit}>Envoyer le rapport</Button>
+          </div>
+        </div>
+      )}
+
+      <div className="wp-divider" />
+      <p className="wp-section-title">Paliers d'exploits</p>
+      <p className="wp-section-sub">20 niveaux — de 5 à 100 signalements. Un exploit exclusif à chaque palier.</p>
+      <div className="wp-tiers">
+        {tiers.map(t => (
+          <div key={t} className="wp-tier">
+            <div className="wp-tier-num">{t}</div>
+            <div className="wp-tier-label">bugs</div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE ESPACE JOUEUR
+====================================================== */
+function PlayerPage({ loggedIn, setPage }) {
+  if (!loggedIn) return (
+    <main className="wp-main narrow" style={{ textAlign: 'center', paddingTop: 80 }}>
+      <div style={{ color: 'var(--ln-muted)', marginBottom: 20 }}><Icon name="lock" size={48} /></div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--ln-text)', marginBottom: 10 }}>Connexion requise</div>
+      <p style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', color: 'var(--ln-muted)', marginBottom: 28 }}>Connectez-vous pour accéder à votre espace joueur.</p>
+      <Button kind="primary" size="lg" onClick={() => setPage('login')}>Se connecter</Button>
+    </main>
+  );
+
+  const upcoming = [
+    { icon: 'server', label: 'Serveurs en ligne', desc: 'État temps réel' },
+    { icon: 'user',   label: 'Personnages',        desc: 'Gestion & suppression' },
+    { icon: 'chat',   label: 'Amis & Guilde',      desc: 'Liste en ligne' },
+    { icon: 'bell',   label: 'Notifications',      desc: 'Alertes & mises à jour' },
+  ];
+
+  return (
+    <main className="wp-main">
+      <div className="wp-page-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <h1>Espace joueur</h1>
+            <p>Bienvenue, <strong style={{ color: 'var(--ln-accent)', fontStyle: 'normal' }}>morwenna</strong>. TAG-ID : <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ln-accent)', background: 'rgba(232,197,110,.08)', padding: '2px 8px', borderRadius: 4 }}>FR-MRWN-4F2A-81C7</code></p>
+          </div>
+          <Button kind="ghost" size="sm" onClick={() => setPage('profile')}>Modifier le profil</Button>
+        </div>
+      </div>
+
+      <div className="wp-stats" style={{ marginBottom: 32 }}>
+        {[['7', 'Exploits débloqués'], ['1', 'Personnage'], ['3', 'Bugs signalés']].map(([v, l]) => (
+          <div key={l} className="wp-stat"><div className="wp-stat-val">{v}</div><div className="wp-stat-label">{l}</div></div>
+        ))}
+      </div>
+
+      <p className="wp-section-title">Mes sections</p>
+      <div className="wp-grid wp-grid-2" style={{ marginBottom: 36 }}>
+        {[
+          { icon: 'trophy', title: 'Mes Exploits',           desc: 'Progression, exploits visibles et secrets.', page: 'exploits' },
+          { icon: 'scroll', title: 'Mes CGU',                desc: 'Versions acceptées et nouvelles éditions à valider.', page: 'player' },
+          { icon: 'shield', title: 'Profil de récupération', desc: 'Questions secrètes pour la récupération de compte.', page: 'recovery' },
+          { icon: 'bug',    title: 'Signaler un bug',        desc: 'Contribuez et gagnez des exploits.', page: 'bugs' },
+        ].map(c => (
+          <div key={c.title} className="wp-card interactive" onClick={() => setPage(c.page)}>
+            <div className="wp-card-icon"><Icon name={c.icon} /></div>
+            <h3>{c.title}</h3>
+            <p>{c.desc}</p>
+            <span className="wp-card-badge">Accéder</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="wp-section-title">Fonctionnalités à venir</p>
+      <div className="wp-card">
+        {upcoming.map((f, i) => (
+          <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderBottom: i < upcoming.length - 1 ? '1px solid rgba(61,79,102,.25)' : 0 }}>
+            <div style={{ color: 'var(--ln-muted)', flexShrink: 0 }}><Icon name={f.icon} size={18} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ln-text)' }}>{f.label}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12, color: 'var(--ln-muted)' }}>{f.desc}</div>
+            </div>
+            <span className="wp-badge planned">Bientôt</span>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE EXPLOITS
+====================================================== */
+function ExploitsPage() {
+  const exploits = [
+    { id: 1, name: 'Premier sang',        desc: 'Infligez vos premiers dégâts en jeu.',        unlocked: true,  secret: false, tier: 'bronze' },
+    { id: 2, name: 'Bâtisseur de guilde', desc: 'Fondez une guilde de 5 membres ou plus.',     unlocked: true,  secret: false, tier: 'argent' },
+    { id: 3, name: 'Chasseur de bugs I',  desc: 'Atteignez le palier de 5 signalements.',       unlocked: true,  secret: false, tier: 'bronze' },
+    { id: 4, name: 'Chasseur de bugs II', desc: 'Atteignez le palier de 10 signalements.',      unlocked: false, secret: false, tier: 'argent' },
+    { id: 5, name: '???',                 desc: 'Exploit secret — débloqué après accomplissement.', unlocked: false, secret: true, tier: 'or' },
+    { id: 6, name: 'Survivant de l\'aube', desc: 'Survivez à 10 nuits dans les plaines de la lune.', unlocked: true, secret: false, tier: 'argent' },
+    { id: 7, name: '???',                 desc: 'Exploit secret.',                              unlocked: false, secret: true, tier: 'platine' },
+  ];
+  const tierColor = { bronze: '#C25A1A', argent: '#9BA8B8', or: '#E8C56E', platine: '#C7B4FF' };
+  return (
+    <main className="wp-main narrow">
+      <div className="wp-page-header">
+        <h1>Mes Exploits</h1>
+        <p>7 exploits au total · 4 débloqués · 3 secrets restants</p>
+      </div>
+      <div className="wp-progress" style={{ marginBottom: 8 }}><div className="wp-progress-fill" style={{ width: '57%' }} /></div>
+      <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, letterSpacing: '.22em', textTransform: 'uppercase', color: 'var(--ln-muted)', marginBottom: 24 }}>Progression : 4 / 7</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {exploits.map(e => (
+          <div key={e.id} className="wp-card" style={{ display: 'flex', alignItems: 'center', gap: 16, opacity: e.unlocked ? 1 : 0.5 }}>
+            <div style={{ width: 36, height: 36, border: `1px solid ${tierColor[e.tier]}`, borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `rgba(0,0,0,.4)`, flexShrink: 0 }}>
+              {e.unlocked ? <Icon name="trophy" size={18} /> : <Icon name="lock" size={16} />}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, letterSpacing: '.14em', textTransform: 'uppercase', color: e.unlocked ? tierColor[e.tier] : 'var(--ln-muted)' }}>{e.name}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12.5, color: 'var(--ln-muted)' }}>{e.desc}</div>
+            </div>
+            <span className="wp-badge" style={{ color: tierColor[e.tier], borderColor: `${tierColor[e.tier]}55`, background: `${tierColor[e.tier]}10` }}>{e.tier}</span>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   PAGE PROFIL DE RÉCUPÉRATION
+====================================================== */
+function RecoveryPage() {
+  const [form, setForm] = useState({ birth: '', address: '', city: '', postal: '', q1: '', a1: '', q2: '', a2: '', q3: '', a3: '' });
+  const set = k => v => setForm(s => ({ ...s, [k]: v }));
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const save = () => { setLoading(true); setTimeout(() => { setLoading(false); setSaved(true); }, 900); };
+
+  return (
+    <main className="wp-main narrow">
+      <div className="wp-page-header">
+        <h1>Profil de récupération</h1>
+        <p>Ces informations permettent de vérifier votre identité en cas de perte de mot de passe. Elles restent privées.</p>
+      </div>
+      {saved && <div className="wp-alert success" style={{ marginBottom: 16 }}><span className="wp-alert-icon">✓</span>Profil enregistré avec succès.</div>}
+      <div className="wp-card" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
+        <p className="wp-section-title" style={{ margin: 0 }}>Informations personnelles</p>
+        <div className="ln-form-grid cols-2">
+          <Field label="Date de naissance" type="date" value={form.birth} onChange={set('birth')} />
+          <Field label="Code postal" value={form.postal} onChange={set('postal')} placeholder="75001" />
+          <div className="span-2"><Field label="Adresse" value={form.address} onChange={set('address')} placeholder="1 rue des Cendres" /></div>
+          <div className="span-2"><Field label="Ville" value={form.city} onChange={set('city')} placeholder="Paris" /></div>
+        </div>
+        <div className="wp-divider" style={{ margin: '4px 0' }} />
+        <p className="wp-section-title" style={{ margin: 0 }}>Questions secrètes</p>
+        {[[1,'q1','a1'],[2,'q2','a2'],[3,'q3','a3']].map(([n, qk, ak]) => (
+          <div key={n} className="ln-form-grid cols-2" style={{ marginBottom: 0 }}>
+            <Field label={`Question ${n}`} value={form[qk]} onChange={set(qk)} placeholder={`Votre question secrète n°${n}`} />
+            <Field label={`Réponse ${n}`}  type="password" value={form[ak]} onChange={set(ak)} placeholder="Votre réponse" />
+          </div>
+        ))}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
+          <Button kind="primary" loading={loading} onClick={save}>Enregistrer</Button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/* ======================================================
+   APPLICATION PRINCIPALE
+====================================================== */
+function App() {
+  const [page, setPageRaw] = useState(() => localStorage.getItem('wp_page') || 'home');
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [animKey, setAnimKey] = useState(0);
+
+  const setPage = (p) => {
+    setPageRaw(p);
+    setAnimKey(k => k + 1);
+    localStorage.setItem('wp_page', p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPage = () => {
+    switch (page) {
+      case 'home':     return <HomePage setPage={setPage} loggedIn={loggedIn} />;
+      case 'login':    return <LoginPage setPage={setPage} setLoggedIn={setLoggedIn} />;
+      case 'roadmap':  return <RoadmapPage />;
+      case 'support':  return <SupportPage setPage={setPage} />;
+      case 'bugs':     return <BugsPage loggedIn={loggedIn} setPage={setPage} />;
+      case 'player':   return <PlayerPage loggedIn={loggedIn} setPage={setPage} />;
+      case 'exploits': return <ExploitsPage />;
+      case 'recovery': return <RecoveryPage />;
+      case 'profile':  return <ProfilePage setPage={setPage} />;
+      default:         return <HomePage setPage={setPage} loggedIn={loggedIn} />;
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Header page={page} setPage={setPage} loggedIn={loggedIn} setLoggedIn={setLoggedIn} />
+      <div key={animKey} className="ln-screen-enter" style={{ flex: 1 }}>
+        {renderPage()}
+      </div>
+      <Footer setPage={setPage} />
+    </div>
+  );
+}
+
+/* ======================================================
+   PAGE PROFIL (complétion)
+====================================================== */
+function ProfilePage({ setPage }) {
+  const [f, setF] = useState({ firstName: '', lastName: '', bio: '', discord: '' });
+  const set = k => v => setF(s => ({ ...s, [k]: v }));
+  const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const touch = k => v => { set(k)(v); setDirty(true); setSaved(false); };
+
+  return (
+    <main className="wp-main narrow">
+      <div className="wp-page-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1>Mon profil</h1>
+          <Button kind="ghost" size="sm" onClick={() => setPage('player')}>← Retour</Button>
+        </div>
+        <p>Informations personnelles et préférences de compte.</p>
+      </div>
+
+      {/* TAG-ID */}
+      <div className="wp-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20, background: 'rgba(232,197,110,.06)', borderColor: 'rgba(232,197,110,.3)' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 10, letterSpacing: '.22em', textTransform: 'uppercase', color: 'var(--ln-muted)', marginBottom: 4 }}>Votre TAG-ID unique</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, letterSpacing: '.14em', color: 'var(--ln-accent)' }}>FR-MRWN-4F2A-81C7</div>
+          <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12, color: 'var(--ln-muted)', marginTop: 4 }}>Identifiant permanent — ne peut pas être modifié.</div>
+        </div>
+        <Button kind="ghost" size="sm" onClick={() => navigator.clipboard?.writeText('FR-MRWN-4F2A-81C7')}>Copier</Button>
+      </div>
+
+      {saved && <div className="wp-alert success" style={{ marginBottom: 16 }}><span className="wp-alert-icon">✓</span>Profil mis à jour avec succès.</div>}
+
+      <div className="wp-card" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24, marginBottom: 16 }}>
+        <p className="wp-section-title" style={{ margin: 0 }}>Identité (privée)</p>
+        <div className="ln-form-grid cols-2">
+          <Field label="Prénom" value={f.firstName} onChange={touch('firstName')} placeholder="Votre prénom" autoFocus />
+          <Field label="Nom" value={f.lastName} onChange={touch('lastName')} placeholder="Votre nom" />
+        </div>
+        <p className="wp-section-title" style={{ margin: 0 }}>Profil public</p>
+        <Field label="Biographie" value={f.bio} onChange={touch('bio')} placeholder="Quelques mots sur votre aventurier…" tooltip="Visible par les autres joueurs." />
+        <Field label="Discord (optionnel)" value={f.discord} onChange={touch('discord')} placeholder="NomUtilisateur#0000" />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <Button kind="ghost" size="md" disabled={!dirty} onClick={() => { setF({ firstName:'', lastName:'', bio:'', discord:'' }); setDirty(false); }}>Annuler</Button>
+          <Button kind="primary" size="md" disabled={!dirty} onClick={() => { setDirty(false); setSaved(true); }}>Enregistrer</Button>
+        </div>
+      </div>
+
+      <div className="wp-card" style={{ display: 'flex', flexDirection: 'column', padding: 24, gap: 0 }}>
+        <p className="wp-section-title" style={{ margin: '0 0 12px' }}>Sécurité</p>
+        {[
+          { label: 'Adresse courriel', val: 'morwenna@exemple.fr · Vérifiée', btn: 'Modifier' },
+          { label: 'Mot de passe', val: 'Dernière modification il y a 3 jours', btn: 'Changer' },
+          { label: 'Authentification 2FA', val: 'Non activée', btn: 'Activer', accent: true },
+        ].map(r => (
+          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(61,79,102,.25)', gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ln-text)' }}>{r.label}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 12, color: 'var(--ln-muted)' }}>{r.val}</div>
+            </div>
+            <Button kind={r.accent ? 'accent' : 'ghost'} size="sm">{r.btn}</Button>
+          </div>
+        ))}
+        <div style={{ paddingTop: 14 }}>
+          <Button kind="danger" size="sm">Supprimer le compte</Button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

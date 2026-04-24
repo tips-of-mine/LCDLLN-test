@@ -4,6 +4,17 @@
 
 const { useState: useS1, useEffect: useE1 } = React;
 
+// ============ TITRE DE JEU PARTAGÉ ============
+// Utilisé sur toutes les pages où le titre s'affiche (même rendu, mêmes tailles).
+function GameHero() {
+  return (
+    <div className="ln-hero">
+      <div className="ln-hero-line1">Les Chroniques</div>
+      <div className="ln-hero-line2">de la Lune Noire</div>
+    </div>
+  );
+}
+
 // ============ ÉCRAN 1 — PREMIER LANCEMENT : CHOIX DE LANGUE ============
 function LangSelectScreen({ onNext }) {
   const [lang, setLang] = useS1('fr');
@@ -15,10 +26,7 @@ function LangSelectScreen({ onNext }) {
   return (
     <div className="ln-stage">
       <div className="ln-stage-col" style={{ width: 'min(720px, 94vw)' }}>
-        <div className="ln-hero">
-          <div className="ln-hero-line1">Les Chroniques</div>
-          <div className="ln-hero-line2">de la Lune Noire</div>
-        </div>
+        <GameHero />
         <Panel
           title="Choisissez votre langue"
           subtitle={current.welcome}
@@ -75,29 +83,27 @@ function LoginScreen({ onRegister, onOptions, onShard }) {
   const submit = () => {
     if (!id || !pw) { setErr('Veuillez remplir tous les champs.'); return; }
     setErr(null); setSubmitting(true);
-    setTimeout(() => { setSubmitting(false); onShard && onShard(); }, 900);
+    setTimeout(() => { setSubmitting(false); onShard && onShard(); }, 1200);
   };
 
   return (
     <div className="ln-stage">
       <div className="ln-stage-col" style={{ width: 'min(460px, 94vw)' }}>
-        <div className="ln-hero">
-          <div className="ln-hero-line1">Les Chroniques</div>
-          <div className="ln-hero-line2">de la Lune Noire</div>
-        </div>
+        <GameHero />
         <Panel title="Connexion" versionLabel="v0.8.4" infoText="Saisissez l'identifiant et le mot de passe liés à votre compte. Pas de compte ? Utilisez « Créer un compte » ci-dessous."
           footer={<><KeycapHint keyLabel="Tab">champ suivant</KeycapHint><KeycapHint keyLabel="↵">se connecter</KeycapHint><KeycapHint keyLabel="Échap">quitter</KeycapHint></>}
         >
           {err && <Banner kind="error" title="Échec de la connexion">{err}</Banner>}
-          {submitting && <Banner kind="info" title="Vérification en cours">Contact du serveur maître…</Banner>}
           <Field label="Identifiant" value={id} onChange={setId} placeholder="votre nom d'aventurier" autoFocus />
           <Field label="Mot de passe" type="password" value={pw} onChange={setPw} placeholder="••••••••" />
           <Toggle label="Se souvenir de moi" checked={remember} onChange={setRemember} hint="Conserve l'identifiant à la prochaine ouverture." />
           <div className="ln-actions">
             <Button kind="text" size="sm" onClick={() => alert('Envoi du lien de récupération — maquette')}>Mot de passe oublié ?</Button>
             <div className="ln-actions-right">
-              <Button kind="ghost" size="md" onClick={onRegister} keycap="Ctrl+R">Créer un compte</Button>
-              <Button kind="primary" size="md" onClick={submit} keycap="↵" disabled={submitting}>Se connecter</Button>
+              <Button kind="ghost" size="md" onClick={onRegister} keycap="Ctrl+R" disabled={submitting}>Créer un compte</Button>
+              <Button kind="primary" size="md" onClick={submit} keycap="↵" loading={submitting}>
+                {submitting ? 'Connexion…' : 'Se connecter'}
+              </Button>
             </div>
           </div>
         </Panel>
@@ -140,6 +146,13 @@ function RegisterScreen({ onBack, onConfirm, onError }) {
     { key: 'world',  label: 'Monde' },
   ];
 
+  const PAYS = [
+    'AF','AL','DZ','AR','AU','AT','BE','BR','CA','CL','CN','CO','HR','CZ','DK',
+    'EG','FI','FR','DE','GR','HU','IN','ID','IE','IL','IT','JP','KR','LU','MA',
+    'MX','NL','NZ','NO','PE','PL','PT','RO','RU','SA','ZA','ES','SE','CH','TN',
+    'TR','UA','GB','US','VE',
+  ].map(c => ({ value: c, label: c }));
+
   const [f, setF] = useS1({ id: '', email: '', pw: '', pw2: '', day: '01', month: '01', year: '2000', country: 'FR' });
   const set = (k) => (v) => setF(s => ({ ...s, [k]: v }));
 
@@ -148,7 +161,14 @@ function RegisterScreen({ onBack, onConfirm, onError }) {
   const strength = pwStrength(f.pw);
   const pwMatch = f.pw && f.pw2 && f.pw === f.pw2;
 
-  const canSubmit = uCheck.status === 'ok' && eCheck.status === 'ok' && strength >= 3 && pwMatch;
+  const canSubmit = uCheck.status === 'ok' && eCheck.status === 'ok' && strength >= 3 && pwMatch && f.country;
+
+  const [submitting, setSubmitting] = useS1(false);
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setTimeout(() => { setSubmitting(false); onConfirm && onConfirm(); }, 1400);
+  };
 
   return (
     <div className="ln-stage" style={{ padding: 'clamp(12px, 2vh, 24px)' }}>
@@ -158,7 +178,7 @@ function RegisterScreen({ onBack, onConfirm, onError }) {
           title="Créer un compte"
           subtitle="Forger votre identité dans les terres de la Lune Noire."
           versionLabel="2 / 4"
-          infoText="Le code d'accès de l'Édition des morts est facultatif pour les nouveaux joueurs ; laissez vide si vous n'en avez pas."
+          infoText="Le pays de résidence génère votre TAG-ID unique (ex. FR-MRWN-4F2A). Prénom et nom pourront être renseignés plus tard depuis le portail web."
         >
           <div className="ln-form-grid cols-2">
             <div className="span-2">
@@ -184,18 +204,35 @@ function RegisterScreen({ onBack, onConfirm, onError }) {
               status={f.pw2 ? (pwMatch ? 'ok' : 'err') : undefined}
               statusMsg={f.pw2 ? (pwMatch ? 'Correspond' : 'Les mots de passe diffèrent') : ''}
             />
-            <Dropdown label="Jour" value={f.day} onChange={set('day')}
+            <Dropdown label="Jour de naissance" value={f.day} onChange={set('day')}
               options={Array.from({ length: 31 }, (_, i) => ({ value: String(i+1).padStart(2,'0'), label: String(i+1).padStart(2,'0') }))} />
             <Dropdown label="Mois" value={f.month} onChange={set('month')}
               options={['Janv.','Févr.','Mars','Avr.','Mai','Juin','Juil.','Août','Sept.','Oct.','Nov.','Déc.'].map((m,i) => ({ value: String(i+1).padStart(2,'0'), label: m }))} />
             <Dropdown label="Année" value={f.year} onChange={set('year')}
               options={Array.from({ length: 90 }, (_, i) => { const y = 2010 - i; return { value: String(y), label: String(y) }; })} />
+            <div className="span-2">
+              <Dropdown
+                label="Pays de résidence"
+                value={f.country}
+                onChange={set('country')}
+                options={PAYS}
+                tooltip="Détermine votre TAG-ID unique. Exemple : FR → TAG-ID FR-MRWN-4F2A."
+              />
+              {f.country && (
+                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ln-accent)' }}>
+                  <span style={{ opacity: .6 }}>TAG-ID prévu :</span>
+                  <span>{f.country}-{f.id ? f.id.slice(0,4).toUpperCase().padEnd(4,'·') : '····'}-????</span>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="ln-actions">
-            <Button kind="ghost" size="md" onClick={onBack} keycap="Échap">Retour</Button>
+            <div className="ln-actions">
+            <Button kind="ghost" size="md" onClick={onBack} keycap="Échap" disabled={submitting}>Retour</Button>
             <div className="ln-actions-right">
-              <Button kind="text" size="sm" onClick={onError}>Voir les erreurs</Button>
-              <Button kind="primary" size="md" keycap="↵" disabled={!canSubmit} onClick={onConfirm}>Créer le compte</Button>
+              <Button kind="text" size="sm" onClick={onError} disabled={submitting}>Voir les erreurs</Button>
+              <Button kind="primary" size="md" loading={submitting} disabled={!canSubmit} onClick={handleSubmit}>
+                {submitting ? 'Création…' : 'Créer le compte'}
+              </Button>
             </div>
           </div>
         </Panel>
@@ -262,4 +299,4 @@ function RegisterErrorScreen({ onBack }) {
   );
 }
 
-Object.assign(window, { LangSelectScreen, LoginScreen, RegisterScreen, RegisterErrorScreen });
+Object.assign(window, { GameHero, LangSelectScreen, LoginScreen, RegisterScreen, RegisterErrorScreen });

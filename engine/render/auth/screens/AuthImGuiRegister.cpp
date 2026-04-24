@@ -1,3 +1,4 @@
+// AUTH-UI.2 — rendu ImGui de l'écran de création de compte (formulaire d'inscription).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -15,14 +16,17 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur thème en ImVec4 pour ImGui::PushStyleColor.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 	}
 
+	/// Affiche le formulaire d'inscription : identifiant, e-mail, mots de passe, date de naissance, pays, nom/prénom, et boutons Retour/Créer.
 	void AuthImGuiRenderer::RenderRegisterScreen(const RenderModel& rm, float vpW, float vpH)
 	{
+		/// Résout une clé de traduction via le présentateur ; retombe sur le fallback si absent.
 		const auto tr = [this](const char* key, const char* fallback) -> std::string {
 			if (m_authPresenter != nullptr)
 			{
@@ -103,6 +107,7 @@ namespace engine::render
 			DrawAuthGoldField(rm.fields[9], m_regPw2, static_cast<int>(sizeof(m_regPw2)), true);
 			ImGui::Columns(1);
 
+			/// Peuple un vecteur de pointeurs C à partir des labels d'une RenderDropdown, nécessaire pour ImGui::Combo qui attend un tableau de const char*.
 			auto buildDdPtrs = [](const engine::client::AuthUiPresenter::RenderDropdown& dd, std::vector<std::string>& store,
 								   std::vector<const char*>& ptrs) {
 				store.clear();
@@ -262,6 +267,7 @@ namespace engine::render
 			const int di = std::clamp(m_regBirthDayIdx, 0, static_cast<int>(rm.dropdowns[0].options.size()) - 1);
 			const int mi = std::clamp(m_regBirthMonthIdx, 0, static_cast<int>(rm.dropdowns[1].options.size()) - 1);
 			const int yi = std::clamp(m_regBirthYearIdx, 0, static_cast<int>(rm.dropdowns[2].options.size()) - 1);
+			/// Garantit un affichage sur deux chiffres pour les valeurs de jour et de mois (ex. "1" → "01").
 			auto pad2 = [](std::string s) -> std::string {
 				if (s.size() == 1u)
 				{

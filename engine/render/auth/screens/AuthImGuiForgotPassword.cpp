@@ -9,8 +9,10 @@
 
 namespace engine::render
 {
+	/// Affiche le panneau de récupération de mot de passe : champ e-mail, bouton Envoyer et bouton Retour.
 	void AuthImGuiRenderer::RenderForgotScreen(const RenderModel& rm, float vpW, float vpH)
 	{
+		/// Résout une clé de traduction via le présentateur ; retombe sur le fallback si absent.
 		const auto tr = [this](const char* key, const char* fallback) -> std::string {
 			if (m_authPresenter != nullptr)
 			{

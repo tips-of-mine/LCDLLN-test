@@ -1,4 +1,5 @@
-// AUTH-UI.10 — rendu ImGui écran CGU (split depuis AuthImGuiRenderer.cpp).
+// AUTH-UI.10 — rendu ImGui écran d'acceptation des Conditions Générales d'Utilisation (split depuis AuthImGuiRenderer.cpp).
+// Contient RenderTermsScreen : panneau avec texte défilant des CGU, case à cocher d'accusé de lecture, et boutons Refuser / Accepter.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -13,12 +14,14 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 	} // namespace
 
+	/// Affiche l'écran des CGU : métadonnées en en-tête, texte intégral défilant, case à cocher d'acquittement, et boutons Refuser / Accepter.
 	void AuthImGuiRenderer::RenderTermsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		(void)vpW;
@@ -63,7 +66,7 @@ namespace engine::render
 			ImGui::PopStyleColor();
 			const float scrollY = ImGui::GetScrollY();
 			const float scrollMax = ImGui::GetScrollMaxY();
-			const bool atBottom = (scrollMax <= 1.f) || (scrollMax > 0.f && scrollY >= scrollMax - 4.f);
+			const bool atBottom = (scrollMax <= 1.f) || (scrollMax > 0.f && scrollY >= scrollMax - 4.f); ///< Vrai quand l'utilisateur a atteint le bas du texte (tolérance de 4 px).
 			m_authPresenter->ImGuiNotifyTermsScrollReachedBottom(atBottom);
 		}
 		else
@@ -72,7 +75,7 @@ namespace engine::render
 		}
 		ImGui::EndChild();
 
-		bool termsAckChecked = false;
+		bool termsAckChecked = false; ///< État courant de la case à cocher d'acquittement, initialisé depuis le modèle avant le rendu.
 		for (const auto& line : rm.bodyLines)
 		{
 			if (line.checkbox)

@@ -1,4 +1,5 @@
-// AUTH-UI.6 — overlay Options (phase LanguageOptions), layout sidebar + panneau principal.
+// AUTH-UI.6 — overlay Options de la phase LanguageOptions : sidebar de navigation par onglets et panneau principal multi-sections (split depuis AuthImGuiRenderer.cpp).
+// Contient RenderOptionsScreen avec ses lambdas internes (sliderVol01, sectionTitle, hintLine, toggleRow, submitOptionsMirror) et les sept onglets de configuration.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
@@ -17,20 +18,23 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
+		/// Convertit une couleur LnTheme::Rgba en ImU32 pour les appels de draw list ImGui.
 		ImU32 U32(const LnTheme::Rgba& c)
 		{
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}};
-		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]);
+		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des résolutions vidéo proposées dans le combo graphique.
+		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrées dans kOptionsRes, calculé statiquement.
 	} // namespace
 
+	/// Affiche l'overlay Options complet : sidebar de navigation par onglets à gauche, panneau principal à droite avec les réglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
 	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		const auto tr = [this](const char* key, const char* fallback = nullptr) -> std::string {

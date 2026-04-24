@@ -1,3 +1,6 @@
+// AUTH-UI.2 — Écran d'inscription : saisie des informations personnelles, vérification du nom d'utilisateur et envoi du formulaire.
+//
+// Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
 #include "engine/client/AuthUi.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/core/DefaultClientEndpoints.h"
@@ -179,6 +182,7 @@ namespace
 	}
 } // namespace
 
+	/// Peuple le RenderModel avec les champs du formulaire d'inscription (identité, date de naissance, pays, mots de passe).
 	void AuthUiPresenter::BuildModel_Register(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.panel.register");
@@ -359,6 +363,7 @@ namespace
 		}
 	}
 
+	/// Gère la navigation au clavier dans les champs cycliques (date de naissance, pays) du formulaire d'inscription.
 	void AuthUiPresenter::Update_Register(engine::platform::Input& input, const engine::core::Config&, engine::platform::Window&,
 		bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -397,6 +402,7 @@ namespace
 		}
 	}
 
+	/// Lance le worker asynchrone qui envoie la requête d'inscription au serveur maître.
 	void AuthUiPresenter::StartRegisterWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
@@ -583,6 +589,7 @@ namespace
 		});
 	}
 
+	/// Lance le worker asynchrone de vérification de disponibilité du nom d'utilisateur (debounce côté modèle).
 	void AuthUiPresenter::StartUsernameCheckWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
@@ -663,6 +670,7 @@ namespace
 		});
 	}
 
+	/// Construit un instantané des champs d'inscription pour les exposer au renderer ImGui.
 	AuthUiPresenter::RegisterFieldsMirrorForImGui AuthUiPresenter::BuildRegisterFieldsMirrorForImGui() const
 	{
 		RegisterFieldsMirrorForImGui s{};
@@ -677,6 +685,7 @@ namespace
 		return s;
 	}
 
+	/// Reçoit le formulaire complet depuis ImGui et déclenche la soumission de l'inscription.
 	void AuthUiPresenter::ImGuiSubmitRegister(const engine::core::Config& cfg, const RegisterImGuiSubmit& form)
 	{
 		if (m_phase != Phase::Register)
@@ -706,6 +715,7 @@ namespace
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Force l'affichage de l'écran d'erreur de validation lorsque des champs sont incomplets ou invalides.
 	void AuthUiPresenter::ImGuiRegisterPreviewValidationErrors(const engine::core::Config& cfg)
 	{
 		(void)cfg;
@@ -716,6 +726,7 @@ namespace
 		EnterAuthErrorPhase(Phase::Register, Tr("auth.error.enter_register_fields"));
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::BuildModel_Register(RenderModel&) const {}

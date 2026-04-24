@@ -1,3 +1,6 @@
+// AUTH-UI.1 — Orchestrateur principal du rendu UI d'authentification (fond Vulkan, cadre, routage vers les écrans)
+
+// Calcule les métriques de disposition, construit les couches Vulkan de fond/cadre et route vers le Render*Screen approprié selon la Phase courante.
 #include "engine/render/AuthUiRenderer.h"
 
 #include "engine/platform/FileSystem.h"
@@ -14,6 +17,7 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une chaîne hexadécimale CSS (#RRGGBB) en composantes RGBA normalisées [0,1].
 		bool ParseHexColor(std::string_view hex, float out[4])
 		{
 			if (hex.size() != 7 || hex[0] != '#')
@@ -43,6 +47,7 @@ namespace engine::render
 			return true;
 		}
 
+		/// Lit une clé hexadécimale dans la configuration et écrase la couleur de sortie si la valeur est présente.
 		void OverrideThemeColor(const engine::core::Config& cfg, std::string_view key, float out[4])
 		{
 			const std::string value = cfg.GetString(key, {});
@@ -53,6 +58,7 @@ namespace engine::render
 		}
 	}
 
+	/// Charge le thème visuel depuis le fichier JSON désigné par ui.theme.default_id et applique les surcharges de palette.
 	AuthUiTheme LoadAuthUiTheme(const engine::core::Config& cfg)
 	{
 		AuthUiTheme theme{};
@@ -79,6 +85,7 @@ namespace engine::render
 		return theme;
 	}
 
+	/// Calcule les métriques de disposition spécifiques à l'écran de sélection de langue au premier lancement.
 	AuthUiLayoutMetrics BuildLanguageFirstRunLayoutMetrics(
 		VkExtent2D extent,
 		const engine::client::AuthUiPresenter::RenderModel& model)
@@ -173,6 +180,7 @@ namespace engine::render
 		return m;
 	}
 
+	/// Calcule l'ensemble des métriques de disposition (panneau, champs, boutons, titres) selon l'état visuel courant.
 	AuthUiLayoutMetrics BuildAuthUiLayoutMetrics(
 		VkExtent2D extent,
 		const engine::client::AuthUiPresenter::VisualState& state,
@@ -387,6 +395,7 @@ namespace engine::render
 		return metrics;
 	}
 
+	/// Tente de calculer la disposition en deux lignes de boutons pour l'écran de connexion ; retourne faux si inapplicable.
 	bool TryGetLoginTwoRowLayout(
 		const AuthUiLayoutMetrics& lay,
 		const engine::client::AuthUiPresenter::VisualState& state,
@@ -430,6 +439,7 @@ namespace engine::render
 		return true;
 	}
 
+	/// Construit la liste des couches Vulkan (fond, cadre, champs, boutons) à soumettre via vkCmdClearAttachments.
 	std::vector<AuthUiLayer> BuildAuthUiLayers(const VkExtent2D extent, const engine::client::AuthUiPresenter::VisualState& state,
 		const engine::client::AuthUiPresenter::RenderModel& model, const AuthUiTheme& theme, bool calibrationOverlay, bool usePhotoBackdrop)
 	{
@@ -993,6 +1003,7 @@ namespace engine::render
 		return layers;
 	}
 
+	/// Calcule les positions des icônes d'info-bulle associées aux champs de saisie pour le rendu de l'info-badge.
 	std::vector<AuthFieldInfoIconLayout> BuildAuthFieldInfoIconLayouts(
 		VkExtent2D extent,
 		const engine::client::AuthUiPresenter::VisualState& state,

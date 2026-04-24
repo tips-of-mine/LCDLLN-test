@@ -1,3 +1,7 @@
+// Implémentation du dispatcher requête/réponse (voir RequestResponseDispatcher.h).
+// Pump() est le point central : il dépile les événements NetClient, identifie chaque paquet
+// par son request_id, résout les requêtes en attente ou route les push, puis expire les timeouts.
+// Les callbacks sont toujours appelés depuis Pump() — jamais depuis le thread IO.
 #include "engine/network/RequestResponseDispatcher.h"
 #include "engine/network/ErrorPacket.h"
 #include "engine/network/NetClient.h"
@@ -48,7 +52,7 @@ namespace engine::network
 			return false;
 		}
 		uint32_t requestId = m_nextRequestId.fetch_add(1);
-		if (requestId == 0u)
+		if (requestId == 0u) // 0 est réservé aux push serveur ; on saute cette valeur.
 			requestId = m_nextRequestId.fetch_add(1);
 
 		PacketBuilder builder;
@@ -86,6 +90,12 @@ namespace engine::network
 		return true;
 	}
 
+	/// Consomme tous les paquets reçus depuis le dernier appel, dispatche les callbacks et expire les timeouts.
+	/// Ordre de traitement pour chaque paquet :
+	///   1. Paquet ERROR  → ErrorHandler puis callback pending avec payload vide (jamais timeout=true).
+	///   2. request_id > 0 → résout la requête en attente avec le payload de réponse.
+	///   3. request_id == 0 → push serveur routé vers PushHandler.
+	/// Après le traitement des paquets, les entrées dont la deadline est dépassée reçoivent timeout=true.
 	void RequestResponseDispatcher::Pump()
 	{
 		if (m_client == nullptr)
@@ -168,7 +178,7 @@ namespace engine::network
 			}
 		}
 
-		// Clean expired pending (timeout)
+		// Expire les requêtes dont la deadline est dépassée : callback avec timeout=true, payload vide.
 		std::vector<std::pair<uint32_t, RequestResponseCallback>> timedOut;
 		{
 			std::lock_guard lock(m_mutex);

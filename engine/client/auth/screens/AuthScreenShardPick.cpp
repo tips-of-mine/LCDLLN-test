@@ -1,3 +1,6 @@
+// AUTH-UI.8 — Couche modèle pour l'écran de choix du royaume (shard).
+
+// Couche modèle : BuildModel_ShardPick liste les shards disponibles, Update_ShardPick gère la navigation clavier.
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
@@ -10,6 +13,7 @@ namespace engine::client
 {
 #if defined(_WIN32)
 
+	/// Enregistre le shard sélectionné par l'utilisateur dans le renderer ImGui.
 	void AuthUiPresenter::ImGuiSetShardPickChoiceShardId(uint32_t shardId)
 	{
 		if (m_phase != Phase::ShardPick)
@@ -19,6 +23,7 @@ namespace engine::client
 		m_shardPickChoiceShardId = shardId;
 	}
 
+	/// Soumet le shard choisi et lance la connexion au royaume.
 	void AuthUiPresenter::ImGuiSubmitShardPick(const engine::core::Config& cfg)
 	{
 		if (m_phase != Phase::ShardPick)
@@ -28,6 +33,7 @@ namespace engine::client
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Annule le choix de shard et retourne à la connexion en réinitialisant la liste.
 	void AuthUiPresenter::ImGuiBackFromShardPickToLogin()
 	{
 		if (m_phase != Phase::ShardPick)
@@ -41,6 +47,7 @@ namespace engine::client
 		m_shardPickEntries.clear();
 	}
 
+	/// Peuple la liste des shards disponibles (nom, charge, endpoint) avec indication du shard sélectionné.
 	void AuthUiPresenter::BuildModel_ShardPick(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.phase.shard_pick");
@@ -81,6 +88,7 @@ namespace engine::client
 		}
 	}
 
+	/// Gère la navigation clavier (flèches) dans la liste des shards et Entrée pour valider (hors ImGui).
 	void AuthUiPresenter::Update_ShardPick(engine::platform::Input& input, const engine::core::Config& cfg,
 		engine::platform::Window& window, bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -170,6 +178,7 @@ namespace engine::client
 		}
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::BuildModel_ShardPick(RenderModel&) const {}

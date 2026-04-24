@@ -1,3 +1,6 @@
+// AUTH-UI.10 — Couche modèle pour l'écran d'acceptation des CGU.
+
+// Couche modèle : BuildModel_Terms affiche le texte paginé, StartTermsStatusWorker et StartTermsAcceptWorker gèrent le réseau.
 #include "engine/client/AuthUi.h"
 
 #include "engine/network/NetClient.h"
@@ -19,6 +22,7 @@ namespace engine::client
 {
 #if defined(_WIN32)
 
+	/// Notifie que l'utilisateur a atteint la fin du texte (déverrouille la case d'acceptation).
 	void AuthUiPresenter::ImGuiNotifyTermsScrollReachedBottom(bool reached)
 	{
 		if (m_phase != Phase::Terms)
@@ -28,6 +32,7 @@ namespace engine::client
 		m_termsScrolledToBottom = reached;
 	}
 
+	/// Met à jour la case "j'accepte" (cochée/décochée par l'utilisateur).
 	void AuthUiPresenter::ImGuiSetTermsAcknowledgeChecked(bool on)
 	{
 		if (m_phase != Phase::Terms)
@@ -37,6 +42,7 @@ namespace engine::client
 		m_termsAcknowledgeChecked = on;
 	}
 
+	/// Déclenche l'acceptation des CGU via le bouton principal ImGui.
 	void AuthUiPresenter::ImGuiTermsPrimaryClick(const engine::core::Config& cfg)
 	{
 		if (m_phase != Phase::Terms)
@@ -51,6 +57,7 @@ namespace engine::client
 		window.RequestClose();
 	}
 
+	/// Peuple le modèle CGU : métadonnées (édition, version, langue), texte paginé, état de la case d'acceptation.
 	void AuthUiPresenter::BuildModel_Terms(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.panel.terms");
@@ -88,6 +95,7 @@ namespace engine::client
 		}
 	}
 
+	/// Gère le défilement (molette/flèches/PageDown) et la case à cocher (Espace) hors ImGui.
 	void AuthUiPresenter::Update_Terms(engine::platform::Input& input, const engine::core::Config&, engine::platform::Window&,
 		bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -133,6 +141,7 @@ namespace engine::client
 		}
 	}
 
+	/// Lance le worker réseau qui récupère l'édition en attente et le contenu des CGU (opcodes TermsStatus + TermsContent).
 	void AuthUiPresenter::StartTermsStatusWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
@@ -260,6 +269,7 @@ namespace engine::client
 		});
 	}
 
+	/// Lance le worker réseau qui envoie l'acceptation puis recharge le statut CGU pour vérifier s'il en reste d'autres.
 	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config& cfg)
 	{
 		JoinWorker();
@@ -417,11 +427,13 @@ namespace engine::client
 		});
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::ImGuiNotifyTermsScrollReachedBottom(bool) {}
 	void AuthUiPresenter::ImGuiSetTermsAcknowledgeChecked(bool) {}
 	void AuthUiPresenter::ImGuiTermsPrimaryClick(const engine::core::Config&) {}
+	/// Ferme la fenêtre si l'utilisateur refuse les CGU (seule option disponible en cas de refus).
 	void AuthUiPresenter::ImGuiTermsDecline(engine::platform::Window& window)
 	{
 		window.RequestClose();

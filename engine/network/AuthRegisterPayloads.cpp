@@ -1,3 +1,8 @@
+// Implémentation de la sérialisation/désérialisation des payloads auth/register (voir AuthRegisterPayloads.h).
+// Stratégie de parsing : ByteReader lit séquentiellement avec Remaining() >= 2 avant ReadString(),
+// ce qui garantit la compatibilité descendante — un ancien client sans champs optionnels est accepté.
+// Stratégie de build : les champs optionnels (first_name…country_code) ne sont sérialisés que si
+// au moins un d'eux est non-vide, pour rester compatible avec les anciens serveurs.
 #include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/ByteReader.h"
 #include "engine/network/ByteWriter.h"

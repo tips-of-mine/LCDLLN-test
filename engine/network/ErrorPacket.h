@@ -1,3 +1,7 @@
+// Paquet ERROR du protocole v1 : format binaire, construction côté serveur, parsing côté client.
+// Format du payload ERROR : [ uint32 error_code ][ uint16 message_len ][ message_utf8 (message_len octets) ]
+// Le message est optionnel (message_len peut être 0). Le request_id est dans l'en-tête du paquet.
+// Thread-safety : les fonctions stateless sont thread-safe ; aucun état partagé.
 #pragma once
 
 #include "engine/network/NetErrorCode.h"
@@ -11,23 +15,29 @@
 
 namespace engine::network
 {
-	/// Parsed ERROR packet payload (error_code + optional message). request_id is in the packet header.
+	/// Payload ERROR désérialisé. Le request_id associé se trouve dans l'en-tête du paquet.
 	struct ErrorPayload
 	{
-		NetErrorCode errorCode = NetErrorCode::OK;
-		std::string message;
+		NetErrorCode errorCode = NetErrorCode::OK; ///< Code d'erreur réseau (voir NetErrorCode.h).
+		std::string message;                        ///< Message lisible facultatif (peut être vide).
 	};
 
-	/// Builds a full protocol v1 ERROR packet (header + payload). Used by server to send errors.
-	/// \param errorCode Protocol error code.
-	/// \param message Optional human-readable message (avoid internal details in production).
-	/// \param requestId Header request_id (e.g. match client request; 0 if no matching request).
-	/// \param sessionId Header session_id (0 if not authenticated).
-	/// \return Packet bytes ready to send, or empty if message exceeds max string length.
+	/// Construit un paquet ERROR complet (en-tête v1 + payload) prêt à l'envoi.
+	/// Utilisé par le serveur pour signaler une erreur en réponse à une requête client.
+	/// @param errorCode   Code d'erreur à inclure dans le payload.
+	/// @param message     Message lisible optionnel (éviter les détails internes en production).
+	///                    Tronqué silencieusement à kProtocolV1MaxStringLength si trop long.
+	/// @param requestId   request_id de l'en-tête : doit correspondre à la requête cliente (0 si aucune).
+	/// @param sessionId   session_id de l'en-tête (0 si non authentifié).
+	/// @return Paquet sérialisé prêt à l'envoi, ou vecteur vide si la sérialisation échoue.
 	std::vector<uint8_t> BuildErrorPacket(NetErrorCode errorCode, std::string_view message,
 		uint32_t requestId, uint64_t sessionId);
 
-	/// Parses ERROR packet payload (uint32 error_code, uint16 message_len, message_utf8).
-	/// \return Parsed payload, or std::nullopt if payload is truncated or invalid.
+	/// Désérialise le payload d'un paquet ERROR reçu.
+	/// Format attendu : [ uint32 error_code ][ uint16 message_len ][ message_utf8 ].
+	/// Le message est optionnel : si payloadSize == 4, message reste vide.
+	/// @param payload      Pointeur sur le début du payload (après l'en-tête paquet).
+	/// @param payloadSize  Taille du payload en octets.
+	/// @return ErrorPayload parsé, ou std::nullopt si le buffer est tronqué ou invalide (< 4 octets).
 	std::optional<ErrorPayload> ParseErrorPayload(const uint8_t* payload, size_t payloadSize);
 }

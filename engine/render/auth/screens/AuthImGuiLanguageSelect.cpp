@@ -1,4 +1,5 @@
-// AUTH-UI.7 — rendu ImGui écran choix de langue (split depuis AuthImGuiRenderer.cpp).
+// AUTH-UI.7 — rendu ImGui écran choix de langue au premier lancement (split depuis AuthImGuiRenderer.cpp).
+// Contient DrawLanguageFirstRunCards (grille de cartes drapeaux cliquables) et RenderLangScreen (panneau centré avec titre, cartes et bouton Continuer).
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
@@ -18,21 +19,25 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
+		/// Convertit une couleur LnTheme::Rgba en ImU32 pour les appels de draw list ImGui.
 		ImU32 U32(const LnTheme::Rgba& c)
 		{
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
+		/// Retourne vrai si le tag de locale correspond à une variante anglaise (en, en-GB, en_US…).
 		bool IsEnglishLocaleTag(std::string_view tag)
 		{
 			return tag == "en" || tag == "en-GB" || tag == "en_US" || (tag.size() >= 2 && tag[0] == 'e' && tag[1] == 'n');
 		}
 
+		/// Dessine le drapeau approprié dans la carte de langue selon le tag de locale ; repli sur un rectangle neutre pour les locales inconnues.
 		void DrawCardFlag(ImDrawList* dl, float x, float y, float fw, float fh, std::string_view tag)
 		{
 			if (tag == "fr")
@@ -51,17 +56,18 @@ namespace engine::render
 		}
 	} // namespace
 
+	/// Affiche la grille de cartes de sélection de langue (drapeau + nom) et retourne l'index de la carte cliquée, ou -1 si aucun clic.
 	int AuthImGuiRenderer::DrawLanguageFirstRunCards(const RenderModel& rm, int selected)
 	{
 		int clicked = -1;
 		const size_t n = rm.languageFirstRunCards.empty() ? 2u : rm.languageFirstRunCards.size();
-		const float gap = 16.f;
+		const float gap = 16.f; ///< Espacement horizontal entre les cartes.
 		const float avail = ImGui::GetContentRegionAvail().x;
 		const float cardW = (avail - gap * static_cast<float>(n > 1u ? n - 1u : 0u)) / static_cast<float>((n < 1u) ? 1u : n);
-		const float cardH = 148.f;
+		const float cardH = 148.f; ///< Hauteur fixe de chaque carte de langue.
 		const ImVec2 cardSize((std::max)(140.f, cardW), cardH);
 		const float totalW = cardSize.x * static_cast<float>(n) + gap * static_cast<float>(n > 1u ? n - 1u : 0u);
-		const float startX = (ImGui::GetContentRegionAvail().x - totalW) * 0.5f + ImGui::GetCursorPosX();
+		const float startX = (ImGui::GetContentRegionAvail().x - totalW) * 0.5f + ImGui::GetCursorPosX(); ///< Position X de départ pour centrer horizontalement la rangée de cartes.
 
 		for (size_t i = 0; i < n; ++i)
 		{
@@ -133,6 +139,7 @@ namespace engine::render
 		return clicked;
 	}
 
+	/// Affiche l'écran complet de sélection de langue : titre du jeu, panneau centré avec les cartes de langue et le bouton Continuer, puis hints de navigation en pied de panel.
 	void AuthImGuiRenderer::RenderLangScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;

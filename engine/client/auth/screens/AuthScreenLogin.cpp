@@ -1,3 +1,6 @@
+// AUTH-UI.1 — Écran de connexion : saisie identifiant/mot de passe, navigation vers inscription/récupération.
+//
+// Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
 #include "engine/client/AuthUi.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/core/DefaultClientEndpoints.h"
@@ -33,6 +36,7 @@ namespace
 	}
 } // namespace
 
+	/// Peuple le RenderModel avec les champs, actions et raccourcis clavier de l'écran de connexion.
 	void AuthUiPresenter::BuildModel_Login(RenderModel& model) const
 	{
 		model.sectionTitle = Tr("auth.section.login");
@@ -130,6 +134,7 @@ namespace
 		}
 	}
 
+	/// Traite les raccourcis clavier globaux de l'écran de connexion (Ctrl+R, Ctrl+F, Ctrl+O).
 	void AuthUiPresenter::Update_LoginShortcuts(engine::platform::Input& input, const engine::core::Config& cfg,
 		engine::platform::Window& window, bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -156,6 +161,7 @@ namespace
 		}
 	}
 
+	/// Reçoit les identifiants saisis dans ImGui et déclenche la soumission du formulaire de connexion.
 	void AuthUiPresenter::ImGuiSubmitLogin(const engine::core::Config& cfg, const char* loginUtf8, const char* passwordUtf8,
 		bool rememberMe)
 	{
@@ -169,6 +175,7 @@ namespace
 		SubmitCurrentPhase(cfg);
 	}
 
+	/// Bascule vers l'écran d'inscription depuis la connexion, en réinitialisant l'état du formulaire.
 	void AuthUiPresenter::ImGuiNavigateToRegisterFromLogin()
 	{
 		if (m_phase != Phase::Login)
@@ -185,6 +192,7 @@ namespace
 		m_usernameLastChecked.clear();
 	}
 
+	/// Retourne à l'écran de connexion depuis l'inscription en nettoyant l'état du formulaire d'inscription.
 	void AuthUiPresenter::ImGuiBackFromRegisterToLogin()
 	{
 		if (m_phase != Phase::Register)
@@ -202,6 +210,7 @@ namespace
 		m_registeredTagId.clear();
 	}
 
+	/// Ouvre le portail web de récupération de mot de passe dans le navigateur système.
 	void AuthUiPresenter::ImGuiOpenForgotPasswordPortal(const engine::core::Config& cfg, engine::platform::Window& window)
 	{
 		if (m_phase != Phase::Login)
@@ -216,11 +225,13 @@ namespace
 		}
 	}
 
+	/// Demande la fermeture de la fenêtre application (bouton quitter).
 	void AuthUiPresenter::ImGuiRequestClose(engine::platform::Window& window)
 	{
 		window.RequestClose();
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::BuildModel_Login(RenderModel&) const {}

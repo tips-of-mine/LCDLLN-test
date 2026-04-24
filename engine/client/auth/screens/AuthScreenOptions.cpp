@@ -1,3 +1,6 @@
+// AUTH-UI.6 — Couche modèle pour l'overlay Options (phase LanguageOptions).
+
+// Couche modèle : BuildModel_Options expose les catégories et leurs réglages, Update_Options gère la navigation clavier.
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
@@ -14,6 +17,7 @@ namespace engine::client
 #if defined(_WIN32)
 	namespace
 	{
+		/// Arrondit un volume au dixième le plus proche (0.0–1.0) pour éviter les flottants imprévisibles dans l'affichage.
 		float ClampOptionVolume(float value)
 		{
 			const float clamped = std::clamp(value, 0.0f, 1.0f);
@@ -22,11 +26,13 @@ namespace engine::client
 		}
 	} // namespace
 
+	/// Ouvre l'overlay Options depuis le renderer ImGui (pont vers OpenLanguageOptions).
 	void AuthUiPresenter::ImGuiOpenLanguageOptionsMenu()
 	{
 		OpenLanguageOptions();
 	}
 
+	/// Exécute une action du sous-menu Compte (changer mot de passe, e-mail, ou déconnexion).
 	void AuthUiPresenter::ImGuiOptionsAccountMenuAction(OptionsAccountMenuAction action)
 	{
 		if (m_phase != Phase::LanguageOptions)
@@ -60,6 +66,7 @@ namespace engine::client
 		}
 	}
 
+	/// Peuple le modèle du menu Options : racine (liste catégories) ou sous-menu actif (langue, vidéo, audio, contrôles, jeu).
 	void AuthUiPresenter::BuildModel_Options(RenderModel& model) const
 	{
 		auto addOptionsRow = [this, &model](std::string label, std::string value, bool active)
@@ -204,6 +211,7 @@ namespace engine::client
 		addActionKeys("auth.hint.return_login", false, true, false, "common.back");
 	}
 
+	/// Gère la navigation clavier dans le menu Options (flèches, Entrée, Échap) hors ImGui.
 	void AuthUiPresenter::Update_Options(engine::platform::Input& input, const engine::core::Config&, engine::platform::Window&,
 		bool usingNativeAuth, bool authUiImguiMode)
 	{
@@ -372,6 +380,7 @@ namespace engine::client
 		}
 	}
 
+// Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
 	void AuthUiPresenter::ImGuiOpenLanguageOptionsMenu() {}

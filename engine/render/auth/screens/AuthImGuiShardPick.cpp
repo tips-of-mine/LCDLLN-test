@@ -1,4 +1,5 @@
-// AUTH-UI.8 — rendu ImGui écran choix de shard (split depuis AuthImGuiRenderer.cpp).
+// AUTH-UI.8 — rendu ImGui écran de sélection du serveur de jeu (shard) avec liste détaillée et indicateurs de charge (split depuis AuthImGuiRenderer.cpp).
+// Contient les helpers d'extraction d'hôte/initiale depuis l'endpoint et RenderShardScreen (liste scrollable de shards avec barre de charge, statut et bouton Entrer).
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -21,16 +22,19 @@ namespace engine::render
 {
 	namespace
 	{
+		/// Convertit une couleur LnTheme::Rgba en ImVec4 pour les appels de style ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
+		/// Convertit une couleur LnTheme::Rgba en ImU32 pour les appels de draw list ImGui.
 		ImU32 U32(const LnTheme::Rgba& c)
 		{
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
+		/// Extrait la partie hôte d'un endpoint "host:port" ; retourne l'endpoint brut si aucun ':' n'est trouvé.
 		std::string ShardEndpointHost(const std::string& endpoint)
 		{
 			if (endpoint.empty())
@@ -41,6 +45,7 @@ namespace engine::render
 			return (colon == std::string::npos) ? endpoint : endpoint.substr(0u, colon);
 		}
 
+		/// Retourne la première lettre alphabétique (majuscule) de l'hôte d'un endpoint, utilisée comme avatar textuel dans la carte de shard.
 		char ShardInitialFromEndpoint(const std::string& endpoint)
 		{
 			const std::string host = ShardEndpointHost(endpoint);
@@ -56,6 +61,7 @@ namespace engine::render
 		}
 	} // namespace
 
+	/// Affiche l'écran de sélection du shard : liste scrollable des serveurs avec nom, endpoint, barre de charge, ping et statut, puis boutons Retour et Entrer dans le monde.
 	void AuthImGuiRenderer::RenderShardScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		using P = engine::client::LocalizationService::Params;
@@ -76,7 +82,7 @@ namespace engine::render
 		const std::string subStr = tr("auth.shard_pick.panel_subtitle");
 
 		uint32_t choice = 0u;
-		static const std::vector<engine::network::ServerListEntry> kEmptyShardList{};
+		static const std::vector<engine::network::ServerListEntry> kEmptyShardList{}; ///< Valeur vide statique utilisée en repli quand le presenter est absent.
 		const std::vector<engine::network::ServerListEntry>& entries =
 			m_authPresenter != nullptr ? m_authPresenter->ShardPickEntries() : kEmptyShardList;
 		if (m_authPresenter != nullptr)
@@ -296,6 +302,7 @@ namespace engine::render
 		const std::string backStr = tr("auth.shard_pick.button_back");
 		const std::string enterStr = tr("auth.shard_pick.enter_world");
 
+		/// Dessine un bouton fantôme (bordure fine, fond transparent) de largeur fixée ; gère l'état désactivé.
 		auto drawSizedGhost = [&](const char* label, float w, bool disabled) -> bool {
 			if (disabled)
 			{

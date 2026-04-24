@@ -1,3 +1,22 @@
+/// @file engine/core/Config.h
+/// @brief Système de configuration hiérarchique pour le MMORPG.
+///
+/// Résolution des valeurs (ordre de priorité décroissant) :
+///   1. Ligne de commande CLI  (--clé=valeur, priorité maximale)
+///   2. Fichier JSON/INI chargé via LoadFromFile()
+///   3. Fichiers de liens externes (external/external_links.json, fusionnés en tant que défauts)
+///   4. Valeurs par défaut déclarées avec SetDefault()
+///
+/// Utilisation typique (serveur ou client) :
+/// @code
+///   auto cfg = engine::core::Config::Load("config.json", argc, argv);
+///   int port = cfg.GetInt("client.master_port", 7000);
+///   bool debug = cfg.GetBool("log.console", true);
+/// @endcode
+///
+/// Thread-safety : aucune. Toutes les lectures/écritures doivent se faire
+/// depuis le même thread (généralement le thread principal au démarrage).
+
 #pragma once
 
 #include <cstdint>
@@ -9,9 +28,14 @@
 
 namespace engine::core
 {
+	/// Gestionnaire de configuration unique par processus.
+	/// Supporte les formats JSON et INI. Les clés hiérarchiques utilisent
+	/// le point comme séparateur (ex. "client.master_port").
 	class Config final
 	{
 	public:
+		/// Type discriminé pouvant représenter toutes les valeurs scalaires supportées.
+		/// std::monostate indique une clé déclarée mais sans valeur.
 		using Value = std::variant<std::monostate, bool, int64_t, double, std::string>;
 
 		/// Create an empty config (use `SetDefault` to seed defaults).

@@ -15,8 +15,9 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    const vis = body.profileVisibility;
     const result = await updatePrivacySettings(session.accountId, {
-      profileVisibility: body.profileVisibility as "public" | "friends" | "private" | undefined,
+      profileVisibility: vis === "public" || vis === "friends" || vis === "private" ? vis : undefined,
     });
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });
   } catch {

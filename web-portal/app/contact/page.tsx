@@ -11,43 +11,43 @@ export default function ContactPage() {
   }
 
   return (
-    <>
-      <div className="page-header">
+    <div className="wp-main">
+      <div className="wp-page-header">
         <h1>Contact</h1>
         <p>
-          Une question, une suggestion ou besoin d&apos;aide ? Utilisez le formulaire
-          ci-dessous ou contactez-nous directement.
+          Une question, une suggestion ou besoin d&apos;aide&nbsp;? Utilisez le
+          formulaire ci-dessous ou contactez-nous directement.
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", alignItems: "start" }}>
+      <div className="wp-grid wp-grid-2" style={{ alignItems: "start" }}>
         {/* Contact info */}
         <div style={{ display: "grid", gap: "1rem" }}>
-          <div className="card" style={{ margin: 0 }}>
-            <div className="feature-icon" style={{ marginBottom: "0.5rem" }}>&#9993;</div>
-            <h3 className="mt-0 mb-1">E-mail</h3>
-            <p className="text-sm mb-0">contact@lcdlln.example.com</p>
+          <div className="wp-card">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>✉</div>
+            <h3 style={{ margin: "0 0 4px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>E-mail</h3>
+            <p style={{ margin: 0, fontSize: 14, color: "var(--ln-muted)" }}>contact@lcdlln.example.com</p>
           </div>
 
-          <div className="card" style={{ margin: 0 }}>
-            <div className="feature-icon purple" style={{ marginBottom: "0.5rem" }}>&#128172;</div>
-            <h3 className="mt-0 mb-1">Discord</h3>
-            <p className="text-sm mb-0">Rejoignez la communauté sur notre serveur Discord pour des réponses rapides.</p>
+          <div className="wp-card">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
+            <h3 style={{ margin: "0 0 4px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Discord</h3>
+            <p style={{ margin: 0, fontSize: 14, color: "var(--ln-muted)" }}>Rejoignez la communauté sur notre serveur Discord pour des réponses rapides.</p>
           </div>
 
-          <div className="card" style={{ margin: 0 }}>
-            <div className="feature-icon orange" style={{ marginBottom: "0.5rem" }}>&#128214;</div>
-            <h3 className="mt-0 mb-1">Documentation</h3>
-            <p className="text-sm mb-0">Consultez le support et la FAQ avant de nous contacter.</p>
+          <div className="wp-card">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>📖</div>
+            <h3 style={{ margin: "0 0 4px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Documentation</h3>
+            <p style={{ margin: 0, fontSize: 14, color: "var(--ln-muted)" }}>Consultez le support et la FAQ avant de nous contacter.</p>
           </div>
         </div>
 
         {/* Contact form */}
-        <div className="card" style={{ margin: 0 }}>
+        <div className="wp-card">
           {sent ? (
-            <div className="success-box">
-              <strong>Message envoyé !</strong>
-              <p className="text-sm mt-1" style={{ color: "inherit", margin: 0 }}>
+            <div className="wp-alert success">
+              <strong>Message envoyé&nbsp;!</strong>
+              <p style={{ margin: "4px 0 0", fontSize: 14 }}>
                 Nous reviendrons vers vous dans les plus brefs délais.
               </p>
             </div>
@@ -76,19 +76,11 @@ export default function ContactPage() {
                 <label>Message</label>
                 <textarea rows={5} placeholder="Décrivez votre demande…" required />
               </div>
-              <button type="submit" className="btn-primary">Envoyer le message</button>
+              <button type="submit" className="btn btn-primary">Envoyer le message</button>
             </form>
           )}
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
-    </>
+    </div>
   );
 }

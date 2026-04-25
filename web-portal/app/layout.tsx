@@ -13,6 +13,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SiteHeader />
         <main>{children}</main>
+        <footer className="wp-footer">
+          <span style={{ fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: ".24em", textTransform: "uppercase" }}>
+            © 2026 · Les Chroniques de la Lune Noire
+          </span>
+          <div className="wp-footer-links">
+            <a href="/support">Support</a>
+            <a href="/bugs">Signaler un bug</a>
+            <a href="/contact">Contact</a>
+          </div>
+        </footer>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-24.
+> Dernière mise à jour : 2026-04-24 — design Lune Noire intégré au web-portal (section 12).
 
 ---
 
@@ -282,14 +282,76 @@ Les plans d'implémentation récents sont dans `docs/superpowers/plans/`.
 
 ## 12. Web portal (Next.js)
 
-| Dossier | Rôle |
+**Design system :** Lune Noire (thème médiéval dark fantasy).
+**Branche de référence :** `claude/update-web-portal-design-tcKMO`
+**Polices :** Cinzel (≈ Windlass) + EB Garamond (≈ Morpheus) via Google Fonts.
+
+### Fichiers de style
+
+| Fichier | Rôle |
 |---|---|
-| `web-portal/app/login/` | Page connexion web. |
-| `web-portal/app/password-recovery/` | Récupération mot de passe web. |
-| `web-portal/app/admin/` | Panel admin. |
-| `web-portal/app/player/` | Profil joueur. |
-| `web-portal/app/api/` | Routes API Next.js (backend web). |
-| `web-portal/components/` | Composants React partagés. |
+| `web-portal/app/globals.css` | **Source unique de vérité CSS.** Tokens `--ln-*`, overlays race, reset, toutes les classes `wp-*`, boutons `.btn`, formulaires `.field`. |
+| `design/lune-noire-design-system/colors_and_type.css` | Référence officielle tokens couleurs + typo (Windlass/Morpheus). Ne pas modifier. |
+| `design/lune-noire-design-system/ui_kits/web_portal/portal.css` | Source des classes `wp-*` (layout, cards, timeline, accordéon…). |
+
+### Système de classes CSS (`wp-*`)
+
+| Classe | Rôle |
+|---|---|
+| `wp-main` / `.narrow` / `.wide` | Conteneur de page (max-width 1100 / 700 / 1200 px). |
+| `wp-page-header` | Titre + sous-titre de page avec séparateur bas. |
+| `wp-hero` | Section héro centrée avec gradient de fond. |
+| `wp-stats` / `wp-stat` / `wp-stat-value` / `wp-stat-label` | Grille de statistiques. |
+| `wp-section-title` / `wp-section-sub` | Titres de section intermédiaires. |
+| `wp-grid` / `wp-grid-2/3/4` | Grilles responsive auto-fit. |
+| `wp-card` / `.interactive` | Carte fond semi-transparent ; `.interactive` ajoute hover doré. |
+| `wp-badge` / `.done` / `.active` / `.planned` | Pastilles de statut (vert / or / gris). |
+| `wp-alert` / `.info` / `.success` / `.warning` / `.error` | Bannières d'alerte colorées. |
+| `wp-accordion` / `wp-acc-item` / `wp-acc-trigger` / `wp-acc-body` | FAQ accordéon. |
+| `wp-timeline` / `wp-tl-item` / `.done` / `.active` | Timeline roadmap avec ligne verticale et point coloré (`::before`). |
+| `wp-tiers` / `wp-tier` / `wp-tier-num` / `wp-tier-label` | Grille de paliers (exploits). |
+| `wp-table-wrap` / `wp-table` | Tableau responsive avec header stylisé. |
+| `wp-progress` / `wp-progress-fill` | Barre de progression. |
+| `wp-divider` | Séparateur horizontal. |
+| `wp-header` / `wp-logo` / `wp-nav` | Topbar sticky (voir `SiteHeader.tsx`). |
+| `wp-footer` / `wp-footer-links` | Pied de page. |
+
+### Boutons et formulaires
+
+| Classe | Rôle |
+|---|---|
+| `btn btn-primary` | Bouton principal bleu dégradé. |
+| `btn btn-ghost` | Bouton secondaire transparent bordure. |
+| `btn btn-accent` | Bouton doré contour. |
+| `btn btn-danger` | Bouton rouge destruction. |
+| `field` | Wrapper label + input/textarea/select stylisé. |
+| `form-stack` | Colonne de champs avec gap. |
+| `error-box` / `success-box` | Boîtes de feedback formulaire (composants existants). |
+
+### Overlays race
+
+Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|humains"` sur un ancêtre pour rebrancher toutes les variables `--ln-*` automatiquement.
+
+### Pages et composants
+
+| Fichier | Rôle |
+|---|---|
+| `web-portal/app/layout.tsx` | Layout racine : `SiteHeader` + `<main>` + `wp-footer`. |
+| `web-portal/components/SiteHeader.tsx` | Topbar sticky avec logo lune, nav et toggle mobile. |
+| `web-portal/app/page.tsx` | Page d'accueil : hero, stats, grille fonctionnalités, accès rapide. |
+| `web-portal/app/login/page.tsx` | Connexion : logo lune, `wp-card`, champs `.field`, `wp-alert error`. |
+| `web-portal/app/roadmap/page.tsx` | Roadmap : `wp-timeline` avec états `.done` / `.active`. |
+| `web-portal/app/bugs/page.tsx` | Signalement bugs : étapes `wp-grid-3`, `wp-tiers` (paliers 5–100). |
+| `web-portal/app/support/page.tsx` | FAQ : `wp-accordion` avec `AccordionItem` client. |
+| `web-portal/app/contact/page.tsx` | Contact : infos + formulaire dans `wp-grid-2`. |
+| `web-portal/app/admin/page.tsx` | Panel admin : stats, grille modules, note sécurité. |
+| `web-portal/app/player/page.tsx` | Espace joueur : stats, nav vers sous-sections. |
+| `web-portal/app/player/cgu/page.tsx` | CGU joueur : `wp-table` acceptations. |
+| `web-portal/app/player/exploits/page.tsx` | Exploits : délègue à `ExploitsProfile`. |
+| `web-portal/app/player/recovery-profile/page.tsx` | Profil récupération : `wp-alert warning` si pas de compte. |
+| `web-portal/app/password-recovery/page.tsx` | Récupération mot de passe : `wp-card` info. |
+| `web-portal/components/ExploitsProfile.tsx` | Exploits : progress bar, cartes visibles/masquées, stats. |
+| `web-portal/app/api/` | Routes API Next.js (backend web, non modifiées). |
 
 ---
 

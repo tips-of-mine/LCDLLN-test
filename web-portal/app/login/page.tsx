@@ -36,32 +36,48 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ maxWidth: "24rem", margin: "3rem auto" }}>
-      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>&#128274;</div>
-        <h1 style={{ marginBottom: "0.25rem" }}>Connexion</h1>
-        <p className="text-sm">Accédez à votre espace joueur</p>
+    <div className="wp-main narrow" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 48 }}>
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{
+          width: 64, height: 64, borderRadius: "50%",
+          background: "radial-gradient(circle at 32% 30%, #2a2330 0%, #0B0712 55%, #000 100%)",
+          border: "1px solid #1a1420",
+          boxShadow: "0 0 30px rgba(74,123,184,.4)",
+          margin: "0 auto 18px",
+        }} />
+        <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 20, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--ln-text)", marginBottom: 6 }}>
+          Connexion
+        </div>
+        <div style={{ fontFamily: "var(--font-body)", fontStyle: "italic", fontSize: 14, color: "var(--ln-muted)" }}>
+          Accédez à votre espace joueur
+        </div>
       </div>
 
-      <div className="card" style={{ margin: 0 }}>
-        <form onSubmit={handleSubmit} className="form-stack">
-          {error && <div className="error-box">{error}</div>}
-
+      <div className="wp-card" style={{ width: "100%", maxWidth: 440, padding: 28 }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {error && (
+            <div className="wp-alert error">
+              <span className="wp-alert-icon">✕</span>
+              {error}
+            </div>
+          )}
           <div className="field">
-            <label>Identifiant ou e-mail</label>
+            <label htmlFor="identifier">Identifiant ou e-mail</label>
             <input
+              id="identifier"
               type="text"
               value={identifier}
               onChange={(ev) => setIdentifier(ev.target.value)}
               placeholder="Votre login ou adresse e-mail"
               required
               autoComplete="username"
+              autoFocus
             />
           </div>
-
           <div className="field">
-            <label>Mot de passe</label>
+            <label htmlFor="password">Mot de passe</label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
@@ -70,24 +86,20 @@ export default function LoginPage() {
               autoComplete="current-password"
             />
           </div>
-
-          <button type="submit" className="btn-primary" disabled={loading}>
+          <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loading}>
             {loading ? "Connexion…" : "Se connecter"}
           </button>
         </form>
-
-        <div style={{ marginTop: "1.25rem", paddingTop: "1.25rem", borderTop: "1px solid var(--border)", textAlign: "center" }}>
-          <Link href="/password-recovery" className="text-sm">
-            Mot de passe oublié ?
+        <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--ln-border)", textAlign: "center" }}>
+          <Link href="/password-recovery" style={{ fontFamily: "var(--font-ui)", fontSize: 10, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--ln-muted)" }}>
+            Mot de passe oublié ?
           </Link>
         </div>
       </div>
 
-      <p className="text-sm text-center mt-3" style={{ color: "var(--muted)" }}>
-        Pas encore de compte ? Créez-le dans le client jeu. Le même mot de passe que
-        pour vous connecter au jeu fonctionne ici (hash Argon2). Ancien mot de passe
-        défini uniquement par le portail (scrypt) reste accepté jusqu’à une
-        réinitialisation.
+      <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", fontSize: 12.5, color: "var(--ln-muted)", textAlign: "center", maxWidth: 400, marginTop: 20, lineHeight: 1.6 }}>
+        Pas encore de compte ? Créez-le dans le client jeu. Le même identifiant et mot de passe
+        que pour le jeu fonctionnent ici.
       </p>
     </div>
   );

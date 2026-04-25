@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-export { COOKIE_NAME, COOKIE_MAX_AGE_SEC } from "./session-constants";
+import { COOKIE_NAME, COOKIE_MAX_AGE_SEC } from "./session-constants";
+export { COOKIE_NAME, COOKIE_MAX_AGE_SEC };
 
 export type SessionPayload = {
   v: 1;

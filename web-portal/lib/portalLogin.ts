@@ -24,13 +24,9 @@ function verifyLegacyScryptPassword(password: string, stored: string): boolean {
 }
 
 export type PortalLoginResult =
-  | { ok: true; accountId: number; login: string }
+  | { ok: true; accountId: number; login: string; tagId: string; role: string }
   | { ok: false; code: "missing" | "invalid" | "db" };
 
-/**
- * Identifiant = login exact ou e-mail (comme la récupération de mot de passe).
- * Le hash jeu utilise toujours la colonne `login` pour dériver le sel.
- */
 export async function verifyPortalCredentials(
   identifier: string,
   plainPassword: string,
@@ -40,24 +36,36 @@ export async function verifyPortalCredentials(
     return { ok: false, code: "missing" };
   }
   try {
-    const rows = await query<Array<RowDataPacket & { id: number; login: string; password_hash: string }>>(
-      `
-      SELECT id, login, password_hash FROM accounts
-      WHERE LOWER(email) = ? OR login = ?
-      LIMIT 1
-    `,
+    const rows = await query<
+      Array<
+        RowDataPacket & {
+          id: number;
+          login: string;
+          password_hash: string;
+          tag_id: string;
+          role: string;
+        }
+      >
+    >(
+      `SELECT id, login, password_hash, tag_id, role
+       FROM accounts
+       WHERE LOWER(email) = ? OR login = ?
+       LIMIT 1`,
       [normalizeLower(idTrim), idTrim],
     );
+
     const row = rows[0];
-    if (!row) {
-      return { ok: false, code: "invalid" };
-    }
+    if (!row) return { ok: false, code: "invalid" };
+
     const dbLogin = row.login.trim();
+    const tagId = row.tag_id ?? "";
+    const role = row.role ?? "player";
+
     if (await verifyGameMasterPassword(dbLogin, plainPassword, row.password_hash)) {
-      return { ok: true, accountId: row.id, login: dbLogin };
+      return { ok: true, accountId: row.id, login: dbLogin, tagId, role };
     }
     if (verifyLegacyScryptPassword(plainPassword, row.password_hash)) {
-      return { ok: true, accountId: row.id, login: dbLogin };
+      return { ok: true, accountId: row.id, login: dbLogin, tagId, role };
     }
     return { ok: false, code: "invalid" };
   } catch {

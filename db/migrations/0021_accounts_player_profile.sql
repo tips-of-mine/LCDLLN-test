@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS email_change_tokens (
   PRIMARY KEY (id),
   KEY idx_email_change_account (account_id),
   KEY idx_email_change_expires (expires_at),
+  KEY idx_email_change_lookup (account_id, code),
   CONSTRAINT fk_email_change_account
     FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

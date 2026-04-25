@@ -23,12 +23,17 @@ export function CharacterCard({ character, onDeleted }: Props) {
   async function handleDelete() {
     setStep("deleting");
     setError("");
-    const res = await fetch(`/api/player/characters/${character.id}`, { method: "DELETE" });
-    const data = (await res.json()) as { ok: boolean; message?: string };
-    if (data.ok) {
-      onDeleted(character.id);
-    } else {
-      setError(data.message ?? "Erreur lors de la suppression.");
+    try {
+      const res = await fetch(`/api/player/characters/${character.id}`, { method: "DELETE" });
+      const data = (await res.json()) as { ok: boolean; message?: string };
+      if (data.ok) {
+        onDeleted(character.id);
+      } else {
+        setError(data.message ?? "Erreur lors de la suppression.");
+        setStep("idle");
+      }
+    } catch {
+      setError("Erreur réseau. Veuillez réessayer.");
       setStep("idle");
     }
   }
@@ -87,10 +92,11 @@ export function CharacterCard({ character, onDeleted }: Props) {
                 Action irréversible. Confirmez la suppression définitive ?
               </p>
               <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                <button className="btn btn-ghost" onClick={() => setStep("idle")}>Annuler</button>
+                <button className="btn btn-ghost" disabled={step === "deleting"} onClick={() => setStep("idle")}>Annuler</button>
                 <button
                   className="btn btn-secondary"
                   style={{ background: "rgba(200,50,50,0.25)", color: "var(--ln-danger)" }}
+                  disabled={step === "deleting"}
                   onClick={handleDelete}
                 >
                   Supprimer définitivement

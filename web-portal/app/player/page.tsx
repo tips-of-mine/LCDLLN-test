@@ -1,40 +1,104 @@
+// web-portal/app/player/page.tsx
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { readSession } from "@/lib/session";
+import { getAccountProfile } from "@/lib/playerProfile";
+import { getCharactersWithStats } from "@/lib/playerCharacters";
+import { getPlayerExploitsData } from "@/lib/exploitsData";
 
-export default function PlayerHomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function PlayerHomePage() {
+  const session = readSession(cookies());
+  if (!session) redirect("/login?next=/player");
+
+  const [profile, characters, exploits] = await Promise.all([
+    getAccountProfile(session.accountId),
+    getCharactersWithStats(session.accountId).catch(() => []),
+    getPlayerExploitsData(session.accountId).catch(() => null),
+  ]);
+
+  if (!profile) redirect("/login");
+
+  const completedExploits = exploits?.totals.completedByPlayer ?? 0;
+  const totalExploits = exploits?.totals.totalInGame ?? 0;
+
   return (
     <div className="wp-main">
       <div className="wp-page-header">
-        <h1>Espace joueur</h1>
-        <p>
-          Gérez votre profil, suivez vos exploits et consultez vos informations de compte.
-          Contenu accessible après connexion.
-        </p>
+        <h1>
+          Bienvenue,{" "}
+          <span style={{ fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>
+            {profile.tagId || profile.login}
+          </span>
+        </h1>
+        <p>Gérez votre profil, suivez vos exploits et consultez vos informations de compte.</p>
       </div>
+
+      {profile.emailPending && !profile.emailVerified && (
+        <div className="wp-card" style={{ marginBottom: "1rem", borderColor: "rgba(220,180,50,.4)", background: "rgba(220,180,50,.05)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.1rem" }}>⚠</span>
+            <div>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ln-warning)", marginBottom: 4 }}>
+                Email en attente de validation
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--ln-muted)" }}>
+                Un code de vérification a été envoyé à <strong>{profile.emailPending}</strong>.{" "}
+                <Link href="/player/account" style={{ color: "var(--ln-accent)" }}>Valider</Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="wp-stats">
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{completedExploits}</div>
           <div className="wp-stat-label">Exploits débloqués</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{characters.length}</div>
           <div className="wp-stat-label">Personnages</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
-          <div className="wp-stat-label">Bugs signalés</div>
+          <div className="wp-stat-value">{totalExploits > 0 ? `${Math.round((completedExploits / totalExploits) * 100)}%` : "—"}</div>
+          <div className="wp-stat-label">Progression</div>
         </div>
       </div>
 
-      <div className="wp-section-title">Mes sections</div>
+      <div className="wp-section-title">Mon espace</div>
 
       <div className="wp-grid wp-grid-2">
+        <Link href="/player/account" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>👤</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Détail du compte</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Nom, prénom, adresse, email.
+            </p>
+            <span className="wp-badge active">Gérer</span>
+          </div>
+        </Link>
+
+        <Link href="/player/servers" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>⚔️</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Mes aventures</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Personnages, temps joué par serveur.
+            </p>
+            <span className="wp-badge active">Voir</span>
+          </div>
+        </Link>
+
         <Link href="/player/exploits" style={{ textDecoration: "none" }}>
           <div className="wp-card interactive">
             <div style={{ fontSize: 28, marginBottom: 8 }}>🏆</div>
             <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Mes Exploits</h3>
             <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-              Consultez votre progression, exploits visibles et secrets.
+              Progression, exploits secrets et taux de complétion.
             </p>
             <span className="wp-badge active">Voir mes exploits</span>
           </div>
@@ -45,18 +109,40 @@ export default function PlayerHomePage() {
             <div style={{ fontSize: 28, marginBottom: 8 }}>📜</div>
             <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Mes CGU</h3>
             <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-              Historique des versions acceptées et nouvelles éditions à valider.
+              Historique des versions acceptées.
             </p>
-            <span className="wp-badge active">Voir mes CGU</span>
+            <span className="wp-badge active">Voir</span>
           </div>
         </Link>
 
-        <Link href="/player/recovery-profile" style={{ textDecoration: "none" }}>
+        <Link href="/player/privacy" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Vie privée</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Visibilité du profil, historique CGU.
+            </p>
+            <span className="wp-badge active">Configurer</span>
+          </div>
+        </Link>
+
+        <Link href="/player/security" style={{ textDecoration: "none" }}>
           <div className="wp-card interactive">
             <div style={{ fontSize: 28, marginBottom: 8 }}>🛡️</div>
-            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Profil de récupération</h3>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Sécurité</h3>
             <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-              Configurez vos questions secrètes pour la récupération de compte.
+              Mot de passe et double authentification.
+            </p>
+            <span className="wp-badge active">Gérer</span>
+          </div>
+        </Link>
+
+        <Link href="/player/parental" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>👨‍👩‍👧</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Contrôle parental</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Validation parentale pour joueurs mineurs.
             </p>
             <span className="wp-badge active">Configurer</span>
           </div>
@@ -67,42 +153,11 @@ export default function PlayerHomePage() {
             <div style={{ fontSize: 28, marginBottom: 8 }}>🐛</div>
             <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Signaler un bug</h3>
             <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-              Contribuez à l&apos;amélioration du jeu et gagnez des exploits.
+              Contribuez à l&apos;amélioration du jeu.
             </p>
             <span className="wp-badge active">Signaler</span>
           </div>
         </Link>
-      </div>
-
-      <div className="wp-section-title" style={{ marginTop: "2rem" }}>Fonctionnalités à venir</div>
-
-      <div className="wp-card">
-        <div style={{ display: "grid", gap: "0.75rem" }}>
-          {[
-            { icon: "🖥️", label: "Serveurs en ligne", desc: "État temps réel des serveurs de jeu" },
-            { icon: "👤", label: "Personnages", desc: "Gestion et suppression avec double validation" },
-            { icon: "👥", label: "Amis & Guilde", desc: "Liste d'amis et membres de guilde en ligne" },
-            { icon: "🔔", label: "Notifications", desc: "Alertes de maintenance et mises à jour" },
-          ].map((f) => (
-            <div
-              key={f.label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                padding: "0.5rem 0",
-                borderBottom: "1px solid var(--ln-border)",
-              }}
-            >
-              <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{f.icon}</span>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--ln-text)" }}>{f.label}</div>
-                <div style={{ fontSize: 13, color: "var(--ln-muted)" }}>{f.desc}</div>
-              </div>
-              <span className="wp-badge planned" style={{ marginLeft: "auto", flexShrink: 0 }}>Bientôt</span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

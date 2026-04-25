@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyPortalCredentials } from "@/lib/portalLogin";
+import { signSession, COOKIE_NAME, COOKIE_MAX_AGE_SEC } from "@/lib/session";
 
-const COOKIE_NAME = "lcdlln_portal_account";
-const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
+const LEGACY_COOKIE = "lcdlln_portal_account";
+
+function sanitizeNext(raw: unknown): string {
+  if (typeof raw !== "string") return "/player";
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "/player";
+  return trimmed;
+}
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { identifier?: string; password?: string };
+    const body = (await request.json()) as {
+      identifier?: string;
+      password?: string;
+      next?: string;
+    };
     const identifier = typeof body.identifier === "string" ? body.identifier : "";
     const password = typeof body.password === "string" ? body.password : "";
 
@@ -23,8 +34,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, message }, { status });
     }
 
+    const sessionValue = signSession({
+      v: 1,
+      accountId: result.accountId,
+      tagId: result.tagId,
+      login: result.login,
+      role: result.role as "player" | "admin" | "moderator",
+    });
+
     const jar = cookies();
-    jar.set(COOKIE_NAME, String(result.accountId), {
+    jar.delete(LEGACY_COOKIE);
+    jar.set(COOKIE_NAME, sessionValue, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -32,11 +52,7 @@ export async function POST(request: Request) {
       maxAge: COOKIE_MAX_AGE_SEC,
     });
 
-    return NextResponse.json({
-      ok: true,
-      login: result.login,
-      redirect: "/player",
-    });
+    return NextResponse.json({ ok: true, redirect: sanitizeNext(body.next) });
   } catch {
     return NextResponse.json({ ok: false, message: "Requête invalide." }, { status: 400 });
   }

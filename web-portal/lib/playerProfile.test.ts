@@ -8,10 +8,14 @@ vi.mock("@/lib/passwordRecovery", () => ({
   getRecoveryProfile: vi.fn(),
   upsertRecoveryProfile: vi.fn(),
 }));
+vi.mock("node:crypto", async (importOriginal) => {
+  const real = await importOriginal<typeof import("node:crypto")>();
+  return { ...real, randomBytes: vi.fn(() => Buffer.from("123456", "utf8")) };
+});
 
 import { query } from "@/lib/db";
 import { getRecoveryProfile, upsertRecoveryProfile } from "@/lib/passwordRecovery";
-import { getAccountProfile, updateAccountProfile } from "./playerProfile";
+import { getAccountProfile, updateAccountProfile, requestEmailChange, confirmEmailChange } from "./playerProfile";
 
 const mockQuery = vi.mocked(query);
 const mockGetRecovery = vi.mocked(getRecoveryProfile);
@@ -87,5 +91,48 @@ describe("updateAccountProfile", () => {
     });
     expect(result.ok).toBe(false);
     expect((result as { ok: false; message: string }).message).toContain("Prénom");
+  });
+});
+
+describe("requestEmailChange", () => {
+  it("retourne une erreur si email invalide", async () => {
+    const result = await requestEmailChange(1, "pas-un-email");
+    expect(result.ok).toBe(false);
+    expect((result as { ok: false; message: string }).message).toContain("email");
+  });
+
+  it("insère un token si email valide et non pris", async () => {
+    // email not taken check
+    mockQuery.mockResolvedValueOnce([{ cnt: 0 }]);
+    // INSERT token
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 });
+    // UPDATE email_pending + email_verified=0
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 });
+    const result = await requestEmailChange(1, "nouveau@test.com");
+    expect(result.ok).toBe(true);
+  });
+
+  it("retourne une erreur si email déjà utilisé", async () => {
+    mockQuery.mockResolvedValueOnce([{ cnt: 1 }]);
+    const result = await requestEmailChange(1, "pris@test.com");
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("confirmEmailChange", () => {
+  it("retourne une erreur si code invalide", async () => {
+    mockQuery.mockResolvedValueOnce([]); // token not found
+    const result = await confirmEmailChange(1, "000000");
+    expect(result.ok).toBe(false);
+  });
+
+  it("applique le changement d'email si code valide", async () => {
+    mockQuery.mockResolvedValueOnce([
+      { id: 5, new_email: "nouveau@test.com", used_at: null, expired: 0 },
+    ]);
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 }); // UPDATE accounts
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 }); // UPDATE token used_at
+    const result = await confirmEmailChange(1, "123456");
+    expect(result.ok).toBe(true);
   });
 });

@@ -108,3 +108,82 @@ export async function updateAccountProfile(
 
   return { ok: true };
 }
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+}
+
+export async function requestEmailChange(
+  accountId: number,
+  newEmail: string,
+): Promise<ProfileResult> {
+  const email = newEmail.trim().toLowerCase();
+  if (!isValidEmail(email)) return { ok: false, message: "Adresse email invalide." };
+
+  const taken = await query<Array<RowDataPacket & { cnt: number }>>(
+    "SELECT COUNT(*) AS cnt FROM accounts WHERE LOWER(email) = ? AND id <> ?",
+    [email, accountId],
+  );
+  if ((taken[0]?.cnt ?? 0) > 0) {
+    return { ok: false, message: "Cette adresse email est déjà utilisée." };
+  }
+
+  const { randomBytes } = await import("node:crypto");
+  const code = String(parseInt(randomBytes(3).toString("hex"), 16) % 1000000).padStart(6, "0");
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const expiresAtStr = expiresAt.toISOString().slice(0, 19).replace("T", " ");
+
+  await query<ResultSetHeader>(
+    `INSERT INTO email_change_tokens (account_id, new_email, code, expires_at)
+     VALUES (?, ?, ?, ?)`,
+    [accountId, email, code, expiresAtStr],
+  );
+
+  await query<ResultSetHeader>(
+    "UPDATE accounts SET email_pending = ?, email_verified = 0 WHERE id = ?",
+    [email, accountId],
+  );
+
+  // Envoi email — log en dev, nodemailer en prod
+  const portalUrl = (process.env.NEXT_PUBLIC_PORTAL_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+  console.info(
+    `[email-change] Code ${code} pour account ${accountId} → ${email} | Lien: ${portalUrl}/player/account`,
+  );
+
+  return { ok: true };
+}
+
+export async function confirmEmailChange(
+  accountId: number,
+  code: string,
+): Promise<ProfileResult> {
+  const cleanCode = code.trim();
+  if (!/^\d{6}$/.test(cleanCode)) return { ok: false, message: "Code invalide." };
+
+  const rows = await query<
+    Array<RowDataPacket & { id: number; new_email: string; used_at: string | null; expired: number }>
+  >(
+    `SELECT id, new_email, used_at,
+            CASE WHEN expires_at < UTC_TIMESTAMP() THEN 1 ELSE 0 END AS expired
+     FROM email_change_tokens
+     WHERE account_id = ? AND code = ?
+     ORDER BY created_at DESC LIMIT 1`,
+    [accountId, cleanCode],
+  );
+
+  const token = rows[0];
+  if (!token || token.used_at !== null || token.expired === 1) {
+    return { ok: false, message: "Code invalide ou expiré." };
+  }
+
+  await query<ResultSetHeader>(
+    "UPDATE accounts SET email = ?, email_pending = NULL, email_verified = 1 WHERE id = ?",
+    [token.new_email, accountId],
+  );
+  await query<ResultSetHeader>(
+    "UPDATE email_change_tokens SET used_at = UTC_TIMESTAMP() WHERE id = ?",
+    [token.id],
+  );
+
+  return { ok: true };
+}

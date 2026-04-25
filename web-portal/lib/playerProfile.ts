@@ -97,9 +97,10 @@ export async function updateAccountProfile(
     [firstName, lastName, accountId],
   );
 
+  const existing = await getRecoveryProfile(accountId);
   await upsertRecoveryProfile({
     accountId,
-    birthDate: "",
+    birthDate: existing?.birthDate ?? "",
     address: input.address.trim(),
     city: input.city.trim(),
     postalCode: input.postalCode.trim(),

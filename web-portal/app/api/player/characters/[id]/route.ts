@@ -16,6 +16,10 @@ export async function DELETE(
     return NextResponse.json({ ok: false, message: "Identifiant invalide." }, { status: 400 });
   }
 
-  const result = await deleteCharacter(charId, session.accountId);
-  return NextResponse.json(result, { status: result.ok ? 200 : 404 });
+  try {
+    const result = await deleteCharacter(charId, session.accountId);
+    return NextResponse.json(result, { status: result.ok ? 200 : 404 });
+  } catch {
+    return NextResponse.json({ ok: false, message: "Erreur serveur." }, { status: 500 });
+  }
 }

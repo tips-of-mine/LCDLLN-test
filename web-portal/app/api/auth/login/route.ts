@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       accountId: result.accountId,
       tagId: result.tagId,
       login: result.login,
-      role: result.role as "player" | "admin" | "moderator",
+      role: result.role,
     });
 
     const jar = cookies();

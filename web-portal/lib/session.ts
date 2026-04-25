@@ -1,7 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-
-export const COOKIE_NAME = "lcdlln_session";
-export const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
+export { COOKIE_NAME, COOKIE_MAX_AGE_SEC } from "./session-constants";
 
 export type SessionPayload = {
   v: 1;

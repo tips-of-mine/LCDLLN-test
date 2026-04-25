@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { signSession, verifySession, readSession, type SessionPayload } from "./session";
 
 const TEST_SECRET = "test-secret-at-least-32-chars-long-for-hmac-sha256!!";
@@ -70,11 +70,8 @@ describe("verifySession", () => {
 
   it("retourne null si v !== 1", () => {
     const badPayload: unknown = { v: 2, accountId: 1, tagId: "", login: "x", role: "player" };
-    process.env.SESSION_HMAC_SECRET = TEST_SECRET;
-    const val = signSession(badPayload as SessionPayload);
-    const result = verifySession(val);
-    process.env.SESSION_HMAC_SECRET = "";
-    expect(result).toBeNull();
+    const val = withSecret(() => signSession(badPayload as SessionPayload));
+    expect(withSecret(() => verifySession(val))).toBeNull();
   });
 });
 

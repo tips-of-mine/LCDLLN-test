@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { COOKIE_NAME } from "@/lib/session-constants";
 
-const COOKIE_NAME = "lcdlln_session";
 const ADMIN_ROLES = new Set(["admin", "moderator"]);
 
 function parsePayload(cookieVal: string): { role?: string } | null {

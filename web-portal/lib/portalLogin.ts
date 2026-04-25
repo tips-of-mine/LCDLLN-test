@@ -23,8 +23,10 @@ function verifyLegacyScryptPassword(password: string, stored: string): boolean {
   }
 }
 
+const VALID_ROLES = new Set(["player", "admin", "moderator"]);
+
 export type PortalLoginResult =
-  | { ok: true; accountId: number; login: string; tagId: string; role: string }
+  | { ok: true; accountId: number; login: string; tagId: string; role: "player" | "admin" | "moderator" }
   | { ok: false; code: "missing" | "invalid" | "db" };
 
 export async function verifyPortalCredentials(
@@ -59,7 +61,7 @@ export async function verifyPortalCredentials(
 
     const dbLogin = row.login.trim();
     const tagId = row.tag_id ?? "";
-    const role = row.role ?? "player";
+    const role = VALID_ROLES.has(row.role) ? (row.role as "player" | "admin" | "moderator") : "player";
 
     if (await verifyGameMasterPassword(dbLogin, plainPassword, row.password_hash)) {
       return { ok: true, accountId: row.id, login: dbLogin, tagId, role };

@@ -187,7 +187,7 @@ export async function upsertRecoveryProfile(input: RecoveryProfileInput): Promis
     .filter((item) => item.question.length > 0 && item.answer.length > 0)
     .slice(0, 3);
 
-  if (questions.length !== 3) {
+  if (input.secretQuestions.length > 0 && questions.length !== 3) {
     throw new Error("Trois questions secretes sont requises.");
   }
 
@@ -209,12 +209,14 @@ export async function upsertRecoveryProfile(input: RecoveryProfileInput): Promis
       normalizePostalCode(input.postalCode) || null,
     ],
   );
-  await query<ResultSetHeader>("DELETE FROM account_recovery_secret_questions WHERE account_id = ?", [input.accountId]);
-  for (const item of questions) {
-    await query<ResultSetHeader>(
-      "INSERT INTO account_recovery_secret_questions (account_id, question, answer_hash) VALUES (?, ?, ?)",
-      [input.accountId, item.question, hashAnswer(item.answer)],
-    );
+  if (questions.length > 0) {
+    await query<ResultSetHeader>("DELETE FROM account_recovery_secret_questions WHERE account_id = ?", [input.accountId]);
+    for (const item of questions) {
+      await query<ResultSetHeader>(
+        "INSERT INTO account_recovery_secret_questions (account_id, question, answer_hash) VALUES (?, ?, ?)",
+        [input.accountId, item.question, hashAnswer(item.answer)],
+      );
+    }
   }
 
   return { ok: true };

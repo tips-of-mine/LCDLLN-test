@@ -128,8 +128,8 @@ export async function requestEmailChange(
     return { ok: false, message: "Cette adresse email est déjà utilisée." };
   }
 
-  const { randomBytes } = await import("node:crypto");
-  const code = String(parseInt(randomBytes(3).toString("hex"), 16) % 1000000).padStart(6, "0");
+  const { randomInt } = await import("node:crypto");
+  const code = String(randomInt(0, 1000000)).padStart(6, "0");
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const expiresAtStr = expiresAt.toISOString().slice(0, 19).replace("T", " ");
 
@@ -146,9 +146,11 @@ export async function requestEmailChange(
 
   // Envoi email — log en dev, nodemailer en prod
   const portalUrl = (process.env.NEXT_PUBLIC_PORTAL_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-  console.info(
-    `[email-change] Code ${code} pour account ${accountId} → ${email} | Lien: ${portalUrl}/player/account`,
-  );
+  if (process.env.NODE_ENV !== "production") {
+    console.info(
+      `[email-change] Code ${code} pour account ${accountId} → ${email} | Lien: ${portalUrl}/player/account`,
+    );
+  }
 
   return { ok: true };
 }
@@ -176,13 +178,16 @@ export async function confirmEmailChange(
     return { ok: false, message: "Code invalide ou expiré." };
   }
 
+  const markUsed = await query<ResultSetHeader>(
+    "UPDATE email_change_tokens SET used_at = UTC_TIMESTAMP() WHERE id = ? AND used_at IS NULL",
+    [token.id],
+  );
+  if (markUsed.affectedRows === 0) {
+    return { ok: false, message: "Code invalide ou expiré." };
+  }
   await query<ResultSetHeader>(
     "UPDATE accounts SET email = ?, email_pending = NULL, email_verified = 1 WHERE id = ?",
     [token.new_email, accountId],
-  );
-  await query<ResultSetHeader>(
-    "UPDATE email_change_tokens SET used_at = UTC_TIMESTAMP() WHERE id = ?",
-    [token.id],
   );
 
   return { ok: true };

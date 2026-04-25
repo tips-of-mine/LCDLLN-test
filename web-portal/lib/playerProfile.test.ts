@@ -10,7 +10,7 @@ vi.mock("@/lib/passwordRecovery", () => ({
 }));
 vi.mock("node:crypto", async (importOriginal) => {
   const real = await importOriginal<typeof import("node:crypto")>();
-  return { ...real, randomBytes: vi.fn(() => Buffer.from("123456", "utf8")) };
+  return { ...real, randomInt: vi.fn(() => 500000) };
 });
 
 import { query } from "@/lib/db";
@@ -130,9 +130,31 @@ describe("confirmEmailChange", () => {
     mockQuery.mockResolvedValueOnce([
       { id: 5, new_email: "nouveau@test.com", used_at: null, expired: 0 },
     ]);
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 }); // UPDATE token used_at (atomic gate)
     mockQuery.mockResolvedValueOnce({ affectedRows: 1 }); // UPDATE accounts
-    mockQuery.mockResolvedValueOnce({ affectedRows: 1 }); // UPDATE token used_at
     const result = await confirmEmailChange(1, "123456");
     expect(result.ok).toBe(true);
+  });
+
+  it("retourne une erreur si token déjà utilisé", async () => {
+    mockQuery.mockResolvedValueOnce([
+      { id: 5, new_email: "nouveau@test.com", used_at: "2026-04-25 10:00:00", expired: 0 },
+    ]);
+    const result = await confirmEmailChange(1, "123456");
+    expect(result.ok).toBe(false);
+  });
+
+  it("retourne une erreur si token expiré", async () => {
+    mockQuery.mockResolvedValueOnce([
+      { id: 5, new_email: "nouveau@test.com", used_at: null, expired: 1 },
+    ]);
+    const result = await confirmEmailChange(1, "123456");
+    expect(result.ok).toBe(false);
+  });
+
+  it("retourne une erreur si code mal formaté (aucun appel DB)", async () => {
+    const result = await confirmEmailChange(1, "ABCDEF");
+    expect(result.ok).toBe(false);
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 });

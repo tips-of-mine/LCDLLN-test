@@ -188,3 +188,8 @@ input,textarea,select,button{font-family:inherit;}
 @keyframes slide-in{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 @keyframes fade-in{from{opacity:0;}to{opacity:1;}}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Legacy aliases ── */
+.card{background:rgba(20,28,40,.6);border:1px solid var(--ln-border);border-radius:var(--radius-md);padding:clamp(16px,2vw,24px);box-shadow:var(--shadow-1);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}

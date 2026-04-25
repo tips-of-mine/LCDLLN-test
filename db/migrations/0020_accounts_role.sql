@@ -3,6 +3,8 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+START TRANSACTION;
+
 SET @m20_c := (
   SELECT COUNT(*) FROM information_schema.columns
   WHERE table_schema = DATABASE()
@@ -13,5 +15,7 @@ SET @m20_s := IF(@m20_c = 0,
   'ALTER TABLE accounts ADD COLUMN role ENUM(''player'',''admin'',''moderator'') NOT NULL DEFAULT ''player'' AFTER tag_id',
   'SELECT 1');
 PREPARE m20_p FROM @m20_s; EXECUTE m20_p; DEALLOCATE PREPARE m20_p;
+
+COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;

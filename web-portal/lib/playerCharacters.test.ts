@@ -35,6 +35,24 @@ describe("getCharactersWithStats", () => {
     const result = await getCharactersWithStats(42);
     expect(result).toHaveLength(0);
   });
+
+  it("retourne totalPlaySeconds à 0 si pas de stats", async () => {
+    mockQuery.mockResolvedValueOnce([
+      {
+        id: 2,
+        name: "New",
+        slot: 1,
+        server_name: null,
+        server_id: null,
+        total_play_seconds: null,
+        last_seen: null,
+        created_at: "2026-01-01 00:00:00",
+      },
+    ]);
+    const result = await getCharactersWithStats(42);
+    expect(result[0].totalPlaySeconds).toBe(0);
+    expect(result[0].serverName).toBeNull();
+  });
 });
 
 describe("deleteCharacter", () => {
@@ -48,5 +66,14 @@ describe("deleteCharacter", () => {
     mockQuery.mockResolvedValueOnce({ affectedRows: 0 });
     const result = await deleteCharacter(99, 42);
     expect(result.ok).toBe(false);
+  });
+
+  it("passe les bons arguments à la query (characterId, accountId)", async () => {
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 });
+    await deleteCharacter(1, 42);
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining("account_id"),
+      [1, 42],
+    );
   });
 });

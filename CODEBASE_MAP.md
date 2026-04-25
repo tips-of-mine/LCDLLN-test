@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-24 — design Lune Noire intégré au web-portal (section 12).
+> Dernière mise à jour : 2026-04-25 — auth & navigation web-portal (sous-projet A).
 
 ---
 
@@ -351,6 +351,10 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/player/recovery-profile/page.tsx` | Profil récupération : `wp-alert warning` si pas de compte. |
 | `web-portal/app/password-recovery/page.tsx` | Récupération mot de passe : `wp-card` info. |
 | `web-portal/components/ExploitsProfile.tsx` | Exploits : progress bar, cartes visibles/masquées, stats. |
+| `web-portal/middleware.ts` | Protection routes `/player/*` et `/admin/*` via cookie HMAC signé (Edge Runtime). |
+| `web-portal/lib/session.ts` | Signature/vérification du cookie `lcdlln_session` (HMAC-SHA256, Node.js runtime). |
+| `web-portal/components/NavToggle.tsx` | Toggle menu mobile (Client Component, gère `useState` hamburger). |
+| `web-portal/components/LoginForm.tsx` | Formulaire de connexion (Client Component, reçoit `nextPath` prop). |
 | `web-portal/app/api/` | Routes API Next.js (backend web, non modifiées). |
 
 ---

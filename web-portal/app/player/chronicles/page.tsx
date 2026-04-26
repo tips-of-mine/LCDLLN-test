@@ -36,33 +36,52 @@ export default async function ChroniquesPage() {
 
   const accountId = session.accountId
 
-  // Section 1: Temps de jeu par serveur
-  const shardRows = await query<ShardPlaytime[]>(
-    `SELECT s.name as shard_name,
-            COALESCE(SUM(cs.playtime_seconds), 0) as total_playtime,
-            COUNT(c.id) as character_count
-     FROM shards s
-     LEFT JOIN characters c ON c.account_id = ? AND c.deleted_at IS NULL
-     LEFT JOIN character_stats cs ON cs.character_id = c.id AND cs.shard_id = s.id
-     GROUP BY s.id, s.name
-     ORDER BY total_playtime DESC`,
-    [accountId]
-  )
+  // Section 1: Temps de jeu par serveur (game_servers + character_stats)
+  let shardRows: ShardPlaytime[] = []
+  try {
+    shardRows = await query<ShardPlaytime[]>(
+      `SELECT s.name as shard_name,
+              COALESCE(SUM(cs.total_play_seconds), 0) as total_playtime,
+              COUNT(DISTINCT c.id) as character_count
+       FROM game_servers s
+       LEFT JOIN characters c ON c.account_id = ? AND c.deleted_at IS NULL
+       LEFT JOIN character_stats cs ON cs.character_id = c.id AND cs.server_id = s.server_id
+       GROUP BY s.server_id, s.name
+       ORDER BY total_playtime DESC`,
+      [accountId]
+    )
+  } catch {
+    // table game_servers ou character_stats absente — afficher message vide
+  }
 
   // Section 2: Exploits
   const exploitsData = await getPlayerExploitsData(accountId)
 
   // Section 3: Personnages
-  const characterRows = await query<CharacterRow[]>(
-    `SELECT c.id, c.name, c.slot,
-            COALESCE(SUM(cs.playtime_seconds), 0) as total_playtime
-     FROM characters c
-     LEFT JOIN character_stats cs ON cs.character_id = c.id
-     WHERE c.account_id = ? AND c.deleted_at IS NULL
-     GROUP BY c.id, c.name, c.slot
-     ORDER BY c.slot ASC`,
-    [accountId]
-  )
+  let characterRows: CharacterRow[] = []
+  try {
+    characterRows = await query<CharacterRow[]>(
+      `SELECT c.id, c.name, c.slot,
+              COALESCE(SUM(cs.total_play_seconds), 0) as total_playtime
+       FROM characters c
+       LEFT JOIN character_stats cs ON cs.character_id = c.id
+       WHERE c.account_id = ? AND c.deleted_at IS NULL
+       GROUP BY c.id, c.name, c.slot
+       ORDER BY c.slot ASC`,
+      [accountId]
+    )
+  } catch {
+    // table character_stats absente — afficher liste sans temps de jeu
+    try {
+      characterRows = await query<CharacterRow[]>(
+        `SELECT c.id, c.name, c.slot, 0 as total_playtime
+         FROM characters c
+         WHERE c.account_id = ? AND c.deleted_at IS NULL
+         ORDER BY c.slot ASC`,
+        [accountId]
+      )
+    } catch { /* ignore */ }
+  }
 
   return (
     <div className="wp-main">

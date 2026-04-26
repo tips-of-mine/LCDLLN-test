@@ -17,18 +17,27 @@ export function PrivacyForm({ initialVisibility }: Props) {
   const [visibility, setVisibility] = useState<Visibility>(initialVisibility)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleChange(value: Visibility) {
     setVisibility(value)
     setSaving(true)
     setSaved(false)
+    setError(null)
     try {
-      await fetch('/api/player/privacy', {
+      const res = await fetch('/api/player/privacy', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visibility: value }),
       })
-      setSaved(true)
+      const data = await res.json() as { ok: boolean; message?: string }
+      if (!data.ok) {
+        setError(data.message ?? 'Erreur lors de la sauvegarde')
+      } else {
+        setSaved(true)
+      }
+    } catch {
+      setError('Erreur réseau')
     } finally {
       setSaving(false)
     }
@@ -60,6 +69,7 @@ export function PrivacyForm({ initialVisibility }: Props) {
       ))}
       {saving && <span style={{ fontSize: 13, color: 'var(--ln-muted)', fontStyle: 'italic' }}>Enregistrement...</span>}
       {saved && !saving && <span style={{ fontSize: 13, color: 'var(--ln-success)' }}>&#x2713; Préférence enregistrée</span>}
+      {error && <span style={{ fontSize: 13, color: 'var(--ln-error)' }}>&#x26A0; {error}</span>}
     </div>
   )
 }

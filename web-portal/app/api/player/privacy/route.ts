@@ -26,7 +26,9 @@ export async function PATCH(request: Request) {
     )
 
     return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
+  } catch (err) {
+    console.error('[PATCH /api/player/privacy]', err)
+    const msg = err instanceof Error ? err.message : 'Erreur serveur'
+    return NextResponse.json({ ok: false, message: msg }, { status: 500 })
   }
 }

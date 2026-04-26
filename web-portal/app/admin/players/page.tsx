@@ -61,7 +61,8 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
       [offset]
     )
     players = rows as PlayerRow[]
-  } catch {
+  } catch (err) {
+    console.error('[AdminPlayersPage] DB error:', err)
     dbError = true
   }
 

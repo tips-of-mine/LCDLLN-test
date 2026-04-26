@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getSession } from "@/lib/session";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getSession();
+
   return (
     <div className="wp-main">
       <div className="wp-hero">
@@ -10,9 +13,15 @@ export default function HomePage() {
           gérez votre profil et suivez vos exploits en jeu.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-          <Link href="/login" className="btn btn-accent">
-            Se connecter
-          </Link>
+          {session ? (
+            <Link href="/player" className="btn btn-accent">
+              Mon espace joueur
+            </Link>
+          ) : (
+            <Link href="/login" className="btn btn-accent">
+              Se connecter
+            </Link>
+          )}
           <Link href="/roadmap" className="btn btn-ghost">
             Voir la roadmap
           </Link>

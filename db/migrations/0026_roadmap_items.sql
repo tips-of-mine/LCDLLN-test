@@ -1,5 +1,5 @@
 -- Migration 0026 — Roadmap items (points de développement du projet)
--- Nouvelle table : roadmap_items (12 items de base définis dans le projet)
+-- Nouvelle table : roadmap_items (14 items de base définis dans le projet)
 -- Permet une gestion simplifiée de la roadmap publique via le portail web
 
 SET NAMES utf8mb4;
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS roadmap_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Points de roadmap du projet';
 
--- Insertion des 12 items de base (idempotent avec INSERT IGNORE)
+-- Insertion des 14 items de base (idempotent avec INSERT IGNORE)
 INSERT IGNORE INTO roadmap_items (title, description, status, category, display_order) VALUES
 (
   'Infrastructure de base',

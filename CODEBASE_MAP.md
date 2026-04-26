@@ -337,25 +337,52 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | Fichier | Rôle |
 |---|---|
 | `web-portal/app/layout.tsx` | Layout racine : `SiteHeader` + `<main>` + `wp-footer`. |
-| `web-portal/components/SiteHeader.tsx` | Topbar sticky avec logo lune, nav et toggle mobile. |
+| `web-portal/components/SiteHeader.tsx` | **Server Component** — appelle `getSession()`, délègue nav interactive à `HeaderActions`. |
+| `web-portal/components/HeaderActions.tsx` | **Client Component** — menu mobile, liens conditionnels (TAG-ID, Espace joueur, Admin, Déconnexion). |
 | `web-portal/app/page.tsx` | Page d'accueil : hero, stats, grille fonctionnalités, accès rapide. |
 | `web-portal/app/login/page.tsx` | Connexion : logo lune, `wp-card`, champs `.field`, `wp-alert error`. |
-| `web-portal/app/roadmap/page.tsx` | Roadmap : `wp-timeline` avec états `.done` / `.active`. |
+| `web-portal/app/roadmap/page.tsx` | Roadmap dynamique : lecture depuis `roadmap_items` DB, `wp-timeline`. |
 | `web-portal/app/bugs/page.tsx` | Signalement bugs : étapes `wp-grid-3`, `wp-tiers` (paliers 5–100). |
-| `web-portal/app/support/page.tsx` | FAQ : `wp-accordion` avec `AccordionItem` client. |
+| `web-portal/app/support/page.tsx` | FAQ dynamique : lecture depuis `faq_items` DB (published=1), accordéon. |
 | `web-portal/app/contact/page.tsx` | Contact : infos + formulaire dans `wp-grid-2`. |
-| `web-portal/app/admin/page.tsx` | Panel admin : stats, grille modules, note sécurité. |
-| `web-portal/app/player/page.tsx` | Espace joueur : stats, nav vers sous-sections. |
-| `web-portal/app/player/cgu/page.tsx` | CGU joueur : `wp-table` acceptations. |
+| `web-portal/app/admin/page.tsx` | Hub admin : 6 modules (CGU, acceptations, joueurs, roadmap, FAQ, bugs). |
+| `web-portal/app/admin/cgu/page.tsx` | CGU admin CRUD : draft/published/retired avec règles métier strictes. |
+| `web-portal/app/admin/acceptances/page.tsx` | Suivi acceptations CGU (lecture seule). |
+| `web-portal/app/admin/players/page.tsx` | Gestion joueurs : liste paginée, filtres, actions (email, statut, personnages). |
+| `web-portal/app/admin/roadmap/page.tsx` | Roadmap admin CRUD : ajouter/modifier/supprimer items. |
+| `web-portal/app/admin/faq/page.tsx` | FAQ admin CRUD : questions/réponses publiées ou archivées. |
+| `web-portal/app/admin/bugs/page.tsx` | Suivi bugs : changement statut, commentaire admin, attribution exploits. |
+| `web-portal/app/player/page.tsx` | Hub espace joueur : nav vers 5 sections + sections existantes. |
+| `web-portal/app/player/account/page.tsx` | Détail du compte : profil, email (avec re-validation), adresse postale. |
+| `web-portal/app/player/chronicles/page.tsx` | Mes Chroniques : temps de jeu par serveur, exploits, personnages + suppression. |
+| `web-portal/app/player/parental/page.tsx` | Contrôle parental : validation tuteur légal pour joueurs mineurs. |
+| `web-portal/app/player/security/page.tsx` | Sécurité : changement mot de passe, placeholder MFA. |
+| `web-portal/app/player/privacy/page.tsx` | Vie privée : CGU (accepter), visibilité du profil. |
+| `web-portal/app/player/cgu/page.tsx` | CGU joueur (legacy) : `wp-table` acceptations. |
 | `web-portal/app/player/exploits/page.tsx` | Exploits : délègue à `ExploitsProfile`. |
 | `web-portal/app/player/recovery-profile/page.tsx` | Profil récupération : `wp-alert warning` si pas de compte. |
 | `web-portal/app/password-recovery/page.tsx` | Récupération mot de passe : `wp-card` info. |
 | `web-portal/components/ExploitsProfile.tsx` | Exploits : progress bar, cartes visibles/masquées, stats. |
-| `web-portal/middleware.ts` | Protection routes `/player/*` et `/admin/*` via cookie HMAC signé (Edge Runtime). |
-| `web-portal/lib/session.ts` | Signature/vérification du cookie `lcdlln_session` (HMAC-SHA256, Node.js runtime). |
-| `web-portal/components/NavToggle.tsx` | Toggle menu mobile (Client Component, gère `useState` hamburger). |
-| `web-portal/components/LoginForm.tsx` | Formulaire de connexion (Client Component, reçoit `nextPath` prop). |
-| `web-portal/app/api/` | Routes API Next.js (backend web, non modifiées). |
+| `web-portal/components/AccountForm.tsx` | Formulaire compte joueur (Client Component) — infos perso, email, adresse. |
+| `web-portal/components/CharacterDeleteButton.tsx` | Suppression personnage en 2 confirmations (Client Component). |
+| `web-portal/components/PasswordChangeForm.tsx` | Changement mot de passe (Client Component). |
+| `web-portal/components/PrivacyForm.tsx` | Visibilité profil radio buttons (Client Component). |
+| `web-portal/components/CguAcceptButton.tsx` | Bouton acceptation CGU (Client Component). |
+| `web-portal/components/admin/PlayerActions.tsx` | Actions joueur admin : email, statut, désactivation motif, personnages. |
+| `web-portal/components/admin/CguManager.tsx` | Gestion CGU admin : create/edit/publish/retire (Client Component). |
+| `web-portal/components/admin/FaqAdmin.tsx` | CRUD FAQ admin (Client Component). |
+| `web-portal/components/admin/BugAdmin.tsx` | Gestion bugs admin : statut, commentaire, exploit award (Client Component). |
+| `web-portal/middleware.ts` | Protection routes `/player/*` et `/admin/*` via cookies (Edge Runtime). |
+| `web-portal/lib/session.ts` | `getSession()` — lit cookie `lcdlln_portal_account`, retourne `Session \| null`. |
+| `web-portal/lib/email.ts` | Module email centralisé — 7 fonctions d'envoi, templates HTML Lune Noire. |
+| `web-portal/lib/db.ts` | Pool MySQL partagé, `query<T>()`. |
+| `web-portal/lib/portalLogin.ts` | `verifyPortalCredentials()` — double Argon2id + legacy scrypt. |
+| `web-portal/lib/gamePasswordHash.ts` | Hash/verify double Argon2id (`@node-rs/argon2`). |
+| `web-portal/app/api/auth/login/route.ts` | POST login — set cookies `lcdlln_portal_account` + `lcdlln_portal_role`. |
+| `web-portal/app/api/auth/logout/route.ts` | POST logout — supprime les deux cookies session. |
+| `web-portal/app/api/player/` | APIs joueur : account PATCH, email change, password, parental, cgu accept, privacy, characters delete. |
+| `web-portal/app/api/admin/` | APIs admin : players (verify-email, activate, disable), characters (force-rename), roadmap CRUD, faq CRUD, cgu CRUD+publish+retire, bugs PATCH. |
+| `design/lune-noire-design-system/ui_kits/email/` | 7 templates HTML email (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change). |
 
 ---
 

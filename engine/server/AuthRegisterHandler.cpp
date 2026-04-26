@@ -211,10 +211,11 @@ namespace engine::server
 				{
 					std::string subject;
 					std::string body;
-					BuildVerificationEmail(emailLocale, code, subject, body);
+					bool isHtml = false;
+					BuildVerificationEmail(emailLocale, code, subject, body, isHtml);
 					LOG_INFO(Auth, "[AuthRegisterHandler] envoi email vérification (account_id={})", account_id);
 					m_accountStore->PersistEmailVerificationCode(account_id, code);
-					const bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body);
+					const bool sent = SmtpMailer::Send(*m_smtpConfig, email_norm, subject, body, isHtml);
 					if (sent)
 					{
 						m_resetStore->RecordEmailSent(account_id);

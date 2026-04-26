@@ -1,11 +1,66 @@
 #include "engine/server/LocalizedEmail.h"
 
 #include <cctype>
+#include <fstream>
+#include <sstream>
 
 namespace engine::server
 {
-	namespace
-	{
+
+static std::string s_emailTemplateDir;
+
+void SetEmailTemplateDir(std::string_view dir)
+{
+    s_emailTemplateDir = std::string(dir);
+}
+
+namespace
+{
+    /// Charge un template HTML : essaie {dir}/email/{name}.{locale}.html
+    /// puis fallback {dir}/email/{name}.fr.html. Retourne chaîne vide si aucun n'existe.
+    std::string LoadHtmlTemplate(const std::string& name, const std::string& locale)
+    {
+        if (s_emailTemplateDir.empty()) return {};
+        auto tryFile = [&](const std::string& loc) -> std::string {
+            std::string path = s_emailTemplateDir + "/email/" + name + "." + loc + ".html";
+            std::ifstream f(path);
+            if (!f.is_open()) return {};
+            std::ostringstream ss;
+            ss << f.rdbuf();
+            return ss.str();
+        };
+        std::string html = tryFile(locale);
+        if (html.empty()) html = tryFile("fr");
+        return html;
+    }
+
+    void ReplaceAllInPlace(std::string& str, const std::string& from, const std::string& to)
+    {
+        size_t pos = 0;
+        while ((pos = str.find(from, pos)) != std::string::npos)
+        {
+            str.replace(pos, from.size(), to);
+            pos += to.size();
+        }
+    }
+
+    /// Mappe AccountEmailLocale en tag string ("fr", "en", etc.)
+    std::string LocaleToTag(AccountEmailLocale loc)
+    {
+        switch (loc)
+        {
+        case AccountEmailLocale::French:     return "fr";
+        case AccountEmailLocale::Spanish:    return "es";
+        case AccountEmailLocale::German:     return "de";
+        case AccountEmailLocale::Portuguese: return "pt";
+        case AccountEmailLocale::Italian:    return "it";
+        default:                             return "en";
+        }
+    }
+} // anonymous namespace (template helpers)
+
+namespace
+{
 		std::string_view TrimLower(std::string_view s)
 		{
 			while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front())))
@@ -52,8 +107,23 @@ namespace engine::server
 		return AccountEmailLocale::English;
 	}
 
-	void BuildVerificationEmail(AccountEmailLocale loc, const std::string& code, std::string& outSubject, std::string& outBody)
+	void BuildVerificationEmail(AccountEmailLocale loc, const std::string& code,
+	                            std::string& outSubject, std::string& outBody, bool& outIsHtml)
 	{
+		outIsHtml = false;
+		const std::string locTag = LocaleToTag(loc);
+		std::string html = LoadHtmlTemplate("verification", locTag);
+		if (!html.empty())
+		{
+			ReplaceAllInPlace(html, "{{token}}", code);
+			outSubject = (loc == AccountEmailLocale::French)
+			    ? "Vérification de votre compte — Les Chroniques de la Lune Noire"
+			    : "Account verification — Les Chroniques de la Lune Noire";
+			outBody = std::move(html);
+			outIsHtml = true;
+			return;
+		}
+		// Fallback plain text
 		switch (loc)
 		{
 		case AccountEmailLocale::French:
@@ -96,8 +166,23 @@ namespace engine::server
 		}
 	}
 
-	void BuildPasswordResetEmail(AccountEmailLocale loc, const std::string& resetUrl, std::string& outSubject, std::string& outBody)
+	void BuildPasswordResetEmail(AccountEmailLocale loc, const std::string& resetUrl,
+	                             std::string& outSubject, std::string& outBody, bool& outIsHtml)
 	{
+		outIsHtml = false;
+		const std::string locTag = LocaleToTag(loc);
+		std::string html = LoadHtmlTemplate("password-reset", locTag);
+		if (!html.empty())
+		{
+			ReplaceAllInPlace(html, "{{link}}", resetUrl);
+			outSubject = (loc == AccountEmailLocale::French)
+			    ? "Réinitialisation de votre mot de passe — Les Chroniques de la Lune Noire"
+			    : "Password reset — Les Chroniques de la Lune Noire";
+			outBody = std::move(html);
+			outIsHtml = true;
+			return;
+		}
+		// Fallback plain text
 		switch (loc)
 		{
 		case AccountEmailLocale::French:
@@ -146,8 +231,13 @@ namespace engine::server
 		}
 	}
 
-	void BuildTermsAcceptanceEmail(AccountEmailLocale loc, const std::string& versionLabel, std::string& outSubject, std::string& outBody)
+	void BuildTermsAcceptanceEmail(AccountEmailLocale loc, const std::string& versionLabel,
+	                               std::string& outSubject, std::string& outBody, bool& outIsHtml)
 	{
+		outIsHtml = false;
+		const std::string locTag = LocaleToTag(loc);
+		// Note: les templates CGU ne sont pas dans web-portal/email-templates — fallback plain text uniquement.
+		// Fallback plain text
 		switch (loc)
 		{
 		case AccountEmailLocale::French:

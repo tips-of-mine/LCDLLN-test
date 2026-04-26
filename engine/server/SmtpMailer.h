@@ -33,7 +33,7 @@ namespace engine::server
 		static SmtpConfig Load(const engine::core::Config& mainConfig, std::string_view primaryConfigPath);
 	};
 
-	/// Sends a plain-text email via SMTP.
+	/// Sends a plain-text or HTML email via SMTP.
 	/// Thread-safe to call concurrently (each call opens its own connection).
 	/// Returns true on success, false on any network/protocol error (always logs).
 	class SmtpMailer
@@ -43,12 +43,14 @@ namespace engine::server
 		/// \param cfg    SMTP connection parameters.
 		/// \param to     Recipient address (e.g. "user@example.com").
 		/// \param subject Email subject line.
-		/// \param body   Plain-text body.
+		/// \param body   Email body (plain text or HTML depending on \a isHtml).
+		/// \param isHtml If true, sends Content-Type: text/html; otherwise text/plain.
 		/// \return true if the server accepted the message, false otherwise.
 		static bool Send(const SmtpConfig& cfg,
 		                 const std::string& to,
 		                 const std::string& subject,
-		                 const std::string& body);
+		                 const std::string& body,
+		                 bool isHtml = false);
 	};
 
 } // namespace engine::server

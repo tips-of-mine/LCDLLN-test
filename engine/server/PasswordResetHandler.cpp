@@ -124,9 +124,10 @@ namespace engine::server
 			const std::string resetUrl = m_smtpConfig->reset_url_base + "?token=" + token;
 			std::string subject;
 			std::string body;
-			BuildPasswordResetEmail(optAccount->email_locale, resetUrl, subject, body);
+			bool isHtml = false;
+			BuildPasswordResetEmail(optAccount->email_locale, resetUrl, subject, body, isHtml);
 			LOG_INFO(Auth, "[PasswordResetHandler] envoi email reset mot de passe (account_id={})", account_id);
-			const bool sent = SmtpMailer::Send(*m_smtpConfig, email, subject, body);
+			const bool sent = SmtpMailer::Send(*m_smtpConfig, email, subject, body, isHtml);
 			if (!sent)
 				LOG_WARN(Auth,
 					"[PasswordResetHandler] ForgotPassword: échec envoi email (account_id={}) — lignes [SMTP] / sous-système Smtp (log.level Info conseillé)",
@@ -363,8 +364,9 @@ namespace engine::server
 		if (m_smtpConfig && !m_smtpConfig->host.empty())
 		{
 			std::string subject, body;
-			BuildVerificationEmail(optAccount->email_locale, code, subject, body);
-			const bool sent = SmtpMailer::Send(*m_smtpConfig, optAccount->email, subject, body);
+			bool isHtml = false;
+			BuildVerificationEmail(optAccount->email_locale, code, subject, body, isHtml);
+			const bool sent = SmtpMailer::Send(*m_smtpConfig, optAccount->email, subject, body, isHtml);
 			if (sent)
 			{
 				m_resetStore->RecordEmailSent(account_id);

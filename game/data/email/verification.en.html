@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Account Verification — Les Chroniques de la Lune Noire</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #05070A; font-family: 'EB Garamond', Georgia, serif; -webkit-font-smoothing: antialiased; }
+  a { color: #E8C56E; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body style="background:#05070A; margin:0; padding:0;">
+
+<!-- Wrapper -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#05070A; padding: 40px 20px;">
+<tr><td align="center">
+
+  <!-- Container 600px -->
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+
+    <!-- ===== HEADER / MOON ===== -->
+    <tr>
+      <td align="center" style="padding: 0 0 32px;">
+
+        <!-- Moon + title -->
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td align="center" style="padding-bottom: 18px;">
+              <div style="
+                width: 80px; height: 80px; border-radius: 50%;
+                background: radial-gradient(circle at 32% 30%, #2a2330 0%, #0B0712 55%, #000 100%);
+                border: 1px solid #1a1420;
+                display: inline-block;
+                box-shadow: 0 0 40px rgba(74,123,184,.4);
+              ">
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <p style="font-family:'Cinzel',serif; font-weight:700; font-size:13px; letter-spacing:.4em; text-transform:uppercase; color:#E8C56E; margin:0;">
+                Les Chroniques de la Lune Noire
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ===== MAIN BODY ===== -->
+    <tr>
+      <td>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="
+          background: rgba(20,28,40,.95);
+          border: 1px solid #3D4F66;
+          border-radius: 12px;
+          overflow: hidden;
+        ">
+
+          <!-- Decorative top bar -->
+          <tr>
+            <td style="
+              height: 4px;
+              background: linear-gradient(90deg, #1D2A4A 0%, #4A7BB8 40%, #E8C56E 60%, #1D2A4A 100%);
+            "></td>
+          </tr>
+
+          <!-- Section title -->
+          <tr>
+            <td align="center" style="padding: 40px 40px 24px;">
+              <p style="
+                font-family: 'Cinzel', serif; font-weight: 700;
+                font-size: 22px; letter-spacing: .18em; text-transform: uppercase;
+                color: #F2F4F8; margin: 0 0 10px;
+              ">Account Verification</p>
+              <p style="
+                font-family: 'EB Garamond', Georgia, serif; font-style: italic;
+                font-size: 16px; color: #9BA8B8; line-height: 1.55; margin: 0;
+              ">Welcome, adventurer. Your identity must be confirmed before crossing the gates of the Dark Moon.</p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr><td style="height:1px; background:#3D4F66; margin: 0 40px;"></td></tr>
+
+          <!-- Intro text -->
+          <tr>
+            <td style="padding: 28px 40px 20px;">
+              <p style="
+                font-family: 'EB Garamond', Georgia, serif;
+                font-size: 16px; color: #D0D8E4; line-height: 1.65; margin: 0;
+              ">
+                An account was just created with this email address for
+                <strong style="color:#F2F4F8;">Les Chroniques de la Lune Noire</strong>.
+                To activate your account and begin your adventure, use the code below.
+              </p>
+            </td>
+          </tr>
+
+          <!-- OTP Code -->
+          <tr>
+            <td align="center" style="padding: 10px 40px 28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="
+                    background: rgba(10,13,18,.8);
+                    border: 1px solid #4A7BB8;
+                    border-radius: 10px;
+                    padding: 22px 40px;
+                    text-align: center;
+                    box-shadow: 0 0 0 1px rgba(74,123,184,.2), 0 0 30px rgba(74,123,184,.15);
+                  ">
+                    <p style="
+                      font-family: 'Cinzel', serif; font-weight: 700;
+                      font-size: 11px; letter-spacing: .32em; text-transform: uppercase;
+                      color: #9BA8B8; margin: 0 0 12px;
+                    ">Your verification code</p>
+                    <p style="
+                      font-family: 'Courier New', monospace; font-weight: 700;
+                      font-size: 44px; letter-spacing: .22em; color: #E8C56E;
+                      margin: 0; line-height: 1;
+                    ">{{token}}</p>
+                    <p style="
+                      font-family: 'EB Garamond', Georgia, serif; font-style: italic;
+                      font-size: 13px; color: #9BA8B8; margin: 12px 0 0;
+                    ">Expires in 15 minutes.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA button -->
+          <tr>
+            <td align="center" style="padding: 0 40px 36px;">
+              <a href="#" style="
+                display: inline-block;
+                font-family: 'Cinzel', serif; font-weight: 700;
+                font-size: 13px; letter-spacing: .2em; text-transform: uppercase;
+                color: #F2F4F8;
+                background: linear-gradient(180deg, #5a8bc6 0%, #3E689E 100%);
+                border: 1px solid #6b9bd4;
+                border-radius: 8px;
+                padding: 14px 32px;
+                text-decoration: none;
+                box-shadow: 0 4px 16px rgba(0,0,0,.4);
+              ">Open the game and enter the code</a>
+              <p style="font-family:'EB Garamond',serif; font-style:italic; font-size:13px; color:#9BA8B8; margin:12px 0 0;">
+                Or enter the code directly in the game window.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Security warning -->
+          <tr>
+            <td style="padding: 0 40px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="
+                background: rgba(196,64,64,.06);
+                border: 1px solid #5a2020;
+                border-radius: 8px;
+              ">
+                <tr>
+                  <td style="padding: 14px 18px;">
+                    <p style="
+                      font-family: 'Cinzel', serif; font-size: 10px;
+                      letter-spacing: .22em; text-transform: uppercase;
+                      color: #FF9B9B; margin: 0 0 6px;
+                    ">Security warning</p>
+                    <p style="
+                      font-family: 'EB Garamond', Georgia, serif; font-style: italic;
+                      font-size: 14px; color: #D0B0B0; margin: 0; line-height: 1.55;
+                    ">
+                      If you did not create this account, ignore this message. No one will ever ask you for this code through any channel other than the game itself.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Decorative bottom bar -->
+          <tr>
+            <td style="
+              height: 4px;
+              background: linear-gradient(90deg, #1D2A4A 0%, #4A7BB8 40%, #E8C56E 60%, #1D2A4A 100%);
+            "></td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+
+    <!-- ===== FOOTER ===== -->
+    <tr>
+      <td align="center" style="padding: 28px 0 10px;">
+        <p style="
+          font-family: 'Cinzel', serif; font-size: 11px;
+          letter-spacing: .22em; text-transform: uppercase;
+          color: #3D4F66; margin: 0 0 10px;
+        ">Les Chroniques de la Lune Noire · Edition of the Dead</p>
+        <p style="
+          font-family: 'EB Garamond', Georgia, serif; font-style: italic;
+          font-size: 13px; color: #3D4F66; margin: 0 0 8px;
+        ">
+          <a href="#" style="color:#5C6B8C;">Privacy policy</a>
+          &nbsp;·&nbsp;
+          <a href="#" style="color:#5C6B8C;">Unsubscribe</a>
+          &nbsp;·&nbsp;
+          <a href="#" style="color:#5C6B8C;">Help</a>
+        </p>
+        <p style="font-family:'EB Garamond',serif; font-size:12px; color:#3D4F66; margin:0;">
+          © 2026 Les Chroniques de la Lune Noire. All rights reserved.
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</td></tr>
+</table>
+
+</body>
+</html>

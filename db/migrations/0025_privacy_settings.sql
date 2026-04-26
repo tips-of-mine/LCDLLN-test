@@ -8,7 +8,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 START TRANSACTION;
 
 CREATE TABLE IF NOT EXISTS account_privacy_settings (
-  account_id INT UNSIGNED NOT NULL,
+  account_id BIGINT UNSIGNED NOT NULL,
   profile_visibility ENUM('public','friends','none') NOT NULL DEFAULT 'public'
                      COMMENT 'public=visible à tous, friends=visible aux amis seulement, none=caché',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

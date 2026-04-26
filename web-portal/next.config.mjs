@@ -4,7 +4,9 @@ const nextConfig = {
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
   // @node-rs/argon2 embarque un binaire natif .node : ne pas le bundler via webpack.
-  serverExternalPackages: ['@node-rs/argon2'],
+  experimental: {
+    serverComponentsExternalPackages: ['@node-rs/argon2'],
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Fallback explicite : marque @node-rs/argon2 comme module CommonJS externe

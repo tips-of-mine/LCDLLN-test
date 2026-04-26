@@ -4,7 +4,7 @@
  * password_hash en base = Argon2id(client_hash, sel_serveur aléatoire).
  */
 import { createHash, randomBytes } from "node:crypto";
-import { hash, verify, Algorithm } from "@node-rs/argon2";
+import { hash, verify } from "@node-rs/argon2";
 
 const CLIENT_SALT_PREFIX = Buffer.from(
   "LCDLLN\x1fclient_argon_salt\x1fv1\x1f",
@@ -25,7 +25,6 @@ export function deriveClientPasswordSalt(login: string): Buffer {
 }
 
 const ARGON2_GAME_OPTS = {
-  algorithm: Algorithm.Argon2id,
   timeCost: 2,
   memoryCost: 65536,
   parallelism: 1,

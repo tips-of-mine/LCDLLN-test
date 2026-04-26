@@ -23,7 +23,7 @@ SET @m28_c2 := (
   WHERE table_schema = DATABASE() AND table_name = 'bug_reports' AND column_name = 'admin_comment'
 );
 SET @m28_s2 := IF(@m28_c2 = 0,
-  'ALTER TABLE bug_reports ADD COLUMN admin_comment TEXT NULL COMMENT ''Commentaire de l''administrateur''',
+  'ALTER TABLE bug_reports ADD COLUMN admin_comment TEXT NULL COMMENT ''Commentaire admin''',
   'SELECT 1');
 PREPARE m28_p2 FROM @m28_s2;
 EXECUTE m28_p2;

@@ -240,7 +240,19 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | Dossier/Fichier | Rôle |
 |---|---|
 | `db/schema.sql` | Schéma complet (référence). |
-| `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0019). Appliquées en ordre par MigrationRunner. |
+| `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0031). Appliquées en ordre par lcdlln-master au démarrage. |
+| `db/migrations/0020_terms_system.sql` | Système CGU : `terms_editions`, `terms_localizations`, `account_terms_acceptances`. |
+| `db/migrations/0021_bug_reports.sql` | Table `bug_reports` (catégorie, titre, corps, statut, assigné, exploit accordé). |
+| `db/migrations/0022_character_stats.sql` | Table `character_stats` — `total_play_seconds` + `server_id` (FK → `game_servers`). |
+| `db/migrations/0023_faq.sql` | Table `faq_entries` (question, réponse, ordre, statut). |
+| `db/migrations/0024_roadmap_db.sql` | Table `roadmap_items` pour roadmap dynamique (CRUD admin). |
+| `db/migrations/0025_account_privacy.sql` | Table `account_privacy_settings` — attention : FK INT UNSIGNED incorrecte, corrigée par 0031. |
+| `db/migrations/0026_parental_control.sql` | Colonne `parental_validated` sur `accounts`. |
+| `db/migrations/0027_account_deletion.sql` | Colonne `deleted_at` sur `accounts` (soft delete). |
+| `db/migrations/0028_force_rename.sql` | Colonne `force_rename` sur `characters` (renommage forcé par admin). |
+| `db/migrations/0029_email_pending.sql` | Colonne `email_pending` + `email_pending_token` sur `accounts` (changement email à valider). |
+| `db/migrations/0030_terms_editions_nullable.sql` | `published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
+| `db/migrations/0031_privacy_settings_ensure.sql` | Recrée `account_privacy_settings` avec `BIGINT UNSIGNED` correct — idempotente (`IF NOT EXISTS`). |
 | `engine/server/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur. |
 | `engine/server/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |
 | `engine/server/db/DbHelpers.h/.cpp` | Helpers requêtes SQL (bind params, lecture résultats). |
@@ -342,7 +354,7 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/page.tsx` | Page d'accueil : hero, stats, grille fonctionnalités, accès rapide. |
 | `web-portal/app/login/page.tsx` | Connexion : logo lune, `wp-card`, champs `.field`, `wp-alert error`. |
 | `web-portal/app/roadmap/page.tsx` | Roadmap dynamique : lecture depuis `roadmap_items` DB, `wp-timeline`. |
-| `web-portal/app/bugs/page.tsx` | Signalement bugs : étapes `wp-grid-3`, `wp-tiers` (paliers 5–100). |
+| `web-portal/app/bugs/page.tsx` | Signalement bugs : affiche `BugReportForm` si authentifié, sinon message "Connexion requise". |
 | `web-portal/app/support/page.tsx` | FAQ dynamique : lecture depuis `faq_items` DB (published=1), accordéon. |
 | `web-portal/app/contact/page.tsx` | Contact : infos + formulaire dans `wp-grid-2`. |
 | `web-portal/app/admin/page.tsx` | Hub admin : 6 modules (CGU, acceptations, joueurs, roadmap, FAQ, bugs). |
@@ -357,8 +369,9 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/player/chronicles/page.tsx` | Mes Chroniques : temps de jeu par serveur, exploits, personnages + suppression. |
 | `web-portal/app/player/parental/page.tsx` | Contrôle parental : validation tuteur légal pour joueurs mineurs. |
 | `web-portal/app/player/security/page.tsx` | Sécurité : changement mot de passe, placeholder MFA. |
-| `web-portal/app/player/privacy/page.tsx` | Vie privée : CGU (accepter), visibilité du profil. |
-| `web-portal/app/player/cgu/page.tsx` | CGU joueur (legacy) : `wp-table` acceptations. |
+| `web-portal/app/player/privacy/page.tsx` | Vie privée : liste CGU (lire + accepter), visibilité du profil. |
+| `web-portal/app/player/cgu/page.tsx` | Mes CGU : bannière statut, section "À accepter", historique complet des acceptations. |
+| `web-portal/app/cgu/[id]/page.tsx` | Lecture publique d'une CGU publiée (FR/EN), langue via `?lang=` — `notFound()` si non publié. |
 | `web-portal/app/player/exploits/page.tsx` | Exploits : délègue à `ExploitsProfile`. |
 | `web-portal/app/player/recovery-profile/page.tsx` | Profil récupération : `wp-alert warning` si pas de compte. |
 | `web-portal/app/password-recovery/page.tsx` | Récupération mot de passe : `wp-card` info. |
@@ -368,6 +381,7 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/components/PasswordChangeForm.tsx` | Changement mot de passe (Client Component). |
 | `web-portal/components/PrivacyForm.tsx` | Visibilité profil radio buttons (Client Component). |
 | `web-portal/components/CguAcceptButton.tsx` | Bouton acceptation CGU (Client Component). |
+| `web-portal/components/BugReportForm.tsx` | Formulaire signalement bug : catégorie, titre, corps — POST `/api/bugs` (Client Component). |
 | `web-portal/components/admin/PlayerActions.tsx` | Actions joueur admin : email, statut, désactivation motif, personnages. |
 | `web-portal/components/admin/CguManager.tsx` | Gestion CGU admin : create/edit/publish/retire (Client Component). |
 | `web-portal/components/admin/FaqAdmin.tsx` | CRUD FAQ admin (Client Component). |
@@ -381,6 +395,7 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/api/auth/login/route.ts` | POST login — set cookies `lcdlln_portal_account` + `lcdlln_portal_role`. |
 | `web-portal/app/api/auth/logout/route.ts` | POST logout — supprime les deux cookies session. |
 | `web-portal/app/api/player/` | APIs joueur : account PATCH, email change, password, parental, cgu accept, privacy, characters delete. |
+| `web-portal/app/api/bugs/route.ts` | POST bug report — insère dans `bug_reports`, auth via cookie session, valide catégorie. |
 | `web-portal/app/api/admin/` | APIs admin : players (verify-email, activate, disable), characters (force-rename), roadmap CRUD, faq CRUD, cgu CRUD+publish+retire, bugs PATCH. |
 | `design/lune-noire-design-system/ui_kits/email/` | 7 templates HTML email (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change). |
 

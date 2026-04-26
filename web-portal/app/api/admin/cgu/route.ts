@@ -34,10 +34,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create edition
+    // Create edition (draft: published_at stays NULL)
     const result = await query<ResultSetHeader>(
-      `INSERT INTO terms_editions (version_label, status, published_at, retired_reason)
-       VALUES (?, 'draft', NULL, NULL)`,
+      `INSERT INTO terms_editions (version_label, status) VALUES (?, 'draft')`,
       [versionLabel]
     )
     const editionId = result.insertId
@@ -61,7 +60,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true, id: editionId }, { status: 201 })
-  } catch {
-    return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
+  } catch (err) {
+    console.error('[POST /api/admin/cgu]', err)
+    const msg = err instanceof Error ? err.message : 'Erreur serveur'
+    return NextResponse.json({ ok: false, message: msg }, { status: 500 })
   }
 }

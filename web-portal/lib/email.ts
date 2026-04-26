@@ -15,7 +15,7 @@ interface SmtpLocalConfig {
 }
 
 function loadSmtpLocalJson(): SmtpLocalConfig['smtp'] | null {
-  const jsonPath = path.join(process.cwd(), '..', 'smtp.local.json')
+  const jsonPath = path.join(process.cwd(), '..', 'config', 'smtp.local.json')
   if (!fs.existsSync(jsonPath)) return null
   try {
     const raw = fs.readFileSync(jsonPath, 'utf-8')

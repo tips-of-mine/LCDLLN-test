@@ -24,22 +24,32 @@ export default async function PrivacyPage() {
 
   const accountId = session.accountId
 
-  const cguRows = await query<CguRow[]>(
-    `SELECT te.id, te.version_label, te.published_at, te.status,
-            ata.accepted_at,
-            COALESCE(tl.title, te.version_label) as title
-     FROM terms_editions te
-     LEFT JOIN terms_localizations tl ON tl.edition_id = te.id AND tl.locale = 'fr'
-     LEFT JOIN account_terms_acceptances ata ON ata.edition_id = te.id AND ata.account_id = ?
-     WHERE te.status = 'published'
-     ORDER BY te.published_at DESC`,
-    [accountId]
-  )
+  let cguRows: CguRow[] = []
+  try {
+    cguRows = await query<CguRow[]>(
+      `SELECT te.id, te.version_label, te.published_at, te.status,
+              ata.accepted_at,
+              COALESCE(tl.title, te.version_label) as title
+       FROM terms_editions te
+       LEFT JOIN terms_localizations tl ON tl.edition_id = te.id AND tl.locale = 'fr'
+       LEFT JOIN account_terms_acceptances ata ON ata.edition_id = te.id AND ata.account_id = ?
+       WHERE te.status = 'published'
+       ORDER BY te.published_at DESC, te.id DESC`,
+      [accountId]
+    )
+  } catch (err) {
+    console.error('[PrivacyPage] CGU query error:', err)
+  }
 
-  const privacyRows = await query<PrivacyRow[]>(
-    'SELECT profile_visibility FROM account_privacy_settings WHERE account_id = ?',
-    [accountId]
-  )
+  let privacyRows: PrivacyRow[] = []
+  try {
+    privacyRows = await query<PrivacyRow[]>(
+      'SELECT profile_visibility FROM account_privacy_settings WHERE account_id = ?',
+      [accountId]
+    )
+  } catch (err) {
+    console.error('[PrivacyPage] Privacy query error:', err)
+  }
 
   const currentVisibility: 'public' | 'friends' | 'none' =
     privacyRows[0]?.profile_visibility ?? 'public'

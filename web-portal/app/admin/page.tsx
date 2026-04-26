@@ -1,11 +1,35 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { query } from "@/lib/db";
+import type { RowDataPacket } from "mysql2/promise";
+
+async function getStats() {
+  try {
+    const [accounts, cgu, bugs, acceptances] = await Promise.all([
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM accounts", []),
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM terms_editions WHERE status = 'published'", []),
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM bug_reports", []),
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM account_terms_acceptances", []),
+    ]);
+    return {
+      accounts: accounts[0]?.n ?? 0,
+      cgu: cgu[0]?.n ?? 0,
+      bugs: bugs[0]?.n ?? 0,
+      acceptances: acceptances[0]?.n ?? 0,
+    };
+  } catch {
+    return { accounts: "—", cgu: "—", bugs: "—", acceptances: "—" };
+  }
+}
 
 export default async function AdminHomePage() {
   const session = await getSession();
   if (!session) redirect("/login?redirect=/admin");
   if (session.role !== "admin") redirect("/");
+
+  const stats = await getStats();
+
   return (
     <div className="wp-main">
       <div className="wp-page-header">
@@ -18,19 +42,19 @@ export default async function AdminHomePage() {
 
       <div className="wp-stats">
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
-          <div className="wp-stat-label">Comptes actifs</div>
+          <div className="wp-stat-value">{stats.accounts}</div>
+          <div className="wp-stat-label">Comptes</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{stats.cgu}</div>
           <div className="wp-stat-label">CGU publiées</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{stats.bugs}</div>
           <div className="wp-stat-label">Bugs signalés</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{stats.acceptances}</div>
           <div className="wp-stat-label">Acceptations CGU</div>
         </div>
       </div>

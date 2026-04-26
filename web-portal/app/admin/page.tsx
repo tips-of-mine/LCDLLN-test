@@ -57,25 +57,53 @@ export default function AdminHomePage() {
           </div>
         </Link>
 
-        <div className="wp-card" style={{ opacity: 0.6 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>👤</div>
-          <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Profils joueurs</h3>
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-            Consultation en lecture seule des profils joueurs.
-            Aucune modification depuis cet écran.
-          </p>
-          <span className="wp-badge planned">Bientôt</span>
-        </div>
+        <Link href="/admin/players" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Gestion des Joueurs</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Consultation des comptes joueurs, historique et statuts.
+              Recherche et filtrage avancés.
+            </p>
+            <span className="wp-badge done">Lecture seule</span>
+          </div>
+        </Link>
 
-        <div className="wp-card" style={{ opacity: 0.6 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>📊</div>
-          <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Statistiques</h3>
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-            Tableaux de bord avec métriques d&apos;utilisation,
-            taux d&apos;acceptation CGU et activité globale.
-          </p>
-          <span className="wp-badge planned">Bientôt</span>
-        </div>
+        <Link href="/admin/roadmap" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🗺️</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Roadmap</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Créer, modifier et publier la feuille de route des développements.
+              Gestion des priorités et des versions.
+            </p>
+            <span className="wp-badge active">CRUD</span>
+          </div>
+        </Link>
+
+        <Link href="/admin/faq" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>❓</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>FAQ & Support</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Gérer les questions fréquemment posées et les articles de support.
+              Multilingue et versionnée.
+            </p>
+            <span className="wp-badge active">CRUD</span>
+          </div>
+        </Link>
+
+        <Link href="/admin/bugs" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🐛</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Suivi des Bugs</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Suivi et gestion des bugs signalés par les joueurs.
+              États, priorités et résolution.
+            </p>
+            <span className="wp-badge active">CRUD</span>
+          </div>
+        </Link>
       </div>
 
       <div className="wp-card" style={{ borderColor: "rgba(232,165,92,.35)", marginTop: "1.5rem" }}>

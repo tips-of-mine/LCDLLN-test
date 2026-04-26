@@ -11,7 +11,7 @@ SET @m29_c1 := (
   WHERE table_schema = DATABASE() AND table_name = 'terms_editions' AND column_name = 'retired_reason'
 );
 SET @m29_s1 := IF(@m29_c1 = 0,
-  'ALTER TABLE terms_editions ADD COLUMN retired_reason TEXT NULL COMMENT ''Raison du retrait de l''édition (status=retired)''',
+  'ALTER TABLE terms_editions ADD COLUMN retired_reason TEXT NULL COMMENT ''Raison retrait edition (status=retired)''',
   'SELECT 1');
 PREPARE m29_p1 FROM @m29_s1;
 EXECUTE m29_p1;

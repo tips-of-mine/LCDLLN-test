@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { query } from "@/lib/db";
 import { CguAcceptButton } from "@/components/CguAcceptButton";
@@ -109,7 +109,12 @@ export default async function PlayerCguPage() {
                     )}
                   </div>
                 </div>
-                <CguAcceptButton editionId={row.id} />
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <Link href={`/cgu/${row.id}`} className="btn btn-ghost" style={{ fontSize: 12 }}>
+                    Lire
+                  </Link>
+                  <CguAcceptButton editionId={row.id} />
+                </div>
               </div>
             ))}
           </div>
@@ -147,7 +152,9 @@ export default async function PlayerCguPage() {
                     {row.version_label}
                   </td>
                   <td style={{ padding: "12px 16px", color: "var(--ln-text)" }}>
-                    {row.title}
+                    <Link href={`/cgu/${row.id}`} style={{ color: "var(--ln-accent)", textDecoration: "none" }}>
+                      {row.title}
+                    </Link>
                   </td>
                   <td style={{ padding: "12px 16px", color: "var(--ln-muted)", fontSize: 12 }}>
                     {row.published_at

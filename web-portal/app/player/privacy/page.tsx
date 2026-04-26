@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { query } from '@/lib/db'
 import { getSession } from '@/lib/session'
 import { redirect } from 'next/navigation'
@@ -102,7 +103,9 @@ export default async function PrivacyPage() {
                     {row.version_label}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ln-text)' }}>
-                    {row.title}
+                    <Link href={`/cgu/${row.id}`} style={{ color: 'var(--ln-accent)', textDecoration: 'none' }}>
+                      {row.title}
+                    </Link>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ln-muted)' }}>
                     {new Date(row.published_at).toLocaleDateString('fr-FR', {
@@ -122,7 +125,12 @@ export default async function PrivacyPage() {
                     )}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    {!row.accepted_at && <CguAcceptButton editionId={row.id} />}
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <Link href={`/cgu/${row.id}`} style={{ fontSize: 12, color: 'var(--ln-muted)', textDecoration: 'none', fontFamily: 'var(--font-ui)', letterSpacing: '.12em' }}>
+                        Lire
+                      </Link>
+                      {!row.accepted_at && <CguAcceptButton editionId={row.id} />}
+                    </div>
                   </td>
                 </tr>
               ))}

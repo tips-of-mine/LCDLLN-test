@@ -1,6 +1,38 @@
 import Link from "next/link";
+import { query } from "@/lib/db";
+import { CguManager } from "@/components/admin/CguManager";
+import type { RowDataPacket } from "mysql2/promise";
 
-export default function AdminCguPage() {
+type EditionRow = RowDataPacket & {
+  id: number;
+  version_label: string;
+  published_at: string | null;
+  status: "draft" | "published" | "retired";
+  retired_reason: string | null;
+  title_fr: string | null;
+  acceptance_count: number;
+};
+
+async function getEditions(): Promise<EditionRow[]> {
+  try {
+    return await query<EditionRow[]>(
+      `SELECT te.id, te.version_label, te.published_at, te.status, te.retired_reason,
+              tl_fr.title as title_fr,
+              COUNT(DISTINCT ata.account_id) as acceptance_count
+       FROM terms_editions te
+       LEFT JOIN terms_localizations tl_fr ON tl_fr.edition_id = te.id AND tl_fr.locale = 'fr'
+       LEFT JOIN account_terms_acceptances ata ON ata.edition_id = te.id
+       GROUP BY te.id
+       ORDER BY te.id DESC`
+    );
+  } catch {
+    return [];
+  }
+}
+
+export default async function AdminCguPage() {
+  const editions = await getEditions();
+
   return (
     <>
       <div className="page-header">
@@ -12,39 +44,7 @@ export default function AdminCguPage() {
         </p>
       </div>
 
-      {/* Action bar */}
-      <div className="flex items-center justify-between flex-wrap gap-1 mb-2">
-        <div className="flex items-center gap-1">
-          <button className="btn btn-primary" disabled>Nouvelle édition</button>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="badge badge-muted">API non connectée</span>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Version</th>
-              <th>Statut</th>
-              <th>Date de publication</th>
-              <th>Langues</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={5} style={{ textAlign: "center", color: "var(--muted)", padding: "2rem 1rem" }}>
-                Interface à connecter aux endpoints API du master.
-                <br />
-                <span className="text-xs">Tables : <code>terms_editions</code>, <code>terms_localizations</code></span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <CguManager editions={editions} />
 
       {/* Workflow explanation */}
       <h2>Workflow de publication</h2>
@@ -56,6 +56,7 @@ export default function AdminCguPage() {
           </div>
           <p className="text-sm mb-0">
             Rédigez le contenu multilingue. Non visible par les joueurs.
+            Modifiable et supprimable librement.
           </p>
         </div>
         <div className="card" style={{ margin: 0 }}>
@@ -65,6 +66,7 @@ export default function AdminCguPage() {
           </div>
           <p className="text-sm mb-0">
             Les joueurs sont invités à accepter cette version.
+            Non modifiable — retrait avec motif obligatoire.
           </p>
         </div>
         <div className="card" style={{ margin: 0 }}>
@@ -74,6 +76,7 @@ export default function AdminCguPage() {
           </div>
           <p className="text-sm mb-0">
             Version archivée, remplacée par une édition plus récente.
+            En lecture seule, motif conservé.
           </p>
         </div>
       </div>

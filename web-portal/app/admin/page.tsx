@@ -62,10 +62,10 @@ export default function AdminHomePage() {
             <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
             <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Gestion des Joueurs</h3>
             <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-              Consultation des comptes joueurs, historique et statuts.
-              Recherche et filtrage avancés.
+              Liste paginée, validation email, activation / désactivation de comptes
+              et gestion des personnages avec renommage forcé.
             </p>
-            <span className="wp-badge done">Lecture seule</span>
+            <span className="wp-badge active">Actions</span>
           </div>
         </Link>
 

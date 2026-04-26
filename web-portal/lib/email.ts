@@ -43,7 +43,7 @@ function getTransporter() {
 }
 
 function loadTemplate(filename: string, vars: Record<string, string>): string {
-  const templatePath = path.join(process.cwd(), '..', 'design', 'lune-noire-design-system', 'ui_kits', 'email', filename)
+  const templatePath = path.join(process.cwd(), 'email-templates', filename)
   let html = fs.readFileSync(templatePath, 'utf-8')
   for (const [key, value] of Object.entries(vars)) {
     html = html.replaceAll(`{{${key}}}`, value)

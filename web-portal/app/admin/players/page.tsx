@@ -35,7 +35,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
     const statusFilter = status === 'all' ? '' : "AND a.account_status = '" + status + "'"
 
     const countRows = await query<Array<RowDataPacket & { total: number }>>(
-      `SELECT COUNT(DISTINCT a.id) as total FROM accounts a WHERE a.role != 'admin' ${statusFilter}`,
+      `SELECT COUNT(DISTINCT a.id) as total FROM accounts a WHERE 1=1 ${statusFilter}`,
       []
     )
     totalCount = countRows[0]?.total ?? 0
@@ -48,7 +48,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
        FROM accounts a
        LEFT JOIN account_terms_acceptances ata ON ata.account_id = a.id
        LEFT JOIN terms_editions te_pub ON te_pub.status = 'published'
-       WHERE a.role != 'admin' ${statusFilter}
+       WHERE 1=1 ${statusFilter}
        GROUP BY a.id
        ORDER BY a.id DESC
        LIMIT ${PAGE_SIZE} OFFSET ?`,
@@ -187,6 +187,18 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
 
                   {/* Badges */}
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Role badge for admins */}
+                    {player.role === 'admin' && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center',
+                        fontFamily: 'var(--font-ui)', fontSize: '9.5px', letterSpacing: '.2em', textTransform: 'uppercase',
+                        padding: '3px 10px', borderRadius: 100,
+                        border: '1px solid rgba(232,197,110,.6)',
+                        color: 'var(--ln-accent)', background: 'rgba(232,197,110,.1)', flexShrink: 0,
+                      }}>
+                        Admin
+                      </span>
+                    )}
                     {/* Account status */}
                     <span style={{
                       display: 'inline-flex', alignItems: 'center',

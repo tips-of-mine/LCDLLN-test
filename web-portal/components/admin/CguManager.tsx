@@ -74,9 +74,11 @@ export function CguManager({ editions }: { editions: Edition[] }) {
         body: JSON.stringify({ versionLabel, titleFr, contentFr, titleEn, contentEn }),
       })
       const data = await res.json() as { ok: boolean; message?: string }
-      if (!data.ok) { setError(data.message ?? 'Erreur'); return }
+      if (!data.ok) { setError(data.message ?? 'Erreur inconnue'); return }
       closeForm()
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau')
     } finally {
       setLoading(false)
     }
@@ -94,9 +96,11 @@ export function CguManager({ editions }: { editions: Edition[] }) {
         body: JSON.stringify({ versionLabel, titleFr, contentFr, titleEn, contentEn }),
       })
       const data = await res.json() as { ok: boolean; message?: string }
-      if (!data.ok) { setError(data.message ?? 'Erreur'); return }
+      if (!data.ok) { setError(data.message ?? 'Erreur inconnue'); return }
       closeForm()
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau')
     } finally {
       setLoading(false)
     }
@@ -105,9 +109,14 @@ export function CguManager({ editions }: { editions: Edition[] }) {
   async function handlePublish(edition: Edition) {
     if (!confirm(`Publier l'édition "${edition.version_label}" ? Cette action est irréversible.`)) return
     setLoading(true)
+    setError(null)
     try {
-      await fetch(`/api/admin/cgu/${edition.id}/publish`, { method: 'POST' })
+      const res = await fetch(`/api/admin/cgu/${edition.id}/publish`, { method: 'POST' })
+      const data = await res.json() as { ok: boolean; message?: string }
+      if (!data.ok) { setError(data.message ?? 'Erreur inconnue'); return }
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau')
     } finally {
       setLoading(false)
     }
@@ -116,9 +125,14 @@ export function CguManager({ editions }: { editions: Edition[] }) {
   async function handleDelete(edition: Edition) {
     if (!confirm(`Supprimer définitivement l'édition "${edition.version_label}" ?`)) return
     setLoading(true)
+    setError(null)
     try {
-      await fetch(`/api/admin/cgu/${edition.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/cgu/${edition.id}`, { method: 'DELETE' })
+      const data = await res.json() as { ok: boolean; message?: string }
+      if (!data.ok) { setError(data.message ?? 'Erreur inconnue'); return }
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau')
     } finally {
       setLoading(false)
     }
@@ -136,9 +150,11 @@ export function CguManager({ editions }: { editions: Edition[] }) {
         body: JSON.stringify({ reason: retireReason }),
       })
       const data = await res.json() as { ok: boolean; message?: string }
-      if (!data.ok) { setError(data.message ?? 'Erreur'); return }
+      if (!data.ok) { setError(data.message ?? 'Erreur inconnue'); return }
       closeForm()
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur réseau')
     } finally {
       setLoading(false)
     }

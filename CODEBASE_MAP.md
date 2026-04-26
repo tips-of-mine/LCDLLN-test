@@ -374,7 +374,7 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/components/admin/BugAdmin.tsx` | Gestion bugs admin : statut, commentaire, exploit award (Client Component). |
 | `web-portal/middleware.ts` | Protection routes `/player/*` et `/admin/*` via cookies (Edge Runtime). |
 | `web-portal/lib/session.ts` | `getSession()` — lit cookie `lcdlln_portal_account`, retourne `Session \| null`. |
-| `web-portal/lib/email.ts` | Module email centralisé — 7 fonctions d'envoi, templates HTML Lune Noire. |
+| `web-portal/lib/email.ts` | Module email centralisé — 7 fonctions d'envoi, templates HTML Lune Noire. Lit la config SMTP depuis `smtp.local.json` (racine dépôt) en fallback si les variables d'environnement `SMTP_HOST` etc. sont absentes. |
 | `web-portal/lib/db.ts` | Pool MySQL partagé, `query<T>()`. |
 | `web-portal/lib/portalLogin.ts` | `verifyPortalCredentials()` — double Argon2id + legacy scrypt. |
 | `web-portal/lib/gamePasswordHash.ts` | Hash/verify double Argon2id (`@node-rs/argon2`). |
@@ -383,6 +383,42 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/api/player/` | APIs joueur : account PATCH, email change, password, parental, cgu accept, privacy, characters delete. |
 | `web-portal/app/api/admin/` | APIs admin : players (verify-email, activate, disable), characters (force-rename), roadmap CRUD, faq CRUD, cgu CRUD+publish+retire, bugs PATCH. |
 | `design/lune-noire-design-system/ui_kits/email/` | 7 templates HTML email (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change). |
+
+---
+
+## Configuration SMTP (envoi d'e-mail)
+
+`web-portal/lib/email.ts` supporte deux modes de configuration, par ordre de priorité :
+
+### Mode 1 — Variables d'environnement (production recommandée)
+| Variable | Description |
+|----------|-------------|
+| `SMTP_HOST` | Hôte SMTP (ex. `10.0.4.52`) |
+| `SMTP_PORT` | Port (défaut : `587`) |
+| `SMTP_SECURE` | `"true"` pour SSL/TLS port 465, sinon laisser vide (STARTTLS sur 587) |
+| `SMTP_USER` | Identifiant de connexion SMTP |
+| `SMTP_PASS` | Mot de passe SMTP |
+| `SMTP_FROM` | Adresse expéditeur (ex. `"Lune Noire" <noreply@lune-noire.fr>`) |
+
+### Mode 2 — Fichier local (développement / serveur sans gestionnaire d'env)
+Créer `smtp.local.json` **à la racine du dépôt** (même niveau que `web-portal/`).
+Ce fichier est ignoré par git (`.gitignore`). Un exemple est disponible dans `smtp.local.json.example`.
+
+```json
+{
+  "smtp": {
+    "host": "10.0.4.52",
+    "port": 587,
+    "user": "user@domain.fr",
+    "password": "mot-de-passe",
+    "from": "user@domain.fr",
+    "starttls": 1
+  }
+}
+```
+
+> **Priorité** : les variables d'environnement priment toujours sur `smtp.local.json`.
+> Si `SMTP_HOST` est défini en env, le fichier JSON n'est pas lu du tout.
 
 ---
 

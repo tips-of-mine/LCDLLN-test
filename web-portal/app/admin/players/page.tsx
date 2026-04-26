@@ -57,8 +57,8 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
        WHERE 1=1 ${statusFilter}
        GROUP BY a.id
        ORDER BY a.id DESC
-       LIMIT ? OFFSET ?`,
-      [PAGE_SIZE, offset]
+       LIMIT ${PAGE_SIZE} OFFSET ${offset}`,
+      []
     )
     players = rows as PlayerRow[]
   } catch (err) {

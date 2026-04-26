@@ -4,7 +4,7 @@
  * password_hash en base = Argon2id(client_hash, sel_serveur aléatoire).
  */
 import { createHash, randomBytes } from "node:crypto";
-import argon2 from "argon2";
+import { hash, verify, Algorithm } from "@node-rs/argon2";
 
 const CLIENT_SALT_PREFIX = Buffer.from(
   "LCDLLN\x1fclient_argon_salt\x1fv1\x1f",
@@ -25,11 +25,11 @@ export function deriveClientPasswordSalt(login: string): Buffer {
 }
 
 const ARGON2_GAME_OPTS = {
-  type: argon2.argon2id,
+  algorithm: Algorithm.Argon2id,
   timeCost: 2,
   memoryCost: 65536,
   parallelism: 1,
-  hashLength: 32,
+  outputLen: 32,
 } as const;
 
 /**
@@ -37,12 +37,12 @@ const ARGON2_GAME_OPTS = {
  */
 export async function hashPasswordForGameMaster(login: string, plainPassword: string): Promise<string> {
   const salt = deriveClientPasswordSalt(login);
-  const clientHash = await argon2.hash(plainPassword, {
+  const clientHash = await hash(plainPassword, {
     ...ARGON2_GAME_OPTS,
     salt,
   });
   const serverSalt = randomBytes(16);
-  return argon2.hash(clientHash, {
+  return hash(clientHash, {
     ...ARGON2_GAME_OPTS,
     salt: serverSalt,
   });
@@ -60,12 +60,12 @@ export async function verifyGameMasterPassword(
     return false;
   }
   const salt = deriveClientPasswordSalt(login);
-  const clientHash = await argon2.hash(plainPassword, {
+  const clientHash = await hash(plainPassword, {
     ...ARGON2_GAME_OPTS,
     salt,
   });
   try {
-    return await argon2.verify(storedFinalHash, clientHash);
+    return await verify(storedFinalHash, clientHash);
   } catch {
     return false;
   }

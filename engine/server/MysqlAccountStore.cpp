@@ -54,7 +54,8 @@ namespace engine::server
 
 		/// Convertit une ligne MySQL (MYSQL_ROW) en AccountRecord.
 		/// Ordre des colonnes attendu : id, email, login, password_hash, account_status,
-		///                              email_verified, email_locale.
+		///                              email_verified, email_locale, first_name, last_name,
+		///                              birth_date, country_code, tag_id.
 		/// Les e-mails placeholder (@lcdlln.no-email.local) sont silencieusement remplacés par
 		/// une chaîne vide dans AccountRecord.email (transparence vis-à-vis de l'appelant).
 		/// @param row Ligne renvoyée par mysql_fetch_row(). Ne doit pas être nullptr.
@@ -81,6 +82,16 @@ namespace engine::server
 			const unsigned loc = row[6] ? static_cast<unsigned>(std::strtoul(row[6], nullptr, 10)) : 0;
 			if (loc <= static_cast<unsigned>(AccountEmailLocale::Italian))
 				r.email_locale = static_cast<AccountEmailLocale>(loc);
+			if (row[7])
+				r.first_name = row[7];
+			if (row[8])
+				r.last_name = row[8];
+			if (row[9])
+				r.birth_date = row[9];
+			if (row[10])
+				r.country_code = row[10];
+			if (row[11])
+				r.tag_id = row[11];
 			return r;
 		}
 
@@ -127,9 +138,6 @@ namespace engine::server
 		std::string& tag_id_out,
 		AccountEmailLocale email_locale)
 	{
-		(void)first_name;
-		(void)last_name;
-		(void)birth_date;
 		if (!m_pool || !m_pool->IsInitialized())
 		{
 			LOG_WARN(Auth, "[MysqlAccountStore] CreateAccount: pool unavailable");
@@ -249,9 +257,12 @@ namespace engine::server
 		const std::string esc_hash = EscapeMysql(mysql, final_hash);
 		const std::string esc_country = EscapeMysql(mysql, cc);
 		const std::string esc_tag_id = EscapeMysql(mysql, local_tag_id);
+		const std::string esc_first_name = EscapeMysql(mysql, first_name);
+		const std::string esc_last_name = EscapeMysql(mysql, last_name);
+		const std::string esc_birth_date = EscapeMysql(mysql, birth_date);
 		const unsigned loc = static_cast<unsigned>(email_locale);
 
-		std::string sql = "INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified, country_code, tag_id) VALUES ('";
+		std::string sql = "INSERT INTO accounts (email, login, password_hash, account_status, email_locale, email_verified, country_code, tag_id, first_name, last_name, birth_date) VALUES ('";
 		sql += esc_email;
 		sql += "','";
 		sql += esc_login;
@@ -263,6 +274,12 @@ namespace engine::server
 		sql += esc_country;
 		sql += "','";
 		sql += esc_tag_id;
+		sql += "','";
+		sql += esc_first_name;
+		sql += "','";
+		sql += esc_last_name;
+		sql += "','";
+		sql += esc_birth_date;
 		sql += "')";
 
 		auto t0 = std::chrono::steady_clock::now();
@@ -317,7 +334,7 @@ namespace engine::server
 			return std::nullopt;
 		const std::string esc = EscapeMysql(mysql, normalisedLogin);
 		const std::string sql =
-			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale FROM accounts WHERE login='"
+			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale, first_name, last_name, birth_date, country_code, tag_id FROM accounts WHERE login='"
 			+ esc + "' LIMIT 1";
 		return QueryOneAccount(mysql, sql);
 	}
@@ -331,7 +348,7 @@ namespace engine::server
 		if (!mysql)
 			return std::nullopt;
 		const std::string sql =
-			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale FROM accounts WHERE id="
+			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale, first_name, last_name, birth_date, country_code, tag_id FROM accounts WHERE id="
 			+ std::to_string(account_id) + " LIMIT 1";
 		return QueryOneAccount(mysql, sql);
 	}
@@ -376,7 +393,7 @@ namespace engine::server
 			return std::nullopt;
 		const std::string esc = EscapeMysql(mysql, normalisedEmail);
 		const std::string sql =
-			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale FROM accounts WHERE email='"
+			"SELECT id, email, login, password_hash, account_status, email_verified, email_locale, first_name, last_name, birth_date, country_code, tag_id FROM accounts WHERE email='"
 			+ esc + "' LIMIT 1";
 		return QueryOneAccount(mysql, sql);
 	}

@@ -240,10 +240,17 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | Dossier/Fichier | Rôle |
 |---|---|
 | `db/schema.sql` | Schéma complet (référence). |
-| `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0019). Appliquées en ordre par MigrationRunner. |
+| `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0023). Appliquées en ordre par MigrationRunner. |
 | `engine/server/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur. |
 | `engine/server/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |
 | `engine/server/db/DbHelpers.h/.cpp` | Helpers requêtes SQL (bind params, lecture résultats). |
+
+**Migrations notables sur `accounts` :**
+| Migration | Colonnes ajoutées |
+|---|---|
+| 0006 | `email_locale`, `email_verified` |
+| 0016 | `country_code`, `tag_id` |
+| 0023 | `first_name`, `last_name`, `birth_date` (fix : champs ignorés à l'inscription) |
 
 ---
 

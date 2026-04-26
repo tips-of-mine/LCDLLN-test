@@ -1,5 +1,7 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { query } from '@/lib/db'
+import { getSession } from '@/lib/session'
 import type { RowDataPacket } from 'mysql2/promise'
 import { PlayerActions, type PlayerRow } from '@/components/admin/PlayerActions'
 
@@ -23,6 +25,10 @@ function emailBadge(verified: number) {
 }
 
 export default async function AdminPlayersPage({ searchParams }: PageProps) {
+  const session = await getSession();
+  if (!session) redirect('/login?redirect=/admin/players');
+  if (session.role !== 'admin') redirect('/');
+
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1)
   const status: AccountStatus = (['active', 'disabled'].includes(searchParams.status ?? '') ? searchParams.status : 'all') as AccountStatus
   const offset = (page - 1) * PAGE_SIZE

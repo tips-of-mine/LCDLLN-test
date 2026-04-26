@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 
-export default function AdminHomePage() {
+export default async function AdminHomePage() {
+  const session = await getSession();
+  if (!session) redirect("/login?redirect=/admin");
+  if (session.role !== "admin") redirect("/");
   return (
     <div className="wp-main">
       <div className="wp-page-header">

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { query } from "@/lib/db";
 import { CguManager } from "@/components/admin/CguManager";
+import { getSession } from "@/lib/session";
 import type { RowDataPacket } from "mysql2/promise";
 
 type EditionRow = RowDataPacket & {
@@ -31,6 +33,10 @@ async function getEditions(): Promise<EditionRow[]> {
 }
 
 export default async function AdminCguPage() {
+  const session = await getSession();
+  if (!session) redirect("/login?redirect=/admin/cgu");
+  if (session.role !== "admin") redirect("/");
+
   const editions = await getEditions();
 
   return (

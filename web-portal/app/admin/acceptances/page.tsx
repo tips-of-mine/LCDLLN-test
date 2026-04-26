@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 
-export default function AdminAcceptancesPage() {
+export default async function AdminAcceptancesPage() {
+  const session = await getSession();
+  if (!session) redirect("/login?redirect=/admin/acceptances");
+  if (session.role !== "admin") redirect("/");
   return (
     <>
       <div className="page-header">

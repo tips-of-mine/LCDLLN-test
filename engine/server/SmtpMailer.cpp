@@ -255,7 +255,8 @@ namespace engine::server
 	bool SmtpMailer::Send(const SmtpConfig& cfg,
 	                      const std::string& to,
 	                      const std::string& subject,
-	                      const std::string& body)
+	                      const std::string& body,
+	                      bool isHtml)
 	{
 		if (cfg.host.empty())
 		{
@@ -467,7 +468,8 @@ namespace engine::server
 		msg += "To: " + to + "\r\n";
 		msg += "Subject: " + subject + "\r\n";
 		msg += "MIME-Version: 1.0\r\n";
-		msg += "Content-Type: text/plain; charset=UTF-8\r\n";
+		msg += isHtml ? "Content-Type: text/html; charset=UTF-8\r\n"
+		              : "Content-Type: text/plain; charset=UTF-8\r\n";
 		msg += "\r\n";
 		msg += body;
 		msg += "\r\n.\r\n";
@@ -502,7 +504,8 @@ namespace engine::server
 	bool SmtpMailer::Send(const SmtpConfig& /*cfg*/,
 	                      const std::string& to,
 	                      const std::string& subject,
-	                      const std::string& /*body*/)
+	                      const std::string& /*body*/,
+	                      bool /*isHtml*/)
 	{
 		LOG_WARN(Smtp, "[SmtpMailer] SMTP not implemented on Win32 — email not sent (to={} subject={})", RedactEmailForLog(to), subject);
 		return false;

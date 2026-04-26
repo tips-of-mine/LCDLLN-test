@@ -92,12 +92,8 @@ services:
       - "traefik.enable=false"
     volumes:
       - ./config/master.config.json:/app/config.json:ro
-      # SMTP : le serveur charge smtp.local.json dans le même répertoire que config.json dans le conteneur (/app).
-      # Sans cette ligne, seul l’hôte a server-config/smtp.local.json — le master ne le voit pas.
-      # Exemple si vos secrets sont dans server-config/ à côté du compose :
-      #   - ./server-config/smtp.local.json:/app/smtp.local.json:ro
-      # Ou à côté du JSON master sur l’hôte :
-      #   - ./config/smtp.local.json:/app/smtp.local.json:ro
+      # SMTP : monté depuis config/smtp.local.json (fichier non versionné, créer sur le serveur).
+      - ./config/smtp.local.json:/app/smtp.local.json:ro
       - ./game/data:/app/game/data:ro
       - ./data/logs/master:/app/logs
     # HTTP 3842 (/healthz) : le TCP 3840 est le protocole jeu ; nc -z le pollue dans les logs NetServer.
@@ -163,6 +159,9 @@ services:
     networks:
       - back_lcdlln_network
       - traefik_front_network
+    volumes:
+      # SMTP : web-portal cherche process.cwd()/../config/smtp.local.json = /config/smtp.local.json
+      - ./config/smtp.local.json:/config/smtp.local.json:ro
     environment:
       NODE_ENV: production
       # Aligné sur MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE du service mysql

@@ -25,6 +25,7 @@
 #include "engine/server/PasswordResetStore.h"
 #include "engine/server/PasswordResetHandler.h"
 #include "engine/server/SmtpMailer.h"
+#include "engine/server/LocalizedEmail.h"
 #include "engine/server/TermsRepository.h"
 #include "engine/server/TermsHandler.h"
 #include "engine/server/CharacterCreateHandler.h"
@@ -212,6 +213,12 @@ int main(int argc, char** argv)
 
 	// M33.2: SMTP config + password reset / email verification stores.
 	engine::server::SmtpConfig smtpConfig = engine::server::SmtpConfig::Load(config, "config.json");
+	// Répertoire des templates email HTML (depuis paths.content dans config.json)
+	{
+		const std::string contentPath = config.GetString("paths.content", "game/data");
+		engine::server::SetEmailTemplateDir(contentPath);
+		LOG_INFO(Net, "[ServerMain] email template dir: {}", contentPath);
+	}
 	{
 		const bool smtpReady = !smtpConfig.host.empty() && smtpConfig.port != 0;
 		const std::string smtpDedicatedLog = config.GetString("log.subsystem_files.Smtp", "");

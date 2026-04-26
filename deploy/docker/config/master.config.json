@@ -23,5 +23,6 @@
       "Smtp": "lcdlln-SMTP.log"
     }
   },
-  "paths": { "content": "game/data" }
+  "paths": { "content": "game/data" },
+  "terms": { "enforce": true }
 }

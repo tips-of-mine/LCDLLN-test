@@ -1,6 +1,35 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { query } from "@/lib/db";
+import type { RowDataPacket } from "mysql2/promise";
 
-export default function AdminHomePage() {
+async function getStats() {
+  try {
+    const [accounts, cgu, bugs, acceptances] = await Promise.all([
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM accounts", []),
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM terms_editions WHERE status = 'published'", []),
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM bug_reports", []),
+      query<Array<RowDataPacket & { n: number }>>("SELECT COUNT(*) as n FROM account_terms_acceptances", []),
+    ]);
+    return {
+      accounts: accounts[0]?.n ?? 0,
+      cgu: cgu[0]?.n ?? 0,
+      bugs: bugs[0]?.n ?? 0,
+      acceptances: acceptances[0]?.n ?? 0,
+    };
+  } catch {
+    return { accounts: "—", cgu: "—", bugs: "—", acceptances: "—" };
+  }
+}
+
+export default async function AdminHomePage() {
+  const session = await getSession();
+  if (!session) redirect("/login?redirect=/admin");
+  if (session.role !== "admin") redirect("/");
+
+  const stats = await getStats();
+
   return (
     <div className="wp-main">
       <div className="wp-page-header">
@@ -13,19 +42,19 @@ export default function AdminHomePage() {
 
       <div className="wp-stats">
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
-          <div className="wp-stat-label">Comptes actifs</div>
+          <div className="wp-stat-value">{stats.accounts}</div>
+          <div className="wp-stat-label">Comptes</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{stats.cgu}</div>
           <div className="wp-stat-label">CGU publiées</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{stats.bugs}</div>
           <div className="wp-stat-label">Bugs signalés</div>
         </div>
         <div className="wp-stat">
-          <div className="wp-stat-value">—</div>
+          <div className="wp-stat-value">{stats.acceptances}</div>
           <div className="wp-stat-label">Acceptations CGU</div>
         </div>
       </div>
@@ -57,25 +86,53 @@ export default function AdminHomePage() {
           </div>
         </Link>
 
-        <div className="wp-card" style={{ opacity: 0.6 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>👤</div>
-          <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Profils joueurs</h3>
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-            Consultation en lecture seule des profils joueurs.
-            Aucune modification depuis cet écran.
-          </p>
-          <span className="wp-badge planned">Bientôt</span>
-        </div>
+        <Link href="/admin/players" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Gestion des Joueurs</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Liste paginée, validation email, activation / désactivation de comptes
+              et gestion des personnages avec renommage forcé.
+            </p>
+            <span className="wp-badge active">Actions</span>
+          </div>
+        </Link>
 
-        <div className="wp-card" style={{ opacity: 0.6 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>📊</div>
-          <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Statistiques</h3>
-          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
-            Tableaux de bord avec métriques d&apos;utilisation,
-            taux d&apos;acceptation CGU et activité globale.
-          </p>
-          <span className="wp-badge planned">Bientôt</span>
-        </div>
+        <Link href="/admin/roadmap" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🗺️</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Roadmap</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Créer, modifier et publier la feuille de route des développements.
+              Gestion des priorités et des versions.
+            </p>
+            <span className="wp-badge active">CRUD</span>
+          </div>
+        </Link>
+
+        <Link href="/admin/faq" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>❓</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>FAQ & Support</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Gérer les questions fréquemment posées et les articles de support.
+              Multilingue et versionnée.
+            </p>
+            <span className="wp-badge active">CRUD</span>
+          </div>
+        </Link>
+
+        <Link href="/admin/bugs" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🐛</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Suivi des Bugs</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Suivi et gestion des bugs signalés par les joueurs.
+              États, priorités et résolution.
+            </p>
+            <span className="wp-badge active">CRUD</span>
+          </div>
+        </Link>
       </div>
 
       <div className="wp-card" style={{ borderColor: "rgba(232,165,92,.35)", marginTop: "1.5rem" }}>

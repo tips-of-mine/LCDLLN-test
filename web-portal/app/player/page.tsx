@@ -74,35 +74,67 @@ export default function PlayerHomePage() {
         </Link>
       </div>
 
-      <div className="wp-section-title" style={{ marginTop: "2rem" }}>Fonctionnalités à venir</div>
+      <div className="wp-section-title" style={{ marginTop: "2rem" }}>Mon compte & sécurité</div>
 
-      <div className="wp-card">
-        <div style={{ display: "grid", gap: "0.75rem" }}>
-          {[
-            { icon: "🖥️", label: "Serveurs en ligne", desc: "État temps réel des serveurs de jeu" },
-            { icon: "👤", label: "Personnages", desc: "Gestion et suppression avec double validation" },
-            { icon: "👥", label: "Amis & Guilde", desc: "Liste d'amis et membres de guilde en ligne" },
-            { icon: "🔔", label: "Notifications", desc: "Alertes de maintenance et mises à jour" },
-          ].map((f) => (
-            <div
-              key={f.label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                padding: "0.5rem 0",
-                borderBottom: "1px solid var(--ln-border)",
-              }}
-            >
-              <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{f.icon}</span>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--ln-text)" }}>{f.label}</div>
-                <div style={{ fontSize: 13, color: "var(--ln-muted)" }}>{f.desc}</div>
-              </div>
-              <span className="wp-badge planned" style={{ marginLeft: "auto", flexShrink: 0 }}>Bientôt</span>
-            </div>
-          ))}
-        </div>
+      <div className="wp-grid wp-grid-2">
+        <Link href="/player/account" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>👤</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Détail du compte</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Consultez et modifiez vos informations personnelles et vos préférences.
+            </p>
+            <span className="wp-badge active">Accéder</span>
+          </div>
+        </Link>
+
+        <Link href="/player/security" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🔐</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Sécurité du compte</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Changez votre mot de passe, authentification deux facteurs et sessions actives.
+            </p>
+            <span className="wp-badge active">Configurer</span>
+          </div>
+        </Link>
+
+        <Link href="/player/privacy" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🛡️</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Vie Privée</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Gérez vos données personnelles, téléchargements et suppressions de compte.
+            </p>
+            <span className="wp-badge active">Accéder</span>
+          </div>
+        </Link>
+
+        <Link href="/player/parental" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>👨‍👩‍👧</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Contrôle Parental</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Configurez les restrictions et autorisations pour les mineurs.
+            </p>
+            <span className="wp-badge active">Configurer</span>
+          </div>
+        </Link>
+      </div>
+
+      <div className="wp-section-title" style={{ marginTop: "2rem" }}>Mes contenus</div>
+
+      <div className="wp-grid wp-grid-2">
+        <Link href="/player/chronicles" style={{ textDecoration: "none" }}>
+          <div className="wp-card interactive">
+            <div style={{ fontSize: 28, marginBottom: 8 }}>📖</div>
+            <h3 style={{ margin: "0 0 8px", fontFamily: "var(--font-display)", color: "var(--ln-accent)" }}>Mes Chroniques</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--ln-muted)" }}>
+              Consultez et gérez vos chroniques, vos brouillons et vos publications.
+            </p>
+            <span className="wp-badge active">Voir mes chroniques</span>
+          </div>
+        </Link>
       </div>
     </div>
   );

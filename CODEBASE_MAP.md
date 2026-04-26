@@ -240,7 +240,19 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | Dossier/Fichier | Rôle |
 |---|---|
 | `db/schema.sql` | Schéma complet (référence). |
-| `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0023). Appliquées en ordre par MigrationRunner. |
+| `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0031). Appliquées en ordre par lcdlln-master au démarrage. |
+| `db/migrations/0020_terms_system.sql` | Système CGU : `terms_editions`, `terms_localizations`, `account_terms_acceptances`. |
+| `db/migrations/0021_bug_reports.sql` | Table `bug_reports` (catégorie, titre, corps, statut, assigné, exploit accordé). |
+| `db/migrations/0022_character_stats.sql` | Table `character_stats` — `total_play_seconds` + `server_id` (FK → `game_servers`). |
+| `db/migrations/0023_faq.sql` | Table `faq_entries` (question, réponse, ordre, statut). |
+| `db/migrations/0024_roadmap_db.sql` | Table `roadmap_items` pour roadmap dynamique (CRUD admin). |
+| `db/migrations/0025_account_privacy.sql` | Table `account_privacy_settings` — attention : FK INT UNSIGNED incorrecte, corrigée par 0031. |
+| `db/migrations/0026_parental_control.sql` | Colonne `parental_validated` sur `accounts`. |
+| `db/migrations/0027_account_deletion.sql` | Colonne `deleted_at` sur `accounts` (soft delete). |
+| `db/migrations/0028_force_rename.sql` | Colonne `force_rename` sur `characters` (renommage forcé par admin). |
+| `db/migrations/0029_email_pending.sql` | Colonne `email_pending` + `email_pending_token` sur `accounts` (changement email à valider). |
+| `db/migrations/0030_terms_editions_nullable.sql` | `published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
+| `db/migrations/0031_privacy_settings_ensure.sql` | Recrée `account_privacy_settings` avec `BIGINT UNSIGNED` correct — idempotente (`IF NOT EXISTS`). |
 | `engine/server/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur. |
 | `engine/server/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |
 | `engine/server/db/DbHelpers.h/.cpp` | Helpers requêtes SQL (bind params, lecture résultats). |
@@ -344,25 +356,91 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | Fichier | Rôle |
 |---|---|
 | `web-portal/app/layout.tsx` | Layout racine : `SiteHeader` + `<main>` + `wp-footer`. |
-| `web-portal/components/SiteHeader.tsx` | Topbar sticky avec logo lune, nav et toggle mobile. |
+| `web-portal/components/SiteHeader.tsx` | **Server Component** — appelle `getSession()`, délègue nav interactive à `HeaderActions`. |
+| `web-portal/components/HeaderActions.tsx` | **Client Component** — menu mobile, liens conditionnels (TAG-ID, Espace joueur, Admin, Déconnexion). |
 | `web-portal/app/page.tsx` | Page d'accueil : hero, stats, grille fonctionnalités, accès rapide. |
 | `web-portal/app/login/page.tsx` | Connexion : logo lune, `wp-card`, champs `.field`, `wp-alert error`. |
-| `web-portal/app/roadmap/page.tsx` | Roadmap : `wp-timeline` avec états `.done` / `.active`. |
-| `web-portal/app/bugs/page.tsx` | Signalement bugs : étapes `wp-grid-3`, `wp-tiers` (paliers 5–100). |
-| `web-portal/app/support/page.tsx` | FAQ : `wp-accordion` avec `AccordionItem` client. |
+| `web-portal/app/roadmap/page.tsx` | Roadmap dynamique : lecture depuis `roadmap_items` DB, `wp-timeline`. |
+| `web-portal/app/bugs/page.tsx` | Signalement bugs : affiche `BugReportForm` si authentifié, sinon message "Connexion requise". |
+| `web-portal/app/support/page.tsx` | FAQ dynamique : lecture depuis `faq_items` DB (published=1), accordéon. |
 | `web-portal/app/contact/page.tsx` | Contact : infos + formulaire dans `wp-grid-2`. |
-| `web-portal/app/admin/page.tsx` | Panel admin : stats, grille modules, note sécurité. |
-| `web-portal/app/player/page.tsx` | Espace joueur : stats, nav vers sous-sections. |
-| `web-portal/app/player/cgu/page.tsx` | CGU joueur : `wp-table` acceptations. |
+| `web-portal/app/admin/page.tsx` | Hub admin : 6 modules (CGU, acceptations, joueurs, roadmap, FAQ, bugs). |
+| `web-portal/app/admin/cgu/page.tsx` | CGU admin CRUD : draft/published/retired avec règles métier strictes. |
+| `web-portal/app/admin/acceptances/page.tsx` | Suivi acceptations CGU (lecture seule). |
+| `web-portal/app/admin/players/page.tsx` | Gestion joueurs : liste paginée, filtres, actions (email, statut, personnages). |
+| `web-portal/app/admin/roadmap/page.tsx` | Roadmap admin CRUD : ajouter/modifier/supprimer items. |
+| `web-portal/app/admin/faq/page.tsx` | FAQ admin CRUD : questions/réponses publiées ou archivées. |
+| `web-portal/app/admin/bugs/page.tsx` | Suivi bugs : changement statut, commentaire admin, attribution exploits. |
+| `web-portal/app/player/page.tsx` | Hub espace joueur : nav vers 5 sections + sections existantes. |
+| `web-portal/app/player/account/page.tsx` | Détail du compte : profil, email (avec re-validation), adresse postale. |
+| `web-portal/app/player/chronicles/page.tsx` | Mes Chroniques : temps de jeu par serveur, exploits, personnages + suppression. |
+| `web-portal/app/player/parental/page.tsx` | Contrôle parental : validation tuteur légal pour joueurs mineurs. |
+| `web-portal/app/player/security/page.tsx` | Sécurité : changement mot de passe, placeholder MFA. |
+| `web-portal/app/player/privacy/page.tsx` | Vie privée : liste CGU (lire + accepter), visibilité du profil. |
+| `web-portal/app/player/cgu/page.tsx` | Mes CGU : bannière statut, section "À accepter", historique complet des acceptations. |
+| `web-portal/app/cgu/[id]/page.tsx` | Lecture publique d'une CGU publiée (FR/EN), langue via `?lang=` — `notFound()` si non publié. |
 | `web-portal/app/player/exploits/page.tsx` | Exploits : délègue à `ExploitsProfile`. |
 | `web-portal/app/player/recovery-profile/page.tsx` | Profil récupération : `wp-alert warning` si pas de compte. |
 | `web-portal/app/password-recovery/page.tsx` | Récupération mot de passe : `wp-card` info. |
 | `web-portal/components/ExploitsProfile.tsx` | Exploits : progress bar, cartes visibles/masquées, stats. |
-| `web-portal/middleware.ts` | Protection routes `/player/*` et `/admin/*` via cookie HMAC signé (Edge Runtime). |
-| `web-portal/lib/session.ts` | Signature/vérification du cookie `lcdlln_session` (HMAC-SHA256, Node.js runtime). |
-| `web-portal/components/NavToggle.tsx` | Toggle menu mobile (Client Component, gère `useState` hamburger). |
-| `web-portal/components/LoginForm.tsx` | Formulaire de connexion (Client Component, reçoit `nextPath` prop). |
-| `web-portal/app/api/` | Routes API Next.js (backend web, non modifiées). |
+| `web-portal/components/AccountForm.tsx` | Formulaire compte joueur (Client Component) — infos perso, email, adresse. |
+| `web-portal/components/CharacterDeleteButton.tsx` | Suppression personnage en 2 confirmations (Client Component). |
+| `web-portal/components/PasswordChangeForm.tsx` | Changement mot de passe (Client Component). |
+| `web-portal/components/PrivacyForm.tsx` | Visibilité profil radio buttons (Client Component). |
+| `web-portal/components/CguAcceptButton.tsx` | Bouton acceptation CGU (Client Component). |
+| `web-portal/components/BugReportForm.tsx` | Formulaire signalement bug : catégorie, titre, corps — POST `/api/bugs` (Client Component). |
+| `web-portal/components/admin/PlayerActions.tsx` | Actions joueur admin : email, statut, désactivation motif, personnages. |
+| `web-portal/components/admin/CguManager.tsx` | Gestion CGU admin : create/edit/publish/retire (Client Component). |
+| `web-portal/components/admin/FaqAdmin.tsx` | CRUD FAQ admin (Client Component). |
+| `web-portal/components/admin/BugAdmin.tsx` | Gestion bugs admin : statut, commentaire, exploit award (Client Component). |
+| `web-portal/middleware.ts` | Protection routes `/player/*` et `/admin/*` via cookies (Edge Runtime). |
+| `web-portal/lib/session.ts` | `getSession()` — lit cookie `lcdlln_portal_account`, retourne `Session \| null`. |
+| `web-portal/lib/email.ts` | Module email centralisé — 7 fonctions d'envoi, templates HTML Lune Noire. Lit la config SMTP depuis `config/smtp.local.json` (racine dépôt) en fallback si les variables d'environnement `SMTP_HOST` etc. sont absentes. |
+| `web-portal/lib/db.ts` | Pool MySQL partagé, `query<T>()`. |
+| `web-portal/lib/portalLogin.ts` | `verifyPortalCredentials()` — double Argon2id + legacy scrypt. |
+| `web-portal/lib/gamePasswordHash.ts` | Hash/verify double Argon2id (`@node-rs/argon2`). |
+| `web-portal/app/api/auth/login/route.ts` | POST login — set cookies `lcdlln_portal_account` + `lcdlln_portal_role`. |
+| `web-portal/app/api/auth/logout/route.ts` | POST logout — supprime les deux cookies session. |
+| `web-portal/app/api/player/` | APIs joueur : account PATCH, email change, password, parental, cgu accept, privacy, characters delete. |
+| `web-portal/app/api/bugs/route.ts` | POST bug report — insère dans `bug_reports`, auth via cookie session, valide catégorie. |
+| `web-portal/app/api/admin/` | APIs admin : players (verify-email, activate, disable), characters (force-rename), roadmap CRUD, faq CRUD, cgu CRUD+publish+retire, bugs PATCH. |
+| `design/lune-noire-design-system/ui_kits/email/` | 7 templates HTML email (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change). |
+
+---
+
+## Configuration SMTP (envoi d'e-mail)
+
+`web-portal/lib/email.ts` supporte deux modes de configuration, par ordre de priorité :
+
+### Mode 1 — Variables d'environnement (production recommandée)
+| Variable | Description |
+|----------|-------------|
+| `SMTP_HOST` | Hôte SMTP (ex. `10.0.4.52`) |
+| `SMTP_PORT` | Port (défaut : `587`) |
+| `SMTP_SECURE` | `"true"` pour SSL/TLS port 465, sinon laisser vide (STARTTLS sur 587) |
+| `SMTP_USER` | Identifiant de connexion SMTP |
+| `SMTP_PASS` | Mot de passe SMTP |
+| `SMTP_FROM` | Adresse expéditeur (ex. `"Lune Noire" <noreply@lune-noire.fr>`) |
+
+### Mode 2 — Fichier local (développement / serveur sans gestionnaire d'env)
+Créer `config/smtp.local.json` **dans le dossier `config/`** à la racine du dépôt.
+Ce fichier est ignoré par git (`.gitignore`). Un exemple est disponible dans `smtp.local.json.example`.
+
+```json
+{
+  "smtp": {
+    "host": "10.0.4.52",
+    "port": 587,
+    "user": "user@domain.fr",
+    "password": "mot-de-passe",
+    "from": "user@domain.fr",
+    "starttls": 1
+  }
+}
+```
+
+> **Priorité** : les variables d'environnement priment toujours sur `smtp.local.json`.
+> Si `SMTP_HOST` est défini en env, le fichier JSON n'est pas lu du tout.
 
 ---
 

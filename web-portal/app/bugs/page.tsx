@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { getSession } from "@/lib/session";
+import { BugReportForm } from "@/components/BugReportForm";
 
 const tiers = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
 
-export default function BugsPage() {
+export default async function BugsPage() {
+  const session = await getSession();
   return (
     <div className="wp-main narrow">
       <div className="wp-page-header">
@@ -28,16 +31,20 @@ export default function BugsPage() {
       </div>
 
       <p className="wp-section-title">Soumettre un rapport</p>
-      <div className="wp-card" style={{ textAlign: "center", padding: 32 }}>
-        <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>🔒</div>
-        <div style={{ fontFamily: "var(--font-display)", fontSize: 13, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ln-text)", marginBottom: 8 }}>
-          Connexion requise
+      {session ? (
+        <BugReportForm />
+      ) : (
+        <div className="wp-card" style={{ textAlign: "center", padding: 32 }}>
+          <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>🔒</div>
+          <div style={{ fontFamily: "var(--font-display)", fontSize: 13, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ln-text)", marginBottom: 8 }}>
+            Connexion requise
+          </div>
+          <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", fontSize: 13.5, color: "var(--ln-muted)", marginBottom: 20 }}>
+            Vous devez être connecté pour soumettre un rapport de bug.
+          </p>
+          <Link href="/login?redirect=/bugs" className="btn btn-primary">Se connecter</Link>
         </div>
-        <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", fontSize: 13.5, color: "var(--ln-muted)", marginBottom: 20 }}>
-          Vous devez être connecté pour soumettre un rapport de bug.
-        </p>
-        <Link href="/login" className="btn btn-primary">Se connecter</Link>
-      </div>
+      )}
 
       <div className="wp-divider" />
 

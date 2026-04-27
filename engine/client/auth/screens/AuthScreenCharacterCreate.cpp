@@ -73,6 +73,9 @@ namespace engine::client
 		m_characterName.clear();
 		m_userErrorText.clear();
 		m_activeField = 0;
+		// On revient à l'écran de connexion : la prochaine boucle d'auth devra réafficher le ShardPick proprement.
+		m_chosenShardId = 0;
+		m_postRegistrationCharacterCreatePending = false;
 		SetPhase(Phase::Login);
 	}
 

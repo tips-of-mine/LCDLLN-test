@@ -208,6 +208,8 @@ namespace
 		m_userErrorText.clear();
 		m_passwordConfirm.clear();
 		m_registeredTagId.clear();
+		// L'inscription en cours est annulée : la prochaine connexion ne doit pas court-circuiter ShardPick → MasterFlow.
+		m_postRegistrationCharacterCreatePending = false;
 	}
 
 	/// Ouvre le portail web de récupération de mot de passe dans le navigateur système.

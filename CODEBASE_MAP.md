@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-25 — auth & navigation web-portal (sous-projet A).
+> Dernière mise à jour : 2026-04-27 — réordonnancement ShardPick → CharacterCreate dans le flux d'auth client.
 
 ---
 
@@ -46,6 +46,31 @@ Utilisateur → AuthUiPresenter (logique) → RenderModel → AuthImGuiRenderer 
                     ↓
              BuildModel_Xxx() → RenderModel mis à jour → re-render
 ```
+
+### Ordre des écrans (état actuel après réordonnancement 2026-04-27)
+
+```
+Premier lancement (compte inexistant) :
+  LanguageSelectionFirstRun → Login → Register → EmailConfirmationPending →
+  VerifyEmail → Login (re-saisie credentials) → Terms (si CGU à accepter) →
+  ShardPick (forcé, même avec un seul royaume) → CharacterCreate →
+  MasterFlow (avec shardOverride) → Game
+
+Connexion utilisateur existant :
+  Login → Terms (si CGU mises à jour, sinon sauté) →
+  ShardPick → MasterFlow (avec shardOverride) → Game
+```
+
+Drapeaux clés (`engine/client/AuthUi.h`) :
+- `m_postRegistrationCharacterCreatePending` (bool) — armé sur `Register` succès, désarmé sur
+  `CharacterCreate` succès / annulation / Escape / `flowComplete`. Quand vrai, `ShardPick` redirige
+  vers `Phase::CharacterCreate` au lieu de `MasterFlow`.
+- `m_chosenShardId` (uint32_t) — royaume sélectionné par l'utilisateur sur `ShardPick`. Persiste à
+  travers `Phase::CharacterCreate` et sert d'override `m_shardFlowOverrideId` pour le `MasterFlow`
+  final qui connecte le client au shard.
+- `MasterShardClientFlow::SetShardPickWhenMultiple(true)` (appelé par AuthUi) force le retour
+  `shard_choice_required` même quand un seul shard est en ligne. Le défaut de la classe est `false`
+  pour que le client headless `ClientFlowMain` continue d'auto-sélectionner.
 
 ### Fichiers impliqués par phase d'auth
 
@@ -452,3 +477,9 @@ Ce fichier est ignoré par git (`.gitignore`). Un exemple est disponible dans `s
 4. **Je veux changer un message / traduction** → `game/data/localization/fr/fr.json`
 5. **Je veux changer la logique réseau d'un écran** → `StartXxxWorker()` dans le fichier presenter + payload dans `engine/network/AuthRegisterPayloads.h`
 6. **Je veux changer ce que le serveur fait à la réception** → `engine/server/XxxHandler.cpp`
+7. **Je veux changer l'ordre d'enchaînement des écrans d'auth** → `PollAsyncResult()` et `SubmitCurrentPhase()` dans `engine/client/auth/AuthUiPresenterCore.cpp`. Pour l'auto/forcé du choix de shard côté flux : `engine/network/MasterShardClientFlow.cpp` (variable `m_shardPickWhenMultiple`).
+
+### Limitations connues (à compléter par fonctionnalités futures)
+
+- Pas encore de requête « liste des personnages d'un compte sur un shard ». Après `ShardPick`, le client ne sait pas si le compte a déjà des personnages ; le drapeau `m_postRegistrationCharacterCreatePending` est utilisé en proxy pour décider `ShardPick → CharacterCreate` vs `ShardPick → MasterFlow`. La sélection « jouer avec un personnage existant ou en créer un autre (max 5/shard) » n'a pas encore de protocole ni d'écran dédié.
+- Le drapeau `m_postRegistrationCharacterCreatePending` est en mémoire processus ; si l'utilisateur s'inscrit puis ferme l'application avant la création de personnage, il devra (au prochain lancement) s'authentifier puis le serveur devra fournir l'information « pas de personnage sur ce shard » pour rejouer la création (non implémenté).

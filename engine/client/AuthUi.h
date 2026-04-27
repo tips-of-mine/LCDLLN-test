@@ -688,6 +688,13 @@ namespace engine::client
 		std::vector<engine::network::ServerListEntry> m_shardPickEntries;
 		uint32_t m_shardPickChoiceShardId = 0;
 		uint32_t m_shardFlowOverrideId = 0;
+		/// Royaume choisi par l'utilisateur sur l'écran ShardPick. Persiste à travers Phase::CharacterCreate
+		/// puis sert d'override pour StartMasterFlowWorker une fois le personnage créé.
+		uint32_t m_chosenShardId = 0;
+		/// Vrai entre l'inscription réussie et la création du personnage : ShardPick → CharacterCreate
+		/// (un nouveau compte n'a pas encore de personnage). Faux pour un retour utilisateur classique :
+		/// ShardPick → connexion directe au royaume.
+		bool m_postRegistrationCharacterCreatePending = false;
 		bool        m_infoPopupVisible = false;
 		std::string m_infoPopupText;
 		bool m_savedRememberLogin = false;

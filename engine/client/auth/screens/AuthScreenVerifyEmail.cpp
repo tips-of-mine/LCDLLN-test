@@ -221,6 +221,8 @@ namespace engine::client
 		m_userErrorText.clear();
 		m_verifyCode.clear();
 		m_activeField = 0;
+		// Vérification abandonnée : la prochaine connexion ne doit pas hériter du flag « post-inscription ».
+		m_postRegistrationCharacterCreatePending = false;
 		SetPhase(Phase::Login);
 	}
 
@@ -279,6 +281,8 @@ namespace engine::client
 		m_userErrorText.clear();
 		m_activeField = 0;
 		m_verifyCode.clear();
+		// Confirmation courriel abandonnée : la prochaine connexion ne doit pas hériter du flag « post-inscription ».
+		m_postRegistrationCharacterCreatePending = false;
 		SetPhase(Phase::Login);
 	}
 

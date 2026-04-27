@@ -1159,6 +1159,8 @@ namespace engine::client
 		m_registeredTagId.clear();
 		m_pendingVerifyAccountId = 0;
 		m_pendingTermsEditionId = 0;
+		m_chosenShardId = 0;
+		m_postRegistrationCharacterCreatePending = false;
 		m_termsScrolledToBottom = false;
 		m_termsAcknowledgeChecked = false;
 		m_rememberLogin = false;
@@ -1627,6 +1629,9 @@ namespace engine::client
 			{
 				m_pendingVerifyAccountId = copy.accountId;
 				m_verifyCodeSentAt = std::chrono::steady_clock::now();
+				// Le compte vient d'être créé : il n'a aucun personnage. Une fois l'utilisateur ré-authentifié et les CGU acceptées,
+				// l'écran ShardPick devra rediriger vers Phase::CharacterCreate et non vers la connexion directe au royaume.
+				m_postRegistrationCharacterCreatePending = true;
 				SetPhase(Phase::EmailConfirmationPending);
 				// Conserver m_pendingVerifyAccountId = copy.accountId (doit rester en place)
 				m_userErrorText.clear();
@@ -1764,7 +1769,12 @@ namespace engine::client
 				if (copy.termsPendingCount == 0)
 				{
 					m_infoBanner = Tr("auth.info.terms_done");
-					SetPhase(Phase::CharacterCreate);
+					// Avant de proposer la création/sélection d'un personnage, l'utilisateur doit choisir un royaume.
+					// MasterFlow renvoie shard_choice_required → Phase::ShardPick.
+					ResetMasterSession();
+					SetPhase(Phase::Submitting);
+					StartMasterFlowWorker(cfg);
+					return;
 				}
 				else
 				{
@@ -1796,7 +1806,12 @@ namespace engine::client
 				if (copy.termsPendingCount == 0)
 				{
 					m_infoBanner = Tr("auth.info.terms_done");
-					SetPhase(Phase::CharacterCreate);
+					// Toutes les CGU acceptées : place au choix du royaume avant la création/sélection du personnage.
+					// MasterFlow renvoie shard_choice_required → Phase::ShardPick.
+					ResetMasterSession();
+					SetPhase(Phase::Submitting);
+					StartMasterFlowWorker(cfg);
+					return;
 				}
 				else
 				{
@@ -1827,6 +1842,9 @@ namespace engine::client
 			{
 				ResetMasterSession();
 				m_infoBanner = copy.message.empty() ? Tr("auth.info.character_created") : copy.message;
+				// Le personnage existe désormais sur m_chosenShardId : on saute l'écran ShardPick au tour suivant.
+				m_postRegistrationCharacterCreatePending = false;
+				m_shardFlowOverrideId = m_chosenShardId;
 				SetPhase(Phase::Submitting);
 				StartMasterFlowWorker(cfg);
 			}
@@ -1874,6 +1892,9 @@ namespace engine::client
 				}
 			}
 			m_flowComplete = true;
+			// Réinitialiser l'état de sélection royaume / création post-inscription : la prochaine session démarrera proprement.
+			m_postRegistrationCharacterCreatePending = false;
+			m_chosenShardId = 0;
 			SetPhase(Phase::Login);
 			return;
 		}
@@ -2438,8 +2459,17 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			LOG_WARN(Core, "[AuthUiPresenter] ShardPick submit rejected: no shard selected");
 			return;
 		}
+		// Mémoriser le royaume choisi : il sert d'override pour le MasterFlow final
+		// (après création de personnage pour un nouveau compte, ou directement pour un retour).
+		m_chosenShardId = m_shardPickChoiceShardId;
+		if (m_postRegistrationCharacterCreatePending)
+		{
+			LOG_INFO(Core, "[AuthUiPresenter] ShardPick -> CharacterCreate (compte fraîchement créé sur shard {})", m_chosenShardId);
+			SetPhase(Phase::CharacterCreate);
+			return;
+		}
 		SetPhase(Phase::Submitting);
-		m_shardFlowOverrideId = m_shardPickChoiceShardId;
+		m_shardFlowOverrideId = m_chosenShardId;
 		StartMasterFlowWorker(cfg);
 		return;
 	}
@@ -4137,6 +4167,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			SetPhase(Phase::Login);
 			m_userErrorText.clear();
 			m_infoBanner = Tr("auth.info.character_cancelled");
+			m_chosenShardId = 0;
+			m_postRegistrationCharacterCreatePending = false;
 			ResetMasterSession();
 			return true;
 		}
@@ -4144,6 +4176,8 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		{
 			m_shardPickEntries.clear();
 			m_shardPickChoiceShardId = 0;
+			m_chosenShardId = 0;
+			m_postRegistrationCharacterCreatePending = false;
 			SetPhase(Phase::Login);
 			m_userErrorText.clear();
 			LOG_INFO(Core, "[AuthUiPresenter] Escape: ShardPick -> Login");

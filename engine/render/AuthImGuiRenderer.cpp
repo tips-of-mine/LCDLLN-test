@@ -1001,7 +1001,7 @@ namespace engine::render
 		ImGui::PopStyleColor();
 	}
 
-	bool AuthImGuiRenderer::DrawPrimaryButton(std::string_view label, bool disabled)
+	bool AuthImGuiRenderer::DrawPrimaryButton(std::string_view label, bool disabled, float width)
 	{
 		if (disabled)
 		{
@@ -1014,7 +1014,7 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		char id[160];
 		std::snprintf(id, sizeof(id), "%.*s##primary", static_cast<int>(label.size()), label.data());
-		const bool clicked = ImGui::Button(id, ImVec2(-FLT_MIN, 32.f));
+		const bool clicked = ImGui::Button(id, ImVec2(width, 32.f));
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(4);
 		if (disabled)
@@ -1024,7 +1024,7 @@ namespace engine::render
 		return clicked;
 	}
 
-	bool AuthImGuiRenderer::DrawGhostButton(std::string_view label, bool disabled)
+	bool AuthImGuiRenderer::DrawGhostButton(std::string_view label, bool disabled, float width)
 	{
 		if (disabled)
 		{
@@ -1039,7 +1039,7 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		char id[160];
 		std::snprintf(id, sizeof(id), "%.*s##ghost", static_cast<int>(label.size()), label.data());
-		const bool clicked = ImGui::Button(id, ImVec2(-FLT_MIN, 32.f));
+		const bool clicked = ImGui::Button(id, ImVec2(width, 32.f));
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(5);
 		if (disabled)

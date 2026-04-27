@@ -91,12 +91,19 @@ namespace engine::render
 			}
 		}
 		DrawSeparator();
-		if (DrawGhostButton("Refuser") && m_authPresenter != nullptr && m_authWindow != nullptr)
+		// Largeurs finies : avant, DrawGhostButton et DrawPrimaryButton utilisaient -FLT_MIN
+		// (pleine largeur), donc Refuser couvrait toute la ligne et son rectangle de hit-test
+		// englobait celui d'Accepter. ImGui choisit le premier item dessiné en cas de chevauchement
+		// → cliquer sur « Accepter / continuer » déclenchait en fait Refuser → RequestClose() →
+		// fermeture immédiate du jeu (« le jeu plante »).
+		const float btnGap = 14.f;
+		const float btnW = (ImGui::GetContentRegionAvail().x - btnGap) * 0.5f;
+		if (DrawGhostButton("Refuser", false, btnW) && m_authPresenter != nullptr && m_authWindow != nullptr)
 		{
 			m_authPresenter->ImGuiTermsDecline(*m_authWindow);
 		}
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.45f);
-		if (DrawPrimaryButton("Accepter / continuer") && m_authPresenter != nullptr && m_authCfg != nullptr)
+		ImGui::SameLine(0.f, btnGap);
+		if (DrawPrimaryButton("Accepter / continuer", false, btnW) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiTermsPrimaryClick(*m_authCfg);
 		}

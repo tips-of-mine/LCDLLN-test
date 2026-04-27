@@ -183,6 +183,12 @@ namespace engine::render
 				const ImVec4 borderCol = isSelected ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder);
 				const float dim = (rowSelectable || e.status == 2u) ? 1.f : 0.48f;
 
+				// On pousse 3 StyleVar (Alpha + ChildRounding + ChildBorderSize) et 2 StyleColor
+				// (ChildBg + Border) avant BeginChild. Seuls ChildRounding/ChildBorderSize/ChildBg/Border
+				// servent au cadre de la fenêtre enfant : on peut les pop juste après BeginChild. L'Alpha
+				// doit rester actif pour DIM le CONTENU de la ligne — on la pop après EndChild (l. ~292).
+				// Avant : on poppait les 3 StyleVar ici ET 1 StyleVar après EndChild → assertion ImGui
+				// « PopStyleVar() too many times ».
 				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * dim);
 				ImGui::PushStyleColor(ImGuiCol_ChildBg, isSelected ? IV(LnTheme::AccentDim(0.1f)) : IV(LnTheme::kSurface));
 				ImGui::PushStyleColor(ImGuiCol_Border, borderCol);
@@ -191,7 +197,7 @@ namespace engine::render
 				char rowId[40];
 				std::snprintf(rowId, sizeof(rowId), "##shard%u", e.shard_id);
 				ImGui::BeginChild(rowId, ImVec2(-FLT_MIN, kRowH), true, ImGuiWindowFlags_NoScrollbar);
-				ImGui::PopStyleVar(3);
+				ImGui::PopStyleVar(2);
 				ImGui::PopStyleColor(2);
 
 				const float innerW = ImGui::GetContentRegionAvail().x;

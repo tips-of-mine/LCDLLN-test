@@ -108,14 +108,22 @@ namespace engine::render
 			ImGui::Columns(1);
 
 			/// Peuple un vecteur de pointeurs C à partir des labels d'une RenderDropdown, nécessaire pour ImGui::Combo qui attend un tableau de const char*.
+			/// IMPORTANT : on remplit \p store en entier AVANT de prendre les c_str() — chaque push_back peut
+			/// réallouer le vector, ce qui invalide les c_str() des éléments précédents. Le bug provoquait
+			/// l'affichage du libellé du dernier dropdown dans toutes les cases (« Jour de naissance » partout).
 			auto buildDdPtrs = [](const engine::client::AuthUiPresenter::RenderDropdown& dd, std::vector<std::string>& store,
 								   std::vector<const char*>& ptrs) {
 				store.clear();
-				ptrs.clear();
+				store.reserve(dd.options.size());
 				for (const auto& o : dd.options)
 				{
 					store.push_back(o.label);
-					ptrs.push_back(store.back().c_str());
+				}
+				ptrs.clear();
+				ptrs.reserve(store.size());
+				for (const auto& s : store)
+				{
+					ptrs.push_back(s.c_str());
 				}
 			};
 			std::vector<std::string> dayStore;

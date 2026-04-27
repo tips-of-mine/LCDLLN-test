@@ -42,8 +42,7 @@ namespace engine::render
 			}
 		};
 
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
-		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
 		ImGui::SetWindowFontScale(1.62f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
@@ -53,13 +52,16 @@ namespace engine::render
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
-		ImGui::SetWindowFontScale(1.12f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-		ImGui::TextUnformatted(h2.c_str());
-		ImGui::PopStyleColor();
-		ImGui::SetWindowFontScale(1.f);
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.12f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
 
 		if (rm.authErrorRichRegisterLayout && !rm.authRegisterErrorVariants.empty())
 		{

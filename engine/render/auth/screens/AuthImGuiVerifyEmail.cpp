@@ -58,8 +58,7 @@ namespace engine::render
 	/// Affiche l'écran de saisie du code à 6 chiffres envoyé par e-mail lors de l'inscription.
 	void AuthImGuiRenderer::RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
-		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
 		ImGui::SetWindowFontScale(1.62f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
@@ -69,13 +68,16 @@ namespace engine::render
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
-		ImGui::SetWindowFontScale(1.12f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-		ImGui::TextUnformatted(h2.c_str());
-		ImGui::PopStyleColor();
-		ImGui::SetWindowFontScale(1.f);
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.12f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -296,8 +298,7 @@ namespace engine::render
 	/// Affiche l'écran « vérifiez vos e-mails » affiché après une inscription réussie, avec renvoi du code si 15 min se sont écoulées.
 	void AuthImGuiRenderer::RenderEmailConfirmationScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
-		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
 		ImGui::SetWindowFontScale(1.62f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
@@ -307,13 +308,16 @@ namespace engine::render
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
-		ImGui::SetWindowFontScale(1.12f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-		ImGui::TextUnformatted(h2.c_str());
-		ImGui::PopStyleColor();
-		ImGui::SetWindowFontScale(1.f);
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.12f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
 
 		DrawRegisterFlowHeader(rm, vpW);
 

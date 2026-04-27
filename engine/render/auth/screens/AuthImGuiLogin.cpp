@@ -40,8 +40,9 @@ namespace engine::render
 		ImGui::SetCursorPosX((vpW - stageW) * 0.5f);
 		ImGui::BeginChild("##ln_login_stage", ImVec2(stageW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
-		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
+		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
+		// sinon le fallback en dur dupliquait visuellement le titre.
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
 		ImGui::SetWindowFontScale(1.62f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
@@ -51,13 +52,16 @@ namespace engine::render
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
-		ImGui::SetWindowFontScale(1.12f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
-		ImGui::SetCursorPosX((stageW - w2) * 0.5f);
-		ImGui::TextUnformatted(h2.c_str());
-		ImGui::PopStyleColor();
-		ImGui::SetWindowFontScale(1.f);
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.12f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPosX((stageW - w2) * 0.5f);
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
 
 		ImGui::Spacing();
 

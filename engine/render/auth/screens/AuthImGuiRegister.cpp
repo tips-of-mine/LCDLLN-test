@@ -128,22 +128,40 @@ namespace engine::render
 			buildDdPtrs(rm.dropdowns[1], monStore, monPtrs);
 			buildDdPtrs(rm.dropdowns[2], yrStore, yrPtrs);
 
+			// Date de naissance : trois colonnes égales (jour / mois / année) avec libellés au-dessus.
+			// Avant : deux combos collés (jour+mois) puis l'année toute seule sur une nouvelle ligne — la
+			// combo année apparaissait coupée et donnait l'impression que les champs n'étaient pas fonctionnels.
+			const float ddGap = 10.f;
+			const float ddW = (ImGui::GetContentRegionAvail().x - ddGap * 2.f) / 3.f;
+			const float ddStartX = ImGui::GetCursorPosX();
+			const std::string& dayLab = rm.dropdowns[0].label.empty() ? std::string("JOUR") : rm.dropdowns[0].label;
+			const std::string& monLab = rm.dropdowns[1].label.empty() ? std::string("MOIS") : rm.dropdowns[1].label;
+			const std::string& yrLab = rm.dropdowns[2].label.empty() ? std::string("ANNEE") : rm.dropdowns[2].label;
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			ImGui::TextUnformatted(dayLab.c_str());
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ddStartX + ddW + ddGap);
+			ImGui::TextUnformatted(monLab.c_str());
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ddStartX + (ddW + ddGap) * 2.f);
+			ImGui::TextUnformatted(yrLab.c_str());
+			ImGui::PopStyleColor();
 			ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
 			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			const float halfDate = (ImGui::GetContentRegionAvail().x - 10.f) * 0.5f;
-			ImGui::SetNextItemWidth(halfDate);
+			ImGui::SetNextItemWidth(ddW);
 			if (!dayPtrs.empty())
 			{
 				ImGui::Combo("##reg_day", &m_regBirthDayIdx, dayPtrs.data(), static_cast<int>(dayPtrs.size()));
 			}
-			ImGui::SameLine(0.f, 10.f);
-			ImGui::SetNextItemWidth(halfDate);
+			ImGui::SameLine(0.f, ddGap);
+			ImGui::SetNextItemWidth(ddW);
 			if (!monPtrs.empty())
 			{
 				ImGui::Combo("##reg_month", &m_regBirthMonthIdx, monPtrs.data(), static_cast<int>(monPtrs.size()));
 			}
-			ImGui::SetNextItemWidth(-FLT_MIN);
+			ImGui::SameLine(0.f, ddGap);
+			ImGui::SetNextItemWidth(ddW);
 			if (!yrPtrs.empty())
 			{
 				ImGui::Combo("##reg_year", &m_regBirthYearIdx, yrPtrs.data(), static_cast<int>(yrPtrs.size()));
@@ -292,34 +310,16 @@ namespace engine::render
 			actBack = &rm.actions[1];
 		}
 
-		const float backW = 200.f;
-		const float submitW = 280.f;
-		const float rowH = 34.f;
 		if (actBack != nullptr && actSubmit != nullptr)
 		{
-			std::string backLab = actBack->label.empty() ? std::string("RETOUR") : actBack->label;
-			backLab += "##reg_back";
-			ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.1f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.16f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			if (ImGui::Button(backLab.c_str(), ImVec2(backW, rowH)) && m_authPresenter != nullptr)
+			// Boutons d'action alignés sur le visuel texte simple (cf. écran de connexion) :
+			// pas de fond plein, pas de bordure, pas d'actionBadge — un simple SmallButton avec
+			// couleur texte muted. Avant, le calcul de rowRight pouvait pousser le bouton submit
+			// hors du panneau quand le contenu de la ligne était large.
+			std::string backLab = actBack->label.empty() ? tr("auth.hint.return_login", "Back") : actBack->label;
+			if (DrawAuthButtonText(backLab, "##reg_back") && m_authPresenter != nullptr)
 			{
 				m_authPresenter->ImGuiBackFromRegisterToLogin();
-			}
-			ImGui::PopStyleVar(2);
-			ImGui::PopStyleColor(5);
-			if (!actBack->actionBadge.empty())
-			{
-				ImGui::SameLine(0.f, 6.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.85f);
-				ImGui::TextUnformatted(actBack->actionBadge.c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
 			}
 			if (!rm.authRegisterShowErrorsLabel.empty() && !canSubmit)
 			{
@@ -332,23 +332,9 @@ namespace engine::render
 				ImGui::PopStyleColor();
 			}
 
-			const float submitBadgeW =
-				actSubmit->actionBadge.empty() ? 0.f : (ImGui::CalcTextSize(actSubmit->actionBadge.c_str()).x + 10.f);
-			const float leftEndX = ImGui::GetItemRectMax().x;
-			float rowRight = ImGui::GetCursorStartPos().x + ImGui::GetContentRegionAvail().x - submitW - submitBadgeW - 4.f;
-			if (rowRight < leftEndX + 12.f)
-			{
-				rowRight = leftEndX + 12.f;
-			}
-			ImGui::SetCursorPosX(rowRight);
+			ImGui::SameLine(0.f, 24.f);
 			std::string subLab = actSubmit->label.empty() ? tr("auth.register.submit_create", "CREATE ACCOUNT") : actSubmit->label;
-			subLab += "##reg_submit";
-			ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kPrimary));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.39f, 0.58f, 0.82f, 1.f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.19f, 0.38f, 0.62f, 1.f));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			if (ImGui::Button(subLab.c_str(), ImVec2(submitW, rowH)) && m_authPresenter != nullptr && m_authCfg != nullptr)
+			if (DrawAuthButtonText(subLab, "##reg_submit") && m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
 				engine::client::AuthUiPresenter::RegisterImGuiSubmit form{};
 				form.login = m_regId;
@@ -362,17 +348,6 @@ namespace engine::render
 				form.birthYear = yrStr.c_str();
 				form.countryIso2 = m_regCountry;
 				m_authPresenter->ImGuiSubmitRegister(*m_authCfg, form);
-			}
-			ImGui::PopStyleVar(1);
-			ImGui::PopStyleColor(4);
-			if (!actSubmit->actionBadge.empty())
-			{
-				ImGui::SameLine(0.f, 6.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.95f);
-				ImGui::TextUnformatted(actSubmit->actionBadge.c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
 			}
 			ImGui::Spacing();
 		}

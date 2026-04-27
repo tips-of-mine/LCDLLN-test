@@ -3945,11 +3945,6 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		ResolveActionButtonLabels(model);
 
-		if (m_phase == Phase::Login && model.actions.size() == 4u)
-		{
-			model.actions[0].actionBadge = Tr("auth.badge.ctrl_r");
-			model.actions[2].actionBadge = Tr("auth.badge.submit");
-		}
 		if (m_phase == Phase::Register && model.actions.size() >= 2u)
 		{
 			model.actions[0].actionBadge = Tr("auth.badge.submit_enter");

@@ -138,63 +138,27 @@ namespace engine::render
 			actQuit = &rm.actions[3];
 		}
 
-		const float rowBtnH = 34.f;
+		// Boutons « Créer un compte » et « Se connecter » alignés sur le visuel texte simple
+		// (cf. « Retour au bureau ») : pas de fond coloré, pas de bordure, pas d'actionBadge.
 		if (actCreate != nullptr && actSubmit != nullptr)
 		{
-			const float gap = 12.f;
-			const float submitW = 220.f;
-			const float availRow = ImGui::GetContentRegionAvail().x;
-			const float badgeCreateW =
-				actCreate->actionBadge.empty() ? 0.f : (ImGui::CalcTextSize(actCreate->actionBadge.c_str()).x + 10.f);
-			const float badgeSubmitW =
-				actSubmit->actionBadge.empty() ? 0.f : (ImGui::CalcTextSize(actSubmit->actionBadge.c_str()).x + 10.f);
-			const float createW =
-				(std::max)(120.f, availRow - submitW - gap - badgeCreateW - badgeSubmitW - 6.f);
 			const std::string createLbl =
 				actCreate->label.empty() ? tr("auth.login.maquette_create", "CREATE ACCOUNT") : actCreate->label;
-			ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.1f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.16f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kText));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			std::string createId = createLbl + "##login_create_btn";
-			if (ImGui::Button(createId.c_str(), ImVec2(createW, rowBtnH)) && m_authPresenter != nullptr)
+			if (DrawAuthButtonText(createLbl, "##login_create_btn") && m_authPresenter != nullptr)
 			{
 				m_authPresenter->ImGuiNavigateToRegisterFromLogin();
 			}
-			ImGui::PopStyleVar(2);
-			ImGui::PopStyleColor(5);
-			if (!actCreate->actionBadge.empty())
-			{
-				ImGui::SameLine(0.f, 6.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.85f);
-				ImGui::TextUnformatted(actCreate->actionBadge.c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
-			}
-			ImGui::SameLine(0.f, gap);
+			ImGui::SameLine(0.f, 24.f);
 			const std::string submitLbl =
 				actSubmit->label.empty() ? tr("auth.login.maquette_submit", "SIGN IN") : actSubmit->label;
-			if (DrawAuthButtonPrimary(submitLbl, "##login_submit_btn", vs.submitting) && m_authPresenter != nullptr && m_authCfg != nullptr
+			if (DrawAuthButtonText(submitLbl, "##login_submit_btn") && m_authPresenter != nullptr && m_authCfg != nullptr
 				&& !vs.submitting)
 			{
 				m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 			}
-			if (!actSubmit->actionBadge.empty())
-			{
-				ImGui::SameLine(0.f, 6.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.95f);
-				ImGui::TextUnformatted(actSubmit->actionBadge.c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
-			}
 		}
-		else if (DrawPrimaryButton(tr("auth.login.maquette_submit", "SIGN IN").c_str(), vs.submitting) && m_authPresenter != nullptr
-			&& m_authCfg != nullptr && !vs.submitting)
+		else if (DrawAuthButtonText(tr("auth.login.maquette_submit", "SIGN IN"), "##login_submit_btn_only")
+			&& m_authPresenter != nullptr && m_authCfg != nullptr && !vs.submitting)
 		{
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}

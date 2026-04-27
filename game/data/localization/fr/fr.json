@@ -102,7 +102,7 @@
   "auth.footer_hint.login_bar": "TAB CHAMP SUIVANT    |    ✓ SE CONNECTER    |    ECHAP QUITTER",
   "auth.login.maquette_create": "CRÉER UN COMPTE",
   "auth.login.maquette_submit": "SE CONNECTER",
-  "auth.login.footer_options": "⚙ OPTIONS",
+  "auth.login.footer_options": "OPTIONS",
   "auth.login.version_badge": "v8.8.4",
   "auth.login.remember_title": "SE SOUVENIR DE MOI",
   "auth.login.remember_detail": "CONSERVE L'IDENTIFIANT À LA PROCHAINE OUVERTURE",

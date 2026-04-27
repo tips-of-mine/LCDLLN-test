@@ -102,7 +102,7 @@
   "auth.footer_hint.login_bar": "TAB NEXT FIELD    |    ✓ SIGN IN    |    ESC QUIT",
   "auth.login.maquette_create": "CREATE ACCOUNT",
   "auth.login.maquette_submit": "SIGN IN",
-  "auth.login.footer_options": "⚙ OPTIONS",
+  "auth.login.footer_options": "OPTIONS",
   "auth.login.version_badge": "v8.8.4",
   "auth.login.remember_title": "REMEMBER ME",
   "auth.login.remember_detail": "KEEPS YOUR USERNAME FOR THE NEXT LAUNCH",

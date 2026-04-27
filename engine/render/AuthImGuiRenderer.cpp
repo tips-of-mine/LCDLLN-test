@@ -489,7 +489,8 @@ namespace engine::render
 	}
 
 	bool AuthImGuiRenderer::BeginPanel(float width, float vpW, float vpH, std::string_view title,
-		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent)
+		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent,
+		float fixedHeight)
 	{
 		const float panelX = (vpW - width) * 0.5f;
 		const float panelY = vpH * 0.28f;
@@ -501,7 +502,10 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 18.f));
 
-		const bool open = ImGui::BeginChild("##ln_panel", ImVec2(width, 0.f), true,
+		// Si fixedHeight > 0 : le panneau a une hauteur figée (utile pour les écrans dont le contenu
+		// est compact, comme la sélection de langue). Sinon le panneau remplit l'espace disponible.
+		const ImVec2 panelSize(width, fixedHeight > 0.f ? fixedHeight : 0.f);
+		const bool open = ImGui::BeginChild("##ln_panel", panelSize, true,
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 		ImGui::PopStyleVar(3);

@@ -109,7 +109,8 @@ namespace engine::render
 
 		void BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha = 1.f);
 		bool BeginPanel(float width, float vpW, float vpH, std::string_view title, std::string_view subtitle,
-			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false);
+			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false,
+			float fixedHeight = 0.f);
 		void EndPanel();
 		int DrawLanguageFirstRunCards(const RenderModel& rm, int selected);
 		void DrawAuthTweaksPanel(float vpW, float vpH);

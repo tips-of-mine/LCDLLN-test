@@ -62,10 +62,10 @@ namespace engine::render
 		int clicked = -1;
 		const size_t n = rm.languageFirstRunCards.empty() ? 2u : rm.languageFirstRunCards.size();
 		const float gap = 16.f; ///< Espacement horizontal entre les cartes.
-		const float avail = ImGui::GetContentRegionAvail().x;
-		const float cardW = (avail - gap * static_cast<float>(n > 1u ? n - 1u : 0u)) / static_cast<float>((n < 1u) ? 1u : n);
-		const float cardH = 148.f; ///< Hauteur fixe de chaque carte de langue.
-		const ImVec2 cardSize((std::max)(140.f, cardW), cardH);
+		// Cartes plus compactes : largeur fixe maxi pour ne pas s'étaler ; centrage horizontal géré ci-dessous.
+		const float cardWMax = 200.f;
+		const float cardH = 96.f; ///< Hauteur fixe d'une carte (compacte, drapeau centré + libellés).
+		const ImVec2 cardSize(cardWMax, cardH);
 		const float totalW = cardSize.x * static_cast<float>(n) + gap * static_cast<float>(n > 1u ? n - 1u : 0u);
 		const float startX = (ImGui::GetContentRegionAvail().x - totalW) * 0.5f + ImGui::GetCursorPosX(); ///< Position X de départ pour centrer horizontalement la rangée de cartes.
 
@@ -121,19 +121,24 @@ namespace engine::render
 			const float borderThick = isSelected ? 2.f : 1.f;
 			dl->AddRect(rmin, rmax, borderCol, 8.f, 0, borderThick);
 
-			const float flagW = 54.f;
-			const float flagH = 38.f;
-			const float fx = rmin.x + (cardSize.x - flagW) * 0.5f;
-			const float fy = rmin.y + 12.f;
+			// Drapeau centré dans la carte (à gauche du libellé) — taille réduite pour cartes compactes.
+			const float flagW = 44.f;
+			const float flagH = 30.f;
+			const float flagPadL = 14.f;
+			const float fx = rmin.x + flagPadL;
+			const float fy = rmin.y + (cardSize.y - flagH) * 0.5f;
 			DrawCardFlag(dl, fx, fy, flagW, flagH, locTag);
 
 			ImFont* font = ImGui::GetFont();
-			const float nameSize = font->FontSize * 1.08f;
-			const ImVec2 namePos(rmin.x + 10.f, fy + flagH + 10.f);
+			const float nameSize = font->FontSize * 1.05f;
+			const float nativeSz = font->FontSize * 0.88f;
+			const float textBlockH = nameSize + 4.f + nativeSz;
+			const float textX = fx + flagW + 12.f;
+			const float textY = rmin.y + (cardSize.y - textBlockH) * 0.5f;
+			const ImVec2 namePos(textX, textY);
 			dl->AddText(font, nameSize, namePos, U32(LnTheme::kText), nameCaps.data(), nameCaps.data() + static_cast<int>(nameCaps.size()));
 
-			const float nativeSz = font->FontSize * 0.92f;
-			const ImVec2 natPos(rmin.x + 10.f, namePos.y + nameSize + 4.f);
+			const ImVec2 natPos(textX, textY + nameSize + 4.f);
 			dl->AddText(font, nativeSz, natPos, U32(LnTheme::kMuted), nativeLn.data(), nativeLn.data() + static_cast<int>(nativeLn.size()));
 		}
 		return clicked;
@@ -172,7 +177,9 @@ namespace engine::render
 		const std::string& welcome =
 			rm.languagePanelSubtitle.empty() ? std::string("Bienvenue, voyageur.") : rm.languagePanelSubtitle;
 		const std::string ver = rm.languageVersionLabel.empty() ? std::string("1 / 2") : rm.languageVersionLabel;
-		if (!BeginPanel(720.f, vpW, vpH, panelTitle, welcome, ver, true, true))
+		// Panneau compact : hauteur calée sur titre + sous-titre + cartes (96px) + bouton + footer + paddings.
+		const float panelFixedH = 320.f;
+		if (!BeginPanel(720.f, vpW, vpH, panelTitle, welcome, ver, true, true, panelFixedH))
 		{
 			EndPanel();
 			return;

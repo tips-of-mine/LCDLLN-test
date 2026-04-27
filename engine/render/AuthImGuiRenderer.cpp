@@ -502,10 +502,14 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 18.f));
 
-		// Si fixedHeight > 0 : le panneau a une hauteur figée (utile pour les écrans dont le contenu
-		// est compact, comme la sélection de langue). Sinon le panneau remplit l'espace disponible.
+		// Si fixedHeight > 0 : le panneau a une hauteur figée. Sinon AutoResizeY : la hauteur s'aligne
+		// sur le contenu réel — évite les énormes panneaux vides qui poussaient les champs et boutons
+		// hors de l'écran (ex. login après bannière info, choix de langue).
 		const ImVec2 panelSize(width, fixedHeight > 0.f ? fixedHeight : 0.f);
-		const bool open = ImGui::BeginChild("##ln_panel", panelSize, true,
+		const ImGuiChildFlags childFlags = (fixedHeight > 0.f)
+			? ImGuiChildFlags_Borders
+			: (ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
+		const bool open = ImGui::BeginChild("##ln_panel", panelSize, childFlags,
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 		ImGui::PopStyleVar(3);
@@ -958,7 +962,10 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		std::string bannerId = "##banner_";
 		bannerId.append(title.data(), title.size());
-		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f), true, ImGuiWindowFlags_NoScrollbar);
+		// AutoResizeY : la bannière s'adapte à la hauteur réelle du texte au lieu de remplir tout le panneau.
+		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f),
+			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+			ImGuiWindowFlags_NoScrollbar);
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(2);
 

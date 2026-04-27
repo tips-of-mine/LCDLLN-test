@@ -147,13 +147,12 @@ namespace engine::render
 	/// Affiche l'écran complet de sélection de langue : titre du jeu, panneau centré avec les cartes de langue et le bouton Continuer, puis hints de navigation en pied de panel.
 	void AuthImGuiRenderer::RenderLangScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// h1 = titre principal (ex. « Les Chroniques de la Lune Noire »).
-		// h2 = sous-titre optionnel (auth.title_line2). On ne dessine h2 que s'il est non vide :
-		// avec le fallback en dur précédent, h2 affichait toujours « DE LA LUNE NOIRE » même quand
-		// la traduction était vide → titre dupliqué.
+		// Titre sur deux lignes : 2.4x pour h1 (~31 px) et 1.5x pour h2 (~20 px) avec Windlass 13 px.
+		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
+		// sinon le fallback en dur précédent dupliquait le titre.
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		ImGui::SetWindowFontScale(1.62f);
+		ImGui::SetWindowFontScale(2.4f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.07f));
@@ -163,7 +162,7 @@ namespace engine::render
 
 		if (!rm.titleLine2.empty())
 		{
-			ImGui::SetWindowFontScale(1.12f);
+			ImGui::SetWindowFontScale(1.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
 			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));

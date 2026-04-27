@@ -36,7 +36,7 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		const float stageW = (std::min)(460.f, vpW * 0.94f);
+		const float stageW = (std::min)(540.f, vpW * 0.94f);
 		ImGui::SetCursorPosX((vpW - stageW) * 0.5f);
 		ImGui::BeginChild("##ln_login_stage", ImVec2(stageW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 
@@ -44,7 +44,9 @@ namespace engine::render
 		// sinon le fallback en dur dupliquait visuellement le titre.
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		ImGui::SetWindowFontScale(1.62f);
+		// Titre plus grand : 2.4x le base (Windlass 13 px → ~31 px) — l'utilisateur voulait
+		// le titre plus visible. Avant : 1.62x = ~21 px, lisible mais trop discret.
+		ImGui::SetWindowFontScale(2.4f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPosX((stageW - w1) * 0.5f);
@@ -54,7 +56,7 @@ namespace engine::render
 
 		if (!rm.titleLine2.empty())
 		{
-			ImGui::SetWindowFontScale(1.12f);
+			ImGui::SetWindowFontScale(1.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
 			ImGui::SetCursorPosX((stageW - w2) * 0.5f);
@@ -178,13 +180,26 @@ namespace engine::render
 
 		if (actOpts != nullptr && actQuit != nullptr && m_authPresenter != nullptr)
 		{
+			// Avant : SetCursorPos dans la fenêtre overlay APRÈS DrawAuthTweaksPanel — les boutons
+			// étaient bien dessinés mais ne réagissaient pas aux clics (hit-test brouillé par
+			// l'autre fenêtre ImGui dessinée juste avant). Solution propre : ouvrir une petite
+			// fenêtre dédiée au bas du viewport, comme DrawAuthTweaksPanel pour les races.
 			const std::string lo = actOpts->label.empty() ? std::string("OPTIONS") : actOpts->label;
 			const std::string lq = actQuit->label.empty() ? tr("auth.footer.chip.esc.desc", "QUIT") : actQuit->label;
 			const float tw = ImGui::CalcTextSize(lo.c_str()).x + ImGui::CalcTextSize(lq.c_str()).x + 48.f;
-			// Pinné au bas du viewport : avant on faisait GetCursorPosY() + 14 qui plaçait les
-			// boutons APRÈS le stage (BeginChild ImVec2(stageW, 0.f) = pleine hauteur disponible),
-			// donc Options et Retour au bureau finissaient sous l'écran et étaient invisibles.
-			ImGui::SetCursorPos(ImVec2((vpW - tw) * 0.5f, vpH - 56.f));
+			const float footerW = (std::max)(tw + 32.f, 220.f);
+			const float footerH = 36.f;
+			ImGui::SetNextWindowPos(ImVec2((vpW - footerW) * 0.5f, vpH - footerH - 12.f), ImGuiCond_Always);
+			ImGui::SetNextWindowSize(ImVec2(footerW, footerH), ImGuiCond_Always);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 6.f));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.f, 0.f, 0.f));
+			ImGui::Begin("##ln_auth_login_footer",
+				nullptr,
+				ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
+					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoScrollbar);
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar(2);
 			if (DrawAuthButtonText(lo, "##foot_opts"))
 			{
 				m_authPresenter->ImGuiOpenLanguageOptionsMenu();
@@ -194,6 +209,7 @@ namespace engine::render
 			{
 				m_authPresenter->ImGuiRequestClose(*m_authWindow);
 			}
+			ImGui::End();
 		}
 	}
 } // namespace engine::render

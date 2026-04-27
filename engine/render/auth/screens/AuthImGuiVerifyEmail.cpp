@@ -60,7 +60,7 @@ namespace engine::render
 	{
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		ImGui::SetWindowFontScale(1.62f);
+		ImGui::SetWindowFontScale(2.4f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
@@ -70,7 +70,7 @@ namespace engine::render
 
 		if (!rm.titleLine2.empty())
 		{
-			ImGui::SetWindowFontScale(1.12f);
+			ImGui::SetWindowFontScale(1.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
 			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
@@ -300,7 +300,7 @@ namespace engine::render
 	{
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		ImGui::SetWindowFontScale(1.62f);
+		ImGui::SetWindowFontScale(2.4f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
@@ -310,7 +310,7 @@ namespace engine::render
 
 		if (!rm.titleLine2.empty())
 		{
-			ImGui::SetWindowFontScale(1.12f);
+			ImGui::SetWindowFontScale(1.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
 			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));

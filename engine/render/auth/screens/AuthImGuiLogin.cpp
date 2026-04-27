@@ -181,7 +181,10 @@ namespace engine::render
 			const std::string lo = actOpts->label.empty() ? std::string("OPTIONS") : actOpts->label;
 			const std::string lq = actQuit->label.empty() ? tr("auth.footer.chip.esc.desc", "QUIT") : actQuit->label;
 			const float tw = ImGui::CalcTextSize(lo.c_str()).x + ImGui::CalcTextSize(lq.c_str()).x + 48.f;
-			ImGui::SetCursorPos(ImVec2((vpW - tw) * 0.5f, ImGui::GetCursorPosY() + 14.f));
+			// Pinné au bas du viewport : avant on faisait GetCursorPosY() + 14 qui plaçait les
+			// boutons APRÈS le stage (BeginChild ImVec2(stageW, 0.f) = pleine hauteur disponible),
+			// donc Options et Retour au bureau finissaient sous l'écran et étaient invisibles.
+			ImGui::SetCursorPos(ImVec2((vpW - tw) * 0.5f, vpH - 56.f));
 			if (DrawAuthButtonText(lo, "##foot_opts"))
 			{
 				m_authPresenter->ImGuiOpenLanguageOptionsMenu();

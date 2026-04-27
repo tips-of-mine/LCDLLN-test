@@ -655,7 +655,16 @@ namespace engine::render
 		const float trackH = 22.f;
 		const float pad = 3.f;
 		const ImVec2 p0 = ImGui::GetCursorScreenPos();
-		ImGui::InvisibleButton("##remember_toggle", ImVec2(trackW + 4.f, trackH + 6.f));
+		// Zone de clic = toute la ligne (toggle + libellé) pour que cliquer sur "SE SOUVENIR DE MOI"
+		// bascule l'état comme le ferait un clic sur le toggle. Avant, l'InvisibleButton couvrait
+		// uniquement la pastille (50x28 px) et le libellé n'avait aucun handler, ce qui donnait
+		// l'impression que le toggle ne réagissait pas.
+		std::string rememberTitle = (!rm.bodyLines.empty() && !rm.bodyLines[0].text.empty())
+			? rm.bodyLines[0].text
+			: std::string("SE SOUVENIR DE MOI");
+		const float rowAvail = ImGui::GetContentRegionAvail().x;
+		const ImVec2 hitSize(rowAvail, trackH + 6.f);
+		ImGui::InvisibleButton("##remember_toggle", hitSize);
 		if (ImGui::IsItemClicked())
 		{
 			m_rememberMe = !m_rememberMe;
@@ -672,15 +681,13 @@ namespace engine::render
 		const float cx = on ? (b.x - pad - thumbR) : (a.x + pad + thumbR);
 		const float cy = (a.y + b.y) * 0.5f;
 		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, U32(LnTheme::kAccent));
+		// Libellé dessiné via la draw list par-dessus la zone invisible (pas de SameLine + Text qui
+		// déplacerait le curseur d'une ligne et casserait le hit-test ci-dessus).
+		const float labelX = b.x + 12.f;
+		const ImVec2 ts = ImGui::CalcTextSize(rememberTitle.c_str());
+		const float labelY = (a.y + b.y) * 0.5f - ts.y * 0.5f;
+		dl->AddText(ImVec2(labelX, labelY), U32(LnTheme::kText), rememberTitle.c_str());
 
-		ImGui::SameLine(0.f, 12.f);
-		ImGui::BeginGroup();
-		std::string rememberTitle = (!rm.bodyLines.empty() && !rm.bodyLines[0].text.empty())
-			? rm.bodyLines[0].text
-			: std::string("SE SOUVENIR DE MOI");
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		ImGui::TextUnformatted(rememberTitle.c_str());
-		ImGui::PopStyleColor();
 		if (!rm.authRememberDetailLine.empty())
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
@@ -689,7 +696,6 @@ namespace engine::render
 			ImGui::SetWindowFontScale(1.f);
 			ImGui::PopStyleColor();
 		}
-		ImGui::EndGroup();
 	}
 
 	void AuthImGuiRenderer::DrawLoginFooterChips(const RenderModel& rm)

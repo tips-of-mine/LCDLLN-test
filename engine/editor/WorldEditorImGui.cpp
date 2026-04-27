@@ -450,20 +450,21 @@ namespace engine::editor
 
 		if (cfg != nullptr)
 		{
-			// Clé spécifique à la piste ImGui : la piste Vulkan/AuthGlyphPass utilise
-			// render.auth_ui.font_pixel_height = 28 px par défaut, mais en ImGui les facteurs
-			// SetWindowFontScale (1.62 pour le titre, 1.12 pour le sous-titre…) étaient calibrés
-			// pour la police par défaut 13 px — un atlas Windlass à 28 px multiplié par 1.62
-			// donnait un titre à 45 px qui débordait des panneaux. On charge donc Windlass plus
-			// petit pour ImGui et on laisse la piste Vulkan inchangée.
+			// Clés spécifiques à la piste ImGui (la piste Vulkan/AuthGlyphPass garde sa propre
+			// taille via render.auth_ui.font_pixel_height = 28). En ImGui les facteurs
+			// SetWindowFontScale (1.62 pour le titre, 1.12 pour le sous-titre, 1.15 pour le titre
+			// du panneau, 0.78–0.95 pour les libellés…) sont calibrés pour la police par défaut
+			// ProggyClean ~13 px ; charger Windlass à la même taille respecte donc tous les
+			// gabarits existants. On peut surcharger via render.auth_ui.imgui.font_pixel_height
+			// si on veut grossir/réduire globalement l'UI auth ImGui sans toucher aux scales.
 			const std::string uiFontPath = cfg->GetString("render.auth_ui.font_path", "");
 			const float uiFontPx = static_cast<float>(std::clamp<int64_t>(
-				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 16), 12, 64));
+				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 13), 11, 32));
 			loadAuthFontFromConfig(uiFontPath, uiFontPx, "UI");
 
 			const std::string valueFontPath = cfg->GetString("render.auth_ui.value_font_path", "");
 			const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
-				cfg->GetInt("render.auth_ui.imgui.value_font_pixel_height", 14), 12, 64));
+				cfg->GetInt("render.auth_ui.imgui.value_font_pixel_height", 12), 11, 32));
 			loadAuthFontFromConfig(valueFontPath, valueFontPx, "valeurs");
 		}
 

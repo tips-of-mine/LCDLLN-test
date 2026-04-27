@@ -70,12 +70,15 @@ namespace engine::editor
 		~WorldEditorImGui();
 
 		/// \param hwndNative \c HWND sous Windows, sinon ignoré.
+		/// \param cfg utilisé pour charger les polices TTF de l'UI auth (Windlass / Morpheus) dans
+		/// l'atlas ImGui avant la création de la texture de fonts par ImGui_ImplVulkan_Init.
 		bool Init(VkInstance instance,
 			const engine::render::VkDeviceContext& deviceContext,
 			VkFormat swapchainFormat,
 			uint32_t swapchainImageCount,
 			uint32_t vulkanApiVersion,
-			void* hwndNative);
+			void* hwndNative,
+			const engine::core::Config* cfg = nullptr);
 
 		void Shutdown(VkDevice device);
 

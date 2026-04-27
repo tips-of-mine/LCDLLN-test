@@ -489,7 +489,8 @@ namespace engine::render
 	}
 
 	bool AuthImGuiRenderer::BeginPanel(float width, float vpW, float vpH, std::string_view title,
-		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent)
+		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent,
+		float fixedHeight)
 	{
 		const float panelX = (vpW - width) * 0.5f;
 		const float panelY = vpH * 0.28f;
@@ -501,7 +502,14 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 18.f));
 
-		const bool open = ImGui::BeginChild("##ln_panel", ImVec2(width, 0.f), true,
+		// Si fixedHeight > 0 : le panneau a une hauteur figée. Sinon AutoResizeY : la hauteur s'aligne
+		// sur le contenu réel — évite les énormes panneaux vides qui poussaient les champs et boutons
+		// hors de l'écran (ex. login après bannière info, choix de langue).
+		const ImVec2 panelSize(width, fixedHeight > 0.f ? fixedHeight : 0.f);
+		const ImGuiChildFlags childFlags = (fixedHeight > 0.f)
+			? ImGuiChildFlags_Borders
+			: (ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
+		const bool open = ImGui::BeginChild("##ln_panel", panelSize, childFlags,
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 		ImGui::PopStyleVar(3);
@@ -647,7 +655,16 @@ namespace engine::render
 		const float trackH = 22.f;
 		const float pad = 3.f;
 		const ImVec2 p0 = ImGui::GetCursorScreenPos();
-		ImGui::InvisibleButton("##remember_toggle", ImVec2(trackW + 4.f, trackH + 6.f));
+		// Zone de clic = toute la ligne (toggle + libellé) pour que cliquer sur "SE SOUVENIR DE MOI"
+		// bascule l'état comme le ferait un clic sur le toggle. Avant, l'InvisibleButton couvrait
+		// uniquement la pastille (50x28 px) et le libellé n'avait aucun handler, ce qui donnait
+		// l'impression que le toggle ne réagissait pas.
+		std::string rememberTitle = (!rm.bodyLines.empty() && !rm.bodyLines[0].text.empty())
+			? rm.bodyLines[0].text
+			: std::string("SE SOUVENIR DE MOI");
+		const float rowAvail = ImGui::GetContentRegionAvail().x;
+		const ImVec2 hitSize(rowAvail, trackH + 6.f);
+		ImGui::InvisibleButton("##remember_toggle", hitSize);
 		if (ImGui::IsItemClicked())
 		{
 			m_rememberMe = !m_rememberMe;
@@ -664,15 +681,13 @@ namespace engine::render
 		const float cx = on ? (b.x - pad - thumbR) : (a.x + pad + thumbR);
 		const float cy = (a.y + b.y) * 0.5f;
 		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, U32(LnTheme::kAccent));
+		// Libellé dessiné via la draw list par-dessus la zone invisible (pas de SameLine + Text qui
+		// déplacerait le curseur d'une ligne et casserait le hit-test ci-dessus).
+		const float labelX = b.x + 12.f;
+		const ImVec2 ts = ImGui::CalcTextSize(rememberTitle.c_str());
+		const float labelY = (a.y + b.y) * 0.5f - ts.y * 0.5f;
+		dl->AddText(ImVec2(labelX, labelY), U32(LnTheme::kText), rememberTitle.c_str());
 
-		ImGui::SameLine(0.f, 12.f);
-		ImGui::BeginGroup();
-		std::string rememberTitle = (!rm.bodyLines.empty() && !rm.bodyLines[0].text.empty())
-			? rm.bodyLines[0].text
-			: std::string("SE SOUVENIR DE MOI");
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		ImGui::TextUnformatted(rememberTitle.c_str());
-		ImGui::PopStyleColor();
 		if (!rm.authRememberDetailLine.empty())
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
@@ -681,7 +696,6 @@ namespace engine::render
 			ImGui::SetWindowFontScale(1.f);
 			ImGui::PopStyleColor();
 		}
-		ImGui::EndGroup();
 	}
 
 	void AuthImGuiRenderer::DrawLoginFooterChips(const RenderModel& rm)
@@ -954,7 +968,10 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		std::string bannerId = "##banner_";
 		bannerId.append(title.data(), title.size());
-		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f), true, ImGuiWindowFlags_NoScrollbar);
+		// AutoResizeY : la bannière s'adapte à la hauteur réelle du texte au lieu de remplir tout le panneau.
+		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f),
+			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+			ImGuiWindowFlags_NoScrollbar);
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(2);
 
@@ -990,7 +1007,7 @@ namespace engine::render
 		ImGui::PopStyleColor();
 	}
 
-	bool AuthImGuiRenderer::DrawPrimaryButton(std::string_view label, bool disabled)
+	bool AuthImGuiRenderer::DrawPrimaryButton(std::string_view label, bool disabled, float width)
 	{
 		if (disabled)
 		{
@@ -1003,7 +1020,7 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		char id[160];
 		std::snprintf(id, sizeof(id), "%.*s##primary", static_cast<int>(label.size()), label.data());
-		const bool clicked = ImGui::Button(id, ImVec2(-FLT_MIN, 32.f));
+		const bool clicked = ImGui::Button(id, ImVec2(width, 32.f));
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(4);
 		if (disabled)
@@ -1013,7 +1030,7 @@ namespace engine::render
 		return clicked;
 	}
 
-	bool AuthImGuiRenderer::DrawGhostButton(std::string_view label, bool disabled)
+	bool AuthImGuiRenderer::DrawGhostButton(std::string_view label, bool disabled, float width)
 	{
 		if (disabled)
 		{
@@ -1028,7 +1045,7 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		char id[160];
 		std::snprintf(id, sizeof(id), "%.*s##ghost", static_cast<int>(label.size()), label.data());
-		const bool clicked = ImGui::Button(id, ImVec2(-FLT_MIN, 32.f));
+		const bool clicked = ImGui::Button(id, ImVec2(width, 32.f));
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(5);
 		if (disabled)

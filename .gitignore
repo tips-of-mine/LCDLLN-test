@@ -5,3 +5,6 @@ world_editor.log
 
 # SPIR-V généré (sources GLSL dans game/data/shaders/) — voir tools/compile_game_shaders.ps1
 game/data/shaders/*.spv
+
+# Répertoires de build CMake locaux (build/linux-x64*, build/win-x64*, etc.).
+build/

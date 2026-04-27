@@ -2659,7 +2659,8 @@ namespace engine
 				m_vkSwapchain.GetImageFormat(),
 				m_vkSwapchain.GetImageCount(),
 				VK_API_VERSION_1_1,
-				m_window.GetNativeHandle()))
+				m_window.GetNativeHandle(),
+				&m_cfg))
 			{
 				if (m_worldEditorExe)
 				{

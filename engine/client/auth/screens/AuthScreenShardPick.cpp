@@ -45,6 +45,8 @@ namespace engine::client
 		SetPhase(Phase::Login);
 		m_shardPickChoiceShardId = 0;
 		m_shardPickEntries.clear();
+		m_chosenShardId = 0;
+		m_postRegistrationCharacterCreatePending = false;
 	}
 
 	/// Peuple la liste des shards disponibles (nom, charge, endpoint) avec indication du shard sélectionné.

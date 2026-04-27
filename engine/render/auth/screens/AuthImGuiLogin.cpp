@@ -36,14 +36,17 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		const float stageW = (std::min)(460.f, vpW * 0.94f);
+		const float stageW = (std::min)(540.f, vpW * 0.94f);
 		ImGui::SetCursorPosX((vpW - stageW) * 0.5f);
 		ImGui::BeginChild("##ln_login_stage", ImVec2(stageW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("LES CHRONIQUES") : rm.titleLine1;
-		const std::string& h2 = rm.titleLine2.empty() ? std::string("DE LA LUNE NOIRE") : rm.titleLine2;
+		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
+		// sinon le fallback en dur dupliquait visuellement le titre.
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		ImGui::SetWindowFontScale(1.62f);
+		// Titre plus grand : 2.4x le base (Windlass 13 px → ~31 px) — l'utilisateur voulait
+		// le titre plus visible. Avant : 1.62x = ~21 px, lisible mais trop discret.
+		ImGui::SetWindowFontScale(2.4f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPosX((stageW - w1) * 0.5f);
@@ -51,13 +54,16 @@ namespace engine::render
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
-		ImGui::SetWindowFontScale(1.12f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-		const float w2 = ImGui::CalcTextSize(h2.c_str()).x;
-		ImGui::SetCursorPosX((stageW - w2) * 0.5f);
-		ImGui::TextUnformatted(h2.c_str());
-		ImGui::PopStyleColor();
-		ImGui::SetWindowFontScale(1.f);
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPosX((stageW - w2) * 0.5f);
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
 
 		ImGui::Spacing();
 
@@ -138,63 +144,27 @@ namespace engine::render
 			actQuit = &rm.actions[3];
 		}
 
-		const float rowBtnH = 34.f;
+		// Boutons « Créer un compte » et « Se connecter » alignés sur le visuel texte simple
+		// (cf. « Retour au bureau ») : pas de fond coloré, pas de bordure, pas d'actionBadge.
 		if (actCreate != nullptr && actSubmit != nullptr)
 		{
-			const float gap = 12.f;
-			const float submitW = 220.f;
-			const float availRow = ImGui::GetContentRegionAvail().x;
-			const float badgeCreateW =
-				actCreate->actionBadge.empty() ? 0.f : (ImGui::CalcTextSize(actCreate->actionBadge.c_str()).x + 10.f);
-			const float badgeSubmitW =
-				actSubmit->actionBadge.empty() ? 0.f : (ImGui::CalcTextSize(actSubmit->actionBadge.c_str()).x + 10.f);
-			const float createW =
-				(std::max)(120.f, availRow - submitW - gap - badgeCreateW - badgeSubmitW - 6.f);
 			const std::string createLbl =
 				actCreate->label.empty() ? tr("auth.login.maquette_create", "CREATE ACCOUNT") : actCreate->label;
-			ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.1f)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.16f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kText));
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
-			std::string createId = createLbl + "##login_create_btn";
-			if (ImGui::Button(createId.c_str(), ImVec2(createW, rowBtnH)) && m_authPresenter != nullptr)
+			if (DrawAuthButtonText(createLbl, "##login_create_btn") && m_authPresenter != nullptr)
 			{
 				m_authPresenter->ImGuiNavigateToRegisterFromLogin();
 			}
-			ImGui::PopStyleVar(2);
-			ImGui::PopStyleColor(5);
-			if (!actCreate->actionBadge.empty())
-			{
-				ImGui::SameLine(0.f, 6.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.85f);
-				ImGui::TextUnformatted(actCreate->actionBadge.c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
-			}
-			ImGui::SameLine(0.f, gap);
+			ImGui::SameLine(0.f, 24.f);
 			const std::string submitLbl =
 				actSubmit->label.empty() ? tr("auth.login.maquette_submit", "SIGN IN") : actSubmit->label;
-			if (DrawAuthButtonPrimary(submitLbl, "##login_submit_btn", vs.submitting) && m_authPresenter != nullptr && m_authCfg != nullptr
+			if (DrawAuthButtonText(submitLbl, "##login_submit_btn") && m_authPresenter != nullptr && m_authCfg != nullptr
 				&& !vs.submitting)
 			{
 				m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 			}
-			if (!actSubmit->actionBadge.empty())
-			{
-				ImGui::SameLine(0.f, 6.f);
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::SetWindowFontScale(0.95f);
-				ImGui::TextUnformatted(actSubmit->actionBadge.c_str());
-				ImGui::SetWindowFontScale(1.f);
-				ImGui::PopStyleColor();
-			}
 		}
-		else if (DrawPrimaryButton(tr("auth.login.maquette_submit", "SIGN IN").c_str(), vs.submitting) && m_authPresenter != nullptr
-			&& m_authCfg != nullptr && !vs.submitting)
+		else if (DrawAuthButtonText(tr("auth.login.maquette_submit", "SIGN IN"), "##login_submit_btn_only")
+			&& m_authPresenter != nullptr && m_authCfg != nullptr && !vs.submitting)
 		{
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}
@@ -210,10 +180,26 @@ namespace engine::render
 
 		if (actOpts != nullptr && actQuit != nullptr && m_authPresenter != nullptr)
 		{
+			// Avant : SetCursorPos dans la fenêtre overlay APRÈS DrawAuthTweaksPanel — les boutons
+			// étaient bien dessinés mais ne réagissaient pas aux clics (hit-test brouillé par
+			// l'autre fenêtre ImGui dessinée juste avant). Solution propre : ouvrir une petite
+			// fenêtre dédiée au bas du viewport, comme DrawAuthTweaksPanel pour les races.
 			const std::string lo = actOpts->label.empty() ? std::string("OPTIONS") : actOpts->label;
 			const std::string lq = actQuit->label.empty() ? tr("auth.footer.chip.esc.desc", "QUIT") : actQuit->label;
 			const float tw = ImGui::CalcTextSize(lo.c_str()).x + ImGui::CalcTextSize(lq.c_str()).x + 48.f;
-			ImGui::SetCursorPos(ImVec2((vpW - tw) * 0.5f, ImGui::GetCursorPosY() + 14.f));
+			const float footerW = (std::max)(tw + 32.f, 220.f);
+			const float footerH = 36.f;
+			ImGui::SetNextWindowPos(ImVec2((vpW - footerW) * 0.5f, vpH - footerH - 12.f), ImGuiCond_Always);
+			ImGui::SetNextWindowSize(ImVec2(footerW, footerH), ImGuiCond_Always);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 6.f));
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.f, 0.f, 0.f));
+			ImGui::Begin("##ln_auth_login_footer",
+				nullptr,
+				ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
+					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoScrollbar);
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar(2);
 			if (DrawAuthButtonText(lo, "##foot_opts"))
 			{
 				m_authPresenter->ImGuiOpenLanguageOptionsMenu();
@@ -223,6 +209,7 @@ namespace engine::render
 			{
 				m_authPresenter->ImGuiRequestClose(*m_authWindow);
 			}
+			ImGui::End();
 		}
 	}
 } // namespace engine::render

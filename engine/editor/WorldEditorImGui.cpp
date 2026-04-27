@@ -4,6 +4,7 @@
 #include "engine/core/Log.h"
 #include "engine/editor/TreeSpeciesCatalog.h"
 #include "engine/editor/WorldEditorSession.h"
+#include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
 #include "engine/render/terrain/HeightmapLoader.h"
 #include "engine/render/vk/VkDeviceContext.h"
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -359,7 +361,8 @@ namespace engine::editor
 		VkFormat swapchainFormat,
 		uint32_t swapchainImageCount,
 		uint32_t vulkanApiVersion,
-		void* hwndNative)
+		void* hwndNative,
+		const engine::core::Config* cfg)
 	{
 #if !defined(_WIN32)
 		(void)instance;
@@ -368,6 +371,7 @@ namespace engine::editor
 		(void)swapchainImageCount;
 		(void)vulkanApiVersion;
 		(void)hwndNative;
+		(void)cfg;
 		return false;
 #else
 		if (m_ready)
@@ -409,6 +413,60 @@ namespace engine::editor
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (caméra FPS).
 		ImGui::StyleColorsDark();
+
+		// Polices auth (Windlass / Morpheus) chargées dans l'atlas ImGui AVANT ImGui_ImplVulkan_Init —
+		// celui-ci construit la texture des fonts une seule fois à partir de l'atlas. Sans ce chargement,
+		// l'UI auth utilise la police ImGui par défaut (ProggyClean ~13 px) qui ne ressemble pas à la
+		// maquette Lune Noire. La piste Vulkan/AuthGlyphPass utilise déjà ces mêmes fichiers (Engine.cpp).
+		// On charge Windlass en premier : elle devient la police par défaut d'ImGui.
+		auto loadAuthFontFromConfig = [&io, cfg](std::string_view relativePath, float pixelHeight, const char* role) -> bool {
+			if (cfg == nullptr || relativePath.empty())
+			{
+				return false;
+			}
+			std::vector<uint8_t> bytes = engine::platform::FileSystem::ReadAllBytesContent(*cfg, relativePath);
+			if (bytes.empty())
+			{
+				LOG_WARN(Render, "[WorldEditorImGui] Police {} introuvable ou vide : {}", role, relativePath);
+				return false;
+			}
+			// L'atlas ImGui prend la propriété du buffer (FontDataOwnedByAtlas par défaut = true) et le
+			// libérera via IM_FREE — on doit donc l'allouer via IM_ALLOC, pas réutiliser le std::vector
+			// (sinon UB : la mémoire serait libérée deux fois ou utilisée après libération).
+			void* atlasOwned = IM_ALLOC(bytes.size());
+			std::memcpy(atlasOwned, bytes.data(), bytes.size());
+			ImFontConfig fcfg{};
+			ImFont* font = io.Fonts->AddFontFromMemoryTTF(atlasOwned, static_cast<int>(bytes.size()), pixelHeight,
+				&fcfg, io.Fonts->GetGlyphRangesDefault());
+			if (font == nullptr)
+			{
+				IM_FREE(atlasOwned);
+				LOG_WARN(Render, "[WorldEditorImGui] Police {} : AddFontFromMemoryTTF a échoué pour {}", role, relativePath);
+				return false;
+			}
+			LOG_INFO(Render, "[WorldEditorImGui] Police {} chargée dans l'atlas ImGui : {} ({}px)", role, relativePath, pixelHeight);
+			return true;
+		};
+
+		if (cfg != nullptr)
+		{
+			// Clés spécifiques à la piste ImGui (la piste Vulkan/AuthGlyphPass garde sa propre
+			// taille via render.auth_ui.font_pixel_height = 28). En ImGui les facteurs
+			// SetWindowFontScale (1.62 pour le titre, 1.12 pour le sous-titre, 1.15 pour le titre
+			// du panneau, 0.78–0.95 pour les libellés…) sont calibrés pour la police par défaut
+			// ProggyClean ~13 px ; charger Windlass à la même taille respecte donc tous les
+			// gabarits existants. On peut surcharger via render.auth_ui.imgui.font_pixel_height
+			// si on veut grossir/réduire globalement l'UI auth ImGui sans toucher aux scales.
+			const std::string uiFontPath = cfg->GetString("render.auth_ui.font_path", "");
+			const float uiFontPx = static_cast<float>(std::clamp<int64_t>(
+				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 13), 11, 32));
+			loadAuthFontFromConfig(uiFontPath, uiFontPx, "UI");
+
+			const std::string valueFontPath = cfg->GetString("render.auth_ui.value_font_path", "");
+			const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
+				cfg->GetInt("render.auth_ui.imgui.value_font_pixel_height", 12), 11, 32));
+			loadAuthFontFromConfig(valueFontPath, valueFontPx, "valeurs");
+		}
 
 		ImGui_ImplWin32_Init(hwnd);
 

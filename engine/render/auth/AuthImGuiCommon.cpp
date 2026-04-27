@@ -35,7 +35,11 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		std::string bannerId = "##auth_banner_";
 		bannerId.append(title.data(), title.size());
-		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f), true, ImGuiWindowFlags_NoScrollbar);
+		// AutoResizeY : la bannière s'adapte à la hauteur réelle du texte (1 à 3 lignes typiquement)
+		// au lieu de remplir toute la hauteur disponible — ce qui poussait les champs hors écran.
+		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f),
+			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+			ImGuiWindowFlags_NoScrollbar);
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(2);
 

@@ -210,13 +210,13 @@ namespace engine::network
 				return result;
 			}
 		}
-		else if (eligible.size() > 1 && m_shardPickWhenMultiple)
+		else if (m_shardPickWhenMultiple)
 		{
 			result.shard_choice_required = true;
 			result.server_list_for_pick = list;
 			result.success = false;
 			LOG_INFO(Net,
-				"[MasterShardClientFlow] Multiple online shards ({}); returning shard_choice_required for UI",
+				"[MasterShardClientFlow] {} online shard(s); returning shard_choice_required for UI",
 				eligible.size());
 			masterClient->Disconnect("shard_choice_required");
 			return result;

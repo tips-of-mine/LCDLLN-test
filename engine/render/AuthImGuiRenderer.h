@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cfloat>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -109,7 +110,8 @@ namespace engine::render
 
 		void BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha = 1.f);
 		bool BeginPanel(float width, float vpW, float vpH, std::string_view title, std::string_view subtitle,
-			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false);
+			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false,
+			float fixedHeight = 0.f);
 		void EndPanel();
 		int DrawLanguageFirstRunCards(const RenderModel& rm, int selected);
 		void DrawAuthTweaksPanel(float vpW, float vpH);
@@ -123,8 +125,12 @@ namespace engine::render
 		void DrawField(std::string_view label, char* buf, int bufSz, bool password = false);
 		void DrawBanner(std::string_view title, std::string_view msg, float r, float g, float b);
 		void DrawKeycapHints(std::initializer_list<std::pair<const char*, const char*>> hints);
-		bool DrawPrimaryButton(std::string_view label, bool disabled = false);
-		bool DrawGhostButton(std::string_view label, bool disabled = false);
+		// width = -FLT_MIN (défaut) = pleine largeur. Quand on place plusieurs de ces boutons sur
+		// la même ligne avec SameLine, il faut donner une largeur finie à chacun pour éviter que
+		// leur rectangle de hit-test ne se chevauche (cas vu dans Terms : Refuser couvrait toute
+		// la largeur, donc cliquer sur Accepter déclenchait Refuser → fermeture de l'app).
+		bool DrawPrimaryButton(std::string_view label, bool disabled = false, float width = -FLT_MIN);
+		bool DrawGhostButton(std::string_view label, bool disabled = false, float width = -FLT_MIN);
 		void DrawSeparator();
 		void DrawBreadcrumb(std::initializer_list<const char*> steps, int current);
 		void DrawBreadcrumb(const std::vector<std::string>& steps, int current);

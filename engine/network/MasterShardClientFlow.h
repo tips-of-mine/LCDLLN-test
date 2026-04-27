@@ -45,7 +45,7 @@ namespace engine::network
 		void SetTimeoutMs(uint32_t ms) { m_timeoutMs = ms; }
 		/// Si non nul, sélectionne ce shard_id parmi les entrées en ligne avec endpoint (sinon comportement automatique).
 		void SetShardIdOverride(uint32_t shardId) { m_shardIdOverride = shardId; }
-		/// Si vrai (défaut) et plusieurs shards en ligne avec endpoint, \ref Run retourne \c shard_choice_required au lieu d'en choisir un.
+		/// Si vrai et au moins un shard en ligne avec endpoint, \ref Run retourne \c shard_choice_required au lieu d'en choisir un — même quand il n'y a qu'un seul shard éligible. La sélection automatique reste activée pour les clients headless qui laissent le défaut à \c false.
 		void SetShardPickWhenMultiple(bool v) { m_shardPickWhenMultiple = v; }
 
 		/// Run the full flow. Uses \a masterClient for Master; creates a temporary client for Shard. Returns result with success/error and optional account_id/shard_id.
@@ -59,6 +59,8 @@ namespace engine::network
 		std::string m_clientHash;
 		uint32_t m_timeoutMs = 5000u;
 		uint32_t m_shardIdOverride = 0;
-		bool m_shardPickWhenMultiple = true;
+		// Défaut désactivé : ClientFlowMain (headless, sans UI) doit auto-sélectionner.
+		// L'UI client appelle SetShardPickWhenMultiple(true) pour toujours afficher l'écran de choix du royaume.
+		bool m_shardPickWhenMultiple = false;
 	};
 }

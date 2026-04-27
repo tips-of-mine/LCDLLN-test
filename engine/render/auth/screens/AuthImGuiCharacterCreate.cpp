@@ -38,11 +38,15 @@ namespace engine::render
 			ImGui::PopStyleColor();
 		}
 		ImGui::Spacing();
-		if (DrawGhostButton("Annuler") && m_authPresenter != nullptr)
+		// Largeurs finies pour éviter que Annuler (pleine largeur) ne capture les clics destinés
+		// à Créer (cf. correctif AuthImGuiTerms.cpp pour la même classe de bug).
+		const float ccGap = 8.f;
+		const float ccBtnW = (ImGui::GetContentRegionAvail().x - ccGap) * 0.5f;
+		if (DrawGhostButton("Annuler", false, ccBtnW) && m_authPresenter != nullptr)
 		{
 			m_authPresenter->ImGuiCancelCharacterCreateReturnToLogin();
 		}
-		ImGui::SameLine(0.f, 8.f);
+		ImGui::SameLine(0.f, ccGap);
 		std::string submitLabel = "Creer"; ///< Libellé du bouton de confirmation, surchargé par l'action primaire du modèle si présente.
 		for (const auto& a : rm.actions)
 		{
@@ -52,7 +56,7 @@ namespace engine::render
 				break;
 			}
 		}
-		if (DrawPrimaryButton(submitLabel.c_str()) && m_authPresenter != nullptr && m_authCfg != nullptr)
+		if (DrawPrimaryButton(submitLabel.c_str(), false, ccBtnW) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
 			m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName);
 		}

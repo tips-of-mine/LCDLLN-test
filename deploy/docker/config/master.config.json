@@ -1,7 +1,8 @@
 {
   "server": {
     "tcp": { "port": 3840 },
-    "health": { "port": 3842, "bind": "0.0.0.0" }
+    "health": { "port": 3842, "bind": "0.0.0.0" },
+    "self_register": false
   },
   "db": {
     "host": "mysql",

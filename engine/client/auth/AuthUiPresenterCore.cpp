@@ -1901,6 +1901,16 @@ namespace engine::client
 			// Sinon : 0 perso => CharacterCreate ; ≥1 perso => CharacterSelect.
 			m_characterList = std::move(copy.characterList);
 			m_selectedCharacterIndex = m_characterList.empty() ? -1 : 0;
+			// Phase 3 — Persister l'endpoint du shard pour pouvoir le re-publier dans la
+			// EnterWorldCommand quand l'utilisateur cliquera Jouer / validera CharacterCreate.
+			if (!copy.shardEndpoint.empty())
+			{
+				m_chosenShardEndpoint = copy.shardEndpoint;
+				if (copy.shardId != 0u)
+				{
+					m_chosenShardId = copy.shardId;
+				}
+			}
 			if (m_postRegistrationCharacterCreatePending)
 			{
 				LOG_INFO(Core, "[AuthUiPresenter] post-Register: routage CharacterCreate (forcé)");
@@ -2188,6 +2198,9 @@ namespace engine::client
 					// Phase 2 — la liste optionnelle est récupérée par le flow sur la connexion master ;
 					// vide si la requête a échoué (le client retombera sur CharacterCreate).
 					local.characterList = std::move(r.character_list);
+					// Phase 3 — l'endpoint du shard accepté est nécessaire pour câbler la gameplay UDP.
+					local.shardId = r.shard_id;
+					local.shardEndpoint = std::move(r.shard_endpoint);
 				}
 			}
 			{

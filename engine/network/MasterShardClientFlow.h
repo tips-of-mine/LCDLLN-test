@@ -27,6 +27,10 @@ namespace engine::network
 		std::string errorMessage;
 		uint64_t account_id = 0;
 		uint32_t shard_id = 0;
+		/// Phase 3 — endpoint host:port du shard accepté (renseigné quand \c success=true).
+		/// Permet à l'engine de relier la connexion gameplay UDP au bon shard quand l'utilisateur
+		/// finalise CharacterSelect / CharacterCreate (consommé via EnterWorldCommand).
+		std::string shard_endpoint;
 		/// Phase 2 — populated after TICKET_ACCEPTED via a CHARACTER_LIST_REQUEST on the master
 		/// connection (filtered server-side by account_id + shard_id + deleted_at IS NULL).
 		/// Empty vector + \c success=true means the account has no character on this shard yet

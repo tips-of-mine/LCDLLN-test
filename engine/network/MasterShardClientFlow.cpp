@@ -402,7 +402,9 @@ namespace engine::network
 
 		result.success = true;
 		result.shard_id = targetShardId;
-		LOG_INFO(Net, "[MasterShardClientFlow] Flow complete (shard_id={}, characters={})", result.shard_id, result.character_list.size());
+		result.shard_endpoint = shardHost + ":" + std::to_string(static_cast<unsigned>(shardPort));
+		LOG_INFO(Net, "[MasterShardClientFlow] Flow complete (shard_id={}, endpoint={}, characters={})",
+			result.shard_id, result.shard_endpoint, result.character_list.size());
 		return result;
 	}
 }

@@ -228,6 +228,13 @@ namespace engine::client
 		return cmd;
 	}
 
+	AuthUiPresenter::EnterWorldCommand AuthUiPresenter::ConsumePendingEnterWorldCommand()
+	{
+		EnterWorldCommand cmd = m_pendingEnterWorld;
+		m_pendingEnterWorld = {};
+		return cmd;
+	}
+
 	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()
 	{
 		const AudioSettingsCommand cmd = m_pendingAudioSettings;

@@ -33,10 +33,16 @@ namespace engine::client
 			return;
 		}
 		const auto& chosen = m_characterList[static_cast<size_t>(m_selectedCharacterIndex)];
-		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect -> activate (character_id={}, name={})",
-			chosen.character_id, chosen.name);
-		// Phase 2 : on termine le flow d'auth et on laisse l'engine gérer la suite.
-		// La transition propre vers la scène jeu (EnterWorldCommand + spawn) sera ajoutée en Phase 3.
+		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect -> activate (character_id={}, name={}, shard={}, endpoint={})",
+			chosen.character_id, chosen.name, m_chosenShardId, m_chosenShardEndpoint);
+		// Phase 3 — émission de la commande d'entrée dans le monde, consommée par
+		// Engine::Update sur la première frame post-auth (cf. AuthGate else branch).
+		m_pendingEnterWorld = {};
+		m_pendingEnterWorld.applyRequested = true;
+		m_pendingEnterWorld.characterId = chosen.character_id;
+		m_pendingEnterWorld.shardId = m_chosenShardId;
+		m_pendingEnterWorld.shardEndpoint = m_chosenShardEndpoint;
+		m_pendingEnterWorld.characterName = chosen.name;
 		m_userErrorText.clear();
 		m_infoBanner.clear();
 		m_postRegistrationCharacterCreatePending = false;

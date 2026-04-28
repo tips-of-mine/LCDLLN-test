@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <filesystem>
@@ -2856,6 +2857,58 @@ namespace engine
 			if (m_audioEngine.GetCurrentZoneId() == 9999)
 			{
 				m_audioEngine.SetZone(0);
+			}
+
+			// Phase 3 — Première frame post-auth : consommer la EnterWorldCommand émise par
+			// AuthScreenCharacterSelect ("Jouer") pour câbler la connexion gameplay UDP au shard
+			// choisi par l'utilisateur. La commande est one-shot : ConsumePendingEnterWorldCommand
+			// la remet à zéro après lecture, donc cette branche n'agit qu'une seule fois par session.
+			const engine::client::AuthUiPresenter::EnterWorldCommand enterCmd
+				= m_authUi.ConsumePendingEnterWorldCommand();
+			if (enterCmd.applyRequested)
+			{
+				LOG_INFO(Core, "[EnterWorld] character_id={}, name='{}', shard_id={}, endpoint='{}'",
+					enterCmd.characterId, enterCmd.characterName, enterCmd.shardId, enterCmd.shardEndpoint);
+
+				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.
+				// InitGameplayNet relit ces clés à l'appel (cf. ligne ~3552) ; les écraser avant
+				// l'init est suffisant pour cibler le bon shard.
+				if (!enterCmd.shardEndpoint.empty())
+				{
+					const size_t colon = enterCmd.shardEndpoint.rfind(':');
+					if (colon != std::string::npos)
+					{
+						const std::string host = enterCmd.shardEndpoint.substr(0, colon);
+						const int64_t port = std::strtoll(enterCmd.shardEndpoint.substr(colon + 1).c_str(), nullptr, 10);
+						if (!host.empty() && port > 0 && port < 65536)
+						{
+							m_cfg.SetValue("client.gameplay_udp.host", host);
+							m_cfg.SetValue("client.gameplay_udp.port", port);
+							m_cfg.SetValue("client.gameplay_udp.enabled", true);
+							// Si la session UDP a été ouverte au boot avec un host différent
+							// (config par défaut), on la coupe avant de la rouvrir sur le bon shard.
+							if (m_gameplayNetInitialized)
+							{
+								ShutdownGameplayNet();
+							}
+							InitGameplayNet();
+						}
+						else
+						{
+							LOG_WARN(Core, "[EnterWorld] endpoint invalide host='{}' port={} : connexion gameplay non démarrée",
+								host, port);
+						}
+					}
+					else
+					{
+						LOG_WARN(Core, "[EnterWorld] endpoint sans ':' ('{}') : connexion gameplay non démarrée",
+							enterCmd.shardEndpoint);
+					}
+				}
+				else
+				{
+					LOG_WARN(Core, "[EnterWorld] endpoint vide : connexion gameplay non démarrée (la scène 3D s'affichera quand même mais sans réseau)");
+				}
 			}
 		}
 

@@ -65,6 +65,20 @@ namespace engine::client
 			float fovDegrees = 70.f;
 		};
 
+		/// Phase 3 — Commande one-shot émise au moment où l'utilisateur entre dans le monde
+		/// (clic « Jouer » sur CharacterSelect, ou succès CharacterCreate). Consommée par
+		/// l'engine sur la première frame post-auth pour câbler la connexion gameplay UDP au
+		/// shard cible et amorcer la scène 3D. \c applyRequested vaut \c true tant que la
+		/// commande n'a pas été consommée via \ref ConsumePendingEnterWorldCommand.
+		struct EnterWorldCommand
+		{
+			bool applyRequested = false;
+			uint64_t characterId = 0;
+			uint32_t shardId = 0;
+			std::string shardEndpoint; ///< host:port du shard pour la connexion gameplay UDP.
+			std::string characterName;
+		};
+
 		struct AudioSettingsCommand
 		{
 			bool applyRequested = false;
@@ -373,6 +387,9 @@ namespace engine::client
 		/// DIAG — retourne l'adresse du mutex alloué sur le tas (pour VirtualQuery Windows).
 		const void* GetAsyncMutexAddr() const { return m_asyncMutex.get(); }
 		VideoSettingsCommand ConsumePendingVideoSettings();
+		/// Phase 3 — Consomme la commande d'entrée dans le monde. Retourne le contenu courant
+		/// (avec \c applyRequested=true s'il y a quelque chose à appliquer) puis remet à zéro.
+		EnterWorldCommand ConsumePendingEnterWorldCommand();
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
 		GameSettingsCommand ConsumePendingGameSettings();
@@ -747,6 +764,12 @@ namespace engine::client
 		float m_videoFovDegrees = 70.f;
 		float m_videoFovDegreesPending = 70.f;
 		VideoSettingsCommand m_pendingVideoSettings{};
+		/// Phase 3 — Pending command for entering the world. Set by ImGuiActivateSelectedCharacter
+		/// or by CharacterCreate success path; consumed by Engine::Update on first post-auth frame.
+		EnterWorldCommand m_pendingEnterWorld{};
+		/// Phase 3 — Endpoint host:port du shard accepté (persisté à travers CharacterSelect/Create
+		/// pour pouvoir composer la EnterWorldCommand au moment du clic « Jouer »).
+		std::string m_chosenShardEndpoint;
 		float m_audioMasterVolume = 1.0f;
 		float m_audioMusicVolume = 1.0f;
 		float m_audioSfxVolume = 1.0f;
@@ -836,6 +859,11 @@ namespace engine::client
 			/// Phase 2 — Personnages reçus via CHARACTER_LIST après TICKET_ACCEPTED. Vide si aucun
 			/// (route vers CharacterCreate) ou si la requête optionnelle a échoué (même routage).
 			std::vector<engine::network::CharacterListEntry> characterList;
+			/// Phase 3 — Endpoint du shard accepté (host:port) pour câbler la gameplay UDP.
+			std::string shardEndpoint;
+			/// Phase 3 — shard_id du shard accepté (déjà connu côté presenter mais utile pour
+			/// remonter explicitement avec l'endpoint).
+			uint32_t shardId = 0;
 		};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};

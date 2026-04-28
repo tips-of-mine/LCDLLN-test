@@ -143,4 +143,14 @@ namespace engine::network
 	/// La réponse est toujours un succès côté client si le rate-limit n'est pas atteint.
 	constexpr uint16_t kOpcodeResendVerificationRequest  = 37u;
 	constexpr uint16_t kOpcodeResendVerificationResponse = 38u; ///< Master→Client : succès ou INTERNAL_ERROR (rate-limit silencieux côté protocole).
+
+	// -------------------------------------------------------------------------
+	// Opcodes de liste des personnages (valeurs 39–40)
+	// Référence : Phase 1 du flux post-auth — le client demande la liste de ses
+	// personnages sur le shard sélectionné pour décider entre CharacterSelect
+	// (≥1 perso) et CharacterCreate (0 perso). Session requise sur le Master.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeCharacterListRequest  = 39u; ///< Client→Master : demande la liste des personnages du compte sur un server_id donné.
+	constexpr uint16_t kOpcodeCharacterListResponse = 40u; ///< Master→Client : tableau des personnages (id, slot, nom, race, classe, niveau, last_seen).
 }

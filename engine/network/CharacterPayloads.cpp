@@ -133,4 +133,107 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	// -------------------------------------------------------------------------
+	// Phase 1 — CHARACTER_LIST request/response payloads.
+	// Request : uint32 serverId
+	// Response: uint8 success [+ uint16 count + entries...]
+	// Entry   : uint64 id | uint8 slot | string name | uint32 raceId | uint16 classId
+	//           | uint16 level | uint8 forceRename | uint64 lastSeenUnix | uint64 totalPlaySecs
+	// -------------------------------------------------------------------------
+	std::optional<CharacterListRequestPayload> ParseCharacterListRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 4u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterListRequestPayload out;
+		if (!r.ReadU32(out.serverId))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterListRequestPayload(uint32_t serverId)
+	{
+		std::vector<uint8_t> buf(4u, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU32(serverId))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
+	}
+
+	std::optional<CharacterListResponsePayload> ParseCharacterListResponsePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 1u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterListResponsePayload out;
+		uint8_t success = 0;
+		if (!r.ReadBytes(&success, 1u))
+			return std::nullopt;
+		out.success = success;
+		if (success == 0)
+			return out;
+		uint16_t count = 0;
+		if (!r.ReadU16(count))
+			return std::nullopt;
+		out.entries.reserve(static_cast<size_t>(count));
+		for (uint16_t i = 0; i < count; ++i)
+		{
+			CharacterListEntry e;
+			uint8_t slotByte = 0;
+			uint8_t forceRenameByte = 0;
+			if (!r.ReadU64(e.character_id))
+				return std::nullopt;
+			if (!r.ReadBytes(&slotByte, 1u))
+				return std::nullopt;
+			e.slot = slotByte;
+			if (!r.ReadString(e.name))
+				return std::nullopt;
+			if (!r.ReadU32(e.race_id) || !r.ReadU16(e.class_id) || !r.ReadU16(e.level))
+				return std::nullopt;
+			if (!r.ReadBytes(&forceRenameByte, 1u))
+				return std::nullopt;
+			e.force_rename = forceRenameByte;
+			if (!r.ReadU64(e.last_seen_unix) || !r.ReadU64(e.total_play_secs))
+				return std::nullopt;
+			out.entries.push_back(std::move(e));
+		}
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterListResponsePacket(uint8_t success, const std::vector<CharacterListEntry>& entries,
+	                                                     uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteBytes(&success, 1u))
+			return {};
+		if (success != 0)
+		{
+			if (!w.WriteU16(static_cast<uint16_t>(entries.size())))
+				return {};
+			for (const auto& e : entries)
+			{
+				const uint8_t slotByte = e.slot;
+				const uint8_t forceRenameByte = e.force_rename;
+				if (!w.WriteU64(e.character_id))
+					return {};
+				if (!w.WriteBytes(&slotByte, 1u))
+					return {};
+				if (!w.WriteString(e.name))
+					return {};
+				if (!w.WriteU32(e.race_id) || !w.WriteU16(e.class_id) || !w.WriteU16(e.level))
+					return {};
+				if (!w.WriteBytes(&forceRenameByte, 1u))
+					return {};
+				if (!w.WriteU64(e.last_seen_unix) || !w.WriteU64(e.total_play_secs))
+					return {};
+			}
+		}
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeCharacterListResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
 }

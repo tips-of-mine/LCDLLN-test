@@ -306,8 +306,19 @@ int main(int argc, char** argv)
 	serverListHandler.SetShardRegistry(&shardRegistry);
 
 	engine::server::ServerRegistry serverRegistry;
-	serverRegistry.RegisterSelf(config);
-	serverListHandler.SetServerRegistry(&serverRegistry);
+	// Le master ne s'auto-enregistre dans game_servers que si server.self_register=true.
+	// Défaut false : en déploiement master/shard séparé, l'entrée master pollue la liste
+	// des shards renvoyée par SERVER_LIST (port 3840 = auth, pas gameplay).
+	const bool selfRegister = config.GetBool("server.self_register", false);
+	if (selfRegister)
+	{
+		serverRegistry.RegisterSelf(config);
+		serverListHandler.SetServerRegistry(&serverRegistry);
+	}
+	else
+	{
+		LOG_INFO(Server, "[MAIN_SRV] server.self_register=false : master non listé dans game_servers (SERVER_LIST ne renvoie que les shards)");
+	}
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");

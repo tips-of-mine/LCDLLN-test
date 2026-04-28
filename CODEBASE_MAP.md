@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-27 — réordonnancement ShardPick → CharacterCreate dans le flux d'auth client.
+> Dernière mise à jour : 2026-04-28 — itération 7 du login : gap CONNEXION→IDENTIFIANT resserré à ~9 px avec trait centré (ImGui::Spacing après Separator retiré dans BeginPanel — affecte tous les écrans), champs Identifiant et Mot de passe plus hauts (FramePadding y 3 → 8 dans DrawAuthGoldField, hauteur ≈ 19 → 29 px), descente accrue des 4 boutons (Dummy 18 → 32 avant Récupération/Portail, 14 → 28 avant Créer/Se connecter). Itération 6 : aération formulaire (extraSpacingPx 6, Dummy 12 entre les deux champs). Itération 5 : cadre +30 px hauteur, Tweaks 218 → 160 px collé en bas. Itération 4 : recentrage via `BeginPanel(stageW, titleZoneW, ...)`. Itération 3 : titre stage 96 %, sous-titre 2.5x, cadre +10 px, Tweaks sans header. Itération 2 : titre 5.0x + marge sup., persistance suppression infoBanner langue, retrait cédilles. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère, Tweaks 0.85x + boutons interactifs. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan, templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -205,6 +205,11 @@ RenderModel
 | Fichier | Rôle |
 |---|---|
 | `engine/render/AuthImGuiRenderer.h/.cpp` | Point d'entrée rendu auth ImGui. Dispatch vers les sous-renderers. |
+| `engine/render/AuthUiRenderer.h` | Interface abstraite du renderer (ancienne piste non-ImGui — toujours présente). |
+| `engine/render/auth/AuthUiRendererCore.cpp` | Cœur partagé du renderer auth (init, transitions de phase). |
+| `engine/render/AuthLogoPass.h/.cpp` | Passe Vulkan dédiée au logo « Lune Noire » de l'écran d'auth. |
+| `engine/render/AuthGlyphPass.h/.cpp` | Passe Vulkan pour le rendu typographique haut de gamme (glyphes Windlass/Morpheus) en complément d'ImGui. |
+| `engine/render/FontAtlasTtf.h/.cpp` | Construction d'un atlas TTF (Windlass.ttf) chargé dans ImGui — voir commit `00ad2b5` (2026-04-27). |
 | `engine/render/auth/AuthImGuiCommon.h/.cpp` | **Styles partagés : couleurs, polices, boutons, champs.** Modifier ici impacte tous les écrans. |
 | `engine/render/auth/screens/AuthImGuiLogin.cpp` | Rendu écran connexion. |
 | `engine/render/auth/screens/AuthImGuiRegister.cpp` | Rendu écran inscription. |
@@ -266,17 +271,21 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 |---|---|
 | `db/schema.sql` | Schéma complet (référence). |
 | `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0031). Appliquées en ordre par lcdlln-master au démarrage. |
-| `db/migrations/0020_terms_system.sql` | Système CGU : `terms_editions`, `terms_localizations`, `account_terms_acceptances`. |
-| `db/migrations/0021_bug_reports.sql` | Table `bug_reports` (catégorie, titre, corps, statut, assigné, exploit accordé). |
+| `db/migrations/0007_terms_cgu.sql` | Système CGU initial : `terms_editions`, `terms_localizations`, `account_terms_acceptances`. |
+| `db/migrations/0008_bug_reports_exploit.sql` | Table `bug_reports` initiale (catégorie, titre, corps, exploit accordé). |
+| `db/migrations/0017_game_servers.sql` | Registre des serveurs de jeu (`game_servers`) — le master s'y enregistre/désenregistre. |
+| `db/migrations/0018_player_trade_log.sql` | Audit des échanges joueur-à-joueur (anti-scam). |
+| `db/migrations/0019_player_professions.sql` | Tracking professions/skill levels par personnage (Linux/MySQL). |
 | `db/migrations/0022_character_stats.sql` | Table `character_stats` — `total_play_seconds` + `server_id` (FK → `game_servers`). |
-| `db/migrations/0023_faq.sql` | Table `faq_entries` (question, réponse, ordre, statut). |
-| `db/migrations/0024_roadmap_db.sql` | Table `roadmap_items` pour roadmap dynamique (CRUD admin). |
-| `db/migrations/0025_account_privacy.sql` | Table `account_privacy_settings` — attention : FK INT UNSIGNED incorrecte, corrigée par 0031. |
-| `db/migrations/0026_parental_control.sql` | Colonne `parental_validated` sur `accounts`. |
-| `db/migrations/0027_account_deletion.sql` | Colonne `deleted_at` sur `accounts` (soft delete). |
-| `db/migrations/0028_force_rename.sql` | Colonne `force_rename` sur `characters` (renommage forcé par admin). |
-| `db/migrations/0029_email_pending.sql` | Colonne `email_pending` + `email_pending_token` sur `accounts` (changement email à valider). |
-| `db/migrations/0030_terms_editions_nullable.sql` | `published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
+| `db/migrations/0023_accounts_profile.sql` | Profil joueur sur `accounts` : adresse complète, `email_pending` flow, `disabled_reason`, `role`, colonnes parental_*. Idempotent. |
+| `db/migrations/0023_accounts_profile_fields.sql` | Champs de profil ajoutés à `accounts` : `first_name`, `last_name`, `birth_date` (corrige les champs ignorés à l'inscription). |
+| `db/migrations/0024_characters_soft_delete.sql` | Colonnes `deleted_at` (soft delete) + `force_rename` sur `characters`. |
+| `db/migrations/0025_privacy_settings.sql` | Nouvelle table `account_privacy_settings` (visibilité profil : public/friends/none). FK INT UNSIGNED imprécise — corrigée par 0031. |
+| `db/migrations/0026_roadmap_items.sql` | Nouvelle table `roadmap_items` pour la roadmap publique gérée depuis le portail web. |
+| `db/migrations/0027_faq_items.sql` | Nouvelle table `faq_items` (FAQ portail web avec contrôle de publication). |
+| `db/migrations/0028_bug_reports_admin.sql` | Extension `bug_reports` : `admin_status`, `admin_comment`, `exploit_awarded`. |
+| `db/migrations/0029_terms_retired_reason.sql` | Colonne `retired_reason` sur `terms_editions` (raison de retrait d'une édition CGU). |
+| `db/migrations/0030_terms_editions_nullable_published_at.sql` | `terms_editions.published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
 | `db/migrations/0031_privacy_settings_ensure.sql` | Recrée `account_privacy_settings` avec `BIGINT UNSIGNED` correct — idempotente (`IF NOT EXISTS`). |
 | `engine/server/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur. |
 | `engine/server/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |
@@ -287,7 +296,8 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 |---|---|
 | 0006 | `email_locale`, `email_verified` |
 | 0016 | `country_code`, `tag_id` |
-| 0023 | `first_name`, `last_name`, `birth_date` (fix : champs ignorés à l'inscription) |
+| 0023 (`accounts_profile`) | adresse postale complète, `email_pending` + token, `disabled_reason`, `role`, colonnes contrôle parental |
+| 0023 (`accounts_profile_fields`) | `first_name`, `last_name`, `birth_date` (fix : champs ignorés à l'inscription) |
 
 ---
 
@@ -429,7 +439,9 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/api/player/` | APIs joueur : account PATCH, email change, password, parental, cgu accept, privacy, characters delete. |
 | `web-portal/app/api/bugs/route.ts` | POST bug report — insère dans `bug_reports`, auth via cookie session, valide catégorie. |
 | `web-portal/app/api/admin/` | APIs admin : players (verify-email, activate, disable), characters (force-rename), roadmap CRUD, faq CRUD, cgu CRUD+publish+retire, bugs PATCH. |
-| `design/lune-noire-design-system/ui_kits/email/` | 7 templates HTML email (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change). |
+| `web-portal/email-templates/` | Templates HTML email FR/EN actifs lus par `web-portal/lib/email.ts` (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change — 14 fichiers). |
+| `game/data/email/` | Mêmes templates HTML FR/EN consommés côté C++ par `SmtpMailer` (commit `d7b490b`). |
+| `design/lune-noire-design-system/ui_kits/email/` | Source design d'origine — référence visuelle, pas chargée à l'exécution. |
 
 ---
 
@@ -466,6 +478,114 @@ Ce fichier est ignoré par git (`.gitignore`). Un exemple est disponible dans `s
 
 > **Priorité** : les variables d'environnement priment toujours sur `smtp.local.json`.
 > Si `SMTP_HOST` est défini en env, le fichier JSON n'est pas lu du tout.
+
+---
+
+## 13. Tweaks et badges éphémères de l'écran de connexion
+
+### 13.1 Panneau « Tweaks » (bas-droite)
+
+Source unique : `AuthImGuiRenderer::DrawAuthTweaksPanel` dans `engine/render/AuthImGuiRenderer.cpp`.
+État maintenu par l'instance du renderer (`m_langTweakRace`, `m_langTweakAnimBg`).
+La police du panneau est volontairement plus petite que celle du cadre principal
+(`SetWindowFontScale(0.85f)`), et la sélection courante d'une race ou du toggle
+ACTIVE / DESACTIVE est signalée à la fois par la **bordure** et la **couleur du texte**
+en accent (`LnTheme::kAccent`).
+
+Le titre « TWEAKS » et son bouton de réduction (- / +) ont été retirés en itération 3 :
+le panneau est désormais toujours affiché expansé, sans header.
+
+**Hauteur calibrée serrée** (itération 5) : `winH = 160 px` (auparavant 218) pour que le
+contenu — « THEME DE RACE » + grille 3×3 + « FOND ANIME » + ACTIVE/DESACTIVE à
+`SetWindowFontScale(0.85f)` ≈ 152 px — touche naturellement le bas du cadre. Aucun Dummy
+au-dessus du premier label : la position est dictée uniquement par `WindowPadding(12, 12)`.
+**Ancrage bas-droite** : `pos = (vpW - winW - 22, vpH - winH - 10)` pour conserver la même
+marge externe (10 px du bord bas, 22 px du bord droit) quelle que soit la résolution.
+`m_authTweakPanelMinimized` reste comme placeholder mais n'est plus relu — gardé pour
+réintroduire la fonctionnalité minimize sans réécrire la struct si besoin.
+
+### 13.2 Toggle « FOND ANIME » → animation décorative du fond auth
+
+`m_langTweakAnimBg` (`bool`) est la source de vérité du toggle ACTIVE / DESACTIVE.
+Contrat futur : quand la passe Vulkan d'animation de fond auth sera ajoutée (probablement à
+côté de `engine/render/AuthLogoPass` / `engine/render/AuthGlyphPass`), elle devra observer ce
+flag et activer/désactiver son émission de commandes en conséquence. Tant que la passe
+n'existe pas, le toggle ne fait que conserver l'état visuellement (sélection de bordure +
+texte) — voir le commentaire `// Le toggle ACTIVE / DESACTIVE pilote le futur fond animé`
+dans `DrawAuthTweaksPanel`.
+
+### 13.3 Badge éphémère « Langue : … »
+
+Lors de la transition `LanguageSelectionFirstRun → Login`, le renderer capture
+`rm.infoBanner` (posé par `AuthUiPresenter::ApplyLocaleSelection`) puis l'affiche au-dessus
+du cadre central pendant `kLoginLangBadgeDurationSec` secondes (4 s par défaut, dont
+`kLoginLangBadgeFadeOutSec` = 1 s de fade-out final).
+
+**Suppression permanente de la double affichage** : tant que `rm.infoBanner` est égal à
+`m_loginLangBadgeText` (le texte capturé), le panneau de connexion n'affiche **plus jamais**
+ce bandeau à l'intérieur — pas seulement pendant la fenêtre éphémère. Cette persistance évite
+que le bandeau « saute » dans le cadre après le fade-out (effet visuel signalé en revue UX).
+À l'expiration du timer, `m_loginLangBadgeStartTime` repasse à `-1.0` (plus de fenêtre
+flottante), mais `m_loginLangBadgeText` reste mémorisé jusqu'au prochain `Reset()` ou jusqu'à
+ce qu'une nouvelle transition LangSel → Login le remplace.
+
+État : `m_loginLangBadgeText`, `m_loginLangBadgeStartTime`, `m_prevPhaseToken` dans
+`AuthImGuiRenderer.h`.
+Détection : `SyncTransientFromModel` compare `m_prevPhaseToken` au nouveau token (bit 0 =
+language sel, bit 1 = login, bit 31 = active) avec un masque `0x7FFFFFFFu` pour ignorer le
+bit "active". Rendu : `DrawLoginLanguageBadge(vpW, vpH)`.
+
+### 13.4 Titre login agrandi + marge supérieure
+
+`RenderLoginScreen` applique `SetWindowFontScale(5.0f)` au titre principal (Windlass 13 px →
+≈ 65 px), précédé d'un `SetCursorPosY(max(24, vpH * 0.05f))` pour ajouter une bande d'air
+au-dessus. Objectif maquette : que le titre remplisse plus de la moitié de l'espace vide
+entre le bord supérieur de l'écran et le panneau (qui démarre à `vpH * 0.28f`).
+
+**Stage englobante élargie** : à 5.0x, « LES CHRONIQUES » mesure ~720 px et était clipée
+quand le BeginChild faisait 570 px de large. La stage est désormais à `vpW * 0.96f` pour
+englober titre + sous-titre + cadre central sans clipping. Le cadre central (panneau de
+connexion) reste fixé à 580 px et **doit être centré dans la stage**, pas dans le viewport :
+on appelle donc `BeginPanel(stageW=580, titleZoneW, vpH, ...)` avec `titleZoneW` (la largeur
+réelle du child englobant) comme 2e argument, sinon `panelX = (vpW - vpW) / 2 = 0` aligne
+le panneau contre le bord gauche du child (bug observé en itération 3 → corrigé en it. 4).
+
+**Sous-titre `de la Lune Noire`** : `SetWindowFontScale(2.5f)` (auparavant 1.5f) précédé
+d'un `Dummy(0, 8)` pour le descendre légèrement sous la baseline du titre principal.
+
+### 13.6 Aération formulaire login (itération 6 + 7)
+
+`DrawAuthGoldField` accepte maintenant `extraSpacingPx` (défaut 0 → comportement Register
+inchangé). Le login passe 6 px → un `Dummy` est inséré entre le libellé en majuscules
+accent et le `InputText`. Entre les deux champs, un `Dummy(0, 12)` au call site sépare
+« IDENTIFIANT » et « MOT DE PASSE ».
+
+**Hauteur des champs (it. 7)** : `DrawAuthGoldField` pousse également
+`FramePadding(10, 8)` autour de l'`InputText` (auparavant le défaut ImGui de
+`(4, 3)`). Hauteur effective des champs ≈ 29 px (au lieu de 19 px par défaut).
+
+**Boutons descendus (it. 7)** : au-dessus des liens secondaires (Récupération du mot de
+passe, Portail web) : `Dummy(0, 32)` (auparavant 18). Au-dessus des actions principales
+(Créer un compte, Se connecter) : `Dummy(0, 28)` (auparavant 14).
+
+**Gap CONNEXION→IDENTIFIANT (it. 7)** : retrait du `ImGui::Spacing()` après le `Separator`
+dans `BeginPanel` → gap visuel ≈ 9 px (ItemSpacing.y * 2 + Separator) avec le trait
+naturellement centré. Affecte tous les écrans qui utilisent `BeginPanel`.
+
+### 13.5 Limitations Windlass.ttf (police principale)
+
+`game/data/fonts/Windlass.ttf` ne contient pas tous les glyphes Latin-1 supplément :
+- Majuscules accentuées : É (0xC9), À (0xC0), Ô (0xD4)…
+- Minuscules accentuées spécifiques : ç (0xE7) a notamment été observé manquant.
+
+ImGui les rend en `?` (ou un placeholder visuel). Tant qu'aucune fallback font n'est
+fusionnée dans l'atlas (cf. `WorldEditorImGui::Init` — la solution propre serait
+`AddFontFromMemoryTTF` en `MergeMode = true` avec une police qui couvre 0x0080-0x00FF), les
+libellés français de l'UI auth doivent rester en ASCII pur. Liste des clés concernées :
+- `auth.login.maquette_create` (« CREER UN COMPTE »)
+- `auth.login.remember_detail` (« CONSERVE L'IDENTIFIANT A LA PROCHAINE OUVERTURE »)
+- `language.native_line.fr`, `language.name.fr` (« Francais » au lieu de « Français »)
+- `language.apply_success` (« Langue appliquee immediatement : … »)
 
 ---
 

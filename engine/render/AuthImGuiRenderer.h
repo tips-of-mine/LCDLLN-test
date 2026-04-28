@@ -85,10 +85,25 @@ namespace engine::render
 		bool m_optShowTooltipsUi = true;
 		int m_optPreferredServer = 2;
 
-		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement — décoratif pour l’instant.
+		/// Réglages visuels locaux (maquette « Tweaks ») sur l’écran premier lancement.
+		/// `m_langTweakAnimBg` pilote (à terme) l’animation décorative du fond auth — voir
+		/// CODEBASE_MAP.md §13 « Tweaks d’auth ». Tant que l’animation n’existe pas, ce flag n’a
+		/// qu’un effet visuel sur l’état des boutons ACTIVE / DESACTIVE.
 		int m_langTweakRace = 0;
 		bool m_langTweakAnimBg = true;
 		bool m_authTweakPanelMinimized = false;
+
+		/// Badge éphémère « Langue : Français » affiché au-dessus du panneau de connexion, juste
+		/// après une transition LanguageSelectionFirstRun → Login. Le texte est figé au moment de
+		/// la transition (lecture de `rm.infoBanner` ce frame-là) puis fade out automatiquement
+		/// au bout d’environ `kLoginLangBadgeDurationSec` secondes.
+		std::string m_loginLangBadgeText;
+		double m_loginLangBadgeStartTime = -1.0;
+		uint32_t m_prevPhaseToken = 0u;
+		/// Durée totale d'affichage du badge éphémère « Langue : … » au-dessus du panneau login.
+		static constexpr double kLoginLangBadgeDurationSec = 4.0;
+		/// Durée du fondu sortant inclus dans `kLoginLangBadgeDurationSec`.
+		static constexpr double kLoginLangBadgeFadeOutSec = 1.0;
 		/// Écran erreur inscription : pastille active (maquette) ; -1 = suivre le modèle classifié.
 		int m_authErrorPillPreview = -1;
 
@@ -115,8 +130,12 @@ namespace engine::render
 		void EndPanel();
 		int DrawLanguageFirstRunCards(const RenderModel& rm, int selected);
 		void DrawAuthTweaksPanel(float vpW, float vpH);
+		/// Affiche au-dessus du cadre login le badge « Langue : … » capturé lors de la transition
+		/// depuis l'écran de sélection de langue. Disparaît automatiquement après quelques secondes.
+		void DrawLoginLanguageBadge(float vpW, float vpH);
 		void DrawLangFooterHints(std::string_view left, std::string_view right);
-		void DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz, bool password);
+		void DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz, bool password,
+			float extraSpacingPx = 0.f);
 		void DrawLoginRememberRow(const RenderModel& rm);
 		void DrawLoginFooterChips(const RenderModel& rm);
 		void DrawFooterChipRow(const std::vector<std::pair<std::string, std::string>>& chips);

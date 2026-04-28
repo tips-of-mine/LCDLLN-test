@@ -36,36 +36,51 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		const float stageW = (std::min)(540.f, vpW * 0.94f);
-		ImGui::SetCursorPosX((vpW - stageW) * 0.5f);
-		ImGui::BeginChild("##ln_login_stage", ImVec2(stageW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
+		// Le BeginChild qui enveloppe titre + cadre principal doit être assez large pour que le
+		// titre à 5.0x (≈ 65 px de hauteur, mais largeur ≈ 720 px pour « LES CHRONIQUES ») ne
+		// soit pas clipé sur les bords. On l'étend donc à 96 % du viewport. Le cadre central
+		// lui-même reste fixé à 580 px (calibré dans BeginPanel via vpW), donc l'élargissement
+		// du child n'agrandit pas le panneau de connexion — uniquement la zone titre.
+		const float titleZoneW = vpW * 0.96f;
+		ImGui::SetCursorPosX((vpW - titleZoneW) * 0.5f);
+		ImGui::BeginChild("##ln_login_stage", ImVec2(titleZoneW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 
 		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
 		// sinon le fallback en dur dupliquait visuellement le titre.
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		// Titre plus grand : 2.4x le base (Windlass 13 px → ~31 px) — l'utilisateur voulait
-		// le titre plus visible. Avant : 1.62x = ~21 px, lisible mais trop discret.
-		ImGui::SetWindowFontScale(2.4f);
+		// Marge supérieure : bande d'air entre le bord haut de l'écran et le titre
+		// (le titre doit rester visible en entier et ne pas toucher le bord).
+		const float topMargin = (std::max)(24.f, vpH * 0.05f);
+		ImGui::SetCursorPosY(topMargin);
+		ImGui::SetWindowFontScale(5.0f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPosX((stageW - w1) * 0.5f);
+		ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w1) * 0.5f));
 		ImGui::TextUnformatted(h1.c_str());
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
 		if (!rm.titleLine2.empty())
 		{
-			ImGui::SetWindowFontScale(1.5f);
+			// Sous-titre désormais nettement plus grand (1.5x → 2.5x ≈ 32 px) et descendu
+			// de quelques pixels pour reposer naturellement sous la baseline du titre principal,
+			// dont le scale 5.0x laisse un blanc important.
+			ImGui::Dummy(ImVec2(0.f, 8.f));
+			ImGui::SetWindowFontScale(2.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPosX((stageW - w2) * 0.5f);
+			ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w2) * 0.5f));
 			ImGui::TextUnformatted(rm.titleLine2.c_str());
 			ImGui::PopStyleColor();
 			ImGui::SetWindowFontScale(1.f);
 		}
 
 		ImGui::Spacing();
+
+		// Cadre central + 10 px en hauteur ET en largeur (570 → 580 ; +10 px de hauteur ajouté
+		// avant EndPanel). La maquette demande ce coup de pouce pour aérer les boutons.
+		const float stageW = (std::min)(580.f, vpW * 0.96f);
 
 		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CONNEXION") : rm.sectionTitle;
 		for (char& ch : panelTitle)
@@ -77,7 +92,12 @@ namespace engine::render
 		}
 		const std::string ver =
 			rm.authLoginVersionBadge.empty() ? std::string("v0.0.0") : rm.authLoginVersionBadge;
-		if (!BeginPanel(stageW, stageW, vpH, panelTitle, "", ver, true, false))
+		// BeginPanel reçoit la largeur du conteneur englobant comme 2e argument (« vpW » dans la
+		// signature, mais utilisé pour centrer le panneau via `(vpW - width) / 2`). Comme nous
+		// sommes désormais dans un BeginChild de largeur titleZoneW (≠ vpW), il faut passer
+		// titleZoneW — sinon le calcul `(stageW - stageW) / 2 = 0` poussait le panneau contre
+		// le bord gauche de la stage (bug observé en revue UX).
+		if (!BeginPanel(stageW, titleZoneW, vpH, panelTitle, "", ver, true, false))
 		{
 			EndPanel();
 			ImGui::EndChild();
@@ -89,21 +109,33 @@ namespace engine::render
 			DrawAuthBanner(tr("auth.banner.error_title", "Echec"), rm.errorText, LnTheme::kErrorCol.r, LnTheme::kErrorCol.g,
 				LnTheme::kErrorCol.b);
 		}
+		// Le badge « Langue : … » est rendu au-dessus du cadre par DrawLoginLanguageBadge() ;
+		// on supprime la double affichage à l'intérieur du panneau dès que rm.infoBanner
+		// correspond au texte capturé sur la transition LangSel → Login. Cette suppression
+		// est *permanente* (et pas seulement pendant la fenêtre éphémère) pour éviter que
+		// le bandeau ne « saute » dans le cadre principal après le fade-out — l'utilisateur
+		// l'a vécu comme un bug visuel.
+		const bool suppressLangInfoInsidePanel = !m_loginLangBadgeText.empty()
+			&& rm.infoBanner == m_loginLangBadgeText;
 		if (vs.submitting && !rm.infoBanner.empty())
 		{
 			DrawAuthBanner(tr("auth.banner.info_title", "Patience"), rm.infoBanner, LnTheme::kPrimary.r, LnTheme::kPrimary.g,
 				LnTheme::kPrimary.b);
 		}
-		else if (!rm.infoBanner.empty())
+		else if (!rm.infoBanner.empty() && !suppressLangInfoInsidePanel)
 		{
 			DrawAuthBanner(tr("auth.banner.info_title", "Information"), rm.infoBanner, LnTheme::kPrimary.r, LnTheme::kPrimary.g,
 				LnTheme::kPrimary.b);
 		}
 
+		// Suite au retour utilisateur : plus d'espace entre les 4 éléments « Identifiant /
+		// champ id / Mot de passe / champ pw ». extraSpacingPx=6 ajoute un Dummy entre
+		// chaque libellé et son input ; un Dummy(0, 12) supplémentaire sépare les deux champs.
 		if (rm.fields.size() >= 2u)
 		{
-			DrawAuthGoldField(rm.fields[0], m_loginId, static_cast<int>(sizeof(m_loginId)), false);
-			DrawAuthGoldField(rm.fields[1], m_loginPw, static_cast<int>(sizeof(m_loginPw)), true);
+			DrawAuthGoldField(rm.fields[0], m_loginId, static_cast<int>(sizeof(m_loginId)), false, 6.f);
+			ImGui::Dummy(ImVec2(0.f, 12.f));
+			DrawAuthGoldField(rm.fields[1], m_loginPw, static_cast<int>(sizeof(m_loginPw)), true, 6.f);
 		}
 		else
 		{
@@ -112,7 +144,9 @@ namespace engine::render
 		}
 
 		DrawLoginRememberRow(rm);
-		ImGui::Spacing();
+		// Espace généreux avant les liens secondaires (Récupération / Portail web) — l'utilisateur
+		// veut tous les boutons descendus encore plus bas pour bien aérer le panneau.
+		ImGui::Dummy(ImVec2(0.f, 32.f));
 
 		if (m_authPresenter != nullptr)
 		{
@@ -129,7 +163,8 @@ namespace engine::render
 			{
 				m_authPresenter->ImGuiOpenForgotPasswordPortal(*m_authCfg, *m_authWindow);
 			}
-			ImGui::Spacing();
+			// Espace avant les actions principales (Créer un compte / Se connecter).
+			ImGui::Dummy(ImVec2(0.f, 28.f));
 		}
 
 		const engine::client::AuthUiPresenter::RenderAction* actCreate = nullptr;
@@ -169,13 +204,21 @@ namespace engine::render
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}
 
-		DrawSeparator();
-		DrawLoginFooterChips(rm);
+		// Anciennement : DrawSeparator() + DrawLoginFooterChips(rm) qui affichaient les chips
+		// [Tab] champ suivant | [Entree] se connecter | [Echap] quitter. L'utilisateur veut ces
+		// rappels masqués (les touches restent actives via ImGui InputText nav et le handler
+		// d'entrée du presenter), mais la zone visuelle disparaît pour épurer le panneau.
+
+		// Marge basse à l'intérieur du cadre — BeginPanel utilise AutoResizeY, donc ce Dummy
+		// translate directement la bordure inférieure du panneau vers le bas. Bumpé à 30 px
+		// (suite au retour utilisateur : « il faudrait l'agrandir en hauteur »).
+		ImGui::Dummy(ImVec2(0.f, 30.f));
 
 		EndPanel();
 
 		ImGui::EndChild();
 
+		DrawLoginLanguageBadge(vpW, vpH);
 		DrawAuthTweaksPanel(vpW, vpH);
 
 		if (actOpts != nullptr && actQuit != nullptr && m_authPresenter != nullptr)

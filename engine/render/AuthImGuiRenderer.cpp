@@ -475,6 +475,10 @@ namespace engine::render
 		{
 			RenderCharCreateScreen(rm, viewportW, viewportH);
 		}
+		else if (vs.characterSelect)
+		{
+			RenderCharacterSelectScreen(rm, viewportW, viewportH);
+		}
 		else if (vs.submitting)
 		{
 			if (BeginPanel(420.f, viewportW, viewportH, rm.sectionTitle.c_str(), "", ""))

@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-28 — Phase 1 du flux post-auth : nouveaux opcodes `kOpcodeCharacterListRequest=39` / `kOpcodeCharacterListResponse=40` (`engine/network/ProtocolV1Constants.h`), payloads `CharacterListRequestPayload` + `CharacterListEntry` + `CharacterListResponsePayload` dans `engine/network/CharacterPayloads.h/.cpp`, handler `engine/server/CharacterListHandler.h/.cpp` côté **master** (résout `connId → sessionId → accountId`, requête `characters LEFT JOIN character_stats` filtrée par `server_id` + `deleted_at IS NULL` triée `slot ASC`). Câblé dans `engine/server/main_server_linux.cpp` à côté de `CharacterCreateHandler`. Tests round-trip dans `engine/network/CharacterListPayloadsTests.cpp` (cible CMake `character_list_payloads_tests`). Phase 2 (UI `CharacterSelect` + branchement post-`TICKET_ACCEPTED`) et Phase 3 (entrée monde) viendront dans des PR distinctes. Itération 7 du login : gap CONNEXION→IDENTIFIANT resserré à ~9 px avec trait centré (ImGui::Spacing après Separator retiré dans BeginPanel — affecte tous les écrans), champs Identifiant et Mot de passe plus hauts (FramePadding y 3 → 8 dans DrawAuthGoldField, hauteur ≈ 19 → 29 px), descente accrue des 4 boutons (Dummy 18 → 32 avant Récupération/Portail, 14 → 28 avant Créer/Se connecter). Itération 6 : aération formulaire (extraSpacingPx 6, Dummy 12 entre les deux champs). Itération 5 : cadre +30 px hauteur, Tweaks 218 → 160 px collé en bas. Itération 4 : recentrage via `BeginPanel(stageW, titleZoneW, ...)`. Itération 3 : titre stage 96 %, sous-titre 2.5x, cadre +10 px, Tweaks sans header. Itération 2 : titre 5.0x + marge sup., persistance suppression infoBanner langue, retrait cédilles. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère, Tweaks 0.85x + boutons interactifs. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan, templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
+> Dernière mise à jour : 2026-04-28 — **Phase 2 du flux post-auth** : `MasterShardClientFlow.Run()` envoie un `CHARACTER_LIST_REQUEST` sur la connexion master (toujours active après `TICKET_ACCEPTED`, échec non-fatal) et remplit `MasterShardFlowResult::character_list`. `AuthUiPresenter` introduit `Phase::CharacterSelect` et les membres `m_characterList` / `m_selectedCharacterIndex`. Dans la branche succès du flow (`AuthUiPresenterCore.cpp` ~1894), `m_flowComplete = true` est remplacé par : si `m_postRegistrationCharacterCreatePending` ou liste vide → `Phase::CharacterCreate` ; sinon → `Phase::CharacterSelect`. Nouveaux fichiers `engine/client/auth/screens/AuthScreenCharacterSelect.cpp` (presenter) et `engine/render/auth/screens/AuthImGuiCharacterSelect.cpp` (renderer ImGui : liste cliquable + boutons Retour / Créer / Jouer). `flowComplete=true` est désormais mis quand l'utilisateur clique « Jouer » ; la transition propre vers la scène 3D (EnterWorldCommand + spawn + InitGameplayNet runtime) viendra en Phase 3. Clés de localisation `auth.character_select.*` ajoutées en FR/EN. Phase 1 (protocole CHARACTER_LIST) : opcodes 39/40, payloads, handler master, tests `character_list_payloads_tests`. Itération 7 du login : gap CONNEXION→IDENTIFIANT resserré à ~9 px avec trait centré (ImGui::Spacing après Separator retiré dans BeginPanel — affecte tous les écrans), champs Identifiant et Mot de passe plus hauts (FramePadding y 3 → 8 dans DrawAuthGoldField, hauteur ≈ 19 → 29 px), descente accrue des 4 boutons (Dummy 18 → 32 avant Récupération/Portail, 14 → 28 avant Créer/Se connecter). Itération 6 : aération formulaire (extraSpacingPx 6, Dummy 12 entre les deux champs). Itération 5 : cadre +30 px hauteur, Tweaks 218 → 160 px collé en bas. Itération 4 : recentrage via `BeginPanel(stageW, titleZoneW, ...)`. Itération 3 : titre stage 96 %, sous-titre 2.5x, cadre +10 px, Tweaks sans header. Itération 2 : titre 5.0x + marge sup., persistance suppression infoBanner langue, retrait cédilles. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère, Tweaks 0.85x + boutons interactifs. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan, templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -53,12 +53,14 @@ Utilisateur → AuthUiPresenter (logique) → RenderModel → AuthImGuiRenderer 
 Premier lancement (compte inexistant) :
   LanguageSelectionFirstRun → Login → Register → EmailConfirmationPending →
   VerifyEmail → Login (re-saisie credentials) → Terms (si CGU à accepter) →
-  ShardPick (forcé, même avec un seul royaume) → CharacterCreate →
-  MasterFlow (avec shardOverride) → Game
+  ShardPick (forcé, même avec un seul royaume) →
+  MasterFlow (TICKET_ACCEPTED + CHARACTER_LIST) →
+  CharacterCreate (post-Register forcé) → Game
 
 Connexion utilisateur existant :
   Login → Terms (si CGU mises à jour, sinon sauté) →
-  ShardPick → MasterFlow (avec shardOverride) → Game
+  ShardPick → MasterFlow (TICKET_ACCEPTED + CHARACTER_LIST) →
+  CharacterSelect (≥1 perso) ou CharacterCreate (0 perso) → Game
 ```
 
 Drapeaux clés (`engine/client/AuthUi.h`) :
@@ -83,6 +85,7 @@ Drapeaux clés (`engine/client/AuthUi.h`) :
 | Mot de passe oublié | `auth/screens/AuthScreenForgotPassword.cpp` | `render/auth/screens/AuthImGuiForgotPassword.cpp` |
 | Choix shard | `auth/screens/AuthScreenShardPick.cpp` | `render/auth/screens/AuthImGuiShardPick.cpp` |
 | Création personnage | `auth/screens/AuthScreenCharacterCreate.cpp` | `render/auth/screens/AuthImGuiCharacterCreate.cpp` |
+| Sélection personnage | `auth/screens/AuthScreenCharacterSelect.cpp` | `render/auth/screens/AuthImGuiCharacterSelect.cpp` |
 | Options | `auth/screens/AuthScreenOptions.cpp` | `render/auth/screens/AuthImGuiOptions.cpp` |
 | CGU | `auth/screens/AuthScreenTerms.cpp` | `render/auth/screens/AuthImGuiTerms.cpp` |
 | Erreur | `auth/screens/AuthScreenError.cpp` | `render/auth/screens/AuthImGuiError.cpp` |

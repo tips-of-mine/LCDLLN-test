@@ -2,6 +2,7 @@
 
 #include "engine/client/LocalizationService.h"
 #include "engine/core/Config.h"
+#include "engine/network/CharacterPayloads.h"
 #include "engine/network/NetClient.h"
 #include "engine/network/ServerListPayloads.h"
 #include "engine/platform/Input.h"
@@ -98,6 +99,8 @@ namespace engine::client
 			bool forgotPassword = false;
 			bool terms = false;
 			bool characterCreate = false;
+			/// Phase 2 — écran de sélection de personnage (visible si \c m_phase == Phase::CharacterSelect).
+			bool characterSelect = false;
 			bool languageSelection = false;
 			bool languageOptions = false;
 			bool submitting = false;
@@ -481,6 +484,11 @@ namespace engine::client
 		uint32_t ShardPickChoiceShardId() const { return m_shardPickChoiceShardId; }
 		void ImGuiSetShardPickChoiceShardId(uint32_t shardId);
 		const std::vector<engine::network::ServerListEntry>& ShardPickEntries() const { return m_shardPickEntries; }
+
+		/// Phase 2 — Accessor pour le renderer ImGui de l'écran CharacterSelect.
+		const std::vector<engine::network::CharacterListEntry>& CharacterListEntries() const { return m_characterList; }
+		/// Phase 2 — Index du personnage sélectionné (-1 = aucun).
+		int CharacterSelectIndex() const { return m_selectedCharacterIndex; }
 		void ImGuiSubmitShardPick(const engine::core::Config& cfg);
 		void ImGuiBackFromShardPickToLogin();
 
@@ -491,6 +499,15 @@ namespace engine::client
 
 		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8);
 		void ImGuiCancelCharacterCreateReturnToLogin();
+		/// Phase 2 — sélectionne le i-ème personnage de \ref m_characterList (mise en surbrillance, pas d'entrée dans le monde).
+		void ImGuiSelectCharacterEntry(int index);
+		/// Phase 2 — l'utilisateur valide le personnage actuellement sélectionné et entre dans le monde.
+		/// Aujourd'hui (Phase 2 isolée), positionne simplement \ref m_flowComplete ; la Phase 3 branchera la transition gameplay.
+		void ImGuiActivateSelectedCharacter();
+		/// Phase 2 — bouton "Créer un nouveau personnage" depuis l'écran CharacterSelect : route vers CharacterCreate.
+		void ImGuiCreateAnotherCharacterFromSelect();
+		/// Phase 2 — bouton "Retour" depuis CharacterSelect : revient à Login (réinitialise l'état du shard pick).
+		void ImGuiCancelCharacterSelectReturnToLogin();
 
 		const std::string& TermsFullTextForImGui() const { return m_termsContent; }
 		const std::vector<std::string>& GetAvailableLocales() const { return m_localization.GetAvailableLocales(); }
@@ -513,6 +530,7 @@ namespace engine::client
 			ForgotPassword,
 			Terms,
 			CharacterCreate,
+			CharacterSelect,            // Phase 2 — écran "Choisir un personnage" (>=1 perso sur le shard)
 			ShardPick,
 			LanguageSelectionFirstRun,
 			LanguageOptions,
@@ -600,6 +618,10 @@ namespace engine::client
 		/// AUTH-UI.11 — \c Phase::CharacterCreate (split uniquement).
 		void BuildModel_CharacterCreate(RenderModel& model) const;
 		void Update_CharacterCreate(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
+			bool usingNativeAuth, bool authUiImguiMode);
+		/// Phase 2 — \c Phase::CharacterSelect : liste les personnages reçus du master après TICKET_ACCEPTED.
+		void BuildModel_CharacterSelect(RenderModel& model) const;
+		void Update_CharacterSelect(engine::platform::Input& input, const engine::core::Config& cfg, engine::platform::Window& window,
 			bool usingNativeAuth, bool authUiImguiMode);
 		/// Transition de phase avec reset des états hover et du texte d'erreur utilisateur.
 		/// Ne touche PAS m_infoBanner sauf pour Phase::Error (évite la superposition infoBanner+errorText).
@@ -695,6 +717,12 @@ namespace engine::client
 		/// (un nouveau compte n'a pas encore de personnage). Faux pour un retour utilisateur classique :
 		/// ShardPick → connexion directe au royaume.
 		bool m_postRegistrationCharacterCreatePending = false;
+		/// Phase 2 — Liste des personnages reçue après TICKET_ACCEPTED via CHARACTER_LIST_REQUEST.
+		/// Vide = aucun personnage sur ce shard → routage vers \c Phase::CharacterCreate.
+		/// Au moins un = routage vers \c Phase::CharacterSelect.
+		std::vector<engine::network::CharacterListEntry> m_characterList;
+		/// Phase 2 — Index du personnage actuellement sélectionné dans \ref m_characterList (-1 = rien).
+		int m_selectedCharacterIndex = -1;
 		bool        m_infoPopupVisible = false;
 		std::string m_infoPopupText;
 		bool m_savedRememberLogin = false;
@@ -805,6 +833,9 @@ namespace engine::client
 			/// AsyncKind::Login : plusieurs shards en ligne, choix utilisateur requis.
 			bool shardChoiceRequired = false;
 			std::vector<engine::network::ServerListEntry> serverListForPick;
+			/// Phase 2 — Personnages reçus via CHARACTER_LIST après TICKET_ACCEPTED. Vide si aucun
+			/// (route vers CharacterCreate) ou si la requête optionnelle a échoué (même routage).
+			std::vector<engine::network::CharacterListEntry> characterList;
 		};
 		AsyncResult m_asyncResult{};
 		std::thread m_worker{};

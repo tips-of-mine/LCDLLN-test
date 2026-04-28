@@ -122,6 +122,7 @@ namespace engine::render
 		void RenderForgotScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderTermsScreen(const RenderModel& rm, float vpW, float vpH);
 		void RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH);
+		void RenderCharacterSelectScreen(const RenderModel& rm, float vpW, float vpH);
 
 		void BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha = 1.f);
 		bool BeginPanel(float width, float vpW, float vpH, std::string_view title, std::string_view subtitle,

@@ -879,13 +879,19 @@ namespace engine::render
 		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "MORTS-V.", "CORROM.",
 			"DIVINS", "DEMONS"};
 		const float winW = 272.f;
-		const float winH = 218.f;
+		// Cadre rétréci en hauteur et ancré en bas-droite : le contenu (label race + grille 3x3
+		// + label fond + paire de boutons) à 0.85x avec windowPadding 12 occupe environ 152 px.
+		// On dimensionne à 160 pour 8 px de marge interne, et la bordure inférieure est calée à
+		// `vpH - 10` (même gap que la version précédente) → contenu naturellement collé au bas
+		// du cadre, plus d'espace mort visible.
+		const float winH = 160.f;
+		const float bottomGap = 10.f;
 
 		// Le titre « TWEAKS » et son bouton de réduction (- / +) ont été retirés à la demande
 		// de l'utilisateur : le panneau est désormais toujours affiché expansé, sans header.
 		// `m_authTweakPanelMinimized` reste comme placeholder mais n'est plus relu.
 
-		ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - (winH + 10.f)), ImGuiCond_Always);
+		ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - winH - bottomGap), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_Always);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
@@ -900,15 +906,6 @@ namespace engine::render
 		// Le panneau Tweaks doit utiliser une typographie plus discrète que le cadre principal :
 		// 0.85x compense le titre login agrandi, en gardant les boutons cliquables.
 		ImGui::SetWindowFontScale(0.85f);
-
-		// Sans le titre « TWEAKS », le contenu se retrouvait collé en haut avec un grand vide
-		// au bas du cadre. On centre verticalement (avec un biais descendant) en injectant un
-		// Dummy au-dessus de « THEME DE RACE ». Heuristique : le contenu (label race + grille
-		// 3x3 + label fond + paire de boutons) fait environ 156 px à 0.85x. Avec windowPadding
-		// 12 + 12 = 24, total = 180 px de contenu sur 218 px de fenêtre → 38 px vides répartis.
-		// On en met 35 en haut pour que le bloc d'options se retrouve nettement plus proche du
-		// bas — l'utilisateur a explicitement demandé que les textes descendent davantage.
-		ImGui::Dummy(ImVec2(0.f, 35.f));
 
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::TextUnformatted("THEME DE RACE");

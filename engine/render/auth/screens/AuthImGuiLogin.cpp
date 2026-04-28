@@ -202,9 +202,10 @@ namespace engine::render
 		// rappels masqués (les touches restent actives via ImGui InputText nav et le handler
 		// d'entrée du presenter), mais la zone visuelle disparaît pour épurer le panneau.
 
-		// +10 px de marge basse à l'intérieur du cadre — BeginPanel utilise AutoResizeY, donc
-		// ce Dummy translate directement la bordure inférieure du panneau vers le bas.
-		ImGui::Dummy(ImVec2(0.f, 10.f));
+		// Marge basse à l'intérieur du cadre — BeginPanel utilise AutoResizeY, donc ce Dummy
+		// translate directement la bordure inférieure du panneau vers le bas. Bumpé à 30 px
+		// (suite au retour utilisateur : « il faudrait l'agrandir en hauteur »).
+		ImGui::Dummy(ImVec2(0.f, 30.f));
 
 		EndPanel();
 

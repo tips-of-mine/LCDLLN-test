@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-28 — itération 4 du login : recentrage du cadre principal (BeginPanel reçoit titleZoneW au lieu de stageW comme 2e arg, sinon panelX = 0 alignait le panneau contre le bord gauche de la stage 96 %), Dummy Tweaks 18 px → 35 px pour combler le vide en bas. Itération 3 : titre rendu dans une stage à 96 % du viewport (plus de clipping à 5.0x), sous-titre 1.5x → 2.5x, cadre +10 px largeur/hauteur, Tweaks sans header. Itération 2 : titre 5.0x + marge supérieure, persistance permanente de la suppression « infoBanner langue », retrait des cédilles (« Francais »). Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … », Tweaks 0.85x + boutons interactifs avec contrat fond animé. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
+> Dernière mise à jour : 2026-04-28 — itération 5 du login : cadre principal +30 px de hauteur (Dummy 10 → 30 avant EndPanel), panneau Tweaks rétréci à 160 px de hauteur (au lieu de 218) avec contenu collé en bas (Dummy d'espacement supérieur retiré), ancrage bas-droite préservé (`vpH - winH - 10`). Itération 4 : recentrage du cadre principal via `BeginPanel(stageW, titleZoneW, ...)`. Itération 3 : titre rendu dans une stage à 96 % du viewport, sous-titre 1.5x → 2.5x, cadre +10 px largeur/hauteur, Tweaks sans header. Itération 2 : titre 5.0x + marge supérieure, persistance permanente de la suppression « infoBanner langue », retrait des cédilles (« Francais »). Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … », Tweaks 0.85x + boutons interactifs avec contrat fond animé. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -493,9 +493,14 @@ ACTIVE / DESACTIVE est signalée à la fois par la **bordure** et la **couleur d
 en accent (`LnTheme::kAccent`).
 
 Le titre « TWEAKS » et son bouton de réduction (- / +) ont été retirés en itération 3 :
-le panneau est désormais toujours affiché expansé, sans header. Le contenu (« THEME DE
-RACE » + grille 3×3 + « FOND ANIME » + ACTIVE/DESACTIVE) est centré verticalement via
-un `ImGui::Dummy(0, 18)` au-dessus du premier label, pour combler le vide en bas du cadre.
+le panneau est désormais toujours affiché expansé, sans header.
+
+**Hauteur calibrée serrée** (itération 5) : `winH = 160 px` (auparavant 218) pour que le
+contenu — « THEME DE RACE » + grille 3×3 + « FOND ANIME » + ACTIVE/DESACTIVE à
+`SetWindowFontScale(0.85f)` ≈ 152 px — touche naturellement le bas du cadre. Aucun Dummy
+au-dessus du premier label : la position est dictée uniquement par `WindowPadding(12, 12)`.
+**Ancrage bas-droite** : `pos = (vpW - winW - 22, vpH - winH - 10)` pour conserver la même
+marge externe (10 px du bord bas, 22 px du bord droit) quelle que soit la résolution.
 `m_authTweakPanelMinimized` reste comme placeholder mais n'est plus relu — gardé pour
 réintroduire la fonctionnalité minimize sans réécrire la struct si besoin.
 

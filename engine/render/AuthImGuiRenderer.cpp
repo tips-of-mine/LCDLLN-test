@@ -879,37 +879,14 @@ namespace engine::render
 		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "MORTS-V.", "CORROM.",
 			"DIVINS", "DEMONS"};
 		const float winW = 272.f;
-		if (m_authTweakPanelMinimized)
-		{
-			ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - 42.f), ImGuiCond_Always);
-			ImGui::SetNextWindowSize(ImVec2(winW, 36.f), ImGuiCond_Always);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.f, 8.f));
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
-			ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
-			ImGui::Begin("##ln_auth_tweaks_mini",
-				nullptr,
-				ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
-					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
-			ImGui::SetWindowFontScale(0.85f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-			ImGui::TextUnformatted("TWEAKS");
-			ImGui::PopStyleColor();
-			ImGui::SameLine(0.f, ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("+").x - 4.f);
-			if (ImGui::SmallButton("+##tweak_expand"))
-			{
-				m_authTweakPanelMinimized = false;
-			}
-			ImGui::SetWindowFontScale(1.f);
-			ImGui::End();
-			ImGui::PopStyleColor(2);
-			ImGui::PopStyleVar(3);
-			return;
-		}
+		const float winH = 218.f;
 
-		ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - 228.f), ImGuiCond_Always);
-		ImGui::SetNextWindowSize(ImVec2(winW, 218.f), ImGuiCond_Always);
+		// Le titre « TWEAKS » et son bouton de réduction (- / +) ont été retirés à la demande
+		// de l'utilisateur : le panneau est désormais toujours affiché expansé, sans header.
+		// `m_authTweakPanelMinimized` reste comme placeholder mais n'est plus relu.
+
+		ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - (winH + 10.f)), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(winW, winH), ImGuiCond_Always);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.f, 12.f));
@@ -921,18 +898,18 @@ namespace engine::render
 				| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
 		// Le panneau Tweaks doit utiliser une typographie plus discrète que le cadre principal :
-		// 0.85x compense le titre login agrandi à 3.0x, en gardant les boutons cliquables.
+		// 0.85x compense le titre login agrandi, en gardant les boutons cliquables.
 		ImGui::SetWindowFontScale(0.85f);
 
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		ImGui::TextUnformatted("TWEAKS");
-		ImGui::PopStyleColor();
-		ImGui::SameLine(0.f, ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("-").x - 4.f);
-		if (ImGui::SmallButton("-##tweak_min"))
-		{
-			m_authTweakPanelMinimized = true;
-		}
-		ImGui::Spacing();
+		// Sans le titre « TWEAKS », le contenu se retrouvait collé en haut avec un grand vide
+		// au bas du cadre. On centre verticalement en injectant un Dummy au-dessus de
+		// « THEME DE RACE » dimensionné pour pousser le contenu de quelques pixels vers le bas.
+		// Heuristique : le contenu (label race + grille 3x3 + label fond + paire de boutons)
+		// fait environ 165 px à 0.85x. Avec windowPadding 12 + 12 = 24, total = 189 px de
+		// contenu sur 218 px de fenêtre → 29 px vides répartis. On en met 18 en haut pour que
+		// le contenu visuel paraisse centré (avec un léger biais vers le bas pour l'esthétique).
+		ImGui::Dummy(ImVec2(0.f, 18.f));
+
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::TextUnformatted("THEME DE RACE");
 		ImGui::PopStyleColor();

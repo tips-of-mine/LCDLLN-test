@@ -36,44 +36,51 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		// Cadre central agrandi de ~30 px en largeur (540 → 570) suite au retour utilisateur :
-		// la maquette précédente paraissait à l'étroit, surtout côté boutons.
-		const float stageW = (std::min)(570.f, vpW * 0.96f);
-		ImGui::SetCursorPosX((vpW - stageW) * 0.5f);
-		ImGui::BeginChild("##ln_login_stage", ImVec2(stageW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
+		// Le BeginChild qui enveloppe titre + cadre principal doit être assez large pour que le
+		// titre à 5.0x (≈ 65 px de hauteur, mais largeur ≈ 720 px pour « LES CHRONIQUES ») ne
+		// soit pas clipé sur les bords. On l'étend donc à 96 % du viewport. Le cadre central
+		// lui-même reste fixé à 580 px (calibré dans BeginPanel via vpW), donc l'élargissement
+		// du child n'agrandit pas le panneau de connexion — uniquement la zone titre.
+		const float titleZoneW = vpW * 0.96f;
+		ImGui::SetCursorPosX((vpW - titleZoneW) * 0.5f);
+		ImGui::BeginChild("##ln_login_stage", ImVec2(titleZoneW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 
 		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
 		// sinon le fallback en dur dupliquait visuellement le titre.
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		// Titre nettement plus haut + marge dans la zone vide entre le bord supérieur de l'écran
-		// et le panneau (panneau positionné à vpH * 0.28 par BeginPanel). Le titre doit remplir
-		// plus de la moitié de cet espace, avec un peu d'air en haut. SetWindowFontScale(5.0f)
-		// donne ≈ 65 px de hauteur de glyphe (Windlass 13 px), centré entre la marge top et le
-		// haut du cadre. Pour atteindre franchement « plus de la moitié », on ajoute une bande
-		// d'air supérieure proportionnelle au viewport (≈ vpH * 0.05) avant le rendu du titre.
+		// Marge supérieure : bande d'air entre le bord haut de l'écran et le titre
+		// (le titre doit rester visible en entier et ne pas toucher le bord).
 		const float topMargin = (std::max)(24.f, vpH * 0.05f);
 		ImGui::SetCursorPosY(topMargin);
 		ImGui::SetWindowFontScale(5.0f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPosX((stageW - w1) * 0.5f);
+		ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w1) * 0.5f));
 		ImGui::TextUnformatted(h1.c_str());
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopStyleColor();
 
 		if (!rm.titleLine2.empty())
 		{
-			ImGui::SetWindowFontScale(1.5f);
+			// Sous-titre désormais nettement plus grand (1.5x → 2.5x ≈ 32 px) et descendu
+			// de quelques pixels pour reposer naturellement sous la baseline du titre principal,
+			// dont le scale 5.0x laisse un blanc important.
+			ImGui::Dummy(ImVec2(0.f, 8.f));
+			ImGui::SetWindowFontScale(2.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPosX((stageW - w2) * 0.5f);
+			ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w2) * 0.5f));
 			ImGui::TextUnformatted(rm.titleLine2.c_str());
 			ImGui::PopStyleColor();
 			ImGui::SetWindowFontScale(1.f);
 		}
 
 		ImGui::Spacing();
+
+		// Cadre central + 10 px en hauteur ET en largeur (570 → 580 ; +10 px de hauteur ajouté
+		// avant EndPanel). La maquette demande ce coup de pouce pour aérer les boutons.
+		const float stageW = (std::min)(580.f, vpW * 0.96f);
 
 		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CONNEXION") : rm.sectionTitle;
 		for (char& ch : panelTitle)
@@ -189,6 +196,10 @@ namespace engine::render
 		// [Tab] champ suivant | [Entree] se connecter | [Echap] quitter. L'utilisateur veut ces
 		// rappels masqués (les touches restent actives via ImGui InputText nav et le handler
 		// d'entrée du presenter), mais la zone visuelle disparaît pour épurer le panneau.
+
+		// +10 px de marge basse à l'intérieur du cadre — BeginPanel utilise AutoResizeY, donc
+		// ce Dummy translate directement la bordure inférieure du panneau vers le bas.
+		ImGui::Dummy(ImVec2(0.f, 10.f));
 
 		EndPanel();
 

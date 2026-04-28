@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-28 — itération 2 du login : titre 5.0x avec marge supérieure (≈ vpH * 0.05), persistance permanente de la suppression « infoBanner langue » à l'intérieur du panneau (évite le saut visuel post-fade), retrait des cédilles (« Francais » sans ç) à cause de Windlass.ttf qui n'a pas de ç. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … », Tweaks 0.85x + boutons interactifs avec contrat fond animé. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
+> Dernière mise à jour : 2026-04-28 — itération 3 du login : titre désormais rendu dans une stage à 96 % du viewport (plus de clipping à 5.0x), sous-titre 1.5x → 2.5x avec offset vertical, cadre central +10 px largeur (570 → 580) et +10 px hauteur (Dummy avant EndPanel), panneau Tweaks sans titre « TWEAKS » (label + bouton minimize retirés) et contenu centré verticalement. Itération 2 : titre 5.0x avec marge supérieure, persistance permanente de la suppression « infoBanner langue », retrait des cédilles (« Francais » sans ç). Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … », Tweaks 0.85x + boutons interactifs avec contrat fond animé. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -486,11 +486,18 @@ Ce fichier est ignoré par git (`.gitignore`). Un exemple est disponible dans `s
 ### 13.1 Panneau « Tweaks » (bas-droite)
 
 Source unique : `AuthImGuiRenderer::DrawAuthTweaksPanel` dans `engine/render/AuthImGuiRenderer.cpp`.
-État maintenu par l'instance du renderer (`m_langTweakRace`, `m_langTweakAnimBg`,
-`m_authTweakPanelMinimized`). La police du panneau est volontairement plus petite que celle
-du cadre principal (`SetWindowFontScale(0.85f)`), et la sélection courante d'une race ou du
-toggle ACTIVE / DESACTIVE est signalée à la fois par la **bordure** et la **couleur du texte**
+État maintenu par l'instance du renderer (`m_langTweakRace`, `m_langTweakAnimBg`).
+La police du panneau est volontairement plus petite que celle du cadre principal
+(`SetWindowFontScale(0.85f)`), et la sélection courante d'une race ou du toggle
+ACTIVE / DESACTIVE est signalée à la fois par la **bordure** et la **couleur du texte**
 en accent (`LnTheme::kAccent`).
+
+Le titre « TWEAKS » et son bouton de réduction (- / +) ont été retirés en itération 3 :
+le panneau est désormais toujours affiché expansé, sans header. Le contenu (« THEME DE
+RACE » + grille 3×3 + « FOND ANIME » + ACTIVE/DESACTIVE) est centré verticalement via
+un `ImGui::Dummy(0, 18)` au-dessus du premier label, pour combler le vide en bas du cadre.
+`m_authTweakPanelMinimized` reste comme placeholder mais n'est plus relu — gardé pour
+réintroduire la fonctionnalité minimize sans réécrire la struct si besoin.
 
 ### 13.2 Toggle « FOND ANIME » → animation décorative du fond auth
 
@@ -529,6 +536,15 @@ bit "active". Rendu : `DrawLoginLanguageBadge(vpW, vpH)`.
 ≈ 65 px), précédé d'un `SetCursorPosY(max(24, vpH * 0.05f))` pour ajouter une bande d'air
 au-dessus. Objectif maquette : que le titre remplisse plus de la moitié de l'espace vide
 entre le bord supérieur de l'écran et le panneau (qui démarre à `vpH * 0.28f`).
+
+**Stage englobante élargie** : à 5.0x, « LES CHRONIQUES » mesure ~720 px et était clipée
+quand le BeginChild faisait 570 px de large. La stage est désormais à `vpW * 0.96f` pour
+englober titre + sous-titre + cadre central sans clipping. Le cadre central (panneau de
+connexion) reste fixé à 580 px et est centré indépendamment via `BeginPanel(width, vpW, ...)`
+qui calcule sa propre `panelX = (vpW - width) * 0.5f`.
+
+**Sous-titre `de la Lune Noire`** : `SetWindowFontScale(2.5f)` (auparavant 1.5f) précédé
+d'un `Dummy(0, 8)` pour le descendre légèrement sous la baseline du titre principal.
 
 ### 13.5 Limitations Windlass.ttf (police principale)
 

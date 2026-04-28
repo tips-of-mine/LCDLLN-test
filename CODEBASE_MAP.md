@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-27 — réordonnancement ShardPick → CharacterCreate dans le flux d'auth client.
+> Dernière mise à jour : 2026-04-28 — corrections migrations 0017-0031 (vrais noms de fichiers), ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -205,6 +205,11 @@ RenderModel
 | Fichier | Rôle |
 |---|---|
 | `engine/render/AuthImGuiRenderer.h/.cpp` | Point d'entrée rendu auth ImGui. Dispatch vers les sous-renderers. |
+| `engine/render/AuthUiRenderer.h` | Interface abstraite du renderer (ancienne piste non-ImGui — toujours présente). |
+| `engine/render/auth/AuthUiRendererCore.cpp` | Cœur partagé du renderer auth (init, transitions de phase). |
+| `engine/render/AuthLogoPass.h/.cpp` | Passe Vulkan dédiée au logo « Lune Noire » de l'écran d'auth. |
+| `engine/render/AuthGlyphPass.h/.cpp` | Passe Vulkan pour le rendu typographique haut de gamme (glyphes Windlass/Morpheus) en complément d'ImGui. |
+| `engine/render/FontAtlasTtf.h/.cpp` | Construction d'un atlas TTF (Windlass.ttf) chargé dans ImGui — voir commit `00ad2b5` (2026-04-27). |
 | `engine/render/auth/AuthImGuiCommon.h/.cpp` | **Styles partagés : couleurs, polices, boutons, champs.** Modifier ici impacte tous les écrans. |
 | `engine/render/auth/screens/AuthImGuiLogin.cpp` | Rendu écran connexion. |
 | `engine/render/auth/screens/AuthImGuiRegister.cpp` | Rendu écran inscription. |
@@ -266,17 +271,21 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 |---|---|
 | `db/schema.sql` | Schéma complet (référence). |
 | `db/migrations/000N_*.sql` | Migrations numérotées (0001 → 0031). Appliquées en ordre par lcdlln-master au démarrage. |
-| `db/migrations/0020_terms_system.sql` | Système CGU : `terms_editions`, `terms_localizations`, `account_terms_acceptances`. |
-| `db/migrations/0021_bug_reports.sql` | Table `bug_reports` (catégorie, titre, corps, statut, assigné, exploit accordé). |
+| `db/migrations/0007_terms_cgu.sql` | Système CGU initial : `terms_editions`, `terms_localizations`, `account_terms_acceptances`. |
+| `db/migrations/0008_bug_reports_exploit.sql` | Table `bug_reports` initiale (catégorie, titre, corps, exploit accordé). |
+| `db/migrations/0017_game_servers.sql` | Registre des serveurs de jeu (`game_servers`) — le master s'y enregistre/désenregistre. |
+| `db/migrations/0018_player_trade_log.sql` | Audit des échanges joueur-à-joueur (anti-scam). |
+| `db/migrations/0019_player_professions.sql` | Tracking professions/skill levels par personnage (Linux/MySQL). |
 | `db/migrations/0022_character_stats.sql` | Table `character_stats` — `total_play_seconds` + `server_id` (FK → `game_servers`). |
-| `db/migrations/0023_faq.sql` | Table `faq_entries` (question, réponse, ordre, statut). |
-| `db/migrations/0024_roadmap_db.sql` | Table `roadmap_items` pour roadmap dynamique (CRUD admin). |
-| `db/migrations/0025_account_privacy.sql` | Table `account_privacy_settings` — attention : FK INT UNSIGNED incorrecte, corrigée par 0031. |
-| `db/migrations/0026_parental_control.sql` | Colonne `parental_validated` sur `accounts`. |
-| `db/migrations/0027_account_deletion.sql` | Colonne `deleted_at` sur `accounts` (soft delete). |
-| `db/migrations/0028_force_rename.sql` | Colonne `force_rename` sur `characters` (renommage forcé par admin). |
-| `db/migrations/0029_email_pending.sql` | Colonne `email_pending` + `email_pending_token` sur `accounts` (changement email à valider). |
-| `db/migrations/0030_terms_editions_nullable.sql` | `published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
+| `db/migrations/0023_accounts_profile.sql` | Profil joueur sur `accounts` : adresse complète, `email_pending` flow, `disabled_reason`, `role`, colonnes parental_*. Idempotent. |
+| `db/migrations/0023_accounts_profile_fields.sql` | Champs de profil ajoutés à `accounts` : `first_name`, `last_name`, `birth_date` (corrige les champs ignorés à l'inscription). |
+| `db/migrations/0024_characters_soft_delete.sql` | Colonnes `deleted_at` (soft delete) + `force_rename` sur `characters`. |
+| `db/migrations/0025_privacy_settings.sql` | Nouvelle table `account_privacy_settings` (visibilité profil : public/friends/none). FK INT UNSIGNED imprécise — corrigée par 0031. |
+| `db/migrations/0026_roadmap_items.sql` | Nouvelle table `roadmap_items` pour la roadmap publique gérée depuis le portail web. |
+| `db/migrations/0027_faq_items.sql` | Nouvelle table `faq_items` (FAQ portail web avec contrôle de publication). |
+| `db/migrations/0028_bug_reports_admin.sql` | Extension `bug_reports` : `admin_status`, `admin_comment`, `exploit_awarded`. |
+| `db/migrations/0029_terms_retired_reason.sql` | Colonne `retired_reason` sur `terms_editions` (raison de retrait d'une édition CGU). |
+| `db/migrations/0030_terms_editions_nullable_published_at.sql` | `terms_editions.published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
 | `db/migrations/0031_privacy_settings_ensure.sql` | Recrée `account_privacy_settings` avec `BIGINT UNSIGNED` correct — idempotente (`IF NOT EXISTS`). |
 | `engine/server/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur. |
 | `engine/server/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |
@@ -287,7 +296,8 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 |---|---|
 | 0006 | `email_locale`, `email_verified` |
 | 0016 | `country_code`, `tag_id` |
-| 0023 | `first_name`, `last_name`, `birth_date` (fix : champs ignorés à l'inscription) |
+| 0023 (`accounts_profile`) | adresse postale complète, `email_pending` + token, `disabled_reason`, `role`, colonnes contrôle parental |
+| 0023 (`accounts_profile_fields`) | `first_name`, `last_name`, `birth_date` (fix : champs ignorés à l'inscription) |
 
 ---
 
@@ -429,7 +439,9 @@ Appliquer `data-race="elfes|orcs|nains|morts_vivants|corrompus|divins|demons|hum
 | `web-portal/app/api/player/` | APIs joueur : account PATCH, email change, password, parental, cgu accept, privacy, characters delete. |
 | `web-portal/app/api/bugs/route.ts` | POST bug report — insère dans `bug_reports`, auth via cookie session, valide catégorie. |
 | `web-portal/app/api/admin/` | APIs admin : players (verify-email, activate, disable), characters (force-rename), roadmap CRUD, faq CRUD, cgu CRUD+publish+retire, bugs PATCH. |
-| `design/lune-noire-design-system/ui_kits/email/` | 7 templates HTML email (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change). |
+| `web-portal/email-templates/` | Templates HTML email FR/EN actifs lus par `web-portal/lib/email.ts` (welcome, verification, password-reset, account-confirmed, account-disabled, parental-validation, email-change — 14 fichiers). |
+| `game/data/email/` | Mêmes templates HTML FR/EN consommés côté C++ par `SmtpMailer` (commit `d7b490b`). |
+| `design/lune-noire-design-system/ui_kits/email/` | Source design d'origine — référence visuelle, pas chargée à l'exécution. |
 
 ---
 

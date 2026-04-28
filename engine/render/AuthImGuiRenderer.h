@@ -134,7 +134,8 @@ namespace engine::render
 		/// depuis l'écran de sélection de langue. Disparaît automatiquement après quelques secondes.
 		void DrawLoginLanguageBadge(float vpW, float vpH);
 		void DrawLangFooterHints(std::string_view left, std::string_view right);
-		void DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz, bool password);
+		void DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz, bool password,
+			float extraSpacingPx = 0.f);
 		void DrawLoginRememberRow(const RenderModel& rm);
 		void DrawLoginFooterChips(const RenderModel& rm);
 		void DrawFooterChipRow(const std::vector<std::pair<std::string, std::string>>& chips);

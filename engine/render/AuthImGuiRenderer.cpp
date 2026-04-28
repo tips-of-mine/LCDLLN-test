@@ -624,7 +624,7 @@ namespace engine::render
 	}
 
 	void AuthImGuiRenderer::DrawAuthGoldField(const engine::client::AuthUiPresenter::RenderField& spec, char* buf, int bufSz,
-		bool password)
+		bool password, float extraSpacingPx)
 	{
 		std::string lab = spec.label;
 		for (char& ch : lab)
@@ -637,6 +637,13 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 		ImGui::TextUnformatted(lab.c_str());
 		ImGui::PopStyleColor();
+
+		// Espace optionnel entre le libellé et le champ — utilisé sur l'écran login pour aérer
+		// la maquette suite au retour utilisateur. Register garde le défaut 0 (peu de place).
+		if (extraSpacingPx > 0.f)
+		{
+			ImGui::Dummy(ImVec2(0.f, extraSpacingPx));
+		}
 
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
 		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IV(LnTheme::kSurface));

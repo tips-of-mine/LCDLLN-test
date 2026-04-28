@@ -128,10 +128,14 @@ namespace engine::render
 				LnTheme::kPrimary.b);
 		}
 
+		// Suite au retour utilisateur : plus d'espace entre les 4 éléments « Identifiant /
+		// champ id / Mot de passe / champ pw ». extraSpacingPx=6 ajoute un Dummy entre
+		// chaque libellé et son input ; un Dummy(0, 12) supplémentaire sépare les deux champs.
 		if (rm.fields.size() >= 2u)
 		{
-			DrawAuthGoldField(rm.fields[0], m_loginId, static_cast<int>(sizeof(m_loginId)), false);
-			DrawAuthGoldField(rm.fields[1], m_loginPw, static_cast<int>(sizeof(m_loginPw)), true);
+			DrawAuthGoldField(rm.fields[0], m_loginId, static_cast<int>(sizeof(m_loginId)), false, 6.f);
+			ImGui::Dummy(ImVec2(0.f, 12.f));
+			DrawAuthGoldField(rm.fields[1], m_loginPw, static_cast<int>(sizeof(m_loginPw)), true, 6.f);
 		}
 		else
 		{
@@ -140,7 +144,9 @@ namespace engine::render
 		}
 
 		DrawLoginRememberRow(rm);
-		ImGui::Spacing();
+		// Espace généreux avant les liens secondaires (Récupération / Portail web) — l'utilisateur
+		// veut tous les boutons descendus pour mieux aérer le bas du panneau.
+		ImGui::Dummy(ImVec2(0.f, 18.f));
 
 		if (m_authPresenter != nullptr)
 		{
@@ -157,7 +163,8 @@ namespace engine::render
 			{
 				m_authPresenter->ImGuiOpenForgotPasswordPortal(*m_authCfg, *m_authWindow);
 			}
-			ImGui::Spacing();
+			// Espace avant les actions principales (Créer un compte / Se connecter).
+			ImGui::Dummy(ImVec2(0.f, 14.f));
 		}
 
 		const engine::client::AuthUiPresenter::RenderAction* actCreate = nullptr;

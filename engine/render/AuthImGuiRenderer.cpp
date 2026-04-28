@@ -198,6 +198,9 @@ namespace engine::render
 		m_langTweakRace = 0;
 		m_langTweakAnimBg = true;
 		m_authTweakPanelMinimized = false;
+		m_loginLangBadgeText.clear();
+		m_loginLangBadgeStartTime = -1.0;
+		m_prevPhaseToken = 0u;
 		m_regCountryComboIdx = 0;
 		m_optResIdx = 2;
 		m_optQualityPreset = 2;
@@ -263,7 +266,23 @@ namespace engine::render
 		{
 			return;
 		}
+		m_prevPhaseToken = m_lastSyncedPhaseToken;
 		m_lastSyncedPhaseToken = fp;
+
+		// Détection de la transition « écran de sélection de langue » → « écran de connexion » :
+		// on capture le bandeau d'info posé par ApplyLocaleSelection (« Langue : Français » par
+		// ex.) pour le re-publier au-dessus du cadre pendant quelques secondes (cf. Render()).
+		// Bit 0 = languageSelection, bit 1 = login (cf. VisualFingerprint). On masque le bit 31
+		// (« active ») afin de ne pas confondre l'état initial 0xffffffff avec une vraie phase.
+		constexpr uint32_t kPhaseMask = 0x7FFFFFFFu;
+		constexpr uint32_t kPhaseLanguageOnly = 1u << 0;
+		const bool justLoggedIn = (fp & (1u << 1)) != 0u;
+		const bool fromLanguageSel = (m_prevPhaseToken & kPhaseMask) == kPhaseLanguageOnly;
+		if (justLoggedIn && fromLanguageSel && !rm.infoBanner.empty())
+		{
+			m_loginLangBadgeText = rm.infoBanner;
+			m_loginLangBadgeStartTime = ImGui::GetTime();
+		}
 
 		if (vs.error)
 		{
@@ -669,6 +688,12 @@ namespace engine::render
 		{
 			m_rememberMe = !m_rememberMe;
 		}
+		// Détail (« Conserve l'identifiant à la prochaine ouverture ») désormais affiché en tooltip
+		// au survol de la ligne — ne mange plus de hauteur dans le panneau.
+		if (ImGui::IsItemHovered() && !rm.authRememberDetailLine.empty())
+		{
+			ImGui::SetTooltip("%s", rm.authRememberDetailLine.c_str());
+		}
 		const bool on = m_rememberMe;
 		ImDrawList* dl = ImGui::GetWindowDrawList();
 		const ImVec2 a(p0.x + 2.f, p0.y + 3.f);
@@ -687,15 +712,6 @@ namespace engine::render
 		const ImVec2 ts = ImGui::CalcTextSize(rememberTitle.c_str());
 		const float labelY = (a.y + b.y) * 0.5f - ts.y * 0.5f;
 		dl->AddText(ImVec2(labelX, labelY), U32(LnTheme::kText), rememberTitle.c_str());
-
-		if (!rm.authRememberDetailLine.empty())
-		{
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-			ImGui::SetWindowFontScale(0.82f);
-			ImGui::TextWrapped("%s", rm.authRememberDetailLine.c_str());
-			ImGui::SetWindowFontScale(1.f);
-			ImGui::PopStyleColor();
-		}
 	}
 
 	void AuthImGuiRenderer::DrawLoginFooterChips(const RenderModel& rm)
@@ -803,6 +819,59 @@ namespace engine::render
 		DrawFooterChipRow(rm.authRegisterFooterChips);
 	}
 
+	void AuthImGuiRenderer::DrawLoginLanguageBadge(float vpW, float vpH)
+	{
+		if (m_loginLangBadgeText.empty() || m_loginLangBadgeStartTime <= 0.0)
+		{
+			return;
+		}
+		const double elapsed = ImGui::GetTime() - m_loginLangBadgeStartTime;
+		if (elapsed < 0.0 || elapsed >= kLoginLangBadgeDurationSec)
+		{
+			// Au-delà de la fenêtre d'affichage, on libère l'état pour ne pas re-rendre au prochain frame.
+			m_loginLangBadgeText.clear();
+			m_loginLangBadgeStartTime = -1.0;
+			return;
+		}
+		// Fade-out final (dernière `kLoginLangBadgeFadeOutSec` secondes) pour disparition douce.
+		float alpha = 1.f;
+		const double fadeStart = kLoginLangBadgeDurationSec - kLoginLangBadgeFadeOutSec;
+		if (elapsed > fadeStart)
+		{
+			alpha = static_cast<float>(1.0 - (elapsed - fadeStart) / kLoginLangBadgeFadeOutSec);
+			alpha = std::clamp(alpha, 0.f, 1.f);
+		}
+
+		const float panelTop = vpH * 0.28f;
+		const float badgePadX = 18.f;
+		const float badgePadY = 8.f;
+		const ImVec2 textSz = ImGui::CalcTextSize(m_loginLangBadgeText.c_str());
+		const float badgeW = textSz.x + 2.f * badgePadX;
+		const float badgeH = textSz.y + 2.f * badgePadY;
+		const float badgeX = (vpW - badgeW) * 0.5f;
+		const float badgeY = (std::max)(8.f, panelTop - badgeH - 12.f);
+
+		ImGui::SetNextWindowPos(ImVec2(badgeX, badgeY), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(badgeW, badgeH), ImGuiCond_Always);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 6.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(badgePadX, badgePadY));
+		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.92f)));
+		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kAccent));
+		ImGui::Begin("##ln_login_lang_badge",
+			nullptr,
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoInputs
+				| ImGuiWindowFlags_NoScrollbar);
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+		ImGui::TextUnformatted(m_loginLangBadgeText.c_str());
+		ImGui::PopStyleColor();
+		ImGui::End();
+		ImGui::PopStyleColor(2);
+		ImGui::PopStyleVar(4);
+	}
+
 	void AuthImGuiRenderer::DrawAuthTweaksPanel(float vpW, float vpH)
 	{
 		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "MORTS-V.", "CORROM.",
@@ -821,6 +890,7 @@ namespace engine::render
 				nullptr,
 				ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
 					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
+			ImGui::SetWindowFontScale(0.85f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 			ImGui::TextUnformatted("TWEAKS");
 			ImGui::PopStyleColor();
@@ -829,6 +899,7 @@ namespace engine::render
 			{
 				m_authTweakPanelMinimized = false;
 			}
+			ImGui::SetWindowFontScale(1.f);
 			ImGui::End();
 			ImGui::PopStyleColor(2);
 			ImGui::PopStyleVar(3);
@@ -847,6 +918,10 @@ namespace engine::render
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
 				| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
+		// Le panneau Tweaks doit utiliser une typographie plus discrète que le cadre principal :
+		// 0.85x compense le titre login agrandi à 3.0x, en gardant les boutons cliquables.
+		ImGui::SetWindowFontScale(0.85f);
+
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		ImGui::TextUnformatted("TWEAKS");
 		ImGui::PopStyleColor();
@@ -861,6 +936,9 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		ImGui::Spacing();
 
+		// Boutons « race » : la sélection courante doit ressortir visuellement (texte ET bordure
+		// en accent), sinon l'utilisateur ne distingue pas l'état actif. PushStyleColor(Text)
+		// par bouton pour ne pas écraser l'état des autres.
 		const float btnW = (ImGui::GetContentRegionAvail().x - 8.f) / 3.f;
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
@@ -877,6 +955,7 @@ namespace engine::render
 				const int idx = r * 3 + c;
 				const bool sel = (m_langTweakRace == idx);
 				ImGui::PushStyleColor(ImGuiCol_Border, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+				ImGui::PushStyleColor(ImGuiCol_Text, sel ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
 				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, sel ? 1.5f : 1.f);
 				char id[40];
 				std::snprintf(id, sizeof(id), "%s##race_%d", kRaceLabels[idx], idx);
@@ -885,7 +964,7 @@ namespace engine::render
 					m_langTweakRace = idx;
 				}
 				ImGui::PopStyleVar(1);
-				ImGui::PopStyleColor(1);
+				ImGui::PopStyleColor(2);
 			}
 		}
 		ImGui::PopStyleVar(1);
@@ -901,30 +980,36 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 		{
+			// Le toggle ACTIVE / DESACTIVE pilote le futur fond animé de l'écran d'auth.
+			// Tant que l'animation n'est pas branchée côté Vulkan (passe de fond), seul le
+			// rendu visuel des deux boutons reflète l'état choisi. Voir CODEBASE_MAP.md §13.
 			const float half = (ImGui::GetContentRegionAvail().x - 6.f) * 0.5f;
 			const bool on = m_langTweakAnimBg;
 			ImGui::PushStyleColor(ImGuiCol_Border, on ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Text, on ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, on ? 1.5f : 1.f);
 			if (ImGui::Button("ACTIVE##lang_bg_on", ImVec2(half, 0.f)))
 			{
 				m_langTweakAnimBg = true;
 			}
 			ImGui::PopStyleVar(1);
-			ImGui::PopStyleColor(1);
+			ImGui::PopStyleColor(2);
 			ImGui::SameLine(0.f, 6.f);
 			const bool off = !m_langTweakAnimBg;
 			ImGui::PushStyleColor(ImGuiCol_Border, off ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
+			ImGui::PushStyleColor(ImGuiCol_Text, off ? IV(LnTheme::kAccent) : IV(LnTheme::kText));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, off ? 1.5f : 1.f);
 			if (ImGui::Button("DESACTIVE##lang_bg_off", ImVec2(half, 0.f)))
 			{
 				m_langTweakAnimBg = false;
 			}
 			ImGui::PopStyleVar(1);
-			ImGui::PopStyleColor(1);
+			ImGui::PopStyleColor(2);
 		}
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(3);
 
+		ImGui::SetWindowFontScale(1.f);
 		ImGui::End();
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar(3);

@@ -36,7 +36,9 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		const float stageW = (std::min)(540.f, vpW * 0.94f);
+		// Cadre central agrandi de ~30 px en largeur (540 → 570) suite au retour utilisateur :
+		// la maquette précédente paraissait à l'étroit, surtout côté boutons.
+		const float stageW = (std::min)(570.f, vpW * 0.96f);
 		ImGui::SetCursorPosX((vpW - stageW) * 0.5f);
 		ImGui::BeginChild("##ln_login_stage", ImVec2(stageW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
 
@@ -44,9 +46,9 @@ namespace engine::render
 		// sinon le fallback en dur dupliquait visuellement le titre.
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		// Titre plus grand : 2.4x le base (Windlass 13 px → ~31 px) — l'utilisateur voulait
-		// le titre plus visible. Avant : 1.62x = ~21 px, lisible mais trop discret.
-		ImGui::SetWindowFontScale(2.4f);
+		// Titre nettement plus grand : 3.0x le base (Windlass 13 px → ~39 px) — la maquette
+		// rendait le titre encore trop discret à 2.4x. À 3.0x il occupe l'espace prévu.
+		ImGui::SetWindowFontScale(3.0f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPosX((stageW - w1) * 0.5f);
@@ -89,12 +91,18 @@ namespace engine::render
 			DrawAuthBanner(tr("auth.banner.error_title", "Echec"), rm.errorText, LnTheme::kErrorCol.r, LnTheme::kErrorCol.g,
 				LnTheme::kErrorCol.b);
 		}
+		// Le badge « Langue : … » est rendu au-dessus du cadre par DrawLoginLanguageBadge() ; on
+		// évite la double affichage à l'intérieur du panneau pendant la fenêtre éphémère.
+		const bool ephemeralLangBadgeActive = !m_loginLangBadgeText.empty()
+			&& m_loginLangBadgeStartTime > 0.0
+			&& (ImGui::GetTime() - m_loginLangBadgeStartTime) < kLoginLangBadgeDurationSec
+			&& rm.infoBanner == m_loginLangBadgeText;
 		if (vs.submitting && !rm.infoBanner.empty())
 		{
 			DrawAuthBanner(tr("auth.banner.info_title", "Patience"), rm.infoBanner, LnTheme::kPrimary.r, LnTheme::kPrimary.g,
 				LnTheme::kPrimary.b);
 		}
-		else if (!rm.infoBanner.empty())
+		else if (!rm.infoBanner.empty() && !ephemeralLangBadgeActive)
 		{
 			DrawAuthBanner(tr("auth.banner.info_title", "Information"), rm.infoBanner, LnTheme::kPrimary.r, LnTheme::kPrimary.g,
 				LnTheme::kPrimary.b);
@@ -169,13 +177,16 @@ namespace engine::render
 			m_authPresenter->ImGuiSubmitLogin(*m_authCfg, m_loginId, m_loginPw, m_rememberMe);
 		}
 
-		DrawSeparator();
-		DrawLoginFooterChips(rm);
+		// Anciennement : DrawSeparator() + DrawLoginFooterChips(rm) qui affichaient les chips
+		// [Tab] champ suivant | [Entree] se connecter | [Echap] quitter. L'utilisateur veut ces
+		// rappels masqués (les touches restent actives via ImGui InputText nav et le handler
+		// d'entrée du presenter), mais la zone visuelle disparaît pour épurer le panneau.
 
 		EndPanel();
 
 		ImGui::EndChild();
 
+		DrawLoginLanguageBadge(vpW, vpH);
 		DrawAuthTweaksPanel(vpW, vpH);
 
 		if (actOpts != nullptr && actQuit != nullptr && m_authPresenter != nullptr)

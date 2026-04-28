@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-28 — corrections migrations 0017-0031 (vrais noms de fichiers), ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
+> Dernière mise à jour : 2026-04-28 — retouches écran login (titre 3.0x, cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … »), maquette Tweaks (police 0.85x + boutons interactifs avec contrat fond animé), corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -478,6 +478,52 @@ Ce fichier est ignoré par git (`.gitignore`). Un exemple est disponible dans `s
 
 > **Priorité** : les variables d'environnement priment toujours sur `smtp.local.json`.
 > Si `SMTP_HOST` est défini en env, le fichier JSON n'est pas lu du tout.
+
+---
+
+## 13. Tweaks et badges éphémères de l'écran de connexion
+
+### 13.1 Panneau « Tweaks » (bas-droite)
+
+Source unique : `AuthImGuiRenderer::DrawAuthTweaksPanel` dans `engine/render/AuthImGuiRenderer.cpp`.
+État maintenu par l'instance du renderer (`m_langTweakRace`, `m_langTweakAnimBg`,
+`m_authTweakPanelMinimized`). La police du panneau est volontairement plus petite que celle
+du cadre principal (`SetWindowFontScale(0.85f)`), et la sélection courante d'une race ou du
+toggle ACTIVE / DESACTIVE est signalée à la fois par la **bordure** et la **couleur du texte**
+en accent (`LnTheme::kAccent`).
+
+### 13.2 Toggle « FOND ANIME » → animation décorative du fond auth
+
+`m_langTweakAnimBg` (`bool`) est la source de vérité du toggle ACTIVE / DESACTIVE.
+Contrat futur : quand la passe Vulkan d'animation de fond auth sera ajoutée (probablement à
+côté de `engine/render/AuthLogoPass` / `engine/render/AuthGlyphPass`), elle devra observer ce
+flag et activer/désactiver son émission de commandes en conséquence. Tant que la passe
+n'existe pas, le toggle ne fait que conserver l'état visuellement (sélection de bordure +
+texte) — voir le commentaire `// Le toggle ACTIVE / DESACTIVE pilote le futur fond animé`
+dans `DrawAuthTweaksPanel`.
+
+### 13.3 Badge éphémère « Langue : … »
+
+Lors de la transition `LanguageSelectionFirstRun → Login`, le renderer capture
+`rm.infoBanner` (posé par `AuthUiPresenter::ApplyLocaleSelection`) puis l'affiche au-dessus
+du cadre central pendant `kLoginLangBadgeDurationSec` secondes (4 s par défaut, dont
+`kLoginLangBadgeFadeOutSec` = 1 s de fade-out final). Pendant cette fenêtre, le panneau de
+connexion **n'affiche pas** l'`infoBanner` à l'intérieur (suppression de la double affichage).
+
+État : `m_loginLangBadgeText`, `m_loginLangBadgeStartTime`, `m_prevPhaseToken` dans
+`AuthImGuiRenderer.h`.
+Détection : `SyncTransientFromModel` compare `m_prevPhaseToken` au nouveau token (bit 0 =
+language sel, bit 1 = login, bit 31 = active) avec un masque `0x7FFFFFFFu` pour ignorer le
+bit "active". Rendu : `DrawLoginLanguageBadge(vpW, vpH)`.
+
+### 13.4 Limitations Windlass.ttf (police principale)
+
+Windlass.ttf (game/data/fonts/Windlass.ttf) ne contient pas les glyphes Latin-1 supplément
+en majuscules (É, À, Ô, etc.) : ImGui les rend en `?`. Tant qu'aucune fallback font n'est
+fusionnée dans l'atlas (cf. `WorldEditorImGui::Init`), les libellés FR utilisés par l'UI auth
+doivent rester en majuscules ASCII (« CREER », « A LA », etc.). Voir la liste dans
+`game/data/localization/fr/fr.json` sous les clés `auth.login.maquette_*` et
+`auth.login.remember_*`.
 
 ---
 

@@ -107,16 +107,26 @@ namespace engine::render
 		return false;
 	}
 
-	/// Dessine un bouton de style texte atténué (lien secondaire).
+	/// Dessine un bouton de style texte atténué (lien secondaire) avec une zone de clic plus
+	/// confortable que SmallButton : la hauteur native de SmallButton coupait visuellement les
+	/// jambages des libellés en français (« Récupération », « créer », « bureau »…). On utilise
+	/// donc Button avec un FramePadding vertical élargi et un fond/bordure transparents pour
+	/// conserver le style « texte ».
 	bool DrawAuthButtonText(std::string_view label, std::string_view idSuffix)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		std::string id;
 		id.reserve(label.size() + idSuffix.size() + 4u);
 		id.append(label.data(), label.size());
 		id.append(idSuffix.data(), idSuffix.size());
-		const bool pressed = ImGui::SmallButton(id.c_str());
-		ImGui::PopStyleColor();
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.10f)));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.f, 8.f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+		const bool pressed = ImGui::Button(id.c_str());
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(4);
 		return pressed;
 	}
 

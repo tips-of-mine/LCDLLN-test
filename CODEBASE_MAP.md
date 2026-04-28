@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-28 — itération 6 du login : aération du formulaire (DrawAuthGoldField gagne un paramètre `extraSpacingPx` ; login passe 6 px label↔input, +12 px entre les deux champs), descente des 4 boutons (Dummy 18 px avant Récupération/Portail, Dummy 14 px avant Créer compte/Se connecter). Itération 5 : cadre principal +30 px de hauteur, Tweaks 218 → 160 px avec contenu collé en bas. Itération 4 : recentrage via `BeginPanel(stageW, titleZoneW, ...)`. Itération 3 : titre stage 96 %, sous-titre 2.5x, cadre +10 px, Tweaks sans header. Itération 2 : titre 5.0x + marge sup., persistance suppression infoBanner langue, retrait cédilles. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère, Tweaks 0.85x + boutons interactifs. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan, templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
+> Dernière mise à jour : 2026-04-28 — itération 7 du login : gap CONNEXION→IDENTIFIANT resserré à ~9 px avec trait centré (ImGui::Spacing après Separator retiré dans BeginPanel — affecte tous les écrans), champs Identifiant et Mot de passe plus hauts (FramePadding y 3 → 8 dans DrawAuthGoldField, hauteur ≈ 19 → 29 px), descente accrue des 4 boutons (Dummy 18 → 32 avant Récupération/Portail, 14 → 28 avant Créer/Se connecter). Itération 6 : aération formulaire (extraSpacingPx 6, Dummy 12 entre les deux champs). Itération 5 : cadre +30 px hauteur, Tweaks 218 → 160 px collé en bas. Itération 4 : recentrage via `BeginPanel(stageW, titleZoneW, ...)`. Itération 3 : titre stage 96 %, sous-titre 2.5x, cadre +10 px, Tweaks sans header. Itération 2 : titre 5.0x + marge sup., persistance suppression infoBanner langue, retrait cédilles. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère, Tweaks 0.85x + boutons interactifs. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan, templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -553,15 +553,24 @@ le panneau contre le bord gauche du child (bug observé en itération 3 → corr
 **Sous-titre `de la Lune Noire`** : `SetWindowFontScale(2.5f)` (auparavant 1.5f) précédé
 d'un `Dummy(0, 8)` pour le descendre légèrement sous la baseline du titre principal.
 
-### 13.6 Aération formulaire login (itération 6)
+### 13.6 Aération formulaire login (itération 6 + 7)
 
 `DrawAuthGoldField` accepte maintenant `extraSpacingPx` (défaut 0 → comportement Register
 inchangé). Le login passe 6 px → un `Dummy` est inséré entre le libellé en majuscules
 accent et le `InputText`. Entre les deux champs, un `Dummy(0, 12)` au call site sépare
-« IDENTIFIANT » et « MOT DE PASSE ». Au-dessus des liens secondaires (Récupération du mot
-de passe, Portail web) : `Dummy(0, 18)`. Au-dessus des actions principales (Créer un compte,
-Se connecter) : `Dummy(0, 14)`. Le total descend les 4 boutons d'environ 32 px sans
-réorganiser l'ordre du contenu.
+« IDENTIFIANT » et « MOT DE PASSE ».
+
+**Hauteur des champs (it. 7)** : `DrawAuthGoldField` pousse également
+`FramePadding(10, 8)` autour de l'`InputText` (auparavant le défaut ImGui de
+`(4, 3)`). Hauteur effective des champs ≈ 29 px (au lieu de 19 px par défaut).
+
+**Boutons descendus (it. 7)** : au-dessus des liens secondaires (Récupération du mot de
+passe, Portail web) : `Dummy(0, 32)` (auparavant 18). Au-dessus des actions principales
+(Créer un compte, Se connecter) : `Dummy(0, 28)` (auparavant 14).
+
+**Gap CONNEXION→IDENTIFIANT (it. 7)** : retrait du `ImGui::Spacing()` après le `Separator`
+dans `BeginPanel` → gap visuel ≈ 9 px (ItemSpacing.y * 2 + Separator) avec le trait
+naturellement centré. Affecte tous les écrans qui utilisent `BeginPanel`.
 
 ### 13.5 Limitations Windlass.ttf (police principale)
 

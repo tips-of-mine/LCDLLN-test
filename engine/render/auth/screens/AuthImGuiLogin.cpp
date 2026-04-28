@@ -145,8 +145,8 @@ namespace engine::render
 
 		DrawLoginRememberRow(rm);
 		// Espace généreux avant les liens secondaires (Récupération / Portail web) — l'utilisateur
-		// veut tous les boutons descendus pour mieux aérer le bas du panneau.
-		ImGui::Dummy(ImVec2(0.f, 18.f));
+		// veut tous les boutons descendus encore plus bas pour bien aérer le panneau.
+		ImGui::Dummy(ImVec2(0.f, 32.f));
 
 		if (m_authPresenter != nullptr)
 		{
@@ -164,7 +164,7 @@ namespace engine::render
 				m_authPresenter->ImGuiOpenForgotPasswordPortal(*m_authCfg, *m_authWindow);
 			}
 			// Espace avant les actions principales (Créer un compte / Se connecter).
-			ImGui::Dummy(ImVec2(0.f, 14.f));
+			ImGui::Dummy(ImVec2(0.f, 28.f));
 		}
 
 		const engine::client::AuthUiPresenter::RenderAction* actCreate = nullptr;

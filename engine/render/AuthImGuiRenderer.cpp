@@ -591,7 +591,11 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Separator, IV(LnTheme::kBorder));
 		ImGui::Separator();
 		ImGui::PopStyleColor();
-		ImGui::Spacing();
+		// Anciennement : ImGui::Spacing() (= Dummy(0, 8)) après le Separator. Total
+		// title→content était ≈ 17 px, le retour utilisateur demande ~10 px avec le trait
+		// au milieu. ItemSpacing.y (4) est appliqué automatiquement avant ET après le
+		// Separator par ImGui : 4 + 1 (sep) + 4 = ~9 px → cible quasi atteinte sans
+		// supplément. On laisse donc ce bloc nu.
 		return true;
 	}
 
@@ -651,6 +655,10 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+		// FramePadding.y bumpé de 3 (défaut ImGui) à 8 px → InputText ≈ 13 + 16 = 29 px
+		// de hauteur au lieu de 19. La maquette login demande des champs nettement plus
+		// hauts pour la saisie. Le paramètre s'applique aussi à Register, qui en bénéficie.
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.f, 8.f));
 
 		char inputId[64];
 		std::snprintf(inputId, sizeof(inputId), "##gf_%p", static_cast<void*>(buf));
@@ -670,7 +678,7 @@ namespace engine::render
 			ImGui::InputText(inputId, buf, static_cast<size_t>(bufSz), flags);
 		}
 
-		ImGui::PopStyleVar(2);
+		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(4);
 		ImGui::Spacing();
 	}

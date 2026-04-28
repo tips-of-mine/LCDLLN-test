@@ -46,9 +46,15 @@ namespace engine::render
 		// sinon le fallback en dur dupliquait visuellement le titre.
 		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
 
-		// Titre nettement plus grand : 3.0x le base (Windlass 13 px → ~39 px) — la maquette
-		// rendait le titre encore trop discret à 2.4x. À 3.0x il occupe l'espace prévu.
-		ImGui::SetWindowFontScale(3.0f);
+		// Titre nettement plus haut + marge dans la zone vide entre le bord supérieur de l'écran
+		// et le panneau (panneau positionné à vpH * 0.28 par BeginPanel). Le titre doit remplir
+		// plus de la moitié de cet espace, avec un peu d'air en haut. SetWindowFontScale(5.0f)
+		// donne ≈ 65 px de hauteur de glyphe (Windlass 13 px), centré entre la marge top et le
+		// haut du cadre. Pour atteindre franchement « plus de la moitié », on ajoute une bande
+		// d'air supérieure proportionnelle au viewport (≈ vpH * 0.05) avant le rendu du titre.
+		const float topMargin = (std::max)(24.f, vpH * 0.05f);
+		ImGui::SetCursorPosY(topMargin);
+		ImGui::SetWindowFontScale(5.0f);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
 		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
 		ImGui::SetCursorPosX((stageW - w1) * 0.5f);
@@ -91,18 +97,20 @@ namespace engine::render
 			DrawAuthBanner(tr("auth.banner.error_title", "Echec"), rm.errorText, LnTheme::kErrorCol.r, LnTheme::kErrorCol.g,
 				LnTheme::kErrorCol.b);
 		}
-		// Le badge « Langue : … » est rendu au-dessus du cadre par DrawLoginLanguageBadge() ; on
-		// évite la double affichage à l'intérieur du panneau pendant la fenêtre éphémère.
-		const bool ephemeralLangBadgeActive = !m_loginLangBadgeText.empty()
-			&& m_loginLangBadgeStartTime > 0.0
-			&& (ImGui::GetTime() - m_loginLangBadgeStartTime) < kLoginLangBadgeDurationSec
+		// Le badge « Langue : … » est rendu au-dessus du cadre par DrawLoginLanguageBadge() ;
+		// on supprime la double affichage à l'intérieur du panneau dès que rm.infoBanner
+		// correspond au texte capturé sur la transition LangSel → Login. Cette suppression
+		// est *permanente* (et pas seulement pendant la fenêtre éphémère) pour éviter que
+		// le bandeau ne « saute » dans le cadre principal après le fade-out — l'utilisateur
+		// l'a vécu comme un bug visuel.
+		const bool suppressLangInfoInsidePanel = !m_loginLangBadgeText.empty()
 			&& rm.infoBanner == m_loginLangBadgeText;
 		if (vs.submitting && !rm.infoBanner.empty())
 		{
 			DrawAuthBanner(tr("auth.banner.info_title", "Patience"), rm.infoBanner, LnTheme::kPrimary.r, LnTheme::kPrimary.g,
 				LnTheme::kPrimary.b);
 		}
-		else if (!rm.infoBanner.empty() && !ephemeralLangBadgeActive)
+		else if (!rm.infoBanner.empty() && !suppressLangInfoInsidePanel)
 		{
 			DrawAuthBanner(tr("auth.banner.info_title", "Information"), rm.infoBanner, LnTheme::kPrimary.r, LnTheme::kPrimary.g,
 				LnTheme::kPrimary.b);

@@ -828,8 +828,10 @@ namespace engine::render
 		const double elapsed = ImGui::GetTime() - m_loginLangBadgeStartTime;
 		if (elapsed < 0.0 || elapsed >= kLoginLangBadgeDurationSec)
 		{
-			// Au-delà de la fenêtre d'affichage, on libère l'état pour ne pas re-rendre au prochain frame.
-			m_loginLangBadgeText.clear();
+			// Au-delà de la fenêtre d'affichage, on n'efface PAS `m_loginLangBadgeText` : il sert
+			// au panneau login pour continuer à supprimer la même `infoBanner` à l'intérieur, sinon
+			// le bandeau « Information / Langue appliquée immédiatement » réapparaîtrait dans le
+			// cadre principal après le fade-out (effet « se déplace ») — voir RenderLoginScreen.
 			m_loginLangBadgeStartTime = -1.0;
 			return;
 		}

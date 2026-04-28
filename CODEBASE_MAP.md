@@ -1,7 +1,7 @@
 # CODEBASE MAP — Lune Noire (LCDLLN-test)
 
 > Référence rapide à inclure dans un prompt pour éviter la ré-analyse complète.
-> Dernière mise à jour : 2026-04-28 — retouches écran login (titre 3.0x, cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … »), maquette Tweaks (police 0.85x + boutons interactifs avec contrat fond animé), corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
+> Dernière mise à jour : 2026-04-28 — itération 2 du login : titre 5.0x avec marge supérieure (≈ vpH * 0.05), persistance permanente de la suppression « infoBanner langue » à l'intérieur du panneau (évite le saut visuel post-fade), retrait des cédilles (« Francais » sans ç) à cause de Windlass.ttf qui n'a pas de ç. Itération 1 : cadre 570 px, chips Tab/Entrée masquées, tooltip « Se souvenir de moi », badge éphémère « Langue : … », Tweaks 0.85x + boutons interactifs avec contrat fond animé. Plus en amont : corrections migrations 0017-0031, ajout passes auth Vulkan (Glyph/Logo/FontAtlasTtf), templates email déplacés vers `web-portal/email-templates/` et `game/data/email/`.
 
 ---
 
@@ -507,8 +507,15 @@ dans `DrawAuthTweaksPanel`.
 Lors de la transition `LanguageSelectionFirstRun → Login`, le renderer capture
 `rm.infoBanner` (posé par `AuthUiPresenter::ApplyLocaleSelection`) puis l'affiche au-dessus
 du cadre central pendant `kLoginLangBadgeDurationSec` secondes (4 s par défaut, dont
-`kLoginLangBadgeFadeOutSec` = 1 s de fade-out final). Pendant cette fenêtre, le panneau de
-connexion **n'affiche pas** l'`infoBanner` à l'intérieur (suppression de la double affichage).
+`kLoginLangBadgeFadeOutSec` = 1 s de fade-out final).
+
+**Suppression permanente de la double affichage** : tant que `rm.infoBanner` est égal à
+`m_loginLangBadgeText` (le texte capturé), le panneau de connexion n'affiche **plus jamais**
+ce bandeau à l'intérieur — pas seulement pendant la fenêtre éphémère. Cette persistance évite
+que le bandeau « saute » dans le cadre après le fade-out (effet visuel signalé en revue UX).
+À l'expiration du timer, `m_loginLangBadgeStartTime` repasse à `-1.0` (plus de fenêtre
+flottante), mais `m_loginLangBadgeText` reste mémorisé jusqu'au prochain `Reset()` ou jusqu'à
+ce qu'une nouvelle transition LangSel → Login le remplace.
 
 État : `m_loginLangBadgeText`, `m_loginLangBadgeStartTime`, `m_prevPhaseToken` dans
 `AuthImGuiRenderer.h`.
@@ -516,14 +523,27 @@ Détection : `SyncTransientFromModel` compare `m_prevPhaseToken` au nouveau toke
 language sel, bit 1 = login, bit 31 = active) avec un masque `0x7FFFFFFFu` pour ignorer le
 bit "active". Rendu : `DrawLoginLanguageBadge(vpW, vpH)`.
 
-### 13.4 Limitations Windlass.ttf (police principale)
+### 13.4 Titre login agrandi + marge supérieure
 
-Windlass.ttf (game/data/fonts/Windlass.ttf) ne contient pas les glyphes Latin-1 supplément
-en majuscules (É, À, Ô, etc.) : ImGui les rend en `?`. Tant qu'aucune fallback font n'est
-fusionnée dans l'atlas (cf. `WorldEditorImGui::Init`), les libellés FR utilisés par l'UI auth
-doivent rester en majuscules ASCII (« CREER », « A LA », etc.). Voir la liste dans
-`game/data/localization/fr/fr.json` sous les clés `auth.login.maquette_*` et
-`auth.login.remember_*`.
+`RenderLoginScreen` applique `SetWindowFontScale(5.0f)` au titre principal (Windlass 13 px →
+≈ 65 px), précédé d'un `SetCursorPosY(max(24, vpH * 0.05f))` pour ajouter une bande d'air
+au-dessus. Objectif maquette : que le titre remplisse plus de la moitié de l'espace vide
+entre le bord supérieur de l'écran et le panneau (qui démarre à `vpH * 0.28f`).
+
+### 13.5 Limitations Windlass.ttf (police principale)
+
+`game/data/fonts/Windlass.ttf` ne contient pas tous les glyphes Latin-1 supplément :
+- Majuscules accentuées : É (0xC9), À (0xC0), Ô (0xD4)…
+- Minuscules accentuées spécifiques : ç (0xE7) a notamment été observé manquant.
+
+ImGui les rend en `?` (ou un placeholder visuel). Tant qu'aucune fallback font n'est
+fusionnée dans l'atlas (cf. `WorldEditorImGui::Init` — la solution propre serait
+`AddFontFromMemoryTTF` en `MergeMode = true` avec une police qui couvre 0x0080-0x00FF), les
+libellés français de l'UI auth doivent rester en ASCII pur. Liste des clés concernées :
+- `auth.login.maquette_create` (« CREER UN COMPTE »)
+- `auth.login.remember_detail` (« CONSERVE L'IDENTIFIANT A LA PROCHAINE OUVERTURE »)
+- `language.native_line.fr`, `language.name.fr` (« Francais » au lieu de « Français »)
+- `language.apply_success` (« Langue appliquee immediatement : … »)
 
 ---
 

@@ -37,6 +37,28 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
+		// Stage title (cohérence avec Login / Register / CharacterCreate) : le grand titre
+		// « LES CHRONIQUES » et son sous-titre sont dessinés AU-DESSUS du cadre. Le cadre
+		// ne porte que le titre de section (« Choisir un personnage »).
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
+		ImGui::SetWindowFontScale(2.4f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
+		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
+		ImGui::TextUnformatted(h1.c_str());
+		ImGui::SetWindowFontScale(1.f);
+		ImGui::PopStyleColor();
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
+
 		const std::string titleStr = rm.sectionTitle.empty()
 			? tr("auth.character_select.panel_title") : rm.sectionTitle;
 		const std::string subStr = tr("auth.character_select.panel_subtitle");

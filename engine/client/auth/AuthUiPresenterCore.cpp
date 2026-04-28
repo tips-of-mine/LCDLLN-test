@@ -1676,7 +1676,11 @@ namespace engine::client
 				}
 				else
 				{
-					ResetMasterSession();
+					// Phase 2/3 fix : ne PAS réinitialiser la session master ici, sinon
+					// CharacterCreate (post-MasterFlow) trouvera m_masterClient nul et échouera
+					// avec "auth.error.character_session_inactive". MasterFlow utilise sa propre
+					// connexion locale ; m_masterClient (issu de AuthOnly) reste vivant et la
+					// session correspondante côté serveur (ConnectionSessionMap) reste valide.
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 				}
@@ -1775,7 +1779,8 @@ namespace engine::client
 					m_infoBanner = Tr("auth.info.terms_done");
 					// Avant de proposer la création/sélection d'un personnage, l'utilisateur doit choisir un royaume.
 					// MasterFlow renvoie shard_choice_required → Phase::ShardPick.
-					ResetMasterSession();
+					// Phase 2/3 fix : on garde m_masterClient (cf. ligne 1679) pour que CharacterCreate
+					// post-MasterFlow trouve une session valide.
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 					return;
@@ -1812,7 +1817,7 @@ namespace engine::client
 					m_infoBanner = Tr("auth.info.terms_done");
 					// Toutes les CGU acceptées : place au choix du royaume avant la création/sélection du personnage.
 					// MasterFlow renvoie shard_choice_required → Phase::ShardPick.
-					ResetMasterSession();
+					// Phase 2/3 fix : on garde m_masterClient (cf. ligne 1679).
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 					return;

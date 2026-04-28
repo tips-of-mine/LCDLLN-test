@@ -972,6 +972,7 @@ namespace engine::client
 		case Phase::LanguageOptions: return "LanguageOptions";
 		case Phase::Terms: return "Terms";
 		case Phase::CharacterCreate: return "CharacterCreate";
+		case Phase::CharacterSelect: return "CharacterSelect";
 		case Phase::ShardPick: return "ShardPick";
 		case Phase::Error: return "Error";
 		default: return "Unknown";
@@ -1475,6 +1476,9 @@ namespace engine::client
 		case Phase::CharacterCreate:
 			t += Tr("auth.phase.character_create");
 			break;
+		case Phase::CharacterSelect:
+			t += Tr("auth.phase.character_select");
+			break;
 		case Phase::ShardPick:
 			t += Tr("auth.phase.shard_pick");
 			break;
@@ -1672,7 +1676,11 @@ namespace engine::client
 				}
 				else
 				{
-					ResetMasterSession();
+					// Phase 2/3 fix : ne PAS réinitialiser la session master ici, sinon
+					// CharacterCreate (post-MasterFlow) trouvera m_masterClient nul et échouera
+					// avec "auth.error.character_session_inactive". MasterFlow utilise sa propre
+					// connexion locale ; m_masterClient (issu de AuthOnly) reste vivant et la
+					// session correspondante côté serveur (ConnectionSessionMap) reste valide.
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 				}
@@ -1771,7 +1779,8 @@ namespace engine::client
 					m_infoBanner = Tr("auth.info.terms_done");
 					// Avant de proposer la création/sélection d'un personnage, l'utilisateur doit choisir un royaume.
 					// MasterFlow renvoie shard_choice_required → Phase::ShardPick.
-					ResetMasterSession();
+					// Phase 2/3 fix : on garde m_masterClient (cf. ligne 1679) pour que CharacterCreate
+					// post-MasterFlow trouve une session valide.
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 					return;
@@ -1808,7 +1817,7 @@ namespace engine::client
 					m_infoBanner = Tr("auth.info.terms_done");
 					// Toutes les CGU acceptées : place au choix du royaume avant la création/sélection du personnage.
 					// MasterFlow renvoie shard_choice_required → Phase::ShardPick.
-					ResetMasterSession();
+					// Phase 2/3 fix : on garde m_masterClient (cf. ligne 1679).
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 					return;
@@ -1891,11 +1900,36 @@ namespace engine::client
 					ClearRememberedLoginSidecar();
 				}
 			}
-			m_flowComplete = true;
-			// Réinitialiser l'état de sélection royaume / création post-inscription : la prochaine session démarrera proprement.
-			m_postRegistrationCharacterCreatePending = false;
-			m_chosenShardId = 0;
-			SetPhase(Phase::Login);
+
+			// Phase 2 — décision post-shard selon la liste des personnages reçue avec le ticket.
+			// Si le compte vient d'être créé (post-Register), on garde le routage forcé vers CharacterCreate.
+			// Sinon : 0 perso => CharacterCreate ; ≥1 perso => CharacterSelect.
+			m_characterList = std::move(copy.characterList);
+			m_selectedCharacterIndex = m_characterList.empty() ? -1 : 0;
+			// Phase 3 — Persister l'endpoint du shard pour pouvoir le re-publier dans la
+			// EnterWorldCommand quand l'utilisateur cliquera Jouer / validera CharacterCreate.
+			if (!copy.shardEndpoint.empty())
+			{
+				m_chosenShardEndpoint = copy.shardEndpoint;
+				if (copy.shardId != 0u)
+				{
+					m_chosenShardId = copy.shardId;
+				}
+			}
+			if (m_postRegistrationCharacterCreatePending)
+			{
+				LOG_INFO(Core, "[AuthUiPresenter] post-Register: routage CharacterCreate (forcé)");
+				SetPhase(Phase::CharacterCreate);
+				return;
+			}
+			if (m_characterList.empty())
+			{
+				LOG_INFO(Core, "[AuthUiPresenter] aucun personnage sur ce shard -> CharacterCreate");
+				SetPhase(Phase::CharacterCreate);
+				return;
+			}
+			LOG_INFO(Core, "[AuthUiPresenter] {} personnage(s) sur ce shard -> CharacterSelect", m_characterList.size());
+			SetPhase(Phase::CharacterSelect);
 			return;
 		}
 		EnterAuthErrorPhase(Phase::Login, copy.message);
@@ -2164,6 +2198,15 @@ namespace engine::client
 			{
 				local.success = r.success;
 				local.message = r.success ? (std::string("Shard ready (shard_id=") + std::to_string(r.shard_id) + ").") : r.errorMessage;
+				if (r.success)
+				{
+					// Phase 2 — la liste optionnelle est récupérée par le flow sur la connexion master ;
+					// vide si la requête a échoué (le client retombera sur CharacterCreate).
+					local.characterList = std::move(r.character_list);
+					// Phase 3 — l'endpoint du shard accepté est nécessaire pour câbler la gameplay UDP.
+					local.shardId = r.shard_id;
+					local.shardEndpoint = std::move(r.shard_endpoint);
+				}
 			}
 			{
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
@@ -3752,6 +3795,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 
 		Update_Terms(input, cfg, window, usingNativeAuth, authUiImguiMode);
 		Update_CharacterCreate(input, cfg, window, usingNativeAuth, authUiImguiMode);
+		Update_CharacterSelect(input, cfg, window, usingNativeAuth, authUiImguiMode);
 		Update_LanguageSelect(input, cfg, window, usingNativeAuth, authUiImguiMode);
 		Update_ShardPick(input, cfg, window, usingNativeAuth, authUiImguiMode);
 
@@ -3913,6 +3957,9 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			break;
 		case Phase::CharacterCreate:
 			BuildModel_CharacterCreate(model);
+			break;
+		case Phase::CharacterSelect:
+			BuildModel_CharacterSelect(model);
 			break;
 		case Phase::ShardPick:
 			BuildModel_ShardPick(model);
@@ -4100,6 +4147,7 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		state.forgotPassword = m_phase == Phase::ForgotPassword;
 		state.terms = m_phase == Phase::Terms;
 		state.characterCreate = m_phase == Phase::CharacterCreate;
+		state.characterSelect = m_phase == Phase::CharacterSelect;
 		state.languageSelection = m_phase == Phase::LanguageSelectionFirstRun;
 		state.languageOptions = m_phase == Phase::LanguageOptions;
 		state.options = m_phase == Phase::LanguageOptions;

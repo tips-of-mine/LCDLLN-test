@@ -23,8 +23,31 @@ namespace engine::render
 	/// Affiche l'écran de création de personnage : champ de saisie du nom, lignes d'information issues du modèle, puis boutons Annuler et Créer.
 	void AuthImGuiRenderer::RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string title = rm.titleLine1.empty() ? std::string("Creation de personnage") : rm.titleLine1;
-		if (!BeginPanel(680.f, vpW, vpH, title.c_str(), rm.titleLine2.c_str(), ""))
+		// Cohérence avec les autres écrans (Login / Register / VerifyEmail / Error) :
+		// le grand titre « LES CHRONIQUES » et son sous-titre « de la Lune Noire » sont
+		// dessinés AU-DESSUS du cadre, jamais comme titre de panneau. Le panneau ne
+		// porte que la section (« Création du personnage » via rm.sectionTitle).
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
+		ImGui::SetWindowFontScale(2.4f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
+		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
+		ImGui::TextUnformatted(h1.c_str());
+		ImGui::SetWindowFontScale(1.f);
+		ImGui::PopStyleColor();
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::SetWindowFontScale(1.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
+
+		const std::string panelTitle = rm.sectionTitle.empty() ? std::string("Creation de personnage") : rm.sectionTitle;
+		if (!BeginPanel(680.f, vpW, vpH, panelTitle.c_str(), "", ""))
 		{
 			EndPanel();
 			return;

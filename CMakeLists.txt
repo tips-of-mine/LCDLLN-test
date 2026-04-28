@@ -222,6 +222,7 @@ add_library(engine_core
   engine/client/auth/screens/AuthScreenShardPick.cpp
   engine/client/auth/screens/AuthScreenTerms.cpp
   engine/client/auth/screens/AuthScreenCharacterCreate.cpp
+  engine/client/auth/screens/AuthScreenCharacterSelect.cpp
   engine/client/AoEPreviewSystem.cpp
   engine/client/BuffBarPresenter.cpp
   engine/client/AuraFXSystem.cpp
@@ -282,6 +283,7 @@ add_library(engine_core
   engine/render/auth/screens/AuthImGuiShardPick.cpp
   engine/render/auth/screens/AuthImGuiTerms.cpp
   engine/render/auth/screens/AuthImGuiCharacterCreate.cpp
+  engine/render/auth/screens/AuthImGuiCharacterSelect.cpp
   engine/render/LnTheme.h
   engine/render/AuthImGuiRenderer.cpp
   engine/render/DecalSystem.cpp

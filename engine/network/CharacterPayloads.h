@@ -45,4 +45,40 @@ namespace engine::network
 
 	std::optional<CharacterCreateResponsePayload> ParseCharacterCreateResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterCreateResponsePacket(uint8_t success, uint64_t characterId, uint32_t requestId, uint64_t sessionIdHeader);
+
+	/// Phase 1 — Character list request payload.
+	/// Wire format : uint32 serverId (the server_id of the shard the user just selected).
+	struct CharacterListRequestPayload
+	{
+		uint32_t serverId = 0;
+	};
+
+	/// Phase 1 — One entry of the character list response.
+	/// Mirrors the columns the client needs to render CharacterSelect or to decide
+	/// CharacterSelect (>=1 entry) vs CharacterCreate (0 entry).
+	struct CharacterListEntry
+	{
+		uint64_t character_id     = 0;
+		uint8_t  slot             = 0;
+		std::string name;
+		uint32_t race_id          = 0;
+		uint16_t class_id         = 0;
+		uint16_t level            = 1;
+		uint8_t  force_rename     = 0;
+		uint64_t last_seen_unix   = 0; ///< Unix timestamp seconds; 0 if character never logged in.
+		uint64_t total_play_secs  = 0;
+	};
+
+	struct CharacterListResponsePayload
+	{
+		uint8_t success = 0; ///< 0 = error (count ignored), 1 = OK.
+		std::vector<CharacterListEntry> entries;
+	};
+
+	std::optional<CharacterListRequestPayload> ParseCharacterListRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterListRequestPayload(uint32_t serverId);
+
+	std::optional<CharacterListResponsePayload> ParseCharacterListResponsePayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterListResponsePacket(uint8_t success, const std::vector<CharacterListEntry>& entries,
+	                                                     uint32_t requestId, uint64_t sessionIdHeader);
 }

@@ -1,4 +1,5 @@
 #include "engine/network/MasterShardClientFlow.h"
+#include "engine/network/CharacterPayloads.h"
 #include "engine/network/NetClient.h"
 #include "engine/network/RequestResponseDispatcher.h"
 #include "engine/network/AuthRegisterPayloads.h"
@@ -355,9 +356,53 @@ namespace engine::network
 		}
 		LOG_INFO(Net, "[FLOW] PRESENT_SHARD_TICKET result={}", "ACCEPTED");
 
+		// Phase 2 — Optional CHARACTER_LIST query on the master connection (still open via `disp`)
+		// to let the client decide between CharacterSelect (>=1 char) and CharacterCreate (0 char).
+		// A failure here does NOT fail the whole flow: the shard handshake is already complete.
+		LOG_INFO(Net, "[MasterShardClientFlow] Requesting CHARACTER_LIST for shard_id={}", targetShardId);
+		{
+			std::vector<CharacterListEntry> characters;
+			bool listDone = false;
+			bool listSuccess = false;
+			auto reqPayload = BuildCharacterListRequestPayload(targetShardId);
+			if (disp.SendRequest(kOpcodeCharacterListRequest, reqPayload,
+				[&](uint32_t, bool timeout, std::vector<uint8_t> payload) {
+					listDone = true;
+					if (timeout || payload.empty())
+						return;
+					auto parsed = ParseCharacterListResponsePayload(payload.data(), payload.size());
+					if (parsed && parsed->success != 0)
+					{
+						characters = std::move(parsed->entries);
+						listSuccess = true;
+					}
+				}, m_timeoutMs))
+			{
+				auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(m_timeoutMs + 500);
+				while (!listDone && std::chrono::steady_clock::now() < deadline)
+				{
+					disp.Pump();
+					std::this_thread::sleep_for(std::chrono::milliseconds(20));
+				}
+			}
+			else
+			{
+				LOG_WARN(Net, "[MasterShardClientFlow] Send CHARACTER_LIST request failed (non-fatal)");
+			}
+			if (listSuccess)
+			{
+				LOG_INFO(Net, "[MasterShardClientFlow] CHARACTER_LIST OK ({} entries)", characters.size());
+				result.character_list = std::move(characters);
+			}
+			else
+			{
+				LOG_WARN(Net, "[MasterShardClientFlow] CHARACTER_LIST timeout/empty (non-fatal); client will fall back to CharacterCreate");
+			}
+		}
+
 		result.success = true;
 		result.shard_id = targetShardId;
-		LOG_INFO(Net, "[MasterShardClientFlow] Flow complete (shard_id={})", result.shard_id);
+		LOG_INFO(Net, "[MasterShardClientFlow] Flow complete (shard_id={}, characters={})", result.shard_id, result.character_list.size());
 		return result;
 	}
 }

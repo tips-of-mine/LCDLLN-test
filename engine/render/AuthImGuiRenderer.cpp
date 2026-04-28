@@ -902,13 +902,13 @@ namespace engine::render
 		ImGui::SetWindowFontScale(0.85f);
 
 		// Sans le titre « TWEAKS », le contenu se retrouvait collé en haut avec un grand vide
-		// au bas du cadre. On centre verticalement en injectant un Dummy au-dessus de
-		// « THEME DE RACE » dimensionné pour pousser le contenu de quelques pixels vers le bas.
-		// Heuristique : le contenu (label race + grille 3x3 + label fond + paire de boutons)
-		// fait environ 165 px à 0.85x. Avec windowPadding 12 + 12 = 24, total = 189 px de
-		// contenu sur 218 px de fenêtre → 29 px vides répartis. On en met 18 en haut pour que
-		// le contenu visuel paraisse centré (avec un léger biais vers le bas pour l'esthétique).
-		ImGui::Dummy(ImVec2(0.f, 18.f));
+		// au bas du cadre. On centre verticalement (avec un biais descendant) en injectant un
+		// Dummy au-dessus de « THEME DE RACE ». Heuristique : le contenu (label race + grille
+		// 3x3 + label fond + paire de boutons) fait environ 156 px à 0.85x. Avec windowPadding
+		// 12 + 12 = 24, total = 180 px de contenu sur 218 px de fenêtre → 38 px vides répartis.
+		// On en met 35 en haut pour que le bloc d'options se retrouve nettement plus proche du
+		// bas — l'utilisateur a explicitement demandé que les textes descendent davantage.
+		ImGui::Dummy(ImVec2(0.f, 35.f));
 
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::TextUnformatted("THEME DE RACE");

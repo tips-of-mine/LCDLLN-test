@@ -92,7 +92,12 @@ namespace engine::render
 		}
 		const std::string ver =
 			rm.authLoginVersionBadge.empty() ? std::string("v0.0.0") : rm.authLoginVersionBadge;
-		if (!BeginPanel(stageW, stageW, vpH, panelTitle, "", ver, true, false))
+		// BeginPanel reçoit la largeur du conteneur englobant comme 2e argument (« vpW » dans la
+		// signature, mais utilisé pour centrer le panneau via `(vpW - width) / 2`). Comme nous
+		// sommes désormais dans un BeginChild de largeur titleZoneW (≠ vpW), il faut passer
+		// titleZoneW — sinon le calcul `(stageW - stageW) / 2 = 0` poussait le panneau contre
+		// le bord gauche de la stage (bug observé en revue UX).
+		if (!BeginPanel(stageW, titleZoneW, vpH, panelTitle, "", ver, true, false))
 		{
 			EndPanel();
 			ImGui::EndChild();

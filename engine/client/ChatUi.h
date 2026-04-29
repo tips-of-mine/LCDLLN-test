@@ -55,6 +55,11 @@ namespace engine::client
 		uint16_t ChannelFilterMask() const { return m_channelFilterMask; }
 		uint32_t ScrollLinesFromEnd() const { return m_scrollLinesFromEnd; }
 
+		/// Phase 3.11.2 — Toggle le filtre d'un canal (bit 0..9). Mirror de la logique
+		/// 1-0 clavier dans \ref Update : invariants identiques (XOR sur le bit). Utilisé
+		/// par le renderer ImGui pour les chips canal cliquables. No-op si \p channelBit >= 10.
+		void ToggleChannelFilter(uint8_t channelBit);
+
 	private:
 		void SubmitInputLine();
 		void RebuildFilterLegend(std::string& out) const;

@@ -316,6 +316,17 @@ namespace engine::client
 		LOG_INFO(Core, "[ChatUiPresenter] Chat focus set ({})", focused ? "true" : "false");
 	}
 
+	void ChatUiPresenter::ToggleChannelFilter(uint8_t channelBit)
+	{
+		if (channelBit >= 10u)
+			return;
+		const uint16_t bit = static_cast<uint16_t>(1u << channelBit);
+		m_channelFilterMask = static_cast<uint16_t>(m_channelFilterMask ^ bit);
+		LOG_INFO(Core, "[ChatUiPresenter] Channel filter toggled via UI (channel_index={}, mask=0x{:04X})",
+			static_cast<unsigned>(channelBit),
+			m_channelFilterMask);
+	}
+
 	std::string ChatUiPresenter::BuildPanelText() const
 	{
 		std::string panel;

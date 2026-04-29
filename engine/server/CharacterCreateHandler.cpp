@@ -221,14 +221,32 @@ namespace engine::server
 		std::snprintf(spawnBuf, sizeof(spawnBuf), "%.6f, %.6f, %.6f, %.6f, %.6f",
 			spawnX, spawnY, spawnZ, spawnYaw, spawnPitch);
 
+		// Phase 3.8 — Persistance des identifiants chaîne race/classe choisis par
+		// l'utilisateur (parsed->raceId / parsed->classId, ex. "humains" / "warrior").
+		// Limite à 32 chars (taille de la colonne) ; plus court côté SQL après escape.
+		auto truncate = [](const std::string& s) -> std::string {
+			constexpr size_t kMax = 32u;
+			return s.size() <= kMax ? s : s.substr(0, kMax);
+		};
+		const std::string raceIdTruncated  = truncate(parsed->raceId);
+		const std::string classIdTruncated = truncate(parsed->classId);
+		char escapedRace[80]{};
+		char escapedClass[80]{};
+		mysql_real_escape_string(mysql, escapedRace,
+			raceIdTruncated.c_str(), static_cast<unsigned long>(raceIdTruncated.size()));
+		mysql_real_escape_string(mysql, escapedClass,
+			classIdTruncated.c_str(), static_cast<unsigned long>(classIdTruncated.size()));
+
 		std::string sql =
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
-			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg) VALUES ("
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str) VALUES ("
 			+ std::to_string(*accountId) + ", "
 			+ std::to_string(slot) + ", '"
 			+ escapedName + "', "
 			+ std::to_string(serverId) + ", 0, 0, 1, '{}', "
-			+ spawnBuf + ")";
+			+ spawnBuf + ", '"
+			+ escapedRace + "', '"
+			+ escapedClass + "')";
 		if (!engine::server::db::DbExecute(mysql, sql))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);
@@ -241,7 +259,7 @@ namespace engine::server
 		auto pkt = BuildCharacterCreateResponsePacket(1u, characterId, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
-		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, spawn=({}, {}, {}))",
-			*accountId, characterId, serverId, slot, parsed->name, spawnX, spawnY, spawnZ);
+		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', spawn=({}, {}, {}))",
+			*accountId, characterId, serverId, slot, parsed->name, raceIdTruncated, classIdTruncated, spawnX, spawnY, spawnZ);
 	}
 }

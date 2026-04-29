@@ -94,6 +94,8 @@ static void TestPopulatedResponseRoundTrip()
 		a.spawn_z          = -34.0f;
 		a.spawn_yaw_deg    = 90.0f;
 		a.spawn_pitch_deg  = -5.5f;
+		a.race_str         = "humains";
+		a.class_str        = "warrior";
 		entries.push_back(a);
 	}
 	{
@@ -112,6 +114,7 @@ static void TestPopulatedResponseRoundTrip()
 		b.spawn_z          = 0.0f;
 		b.spawn_yaw_deg    = 0.0f;
 		b.spawn_pitch_deg  = -10.0f;
+		// Pre-migration row simulation: empty race/class strings.
 		entries.push_back(b);
 	}
 
@@ -141,6 +144,8 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(a.spawn_z == -34.0f, "entry0 spawn_z");
 		Assert(a.spawn_yaw_deg == 90.0f, "entry0 spawn_yaw_deg");
 		Assert(a.spawn_pitch_deg == -5.5f, "entry0 spawn_pitch_deg");
+		Assert(a.race_str == "humains", "entry0 race_str");
+		Assert(a.class_str == "warrior", "entry0 class_str");
 
 		const auto& b = parsed->entries[1];
 		Assert(b.character_id == 1002u, "entry1 id");
@@ -151,6 +156,8 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(b.spawn_x == 0.0f, "entry1 spawn_x zero");
 		Assert(b.spawn_y == 100.0f, "entry1 spawn_y default");
 		Assert(b.spawn_pitch_deg == -10.0f, "entry1 spawn_pitch_deg default");
+		Assert(b.race_str.empty(), "entry1 race_str empty (pre-migration)");
+		Assert(b.class_str.empty(), "entry1 class_str empty (pre-migration)");
 	}
 }
 

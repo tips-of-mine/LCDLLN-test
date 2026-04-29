@@ -66,11 +66,13 @@ namespace engine::server
 
 		// LEFT JOIN character_stats so characters who never logged in still appear (last_seen NULL → 0).
 		// Phase 3.6 — spawn position lue depuis characters.spawn_{x,y,z,yaw_deg,pitch_deg}.
+		// Phase 3.8 — race_str / class_str (chaînes ; cf. game/data/races/{races,classes}.json).
 		std::string sql =
 			"SELECT c.id, c.slot, c.name, c.race_id, c.class_id, c.level, c.force_rename, "
 			"COALESCE(UNIX_TIMESTAMP(s.last_seen), 0) AS last_seen_unix, "
 			"COALESCE(s.total_play_seconds, 0) AS total_play, "
-			"c.spawn_x, c.spawn_y, c.spawn_z, c.spawn_yaw_deg, c.spawn_pitch_deg "
+			"c.spawn_x, c.spawn_y, c.spawn_z, c.spawn_yaw_deg, c.spawn_pitch_deg, "
+			"c.race_str, c.class_str "
 			"FROM characters c "
 			"LEFT JOIN character_stats s ON s.character_id = c.id AND s.server_id = c.server_id "
 			"WHERE c.account_id = " + std::to_string(*accountId)
@@ -107,6 +109,9 @@ namespace engine::server
 			if (row[11]) e.spawn_z         = std::strtof(row[11], nullptr);
 			if (row[12]) e.spawn_yaw_deg   = std::strtof(row[12], nullptr);
 			if (row[13]) e.spawn_pitch_deg = std::strtof(row[13], nullptr);
+			// Phase 3.8 — race / class strings (migration 0033).
+			if (row[14]) e.race_str  = row[14];
+			if (row[15]) e.class_str = row[15];
 			entries.push_back(std::move(e));
 		}
 		engine::server::db::DbFreeResult(res);

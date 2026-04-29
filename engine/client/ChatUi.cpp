@@ -178,35 +178,41 @@ namespace engine::client
 				LOG_INFO(Core, "[ChatUiPresenter] Chat focus OFF (Escape)");
 			}
 
-			if (input.WasPressed(engine::platform::Key::Enter))
+			// Phase 3.11.3 — Quand un ImGui::InputText pilote la saisie, on saute
+			// Enter/Backspace/typing pour éviter une double insertion. ImGui appelle
+			// SubmitFromUi via EnterReturnsTrue ; le buffer est sync via SetInputLine.
+			if (!m_imguiInputActive)
 			{
-				SubmitInputLine();
-			}
-
-			if (input.WasPressed(engine::platform::Key::Backspace) && !m_inputLine.empty())
-			{
-				PopLastUtf8Codepoint(m_inputLine);
-			}
-
-			std::string pending{};
-			input.ConsumePendingTextUtf8(pending);
-			if (!pending.empty())
-			{
-				for (const char ch : pending)
+				if (input.WasPressed(engine::platform::Key::Enter))
 				{
-					const auto uch = static_cast<unsigned char>(ch);
-					if (uch < 32u && uch != '\t')
-					{
-						continue;
-					}
+					SubmitInputLine();
+				}
 
-					if (m_inputLine.size() >= kMaxInputUtf8Bytes)
-					{
-						LOG_WARN(Core, "[ChatUiPresenter] Input truncated at max_bytes={}", kMaxInputUtf8Bytes);
-						break;
-					}
+				if (input.WasPressed(engine::platform::Key::Backspace) && !m_inputLine.empty())
+				{
+					PopLastUtf8Codepoint(m_inputLine);
+				}
 
-					m_inputLine.push_back(ch);
+				std::string pending{};
+				input.ConsumePendingTextUtf8(pending);
+				if (!pending.empty())
+				{
+					for (const char ch : pending)
+					{
+						const auto uch = static_cast<unsigned char>(ch);
+						if (uch < 32u && uch != '\t')
+						{
+							continue;
+						}
+
+						if (m_inputLine.size() >= kMaxInputUtf8Bytes)
+						{
+							LOG_WARN(Core, "[ChatUiPresenter] Input truncated at max_bytes={}", kMaxInputUtf8Bytes);
+							break;
+						}
+
+						m_inputLine.push_back(ch);
+					}
 				}
 			}
 
@@ -325,6 +331,19 @@ namespace engine::client
 		LOG_INFO(Core, "[ChatUiPresenter] Channel filter toggled via UI (channel_index={}, mask=0x{:04X})",
 			static_cast<unsigned>(channelBit),
 			m_channelFilterMask);
+	}
+
+	void ChatUiPresenter::SetInputLine(std::string_view text)
+	{
+		const size_t n = (text.size() < kMaxInputUtf8Bytes) ? text.size() : kMaxInputUtf8Bytes;
+		m_inputLine.assign(text.data(), n);
+	}
+
+	void ChatUiPresenter::SubmitFromUi()
+	{
+		if (!m_initialized)
+			return;
+		SubmitInputLine();
 	}
 
 	std::string ChatUiPresenter::BuildPanelText() const

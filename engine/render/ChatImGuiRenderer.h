@@ -33,5 +33,10 @@ namespace engine::render
 		/// Mémorise le focus de la frame précédente pour détecter la transition
 		/// non-focus → focus (et faire ImGui::SetKeyboardFocusHere sur l'input).
 		bool m_lastFocus = false;
+
+		/// Phase 3.11.3 — Buffer mutable consommé par \c ImGui::InputText.
+		/// Synchronisé avec \c ChatUiPresenter::InputLine chaque frame.
+		/// 257 octets = \c ChatUiPresenter::kMaxInputUtf8Bytes (256) + terminateur NUL.
+		char m_inputBuf[257]{};
 	};
 }

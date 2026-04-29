@@ -60,6 +60,22 @@ namespace engine::client
 		/// par le renderer ImGui pour les chips canal cliquables. No-op si \p channelBit >= 10.
 		void ToggleChannelFilter(uint8_t channelBit);
 
+		/// Phase 3.11.3 — Quand un \c ImGui::InputText pilote la saisie, on coupe la branche
+		/// keyboard-typing/Enter/Backspace dans \ref Update pour éviter une double insertion.
+		/// Escape (unfocus) et scroll restent actifs. \c true par défaut côté ImGui actif,
+		/// \c false en fallback texte (Linux ou flag \c render.chat_imgui.enabled=false).
+		void SetImGuiInputActive(bool active) { m_imguiInputActive = active; }
+
+		/// Phase 3.11.3 — Remplace directement la ligne de saisie (utilisé par le renderer
+		/// pour pousser le buffer \c ImGui::InputText vers le presenter chaque frame).
+		/// Tronque silencieusement à \c kMaxInputUtf8Bytes.
+		void SetInputLine(std::string_view text);
+
+		/// Phase 3.11.3 — Soumet la ligne de saisie courante (chemin équivalent à Enter
+		/// clavier). Utilisé par le renderer quand \c ImGui::InputText retourne \c true
+		/// via le flag \c EnterReturnsTrue.
+		void SubmitFromUi();
+
 	private:
 		void SubmitInputLine();
 		void RebuildFilterLegend(std::string& out) const;
@@ -74,6 +90,8 @@ namespace engine::client
 		/// Bitmask over \ref engine::net::ChatChannel raw values 0..9 (1 = visible).
 		uint16_t m_channelFilterMask = 0x3FFu;
 		uint32_t m_scrollLinesFromEnd = 0;
+		/// Phase 3.11.3 — \c true quand un \c ImGui::InputText externe pilote la saisie.
+		bool m_imguiInputActive = false;
 		static constexpr uint32_t kMaxVisibleLines = 18u;
 		static constexpr size_t kMaxInputUtf8Bytes = 256u;
 	};

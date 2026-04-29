@@ -1564,6 +1564,8 @@ namespace engine::client
 				return "TermsAccept";
 			case AsyncKind::CharacterCreate:
 				return "CharacterCreate";
+			case AsyncKind::CharacterDelete:
+				return "CharacterDelete";
 			case AsyncKind::Login:
 				return "Login";
 			case AsyncKind::StatusProbe:
@@ -1860,6 +1862,52 @@ namespace engine::client
 			else
 			{
 				EnterAuthErrorPhase(Phase::CharacterCreate, copy.message);
+			}
+			return;
+		}
+
+		if (kind == AsyncKind::CharacterDelete)
+		{
+			if (copy.success)
+			{
+				// Phase 3.9 — retire l'entree localement (au lieu de redemander la liste)
+				// pour eviter un round-trip et garder l'ecran reactif. Si la liste devient
+				// vide, l'ecran route automatiquement vers CharacterCreate via la logique
+				// post-MasterFlow ; ici on reste sur CharacterSelect avec une entree de moins.
+				if (m_pendingDeleteCharacterId != 0u)
+				{
+					auto it = std::find_if(m_characterList.begin(), m_characterList.end(),
+						[this](const engine::network::CharacterListEntry& e) {
+							return e.character_id == m_pendingDeleteCharacterId;
+						});
+					if (it != m_characterList.end())
+					{
+						m_characterList.erase(it);
+					}
+				}
+				m_pendingDeleteCharacterIndex = -1;
+				m_pendingDeleteCharacterId = 0;
+				if (m_selectedCharacterIndex >= static_cast<int>(m_characterList.size()))
+				{
+					m_selectedCharacterIndex = m_characterList.empty() ? -1 : 0;
+				}
+				m_userErrorText.clear();
+				m_infoBanner = Tr("auth.info.character_deleted");
+				if (m_characterList.empty())
+				{
+					LOG_INFO(Core, "[AuthUiPresenter] CharacterDelete OK : liste vide -> CharacterCreate");
+					SetPhase(Phase::CharacterCreate);
+				}
+				else
+				{
+					LOG_INFO(Core, "[AuthUiPresenter] CharacterDelete OK : {} entrees restantes", m_characterList.size());
+				}
+			}
+			else
+			{
+				m_pendingDeleteCharacterIndex = -1;
+				m_pendingDeleteCharacterId = 0;
+				EnterAuthErrorPhase(Phase::CharacterSelect, copy.message);
 			}
 			return;
 		}

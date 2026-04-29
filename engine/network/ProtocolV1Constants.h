@@ -153,4 +153,13 @@ namespace engine::network
 
 	constexpr uint16_t kOpcodeCharacterListRequest  = 39u; ///< Client→Master : demande la liste des personnages du compte sur un server_id donné.
 	constexpr uint16_t kOpcodeCharacterListResponse = 40u; ///< Master→Client : tableau des personnages (id, slot, nom, race, classe, niveau, last_seen).
+
+	// -------------------------------------------------------------------------
+	// Opcodes de suppression de personnage (valeurs 41–42)
+	// Référence : Phase 3.9 — soft-delete (positionne `characters.deleted_at`).
+	// Session requise sur le Master ; vérifie que le perso appartient au compte.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeCharacterDeleteRequest  = 41u; ///< Client→Master : demande la suppression (logique) d'un personnage par character_id.
+	constexpr uint16_t kOpcodeCharacterDeleteResponse = 42u; ///< Master→Client : succès / erreur de la suppression.
 }

@@ -2940,6 +2940,17 @@ namespace engine
 							m_cfg.SetValue("client.gameplay_udp.host", host);
 							m_cfg.SetValue("client.gameplay_udp.port", port);
 							m_cfg.SetValue("client.gameplay_udp.enabled", true);
+							// Phase 3.7 — Le shard utilise déjà clientNonce comme tentativeCharacterKey
+							// (cf. ServerApp::HandleHello). On override la clé config pour propager le
+							// character_id réel sélectionné par l'utilisateur. uint32 suffit pour < 4 G
+							// personnages — on tronque les bits hauts si jamais le BIGINT DB déborde.
+							if (enterCmd.characterId != 0u)
+							{
+								m_cfg.SetValue("client.gameplay_udp.character_key",
+									static_cast<int64_t>(enterCmd.characterId & 0xFFFFFFFFu));
+								LOG_INFO(Core, "[EnterWorld] propagating character_id={} as gameplay UDP character_key",
+									enterCmd.characterId);
+							}
 							// Si la session UDP a été ouverte au boot avec un host différent
 							// (config par défaut), on la coupe avant de la rouvrir sur le bon shard.
 							if (m_gameplayNetInitialized)

@@ -534,6 +534,16 @@ namespace engine::client
 		/// Phase 2 — bouton "Retour" depuis CharacterSelect : revient à Login (réinitialise l'état du shard pick).
 		void ImGuiCancelCharacterSelectReturnToLogin();
 
+		/// Phase 3.9 — Demande la suppression du i-eme personnage. Passe par un etat de
+		/// confirmation (\ref m_pendingDeleteCharacterIndex >= 0). Un second clic depuis
+		/// la confirmation declenche StartCharacterDeleteWorker.
+		void ImGuiRequestDeleteCharacter(int index, const engine::core::Config& cfg);
+		/// Phase 3.9 — Annule la confirmation de suppression en cours.
+		void ImGuiCancelDeleteCharacterConfirm();
+		/// Phase 3.9 — Indique que l'utilisateur est en train de confirmer la suppression
+		/// du personnage d'index donne (utilise par le renderer pour afficher un dialogue).
+		int  PendingDeleteCharacterIndex() const { return m_pendingDeleteCharacterIndex; }
+
 		const std::string& TermsFullTextForImGui() const { return m_termsContent; }
 		const std::vector<std::string>& GetAvailableLocales() const { return m_localization.GetAvailableLocales(); }
 		/// Index carte sélectionnée sur \c Phase::LanguageSelectionFirstRun (clavier / modèle).
@@ -578,6 +588,9 @@ namespace engine::client
 		void StartTermsStatusWorker(const engine::core::Config& cfg);
 		void StartTermsAcceptWorker(const engine::core::Config& cfg);
 		void StartCharacterCreateWorker(const engine::core::Config& cfg);
+		/// Phase 3.9 — Lance le worker reseau pour supprimer le personnage selectionne (id stocke
+		/// dans \ref m_pendingDeleteCharacterId par \ref ImGuiRequestDeleteCharacter).
+		void StartCharacterDeleteWorker(const engine::core::Config& cfg);
 		void StartStatusProbeWorker(const engine::core::Config& cfg);
 		void ResetMasterSession();
 		void StartMasterFlowWorker(const engine::core::Config& cfg);
@@ -748,6 +761,12 @@ namespace engine::client
 		std::vector<engine::network::CharacterListEntry> m_characterList;
 		/// Phase 2 — Index du personnage actuellement sélectionné dans \ref m_characterList (-1 = rien).
 		int m_selectedCharacterIndex = -1;
+		/// Phase 3.9 — Index du perso pour lequel l'utilisateur est en train de
+		/// confirmer la suppression. -1 = pas de confirmation en cours.
+		int m_pendingDeleteCharacterIndex = -1;
+		/// Phase 3.9 — character_id en cours de suppression (snapshoté au moment ou
+		/// le worker est lance, indépendant de l'index qui peut bouger pendant l'attente).
+		uint64_t m_pendingDeleteCharacterId = 0;
 		bool        m_infoPopupVisible = false;
 		std::string m_infoPopupText;
 		bool m_savedRememberLogin = false;
@@ -886,6 +905,7 @@ namespace engine::client
 			TermsStatus,
 			TermsAccept,
 			CharacterCreate,
+			CharacterDelete,    ///< Phase 3.9 : suppression logique d'un personnage.
 			Login,
 			StatusProbe,
 			UsernameCheck  ///< Plan C : vérification disponibilité username (debounce).

@@ -91,6 +91,7 @@ elseif(UNIX)
     TermsHandler.cpp
     CharacterCreateHandler.cpp
     CharacterListHandler.cpp
+    CharacterDeleteHandler.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp

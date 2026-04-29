@@ -275,6 +275,19 @@ namespace engine
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;
 		std::chrono::steady_clock::time_point        m_enterWorldBannerExpiry{};
+
+		/// Phase 3.6.6 — Identité du personnage actif (renseignée à la consommation de
+		/// EnterWorldCommand). 0 = pas de perso actif (pré-EnterWorld ou post-Shutdown).
+		uint64_t                                     m_currentCharacterId = 0;
+		/// Phase 3.6.6 — Prochain instant où la sauvegarde périodique de position sera envoyée.
+		/// Initialisé à now + intervalle au moment de la consommation EnterWorldCommand.
+		std::chrono::steady_clock::time_point        m_nextSavePositionTime{};
+		/// Phase 3.6.6 — Intervalle entre deux sauvegardes périodiques (configurable via
+		/// `client.save_position.interval_sec`, défaut 30s).
+		std::chrono::seconds                         m_savePositionIntervalSec{ 30 };
+		/// Phase 3.6.6 — Vrai si la sauvegarde finale au Shutdown a déjà été envoyée
+		/// (évite les doublons si Shutdown est appelé deux fois).
+		bool                                         m_shutdownPositionSaved = false;
 		/// M35.2 — optional UDP gameplay + vendor shop / inventory presenters.
 		bool m_gameplayNetInitialized = false;
 		engine::client::UIModelBinding m_uiModelBinding{};

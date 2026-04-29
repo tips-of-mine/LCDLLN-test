@@ -2533,6 +2533,25 @@ namespace engine
 			m_editorMode->Shutdown(m_window);
 			m_editorMode.reset();
 		}
+		// Phase 3.6.6 — Sauvegarde finale de la position avant de fermer la connexion master.
+		// Fire-and-forget : on n'attend pas l'ack (ce serait risqué dans un chemin de shutdown
+		// avec timers et ordre de destruction) — le serveur logge en cas d'échec d'UPDATE.
+		// La connexion m_authUi.m_masterClient est encore vivante ici (Shutdown des UI vient juste après).
+		if (!m_shutdownPositionSaved && m_currentCharacterId != 0u)
+		{
+			const uint32_t shutdownReadIdx = m_renderReadIndex.load(std::memory_order_acquire) & 1u;
+			const engine::render::Camera& shutdownCam = m_renderStates[shutdownReadIdx].camera;
+			constexpr float kRad2Deg = 180.f / 3.14159265f;
+			const float yawDeg   = shutdownCam.yaw   * kRad2Deg;
+			const float pitchDeg = shutdownCam.pitch * kRad2Deg;
+			const bool sent = m_authUi.SavePositionAsync(m_currentCharacterId,
+				shutdownCam.position.x, shutdownCam.position.y, shutdownCam.position.z,
+				yawDeg, pitchDeg);
+			LOG_INFO(Core, "[SavePosition] shutdown save (character_id={}, pos=({:.1f},{:.1f},{:.1f}), sent={})",
+				m_currentCharacterId, shutdownCam.position.x, shutdownCam.position.y, shutdownCam.position.z, sent);
+			m_shutdownPositionSaved = true;
+		}
+
 		ShutdownGameplayNet();
 		m_authUi.Shutdown();
 		m_chatUi.Shutdown();
@@ -2925,6 +2944,17 @@ namespace engine
 					m_enterWorldBannerExpiry = std::chrono::steady_clock::now() + std::chrono::seconds(5);
 				}
 
+				// Phase 3.6.6 — Memorise l'identité du perso et arme la sauvegarde périodique.
+				// La connexion master (m_authUi.m_masterClient) reste vivante grâce au fix
+				// Phase 2/3 ; SavePositionAsync l'utilise en fire-and-forget.
+				m_currentCharacterId = enterCmd.characterId;
+				const int64_t intervalCfg = m_cfg.GetInt("client.save_position.interval_sec", 30);
+				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
+				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
+				m_shutdownPositionSaved = false;
+				LOG_INFO(Core, "[EnterWorld] periodic position save armed (character_id={}, interval={}s)",
+					m_currentCharacterId, m_savePositionIntervalSec.count());
+
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.
 				// InitGameplayNet relit ces clés à l'appel (cf. ligne ~3552) ; les écraser avant
 				// l'init est suffisant pour cibler le bon shard.
@@ -2975,6 +3005,33 @@ namespace engine
 				{
 					LOG_WARN(Core, "[EnterWorld] endpoint vide : connexion gameplay non démarrée (la scène 3D s'affichera quand même mais sans réseau)");
 				}
+			}
+
+			// Phase 3.6.6 — Drain des événements de la connexion master encore vivante post-auth.
+			// AuthUiPresenter conserve m_masterClient + m_masterSessionId après EnterWorld grâce
+			// au fix Phase 2/3 (suppression des ResetMasterSession() avant MasterFlow). Ici on
+			// pompe pour récupérer les réponses CHARACTER_SAVE_POSITION_RESPONSE (loggées en debug)
+			// et détecter une déconnexion master inattendue (auquel cas SavePositionAsync échouera
+			// proprement aux prochains ticks).
+			m_authUi.PumpPostAuthEvents();
+
+			// Phase 3.6.6 — Tick périodique de sauvegarde de position. Démarré à la consommation
+			// de EnterWorldCommand (m_currentCharacterId != 0). Intervalle borné à >= 5 s côté
+			// AuthUiPresenter::SavePositionAsync via la config `client.save_position.interval_sec`.
+			if (m_currentCharacterId != 0u
+				&& std::chrono::steady_clock::now() >= m_nextSavePositionTime)
+			{
+				constexpr float kRad2Deg = 180.f / 3.14159265f;
+				const float yawDeg   = out.camera.yaw   * kRad2Deg;
+				const float pitchDeg = out.camera.pitch * kRad2Deg;
+				if (m_authUi.SavePositionAsync(m_currentCharacterId,
+					out.camera.position.x, out.camera.position.y, out.camera.position.z,
+					yawDeg, pitchDeg))
+				{
+					LOG_DEBUG(Core, "[SavePosition] periodic save sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}))",
+						m_currentCharacterId, out.camera.position.x, out.camera.position.y, out.camera.position.z);
+				}
+				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 			}
 
 			// Phase 3.5 — Affichage de la bannière "Bienvenue" tant qu'elle n'a pas expiré.

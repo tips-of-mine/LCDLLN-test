@@ -2,7 +2,10 @@
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/core/DefaultClientEndpoints.h"
 #include "engine/core/Log.h"
+#include "engine/network/CharacterPayloads.h"
 #include "engine/network/NetClient.h"
+#include "engine/network/PacketBuilder.h"
+#include "engine/network/ProtocolV1Constants.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
 #include <algorithm>
@@ -233,6 +236,79 @@ namespace engine::client
 		EnterWorldCommand cmd = m_pendingEnterWorld;
 		m_pendingEnterWorld = {};
 		return cmd;
+	}
+
+	bool AuthUiPresenter::SavePositionAsync(uint64_t characterId, float x, float y, float z, float yawDeg, float pitchDeg)
+	{
+		if (!m_masterClient || m_masterSessionId == 0u || characterId == 0u)
+		{
+			return false;
+		}
+
+		// Construit le paquet CHARACTER_SAVE_POSITION_REQUEST en sérialisant le payload
+		// puis en l'enveloppant dans un PacketBuilder. requestId = 0 (fire-and-forget) :
+		// la réponse master arrive en PollEvents sur m_masterClient mais on ne fait pas
+		// le matching, on s'en remet aux logs côté serveur en cas d'erreur.
+		const std::vector<uint8_t> payload = engine::network::BuildCharacterSavePositionRequestPayload(
+			characterId, x, y, z, yawDeg, pitchDeg);
+		if (payload.empty())
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SavePositionAsync: Build payload failed");
+			return false;
+		}
+
+		engine::network::PacketBuilder builder;
+		auto w = builder.PayloadWriter();
+		if (!w.WriteBytes(payload.data(), payload.size()))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SavePositionAsync: WriteBytes failed");
+			return false;
+		}
+		if (!builder.Finalize(engine::network::kOpcodeCharacterSavePositionRequest, 0u, 0u, m_masterSessionId, payload.size()))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SavePositionAsync: Finalize failed");
+			return false;
+		}
+		const auto& packet = builder.Data();
+		if (packet.empty())
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SavePositionAsync: empty packet");
+			return false;
+		}
+		if (!m_masterClient->Send(std::span<const uint8_t>(packet.data(), packet.size())))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SavePositionAsync: Send failed (queue full / disconnected ?)");
+			return false;
+		}
+		LOG_DEBUG(Net, "[AuthUiPresenter] SavePositionAsync queued (character_id={}, pos=({:.1f},{:.1f},{:.1f}))",
+			characterId, x, y, z);
+		return true;
+	}
+
+	void AuthUiPresenter::PumpPostAuthEvents()
+	{
+		if (!m_masterClient)
+			return;
+		auto events = m_masterClient->PollEvents();
+		for (const auto& ev : events)
+		{
+			using engine::network::NetClientEventType;
+			if (ev.type == NetClientEventType::Disconnected)
+			{
+				LOG_INFO(Net, "[AuthUiPresenter] Master connection disconnected post-auth (reason='{}')", ev.reason);
+				// La session est morte ; on libère pour que les futurs SavePositionAsync échouent
+				// proprement (au lieu de Send sur une socket fermée).
+				m_masterSessionId = 0;
+				m_masterClient.reset();
+				return;
+			}
+			// PacketReceived (réponses SAVE_POSITION par exemple) : on log au niveau debug
+			// et on ne fait pas de matching de request_id (fire-and-forget).
+			if (ev.type == NetClientEventType::PacketReceived)
+			{
+				LOG_DEBUG(Net, "[AuthUiPresenter] Master post-auth packet received ({} bytes)", ev.packet.size());
+			}
+		}
 	}
 
 	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()

@@ -384,4 +384,67 @@ namespace engine::client
 		panel += "_\n";
 		return panel;
 	}
+
+	std::string ChatUiPresenter::BuildHudPanelText() const
+	{
+		if (!m_initialized)
+			return {};
+
+		// Filtre les lignes selon la mask par canal, comme BuildPanelText.
+		std::vector<const engine::net::ChatMessage*> filtered;
+		filtered.reserve(m_history.Lines().size());
+		for (const engine::net::ChatMessage& line : m_history.Lines())
+		{
+			if (ChannelFilterAllows(m_channelFilterMask, line.channel))
+			{
+				filtered.push_back(&line);
+			}
+		}
+
+		std::string out;
+		out.reserve(1024);
+
+		if (filtered.empty())
+		{
+			out += "(pas de messages)\n";
+		}
+		else
+		{
+			const uint32_t total = static_cast<uint32_t>(filtered.size());
+			const uint32_t maxLines = kMaxVisibleLines;
+			uint32_t begin = 0;
+			if (total > maxLines)
+			{
+				const uint32_t maxStart = total - maxLines;
+				const uint32_t scrollClamp = std::min(m_scrollLinesFromEnd, maxStart);
+				begin = maxStart - scrollClamp;
+			}
+			const uint32_t end = std::min<uint32_t>(total, begin + maxLines);
+			for (uint32_t i = begin; i < end; ++i)
+			{
+				const engine::net::ChatMessage& line = *filtered[i];
+				out += engine::net::FormatTimeHHMMUtc(line.timestampUnixMs);
+				out += " [";
+				out += ChannelTag(line.channel);
+				out += "] ";
+				out += line.sender;
+				out += ": ";
+				out += line.text;
+				out += '\n';
+			}
+		}
+
+		// Ligne d'invite : focus actif -> on montre la saisie en cours ; sinon, hint clavier.
+		if (m_chatFocus)
+		{
+			out += "> ";
+			out += m_inputLine;
+			out += '_';
+		}
+		else
+		{
+			out += "[/] pour tchatter  -  [1..0] filtres canal";
+		}
+		return out;
+	}
 }

@@ -197,6 +197,17 @@ namespace engine::network
 			e.force_rename = forceRenameByte;
 			if (!r.ReadU64(e.last_seen_unix) || !r.ReadU64(e.total_play_secs))
 				return std::nullopt;
+			// Phase 3.6 — 5 floats spawn (20 octets). Wire format strictement LE
+			// (match x86 / Vulkan). Pas tolérant aux entrées tronquées : si la DB
+			// pré-migration renvoie 0 partout, le client appliquera les défauts engine.
+			if (!r.ReadBytes(reinterpret_cast<uint8_t*>(&e.spawn_x), sizeof(float))
+				|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&e.spawn_y), sizeof(float))
+				|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&e.spawn_z), sizeof(float))
+				|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&e.spawn_yaw_deg), sizeof(float))
+				|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&e.spawn_pitch_deg), sizeof(float)))
+			{
+				return std::nullopt;
+			}
 			out.entries.push_back(std::move(e));
 		}
 		return out;
@@ -229,6 +240,15 @@ namespace engine::network
 					return {};
 				if (!w.WriteU64(e.last_seen_unix) || !w.WriteU64(e.total_play_secs))
 					return {};
+				// Phase 3.6 — 5 floats spawn (20 octets), strict LE.
+				if (!w.WriteBytes(reinterpret_cast<const uint8_t*>(&e.spawn_x), sizeof(float))
+					|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&e.spawn_y), sizeof(float))
+					|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&e.spawn_z), sizeof(float))
+					|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&e.spawn_yaw_deg), sizeof(float))
+					|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&e.spawn_pitch_deg), sizeof(float)))
+				{
+					return {};
+				}
 			}
 		}
 		const size_t payloadBytes = w.Offset();

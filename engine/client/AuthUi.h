@@ -77,6 +77,14 @@ namespace engine::client
 			uint32_t shardId = 0;
 			std::string shardEndpoint; ///< host:port du shard pour la connexion gameplay UDP.
 			std::string characterName;
+			// Phase 3.6 — Position de spawn lue depuis characters.spawn_*. Un (0, 0, 0)
+			// laisse l'engine appliquer son défaut config (client.world.default_spawn).
+			float spawnX        = 0.0f;
+			float spawnY        = 0.0f;
+			float spawnZ        = 0.0f;
+			float spawnYawDeg   = 0.0f;
+			float spawnPitchDeg = 0.0f;
+			bool  hasSpawn      = false; ///< true = spawn renseigné depuis la liste de personnages.
 		};
 
 		struct AudioSettingsCommand

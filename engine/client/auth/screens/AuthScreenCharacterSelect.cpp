@@ -33,16 +33,29 @@ namespace engine::client
 			return;
 		}
 		const auto& chosen = m_characterList[static_cast<size_t>(m_selectedCharacterIndex)];
-		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect -> activate (character_id={}, name={}, shard={}, endpoint={})",
-			chosen.character_id, chosen.name, m_chosenShardId, m_chosenShardEndpoint);
+		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect -> activate (character_id={}, name={}, shard={}, endpoint={}, spawn=({},{},{}))",
+			chosen.character_id, chosen.name, m_chosenShardId, m_chosenShardEndpoint,
+			chosen.spawn_x, chosen.spawn_y, chosen.spawn_z);
 		// Phase 3 — émission de la commande d'entrée dans le monde, consommée par
 		// Engine::Update sur la première frame post-auth (cf. AuthGate else branch).
+		// Phase 3.6 — la position spawn vient de la DB (characters.spawn_*) via la
+		// payload CHARACTER_LIST. Si tout est à zéro (cas pré-migration ou perso fraichement
+		// créé pas encore réécrit), hasSpawn reste false et l'engine appliquera son défaut.
 		m_pendingEnterWorld = {};
 		m_pendingEnterWorld.applyRequested = true;
 		m_pendingEnterWorld.characterId = chosen.character_id;
 		m_pendingEnterWorld.shardId = m_chosenShardId;
 		m_pendingEnterWorld.shardEndpoint = m_chosenShardEndpoint;
 		m_pendingEnterWorld.characterName = chosen.name;
+		m_pendingEnterWorld.spawnX        = chosen.spawn_x;
+		m_pendingEnterWorld.spawnY        = chosen.spawn_y;
+		m_pendingEnterWorld.spawnZ        = chosen.spawn_z;
+		m_pendingEnterWorld.spawnYawDeg   = chosen.spawn_yaw_deg;
+		m_pendingEnterWorld.spawnPitchDeg = chosen.spawn_pitch_deg;
+		const bool nonZero = (chosen.spawn_x != 0.0f) || (chosen.spawn_y != 0.0f)
+			|| (chosen.spawn_z != 0.0f) || (chosen.spawn_yaw_deg != 0.0f)
+			|| (chosen.spawn_pitch_deg != 0.0f);
+		m_pendingEnterWorld.hasSpawn = nonZero;
 		m_userErrorText.clear();
 		m_infoBanner.clear();
 		m_postRegistrationCharacterCreatePending = false;

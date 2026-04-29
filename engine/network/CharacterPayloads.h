@@ -78,6 +78,10 @@ namespace engine::network
 		float    spawn_z          = 0.0f;
 		float    spawn_yaw_deg    = 0.0f;
 		float    spawn_pitch_deg  = -10.0f;
+		// Phase 3.8 — race/class string identifiers (cf. game/data/races/{races,classes}.json).
+		// Vides si character créé pré-migration 0033, ou si l'utilisateur n'a pas choisi.
+		std::string race_str;
+		std::string class_str;
 	};
 
 	struct CharacterListResponsePayload

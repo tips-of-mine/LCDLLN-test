@@ -208,6 +208,9 @@ namespace engine::network
 			{
 				return std::nullopt;
 			}
+			// Phase 3.8 — race/class strings (length-prefixed UTF-8).
+			if (!r.ReadString(e.race_str) || !r.ReadString(e.class_str))
+				return std::nullopt;
 			out.entries.push_back(std::move(e));
 		}
 		return out;
@@ -249,6 +252,9 @@ namespace engine::network
 				{
 					return {};
 				}
+				// Phase 3.8 — race / class strings.
+				if (!w.WriteString(e.race_str) || !w.WriteString(e.class_str))
+					return {};
 			}
 		}
 		const size_t payloadBytes = w.Offset();

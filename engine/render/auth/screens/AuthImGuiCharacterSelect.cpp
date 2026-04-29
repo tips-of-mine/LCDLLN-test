@@ -124,9 +124,43 @@ namespace engine::render
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 
-				const std::string sub = tr("auth.character_select.subline",
-					P{ { "slot", std::to_string(static_cast<unsigned>(c.slot) + 1u) },
-					   { "level", std::to_string(c.level) } });
+				// Phase 3.8 — Affichage humanisé race/classe :
+				// - si race_str/class_str non-vides (perso post-migration 0033) on les utilise
+				//   via une clé de localisation "auth.character_select.race.<id>" pour le label,
+				//   en retombant sur l'identifiant brut si aucune traduction n'est définie.
+				// - sinon (perso pré-migration), on cache la mention pour ne pas afficher
+				//   "Race ?" qui est plus distrayant qu'utile.
+				auto humanize = [&](const char* prefix, const std::string& id) -> std::string {
+					if (id.empty())
+						return std::string{};
+					std::string key = prefix;
+					key += id;
+					std::string localized = m_authPresenter ? m_authPresenter->UiTranslate(key) : std::string{};
+					if (!localized.empty())
+						return localized;
+					// Capitalisation simple du premier caractère ASCII (lettre minuscule -> majuscule).
+					std::string copy = id;
+					if (!copy.empty() && copy[0] >= 'a' && copy[0] <= 'z')
+						copy[0] = static_cast<char>(copy[0] - 'a' + 'A');
+					return copy;
+				};
+				const std::string raceLabel  = humanize("auth.character_select.race.", c.race_str);
+				const std::string classLabel = humanize("auth.character_select.class.", c.class_str);
+				std::string sub;
+				if (!raceLabel.empty() || !classLabel.empty())
+				{
+					sub = tr("auth.character_select.subline_full",
+						P{ { "slot", std::to_string(static_cast<unsigned>(c.slot) + 1u) },
+						   { "level", std::to_string(c.level) },
+						   { "race", raceLabel.empty() ? std::string("?") : raceLabel },
+						   { "class", classLabel.empty() ? std::string("?") : classLabel } });
+				}
+				else
+				{
+					sub = tr("auth.character_select.subline",
+						P{ { "slot", std::to_string(static_cast<unsigned>(c.slot) + 1u) },
+						   { "level", std::to_string(c.level) } });
+				}
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);
 				ImGui::TextUnformatted(sub.c_str());

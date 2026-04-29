@@ -68,6 +68,7 @@ namespace engine::editor
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -270,6 +271,10 @@ namespace engine
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;
 		engine::client::ChatUiPresenter m_chatUi;
+		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
+		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
+		std::string                                  m_enterWorldBannerText;
+		std::chrono::steady_clock::time_point        m_enterWorldBannerExpiry{};
 		/// M35.2 — optional UDP gameplay + vendor shop / inventory presenters.
 		bool m_gameplayNetInitialized = false;
 		engine::client::UIModelBinding m_uiModelBinding{};

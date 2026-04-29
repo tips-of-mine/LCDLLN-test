@@ -2853,7 +2853,6 @@ namespace engine
 		}
 		else
 		{
-			m_window.SetOverlayText({});
 			if (m_audioEngine.GetCurrentZoneId() == 9999)
 			{
 				m_audioEngine.SetZone(0);
@@ -2869,6 +2868,45 @@ namespace engine
 			{
 				LOG_INFO(Core, "[EnterWorld] character_id={}, name='{}', shard_id={}, endpoint='{}'",
 					enterCmd.characterId, enterCmd.characterName, enterCmd.shardId, enterCmd.shardEndpoint);
+
+				// Phase 3.5 — Téléportation de la caméra à la position de spawn par défaut
+				// (`client.world.default_spawn.{x,y,z,yaw_deg,pitch_deg}` dans la config).
+				// Sera surchargé par characters.spawn_x/y/z une fois la migration DB en place.
+				{
+					const float spawnX = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.x", 0.0));
+					const float spawnY = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.y", 100.0));
+					const float spawnZ = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.z", 0.0));
+					const float yawDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
+					const float pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -10.0));
+					constexpr float kDeg2Rad = 3.14159265f / 180.f;
+					out.camera.position.x = spawnX;
+					out.camera.position.y = spawnY;
+					out.camera.position.z = spawnZ;
+					out.camera.yaw = yawDeg * kDeg2Rad;
+					out.camera.pitch = pitchDeg * kDeg2Rad;
+					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
+						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
+				}
+
+				// Phase 3.5 — Bannière "Bienvenue, <perso>" affichée 5 s.
+				{
+					std::string personName = enterCmd.characterName.empty()
+						? std::string("aventurier") : enterCmd.characterName;
+					const std::string tpl = m_authUi.UiTranslate("auth.enter_world.welcome");
+					if (!tpl.empty())
+					{
+						const std::string token{"{name}"};
+						const size_t pos = tpl.find(token);
+						m_enterWorldBannerText = (pos == std::string::npos)
+							? tpl
+							: tpl.substr(0, pos) + personName + tpl.substr(pos + token.size());
+					}
+					else
+					{
+						m_enterWorldBannerText = "Bienvenue, " + personName + " !";
+					}
+					m_enterWorldBannerExpiry = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+				}
 
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.
 				// InitGameplayNet relit ces clés à l'appel (cf. ligne ~3552) ; les écraser avant
@@ -2909,6 +2947,23 @@ namespace engine
 				{
 					LOG_WARN(Core, "[EnterWorld] endpoint vide : connexion gameplay non démarrée (la scène 3D s'affichera quand même mais sans réseau)");
 				}
+			}
+
+			// Phase 3.5 — Affichage de la bannière "Bienvenue" tant qu'elle n'a pas expiré.
+			// SetOverlayText vide la zone de texte si la bannière n'est plus active.
+			if (!m_enterWorldBannerText.empty()
+				&& std::chrono::steady_clock::now() < m_enterWorldBannerExpiry)
+			{
+				m_window.SetOverlayText(m_enterWorldBannerText);
+			}
+			else
+			{
+				if (!m_enterWorldBannerText.empty())
+				{
+					// Premier frame d'expiration : on libère explicitement le texte.
+					m_enterWorldBannerText.clear();
+				}
+				m_window.SetOverlayText({});
 			}
 		}
 

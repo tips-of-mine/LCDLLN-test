@@ -253,6 +253,7 @@
   "auth.character_select.subline": "Slot {slot} - Niveau {level}",
   "auth.character_select.line": "Slot {slot} - {name} (niv. {level})",
   "auth.character_select.play": "Jouer",
+  "auth.enter_world.welcome": "Bienvenue, {name} ! Entree dans le monde...",
   "auth.character_select.create_new": "Creer un nouveau personnage",
   "auth.panel.submitting": "Connexion au serveur en cours...",
   "auth.panel.error": "Erreur",

@@ -83,7 +83,15 @@
         "histogram_percentile_high": 0.90
     },
     "world": {
-        "max_draw_distance_m": 0.0
+        "max_draw_distance_m": 0.0,
+        "default_spawn": {
+            "_comment": "Position de la caméra (m) au moment du clic Jouer (Phase 3.5). Y > 0 = au-dessus du terrain. Sera surchargée par characters.spawn_x/y/z une fois la migration en place.",
+            "x": 0.0,
+            "y": 100.0,
+            "z": 0.0,
+            "yaw_deg": 0.0,
+            "pitch_deg": -10.0
+        }
     },
     "paths": {
         "content": "game/data"

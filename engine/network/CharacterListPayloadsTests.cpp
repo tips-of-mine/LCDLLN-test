@@ -89,6 +89,11 @@ static void TestPopulatedResponseRoundTrip()
 		a.force_rename     = 0u;
 		a.last_seen_unix   = 1700000000ull;
 		a.total_play_secs  = 3600ull;
+		a.spawn_x          = 12.5f;
+		a.spawn_y          = 87.25f;
+		a.spawn_z          = -34.0f;
+		a.spawn_yaw_deg    = 90.0f;
+		a.spawn_pitch_deg  = -5.5f;
 		entries.push_back(a);
 	}
 	{
@@ -102,6 +107,11 @@ static void TestPopulatedResponseRoundTrip()
 		b.force_rename     = 1u;
 		b.last_seen_unix   = 0ull;
 		b.total_play_secs  = 0ull;
+		b.spawn_x          = 0.0f;
+		b.spawn_y          = 100.0f;
+		b.spawn_z          = 0.0f;
+		b.spawn_yaw_deg    = 0.0f;
+		b.spawn_pitch_deg  = -10.0f;
 		entries.push_back(b);
 	}
 
@@ -126,6 +136,11 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(a.force_rename == 0u, "entry0 force_rename");
 		Assert(a.last_seen_unix == 1700000000ull, "entry0 last_seen_unix");
 		Assert(a.total_play_secs == 3600ull, "entry0 total_play_secs");
+		Assert(a.spawn_x == 12.5f, "entry0 spawn_x");
+		Assert(a.spawn_y == 87.25f, "entry0 spawn_y");
+		Assert(a.spawn_z == -34.0f, "entry0 spawn_z");
+		Assert(a.spawn_yaw_deg == 90.0f, "entry0 spawn_yaw_deg");
+		Assert(a.spawn_pitch_deg == -5.5f, "entry0 spawn_pitch_deg");
 
 		const auto& b = parsed->entries[1];
 		Assert(b.character_id == 1002u, "entry1 id");
@@ -133,6 +148,9 @@ static void TestPopulatedResponseRoundTrip()
 		Assert(b.name == "Brynn", "entry1 name");
 		Assert(b.force_rename == 1u, "entry1 force_rename true");
 		Assert(b.last_seen_unix == 0ull, "entry1 last_seen_unix zero");
+		Assert(b.spawn_x == 0.0f, "entry1 spawn_x zero");
+		Assert(b.spawn_y == 100.0f, "entry1 spawn_y default");
+		Assert(b.spawn_pitch_deg == -10.0f, "entry1 spawn_pitch_deg default");
 	}
 }
 

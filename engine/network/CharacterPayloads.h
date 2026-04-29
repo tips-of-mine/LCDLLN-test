@@ -56,6 +56,10 @@ namespace engine::network
 	/// Phase 1 — One entry of the character list response.
 	/// Mirrors the columns the client needs to render CharacterSelect or to decide
 	/// CharacterSelect (>=1 entry) vs CharacterCreate (0 entry).
+	/// Phase 3.6 — spawn position (5 floats) appended at the end of the wire entry
+	/// to keep the wire format extension forward-compatible (older clients can ignore
+	/// extra bytes if the parse loop is tolerant — current parser is strict, so server
+	/// + client must deploy together).
 	struct CharacterListEntry
 	{
 		uint64_t character_id     = 0;
@@ -67,6 +71,13 @@ namespace engine::network
 		uint8_t  force_rename     = 0;
 		uint64_t last_seen_unix   = 0; ///< Unix timestamp seconds; 0 if character never logged in.
 		uint64_t total_play_secs  = 0;
+		// Phase 3.6 — spawn (mètres / degrés). Defaults sensibles si la DB renvoie 0
+		// (ex. row pré-migration) : spawn_y=100 plutôt que 0 pour ne pas spawner sous le terrain.
+		float    spawn_x          = 0.0f;
+		float    spawn_y          = 100.0f;
+		float    spawn_z          = 0.0f;
+		float    spawn_yaw_deg    = 0.0f;
+		float    spawn_pitch_deg  = -10.0f;
 	};
 
 	struct CharacterListResponsePayload

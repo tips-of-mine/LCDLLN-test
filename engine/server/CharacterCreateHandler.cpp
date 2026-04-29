@@ -206,12 +206,29 @@ namespace engine::server
 
 		char escapedName[128]{};
 		mysql_real_escape_string(mysql, escapedName, parsed->name.c_str(), static_cast<unsigned long>(parsed->name.size()));
+
+		// Phase 3.6 — Spawn par défaut lu depuis la config serveur (peut être surchargé
+		// plus tard par le shard quand l'utilisateur se déconnecte / le serveur sauvegarde
+		// la position courante du personnage). Défauts cohérents avec le défaut client
+		// (config.json : client.world.default_spawn).
+		const double spawnX     = m_config ? m_config->GetDouble("character_creation.default_spawn.x", 0.0) : 0.0;
+		const double spawnY     = m_config ? m_config->GetDouble("character_creation.default_spawn.y", 100.0) : 100.0;
+		const double spawnZ     = m_config ? m_config->GetDouble("character_creation.default_spawn.z", 0.0) : 0.0;
+		const double spawnYaw   = m_config ? m_config->GetDouble("character_creation.default_spawn.yaw_deg", 0.0) : 0.0;
+		const double spawnPitch = m_config ? m_config->GetDouble("character_creation.default_spawn.pitch_deg", -10.0) : -10.0;
+
+		char spawnBuf[256]{};
+		std::snprintf(spawnBuf, sizeof(spawnBuf), "%.6f, %.6f, %.6f, %.6f, %.6f",
+			spawnX, spawnY, spawnZ, spawnYaw, spawnPitch);
+
 		std::string sql =
-			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json) VALUES ("
+			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg) VALUES ("
 			+ std::to_string(*accountId) + ", "
 			+ std::to_string(slot) + ", '"
 			+ escapedName + "', "
-			+ std::to_string(serverId) + ", 0, 0, 1, '{}')";
+			+ std::to_string(serverId) + ", 0, 0, 1, '{}', "
+			+ spawnBuf + ")";
 		if (!engine::server::db::DbExecute(mysql, sql))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);
@@ -224,7 +241,7 @@ namespace engine::server
 		auto pkt = BuildCharacterCreateResponsePacket(1u, characterId, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
-		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={})",
-			*accountId, characterId, serverId, slot, parsed->name);
+		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, spawn=({}, {}, {}))",
+			*accountId, characterId, serverId, slot, parsed->name, spawnX, spawnY, spawnZ);
 	}
 }

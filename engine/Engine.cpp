@@ -2869,15 +2869,32 @@ namespace engine
 				LOG_INFO(Core, "[EnterWorld] character_id={}, name='{}', shard_id={}, endpoint='{}'",
 					enterCmd.characterId, enterCmd.characterName, enterCmd.shardId, enterCmd.shardEndpoint);
 
-				// Phase 3.5 — Téléportation de la caméra à la position de spawn par défaut
-				// (`client.world.default_spawn.{x,y,z,yaw_deg,pitch_deg}` dans la config).
-				// Sera surchargé par characters.spawn_x/y/z une fois la migration DB en place.
+				// Phase 3.5/3.6 — Téléportation de la caméra à la position de spawn.
+				// Priorité 1 (Phase 3.6) : spawn par-personnage, lu depuis characters.spawn_*
+				// via la payload CHARACTER_LIST puis posé dans EnterWorldCommand par
+				// AuthScreenCharacterSelect. enterCmd.hasSpawn vaut false si tous les champs
+				// spawn de la DB étaient à zéro (pré-migration, ou défaut DB tel quel).
+				// Priorité 2 (Phase 3.5, fallback) : défaut config `client.world.default_spawn.*`.
 				{
-					const float spawnX = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.x", 0.0));
-					const float spawnY = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.y", 100.0));
-					const float spawnZ = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.z", 0.0));
-					const float yawDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
-					const float pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -10.0));
+					float spawnX, spawnY, spawnZ, yawDeg, pitchDeg;
+					if (enterCmd.hasSpawn)
+					{
+						spawnX   = enterCmd.spawnX;
+						spawnY   = enterCmd.spawnY;
+						spawnZ   = enterCmd.spawnZ;
+						yawDeg   = enterCmd.spawnYawDeg;
+						pitchDeg = enterCmd.spawnPitchDeg;
+						LOG_INFO(Core, "[EnterWorld] using per-character spawn from DB");
+					}
+					else
+					{
+						spawnX   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.x", 0.0));
+						spawnY   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.y", 100.0));
+						spawnZ   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.z", 0.0));
+						yawDeg   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
+						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -10.0));
+						LOG_INFO(Core, "[EnterWorld] using config default spawn (no per-character data)");
+					}
 					constexpr float kDeg2Rad = 3.14159265f / 180.f;
 					out.camera.position.x = spawnX;
 					out.camera.position.y = spawnY;

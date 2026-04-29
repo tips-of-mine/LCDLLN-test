@@ -65,10 +65,12 @@ namespace engine::server
 		}
 
 		// LEFT JOIN character_stats so characters who never logged in still appear (last_seen NULL → 0).
+		// Phase 3.6 — spawn position lue depuis characters.spawn_{x,y,z,yaw_deg,pitch_deg}.
 		std::string sql =
 			"SELECT c.id, c.slot, c.name, c.race_id, c.class_id, c.level, c.force_rename, "
 			"COALESCE(UNIX_TIMESTAMP(s.last_seen), 0) AS last_seen_unix, "
-			"COALESCE(s.total_play_seconds, 0) AS total_play "
+			"COALESCE(s.total_play_seconds, 0) AS total_play, "
+			"c.spawn_x, c.spawn_y, c.spawn_z, c.spawn_yaw_deg, c.spawn_pitch_deg "
 			"FROM characters c "
 			"LEFT JOIN character_stats s ON s.character_id = c.id AND s.server_id = c.server_id "
 			"WHERE c.account_id = " + std::to_string(*accountId)
@@ -99,6 +101,12 @@ namespace engine::server
 			if (row[6]) e.force_rename    = static_cast<uint8_t>(std::strtoul(row[6], nullptr, 10) != 0u ? 1u : 0u);
 			if (row[7]) e.last_seen_unix  = std::strtoull(row[7], nullptr, 10);
 			if (row[8]) e.total_play_secs = std::strtoull(row[8], nullptr, 10);
+			// Phase 3.6 — spawn (5 colonnes ajoutées par migration 0032).
+			if (row[9])  e.spawn_x         = std::strtof(row[9], nullptr);
+			if (row[10]) e.spawn_y         = std::strtof(row[10], nullptr);
+			if (row[11]) e.spawn_z         = std::strtof(row[11], nullptr);
+			if (row[12]) e.spawn_yaw_deg   = std::strtof(row[12], nullptr);
+			if (row[13]) e.spawn_pitch_deg = std::strtof(row[13], nullptr);
 			entries.push_back(std::move(e));
 		}
 		engine::server::db::DbFreeResult(res);

@@ -162,4 +162,14 @@ namespace engine::network
 
 	constexpr uint16_t kOpcodeCharacterDeleteRequest  = 41u; ///< Client→Master : demande la suppression (logique) d'un personnage par character_id.
 	constexpr uint16_t kOpcodeCharacterDeleteResponse = 42u; ///< Master→Client : succès / erreur de la suppression.
+
+	// -------------------------------------------------------------------------
+	// Opcodes de sauvegarde de position (valeurs 43–44)
+	// Référence : Phase 3.6.5 — le client pousse périodiquement la position courante
+	// du personnage actif au master pour persistance dans characters.spawn_*.
+	// Session requise sur le Master ; vérifie que le perso appartient au compte.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeCharacterSavePositionRequest  = 43u; ///< Client→Master : sauvegarde la position courante (x, y, z, yaw_deg, pitch_deg) d'un personnage.
+	constexpr uint16_t kOpcodeCharacterSavePositionResponse = 44u; ///< Master→Client : succès / erreur (NOT_FOUND si perso pas possédé par le compte).
 }

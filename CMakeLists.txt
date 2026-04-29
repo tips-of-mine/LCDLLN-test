@@ -545,6 +545,11 @@ add_executable(character_list_payloads_tests engine/network/CharacterListPayload
 target_link_libraries(character_list_payloads_tests PRIVATE engine_core)
 add_test(NAME character_list_payloads_tests COMMAND character_list_payloads_tests)
 
+# Phase 3.6.5: CHARACTER_SAVE_POSITION request/response payload round-trip tests
+add_executable(character_save_position_payloads_tests engine/network/CharacterSavePositionPayloadsTests.cpp)
+target_link_libraries(character_save_position_payloads_tests PRIVATE engine_core)
+add_test(NAME character_save_position_payloads_tests COMMAND character_save_position_payloads_tests)
+
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)
 target_link_libraries(log_rotation_smoke_tests PRIVATE engine_core)

@@ -34,6 +34,14 @@ namespace engine::client
 		/// Multi-line debug/panel string for \ref engine::RenderState::chatDebugText.
 		std::string BuildPanelText() const;
 
+		/// Phase 3.11 — Texte affichable directement à l'écran post-auth via
+		/// \c m_window.SetOverlayText. Plus court et plus lisible que \ref BuildPanelText
+		/// (pas de header debug, pas de code couleur ARGB, pas de "filter_mask=0x...").
+		/// Format : N lignes "[hh:mm TAG] Sender: text" (filtrées par \ref m_channelFilterMask)
+		/// + une ligne d'invite "> _input_" quand le focus est actif, ou "[/] tchatter" sinon.
+		/// Retourne une chaîne vide si le presenter n'est pas initialisé.
+		std::string BuildHudPanelText() const;
+
 		bool IsChatFocusActive() const { return m_chatFocus; }
 
 		void SetChatFocus(bool focused);

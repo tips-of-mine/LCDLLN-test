@@ -2978,7 +2978,9 @@ namespace engine
 			}
 
 			// Phase 3.5 — Affichage de la bannière "Bienvenue" tant qu'elle n'a pas expiré.
-			// SetOverlayText vide la zone de texte si la bannière n'est plus active.
+			// Phase 3.11 — Quand la bannière a expiré, on affiche le panneau chat à la place
+			// (c'est la première surface visuelle pour le système de chat post-auth).
+			// Priorité : banner > chat > vide.
 			if (!m_enterWorldBannerText.empty()
 				&& std::chrono::steady_clock::now() < m_enterWorldBannerExpiry)
 			{
@@ -2988,10 +2990,25 @@ namespace engine
 			{
 				if (!m_enterWorldBannerText.empty())
 				{
-					// Premier frame d'expiration : on libère explicitement le texte.
+					// Premier frame d'expiration : on libère explicitement le texte de la bannière.
 					m_enterWorldBannerText.clear();
 				}
-				m_window.SetOverlayText({});
+				if (m_chatUi.IsInitialized())
+				{
+					std::string chatHud = m_chatUi.BuildHudPanelText();
+					if (!chatHud.empty())
+					{
+						m_window.SetOverlayText(chatHud);
+					}
+					else
+					{
+						m_window.SetOverlayText({});
+					}
+				}
+				else
+				{
+					m_window.SetOverlayText({});
+				}
 			}
 		}
 

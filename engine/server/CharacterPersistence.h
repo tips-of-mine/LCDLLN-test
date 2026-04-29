@@ -14,7 +14,8 @@ namespace engine::server
 	/// Persisted character payload stored by the server save/load pipeline.
 	struct PersistedCharacterState
 	{
-		uint32_t characterKey = 0;
+		/// Phase 3.7.5 — élargi à uint64 (character_id BIGINT UNSIGNED, valeur Hello).
+		uint64_t characterKey = 0;
 		uint32_t zoneId = 1;
 		float positionMetersX = 0.0f;
 		float positionMetersY = 0.0f;
@@ -57,14 +58,14 @@ namespace engine::server
 		void Shutdown();
 
 		/// Load one character state if it was previously persisted.
-		bool LoadCharacter(uint32_t characterKey, PersistedCharacterState& outState) const;
+		bool LoadCharacter(uint64_t characterKey, PersistedCharacterState& outState) const;
 
 		/// Save one character state to the configured persistence location.
 		bool SaveCharacter(const PersistedCharacterState& state) const;
 
 	private:
 		/// Build the relative content path used to store one character state file.
-		std::string BuildCharacterStateRelativePath(uint32_t characterKey) const;
+		std::string BuildCharacterStateRelativePath(uint64_t characterKey) const;
 
 		engine::core::Config m_config;
 		std::string m_schemaRelativePath;

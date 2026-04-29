@@ -16,7 +16,8 @@ namespace engine::server
 	{
 		uint32_t listingId = 0;
 		uint32_t sellerClientId = 0;
-		uint32_t sellerCharacterKey = 0;
+		/// Phase 3.7.5 — élargi à uint64 (alignement avec ConnectedClient::persistenceCharacterKey).
+		uint64_t sellerCharacterKey = 0;
 		uint32_t itemId = 0;
 		uint32_t quantity = 0;
 		uint32_t startBid = 0;
@@ -24,7 +25,7 @@ namespace engine::server
 		uint32_t buyoutPrice = 0;
 		uint32_t currentBid = 0;
 		uint32_t highBidderClientId = 0;
-		uint32_t highBidderCharacterKey = 0;
+		uint64_t highBidderCharacterKey = 0;
 		uint32_t expiresAtTick = 0;
 		bool closed = false;
 	};
@@ -34,9 +35,9 @@ namespace engine::server
 	{
 		uint32_t listingId = 0;
 		/// 0 = expired with no bids (return item to seller).
-		uint32_t buyerCharacterKey = 0;
+		uint64_t buyerCharacterKey = 0;
 		uint32_t buyerClientId = 0;
-		uint32_t sellerCharacterKey = 0;
+		uint64_t sellerCharacterKey = 0;
 		ItemStack item{};
 		uint32_t finalPrice = 0;
 		uint32_t sellerProceeds = 0;

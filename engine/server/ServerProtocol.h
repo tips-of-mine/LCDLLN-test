@@ -11,7 +11,10 @@
 namespace engine::server
 {
 	/// Protocol version accepted by the server skeleton.
-	inline constexpr uint16_t kProtocolVersion = 1;
+	/// Phase 3.7.5 — bump 1 → 2 : `HelloMessage::clientNonce` est passé de \c uint32 à \c uint64
+	/// pour transporter un \c character_id complet (BIGINT UNSIGNED) sans tronquer.
+	/// Wire-breaking : client + shard doivent se déployer ensemble.
+	inline constexpr uint16_t kProtocolVersion = 2;
 
 	/// Message kinds exchanged by the server skeleton.
 	enum class MessageKind : uint16_t
@@ -181,11 +184,14 @@ namespace engine::server
 	};
 
 	/// Initial client handshake sent before any other message.
+	/// Phase 3.7.5 — `clientNonce` élargi à \c uint64 pour porter le `character_id` (BIGINT
+	/// UNSIGNED) tel quel. Le shard interprète cette valeur comme `tentativeCharacterKey`
+	/// (cf. ServerApp::HandleHello). Auparavant tronqué côté client à `& 0xFFFFFFFF`.
 	struct HelloMessage
 	{
 		uint16_t requestedTickHz = 0;
 		uint16_t requestedSnapshotHz = 0;
-		uint32_t clientNonce = 0;
+		uint64_t clientNonce = 0;
 	};
 
 	/// Minimal input envelope accepted by the server authoritative loop.

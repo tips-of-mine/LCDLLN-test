@@ -2982,13 +2982,16 @@ namespace engine
 							m_cfg.SetValue("client.gameplay_udp.enabled", true);
 							// Phase 3.7 — Le shard utilise déjà clientNonce comme tentativeCharacterKey
 							// (cf. ServerApp::HandleHello). On override la clé config pour propager le
-							// character_id réel sélectionné par l'utilisateur. uint32 suffit pour < 4 G
-							// personnages — on tronque les bits hauts si jamais le BIGINT DB déborde.
+							// character_id réel sélectionné par l'utilisateur.
+							// Phase 3.7.5 — clientNonce est désormais uint64, plus de troncation des bits hauts.
+							// La config porte un int64_t (signé) ; on reinterpret-cast bit-à-bit pour préserver
+							// la valeur uint64 (negative-looking si bit 63 set, mais réinterprété en uint64
+							// côté lecture).
 							if (enterCmd.characterId != 0u)
 							{
 								m_cfg.SetValue("client.gameplay_udp.character_key",
-									static_cast<int64_t>(enterCmd.characterId & 0xFFFFFFFFu));
-								LOG_INFO(Core, "[EnterWorld] propagating character_id={} as gameplay UDP character_key",
+									static_cast<int64_t>(enterCmd.characterId));
+								LOG_INFO(Core, "[EnterWorld] propagating character_id={} as gameplay UDP character_key (uint64)",
 									enterCmd.characterId);
 							}
 							// Si la session UDP a été ouverte au boot avec un host différent
@@ -3829,9 +3832,13 @@ namespace engine
 		const int64_t snapHzCfg = m_cfg.GetInt("client.gameplay_udp.request_snapshot_hz", 10);
 		const uint16_t reqSnap = static_cast<uint16_t>(
 			std::clamp(snapHzCfg, static_cast<int64_t>(1), static_cast<int64_t>(60)));
+		// Phase 3.7.5 — character_key élargi à uint64. La config stocke un int64_t signé ;
+		// on bit-cast pour préserver la valeur uint64 quand le bit 63 serait positionné
+		// (reinterpret par bits, pas conversion arithmétique).
 		const int64_t charKeyCfg = m_cfg.GetInt("client.gameplay_udp.character_key", 1);
-		const uint32_t charKey =
-			static_cast<uint32_t>(std::max(static_cast<int64_t>(1), charKeyCfg));
+		const uint64_t charKey = (charKeyCfg <= 0)
+			? static_cast<uint64_t>(1u)
+			: static_cast<uint64_t>(charKeyCfg);
 		(void)m_gameplayUdp.SendHello(reqTick, reqSnap, charKey);
 
 		m_gameplayNetInitialized = true;

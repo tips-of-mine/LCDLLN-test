@@ -186,24 +186,26 @@ namespace engine::server
 
 	bool DecodeHello(std::span<const std::byte> packet, HelloMessage& outMessage)
 	{
+		// Phase 3.7.5 — payload = 12 octets (uint16 tick, uint16 snap, uint64 nonce).
 		std::span<const std::byte> payload;
-		if (!DecodeHeader(packet, MessageKind::Hello, payload) || payload.size() != 8)
+		if (!DecodeHeader(packet, MessageKind::Hello, payload) || payload.size() != 12)
 		{
 			return false;
 		}
 
 		outMessage.requestedTickHz = ReadU16(payload, 0);
 		outMessage.requestedSnapshotHz = ReadU16(payload, 2);
-		outMessage.clientNonce = ReadU32(payload, 4);
+		outMessage.clientNonce = ReadU64(payload, 4);
 		return true;
 	}
 
 	std::vector<std::byte> EncodeHello(const HelloMessage& message)
 	{
-		std::vector<std::byte> packet = BeginPacket(MessageKind::Hello, 8);
+		// Phase 3.7.5 — payload = 12 octets (uint16 + uint16 + uint64).
+		std::vector<std::byte> packet = BeginPacket(MessageKind::Hello, 12);
 		WriteU16(packet, message.requestedTickHz);
 		WriteU16(packet, message.requestedSnapshotHz);
-		WriteU32(packet, message.clientNonce);
+		WriteU64(packet, message.clientNonce);
 		return packet;
 	}
 

@@ -106,14 +106,14 @@ namespace engine::server
 			AuctionListingRecord r{};
 			r.listingId = id;
 			r.sellerClientId = static_cast<uint32_t>(ini.GetInt(p + "seller_client", 0));
-			r.sellerCharacterKey = static_cast<uint32_t>(ini.GetInt(p + "seller_ck", 0));
+			r.sellerCharacterKey = static_cast<uint64_t>(ini.GetInt(p + "seller_ck", 0));
 			r.itemId = static_cast<uint32_t>(ini.GetInt(p + "item", 0));
 			r.quantity = static_cast<uint32_t>(ini.GetInt(p + "qty", 0));
 			r.startBid = static_cast<uint32_t>(ini.GetInt(p + "start", 0));
 			r.buyoutPrice = static_cast<uint32_t>(ini.GetInt(p + "buyout", 0));
 			r.currentBid = static_cast<uint32_t>(ini.GetInt(p + "cur", 0));
 			r.highBidderClientId = static_cast<uint32_t>(ini.GetInt(p + "high_client", 0));
-			r.highBidderCharacterKey = static_cast<uint32_t>(ini.GetInt(p + "high_ck", 0));
+			r.highBidderCharacterKey = static_cast<uint64_t>(ini.GetInt(p + "high_ck", 0));
 			r.expiresAtTick = static_cast<uint32_t>(ini.GetInt(p + "exp_tick", 0));
 			r.closed = ini.GetInt(p + "closed", 0) != 0;
 			m_listings.push_back(r);

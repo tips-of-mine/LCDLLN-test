@@ -96,4 +96,21 @@ namespace engine::network
 	std::optional<CharacterListResponsePayload> ParseCharacterListResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterListResponsePacket(uint8_t success, const std::vector<CharacterListEntry>& entries,
 	                                                     uint32_t requestId, uint64_t sessionIdHeader);
+
+	/// Phase 3.9 — Character delete request payload (8 bytes).
+	struct CharacterDeleteRequestPayload
+	{
+		uint64_t characterId = 0;
+	};
+
+	struct CharacterDeleteResponsePayload
+	{
+		uint8_t success = 0; ///< 1 = soft-deleted ; 0 = error (NOT_FOUND, NOT_OWNED, etc.).
+	};
+
+	std::optional<CharacterDeleteRequestPayload> ParseCharacterDeleteRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterDeleteRequestPayload(uint64_t characterId);
+
+	std::optional<CharacterDeleteResponsePayload> ParseCharacterDeleteResponsePayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterDeleteResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
 }

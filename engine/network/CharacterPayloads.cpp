@@ -262,4 +262,55 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	// -------------------------------------------------------------------------
+	// Phase 3.9 — CHARACTER_DELETE request/response payloads.
+	// Request : uint64 character_id (8 octets).
+	// Response: uint8 success.
+	// -------------------------------------------------------------------------
+	std::optional<CharacterDeleteRequestPayload> ParseCharacterDeleteRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 8u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterDeleteRequestPayload out;
+		if (!r.ReadU64(out.characterId))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterDeleteRequestPayload(uint64_t characterId)
+	{
+		std::vector<uint8_t> buf(8u, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU64(characterId))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
+	}
+
+	std::optional<CharacterDeleteResponsePayload> ParseCharacterDeleteResponsePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 1u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterDeleteResponsePayload out;
+		uint8_t success = 0;
+		if (!r.ReadBytes(&success, 1u))
+			return std::nullopt;
+		out.success = success;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterDeleteResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteBytes(&success, 1u))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeCharacterDeleteResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
 }

@@ -6,8 +6,12 @@
 #include "engine/render/LnTheme.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <string>
+#include <string_view>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -83,10 +87,13 @@ namespace engine::render
 
 		if (ImGui::Begin("##ln_chat_panel", nullptr, flags))
 		{
-			// Bandeau filtres : un petit rectangle par canal (10), opaque si visible, atténué si masqué.
-			// Lecture-seule pour l'instant — l'utilisateur change le mask via les touches 1-0 (cf. ChatUiPresenter::Update).
+			// Phase 3.11.2 — Chips canal cliquables. Click toggle le bit via
+			// ChatUiPresenter::ToggleChannelFilter (mirror du raccourci 1-0 clavier dans
+			// ChatUiPresenter::Update). Couleur : ARGB du canal si visible, gris atténué si masqué.
 			const uint16_t mask = m_chat->ChannelFilterMask();
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.20f)));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  IV(LnTheme::AccentDim(0.35f)));
 			for (uint8_t i = 0; i < 10u; ++i)
 			{
 				if (i > 0) ImGui::SameLine(0.f, 4.f);
@@ -94,9 +101,24 @@ namespace engine::render
 				const ImVec4 color = visible
 					? ArgbToIm(engine::net::ChannelColorArgb(static_cast<engine::net::ChatChannel>(i)))
 					: IV(LnTheme::kMuted);
-				ImGui::TextColored(color, "[%s]", ChannelTag(static_cast<engine::net::ChatChannel>(i)));
+				ImGui::PushStyleColor(ImGuiCol_Text, color);
+				char buttonId[32];
+				std::snprintf(buttonId, sizeof(buttonId), "[%s]##ch%u",
+					ChannelTag(static_cast<engine::net::ChatChannel>(i)), static_cast<unsigned>(i));
+				if (ImGui::SmallButton(buttonId))
+				{
+					m_chat->ToggleChannelFilter(i);
+				}
+				ImGui::PopStyleColor();
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::SetTooltip("%s : clic pour %s (raccourci %u)",
+						ChannelTag(static_cast<engine::net::ChatChannel>(i)),
+						visible ? "masquer" : "afficher",
+						static_cast<unsigned>((i + 1u) % 10u));
+				}
 			}
-			ImGui::PopStyleColor();
+			ImGui::PopStyleColor(3);
 			ImGui::Separator();
 
 			// Zone scrollable : on calcule la hauteur en réservant 28 px pour la ligne d'invite/saisie en bas.
@@ -132,14 +154,51 @@ namespace engine::render
 
 			ImGui::Separator();
 
-			// Ligne d'invite ou de saisie en cours. ChatUiPresenter::Update() pilote l'input clavier
-			// (focus '/', Enter pour submit, etc.) — ici on se contente d'afficher l'état courant.
+			// Phase 3.11.3 — Vrai ImGui::InputText quand le focus est actif.
+			// Le presenter passe en mode "ImGui owns input" (cf. SetImGuiInputActive depuis
+			// Engine.cpp) pour ne pas dupliquer la saisie. Sync entre m_inputBuf et le
+			// presenter chaque frame : 1) si l'InputLine() externe a changé sans nous, on
+			// recopie ; 2) après l'InputText, on pousse m_inputBuf -> SetInputLine.
 			const bool focused = m_chat->IsChatFocusActive();
+			const std::string& presenterLine = m_chat->InputLine();
+			if (presenterLine.size() > sizeof(m_inputBuf) - 1u
+				|| presenterLine != std::string_view(m_inputBuf))
+			{
+				const size_t n = (presenterLine.size() < sizeof(m_inputBuf) - 1u)
+					? presenterLine.size() : (sizeof(m_inputBuf) - 1u);
+				if (n > 0u)
+					std::memcpy(m_inputBuf, presenterLine.data(), n);
+				m_inputBuf[n] = '\0';
+			}
+
 			if (focused)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-				ImGui::Text("> %s_", m_chat->InputLine().c_str());
-				ImGui::PopStyleColor();
+				// Première frame de focus : pousser le focus clavier sur l'InputText.
+				if (!m_lastFocus)
+				{
+					ImGui::SetKeyboardFocusHere();
+				}
+
+				ImGui::PushStyleColor(ImGuiCol_Text,    IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
+				ImGui::PushStyleColor(ImGuiCol_Border,  IV(LnTheme::kBorder));
+				ImGui::Text("> ");
+				ImGui::SameLine(0.f, 4.f);
+				ImGui::SetNextItemWidth(-FLT_MIN); // remplit la ligne restante
+				const ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue
+					| ImGuiInputTextFlags_AutoSelectAll;
+				if (ImGui::InputText("##ln_chat_input", m_inputBuf, sizeof(m_inputBuf), flags))
+				{
+					m_chat->SetInputLine(m_inputBuf);
+					m_chat->SubmitFromUi();
+					m_inputBuf[0] = '\0';
+				}
+				else
+				{
+					// Push permanent du buffer vers le presenter (l'utilisateur tape sans Enter).
+					m_chat->SetInputLine(m_inputBuf);
+				}
+				ImGui::PopStyleColor(3);
 			}
 			else
 			{

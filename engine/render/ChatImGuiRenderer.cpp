@@ -6,8 +6,12 @@
 #include "engine/render/LnTheme.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <string>
+#include <string_view>
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -150,14 +154,51 @@ namespace engine::render
 
 			ImGui::Separator();
 
-			// Ligne d'invite ou de saisie en cours. ChatUiPresenter::Update() pilote l'input clavier
-			// (focus '/', Enter pour submit, etc.) — ici on se contente d'afficher l'état courant.
+			// Phase 3.11.3 — Vrai ImGui::InputText quand le focus est actif.
+			// Le presenter passe en mode "ImGui owns input" (cf. SetImGuiInputActive depuis
+			// Engine.cpp) pour ne pas dupliquer la saisie. Sync entre m_inputBuf et le
+			// presenter chaque frame : 1) si l'InputLine() externe a changé sans nous, on
+			// recopie ; 2) après l'InputText, on pousse m_inputBuf -> SetInputLine.
 			const bool focused = m_chat->IsChatFocusActive();
+			const std::string& presenterLine = m_chat->InputLine();
+			if (presenterLine.size() > sizeof(m_inputBuf) - 1u
+				|| presenterLine != std::string_view(m_inputBuf))
+			{
+				const size_t n = (presenterLine.size() < sizeof(m_inputBuf) - 1u)
+					? presenterLine.size() : (sizeof(m_inputBuf) - 1u);
+				if (n > 0u)
+					std::memcpy(m_inputBuf, presenterLine.data(), n);
+				m_inputBuf[n] = '\0';
+			}
+
 			if (focused)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-				ImGui::Text("> %s_", m_chat->InputLine().c_str());
-				ImGui::PopStyleColor();
+				// Première frame de focus : pousser le focus clavier sur l'InputText.
+				if (!m_lastFocus)
+				{
+					ImGui::SetKeyboardFocusHere();
+				}
+
+				ImGui::PushStyleColor(ImGuiCol_Text,    IV(LnTheme::kAccent));
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, IV(LnTheme::kSurface));
+				ImGui::PushStyleColor(ImGuiCol_Border,  IV(LnTheme::kBorder));
+				ImGui::Text("> ");
+				ImGui::SameLine(0.f, 4.f);
+				ImGui::SetNextItemWidth(-FLT_MIN); // remplit la ligne restante
+				const ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue
+					| ImGuiInputTextFlags_AutoSelectAll;
+				if (ImGui::InputText("##ln_chat_input", m_inputBuf, sizeof(m_inputBuf), flags))
+				{
+					m_chat->SetInputLine(m_inputBuf);
+					m_chat->SubmitFromUi();
+					m_inputBuf[0] = '\0';
+				}
+				else
+				{
+					// Push permanent du buffer vers le presenter (l'utilisateur tape sans Enter).
+					m_chat->SetInputLine(m_inputBuf);
+				}
+				ImGui::PopStyleColor(3);
 			}
 			else
 			{

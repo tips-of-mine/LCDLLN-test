@@ -3126,6 +3126,16 @@ namespace engine
 
 			if (!authGateActive && m_chatUi.IsInitialized())
 			{
+				// Phase 3.11.3 — Indique au presenter si un ImGui::InputText pilote la saisie
+				// (panneau chat ImGui actif). Coupe la branche keyboard-typing/Enter dans Update
+				// pour éviter une double insertion ; Escape et scroll restent actifs.
+#if defined(_WIN32)
+				const bool chatImguiInputActive = m_chatImGui && !m_worldEditorExe
+					&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+				m_chatUi.SetImGuiInputActive(chatImguiInputActive);
+#else
+				m_chatUi.SetImGuiInputActive(false);
+#endif
 				m_chatUi.Update(m_input, static_cast<float>(dt));
 			}
 		}

@@ -398,6 +398,20 @@ namespace engine::client
 		/// Phase 3 — Consomme la commande d'entrée dans le monde. Retourne le contenu courant
 		/// (avec \c applyRequested=true s'il y a quelque chose à appliquer) puis remet à zéro.
 		EnterWorldCommand ConsumePendingEnterWorldCommand();
+
+		/// Phase 3.6.6 — Sauvegarde fire-and-forget de la position courante via la connexion
+		/// master encore vivante (m_masterClient + m_masterSessionId conservés post-EnterWorld
+		/// grâce au fix Phase 2/3 qui a supprimé les ResetMasterSession() avant MasterFlow).
+		/// Retourne true si le paquet a été émis (queue Send), false si pas de session active
+		/// ou si l'envoi a échoué. La réponse est consommée par \ref PumpPostAuthEvents() côté
+		/// engine — ici on n'attend rien (fire-and-forget).
+		bool SavePositionAsync(uint64_t characterId, float x, float y, float z, float yawDeg, float pitchDeg);
+
+		/// Phase 3.6.6 — Drain les événements de la connexion master encore active post-auth
+		/// (réponses aux SAVE_POSITION, déconnexions inattendues, …). À appeler chaque frame
+		/// par l'engine quand le gate auth est inactif. No-op si pas de session active.
+		void PumpPostAuthEvents();
+
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
 		GameSettingsCommand ConsumePendingGameSettings();

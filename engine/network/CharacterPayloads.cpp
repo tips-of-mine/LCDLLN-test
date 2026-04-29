@@ -313,4 +313,71 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	// -------------------------------------------------------------------------
+	// Phase 3.6.5 — CHARACTER_SAVE_POSITION request/response.
+	// Request : uint64 character_id + 5 × float (28 octets).
+	// Response: uint8 success.
+	// -------------------------------------------------------------------------
+	std::optional<CharacterSavePositionRequestPayload> ParseCharacterSavePositionRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 28u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterSavePositionRequestPayload out;
+		if (!r.ReadU64(out.characterId))
+			return std::nullopt;
+		if (!r.ReadBytes(reinterpret_cast<uint8_t*>(&out.x), sizeof(float))
+			|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&out.y), sizeof(float))
+			|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&out.z), sizeof(float))
+			|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&out.yawDeg), sizeof(float))
+			|| !r.ReadBytes(reinterpret_cast<uint8_t*>(&out.pitchDeg), sizeof(float)))
+		{
+			return std::nullopt;
+		}
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterSavePositionRequestPayload(uint64_t characterId, float x, float y, float z, float yawDeg, float pitchDeg)
+	{
+		std::vector<uint8_t> buf(28u, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU64(characterId))
+			return {};
+		if (!w.WriteBytes(reinterpret_cast<const uint8_t*>(&x), sizeof(float))
+			|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&y), sizeof(float))
+			|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&z), sizeof(float))
+			|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&yawDeg), sizeof(float))
+			|| !w.WriteBytes(reinterpret_cast<const uint8_t*>(&pitchDeg), sizeof(float)))
+		{
+			return {};
+		}
+		buf.resize(w.Offset());
+		return buf;
+	}
+
+	std::optional<CharacterSavePositionResponsePayload> ParseCharacterSavePositionResponsePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 1u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterSavePositionResponsePayload out;
+		uint8_t success = 0;
+		if (!r.ReadBytes(&success, 1u))
+			return std::nullopt;
+		out.success = success;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterSavePositionResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteBytes(&success, 1u))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeCharacterSavePositionResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
 }

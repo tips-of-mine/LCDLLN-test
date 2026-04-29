@@ -113,4 +113,27 @@ namespace engine::network
 
 	std::optional<CharacterDeleteResponsePayload> ParseCharacterDeleteResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterDeleteResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
+
+	/// Phase 3.6.5 — Save current character position to master (persisted in characters.spawn_*).
+	/// Wire format : uint64 character_id + 5 × float (x, y, z, yaw_deg, pitch_deg) — 28 bytes total.
+	struct CharacterSavePositionRequestPayload
+	{
+		uint64_t characterId   = 0;
+		float    x             = 0.0f;
+		float    y             = 0.0f;
+		float    z             = 0.0f;
+		float    yawDeg        = 0.0f;
+		float    pitchDeg      = 0.0f;
+	};
+
+	struct CharacterSavePositionResponsePayload
+	{
+		uint8_t success = 0; ///< 1 = saved ; 0 = error (NOT_FOUND, NOT_OWNED, INTERNAL).
+	};
+
+	std::optional<CharacterSavePositionRequestPayload> ParseCharacterSavePositionRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterSavePositionRequestPayload(uint64_t characterId, float x, float y, float z, float yawDeg, float pitchDeg);
+
+	std::optional<CharacterSavePositionResponsePayload> ParseCharacterSavePositionResponsePayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterSavePositionResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
 }

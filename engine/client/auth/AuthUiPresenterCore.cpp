@@ -1678,11 +1678,10 @@ namespace engine::client
 				}
 				else
 				{
-					// Phase 2/3 fix : ne PAS réinitialiser la session master ici, sinon
-					// CharacterCreate (post-MasterFlow) trouvera m_masterClient nul et échouera
-					// avec "auth.error.character_session_inactive". MasterFlow utilise sa propre
-					// connexion locale ; m_masterClient (issu de AuthOnly) reste vivant et la
-					// session correspondante côté serveur (ConnectionSessionMap) reste valide.
+					// Phase 2/3 + hotfix réutilisation : on ne réinitialise pas la session ici.
+					// StartMasterFlowWorker recyclera m_masterClient (Disconnect old + nouvelle
+					// instance attribuée AVANT le worker), et la session post-Flow remplacera
+					// m_masterSessionId via AsyncResult.sessionId dans le consumer Login success.
 					SetPhase(Phase::Submitting);
 					StartMasterFlowWorker(cfg);
 				}
@@ -1936,6 +1935,15 @@ namespace engine::client
 			m_userErrorText.clear();
 			m_infoBanner = copy.message;
 			LOG_INFO(Core, "[AuthUiPresenter] Master/shard flow OK: {}", copy.message);
+			// Hotfix : MasterShardClientFlow re-AUTH crée une nouvelle session côté serveur
+			// (l'ancienne session AuthOnly est kickée par duplicate-login). On synchronise
+			// m_masterSessionId sur la nouvelle session pour que les RequestResponseDispatcher
+			// post-flow (CharacterCreate, CharacterDelete, SAVE_POSITION) utilisent le bon
+			// session_id dans leurs en-têtes de paquet.
+			if (copy.sessionId != 0u)
+			{
+				m_masterSessionId = copy.sessionId;
+			}
 			if (kind == AsyncKind::Login)
 			{
 				SaveRememberPreference();
@@ -2222,10 +2230,25 @@ namespace engine::client
 			m_asyncResult = {};
 		}
 
-		m_worker = std::thread([this, host, port, timeoutMs, login, hash, allowInsecure, serverFingerprint, shardPickWhenMultiple, shardOverride]() {
+		// Hotfix : MasterShardClientFlow ouvre une nouvelle connexion + re-AUTH. L'ancienne
+		// session AuthOnly va être kickée (duplicate login), il faut donc fermer proprement
+		// l'ancienne connexion m_masterClient AVANT le worker pour ne pas avoir deux
+		// connexions concurrentes du même compte.
+		// Surtout : on alloue le NEW NetClient en main thread et on l'attribue à m_masterClient
+		// AVANT de lancer le worker, qui ne capte qu'un raw pointer. Ainsi la connexion
+		// SURVIT à la fin du worker et reste utilisable par CharacterCreate / CharacterDelete /
+		// SAVE_POSITION post-flow. Le presenter reste seul propriétaire (unique_ptr).
+		if (m_masterClient)
+		{
+			m_masterClient->Disconnect("master_flow_restart");
+			m_masterClient.reset();
+		}
+		m_masterClient = std::make_unique<engine::network::NetClient>();
+		ApplyMasterTlsConfig(*m_masterClient, serverFingerprint, allowInsecure);
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+
+		m_worker = std::thread([this, masterClient, host, port, timeoutMs, login, hash, shardPickWhenMultiple, shardOverride]() {
 			AsyncResult local{};
-			engine::network::NetClient masterClient;
-			ApplyMasterTlsConfig(masterClient, serverFingerprint, allowInsecure);
 			engine::network::MasterShardClientFlow flow;
 			flow.SetMasterAddress(host, port);
 			flow.SetCredentials(login, hash);
@@ -2233,7 +2256,7 @@ namespace engine::client
 			flow.SetShardPickWhenMultiple(shardPickWhenMultiple);
 			flow.SetShardIdOverride(shardOverride);
 			LOG_INFO(Net, "[AuthUiPresenter] MasterShardClientFlow starting (login='{}')", login);
-			engine::network::MasterShardFlowResult r = flow.Run(&masterClient);
+			engine::network::MasterShardFlowResult r = flow.Run(masterClient);
 			local.ready = true;
 			if (r.shard_choice_required)
 			{
@@ -2254,6 +2277,8 @@ namespace engine::client
 					// Phase 3 — l'endpoint du shard accepté est nécessaire pour câbler la gameplay UDP.
 					local.shardId = r.shard_id;
 					local.shardEndpoint = std::move(r.shard_endpoint);
+					// Hotfix : nouvelle session post-Flow (l'ancienne AuthOnly a été kickée).
+					local.sessionId = r.session_id;
 				}
 			}
 			{

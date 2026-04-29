@@ -143,6 +143,7 @@ namespace engine::network
 				return result;
 			}
 			disp.SetSessionId(sessionId);
+			result.session_id = sessionId;
 			LOG_INFO(Net, "[MasterShardClientFlow] AUTH OK (session_id={})", sessionId);
 		}
 

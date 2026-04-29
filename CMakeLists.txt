@@ -347,6 +347,7 @@ add_library(engine_core
   engine/network/RequestResponseDispatcher.cpp
   engine/network/ErrorPacket.cpp
   engine/network/AuthRegisterPayloads.cpp
+  engine/network/FakeNetClient.cpp
   engine/network/CharacterPayloads.cpp
   engine/network/ShardPayloads.cpp
   engine/network/TermsPayloads.cpp
@@ -549,6 +550,11 @@ add_test(NAME character_list_payloads_tests COMMAND character_list_payloads_test
 add_executable(character_delete_payloads_tests engine/network/CharacterDeletePayloadsTests.cpp)
 target_link_libraries(character_delete_payloads_tests PRIVATE engine_core)
 add_test(NAME character_delete_payloads_tests COMMAND character_delete_payloads_tests)
+
+# Phase 3.10.1: FakeNetClient (in-memory paired NetClient stand-in for E2E tests)
+add_executable(fake_netclient_tests engine/network/FakeNetClientTests.cpp)
+target_link_libraries(fake_netclient_tests PRIVATE engine_core)
+add_test(NAME fake_netclient_tests COMMAND fake_netclient_tests)
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)

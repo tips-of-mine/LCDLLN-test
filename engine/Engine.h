@@ -57,6 +57,7 @@ struct GLFWwindow;
 namespace engine::render
 {
 	class AuthImGuiRenderer;
+	class ChatImGuiRenderer;
 	class DeferredPipeline;
 }
 namespace engine::editor
@@ -240,6 +241,8 @@ namespace engine
 		std::unique_ptr<engine::editor::WorldEditorImGui> m_worldEditorImGui;
 		/// Overlay auth Dear ImGui (cycle de vie ImGui partagé avec \ref m_worldEditorImGui sur Windows).
 		std::unique_ptr<engine::render::AuthImGuiRenderer> m_authImGui;
+		/// Phase 3.11.1 — Panneau chat Dear ImGui (post-auth, partage le même contexte ImGui que m_authImGui).
+		std::unique_ptr<engine::render::ChatImGuiRenderer> m_chatImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

@@ -1,0 +1,167 @@
+#include "engine/render/ChatImGuiRenderer.h"
+
+#include "engine/client/ChatUi.h"
+#include "engine/core/Config.h"
+#include "engine/net/ChatSystem.h"
+#include "engine/render/LnTheme.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <string>
+
+#if defined(_WIN32)
+#	include "imgui.h"
+
+namespace engine::render
+{
+	namespace
+	{
+		ImVec4 IV(const LnTheme::Rgba& c) { return ImVec4(c.r, c.g, c.b, c.a); }
+
+		/// Convertit ARGB8888 (cf. \ref engine::net::ChannelColorArgb) en ImVec4.
+		/// ImGui n'a pas d'overload qui prend un ARGB direct ; on décompose via masques.
+		ImVec4 ArgbToIm(uint32_t argb)
+		{
+			const float a = static_cast<float>((argb >> 24) & 0xFFu) / 255.f;
+			const float r = static_cast<float>((argb >> 16) & 0xFFu) / 255.f;
+			const float g = static_cast<float>((argb >>  8) & 0xFFu) / 255.f;
+			const float b = static_cast<float>((argb >>  0) & 0xFFu) / 255.f;
+			return ImVec4(r, g, b, a);
+		}
+
+		const char* ChannelTag(engine::net::ChatChannel ch)
+		{
+			using engine::net::ChatChannel;
+			switch (ch)
+			{
+				case ChatChannel::Say:     return "SAY";
+				case ChatChannel::Yell:    return "YEL";
+				case ChatChannel::Whisper: return "WSP";
+				case ChatChannel::Party:   return "PTY";
+				case ChatChannel::Guild:   return "GLD";
+				case ChatChannel::Zone:    return "ZON";
+				case ChatChannel::Global:  return "GLB";
+				case ChatChannel::Server:  return "SRV";
+				case ChatChannel::Raid:    return "RAI";
+				case ChatChannel::Friends: return "AMI";
+			}
+			return "???";
+		}
+	}
+
+	void ChatImGuiRenderer::BindChatUi(engine::client::ChatUiPresenter* presenter, const engine::core::Config* cfg)
+	{
+		m_chat = presenter;
+		m_cfg = cfg;
+	}
+
+	void ChatImGuiRenderer::Render(float viewportW, float viewportH)
+	{
+		if (m_chat == nullptr || !m_chat->IsInitialized())
+			return;
+
+		// Géométrie configurable. Defaults : 520×220 px ancré en bas-gauche, marge 16 px.
+		const float panelW = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.width_px", 520)) : 520.f;
+		const float panelH = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.height_px", 220)) : 220.f;
+		const float margin = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.anchor_margin_px", 16)) : 16.f;
+
+		const float posX = margin;
+		const float posY = std::max(0.f, viewportH - panelH - margin);
+
+		ImGui::SetNextWindowPos(ImVec2(posX, posY));
+		ImGui::SetNextWindowSize(ImVec2(panelW, panelH));
+		ImGui::SetNextWindowBgAlpha(0.78f);
+
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
+		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
+
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
+			| ImGuiWindowFlags_NoMove
+			| ImGuiWindowFlags_NoFocusOnAppearing
+			| ImGuiWindowFlags_NoBringToFrontOnFocus
+			| ImGuiWindowFlags_NoNav;
+
+		if (ImGui::Begin("##ln_chat_panel", nullptr, flags))
+		{
+			// Bandeau filtres : un petit rectangle par canal (10), opaque si visible, atténué si masqué.
+			// Lecture-seule pour l'instant — l'utilisateur change le mask via les touches 1-0 (cf. ChatUiPresenter::Update).
+			const uint16_t mask = m_chat->ChannelFilterMask();
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+			for (uint8_t i = 0; i < 10u; ++i)
+			{
+				if (i > 0) ImGui::SameLine(0.f, 4.f);
+				const bool visible = (mask & (1u << i)) != 0u;
+				const ImVec4 color = visible
+					? ArgbToIm(engine::net::ChannelColorArgb(static_cast<engine::net::ChatChannel>(i)))
+					: IV(LnTheme::kMuted);
+				ImGui::TextColored(color, "[%s]", ChannelTag(static_cast<engine::net::ChatChannel>(i)));
+			}
+			ImGui::PopStyleColor();
+			ImGui::Separator();
+
+			// Zone scrollable : on calcule la hauteur en réservant 28 px pour la ligne d'invite/saisie en bas.
+			const float bottomBar = 28.f;
+			const float scrollH = std::max(40.f, ImGui::GetContentRegionAvail().y - bottomBar);
+
+			ImGui::BeginChild("##ln_chat_scroll", ImVec2(0.f, scrollH), false,
+				ImGuiWindowFlags_HorizontalScrollbar);
+
+			const auto& lines = m_chat->History().Lines();
+
+			// Filtre côté renderer : on saute les lignes hors mask sans toucher au presenter.
+			for (const auto& msg : lines)
+			{
+				const auto chBit = static_cast<uint8_t>(msg.channel);
+				if (chBit < 10u && (mask & (1u << chBit)) == 0u)
+					continue;
+
+				const ImVec4 color = ArgbToIm(engine::net::ChannelColorArgb(msg.channel));
+				const std::string hhmm = engine::net::FormatTimeHHMMUtc(msg.timestampUnixMs);
+				const char* tag = ChannelTag(msg.channel);
+				ImGui::TextColored(color, "%s [%s] %s: %s",
+					hhmm.c_str(), tag, msg.sender.c_str(), msg.text.c_str());
+			}
+
+			// Auto-scroll bottom uniquement si l'utilisateur n'a pas remonté manuellement
+			// (ChatUiPresenter::m_scrollLinesFromEnd > 0 = remonté ; 0 = en bas).
+			if (m_chat->ScrollLinesFromEnd() == 0u)
+			{
+				ImGui::SetScrollHereY(1.f);
+			}
+			ImGui::EndChild();
+
+			ImGui::Separator();
+
+			// Ligne d'invite ou de saisie en cours. ChatUiPresenter::Update() pilote l'input clavier
+			// (focus '/', Enter pour submit, etc.) — ici on se contente d'afficher l'état courant.
+			const bool focused = m_chat->IsChatFocusActive();
+			if (focused)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+				ImGui::Text("> %s_", m_chat->InputLine().c_str());
+				ImGui::PopStyleColor();
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
+				ImGui::TextUnformatted("[/] pour tchatter  -  [1..0] filtres canal");
+				ImGui::PopStyleColor();
+			}
+
+			m_lastFocus = focused;
+		}
+		ImGui::End();
+
+		ImGui::PopStyleColor(2);
+	}
+}
+
+#else // !_WIN32
+
+namespace engine::render
+{
+	void ChatImGuiRenderer::BindChatUi(engine::client::ChatUiPresenter*, const engine::core::Config*) {}
+	void ChatImGuiRenderer::Render(float, float) {}
+}
+
+#endif

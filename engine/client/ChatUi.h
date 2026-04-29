@@ -48,6 +48,13 @@ namespace engine::client
 
 		bool IsInitialized() const { return m_initialized; }
 
+		/// Phase 3.11.1 — Lecteurs publics utilisés par le renderer ImGui chat.
+		/// Aucune mutation : le presenter reste seule autorité sur ses buffers.
+		const engine::net::ChatHistoryRing& History() const { return m_history; }
+		const std::string& InputLine() const { return m_inputLine; }
+		uint16_t ChannelFilterMask() const { return m_channelFilterMask; }
+		uint32_t ScrollLinesFromEnd() const { return m_scrollLinesFromEnd; }
+
 	private:
 		void SubmitInputLine();
 		void RebuildFilterLegend(std::string& out) const;

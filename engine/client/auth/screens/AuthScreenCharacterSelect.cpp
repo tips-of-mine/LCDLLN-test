@@ -1,14 +1,24 @@
 // Phase 2 — Couche modèle pour l'écran de sélection de personnage.
 // Affiche la liste reçue via CHARACTER_LIST_REQUEST (Phase 1) et propose 3 actions :
 // Jouer (personnage sélectionné), Créer un nouveau personnage, Retour.
+// Phase 3.9 — ajoute la suppression logique (CHARACTER_DELETE_REQUEST).
 
 #include "engine/client/AuthUi.h"
 
 #include "engine/core/Log.h"
+#include "engine/network/CharacterPayloads.h"
+#include "engine/network/ErrorPacket.h"
+#include "engine/network/NetClient.h"
+#include "engine/network/ProtocolV1Constants.h"
+#include "engine/network/RequestResponseDispatcher.h"
 #include "engine/platform/Input.h"
 #include "engine/platform/Window.h"
 
+#include <chrono>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <vector>
 
 namespace engine::client
 {
@@ -171,12 +181,126 @@ namespace engine::client
 		}
 	}
 
+	void AuthUiPresenter::ImGuiRequestDeleteCharacter(int index, const engine::core::Config& cfg)
+	{
+		if (m_phase != Phase::CharacterSelect)
+			return;
+		if (index < 0 || static_cast<size_t>(index) >= m_characterList.size())
+			return;
+		// Confirmation en deux temps : premier appel arme la confirmation
+		// (le renderer affiche un bouton/dialogue distinct) ; second appel sur
+		// le meme index lance la suppression effective.
+		if (m_pendingDeleteCharacterIndex != index)
+		{
+			m_pendingDeleteCharacterIndex = index;
+			LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect : delete confirmation armed (index={}, character_id={})",
+				index, m_characterList[static_cast<size_t>(index)].character_id);
+			return;
+		}
+		// Second clic sur le meme index : on lance le worker reseau.
+		m_pendingDeleteCharacterId = m_characterList[static_cast<size_t>(index)].character_id;
+		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect : delete CONFIRMED (index={}, character_id={})",
+			index, m_pendingDeleteCharacterId);
+		StartCharacterDeleteWorker(cfg);
+	}
+
+	void AuthUiPresenter::ImGuiCancelDeleteCharacterConfirm()
+	{
+		if (m_pendingDeleteCharacterIndex < 0)
+			return;
+		LOG_INFO(Core, "[AuthUiPresenter] CharacterSelect : delete confirmation cancelled");
+		m_pendingDeleteCharacterIndex = -1;
+	}
+
+	void AuthUiPresenter::StartCharacterDeleteWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		if (!m_masterClient || m_masterSessionId == 0)
+		{
+			EnterAuthErrorPhase(Phase::CharacterSelect, Tr("auth.error.character_session_inactive"));
+			return;
+		}
+		if (m_pendingDeleteCharacterId == 0u)
+		{
+			LOG_WARN(Core, "[AuthUiPresenter] StartCharacterDeleteWorker called with no pending character_id");
+			return;
+		}
+
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const uint64_t characterId = m_pendingDeleteCharacterId;
+
+		m_pendingAsyncKind = AsyncKind::CharacterDelete;
+		{
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+		const uint64_t sessionId = m_masterSessionId;
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterId]() {
+			AsyncResult local{};
+			if (masterClient == nullptr)
+			{
+				local.ready = true;
+				local.message = "Internal error: master client missing.";
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(masterClient);
+			disp.SetSessionId(sessionId);
+			bool done = false;
+			std::string errMsg;
+			if (!disp.SendRequest(engine::network::kOpcodeCharacterDeleteRequest,
+					engine::network::BuildCharacterDeleteRequestPayload(characterId),
+					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+						done = true;
+						if (timeout)
+						{
+							errMsg = "CHARACTER_DELETE timeout.";
+							return;
+						}
+						auto resp = engine::network::ParseCharacterDeleteResponsePayload(pl.data(), pl.size());
+						if (resp && resp->success != 0)
+							return; // success — errMsg stays empty
+						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());
+						errMsg = (er && !er->message.empty())
+							? er->message
+							: std::string("Character delete failed.");
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				local.message = "Send CHARACTER_DELETE failed.";
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			local.ready = true;
+			local.success = done && errMsg.empty();
+			local.message = local.success
+				? std::string("Character deleted.")
+				: (errMsg.empty() ? std::string("CHARACTER_DELETE timeout.") : errMsg);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = local;
+		});
+	}
+
 #else
 
 	void AuthUiPresenter::ImGuiSelectCharacterEntry(int) {}
 	void AuthUiPresenter::ImGuiActivateSelectedCharacter() {}
 	void AuthUiPresenter::ImGuiCreateAnotherCharacterFromSelect() {}
 	void AuthUiPresenter::ImGuiCancelCharacterSelectReturnToLogin() {}
+	void AuthUiPresenter::ImGuiRequestDeleteCharacter(int, const engine::core::Config&) {}
+	void AuthUiPresenter::ImGuiCancelDeleteCharacterConfirm() {}
+	void AuthUiPresenter::StartCharacterDeleteWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::BuildModel_CharacterSelect(RenderModel&) const {}
 	void AuthUiPresenter::Update_CharacterSelect(engine::platform::Input&, const engine::core::Config&,
 		engine::platform::Window&, bool, bool) {}

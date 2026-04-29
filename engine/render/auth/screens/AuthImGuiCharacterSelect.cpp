@@ -167,12 +167,61 @@ namespace engine::render
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 
+				// Phase 3.9 — Bouton suppression a droite de la ligne. Etats :
+				// 1) normal      : bouton "X" — premier clic arme la confirmation.
+				// 2) confirming  : "Confirmer ?" — second clic supprime ; clic ailleurs annule.
+				const int pendingDeleteIdx = m_authPresenter
+					? m_authPresenter->PendingDeleteCharacterIndex() : -1;
+				const bool isConfirming = (pendingDeleteIdx == static_cast<int>(i));
+				constexpr float kDeleteBtnW = 110.f;
+				const float btnX = ImGui::GetWindowWidth() - kDeleteBtnW - 12.f;
+				ImGui::SetCursorPos(ImVec2(btnX, (kRowH - 28.f) * 0.5f));
+				if (isConfirming)
+				{
+					ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+					char btnId[48];
+					std::snprintf(btnId, sizeof(btnId), "%s##chardel_confirm%zu",
+						tr("auth.character_select.delete_confirm").c_str(), i);
+					if (ImGui::Button(btnId, ImVec2(kDeleteBtnW, 28.f))
+						&& m_authPresenter != nullptr && m_authCfg != nullptr)
+					{
+						m_authPresenter->ImGuiRequestDeleteCharacter(static_cast<int>(i), *m_authCfg);
+					}
+					ImGui::PopStyleColor(4);
+				}
+				else
+				{
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.08f)));
+					ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kErrorCol));
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kErrorCol));
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+					char btnId[48];
+					std::snprintf(btnId, sizeof(btnId), "%s##chardel%zu",
+						tr("auth.character_select.delete").c_str(), i);
+					if (ImGui::Button(btnId, ImVec2(kDeleteBtnW, 28.f))
+						&& m_authPresenter != nullptr && m_authCfg != nullptr)
+					{
+						m_authPresenter->ImGuiRequestDeleteCharacter(static_cast<int>(i), *m_authCfg);
+					}
+					ImGui::PopStyleVar(2);
+					ImGui::PopStyleColor(4);
+				}
+
 				ImGui::SetCursorPos(ImVec2(0.f, 0.f));
 				char invId[48];
 				std::snprintf(invId, sizeof(invId), "##charinv%zu", i);
-				ImGui::InvisibleButton(invId, ImVec2(ImGui::GetWindowWidth() - 8.f, kRowH));
+				const float invW = std::max(0.f, ImGui::GetWindowWidth() - 8.f - kDeleteBtnW - 16.f);
+				ImGui::InvisibleButton(invId, ImVec2(invW, kRowH));
 				if (ImGui::IsItemClicked() && m_authPresenter != nullptr)
 				{
+					// Cliquer ailleurs annule la confirmation de suppression en cours.
+					if (pendingDeleteIdx >= 0)
+						m_authPresenter->ImGuiCancelDeleteCharacterConfirm();
 					m_authPresenter->ImGuiSelectCharacterEntry(static_cast<int>(i));
 				}
 

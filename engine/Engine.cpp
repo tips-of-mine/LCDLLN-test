@@ -7,6 +7,7 @@
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/render/AuthImGuiRenderer.h"
+#include "engine/render/ChatImGuiRenderer.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
@@ -2376,10 +2377,16 @@ namespace engine
 
 													bool worldEditorUiToPresent = false;
 #if defined(_WIN32)
+													// Phase 3.11.1 — RecordToBackbuffer fire aussi quand le panneau chat est actif post-auth
+													// (le draw list ImGui contient alors la fenêtre chat émise par ChatImGuiRenderer).
+													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
+														&& !authVisualState.active && !m_worldEditorExe
+														&& m_cfg.GetBool("render.chat_imgui.enabled", true);
 													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
 														&& (m_worldEditorExe
 															|| (m_authImGui && authVisualState.active
-																&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false)))
+																&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false))
+															|| chatImguiActive)
 														&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
 														&& !presentSolidColorDebug)
 													{
@@ -2689,6 +2696,9 @@ namespace engine
 				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
 				m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
 				m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);
+				// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
+				m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
+				m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);
 			}
 			else
 			{
@@ -3050,7 +3060,19 @@ namespace engine
 					// Premier frame d'expiration : on libère explicitement le texte de la bannière.
 					m_enterWorldBannerText.clear();
 				}
-				if (m_chatUi.IsInitialized())
+				// Phase 3.11.1 — Si le panneau ImGui chat est actif (Windows + render.chat_imgui.enabled),
+				// on n'écrit PAS le texte overlay Win32 pour éviter le double affichage.
+				// Sinon (Linux build, ou flag désactivé), on retombe sur l'overlay texte legacy.
+				bool chatImguiOwnsDisplay = false;
+#if defined(_WIN32)
+				chatImguiOwnsDisplay = m_chatImGui && m_chatUi.IsInitialized()
+					&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+#endif
+				if (chatImguiOwnsDisplay)
+				{
+					m_window.SetOverlayText({});
+				}
+				else if (m_chatUi.IsInitialized())
 				{
 					std::string chatHud = m_chatUi.BuildHudPanelText();
 					if (!chatHud.empty())
@@ -3073,7 +3095,11 @@ namespace engine
 		// Dear ImGui : lire io.WantCapture* après NewFrame() pour la frame courante (sinon la caméra reste figée).
 		const bool authImguiOverlayNewFrame = m_authImGui && m_authUi.GetVisualState().active
 			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
-		if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && (m_worldEditorExe || authImguiOverlayNewFrame))
+		// Phase 3.11.1 — NewFrame également quand le panneau chat doit s'afficher (post-auth, pas en éditeur).
+		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
+			&& !authGateActive && !m_worldEditorExe
+			&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+		if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && (m_worldEditorExe || authImguiOverlayNewFrame || chatImguiOverlayNewFrame))
 		{
 			float imguiDw = static_cast<float>(std::max(1, m_width));
 			float imguiDh = static_cast<float>(std::max(1, m_height));
@@ -3373,6 +3399,26 @@ namespace engine
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
+			ImGui::Render();
+		}
+		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
+			&& m_chatUi.IsInitialized() && !authGateActive && !m_worldEditorExe
+			&& m_cfg.GetBool("render.chat_imgui.enabled", true))
+		{
+			// Phase 3.11.1 — Rendu du panneau chat. NewFrame déjà appelé plus haut via
+			// chatImguiOverlayNewFrame. ImGui::Render finalise la draw list pour le RecordToBackbuffer.
+			float dw = static_cast<float>(std::max(1, m_width));
+			float dh = static_cast<float>(std::max(1, m_height));
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extUi = m_vkSwapchain.GetExtent();
+				if (extUi.width > 0 && extUi.height > 0)
+				{
+					dw = static_cast<float>(extUi.width);
+					dh = static_cast<float>(extUi.height);
+				}
+			}
+			m_chatImGui->Render(dw, dh);
 			ImGui::Render();
 		}
 #endif

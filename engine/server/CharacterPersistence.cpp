@@ -55,7 +55,7 @@ namespace engine::server
 		LOG_INFO(Net, "[CharacterPersistence] Destroyed");
 	}
 
-	bool CharacterPersistenceStore::LoadCharacter(uint32_t characterKey, PersistedCharacterState& outState) const
+	bool CharacterPersistenceStore::LoadCharacter(uint64_t characterKey, PersistedCharacterState& outState) const
 	{
 		if (!m_initialized)
 		{
@@ -296,7 +296,7 @@ namespace engine::server
 		return true;
 	}
 
-	std::string CharacterPersistenceStore::BuildCharacterStateRelativePath(uint32_t characterKey) const
+	std::string CharacterPersistenceStore::BuildCharacterStateRelativePath(uint64_t characterKey) const
 	{
 		return "persistence/characters/character_" + std::to_string(characterKey) + ".ini";
 	}

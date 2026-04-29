@@ -33,7 +33,8 @@ namespace engine::client
 		bool IsActive() const { return m_active; }
 
 		/// Send one Hello datagram (character / persistence nonce).
-		bool SendHello(uint16_t requestedTickHz, uint16_t requestedSnapshotHz, uint32_t clientNonce);
+		/// Phase 3.7.5 — clientNonce élargi à uint64 pour transporter un character_id complet.
+		bool SendHello(uint16_t requestedTickHz, uint16_t requestedSnapshotHz, uint64_t clientNonce);
 
 		/// Send TalkRequest (e.g. `vendor:1` to open shop).
 		bool SendTalkRequest(uint32_t clientId, std::string_view targetId);

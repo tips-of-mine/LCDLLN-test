@@ -83,8 +83,9 @@ namespace engine::server
 		EntityId entityId = 0;
 		uint32_t archetypeId = 1;
 		uint32_t lastInputSequence = 0;
-		uint32_t helloNonce = 0;
-		uint32_t persistenceCharacterKey = 0;
+		/// Phase 3.7.5 — élargi à uint64 pour porter le character_id complet.
+		uint64_t helloNonce = 0;
+		uint64_t persistenceCharacterKey = 0;
 		uint32_t experiencePoints = 0;
 		uint32_t gold = 0;
 		/// M35.1 — additional currencies (wallet); gold remains primary trade currency.
@@ -257,7 +258,8 @@ namespace engine::server
 		void ProcessPacket(const Datagram& datagram);
 
 		/// Accept a new client or refresh an existing handshake.
-		void HandleHello(const Endpoint& endpoint, uint32_t helloNonce);
+		/// Phase 3.7.5 — \p helloNonce élargi à uint64 (character_id complet).
+		void HandleHello(const Endpoint& endpoint, uint64_t helloNonce);
 
 		/// Record the last input sequence for a connected client.
 		void HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersZ);
@@ -433,12 +435,13 @@ namespace engine::server
 		void ApplyAuctionSettlement(const AuctionSettlement& settlement);
 
 		/// Refund gold to an online player or queue to persisted mailbox when offline.
-		void RefundGoldToCharacter(uint32_t characterKey, uint32_t amountGold, std::string_view reason);
+		// Phase 3.7.5 — characterKey élargi à uint64 (alignement avec persistenceCharacterKey).
+		void RefundGoldToCharacter(uint64_t characterKey, uint32_t amountGold, std::string_view reason);
 
 		/// Append gold and/or one item stack to a character persistence file (offline delivery).
-		bool DepositMailboxDelivery(uint32_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional);
+		bool DepositMailboxDelivery(uint64_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional);
 
-		ConnectedClient* FindConnectedClientByCharacterKey(uint32_t characterKey);
+		ConnectedClient* FindConnectedClientByCharacterKey(uint64_t characterKey);
 
 		/// Remove \p quantity of \p itemId from bags (merge stacks); fails if insufficient.
 		bool RemoveStackFromInventory(ConnectedClient& client, uint32_t itemId, uint32_t quantity, std::string& outError);
@@ -769,7 +772,8 @@ namespace engine::server
 		SecurityAuditLog m_moderationAuditLog;
 		bool m_moderationAuditLogReady = false;
 		/// M29.2: character keys rejected at handshake after `/ban`.
-		std::unordered_set<uint32_t> m_bannedCharacterKeys;
+		/// Phase 3.7.5 — élargi à uint64 (character_id complet).
+		std::unordered_set<uint64_t> m_bannedCharacterKeys;
 
 		/// M32.1: friend system (presence tracking + DB-backed requests when ENGINE_HAS_MYSQL).
 		FriendSystem m_friendSystem;

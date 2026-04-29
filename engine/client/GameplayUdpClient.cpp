@@ -194,7 +194,7 @@ namespace engine::client
 			welcome.snapshotHz);
 	}
 
-	bool GameplayUdpClient::SendHello(uint16_t requestedTickHz, uint16_t requestedSnapshotHz, uint32_t clientNonce)
+	bool GameplayUdpClient::SendHello(uint16_t requestedTickHz, uint16_t requestedSnapshotHz, uint64_t clientNonce)
 	{
 		engine::server::HelloMessage hm{};
 		hm.requestedTickHz = requestedTickHz;

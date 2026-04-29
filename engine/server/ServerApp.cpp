@@ -848,9 +848,13 @@ namespace engine::server
 		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
 	}
 
-	void ServerApp::HandleHello(const Endpoint& endpoint, uint32_t helloNonce)
+	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce)
 	{
-		const uint32_t tentativeCharacterKey = helloNonce != 0 ? helloNonce : m_nextClientId;
+		// Phase 3.7.5 — tentativeCharacterKey élargi à uint64. Fallback sur m_nextClientId
+		// (uint32) si le client n'a pas envoyé de character_id ; cast widening explicite.
+		const uint64_t tentativeCharacterKey = helloNonce != 0u
+			? helloNonce
+			: static_cast<uint64_t>(m_nextClientId);
 		if (m_bannedCharacterKeys.find(tentativeCharacterKey) != m_bannedCharacterKeys.end())
 		{
 			LOG_WARN(Net,
@@ -881,7 +885,10 @@ namespace engine::server
 		client.zoneId = 1;
 		client.entityId = static_cast<EntityId>(client.clientId);
 		client.helloNonce = helloNonce;
-		client.persistenceCharacterKey = helloNonce != 0 ? helloNonce : client.clientId;
+		// Phase 3.7.5 — fallback uint32 clientId widened to uint64.
+		client.persistenceCharacterKey = helloNonce != 0u
+			? helloNonce
+			: static_cast<uint64_t>(client.clientId);
 		client.stats.currentHealth = kDefaultPlayerHealth;
 		client.stats.maxHealth = kDefaultPlayerHealth;
 		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
@@ -3849,7 +3856,10 @@ namespace engine::server
 		const uint32_t banCount = static_cast<uint32_t>(banConfig.GetInt("ban.count", 0));
 		for (uint32_t banIndex = 0; banIndex < banCount && banIndex < 4096u; ++banIndex)
 		{
-			const uint32_t key = static_cast<uint32_t>(banConfig.GetInt("ban." + std::to_string(banIndex) + ".key", 0));
+			// Phase 3.7.5 — clé élargie à uint64. Config::GetInt retourne int64_t signé ;
+			// on bit-cast pour préserver la valeur uint64 quand le bit 63 serait positionné.
+			const int64_t rawKey = banConfig.GetInt("ban." + std::to_string(banIndex) + ".key", 0);
+			const uint64_t key = (rawKey == 0) ? 0u : static_cast<uint64_t>(rawKey);
 			if (key != 0u)
 			{
 				m_bannedCharacterKeys.insert(key);
@@ -3861,7 +3871,7 @@ namespace engine::server
 
 	void ServerApp::SaveChatBanFile()
 	{
-		std::vector<uint32_t> keys(m_bannedCharacterKeys.begin(), m_bannedCharacterKeys.end());
+		std::vector<uint64_t> keys(m_bannedCharacterKeys.begin(), m_bannedCharacterKeys.end());
 		std::sort(keys.begin(), keys.end());
 		std::ostringstream output;
 		output << "ban.count=" << keys.size() << "\n";
@@ -4231,7 +4241,7 @@ namespace engine::server
 
 			if (command.kind == ChatSlashCommandKind::Ban)
 			{
-				const uint32_t characterKey = target->persistenceCharacterKey;
+				const uint64_t characterKey = target->persistenceCharacterKey;
 				if (characterKey == 0)
 				{
 					SendChatSystemNotice(sender, "Ban failed: target has no persistence key.");
@@ -5086,7 +5096,7 @@ namespace engine::server
 			totalGoldU64);
 	}
 
-	ConnectedClient* ServerApp::FindConnectedClientByCharacterKey(uint32_t characterKey)
+	ConnectedClient* ServerApp::FindConnectedClientByCharacterKey(uint64_t characterKey)
 	{
 		for (ConnectedClient& client : m_clients)
 		{
@@ -5254,9 +5264,9 @@ namespace engine::server
 			SendChatSystemNotice(*client, "Bid too low.");
 			return;
 		}
-		const uint32_t prevCk = row->highBidderCharacterKey;
+		const uint64_t prevCk = row->highBidderCharacterKey;
 		const uint32_t prevBid = row->currentBid;
-		const uint32_t bidderCk = client->persistenceCharacterKey;
+		const uint64_t bidderCk = client->persistenceCharacterKey;
 		uint64_t charge = message.bidAmount;
 		if (prevCk == bidderCk && prevBid > 0u)
 		{
@@ -5324,7 +5334,7 @@ namespace engine::server
 			SendChatSystemNotice(*client, "You cannot buy out your own auction.");
 			return;
 		}
-		const uint32_t buyerCk = client->persistenceCharacterKey;
+		const uint64_t buyerCk = client->persistenceCharacterKey;
 		uint64_t charge = row->buyoutPrice;
 		if (row->highBidderCharacterKey == buyerCk && row->currentBid > 0u)
 		{
@@ -5342,7 +5352,7 @@ namespace engine::server
 			(void)SendWalletUpdate(*client);
 			SaveConnectedClient(*client, "auction_buyout_charge");
 		}
-		const uint32_t hiCk = row->highBidderCharacterKey;
+		const uint64_t hiCk = row->highBidderCharacterKey;
 		const uint32_t hiBid = row->currentBid;
 		if (hiCk != 0u && hiCk != buyerCk)
 		{
@@ -5385,7 +5395,7 @@ namespace engine::server
 		}
 	}
 
-	void ServerApp::RefundGoldToCharacter(uint32_t characterKey, uint32_t amountGold, std::string_view /*reason*/)
+	void ServerApp::RefundGoldToCharacter(uint64_t characterKey, uint32_t amountGold, std::string_view /*reason*/)
 	{
 		if (amountGold == 0u)
 		{
@@ -5414,7 +5424,7 @@ namespace engine::server
 		LOG_INFO(Net, "[ServerApp] RefundGold mailed (ck={}, amount={})", characterKey, amountGold);
 	}
 
-	bool ServerApp::DepositMailboxDelivery(uint32_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional)
+	bool ServerApp::DepositMailboxDelivery(uint64_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional)
 	{
 		PersistedCharacterState state{};
 		if (!m_characterPersistence.LoadCharacter(characterKey, state))

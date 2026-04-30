@@ -1615,17 +1615,10 @@ namespace engine::editor
 	bool ImportPngToTexr(const engine::core::Config& cfg, const std::filesystem::path& pngAbsolutePath, std::string_view texrRelativeToTextures,
 		bool srgb, std::string& outError)
 	{
-		int w = 0;
-		int h = 0;
-		int comp = 0;
-		stbi_uc* pixels = stbi_load(pngAbsolutePath.string().c_str(), &w, &h, &comp, 4);
-		if (!pixels || w <= 0 || h <= 0)
+		std::error_code existsEc;
+		if (!std::filesystem::is_regular_file(pngAbsolutePath, existsEc))
 		{
-			outError = "PNG illisible ou vide";
-			if (pixels)
-			{
-				stbi_image_free(pixels);
-			}
+			outError = "fichier source introuvable: " + pngAbsolutePath.string();
 			return false;
 		}
 
@@ -1634,6 +1627,32 @@ namespace engine::editor
 		{
 			rel.erase(rel.begin());
 		}
+		if (rel.empty())
+		{
+			outError = "nom destination vide (attendu: ex. ui/icon.texr)";
+			return false;
+		}
+		if (rel.find("..") != std::string::npos)
+		{
+			outError = "nom destination invalide (traversée '..' interdite)";
+			return false;
+		}
+
+		int w = 0;
+		int h = 0;
+		int comp = 0;
+		stbi_uc* pixels = stbi_load(pngAbsolutePath.string().c_str(), &w, &h, &comp, 4);
+		if (!pixels || w <= 0 || h <= 0)
+		{
+			const char* reason = stbi_failure_reason();
+			outError = std::string("lecture image échouée: ") + (reason ? reason : "format non supporté (PNG/JPG/TGA/BMP attendu)");
+			if (pixels)
+			{
+				stbi_image_free(pixels);
+			}
+			return false;
+		}
+
 		const std::filesystem::path destRel = std::filesystem::path("textures") / rel;
 		const std::filesystem::path destAbs = engine::platform::FileSystem::ResolveContentPath(cfg, destRel.generic_string());
 		std::error_code ec;
@@ -1643,7 +1662,7 @@ namespace engine::editor
 		if (!out.is_open())
 		{
 			stbi_image_free(pixels);
-			outError = "ouverture .texr impossible";
+			outError = "ouverture .texr impossible: " + destAbs.string();
 			return false;
 		}
 
@@ -1669,15 +1688,26 @@ namespace engine::editor
 	bool ImportAudioFile(const engine::core::Config& cfg, const std::filesystem::path& srcAbsolutePath, std::string_view destRelativeToAudio,
 		std::string& outError)
 	{
-		if (!engine::platform::FileSystem::Exists(srcAbsolutePath))
+		std::error_code existsEc;
+		if (!std::filesystem::is_regular_file(srcAbsolutePath, existsEc))
 		{
-			outError = "fichier audio source absent";
+			outError = "fichier audio source introuvable: " + srcAbsolutePath.string();
 			return false;
 		}
 		std::string rel(destRelativeToAudio);
 		while (!rel.empty() && (rel.front() == '/' || rel.front() == '\\'))
 		{
 			rel.erase(rel.begin());
+		}
+		if (rel.empty())
+		{
+			outError = "nom destination vide (attendu: ex. footstep/sand.wav)";
+			return false;
+		}
+		if (rel.find("..") != std::string::npos)
+		{
+			outError = "nom destination invalide (traversée '..' interdite)";
+			return false;
 		}
 		const std::filesystem::path destRel = std::filesystem::path("audio") / rel;
 		const std::filesystem::path destAbs = engine::platform::FileSystem::ResolveContentPath(cfg, destRel.generic_string());
@@ -1686,7 +1716,7 @@ namespace engine::editor
 		std::filesystem::copy_file(srcAbsolutePath, destAbs, std::filesystem::copy_options::overwrite_existing, ec);
 		if (ec)
 		{
-			outError = "copie audio: " + ec.message();
+			outError = "copie audio échouée: " + ec.message() + " (vers " + destAbs.string() + ")";
 			return false;
 		}
 		LOG_INFO(Core, "[WorldEditor] Import audio OK → {}", destAbs.string());

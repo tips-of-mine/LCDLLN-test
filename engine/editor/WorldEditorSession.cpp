@@ -69,6 +69,51 @@ namespace engine::editor
 			return std::string(buf);
 		}
 
+		/// Normalise un chemin saisi à la main : strip espaces et guillemets entourants
+		/// (typiquement quand l'utilisateur fait copier-coller depuis l'Explorateur Windows).
+		std::string NormalizeUserPath(std::string s)
+		{
+			while (!s.empty() && (s.front() == ' ' || s.front() == '\t'))
+			{
+				s.erase(s.begin());
+			}
+			while (!s.empty() && (s.back() == ' ' || s.back() == '\t' || s.back() == '\r' || s.back() == '\n'))
+			{
+				s.pop_back();
+			}
+			if (s.size() >= 2)
+			{
+				const char a = s.front();
+				const char b = s.back();
+				if ((a == '"' && b == '"') || (a == '\'' && b == '\''))
+				{
+					s.pop_back();
+					s.erase(s.begin());
+				}
+			}
+			return s;
+		}
+
+		/// Bascule l'extension d'un nom de fichier (ex. "sand.png" → "sand.texr"). Si pas
+		/// d'extension, l'ajoute. Préserve les répertoires antérieurs.
+		std::string ReplaceExtension(std::string_view nameWithMaybeDirs, std::string_view newExtNoDot)
+		{
+			std::string out(nameWithMaybeDirs);
+			const size_t lastSlash = out.find_last_of("/\\");
+			const size_t baseStart = (lastSlash == std::string::npos) ? 0u : lastSlash + 1u;
+			const size_t lastDot = out.find_last_of('.');
+			if (lastDot != std::string::npos && lastDot > baseStart)
+			{
+				out.resize(lastDot + 1);
+			}
+			else
+			{
+				out.push_back('.');
+			}
+			out.append(newExtNoDot.data(), newExtNoDot.size());
+			return out;
+		}
+
 		uint32_t NextPow2Clamp(uint32_t v)
 		{
 			if (v < 64u)
@@ -553,41 +598,95 @@ namespace engine::editor
 
 	bool WorldEditorSession::ActionImportTexture(const engine::core::Config& cfg)
 	{
-		const std::string png(m_bufPngPath.data());
-		const std::string dest(m_bufTexrName.data());
-		if (png.empty() || dest.empty())
+		std::string png = NormalizeUserPath(std::string(m_bufPngPath.data()));
+		std::string dest = NormalizeUserPath(std::string(m_bufTexrName.data()));
+		if (png.empty())
 		{
-			SetStatus("Import texture: chemins PNG ou nom .texr requis.");
+			SetStatus("Import texture: chemin PNG source requis (chemin absolu).");
 			return false;
 		}
+		// Auto-dérive un nom destination si vide, depuis le basename de la source.
+		if (dest.empty())
+		{
+			const std::filesystem::path srcPath(png);
+			std::string base = srcPath.filename().string();
+			if (base.empty())
+			{
+				SetStatus("Import texture: nom destination vide et source sans nom de fichier.");
+				return false;
+			}
+			dest = ReplaceExtension(base, "texr");
+		}
+		else
+		{
+			// Si l'utilisateur n'a pas mis l'extension, l'ajouter automatiquement.
+			const size_t lastDot = dest.find_last_of('.');
+			const size_t lastSlash = dest.find_last_of("/\\");
+			const bool hasExt = lastDot != std::string::npos
+				&& (lastSlash == std::string::npos || lastDot > lastSlash);
+			if (!hasExt)
+			{
+				dest.append(".texr");
+			}
+			else if (dest.size() < 5 || std::string_view(dest).substr(dest.size() - 5) != ".texr")
+			{
+				dest = ReplaceExtension(dest, "texr");
+			}
+		}
+		// Reflète la normalisation dans le buffer UI pour aider l'utilisateur.
+		SetBuf(m_bufPngPath, png);
+		SetBuf(m_bufTexrName, dest);
+
 		std::string err;
 		if (!ImportPngToTexr(cfg, std::filesystem::path(png), dest, true, err))
 		{
 			SetStatus("Import texture: " + err);
+			LOG_WARN(Core, "[WorldEditor] Import texture failed: src='{}' dest='{}' err='{}'", png, dest, err);
 			return false;
 		}
 		const std::string rel = std::string("textures/") + dest;
-		m_doc.textureAssets.push_back(rel);
+		// Évite les doublons dans la liste (ré-import du même nom).
+		const auto it = std::find(m_doc.textureAssets.begin(), m_doc.textureAssets.end(), rel);
+		if (it == m_doc.textureAssets.end())
+		{
+			m_doc.textureAssets.push_back(rel);
+		}
 		SetStatus("Texture importée: " + rel);
 		return true;
 	}
 
 	bool WorldEditorSession::ActionImportAudio(const engine::core::Config& cfg)
 	{
-		const std::string src(m_bufAudioSrc.data());
-		const std::string dst(m_bufAudioDest.data());
-		if (src.empty() || dst.empty())
+		std::string src = NormalizeUserPath(std::string(m_bufAudioSrc.data()));
+		std::string dst = NormalizeUserPath(std::string(m_bufAudioDest.data()));
+		if (src.empty())
 		{
-			SetStatus("Import audio: chemins requis (source absolue, dest relative à audio/).");
+			SetStatus("Import audio: chemin source requis (chemin absolu).");
 			return false;
 		}
+		// Auto-dérive un nom destination si vide, depuis le basename de la source.
+		if (dst.empty())
+		{
+			const std::filesystem::path srcPath(src);
+			dst = srcPath.filename().string();
+			if (dst.empty())
+			{
+				SetStatus("Import audio: nom destination vide et source sans nom de fichier.");
+				return false;
+			}
+		}
+		// Reflète la normalisation dans le buffer UI.
+		SetBuf(m_bufAudioSrc, src);
+		SetBuf(m_bufAudioDest, dst);
+
 		std::string err;
 		if (!ImportAudioFile(cfg, std::filesystem::path(src), dst, err))
 		{
 			SetStatus("Import audio: " + err);
+			LOG_WARN(Core, "[WorldEditor] Import audio failed: src='{}' dest='{}' err='{}'", src, dst, err);
 			return false;
 		}
-		SetStatus("Audio copié vers audio/" + dst + " (aucune lecture).");
+		SetStatus("Audio copié vers audio/" + dst);
 		return true;
 	}
 

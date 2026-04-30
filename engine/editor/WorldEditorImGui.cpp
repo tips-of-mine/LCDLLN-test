@@ -857,20 +857,41 @@ namespace engine::editor
 			ImGui::End();
 
 			ImGui::Begin("Import assets");
-			ImGui::InputText("PNG (chemin absolu)", m_session->BufPngPath().data(), m_session->BufPngPath().size());
-			ImGui::InputTextWithHint("Nom .texr sous textures/", "ex: ui/editor_import.texr", m_session->BufTexrName().data(),
-				m_session->BufTexrName().size());
-			if (ImGui::Button("Convertir PNG → TEXR"))
+			ImGui::TextUnformatted("Texture (PNG / JPG / TGA / BMP)");
+			ImGui::InputTextWithHint("Source", "C:/chemin/vers/image.png (guillemets autorisés)",
+				m_session->BufPngPath().data(), m_session->BufPngPath().size());
+			ImGui::InputTextWithHint("Nom dans textures/", "vide = déduit automatiquement (ex: image.texr)",
+				m_session->BufTexrName().data(), m_session->BufTexrName().size());
+			if (ImGui::Button("Importer cette texture"))
 			{
 				(void)m_session->ActionImportTexture(*m_cfg);
 			}
+			ImGui::TextDisabled("L'extension .texr est ajoutée si absente. Le fichier est écrit dans <content>/textures/.");
 			ImGui::Separator();
-			ImGui::InputText("Audio source (absolu)", m_session->BufAudioSrc().data(), m_session->BufAudioSrc().size());
-			ImGui::InputTextWithHint("Dest sous audio/", "ex: editor/import.wav", m_session->BufAudioDest().data(),
-				m_session->BufAudioDest().size());
-			if (ImGui::Button("Copier audio"))
+
+			ImGui::TextUnformatted("Audio (WAV / OGG)");
+			ImGui::InputTextWithHint("Source##audio", "C:/chemin/vers/son.wav (guillemets autorisés)",
+				m_session->BufAudioSrc().data(), m_session->BufAudioSrc().size());
+			ImGui::InputTextWithHint("Nom dans audio/", "vide = même nom que la source (ex: footstep/sand.wav)",
+				m_session->BufAudioDest().data(), m_session->BufAudioDest().size());
+			if (ImGui::Button("Importer cet audio"))
 			{
 				(void)m_session->ActionImportAudio(*m_cfg);
+			}
+			ImGui::TextDisabled("Le fichier est copié dans <content>/audio/. Aucune transcompression.");
+			ImGui::Separator();
+
+			ImGui::TextUnformatted("Textures déjà importées sur cette carte:");
+			if (m_session->Doc().textureAssets.empty())
+			{
+				ImGui::TextDisabled("(aucune)");
+			}
+			else
+			{
+				for (const std::string& t : m_session->Doc().textureAssets)
+				{
+					ImGui::BulletText("%s", t.c_str());
+				}
 			}
 			ImGui::End();
 

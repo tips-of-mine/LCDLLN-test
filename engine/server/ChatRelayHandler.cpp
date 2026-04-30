@@ -11,8 +11,14 @@
 #include "engine/server/NetServer.h"
 #include "engine/server/SessionCharacterMap.h"
 #include "engine/server/SessionManager.h"
+#include "engine/server/db/ConnectionPool.h"
+#include "engine/server/db/DbHelpers.h"
+
+#include <mysql.h>
 
 #include <chrono>
+#include <cstdio>
+#include <unordered_set>
 #include <string>
 
 namespace engine::server
@@ -37,6 +43,7 @@ namespace engine::server
 	void ChatRelayHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
 	void ChatRelayHandler::SetSessionCharacterMap(SessionCharacterMap* charMap) { m_charMap = charMap; }
 	void ChatRelayHandler::SetAccountStore(AccountStore* accounts)            { m_accounts = accounts; }
+	void ChatRelayHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
 
 	void ChatRelayHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -168,6 +175,89 @@ namespace engine::server
 			LOG_INFO(Net, "[ChatRelayHandler] Whisper '{}' -> '{}' (text_len={})",
 				sender, parsed->targetToken, parsed->text.size());
 			return;
+		}
+
+		// Phase 5.1 — Guild routing : SQL `guild_members` (1) sender's guild, (2) co-members.
+		if (parsed->channel == static_cast<uint8_t>(engine::net::ChatChannel::Guild))
+		{
+			if (!m_pool)
+			{
+				// Pas de pool DB attaché : fallback broadcast pour ne pas perdre le message.
+				LOG_WARN(Net, "[ChatRelayHandler] Guild routing requested but no ConnectionPool ; falling back to broadcast");
+			}
+			else
+			{
+				auto guard = m_pool->Acquire();
+				MYSQL* mysql = guard.get();
+				if (!mysql)
+				{
+					auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
+					if (!pkt.empty())
+						m_server->Send(connId, pkt);
+					return;
+				}
+
+				// Une seule requête : récupère tous les player_id qui partagent la guilde du sender.
+				// Si le sender n'a pas de ligne dans guild_members → result vide → on notice.
+				char queryBuf[512]{};
+				std::snprintf(queryBuf, sizeof(queryBuf),
+					"SELECT player_id FROM guild_members WHERE guild_id = "
+					"(SELECT guild_id FROM guild_members WHERE player_id = %llu LIMIT 1)",
+					static_cast<unsigned long long>(*accountId));
+
+				MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
+				std::unordered_set<uint64_t> memberAccountIds;
+				if (res)
+				{
+					MYSQL_ROW row;
+					while ((row = mysql_fetch_row(res)) != nullptr)
+					{
+						if (row[0])
+						{
+							const uint64_t pid = std::strtoull(row[0], nullptr, 10);
+							if (pid != 0u)
+								memberAccountIds.insert(pid);
+						}
+					}
+					engine::server::db::DbFreeResult(res);
+				}
+
+				if (memberAccountIds.empty())
+				{
+					// Sender pas dans une guilde (ou guilde vide — impossible normalement) → notice.
+					const uint64_t ts0 = NowUnixMsUtc();
+					auto notice = BuildChatRelayPacket(ts0,
+						static_cast<uint8_t>(engine::net::ChatChannel::Server),
+						"system",
+						"You are not in a guild.",
+						sessionIdHeader);
+					if (!notice.empty())
+						m_server->Send(connId, notice);
+					LOG_INFO(Net, "[ChatRelayHandler] Guild from '{}' rejected : not in a guild", sender);
+					return;
+				}
+
+				// Snapshot connId↔sessionId → on filtre ceux dont l'account_id est dans le set.
+				const uint64_t ts = NowUnixMsUtc();
+				const auto snapshot = m_connMap->Snapshot();
+				size_t delivered = 0;
+				for (const auto& [destConn, destSession] : snapshot)
+				{
+					auto destAccountOpt = m_sessions->GetAccountId(destSession);
+					if (!destAccountOpt)
+						continue;
+					if (memberAccountIds.find(*destAccountOpt) == memberAccountIds.end())
+						continue;
+					auto pkt = BuildChatRelayPacket(ts, parsed->channel, sender, parsed->text, destSession);
+					if (pkt.empty())
+						continue;
+					if (m_server->Send(destConn, pkt))
+						++delivered;
+				}
+				LOG_INFO(Net, "[ChatRelayHandler] Guild routing sender='{}' members_total={} delivered={}",
+					sender, memberAccountIds.size(), delivered);
+				return;
+			}
 		}
 
 		// Broadcast : un même paquet à toutes les sessions actives. Chaque destinataire reçoit

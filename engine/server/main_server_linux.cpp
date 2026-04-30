@@ -324,6 +324,8 @@ int main(int argc, char** argv)
 	chatRelayHandler.SetConnectionSessionMap(&connSessionMap);
 	chatRelayHandler.SetSessionCharacterMap(&sessionCharMap);
 	chatRelayHandler.SetAccountStore(accountStore);
+	// Phase 5.1 — pool DB pour le routage guild (SQL guild_members).
+	chatRelayHandler.SetConnectionPool(&dbPool);
 
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);

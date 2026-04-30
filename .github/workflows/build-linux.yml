@@ -44,6 +44,41 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset linux-x64-release
 
+      # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
+      # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que
+      # le step précédent (qui construit toutes les cibles) pourrait masquer le diagnostic.
+      - name: Build explicite — cible world_editor_app
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --build --preset linux-x64-release --target world_editor_app
+
+      - name: Vérifie présence des deux exécutables (jeu + éditeur)
+        run: |
+          set -e
+          BUILD_DIR="$GITHUB_WORKSPACE/build/linux-x64-release"
+          # Les binaires CMake sont placés dans pkg/<sous-dossier>/ (cf. RUNTIME_OUTPUT_DIRECTORY).
+          # Cherche le serveur (lcdlln_server) et l'éditeur (lcdlln_world_editor) sans présupposer le sous-chemin.
+          SERVER_BIN=$(find "$BUILD_DIR/pkg" -type f \( -name "lcdlln_server" -o -name "lcdlln_master" -o -name "lcdlln-master" \) -print -quit 2>/dev/null || true)
+          EDITOR_BIN=$(find "$BUILD_DIR/pkg" -type f -name "lcdlln_world_editor" -print -quit 2>/dev/null || true)
+          ERR=0
+          if [ -z "$SERVER_BIN" ]; then
+            echo "[FAIL] Aucun binaire serveur (lcdlln_server / lcdlln_master) trouvé sous $BUILD_DIR/pkg"
+            ERR=1
+          else
+            echo "[OK] Server : $SERVER_BIN"
+          fi
+          if [ -z "$EDITOR_BIN" ]; then
+            echo "[FAIL] Binaire éditeur (lcdlln_world_editor) absent sous $BUILD_DIR/pkg"
+            ERR=1
+          else
+            echo "[OK] Editor : $EDITOR_BIN"
+          fi
+          if [ "$ERR" -ne 0 ]; then
+            echo "--- Listing $BUILD_DIR/pkg ---"
+            find "$BUILD_DIR/pkg" -maxdepth 3 -type f -printf "%p\n" | sort
+            exit 1
+          fi
+
       # Copie automatique db/schema.sql + db/migrations/ → deploy/docker/db/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
       - name: Assembler deploy/docker (sync db + binaires + lib MySQL + game/data)

@@ -1,5 +1,7 @@
 #include "engine/render/terrain/SplatSampling.h"
 
+#include <cstddef>
+
 namespace engine::render::terrain
 {
 	SplatSampleResult SampleDominantSplatLayerAtWorldXZ(const uint8_t* splatRgba,

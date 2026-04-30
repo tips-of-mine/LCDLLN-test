@@ -10,6 +10,7 @@
 #include "engine/render/vk/VkDeviceContext.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -837,6 +838,21 @@ namespace engine::editor
 			ImGui::End();
 
 			ImGui::Begin("Outils");
+			// État du terrain — visible en permanence, pour expliquer pourquoi le clic peut être inactif.
+			{
+				const bool terrainReady = !m_session->Doc().heightmapContentRelativePath.empty();
+				if (terrainReady)
+				{
+					ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f), "Terrain : prêt");
+				}
+				else
+				{
+					ImGui::TextColored(ImVec4(1.f, 0.55f, 0.3f, 1.f),
+						"Terrain : aucun. Créez ou chargez une carte avant de peindre / sculpter.");
+				}
+				ImGui::TextDisabled("Le clic gauche est ignoré quand la souris est au-dessus de l'UI ; visez la zone 3D.");
+				ImGui::Separator();
+			}
 			if (ImGui::BeginTabBar("OutilsTabs"))
 			{
 				int& tm = m_session->TerrainEditMode();
@@ -862,8 +878,55 @@ namespace engine::editor
 					ImGui::Combo("Type de sol", &m_session->SplatLayer(), layers, IM_ARRAYSIZE(layers));
 					ImGui::SliderFloat("Rayon du pinceau (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
 					ImGui::SliderFloat("Force", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+
 					ImGui::Separator();
-					ImGui::TextWrapped("Maintenez le clic gauche pour peindre. La sauvegarde écrit le fichier splat.");
+					if (ImGui::CollapsingHeader("Textures personnalisées (par couche)"))
+					{
+						ImGui::TextDisabled("Associez une texture importée à chaque type de sol.");
+						const std::vector<std::string>& imported = m_session->Doc().textureAssets;
+						std::array<std::string, 4>& refs = m_session->MutableDoc().splatLayerTextureRefs;
+						std::string itemsZ;
+						itemsZ += "(par défaut moteur)";
+						itemsZ.push_back('\0');
+						for (const std::string& t : imported)
+						{
+							itemsZ += t;
+							itemsZ.push_back('\0');
+						}
+						itemsZ.push_back('\0');
+						for (int li = 0; li < 4; ++li)
+						{
+							int sel = 0;
+							if (!refs[static_cast<size_t>(li)].empty())
+							{
+								for (size_t i = 0; i < imported.size(); ++i)
+								{
+									if (imported[i] == refs[static_cast<size_t>(li)])
+									{
+										sel = static_cast<int>(i + 1);
+										break;
+									}
+								}
+							}
+							char lbl[32];
+							std::snprintf(lbl, sizeof(lbl), "%s##splatTex%d", layers[li], li);
+							if (ImGui::Combo(lbl, &sel, itemsZ.c_str()))
+							{
+								if (sel <= 0)
+								{
+									refs[static_cast<size_t>(li)].clear();
+								}
+								else if (static_cast<size_t>(sel - 1) < imported.size())
+								{
+									refs[static_cast<size_t>(li)] = imported[static_cast<size_t>(sel - 1)];
+								}
+							}
+						}
+						ImGui::TextDisabled("Le mapping est persisté dans la carte (champ JSON splat_layer_texture_refs).");
+					}
+
+					ImGui::Separator();
+					ImGui::TextWrapped("Maintenez le clic gauche sur le sol pour peindre. La sauvegarde écrit le fichier splat.");
 					ImGui::EndTabItem();
 				}
 

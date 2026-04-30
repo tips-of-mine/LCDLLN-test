@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -49,6 +50,11 @@ namespace engine::editor
 		/// Masque herbe / détail surface R8 (fichier GRMS, ticket 010), même résolution que la splat, relatif au content.
 		std::string grassMaskContentRelativePath;
 		std::vector<std::string> textureAssets;
+		/// Mapping couche splat → texture importée (référence un chemin présent dans \c textureAssets).
+		/// Index : 0=Herbe (R), 1=Terre (G), 2=Roc (B), 3=Neige (A). Vide = couche par défaut moteur.
+		/// Persisté en JSON (clé \c splat_layer_texture_refs). Utilisé par l'export runtime pour
+		/// substituer la texture engine-default par celle choisie par l'utilisateur.
+		std::array<std::string, 4> splatLayerTextureRefs{};
 		/// Identifiants de préfabs / objets (MVP : chaînes libres).
 		std::vector<std::string> objectPrefabIds;
 		/// Instances pour \c layout_from_editor.json (ticket 009).

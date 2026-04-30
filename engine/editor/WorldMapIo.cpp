@@ -1675,7 +1675,7 @@ namespace engine::editor
 				return false;
 			}
 			man << "{\n";
-			man << "  \"lcdlln_runtime_manifest_version\": 3,\n";
+			man << "  \"lcdlln_runtime_manifest_version\": 4,\n";
 			man << "  \"zone_id\": \"" << EscapeJson(zid) << "\",\n";
 			man << "  \"terrain_heightmap\": \"zones/" << EscapeJson(zid) << "/terrain_height.r16h\",\n";
 			if (!terrainSplatBundledPosix.empty())
@@ -1706,6 +1706,15 @@ namespace engine::editor
 			man << "  \"texture_assets\": " << SerializeTexturesArray(doc.textureAssets) << ",\n";
 			man << "  \"exported_textures\": " << SerializeTexturesArray(exportedTextureRelPosix) << ",\n";
 			man << "  \"texture_assets_source_missing\": " << SerializeTexturesArray(missingTextureRelPosix) << ",\n";
+			// P3.1 (Lot E runtime) : reference catalogue audio + mapping son-de-pas par couche splat.
+			// Le runtime jeu utilisera ces references pour enregistrer dynamiquement les sons dans
+			// AudioEngine et les declencher au sampling de la splat dominante sous le joueur.
+			// Le manifest bump 3 -> 4 traduit l'ajout ; les anciens runtimes (v3) ignorent ces clefs.
+			man << "  \"audio_assets\": " << SerializeTexturesArray(doc.audioAssets) << ",\n";
+			{
+				std::vector<std::string> footstepRefs(doc.splatLayerFootstepAudioRefs.begin(), doc.splatLayerFootstepAudioRefs.end());
+				man << "  \"splat_layer_footstep_audio_refs\": " << SerializeTexturesArray(footstepRefs) << ",\n";
+			}
 			man << "  \"object_prefab_ids\": " << SerializeTexturesArray(doc.objectPrefabIds) << ",\n";
 			man << "  \"note\": \"Paquet produit par lcdlln_world_editor - textures copiees sous exported_textures/ ; brancher zone_builder / streaming selon pipeline jeu.\"\n";
 			man << "}\n";

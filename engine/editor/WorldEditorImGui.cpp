@@ -30,6 +30,7 @@
 #	include <windows.h>
 
 #	include "imgui.h"
+#	include "imgui_internal.h" // DockBuilder* (public mais declare dans l'en-tete internal)
 #	include "imgui_impl_vulkan.h"
 #	include "imgui_impl_win32.h"
 	// ImGui 1.91+ : la declaration n'est plus dans l'en-tete (#if 0) pour eviter HWND dans l'API publique.
@@ -609,14 +610,19 @@ namespace engine::editor
 			{
 				if (ImGui::MenuItem("Reinitialiser la disposition des fenetres"))
 				{
-					// Supprime le fichier .ini ; ImGui ne reecrit pas la disposition tant que le contexte
-					// vit. La reinitialisation visible prend effet au prochain lancement de l'editeur.
-					// (ImGui::ClearIniSettings n'est pas disponible dans la version d'ImGui utilisee ici.)
+					// Reinitialisation in-process : on retire le node DockBuilder courant et on
+					// repasse m_defaultLayoutAttempted a false. La frame suivante reconstruit la
+					// disposition par defaut via le bloc DockBuilder en haut de BuildUi().
+					const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpace");
+					ImGui::DockBuilderRemoveNode(dockId);
+					m_defaultLayoutAttempted = false;
+					// Supprime aussi le fichier .ini pour que la reinitialisation persiste apres
+					// le redemarrage (sinon ImGui rechargerait l'ancienne disposition au prochain run).
 					std::error_code ec;
 					std::filesystem::remove("world_editor_imgui.ini", ec);
 					if (m_session)
 					{
-						m_session->SetStatus("Disposition reinitialisee - l'effet sera visible au prochain demarrage.");
+						m_session->SetStatus("Disposition reinitialisee.");
 					}
 				}
 				ImGui::Separator();
@@ -714,7 +720,53 @@ namespace engine::editor
 		{
 			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpace");
 			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) - litteral pour eviter les divergences d'en-tetes.
-			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), static_cast<ImGuiDockNodeFlags>(1u << 4));
+			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 4);
+
+			// Disposition par defaut : si ImGui n'a pas charge de layout depuis world_editor_imgui.ini
+			// (premier demarrage, fichier supprime via le menu Vue, ou nouveau dockId), on pose une
+			// disposition propre (palette gauche, inspecteur droite, scene centrale, statut bas) via
+			// l'API DockBuilder. La tentative ne se fait qu'une fois par session - sinon, l'utilisateur
+			// qui re-dispose ses panneaux les verrait reposer chaque frame.
+			if (!m_defaultLayoutAttempted)
+			{
+				m_defaultLayoutAttempted = true;
+				if (ImGui::DockBuilderGetNode(dockId) == nullptr)
+				{
+					ImGui::DockBuilderRemoveNode(dockId);
+					ImGui::DockBuilderAddNode(dockId, kDockSpaceFlags | ImGuiDockNodeFlags_DockSpace);
+					ImGui::DockBuilderSetNodeSize(dockId, vp->WorkSize);
+
+					ImGuiID idLeft = 0;
+					ImGuiID idCenter = dockId;
+					ImGui::DockBuilderSplitNode(idCenter, ImGuiDir_Left, 0.22f, &idLeft, &idCenter);
+
+					ImGuiID idRight = 0;
+					ImGui::DockBuilderSplitNode(idCenter, ImGuiDir_Right, 0.30f, &idRight, &idCenter);
+
+					ImGuiID idBottom = 0;
+					ImGui::DockBuilderSplitNode(idCenter, ImGuiDir_Down, 0.18f, &idBottom, &idCenter);
+
+					// Palette outils : a gauche, c'est la zone d'action principale.
+					ImGui::DockBuilderDockWindow("Outils", idLeft);
+
+					// Inspecteur : panneaux carte / affichage / import / objets sont des onglets a droite.
+					ImGui::DockBuilderDockWindow("Carte", idRight);
+					ImGui::DockBuilderDockWindow("Affichage & grille", idRight);
+					ImGui::DockBuilderDockWindow("Import assets", idRight);
+					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
+
+					// Statut en bas, plein largeur.
+					ImGui::DockBuilderDockWindow("Statut", idBottom);
+
+					// La fenetre Scene ne capture pas la souris (ImGuiWindowFlags_NoMouseInputs) ;
+					// on la place dans le node central pour qu'elle remplisse l'espace 3D restant.
+					ImGui::DockBuilderDockWindow("Scene", idCenter);
+
+					ImGui::DockBuilderFinish(dockId);
+				}
+			}
+
+			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), kDockSpaceFlags);
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(3);

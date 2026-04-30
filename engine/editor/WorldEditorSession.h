@@ -20,7 +20,7 @@ namespace engine::core
 
 namespace engine::editor
 {
-	/// État éditeur (carte, chemins, brosses, grille) — logique sans ImGui.
+	/// Etat editeur (carte, chemins, brosses, grille) - logique sans ImGui.
 	class WorldEditorSession final
 	{
 	public:
@@ -34,11 +34,11 @@ namespace engine::editor
 
 		void SetStatus(std::string_view message);
 
-		/// Fichier JSON d’édition absolu (vide si jamais sauvegardé).
+		/// Fichier JSON d'edition absolu (vide si jamais sauvegarde).
 		const std::string& EditFileAbsolutePath() const { return m_editJsonAbsolutePath; }
 		void SetEditFileAbsolutePath(std::string path) { m_editJsonAbsolutePath = std::move(path); }
 
-		// Tampons pour l’UI (ImGui InputText)
+		// Tampons pour l'UI (ImGui InputText)
 		std::array<char, 128>& BufZoneId() { return m_bufZoneId; }
 		std::array<char, 32>& BufSize() { return m_bufSize; }
 		std::array<char, 32>& BufSeed() { return m_bufSeed; }
@@ -67,34 +67,34 @@ namespace engine::editor
 		[[nodiscard]] const TreeSpeciesCatalog& TreeCatalog() const { return m_treeCatalog; }
 		/// Charge une fois `world_editor/tree_species_catalog.json` et resynchronise les instances (clamp).
 		void EnsureTreeCatalogLoaded(const engine::core::Config& cfg);
-		/// Sélection liste instances (−1 = aucune) : prochain clic pose une nouvelle instance, sinon déplace la sélectionnée.
+		/// Selection liste instances (-1 = aucune) : prochain clic pose une nouvelle instance, sinon deplace la selectionnee.
 		int& SelectedLayoutInstanceIndex() { return m_selectedLayoutInstance; }
 
-		/// Mode herbe : si vrai, la brosse retire le masque au lieu de l’ajouter.
+		/// Mode herbe : si vrai, la brosse retire le masque au lieu de l'ajouter.
 		bool& GrassMaskEraseBrush() { return m_grassMaskEraseBrush; }
 
 		/// Brouillon polyligne route (011) : points monde XZ (clics terrain).
 		std::vector<std::pair<double, double>>& RouteDraftPoints() { return m_routeDraftXz; }
 		const std::vector<std::pair<double, double>>& RouteDraftPoints() const { return m_routeDraftXz; }
 		void ClearRouteDraft();
-		/// Ajoute un point (déjà clampé côté moteur aux limites du terrain).
+		/// Ajoute un point (deja clampe cote moteur aux limites du terrain).
 		void AddRouteDraftPoint(double worldX, double worldZ);
-		/// Largeur bande route (m) et couche splat cible pour l’application sur le SLAP.
+		/// Largeur bande route (m) et couche splat cible pour l'application sur le SLAP.
 		float& RouteStripWidthM() { return m_routeStripWidthM; }
 		int& RouteSplatLayer() { return m_routeSplatLayer; }
 
-		/// UI « Appliquer sur splat » : traité par l’Engine (peinture + flush + doc.routes).
+		/// UI " Appliquer sur splat " : traite par l'Engine (peinture + flush + doc.routes).
 		void RequestApplyRouteDraftToSplat();
 		[[nodiscard]] bool ConsumeRouteApplyDraftRequest();
 
-		/// Place une nouvelle instance ou déplace celle sélectionnée (coords monde, Y au sol).
+		/// Place une nouvelle instance ou deplace celle selectionnee (coords monde, Y au sol).
 		void PlaceOrMoveLayoutInstanceAtTerrainHit(const engine::core::Config& cfg, double worldX, double worldY, double worldZ);
 		void RemoveLayoutInstance(size_t index);
 
-		/// Appelé avant l’écriture du JSON d’édition pour persister heightmap / splat sur disque (Vulkan).
+		/// Appele avant l'ecriture du JSON d'edition pour persister heightmap / splat sur disque (Vulkan).
 		void SetTerrainSaveHook(std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> hook);
 
-		/// Crée une carte plate sous \c world_editor/maps/<id>/ (content).
+		/// Cree une carte plate sous \c world_editor/maps/<id>/ (content).
 		bool ActionNewMap(const engine::core::Config& cfg);
 
 		bool ActionSaveEditJson(const engine::core::Config& cfg);
@@ -104,21 +104,21 @@ namespace engine::editor
 		bool ActionImportAudio(const engine::core::Config& cfg);
 
 		/// Sauvegarde dans le chemin canonique \c world_editor/maps/<zone_id>/map.lcdlln_edit.json
-		/// (déduit de \c m_doc.zoneId — pas besoin de saisir un chemin).
+		/// (deduit de \c m_doc.zoneId - pas besoin de saisir un chemin).
 		bool ActionSaveCurrentMap(const engine::core::Config& cfg);
 
 		/// Charge \c world_editor/maps/<zoneId>/map.lcdlln_edit.json (chemin canonique).
 		bool ActionLoadMapByZoneId(const engine::core::Config& cfg, std::string_view zoneId);
 
-		/// Sous-répertoire du content où vivent toutes les cartes de l'éditeur.
+		/// Sous-repertoire du content ou vivent toutes les cartes de l'editeur.
 		static constexpr const char* kMapsContentRelativeDir = "world_editor/maps";
-		/// Nom de fichier canonique du JSON d'édition d'une carte.
+		/// Nom de fichier canonique du JSON d'edition d'une carte.
 		static constexpr const char* kEditDocFilename = "map.lcdlln_edit.json";
 
-		/// Chemin canonique absolu de la carte \p zoneId (inexistant ≠ erreur ; aucune E/S ici).
+		/// Chemin canonique absolu de la carte \p zoneId (inexistant != erreur ; aucune E/S ici).
 		static std::filesystem::path CanonicalMapJsonPath(const engine::core::Config& cfg, std::string_view zoneId);
 
-		/// Re-scan de \c world_editor/maps/ : remplit \ref AvailableMapIds() (zoneIds triés alphabétiquement).
+		/// Re-scan de \c world_editor/maps/ : remplit \ref AvailableMapIds() (zoneIds tries alphabetiquement).
 		void RefreshAvailableMaps(const engine::core::Config& cfg);
 		const std::vector<std::string>& AvailableMapIds() const { return m_availableMapIds; }
 		int& SelectedAvailableMapIndex() { return m_selectedAvailableMapIndex; }
@@ -126,9 +126,9 @@ namespace engine::editor
 		void SyncBuffersFromDoc();
 		void SyncDocIdFromBuffer();
 
-		/// Demande un rechargement du terrain GPU (après nouvelle carte / chargement JSON).
+		/// Demande un rechargement du terrain GPU (apres nouvelle carte / chargement JSON).
 		void RequestTerrainGpuReload();
-		/// \return true une fois par demande consommée (pour l’Engine).
+		/// \return true une fois par demande consommee (pour l'Engine).
 		bool ConsumeTerrainGpuReloadRequest();
 
 	private:

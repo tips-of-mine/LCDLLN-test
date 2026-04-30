@@ -13,10 +13,12 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
 
 #if defined(_WIN32)
@@ -577,12 +579,23 @@ namespace engine::editor
 		{
 			if (ImGui::BeginMenu("Fichier"))
 			{
-				if (ImGui::MenuItem("Importer texture PNG → TEXR…", nullptr, false, m_session != nullptr && m_cfg != nullptr)
+				if (ImGui::MenuItem("Sauvegarder la carte courante", "Ctrl+S", false, m_session != nullptr && m_cfg != nullptr)
+					&& m_session && m_cfg)
+				{
+					(void)m_session->ActionSaveCurrentMap(*m_cfg);
+				}
+				if (ImGui::MenuItem("Exporter en runtime", nullptr, false, m_session != nullptr && m_cfg != nullptr)
+					&& m_session && m_cfg)
+				{
+					(void)m_session->ActionExportRuntime(*m_cfg);
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Importer une texture (PNG/JPG/TGA/BMP)…", nullptr, false, m_session != nullptr && m_cfg != nullptr)
 					&& m_session && m_cfg)
 				{
 					(void)m_session->ActionImportTexture(*m_cfg);
 				}
-				if (ImGui::MenuItem("Importer audio (copie fichier)…", nullptr, false, m_session != nullptr && m_cfg != nullptr)
+				if (ImGui::MenuItem("Importer un son (WAV/OGG)…", nullptr, false, m_session != nullptr && m_cfg != nullptr)
 					&& m_session && m_cfg)
 				{
 					(void)m_session->ActionImportAudio(*m_cfg);
@@ -591,14 +604,17 @@ namespace engine::editor
 				ImGui::MenuItem("Quitter", nullptr, false, false);
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Outils"))
+			if (ImGui::BeginMenu("Vue"))
 			{
-				ImGui::TextUnformatted("Peinture splat : panneau « Terrain (sculpt) », mode Splat.");
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Affichage"))
-			{
-				ImGui::TextUnformatted("Cycle jour/nuit: à brancher atmosphère.");
+				if (ImGui::MenuItem("Réinitialiser la disposition des fenêtres"))
+				{
+					std::error_code ec;
+					std::filesystem::remove("world_editor_imgui.ini", ec);
+					ImGui::ClearIniSettings();
+				}
+				ImGui::Separator();
+				ImGui::TextDisabled("Astuce : faites glisser une fenêtre par sa barre de titre");
+				ImGui::TextDisabled("pour la docker à gauche, à droite ou en bas.");
 				ImGui::EndMenu();
 			}
 			if (m_cfg && ImGui::BeginMenu("Options"))
@@ -616,6 +632,50 @@ namespace engine::editor
 					TryPersistMovementLayoutToUserSettings("zqsd");
 				}
 				ImGui::EndMenu();
+			}
+			// Barre d'outils rapide à droite du menu : sauvegarde 1-clic + chargement carte.
+			if (m_session != nullptr && m_cfg != nullptr)
+			{
+				ImGui::Separator();
+				if (ImGui::MenuItem("[Sauvegarder]"))
+				{
+					(void)m_session->ActionSaveCurrentMap(*m_cfg);
+				}
+				if (!m_session->AvailableMapsScanned())
+				{
+					m_session->RefreshAvailableMaps(*m_cfg);
+				}
+				if (ImGui::BeginMenu("[Charger une carte]"))
+				{
+					const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
+					if (mapIds.empty())
+					{
+						ImGui::TextDisabled("Aucune carte. Créez-en une via le panneau « Carte ».");
+					}
+					else
+					{
+						for (size_t i = 0; i < mapIds.size(); ++i)
+						{
+							if (ImGui::MenuItem(mapIds[i].c_str()))
+							{
+								(void)m_session->ActionLoadMapByZoneId(*m_cfg, mapIds[i]);
+								m_session->SelectedAvailableMapIndex() = static_cast<int>(i);
+							}
+						}
+					}
+					ImGui::Separator();
+					if (ImGui::MenuItem("Rafraîchir la liste"))
+					{
+						m_session->RefreshAvailableMaps(*m_cfg);
+					}
+					ImGui::EndMenu();
+				}
+				// Statut court à droite
+				if (!m_session->Status().empty())
+				{
+					ImGui::Separator();
+					ImGui::TextUnformatted(m_session->Status().c_str());
+				}
 			}
 			ImGui::EndMainMenuBar();
 		}
@@ -776,83 +836,92 @@ namespace engine::editor
 			ImGui::TextUnformatted("La grille est dessinée en surimpression (projection caméra) lorsque le terrain GPU est chargé.");
 			ImGui::End();
 
-			ImGui::Begin("Terrain (sculpt)");
-			const char* modes[] = { "Heightmap (MNT)", "Splat (matériaux)", "Herbe (masque GRMS)", "Instances (layout)",
-				"Routes (splat / 011)" };
-			ImGui::Combo("Mode", &m_session->TerrainEditMode(), modes, IM_ARRAYSIZE(modes));
+			ImGui::Begin("Outils");
+			if (ImGui::BeginTabBar("OutilsTabs"))
 			{
 				int& tm = m_session->TerrainEditMode();
+
+				if (ImGui::BeginTabItem("Sculpter"))
+				{
+					tm = 0;
+					ImGui::TextDisabled("Modifie la hauteur du sol au pinceau.");
+					const char* ops[] = { "Monter", "Descendre", "Adoucir", "Niveler" };
+					ImGui::Combo("Action", &m_session->BrushOp(), ops, IM_ARRAYSIZE(ops));
+					ImGui::SliderFloat("Rayon du pinceau (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
+					ImGui::SliderFloat("Force", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+					ImGui::Separator();
+					ImGui::TextWrapped("Maintenez le clic gauche sur le sol pour appliquer.");
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Peindre"))
+				{
+					tm = 1;
+					ImGui::TextDisabled("Peint le type de sol (herbe, terre, roc, neige).");
+					const char* layers[] = { "Herbe", "Terre", "Roc", "Neige" };
+					ImGui::Combo("Type de sol", &m_session->SplatLayer(), layers, IM_ARRAYSIZE(layers));
+					ImGui::SliderFloat("Rayon du pinceau (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
+					ImGui::SliderFloat("Force", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+					ImGui::Separator();
+					ImGui::TextWrapped("Maintenez le clic gauche pour peindre. La sauvegarde écrit le fichier splat.");
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Herbe"))
+				{
+					tm = 2;
+					ImGui::TextDisabled("Définit où des touffes d'herbe poussent.");
+					ImGui::Checkbox("Mode gomme (efface l'herbe)", &m_session->GrassMaskEraseBrush());
+					ImGui::SliderFloat("Rayon du pinceau (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
+					ImGui::SliderFloat("Force", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+					ImGui::Separator();
+					ImGui::TextWrapped("Maintenez le clic gauche pour appliquer. La sauvegarde écrit grass.grms.");
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Objets"))
+				{
+					tm = 3;
+					ImGui::TextDisabled("Pose des arbres, rochers ou autres objets.");
+					ImGui::TextWrapped(
+						"Choisissez le type d'objet dans le panneau « Objets sur la carte » à droite.");
+					ImGui::Separator();
+					ImGui::TextWrapped(
+						"Clic gauche sur le sol : pose un nouvel objet, ou déplace l'objet sélectionné dans la liste.");
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Routes"))
+				{
+					tm = 4;
+					ImGui::TextDisabled("Trace des chemins / routes en peignant une bande de splat.");
+					const char* rlayers[] = { "Herbe", "Terre / chemin", "Roc", "Neige" };
+					ImGui::Combo("Sol de la route", &m_session->RouteSplatLayer(), rlayers, IM_ARRAYSIZE(rlayers));
+					{
+						int& rl = m_session->RouteSplatLayer();
+						rl = std::clamp(rl, 0, 3);
+					}
+					ImGui::SliderFloat("Largeur (m)", &m_session->RouteStripWidthM(), 0.5f, 64.f, "%.1f");
+					ImGui::SliderFloat("Intensité", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+					ImGui::Separator();
+					if (ImGui::Button("Effacer les points"))
+					{
+						m_session->ClearRouteDraft();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Tracer la route"))
+					{
+						m_session->RequestApplyRouteDraftToSplat();
+					}
+					ImGui::Text("Points placés : %zu", m_session->RouteDraftPoints().size());
+					ImGui::Text("Routes enregistrées : %zu", m_session->Doc().routes.size());
+					ImGui::Separator();
+					ImGui::TextWrapped("Cliquez sur le sol pour ajouter un sommet de la route, puis « Tracer la route ».");
+					ImGui::EndTabItem();
+				}
+
 				tm = std::clamp(tm, 0, 4);
-			}
-			if (m_session->TerrainEditMode() == 0)
-			{
-				const char* ops[] = { "Élever", "Abaisser", "Lisser", "Aplatir" };
-				ImGui::Combo("Opération", &m_session->BrushOp(), ops, IM_ARRAYSIZE(ops));
-			}
-			else if (m_session->TerrainEditMode() == 1)
-			{
-				const char* layers[] = { "Herbe (R)", "Terre (G)", "Roc (B)", "Neige (A)" };
-				ImGui::Combo("Couche splat", &m_session->SplatLayer(), layers, IM_ARRAYSIZE(layers));
-			}
-			else if (m_session->TerrainEditMode() == 2)
-			{
-				ImGui::Checkbox("Effacer (retire le masque)", &m_session->GrassMaskEraseBrush());
-			}
-			else if (m_session->TerrainEditMode() == 3)
-			{
-				ImGui::TextUnformatted("Utilisez le panneau « Instances (layout) » pour le type glTF.");
-			}
-			else
-			{
-				const char* rlayers[] = { "Herbe (R)", "Terre / macadam (G)", "Roc (B)", "Neige (A)" };
-				ImGui::Combo("Couche route (splat)", &m_session->RouteSplatLayer(), rlayers, IM_ARRAYSIZE(rlayers));
-				{
-					int& rl = m_session->RouteSplatLayer();
-					rl = std::clamp(rl, 0, 3);
-				}
-				ImGui::SliderFloat("Largeur bande (m)", &m_session->RouteStripWidthM(), 0.5f, 64.f, "%.1f");
-				if (ImGui::Button("Effacer brouillon (points)"))
-				{
-					m_session->ClearRouteDraft();
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Appliquer sur splat"))
-				{
-					m_session->RequestApplyRouteDraftToSplat();
-				}
-				ImGui::Text("Points brouillon : %zu", m_session->RouteDraftPoints().size());
-				ImGui::Text("Routes enregistrées (doc) : %zu", m_session->Doc().routes.size());
-			}
-			if (m_session->TerrainEditMode() != 3 && m_session->TerrainEditMode() != 4)
-			{
-				ImGui::SliderFloat("Rayon (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
-				ImGui::SliderFloat("Intensité", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
-			}
-			else if (m_session->TerrainEditMode() == 4)
-			{
-				ImGui::SliderFloat("Intensité splat (route)", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
-			}
-			if (m_session->TerrainEditMode() == 0)
-			{
-				ImGui::TextUnformatted("Clic gauche maintenu (hors UI) : sculpte la heightmap.");
-			}
-			else if (m_session->TerrainEditMode() == 1)
-			{
-				ImGui::TextUnformatted("Clic gauche maintenu (hors UI) : peint la couche splat (aperçu GPU immédiat).");
-				ImGui::TextUnformatted("Sauvegarder l’édition écrit aussi le fichier SLAP (voir chemin splatmap).");
-			}
-			else if (m_session->TerrainEditMode() == 2)
-			{
-				ImGui::TextUnformatted("Clic gauche maintenu : peint le masque herbe (GRMS, UV = splat). Sauvegarde écrit grass.grms.");
-			}
-			else if (m_session->TerrainEditMode() == 3)
-			{
-				ImGui::TextUnformatted("Clic gauche (hors UI, une fois) : pose ou déplace une instance au sol.");
-			}
-			else
-			{
-				ImGui::TextUnformatted(
-					"011 branche A : clics gauches sur le sol pour enchaîner les sommets ; « Appliquer » peint une bande splat (export SLAP inchangé).");
+				ImGui::EndTabBar();
 			}
 			ImGui::End();
 
@@ -895,7 +964,7 @@ namespace engine::editor
 			}
 			ImGui::End();
 
-			ImGui::Begin("Instances (layout)");
+			ImGui::Begin("Objets sur la carte");
 			if (m_cfg != nullptr)
 			{
 				m_session->EnsureTreeCatalogLoaded(*m_cfg);
@@ -1035,10 +1104,6 @@ namespace engine::editor
 			{
 				m_session->SelectedLayoutInstanceIndex() = -1;
 			}
-			ImGui::End();
-
-			ImGui::Begin("Préfabs / objets", nullptr, ImGuiWindowFlags_NoMouseInputs);
-			ImGui::TextUnformatted("Champ JSON « objects » (préfabs) — hors périmètre placement 009.");
 			ImGui::End();
 
 			ImGui::Begin("Statut", nullptr, ImGuiWindowFlags_NoMouseInputs);

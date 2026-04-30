@@ -75,6 +75,13 @@ namespace engine::editor
 		/// Si vrai, \ref terrainWorldSizeM remplace `terrain.world_size` pour l’init terrain du World Editor (alignement zone logique).
 		bool   hasTerrainWorldSizeM = false;
 		double terrainWorldSizeM    = 10000.0;
+
+		/// Eau (Lot G) : si \c waterEnabled, une surface plane à \c waterLevelMeters (Y monde) doit être rendue.
+		/// Persisté en JSON (clés \c water_enabled, \c water_level_m). Le rendu effectif (passe Vulkan
+		/// transparent + shader simple) sera branché dans une itération moteur ultérieure — l'éditeur
+		/// expose déjà la donnée pour que la création de cartes avec eau soit possible dès maintenant.
+		bool   waterEnabled    = false;
+		double waterLevelMeters = 0.0;
 	};
 
 } // namespace engine::editor

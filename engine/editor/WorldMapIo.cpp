@@ -150,6 +150,75 @@ namespace engine::editor
 			return true;
 		}
 
+		bool ParseJsonBoolValue(std::string_view json, std::string_view key, bool& out)
+		{
+			const std::string needle = std::string("\"") + std::string(key) + "\"";
+			size_t p = json.find(needle);
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			p = json.find(':', p + needle.size());
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			++p;
+			SkipWs(json, p);
+			if (p + 4 <= json.size() && json.substr(p, 4) == "true")
+			{
+				out = true;
+				return true;
+			}
+			if (p + 5 <= json.size() && json.substr(p, 5) == "false")
+			{
+				out = false;
+				return true;
+			}
+			return false;
+		}
+
+		bool ParseJsonDoubleValue(std::string_view json, std::string_view key, double& out)
+		{
+			const std::string needle = std::string("\"") + std::string(key) + "\"";
+			size_t p = json.find(needle);
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			p = json.find(':', p + needle.size());
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			++p;
+			SkipWs(json, p);
+			std::string num;
+			while (p < json.size())
+			{
+				const char c = json[p];
+				if ((c >= '0' && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
+				{
+					num.push_back(c);
+					++p;
+					continue;
+				}
+				break;
+			}
+			if (num.empty())
+			{
+				return false;
+			}
+			char* endPtr = nullptr;
+			const double v = std::strtod(num.c_str(), &endPtr);
+			if (static_cast<size_t>(endPtr - num.c_str()) != num.size())
+			{
+				return false;
+			}
+			out = v;
+			return true;
+		}
+
 		bool KeyHasNull(std::string_view json, std::string_view key)
 		{
 			const std::string needle = std::string("\"") + std::string(key) + "\"";
@@ -1224,6 +1293,8 @@ namespace engine::editor
 		out << "  \"instances\": " << SerializeLayoutInstancesJson(doc.layoutInstances) << ",\n";
 		out << "  \"routes\": " << SerializeRoutesJson(doc.routes) << ",\n";
 		out << "  \"objects\": " << SerializeTexturesArray(doc.objectPrefabIds) << ",\n";
+		out << "  \"water_enabled\": " << (doc.waterEnabled ? "true" : "false") << ",\n";
+		out << "  \"water_level_m\": " << doc.waterLevelMeters << ",\n";
 		if (doc.hasTerrainWorldSizeM)
 		{
 			out << "  \"terrain_world_size_m\": " << doc.terrainWorldSizeM << "\n";
@@ -1361,6 +1432,19 @@ namespace engine::editor
 		if (!ParseJsonStringArray(json, "objects", d.objectPrefabIds, outError))
 		{
 			return false;
+		}
+		// Eau (Lot G) — optionnel, défaut désactivé.
+		{
+			bool wEnabled = false;
+			if (ParseJsonBoolValue(json, "water_enabled", wEnabled))
+			{
+				d.waterEnabled = wEnabled;
+			}
+			double wLevel = 0.0;
+			if (ParseJsonDoubleValue(json, "water_level_m", wLevel))
+			{
+				d.waterLevelMeters = wLevel;
+			}
 		}
 		if (!ParseOptionalTerrainWorldSizeM(json, d, outError))
 		{

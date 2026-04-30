@@ -1019,6 +1019,30 @@ namespace engine::editor
 					ImGui::EndTabItem();
 				}
 
+				if (ImGui::BeginTabItem("Eau"))
+				{
+					// Pas un mode de pinceau : on ne change pas tm.
+					ImGui::TextDisabled("Active une surface d'eau plane à un Y donné (lac, mer).");
+					bool waterOn = m_session->Doc().waterEnabled;
+					if (ImGui::Checkbox("Eau active", &waterOn))
+					{
+						m_session->MutableDoc().waterEnabled = waterOn;
+					}
+					float lvl = static_cast<float>(m_session->Doc().waterLevelMeters);
+					if (ImGui::SliderFloat("Niveau de l'eau (Y, m)", &lvl, -200.f, 500.f, "%.2f"))
+					{
+						m_session->MutableDoc().waterLevelMeters = static_cast<double>(lvl);
+					}
+					ImGui::Separator();
+					ImGui::TextDisabled(
+						"Ces réglages sont persistés dans la carte (champs JSON water_enabled,");
+					ImGui::TextDisabled(
+						"water_level_m). La passe Vulkan eau (surface transparente, reflets simples)");
+					ImGui::TextDisabled(
+						"sera branchée dans une itération moteur ultérieure.");
+					ImGui::EndTabItem();
+				}
+
 				if (ImGui::BeginTabItem("Routes"))
 				{
 					tm = 4;

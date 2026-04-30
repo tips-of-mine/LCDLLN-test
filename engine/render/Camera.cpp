@@ -50,8 +50,9 @@ namespace engine::render
 
 	void FpsCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
 		MovementLayout layout, bool scrollWheelAdjustsFov, bool applyMouseLook, bool applyKeyboardMove,
-		float worldEditorTerrainWorldSizeM, Camera& camera)
+		float worldEditorTerrainWorldSizeM, Camera& camera, float extraSpeedMultiplier)
 	{
+		extraSpeedMultiplier = std::clamp(extraSpeedMultiplier, 0.05f, 50.0f);
 		if (applyMouseLook)
 		{
 			const float sens = static_cast<float>(mouseSensitivityRadPerPixel);
@@ -71,6 +72,7 @@ namespace engine::render
 				const float scale = std::sqrt(worldEditorTerrainWorldSizeM / kRefM);
 				speed *= std::clamp(scale, 1.f, 12.f);
 			}
+			speed *= extraSpeedMultiplier;
 			const float dist = static_cast<float>(dt) * speed;
 			const float cy = std::cos(camera.yaw);
 			const float sy = std::sin(camera.yaw);

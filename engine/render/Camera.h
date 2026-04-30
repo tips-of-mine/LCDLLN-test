@@ -50,8 +50,10 @@ namespace engine::render
 		/// tout en bloquant WASD quand ImGui capte le clavier (champs texte), etc.
 		/// Si \p worldEditorTerrainWorldSizeM > 0 (éditeur monde), la vitesse de marche/course est multipliée
 		/// selon la taille du terrain (grandes zones navigables plus vite, plafonné).
+		/// \p extraSpeedMultiplier (défaut 1.0) : multiplicateur supplémentaire utilisateur (slider UI éditeur),
+		/// appliqué APRÈS la mise à l'échelle terrain. Clamp [0.05, 50.0] pour éviter une vitesse nulle ou folle.
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
 			MovementLayout layout, bool scrollWheelAdjustsFov, bool applyMouseLook, bool applyKeyboardMove,
-			float worldEditorTerrainWorldSizeM, Camera& camera);
+			float worldEditorTerrainWorldSizeM, Camera& camera, float extraSpeedMultiplier = 1.0f);
 	};
 }

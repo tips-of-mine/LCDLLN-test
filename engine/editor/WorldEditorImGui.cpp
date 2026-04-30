@@ -614,6 +614,19 @@ namespace engine::editor
 					ImGui::ClearIniSettings();
 				}
 				ImGui::Separator();
+				if (m_cfg)
+				{
+					float mult = static_cast<float>(m_cfg->GetDouble("controls.editor_camera_speed_multiplier", 1.0));
+					ImGui::TextDisabled("Vitesse de déplacement (Shift = course) :");
+					if (ImGui::SliderFloat("Vitesse caméra (x)", &mult, 0.25f, 5.0f, "%.2f"))
+					{
+						mult = std::clamp(mult, 0.25f, 5.0f);
+						m_cfg->SetValue("controls.editor_camera_speed_multiplier", static_cast<double>(mult));
+					}
+					ImGui::TextDisabled("Astuce : montez ce curseur pour traverser plus vite les");
+					ImGui::TextDisabled("grandes cartes pendant la création.");
+					ImGui::Separator();
+				}
 				ImGui::TextDisabled("Astuce : faites glisser une fenêtre par sa barre de titre");
 				ImGui::TextDisabled("pour la docker à gauche, à droite ou en bas.");
 				ImGui::EndMenu();

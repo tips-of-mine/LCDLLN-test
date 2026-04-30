@@ -32,7 +32,7 @@
 #	include "imgui.h"
 #	include "imgui_impl_vulkan.h"
 #	include "imgui_impl_win32.h"
-	// ImGui 1.91+ : la déclaration n’est plus dans l’en-tête (#if 0) pour éviter HWND dans l’API publique.
+	// ImGui 1.91+ : la declaration n'est plus dans l'en-tete (#if 0) pour eviter HWND dans l'API publique.
 	extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #	include <vulkan/vulkan.h>
@@ -74,7 +74,7 @@ namespace engine::editor
 			std::ofstream out(path, std::ios::binary | std::ios::trunc);
 			if (!out)
 			{
-				LOG_WARN(Core, "[WorldEditor] Écriture impossible : {} (déplacement non persisté)", path);
+				LOG_WARN(Core, "[WorldEditor] Ecriture impossible : {} (deplacement non persiste)", path);
 				return;
 			}
 			out << json;
@@ -168,8 +168,8 @@ namespace engine::editor
 	namespace
 	{
 		// Plafond du nombre de lignes de grille par axe (surimpression ImGui). Sans cela, une maille
-		// fine sur un grand terrain génère trop de primitives ; un plafond trop bas rend la maille
-		// « figée » (espacement minimal ≈ tailleTerrain / (plafond - 1)).
+		// fine sur un grand terrain genere trop de primitives ; un plafond trop bas rend la maille
+		// "figee" (espacement minimal ~= tailleTerrain / (plafond - 1)).
 		constexpr int kWorldEditorGridMaxLinesPerAxis = 2048;
 
 		bool WorldToScreen(const float vp[16], float wx, float wy, float wz, int vw, int vh, float& sx, float& sy)
@@ -354,7 +354,7 @@ namespace engine::editor
 #if defined(_WIN32)
 		if (m_ready)
 		{
-			LOG_WARN(Render, "[WorldEditorImGui] Shutdown non appelé avant destruction");
+			LOG_WARN(Render, "[WorldEditorImGui] Shutdown non appele avant destruction");
 		}
 #endif
 	}
@@ -383,13 +383,13 @@ namespace engine::editor
 		}
 		if (!deviceContext.IsValid() || !deviceContext.SupportsDynamicRendering())
 		{
-			LOG_WARN(Render, "[WorldEditorImGui] Init ignoré: device ou dynamic rendering indisponible");
+			LOG_WARN(Render, "[WorldEditorImGui] Init ignore: device ou dynamic rendering indisponible");
 			return false;
 		}
 		HWND hwnd = hwndNative ? static_cast<HWND>(hwndNative) : nullptr;
 		if (!hwnd)
 		{
-			LOG_WARN(Render, "[WorldEditorImGui] Init ignoré: HWND nul");
+			LOG_WARN(Render, "[WorldEditorImGui] Init ignore: HWND nul");
 			return false;
 		}
 		const uint32_t imgCount = std::max(2u, swapchainImageCount);
@@ -405,7 +405,7 @@ namespace engine::editor
 		poolInfo.pPoolSizes = poolSizes;
 		if (vkCreateDescriptorPool(deviceContext.GetDevice(), &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
 		{
-			LOG_ERROR(Render, "[WorldEditorImGui] vkCreateDescriptorPool a échoué");
+			LOG_ERROR(Render, "[WorldEditorImGui] vkCreateDescriptorPool a echoue");
 			return false;
 		}
 
@@ -414,14 +414,14 @@ namespace engine::editor
 		ImGuiIO& io = ImGui::GetIO();
 		io.IniFilename = "world_editor_imgui.ini";
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (caméra FPS).
+		// Pas de NavEnableKeyboard : sinon io.WantCaptureKeyboard reste souvent vrai et bloque WASD (camera FPS).
 		ImGui::StyleColorsDark();
 
-		// Polices auth (Windlass / Morpheus) chargées dans l'atlas ImGui AVANT ImGui_ImplVulkan_Init —
-		// celui-ci construit la texture des fonts une seule fois à partir de l'atlas. Sans ce chargement,
-		// l'UI auth utilise la police ImGui par défaut (ProggyClean ~13 px) qui ne ressemble pas à la
-		// maquette Lune Noire. La piste Vulkan/AuthGlyphPass utilise déjà ces mêmes fichiers (Engine.cpp).
-		// On charge Windlass en premier : elle devient la police par défaut d'ImGui.
+		// Polices auth (Windlass / Morpheus) chargees dans l'atlas ImGui AVANT ImGui_ImplVulkan_Init -
+		// celui-ci construit la texture des fonts une seule fois a partir de l'atlas. Sans ce chargement,
+		// l'UI auth utilise la police ImGui par defaut (ProggyClean ~13 px) qui ne ressemble pas a la
+		// maquette Lune Noire. La piste Vulkan/AuthGlyphPass utilise deja ces memes fichiers (Engine.cpp).
+		// On charge Windlass en premier : elle devient la police par defaut d'ImGui.
 		auto loadAuthFontFromConfig = [&io, cfg](std::string_view relativePath, float pixelHeight, const char* role) -> bool {
 			if (cfg == nullptr || relativePath.empty())
 			{
@@ -433,9 +433,9 @@ namespace engine::editor
 				LOG_WARN(Render, "[WorldEditorImGui] Police {} introuvable ou vide : {}", role, relativePath);
 				return false;
 			}
-			// L'atlas ImGui prend la propriété du buffer (FontDataOwnedByAtlas par défaut = true) et le
-			// libérera via IM_FREE — on doit donc l'allouer via IM_ALLOC, pas réutiliser le std::vector
-			// (sinon UB : la mémoire serait libérée deux fois ou utilisée après libération).
+			// L'atlas ImGui prend la propriete du buffer (FontDataOwnedByAtlas par defaut = true) et le
+			// liberera via IM_FREE - on doit donc l'allouer via IM_ALLOC, pas reutiliser le std::vector
+			// (sinon UB : la memoire serait liberee deux fois ou utilisee apres liberation).
 			void* atlasOwned = IM_ALLOC(bytes.size());
 			std::memcpy(atlasOwned, bytes.data(), bytes.size());
 			ImFontConfig fcfg{};
@@ -444,22 +444,22 @@ namespace engine::editor
 			if (font == nullptr)
 			{
 				IM_FREE(atlasOwned);
-				LOG_WARN(Render, "[WorldEditorImGui] Police {} : AddFontFromMemoryTTF a échoué pour {}", role, relativePath);
+				LOG_WARN(Render, "[WorldEditorImGui] Police {} : AddFontFromMemoryTTF a echoue pour {}", role, relativePath);
 				return false;
 			}
-			LOG_INFO(Render, "[WorldEditorImGui] Police {} chargée dans l'atlas ImGui : {} ({}px)", role, relativePath, pixelHeight);
+			LOG_INFO(Render, "[WorldEditorImGui] Police {} chargee dans l'atlas ImGui : {} ({}px)", role, relativePath, pixelHeight);
 			return true;
 		};
 
 		if (cfg != nullptr)
 		{
-			// Clés spécifiques à la piste ImGui (la piste Vulkan/AuthGlyphPass garde sa propre
+			// Cles specifiques a la piste ImGui (la piste Vulkan/AuthGlyphPass garde sa propre
 			// taille via render.auth_ui.font_pixel_height = 28). En ImGui les facteurs
 			// SetWindowFontScale (1.62 pour le titre, 1.12 pour le sous-titre, 1.15 pour le titre
-			// du panneau, 0.78–0.95 pour les libellés…) sont calibrés pour la police par défaut
-			// ProggyClean ~13 px ; charger Windlass à la même taille respecte donc tous les
+			// du panneau, 0.78-0.95 pour les libelles...) sont calibres pour la police par defaut
+			// ProggyClean ~13 px ; charger Windlass a la meme taille respecte donc tous les
 			// gabarits existants. On peut surcharger via render.auth_ui.imgui.font_pixel_height
-			// si on veut grossir/réduire globalement l'UI auth ImGui sans toucher aux scales.
+			// si on veut grossir/reduire globalement l'UI auth ImGui sans toucher aux scales.
 			const std::string uiFontPath = cfg->GetString("render.auth_ui.font_path", "");
 			const float uiFontPx = static_cast<float>(std::clamp<int64_t>(
 				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 13), 11, 32));
@@ -499,7 +499,7 @@ namespace engine::editor
 
 		if (!ImGui_ImplVulkan_Init(&vulkanInfo))
 		{
-			LOG_ERROR(Render, "[WorldEditorImGui] ImGui_ImplVulkan_Init a échoué");
+			LOG_ERROR(Render, "[WorldEditorImGui] ImGui_ImplVulkan_Init a echoue");
 			ImGui_ImplWin32_Shutdown();
 			ImGui::DestroyContext();
 			vkDestroyDescriptorPool(deviceContext.GetDevice(), m_descriptorPool, nullptr);
@@ -591,12 +591,12 @@ namespace engine::editor
 					(void)m_session->ActionExportRuntime(*m_cfg);
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Importer une texture (PNG/JPG/TGA/BMP)…", nullptr, false, m_session != nullptr && m_cfg != nullptr)
+				if (ImGui::MenuItem("Importer une texture (PNG/JPG/TGA/BMP)...", nullptr, false, m_session != nullptr && m_cfg != nullptr)
 					&& m_session && m_cfg)
 				{
 					(void)m_session->ActionImportTexture(*m_cfg);
 				}
-				if (ImGui::MenuItem("Importer un son (WAV/OGG)…", nullptr, false, m_session != nullptr && m_cfg != nullptr)
+				if (ImGui::MenuItem("Importer un son (WAV/OGG)...", nullptr, false, m_session != nullptr && m_cfg != nullptr)
 					&& m_session && m_cfg)
 				{
 					(void)m_session->ActionImportAudio(*m_cfg);
@@ -607,57 +607,57 @@ namespace engine::editor
 			}
 			if (ImGui::BeginMenu("Vue"))
 			{
-				if (ImGui::MenuItem("Réinitialiser la disposition des fenêtres"))
+				if (ImGui::MenuItem("Reinitialiser la disposition des fenetres"))
 				{
-					// Supprime le fichier .ini ; ImGui ne réécrit pas la disposition tant que le contexte
-					// vit. La réinitialisation visible prend effet au prochain lancement de l'éditeur.
-					// (ImGui::ClearIniSettings n'est pas disponible dans la version d'ImGui utilisée ici.)
+					// Supprime le fichier .ini ; ImGui ne reecrit pas la disposition tant que le contexte
+					// vit. La reinitialisation visible prend effet au prochain lancement de l'editeur.
+					// (ImGui::ClearIniSettings n'est pas disponible dans la version d'ImGui utilisee ici.)
 					std::error_code ec;
 					std::filesystem::remove("world_editor_imgui.ini", ec);
 					if (m_session)
 					{
-						m_session->SetStatus("Disposition réinitialisée — l'effet sera visible au prochain démarrage.");
+						m_session->SetStatus("Disposition reinitialisee - l'effet sera visible au prochain demarrage.");
 					}
 				}
 				ImGui::Separator();
 				if (m_cfg)
 				{
 					float mult = static_cast<float>(m_cfg->GetDouble("controls.editor_camera_speed_multiplier", 1.0));
-					ImGui::TextDisabled("Vitesse de déplacement (Shift = course) :");
-					if (ImGui::SliderFloat("Vitesse caméra (x)", &mult, 0.25f, 5.0f, "%.2f"))
+					ImGui::TextDisabled("Vitesse de deplacement (Shift = course) :");
+					if (ImGui::SliderFloat("Vitesse camera (x)", &mult, 0.25f, 5.0f, "%.2f"))
 					{
 						mult = std::clamp(mult, 0.25f, 5.0f);
 						m_cfg->SetValue("controls.editor_camera_speed_multiplier", static_cast<double>(mult));
 					}
 					ImGui::TextDisabled("Astuce : montez ce curseur pour traverser plus vite les");
-					ImGui::TextDisabled("grandes cartes pendant la création.");
+					ImGui::TextDisabled("grandes cartes pendant la creation.");
 					ImGui::Separator();
 				}
-				ImGui::TextDisabled("Astuce : faites glisser une fenêtre par sa barre de titre");
-				ImGui::TextDisabled("pour la docker à gauche, à droite ou en bas.");
+				ImGui::TextDisabled("Astuce : faites glisser une fenetre par sa barre de titre");
+				ImGui::TextDisabled("pour la docker a gauche, a droite ou en bas.");
 				ImGui::EndMenu();
 			}
 			if (m_cfg && ImGui::BeginMenu("Options"))
 			{
 				const std::string cur = m_cfg->GetString("controls.movement_layout", "wasd");
 				const bool zqsdActive = (cur == "zqsd");
-				if (ImGui::MenuItem("Déplacement : QWERTY (WASD)", nullptr, !zqsdActive))
+				if (ImGui::MenuItem("Deplacement : QWERTY (WASD)", nullptr, !zqsdActive))
 				{
 					m_cfg->SetValue("controls.movement_layout", std::string("wasd"));
 					TryPersistMovementLayoutToUserSettings("wasd");
 				}
-				if (ImGui::MenuItem("Déplacement : AZERTY (ZQSD)", nullptr, zqsdActive))
+				if (ImGui::MenuItem("Deplacement : AZERTY (ZQSD)", nullptr, zqsdActive))
 				{
 					m_cfg->SetValue("controls.movement_layout", std::string("zqsd"));
 					TryPersistMovementLayoutToUserSettings("zqsd");
 				}
 				ImGui::EndMenu();
 			}
-			// Barre d'outils rapide à droite du menu : sauvegarde 1-clic + chargement carte.
+			// Barre d'outils rapide a droite du menu : sauvegarde 1-clic + chargement carte.
 			if (m_session != nullptr && m_cfg != nullptr)
 			{
 				ImGui::Separator();
-				if (ImGui::MenuItem("[Sauvegarder]"))
+				if (ImGui::MenuItem("Sauvegarder"))
 				{
 					(void)m_session->ActionSaveCurrentMap(*m_cfg);
 				}
@@ -665,12 +665,12 @@ namespace engine::editor
 				{
 					m_session->RefreshAvailableMaps(*m_cfg);
 				}
-				if (ImGui::BeginMenu("[Charger une carte]"))
+				if (ImGui::BeginMenu("Charger une carte"))
 				{
 					const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
 					if (mapIds.empty())
 					{
-						ImGui::TextDisabled("Aucune carte. Créez-en une via le panneau « Carte ».");
+						ImGui::TextDisabled("Aucune carte. Creez-en une via le panneau 'Carte'.");
 					}
 					else
 					{
@@ -684,13 +684,13 @@ namespace engine::editor
 						}
 					}
 					ImGui::Separator();
-					if (ImGui::MenuItem("Rafraîchir la liste"))
+					if (ImGui::MenuItem("Rafraichir la liste"))
 					{
 						m_session->RefreshAvailableMaps(*m_cfg);
 					}
 					ImGui::EndMenu();
 				}
-				// Statut court à droite
+				// Statut court a droite
 				if (!m_session->Status().empty())
 				{
 					ImGui::Separator();
@@ -713,34 +713,34 @@ namespace engine::editor
 		if (ImGui::Begin("WorldEditorDockSpaceHost", nullptr, hostFlags))
 		{
 			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpace");
-			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) — littéral pour éviter les divergences d’en-têtes.
+			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) - litteral pour eviter les divergences d'en-tetes.
 			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), static_cast<ImGuiDockNodeFlags>(1u << 4));
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(3);
 
-		ImGui::Begin("Scène", nullptr, ImGuiWindowFlags_NoMouseInputs);
-		ImGui::TextUnformatted("Vue 3D Vulkan (même moteur que le jeu).");
+		ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoMouseInputs);
+		ImGui::TextUnformatted("Vue 3D Vulkan (meme moteur que le jeu).");
 		ImGui::TextUnformatted(
-			"Déplacement : menu « Options » → QWERTY (WASD) ou AZERTY (ZQSD), un seul à la fois. Shift = plus rapide ; "
-			"vitesse de base augmente avec la taille du terrain chargé.");
+			"Deplacement : menu 'Options' -> QWERTY (WASD) ou AZERTY (ZQSD), un seul a la fois. Shift = plus rapide ; "
+			"vitesse de base augmente avec la taille du terrain charge.");
 		ImGui::TextUnformatted(
-			"Orientation : maintenez le clic droit et déplacez la souris (même au-dessus des fenêtres ImGui) ; "
-			"sinon la souris n’oriente que lorsqu’ImGui ne la capture pas. Molette : zoom FOV.");
+			"Orientation : maintenez le clic droit et deplacez la souris (meme au-dessus des fenetres ImGui) ; "
+			"sinon la souris n'oriente que lorsqu'ImGui ne la capture pas. Molette : zoom FOV.");
 		ImGui::TextUnformatted(
 			"Si la vue monte quand vous baissez la souris : dans user_settings.json ou options client, "
 			"activez controls.invert_y.");
 		if (viewportOverlay != nullptr && viewportOverlay->viewProjColMajor != nullptr)
 		{
 			ImGui::Separator();
-			ImGui::Text("Caméra (monde) : (%.2f, %.2f, %.2f) m", static_cast<double>(viewportOverlay->cameraWorldX),
+			ImGui::Text("Camera (monde) : (%.2f, %.2f, %.2f) m", static_cast<double>(viewportOverlay->cameraWorldX),
 				static_cast<double>(viewportOverlay->cameraWorldY), static_cast<double>(viewportOverlay->cameraWorldZ));
-			ImGui::Text("Orientation : yaw %.1f°, pitch %.1f°", static_cast<double>(viewportOverlay->cameraYawDeg),
+			ImGui::Text("Orientation : yaw %.1fdeg, pitch %.1fdeg", static_cast<double>(viewportOverlay->cameraYawDeg),
 				static_cast<double>(viewportOverlay->cameraPitchDeg));
 			ImGui::TextDisabled(
-				"La grille et le rendu 3D utilisent la même matrice vue×projection chaque frame : ce n’est pas une grille « figée » "
-				"qui oublierait de se rafraîchir. Si ces nombres ne bougent pas avec WASD / souris, la caméra ne reçoit pas l’entrée "
-				"(focus ImGui, etc.). S’ils bougent mais l’image ne change pas, il s’agit d’un autre problème de rendu.");
+				"La grille et le rendu 3D utilisent la meme matrice vue x projection chaque frame : ce n'est pas une grille 'figee' "
+				"qui oublierait de se rafraichir. Si ces nombres ne bougent pas avec WASD / souris, la camera ne recoit pas l'entree "
+				"(focus ImGui, etc.). S'ils bougent mais l'image ne change pas, il s'agit d'un autre probleme de rendu.");
 		}
 		ImGui::End();
 
@@ -753,16 +753,16 @@ namespace engine::editor
 
 			ImGui::Begin("Carte");
 
-			// Section 1 — Cartes existantes (chemin canonique world_editor/maps/<zone_id>/).
+			// Section 1 - Cartes existantes (chemin canonique world_editor/maps/<zone_id>/).
 			ImGui::TextUnformatted("Cartes disponibles");
-			if (ImGui::Button("Rafraîchir la liste"))
+			if (ImGui::Button("Rafraichir la liste"))
 			{
 				m_session->RefreshAvailableMaps(*m_cfg);
 			}
 			const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
 			if (mapIds.empty())
 			{
-				ImGui::TextDisabled("Aucune carte trouvée. Créez-en une ci-dessous, ou cliquez sur « Rafraîchir la liste ».");
+				ImGui::TextDisabled("Aucune carte trouvee. Creez-en une ci-dessous, ou cliquez sur 'Rafraichir la liste'.");
 			}
 			else
 			{
@@ -777,14 +777,14 @@ namespace engine::editor
 				sel = std::clamp(sel, 0, static_cast<int>(mapIds.size()) - 1);
 				ImGui::Combo("Carte", &sel, itemsZ.c_str());
 				sel = std::clamp(sel, 0, static_cast<int>(mapIds.size()) - 1);
-				if (ImGui::Button("Charger la carte sélectionnée"))
+				if (ImGui::Button("Charger la carte selectionnee"))
 				{
 					(void)m_session->ActionLoadMapByZoneId(*m_cfg, mapIds[static_cast<size_t>(sel)]);
 				}
 			}
 			ImGui::Separator();
 
-			// Section 2 — Sauvegarde 1-clic dans le chemin canonique de la carte courante.
+			// Section 2 - Sauvegarde 1-clic dans le chemin canonique de la carte courante.
 			ImGui::TextUnformatted("Carte courante");
 			ImGui::InputText("Nom (zone_id)", m_session->BufZoneId().data(), m_session->BufZoneId().size());
 			if (ImGui::Button("Sauvegarder"))
@@ -802,12 +802,12 @@ namespace engine::editor
 			}
 			ImGui::Separator();
 
-			// Section 3 — Création d'une nouvelle carte.
+			// Section 3 - Creation d'une nouvelle carte.
 			ImGui::TextUnformatted("Nouvelle carte");
-			ImGui::InputText("Taille (N×N)", m_session->BufSize().data(), m_session->BufSize().size());
-			ImGui::InputTextWithHint("Seed (optionnel)", "vide = aléatoire non fixé",
+			ImGui::InputText("Taille (NxN)", m_session->BufSize().data(), m_session->BufSize().size());
+			ImGui::InputTextWithHint("Seed (optionnel)", "vide = aleatoire non fixe",
 				m_session->BufSeed().data(), m_session->BufSeed().size());
-			if (ImGui::Button("Créer une nouvelle carte"))
+			if (ImGui::Button("Creer une nouvelle carte"))
 			{
 				if (m_session->ActionNewMap(*m_cfg))
 				{
@@ -816,8 +816,8 @@ namespace engine::editor
 			}
 			ImGui::Separator();
 
-			// Section 4 — Détails fichiers + recharge terrain GPU (avancé, replié par défaut).
-			if (ImGui::CollapsingHeader("Détails fichiers (avancé)"))
+			// Section 4 - Details fichiers + recharge terrain GPU (avance, replie par defaut).
+			if (ImGui::CollapsingHeader("Details fichiers (avance)"))
 			{
 				ImGui::TextUnformatted("Heightmap (relatif content):");
 				ImGui::TextWrapped("%s", m_session->Doc().heightmapContentRelativePath.c_str());
@@ -836,7 +836,7 @@ namespace engine::editor
 			ImGui::End();
 
 			ImGui::Begin("Affichage & grille");
-			ImGui::Checkbox("Grille (aperçu écran)", &m_session->ShowGrid());
+			ImGui::Checkbox("Grille (apercu ecran)", &m_session->ShowGrid());
 			ImGui::SliderFloat("Maille grille (m)", &m_session->GridCellMeters(), 1.f, 128.f, "%.1f");
 			if (viewportOverlay && viewportOverlay->heightmap && viewportOverlay->terrainWorldSize > 0.f)
 			{
@@ -848,28 +848,28 @@ namespace engine::editor
 					const float minSpacing =
 						ws / static_cast<float>(std::max(1, kWorldEditorGridMaxLinesPerAxis - 1));
 					ImGui::TextColored(ImVec4(1.f, 0.82f, 0.35f, 1.f),
-						"La grille est limitée à %d lignes par axe (performances). Avec un terrain de %.0f m, "
-						"la maille affichée ne peut pas être plus fine qu’environ %.1f m tant que ce plafond s’applique.",
+						"La grille est limitee a %d lignes par axe (performances). Avec un terrain de %.0f m, "
+						"la maille affichee ne peut pas etre plus fine qu'environ %.1f m tant que ce plafond s'applique.",
 						kWorldEditorGridMaxLinesPerAxis, static_cast<double>(ws), static_cast<double>(minSpacing));
 				}
 			}
-			ImGui::TextUnformatted("La grille est dessinée en surimpression (projection caméra) lorsque le terrain GPU est chargé.");
+			ImGui::TextUnformatted("La grille est dessinee en surimpression (projection camera) lorsque le terrain GPU est charge.");
 			ImGui::End();
 
 			ImGui::Begin("Outils");
-			// État du terrain — visible en permanence, pour expliquer pourquoi le clic peut être inactif.
+			// Etat du terrain - visible en permanence, pour expliquer pourquoi le clic peut etre inactif.
 			{
 				const bool terrainReady = !m_session->Doc().heightmapContentRelativePath.empty();
 				if (terrainReady)
 				{
-					ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f), "Terrain : prêt");
+					ImGui::TextColored(ImVec4(0.5f, 0.95f, 0.55f, 1.f), "Terrain : pret");
 				}
 				else
 				{
 					ImGui::TextColored(ImVec4(1.f, 0.55f, 0.3f, 1.f),
-						"Terrain : aucun. Créez ou chargez une carte avant de peindre / sculpter.");
+						"Terrain : aucun. Creez ou chargez une carte avant de peindre / sculpter.");
 				}
-				ImGui::TextDisabled("Le clic gauche est ignoré quand la souris est au-dessus de l'UI ; visez la zone 3D.");
+				ImGui::TextDisabled("Le clic gauche est ignore quand la souris est au-dessus de l'UI ; visez la zone 3D.");
 				ImGui::Separator();
 			}
 			if (ImGui::BeginTabBar("OutilsTabs"))
@@ -899,13 +899,13 @@ namespace engine::editor
 					ImGui::SliderFloat("Force", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
 
 					ImGui::Separator();
-					if (ImGui::CollapsingHeader("Textures personnalisées (par couche)"))
+					if (ImGui::CollapsingHeader("Textures personnalisees (par couche)"))
 					{
-						ImGui::TextDisabled("Associez une texture importée à chaque type de sol.");
+						ImGui::TextDisabled("Associez une texture importee a chaque type de sol.");
 						const std::vector<std::string>& imported = m_session->Doc().textureAssets;
 						std::array<std::string, 4>& refs = m_session->MutableDoc().splatLayerTextureRefs;
 						std::string itemsZ;
-						itemsZ += "(par défaut moteur)";
+						itemsZ += "(par defaut moteur)";
 						itemsZ.push_back('\0');
 						for (const std::string& t : imported)
 						{
@@ -941,7 +941,7 @@ namespace engine::editor
 								}
 							}
 						}
-						ImGui::TextDisabled("Le mapping est persisté dans la carte (champ JSON splat_layer_texture_refs).");
+						ImGui::TextDisabled("Le mapping est persiste dans la carte (champ JSON splat_layer_texture_refs).");
 					}
 
 					if (ImGui::CollapsingHeader("Sons de pas (par couche)"))
@@ -961,7 +961,7 @@ namespace engine::editor
 						if (imported.empty())
 						{
 							ImGui::TextColored(ImVec4(1.f, 0.7f, 0.3f, 1.f),
-								"Importez d'abord des sons via le panneau « Import assets ».");
+								"Importez d'abord des sons via le panneau 'Import assets'.");
 						}
 						for (int li = 0; li < 4; ++li)
 						{
@@ -992,24 +992,24 @@ namespace engine::editor
 							}
 						}
 						ImGui::TextDisabled(
-							"Persisté en JSON. Lecture côté gameplay (déplacement joueur → couche splat dominante)"
-							" sera branchée dans une itération moteur ultérieure.");
+							"Persiste en JSON. Lecture cote gameplay (deplacement joueur -> couche splat dominante)"
+							" sera branchee dans une iteration moteur ulterieure.");
 					}
 
 					ImGui::Separator();
-					ImGui::TextWrapped("Maintenez le clic gauche sur le sol pour peindre. La sauvegarde écrit le fichier splat.");
+					ImGui::TextWrapped("Maintenez le clic gauche sur le sol pour peindre. La sauvegarde ecrit le fichier splat.");
 					ImGui::EndTabItem();
 				}
 
 				if (ImGui::BeginTabItem("Herbe"))
 				{
 					tm = 2;
-					ImGui::TextDisabled("Définit où des touffes d'herbe poussent.");
+					ImGui::TextDisabled("Definit ou des touffes d'herbe poussent.");
 					ImGui::Checkbox("Mode gomme (efface l'herbe)", &m_session->GrassMaskEraseBrush());
 					ImGui::SliderFloat("Rayon du pinceau (m)", &m_session->BrushRadius(), 0.5f, 200.f, "%.1f");
 					ImGui::SliderFloat("Force", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
 					ImGui::Separator();
-					ImGui::TextWrapped("Maintenez le clic gauche pour appliquer. La sauvegarde écrit grass.grms.");
+					ImGui::TextWrapped("Maintenez le clic gauche pour appliquer. La sauvegarde ecrit grass.grms.");
 					ImGui::EndTabItem();
 				}
 
@@ -1018,17 +1018,17 @@ namespace engine::editor
 					tm = 3;
 					ImGui::TextDisabled("Pose des arbres, rochers ou autres objets.");
 					ImGui::TextWrapped(
-						"Choisissez le type d'objet dans le panneau « Objets sur la carte » à droite.");
+						"Choisissez le type d'objet dans le panneau 'Objets sur la carte' a droite.");
 					ImGui::Separator();
 					ImGui::TextWrapped(
-						"Clic gauche sur le sol : pose un nouvel objet, ou déplace l'objet sélectionné dans la liste.");
+						"Clic gauche sur le sol : pose un nouvel objet, ou deplace l'objet selectionne dans la liste.");
 					ImGui::EndTabItem();
 				}
 
 				if (ImGui::BeginTabItem("Eau"))
 				{
 					// Pas un mode de pinceau : on ne change pas tm.
-					ImGui::TextDisabled("Active une surface d'eau plane à un Y donné (lac, mer).");
+					ImGui::TextDisabled("Active une surface d'eau plane a un Y donne (lac, mer).");
 					bool waterOn = m_session->Doc().waterEnabled;
 					if (ImGui::Checkbox("Eau active", &waterOn))
 					{
@@ -1041,11 +1041,11 @@ namespace engine::editor
 					}
 					ImGui::Separator();
 					ImGui::TextDisabled(
-						"Ces réglages sont persistés dans la carte (champs JSON water_enabled,");
+						"Ces reglages sont persistes dans la carte (champs JSON water_enabled,");
 					ImGui::TextDisabled(
 						"water_level_m). La passe Vulkan eau (surface transparente, reflets simples)");
 					ImGui::TextDisabled(
-						"sera branchée dans une itération moteur ultérieure.");
+						"sera branchee dans une iteration moteur ulterieure.");
 					ImGui::EndTabItem();
 				}
 
@@ -1060,7 +1060,7 @@ namespace engine::editor
 						rl = std::clamp(rl, 0, 3);
 					}
 					ImGui::SliderFloat("Largeur (m)", &m_session->RouteStripWidthM(), 0.5f, 64.f, "%.1f");
-					ImGui::SliderFloat("Intensité", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
+					ImGui::SliderFloat("Intensite", &m_session->BrushStrength(), 0.01f, 1.f, "%.2f");
 					ImGui::Separator();
 					if (ImGui::Button("Effacer les points"))
 					{
@@ -1071,10 +1071,10 @@ namespace engine::editor
 					{
 						m_session->RequestApplyRouteDraftToSplat();
 					}
-					ImGui::Text("Points placés : %zu", m_session->RouteDraftPoints().size());
-					ImGui::Text("Routes enregistrées : %zu", m_session->Doc().routes.size());
+					ImGui::Text("Points places : %zu", m_session->RouteDraftPoints().size());
+					ImGui::Text("Routes enregistrees : %zu", m_session->Doc().routes.size());
 					ImGui::Separator();
-					ImGui::TextWrapped("Cliquez sur le sol pour ajouter un sommet de la route, puis « Tracer la route ».");
+					ImGui::TextWrapped("Cliquez sur le sol pour ajouter un sommet de la route, puis 'Tracer la route'.");
 					ImGui::EndTabItem();
 				}
 
@@ -1085,30 +1085,30 @@ namespace engine::editor
 
 			ImGui::Begin("Import assets");
 			ImGui::TextUnformatted("Texture (PNG / JPG / TGA / BMP)");
-			ImGui::InputTextWithHint("Source", "C:/chemin/vers/image.png (guillemets autorisés)",
+			ImGui::InputTextWithHint("Source", "C:/chemin/vers/image.png (guillemets autorises)",
 				m_session->BufPngPath().data(), m_session->BufPngPath().size());
-			ImGui::InputTextWithHint("Nom dans textures/", "vide = déduit automatiquement (ex: image.texr)",
+			ImGui::InputTextWithHint("Nom dans textures/", "vide = deduit automatiquement (ex: image.texr)",
 				m_session->BufTexrName().data(), m_session->BufTexrName().size());
 			if (ImGui::Button("Importer cette texture"))
 			{
 				(void)m_session->ActionImportTexture(*m_cfg);
 			}
-			ImGui::TextDisabled("L'extension .texr est ajoutée si absente. Le fichier est écrit dans <content>/textures/.");
+			ImGui::TextDisabled("L'extension .texr est ajoutee si absente. Le fichier est ecrit dans <content>/textures/.");
 			ImGui::Separator();
 
 			ImGui::TextUnformatted("Audio (WAV / OGG)");
-			ImGui::InputTextWithHint("Source##audio", "C:/chemin/vers/son.wav (guillemets autorisés)",
+			ImGui::InputTextWithHint("Source##audio", "C:/chemin/vers/son.wav (guillemets autorises)",
 				m_session->BufAudioSrc().data(), m_session->BufAudioSrc().size());
-			ImGui::InputTextWithHint("Nom dans audio/", "vide = même nom que la source (ex: footstep/sand.wav)",
+			ImGui::InputTextWithHint("Nom dans audio/", "vide = meme nom que la source (ex: footstep/sand.wav)",
 				m_session->BufAudioDest().data(), m_session->BufAudioDest().size());
 			if (ImGui::Button("Importer cet audio"))
 			{
 				(void)m_session->ActionImportAudio(*m_cfg);
 			}
-			ImGui::TextDisabled("Le fichier est copié dans <content>/audio/. Aucune transcompression.");
+			ImGui::TextDisabled("Le fichier est copie dans <content>/audio/. Aucune transcompression.");
 			ImGui::Separator();
 
-			ImGui::TextUnformatted("Textures déjà importées sur cette carte:");
+			ImGui::TextUnformatted("Textures deja importees sur cette carte:");
 			if (m_session->Doc().textureAssets.empty())
 			{
 				ImGui::TextDisabled("(aucune)");
@@ -1130,7 +1130,7 @@ namespace engine::editor
 			const char* placeKinds[] = { "Arbre (catalogue 013)", "Rocher (legacy zone_1)" };
 			{
 				int& pk = m_session->InstancePlacementKind();
-				ImGui::Combo("Type à placer", &pk, placeKinds, IM_ARRAYSIZE(placeKinds));
+				ImGui::Combo("Type a placer", &pk, placeKinds, IM_ARRAYSIZE(placeKinds));
 				pk = std::clamp(pk, 0, 1);
 			}
 			if (m_session->InstancePlacementKind() == 0)
@@ -1153,7 +1153,7 @@ namespace engine::editor
 					int& si = m_session->TreeSpeciesUiIndex();
 					const int prevSi = si;
 					si = std::clamp(si, 0, static_cast<int>(specs.size()) - 1);
-					ImGui::Combo("Espèce", &si, speciesItems.c_str());
+					ImGui::Combo("Espece", &si, speciesItems.c_str());
 					si = std::clamp(si, 0, static_cast<int>(specs.size()) - 1);
 					if (si != prevSi)
 					{
@@ -1177,20 +1177,20 @@ namespace engine::editor
 					shi = std::clamp(shi, 0, static_cast<int>(sp.shapes.size()) - 1);
 					ImGui::Combo("Forme (variante glTF)", &shi, shapeItems.c_str());
 					shi = std::clamp(shi, 0, static_cast<int>(sp.shapes.size()) - 1);
-					ImGui::SliderFloat("Taille (min–max espèce)", &m_session->TreeScaleT01(), 0.f, 1.f, "%.2f");
-					ImGui::Checkbox("Échelle aléatoire à la pose", &m_session->TreeRandomizeScaleOnPlace());
+					ImGui::SliderFloat("Taille (min-max espece)", &m_session->TreeScaleT01(), 0.f, 1.f, "%.2f");
+					ImGui::Checkbox("Echelle aleatoire a la pose", &m_session->TreeRandomizeScaleOnPlace());
 					if (m_session->TreeRandomizeScaleOnPlace())
 					{
-						ImGui::TextDisabled("Le curseur taille est ignoré si aléatoire est coché.");
+						ImGui::TextDisabled("Le curseur taille est ignore si aleatoire est coche.");
 					}
 				}
 			}
 			else
 			{
-				ImGui::TextUnformatted("Pose un rocher (zones/zone_1/zone_1.gltf), sans espèce catalogue.");
+				ImGui::TextUnformatted("Pose un rocher (zones/zone_1/zone_1.gltf), sans espece catalogue.");
 			}
 			ImGui::TextUnformatted(
-				"Sélectionnez une ligne pour déplacer au prochain clic. Sans sélection : nouvelle instance. Coordonnées monde + snap hauteur MNT.");
+				"Selectionnez une ligne pour deplacer au prochain clic. Sans selection : nouvelle instance. Coordonnees monde + snap hauteur MNT.");
 			ImGui::Separator();
 			for (size_t i = 0; i < m_session->MutableDoc().layoutInstances.size(); ++i)
 			{
@@ -1198,12 +1198,12 @@ namespace engine::editor
 				char label[256];
 				if (!inst.speciesId.empty())
 				{
-					std::snprintf(label, sizeof(label), "%s — %s #%u — scale %.3f##instrow%zu", inst.guid.c_str(), inst.speciesId.c_str(),
+					std::snprintf(label, sizeof(label), "%s - %s #%u - scale %.3f##instrow%zu", inst.guid.c_str(), inst.speciesId.c_str(),
 						static_cast<unsigned>(inst.shapeVariantIndex), inst.uniformScale, i);
 				}
 				else
 				{
-					std::snprintf(label, sizeof(label), "%s — %s##instrow%zu", inst.guid.c_str(), inst.gltfContentRelativePath.c_str(), i);
+					std::snprintf(label, sizeof(label), "%s - %s##instrow%zu", inst.guid.c_str(), inst.gltfContentRelativePath.c_str(), i);
 				}
 				const bool sel = (m_session->SelectedLayoutInstanceIndex() == static_cast<int>(i));
 				if (ImGui::Selectable(label, sel))
@@ -1230,7 +1230,7 @@ namespace engine::editor
 						if (spec != nullptr && !spec->shapes.empty())
 						{
 							ImGui::Separator();
-							ImGui::TextUnformatted("Édition instance sélectionnée (arbre)");
+							ImGui::TextUnformatted("Edition instance selectionnee (arbre)");
 							std::string shapeItemsSel;
 							for (const TreeSpeciesShapeSpec& sh : spec->shapes)
 							{
@@ -1251,14 +1251,14 @@ namespace engine::editor
 							inst.shapeVariantIndex = static_cast<uint32_t>(sh);
 							inst.gltfContentRelativePath = spec->shapes[static_cast<size_t>(sh)].gltfContentRelativePath;
 							float scf = static_cast<float>(inst.uniformScale);
-							(void)ImGui::SliderFloat("Échelle##edit_sel", &scf, static_cast<float>(spec->scaleMin), static_cast<float>(spec->scaleMax),
+							(void)ImGui::SliderFloat("Echelle##edit_sel", &scf, static_cast<float>(spec->scaleMin), static_cast<float>(spec->scaleMax),
 								"%.3f");
 							inst.uniformScale = static_cast<double>(scf);
 						}
 					}
 				}
 			}
-			if (ImGui::Button("Aucune sélection (pose toujours une nouvelle instance)"))
+			if (ImGui::Button("Aucune selection (pose toujours une nouvelle instance)"))
 			{
 				m_session->SelectedLayoutInstanceIndex() = -1;
 			}
@@ -1270,8 +1270,8 @@ namespace engine::editor
 		}
 		else
 		{
-			ImGui::Begin("Propriétés", nullptr, ImGuiWindowFlags_NoMouseInputs);
-			ImGui::TextUnformatted("Session éditeur non initialisée.");
+			ImGui::Begin("Proprietes", nullptr, ImGuiWindowFlags_NoMouseInputs);
+			ImGui::TextUnformatted("Session editeur non initialisee.");
 			ImGui::End();
 		}
 

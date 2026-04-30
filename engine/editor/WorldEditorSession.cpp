@@ -69,7 +69,7 @@ namespace engine::editor
 			return std::string(buf);
 		}
 
-		/// Normalise un chemin saisi à la main : strip espaces et guillemets entourants
+		/// Normalise un chemin saisi a la main : strip espaces et guillemets entourants
 		/// (typiquement quand l'utilisateur fait copier-coller depuis l'Explorateur Windows).
 		std::string NormalizeUserPath(std::string s)
 		{
@@ -94,8 +94,8 @@ namespace engine::editor
 			return s;
 		}
 
-		/// Bascule l'extension d'un nom de fichier (ex. "sand.png" → "sand.texr"). Si pas
-		/// d'extension, l'ajoute. Préserve les répertoires antérieurs.
+		/// Bascule l'extension d'un nom de fichier (ex. "sand.png" -> "sand.texr"). Si pas
+		/// d'extension, l'ajoute. Preserve les repertoires anterieurs.
 		std::string ReplaceExtension(std::string_view nameWithMaybeDirs, std::string_view newExtNoDot)
 		{
 			std::string out(nameWithMaybeDirs);
@@ -196,7 +196,7 @@ namespace engine::editor
 			inst.worldX = worldX;
 			inst.worldY = worldY;
 			inst.worldZ = worldZ;
-			SetStatus("Instance déplacée.");
+			SetStatus("Instance deplacee.");
 			return;
 		}
 		const int kind = std::clamp(m_instancePlacementKind, 0, 1);
@@ -213,7 +213,7 @@ namespace engine::editor
 		{
 			if (m_treeCatalog.Species().empty())
 			{
-				SetStatus("Aucune espèce d’arbre valide (catalogue absent ou sans 2+ glTF par espèce). Utilisez « Rocher » ou corrigez le JSON.");
+				SetStatus("Aucune espece d'arbre valide (catalogue absent ou sans 2+ glTF par espece). Utilisez 'Rocher' ou corrigez le JSON.");
 				return;
 			}
 			const int si = std::clamp(m_treeSpeciesUiIndex, 0, static_cast<int>(m_treeCatalog.Species().size()) - 1);
@@ -240,7 +240,7 @@ namespace engine::editor
 		inst.worldY = worldY;
 		inst.worldZ = worldZ;
 		m_doc.layoutInstances.push_back(std::move(inst));
-		SetStatus(kind == 1 ? "Rocher placé." : "Arbre placé.");
+		SetStatus(kind == 1 ? "Rocher place." : "Arbre place.");
 	}
 
 	void WorldEditorSession::RemoveLayoutInstance(size_t index)
@@ -258,7 +258,7 @@ namespace engine::editor
 		{
 			--m_selectedLayoutInstance;
 		}
-		SetStatus("Instance supprimée.");
+		SetStatus("Instance supprimee.");
 	}
 
 	void WorldEditorSession::SyncBuffersFromDoc()
@@ -354,7 +354,7 @@ namespace engine::editor
 			engine::render::terrain::TerrainGrassDetail::GenerateZeros(1024u, 1024u, gm);
 			if (!engine::render::terrain::TerrainGrassDetail::SaveToFile(grassAbs.string(), gm))
 			{
-				SetStatus("Nouvelle carte: écriture grass.grms impossible");
+				SetStatus("Nouvelle carte: ecriture grass.grms impossible");
 				LOG_ERROR(Core, "[WorldEditor] grass.grms write failed: {}", grassAbs.string());
 				return false;
 			}
@@ -383,12 +383,12 @@ namespace engine::editor
 		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
 		if (!SaveEditDocumentJson(jsonAbs, m_doc, err))
 		{
-			SetStatus("Carte créée mais sauvegarde JSON échouée: " + err);
+			SetStatus("Carte creee mais sauvegarde JSON echouee: " + err);
 			LOG_WARN(Core, "[WorldEditor] {}", err);
 			RequestTerrainGpuReload();
 			return true;
 		}
-		SetStatus("Nouvelle carte OK — " + hmRel);
+		SetStatus("Nouvelle carte OK - " + hmRel);
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		LOG_INFO(Core, "[WorldEditor] New map OK zone={} size={}", zid, sz);
@@ -408,7 +408,7 @@ namespace engine::editor
 		}
 		if (m_terrainSaveHook && !m_terrainSaveHook(cfg, m_doc))
 		{
-			SetStatus("Sauvegarde: échec écriture des fichiers terrain (heightmap / splat / grass).");
+			SetStatus("Sauvegarde: echec ecriture des fichiers terrain (heightmap / splat / grass).");
 			return false;
 		}
 		std::string err;
@@ -418,7 +418,7 @@ namespace engine::editor
 			return false;
 		}
 		m_editJsonAbsolutePath = path;
-		SetStatus("Sauvegardé: " + path);
+		SetStatus("Sauvegarde: " + path);
 		return true;
 	}
 
@@ -440,7 +440,7 @@ namespace engine::editor
 		m_treeCatalogLoadAttempted = false;
 		m_editJsonAbsolutePath = path;
 		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
-		SetStatus("Chargé: " + path);
+		SetStatus("Charge: " + path);
 		m_selectedLayoutInstance = -1;
 		m_routeDraftXz.clear();
 		m_routeApplyDraftRequested = false;
@@ -460,7 +460,7 @@ namespace engine::editor
 			SetStatus("Export: " + err);
 			return false;
 		}
-		SetStatus("Export runtime OK → game/data/zones/" + SanitizeZoneId(m_doc.zoneId) + "/");
+		SetStatus("Export runtime OK -> game/data/zones/" + SanitizeZoneId(m_doc.zoneId) + "/");
 		return true;
 	}
 
@@ -528,7 +528,7 @@ namespace engine::editor
 		std::filesystem::create_directories(jsonAbs.parent_path(), ec);
 		if (m_terrainSaveHook && !m_terrainSaveHook(cfg, m_doc))
 		{
-			SetStatus("Sauvegarde: échec écriture des fichiers terrain (heightmap / splat / grass).");
+			SetStatus("Sauvegarde: echec ecriture des fichiers terrain (heightmap / splat / grass).");
 			return false;
 		}
 		std::string err;
@@ -539,7 +539,7 @@ namespace engine::editor
 		}
 		m_editJsonAbsolutePath = jsonAbs.string();
 		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
-		SetStatus("Carte sauvegardée: " + zid);
+		SetStatus("Carte sauvegardee: " + zid);
 		LOG_INFO(Core, "[WorldEditor] Saved map zone={} -> {}", zid, m_editJsonAbsolutePath);
 		RefreshAvailableMaps(cfg);
 		for (int i = 0; i < static_cast<int>(m_availableMapIds.size()); ++i)
@@ -579,7 +579,7 @@ namespace engine::editor
 		m_editJsonAbsolutePath = jsonAbs.string();
 		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
 		SetBuf(m_bufLoadPath, m_editJsonAbsolutePath);
-		SetStatus("Carte chargée: " + zid);
+		SetStatus("Carte chargee: " + zid);
 		LOG_INFO(Core, "[WorldEditor] Loaded map zone={} -> {}", zid, m_editJsonAbsolutePath);
 		m_selectedLayoutInstance = -1;
 		m_routeDraftXz.clear();
@@ -608,7 +608,7 @@ namespace engine::editor
 			SetStatus("Import texture: chemin PNG source requis (chemin absolu).");
 			return false;
 		}
-		// Auto-dérive un nom destination si vide, depuis le basename de la source.
+		// Auto-derive un nom destination si vide, depuis le basename de la source.
 		if (dest.empty())
 		{
 			const std::filesystem::path srcPath(png);
@@ -636,7 +636,7 @@ namespace engine::editor
 				dest = ReplaceExtension(dest, "texr");
 			}
 		}
-		// Reflète la normalisation dans le buffer UI pour aider l'utilisateur.
+		// Reflete la normalisation dans le buffer UI pour aider l'utilisateur.
 		SetBuf(m_bufPngPath, png);
 		SetBuf(m_bufTexrName, dest);
 
@@ -648,13 +648,13 @@ namespace engine::editor
 			return false;
 		}
 		const std::string rel = std::string("textures/") + dest;
-		// Évite les doublons dans la liste (ré-import du même nom).
+		// Evite les doublons dans la liste (re-import du meme nom).
 		const auto it = std::find(m_doc.textureAssets.begin(), m_doc.textureAssets.end(), rel);
 		if (it == m_doc.textureAssets.end())
 		{
 			m_doc.textureAssets.push_back(rel);
 		}
-		SetStatus("Texture importée: " + rel);
+		SetStatus("Texture importee: " + rel);
 		return true;
 	}
 
@@ -667,7 +667,7 @@ namespace engine::editor
 			SetStatus("Import audio: chemin source requis (chemin absolu).");
 			return false;
 		}
-		// Auto-dérive un nom destination si vide, depuis le basename de la source.
+		// Auto-derive un nom destination si vide, depuis le basename de la source.
 		if (dst.empty())
 		{
 			const std::filesystem::path srcPath(src);
@@ -678,7 +678,7 @@ namespace engine::editor
 				return false;
 			}
 		}
-		// Reflète la normalisation dans le buffer UI.
+		// Reflete la normalisation dans le buffer UI.
 		SetBuf(m_bufAudioSrc, src);
 		SetBuf(m_bufAudioDest, dst);
 
@@ -690,13 +690,13 @@ namespace engine::editor
 			return false;
 		}
 		const std::string rel = std::string("audio/") + dst;
-		// Évite les doublons dans la liste (ré-import du même nom).
+		// Evite les doublons dans la liste (re-import du meme nom).
 		const auto it = std::find(m_doc.audioAssets.begin(), m_doc.audioAssets.end(), rel);
 		if (it == m_doc.audioAssets.end())
 		{
 			m_doc.audioAssets.push_back(rel);
 		}
-		SetStatus("Audio importé: " + rel);
+		SetStatus("Audio importe: " + rel);
 		return true;
 	}
 

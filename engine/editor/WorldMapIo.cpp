@@ -24,7 +24,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4505)
 #endif
-// Implémentation STB déjà dans AssetRegistry.cpp — pas de second STB_IMAGE_IMPLEMENTATION.
+// Implementation STB deja dans AssetRegistry.cpp - pas de second STB_IMAGE_IMPLEMENTATION.
 #include "stb_image.h"
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -239,12 +239,12 @@ namespace engine::editor
 
 		constexpr size_t kMaxJsonStringArrayEntries = 4096;
 
-		/// Lit une chaîne JSON à partir du guillemet ouvrant (avance \p p après le guillemet fermant).
+		/// Lit une chaine JSON a partir du guillemet ouvrant (avance \p p apres le guillemet fermant).
 		bool ReadJsonStringLiteral(std::string_view json, size_t& p, std::string& out, std::string& outError, std::string_view contextKey)
 		{
 			if (p >= json.size() || json[p] != '"')
 			{
-				outError = std::string(contextKey) + ": valeur chaîne attendue (guillemet ouvrant)";
+				outError = std::string(contextKey) + ": valeur chaine attendue (guillemet ouvrant)";
 				return false;
 			}
 			++p;
@@ -255,7 +255,7 @@ namespace engine::editor
 				{
 					if (p + 1 >= json.size())
 					{
-						outError = std::string(contextKey) + ": échappement '\\' incomplet";
+						outError = std::string(contextKey) + ": echappement '\\' incomplet";
 						return false;
 					}
 					p += 2;
@@ -269,11 +269,11 @@ namespace engine::editor
 				}
 				++p;
 			}
-			outError = std::string(contextKey) + ": chaîne JSON non terminée";
+			outError = std::string(contextKey) + ": chaine JSON non terminee";
 			return false;
 		}
 
-		/// Parse un tableau JSON de chaînes uniquement pour la clé \p key. Clé absente ou valeur `null` → \p out vide, succès.
+		/// Parse un tableau JSON de chaines uniquement pour la cle \p key. Cle absente ou valeur `null` -> \p out vide, succes.
 		bool ParseJsonStringArray(std::string_view json, std::string_view key, std::vector<std::string>& out, std::string& outError)
 		{
 			out.clear();
@@ -286,7 +286,7 @@ namespace engine::editor
 			size_t p = json.find(':', keyPos + needle.size());
 			if (p == std::string::npos)
 			{
-				outError = std::string(key) + ": ':' manquant après la clé";
+				outError = std::string(key) + ": ':' manquant apres la cle";
 				return false;
 			}
 			++p;
@@ -316,7 +316,7 @@ namespace engine::editor
 				}
 				if (out.size() >= kMaxJsonStringArrayEntries)
 				{
-					outError = std::string(key) + ": trop d'entrées (max " + std::to_string(kMaxJsonStringArrayEntries) + ")";
+					outError = std::string(key) + ": trop d'entrees (max " + std::to_string(kMaxJsonStringArrayEntries) + ")";
 					return false;
 				}
 				out.push_back(std::move(item));
@@ -331,7 +331,7 @@ namespace engine::editor
 					++p;
 					return true;
 				}
-				outError = std::string(key) + ": ',' ou ']' attendu après un élément";
+				outError = std::string(key) + ": ',' ou ']' attendu apres un element";
 				return false;
 			}
 		}
@@ -436,7 +436,7 @@ namespace engine::editor
 			return true;
 		}
 
-		/// Parse `terrain_world_size_m` (nombre ou null). Clé absente → pas d’override (succès).
+		/// Parse `terrain_world_size_m` (nombre ou null). Cle absente -> pas d'override (succes).
 		bool ParseOptionalTerrainWorldSizeM(std::string_view json, WorldMapEditDocument& d, std::string& outError)
 		{
 			constexpr std::string_view kKey = "terrain_world_size_m";
@@ -450,7 +450,7 @@ namespace engine::editor
 			size_t p = json.find(':', keyPos + needle.size());
 			if (p == std::string::npos)
 			{
-				outError = std::string(kKey) + ": ':' manquant après la clé";
+				outError = std::string(kKey) + ": ':' manquant apres la cle";
 				return false;
 			}
 			++p;
@@ -486,7 +486,7 @@ namespace engine::editor
 			}
 			if (v <= 0.0 || v > 1.0e7)
 			{
-				outError = std::string(kKey) + ": valeur hors plage (]0, 1e7] mètres)";
+				outError = std::string(kKey) + ": valeur hors plage (]0, 1e7] metres)";
 				return false;
 			}
 			d.hasTerrainWorldSizeM = true;
@@ -552,7 +552,7 @@ namespace engine::editor
 			SkipWs(obj, p);
 			if (p >= obj.size() || obj[p] != ',')
 			{
-				outError = std::string(key) + ": ',' après X";
+				outError = std::string(key) + ": ',' apres X";
 				return false;
 			}
 			++p;
@@ -564,7 +564,7 @@ namespace engine::editor
 			SkipWs(obj, p);
 			if (p >= obj.size() || obj[p] != ',')
 			{
-				outError = std::string(key) + ": ',' après Y";
+				outError = std::string(key) + ": ',' apres Y";
 				return false;
 			}
 			++p;
@@ -637,14 +637,14 @@ namespace engine::editor
 			p = obj.find(':', p + needle.size());
 			if (p == std::string::npos)
 			{
-				outError = "instance: ':' après clé optionnelle";
+				outError = "instance: ':' apres cle optionnelle";
 				return false;
 			}
 			++p;
 			SkipWs(obj, p);
 			if (p >= obj.size() || obj[p] != '"')
 			{
-				outError = std::string("instance: chaîne JSON attendue pour ") + std::string(key);
+				outError = std::string("instance: chaine JSON attendue pour ") + std::string(key);
 				return false;
 			}
 			++p;
@@ -655,7 +655,7 @@ namespace engine::editor
 				{
 					if (p + 1 >= obj.size())
 					{
-						outError = "instance: échappement incomplet";
+						outError = "instance: echappement incomplet";
 						return false;
 					}
 					p += 2;
@@ -687,7 +687,7 @@ namespace engine::editor
 			p = obj.find(':', p + needle.size());
 			if (p == std::string::npos)
 			{
-				outError = "instance: ':' après shape_variant";
+				outError = "instance: ':' apres shape_variant";
 				return false;
 			}
 			++p;
@@ -817,7 +817,7 @@ namespace engine::editor
 				}
 				if (p >= json.size())
 				{
-					outError = "instances: tableau non terminé";
+					outError = "instances: tableau non termine";
 					return false;
 				}
 				if (json[p] != '{')
@@ -831,7 +831,7 @@ namespace engine::editor
 				{
 					if (p >= json.size())
 					{
-						outError = "instances: accolade non fermée";
+						outError = "instances: accolade non fermee";
 						return false;
 					}
 					if (json[p] == '{')
@@ -861,7 +861,7 @@ namespace engine::editor
 				{
 					return true;
 				}
-				outError = "instances: ',' ou ']' attendu après un objet";
+				outError = "instances: ',' ou ']' attendu apres un objet";
 				return false;
 			}
 		}
@@ -879,7 +879,7 @@ namespace engine::editor
 			size_t p = obj.find(':', keyPos + needle.size());
 			if (p == std::string::npos)
 			{
-				outError = "route: ':' après points";
+				outError = "route: ':' apres points";
 				return false;
 			}
 			++p;
@@ -931,7 +931,7 @@ namespace engine::editor
 				}
 				if (p >= obj.size())
 				{
-					outError = "route: tableau points non terminé";
+					outError = "route: tableau points non termine";
 					return false;
 				}
 				if (obj[p] != '[')
@@ -944,25 +944,25 @@ namespace engine::editor
 				double vz = 0.0;
 				if (!readOneDouble(vx))
 				{
-					outError = "route: coordonnée X invalide";
+					outError = "route: coordonnee X invalide";
 					return false;
 				}
 				SkipWs(obj, p);
 				if (p >= obj.size() || obj[p] != ',')
 				{
-					outError = "route: ',' après X";
+					outError = "route: ',' apres X";
 					return false;
 				}
 				++p;
 				if (!readOneDouble(vz))
 				{
-					outError = "route: coordonnée Z invalide";
+					outError = "route: coordonnee Z invalide";
 					return false;
 				}
 				SkipWs(obj, p);
 				if (p >= obj.size() || obj[p] != ']')
 				{
-					outError = "route: ']' attendu après Z";
+					outError = "route: ']' attendu apres Z";
 					return false;
 				}
 				++p;
@@ -982,7 +982,7 @@ namespace engine::editor
 					}
 					return true;
 				}
-				outError = "route: ',' ou ']' attendu après un point";
+				outError = "route: ',' ou ']' attendu apres un point";
 				return false;
 			}
 		}
@@ -1052,7 +1052,7 @@ namespace engine::editor
 				}
 				if (p >= json.size())
 				{
-					outError = "routes: tableau non terminé";
+					outError = "routes: tableau non termine";
 					return false;
 				}
 				if (json[p] != '{')
@@ -1066,7 +1066,7 @@ namespace engine::editor
 				{
 					if (p >= json.size())
 					{
-						outError = "routes: accolade non fermée";
+						outError = "routes: accolade non fermee";
 						return false;
 					}
 					if (json[p] == '{')
@@ -1262,7 +1262,7 @@ namespace engine::editor
 		std::ofstream out(absolutePath, std::ios::binary | std::ios::trunc);
 		if (!out.is_open())
 		{
-			outError = "impossible d’ouvrir le fichier en écriture";
+			outError = "impossible d'ouvrir le fichier en ecriture";
 			return false;
 		}
 		out << "{\n";
@@ -1306,7 +1306,7 @@ namespace engine::editor
 		out << "}\n";
 		if (!out.good())
 		{
-			outError = "erreur d’écriture";
+			outError = "erreur d'ecriture";
 			return false;
 		}
 		return true;
@@ -1347,7 +1347,7 @@ namespace engine::editor
 		}
 		if (d.formatVersion > WorldMapEditDocument::kFormatVersion)
 		{
-			outError = "version document non supportée: " + std::to_string(d.formatVersion) + " (max " +
+			outError = "version document non supportee: " + std::to_string(d.formatVersion) + " (max " +
 			           std::to_string(WorldMapEditDocument::kFormatVersion) + ")";
 			return false;
 		}
@@ -1395,7 +1395,7 @@ namespace engine::editor
 		{
 			std::string parseErr;
 			(void)ParseJsonStringArray(json, "audio_assets", d.audioAssets, parseErr);
-			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+			// Champ optionnel : absent dans les vieux JSON, on n'echoue pas.
 		}
 		{
 			std::vector<std::string> refs;
@@ -1407,7 +1407,7 @@ namespace engine::editor
 					d.splatLayerTextureRefs[i] = refs[i];
 				}
 			}
-			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+			// Champ optionnel : absent dans les vieux JSON, on n'echoue pas.
 		}
 		{
 			std::vector<std::string> refs;
@@ -1419,7 +1419,7 @@ namespace engine::editor
 					d.splatLayerFootstepAudioRefs[i] = refs[i];
 				}
 			}
-			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+			// Champ optionnel : absent dans les vieux JSON, on n'echoue pas.
 		}
 		if (!ParseJsonLayoutInstances(json, d.layoutInstances, outError))
 		{
@@ -1433,7 +1433,7 @@ namespace engine::editor
 		{
 			return false;
 		}
-		// Eau (Lot G) — optionnel, défaut désactivé.
+		// Eau (Lot G) - optionnel, defaut desactive.
 		{
 			bool wEnabled = false;
 			if (ParseJsonBoolValue(json, "water_enabled", wEnabled))
@@ -1467,7 +1467,7 @@ namespace engine::editor
 		std::ofstream out(absolutePath, std::ios::binary | std::ios::trunc);
 		if (!out.is_open())
 		{
-			outError = "création heightmap impossible";
+			outError = "creation heightmap impossible";
 			return false;
 		}
 		const uint32_t magic = engine::render::terrain::kHeightmapMagic;
@@ -1481,7 +1481,7 @@ namespace engine::editor
 		}
 		if (!out.good())
 		{
-			outError = "écriture heightmap incomplète";
+			outError = "ecriture heightmap incomplete";
 			return false;
 		}
 		return true;
@@ -1499,7 +1499,7 @@ namespace engine::editor
 		std::ofstream out(absolutePath, std::ios::binary | std::ios::trunc);
 		if (!out.is_open())
 		{
-			outError = "création splat impossible";
+			outError = "creation splat impossible";
 			return false;
 		}
 		const uint32_t magic = engine::render::terrain::kTerrainSplatFileMagic;
@@ -1517,7 +1517,7 @@ namespace engine::editor
 		}
 		if (!out.good())
 		{
-			outError = "écriture splat incomplète";
+			outError = "ecriture splat incomplete";
 			return false;
 		}
 		return true;
@@ -1539,7 +1539,7 @@ namespace engine::editor
 		std::filesystem::copy_file(srcHm, dstHm, std::filesystem::copy_options::overwrite_existing, ec);
 		if (ec)
 		{
-			outError = "copie heightmap échouée: " + ec.message();
+			outError = "copie heightmap echouee: " + ec.message();
 			return false;
 		}
 
@@ -1551,13 +1551,13 @@ namespace engine::editor
 			{
 				if (!ContentRelativePathHasNoTraversal(relSm))
 				{
-					outError = "chemin splatmap refusé (relatif au content, sans ..) : " + doc.splatmapContentRelativePath;
+					outError = "chemin splatmap refuse (relatif au content, sans ..) : " + doc.splatmapContentRelativePath;
 					return false;
 				}
 				const std::filesystem::path srcSm = engine::platform::FileSystem::ResolveContentPath(cfg, relSm);
 				if (!engine::platform::FileSystem::Exists(srcSm))
 				{
-					LOG_WARN(Core, "[WorldEditor] Export runtime : splatmap absent, ignoré → {} (terrain_splatmap=null)",
+					LOG_WARN(Core, "[WorldEditor] Export runtime : splatmap absent, ignore -> {} (terrain_splatmap=null)",
 						srcSm.string());
 				}
 				else
@@ -1566,7 +1566,7 @@ namespace engine::editor
 					std::filesystem::copy_file(srcSm, dstSm, std::filesystem::copy_options::overwrite_existing, ec);
 					if (ec)
 					{
-						outError = "copie splatmap échouée: " + ec.message();
+						outError = "copie splatmap echouee: " + ec.message();
 						return false;
 					}
 					terrainSplatBundledPosix = std::string("zones/") + zid + "/terrain_splat.slap";
@@ -1582,13 +1582,13 @@ namespace engine::editor
 			{
 				if (!ContentRelativePathHasNoTraversal(relGm))
 				{
-					outError = "chemin grass_mask refusé (relatif au content, sans ..) : " + doc.grassMaskContentRelativePath;
+					outError = "chemin grass_mask refuse (relatif au content, sans ..) : " + doc.grassMaskContentRelativePath;
 					return false;
 				}
 				const std::filesystem::path srcGm = engine::platform::FileSystem::ResolveContentPath(cfg, relGm);
 				if (!engine::platform::FileSystem::Exists(srcGm))
 				{
-					LOG_WARN(Core, "[WorldEditor] Export runtime : grass_mask absent, ignoré → {} (terrain_grass_mask=null)",
+					LOG_WARN(Core, "[WorldEditor] Export runtime : grass_mask absent, ignore -> {} (terrain_grass_mask=null)",
 						srcGm.string());
 				}
 				else
@@ -1597,7 +1597,7 @@ namespace engine::editor
 					std::filesystem::copy_file(srcGm, dstGm, std::filesystem::copy_options::overwrite_existing, ec);
 					if (ec)
 					{
-						outError = "copie grass_mask échouée: " + ec.message();
+						outError = "copie grass_mask echouee: " + ec.message();
 						return false;
 					}
 					terrainGrassBundledPosix = std::string("zones/") + zid + "/terrain_grass.grms";
@@ -1610,7 +1610,7 @@ namespace engine::editor
 			std::ofstream meta(metaPath, std::ios::binary | std::ios::trunc);
 			if (!meta.is_open())
 			{
-				outError = "écriture zone.meta impossible";
+				outError = "ecriture zone.meta impossible";
 				return false;
 			}
 			engine::world::OutputVersionHeader hdr{};
@@ -1639,13 +1639,13 @@ namespace engine::editor
 			}
 			if (!ContentRelativePathHasNoTraversal(rel))
 			{
-				outError = "chemin texture refusé (relatif au content, sans ..) : " + raw;
+				outError = "chemin texture refuse (relatif au content, sans ..) : " + raw;
 				return false;
 			}
 			const std::filesystem::path srcTex = engine::platform::FileSystem::ResolveContentPath(cfg, rel);
 			if (!engine::platform::FileSystem::Exists(srcTex))
 			{
-				LOG_WARN(Core, "[WorldEditor] Export runtime : texture absente, ignorée → {}", rel);
+				LOG_WARN(Core, "[WorldEditor] Export runtime : texture absente, ignoree -> {}", rel);
 				missingTextureRelPosix.push_back(rel);
 				continue;
 			}
@@ -1654,7 +1654,7 @@ namespace engine::editor
 			std::filesystem::create_directories(dstTex.parent_path(), ec);
 			if (ec)
 			{
-				outError = "création dossier export textures : " + ec.message();
+				outError = "creation dossier export textures : " + ec.message();
 				return false;
 			}
 			std::filesystem::copy_file(srcTex, dstTex, std::filesystem::copy_options::overwrite_existing, ec);
@@ -1671,7 +1671,7 @@ namespace engine::editor
 			std::ofstream man(manifestPath, std::ios::binary | std::ios::trunc);
 			if (!man.is_open())
 			{
-				outError = "écriture manifest impossible";
+				outError = "ecriture manifest impossible";
 				return false;
 			}
 			man << "{\n";
@@ -1707,7 +1707,7 @@ namespace engine::editor
 			man << "  \"exported_textures\": " << SerializeTexturesArray(exportedTextureRelPosix) << ",\n";
 			man << "  \"texture_assets_source_missing\": " << SerializeTexturesArray(missingTextureRelPosix) << ",\n";
 			man << "  \"object_prefab_ids\": " << SerializeTexturesArray(doc.objectPrefabIds) << ",\n";
-			man << "  \"note\": \"Paquet produit par lcdlln_world_editor — textures copiées sous exported_textures/ ; brancher zone_builder / streaming selon pipeline jeu.\"\n";
+			man << "  \"note\": \"Paquet produit par lcdlln_world_editor - textures copiees sous exported_textures/ ; brancher zone_builder / streaming selon pipeline jeu.\"\n";
 			man << "}\n";
 		}
 
@@ -1716,7 +1716,7 @@ namespace engine::editor
 			std::ofstream lay(layoutPath, std::ios::binary | std::ios::trunc);
 			if (!lay.is_open())
 			{
-				outError = "écriture layout_from_editor.json impossible";
+				outError = "ecriture layout_from_editor.json impossible";
 				return false;
 			}
 			const double originX = cfg.GetDouble("terrain.origin_x", -512.0);
@@ -1724,12 +1724,12 @@ namespace engine::editor
 			WriteLayoutForZoneBuilder(lay, doc, originX, originZ);
 			if (!lay.good())
 			{
-				outError = "écriture layout_from_editor.json incomplète";
+				outError = "ecriture layout_from_editor.json incomplete";
 				return false;
 			}
 		}
 
-		LOG_INFO(Core, "[WorldEditor] Export runtime OK → {} (textures exportées: {}, absentes: {})", zoneDir.string(),
+		LOG_INFO(Core, "[WorldEditor] Export runtime OK -> {} (textures exportees: {}, absentes: {})", zoneDir.string(),
 			exportedTextureRelPosix.size(), missingTextureRelPosix.size());
 		return true;
 	}
@@ -1756,7 +1756,7 @@ namespace engine::editor
 		}
 		if (rel.find("..") != std::string::npos)
 		{
-			outError = "nom destination invalide (traversée '..' interdite)";
+			outError = "nom destination invalide (traversee '..' interdite)";
 			return false;
 		}
 
@@ -1767,7 +1767,7 @@ namespace engine::editor
 		if (!pixels || w <= 0 || h <= 0)
 		{
 			const char* reason = stbi_failure_reason();
-			outError = std::string("lecture image échouée: ") + (reason ? reason : "format non supporté (PNG/JPG/TGA/BMP attendu)");
+			outError = std::string("lecture image echouee: ") + (reason ? reason : "format non supporte (PNG/JPG/TGA/BMP attendu)");
 			if (pixels)
 			{
 				stbi_image_free(pixels);
@@ -1800,10 +1800,10 @@ namespace engine::editor
 		stbi_image_free(pixels);
 		if (!out.good())
 		{
-			outError = "écriture .texr incomplète";
+			outError = "ecriture .texr incomplete";
 			return false;
 		}
-		LOG_INFO(Core, "[WorldEditor] Import PNG → TEXR OK: {}", destAbs.string());
+		LOG_INFO(Core, "[WorldEditor] Import PNG -> TEXR OK: {}", destAbs.string());
 		return true;
 	}
 
@@ -1828,7 +1828,7 @@ namespace engine::editor
 		}
 		if (rel.find("..") != std::string::npos)
 		{
-			outError = "nom destination invalide (traversée '..' interdite)";
+			outError = "nom destination invalide (traversee '..' interdite)";
 			return false;
 		}
 		const std::filesystem::path destRel = std::filesystem::path("audio") / rel;
@@ -1838,10 +1838,10 @@ namespace engine::editor
 		std::filesystem::copy_file(srcAbsolutePath, destAbs, std::filesystem::copy_options::overwrite_existing, ec);
 		if (ec)
 		{
-			outError = "copie audio échouée: " + ec.message() + " (vers " + destAbs.string() + ")";
+			outError = "copie audio echouee: " + ec.message() + " (vers " + destAbs.string() + ")";
 			return false;
 		}
-		LOG_INFO(Core, "[WorldEditor] Import audio OK → {}", destAbs.string());
+		LOG_INFO(Core, "[WorldEditor] Import audio OK -> {}", destAbs.string());
 		return true;
 	}
 

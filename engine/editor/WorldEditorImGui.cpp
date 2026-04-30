@@ -925,6 +925,58 @@ namespace engine::editor
 						ImGui::TextDisabled("Le mapping est persisté dans la carte (champ JSON splat_layer_texture_refs).");
 					}
 
+					if (ImGui::CollapsingHeader("Sons de pas (par couche)"))
+					{
+						ImGui::TextDisabled("Choisissez le son entendu par le joueur sur chaque type de sol.");
+						const std::vector<std::string>& imported = m_session->Doc().audioAssets;
+						std::array<std::string, 4>& refs = m_session->MutableDoc().splatLayerFootstepAudioRefs;
+						std::string itemsZ;
+						itemsZ += "(aucun)";
+						itemsZ.push_back('\0');
+						for (const std::string& t : imported)
+						{
+							itemsZ += t;
+							itemsZ.push_back('\0');
+						}
+						itemsZ.push_back('\0');
+						if (imported.empty())
+						{
+							ImGui::TextColored(ImVec4(1.f, 0.7f, 0.3f, 1.f),
+								"Importez d'abord des sons via le panneau « Import assets ».");
+						}
+						for (int li = 0; li < 4; ++li)
+						{
+							int sel = 0;
+							if (!refs[static_cast<size_t>(li)].empty())
+							{
+								for (size_t i = 0; i < imported.size(); ++i)
+								{
+									if (imported[i] == refs[static_cast<size_t>(li)])
+									{
+										sel = static_cast<int>(i + 1);
+										break;
+									}
+								}
+							}
+							char lbl[40];
+							std::snprintf(lbl, sizeof(lbl), "%s##splatAudio%d", layers[li], li);
+							if (ImGui::Combo(lbl, &sel, itemsZ.c_str()))
+							{
+								if (sel <= 0)
+								{
+									refs[static_cast<size_t>(li)].clear();
+								}
+								else if (static_cast<size_t>(sel - 1) < imported.size())
+								{
+									refs[static_cast<size_t>(li)] = imported[static_cast<size_t>(sel - 1)];
+								}
+							}
+						}
+						ImGui::TextDisabled(
+							"Persisté en JSON. Lecture côté gameplay (déplacement joueur → couche splat dominante)"
+							" sera branchée dans une itération moteur ultérieure.");
+					}
+
 					ImGui::Separator();
 					ImGui::TextWrapped("Maintenez le clic gauche sur le sol pour peindre. La sauvegarde écrit le fichier splat.");
 					ImGui::EndTabItem();

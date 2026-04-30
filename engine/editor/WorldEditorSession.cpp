@@ -361,6 +361,9 @@ namespace engine::editor
 		}
 		m_doc.grassMaskContentRelativePath = grassRel;
 		m_doc.textureAssets.clear();
+		m_doc.audioAssets.clear();
+		for (std::string& r : m_doc.splatLayerTextureRefs) { r.clear(); }
+		for (std::string& r : m_doc.splatLayerFootstepAudioRefs) { r.clear(); }
 		m_doc.objectPrefabIds.clear();
 		m_doc.layoutInstances.clear();
 		m_doc.routes.clear();
@@ -686,7 +689,14 @@ namespace engine::editor
 			LOG_WARN(Core, "[WorldEditor] Import audio failed: src='{}' dest='{}' err='{}'", src, dst, err);
 			return false;
 		}
-		SetStatus("Audio copié vers audio/" + dst);
+		const std::string rel = std::string("audio/") + dst;
+		// Évite les doublons dans la liste (ré-import du même nom).
+		const auto it = std::find(m_doc.audioAssets.begin(), m_doc.audioAssets.end(), rel);
+		if (it == m_doc.audioAssets.end())
+		{
+			m_doc.audioAssets.push_back(rel);
+		}
+		SetStatus("Audio importé: " + rel);
 		return true;
 	}
 

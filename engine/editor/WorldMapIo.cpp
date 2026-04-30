@@ -1212,9 +1212,14 @@ namespace engine::editor
 		out << "  \"splatmap\": \"" << EscapeJson(doc.splatmapContentRelativePath) << "\",\n";
 		out << "  \"grass_mask\": \"" << EscapeJson(doc.grassMaskContentRelativePath) << "\",\n";
 		out << "  \"textures\": " << SerializeTexturesArray(doc.textureAssets) << ",\n";
+		out << "  \"audio_assets\": " << SerializeTexturesArray(doc.audioAssets) << ",\n";
 		{
 			std::vector<std::string> refs(doc.splatLayerTextureRefs.begin(), doc.splatLayerTextureRefs.end());
 			out << "  \"splat_layer_texture_refs\": " << SerializeTexturesArray(refs) << ",\n";
+		}
+		{
+			std::vector<std::string> refs(doc.splatLayerFootstepAudioRefs.begin(), doc.splatLayerFootstepAudioRefs.end());
+			out << "  \"splat_layer_footstep_audio_refs\": " << SerializeTexturesArray(refs) << ",\n";
 		}
 		out << "  \"instances\": " << SerializeLayoutInstancesJson(doc.layoutInstances) << ",\n";
 		out << "  \"routes\": " << SerializeRoutesJson(doc.routes) << ",\n";
@@ -1317,6 +1322,11 @@ namespace engine::editor
 			return false;
 		}
 		{
+			std::string parseErr;
+			(void)ParseJsonStringArray(json, "audio_assets", d.audioAssets, parseErr);
+			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+		}
+		{
 			std::vector<std::string> refs;
 			std::string parseErr;
 			if (ParseJsonStringArray(json, "splat_layer_texture_refs", refs, parseErr))
@@ -1324,6 +1334,18 @@ namespace engine::editor
 				for (size_t i = 0; i < d.splatLayerTextureRefs.size() && i < refs.size(); ++i)
 				{
 					d.splatLayerTextureRefs[i] = refs[i];
+				}
+			}
+			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+		}
+		{
+			std::vector<std::string> refs;
+			std::string parseErr;
+			if (ParseJsonStringArray(json, "splat_layer_footstep_audio_refs", refs, parseErr))
+			{
+				for (size_t i = 0; i < d.splatLayerFootstepAudioRefs.size() && i < refs.size(); ++i)
+				{
+					d.splatLayerFootstepAudioRefs[i] = refs[i];
 				}
 			}
 			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.

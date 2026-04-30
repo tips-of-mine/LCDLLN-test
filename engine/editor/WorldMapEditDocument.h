@@ -50,11 +50,21 @@ namespace engine::editor
 		/// Masque herbe / détail surface R8 (fichier GRMS, ticket 010), même résolution que la splat, relatif au content.
 		std::string grassMaskContentRelativePath;
 		std::vector<std::string> textureAssets;
+		/// Liste des sons importés par l'éditeur (chemins relatifs au content, ex. \c audio/footstep/sand.wav).
+		/// Persisté en JSON (clé \c audio_assets). Sert de catalogue pour les dropdowns « son de pas par couche »
+		/// et pour la persistance générale des sons utilisés par cette carte.
+		std::vector<std::string> audioAssets;
 		/// Mapping couche splat → texture importée (référence un chemin présent dans \c textureAssets).
 		/// Index : 0=Herbe (R), 1=Terre (G), 2=Roc (B), 3=Neige (A). Vide = couche par défaut moteur.
 		/// Persisté en JSON (clé \c splat_layer_texture_refs). Utilisé par l'export runtime pour
 		/// substituer la texture engine-default par celle choisie par l'utilisateur.
 		std::array<std::string, 4> splatLayerTextureRefs{};
+		/// Mapping couche splat → son de pas (référence un chemin présent dans \c audioAssets).
+		/// Index : 0=Herbe (R), 1=Terre (G), 2=Roc (B), 3=Neige (A). Vide = aucun son spécifique.
+		/// Persisté en JSON (clé \c splat_layer_footstep_audio_refs). Le branchement gameplay (lecture
+		/// au déplacement du joueur en lisant la couche splat dominante sous ses pieds) sera fait dans
+		/// une itération ultérieure côté runtime du jeu — l'éditeur en assure déjà la persistance.
+		std::array<std::string, 4> splatLayerFootstepAudioRefs{};
 		/// Identifiants de préfabs / objets (MVP : chaînes libres).
 		std::vector<std::string> objectPrefabIds;
 		/// Instances pour \c layout_from_editor.json (ticket 009).

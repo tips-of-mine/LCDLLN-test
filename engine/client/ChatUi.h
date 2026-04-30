@@ -4,7 +4,9 @@
 #include "engine/platform/Input.h"
 
 #include <cstdint>
+#include <functional>
 #include <string>
+#include <string_view>
 
 namespace engine::client
 {
@@ -76,6 +78,14 @@ namespace engine::client
 		/// via le flag \c EnterReturnsTrue.
 		void SubmitFromUi();
 
+		/// Chat MVP — Callback appelée lors d'un Submit pour envoyer le message au master.
+		/// Retourne true si le message a été queué côté réseau (le renderer ne fait alors
+		/// PAS d'écho local — le serveur le rebroadcast via CHAT_RELAY → PushNetworkLine).
+		/// Retourne false si pas connecté ou échec d'envoi : on retombe sur un écho local
+		/// "Local" pour que l'utilisateur ait un feedback même offline.
+		using SendCallback = std::function<bool(uint8_t channel, std::string_view text)>;
+		void SetSendCallback(SendCallback cb) { m_sendCallback = std::move(cb); }
+
 	private:
 		void SubmitInputLine();
 		void RebuildFilterLegend(std::string& out) const;
@@ -92,6 +102,8 @@ namespace engine::client
 		uint32_t m_scrollLinesFromEnd = 0;
 		/// Phase 3.11.3 — \c true quand un \c ImGui::InputText externe pilote la saisie.
 		bool m_imguiInputActive = false;
+		/// Chat MVP — callback réseau (set par l'engine via \ref SetSendCallback).
+		SendCallback m_sendCallback;
 		static constexpr uint32_t kMaxVisibleLines = 18u;
 		static constexpr size_t kMaxInputUtf8Bytes = 256u;
 	};

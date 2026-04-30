@@ -3,8 +3,10 @@
 #include "engine/core/DefaultClientEndpoints.h"
 #include "engine/core/Log.h"
 #include "engine/network/CharacterPayloads.h"
+#include "engine/network/ChatPayloads.h"
 #include "engine/network/NetClient.h"
 #include "engine/network/PacketBuilder.h"
+#include "engine/network/PacketView.h"
 #include "engine/network/ProtocolV1Constants.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
@@ -285,6 +287,49 @@ namespace engine::client
 		return true;
 	}
 
+	bool AuthUiPresenter::SendChatAsync(uint8_t channel, std::string_view text)
+	{
+		if (!m_masterClient || m_masterSessionId == 0u)
+		{
+			return false;
+		}
+		if (text.empty())
+		{
+			return false;
+		}
+		const std::vector<uint8_t> payload = engine::network::BuildChatSendRequestPayload(channel, text);
+		if (payload.empty())
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendChatAsync: Build payload failed");
+			return false;
+		}
+		engine::network::PacketBuilder builder;
+		auto w = builder.PayloadWriter();
+		if (!w.WriteBytes(payload.data(), payload.size()))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendChatAsync: WriteBytes failed");
+			return false;
+		}
+		if (!builder.Finalize(engine::network::kOpcodeChatSendRequest, 0u, 0u, m_masterSessionId, payload.size()))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendChatAsync: Finalize failed");
+			return false;
+		}
+		const auto& packet = builder.Data();
+		if (packet.empty())
+		{
+			return false;
+		}
+		if (!m_masterClient->Send(std::span<const uint8_t>(packet.data(), packet.size())))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendChatAsync: Send failed");
+			return false;
+		}
+		LOG_DEBUG(Net, "[AuthUiPresenter] SendChatAsync queued (channel={}, text_len={})",
+			static_cast<unsigned>(channel), text.size());
+		return true;
+	}
+
 	void AuthUiPresenter::PumpPostAuthEvents()
 	{
 		if (!m_masterClient)
@@ -302,11 +347,21 @@ namespace engine::client
 				m_masterClient.reset();
 				return;
 			}
-			// PacketReceived (réponses SAVE_POSITION par exemple) : on log au niveau debug
-			// et on ne fait pas de matching de request_id (fire-and-forget).
 			if (ev.type == NetClientEventType::PacketReceived)
 			{
 				LOG_DEBUG(Net, "[AuthUiPresenter] Master post-auth packet received ({} bytes)", ev.packet.size());
+				// Chat MVP : si l'engine a installé un push handler, on parse l'en-tête V1 et
+				// on dispatche l'opcode + payload. Le handler décide quoi faire (ex. CHAT_RELAY
+				// → ChatUiPresenter::PushNetworkLine).
+				if (m_masterPushHandler && ev.packet.size() >= engine::network::kProtocolV1HeaderSize)
+				{
+					engine::network::PacketView view;
+					if (engine::network::PacketView::Parse(ev.packet.data(), ev.packet.size(), view)
+						== engine::network::PacketParseResult::Ok)
+					{
+						m_masterPushHandler(view.Opcode(), view.Payload(), view.PayloadSize());
+					}
+				}
 			}
 		}
 	}

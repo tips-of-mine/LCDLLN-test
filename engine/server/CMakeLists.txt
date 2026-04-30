@@ -93,6 +93,8 @@ elseif(UNIX)
     CharacterListHandler.cpp
     CharacterDeleteHandler.cpp
     CharacterSavePositionHandler.cpp
+    ChatRelayHandler.cpp
+    ${CMAKE_SOURCE_DIR}/engine/network/ChatPayloads.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp

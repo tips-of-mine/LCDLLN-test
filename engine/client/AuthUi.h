@@ -9,6 +9,7 @@
 #include "engine/platform/StableMutex.h"
 
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -411,6 +412,19 @@ namespace engine::client
 		/// (réponses aux SAVE_POSITION, déconnexions inattendues, …). À appeler chaque frame
 		/// par l'engine quand le gate auth est inactif. No-op si pas de session active.
 		void PumpPostAuthEvents();
+
+		/// Chat MVP — Envoi fire-and-forget d'un message chat sur la connexion master active.
+		/// Sérialise via \ref engine::network::BuildChatSendRequestPayload (opcode 45,
+		/// requestId=0). \p channel mappe \ref engine::net::ChatChannel raw value.
+		/// Retourne false si pas de session, payload vide, ou Send rejeté.
+		bool SendChatAsync(uint8_t channel, std::string_view text);
+
+		/// Chat MVP — Callback installée par l'engine pour recevoir les paquets push
+		/// (request_id=0) sur la connexion master post-auth. Appelée depuis
+		/// \ref PumpPostAuthEvents pour chaque \c PacketReceived. Le callback parse l'opcode
+		/// et dispatche vers le presenter approprié (ex. CHAT_RELAY → ChatUiPresenter).
+		using MasterPushHandler = std::function<void(uint16_t opcode, const uint8_t* payload, size_t payloadSize)>;
+		void SetMasterPushHandler(MasterPushHandler handler) { m_masterPushHandler = std::move(handler); }
 
 		AudioSettingsCommand ConsumePendingAudioSettings();
 		ControlSettingsCommand ConsumePendingControlSettings();
@@ -930,6 +944,9 @@ namespace engine::client
 		// Heap-allocated in Init() — StableMutex avoids SRWLOCK crash (STAB.14).
 		std::unique_ptr<AuthMutex> m_asyncMutex;
 		std::string m_registeredTagId; ///< TAG-ID reçu après inscription réussie. Conservé pour affichage (bandeau) et usage futur (copie presse-papier, champ dédié).
+		/// Chat MVP — callback installée par l'engine pour dispatcher les paquets push
+		/// (request_id=0) reçus sur la connexion master post-auth (CHAT_RELAY notamment).
+		MasterPushHandler m_masterPushHandler;
 	};
 
 }

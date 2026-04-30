@@ -349,6 +349,7 @@ add_library(engine_core
   engine/network/ErrorPacket.cpp
   engine/network/AuthRegisterPayloads.cpp
   engine/network/CharacterPayloads.cpp
+  engine/network/ChatPayloads.cpp
   engine/network/ShardPayloads.cpp
   engine/network/TermsPayloads.cpp
 )
@@ -550,6 +551,11 @@ add_test(NAME character_list_payloads_tests COMMAND character_list_payloads_test
 add_executable(character_save_position_payloads_tests engine/network/CharacterSavePositionPayloadsTests.cpp)
 target_link_libraries(character_save_position_payloads_tests PRIVATE engine_core)
 add_test(NAME character_save_position_payloads_tests COMMAND character_save_position_payloads_tests)
+
+# Chat MVP: CHAT_SEND_REQUEST / CHAT_RELAY payload round-trip tests
+add_executable(chat_payloads_tests engine/network/ChatPayloadsTests.cpp)
+target_link_libraries(chat_payloads_tests PRIVATE engine_core)
+add_test(NAME chat_payloads_tests COMMAND chat_payloads_tests)
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)

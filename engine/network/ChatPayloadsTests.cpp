@@ -43,8 +43,10 @@ static void TestSendRequestRejectsShort()
 {
 	auto parsed = ParseChatSendRequestPayload(nullptr, 1u);
 	Assert(!parsed.has_value(), "Parse send rejects nullptr");
-	uint8_t empty[0]{};
-	auto parsed2 = ParseChatSendRequestPayload(empty, 0u);
+	// MSVC refuse les tableaux de taille 0 (extension gcc) : on passe un buffer 1 octet
+	// avec size=0 pour tester le rejet "size < 1".
+	uint8_t emptyOneByte[1]{};
+	auto parsed2 = ParseChatSendRequestPayload(emptyOneByte, 0u);
 	Assert(!parsed2.has_value(), "Parse send rejects size=0");
 }
 

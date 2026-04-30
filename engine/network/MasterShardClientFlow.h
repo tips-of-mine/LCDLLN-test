@@ -37,6 +37,12 @@ namespace engine::network
 		/// (the client UI should route to CharacterCreate). Stays empty if the optional list
 		/// query failed — the flow still reports success because the shard handshake completed.
 		std::vector<CharacterListEntry> character_list;
+		/// Hotfix : la session AUTH créée par MasterShardClientFlow::Run doit être propagée
+		/// à l'appelant pour que la connexion master reste utilisable post-flow (CharacterCreate,
+		/// CharacterDelete, SAVE_POSITION). Sinon m_masterSessionId reste sur l'ancienne session
+		/// (AuthOnly) qui a été kickée par le re-AUTH du flow → SendRequest "not connected".
+		/// 0 si le flow n'est pas allé jusqu'à AUTH.
+		uint64_t session_id = 0;
 	};
 
 	/// Orchestrates the vertical slice: connect Master → AUTH → SERVER_LIST → REQUEST_SHARD_TICKET → connect Shard → PRESENT_SHARD_TICKET.

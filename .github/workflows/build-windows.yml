@@ -36,6 +36,34 @@ jobs:
         run: |
           cmake --build --preset vs2022-x64-release
 
+      # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
+      # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que
+      # le step précédent (qui construit toutes les cibles) pourrait masquer le diagnostic.
+      - name: Build explicite — cible world_editor_app
+        shell: pwsh
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: |
+          cmake --build --preset vs2022-x64-release --target world_editor_app
+
+      - name: Vérifie présence des deux exécutables (jeu + éditeur)
+        shell: pwsh
+        run: |
+          $errors = @()
+          $engineExe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln*.exe" `
+            -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "lcdlln_world_editor.exe" } | Select-Object -First 1
+          $editorExe = Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE\build" -Filter "lcdlln_world_editor.exe" `
+            -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $engineExe) { $errors += "Game executable (lcdlln*.exe non-editor) introuvable" }
+          if (-not $editorExe) { $errors += "Editor executable (lcdlln_world_editor.exe) introuvable" }
+          if ($errors.Count -gt 0) {
+            Write-Host "[FAIL] Build verification failed:"
+            $errors | ForEach-Object { Write-Host "  - $_" }
+            exit 1
+          }
+          Write-Host "[OK] Game exe   : $($engineExe.FullName)"
+          Write-Host "[OK] Editor exe : $($editorExe.FullName)"
+
       # Les .spv ne sont pas versionnés (sources GLSL seulement) ; le moteur charge uniquement le SPIR-V depuis game/data/shaders/.
       - name: Cache Vulkan SDK (glslangValidator)
         id: vk-sdk-cache

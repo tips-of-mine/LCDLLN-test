@@ -150,6 +150,75 @@ namespace engine::editor
 			return true;
 		}
 
+		bool ParseJsonBoolValue(std::string_view json, std::string_view key, bool& out)
+		{
+			const std::string needle = std::string("\"") + std::string(key) + "\"";
+			size_t p = json.find(needle);
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			p = json.find(':', p + needle.size());
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			++p;
+			SkipWs(json, p);
+			if (p + 4 <= json.size() && json.substr(p, 4) == "true")
+			{
+				out = true;
+				return true;
+			}
+			if (p + 5 <= json.size() && json.substr(p, 5) == "false")
+			{
+				out = false;
+				return true;
+			}
+			return false;
+		}
+
+		bool ParseJsonDoubleValue(std::string_view json, std::string_view key, double& out)
+		{
+			const std::string needle = std::string("\"") + std::string(key) + "\"";
+			size_t p = json.find(needle);
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			p = json.find(':', p + needle.size());
+			if (p == std::string::npos)
+			{
+				return false;
+			}
+			++p;
+			SkipWs(json, p);
+			std::string num;
+			while (p < json.size())
+			{
+				const char c = json[p];
+				if ((c >= '0' && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
+				{
+					num.push_back(c);
+					++p;
+					continue;
+				}
+				break;
+			}
+			if (num.empty())
+			{
+				return false;
+			}
+			char* endPtr = nullptr;
+			const double v = std::strtod(num.c_str(), &endPtr);
+			if (static_cast<size_t>(endPtr - num.c_str()) != num.size())
+			{
+				return false;
+			}
+			out = v;
+			return true;
+		}
+
 		bool KeyHasNull(std::string_view json, std::string_view key)
 		{
 			const std::string needle = std::string("\"") + std::string(key) + "\"";
@@ -1212,9 +1281,20 @@ namespace engine::editor
 		out << "  \"splatmap\": \"" << EscapeJson(doc.splatmapContentRelativePath) << "\",\n";
 		out << "  \"grass_mask\": \"" << EscapeJson(doc.grassMaskContentRelativePath) << "\",\n";
 		out << "  \"textures\": " << SerializeTexturesArray(doc.textureAssets) << ",\n";
+		out << "  \"audio_assets\": " << SerializeTexturesArray(doc.audioAssets) << ",\n";
+		{
+			std::vector<std::string> refs(doc.splatLayerTextureRefs.begin(), doc.splatLayerTextureRefs.end());
+			out << "  \"splat_layer_texture_refs\": " << SerializeTexturesArray(refs) << ",\n";
+		}
+		{
+			std::vector<std::string> refs(doc.splatLayerFootstepAudioRefs.begin(), doc.splatLayerFootstepAudioRefs.end());
+			out << "  \"splat_layer_footstep_audio_refs\": " << SerializeTexturesArray(refs) << ",\n";
+		}
 		out << "  \"instances\": " << SerializeLayoutInstancesJson(doc.layoutInstances) << ",\n";
 		out << "  \"routes\": " << SerializeRoutesJson(doc.routes) << ",\n";
 		out << "  \"objects\": " << SerializeTexturesArray(doc.objectPrefabIds) << ",\n";
+		out << "  \"water_enabled\": " << (doc.waterEnabled ? "true" : "false") << ",\n";
+		out << "  \"water_level_m\": " << doc.waterLevelMeters << ",\n";
 		if (doc.hasTerrainWorldSizeM)
 		{
 			out << "  \"terrain_world_size_m\": " << doc.terrainWorldSizeM << "\n";
@@ -1312,6 +1392,35 @@ namespace engine::editor
 		{
 			return false;
 		}
+		{
+			std::string parseErr;
+			(void)ParseJsonStringArray(json, "audio_assets", d.audioAssets, parseErr);
+			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+		}
+		{
+			std::vector<std::string> refs;
+			std::string parseErr;
+			if (ParseJsonStringArray(json, "splat_layer_texture_refs", refs, parseErr))
+			{
+				for (size_t i = 0; i < d.splatLayerTextureRefs.size() && i < refs.size(); ++i)
+				{
+					d.splatLayerTextureRefs[i] = refs[i];
+				}
+			}
+			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+		}
+		{
+			std::vector<std::string> refs;
+			std::string parseErr;
+			if (ParseJsonStringArray(json, "splat_layer_footstep_audio_refs", refs, parseErr))
+			{
+				for (size_t i = 0; i < d.splatLayerFootstepAudioRefs.size() && i < refs.size(); ++i)
+				{
+					d.splatLayerFootstepAudioRefs[i] = refs[i];
+				}
+			}
+			// Champ optionnel : absent dans les vieux JSON, on n'échoue pas.
+		}
 		if (!ParseJsonLayoutInstances(json, d.layoutInstances, outError))
 		{
 			return false;
@@ -1323,6 +1432,19 @@ namespace engine::editor
 		if (!ParseJsonStringArray(json, "objects", d.objectPrefabIds, outError))
 		{
 			return false;
+		}
+		// Eau (Lot G) — optionnel, défaut désactivé.
+		{
+			bool wEnabled = false;
+			if (ParseJsonBoolValue(json, "water_enabled", wEnabled))
+			{
+				d.waterEnabled = wEnabled;
+			}
+			double wLevel = 0.0;
+			if (ParseJsonDoubleValue(json, "water_level_m", wLevel))
+			{
+				d.waterLevelMeters = wLevel;
+			}
 		}
 		if (!ParseOptionalTerrainWorldSizeM(json, d, outError))
 		{
@@ -1615,17 +1737,10 @@ namespace engine::editor
 	bool ImportPngToTexr(const engine::core::Config& cfg, const std::filesystem::path& pngAbsolutePath, std::string_view texrRelativeToTextures,
 		bool srgb, std::string& outError)
 	{
-		int w = 0;
-		int h = 0;
-		int comp = 0;
-		stbi_uc* pixels = stbi_load(pngAbsolutePath.string().c_str(), &w, &h, &comp, 4);
-		if (!pixels || w <= 0 || h <= 0)
+		std::error_code existsEc;
+		if (!std::filesystem::is_regular_file(pngAbsolutePath, existsEc))
 		{
-			outError = "PNG illisible ou vide";
-			if (pixels)
-			{
-				stbi_image_free(pixels);
-			}
+			outError = "fichier source introuvable: " + pngAbsolutePath.string();
 			return false;
 		}
 
@@ -1634,6 +1749,32 @@ namespace engine::editor
 		{
 			rel.erase(rel.begin());
 		}
+		if (rel.empty())
+		{
+			outError = "nom destination vide (attendu: ex. ui/icon.texr)";
+			return false;
+		}
+		if (rel.find("..") != std::string::npos)
+		{
+			outError = "nom destination invalide (traversée '..' interdite)";
+			return false;
+		}
+
+		int w = 0;
+		int h = 0;
+		int comp = 0;
+		stbi_uc* pixels = stbi_load(pngAbsolutePath.string().c_str(), &w, &h, &comp, 4);
+		if (!pixels || w <= 0 || h <= 0)
+		{
+			const char* reason = stbi_failure_reason();
+			outError = std::string("lecture image échouée: ") + (reason ? reason : "format non supporté (PNG/JPG/TGA/BMP attendu)");
+			if (pixels)
+			{
+				stbi_image_free(pixels);
+			}
+			return false;
+		}
+
 		const std::filesystem::path destRel = std::filesystem::path("textures") / rel;
 		const std::filesystem::path destAbs = engine::platform::FileSystem::ResolveContentPath(cfg, destRel.generic_string());
 		std::error_code ec;
@@ -1643,7 +1784,7 @@ namespace engine::editor
 		if (!out.is_open())
 		{
 			stbi_image_free(pixels);
-			outError = "ouverture .texr impossible";
+			outError = "ouverture .texr impossible: " + destAbs.string();
 			return false;
 		}
 
@@ -1669,15 +1810,26 @@ namespace engine::editor
 	bool ImportAudioFile(const engine::core::Config& cfg, const std::filesystem::path& srcAbsolutePath, std::string_view destRelativeToAudio,
 		std::string& outError)
 	{
-		if (!engine::platform::FileSystem::Exists(srcAbsolutePath))
+		std::error_code existsEc;
+		if (!std::filesystem::is_regular_file(srcAbsolutePath, existsEc))
 		{
-			outError = "fichier audio source absent";
+			outError = "fichier audio source introuvable: " + srcAbsolutePath.string();
 			return false;
 		}
 		std::string rel(destRelativeToAudio);
 		while (!rel.empty() && (rel.front() == '/' || rel.front() == '\\'))
 		{
 			rel.erase(rel.begin());
+		}
+		if (rel.empty())
+		{
+			outError = "nom destination vide (attendu: ex. footstep/sand.wav)";
+			return false;
+		}
+		if (rel.find("..") != std::string::npos)
+		{
+			outError = "nom destination invalide (traversée '..' interdite)";
+			return false;
 		}
 		const std::filesystem::path destRel = std::filesystem::path("audio") / rel;
 		const std::filesystem::path destAbs = engine::platform::FileSystem::ResolveContentPath(cfg, destRel.generic_string());
@@ -1686,7 +1838,7 @@ namespace engine::editor
 		std::filesystem::copy_file(srcAbsolutePath, destAbs, std::filesystem::copy_options::overwrite_existing, ec);
 		if (ec)
 		{
-			outError = "copie audio: " + ec.message();
+			outError = "copie audio échouée: " + ec.message() + " (vers " + destAbs.string() + ")";
 			return false;
 		}
 		LOG_INFO(Core, "[WorldEditor] Import audio OK → {}", destAbs.string());

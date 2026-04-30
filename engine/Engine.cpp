@@ -3194,8 +3194,10 @@ namespace engine
 			{
 				terrainWorldM = m_terrain.GetTerrainWorldSize();
 			}
+			const float editorSpeedMult = static_cast<float>(
+				m_cfg.GetDouble("controls.editor_camera_speed_multiplier", 1.0));
 			m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, true, applyLook, applyKb,
-				terrainWorldM, out.camera);
+				terrainWorldM, out.camera, editorSpeedMult);
 		}
 
 		if (m_gameplayNetInitialized)

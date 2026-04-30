@@ -609,9 +609,15 @@ namespace engine::editor
 			{
 				if (ImGui::MenuItem("Réinitialiser la disposition des fenêtres"))
 				{
+					// Supprime le fichier .ini ; ImGui ne réécrit pas la disposition tant que le contexte
+					// vit. La réinitialisation visible prend effet au prochain lancement de l'éditeur.
+					// (ImGui::ClearIniSettings n'est pas disponible dans la version d'ImGui utilisée ici.)
 					std::error_code ec;
 					std::filesystem::remove("world_editor_imgui.ini", ec);
-					ImGui::ClearIniSettings();
+					if (m_session)
+					{
+						m_session->SetStatus("Disposition réinitialisée — l'effet sera visible au prochain démarrage.");
+					}
 				}
 				ImGui::Separator();
 				if (m_cfg)

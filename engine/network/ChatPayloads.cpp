@@ -17,21 +17,29 @@ namespace engine::network
 		if (!r.ReadBytes(&ch, 1u))
 			return std::nullopt;
 		out.channel = ch;
+		// Phase 4 : targetToken précède le texte. Vide pour les canaux non-whisper.
+		if (!r.ReadString(out.targetToken))
+			return std::nullopt;
 		if (!r.ReadString(out.text))
 			return std::nullopt;
 		return out;
 	}
 
-	std::vector<uint8_t> BuildChatSendRequestPayload(uint8_t channel, std::string_view text)
+	std::vector<uint8_t> BuildChatSendRequestPayload(uint8_t channel, std::string_view targetToken, std::string_view text)
 	{
 		// Borne défensive : si l'appelant dépasse le plafond, on tronque pour éviter
 		// un Build qui échouerait sur kProtocolV1MaxStringLength.
 		if (text.size() > kMaxChatTextBytes)
 			text = text.substr(0, kMaxChatTextBytes);
+		// Plafond léger sur le target (32 chars = max DB column). Au-delà = tronqué.
+		if (targetToken.size() > 32u)
+			targetToken = targetToken.substr(0, 32u);
 
 		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
 		ByteWriter w(buf.data(), buf.size());
 		if (!w.WriteBytes(&channel, 1u))
+			return {};
+		if (!w.WriteString(targetToken))
 			return {};
 		if (!w.WriteString(text))
 			return {};

@@ -28,15 +28,25 @@ using namespace engine::network;
 
 static void TestSendRequestRoundTrip()
 {
-	auto buf = BuildChatSendRequestPayload(6u, "bonjour les amis");
+	auto buf = BuildChatSendRequestPayload(6u, "", "bonjour les amis");
 	Assert(!buf.empty(), "Build send empty check");
 	auto parsed = ParseChatSendRequestPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "Parse send OK");
 	if (parsed)
 	{
 		Assert(parsed->channel == 6u, "channel round-trips");
+		Assert(parsed->targetToken.empty(), "targetToken empty for non-whisper");
 		Assert(parsed->text == "bonjour les amis", "text round-trips");
 	}
+}
+
+static void TestSendRequestWhisperRoundTrip()
+{
+	auto buf = BuildChatSendRequestPayload(2u, "Alyx", "tu es la ?");
+	auto parsed = ParseChatSendRequestPayload(buf.data(), buf.size());
+	Assert(parsed.has_value() && parsed->channel == 2u, "whisper channel round-trips");
+	Assert(parsed && parsed->targetToken == "Alyx", "whisper targetToken round-trips");
+	Assert(parsed && parsed->text == "tu es la ?", "whisper text round-trips");
 }
 
 static void TestSendRequestRejectsShort()
@@ -55,7 +65,7 @@ static void TestSendRequestUtf8()
 	// Wire format byte-pour-byte : on encode des octets >= 0x80 directement (\xc3\xa9 = 'é'
 	// en UTF-8). Pas de literal UTF-8 dans la source pour rester portable MSVC sans /utf-8.
 	const std::string utf8Sample = "\xc3\xa9\xc3\xa9 multibyte";
-	auto buf = BuildChatSendRequestPayload(2u, utf8Sample);
+	auto buf = BuildChatSendRequestPayload(2u, "", utf8Sample);
 	auto parsed = ParseChatSendRequestPayload(buf.data(), buf.size());
 	Assert(parsed.has_value() && parsed->text == utf8Sample, "UTF-8 multibyte round-trips byte-perfect");
 }
@@ -92,6 +102,7 @@ static void TestRelayRejectsShort()
 int main()
 {
 	TestSendRequestRoundTrip();
+	TestSendRequestWhisperRoundTrip();
 	TestSendRequestRejectsShort();
 	TestSendRequestUtf8();
 	TestRelayRoundTrip();

@@ -416,8 +416,16 @@ namespace engine::client
 		/// Chat MVP — Envoi fire-and-forget d'un message chat sur la connexion master active.
 		/// Sérialise via \ref engine::network::BuildChatSendRequestPayload (opcode 45,
 		/// requestId=0). \p channel mappe \ref engine::net::ChatChannel raw value.
-		/// Retourne false si pas de session, payload vide, ou Send rejeté.
-		bool SendChatAsync(uint8_t channel, std::string_view text);
+		/// \p targetToken vide sauf pour le canal Whisper. Retourne false si pas de session,
+		/// payload vide, ou Send rejeté.
+		bool SendChatAsync(uint8_t channel, std::string_view targetToken, std::string_view text);
+
+		/// Phase 4 chat — Annonce au master le personnage actif après EnterWorld.
+		/// Master valide ownership (account_id + character_id en DB) et enregistre le binding
+		/// connId → (character_id, character_name) pour le sender display dans CHAT_RELAY +
+		/// la résolution de cible /whisper. Fire-and-forget (la réponse 1=ok / 0=error est
+		/// loggée en debug par PumpPostAuthEvents si l'engine l'a câblée).
+		bool SendEnterWorldAsync(uint64_t characterId, std::string_view characterName);
 
 		/// Chat MVP — Callback installée par l'engine pour recevoir les paquets push
 		/// (request_id=0) sur la connexion master post-auth. Appelée depuis

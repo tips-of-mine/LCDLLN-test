@@ -93,6 +93,8 @@ elseif(UNIX)
     CharacterListHandler.cpp
     CharacterDeleteHandler.cpp
     CharacterSavePositionHandler.cpp
+    CharacterEnterWorldHandler.cpp
+    SessionCharacterMap.cpp
     ChatRelayHandler.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ChatPayloads.cpp
     PasswordResetStore.cpp
@@ -117,6 +119,16 @@ elseif(UNIX)
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
   target_compile_definitions(server_app PRIVATE ENGINE_HAS_MYSQL=1)
   target_link_libraries(server_app PRIVATE pthread OpenSSL::SSL engine_auth spdlog::spdlog ${MYSQL_LIBRARY})
+
+  # Phase 4 chat — SessionCharacterMap unit tests (pure in-memory, no DB).
+  add_executable(session_character_map_tests
+    SessionCharacterMapTests.cpp
+    SessionCharacterMap.cpp
+  )
+  target_include_directories(session_character_map_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(session_character_map_tests PRIVATE pthread)
+  target_compile_options(session_character_map_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME session_character_map_tests COMMAND session_character_map_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M33.3: Anti-bot unit tests (UserRateLimiter, CaptchaVerifier bypass, BotDetector).
   add_executable(anti_bot_tests

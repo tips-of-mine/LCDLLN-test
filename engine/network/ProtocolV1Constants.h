@@ -182,4 +182,15 @@ namespace engine::network
 
 	constexpr uint16_t kOpcodeChatSendRequest = 45u; ///< Client→Master : envoie un message chat (channel + texte).
 	constexpr uint16_t kOpcodeChatRelay       = 46u; ///< Master→Client : push d'un message à afficher (timestamp + channel + sender + texte).
+
+	// -------------------------------------------------------------------------
+	// Opcodes EnterWorld (valeurs 47–48)
+	// Référence : Phase 4 chat — le client annonce au master quel personnage il
+	// joue actuellement (post-EnterWorld). Le master enregistre le mapping
+	// connId → (character_id, character_name) pour : (a) le sender display dans
+	// CHAT_RELAY ; (b) la résolution de cible pour /whisper.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeCharacterEnterWorldRequest  = 47u; ///< Client→Master : déclare le personnage actif après EnterWorld.
+	constexpr uint16_t kOpcodeCharacterEnterWorldResponse = 48u; ///< Master→Client : ACK ou erreur (NOT_OWNED, NAME_MISMATCH, …).
 }

@@ -744,8 +744,8 @@ namespace engine
 		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
 		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
 		// vers un handler qui parse et appelle ChatUi::PushNetworkLine.
-		m_chatUi.SetSendCallback([this](uint8_t channel, std::string_view text) -> bool {
-			return m_authUi.SendChatAsync(channel, text);
+		m_chatUi.SetSendCallback([this](uint8_t channel, std::string_view targetToken, std::string_view text) -> bool {
+			return m_authUi.SendChatAsync(channel, targetToken, text);
 		});
 		m_authUi.SetMasterPushHandler([this](uint16_t opcode, const uint8_t* payload, size_t payloadSize) {
 			using namespace engine::network;
@@ -2993,6 +2993,14 @@ namespace engine
 				m_shutdownPositionSaved = false;
 				LOG_INFO(Core, "[EnterWorld] periodic position save armed (character_id={}, interval={}s)",
 					m_currentCharacterId, m_savePositionIntervalSec.count());
+
+				// Phase 4 chat — Annonce le perso actif au master pour le sender display +
+				// la résolution de cible /whisper. Fire-and-forget : la réponse arrive via
+				// PumpPostAuthEvents et est juste loggée en debug (pas de blocage UI).
+				if (m_currentCharacterId != 0u && !enterCmd.characterName.empty())
+				{
+					(void)m_authUi.SendEnterWorldAsync(m_currentCharacterId, enterCmd.characterName);
+				}
 
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.
 				// InitGameplayNet relit ces clés à l'appel (cf. ligne ~3552) ; les écraser avant

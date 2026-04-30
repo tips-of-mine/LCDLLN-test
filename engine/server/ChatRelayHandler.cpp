@@ -9,6 +9,7 @@
 #include "engine/server/AccountRecord.h"
 #include "engine/server/ConnectionSessionMap.h"
 #include "engine/server/NetServer.h"
+#include "engine/server/SessionCharacterMap.h"
 #include "engine/server/SessionManager.h"
 
 #include <chrono>
@@ -34,6 +35,7 @@ namespace engine::server
 	void ChatRelayHandler::SetServer(NetServer* server)                       { m_server = server; }
 	void ChatRelayHandler::SetSessionManager(SessionManager* sessions)        { m_sessions = sessions; }
 	void ChatRelayHandler::SetConnectionSessionMap(ConnectionSessionMap* map) { m_connMap = map; }
+	void ChatRelayHandler::SetSessionCharacterMap(SessionCharacterMap* charMap) { m_charMap = charMap; }
 	void ChatRelayHandler::SetAccountStore(AccountStore* accounts)            { m_accounts = accounts; }
 
 	void ChatRelayHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -88,29 +90,83 @@ namespace engine::server
 			return;
 		}
 
-		auto accountRec = m_accounts->FindByAccountId(*accountId);
-		if (!accountRec)
+		// Phase 4 — Sender display name : preference au character_name (post-EnterWorld)
+		// via SessionCharacterMap, fallback au login d'account si le client n'a pas encore
+		// declaré son perso (ex. message envoyé entre EnterWorld et la confirmation du
+		// CHARACTER_ENTER_WORLD_RESPONSE).
+		std::string sender;
+		if (m_charMap)
 		{
-			auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "account lookup failed", requestId, sessionIdHeader);
-			if (!pkt.empty())
-				m_server->Send(connId, pkt);
-			return;
+			if (auto info = m_charMap->GetByConnId(connId))
+				sender = info->characterName;
+		}
+		if (sender.empty())
+		{
+			auto accountRec = m_accounts->FindByAccountId(*accountId);
+			if (!accountRec)
+			{
+				auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "account lookup failed", requestId, sessionIdHeader);
+				if (!pkt.empty())
+					m_server->Send(connId, pkt);
+				return;
+			}
+			sender = accountRec->login;
 		}
 
-		const std::string sender = accountRec->login;
-
-		// Whisper non encore implémenté : on renvoie une notice "Server" channel à l'expéditeur seulement.
+		// Phase 4 — Whisper : résolution du target par nom normalisé.
 		if (parsed->channel == static_cast<uint8_t>(engine::net::ChatChannel::Whisper))
 		{
+			if (!m_charMap || parsed->targetToken.empty())
+			{
+				const uint64_t ts0 = NowUnixMsUtc();
+				auto notice = BuildChatRelayPacket(ts0,
+					static_cast<uint8_t>(engine::net::ChatChannel::Server),
+					"system",
+					"Whisper requires a target.",
+					sessionIdHeader);
+				if (!notice.empty())
+					m_server->Send(connId, notice);
+				return;
+			}
+			const std::string targetNorm = SessionCharacterMap::Normalize(parsed->targetToken);
+			auto destConnOpt = m_charMap->FindConnByNormalizedName(targetNorm);
+			if (!destConnOpt)
+			{
+				const uint64_t ts0 = NowUnixMsUtc();
+				auto notice = BuildChatRelayPacket(ts0,
+					static_cast<uint8_t>(engine::net::ChatChannel::Server),
+					"system",
+					"Player '" + parsed->targetToken + "' is not online.",
+					sessionIdHeader);
+				if (!notice.empty())
+					m_server->Send(connId, notice);
+				LOG_INFO(Net, "[ChatRelayHandler] Whisper from '{}' to '{}' : target offline",
+					sender, parsed->targetToken);
+				return;
+			}
+			const uint32_t destConn = *destConnOpt;
 			const uint64_t ts = NowUnixMsUtc();
-			auto notice = BuildChatRelayPacket(ts,
-				static_cast<uint8_t>(engine::net::ChatChannel::Server),
-				"system",
-				"Whisper not yet supported (Phase 4.x).",
-				sessionIdHeader);
-			if (!notice.empty())
-				m_server->Send(connId, notice);
-			LOG_INFO(Net, "[ChatRelayHandler] Whisper requested by '{}' rejected (not implemented)", sender);
+
+			// Pour le destinataire : on doit utiliser SON sessionId. On le récupère via
+			// ConnectionSessionMap.
+			auto destSessionOpt = m_connMap->GetSessionId(destConn);
+			if (destSessionOpt)
+			{
+				// Texte vu par le destinataire : "[from sender] body" — pour qu'il sache de qui ca vient.
+				const std::string toRecipient = "[from " + sender + "] " + parsed->text;
+				auto pktDest = BuildChatRelayPacket(ts, parsed->channel, sender, toRecipient, *destSessionOpt);
+				if (!pktDest.empty())
+					m_server->Send(destConn, pktDest);
+			}
+
+			// Echo expéditeur : "[to target] body" — confirmation que le whisper est bien parti.
+			const std::string toSender = "[to " + parsed->targetToken + "] " + parsed->text;
+			auto pktSender = BuildChatRelayPacket(ts, parsed->channel, sender, toSender, sessionIdHeader);
+			if (!pktSender.empty())
+				m_server->Send(connId, pktSender);
+
+			LOG_INFO(Net, "[ChatRelayHandler] Whisper '{}' -> '{}' (text_len={})",
+				sender, parsed->targetToken, parsed->text.size());
 			return;
 		}
 

@@ -290,14 +290,16 @@ namespace engine::client
 		// CHAT_RELAY → PushNetworkLine (sender renseigné côté serveur, sans risque de spoof).
 		// Si échec (pas de callback ou pas de session active) : on retombe sur un écho local
 		// pour donner un feedback à l'utilisateur même offline.
+		// Phase 4 : on transmet targetToken au callback (vide sauf pour /whisper). Le serveur
+		// résout le destinataire et stamp le sender côté master ; plus besoin de pre-formater.
 		const uint8_t channelWire = engine::net::ToWire(parsed.channel);
-		const std::string body = parsed.channel == engine::net::ChatChannel::Whisper
-			? std::string{"[to "} + parsed.whisperTargetToken + "] " + parsed.messageBody
-			: parsed.messageBody;
+		const std::string_view targetToken = parsed.channel == engine::net::ChatChannel::Whisper
+			? std::string_view{parsed.whisperTargetToken}
+			: std::string_view{};
 		bool sent = false;
 		if (m_sendCallback)
 		{
-			sent = m_sendCallback(channelWire, body);
+			sent = m_sendCallback(channelWire, targetToken, parsed.messageBody);
 		}
 
 		if (!sent)
@@ -307,15 +309,19 @@ namespace engine::client
 			message.timestampUnixMs = ts;
 			message.channel = parsed.channel;
 			message.sender = "Local";
-			message.text = body;
+			// En offline, on conserve l'ancien formatage "[to X] body" pour que l'utilisateur
+			// voie clairement à qui le whisper était destiné même sans broadcast serveur.
+			message.text = parsed.channel == engine::net::ChatChannel::Whisper
+				? std::string{"[to "} + parsed.whisperTargetToken + "] " + parsed.messageBody
+				: parsed.messageBody;
 			m_history.Push(message);
 			LOG_INFO(Core, "[ChatUiPresenter] Message echoed locally (offline ; channel_wire={}, ts_ms={})",
 				static_cast<unsigned>(channelWire), ts);
 		}
 		else
 		{
-			LOG_INFO(Core, "[ChatUiPresenter] Message sent to master (channel_wire={})",
-				static_cast<unsigned>(channelWire));
+			LOG_INFO(Core, "[ChatUiPresenter] Message sent to master (channel_wire={}, has_target={})",
+				static_cast<unsigned>(channelWire), !targetToken.empty());
 		}
 
 		m_inputLine.clear();

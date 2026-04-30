@@ -11,11 +11,16 @@ namespace engine::network
 {
 	/// Chat MVP — Client → Master : envoi d'un message chat.
 	/// Wire format :
-	///   uint8 channel       (cf. engine::net::ChatChannel raw value 0..9)
-	///   string text         (length-prefixed UTF-8, max kMaxChatTextBytes)
+	///   uint8  channel       (cf. engine::net::ChatChannel raw value 0..9)
+	///   string targetToken   (length-prefixed UTF-8, vide si non-whisper) — Phase 4
+	///   string text          (length-prefixed UTF-8, max kMaxChatTextBytes)
+	///
+	/// Note Phase 4 : ajout du champ \c targetToken (wire-breaking par rapport à
+	/// la v1 du chat MVP). Master + client doivent se déployer ensemble.
 	struct ChatSendRequestPayload
 	{
 		uint8_t     channel = 0;
+		std::string targetToken; ///< Vide sauf pour le canal Whisper (cf. ParseSlashPrefixes /w).
 		std::string text;
 	};
 
@@ -39,7 +44,7 @@ namespace engine::network
 	inline constexpr size_t kMaxChatTextBytes = 256u;
 
 	std::optional<ChatSendRequestPayload> ParseChatSendRequestPayload(const uint8_t* payload, size_t payloadSize);
-	std::vector<uint8_t> BuildChatSendRequestPayload(uint8_t channel, std::string_view text);
+	std::vector<uint8_t> BuildChatSendRequestPayload(uint8_t channel, std::string_view targetToken, std::string_view text);
 
 	std::optional<ChatRelayPayload> ParseChatRelayPayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildChatRelayPacket(uint64_t timestampUnixMs, uint8_t channel,

@@ -50,9 +50,12 @@ static void TestSendRequestRejectsShort()
 
 static void TestSendRequestUtf8()
 {
-	auto buf = BuildChatSendRequestPayload(2u, "héhé 漢字");
+	// Wire format byte-pour-byte : on encode des octets >= 0x80 directement (\xc3\xa9 = 'é'
+	// en UTF-8). Pas de literal UTF-8 dans la source pour rester portable MSVC sans /utf-8.
+	const std::string utf8Sample = "\xc3\xa9\xc3\xa9 multibyte";
+	auto buf = BuildChatSendRequestPayload(2u, utf8Sample);
 	auto parsed = ParseChatSendRequestPayload(buf.data(), buf.size());
-	Assert(parsed.has_value() && parsed->text == "héhé 漢字", "UTF-8 multibyte round-trips");
+	Assert(parsed.has_value() && parsed->text == utf8Sample, "UTF-8 multibyte round-trips byte-perfect");
 }
 
 static void TestRelayRoundTrip()

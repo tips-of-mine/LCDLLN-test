@@ -380,4 +380,59 @@ namespace engine::network
 			return {};
 		return builder.Data();
 	}
+
+	// -------------------------------------------------------------------------
+	// Phase 4 chat — CHARACTER_ENTER_WORLD request/response.
+	// Request : uint64 character_id + string character_name (length-prefixed UTF-8).
+	// Response: uint8 success.
+	// -------------------------------------------------------------------------
+	std::optional<CharacterEnterWorldRequestPayload> ParseCharacterEnterWorldRequestPayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 9u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterEnterWorldRequestPayload out;
+		if (!r.ReadU64(out.characterId))
+			return std::nullopt;
+		if (!r.ReadString(out.characterName))
+			return std::nullopt;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterEnterWorldRequestPayload(uint64_t characterId, std::string_view characterName)
+	{
+		std::vector<uint8_t> buf(kProtocolV1MaxPacketSize, 0u);
+		ByteWriter w(buf.data(), buf.size());
+		if (!w.WriteU64(characterId))
+			return {};
+		if (!w.WriteString(characterName))
+			return {};
+		buf.resize(w.Offset());
+		return buf;
+	}
+
+	std::optional<CharacterEnterWorldResponsePayload> ParseCharacterEnterWorldResponsePayload(const uint8_t* payload, size_t payloadSize)
+	{
+		if (!payload || payloadSize < 1u)
+			return std::nullopt;
+		ByteReader r(payload, payloadSize);
+		CharacterEnterWorldResponsePayload out;
+		uint8_t success = 0;
+		if (!r.ReadBytes(&success, 1u))
+			return std::nullopt;
+		out.success = success;
+		return out;
+	}
+
+	std::vector<uint8_t> BuildCharacterEnterWorldResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!w.WriteBytes(&success, 1u))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeCharacterEnterWorldResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
+	}
 }

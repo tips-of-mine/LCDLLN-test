@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace engine::network
@@ -136,4 +138,25 @@ namespace engine::network
 
 	std::optional<CharacterSavePositionResponsePayload> ParseCharacterSavePositionResponsePayload(const uint8_t* payload, size_t payloadSize);
 	std::vector<uint8_t> BuildCharacterSavePositionResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
+
+	/// Phase 4 chat — Client → Master : déclare le personnage actif après EnterWorld.
+	/// Wire format : uint64 character_id + string character_name (length-prefixed UTF-8).
+	/// Le master valide ownership (account_id + character_id en DB) et enregistre le mapping
+	/// connId → (character_id, character_name) pour le chat (sender display + whisper target).
+	struct CharacterEnterWorldRequestPayload
+	{
+		uint64_t    characterId = 0;
+		std::string characterName;
+	};
+
+	struct CharacterEnterWorldResponsePayload
+	{
+		uint8_t success = 0; ///< 1 = enregistré ; 0 = NOT_OWNED, NAME_MISMATCH, INTERNAL.
+	};
+
+	std::optional<CharacterEnterWorldRequestPayload> ParseCharacterEnterWorldRequestPayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterEnterWorldRequestPayload(uint64_t characterId, std::string_view characterName);
+
+	std::optional<CharacterEnterWorldResponsePayload> ParseCharacterEnterWorldResponsePayload(const uint8_t* payload, size_t payloadSize);
+	std::vector<uint8_t> BuildCharacterEnterWorldResponsePacket(uint8_t success, uint32_t requestId, uint64_t sessionIdHeader);
 }

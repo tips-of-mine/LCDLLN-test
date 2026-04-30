@@ -8,28 +8,27 @@ namespace engine::server
 	class NetServer;
 	class SessionManager;
 	class ConnectionSessionMap;
+	class SessionCharacterMap;
 	class AccountStore;
 
-	/// Chat MVP — Master-side handler for kOpcodeChatSendRequest.
+	/// Master-side handler for kOpcodeChatSendRequest.
 	///
-	/// Resolves the sender's display name from the session (account_id → AccountStore login),
-	/// validates the channel + text length, then broadcasts a CHAT_RELAY packet to every
-	/// authenticated master session via ConnectionSessionMap::Snapshot().
+	/// Phase 4 :
+	///   - Sender display name = character_name (via SessionCharacterMap), fallback login.
+	///   - Whisper (channel=Whisper) : résolu via SessionCharacterMap par character_name
+	///     normalisé. Si target offline → CHAT_RELAY "Server" notice à l'expéditeur seul.
+	///     Si target online → CHAT_RELAY (channel=Whisper) envoyé à target ET sender.
 	///
-	/// Limitations volontaires de la v1 :
-	///  - Pas de routage par canal (Say/Yell/Zone/Party/Guild/Friends broadcastent tous global) ;
-	///    le canal est échoé dans CHAT_RELAY pour préserver l'affichage couleur côté client.
-	///  - Whisper (channel=Whisper) : le master renvoie un CHAT_RELAY "Server" notice
-	///    "feature not yet available" à l'expéditeur seulement (target lookup nécessite
-	///    un mapping display_name → connId qui sera ajouté quand EnterWorld pousse
-	///    le perso sélectionné côté master).
-	///  - Sender = login. Le character display_name viendra plus tard (Phase 4.x).
+	/// Limitations restantes (Phase 4.5+) :
+	///   - Pas de routage par canal pour Say/Yell/Zone/Party/Guild/Friends → tous broadcast global.
+	///   - Le canal est juste echoé dans CHAT_RELAY pour préserver la couleur côté client.
 	class ChatRelayHandler
 	{
 	public:
 		void SetServer(NetServer* server);
 		void SetSessionManager(SessionManager* sessions);
 		void SetConnectionSessionMap(ConnectionSessionMap* map);
+		void SetSessionCharacterMap(SessionCharacterMap* charMap);
 		void SetAccountStore(AccountStore* accounts);
 
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
@@ -39,6 +38,7 @@ namespace engine::server
 		NetServer*            m_server   = nullptr;
 		SessionManager*       m_sessions = nullptr;
 		ConnectionSessionMap* m_connMap  = nullptr;
+		SessionCharacterMap*  m_charMap  = nullptr;
 		AccountStore*         m_accounts = nullptr;
 	};
 }

@@ -287,7 +287,7 @@ namespace engine::client
 		return true;
 	}
 
-	bool AuthUiPresenter::SendChatAsync(uint8_t channel, std::string_view text)
+	bool AuthUiPresenter::SendChatAsync(uint8_t channel, std::string_view targetToken, std::string_view text)
 	{
 		if (!m_masterClient || m_masterSessionId == 0u)
 		{
@@ -297,7 +297,7 @@ namespace engine::client
 		{
 			return false;
 		}
-		const std::vector<uint8_t> payload = engine::network::BuildChatSendRequestPayload(channel, text);
+		const std::vector<uint8_t> payload = engine::network::BuildChatSendRequestPayload(channel, targetToken, text);
 		if (payload.empty())
 		{
 			LOG_WARN(Net, "[AuthUiPresenter] SendChatAsync: Build payload failed");
@@ -325,8 +325,42 @@ namespace engine::client
 			LOG_WARN(Net, "[AuthUiPresenter] SendChatAsync: Send failed");
 			return false;
 		}
-		LOG_DEBUG(Net, "[AuthUiPresenter] SendChatAsync queued (channel={}, text_len={})",
-			static_cast<unsigned>(channel), text.size());
+		LOG_DEBUG(Net, "[AuthUiPresenter] SendChatAsync queued (channel={}, target_len={}, text_len={})",
+			static_cast<unsigned>(channel), targetToken.size(), text.size());
+		return true;
+	}
+
+	bool AuthUiPresenter::SendEnterWorldAsync(uint64_t characterId, std::string_view characterName)
+	{
+		if (!m_masterClient || m_masterSessionId == 0u || characterId == 0u || characterName.empty())
+		{
+			return false;
+		}
+		const std::vector<uint8_t> payload =
+			engine::network::BuildCharacterEnterWorldRequestPayload(characterId, characterName);
+		if (payload.empty())
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendEnterWorldAsync: Build payload failed");
+			return false;
+		}
+		engine::network::PacketBuilder builder;
+		auto w = builder.PayloadWriter();
+		if (!w.WriteBytes(payload.data(), payload.size()))
+		{
+			return false;
+		}
+		if (!builder.Finalize(engine::network::kOpcodeCharacterEnterWorldRequest, 0u, 0u, m_masterSessionId, payload.size()))
+		{
+			return false;
+		}
+		const auto& packet = builder.Data();
+		if (packet.empty() || !m_masterClient->Send(std::span<const uint8_t>(packet.data(), packet.size())))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendEnterWorldAsync: Send failed");
+			return false;
+		}
+		LOG_INFO(Net, "[AuthUiPresenter] SendEnterWorldAsync queued (character_id={}, name_len={})",
+			characterId, characterName.size());
 		return true;
 	}
 

@@ -32,7 +32,9 @@
 #include "engine/server/CharacterListHandler.h"
 #include "engine/server/CharacterDeleteHandler.h"
 #include "engine/server/CharacterSavePositionHandler.h"
+#include "engine/server/CharacterEnterWorldHandler.h"
 #include "engine/server/ChatRelayHandler.h"
+#include "engine/server/SessionCharacterMap.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -305,11 +307,22 @@ int main(int argc, char** argv)
 	characterSavePositionHandler.SetConnectionSessionMap(&connSessionMap);
 	characterSavePositionHandler.SetConnectionPool(&dbPool);
 
+	// Phase 4 chat — mapping connId → (character_id, character_name) pour sender display + whisper target.
+	engine::server::SessionCharacterMap sessionCharMap;
+
+	engine::server::CharacterEnterWorldHandler characterEnterWorldHandler;
+	characterEnterWorldHandler.SetServer(&server);
+	characterEnterWorldHandler.SetSessionManager(&sessionManager);
+	characterEnterWorldHandler.SetConnectionSessionMap(&connSessionMap);
+	characterEnterWorldHandler.SetSessionCharacterMap(&sessionCharMap);
+	characterEnterWorldHandler.SetConnectionPool(&dbPool);
+
 	// Chat MVP — handler de relais des messages chat (broadcast à toutes les sessions actives).
 	engine::server::ChatRelayHandler chatRelayHandler;
 	chatRelayHandler.SetServer(&server);
 	chatRelayHandler.SetSessionManager(&sessionManager);
 	chatRelayHandler.SetConnectionSessionMap(&connSessionMap);
+	chatRelayHandler.SetSessionCharacterMap(&sessionCharMap);
 	chatRelayHandler.SetAccountStore(accountStore);
 
 	// Wire PasswordResetHandler dependencies.
@@ -351,7 +364,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -376,6 +389,8 @@ int main(int argc, char** argv)
 			characterSavePositionHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeChatSendRequest)
 			chatRelayHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeCharacterEnterWorldRequest)
+			characterEnterWorldHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
@@ -638,6 +653,9 @@ int main(int argc, char** argv)
 			{
 				server.CloseConnection(connId, engine::server::DisconnectReason::HeartbeatTimeout);
 				sessionManager.Close(sessionId, engine::server::SessionCloseReason::HeartbeatTimeout);
+				// Phase 4 chat — purge le binding character actif pour ne pas leak
+				// dans le whisper directory.
+				sessionCharMap.Remove(connId);
 				LOG_INFO(Net, "[ServerMain] Session expired (connId={}, session_id={}), connection closed", connId, sessionId);
 			}
 		}

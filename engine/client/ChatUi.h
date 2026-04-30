@@ -83,7 +83,8 @@ namespace engine::client
 		/// PAS d'écho local — le serveur le rebroadcast via CHAT_RELAY → PushNetworkLine).
 		/// Retourne false si pas connecté ou échec d'envoi : on retombe sur un écho local
 		/// "Local" pour que l'utilisateur ait un feedback même offline.
-		using SendCallback = std::function<bool(uint8_t channel, std::string_view text)>;
+		/// Phase 4 : ajout du paramètre \p targetToken (vide sauf pour /whisper).
+		using SendCallback = std::function<bool(uint8_t channel, std::string_view targetToken, std::string_view text)>;
 		void SetSendCallback(SendCallback cb) { m_sendCallback = std::move(cb); }
 
 	private:

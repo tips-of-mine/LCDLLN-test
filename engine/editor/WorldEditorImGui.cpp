@@ -613,7 +613,7 @@ namespace engine::editor
 					// Reinitialisation in-process : on retire le node DockBuilder courant et on
 					// repasse m_defaultLayoutAttempted a false. La frame suivante reconstruit la
 					// disposition par defaut via le bloc DockBuilder en haut de BuildUi().
-					const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpace");
+					const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
 					ImGui::DockBuilderRemoveNode(dockId);
 					m_defaultLayoutAttempted = false;
 					// Supprime aussi le fichier .ini pour que la reinitialisation persiste apres
@@ -718,7 +718,7 @@ namespace engine::editor
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
 		if (ImGui::Begin("WorldEditorDockSpaceHost", nullptr, hostFlags))
 		{
-			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpace");
+			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
 			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) - litteral pour eviter les divergences d'en-tetes.
 			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 4);
 
@@ -749,18 +749,19 @@ namespace engine::editor
 					// Palette outils : a gauche, c'est la zone d'action principale.
 					ImGui::DockBuilderDockWindow("Outils", idLeft);
 
-					// Inspecteur : panneaux carte / affichage / import / objets sont des onglets a droite.
+					// Inspecteur : panneaux carte / affichage / import / objets / scene sont des onglets a droite.
+					// Scene rejoint cette pile : la docker dans le node central annulait le passthrough et
+					// bloquait l'interaction 3D (regression P1). En tant qu'onglet a droite, son contenu
+					// (diagnostic camera) reste accessible et le node central reste vide -> 3D visible
+					// et cliquable au travers du DockSpace.
 					ImGui::DockBuilderDockWindow("Carte", idRight);
 					ImGui::DockBuilderDockWindow("Affichage & grille", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
+					ImGui::DockBuilderDockWindow("Scene", idRight);
 
 					// Statut en bas, plein largeur.
 					ImGui::DockBuilderDockWindow("Statut", idBottom);
-
-					// La fenetre Scene ne capture pas la souris (ImGuiWindowFlags_NoMouseInputs) ;
-					// on la place dans le node central pour qu'elle remplisse l'espace 3D restant.
-					ImGui::DockBuilderDockWindow("Scene", idCenter);
 
 					ImGui::DockBuilderFinish(dockId);
 				}
@@ -771,7 +772,10 @@ namespace engine::editor
 		ImGui::End();
 		ImGui::PopStyleVar(3);
 
-		ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoMouseInputs);
+		// NoBackground : si la fenetre Scene est dockee dans un node qui n'est plus passthrough,
+		// son fond ne masque pas la 3D dessous. NoMouseInputs : les clics passent au travers vers
+		// la couche viewport overlay (raycast terrain, peinture splat, etc.).
+		ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoBackground);
 		ImGui::TextUnformatted("Vue 3D Vulkan (meme moteur que le jeu).");
 		ImGui::TextUnformatted(
 			"Deplacement : menu 'Options' -> QWERTY (WASD) ou AZERTY (ZQSD), un seul a la fois. Shift = plus rapide ; "

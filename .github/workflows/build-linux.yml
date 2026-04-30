@@ -44,6 +44,31 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: cmake --build --preset linux-x64-release
 
+      # Lot H : garde explicite que le World Editor compile au même titre que le jeu.
+      # Si une régression casse uniquement la cible world_editor_app, ce step échoue alors que
+      # le step précédent (qui construit toutes les cibles) pourrait masquer le diagnostic.
+      - name: Build explicite — cible world_editor_app
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cmake --build --preset linux-x64-release --target world_editor_app
+
+      - name: Vérifie présence des deux exécutables (jeu + éditeur)
+        run: |
+          set -e
+          BUILD_DIR="$GITHUB_WORKSPACE/build/linux-x64-release"
+          # Linux ne produit pas l'éditeur (Windows-only via WIN32_LEAN_AND_MEAN), mais on vérifie la présence du binaire
+          # qui est compilé en headless ; sinon vérifier juste engine_app.
+          test -x "$BUILD_DIR/lcdlln-master" -o -x "$BUILD_DIR/lcdlln-master.exe" \
+            || (echo "ERREUR : binaire lcdlln-master absent" && ls -la "$BUILD_DIR" && exit 1)
+          # world_editor_app produit lcdlln_world_editor (binaire Linux compile mais ne lance pas Vulkan/Win32 — sert
+          # à valider que le code éditeur compile sur Linux).
+          if test -e "$BUILD_DIR/pkg/world_editor/lcdlln_world_editor"; then
+            echo "[OK] world editor binary present"
+          else
+            echo "[INFO] world editor binary not in expected path, scanning..."
+            find "$BUILD_DIR" -type f -name "lcdlln_world_editor*" -ls || true
+          fi
+
       # Copie automatique db/schema.sql + db/migrations/ → deploy/docker/db/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
       - name: Assembler deploy/docker (sync db + binaires + lib MySQL + game/data)

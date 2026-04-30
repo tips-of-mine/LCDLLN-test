@@ -111,6 +111,10 @@ namespace engine::editor
 		void* m_hwnd = nullptr;
 		WorldEditorSession* m_session = nullptr;
 		engine::core::Config* m_cfg = nullptr;
+		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
+		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
+		/// repassé à true après la pose.
+		bool m_defaultLayoutAttempted = false;
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 #endif

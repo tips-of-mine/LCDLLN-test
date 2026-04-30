@@ -56,17 +56,27 @@ jobs:
         run: |
           set -e
           BUILD_DIR="$GITHUB_WORKSPACE/build/linux-x64-release"
-          # Linux ne produit pas l'éditeur (Windows-only via WIN32_LEAN_AND_MEAN), mais on vérifie la présence du binaire
-          # qui est compilé en headless ; sinon vérifier juste engine_app.
-          test -x "$BUILD_DIR/lcdlln-master" -o -x "$BUILD_DIR/lcdlln-master.exe" \
-            || (echo "ERREUR : binaire lcdlln-master absent" && ls -la "$BUILD_DIR" && exit 1)
-          # world_editor_app produit lcdlln_world_editor (binaire Linux compile mais ne lance pas Vulkan/Win32 — sert
-          # à valider que le code éditeur compile sur Linux).
-          if test -e "$BUILD_DIR/pkg/world_editor/lcdlln_world_editor"; then
-            echo "[OK] world editor binary present"
+          # Les binaires CMake sont placés dans pkg/<sous-dossier>/ (cf. RUNTIME_OUTPUT_DIRECTORY).
+          # Cherche le serveur (lcdlln_server) et l'éditeur (lcdlln_world_editor) sans présupposer le sous-chemin.
+          SERVER_BIN=$(find "$BUILD_DIR/pkg" -type f \( -name "lcdlln_server" -o -name "lcdlln_master" -o -name "lcdlln-master" \) -print -quit 2>/dev/null || true)
+          EDITOR_BIN=$(find "$BUILD_DIR/pkg" -type f -name "lcdlln_world_editor" -print -quit 2>/dev/null || true)
+          ERR=0
+          if [ -z "$SERVER_BIN" ]; then
+            echo "[FAIL] Aucun binaire serveur (lcdlln_server / lcdlln_master) trouvé sous $BUILD_DIR/pkg"
+            ERR=1
           else
-            echo "[INFO] world editor binary not in expected path, scanning..."
-            find "$BUILD_DIR" -type f -name "lcdlln_world_editor*" -ls || true
+            echo "[OK] Server : $SERVER_BIN"
+          fi
+          if [ -z "$EDITOR_BIN" ]; then
+            echo "[FAIL] Binaire éditeur (lcdlln_world_editor) absent sous $BUILD_DIR/pkg"
+            ERR=1
+          else
+            echo "[OK] Editor : $EDITOR_BIN"
+          fi
+          if [ "$ERR" -ne 0 ]; then
+            echo "--- Listing $BUILD_DIR/pkg ---"
+            find "$BUILD_DIR/pkg" -maxdepth 3 -type f -printf "%p\n" | sort
+            exit 1
           fi
 
       # Copie automatique db/schema.sql + db/migrations/ → deploy/docker/db/ (Docker + MigrationRunner).

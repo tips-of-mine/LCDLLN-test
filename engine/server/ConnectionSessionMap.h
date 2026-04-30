@@ -26,6 +26,12 @@ namespace engine::server
 		/// Returns session_id for \a connId if registered. For M22.4 (shard ticket: connId → account_id).
 		std::optional<uint64_t> GetSessionId(uint32_t connId) const;
 
+		/// Chat MVP — Snapshot des paires (connId, sessionId) actuellement enregistrées.
+		/// Utilisé par les handlers broadcast (chat) qui doivent envoyer un même paquet à
+		/// toutes les sessions actives. Verrouille brièvement le mutex pour copier la map ;
+		/// le snapshot peut être obsolète au moment où l'appelant l'utilise (race normale).
+		std::vector<std::pair<uint32_t, uint64_t>> Snapshot() const;
+
 		/// Returns pairs (connId, session_id) for which the session is no longer valid (heartbeat timeout or max age).
 		/// Call after SessionManager::EvictExpired(). Caller must then close each connId and SessionManager::Close(session_id).
 		std::vector<std::pair<uint32_t, uint64_t>> CollectExpired(const SessionManager& sessionManager);

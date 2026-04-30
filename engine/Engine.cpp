@@ -6,6 +6,8 @@
 #include "engine/editor/WorldEditorSession.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
+#include "engine/network/ChatPayloads.h"
+#include "engine/network/ProtocolV1Constants.h"
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/ChatImGuiRenderer.h"
 #include "engine/render/AuthUiRenderer.h"
@@ -737,6 +739,33 @@ namespace engine
 		{
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
 		}
+
+		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).
+		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
+		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
+		// vers un handler qui parse et appelle ChatUi::PushNetworkLine.
+		m_chatUi.SetSendCallback([this](uint8_t channel, std::string_view text) -> bool {
+			return m_authUi.SendChatAsync(channel, text);
+		});
+		m_authUi.SetMasterPushHandler([this](uint16_t opcode, const uint8_t* payload, size_t payloadSize) {
+			using namespace engine::network;
+			if (opcode != kOpcodeChatRelay)
+				return;
+			auto parsed = ParseChatRelayPayload(payload, payloadSize);
+			if (!parsed)
+			{
+				LOG_WARN(Net, "[Engine] CHAT_RELAY parse failed (size={})", payloadSize);
+				return;
+			}
+			engine::net::ChatChannel ch = engine::net::ChatChannel::Say;
+			(void)engine::net::TryDecodeChannelWire(parsed->channel, ch);
+			engine::net::ChatMessage msg{};
+			msg.timestampUnixMs = parsed->timestampUnixMs;
+			msg.channel = ch;
+			msg.sender = std::move(parsed->sender);
+			msg.text = std::move(parsed->text);
+			m_chatUi.PushNetworkLine(msg);
+		});
 
 		if (m_worldEditorExe && m_authUi.IsInitialized())
 		{

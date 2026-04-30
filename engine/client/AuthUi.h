@@ -8,6 +8,7 @@
 #include "engine/platform/Input.h"
 #include "engine/platform/StableMutex.h"
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -426,6 +427,26 @@ namespace engine::client
 		/// la résolution de cible /whisper. Fire-and-forget (la réponse 1=ok / 0=error est
 		/// loggée en debug par PumpPostAuthEvents si l'engine l'a câblée).
 		bool SendEnterWorldAsync(uint64_t characterId, std::string_view characterName);
+
+		/// Phase 5 reconnect — L'engine appelle cette méthode juste après avoir consommé
+		/// EnterWorldCommand (dans Engine.cpp), pour mémoriser le personnage actif. Cette
+		/// info est nécessaire pour ré-envoyer un CHARACTER_ENTER_WORLD_REQUEST à la
+		/// reconnexion master sans repasser par tout le flow Login/CharacterSelect.
+		void RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName);
+
+		/// Phase 5 reconnect — Tente une reconnexion master si requise et le délai dépassé.
+		/// À appeler chaque frame post-auth depuis l'engine. No-op si pas en mode reconnect.
+		/// Crée son propre worker thread (réutilise les credentials \c m_login/\c m_password
+		/// stockés depuis le login initial) puis re-AUTH + re-EnterWorld.
+		void TickReconnect(const engine::core::Config& cfg);
+
+		/// Phase 5 reconnect — true tant qu'une tentative de reconnexion est en cours
+		/// (utilisé par l'engine pour afficher une bannière à l'écran).
+		bool IsReconnecting() const { return m_reconnectInProgress; }
+
+		/// Phase 5 reconnect — texte localisé à afficher pendant la tentative
+		/// (« Connexion perdue, reconnexion… » / « Reconnexion impossible… »).
+		const std::string& ReconnectStatusText() const { return m_reconnectStatusText; }
 
 		/// Chat MVP — Callback installée par l'engine pour recevoir les paquets push
 		/// (request_id=0) sur la connexion master post-auth. Appelée depuis
@@ -955,6 +976,27 @@ namespace engine::client
 		/// Chat MVP — callback installée par l'engine pour dispatcher les paquets push
 		/// (request_id=0) reçus sur la connexion master post-auth (CHAT_RELAY notamment).
 		MasterPushHandler m_masterPushHandler;
+
+		// -----------------------------------------------------------------------------
+		// Phase 5 reconnect — état de tentative de reconnexion automatique du master.
+		// -----------------------------------------------------------------------------
+		/// Personnage actif (mémorisé par l'engine via RememberPostEnterWorldCharacter)
+		/// pour pouvoir ré-envoyer ENTER_WORLD à la reconnexion.
+		uint64_t    m_postEnterWorldCharacterId = 0;
+		std::string m_postEnterWorldCharacterName;
+		/// True dès qu'on détecte une déconnexion master post-EnterWorld et qu'on n'a
+		/// pas encore donné suite (succès / abandon).
+		bool m_reconnectInProgress = false;
+		/// Numéro d'essai courant (1-based). Plafond : \ref m_reconnectMaxAttempts.
+		uint32_t m_reconnectAttempt = 0;
+		uint32_t m_reconnectMaxAttempts = 1; ///< MVP : une seule tentative.
+		std::chrono::steady_clock::time_point m_reconnectNextAt{};
+		/// Texte affiché par l'engine pendant la phase de reconnexion (FR par défaut).
+		std::string m_reconnectStatusText;
+		/// True quand le worker reconnect est terminé et que le main thread doit consommer
+		/// le résultat (succès ou abandon).
+		std::atomic<bool> m_reconnectAsyncDone{ false };
+		bool m_reconnectAsyncSuccess = false;
 	};
 
 }

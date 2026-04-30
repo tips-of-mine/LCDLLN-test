@@ -172,4 +172,14 @@ namespace engine::network
 
 	constexpr uint16_t kOpcodeCharacterSavePositionRequest  = 43u; ///< Client→Master : sauvegarde la position courante (x, y, z, yaw_deg, pitch_deg) d'un personnage.
 	constexpr uint16_t kOpcodeCharacterSavePositionResponse = 44u; ///< Master→Client : succès / erreur (NOT_FOUND si perso pas possédé par le compte).
+
+	// -------------------------------------------------------------------------
+	// Opcodes de chat (valeurs 45–46)
+	// Référence : MVP chat réseau — le client envoie un message texte au master
+	// (CHAT_SEND_REQUEST), le master broadcast à toutes les sessions actives
+	// via CHAT_RELAY (push asynchrone, request_id=0).
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeChatSendRequest = 45u; ///< Client→Master : envoie un message chat (channel + texte).
+	constexpr uint16_t kOpcodeChatRelay       = 46u; ///< Master→Client : push d'un message à afficher (timestamp + channel + sender + texte).
 }

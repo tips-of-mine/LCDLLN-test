@@ -23,6 +23,18 @@ namespace engine::server
 		return it->second;
 	}
 
+	std::vector<std::pair<uint32_t, uint64_t>> ConnectionSessionMap::Snapshot() const
+	{
+		std::vector<std::pair<uint32_t, uint64_t>> out;
+		std::lock_guard lock(m_mutex);
+		out.reserve(m_connToSession.size());
+		for (const auto& [conn, sess] : m_connToSession)
+		{
+			out.emplace_back(conn, sess);
+		}
+		return out;
+	}
+
 	std::vector<std::pair<uint32_t, uint64_t>> ConnectionSessionMap::CollectExpired(const SessionManager& sessionManager)
 	{
 		std::vector<std::pair<uint32_t, uint64_t>> out;

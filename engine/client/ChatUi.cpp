@@ -285,26 +285,41 @@ namespace engine::client
 			return;
 		}
 
-		const uint64_t ts = NowUnixMsUtc();
-		engine::net::ChatMessage message{};
-		message.timestampUnixMs = ts;
-		message.channel = parsed.channel;
-		message.sender = "Local";
-		message.text = parsed.messageBody;
-		if (parsed.channel == engine::net::ChatChannel::Whisper)
+		// Chat MVP — On essaie d'abord d'envoyer au master via la callback installée par
+		// l'engine. Si succès : pas d'écho local, le serveur va relayer le message via
+		// CHAT_RELAY → PushNetworkLine (sender renseigné côté serveur, sans risque de spoof).
+		// Si échec (pas de callback ou pas de session active) : on retombe sur un écho local
+		// pour donner un feedback à l'utilisateur même offline.
+		const uint8_t channelWire = engine::net::ToWire(parsed.channel);
+		const std::string body = parsed.channel == engine::net::ChatChannel::Whisper
+			? std::string{"[to "} + parsed.whisperTargetToken + "] " + parsed.messageBody
+			: parsed.messageBody;
+		bool sent = false;
+		if (m_sendCallback)
 		{
-			message.text = "[to ";
-			message.text += parsed.whisperTargetToken;
-			message.text += "] ";
-			message.text += parsed.messageBody;
+			sent = m_sendCallback(channelWire, body);
 		}
 
-		m_history.Push(message);
+		if (!sent)
+		{
+			const uint64_t ts = NowUnixMsUtc();
+			engine::net::ChatMessage message{};
+			message.timestampUnixMs = ts;
+			message.channel = parsed.channel;
+			message.sender = "Local";
+			message.text = body;
+			m_history.Push(message);
+			LOG_INFO(Core, "[ChatUiPresenter] Message echoed locally (offline ; channel_wire={}, ts_ms={})",
+				static_cast<unsigned>(channelWire), ts);
+		}
+		else
+		{
+			LOG_INFO(Core, "[ChatUiPresenter] Message sent to master (channel_wire={})",
+				static_cast<unsigned>(channelWire));
+		}
+
 		m_inputLine.clear();
 		m_chatFocus = false;
-		LOG_INFO(Core, "[ChatUiPresenter] Message submitted locally (channel_wire={}, ts_ms={})",
-			static_cast<unsigned>(engine::net::ToWire(parsed.channel)),
-			ts);
 	}
 
 	void ChatUiPresenter::RebuildFilterLegend(std::string& out) const

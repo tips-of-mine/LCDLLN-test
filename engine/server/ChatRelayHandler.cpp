@@ -260,6 +260,88 @@ namespace engine::server
 			}
 		}
 
+		// Phase 5.2 — Friends routing : SQL `friends` (status=1 accepted) → set d'account_id.
+		// Le sender est ajouté au set pour qu'il voie son propre message echo (cohérent avec
+		// le comportement guild où sender ∈ guild_members).
+		if (parsed->channel == static_cast<uint8_t>(engine::net::ChatChannel::Friends))
+		{
+			if (!m_pool)
+			{
+				LOG_WARN(Net, "[ChatRelayHandler] Friends routing requested but no ConnectionPool ; falling back to broadcast");
+			}
+			else
+			{
+				auto guard = m_pool->Acquire();
+				MYSQL* mysql = guard.get();
+				if (!mysql)
+				{
+					auto pkt = BuildErrorPacket(NetErrorCode::INTERNAL_ERROR, "database unavailable", requestId, sessionIdHeader);
+					if (!pkt.empty())
+						m_server->Send(connId, pkt);
+					return;
+				}
+
+				char queryBuf[256]{};
+				std::snprintf(queryBuf, sizeof(queryBuf),
+					"SELECT friend_id FROM friends WHERE player_id = %llu AND status = 1",
+					static_cast<unsigned long long>(*accountId));
+
+				MYSQL_RES* res = engine::server::db::DbQuery(mysql, queryBuf);
+				std::unordered_set<uint64_t> friendAccountIds;
+				friendAccountIds.insert(*accountId); // sender voit son propre echo
+				if (res)
+				{
+					MYSQL_ROW row;
+					while ((row = mysql_fetch_row(res)) != nullptr)
+					{
+						if (row[0])
+						{
+							const uint64_t fid = std::strtoull(row[0], nullptr, 10);
+							if (fid != 0u)
+								friendAccountIds.insert(fid);
+						}
+					}
+					engine::server::db::DbFreeResult(res);
+				}
+
+				if (friendAccountIds.size() == 1u)
+				{
+					// Aucune ligne friends → seul le sender est dans le set → notice "no friends online".
+					// Distinct du cas "vraiment 0 amis" vs "amis tous offline" — pour MVP on ne discrimine pas.
+					const uint64_t ts0 = NowUnixMsUtc();
+					auto notice = BuildChatRelayPacket(ts0,
+						static_cast<uint8_t>(engine::net::ChatChannel::Server),
+						"system",
+						"No friends online to receive your message.",
+						sessionIdHeader);
+					if (!notice.empty())
+						m_server->Send(connId, notice);
+					LOG_INFO(Net, "[ChatRelayHandler] Friends from '{}' : no recipients (only self)", sender);
+					return;
+				}
+
+				const uint64_t ts = NowUnixMsUtc();
+				const auto snapshot = m_connMap->Snapshot();
+				size_t delivered = 0;
+				for (const auto& [destConn, destSession] : snapshot)
+				{
+					auto destAccountOpt = m_sessions->GetAccountId(destSession);
+					if (!destAccountOpt)
+						continue;
+					if (friendAccountIds.find(*destAccountOpt) == friendAccountIds.end())
+						continue;
+					auto pkt = BuildChatRelayPacket(ts, parsed->channel, sender, parsed->text, destSession);
+					if (pkt.empty())
+						continue;
+					if (m_server->Send(destConn, pkt))
+						++delivered;
+				}
+				LOG_INFO(Net, "[ChatRelayHandler] Friends routing sender='{}' friends_total={} delivered={}",
+					sender, friendAccountIds.size() - 1u, delivered);
+				return;
+			}
+		}
+
 		// Broadcast : un même paquet à toutes les sessions actives. Chaque destinataire reçoit
 		// le packet avec SON propre sessionId dans l'en-tête (assemblage par paquet, pas un seul
 		// PacketBuilder réutilisé) — sinon le client filtrerait éventuellement par session.

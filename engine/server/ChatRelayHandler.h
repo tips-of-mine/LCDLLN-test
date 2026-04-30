@@ -30,7 +30,13 @@ namespace engine::server
 	///     CHAT_RELAY uniquement aux membres en ligne. Si sender pas dans une guilde, notice
 	///     "Server" "You are not in a guild" à l'expéditeur seul.
 	///
-	/// Limitations restantes (Phase 5.2+) :
+	/// Phase 5.2 :
+	///   - Friends (channel=Friends) : SQL `friends WHERE status=1` → set d'account_id des
+	///     amis acceptés. Sender inclus dans le set pour voir son propre echo. Si aucun ami
+	///     en ligne (seul le sender match), notice "Server" "No friends online to receive
+	///     your message" à l'expéditeur seul.
+	///
+	/// Limitations restantes (Phase 5.3+) :
 	///   - /p (party) et /zone : pas de routage, broadcast global. Party vit en RAM côté
 	///     shard (PartySystem.cpp), pas accessible au master ; zone idem.
 	///   - Le canal est juste echoé dans CHAT_RELAY pour préserver la couleur côté client.

@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <random>
 #include <string>
@@ -102,6 +103,26 @@ namespace engine::editor
 		bool ActionImportTexture(const engine::core::Config& cfg);
 		bool ActionImportAudio(const engine::core::Config& cfg);
 
+		/// Sauvegarde dans le chemin canonique \c world_editor/maps/<zone_id>/map.lcdlln_edit.json
+		/// (déduit de \c m_doc.zoneId — pas besoin de saisir un chemin).
+		bool ActionSaveCurrentMap(const engine::core::Config& cfg);
+
+		/// Charge \c world_editor/maps/<zoneId>/map.lcdlln_edit.json (chemin canonique).
+		bool ActionLoadMapByZoneId(const engine::core::Config& cfg, std::string_view zoneId);
+
+		/// Sous-répertoire du content où vivent toutes les cartes de l'éditeur.
+		static constexpr const char* kMapsContentRelativeDir = "world_editor/maps";
+		/// Nom de fichier canonique du JSON d'édition d'une carte.
+		static constexpr const char* kEditDocFilename = "map.lcdlln_edit.json";
+
+		/// Chemin canonique absolu de la carte \p zoneId (inexistant ≠ erreur ; aucune E/S ici).
+		static std::filesystem::path CanonicalMapJsonPath(const engine::core::Config& cfg, std::string_view zoneId);
+
+		/// Re-scan de \c world_editor/maps/ : remplit \ref AvailableMapIds() (zoneIds triés alphabétiquement).
+		void RefreshAvailableMaps(const engine::core::Config& cfg);
+		const std::vector<std::string>& AvailableMapIds() const { return m_availableMapIds; }
+		int& SelectedAvailableMapIndex() { return m_selectedAvailableMapIndex; }
+
 		void SyncBuffersFromDoc();
 		void SyncDocIdFromBuffer();
 
@@ -154,6 +175,13 @@ namespace engine::editor
 		std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> m_terrainSaveHook;
 
 		bool m_terrainGpuReloadRequested = false;
+
+		std::vector<std::string> m_availableMapIds;
+		int m_selectedAvailableMapIndex = 0;
+		bool m_availableMapsScanned = false;
+
+	public:
+		bool AvailableMapsScanned() const { return m_availableMapsScanned; }
 	};
 
 } // namespace engine::editor

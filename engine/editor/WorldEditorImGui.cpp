@@ -666,40 +666,93 @@ namespace engine::editor
 
 		if (m_session && m_cfg)
 		{
-			ImGui::Begin("Carte (JSON édition)");
-			ImGui::InputText("zone_id", m_session->BufZoneId().data(), m_session->BufZoneId().size());
-			ImGui::InputText("taille (N×N)", m_session->BufSize().data(), m_session->BufSize().size());
-			ImGui::InputTextWithHint("seed (optionnel)", "vide = aléatoire non fixé", m_session->BufSeed().data(), m_session->BufSeed().size());
-			if (ImGui::Button("Nouvelle carte"))
+			if (!m_session->AvailableMapsScanned())
 			{
-				(void)m_session->ActionNewMap(*m_cfg);
+				m_session->RefreshAvailableMaps(*m_cfg);
+			}
+
+			ImGui::Begin("Carte");
+
+			// Section 1 — Cartes existantes (chemin canonique world_editor/maps/<zone_id>/).
+			ImGui::TextUnformatted("Cartes disponibles");
+			if (ImGui::Button("Rafraîchir la liste"))
+			{
+				m_session->RefreshAvailableMaps(*m_cfg);
+			}
+			const std::vector<std::string>& mapIds = m_session->AvailableMapIds();
+			if (mapIds.empty())
+			{
+				ImGui::TextDisabled("Aucune carte trouvée. Créez-en une ci-dessous, ou cliquez sur « Rafraîchir la liste ».");
+			}
+			else
+			{
+				std::string itemsZ;
+				for (const std::string& id : mapIds)
+				{
+					itemsZ += id;
+					itemsZ.push_back('\0');
+				}
+				itemsZ.push_back('\0');
+				int& sel = m_session->SelectedAvailableMapIndex();
+				sel = std::clamp(sel, 0, static_cast<int>(mapIds.size()) - 1);
+				ImGui::Combo("Carte", &sel, itemsZ.c_str());
+				sel = std::clamp(sel, 0, static_cast<int>(mapIds.size()) - 1);
+				if (ImGui::Button("Charger la carte sélectionnée"))
+				{
+					(void)m_session->ActionLoadMapByZoneId(*m_cfg, mapIds[static_cast<size_t>(sel)]);
+				}
 			}
 			ImGui::Separator();
-			ImGui::InputText("Charger JSON (chemin absolu)", m_session->BufLoadPath().data(), m_session->BufLoadPath().size());
-			if (ImGui::Button("Charger"))
+
+			// Section 2 — Sauvegarde 1-clic dans le chemin canonique de la carte courante.
+			ImGui::TextUnformatted("Carte courante");
+			ImGui::InputText("Nom (zone_id)", m_session->BufZoneId().data(), m_session->BufZoneId().size());
+			if (ImGui::Button("Sauvegarder"))
 			{
-				(void)m_session->ActionLoadEditJson(*m_cfg);
+				(void)m_session->ActionSaveCurrentMap(*m_cfg);
 			}
-			ImGui::InputText("Sauver JSON (chemin absolu)", m_session->BufSavePath().data(), m_session->BufSavePath().size());
-			if (ImGui::Button("Sauvegarder édition"))
-			{
-				(void)m_session->ActionSaveEditJson(*m_cfg);
-			}
-			if (ImGui::Button("Exporter runtime (zones/<id>/)"))
+			ImGui::SameLine();
+			if (ImGui::Button("Exporter runtime"))
 			{
 				(void)m_session->ActionExportRuntime(*m_cfg);
 			}
-			ImGui::Separator();
-			ImGui::TextUnformatted("Heightmap (relatif content):");
-			ImGui::TextWrapped("%s", m_session->Doc().heightmapContentRelativePath.c_str());
-			ImGui::TextUnformatted("Splatmap SLAP (relatif content):");
-			ImGui::TextWrapped("%s", m_session->Doc().splatmapContentRelativePath.c_str());
-			ImGui::TextUnformatted("Masque herbe GRMS (relatif content):");
-			ImGui::TextWrapped("%s", m_session->Doc().grassMaskContentRelativePath.c_str());
-			if (ImGui::Button("Recharger terrain GPU"))
+			if (!m_session->EditFileAbsolutePath().empty())
 			{
-				m_session->RequestTerrainGpuReload();
+				ImGui::TextDisabled("Fichier: %s", m_session->EditFileAbsolutePath().c_str());
 			}
+			ImGui::Separator();
+
+			// Section 3 — Création d'une nouvelle carte.
+			ImGui::TextUnformatted("Nouvelle carte");
+			ImGui::InputText("Taille (N×N)", m_session->BufSize().data(), m_session->BufSize().size());
+			ImGui::InputTextWithHint("Seed (optionnel)", "vide = aléatoire non fixé",
+				m_session->BufSeed().data(), m_session->BufSeed().size());
+			if (ImGui::Button("Créer une nouvelle carte"))
+			{
+				if (m_session->ActionNewMap(*m_cfg))
+				{
+					m_session->RefreshAvailableMaps(*m_cfg);
+				}
+			}
+			ImGui::Separator();
+
+			// Section 4 — Détails fichiers + recharge terrain GPU (avancé, replié par défaut).
+			if (ImGui::CollapsingHeader("Détails fichiers (avancé)"))
+			{
+				ImGui::TextUnformatted("Heightmap (relatif content):");
+				ImGui::TextWrapped("%s", m_session->Doc().heightmapContentRelativePath.c_str());
+				ImGui::TextUnformatted("Splatmap SLAP (relatif content):");
+				ImGui::TextWrapped("%s", m_session->Doc().splatmapContentRelativePath.c_str());
+				ImGui::TextUnformatted("Masque herbe GRMS (relatif content):");
+				ImGui::TextWrapped("%s", m_session->Doc().grassMaskContentRelativePath.c_str());
+				if (ImGui::Button("Recharger terrain GPU"))
+				{
+					m_session->RequestTerrainGpuReload();
+				}
+				ImGui::TextDisabled(
+					"Chemins canoniques : <content>/world_editor/maps/<zone_id>/{map.lcdlln_edit.json, height.r16h, splat.slap, grass.grms}.");
+			}
+
 			ImGui::End();
 
 			ImGui::Begin("Affichage & grille");

@@ -416,6 +416,141 @@ namespace engine::editor
 		return true;
 	}
 
+	std::filesystem::path WorldEditorSession::CanonicalMapJsonPath(const engine::core::Config& cfg, std::string_view zoneId)
+	{
+		const std::string sanitized = SanitizeZoneId(zoneId);
+		const std::string relDir = std::string(kMapsContentRelativeDir) + "/" + sanitized;
+		return engine::platform::FileSystem::ResolveContentPath(cfg, relDir) / kEditDocFilename;
+	}
+
+	void WorldEditorSession::RefreshAvailableMaps(const engine::core::Config& cfg)
+	{
+		m_availableMapsScanned = true;
+		m_availableMapIds.clear();
+		const std::filesystem::path mapsRoot = engine::platform::FileSystem::ResolveContentPath(cfg, kMapsContentRelativeDir);
+		std::error_code ec;
+		if (!std::filesystem::exists(mapsRoot, ec) || !std::filesystem::is_directory(mapsRoot, ec))
+		{
+			m_selectedAvailableMapIndex = 0;
+			return;
+		}
+		for (const std::filesystem::directory_entry& e : std::filesystem::directory_iterator(mapsRoot, ec))
+		{
+			if (ec)
+			{
+				break;
+			}
+			if (!e.is_directory(ec))
+			{
+				continue;
+			}
+			const std::filesystem::path docPath = e.path() / kEditDocFilename;
+			if (!std::filesystem::is_regular_file(docPath, ec))
+			{
+				continue;
+			}
+			m_availableMapIds.emplace_back(e.path().filename().string());
+		}
+		std::sort(m_availableMapIds.begin(), m_availableMapIds.end());
+		if (m_availableMapIds.empty())
+		{
+			m_selectedAvailableMapIndex = 0;
+		}
+		else
+		{
+			m_selectedAvailableMapIndex = std::clamp(m_selectedAvailableMapIndex, 0,
+				static_cast<int>(m_availableMapIds.size()) - 1);
+		}
+	}
+
+	bool WorldEditorSession::ActionSaveCurrentMap(const engine::core::Config& cfg)
+	{
+		SyncDocIdFromBuffer();
+		EnsureTreeCatalogLoaded(cfg);
+		SanitizeAllLayoutInstancesAgainstTreeCatalog();
+		const std::string zid = SanitizeZoneId(m_doc.zoneId);
+		if (zid.empty())
+		{
+			SetStatus("Sauvegarde: nom de carte vide.");
+			return false;
+		}
+		m_doc.zoneId = zid;
+		const std::filesystem::path jsonAbs = CanonicalMapJsonPath(cfg, zid);
+		std::error_code ec;
+		std::filesystem::create_directories(jsonAbs.parent_path(), ec);
+		if (m_terrainSaveHook && !m_terrainSaveHook(cfg, m_doc))
+		{
+			SetStatus("Sauvegarde: échec écriture des fichiers terrain (heightmap / splat / grass).");
+			return false;
+		}
+		std::string err;
+		if (!SaveEditDocumentJson(jsonAbs, m_doc, err))
+		{
+			SetStatus("Sauvegarde: " + err);
+			return false;
+		}
+		m_editJsonAbsolutePath = jsonAbs.string();
+		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
+		SetStatus("Carte sauvegardée: " + zid);
+		LOG_INFO(Core, "[WorldEditor] Saved map zone={} -> {}", zid, m_editJsonAbsolutePath);
+		RefreshAvailableMaps(cfg);
+		for (int i = 0; i < static_cast<int>(m_availableMapIds.size()); ++i)
+		{
+			if (m_availableMapIds[static_cast<size_t>(i)] == zid)
+			{
+				m_selectedAvailableMapIndex = i;
+				break;
+			}
+		}
+		return true;
+	}
+
+	bool WorldEditorSession::ActionLoadMapByZoneId(const engine::core::Config& cfg, std::string_view zoneId)
+	{
+		const std::string zid = SanitizeZoneId(zoneId);
+		if (zid.empty())
+		{
+			SetStatus("Chargement: nom de carte vide.");
+			return false;
+		}
+		const std::filesystem::path jsonAbs = CanonicalMapJsonPath(cfg, zid);
+		std::error_code ec;
+		if (!std::filesystem::is_regular_file(jsonAbs, ec))
+		{
+			SetStatus("Chargement: fichier introuvable -> " + jsonAbs.string());
+			return false;
+		}
+		std::string err;
+		if (!LoadEditDocumentJson(jsonAbs, m_doc, err))
+		{
+			SetStatus("Chargement: " + err);
+			return false;
+		}
+		m_doc.zoneId = SanitizeZoneId(m_doc.zoneId.empty() ? zid : m_doc.zoneId);
+		m_treeCatalogLoadAttempted = false;
+		m_editJsonAbsolutePath = jsonAbs.string();
+		SetBuf(m_bufSavePath, m_editJsonAbsolutePath);
+		SetBuf(m_bufLoadPath, m_editJsonAbsolutePath);
+		SetStatus("Carte chargée: " + zid);
+		LOG_INFO(Core, "[WorldEditor] Loaded map zone={} -> {}", zid, m_editJsonAbsolutePath);
+		m_selectedLayoutInstance = -1;
+		m_routeDraftXz.clear();
+		m_routeApplyDraftRequested = false;
+		EnsureTreeCatalogLoaded(cfg);
+		RequestTerrainGpuReload();
+		SyncBuffersFromDoc();
+		RefreshAvailableMaps(cfg);
+		for (int i = 0; i < static_cast<int>(m_availableMapIds.size()); ++i)
+		{
+			if (m_availableMapIds[static_cast<size_t>(i)] == zid)
+			{
+				m_selectedAvailableMapIndex = i;
+				break;
+			}
+		}
+		return true;
+	}
+
 	bool WorldEditorSession::ActionImportTexture(const engine::core::Config& cfg)
 	{
 		const std::string png(m_bufPngPath.data());

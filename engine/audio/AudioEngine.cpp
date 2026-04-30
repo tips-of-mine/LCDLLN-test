@@ -64,11 +64,104 @@ namespace engine::audio
 			return false;
 		}
 
+		// P3.2 -- Sons de pas par couche splat : si la config pointe sur un runtime_manifest.json
+		// produit par lcdlln_world_editor, on enregistre les 4 sons _footstep_layer_<n>.
+		// Echec ici n'est pas fatal : le jeu peut tourner sans sons de pas (ex. zone neutre).
+		const std::string footstepManifestRel = config.GetString("audio.footstep_manifest_path", "");
+		if (!footstepManifestRel.empty())
+		{
+			const std::filesystem::path manifestAbs =
+				engine::platform::FileSystem::ResolveContentPath(config, footstepManifestRel);
+			if (!RegisterFootstepSoundsFromManifest(manifestAbs))
+			{
+				LOG_WARN(Core, "[AudioEngine] Footstep manifest registration failed (path='{}')",
+					footstepManifestRel);
+			}
+		}
+
 		m_initialized = true;
 		LOG_INFO(Core, "[AudioEngine] Init OK (3D=logical, menu_music=miniaudio if used, buses={}, sounds={}, zones={})",
 			static_cast<uint32_t>(m_buses.size()),
 			static_cast<uint32_t>(m_sounds.size()),
 			static_cast<uint32_t>(m_zoneAmbience.size()));
+		return true;
+	}
+
+	std::string AudioEngine::FootstepSoundIdForLayer(uint32_t layer)
+	{
+		return std::string("_footstep_layer_") + std::to_string(layer);
+	}
+
+	bool AudioEngine::RegisterFootstepSoundsFromManifest(const std::filesystem::path& manifestAbsolutePath)
+	{
+		if (m_config == nullptr)
+		{
+			LOG_ERROR(Core, "[AudioEngine] RegisterFootstepSoundsFromManifest FAILED: missing config (call Init first)");
+			return false;
+		}
+		engine::core::Config manifest;
+		if (!manifest.LoadFromFile(manifestAbsolutePath.string()))
+		{
+			LOG_ERROR(Core, "[AudioEngine] RegisterFootstepSoundsFromManifest FAILED: unable to read '{}'",
+				manifestAbsolutePath.string());
+			return false;
+		}
+		const int64_t manifestVersion = manifest.GetInt("lcdlln_runtime_manifest_version", 0);
+		if (manifestVersion < 4)
+		{
+			LOG_WARN(Core,
+				"[AudioEngine] Footstep manifest version {} < 4 (clef splat_layer_footstep_audio_refs absente) ; aucun son de pas enregistre",
+				manifestVersion);
+			return false;
+		}
+
+		// Bus par defaut : "SFX" si present, sinon le premier bus disponible (l'audio sortira
+		// quand meme, juste sans le mixage SFX dedie).
+		std::string defaultBusId = "SFX";
+		if (m_buses.find(defaultBusId) == m_buses.end() && !m_buses.empty())
+		{
+			defaultBusId = m_buses.begin()->first;
+		}
+
+		uint32_t registeredCount = 0;
+		for (uint32_t layer = 0; layer < 4u; ++layer)
+		{
+			const std::string key = "splat_layer_footstep_audio_refs[" + std::to_string(layer) + "]";
+			const std::string relPath = manifest.GetString(key, "");
+			if (relPath.empty())
+			{
+				continue;
+			}
+			AudioSoundDefinition sound{};
+			sound.id = FootstepSoundIdForLayer(layer);
+			sound.relativePath = relPath;
+			sound.busId = defaultBusId;
+			sound.minDistanceMeters = 0.5f;
+			sound.maxDistanceMeters = 12.0f;
+			sound.loop = false;
+
+			const std::filesystem::path soundPath =
+				engine::platform::FileSystem::ResolveContentPath(*m_config, relPath);
+			if (!engine::platform::FileSystem::Exists(soundPath))
+			{
+				LOG_WARN(Core,
+					"[AudioEngine] Footstep audio missing on disk (layer={}, path='{}') ; metadata enregistree, lecture echouera silencieusement",
+					layer, relPath);
+			}
+
+			m_sounds[sound.id] = sound;
+			++registeredCount;
+			LOG_INFO(Core, "[AudioEngine] Registered footstep sound (layer={}, id='{}', path='{}')",
+				layer, sound.id, sound.relativePath);
+		}
+
+		if (registeredCount == 0u)
+		{
+			LOG_INFO(Core,
+				"[AudioEngine] Footstep manifest charge mais aucune couche n'avait de son assigne (champ vide) ; aucun son enregistre");
+			return false;
+		}
+		LOG_INFO(Core, "[AudioEngine] Footstep registration OK ({} couches sur 4)", registeredCount);
 		return true;
 	}
 

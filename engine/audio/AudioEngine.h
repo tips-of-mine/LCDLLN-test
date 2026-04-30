@@ -98,6 +98,21 @@ namespace engine::audio
 		bool StartMenuMusic(const std::filesystem::path& filePathUtf8);
 		void StopMenuMusic();
 
+		/// P3.2 — Lit \c runtime_manifest.json (v4+) produit par lcdlln_world_editor et enregistre
+		/// dynamiquement les sons de pas par couche splat. Le manifeste expose
+		/// \c splat_layer_footstep_audio_refs : un tableau de 4 chemins (R/G/B/A = herbe/terre/roc/neige).
+		/// Chaque entrée non-vide devient un \c AudioSoundDefinition avec l'id synthétique
+		/// \c "_footstep_layer_<n>" (n = 0..3), sur le bus \c "SFX", attenuation 0.5–12 m, non-loop.
+		/// Les ré-appels écrasent les enregistrements précédents (ré-export = ré-application propre).
+		/// \return true si au moins une couche a été enregistrée ; false sur erreur d'I/O ou
+		/// manifeste incompatible (clef absente, mauvaise version).
+		bool RegisterFootstepSoundsFromManifest(const std::filesystem::path& manifestAbsolutePath);
+
+		/// Construit l'id conventionnel d'un son de pas pour la couche splat \p layer (0..3).
+		/// Forme : \c "_footstep_layer_<n>". Préfixe \c '_' pour ne pas entrer en collision avec
+		/// les ids exposés par les sons utilisateur (lesquels sont, par convention, alphanumériques).
+		static std::string FootstepSoundIdForLayer(uint32_t layer);
+
 	private:
 		/// Load zone audio data from the configured content-relative JSON file.
 		bool LoadZoneAudio();

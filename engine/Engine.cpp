@@ -3000,6 +3000,9 @@ namespace engine
 				if (m_currentCharacterId != 0u && !enterCmd.characterName.empty())
 				{
 					(void)m_authUi.SendEnterWorldAsync(m_currentCharacterId, enterCmd.characterName);
+					// Phase 5 reconnect — mémorise l'identité pour pouvoir ré-envoyer
+					// CHARACTER_ENTER_WORLD à la reconnexion sans repasser par tout le flow.
+					m_authUi.RememberPostEnterWorldCharacter(m_currentCharacterId, enterCmd.characterName);
 				}
 
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.
@@ -3065,6 +3068,10 @@ namespace engine
 			// proprement aux prochains ticks).
 			m_authUi.PumpPostAuthEvents();
 
+			// Phase 5 reconnect — Si une déconnexion master a été détectée par PumpPostAuthEvents,
+			// AuthUi est passé en mode reconnect. TickReconnect lance la tentative auto au bon moment.
+			m_authUi.TickReconnect(m_cfg);
+
 			// Phase 3.6.6 — Tick périodique de sauvegarde de position. Démarré à la consommation
 			// de EnterWorldCommand (m_currentCharacterId != 0). Intervalle borné à >= 5 s côté
 			// AuthUiPresenter::SavePositionAsync via la config `client.save_position.interval_sec`.
@@ -3084,11 +3091,18 @@ namespace engine
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 			}
 
+			// Phase 5 reconnect — Si une tentative de reconnexion master est en cours,
+			// la bannière de statut prend la priorité (elle remplace même la bannière welcome).
+			// Le texte est court et localisé côté AuthUi (Tr("auth.info.reconnect_in_progress")).
 			// Phase 3.5 — Affichage de la bannière "Bienvenue" tant qu'elle n'a pas expiré.
 			// Phase 3.11 — Quand la bannière a expiré, on affiche le panneau chat à la place
 			// (c'est la première surface visuelle pour le système de chat post-auth).
-			// Priorité : banner > chat > vide.
-			if (!m_enterWorldBannerText.empty()
+			// Priorité : reconnect > banner > chat > vide.
+			if (m_authUi.IsReconnecting() && !m_authUi.ReconnectStatusText().empty())
+			{
+				m_window.SetOverlayText(m_authUi.ReconnectStatusText());
+			}
+			else if (!m_enterWorldBannerText.empty()
 				&& std::chrono::steady_clock::now() < m_enterWorldBannerExpiry)
 			{
 				m_window.SetOverlayText(m_enterWorldBannerText);

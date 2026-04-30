@@ -2,12 +2,14 @@
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/core/DefaultClientEndpoints.h"
 #include "engine/core/Log.h"
+#include "engine/network/AuthRegisterPayloads.h"
 #include "engine/network/CharacterPayloads.h"
 #include "engine/network/ChatPayloads.h"
 #include "engine/network/NetClient.h"
 #include "engine/network/PacketBuilder.h"
 #include "engine/network/PacketView.h"
 #include "engine/network/ProtocolV1Constants.h"
+#include "engine/network/RequestResponseDispatcher.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
 #include <algorithm>
@@ -19,6 +21,36 @@
 
 namespace engine::client
 {
+	namespace
+	{
+		// Phase 5 reconnect — duplicates des helpers déjà présents en anonyme dans
+		// AuthUiPresenterCore.cpp. Anonymous namespace pour ne pas polluer les TU.
+		bool ReconnectWaitConnected(engine::network::NetClient* c, uint32_t timeoutMs)
+		{
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
+			while (std::chrono::steady_clock::now() < deadline)
+			{
+				auto events = c->PollEvents();
+				for (const auto& ev : events)
+				{
+					if (ev.type == engine::network::NetClientEventType::Connected)
+						return true;
+					if (ev.type == engine::network::NetClientEventType::Disconnected)
+						return false;
+				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			}
+			return false;
+		}
+
+		void ReconnectApplyTls(engine::network::NetClient& client, const std::string& fingerprintHex, bool allowInsecure)
+		{
+			if (!fingerprintHex.empty())
+				client.SetExpectedServerFingerprint(fingerprintHex);
+			client.SetAllowInsecureDev(allowInsecure);
+		}
+	}
+
 #if defined(_WIN32)
 	AuthUiPresenter::LanguageOptionsImGuiMirror AuthUiPresenter::BuildLanguageOptionsImGuiMirror() const
 	{
@@ -379,6 +411,24 @@ namespace engine::client
 				// proprement (au lieu de Send sur une socket fermée).
 				m_masterSessionId = 0;
 				m_masterClient.reset();
+
+				// Phase 5 reconnect : si on était post-EnterWorld (un perso actif est connu),
+				// on programme une tentative de reconnexion automatique au lieu de laisser
+				// le client silencieusement perdre le chat / SAVE_POSITION. L'engine appelle
+				// TickReconnect chaque frame pour exécuter la tentative quand m_reconnectNextAt
+				// est dépassé.
+				if (m_postEnterWorldCharacterId != 0u && !m_login.empty() && !m_password.empty())
+				{
+					m_reconnectInProgress = true;
+					m_reconnectAttempt = 0;
+					m_reconnectAsyncDone.store(false);
+					m_reconnectAsyncSuccess = false;
+					m_reconnectNextAt = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+					m_reconnectStatusText = Tr("auth.info.reconnect_in_progress");
+					if (m_reconnectStatusText.empty())
+						m_reconnectStatusText = "Connexion perdue, reconnexion en cours...";
+					LOG_WARN(Net, "[AuthUiPresenter] Master perdu post-EnterWorld : tentative de reconnexion programmee (+2s)");
+				}
 				return;
 			}
 			if (ev.type == NetClientEventType::PacketReceived)
@@ -398,6 +448,145 @@ namespace engine::client
 				}
 			}
 		}
+	}
+
+	void AuthUiPresenter::RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName)
+	{
+		m_postEnterWorldCharacterId = characterId;
+		m_postEnterWorldCharacterName = std::move(characterName);
+	}
+
+	void AuthUiPresenter::TickReconnect(const engine::core::Config& cfg)
+	{
+		if (!m_reconnectInProgress)
+			return;
+
+		// Étape 1 : si un worker précédent vient de finir, on consomme le résultat.
+		if (m_reconnectAsyncDone.load())
+		{
+			JoinWorker();
+			m_reconnectAsyncDone.store(false);
+			if (m_reconnectAsyncSuccess)
+			{
+				LOG_INFO(Net, "[AuthUiPresenter] Reconnect success (attempt={})", m_reconnectAttempt);
+				m_reconnectInProgress = false;
+				m_reconnectStatusText = Tr("auth.info.reconnect_success");
+				if (m_reconnectStatusText.empty())
+					m_reconnectStatusText = "Connexion retablie.";
+				// L'engine effacera la bannière sur la frame suivante via IsReconnecting()=false.
+				return;
+			}
+			// Échec : MVP = une seule tentative, on abandonne et on revient à l'écran login.
+			if (m_reconnectAttempt >= m_reconnectMaxAttempts)
+			{
+				LOG_WARN(Net, "[AuthUiPresenter] Reconnect FAILED after {} attempt(s) ; back to login", m_reconnectAttempt);
+				m_reconnectInProgress = false;
+				m_reconnectStatusText.clear();
+				// Routage vers l'écran login : le flow va recommencer au prochain Submit.
+				EnterAuthErrorPhase(Phase::Login, Tr("auth.error.reconnect_failed_back_to_login"));
+				return;
+			}
+			// (Phase 5.x si on étend à plusieurs tentatives : reprogrammer m_reconnectNextAt avec backoff.)
+		}
+
+		// Étape 2 : si pas encore l'heure ou si un worker tourne déjà, on attend.
+		if (std::chrono::steady_clock::now() < m_reconnectNextAt)
+			return;
+		if (m_worker.joinable())
+			return;
+		if (m_reconnectAttempt >= m_reconnectMaxAttempts)
+			return; // sera traité au prochain m_reconnectAsyncDone.
+
+		// Étape 3 : on lance la tentative.
+		++m_reconnectAttempt;
+		LOG_INFO(Net, "[AuthUiPresenter] Reconnect attempt {}/{}", m_reconnectAttempt, m_reconnectMaxAttempts);
+
+		// Capture des paramètres connexion + credentials (m_login + m_password sont conservés
+		// jusqu'à Shutdown ; ComputeClientHash recalcule le hash via le sel serveur).
+		const std::string host = cfg.GetEffectiveMasterHost("localhost");
+		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
+		EnsurePasswordSalt(cfg);
+		const std::string hash = ComputeClientHash(cfg);
+		const std::string login = m_login;
+		const uint64_t  charId = m_postEnterWorldCharacterId;
+		const std::string charName = m_postEnterWorldCharacterName;
+
+		if (hash.empty() || login.empty() || charId == 0u || charName.empty())
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] Reconnect missing credentials/character ; abort");
+			m_reconnectAsyncSuccess = false;
+			m_reconnectAsyncDone.store(true);
+			return;
+		}
+
+		// On (ré-)alloue m_masterClient en main thread pour qu'il survive après le worker
+		// (même pattern que StartMasterFlowWorker post-hotfix #401).
+		if (m_masterClient)
+		{
+			m_masterClient->Disconnect("reconnect_restart");
+			m_masterClient.reset();
+		}
+		m_masterClient = std::make_unique<engine::network::NetClient>();
+		ReconnectApplyTls(*m_masterClient, serverFingerprint, allowInsecure);
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+
+		m_worker = std::thread([this, masterClient, host, port, timeoutMs, login, hash, charId, charName]() {
+			masterClient->Connect(host, port);
+			if (!ReconnectWaitConnected(masterClient, timeoutMs + 2000u))
+			{
+				LOG_WARN(Net, "[Reconnect] master connect timeout");
+				m_reconnectAsyncSuccess = false;
+				m_reconnectAsyncDone.store(true);
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(masterClient);
+			bool authDone = false;
+			bool authOk = false;
+			uint64_t newSession = 0;
+			if (!disp.SendRequest(engine::network::kOpcodeAuthRequest,
+				engine::network::BuildAuthRequestPayload(login, hash),
+				[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
+					authDone = true;
+					if (timeout) return;
+					auto auth = engine::network::ParseAuthResponsePayload(pl.data(), pl.size());
+					if (auth && auth->success != 0)
+					{
+						authOk = true;
+						newSession = auth->session_id;
+					}
+				}, timeoutMs))
+			{
+				LOG_WARN(Net, "[Reconnect] AUTH send failed");
+				m_reconnectAsyncSuccess = false;
+				m_reconnectAsyncDone.store(true);
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!authDone && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			if (!authOk)
+			{
+				LOG_WARN(Net, "[Reconnect] AUTH failed/timeout");
+				m_reconnectAsyncSuccess = false;
+				m_reconnectAsyncDone.store(true);
+				return;
+			}
+			m_masterSessionId = newSession;
+			LOG_INFO(Net, "[Reconnect] AUTH OK (new session_id={})", newSession);
+
+			// Re-ENTER_WORLD : fire-and-forget. Si le master rejette (perso supprimé
+			// entre temps ?), le sender retombera sur le login, c'est non-fatal.
+			(void)SendEnterWorldAsync(charId, charName);
+
+			m_reconnectAsyncSuccess = true;
+			m_reconnectAsyncDone.store(true);
+		});
 	}
 
 	AuthUiPresenter::AudioSettingsCommand AuthUiPresenter::ConsumePendingAudioSettings()

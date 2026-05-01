@@ -3213,7 +3213,14 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, true, true, 0.f,
+				// Cf. retour utilisateur : 'la souris ne doit pas etre le suivi camera
+				// par defaut, il faut que l'on puisse realiser des actions sans que la
+				// camera bouge'. Standard MMO : la souris est libre par defaut (curseur
+				// visible, peut cliquer UI / NPCs / icones), et seul le clic droit
+				// maintenu active la rotation libre de la camera (yaw + pitch via
+				// mouvements souris). Aligne sur le comportement du mode --editor.
+				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, rmbLook, true, 0.f,
 					out.camera);
 			}
 

@@ -59,7 +59,11 @@ namespace engine::render
 		const float mainWMax = 1200.f;
 		const float mainW = (std::min)(mainWMax, vpW - sideW - 32.f);
 		const float mainOriginX = sideW + ((vpW - sideW - mainW) * 0.5f);
-		const float height = vpH;
+		// Hauteurs ajustees PAR sous-menu : on passe les deux child a AutoResizeY,
+		// la hauteur s'adapte au contenu reel de l'onglet actif (au lieu d'occuper
+		// toute la viewport - 1080 px - et de laisser une grande zone vide).
+		// Le caller plus haut (DrawAuthTweaksPanel) reste libre, ces childs ne
+		// remplissent plus tout l'ecran.
 
 		static constexpr const char* kTabKeys[] = {"options.imgui.tab.graphics", "options.imgui.tab.audio", "options.imgui.tab.controls",
 			"options.imgui.tab.lang", "options.imgui.tab.ui", "options.imgui.tab.net", "options.imgui.tab.account"};
@@ -71,7 +75,9 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kPanel));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, height), true, ImGuiWindowFlags_None);
+		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, 0.f),
+			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+			ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
@@ -112,12 +118,11 @@ namespace engine::render
 			ImGui::PopStyleColor(4);
 		}
 
-		const float footerReserve = 56.f;
-		const float spacerH = ImGui::GetContentRegionAvail().y - footerReserve;
-		if (spacerH > 2.f)
-		{
-			ImGui::Dummy(ImVec2(1.f, spacerH));
-		}
+		// AutoResizeY : la sidebar prend la hauteur de son contenu, pas besoin
+		// du Dummy de remplissage qui poussait le footer en bas (sinon ca force
+		// la hauteur a vpH et casse l'auto-resize). Le footer suit directement
+		// les boutons avec un petit espace.
+		ImGui::Dummy(ImVec2(1.f, 12.f));
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.82f);
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
@@ -135,7 +140,13 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kBackground));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##opts_main", ImVec2(mainW, height), true, ImGuiWindowFlags_None);
+		// AutoResizeY : le panel main s'adapte au contenu de l'onglet actif
+		// (cf. demande utilisateur : 'le cadre est trop grand en hauteur, il
+		// faut l'ajuster par sous-menu'). Cap maximum a vpH * 0.9 pour ne pas
+		// deborder de l'ecran sur de tres longs onglets.
+		ImGui::BeginChild("##opts_main", ImVec2(mainW, 0.f),
+			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
+			ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
@@ -163,8 +174,12 @@ namespace engine::render
 		ImGui::EndChild();
 		DrawSeparator();
 
-		const float footerH = 52.f;
-		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, (std::max)(120.f, height - footerH - 88.f)), false);
+		// Body sans hauteur fixe : AutoResizeY sur le main child englobant pousse
+		// le footer juste apres le contenu. Hauteur minimum 120 px pour que les
+		// onglets quasi-vides (LANGUE) restent visuellement coherents.
+		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, 0.f),
+			ImGuiChildFlags_AutoResizeY,
+			ImGuiWindowFlags_None);
 
 		const auto markDirty = [this]() { m_optDirty = true; };
 

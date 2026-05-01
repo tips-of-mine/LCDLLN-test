@@ -58,6 +58,7 @@ namespace engine::render
 {
 	class AuthImGuiRenderer;
 	class ChatImGuiRenderer;
+	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
 namespace engine::editor
@@ -243,6 +244,8 @@ namespace engine
 		std::unique_ptr<engine::render::AuthImGuiRenderer> m_authImGui;
 		/// Phase 3.11.1 — Panneau chat Dear ImGui (post-auth, partage le même contexte ImGui que m_authImGui).
 		std::unique_ptr<engine::render::ChatImGuiRenderer> m_chatImGui;
+		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
+		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).

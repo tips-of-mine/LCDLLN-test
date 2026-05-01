@@ -10,6 +10,7 @@
 #include "engine/network/ProtocolV1Constants.h"
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/ChatImGuiRenderer.h"
+#include "engine/render/EditorHubImGuiRenderer.h"
 #include "engine/render/AuthUiRenderer.h"
 #include "engine/render/DeferredPipeline.h"
 #include "engine/render/ShaderCompiler.h"
@@ -2411,11 +2412,14 @@ namespace engine
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
 														&& !authVisualState.active && !m_worldEditorExe
 														&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
+													const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
 														&& (m_worldEditorExe
 															|| (m_authImGui && authVisualState.active
 																&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false))
-															|| chatImguiActive)
+															|| chatImguiActive
+															|| editorHubActive)
 														&& m_vkDeviceContext.SupportsDynamicRendering() && backbufferView != VK_NULL_HANDLE
 														&& !presentSolidColorDebug)
 													{
@@ -2738,6 +2742,11 @@ namespace engine
 				// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
 				m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
 				m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);
+				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
+				// si --editor est actif (cf. condition Render branch plus bas).
+				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
+				if (m_editorMode)
+					m_editorHubImGui->BindEditorMode(m_editorMode.get());
 			}
 			else
 			{
@@ -3163,7 +3172,10 @@ namespace engine
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
 			&& !authGateActive && !m_worldEditorExe
 			&& m_cfg.GetBool("render.chat_imgui.enabled", true);
-		if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && (m_worldEditorExe || authImguiOverlayNewFrame || chatImguiOverlayNewFrame))
+		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
+		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
+		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
+			&& (m_worldEditorExe || authImguiOverlayNewFrame || chatImguiOverlayNewFrame || editorHubOverlayNewFrame))
 		{
 			float imguiDw = static_cast<float>(std::max(1, m_width));
 			float imguiDh = static_cast<float>(std::max(1, m_height));
@@ -3495,6 +3507,24 @@ namespace engine
 				}
 			}
 			m_chatImGui->Render(dw, dh);
+			ImGui::Render();
+		}
+		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_editorHubImGui
+			&& m_editorEnabled && !m_worldEditorExe)
+		{
+			// M43.4 — Rendu du panneau Editor Hub overlay quand --editor (sans world-editor).
+			float dw = static_cast<float>(std::max(1, m_width));
+			float dh = static_cast<float>(std::max(1, m_height));
+			if (m_vkSwapchain.IsValid())
+			{
+				const VkExtent2D extUi = m_vkSwapchain.GetExtent();
+				if (extUi.width > 0 && extUi.height > 0)
+				{
+					dw = static_cast<float>(extUi.width);
+					dh = static_cast<float>(extUi.height);
+				}
+			}
+			m_editorHubImGui->Render(dw, dh);
 			ImGui::Render();
 		}
 #endif

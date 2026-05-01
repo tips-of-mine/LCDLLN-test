@@ -50,13 +50,21 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
-		const float sideW = 220.f;
-		const float mainW = (std::max)(200.f, vpW - sideW);
+		// Sidebar elargie 220 -> 320 px pour que les libelles complets ('CONTROLES',
+		// 'INTERFACE', 'COMPTE') ne soient pas tronques. Boutons 36 -> 44 px de haut.
+		const float sideW = 320.f;
+		// Panel main borne a 1200 px max et centre horizontalement : sur les setups ultra-wide
+		// (5760x1080 trois ecrans), un mainW=5540 etalait le contenu illisiblement et la barre
+		// de scroll vertical apparaissait sur le bord droit hors champ utile.
+		const float mainWMax = 1200.f;
+		const float mainW = (std::min)(mainWMax, vpW - sideW - 32.f);
+		const float mainOriginX = sideW + ((vpW - sideW - mainW) * 0.5f);
 		const float height = vpH;
 
 		static constexpr const char* kTabKeys[] = {"options.imgui.tab.graphics", "options.imgui.tab.audio", "options.imgui.tab.controls",
 			"options.imgui.tab.lang", "options.imgui.tab.ui", "options.imgui.tab.net", "options.imgui.tab.account"};
-		static constexpr const char* kTabIcons[] = {"\xE2\x96\xA3", "\xE2\x99\xAB", "\xE2\x8C\xA8", "Aa", "\xE2\x8C\x97", "\xE2\x8C\x98", "\xE2\x9C\xA6"};
+		// Anciennes icones Unicode (carre, note de musique, clavier, etc.) absentes de Windlass
+		// + ProggyClean fallback : rendaient toutes des '?'. Suppression au profit du libelle nu.
 		static constexpr int tabCount = 7;
 
 		ImGui::SetCursorPos(ImVec2(0.f, 0.f));
@@ -88,8 +96,8 @@ namespace engine::render
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, active ? 1.5f : 0.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 			char btnLine[192];
-			std::snprintf(btnLine, sizeof(btnLine), "%s  %s##tab%d", kTabIcons[i], tabLabel.c_str(), i);
-			if (ImGui::Button(btnLine, ImVec2(-FLT_MIN, 36.f)))
+			std::snprintf(btnLine, sizeof(btnLine), "%s##tab%d", tabLabel.c_str(), i);
+			if (ImGui::Button(btnLine, ImVec2(-FLT_MIN, 44.f)))
 			{
 				m_optionsTab = i;
 			}
@@ -121,10 +129,15 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		ImGui::EndChild();
 
-		ImGui::SetCursorPos(ImVec2(sideW, 0.f));
+		// Panel main borne et centre horizontalement (cf. mainOriginX en haut). Bordure
+		// douce pour distinguer le bloc sur fond ultra-wide.
+		ImGui::SetCursorPos(ImVec2(mainOriginX, 0.f));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kBackground));
-		ImGui::BeginChild("##opts_main", ImVec2(mainW, height), false, ImGuiWindowFlags_None);
-		ImGui::PopStyleColor(1);
+		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
+		ImGui::BeginChild("##opts_main", ImVec2(mainW, height), true, ImGuiWindowFlags_None);
+		ImGui::PopStyleVar(1);
+		ImGui::PopStyleColor(2);
 
 		ImGui::BeginChild("##opts_header", ImVec2(-FLT_MIN, 0.f), false);
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));

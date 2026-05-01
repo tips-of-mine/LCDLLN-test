@@ -3364,8 +3364,19 @@ namespace engine
 				const float yaw = out.camera.yaw;
 				const float c = std::cos(yaw);
 				const float s = std::sin(yaw);
+				// Etape 5 : bob vertical placeholder quand le perso marche / court.
+				// Idle : pas d'oscillation. L'amplitude est de 4 cm en walk, 7 cm
+				// en run -- visible sans etre desagreable. A remplacer par de
+				// vraies anims squelettiques quand un format anim sera cable.
+				float bobY = 0.0f;
+				const auto loco = m_orbitalCameraController.GetLocomotionState();
+				if (loco != engine::render::OrbitalCameraController::LocomotionState::Idle)
+				{
+					const float bobAmpM = (loco == engine::render::OrbitalCameraController::LocomotionState::Run) ? 0.07f : 0.04f;
+					bobY = std::sin(m_orbitalCameraController.GetWalkBobPhaseRad()) * bobAmpM;
+				}
 				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = s;    out.objectModelMatrix[3]  = target.x;
-				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y;
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y + bobY;
 				out.objectModelMatrix[8]  = -s;    out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = target.z;
 				out.objectModelMatrix[12] = 0.0f;  out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
 			}

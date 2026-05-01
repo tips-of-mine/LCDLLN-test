@@ -90,6 +90,14 @@ namespace engine::render
 		const engine::math::Vec3& GetTargetPosition() const { return m_target; }
 		float GetDistance() const { return m_distance; }
 
+		/// Etat de locomotion derive du dernier Update : 0=idle, 1=walk, 2=run.
+		enum class LocomotionState : uint8_t { Idle = 0, Walk = 1, Run = 2 };
+		LocomotionState GetLocomotionState() const { return m_locomotion; }
+		/// Phase d'animation de marche en radians, monotone croissante. Permet a
+		/// l'avatar visuel d'osciller verticalement (placeholder bob) pour suggerer
+		/// un mouvement avant de cabler de vraies animations.
+		float GetWalkBobPhaseRad() const { return m_walkBobPhase; }
+
 		/// Update logique a appeler chaque frame in-game. Met a jour m_target / yaw /
 		/// pitch / m_distance selon l'input, puis ecrit camera.position et
 		/// camera.yaw/pitch pour le rendu.
@@ -100,5 +108,7 @@ namespace engine::render
 		engine::math::Vec3 m_target{ 0.0f, kTargetEyeHeight, 0.0f };
 		float              m_distance = kDistanceDefault;
 		bool               m_initialized = false;
+		LocomotionState    m_locomotion = LocomotionState::Idle;
+		float              m_walkBobPhase = 0.0f;
 	};
 }

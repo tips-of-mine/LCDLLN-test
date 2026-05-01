@@ -162,9 +162,14 @@ namespace engine::render
 		}
 
 		// WASD/ZQSD -> deplace le point cible dans le plan XZ selon yaw courant.
+		// Etape 5 : derive aussi un etat de locomotion (Idle/Walk/Run) et fait
+		// avancer une phase de bob pour le placeholder anim de l'avatar.
+		bool moving = false;
+		bool running = false;
 		if (applyKeyboardMove)
 		{
-			const float speed = input.IsDown(engine::platform::Key::Shift) ? kRunSpeed : kWalkSpeed;
+			running = input.IsDown(engine::platform::Key::Shift);
+			const float speed = running ? kRunSpeed : kWalkSpeed;
 			const float dist = static_cast<float>(dt) * speed;
 			const float cy = std::cos(camera.yaw);
 			const float sy = std::sin(camera.yaw);
@@ -184,22 +189,40 @@ namespace engine::render
 			{
 				m_target.x += forwardX * dist;
 				m_target.z += forwardZ * dist;
+				moving = true;
 			}
 			if (input.IsDown(backwardKey))
 			{
 				m_target.x -= forwardX * dist;
 				m_target.z -= forwardZ * dist;
+				moving = true;
 			}
 			if (input.IsDown(rightKey))
 			{
 				m_target.x += rightX * dist;
 				m_target.z += rightZ * dist;
+				moving = true;
 			}
 			if (input.IsDown(leftKey))
 			{
 				m_target.x -= rightX * dist;
 				m_target.z -= rightZ * dist;
+				moving = true;
 			}
+		}
+		// Etat de locomotion : Idle quand pas de touche, Walk normal, Run avec Shift.
+		if (!moving)
+			m_locomotion = LocomotionState::Idle;
+		else
+			m_locomotion = running ? LocomotionState::Run : LocomotionState::Walk;
+		// Phase d'oscillation : avance proportionnellement a la vitesse pour que
+		// le bob aille plus vite en Run qu'en Walk. 8 cycles/seconde en run, 5 en walk.
+		if (moving)
+		{
+			constexpr float kPi2 = 6.2831853f;
+			const float bobFreqHz = running ? 8.0f : 5.0f;
+			m_walkBobPhase += static_cast<float>(dt) * bobFreqHz * kPi2;
+			if (m_walkBobPhase > kPi2 * 1024.f) m_walkBobPhase = std::fmod(m_walkBobPhase, kPi2);
 		}
 
 		// Position camera = cible - dir(yaw, pitch) * distance. La camera regarde

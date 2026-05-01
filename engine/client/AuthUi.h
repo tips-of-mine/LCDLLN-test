@@ -377,12 +377,6 @@ namespace engine::client
 		/// Utilisé par \c lcdlln_world_editor.exe : pas d’écran login, accès direct à la scène 3D (Vulkan).
 		void BypassAuthGateForWorldEditor();
 
-		/// Marque le flux d'authentification comme terminé après une transition EnterWorld
-		/// validée (sélection royaume + perso + connexion shard OK). Sans cet appel,
-		/// `IsFlowComplete()` reste à `false` même après EnterWorld, ce qui maintient
-		/// `authGateActive` à true côté Engine.cpp et empêche le chat HUD de s'afficher.
-		void MarkAuthFlowCompleteAfterEnterWorld();
-
 		/// While the auth gate is active, gameplay camera and chat should not consume input.
 		bool BlocksWorldInput() const;
 

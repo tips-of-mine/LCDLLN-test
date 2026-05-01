@@ -3079,14 +3079,6 @@ namespace engine
 				{
 					LOG_WARN(Core, "[EnterWorld] endpoint vide : connexion gameplay non démarrée (la scène 3D s'affichera quand même mais sans réseau)");
 				}
-
-				// Marque le flux auth comme complet : authGateActive devient false cote Engine,
-				// ce qui debloque le rendu du chat HUD ImGui (canaux global / zone / guilde /
-				// amis / whisper) et le controleur camera FPS gameplay. Sans cet appel,
-				// IsFlowComplete() restait false meme apres un EnterWorld reussi, et le chat
-				// HUD n'apparaissait jamais post-authentification. Place dans la branche
-				// `enterCmd.applyRequested` pour ne se declencher qu'une seule fois (one-shot).
-				m_authUi.MarkAuthFlowCompleteAfterEnterWorld();
 			}
 
 			// Phase 3.6.6 — Drain des événements de la connexion master encore vivante post-auth.

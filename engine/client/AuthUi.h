@@ -377,6 +377,13 @@ namespace engine::client
 		/// Utilisé par \c lcdlln_world_editor.exe : pas d’écran login, accès direct à la scène 3D (Vulkan).
 		void BypassAuthGateForWorldEditor();
 
+		/// Réinitialise le présentateur sur l'écran de connexion (Phase::Login) après
+		/// que le joueur a choisi « Se déconnecter » dans le menu pause in-game.
+		/// `m_flowComplete` repasse à false, ce qui re-affiche l'auth UI par-dessus
+		/// le monde 3D. Le caller (Engine::RequestLogoutToLoginScreen) doit aussi
+		/// arrêter la connexion gameplay UDP et clearer les presenters in-game.
+		void RequestReturnToLogin();
+
 		/// While the auth gate is active, gameplay camera and chat should not consume input.
 		bool BlocksWorldInput() const;
 

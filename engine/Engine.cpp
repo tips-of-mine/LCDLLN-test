@@ -2417,7 +2417,7 @@ namespace engine
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
 														&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
 														&& !m_worldEditorExe
-														&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
 													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
 													const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -2646,7 +2646,12 @@ namespace engine
 		}
 		else if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
 		{
-			OnQuit();
+			// Echap in-game (post-auth, pas dans un menu chat/auction/shop) :
+			// toggle le menu pause au lieu de quitter directement le client.
+			// Demande utilisateur explicite : 'on quitte automatiquement le jeu,
+			// il ne faut surtout pas. Nous devons toujours passer par un menu
+			// intermediaire, qui propose de Quitter / Options / Se deconnecter'.
+			ToggleInGamePauseMenu();
 		}
 
 		if (m_input.WasPressed(engine::platform::Key::F_11))
@@ -3177,10 +3182,13 @@ namespace engine
 		// Phase 3.11.1 — NewFrame également quand le panneau chat doit s'afficher (post-auth, pas en éditeur).
 		// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE
 		// (cf. fix encombrement ecran noir lorsque LocalizationService init echoue).
+		// Inclut aussi le menu pause in-game (m_inGamePauseMenuVisible) pour que NewFrame
+		// soit appele quand seul le menu pause est ouvert (chat config off mais auth OK).
+		const bool postAuthInGame = m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& !m_worldEditorExe;
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
-			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
-			&& !m_worldEditorExe
-			&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+			&& postAuthInGame
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -3502,7 +3510,7 @@ namespace engine
 			&& m_chatUi.IsInitialized()
 			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
 			&& !m_worldEditorExe
-			&& m_cfg.GetBool("render.chat_imgui.enabled", true))
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible))
 		{
 			// Phase 3.11.1 — Rendu du panneau chat. NewFrame déjà appelé plus haut via
 			// chatImguiOverlayNewFrame. ImGui::Render finalise la draw list pour le RecordToBackbuffer.
@@ -3518,6 +3526,51 @@ namespace engine
 				}
 			}
 			m_chatImGui->Render(dw, dh);
+			// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
+			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
+			if (m_inGamePauseMenuVisible)
+			{
+				const float menuW = 320.f;
+				const float menuH = 220.f;
+				ImGui::SetNextWindowPos(ImVec2((dw - menuW) * 0.5f, (dh - menuH) * 0.5f), ImGuiCond_Always);
+				ImGui::SetNextWindowSize(ImVec2(menuW, menuH), ImGuiCond_Always);
+				ImGui::SetNextWindowBgAlpha(0.92f);
+				ImGui::Begin("##ln_pause_menu", nullptr,
+					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+				ImGui::SetWindowFontScale(1.2f);
+				const char* title = "PAUSE";
+				const float titleW = ImGui::CalcTextSize(title).x;
+				ImGui::SetCursorPosX((menuW - titleW) * 0.5f);
+				ImGui::TextUnformatted(title);
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::Separator();
+				ImGui::Spacing();
+				const float btnW = menuW - 40.f;
+				if (ImGui::Button("Reprendre", ImVec2(btnW, 32.f)))
+				{
+					m_inGamePauseMenuVisible = false;
+				}
+				ImGui::Spacing();
+				if (ImGui::Button("Options", ImVec2(btnW, 32.f)))
+				{
+					// TODO : ouvrir l'overlay Options in-game (re-utilisera AuthImGuiOptions
+					// quand decoupage UI sera fait). Pour l'instant juste un log.
+					LOG_INFO(Core, "[InGamePauseMenu] Options cliquee (TODO ouverture overlay)");
+				}
+				ImGui::Spacing();
+				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))
+				{
+					RequestLogoutToLoginScreen();
+				}
+				ImGui::Spacing();
+				if (ImGui::Button("Quitter le jeu", ImVec2(btnW, 32.f)))
+				{
+					OnQuit();
+				}
+				ImGui::End();
+			}
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_editorHubImGui
@@ -3845,6 +3898,31 @@ namespace engine
 	void Engine::OnQuit()
 	{
 		m_quitRequested = true;
+	}
+
+	void Engine::ToggleInGamePauseMenu()
+	{
+		m_inGamePauseMenuVisible = !m_inGamePauseMenuVisible;
+		LOG_INFO(Core, "[InGamePauseMenu] toggled visible={}", m_inGamePauseMenuVisible);
+	}
+
+	void Engine::RequestLogoutToLoginScreen()
+	{
+		LOG_INFO(Core, "[InGamePauseMenu] logout requested -> Login screen");
+		// 1) Coupe la connexion gameplay UDP + presenters in-game.
+		if (m_gameplayNetInitialized)
+		{
+			ShutdownGameplayNet();
+		}
+		// 2) Reset auth UI : flowComplete repasse a false, phase Login. Le presenter
+		//    relancera MasterShardClientFlow au prochain clic Se connecter.
+		m_authUi.RequestReturnToLogin();
+		// 3) Cache le menu pause (pour qu'il ne reste pas visible sur l'ecran auth).
+		m_inGamePauseMenuVisible = false;
+		// 4) Oublie le character_id memorise (sinon SavePositionAsync continuerait
+		//    a essayer d'envoyer la position d'un perso pour lequel la session est
+		//    fermee).
+		m_currentCharacterId = 0;
 	}
 
 	void Engine::WatchShader(std::string_view relativePath, engine::render::ShaderStage stage, std::string_view defines)

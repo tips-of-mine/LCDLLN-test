@@ -154,7 +154,9 @@ namespace engine::render
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
-		ImGui::BeginChild("##opts_header", ImVec2(-FLT_MIN, 0.f), false);
+		// Header inline : pas de BeginChild wrapper qui consommait trop de hauteur
+		// (ImGui::BeginChild avec hauteur 0 sans flag AutoResizeY peut prendre 100%
+		// de la zone disponible -> body invisible, retour utilisateur 'cadre vide').
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.78f);
 		ImGui::TextUnformatted(tr("options.imgui.category_label").c_str());
@@ -175,7 +177,6 @@ namespace engine::render
 			ImGui::TextUnformatted(tr("options.imgui.dirty_banner_title").c_str());
 			ImGui::PopStyleColor();
 		}
-		ImGui::EndChild();
 		DrawSeparator();
 
 		// Body : hauteur 0 = remplit l'espace restant du panel main (ImGui calcule

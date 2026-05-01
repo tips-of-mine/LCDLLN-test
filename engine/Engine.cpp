@@ -2649,7 +2649,6 @@ namespace engine
 		{
     		LOG_INFO(Platform, "[Resize] Swapchain recreate requested");
 
-			m_swapchainResizeRequested = false;
 			if (m_vkDeviceContext.IsValid() && m_vkSwapchain.IsValid() && m_width > 0 && m_height > 0)
 			{
 				vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
@@ -2667,21 +2666,32 @@ namespace engine
 				bool ok = m_vkSwapchain.Recreate(static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height));
 				if (ok)
 				{
+					// Hot-fix : on ne clear le flag qu'apres succes complet. Si Recreate echoue
+					// (resize trop rapide, surface lost momentanee, etc.) le flag reste true et
+					// la frame suivante retente -> evite l'ecran noir permanent en cas d'echec
+					// transitoire.
+					m_swapchainResizeRequested = false;
 					m_suboptimalStreak = 0;
 					m_suboptimalWidth = m_width;
 					m_suboptimalHeight = m_height;
-					LOG_INFO(Platform, "[Resize] Swapchain recreated OK");
+					LOG_INFO(Platform, "[Resize] Swapchain recreated OK ({}x{})", m_width, m_height);
 					if (m_worldEditorImGui)
 					{
 						m_worldEditorImGui->OnSwapchainRecreate(m_vkSwapchain.GetImageCount());
 					}
 				}
 				else
-					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED");
+				{
+					LOG_WARN(Platform, "[Resize] Swapchain recreate FAILED ({}x{}) - retry next frame", m_width, m_height);
+					// flag deliberement laisse a true : retry au prochain BeginFrame.
+				}
 			}
 			else
 			{
-				LOG_WARN(Platform, "[Resize] Swapchain recreate skipped — device/swapchain not ready or invalid size");
+				// Cas typique : fenetre minimisee (m_width/m_height a 0). On clear le flag, il
+				// sera reposte automatiquement quand WM_SIZE refire au restore (cf. Window.cpp).
+				m_swapchainResizeRequested = false;
+				LOG_WARN(Platform, "[Resize] Swapchain recreate skipped - device/swapchain not ready or invalid size ({}x{})", m_width, m_height);
 			}
 		}
 

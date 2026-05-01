@@ -36,11 +36,14 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		// Cadre CGU elargi : 560 -> 880 px (cap par 92 % du viewport sur petits ecrans)
-		// pour que les lignes des conditions ne soient plus tronquees / superposees.
+		// Cadre CGU : largeur 880 px (cap par 92 % vpW sur petits ecrans), hauteur
+		// fixee a 78 % vpH pour que la checkbox + boutons soient toujours visibles
+		// dans la viewport (avant : panel auto-resize debordait sous l'ecran et
+		// l'utilisateur ne pouvait ni cocher la case ni cliquer Refuser/Accepter).
 		const std::string title = rm.sectionTitle.empty() ? tr("auth.panel.terms", "Terms of use") : rm.sectionTitle;
 		const float termsW = (std::min)(880.f, vpW * 0.92f);
-		if (!BeginPanel(termsW, vpW, vpH, title.c_str(), "", ""))
+		const float termsPanelH = (std::min)(820.f, vpH * 0.78f);
+		if (!BeginPanel(termsW, vpW, vpH, title.c_str(), "", "", false, false, termsPanelH))
 		{
 			EndPanel();
 			return;
@@ -59,10 +62,11 @@ namespace engine::render
 				ImGui::PopStyleColor();
 			}
 		}
-		// Hauteur scroll bumpee 260 -> 60 % du viewport (min 360 px) : avec un cadre
-		// plus large, on peut aussi se permettre plus de hauteur pour reduire la quantite
-		// de scroll necessaire pour lire les CGU.
-		const float termsScrollH = (std::max)(360.f, vpH * 0.60f);
+		// Reserve 110 px en bas du panel pour la checkbox + separator + 2 boutons.
+		// Le scroll prend tout l'espace vertical restant disponible dans le panel
+		// (apres meta lines), borne a un minimum 200 px.
+		const float termsFooterReserve = 110.f;
+		const float termsScrollH = (std::max)(200.f, ImGui::GetContentRegionAvail().y - termsFooterReserve);
 		ImGui::BeginChild("##terms_scroll", ImVec2(-FLT_MIN, termsScrollH), true, ImGuiWindowFlags_None);
 		if (m_authPresenter != nullptr)
 		{

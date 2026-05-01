@@ -72,13 +72,15 @@ namespace engine::render
 		// + ProggyClean fallback : rendaient toutes des '?'. Suppression au profit du libelle nu.
 		static constexpr int tabCount = 7;
 
-		// Sidebar hauteur alignee sur le main (pour symetrie visuelle du cadre Options).
-		const float sideH = (std::max)(560.f, vpH * 0.78f);
-		ImGui::SetCursorPos(ImVec2(0.f, (vpH - sideH) * 0.5f));
+		// Sidebar haute = main haute (alignement vertical du cadre).
+		const float topMargin = 60.f;
+		const float bottomMargin = 60.f;
+		const float panelH = (std::max)(560.f, vpH - topMargin - bottomMargin);
+		ImGui::SetCursorPos(ImVec2(0.f, topMargin));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kPanel));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, sideH),
+		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, panelH),
 			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
@@ -140,18 +142,14 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		ImGui::EndChild();
 
-		// Panel main borne en largeur (mainW) et hauteur explicite. Retour arriere
-		// sur AutoResizeY (qui rendait le cadre trop petit sur les onglets courts
-		// au point qu'on ne pouvait plus interagir avec les widgets : retour
-		// utilisateur 'on ne peut plus modifier aucune option'). On utilise
-		// max(560, vpH * 0.78) pour avoir une zone confortable, et le scroll
-		// interne (BeginChild ##opts_body) prend le relais sur les onglets longs.
-		const float mainH = (std::max)(560.f, vpH * 0.78f);
-		ImGui::SetCursorPos(ImVec2(mainOriginX, (vpH - mainH) * 0.5f));
+		// Panel main : meme topMargin que la sidebar pour alignement, hauteur =
+		// panelH. Le contenu commence dans le coin haut-gauche du child et le
+		// scroll interne (##opts_body) prend le relais si trop d'options.
+		ImGui::SetCursorPos(ImVec2(mainOriginX, topMargin));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kBackground));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##opts_main", ImVec2(mainW, mainH),
+		ImGui::BeginChild("##opts_main", ImVec2(mainW, panelH),
 			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
@@ -180,11 +178,12 @@ namespace engine::render
 		ImGui::EndChild();
 		DrawSeparator();
 
-		// Body avec hauteur explicite : laisse 88 px en bas pour le footer
-		// d'actions du panel main (Appliquer / Reset / etc.). Le ##opts_body
-		// scrolle seul sur les onglets longs.
-		const float footerH = 52.f;
-		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, (std::max)(120.f, mainH - footerH - 88.f)),
+		// Body : hauteur 0 = remplit l'espace restant du panel main (ImGui calcule
+		// auto en retranchant la taille deja consommee par header + separator).
+		// Reserve 60 px en bas pour le footer d'actions (RETOUR / ANNULER / APPLIQUER).
+		const float footerReserve = 60.f;
+		const float bodyH = (std::max)(120.f, ImGui::GetContentRegionAvail().y - footerReserve);
+		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, bodyH),
 			false, ImGuiWindowFlags_None);
 
 		const auto markDirty = [this]() { m_optDirty = true; };

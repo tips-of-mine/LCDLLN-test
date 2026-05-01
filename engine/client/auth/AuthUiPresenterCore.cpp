@@ -4328,4 +4328,16 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		LOG_INFO(Core, "[AuthUiPresenter] World Editor : flux auth marqué complet (pas d’écran login)");
 	}
 
+	void AuthUiPresenter::MarkAuthFlowCompleteAfterEnterWorld()
+	{
+		if (!m_initialized || m_flowComplete)
+		{
+			return;
+		}
+		m_flowComplete = true;
+		m_userErrorText.clear();
+		m_infoBanner.clear();
+		LOG_INFO(Core, "[AuthUiPresenter] EnterWorld validé : flux auth marqué complet (chat HUD débloqué)");
+	}
+
 }

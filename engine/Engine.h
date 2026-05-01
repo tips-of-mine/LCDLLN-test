@@ -297,6 +297,10 @@ namespace engine
 		/// Phase 3.6.6 — Prochain instant où la sauvegarde périodique de position sera envoyée.
 		/// Initialisé à now + intervalle au moment de la consommation EnterWorldCommand.
 		std::chrono::steady_clock::time_point        m_nextSavePositionTime{};
+		/// Etape 6 : derniere position synchronisee. Permet de detecter le mouvement
+		/// (delta > seuil) et de raccourcir l'intervalle de save tant que le perso
+		/// bouge. Reinitialisee au EnterWorld depuis le spawn.
+		engine::math::Vec3                            m_lastSyncedPosition{ 0.f, 0.f, 0.f };
 		/// Phase 3.6.6 — Intervalle entre deux sauvegardes périodiques (configurable via
 		/// `client.save_position.interval_sec`, défaut 30s).
 		std::chrono::seconds                         m_savePositionIntervalSec{ 30 };

@@ -3000,6 +3000,10 @@ namespace engine
 					// repositionnera ensuite la camera derriere la cible (par defaut
 					// 6 m d'orbite arriere) au prochain Update.
 					m_orbitalCameraController.SetTargetPosition(out.camera.position);
+					// Etape 6 : initialise la derniere position synchronisee au spawn
+					// pour que la 1ere detection de mouvement soit correcte (sans cela
+					// le perso etait "deplace" depuis (0,0,0) au tout 1er tick).
+					m_lastSyncedPosition = out.camera.position;
 					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
 						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
 				}
@@ -3116,25 +3120,45 @@ namespace engine
 			// Phase 3.6.6 — Tick périodique de sauvegarde de position. Démarré à la consommation
 			// de EnterWorldCommand (m_currentCharacterId != 0). Intervalle borné à >= 5 s côté
 			// AuthUiPresenter::SavePositionAsync via la config `client.save_position.interval_sec`.
-			if (m_currentCharacterId != 0u
-				&& std::chrono::steady_clock::now() >= m_nextSavePositionTime)
+			//
+			// Etape 6 vue 3eme personne : ajout d'une heuristique mouvement -> save plus
+			// frequente. Quand le perso a bouge de plus de 0.5 m depuis la derniere
+			// synchro, on declenche immediatement (rate-limite a 1.0 s entre 2 saves).
+			// Si statique, on revient a l'intervalle long (m_savePositionIntervalSec).
+			if (m_currentCharacterId != 0u)
 			{
-				constexpr float kRad2Deg = 180.f / 3.14159265f;
-				const float yawDeg   = out.camera.yaw   * kRad2Deg;
-				const float pitchDeg = out.camera.pitch * kRad2Deg;
-				// Vue 3eme personne : on persiste la position de la *cible* (le
-				// joueur), pas celle de la camera (qui est en orbite arriere). Au
-				// prochain login, le spawn DB sera la position du joueur, pas la
-				// camera, ce qui permet de retomber sur le bon spot.
 				const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
-				if (m_authUi.SavePositionAsync(m_currentCharacterId,
-					playerPos.x, playerPos.y, playerPos.z,
-					yawDeg, pitchDeg))
+				const float dx = playerPos.x - m_lastSyncedPosition.x;
+				const float dy = playerPos.y - m_lastSyncedPosition.y;
+				const float dz = playerPos.z - m_lastSyncedPosition.z;
+				const float dist2 = dx * dx + dy * dy + dz * dz;
+				constexpr float kMoveThresholdM   = 0.5f;
+				constexpr float kMoveThresholdSqr = kMoveThresholdM * kMoveThresholdM;
+				const auto now = std::chrono::steady_clock::now();
+				const bool intervalElapsed = now >= m_nextSavePositionTime;
+				const bool movedSignificantly = dist2 >= kMoveThresholdSqr;
+				if (intervalElapsed || movedSignificantly)
 				{
-					LOG_DEBUG(Core, "[SavePosition] periodic save sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}))",
-						m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z);
+					constexpr float kRad2Deg = 180.f / 3.14159265f;
+					const float yawDeg   = out.camera.yaw   * kRad2Deg;
+					const float pitchDeg = out.camera.pitch * kRad2Deg;
+					if (m_authUi.SavePositionAsync(m_currentCharacterId,
+						playerPos.x, playerPos.y, playerPos.z,
+						yawDeg, pitchDeg))
+					{
+						LOG_DEBUG(Core, "[SavePosition] sync sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}), reason={})",
+							m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z,
+							movedSignificantly ? "moved" : "tick");
+					}
+					m_lastSyncedPosition = playerPos;
+					// Si on est ici parce qu'on a bouge (et pas a cause de l'intervalle
+					// long), on rate-limite la prochaine sync a 1.0 s minimum pour ne
+					// pas spammer le serveur tant que le joueur enchaine les pas.
+					// Sinon on retombe sur l'intervalle long (config-driven).
+					const auto nextDelay = movedSignificantly ? std::chrono::milliseconds(1000)
+					                                          : std::chrono::duration_cast<std::chrono::milliseconds>(m_savePositionIntervalSec);
+					m_nextSavePositionTime = now + nextDelay;
 				}
-				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 			}
 
 			// Phase 5 reconnect — Si une tentative de reconnexion master est en cours,

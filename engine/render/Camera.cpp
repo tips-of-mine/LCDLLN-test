@@ -212,9 +212,46 @@ namespace engine::render
 		const float forwardX = -sy * cp;
 		const float forwardY = -sp;
 		const float forwardZ = -cy * cp;
+
+		// Etape 3 collision camera-decor : si la camera calculee va passer SOUS le
+		// sol (Y < kGroundY + kGroundPadding), on reduit la distance effective
+		// pour que la camera reste au-dessus du sol au lieu de la teleporter
+		// verticalement (ce qui donnerait un saut visuel desagreable). On laisse
+		// kDistanceMin comme plancher (la camera ne peut pas etre plus pres que
+		// kDistanceMin de la cible).
+		// TODO : remplacer kGroundY (constante = 0) par une vraie query de hauteur
+		// terrain quand TerrainRenderer exposera SampleHeightAtWorldXZ.
+		constexpr float kGroundY = 0.0f;
+		constexpr float kGroundPadding = 0.5f;
+		float effectiveDistance = m_distance;
+		if (forwardY < -0.001f)
+		{
+			// camera_y = target.y - forwardY * distance ; on veut camera_y >= floor.
+			// distance_max = (target.y - floor) / -forwardY.
+			const float floorY = kGroundY + kGroundPadding;
+			const float distMaxBelowFloor = (m_target.y - floorY) / -forwardY;
+			if (distMaxBelowFloor > 0.f && distMaxBelowFloor < effectiveDistance)
+			{
+				if (distMaxBelowFloor >= kDistanceMin)
+				{
+					effectiveDistance = distMaxBelowFloor;
+				}
+				else
+				{
+					effectiveDistance = kDistanceMin;
+				}
+			}
+		}
+
 		// Position camera : recule dans la direction OPPOSEE du forward, depuis target.
-		camera.position.x = m_target.x - forwardX * m_distance;
-		camera.position.y = m_target.y - forwardY * m_distance;
-		camera.position.z = m_target.z - forwardZ * m_distance;
+		camera.position.x = m_target.x - forwardX * effectiveDistance;
+		camera.position.y = m_target.y - forwardY * effectiveDistance;
+		camera.position.z = m_target.z - forwardZ * effectiveDistance;
+		// Clamp final en Y : meme avec effectiveDistance reduit, on s'assure que
+		// la camera ne descende pas sous le seuil (cas ou m_target.y < floor par ex.).
+		if (camera.position.y < kGroundY + kGroundPadding)
+		{
+			camera.position.y = kGroundY + kGroundPadding;
+		}
 	}
 }

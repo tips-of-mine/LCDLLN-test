@@ -479,20 +479,24 @@ namespace engine::editor
 				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 13), 11, 32));
 			loadAuthFontFromConfig(uiFontPath, uiFontPx, "UI");
 
+			// Fallback merge : Windlass.ttf ne contient pas les caracteres accentues, '*' (utilise
+			// par ImGuiInputTextFlags_Password), '[' ']' '%' '@' et autres ponctuations etendues.
+			// ImGui les rendait alors comme '?'. On merge ProggyClean (ImGui built-in) IMMEDIATEMENT
+			// apres Windlass (sinon le merge prend la fonte precedente, pas Windlass) : Windlass
+			// reste prioritaire pour A-Z/a-z/0-9 et ProggyClean prend le relais pour les autres.
+			// Visuellement les glyphes de fallback ne matchent pas la maquette mais c'est mieux
+			// que des '?'.
+			{
+				ImFontConfig fallbackCfg{};
+				fallbackCfg.MergeMode = true;
+				io.Fonts->AddFontDefault(&fallbackCfg);
+				LOG_INFO(Render, "[WorldEditorImGui] Fallback ProggyClean merge sur Windlass (couvre * [ ] @ etc.)");
+			}
+
 			const std::string valueFontPath = cfg->GetString("render.auth_ui.value_font_path", "");
 			const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
 				cfg->GetInt("render.auth_ui.imgui.value_font_pixel_height", 12), 11, 32));
 			loadAuthFontFromConfig(valueFontPath, valueFontPx, "valeurs");
-
-			// Fallback merge : Windlass.ttf ne contient pas les caracteres accentues (E, e, e,
-			// e), ni « @ » et autres ponctuations etendues. ImGui les rendait alors comme « ? ».
-			// On merge ProggyClean (ImGui built-in) APRES Windlass : ImGui pioche dans le
-			// premier atlas qui contient le glyphe, donc Windlass reste prioritaire pour A-Z/0-9
-			// et ProggyClean prend le relais pour @, e, E, etc. Visuellement les glyphes de
-			// fallback ne matchent pas la maquette mais c'est mieux que des « ? ».
-			ImFontConfig fallbackCfg{};
-			fallbackCfg.MergeMode = true;
-			io.Fonts->AddFontDefault(&fallbackCfg);
 		}
 
 		ImGui_ImplWin32_Init(hwnd);

@@ -102,8 +102,14 @@ namespace engine::server
 	int CharacterCreateHandler::FindNextSlot(void* mysqlPtr, uint64_t accountId, uint64_t serverId) const
 	{
 		MYSQL* mysql = reinterpret_cast<MYSQL*>(mysqlPtr);
+		// Filtre 'deleted_at IS NULL' : sans cela, les persos soft-deletes via
+		// CharacterDeleteHandler (qui pose deleted_at = NOW()) restent comptes
+		// comme occupant un slot, et FindNextSlot retourne 1 au lieu de 0 apres
+		// suppression d'un unique perso. Du coup le client affiche 'Slot 2' alors
+		// qu'il devrait afficher 'Slot 1'.
 		std::string sql = "SELECT slot FROM characters WHERE account_id = " + std::to_string(accountId)
-			+ " AND server_id = " + std::to_string(serverId) + " ORDER BY slot ASC";
+			+ " AND server_id = " + std::to_string(serverId)
+			+ " AND deleted_at IS NULL ORDER BY slot ASC";
 		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
 		if (!res)
 			return -1;

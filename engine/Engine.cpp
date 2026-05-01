@@ -3341,18 +3341,33 @@ namespace engine
 		else
 		{
 			out.objectVisible = true;
-			// Etape 2 vue 3eme personne : positionne le mesh placeholder de
-			// l'avatar a la position cible orbitale (= position du joueur). Le
-			// modele 'avatar_placeholder.mesh' est un cube 0.5x1.8x0.5 m centre
-			// sur (0, 0.9, 0) ; sa hauteur 0 = pieds. Donc translation(target).
-			// Matrice row-major : | 1 0 0 tx | | 0 1 0 ty | | 0 0 1 tz | | 0 0 0 1 |.
+			// Etape 2 + 4 vue 3eme personne : position + orientation de l'avatar.
+			//
+			// Position : translation a la cible orbitale (= position joueur).
+			// Le mesh 'avatar_placeholder.mesh' est un cube 0.5x1.8x0.5 m centre
+			// sur (0, 0.9, 0), pieds Y=0 ; donc translation(target) sans offset.
+			//
+			// Orientation : rotation Y selon le yaw camera (etape 4). Standard MMO :
+			// le perso fait face dans la meme direction horizontale que la camera,
+			// ce qui revient a montrer son dos a la camera (3eme personne classique).
+			// Le cube placeholder etant symetrique, ca n'a pas d'effet visuel pour
+			// le moment ; le cablage est en place pour les futurs meshes textures.
+			//
+			// Matrice row-major M = T(target) * R_y(yaw) :
+			//   | cos(y)   0  sin(y)  tx |
+			//   | 0        1  0       ty |
+			//   | -sin(y)  0  cos(y)  tz |
+			//   | 0        0  0       1  |
 			if (m_currentCharacterId != 0u)
 			{
 				const engine::math::Vec3& target = m_orbitalCameraController.GetTargetPosition();
-				out.objectModelMatrix[0]  = 1.0f; out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = 0.0f; out.objectModelMatrix[3]  = target.x;
-				out.objectModelMatrix[4]  = 0.0f; out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y;
-				out.objectModelMatrix[8]  = 0.0f; out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = 1.0f; out.objectModelMatrix[11] = target.z;
-				out.objectModelMatrix[12] = 0.0f; out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
+				const float yaw = out.camera.yaw;
+				const float c = std::cos(yaw);
+				const float s = std::sin(yaw);
+				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = s;    out.objectModelMatrix[3]  = target.x;
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y;
+				out.objectModelMatrix[8]  = -s;    out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = target.z;
+				out.objectModelMatrix[12] = 0.0f;  out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
 			}
 		}
 

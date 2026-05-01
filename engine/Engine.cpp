@@ -1412,7 +1412,12 @@ namespace engine
 												vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 											});
 
-										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
+										// Etape 2 vue 3eme personne : on charge directement le mesh placeholder
+										// avatar (cube 0.5x1.8x0.5 m) au boot. Avant, on chargeait
+										// 'meshes/test.mesh' (un simple triangle), utilise comme proxy de scene.
+										// L'avatar est positionne a la cible orbitale via out.objectModelMatrix
+										// (cf. branche !m_editorMode du Update).
+										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/avatar_placeholder.mesh");
 
 
 										m_frameGraph.addPass("GPU_Cull",
@@ -3336,6 +3341,19 @@ namespace engine
 		else
 		{
 			out.objectVisible = true;
+			// Etape 2 vue 3eme personne : positionne le mesh placeholder de
+			// l'avatar a la position cible orbitale (= position du joueur). Le
+			// modele 'avatar_placeholder.mesh' est un cube 0.5x1.8x0.5 m centre
+			// sur (0, 0.9, 0) ; sa hauteur 0 = pieds. Donc translation(target).
+			// Matrice row-major : | 1 0 0 tx | | 0 1 0 ty | | 0 0 1 tz | | 0 0 0 1 |.
+			if (m_currentCharacterId != 0u)
+			{
+				const engine::math::Vec3& target = m_orbitalCameraController.GetTargetPosition();
+				out.objectModelMatrix[0]  = 1.0f; out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = 0.0f; out.objectModelMatrix[3]  = target.x;
+				out.objectModelMatrix[4]  = 0.0f; out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y;
+				out.objectModelMatrix[8]  = 0.0f; out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = 1.0f; out.objectModelMatrix[11] = target.z;
+				out.objectModelMatrix[12] = 0.0f; out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
+			}
 		}
 
 #if defined(_WIN32)

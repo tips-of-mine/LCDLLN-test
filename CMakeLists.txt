@@ -336,6 +336,7 @@ add_library(engine_core
   engine/render/terrain/HeightmapLoader.cpp
   engine/render/terrain/TerrainMesh.cpp
   engine/render/terrain/TerrainSplatting.cpp
+  engine/render/terrain/SplatSampling.cpp
   engine/render/terrain/TerrainHoleMask.cpp
   engine/render/terrain/TerrainGrassDetail.cpp
   engine/render/terrain/TerrainCliffMesh.cpp

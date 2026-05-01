@@ -2590,11 +2590,13 @@ namespace engine
 			constexpr float kRad2Deg = 180.f / 3.14159265f;
 			const float yawDeg   = shutdownCam.yaw   * kRad2Deg;
 			const float pitchDeg = shutdownCam.pitch * kRad2Deg;
+			// Vue 3eme personne : on persiste la position cible (joueur), pas la camera.
+			const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
 			const bool sent = m_authUi.SavePositionAsync(m_currentCharacterId,
-				shutdownCam.position.x, shutdownCam.position.y, shutdownCam.position.z,
+				playerPos.x, playerPos.y, playerPos.z,
 				yawDeg, pitchDeg);
 			LOG_INFO(Core, "[SavePosition] shutdown save (character_id={}, pos=({:.1f},{:.1f},{:.1f}), sent={})",
-				m_currentCharacterId, shutdownCam.position.x, shutdownCam.position.y, shutdownCam.position.z, sent);
+				m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z, sent);
 			m_shutdownPositionSaved = true;
 		}
 
@@ -2989,6 +2991,10 @@ namespace engine
 					out.camera.position.z = spawnZ;
 					out.camera.yaw = yawDeg * kDeg2Rad;
 					out.camera.pitch = pitchDeg * kDeg2Rad;
+					// Aligne la cible orbitale sur le spawn DB. Le controleur
+					// repositionnera ensuite la camera derriere la cible (par defaut
+					// 6 m d'orbite arriere) au prochain Update.
+					m_orbitalCameraController.SetTargetPosition(out.camera.position);
 					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
 						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
 				}
@@ -3111,12 +3117,17 @@ namespace engine
 				constexpr float kRad2Deg = 180.f / 3.14159265f;
 				const float yawDeg   = out.camera.yaw   * kRad2Deg;
 				const float pitchDeg = out.camera.pitch * kRad2Deg;
+				// Vue 3eme personne : on persiste la position de la *cible* (le
+				// joueur), pas celle de la camera (qui est en orbite arriere). Au
+				// prochain login, le spawn DB sera la position du joueur, pas la
+				// camera, ce qui permet de retomber sur le bon spot.
+				const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
 				if (m_authUi.SavePositionAsync(m_currentCharacterId,
-					out.camera.position.x, out.camera.position.y, out.camera.position.z,
+					playerPos.x, playerPos.y, playerPos.z,
 					yawDeg, pitchDeg))
 				{
 					LOG_DEBUG(Core, "[SavePosition] periodic save sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}))",
-						m_currentCharacterId, out.camera.position.x, out.camera.position.y, out.camera.position.z);
+						m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z);
 				}
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 			}
@@ -3213,15 +3224,14 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				// Cf. retour utilisateur : 'la souris ne doit pas etre le suivi camera
-				// par defaut, il faut que l'on puisse realiser des actions sans que la
-				// camera bouge'. Standard MMO : la souris est libre par defaut (curseur
-				// visible, peut cliquer UI / NPCs / icones), et seul le clic droit
-				// maintenu active la rotation libre de la camera (yaw + pitch via
-				// mouvements souris). Aligne sur le comportement du mode --editor.
+				// Etape 1 vue 3eme personne : controleur orbital (camera derriere une
+				// position cible, qui sera celle de l'avatar dans un PR ulterieur).
+				// Comportement : souris libre par defaut ; clic droit maintenu rotate
+				// la camera autour de la cible (yaw/pitch) ; molette zoom in/out ;
+				// WASD deplace la cible dans le plan XZ et la camera suit.
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, rmbLook, true, 0.f,
-					out.camera);
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
+					rmbLook, true, out.camera);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())

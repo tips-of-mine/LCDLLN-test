@@ -322,6 +322,9 @@ namespace engine
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;
 		engine::render::FpsCameraController m_fpsCameraController;
+		/// Controleur camera 3eme personne post-EnterWorld (vue orbitale arriere).
+		/// Utilise UNIQUEMENT in-game (post-auth, pas en mode --editor / --world-editor).
+		engine::render::OrbitalCameraController m_orbitalCameraController;
 		engine::world::World m_world;
 		engine::world::StreamingScheduler m_streamingScheduler;
 		engine::world::StreamCache m_streamCache;

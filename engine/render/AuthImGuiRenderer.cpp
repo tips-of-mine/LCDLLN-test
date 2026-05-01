@@ -575,6 +575,9 @@ namespace engine::render
 		}
 		if (!subtitle.empty())
 		{
+			// Petit espace vertical entre le title du panel et son subtitle (welcome) — sans
+			// ce Dummy, ItemSpacing.y (4 px) seul collait visuellement les deux lignes.
+			ImGui::Dummy(ImVec2(0.f, 6.f));
 			if (subtitleWelcomeAccent)
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));

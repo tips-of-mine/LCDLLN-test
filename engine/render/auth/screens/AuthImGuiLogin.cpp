@@ -63,10 +63,11 @@ namespace engine::render
 
 		if (!rm.titleLine2.empty())
 		{
-			// Sous-titre désormais nettement plus grand (1.5x → 2.5x ≈ 32 px) et descendu
-			// de quelques pixels pour reposer naturellement sous la baseline du titre principal,
-			// dont le scale 5.0x laisse un blanc important.
-			ImGui::Dummy(ImVec2(0.f, 8.f));
+			// Sous-titre descendu sous la baseline du titre principal. La jambe oblique du R
+			// de « CHRONIQUES » à scale 5.0x descend nettement sous la baseline ; on pousse
+			// donc le sous-titre à 28 px pour qu'il commence clairement *en dessous* de la
+			// pointe de la jambe et éviter la collision visuelle.
+			ImGui::Dummy(ImVec2(0.f, 28.f));
 			ImGui::SetWindowFontScale(2.5f);
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
 			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;

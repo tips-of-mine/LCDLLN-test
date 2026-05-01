@@ -62,6 +62,9 @@ namespace engine::render
 
 		char m_forgotEmail[256]{};
 		char m_charName[96]{};
+		/// Index dans la liste des races jouables (cf. RenderCharCreateScreen).
+		/// 0 = humains, 1 = elfes, 2 = orcs, 3 = nains, 4 = demons, 5 = chevaliers_dragons.
+		int m_charRaceIdx = 0;
 
 		bool m_optDirty = false;
 		bool m_optFullscreen = true;

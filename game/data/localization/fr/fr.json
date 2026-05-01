@@ -263,6 +263,7 @@
   "auth.character_select.race.corrompus": "Corrompu",
   "auth.character_select.race.divins": "Divin",
   "auth.character_select.race.demons": "Demon",
+  "auth.character_select.race.chevaliers_dragons": "Chevalier-dragon",
   "auth.character_select.class.warrior": "Guerrier",
   "auth.character_select.class.mage": "Mage",
   "auth.character_select.class.rogue": "Voleur",

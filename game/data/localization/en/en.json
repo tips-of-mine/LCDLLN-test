@@ -263,6 +263,7 @@
   "auth.character_select.race.corrompus": "Corrupted",
   "auth.character_select.race.divins": "Divine",
   "auth.character_select.race.demons": "Demon",
+  "auth.character_select.race.chevaliers_dragons": "Dragon Knight",
   "auth.character_select.class.warrior": "Warrior",
   "auth.character_select.class.mage": "Mage",
   "auth.character_select.class.rogue": "Rogue",

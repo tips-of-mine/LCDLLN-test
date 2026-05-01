@@ -129,20 +129,42 @@ namespace engine::render
 				};
 				const std::string raceLabel  = humanize("auth.character_select.race.", c.race_str);
 				const std::string classLabel = humanize("auth.character_select.class.", c.class_str);
-				std::string sub;
+				// Symbole d'identification rapide de la race : initiale ASCII en accent.
+				// Aligne sur les ids strings de la table races (cf. migration 0036).
+				const auto raceSymbol = [](const std::string& raceId) -> char {
+					if (raceId == "humains")             return 'H';
+					if (raceId == "elfes")               return 'E';
+					if (raceId == "orcs")                return 'O';
+					if (raceId == "nains")               return 'N';
+					if (raceId == "demons")              return 'D';
+					if (raceId == "chevaliers_dragons")  return 'C';
+					return '\0';
+				};
+				const char raceSym = raceSymbol(c.race_str);
+
+				// Compose la subline en code : permet de gommer cleanement les parties
+				// race / classe quand elles sont vides (avant on affichait "?" en fallback,
+				// ce qui parasitait l'UI : 'Slot 1 - Elfe ? - Niveau 1').
+				std::string sub = "Slot " + std::to_string(static_cast<unsigned>(c.slot) + 1u);
 				if (!raceLabel.empty() || !classLabel.empty())
 				{
-					sub = tr("auth.character_select.subline_full",
-						P{ { "slot", std::to_string(static_cast<unsigned>(c.slot) + 1u) },
-						   { "level", std::to_string(c.level) },
-						   { "race", raceLabel.empty() ? std::string("?") : raceLabel },
-						   { "class", classLabel.empty() ? std::string("?") : classLabel } });
+					sub += " - ";
+					if (!raceLabel.empty())  sub += raceLabel;
+					if (!raceLabel.empty() && !classLabel.empty()) sub += " ";
+					if (!classLabel.empty()) sub += classLabel;
 				}
-				else
+				sub += " - Niveau " + std::to_string(c.level);
+
+				// Symbole race (lettre) en accent juste avant la subline si dispo.
+				if (raceSym != '\0')
 				{
-					sub = tr("auth.character_select.subline",
-						P{ { "slot", std::to_string(static_cast<unsigned>(c.slot) + 1u) },
-						   { "level", std::to_string(c.level) } });
+					ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+					ImGui::SetWindowFontScale(0.95f);
+					char symBuf[2] = { raceSym, '\0' };
+					ImGui::TextUnformatted(symBuf);
+					ImGui::SetWindowFontScale(1.f);
+					ImGui::PopStyleColor();
+					ImGui::SameLine(0.f, 8.f);
 				}
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 				ImGui::SetWindowFontScale(0.82f);

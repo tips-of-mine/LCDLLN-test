@@ -90,13 +90,25 @@ namespace engine::render
 			// Phase 3.11.2 — Chips canal cliquables. Click toggle le bit via
 			// ChatUiPresenter::ToggleChannelFilter (mirror du raccourci 1-0 clavier dans
 			// ChatUiPresenter::Update). Couleur : ARGB du canal si visible, gris atténué si masqué.
+			//
+			// Restriction utilisateur : in-world on n'expose que Global / Zone / Friends
+			// (les seuls canaux fonctionnels demandes). Les autres (Say, Yell, Whisper,
+			// Party, Guild, Server, Raid) restent supportes par le wire mais ne sont
+			// pas exposes en UI tant que les fonctionnalites associees (groupe, guilde,
+			// raid...) ne sont pas branchees cote serveur.
+			static constexpr uint8_t kVisibleChannels[] = {
+				static_cast<uint8_t>(engine::net::ChatChannel::Global),  // 6
+				static_cast<uint8_t>(engine::net::ChatChannel::Zone),    // 5
+				static_cast<uint8_t>(engine::net::ChatChannel::Friends), // 9
+			};
 			const uint16_t mask = m_chat->ChannelFilterMask();
 			ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.20f)));
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  IV(LnTheme::AccentDim(0.35f)));
-			for (uint8_t i = 0; i < 10u; ++i)
+			for (size_t k = 0; k < (sizeof(kVisibleChannels) / sizeof(kVisibleChannels[0])); ++k)
 			{
-				if (i > 0) ImGui::SameLine(0.f, 4.f);
+				const uint8_t i = kVisibleChannels[k];
+				if (k > 0) ImGui::SameLine(0.f, 4.f);
 				const bool visible = (mask & (1u << i)) != 0u;
 				const ImVec4 color = visible
 					? ArgbToIm(engine::net::ChannelColorArgb(static_cast<engine::net::ChatChannel>(i)))

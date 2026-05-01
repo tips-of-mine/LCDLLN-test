@@ -50,13 +50,14 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
-		// Sidebar elargie 220 -> 320 px pour que les libelles complets ('CONTROLES',
-		// 'INTERFACE', 'COMPTE') ne soient pas tronques. Boutons 36 -> 44 px de haut.
-		const float sideW = 320.f;
-		// Panel main borne a 1200 px max et centre horizontalement : sur les setups ultra-wide
-		// (5760x1080 trois ecrans), un mainW=5540 etalait le contenu illisiblement et la barre
-		// de scroll vertical apparaissait sur le bord droit hors champ utile.
-		const float mainWMax = 1200.f;
+		// Sidebar : retour a 220 px (revert du bump 320 px : la sidebar etait OK
+		// avant, c'est le main qui doit changer pour qu'on puisse interagir avec
+		// les widgets).
+		const float sideW = 220.f;
+		// Panel main : on conserve le bornage horizontal mais on l'augmente a 1600
+		// pour avoir assez de largeur pour les sliders, combos, et le label hint
+		// a droite. Centre horizontalement sur ultra-wide.
+		const float mainWMax = 1600.f;
 		const float mainW = (std::min)(mainWMax, vpW - sideW - 32.f);
 		const float mainOriginX = sideW + ((vpW - sideW - mainW) * 0.5f);
 		// Hauteurs ajustees PAR sous-menu : on passe les deux child a AutoResizeY,
@@ -71,13 +72,14 @@ namespace engine::render
 		// + ProggyClean fallback : rendaient toutes des '?'. Suppression au profit du libelle nu.
 		static constexpr int tabCount = 7;
 
-		ImGui::SetCursorPos(ImVec2(0.f, 0.f));
+		// Sidebar hauteur alignee sur le main (pour symetrie visuelle du cadre Options).
+		const float sideH = (std::max)(560.f, vpH * 0.78f);
+		ImGui::SetCursorPos(ImVec2(0.f, (vpH - sideH) * 0.5f));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kPanel));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, 0.f),
-			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
-			ImGuiWindowFlags_None);
+		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, sideH),
+			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
@@ -103,7 +105,7 @@ namespace engine::render
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 			char btnLine[192];
 			std::snprintf(btnLine, sizeof(btnLine), "%s##tab%d", tabLabel.c_str(), i);
-			if (ImGui::Button(btnLine, ImVec2(-FLT_MIN, 44.f)))
+			if (ImGui::Button(btnLine, ImVec2(-FLT_MIN, 36.f)))
 			{
 				m_optionsTab = i;
 			}
@@ -118,11 +120,15 @@ namespace engine::render
 			ImGui::PopStyleColor(4);
 		}
 
-		// AutoResizeY : la sidebar prend la hauteur de son contenu, pas besoin
-		// du Dummy de remplissage qui poussait le footer en bas (sinon ca force
-		// la hauteur a vpH et casse l'auto-resize). Le footer suit directement
-		// les boutons avec un petit espace.
-		ImGui::Dummy(ImVec2(1.f, 12.f));
+		// Push le footer hint en bas du sidebar : reserve 56 px pour le footer +
+		// remplit l'espace restant. Comportement original (avant le passage en
+		// AutoResizeY).
+		const float sidebarFooterReserve = 56.f;
+		const float sidebarSpacerH = ImGui::GetContentRegionAvail().y - sidebarFooterReserve;
+		if (sidebarSpacerH > 2.f)
+		{
+			ImGui::Dummy(ImVec2(1.f, sidebarSpacerH));
+		}
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.82f);
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.92f);
@@ -134,19 +140,19 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		ImGui::EndChild();
 
-		// Panel main borne et centre horizontalement (cf. mainOriginX en haut). Bordure
-		// douce pour distinguer le bloc sur fond ultra-wide.
-		ImGui::SetCursorPos(ImVec2(mainOriginX, 0.f));
+		// Panel main borne en largeur (mainW) et hauteur explicite. Retour arriere
+		// sur AutoResizeY (qui rendait le cadre trop petit sur les onglets courts
+		// au point qu'on ne pouvait plus interagir avec les widgets : retour
+		// utilisateur 'on ne peut plus modifier aucune option'). On utilise
+		// max(560, vpH * 0.78) pour avoir une zone confortable, et le scroll
+		// interne (BeginChild ##opts_body) prend le relais sur les onglets longs.
+		const float mainH = (std::max)(560.f, vpH * 0.78f);
+		ImGui::SetCursorPos(ImVec2(mainOriginX, (vpH - mainH) * 0.5f));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kBackground));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		// AutoResizeY : le panel main s'adapte au contenu de l'onglet actif
-		// (cf. demande utilisateur : 'le cadre est trop grand en hauteur, il
-		// faut l'ajuster par sous-menu'). Cap maximum a vpH * 0.9 pour ne pas
-		// deborder de l'ecran sur de tres longs onglets.
-		ImGui::BeginChild("##opts_main", ImVec2(mainW, 0.f),
-			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
-			ImGuiWindowFlags_None);
+		ImGui::BeginChild("##opts_main", ImVec2(mainW, mainH),
+			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
@@ -174,12 +180,12 @@ namespace engine::render
 		ImGui::EndChild();
 		DrawSeparator();
 
-		// Body sans hauteur fixe : AutoResizeY sur le main child englobant pousse
-		// le footer juste apres le contenu. Hauteur minimum 120 px pour que les
-		// onglets quasi-vides (LANGUE) restent visuellement coherents.
-		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, 0.f),
-			ImGuiChildFlags_AutoResizeY,
-			ImGuiWindowFlags_None);
+		// Body avec hauteur explicite : laisse 88 px en bas pour le footer
+		// d'actions du panel main (Appliquer / Reset / etc.). Le ##opts_body
+		// scrolle seul sur les onglets longs.
+		const float footerH = 52.f;
+		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, (std::max)(120.f, mainH - footerH - 88.f)),
+			false, ImGuiWindowFlags_None);
 
 		const auto markDirty = [this]() { m_optDirty = true; };
 

@@ -724,15 +724,13 @@ namespace engine::render
 			flags |= ImGuiInputTextFlags_Password;
 		}
 		ImGui::SetNextItemWidth(-FLT_MIN);
-		// Pour les champs password, augmenter la taille des '*' affiches : ImGui
-		// rend le PasswordChar a la taille de fonte courante, donc on bumpe le
-		// WindowFontScale a 1.5x autour de l'InputText. Champs non-password : pas
-		// de changement (on garde la taille standard pour le texte saisi).
-		const bool bumpFontForPassword = password;
-		if (bumpFontForPassword)
-		{
-			ImGui::SetWindowFontScale(1.5f);
-		}
+		// NOTE : retour arriere sur le SetWindowFontScale(1.5f) pour les password
+		// (cf. retour utilisateur : 'tu as augmente la taille de la cellule, j'ai
+		// dit qu'augmenter la taille de la police'). ImGui scale fonte ET cellule
+		// ensemble, donc bumper le scale agrandissait visuellement les deux. Pour
+		// agrandir SEULEMENT la police des '*' sans toucher la hauteur de cellule
+		// il faudra une fonte 'value' dediee charge a une taille >13px et la
+		// PushFont() autour de l'InputText - report a un PR ulterieur.
 		const char* hint = spec.inputPlaceholder.empty() ? nullptr : spec.inputPlaceholder.c_str();
 		if (hint != nullptr && buf[0] == '\0')
 		{
@@ -741,10 +739,6 @@ namespace engine::render
 		else
 		{
 			ImGui::InputText(inputId, buf, static_cast<size_t>(bufSz), flags);
-		}
-		if (bumpFontForPassword)
-		{
-			ImGui::SetWindowFontScale(1.f);
 		}
 
 		ImGui::PopStyleVar(3);

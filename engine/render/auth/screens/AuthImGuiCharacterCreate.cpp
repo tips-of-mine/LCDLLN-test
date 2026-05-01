@@ -1,5 +1,5 @@
-// AUTH-UI.11 — rendu ImGui écran de création de personnage avec saisie du nom et confirmation (split depuis AuthImGuiRenderer.cpp).
-// Contient RenderCharCreateScreen : panneau avec champ de nom, lignes d'information issues du modèle, et boutons Annuler / Créer.
+// AUTH-UI.11 - rendu ImGui ecran de creation de personnage avec saisie du nom et confirmation (split depuis AuthImGuiRenderer.cpp).
+// Contient RenderCharCreateScreen : panneau avec champ de nom, lignes d'information issues du modele, et boutons Annuler / Creer.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -20,10 +20,10 @@ namespace engine::render
 		}
 	} // namespace
 
-	/// Affiche l'écran de création de personnage : champ de saisie du nom, lignes d'information issues du modèle, puis boutons Annuler et Créer.
+	/// Affiche l'ecran de creation de personnage : champ de saisie du nom, lignes d'information issues du modele, puis boutons Annuler et Creer.
 	void AuthImGuiRenderer::RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// Titre/sous-titre via helper unifié (référence visuelle).
+		// Titre/sous-titre via helper unifie (reference visuelle).
 		DrawAuthBigTitle(rm, vpW, vpH, "charcreate");
 		const float titleZoneW = vpW * 0.96f;
 
@@ -43,8 +43,8 @@ namespace engine::render
 			ImGui::PopStyleColor();
 		}
 		ImGui::Spacing();
-		// Largeurs finies pour éviter que Annuler (pleine largeur) ne capture les clics destinés
-		// à Créer (cf. correctif AuthImGuiTerms.cpp pour la même classe de bug).
+		// Largeurs finies pour eviter que Annuler (pleine largeur) ne capture les clics destines
+		// a Creer (cf. correctif AuthImGuiTerms.cpp pour la meme classe de bug).
 		const float ccGap = 8.f;
 		const float ccBtnW = (ImGui::GetContentRegionAvail().x - ccGap) * 0.5f;
 		if (DrawGhostButton("Annuler", false, ccBtnW) && m_authPresenter != nullptr)
@@ -52,7 +52,7 @@ namespace engine::render
 			m_authPresenter->ImGuiCancelCharacterCreateReturnToLogin();
 		}
 		ImGui::SameLine(0.f, ccGap);
-		std::string submitLabel = "Creer"; ///< Libellé du bouton de confirmation, surchargé par l'action primaire du modèle si présente.
+		std::string submitLabel = "Creer"; ///< Libelle du bouton de confirmation, surcharge par l'action primaire du modele si presente.
 		for (const auto& a : rm.actions)
 		{
 			if (a.primary)

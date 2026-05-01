@@ -1,6 +1,6 @@
-// AUTH-UI.3 — Écrans de vérification d'e-mail (saisie du code 6 chiffres et confirmation d'inscription)
+// AUTH-UI.3 - Ecrans de verification d'e-mail (saisie du code 6 chiffres et confirmation d'inscription)
 
-// Contient RenderVerifyScreen (inscription en cours) et RenderEmailConfirmationScreen (inscription réussie, renvoi disponible après 15 min).
+// Contient RenderVerifyScreen (inscription en cours) et RenderEmailConfirmationScreen (inscription reussie, renvoi disponible apres 15 min).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -16,13 +16,13 @@ namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur thème en ImVec4 pour ImGui.
+		/// Convertit une couleur theme en ImVec4 pour ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
-		/// Concatène dans l'ordre les chiffres valides des 6 cases de saisie.
+		/// Concatene dans l'ordre les chiffres valides des 6 cases de saisie.
 		std::string PackVerifySlotsInOrder(const char slots[7])
 		{
 			std::string o;
@@ -50,15 +50,15 @@ namespace engine::render
 			return true;
 		}
 
-		static int g_verifyDigitFocusSlot = -1;      ///< Index de la case à focaliser au prochain frame (-1 = aucune).
-		static bool g_verifySlotFocused[6]{};         ///< État de focus par case pour l'écran de vérification en cours d'inscription.
-		static bool g_confSlotFocused[6]{};           ///< État de focus par case pour l'écran de confirmation post-inscription.
+		static int g_verifyDigitFocusSlot = -1;      ///< Index de la case a focaliser au prochain frame (-1 = aucune).
+		static bool g_verifySlotFocused[6]{};         ///< Etat de focus par case pour l'ecran de verification en cours d'inscription.
+		static bool g_confSlotFocused[6]{};           ///< Etat de focus par case pour l'ecran de confirmation post-inscription.
 	}
 
-	/// Affiche l'écran de saisie du code à 6 chiffres envoyé par e-mail lors de l'inscription.
+	/// Affiche l'ecran de saisie du code a 6 chiffres envoye par e-mail lors de l'inscription.
 	void AuthImGuiRenderer::RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// Titre/sous-titre via helper unifié (référence visuelle).
+		// Titre/sous-titre via helper unifie (reference visuelle).
 		DrawAuthBigTitle(rm, vpW, vpH, "verify");
 		const float titleZoneW = vpW * 0.96f;
 
@@ -280,10 +280,10 @@ namespace engine::render
 		}
 	}
 
-	/// Affiche l'écran « vérifiez vos e-mails » affiché après une inscription réussie, avec renvoi du code si 15 min se sont écoulées.
+	/// Affiche l'ecran " verifiez vos e-mails " affiche apres une inscription reussie, avec renvoi du code si 15 min se sont ecoulees.
 	void AuthImGuiRenderer::RenderEmailConfirmationScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// Titre/sous-titre via helper unifié (référence visuelle).
+		// Titre/sous-titre via helper unifie (reference visuelle).
 		DrawAuthBigTitle(rm, vpW, vpH, "emailconf");
 		const float titleZoneW = vpW * 0.96f;
 

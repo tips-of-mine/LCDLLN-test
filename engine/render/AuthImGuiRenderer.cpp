@@ -270,11 +270,11 @@ namespace engine::render
 		m_prevPhaseToken = m_lastSyncedPhaseToken;
 		m_lastSyncedPhaseToken = fp;
 
-		// Détection de la transition « écran de sélection de langue » → « écran de connexion » :
-		// on capture le bandeau d'info posé par ApplyLocaleSelection (« Langue : Français » par
+		// Detection de la transition " ecran de selection de langue " > " ecran de connexion " :
+		// on capture le bandeau d'info pose par ApplyLocaleSelection (" Langue : Francais " par
 		// ex.) pour le re-publier au-dessus du cadre pendant quelques secondes (cf. Render()).
 		// Bit 0 = languageSelection, bit 1 = login (cf. VisualFingerprint). On masque le bit 31
-		// (« active ») afin de ne pas confondre l'état initial 0xffffffff avec une vraie phase.
+		// (" active ") afin de ne pas confondre l'etat initial 0xffffffff avec une vraie phase.
 		constexpr uint32_t kPhaseMask = 0x7FFFFFFFu;
 		constexpr uint32_t kPhaseLanguageOnly = 1u << 0;
 		const bool justLoggedIn = (fp & (1u << 1)) != 0u;
@@ -514,10 +514,10 @@ namespace engine::render
 
 	void AuthImGuiRenderer::DrawAuthBigTitle(const RenderModel& rm, float vpW, float vpH, const char* screenId)
 	{
-		// Pattern de référence calé sur l'écran Login : BeginChild stage 96 % vpW pour
-		// permettre au titre 5.0x (≈720 px) de tenir, h1 centré scale 5.0x, Dummy 28 px
-		// pour passer sous la jambe oblique du R de « CHRONIQUES », h2 centré scale 2.5x.
-		// Le caller doit appeler ImGui::EndChild() après EndPanel.
+		// Pattern de reference cale sur l'ecran Login : BeginChild stage 96 % vpW pour
+		// permettre au titre 5.0x (720 px) de tenir, h1 centre scale 5.0x, Dummy 28 px
+		// pour passer sous la jambe oblique du R de " CHRONIQUES ", h2 centre scale 2.5x.
+		// Le caller doit appeler ImGui::EndChild() apres EndPanel.
 		const float titleZoneW = vpW * 0.96f;
 		ImGui::SetCursorPosX((vpW - titleZoneW) * 0.5f);
 		char childId[64];
@@ -562,12 +562,12 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 18.f));
-		// ItemSpacing.y bumpé de 4 (défaut ImGui) à 8 px pour aérer les lignes de texte
-		// et de widgets dans tous les panneaux auth (référence visuelle Login).
+		// ItemSpacing.y bumpe de 4 (defaut ImGui) a 8 px pour aerer les lignes de texte
+		// et de widgets dans tous les panneaux auth (reference visuelle Login).
 
-		// Si fixedHeight > 0 : le panneau a une hauteur figée. Sinon AutoResizeY : la hauteur s'aligne
-		// sur le contenu réel — évite les énormes panneaux vides qui poussaient les champs et boutons
-		// hors de l'écran (ex. login après bannière info, choix de langue).
+		// Si fixedHeight > 0 : le panneau a une hauteur figee. Sinon AutoResizeY : la hauteur s'aligne
+		// sur le contenu reel - evite les enormes panneaux vides qui poussaient les champs et boutons
+		// hors de l'ecran (ex. login apres banniere info, choix de langue).
 		const ImVec2 panelSize(width, fixedHeight > 0.f ? fixedHeight : 0.f);
 		const ImGuiChildFlags childFlags = (fixedHeight > 0.f)
 			? ImGuiChildFlags_Borders
@@ -578,10 +578,10 @@ namespace engine::render
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(2);
 
-		// ItemSpacing.y bumpé à 8 px (défaut 4) pour aérer les lignes de texte et de
-		// widgets dans tous les panneaux auth — popé dans EndPanel. Pushé même si
-		// !open : EndPanel doit être appelé dans tous les cas (cf. callers), et le
-		// push/pop doit donc rester équilibré.
+		// ItemSpacing.y bumpe a 8 px (defaut 4) pour aerer les lignes de texte et de
+		// widgets dans tous les panneaux auth - pope dans EndPanel. Pushe meme si
+		// !open : EndPanel doit etre appele dans tous les cas (cf. callers), et le
+		// push/pop doit donc rester equilibre.
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 8.f));
 
 		if (!open)
@@ -621,7 +621,7 @@ namespace engine::render
 		}
 		if (!subtitle.empty())
 		{
-			// Petit espace vertical entre le title du panel et son subtitle (welcome) — sans
+			// Petit espace vertical entre le title du panel et son subtitle (welcome) - sans
 			// ce Dummy, ItemSpacing.y (4 px) seul collait visuellement les deux lignes.
 			ImGui::Dummy(ImVec2(0.f, 6.f));
 			if (subtitleWelcomeAccent)
@@ -644,18 +644,18 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Separator, IV(LnTheme::kBorder));
 		ImGui::Separator();
 		ImGui::PopStyleColor();
-		// Anciennement : ImGui::Spacing() (= Dummy(0, 8)) après le Separator. Total
-		// title→content était ≈ 17 px, le retour utilisateur demande ~10 px avec le trait
-		// au milieu. ItemSpacing.y (4) est appliqué automatiquement avant ET après le
-		// Separator par ImGui : 4 + 1 (sep) + 4 = ~9 px → cible quasi atteinte sans
-		// supplément. On laisse donc ce bloc nu.
+		// Anciennement : ImGui::Spacing() (= Dummy(0, 8)) apres le Separator. Total
+		// title>content etait  17 px, le retour utilisateur demande ~10 px avec le trait
+		// au milieu. ItemSpacing.y (4) est applique automatiquement avant ET apres le
+		// Separator par ImGui : 4 + 1 (sep) + 4 = ~9 px > cible quasi atteinte sans
+		// supplement. On laisse donc ce bloc nu.
 		return true;
 	}
 
 	void AuthImGuiRenderer::EndPanel()
 	{
-		// Pop ItemSpacing pushé dans BeginPanel (uniquement si le panel a été ouvert
-		// avec succès — sinon BeginPanel a return false avant le push).
+		// Pop ItemSpacing pushe dans BeginPanel (uniquement si le panel a ete ouvert
+		// avec succes - sinon BeginPanel a return false avant le push).
 		ImGui::PopStyleVar(1);
 		ImGui::EndChild();
 	}
@@ -698,8 +698,8 @@ namespace engine::render
 		ImGui::TextUnformatted(lab.c_str());
 		ImGui::PopStyleColor();
 
-		// Espace optionnel entre le libellé et le champ — utilisé sur l'écran login pour aérer
-		// la maquette suite au retour utilisateur. Register garde le défaut 0 (peu de place).
+		// Espace optionnel entre le libelle et le champ - utilise sur l'ecran login pour aerer
+		// la maquette suite au retour utilisateur. Register garde le defaut 0 (peu de place).
 		if (extraSpacingPx > 0.f)
 		{
 			ImGui::Dummy(ImVec2(0.f, extraSpacingPx));
@@ -711,9 +711,9 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
-		// FramePadding.y bumpé de 3 (défaut ImGui) à 8 px → InputText ≈ 13 + 16 = 29 px
+		// FramePadding.y bumpe de 3 (defaut ImGui) a 8 px > InputText  13 + 16 = 29 px
 		// de hauteur au lieu de 19. La maquette login demande des champs nettement plus
-		// hauts pour la saisie. Le paramètre s'applique aussi à Register, qui en bénéficie.
+		// hauts pour la saisie. Le parametre s'applique aussi a Register, qui en beneficie.
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.f, 8.f));
 
 		char inputId[64];
@@ -745,10 +745,10 @@ namespace engine::render
 		const float trackH = 22.f;
 		const float pad = 3.f;
 		const ImVec2 p0 = ImGui::GetCursorScreenPos();
-		// Zone de clic = toute la ligne (toggle + libellé) pour que cliquer sur "SE SOUVENIR DE MOI"
-		// bascule l'état comme le ferait un clic sur le toggle. Avant, l'InvisibleButton couvrait
-		// uniquement la pastille (50x28 px) et le libellé n'avait aucun handler, ce qui donnait
-		// l'impression que le toggle ne réagissait pas.
+		// Zone de clic = toute la ligne (toggle + libelle) pour que cliquer sur "SE SOUVENIR DE MOI"
+		// bascule l'etat comme le ferait un clic sur le toggle. Avant, l'InvisibleButton couvrait
+		// uniquement la pastille (50x28 px) et le libelle n'avait aucun handler, ce qui donnait
+		// l'impression que le toggle ne reagissait pas.
 		std::string rememberTitle = (!rm.bodyLines.empty() && !rm.bodyLines[0].text.empty())
 			? rm.bodyLines[0].text
 			: std::string("SE SOUVENIR DE MOI");
@@ -759,8 +759,8 @@ namespace engine::render
 		{
 			m_rememberMe = !m_rememberMe;
 		}
-		// Détail (« Conserve l'identifiant à la prochaine ouverture ») désormais affiché en tooltip
-		// au survol de la ligne — ne mange plus de hauteur dans le panneau.
+		// Detail (" Conserve l'identifiant a la prochaine ouverture ") desormais affiche en tooltip
+		// au survol de la ligne - ne mange plus de hauteur dans le panneau.
 		if (ImGui::IsItemHovered() && !rm.authRememberDetailLine.empty())
 		{
 			ImGui::SetTooltip("%s", rm.authRememberDetailLine.c_str());
@@ -777,8 +777,8 @@ namespace engine::render
 		const float cx = on ? (b.x - pad - thumbR) : (a.x + pad + thumbR);
 		const float cy = (a.y + b.y) * 0.5f;
 		dl->AddCircleFilled(ImVec2(cx, cy), thumbR, U32(LnTheme::kAccent));
-		// Libellé dessiné via la draw list par-dessus la zone invisible (pas de SameLine + Text qui
-		// déplacerait le curseur d'une ligne et casserait le hit-test ci-dessus).
+		// Libelle dessine via la draw list par-dessus la zone invisible (pas de SameLine + Text qui
+		// deplacerait le curseur d'une ligne et casserait le hit-test ci-dessus).
 		const float labelX = b.x + 12.f;
 		const ImVec2 ts = ImGui::CalcTextSize(rememberTitle.c_str());
 		const float labelY = (a.y + b.y) * 0.5f - ts.y * 0.5f;
@@ -899,14 +899,14 @@ namespace engine::render
 		const double elapsed = ImGui::GetTime() - m_loginLangBadgeStartTime;
 		if (elapsed < 0.0 || elapsed >= kLoginLangBadgeDurationSec)
 		{
-			// Au-delà de la fenêtre d'affichage, on n'efface PAS `m_loginLangBadgeText` : il sert
-			// au panneau login pour continuer à supprimer la même `infoBanner` à l'intérieur, sinon
-			// le bandeau « Information / Langue appliquée immédiatement » réapparaîtrait dans le
-			// cadre principal après le fade-out (effet « se déplace ») — voir RenderLoginScreen.
+			// Au-dela de la fenetre d'affichage, on n'efface PAS `m_loginLangBadgeText` : il sert
+			// au panneau login pour continuer a supprimer la meme `infoBanner` a l'interieur, sinon
+			// le bandeau " Information / Langue appliquee immediatement " reapparaitrait dans le
+			// cadre principal apres le fade-out (effet " se deplace ") - voir RenderLoginScreen.
 			m_loginLangBadgeStartTime = -1.0;
 			return;
 		}
-		// Fade-out final (dernière `kLoginLangBadgeFadeOutSec` secondes) pour disparition douce.
+		// Fade-out final (derniere `kLoginLangBadgeFadeOutSec` secondes) pour disparition douce.
 		float alpha = 1.f;
 		const double fadeStart = kLoginLangBadgeDurationSec - kLoginLangBadgeFadeOutSec;
 		if (elapsed > fadeStart)
@@ -950,16 +950,16 @@ namespace engine::render
 		static constexpr const char* kRaceLabels[] = {"DEFAUT", "HUMAINS", "ELFES", "NAINS", "ORCS", "MORTS-V.", "CORROM.",
 			"DIVINS", "DEMONS"};
 		const float winW = 272.f;
-		// Cadre rétréci en hauteur et ancré en bas-droite : le contenu (label race + grille 3x3
-		// + label fond + paire de boutons) à 0.85x avec windowPadding 12 occupe environ 152 px.
-		// On dimensionne à 160 pour 8 px de marge interne, et la bordure inférieure est calée à
-		// `vpH - 10` (même gap que la version précédente) → contenu naturellement collé au bas
+		// Cadre retreci en hauteur et ancre en bas-droite : le contenu (label race + grille 3x3
+		// + label fond + paire de boutons) a 0.85x avec windowPadding 12 occupe environ 152 px.
+		// On dimensionne a 160 pour 8 px de marge interne, et la bordure inferieure est calee a
+		// `vpH - 10` (meme gap que la version precedente) > contenu naturellement colle au bas
 		// du cadre, plus d'espace mort visible.
 		const float winH = 160.f;
 		const float bottomGap = 10.f;
 
-		// Le titre « TWEAKS » et son bouton de réduction (- / +) ont été retirés à la demande
-		// de l'utilisateur : le panneau est désormais toujours affiché expansé, sans header.
+		// Le titre " TWEAKS " et son bouton de reduction (- / +) ont ete retires a la demande
+		// de l'utilisateur : le panneau est desormais toujours affiche expanse, sans header.
 		// `m_authTweakPanelMinimized` reste comme placeholder mais n'est plus relu.
 
 		ImGui::SetNextWindowPos(ImVec2(vpW - winW - 22.f, vpH - winH - bottomGap), ImGuiCond_Always);
@@ -974,7 +974,7 @@ namespace engine::render
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove
 				| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
-		// Le panneau Tweaks doit utiliser une typographie plus discrète que le cadre principal :
+		// Le panneau Tweaks doit utiliser une typographie plus discrete que le cadre principal :
 		// 0.85x compense le titre login agrandi, en gardant les boutons cliquables.
 		ImGui::SetWindowFontScale(0.85f);
 
@@ -983,9 +983,9 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		ImGui::Spacing();
 
-		// Boutons « race » : la sélection courante doit ressortir visuellement (texte ET bordure
-		// en accent), sinon l'utilisateur ne distingue pas l'état actif. PushStyleColor(Text)
-		// par bouton pour ne pas écraser l'état des autres.
+		// Boutons " race " : la selection courante doit ressortir visuellement (texte ET bordure
+		// en accent), sinon l'utilisateur ne distingue pas l'etat actif. PushStyleColor(Text)
+		// par bouton pour ne pas ecraser l'etat des autres.
 		const float btnW = (ImGui::GetContentRegionAvail().x - 8.f) / 3.f;
 		ImGui::PushStyleColor(ImGuiCol_Button, IV(LnTheme::kSurface));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.12f)));
@@ -1027,9 +1027,9 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, IV(LnTheme::AccentDim(0.18f)));
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 		{
-			// Le toggle ACTIVE / DESACTIVE pilote le futur fond animé de l'écran d'auth.
-			// Tant que l'animation n'est pas branchée côté Vulkan (passe de fond), seul le
-			// rendu visuel des deux boutons reflète l'état choisi. Voir CODEBASE_MAP.md §13.
+			// Le toggle ACTIVE / DESACTIVE pilote le futur fond anime de l'ecran d'auth.
+			// Tant que l'animation n'est pas branchee cote Vulkan (passe de fond), seul le
+			// rendu visuel des deux boutons reflete l'etat choisi. Voir CODEBASE_MAP.md 13.
 			const float half = (ImGui::GetContentRegionAvail().x - 6.f) * 0.5f;
 			const bool on = m_langTweakAnimBg;
 			ImGui::PushStyleColor(ImGuiCol_Border, on ? IV(LnTheme::kAccent) : IV(LnTheme::kBorder));
@@ -1100,7 +1100,7 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		std::string bannerId = "##banner_";
 		bannerId.append(title.data(), title.size());
-		// AutoResizeY : la bannière s'adapte à la hauteur réelle du texte au lieu de remplir tout le panneau.
+		// AutoResizeY : la banniere s'adapte a la hauteur reelle du texte au lieu de remplir tout le panneau.
 		ImGui::BeginChild(bannerId.c_str(), ImVec2(-FLT_MIN, 0.f),
 			ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY,
 			ImGuiWindowFlags_NoScrollbar);
@@ -1211,7 +1211,7 @@ namespace engine::render
 			if (i < total)
 			{
 				ImGui::SameLine(0.f, 12.f);
-				ImGui::TextUnformatted("›");
+				ImGui::TextUnformatted(">");
 				ImGui::SameLine(0.f, 12.f);
 			}
 		}
@@ -1232,7 +1232,7 @@ namespace engine::render
 			if (i + 1 < total)
 			{
 				ImGui::SameLine(0.f, 12.f);
-				ImGui::TextUnformatted("›");
+				ImGui::TextUnformatted(">");
 				ImGui::SameLine(0.f, 12.f);
 			}
 		}

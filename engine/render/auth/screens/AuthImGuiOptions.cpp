@@ -1,4 +1,4 @@
-// AUTH-UI.6 — overlay Options de la phase LanguageOptions : sidebar de navigation par onglets et panneau principal multi-sections (split depuis AuthImGuiRenderer.cpp).
+// AUTH-UI.6 - overlay Options de la phase LanguageOptions : sidebar de navigation par onglets et panneau principal multi-sections (split depuis AuthImGuiRenderer.cpp).
 // Contient RenderOptionsScreen avec ses lambdas internes (sliderVol01, sectionTitle, hintLine, toggleRow, submitOptionsMirror) et les sept onglets de configuration.
 
 #include "engine/render/AuthImGuiRenderer.h"
@@ -30,11 +30,11 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des résolutions vidéo proposées dans le combo graphique.
-		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrées dans kOptionsRes, calculé statiquement.
+		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des resolutions video proposees dans le combo graphique.
+		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrees dans kOptionsRes, calcule statiquement.
 	} // namespace
 
-	/// Affiche l'overlay Options complet : sidebar de navigation par onglets à gauche, panneau principal à droite avec les réglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
+	/// Affiche l'overlay Options complet : sidebar de navigation par onglets a gauche, panneau principal a droite avec les reglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
 	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		const auto tr = [this](const char* key, const char* fallback = nullptr) -> std::string {
@@ -437,7 +437,7 @@ namespace engine::render
 			ImGui::TextUnformatted(loginDisp.c_str());
 			ImGui::PopStyleColor();
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-			const std::string& tagDisp = rm.authOptionsAccountTagId.empty() ? std::string("—") : rm.authOptionsAccountTagId;
+			const std::string& tagDisp = rm.authOptionsAccountTagId.empty() ? std::string("-") : rm.authOptionsAccountTagId;
 			ImGui::TextUnformatted(tagDisp.c_str());
 			ImGui::PopStyleColor();
 			ImGui::EndChild();

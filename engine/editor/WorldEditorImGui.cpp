@@ -423,6 +423,19 @@ namespace engine::editor
 		// l'UI auth utilise la police ImGui par defaut (ProggyClean ~13 px) qui ne ressemble pas a la
 		// maquette Lune Noire. La piste Vulkan/AuthGlyphPass utilise deja ces memes fichiers (Engine.cpp).
 		// On charge Windlass en premier : elle devient la police par defaut d'ImGui.
+		// Range restreint pour les fontes decoratives Lune Noire (Windlass) : A-Z, a-z,
+		// 0-9, espace, et ponctuation basique presente dans la fonte. Tout le reste est
+		// laisse a ProggyClean en MergeMode (cf. plus bas) - sinon ImGui reserve un slot
+		// vide pour chaque codepoint demande (ex. % et [ et ]) et le merge ne remplace
+		// jamais les slots existants, ce qui produisait des "?" a l'affichage.
+		static const ImWchar kWindlassRanges[] = {
+			0x0020, 0x0020, // espace
+			0x0027, 0x0027, // '
+			0x002C, 0x003F, // , - . / 0-9 : ; < = > ?
+			0x0041, 0x005A, // A-Z
+			0x0061, 0x007A, // a-z
+			0,
+		};
 		auto loadAuthFontFromConfig = [&io, cfg](std::string_view relativePath, float pixelHeight, const char* role) -> bool {
 			if (cfg == nullptr || relativePath.empty())
 			{
@@ -441,7 +454,7 @@ namespace engine::editor
 			std::memcpy(atlasOwned, bytes.data(), bytes.size());
 			ImFontConfig fcfg{};
 			ImFont* font = io.Fonts->AddFontFromMemoryTTF(atlasOwned, static_cast<int>(bytes.size()), pixelHeight,
-				&fcfg, io.Fonts->GetGlyphRangesDefault());
+				&fcfg, kWindlassRanges);
 			if (font == nullptr)
 			{
 				IM_FREE(atlasOwned);

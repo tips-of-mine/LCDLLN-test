@@ -1,4 +1,4 @@
-// AUTH-UI.1 — rendu ImGui de l'écran de connexion (identifiant + mot de passe).
+// AUTH-UI.1 - rendu ImGui de l'ecran de connexion (identifiant + mot de passe).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -11,10 +11,10 @@
 
 namespace engine::render
 {
-	/// Affiche le panneau de connexion centré : titre du jeu, champs identifiant/mot de passe, boutons Créer un compte et Se connecter.
+	/// Affiche le panneau de connexion centre : titre du jeu, champs identifiant/mot de passe, boutons Creer un compte et Se connecter.
 	void AuthImGuiRenderer::RenderLoginScreen(const VisualState& vs, const RenderModel& rm, float vpW, float vpH)
 	{
-		/// Résout une clé de traduction via le présentateur ; retombe sur le fallback si absent.
+		/// Resout une cle de traduction via le presentateur ; retombe sur le fallback si absent.
 		const auto tr = [this](const char* key, const char* fallback) -> std::string {
 			if (m_authPresenter != nullptr)
 			{
@@ -27,14 +27,14 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		// Titre/sous-titre via helper unifié (référence visuelle pour tous les écrans auth).
+		// Titre/sous-titre via helper unifie (reference visuelle pour tous les ecrans auth).
 		DrawAuthBigTitle(rm, vpW, vpH, "login");
 		const float titleZoneW = vpW * 0.96f;
 
 		ImGui::Spacing();
 
-		// Cadre central + 10 px en hauteur ET en largeur (570 → 580 ; +10 px de hauteur ajouté
-		// avant EndPanel). La maquette demande ce coup de pouce pour aérer les boutons.
+		// Cadre central + 10 px en hauteur ET en largeur (570 > 580 ; +10 px de hauteur ajoute
+		// avant EndPanel). La maquette demande ce coup de pouce pour aerer les boutons.
 		const float stageW = (std::min)(580.f, vpW * 0.96f);
 
 		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CONNEXION") : rm.sectionTitle;
@@ -47,11 +47,11 @@ namespace engine::render
 		}
 		const std::string ver =
 			rm.authLoginVersionBadge.empty() ? std::string("v0.0.0") : rm.authLoginVersionBadge;
-		// BeginPanel reçoit la largeur du conteneur englobant comme 2e argument (« vpW » dans la
-		// signature, mais utilisé pour centrer le panneau via `(vpW - width) / 2`). Comme nous
-		// sommes désormais dans un BeginChild de largeur titleZoneW (≠ vpW), il faut passer
-		// titleZoneW — sinon le calcul `(stageW - stageW) / 2 = 0` poussait le panneau contre
-		// le bord gauche de la stage (bug observé en revue UX).
+		// BeginPanel recoit la largeur du conteneur englobant comme 2e argument (" vpW " dans la
+		// signature, mais utilise pour centrer le panneau via `(vpW - width) / 2`). Comme nous
+		// sommes desormais dans un BeginChild de largeur titleZoneW ( vpW), il faut passer
+		// titleZoneW - sinon le calcul `(stageW - stageW) / 2 = 0` poussait le panneau contre
+		// le bord gauche de la stage (bug observe en revue UX).
 		if (!BeginPanel(stageW, titleZoneW, vpH, panelTitle, "", ver, true, false))
 		{
 			EndPanel();
@@ -64,12 +64,12 @@ namespace engine::render
 			DrawAuthBanner(tr("auth.banner.error_title", "Echec"), rm.errorText, LnTheme::kErrorCol.r, LnTheme::kErrorCol.g,
 				LnTheme::kErrorCol.b);
 		}
-		// Le badge « Langue : … » est rendu au-dessus du cadre par DrawLoginLanguageBadge() ;
-		// on supprime la double affichage à l'intérieur du panneau dès que rm.infoBanner
-		// correspond au texte capturé sur la transition LangSel → Login. Cette suppression
-		// est *permanente* (et pas seulement pendant la fenêtre éphémère) pour éviter que
-		// le bandeau ne « saute » dans le cadre principal après le fade-out — l'utilisateur
-		// l'a vécu comme un bug visuel.
+		// Le badge " Langue : ... " est rendu au-dessus du cadre par DrawLoginLanguageBadge() ;
+		// on supprime la double affichage a l'interieur du panneau des que rm.infoBanner
+		// correspond au texte capture sur la transition LangSel > Login. Cette suppression
+		// est *permanente* (et pas seulement pendant la fenetre ephemere) pour eviter que
+		// le bandeau ne " saute " dans le cadre principal apres le fade-out - l'utilisateur
+		// l'a vecu comme un bug visuel.
 		const bool suppressLangInfoInsidePanel = !m_loginLangBadgeText.empty()
 			&& rm.infoBanner == m_loginLangBadgeText;
 		if (vs.submitting && !rm.infoBanner.empty())
@@ -83,9 +83,9 @@ namespace engine::render
 				LnTheme::kPrimary.b);
 		}
 
-		// Suite au retour utilisateur : plus d'espace entre les 4 éléments « Identifiant /
-		// champ id / Mot de passe / champ pw ». extraSpacingPx=6 ajoute un Dummy entre
-		// chaque libellé et son input ; un Dummy(0, 12) supplémentaire sépare les deux champs.
+		// Suite au retour utilisateur : plus d'espace entre les 4 elements " Identifiant /
+		// champ id / Mot de passe / champ pw ". extraSpacingPx=6 ajoute un Dummy entre
+		// chaque libelle et son input ; un Dummy(0, 12) supplementaire separe les deux champs.
 		if (rm.fields.size() >= 2u)
 		{
 			DrawAuthGoldField(rm.fields[0], m_loginId, static_cast<int>(sizeof(m_loginId)), false, 6.f);
@@ -99,8 +99,8 @@ namespace engine::render
 		}
 
 		DrawLoginRememberRow(rm);
-		// Espace généreux avant les liens secondaires (Récupération / Portail web) — l'utilisateur
-		// veut tous les boutons descendus encore plus bas pour bien aérer le panneau.
+		// Espace genereux avant les liens secondaires (Recuperation / Portail web) - l'utilisateur
+		// veut tous les boutons descendus encore plus bas pour bien aerer le panneau.
 		ImGui::Dummy(ImVec2(0.f, 32.f));
 
 		if (m_authPresenter != nullptr)
@@ -118,7 +118,7 @@ namespace engine::render
 			{
 				m_authPresenter->ImGuiOpenForgotPasswordPortal(*m_authCfg, *m_authWindow);
 			}
-			// Espace avant les actions principales (Créer un compte / Se connecter).
+			// Espace avant les actions principales (Creer un compte / Se connecter).
 			ImGui::Dummy(ImVec2(0.f, 28.f));
 		}
 
@@ -134,8 +134,8 @@ namespace engine::render
 			actQuit = &rm.actions[3];
 		}
 
-		// Boutons « Créer un compte » et « Se connecter » alignés sur le visuel texte simple
-		// (cf. « Retour au bureau ») : pas de fond coloré, pas de bordure, pas d'actionBadge.
+		// Boutons " Creer un compte " et " Se connecter " alignes sur le visuel texte simple
+		// (cf. " Retour au bureau ") : pas de fond colore, pas de bordure, pas d'actionBadge.
 		if (actCreate != nullptr && actSubmit != nullptr)
 		{
 			const std::string createLbl =
@@ -161,12 +161,12 @@ namespace engine::render
 
 		// Anciennement : DrawSeparator() + DrawLoginFooterChips(rm) qui affichaient les chips
 		// [Tab] champ suivant | [Entree] se connecter | [Echap] quitter. L'utilisateur veut ces
-		// rappels masqués (les touches restent actives via ImGui InputText nav et le handler
-		// d'entrée du presenter), mais la zone visuelle disparaît pour épurer le panneau.
+		// rappels masques (les touches restent actives via ImGui InputText nav et le handler
+		// d'entree du presenter), mais la zone visuelle disparait pour epurer le panneau.
 
-		// Marge basse à l'intérieur du cadre — BeginPanel utilise AutoResizeY, donc ce Dummy
-		// translate directement la bordure inférieure du panneau vers le bas. Bumpé à 30 px
-		// (suite au retour utilisateur : « il faudrait l'agrandir en hauteur »).
+		// Marge basse a l'interieur du cadre - BeginPanel utilise AutoResizeY, donc ce Dummy
+		// translate directement la bordure inferieure du panneau vers le bas. Bumpe a 30 px
+		// (suite au retour utilisateur : " il faudrait l'agrandir en hauteur ").
 		ImGui::Dummy(ImVec2(0.f, 30.f));
 
 		EndPanel();
@@ -178,10 +178,10 @@ namespace engine::render
 
 		if (actOpts != nullptr && actQuit != nullptr && m_authPresenter != nullptr)
 		{
-			// Avant : SetCursorPos dans la fenêtre overlay APRÈS DrawAuthTweaksPanel — les boutons
-			// étaient bien dessinés mais ne réagissaient pas aux clics (hit-test brouillé par
-			// l'autre fenêtre ImGui dessinée juste avant). Solution propre : ouvrir une petite
-			// fenêtre dédiée au bas du viewport, comme DrawAuthTweaksPanel pour les races.
+			// Avant : SetCursorPos dans la fenetre overlay APRES DrawAuthTweaksPanel - les boutons
+			// etaient bien dessines mais ne reagissaient pas aux clics (hit-test brouille par
+			// l'autre fenetre ImGui dessinee juste avant). Solution propre : ouvrir une petite
+			// fenetre dediee au bas du viewport, comme DrawAuthTweaksPanel pour les races.
 			const std::string lo = actOpts->label.empty() ? std::string("OPTIONS") : actOpts->label;
 			const std::string lq = actQuit->label.empty() ? tr("auth.footer.chip.esc.desc", "QUIT") : actQuit->label;
 			const float tw = ImGui::CalcTextSize(lo.c_str()).x + ImGui::CalcTextSize(lq.c_str()).x + 48.f;

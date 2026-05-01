@@ -1,6 +1,6 @@
-// Phase 2 — Rendu ImGui de l'écran "Choisir un personnage".
-// Affiche la liste des personnages reçus du master via CHARACTER_LIST (opcode 39) après TICKET_ACCEPTED,
-// puis 3 actions : Jouer (perso sélectionné), Créer un nouveau personnage, Retour.
+// Phase 2 - Rendu ImGui de l'ecran "Choisir un personnage".
+// Affiche la liste des personnages recus du master via CHARACTER_LIST (opcode 39) apres TICKET_ACCEPTED,
+// puis 3 actions : Jouer (perso selectionne), Creer un nouveau personnage, Retour.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -37,7 +37,7 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
-		// Titre/sous-titre via helper unifié (référence visuelle).
+		// Titre/sous-titre via helper unifie (reference visuelle).
 		DrawAuthBigTitle(rm, vpW, vpH, "charselect");
 		const float titleZoneW = vpW * 0.96f;
 
@@ -107,11 +107,11 @@ namespace engine::render
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 
-				// Phase 3.8 — Affichage humanisé race/classe :
+				// Phase 3.8 - Affichage humanise race/classe :
 				// - si race_str/class_str non-vides (perso post-migration 0033) on les utilise
-				//   via une clé de localisation "auth.character_select.race.<id>" pour le label,
-				//   en retombant sur l'identifiant brut si aucune traduction n'est définie.
-				// - sinon (perso pré-migration), on cache la mention pour ne pas afficher
+				//   via une cle de localisation "auth.character_select.race.<id>" pour le label,
+				//   en retombant sur l'identifiant brut si aucune traduction n'est definie.
+				// - sinon (perso pre-migration), on cache la mention pour ne pas afficher
 				//   "Race ?" qui est plus distrayant qu'utile.
 				auto humanize = [&](const char* prefix, const std::string& id) -> std::string {
 					if (id.empty())
@@ -121,7 +121,7 @@ namespace engine::render
 					std::string localized = m_authPresenter ? m_authPresenter->UiTranslate(key) : std::string{};
 					if (!localized.empty())
 						return localized;
-					// Capitalisation simple du premier caractère ASCII (lettre minuscule -> majuscule).
+					// Capitalisation simple du premier caractere ASCII (lettre minuscule -> majuscule).
 					std::string copy = id;
 					if (!copy.empty() && copy[0] >= 'a' && copy[0] <= 'z')
 						copy[0] = static_cast<char>(copy[0] - 'a' + 'A');
@@ -150,9 +150,9 @@ namespace engine::render
 				ImGui::SetWindowFontScale(1.f);
 				ImGui::PopStyleColor();
 
-				// Phase 3.9 — Bouton suppression a droite de la ligne. Etats :
-				// 1) normal      : bouton "X" — premier clic arme la confirmation.
-				// 2) confirming  : "Confirmer ?" — second clic supprime ; clic ailleurs annule.
+				// Phase 3.9 - Bouton suppression a droite de la ligne. Etats :
+				// 1) normal      : bouton "X" - premier clic arme la confirmation.
+				// 2) confirming  : "Confirmer ?" - second clic supprime ; clic ailleurs annule.
 				const int pendingDeleteIdx = m_authPresenter
 					? m_authPresenter->PendingDeleteCharacterIndex() : -1;
 				const bool isConfirming = (pendingDeleteIdx == static_cast<int>(i));
@@ -216,7 +216,7 @@ namespace engine::render
 		ImGui::EndChild();
 		ImGui::Spacing();
 
-		// 3 boutons : Retour | Créer nouveau | Jouer
+		// 3 boutons : Retour | Creer nouveau | Jouer
 		const bool canPlay = (selected >= 0
 			&& static_cast<size_t>(selected) < entries.size());
 		const bool canCreate = (entries.size() < 5u);

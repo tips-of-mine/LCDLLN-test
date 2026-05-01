@@ -1,5 +1,5 @@
-// AUTH-UI.10 — rendu ImGui écran d'acceptation des Conditions Générales d'Utilisation (split depuis AuthImGuiRenderer.cpp).
-// Contient RenderTermsScreen : panneau avec texte défilant des CGU, case à cocher d'accusé de lecture, et boutons Refuser / Accepter.
+// AUTH-UI.10 - rendu ImGui ecran d'acceptation des Conditions Generales d'Utilisation (split depuis AuthImGuiRenderer.cpp).
+// Contient RenderTermsScreen : panneau avec texte defilant des CGU, case a cocher d'accuse de lecture, et boutons Refuser / Accepter.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -21,7 +21,7 @@ namespace engine::render
 		}
 	} // namespace
 
-	/// Affiche l'écran des CGU : métadonnées en en-tête, texte intégral défilant, case à cocher d'acquittement, et boutons Refuser / Accepter.
+	/// Affiche l'ecran des CGU : metadonnees en en-tete, texte integral defilant, case a cocher d'acquittement, et boutons Refuser / Accepter.
 	void AuthImGuiRenderer::RenderTermsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		(void)vpW;
@@ -66,7 +66,7 @@ namespace engine::render
 			ImGui::PopStyleColor();
 			const float scrollY = ImGui::GetScrollY();
 			const float scrollMax = ImGui::GetScrollMaxY();
-			const bool atBottom = (scrollMax <= 1.f) || (scrollMax > 0.f && scrollY >= scrollMax - 4.f); ///< Vrai quand l'utilisateur a atteint le bas du texte (tolérance de 4 px).
+			const bool atBottom = (scrollMax <= 1.f) || (scrollMax > 0.f && scrollY >= scrollMax - 4.f); ///< Vrai quand l'utilisateur a atteint le bas du texte (tolerance de 4 px).
 			m_authPresenter->ImGuiNotifyTermsScrollReachedBottom(atBottom);
 		}
 		else
@@ -75,7 +75,7 @@ namespace engine::render
 		}
 		ImGui::EndChild();
 
-		bool termsAckChecked = false; ///< État courant de la case à cocher d'acquittement, initialisé depuis le modèle avant le rendu.
+		bool termsAckChecked = false; ///< Etat courant de la case a cocher d'acquittement, initialise depuis le modele avant le rendu.
 		for (const auto& line : rm.bodyLines)
 		{
 			if (line.checkbox)
@@ -93,9 +93,9 @@ namespace engine::render
 		DrawSeparator();
 		// Largeurs finies : avant, DrawGhostButton et DrawPrimaryButton utilisaient -FLT_MIN
 		// (pleine largeur), donc Refuser couvrait toute la ligne et son rectangle de hit-test
-		// englobait celui d'Accepter. ImGui choisit le premier item dessiné en cas de chevauchement
-		// → cliquer sur « Accepter / continuer » déclenchait en fait Refuser → RequestClose() →
-		// fermeture immédiate du jeu (« le jeu plante »).
+		// englobait celui d'Accepter. ImGui choisit le premier item dessine en cas de chevauchement
+		// > cliquer sur " Accepter / continuer " declenchait en fait Refuser > RequestClose() >
+		// fermeture immediate du jeu (" le jeu plante ").
 		const float btnGap = 14.f;
 		const float btnW = (ImGui::GetContentRegionAvail().x - btnGap) * 0.5f;
 		if (DrawGhostButton("Refuser", false, btnW) && m_authPresenter != nullptr && m_authWindow != nullptr)

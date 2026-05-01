@@ -554,7 +554,13 @@ namespace engine::render
 		float fixedHeight)
 	{
 		const float panelX = (vpW - width) * 0.5f;
-		const float panelY = vpH * 0.28f;
+		// Quand fixedHeight > 0 (panel a hauteur fixe connue), on centre verticalement
+		// la fenetre dans la viewport. Sinon (auto-resize), on garde l'ancien
+		// comportement (panelY = vpH * 0.28) qui laisse de la place pour le titre
+		// 'LES CHRONIQUES' au-dessus.
+		const float panelY = (fixedHeight > 0.f)
+			? (std::max)(0.f, (vpH - fixedHeight) * 0.5f)
+			: (vpH * 0.28f);
 		ImGui::SetCursorPos(ImVec2(panelX, panelY));
 
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::PanelBg()));

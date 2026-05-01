@@ -36,12 +36,11 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		// Cadre CGU : largeur 880 px (cap par 92 % vpW sur petits ecrans), hauteur
-		// fixee a 78 % vpH pour que la checkbox + boutons soient toujours visibles
-		// dans la viewport (avant : panel auto-resize debordait sous l'ecran et
-		// l'utilisateur ne pouvait ni cocher la case ni cliquer Refuser/Accepter).
+		// Cadre CGU : largeur 960 px (cap par 92 % vpW sur petits ecrans), hauteur
+		// fixee a 78 % vpH. Le panel est centre verticalement *et* horizontalement
+		// dans la viewport (BeginPanel gere les deux quand fixedHeight > 0).
 		const std::string title = rm.sectionTitle.empty() ? tr("auth.panel.terms", "Terms of use") : rm.sectionTitle;
-		const float termsW = (std::min)(880.f, vpW * 0.92f);
+		const float termsW = (std::min)(960.f, vpW * 0.92f);
 		const float termsPanelH = (std::min)(820.f, vpH * 0.78f);
 		if (!BeginPanel(termsW, vpW, vpH, title.c_str(), "", "", false, false, termsPanelH))
 		{

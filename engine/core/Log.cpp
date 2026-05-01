@@ -22,6 +22,8 @@ namespace engine::core
 	{
 		std::ofstream s_file;
 		bool          s_consoleEnabled = false;
+		/// M44.4 — Si true, formate chaque ligne en JSON (jsonl) au lieu du format bracketé.
+		bool          s_jsonOutput = false;
 		/// Chemins résolus → flux (un fichier peut servir plusieurs sous-systèmes).
 		std::unordered_map<std::string, std::ofstream> s_extraFilesByPath;
 		/// Sous-système (chaîne du macro LOG_*) → chemin résolu dans \c s_extraFilesByPath.
@@ -80,6 +82,42 @@ namespace engine::core
 		return std::string(prefix) + buf;
 	}
 
+	namespace
+	{
+		/// M44.4 — Escape JSON strings : quote, backslash, newline, carriage return,
+		/// tab, et caractères de contrôle ASCII (\u00xx). Toléré non-ASCII passe-through
+		/// (UTF-8 byte-perfect — Loki/ELK acceptent).
+		void AppendJsonEscaped(std::string& out, std::string_view s)
+		{
+			for (char c : s)
+			{
+				const unsigned char uc = static_cast<unsigned char>(c);
+				switch (c)
+				{
+					case '"':  out += "\\\""; break;
+					case '\\': out += "\\\\"; break;
+					case '\n': out += "\\n";  break;
+					case '\r': out += "\\r";  break;
+					case '\t': out += "\\t";  break;
+					case '\b': out += "\\b";  break;
+					case '\f': out += "\\f";  break;
+					default:
+						if (uc < 0x20u)
+						{
+							char esc[8]{};
+							std::snprintf(esc, sizeof(esc), "\\u%04x", uc);
+							out += esc;
+						}
+						else
+						{
+							out += c;
+						}
+						break;
+				}
+			}
+		}
+	}
+
 	void Log::Init(const LogSettings& settings)
 	{
 		Shutdown();
@@ -87,6 +125,7 @@ namespace engine::core
 
 		s_level.store(settings.level, std::memory_order_relaxed);
 		s_consoleEnabled = settings.console;
+		s_jsonOutput = settings.jsonOutput;
 
 		if (!settings.filePath.empty())
 		{
@@ -180,6 +219,7 @@ namespace engine::core
 		s_extraFilesByPath.clear();
 		s_subsystemToResolvedPath.clear();
 		s_consoleEnabled = false;
+		s_jsonOutput = false;
 		UnlockLog();
 		DestroyLock();
 	}
@@ -204,7 +244,6 @@ namespace engine::core
 		if (level < s_level.load(std::memory_order_relaxed))
 			return;
 
-		// Timestamp [JJ/MM/AAAA][HH:MM:SS]
 		const auto now    = std::chrono::system_clock::now();
 		const std::time_t t = std::chrono::system_clock::to_time_t(now);
 		std::tm tm{};
@@ -213,18 +252,46 @@ namespace engine::core
 #else
 		localtime_r(&t, &tm);
 #endif
-		char timeBuf[32]{};
-		std::snprintf(timeBuf, sizeof(timeBuf), "%02d/%02d/%04d][%02d:%02d:%02d",
-			tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
-			tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-		// Format: [JJ/MM/AAAA][HH:MM:SS][LEVEL][Subsystem] message
 		const char* lvlStr = LevelToString(level);
 		const char* sys    = subsystem ? subsystem : "?";
-		char header[72]{};
-		std::snprintf(header, sizeof(header), "[%s][%-5s][%s] ", timeBuf, lvlStr, sys);
 
-		const std::string line = std::string(header) + std::string(message) + "\n";
+		std::string line;
+		if (s_jsonOutput)
+		{
+			// M44.4 — JSONL : un objet par ligne. Timestamp UTC ISO-8601 (gmtime, pas localtime,
+			// pour faciliter l'agrégation cross-zones côté Loki/ELK).
+			std::tm utc{};
+#if defined(_WIN32)
+			gmtime_s(&utc, &t);
+#else
+			gmtime_r(&t, &utc);
+#endif
+			char isoTs[32]{};
+			std::snprintf(isoTs, sizeof(isoTs), "%04d-%02d-%02dT%02d:%02d:%02dZ",
+				utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday,
+				utc.tm_hour, utc.tm_min, utc.tm_sec);
+
+			line.reserve(message.size() + 96u);
+			line += "{\"timestamp\":\"";
+			line += isoTs;
+			line += "\",\"level\":\"";
+			line += lvlStr;
+			line += "\",\"subsystem\":\"";
+			AppendJsonEscaped(line, sys);
+			line += "\",\"message\":\"";
+			AppendJsonEscaped(line, message);
+			line += "\"}\n";
+		}
+		else
+		{
+			char timeBuf[32]{};
+			std::snprintf(timeBuf, sizeof(timeBuf), "%02d/%02d/%04d][%02d:%02d:%02d",
+				tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
+				tm.tm_hour, tm.tm_min, tm.tm_sec);
+			char header[72]{};
+			std::snprintf(header, sizeof(header), "[%s][%-5s][%s] ", timeBuf, lvlStr, sys);
+			line = std::string(header) + std::string(message) + "\n";
+		}
 
 		LockLog();
 		if (s_file.is_open())

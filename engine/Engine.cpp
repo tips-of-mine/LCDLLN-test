@@ -596,6 +596,8 @@ namespace engine
 		logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), m_cfg.GetInt("log.rotation_size_mb", 10)));
 		logSettings.retention_days   = static_cast<int>(m_cfg.GetInt("log.retention_days", 7));
 		logSettings.subsystemFiles   = m_cfg.GetStringMapUnderPrefix("log.subsystem_files");
+		// M44.4 — Format JSONL pour ingestion Loki/ELK (cf. tickets/issues/M44.4_*_Issue.md).
+		logSettings.jsonOutput       = m_cfg.GetBool("log.json", false);
 
 		engine::core::Log::Init(logSettings);
 

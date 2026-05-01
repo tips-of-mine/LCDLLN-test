@@ -724,6 +724,15 @@ namespace engine::render
 			flags |= ImGuiInputTextFlags_Password;
 		}
 		ImGui::SetNextItemWidth(-FLT_MIN);
+		// Pour les champs password, augmenter la taille des '*' affiches : ImGui
+		// rend le PasswordChar a la taille de fonte courante, donc on bumpe le
+		// WindowFontScale a 1.5x autour de l'InputText. Champs non-password : pas
+		// de changement (on garde la taille standard pour le texte saisi).
+		const bool bumpFontForPassword = password;
+		if (bumpFontForPassword)
+		{
+			ImGui::SetWindowFontScale(1.5f);
+		}
 		const char* hint = spec.inputPlaceholder.empty() ? nullptr : spec.inputPlaceholder.c_str();
 		if (hint != nullptr && buf[0] == '\0')
 		{
@@ -732,6 +741,10 @@ namespace engine::render
 		else
 		{
 			ImGui::InputText(inputId, buf, static_cast<size_t>(bufSz), flags);
+		}
+		if (bumpFontForPassword)
+		{
+			ImGui::SetWindowFontScale(1.f);
 		}
 
 		ImGui::PopStyleVar(3);

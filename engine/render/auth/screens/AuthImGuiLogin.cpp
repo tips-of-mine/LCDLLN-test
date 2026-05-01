@@ -11,15 +11,6 @@
 
 namespace engine::render
 {
-	namespace
-	{
-		/// Convertit une couleur thème en ImVec4 pour ImGui::PushStyleColor.
-		ImVec4 IV(const LnTheme::Rgba& c)
-		{
-			return ImVec4(c.r, c.g, c.b, c.a);
-		}
-	}
-
 	/// Affiche le panneau de connexion centré : titre du jeu, champs identifiant/mot de passe, boutons Créer un compte et Se connecter.
 	void AuthImGuiRenderer::RenderLoginScreen(const VisualState& vs, const RenderModel& rm, float vpW, float vpH)
 	{
@@ -36,46 +27,9 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		// Le BeginChild qui enveloppe titre + cadre principal doit être assez large pour que le
-		// titre à 5.0x (≈ 65 px de hauteur, mais largeur ≈ 720 px pour « LES CHRONIQUES ») ne
-		// soit pas clipé sur les bords. On l'étend donc à 96 % du viewport. Le cadre central
-		// lui-même reste fixé à 580 px (calibré dans BeginPanel via vpW), donc l'élargissement
-		// du child n'agrandit pas le panneau de connexion — uniquement la zone titre.
+		// Titre/sous-titre via helper unifié (référence visuelle pour tous les écrans auth).
+		DrawAuthBigTitle(rm, vpW, vpH, "login");
 		const float titleZoneW = vpW * 0.96f;
-		ImGui::SetCursorPosX((vpW - titleZoneW) * 0.5f);
-		ImGui::BeginChild("##ln_login_stage", ImVec2(titleZoneW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
-
-		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
-		// sinon le fallback en dur dupliquait visuellement le titre.
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		// Marge supérieure : bande d'air entre le bord haut de l'écran et le titre
-		// (le titre doit rester visible en entier et ne pas toucher le bord).
-		const float topMargin = (std::max)(24.f, vpH * 0.05f);
-		ImGui::SetCursorPosY(topMargin);
-		ImGui::SetWindowFontScale(5.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w1) * 0.5f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			// Sous-titre descendu sous la baseline du titre principal. La jambe oblique du R
-			// de « CHRONIQUES » à scale 5.0x descend nettement sous la baseline ; on pousse
-			// donc le sous-titre à 28 px pour qu'il commence clairement *en dessous* de la
-			// pointe de la jambe et éviter la collision visuelle.
-			ImGui::Dummy(ImVec2(0.f, 28.f));
-			ImGui::SetWindowFontScale(2.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w2) * 0.5f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
 
 		ImGui::Spacing();
 

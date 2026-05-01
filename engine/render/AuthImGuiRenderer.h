@@ -125,6 +125,12 @@ namespace engine::render
 		void RenderCharacterSelectScreen(const RenderModel& rm, float vpW, float vpH);
 
 		void BeginFullscreenOverlay(float vpW, float vpH, float windowBgAlpha = 1.f);
+		/// Helper unifié pour le rendu du grand titre « LES CHRONIQUES » + sous-titre
+		/// « DE LA LUNE NOIRE » sur tous les écrans auth — pattern de référence calé
+		/// sur l'écran Login (h1 scale 5.0x, Dummy 28 px pour passer sous la jambe du R,
+		/// h2 scale 2.5x). Ouvre un BeginChild "##ln_<screenId>_stage" 96 % vpW que le
+		/// caller doit refermer via ImGui::EndChild() après EndPanel.
+		void DrawAuthBigTitle(const RenderModel& rm, float vpW, float vpH, const char* screenId);
 		bool BeginPanel(float width, float vpW, float vpH, std::string_view title, std::string_view subtitle,
 			std::string_view versionLabel = {}, bool versionLeadingInfoGlyph = false, bool subtitleWelcomeAccent = false,
 			float fixedHeight = 0.f);

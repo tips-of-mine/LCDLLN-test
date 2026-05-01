@@ -58,26 +58,9 @@ namespace engine::render
 	/// Affiche l'écran de saisie du code à 6 chiffres envoyé par e-mail lors de l'inscription.
 	void AuthImGuiRenderer::RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifié (référence visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "verify");
+		const float titleZoneW = vpW * 0.96f;
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -93,9 +76,10 @@ namespace engine::render
 			rm.authVerifyPanelSubtitle.empty() ? std::string("NOUS AVONS ENVOYE UN CODE A 6 CHIFFRES.") : rm.authVerifyPanelSubtitle;
 		const std::string& ver =
 			rm.authVerifyPanelBadge.empty() ? std::string("3 / 4") : rm.authVerifyPanelBadge;
-		if (!BeginPanel(560.f, vpW, vpH, panelTitle, sub, ver, true, false))
+		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
 		}
@@ -266,6 +250,7 @@ namespace engine::render
 		ImGui::Columns(1);
 
 		EndPanel();
+		ImGui::EndChild();
 
 		if (!rm.authVerifyDevHint.empty())
 		{
@@ -298,26 +283,9 @@ namespace engine::render
 	/// Affiche l'écran « vérifiez vos e-mails » affiché après une inscription réussie, avec renvoi du code si 15 min se sont écoulées.
 	void AuthImGuiRenderer::RenderEmailConfirmationScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifié (référence visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "emailconf");
+		const float titleZoneW = vpW * 0.96f;
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -332,9 +300,10 @@ namespace engine::render
 		const std::string& sub = rm.authVerifyPanelSubtitle;
 		const std::string& ver =
 			rm.authVerifyPanelBadge.empty() ? std::string("3 / 4") : rm.authVerifyPanelBadge;
-		if (!BeginPanel(560.f, vpW, vpH, panelTitle, sub, ver, true, false))
+		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
 		}
@@ -513,6 +482,7 @@ namespace engine::render
 		ImGui::Columns(1);
 
 		EndPanel();
+		ImGui::EndChild();
 
 		if (!rm.authVerifyDevHint.empty())
 		{

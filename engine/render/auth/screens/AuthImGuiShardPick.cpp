@@ -74,9 +74,13 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
-		const std::vector<std::string> breadcrumb = {tr("auth.shard_pick.breadcrumb.account"), tr("auth.shard_pick.breadcrumb.realm"),
-			tr("auth.shard_pick.breadcrumb.character"), tr("auth.shard_pick.breadcrumb.enter")};
-		DrawBreadcrumb(breadcrumb, 1);
+		// Breadcrumb « 01 COMPTE > 02 ROYAUME > … » retiré : il était dessiné en absolu
+		// en haut à gauche et apparaissait comme un texte parasite hors de la stage centrale.
+		// Le panel principal et son badge « 1/2 / 2/2 » suffisent à indiquer l'étape.
+
+		// Titre/sous-titre via helper unifié (référence visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "shard");
+		const float titleZoneW = vpW * 0.96f;
 
 		const std::string titleStr = rm.sectionTitle.empty() ? tr("auth.shard_pick.panel_title") : rm.sectionTitle;
 		const std::string subStr = tr("auth.shard_pick.panel_subtitle");
@@ -101,9 +105,10 @@ namespace engine::render
 		const std::string verStr = tr("auth.shard_pick.version_online",
 			P{{"online", std::to_string(onlineCount)}, {"total", std::to_string(entries.size())}});
 
-		if (!BeginPanel(820.f, vpW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(verStr), true, false))
+		if (!BeginPanel(820.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(verStr), true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 
@@ -370,6 +375,7 @@ namespace engine::render
 		}
 
 		EndPanel();
+		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);
 	}

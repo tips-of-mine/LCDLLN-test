@@ -39,26 +39,9 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifié (référence visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "register");
+		const float titleZoneW = vpW * 0.96f;
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -71,12 +54,15 @@ namespace engine::render
 			}
 		}
 		const std::string& sub =
-			rm.authRegisterPanelSubtitle.empty() ? std::string("FORGER VOTRE IDENTITÉ") : rm.authRegisterPanelSubtitle;
+			rm.authRegisterPanelSubtitle.empty() ? std::string("FORGER VOTRE IDENTITE") : rm.authRegisterPanelSubtitle;
 		const std::string ver =
 			rm.authRegisterPanelBadge.empty() ? std::string("2 / 4") : rm.authRegisterPanelBadge;
-		if (!BeginPanel(760.f, vpW, vpH, panelTitle, sub, ver, true, false))
+		// Panel élargi 760 → 880 px : avec 760, le bouton « CREER LE COMPTE » à droite était
+		// coupé en bord de cadre. Cf retour utilisateur sur la maquette.
+		if (!BeginPanel(880.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 
@@ -388,6 +374,7 @@ namespace engine::render
 		DrawSeparator();
 		DrawRegisterFooterChips(rm);
 		EndPanel();
+		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);
 	}

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <initializer_list>
 #include <string>
@@ -511,6 +512,43 @@ namespace engine::render
 		ImGui::PopStyleColor(1);
 	}
 
+	void AuthImGuiRenderer::DrawAuthBigTitle(const RenderModel& rm, float vpW, float vpH, const char* screenId)
+	{
+		// Pattern de référence calé sur l'écran Login : BeginChild stage 96 % vpW pour
+		// permettre au titre 5.0x (≈720 px) de tenir, h1 centré scale 5.0x, Dummy 28 px
+		// pour passer sous la jambe oblique du R de « CHRONIQUES », h2 centré scale 2.5x.
+		// Le caller doit appeler ImGui::EndChild() après EndPanel.
+		const float titleZoneW = vpW * 0.96f;
+		ImGui::SetCursorPosX((vpW - titleZoneW) * 0.5f);
+		char childId[64];
+		std::snprintf(childId, sizeof(childId), "##ln_%s_stage", screenId);
+		ImGui::BeginChild(childId, ImVec2(titleZoneW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
+
+		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
+
+		const float topMargin = (std::max)(24.f, vpH * 0.05f);
+		ImGui::SetCursorPosY(topMargin);
+		ImGui::SetWindowFontScale(5.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
+		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
+		ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w1) * 0.5f));
+		ImGui::TextUnformatted(h1.c_str());
+		ImGui::SetWindowFontScale(1.f);
+		ImGui::PopStyleColor();
+
+		if (!rm.titleLine2.empty())
+		{
+			ImGui::Dummy(ImVec2(0.f, 28.f));
+			ImGui::SetWindowFontScale(2.5f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
+			ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w2) * 0.5f));
+			ImGui::TextUnformatted(rm.titleLine2.c_str());
+			ImGui::PopStyleColor();
+			ImGui::SetWindowFontScale(1.f);
+		}
+	}
+
 	bool AuthImGuiRenderer::BeginPanel(float width, float vpW, float vpH, std::string_view title,
 		std::string_view subtitle, std::string_view versionLabel, bool versionLeadingInfoGlyph, bool subtitleWelcomeAccent,
 		float fixedHeight)
@@ -524,6 +562,8 @@ namespace engine::render
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.f, 18.f));
+		// ItemSpacing.y bumpé de 4 (défaut ImGui) à 8 px pour aérer les lignes de texte
+		// et de widgets dans tous les panneaux auth (référence visuelle Login).
 
 		// Si fixedHeight > 0 : le panneau a une hauteur figée. Sinon AutoResizeY : la hauteur s'aligne
 		// sur le contenu réel — évite les énormes panneaux vides qui poussaient les champs et boutons
@@ -537,6 +577,12 @@ namespace engine::render
 
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(2);
+
+		// ItemSpacing.y bumpé à 8 px (défaut 4) pour aérer les lignes de texte et de
+		// widgets dans tous les panneaux auth — popé dans EndPanel. Pushé même si
+		// !open : EndPanel doit être appelé dans tous les cas (cf. callers), et le
+		// push/pop doit donc rester équilibré.
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 8.f));
 
 		if (!open)
 		{
@@ -608,6 +654,9 @@ namespace engine::render
 
 	void AuthImGuiRenderer::EndPanel()
 	{
+		// Pop ItemSpacing pushé dans BeginPanel (uniquement si le panel a été ouvert
+		// avec succès — sinon BeginPanel a return false avant le push).
+		ImGui::PopStyleVar(1);
 		ImGui::EndChild();
 	}
 

@@ -147,36 +147,9 @@ namespace engine::render
 	/// Affiche l'écran complet de sélection de langue : titre du jeu, panneau centré avec les cartes de langue et le bouton Continuer, puis hints de navigation en pied de panel.
 	void AuthImGuiRenderer::RenderLangScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// Titre/sous-titre alignés sur le rendu de l'écran Login (référence visuelle) :
-		// h1 scale 5.0x (≈ 65 px) et h2 scale 2.5x (≈ 32 px) avec Dummy(0, 28) entre les deux
-		// pour passer sous la jambe oblique du R de « CHRONIQUES ».
+		// Titre/sous-titre via helper unifié (référence visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "lang");
 		const float titleZoneW = vpW * 0.96f;
-		ImGui::SetCursorPosX((vpW - titleZoneW) * 0.5f);
-		ImGui::BeginChild("##ln_lang_stage", ImVec2(titleZoneW, 0.f), false, ImGuiWindowFlags_NoScrollbar);
-
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		const float topMargin = (std::max)(24.f, vpH * 0.05f);
-		ImGui::SetCursorPosY(topMargin);
-		ImGui::SetWindowFontScale(5.0f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w1) * 0.5f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::Dummy(ImVec2(0.f, 28.f));
-			ImGui::SetWindowFontScale(2.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPosX((std::max)(0.f, (titleZoneW - w2) * 0.5f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
 
 		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CHOISISSEZ VOTRE LANGUE") : rm.sectionTitle;
 		for (char& ch : panelTitle)

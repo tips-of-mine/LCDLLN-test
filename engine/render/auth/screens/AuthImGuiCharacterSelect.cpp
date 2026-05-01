@@ -37,27 +37,9 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
-		// Stage title (cohérence avec Login / Register / CharacterCreate) : le grand titre
-		// « LES CHRONIQUES » et son sous-titre sont dessinés AU-DESSUS du cadre. Le cadre
-		// ne porte que le titre de section (« Choisir un personnage »).
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifié (référence visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "charselect");
+		const float titleZoneW = vpW * 0.96f;
 
 		const std::string titleStr = rm.sectionTitle.empty()
 			? tr("auth.character_select.panel_title") : rm.sectionTitle;
@@ -68,9 +50,10 @@ namespace engine::render
 			? m_authPresenter->CharacterListEntries() : kEmpty;
 		const int selected = m_authPresenter ? m_authPresenter->CharacterSelectIndex() : -1;
 
-		if (!BeginPanel(680.f, vpW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(""), true, false))
+		if (!BeginPanel(680.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(""), true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 
@@ -294,6 +277,7 @@ namespace engine::render
 		}
 
 		EndPanel();
+		ImGui::EndChild();
 	}
 } // namespace engine::render
 

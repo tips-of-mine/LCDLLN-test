@@ -34,6 +34,12 @@ namespace engine::core
         int retention_days = 7;
         /// Fichiers journaux additionnels : nom du sous-système (argument des macros \c LOG_* , ex. \c Smtp) → nom de fichier relatif au dossier du fichier principal \c filePath (ou \c "." si \c filePath n'a pas de dossier). Les lignes sont dupliquées : elles vont aussi dans le fichier principal et la console si actifs.
         std::unordered_map<std::string, std::string> subsystemFiles;
+        /// M44.4 — Si \c true, les lignes sont émises au format JSON (un objet JSON par ligne,
+        /// jsonl). Active via la clé config \c log.json en prod pour ingestion par Loki/ELK.
+        /// Format : \c {"timestamp":"YYYY-MM-DDTHH:MM:SSZ","level":"INFO","subsystem":"Net","message":"..."}.
+        /// Le timestamp est en UTC ISO-8601. Les caractères spéciaux JSON (quote, backslash,
+        /// newline, contrôle) sont échappés dans \c subsystem et \c message.
+        bool jsonOutput = false;
     };
     class Log final
     {

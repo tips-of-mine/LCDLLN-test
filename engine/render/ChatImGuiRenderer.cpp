@@ -103,7 +103,9 @@ namespace engine::render
 					: IV(LnTheme::kMuted);
 				ImGui::PushStyleColor(ImGuiCol_Text, color);
 				char buttonId[32];
-				std::snprintf(buttonId, sizeof(buttonId), "[%s]##ch%u",
+				// Pas de crochets [ ] autour du tag : Windlass.ttf n'a pas ces glyphes et
+				// ImGui les rendait comme "?" (cf. fix global glyph range PR #419).
+				std::snprintf(buttonId, sizeof(buttonId), "%s##ch%u",
 					ChannelTag(static_cast<engine::net::ChatChannel>(i)), static_cast<unsigned>(i));
 				if (ImGui::SmallButton(buttonId))
 				{
@@ -140,7 +142,7 @@ namespace engine::render
 				const ImVec4 color = ArgbToIm(engine::net::ChannelColorArgb(msg.channel));
 				const std::string hhmm = engine::net::FormatTimeHHMMUtc(msg.timestampUnixMs);
 				const char* tag = ChannelTag(msg.channel);
-				ImGui::TextColored(color, "%s [%s] %s: %s",
+				ImGui::TextColored(color, "%s %s %s: %s",
 					hhmm.c_str(), tag, msg.sender.c_str(), msg.text.c_str());
 			}
 
@@ -203,7 +205,7 @@ namespace engine::render
 			else
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-				ImGui::TextUnformatted("[/] pour tchatter  -  [1..0] filtres canal");
+				ImGui::TextUnformatted("/ pour tchatter  -  1..0 filtres canal");
 				ImGui::PopStyleColor();
 			}
 

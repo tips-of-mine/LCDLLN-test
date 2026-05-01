@@ -1,5 +1,5 @@
-// AUTH-UI.7 — rendu ImGui écran choix de langue au premier lancement (split depuis AuthImGuiRenderer.cpp).
-// Contient DrawLanguageFirstRunCards (grille de cartes drapeaux cliquables) et RenderLangScreen (panneau centré avec titre, cartes et bouton Continuer).
+// AUTH-UI.7 - rendu ImGui ecran choix de langue au premier lancement (split depuis AuthImGuiRenderer.cpp).
+// Contient DrawLanguageFirstRunCards (grille de cartes drapeaux cliquables) et RenderLangScreen (panneau centre avec titre, cartes et bouton Continuer).
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
@@ -31,13 +31,13 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		/// Retourne vrai si le tag de locale correspond à une variante anglaise (en, en-GB, en_US…).
+		/// Retourne vrai si le tag de locale correspond a une variante anglaise (en, en-GB, en_US...).
 		bool IsEnglishLocaleTag(std::string_view tag)
 		{
 			return tag == "en" || tag == "en-GB" || tag == "en_US" || (tag.size() >= 2 && tag[0] == 'e' && tag[1] == 'n');
 		}
 
-		/// Dessine le drapeau approprié dans la carte de langue selon le tag de locale ; repli sur un rectangle neutre pour les locales inconnues.
+		/// Dessine le drapeau approprie dans la carte de langue selon le tag de locale ; repli sur un rectangle neutre pour les locales inconnues.
 		void DrawCardFlag(ImDrawList* dl, float x, float y, float fw, float fh, std::string_view tag)
 		{
 			if (tag == "fr")
@@ -56,18 +56,18 @@ namespace engine::render
 		}
 	} // namespace
 
-	/// Affiche la grille de cartes de sélection de langue (drapeau + nom) et retourne l'index de la carte cliquée, ou -1 si aucun clic.
+	/// Affiche la grille de cartes de selection de langue (drapeau + nom) et retourne l'index de la carte cliquee, ou -1 si aucun clic.
 	int AuthImGuiRenderer::DrawLanguageFirstRunCards(const RenderModel& rm, int selected)
 	{
 		int clicked = -1;
 		const size_t n = rm.languageFirstRunCards.empty() ? 2u : rm.languageFirstRunCards.size();
 		const float gap = 16.f; ///< Espacement horizontal entre les cartes.
-		// Cartes plus compactes : largeur fixe maxi pour ne pas s'étaler ; centrage horizontal géré ci-dessous.
+		// Cartes plus compactes : largeur fixe maxi pour ne pas s'etaler ; centrage horizontal gere ci-dessous.
 		const float cardWMax = 200.f;
-		const float cardH = 96.f; ///< Hauteur fixe d'une carte (compacte, drapeau centré + libellés).
+		const float cardH = 96.f; ///< Hauteur fixe d'une carte (compacte, drapeau centre + libelles).
 		const ImVec2 cardSize(cardWMax, cardH);
 		const float totalW = cardSize.x * static_cast<float>(n) + gap * static_cast<float>(n > 1u ? n - 1u : 0u);
-		const float startX = (ImGui::GetContentRegionAvail().x - totalW) * 0.5f + ImGui::GetCursorPosX(); ///< Position X de départ pour centrer horizontalement la rangée de cartes.
+		const float startX = (ImGui::GetContentRegionAvail().x - totalW) * 0.5f + ImGui::GetCursorPosX(); ///< Position X de depart pour centrer horizontalement la rangee de cartes.
 
 		for (size_t i = 0; i < n; ++i)
 		{
@@ -82,7 +82,7 @@ namespace engine::render
 
 			std::string_view locTag = (i == 0u) ? "fr" : "en";
 			std::string_view nameCaps = (i == 0u) ? "FRANCAIS" : "ENGLISH";
-			std::string_view nativeLn = (i == 0u) ? "Français" : "English";
+			std::string_view nativeLn = (i == 0u) ? "Francais" : "English";
 			if (!rm.languageFirstRunCards.empty() && i < rm.languageFirstRunCards.size())
 			{
 				const auto& c = rm.languageFirstRunCards[i];
@@ -121,7 +121,7 @@ namespace engine::render
 			const float borderThick = isSelected ? 2.f : 1.f;
 			dl->AddRect(rmin, rmax, borderCol, 8.f, 0, borderThick);
 
-			// Drapeau centré dans la carte (à gauche du libellé) — taille réduite pour cartes compactes.
+			// Drapeau centre dans la carte (a gauche du libelle) - taille reduite pour cartes compactes.
 			const float flagW = 44.f;
 			const float flagH = 30.f;
 			const float flagPadL = 14.f;
@@ -144,32 +144,12 @@ namespace engine::render
 		return clicked;
 	}
 
-	/// Affiche l'écran complet de sélection de langue : titre du jeu, panneau centré avec les cartes de langue et le bouton Continuer, puis hints de navigation en pied de panel.
+	/// Affiche l'ecran complet de selection de langue : titre du jeu, panneau centre avec les cartes de langue et le bouton Continuer, puis hints de navigation en pied de panel.
 	void AuthImGuiRenderer::RenderLangScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// Titre sur deux lignes : 2.4x pour h1 (~31 px) et 1.5x pour h2 (~20 px) avec Windlass 13 px.
-		// h2 (sous-titre auth.title_line2) optionnel : on ne le dessine que s'il est non vide,
-		// sinon le fallback en dur précédent dupliquait le titre.
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.07f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "lang");
+		const float titleZoneW = vpW * 0.96f;
 
 		std::string panelTitle = rm.sectionTitle.empty() ? std::string("CHOISISSEZ VOTRE LANGUE") : rm.sectionTitle;
 		for (char& ch : panelTitle)
@@ -182,11 +162,14 @@ namespace engine::render
 		const std::string& welcome =
 			rm.languagePanelSubtitle.empty() ? std::string("Bienvenue, voyageur.") : rm.languagePanelSubtitle;
 		const std::string ver = rm.languageVersionLabel.empty() ? std::string("1 / 2") : rm.languageVersionLabel;
-		// Panneau compact : hauteur calée sur titre + sous-titre + cartes (96px) + bouton + footer + paddings.
-		const float panelFixedH = 320.f;
-		if (!BeginPanel(720.f, vpW, vpH, panelTitle, welcome, ver, true, true, panelFixedH))
+		// Panneau compact : hauteur calee sur titre + sous-titre + cartes (96px) + bouton + footer + paddings.
+		// On passe titleZoneW (et non vpW) en 2e arg : le panel se centre desormais dans la stage
+		// (BeginChild ##ln_lang_stage), meme logique que l'ecran Login.
+		const float panelFixedH = 340.f;
+		if (!BeginPanel(720.f, titleZoneW, vpH, panelTitle, welcome, ver, true, true, panelFixedH))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 
@@ -231,7 +214,8 @@ namespace engine::render
 				break;
 			}
 		}
-		contLabel += "  >";
+		// Note : pas de suffixe " > " - le glyph n'est pas rendu par la fonte (il apparaissait
+		// comme un " ? "). Le libelle reste sobre, suffisant comme call-to-action.
 
 		const float btnW = 200.f;
 		ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - btnW + ImGui::GetCursorPosX());
@@ -256,11 +240,12 @@ namespace engine::render
 
 		DrawSeparator();
 		const std::string& footL =
-			rm.languageFooterLeft.empty() ? std::string("<- -> naviguer") : rm.languageFooterLeft;
-		const std::string& footR = rm.languageFooterRight.empty() ? std::string("Entree valider") : rm.languageFooterRight;
+			rm.languageFooterLeft.empty() ? std::string("Fleches : naviguer") : rm.languageFooterLeft;
+		const std::string& footR = rm.languageFooterRight.empty() ? std::string("Entree : valider") : rm.languageFooterRight;
 		DrawLangFooterHints(footL, footR);
 
 		EndPanel();
+		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);
 	}

@@ -1,4 +1,4 @@
-// AUTH-UI.2 — rendu ImGui de l'écran de création de compte (formulaire d'inscription).
+// AUTH-UI.2 - rendu ImGui de l'ecran de creation de compte (formulaire d'inscription).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -16,17 +16,17 @@ namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur thème en ImVec4 pour ImGui::PushStyleColor.
+		/// Convertit une couleur theme en ImVec4 pour ImGui::PushStyleColor.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 	}
 
-	/// Affiche le formulaire d'inscription : identifiant, e-mail, mots de passe, date de naissance, pays, nom/prénom, et boutons Retour/Créer.
+	/// Affiche le formulaire d'inscription : identifiant, e-mail, mots de passe, date de naissance, pays, nom/prenom, et boutons Retour/Creer.
 	void AuthImGuiRenderer::RenderRegisterScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		/// Résout une clé de traduction via le présentateur ; retombe sur le fallback si absent.
+		/// Resout une cle de traduction via le presentateur ; retombe sur le fallback si absent.
 		const auto tr = [this](const char* key, const char* fallback) -> std::string {
 			if (m_authPresenter != nullptr)
 			{
@@ -39,26 +39,9 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "register");
+		const float titleZoneW = vpW * 0.96f;
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -71,12 +54,15 @@ namespace engine::render
 			}
 		}
 		const std::string& sub =
-			rm.authRegisterPanelSubtitle.empty() ? std::string("FORGER VOTRE IDENTITÉ") : rm.authRegisterPanelSubtitle;
+			rm.authRegisterPanelSubtitle.empty() ? std::string("FORGER VOTRE IDENTITE") : rm.authRegisterPanelSubtitle;
 		const std::string ver =
 			rm.authRegisterPanelBadge.empty() ? std::string("2 / 4") : rm.authRegisterPanelBadge;
-		if (!BeginPanel(760.f, vpW, vpH, panelTitle, sub, ver, true, false))
+		// Panel elargi 760 > 880 px : avec 760, le bouton " CREER LE COMPTE " a droite etait
+		// coupe en bord de cadre. Cf retour utilisateur sur la maquette.
+		if (!BeginPanel(880.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 
@@ -109,10 +95,10 @@ namespace engine::render
 			DrawAuthGoldField(rm.fields[9], m_regPw2, static_cast<int>(sizeof(m_regPw2)), true);
 			ImGui::Columns(1);
 
-			/// Peuple un vecteur de pointeurs C à partir des labels d'une RenderDropdown, nécessaire pour ImGui::Combo qui attend un tableau de const char*.
-			/// IMPORTANT : on remplit \p store en entier AVANT de prendre les c_str() — chaque push_back peut
-			/// réallouer le vector, ce qui invalide les c_str() des éléments précédents. Le bug provoquait
-			/// l'affichage du libellé du dernier dropdown dans toutes les cases (« Jour de naissance » partout).
+			/// Peuple un vecteur de pointeurs C a partir des labels d'une RenderDropdown, necessaire pour ImGui::Combo qui attend un tableau de const char*.
+			/// IMPORTANT : on remplit \p store en entier AVANT de prendre les c_str() - chaque push_back peut
+			/// reallouer le vector, ce qui invalide les c_str() des elements precedents. Le bug provoquait
+			/// l'affichage du libelle du dernier dropdown dans toutes les cases (" Jour de naissance " partout).
 			auto buildDdPtrs = [](const engine::client::AuthUiPresenter::RenderDropdown& dd, std::vector<std::string>& store,
 								   std::vector<const char*>& ptrs) {
 				store.clear();
@@ -138,9 +124,9 @@ namespace engine::render
 			buildDdPtrs(rm.dropdowns[1], monStore, monPtrs);
 			buildDdPtrs(rm.dropdowns[2], yrStore, yrPtrs);
 
-			// Date de naissance : trois colonnes égales (jour / mois / année) avec libellés au-dessus.
-			// Avant : deux combos collés (jour+mois) puis l'année toute seule sur une nouvelle ligne — la
-			// combo année apparaissait coupée et donnait l'impression que les champs n'étaient pas fonctionnels.
+			// Date de naissance : trois colonnes egales (jour / mois / annee) avec libelles au-dessus.
+			// Avant : deux combos colles (jour+mois) puis l'annee toute seule sur une nouvelle ligne - la
+			// combo annee apparaissait coupee et donnait l'impression que les champs n'etaient pas fonctionnels.
 			const float ddGap = 10.f;
 			const float ddW = (ImGui::GetContentRegionAvail().x - ddGap * 2.f) / 3.f;
 			const float ddStartX = ImGui::GetCursorPosX();
@@ -295,7 +281,7 @@ namespace engine::render
 			const int di = std::clamp(m_regBirthDayIdx, 0, static_cast<int>(rm.dropdowns[0].options.size()) - 1);
 			const int mi = std::clamp(m_regBirthMonthIdx, 0, static_cast<int>(rm.dropdowns[1].options.size()) - 1);
 			const int yi = std::clamp(m_regBirthYearIdx, 0, static_cast<int>(rm.dropdowns[2].options.size()) - 1);
-			/// Garantit un affichage sur deux chiffres pour les valeurs de jour et de mois (ex. "1" → "01").
+			/// Garantit un affichage sur deux chiffres pour les valeurs de jour et de mois (ex. "1" > "01").
 			auto pad2 = [](std::string s) -> std::string {
 				if (s.size() == 1u)
 				{
@@ -322,10 +308,10 @@ namespace engine::render
 
 		if (actBack != nullptr && actSubmit != nullptr)
 		{
-			// Boutons d'action alignés sur le visuel texte simple (cf. écran de connexion) :
-			// pas de fond plein, pas de bordure, pas d'actionBadge — un simple SmallButton avec
+			// Boutons d'action alignes sur le visuel texte simple (cf. ecran de connexion) :
+			// pas de fond plein, pas de bordure, pas d'actionBadge - un simple SmallButton avec
 			// couleur texte muted. Avant, le calcul de rowRight pouvait pousser le bouton submit
-			// hors du panneau quand le contenu de la ligne était large.
+			// hors du panneau quand le contenu de la ligne etait large.
 			std::string backLab = actBack->label.empty() ? tr("auth.hint.return_login", "Back") : actBack->label;
 			if (DrawAuthButtonText(backLab, "##reg_back") && m_authPresenter != nullptr)
 			{
@@ -388,6 +374,7 @@ namespace engine::render
 		DrawSeparator();
 		DrawRegisterFooterChips(rm);
 		EndPanel();
+		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);
 	}

@@ -131,4 +131,150 @@ namespace engine::render
 			}
 		}
 	}
+
+	void OrbitalCameraController::SetTargetPosition(const engine::math::Vec3& worldPos)
+	{
+		m_target = worldPos;
+		m_initialized = true;
+	}
+
+	void OrbitalCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
+		bool invertY, MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera)
+	{
+		// Clic droit maintenu + souris -> rotation orbite (yaw/pitch).
+		if (applyMouseLook)
+		{
+			const float sens = static_cast<float>(mouseSensitivityRadPerPixel);
+			camera.yaw += static_cast<float>(input.MouseDeltaX()) * sens;
+			const float pitchSign = invertY ? -1.0f : 1.0f;
+			camera.pitch += static_cast<float>(input.MouseDeltaY()) * sens * pitchSign;
+			if (camera.pitch < kPitchMin) camera.pitch = kPitchMin;
+			if (camera.pitch > kPitchMax) camera.pitch = kPitchMax;
+		}
+
+		// Molette -> zoom in/out (modifie distance camera-cible).
+		const int scroll = input.MouseScrollDelta();
+		if (scroll != 0)
+		{
+			m_distance -= static_cast<float>(scroll) * kZoomStep;
+			if (m_distance < kDistanceMin) m_distance = kDistanceMin;
+			if (m_distance > kDistanceMax) m_distance = kDistanceMax;
+		}
+
+		// WASD/ZQSD -> deplace le point cible dans le plan XZ selon yaw courant.
+		// Etape 5 : derive aussi un etat de locomotion (Idle/Walk/Run) et fait
+		// avancer une phase de bob pour le placeholder anim de l'avatar.
+		bool moving = false;
+		bool running = false;
+		if (applyKeyboardMove)
+		{
+			running = input.IsDown(engine::platform::Key::Shift);
+			const float speed = running ? kRunSpeed : kWalkSpeed;
+			const float dist = static_cast<float>(dt) * speed;
+			const float cy = std::cos(camera.yaw);
+			const float sy = std::sin(camera.yaw);
+			// Direction avant horizontale (yaw seul, pitch ignore pour le mouvement
+			// au sol -- l'avatar marche sur l'axe horizontal).
+			const float forwardX = -sy;
+			const float forwardZ = -cy;
+			const float rightX = cy;
+			const float rightZ = -sy;
+			const engine::platform::Key forwardKey =
+				(layout == MovementLayout::ZQSD) ? engine::platform::Key::Z : engine::platform::Key::W;
+			const engine::platform::Key backwardKey = engine::platform::Key::S;
+			const engine::platform::Key rightKey = engine::platform::Key::D;
+			const engine::platform::Key leftKey =
+				(layout == MovementLayout::ZQSD) ? engine::platform::Key::Q : engine::platform::Key::A;
+			if (input.IsDown(forwardKey))
+			{
+				m_target.x += forwardX * dist;
+				m_target.z += forwardZ * dist;
+				moving = true;
+			}
+			if (input.IsDown(backwardKey))
+			{
+				m_target.x -= forwardX * dist;
+				m_target.z -= forwardZ * dist;
+				moving = true;
+			}
+			if (input.IsDown(rightKey))
+			{
+				m_target.x += rightX * dist;
+				m_target.z += rightZ * dist;
+				moving = true;
+			}
+			if (input.IsDown(leftKey))
+			{
+				m_target.x -= rightX * dist;
+				m_target.z -= rightZ * dist;
+				moving = true;
+			}
+		}
+		// Etat de locomotion : Idle quand pas de touche, Walk normal, Run avec Shift.
+		if (!moving)
+			m_locomotion = LocomotionState::Idle;
+		else
+			m_locomotion = running ? LocomotionState::Run : LocomotionState::Walk;
+		// Phase d'oscillation : avance proportionnellement a la vitesse pour que
+		// le bob aille plus vite en Run qu'en Walk. 8 cycles/seconde en run, 5 en walk.
+		if (moving)
+		{
+			constexpr float kPi2 = 6.2831853f;
+			const float bobFreqHz = running ? 8.0f : 5.0f;
+			m_walkBobPhase += static_cast<float>(dt) * bobFreqHz * kPi2;
+			if (m_walkBobPhase > kPi2 * 1024.f) m_walkBobPhase = std::fmod(m_walkBobPhase, kPi2);
+		}
+
+		// Position camera = cible - dir(yaw, pitch) * distance. La camera regarde
+		// le point cible (la "tete" du joueur a kTargetEyeHeight au-dessus du sol).
+		const float cy = std::cos(camera.yaw);
+		const float sy = std::sin(camera.yaw);
+		const float cp = std::cos(camera.pitch);
+		const float sp = std::sin(camera.pitch);
+		// Forward du regard de la camera (cf. ComputeViewMatrix : forward = -view dir).
+		const float forwardX = -sy * cp;
+		const float forwardY = -sp;
+		const float forwardZ = -cy * cp;
+
+		// Etape 3 collision camera-decor : si la camera calculee va passer SOUS le
+		// sol (Y < kGroundY + kGroundPadding), on reduit la distance effective
+		// pour que la camera reste au-dessus du sol au lieu de la teleporter
+		// verticalement (ce qui donnerait un saut visuel desagreable). On laisse
+		// kDistanceMin comme plancher (la camera ne peut pas etre plus pres que
+		// kDistanceMin de la cible).
+		// TODO : remplacer kGroundY (constante = 0) par une vraie query de hauteur
+		// terrain quand TerrainRenderer exposera SampleHeightAtWorldXZ.
+		constexpr float kGroundY = 0.0f;
+		constexpr float kGroundPadding = 0.5f;
+		float effectiveDistance = m_distance;
+		if (forwardY < -0.001f)
+		{
+			// camera_y = target.y - forwardY * distance ; on veut camera_y >= floor.
+			// distance_max = (target.y - floor) / -forwardY.
+			const float floorY = kGroundY + kGroundPadding;
+			const float distMaxBelowFloor = (m_target.y - floorY) / -forwardY;
+			if (distMaxBelowFloor > 0.f && distMaxBelowFloor < effectiveDistance)
+			{
+				if (distMaxBelowFloor >= kDistanceMin)
+				{
+					effectiveDistance = distMaxBelowFloor;
+				}
+				else
+				{
+					effectiveDistance = kDistanceMin;
+				}
+			}
+		}
+
+		// Position camera : recule dans la direction OPPOSEE du forward, depuis target.
+		camera.position.x = m_target.x - forwardX * effectiveDistance;
+		camera.position.y = m_target.y - forwardY * effectiveDistance;
+		camera.position.z = m_target.z - forwardZ * effectiveDistance;
+		// Clamp final en Y : meme avec effectiveDistance reduit, on s'assure que
+		// la camera ne descende pas sous le seuil (cas ou m_target.y < floor par ex.).
+		if (camera.position.y < kGroundY + kGroundPadding)
+		{
+			camera.position.y = kGroundY + kGroundPadding;
+		}
+	}
 }

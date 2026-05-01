@@ -230,6 +230,7 @@ RenderModel
 ### Passes Vulkan (rendu 3D jeu)
 | Fichier | Rôle |
 |---|---|
+| `engine/render/Camera.h/.cpp` | `Camera` (matrices view/proj), `FpsCameraController` (mode --editor), **`OrbitalCameraController`** (vue 3ᵉ personne post-EnterWorld : orbite arrière, clic droit pivote, molette zoom, WASD déplace cible, walk-bob locomotion). |
 | `engine/render/DeferredPipeline.h/.cpp` | Pipeline déferred principal (orchestration des passes). |
 | `engine/render/GeometryPass.h/.cpp` | GBuffer (albedo, normales, roughness…). |
 | `engine/render/LightingPass.h/.cpp` | Calcul éclairage PBR. |
@@ -292,6 +293,12 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `db/migrations/0029_terms_retired_reason.sql` | Colonne `retired_reason` sur `terms_editions` (raison de retrait d'une édition CGU). |
 | `db/migrations/0030_terms_editions_nullable_published_at.sql` | `terms_editions.published_at` passe en `TIMESTAMP NULL DEFAULT NULL` (les brouillons n'ont pas de date). |
 | `db/migrations/0031_privacy_settings_ensure.sql` | Recrée `account_privacy_settings` avec `BIGINT UNSIGNED` correct — idempotente (`IF NOT EXISTS`). |
+| `db/migrations/0032_characters_spawn_position.sql` | Colonnes `spawn_x/y/z/yaw_deg/pitch_deg` sur `characters` (spawn personnalisé par perso, persistance position de déconnexion). |
+| `db/migrations/0033_characters_race_class_strings.sql` | Colonnes `race_str` / `class_str` sur `characters` (identifiants chaîne stables remplaçant les FK numériques `race_id`/`class_id` côté UI). |
+| `db/migrations/0034_roadmap_items_v2.sql` | Roadmap publique v2 : ajoute 6 items (chat in-game, audio immersif, système personnages, reconnexion auto, guildes/amis, boutique). |
+| `db/migrations/0035_seed_servers_default.sql` | Seed `(id=1, name='main')` dans `servers` — débloque la FK `characters.server_id → servers.id` quand le master n'auto-register pas. |
+| `db/migrations/0036_seed_races_default.sql` | Seed `races` avec id=0 'default' + les 6 races jouables (humains/elfes/orcs/nains/demons/chevaliers_dragons). Utilise `NO_AUTO_VALUE_ON_ZERO` pour pouvoir insérer id=0 explicite sur AUTO_INCREMENT. |
+| `db/migrations/0037_roadmap_items_v3.sql` | Roadmap publique v3 : vue 3ème personne, menu pause in-game, sélection de race à la création, CGU. |
 | `engine/server/MigrationRunner.h/.cpp` | Applique les migrations au démarrage du serveur. |
 | `engine/server/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL réutilisables. |
 | `engine/server/db/DbHelpers.h/.cpp` | Helpers requêtes SQL (bind params, lecture résultats). |
@@ -594,12 +601,89 @@ libellés français de l'UI auth doivent rester en ASCII pur. Liste des clés co
 
 ---
 
+## 14. Vue 3ème personne (post-EnterWorld) — chantier 2026-05-01
+
+Ajouté sur la PR #419. La caméra in-game (post-clic « Jouer » dans CharacterSelect)
+n'est plus FPS mais **orbitale 3ᵉ personne** autour d'une position cible représentant le joueur.
+
+### Fichiers clés
+| Fichier | Rôle |
+|---|---|
+| `engine/render/Camera.h/.cpp` | `OrbitalCameraController` : membre `m_target` (position cible), `m_distance` (zoom), `LocomotionState` (Idle/Walk/Run), `m_walkBobPhase` (phase oscillation). Méthode `Update` lit input et écrit `camera.position` + `camera.yaw/pitch`. Gère collision caméra-sol. |
+| `engine/Engine.h` | Membre `m_orbitalCameraController` + `m_lastSyncedPosition` (étape 6). |
+| `engine/Engine.cpp` (branche `!m_editorMode` post-EnterWorld) | Appelle `m_orbitalCameraController.Update`, calcule `out.objectModelMatrix = T(target) × R_y(yaw) × bobY`, déclenche `SavePositionAsync` adaptatif au mouvement. |
+| `game/data/meshes/avatar_placeholder.mesh` | Cube 0.5×1.8×0.5 m (pieds Y=0), placeholder visuel pour l'avatar. Format binaire `.mesh` standard (magic 'MESH', vertex stride 32 = pos+normal+UV). |
+
+### Contrôles
+- **Souris libre** par défaut (curseur cliquable sur UI).
+- **Clic droit maintenu** → rotation yaw/pitch en orbite.
+- **Molette** → zoom in/out (clamp [1.5 ; 20] m, défaut 6 m).
+- **WASD/ZQSD** → déplace la cible ; la caméra suit.
+- **Shift** → courir (et accélérer le walk-bob).
+
+### Limites assumées (à enrichir dans des PR ultérieurs)
+- Avatar = cube monochrome (pas encore de mesh humanoïde texturé).
+- Pas d'orientation différenciée selon direction de mouvement (perso suit la caméra).
+- Walk-bob = oscillation Y placeholder (pas de vraies anims squelettiques).
+- Sol supposé plat à Y=0 (pas de raycast contre la heightmap terrain).
+- Synchro position via `CHARACTER_SAVE_POSITION_REQUEST` (TCP master, ~1 s en mouvement) — pas un vrai protocole UDP gameplay temps-réel.
+
+---
+
+## 15. Menu pause in-game
+
+Touche **Échap** post-EnterWorld toggle un menu ImGui centré au-dessus du monde.
+
+### Fichiers clés
+| Fichier | Rôle |
+|---|---|
+| `engine/Engine.h` | Membre `m_inGamePauseMenuVisible` + méthodes `ToggleInGamePauseMenu()`, `RequestLogoutToLoginScreen()`. |
+| `engine/Engine.cpp` (branche Échap in-game) | Toggle au lieu de `OnQuit()` ; rendu ImGui inline dans la branche du chat HUD (même `ImGui::Render` final). |
+| `engine/client/AuthUi.h` + `AuthUiPresenterCore.cpp` | Méthode publique `RequestReturnToLogin()` : reset `m_flowComplete=false`, repasse en `Phase::Login`. |
+
+### Actions
+- **Reprendre** → ferme le menu.
+- **Options** → TODO (placeholder, ouvrira l'overlay options in-game dans un PR ultérieur).
+- **Se déconnecter** → coupe gameplay UDP, reset auth presenter, ré-affiche écran de connexion.
+- **Quitter le jeu** → `OnQuit()` (comportement original).
+
+---
+
+## 16. Sélection de race à la création de personnage
+
+L'écran CharacterCreate expose désormais un combo des 6 races jouables.
+
+### Fichiers clés
+| Fichier | Rôle |
+|---|---|
+| `engine/render/auth/screens/AuthImGuiCharacterCreate.cpp` | Combo `kRaceIds[]` / `kRaceLabels[]` ; passe l'id string au submit. |
+| `engine/render/AuthImGuiRenderer.h` | Membre `m_charRaceIdx`. |
+| `engine/client/AuthUi.h` + `AuthScreenCharacterCreate.cpp` | Méthode `ImGuiSubmitCharacterCreate(cfg, name, raceId)` ; membre `m_characterRaceId` ; passé à `BuildCharacterCreateRequestPayload(name, raceId)`. |
+| `db/migrations/0036_seed_races_default.sql` | Seed `races` avec les 6 races jouables (humains, elfes, orcs, nains, demons, chevaliers_dragons) + id=0 'default' (compat code legacy). |
+| `engine/server/CharacterCreateHandler.cpp` | Persiste `parsed->raceId` dans `characters.race_str` (colonne 0033). |
+| `engine/render/auth/screens/AuthImGuiCharacterSelect.cpp` | Affichage post-création : symbole d'identification race (initiale ASCII en accent) + libellé localisé via `auth.character_select.race.<id>`. |
+
+### Mapping race id ↔ libellé FR
+| `race_str` (DB) | Libellé UI (FR) | Symbole |
+|---|---|---|
+| `humains` | Humain | H |
+| `elfes` | Elfe | E |
+| `orcs` | Orc | O |
+| `nains` | Nain | N |
+| `demons` | Demon | D |
+| `chevaliers_dragons` | Chevalier-dragon | C |
+
+---
+
 ## Aide-mémoire : comment trouver un écran
 
 1. **Je veux changer le visuel d'un écran** → `engine/render/auth/screens/AuthImGuiXxx.cpp`
 2. **Je veux changer la logique / les données affichées** → `engine/client/auth/screens/AuthScreenXxx.cpp`
 3. **Je veux changer un style global (couleur, police, bouton)** → `engine/render/auth/AuthImGuiCommon.h/.cpp`
 4. **Je veux changer un message / traduction** → `game/data/localization/fr/fr.json`
+5. **Je veux changer le comportement de la caméra in-game** → `engine/render/Camera.{h,cpp}` (`OrbitalCameraController`)
+6. **Je veux changer le menu pause** → `engine/Engine.cpp` (branche Échap + rendu inline du panel)
+7. **Je veux ajouter / modifier la roadmap publique** → `db/migrations/00NN_roadmap_items_*.sql` (incrémenter le numéro)
 5. **Je veux changer la logique réseau d'un écran** → `StartXxxWorker()` dans le fichier presenter + payload dans `engine/network/AuthRegisterPayloads.h`
 6. **Je veux changer ce que le serveur fait à la réception** → `engine/server/XxxHandler.cpp`
 7. **Je veux changer l'ordre d'enchaînement des écrans d'auth** → `PollAsyncResult()` et `SubmitCurrentPhase()` dans `engine/client/auth/AuthUiPresenterCore.cpp`. Pour l'auto/forcé du choix de shard côté flux : `engine/network/MasterShardClientFlow.cpp` (variable `m_shardPickWhenMultiple`).

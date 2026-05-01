@@ -423,6 +423,19 @@ namespace engine::editor
 		// l'UI auth utilise la police ImGui par defaut (ProggyClean ~13 px) qui ne ressemble pas a la
 		// maquette Lune Noire. La piste Vulkan/AuthGlyphPass utilise deja ces memes fichiers (Engine.cpp).
 		// On charge Windlass en premier : elle devient la police par defaut d'ImGui.
+		// Range restreint pour les fontes decoratives Lune Noire (Windlass) : A-Z, a-z,
+		// 0-9, espace, et ponctuation basique presente dans la fonte. Tout le reste est
+		// laisse a ProggyClean en MergeMode (cf. plus bas) - sinon ImGui reserve un slot
+		// vide pour chaque codepoint demande (ex. % et [ et ]) et le merge ne remplace
+		// jamais les slots existants, ce qui produisait des "?" a l'affichage.
+		static const ImWchar kWindlassRanges[] = {
+			0x0020, 0x0020, // espace
+			0x0027, 0x0027, // '
+			0x002C, 0x003F, // , - . / 0-9 : ; < = > ?
+			0x0041, 0x005A, // A-Z
+			0x0061, 0x007A, // a-z
+			0,
+		};
 		auto loadAuthFontFromConfig = [&io, cfg](std::string_view relativePath, float pixelHeight, const char* role) -> bool {
 			if (cfg == nullptr || relativePath.empty())
 			{
@@ -441,7 +454,7 @@ namespace engine::editor
 			std::memcpy(atlasOwned, bytes.data(), bytes.size());
 			ImFontConfig fcfg{};
 			ImFont* font = io.Fonts->AddFontFromMemoryTTF(atlasOwned, static_cast<int>(bytes.size()), pixelHeight,
-				&fcfg, io.Fonts->GetGlyphRangesDefault());
+				&fcfg, kWindlassRanges);
 			if (font == nullptr)
 			{
 				IM_FREE(atlasOwned);
@@ -465,6 +478,20 @@ namespace engine::editor
 			const float uiFontPx = static_cast<float>(std::clamp<int64_t>(
 				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 13), 11, 32));
 			loadAuthFontFromConfig(uiFontPath, uiFontPx, "UI");
+
+			// Fallback merge : Windlass.ttf ne contient pas les caracteres accentues, '*' (utilise
+			// par ImGuiInputTextFlags_Password), '[' ']' '%' '@' et autres ponctuations etendues.
+			// ImGui les rendait alors comme '?'. On merge ProggyClean (ImGui built-in) IMMEDIATEMENT
+			// apres Windlass (sinon le merge prend la fonte precedente, pas Windlass) : Windlass
+			// reste prioritaire pour A-Z/a-z/0-9 et ProggyClean prend le relais pour les autres.
+			// Visuellement les glyphes de fallback ne matchent pas la maquette mais c'est mieux
+			// que des '?'.
+			{
+				ImFontConfig fallbackCfg{};
+				fallbackCfg.MergeMode = true;
+				io.Fonts->AddFontDefault(&fallbackCfg);
+				LOG_INFO(Render, "[WorldEditorImGui] Fallback ProggyClean merge sur Windlass (couvre * [ ] @ etc.)");
+			}
 
 			const std::string valueFontPath = cfg->GetString("render.auth_ui.value_font_path", "");
 			const float valueFontPx = static_cast<float>(std::clamp<int64_t>(

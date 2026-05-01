@@ -1,5 +1,5 @@
-// AUTH-UI.11 — rendu ImGui écran de création de personnage avec saisie du nom et confirmation (split depuis AuthImGuiRenderer.cpp).
-// Contient RenderCharCreateScreen : panneau avec champ de nom, lignes d'information issues du modèle, et boutons Annuler / Créer.
+// AUTH-UI.11 - rendu ImGui ecran de creation de personnage avec saisie du nom et confirmation (split depuis AuthImGuiRenderer.cpp).
+// Contient RenderCharCreateScreen : panneau avec champ de nom, lignes d'information issues du modele, et boutons Annuler / Creer.
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -20,36 +20,18 @@ namespace engine::render
 		}
 	} // namespace
 
-	/// Affiche l'écran de création de personnage : champ de saisie du nom, lignes d'information issues du modèle, puis boutons Annuler et Créer.
+	/// Affiche l'ecran de creation de personnage : champ de saisie du nom, lignes d'information issues du modele, puis boutons Annuler et Creer.
 	void AuthImGuiRenderer::RenderCharCreateScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		// Cohérence avec les autres écrans (Login / Register / VerifyEmail / Error) :
-		// le grand titre « LES CHRONIQUES » et son sous-titre « de la Lune Noire » sont
-		// dessinés AU-DESSUS du cadre, jamais comme titre de panneau. Le panneau ne
-		// porte que la section (« Création du personnage » via rm.sectionTitle).
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "charcreate");
+		const float titleZoneW = vpW * 0.96f;
 
 		const std::string panelTitle = rm.sectionTitle.empty() ? std::string("Creation de personnage") : rm.sectionTitle;
-		if (!BeginPanel(680.f, vpW, vpH, panelTitle.c_str(), "", ""))
+		if (!BeginPanel(680.f, titleZoneW, vpH, panelTitle.c_str(), "", ""))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 		const std::string& nameLabel = rm.fields.empty() ? std::string("Nom du personnage") : rm.fields[0].label;
@@ -60,9 +42,23 @@ namespace engine::render
 			ImGui::TextWrapped("%s", line.text.c_str());
 			ImGui::PopStyleColor();
 		}
+
+		// Choix de la race : combo aligne sur les 6 races jouables seedees par la
+		// migration 0036. L'id string envoye au serveur (raceId) doit correspondre
+		// a la colonne `races.name` ; les libelles affiches sont en francais natif.
 		ImGui::Spacing();
-		// Largeurs finies pour éviter que Annuler (pleine largeur) ne capture les clics destinés
-		// à Créer (cf. correctif AuthImGuiTerms.cpp pour la même classe de bug).
+		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
+		ImGui::TextUnformatted("RACE");
+		ImGui::PopStyleColor();
+		static constexpr const char* kRaceIds[]    = { "humains", "elfes", "orcs", "nains", "demons", "chevaliers_dragons" };
+		static constexpr const char* kRaceLabels[] = { "Humain",  "Elfe",  "Orc",  "Nain",  "Demon",  "Chevalier-dragon"   };
+		static constexpr int kRaceCount = sizeof(kRaceIds) / sizeof(kRaceIds[0]);
+		if (m_charRaceIdx < 0 || m_charRaceIdx >= kRaceCount) m_charRaceIdx = 0;
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		ImGui::Combo("##charcreate_race", &m_charRaceIdx, kRaceLabels, kRaceCount);
+		ImGui::Spacing();
+		// Largeurs finies pour eviter que Annuler (pleine largeur) ne capture les clics destines
+		// a Creer (cf. correctif AuthImGuiTerms.cpp pour la meme classe de bug).
 		const float ccGap = 8.f;
 		const float ccBtnW = (ImGui::GetContentRegionAvail().x - ccGap) * 0.5f;
 		if (DrawGhostButton("Annuler", false, ccBtnW) && m_authPresenter != nullptr)
@@ -70,7 +66,7 @@ namespace engine::render
 			m_authPresenter->ImGuiCancelCharacterCreateReturnToLogin();
 		}
 		ImGui::SameLine(0.f, ccGap);
-		std::string submitLabel = "Creer"; ///< Libellé du bouton de confirmation, surchargé par l'action primaire du modèle si présente.
+		std::string submitLabel = "Creer"; ///< Libelle du bouton de confirmation, surcharge par l'action primaire du modele si presente.
 		for (const auto& a : rm.actions)
 		{
 			if (a.primary)
@@ -81,9 +77,13 @@ namespace engine::render
 		}
 		if (DrawPrimaryButton(submitLabel.c_str(), false, ccBtnW) && m_authPresenter != nullptr && m_authCfg != nullptr)
 		{
-			m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName);
+			static constexpr const char* kRaceIdsSubmit[] = { "humains", "elfes", "orcs", "nains", "demons", "chevaliers_dragons" };
+			static constexpr int kRaceCountSubmit = sizeof(kRaceIdsSubmit) / sizeof(kRaceIdsSubmit[0]);
+			const int raceIdx = (m_charRaceIdx >= 0 && m_charRaceIdx < kRaceCountSubmit) ? m_charRaceIdx : 0;
+			m_authPresenter->ImGuiSubmitCharacterCreate(*m_authCfg, m_charName, kRaceIdsSubmit[raceIdx]);
 		}
 		EndPanel();
+		ImGui::EndChild();
 	}
 } // namespace engine::render
 

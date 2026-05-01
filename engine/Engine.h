@@ -146,6 +146,15 @@ namespace engine
 
 		void OnResize(int w, int h);
 		void OnQuit();
+		/// Menu pause in-game (touche Echap post-auth) : ouvre/ferme le panneau avec
+		/// les actions Quitter / Options / Deconnecter. La 1ere version (M44.x) est
+		/// minimale ; pas de gating vers UI options ni reset complet du world state.
+		void ToggleInGamePauseMenu();
+		/// Termine la session in-game et ramene le client a l'ecran de connexion :
+		/// ferme la connexion UDP gameplay, marque l'auth UI comme non complete,
+		/// repositionne sur Phase::Login. Le master/shard handshake recommencera
+		/// au prochain clic Se connecter.
+		void RequestLogoutToLoginScreen();
 		/// Optional UDP gameplay + shop/inventory HUD (M35.2); controlled by `client.gameplay_udp.enabled`.
 		void InitGameplayNet();
 		/// Tears down presenters, UI binding, and UDP socket created by \ref InitGameplayNet.
@@ -288,6 +297,10 @@ namespace engine
 		/// Phase 3.6.6 — Prochain instant où la sauvegarde périodique de position sera envoyée.
 		/// Initialisé à now + intervalle au moment de la consommation EnterWorldCommand.
 		std::chrono::steady_clock::time_point        m_nextSavePositionTime{};
+		/// Etape 6 : derniere position synchronisee. Permet de detecter le mouvement
+		/// (delta > seuil) et de raccourcir l'intervalle de save tant que le perso
+		/// bouge. Reinitialisee au EnterWorld depuis le spawn.
+		engine::math::Vec3                            m_lastSyncedPosition{ 0.f, 0.f, 0.f };
 		/// Phase 3.6.6 — Intervalle entre deux sauvegardes périodiques (configurable via
 		/// `client.save_position.interval_sec`, défaut 30s).
 		std::chrono::seconds                         m_savePositionIntervalSec{ 30 };
@@ -313,6 +326,9 @@ namespace engine
 		engine::core::Time m_time;
 		engine::core::memory::FrameArena m_frameArena;
 		engine::render::FpsCameraController m_fpsCameraController;
+		/// Controleur camera 3eme personne post-EnterWorld (vue orbitale arriere).
+		/// Utilise UNIQUEMENT in-game (post-auth, pas en mode --editor / --world-editor).
+		engine::render::OrbitalCameraController m_orbitalCameraController;
 		engine::world::World m_world;
 		engine::world::StreamingScheduler m_streamingScheduler;
 		engine::world::StreamCache m_streamCache;
@@ -333,6 +349,10 @@ namespace engine
 		/// \c true si la ligne de commande contient \c --world-editor (injecté par lcdlln_world_editor.exe uniquement).
 		bool m_worldEditorExe = false;
 		bool m_editorEnabled = false;
+		/// Menu pause in-game ouvert : la touche Echap post-auth bascule cet etat
+		/// (au lieu de quitter le client). Tant qu'il est actif, le menu ImGui est
+		/// dessine au-dessus du monde et propose Quitter / Options / Deconnecter.
+		bool m_inGamePauseMenuVisible = false;
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;
 		int m_width = 0;

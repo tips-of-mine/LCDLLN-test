@@ -53,13 +53,14 @@ namespace engine::client
 	} // namespace
 
 	/// Soumet le nom de personnage saisi depuis le renderer ImGui et lance la création.
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8)
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8)
 	{
 		if (m_phase != Phase::CharacterCreate)
 		{
 			return;
 		}
 		m_characterName = nameUtf8 ? std::string(nameUtf8) : std::string();
+		m_characterRaceId = raceIdUtf8 ? std::string(raceIdUtf8) : std::string();
 		SubmitCurrentPhase(cfg);
 	}
 
@@ -130,6 +131,7 @@ namespace engine::client
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
 		const std::string characterName = m_characterName;
+		const std::string characterRaceId = m_characterRaceId;
 
 		m_pendingAsyncKind = AsyncKind::CharacterCreate;
 		{
@@ -139,7 +141,7 @@ namespace engine::client
 
 		engine::network::NetClient* const masterClient = m_masterClient.get();
 		const uint64_t sessionId = m_masterSessionId;
-		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName]() {
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs, characterName, characterRaceId]() {
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
@@ -154,7 +156,7 @@ namespace engine::client
 			bool done = false;
 			std::string errMsg;
 			if (!disp.SendRequest(engine::network::kOpcodeCharacterCreateRequest,
-					engine::network::BuildCharacterCreateRequestPayload(characterName),
+					engine::network::BuildCharacterCreateRequestPayload(characterName, characterRaceId),
 					[&](uint32_t, bool timeout, std::vector<uint8_t> pl) {
 						done = true;
 						if (timeout)
@@ -204,7 +206,7 @@ namespace engine::client
 // Stubs Linux/Mac — aucune UI d'auth sur ces plateformes.
 #else
 
-	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*) {}
+	void AuthUiPresenter::ImGuiSubmitCharacterCreate(const engine::core::Config&, const char*, const char*) {}
 	void AuthUiPresenter::ImGuiCancelCharacterCreateReturnToLogin() {}
 
 	void AuthUiPresenter::BuildModel_CharacterCreate(RenderModel&) const {}

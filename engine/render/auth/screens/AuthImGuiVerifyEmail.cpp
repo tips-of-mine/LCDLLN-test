@@ -1,6 +1,6 @@
-// AUTH-UI.3 — Écrans de vérification d'e-mail (saisie du code 6 chiffres et confirmation d'inscription)
+// AUTH-UI.3 - Ecrans de verification d'e-mail (saisie du code 6 chiffres et confirmation d'inscription)
 
-// Contient RenderVerifyScreen (inscription en cours) et RenderEmailConfirmationScreen (inscription réussie, renvoi disponible après 15 min).
+// Contient RenderVerifyScreen (inscription en cours) et RenderEmailConfirmationScreen (inscription reussie, renvoi disponible apres 15 min).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -16,13 +16,13 @@ namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur thème en ImVec4 pour ImGui.
+		/// Convertit une couleur theme en ImVec4 pour ImGui.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
-		/// Concatène dans l'ordre les chiffres valides des 6 cases de saisie.
+		/// Concatene dans l'ordre les chiffres valides des 6 cases de saisie.
 		std::string PackVerifySlotsInOrder(const char slots[7])
 		{
 			std::string o;
@@ -50,34 +50,17 @@ namespace engine::render
 			return true;
 		}
 
-		static int g_verifyDigitFocusSlot = -1;      ///< Index de la case à focaliser au prochain frame (-1 = aucune).
-		static bool g_verifySlotFocused[6]{};         ///< État de focus par case pour l'écran de vérification en cours d'inscription.
-		static bool g_confSlotFocused[6]{};           ///< État de focus par case pour l'écran de confirmation post-inscription.
+		static int g_verifyDigitFocusSlot = -1;      ///< Index de la case a focaliser au prochain frame (-1 = aucune).
+		static bool g_verifySlotFocused[6]{};         ///< Etat de focus par case pour l'ecran de verification en cours d'inscription.
+		static bool g_confSlotFocused[6]{};           ///< Etat de focus par case pour l'ecran de confirmation post-inscription.
 	}
 
-	/// Affiche l'écran de saisie du code à 6 chiffres envoyé par e-mail lors de l'inscription.
+	/// Affiche l'ecran de saisie du code a 6 chiffres envoye par e-mail lors de l'inscription.
 	void AuthImGuiRenderer::RenderVerifyScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "verify");
+		const float titleZoneW = vpW * 0.96f;
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -93,9 +76,10 @@ namespace engine::render
 			rm.authVerifyPanelSubtitle.empty() ? std::string("NOUS AVONS ENVOYE UN CODE A 6 CHIFFRES.") : rm.authVerifyPanelSubtitle;
 		const std::string& ver =
 			rm.authVerifyPanelBadge.empty() ? std::string("3 / 4") : rm.authVerifyPanelBadge;
-		if (!BeginPanel(560.f, vpW, vpH, panelTitle, sub, ver, true, false))
+		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
 		}
@@ -266,6 +250,7 @@ namespace engine::render
 		ImGui::Columns(1);
 
 		EndPanel();
+		ImGui::EndChild();
 
 		if (!rm.authVerifyDevHint.empty())
 		{
@@ -295,29 +280,12 @@ namespace engine::render
 		}
 	}
 
-	/// Affiche l'écran « vérifiez vos e-mails » affiché après une inscription réussie, avec renvoi du code si 15 min se sont écoulées.
+	/// Affiche l'ecran " verifiez vos e-mails " affiche apres une inscription reussie, avec renvoi du code si 15 min se sont ecoulees.
 	void AuthImGuiRenderer::RenderEmailConfirmationScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "emailconf");
+		const float titleZoneW = vpW * 0.96f;
 
 		DrawRegisterFlowHeader(rm, vpW);
 
@@ -332,9 +300,10 @@ namespace engine::render
 		const std::string& sub = rm.authVerifyPanelSubtitle;
 		const std::string& ver =
 			rm.authVerifyPanelBadge.empty() ? std::string("3 / 4") : rm.authVerifyPanelBadge;
-		if (!BeginPanel(560.f, vpW, vpH, panelTitle, sub, ver, true, false))
+		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
 		}
@@ -513,6 +482,7 @@ namespace engine::render
 		ImGui::Columns(1);
 
 		EndPanel();
+		ImGui::EndChild();
 
 		if (!rm.authVerifyDevHint.empty())
 		{

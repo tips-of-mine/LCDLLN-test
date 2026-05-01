@@ -1,4 +1,4 @@
-// AUTH-UI.4 — rendu ImGui de l'écran d'erreur d'authentification (erreur simple ou erreur enrichie d'inscription).
+// AUTH-UI.4 - rendu ImGui de l'ecran d'erreur d'authentification (erreur simple ou erreur enrichie d'inscription).
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/auth/AuthImGuiCommon.h"
 #include "engine/render/LnTheme.h"
@@ -15,26 +15,26 @@ namespace engine::render
 {
 	namespace
 	{
-		/// Convertit une couleur thème en ImVec4 pour ImGui::PushStyleColor.
+		/// Convertit une couleur theme en ImVec4 pour ImGui::PushStyleColor.
 		ImVec4 IV(const LnTheme::Rgba& c)
 		{
 			return ImVec4(c.r, c.g, c.b, c.a);
 		}
 
-		/// Convertit une couleur thème en ImU32 pour les primitives du DrawList (AddRectFilled, etc.).
+		/// Convertit une couleur theme en ImU32 pour les primitives du DrawList (AddRectFilled, etc.).
 		ImU32 U32(const LnTheme::Rgba& c)
 		{
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		/// Pastilles de variante d’erreur : désactivé en production (maquette AUTH-UI.4).
+		/// Pastilles de variante d'erreur : desactive en production (maquette AUTH-UI.4).
 		constexpr bool kAuthErrorVariantPillsDemo = false;
 	}
 
-	/// Affiche l'écran d'erreur : bannière d'erreur, indice de correction et bouton retour ; gère le layout enrichi d'inscription ou le layout simple.
+	/// Affiche l'ecran d'erreur : banniere d'erreur, indice de correction et bouton retour ; gere le layout enrichi d'inscription ou le layout simple.
 	void AuthImGuiRenderer::RenderErrorScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		/// Déclenche l'acquittement de l'erreur et retourne à l'écran précédent.
+		/// Declenche l'acquittement de l'erreur et retourne a l'ecran precedent.
 		auto acknowledge = [this]() {
 			if (m_authPresenter != nullptr && m_authCfg != nullptr)
 			{
@@ -42,26 +42,9 @@ namespace engine::render
 			}
 		};
 
-		const std::string& h1 = rm.titleLine1.empty() ? std::string("Les Chroniques de la Lune Noire") : rm.titleLine1;
-
-		ImGui::SetWindowFontScale(2.4f);
-		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kText));
-		const float w1 = ImGui::CalcTextSize(h1.c_str()).x;
-		ImGui::SetCursorPos(ImVec2((vpW - w1) * 0.5f, vpH * 0.05f));
-		ImGui::TextUnformatted(h1.c_str());
-		ImGui::SetWindowFontScale(1.f);
-		ImGui::PopStyleColor();
-
-		if (!rm.titleLine2.empty())
-		{
-			ImGui::SetWindowFontScale(1.5f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kAccent));
-			const float w2 = ImGui::CalcTextSize(rm.titleLine2.c_str()).x;
-			ImGui::SetCursorPos(ImVec2((vpW - w2) * 0.5f, ImGui::GetCursorPosY() + 2.f));
-			ImGui::TextUnformatted(rm.titleLine2.c_str());
-			ImGui::PopStyleColor();
-			ImGui::SetWindowFontScale(1.f);
-		}
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "error");
+		const float titleZoneW = vpW * 0.96f;
 
 		if (rm.authErrorRichRegisterLayout && !rm.authRegisterErrorVariants.empty())
 		{
@@ -78,9 +61,10 @@ namespace engine::render
 			const std::string_view sub = rm.authErrorPanelSubtitle;
 			const std::string& ver =
 				rm.authErrorVersionBadge.empty() ? std::string("Erreur") : rm.authErrorVersionBadge;
-			if (!BeginPanel(640.f, vpW, vpH, panelTitle, sub, ver, true, false))
+			if (!BeginPanel(640.f, titleZoneW, vpH, panelTitle, sub, ver, true, false))
 			{
 				EndPanel();
+				ImGui::EndChild();
 				DrawAuthTweaksPanel(vpW, vpH);
 				return;
 			}
@@ -223,6 +207,7 @@ namespace engine::render
 			}
 
 			EndPanel();
+			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 
 			if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))
@@ -241,9 +226,10 @@ namespace engine::render
 			}
 		}
 		const std::string& ver = rm.authErrorVersionBadge.empty() ? std::string("Erreur") : rm.authErrorVersionBadge;
-		if (!BeginPanel(560.f, vpW, vpH, panelTitle, "", ver, true, false))
+		if (!BeginPanel(560.f, titleZoneW, vpH, panelTitle, "", ver, true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			DrawAuthTweaksPanel(vpW, vpH);
 			return;
 		}
@@ -258,6 +244,7 @@ namespace engine::render
 			m_authPresenter->ImGuiAcknowledgeErrorScreen(*m_authCfg);
 		}
 		EndPanel();
+		ImGui::EndChild();
 		DrawAuthTweaksPanel(vpW, vpH);
 
 		if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))

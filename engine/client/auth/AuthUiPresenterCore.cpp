@@ -4328,4 +4328,24 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 		LOG_INFO(Core, "[AuthUiPresenter] World Editor : flux auth marqué complet (pas d’écran login)");
 	}
 
+	void AuthUiPresenter::RequestReturnToLogin()
+	{
+		if (!m_initialized)
+		{
+			return;
+		}
+		JoinWorker();
+		m_flowComplete = false;
+		m_phase = Phase::Login;
+		m_errorReturnPhase = Phase::Login;
+		m_userErrorText.clear();
+		m_infoBanner.clear();
+		// Vide les buffers d'identifiant/mot de passe en mémoire pour ne pas re-soumettre
+		// par erreur l'auth précédente. Le login persisté sera re-rempli au prochain frame
+		// par la lecture de remembered_login.json côté UI.
+		m_pendingEnterWorld = {};
+		m_postRegistrationCharacterCreatePending = false;
+		LOG_INFO(Core, "[AuthUiPresenter] Logout: retour ecran Login (flow_complete=false)");
+	}
+
 }

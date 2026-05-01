@@ -1412,7 +1412,12 @@ namespace engine
 												vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 											});
 
-										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/test.mesh");
+										// Etape 2 vue 3eme personne : on charge directement le mesh placeholder
+										// avatar (cube 0.5x1.8x0.5 m) au boot. Avant, on chargeait
+										// 'meshes/test.mesh' (un simple triangle), utilise comme proxy de scene.
+										// L'avatar est positionne a la cible orbitale via out.objectModelMatrix
+										// (cf. branche !m_editorMode du Update).
+										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/avatar_placeholder.mesh");
 
 
 										m_frameGraph.addPass("GPU_Cull",
@@ -2411,9 +2416,13 @@ namespace engine
 #if defined(_WIN32)
 													// Phase 3.11.1 — RecordToBackbuffer fire aussi quand le panneau chat est actif post-auth
 													// (le draw list ImGui contient alors la fenêtre chat émise par ChatImGuiRenderer).
+													// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE.
+													// Sans `IsInitialized()`, un echec d'init de localisation fait passer authGateActive
+													// a false (m_initialized=false) et le chat apparaissait alors par-dessus un ecran noir.
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
-														&& !authVisualState.active && !m_worldEditorExe
-														&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+														&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+														&& !m_worldEditorExe
+														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
 													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
 													const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -2586,11 +2595,13 @@ namespace engine
 			constexpr float kRad2Deg = 180.f / 3.14159265f;
 			const float yawDeg   = shutdownCam.yaw   * kRad2Deg;
 			const float pitchDeg = shutdownCam.pitch * kRad2Deg;
+			// Vue 3eme personne : on persiste la position cible (joueur), pas la camera.
+			const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
 			const bool sent = m_authUi.SavePositionAsync(m_currentCharacterId,
-				shutdownCam.position.x, shutdownCam.position.y, shutdownCam.position.z,
+				playerPos.x, playerPos.y, playerPos.z,
 				yawDeg, pitchDeg);
 			LOG_INFO(Core, "[SavePosition] shutdown save (character_id={}, pos=({:.1f},{:.1f},{:.1f}), sent={})",
-				m_currentCharacterId, shutdownCam.position.x, shutdownCam.position.y, shutdownCam.position.z, sent);
+				m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z, sent);
 			m_shutdownPositionSaved = true;
 		}
 
@@ -2642,7 +2653,12 @@ namespace engine
 		}
 		else if (!m_editorEnabled && m_input.WasPressed(engine::platform::Key::Escape))
 		{
-			OnQuit();
+			// Echap in-game (post-auth, pas dans un menu chat/auction/shop) :
+			// toggle le menu pause au lieu de quitter directement le client.
+			// Demande utilisateur explicite : 'on quitte automatiquement le jeu,
+			// il ne faut surtout pas. Nous devons toujours passer par un menu
+			// intermediaire, qui propose de Quitter / Options / Se deconnecter'.
+			ToggleInGamePauseMenu();
 		}
 
 		if (m_input.WasPressed(engine::platform::Key::F_11))
@@ -2980,6 +2996,14 @@ namespace engine
 					out.camera.position.z = spawnZ;
 					out.camera.yaw = yawDeg * kDeg2Rad;
 					out.camera.pitch = pitchDeg * kDeg2Rad;
+					// Aligne la cible orbitale sur le spawn DB. Le controleur
+					// repositionnera ensuite la camera derriere la cible (par defaut
+					// 6 m d'orbite arriere) au prochain Update.
+					m_orbitalCameraController.SetTargetPosition(out.camera.position);
+					// Etape 6 : initialise la derniere position synchronisee au spawn
+					// pour que la 1ere detection de mouvement soit correcte (sans cela
+					// le perso etait "deplace" depuis (0,0,0) au tout 1er tick).
+					m_lastSyncedPosition = out.camera.position;
 					LOG_INFO(Core, "[EnterWorld] camera teleport ({}, {}, {}) yaw={}deg pitch={}deg",
 						spawnX, spawnY, spawnZ, yawDeg, pitchDeg);
 				}
@@ -3096,20 +3120,45 @@ namespace engine
 			// Phase 3.6.6 — Tick périodique de sauvegarde de position. Démarré à la consommation
 			// de EnterWorldCommand (m_currentCharacterId != 0). Intervalle borné à >= 5 s côté
 			// AuthUiPresenter::SavePositionAsync via la config `client.save_position.interval_sec`.
-			if (m_currentCharacterId != 0u
-				&& std::chrono::steady_clock::now() >= m_nextSavePositionTime)
+			//
+			// Etape 6 vue 3eme personne : ajout d'une heuristique mouvement -> save plus
+			// frequente. Quand le perso a bouge de plus de 0.5 m depuis la derniere
+			// synchro, on declenche immediatement (rate-limite a 1.0 s entre 2 saves).
+			// Si statique, on revient a l'intervalle long (m_savePositionIntervalSec).
+			if (m_currentCharacterId != 0u)
 			{
-				constexpr float kRad2Deg = 180.f / 3.14159265f;
-				const float yawDeg   = out.camera.yaw   * kRad2Deg;
-				const float pitchDeg = out.camera.pitch * kRad2Deg;
-				if (m_authUi.SavePositionAsync(m_currentCharacterId,
-					out.camera.position.x, out.camera.position.y, out.camera.position.z,
-					yawDeg, pitchDeg))
+				const engine::math::Vec3& playerPos = m_orbitalCameraController.GetTargetPosition();
+				const float dx = playerPos.x - m_lastSyncedPosition.x;
+				const float dy = playerPos.y - m_lastSyncedPosition.y;
+				const float dz = playerPos.z - m_lastSyncedPosition.z;
+				const float dist2 = dx * dx + dy * dy + dz * dz;
+				constexpr float kMoveThresholdM   = 0.5f;
+				constexpr float kMoveThresholdSqr = kMoveThresholdM * kMoveThresholdM;
+				const auto now = std::chrono::steady_clock::now();
+				const bool intervalElapsed = now >= m_nextSavePositionTime;
+				const bool movedSignificantly = dist2 >= kMoveThresholdSqr;
+				if (intervalElapsed || movedSignificantly)
 				{
-					LOG_DEBUG(Core, "[SavePosition] periodic save sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}))",
-						m_currentCharacterId, out.camera.position.x, out.camera.position.y, out.camera.position.z);
+					constexpr float kRad2Deg = 180.f / 3.14159265f;
+					const float yawDeg   = out.camera.yaw   * kRad2Deg;
+					const float pitchDeg = out.camera.pitch * kRad2Deg;
+					if (m_authUi.SavePositionAsync(m_currentCharacterId,
+						playerPos.x, playerPos.y, playerPos.z,
+						yawDeg, pitchDeg))
+					{
+						LOG_DEBUG(Core, "[SavePosition] sync sent (character_id={}, pos=({:.1f},{:.1f},{:.1f}), reason={})",
+							m_currentCharacterId, playerPos.x, playerPos.y, playerPos.z,
+							movedSignificantly ? "moved" : "tick");
+					}
+					m_lastSyncedPosition = playerPos;
+					// Si on est ici parce qu'on a bouge (et pas a cause de l'intervalle
+					// long), on rate-limite la prochaine sync a 1.0 s minimum pour ne
+					// pas spammer le serveur tant que le joueur enchaine les pas.
+					// Sinon on retombe sur l'intervalle long (config-driven).
+					const auto nextDelay = movedSignificantly ? std::chrono::milliseconds(1000)
+					                                          : std::chrono::duration_cast<std::chrono::milliseconds>(m_savePositionIntervalSec);
+					m_nextSavePositionTime = now + nextDelay;
 				}
-				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 			}
 
 			// Phase 5 reconnect — Si une tentative de reconnexion master est en cours,
@@ -3171,9 +3220,15 @@ namespace engine
 		const bool authImguiOverlayNewFrame = m_authImGui && m_authUi.GetVisualState().active
 			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
 		// Phase 3.11.1 — NewFrame également quand le panneau chat doit s'afficher (post-auth, pas en éditeur).
+		// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE
+		// (cf. fix encombrement ecran noir lorsque LocalizationService init echoue).
+		// Inclut aussi le menu pause in-game (m_inGamePauseMenuVisible) pour que NewFrame
+		// soit appele quand seul le menu pause est ouvert (chat config off mais auth OK).
+		const bool postAuthInGame = m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& !m_worldEditorExe;
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
-			&& !authGateActive && !m_worldEditorExe
-			&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+			&& postAuthInGame
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -3198,8 +3253,14 @@ namespace engine
 		{
 			if (!authGateActive && !m_chatUi.IsChatFocusActive())
 			{
-				m_fpsCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout, false, true, true, 0.f,
-					out.camera);
+				// Etape 1 vue 3eme personne : controleur orbital (camera derriere une
+				// position cible, qui sera celle de l'avatar dans un PR ulterieur).
+				// Comportement : souris libre par defaut ; clic droit maintenu rotate
+				// la camera autour de la cible (yaw/pitch) ; molette zoom in/out ;
+				// WASD deplace la cible dans le plan XZ et la camera suit.
+				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
+					rmbLook, true, out.camera);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())
@@ -3304,6 +3365,45 @@ namespace engine
 		else
 		{
 			out.objectVisible = true;
+			// Etape 2 + 4 vue 3eme personne : position + orientation de l'avatar.
+			//
+			// Position : translation a la cible orbitale (= position joueur).
+			// Le mesh 'avatar_placeholder.mesh' est un cube 0.5x1.8x0.5 m centre
+			// sur (0, 0.9, 0), pieds Y=0 ; donc translation(target) sans offset.
+			//
+			// Orientation : rotation Y selon le yaw camera (etape 4). Standard MMO :
+			// le perso fait face dans la meme direction horizontale que la camera,
+			// ce qui revient a montrer son dos a la camera (3eme personne classique).
+			// Le cube placeholder etant symetrique, ca n'a pas d'effet visuel pour
+			// le moment ; le cablage est en place pour les futurs meshes textures.
+			//
+			// Matrice row-major M = T(target) * R_y(yaw) :
+			//   | cos(y)   0  sin(y)  tx |
+			//   | 0        1  0       ty |
+			//   | -sin(y)  0  cos(y)  tz |
+			//   | 0        0  0       1  |
+			if (m_currentCharacterId != 0u)
+			{
+				const engine::math::Vec3& target = m_orbitalCameraController.GetTargetPosition();
+				const float yaw = out.camera.yaw;
+				const float c = std::cos(yaw);
+				const float s = std::sin(yaw);
+				// Etape 5 : bob vertical placeholder quand le perso marche / court.
+				// Idle : pas d'oscillation. L'amplitude est de 4 cm en walk, 7 cm
+				// en run -- visible sans etre desagreable. A remplacer par de
+				// vraies anims squelettiques quand un format anim sera cable.
+				float bobY = 0.0f;
+				const auto loco = m_orbitalCameraController.GetLocomotionState();
+				if (loco != engine::render::OrbitalCameraController::LocomotionState::Idle)
+				{
+					const float bobAmpM = (loco == engine::render::OrbitalCameraController::LocomotionState::Run) ? 0.07f : 0.04f;
+					bobY = std::sin(m_orbitalCameraController.GetWalkBobPhaseRad()) * bobAmpM;
+				}
+				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = s;    out.objectModelMatrix[3]  = target.x;
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y + bobY;
+				out.objectModelMatrix[8]  = -s;    out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = target.z;
+				out.objectModelMatrix[12] = 0.0f;  out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
+			}
 		}
 
 #if defined(_WIN32)
@@ -3492,8 +3592,10 @@ namespace engine
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
-			&& m_chatUi.IsInitialized() && !authGateActive && !m_worldEditorExe
-			&& m_cfg.GetBool("render.chat_imgui.enabled", true))
+			&& m_chatUi.IsInitialized()
+			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& !m_worldEditorExe
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible))
 		{
 			// Phase 3.11.1 — Rendu du panneau chat. NewFrame déjà appelé plus haut via
 			// chatImguiOverlayNewFrame. ImGui::Render finalise la draw list pour le RecordToBackbuffer.
@@ -3509,6 +3611,51 @@ namespace engine
 				}
 			}
 			m_chatImGui->Render(dw, dh);
+			// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
+			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
+			if (m_inGamePauseMenuVisible)
+			{
+				const float menuW = 320.f;
+				const float menuH = 220.f;
+				ImGui::SetNextWindowPos(ImVec2((dw - menuW) * 0.5f, (dh - menuH) * 0.5f), ImGuiCond_Always);
+				ImGui::SetNextWindowSize(ImVec2(menuW, menuH), ImGuiCond_Always);
+				ImGui::SetNextWindowBgAlpha(0.92f);
+				ImGui::Begin("##ln_pause_menu", nullptr,
+					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+				ImGui::SetWindowFontScale(1.2f);
+				const char* title = "PAUSE";
+				const float titleW = ImGui::CalcTextSize(title).x;
+				ImGui::SetCursorPosX((menuW - titleW) * 0.5f);
+				ImGui::TextUnformatted(title);
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::Separator();
+				ImGui::Spacing();
+				const float btnW = menuW - 40.f;
+				if (ImGui::Button("Reprendre", ImVec2(btnW, 32.f)))
+				{
+					m_inGamePauseMenuVisible = false;
+				}
+				ImGui::Spacing();
+				if (ImGui::Button("Options", ImVec2(btnW, 32.f)))
+				{
+					// TODO : ouvrir l'overlay Options in-game (re-utilisera AuthImGuiOptions
+					// quand decoupage UI sera fait). Pour l'instant juste un log.
+					LOG_INFO(Core, "[InGamePauseMenu] Options cliquee (TODO ouverture overlay)");
+				}
+				ImGui::Spacing();
+				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))
+				{
+					RequestLogoutToLoginScreen();
+				}
+				ImGui::Spacing();
+				if (ImGui::Button("Quitter le jeu", ImVec2(btnW, 32.f)))
+				{
+					OnQuit();
+				}
+				ImGui::End();
+			}
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_editorHubImGui
@@ -3836,6 +3983,31 @@ namespace engine
 	void Engine::OnQuit()
 	{
 		m_quitRequested = true;
+	}
+
+	void Engine::ToggleInGamePauseMenu()
+	{
+		m_inGamePauseMenuVisible = !m_inGamePauseMenuVisible;
+		LOG_INFO(Core, "[InGamePauseMenu] toggled visible={}", m_inGamePauseMenuVisible);
+	}
+
+	void Engine::RequestLogoutToLoginScreen()
+	{
+		LOG_INFO(Core, "[InGamePauseMenu] logout requested -> Login screen");
+		// 1) Coupe la connexion gameplay UDP + presenters in-game.
+		if (m_gameplayNetInitialized)
+		{
+			ShutdownGameplayNet();
+		}
+		// 2) Reset auth UI : flowComplete repasse a false, phase Login. Le presenter
+		//    relancera MasterShardClientFlow au prochain clic Se connecter.
+		m_authUi.RequestReturnToLogin();
+		// 3) Cache le menu pause (pour qu'il ne reste pas visible sur l'ecran auth).
+		m_inGamePauseMenuVisible = false;
+		// 4) Oublie le character_id memorise (sinon SavePositionAsync continuerait
+		//    a essayer d'envoyer la position d'un perso pour lequel la session est
+		//    fermee).
+		m_currentCharacterId = 0;
 	}
 
 	void Engine::WatchShader(std::string_view relativePath, engine::render::ShaderStage stage, std::string_view defines)

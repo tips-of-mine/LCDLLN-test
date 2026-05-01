@@ -1,4 +1,4 @@
-// AUTH-UI.6 — overlay Options de la phase LanguageOptions : sidebar de navigation par onglets et panneau principal multi-sections (split depuis AuthImGuiRenderer.cpp).
+// AUTH-UI.6 - overlay Options de la phase LanguageOptions : sidebar de navigation par onglets et panneau principal multi-sections (split depuis AuthImGuiRenderer.cpp).
 // Contient RenderOptionsScreen avec ses lambdas internes (sliderVol01, sectionTitle, hintLine, toggleRow, submitOptionsMirror) et les sept onglets de configuration.
 
 #include "engine/render/AuthImGuiRenderer.h"
@@ -30,11 +30,11 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des résolutions vidéo proposées dans le combo graphique.
-		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrées dans kOptionsRes, calculé statiquement.
+		constexpr int kOptionsRes[][2] = {{1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}; ///< Table des resolutions video proposees dans le combo graphique.
+		constexpr int kOptionsResCount = sizeof(kOptionsRes) / sizeof(kOptionsRes[0]); ///< Nombre d'entrees dans kOptionsRes, calcule statiquement.
 	} // namespace
 
-	/// Affiche l'overlay Options complet : sidebar de navigation par onglets à gauche, panneau principal à droite avec les réglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
+	/// Affiche l'overlay Options complet : sidebar de navigation par onglets a gauche, panneau principal a droite avec les reglages de l'onglet actif, et barre de boutons Retour / Annuler / Appliquer en bas.
 	void AuthImGuiRenderer::RenderOptionsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		const auto tr = [this](const char* key, const char* fallback = nullptr) -> std::string {
@@ -50,20 +50,38 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
+		// Sidebar : retour a 220 px (revert du bump 320 px : la sidebar etait OK
+		// avant, c'est le main qui doit changer pour qu'on puisse interagir avec
+		// les widgets).
 		const float sideW = 220.f;
-		const float mainW = (std::max)(200.f, vpW - sideW);
-		const float height = vpH;
+		// Panel main : on conserve le bornage horizontal mais on l'augmente a 1600
+		// pour avoir assez de largeur pour les sliders, combos, et le label hint
+		// a droite. Centre horizontalement sur ultra-wide.
+		const float mainWMax = 1600.f;
+		const float mainW = (std::min)(mainWMax, vpW - sideW - 32.f);
+		const float mainOriginX = sideW + ((vpW - sideW - mainW) * 0.5f);
+		// Hauteurs ajustees PAR sous-menu : on passe les deux child a AutoResizeY,
+		// la hauteur s'adapte au contenu reel de l'onglet actif (au lieu d'occuper
+		// toute la viewport - 1080 px - et de laisser une grande zone vide).
+		// Le caller plus haut (DrawAuthTweaksPanel) reste libre, ces childs ne
+		// remplissent plus tout l'ecran.
 
 		static constexpr const char* kTabKeys[] = {"options.imgui.tab.graphics", "options.imgui.tab.audio", "options.imgui.tab.controls",
 			"options.imgui.tab.lang", "options.imgui.tab.ui", "options.imgui.tab.net", "options.imgui.tab.account"};
-		static constexpr const char* kTabIcons[] = {"\xE2\x96\xA3", "\xE2\x99\xAB", "\xE2\x8C\xA8", "Aa", "\xE2\x8C\x97", "\xE2\x8C\x98", "\xE2\x9C\xA6"};
+		// Anciennes icones Unicode (carre, note de musique, clavier, etc.) absentes de Windlass
+		// + ProggyClean fallback : rendaient toutes des '?'. Suppression au profit du libelle nu.
 		static constexpr int tabCount = 7;
 
-		ImGui::SetCursorPos(ImVec2(0.f, 0.f));
+		// Sidebar haute = main haute (alignement vertical du cadre).
+		const float topMargin = 60.f;
+		const float bottomMargin = 60.f;
+		const float panelH = (std::max)(560.f, vpH - topMargin - bottomMargin);
+		ImGui::SetCursorPos(ImVec2(0.f, topMargin));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kPanel));
 		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
-		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, height), true, ImGuiWindowFlags_None);
+		ImGui::BeginChild("##opts_sidebar", ImVec2(sideW, panelH),
+			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 		ImGui::PopStyleVar(1);
 		ImGui::PopStyleColor(2);
 
@@ -88,7 +106,7 @@ namespace engine::render
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, active ? 1.5f : 0.f);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
 			char btnLine[192];
-			std::snprintf(btnLine, sizeof(btnLine), "%s  %s##tab%d", kTabIcons[i], tabLabel.c_str(), i);
+			std::snprintf(btnLine, sizeof(btnLine), "%s##tab%d", tabLabel.c_str(), i);
 			if (ImGui::Button(btnLine, ImVec2(-FLT_MIN, 36.f)))
 			{
 				m_optionsTab = i;
@@ -104,11 +122,14 @@ namespace engine::render
 			ImGui::PopStyleColor(4);
 		}
 
-		const float footerReserve = 56.f;
-		const float spacerH = ImGui::GetContentRegionAvail().y - footerReserve;
-		if (spacerH > 2.f)
+		// Push le footer hint en bas du sidebar : reserve 56 px pour le footer +
+		// remplit l'espace restant. Comportement original (avant le passage en
+		// AutoResizeY).
+		const float sidebarFooterReserve = 56.f;
+		const float sidebarSpacerH = ImGui::GetContentRegionAvail().y - sidebarFooterReserve;
+		if (sidebarSpacerH > 2.f)
 		{
-			ImGui::Dummy(ImVec2(1.f, spacerH));
+			ImGui::Dummy(ImVec2(1.f, sidebarSpacerH));
 		}
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.82f);
@@ -121,12 +142,21 @@ namespace engine::render
 		ImGui::PopStyleColor();
 		ImGui::EndChild();
 
-		ImGui::SetCursorPos(ImVec2(sideW, 0.f));
+		// Panel main : meme topMargin que la sidebar pour alignement, hauteur =
+		// panelH. Le contenu commence dans le coin haut-gauche du child et le
+		// scroll interne (##opts_body) prend le relais si trop d'options.
+		ImGui::SetCursorPos(ImVec2(mainOriginX, topMargin));
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, IV(LnTheme::kBackground));
-		ImGui::BeginChild("##opts_main", ImVec2(mainW, height), false, ImGuiWindowFlags_None);
-		ImGui::PopStyleColor(1);
+		ImGui::PushStyleColor(ImGuiCol_Border, IV(LnTheme::kBorder));
+		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.f);
+		ImGui::BeginChild("##opts_main", ImVec2(mainW, panelH),
+			ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
+		ImGui::PopStyleVar(1);
+		ImGui::PopStyleColor(2);
 
-		ImGui::BeginChild("##opts_header", ImVec2(-FLT_MIN, 0.f), false);
+		// Header inline : pas de BeginChild wrapper qui consommait trop de hauteur
+		// (ImGui::BeginChild avec hauteur 0 sans flag AutoResizeY peut prendre 100%
+		// de la zone disponible -> body invisible, retour utilisateur 'cadre vide').
 		ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
 		ImGui::SetWindowFontScale(0.78f);
 		ImGui::TextUnformatted(tr("options.imgui.category_label").c_str());
@@ -147,11 +177,15 @@ namespace engine::render
 			ImGui::TextUnformatted(tr("options.imgui.dirty_banner_title").c_str());
 			ImGui::PopStyleColor();
 		}
-		ImGui::EndChild();
 		DrawSeparator();
 
-		const float footerH = 52.f;
-		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, (std::max)(120.f, height - footerH - 88.f)), false);
+		// Body : hauteur 0 = remplit l'espace restant du panel main (ImGui calcule
+		// auto en retranchant la taille deja consommee par header + separator).
+		// Reserve 60 px en bas pour le footer d'actions (RETOUR / ANNULER / APPLIQUER).
+		const float footerReserve = 60.f;
+		const float bodyH = (std::max)(120.f, ImGui::GetContentRegionAvail().y - footerReserve);
+		ImGui::BeginChild("##opts_body", ImVec2(-FLT_MIN, bodyH),
+			false, ImGuiWindowFlags_None);
 
 		const auto markDirty = [this]() { m_optDirty = true; };
 
@@ -437,7 +471,7 @@ namespace engine::render
 			ImGui::TextUnformatted(loginDisp.c_str());
 			ImGui::PopStyleColor();
 			ImGui::PushStyleColor(ImGuiCol_Text, IV(LnTheme::kMuted));
-			const std::string& tagDisp = rm.authOptionsAccountTagId.empty() ? std::string("—") : rm.authOptionsAccountTagId;
+			const std::string& tagDisp = rm.authOptionsAccountTagId.empty() ? std::string("-") : rm.authOptionsAccountTagId;
 			ImGui::TextUnformatted(tagDisp.c_str());
 			ImGui::PopStyleColor();
 			ImGui::EndChild();

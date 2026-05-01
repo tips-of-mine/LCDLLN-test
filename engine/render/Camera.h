@@ -56,4 +56,59 @@ namespace engine::render
 			MovementLayout layout, bool scrollWheelAdjustsFov, bool applyMouseLook, bool applyKeyboardMove,
 			float worldEditorTerrainWorldSizeM, Camera& camera, float extraSpeedMultiplier = 1.0f);
 	};
+
+	/// Controleur camera 3eme personne orbital (post-EnterWorld).
+	///
+	/// Maintient un point cible (la position du joueur, future position d'un avatar
+	/// 3D) et calcule la position camera en orbite arriere derriere ce point :
+	///     camera.position = target - forwardDir(yaw, pitch) * distance
+	///
+	/// Inputs :
+	///   * Clic droit + souris : rotation yaw/pitch autour de la cible.
+	///   * Molette : zoom in/out (modifie la distance).
+	///   * WASD/ZQSD : deplace le point cible dans le plan XZ selon l'orientation
+	///     yaw courante. La camera suit automatiquement.
+	///
+	/// La position cible est conservee entre les frames (membre m_target). Engine
+	/// peut la (re)setter explicitement via \ref SetTargetPosition (utilise au
+	/// spawn EnterWorld pour aligner sur la position du personnage).
+	class OrbitalCameraController
+	{
+	public:
+		static constexpr float kWalkSpeed       = 5.0f;
+		static constexpr float kRunSpeed        = 10.0f;
+		static constexpr float kPitchMin        = -60.0f * 3.14159265f / 180.0f; ///< 3eme personne : pas de plongee verticale extreme.
+		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
+		static constexpr float kDistanceMin     = 1.5f;   ///< Zoom le plus proche : juste derriere la nuque.
+		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
+		static constexpr float kDistanceDefault = 6.0f;
+		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
+		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
+		static constexpr float kTargetEyeHeight = 1.7f;
+
+		void SetTargetPosition(const engine::math::Vec3& worldPos);
+		const engine::math::Vec3& GetTargetPosition() const { return m_target; }
+		float GetDistance() const { return m_distance; }
+
+		/// Etat de locomotion derive du dernier Update : 0=idle, 1=walk, 2=run.
+		enum class LocomotionState : uint8_t { Idle = 0, Walk = 1, Run = 2 };
+		LocomotionState GetLocomotionState() const { return m_locomotion; }
+		/// Phase d'animation de marche en radians, monotone croissante. Permet a
+		/// l'avatar visuel d'osciller verticalement (placeholder bob) pour suggerer
+		/// un mouvement avant de cabler de vraies animations.
+		float GetWalkBobPhaseRad() const { return m_walkBobPhase; }
+
+		/// Update logique a appeler chaque frame in-game. Met a jour m_target / yaw /
+		/// pitch / m_distance selon l'input, puis ecrit camera.position et
+		/// camera.yaw/pitch pour le rendu.
+		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
+			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera);
+
+	private:
+		engine::math::Vec3 m_target{ 0.0f, kTargetEyeHeight, 0.0f };
+		float              m_distance = kDistanceDefault;
+		bool               m_initialized = false;
+		LocomotionState    m_locomotion = LocomotionState::Idle;
+		float              m_walkBobPhase = 0.0f;
+	};
 }

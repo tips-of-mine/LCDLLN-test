@@ -377,6 +377,13 @@ namespace engine::client
 		/// Utilisé par \c lcdlln_world_editor.exe : pas d’écran login, accès direct à la scène 3D (Vulkan).
 		void BypassAuthGateForWorldEditor();
 
+		/// Réinitialise le présentateur sur l'écran de connexion (Phase::Login) après
+		/// que le joueur a choisi « Se déconnecter » dans le menu pause in-game.
+		/// `m_flowComplete` repasse à false, ce qui re-affiche l'auth UI par-dessus
+		/// le monde 3D. Le caller (Engine::RequestLogoutToLoginScreen) doit aussi
+		/// arrêter la connexion gameplay UDP et clearer les presenters in-game.
+		void RequestReturnToLogin();
+
 		/// While the auth gate is active, gameplay camera and chat should not consume input.
 		bool BlocksWorldInput() const;
 
@@ -579,7 +586,7 @@ namespace engine::client
 		void ImGuiTermsPrimaryClick(const engine::core::Config& cfg);
 		void ImGuiTermsDecline(engine::platform::Window& window);
 
-		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8);
+		void ImGuiSubmitCharacterCreate(const engine::core::Config& cfg, const char* nameUtf8, const char* raceIdUtf8 = "");
 		void ImGuiCancelCharacterCreateReturnToLogin();
 		/// Phase 2 — sélectionne le i-ème personnage de \ref m_characterList (mise en surbrillance, pas d'entrée dans le monde).
 		void ImGuiSelectCharacterEntry(int index);
@@ -781,6 +788,11 @@ namespace engine::client
 		std::string m_termsLocale;
 		std::string m_termsContent;
 		std::string m_characterName;
+		/// Identifiant string de la race choisie sur l'écran CharacterCreate (ex.
+		/// "humains", "elfes", "orcs", "nains", "demons", "chevaliers_dragons").
+		/// Vide = race non sélectionnée (le serveur recevra une chaîne vide et
+		/// stockera race_str = ""). Aligné sur la table `races` (cf. migration 0036).
+		std::string m_characterRaceId;
 		uint32_t m_activeField = 0;
 		int32_t m_hoveredFieldIndex = -1;
 		int32_t m_hoveredFieldInfoIndex = -1;

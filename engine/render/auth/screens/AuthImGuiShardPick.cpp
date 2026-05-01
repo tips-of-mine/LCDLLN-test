@@ -1,5 +1,5 @@
-// AUTH-UI.8 — rendu ImGui écran de sélection du serveur de jeu (shard) avec liste détaillée et indicateurs de charge (split depuis AuthImGuiRenderer.cpp).
-// Contient les helpers d'extraction d'hôte/initiale depuis l'endpoint et RenderShardScreen (liste scrollable de shards avec barre de charge, statut et bouton Entrer).
+// AUTH-UI.8 - rendu ImGui ecran de selection du serveur de jeu (shard) avec liste detaillee et indicateurs de charge (split depuis AuthImGuiRenderer.cpp).
+// Contient les helpers d'extraction d'hote/initiale depuis l'endpoint et RenderShardScreen (liste scrollable de shards avec barre de charge, statut et bouton Entrer).
 
 #include "engine/render/AuthImGuiRenderer.h"
 #include "engine/render/LnTheme.h"
@@ -34,7 +34,7 @@ namespace engine::render
 			return ImGui::ColorConvertFloat4ToU32(IV(c));
 		}
 
-		/// Extrait la partie hôte d'un endpoint "host:port" ; retourne l'endpoint brut si aucun ':' n'est trouvé.
+		/// Extrait la partie hote d'un endpoint "host:port" ; retourne l'endpoint brut si aucun ':' n'est trouve.
 		std::string ShardEndpointHost(const std::string& endpoint)
 		{
 			if (endpoint.empty())
@@ -45,7 +45,7 @@ namespace engine::render
 			return (colon == std::string::npos) ? endpoint : endpoint.substr(0u, colon);
 		}
 
-		/// Retourne la première lettre alphabétique (majuscule) de l'hôte d'un endpoint, utilisée comme avatar textuel dans la carte de shard.
+		/// Retourne la premiere lettre alphabetique (majuscule) de l'hote d'un endpoint, utilisee comme avatar textuel dans la carte de shard.
 		char ShardInitialFromEndpoint(const std::string& endpoint)
 		{
 			const std::string host = ShardEndpointHost(endpoint);
@@ -61,7 +61,7 @@ namespace engine::render
 		}
 	} // namespace
 
-	/// Affiche l'écran de sélection du shard : liste scrollable des serveurs avec nom, endpoint, barre de charge, ping et statut, puis boutons Retour et Entrer dans le monde.
+	/// Affiche l'ecran de selection du shard : liste scrollable des serveurs avec nom, endpoint, barre de charge, ping et statut, puis boutons Retour et Entrer dans le monde.
 	void AuthImGuiRenderer::RenderShardScreen(const RenderModel& rm, float vpW, float vpH)
 	{
 		using P = engine::client::LocalizationService::Params;
@@ -74,15 +74,19 @@ namespace engine::render
 			return s.empty() ? std::string(key) : s;
 		};
 
-		const std::vector<std::string> breadcrumb = {tr("auth.shard_pick.breadcrumb.account"), tr("auth.shard_pick.breadcrumb.realm"),
-			tr("auth.shard_pick.breadcrumb.character"), tr("auth.shard_pick.breadcrumb.enter")};
-		DrawBreadcrumb(breadcrumb, 1);
+		// Breadcrumb " 01 COMPTE > 02 ROYAUME > ... " retire : il etait dessine en absolu
+		// en haut a gauche et apparaissait comme un texte parasite hors de la stage centrale.
+		// Le panel principal et son badge " 1/2 / 2/2 " suffisent a indiquer l'etape.
+
+		// Titre/sous-titre via helper unifie (reference visuelle).
+		DrawAuthBigTitle(rm, vpW, vpH, "shard");
+		const float titleZoneW = vpW * 0.96f;
 
 		const std::string titleStr = rm.sectionTitle.empty() ? tr("auth.shard_pick.panel_title") : rm.sectionTitle;
 		const std::string subStr = tr("auth.shard_pick.panel_subtitle");
 
 		uint32_t choice = 0u;
-		static const std::vector<engine::network::ServerListEntry> kEmptyShardList{}; ///< Valeur vide statique utilisée en repli quand le presenter est absent.
+		static const std::vector<engine::network::ServerListEntry> kEmptyShardList{}; ///< Valeur vide statique utilisee en repli quand le presenter est absent.
 		const std::vector<engine::network::ServerListEntry>& entries =
 			m_authPresenter != nullptr ? m_authPresenter->ShardPickEntries() : kEmptyShardList;
 		if (m_authPresenter != nullptr)
@@ -101,9 +105,10 @@ namespace engine::render
 		const std::string verStr = tr("auth.shard_pick.version_online",
 			P{{"online", std::to_string(onlineCount)}, {"total", std::to_string(entries.size())}});
 
-		if (!BeginPanel(820.f, vpW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(verStr), true, false))
+		if (!BeginPanel(820.f, titleZoneW, vpH, std::string_view(titleStr), std::string_view(subStr), std::string_view(verStr), true, false))
 		{
 			EndPanel();
+			ImGui::EndChild();
 			return;
 		}
 
@@ -185,10 +190,10 @@ namespace engine::render
 
 				// On pousse 3 StyleVar (Alpha + ChildRounding + ChildBorderSize) et 2 StyleColor
 				// (ChildBg + Border) avant BeginChild. Seuls ChildRounding/ChildBorderSize/ChildBg/Border
-				// servent au cadre de la fenêtre enfant : on peut les pop juste après BeginChild. L'Alpha
-				// doit rester actif pour DIM le CONTENU de la ligne — on la pop après EndChild (l. ~292).
-				// Avant : on poppait les 3 StyleVar ici ET 1 StyleVar après EndChild → assertion ImGui
-				// « PopStyleVar() too many times ».
+				// servent au cadre de la fenetre enfant : on peut les pop juste apres BeginChild. L'Alpha
+				// doit rester actif pour DIM le CONTENU de la ligne - on la pop apres EndChild (l. ~292).
+				// Avant : on poppait les 3 StyleVar ici ET 1 StyleVar apres EndChild > assertion ImGui
+				// " PopStyleVar() too many times ".
 				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * dim);
 				ImGui::PushStyleColor(ImGuiCol_ChildBg, isSelected ? IV(LnTheme::AccentDim(0.1f)) : IV(LnTheme::kSurface));
 				ImGui::PushStyleColor(ImGuiCol_Border, borderCol);
@@ -308,7 +313,7 @@ namespace engine::render
 		const std::string backStr = tr("auth.shard_pick.button_back");
 		const std::string enterStr = tr("auth.shard_pick.enter_world");
 
-		/// Dessine un bouton fantôme (bordure fine, fond transparent) de largeur fixée ; gère l'état désactivé.
+		/// Dessine un bouton fantome (bordure fine, fond transparent) de largeur fixee ; gere l'etat desactive.
 		auto drawSizedGhost = [&](const char* label, float w, bool disabled) -> bool {
 			if (disabled)
 			{
@@ -370,6 +375,7 @@ namespace engine::render
 		}
 
 		EndPanel();
+		ImGui::EndChild();
 
 		DrawAuthTweaksPanel(vpW, vpH);
 	}

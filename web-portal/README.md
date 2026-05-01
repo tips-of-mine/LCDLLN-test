@@ -32,6 +32,7 @@ Build production : `npm run build` puis `npm start` ou image Docker.
 - Bugs : `bug_reports` ; la progression alimente les exploits dont `metric_source = 'bug_reports'` (seuils en base).
 - Nettoyage ancienne 0008 : migration `0009` (`DROP` de `account_bug_exploit_stats` si elle existait).
 - Récupération mot de passe : `account_recovery_profiles`, `account_recovery_secret_questions`, `account_password_reset_tokens` (migration `0010`).
+- Roadmap publique : `roadmap_items` (migration `0026` — création + 14 items initiaux ; migration `0034` — ajout de 6 items reflétant les features livrées : chat, audio, personnages, reconnexion auto, guildes/amis, boutique).
 
 ## Docker & Traefik
 

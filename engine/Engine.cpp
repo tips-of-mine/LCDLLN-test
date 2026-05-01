@@ -2411,8 +2411,12 @@ namespace engine
 #if defined(_WIN32)
 													// Phase 3.11.1 — RecordToBackbuffer fire aussi quand le panneau chat est actif post-auth
 													// (le draw list ImGui contient alors la fenêtre chat émise par ChatImGuiRenderer).
+													// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE.
+													// Sans `IsInitialized()`, un echec d'init de localisation fait passer authGateActive
+													// a false (m_initialized=false) et le chat apparaissait alors par-dessus un ecran noir.
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
-														&& !authVisualState.active && !m_worldEditorExe
+														&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+														&& !m_worldEditorExe
 														&& m_cfg.GetBool("render.chat_imgui.enabled", true);
 													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
 													const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
@@ -3171,8 +3175,11 @@ namespace engine
 		const bool authImguiOverlayNewFrame = m_authImGui && m_authUi.GetVisualState().active
 			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
 		// Phase 3.11.1 — NewFrame également quand le panneau chat doit s'afficher (post-auth, pas en éditeur).
+		// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE
+		// (cf. fix encombrement ecran noir lorsque LocalizationService init echoue).
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
-			&& !authGateActive && !m_worldEditorExe
+			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& !m_worldEditorExe
 			&& m_cfg.GetBool("render.chat_imgui.enabled", true);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
@@ -3492,7 +3499,9 @@ namespace engine
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
-			&& m_chatUi.IsInitialized() && !authGateActive && !m_worldEditorExe
+			&& m_chatUi.IsInitialized()
+			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& !m_worldEditorExe
 			&& m_cfg.GetBool("render.chat_imgui.enabled", true))
 		{
 			// Phase 3.11.1 — Rendu du panneau chat. NewFrame déjà appelé plus haut via

@@ -24,7 +24,6 @@ namespace engine::render
 	/// Affiche l'ecran des CGU : metadonnees en en-tete, texte integral defilant, case a cocher d'acquittement, et boutons Refuser / Accepter.
 	void AuthImGuiRenderer::RenderTermsScreen(const RenderModel& rm, float vpW, float vpH)
 	{
-		(void)vpW;
 		const auto tr = [this](const char* key, const char* fallback) -> std::string {
 			if (m_authPresenter != nullptr)
 			{
@@ -37,8 +36,11 @@ namespace engine::render
 			return std::string(fallback);
 		};
 
+		// Cadre CGU elargi : 560 -> 880 px (cap par 92 % du viewport sur petits ecrans)
+		// pour que les lignes des conditions ne soient plus tronquees / superposees.
 		const std::string title = rm.sectionTitle.empty() ? tr("auth.panel.terms", "Terms of use") : rm.sectionTitle;
-		if (!BeginPanel(560.f, vpW, vpH, title.c_str(), "", ""))
+		const float termsW = (std::min)(880.f, vpW * 0.92f);
+		if (!BeginPanel(termsW, vpW, vpH, title.c_str(), "", ""))
 		{
 			EndPanel();
 			return;
@@ -57,7 +59,11 @@ namespace engine::render
 				ImGui::PopStyleColor();
 			}
 		}
-		ImGui::BeginChild("##terms_scroll", ImVec2(-FLT_MIN, 260.f), true, ImGuiWindowFlags_None);
+		// Hauteur scroll bumpee 260 -> 60 % du viewport (min 360 px) : avec un cadre
+		// plus large, on peut aussi se permettre plus de hauteur pour reduire la quantite
+		// de scroll necessaire pour lire les CGU.
+		const float termsScrollH = (std::max)(360.f, vpH * 0.60f);
+		ImGui::BeginChild("##terms_scroll", ImVec2(-FLT_MIN, termsScrollH), true, ImGuiWindowFlags_None);
 		if (m_authPresenter != nullptr)
 		{
 			const std::string& full = m_authPresenter->TermsFullTextForImGui();

@@ -287,6 +287,7 @@ add_library(engine_core
   engine/render/LnTheme.h
   engine/render/AuthImGuiRenderer.cpp
   engine/render/ChatImGuiRenderer.cpp
+  engine/render/EditorHubImGuiRenderer.cpp
   engine/render/DecalSystem.cpp
   engine/render/DecalPass.cpp
   engine/render/ParticleSystem.cpp

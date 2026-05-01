@@ -109,6 +109,13 @@ namespace engine::editor
 		/// Returns true when the editable object layer is visible.
 		bool IsObjectVisible() const;
 
+		/// M43.4 — Lecteurs publics pour le panneau ImGui "Editor Hub" (overlay).
+		/// Le hub affiche le titre déjà composé par RefreshShell (Scene/Inspector/Assets +
+		/// flag dirty) sans re-construire la chaîne, donc 100% cohérent avec l'ancien
+		/// affichage en window title.
+		const std::string& GetHubTitle() const { return m_lastWindowTitle; }
+		bool IsDirty() const { return m_dirty; }
+
 	private:
 		/// Creates one gameplay volume of the requested type at the current editor pivot.
 		bool CreateVolume(VolumeType type);

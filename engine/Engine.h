@@ -226,6 +226,11 @@ namespace engine
 		engine::render::AuthGlyphPass m_authGlyphPass;
 		engine::render::AuthLogoPass m_authLogoPass;
 		engine::render::MeshHandle m_geometryMeshHandle;
+		/// Texture peau de l'avatar (1x1 sRGB violet clair, visible sur sol blanc et ciel sombre).
+		engine::render::TextureHandle m_avatarSkinTextureHandle;
+		/// Index materiel de l'avatar dans la MaterialDescriptorCache (0 = default fallback,
+		/// non-zero = materiel dedie violet clair). Renseigne au boot apres registration.
+		uint32_t m_avatarMaterialId = 0u;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 
@@ -353,6 +358,11 @@ namespace engine
 		/// (au lieu de quitter le client). Tant qu'il est actif, le menu ImGui est
 		/// dessine au-dessus du monde et propose Quitter / Options / Deconnecter.
 		bool m_inGamePauseMenuVisible = false;
+		/// Mini-panel options in-game ouvert via le bouton Options du menu pause.
+		/// Contient les controles essentiels (volume master, plein ecran, vsync,
+		/// sensibilite souris) ; pas le full panel auth Options qui necessite un
+		/// flux specifique (AuthScreenOptions). Releve des paliers d'un PR ulterieur.
+		bool m_inGameOptionsPanelVisible = false;
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;
 		int m_width = 0;

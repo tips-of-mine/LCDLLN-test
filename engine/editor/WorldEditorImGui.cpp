@@ -6,6 +6,7 @@
 #include "engine/editor/WorldEditorSession.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
+#include "engine/render/SharedFontHandles.h"
 #include "engine/render/terrain/HeightmapLoader.h"
 #include "engine/render/vk/VkDeviceContext.h"
 
@@ -497,6 +498,41 @@ namespace engine::editor
 			const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
 				cfg->GetInt("render.auth_ui.imgui.value_font_pixel_height", 12), 11, 32));
 			loadAuthFontFromConfig(valueFontPath, valueFontPx, "valeurs");
+
+			// Fonte password : 2eme passe sur Windlass a 24 px (plus large que la
+			// fonte UI standard 13 px), avec un merge ProggyClean immediat pour le
+			// glyph '*' qui n'est pas dans Windlass. Le pointeur est partage via
+			// SharedFontHandles::g_largePasswordFont pour que DrawAuthGoldField
+			// puisse PushFont autour de l'InputText password.
+			if (!uiFontPath.empty())
+			{
+				std::vector<uint8_t> bytesPwd = engine::platform::FileSystem::ReadAllBytesContent(*cfg, uiFontPath);
+				if (!bytesPwd.empty())
+				{
+					void* atlasPwd = IM_ALLOC(bytesPwd.size());
+					std::memcpy(atlasPwd, bytesPwd.data(), bytesPwd.size());
+					ImFontConfig pwdCfg{};
+					ImFont* pwdFont = io.Fonts->AddFontFromMemoryTTF(atlasPwd, static_cast<int>(bytesPwd.size()),
+						24.0f, &pwdCfg, kWindlassRanges);
+					if (pwdFont != nullptr)
+					{
+						// Merge ProggyClean a 24px pour fournir '*' (et autres glyphs
+						// hors range Windlass) a la meme taille que Windlass.
+						// Note : ProggyClean est bitmap fixe a 13px, donc l'agrandissement
+						// est crenele. Acceptable pour un masque password.
+						ImFontConfig mergePwd{};
+						mergePwd.MergeMode = true;
+						mergePwd.SizePixels = 24.0f;
+						io.Fonts->AddFontDefault(&mergePwd);
+						engine::render::SharedFontHandles::g_largePasswordFont = static_cast<void*>(pwdFont);
+						LOG_INFO(Render, "[WorldEditorImGui] Police password (Windlass 24px + ProggyClean merge) prete");
+					}
+					else
+					{
+						IM_FREE(atlasPwd);
+					}
+				}
+			}
 		}
 
 		ImGui_ImplWin32_Init(hwnd);

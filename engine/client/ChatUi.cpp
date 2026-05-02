@@ -140,10 +140,14 @@ namespace engine::client
 
 		if (!m_chatFocus)
 		{
-			if (input.WasPressed(engine::platform::Key::Slash))
+			// Slash : convention historique. Enter : convention MMO (WoW, GW2). On
+			// active les deux pour ne pas dependre du layout clavier (Slash sur AZERTY
+			// FR demande Shift+: ce qui peut surprendre).
+			if (input.WasPressed(engine::platform::Key::Slash)
+				|| input.WasPressed(engine::platform::Key::Enter))
 			{
 				m_chatFocus = true;
-				LOG_INFO(Core, "[ChatUiPresenter] Chat focus ON (toggle=Slash)");
+				LOG_INFO(Core, "[ChatUiPresenter] Chat focus ON (toggle=Slash/Enter)");
 			}
 
 			for (uint32_t ch = 0; ch < 10; ++ch)

@@ -139,8 +139,12 @@ namespace engine::render
 	}
 
 	void OrbitalCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
-		bool invertY, MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera)
+		bool invertY, MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
+		float groundYAtTarget, float speedMultiplier)
 	{
+		// Borne le multiplicateur pour eviter une vitesse nulle (perso bloque)
+		// ou folle (teleport accidentel hors monde par integration trop grande).
+		const float speedMul = std::clamp(speedMultiplier, 0.05f, 5.0f);
 		// Clic droit maintenu + souris -> rotation orbite (yaw/pitch).
 		if (applyMouseLook)
 		{
@@ -161,6 +165,38 @@ namespace engine::render
 			if (m_distance > kDistanceMax) m_distance = kDistanceMax;
 		}
 
+		// Touches d'action : Saut (Space) + Accroupi (Control). Le declenchement
+		// (input) est gate par applyKeyboardMove pour que le chat focus n'envoie
+		// pas de saut accidentel ; mais l'integration physique tourne toujours
+		// (sinon la chute s'arreterait en plein air si l'utilisateur ouvre le chat).
+		constexpr float kJumpInitialVelocityMps = 5.0f; // ~1.3 m de hauteur de saut.
+		constexpr float kGravityMps2            = 9.81f;
+		if (applyKeyboardMove)
+		{
+			m_isCrouching = input.IsDown(engine::platform::Key::Control);
+			// Saut : Space, uniquement quand grounded (offset Y == 0 ET pas en chute)
+			// et debout (pas de saut accroupi).
+			if (input.WasPressed(engine::platform::Key::Space)
+				&& m_verticalOffsetY <= 0.001f && std::fabs(m_verticalVelocityY) < 0.01f
+				&& !m_isCrouching)
+			{
+				m_verticalVelocityY = kJumpInitialVelocityMps;
+			}
+		}
+		// Integration verticale (toujours, meme si !applyKeyboardMove) : applique
+		// la gravite et clampe au sol. Sans ca, sauter puis ouvrir le chat figerait
+		// l'avatar en vol.
+		if (m_verticalVelocityY != 0.0f || m_verticalOffsetY > 0.001f)
+		{
+			m_verticalVelocityY -= kGravityMps2 * static_cast<float>(dt);
+			m_verticalOffsetY   += m_verticalVelocityY * static_cast<float>(dt);
+			if (m_verticalOffsetY <= 0.0f)
+			{
+				m_verticalOffsetY   = 0.0f;
+				m_verticalVelocityY = 0.0f;
+			}
+		}
+
 		// WASD/ZQSD -> deplace le point cible dans le plan XZ selon yaw courant.
 		// Etape 5 : derive aussi un etat de locomotion (Idle/Walk/Run) et fait
 		// avancer une phase de bob pour le placeholder anim de l'avatar.
@@ -168,8 +204,17 @@ namespace engine::render
 		bool running = false;
 		if (applyKeyboardMove)
 		{
-			running = input.IsDown(engine::platform::Key::Shift);
-			const float speed = running ? kRunSpeed : kWalkSpeed;
+			running = input.IsDown(engine::platform::Key::Shift) && !m_isCrouching;
+			// Vitesse : crouch ralentit, run accelere, sinon walk normal.
+			// Apres calcul du nominal, multiplie par speedMul (race x terrain x buffs).
+			float speed;
+			if (m_isCrouching)
+				speed = kWalkSpeed * 0.5f;        // 2.5 m/s accroupi (silencieux).
+			else if (running)
+				speed = kRunSpeed;                 // 10 m/s en sprint Shift.
+			else
+				speed = kWalkSpeed;                // 5 m/s marche normale.
+			speed *= speedMul;
 			const float dist = static_cast<float>(dt) * speed;
 			const float cy = std::cos(camera.yaw);
 			const float sy = std::sin(camera.yaw);
@@ -225,6 +270,15 @@ namespace engine::render
 			if (m_walkBobPhase > kPi2 * 1024.f) m_walkBobPhase = std::fmod(m_walkBobPhase, kPi2);
 		}
 
+		// Met a jour la hauteur target Y selon : sol + eye_height + saut + accroupi.
+		// Le perso "stand on terrain" : sa hauteur de yeux suit l'altitude du sol
+		// (groundYAtTarget) + la hauteur des yeux (1.7 m). Saut ajoute m_verticalOffsetY,
+		// accroupi soustrait 0.5 m.
+		constexpr float kCrouchDropM = 0.5f;
+		const float baseTargetY = groundYAtTarget + kTargetEyeHeight;
+		const float crouchOffsetY = m_isCrouching ? -kCrouchDropM : 0.0f;
+		m_target.y = baseTargetY + m_verticalOffsetY + crouchOffsetY;
+
 		// Position camera = cible - dir(yaw, pitch) * distance. La camera regarde
 		// le point cible (la "tete" du joueur a kTargetEyeHeight au-dessus du sol).
 		const float cy = std::cos(camera.yaw);
@@ -237,14 +291,16 @@ namespace engine::render
 		const float forwardZ = -cy * cp;
 
 		// Etape 3 collision camera-decor : si la camera calculee va passer SOUS le
-		// sol (Y < kGroundY + kGroundPadding), on reduit la distance effective
+		// sol (Y < groundY + kGroundPadding), on reduit la distance effective
 		// pour que la camera reste au-dessus du sol au lieu de la teleporter
 		// verticalement (ce qui donnerait un saut visuel desagreable). On laisse
 		// kDistanceMin comme plancher (la camera ne peut pas etre plus pres que
 		// kDistanceMin de la cible).
-		// TODO : remplacer kGroundY (constante = 0) par une vraie query de hauteur
-		// terrain quand TerrainRenderer exposera SampleHeightAtWorldXZ.
-		constexpr float kGroundY = 0.0f;
+		//
+		// Chantier 2 : groundYAtTarget vient de TerrainRenderer::SampleHeightAtWorldXZ
+		// (passe en parametre) -> collision contre le vrai relief du terrain et plus
+		// uniquement Y=0. Si pas de terrain charge, le caller passe 0.
+		const float kGroundY = groundYAtTarget;
 		constexpr float kGroundPadding = 0.5f;
 		float effectiveDistance = m_distance;
 		if (forwardY < -0.001f)
@@ -267,9 +323,28 @@ namespace engine::render
 		}
 
 		// Position camera : recule dans la direction OPPOSEE du forward, depuis target.
-		camera.position.x = m_target.x - forwardX * effectiveDistance;
-		camera.position.y = m_target.y - forwardY * effectiveDistance;
-		camera.position.z = m_target.z - forwardZ * effectiveDistance;
+		// Vue "over the shoulder" : decale la camera lateralement (vecteur right) et
+		// verticalement (vecteur up cible) pour que le personnage apparaisse sur le
+		// cote gauche de l'ecran et legerement vers le bas, comme dans les MMO/survie
+		// modernes (Once Human, New World, GW2 zoom-in...). Sans ce decalage, le perso
+		// est centre et masque la vue centrale.
+		// right vector horizontal (cross world_up x forward, cf. ComputeViewMatrix).
+		const float rightX = -forwardZ;
+		const float rightZ = forwardX;
+		const float rightLen = std::sqrt(rightX * rightX + rightZ * rightZ);
+		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
+		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
+		// Decalage epaule droite : 0.8 m vers la droite -> perso apparait a gauche.
+		// Decalage hauteur : +1.2 m au-dessus des yeux du target -> la camera est
+		// nettement plus haute que le personnage (head ~ 1.8 m, camera Y ~ 2.9 m
+		// soit ~1.1 m au-dessus du crane). Combine avec le pitch -10 deg par defaut,
+		// le perso apparait dans la moitie INFERIEURE de l'ecran et on voit bien
+		// le decor au-dessus de lui (style Once Human / New World).
+		constexpr float kShoulderOffsetM = 0.8f;
+		constexpr float kHeightOffsetM   = 1.2f;
+		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
+		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
+		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;
 		// Clamp final en Y : meme avec effectiveDistance reduit, on s'assure que
 		// la camera ne descende pas sous le seuil (cas ou m_target.y < floor par ex.).
 		if (camera.position.y < kGroundY + kGroundPadding)

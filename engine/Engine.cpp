@@ -1419,6 +1419,22 @@ namespace engine
 										// (cf. branche !m_editorMode du Update).
 										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/avatar_placeholder.mesh");
 
+										// Texture peau avatar : 1x1 sRGB violet clair (190,140,230). Le materiel
+										// dedie m_avatarMaterialId remplace le default fallback (texture blanche
+										// invisible sur sol blanc) pour que l'humanoide ressorte clairement.
+										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
+										if (m_avatarSkinTextureHandle.IsValid() && m_pipeline)
+										{
+											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+											if (materialCache.IsValid())
+											{
+												engine::render::Material avatarMat{};
+												avatarMat.baseColor = m_avatarSkinTextureHandle;
+												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), avatarMat);
+												LOG_INFO(Render, "[Avatar] Materiel violet clair enregistre, materialId={}", m_avatarMaterialId);
+											}
+										}
+
 
 										m_frameGraph.addPass("GPU_Cull",
 											[](engine::render::PassBuilder&) {},
@@ -1512,7 +1528,7 @@ namespace engine
 														cullingPass.GetDrawItemCount(m_currentFrame),
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
-														materialCache.GetDefaultMaterialIndex(),
+														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
 														terrainBeforeGeometry);
 												}
 												else
@@ -1525,7 +1541,7 @@ namespace engine
 														static_cast<uint32_t>(lodLevel),
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
-														materialCache.GetDefaultMaterialIndex(),
+														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
 														terrainBeforeGeometry);
 												}
 											});
@@ -2420,9 +2436,9 @@ namespace engine
 													// Sans `IsInitialized()`, un echec d'init de localisation fait passer authGateActive
 													// a false (m_initialized=false) et le chat apparaissait alors par-dessus un ecran noir.
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
-														&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+														&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 														&& !m_worldEditorExe
-														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
+														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
 													const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -2964,6 +2980,11 @@ namespace engine
 				LOG_INFO(Core, "[EnterWorld] character_id={}, name='{}', shard_id={}, endpoint='{}'",
 					enterCmd.characterId, enterCmd.characterName, enterCmd.shardId, enterCmd.shardEndpoint);
 
+				// Coupe la musique des ecrans d'auth/menu (Horns_of_the_Fallen_Bastion.mp3)
+				// au moment d'entrer dans le monde : le joueur entend desormais l'ambiance
+				// du shard (zone audio) et eventuellement de futures musiques in-game.
+				m_audioEngine.StopMenuMusic();
+
 				// Phase 3.5/3.6 — Téléportation de la caméra à la position de spawn.
 				// Priorité 1 (Phase 3.6) : spawn par-personnage, lu depuis characters.spawn_*
 				// via la payload CHARACTER_LIST puis posé dans EnterWorldCommand par
@@ -3220,15 +3241,15 @@ namespace engine
 		const bool authImguiOverlayNewFrame = m_authImGui && m_authUi.GetVisualState().active
 			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
 		// Phase 3.11.1 — NewFrame également quand le panneau chat doit s'afficher (post-auth, pas en éditeur).
-		// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE
-		// (cf. fix encombrement ecran noir lorsque LocalizationService init echoue).
-		// Inclut aussi le menu pause in-game (m_inGamePauseMenuVisible) pour que NewFrame
-		// soit appele quand seul le menu pause est ouvert (chat config off mais auth OK).
-		const bool postAuthInGame = m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+		// Responsabilite : chat HUD VISIBLE des que le master a accepte l'AUTH
+		// (Global + Friends) ; la liste s'enrichit du canal Zone une fois le shard
+		// rejoint. Cf. retour utilisateur : 'une fois authentifie, il doit y avoir
+		// le chat global + amis ; une fois le royaume choisi, + zone'.
+		const bool postAuthMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe;
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
-			&& postAuthInGame
-			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
+			&& postAuthMaster
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -3258,12 +3279,58 @@ namespace engine
 				// Comportement : souris libre par defaut ; clic droit maintenu rotate
 				// la camera autour de la cible (yaw/pitch) ; molette zoom in/out ;
 				// WASD deplace la cible dans le plan XZ et la camera suit.
+				//
+				// Chantier 2 : passe la hauteur sol terrain au controleur pour la
+				// collision camera-decor (plus seulement Y=0). 0 si pas de terrain.
+				//
+				// Convention MMORPG : la souris est LIBRE par defaut (curseur visible,
+				// utilisable pour cliquer sur l'UI HUD). Maintenir le CLIC DROIT pour
+				// faire pivoter la camera autour du personnage. Sans clic droit, la
+				// camera reste fixe par rapport au monde et le perso continue d'etre
+				// dans la vue (la camera est positionnee derriere lui via le yaw
+				// courant). L'avatar suit le yaw camera donc on voit toujours son dos.
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+				const auto& camTarget = m_orbitalCameraController.GetTargetPosition();
+				const float groundY = m_terrain.IsValid()
+					? m_terrain.SampleHeightAtWorldXZ(camTarget.x, camTarget.z)
+					: 0.0f;
+
+				// Modificateur de vitesse combine RACE x TERRAIN.
+				// RACE : table id->multiplicateur (placeholder, a tuner gameplay).
+				// L'identifiant race est stocke en string sur AuthUi (m_characterRaceId).
+				// TODO : eventuellement migrer vers la table races (DB) pour que les
+				// game-designers tunent sans recompiler.
+				auto raceMultiplier = [](const std::string& raceId) -> float {
+					if (raceId == "elfes")              return 1.10f; // legers, agiles.
+					if (raceId == "nains")              return 0.85f; // courts sur pattes.
+					if (raceId == "orcs")               return 0.95f;
+					if (raceId == "morts_vivants")      return 0.90f; // demarche raide.
+					if (raceId == "demons")             return 1.05f; // au sol ; vol = autre meca.
+					if (raceId == "chevaliers_dragons") return 1.00f; // monture = autre meca.
+					if (raceId == "humains" || raceId.empty() || raceId == "default") return 1.00f;
+					return 1.00f;
+				};
+				const float raceMul = raceMultiplier(m_authUi.GetSelectedCharacterRaceId());
+
+				// TERRAIN : pour l'instant 1.0, hook pour future query splatmap.
+				// TODO : ajouter TerrainRenderer::SampleSpeedMultiplierAtWorldXZ(x,z)
+				// qui lit le splat CPU (R=grass G=dirt B=rock A=snow) et retourne
+				// une moyenne ponderee (grass=1.0, dirt=0.95, rock=0.90, snow=0.65).
+				constexpr float terrainMul = 1.0f;
+
+				const float speedMul = raceMul * terrainMul;
 				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
-					rmbLook, true, out.camera);
+					rmbLook, true, out.camera, groundY, speedMul);
 			}
 
-			if (!authGateActive && m_chatUi.IsInitialized())
+			// Chat update : avant on attendait !authGateActive (donc post-EnterWorld
+			// uniquement). Resultat : sur ShardPick/CharSelect, le panneau chat ImGui
+			// rendait bien mais l'utilisateur appuyait sur Enter/Slash sans effet,
+			// car ChatUiPresenter::Update n'etait jamais appele -> le focus chat ne
+			// pouvait pas s'activer. Desormais on update aussi des que le master a
+			// accepte l'auth (m_masterSessionId != 0), donc des ShardPick.
+			const bool chatPostMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated();
+			if ((!authGateActive || chatPostMaster) && m_chatUi.IsInitialized())
 			{
 				// Phase 3.11.3 — Indique au presenter si un ImGui::InputText pilote la saisie
 				// (panneau chat ImGui actif). Coupe la branche keyboard-typing/Enter dans Update
@@ -3368,8 +3435,10 @@ namespace engine
 			// Etape 2 + 4 vue 3eme personne : position + orientation de l'avatar.
 			//
 			// Position : translation a la cible orbitale (= position joueur).
-			// Le mesh 'avatar_placeholder.mesh' est un cube 0.5x1.8x0.5 m centre
-			// sur (0, 0.9, 0), pieds Y=0 ; donc translation(target) sans offset.
+			// Le mesh 'avatar_placeholder.mesh' (chantier 3) est un humanoide
+			// composite : torse + tete + 2 bras + 2 jambes (6 boites soudees,
+			// 144 verts, 216 indices). Pieds a mesh-Y=0, sommet du crane a
+			// mesh-Y=1.8 ; translation(target) sans offset.
 			//
 			// Orientation : rotation Y selon le yaw camera (etape 4). Standard MMO :
 			// le perso fait face dans la meme direction horizontale que la camera,
@@ -3382,7 +3451,9 @@ namespace engine
 			//   | 0        1  0       ty |
 			//   | -sin(y)  0  cos(y)  tz |
 			//   | 0        0  0       1  |
-			if (m_currentCharacterId != 0u)
+			// On rend l'avatar systematiquement (meme si character_id == 0u, ex.
+			// scenarios de test sans EnterWorld complet) pour que la 3eme personne
+			// soit visible des l'entree dans la scene 3D.
 			{
 				const engine::math::Vec3& target = m_orbitalCameraController.GetTargetPosition();
 				const float yaw = out.camera.yaw;
@@ -3399,10 +3470,31 @@ namespace engine
 					const float bobAmpM = (loco == engine::render::OrbitalCameraController::LocomotionState::Run) ? 0.07f : 0.04f;
 					bobY = std::sin(m_orbitalCameraController.GetWalkBobPhaseRad()) * bobAmpM;
 				}
-				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = s;    out.objectModelMatrix[3]  = target.x;
-				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y + bobY;
-				out.objectModelMatrix[8]  = -s;    out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = target.z;
-				out.objectModelMatrix[12] = 0.0f;  out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
+				// Le orbital target est a kTargetEyeHeight (1.7 m) au-dessus du sol :
+				// c'est la position des yeux du joueur. L'avatar (mesh feet at mesh-Y=0)
+				// doit etre translate de (target.y - kTargetEyeHeight) pour que ses
+				// pieds soient sur le sol et non flottent dans les airs. groundY ici
+				// est 0 (sol plat) ou la hauteur terrain echantillonnee plus haut.
+				const float feetY = target.y - engine::render::OrbitalCameraController::kTargetEyeHeight + bobY;
+				// IMPORTANT : layout COLUMN-MAJOR. Le shader gbuffer_geometry.vert
+				// reconstruit la mat4 via 4 vec4 (instanceRow0..3), chacun lu en sequence
+				// dans le buffer d'instance ; GLSL mat4(c0,c1,c2,c3) place chaque vec4
+				// comme COLONNE. Donc nos indices [0..3] = colonne 0, [4..7] = colonne 1,
+				// etc. La translation va dans la 4eme COLONNE (indices 12, 13, 14).
+				// Avant ce fix, le code etait ecrit en row-major, ce qui mettait la
+				// translation dans la composante w des positions monde -> avatar
+				// invisible (worldPos.w != 1, et translation nulle dans xyz).
+				//
+				// Matrice mathematique (colonne-major M = T * R_y(yaw)) :
+				//   | cos(y)   0   sin(y)    tx |
+				//   | 0        1   0         ty |
+				//   | -sin(y)  0   cos(y)    tz |
+				//   | 0        0   0         1  |
+				// Stockage colonne-par-colonne :
+				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = -s;   out.objectModelMatrix[3]  = 0.0f; // col0 : axe X local
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
+				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
+				out.objectModelMatrix[12] = target.x; out.objectModelMatrix[13] = feetY; out.objectModelMatrix[14] = target.z; out.objectModelMatrix[15] = 1.0f; // col3 : translation
 			}
 		}
 
@@ -3589,13 +3681,36 @@ namespace engine
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
+			// Chat HUD overlay sur les ecrans post-master-auth (ShardPick / CharacterSelect /
+			// CharacterCreate). Avant cette correction, le chat n'apparaissait qu'une fois
+			// in-game car la branche auth-rendering excluait le rendu chat. inWorldShard=false
+			// ici (canaux Global + Friends seulement, pas encore Zone).
+			const bool postAuthMasterChat = m_chatImGui && m_chatUi.IsInitialized()
+				&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
+				&& !m_worldEditorExe
+				&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+			if (postAuthMasterChat)
+				m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// DIAG : log 1x/sec pour diagnostiquer chat invisible. Etat des conditions.
+			if ((m_currentFrame % 60u) == 0u)
+			{
+				LOG_INFO(Render, "[ChatDiag-AuthBranch] frame={} chatImGui={} chatUiInit={} authInit={} masterAuth={} worldEditorExe={} cfgEnabled={} -> overlay={}",
+					m_currentFrame,
+					(m_chatImGui != nullptr),
+					m_chatUi.IsInitialized(),
+					m_authUi.IsInitialized(),
+					m_authUi.IsMasterAuthenticated(),
+					m_worldEditorExe,
+					m_cfg.GetBool("render.chat_imgui.enabled", true),
+					postAuthMasterChat);
+			}
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
 			&& m_chatUi.IsInitialized()
-			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe
-			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible))
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible))
 		{
 			// Phase 3.11.1 — Rendu du panneau chat. NewFrame déjà appelé plus haut via
 			// chatImguiOverlayNewFrame. ImGui::Render finalise la draw list pour le RecordToBackbuffer.
@@ -3610,7 +3725,14 @@ namespace engine
 					dh = static_cast<float>(extUi.height);
 				}
 			}
-			m_chatImGui->Render(dw, dh);
+			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
+			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// DIAG chat-only branch (in-game).
+			if ((m_currentFrame % 60u) == 0u)
+			{
+				LOG_INFO(Render, "[ChatDiag-InGameBranch] frame={} dw={} dh={} inWorldShard={} chatFocus={}",
+					m_currentFrame, dw, dh, m_authUi.IsInWorldShard(), m_chatUi.IsChatFocusActive());
+			}
 			// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
 			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
 			if (m_inGamePauseMenuVisible)
@@ -3640,9 +3762,8 @@ namespace engine
 				ImGui::Spacing();
 				if (ImGui::Button("Options", ImVec2(btnW, 32.f)))
 				{
-					// TODO : ouvrir l'overlay Options in-game (re-utilisera AuthImGuiOptions
-					// quand decoupage UI sera fait). Pour l'instant juste un log.
-					LOG_INFO(Core, "[InGamePauseMenu] Options cliquee (TODO ouverture overlay)");
+					m_inGamePauseMenuVisible = false;
+					m_inGameOptionsPanelVisible = true;
 				}
 				ImGui::Spacing();
 				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))
@@ -3653,6 +3774,65 @@ namespace engine
 				if (ImGui::Button("Quitter le jeu", ImVec2(btnW, 32.f)))
 				{
 					OnQuit();
+				}
+				ImGui::End();
+			}
+			// Mini-panel Options in-game (ouvert via le bouton Options du menu pause).
+			// Contient les controles essentiels qu'on veut pouvoir ajuster sans
+			// quitter le jeu : volume master, plein ecran, vsync, sensibilite souris.
+			// Le full panel auth Options reste accessible via Se deconnecter -> Login -> Options.
+			if (m_inGameOptionsPanelVisible)
+			{
+				const float optW = 420.f;
+				const float optH = 320.f;
+				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
+				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
+				ImGui::SetNextWindowBgAlpha(0.95f);
+				ImGui::Begin("##ln_ingame_options", nullptr,
+					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+				ImGui::SetWindowFontScale(1.15f);
+				const char* optTitle = "OPTIONS";
+				const float optTitleW = ImGui::CalcTextSize(optTitle).x;
+				ImGui::SetCursorPosX((optW - optTitleW) * 0.5f);
+				ImGui::TextUnformatted(optTitle);
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::Separator();
+				ImGui::Spacing();
+
+				// Lecture des valeurs actuelles depuis la config et ecriture in-place.
+				float vol = static_cast<float>(m_cfg.GetDouble("audio.master_volume", 1.0));
+				bool fullscreen = m_cfg.GetBool("video.fullscreen", false);
+				bool vsync = m_cfg.GetBool("render.vsync", true);
+				float sens = static_cast<float>(m_cfg.GetDouble("controls.mouse_sensitivity", 0.002));
+
+				if (ImGui::SliderFloat("Volume general", &vol, 0.0f, 1.0f, "%.2f"))
+				{
+					m_cfg.SetValue("audio.master_volume", static_cast<double>(vol));
+					(void)m_audioEngine.SetMasterVolume(vol);
+				}
+				if (ImGui::Checkbox("Plein ecran", &fullscreen))
+				{
+					m_cfg.SetValue("video.fullscreen", fullscreen);
+					// Nota : changement effectif au prochain restart (toggle live = autre PR).
+				}
+				if (ImGui::Checkbox("VSync", &vsync))
+				{
+					m_cfg.SetValue("render.vsync", vsync);
+				}
+				if (ImGui::SliderFloat("Sensibilite souris", &sens, 0.0005f, 0.01f, "%.4f rad/px"))
+				{
+					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
+				}
+
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				const float optBtnW = optW - 40.f;
+				if (ImGui::Button("Fermer", ImVec2(optBtnW, 32.f)))
+				{
+					m_inGameOptionsPanelVisible = false;
 				}
 				ImGui::End();
 			}

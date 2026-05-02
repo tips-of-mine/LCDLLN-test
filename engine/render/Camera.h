@@ -81,7 +81,9 @@ namespace engine::render
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
 		static constexpr float kDistanceMin     = 1.5f;   ///< Zoom le plus proche : juste derriere la nuque.
 		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
-		static constexpr float kDistanceDefault = 6.0f;
+		// 4 m par defaut : cadrage MMO/survie (perso prend ~30% de la hauteur ecran
+		// a FOV 70). 6 m donnait un perso trop petit (~21%). Reglable via molette.
+		static constexpr float kDistanceDefault = 4.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;
@@ -101,8 +103,21 @@ namespace engine::render
 		/// Update logique a appeler chaque frame in-game. Met a jour m_target / yaw /
 		/// pitch / m_distance selon l'input, puis ecrit camera.position et
 		/// camera.yaw/pitch pour le rendu.
+		///
+		/// \p groundYAtTarget : hauteur du sol (en metres monde) sous la position
+		/// cible courante, calculee par le caller via TerrainRenderer::SampleHeightAtWorldXZ.
+		/// Sert a clamper la camera au-dessus du terrain quand l'utilisateur
+		/// regarde fortement vers le bas. Passer 0 pour un sol plat (sans terrain).
+		///
+		/// \p speedMultiplier : facteur multiplicatif applique a la vitesse de
+		/// marche/course/accroupi. Permet au caller de combiner :
+		///   * un modificateur de race (ex. elfes 1.10x, nains 0.85x)
+		///   * un modificateur de terrain (ex. sable 0.65x, neige 0.70x, herbe 1.0x)
+		///   * un modificateur d'etat (buff sprint, debuff slow...)
+		/// 1.0f = vitesse de base nominale (kWalkSpeed/kRunSpeed). Borne [0.05, 5.0].
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera);
+			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
+			float groundYAtTarget = 0.0f, float speedMultiplier = 1.0f);
 
 	private:
 		engine::math::Vec3 m_target{ 0.0f, kTargetEyeHeight, 0.0f };
@@ -110,5 +125,12 @@ namespace engine::render
 		bool               m_initialized = false;
 		LocomotionState    m_locomotion = LocomotionState::Idle;
 		float              m_walkBobPhase = 0.0f;
+		// Saut : vitesse verticale (m/s) et offset Y (m) au-dessus du sol. A 0
+		// quand le perso est au sol. Space declenche un saut quand grounded.
+		float              m_verticalVelocityY = 0.0f;
+		float              m_verticalOffsetY   = 0.0f;
+		// Accroupi : maintenir Control. Reduit la hauteur cible et la vitesse
+		// horizontale.
+		bool               m_isCrouching = false;
 	};
 }

@@ -643,9 +643,13 @@ Touche **Échap** post-EnterWorld toggle un menu ImGui centré au-dessus du mond
 
 ### Actions
 - **Reprendre** → ferme le menu.
-- **Options** → TODO (placeholder, ouvrira l'overlay options in-game dans un PR ultérieur).
+- **Options** → ouvre un mini-panel options in-game (volume général, plein écran, vsync, sensibilité souris). Membre `m_inGameOptionsPanelVisible`. Le full panel auth Options reste accessible via `Se déconnecter` → écran Login → Options.
 - **Se déconnecter** → coupe gameplay UDP, reset auth presenter, ré-affiche écran de connexion.
 - **Quitter le jeu** → `OnQuit()` (comportement original).
+
+### Distinction chat post-auth vs post-shard
+- `AuthUiPresenter::IsMasterAuthenticated()` (vrai dès AUTH OK : `m_masterSessionId != 0`) gate l'apparition du chat HUD. Chat visible donc dès Login OK.
+- `AuthUiPresenter::IsInWorldShard()` (alias `IsFlowComplete`) passé à `ChatImGuiRenderer::Render(..., bool inWorldShard)` : si `false` (post-auth pas in-world), seuls **Global + Friends** sont exposés ; si `true` (post-EnterWorld), ajout de **Zone**.
 
 ---
 

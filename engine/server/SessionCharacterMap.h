@@ -40,6 +40,10 @@ namespace engine::server
 		/// Resolve a whisper target by normalized name → connId. Nullopt if not online.
 		std::optional<uint32_t> FindConnByNormalizedName(const std::string& normalizedName) const;
 
+		/// Nombre de joueurs ayant valide EnterWorld (connId actuellement en jeu).
+		/// Utilise par l'API /status pour le compteur totalPlayers / per-shard players.
+		size_t Count() const;
+
 		/// Lowercase ASCII normalization (anything outside 0x00–0x7F is left untouched ;
 		/// case folding restricted to 'A'–'Z'). Whisper lookup uses byte-equality on the
 		/// normalized form, so non-ASCII names match exactly (no case-insensitive match

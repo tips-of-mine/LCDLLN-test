@@ -24,7 +24,12 @@ namespace engine::render
 		/// Émet les commandes ImGui pour la frame courante. Suppose que
 		/// \c m_worldEditorImGui->NewFrame a déjà été appelé.
 		/// No-op si le presenter n'est pas bindé ou pas initialisé.
-		void Render(float viewportW, float viewportH);
+		///
+		/// \p inWorldShard : si true, expose le canal Zone (en plus de Global et
+		/// Friends). Sinon (post-auth mais pas encore branché sur un shard),
+		/// seuls Global + Friends sont exposés -- le canal Zone n'a pas de sens
+		/// hors shard (pas de monde courant).
+		void Render(float viewportW, float viewportH, bool inWorldShard = true);
 
 	private:
 		engine::client::ChatUiPresenter* m_chat = nullptr;

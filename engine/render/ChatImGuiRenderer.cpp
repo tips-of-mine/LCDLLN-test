@@ -59,24 +59,26 @@ namespace engine::render
 		m_cfg = cfg;
 	}
 
-	void ChatImGuiRenderer::Render(float viewportW, float viewportH)
+	void ChatImGuiRenderer::Render(float viewportW, float viewportH, bool inWorldShard)
 	{
 		if (m_chat == nullptr || !m_chat->IsInitialized())
 			return;
 
-		// Géométrie configurable. Defaults : 520×220 px ancré en bas-gauche, marge 16 px.
-		const float panelW = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.width_px", 520)) : 520.f;
-		const float panelH = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.height_px", 220)) : 220.f;
-		const float margin = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.anchor_margin_px", 16)) : 16.f;
+		// Geometrie configurable. Defaults augmentes a 640x300 px ancre en bas-gauche, marge 24 px,
+		// pour que le panneau soit clairement visible (plaintes utilisateurs : "le chat ne s'affiche pas").
+		const float panelW = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.width_px", 640)) : 640.f;
+		const float panelH = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.height_px", 300)) : 300.f;
+		const float margin = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.anchor_margin_px", 24)) : 24.f;
 
 		const float posX = margin;
 		const float posY = std::max(0.f, viewportH - panelH - margin);
 
 		ImGui::SetNextWindowPos(ImVec2(posX, posY));
 		ImGui::SetNextWindowSize(ImVec2(panelW, panelH));
-		ImGui::SetNextWindowBgAlpha(0.78f);
+		// Background opaque (alpha=0.95) au lieu de 0.78 pour bien le voir sur fonds clairs et sombres.
+		ImGui::SetNextWindowBgAlpha(0.95f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
@@ -96,16 +98,27 @@ namespace engine::render
 			// Party, Guild, Server, Raid) restent supportes par le wire mais ne sont
 			// pas exposes en UI tant que les fonctionnalites associees (groupe, guilde,
 			// raid...) ne sont pas branchees cote serveur.
-			static constexpr uint8_t kVisibleChannels[] = {
+			// Set de canaux exposes selon le contexte. Demande utilisateur :
+			//   * Post-auth mais pas encore in-world : Global + Friends.
+			//   * Une fois le royaume rejoint (in-world)  : + Zone.
+			static constexpr uint8_t kChannelsPostAuth[] = {
+				static_cast<uint8_t>(engine::net::ChatChannel::Global),  // 6
+				static_cast<uint8_t>(engine::net::ChatChannel::Friends), // 9
+			};
+			static constexpr uint8_t kChannelsPostShard[] = {
 				static_cast<uint8_t>(engine::net::ChatChannel::Global),  // 6
 				static_cast<uint8_t>(engine::net::ChatChannel::Zone),    // 5
 				static_cast<uint8_t>(engine::net::ChatChannel::Friends), // 9
 			};
+			const uint8_t* kVisibleChannels = inWorldShard ? kChannelsPostShard : kChannelsPostAuth;
+			const size_t   kVisibleChannelsCount = inWorldShard
+				? (sizeof(kChannelsPostShard) / sizeof(kChannelsPostShard[0]))
+				: (sizeof(kChannelsPostAuth) / sizeof(kChannelsPostAuth[0]));
 			const uint16_t mask = m_chat->ChannelFilterMask();
 			ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.f, 0.f, 0.f, 0.f));
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IV(LnTheme::AccentDim(0.20f)));
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive,  IV(LnTheme::AccentDim(0.35f)));
-			for (size_t k = 0; k < (sizeof(kVisibleChannels) / sizeof(kVisibleChannels[0])); ++k)
+			for (size_t k = 0; k < kVisibleChannelsCount; ++k)
 			{
 				const uint8_t i = kVisibleChannels[k];
 				if (k > 0) ImGui::SameLine(0.f, 4.f);
@@ -234,7 +247,7 @@ namespace engine::render
 namespace engine::render
 {
 	void ChatImGuiRenderer::BindChatUi(engine::client::ChatUiPresenter*, const engine::core::Config*) {}
-	void ChatImGuiRenderer::Render(float, float) {}
+	void ChatImGuiRenderer::Render(float, float, bool) {}
 }
 
 #endif

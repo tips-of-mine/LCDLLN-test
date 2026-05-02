@@ -64,19 +64,21 @@ namespace engine::render
 		if (m_chat == nullptr || !m_chat->IsInitialized())
 			return;
 
-		// Géométrie configurable. Defaults : 520×220 px ancré en bas-gauche, marge 16 px.
-		const float panelW = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.width_px", 520)) : 520.f;
-		const float panelH = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.height_px", 220)) : 220.f;
-		const float margin = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.anchor_margin_px", 16)) : 16.f;
+		// Geometrie configurable. Defaults augmentes a 640x300 px ancre en bas-gauche, marge 24 px,
+		// pour que le panneau soit clairement visible (plaintes utilisateurs : "le chat ne s'affiche pas").
+		const float panelW = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.width_px", 640)) : 640.f;
+		const float panelH = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.height_px", 300)) : 300.f;
+		const float margin = m_cfg ? static_cast<float>(m_cfg->GetInt("render.chat_imgui.anchor_margin_px", 24)) : 24.f;
 
 		const float posX = margin;
 		const float posY = std::max(0.f, viewportH - panelH - margin);
 
 		ImGui::SetNextWindowPos(ImVec2(posX, posY));
 		ImGui::SetNextWindowSize(ImVec2(panelW, panelH));
-		ImGui::SetNextWindowBgAlpha(0.78f);
+		// Background opaque (alpha=0.95) au lieu de 0.78 pour bien le voir sur fonds clairs et sombres.
+		ImGui::SetNextWindowBgAlpha(0.95f);
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.78f)));
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration

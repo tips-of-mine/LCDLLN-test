@@ -3282,7 +3282,15 @@ namespace engine
 				//
 				// Chantier 2 : passe la hauteur sol terrain au controleur pour la
 				// collision camera-decor (plus seulement Y=0). 0 si pas de terrain.
-				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+				//
+				// Camera 3eme personne LOCKED : la camera est toujours dans le dos du
+				// personnage. Le mouvement souris controle YAW/PITCH du regard EN
+				// PERMANENCE (pas besoin de maintenir le clic droit). L'avatar suit
+				// automatiquement le yaw camera (cf. matrice avatar plus bas), donc le
+				// joueur regarde toujours dans la direction de la camera et on voit
+				// toujours son dos. Convention MMORPG standard (WoW, FFXIV en mode
+				// permanent-look, GW2, etc.).
+				const bool rmbLook = true;
 				const auto& camTarget = m_orbitalCameraController.GetTargetPosition();
 				const float groundY = m_terrain.IsValid()
 					? m_terrain.SampleHeightAtWorldXZ(camTarget.x, camTarget.z)

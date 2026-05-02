@@ -2964,6 +2964,11 @@ namespace engine
 				LOG_INFO(Core, "[EnterWorld] character_id={}, name='{}', shard_id={}, endpoint='{}'",
 					enterCmd.characterId, enterCmd.characterName, enterCmd.shardId, enterCmd.shardEndpoint);
 
+				// Coupe la musique des ecrans d'auth/menu (Horns_of_the_Fallen_Bastion.mp3)
+				// au moment d'entrer dans le monde : le joueur entend desormais l'ambiance
+				// du shard (zone audio) et eventuellement de futures musiques in-game.
+				m_audioEngine.StopMenuMusic();
+
 				// Phase 3.5/3.6 — Téléportation de la caméra à la position de spawn.
 				// Priorité 1 (Phase 3.6) : spawn par-personnage, lu depuis characters.spawn_*
 				// via la payload CHARACTER_LIST puis posé dans EnterWorldCommand par
@@ -3391,7 +3396,9 @@ namespace engine
 			//   | 0        1  0       ty |
 			//   | -sin(y)  0  cos(y)  tz |
 			//   | 0        0  0       1  |
-			if (m_currentCharacterId != 0u)
+			// On rend l'avatar systematiquement (meme si character_id == 0u, ex.
+			// scenarios de test sans EnterWorld complet) pour que la 3eme personne
+			// soit visible des l'entree dans la scene 3D.
 			{
 				const engine::math::Vec3& target = m_orbitalCameraController.GetTargetPosition();
 				const float yaw = out.camera.yaw;
@@ -3408,8 +3415,14 @@ namespace engine
 					const float bobAmpM = (loco == engine::render::OrbitalCameraController::LocomotionState::Run) ? 0.07f : 0.04f;
 					bobY = std::sin(m_orbitalCameraController.GetWalkBobPhaseRad()) * bobAmpM;
 				}
+				// Le orbital target est a kTargetEyeHeight (1.7 m) au-dessus du sol :
+				// c'est la position des yeux du joueur. L'avatar (mesh feet at mesh-Y=0)
+				// doit etre translate de (target.y - kTargetEyeHeight) pour que ses
+				// pieds soient sur le sol et non flottent dans les airs. groundY ici
+				// est 0 (sol plat) ou la hauteur terrain echantillonnee plus haut.
+				const float feetY = target.y - engine::render::OrbitalCameraController::kTargetEyeHeight + bobY;
 				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = s;    out.objectModelMatrix[3]  = target.x;
-				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = target.y + bobY;
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = feetY;
 				out.objectModelMatrix[8]  = -s;    out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = target.z;
 				out.objectModelMatrix[12] = 0.0f;  out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
 			}
@@ -3598,6 +3611,16 @@ namespace engine
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
+			// Chat HUD overlay sur les ecrans post-master-auth (ShardPick / CharacterSelect /
+			// CharacterCreate). Avant cette correction, le chat n'apparaissait qu'une fois
+			// in-game car la branche auth-rendering excluait le rendu chat. inWorldShard=false
+			// ici (canaux Global + Friends seulement, pas encore Zone).
+			const bool postAuthMasterChat = m_chatImGui && m_chatUi.IsInitialized()
+				&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
+				&& !m_worldEditorExe
+				&& m_cfg.GetBool("render.chat_imgui.enabled", true);
+			if (postAuthMasterChat)
+				m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui

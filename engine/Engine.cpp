@@ -2422,7 +2422,7 @@ namespace engine
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
 														&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 														&& !m_worldEditorExe
-														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
+														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
 													const bool editorHubActive = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 													if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -3228,7 +3228,7 @@ namespace engine
 			&& !m_worldEditorExe;
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
 			&& postAuthMaster
-			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -3595,7 +3595,7 @@ namespace engine
 			&& m_chatUi.IsInitialized()
 			&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe
-			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible))
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible))
 		{
 			// Phase 3.11.1 — Rendu du panneau chat. NewFrame déjà appelé plus haut via
 			// chatImguiOverlayNewFrame. ImGui::Render finalise la draw list pour le RecordToBackbuffer.
@@ -3641,9 +3641,8 @@ namespace engine
 				ImGui::Spacing();
 				if (ImGui::Button("Options", ImVec2(btnW, 32.f)))
 				{
-					// TODO : ouvrir l'overlay Options in-game (re-utilisera AuthImGuiOptions
-					// quand decoupage UI sera fait). Pour l'instant juste un log.
-					LOG_INFO(Core, "[InGamePauseMenu] Options cliquee (TODO ouverture overlay)");
+					m_inGamePauseMenuVisible = false;
+					m_inGameOptionsPanelVisible = true;
 				}
 				ImGui::Spacing();
 				if (ImGui::Button("Se deconnecter", ImVec2(btnW, 32.f)))
@@ -3654,6 +3653,65 @@ namespace engine
 				if (ImGui::Button("Quitter le jeu", ImVec2(btnW, 32.f)))
 				{
 					OnQuit();
+				}
+				ImGui::End();
+			}
+			// Mini-panel Options in-game (ouvert via le bouton Options du menu pause).
+			// Contient les controles essentiels qu'on veut pouvoir ajuster sans
+			// quitter le jeu : volume master, plein ecran, vsync, sensibilite souris.
+			// Le full panel auth Options reste accessible via Se deconnecter -> Login -> Options.
+			if (m_inGameOptionsPanelVisible)
+			{
+				const float optW = 420.f;
+				const float optH = 320.f;
+				ImGui::SetNextWindowPos(ImVec2((dw - optW) * 0.5f, (dh - optH) * 0.5f), ImGuiCond_Always);
+				ImGui::SetNextWindowSize(ImVec2(optW, optH), ImGuiCond_Always);
+				ImGui::SetNextWindowBgAlpha(0.95f);
+				ImGui::Begin("##ln_ingame_options", nullptr,
+					ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
+				ImGui::SetWindowFontScale(1.15f);
+				const char* optTitle = "OPTIONS";
+				const float optTitleW = ImGui::CalcTextSize(optTitle).x;
+				ImGui::SetCursorPosX((optW - optTitleW) * 0.5f);
+				ImGui::TextUnformatted(optTitle);
+				ImGui::SetWindowFontScale(1.f);
+				ImGui::Separator();
+				ImGui::Spacing();
+
+				// Lecture des valeurs actuelles depuis la config et ecriture in-place.
+				float vol = static_cast<float>(m_cfg.GetDouble("audio.master_volume", 1.0));
+				bool fullscreen = m_cfg.GetBool("video.fullscreen", false);
+				bool vsync = m_cfg.GetBool("render.vsync", true);
+				float sens = static_cast<float>(m_cfg.GetDouble("controls.mouse_sensitivity", 0.002));
+
+				if (ImGui::SliderFloat("Volume general", &vol, 0.0f, 1.0f, "%.2f"))
+				{
+					m_cfg.SetValue("audio.master_volume", static_cast<double>(vol));
+					(void)m_audioEngine.SetMasterVolume(vol);
+				}
+				if (ImGui::Checkbox("Plein ecran", &fullscreen))
+				{
+					m_cfg.SetValue("video.fullscreen", fullscreen);
+					// Nota : changement effectif au prochain restart (toggle live = autre PR).
+				}
+				if (ImGui::Checkbox("VSync", &vsync))
+				{
+					m_cfg.SetValue("render.vsync", vsync);
+				}
+				if (ImGui::SliderFloat("Sensibilite souris", &sens, 0.0005f, 0.01f, "%.4f rad/px"))
+				{
+					m_cfg.SetValue("controls.mouse_sensitivity", static_cast<double>(sens));
+				}
+
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				const float optBtnW = optW - 40.f;
+				if (ImGui::Button("Fermer", ImVec2(optBtnW, 32.f)))
+				{
+					m_inGameOptionsPanelVisible = false;
 				}
 				ImGui::End();
 			}

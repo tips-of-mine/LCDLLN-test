@@ -353,6 +353,11 @@ namespace engine
 		/// (au lieu de quitter le client). Tant qu'il est actif, le menu ImGui est
 		/// dessine au-dessus du monde et propose Quitter / Options / Deconnecter.
 		bool m_inGamePauseMenuVisible = false;
+		/// Mini-panel options in-game ouvert via le bouton Options du menu pause.
+		/// Contient les controles essentiels (volume master, plein ecran, vsync,
+		/// sensibilite souris) ; pas le full panel auth Options qui necessite un
+		/// flux specifique (AuthScreenOptions). Releve des paliers d'un PR ulterieur.
+		bool m_inGameOptionsPanelVisible = false;
 		bool m_vsync = true;
 		double m_fixedDt = 0.0;
 		int m_width = 0;

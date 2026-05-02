@@ -2,6 +2,7 @@
 
 #include "engine/client/LocalizationService.h"
 #include "engine/render/LnTheme.h"
+#include "engine/render/SharedFontHandles.h"
 
 #include <algorithm>
 #include <cmath>
@@ -730,13 +731,17 @@ namespace engine::render
 			flags |= ImGuiInputTextFlags_Password;
 		}
 		ImGui::SetNextItemWidth(-FLT_MIN);
-		// NOTE : retour arriere sur le SetWindowFontScale(1.5f) pour les password
-		// (cf. retour utilisateur : 'tu as augmente la taille de la cellule, j'ai
-		// dit qu'augmenter la taille de la police'). ImGui scale fonte ET cellule
-		// ensemble, donc bumper le scale agrandissait visuellement les deux. Pour
-		// agrandir SEULEMENT la police des '*' sans toucher la hauteur de cellule
-		// il faudra une fonte 'value' dediee charge a une taille >13px et la
-		// PushFont() autour de l'InputText - report a un PR ulterieur.
+		// Pour les champs password : utilise la fonte large dediee (Windlass 24 px
+		// + ProggyClean 24 px en merge pour le glyph '*'), partagee via
+		// SharedFontHandles::g_largePasswordFont. Cela rend les '*' visiblement
+		// plus gros sans agrandir la cellule (puisque la cellule reste sur
+		// FramePadding du style courant, pas sur la taille de fonte). Si la
+		// fonte n'est pas chargee (init failed), on retombe sur la fonte courante.
+		const bool pushedLargePwdFont = (password && SharedFontHandles::g_largePasswordFont != nullptr);
+		if (pushedLargePwdFont)
+		{
+			ImGui::PushFont(static_cast<ImFont*>(SharedFontHandles::g_largePasswordFont));
+		}
 		const char* hint = spec.inputPlaceholder.empty() ? nullptr : spec.inputPlaceholder.c_str();
 		if (hint != nullptr && buf[0] == '\0')
 		{
@@ -745,6 +750,10 @@ namespace engine::render
 		else
 		{
 			ImGui::InputText(inputId, buf, static_cast<size_t>(bufSz), flags);
+		}
+		if (pushedLargePwdFont)
+		{
+			ImGui::PopFont();
 		}
 
 		ImGui::PopStyleVar(3);

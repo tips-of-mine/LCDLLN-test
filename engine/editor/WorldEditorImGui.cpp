@@ -524,7 +524,7 @@ namespace engine::editor
 						mergePwd.MergeMode = true;
 						mergePwd.SizePixels = 24.0f;
 						io.Fonts->AddFontDefault(&mergePwd);
-						SharedFontHandles::g_largePasswordFont = static_cast<void*>(pwdFont);
+						engine::render::SharedFontHandles::g_largePasswordFont = static_cast<void*>(pwdFont);
 						LOG_INFO(Render, "[WorldEditorImGui] Police password (Windlass 24px + ProggyClean merge) prete");
 					}
 					else

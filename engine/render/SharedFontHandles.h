@@ -11,7 +11,7 @@
 //   * AuthImGuiRenderer.cpp (autour InputText password) :
 //       if (g_largePasswordFont) ImGui::PushFont(g_largePasswordFont);
 
-namespace engine::render
+namespace engine::render::SharedFontHandles
 {
 	/// Pointeur vers une fonte chargee a une taille >13 px destinee aux widgets
 	/// password (mask '*' lisible). Nul si le loader n'a pas reussi a charger

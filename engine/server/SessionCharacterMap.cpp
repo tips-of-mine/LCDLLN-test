@@ -81,4 +81,10 @@ namespace engine::server
 			return std::nullopt;
 		return it->second;
 	}
+
+	size_t SessionCharacterMap::Count() const
+	{
+		std::lock_guard lock(m_mutex);
+		return m_byConn.size();
+	}
 }

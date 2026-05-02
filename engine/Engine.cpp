@@ -3444,10 +3444,25 @@ namespace engine
 				// pieds soient sur le sol et non flottent dans les airs. groundY ici
 				// est 0 (sol plat) ou la hauteur terrain echantillonnee plus haut.
 				const float feetY = target.y - engine::render::OrbitalCameraController::kTargetEyeHeight + bobY;
-				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = s;    out.objectModelMatrix[3]  = target.x;
-				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = feetY;
-				out.objectModelMatrix[8]  = -s;    out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = target.z;
-				out.objectModelMatrix[12] = 0.0f;  out.objectModelMatrix[13] = 0.0f; out.objectModelMatrix[14] = 0.0f; out.objectModelMatrix[15] = 1.0f;
+				// IMPORTANT : layout COLUMN-MAJOR. Le shader gbuffer_geometry.vert
+				// reconstruit la mat4 via 4 vec4 (instanceRow0..3), chacun lu en sequence
+				// dans le buffer d'instance ; GLSL mat4(c0,c1,c2,c3) place chaque vec4
+				// comme COLONNE. Donc nos indices [0..3] = colonne 0, [4..7] = colonne 1,
+				// etc. La translation va dans la 4eme COLONNE (indices 12, 13, 14).
+				// Avant ce fix, le code etait ecrit en row-major, ce qui mettait la
+				// translation dans la composante w des positions monde -> avatar
+				// invisible (worldPos.w != 1, et translation nulle dans xyz).
+				//
+				// Matrice mathematique (colonne-major M = T * R_y(yaw)) :
+				//   | cos(y)   0   sin(y)    tx |
+				//   | 0        1   0         ty |
+				//   | -sin(y)  0   cos(y)    tz |
+				//   | 0        0   0         1  |
+				// Stockage colonne-par-colonne :
+				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = -s;   out.objectModelMatrix[3]  = 0.0f; // col0 : axe X local
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
+				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
+				out.objectModelMatrix[12] = target.x; out.objectModelMatrix[13] = feetY; out.objectModelMatrix[14] = target.z; out.objectModelMatrix[15] = 1.0f; // col3 : translation
 			}
 		}
 
@@ -3644,6 +3659,19 @@ namespace engine
 				&& m_cfg.GetBool("render.chat_imgui.enabled", true);
 			if (postAuthMasterChat)
 				m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// DIAG : log 1x/sec pour diagnostiquer chat invisible. Etat des conditions.
+			if ((m_currentFrame % 60u) == 0u)
+			{
+				LOG_INFO(Render, "[ChatDiag-AuthBranch] frame={} chatImGui={} chatUiInit={} authInit={} masterAuth={} worldEditorExe={} cfgEnabled={} -> overlay={}",
+					m_currentFrame,
+					(m_chatImGui != nullptr),
+					m_chatUi.IsInitialized(),
+					m_authUi.IsInitialized(),
+					m_authUi.IsMasterAuthenticated(),
+					m_worldEditorExe,
+					m_cfg.GetBool("render.chat_imgui.enabled", true),
+					postAuthMasterChat);
+			}
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
@@ -3667,6 +3695,12 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// DIAG chat-only branch (in-game).
+			if ((m_currentFrame % 60u) == 0u)
+			{
+				LOG_INFO(Render, "[ChatDiag-InGameBranch] frame={} dw={} dh={} inWorldShard={} chatFocus={}",
+					m_currentFrame, dw, dh, m_authUi.IsInWorldShard(), m_chatUi.IsChatFocusActive());
+			}
 			// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
 			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
 			if (m_inGamePauseMenuVisible)

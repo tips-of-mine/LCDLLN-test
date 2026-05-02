@@ -731,17 +731,17 @@ namespace engine::render
 			flags |= ImGuiInputTextFlags_Password;
 		}
 		ImGui::SetNextItemWidth(-FLT_MIN);
-		// Pour les champs password : utilise la fonte large dediee (Windlass 24 px
-		// + ProggyClean 24 px en merge pour le glyph '*'), partagee via
-		// SharedFontHandles::g_largePasswordFont. Cela rend les '*' visiblement
-		// plus gros sans agrandir la cellule (puisque la cellule reste sur
-		// FramePadding du style courant, pas sur la taille de fonte). Si la
-		// fonte n'est pas chargee (init failed), on retombe sur la fonte courante.
-		const bool pushedLargePwdFont = (password && SharedFontHandles::g_largePasswordFont != nullptr);
-		if (pushedLargePwdFont)
-		{
-			ImGui::PushFont(static_cast<ImFont*>(SharedFontHandles::g_largePasswordFont));
-		}
+		// Note : on N'utilise PAS la fonte 24 px sur les champs password. Pousser
+		// une fonte plus grande dans ImGui::InputText agrandissait la HAUTEUR de
+		// la cellule (ImGui scale auto sur la taille de fonte courante), ce qui
+		// rendait les cellules password plus hautes que les autres (login, email).
+		// Retour utilisateur : "tu as augmente la taille de la cellule, j'ai dit
+		// d'augmenter la police". On retombe donc sur la fonte courante (Windlass
+		// 13 px) pour preserver une hauteur uniforme avec les autres champs ; les
+		// asterisques restent petits mais l'alignement est coherent. Pour rendre
+		// les '*' lisibles tout en gardant la hauteur, il faudra dans une future
+		// PR overlay un texte custom de masque a fonte plus grosse, en plus du
+		// vrai InputText reste a fonte normale (ou changer le glyph de masque).
 		const char* hint = spec.inputPlaceholder.empty() ? nullptr : spec.inputPlaceholder.c_str();
 		if (hint != nullptr && buf[0] == '\0')
 		{
@@ -750,10 +750,6 @@ namespace engine::render
 		else
 		{
 			ImGui::InputText(inputId, buf, static_cast<size_t>(bufSz), flags);
-		}
-		if (pushedLargePwdFont)
-		{
-			ImGui::PopFont();
 		}
 
 		ImGui::PopStyleVar(3);

@@ -455,17 +455,21 @@ int main(int argc, char** argv)
 			return out;
 		};
 
-		uint64_t totalPlayers = 0;
+		// Source de verite pour le compteur joueurs : SessionCharacterMap (cote master)
+		// qui contient les connId post-EnterWorld. Avant : on utilisait le current_load
+		// du heartbeat shard, mais le shard binaire ne voyait que les connexions TCP
+		// transitoires (handshake ticket -> close), ce qui donnait toujours 0.
+		// Pour le dev avec un seul shard, on assigne tout le compte EnterWorld au shard
+		// online unique. A generaliser quand multi-shard arrivera (mapping char->shard).
+		const uint64_t playersFromMaster = static_cast<uint64_t>(sessionCharMap.Count());
 		uint32_t shardsOnline = 0;
 		for (const auto& s : shards)
 		{
 			const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
 			if (ok)
-			{
 				++shardsOnline;
-				totalPlayers += s.current_load;
-			}
 		}
+		const uint64_t totalPlayers = playersFromMaster;
 
 		const bool authOk = dbOk;
 		const bool masterOk = dbOk && shardsOnline > 0;
@@ -507,10 +511,17 @@ int main(int argc, char** argv)
 		}
 		else
 		{
+			// Si un seul shard online, on lui assigne 100% des EnterWorld actifs.
+			// Sinon, on retombe sur s.current_load (heartbeat) -- pas exact mais
+			// au moins distribue.
+			const bool singleShardOnline = (shardsOnline == 1u);
 			for (const auto& s : shards)
 			{
 				const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
-				appendServer(s.name, ok, s.current_load, s.endpoint, s.region, s.max_capacity, s.state);
+				const uint32_t players = (ok && singleShardOnline)
+					? static_cast<uint32_t>(playersFromMaster)
+					: s.current_load;
+				appendServer(s.name, ok, players, s.endpoint, s.region, s.max_capacity, s.state);
 			}
 		}
 
@@ -531,16 +542,15 @@ int main(int argc, char** argv)
 		const bool dbOk = readyCheck();
 		const auto shards = shardRegistry.ListShards();
 
-		uint64_t totalPlayers = 0;
+		// Cf. statusProvider plus haut : SessionCharacterMap.Count() est la source
+		// de verite (post-EnterWorld) plutot que s.current_load (heartbeat shard).
+		const uint64_t totalPlayers = static_cast<uint64_t>(sessionCharMap.Count());
 		uint32_t onlineServers = 0;
 		for (const auto& s : shards)
 		{
 			const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
 			if (ok)
-			{
 				++onlineServers;
-				totalPlayers += s.current_load;
-			}
 		}
 
 		const bool authOk = dbOk;

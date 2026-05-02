@@ -2420,7 +2420,7 @@ namespace engine
 													// Sans `IsInitialized()`, un echec d'init de localisation fait passer authGateActive
 													// a false (m_initialized=false) et le chat apparaissait alors par-dessus un ecran noir.
 													const bool chatImguiActive = m_chatImGui && m_chatUi.IsInitialized()
-														&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+														&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 														&& !m_worldEditorExe
 														&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
 													// M43.4 — RecordToBackbuffer également quand --editor (sans world-editor).
@@ -3220,14 +3220,14 @@ namespace engine
 		const bool authImguiOverlayNewFrame = m_authImGui && m_authUi.GetVisualState().active
 			&& m_cfg.GetBool("render.auth_ui.imgui.enabled", false);
 		// Phase 3.11.1 — NewFrame également quand le panneau chat doit s'afficher (post-auth, pas en éditeur).
-		// Responsabilite : chat HUD VISIBLE uniquement si auth INITIALISEE *et* COMPLETE
-		// (cf. fix encombrement ecran noir lorsque LocalizationService init echoue).
-		// Inclut aussi le menu pause in-game (m_inGamePauseMenuVisible) pour que NewFrame
-		// soit appele quand seul le menu pause est ouvert (chat config off mais auth OK).
-		const bool postAuthInGame = m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+		// Responsabilite : chat HUD VISIBLE des que le master a accepte l'AUTH
+		// (Global + Friends) ; la liste s'enrichit du canal Zone une fois le shard
+		// rejoint. Cf. retour utilisateur : 'une fois authentifie, il doit y avoir
+		// le chat global + amis ; une fois le royaume choisi, + zone'.
+		const bool postAuthMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe;
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
-			&& postAuthInGame
+			&& postAuthMaster
 			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
@@ -3593,7 +3593,7 @@ namespace engine
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
 			&& m_chatUi.IsInitialized()
-			&& m_authUi.IsInitialized() && m_authUi.IsFlowComplete()
+			&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe
 			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible))
 		{
@@ -3610,7 +3610,8 @@ namespace engine
 					dh = static_cast<float>(extUi.height);
 				}
 			}
-			m_chatImGui->Render(dw, dh);
+			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
+			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
 			// Menu pause in-game superpose au chat HUD : meme branche de rendu pour
 			// que le ImGui::Render() finalise les deux draw lists en une seule passe.
 			if (m_inGamePauseMenuVisible)

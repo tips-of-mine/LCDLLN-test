@@ -384,6 +384,16 @@ namespace engine::client
 		/// arrêter la connexion gameplay UDP et clearer les presenters in-game.
 		void RequestReturnToLogin();
 
+		/// Vrai dès que le master a accepté l'AUTH (m_masterSessionId != 0). Permet
+		/// au chat HUD d'apparaître plus tôt que IsFlowComplete (qui n'est vrai
+		/// qu'après EnterWorld) : on autorise le chat global+amis dès l'auth, et
+		/// le chat de zone vient s'ajouter une fois le shard rejoint.
+		bool IsMasterAuthenticated() const { return m_masterSessionId != 0u; }
+		/// Vrai quand le client est branché sur un shard (le ticket a été accepté
+		/// par le shard et le perso est entré dans le monde). Equivaut à
+		/// `IsFlowComplete()` côté présentateur.
+		bool IsInWorldShard() const { return m_flowComplete; }
+
 		/// While the auth gate is active, gameplay camera and chat should not consume input.
 		bool BlocksWorldInput() const;
 

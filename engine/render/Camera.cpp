@@ -270,9 +270,24 @@ namespace engine::render
 		}
 
 		// Position camera : recule dans la direction OPPOSEE du forward, depuis target.
-		camera.position.x = m_target.x - forwardX * effectiveDistance;
-		camera.position.y = m_target.y - forwardY * effectiveDistance;
-		camera.position.z = m_target.z - forwardZ * effectiveDistance;
+		// Vue "over the shoulder" : decale la camera lateralement (vecteur right) et
+		// verticalement (vecteur up cible) pour que le personnage apparaisse sur le
+		// cote gauche de l'ecran et legerement vers le bas, comme dans les MMO/survie
+		// modernes (Once Human, New World, GW2 zoom-in...). Sans ce decalage, le perso
+		// est centre et masque la vue centrale.
+		// right vector horizontal (cross world_up x forward, cf. ComputeViewMatrix).
+		const float rightX = -forwardZ;
+		const float rightZ = forwardX;
+		const float rightLen = std::sqrt(rightX * rightX + rightZ * rightZ);
+		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
+		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
+		// Decalage epaule droite : 0.8 m vers la droite -> perso apparait a gauche.
+		// Decalage hauteur : +0.4 m au-dessus des yeux -> camera regarde un peu plus bas.
+		constexpr float kShoulderOffsetM = 0.8f;
+		constexpr float kHeightOffsetM   = 0.4f;
+		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
+		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
+		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;
 		// Clamp final en Y : meme avec effectiveDistance reduit, on s'assure que
 		// la camera ne descende pas sous le seuil (cas ou m_target.y < floor par ex.).
 		if (camera.position.y < kGroundY + kGroundPadding)

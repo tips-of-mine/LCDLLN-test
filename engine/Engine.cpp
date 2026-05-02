@@ -3375,8 +3375,10 @@ namespace engine
 			// Etape 2 + 4 vue 3eme personne : position + orientation de l'avatar.
 			//
 			// Position : translation a la cible orbitale (= position joueur).
-			// Le mesh 'avatar_placeholder.mesh' est un cube 0.5x1.8x0.5 m centre
-			// sur (0, 0.9, 0), pieds Y=0 ; donc translation(target) sans offset.
+			// Le mesh 'avatar_placeholder.mesh' (chantier 3) est un humanoide
+			// composite : torse + tete + 2 bras + 2 jambes (6 boites soudees,
+			// 144 verts, 216 indices). Pieds a mesh-Y=0, sommet du crane a
+			// mesh-Y=1.8 ; translation(target) sans offset.
 			//
 			// Orientation : rotation Y selon le yaw camera (etape 4). Standard MMO :
 			// le perso fait face dans la meme direction horizontale que la camera,

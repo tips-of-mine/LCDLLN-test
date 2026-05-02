@@ -3291,7 +3291,14 @@ namespace engine
 					rmbLook, true, out.camera, groundY);
 			}
 
-			if (!authGateActive && m_chatUi.IsInitialized())
+			// Chat update : avant on attendait !authGateActive (donc post-EnterWorld
+			// uniquement). Resultat : sur ShardPick/CharSelect, le panneau chat ImGui
+			// rendait bien mais l'utilisateur appuyait sur Enter/Slash sans effet,
+			// car ChatUiPresenter::Update n'etait jamais appele -> le focus chat ne
+			// pouvait pas s'activer. Desormais on update aussi des que le master a
+			// accepte l'auth (m_masterSessionId != 0), donc des ShardPick.
+			const bool chatPostMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated();
+			if ((!authGateActive || chatPostMaster) && m_chatUi.IsInitialized())
 			{
 				// Phase 3.11.3 — Indique au presenter si un ImGui::InputText pilote la saisie
 				// (panneau chat ImGui actif). Coupe la branche keyboard-typing/Enter dans Update

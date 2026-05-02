@@ -134,6 +134,12 @@ int main(int argc, char** argv)
 
 	while (server.IsRunning() && g_quit == 0)
 	{
+		// Met a jour le nombre de joueurs connectes (NetServer connection count)
+		// avant chaque Pump : ShardToMasterClient::SendHeartbeat utilise cette
+		// valeur pour le payload SHARD_HEARTBEAT, qui alimente l'API status
+		// (totalPlayers + game_servers[].players). Avant, m_current_load restait
+		// a 0 car SetCurrentLoad n'etait jamais appele.
+		toMaster.SetCurrentLoad(server.GetConnectionCount());
 		toMaster.Pump();
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}

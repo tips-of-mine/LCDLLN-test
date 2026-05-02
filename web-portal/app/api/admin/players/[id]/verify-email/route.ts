@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { isAuthenticatedAdmin } from '@/lib/apiAuth'
 import { query } from '@/lib/db'
 
-async function checkAdmin() {
-  const role = cookies().get('lcdlln_portal_role')?.value
-  return role === 'admin'
-}
-
 export async function PATCH(_req: Request, { params }: { params: { id: string } }) {
-  if (!await checkAdmin()) return NextResponse.json({ ok: false }, { status: 403 })
+  if (!await isAuthenticatedAdmin()) return NextResponse.json({ ok: false }, { status: 403 })
   const id = parseInt(params.id, 10)
   if (isNaN(id)) return NextResponse.json({ ok: false }, { status: 400 })
   try {

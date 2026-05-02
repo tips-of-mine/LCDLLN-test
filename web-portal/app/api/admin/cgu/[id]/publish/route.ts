@@ -1,7 +1,7 @@
 // POST /api/admin/cgu/[id]/publish
 // Publishes a draft CGU edition
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { isAuthenticatedAdmin } from '@/lib/apiAuth'
 import { query } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2/promise'
 
@@ -9,8 +9,7 @@ export async function POST(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const jar = cookies()
-  if (jar.get('lcdlln_portal_role')?.value !== 'admin') {
+  if (!(await isAuthenticatedAdmin())) {
     return NextResponse.json({ ok: false }, { status: 403 })
   }
 

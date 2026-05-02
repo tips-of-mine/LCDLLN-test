@@ -1,19 +1,17 @@
 // PATCH /api/player/characters/[id]/delete
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { getAuthenticatedAccountId } from '@/lib/apiAuth'
 import type { RowDataPacket } from 'mysql2/promise'
 
 export async function PATCH(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false }, { status: 401 })
-  const accountId = parseInt(raw, 10)
+  const accountId = await getAuthenticatedAccountId()
+  if (!accountId) return NextResponse.json({ ok: false }, { status: 401 })
   const characterId = parseInt(params.id, 10)
-  if (isNaN(accountId) || isNaN(characterId)) return NextResponse.json({ ok: false }, { status: 400 })
+  if (isNaN(characterId)) return NextResponse.json({ ok: false }, { status: 400 })
 
   try {
     // Verify ownership

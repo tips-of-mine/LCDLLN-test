@@ -1,19 +1,14 @@
 // PATCH /api/admin/roadmap/[id] — update roadmap item fields
 // DELETE /api/admin/roadmap/[id] — delete roadmap item
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { isAuthenticatedAdmin } from '@/lib/apiAuth'
 import { query } from '@/lib/db'
-
-function isAdmin(): boolean {
-  const jar = cookies()
-  return jar.get('lcdlln_portal_role')?.value === 'admin'
-}
 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin()) {
+  if (!(await isAuthenticatedAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   const id = parseInt(params.id, 10)
@@ -59,7 +54,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin()) {
+  if (!(await isAuthenticatedAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   const id = parseInt(params.id, 10)

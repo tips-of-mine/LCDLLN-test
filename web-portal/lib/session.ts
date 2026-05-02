@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { verifyCookieValue } from '@/lib/cookieSigning'
 import type { RowDataPacket } from 'mysql2/promise'
 
 export type Session = {
@@ -11,7 +12,8 @@ export type Session = {
 
 export async function getSession(): Promise<Session> {
   const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
+  const signed = jar.get('lcdlln_portal_account')?.value
+  const raw = await verifyCookieValue(signed)
   if (!raw) return null
   const accountId = parseInt(raw, 10)
   if (isNaN(accountId) || accountId <= 0) return null

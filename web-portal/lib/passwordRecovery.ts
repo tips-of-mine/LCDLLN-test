@@ -2,6 +2,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { query } from "@/lib/db";
 import { hashPasswordForGameMaster } from "@/lib/gamePasswordHash";
+import { verifyPasswordStrength } from "@/lib/passwordPolicy";
 
 type AccountRow = RowDataPacket & {
   id: number;
@@ -100,15 +101,6 @@ function computeAgeYears(birthDate: string): number | null {
     age -= 1;
   }
   return age >= 0 ? age : null;
-}
-
-function verifyPasswordStrength(password: string): string | null {
-  if (password.length < 8) return "Le mot de passe doit contenir au moins 8 caracteres.";
-  if (password.length > 256) return "Le mot de passe depasse la longueur maximale autorisee.";
-  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-    return "Le mot de passe doit contenir au moins une lettre et un chiffre.";
-  }
-  return null;
 }
 
 export async function ensurePasswordRecoveryTables(): Promise<void> {

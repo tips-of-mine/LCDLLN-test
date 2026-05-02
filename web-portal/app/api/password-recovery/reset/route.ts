@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     const result = await resetPasswordWithToken(body.token || "", body.newPassword || "");
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue.";
-    return NextResponse.json({ ok: false, message }, { status: 500 });
+    console.error("[POST /api/password-recovery/reset]", error);
+    return NextResponse.json({ ok: false, message: "Erreur serveur" }, { status: 500 });
   }
 }

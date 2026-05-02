@@ -1,15 +1,12 @@
 // PATCH /api/player/account
 // Body: { firstName?, lastName?, addressStreet?, addressCity?, addressZip?, addressCountry? }
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { getAuthenticatedAccountId } from '@/lib/apiAuth'
 
 export async function PATCH(request: Request) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false, message: 'Non authentifié' }, { status: 401 })
-  const accountId = parseInt(raw, 10)
-  if (isNaN(accountId)) return NextResponse.json({ ok: false, message: 'Session invalide' }, { status: 401 })
+  const accountId = await getAuthenticatedAccountId()
+  if (!accountId) return NextResponse.json({ ok: false, message: 'Non authentifié' }, { status: 401 })
 
   try {
     const body = await request.json() as Record<string, string>

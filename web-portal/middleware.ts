@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifyCookieValue } from '@/lib/cookieSigning'
 
-export function middleware(request: NextRequest) {
-  const accountId = request.cookies.get('lcdlln_portal_account')?.value
-  const role = request.cookies.get('lcdlln_portal_role')?.value
+export async function middleware(request: NextRequest) {
+  const accountId = await verifyCookieValue(request.cookies.get('lcdlln_portal_account')?.value)
+  const role = await verifyCookieValue(request.cookies.get('lcdlln_portal_role')?.value)
   const { pathname } = request.nextUrl
 
   if (pathname.startsWith('/player')) {

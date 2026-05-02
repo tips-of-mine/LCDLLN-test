@@ -1,18 +1,15 @@
 // POST /api/bugs
 // Body: { title, body, category }
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { query } from '@/lib/db'
+import { getAuthenticatedAccountId } from '@/lib/apiAuth'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 const VALID_CATEGORIES = ['gameplay', 'graphique', 'reseau', 'interface', 'autre'] as const
 
 export async function POST(request: Request) {
-  const jar = cookies()
-  const raw = jar.get('lcdlln_portal_account')?.value
-  if (!raw) return NextResponse.json({ ok: false }, { status: 401 })
-  const accountId = parseInt(raw, 10)
-  if (isNaN(accountId)) return NextResponse.json({ ok: false }, { status: 401 })
+  const accountId = await getAuthenticatedAccountId()
+  if (!accountId) return NextResponse.json({ ok: false }, { status: 401 })
 
   try {
     const body = await request.json() as { title?: string; body?: string; category?: string }
@@ -34,7 +31,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, id: result.insertId }, { status: 201 })
   } catch (err) {
     console.error('[POST /api/bugs]', err)
-    const msg = err instanceof Error ? err.message : 'Erreur serveur'
-    return NextResponse.json({ ok: false, message: msg }, { status: 500 })
+    return NextResponse.json({ ok: false, message: 'Erreur serveur' }, { status: 500 })
   }
 }

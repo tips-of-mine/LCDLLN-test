@@ -1,11 +1,19 @@
 import { scryptSync, timingSafeEqual } from "node:crypto";
 import type { RowDataPacket } from "mysql2/promise";
 import { query } from "@/lib/db";
-import { verifyGameMasterPassword } from "@/lib/gamePasswordHash";
+import { hashPasswordForGameMaster, verifyGameMasterPassword } from "@/lib/gamePasswordHash";
 
 function normalizeLower(value: string): string {
   return value.trim().toLowerCase();
 }
+
+// Hash bidon (Argon2id valide) précalculé au chargement du module. Sert à égaliser
+// le temps de réponse quand le compte n'existe pas, pour empêcher l'énumération de
+// logins/emails par mesure de timing. Le résultat de la verify n'est jamais utilisé.
+const dummyHashPromise: Promise<string> = hashPasswordForGameMaster(
+  "__dummy_login__",
+  "__dummy_password__",
+);
 
 function verifyLegacyScryptPassword(password: string, stored: string): boolean {
   if (!stored.startsWith("scrypt$")) return false;
@@ -50,6 +58,11 @@ export async function verifyPortalCredentials(
     );
     const row = rows[0];
     if (!row) {
+      // Égalise le temps avec un compte trouvé : on lance un Argon2id factice
+      // pour rendre l'énumération par timing impraticable.
+      try {
+        await verifyGameMasterPassword("__dummy_login__", plainPassword, await dummyHashPromise);
+      } catch { /* ignore */ }
       return { ok: false, code: "invalid" };
     }
     const dbLogin = row.login.trim();

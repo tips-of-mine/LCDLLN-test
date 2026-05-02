@@ -1,17 +1,12 @@
 // GET /api/admin/roadmap — returns all roadmap items ordered by display_order
 // POST /api/admin/roadmap — creates a new roadmap item
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { isAuthenticatedAdmin } from '@/lib/apiAuth'
 import { query } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2/promise'
 
-function isAdmin(): boolean {
-  const jar = cookies()
-  return jar.get('lcdlln_portal_role')?.value === 'admin'
-}
-
 export async function GET() {
-  if (!isAdmin()) {
+  if (!(await isAuthenticatedAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   try {
@@ -25,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!isAdmin()) {
+  if (!(await isAuthenticatedAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   try {

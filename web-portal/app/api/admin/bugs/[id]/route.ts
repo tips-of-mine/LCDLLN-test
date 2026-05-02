@@ -9,14 +9,9 @@
 //  4. Set exploit_awarded = 1 on the bug report.
 
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { isAuthenticatedAdmin } from '@/lib/apiAuth'
 import { query } from '@/lib/db'
 import type { RowDataPacket } from 'mysql2/promise'
-
-function isAdmin(): boolean {
-  const jar = cookies()
-  return jar.get('lcdlln_portal_role')?.value === 'admin'
-}
 
 const VALID_STATUSES = ['pending', 'confirmed', 'in_progress', 'resolved', 'not_a_bug'] as const
 type AdminStatus = (typeof VALID_STATUSES)[number]
@@ -40,7 +35,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  if (!isAdmin()) {
+  if (!(await isAuthenticatedAdmin())) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
 

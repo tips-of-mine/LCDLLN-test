@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
+
+// Empêche que le token de reset ne fuite via le header Referer vers d'éventuelles
+// ressources tierces chargées par cette page.
+export const metadata: Metadata = {
+  referrer: "no-referrer",
+};
 
 export default function PasswordRecoveryResetPage({
   searchParams,

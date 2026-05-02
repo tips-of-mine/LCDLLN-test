@@ -3008,7 +3008,9 @@ namespace engine
 						spawnY   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.y", 100.0));
 						spawnZ   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.z", 0.0));
 						yawDeg   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
-						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -10.0));
+						// Pitch -20deg par defaut : vue 3eme personne legerement plongeante,
+						// pour bien voir le perso au centre-bas de l'ecran (cf. WoW/New World/Once Human).
+						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -20.0));
 						LOG_INFO(Core, "[EnterWorld] using config default spawn (no per-character data)");
 					}
 					constexpr float kDeg2Rad = 3.14159265f / 180.f;
@@ -3495,6 +3497,20 @@ namespace engine
 				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
 				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
 				out.objectModelMatrix[12] = target.x; out.objectModelMatrix[13] = feetY; out.objectModelMatrix[14] = target.z; out.objectModelMatrix[15] = 1.0f; // col3 : translation
+				// DIAG visibilite avatar : 1 LOG par seconde pour confirmer que la matrice
+				// est bien posee et visible. Aide au triage des plaintes "je ne vois pas le perso".
+				static double s_lastAvatarDiagAt = -1000.0;
+				const double nowSec = static_cast<double>(m_currentFrame) * 0.0167;
+				if (nowSec - s_lastAvatarDiagAt > 1.0)
+				{
+					s_lastAvatarDiagAt = nowSec;
+					LOG_INFO(Render, "[Avatar] pos=({:.2f},{:.2f},{:.2f}) feetY={:.2f} cam=({:.2f},{:.2f},{:.2f}) yaw={:.2f}deg pitch={:.2f}deg dist={:.2f}m visible={}",
+						target.x, target.y, target.z, feetY,
+						out.camera.position.x, out.camera.position.y, out.camera.position.z,
+						out.camera.yaw * 57.2958f, out.camera.pitch * 57.2958f,
+						m_orbitalCameraController.GetDistance(),
+						out.objectVisible ? 1 : 0);
+				}
 			}
 		}
 

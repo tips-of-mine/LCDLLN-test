@@ -81,10 +81,10 @@ namespace engine::render
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
 		static constexpr float kDistanceMin     = 1.5f;   ///< Zoom le plus proche : juste derriere la nuque.
 		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
-		// 5 m par defaut : compromis entre le 4m precedent (perso trop pres, sortait
-		// parfois de l'ecran avec les offsets epaule/hauteur) et le 6m initial
-		// (perso trop petit). Reglable via molette.
-		static constexpr float kDistanceDefault = 5.0f;
+		// 8 m par defaut : la valeur 5m precedente, combinee aux offsets epaule + hauteur,
+		// rendait le perso difficile a voir (trop pres de la camera, parfois hors frustum).
+		// 8m donne un cadrage MMORPG classique (le perso fait ~1/4 de hauteur ecran).
+		static constexpr float kDistanceDefault = 8.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;

@@ -334,12 +334,14 @@ namespace engine::render
 		const float rightLen = std::sqrt(rightX * rightX + rightZ * rightZ);
 		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
 		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
-		// Decalage epaule droite : 0.3 m vers la droite -> perso legerement decentre.
-		// Decalage hauteur : +0.5 m au-dessus des yeux -> camera un peu plus haute.
-		// Valeurs reduites par rapport a l'iteration precedente (0.8m / 1.2m) qui
-		// faisait disparaitre le perso de l'ecran chez l'utilisateur. A re-tuner.
-		constexpr float kShoulderOffsetM = 0.3f;
-		constexpr float kHeightOffsetM   = 0.5f;
+		// Iteration 3 : utilisateur signale que le perso reste invisible avec 0.3/0.5
+		// + dist=5m. On centre l'avatar (epaule=0) et on remonte la camera bien au-dessus
+		// (1.5m au-dessus de la tete) pour un cadrage MMO classique : perso au centre-bas
+		// de l'ecran, vue legerement plongeante. Combine a kDistanceDefault=8m, le perso
+		// occupe ~1/4 de la hauteur ecran et reste clairement visible meme apres
+		// translations/zooms.
+		constexpr float kShoulderOffsetM = 0.0f;
+		constexpr float kHeightOffsetM   = 1.5f;
 		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
 		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
 		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;

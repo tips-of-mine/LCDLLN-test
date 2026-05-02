@@ -356,7 +356,16 @@ namespace engine::server
 			if (m_server->Send(destConn, pkt))
 				++delivered;
 		}
-		LOG_INFO(Net, "[ChatRelayHandler] Chat broadcast sender='{}' channel={} text_len={} delivered={}/{}",
-			sender, static_cast<unsigned>(parsed->channel), parsed->text.size(), delivered, snapshot.size());
+		// Log INCLUT le texte du message pour audit/moderation (demande utilisateur).
+		// Tronque a 200 chars dans le log pour ne pas saturer le subsystem si un
+		// joueur poste un pave ; le payload reseau passe entier (jusqu'a kProtocolV1MaxStringLength).
+		std::string textForLog = parsed->text;
+		if (textForLog.size() > 200u)
+		{
+			textForLog.resize(200u);
+			textForLog += "...[truncated]";
+		}
+		LOG_INFO(Net, "[ChatRelayHandler] Chat broadcast sender='{}' channel={} text_len={} delivered={}/{} text='{}'",
+			sender, static_cast<unsigned>(parsed->channel), parsed->text.size(), delivered, snapshot.size(), textForLog);
 	}
 }

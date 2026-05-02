@@ -77,6 +77,12 @@ namespace engine::render
 		ImGui::SetNextWindowSize(ImVec2(panelW, panelH));
 		// Background opaque (alpha=0.95) au lieu de 0.78 pour bien le voir sur fonds clairs et sombres.
 		ImGui::SetNextWindowBgAlpha(0.95f);
+		// Force le panneau chat au PREMIER PLAN : utile sur les ecrans pre-EnterWorld
+		// ou le panneau auth occupe TOUT le viewport en alpha=1.0 et masque le chat
+		// si l'ordre d'empilement ImGui ne le met pas devant. Sans focus capture
+		// (NoBringToFrontOnFocus + NoFocusOnAppearing en flags) pour ne pas voler
+		// l'input clavier de l'auth.
+		ImGui::SetNextWindowFocus();
 
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));

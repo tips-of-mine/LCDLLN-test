@@ -81,9 +81,10 @@ namespace engine::render
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
 		static constexpr float kDistanceMin     = 1.5f;   ///< Zoom le plus proche : juste derriere la nuque.
 		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
-		// 4 m par defaut : cadrage MMO/survie (perso prend ~30% de la hauteur ecran
-		// a FOV 70). 6 m donnait un perso trop petit (~21%). Reglable via molette.
-		static constexpr float kDistanceDefault = 4.0f;
+		// 5 m par defaut : compromis entre le 4m precedent (perso trop pres, sortait
+		// parfois de l'ecran avec les offsets epaule/hauteur) et le 6m initial
+		// (perso trop petit). Reglable via molette.
+		static constexpr float kDistanceDefault = 5.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;

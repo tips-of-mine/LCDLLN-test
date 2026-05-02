@@ -1419,6 +1419,22 @@ namespace engine
 										// (cf. branche !m_editorMode du Update).
 										m_geometryMeshHandle = m_assetRegistry.LoadMesh("meshes/avatar_placeholder.mesh");
 
+										// Texture peau avatar : 1x1 sRGB violet clair (190,140,230). Le materiel
+										// dedie m_avatarMaterialId remplace le default fallback (texture blanche
+										// invisible sur sol blanc) pour que l'humanoide ressorte clairement.
+										m_avatarSkinTextureHandle = m_assetRegistry.LoadTexture("textures/avatar_skin.texr", true);
+										if (m_avatarSkinTextureHandle.IsValid() && m_pipeline)
+										{
+											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+											if (materialCache.IsValid())
+											{
+												engine::render::Material avatarMat{};
+												avatarMat.baseColor = m_avatarSkinTextureHandle;
+												m_avatarMaterialId = materialCache.CreateMaterial(m_vkDeviceContext.GetDevice(), avatarMat);
+												LOG_INFO(Render, "[Avatar] Materiel violet clair enregistre, materialId={}", m_avatarMaterialId);
+											}
+										}
+
 
 										m_frameGraph.addPass("GPU_Cull",
 											[](engine::render::PassBuilder&) {},
@@ -1512,7 +1528,7 @@ namespace engine
 														cullingPass.GetDrawItemCount(m_currentFrame),
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
-														materialCache.GetDefaultMaterialIndex(),
+														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
 														terrainBeforeGeometry);
 												}
 												else
@@ -1525,7 +1541,7 @@ namespace engine
 														static_cast<uint32_t>(lodLevel),
 														materialCache.GetDescriptorSet(),
 														rs.objectModelMatrix,
-														materialCache.GetDefaultMaterialIndex(),
+														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
 														terrainBeforeGeometry);
 												}
 											});

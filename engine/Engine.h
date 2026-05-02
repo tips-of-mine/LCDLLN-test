@@ -226,6 +226,11 @@ namespace engine
 		engine::render::AuthGlyphPass m_authGlyphPass;
 		engine::render::AuthLogoPass m_authLogoPass;
 		engine::render::MeshHandle m_geometryMeshHandle;
+		/// Texture peau de l'avatar (1x1 sRGB violet clair, visible sur sol blanc et ciel sombre).
+		engine::render::TextureHandle m_avatarSkinTextureHandle;
+		/// Index materiel de l'avatar dans la MaterialDescriptorCache (0 = default fallback,
+		/// non-zero = materiel dedie violet clair). Renseigne au boot apres registration.
+		uint32_t m_avatarMaterialId = 0u;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
 

@@ -34,17 +34,16 @@ function bytesToHex(bytes: ArrayBuffer): string {
   return out;
 }
 
-function hexToBytes(hex: string): Uint8Array | null {
+function hexToArrayBuffer(hex: string): ArrayBuffer | null {
   if (hex.length % 2 !== 0) return null;
-  // Backing buffer typé explicitement ArrayBuffer (et non ArrayBufferLike) pour
-  // satisfaire la signature BufferSource de crypto.subtle.verify avec @types/node 22+.
-  const out = new Uint8Array(new ArrayBuffer(hex.length / 2));
-  for (let i = 0; i < out.length; i += 1) {
+  const buffer = new ArrayBuffer(hex.length / 2);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < view.length; i += 1) {
     const byte = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
     if (Number.isNaN(byte)) return null;
-    out[i] = byte;
+    view[i] = byte;
   }
-  return out;
+  return buffer;
 }
 
 export async function signCookieValue(rawValue: string): Promise<string> {
@@ -61,10 +60,12 @@ export async function verifyCookieValue(signedValue: string | undefined): Promis
   const rawValue = signedValue.substring(0, dot);
   const providedHex = signedValue.substring(dot + 1);
   if (!/^[a-f0-9]{64}$/i.test(providedHex)) return null;
-  const providedBytes = hexToBytes(providedHex);
-  if (!providedBytes) return null;
+  // ArrayBuffer (vs Uint8Array) satisfait la signature BufferSource stricte de
+  // crypto.subtle.verify avec @types/node 22+ sans cast.
+  const providedSignature = hexToArrayBuffer(providedHex);
+  if (!providedSignature) return null;
   const key = await getKey();
   const enc = new TextEncoder();
-  const ok = await crypto.subtle.verify("HMAC", key, providedBytes, enc.encode(rawValue));
+  const ok = await crypto.subtle.verify("HMAC", key, providedSignature, enc.encode(rawValue));
   return ok ? rawValue : null;
 }

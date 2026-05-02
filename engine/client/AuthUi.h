@@ -374,6 +374,12 @@ namespace engine::client
 		/// When false, the master/shard gate has passed and the world loop should run normally.
 		bool IsFlowComplete() const { return m_flowComplete; }
 
+		/// True dès que l'AUTH a réussi côté master (session_id non-zéro). Permet d'exposer le
+		/// chat (Say/Yell/Zone) sur les écrans post-login (CharacterSelect, CharacterCreate)
+		/// avant l'EnterWorld définitif — la connexion master est déjà vivante et le handler
+		/// CHAT_RELAY est câblé.
+		bool IsMasterSessionAlive() const { return m_masterSessionId != 0; }
+
 		/// Utilisé par \c lcdlln_world_editor.exe : pas d’écran login, accès direct à la scène 3D (Vulkan).
 		void BypassAuthGateForWorldEditor();
 

@@ -52,9 +52,17 @@ namespace engine::server
 		if (opcode != kOpcodeChatSendRequest || !m_server || !m_sessions || !m_connMap || !m_accounts)
 			return;
 
+		// Trace systématique à l'entrée pour assurer le suivi côté serveur de chaque
+		// CHAT_SEND_REQUEST reçu (visibilité demandée par l'opérateur — sinon les
+		// rejets précoces / les broadcasts vides ne laissaient aucune trace).
+		LOG_INFO(Net, "[ChatRelayHandler] Recv CHAT_SEND_REQUEST conn={} session_hdr={} payload_size={}",
+			connId, sessionIdHeader, payloadSize);
+
 		auto parsed = ParseChatSendRequestPayload(payload, payloadSize);
 		if (!parsed)
 		{
+			LOG_WARN(Net, "[ChatRelayHandler] Reject : invalid payload (conn={} payload_size={})",
+				connId, payloadSize);
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "invalid chat payload", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
@@ -63,6 +71,8 @@ namespace engine::server
 
 		if (!IsValidChannelByte(parsed->channel))
 		{
+			LOG_WARN(Net, "[ChatRelayHandler] Reject : invalid channel byte={} (conn={})",
+				static_cast<unsigned>(parsed->channel), connId);
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "invalid channel", requestId, sessionIdHeader);
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
@@ -71,10 +81,14 @@ namespace engine::server
 
 		if (parsed->text.empty())
 		{
+			LOG_DEBUG(Net, "[ChatRelayHandler] Empty text from conn={} channel={} : ignored silently",
+				connId, static_cast<unsigned>(parsed->channel));
 			// Empty message : on ignore silencieusement (pas d'erreur, l'utilisateur a sans
 			// doute juste pressé Entrée sans contenu).
 			return;
 		}
+		LOG_INFO(Net, "[ChatRelayHandler] Parsed channel={} target='{}' text_len={}",
+			static_cast<unsigned>(parsed->channel), parsed->targetToken, parsed->text.size());
 		if (parsed->text.size() > kMaxChatTextBytes)
 		{
 			parsed->text.resize(kMaxChatTextBytes);

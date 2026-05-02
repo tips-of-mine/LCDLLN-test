@@ -3589,6 +3589,15 @@ namespace engine
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
+			// Le chat est exposé dès que la session master est établie (post-AUTH) — donc
+			// visible sur CharacterSelect / CharacterCreate avant l'EnterWorld définitif.
+			// Permet au joueur de discuter pendant qu'il choisit son personnage.
+			if (m_chatImGui && m_chatUi.IsInitialized() && m_authUi.IsMasterSessionAlive()
+				&& !m_worldEditorExe
+				&& m_cfg.GetBool("render.chat_imgui.enabled", true))
+			{
+				m_chatImGui->Render(dw, dh);
+			}
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui

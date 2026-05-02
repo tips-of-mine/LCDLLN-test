@@ -79,12 +79,20 @@ namespace engine::render
 		static constexpr float kRunSpeed        = 10.0f;
 		static constexpr float kPitchMin        = -60.0f * 3.14159265f / 180.0f; ///< 3eme personne : pas de plongee verticale extreme.
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
-		static constexpr float kDistanceMin     = 1.5f;   ///< Zoom le plus proche : juste derriere la nuque.
+		/// Distance min : 3.0 m garantit un degagement suffisant autour du placeholder
+		/// avatar (cube 0.5x1.8x0.5 m) pour eviter que la camera se retrouve a
+		/// l'interieur du mesh ou que le near-clip plane (0.1 m) decoupe le perso.
+		static constexpr float kDistanceMin     = 3.0f;
 		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
 		static constexpr float kDistanceDefault = 6.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;
+		/// Decalage vertical (m) ajoute au point cible pour le calcul camera : la
+		/// camera regarde la mi-poitrine de l'avatar (~ 1.0 m au-dessus des pieds)
+		/// plutot que les pieds. Sans cet offset, le placeholder (1.8 m de haut,
+		/// pivot aux pieds) etait coupe par le bord superieur de l'ecran.
+		static constexpr float kCameraLookAtUpOffsetM = 1.0f;
 
 		void SetTargetPosition(const engine::math::Vec3& worldPos);
 		const engine::math::Vec3& GetTargetPosition() const { return m_target; }

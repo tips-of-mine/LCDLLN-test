@@ -246,13 +246,18 @@ namespace engine::render
 		// terrain quand TerrainRenderer exposera SampleHeightAtWorldXZ.
 		constexpr float kGroundY = 0.0f;
 		constexpr float kGroundPadding = 0.5f;
+		// Point de visee de la camera : on regarde la mi-corps de l'avatar plutot
+		// que ses pieds. Sans cet offset, l'avatar (1.8 m de haut, pivot pieds)
+		// occupait la moitie superieure de l'ecran et passait au-dessus du cadrage
+		// au moindre zoom -> le perso disparaissait visuellement.
+		const float lookAtY = m_target.y + kCameraLookAtUpOffsetM;
 		float effectiveDistance = m_distance;
 		if (forwardY < -0.001f)
 		{
-			// camera_y = target.y - forwardY * distance ; on veut camera_y >= floor.
-			// distance_max = (target.y - floor) / -forwardY.
+			// camera_y = lookAtY - forwardY * distance ; on veut camera_y >= floor.
+			// distance_max = (lookAtY - floor) / -forwardY.
 			const float floorY = kGroundY + kGroundPadding;
-			const float distMaxBelowFloor = (m_target.y - floorY) / -forwardY;
+			const float distMaxBelowFloor = (lookAtY - floorY) / -forwardY;
 			if (distMaxBelowFloor > 0.f && distMaxBelowFloor < effectiveDistance)
 			{
 				if (distMaxBelowFloor >= kDistanceMin)
@@ -266,9 +271,10 @@ namespace engine::render
 			}
 		}
 
-		// Position camera : recule dans la direction OPPOSEE du forward, depuis target.
+		// Position camera : recule dans la direction OPPOSEE du forward, depuis le
+		// point de visee (mi-corps de l'avatar).
 		camera.position.x = m_target.x - forwardX * effectiveDistance;
-		camera.position.y = m_target.y - forwardY * effectiveDistance;
+		camera.position.y = lookAtY      - forwardY * effectiveDistance;
 		camera.position.z = m_target.z - forwardZ * effectiveDistance;
 		// Clamp final en Y : meme avec effectiveDistance reduit, on s'assure que
 		// la camera ne descende pas sous le seuil (cas ou m_target.y < floor par ex.).

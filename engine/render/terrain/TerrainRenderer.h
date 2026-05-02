@@ -168,6 +168,12 @@ namespace engine::render::terrain
         /// Returns the maximum height in world units (config: terrain.height_scale).
         float GetHeightScale()      const { return m_heightScale;      }
 
+        /// Echantillonne la hauteur du terrain (en metres monde) a la position
+        /// horizontale (worldX, worldZ). Filtrage bilineaire ; retombe sur 0
+        /// si la heightmap n'est pas chargee. Utilisable par la collision
+        /// camera-sol et le snap au sol des avatars.
+        float SampleHeightAtWorldXZ(float worldX, float worldZ) const;
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
         // All stages, 16 bytes total.

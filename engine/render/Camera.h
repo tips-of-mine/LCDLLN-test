@@ -101,8 +101,14 @@ namespace engine::render
 		/// Update logique a appeler chaque frame in-game. Met a jour m_target / yaw /
 		/// pitch / m_distance selon l'input, puis ecrit camera.position et
 		/// camera.yaw/pitch pour le rendu.
+		///
+		/// \p groundYAtTarget : hauteur du sol (en metres monde) sous la position
+		/// cible courante, calculee par le caller via TerrainRenderer::SampleHeightAtWorldXZ.
+		/// Sert a clamper la camera au-dessus du terrain quand l'utilisateur
+		/// regarde fortement vers le bas. Passer 0 pour un sol plat (sans terrain).
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
-			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera);
+			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
+			float groundYAtTarget = 0.0f);
 
 	private:
 		engine::math::Vec3 m_target{ 0.0f, kTargetEyeHeight, 0.0f };

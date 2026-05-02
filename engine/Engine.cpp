@@ -3258,9 +3258,16 @@ namespace engine
 				// Comportement : souris libre par defaut ; clic droit maintenu rotate
 				// la camera autour de la cible (yaw/pitch) ; molette zoom in/out ;
 				// WASD deplace la cible dans le plan XZ et la camera suit.
+				//
+				// Chantier 2 : passe la hauteur sol terrain au controleur pour la
+				// collision camera-decor (plus seulement Y=0). 0 si pas de terrain.
 				const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
+				const auto& camTarget = m_orbitalCameraController.GetTargetPosition();
+				const float groundY = m_terrain.IsValid()
+					? m_terrain.SampleHeightAtWorldXZ(camTarget.x, camTarget.z)
+					: 0.0f;
 				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
-					rmbLook, true, out.camera);
+					rmbLook, true, out.camera, groundY);
 			}
 
 			if (!authGateActive && m_chatUi.IsInitialized())

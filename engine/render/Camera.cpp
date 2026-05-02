@@ -139,7 +139,8 @@ namespace engine::render
 	}
 
 	void OrbitalCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
-		bool invertY, MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera)
+		bool invertY, MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
+		float groundYAtTarget)
 	{
 		// Clic droit maintenu + souris -> rotation orbite (yaw/pitch).
 		if (applyMouseLook)
@@ -237,14 +238,16 @@ namespace engine::render
 		const float forwardZ = -cy * cp;
 
 		// Etape 3 collision camera-decor : si la camera calculee va passer SOUS le
-		// sol (Y < kGroundY + kGroundPadding), on reduit la distance effective
+		// sol (Y < groundY + kGroundPadding), on reduit la distance effective
 		// pour que la camera reste au-dessus du sol au lieu de la teleporter
 		// verticalement (ce qui donnerait un saut visuel desagreable). On laisse
 		// kDistanceMin comme plancher (la camera ne peut pas etre plus pres que
 		// kDistanceMin de la cible).
-		// TODO : remplacer kGroundY (constante = 0) par une vraie query de hauteur
-		// terrain quand TerrainRenderer exposera SampleHeightAtWorldXZ.
-		constexpr float kGroundY = 0.0f;
+		//
+		// Chantier 2 : groundYAtTarget vient de TerrainRenderer::SampleHeightAtWorldXZ
+		// (passe en parametre) -> collision contre le vrai relief du terrain et plus
+		// uniquement Y=0. Si pas de terrain charge, le caller passe 0.
+		const float kGroundY = groundYAtTarget;
 		constexpr float kGroundPadding = 0.5f;
 		float effectiveDistance = m_distance;
 		if (forwardY < -0.001f)

@@ -1286,6 +1286,25 @@ namespace engine::render::terrain
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainRenderer::SampleHeightAtWorldXZ
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    float TerrainRenderer::SampleHeightAtWorldXZ(float worldX, float worldZ) const
+    {
+        // Heightmap absente (placeholder flat) -> sol a Y=0.
+        if (m_heightmapData.heights.empty() || m_heightmapData.width == 0u || m_heightmapData.height == 0u)
+            return 0.0f;
+        if (m_terrainWorldSize <= 0.0f)
+            return 0.0f;
+        // Convertit la position monde XZ en coordonnees UV [0..1] dans la
+        // heightmap. Edge-clamp : hors-terrain -> bord le plus proche.
+        const float u = (worldX - m_terrainOriginX) / m_terrainWorldSize;
+        const float v = (worldZ - m_terrainOriginZ) / m_terrainWorldSize;
+        const float normalized = m_heightmapData.SampleBilinearNorm(u, v);
+        return normalized * m_heightScale;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainRenderer::Destroy
     // ─────────────────────────────────────────────────────────────────────────────
 

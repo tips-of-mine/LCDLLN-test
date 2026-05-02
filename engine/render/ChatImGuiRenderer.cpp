@@ -245,7 +245,7 @@ namespace engine::render
 namespace engine::render
 {
 	void ChatImGuiRenderer::BindChatUi(engine::client::ChatUiPresenter*, const engine::core::Config*) {}
-	void ChatImGuiRenderer::Render(float, float) {}
+	void ChatImGuiRenderer::Render(float, float, bool) {}
 }
 
 #endif

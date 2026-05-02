@@ -282,9 +282,13 @@ namespace engine::render
 		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
 		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
 		// Decalage epaule droite : 0.8 m vers la droite -> perso apparait a gauche.
-		// Decalage hauteur : +0.4 m au-dessus des yeux -> camera regarde un peu plus bas.
+		// Decalage hauteur : +1.2 m au-dessus des yeux du target -> la camera est
+		// nettement plus haute que le personnage (head ~ 1.8 m, camera Y ~ 2.9 m
+		// soit ~1.1 m au-dessus du crane). Combine avec le pitch -10 deg par defaut,
+		// le perso apparait dans la moitie INFERIEURE de l'ecran et on voit bien
+		// le decor au-dessus de lui (style Once Human / New World).
 		constexpr float kShoulderOffsetM = 0.8f;
-		constexpr float kHeightOffsetM   = 0.4f;
+		constexpr float kHeightOffsetM   = 1.2f;
 		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
 		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
 		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;

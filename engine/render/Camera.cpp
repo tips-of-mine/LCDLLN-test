@@ -140,8 +140,11 @@ namespace engine::render
 
 	void OrbitalCameraController::Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel,
 		bool invertY, MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
-		float groundYAtTarget)
+		float groundYAtTarget, float speedMultiplier)
 	{
+		// Borne le multiplicateur pour eviter une vitesse nulle (perso bloque)
+		// ou folle (teleport accidentel hors monde par integration trop grande).
+		const float speedMul = std::clamp(speedMultiplier, 0.05f, 5.0f);
 		// Clic droit maintenu + souris -> rotation orbite (yaw/pitch).
 		if (applyMouseLook)
 		{
@@ -203,6 +206,7 @@ namespace engine::render
 		{
 			running = input.IsDown(engine::platform::Key::Shift) && !m_isCrouching;
 			// Vitesse : crouch ralentit, run accelere, sinon walk normal.
+			// Apres calcul du nominal, multiplie par speedMul (race x terrain x buffs).
 			float speed;
 			if (m_isCrouching)
 				speed = kWalkSpeed * 0.5f;        // 2.5 m/s accroupi (silencieux).
@@ -210,6 +214,7 @@ namespace engine::render
 				speed = kRunSpeed;                 // 10 m/s en sprint Shift.
 			else
 				speed = kWalkSpeed;                // 5 m/s marche normale.
+			speed *= speedMul;
 			const float dist = static_cast<float>(dt) * speed;
 			const float cy = std::cos(camera.yaw);
 			const float sy = std::sin(camera.yaw);

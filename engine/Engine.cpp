@@ -3294,8 +3294,33 @@ namespace engine
 				const float groundY = m_terrain.IsValid()
 					? m_terrain.SampleHeightAtWorldXZ(camTarget.x, camTarget.z)
 					: 0.0f;
+
+				// Modificateur de vitesse combine RACE x TERRAIN.
+				// RACE : table id->multiplicateur (placeholder, a tuner gameplay).
+				// L'identifiant race est stocke en string sur AuthUi (m_characterRaceId).
+				// TODO : eventuellement migrer vers la table races (DB) pour que les
+				// game-designers tunent sans recompiler.
+				auto raceMultiplier = [](const std::string& raceId) -> float {
+					if (raceId == "elfes")              return 1.10f; // legers, agiles.
+					if (raceId == "nains")              return 0.85f; // courts sur pattes.
+					if (raceId == "orcs")               return 0.95f;
+					if (raceId == "morts_vivants")      return 0.90f; // demarche raide.
+					if (raceId == "demons")             return 1.05f; // au sol ; vol = autre meca.
+					if (raceId == "chevaliers_dragons") return 1.00f; // monture = autre meca.
+					if (raceId == "humains" || raceId.empty() || raceId == "default") return 1.00f;
+					return 1.00f;
+				};
+				const float raceMul = raceMultiplier(m_authUi.GetSelectedCharacterRaceId());
+
+				// TERRAIN : pour l'instant 1.0, hook pour future query splatmap.
+				// TODO : ajouter TerrainRenderer::SampleSpeedMultiplierAtWorldXZ(x,z)
+				// qui lit le splat CPU (R=grass G=dirt B=rock A=snow) et retourne
+				// une moyenne ponderee (grass=1.0, dirt=0.95, rock=0.90, snow=0.65).
+				constexpr float terrainMul = 1.0f;
+
+				const float speedMul = raceMul * terrainMul;
 				m_orbitalCameraController.Update(m_input, dt, mouseSensitivity, invertY, movementLayout,
-					rmbLook, true, out.camera, groundY);
+					rmbLook, true, out.camera, groundY, speedMul);
 			}
 
 			// Chat update : avant on attendait !authGateActive (donc post-EnterWorld

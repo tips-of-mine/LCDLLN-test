@@ -394,6 +394,12 @@ namespace engine::client
 		/// `IsFlowComplete()` côté présentateur.
 		bool IsInWorldShard() const { return m_flowComplete; }
 
+		/// Identifiant string de la race du personnage actif (ex. "elfes", "nains",
+		/// "humains", "demons", "chevaliers_dragons"). Renvoie "" si aucune race
+		/// n'a ete renseignee. Utilise par le gameplay pour appliquer des
+		/// modificateurs raciaux (vitesse, capacites speciales vol/teleport/monture).
+		const std::string& GetSelectedCharacterRaceId() const { return m_characterRaceId; }
+
 		/// While the auth gate is active, gameplay camera and chat should not consume input.
 		bool BlocksWorldInput() const;
 

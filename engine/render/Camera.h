@@ -108,9 +108,16 @@ namespace engine::render
 		/// cible courante, calculee par le caller via TerrainRenderer::SampleHeightAtWorldXZ.
 		/// Sert a clamper la camera au-dessus du terrain quand l'utilisateur
 		/// regarde fortement vers le bas. Passer 0 pour un sol plat (sans terrain).
+		///
+		/// \p speedMultiplier : facteur multiplicatif applique a la vitesse de
+		/// marche/course/accroupi. Permet au caller de combiner :
+		///   * un modificateur de race (ex. elfes 1.10x, nains 0.85x)
+		///   * un modificateur de terrain (ex. sable 0.65x, neige 0.70x, herbe 1.0x)
+		///   * un modificateur d'etat (buff sprint, debuff slow...)
+		/// 1.0f = vitesse de base nominale (kWalkSpeed/kRunSpeed). Borne [0.05, 5.0].
 		void Update(engine::platform::Input& input, double dt, float mouseSensitivityRadPerPixel, bool invertY,
 			MovementLayout layout, bool applyMouseLook, bool applyKeyboardMove, Camera& camera,
-			float groundYAtTarget = 0.0f);
+			float groundYAtTarget = 0.0f, float speedMultiplier = 1.0f);
 
 	private:
 		engine::math::Vec3 m_target{ 0.0f, kTargetEyeHeight, 0.0f };

@@ -36,7 +36,9 @@ function bytesToHex(bytes: ArrayBuffer): string {
 
 function hexToBytes(hex: string): Uint8Array | null {
   if (hex.length % 2 !== 0) return null;
-  const out = new Uint8Array(hex.length / 2);
+  // Backing buffer typé explicitement ArrayBuffer (et non ArrayBufferLike) pour
+  // satisfaire la signature BufferSource de crypto.subtle.verify avec @types/node 22+.
+  const out = new Uint8Array(new ArrayBuffer(hex.length / 2));
   for (let i = 0; i < out.length; i += 1) {
     const byte = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
     if (Number.isNaN(byte)) return null;

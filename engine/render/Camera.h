@@ -118,5 +118,12 @@ namespace engine::render
 		bool               m_initialized = false;
 		LocomotionState    m_locomotion = LocomotionState::Idle;
 		float              m_walkBobPhase = 0.0f;
+		// Saut : vitesse verticale (m/s) et offset Y (m) au-dessus du sol. A 0
+		// quand le perso est au sol. Space declenche un saut quand grounded.
+		float              m_verticalVelocityY = 0.0f;
+		float              m_verticalOffsetY   = 0.0f;
+		// Accroupi : maintenir Control. Reduit la hauteur cible et la vitesse
+		// horizontale.
+		bool               m_isCrouching = false;
 	};
 }

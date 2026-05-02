@@ -162,6 +162,38 @@ namespace engine::render
 			if (m_distance > kDistanceMax) m_distance = kDistanceMax;
 		}
 
+		// Touches d'action : Saut (Space) + Accroupi (Control). Le declenchement
+		// (input) est gate par applyKeyboardMove pour que le chat focus n'envoie
+		// pas de saut accidentel ; mais l'integration physique tourne toujours
+		// (sinon la chute s'arreterait en plein air si l'utilisateur ouvre le chat).
+		constexpr float kJumpInitialVelocityMps = 5.0f; // ~1.3 m de hauteur de saut.
+		constexpr float kGravityMps2            = 9.81f;
+		if (applyKeyboardMove)
+		{
+			m_isCrouching = input.IsDown(engine::platform::Key::Control);
+			// Saut : Space, uniquement quand grounded (offset Y == 0 ET pas en chute)
+			// et debout (pas de saut accroupi).
+			if (input.WasPressed(engine::platform::Key::Space)
+				&& m_verticalOffsetY <= 0.001f && std::fabs(m_verticalVelocityY) < 0.01f
+				&& !m_isCrouching)
+			{
+				m_verticalVelocityY = kJumpInitialVelocityMps;
+			}
+		}
+		// Integration verticale (toujours, meme si !applyKeyboardMove) : applique
+		// la gravite et clampe au sol. Sans ca, sauter puis ouvrir le chat figerait
+		// l'avatar en vol.
+		if (m_verticalVelocityY != 0.0f || m_verticalOffsetY > 0.001f)
+		{
+			m_verticalVelocityY -= kGravityMps2 * static_cast<float>(dt);
+			m_verticalOffsetY   += m_verticalVelocityY * static_cast<float>(dt);
+			if (m_verticalOffsetY <= 0.0f)
+			{
+				m_verticalOffsetY   = 0.0f;
+				m_verticalVelocityY = 0.0f;
+			}
+		}
+
 		// WASD/ZQSD -> deplace le point cible dans le plan XZ selon yaw courant.
 		// Etape 5 : derive aussi un etat de locomotion (Idle/Walk/Run) et fait
 		// avancer une phase de bob pour le placeholder anim de l'avatar.
@@ -169,8 +201,15 @@ namespace engine::render
 		bool running = false;
 		if (applyKeyboardMove)
 		{
-			running = input.IsDown(engine::platform::Key::Shift);
-			const float speed = running ? kRunSpeed : kWalkSpeed;
+			running = input.IsDown(engine::platform::Key::Shift) && !m_isCrouching;
+			// Vitesse : crouch ralentit, run accelere, sinon walk normal.
+			float speed;
+			if (m_isCrouching)
+				speed = kWalkSpeed * 0.5f;        // 2.5 m/s accroupi (silencieux).
+			else if (running)
+				speed = kRunSpeed;                 // 10 m/s en sprint Shift.
+			else
+				speed = kWalkSpeed;                // 5 m/s marche normale.
 			const float dist = static_cast<float>(dt) * speed;
 			const float cy = std::cos(camera.yaw);
 			const float sy = std::sin(camera.yaw);
@@ -225,6 +264,15 @@ namespace engine::render
 			m_walkBobPhase += static_cast<float>(dt) * bobFreqHz * kPi2;
 			if (m_walkBobPhase > kPi2 * 1024.f) m_walkBobPhase = std::fmod(m_walkBobPhase, kPi2);
 		}
+
+		// Met a jour la hauteur target Y selon : sol + eye_height + saut + accroupi.
+		// Le perso "stand on terrain" : sa hauteur de yeux suit l'altitude du sol
+		// (groundYAtTarget) + la hauteur des yeux (1.7 m). Saut ajoute m_verticalOffsetY,
+		// accroupi soustrait 0.5 m.
+		constexpr float kCrouchDropM = 0.5f;
+		const float baseTargetY = groundYAtTarget + kTargetEyeHeight;
+		const float crouchOffsetY = m_isCrouching ? -kCrouchDropM : 0.0f;
+		m_target.y = baseTargetY + m_verticalOffsetY + crouchOffsetY;
 
 		// Position camera = cible - dir(yaw, pitch) * distance. La camera regarde
 		// le point cible (la "tete" du joueur a kTargetEyeHeight au-dessus du sol).

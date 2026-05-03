@@ -1407,7 +1407,15 @@ namespace engine
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												VkImage img = reg.getImage(m_fgSceneColorId);
 												if (img == VK_NULL_HANDLE) return;
-												VkClearColorValue clearColor = { { 0.15f, 0.15f, 0.18f, 1.0f } };
+												// C3 simplifie : clear color = couleur horizon ciel calculee par
+												// DayNightCycle (au lieu d'un gris constant 0.15/0.15/0.18). Donne
+												// un ciel dynamique qui change de couleur selon l'heure (bleu jour,
+												// orange dawn/dusk, sombre nuit) sans avoir besoin d'une SkyboxPass
+												// Vulkan complete. A remplacer par un vrai sky shader plus tard.
+												const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+												VkClearColorValue clearColor = {
+													{ dn.skyHorizon[0], dn.skyHorizon[1], dn.skyHorizon[2], 1.0f }
+												};
 												VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 												vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 											});

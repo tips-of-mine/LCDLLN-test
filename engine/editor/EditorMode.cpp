@@ -245,11 +245,16 @@ namespace engine::editor
 		LOG_INFO(Core, "[EditorMode] Destroyed");
 	}
 
+	/// Construit la camera initiale de l'editeur monde.
+	/// Position (0, 150, 200) : au-dessus de la mi-hauteur d'un terrain par defaut
+	/// (heightmap=0.5 * height_scale=200m -> sol a y=100m). Camera 50m au-dessus
+	/// du sol attendu, regardant vers le centre du terrain (origin par defaut 0,0).
+	/// Pitch +0.5 rad (~28deg) : vue plongeante pour voir le sol en contrebas.
 	engine::render::Camera EditorMode::BuildInitialCamera() const
 	{
 		engine::render::Camera camera;
-		camera.position = { 0.0f, 1.5f, 5.0f };
-		camera.pitch = 0.18f;
+		camera.position = { 0.0f, 150.0f, 200.0f };
+		camera.pitch = 0.5f;
 		return camera;
 	}
 

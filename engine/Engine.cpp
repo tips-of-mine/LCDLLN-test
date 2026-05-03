@@ -3276,13 +3276,16 @@ namespace engine
 		// le chat global + amis ; une fois le royaume choisi, + zone'.
 		const bool postAuthMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe;
-		// Chat HUD overlay desactive pre-EnterWorld : retour utilisateur "on laisse
-		// tomber pour le moment, l'affichage du CHAT juste apres l'authentification".
-		// Le chat ne s'affiche desormais qu'une fois in-game (cf. branche !authGateActive
-		// plus bas qui rend m_chatImGui->Render avec inWorldShard=true). On garde la
-		// branche cote panneau pause / options pour permettre les changements de canal
-		// dans les menus en jeu.
-		const bool chatImguiOverlayNewFrame = false;
+		// Chat HUD : on garde l'appel a ImGui::NewFrame en post-master-auth (meme
+		// pre-EnterWorld) car la branche de rendu in-game ligne 3739+ fait
+		// m_chatImGui->Render + ImGui::Render() en supposant qu'un NewFrame a deja ete
+		// appele plus haut. Sans cet appel, ImGui::Render() utilise des draw data stale
+		// -> swapchain presente le meme framebuffer en boucle, ecran fige.
+		// Le RENDU du panneau chat pre-EnterWorld reste desactive (cf. branche
+		// auth-rendering qui n'appelle plus m_chatImGui->Render).
+		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
+			&& postAuthMaster
+			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()

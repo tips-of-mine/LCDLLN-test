@@ -36,9 +36,10 @@
             "value_font_pixel_height": 28
         },
         "terrain": {
-            "heightmap": "terrain/heightmap.r16h",
-            "splatmap": "",
-            "grass_mask": "",
+            "_comment": "Pointe vers la zone demo_plains (heightmap 65x65, splat 4 couches grass/dirt/rock/snow, masque herbe). PR ulterieure : le serveur enverra le zoneId au client a EnterWorld pour charger dynamiquement la bonne zone.",
+            "heightmap": "zones/demo_plains/terrain_height.r16h",
+            "splatmap": "zones/demo_plains/terrain_splat.slap",
+            "grass_mask": "zones/demo_plains/terrain_grass.grms",
             "grass_mask_visual_strength": 0.35,
             "hole_mask": ""
         }

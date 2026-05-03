@@ -236,23 +236,39 @@ namespace engine::server
 		};
 		const std::string raceIdTruncated  = truncate(parsed->raceId);
 		const std::string classIdTruncated = truncate(parsed->classId);
+		// PR-E : auto-assignation de la faction selon la race choisie. Couvre les
+		// 6 races jouables seedees en migration 0036 et aligne sur le backfill de
+		// la migration 0040. Ulterieurement le client pourra envoyer un factionId
+		// explicite (cas Crepuscule / mercenaires) — pour l'instant on derive.
+		auto factionFromRace = [](std::string_view race) -> const char* {
+			if (race == "humains" || race == "nains" || race == "elfes" || race == "chevaliers_dragons")
+				return "lumiere";
+			if (race == "orcs" || race == "demons")
+				return "ombres";
+			return ""; // unaligned/crepuscule par defaut.
+		};
+		const std::string factionStr = factionFromRace(raceIdTruncated);
 		char escapedRace[80]{};
 		char escapedClass[80]{};
+		char escapedFaction[80]{};
 		mysql_real_escape_string(mysql, escapedRace,
 			raceIdTruncated.c_str(), static_cast<unsigned long>(raceIdTruncated.size()));
 		mysql_real_escape_string(mysql, escapedClass,
 			classIdTruncated.c_str(), static_cast<unsigned long>(classIdTruncated.size()));
+		mysql_real_escape_string(mysql, escapedFaction,
+			factionStr.c_str(), static_cast<unsigned long>(factionStr.size()));
 
 		std::string sql =
 			"INSERT INTO characters (account_id, slot, name, server_id, race_id, class_id, level, appearance_json,"
-			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str) VALUES ("
+			" spawn_x, spawn_y, spawn_z, spawn_yaw_deg, spawn_pitch_deg, race_str, class_str, faction_str) VALUES ("
 			+ std::to_string(*accountId) + ", "
 			+ std::to_string(slot) + ", '"
 			+ escapedName + "', "
 			+ std::to_string(serverId) + ", 0, 0, 1, '{}', "
 			+ spawnBuf + ", '"
 			+ escapedRace + "', '"
-			+ escapedClass + "')";
+			+ escapedClass + "', '"
+			+ escapedFaction + "')";
 		if (!engine::server::db::DbExecute(mysql, sql))
 		{
 			auto pkt = BuildErrorPacket(NetErrorCode::BAD_REQUEST, "character creation failed", requestId, sessionIdHeader);
@@ -265,7 +281,9 @@ namespace engine::server
 		auto pkt = BuildCharacterCreateResponsePacket(1u, characterId, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
-		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', spawn=({}, {}, {}))",
-			*accountId, characterId, serverId, slot, parsed->name, raceIdTruncated, classIdTruncated, spawnX, spawnY, spawnZ);
+		LOG_INFO(Auth, "[CharacterCreateHandler] Character created (account_id={}, character_id={}, server_id={}, slot={}, name={}, race='{}', class='{}', faction='{}', spawn=({}, {}, {}))",
+			*accountId, characterId, serverId, slot, parsed->name, raceIdTruncated, classIdTruncated,
+			factionStr.empty() ? "(unaligned)" : factionStr,
+			spawnX, spawnY, spawnZ);
 	}
 }

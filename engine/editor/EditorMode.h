@@ -75,6 +75,16 @@ namespace engine::editor
 		float sphereRadius = 1.0f;
 		std::string stringId = "default";
 		std::string targetZoneId;
+		// SpawnArea : filtres race + faction du premier spawn. Vides = match all.
+		// raceFilters : liste d'ids races (cf. game/data/races/races.json :
+		//   humains, elfes, orcs, nains, demons, chevaliers_dragons). Vide = toutes.
+		// factionFilter : id faction unique (cf. table DB factions :
+		//   lumiere, ombres, crepuscule). Vide = toutes.
+		// Le serveur (CharacterEnterWorldHandler) selectionne au premier login
+		// le SpawnArea dont (race, faction) du perso matche les filtres ; en cas
+		// d'egalite il prend le plus pres de l'origine du terrain.
+		std::vector<std::string> raceFilters;
+		std::string factionFilter;
 	};
 
 	/// Minimal editor mode shell: one editable scene object, CPU selection, and keyboard gizmos.

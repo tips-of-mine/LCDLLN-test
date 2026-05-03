@@ -880,15 +880,67 @@ namespace engine::editor
 			selectedVolume->stringId = (selectedVolume->stringId == "trigger.default") ? "trigger.alt" : "trigger.default";
 			break;
 		case VolumeType::SpawnArea:
-			selectedVolume->stringId = (selectedVolume->stringId == "spawn.default") ? "spawn.elite" : "spawn.default";
+		{
+			// Cycle a 9 etats predefinies (V successifs) : couvre les 8 combos
+			// race+faction par defaut (cf. migration 0040 backfill) + un etat
+			// "match all" sans filtre. Une UI ImGui dediee viendra plus tard pour
+			// permettre du multi-select race et un dropdown faction libre.
+			struct SpawnPreset { const char* faction; const char* race; const char* sid; };
+			static constexpr SpawnPreset kPresets[] = {
+				{ "",           "",                   "spawn.default" }, ///< Match all (faction + race quelconques).
+				{ "lumiere",    "humains",            "spawn.default" },
+				{ "lumiere",    "nains",              "spawn.default" },
+				{ "lumiere",    "elfes",              "spawn.default" },
+				{ "lumiere",    "chevaliers_dragons", "spawn.default" },
+				{ "ombres",     "orcs",               "spawn.default" },
+				{ "ombres",     "demons",             "spawn.default" },
+				{ "crepuscule", "",                   "spawn.default" }, ///< Neutres / mercenaires : toutes races.
+				{ "",           "",                   "spawn.elite"   }, ///< Spawn elite (raid lead, instance) sans filtre.
+			};
+			// Trouve l'index courant du preset (par egalite stringId+faction+race).
+			const std::string currentRace = selectedVolume->raceFilters.empty() ? std::string{} : selectedVolume->raceFilters[0];
+			size_t idx = 0u;
+			for (size_t k = 0; k < std::size(kPresets); ++k)
+			{
+				if (selectedVolume->stringId == kPresets[k].sid
+					&& selectedVolume->factionFilter == kPresets[k].faction
+					&& currentRace == kPresets[k].race)
+				{
+					idx = k;
+					break;
+				}
+			}
+			idx = (idx + 1u) % std::size(kPresets);
+			selectedVolume->stringId      = kPresets[idx].sid;
+			selectedVolume->factionFilter = kPresets[idx].faction;
+			selectedVolume->raceFilters.clear();
+			if (kPresets[idx].race[0] != '\0')
+				selectedVolume->raceFilters.emplace_back(kPresets[idx].race);
 			break;
+		}
 		case VolumeType::ZoneTransition:
 			selectedVolume->targetZoneId = (selectedVolume->targetZoneId == "zone.next") ? "zone.return" : "zone.next";
 			break;
 		}
 
 		MarkDirty("volume-property");
-		LOG_INFO(Core, "[EditorMode] Volume property cycled (id={}, type={})", selectedVolume->id, GetVolumeTypeName(selectedVolume->type));
+		// Pour un SpawnArea on remonte les filtres race+faction dans le log pour
+		// que le mappeur voie ce qu'il a configure (utile sans UI inspecteur).
+		if (selectedVolume->type == VolumeType::SpawnArea)
+		{
+			const std::string raceLog = selectedVolume->raceFilters.empty()
+				? std::string("(toutes)")
+				: selectedVolume->raceFilters[0];
+			const std::string factionLog = selectedVolume->factionFilter.empty()
+				? std::string("(toutes)")
+				: selectedVolume->factionFilter;
+			LOG_INFO(Core, "[EditorMode] SpawnArea cycled (id={}, stringId={}, faction={}, race={})",
+				selectedVolume->id, selectedVolume->stringId, factionLog, raceLog);
+		}
+		else
+		{
+			LOG_INFO(Core, "[EditorMode] Volume property cycled (id={}, type={})", selectedVolume->id, GetVolumeTypeName(selectedVolume->type));
+		}
 		return true;
 	}
 
@@ -1064,14 +1116,26 @@ namespace engine::editor
 		for (size_t i = 0; i < spawnsSorted.size(); ++i)
 		{
 			const VolumeEntity& volume = *spawnsSorted[i];
+			std::string raceFiltersJson = "[";
+			for (size_t r = 0; r < volume.raceFilters.size(); ++r)
+			{
+				raceFiltersJson += "\"";
+				raceFiltersJson += volume.raceFilters[r];
+				raceFiltersJson += "\"";
+				if (r + 1u < volume.raceFilters.size())
+					raceFiltersJson += ", ";
+			}
+			raceFiltersJson += "]";
 			json += std::format(
-				"    {{ \"id\": {}, \"type\": \"{}\", \"shape\": \"{}\", \"position\": [{:.3f}, {:.3f}, {:.3f}], \"radius\": {:.3f}, \"stringId\": \"{}\" }}{}\n",
+				"    {{ \"id\": {}, \"type\": \"{}\", \"shape\": \"{}\", \"position\": [{:.3f}, {:.3f}, {:.3f}], \"radius\": {:.3f}, \"stringId\": \"{}\", \"raceFilters\": {}, \"factionFilter\": \"{}\" }}{}\n",
 				volume.id,
 				GetVolumeTypeName(volume.type),
 				GetVolumeShapeName(volume.shape),
 				volume.position.x, volume.position.y, volume.position.z,
 				volume.sphereRadius,
 				volume.stringId,
+				raceFiltersJson,
+				volume.factionFilter,
 				(i + 1u < spawnsSorted.size()) ? "," : "");
 		}
 		json += "  ],\n";

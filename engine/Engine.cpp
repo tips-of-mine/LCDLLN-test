@@ -3908,14 +3908,15 @@ namespace engine
 	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
 	        return;
 	    }
-	    // Skip render quand la fenetre est minimisee (m_width/m_height = 0) ou en
-	    // attente de recreation swapchain. Sans ce guard, les passes Vulkan acquerent
-	    // des images de taille invalide et plantent en cas de resize agressif (cas
-	    // signale dans l'editeur monde lors de drag de bord de fenetre).
-	    if (m_width <= 0 || m_height <= 0 || m_swapchainResizeRequested)
+	    // Skip render uniquement quand la fenetre est minimisee (m_width/m_height = 0).
+	    // Ne PAS skipper sur m_swapchainResizeRequested : le code de resize est traite
+	    // dans BeginFrame du frame suivant, et vkAcquireNextImageKHR retourne
+	    // OUT_OF_DATE_KHR / SUBOPTIMAL_KHR qui sont gerees plus bas. Skipper en plus
+	    // du flag risquait de figer le rendu de l'editeur monde dont la fenetre
+	    // ne plante plus mais reste noire en permanence (signale par utilisateur).
+	    if (m_width <= 0 || m_height <= 0)
 	    {
-	        LOG_DEBUG(Render, "[Engine] Render skipped (w={} h={} resizePending={})",
-	            m_width, m_height, m_swapchainResizeRequested ? 1 : 0);
+	        LOG_DEBUG(Render, "[Engine] Render skipped (window minimized w={} h={})", m_width, m_height);
 	        return;
 	    }
 	    LOG_DEBUG(Render, "[Engine] Render begin frame={}", m_currentFrame);

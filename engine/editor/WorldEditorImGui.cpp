@@ -856,22 +856,31 @@ namespace engine::editor
 			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 4);
 
 			// Detection de resize de fenetre : si la taille du viewport a change
-			// depuis la derniere frame, on force DockBuilderSetNodeSize sur le node
-			// racine pour que les panneaux dockes se relayent automatiquement. Sans
-			// ce relayout, les panneaux restent ancres a l'ancienne taille (lue dans
-			// world_editor_imgui.ini), ce qui les place hors du viewport et donne
-			// l'impression que l'UI a disparu apres un drag de bord de fenetre.
+			// depuis la derniere frame (apres initialisation), on force
+			// DockBuilderSetNodeSize sur le node racine pour que les panneaux dockes
+			// se relayent automatiquement. Sans ce relayout, les panneaux restent
+			// ancres a l'ancienne taille (lue dans world_editor_imgui.ini), ce qui
+			// les place hors du viewport et donne l'impression que l'UI a disparu
+			// apres un drag de bord de fenetre.
+			//
+			// IMPORTANT : on ne fire pas la premiere frame (m_lastDockSpaceWidth==0
+			// par defaut) car le node racine n'existe pas encore (cree par le bloc
+			// m_defaultLayoutAttempted juste au-dessus). DockBuilderSetNodeSize
+			// avant que la layout par defaut ait ete posee bouilli les sizes
+			// proportionnelles -> ecran noir signale par l'utilisateur.
 			constexpr float kResizeEpsilonPx = 0.5f;
-			if (std::fabs(vp->WorkSize.x - m_lastDockSpaceWidth)  > kResizeEpsilonPx
-			 || std::fabs(vp->WorkSize.y - m_lastDockSpaceHeight) > kResizeEpsilonPx)
+			const bool dockSizeInitialized = (m_lastDockSpaceWidth > kResizeEpsilonPx);
+			if (dockSizeInitialized
+			 && (std::fabs(vp->WorkSize.x - m_lastDockSpaceWidth)  > kResizeEpsilonPx
+			  || std::fabs(vp->WorkSize.y - m_lastDockSpaceHeight) > kResizeEpsilonPx))
 			{
 				if (ImGui::DockBuilderGetNode(dockId) != nullptr)
 				{
 					ImGui::DockBuilderSetNodeSize(dockId, vp->WorkSize);
 				}
-				m_lastDockSpaceWidth  = vp->WorkSize.x;
-				m_lastDockSpaceHeight = vp->WorkSize.y;
 			}
+			m_lastDockSpaceWidth  = vp->WorkSize.x;
+			m_lastDockSpaceHeight = vp->WorkSize.y;
 
 			// Disposition par defaut : si ImGui n'a pas charge de layout depuis world_editor_imgui.ini
 			// (premier demarrage, fichier supprime via le menu Vue, ou nouveau dockId), on pose une

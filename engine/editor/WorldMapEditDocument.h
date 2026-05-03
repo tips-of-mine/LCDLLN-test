@@ -82,6 +82,16 @@ namespace engine::editor
 		/// expose deja la donnee pour que la creation de cartes avec eau soit possible des maintenant.
 		bool   waterEnabled    = false;
 		double waterLevelMeters = 0.0;
+
+		/// Atmosphere (C5) : etat du cycle jour/nuit sauvegarde par zone. Si
+		/// hasAtmosphere=true, l'editeur applique ces valeurs au DayNightCycle
+		/// au chargement de la carte, et les sauvegarde au save / export.
+		/// timeOfDayHours dans [0, 24) ; timeScale en secondes reelles par heure
+		/// in-game (60 = 24 min reel = 1 jour jeu, 3600 = 1:1 reel).
+		/// Persiste en JSON (cles \c atmosphere.time_of_day_h, \c atmosphere.time_scale).
+		bool   hasAtmosphere    = false;
+		double timeOfDayHours   = 8.0;
+		double timeScale        = 60.0;
 	};
 
 } // namespace engine::editor

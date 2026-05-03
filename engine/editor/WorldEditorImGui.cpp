@@ -1117,6 +1117,42 @@ namespace engine::editor
 				ImGui::ColorButton("##skyHor", ImVec4(hor[0], hor[1], hor[2], 1.0f));
 				ImGui::SameLine(); ImGui::TextUnformatted("Ciel (horizon)");
 				ImGui::TextDisabled("La couleur de fond du viewport prend skyHorizon a chaque frame.");
+				ImGui::Separator();
+				// C5 - sauvegarde / chargement de l'atmosphere par zone.
+				// Boutons explicites : "Charger depuis carte" applique le timeOfDay+timeScale
+				// stockes dans la carte courante au DayNightCycle. "Sauver dans carte"
+				// capture les valeurs courantes du cycle vers le document de la carte
+				// (le save disque reel se fait via le panneau Carte > Sauvegarder).
+				if (m_session != nullptr)
+				{
+					ImGui::TextUnformatted("Atmosphere par zone :");
+					if (m_session->Doc().hasAtmosphere)
+					{
+						ImGui::Text("Sauvegarde dans carte : %.2fh @ %.0fs/h",
+							m_session->Doc().timeOfDayHours, m_session->Doc().timeScale);
+					}
+					else
+					{
+						ImGui::TextDisabled("Aucune atmosphere sauvegardee dans la carte courante.");
+					}
+					if (ImGui::Button("Charger depuis carte"))
+					{
+						if (m_session->Doc().hasAtmosphere)
+						{
+							m_dayNight->SetTime(static_cast<float>(m_session->Doc().timeOfDayHours));
+							m_dayNight->SetTimeScale(static_cast<float>(m_session->Doc().timeScale));
+						}
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Sauver dans carte"))
+					{
+						auto& docRef = m_session->MutableDoc();
+						docRef.hasAtmosphere = true;
+						docRef.timeOfDayHours = static_cast<double>(dn.timeOfDay);
+						docRef.timeScale = static_cast<double>(m_dayNight->GetTimeScale());
+					}
+					ImGui::TextDisabled("(Pour persister sur disque, panneau Carte > Sauvegarder)");
+				}
 			}
 			ImGui::End();
 

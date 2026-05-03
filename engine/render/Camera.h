@@ -79,12 +79,11 @@ namespace engine::render
 		static constexpr float kRunSpeed        = 10.0f;
 		static constexpr float kPitchMin        = -60.0f * 3.14159265f / 180.0f; ///< 3eme personne : pas de plongee verticale extreme.
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
-		static constexpr float kDistanceMin     = 0.5f;   ///< Zoom le plus proche : juste derriere la nuque.
-		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
-		// 1 m par defaut : caracteres tres pres derriere le perso (demande utilisateur).
-		// Permet de voir le dos de l'avatar en gros plan, avec la camera 4.2m au-dessus
-		// (cf. kHeightOffsetM=2.5) -> vue plongeante "epaule au-dessus".
-		static constexpr float kDistanceDefault = 1.0f;
+		static constexpr float kDistanceMin     = 1.0f;
+		static constexpr float kDistanceMax     = 20.0f;
+		// 5 m par defaut : cible image 2 utilisateur (avatar ~26% hauteur ecran).
+		// Combine au scale x1 sur l'avatar (1.8m), donne le rendu desire.
+		static constexpr float kDistanceDefault = 5.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;

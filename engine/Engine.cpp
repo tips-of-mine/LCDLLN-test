@@ -3517,18 +3517,12 @@ namespace engine
 				// (5.4 m de haut, camera a 1.81 m au-dessus du sol = inside the model)
 				// -> ecran fige perceptuel. La camera 3eme personne (dist=8m, height=1.5m)
 				// est largement assez genereuse a echelle reelle.
-				// Echelle x2 sur l'avatar (1.8m -> 3.6m). Le mesh humanoide placeholder est
-				// petit pour debug visuel : meme a 6m de distance, il occupe 21% de hauteur
-				// ecran. A x2, il fait 42% de hauteur a 6m -> impossible a manquer. La
-				// camera (cf. Camera.cpp kHeightOffsetM=2.5) est 4.2m au-dessus du sol,
-				// donc bien au-dessus du sommet du mesh agrandi (3.6m), pas de risque
-				// d'etre dans le mesh.
-				constexpr float kAvatarScale = 2.0f;
-				const float sc = c * kAvatarScale;
-				const float ss = s * kAvatarScale;
-				out.objectModelMatrix[0]  = sc;    out.objectModelMatrix[1]  = 0.0f;          out.objectModelMatrix[2]  = -ss;  out.objectModelMatrix[3]  = 0.0f; // col0 : axe X scale
-				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = kAvatarScale;  out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y scale
-				out.objectModelMatrix[8]  = ss;    out.objectModelMatrix[9]  = 0.0f;          out.objectModelMatrix[10] = sc;   out.objectModelMatrix[11] = 0.0f; // col2 : axe Z scale
+				// Avatar a echelle reelle 1.8m (pas de scale). Cible image 2 utilisateur :
+				// avec camera a 5m de distance (cf. Camera.h kDistanceDefault), l'avatar
+				// occupe 26% de hauteur ecran -> visible et identifiable comme humanoide.
+				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = -s;   out.objectModelMatrix[3]  = 0.0f; // col0 : axe X local
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
+				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
 				out.objectModelMatrix[12] = target.x; out.objectModelMatrix[13] = feetY; out.objectModelMatrix[14] = target.z; out.objectModelMatrix[15] = 1.0f; // col3 : translation
 			}
 		}

@@ -334,16 +334,11 @@ namespace engine::render
 		const float rightLen = std::sqrt(rightX * rightX + rightZ * rightZ);
 		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
 		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
-		// Demande utilisateur : "ideallement on devrait se trouver un peu au-dessus
-		// de lui ... ainsi on pourra voir ce qu'il y a devant lui".
-		// kHeightOffsetM = 2.5m : camera physiquement 2.5m au-dessus du niveau des
-		// yeux du perso (donc ~4.2m au-dessus du sol pour un humain de 1.8m). Combine
-		// au pitch initial qui regarde l'avant, on voit le perso dans la moitie basse
-		// de l'ecran et le terrain devant lui dans la moitie haute.
-		// kShoulderOffsetM = 0.3m : avatar legerement decale a gauche de l'ecran
-		// (over-the-shoulder droite, classique MMO).
-		constexpr float kShoulderOffsetM = 0.3f;
-		constexpr float kHeightOffsetM   = 2.5f;
+		// Cible image 2 utilisateur : avatar ~26% hauteur ecran. Camera 5m derriere,
+		// 1m au-dessus du niveau des yeux (donc ~2.7m au-dessus du sol pour un humain
+		// de 1.8m). Pas d'over-the-shoulder, perso au centre de l'ecran.
+		constexpr float kShoulderOffsetM = 0.0f;
+		constexpr float kHeightOffsetM   = 1.0f;
 		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
 		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
 		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;

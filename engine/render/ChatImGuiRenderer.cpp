@@ -81,19 +81,15 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
-		// Pre-EnterWorld (ecrans auth/terms/charcreate), le panneau chat est decoratif :
-		// on ajoute NoInputs pour que les clics passent a travers vers le panneau auth en
-		// dessous (sinon le panneau chat ancre bottom-left intercepte les clics sur les
-		// boutons "Accepter / continuer" de l'ecran CGU qui se trouvent dans la meme zone).
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
+		// inWorldShard ignore : le chat n'est rendu que post-EnterWorld (gating cote
+		// Engine.cpp), donc inWorldShard est toujours true ici en pratique. On garde
+		// le parametre pour compat / futur retablissement du chat pre-game.
+		(void)inWorldShard;
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
 			| ImGuiWindowFlags_NoMove
 			| ImGuiWindowFlags_NoFocusOnAppearing
 			| ImGuiWindowFlags_NoBringToFrontOnFocus
 			| ImGuiWindowFlags_NoNav;
-		if (!inWorldShard)
-		{
-			flags |= ImGuiWindowFlags_NoInputs;
-		}
 
 		if (ImGui::Begin("##ln_chat_panel", nullptr, flags))
 		{

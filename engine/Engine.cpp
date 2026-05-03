@@ -3249,9 +3249,13 @@ namespace engine
 		// le chat global + amis ; une fois le royaume choisi, + zone'.
 		const bool postAuthMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe;
-		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
-			&& postAuthMaster
-			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
+		// Chat HUD overlay desactive pre-EnterWorld : retour utilisateur "on laisse
+		// tomber pour le moment, l'affichage du CHAT juste apres l'authentification".
+		// Le chat ne s'affiche desormais qu'une fois in-game (cf. branche !authGateActive
+		// plus bas qui rend m_chatImGui->Render avec inWorldShard=true). On garde la
+		// branche cote panneau pause / options pour permettre les changements de canal
+		// dans les menus en jeu.
+		const bool chatImguiOverlayNewFrame = false;
 		// M43.4 — NewFrame également quand --editor (sans world-editor exe) actif.
 		const bool editorHubOverlayNewFrame = m_editorHubImGui && m_editorEnabled && !m_worldEditorExe;
 		if (m_worldEditorImGui && m_worldEditorImGui->IsReady()
@@ -3325,14 +3329,11 @@ namespace engine
 					rmbLook, true, out.camera, groundY, speedMul);
 			}
 
-			// Chat update : avant on attendait !authGateActive (donc post-EnterWorld
-			// uniquement). Resultat : sur ShardPick/CharSelect, le panneau chat ImGui
-			// rendait bien mais l'utilisateur appuyait sur Enter/Slash sans effet,
-			// car ChatUiPresenter::Update n'etait jamais appele -> le focus chat ne
-			// pouvait pas s'activer. Desormais on update aussi des que le master a
-			// accepte l'auth (m_masterSessionId != 0), donc des ShardPick.
-			const bool chatPostMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated();
-			if ((!authGateActive || chatPostMaster) && m_chatUi.IsInitialized())
+			// Chat update : uniquement post-EnterWorld. Le rendu pre-game est desactive
+			// (cf. chatImguiOverlayNewFrame=false plus haut), donc pas besoin d'Update
+			// le presenter avant. Si on reactive le chat pre-game un jour, etendre cette
+			// gate avec un OR sur IsMasterAuthenticated().
+			if (!authGateActive && m_chatUi.IsInitialized())
 			{
 				// Phase 3.11.3 — Indique au presenter si un ImGui::InputText pilote la saisie
 				// (panneau chat ImGui actif). Coupe la branche keyboard-typing/Enter dans Update
@@ -3697,29 +3698,10 @@ namespace engine
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
-			// Chat HUD overlay sur les ecrans post-master-auth (ShardPick / CharacterSelect /
-			// CharacterCreate). Avant cette correction, le chat n'apparaissait qu'une fois
-			// in-game car la branche auth-rendering excluait le rendu chat. inWorldShard=false
-			// ici (canaux Global + Friends seulement, pas encore Zone).
-			const bool postAuthMasterChat = m_chatImGui && m_chatUi.IsInitialized()
-				&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
-				&& !m_worldEditorExe
-				&& m_cfg.GetBool("render.chat_imgui.enabled", true);
-			if (postAuthMasterChat)
-				m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
-			// DIAG : log 1x/sec pour diagnostiquer chat invisible. Etat des conditions.
-			if ((m_currentFrame % 60u) == 0u)
-			{
-				LOG_INFO(Render, "[ChatDiag-AuthBranch] frame={} chatImGui={} chatUiInit={} authInit={} masterAuth={} worldEditorExe={} cfgEnabled={} -> overlay={}",
-					m_currentFrame,
-					(m_chatImGui != nullptr),
-					m_chatUi.IsInitialized(),
-					m_authUi.IsInitialized(),
-					m_authUi.IsMasterAuthenticated(),
-					m_worldEditorExe,
-					m_cfg.GetBool("render.chat_imgui.enabled", true),
-					postAuthMasterChat);
-			}
+			// Chat HUD desactive sur les ecrans pre-EnterWorld (auth/ShardPick/
+			// CharacterSelect/CharacterCreate) suite a retour utilisateur "on laisse
+			// tomber pour le moment, l'affichage du CHAT juste apres l'authentification".
+			// Le chat reapparaitra une fois la branche !authGateActive prise (in-game).
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui

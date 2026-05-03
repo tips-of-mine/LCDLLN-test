@@ -3017,20 +3017,23 @@ namespace engine
 						spawnY   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.y", 100.0));
 						spawnZ   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.z", 0.0));
 						yawDeg   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
-						// Pitch -20deg par defaut : vue 3eme personne legerement plongeante,
-						// pour bien voir le perso au centre-bas de l'ecran (cf. WoW/New World/Once Human).
-						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -20.0));
+						// Pitch +20deg par defaut : convention orbital camera = pitch
+						// positif fait que la camera se positionne AU-DESSUS du target et
+						// regarde vers le bas (cf. Camera.cpp lignes 280-345 : camera.y =
+						// target.y - sin(pitch)*distance, sin > 0 -> camera plus haut).
+						// Le sign etait inverse precedemment (-20) -> camera placee EN-DESSOUS
+						// du target regardant le ciel -> ecran "fige" (rien de visible).
+						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", 20.0));
 						LOG_INFO(Core, "[EnterWorld] using config default spawn (no per-character data)");
 					}
 					constexpr float kDeg2Rad = 3.14159265f / 180.f;
-					// Force un pitch initial plongeant (-20deg) si le pitch sauvegarde est
-					// trop proche de l'horizon (ex. 0deg de l'ancien defaut DB) : avec une
-					// vue 3eme personne, regarder l'horizon cache le perso. L'utilisateur
-					// peut ensuite ajuster avec la souris (RMB).
-					if (pitchDeg > -10.0f)
+					// Force un pitch initial plongeant (+20deg) si le pitch sauvegarde est
+					// trop proche de l'horizon (ex. 0deg ou -10deg des anciens defauts DB).
+					// Convention : pitch positif = vue plongeante (cf. ci-dessus).
+					if (pitchDeg < 10.0f)
 					{
-						LOG_INFO(Core, "[EnterWorld] pitch sauvegarde={}deg trop proche de l'horizon, force a -20deg", pitchDeg);
-						pitchDeg = -20.0f;
+						LOG_INFO(Core, "[EnterWorld] pitch sauvegarde={}deg insuffisant pour vue plongeante 3eme personne, force a +20deg", pitchDeg);
+						pitchDeg = 20.0f;
 					}
 					out.camera.position.x = spawnX;
 					out.camera.position.y = spawnY;

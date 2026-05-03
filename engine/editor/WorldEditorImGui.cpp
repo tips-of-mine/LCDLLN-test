@@ -367,7 +367,8 @@ namespace engine::editor
 		uint32_t swapchainImageCount,
 		uint32_t vulkanApiVersion,
 		void* hwndNative,
-		const engine::core::Config* cfg)
+		const engine::core::Config* cfg,
+		bool isWorldEditorExe)
 	{
 #if !defined(_WIN32)
 		(void)instance;
@@ -377,6 +378,7 @@ namespace engine::editor
 		(void)vulkanApiVersion;
 		(void)hwndNative;
 		(void)cfg;
+		(void)isWorldEditorExe;
 		return false;
 #else
 		if (m_ready)
@@ -468,6 +470,55 @@ namespace engine::editor
 
 		if (cfg != nullptr)
 		{
+			// Editeur monde (lcdlln_world_editor.exe) : on substitue Arial a Windlass
+			// comme police par defaut. Windlass est decorative (faite pour l'UI auth /
+			// in-game qui evoque le lore Lune Noire) — illisible et limitee en glyphs
+			// pour un editeur de carte technique. Arial est neutre, riche en glyphs
+			// (accents, ponctuation), et standard sur Windows (C:/Windows/Fonts/arial.ttf).
+			//
+			// Sequence : si isWorldEditorExe ET le fichier Arial est lisible, on charge
+			// Arial en PREMIER (devient ImGui::GetFont() par defaut). Le bloc Windlass
+			// existant en dessous est court-circuite par un flag local pour eviter que
+			// Windlass se retrouve par-dessus dans l'atlas. Si Arial absent, fallback
+			// Windlass comme avant (degradation gracieuse).
+			bool arialLoaded = false;
+			if (isWorldEditorExe)
+			{
+				const std::string arialPath = cfg->GetString("editor.font.arial_path", "C:/Windows/Fonts/arial.ttf");
+				const float arialPx = static_cast<float>(std::clamp<int64_t>(
+					cfg->GetInt("editor.font.arial_pixel_height", 14), 11, 32));
+				// arial_path : chemin absolu (defaut C:/Windows/Fonts/arial.ttf) OU
+				// chemin relatif a paths.content. On tente d'abord absolu puis content.
+				std::vector<uint8_t> bytesArial = engine::platform::FileSystem::ReadAllBytes(std::filesystem::path(arialPath));
+				if (bytesArial.empty())
+				{
+					bytesArial = engine::platform::FileSystem::ReadAllBytesContent(*cfg, arialPath);
+				}
+				if (!bytesArial.empty())
+				{
+					void* atlasArial = IM_ALLOC(bytesArial.size());
+					std::memcpy(atlasArial, bytesArial.data(), bytesArial.size());
+					ImFontConfig acfg{};
+					// Range standard latin1 (couvre A-Z, a-z, 0-9, accents FR, ponctuation).
+					ImFont* arialFont = io.Fonts->AddFontFromMemoryTTF(atlasArial, static_cast<int>(bytesArial.size()),
+						arialPx, &acfg, io.Fonts->GetGlyphRangesDefault());
+					if (arialFont != nullptr)
+					{
+						arialLoaded = true;
+						LOG_INFO(Render, "[WorldEditorImGui] Police editeur Arial chargee : {} ({}px)", arialPath, arialPx);
+					}
+					else
+					{
+						IM_FREE(atlasArial);
+						LOG_WARN(Render, "[WorldEditorImGui] AddFontFromMemoryTTF Arial a echoue : {}", arialPath);
+					}
+				}
+				else
+				{
+					LOG_WARN(Render, "[WorldEditorImGui] Police editeur Arial introuvable : {} (fallback Windlass)", arialPath);
+				}
+			}
+
 			// Cles specifiques a la piste ImGui (la piste Vulkan/AuthGlyphPass garde sa propre
 			// taille via render.auth_ui.font_pixel_height = 28). En ImGui les facteurs
 			// SetWindowFontScale (1.62 pour le titre, 1.12 pour le sous-titre, 1.15 pour le titre
@@ -475,10 +526,17 @@ namespace engine::editor
 			// ProggyClean ~13 px ; charger Windlass a la meme taille respecte donc tous les
 			// gabarits existants. On peut surcharger via render.auth_ui.imgui.font_pixel_height
 			// si on veut grossir/reduire globalement l'UI auth ImGui sans toucher aux scales.
+			//
+			// arialLoaded=true (editeur monde) court-circuite Windlass pour qu'Arial reste
+			// la police par defaut. L'editeur n'utilise pas les ecrans auth, donc Windlass
+			// n'a pas d'usage la-bas.
 			const std::string uiFontPath = cfg->GetString("render.auth_ui.font_path", "");
 			const float uiFontPx = static_cast<float>(std::clamp<int64_t>(
 				cfg->GetInt("render.auth_ui.imgui.font_pixel_height", 13), 11, 32));
-			loadAuthFontFromConfig(uiFontPath, uiFontPx, "UI");
+			if (!arialLoaded)
+			{
+				loadAuthFontFromConfig(uiFontPath, uiFontPx, "UI");
+			}
 
 			// Fallback merge : Windlass.ttf ne contient pas les caracteres accentues, '*' (utilise
 			// par ImGuiInputTextFlags_Password), '[' ']' '%' '@' et autres ponctuations etendues.
@@ -487,6 +545,10 @@ namespace engine::editor
 			// reste prioritaire pour A-Z/a-z/0-9 et ProggyClean prend le relais pour les autres.
 			// Visuellement les glyphes de fallback ne matchent pas la maquette mais c'est mieux
 			// que des '?'.
+			//
+			// Si arialLoaded (editeur monde), on saute ProggyClean : Arial couvre deja les
+			// accents et ponctuations etendues, pas besoin de fallback.
+			if (!arialLoaded)
 			{
 				ImFontConfig fallbackCfg{};
 				fallbackCfg.MergeMode = true;
@@ -497,14 +559,22 @@ namespace engine::editor
 			const std::string valueFontPath = cfg->GetString("render.auth_ui.value_font_path", "");
 			const float valueFontPx = static_cast<float>(std::clamp<int64_t>(
 				cfg->GetInt("render.auth_ui.imgui.value_font_pixel_height", 12), 11, 32));
-			loadAuthFontFromConfig(valueFontPath, valueFontPx, "valeurs");
+			if (!arialLoaded)
+			{
+				// Police "valeurs" Morpheus : utile uniquement pour l'UI auth (nom du
+				// perso, montant en or...). Pas pertinent dans l'editeur monde.
+				loadAuthFontFromConfig(valueFontPath, valueFontPx, "valeurs");
+			}
 
 			// Fonte password : 2eme passe sur Windlass a 24 px (plus large que la
 			// fonte UI standard 13 px), avec un merge ProggyClean immediat pour le
 			// glyph '*' qui n'est pas dans Windlass. Le pointeur est partage via
 			// SharedFontHandles::g_largePasswordFont pour que DrawAuthGoldField
 			// puisse PushFont autour de l'InputText password.
-			if (!uiFontPath.empty())
+			//
+			// Skipped en mode editeur monde : pas d'ecran auth, pas d'InputText
+			// password. Le pointeur partage reste a nullptr.
+			if (!arialLoaded && !uiFontPath.empty())
 			{
 				std::vector<uint8_t> bytesPwd = engine::platform::FileSystem::ReadAllBytesContent(*cfg, uiFontPath);
 				if (!bytesPwd.empty())
@@ -784,6 +854,33 @@ namespace engine::editor
 			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
 			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) - litteral pour eviter les divergences d'en-tetes.
 			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 4);
+
+			// Detection de resize de fenetre : si la taille du viewport a change
+			// depuis la derniere frame (apres initialisation), on force
+			// DockBuilderSetNodeSize sur le node racine pour que les panneaux dockes
+			// se relayent automatiquement. Sans ce relayout, les panneaux restent
+			// ancres a l'ancienne taille (lue dans world_editor_imgui.ini), ce qui
+			// les place hors du viewport et donne l'impression que l'UI a disparu
+			// apres un drag de bord de fenetre.
+			//
+			// IMPORTANT : on ne fire pas la premiere frame (m_lastDockSpaceWidth==0
+			// par defaut) car le node racine n'existe pas encore (cree par le bloc
+			// m_defaultLayoutAttempted juste au-dessus). DockBuilderSetNodeSize
+			// avant que la layout par defaut ait ete posee bouilli les sizes
+			// proportionnelles -> ecran noir signale par l'utilisateur.
+			constexpr float kResizeEpsilonPx = 0.5f;
+			const bool dockSizeInitialized = (m_lastDockSpaceWidth > kResizeEpsilonPx);
+			if (dockSizeInitialized
+			 && (std::fabs(vp->WorkSize.x - m_lastDockSpaceWidth)  > kResizeEpsilonPx
+			  || std::fabs(vp->WorkSize.y - m_lastDockSpaceHeight) > kResizeEpsilonPx))
+			{
+				if (ImGui::DockBuilderGetNode(dockId) != nullptr)
+				{
+					ImGui::DockBuilderSetNodeSize(dockId, vp->WorkSize);
+				}
+			}
+			m_lastDockSpaceWidth  = vp->WorkSize.x;
+			m_lastDockSpaceHeight = vp->WorkSize.y;
 
 			// Disposition par defaut : si ImGui n'a pas charge de layout depuis world_editor_imgui.ini
 			// (premier demarrage, fichier supprime via le menu Vue, ou nouveau dockId), on pose une

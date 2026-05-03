@@ -334,14 +334,11 @@ namespace engine::render
 		const float rightLen = std::sqrt(rightX * rightX + rightZ * rightZ);
 		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
 		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
-		// Decalage epaule droite : 0.8 m vers la droite -> perso apparait a gauche.
-		// Decalage hauteur : +1.2 m au-dessus des yeux du target -> la camera est
-		// nettement plus haute que le personnage (head ~ 1.8 m, camera Y ~ 2.9 m
-		// soit ~1.1 m au-dessus du crane). Combine avec le pitch -10 deg par defaut,
-		// le perso apparait dans la moitie INFERIEURE de l'ecran et on voit bien
-		// le decor au-dessus de lui (style Once Human / New World).
-		constexpr float kShoulderOffsetM = 0.8f;
-		constexpr float kHeightOffsetM   = 1.2f;
+		// Cible image 2 utilisateur : avatar ~26% hauteur ecran. Camera 5m derriere,
+		// 1m au-dessus du niveau des yeux (donc ~2.7m au-dessus du sol pour un humain
+		// de 1.8m). Pas d'over-the-shoulder, perso au centre de l'ecran.
+		constexpr float kShoulderOffsetM = 0.0f;
+		constexpr float kHeightOffsetM   = 1.0f;
 		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
 		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
 		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;

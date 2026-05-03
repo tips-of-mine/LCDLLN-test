@@ -72,13 +72,18 @@ namespace engine::editor
 		/// \param hwndNative \c HWND sous Windows, sinon ignoré.
 		/// \param cfg utilisé pour charger les polices TTF de l'UI auth (Windlass / Morpheus) dans
 		/// l'atlas ImGui avant la création de la texture de fonts par ImGui_ImplVulkan_Init.
+		/// \param isWorldEditorExe \c true pour \c lcdlln_world_editor.exe : la police par defaut
+		/// devient Arial (lisible, neutre pour un editeur de carte) au lieu de Windlass (decorative,
+		/// reservee a l'UI auth/in-game). Cf. \c editor.font.arial_path / \c editor.font.arial_pixel_height
+		/// dans config.json. Aucun effet si \c false (UI auth garde Windlass).
 		bool Init(VkInstance instance,
 			const engine::render::VkDeviceContext& deviceContext,
 			VkFormat swapchainFormat,
 			uint32_t swapchainImageCount,
 			uint32_t vulkanApiVersion,
 			void* hwndNative,
-			const engine::core::Config* cfg = nullptr);
+			const engine::core::Config* cfg = nullptr,
+			bool isWorldEditorExe = false);
 
 		void Shutdown(VkDevice device);
 
@@ -115,6 +120,12 @@ namespace engine::editor
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.
 		bool m_defaultLayoutAttempted = false;
+		/// Dimensions du dockspace au dernier frame BuildUi. Sert a detecter un
+		/// resize de fenetre pour forcer DockBuilderSetNodeSize sur le node racine
+		/// (sinon les panneaux dockes restent ancres a l'ancienne taille apres
+		/// un drag de bord de fenetre, donnant une UI vide ou hors viewport).
+		float m_lastDockSpaceWidth  = 0.0f;
+		float m_lastDockSpaceHeight = 0.0f;
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 #endif

@@ -236,7 +236,36 @@ namespace
 	{
 		outIsHtml = false;
 		const std::string locTag = LocaleToTag(loc);
-		// Note: les templates CGU ne sont pas dans web-portal/email-templates — fallback plain text uniquement.
+		std::string html = LoadHtmlTemplate("cgu-accepted", locTag);
+		if (!html.empty())
+		{
+			ReplaceAllInPlace(html, "{{version}}", versionLabel);
+			switch (loc)
+			{
+			case AccountEmailLocale::French:
+				outSubject = "Acceptation des CGU (" + versionLabel + ") — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::Spanish:
+				outSubject = "Aceptación de los términos (" + versionLabel + ") — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::German:
+				outSubject = "Annahme der Nutzungsbedingungen (" + versionLabel + ") — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::Portuguese:
+				outSubject = "Aceitação dos termos (" + versionLabel + ") — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::Italian:
+				outSubject = "Accettazione dei termini (" + versionLabel + ") — Les Chroniques de la Lune Noire";
+				break;
+			case AccountEmailLocale::English:
+			default:
+				outSubject = "Terms of Service accepted (" + versionLabel + ") — Les Chroniques de la Lune Noire";
+				break;
+			}
+			outBody = std::move(html);
+			outIsHtml = true;
+			return;
+		}
 		// Fallback plain text
 		switch (loc)
 		{

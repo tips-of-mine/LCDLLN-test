@@ -50,3 +50,51 @@ Si la PR change à la fois client ET serveur (cas fréquent), préciser
 
 A introduit opcodes 45/46 + ChatRelayHandler côté master → **redéploiement
 serveur master requis** pour que le chat fonctionne.
+
+## Éditeur monde (`lcdlln_world_editor.exe`)
+
+L'éditeur monde est un binaire séparé (`--world-editor`) qui partage l'engine
+avec le client de jeu mais a des conventions visuelles et de code propres.
+
+### Police d'écriture
+
+L'éditeur monde **n'utilise pas** la police décorative Windlass du jeu. Il
+utilise **Arial** (`C:/Windows/Fonts/arial.ttf` par défaut) — neutre, lisible,
+riche en glyphes accentués/ponctuation, standard sur Windows.
+
+- Configuration : `editor.font.arial_path` + `editor.font.arial_pixel_height`
+  dans `config.json`.
+- Branchement : `WorldEditorImGui::Init(... isWorldEditorExe=true)` charge
+  Arial comme police par défaut au lieu de Windlass. Le fallback ProggyClean
+  et la fonte « valeurs » Morpheus sont aussi désactivés (Arial couvre tout).
+- Pour un futur changement (autre police, taille différente), modifier la
+  branche `if (isWorldEditorExe)` dans `engine/editor/WorldEditorImGui.cpp`.
+
+### Documentation des fonctions
+
+**Règle stricte** : toute fonction (libre, méthode, lambda nommée) ajoutée
+ou modifiée pour l'éditeur monde **doit être documentée systématiquement**
+au moment de sa création/modification. La documentation se fait via un
+commentaire `///` (Doxygen) juste au-dessus de la déclaration, ou un
+commentaire `//` au-dessus de la définition si c'est une lambda interne.
+
+Doivent être présents au minimum :
+1. **Rôle** : que fait la fonction (1-2 phrases).
+2. **Paramètres non-évidents** : `\param nom description` — pas besoin de
+   redocumenter `cfg` ou `device` si leur usage est évident, mais documenter
+   les flags, les indices, les unités physiques (mètres, radians, ms…).
+3. **Effet de bord** : si la fonction modifie un état global (atlas ImGui,
+   buffer GPU, fichier disque), le mentionner.
+4. **Contraintes thread/timing** : ex. « doit être appelée en main thread,
+   avant `ImGui_ImplVulkan_Init` ».
+
+Périmètre concerné par cette règle :
+- `engine/editor/` (tous les fichiers)
+- `engine/render/terrain/TerrainEditingTools.{h,cpp}`
+- toute partie de `engine/Engine.cpp` ou `engine/render/WorldEditorImGui.cpp`
+  spécifique au mode éditeur (gardée par `m_worldEditorExe` ou
+  `m_editorEnabled`).
+
+Cette règle aide les futurs mappeurs et contributeurs à comprendre
+l'outillage sans relire tout le code. Elle s'ajoute à la convention générale
+du repo (commentaires en français, clarté > brièveté).

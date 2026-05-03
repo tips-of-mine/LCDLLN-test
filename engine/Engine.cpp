@@ -2764,7 +2764,8 @@ namespace engine
 				m_vkSwapchain.GetImageCount(),
 				VK_API_VERSION_1_1,
 				m_window.GetNativeHandle(),
-				&m_cfg))
+				&m_cfg,
+				m_worldEditorExe))
 			{
 				if (m_worldEditorExe)
 				{
@@ -2949,7 +2950,15 @@ namespace engine
 			}
 			if (m_chatUi.IsInitialized())
 			{
-				m_chatUi.Update(m_input, static_cast<float>(dt));
+				// PAS d'update du chat pendant les ecrans d'auth : sinon le Enter
+				// que l'utilisateur tape pour valider le login active aussi le chat
+				// focus (cf. ChatUiPresenter::Update qui toggle sur Slash/Enter).
+				// Resultat : in-game, m_chatFocus reste true -> orbital camera Update
+				// est skip -> camera fige a la position spawn = position avatar
+				// (utilisateur voyait l'interieur du mesh humanoide). On garde
+				// uniquement la mise a jour viewport pour que la geometrie chat
+				// soit prete au moment d'EnterWorld.
+				(void)m_chatUi;
 			}
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();
@@ -3057,6 +3066,14 @@ namespace engine
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 				m_shutdownPositionSaved = false;
+				// Reset defensif du chat focus : si l'utilisateur a tape Enter pendant
+				// la saisie du login, ChatUiPresenter::Update aurait toggle m_chatFocus=true.
+				// In-game ce flag bloque l'orbital camera Update (cf. line 3275).
+				if (m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive())
+				{
+					m_chatUi.SetChatFocus(false);
+					LOG_INFO(Core, "[EnterWorld] chat focus reset OFF (etait active depuis l'auth)");
+				}
 				LOG_INFO(Core, "[EnterWorld] periodic position save armed (character_id={}, interval={}s)",
 					m_currentCharacterId, m_savePositionIntervalSec.count());
 
@@ -3247,6 +3264,13 @@ namespace engine
 		// le chat global + amis ; une fois le royaume choisi, + zone'.
 		const bool postAuthMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
 			&& !m_worldEditorExe;
+		// Chat HUD : on garde l'appel a ImGui::NewFrame en post-master-auth (meme
+		// pre-EnterWorld) car la branche de rendu in-game ligne 3739+ fait
+		// m_chatImGui->Render + ImGui::Render() en supposant qu'un NewFrame a deja ete
+		// appele plus haut. Sans cet appel, ImGui::Render() utilise des draw data stale
+		// -> swapchain presente le meme framebuffer en boucle, ecran fige.
+		// Le RENDU du panneau chat pre-EnterWorld reste desactive (cf. branche
+		// auth-rendering qui n'appelle plus m_chatImGui->Render).
 		const bool chatImguiOverlayNewFrame = m_chatImGui && m_chatUi.IsInitialized()
 			&& postAuthMaster
 			&& (m_cfg.GetBool("render.chat_imgui.enabled", true) || m_inGamePauseMenuVisible || m_inGameOptionsPanelVisible);
@@ -3323,14 +3347,11 @@ namespace engine
 					rmbLook, true, out.camera, groundY, speedMul);
 			}
 
-			// Chat update : avant on attendait !authGateActive (donc post-EnterWorld
-			// uniquement). Resultat : sur ShardPick/CharSelect, le panneau chat ImGui
-			// rendait bien mais l'utilisateur appuyait sur Enter/Slash sans effet,
-			// car ChatUiPresenter::Update n'etait jamais appele -> le focus chat ne
-			// pouvait pas s'activer. Desormais on update aussi des que le master a
-			// accepte l'auth (m_masterSessionId != 0), donc des ShardPick.
-			const bool chatPostMaster = m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated();
-			if ((!authGateActive || chatPostMaster) && m_chatUi.IsInitialized())
+			// Chat update : uniquement post-EnterWorld. Le rendu pre-game est desactive
+			// (cf. chatImguiOverlayNewFrame=false plus haut), donc pas besoin d'Update
+			// le presenter avant. Si on reactive le chat pre-game un jour, etendre cette
+			// gate avec un OR sur IsMasterAuthenticated().
+			if (!authGateActive && m_chatUi.IsInitialized())
 			{
 				// Phase 3.11.3 — Indique au presenter si un ImGui::InputText pilote la saisie
 				// (panneau chat ImGui actif). Coupe la branche keyboard-typing/Enter dans Update
@@ -3491,6 +3512,14 @@ namespace engine
 				//   | -sin(y)  0   cos(y)    tz |
 				//   | 0        0   0         1  |
 				// Stockage colonne-par-colonne :
+				// Avatar a echelle 1:1 (1.8 m). Le scale x3 introduit pour "garantir
+				// la visibilite" placait la camera A L'INTERIEUR du corps de l'avatar
+				// (5.4 m de haut, camera a 1.81 m au-dessus du sol = inside the model)
+				// -> ecran fige perceptuel. La camera 3eme personne (dist=8m, height=1.5m)
+				// est largement assez genereuse a echelle reelle.
+				// Avatar a echelle reelle 1.8m (pas de scale). Cible image 2 utilisateur :
+				// avec camera a 5m de distance (cf. Camera.h kDistanceDefault), l'avatar
+				// occupe 26% de hauteur ecran -> visible et identifiable comme humanoide.
 				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = -s;   out.objectModelMatrix[3]  = 0.0f; // col0 : axe X local
 				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
 				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
@@ -3681,29 +3710,10 @@ namespace engine
 			const engine::client::AuthUiPresenter::VisualState authVsImgui = m_authUi.GetVisualState();
 			const engine::client::AuthUiPresenter::RenderModel authRmImgui = m_authUi.BuildRenderModel();
 			m_authImGui->Render(authVsImgui, authRmImgui, dw, dh);
-			// Chat HUD overlay sur les ecrans post-master-auth (ShardPick / CharacterSelect /
-			// CharacterCreate). Avant cette correction, le chat n'apparaissait qu'une fois
-			// in-game car la branche auth-rendering excluait le rendu chat. inWorldShard=false
-			// ici (canaux Global + Friends seulement, pas encore Zone).
-			const bool postAuthMasterChat = m_chatImGui && m_chatUi.IsInitialized()
-				&& m_authUi.IsInitialized() && m_authUi.IsMasterAuthenticated()
-				&& !m_worldEditorExe
-				&& m_cfg.GetBool("render.chat_imgui.enabled", true);
-			if (postAuthMasterChat)
-				m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
-			// DIAG : log 1x/sec pour diagnostiquer chat invisible. Etat des conditions.
-			if ((m_currentFrame % 60u) == 0u)
-			{
-				LOG_INFO(Render, "[ChatDiag-AuthBranch] frame={} chatImGui={} chatUiInit={} authInit={} masterAuth={} worldEditorExe={} cfgEnabled={} -> overlay={}",
-					m_currentFrame,
-					(m_chatImGui != nullptr),
-					m_chatUi.IsInitialized(),
-					m_authUi.IsInitialized(),
-					m_authUi.IsMasterAuthenticated(),
-					m_worldEditorExe,
-					m_cfg.GetBool("render.chat_imgui.enabled", true),
-					postAuthMasterChat);
-			}
+			// Chat HUD desactive sur les ecrans pre-EnterWorld (auth/ShardPick/
+			// CharacterSelect/CharacterCreate) suite a retour utilisateur "on laisse
+			// tomber pour le moment, l'affichage du CHAT juste apres l'authentification".
+			// Le chat reapparaitra une fois la branche !authGateActive prise (in-game).
 			ImGui::Render();
 		}
 		else if (m_worldEditorImGui && m_worldEditorImGui->IsReady() && m_chatImGui
@@ -3893,6 +3903,17 @@ namespace engine
 	    if (!m_vkDeviceContext.IsValid() || !m_vkSwapchain.IsValid() || m_frameResources[0].cmdPool == VK_NULL_HANDLE)
 	    {
 	        LOG_WARN(Render, "[Engine] Render early return: device/swapchain not ready frame={}", m_currentFrame);
+	        return;
+	    }
+	    // Skip render uniquement quand la fenetre est minimisee (m_width/m_height = 0).
+	    // Ne PAS skipper sur m_swapchainResizeRequested : le code de resize est traite
+	    // dans BeginFrame du frame suivant, et vkAcquireNextImageKHR retourne
+	    // OUT_OF_DATE_KHR / SUBOPTIMAL_KHR qui sont gerees plus bas. Skipper en plus
+	    // du flag risquait de figer le rendu de l'editeur monde dont la fenetre
+	    // ne plante plus mais reste noire en permanence (signale par utilisateur).
+	    if (m_width <= 0 || m_height <= 0)
+	    {
+	        LOG_DEBUG(Render, "[Engine] Render skipped (window minimized w={} h={})", m_width, m_height);
 	        return;
 	    }
 	    LOG_DEBUG(Render, "[Engine] Render begin frame={}", m_currentFrame);
@@ -4780,6 +4801,39 @@ namespace engine
 			LOG_WARN(Render, "[WorldEditor] TerrainEditingTools::Init failed");
 		}
 		m_terrain.InvalidateFramebufferCache(device);
+
+		// Repositionne la camera au-dessus du terrain qu'on vient de charger pour
+		// que l'utilisateur voie immediatement le sol apres "Creer une nouvelle carte"
+		// ou "Charger la carte selectionnee". Sans ce reset, la camera peut rester
+		// sous le sol (terrain par defaut a y=100m si heightmap a 0.5 * height_scale=200m,
+		// camera initiale a y=1.5m -> 98.5m sous le sol = sol invisible).
+		// Position calculee : centre XZ du terrain, 50m au-dessus de la hauteur
+		// moyenne attendue, regard pivote vers le bas.
+		if (m_editorMode)
+		{
+			const float ox = m_terrain.GetTerrainOriginX();
+			const float oz = m_terrain.GetTerrainOriginZ();
+			const float ws = m_terrain.GetTerrainWorldSize();
+			const float hs = m_terrain.GetHeightScale();
+			const float centerX = ox + ws * 0.5f;
+			const float centerZ = oz + ws * 0.5f;
+			const float midGroundY = hs * 0.5f; // heightmap mid-value -> sol moyen
+
+			engine::render::Camera reset;
+			reset.position.x = centerX;
+			reset.position.y = midGroundY + 50.0f;       // 50m au-dessus du sol moyen
+			reset.position.z = centerZ + ws * 0.25f;     // recule a 25% du world size
+			reset.yaw = 0.0f;
+			reset.pitch = 0.5f;                          // vue plongeante ~28deg
+			reset.fovYDeg = 70.0f;
+			reset.aspect = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
+			reset.nearZ = 0.1f;
+			reset.farZ = 5000.0f;
+			m_renderStates[0].camera = reset;
+			m_renderStates[1].camera = reset;
+			LOG_INFO(Render, "[WorldEditor] Camera repositioned above terrain center=({:.1f},{:.1f}) groundY={:.1f} cameraY={:.1f}",
+				centerX, centerZ, midGroundY, reset.position.y);
+		}
 	}
 #endif
 

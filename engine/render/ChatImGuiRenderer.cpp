@@ -81,6 +81,10 @@ namespace engine::render
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, IV(LnTheme::PanelBg(0.95f)));
 		ImGui::PushStyleColor(ImGuiCol_Border,   IV(LnTheme::kBorder));
 
+		// inWorldShard ignore : le chat n'est rendu que post-EnterWorld (gating cote
+		// Engine.cpp), donc inWorldShard est toujours true ici en pratique. On garde
+		// le parametre pour compat / futur retablissement du chat pre-game.
+		(void)inWorldShard;
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
 			| ImGuiWindowFlags_NoMove
 			| ImGuiWindowFlags_NoFocusOnAppearing

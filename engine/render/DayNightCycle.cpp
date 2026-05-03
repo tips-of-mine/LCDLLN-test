@@ -124,6 +124,18 @@ namespace engine::render
 		LOG_INFO(Render, "[DayNightCycle] SetTime → {:.2f}h", m_timeOfDay);
 	}
 
+	/// Met a jour le timeScale (secondes reelles par heure in-game). Borne a
+	/// [0.1, 1000.0] pour eviter les problemes de division ou wraparound. Appele
+	/// par le panneau "Atmosphere" de l'editeur monde quand l'utilisateur deplace
+	/// le slider de vitesse du temps.
+	void DayNightCycle::SetTimeScale(float realSecondsPerHour)
+	{
+		if (realSecondsPerHour < 0.1f) realSecondsPerHour = 0.1f;
+		if (realSecondsPerHour > 1000.0f) realSecondsPerHour = 1000.0f;
+		m_timeScale = realSecondsPerHour;
+		LOG_INFO(Render, "[DayNightCycle] SetTimeScale → {:.2f}s/h", m_timeScale);
+	}
+
 	// -------------------------------------------------------------------------
 	// DayNightCycle::ComputeState
 	// -------------------------------------------------------------------------

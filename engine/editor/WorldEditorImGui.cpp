@@ -4,6 +4,7 @@
 #include "engine/core/Log.h"
 #include "engine/editor/TreeSpeciesCatalog.h"
 #include "engine/editor/WorldEditorSession.h"
+#include "engine/render/DayNightCycle.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/platform/Window.h"
 #include "engine/render/SharedFontHandles.h"
@@ -916,6 +917,7 @@ namespace engine::editor
 					// et cliquable au travers du DockSpace.
 					ImGui::DockBuilderDockWindow("Carte", idRight);
 					ImGui::DockBuilderDockWindow("Affichage & grille", idRight);
+					ImGui::DockBuilderDockWindow("Atmosphere", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
 					ImGui::DockBuilderDockWindow("Scene", idRight);
@@ -1070,6 +1072,52 @@ namespace engine::editor
 				}
 			}
 			ImGui::TextUnformatted("La grille est dessinee en surimpression (projection camera) lorsque le terrain GPU est charge.");
+			ImGui::End();
+
+			// ── Panneau Atmosphere ─────────────────────────────────────────────────
+			// Permet a l'utilisateur de modifier en direct le cycle jour/nuit :
+			// time-of-day (0-24h), timeScale (vitesse du temps), et lecture des
+			// valeurs derivees (direction soleil, couleurs ciel zenith/horizon,
+			// ambient, isDaytime).
+			ImGui::Begin("Atmosphere");
+			if (m_dayNight == nullptr)
+			{
+				ImGui::TextDisabled("DayNightCycle non branche.");
+				ImGui::TextDisabled("(SetDayNightCycle pas appele depuis Engine)");
+			}
+			else
+			{
+				const engine::render::DayNightCycle::State& dn = m_dayNight->GetState();
+				float tod = dn.timeOfDay;
+				if (ImGui::SliderFloat("Heure (0-24)", &tod, 0.0f, 24.0f, "%.2f h"))
+				{
+					m_dayNight->SetTime(tod);
+				}
+				float ts = m_dayNight->GetTimeScale();
+				if (ImGui::SliderFloat("Vitesse temps (s/heure)", &ts, 0.1f, 600.0f, "%.1f"))
+				{
+					m_dayNight->SetTimeScale(ts);
+				}
+				ImGui::TextDisabled("60 = 1 min reel = 1 heure jeu (24 min reel = 1 jour jeu)");
+				ImGui::TextDisabled("3600 = temps reel 1:1 (24 h reel = 1 jour jeu)");
+				ImGui::Separator();
+				ImGui::TextUnformatted("Etat calcule (lecture seule) :");
+				ImGui::Text("Jour : %s", dn.isDaytime ? "oui (soleil)" : "non (lune)");
+				ImGui::Text("Direction soleil : (%.2f, %.2f, %.2f)", dn.lightDir[0], dn.lightDir[1], dn.lightDir[2]);
+				const float lightCol[3] = { dn.lightColor[0], dn.lightColor[1], dn.lightColor[2] };
+				ImGui::ColorButton("##lightCol", ImVec4(lightCol[0], lightCol[1], lightCol[2], 1.0f));
+				ImGui::SameLine(); ImGui::TextUnformatted("Couleur lumiere");
+				const float ambCol[3] = { dn.ambientColor[0], dn.ambientColor[1], dn.ambientColor[2] };
+				ImGui::ColorButton("##ambCol", ImVec4(ambCol[0], ambCol[1], ambCol[2], 1.0f));
+				ImGui::SameLine(); ImGui::TextUnformatted("Couleur ambiente");
+				const float zen[3] = { dn.skyZenith[0], dn.skyZenith[1], dn.skyZenith[2] };
+				ImGui::ColorButton("##skyZen", ImVec4(zen[0], zen[1], zen[2], 1.0f));
+				ImGui::SameLine(); ImGui::TextUnformatted("Ciel (zenith)");
+				const float hor[3] = { dn.skyHorizon[0], dn.skyHorizon[1], dn.skyHorizon[2] };
+				ImGui::ColorButton("##skyHor", ImVec4(hor[0], hor[1], hor[2], 1.0f));
+				ImGui::SameLine(); ImGui::TextUnformatted("Ciel (horizon)");
+				ImGui::TextDisabled("La couleur de fond du viewport prend skyHorizon a chaque frame.");
+			}
 			ImGui::End();
 
 			ImGui::Begin("Outils");

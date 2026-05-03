@@ -78,6 +78,14 @@ namespace engine::render
 		/// Useful for the `/time set <hours>` debug command.
 		void SetTime(float hours);
 
+		/// Update the time scale (real seconds per in-game hour).
+		/// Used by the editor's "Atmosphere" panel slider. Clamps to [0.1, 1000.0]
+		/// to avoid divide-by-zero or wraparound issues.
+		void SetTimeScale(float realSecondsPerHour);
+
+		/// Return the current time scale (real seconds per in-game hour).
+		float GetTimeScale() const { return m_timeScale; }
+
 		/// Return the current computed state.
 		const State& GetState() const { return m_state; }
 

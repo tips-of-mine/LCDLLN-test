@@ -19,6 +19,7 @@ namespace engine::platform
 namespace engine::render
 {
 	class VkDeviceContext;
+	class DayNightCycle;
 }
 namespace engine::render::terrain
 {
@@ -96,6 +97,11 @@ namespace engine::editor
 		/// Contexte données éditeur (\c lcdlln_world_editor uniquement). Peut être nul.
 		void SetEditorContext(WorldEditorSession* session, engine::core::Config* cfg);
 
+		/// Branche le DayNightCycle pour que le panneau "Atmosphere" puisse modifier
+		/// la time-of-day, le timeScale et l'ambient en live. Pointeur non possede.
+		/// Nul si non branche -> panneau Atmosphere affiche un message d'attente.
+		void SetDayNightCycle(engine::render::DayNightCycle* dayNight) { m_dayNight = dayNight; }
+
 		/// Win32 : branche \c ImGui_ImplWin32_WndProcHandler avant le traitement LCDLLN.
 		void AttachPlatformWindow(void* hwndNative, engine::platform::Window& window);
 		void DetachPlatformWindow(engine::platform::Window& window);
@@ -116,6 +122,7 @@ namespace engine::editor
 		void* m_hwnd = nullptr;
 		WorldEditorSession* m_session = nullptr;
 		engine::core::Config* m_cfg = nullptr;
+		engine::render::DayNightCycle* m_dayNight = nullptr;
 		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.

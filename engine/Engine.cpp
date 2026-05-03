@@ -2779,6 +2779,9 @@ namespace engine
 				{
 					m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
 				}
+				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
+				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
+				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
 				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
 				m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
 				m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);

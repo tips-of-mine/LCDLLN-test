@@ -2950,7 +2950,15 @@ namespace engine
 			}
 			if (m_chatUi.IsInitialized())
 			{
-				m_chatUi.Update(m_input, static_cast<float>(dt));
+				// PAS d'update du chat pendant les ecrans d'auth : sinon le Enter
+				// que l'utilisateur tape pour valider le login active aussi le chat
+				// focus (cf. ChatUiPresenter::Update qui toggle sur Slash/Enter).
+				// Resultat : in-game, m_chatFocus reste true -> orbital camera Update
+				// est skip -> camera fige a la position spawn = position avatar
+				// (utilisateur voyait l'interieur du mesh humanoide). On garde
+				// uniquement la mise a jour viewport pour que la geometrie chat
+				// soit prete au moment d'EnterWorld.
+				(void)m_chatUi;
 			}
 			out.authHudText = m_authUi.BuildPanelText();
 			out.chatDebugText.clear();
@@ -3069,6 +3077,14 @@ namespace engine
 				m_savePositionIntervalSec = std::chrono::seconds(std::max<int64_t>(5, intervalCfg));
 				m_nextSavePositionTime = std::chrono::steady_clock::now() + m_savePositionIntervalSec;
 				m_shutdownPositionSaved = false;
+				// Reset defensif du chat focus : si l'utilisateur a tape Enter pendant
+				// la saisie du login, ChatUiPresenter::Update aurait toggle m_chatFocus=true.
+				// In-game ce flag bloque l'orbital camera Update (cf. line 3275).
+				if (m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive())
+				{
+					m_chatUi.SetChatFocus(false);
+					LOG_INFO(Core, "[EnterWorld] chat focus reset OFF (etait active depuis l'auth)");
+				}
 				LOG_INFO(Core, "[EnterWorld] periodic position save armed (character_id={}, interval={}s)",
 					m_currentCharacterId, m_savePositionIntervalSec.count());
 

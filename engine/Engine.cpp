@@ -3017,22 +3017,10 @@ namespace engine
 						spawnY   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.y", 100.0));
 						spawnZ   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.z", 0.0));
 						yawDeg   = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.yaw_deg", 0.0));
-						// Pitch +10deg par defaut : vue legerement plongeante. +20deg etait
-						// trop agressif et declenchait le clamp anti-collision sol qui
-						// reduisait effectiveDistance de 8m a 3.5m, mettant la camera
-						// quasi dans le mesh de l'avatar. +10deg laisse 8m reels.
-						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", 10.0));
+						pitchDeg = static_cast<float>(m_cfg.GetDouble("client.world.default_spawn.pitch_deg", -10.0));
 						LOG_INFO(Core, "[EnterWorld] using config default spawn (no per-character data)");
 					}
 					constexpr float kDeg2Rad = 3.14159265f / 180.f;
-					// Force pitch dans plage [5, 20] : <5deg cache le perso (camera trop
-					// horizontale), >20deg declenche le clamp anti-collision sol qui
-					// rapproche la camera dans le mesh.
-					if (pitchDeg < 5.0f || pitchDeg > 20.0f)
-					{
-						LOG_INFO(Core, "[EnterWorld] pitch sauvegarde={}deg hors plage [5,20], force a +10deg", pitchDeg);
-						pitchDeg = 10.0f;
-					}
 					out.camera.position.x = spawnX;
 					out.camera.position.y = spawnY;
 					out.camera.position.z = spawnZ;
@@ -3533,20 +3521,6 @@ namespace engine
 				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
 				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
 				out.objectModelMatrix[12] = target.x; out.objectModelMatrix[13] = feetY; out.objectModelMatrix[14] = target.z; out.objectModelMatrix[15] = 1.0f; // col3 : translation
-				// DIAG visibilite avatar : 1 LOG par seconde pour confirmer que la matrice
-				// est bien posee et visible. Aide au triage des plaintes "je ne vois pas le perso".
-				static double s_lastAvatarDiagAt = -1000.0;
-				const double nowSec = static_cast<double>(m_currentFrame) * 0.0167;
-				if (nowSec - s_lastAvatarDiagAt > 1.0)
-				{
-					s_lastAvatarDiagAt = nowSec;
-					LOG_INFO(Render, "[Avatar] pos=({:.2f},{:.2f},{:.2f}) feetY={:.2f} cam=({:.2f},{:.2f},{:.2f}) yaw={:.2f}deg pitch={:.2f}deg dist={:.2f}m visible={}",
-						target.x, target.y, target.z, feetY,
-						out.camera.position.x, out.camera.position.y, out.camera.position.z,
-						out.camera.yaw * 57.2958f, out.camera.pitch * 57.2958f,
-						m_orbitalCameraController.GetDistance(),
-						out.objectVisible ? 1 : 0);
-				}
 			}
 		}
 

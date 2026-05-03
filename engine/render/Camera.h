@@ -81,9 +81,10 @@ namespace engine::render
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
 		static constexpr float kDistanceMin     = 1.0f;
 		static constexpr float kDistanceMax     = 20.0f;
-		// 5 m par defaut : cible image 2 utilisateur (avatar ~26% hauteur ecran).
-		// Combine au scale x1 sur l'avatar (1.8m), donne le rendu desire.
-		static constexpr float kDistanceDefault = 5.0f;
+		// 3 m par defaut : compromis entre vue rapprochee (perso domine 43% ecran)
+		// et visibilite complete (corps entier de la tete aux pieds).
+		// Reglable via molette de 1m a 20m.
+		static constexpr float kDistanceDefault = 3.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;

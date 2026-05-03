@@ -236,16 +236,19 @@ namespace engine::server
 		};
 		const std::string raceIdTruncated  = truncate(parsed->raceId);
 		const std::string classIdTruncated = truncate(parsed->classId);
-		// PR-E : auto-assignation de la faction selon la race choisie. Couvre les
-		// 6 races jouables seedees en migration 0036 et aligne sur le backfill de
-		// la migration 0040. Ulterieurement le client pourra envoyer un factionId
-		// explicite (cas Crepuscule / mercenaires) — pour l'instant on derive.
+		// PR-E : auto-assignation de la faction selon la race choisie.
+		// Les factions sont race-lockees (cf. migration 0040 : Chevaliers de la
+		// Lumiere / Justice / La Lune Noire / Empire de L'Hynn pour humains ;
+		// Dzorak pour orcs ; Demons ; Chevaliers-Dragons ; etc.).
+		// Pour les races avec faction unique on assigne directement. Pour les
+		// races multi-factions (humains : 4 choix possibles) on laisse vide :
+		// le joueur fera son choix au premier login via une UI dediee a venir.
 		auto factionFromRace = [](std::string_view race) -> const char* {
-			if (race == "humains" || race == "nains" || race == "elfes" || race == "chevaliers_dragons")
-				return "lumiere";
-			if (race == "orcs" || race == "demons")
-				return "ombres";
-			return ""; // unaligned/crepuscule par defaut.
+			if (race == "orcs")               return "dzorak";
+			if (race == "demons")             return "demons";
+			if (race == "chevaliers_dragons") return "chevaliers_dragons";
+			// humains, elfes, nains : faction(s) a choisir / pas encore definie -> vide.
+			return "";
 		};
 		const std::string factionStr = factionFromRace(raceIdTruncated);
 		char escapedRace[80]{};

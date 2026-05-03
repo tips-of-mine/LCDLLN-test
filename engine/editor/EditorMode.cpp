@@ -881,21 +881,22 @@ namespace engine::editor
 			break;
 		case VolumeType::SpawnArea:
 		{
-			// Cycle a 9 etats predefinies (V successifs) : couvre les 8 combos
-			// race+faction par defaut (cf. migration 0040 backfill) + un etat
-			// "match all" sans filtre. Une UI ImGui dediee viendra plus tard pour
-			// permettre du multi-select race et un dropdown faction libre.
+			// Cycle a 9 etats predefinies (V successifs) : couvre les factions
+			// race-lockees definies en migration 0040 + un etat "match all" sans
+			// filtre. Une UI ImGui dediee viendra plus tard pour permettre du
+			// multi-select race et un dropdown faction libre (incluant les sous-
+			// maisons des factions).
 			struct SpawnPreset { const char* faction; const char* race; const char* sid; };
 			static constexpr SpawnPreset kPresets[] = {
-				{ "",           "",                   "spawn.default" }, ///< Match all (faction + race quelconques).
-				{ "lumiere",    "humains",            "spawn.default" },
-				{ "lumiere",    "nains",              "spawn.default" },
-				{ "lumiere",    "elfes",              "spawn.default" },
-				{ "lumiere",    "chevaliers_dragons", "spawn.default" },
-				{ "ombres",     "orcs",               "spawn.default" },
-				{ "ombres",     "demons",             "spawn.default" },
-				{ "crepuscule", "",                   "spawn.default" }, ///< Neutres / mercenaires : toutes races.
-				{ "",           "",                   "spawn.elite"   }, ///< Spawn elite (raid lead, instance) sans filtre.
+				{ "",                   "",                   "spawn.default" }, ///< Match all (faction + race quelconques).
+				{ "chevaliers_lumiere", "humains",            "spawn.default" },
+				{ "chevaliers_justice", "humains",            "spawn.default" },
+				{ "lune_noire",         "humains",            "spawn.default" },
+				{ "empire_hynn",        "humains",            "spawn.default" },
+				{ "dzorak",             "orcs",               "spawn.default" },
+				{ "demons",             "demons",             "spawn.default" },
+				{ "chevaliers_dragons", "chevaliers_dragons", "spawn.default" },
+				{ "",                   "",                   "spawn.elite"   }, ///< Spawn elite (raid lead, instance) sans filtre.
 			};
 			// Trouve l'index courant du preset (par egalite stringId+faction+race).
 			const std::string currentRace = selectedVolume->raceFilters.empty() ? std::string{} : selectedVolume->raceFilters[0];

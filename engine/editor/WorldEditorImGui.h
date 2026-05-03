@@ -120,6 +120,12 @@ namespace engine::editor
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.
 		bool m_defaultLayoutAttempted = false;
+		/// Dimensions du dockspace au dernier frame BuildUi. Sert a detecter un
+		/// resize de fenetre pour forcer DockBuilderSetNodeSize sur le node racine
+		/// (sinon les panneaux dockes restent ancres a l'ancienne taille apres
+		/// un drag de bord de fenetre, donnant une UI vide ou hors viewport).
+		float m_lastDockSpaceWidth  = 0.0f;
+		float m_lastDockSpaceHeight = 0.0f;
 #if defined(_WIN32)
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 #endif

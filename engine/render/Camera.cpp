@@ -135,6 +135,12 @@ namespace engine::render
 	void OrbitalCameraController::SetTargetPosition(const engine::math::Vec3& worldPos)
 	{
 		m_target = worldPos;
+		// Reset defensif de la distance a kDistanceDefault. Sans ca, si l'utilisateur
+		// avait zoome a kDistanceMin sur un perso precedent, le nouveau spawn restait
+		// camera collee au nouveau perso (souvent invisible car dans le mesh).
+		m_distance = kDistanceDefault;
+		m_verticalVelocityY = 0.0f;
+		m_verticalOffsetY = 0.0f;
 		m_initialized = true;
 	}
 
@@ -334,14 +340,14 @@ namespace engine::render
 		const float rightLen = std::sqrt(rightX * rightX + rightZ * rightZ);
 		const float rightNX = rightLen > 0.0f ? rightX / rightLen : 1.0f;
 		const float rightNZ = rightLen > 0.0f ? rightZ / rightLen : 0.0f;
-		// Iteration 3 : utilisateur signale que le perso reste invisible avec 0.3/0.5
-		// + dist=5m. On centre l'avatar (epaule=0) et on remonte la camera bien au-dessus
-		// (1.5m au-dessus de la tete) pour un cadrage MMO classique : perso au centre-bas
-		// de l'ecran, vue legerement plongeante. Combine a kDistanceDefault=8m, le perso
-		// occupe ~1/4 de la hauteur ecran et reste clairement visible meme apres
-		// translations/zooms.
+		// Iteration 4 : retire les offsets epaule + hauteur. Avec un clamp anti-collision
+		// agressif (effectiveDistance reduit a 3.51m quand pitch=20deg), l'addition d'un
+		// kHeightOffsetM=1.5m fait que la camera vise 1.5m AU-DESSUS de la tete de l'avatar
+		// -> avatar dans le tiers inferieur, parfois confondu avec le terrain. On ramene
+		// les offsets a 0 : la camera vise EXACTEMENT le point cible (la tete) a la
+		// distance effective. Avatar centre vertical, impossible a manquer.
 		constexpr float kShoulderOffsetM = 0.0f;
-		constexpr float kHeightOffsetM   = 1.5f;
+		constexpr float kHeightOffsetM   = 0.0f;
 		camera.position.x = m_target.x - forwardX * effectiveDistance + rightNX * kShoulderOffsetM;
 		camera.position.y = m_target.y - forwardY * effectiveDistance + kHeightOffsetM;
 		camera.position.z = m_target.z - forwardZ * effectiveDistance + rightNZ * kShoulderOffsetM;

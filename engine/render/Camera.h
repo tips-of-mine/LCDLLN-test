@@ -81,10 +81,10 @@ namespace engine::render
 		static constexpr float kPitchMax        = +75.0f * 3.14159265f / 180.0f;
 		static constexpr float kDistanceMin     = 1.5f;   ///< Zoom le plus proche : juste derriere la nuque.
 		static constexpr float kDistanceMax     = 20.0f;  ///< Zoom le plus eloigne.
-		// 3 m par defaut : caracteres tres pres pour debug visuel (image utilisateur :
-		// avatar visible mais ~30px sur 1080 a distance 5m, trop petit). 3m donne
-		// un cadrage MMO classique tres lisible. Reglable via molette de 1.5 a 20m.
-		static constexpr float kDistanceDefault = 3.0f;
+		// 6 m par defaut : moins de 10m derriere le perso (demande utilisateur),
+		// permet de voir ce qu'il y a devant lui sans etre colle dans son dos.
+		// Reglable via molette de 1.5 a 20m.
+		static constexpr float kDistanceDefault = 6.0f;
 		static constexpr float kZoomStep        = 1.0f;   ///< Increment molette.
 		/// Hauteur d'epaule par rapport au sol (1.7 m ~ taille humaine adulte).
 		static constexpr float kTargetEyeHeight = 1.7f;

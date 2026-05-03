@@ -3504,16 +3504,14 @@ namespace engine
 				//   | -sin(y)  0   cos(y)    tz |
 				//   | 0        0   0         1  |
 				// Stockage colonne-par-colonne :
-				// Iteration : scale 3x pour rendre l'avatar tres visible (utilisateur
-				// signale "je ne vois pas le perso"). Avatar de 1.8m -> 5.4m visuel,
-				// impossible a manquer. A retuner / supprimer une fois la chaine
-				// complete (mesh+materiel+camera+culling) validee.
-				constexpr float kAvatarScale = 3.0f;
-				const float sc = c * kAvatarScale;
-				const float ss = s * kAvatarScale;
-				out.objectModelMatrix[0]  = sc;    out.objectModelMatrix[1]  = 0.0f;          out.objectModelMatrix[2]  = -ss;  out.objectModelMatrix[3]  = 0.0f; // col0 : axe X local scale
-				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = kAvatarScale;  out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local scale
-				out.objectModelMatrix[8]  = ss;    out.objectModelMatrix[9]  = 0.0f;          out.objectModelMatrix[10] = sc;   out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local scale
+				// Avatar a echelle 1:1 (1.8 m). Le scale x3 introduit pour "garantir
+				// la visibilite" placait la camera A L'INTERIEUR du corps de l'avatar
+				// (5.4 m de haut, camera a 1.81 m au-dessus du sol = inside the model)
+				// -> ecran fige perceptuel. La camera 3eme personne (dist=8m, height=1.5m)
+				// est largement assez genereuse a echelle reelle.
+				out.objectModelMatrix[0]  = c;     out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = -s;   out.objectModelMatrix[3]  = 0.0f; // col0 : axe X local
+				out.objectModelMatrix[4]  = 0.0f;  out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f; // col1 : axe Y local
+				out.objectModelMatrix[8]  = s;     out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = c;    out.objectModelMatrix[11] = 0.0f; // col2 : axe Z local
 				out.objectModelMatrix[12] = target.x; out.objectModelMatrix[13] = feetY; out.objectModelMatrix[14] = target.z; out.objectModelMatrix[15] = 1.0f; // col3 : translation
 				// DIAG visibilite avatar : 1 LOG par seconde pour confirmer que la matrice
 				// est bien posee et visible. Aide au triage des plaintes "je ne vois pas le perso".

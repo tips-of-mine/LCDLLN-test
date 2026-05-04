@@ -254,6 +254,7 @@ add_library(engine_core
   engine/editor/WorldMapIo.cpp
   engine/editor/TreeSpeciesCatalog.cpp
   engine/editor/WorldEditorSession.cpp
+  engine/editor/TexturePreviewCache.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
@@ -624,6 +625,16 @@ if(MSVC)
   target_compile_options(localization_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME localization_service_tests COMMAND localization_service_tests)
+
+# Tests unitaires CPU pour TexturePreviewCache (ResampleRgba8Box, GenerateProceduralAlbedoLayer).
+# Pas de dependance Vulkan : tournables en CI sans GPU.
+add_executable(texture_preview_cache_tests engine/editor/tests/TexturePreviewCacheTests.cpp)
+target_include_directories(texture_preview_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(texture_preview_cache_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(texture_preview_cache_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME texture_preview_cache_tests COMMAND texture_preview_cache_tests)
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)

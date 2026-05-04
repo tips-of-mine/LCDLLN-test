@@ -386,16 +386,21 @@ namespace engine::editor
 			SetStatus("Carte creee mais sauvegarde JSON echouee: " + err);
 			LOG_WARN(Core, "[WorldEditor] {}", err);
 			RequestTerrainGpuReload();
-			m_splatRefsDirty = true;
+			// Note (debug regression terrain invisible) : on n'arme PAS m_splatRefsDirty
+			// ici. Sur carte neuve, RequestTerrainGpuReload() declenche un Init complet
+			// du splat array avec procedurales (cf. TerrainSplatting::Init). Un second
+			// rebuild via ProcessSplatRefsDirty serait redondant et semblait corrompre
+			// le rendu terrain. Pour les cartes chargees avec refs persistees on
+			// continue d'armer le flag (cf. ActionLoadMapByZoneId).
 			return true;
 		}
 		SetStatus("Nouvelle carte OK - " + hmRel);
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		LOG_INFO(Core, "[WorldEditor] New map OK zone={} size={}", zid, sz);
-		// Nouvelle carte : les refs sont remises a zero mais une session precedente
-		// peut avoir laisse un splat array GPU avec d'autres refs ; forcer le reupload.
-		m_splatRefsDirty = true;
+		// Pas de m_splatRefsDirty ici — voir explication ci-dessus dans la branche
+		// d'erreur de sauvegarde JSON. Init terrain pose deja les procedurales par
+		// defaut, pas besoin d'un second rebuild.
 		return true;
 	}
 

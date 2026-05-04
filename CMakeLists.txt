@@ -255,6 +255,7 @@ add_library(engine_core
   engine/editor/TreeSpeciesCatalog.cpp
   engine/editor/WorldEditorSession.cpp
   engine/editor/TexturePreviewCache.cpp
+  engine/editor/TextureLibraryPanel.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp

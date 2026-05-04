@@ -2,6 +2,7 @@
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/editor/TextureLibraryPanel.h"
 #include "engine/editor/TexturePreviewCache.h"
 #include "engine/editor/TreeSpeciesCatalog.h"
 #include "engine/editor/WorldEditorSession.h"
@@ -760,6 +761,7 @@ namespace engine::editor
 						m_session->SetStatus("Disposition reinitialisee.");
 					}
 				}
+				ImGui::MenuItem("Bibliotheque de textures", nullptr, &m_showTextureLibrary);
 				ImGui::Separator();
 				if (m_cfg)
 				{
@@ -1618,6 +1620,12 @@ namespace engine::editor
 		if (viewportOverlay)
 		{
 			DrawViewportOverlaysImpl(*viewportOverlay);
+		}
+
+		// Panneau Bibliotheque de textures (toggle via menu Vue).
+		if (m_showTextureLibrary && m_session != nullptr)
+		{
+			engine::editor::DrawTextureLibrary(*m_session, m_texturePreviewCache, m_showTextureLibrary);
 		}
 
 		ImGui::Render();

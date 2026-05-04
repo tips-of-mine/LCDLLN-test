@@ -1415,7 +1415,19 @@ namespace engine
 												// un ciel dynamique qui change de couleur selon l'heure (bleu jour,
 												// orange dawn/dusk, sombre nuit) sans avoir besoin d'une SkyboxPass
 												// Vulkan complete. A remplacer par un vrai sky shader plus tard.
+												// Log periodique pour verifier que la valeur change quand l'utilisateur
+												// modifie le slider Heure dans le panneau Atmosphere.
 												const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+												static float s_lastLoggedTime = -999.f;
+												if (std::fabs(dn.timeOfDay - s_lastLoggedTime) > 0.05f)
+												{
+													s_lastLoggedTime = dn.timeOfDay;
+													LOG_INFO(Render, "[Atmosphere] clear color update: time={:.2f}h skyHorizon=({:.2f},{:.2f},{:.2f}) lightColor=({:.2f},{:.2f},{:.2f}) isDay={}",
+														dn.timeOfDay,
+														dn.skyHorizon[0], dn.skyHorizon[1], dn.skyHorizon[2],
+														dn.lightColor[0], dn.lightColor[1], dn.lightColor[2],
+														dn.isDaytime ? 1 : 0);
+												}
 												VkClearColorValue clearColor = {
 													{ dn.skyHorizon[0], dn.skyHorizon[1], dn.skyHorizon[2], 1.0f }
 												};

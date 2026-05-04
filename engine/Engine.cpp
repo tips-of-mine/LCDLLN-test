@@ -4924,11 +4924,21 @@ namespace engine
 		{
 			const float ox = m_terrain.GetTerrainOriginX();
 			const float oz = m_terrain.GetTerrainOriginZ();
-			const float ws = m_terrain.GetTerrainWorldSize();
 			const float hs = m_terrain.GetHeightScale();
 
-			const float centerX     = ox + ws * 0.5f;
-			const float centerZ     = oz + ws * 0.5f;
+			// CRITIQUE : la zone REELLEMENT maillee (`actualExtX/Z`) peut etre
+			// nettement plus petite que `GetTerrainWorldSize()` (cf.
+			// `GetActualRenderedExtentX/Z`). Pour une heightmap 256x256 avec
+			// world_size=10000, on couvre 2344 m au lieu de 10000 m. Si on
+			// place la camera au centre du `world_size`, elle se retrouve hors
+			// des patches et le frustum cull rejette TOUT (terrain invisible).
+			// On vise donc le centre des patches reels.
+			const float actualExtX = m_terrain.GetActualRenderedExtentX();
+			const float actualExtZ = m_terrain.GetActualRenderedExtentZ();
+			const float maxExt     = std::max(actualExtX, actualExtZ);
+
+			const float centerX     = ox + actualExtX * 0.5f;
+			const float centerZ     = oz + actualExtZ * 0.5f;
 			const float midGroundY  = hs * 0.5f;            // hauteur moyenne attendue du sol
 			const float camAltitude = midGroundY + 80.0f;   // marge confortable pour sculpter
 
@@ -4941,12 +4951,13 @@ namespace engine
 			reset.fovYDeg    = 70.0f;
 			reset.aspect     = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
 			reset.nearZ      = 0.1f;
-			reset.farZ       = std::max(5000.0f, ws * 1.5f); // garantit la visibilite des bords sur grand terrain
+			reset.farZ       = std::max(5000.0f, maxExt * 1.5f); // garantit la visibilite des bords sur grand terrain
 			m_renderStates[0].camera = reset;
 			m_renderStates[1].camera = reset;
 			LOG_INFO(Render,
-				"[WorldEditor] Camera reset: pos=({:.1f},{:.1f},{:.1f}) farZ={:.0f} ws={:.0f}",
-				reset.position.x, reset.position.y, reset.position.z, reset.farZ, ws);
+				"[WorldEditor] Camera reset: pos=({:.1f},{:.1f},{:.1f}) farZ={:.0f} actualExt=({:.0f}x{:.0f}) origin=({:.0f},{:.0f})",
+				reset.position.x, reset.position.y, reset.position.z, reset.farZ,
+				actualExtX, actualExtZ, ox, oz);
 		}
 	}
 

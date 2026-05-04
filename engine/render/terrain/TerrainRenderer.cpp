@@ -1369,6 +1369,25 @@ namespace engine::render::terrain
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainRenderer::GetActualRenderedExtentX/Z
+    // ─────────────────────────────────────────────────────────────────────────────
+    // m_vertStepWorld = m_terrainWorldSize / 1024 (cf. Init), donc
+    // l'etendue reellement maillee = m_patchCountX * kPatchQuads * m_vertStepWorld.
+    // Pour une heightmap 256x256 avec world_size=10000, ca donne 15*16*9.77 = 2344 m
+    // au lieu de 10000 m -> le centre des patches n'est PAS le centre de
+    // GetTerrainWorldSize().
+
+    float TerrainRenderer::GetActualRenderedExtentX() const
+    {
+        return static_cast<float>(m_patchCountX) * static_cast<float>(kPatchQuads) * m_vertStepWorld;
+    }
+
+    float TerrainRenderer::GetActualRenderedExtentZ() const
+    {
+        return static_cast<float>(m_patchCountZ) * static_cast<float>(kPatchQuads) * m_vertStepWorld;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainRenderer::SetNoUserTexturesFallback
     // ─────────────────────────────────────────────────────────────────────────────
 

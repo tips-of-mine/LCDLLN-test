@@ -168,6 +168,16 @@ namespace engine::render::terrain
         /// Returns the maximum height in world units (config: terrain.height_scale).
         float GetHeightScale()      const { return m_heightScale;      }
 
+        /// Etendue monde reellement couverte par les patches rendus, en metres
+        /// (m_patchCountX * kPatchQuads * m_vertStepWorld). Peut etre inferieure
+        /// a `GetTerrainWorldSize()` quand la heightmap est plus petite que
+        /// 1025x1025 (kVertStepWorld est calcule sur 1024 pas, indep. de la
+        /// resolution de la heightmap chargee). Pertinent pour positionner la
+        /// camera editeur AU-DESSUS de la zone effectivement maillee, sans quoi
+        /// les patches tombent hors du frustum et le terrain reste invisible.
+        float GetActualRenderedExtentX() const;
+        float GetActualRenderedExtentZ() const;
+
         /// Echantillonne la hauteur du terrain (en metres monde) a la position
         /// horizontale (worldX, worldZ). Filtrage bilineaire ; retombe sur 0
         /// si la heightmap n'est pas chargee. Utilisable par la collision

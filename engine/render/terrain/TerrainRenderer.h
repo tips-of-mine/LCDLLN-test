@@ -196,6 +196,16 @@ namespace engine::render::terrain
         /// Aucun rebuild GPU requis.
         void SetNoUserTexturesFallback(bool enable);
 
+        /// Desactive le frustum culling des patches (debug / workaround). Quand
+        /// vrai, TOUS les patches passent le test Record() les dessine. A
+        /// utiliser uniquement quand on sait que le frustum extrait n'est pas
+        /// fiable (cf. World Editor + heightmap 256x256 + vertStepWorld
+        /// hardcode 1024 -> mismatch entre patches et matrice viewProj qui
+        /// fait que `Frustum::TestAABB` rejette les patches qui sont pourtant
+        /// dans le cone de vue). Coût : aucun en perf, vu que le World Editor
+        /// a au plus quelques centaines de patches.
+        void SetFrustumCullEnabled(bool enable) { m_frustumCullEnabled = enable; }
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
         // All stages, 20 bytes total.
@@ -319,6 +329,12 @@ namespace engine::render::terrain
         /// `Engine::RebuildWorldEditorTerrainGpu` selon l'etat du document
         /// (`splatLayerTextureRefs`). Toujours false pour le client jeu.
         bool     m_noUserTextures    = false;
+
+        /// Si false, Record() saute le test `frustum.TestAABB(...)` et
+        /// dessine TOUS les patches. Defaut true (cull actif) pour le client
+        /// jeu. Engine bascule a false pour le World Editor le temps que le
+        /// bug d'extraction frustum soit corrige (cf. SetFrustumCullEnabled).
+        bool     m_frustumCullEnabled = true;
     };
 
 } // namespace engine::render::terrain

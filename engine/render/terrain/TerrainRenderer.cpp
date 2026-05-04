@@ -1473,7 +1473,7 @@ namespace engine::render::terrain
             const engine::math::Vec3 bMin{ p.originX,                  p.minY, p.originZ };
             const engine::math::Vec3 bMax{ p.originX + patchWorldSize,  p.maxY, p.originZ + patchWorldSize };
 
-            if (!frustum.TestAABB(bMin, bMax)) { ++diagCulled; continue; }
+            if (m_frustumCullEnabled && !frustum.TestAABB(bMin, bMax)) { ++diagCulled; continue; }
             ++diagKept;
 
             // Distance from camera to patch centre (XZ only)

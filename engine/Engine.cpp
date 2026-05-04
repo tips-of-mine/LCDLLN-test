@@ -4914,6 +4914,17 @@ namespace engine
 		}
 		m_terrain.SetNoUserTexturesFallback(noUserTextures);
 
+		// World Editor : desactive le frustum cull. Diagnostic (cf. PR #427) :
+		// avec heightmap 256x256 + world_size override 10000m, le ratio
+		// vertStepWorld/patchSize ne correspond pas a la matrice viewProj
+		// utilisee par Frustum::ExtractFromMatrix, qui rejette TOUS les patches
+		// meme quand la camera est pile au centre. Bug pre-existant (Gribb-
+		// Hartmann avec convention Vulkan Z[0,1] + Y inverse). En attendant la
+		// correction de l'extraction frustum, on desactive le cull cote World
+		// Editor (225 patches max -> aucun impact perf). Le client jeu garde
+		// le cull actif (defaut).
+		m_terrain.SetFrustumCullEnabled(false);
+
 		// Repositionne la camera au centre du terrain qu'on vient de charger pour
 		// que l'utilisateur voie immediatement le sol apres "Creer une nouvelle
 		// carte" ou "Charger la carte selectionnee". Sans ce reset, la camera peut

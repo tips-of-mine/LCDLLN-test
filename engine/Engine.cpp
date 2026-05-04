@@ -3496,10 +3496,7 @@ namespace engine
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();
 		{
-			// La direction gaze est stockee en row 2 du view matrix corrige :
-			// (m[2], m[6], m[10]) = (forward.x, forward.y, forward.z). Cf.
-			// commentaire dans Camera::ComputeViewMatrix.
-			const engine::math::Vec3 forward(out.viewMatrix.m[2], out.viewMatrix.m[6], out.viewMatrix.m[10]);
+			const engine::math::Vec3 forward(-out.viewMatrix.m[8], -out.viewMatrix.m[9], -out.viewMatrix.m[10]);
 			m_streamingScheduler.PushRequests(m_world.GetPendingChunkRequests(), out.camera.position, forward);
 			m_streamingScheduler.DropStaleFromAllQueues();
 		}

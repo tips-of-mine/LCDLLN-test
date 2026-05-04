@@ -2588,6 +2588,8 @@ namespace engine
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 #if defined(_WIN32)
+			if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
+			m_texturePreviewCache.reset();
 			if (m_worldEditorImGui)
 			{
 				m_worldEditorImGui->DetachPlatformWindow(m_window);
@@ -2803,6 +2805,20 @@ namespace engine
 				if (m_worldEditorExe)
 				{
 					m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+
+					// Cache de vignettes pour les textures de splatting.
+					m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
+					const std::string contentDir = m_cfg.GetString("paths.content", "game/data");
+					const std::filesystem::path absContent = std::filesystem::absolute(contentDir);
+					if (!m_texturePreviewCache->Init(m_vkDeviceContext.GetDevice(),
+					                                 m_vkDeviceContext.GetPhysicalDevice(),
+					                                 m_vkDeviceContext.GetGraphicsQueue(),
+					                                 m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+					                                 absContent.string()))
+					{
+						LOG_WARN(Render, "[Engine] TexturePreviewCache init failed -- vignettes editeur indisponibles");
+						m_texturePreviewCache.reset();
+					}
 				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
@@ -2827,6 +2843,12 @@ namespace engine
 		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 		{
 			RebuildWorldEditorTerrainGpu();
+		}
+		ProcessSplatRefsDirty();
+		if (m_texturePreviewCache)
+		{
+			m_texturePreviewCache->Tick(static_cast<uint64_t>(m_currentFrame),
+			                             kEditorTexCacheFramesInFlight);
 		}
 #endif
 
@@ -4888,6 +4910,49 @@ namespace engine
 			m_renderStates[1].camera = reset;
 			LOG_INFO(Render, "[WorldEditor] Camera repositioned above terrain center=({:.1f},{:.1f}) groundY={:.1f} cameraY={:.1f}",
 				centerX, centerZ, midGroundY, reset.position.y);
+		}
+	}
+
+	void Engine::ProcessSplatRefsDirty()
+	{
+		if (!m_worldEditorExe || !m_worldEditorSession) return;
+		if (!m_texturePreviewCache || !m_texturePreviewCache->IsReady()) return;
+		if (!m_worldEditorSession->ConsumeSplatRefsDirty()) return;
+		if (!m_terrain.IsValid()) return;
+
+		engine::render::terrain::TerrainSplatting& splatting = m_terrain.GetSplatting();
+
+		// Pour chaque layer : pousser le buffer CPU adequat dans TerrainSplatting.
+		const auto& refs = m_worldEditorSession->Doc().splatLayerTextureRefs;
+		for (uint32_t layer = 0; layer < engine::render::terrain::kSplatLayerCount; ++layer)
+		{
+			const std::vector<uint8_t>* rgba = nullptr;
+			if (!refs[layer].empty())
+			{
+				// Force la decode/upload de la vignette si pas deja fait
+				// (cree l'entree dans le cache si absente).
+				m_texturePreviewCache->GetTexrThumb(refs[layer]);
+				rgba = m_texturePreviewCache->GetCpuRgba256(refs[layer]);
+			}
+			if (rgba == nullptr)
+			{
+				// Fallback procedurale : assure que l'entree procedurale existe.
+				m_texturePreviewCache->GetProceduralThumb(layer);
+				rgba = m_texturePreviewCache->GetCpuRgba256(
+					"procedural:" + std::to_string(layer));
+			}
+			if (rgba != nullptr)
+			{
+				splatting.SetLayerCpuRgba256(layer, *rgba);
+			}
+		}
+
+		if (!splatting.RebuildAlbedoArrayFromCpuLayers(
+				m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(),
+				m_vkDeviceContext.GetGraphicsQueue(),
+				m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
+		{
+			LOG_ERROR(Render, "[Engine] ProcessSplatRefsDirty: splat array rebuild failed");
 		}
 	}
 #endif

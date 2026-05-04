@@ -2,6 +2,7 @@
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/editor/TexturePreviewCache.h"
 #include "engine/editor/TreeSpeciesCatalog.h"
 #include "engine/editor/WorldEditorSession.h"
 #include "engine/render/DayNightCycle.h"
@@ -1224,6 +1225,33 @@ namespace engine::editor
 						itemsZ.push_back('\0');
 						for (int li = 0; li < 4; ++li)
 						{
+							ImGui::PushID(li);
+
+							// Vignette 48x48 a gauche du combo. Procedurale si
+							// ref vide, .texr resamplee sinon. Cellule grise
+							// si cache non pret ou decode echoue.
+							ImTextureID thumb = nullptr;
+							if (m_texturePreviewCache != nullptr)
+							{
+								if (refs[static_cast<size_t>(li)].empty())
+								{
+									thumb = m_texturePreviewCache->GetProceduralThumb(static_cast<uint32_t>(li));
+								}
+								else
+								{
+									thumb = m_texturePreviewCache->GetTexrThumb(refs[static_cast<size_t>(li)]);
+								}
+							}
+							if (thumb != nullptr)
+							{
+								ImGui::Image(thumb, ImVec2(48.0f, 48.0f));
+							}
+							else
+							{
+								ImGui::Dummy(ImVec2(48.0f, 48.0f));
+							}
+							ImGui::SameLine();
+
 							int sel = 0;
 							if (!refs[static_cast<size_t>(li)].empty())
 							{
@@ -1248,7 +1276,10 @@ namespace engine::editor
 								{
 									refs[static_cast<size_t>(li)] = imported[static_cast<size_t>(sel - 1)];
 								}
+								m_session->MarkSplatRefsDirty();  // declenche reupload GPU
 							}
+
+							ImGui::PopID();
 						}
 						ImGui::TextDisabled("Le mapping est persiste dans la carte (champ JSON splat_layer_texture_refs).");
 					}

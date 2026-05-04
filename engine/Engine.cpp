@@ -2819,6 +2819,10 @@ namespace engine
 						LOG_WARN(Render, "[Engine] TexturePreviewCache init failed -- vignettes editeur indisponibles");
 						m_texturePreviewCache.reset();
 					}
+					if (m_worldEditorImGui && m_texturePreviewCache)
+					{
+						m_worldEditorImGui->SetTexturePreviewCache(m_texturePreviewCache.get());
+					}
 				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
 				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.

@@ -660,6 +660,14 @@ namespace engine::editor
 		{
 			m_doc.textureAssets.push_back(rel);
 		}
+		// Signal le re-import au cache de vignettes (Engine consomme la file).
+		m_recentlyImported.push_back(rel);
+		// Si la texture est referencee par un layer du splat, force aussi un
+		// reupload du splat array pour que la 3D refete la nouvelle version.
+		for (const std::string& r : m_doc.splatLayerTextureRefs)
+		{
+			if (r == rel) { m_splatRefsDirty = true; break; }
+		}
 		SetStatus("Texture importee: " + rel);
 		return true;
 	}

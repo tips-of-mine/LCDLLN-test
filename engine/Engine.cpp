@@ -2848,6 +2848,14 @@ namespace engine
 		{
 			RebuildWorldEditorTerrainGpu();
 		}
+		if (m_worldEditorExe && m_worldEditorSession && m_texturePreviewCache)
+		{
+			for (const std::string& rel : m_worldEditorSession->RecentlyImportedTextures())
+			{
+				m_texturePreviewCache->Invalidate(rel);
+			}
+			m_worldEditorSession->ClearRecentlyImportedTextures();
+		}
 		ProcessSplatRefsDirty();
 		if (m_texturePreviewCache)
 		{

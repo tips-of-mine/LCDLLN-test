@@ -140,6 +140,14 @@ namespace engine::editor
 		/// Lit + reset le flag splat refs. Utilise par Engine cote frame loop.
 		bool ConsumeSplatRefsDirty() { const bool d = m_splatRefsDirty; m_splatRefsDirty = false; return d; }
 
+		/// Liste des .texr (chemins content-relatifs) reimportees depuis la
+		/// derniere consommation. Engine consomme via ConsumeRecentlyImportedTextures
+		/// et appelle TexturePreviewCache::Invalidate sur chaque entree.
+		const std::vector<std::string>& RecentlyImportedTextures() const { return m_recentlyImported; }
+
+		/// Vide la file (a appeler apres avoir invalide les vignettes correspondantes).
+		void ClearRecentlyImportedTextures() { m_recentlyImported.clear(); }
+
 	private:
 		void SanitizeAllLayoutInstancesAgainstTreeCatalog();
 
@@ -185,6 +193,8 @@ namespace engine::editor
 
 		bool m_terrainGpuReloadRequested = false;
 		bool m_splatRefsDirty = false;
+
+		std::vector<std::string> m_recentlyImported;
 
 		std::vector<std::string> m_availableMapIds;
 		int m_selectedAvailableMapIndex = 0;

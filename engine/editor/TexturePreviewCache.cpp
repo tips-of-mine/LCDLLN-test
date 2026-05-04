@@ -14,6 +14,11 @@
 
 #include <vulkan/vulkan.h>
 
+#if defined(_WIN32)
+#   include "imgui_impl_vulkan.h"
+#endif
+#include "engine/render/terrain/TerrainSplatting.h"
+
 namespace engine::editor
 {
     namespace
@@ -232,6 +237,8 @@ namespace engine::editor
     {
         if (m_device != nullptr)
         {
+            for (auto& kv : m_entries) DestroyEntry(kv.second);
+            m_entries.clear();
             if (m_pool != nullptr)
             {
                 vkDestroyDescriptorPool(m_device, m_pool, nullptr);
@@ -250,11 +257,269 @@ namespace engine::editor
         m_contentDir.clear();
         m_ready = false;
     }
+
+    std::string TexturePreviewCache::ProceduralKey(uint32_t layer)
+    {
+        return std::string("procedural:") + std::to_string(layer);
+    }
+
+    ImTextureID TexturePreviewCache::CreateEntry(const std::string& key,
+                                                  const std::vector<uint8_t>& rgba256)
+    {
+        constexpr uint32_t kRes = engine::render::terrain::kSplatLayerResolution;
+        const size_t expectedBytes = static_cast<size_t>(kRes) * kRes * 4u;
+        if (!m_ready || rgba256.size() != expectedBytes)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] CreateEntry({}): not ready or bad size {} (expected {})",
+                      key, rgba256.size(), expectedBytes);
+            return nullptr;
+        }
+
+        GpuPreview preview;
+        preview.cpuRgba256 = rgba256;
+
+        // 1) VkImage 256x256 RGBA8_SRGB, OPTIMAL, SAMPLED + TRANSFER_DST.
+        VkImageCreateInfo ici{};
+        ici.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        ici.imageType     = VK_IMAGE_TYPE_2D;
+        ici.format        = VK_FORMAT_R8G8B8A8_SRGB;
+        ici.extent        = { kRes, kRes, 1 };
+        ici.mipLevels     = 1;
+        ici.arrayLayers   = 1;
+        ici.samples       = VK_SAMPLE_COUNT_1_BIT;
+        ici.tiling        = VK_IMAGE_TILING_OPTIMAL;
+        ici.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        ici.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+        if (vkCreateImage(m_device, &ici, nullptr, &preview.image) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] vkCreateImage failed for {}", key);
+            return nullptr;
+        }
+
+        VkMemoryRequirements mr{};
+        vkGetImageMemoryRequirements(m_device, preview.image, &mr);
+        VkPhysicalDeviceMemoryProperties mp{};
+        vkGetPhysicalDeviceMemoryProperties(m_physDev, &mp);
+        uint32_t memType = UINT32_MAX;
+        for (uint32_t i = 0; i < mp.memoryTypeCount; ++i)
+        {
+            if ((mr.memoryTypeBits & (1u << i)) &&
+                (mp.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+            {
+                memType = i;
+                break;
+            }
+        }
+        if (memType == UINT32_MAX)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] no DEVICE_LOCAL memory for {}", key);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+        VkMemoryAllocateInfo ai{};
+        ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        ai.allocationSize  = mr.size;
+        ai.memoryTypeIndex = memType;
+        if (vkAllocateMemory(m_device, &ai, nullptr, &preview.memory) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] vkAllocateMemory failed for {}", key);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+        vkBindImageMemory(m_device, preview.image, preview.memory, 0);
+
+        // 2) Staging buffer (HOST_VISIBLE | HOST_COHERENT).
+        VkBuffer staging = nullptr;
+        VkDeviceMemory stagingMem = nullptr;
+        VkBufferCreateInfo bci{};
+        bci.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bci.size        = rgba256.size();
+        bci.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        if (vkCreateBuffer(m_device, &bci, nullptr, &staging) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] staging vkCreateBuffer failed for {}", key);
+            vkFreeMemory(m_device, preview.memory, nullptr);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+        VkMemoryRequirements bmr{};
+        vkGetBufferMemoryRequirements(m_device, staging, &bmr);
+        uint32_t hvis = UINT32_MAX;
+        for (uint32_t i = 0; i < mp.memoryTypeCount; ++i)
+        {
+            const VkMemoryPropertyFlags need =
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+            if ((bmr.memoryTypeBits & (1u << i)) &&
+                (mp.memoryTypes[i].propertyFlags & need) == need)
+            {
+                hvis = i;
+                break;
+            }
+        }
+        if (hvis == UINT32_MAX)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] no HOST_VISIBLE memory for {}", key);
+            vkDestroyBuffer(m_device, staging, nullptr);
+            vkFreeMemory(m_device, preview.memory, nullptr);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+        VkMemoryAllocateInfo ai2{};
+        ai2.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        ai2.allocationSize  = bmr.size;
+        ai2.memoryTypeIndex = hvis;
+        if (vkAllocateMemory(m_device, &ai2, nullptr, &stagingMem) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] staging vkAllocateMemory failed for {}", key);
+            vkDestroyBuffer(m_device, staging, nullptr);
+            vkFreeMemory(m_device, preview.memory, nullptr);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+        vkBindBufferMemory(m_device, staging, stagingMem, 0);
+        void* mapped = nullptr;
+        vkMapMemory(m_device, stagingMem, 0, rgba256.size(), 0, &mapped);
+        std::memcpy(mapped, rgba256.data(), rgba256.size());
+        vkUnmapMemory(m_device, stagingMem);
+
+        // 3) One-shot command pool + buffer : barriers + copy.
+        VkCommandPool pool = nullptr;
+        VkCommandPoolCreateInfo pci{};
+        pci.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        pci.queueFamilyIndex = m_queueFamily;
+        pci.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        vkCreateCommandPool(m_device, &pci, nullptr, &pool);
+        VkCommandBuffer cmd = nullptr;
+        VkCommandBufferAllocateInfo cai{};
+        cai.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        cai.commandPool        = pool;
+        cai.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        cai.commandBufferCount = 1;
+        vkAllocateCommandBuffers(m_device, &cai, &cmd);
+        VkCommandBufferBeginInfo cbb{};
+        cbb.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        cbb.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        vkBeginCommandBuffer(cmd, &cbb);
+
+        VkImageMemoryBarrier b1{};
+        b1.sType            = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        b1.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+        b1.newLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        b1.image            = preview.image;
+        b1.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+        b1.srcAccessMask    = 0;
+        b1.dstAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
+        vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                             0, 0, nullptr, 0, nullptr, 1, &b1);
+
+        VkBufferImageCopy r{};
+        r.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+        r.imageExtent      = { kRes, kRes, 1 };
+        vkCmdCopyBufferToImage(cmd, staging, preview.image,
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &r);
+
+        VkImageMemoryBarrier b2 = b1;
+        b2.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        b2.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        b2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        b2.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                             0, 0, nullptr, 0, nullptr, 1, &b2);
+
+        vkEndCommandBuffer(cmd);
+        VkSubmitInfo sub{};
+        sub.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        sub.commandBufferCount = 1;
+        sub.pCommandBuffers    = &cmd;
+        vkQueueSubmit(m_queue, 1, &sub, nullptr);
+        vkQueueWaitIdle(m_queue);
+
+        vkDestroyCommandPool(m_device, pool, nullptr);
+        vkDestroyBuffer(m_device, staging, nullptr);
+        vkFreeMemory(m_device, stagingMem, nullptr);
+
+        // 4) ImageView.
+        VkImageViewCreateInfo vci{};
+        vci.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        vci.image            = preview.image;
+        vci.viewType         = VK_IMAGE_VIEW_TYPE_2D;
+        vci.format           = VK_FORMAT_R8G8B8A8_SRGB;
+        vci.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+        if (vkCreateImageView(m_device, &vci, nullptr, &preview.view) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] vkCreateImageView failed for {}", key);
+            vkFreeMemory(m_device, preview.memory, nullptr);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+
+        // 5) Descriptor ImGui (alloue par le backend ImGui depuis son propre pool).
+        preview.imguiDS = ImGui_ImplVulkan_AddTexture(m_sampler, preview.view,
+                                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        if (preview.imguiDS == nullptr)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] ImGui_ImplVulkan_AddTexture failed for {}", key);
+            vkDestroyImageView(m_device, preview.view, nullptr);
+            vkFreeMemory(m_device, preview.memory, nullptr);
+            vkDestroyImage(m_device, preview.image, nullptr);
+            return nullptr;
+        }
+
+        const ImTextureID id = static_cast<ImTextureID>(preview.imguiDS);
+        m_entries.emplace(key, std::move(preview));
+        return id;
+    }
+
+    void TexturePreviewCache::DestroyEntry(GpuPreview& p)
+    {
+        if (p.imguiDS != nullptr)
+        {
+            ImGui_ImplVulkan_RemoveTexture(p.imguiDS);
+            p.imguiDS = nullptr;
+        }
+        if (p.view != nullptr)   { vkDestroyImageView(m_device, p.view, nullptr);   p.view = nullptr; }
+        if (p.image != nullptr)  { vkDestroyImage(m_device, p.image, nullptr);      p.image = nullptr; }
+        if (p.memory != nullptr) { vkFreeMemory(m_device, p.memory, nullptr);       p.memory = nullptr; }
+        p.cpuRgba256.clear();
+    }
+
+    ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t layer)
+    {
+        if (!m_ready || layer >= engine::render::terrain::kSplatLayerCount) return nullptr;
+        const std::string key = ProceduralKey(layer);
+        auto it = m_entries.find(key);
+        if (it != m_entries.end())
+        {
+            return static_cast<ImTextureID>(it->second.imguiDS);
+        }
+        std::vector<uint8_t> rgba;
+        if (!engine::render::terrain::GenerateProceduralAlbedoLayer(
+                engine::render::terrain::kSplatLayerResolution, layer, rgba))
+        {
+            return nullptr;
+        }
+        return CreateEntry(key, rgba);
+    }
+
+    const std::vector<uint8_t>* TexturePreviewCache::GetCpuRgba256(const std::string& key) const
+    {
+        auto it = m_entries.find(key);
+        if (it == m_entries.end()) return nullptr;
+        return &it->second.cpuRgba256;
+    }
+
 #else
     // No-op stubs pour Linux/macOS — l'editeur monde ne tourne que sur Win32.
     TexturePreviewCache::~TexturePreviewCache() = default;
     bool TexturePreviewCache::Init(VkDevice, VkPhysicalDevice, VkQueue, uint32_t, const std::string&) { return false; }
     void TexturePreviewCache::Shutdown() {}
+    std::string TexturePreviewCache::ProceduralKey(uint32_t layer) { return std::string("procedural:") + std::to_string(layer); }
+    ImTextureID TexturePreviewCache::CreateEntry(const std::string&, const std::vector<uint8_t>&) { return nullptr; }
+    void TexturePreviewCache::DestroyEntry(GpuPreview&) {}
+    ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t) { return nullptr; }
+    const std::vector<uint8_t>* TexturePreviewCache::GetCpuRgba256(const std::string&) const { return nullptr; }
 #endif
 
 } // namespace engine::editor

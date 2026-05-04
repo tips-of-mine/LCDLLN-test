@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // Forward decl Vulkan + ImGui (evite #include vulkan.h dans le .h pour
@@ -81,6 +82,20 @@ namespace engine::editor
         /// True si Init a reussi et Shutdown n'a pas ete appele.
         bool IsReady() const { return m_ready; }
 
+        /// Renvoie une ImTextureID utilisable par ImGui::Image() pour la
+        /// vignette procedurale du layer (0=grass, 1=dirt, 2=rock, 3=snow).
+        /// 1re demande : genere le bruit + cree image+view+descriptor ImGui.
+        /// Suivantes : hit cache. Cle interne : "procedural:N".
+        /// \return nullptr si Init non OK ou layer >= kSplatLayerCount.
+        ImTextureID GetProceduralThumb(uint32_t layer);
+
+        /// Renvoie le buffer CPU 256x256 d'une key cachee (ou nullptr).
+        /// Cles : "procedural:0".."procedural:3" pour les builtins,
+        ///        "textures/<rel>" pour les .texr importees (Task 8).
+        /// Utilise par Engine::ProcessSplatRefsDirty pour reuploader le splat
+        /// array terrain.
+        const std::vector<uint8_t>* GetCpuRgba256(const std::string& key) const;
+
     private:
         bool             m_ready        = false;
         VkDevice         m_device       = nullptr;
@@ -90,7 +105,35 @@ namespace engine::editor
         std::string      m_contentDir;
 
         VkSampler        m_sampler = nullptr;
+        // TODO M-XX : m_pool cree par Init mais non utilise pour l'instant
+        // (ImGui_ImplVulkan_AddTexture alloue depuis son propre pool interne).
+        // A repurposer ou supprimer quand le besoin sera clarifie.
         VkDescriptorPool m_pool    = nullptr;
+
+        /// Une entree GPU cachee : buffer CPU + ressources Vulkan + descriptor ImGui.
+        struct GpuPreview
+        {
+            std::vector<uint8_t> cpuRgba256;
+            VkImage              image   = nullptr;
+            VkImageView          view    = nullptr;
+            VkDeviceMemory       memory  = nullptr;
+            VkDescriptorSet      imguiDS = nullptr;
+        };
+
+        /// key -> preview. Cles cf. doc de GetCpuRgba256.
+        std::unordered_map<std::string, GpuPreview> m_entries;
+
+        /// Cle procedurale standardisee : "procedural:0".."procedural:3".
+        static std::string ProceduralKey(uint32_t layer);
+
+        /// Cree image+view+descriptor ImGui a partir d'un buffer 256x256 RGBA8.
+        /// Stocke dans m_entries[key]. Renvoie l'ImTextureID ou nullptr sur echec.
+        /// Win32 uniquement.
+        ImTextureID CreateEntry(const std::string& key,
+                                const std::vector<uint8_t>& rgba256);
+
+        /// Detruit les ressources Vulkan + ImGui d'une entree (helper interne, Win32 only).
+        void DestroyEntry(GpuPreview& p);
     };
 
 } // namespace engine::editor

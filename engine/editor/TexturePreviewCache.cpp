@@ -239,6 +239,8 @@ namespace engine::editor
         {
             for (auto& kv : m_entries) DestroyEntry(kv.second);
             m_entries.clear();
+            for (auto& pd : m_pendingDeletes) DestroyEntry(pd.preview);
+            m_pendingDeletes.clear();
             if (m_pool != nullptr)
             {
                 vkDestroyDescriptorPool(m_device, m_pool, nullptr);
@@ -250,6 +252,10 @@ namespace engine::editor
                 m_sampler = nullptr;
             }
         }
+        m_negativeCache.clear();
+        m_entries.clear();
+        m_pendingDeletes.clear();
+        m_lastTickFrame = 0;
         m_device = nullptr;
         m_physDev = nullptr;
         m_queue = nullptr;
@@ -547,6 +553,38 @@ namespace engine::editor
         return &it->second.cpuRgba256;
     }
 
+    void TexturePreviewCache::Invalidate(const std::string& contentRelPath)
+    {
+        m_negativeCache.erase(contentRelPath);
+        auto it = m_entries.find(contentRelPath);
+        if (it == m_entries.end()) return;
+        // Differer la destruction (descriptor potentiellement reference dans
+        // une command buffer en vol).
+        PendingDelete pd;
+        pd.preview = std::move(it->second);
+        pd.frameIndex = m_lastTickFrame;
+        m_pendingDeletes.push_back(std::move(pd));
+        m_entries.erase(it);
+    }
+
+    void TexturePreviewCache::Tick(uint64_t currentFrameIndex, uint32_t framesInFlight)
+    {
+        m_lastTickFrame = currentFrameIndex;
+        // Purger les entrees dont l'invalidation date d'au moins framesInFlight.
+        for (auto it = m_pendingDeletes.begin(); it != m_pendingDeletes.end(); )
+        {
+            if (currentFrameIndex >= it->frameIndex + framesInFlight)
+            {
+                DestroyEntry(it->preview);
+                it = m_pendingDeletes.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
 #else
     // No-op stubs pour Linux/macOS — l'editeur monde ne tourne que sur Win32.
     TexturePreviewCache::~TexturePreviewCache() = default;
@@ -558,6 +596,8 @@ namespace engine::editor
     ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t) { return nullptr; }
     ImTextureID TexturePreviewCache::GetTexrThumb(const std::string&) { return nullptr; }
     const std::vector<uint8_t>* TexturePreviewCache::GetCpuRgba256(const std::string&) const { return nullptr; }
+    void TexturePreviewCache::Invalidate(const std::string&) {}
+    void TexturePreviewCache::Tick(uint64_t, uint32_t) {}
 #endif
 
 } // namespace engine::editor

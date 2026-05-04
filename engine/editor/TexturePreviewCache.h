@@ -106,6 +106,22 @@ namespace engine::editor
         /// array terrain.
         const std::vector<uint8_t>* GetCpuRgba256(const std::string& key) const;
 
+        /// Marque une entree pour destruction differee. Le descriptor + ressources
+        /// Vulkan seront detruits au prochain Tick(currentFrame >= invalidatedAt + framesInFlight).
+        /// Reset aussi l'entree dans le cache negatif (permet de retenter le decode).
+        /// Procedurales : invalider n'a pas de sens (octets fixes), mais aucun effet
+        /// indesirable si appele.
+        /// \param contentRelPath Chemin tel que passe a GetTexrThumb (ou
+        ///   "procedural:N" pour les builtins).
+        void Invalidate(const std::string& contentRelPath);
+
+        /// A appeler chaque frame en main thread. Met a jour le compteur interne et
+        /// detruit les entrees en pending depuis assez longtemps pour qu'aucune
+        /// command buffer en vol ne les reference.
+        /// \param currentFrameIndex Compteur de frame monotone (Engine::m_frameCounter).
+        /// \param framesInFlight Nombre maximum de frames en vol simultanees (kMaxFramesInFlight).
+        void Tick(uint64_t currentFrameIndex, uint32_t framesInFlight);
+
     private:
         bool             m_ready        = false;
         VkDevice         m_device       = nullptr;
@@ -136,6 +152,18 @@ namespace engine::editor
         /// Cles dont le decode a echoue : ne pas retenter avant Invalidate
         /// (evite spam logs). Reset par Invalidate (Task 9).
         std::unordered_set<std::string> m_negativeCache;
+
+        /// Entree marquee Invalidate, en attente de destruction.
+        struct PendingDelete
+        {
+            GpuPreview preview;
+            uint64_t   frameIndex = 0; // frame ou Invalidate a ete appele
+        };
+        std::vector<PendingDelete> m_pendingDeletes;
+
+        /// Frame du dernier Tick (sert d'horloge a Invalidate quand Tick n'a
+        /// pas encore ete appele de la frame courante).
+        uint64_t m_lastTickFrame = 0;
 
         /// Cle procedurale standardisee : "procedural:0".."procedural:3".
         static std::string ProceduralKey(uint32_t layer);

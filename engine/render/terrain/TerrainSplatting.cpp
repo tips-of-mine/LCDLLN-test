@@ -280,6 +280,65 @@ namespace engine::render::terrain
     } // namespace
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // GenerateProceduralAlbedoLayer (free function)
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool GenerateProceduralAlbedoLayer(uint32_t resolution, uint32_t layer,
+                                       std::vector<uint8_t>& outRgba)
+    {
+        if (layer >= kSplatLayerCount || resolution < 4u || resolution > 4096u)
+        {
+            return false;
+        }
+
+        // Couleurs de base par layer (identiques au boot TerrainSplatting).
+        static const uint8_t kAlbedo[kSplatLayerCount][4] = {
+            {  89u, 140u,  51u, 255u },   // grass
+            { 128u,  82u,  38u, 255u },   // dirt
+            { 128u, 107u,  82u, 255u },   // rock
+            { 242u, 242u, 250u, 255u },   // snow
+        };
+        static const uint8_t kAmplitude[kSplatLayerCount] = { 38u, 28u, 50u, 12u };
+        static const uint32_t kMacroCell[kSplatLayerCount] = { 8u, 12u, 4u, 16u };
+
+        auto hashNoise = [](uint32_t x, uint32_t y, uint32_t seed) -> float {
+            uint32_t h = x * 0x27d4eb2du ^ y * 0x165667b1u ^ seed * 0x9e3779b9u;
+            h ^= h >> 15; h *= 0x85ebca6bu;
+            h ^= h >> 13; h *= 0xc2b2ae35u;
+            h ^= h >> 16;
+            return static_cast<float>(h & 0xFFFFFFu) / static_cast<float>(0x1000000u);
+        };
+
+        const uint8_t* col = kAlbedo[layer];
+        const float amp = static_cast<float>(kAmplitude[layer]);
+        const uint32_t mc = kMacroCell[layer];
+        const uint32_t pixels = resolution * resolution;
+        outRgba.resize(static_cast<size_t>(pixels) * 4u);
+
+        for (uint32_t y = 0; y < resolution; ++y)
+        {
+            for (uint32_t x = 0; x < resolution; ++x)
+            {
+                const float micro = hashNoise(x, y, layer);
+                const float macro = hashNoise(x / mc, y / mc, layer + 1000u);
+                const float n = (micro * 0.6f + macro * 0.4f) * 2.0f - 1.0f;
+                const float delta = n * amp;
+                auto clampU8 = [](float v) -> uint8_t {
+                    if (v < 0.0f) v = 0.0f;
+                    if (v > 255.0f) v = 255.0f;
+                    return static_cast<uint8_t>(v);
+                };
+                uint8_t* dst = outRgba.data() + (y * resolution + x) * 4u;
+                dst[0] = clampU8(static_cast<float>(col[0]) + delta);
+                dst[1] = clampU8(static_cast<float>(col[1]) + delta);
+                dst[2] = clampU8(static_cast<float>(col[2]) + delta);
+                dst[3] = 255u;
+            }
+        }
+        return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainSplatting::GetLayerTiling
     // ─────────────────────────────────────────────────────────────────────────────
 
@@ -411,74 +470,26 @@ namespace engine::render::terrain
         constexpr uint32_t kTexH = 64u;
         constexpr uint32_t kPixels = kTexW * kTexH;
 
-        // Couleurs de base (RGBA8 lineaire) : 0=grass, 1=dirt, 2=rock, 3=snow.
-        // Choisies pour etre visiblement distinctes meme sous un eclairage faible.
-        static const uint8_t kAlbedo[kSplatLayerCount][4] = {
-            {  89u, 140u,  51u, 255u },   // grass — vert moyen
-            { 128u,  82u,  38u, 255u },   // dirt  — terre brune
-            { 128u, 107u,  82u, 255u },   // rock  — gris-brun
-            { 242u, 242u, 250u, 255u },   // snow  — blanc presque pur
-        };
-
-        // Amplitude de variation par layer (intensite du bruit ajoute).
-        // grass = forte variation (touffes), dirt = grosse variation (crevasses),
-        // rock = variation pointue (cailloux), snow = legere variation.
-        static const uint8_t kAmplitude[kSplatLayerCount] = { 38u, 28u, 50u, 12u };
-
-        // Hash de bruit deterministe : retourne un float [0,1) pour (x, y, layer).
-        // Pas de dependance sur stdlib random, pour un output reproductible.
-        auto hashNoise = [](uint32_t x, uint32_t y, uint32_t seed) -> float {
-            uint32_t h = x * 0x27d4eb2du ^ y * 0x165667b1u ^ seed * 0x9e3779b9u;
-            h ^= h >> 15; h *= 0x85ebca6bu;
-            h ^= h >> 13; h *= 0xc2b2ae35u;
-            h ^= h >> 16;
-            return static_cast<float>(h & 0xFFFFFFu) / static_cast<float>(0x1000000u);
-        };
-
-        // Bruit cellulaire simple : on calcule un noise + un noise plus grossier
-        // pour avoir des macro/micro details. Renvoie [-1, +1].
-        auto layerNoise = [&](uint32_t x, uint32_t y, uint32_t layer, uint32_t macroCellSize) -> float {
-            const float micro = hashNoise(x, y, layer);
-            const uint32_t mx = x / macroCellSize;
-            const uint32_t my = y / macroCellSize;
-            const float macro = hashNoise(mx, my, layer + 1000u);
-            return (micro * 0.6f + macro * 0.4f) * 2.0f - 1.0f;
-        };
-
         // Flat normal (pointing up in tangent space: RGB=128,128,255)
         static const uint8_t kNormal[4] = { 128u, 128u, 255u, 255u };
 
         // ORM: R=AO(255=1.0), G=Roughness(204≈0.8), B=Metallic(0)
         static const uint8_t kORM[4] = { 255u, 204u, 0u, 255u };
 
-        // Build albedo array data (layerCount × width × height × 4 bytes)
+        // Build albedo array data via la free function GenerateProceduralAlbedoLayer.
         {
             std::vector<uint8_t> albedoData(kSplatLayerCount * kPixels * 4u);
+            std::vector<uint8_t> oneLayer;
             for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
             {
-                const uint8_t* col = kAlbedo[layer];
-                const float amp = static_cast<float>(kAmplitude[layer]);
-                // Macro cell size : grass=8 (touffes serrees), dirt=12, rock=4 (cailloux fins), snow=16 (zones lisses)
-                static const uint32_t kMacroCell[kSplatLayerCount] = { 8u, 12u, 4u, 16u };
-                const uint32_t mc = kMacroCell[layer];
-                for (uint32_t y = 0; y < kTexH; ++y)
+                if (!GenerateProceduralAlbedoLayer(kTexW, layer, oneLayer))
                 {
-                    for (uint32_t x = 0; x < kTexW; ++x)
-                    {
-                        const float n = layerNoise(x, y, layer, mc); // [-1, +1]
-                        const float delta = n * amp;
-                        auto clampU8 = [](float v) -> uint8_t {
-                            if (v < 0.0f) v = 0.0f;
-                            if (v > 255.0f) v = 255.0f;
-                            return static_cast<uint8_t>(v);
-                        };
-                        uint8_t* dst = albedoData.data() + (layer * kPixels + y * kTexW + x) * 4u;
-                        dst[0] = clampU8(static_cast<float>(col[0]) + delta);
-                        dst[1] = clampU8(static_cast<float>(col[1]) + delta);
-                        dst[2] = clampU8(static_cast<float>(col[2]) + delta);
-                        dst[3] = 255u;
-                    }
+                    LOG_ERROR(Render, "[TerrainSplatting] GenerateProceduralAlbedoLayer({},{}) failed", kTexW, layer);
+                    Destroy(device);
+                    return false;
                 }
+                std::memcpy(albedoData.data() + layer * kPixels * 4u,
+                            oneLayer.data(), kPixels * 4u);
             }
             if (!UploadTextureArray(device, physDev, albedoData, kTexW, kTexH, kSplatLayerCount,
                                     queue, queueFamilyIndex, m_albedoArray))

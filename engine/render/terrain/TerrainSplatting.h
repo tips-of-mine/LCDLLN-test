@@ -13,6 +13,16 @@ namespace engine::render::terrain
     /// Number of splat layers (grass, dirt, rock, snow).
     static constexpr uint32_t kSplatLayerCount = 4u;
 
+    /// Génère un layer RGBA8 procédural (bruit déterministe par layer).
+    /// Algorithme : combinaison micro/macro de hash xx-style, identique au boot
+    /// de TerrainSplatting (cf. b93a14d). Mêmes octets exacts pour mêmes paramètres.
+    /// \param resolution Côté en pixels (carré). Min 4, max 4096.
+    /// \param layer 0=grass, 1=dirt, 2=rock, 3=snow.
+    /// \param outRgba Sortie : resolution * resolution * 4 octets, RGBA8 sRGB.
+    /// \return false si layer >= kSplatLayerCount ou resolution < 4.
+    bool GenerateProceduralAlbedoLayer(uint32_t resolution, uint32_t layer,
+                                       std::vector<uint8_t>& outRgba);
+
     /// Magic binaire des fichiers splat disque « SLAP » (little-endian), aligné sur `TerrainEditingTools::SaveSplatMap`.
     inline constexpr uint32_t kTerrainSplatFileMagic = 0x50414C53u;
 

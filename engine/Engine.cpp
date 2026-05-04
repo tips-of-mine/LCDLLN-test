@@ -1814,6 +1814,16 @@ namespace engine
 												lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;
 												lp.ambientColor[2] = m_zoneAtmosphere.ambientColor[2] * probeIntensity;
 												lp.ambientColor[3] = 0.0f;
+												// Couleur du ciel utilisée par lighting.frag pour les pixels
+												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
+												// rendre le cycle jour/nuit visible sans skybox dédié.
+												{
+													const engine::render::DayNightCycle::State& dnLight = m_dayNight.GetState();
+													lp.skyColor[0] = dnLight.skyHorizon[0];
+													lp.skyColor[1] = dnLight.skyHorizon[1];
+													lp.skyColor[2] = dnLight.skyHorizon[2];
+													lp.skyColor[3] = 0.0f;
+												}
 												VkImageView irrView       = VK_NULL_HANDLE;
 												VkSampler   irrSamp       = VK_NULL_HANDLE;
 												VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;

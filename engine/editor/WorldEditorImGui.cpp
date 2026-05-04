@@ -1232,7 +1232,7 @@ namespace engine::editor
 							// Vignette 48x48 a gauche du combo. Procedurale si
 							// ref vide, .texr resamplee sinon. Cellule grise
 							// si cache non pret ou decode echoue.
-							ImTextureID thumb = nullptr;
+							ImTextureID thumb = 0;
 							if (m_texturePreviewCache != nullptr)
 							{
 								if (refs[static_cast<size_t>(li)].empty())
@@ -1244,7 +1244,7 @@ namespace engine::editor
 									thumb = m_texturePreviewCache->GetTexrThumb(refs[static_cast<size_t>(li)]);
 								}
 							}
-							if (thumb != nullptr)
+							if (thumb != 0)
 							{
 								ImGui::Image(thumb, ImVec2(48.0f, 48.0f));
 							}

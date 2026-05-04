@@ -36,7 +36,7 @@ namespace engine::editor
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, highlighted ? 3.0f : 0.0f);
             ImGui::PushStyleColor(ImGuiCol_Border, kHighlightColor);
             bool clicked = false;
-            if (id != nullptr)
+            if (id != 0)
             {
                 clicked = ImGui::ImageButton(label, id, size);
             }
@@ -85,7 +85,7 @@ namespace engine::editor
             ImGui::PushID(li);
             ImTextureID id = (cache != nullptr)
                 ? cache->GetProceduralThumb(static_cast<uint32_t>(li))
-                : nullptr;
+                : 0;
             const bool highlighted = (li == activeLayer)
                 && session.Doc().splatLayerTextureRefs[static_cast<size_t>(li)].empty();
             if (DrawThumbButton(id, kLayerNames[li], highlighted))
@@ -112,7 +112,7 @@ namespace engine::editor
             for (size_t i = 0; i < assets.size(); ++i)
             {
                 ImGui::PushID(static_cast<int>(i));
-                ImTextureID id = (cache != nullptr) ? cache->GetTexrThumb(assets[i]) : nullptr;
+                ImTextureID id = (cache != nullptr) ? cache->GetTexrThumb(assets[i]) : 0;
                 // Highlight si cette texture est assignee au layer actif.
                 const bool highlighted =
                     (session.Doc().splatLayerTextureRefs[static_cast<size_t>(activeLayer)] == assets[i]);

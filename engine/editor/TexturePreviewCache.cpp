@@ -278,7 +278,7 @@ namespace engine::editor
         {
             LOG_ERROR(Render, "[TexturePreviewCache] CreateEntry({}): not ready or bad size {} (expected {})",
                       key, rgba256.size(), expectedBytes);
-            return nullptr;
+            return 0;
         }
 
         GpuPreview preview;
@@ -300,7 +300,7 @@ namespace engine::editor
         if (vkCreateImage(m_device, &ici, nullptr, &preview.image) != VK_SUCCESS)
         {
             LOG_ERROR(Render, "[TexturePreviewCache] vkCreateImage failed for {}", key);
-            return nullptr;
+            return 0;
         }
 
         VkMemoryRequirements mr{};
@@ -321,7 +321,7 @@ namespace engine::editor
         {
             LOG_ERROR(Render, "[TexturePreviewCache] no DEVICE_LOCAL memory for {}", key);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
         VkMemoryAllocateInfo ai{};
         ai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -331,7 +331,7 @@ namespace engine::editor
         {
             LOG_ERROR(Render, "[TexturePreviewCache] vkAllocateMemory failed for {}", key);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
         vkBindImageMemory(m_device, preview.image, preview.memory, 0);
 
@@ -348,7 +348,7 @@ namespace engine::editor
             LOG_ERROR(Render, "[TexturePreviewCache] staging vkCreateBuffer failed for {}", key);
             vkFreeMemory(m_device, preview.memory, nullptr);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
         VkMemoryRequirements bmr{};
         vkGetBufferMemoryRequirements(m_device, staging, &bmr);
@@ -370,7 +370,7 @@ namespace engine::editor
             vkDestroyBuffer(m_device, staging, nullptr);
             vkFreeMemory(m_device, preview.memory, nullptr);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
         VkMemoryAllocateInfo ai2{};
         ai2.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -382,7 +382,7 @@ namespace engine::editor
             vkDestroyBuffer(m_device, staging, nullptr);
             vkFreeMemory(m_device, preview.memory, nullptr);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
         vkBindBufferMemory(m_device, staging, stagingMem, 0);
         void* mapped = nullptr;
@@ -458,7 +458,7 @@ namespace engine::editor
             LOG_ERROR(Render, "[TexturePreviewCache] vkCreateImageView failed for {}", key);
             vkFreeMemory(m_device, preview.memory, nullptr);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
 
         // 5) Descriptor ImGui (alloue par le backend ImGui depuis son propre pool).
@@ -470,10 +470,10 @@ namespace engine::editor
             vkDestroyImageView(m_device, preview.view, nullptr);
             vkFreeMemory(m_device, preview.memory, nullptr);
             vkDestroyImage(m_device, preview.image, nullptr);
-            return nullptr;
+            return 0;
         }
 
-        const ImTextureID id = static_cast<ImTextureID>(preview.imguiDS);
+        const ImTextureID id = reinterpret_cast<ImTextureID>(preview.imguiDS);
         m_entries.emplace(key, std::move(preview));
         return id;
     }
@@ -493,33 +493,33 @@ namespace engine::editor
 
     ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t layer)
     {
-        if (!m_ready || layer >= engine::render::terrain::kSplatLayerCount) return nullptr;
+        if (!m_ready || layer >= engine::render::terrain::kSplatLayerCount) return 0;
         const std::string key = ProceduralKey(layer);
         auto it = m_entries.find(key);
         if (it != m_entries.end())
         {
-            return static_cast<ImTextureID>(it->second.imguiDS);
+            return reinterpret_cast<ImTextureID>(it->second.imguiDS);
         }
         std::vector<uint8_t> rgba;
         if (!engine::render::terrain::GenerateProceduralAlbedoLayer(
                 engine::render::terrain::kSplatLayerResolution, layer, rgba))
         {
-            return nullptr;
+            return 0;
         }
         return CreateEntry(key, rgba);
     }
 
     ImTextureID TexturePreviewCache::GetTexrThumb(const std::string& contentRelPath)
     {
-        if (!m_ready || contentRelPath.empty()) return nullptr;
+        if (!m_ready || contentRelPath.empty()) return 0;
         auto it = m_entries.find(contentRelPath);
         if (it != m_entries.end())
         {
-            return static_cast<ImTextureID>(it->second.imguiDS);
+            return reinterpret_cast<ImTextureID>(it->second.imguiDS);
         }
         if (m_negativeCache.count(contentRelPath) != 0)
         {
-            return nullptr; // deja echoue, ne pas spam les logs
+            return 0; // deja echoue, ne pas spam les logs
         }
 
         // Resoudre en chemin absolu via m_contentDir.
@@ -531,7 +531,7 @@ namespace engine::editor
         if (!LoadTexrFile(abs.string(), raw, srcW, srcH))
         {
             m_negativeCache.insert(contentRelPath);
-            return nullptr;
+            return 0;
         }
 
         std::vector<uint8_t> resampled;
@@ -540,7 +540,7 @@ namespace engine::editor
         {
             LOG_ERROR(Render, "[TexturePreviewCache] ResampleRgba8Box failed for {}", contentRelPath);
             m_negativeCache.insert(contentRelPath);
-            return nullptr;
+            return 0;
         }
 
         return CreateEntry(contentRelPath, resampled);
@@ -591,10 +591,10 @@ namespace engine::editor
     bool TexturePreviewCache::Init(VkDevice, VkPhysicalDevice, VkQueue, uint32_t, const std::string&) { return false; }
     void TexturePreviewCache::Shutdown() {}
     std::string TexturePreviewCache::ProceduralKey(uint32_t layer) { return std::string("procedural:") + std::to_string(layer); }
-    ImTextureID TexturePreviewCache::CreateEntry(const std::string&, const std::vector<uint8_t>&) { return nullptr; }
+    ImTextureID TexturePreviewCache::CreateEntry(const std::string&, const std::vector<uint8_t>&) { return 0; }
     void TexturePreviewCache::DestroyEntry(GpuPreview&) {}
-    ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t) { return nullptr; }
-    ImTextureID TexturePreviewCache::GetTexrThumb(const std::string&) { return nullptr; }
+    ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t) { return 0; }
+    ImTextureID TexturePreviewCache::GetTexrThumb(const std::string&) { return 0; }
     const std::vector<uint8_t>* TexturePreviewCache::GetCpuRgba256(const std::string&) const { return nullptr; }
     void TexturePreviewCache::Invalidate(const std::string&) {}
     void TexturePreviewCache::Tick(uint64_t, uint32_t) {}

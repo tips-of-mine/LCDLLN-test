@@ -17,7 +17,7 @@ struct VkImage_T;          typedef VkImage_T*          VkImage;
 struct VkImageView_T;      typedef VkImageView_T*      VkImageView;
 struct VkDeviceMemory_T;   typedef VkDeviceMemory_T*   VkDeviceMemory;
 struct VkDescriptorSet_T;  typedef VkDescriptorSet_T*  VkDescriptorSet;
-typedef void* ImTextureID;
+typedef unsigned long long ImTextureID;
 
 namespace engine::editor
 {

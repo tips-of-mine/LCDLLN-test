@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 // Forward decl Vulkan + ImGui (evite #include vulkan.h dans le .h pour
@@ -89,6 +90,15 @@ namespace engine::editor
         /// \return nullptr si Init non OK ou layer >= kSplatLayerCount.
         ImTextureID GetProceduralThumb(uint32_t layer);
 
+        /// Renvoie l'ImTextureID d'une .texr content-relative (ex: "textures/sand.texr").
+        /// 1re demande : decode (LoadTexrFile) -> resample 256x256 -> upload GPU
+        /// (CreateEntry). Suivantes : hit cache. Cache negatif (decode failed) =
+        /// nullptr renvoye jusqu'a Invalidate.
+        /// \param contentRelPath Chemin relatif au content dir (configure via Init).
+        /// \return nullptr si Init non OK, contentRelPath vide, fichier introuvable
+        ///   ou corrompu.
+        ImTextureID GetTexrThumb(const std::string& contentRelPath);
+
         /// Renvoie le buffer CPU 256x256 d'une key cachee (ou nullptr).
         /// Cles : "procedural:0".."procedural:3" pour les builtins,
         ///        "textures/<rel>" pour les .texr importees (Task 8).
@@ -122,6 +132,10 @@ namespace engine::editor
 
         /// key -> preview. Cles cf. doc de GetCpuRgba256.
         std::unordered_map<std::string, GpuPreview> m_entries;
+
+        /// Cles dont le decode a echoue : ne pas retenter avant Invalidate
+        /// (evite spam logs). Reset par Invalidate (Task 9).
+        std::unordered_set<std::string> m_negativeCache;
 
         /// Cle procedurale standardisee : "procedural:0".."procedural:3".
         static std::string ProceduralKey(uint32_t layer);

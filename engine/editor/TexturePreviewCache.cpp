@@ -503,6 +503,43 @@ namespace engine::editor
         return CreateEntry(key, rgba);
     }
 
+    ImTextureID TexturePreviewCache::GetTexrThumb(const std::string& contentRelPath)
+    {
+        if (!m_ready || contentRelPath.empty()) return nullptr;
+        auto it = m_entries.find(contentRelPath);
+        if (it != m_entries.end())
+        {
+            return static_cast<ImTextureID>(it->second.imguiDS);
+        }
+        if (m_negativeCache.count(contentRelPath) != 0)
+        {
+            return nullptr; // deja echoue, ne pas spam les logs
+        }
+
+        // Resoudre en chemin absolu via m_contentDir.
+        const std::filesystem::path abs =
+            std::filesystem::path(m_contentDir) / contentRelPath;
+
+        std::vector<uint8_t> raw;
+        uint32_t srcW = 0, srcH = 0;
+        if (!LoadTexrFile(abs.string(), raw, srcW, srcH))
+        {
+            m_negativeCache.insert(contentRelPath);
+            return nullptr;
+        }
+
+        std::vector<uint8_t> resampled;
+        if (!ResampleRgba8Box(raw.data(), srcW, srcH,
+                              engine::render::terrain::kSplatLayerResolution, resampled))
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] ResampleRgba8Box failed for {}", contentRelPath);
+            m_negativeCache.insert(contentRelPath);
+            return nullptr;
+        }
+
+        return CreateEntry(contentRelPath, resampled);
+    }
+
     const std::vector<uint8_t>* TexturePreviewCache::GetCpuRgba256(const std::string& key) const
     {
         auto it = m_entries.find(key);
@@ -519,6 +556,7 @@ namespace engine::editor
     ImTextureID TexturePreviewCache::CreateEntry(const std::string&, const std::vector<uint8_t>&) { return nullptr; }
     void TexturePreviewCache::DestroyEntry(GpuPreview&) {}
     ImTextureID TexturePreviewCache::GetProceduralThumb(uint32_t) { return nullptr; }
+    ImTextureID TexturePreviewCache::GetTexrThumb(const std::string&) { return nullptr; }
     const std::vector<uint8_t>* TexturePreviewCache::GetCpuRgba256(const std::string&) const { return nullptr; }
 #endif
 

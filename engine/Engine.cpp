@@ -704,8 +704,11 @@ namespace engine
 		// ------------------------------------------------------------------
 		engine::platform::Window::CreateDesc desc{};
 		desc.title  = m_worldEditorExe ? "LCDLLN World Editor" : "LCDLLN Engine";
-		desc.width  = 1280;
-		desc.height = 720;
+		// Editeur monde : 1920x1080 par defaut (panneaux dockes a droite + viewport
+		// central genereux). Client de jeu : 1280x720 (pris en charge par fullscreen
+		// reglable dans les Options).
+		desc.width  = m_worldEditorExe ? 1920 : 1280;
+		desc.height = m_worldEditorExe ? 1080 : 720;
 
 		if (!m_window.Create(desc))
 		{
@@ -1407,7 +1410,27 @@ namespace engine
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
 												VkImage img = reg.getImage(m_fgSceneColorId);
 												if (img == VK_NULL_HANDLE) return;
-												VkClearColorValue clearColor = { { 0.15f, 0.15f, 0.18f, 1.0f } };
+												// C3 simplifie : clear color = couleur horizon ciel calculee par
+												// DayNightCycle (au lieu d'un gris constant 0.15/0.15/0.18). Donne
+												// un ciel dynamique qui change de couleur selon l'heure (bleu jour,
+												// orange dawn/dusk, sombre nuit) sans avoir besoin d'une SkyboxPass
+												// Vulkan complete. A remplacer par un vrai sky shader plus tard.
+												// Log periodique pour verifier que la valeur change quand l'utilisateur
+												// modifie le slider Heure dans le panneau Atmosphere.
+												const engine::render::DayNightCycle::State& dn = m_dayNight.GetState();
+												static float s_lastLoggedTime = -999.f;
+												if (std::fabs(dn.timeOfDay - s_lastLoggedTime) > 0.05f)
+												{
+													s_lastLoggedTime = dn.timeOfDay;
+													LOG_INFO(Render, "[Atmosphere] clear color update: time={:.2f}h skyHorizon=({:.2f},{:.2f},{:.2f}) lightColor=({:.2f},{:.2f},{:.2f}) isDay={}",
+														dn.timeOfDay,
+														dn.skyHorizon[0], dn.skyHorizon[1], dn.skyHorizon[2],
+														dn.lightColor[0], dn.lightColor[1], dn.lightColor[2],
+														dn.isDaytime ? 1 : 0);
+												}
+												VkClearColorValue clearColor = {
+													{ dn.skyHorizon[0], dn.skyHorizon[1], dn.skyHorizon[2], 1.0f }
+												};
 												VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 												vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
 											});
@@ -1791,6 +1814,16 @@ namespace engine
 												lp.ambientColor[1] = m_zoneAtmosphere.ambientColor[1] * probeIntensity;
 												lp.ambientColor[2] = m_zoneAtmosphere.ambientColor[2] * probeIntensity;
 												lp.ambientColor[3] = 0.0f;
+												// Couleur du ciel utilisée par lighting.frag pour les pixels
+												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
+												// rendre le cycle jour/nuit visible sans skybox dédié.
+												{
+													const engine::render::DayNightCycle::State& dnLight = m_dayNight.GetState();
+													lp.skyColor[0] = dnLight.skyHorizon[0];
+													lp.skyColor[1] = dnLight.skyHorizon[1];
+													lp.skyColor[2] = dnLight.skyHorizon[2];
+													lp.skyColor[3] = 0.0f;
+												}
 												VkImageView irrView       = VK_NULL_HANDLE;
 												VkSampler   irrSamp       = VK_NULL_HANDLE;
 												VkImageView prefilterView = m_pipeline->GetSpecularPrefilterPass().IsValid() ? m_pipeline->GetSpecularPrefilterPass().GetImageView() : VK_NULL_HANDLE;
@@ -2555,6 +2588,8 @@ namespace engine
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
 #if defined(_WIN32)
+			if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
+			m_texturePreviewCache.reset();
 			if (m_worldEditorImGui)
 			{
 				m_worldEditorImGui->DetachPlatformWindow(m_window);
@@ -2770,7 +2805,28 @@ namespace engine
 				if (m_worldEditorExe)
 				{
 					m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+
+					// Cache de vignettes pour les textures de splatting.
+					m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();
+					const std::string contentDir = m_cfg.GetString("paths.content", "game/data");
+					const std::filesystem::path absContent = std::filesystem::absolute(contentDir);
+					if (!m_texturePreviewCache->Init(m_vkDeviceContext.GetDevice(),
+					                                 m_vkDeviceContext.GetPhysicalDevice(),
+					                                 m_vkDeviceContext.GetGraphicsQueue(),
+					                                 m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+					                                 absContent.string()))
+					{
+						LOG_WARN(Render, "[Engine] TexturePreviewCache init failed -- vignettes editeur indisponibles");
+						m_texturePreviewCache.reset();
+					}
+					if (m_worldEditorImGui && m_texturePreviewCache)
+					{
+						m_worldEditorImGui->SetTexturePreviewCache(m_texturePreviewCache.get());
+					}
 				}
+				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
+				// puisse regler time-of-day et timeScale en live depuis l'editeur monde.
+				m_worldEditorImGui->SetDayNightCycle(&m_dayNight);
 				m_worldEditorImGui->AttachPlatformWindow(m_window.GetNativeHandle(), m_window);
 				m_authImGui = std::make_unique<engine::render::AuthImGuiRenderer>();
 				m_authImGui->BindAuthUiBridge(&m_authUi, &m_cfg, &m_window);
@@ -2791,6 +2847,20 @@ namespace engine
 		if (m_worldEditorExe && m_worldEditorSession && m_worldEditorSession->ConsumeTerrainGpuReloadRequest())
 		{
 			RebuildWorldEditorTerrainGpu();
+		}
+		if (m_worldEditorExe && m_worldEditorSession && m_texturePreviewCache)
+		{
+			for (const std::string& rel : m_worldEditorSession->RecentlyImportedTextures())
+			{
+				m_texturePreviewCache->Invalidate(rel);
+			}
+			m_worldEditorSession->ClearRecentlyImportedTextures();
+		}
+		ProcessSplatRefsDirty();
+		if (m_texturePreviewCache)
+		{
+			m_texturePreviewCache->Tick(static_cast<uint64_t>(m_currentFrame),
+			                             kEditorTexCacheFramesInFlight);
 		}
 #endif
 
@@ -3372,9 +3442,14 @@ namespace engine
 			// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
 			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
 			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
-			// Clic droit maintenu : orienter même au-dessus des panneaux ImGui (souris souvent « capturée »).
+			// Convention UX standard (Unity/Unreal/Blender) : la rotation de la
+			// caméra free-fly de l'éditeur n'est active QUE pendant que le clic
+			// droit est maintenu. Sinon le moindre déplacement de la souris fait
+			// dériver la caméra et l'utilisateur perd le terrain. Avant ce fix,
+			// `applyLook = !capMouse || rmbLook` faisait tourner la caméra dès
+			// que la souris survolait la zone 3D — UX cassée.
 			const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-			const bool applyLook = !capMouse || rmbLook;
+			const bool applyLook = rmbLook;
 			const bool applyKb = !capKb;
 			float terrainWorldM = 0.f;
 			if (m_terrain.IsValid())
@@ -3447,8 +3522,27 @@ namespace engine
 		if (m_editorMode)
 		{
 			m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
-			std::memcpy(out.objectModelMatrix, m_editorMode->GetObjectModelMatrix(), sizeof(out.objectModelMatrix));
-			out.objectVisible = m_editorMode->IsObjectVisible();
+			// Demande utilisateur : afficher un humanoide de reference au centre du
+			// terrain pour juger des reliefs. On override la matrice pour positionner
+			// l'avatar (1.8m) au centre XZ du terrain courant a la hauteur du sol
+			// echantillonnee. Si pas de terrain, fallback (0, 0, 0).
+			out.objectVisible = true;
+			float refX = 0.0f, refZ = 0.0f, refY = 0.0f;
+			if (m_terrain.IsValid())
+			{
+				const float ox = m_terrain.GetTerrainOriginX();
+				const float oz = m_terrain.GetTerrainOriginZ();
+				const float ws = m_terrain.GetTerrainWorldSize();
+				refX = ox + ws * 0.5f;
+				refZ = oz + ws * 0.5f;
+				refY = m_terrain.SampleHeightAtWorldXZ(refX, refZ);
+			}
+			// Matrice column-major : identite (rotation 0) + translation (refX, refY, refZ).
+			// Avatar mesh y va de 0 (pieds) a 1.8 (tete) -> pieds au sol echantillonne.
+			out.objectModelMatrix[0]  = 1.0f; out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = 0.0f; out.objectModelMatrix[3]  = 0.0f;
+			out.objectModelMatrix[4]  = 0.0f; out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f;
+			out.objectModelMatrix[8]  = 0.0f; out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = 1.0f; out.objectModelMatrix[11] = 0.0f;
+			out.objectModelMatrix[12] = refX; out.objectModelMatrix[13] = refY; out.objectModelMatrix[14] = refZ; out.objectModelMatrix[15] = 1.0f;
 		}
 		else
 		{
@@ -4821,10 +4915,10 @@ namespace engine
 
 			engine::render::Camera reset;
 			reset.position.x = centerX;
-			reset.position.y = midGroundY + 50.0f;       // 50m au-dessus du sol moyen
-			reset.position.z = centerZ + ws * 0.25f;     // recule a 25% du world size
+			reset.position.y = midGroundY + 5.0f;        // 5m au-dessus du sol moyen
+			reset.position.z = centerZ + 20.0f;          // 20m derriere -> avatar visible ~6% ecran
 			reset.yaw = 0.0f;
-			reset.pitch = 0.5f;                          // vue plongeante ~28deg
+			reset.pitch = 0.1f;                          // pitch leger ~6deg
 			reset.fovYDeg = 70.0f;
 			reset.aspect = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
 			reset.nearZ = 0.1f;
@@ -4833,6 +4927,49 @@ namespace engine
 			m_renderStates[1].camera = reset;
 			LOG_INFO(Render, "[WorldEditor] Camera repositioned above terrain center=({:.1f},{:.1f}) groundY={:.1f} cameraY={:.1f}",
 				centerX, centerZ, midGroundY, reset.position.y);
+		}
+	}
+
+	void Engine::ProcessSplatRefsDirty()
+	{
+		if (!m_worldEditorExe || !m_worldEditorSession) return;
+		if (!m_texturePreviewCache || !m_texturePreviewCache->IsReady()) return;
+		if (!m_worldEditorSession->ConsumeSplatRefsDirty()) return;
+		if (!m_terrain.IsValid()) return;
+
+		engine::render::terrain::TerrainSplatting& splatting = m_terrain.GetSplatting();
+
+		// Pour chaque layer : pousser le buffer CPU adequat dans TerrainSplatting.
+		const auto& refs = m_worldEditorSession->Doc().splatLayerTextureRefs;
+		for (uint32_t layer = 0; layer < engine::render::terrain::kSplatLayerCount; ++layer)
+		{
+			const std::vector<uint8_t>* rgba = nullptr;
+			if (!refs[layer].empty())
+			{
+				// Force la decode/upload de la vignette si pas deja fait
+				// (cree l'entree dans le cache si absente).
+				m_texturePreviewCache->GetTexrThumb(refs[layer]);
+				rgba = m_texturePreviewCache->GetCpuRgba256(refs[layer]);
+			}
+			if (rgba == nullptr)
+			{
+				// Fallback procedurale : assure que l'entree procedurale existe.
+				m_texturePreviewCache->GetProceduralThumb(layer);
+				rgba = m_texturePreviewCache->GetCpuRgba256(
+					"procedural:" + std::to_string(layer));
+			}
+			if (rgba != nullptr)
+			{
+				splatting.SetLayerCpuRgba256(layer, *rgba);
+			}
+		}
+
+		if (!splatting.RebuildAlbedoArrayFromCpuLayers(
+				m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(),
+				m_vkDeviceContext.GetGraphicsQueue(),
+				m_vkDeviceContext.GetGraphicsQueueFamilyIndex()))
+		{
+			LOG_ERROR(Render, "[Engine] ProcessSplatRefsDirty: splat array rebuild failed");
 		}
 	}
 #endif

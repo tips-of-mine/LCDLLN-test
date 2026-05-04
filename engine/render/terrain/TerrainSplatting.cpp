@@ -280,6 +280,67 @@ namespace engine::render::terrain
     } // namespace
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // GenerateProceduralAlbedoLayer (free function)
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool GenerateProceduralAlbedoLayer(uint32_t resolution, uint32_t layer,
+                                       std::vector<uint8_t>& outRgba)
+    {
+        if (layer >= kSplatLayerCount || resolution < 4u || resolution > 4096u)
+        {
+            outRgba.clear();
+            return false;
+        }
+
+        // Couleurs de base par layer (identiques au boot TerrainSplatting).
+        static const uint8_t kAlbedo[kSplatLayerCount][4] = {
+            {  89u, 140u,  51u, 255u },   // grass
+            { 128u,  82u,  38u, 255u },   // dirt
+            { 128u, 107u,  82u, 255u },   // rock
+            { 242u, 242u, 250u, 255u },   // snow
+        };
+        static const uint8_t kAmplitude[kSplatLayerCount] = { 38u, 28u, 50u, 12u };
+        static const uint32_t kMacroCell[kSplatLayerCount] = { 8u, 12u, 4u, 16u };
+
+        auto hashNoise = [](uint32_t x, uint32_t y, uint32_t seed) -> float {
+            uint32_t h = x * 0x27d4eb2du ^ y * 0x165667b1u ^ seed * 0x9e3779b9u;
+            h ^= h >> 15; h *= 0x85ebca6bu;
+            h ^= h >> 13; h *= 0xc2b2ae35u;
+            h ^= h >> 16;
+            return static_cast<float>(h & 0xFFFFFFu) / static_cast<float>(0x1000000u);
+        };
+
+        const uint8_t* col = kAlbedo[layer];
+        const float amp = static_cast<float>(kAmplitude[layer]);
+        const uint32_t mc = kMacroCell[layer];
+        const uint32_t pixels = resolution * resolution;
+        outRgba.resize(static_cast<size_t>(pixels) * 4u);
+
+        auto clampU8 = [](float v) -> uint8_t {
+            if (v < 0.0f) v = 0.0f;
+            if (v > 255.0f) v = 255.0f;
+            return static_cast<uint8_t>(v);
+        };
+
+        for (uint32_t y = 0; y < resolution; ++y)
+        {
+            for (uint32_t x = 0; x < resolution; ++x)
+            {
+                const float micro = hashNoise(x, y, layer);
+                const float macro = hashNoise(x / mc, y / mc, layer + 1000u);
+                const float n = (micro * 0.6f + macro * 0.4f) * 2.0f - 1.0f;
+                const float delta = n * amp;
+                uint8_t* dst = outRgba.data() + (y * resolution + x) * 4u;
+                dst[0] = clampU8(static_cast<float>(col[0]) + delta);
+                dst[1] = clampU8(static_cast<float>(col[1]) + delta);
+                dst[2] = clampU8(static_cast<float>(col[2]) + delta);
+                dst[3] = 255u;
+            }
+        }
+        return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainSplatting::GetLayerTiling
     // ─────────────────────────────────────────────────────────────────────────────
 
@@ -400,19 +461,16 @@ namespace engine::render::terrain
         }
 
         // ── Build placeholder texture arrays ──────────────────────────────────────
-        // Each array layer is a 4×4 solid-colour tile. Layers: grass, dirt, rock, snow.
-        constexpr uint32_t kTexW = 4u;
-        constexpr uint32_t kTexH = 4u;
+        // Demande utilisateur : "inclure par defaut deja un certain nombre de
+        // texture ... herbe, terre, sable, neige, cailloux". Le splatmap RGBA8
+        // ne supporte que 4 canaux (4 layers) : on garde grass/dirt/rock/snow,
+        // qui couvrent les biomes les plus communs (sable = layer dirt jaunifie
+        // plus tard via un splat custom). Pour avoir des materiaux visuellement
+        // convaincants (au lieu de tuiles 4x4 unies), on genere kSplatLayerResolution x
+        // kSplatLayerResolution textures procedurales avec du bruit deterministe par layer.
+        constexpr uint32_t kTexW = kSplatLayerResolution;
+        constexpr uint32_t kTexH = kSplatLayerResolution;
         constexpr uint32_t kPixels = kTexW * kTexH;
-
-        // Layer albedo colours (RGBA8, sRGB-ish but stored linear for GPU)
-        // 0=grass, 1=dirt, 2=rock, 3=snow
-        static const uint8_t kAlbedo[kSplatLayerCount][4] = {
-            {  89u, 140u,  51u, 255u },   // grass — green
-            { 128u,  82u,  38u, 255u },   // dirt  — brown
-            { 128u, 107u,  82u, 255u },   // rock  — grey-brown
-            { 242u, 242u, 250u, 255u },   // snow  — near-white
-        };
 
         // Flat normal (pointing up in tangent space: RGB=128,128,255)
         static const uint8_t kNormal[4] = { 128u, 128u, 255u, 255u };
@@ -420,17 +478,20 @@ namespace engine::render::terrain
         // ORM: R=AO(255=1.0), G=Roughness(204≈0.8), B=Metallic(0)
         static const uint8_t kORM[4] = { 255u, 204u, 0u, 255u };
 
-        // Build albedo array data (layerCount × width × height × 4 bytes)
+        // Build albedo array data via la free function GenerateProceduralAlbedoLayer.
         {
             std::vector<uint8_t> albedoData(kSplatLayerCount * kPixels * 4u);
+            std::vector<uint8_t> oneLayer;
             for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
             {
-                const uint8_t* col = kAlbedo[layer];
-                for (uint32_t p = 0; p < kPixels; ++p)
+                if (!GenerateProceduralAlbedoLayer(kTexW, layer, oneLayer))
                 {
-                    uint8_t* dst = albedoData.data() + (layer * kPixels + p) * 4u;
-                    dst[0] = col[0]; dst[1] = col[1]; dst[2] = col[2]; dst[3] = col[3];
+                    LOG_ERROR(Render, "[TerrainSplatting] GenerateProceduralAlbedoLayer({},{}) failed", kTexW, layer);
+                    Destroy(device);
+                    return false;
                 }
+                std::memcpy(albedoData.data() + layer * kPixels * 4u,
+                            oneLayer.data(), kPixels * 4u);
             }
             if (!UploadTextureArray(device, physDev, albedoData, kTexW, kTexH, kSplatLayerCount,
                                     queue, queueFamilyIndex, m_albedoArray))
@@ -441,7 +502,7 @@ namespace engine::render::terrain
             }
         }
 
-        // Build normal array data
+        // Build normal array data (flat normals for now, all layers point up).
         {
             std::vector<uint8_t> normalData(kSplatLayerCount * kPixels * 4u);
             for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
@@ -479,7 +540,7 @@ namespace engine::render::terrain
         }
 
         LOG_INFO(Render,
-            "[TerrainSplatting] Init OK (splatmap={}x{}, texArrays={}x{}x{}layers)",
+            "[TerrainSplatting] Init OK (splatmap={}x{}, texArrays={}x{}x{}layers, procedural noise)",
             kSplatW, kSplatH, kTexW, kTexH, kSplatLayerCount);
         return true;
     }
@@ -894,6 +955,191 @@ namespace engine::render::terrain
         if (g.image   != VK_NULL_HANDLE) { vkDestroyImage(device, g.image, nullptr);       g.image      = VK_NULL_HANDLE; }
         if (g.memory  != VK_NULL_HANDLE) { vkFreeMemory(device, g.memory, nullptr);        g.memory     = VK_NULL_HANDLE; }
         g.width = g.height = g.layerCount = 0;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::SetLayerCpuRgba256
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    void TerrainSplatting::SetLayerCpuRgba256(uint32_t layer, const std::vector<uint8_t>& rgba)
+    {
+        if (layer >= kSplatLayerCount)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] SetLayerCpuRgba256: layer {} out of range", layer);
+            return;
+        }
+        const size_t expected = static_cast<size_t>(kSplatLayerResolution) * kSplatLayerResolution * 4u;
+        if (rgba.size() != expected)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] SetLayerCpuRgba256: rgba size {} != expected {} ({}x{}x4)",
+                      rgba.size(), expected, kSplatLayerResolution, kSplatLayerResolution);
+            return;
+        }
+        m_layerCpuData[layer] = rgba;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::RebuildAlbedoArrayFromCpuLayers
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainSplatting::RebuildAlbedoArrayFromCpuLayers(VkDevice device, VkPhysicalDevice physDev,
+                                                            VkQueue queue, uint32_t queueFamilyIndex)
+    {
+        if (m_albedoArray.image == VK_NULL_HANDLE)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] RebuildAlbedoArrayFromCpuLayers: array not initialized");
+            return false;
+        }
+        const uint32_t res = kSplatLayerResolution;
+        const size_t layerBytes = static_cast<size_t>(res) * res * 4u;
+        std::vector<uint8_t> packed(static_cast<size_t>(kSplatLayerCount) * layerBytes);
+        std::vector<uint8_t> tmpProc;
+
+        for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
+        {
+            const uint8_t* srcLayer = nullptr;
+            if (m_layerCpuData[layer].size() == layerBytes)
+            {
+                srcLayer = m_layerCpuData[layer].data();
+            }
+            else
+            {
+                if (!GenerateProceduralAlbedoLayer(res, layer, tmpProc))
+                {
+                    LOG_ERROR(Render, "[TerrainSplatting] Rebuild: procedural fallback failed for layer {}", layer);
+                    return false;
+                }
+                srcLayer = tmpProc.data();
+            }
+            std::memcpy(packed.data() + layer * layerBytes, srcLayer, layerBytes);
+        }
+
+        // Staging buffer + copy via existing internal helper.
+        VkBuffer staging = VK_NULL_HANDLE;
+        VkDeviceMemory stagingMem = VK_NULL_HANDLE;
+        if (!CreateStagingBuffer(device, physDev, packed.size(), staging, stagingMem))
+        {
+            return false;
+        }
+        void* mapped = nullptr;
+        if (vkMapMemory(device, stagingMem, 0, packed.size(), 0, &mapped) != VK_SUCCESS)
+        {
+            vkDestroyBuffer(device, staging, nullptr);
+            vkFreeMemory(device, stagingMem, nullptr);
+            return false;
+        }
+        std::memcpy(mapped, packed.data(), packed.size());
+        vkUnmapMemory(device, stagingMem);
+
+        // Build copy regions (1 per layer).
+        std::vector<VkBufferImageCopy> regions(kSplatLayerCount);
+        for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
+        {
+            VkBufferImageCopy& r = regions[layer];
+            r = {};
+            r.bufferOffset = layer * layerBytes;
+            r.bufferRowLength = 0;
+            r.bufferImageHeight = 0;
+            r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            r.imageSubresource.mipLevel = 0;
+            r.imageSubresource.baseArrayLayer = layer;
+            r.imageSubresource.layerCount = 1;
+            r.imageOffset = { 0, 0, 0 };
+            r.imageExtent = { res, res, 1 };
+        }
+
+        const bool ok = ReuploadAlbedoArrayInternal(device, queue, queueFamilyIndex,
+                                                     staging, regions);
+        vkDestroyBuffer(device, staging, nullptr);
+        vkFreeMemory(device, stagingMem, nullptr);
+        return ok;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::ReuploadAlbedoArrayInternal
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainSplatting::ReuploadAlbedoArrayInternal(VkDevice device, VkQueue queue,
+                                                        uint32_t queueFamilyIndex,
+                                                        VkBuffer staging,
+                                                        const std::vector<VkBufferImageCopy>& regions)
+    {
+        VkCommandPool pool = VK_NULL_HANDLE;
+        VkCommandPoolCreateInfo poolCI{};
+        poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolCI.queueFamilyIndex = queueFamilyIndex;
+        poolCI.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        if (vkCreateCommandPool(device, &poolCI, nullptr, &pool) != VK_SUCCESS) return false;
+
+        VkCommandBuffer cmd = VK_NULL_HANDLE;
+        VkCommandBufferAllocateInfo aci{};
+        aci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        aci.commandPool = pool;
+        aci.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        aci.commandBufferCount = 1;
+        if (vkAllocateCommandBuffers(device, &aci, &cmd) != VK_SUCCESS)
+        {
+            vkDestroyCommandPool(device, pool, nullptr);
+            return false;
+        }
+
+        VkCommandBufferBeginInfo bi{};
+        bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        vkBeginCommandBuffer(cmd, &bi);
+
+        // Barrier SHADER_READ_ONLY -> TRANSFER_DST pour tous les layers.
+        {
+            VkImageMemoryBarrier b{};
+            b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            b.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            b.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.image = m_albedoArray.image;
+            b.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, kSplatLayerCount };
+            b.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            b.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            vkCmdPipelineBarrier(cmd,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                0, 0, nullptr, 0, nullptr, 1, &b);
+        }
+
+        vkCmdCopyBufferToImage(cmd, staging, m_albedoArray.image,
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                               static_cast<uint32_t>(regions.size()), regions.data());
+
+        // Barrier TRANSFER_DST -> SHADER_READ_ONLY pour tous les layers.
+        {
+            VkImageMemoryBarrier b{};
+            b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            b.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            b.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.image = m_albedoArray.image;
+            b.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, kSplatLayerCount };
+            b.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            b.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            vkCmdPipelineBarrier(cmd,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                0, 0, nullptr, 0, nullptr, 1, &b);
+        }
+
+        vkEndCommandBuffer(cmd);
+
+        VkSubmitInfo si{};
+        si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        si.commandBufferCount = 1;
+        si.pCommandBuffers = &cmd;
+        if (vkQueueSubmit(queue, 1, &si, VK_NULL_HANDLE) != VK_SUCCESS)
+        {
+            vkDestroyCommandPool(device, pool, nullptr);
+            return false;
+        }
+        vkQueueWaitIdle(queue);
+        vkDestroyCommandPool(device, pool, nullptr);
+        return true;
     }
 
 } // namespace engine::render::terrain

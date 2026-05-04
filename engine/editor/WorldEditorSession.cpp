@@ -386,12 +386,21 @@ namespace engine::editor
 			SetStatus("Carte creee mais sauvegarde JSON echouee: " + err);
 			LOG_WARN(Core, "[WorldEditor] {}", err);
 			RequestTerrainGpuReload();
+			// Note (debug regression terrain invisible) : on n'arme PAS m_splatRefsDirty
+			// ici. Sur carte neuve, RequestTerrainGpuReload() declenche un Init complet
+			// du splat array avec procedurales (cf. TerrainSplatting::Init). Un second
+			// rebuild via ProcessSplatRefsDirty serait redondant et semblait corrompre
+			// le rendu terrain. Pour les cartes chargees avec refs persistees on
+			// continue d'armer le flag (cf. ActionLoadMapByZoneId).
 			return true;
 		}
 		SetStatus("Nouvelle carte OK - " + hmRel);
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		LOG_INFO(Core, "[WorldEditor] New map OK zone={} size={}", zid, sz);
+		// Pas de m_splatRefsDirty ici — voir explication ci-dessus dans la branche
+		// d'erreur de sauvegarde JSON. Init terrain pose deja les procedurales par
+		// defaut, pas besoin d'un second rebuild.
 		return true;
 	}
 
@@ -596,6 +605,8 @@ namespace engine::editor
 				break;
 			}
 		}
+		// Carte chargee : appliquer les splatLayerTextureRefs persistees au splat array GPU.
+		m_splatRefsDirty = true;
 		return true;
 	}
 
@@ -653,6 +664,14 @@ namespace engine::editor
 		if (it == m_doc.textureAssets.end())
 		{
 			m_doc.textureAssets.push_back(rel);
+		}
+		// Signal le re-import au cache de vignettes (Engine consomme la file).
+		m_recentlyImported.push_back(rel);
+		// Si la texture est referencee par un layer du splat, force aussi un
+		// reupload du splat array pour que la 3D refete la nouvelle version.
+		for (const std::string& r : m_doc.splatLayerTextureRefs)
+		{
+			if (r == rel) { m_splatRefsDirty = true; break; }
 		}
 		SetStatus("Texture importee: " + rel);
 		return true;

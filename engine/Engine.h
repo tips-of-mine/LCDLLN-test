@@ -50,6 +50,7 @@
 #include "engine/render/terrain/TerrainRenderer.h"
 #if defined(_WIN32)
 #include "engine/render/terrain/TerrainEditingTools.h"
+#include "engine/editor/TexturePreviewCache.h"
 #endif
 
 struct GLFWwindow;
@@ -170,6 +171,13 @@ namespace engine
 #if defined(_WIN32)
 		/// World editor: (re)charge heightmap + outils sculpt depuis le document.
 		void RebuildWorldEditorTerrainGpu();
+
+		/// Si WorldEditorSession::ConsumeSplatRefsDirty() == true, repack les
+		/// 4 layers (procedural fallback + textures importees via le cache)
+		/// dans m_terrain.GetSplatting() et reuploade le GPU array.
+		/// A appeler chaque frame en world-editor mode, apres les autres ticks.
+		/// No-op si --world-editor non actif ou cache non pret.
+		void ProcessSplatRefsDirty();
 #endif
 
 		engine::core::Config m_cfg;
@@ -262,6 +270,13 @@ namespace engine
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
+#if defined(_WIN32)
+		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;
+
+		/// Nombre de frames en vol pour le purge differé du TexturePreviewCache.
+		/// Aligne sur HiZ/GpuDrivenCulling kDefaultFramesInFlight = 2.
+		static constexpr uint32_t kEditorTexCacheFramesInFlight = 2u;
+#endif
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
 		engine::render::terrain::TerrainRenderer m_terrain;
 #if defined(_WIN32)

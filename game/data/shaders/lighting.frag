@@ -14,12 +14,15 @@
 // Outputs:
 //   outSceneColorHDR (location 0) – SceneColor_HDR, R16G16B16A16_SFLOAT
 //
-// Push constants (132 bytes, fragment stage):
+// Push constants (148 bytes, fragment stage):
 //   mat4  invVP         – inverse view-projection matrix
 //   vec4  cameraPos     – camera world-space position (xyz, w unused)
 //   vec4  lightDir      – normalised direction *toward* the light (xyz, w unused)
 //   vec4  lightColor    – RGB radiance (color * intensity, w unused)
 //   vec4  ambientColor  – constant ambient RGB (fallback when useIBL == 0)
+//   vec4  skyColor      – RGB couleur du ciel (utilisée pour les pixels sans
+//                         géométrie, c.-à-d. depth == 1.0). Pilotée par
+//                         DayNightCycle (skyHorizon) côté CPU. w unused.
 //   float useIBL        – 1.0 = use IBL, 0.0 = constant ambient
 
 layout(location = 0) in  vec2 inUV;
@@ -44,6 +47,7 @@ layout(push_constant) uniform PC
     vec4  lightDir;     // normalised direction toward the directional light (xyz)
     vec4  lightColor;   // RGB radiance (xyz = color * intensity)
     vec4  ambientColor; // constant ambient RGB (fallback when useIBL == 0)
+    vec4  skyColor;     // RGB couleur du ciel pour les pixels sans géométrie
     float useIBL;       // 1.0 = use IBL, 0.0 = constant ambient
 } pc;
 
@@ -100,10 +104,12 @@ void main()
     float metallic  = orm.b;
     float depth     = texture(depthTex, inUV).r;
 
-    // ---- Skip sky / empty fragments (depth == 1.0 means no geometry) ---
+    // ---- Sky / empty fragments (depth == 1.0 means no geometry) --------
+    // On utilise la couleur du ciel pilotée par DayNightCycle (horizon).
+    // Permet de voir l'effet jour/nuit dans l'éditeur même sans skybox.
     if (depth >= 1.0)
     {
-        outSceneColorHDR = vec4(0.0, 0.0, 0.0, 1.0);
+        outSceneColorHDR = vec4(pc.skyColor.rgb, 1.0);
         return;
     }
 

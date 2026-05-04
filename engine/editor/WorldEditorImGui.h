@@ -19,6 +19,7 @@ namespace engine::platform
 namespace engine::render
 {
 	class VkDeviceContext;
+	class DayNightCycle;
 }
 namespace engine::render::terrain
 {
@@ -28,6 +29,7 @@ namespace engine::render::terrain
 namespace engine::editor
 {
 	class WorldEditorSession;
+	class TexturePreviewCache;  // vignettes splatting (Task 12)
 
 	/// Données pour dessiner grille + aperçu brosse par-dessus la vue 3D (avant \c ImGui::Render).
 	struct WorldEditorViewportOverlayDesc
@@ -96,6 +98,16 @@ namespace engine::editor
 		/// Contexte données éditeur (\c lcdlln_world_editor uniquement). Peut être nul.
 		void SetEditorContext(WorldEditorSession* session, engine::core::Config* cfg);
 
+		/// Branche le DayNightCycle pour que le panneau "Atmosphere" puisse modifier
+		/// la time-of-day, le timeScale et l'ambient en live. Pointeur non possede.
+		/// Nul si non branche -> panneau Atmosphere affiche un message d'attente.
+		void SetDayNightCycle(engine::render::DayNightCycle* dayNight) { m_dayNight = dayNight; }
+
+		/// Branche le cache de vignettes (possede par Engine). Pointeur non
+		/// possede. Si nul, les vignettes sont rendues comme cellules grises
+		/// (ImGui::Dummy 48x48) — l'UI reste fonctionnelle, juste sans previews.
+		void SetTexturePreviewCache(engine::editor::TexturePreviewCache* cache) { m_texturePreviewCache = cache; }
+
 		/// Win32 : branche \c ImGui_ImplWin32_WndProcHandler avant le traitement LCDLLN.
 		void AttachPlatformWindow(void* hwndNative, engine::platform::Window& window);
 		void DetachPlatformWindow(engine::platform::Window& window);
@@ -116,6 +128,9 @@ namespace engine::editor
 		void* m_hwnd = nullptr;
 		WorldEditorSession* m_session = nullptr;
 		engine::core::Config* m_cfg = nullptr;
+		engine::render::DayNightCycle* m_dayNight = nullptr;
+		engine::editor::TexturePreviewCache* m_texturePreviewCache = nullptr;
+		bool m_showTextureLibrary = false;  // pilote par le menu Affichage (Task 14)
 		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.

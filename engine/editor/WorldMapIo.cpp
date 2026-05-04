@@ -1297,11 +1297,22 @@ namespace engine::editor
 		out << "  \"water_level_m\": " << doc.waterLevelMeters << ",\n";
 		if (doc.hasTerrainWorldSizeM)
 		{
-			out << "  \"terrain_world_size_m\": " << doc.terrainWorldSizeM << "\n";
+			out << "  \"terrain_world_size_m\": " << doc.terrainWorldSizeM << ",\n";
 		}
 		else
 		{
-			out << "  \"terrain_world_size_m\": null\n";
+			out << "  \"terrain_world_size_m\": null,\n";
+		}
+		// Atmosphere (C5) : hasAtmosphere -> serialise time_of_day_h + time_scale.
+		// Sinon objet null pour signaler "utilise les valeurs par defaut DayNightCycle".
+		if (doc.hasAtmosphere)
+		{
+			out << "  \"atmosphere\": { \"time_of_day_h\": " << doc.timeOfDayHours
+			    << ", \"time_scale\": " << doc.timeScale << " }\n";
+		}
+		else
+		{
+			out << "  \"atmosphere\": null\n";
 		}
 		out << "}\n";
 		if (!out.good())
@@ -1449,6 +1460,28 @@ namespace engine::editor
 		if (!ParseOptionalTerrainWorldSizeM(json, d, outError))
 		{
 			return false;
+		}
+		// Atmosphere (C5) : optionnel, parse time_of_day_h et time_scale dans
+		// l'objet "atmosphere" si present. Cle absente ou null -> hasAtmosphere=false
+		// (le DayNightCycle utilise ses valeurs par defaut, pas d'override par zone).
+		{
+			d.hasAtmosphere = false;
+			double todH = 0.0;
+			double tScale = 0.0;
+			if (ParseJsonDoubleValue(json, "atmosphere.time_of_day_h", todH))
+			{
+				if (todH < 0.0) todH = 0.0;
+				if (todH >= 24.0) todH = 23.999;
+				d.timeOfDayHours = todH;
+				d.hasAtmosphere = true;
+			}
+			if (ParseJsonDoubleValue(json, "atmosphere.time_scale", tScale))
+			{
+				if (tScale < 0.1) tScale = 0.1;
+				if (tScale > 1000.0) tScale = 1000.0;
+				d.timeScale = tScale;
+				d.hasAtmosphere = true;
+			}
 		}
 		doc = std::move(d);
 		return true;

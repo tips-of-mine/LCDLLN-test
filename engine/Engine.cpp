@@ -704,8 +704,11 @@ namespace engine
 		// ------------------------------------------------------------------
 		engine::platform::Window::CreateDesc desc{};
 		desc.title  = m_worldEditorExe ? "LCDLLN World Editor" : "LCDLLN Engine";
-		desc.width  = 1280;
-		desc.height = 720;
+		// Editeur monde : 1920x1080 par defaut (panneaux dockes a droite + viewport
+		// central genereux). Client de jeu : 1280x720 (pris en charge par fullscreen
+		// reglable dans les Options).
+		desc.width  = m_worldEditorExe ? 1920 : 1280;
+		desc.height = m_worldEditorExe ? 1080 : 720;
 
 		if (!m_window.Create(desc))
 		{
@@ -3458,8 +3461,27 @@ namespace engine
 		if (m_editorMode)
 		{
 			m_editorMode->Update(m_input, m_window, out.camera, m_geometryMeshHandle.Get(), m_width, m_height, dt);
-			std::memcpy(out.objectModelMatrix, m_editorMode->GetObjectModelMatrix(), sizeof(out.objectModelMatrix));
-			out.objectVisible = m_editorMode->IsObjectVisible();
+			// Demande utilisateur : afficher un humanoide de reference au centre du
+			// terrain pour juger des reliefs. On override la matrice pour positionner
+			// l'avatar (1.8m) au centre XZ du terrain courant a la hauteur du sol
+			// echantillonnee. Si pas de terrain, fallback (0, 0, 0).
+			out.objectVisible = true;
+			float refX = 0.0f, refZ = 0.0f, refY = 0.0f;
+			if (m_terrain.IsValid())
+			{
+				const float ox = m_terrain.GetTerrainOriginX();
+				const float oz = m_terrain.GetTerrainOriginZ();
+				const float ws = m_terrain.GetTerrainWorldSize();
+				refX = ox + ws * 0.5f;
+				refZ = oz + ws * 0.5f;
+				refY = m_terrain.SampleHeightAtWorldXZ(refX, refZ);
+			}
+			// Matrice column-major : identite (rotation 0) + translation (refX, refY, refZ).
+			// Avatar mesh y va de 0 (pieds) a 1.8 (tete) -> pieds au sol echantillonne.
+			out.objectModelMatrix[0]  = 1.0f; out.objectModelMatrix[1]  = 0.0f; out.objectModelMatrix[2]  = 0.0f; out.objectModelMatrix[3]  = 0.0f;
+			out.objectModelMatrix[4]  = 0.0f; out.objectModelMatrix[5]  = 1.0f; out.objectModelMatrix[6]  = 0.0f; out.objectModelMatrix[7]  = 0.0f;
+			out.objectModelMatrix[8]  = 0.0f; out.objectModelMatrix[9]  = 0.0f; out.objectModelMatrix[10] = 1.0f; out.objectModelMatrix[11] = 0.0f;
+			out.objectModelMatrix[12] = refX; out.objectModelMatrix[13] = refY; out.objectModelMatrix[14] = refZ; out.objectModelMatrix[15] = 1.0f;
 		}
 		else
 		{

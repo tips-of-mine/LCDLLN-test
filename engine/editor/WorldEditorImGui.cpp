@@ -1118,6 +1118,15 @@ namespace engine::editor
 				ImGui::SameLine(); ImGui::TextUnformatted("Ciel (horizon)");
 				ImGui::TextDisabled("La couleur de fond du viewport prend skyHorizon a chaque frame.");
 				ImGui::Separator();
+				// Bouton de secours : reset de la camera au-dessus du terrain courant
+				// (utile quand l'utilisateur signale "je ne vois plus le terrain"). On
+				// passe par le flag de session existant qui declenche RebuildTerrain
+				// + reset de la camera (cf. Engine.cpp::RebuildWorldEditorTerrainGpu).
+				if (m_session != nullptr && ImGui::Button("Recentrer la camera sur le terrain"))
+				{
+					m_session->RequestTerrainGpuReload();
+				}
+				ImGui::Separator();
 				// C5 - sauvegarde / chargement de l'atmosphere par zone.
 				// Boutons explicites : "Charger depuis carte" applique le timeOfDay+timeScale
 				// stockes dans la carte courante au DayNightCycle. "Sauver dans carte"

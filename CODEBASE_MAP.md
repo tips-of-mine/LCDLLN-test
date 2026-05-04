@@ -679,6 +679,54 @@ L'écran CharacterCreate expose désormais un combo des 6 races jouables.
 
 ---
 
+## 17. Éditeur monde — création/chargement de carte (chantier 2026-05-04)
+
+Le binaire `lcdlln_world_editor.exe` partage l'engine avec le client de jeu mais
+a son propre flux de gestion de carte. La création (`ActionNewMap`) et le
+chargement (`ActionLoadMapByZoneId`) passent tous deux par
+`Engine::RebuildWorldEditorTerrainGpu()` qui détruit et réinitialise `m_terrain`
++ `TerrainEditingTools`.
+
+### Carte par défaut
+
+`WorldEditorSession::ActionNewMap` génère sous
+`<paths.content>/world_editor/maps/<zone_id>/` :
+- `height.r16h` — heightmap plate, valeur normalisée 32768 (= mi-hauteur de
+  `terrain.height_scale`).
+- `splat.slap` — 1024×1024, R=255 (100 % couche herbe), autres couches à 0.
+- `grass.grms` — masque herbe à zéros.
+- `map.lcdlln_edit.json` — document d'édition versionné (`kFormatVersion = 1`).
+
+### Reset caméra (chantier 2026-05-04)
+
+Après chaque `RebuildWorldEditorTerrainGpu`, la caméra est repositionnée **au
+centre du terrain**, altitude `mid_ground_y + 80 m`, pitch `0.35 rad` (~20° vers
+le bas), `farZ = max(5000, ws * 1.5)`. Garantit la visibilité du terrain quel
+que soit `terrain.world_size`. Condition de garde : `if (m_worldEditorExe)` (et
+non `m_editorMode` qui peut être null).
+
+### Fallback visuel orange (chantier 2026-05-04)
+
+Lorsque les 4 entrées de `splatLayerTextureRefs` du document sont vides (carte
+fraîchement créée, aucune texture utilisateur posée), `Engine::RebuildWorldEditorTerrainGpu`
+appelle `m_terrain.SetNoUserTexturesFallback(true)`. Le push-constant terrain
+`noUserTextures = 1` fait écrire au shader fragment `outAlbedo = vec3(1.0, 0.55, 0.1)`
+(orange vif). Les normales macro restent inchangées → la lighting pass applique
+naturellement le shading Lambert et le relief reste lisible. Dès qu'une texture
+est assignée à au moins une couche, le rebuild bascule sur le rendu normal.
+**Le client jeu n'active jamais ce fallback** (gardé par `m_worldEditorExe`).
+
+### Fichiers clés
+
+| Fichier | Rôle |
+|---|---|
+| `engine/editor/WorldEditorSession.cpp` (`ActionNewMap`) | Génère heightmap plate + splat + grass + JSON. |
+| `engine/Engine.cpp` (`RebuildWorldEditorTerrainGpu`) | Reset caméra centré, détection `noUserTextures`. |
+| `engine/render/terrain/TerrainRenderer.h/.cpp` | `SetNoUserTexturesFallback`, push-constant `noUserTextures`. |
+| `game/data/shaders/terrain.vert` / `terrain.frag` | Champ `int noUserTextures` au PC, branche orange en fragment. |
+
+---
+
 ## Aide-mémoire : comment trouver un écran
 
 1. **Je veux changer le visuel d'un écran** → `engine/render/auth/screens/AuthImGuiXxx.cpp`
@@ -688,6 +736,7 @@ L'écran CharacterCreate expose désormais un combo des 6 races jouables.
 5. **Je veux changer le comportement de la caméra in-game** → `engine/render/Camera.{h,cpp}` (`OrbitalCameraController`)
 6. **Je veux changer le menu pause** → `engine/Engine.cpp` (branche Échap + rendu inline du panel)
 7. **Je veux ajouter / modifier la roadmap publique** → `db/migrations/00NN_roadmap_items_*.sql` (incrémenter le numéro)
+8. **Je veux comprendre pourquoi le terrain est orange dans l'éditeur** → section 17 (fallback visuel sans texture utilisateur).
 5. **Je veux changer la logique réseau d'un écran** → `StartXxxWorker()` dans le fichier presenter + payload dans `engine/network/AuthRegisterPayloads.h`
 6. **Je veux changer ce que le serveur fait à la réception** → `engine/server/XxxHandler.cpp`
 7. **Je veux changer l'ordre d'enchaînement des écrans d'auth** → `PollAsyncResult()` et `SubmitCurrentPhase()` dans `engine/client/auth/AuthUiPresenterCore.cpp`. Pour l'auto/forcé du choix de shard côté flux : `engine/network/MasterShardClientFlow.cpp` (variable `m_shardPickWhenMultiple`).

@@ -426,7 +426,7 @@ namespace engine::render::terrain
             VkPushConstantRange pcRange{};
             pcRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
             pcRange.offset     = 0;
-            pcRange.size       = sizeof(PushConstants); // 16 bytes
+            pcRange.size       = sizeof(PushConstants); // 20 bytes (cf. struct PushConstants)
 
             VkPipelineLayoutCreateInfo plCI{};
             plCI.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1560,10 +1560,11 @@ namespace engine::render::terrain
                 const TerrainPatchInfo& p = m_patches[entry.patchIdx];
 
                 PushConstants pc{};
-                pc.patchOriginX = p.originX;
-                pc.patchOriginZ = p.originZ;
-                pc.morphFactor  = entry.morphFactor;
-                pc.lodLevel     = static_cast<int32_t>(lod);
+                pc.patchOriginX   = p.originX;
+                pc.patchOriginZ   = p.originZ;
+                pc.morphFactor    = entry.morphFactor;
+                pc.lodLevel       = static_cast<int32_t>(lod);
+                pc.noUserTextures = m_noUserTextures ? 1 : 0;
 
                 vkCmdPushConstants(cmd, m_pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,

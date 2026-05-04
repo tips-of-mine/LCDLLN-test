@@ -33,6 +33,34 @@ Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTe
 - **Instances (tickets 009 + 013)** : tableau `instances` dans le JSON d’édition (`guid`, `gltf`, `position` monde XYZ, optionnels `yaw_deg`, `uniform_scale`). **013** : champs optionnels `species_id` (chaîne) et `shape_variant` (entier) pour les arbres issus du catalogue `world_editor/tree_species_catalog.json` (plusieurs espèces, ≥ deux glTF par espèce, plages `scale_min` / `scale_max` ; fichiers manquants → espèce ignorée, log). Le **layout exporté** `layout_from_editor.json` pour `zone_builder` reste au schéma minimal (`guid`, `gltf`, `position`) — pas de régression consommateur. Mode « Instances » (mode terrain 3) : clic simple sur le sol (`WasMousePressed`) pose ou déplace ; aperçu disques ImGui. **Exporter runtime** écrit `layout_from_editor.json` au format `zone_builder` (positions XZ converties avec `terrain.origin_x` / `terrain.origin_z`, clamp `[0, kZoneSize)`).
 - Overlays ImGui : grille, preview brosse, marqueurs instances, picking rayon → hauteur via `HeightmapData::SampleBilinearNorm` (CPU).
 
+### Reset caméra automatique au create / load
+
+Pour qu'un `Creer une nouvelle carte` ou `Charger la carte selectionnee`
+affiche **immédiatement** un terrain visible dans le viewport,
+`RebuildWorldEditorTerrainGpu()` repositionne la caméra à chaque rebuild
+(garde `m_worldEditorExe`). Position : centre XZ du terrain, altitude
+`height_scale * 0.5 + 80 m`, pitch `0.35 rad` (~20° vers le bas), yaw 0,
+`farZ = max(5000, terrain_world_size * 1.5)` pour les grands terrains. Ce
+reset est World Editor uniquement — le client jeu n'est pas affecté.
+
+### Fallback orange « terrain sans texture utilisateur »
+
+Tant qu'aucune couche splat du document n'a reçu de mapping texture
+(`Doc().splatLayerTextureRefs[i]` vide pour i ∈ [0,3]), le shader terrain
+écrit un albedo **orange uni** (RGB 1.0, 0.55, 0.1). Les sorties
+`outNormal` / `outORM` / `outVelocity` restent inchangées : la lighting
+pass applique son shading lambert sur l'orange et le relief reste lisible
+(orange clair côté soleil, sombre côté opposé). Différencie au premier coup
+d'œil un terrain « en chantier » (orange) d'un terrain « fini » (textures
+posées).
+
+Implémentation : `Engine::RebuildWorldEditorTerrainGpu` détecte la
+condition et appelle `TerrainRenderer::SetNoUserTexturesFallback(bool)` ;
+la valeur est poussée comme `int noUserTextures` dans le push-constant
+terrain (cf. `terrain.vert` / `terrain.frag`). Le client jeu ne lève
+**jamais** ce flag (garde `m_worldEditorExe`). La bascule est automatique :
+poser une texture sur une couche → prochain rebuild → rendu normal.
+
 ## Limites / pistes
 
 - **Splat** : résolution pilotée par le fichier SLAP (typ. 1024²) ; le sculpt heightmap reste à la résolution `size` du document.

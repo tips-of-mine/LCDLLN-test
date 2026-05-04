@@ -174,19 +174,33 @@ namespace engine::render::terrain
         /// camera-sol et le snap au sol des avatars.
         float SampleHeightAtWorldXZ(float worldX, float worldZ) const;
 
+        /// Active/desactive le fallback "terrain sans texture utilisateur" :
+        /// quand vrai, le shader terrain ecrit une couleur orange uni dans
+        /// l'albedo (les normales / ORM / velocity restent inchanges, donc le
+        /// shading reste lisible). Reservé au World Editor pour signaler une
+        /// carte fraichement creee dont aucune couche splat n'a encore recu de
+        /// mapping texture. Le client jeu (lcdlln.exe) ne doit jamais lever ce
+        /// flag (regression visuelle).
+        ///
+        /// Effet : prochain Record() pousse le flag dans le push-constant.
+        /// Aucun rebuild GPU requis.
+        void SetNoUserTexturesFallback(bool enable) { m_noUserTextures = enable; }
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
-        // All stages, 16 bytes total.
+        // All stages, 20 bytes total.
         // offset  0: float patchOriginX
         // offset  4: float patchOriginZ
         // offset  8: float morphFactor   [0,1]
         // offset 12: int   lodLevel      [0, kTerrainLodCount-1]
+        // offset 16: int   noUserTextures (0 = rendu normal, 1 = fallback orange)
         struct PushConstants
         {
-            float   patchOriginX = 0.0f;
-            float   patchOriginZ = 0.0f;
-            float   morphFactor  = 0.0f;
-            int32_t lodLevel     = 0;
+            float   patchOriginX   = 0.0f;
+            float   patchOriginZ   = 0.0f;
+            float   morphFactor    = 0.0f;
+            int32_t lodLevel       = 0;
+            int32_t noUserTextures = 0;
         };
 
         // ── Per-frame UBO (set=0, binding=2) ─────────────────────────────────────
@@ -289,6 +303,12 @@ namespace engine::render::terrain
         float    m_vertStepWorld     = 0.0f; ///< World units per local vertex step at LOD 0
         uint32_t m_patchCountX       = 0;
         uint32_t m_patchCountZ       = 0;
+
+        /// Quand true, la branche fallback orange est activee dans
+        /// terrain.frag via le push-constant `noUserTextures`. Pilote par
+        /// `Engine::RebuildWorldEditorTerrainGpu` selon l'etat du document
+        /// (`splatLayerTextureRefs`). Toujours false pour le client jeu.
+        bool     m_noUserTextures    = false;
     };
 
 } // namespace engine::render::terrain

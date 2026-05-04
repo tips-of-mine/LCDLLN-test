@@ -216,3 +216,117 @@ Modifier ce fichier lorsque le format `zone.meta`, le manifest runtime, ou le co
 La suite chronologique **002 → 007** (spécifications de travail, DoD, chaînage) vit sous **`tickets/world/`** — voir **`tickets/world/README.md`**.
 
 **Zone démo & onboarding** : checklist pas à pas **[`docs/world_zone_demo_checklist.md`](world_zone_demo_checklist.md)** (`zone_id` **`demo_plains`**), incluant le **§5 (ticket 012)** — validation client terrain (SLAP/GRMS) + rappels streaming / `zone_builder` ; liens build dans le **README** racine.
+
+---
+
+## 9. Aperçus de textures et application live (mai 2026)
+
+Depuis le commit `a71d7d6` (branche `claude/editor-terrain-textures-skybox`),
+l'éditeur affiche des vignettes ImGui pour les textures de splatting et
+applique les `.texr` importées au terrain en direct.
+
+### 9.1 Résolution interne du splat array
+
+Le `m_albedoArray` de `TerrainSplatting` est passé de **64×64** à **256×256**
+via la constante `kSplatLayerResolution = 256` (déclarée dans `engine/render/terrain/TerrainSplatting.h`).
+Les 4 layers builtin (grass / dirt / rock / snow) sont générés par bruit
+déterministe via la fonction libre `engine::render::terrain::GenerateProceduralAlbedoLayer`.
+Les `.texr` importées sont resamplées en 256×256 via box filter (crop centre
+si non-carré) avant upload GPU.
+
+### 9.2 Cache de vignettes — `engine::editor::TexturePreviewCache`
+
+Possédé par `Engine`, vit le temps du device Vulkan. Pour chaque texture
+demandée :
+
+1. **Decode** : `LoadTexrFile` parse le header TEXR ou fallback `stb_image`
+   (PNG / JPG / TGA / BMP). Cap à 4096×4096 max source.
+2. **Resample** : `ResampleRgba8Box` réduit à 256×256 RGBA8.
+3. **Upload GPU** : `VkImage` 256×256 RGBA8_SRGB DEVICE_LOCAL OPTIMAL,
+   staging + barrier `UNDEFINED → TRANSFER_DST → SHADER_READ_ONLY`,
+   `VkImageView` 2D, descriptor `ImGui_ImplVulkan_AddTexture`.
+4. **Cache** : `unordered_map<string, GpuPreview>` keyed par
+   `procedural:N` (builtins) ou `textures/<rel>` (importées).
+
+Cache négatif (`m_negativeCache`) : un fichier corrompu n'est pas re-décodé
+avant `Invalidate` explicite (évite spam logs).
+
+Destruction différée (`m_pendingDeletes` + `Tick(currentFrame, framesInFlight)`) :
+les descriptors invalidés ne sont libérés qu'après `framesInFlight = 2` frames,
+pour éviter UAF sur descriptor référencé en command buffer en vol.
+
+### 9.3 Vignettes dans l'UI éditeur
+
+Deux entrées :
+
+- **Onglet Peindre > Textures personnalisées (par couche)** : vignette 48×48
+  inline à gauche du combo de chaque layer. Default moteur = procédurale ;
+  sélection `.texr` = vignette de la texture importée.
+- **Panneau Bibliothèque de textures** (menu Vue > Bibliothèque de textures) :
+  grille 96×96. Section "Procédurales" (4 vignettes builtin fixes) + section
+  "Importées (N)" peuplée depuis `Doc().textureAssets`. Layer actif piloté
+  par radios synchronisés sur `WorldEditorSession::SplatLayer()` (donc
+  équivalent au combo "Type de sol" de Peindre). Clic sur une vignette =
+  assignation au layer actif. La vignette assignée est encadrée d'un liseret
+  bleu accent.
+
+### 9.4 Flux d'application live au terrain 3D
+
+Quand l'utilisateur change une référence de layer (combo Peindre ou clic
+Bibliothèque) :
+
+1. `WorldEditorSession::splatLayerTextureRefs[layer]` est mis à jour et
+   `MarkSplatRefsDirty()` est appelé.
+2. À la frame suivante, `Engine::ProcessSplatRefsDirty` consomme le flag :
+   - Pour chaque layer, récupère le buffer CPU 256×256 via le cache
+     (procédurale si ref vide, `.texr` resamplée sinon ; fallback procédurale
+     si `.texr` introuvable).
+   - Pousse les 4 buffers dans `TerrainSplatting::SetLayerCpuRgba256`.
+   - Appelle `RebuildAlbedoArrayFromCpuLayers` → staging + barrier
+     `SHADER_READ_ONLY → TRANSFER_DST` → 4 `vkCmdCopyBufferToImage` (un par
+     layer) → barrier retour `SHADER_READ_ONLY`.
+
+Le cycle complet prend ~3-5 ms hors stalle GPU, exécuté hors hot frame path
+(uniquement quand un combo change).
+
+### 9.5 Réimport d'une texture
+
+`WorldEditorSession::ActionImportTexture` ajoute le chemin réimporté dans
+`m_recentlyImported`. `Engine::Update` consomme la file chaque frame et
+appelle `TexturePreviewCache::Invalidate` sur chaque entrée. Si la texture
+était référencée par un layer, `m_splatRefsDirty` est aussi mis pour
+forcer un rebuild GPU. La destruction du descriptor est différée de
+`framesInFlight` frames.
+
+### 9.6 Validation manuelle (à faire après CI build)
+
+Une fois le build CI Windows passé, valider sur ta machine :
+
+1. Lancer `lcdlln_world_editor.exe` sur une carte vierge → onglet Peindre
+   montre 4 vignettes procédurales (grass / dirt / rock / snow).
+2. Menu Vue > Bibliothèque de textures → panneau dockable apparaît avec les
+   4 procédurales builtin.
+3. Importer un PNG (panneau Import assets) → la vignette apparaît dans
+   "Importées" en <500 ms.
+4. Sélectionner layer Terre dans Peindre → radios Bibliothèque suivent.
+5. Cliquer la vignette du PNG dans la Bibliothèque → terrain 3D mis à jour
+   en <1 frame, vignette encadrée bleu.
+6. Cliquer la vignette procédurale "Terre" → terrain 3D revient à la
+   procédurale.
+7. Sauvegarder la carte → vérifier `splat_layer_texture_refs[1]` dans le
+   JSON.
+8. Quitter et relancer → terrain 3D affiche directement le PNG sur Terre.
+9. Réimporter le même PNG (overwrite) → vignette + terrain 3D refresh, pas
+   de crash, pas de fuite descriptor (vérifier via RenderDoc/PIX si suspicion).
+
+### 9.7 Limites
+
+- Résolution source max : **4096×4096** (au-delà : refus du décodage,
+  vignette grise, log explicit).
+- Capacité cache : descriptors ImGui internes (~64+ entrées). Au-delà,
+  les vignettes ultérieures peuvent échouer (LOG_ERROR).
+- Pas de mipmaps (pas nécessaire au tiling 8 m+).
+- Pas de support normalmaps / ORM importés : `m_normalArray` et `m_ormArray`
+  restent placeholders (flat normal + roughness fixe). Cf. spec
+  `docs/superpowers/specs/2026-05-04-editor-texture-previews-design.md` §
+  "Hors scope".

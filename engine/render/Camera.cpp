@@ -32,12 +32,24 @@ namespace engine::render
 		else up = engine::math::Vec3(0.0f, 1.0f, 0.0f);
 
 		engine::math::Mat4 V;
-		V.m[0] = right.x;  V.m[1] = right.y;  V.m[2] = right.z;  V.m[3] = 0.0f;
-		V.m[4] = up.x;     V.m[5] = up.y;     V.m[6] = up.z;     V.m[7] = 0.0f;
-		V.m[8] = -forward.x; V.m[9] = -forward.y; V.m[10] = -forward.z; V.m[11] = 0.0f;
-		V.m[12] = -(right.x * position.x + right.y * position.y + right.z * position.z);
-		V.m[13] = -(up.x * position.x + up.y * position.y + up.z * position.z);
-		V.m[14] = (forward.x * position.x + forward.y * position.y + forward.z * position.z);
+		// Vue Vulkan left-handed (+Z forward dans le view-space, ce qu'attend
+		// `Mat4::PerspectiveVulkan` qui pose row3 = (0,0,1,0) -> clip.w = view.z).
+		// Stockage column-major : m[col*4+row]. Lignes du view matrix :
+		//   row 0 = (right.x, right.y, right.z, -dot(right, pos))
+		//   row 1 = (up.x,    up.y,    up.z,    -dot(up,    pos))
+		//   row 2 = (fwd.x,   fwd.y,   fwd.z,   -dot(fwd,   pos))
+		//   row 3 = (0, 0, 0, 1)
+		// Bug pre-existant (PR #427 diag) : l'ancien code stockait les basis
+		// vectors comme COLONNES (matrice camera->world au lieu de world->camera),
+		// avec en plus sign-flip sur m[10] et m[14]. Resultat : viewProj.row3
+		// recevait des valeurs proches de viewProj.row2, donc clip.w sortait
+		// negatif pour TOUS les points -> rasterizer Vulkan rejetait tout.
+		V.m[0] = right.x;   V.m[1] = up.x;     V.m[2]  = forward.x; V.m[3]  = 0.0f;
+		V.m[4] = right.y;   V.m[5] = up.y;     V.m[6]  = forward.y; V.m[7]  = 0.0f;
+		V.m[8] = right.z;   V.m[9] = up.z;     V.m[10] = forward.z; V.m[11] = 0.0f;
+		V.m[12] = -(right.x   * position.x + right.y   * position.y + right.z   * position.z);
+		V.m[13] = -(up.x      * position.x + up.y      * position.y + up.z      * position.z);
+		V.m[14] = -(forward.x * position.x + forward.y * position.y + forward.z * position.z);
 		V.m[15] = 1.0f;
 		return V;
 	}

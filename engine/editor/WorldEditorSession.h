@@ -131,6 +131,15 @@ namespace engine::editor
 		/// \return true une fois par demande consommee (pour l'Engine).
 		bool ConsumeTerrainGpuReloadRequest();
 
+		/// Marque les references de textures de layer (splatLayerTextureRefs)
+		/// comme modifiees. A appeler par les UIs apres avoir change un element
+		/// du tableau (combo Peindre, vignette Bibliotheque). Engine::ProcessSplatRefsDirty
+		/// consomme ce flag chaque frame pour reuploader le splat array GPU.
+		void MarkSplatRefsDirty() { m_splatRefsDirty = true; }
+
+		/// Lit + reset le flag splat refs. Utilise par Engine cote frame loop.
+		bool ConsumeSplatRefsDirty() { const bool d = m_splatRefsDirty; m_splatRefsDirty = false; return d; }
+
 	private:
 		void SanitizeAllLayoutInstancesAgainstTreeCatalog();
 
@@ -175,6 +184,7 @@ namespace engine::editor
 		std::function<bool(const engine::core::Config&, const WorldMapEditDocument&)> m_terrainSaveHook;
 
 		bool m_terrainGpuReloadRequested = false;
+		bool m_splatRefsDirty = false;
 
 		std::vector<std::string> m_availableMapIds;
 		int m_selectedAvailableMapIndex = 0;

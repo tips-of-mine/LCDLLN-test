@@ -386,12 +386,16 @@ namespace engine::editor
 			SetStatus("Carte creee mais sauvegarde JSON echouee: " + err);
 			LOG_WARN(Core, "[WorldEditor] {}", err);
 			RequestTerrainGpuReload();
+			m_splatRefsDirty = true;
 			return true;
 		}
 		SetStatus("Nouvelle carte OK - " + hmRel);
 		RequestTerrainGpuReload();
 		SyncBuffersFromDoc();
 		LOG_INFO(Core, "[WorldEditor] New map OK zone={} size={}", zid, sz);
+		// Nouvelle carte : les refs sont remises a zero mais une session precedente
+		// peut avoir laisse un splat array GPU avec d'autres refs ; forcer le reupload.
+		m_splatRefsDirty = true;
 		return true;
 	}
 
@@ -596,6 +600,8 @@ namespace engine::editor
 				break;
 			}
 		}
+		// Carte chargee : appliquer les splatLayerTextureRefs persistees au splat array GPU.
+		m_splatRefsDirty = true;
 		return true;
 	}
 

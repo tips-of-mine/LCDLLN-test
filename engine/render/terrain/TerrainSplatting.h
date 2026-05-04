@@ -19,7 +19,7 @@ namespace engine::render::terrain
     /// \param resolution Côté en pixels (carré). Min 4, max 4096.
     /// \param layer 0=grass, 1=dirt, 2=rock, 3=snow.
     /// \param outRgba Sortie : resolution * resolution * 4 octets, RGBA8 sRGB.
-    /// \return false si layer >= kSplatLayerCount ou resolution < 4.
+    /// \return false si layer >= kSplatLayerCount, resolution < 4 ou resolution > 4096.
     bool GenerateProceduralAlbedoLayer(uint32_t resolution, uint32_t layer,
                                        std::vector<uint8_t>& outRgba);
 

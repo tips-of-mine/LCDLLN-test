@@ -288,6 +288,7 @@ namespace engine::render::terrain
     {
         if (layer >= kSplatLayerCount || resolution < 4u || resolution > 4096u)
         {
+            outRgba.clear();
             return false;
         }
 
@@ -315,6 +316,12 @@ namespace engine::render::terrain
         const uint32_t pixels = resolution * resolution;
         outRgba.resize(static_cast<size_t>(pixels) * 4u);
 
+        auto clampU8 = [](float v) -> uint8_t {
+            if (v < 0.0f) v = 0.0f;
+            if (v > 255.0f) v = 255.0f;
+            return static_cast<uint8_t>(v);
+        };
+
         for (uint32_t y = 0; y < resolution; ++y)
         {
             for (uint32_t x = 0; x < resolution; ++x)
@@ -323,11 +330,6 @@ namespace engine::render::terrain
                 const float macro = hashNoise(x / mc, y / mc, layer + 1000u);
                 const float n = (micro * 0.6f + macro * 0.4f) * 2.0f - 1.0f;
                 const float delta = n * amp;
-                auto clampU8 = [](float v) -> uint8_t {
-                    if (v < 0.0f) v = 0.0f;
-                    if (v > 255.0f) v = 255.0f;
-                    return static_cast<uint8_t>(v);
-                };
                 uint8_t* dst = outRgba.data() + (y * resolution + x) * 4u;
                 dst[0] = clampU8(static_cast<float>(col[0]) + delta);
                 dst[1] = clampU8(static_cast<float>(col[1]) + delta);

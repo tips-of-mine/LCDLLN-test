@@ -426,7 +426,7 @@ namespace engine::render::terrain
             VkPushConstantRange pcRange{};
             pcRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
             pcRange.offset     = 0;
-            pcRange.size       = sizeof(PushConstants); // 16 bytes
+            pcRange.size       = sizeof(PushConstants); // 20 bytes (cf. struct PushConstants)
 
             VkPipelineLayoutCreateInfo plCI{};
             plCI.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1369,6 +1369,39 @@ namespace engine::render::terrain
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainRenderer::GetActualRenderedExtentX/Z
+    // ─────────────────────────────────────────────────────────────────────────────
+    // m_vertStepWorld = m_terrainWorldSize / 1024 (cf. Init), donc
+    // l'etendue reellement maillee = m_patchCountX * kPatchQuads * m_vertStepWorld.
+    // Pour une heightmap 256x256 avec world_size=10000, ca donne 15*16*9.77 = 2344 m
+    // au lieu de 10000 m -> le centre des patches n'est PAS le centre de
+    // GetTerrainWorldSize().
+
+    float TerrainRenderer::GetActualRenderedExtentX() const
+    {
+        return static_cast<float>(m_patchCountX) * static_cast<float>(kPatchQuads) * m_vertStepWorld;
+    }
+
+    float TerrainRenderer::GetActualRenderedExtentZ() const
+    {
+        return static_cast<float>(m_patchCountZ) * static_cast<float>(kPatchQuads) * m_vertStepWorld;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainRenderer::SetNoUserTexturesFallback
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    void TerrainRenderer::SetNoUserTexturesFallback(bool enable)
+    {
+        if (m_noUserTextures != enable)
+        {
+            LOG_INFO(Render, "[TerrainRenderer] noUserTextures fallback: {} -> {}",
+                m_noUserTextures ? 1 : 0, enable ? 1 : 0);
+        }
+        m_noUserTextures = enable;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainRenderer::Record
     // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1425,6 +1458,13 @@ namespace engine::render::terrain
 
         const float patchWorldSize = static_cast<float>(kPatchQuads) * m_vertStepWorld;
 
+        // Diagnostic one-shot : trace patches retenus / rejetes au premier appel
+        // Record apres un Init. Utile pour comprendre pourquoi le terrain ne
+        // s'affiche pas (cull frustum trop agressif, camera mal placee, etc.).
+        static bool s_recordDiagOnce = true;
+        uint32_t diagCulled = 0;
+        uint32_t diagKept = 0;
+
         for (uint32_t i = 0; i < static_cast<uint32_t>(m_patches.size()); ++i)
         {
             const TerrainPatchInfo& p = m_patches[i];
@@ -1433,7 +1473,8 @@ namespace engine::render::terrain
             const engine::math::Vec3 bMin{ p.originX,                  p.minY, p.originZ };
             const engine::math::Vec3 bMax{ p.originX + patchWorldSize,  p.maxY, p.originZ + patchWorldSize };
 
-            if (!frustum.TestAABB(bMin, bMax)) continue;
+            if (m_frustumCullEnabled && !frustum.TestAABB(bMin, bMax)) { ++diagCulled; continue; }
+            ++diagKept;
 
             // Distance from camera to patch centre (XZ only)
             const float dx   = p.centerX - cameraPos.x;
@@ -1459,6 +1500,99 @@ namespace engine::render::terrain
             }
 
             drawLists[lod].push_back({ i, morphFactor });
+        }
+
+        if (s_recordDiagOnce)
+        {
+            s_recordDiagOnce = false;
+            LOG_INFO(Render,
+                "[TerrainRenderer] Record diag: patches total={} kept={} culled={} cam=({:.1f},{:.1f},{:.1f}) noUserTex={}",
+                static_cast<uint32_t>(m_patches.size()), diagKept, diagCulled,
+                cameraPos.x, cameraPos.y, cameraPos.z,
+                m_noUserTextures ? 1 : 0);
+
+            // ── Diag etendu : matrice viewProj, plans frustum, projections test ─
+            // Permet de diagnostiquer en aval (cf. PR #427) si le bug est dans
+            // ComputeViewMatrix (transposee), PerspectiveVulkan (Z[0,1]) ou
+            // Frustum::ExtractFromMatrix (convention OpenGL r3+r2 vs Vulkan r2).
+            //
+            // Methode : projeter manuellement quelques points de test via la
+            // matrice viewProj fournie a Record() (column-major), et reporter
+            // clip.{x,y,z,w}. Un point "devant la camera" doit avoir clip.w>0.
+
+            const float* M = viewProjMat4; // column-major, M[col*4+row]
+            auto projXYZW = [M](float x, float y, float z, float w,
+                                float& cx, float& cy, float& cz, float& cw) {
+                // result.row_i = sum_j M[col=j, row=i] * v.j = sum_j M[j*4+i] * v.j
+                cx = M[0]*x + M[4]*y + M[8] *z + M[12]*w;
+                cy = M[1]*x + M[5]*y + M[9] *z + M[13]*w;
+                cz = M[2]*x + M[6]*y + M[10]*z + M[14]*w;
+                cw = M[3]*x + M[7]*y + M[11]*z + M[15]*w;
+            };
+
+            // Log la matrice viewProj brute (lignes successives, ordre row-major
+            // pour la lisibilite humaine).
+            LOG_INFO(Render, "[TerrainRenderer] viewProj row0=({:.4f},{:.4f},{:.4f},{:.4f})",
+                M[0], M[4], M[8],  M[12]);
+            LOG_INFO(Render, "[TerrainRenderer] viewProj row1=({:.4f},{:.4f},{:.4f},{:.4f})",
+                M[1], M[5], M[9],  M[13]);
+            LOG_INFO(Render, "[TerrainRenderer] viewProj row2=({:.4f},{:.4f},{:.4f},{:.4f})",
+                M[2], M[6], M[10], M[14]);
+            LOG_INFO(Render, "[TerrainRenderer] viewProj row3=({:.4f},{:.4f},{:.4f},{:.4f})",
+                M[3], M[7], M[11], M[15]);
+
+            // Projection de la position camera elle-meme (devrait donner view~origin
+            // donc clip~(0,0,0,?) en theorie ; w pres de zero).
+            {
+                float cx, cy, cz, cw;
+                projXYZW(cameraPos.x, cameraPos.y, cameraPos.z, 1.0f, cx, cy, cz, cw);
+                LOG_INFO(Render, "[TerrainRenderer] proj(cam)=({:.2f},{:.2f},{:.2f},{:.2f})",
+                    cx, cy, cz, cw);
+            }
+            // Projection de cam + (0,0,+100) : si la camera "regarde +Z" alors
+            // ce point a w>0 (visible). Si elle regarde -Z, w<0 (derriere).
+            {
+                float cx, cy, cz, cw;
+                projXYZW(cameraPos.x, cameraPos.y, cameraPos.z + 100.0f, 1.0f, cx, cy, cz, cw);
+                LOG_INFO(Render, "[TerrainRenderer] proj(cam+Z100)=({:.2f},{:.2f},{:.2f},{:.2f})",
+                    cx, cy, cz, cw);
+            }
+            // Projection de cam + (0,0,-100) : symetrique.
+            {
+                float cx, cy, cz, cw;
+                projXYZW(cameraPos.x, cameraPos.y, cameraPos.z - 100.0f, 1.0f, cx, cy, cz, cw);
+                LOG_INFO(Render, "[TerrainRenderer] proj(cam-Z100)=({:.2f},{:.2f},{:.2f},{:.2f})",
+                    cx, cy, cz, cw);
+            }
+            // Projection du centre du patch central (le plus probable d'etre visible).
+            if (!m_patches.empty())
+            {
+                const TerrainPatchInfo& pc = m_patches[m_patches.size() / 2];
+                const float cyMid = (pc.minY + pc.maxY) * 0.5f;
+                float cx, cy, cz, cw;
+                projXYZW(pc.centerX, cyMid, pc.centerZ, 1.0f, cx, cy, cz, cw);
+                LOG_INFO(Render, "[TerrainRenderer] proj(centerPatch=({:.0f},{:.1f},{:.0f}))=({:.2f},{:.2f},{:.2f},{:.2f})",
+                    pc.centerX, cyMid, pc.centerZ, cx, cy, cz, cw);
+
+                // Test plan-par-plan sur ce patch : pour chaque plan i,
+                // calculer dot(plane.n, max-or-min-corner) + plane.d et reporter
+                // s'il est negatif (rejet).
+                const engine::math::Vec3 bMin{ pc.originX,                     pc.minY, pc.originZ };
+                const engine::math::Vec3 bMax{ pc.originX + patchWorldSize,    pc.maxY, pc.originZ + patchWorldSize };
+                const char* planeNames[6] = { "Left", "Right", "Top", "Bottom", "Near", "Far" };
+                for (int i = 0; i < 6; ++i)
+                {
+                    const engine::math::Plane& p = frustum.GetPlane(static_cast<engine::math::Frustum::PlaneIndex>(i));
+                    const float px = p.nx >= 0.0f ? bMax.x : bMin.x;
+                    const float py = p.ny >= 0.0f ? bMax.y : bMin.y;
+                    const float pz = p.nz >= 0.0f ? bMax.z : bMin.z;
+                    const float dist = p.nx * px + p.ny * py + p.nz * pz + p.d;
+                    LOG_INFO(Render,
+                        "[TerrainRenderer]   plane[{}]={} n=({:.4f},{:.4f},{:.4f}) d={:.2f} positiveCorner=({:.0f},{:.0f},{:.0f}) signedDist={:.2f} {}",
+                        i, planeNames[i], p.nx, p.ny, p.nz, p.d, px, py, pz, dist,
+                        dist < 0.0f ? "REJECT" : "pass");
+                }
+            }
         }
 
         // ── Create / retrieve framebuffer ─────────────────────────────────────────
@@ -1560,10 +1694,11 @@ namespace engine::render::terrain
                 const TerrainPatchInfo& p = m_patches[entry.patchIdx];
 
                 PushConstants pc{};
-                pc.patchOriginX = p.originX;
-                pc.patchOriginZ = p.originZ;
-                pc.morphFactor  = entry.morphFactor;
-                pc.lodLevel     = static_cast<int32_t>(lod);
+                pc.patchOriginX   = p.originX;
+                pc.patchOriginZ   = p.originZ;
+                pc.morphFactor    = entry.morphFactor;
+                pc.lodLevel       = static_cast<int32_t>(lod);
+                pc.noUserTextures = m_noUserTextures ? 1 : 0;
 
                 vkCmdPushConstants(cmd, m_pipelineLayout,
                                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,

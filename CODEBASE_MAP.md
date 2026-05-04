@@ -679,6 +679,56 @@ L'écran CharacterCreate expose désormais un combo des 6 races jouables.
 
 ---
 
+## 17. Éditeur monde — création/chargement de carte (chantier 2026-05-04)
+
+Périmètre : `lcdlln_world_editor.exe` uniquement. Aucun impact client jeu /
+serveur.
+
+### Carte par défaut
+
+`engine::editor::WorldEditorSession::ActionNewMap` produit, sous
+`paths.content` + `world_editor/maps/<zoneId>/` :
+- `height.r16h` : heightmap plate (valeur 32768 = `0.5 * height_scale`).
+- `splat.slap` : 100 % couche herbe (1024×1024).
+- `grass.grms` : masque herbe à zéros.
+- `map.lcdlln_edit.json` : `splatLayerTextureRefs[0..3]` toutes vides
+  (aucune texture utilisateur assignée).
+
+La propriété "refs vides après ActionNewMap" est gardée par le test
+`world_editor_session_tests` (`engine/editor/tests/WorldEditorSessionTests.cpp`).
+
+### Reset caméra automatique
+
+`Engine::RebuildWorldEditorTerrainGpu()` (engine/Engine.cpp) repositionne la
+caméra à chaque création/chargement de carte sous garde `m_worldEditorExe` :
+- Position : centre XZ du terrain, altitude `height_scale * 0.5 + 80 m`.
+- Pitch : `0.35 rad` (~20° vers le bas) ; yaw 0.
+- `farZ = max(5000, terrainWorldSize * 1.5)` pour les grands terrains.
+
+### Fallback orange (terrain sans texture utilisateur)
+
+Tant qu'aucune couche splat n'a reçu de mapping texture, le shader terrain
+écrit une couleur orange uni dans l'albedo (les normales et l'ORM restent
+inchangées, le shading lambert reste lisible).
+
+- Détection (CPU) : dans `RebuildWorldEditorTerrainGpu`, on vérifie que
+  toutes les entrées de `Doc().splatLayerTextureRefs` sont vides ; sinon le
+  flag retombe à `false`. Garde stricte `m_worldEditorExe` : le client jeu
+  ne lève **jamais** ce flag.
+- Propagation : `TerrainRenderer::SetNoUserTexturesFallback(bool)` →
+  membre `m_noUserTextures` → push-constant `int noUserTextures`.
+- Shader : branche `if (pc.noUserTextures != 0) outAlbedo = vec4(1.0, 0.55,
+  0.1, 1.0)` dans `game/data/shaders/terrain.frag`. La struct
+  `PushConstants` côté CPU et le `layout(push_constant)` côté `terrain.vert`
+  / `terrain.frag` ont été étendus en lockstep (20 octets, bien sous la
+  limite Vulkan de 128).
+
+Bascule automatique : dès qu'une texture est posée sur une couche, le
+prochain rebuild via le bouton « Recharger terrain GPU » repasse en rendu
+normal sans intervention.
+
+---
+
 ## Aide-mémoire : comment trouver un écran
 
 1. **Je veux changer le visuel d'un écran** → `engine/render/auth/screens/AuthImGuiXxx.cpp`

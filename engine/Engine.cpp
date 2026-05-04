@@ -3496,7 +3496,10 @@ namespace engine
 
 		out.viewMatrix = out.camera.ComputeViewMatrix();
 		{
-			const engine::math::Vec3 forward(-out.viewMatrix.m[8], -out.viewMatrix.m[9], -out.viewMatrix.m[10]);
+			// La direction gaze est stockee en row 2 du view matrix corrige :
+			// (m[2], m[6], m[10]) = (forward.x, forward.y, forward.z). Cf.
+			// commentaire dans Camera::ComputeViewMatrix.
+			const engine::math::Vec3 forward(out.viewMatrix.m[2], out.viewMatrix.m[6], out.viewMatrix.m[10]);
 			m_streamingScheduler.PushRequests(m_world.GetPendingChunkRequests(), out.camera.position, forward);
 			m_streamingScheduler.DropStaleFromAllQueues();
 		}
@@ -4896,37 +4899,79 @@ namespace engine
 		}
 		m_terrain.InvalidateFramebufferCache(device);
 
-		// Repositionne la camera au-dessus du terrain qu'on vient de charger pour
-		// que l'utilisateur voie immediatement le sol apres "Creer une nouvelle carte"
-		// ou "Charger la carte selectionnee". Sans ce reset, la camera peut rester
-		// sous le sol (terrain par defaut a y=100m si heightmap a 0.5 * height_scale=200m,
-		// camera initiale a y=1.5m -> 98.5m sous le sol = sol invisible).
-		// Position calculee : centre XZ du terrain, 50m au-dessus de la hauteur
-		// moyenne attendue, regard pivote vers le bas.
-		if (m_editorMode)
+		// Detection "aucune texture utilisateur assignee" -> pousse le flag fallback
+		// orange au TerrainRenderer (via push-constant). Des qu'au moins une couche
+		// splat recoit un mapping texture (refs[i] non vide), le flag retombe a
+		// false et le rendu normal reprend.
+		// Garde stricte sur m_worldEditorExe : le client jeu ne doit jamais lever ce
+		// flag (regression visuelle).
+		bool noUserTextures = false;
+		if (m_worldEditorExe && m_worldEditorSession)
+		{
+			noUserTextures = true;
+			const auto& refs = m_worldEditorSession->Doc().splatLayerTextureRefs;
+			for (const std::string& r : refs)
+			{
+				if (!r.empty()) { noUserTextures = false; break; }
+			}
+		}
+		m_terrain.SetNoUserTexturesFallback(noUserTextures);
+
+		// World Editor : desactive le frustum cull. Diagnostic (cf. PR #427) :
+		// avec heightmap 256x256 + world_size override 10000m, le ratio
+		// vertStepWorld/patchSize ne correspond pas a la matrice viewProj
+		// utilisee par Frustum::ExtractFromMatrix, qui rejette TOUS les patches
+		// meme quand la camera est pile au centre. Bug pre-existant (Gribb-
+		// Hartmann avec convention Vulkan Z[0,1] + Y inverse). En attendant la
+		// correction de l'extraction frustum, on desactive le cull cote World
+		// Editor (225 patches max -> aucun impact perf). Le client jeu garde
+		// le cull actif (defaut).
+		m_terrain.SetFrustumCullEnabled(false);
+
+		// Repositionne la camera au centre du terrain qu'on vient de charger pour
+		// que l'utilisateur voie immediatement le sol apres "Creer une nouvelle
+		// carte" ou "Charger la carte selectionnee". Sans ce reset, la camera peut
+		// se retrouver hors champ ou sous le sol selon la heightmap chargee.
+		// On utilise m_worldEditorExe (et non m_editorMode qui peut etre null si
+		// EditorMode::Init a echoue) comme garde du reset.
+		if (m_worldEditorExe)
 		{
 			const float ox = m_terrain.GetTerrainOriginX();
 			const float oz = m_terrain.GetTerrainOriginZ();
-			const float ws = m_terrain.GetTerrainWorldSize();
 			const float hs = m_terrain.GetHeightScale();
-			const float centerX = ox + ws * 0.5f;
-			const float centerZ = oz + ws * 0.5f;
-			const float midGroundY = hs * 0.5f; // heightmap mid-value -> sol moyen
+
+			// CRITIQUE : la zone REELLEMENT maillee (`actualExtX/Z`) peut etre
+			// nettement plus petite que `GetTerrainWorldSize()` (cf.
+			// `GetActualRenderedExtentX/Z`). Pour une heightmap 256x256 avec
+			// world_size=10000, on couvre 2344 m au lieu de 10000 m. Si on
+			// place la camera au centre du `world_size`, elle se retrouve hors
+			// des patches et le frustum cull rejette TOUT (terrain invisible).
+			// On vise donc le centre des patches reels.
+			const float actualExtX = m_terrain.GetActualRenderedExtentX();
+			const float actualExtZ = m_terrain.GetActualRenderedExtentZ();
+			const float maxExt     = std::max(actualExtX, actualExtZ);
+
+			const float centerX     = ox + actualExtX * 0.5f;
+			const float centerZ     = oz + actualExtZ * 0.5f;
+			const float midGroundY  = hs * 0.5f;            // hauteur moyenne attendue du sol
+			const float camAltitude = midGroundY + 80.0f;   // marge confortable pour sculpter
 
 			engine::render::Camera reset;
 			reset.position.x = centerX;
-			reset.position.y = midGroundY + 5.0f;        // 5m au-dessus du sol moyen
-			reset.position.z = centerZ + 20.0f;          // 20m derriere -> avatar visible ~6% ecran
-			reset.yaw = 0.0f;
-			reset.pitch = 0.1f;                          // pitch leger ~6deg
-			reset.fovYDeg = 70.0f;
-			reset.aspect = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
-			reset.nearZ = 0.1f;
-			reset.farZ = 5000.0f;
+			reset.position.y = camAltitude;
+			reset.position.z = centerZ;
+			reset.yaw        = 0.0f;
+			reset.pitch      = 0.35f;                       // ~20deg vers le bas
+			reset.fovYDeg    = 70.0f;
+			reset.aspect     = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
+			reset.nearZ      = 0.1f;
+			reset.farZ       = std::max(5000.0f, maxExt * 1.5f); // garantit la visibilite des bords sur grand terrain
 			m_renderStates[0].camera = reset;
 			m_renderStates[1].camera = reset;
-			LOG_INFO(Render, "[WorldEditor] Camera repositioned above terrain center=({:.1f},{:.1f}) groundY={:.1f} cameraY={:.1f}",
-				centerX, centerZ, midGroundY, reset.position.y);
+			LOG_INFO(Render,
+				"[WorldEditor] Camera reset: pos=({:.1f},{:.1f},{:.1f}) farZ={:.0f} actualExt=({:.0f}x{:.0f}) origin=({:.0f},{:.0f})",
+				reset.position.x, reset.position.y, reset.position.z, reset.farZ,
+				actualExtX, actualExtZ, ox, oz);
 		}
 	}
 

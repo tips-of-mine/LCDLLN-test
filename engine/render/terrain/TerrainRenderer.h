@@ -168,25 +168,59 @@ namespace engine::render::terrain
         /// Returns the maximum height in world units (config: terrain.height_scale).
         float GetHeightScale()      const { return m_heightScale;      }
 
+        /// Etendue monde reellement couverte par les patches rendus, en metres
+        /// (m_patchCountX * kPatchQuads * m_vertStepWorld). Peut etre inferieure
+        /// a `GetTerrainWorldSize()` quand la heightmap est plus petite que
+        /// 1025x1025 (kVertStepWorld est calcule sur 1024 pas, indep. de la
+        /// resolution de la heightmap chargee). Pertinent pour positionner la
+        /// camera editeur AU-DESSUS de la zone effectivement maillee, sans quoi
+        /// les patches tombent hors du frustum et le terrain reste invisible.
+        float GetActualRenderedExtentX() const;
+        float GetActualRenderedExtentZ() const;
+
         /// Echantillonne la hauteur du terrain (en metres monde) a la position
         /// horizontale (worldX, worldZ). Filtrage bilineaire ; retombe sur 0
         /// si la heightmap n'est pas chargee. Utilisable par la collision
         /// camera-sol et le snap au sol des avatars.
         float SampleHeightAtWorldXZ(float worldX, float worldZ) const;
 
+        /// Active/desactive le fallback "terrain sans texture utilisateur" :
+        /// quand vrai, le shader terrain ecrit une couleur orange uni dans
+        /// l'albedo (les normales / ORM / velocity restent inchanges, donc le
+        /// shading reste lisible). Reservé au World Editor pour signaler une
+        /// carte fraichement creee dont aucune couche splat n'a encore recu de
+        /// mapping texture. Le client jeu (lcdlln.exe) ne doit jamais lever ce
+        /// flag (regression visuelle).
+        ///
+        /// Effet : prochain Record() pousse le flag dans le push-constant.
+        /// Aucun rebuild GPU requis.
+        void SetNoUserTexturesFallback(bool enable);
+
+        /// Desactive le frustum culling des patches (debug / workaround). Quand
+        /// vrai, TOUS les patches passent le test Record() les dessine. A
+        /// utiliser uniquement quand on sait que le frustum extrait n'est pas
+        /// fiable (cf. World Editor + heightmap 256x256 + vertStepWorld
+        /// hardcode 1024 -> mismatch entre patches et matrice viewProj qui
+        /// fait que `Frustum::TestAABB` rejette les patches qui sont pourtant
+        /// dans le cone de vue). Coût : aucun en perf, vu que le World Editor
+        /// a au plus quelques centaines de patches.
+        void SetFrustumCullEnabled(bool enable) { m_frustumCullEnabled = enable; }
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
-        // All stages, 16 bytes total.
+        // All stages, 20 bytes total.
         // offset  0: float patchOriginX
         // offset  4: float patchOriginZ
         // offset  8: float morphFactor   [0,1]
         // offset 12: int   lodLevel      [0, kTerrainLodCount-1]
+        // offset 16: int   noUserTextures (0 = rendu normal, 1 = fallback orange)
         struct PushConstants
         {
-            float   patchOriginX = 0.0f;
-            float   patchOriginZ = 0.0f;
-            float   morphFactor  = 0.0f;
-            int32_t lodLevel     = 0;
+            float   patchOriginX   = 0.0f;
+            float   patchOriginZ   = 0.0f;
+            float   morphFactor    = 0.0f;
+            int32_t lodLevel       = 0;
+            int32_t noUserTextures = 0;
         };
 
         // ── Per-frame UBO (set=0, binding=2) ─────────────────────────────────────
@@ -289,6 +323,18 @@ namespace engine::render::terrain
         float    m_vertStepWorld     = 0.0f; ///< World units per local vertex step at LOD 0
         uint32_t m_patchCountX       = 0;
         uint32_t m_patchCountZ       = 0;
+
+        /// Quand true, la branche fallback orange est activee dans
+        /// terrain.frag via le push-constant `noUserTextures`. Pilote par
+        /// `Engine::RebuildWorldEditorTerrainGpu` selon l'etat du document
+        /// (`splatLayerTextureRefs`). Toujours false pour le client jeu.
+        bool     m_noUserTextures    = false;
+
+        /// Si false, Record() saute le test `frustum.TestAABB(...)` et
+        /// dessine TOUS les patches. Defaut true (cull actif) pour le client
+        /// jeu. Engine bascule a false pour le World Editor le temps que le
+        /// bug d'extraction frustum soit corrige (cf. SetFrustumCullEnabled).
+        bool     m_frustumCullEnabled = true;
     };
 
 } // namespace engine::render::terrain

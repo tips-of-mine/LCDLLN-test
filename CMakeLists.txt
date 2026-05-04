@@ -637,6 +637,17 @@ if(MSVC)
 endif()
 add_test(NAME texture_preview_cache_tests COMMAND texture_preview_cache_tests)
 
+# Tests unitaires pour WorldEditorSession (ActionNewMap, invariances doc).
+# Pas de dependance Vulkan : tournable en CI sans GPU. Ecrit dans un
+# repertoire temporaire (ne pollue pas game/data).
+add_executable(world_editor_session_tests engine/editor/tests/WorldEditorSessionTests.cpp)
+target_include_directories(world_editor_session_tests PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(world_editor_session_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(world_editor_session_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME world_editor_session_tests COMMAND world_editor_session_tests)
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
   add_executable(client_flow_app engine/network/ClientFlowMain.cpp)

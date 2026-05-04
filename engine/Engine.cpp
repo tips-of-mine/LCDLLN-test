@@ -4896,14 +4896,33 @@ namespace engine
 		}
 		m_terrain.InvalidateFramebufferCache(device);
 
-		// Repositionne la camera au-dessus du terrain qu'on vient de charger pour
-		// que l'utilisateur voie immediatement le sol apres "Creer une nouvelle carte"
-		// ou "Charger la carte selectionnee". Sans ce reset, la camera peut rester
-		// sous le sol (terrain par defaut a y=100m si heightmap a 0.5 * height_scale=200m,
-		// camera initiale a y=1.5m -> 98.5m sous le sol = sol invisible).
-		// Position calculee : centre XZ du terrain, 50m au-dessus de la hauteur
-		// moyenne attendue, regard pivote vers le bas.
-		if (m_editorMode)
+		// Detection "carte fraichement creee" : si aucune couche splat n'a recu
+		// de mapping texture utilisateur, on bascule le shader terrain en
+		// fallback orange uni (cf. terrain.frag) pour que l'utilisateur voie
+		// immediatement ou se trouve le sol meme sans textures officielles.
+		// Garde explicite m_worldEditorExe : le client jeu (lcdlln.exe) ne doit
+		// JAMAIS lever ce flag, le rendu officiel reste strictement inchange.
+		bool noUserTextures = false;
+		if (m_worldEditorExe && m_worldEditorSession)
+		{
+			noUserTextures = true;
+			const auto& refs = m_worldEditorSession->Doc().splatLayerTextureRefs;
+			for (const std::string& r : refs)
+			{
+				if (!r.empty()) { noUserTextures = false; break; }
+			}
+		}
+		m_terrain.SetNoUserTexturesFallback(noUserTextures);
+
+		// Repositionne la camera au centre du terrain qu'on vient de charger
+		// pour que l'utilisateur voie immediatement le sol apres "Creer une
+		// nouvelle carte" ou "Charger la carte selectionnee". L'ancien reset
+		// placait la camera a centerZ + ws*0.25 (donc 2.5 km hors du terrain
+		// pour ws=10 km), avec un pitch trop plongeant qui faisait taper le
+		// rayon sol bien avant le terrain -> terrain hors champ.
+		// Garde m_worldEditorExe (et non m_editorMode qui peut etre null si
+		// EditorMode::Init a echoue).
+		if (m_worldEditorExe)
 		{
 			const float ox = m_terrain.GetTerrainOriginX();
 			const float oz = m_terrain.GetTerrainOriginZ();
@@ -4911,22 +4930,26 @@ namespace engine
 			const float hs = m_terrain.GetHeightScale();
 			const float centerX = ox + ws * 0.5f;
 			const float centerZ = oz + ws * 0.5f;
-			const float midGroundY = hs * 0.5f; // heightmap mid-value -> sol moyen
+			const float midGroundY  = hs * 0.5f;          // sol moyen
+			const float camAltitude = midGroundY + 80.0f; // marge de manoeuvre quand la heightmap sera sculptee
 
 			engine::render::Camera reset;
 			reset.position.x = centerX;
-			reset.position.y = midGroundY + 5.0f;        // 5m au-dessus du sol moyen
-			reset.position.z = centerZ + 20.0f;          // 20m derriere -> avatar visible ~6% ecran
-			reset.yaw = 0.0f;
-			reset.pitch = 0.1f;                          // pitch leger ~6deg
+			reset.position.y = camAltitude;
+			reset.position.z = centerZ;
+			reset.yaw   = 0.0f;
+			reset.pitch = 0.35f; // pitch plongeant modere (~20 deg)
 			reset.fovYDeg = 70.0f;
-			reset.aspect = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
-			reset.nearZ = 0.1f;
-			reset.farZ = 5000.0f;
+			reset.aspect  = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
+			reset.nearZ   = 0.1f;
+			// farZ = max(5000, ws*1.5) : visibilite des bords sur grands terrains,
+			// sans degrader la precision depth pour les petits (ws < 3333 m).
+			reset.farZ    = std::max(5000.0f, ws * 1.5f);
 			m_renderStates[0].camera = reset;
 			m_renderStates[1].camera = reset;
-			LOG_INFO(Render, "[WorldEditor] Camera repositioned above terrain center=({:.1f},{:.1f}) groundY={:.1f} cameraY={:.1f}",
-				centerX, centerZ, midGroundY, reset.position.y);
+			LOG_INFO(Render,
+				"[WorldEditor] Camera reset: pos=({:.1f},{:.1f},{:.1f}) farZ={:.0f} ws={:.0f}",
+				reset.position.x, reset.position.y, reset.position.z, reset.farZ, ws);
 		}
 	}
 

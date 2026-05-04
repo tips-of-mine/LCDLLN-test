@@ -46,6 +46,7 @@ layout(push_constant) uniform PC {
     float patchOriginZ;
     float morphFactor;
     int   lodLevel;
+    int   noUserTextures; // 1 = fallback orange uni (editeur monde sans texture utilisateur), 0 = rendu normal
 } pc;
 
 // ── GBuffer outputs ───────────────────────────────────────────────────────────
@@ -119,7 +120,15 @@ void main()
     float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
     vec3 grassHue = vec3(0.88, 1.04, 0.82);
     albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
-    outAlbedo = vec4(albedo, 1.0);
+    // Fallback editeur monde : carte fraichement creee, aucune couche splat
+    // n'a recu de texture utilisateur -> on remplace l'albedo par un orange
+    // vif. Les autres GBuffer outputs (normal/ORM/velocity) restent inchanges
+    // pour que la lighting pass applique un shading correct sur l'orange.
+    if (pc.noUserTextures != 0) {
+        outAlbedo = vec4(1.0, 0.55, 0.1, 1.0);
+    } else {
+        outAlbedo = vec4(albedo, 1.0);
+    }
 
     // ── Sample and blend detail normals (triplanar per layer) ─────────────────
     // Detail normals are stored as RGB tangent-space normals (N * 0.5 + 0.5).

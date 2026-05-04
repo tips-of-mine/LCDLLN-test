@@ -33,6 +33,14 @@ Les shaders terrain sont chargés comme les autres SPIR-V du content via `LoadTe
 - **Instances (tickets 009 + 013)** : tableau `instances` dans le JSON d’édition (`guid`, `gltf`, `position` monde XYZ, optionnels `yaw_deg`, `uniform_scale`). **013** : champs optionnels `species_id` (chaîne) et `shape_variant` (entier) pour les arbres issus du catalogue `world_editor/tree_species_catalog.json` (plusieurs espèces, ≥ deux glTF par espèce, plages `scale_min` / `scale_max` ; fichiers manquants → espèce ignorée, log). Le **layout exporté** `layout_from_editor.json` pour `zone_builder` reste au schéma minimal (`guid`, `gltf`, `position`) — pas de régression consommateur. Mode « Instances » (mode terrain 3) : clic simple sur le sol (`WasMousePressed`) pose ou déplace ; aperçu disques ImGui. **Exporter runtime** écrit `layout_from_editor.json` au format `zone_builder` (positions XZ converties avec `terrain.origin_x` / `terrain.origin_z`, clamp `[0, kZoneSize)`).
 - Overlays ImGui : grille, preview brosse, marqueurs instances, picking rayon → hauteur via `HeightmapData::SampleBilinearNorm` (CPU).
 
+### Reset caméra au create / load (chantier 2026-05-04)
+
+À chaque appel de `Engine::RebuildWorldEditorTerrainGpu` (création de carte, chargement, ou « Recharger terrain GPU »), la caméra est **repositionnée au centre du terrain** : `(centerX, midGroundY + 80 m, centerZ)`, pitch `0.35 rad` (~20 deg), `farZ = max(5000, ws*1.5)`. Cette logique est gardée par `m_worldEditorExe` (le client jeu n'est jamais affecté). Sans ce reset, la caméra par défaut peut se retrouver hors du terrain (cas `ws = 10 km`) et le terrain reste hors champ après « Creer une nouvelle carte ».
+
+### Fallback orange pour cartes sans texture utilisateur (chantier 2026-05-04)
+
+Lorsque l'éditeur ouvre une carte dont **aucune** couche splat n'a reçu de mapping texture utilisateur (cas typique : juste après `Creer une nouvelle carte`), `RebuildWorldEditorTerrainGpu` lève le flag `noUserTextures` du `TerrainRenderer`. Le shader fragment terrain (`terrain.frag`) substitue alors l'albedo par un orange vif `vec4(1.0, 0.55, 0.1, 1.0)` ; les autres GBuffer outputs (normal, ORM, velocity) restent inchangés, donc la lighting pass applique un shading correct sur l'orange (relief lisible). Le push-constant terrain passe de 16 à 20 octets (un `int noUserTextures` ajouté en queue). Dès qu'une couche splat reçoit un mapping texture utilisateur dans le document, le prochain rebuild bascule sur le rendu normal. **Côté client jeu (`lcdlln.exe`)** : `m_worldEditorExe = false`, le flag n'est jamais levé, le rendu officiel reste **strictement inchangé**.
+
 ## Limites / pistes
 
 - **Splat** : résolution pilotée par le fichier SLAP (typ. 1024²) ; le sculpt heightmap reste à la résolution `size` du document.

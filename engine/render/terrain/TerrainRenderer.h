@@ -174,19 +174,29 @@ namespace engine::render::terrain
         /// camera-sol et le snap au sol des avatars.
         float SampleHeightAtWorldXZ(float worldX, float worldZ) const;
 
+        /// Active/desactive le fallback "terrain sans texture utilisateur"
+        /// (orange uni dans le shader). Pilote par l'editeur monde quand
+        /// aucune couche splat n'a recu de mapping texture utilisateur ;
+        /// reste a `false` cote client jeu (rendu official inchange).
+        /// L'effet s'applique au prochain `Record` (push-constant par patch).
+        void SetNoUserTexturesFallback(bool enabled) { m_noUserTextures = enabled; }
+
     private:
         // ── Push constants ────────────────────────────────────────────────────────
-        // All stages, 16 bytes total.
+        // All stages, 20 bytes total (alignes a 4 bytes, sous la limite Vulkan
+        // garantie de 128 bytes).
         // offset  0: float patchOriginX
         // offset  4: float patchOriginZ
-        // offset  8: float morphFactor   [0,1]
-        // offset 12: int   lodLevel      [0, kTerrainLodCount-1]
+        // offset  8: float morphFactor    [0,1]
+        // offset 12: int   lodLevel       [0, kTerrainLodCount-1]
+        // offset 16: int   noUserTextures (0=rendu normal, 1=fallback orange editeur)
         struct PushConstants
         {
-            float   patchOriginX = 0.0f;
-            float   patchOriginZ = 0.0f;
-            float   morphFactor  = 0.0f;
-            int32_t lodLevel     = 0;
+            float   patchOriginX   = 0.0f;
+            float   patchOriginZ   = 0.0f;
+            float   morphFactor    = 0.0f;
+            int32_t lodLevel       = 0;
+            int32_t noUserTextures = 0;
         };
 
         // ── Per-frame UBO (set=0, binding=2) ─────────────────────────────────────
@@ -289,6 +299,11 @@ namespace engine::render::terrain
         float    m_vertStepWorld     = 0.0f; ///< World units per local vertex step at LOD 0
         uint32_t m_patchCountX       = 0;
         uint32_t m_patchCountZ       = 0;
+
+        /// Fallback "carte sans texture utilisateur" : pousse a 1 dans le
+        /// push-constant pour que `terrain.frag` peigne tout en orange uni.
+        /// Pilote uniquement par l'editeur monde (cf. `SetNoUserTexturesFallback`).
+        bool m_noUserTextures = false;
     };
 
 } // namespace engine::render::terrain

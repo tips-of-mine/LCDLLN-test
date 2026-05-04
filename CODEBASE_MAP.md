@@ -679,6 +679,76 @@ L'écran CharacterCreate expose désormais un combo des 6 races jouables.
 
 ---
 
+## 17. Éditeur monde — création/chargement de carte (chantier 2026-05-04)
+
+### Carte par défaut (`WorldEditorSession::ActionNewMap`)
+
+Cliquer sur **« Creer une nouvelle carte »** dans le World Editor produit un
+trio de fichiers sous `paths.content/world_editor/maps/<zoneId>/` :
+
+- `height.r16h` : heightmap plate (toutes valeurs à 32768, soit la mi-hauteur).
+- `splat.slap` : splat 1024×1024 = 100 % couche herbe (R=255, G=B=A=0).
+- `grass.grms` : masque herbe (zéros — aucun effet par défaut).
+- `map.lcdlln_edit.json` : document d'édition (`kFormatVersion = 1`).
+
+Les `splatLayerTextureRefs` (4 entrées indexées 0=Herbe, 1=Terre, 2=Roc,
+3=Neige) restent **vides** à la création — c'est cette invariance qui pilote
+le fallback orange du shader (cf. ci-dessous). Le test
+`world_editor_session_tests` (`engine/editor/tests/WorldEditorSessionTests.cpp`)
+verrouille cette invariance.
+
+### Reset caméra (`Engine::RebuildWorldEditorTerrainGpu`)
+
+À chaque rebuild GPU du terrain (create/load/reload), la caméra est
+repositionnée au centre du terrain :
+
+- Position : `(centerX, midGroundY + 80 m, centerZ)` — centrée XZ, 80 m
+  au-dessus du sol moyen pour conserver de la marge quand la heightmap sera
+  sculptée plus tard.
+- Pitch : `0.35 rad` (~20 deg), plongée modérée — assez pour voir le sol,
+  pas tellement que le rayon caméra heurte le sol avant d'atteindre le terrain.
+- `farZ = max(5000, ws*1.5)` — visibilité des bords sur grands terrains
+  (`ws = 10 km` typique de `engine::world::kZoneSize`), sans dégrader la
+  précision depth pour les petits.
+- Garde `m_worldEditorExe` (et **non** `m_editorMode`, qui peut être null si
+  `EditorMode::Init` a échoué).
+
+L'ancien reset plaçait la caméra à `centerZ + ws*0.25`, soit 2.5 km derrière
+le bord arrière du terrain pour `ws = 10 km` — terrain hors champ.
+
+### Fallback orange (terrain sans texture utilisateur)
+
+Pour qu'un mappeur voie immédiatement où se trouve le sol après
+`Creer une nouvelle carte` même sans avoir assigné de textures :
+
+- C++ détecte `noUserTextures` dans `RebuildWorldEditorTerrainGpu` (toutes
+  les `splatLayerTextureRefs` sont vides) et appelle
+  `TerrainRenderer::SetNoUserTexturesFallback(true)`.
+- Le push-constant terrain (vertex+fragment) embarque un `int noUserTextures`
+  (offset 16, taille totale 20 octets — sous la limite Vulkan 128).
+- `terrain.frag` peint l'albedo en orange vif `vec4(1.0, 0.55, 0.1, 1.0)`
+  quand le flag est levé. Les sorties `outNormal/outORM/outVelocity`
+  restent inchangées : la lighting pass applique un shading correct sur
+  l'orange (relief lisible).
+- Dès qu'une couche splat reçoit un mapping texture utilisateur dans le
+  document, le prochain `RebuildWorldEditorTerrainGpu` bascule sur le rendu
+  normal.
+
+**Côté client jeu (`lcdlln.exe`)** : `m_worldEditorExe = false` →
+`noUserTextures` jamais levé → branche orange jamais prise → comportement
+**strictement inchangé**.
+
+### Fichiers clés
+
+- `engine/Engine.cpp` (`RebuildWorldEditorTerrainGpu`) — reset caméra +
+  détection `noUserTextures`.
+- `engine/render/terrain/TerrainRenderer.{h,cpp}` — `SetNoUserTexturesFallback`,
+  membre `m_noUserTextures`, push-constant 20 octets.
+- `game/data/shaders/terrain.{vert,frag}` — `int noUserTextures` dans le PC,
+  branche orange dans le frag.
+- `engine/editor/tests/WorldEditorSessionTests.cpp` — verrouille l'invariance
+  « carte par défaut ⇒ refs textures vides ».
+
 ## Aide-mémoire : comment trouver un écran
 
 1. **Je veux changer le visuel d'un écran** → `engine/render/auth/screens/AuthImGuiXxx.cpp`

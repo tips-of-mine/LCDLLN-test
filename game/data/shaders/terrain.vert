@@ -13,10 +13,11 @@
 //   binding 5: sampler2DArray uNormalArray (RGBA8_UNORM, unused in vert)
 //   binding 6: sampler2DArray uORMArray    (RGBA8_UNORM, unused in vert)
 //
-// Push constants (16 bytes):
+// Push constants (20 bytes):
 //   vec2  patchOriginXZ  — world XZ of patch corner
 //   float morphFactor    — geomorphing blend [0=currentLOD, 1=parentLOD]
 //   int   lodLevel       — current LOD index (0..4)
+//   int   noUserTextures — 1 = fallback orange uni (editeur monde, carte sans texture utilisateur), 0 = rendu normal
 
 layout(location = 0) in vec2 inPatchLocal;
 
@@ -38,6 +39,7 @@ layout(push_constant) uniform PC {
     float patchOriginZ;
     float morphFactor;
     int   lodLevel;
+    int   noUserTextures; // declare pour aligner le PC avec terrain.frag (CPU pousse 20 bytes)
 } pc;
 
 // Outputs to fragment shader

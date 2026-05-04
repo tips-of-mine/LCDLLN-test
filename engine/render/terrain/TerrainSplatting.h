@@ -16,9 +16,13 @@ namespace engine::render::terrain
 
     /// Resolution (carre) des layers du texture array albedo. Constante a la
     /// compilation : si on veut configurer plus tard, exposer via Config.
-    /// 256x256 = sweet spot qualite/memoire pour terrain MMO (cf. spec
-    /// 2026-05-04-editor-texture-previews-design.md, section 3).
-    static constexpr uint32_t kSplatLayerResolution = 256u;
+    /// 64x64 = baseline historique qui rend correctement le terrain. Tentative
+    /// de promotion a 256x256 (commit b612948) cassait le rendu (terrain
+    /// invisible, seules les lignes de grille editeur visibles). Cause non
+    /// identifiee — possible incompatibilite shader/format ou descriptor.
+    /// A reinvestiguer separement avant nouvelle promotion. Cf. PR refactor
+    /// editor-terrain-textures-skybox.
+    static constexpr uint32_t kSplatLayerResolution = 64u;
 
     /// Génère un layer RGBA8 procédural (bruit déterministe par layer).
     /// Algorithme : combinaison micro/macro de hash xx-style, identique au boot

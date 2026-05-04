@@ -38,6 +38,7 @@ layout(push_constant) uniform PC {
     float patchOriginZ;
     float morphFactor;
     int   lodLevel;
+    int   noUserTextures;  // 0 = rendu normal, 1 = fallback orange World Editor
 } pc;
 
 // Outputs to fragment shader

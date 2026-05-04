@@ -65,7 +65,7 @@ le problème est double :
 | `engine/render/terrain/TerrainRenderer.h/.cpp` | Nouvelle méthode `SetNoUserTexturesFallback(bool)`, membre `m_noUserTextures`, propagation au push-constant dans `Record`. |
 | `game/data/shaders/terrain.frag` | Champ `int noUserTextures` ajouté au push-constant ; branche orange en début de calcul albedo. |
 | `game/data/shaders/terrain.vert` | Champ `int noUserTextures` ajouté au PC (alignement CPU). |
-| `tests/` (nouveau test C++) | `WorldEditorSession_DefaultMapHasEmptyTextureRefs` — vérifie que `ActionNewMap` produit `splatLayerTextureRefs` toutes vides. |
+| (pas de tests C++) | Le repo n'a pas encore d'infrastructure de tests C++ (cf. ticket M40.1). Validation par golden path manuel uniquement, documenté dans la PR. |
 | `CODEBASE_MAP.md` | Nouvelle section 15 décrivant le flux carte par défaut, reset caméra et fallback orange. |
 | `docs/terrain_et_world_editor.md` | Paragraphes en fin de section World Editor : fallback orange + reset caméra. |
 
@@ -175,34 +175,12 @@ prise → comportement strictement inchangé.
 
 ## 6. Tests
 
-### 6.1 Test unitaire C++
+### 6.1 Pas de test unitaire C++
 
-`WorldEditorSession_DefaultMapHasEmptyTextureRefs` (à ajouter dans le fichier
-de tests existant pour `WorldEditorSession`, ou créer un nouveau fichier si
-absent) :
-
-```cpp
-TEST(WorldEditorSession, DefaultMapHasEmptyTextureRefs) {
-    engine::core::Config cfg;
-    cfg.SetString("paths.content", <tmp_dir>);  // écrit dans un répertoire temp
-    engine::editor::WorldEditorSession session;
-    ASSERT_TRUE(session.ActionNewMap(cfg));
-    const auto& refs = session.Doc().splatLayerTextureRefs;
-    for (const std::string& r : refs) {
-        EXPECT_TRUE(r.empty());
-    }
-}
-```
-
-`ActionNewMap` écrit `height.r16h`, `splat.slap`, `grass.grms` et le JSON sur
-disque sous `paths.content`. Le test doit donc utiliser un répertoire
-temporaire (via `std::filesystem::temp_directory_path()` ou équivalent
-gtest/repo) pour ne pas polluer `game/data/`. À l'implémentation, suivre la
-convention en place dans les tests existants du repo (regarder comment d'autres
-tests `WorldEditorSession_*` ou tests engine I/O gèrent leur cwd / path).
-
-Ce test garantit que la condition de bascule du fallback orange reste
-opérationnelle si quelqu'un modifie `ActionNewMap` plus tard.
+Le repo n'a pas encore d'infrastructure de tests C++ (gtest/catch2 non
+configurés, ticket **M40.1** encore en TODO). Introduire un framework de tests
+pour ce seul cas serait hors scope. La régression est couverte par le golden
+path manuel décrit ci-dessous.
 
 ### 6.2 Validation manuelle (PR golden path)
 

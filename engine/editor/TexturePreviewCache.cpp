@@ -12,6 +12,8 @@
 #include <fstream>
 #include <iterator>
 
+#include <vulkan/vulkan.h>
+
 namespace engine::editor
 {
     namespace
@@ -159,4 +161,100 @@ namespace engine::editor
         stbi_image_free(pixels);
         return true;
     }
+
+#if defined(_WIN32)
+    TexturePreviewCache::~TexturePreviewCache()
+    {
+        Shutdown();
+    }
+
+    bool TexturePreviewCache::Init(VkDevice device, VkPhysicalDevice physDev,
+                                    VkQueue queue, uint32_t queueFamilyIndex,
+                                    const std::string& contentDir)
+    {
+        if (m_ready) return true;
+        if (device == nullptr || physDev == nullptr || queue == nullptr)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] Init: invalid Vulkan handles");
+            return false;
+        }
+        m_device = device;
+        m_physDev = physDev;
+        m_queue = queue;
+        m_queueFamily = queueFamilyIndex;
+        m_contentDir = contentDir;
+
+        // Sampler partage : linear filter, clamp to edge. Identique pour toutes
+        // les vignettes du cache.
+        VkSamplerCreateInfo si{};
+        si.sType         = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        si.magFilter     = VK_FILTER_LINEAR;
+        si.minFilter     = VK_FILTER_LINEAR;
+        si.mipmapMode    = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        si.addressModeU  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        si.addressModeV  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        si.addressModeW  = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        si.maxAnisotropy = 1.0f;
+        si.minLod        = 0.0f;
+        si.maxLod        = 0.0f;
+        if (vkCreateSampler(m_device, &si, nullptr, &m_sampler) != VK_SUCCESS)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] vkCreateSampler failed");
+            return false;
+        }
+
+        // Descriptor pool dedie : 64 sets max, 1 sampled image chacun (pour ImGui).
+        // Au-dela : warning cote alloc, vignette grise.
+        VkDescriptorPoolSize ps{};
+        ps.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        ps.descriptorCount = 64u;
+
+        VkDescriptorPoolCreateInfo pi{};
+        pi.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pi.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pi.maxSets       = 64u;
+        pi.poolSizeCount = 1;
+        pi.pPoolSizes    = &ps;
+        if (vkCreateDescriptorPool(m_device, &pi, nullptr, &m_pool) != VK_SUCCESS)
+        {
+            vkDestroySampler(m_device, m_sampler, nullptr);
+            m_sampler = nullptr;
+            LOG_ERROR(Render, "[TexturePreviewCache] vkCreateDescriptorPool failed");
+            return false;
+        }
+
+        m_ready = true;
+        LOG_INFO(Render, "[TexturePreviewCache] Init OK (contentDir={})", m_contentDir);
+        return true;
+    }
+
+    void TexturePreviewCache::Shutdown()
+    {
+        if (m_device != nullptr)
+        {
+            if (m_pool != nullptr)
+            {
+                vkDestroyDescriptorPool(m_device, m_pool, nullptr);
+                m_pool = nullptr;
+            }
+            if (m_sampler != nullptr)
+            {
+                vkDestroySampler(m_device, m_sampler, nullptr);
+                m_sampler = nullptr;
+            }
+        }
+        m_device = nullptr;
+        m_physDev = nullptr;
+        m_queue = nullptr;
+        m_queueFamily = 0;
+        m_contentDir.clear();
+        m_ready = false;
+    }
+#else
+    // No-op stubs pour Linux/macOS — l'editeur monde ne tourne que sur Win32.
+    TexturePreviewCache::~TexturePreviewCache() = default;
+    bool TexturePreviewCache::Init(VkDevice, VkPhysicalDevice, VkQueue, uint32_t, const std::string&) { return false; }
+    void TexturePreviewCache::Shutdown() {}
+#endif
+
 } // namespace engine::editor

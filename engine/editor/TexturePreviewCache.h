@@ -4,6 +4,19 @@
 #include <string>
 #include <vector>
 
+// Forward decl Vulkan + ImGui (evite #include vulkan.h dans le .h pour
+// reduire le compile time des consommateurs).
+struct VkDevice_T;         typedef VkDevice_T*         VkDevice;
+struct VkPhysicalDevice_T; typedef VkPhysicalDevice_T* VkPhysicalDevice;
+struct VkQueue_T;          typedef VkQueue_T*          VkQueue;
+struct VkSampler_T;        typedef VkSampler_T*        VkSampler;
+struct VkDescriptorPool_T; typedef VkDescriptorPool_T* VkDescriptorPool;
+struct VkImage_T;          typedef VkImage_T*          VkImage;
+struct VkImageView_T;      typedef VkImageView_T*      VkImageView;
+struct VkDeviceMemory_T;   typedef VkDeviceMemory_T*   VkDeviceMemory;
+struct VkDescriptorSet_T;  typedef VkDescriptorSet_T*  VkDescriptorSet;
+typedef void* ImTextureID;
+
 namespace engine::editor
 {
     /// Resample un buffer RGBA8 a une nouvelle resolution carree par box filter
@@ -37,4 +50,47 @@ namespace engine::editor
     bool LoadTexrFile(const std::string& absolutePath,
                       std::vector<uint8_t>& outRgba,
                       uint32_t& outWidth, uint32_t& outHeight);
+
+    /// Cache lazy de textures decodes + uploadees a 256x256 RGBA8 pour rendu
+    /// dans ImGui (vignettes editeur monde) et reupload du splat array terrain.
+    /// Possede par Engine, vit le temps du device Vulkan.
+    /// Win32 uniquement : sur autres plateformes, Init/Get* sont no-op et
+    /// IsReady reste false.
+    class TexturePreviewCache
+    {
+    public:
+        TexturePreviewCache() = default;
+        TexturePreviewCache(const TexturePreviewCache&) = delete;
+        TexturePreviewCache& operator=(const TexturePreviewCache&) = delete;
+        ~TexturePreviewCache();
+
+        /// Initialise sampler + descriptor pool. A appeler apres l'init du
+        /// device Vulkan et apres ImGui_ImplVulkan_Init.
+        /// \param contentDir Repertoire absolu pointant vers <content>/ (pour
+        ///   resoudre les chemins .texr content-relatifs lors des futurs
+        ///   GetTexrThumb).
+        /// \return true si succes. false sur autre plateforme que Win32 ou si
+        ///   les handles Vulkan sont invalides.
+        bool Init(VkDevice device, VkPhysicalDevice physDev,
+                  VkQueue queue, uint32_t queueFamilyIndex,
+                  const std::string& contentDir);
+
+        /// Detruit toutes les ressources Vulkan possedees. Idempotent.
+        void Shutdown();
+
+        /// True si Init a reussi et Shutdown n'a pas ete appele.
+        bool IsReady() const { return m_ready; }
+
+    private:
+        bool             m_ready        = false;
+        VkDevice         m_device       = nullptr;
+        VkPhysicalDevice m_physDev      = nullptr;
+        VkQueue          m_queue        = nullptr;
+        uint32_t         m_queueFamily  = 0;
+        std::string      m_contentDir;
+
+        VkSampler        m_sampler = nullptr;
+        VkDescriptorPool m_pool    = nullptr;
+    };
+
 } // namespace engine::editor

@@ -13,6 +13,12 @@ namespace engine::render::terrain
     /// Number of splat layers (grass, dirt, rock, snow).
     static constexpr uint32_t kSplatLayerCount = 4u;
 
+    /// Resolution (carre) des layers du texture array albedo. Constante a la
+    /// compilation : si on veut configurer plus tard, exposer via Config.
+    /// 256x256 = sweet spot qualite/memoire pour terrain MMO (cf. spec
+    /// 2026-05-04-editor-texture-previews-design.md, section 3).
+    static constexpr uint32_t kSplatLayerResolution = 256u;
+
     /// Génère un layer RGBA8 procédural (bruit déterministe par layer).
     /// Algorithme : combinaison micro/macro de hash xx-style, identique au boot
     /// de TerrainSplatting (cf. b93a14d). Mêmes octets exacts pour mêmes paramètres.

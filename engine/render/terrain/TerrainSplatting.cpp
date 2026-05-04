@@ -466,10 +466,10 @@ namespace engine::render::terrain
         // ne supporte que 4 canaux (4 layers) : on garde grass/dirt/rock/snow,
         // qui couvrent les biomes les plus communs (sable = layer dirt jaunifie
         // plus tard via un splat custom). Pour avoir des materiaux visuellement
-        // convaincants (au lieu de tuiles 4x4 unies), on genere 64x64 textures
-        // procedurales avec du bruit deterministe par layer.
-        constexpr uint32_t kTexW = 64u;
-        constexpr uint32_t kTexH = 64u;
+        // convaincants (au lieu de tuiles 4x4 unies), on genere kSplatLayerResolution x
+        // kSplatLayerResolution textures procedurales avec du bruit deterministe par layer.
+        constexpr uint32_t kTexW = kSplatLayerResolution;
+        constexpr uint32_t kTexH = kSplatLayerResolution;
         constexpr uint32_t kPixels = kTexW * kTexH;
 
         // Flat normal (pointing up in tangent space: RGB=128,128,255)

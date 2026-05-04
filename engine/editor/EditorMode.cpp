@@ -246,15 +246,18 @@ namespace engine::editor
 	}
 
 	/// Construit la camera initiale de l'editeur monde.
-	/// Position (0, 150, 200) : au-dessus de la mi-hauteur d'un terrain par defaut
-	/// (heightmap=0.5 * height_scale=200m -> sol a y=100m). Camera 50m au-dessus
-	/// du sol attendu, regardant vers le centre du terrain (origin par defaut 0,0).
-	/// Pitch +0.5 rad (~28deg) : vue plongeante pour voir le sol en contrebas.
+	/// Position (0, 130, 60) : au-dessus de la mi-hauteur d'un terrain par defaut
+	/// (sol moyen y=100m), 30m au-dessus, 60m derriere -> avatar humanoide de
+	/// reference (1.8m) visible a ~25% hauteur ecran. Pitch +0.4 rad (~23deg) :
+	/// vue plongeante moderee qui montre l'avatar et le terrain devant.
 	engine::render::Camera EditorMode::BuildInitialCamera() const
 	{
 		engine::render::Camera camera;
-		camera.position = { 0.0f, 150.0f, 200.0f };
-		camera.pitch = 0.5f;
+		// Position (0, 105, 20) : 5m au-dessus du sol moyen attendu (heightmap=0.5
+		// * height_scale=200m -> sol y=100m), 20m derriere le centre. Avec pitch
+		// faible 0.1 rad (~6deg), avatar humanoide 1.8m visible a ~6% hauteur ecran.
+		camera.position = { 0.0f, 105.0f, 20.0f };
+		camera.pitch = 0.1f;
 		return camera;
 	}
 

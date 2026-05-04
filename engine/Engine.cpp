@@ -4854,10 +4854,10 @@ namespace engine
 
 			engine::render::Camera reset;
 			reset.position.x = centerX;
-			reset.position.y = midGroundY + 50.0f;       // 50m au-dessus du sol moyen
-			reset.position.z = centerZ + ws * 0.25f;     // recule a 25% du world size
+			reset.position.y = midGroundY + 5.0f;        // 5m au-dessus du sol moyen
+			reset.position.z = centerZ + 20.0f;          // 20m derriere -> avatar visible ~6% ecran
 			reset.yaw = 0.0f;
-			reset.pitch = 0.5f;                          // vue plongeante ~28deg
+			reset.pitch = 0.1f;                          // pitch leger ~6deg
 			reset.fovYDeg = 70.0f;
 			reset.aspect = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
 			reset.nearZ = 0.1f;

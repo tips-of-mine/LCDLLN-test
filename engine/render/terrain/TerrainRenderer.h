@@ -184,7 +184,7 @@ namespace engine::render::terrain
         ///
         /// Effet : prochain Record() pousse le flag dans le push-constant.
         /// Aucun rebuild GPU requis.
-        void SetNoUserTexturesFallback(bool enable) { m_noUserTextures = enable; }
+        void SetNoUserTexturesFallback(bool enable);
 
     private:
         // ── Push constants ────────────────────────────────────────────────────────

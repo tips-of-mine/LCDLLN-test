@@ -1369,6 +1369,20 @@ namespace engine::render::terrain
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainRenderer::SetNoUserTexturesFallback
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    void TerrainRenderer::SetNoUserTexturesFallback(bool enable)
+    {
+        if (m_noUserTextures != enable)
+        {
+            LOG_INFO(Render, "[TerrainRenderer] noUserTextures fallback: {} -> {}",
+                m_noUserTextures ? 1 : 0, enable ? 1 : 0);
+        }
+        m_noUserTextures = enable;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // TerrainRenderer::Record
     // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1425,6 +1439,13 @@ namespace engine::render::terrain
 
         const float patchWorldSize = static_cast<float>(kPatchQuads) * m_vertStepWorld;
 
+        // Diagnostic one-shot : trace patches retenus / rejetes au premier appel
+        // Record apres un Init. Utile pour comprendre pourquoi le terrain ne
+        // s'affiche pas (cull frustum trop agressif, camera mal placee, etc.).
+        static bool s_recordDiagOnce = true;
+        uint32_t diagCulled = 0;
+        uint32_t diagKept = 0;
+
         for (uint32_t i = 0; i < static_cast<uint32_t>(m_patches.size()); ++i)
         {
             const TerrainPatchInfo& p = m_patches[i];
@@ -1433,7 +1454,8 @@ namespace engine::render::terrain
             const engine::math::Vec3 bMin{ p.originX,                  p.minY, p.originZ };
             const engine::math::Vec3 bMax{ p.originX + patchWorldSize,  p.maxY, p.originZ + patchWorldSize };
 
-            if (!frustum.TestAABB(bMin, bMax)) continue;
+            if (!frustum.TestAABB(bMin, bMax)) { ++diagCulled; continue; }
+            ++diagKept;
 
             // Distance from camera to patch centre (XZ only)
             const float dx   = p.centerX - cameraPos.x;
@@ -1459,6 +1481,16 @@ namespace engine::render::terrain
             }
 
             drawLists[lod].push_back({ i, morphFactor });
+        }
+
+        if (s_recordDiagOnce)
+        {
+            s_recordDiagOnce = false;
+            LOG_INFO(Render,
+                "[TerrainRenderer] Record diag: patches total={} kept={} culled={} cam=({:.1f},{:.1f},{:.1f}) noUserTex={}",
+                static_cast<uint32_t>(m_patches.size()), diagKept, diagCulled,
+                cameraPos.x, cameraPos.y, cameraPos.z,
+                m_noUserTextures ? 1 : 0);
         }
 
         // ── Create / retrieve framebuffer ─────────────────────────────────────────

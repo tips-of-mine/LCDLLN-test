@@ -46,6 +46,7 @@ layout(push_constant) uniform PC {
     float patchOriginZ;
     float morphFactor;
     int   lodLevel;
+    int   noUserTextures;  // 0 = rendu normal, 1 = orange uni (World Editor sans textures)
 } pc;
 
 // ── GBuffer outputs ───────────────────────────────────────────────────────────
@@ -111,15 +112,26 @@ void main()
     float tilingSnow  = ubo.layerTiling.w;
 
     // ── Sample and blend albedo (triplanar per layer) ─────────────────────────
-    vec3 albedo = vec3(0.0);
-    albedo += triplanarSample(uAlbedoArray, 0.0, vWorldPos, macroN, tilingGrass).rgb * w.r;
-    albedo += triplanarSample(uAlbedoArray, 1.0, vWorldPos, macroN, tilingDirt ).rgb * w.g;
-    albedo += triplanarSample(uAlbedoArray, 2.0, vWorldPos, macroN, tilingRock ).rgb * w.b;
-    albedo += triplanarSample(uAlbedoArray, 3.0, vWorldPos, macroN, tilingSnow ).rgb * w.a;
-    float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
-    vec3 grassHue = vec3(0.88, 1.04, 0.82);
-    albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
-    outAlbedo = vec4(albedo, 1.0);
+    // Cas World Editor sans texture utilisateur : on court-circuite tout le splatting
+    // et on ecrit un orange vif uni. Les normales (outNormal) restent calculees
+    // normalement pour que la lighting pass applique le shading Lambert et garde
+    // le relief lisible. Cas par defaut (pc.noUserTextures == 0) : rendu normal.
+    if (pc.noUserTextures != 0)
+    {
+        outAlbedo = vec4(1.0, 0.55, 0.1, 1.0);  // orange vif (sec. 5.2 du design 2026-05-04)
+    }
+    else
+    {
+        vec3 albedo = vec3(0.0);
+        albedo += triplanarSample(uAlbedoArray, 0.0, vWorldPos, macroN, tilingGrass).rgb * w.r;
+        albedo += triplanarSample(uAlbedoArray, 1.0, vWorldPos, macroN, tilingDirt ).rgb * w.g;
+        albedo += triplanarSample(uAlbedoArray, 2.0, vWorldPos, macroN, tilingRock ).rgb * w.b;
+        albedo += triplanarSample(uAlbedoArray, 3.0, vWorldPos, macroN, tilingSnow ).rgb * w.a;
+        float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
+        vec3 grassHue = vec3(0.88, 1.04, 0.82);
+        albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
+        outAlbedo = vec4(albedo, 1.0);
+    }
 
     // ── Sample and blend detail normals (triplanar per layer) ─────────────────
     // Detail normals are stored as RGB tangent-space normals (N * 0.5 + 0.5).

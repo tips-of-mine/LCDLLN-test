@@ -19,8 +19,8 @@ namespace engine::render
 	///
 	/// Pipeline: fullscreen triangle (3 vertices, no vertex buffer).
 		/// Descriptor set 0: 9 combined image samplers (GBufA, GBufB, GBufC, Depth, irradiance,
-		/// prefiltered specular, BRDF LUT, SSAO_Blur, DecalOverlay). Push constants (132 bytes): invVP, cameraPos,
-	/// lightDir, lightColor, ambientColor, useIBL.
+		/// prefiltered specular, BRDF LUT, SSAO_Blur, DecalOverlay). Push constants (148 bytes): invVP, cameraPos,
+	/// lightDir, lightColor, ambientColor, skyColor, useIBL.
 	class LightingPass
 	{
 	public:
@@ -34,9 +34,10 @@ namespace engine::render
 			float lightDir[4];    ///< Normalized direction *toward* the light, xyz, w unused.
 			float lightColor[4];   ///< RGB radiance (color * intensity), w unused.
 			float ambientColor[4]; ///< Constant ambient RGB, w unused (fallback when IBL absent).
+			float skyColor[4];     ///< RGB couleur du ciel (skyHorizon DayNightCycle) pour les pixels sans géométrie. w unused.
 			float useIBL;          ///< 1.0 = use IBL (irradiance + prefilter + BRDF LUT), 0.0 = fallback.
 		};
-		static_assert(sizeof(LightParams) == 132, "LightParams must be exactly 132 bytes");
+		static_assert(sizeof(LightParams) == 148, "LightParams must be exactly 148 bytes");
 
 		LightingPass() = default;
 		LightingPass(const LightingPass&) = delete;

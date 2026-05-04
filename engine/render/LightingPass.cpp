@@ -266,7 +266,7 @@ namespace engine::render
 			VkPushConstantRange pushRange{};
 			pushRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 			pushRange.offset     = 0;
-			pushRange.size       = static_cast<uint32_t>(sizeof(LightParams)); // 132 bytes (M05.4 useIBL)
+			pushRange.size       = static_cast<uint32_t>(sizeof(LightParams)); // 148 bytes (skyColor ajouté)
 
 			VkPipelineLayoutCreateInfo layoutInfo{};
 			layoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

@@ -957,4 +957,189 @@ namespace engine::render::terrain
         g.width = g.height = g.layerCount = 0;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::SetLayerCpuRgba256
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    void TerrainSplatting::SetLayerCpuRgba256(uint32_t layer, const std::vector<uint8_t>& rgba)
+    {
+        if (layer >= kSplatLayerCount)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] SetLayerCpuRgba256: layer {} out of range", layer);
+            return;
+        }
+        const size_t expected = static_cast<size_t>(kSplatLayerResolution) * kSplatLayerResolution * 4u;
+        if (rgba.size() != expected)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] SetLayerCpuRgba256: rgba size {} != expected {} ({}x{}x4)",
+                      rgba.size(), expected, kSplatLayerResolution, kSplatLayerResolution);
+            return;
+        }
+        m_layerCpuData[layer] = rgba;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::RebuildAlbedoArrayFromCpuLayers
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainSplatting::RebuildAlbedoArrayFromCpuLayers(VkDevice device, VkPhysicalDevice physDev,
+                                                            VkQueue queue, uint32_t queueFamilyIndex)
+    {
+        if (m_albedoArray.image == VK_NULL_HANDLE)
+        {
+            LOG_ERROR(Render, "[TerrainSplatting] RebuildAlbedoArrayFromCpuLayers: array not initialized");
+            return false;
+        }
+        const uint32_t res = kSplatLayerResolution;
+        const size_t layerBytes = static_cast<size_t>(res) * res * 4u;
+        std::vector<uint8_t> packed(static_cast<size_t>(kSplatLayerCount) * layerBytes);
+        std::vector<uint8_t> tmpProc;
+
+        for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
+        {
+            const uint8_t* srcLayer = nullptr;
+            if (m_layerCpuData[layer].size() == layerBytes)
+            {
+                srcLayer = m_layerCpuData[layer].data();
+            }
+            else
+            {
+                if (!GenerateProceduralAlbedoLayer(res, layer, tmpProc))
+                {
+                    LOG_ERROR(Render, "[TerrainSplatting] Rebuild: procedural fallback failed for layer {}", layer);
+                    return false;
+                }
+                srcLayer = tmpProc.data();
+            }
+            std::memcpy(packed.data() + layer * layerBytes, srcLayer, layerBytes);
+        }
+
+        // Staging buffer + copy via existing internal helper.
+        VkBuffer staging = VK_NULL_HANDLE;
+        VkDeviceMemory stagingMem = VK_NULL_HANDLE;
+        if (!CreateStagingBuffer(device, physDev, packed.size(), staging, stagingMem))
+        {
+            return false;
+        }
+        void* mapped = nullptr;
+        if (vkMapMemory(device, stagingMem, 0, packed.size(), 0, &mapped) != VK_SUCCESS)
+        {
+            vkDestroyBuffer(device, staging, nullptr);
+            vkFreeMemory(device, stagingMem, nullptr);
+            return false;
+        }
+        std::memcpy(mapped, packed.data(), packed.size());
+        vkUnmapMemory(device, stagingMem);
+
+        // Build copy regions (1 per layer).
+        std::vector<VkBufferImageCopy> regions(kSplatLayerCount);
+        for (uint32_t layer = 0; layer < kSplatLayerCount; ++layer)
+        {
+            VkBufferImageCopy& r = regions[layer];
+            r = {};
+            r.bufferOffset = layer * layerBytes;
+            r.bufferRowLength = 0;
+            r.bufferImageHeight = 0;
+            r.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            r.imageSubresource.mipLevel = 0;
+            r.imageSubresource.baseArrayLayer = layer;
+            r.imageSubresource.layerCount = 1;
+            r.imageOffset = { 0, 0, 0 };
+            r.imageExtent = { res, res, 1 };
+        }
+
+        const bool ok = ReuploadAlbedoArrayInternal(device, queue, queueFamilyIndex,
+                                                     staging, regions);
+        vkDestroyBuffer(device, staging, nullptr);
+        vkFreeMemory(device, stagingMem, nullptr);
+        return ok;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // TerrainSplatting::ReuploadAlbedoArrayInternal
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    bool TerrainSplatting::ReuploadAlbedoArrayInternal(VkDevice device, VkQueue queue,
+                                                        uint32_t queueFamilyIndex,
+                                                        VkBuffer staging,
+                                                        const std::vector<VkBufferImageCopy>& regions)
+    {
+        VkCommandPool pool = VK_NULL_HANDLE;
+        VkCommandPoolCreateInfo poolCI{};
+        poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolCI.queueFamilyIndex = queueFamilyIndex;
+        poolCI.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+        if (vkCreateCommandPool(device, &poolCI, nullptr, &pool) != VK_SUCCESS) return false;
+
+        VkCommandBuffer cmd = VK_NULL_HANDLE;
+        VkCommandBufferAllocateInfo aci{};
+        aci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        aci.commandPool = pool;
+        aci.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        aci.commandBufferCount = 1;
+        if (vkAllocateCommandBuffers(device, &aci, &cmd) != VK_SUCCESS)
+        {
+            vkDestroyCommandPool(device, pool, nullptr);
+            return false;
+        }
+
+        VkCommandBufferBeginInfo bi{};
+        bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        vkBeginCommandBuffer(cmd, &bi);
+
+        // Barrier SHADER_READ_ONLY -> TRANSFER_DST pour tous les layers.
+        {
+            VkImageMemoryBarrier b{};
+            b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            b.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            b.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.image = m_albedoArray.image;
+            b.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, kSplatLayerCount };
+            b.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            b.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            vkCmdPipelineBarrier(cmd,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                0, 0, nullptr, 0, nullptr, 1, &b);
+        }
+
+        vkCmdCopyBufferToImage(cmd, staging, m_albedoArray.image,
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                               static_cast<uint32_t>(regions.size()), regions.data());
+
+        // Barrier TRANSFER_DST -> SHADER_READ_ONLY pour tous les layers.
+        {
+            VkImageMemoryBarrier b{};
+            b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            b.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            b.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            b.image = m_albedoArray.image;
+            b.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, kSplatLayerCount };
+            b.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            b.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            vkCmdPipelineBarrier(cmd,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                0, 0, nullptr, 0, nullptr, 1, &b);
+        }
+
+        vkEndCommandBuffer(cmd);
+
+        VkSubmitInfo si{};
+        si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        si.commandBufferCount = 1;
+        si.pCommandBuffers = &cmd;
+        if (vkQueueSubmit(queue, 1, &si, VK_NULL_HANDLE) != VK_SUCCESS)
+        {
+            vkDestroyCommandPool(device, pool, nullptr);
+            return false;
+        }
+        vkQueueWaitIdle(queue);
+        vkDestroyCommandPool(device, pool, nullptr);
+        return true;
+    }
+
 } // namespace engine::render::terrain

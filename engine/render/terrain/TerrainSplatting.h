@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -129,6 +130,28 @@ namespace engine::render::terrain
         bool ReuploadSplatMap(VkDevice device, VkPhysicalDevice physDev,
                               VkQueue queue, uint32_t queueFamilyIndex);
 
+        /// Stocke un buffer CPU RGBA8 kSplatLayerResolution^2 pour le layer
+        /// donne. Le buffer doit faire exactement
+        /// kSplatLayerResolution * kSplatLayerResolution * 4 octets — sinon
+        /// l'appel est ignore (LOG_ERROR). N'uploade pas tout de suite : il
+        /// faut appeler RebuildAlbedoArrayFromCpuLayers ensuite.
+        /// \param layer 0..kSplatLayerCount-1.
+        /// \param rgba Pixels RGBA8 row-major.
+        void SetLayerCpuRgba256(uint32_t layer, const std::vector<uint8_t>& rgba);
+
+        /// Repacke les 4 layers CPU (m_layerCpuData) en un buffer staging
+        /// 4*kSplatLayerResolution^2*4 et re-upload via vkCmdCopyBufferToImage
+        /// dans m_albedoArray.image. Pattern : SHADER_READ_ONLY -> TRANSFER_DST
+        /// -> copies -> SHADER_READ_ONLY, submit + vkQueueWaitIdle.
+        ///
+        /// Pour les layers sans donnee CPU stockee (SetLayerCpuRgba256 jamais
+        /// appele ou taille incorrecte), regenere la procedurale via
+        /// GenerateProceduralAlbedoLayer.
+        ///
+        /// \return true si succes.
+        bool RebuildAlbedoArrayFromCpuLayers(VkDevice device, VkPhysicalDevice physDev,
+                                             VkQueue queue, uint32_t queueFamilyIndex);
+
     private:
         SplatMapGpu    m_splatMap;
         TextureArrayGpu m_albedoArray;
@@ -141,6 +164,10 @@ namespace engine::render::terrain
         std::vector<uint8_t> m_cpuData;
         uint32_t             m_cpuWidth  = 0;
         uint32_t             m_cpuHeight = 0;
+
+        /// Buffers CPU des 4 layers, alimentes par SetLayerCpuRgba256.
+        /// Vide pour un layer = utilise la procedurale au prochain rebuild.
+        std::array<std::vector<uint8_t>, kSplatLayerCount> m_layerCpuData;
 
         // ── Internal upload helpers ───────────────────────────────────────────────
 
@@ -163,6 +190,13 @@ namespace engine::render::terrain
 
         static void DestroySplatMap(VkDevice device, SplatMapGpu& g);
         static void DestroyTextureArray(VkDevice device, TextureArrayGpu& g);
+
+        /// Helper interne : barrier SHADER_READ_ONLY -> TRANSFER_DST, copy, retour
+        /// SHADER_READ_ONLY. Submit + vkQueueWaitIdle. Utilise par
+        /// RebuildAlbedoArrayFromCpuLayers (image deja en SHADER_READ_ONLY apres Init).
+        bool ReuploadAlbedoArrayInternal(VkDevice device, VkQueue queue, uint32_t queueFamilyIndex,
+                                         VkBuffer staging,
+                                         const std::vector<VkBufferImageCopy>& regions);
     };
 
 } // namespace engine::render::terrain

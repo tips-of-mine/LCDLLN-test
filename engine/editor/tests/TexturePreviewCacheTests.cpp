@@ -8,6 +8,9 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <vector>
 
 namespace
@@ -105,6 +108,43 @@ namespace
         REQUIRE(!engine::editor::ResampleRgba8Box(img.data(), 64u, 64u, 2u, out));
         REQUIRE(!engine::editor::ResampleRgba8Box(img.data(), 64u, 64u, 8192u, out));
     }
+
+    /// Ecrit un .texr 4x4 RGBA8 dans tmp et le decode via LoadTexrFile.
+    void Test_LoadTexrRoundTrip()
+    {
+        const std::filesystem::path tmpPath =
+            std::filesystem::temp_directory_path() / "lcdlln_texr_test.texr";
+        std::vector<uint8_t> file;
+        const uint32_t magic = 0x52584554u;
+        const uint32_t w = 4u, h = 4u, srgb = 1u;
+        file.resize(16u + w * h * 4u);
+        std::memcpy(file.data() + 0,  &magic, 4);
+        std::memcpy(file.data() + 4,  &w,     4);
+        std::memcpy(file.data() + 8,  &h,     4);
+        std::memcpy(file.data() + 12, &srgb,  4);
+        for (size_t p = 0; p < w * h; ++p)
+        {
+            file[16u + p * 4u + 0] = 100u;
+            file[16u + p * 4u + 1] = 150u;
+            file[16u + p * 4u + 2] = 200u;
+            file[16u + p * 4u + 3] = 255u;
+        }
+        {
+            std::ofstream f(tmpPath, std::ios::binary);
+            f.write(reinterpret_cast<const char*>(file.data()),
+                    static_cast<long long>(file.size()));
+        }
+
+        std::vector<uint8_t> out;
+        uint32_t outW = 0, outH = 0;
+        REQUIRE(engine::editor::LoadTexrFile(tmpPath.string(), out, outW, outH));
+        REQUIRE(outW == 4u);
+        REQUIRE(outH == 4u);
+        REQUIRE(out.size() == 64u);
+        REQUIRE(out[0] == 100u && out[1] == 150u && out[2] == 200u && out[3] == 255u);
+
+        std::filesystem::remove(tmpPath);
+    }
 } // namespace
 
 int main()
@@ -114,6 +154,7 @@ int main()
     Test_GenerateProceduralDeterminism();
     Test_GenerateProceduralInvalidParams();
     Test_ResampleInvalidParams();
+    Test_LoadTexrRoundTrip();
     if (g_failed == 0)
     {
         std::fprintf(stdout, "[OK] all texture_preview_cache_tests passed\n");

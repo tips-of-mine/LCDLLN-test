@@ -1,12 +1,23 @@
 #include "engine/editor/TexturePreviewCache.h"
 
+#include "engine/core/Log.h"
+
+// stb_image deja defini dans WorldMapIo.cpp / AssetRegistry.cpp — NE PAS redefinir
+// STB_IMAGE_IMPLEMENTATION ici (link error sinon).
+#include "stb_image.h"
+
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 
 namespace engine::editor
 {
     namespace
     {
+        constexpr uint32_t kTexrMagic = 0x52584554u;  // "TEXR" little-endian
+
         /// Crop centre rectangulaire vers carre. Renvoie le pointeur vers le
         /// pixel (0,0) du sous-rectangle carre + son cote.
         void CropToSquare(const uint8_t* src, uint32_t srcW, uint32_t srcH,
@@ -74,6 +85,78 @@ namespace engine::editor
                 dst[3] = static_cast<uint8_t>(accA / count);
             }
         }
+        return true;
+    }
+
+    bool LoadTexrFile(const std::string& absolutePath,
+                      std::vector<uint8_t>& outRgba,
+                      uint32_t& outWidth, uint32_t& outHeight)
+    {
+        outRgba.clear();
+        outWidth = 0;
+        outHeight = 0;
+
+        std::error_code ec;
+        if (!std::filesystem::exists(absolutePath, ec))
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] Texture file not found: {}", absolutePath);
+            return false;
+        }
+
+        std::ifstream f(absolutePath, std::ios::binary);
+        if (!f)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] Cannot open texture file: {}", absolutePath);
+            return false;
+        }
+        std::vector<uint8_t> data((std::istreambuf_iterator<char>(f)),
+                                   std::istreambuf_iterator<char>());
+
+        // Si magic 'TEXR' present : decoder directement.
+        if (data.size() >= 16u)
+        {
+            uint32_t magic = 0, w = 0, h = 0, srgb = 0;
+            std::memcpy(&magic, data.data(), 4);
+            if (magic == kTexrMagic)
+            {
+                std::memcpy(&w,    data.data() + 4,  4);
+                std::memcpy(&h,    data.data() + 8,  4);
+                std::memcpy(&srgb, data.data() + 12, 4);
+                (void)srgb;
+                if (w == 0 || h == 0 || w > 4096u || h > 4096u)
+                {
+                    LOG_ERROR(Render, "[TexturePreviewCache] TEXR invalid dims {}x{}: {}", w, h, absolutePath);
+                    return false;
+                }
+                const size_t pixelBytes = static_cast<size_t>(w) * h * 4u;
+                if (data.size() < 16u + pixelBytes)
+                {
+                    LOG_ERROR(Render, "[TexturePreviewCache] TEXR truncated: {}", absolutePath);
+                    return false;
+                }
+                outRgba.assign(data.begin() + 16,
+                               data.begin() + 16 + static_cast<long long>(pixelBytes));
+                outWidth = w;
+                outHeight = h;
+                return true;
+            }
+        }
+
+        // Fallback : PNG/JPG/TGA/BMP via stb_image.
+        int w = 0, h = 0, comp = 0;
+        stbi_uc* pixels = stbi_load_from_memory(data.data(), static_cast<int>(data.size()),
+                                                &w, &h, &comp, 4);
+        if (pixels == nullptr || w <= 0 || h <= 0 || w > 4096 || h > 4096)
+        {
+            LOG_ERROR(Render, "[TexturePreviewCache] stb_image decode failed or out of range: {}", absolutePath);
+            if (pixels) stbi_image_free(pixels);
+            return false;
+        }
+        const size_t pixelBytes = static_cast<size_t>(w) * h * 4u;
+        outRgba.assign(pixels, pixels + pixelBytes);
+        outWidth = static_cast<uint32_t>(w);
+        outHeight = static_cast<uint32_t>(h);
+        stbi_image_free(pixels);
         return true;
     }
 } // namespace engine::editor

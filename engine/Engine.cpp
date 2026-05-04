@@ -3442,9 +3442,14 @@ namespace engine
 			// aussi la souris (orientation), ce qui figeait la caméra dans l’éditeur.
 			const bool capMouse = m_worldEditorImGui->WantsCaptureMouse();
 			const bool capKb = m_worldEditorImGui->WantsCaptureKeyboard();
-			// Clic droit maintenu : orienter même au-dessus des panneaux ImGui (souris souvent « capturée »).
+			// Convention UX standard (Unity/Unreal/Blender) : la rotation de la
+			// caméra free-fly de l'éditeur n'est active QUE pendant que le clic
+			// droit est maintenu. Sinon le moindre déplacement de la souris fait
+			// dériver la caméra et l'utilisateur perd le terrain. Avant ce fix,
+			// `applyLook = !capMouse || rmbLook` faisait tourner la caméra dès
+			// que la souris survolait la zone 3D — UX cassée.
 			const bool rmbLook = m_input.IsMouseDown(engine::platform::MouseButton::Right);
-			const bool applyLook = !capMouse || rmbLook;
+			const bool applyLook = rmbLook;
 			const bool applyKb = !capKb;
 			float terrainWorldM = 0.f;
 			if (m_terrain.IsValid())

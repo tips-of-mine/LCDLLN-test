@@ -2079,9 +2079,33 @@ namespace engine
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
 												bool authPhotoBackdrop = false;
 												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
-												if (presentSolidColorDebug)
+												// PR #427 follow-up DIAG (PR17) : on remplit le swapchain avec une couleur
+												// MAGENTA distinctive AU LIEU de copier le rendu 3D, MAIS on continue à
+												// dessiner ImGui par-dessus normalement. But : determiner si le viewport
+												// gris central est cause par (a) le pipeline 3D qui ne produit rien
+												// d'utile, ou (b) ImGui qui dessine un fond opaque qui masque la 3D.
+												//   - Si l'utilisateur voit du MAGENTA au centre du viewport : ImGui ne
+												//     masque pas, le bug est dans le pipeline 3D (terrain projete hors
+												//     ecran, lighting.frag qui ne retourne pas la couleur attendue, etc.).
+												//   - Si l'utilisateur voit du GRIS uniforme au centre : ImGui dessine un
+												//     fond opaque (ImGuiCol_WindowBg ou similaire) qui masque le swapchain.
+												// A retirer une fois le diag termine.
+												constexpr bool kDiagPr17ForceMagenta = true;
+												if (presentSolidColorDebug || kDiagPr17ForceMagenta)
 												{
-													LOG_DEBUG(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
+													if (kDiagPr17ForceMagenta)
+													{
+														static bool s_loggedDiagPr17 = false;
+														if (!s_loggedDiagPr17)
+														{
+															s_loggedDiagPr17 = true;
+															LOG_INFO(Render, "[CopyPresent] DIAG PR17: force MAGENTA clear sur swapchain (au lieu de copy 3D). ImGui rend par-dessus.");
+														}
+													}
+													else
+													{
+														LOG_DEBUG(Render, "[CopyPresent] debug solid-color present enabled; skipping scene copy");
+													}
 													const VkClearColorValue debugColor = { { 0.9f, 0.0f, 0.9f, 1.0f } };
 													VkImageSubresourceRange clearRange{};
 													clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

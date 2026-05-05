@@ -524,7 +524,16 @@ namespace engine::render::terrain
             VkPipelineRasterizationStateCreateInfo rasCI{};
             rasCI.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasCI.polygonMode = VK_POLYGON_MODE_FILL;
-            rasCI.cullMode    = VK_CULL_MODE_BACK_BIT;
+            // PR #427 follow-up DIAG (PR22) : on desactive temporairement le
+            // backface culling. Suspect : le commit ee181da (Reapply view matrix
+            // transposee) a inverse la convention de la matrice view (column ->
+            // row vectors), ce qui peut faire apparaitre les triangles terrain
+            // en CW au lieu de CCW dans le clip space. Avec cullMode=BACK et
+            // frontFace=CCW, tous les patches seraient alors silencieusement
+            // rejetes. Si avec NONE on voit le terrain (BLEU dans la viz depth
+            // PR21), on confirme et on inverse soit frontFace, soit l'ordre
+            // des indices du mesh.
+            rasCI.cullMode    = VK_CULL_MODE_NONE;  // etait VK_CULL_MODE_BACK_BIT
             rasCI.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 

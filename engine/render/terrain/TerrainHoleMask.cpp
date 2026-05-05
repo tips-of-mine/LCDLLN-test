@@ -154,7 +154,16 @@ namespace engine::render::terrain
         outData.width  = quadW;
         outData.height = quadH;
         outData.mask.assign(static_cast<size_t>(quadW) * quadH, 255u);
-        LOG_DEBUG(Render, "[TerrainHoleMask] Generated solid fallback mask ({}×{} quads)", quadW, quadH);
+        // DIAG TEMP (PR #427 follow-up) : passe DEBUG -> INFO + sanity check sur les
+        // bytes generes. Si le mask n'est pas "tout 255", terrain.frag::main()
+        // declenche `discard` sur tous les fragments (cf. INVESTIGATION sec. NEW).
+        const uint8_t firstByte = outData.mask.empty() ? 0u : outData.mask.front();
+        const uint8_t lastByte  = outData.mask.empty() ? 0u : outData.mask.back();
+        LOG_INFO(Render,
+            "[TerrainHoleMask] GenerateSolid OK ({}x{} quads, total={} bytes, "
+            "first={} last={}) [doit etre 255/255 sinon discard total]",
+            quadW, quadH, static_cast<uint32_t>(outData.mask.size()),
+            static_cast<uint32_t>(firstByte), static_cast<uint32_t>(lastByte));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -173,6 +182,16 @@ namespace engine::render::terrain
         }
 
         const VkDeviceSize dataBytes = static_cast<VkDeviceSize>(data.width) * data.height;
+
+        // DIAG TEMP (PR #427 follow-up) : log le contenu CPU avant upload.
+        // Permet de verifier qu'on n'envoie pas un buffer de zeros (qui causerait
+        // discard total dans terrain.frag).
+        const uint8_t firstByte = data.mask.front();
+        const uint8_t lastByte  = data.mask.back();
+        LOG_INFO(Render,
+            "[TerrainHoleMask] UploadToGpu start ({}x{} = {} bytes CPU, first={} last={})",
+            data.width, data.height, static_cast<uint64_t>(dataBytes),
+            static_cast<uint32_t>(firstByte), static_cast<uint32_t>(lastByte));
 
         // ── Staging buffer (HOST_VISIBLE | HOST_COHERENT) ─────────────────────
         VkBuffer       stagingBuf = VK_NULL_HANDLE;

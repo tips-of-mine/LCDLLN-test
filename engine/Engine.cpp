@@ -1513,6 +1513,29 @@ namespace engine
 												const engine::RenderState& rs = m_renderStates[readIdx];
 												const bool terrainBeforeGeometry = m_terrain.IsValid()
 													&& m_pipeline->GetGeometryPass().HasLoadPass();
+												// DIAG TEMP (PR #427 follow-up) : log one-shot pour
+												// confirmer que la branche terrainBeforeGeometry est prise
+												// et que les ResourceIds passes a terrain.Record() puis
+												// GeometryPass.RecordIndirect() sont bien identiques (sinon
+												// chacun ecrit dans un VkImage different => terrain ecrit
+												// mais lighting lit autre chose).
+												static bool s_geometryPassDiagOnce = true;
+												if (s_geometryPassDiagOnce)
+												{
+													s_geometryPassDiagOnce = false;
+													LOG_INFO(Render,
+														"[Geometry pass] DIAG: m_terrain.IsValid={} HasLoadPass={} terrainBeforeGeometry={}",
+														m_terrain.IsValid() ? 1 : 0,
+														m_pipeline->GetGeometryPass().HasLoadPass() ? 1 : 0,
+														terrainBeforeGeometry ? 1 : 0);
+													LOG_INFO(Render,
+														"[Geometry pass] DIAG: ResourceIds A={} B={} C={} V={} D={}",
+														static_cast<uint32_t>(m_fgGBufferAId),
+														static_cast<uint32_t>(m_fgGBufferBId),
+														static_cast<uint32_t>(m_fgGBufferCId),
+														static_cast<uint32_t>(m_fgGBufferVelocityId),
+														static_cast<uint32_t>(m_fgDepthId));
+												}
 												if (terrainBeforeGeometry)
 												{
 													m_terrain.Record(
@@ -4913,6 +4936,22 @@ namespace engine
 			for (const std::string& r : refs)
 			{
 				if (!r.empty()) { noUserTextures = false; break; }
+			}
+			// DIAG TEMP (PR #427 follow-up) : log les refs de texture splat
+			// + verdict noUserTextures pour confirmer que le push-constant
+			// terrain.frag::pc.noUserTextures sera bien a 1 (sinon outAlbedo
+			// utilise les textures placeholder => potentiellement noir).
+			LOG_INFO(Render,
+				"[WorldEditor] DIAG splat refs ({} layers): noUserTextures={}",
+				static_cast<uint32_t>(refs.size()),
+				noUserTextures ? 1 : 0);
+			for (size_t i = 0; i < refs.size(); ++i)
+			{
+				LOG_INFO(Render,
+					"[WorldEditor] DIAG   refs[{}]=\"{}\" (empty={})",
+					static_cast<uint32_t>(i),
+					refs[i],
+					refs[i].empty() ? 1 : 0);
 			}
 		}
 		m_terrain.SetNoUserTexturesFallback(noUserTextures);

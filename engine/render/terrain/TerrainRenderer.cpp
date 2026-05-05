@@ -286,6 +286,35 @@ namespace engine::render::terrain
         LOG_DEBUG(Render, "[TerrainRenderer] Patch list built: {}×{} = {} patches",
                   m_patchCountX, m_patchCountZ, totalPatches);
 
+        // DIAG TEMP (PR #427 follow-up) : confirme que toutes les ressources GPU
+        // critiques pour le rendu sont bien creees apres Init. Si l'une est NULL
+        // ou que le hole mask data n'est pas tout 255, on a la cause directe du
+        // terrain invisible (cf. INVESTIGATION_terrain_invisible.md).
+        {
+            const uint8_t hmFirst = m_holeMaskData.mask.empty() ? 0u : m_holeMaskData.mask.front();
+            const uint8_t hmLast  = m_holeMaskData.mask.empty() ? 0u : m_holeMaskData.mask.back();
+            LOG_INFO(Render,
+                "[TerrainRenderer] Init DIAG: heightmap={}x{} patches={} fmt(A={}/B={}/C={}/V={}/D={})",
+                m_heightmapData.width, m_heightmapData.height, totalPatches,
+                static_cast<int>(fmtA), static_cast<int>(fmtB), static_cast<int>(fmtC),
+                static_cast<int>(fmtVelocity), static_cast<int>(fmtDepth));
+            LOG_INFO(Render,
+                "[TerrainRenderer] Init DIAG: holeMaskData={}x{} (first={} last={}) "
+                "[doivent etre 255/255 - autrement discard total]",
+                m_holeMaskData.width, m_holeMaskData.height,
+                static_cast<uint32_t>(hmFirst), static_cast<uint32_t>(hmLast));
+            LOG_INFO(Render,
+                "[TerrainRenderer] Init DIAG: holeMaskGpu image={} view={} sampler={}",
+                (void*)m_holeMaskGpu.image,
+                (void*)m_holeMaskGpu.view,
+                (void*)m_holeMaskGpu.sampler);
+            LOG_INFO(Render,
+                "[TerrainRenderer] Init DIAG: grassMaskData={}x{} grassMaskGpu image={} view={}",
+                m_grassMaskData.width, m_grassMaskData.height,
+                (void*)m_grassMaskGpu.image,
+                (void*)m_grassMaskGpu.view);
+        }
+
         // ── Create render pass ────────────────────────────────────────────────────
         {
             // 5 attachments: A, B, C, Velocity (color), Depth
@@ -1603,6 +1632,22 @@ namespace engine::render::terrain
             registry.getImageView(idVelocity),
             registry.getImageView(idDepth)
         };
+
+        // DIAG TEMP (PR #427 follow-up) : confirme une seule fois que les 5
+        // VkImageView fournies par le frame graph sont non-NULL et matchent
+        // l'extent attendu. Une view NULL ici provoquerait silencieusement
+        // un terrain invisible (vkCreateFramebuffer echouerait, return early).
+        static bool s_recordViewsLogged = false;
+        if (!s_recordViewsLogged)
+        {
+            s_recordViewsLogged = true;
+            LOG_INFO(Render,
+                "[TerrainRenderer] Record DIAG: extent={}x{} views A={} B={} C={} V={} D={}",
+                extent.width, extent.height,
+                (void*)views[0], (void*)views[1],
+                (void*)views[2], (void*)views[3],
+                (void*)views[4]);
+        }
 
         FramebufferKey fbKey{};
         fbKey.renderPass = m_renderPass;

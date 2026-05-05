@@ -90,6 +90,68 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 // ---- Main -------------------------------------------------------------------
 void main()
 {
+    // ============================================================================
+    // === DIAG TEMP — PR #427 follow-up — A REVERTER apres diagnostic terrain ====
+    // ============================================================================
+    // Visualisation 4 quadrants pour isoler ou la pipeline rendu lache :
+    //   Top-Left   : GBufferA (albedo brut). Si on voit l'orange (1, 0.55, 0.1) =>
+    //                terrain.frag a bien tourne et ecrit son albedo. Si noir (clear
+    //                = 0,0,0,0) => aucun fragment terrain n'a ete shade (vertex
+    //                clipped GPU, ou hole mask discard).
+    //   Top-Right  : GBufferB (normale encodee N*0.5+0.5). Si couleurs vives
+    //                visibles => normales ecrites par le terrain. Sinon
+    //                gris-bleu uniforme (clear = 0.5, 0.5, 1.0) => idem TL.
+    //   Bottom-Left: depth visualisee. Magenta (1,0,1) => depth >= 1.0 (clear =>
+    //                aucune geometrie n'a ecrit la depth a ce pixel). Gris =>
+    //                depth ecrite par une geometrie (terrain ou autre).
+    //   Bottom-Right: verdict de l'early-return de la lighting pass : vert =>
+    //                depth < 1.0 (lighting aurait shade un pixel reel). Magenta
+    //                => depth >= 1.0 (lighting court-circuite vers skyColor).
+    //
+    // En un seul screenshot du World Editor on identifie immediatement laquelle
+    // des 4 hypotheses (cf. INVESTIGATION_terrain_invisible.md sec.4) est en
+    // cause.
+    // ----------------------------------------------------------------------------
+    {
+        vec2 uv = inUV;
+        vec4 dbg;
+        if (uv.x < 0.5 && uv.y < 0.5) {
+            // Top-Left : GBufferA brut
+            vec2 quv = vec2(uv.x * 2.0, uv.y * 2.0);
+            dbg = texture(gbufA, quv);
+            dbg.a = 1.0;
+        } else if (uv.x >= 0.5 && uv.y < 0.5) {
+            // Top-Right : GBufferB (normale encodee)
+            vec2 quv = vec2((uv.x - 0.5) * 2.0, uv.y * 2.0);
+            dbg = vec4(texture(gbufB, quv).rgb, 1.0);
+        } else if (uv.x < 0.5 && uv.y >= 0.5) {
+            // Bottom-Left : depth grayscale + magenta si == 1.0 (sky)
+            vec2 quv = vec2(uv.x * 2.0, (uv.y - 0.5) * 2.0);
+            float d = texture(depthTex, quv).r;
+            if (d >= 1.0) {
+                dbg = vec4(1.0, 0.0, 1.0, 1.0);
+            } else {
+                // Etale [0.95, 1.0] sur [0,1] pour mieux voir les variations
+                float dd = clamp((d - 0.95) / 0.05, 0.0, 1.0);
+                dbg = vec4(dd, dd, dd, 1.0);
+            }
+        } else {
+            // Bottom-Right : verdict lighting (vert = OK, magenta = court-circuit sky)
+            vec2 quv = vec2((uv.x - 0.5) * 2.0, (uv.y - 0.5) * 2.0);
+            float d = texture(depthTex, quv).r;
+            if (d >= 1.0) {
+                dbg = vec4(1.0, 0.0, 1.0, 1.0);
+            } else {
+                dbg = vec4(0.0, 1.0, 0.0, 1.0);
+            }
+        }
+        outSceneColorHDR = dbg;
+        return;
+    }
+    // ============================================================================
+    // === FIN DIAG TEMP ==========================================================
+    // ============================================================================
+
     // ---- Sample GBuffer ------------------------------------------------
     vec4  baseAlbedo = texture(gbufA, inUV);
     vec4  decalOverlay = texture(decalOverlayTex, inUV);

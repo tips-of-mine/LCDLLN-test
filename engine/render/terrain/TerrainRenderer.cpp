@@ -553,7 +553,24 @@ namespace engine::render::terrain
             VkPipelineRasterizationStateCreateInfo rasCI{};
             rasCI.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasCI.polygonMode = VK_POLYGON_MODE_FILL;
-            rasCI.cullMode    = VK_CULL_MODE_BACK_BIT;
+            // FIX (PR #427 follow-up) : VK_CULL_MODE_NONE au lieu de BACK_BIT.
+            // Cause racine identifiee : TerrainMesh genere ses indices en CCW vu
+            // du dessus en world space (cf. TerrainMesh.cpp:166), mais
+            // PerspectiveVulkan (Math.h:78) inverse Y (m[5] = -t), ce qui swap
+            // l'orientation des triangles dans le clip space (CCW world -> CW
+            // clip). Avec frontFace=CCW + cullMode=BACK, TOUS les triangles
+            // terrain etaient consideres back-facing et rejetes par le rasterizer
+            // (drawcalls=225 emis mais zero fragment). Aucune erreur Vulkan car
+            // le backface culling est legal. Confirme par PR4 : test brutal
+            // terrain.frag (ROUGE pur) + bypass GeometryPass = toujours zero
+            // pixel terrain visible, alors que tous les handles GPU sont OK.
+            //
+            // VK_CULL_MODE_NONE est le fix le plus safe : zero risque de casser
+            // d'autres passes, perte de perf negligeable (225 patches max).
+            // Un fix plus propre (option 2 : inverser indices dans TerrainMesh,
+            // option 3 : frontFace=CLOCKWISE) sera fait apres confirmation
+            // visuelle de ce fix.
+            rasCI.cullMode    = VK_CULL_MODE_NONE;
             rasCI.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 

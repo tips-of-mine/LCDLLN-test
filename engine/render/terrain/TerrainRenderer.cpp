@@ -1602,6 +1602,59 @@ namespace engine::render::terrain
                 projXYZW(pc.centerX, cyMid, pc.centerZ, 1.0f, cx, cy, cz, cw);
                 LOG_INFO(Render, "[TerrainRenderer] proj(centerPatch=({:.0f},{:.1f},{:.0f}))=({:.2f},{:.2f},{:.2f},{:.2f})",
                     pc.centerX, cyMid, pc.centerZ, cx, cy, cz, cw);
+                // DIAG TEMP (PR #427 follow-up) : NDC pour le centerPatch.
+                // Vulkan exige ndc.x ∈ [-1,+1], ndc.y ∈ [-1,+1], ndc.z ∈ [0,+1].
+                // Si l'un de ces ndc est out, le vertex est CLIPPED par GPU
+                // rasterizer => terrain invisible meme si frustum CPU passe.
+                if (cw != 0.0f) {
+                    LOG_INFO(Render,
+                        "[TerrainRenderer]   ndc=({:.3f},{:.3f},{:.3f}) "
+                        "[in_frustum_X={} Y={} Z={}]",
+                        cx/cw, cy/cw, cz/cw,
+                        (cx/cw >= -1.0f && cx/cw <= 1.0f) ? "OK" : "OUT",
+                        (cy/cw >= -1.0f && cy/cw <= 1.0f) ? "OK" : "OUT",
+                        (cz/cw >= 0.0f  && cz/cw <= 1.0f) ? "OK" : "OUT");
+                }
+
+                // DIAG TEMP (PR #427 follow-up) : projection de 4 patches en eventail
+                // (NW, NE, SW, SE par rapport au centre) pour confirmer que ce n'est
+                // pas seulement le centerPatch qui est out-of-frustum, ou pour
+                // identifier s'il existe au moins un patch qui devrait etre visible.
+                struct EventailIdx { int dx; int dz; const char* name; };
+                const uint32_t cx_p = m_patchCountX / 2u;
+                const uint32_t cz_p = m_patchCountZ / 2u;
+                EventailIdx eventail[4] = {
+                    { -static_cast<int>(cx_p), -static_cast<int>(cz_p), "NW(coin)" },
+                    { +static_cast<int>(cx_p) - 1, -static_cast<int>(cz_p), "NE(coin)" },
+                    { -static_cast<int>(cx_p), +static_cast<int>(cz_p) - 1, "SW(coin)" },
+                    { +static_cast<int>(cx_p) - 1, +static_cast<int>(cz_p) - 1, "SE(coin)" },
+                };
+                for (int e = 0; e < 4; ++e) {
+                    const int px = static_cast<int>(cx_p) + eventail[e].dx;
+                    const int pz = static_cast<int>(cz_p) + eventail[e].dz;
+                    if (px < 0 || pz < 0
+                        || static_cast<uint32_t>(px) >= m_patchCountX
+                        || static_cast<uint32_t>(pz) >= m_patchCountZ) continue;
+                    const TerrainPatchInfo& pe = m_patches[static_cast<uint32_t>(pz) * m_patchCountX + static_cast<uint32_t>(px)];
+                    const float pyMid = (pe.minY + pe.maxY) * 0.5f;
+                    float ex, ey, ez, ew;
+                    projXYZW(pe.centerX, pyMid, pe.centerZ, 1.0f, ex, ey, ez, ew);
+                    if (ew != 0.0f) {
+                        LOG_INFO(Render,
+                            "[TerrainRenderer] proj({}=({:.0f},{:.1f},{:.0f}))=clip({:.2f},{:.2f},{:.2f},{:.2f}) "
+                            "ndc=({:.3f},{:.3f},{:.3f}) [in X={} Y={} Z={}]",
+                            eventail[e].name, pe.centerX, pyMid, pe.centerZ,
+                            ex, ey, ez, ew, ex/ew, ey/ew, ez/ew,
+                            (ex/ew >= -1.0f && ex/ew <= 1.0f) ? "OK" : "OUT",
+                            (ey/ew >= -1.0f && ey/ew <= 1.0f) ? "OK" : "OUT",
+                            (ez/ew >= 0.0f  && ez/ew <= 1.0f) ? "OK" : "OUT");
+                    } else {
+                        LOG_INFO(Render,
+                            "[TerrainRenderer] proj({}=({:.0f},{:.1f},{:.0f}))=clip({:.2f},{:.2f},{:.2f},{:.2f}) "
+                            "[w=0 indeterminate]",
+                            eventail[e].name, pe.centerX, pyMid, pe.centerZ, ex, ey, ez, ew);
+                    }
+                }
 
                 // Test plan-par-plan sur ce patch : pour chaque plan i,
                 // calculer dot(plane.n, max-or-min-corner) + plane.d et reporter

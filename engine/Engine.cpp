@@ -5000,7 +5000,16 @@ namespace engine
 			reset.position.y = camAltitude;
 			reset.position.z = centerZ;
 			reset.yaw        = 0.0f;
-			reset.pitch      = 0.35f;                       // ~20deg vers le bas
+			// FIX (PR #427 follow-up) : avec pitch=0.35 (20deg vers le bas) + camera
+			// pile au centre du terrain, le centerPatch projete a ndc.y=3.91 (loin
+			// hors du frustum vertical). Demonstration : tan(70deg)/tan(35deg)=3.92.
+			// Pour qu'un point pile sous la camera (delta_y/delta_xz tendant vers
+			// l'infini) soit dans le frustum vertical [-1,+1], il faut que l'angle
+			// "sol-sous-camera vs forward" soit < demi-FOV vertical (=35deg). Donc
+			// pitch >= 90 - 35 = 55deg = 0.96 rad. On prend 60deg = 1.05 rad pour
+			// marge confortable. Trade-off : on perd un peu de visibilite des
+			// patches lointains en avant, mais on voit le sol.
+			reset.pitch      = 1.05f;                       // ~60deg vers le bas
 			reset.fovYDeg    = 70.0f;
 			reset.aspect     = static_cast<float>(std::max(1, m_width)) / static_cast<float>(std::max(1, m_height));
 			reset.nearZ      = 0.1f;

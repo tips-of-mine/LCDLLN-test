@@ -90,6 +90,19 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 // ---- Main -------------------------------------------------------------------
 void main()
 {
+    // PR #427 follow-up DIAG (PR18) : force ROUGE PUR au tout debut du shader
+    // pour tester si le pipeline lighting -> tonemap -> CopyPresent fonctionne.
+    //   - Si l'utilisateur voit du ROUGE au centre du viewport : le pipeline 3D
+    //     fonctionne et la couleur arrive bien dans le swapchain ; le bug
+    //     "viewport gris" est alors dans le code NORMAL de ce shader (skyColor
+    //     mal applique, IBL casse, ambient noir, etc.).
+    //   - Si l'utilisateur voit GRIS / autre chose : il y a un probleme entre
+    //     lighting.frag et le swapchain (tonemap qui clip, AutoExposure qui
+    //     corrige a noir, TAA qui melange a zero, etc.).
+    // A retirer une fois le diag termine.
+    outSceneColorHDR = vec4(1.0, 0.0, 0.0, 1.0);
+    return;
+
     // ---- Sample GBuffer ------------------------------------------------
     vec4  baseAlbedo = texture(gbufA, inUV);
     vec4  decalOverlay = texture(decalOverlayTex, inUV);

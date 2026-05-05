@@ -90,20 +90,27 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 // ---- Main -------------------------------------------------------------------
 void main()
 {
-    // PR #427 follow-up DIAG (PR20) : test BINAIRE discriminant pour trancher
-    // entre "skyColor uploade correctement mais tonemappe en gris-beige" et
-    // "push constant casse" (resultat PR19 ambigu : couleur perçue gris-beige).
-    //   - skyColor.r attendu ~0.77 (logs [Atmosphere] skyHorizon=(0.77,...))
-    //     -> on ecrit ROUGE PLEIN (1,0,0). Le tonemap garde le rouge sature.
-    //   - skyColor.r < 0.5 -> push constant casse, on ecrit BLEU PLEIN (0,0,1).
-    // Test discriminant :
-    //   - ROUGE plein ecran : skyColor uploade OK, le bug est ailleurs
-    //     (terrain ne rasterise pas dans le depth buffer, donc tous les pixels
-    //     prennent la branche sky qui apres tonemap donne le gris-beige).
-    //   - BLEU plein ecran : skyColor n'est pas uploade. Verifier le push
-    //     constant CPU / shader uniform layout / Intel maxPushConstantsSize.
+    // PR #427 follow-up DIAG (PR21) : visualisation du DEPTH BUFFER pour savoir
+    // si le terrain rasterise ou pas. Resultat PR20 confirme que pc.skyColor
+    // est correctement uploade (rouge plein ecran). Le bug "viewport gris"
+    // observe au PR16 etait skyColor (0.77,0.60,0.49) tonemappe ACES en beige.
+    // Si on voyait sky partout, c'est que TOUS les pixels avaient depth=1.0,
+    // donc le terrain n'ecrit pas dans le depth buffer. Ce test le confirme :
+    //   - depth >= 1.0  -> ROUGE (pas de geometry, sky branch active)
+    //   - depth <  1.0  -> BLEU  (geometry rasterise dans le depth buffer)
+    //
+    // Resultats attendus :
+    //   - ROUGE plein ecran : terrain ne rasterise PAS du tout. Suspects :
+    //     * backface culling (winding order inverse apres ee181da view LH)
+    //     * tous les vertices clippes (clip.w<0 ou NDC.y hors [-1,1])
+    //     * pipeline graphics terrain pas actif / drawcalls vides
+    //   - BLEU partiel : terrain visible la ou il y a du bleu, on regarde
+    //     pourquoi le reste du viewport reste rouge (clipping vertical).
+    //   - BLEU plein : il y a une geometry partout (peut-etre l'avatar
+    //     placeholder qui couvre ?), pas le terrain attendu.
     // A retirer apres diag.
-    if (pc.skyColor.r > 0.5)
+    float diagDepth = texture(depthTex, inUV).r;
+    if (diagDepth >= 1.0)
     {
         outSceneColorHDR = vec4(1.0, 0.0, 0.0, 1.0);
     }

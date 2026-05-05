@@ -105,9 +105,15 @@ void main()
     float depth     = texture(depthTex, inUV).r;
 
     // ---- Sky / empty fragments (depth == 1.0 means no geometry) --------
-    // On utilise la couleur du ciel pilotée par DayNightCycle (horizon).
-    // Permet de voir l'effet jour/nuit dans l'éditeur même sans skybox.
-    if (depth >= 1.0)
+    // DIAG TEMP (PR #427 follow-up post-PR10) : test "skip sky branch".
+    // On force le shading PBR sur tous les pixels en mettant `false` au lieu
+    // de `depth >= 1.0`. Si le viewport central affiche le terrain shade
+    // (gradient gris/oranger/rouge selon lightDir et albedo), la depth etait
+    // bien le coupable : terrain ecrit la depth mais lighting voit 1.0
+    // (probleme de propagation depth via barrier/layout). Si toujours gris
+    // uniforme, le bug est en aval (tonemap, copy present). A REVERTER une
+    // fois le diagnostic confirme.
+    if (false /* DIAG: was: depth >= 1.0 */)
     {
         outSceneColorHDR = vec4(pc.skyColor.rgb, 1.0);
         return;

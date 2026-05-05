@@ -2117,29 +2117,15 @@ namespace engine
 												b.read(m_fgHistoryAId,      engine::render::ImageUsage::TransferSrc);
 												b.read(m_fgHistoryBId,      engine::render::ImageUsage::TransferSrc);
 												b.read(m_fgSceneColorLDRId, engine::render::ImageUsage::TransferSrc);
-												// PR8 DIAG TEMP (PR #427 follow-up) : on declare GBufferA en TransferSrc
-												// pour que le FrameGraph emette les bons barriers (transition
-												// COLOR_ATTACHMENT_OPTIMAL -> TRANSFER_SRC_OPTIMAL avant la copie).
-												// A REVERTER une fois le bug terrain identifie.
-												b.read(m_fgGBufferAId,      engine::render::ImageUsage::TransferSrc);
 												b.write(m_fgBackbufferId,   engine::render::ImageUsage::TransferDst);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
-												// PR8 DIAG TEMP (PR #427 follow-up) : bypass complet du post-process.
-												// Au lieu de copier le resultat tonemap/TAA vers le swapchain, on copie
-												// DIRECTEMENT GBufferA (sortie terrain renderpass) vers le backbuffer.
-												// Lecture du resultat visuel attendu (clearValues terrain forcees ROUGE) :
-				 								//  - Ecran BLEU (rouge invertie en BGR par la copie bytes-a-bytes
-				 								//    R8G8B8A8_SRGB -> B8G8R8A8_SRGB du swapchain) => terrain a bien
-				 								//    ecrit sa clearValue ROUGE dans GBufferA. Bug est en aval :
-				 								//    lighting lit la mauvaise image, ou problème synchro depth.
-				 								//  - Ecran toujours brun-rose => les ecritures de la renderpass terrain
-				 								//    ne sont pas visibles dans GBufferA malgre BEGIN/END loggees.
-				 								//    Bug est dans la renderpass terrain (subpass dependency, layout,
-				 								//    color blend state, colorWriteMask=0 silencieux).
-				 								//  - Ecran noir / corruption => probleme de TRANSFER_SRC layout transition.
-				 								// A REVERTER une fois le bug identifie.
-												engine::render::ResourceId srcId = m_fgGBufferAId; // PR8 BYPASS au lieu de TaaPass/SceneColorLDR
+												// PR9 (PR #427 follow-up) : bypass GBufferA reverte. Le test PR8 a
+												// confirme que terrain ecrit bien dans GBufferA (bord BLEU = clearValue
+												// ROUGE byte-inverted). On repasse au pipeline normal (lighting/tonemap)
+												// pour tester si terrain devient visible avec depth forcee a 0.5 dans
+												// le shader (gl_FragDepth) + compareOp ALWAYS dans le PSO.
+												engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
 												VkImage srcImg = reg.getImage(srcId);
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;

@@ -91,28 +91,33 @@ vec4 triplanarSample(sampler2DArray arr, float layer,
 void main()
 {
     // ============================================================================
-    // === DIAG TEMP — PR #427 follow-up — A REVERTER apres diagnostic terrain ====
+    // === DIAG TEMP — PR #427 follow-up PR9 — A REVERTER apres diagnostic =======
     // ============================================================================
-    // Test BRUTAL : ecrit du ROUGE pur partout sans aucune logique conditionnelle.
-    // - Skip discard hole mask (en cas ou le hole mask serait corrompu)
-    // - Skip triplanar / splat / grass / detail normals
-    // - Valeurs constantes pour tous les outputs (albedo rouge, normale up, ORM
-    //   roughness=1, velocity zero)
+    // PR8 a confirme que terrain ECRIT bien dans GBufferA (bord BLEU = clearValue
+    // ROUGE byte-inverted en BGR). Le bug est dans la chaine LIGHTING : lighting.frag
+    // prend la branche `if (depth >= 1.0) -> skyColor` car la depth ecrite par terrain
+    // n'est pas visible (PSO compareOp LESS rejetait peut-etre les drawcalls, ou
+    // probleme de sync/layout entre depth attachment et depth sampling).
     //
-    // Lecture du resultat :
-    //   - Si on voit ROUGE a l'ecran (au moins partiellement) => le terrain dessine
-    //     bien des pixels dans les attachments. Le bug etait dans la logique
-    //     splat/normals/discard du shader original.
-    //   - Si toujours brun-rose uniforme (skyColor) => le terrain ne dessine
-    //     LITTERALEMENT aucun fragment. Le bug est encore plus en amont :
-    //     pipeline state cassé silencieusement, descriptor invalide, framebuffer
-    //     mismatch, ou vertex/clip silently rejecte. Investigation au niveau
-    //     C++ dans TerrainRenderer (PSO create info, descriptor binding, etc.).
+    // PR9 force la depth a 0.5 explicitement via gl_FragDepth. Combine avec
+    // compareOp = ALWAYS dans le PSO (TerrainRenderer.cpp), TOUS les drawcalls
+    // passent et ecrivent depth=0.5 (visible par lighting < 1.0).
+    //
+    // Lecture du resultat visuel attendu :
+    //   - Ecran ROUGE/ORANGE (sortie shader normal apres lighting/tonemap)
+    //     => la depth etait le coupable. Bug racine = sync/layout depth, OU
+    //     compareOp LESS qui rejetait les drawcalls.
+    //   - Ecran toujours brun-rose uniforme => lighting ne lit toujours pas
+    //     la depth ecrite. Bug plus profond : aspect bit dans barrier, ou
+    //     image depth read/write differente, ou descriptor lighting mal binde.
+    //   - Ecran rouge sur tout le terrain (vu par lighting comme partout) =>
+    //     idem cas 1, on voit le ROUGE pur du shader.
     // ----------------------------------------------------------------------------
     outAlbedo   = vec4(1.0, 0.0, 0.0, 1.0); // ROUGE pur visible
     outNormal   = vec4(0.5, 0.5, 1.0, 1.0); // normale "up" encodee (0,0,1)*0.5+0.5
     outORM      = vec4(1.0, 1.0, 0.0, 1.0); // AO=1 Roughness=1 Metallic=0
     outVelocity = vec4(0.0, 0.0, 0.0, 1.0); // pas de motion
+    gl_FragDepth = 0.5;                     // PR9: force depth a 0.5 (visible par lighting)
     return;
 
     // Code original conserve apres le return (mort, mais reste visible dans le diff).

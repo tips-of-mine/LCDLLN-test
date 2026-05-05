@@ -580,9 +580,15 @@ namespace engine::render::terrain
 
             VkPipelineDepthStencilStateCreateInfo dsCI{};
             dsCI.sType            = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            // PR9 DIAG TEMP (PR #427 follow-up) : compareOp force a ALWAYS pour
+            // garantir que tous les drawcalls passent peu importe la depth precedente.
+            // Combine avec gl_FragDepth = 0.5 dans terrain.frag, on force la depth
+            // ecrite a 0.5 partout. Lighting devrait alors lire depth=0.5 < 1.0
+            // -> branche normale (pas skyColor) -> shader PBR sur albedo terrain.
+            // A REVERTER une fois le bug terrain identifie.
             dsCI.depthTestEnable  = VK_TRUE;
             dsCI.depthWriteEnable = VK_TRUE;
-            dsCI.depthCompareOp   = VK_COMPARE_OP_LESS;
+            dsCI.depthCompareOp   = VK_COMPARE_OP_ALWAYS; // PR9: ALWAYS au lieu de LESS
 
             // 4 color attachments (A, B, C, Velocity) — no blending
             VkPipelineColorBlendAttachmentState blendAtts[4]{};

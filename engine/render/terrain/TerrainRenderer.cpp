@@ -1778,6 +1778,12 @@ namespace engine::render::terrain
         vkCmdBindVertexBuffers(cmd, 0, 1, &m_meshGpu.vertexBuffer, &vbOffset);
 
         // ── Draw patches, grouped by LOD to minimise index buffer rebinds ─────────
+        // DIAG TEMP (PR #427 follow-up) : compteur de drawcalls effectivement emis
+        // pour confirmer que vkCmdDrawIndexed est bien appele pour chaque patch.
+        uint32_t diagDrawcallCount = 0;
+        uint32_t diagPerLod[kTerrainLodCount] = {0};
+        uint64_t diagTotalIndices = 0;
+
         for (uint32_t lod = 0; lod < kTerrainLodCount; ++lod)
         {
             if (drawLists[lod].empty()) continue;
@@ -1803,7 +1809,28 @@ namespace engine::render::terrain
                                    0, sizeof(PushConstants), &pc);
 
                 vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
+                ++diagDrawcallCount;
+                ++diagPerLod[lod];
+                diagTotalIndices += indexCount;
             }
+        }
+
+        // DIAG TEMP (PR #427 follow-up) : log one-shot du compteur de drawcalls.
+        // Confirme que vkCmdDrawIndexed est appele N fois (N=225 attendu pour la
+        // heightmap par defaut). Si N=0, le code ne dessine rien malgre `kept=225`.
+        static bool s_drawcallDiagOnce = true;
+        if (s_drawcallDiagOnce)
+        {
+            s_drawcallDiagOnce = false;
+            LOG_INFO(Render,
+                "[TerrainRenderer] Record DIAG drawcalls={} totalIndices={} perLod=[{},{},{},{},{}] "
+                "vertexBuffer={} pipeline={} pipelineLayout={} descSet={}",
+                diagDrawcallCount, diagTotalIndices,
+                diagPerLod[0], diagPerLod[1], diagPerLod[2], diagPerLod[3], diagPerLod[4],
+                (void*)m_meshGpu.vertexBuffer,
+                (void*)m_pipeline,
+                (void*)m_pipelineLayout,
+                (void*)m_descSet);
         }
 
         // ── M34.3: Draw cliff meshes (same render pass, separate pipeline) ─────────

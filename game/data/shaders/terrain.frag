@@ -90,6 +90,32 @@ vec4 triplanarSample(sampler2DArray arr, float layer,
 // ─────────────────────────────────────────────────────────────────────────────
 void main()
 {
+    // ============================================================================
+    // === DIAG TEMP — PR #427 follow-up — A REVERTER apres diagnostic terrain ====
+    // ============================================================================
+    // Test BRUTAL : ecrit du ROUGE pur partout sans aucune logique conditionnelle.
+    // - Skip discard hole mask (en cas ou le hole mask serait corrompu)
+    // - Skip triplanar / splat / grass / detail normals
+    // - Valeurs constantes pour tous les outputs (albedo rouge, normale up, ORM
+    //   roughness=1, velocity zero)
+    //
+    // Lecture du resultat :
+    //   - Si on voit ROUGE a l'ecran (au moins partiellement) => le terrain dessine
+    //     bien des pixels dans les attachments. Le bug etait dans la logique
+    //     splat/normals/discard du shader original.
+    //   - Si toujours brun-rose uniforme (skyColor) => le terrain ne dessine
+    //     LITTERALEMENT aucun fragment. Le bug est encore plus en amont :
+    //     pipeline state cassé silencieusement, descriptor invalide, framebuffer
+    //     mismatch, ou vertex/clip silently rejecte. Investigation au niveau
+    //     C++ dans TerrainRenderer (PSO create info, descriptor binding, etc.).
+    // ----------------------------------------------------------------------------
+    outAlbedo   = vec4(1.0, 0.0, 0.0, 1.0); // ROUGE pur visible
+    outNormal   = vec4(0.5, 0.5, 1.0, 1.0); // normale "up" encodee (0,0,1)*0.5+0.5
+    outORM      = vec4(1.0, 1.0, 0.0, 1.0); // AO=1 Roughness=1 Metallic=0
+    outVelocity = vec4(0.0, 0.0, 0.0, 1.0); // pas de motion
+    return;
+
+    // Code original conserve apres le return (mort, mais reste visible dans le diff).
     // ── M34.3: Hole mask discard ──────────────────────────────────────────────
     // Sample the R8 hole mask. Value 0 = hole (discard), 1 = solid (keep).
     // Uses NEAREST sampler so each texel maps exactly to one terrain quad.

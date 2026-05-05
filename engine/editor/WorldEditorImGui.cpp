@@ -856,8 +856,15 @@ namespace engine::editor
 		if (ImGui::Begin("WorldEditorDockSpaceHost", nullptr, hostFlags))
 		{
 			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
-			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) - litteral pour eviter les divergences d'en-tetes.
-			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 4);
+			// PR #427 follow-up : cause racine du "terrain invisible". L'auteur initial avait
+			// ecrit (1u << 4) en pensant que c'etait ImGuiDockNodeFlags_PassthruCentralNode.
+			// Mais dans ImGui v1.91.9-docking (utilise via FetchContent CMakeLists.txt:167) :
+			//   ImGuiDockNodeFlags_PassthruCentralNode = 1 << 3   (= 8)   <-- la bonne valeur
+			//   ImGuiDockNodeFlags_NoDockingSplit      = 1 << 4   (= 16)  <-- celle utilisee par erreur
+			// Sans PassthruCentralNode, le node central du DockSpace dessine un fond opaque qui
+			// MASQUE le rendu 3D. La pipeline (terrain, lighting, tonemap) fonctionne, mais son
+			// resultat n'est jamais visible.
+			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 3);
 
 			// Detection de resize de fenetre : si la taille du viewport a change
 			// depuis la derniere frame (apres initialisation), on force
@@ -932,7 +939,12 @@ namespace engine::editor
 				}
 			}
 
+			// Belt-and-suspenders : on force aussi ImGuiCol_DockingEmptyBg a transparent. Avec le flag
+			// PassthruCentralNode correct ci-dessus, ImGui ne devrait deja plus dessiner ce fond,
+			// mais on le force a transparent au cas ou (couts: nul, securite: max).
+			ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), kDockSpaceFlags);
+			ImGui::PopStyleColor();
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(3);

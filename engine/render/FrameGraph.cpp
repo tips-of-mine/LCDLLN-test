@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <string>
+#include <unordered_set>
 
 namespace engine::render
 {
@@ -456,12 +458,36 @@ namespace engine::render
 	    ensureImageResources(device, physicalDevice, vmaAllocator, frameIndex, extent, framesInFlight);
 	    ensureBufferResources(device, vmaAllocator, frameIndex, framesInFlight);
 	    fillRegistry(registry, frameIndex);
-	
+
+	    // DIAG TEMP (PR #427 follow-up post-PR10) : trace ONE-SHOT par passe.
+	    // Le viewport central reste gris dans le World Editor : ni terrain, ni
+	    // ciel, ni pinceau ne s'affichent. Comme terrain et ciel sortent de
+	    // lighting puis convergent dans la meme chaine bloom -> tonemap -> taa
+	    // -> copy, le bug est forcement aval de lighting. On trace chaque pass
+	    // a la premiere fois qu'elle execute pour voir laquelle saute / fail
+	    // silencieusement. A REVERTER une fois le bug identifie.
+	    static std::unordered_set<std::string> s_loggedPasses;
+	    static bool s_loggedExecuteOrder = false;
+	    if (!s_loggedExecuteOrder)
+	    {
+	        s_loggedExecuteOrder = true;
+	        std::string orderStr;
+	        for (size_t passIdx : m_compiledOrder)
+	        {
+	            if (!orderStr.empty()) orderStr += " -> ";
+	            orderStr += m_passes[passIdx].name;
+	        }
+	        LOG_INFO(Render, "[FG-EXEC] order ({} passes): {}", m_compiledOrder.size(), orderStr);
+	    }
+
 	    std::unordered_map<ResourceId, ResourceUsageState> lastUsage;
 	    for (size_t passIdx : m_compiledOrder)
 	    {
 	        const Pass& pass = m_passes[passIdx];
 	        engine::core::ProfilerScope passScope(pass.name);
+	        const bool firstTime = s_loggedPasses.insert(pass.name).second;
+	        if (firstTime)
+	            LOG_INFO(Render, "[FG-EXEC] pass '{}' BEGIN (executor={})", pass.name, pass.execute ? 1 : 0);
 	        LOG_DEBUG(Render, "[FrameGraph] pass '{}' begin barriers", pass.name);
 	        emitBarriersBeforePass(cmd, pass, registry, lastUsage, sync2Supported, device);
 	        LOG_DEBUG(Render, "[FrameGraph] pass '{}' barriers done", pass.name);
@@ -475,6 +501,8 @@ namespace engine::render
 	            profiler->EndGpuPass(cmd, frameIndex);
 	        }
 	        LOG_DEBUG(Render, "[FrameGraph] pass '{}' fully done (profiler closed)", pass.name);
+	        if (firstTime)
+	            LOG_INFO(Render, "[FG-EXEC] pass '{}' END", pass.name);
 	    }
 	    LOG_DEBUG(Render, "[FrameGraph] execute() ALL passes done — returning to Engine::Render");
 	}

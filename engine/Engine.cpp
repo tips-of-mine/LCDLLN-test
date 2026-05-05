@@ -2075,7 +2075,30 @@ namespace engine
 												engine::render::ResourceId srcId = m_pipeline->GetTaaPass().IsValid() ? GetTaaHistoryNextId() : m_fgSceneColorLDRId;
 												VkImage srcImg = reg.getImage(srcId);
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
-												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
+												// DIAG TEMP (PR #427 follow-up post-PR10) : log one-shot pour confirmer
+												// que CopyPresent execute avec des handles valides. Si on n'a pas ce log,
+												// le pass est skipped (srcImg ou dstImg null).
+												static bool s_copyPresentLogged = false;
+												if (!s_copyPresentLogged) {
+													s_copyPresentLogged = true;
+													LOG_INFO(Render,
+														"[CopyPresent] DIAG ENTREE : srcId={} srcImg={} dstImg={} TaaValid={} fgSceneColorLDRId={} fgBackbufferId={}",
+														static_cast<uint32_t>(srcId),
+														(void*)srcImg, (void*)dstImg,
+														m_pipeline->GetTaaPass().IsValid() ? 1 : 0,
+														static_cast<uint32_t>(m_fgSceneColorLDRId),
+														static_cast<uint32_t>(m_fgBackbufferId));
+												}
+												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) {
+													static bool s_copyPresentNullLogged = false;
+													if (!s_copyPresentNullLogged) {
+														s_copyPresentNullLogged = true;
+														LOG_WARN(Render,
+															"[CopyPresent] DIAG SKIP : srcImg={} dstImg={} - copy non execute !",
+															(void*)srcImg, (void*)dstImg);
+													}
+													return;
+												}
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
 												bool authPhotoBackdrop = false;
 												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);

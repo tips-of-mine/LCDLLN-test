@@ -932,7 +932,16 @@ namespace engine::editor
 				}
 			}
 
+			// PR #427 follow-up post-PR10 : malgre le flag PassthruCentralNode (1<<3, fixe par PR10),
+			// le node central du DockSpace continue de dessiner un fond opaque gris qui masque le
+			// rendu 3D du viewport. Diagnostic confirme par les logs PR14 : la pipeline 3D s'execute
+			// completement (30/30 passes BEGIN+END, CopyPresent OK), et le test visuel "force red"
+			// PR13 a montre que le rouge du swapchain transparait a travers les panneaux ImGui semi-
+			// transparents mais PAS dans le central node. Ce qui confirme que le DockSpace dessine
+			// son propre fond opaque a cet endroit. On le force a transparent en plus du flag.
+			ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 			ImGui::DockSpace(dockId, ImVec2(0.f, 0.f), kDockSpaceFlags);
+			ImGui::PopStyleColor();
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(3);

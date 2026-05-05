@@ -1777,6 +1777,22 @@ namespace engine::render::terrain
         rpBI.clearValueCount   = 5;
         rpBI.pClearValues      = clearValues;
 
+        // DIAG TEMP (PR #427 follow-up) : log one-shot juste AVANT
+        // vkCmdBeginRenderPass pour confirmer physiquement l'execution.
+        // Si on voit "BEGIN renderpass" dans le log + on voit la color de
+        // clear (rouge) a l'ecran => le renderpass terrain s'execute bien.
+        // Si on voit "BEGIN renderpass" mais pas la color de clear =>
+        // framebuffer mismatch (terrain ecrit dans des images differentes
+        // que celles lues par lighting).
+        static bool s_terrainPassLogged = false;
+        if (!s_terrainPassLogged)
+        {
+            LOG_INFO(Render,
+                "[TerrainRenderer] >>> BEGIN renderpass (renderPass={} framebuffer={} extent={}x{})",
+                (void*)m_renderPass, (void*)framebuffer,
+                extent.width, extent.height);
+        }
+
         vkCmdBeginRenderPass(cmd, &rpBI, VK_SUBPASS_CONTENTS_INLINE);
 
         // ── Set dynamic viewport / scissor ────────────────────────────────────────
@@ -1895,6 +1911,19 @@ namespace engine::render::terrain
         }
 
         vkCmdEndRenderPass(cmd);
+
+        // DIAG TEMP (PR #427 follow-up) : log one-shot juste APRES
+        // vkCmdEndRenderPass. Si on voit "END renderpass" mais pas la
+        // color de clear a l'ecran => le renderpass est bien execute mais
+        // ses ecritures n'arrivent pas a la lighting pass (framebuffer
+        // mismatch ou subpass dependency manquante).
+        if (!s_terrainPassLogged)
+        {
+            s_terrainPassLogged = true;
+            LOG_INFO(Render,
+                "[TerrainRenderer] <<< END renderpass (drawcalls={} indices={})",
+                diagDrawcallCount, diagTotalIndices);
+        }
     }
 
 } // namespace engine::render::terrain

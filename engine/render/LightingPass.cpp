@@ -415,6 +415,31 @@ namespace engine::render
 		VkImageView viewSsao  = registry.getImageView(idSsaoBlur);
 		VkImageView viewDecal = registry.getImageView(idDecalOverlay);
 
+		// DIAG TEMP (PR #427 follow-up) : log one-shot des VkImageView lues
+		// par la lighting pass. Comparer avec les VkImageView ecrites par
+		// le terrain (TerrainRenderer Record DIAG views) :
+		//   - Si MEMES handles => terrain et lighting partagent les memes
+		//     VkImage backing. Le bug n'est pas un framebuffer mismatch.
+		//   - Si DIFFERENTS handles => le frame graph alloue des VkImage
+		//     distinctes pour le meme ResourceId, ce qui expliquerait
+		//     pourquoi terrain ecrit dans des images jamais lues.
+		static bool s_lightingViewsLogged = false;
+		if (!s_lightingViewsLogged)
+		{
+			s_lightingViewsLogged = true;
+			LOG_INFO(Render,
+				"[LightingPass] DIAG: extent={}x{} views A={} B={} C={} D={} HDR={} ssao={} decal={}",
+				extent.width, extent.height,
+				(void*)viewA, (void*)viewB, (void*)viewC, (void*)viewD,
+				(void*)viewHDR, (void*)viewSsao, (void*)viewDecal);
+			LOG_INFO(Render,
+				"[LightingPass] DIAG: ResourceIds A={} B={} C={} D={} HDR={} ssao={} decal={}",
+				static_cast<uint32_t>(idGBufA), static_cast<uint32_t>(idGBufB),
+				static_cast<uint32_t>(idGBufC), static_cast<uint32_t>(idDepth),
+				static_cast<uint32_t>(idSceneColorHDR), static_cast<uint32_t>(idSsaoBlur),
+				static_cast<uint32_t>(idDecalOverlay));
+		}
+
 		if (viewA == VK_NULL_HANDLE || viewB == VK_NULL_HANDLE
 			|| viewC == VK_NULL_HANDLE || viewD == VK_NULL_HANDLE
 			|| viewHDR == VK_NULL_HANDLE || viewSsao == VK_NULL_HANDLE || viewDecal == VK_NULL_HANDLE)

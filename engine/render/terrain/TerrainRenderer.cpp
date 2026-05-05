@@ -1752,12 +1752,21 @@ namespace engine::render::terrain
         }
 
         // ── Begin render pass ─────────────────────────────────────────────────────
+        // DIAG TEMP (PR #427 follow-up) : clear values FORCEES pour tester si la
+        // renderpass terrain s'execute physiquement. Si on voit du ROUGE a
+        // l'ecran => le renderpass s'execute, le framebuffer est correct, et
+        // le bug est dans les drawcalls (vertex shader rejette tous les vertices,
+        // descriptor mismatch silencieux, vertex buffer corrompu, etc.). Si on
+        // voit toujours brun-rose => le renderpass terrain NE S'EXECUTE PAS DU
+        // TOUT (frame graph callback non execute, ou framebuffer mismatch
+        // silencieux). depth=0.5 pour bypasser l'early-return de lighting.frag
+        // (qui retourne skyColor si depth >= 1.0).
         VkClearValue clearValues[5]{};
-        clearValues[0].color        = {{ 0.0f, 0.0f, 0.0f, 0.0f }};
-        clearValues[1].color        = {{ 0.5f, 0.5f, 1.0f, 0.0f }};
-        clearValues[2].color        = {{ 1.0f, 0.8f, 0.0f, 0.0f }};
-        clearValues[3].color        = {{ 0.0f, 0.0f, 0.0f, 0.0f }};
-        clearValues[4].depthStencil = { 1.0f, 0 };
+        clearValues[0].color        = {{ 1.0f, 0.0f, 0.0f, 1.0f }}; // ROUGE pur (test)
+        clearValues[1].color        = {{ 0.5f, 0.5f, 1.0f, 1.0f }}; // normal up
+        clearValues[2].color        = {{ 0.0f, 1.0f, 0.0f, 1.0f }}; // ORM AO=0 R=1 M=0
+        clearValues[3].color        = {{ 0.0f, 0.0f, 0.0f, 1.0f }}; // velocity zero
+        clearValues[4].depthStencil = { 0.5f, 0 };                  // depth 0.5 (bypass sky)
 
         VkRenderPassBeginInfo rpBI{};
         rpBI.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

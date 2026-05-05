@@ -90,17 +90,22 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 // ---- Main -------------------------------------------------------------------
 void main()
 {
-    // PR #427 follow-up DIAG (PR18) : force ROUGE PUR au tout debut du shader
-    // pour tester si le pipeline lighting -> tonemap -> CopyPresent fonctionne.
-    //   - Si l'utilisateur voit du ROUGE au centre du viewport : le pipeline 3D
-    //     fonctionne et la couleur arrive bien dans le swapchain ; le bug
-    //     "viewport gris" est alors dans le code NORMAL de ce shader (skyColor
-    //     mal applique, IBL casse, ambient noir, etc.).
-    //   - Si l'utilisateur voit GRIS / autre chose : il y a un probleme entre
-    //     lighting.frag et le swapchain (tonemap qui clip, AutoExposure qui
-    //     corrige a noir, TAA qui melange a zero, etc.).
+    // PR #427 follow-up DIAG (PR19) : force AFFICHAGE de pc.skyColor.rgb sur
+    // TOUS les fragments du viewport. Le test PR18 a confirme que le pipeline
+    // lighting -> tonemap -> CopyPresent fonctionne (rouge pur visible au
+    // centre). Le bug est donc dans le code NORMAL de ce shader.
+    //   - Si l'utilisateur voit du ORANGE (~0.77, 0.60, 0.49 d'apres les logs
+    //     [Atmosphere] skyHorizon) : le push constant pc.skyColor est correct,
+    //     le bug est que la branche `if (depth >= 1.0)` n'est PAS prise pour
+    //     les pixels qui devraient l'etre (depth-buffer mal cleare, terrain
+    //     ecrit a depth<1 partout, etc.) ET le code lighting normal produit
+    //     du gris pour les fragments avec depth<1 sans geometry valable.
+    //   - Si l'utilisateur voit du GRIS : pc.skyColor est mal uploade
+    //     (push constant size limite atteint sur Intel iGPU, mauvais offset,
+    //     CPU n'envoie pas la bonne valeur, etc.). On verifiera alors le code
+    //     C++ qui pousse le push constant fragment de LightingPass.
     // A retirer une fois le diag termine.
-    outSceneColorHDR = vec4(1.0, 0.0, 0.0, 1.0);
+    outSceneColorHDR = vec4(pc.skyColor.rgb, 1.0);
     return;
 
     // ---- Sample GBuffer ------------------------------------------------

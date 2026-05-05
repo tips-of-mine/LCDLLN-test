@@ -90,6 +90,19 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 // ---- Main -------------------------------------------------------------------
 void main()
 {
+    // DIAG TEMP (PR #427 follow-up post-PR10) : test "force red".
+    // On ecrit ROUGE PUR HDR (1,0,0,1) sans rien sampler ni calculer. Permet
+    // d'isoler la chaine lighting -> tonemap -> taa -> copy -> swapchain.
+    //   - Si on voit ROUGE/orange/quelque chose de chaud dans le viewport
+    //     central : la chaine fonctionne. Le bug est dans le calcul PBR
+    //     (depth, normal sampling, IBL, descriptor binding) en aval.
+    //   - Si on voit toujours gris uniforme : le bug est en aval de lighting.
+    //     Le HDR (R16G16B16A16_SFLOAT) ne se propage pas correctement vers
+    //     le swapchain (tonemap clamp, autoExposure, TAA, ou CopyPresent).
+    // A REVERTER une fois le diagnostic confirme.
+    outSceneColorHDR = vec4(1.0, 0.0, 0.0, 1.0);
+    return;
+
     // ---- Sample GBuffer ------------------------------------------------
     vec4  baseAlbedo = texture(gbufA, inUV);
     vec4  decalOverlay = texture(decalOverlayTex, inUV);

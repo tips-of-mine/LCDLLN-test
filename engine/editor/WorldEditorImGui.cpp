@@ -856,8 +856,19 @@ namespace engine::editor
 		if (ImGui::Begin("WorldEditorDockSpaceHost", nullptr, hostFlags))
 		{
 			const ImGuiID dockId = ImGui::GetID("WorldEditorDockSpaceV2");
-			// ImGuiDockNodeFlags_PassthroughCentralNode (1<<4) - litteral pour eviter les divergences d'en-tetes.
-			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 4);
+			// PR #427 follow-up : cause racine du "terrain invisible".
+			// L'auteur initial avait ecrit (1u << 4) en pensant que c'etait
+			// ImGuiDockNodeFlags_PassthruCentralNode, mais (1u << 4) est en fait
+			// ImGuiDockNodeFlags_NoDockingSplit dans ImGui v1.91.9-docking. La
+			// bonne valeur est (1u << 3) = ImGuiDockNodeFlags_PassthruCentralNode.
+			// Sans ce flag, le node central du DockSpace est dessine avec un fond
+			// opaque (couleur ImGuiCol_DockingEmptyBg) qui MASQUE la pipeline 3D
+			// rendue dans le swapchain, d'ou la couleur "brun-rose" / "gris" uniforme
+			// observee dans le viewport central depuis PR #427. La pipeline 3D
+			// (terrain, lighting, tonemap) fonctionnait correctement, mais son
+			// resultat n'etait jamais visible. Voir docs/INVESTIGATION_terrain_invisible.md
+			// pour le detail des PR7/PR8/PR9 qui ont permis d'isoler la cause.
+			constexpr ImGuiDockNodeFlags kDockSpaceFlags = static_cast<ImGuiDockNodeFlags>(1u << 3);
 
 			// Detection de resize de fenetre : si la taille du viewport a change
 			// depuis la derniere frame (apres initialisation), on force

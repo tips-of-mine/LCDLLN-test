@@ -525,7 +525,16 @@ namespace engine::render::terrain
             rasCI.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasCI.polygonMode = VK_POLYGON_MODE_FILL;
             rasCI.cullMode    = VK_CULL_MODE_BACK_BIT;
-            rasCI.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            // PR #427 follow-up : winding apparent en clip space inverse depuis le commit
+            // ee181da (Reapply view matrix transposee, convention Vulkan LH +Z forward).
+            // Le mesh terrain est genere en CCW dans le plan XZ world space, mais la nouvelle
+            // matrice view fait apparaitre les triangles en CW dans le clip space. Avec
+            // frontFace=CCW, le pipeline rejetait silencieusement TOUS les patches (terrain
+            // invisible malgre patches kept=225 cote CPU frustum cull). Confirme par PR
+            // diag avec cullMode=NONE : terrain visible (depth<1 = bleu, sky=rouge dans la
+            // viz depth). Fix permanent : passer frontFace en CLOCKWISE pour matcher la
+            // nouvelle convention du clip space sans toucher au mesh.
+            rasCI.frontFace   = VK_FRONT_FACE_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 
             VkPipelineMultisampleStateCreateInfo msCI{};
@@ -1181,7 +1190,12 @@ namespace engine::render::terrain
                 cliffRas.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
                 cliffRas.polygonMode = VK_POLYGON_MODE_FILL;
                 cliffRas.cullMode    = VK_CULL_MODE_BACK_BIT;
-                cliffRas.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+                // PR #427 follow-up : meme correction que pour le pipeline terrain principal
+                // (ligne 528). Convention Vulkan LH +Z forward (ee181da) -> winding apparent
+                // CW en clip space -> frontFace doit etre CLOCKWISE pour ne pas rejeter les
+                // faces avant. La map de test n'a pas de cliffs (log "Cliff meshes loaded:
+                // 0/0"), mais on aligne la cohérence pour les maps futures.
+                cliffRas.frontFace   = VK_FRONT_FACE_CLOCKWISE;
                 cliffRas.lineWidth   = 1.0f;
 
                 VkPipelineMultisampleStateCreateInfo cliffMs{};

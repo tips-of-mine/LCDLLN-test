@@ -90,22 +90,27 @@ vec3 F_Schlick(float cosTheta, vec3 F0)
 // ---- Main -------------------------------------------------------------------
 void main()
 {
-    // PR #427 follow-up DIAG (PR19) : force AFFICHAGE de pc.skyColor.rgb sur
-    // TOUS les fragments du viewport. Le test PR18 a confirme que le pipeline
-    // lighting -> tonemap -> CopyPresent fonctionne (rouge pur visible au
-    // centre). Le bug est donc dans le code NORMAL de ce shader.
-    //   - Si l'utilisateur voit du ORANGE (~0.77, 0.60, 0.49 d'apres les logs
-    //     [Atmosphere] skyHorizon) : le push constant pc.skyColor est correct,
-    //     le bug est que la branche `if (depth >= 1.0)` n'est PAS prise pour
-    //     les pixels qui devraient l'etre (depth-buffer mal cleare, terrain
-    //     ecrit a depth<1 partout, etc.) ET le code lighting normal produit
-    //     du gris pour les fragments avec depth<1 sans geometry valable.
-    //   - Si l'utilisateur voit du GRIS : pc.skyColor est mal uploade
-    //     (push constant size limite atteint sur Intel iGPU, mauvais offset,
-    //     CPU n'envoie pas la bonne valeur, etc.). On verifiera alors le code
-    //     C++ qui pousse le push constant fragment de LightingPass.
-    // A retirer une fois le diag termine.
-    outSceneColorHDR = vec4(pc.skyColor.rgb, 1.0);
+    // PR #427 follow-up DIAG (PR20) : test BINAIRE discriminant pour trancher
+    // entre "skyColor uploade correctement mais tonemappe en gris-beige" et
+    // "push constant casse" (resultat PR19 ambigu : couleur perçue gris-beige).
+    //   - skyColor.r attendu ~0.77 (logs [Atmosphere] skyHorizon=(0.77,...))
+    //     -> on ecrit ROUGE PLEIN (1,0,0). Le tonemap garde le rouge sature.
+    //   - skyColor.r < 0.5 -> push constant casse, on ecrit BLEU PLEIN (0,0,1).
+    // Test discriminant :
+    //   - ROUGE plein ecran : skyColor uploade OK, le bug est ailleurs
+    //     (terrain ne rasterise pas dans le depth buffer, donc tous les pixels
+    //     prennent la branche sky qui apres tonemap donne le gris-beige).
+    //   - BLEU plein ecran : skyColor n'est pas uploade. Verifier le push
+    //     constant CPU / shader uniform layout / Intel maxPushConstantsSize.
+    // A retirer apres diag.
+    if (pc.skyColor.r > 0.5)
+    {
+        outSceneColorHDR = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+    else
+    {
+        outSceneColorHDR = vec4(0.0, 0.0, 1.0, 1.0);
+    }
     return;
 
     // ---- Sample GBuffer ------------------------------------------------

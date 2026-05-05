@@ -20,7 +20,10 @@ namespace engine::render
 {
 	namespace
 	{
-#ifndef NDEBUG
+		// DIAG TEMP (PR #427 follow-up) : validation layers activees aussi en Release
+		// pour le diag du terrain invisible. Les gardes #ifndef NDEBUG ont ete enlevees
+		// (l'utilisateur a accepte l'impact perf en attendant que le bug soit identifie).
+		// A REMETTRE EN #ifndef NDEBUG une fois le bug fixe.
 		const char* const kValidationLayerName = "VK_LAYER_KHRONOS_validation";
 		const char* const kDebugUtilsExtensionName = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
 
@@ -42,7 +45,6 @@ namespace engine::render
 			}
 			return VK_FALSE;
 		}
-#endif
 	}
 
 	bool VkInstance::Create()
@@ -56,15 +58,56 @@ namespace engine::render
 		}
 
 		std::vector<const char*> extensions(glfwExtensions, glfwExtensions + extCount);
-
-#ifndef NDEBUG
-		extensions.push_back(kDebugUtilsExtensionName);
-#endif
-
 		std::vector<const char*> layers;
-#ifndef NDEBUG
-		layers.push_back(kValidationLayerName);
-#endif
+
+		// DIAG TEMP (PR #427 follow-up) : tentative d'activer Validation Layers
+		// + debug utils. Best-effort : si le layer n'est pas installe sur la
+		// machine (cas typique sans Vulkan SDK), on n'ajoute pas pour eviter
+		// VK_ERROR_LAYER_NOT_PRESENT au vkCreateInstance.
+		bool validationAvailable = false;
+		{
+			uint32_t layerCount = 0;
+			vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+			std::vector<VkLayerProperties> available(layerCount);
+			vkEnumerateInstanceLayerProperties(&layerCount, available.data());
+			for (const auto& l : available)
+			{
+				if (std::strcmp(l.layerName, kValidationLayerName) == 0)
+				{
+					validationAvailable = true;
+					break;
+				}
+			}
+			LOG_INFO(Render, "[VK] Validation layer KHRONOS_validation available={} ({} layers total)",
+				validationAvailable ? 1 : 0, layerCount);
+		}
+
+		bool debugUtilsAvailable = false;
+		{
+			uint32_t extPropCount = 0;
+			vkEnumerateInstanceExtensionProperties(nullptr, &extPropCount, nullptr);
+			std::vector<VkExtensionProperties> availableExt(extPropCount);
+			vkEnumerateInstanceExtensionProperties(nullptr, &extPropCount, availableExt.data());
+			for (const auto& e : availableExt)
+			{
+				if (std::strcmp(e.extensionName, kDebugUtilsExtensionName) == 0)
+				{
+					debugUtilsAvailable = true;
+					break;
+				}
+			}
+			LOG_INFO(Render, "[VK] Extension VK_EXT_debug_utils available={} ({} ext total)",
+				debugUtilsAvailable ? 1 : 0, extPropCount);
+		}
+
+		if (debugUtilsAvailable)
+		{
+			extensions.push_back(kDebugUtilsExtensionName);
+		}
+		if (validationAvailable)
+		{
+			layers.push_back(kValidationLayerName);
+		}
 
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -97,7 +140,7 @@ namespace engine::render
 			VK_VERSION_PATCH(appInfo.apiVersion),
 			(void*)m_instance);
 
-#ifndef NDEBUG
+		// DIAG TEMP (PR #427 follow-up) : debug messenger actif aussi en Release.
 		VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
 		messengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 		messengerInfo.messageSeverity =
@@ -119,8 +162,15 @@ namespace engine::render
 				LOG_WARN(Render, "vkCreateDebugUtilsMessengerEXT failed: {}", static_cast<int>(result));
 				m_debugMessenger = VK_NULL_HANDLE;
 			}
+			else
+			{
+				LOG_INFO(Render, "[VK] Debug messenger active (validation layers ON)");
+			}
 		}
-#endif
+		else
+		{
+			LOG_WARN(Render, "[VK] vkCreateDebugUtilsMessengerEXT introuvable - validation layers ne reporteront rien");
+		}
 
 		LOG_INFO(Render, "Vulkan instance created");
 		return true;
@@ -191,7 +241,7 @@ namespace engine::render
 			m_surface = VK_NULL_HANDLE;
 		}
 
-#ifndef NDEBUG
+		// DIAG TEMP (PR #427 follow-up) : destruction du debug messenger actif aussi en Release.
 		if (m_debugMessenger != VK_NULL_HANDLE)
 		{
 			auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
@@ -202,7 +252,6 @@ namespace engine::render
 			}
 			m_debugMessenger = VK_NULL_HANDLE;
 		}
-#endif
 
 		vkDestroyInstance(m_instance, nullptr);
 		m_instance = VK_NULL_HANDLE;

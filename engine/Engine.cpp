@@ -1563,32 +1563,57 @@ namespace engine
 												}
 												auto& cullingPass = m_pipeline->GetGpuDrivenCullingPass();
 												auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
-												if (cullingPass.IsValid())
+												// DIAG TEMP (PR #427 follow-up) : bypass complet de GeometryPass
+												// pour isoler la cause du terrain invisible. Si le terrain orange
+												// apparait alors que GeometryPass est skippee, c'est que sa
+												// renderpass LOAD-variant ecrasait la depth/color ecrites par le
+												// terrain (bug de subpass dependency, layout, ou load_op).
+												// Si toujours invisible, le bug est en aval (lighting / synchro
+												// frame graph) ou dans la renderpass terrain elle-meme.
+												// A REVERTER une fois le bug identifie.
+												const bool s_skipGeometryPass = true;
+												(void)cullingPass;
+												(void)materialCache;
+												(void)mesh;
+												(void)lodLevel;
+												if (!s_skipGeometryPass)
 												{
-													m_pipeline->GetGeometryPass().RecordIndirect(
-														m_vkDeviceContext.GetDevice(), cmd, reg,
-														m_vkSwapchain.GetExtent(),
-														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-														cullingPass.GetIndirectBuffer(m_currentFrame),
-														cullingPass.GetDrawItemCount(m_currentFrame),
-														materialCache.GetDescriptorSet(),
-														rs.objectModelMatrix,
-														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
-														terrainBeforeGeometry);
+													if (cullingPass.IsValid())
+													{
+														m_pipeline->GetGeometryPass().RecordIndirect(
+															m_vkDeviceContext.GetDevice(), cmd, reg,
+															m_vkSwapchain.GetExtent(),
+															m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+															rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+															cullingPass.GetIndirectBuffer(m_currentFrame),
+															cullingPass.GetDrawItemCount(m_currentFrame),
+															materialCache.GetDescriptorSet(),
+															rs.objectModelMatrix,
+															(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
+															terrainBeforeGeometry);
+													}
+													else
+													{
+														m_pipeline->GetGeometryPass().Record(
+															m_vkDeviceContext.GetDevice(), cmd, reg,
+															m_vkSwapchain.GetExtent(),
+															m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
+															rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
+															static_cast<uint32_t>(lodLevel),
+															materialCache.GetDescriptorSet(),
+															rs.objectModelMatrix,
+															(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
+															terrainBeforeGeometry);
+													}
 												}
 												else
 												{
-													m_pipeline->GetGeometryPass().Record(
-														m_vkDeviceContext.GetDevice(), cmd, reg,
-														m_vkSwapchain.GetExtent(),
-														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId, m_fgGBufferVelocityId, m_fgDepthId,
-														rs.prevViewProjMatrix.m, rs.viewProjMatrix.m, mesh,
-														static_cast<uint32_t>(lodLevel),
-														materialCache.GetDescriptorSet(),
-														rs.objectModelMatrix,
-														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
-														terrainBeforeGeometry);
+													static bool s_loggedSkip = false;
+													if (!s_loggedSkip)
+													{
+														s_loggedSkip = true;
+														LOG_WARN(Render, "[Geometry pass] DIAG TEMP : GeometryPass.RecordIndirect/Record SKIPPED (test isolation terrain). Si terrain visible -> GeometryPass etait coupable.");
+													}
 												}
 											});
 

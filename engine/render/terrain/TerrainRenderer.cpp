@@ -1671,6 +1671,26 @@ namespace engine::render::terrain
         vkCmdSetScissor(cmd, 0, 1, &scissor);
 
         // ── Bind pipeline & descriptor set ───────────────────────────────────────
+        // PR #427 follow-up DIAG (PR23) : log unique d'entree dans la phase
+        // bind+draw du terrain. Permet de detecter un eventuel early-return
+        // ou un probleme de handles Vulkan invalides. Suivra un log avec le
+        // nombre total de vkCmdDrawIndexed appeles dans la boucle ci-dessous.
+        {
+            static bool s_loggedTerrainBindDraw = false;
+            if (!s_loggedTerrainBindDraw)
+            {
+                s_loggedTerrainBindDraw = true;
+                LOG_INFO(Render,
+                    "[TerrainRenderer] DIAG PR23 BIND+DRAW : pipeline={} layout={} descSet={} vertexBuffer={} drawLists.sz=[{},{},{},{},{}]",
+                    (void*)m_pipeline, (void*)m_pipelineLayout, (void*)m_descSet,
+                    (void*)m_meshGpu.vertexBuffer,
+                    static_cast<uint32_t>(drawLists[0].size()),
+                    static_cast<uint32_t>(drawLists[1].size()),
+                    static_cast<uint32_t>(drawLists[2].size()),
+                    static_cast<uint32_t>(drawLists[3].size()),
+                    static_cast<uint32_t>(drawLists[4].size()));
+            }
+        }
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 m_pipelineLayout, 0, 1, &m_descSet, 0, nullptr);
@@ -1680,6 +1700,8 @@ namespace engine::render::terrain
         vkCmdBindVertexBuffers(cmd, 0, 1, &m_meshGpu.vertexBuffer, &vbOffset);
 
         // ── Draw patches, grouped by LOD to minimise index buffer rebinds ─────────
+        // PR #427 DIAG PR23 : compteur total de vkCmdDrawIndexed appeles.
+        uint32_t diagDrawIndexedCalls = 0;
         for (uint32_t lod = 0; lod < kTerrainLodCount; ++lod)
         {
             if (drawLists[lod].empty()) continue;
@@ -1705,6 +1727,21 @@ namespace engine::render::terrain
                                    0, sizeof(PushConstants), &pc);
 
                 vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
+                ++diagDrawIndexedCalls;
+            }
+        }
+
+        // PR #427 DIAG PR23 : log unique du nombre total de vkCmdDrawIndexed
+        // emis. Si > 0, le pipeline rasterizer recoit bien des drawcalls.
+        // Si == 0, on a trouve l'early-return ou drawLists toutes vides.
+        {
+            static bool s_loggedTerrainDrawCount = false;
+            if (!s_loggedTerrainDrawCount)
+            {
+                s_loggedTerrainDrawCount = true;
+                LOG_INFO(Render,
+                    "[TerrainRenderer] DIAG PR23 DRAW DONE : vkCmdDrawIndexed calls={} (totalIndexCount per call cf m_meshGpu.lod[lod].indexCount)",
+                    diagDrawIndexedCalls);
             }
         }
 

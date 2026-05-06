@@ -196,7 +196,18 @@ namespace engine::editor
 				return false;
 			}
 			sx = (ndcX * 0.5f + 0.5f) * static_cast<float>(vw);
-			sy = (1.0f - (ndcY * 0.5f + 0.5f)) * static_cast<float>(vh);
+			// PR25 (M??.?) : fix Y-flip de la grille editeur. Le code precedent
+			// faisait `sy = (1 - (ndc * 0.5 + 0.5)) * vh` (= `(0.5 - 0.5 * ndc) * vh`),
+			// ce qui correspond a la convention OpenGL (NDC.y +1 = haut ecran).
+			// Mais le rendu 3D du moteur utilise Vulkan : `Mat4::PerspectiveVulkan`
+			// pose deja `m[5] = -t` pour inverser Y vers la convention Vulkan
+			// (NDC.y +1 = bas ecran). Le `1.0f -` ici annulait ce flip et faisait
+			// rendre la grille avec un Y inverse par rapport au sol/ciel : sur la
+			// capture de validation, l'utilisateur observait DEUX horizons distincts
+			// (transition rouge/bleu en haut + point de fuite de la grille en bas).
+			// Fix : retirer le `1.0f -`. La grille s'aligne maintenant avec le rendu 3D.
+			// Affecte aussi le brush preview (cercle orange) qui partage WorldToScreen.
+			sy = (ndcY * 0.5f + 0.5f) * static_cast<float>(vh);
 			return true;
 		}
 

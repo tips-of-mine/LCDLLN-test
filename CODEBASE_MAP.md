@@ -759,8 +759,9 @@ Plusieurs ajustements demandés par l'utilisateur après validation PR24 :
 | Grille : maille 5 m | `engine/editor/WorldEditorSession.h:171` | `m_gridCellMeters` défaut 8 → 5 |
 | Avatar humanoïde visible en éditeur | `engine/Engine.cpp:3525-3548` | Déjà en place (avant PR25). Le fix `GeometryPass.cpp:376` (frontFace=CW) le rend effectivement visible. |
 | Grille collée au sol | `engine/editor/WorldEditorImGui.cpp:269-306` | Déjà en place : chaque ligne échantillonne `TerrainWorldY` aux extrémités via la heightmap. **Note** : le rendu utilise `ImGui::GetForegroundDrawList()` (overlay 2D sans depth test contre le 3D), donc visuellement la grille est toujours dessinée par-dessus le sol même quand elle est mathématiquement au même niveau Y. Pour avoir un depth test correct il faudrait un line mesh 3D dédié (refactor non fait). |
+| **Fix Y-flip grille** (test PR25.5) | `engine/editor/WorldEditorImGui.cpp:199` | `WorldToScreen` faisait un flip Y convention OpenGL (`sy = (1.0 - (ndcY * 0.5 + 0.5)) * vh`) alors que le rendu 3D utilise Vulkan (NDC.y +1 = bas écran). Conséquence : la grille était rendue avec Y inversé par rapport au sol/ciel ; sur le test diag PR25.5 (sol forcé ROUGE, ciel forcé BLEU) l'utilisateur observait **deux horizons distincts** — transition rouge/bleu en haut + point de fuite de la grille en bas. Fix : retirer le `1.0f -`. Affecte aussi le brush preview (cercle orange) qui partage `WorldToScreen`. |
 
-Items 6 (sculpt terrain) et 7 (paint splat) restent en investigation — voir PR26.
+Items 6 (sculpt terrain) et 7 (paint splat) restent en investigation — voir PR27 (PR26 étant les fixes préventifs frontFace shadow/water/decal).
 
 ---
 

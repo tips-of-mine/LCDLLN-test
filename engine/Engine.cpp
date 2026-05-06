@@ -3698,6 +3698,27 @@ namespace engine
 
 			m_worldEditorImGui->BuildUi(&overlay);
 
+			// PR27 (M??.?) : log DIAG du flow brush. Items 6+7 (sculpt + paint
+			// splat ne fonctionnent pas) — on instrumente pour identifier la
+			// gate qui bloque. Le log s'allume a chaque clic gauche dans le
+			// viewport. Une fois la cause trouvee et fixee, retirer ce bloc.
+			// Le log capture toutes les conditions exigees par la branche brush
+			// apply (Engine.cpp:3752+) : flags valides, terrainPick reussi,
+			// capture souris ImGui, mode actif, position pickX/Z.
+			if (m_worldEditorExe && m_input.WasMousePressed(engine::platform::MouseButton::Left))
+			{
+				const bool terrainValid = m_terrain.IsValid();
+				const bool sessValid = m_worldEditorSession != nullptr;
+				const bool toolsValid = m_worldEditorTerrainTools.IsValid();
+				const bool vkValid = m_vkDeviceContext.IsValid();
+				const bool capMouse = m_worldEditorImGui ? m_worldEditorImGui->WantsCaptureMouse() : true;
+				const int mode = sessValid ? m_worldEditorSession->TerrainEditMode() : -1;
+				LOG_INFO(Render,
+					"[BRUSH-DIAG] L click : terrainValid={} sessValid={} toolsValid={} vkValid={} terrainPick={} capMouse={} mode={} (0=sculpt 1=splat 2=grass 3=instance 4=route) pickXZ=({:.1f},{:.1f}) mouseScreen=({},{})",
+					terrainValid, sessValid, toolsValid, vkValid, terrainPick, capMouse, mode, pickX, pickZ,
+					m_input.MouseX(), m_input.MouseY());
+			}
+
 			if (m_worldEditorExe && m_worldEditorSession && m_worldEditorTerrainTools.IsValid() && m_vkDeviceContext.IsValid()
 				&& m_worldEditorSession->ConsumeRouteApplyDraftRequest())
 			{
@@ -3762,6 +3783,20 @@ namespace engine
 				else if (m_worldEditorTerrainTools.IsValid() && !cap && m_input.IsMouseDown(engine::platform::MouseButton::Left)
 					&& ws.TerrainEditMode() != 3 && ws.TerrainEditMode() != 4)
 				{
+					// PR27 (M??.?) : log DIAG one-shot sur l'entree de la branche
+					// brush apply. Si ce log apparait, l'input click + conditions
+					// sont OK ; le bug est alors dans ApplyBrush / PaintSplat /
+					// PaintGrassMask ou dans le flush GPU.
+					{
+						static bool s_loggedBrushBranchEntry = false;
+						if (!s_loggedBrushBranchEntry)
+						{
+							s_loggedBrushBranchEntry = true;
+							LOG_INFO(Render,
+								"[BRUSH-DIAG] ENTREE branche brush apply : mode={} pickXZ=({:.1f},{:.1f}) radius={:.1f} strength={:.2f}",
+								ws.TerrainEditMode(), pickX, pickZ, ws.BrushRadius(), ws.BrushStrength());
+						}
+					}
 					engine::render::terrain::BrushParams bp;
 					bp.radius = ws.BrushRadius();
 					bp.strength = ws.BrushStrength();
@@ -3769,21 +3804,45 @@ namespace engine
 					bp.flattenTarget = 0.5f;
 					if (ws.TerrainEditMode() == 1)
 					{
+						// PR27 DIAG one-shot : confirme appel PaintSplat + FlushSplatMap.
+						{
+							static bool s_loggedSplat = false;
+							if (!s_loggedSplat) { s_loggedSplat = true;
+								LOG_INFO(Render, "[BRUSH-DIAG] PaintSplat layer={} pickXZ=({:.1f},{:.1f})",
+									ws.SplatLayer(), pickX, pickZ); }
+						}
 						const uint32_t layer = static_cast<uint32_t>(std::clamp(ws.SplatLayer(), 0, 3));
 						m_worldEditorTerrainTools.PaintSplat(pickX, pickZ, layer, bp);
-						(void)m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
+						const bool flushOk = m_worldEditorTerrainTools.FlushSplatMap(m_vkDeviceContext.GetDevice(),
 							m_vkDeviceContext.GetPhysicalDevice(),
 							m_vkDeviceContext.GetGraphicsQueue(),
 							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						{
+							static bool s_loggedFlushSplat = false;
+							if (!s_loggedFlushSplat) { s_loggedFlushSplat = true;
+								LOG_INFO(Render, "[BRUSH-DIAG] FlushSplatMap result={}", flushOk ? 1 : 0); }
+						}
 					}
 					else if (ws.TerrainEditMode() == 2)
 					{
+						// PR27 DIAG one-shot : confirme appel PaintGrassMask + FlushGrassMask.
+						{
+							static bool s_loggedGrass = false;
+							if (!s_loggedGrass) { s_loggedGrass = true;
+								LOG_INFO(Render, "[BRUSH-DIAG] PaintGrassMask erase={} pickXZ=({:.1f},{:.1f})",
+									ws.GrassMaskEraseBrush() ? 1 : 0, pickX, pickZ); }
+						}
 						m_worldEditorTerrainTools.PaintGrassMask(pickX, pickZ, bp, ws.GrassMaskEraseBrush());
-						(void)m_worldEditorTerrainTools.FlushGrassMask(m_terrain,
+						const bool flushOk = m_worldEditorTerrainTools.FlushGrassMask(m_terrain,
 							m_vkDeviceContext.GetDevice(),
 							m_vkDeviceContext.GetPhysicalDevice(),
 							m_vkDeviceContext.GetGraphicsQueue(),
 							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						{
+							static bool s_loggedFlushGrass = false;
+							if (!s_loggedFlushGrass) { s_loggedFlushGrass = true;
+								LOG_INFO(Render, "[BRUSH-DIAG] FlushGrassMask result={}", flushOk ? 1 : 0); }
+						}
 					}
 					else
 					{
@@ -3794,6 +3853,13 @@ namespace engine
 						case 2: op = engine::render::terrain::BrushOp::Smooth; break;
 						case 3: op = engine::render::terrain::BrushOp::Flatten; break;
 						default: break;
+						}
+						// PR27 DIAG one-shot : confirme appel ApplyBrush sculpt.
+						{
+							static bool s_loggedSculpt = false;
+							if (!s_loggedSculpt) { s_loggedSculpt = true;
+								LOG_INFO(Render, "[BRUSH-DIAG] ApplyBrush op={} (0=Raise 1=Lower 2=Smooth 3=Flatten) pickXZ=({:.1f},{:.1f})",
+									static_cast<uint32_t>(op), pickX, pickZ); }
 						}
 						m_worldEditorTerrainTools.ApplyBrush(pickX, pickZ, op, bp);
 					}

@@ -1,0 +1,91 @@
+/* Shared style for M100 visual mockups (ImGui dark, monospace).
+   Each HTML file inlines this via <link> or duplicates the relevant block. */
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.shell { display: grid; gap: 12px; }
+.menubar {
+  background: #2b2b2b; border: 1px solid #3a3a3a; padding: 6px 12px;
+  display: flex; gap: 18px;
+}
+.menubar .item { color: #cdcdcd; cursor: default; }
+.menubar .item:hover { color: #fff; }
+
+.dock { display: grid; grid-template-columns: 240px 1fr 320px; gap: 12px; min-height: 580px; }
+.dock-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+.panel {
+  background: #252526; border: 1px solid #3a3a3a; border-radius: 2px;
+  display: flex; flex-direction: column;
+}
+.panel .title {
+  background: #2d2d30; padding: 6px 10px; border-bottom: 1px solid #3a3a3a;
+  color: #f0a; font-weight: bold; letter-spacing: 0.5px;
+}
+.panel .title.pink   { color: #d6a; }
+.panel .title.blue   { color: #6cf; }
+.panel .title.green  { color: #6c6; }
+.panel .title.amber  { color: #d90; }
+.panel .body { padding: 10px; flex: 1; overflow: auto; }
+
+.row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; margin-bottom: 6px; }
+.row.three { grid-template-columns: 130px 1fr auto; }
+
+.slider {
+  background: #3a3a3a; height: 8px; position: relative; border-radius: 1px;
+}
+.slider .fill { background: #4080d0; height: 100%; }
+.slider .fill.amber { background: #d09040; }
+.slider .fill.green { background: #40a060; }
+
+.btn {
+  display: inline-block; padding: 4px 10px; background: #3a3a3a;
+  border: 1px solid #555; color: #ddd; cursor: pointer; margin-right: 6px;
+}
+.btn.active { background: #4080d0; color: #fff; border-color: #5090e0; }
+.btn.danger { color: #f88; }
+.btn:hover  { background: #444; }
+
+.checkbox::before { content: "[ ]"; color: #888; margin-right: 6px; }
+.checkbox.checked::before { content: "[✓]"; color: #6cf; }
+
+.radio::before { content: "( )"; color: #888; margin-right: 6px; }
+.radio.checked::before { content: "(•)"; color: #6cf; }
+
+table { border-collapse: collapse; width: 100%; }
+table td, table th { border-bottom: 1px solid #333; padding: 4px 8px; text-align: left; }
+table th { color: #6cf; }
+
+.viewport {
+  background: linear-gradient(180deg, #2c3540, #1a1f25);
+  display: flex; align-items: center; justify-content: center;
+  color: #555; font-style: italic; min-height: 360px;
+  position: relative;
+}
+.viewport .toolbar {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(0,0,0,0.5); padding: 4px 8px; display: flex; gap: 6px;
+}
+.viewport .hud {
+  position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6);
+  padding: 6px 10px; font-size: 11px; color: #cdcdcd;
+}
+
+.combo {
+  background: #2b2b2b; border: 1px solid #555; padding: 2px 8px;
+  display: inline-block; min-width: 140px;
+}
+.combo::after { content: " ▼"; color: #888; float: right; }
+
+.hist-row { display: grid; grid-template-columns: 90px 1fr 80px 60px; gap: 8px; padding: 3px 0; border-bottom: 1px dotted #333; }
+.hist-row.active { background: #2a3a4a; color: #fff; }
+
+footer { margin-top: 14px; color: #666; font-size: 11px; text-align: center; }

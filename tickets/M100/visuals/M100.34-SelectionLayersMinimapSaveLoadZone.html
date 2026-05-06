@@ -1,0 +1,46 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>M100.34 — Selection / Layers / Minimap / Save</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:980px">
+<div class="panel"><div class="title pink">Outliner — Layers</div><div class="body" style="font-size:12px">
+  ▼ Layer Default <span style="color:#6cf">[👁]</span> <span style="color:#888">[🔒]</span><br>
+  &nbsp;&nbsp;&nbsp;└── prop rock_01.glb <span style="color:#888">(id=42)</span><br>
+  &nbsp;&nbsp;&nbsp;└── prop tree_oak <span style="color:#888">(id=43)</span><br>
+  ▼ Layer Buildings <span style="color:#6cf">[👁]</span> <span style="color:#888">[🔒]</span><br>
+  &nbsp;&nbsp;&nbsp;└── prop house_01.glb <span style="color:#888">(id=51)</span><br>
+  ▶ Layer Hidden <span style="color:#888">[ ⊘ ]</span> <span style="color:#f88">[🔒]</span>
+</div></div>
+<div class="panel"><div class="title blue">Minimap</div><div class="body">
+  <pre style="font-family:monospace;font-size:14px;color:#cdcdcd;line-height:1">
++---------------------------+
+|     ░ ░ ▓ ▓ ░             |
+|     ░ █ ░ ░ ░             |
+|     ░ ░ ░ ▓ ▓             |
+|       ●                   |
++---------------------------+
+  </pre>
+  <div style="color:#888;font-size:11px">█ current chunk · ▓ visible · ● camera</div>
+</div></div>
+</div>
+
+<div class="panel" style="max-width:980px;margin-top:12px"><div class="title green">Save Zone As…</div><div class="body">
+  <div class="row"><span>Output dir</span><span>build/zone_main/</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0">
+    <span class="checkbox checked">Terrain (terrain.bin + terrain_lods.bin)</span>
+    <span class="checkbox checked">Splat (splat.bin)</span>
+    <span class="checkbox checked">Props (instances/props.bin)</span>
+    <span class="checkbox checked">Foliage (instances/foliage.bin)</span>
+    <span class="checkbox checked">Hazards (instances/hazards.bin)</span>
+    <span class="checkbox checked">Interactives (instances/interactives.bin)</span>
+    <span class="checkbox checked">Zones (instances/zones.bin)</span>
+    <span class="checkbox checked">Water (instances/water.bin)</span>
+    <span class="checkbox checked">Fog volumes (instances/fog_volumes.bin)</span>
+    <span class="checkbox checked">Atmosphere zones</span>
+    <span class="checkbox checked">Splines (instances/splines.bin)</span>
+    <span class="checkbox checked">Shade maps (chunks/.../shade.bin)</span>
+    <span class="checkbox checked">Collision proxies (per-asset)</span>
+    <span class="checkbox checked">zone.meta + atmosphere.json + probes.bin</span>
+  </div>
+  <div style="margin-top:10px"><span class="btn active">Save Zone</span></div>
+</div></div>
+<footer>M100.34 — Selection, Layers, Minimap & Save/Load Zone</footer>
+</body></html>

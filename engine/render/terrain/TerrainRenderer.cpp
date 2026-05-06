@@ -524,16 +524,12 @@ namespace engine::render::terrain
             VkPipelineRasterizationStateCreateInfo rasCI{};
             rasCI.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasCI.polygonMode = VK_POLYGON_MODE_FILL;
-            rasCI.cullMode    = VK_CULL_MODE_BACK_BIT;
-            // PR #427 follow-up : winding apparent en clip space inverse depuis le commit
-            // ee181da (Reapply view matrix transposee, convention Vulkan LH +Z forward).
-            // Le mesh terrain est genere en CCW dans le plan XZ world space, mais la nouvelle
-            // matrice view fait apparaitre les triangles en CW dans le clip space. Avec
-            // frontFace=CCW, le pipeline rejetait silencieusement TOUS les patches (terrain
-            // invisible malgre patches kept=225 cote CPU frustum cull). Confirme par PR
-            // diag avec cullMode=NONE : terrain visible (depth<1 = bleu, sky=rouge dans la
-            // viz depth). Fix permanent : passer frontFace en CLOCKWISE pour matcher la
-            // nouvelle convention du clip space sans toucher au mesh.
+            // PR30 DIAG : cullMode=NONE pour ignorer le winding et trancher.
+            // Si avec PR29 (lighting court-circuit -> GBufferA direct) on voit l'orange
+            // (1.0, 0.55, 0.1) avec NONE et qu'on voyait gris avec BACK+CW (PR #450),
+            // alors PR24/PR #450 frontFace=CW etait un mauvais diagnostic et il faut
+            // revenir a CCW. Branche DIAG-ONLY, ne JAMAIS merger.
+            rasCI.cullMode    = VK_CULL_MODE_NONE;
             rasCI.frontFace   = VK_FRONT_FACE_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 

@@ -120,13 +120,15 @@ void main()
     float grassAmt = texture(uGrassMask, vUV).r * ubo.terrainParams.w;
     vec3 grassHue = vec3(0.88, 1.04, 0.82);
     albedo = mix(albedo, albedo * grassHue, clamp(grassAmt, 0.0, 1.0));
-    // Fallback World Editor : orange vif quand aucune couche splat n'a de texture utilisateur.
-    // Les sorties normal / ORM / velocity restent inchangees -> shading lambert
-    // sur l'orange => relief lisible (orange clair cote soleil, sombre face opposee).
+    // PR25.5 DIAG Y-flip : forcer le sol en ROUGE PUR pour distinguer
+    // visuellement de la branche sky (forcee en BLEU PUR dans lighting.frag).
+    // Si l'utilisateur voit ROUGE en bas + BLEU en haut, l'image est dans le
+    // bon sens. Si ROUGE en haut + BLEU en bas, image inversee Y.
+    // A retirer apres confirmation du diagnostic.
     if (pc.noUserTextures != 0) {
-        outAlbedo = vec4(1.0, 0.55, 0.1, 1.0);
+        outAlbedo = vec4(1.0, 0.0, 0.0, 1.0);
     } else {
-        outAlbedo = vec4(albedo, 1.0);
+        outAlbedo = vec4(1.0, 0.0, 0.0, 1.0);
     }
 
     // ── Sample and blend detail normals (triplanar per layer) ─────────────────

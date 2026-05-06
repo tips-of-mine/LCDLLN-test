@@ -104,12 +104,16 @@ void main()
     float metallic  = orm.b;
     float depth     = texture(depthTex, inUV).r;
 
-    // ---- Sky / empty fragments (depth == 1.0 means no geometry) --------
-    // On utilise la couleur du ciel pilotée par DayNightCycle (horizon).
-    // Permet de voir l'effet jour/nuit dans l'éditeur même sans skybox.
+    // PR25.5 DIAG Y-flip : forcer le ciel en BLEU PUR (au lieu de pc.skyColor).
+    // Test couple avec terrain.frag qui force le sol en ROUGE PUR.
+    //   - Si ROUGE en bas + BLEU en haut : image dans le bon sens, perception
+    //     erronee, on garde tel quel et on retire ces hacks.
+    //   - Si ROUGE en haut + BLEU en bas : image inversee verticalement, on
+    //     fixe la matrice view (signe up) ou la projection (m[5]).
+    // A retirer apres confirmation du diagnostic.
     if (depth >= 1.0)
     {
-        outSceneColorHDR = vec4(pc.skyColor.rgb, 1.0);
+        outSceneColorHDR = vec4(0.0, 0.0, 1.0, 1.0);
         return;
     }
 

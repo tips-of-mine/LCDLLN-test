@@ -18,15 +18,24 @@ namespace engine::render
 		const float sp = std::sin(pitch);
 		// Forward in world (camera looks along -Z in camera space, so forward = -view direction).
 		const engine::math::Vec3 forward(-sy * cp, -sp, -cy * cp);
-		// Right = cross(world up, forward); world up = (0, 1, 0).
-		engine::math::Vec3 right(forward.z, 0.0f, -forward.x);
+		// PR26.5 (M??.?) : right vector via convention standard cross(forward, world_up)
+		// au lieu de cross(world_up, forward). L'ancien calcul donnait un right
+		// inverse (-X au lieu de +X pour yaw=0), ce qui se traduisait par les
+		// touches Q et D produisant un mouvement world inverse (D allait a
+		// gauche, Q allait a droite). Confirme par l'utilisateur 2026-05-06.
+		// Le up calcule via cross(right, forward) ci-dessous donne LE MEME
+		// vecteur up qu'avant (cross(right_new, forward) = -cross(forward, right_new)
+		// = -cross(forward, -right_old) = cross(forward, right_old) = up_old),
+		// donc le rendu Y reste inchange. Seul le mouvement horizontal Q/D est
+		// corrige.
+		engine::math::Vec3 right(-forward.z, 0.0f, forward.x);
 		float rlen = right.Length();
 		if (rlen > 0.0f) right = right * (1.0f / rlen);
 		else right = engine::math::Vec3(1.0f, 0.0f, 0.0f);
-		// Up = cross(forward, right).
-		engine::math::Vec3 up(forward.y * right.z - forward.z * right.y,
-			forward.z * right.x - forward.x * right.z,
-			forward.x * right.y - forward.y * right.x);
+		// Up = cross(right, forward) (convention RH standard du triedre).
+		engine::math::Vec3 up(right.y * forward.z - right.z * forward.y,
+			right.z * forward.x - right.x * forward.z,
+			right.x * forward.y - right.y * forward.x);
 		float ulen = up.Length();
 		if (ulen > 0.0f) up = up * (1.0f / ulen);
 		else up = engine::math::Vec3(0.0f, 1.0f, 0.0f);

@@ -4,6 +4,7 @@
 #include "engine/editor/EditorMode.h"
 #include "engine/editor/WorldEditorImGui.h"
 #include "engine/editor/WorldEditorSession.h"
+#include "engine/editor/world/WorldEditorShell.h"
 #include "engine/core/memory/Memory.h"
 #include "engine/platform/FileSystem.h"
 #include "engine/network/ChatPayloads.h"
@@ -629,6 +630,13 @@ namespace engine
 		m_editorEnabled = m_worldEditorExe || HasCliFlag(argc, argv, "--editor")
 			|| m_cfg.GetBool("editor.enabled", false);
 
+		// M100.1 — Branche éditeur monde "couche au-dessus" (distincte de
+		// --world-editor qui active le shell M43.x). Activée par le flag CLI
+		// --editor-world ou par editor.world.enabled = true dans config.json.
+		// Les deux shells peuvent cohabiter pendant la transition.
+		const bool worldEditorWorldFlag =
+			HasCliFlag(argc, argv, "--editor-world") || m_cfg.GetBool("editor.world.enabled", false);
+
 		if (m_worldEditorExe)
 		{
 			m_worldEditorSession = std::make_unique<engine::editor::WorldEditorSession>();
@@ -697,6 +705,36 @@ namespace engine
 				{
 					LOG_INFO(Core, "[Boot] Editor mode enabled (--editor ou editor.enabled=true)");
 				}
+			}
+		}
+
+		// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
+		// Indépendante de m_editorMode (qui sert le shell M43.x). Si
+		// `--editor-world` ou `editor.world.enabled = true`, on instancie le
+		// shell ; il vit en parallèle de WorldEditorImGui. Si les deux flags
+		// sont actifs ensemble, c'est le cas non-supporté (logué en warning
+		// ci-dessous). Le SetWorldEditorWorld sur m_editorMode sert d'accès
+		// public si un sous-système a besoin de le savoir.
+		if (worldEditorWorldFlag)
+		{
+			if (m_worldEditorExe)
+			{
+				LOG_WARN(Core,
+					"[Boot] --world-editor ET --editor-world activés — cas non-supporté ; les deux shells vont coexister");
+			}
+			if (m_editorMode)
+			{
+				m_editorMode->SetWorldEditorWorld(true);
+			}
+			m_worldEditorShell = std::make_unique<engine::editor::world::WorldEditorShell>();
+			if (!m_worldEditorShell->Init(m_cfg))
+			{
+				LOG_ERROR(EditorWorld, "[Boot] WorldEditorShell::Init a échoué — shell désactivé");
+				m_worldEditorShell.reset();
+			}
+			else
+			{
+				LOG_INFO(EditorWorld, "[Boot] WorldEditorShell M100.1 instancié (--editor-world)");
 			}
 		}
 
@@ -2645,6 +2683,13 @@ namespace engine
 			m_editorMode->Shutdown(m_window);
 			m_editorMode.reset();
 		}
+		// M100.1 — Persiste le layout ImGui du nouvel éditeur monde puis
+		// libère ses panneaux. Idempotent si Init() n'a pas réussi.
+		if (m_worldEditorShell)
+		{
+			m_worldEditorShell->Shutdown();
+			m_worldEditorShell.reset();
+		}
 		// Phase 3.6.6 — Sauvegarde finale de la position avant de fermer la connexion master.
 		// Fire-and-forget : on n'attend pas l'ack (ce serait risqué dans un chemin de shutdown
 		// avec timers et ordre de destruction) — le serveur logge en cas d'échec d'UPDATE.
@@ -3371,6 +3416,17 @@ namespace engine
 				}
 			}
 			m_worldEditorImGui->NewFrame(static_cast<float>(dt), imguiDw, imguiDh);
+		}
+
+		// M100.1 — Rendu de la coquille du nouvel éditeur monde. Doit être
+		// appelée après ImGui::NewFrame (fait par WorldEditorImGui::NewFrame
+		// ci-dessus, qui partage le même contexte ImGui) et avant
+		// ImGui::Render. RenderFrame est no-op si Init() n'a pas été appelé
+		// avec succès. Pas thread : main thread uniquement.
+		if (m_worldEditorShell && m_worldEditorShell->IsInitialized()
+			&& m_worldEditorImGui && m_worldEditorImGui->IsReady())
+		{
+			m_worldEditorShell->RenderFrame();
 		}
 #endif
 

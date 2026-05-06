@@ -29,6 +29,17 @@ namespace engine::render::terrain
             return;
         }
 
+        // PR32 : barriers heightmap doivent inclure VERTEX_SHADER. La heightmap
+        // (R16_UNORM, binding 0) est echantillonnee dans terrain.vert ligne 72
+        // (`texture(uHeightmap, uv).r`) pour deplacer les sommets ; le fragment
+        // shader ne la lit PAS. Avec dstStage=FRAGMENT_SHADER seul, le vertex
+        // shader peut lire des donnees stale apres un upload (cache L1 non flush
+        // pour la pipeline stage non listee) -> sculpt invisible cote user
+        // alors que l'upload GPU est correct. Inclure VERTEX_SHADER + FRAGMENT
+        // pour robustesse future si la frag finit par sampler aussi.
+        constexpr VkPipelineStageFlags kHeightmapShaderStages =
+            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
         VkImageMemoryBarrier toTransfer{};
         toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         toTransfer.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -40,7 +51,7 @@ namespace engine::render::terrain
         toTransfer.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
         toTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         vkCmdPipelineBarrier(cmd,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            kHeightmapShaderStages,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             0, 0, nullptr, 0, nullptr, 1, &toTransfer);
 
@@ -66,9 +77,11 @@ namespace engine::render::terrain
         toSample.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
         toSample.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         toSample.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        // PR32 : meme commentaire que pour toTransfer ci-dessus. dstStage doit
+        // inclure VERTEX_SHADER puisque c'est la qu'on sample uHeightmap.
         vkCmdPipelineBarrier(cmd,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            kHeightmapShaderStages,
             0, 0, nullptr, 0, nullptr, 1, &toSample);
     }
 
@@ -198,6 +211,13 @@ namespace engine::render::terrain
                 return false;
             }
 
+            // PR32 : meme correction que dans RecordHeightmapR16UploadCommands.
+            // UploadToImage est utilise par FlushHeightmap (fallback synchrone)
+            // pour la heightmap. La heightmap est lue par terrain.vert (vertex
+            // shader) -> les barriers doivent inclure VERTEX_SHADER.
+            constexpr VkPipelineStageFlags kHeightmapShaderStages =
+                VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
             // Barrier: SHADER_READ_ONLY_OPTIMAL → TRANSFER_DST_OPTIMAL
             {
                 VkImageMemoryBarrier b{};
@@ -211,7 +231,7 @@ namespace engine::render::terrain
                 b.srcAccessMask       = VK_ACCESS_SHADER_READ_BIT;
                 b.dstAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
                 vkCmdPipelineBarrier(cmd,
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    kHeightmapShaderStages,
                     VK_PIPELINE_STAGE_TRANSFER_BIT,
                     0, 0, nullptr, 0, nullptr, 1, &b);
             }
@@ -244,9 +264,10 @@ namespace engine::render::terrain
                 b.subresourceRange    = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
                 b.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
                 b.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT;
+                // PR32 : dstStage doit inclure VERTEX_SHADER (cf. ci-dessus).
                 vkCmdPipelineBarrier(cmd,
                     VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    kHeightmapShaderStages,
                     0, 0, nullptr, 0, nullptr, 1, &b);
             }
 

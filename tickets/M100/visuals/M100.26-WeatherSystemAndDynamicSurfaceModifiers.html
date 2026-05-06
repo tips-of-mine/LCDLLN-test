@@ -1,0 +1,25 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>M100.26 — Weather</title>
+<link rel="stylesheet" href="_style.css"></head><body>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:980px">
+<div class="panel"><div class="title">Weather Preview</div><div class="body">
+  <div class="row"><span>Current</span><span>Rain</span></div>
+  <div class="row"><span>Blend to</span><span>Storm (blendT 0.3)</span></div>
+  <div style="margin:14px 0;background:#2a2a2a;padding:10px;border:1px solid #444">
+    Clear ─ <b>Rain</b> ─●─ Storm ─ Snow ─ Drought ─ Fog
+  </div>
+  <div><span class="btn">Apply preview</span> <span class="btn">Reset to live</span></div>
+</div></div>
+<div class="panel"><div class="title">Weather Timeline</div><div class="body">
+  <div class="row"><span>Scenario</span><span class="combo">default</span></div>
+  <table style="font-size:11px">
+    <tr><th></th><th>Clear</th><th>Rain</th><th>Storm</th><th>Snow</th><th>Drought</th><th>Fog</th></tr>
+    <tr><td>Spring</td><td>55%</td><td>25%</td><td>8%</td><td>0%</td><td>2%</td><td>10%</td></tr>
+    <tr><td>Summer</td><td>70%</td><td>8%</td><td>10%</td><td>0%</td><td>10%</td><td>2%</td></tr>
+    <tr><td>Autumn</td><td>45%</td><td>28%</td><td>12%</td><td>0%</td><td>2%</td><td>13%</td></tr>
+    <tr><td>Winter</td><td>30%</td><td>8%</td><td>12%</td><td>35%</td><td>0%</td><td>15%</td></tr>
+  </table>
+  <div style="margin-top:10px;color:#888;font-size:11px">Server broadcasts WeatherBroadcast every 30s · modifiers computed client-side</div>
+</div></div>
+</div>
+<footer>M100.26 — Weather System & Dynamic Surface Modifiers</footer>
+</body></html>

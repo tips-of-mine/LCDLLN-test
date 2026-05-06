@@ -113,6 +113,20 @@ void main()
         return;
     }
 
+    // ====================================================================
+    // PR29 DIAG (TERRAIN INVISIBLE) — court-circuit §6.3 du doc
+    // docs/INVESTIGATION_terrain_invisible.md
+    // - Si on voit l'orange (1.0, 0.55, 0.1) sur la zone terrain :
+    //     => terrain ECRIT bien GBufferA, bug en aval (lighting/PBR/IBL).
+    // - Si on voit toujours gris/beige uniforme :
+    //     => terrain n'ECRIT PAS GBufferA OU la depth reste a 1.0
+    //        (depth>=1 early-out plus haut). Bug en amont (pipeline,
+    //         framebuffer, winding, barriere). Branche DIAG-ONLY, ne
+    //         JAMAIS merger sur main : ce shader saute toute la lighting.
+    // ====================================================================
+    outSceneColorHDR = vec4(albedo, 1.0);
+    return;
+
     // ---- Reconstruct world-space position from depth -------------------
     // NDC xy in [-1,+1]; depth in [0,1] (Vulkan convention).
     vec2  ndcXY  = inUV * 2.0 - 1.0;

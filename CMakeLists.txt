@@ -256,6 +256,16 @@ add_library(engine_core
   engine/editor/WorldEditorSession.cpp
   engine/editor/TexturePreviewCache.cpp
   engine/editor/TextureLibraryPanel.cpp
+  # M100.1 — World editor "couche au-dessus" (engine::editor::world).
+  # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
+  # editor.world.enabled. Pas référencé par engine/server/.
+  engine/editor/world/WorldEditorShell.cpp
+  engine/editor/world/panels/ScenePanel.cpp
+  engine/editor/world/panels/InspectorPanel.cpp
+  engine/editor/world/panels/AssetBrowserPanel.cpp
+  engine/editor/world/panels/OutlinerPanel.cpp
+  engine/editor/world/panels/ConsolePanel.cpp
+  engine/editor/world/panels/ToolPropertiesPanel.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
@@ -648,6 +658,21 @@ if(MSVC)
   target_compile_options(world_editor_session_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME world_editor_session_tests COMMAND world_editor_session_tests)
+
+# M100.1 — Tests unitaires CPU pour la coquille WorldEditorShell.
+# Vérifient le cycle Init/Shutdown, la persistance du layout .ini, le
+# dispatch des raccourcis F1..F12 et le flag dirty. Le test crée un
+# contexte ImGui isolé en interne (pas de fenêtre Vulkan ni device).
+# Windows-only : ImGui n'est compilé que sous WIN32 dans ce repo.
+if(WIN32)
+  add_executable(world_editor_shell_tests engine/editor/world/tests/WorldEditorShellTests.cpp)
+  target_include_directories(world_editor_shell_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(world_editor_shell_tests PRIVATE engine_core imgui_lcdlln)
+  if(MSVC)
+    target_compile_options(world_editor_shell_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME world_editor_shell_tests COMMAND world_editor_shell_tests)
+endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)

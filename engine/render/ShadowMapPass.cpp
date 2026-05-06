@@ -197,7 +197,16 @@ namespace engine::render
 		rs.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rs.polygonMode             = VK_POLYGON_MODE_FILL;
 		rs.cullMode                = VK_CULL_MODE_BACK_BIT; // actual mode selected at Record via dynamic state if needed.
-		rs.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		// PR26 (M??.?) : meme correction de winding apparent en clip space que
+		// PR24 (TerrainRenderer) et PR25 (GeometryPass). Le commit ee181da a
+		// change la convention de Camera::ComputeViewMatrix vers Vulkan LH +Z
+		// forward ; les meshes generes en CCW world-space apparaissent en CW
+		// dans le clip space. Avec cullMode=BACK_BIT + frontFace=CCW, les
+		// shadow casters etaient silencieusement rejetes -> aucune ombre
+		// projetee, et plus tard quand un mesh casterait des ombres, le bug
+		// serait inexplicable. Fix preventif : frontFace=CW pour aligner avec
+		// les pipelines deja corriges.
+		rs.frontFace               = VK_FRONT_FACE_CLOCKWISE;
 		rs.depthClampEnable        = VK_FALSE;
 		rs.depthBiasEnable         = VK_TRUE;
 		rs.lineWidth               = 1.0f;

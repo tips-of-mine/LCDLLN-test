@@ -955,7 +955,12 @@ namespace engine::render
 		rsState.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rsState.polygonMode = VK_POLYGON_MODE_FILL;
 		rsState.cullMode    = VK_CULL_MODE_NONE; // water is two-sided (above + below)
-		rsState.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		// PR26 (M??.?) : alignement de convention avec les autres pipelines
+		// fixes par PR24/PR25 (TerrainRenderer, GeometryPass, ShadowMapPass).
+		// Ici cullMode=NONE rend le frontFace inactif (les deux faces sont
+		// rasterisees), donc pas de bug visuel actuel. Fix preventif au cas
+		// ou cullMode passerait a BACK_BIT plus tard pour une optimisation.
+		rsState.frontFace   = VK_FRONT_FACE_CLOCKWISE;
 		rsState.lineWidth   = 1.0f;
 
 		VkPipelineMultisampleStateCreateInfo msState{};

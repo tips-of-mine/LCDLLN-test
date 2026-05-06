@@ -86,14 +86,24 @@ namespace engine
 			const float sp = std::sin(camera.pitch);
 
 			engine::math::Vec3 forward(-sy * cp, -sp, -cy * cp);
-			engine::math::Vec3 right(forward.z, 0.0f, -forward.x);
+			// PR26.5 (M??.?) : alignement avec le fix Camera.cpp:22. La fonction
+			// CameraViewportWorldDirection sert a calculer la direction du ray
+			// pour le raycast camera->terrain (RaycastTerrainFromCamera). Doit
+			// utiliser exactement les memes conventions que ComputeViewMatrix
+			// pour que le raycast aligne avec ce que la camera voit a l'ecran.
+			// Sans ce fix, le raycast utilisait un right_inverse alors que la
+			// matrice view (post-PR26.5) a un right_standard, donc le pickX/Z
+			// retourne par le raycast etait decale en X (souris a droite ->
+			// pickX a gauche du sol). Possible cause partielle des items 6+7
+			// (sculpt + splat ne fonctionnent pas) — a confirmer en PR27.
+			engine::math::Vec3 right(-forward.z, 0.0f, forward.x);
 			const float rightLen = right.Length();
 			right = rightLen > 0.0f ? right * (1.0f / rightLen) : engine::math::Vec3(1.0f, 0.0f, 0.0f);
 
 			engine::math::Vec3 up(
-				forward.y * right.z - forward.z * right.y,
-				forward.z * right.x - forward.x * right.z,
-				forward.x * right.y - forward.y * right.x);
+				right.y * forward.z - right.z * forward.y,
+				right.z * forward.x - right.x * forward.z,
+				right.x * forward.y - right.y * forward.x);
 			const float upLen = up.Length();
 			up = upLen > 0.0f ? up * (1.0f / upLen) : engine::math::Vec3(0.0f, 1.0f, 0.0f);
 

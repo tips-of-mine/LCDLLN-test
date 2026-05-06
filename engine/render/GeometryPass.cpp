@@ -373,16 +373,15 @@ namespace engine::render
 		rs.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rs.polygonMode = VK_POLYGON_MODE_FILL;
 		rs.cullMode    = VK_CULL_MODE_BACK_BIT;
-		// PR25 (M??.?) : meme correction que TerrainRenderer.cpp:528 (PR24).
-		// Le commit ee181da (Reapply view matrix transposee) a change la
-		// convention de Camera::ComputeViewMatrix vers Vulkan LH +Z forward.
-		// Avec cette nouvelle matrice, les meshes generes en CCW world-space
-		// apparaissent en CW dans le clip space. Avec frontFace=CCW +
-		// cullMode=BACK_BIT, le pipeline rejetait silencieusement TOUS les
-		// triangles -> avatar humanoide invisible en mode editeur (item 2 de
-		// la finalisation editeur 2026-05-06) ET dans le client de jeu post-
-		// EnterWorld (regression notee 2026-05-05). Fix : frontFace=CW.
-		rs.frontFace   = VK_FRONT_FACE_CLOCKWISE;
+		// PR31 (revert PR #450 / PR24) : retour a CCW pour les meshes geometry
+		// (avatar humanoide, props). Meme cause/fix que TerrainRenderer.cpp:527 :
+		// la PR #457 (b470873) a corrige le vecteur right de la camera, ce qui
+		// mirror X dans la matrice view et flippe le winding clip-space par
+		// rapport a l'epoque de PR #450. frontFace=CW cullait silencieusement
+		// l'avatar et les props depuis 8787970 (8787970 = merge PR #457).
+		// Avec PR31, l'avatar humanoide redevient visible dans World Editor
+		// (item 2 finalisation 2026-05-06) ET en client post-EnterWorld.
+		rs.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rs.lineWidth   = 1.0f;
 
 		VkPipelineMultisampleStateCreateInfo ms = {};

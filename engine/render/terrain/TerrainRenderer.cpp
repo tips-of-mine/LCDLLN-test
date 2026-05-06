@@ -525,16 +525,25 @@ namespace engine::render::terrain
             rasCI.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasCI.polygonMode = VK_POLYGON_MODE_FILL;
             rasCI.cullMode    = VK_CULL_MODE_BACK_BIT;
-            // PR #427 follow-up : winding apparent en clip space inverse depuis le commit
-            // ee181da (Reapply view matrix transposee, convention Vulkan LH +Z forward).
-            // Le mesh terrain est genere en CCW dans le plan XZ world space, mais la nouvelle
-            // matrice view fait apparaitre les triangles en CW dans le clip space. Avec
-            // frontFace=CCW, le pipeline rejetait silencieusement TOUS les patches (terrain
-            // invisible malgre patches kept=225 cote CPU frustum cull). Confirme par PR
-            // diag avec cullMode=NONE : terrain visible (depth<1 = bleu, sky=rouge dans la
-            // viz depth). Fix permanent : passer frontFace en CLOCKWISE pour matcher la
-            // nouvelle convention du clip space sans toucher au mesh.
-            rasCI.frontFace   = VK_FRONT_FACE_CLOCKWISE;
+            // PR31 (revert PR #450 / PR24) : retour a CCW.
+            //
+            // Historique : PR #450 (49d462b) avait pose frontFace=CW pour compenser un
+            // winding clip-space cense etre devenu CW apres le matrix view fix ee181da.
+            // PR #457 (b470873) a ensuite corrige le vecteur right de la camera
+            // (cross(forward, world_up) au lieu de cross(world_up, forward)). Cette
+            // correction mirror l'axe X dans la matrice view -> le winding apparent en
+            // clip space est repasse en CCW (chirality inversee par le mirror X).
+            //
+            // Resultat : a partir de PR #457 (sur main depuis 8787970), frontFace=CW
+            // cullait silencieusement tous les patches terrain meme avec patches
+            // kept=225 cote CPU. Symptome : viewport gris uniforme dans World Editor
+            // (toute la lighting prend la branche depth>=1 -> skyColor partout).
+            //
+            // Fix : repasser a CCW (convention Vulkan par defaut). Coherent avec un
+            // triedre RH (right=cross(forward, up), up=cross(right, forward),
+            // forward = -view_dir) pour un mesh CCW en world-space comme les patches
+            // terrain (cf. TerrainMeshGenerator).
+            rasCI.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 
             VkPipelineMultisampleStateCreateInfo msCI{};
@@ -1190,12 +1199,11 @@ namespace engine::render::terrain
                 cliffRas.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
                 cliffRas.polygonMode = VK_POLYGON_MODE_FILL;
                 cliffRas.cullMode    = VK_CULL_MODE_BACK_BIT;
-                // PR #427 follow-up : meme correction que pour le pipeline terrain principal
-                // (ligne 528). Convention Vulkan LH +Z forward (ee181da) -> winding apparent
-                // CW en clip space -> frontFace doit etre CLOCKWISE pour ne pas rejeter les
-                // faces avant. La map de test n'a pas de cliffs (log "Cliff meshes loaded:
-                // 0/0"), mais on aligne la cohérence pour les maps futures.
-                cliffRas.frontFace   = VK_FRONT_FACE_CLOCKWISE;
+                // PR31 (revert PR #450) : meme retour a CCW que pour le pipeline terrain
+                // principal (cf. commentaire detaille ligne 527). Coherence avec la matrice
+                // view post-PR #457 (b470873) qui mirror X et flippe le winding clip-space
+                // par rapport a l'epoque de PR #450.
+                cliffRas.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
                 cliffRas.lineWidth   = 1.0f;
 
                 VkPipelineMultisampleStateCreateInfo cliffMs{};

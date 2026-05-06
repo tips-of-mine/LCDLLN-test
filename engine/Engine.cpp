@@ -2770,6 +2770,20 @@ namespace engine
 		if (m_input.WasPressed(engine::platform::Key::F_11))
     		m_window.ToggleFullscreen();
 
+		// M100.2 — Dispatch des raccourcis éditeur monde vers le shell. Ctrl+Z
+		// / Ctrl+Shift+Z / Ctrl+Y branchent la pile undo/redo ; F1..F12
+		// (déjà gérés en M100.1) restent supportés. On ne dispatche que si
+		// le shell est initialisé (CLI --editor-world ou editor.world.enabled).
+		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			const bool ctrl  = m_input.IsDown(engine::platform::Key::Control);
+			const bool shift = m_input.IsDown(engine::platform::Key::Shift);
+			if (m_input.WasPressed(engine::platform::Key::Z))
+				m_worldEditorShell->HandleShortcut('Z', ctrl, shift);
+			if (m_input.WasPressed(engine::platform::Key::Y))
+				m_worldEditorShell->HandleShortcut('Y', ctrl, shift);
+		}
+
 		m_shaderHotReload.Poll(m_cfg);
 		m_shaderHotReload.ApplyPending(m_shaderCache);
 

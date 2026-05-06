@@ -6,6 +6,7 @@
 #include "engine/editor/world/panels/OutlinerPanel.h"
 #include "engine/editor/world/panels/ConsolePanel.h"
 #include "engine/editor/world/panels/ToolPropertiesPanel.h"
+#include "engine/editor/world/panels/HistoryPanel.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -28,6 +29,17 @@ namespace engine::editor::world
 	bool WorldEditorShell::Init(const engine::core::Config& cfg)
 	{
 		m_layoutPath = cfg.GetString("editor.world.layout_path", "editor_world_layout.ini");
+
+		// M100.2 — Configure la pile undo/redo depuis config.json. Defaults :
+		// 256 commandes, 256 MiB. Le cast est sûr : capacity et maxBytes sont
+		// stockés en size_t mais Config::GetInt renvoie int64_t.
+		CommandStackConfig csCfg;
+		csCfg.capacity = static_cast<size_t>(
+			cfg.GetInt("editor.world.undo.capacity", 256));
+		csCfg.maxBytes = static_cast<size_t>(
+			cfg.GetInt("editor.world.undo.maxBytes", 256ll * 1024ll * 1024ll));
+		m_commandStack.Configure(csCfg);
+
 		m_panels.clear();
 		m_panels.emplace_back(std::make_unique<panels::ScenePanel>());
 		m_panels.emplace_back(std::make_unique<panels::InspectorPanel>());
@@ -35,6 +47,10 @@ namespace engine::editor::world
 		m_panels.emplace_back(std::make_unique<panels::OutlinerPanel>());
 		m_panels.emplace_back(std::make_unique<panels::ConsolePanel>());
 		m_panels.emplace_back(std::make_unique<panels::ToolPropertiesPanel>());
+		// M100.2 — Insère HistoryPanel après les 6 panneaux M100.1. L'ordre
+		// devient : [Scene=0, Inspector=1, AssetBrowser=2, Outliner=3,
+		//            Console=4, ToolProperties=5, History=6].
+		m_panels.emplace_back(std::make_unique<panels::HistoryPanel>(&m_commandStack));
 
 #if defined(_WIN32)
 		std::error_code ec;
@@ -131,9 +147,16 @@ namespace engine::editor::world
 
 		if (ImGui::BeginMenu("Edit"))
 		{
-			// Undo/Redo grisés en M100.1 (branchés en M100.2 via CommandStack).
-			ImGui::MenuItem("Undo", "Ctrl+Z", false, /*enabled*/ false);
-			ImGui::MenuItem("Redo", "Ctrl+Y", false, /*enabled*/ false);
+			// M100.2 — Undo/Redo branchés sur le CommandStack. Les items sont
+			// grisés quand la pile correspondante est vide.
+			if (ImGui::MenuItem("Undo", "Ctrl+Z", false, m_commandStack.CanUndo()))
+			{
+				m_commandStack.Undo();
+			}
+			if (ImGui::MenuItem("Redo", "Ctrl+Y", false, m_commandStack.CanRedo()))
+			{
+				m_commandStack.Redo();
+			}
 			ImGui::EndMenu();
 		}
 
@@ -259,6 +282,37 @@ namespace engine::editor::world
 			return true;
 		}
 		return false;
+	}
+
+	/// M100.2 — Surcharge avec modifiers : intercepte Ctrl+Z, Ctrl+Shift+Z,
+	/// Ctrl+Y avant de déléguer à la version sans modifiers (F1..F12).
+	/// Logge le déclenchement undo/redo en EditorWorld pour faciliter le
+	/// debug "où est passée mon undo ?". 'Z' et 'Y' sont les codes ASCII
+	/// majuscule, qui correspondent aux VK_* Win32 standards.
+	bool WorldEditorShell::HandleShortcut(int virtualKey, bool ctrl, bool shift)
+	{
+		if (ctrl && virtualKey == 'Z' && !shift)
+		{
+			m_commandStack.Undo();
+			LOG_INFO(EditorWorld, "Shortcut Ctrl+Z -> Undo (undoSize={}, redoSize={})",
+				m_commandStack.UndoSize(), m_commandStack.RedoSize());
+			return true;
+		}
+		if (ctrl && virtualKey == 'Z' && shift)
+		{
+			m_commandStack.Redo();
+			LOG_INFO(EditorWorld, "Shortcut Ctrl+Shift+Z -> Redo (undoSize={}, redoSize={})",
+				m_commandStack.UndoSize(), m_commandStack.RedoSize());
+			return true;
+		}
+		if (ctrl && virtualKey == 'Y')
+		{
+			m_commandStack.Redo();
+			LOG_INFO(EditorWorld, "Shortcut Ctrl+Y -> Redo (undoSize={}, redoSize={})",
+				m_commandStack.UndoSize(), m_commandStack.RedoSize());
+			return true;
+		}
+		return HandleShortcut(virtualKey);
 	}
 
 	/// Marque le document éditeur comme modifié et logge la raison.

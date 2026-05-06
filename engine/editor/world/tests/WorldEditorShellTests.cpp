@@ -78,9 +78,9 @@ namespace
 		return cfg;
 	}
 
-	/// Vérifie qu'Init sans fichier .ini ne plante pas et instancie les 6
+	/// Vérifie qu'Init sans fichier .ini ne plante pas et instancie les 7
 	/// panneaux dans l'ordre stable Scene/Inspector/AssetBrowser/Outliner/
-	/// Console/ToolProperties.
+	/// Console/ToolProperties (6 panneaux M100.1) puis History (M100.2).
 	void Test_Init_LoadsDefaultLayout_WhenIniMissing()
 	{
 		ImGuiTestContext ctxGuard;
@@ -90,7 +90,7 @@ namespace
 		auto cfg = MakeTestConfig(tmp, true);
 		engine::editor::world::WorldEditorShell shell;
 		REQUIRE(shell.Init(cfg));
-		REQUIRE(shell.Panels().size() == 6u);
+		REQUIRE(shell.Panels().size() == 7u);
 		shell.Shutdown();
 
 		// Best effort cleanup

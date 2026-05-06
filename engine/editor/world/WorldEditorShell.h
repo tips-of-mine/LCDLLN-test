@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/editor/world/IPanel.h"
+#include "engine/editor/world/CommandStack.h"
 
 #include <memory>
 #include <string>
@@ -48,6 +49,19 @@ namespace engine::editor::world
 		/// \return true si la touche a été consommée par le shell.
 		bool HandleShortcut(int virtualKey);
 
+		/// Surcharge avec modifiers Ctrl/Shift (M100.2). Branche les raccourcis
+		/// éditeur au-dessus des touches « simples » F1..F12 :
+		///   - Ctrl+Z (sans Shift) → `m_commandStack.Undo()`
+		///   - Ctrl+Shift+Z         → `m_commandStack.Redo()`
+		///   - Ctrl+Y               → `m_commandStack.Redo()`
+		/// Si aucun de ces matchs ne s'applique, la fonction délègue à la
+		/// surcharge à 1 argument (compat M100.1 : F1..F12).
+		/// \param virtualKey VK_* Win32 (lettre majuscule pour 'Z'/'Y').
+		/// \param ctrl true si Ctrl est tenu cette frame.
+		/// \param shift true si Shift est tenu cette frame.
+		/// \return true si la touche a été consommée par le shell.
+		bool HandleShortcut(int virtualKey, bool ctrl, bool shift);
+
 		/// Marque le document éditeur comme modifié.
 		/// \param reason Texte court loggé en EditorWorld pour debug.
 		/// Effet de bord : passe `m_dirty` à true et émet un LOG_INFO.
@@ -63,6 +77,16 @@ namespace engine::editor::world
 
 		/// Accès lecture seule pour les tests et le HistoryPanel (M100.2).
 		const std::vector<std::unique_ptr<IPanel>>& Panels() const { return m_panels; }
+
+		/// Accès mutable à la pile undo/redo (M100.2). Les outils concrets
+		/// (sculpt, paint, place…) y poussent leurs `ICommand` via cet
+		/// accesseur récupéré sur le shell partagé.
+		CommandStack& MutableCommandStack() { return m_commandStack; }
+
+		/// Accès lecture seule à la pile undo/redo (M100.2). Utilisé par les
+		/// tests et les UIs en lecture (HistoryPanel passe par un pointeur
+		/// non-const car il appelle Clear/RewindTo).
+		const CommandStack& GetCommandStack() const { return m_commandStack; }
 
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
@@ -84,6 +108,7 @@ namespace engine::editor::world
 		void ResetLayoutToDefault();
 
 		std::vector<std::unique_ptr<IPanel>> m_panels;
+		CommandStack m_commandStack;
 		std::string m_layoutPath;
 		bool m_dirty = false;
 		bool m_initialized = false;

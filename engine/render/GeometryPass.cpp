@@ -372,7 +372,16 @@ namespace engine::render
 		VkPipelineRasterizationStateCreateInfo rs = {};
 		rs.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rs.polygonMode = VK_POLYGON_MODE_FILL;
-		rs.cullMode    = VK_CULL_MODE_BACK_BIT;
+		// PR28 DIAG : test discriminant. User signale (2026-05-06) que l'avatar
+		// est invisible depuis PR1 malgre le fix frontFace=CW de PR25.
+		// Hypothese : le mesh avatar a un winding OPPOSE a celui du terrain.
+		// Avec cullMode=NONE, les deux faces sont rasterisees ; si l'avatar
+		// apparait alors, c'est confirme que le mesh avatar est CCW en clip
+		// space alors que le terrain est CW. Solution permanente : pipeline
+		// distinct pour l'avatar avec frontFace=CCW, OU corriger l'orientation
+		// du mesh asset. Si l'avatar reste invisible, il faut chercher ailleurs
+		// (vertexBuffer null, material incorrect, frustum cull GPU, etc.).
+		rs.cullMode    = VK_CULL_MODE_NONE;  // etait VK_CULL_MODE_BACK_BIT en PR25
 		// PR25 (M??.?) : meme correction que TerrainRenderer.cpp:528 (PR24).
 		// Le commit ee181da (Reapply view matrix transposee) a change la
 		// convention de Camera::ComputeViewMatrix vers Vulkan LH +Z forward.

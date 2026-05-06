@@ -8,6 +8,14 @@ namespace engine::platform { class Input; }
 namespace engine::render
 {
 	/// Camera data: position, orientation (yaw/pitch), and projection parameters.
+	///
+	/// Les champs `lookAt`, `ortho` et `orthoExtent` ont été ajoutés en M100.4
+	/// pour supporter les modes caméra de l'éditeur monde (Orbital +
+	/// TopDownOrtho). Ils sont ignorés par les controllers FPS/Orbital
+	/// gameplay existants : `lookAt` n'est consommé que si un controller le
+	/// renseigne explicitement (ex. `EditorCameraController` en mode Orbital
+	/// ou TopDown), et `ortho==false` par défaut conserve le comportement
+	/// perspective historique.
 	struct Camera
 	{
 		engine::math::Vec3 position{ 0.0f, 0.0f, 0.0f };
@@ -18,6 +26,22 @@ namespace engine::render
 		float aspect = 16.0f / 9.0f;
 		float nearZ = 0.1f;
 		float farZ = 1000.0f;
+
+		/// Point regardé par la caméra (mode Orbital / TopDown éditeur).
+		/// Ignoré quand `ortho==false` ET que le controller utilise yaw/pitch
+		/// (mode FPS standard). Sert à `EditorCameraController::BuildCamera`
+		/// qui le remplit en mode Orbital/TopDown ; le rendu dérive alors
+		/// la matrice de vue via lookAt au lieu de yaw/pitch.
+		engine::math::Vec3 lookAt{ 0.0f, 0.0f, 0.0f };
+
+		/// True si la projection est orthographique (mode TopDown éditeur).
+		/// Quand true, `fovYDeg` est ignoré et `orthoExtent` définit la
+		/// demi-hauteur du frustum vertical en mètres.
+		bool ortho = false;
+
+		/// Demi-hauteur (en mètres) du frustum ortho. Largeur dérivée via
+		/// `aspect`. Ignoré si `ortho==false`.
+		float orthoExtent = 50.0f;
 
 		/// Builds view matrix (world -> camera space, right-handed, camera looks along -Z).
 		engine::math::Mat4 ComputeViewMatrix() const;

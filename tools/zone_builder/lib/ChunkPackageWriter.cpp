@@ -1,4 +1,4 @@
-#include "ChunkPackageWriter.h"
+#include <zone_builder/ChunkPackageWriter.h>
 
 #include "engine/core/Log.h"
 #include "engine/world/ChunkPackageLayout.h"

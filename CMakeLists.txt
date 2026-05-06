@@ -725,6 +725,11 @@ endif()
 
 # M09.4: HLOD builder (offline tool, no Vulkan)
 add_subdirectory(tools/hlod_builder)
+# M100.3: Zone builder library (statique, partagée par l'exécutable offline et
+# le futur exporter éditeur — anti-duplication des writers binaires).
+# Doit être déclarée AVANT add_subdirectory(tools/zone_builder) pour que la
+# cible `zone_builder_lib` existe au moment où l'exe la référence.
+add_subdirectory(tools/zone_builder/lib)
 # M10.5: Zone builder (chunk packages: chunk.meta + geo/tex/instances/nav/probes)
 add_subdirectory(tools/zone_builder)
 # M21.2: Migration checksum tool (SHA-256 of db/migrations/*.sql)

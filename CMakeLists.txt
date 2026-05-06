@@ -260,6 +260,7 @@ add_library(engine_core
   # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
   # editor.world.enabled. Pas référencé par engine/server/.
   engine/editor/world/WorldEditorShell.cpp
+  engine/editor/world/CommandStack.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
   engine/editor/world/panels/AssetBrowserPanel.cpp
@@ -672,6 +673,20 @@ if(WIN32)
     target_compile_options(world_editor_shell_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME world_editor_shell_tests COMMAND world_editor_shell_tests)
+endif()
+
+# M100.2 — Tests unitaires CPU pour la pile undo/redo CommandStack.
+# Pure CPU (pas d'ImGui ni Vulkan), mais on garde le gating WIN32 pour
+# rester cohérent avec les autres tests éditeur monde et éviter de tirer
+# engine_core sous Linux (where editor pieces aren't built anyway).
+if(WIN32)
+  add_executable(command_stack_tests engine/editor/world/tests/CommandStackTests.cpp)
+  target_include_directories(command_stack_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(command_stack_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(command_stack_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME command_stack_tests COMMAND command_stack_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

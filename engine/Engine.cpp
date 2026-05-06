@@ -3723,6 +3723,10 @@ namespace engine
 							m_vkDeviceContext.GetPhysicalDevice(),
 							m_vkDeviceContext.GetGraphicsQueue(),
 							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						// PR32 : meme raison que le brush splat (mode==1). Une bande de route
+						// vient d'etre peinte, on coupe l'orange fallback pour rendre
+						// visible la modification splat sous la route.
+						m_terrain.SetNoUserTexturesFallback(false);
 						ws.MutableDoc().routes.push_back(std::move(rp));
 						ws.ClearRouteDraft();
 						ws.SetStatus("Routes: bande splat appliquée — sauvegardez l’édition pour persister SLAP + JSON.");
@@ -3775,6 +3779,13 @@ namespace engine
 							m_vkDeviceContext.GetPhysicalDevice(),
 							m_vkDeviceContext.GetGraphicsQueue(),
 							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						// PR32 : des qu'on peint splat, l'utilisateur veut voir le resultat.
+						// Or le push-constant noUserTextures=1 (pose au boot quand aucune
+						// texture user n'est assignee) court-circuite le sampling splat dans
+						// terrain.frag et affiche orange partout. On le desactive ici pour
+						// laisser passer la couche procedurale modulee par le splat peint.
+						// Item 7 finalisation editeur 2026-05-06.
+						m_terrain.SetNoUserTexturesFallback(false);
 					}
 					else if (ws.TerrainEditMode() == 2)
 					{
@@ -3784,6 +3795,9 @@ namespace engine
 							m_vkDeviceContext.GetPhysicalDevice(),
 							m_vkDeviceContext.GetGraphicsQueue(),
 							m_vkDeviceContext.GetGraphicsQueueFamilyIndex());
+						// PR32 : meme raison que mode==1 (splat). Le grass mask est lu
+						// dans terrain.frag aussi et l'orange le masque.
+						m_terrain.SetNoUserTexturesFallback(false);
 					}
 					else
 					{

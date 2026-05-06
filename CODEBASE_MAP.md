@@ -727,6 +727,42 @@ Bascule automatique : dès qu'une texture est posée sur une couche, le
 prochain rebuild via le bouton « Recharger terrain GPU » repasse en rendu
 normal sans intervention.
 
+### Cause racine "terrain invisible" — fix permanent (PR24, 2026-05-05)
+
+Le commit `ee181da` ("Reapply view matrix transposee") a changé la convention
+de `Camera::ComputeViewMatrix` vers Vulkan LH +Z forward. Conséquence :
+les meshes générés en CCW world-space apparaissent en **CW** dans le clip
+space. Tous les pipelines configurés `frontFace=CCW + cullMode=BACK_BIT`
+rejetaient silencieusement leurs triangles (terrain, avatar, etc.) malgré
+un frustum cull CPU qui passait.
+
+Pipelines fixés par PR24 puis PR25 (2026-05-06) :
+| Pipeline | Fichier | Ligne du fix | Symptôme avant fix |
+|---|---|---|---|
+| Terrain principal | `engine/render/terrain/TerrainRenderer.cpp` | 528 | Sol invisible (viewport gris-beige uniforme = sky tonemappée) |
+| Terrain falaises | `engine/render/terrain/TerrainRenderer.cpp` | 1193 | Pas de cliffs sur la map de test, fix préventif |
+| Geometry (avatar / props) | `engine/render/GeometryPass.cpp` | 376 | Humanoïde invisible (mode éditeur ET client de jeu post-EnterWorld) |
+
+Si après une régression future un mesh world-space disparaît, vérifier en
+priorité `frontFace` du pipeline concerné. Tous les fix utilisent
+`VK_FRONT_FACE_CLOCKWISE` (au lieu de `_COUNTER_CLOCKWISE`).
+`ShadowMapPass`, `WaterRenderer`, `DecalPass` utilisent encore CCW —
+applicable seulement si on observe des ombres / eau / decals invisibles.
+
+### Finalisation éditeur (PR25, 2026-05-06)
+
+Plusieurs ajustements demandés par l'utilisateur après validation PR24 :
+
+| Item | Fichier | Modif |
+|---|---|---|
+| Caméra : monter/descendre | `engine/render/Camera.cpp:117-145` | `FpsCameraController::Update` lit **R** (Y+=) et **F** (Y-=) en mode éditeur |
+| Grille : maille 5 m | `engine/editor/WorldEditorSession.h:171` | `m_gridCellMeters` défaut 8 → 5 |
+| Avatar humanoïde visible en éditeur | `engine/Engine.cpp:3525-3548` | Déjà en place (avant PR25). Le fix `GeometryPass.cpp:376` (frontFace=CW) le rend effectivement visible. |
+| Grille collée au sol | `engine/editor/WorldEditorImGui.cpp:269-306` | Déjà en place : chaque ligne échantillonne `TerrainWorldY` aux extrémités via la heightmap. **Note** : le rendu utilise `ImGui::GetForegroundDrawList()` (overlay 2D sans depth test contre le 3D), donc visuellement la grille est toujours dessinée par-dessus le sol même quand elle est mathématiquement au même niveau Y. Pour avoir un depth test correct il faudrait un line mesh 3D dédié (refactor non fait). |
+| **Fix Y-flip grille** (test PR25.5) | `engine/editor/WorldEditorImGui.cpp:199` | `WorldToScreen` faisait un flip Y convention OpenGL (`sy = (1.0 - (ndcY * 0.5 + 0.5)) * vh`) alors que le rendu 3D utilise Vulkan (NDC.y +1 = bas écran). Conséquence : la grille était rendue avec Y inversé par rapport au sol/ciel ; sur le test diag PR25.5 (sol forcé ROUGE, ciel forcé BLEU) l'utilisateur observait **deux horizons distincts** — transition rouge/bleu en haut + point de fuite de la grille en bas. Fix : retirer le `1.0f -`. Affecte aussi le brush preview (cercle orange) qui partage `WorldToScreen`. |
+
+Items 6 (sculpt terrain) et 7 (paint splat) restent en investigation — voir PR27 (PR26 étant les fixes préventifs frontFace shadow/water/decal).
+
 ---
 
 ## Aide-mémoire : comment trouver un écran

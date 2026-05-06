@@ -373,7 +373,16 @@ namespace engine::render
 		rs.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rs.polygonMode = VK_POLYGON_MODE_FILL;
 		rs.cullMode    = VK_CULL_MODE_BACK_BIT;
-		rs.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		// PR25 (M??.?) : meme correction que TerrainRenderer.cpp:528 (PR24).
+		// Le commit ee181da (Reapply view matrix transposee) a change la
+		// convention de Camera::ComputeViewMatrix vers Vulkan LH +Z forward.
+		// Avec cette nouvelle matrice, les meshes generes en CCW world-space
+		// apparaissent en CW dans le clip space. Avec frontFace=CCW +
+		// cullMode=BACK_BIT, le pipeline rejetait silencieusement TOUS les
+		// triangles -> avatar humanoide invisible en mode editeur (item 2 de
+		// la finalisation editeur 2026-05-06) ET dans le client de jeu post-
+		// EnterWorld (regression notee 2026-05-05). Fix : frontFace=CW.
+		rs.frontFace   = VK_FRONT_FACE_CLOCKWISE;
 		rs.lineWidth   = 1.0f;
 
 		VkPipelineMultisampleStateCreateInfo ms = {};

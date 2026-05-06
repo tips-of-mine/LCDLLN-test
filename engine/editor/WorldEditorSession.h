@@ -166,7 +166,10 @@ namespace engine::editor
 		std::array<char, 256> m_bufAudioDest{};
 
 		bool m_showGrid = true;
-		float m_gridCellMeters = 8.f;
+		// PR25 (M??.?) : valeur d'origine 8 m -> 5 m. Demande utilisateur pour
+		// avoir une maille plus fine (repere visuel au sol). La cellule reste
+		// modifiable a la volee dans l'UI (panneau "Affichage & grille").
+		float m_gridCellMeters = 5.f;
 		float m_brushRadius = 10.f;
 		float m_brushStrength = 0.1f;
 		int m_brushOp = 0;

@@ -11,6 +11,8 @@ namespace engine::core { class Config; }
 
 namespace engine::editor::world
 {
+	namespace panels { class ScenePanel; }
+
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
 	/// fois par processus quand `editor.world.enabled` est vrai (config.json)
 	/// ou quand `--editor-world` est passé en CLI. Possède la liste des
@@ -106,6 +108,13 @@ namespace engine::editor::world
 		/// Console). Effet de bord : ImGui DockBuilder state + réinitialise
 		/// la visibilité de tous les panneaux à true.
 		void ResetLayoutToDefault();
+
+		/// M100.4 — Helper privé : retourne le ScenePanel (index 0 dans
+		/// `m_panels`, ordre stable garanti par Init). Utilisé par
+		/// `HandleShortcut` pour brancher Numpad 1/3/7 → SetMode et par
+		/// Init/Shutdown pour persister `editor.world.camera.lastMode`.
+		/// Retourne nullptr si Init n'a pas été appelé (m_panels vide).
+		panels::ScenePanel* GetScenePanel();
 
 		std::vector<std::unique_ptr<IPanel>> m_panels;
 		CommandStack m_commandStack;

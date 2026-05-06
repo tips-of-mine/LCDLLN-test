@@ -1,5 +1,6 @@
 #include "engine/editor/world/WorldEditorShell.h"
 
+#include "engine/editor/world/EditorCameraController.h"
 #include "engine/editor/world/panels/ScenePanel.h"
 #include "engine/editor/world/panels/InspectorPanel.h"
 #include "engine/editor/world/panels/AssetBrowserPanel.h"
@@ -20,6 +21,33 @@
 
 namespace engine::editor::world
 {
+	namespace
+	{
+		/// M100.4 — Parse le libellé persisté de `editor.world.camera.lastMode`
+		/// vers l'enum. Convention : "FPS" / "Orbital" / "TopDown" (insensible
+		/// à la casse, fallback FPS si valeur inconnue ou vide).
+		EditorCameraMode ParseCameraModeString(const std::string& s)
+		{
+			if (s == "Orbital" || s == "orbital" || s == "ORBITAL")
+				return EditorCameraMode::Orbital;
+			if (s == "TopDown" || s == "topdown" || s == "TOPDOWN" || s == "TopDownOrtho")
+				return EditorCameraMode::TopDownOrtho;
+			return EditorCameraMode::FPS;
+		}
+
+		/// M100.4 — Inverse de `ParseCameraModeString` pour la persistance.
+		const char* CameraModeToString(EditorCameraMode mode)
+		{
+			switch (mode)
+			{
+				case EditorCameraMode::FPS:          return "FPS";
+				case EditorCameraMode::Orbital:      return "Orbital";
+				case EditorCameraMode::TopDownOrtho: return "TopDown";
+			}
+			return "FPS";
+		}
+	}
+
 	/// Initialise la coquille : lit `editor.world.layout_path`, instancie les
 	/// 6 panneaux dans l'ordre stable, charge le fichier .ini de layout s'il
 	/// existe, sinon réinitialise un layout par défaut. L'ordre des panneaux
@@ -66,20 +94,46 @@ namespace engine::editor::world
 		ResetLayoutToDefault();
 #endif
 
+		// M100.4 — Restaure le mode caméra persisté entre sessions. Convention :
+		// "FPS" / "Orbital" / "TopDown" (cf. spec M100.4 critère "Le mode actif
+		// est persisté entre sessions"). La Config n'a pas (encore) de Save sur
+		// disque ; cette lecture suffit dès qu'un autre composant écrit la clé
+		// dans le JSON. La symétrie côté Shutdown est `SetValue` en mémoire —
+		// la persistance disque sera complétée dans un follow-up M100.4 quand
+		// `engine::core::Config` exposera un `SaveToFile` (TODO ci-dessous).
+		const std::string lastMode = cfg.GetString("editor.world.camera.lastMode", "FPS");
+		if (panels::ScenePanel* scene = GetScenePanel())
+		{
+			scene->MutableCamera().SetMode(ParseCameraModeString(lastMode));
+		}
+
 		m_initialized = true;
-		LOG_INFO(EditorWorld, "WorldEditorShell init OK, {} panels, layout='{}'",
-			m_panels.size(), m_layoutPath);
+		LOG_INFO(EditorWorld, "WorldEditorShell init OK, {} panels, layout='{}', cameraMode='{}'",
+			m_panels.size(), m_layoutPath, lastMode);
 		return true;
 	}
 
 	/// Persiste le layout sur disque puis libère les panneaux. Idempotent.
+	/// M100.4 — Logge le mode caméra final pour traçabilité ; la persistance
+	/// disque de `editor.world.camera.lastMode` est différée à un follow-up
+	/// quand `engine::core::Config` exposera un `SaveToFile`. TODO M100.4
+	/// follow-up : appeler `cfg.SetValue("editor.world.camera.lastMode", …)`
+	/// + `cfg.SaveToFile(...)`. En attendant, le mode est lu à chaque Init
+	/// depuis la valeur déjà présente dans le JSON (modifiable à la main ou
+	/// par un autre composant qui écrirait le fichier de config).
 	void WorldEditorShell::Shutdown()
 	{
 		if (!m_initialized) return;
+		const char* finalMode = "FPS";
+		if (panels::ScenePanel* scene = GetScenePanel())
+		{
+			finalMode = CameraModeToString(scene->GetCamera().GetMode());
+		}
 		EnsureLayoutPersisted();
 		m_panels.clear();
 		m_initialized = false;
-		LOG_INFO(EditorWorld, "WorldEditorShell shutdown");
+		LOG_INFO(EditorWorld, "WorldEditorShell shutdown (cameraMode='{}', persistance disque differee)",
+			finalMode);
 	}
 
 	/// Sauvegarde l'état dock courant d'ImGui dans `m_layoutPath`.
@@ -254,6 +308,33 @@ namespace engine::editor::world
 	/// F5 (playtest) et F11 (fullscreen) sont consommés mais no-op M100.1.
 	bool WorldEditorShell::HandleShortcut(int virtualKey)
 	{
+		// M100.4 — Numpad 1/3/7 : commute le mode caméra du ScenePanel.
+		// Les VK_NUMPAD* codes sont VK_NUMPAD0=0x60..VK_NUMPAD9=0x69. On
+		// traite ces touches AVANT le switch panel-index pour qu'elles ne
+		// soient pas considérées comme inconnues. Si GetScenePanel() est
+		// nullptr (Init pas encore appelé), on consomme la touche tout de
+		// même : le shortcut ne ferait rien d'utile dans ce cas.
+		if (virtualKey == 0x61 /*VK_NUMPAD1*/ ||
+			virtualKey == 0x63 /*VK_NUMPAD3*/ ||
+			virtualKey == 0x67 /*VK_NUMPAD7*/)
+		{
+			if (panels::ScenePanel* scene = GetScenePanel())
+			{
+				EditorCameraMode mode = EditorCameraMode::FPS;
+				switch (virtualKey)
+				{
+					case 0x61: mode = EditorCameraMode::FPS; break;
+					case 0x63: mode = EditorCameraMode::Orbital; break;
+					case 0x67: mode = EditorCameraMode::TopDownOrtho; break;
+				}
+				scene->MutableCamera().SetMode(mode);
+				LOG_INFO(EditorWorld, "Shortcut Numpad{} -> SetMode({})",
+					(virtualKey == 0x61 ? "1" : virtualKey == 0x63 ? "3" : "7"),
+					CameraModeToString(mode));
+			}
+			return true;
+		}
+
 		int panelIndex = -1;
 		switch (virtualKey)
 		{
@@ -335,5 +416,17 @@ namespace engine::editor::world
 		{
 			if (panel) panel->SetVisible(true);
 		}
+	}
+
+	/// M100.4 — Retourne le ScenePanel via static_cast sur `m_panels[0]`
+	/// (l'ordre des panneaux est figé par Init : Scene est toujours en 0).
+	/// Utilise `static_cast` plutôt que `dynamic_cast` car le type concret
+	/// est garanti par le code d'init qui pousse `std::make_unique<ScenePanel>`
+	/// en premier — pas besoin du coût RTTI ni du fallback nullptr d'un mauvais cast.
+	/// Retourne nullptr si Init n'a pas encore été appelé (m_panels vide).
+	panels::ScenePanel* WorldEditorShell::GetScenePanel()
+	{
+		if (m_panels.empty() || !m_panels[0]) return nullptr;
+		return static_cast<panels::ScenePanel*>(m_panels[0].get());
 	}
 }

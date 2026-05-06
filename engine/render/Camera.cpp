@@ -124,6 +124,25 @@ namespace engine::render
 				camera.position.x -= rightX * dist;
 				camera.position.z -= rightZ * dist;
 			}
+			// PR25 (M??.?) : ajout d'un controle vertical world-space pour la
+			// camera free-fly de l'editeur monde. R = monter, F = descendre.
+			// Le pas vertical est strictement aligne sur l'axe Y world (pas de
+			// composante pitch), pour que l'utilisateur garde la meme cible
+			// horizontale en prenant de l'alttitude (cas typique : repositionner
+			// la camera au-dessus du terrain pour vue d'ensemble). Touches
+			// choisies pour rester en main gauche cote ZQSD/WASD : R/F adjacents
+			// sur AZERTY et QWERTY, et n'entrent pas en conflit avec d'eventuels
+			// raccourcis editeur Ctrl-X. Les touches s'appliquent uniquement
+			// quand applyKeyboardMove est vrai (i.e. mode editeur, pas pendant
+			// que la souris est capturee par un panneau ImGui).
+			if (input.IsDown(engine::platform::Key::R))
+			{
+				camera.position.y += dist;
+			}
+			if (input.IsDown(engine::platform::Key::F))
+			{
+				camera.position.y -= dist;
+			}
 		}
 
 		if (scrollWheelAdjustsFov && applyMouseLook)

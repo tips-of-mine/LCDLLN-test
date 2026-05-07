@@ -337,6 +337,7 @@ add_library(engine_core
   engine/render/GeometryPass.cpp
   engine/render/TerrainChunkPipeline.cpp
   engine/render/terrain_chunk/ChunkRuntime.cpp
+  engine/render/terrain_chunk/DescriptorSetPool.cpp
   engine/render/terrain_chunk/LayerArrayLoader.cpp
   engine/render/terrain_chunk/SplatMapGpuCache.cpp
   engine/render/terrain_chunk/TerrainMeshGpuCache.cpp

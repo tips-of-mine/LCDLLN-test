@@ -266,6 +266,10 @@ add_library(engine_core
   engine/editor/world/TerrainRaycast.cpp
   engine/editor/world/TerrainSculptCommand.cpp
   engine/editor/world/TerrainSculptTool.cpp
+  engine/editor/world/TerrainStampCommand.cpp
+  engine/editor/world/TerrainStampTool.cpp
+  engine/editor/world/StampLibrary.cpp
+  engine/editor/world/ProceduralStampGenerators.cpp
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
@@ -771,6 +775,20 @@ if(WIN32)
     target_compile_options(terrain_sculpt_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME terrain_sculpt_tests COMMAND terrain_sculpt_tests)
+endif()
+
+# M100.7 — Tests unitaires CPU pour les stamps & generators procéduraux.
+# Couvre les 3 archétypes (Mountain/Valley/Crater), la conversion uint16→float
+# du loader StampLibrary, la TerrainStampCommand (Execute/Undo) et le mode
+# Replace (overwrite vs Add). Pure CPU, gating WIN32 (pattern terrain_sculpt).
+if(WIN32)
+  add_executable(terrain_stamp_tests engine/editor/world/tests/TerrainStampTests.cpp)
+  target_include_directories(terrain_stamp_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_stamp_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_stamp_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_stamp_tests COMMAND terrain_stamp_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

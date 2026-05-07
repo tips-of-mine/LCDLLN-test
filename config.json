@@ -152,8 +152,9 @@
                 "fpsSpeed": 8.0
             },
             "terrain": {
-                "_comment": "M100.8 — Pool de threads pour la regeneration LOD asynchrone. 0 = auto (hardware_concurrency - 2, min 1). Modifie la reactivite percue lors des brushstrokes consecutifs.",
-                "lodWorkers": 0
+                "_comment": "M100.8 lodWorkers : pool de threads pour la regeneration LOD asynchrone (0 = auto). Terrain Chunk Runtime gpu_budget_mb : budget GPU total (mesh + splat-maps) avant eviction LRU des chunks Far. Active+Visible jamais evinces.",
+                "lodWorkers": 0,
+                "gpu_budget_mb": 256
             }
         }
     },

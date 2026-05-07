@@ -1247,6 +1247,54 @@ namespace engine
 										);
 									LOG_INFO(Core, "[Boot] DeferredPipeline init OK");
 
+									// M100 — Task 12 : Terrain Chunk Runtime — drawcall mesh-terrain par
+									// chunk avec splat 8-layer. Co-existe avec le legacy TerrainRenderer
+									// (skip strict si fichiers chunk absents). Cf.
+									// docs/superpowers/specs/2026-05-07-terrain-chunk-runtime-design.md.
+									if (pipelineOk)
+									{
+										std::string camErr;
+										if (!CreateTerrainChunkCameraResources(camErr))
+										{
+											LOG_ERROR(Render, "[Engine] TerrainChunk camera resources init failed: {}", camErr);
+										}
+										else
+										{
+											m_terrainChunkRenderer = std::make_unique<engine::render::terrain_chunk::TerrainChunkRenderer>();
+											std::string err;
+											const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
+											const std::string shaderRoot = contentRoot + "/shaders";
+											// `staging` et `assetRegistry` sont passés mais non utilisés en M100
+											// (uploads one-shot via VulkanBufferAllocator interne au renderer ;
+											// PBR lookups directs via stb_image). Réservés pour évolutions futures.
+											const bool ok = m_terrainChunkRenderer->Init(
+												m_vkDeviceContext.GetDevice(),
+												m_vkDeviceContext.GetPhysicalDevice(),
+												m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+												m_terrainChunkCameraSetLayout,
+												m_vkDeviceContext.GetGraphicsQueue(),
+												m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+												&m_stagingAllocator,
+												&m_assetRegistry,
+												&m_streamCache,
+												m_cfg,
+												contentRoot,
+												shaderRoot,
+												err);
+											if (!ok)
+											{
+												LOG_ERROR(Render, "[Engine] TerrainChunkRenderer init failed: {}", err);
+												m_terrainChunkRenderer->Shutdown(m_vkDeviceContext.GetDevice());
+												m_terrainChunkRenderer.reset();
+												DestroyTerrainChunkCameraResources();
+											}
+											else
+											{
+												LOG_INFO(Core, "[Boot] TerrainChunkRenderer init OK");
+											}
+										}
+									}
+
 									// M37.1 — Water renderer (optional: skipped if shaders not found).
 									if (pipelineOk)
 									{
@@ -1614,6 +1662,35 @@ namespace engine
 														rs.objectModelMatrix,
 														(m_avatarMaterialId != 0u ? m_avatarMaterialId : materialCache.GetDefaultMaterialIndex()),
 														terrainBeforeGeometry);
+												}
+
+												// M100 — Task 12 : drawcall terrain chunk (post-Phase-3a).
+												// Dessine les chunks visibles qui ont terrain.bin + splat.bin
+												// dans une passe de chargement (loadOp=LOAD) après la geometry
+												// principale. Skip strict si fichiers absents (legacy
+												// TerrainRenderer continue à les dessiner). PAS de branche
+												// m_editorEnabled — parité jeu/éditeur garantie par le format
+												// binaire identique (cf. critère M100.5/.9).
+												if (m_terrainChunkRenderer && m_terrainChunkRenderer->IsValid())
+												{
+													UpdateTerrainChunkCameraUbo(rs.viewProjMatrix.m);
+													const std::vector<engine::world::GlobalChunkCoord> visibleChunks =
+														m_world.GetActiveAndVisibleChunks();
+													if (!visibleChunks.empty())
+													{
+														m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+															m_vkDeviceContext.GetDevice(), cmd, reg,
+															m_vkSwapchain.GetExtent(),
+															m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+															m_fgGBufferVelocityId, m_fgDepthId,
+															[this, &visibleChunks](VkCommandBuffer innerCmd) {
+																m_terrainChunkRenderer->RenderVisibleChunks(
+																	innerCmd,
+																	m_terrainChunkCameraSet,
+																	m_world,
+																	visibleChunks);
+															});
+													}
 												}
 											});
 
@@ -2649,6 +2726,14 @@ namespace engine
 #endif
 		if (m_terrain.IsValid())
 			m_terrain.Destroy(m_vkDeviceContext.GetDevice());
+		// M100 — Task 12 : shutdown terrain chunk runtime AVANT le DeferredPipeline
+		// (le renderer dépend du renderPass `m_pipeline->GetGeometryPass`).
+		if (m_terrainChunkRenderer)
+		{
+			m_terrainChunkRenderer->Shutdown(m_vkDeviceContext.GetDevice());
+			m_terrainChunkRenderer.reset();
+		}
+		DestroyTerrainChunkCameraResources();
 		/// M37.1 — water renderer cleanup.
 		m_waterRenderer.Destroy(m_vkDeviceContext.GetDevice());
 		m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
@@ -2844,6 +2929,11 @@ namespace engine
 		}
 		m_frameArena.BeginFrame(m_time.FrameIndex());
 		m_chunkStats.ResetPerFrame();
+		// M100 — Task 12 : maintenance entre frames du runtime terrain chunk
+		// (eviction LRU des chunks Far + reset descriptor pool). Doit être
+		// appelée AVANT l'enregistrement de la frame courante.
+		if (m_terrainChunkRenderer)
+			m_terrainChunkRenderer->Tick(m_vkDeviceContext.GetDevice());
 		PumpGameplayPackets();
 	}
 
@@ -5098,6 +5188,181 @@ namespace engine
 		}
 	}
 #endif
+
+	// =================================================================
+	// M100 — Task 12 : ressources caméra (set 0) du TerrainChunkPipeline.
+	// =================================================================
+
+	bool Engine::CreateTerrainChunkCameraResources(std::string& outError)
+	{
+		VkDevice device = m_vkDeviceContext.GetDevice();
+		VkPhysicalDevice physDev = m_vkDeviceContext.GetPhysicalDevice();
+		if (device == VK_NULL_HANDLE || physDev == VK_NULL_HANDLE)
+		{
+			outError = "VkDeviceContext non initialisé";
+			return false;
+		}
+
+		// 1. Set layout : 1 UBO pour CameraUBO { mat4 viewProj; }.
+		VkDescriptorSetLayoutBinding binding{};
+		binding.binding         = 0u;
+		binding.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		binding.descriptorCount = 1u;
+		binding.stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+		VkDescriptorSetLayoutCreateInfo lci{};
+		lci.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		lci.bindingCount = 1u;
+		lci.pBindings    = &binding;
+		if (vkCreateDescriptorSetLayout(device, &lci, nullptr, &m_terrainChunkCameraSetLayout) != VK_SUCCESS)
+		{
+			outError = "vkCreateDescriptorSetLayout (camera) failed";
+			return false;
+		}
+
+		// 2. Pool : 1 set, 1 UBO.
+		VkDescriptorPoolSize poolSize{};
+		poolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSize.descriptorCount = 1u;
+		VkDescriptorPoolCreateInfo pci{};
+		pci.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pci.maxSets       = 1u;
+		pci.poolSizeCount = 1u;
+		pci.pPoolSizes    = &poolSize;
+		if (vkCreateDescriptorPool(device, &pci, nullptr, &m_terrainChunkCameraPool) != VK_SUCCESS)
+		{
+			outError = "vkCreateDescriptorPool (camera) failed";
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+
+		// 3. Buffer host-visible 64 octets (mat4 viewProj std140).
+		constexpr VkDeviceSize kUboSize = 64u;
+		VkBufferCreateInfo bci{};
+		bci.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bci.size        = kUboSize;
+		bci.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		if (vkCreateBuffer(device, &bci, nullptr, &m_terrainChunkCameraUbo) != VK_SUCCESS)
+		{
+			outError = "vkCreateBuffer (camera UBO) failed";
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+		VkMemoryRequirements req{};
+		vkGetBufferMemoryRequirements(device, m_terrainChunkCameraUbo, &req);
+
+		// Cherche un memory type host-visible + host-coherent.
+		VkPhysicalDeviceMemoryProperties memProps{};
+		vkGetPhysicalDeviceMemoryProperties(physDev, &memProps);
+		uint32_t memType = UINT32_MAX;
+		const VkMemoryPropertyFlags wanted = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+		{
+			if ((req.memoryTypeBits & (1u << i)) != 0u
+				&& (memProps.memoryTypes[i].propertyFlags & wanted) == wanted)
+			{
+				memType = i;
+				break;
+			}
+		}
+		if (memType == UINT32_MAX)
+		{
+			outError = "Aucun memory type host-visible+coherent trouvé pour camera UBO";
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+		VkMemoryAllocateInfo mai{};
+		mai.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		mai.allocationSize  = req.size;
+		mai.memoryTypeIndex = memType;
+		if (vkAllocateMemory(device, &mai, nullptr, &m_terrainChunkCameraUboMem) != VK_SUCCESS)
+		{
+			outError = "vkAllocateMemory (camera UBO) failed";
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+		if (vkBindBufferMemory(device, m_terrainChunkCameraUbo, m_terrainChunkCameraUboMem, 0) != VK_SUCCESS)
+		{
+			outError = "vkBindBufferMemory (camera UBO) failed";
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+		if (vkMapMemory(device, m_terrainChunkCameraUboMem, 0, kUboSize, 0, &m_terrainChunkCameraUboMapped) != VK_SUCCESS)
+		{
+			outError = "vkMapMemory (camera UBO) failed";
+			m_terrainChunkCameraUboMapped = nullptr;
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+
+		// 4. Allocation du descriptor set + écriture initiale.
+		VkDescriptorSetAllocateInfo dsai{};
+		dsai.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		dsai.descriptorPool     = m_terrainChunkCameraPool;
+		dsai.descriptorSetCount = 1u;
+		dsai.pSetLayouts        = &m_terrainChunkCameraSetLayout;
+		if (vkAllocateDescriptorSets(device, &dsai, &m_terrainChunkCameraSet) != VK_SUCCESS)
+		{
+			outError = "vkAllocateDescriptorSets (camera) failed";
+			DestroyTerrainChunkCameraResources();
+			return false;
+		}
+		VkDescriptorBufferInfo bufInfo{};
+		bufInfo.buffer = m_terrainChunkCameraUbo;
+		bufInfo.offset = 0u;
+		bufInfo.range  = kUboSize;
+		VkWriteDescriptorSet write{};
+		write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet          = m_terrainChunkCameraSet;
+		write.dstBinding      = 0u;
+		write.descriptorCount = 1u;
+		write.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		write.pBufferInfo     = &bufInfo;
+		vkUpdateDescriptorSets(device, 1u, &write, 0, nullptr);
+		return true;
+	}
+
+	void Engine::DestroyTerrainChunkCameraResources()
+	{
+		VkDevice device = m_vkDeviceContext.GetDevice();
+		if (device == VK_NULL_HANDLE) return;
+		// Note : le descriptor set est libéré implicitement par vkDestroyDescriptorPool.
+		m_terrainChunkCameraSet = VK_NULL_HANDLE;
+		if (m_terrainChunkCameraUboMapped != nullptr && m_terrainChunkCameraUboMem != VK_NULL_HANDLE)
+		{
+			vkUnmapMemory(device, m_terrainChunkCameraUboMem);
+			m_terrainChunkCameraUboMapped = nullptr;
+		}
+		if (m_terrainChunkCameraUbo != VK_NULL_HANDLE)
+		{
+			vkDestroyBuffer(device, m_terrainChunkCameraUbo, nullptr);
+			m_terrainChunkCameraUbo = VK_NULL_HANDLE;
+		}
+		if (m_terrainChunkCameraUboMem != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(device, m_terrainChunkCameraUboMem, nullptr);
+			m_terrainChunkCameraUboMem = VK_NULL_HANDLE;
+		}
+		if (m_terrainChunkCameraPool != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorPool(device, m_terrainChunkCameraPool, nullptr);
+			m_terrainChunkCameraPool = VK_NULL_HANDLE;
+		}
+		if (m_terrainChunkCameraSetLayout != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorSetLayout(device, m_terrainChunkCameraSetLayout, nullptr);
+			m_terrainChunkCameraSetLayout = VK_NULL_HANDLE;
+		}
+	}
+
+	void Engine::UpdateTerrainChunkCameraUbo(const float* viewProjMat4)
+	{
+		if (m_terrainChunkCameraUboMapped == nullptr || viewProjMat4 == nullptr)
+			return;
+		std::memcpy(m_terrainChunkCameraUboMapped, viewProjMat4, 64u);
+		// Memory host-coherent : pas de flush nécessaire, la GPU verra l'update
+		// avant le prochain submit.
+	}
 
 } // namespace engine
 

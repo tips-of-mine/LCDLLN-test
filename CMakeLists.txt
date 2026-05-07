@@ -336,6 +336,12 @@ add_library(engine_core
   engine/render/PipelineCache.cpp
   engine/render/GeometryPass.cpp
   engine/render/TerrainChunkPipeline.cpp
+  engine/render/terrain_chunk/ChunkRuntime.cpp
+  engine/render/terrain_chunk/DescriptorSetPool.cpp
+  engine/render/terrain_chunk/LayerArrayLoader.cpp
+  engine/render/terrain_chunk/SplatMapGpuCache.cpp
+  engine/render/terrain_chunk/TerrainChunkRenderer.cpp
+  engine/render/terrain_chunk/TerrainMeshGpuCache.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp
   engine/render/LightingPass.cpp
@@ -740,6 +746,57 @@ if(WIN32)
     target_compile_options(splat_map_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME splat_map_tests COMMAND splat_map_tests)
+endif()
+
+# Terrain Chunk Runtime — Tests unitaires CPU pour ChunkRuntime
+# (cache LRU + budget GPU + protection ring Active/Visible). Pas de Vulkan.
+if(WIN32)
+  add_executable(chunk_runtime_tests engine/render/terrain_chunk/tests/ChunkRuntimeTests.cpp)
+  target_include_directories(chunk_runtime_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(chunk_runtime_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(chunk_runtime_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME chunk_runtime_tests COMMAND chunk_runtime_tests)
+endif()
+
+# Terrain Chunk Runtime — Tests unitaires pour TerrainMeshGpuCache
+# (mock allocator, pas de Vulkan). Vérifie cache hit/miss, eviction,
+# tracking budget runtime.
+if(WIN32)
+  add_executable(terrain_mesh_gpu_cache_tests engine/render/terrain_chunk/tests/TerrainMeshGpuCacheTests.cpp)
+  target_include_directories(terrain_mesh_gpu_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_mesh_gpu_cache_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_mesh_gpu_cache_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_mesh_gpu_cache_tests COMMAND terrain_mesh_gpu_cache_tests)
+endif()
+
+# Terrain Chunk Runtime — Tests unitaires pour SplatMapGpuCache (mock
+# allocator). Vérifie 2 VkImage par chunk (layers 0..3 + 4..7), cache
+# hit, eviction.
+if(WIN32)
+  add_executable(splat_map_gpu_cache_tests engine/render/terrain_chunk/tests/SplatMapGpuCacheTests.cpp)
+  target_include_directories(splat_map_gpu_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(splat_map_gpu_cache_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(splat_map_gpu_cache_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME splat_map_gpu_cache_tests COMMAND splat_map_gpu_cache_tests)
+endif()
+
+# Terrain Chunk Runtime — Tests unitaires pour LayerArrayLoader path
+# resolution (pure CPU, pas de Vulkan). Vérifie .texr first, fallback
+# placeholders, contentRoot prefix, distinct paths par mapType.
+if(WIN32)
+  add_executable(layer_array_loader_tests engine/render/terrain_chunk/tests/LayerArrayLoaderTests.cpp)
+  target_include_directories(layer_array_loader_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(layer_array_loader_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(layer_array_loader_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME layer_array_loader_tests COMMAND layer_array_loader_tests)
 endif()
 
 # M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.

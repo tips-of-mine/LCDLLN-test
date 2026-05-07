@@ -812,6 +812,97 @@ namespace engine::render
 	}
 
 	// -------------------------------------------------------------------------
+	// GeometryPass::RecordTerrainChunkBatch (M100 — Task 12)
+	// -------------------------------------------------------------------------
+
+	void GeometryPass::RecordTerrainChunkBatch(VkDevice device, VkCommandBuffer cmd,
+		Registry& registry, VkExtent2D extent,
+		ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+		const std::function<void(VkCommandBuffer)>& recordCallback)
+	{
+		if (cmd == VK_NULL_HANDLE || extent.width == 0 || extent.height == 0
+			|| !recordCallback)
+		{
+			return;
+		}
+		if (m_renderPassLoad == VK_NULL_HANDLE)
+		{
+			static bool s_warned = false;
+			if (!s_warned)
+			{
+				LOG_WARN(Render, "[GeometryPass] RecordTerrainChunkBatch: renderPassLoad invalide — appel ignoré");
+				s_warned = true;
+			}
+			return;
+		}
+
+		VkImageView viewA     = registry.getImageView(idA);
+		VkImageView viewB     = registry.getImageView(idB);
+		VkImageView viewC     = registry.getImageView(idC);
+		VkImageView viewVel   = registry.getImageView(idVelocity);
+		VkImageView viewDepth = registry.getImageView(idDepth);
+		if (!viewA || !viewB || !viewC || !viewVel || !viewDepth)
+			return;
+
+		// Réutilise la cache framebuffer (key inclut le renderPass : un FB
+		// distinct sera créé si renderPassLoad diffère du renderPass principal).
+		FramebufferKey key{};
+		key.renderPass = m_renderPassLoad;
+		key.views[0]   = viewA;
+		key.views[1]   = viewB;
+		key.views[2]   = viewC;
+		key.views[3]   = viewVel;
+		key.views[4]   = viewDepth;
+		key.width      = extent.width;
+		key.height     = extent.height;
+
+		auto it = m_fbCache.find(key);
+		if (it == m_fbCache.end())
+		{
+			VkImageView views[5] = { viewA, viewB, viewC, viewVel, viewDepth };
+			VkFramebufferCreateInfo fbInfo = {};
+			fbInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass      = m_renderPassLoad;
+			fbInfo.attachmentCount = 5;
+			fbInfo.pAttachments    = views;
+			fbInfo.width           = extent.width;
+			fbInfo.height          = extent.height;
+			fbInfo.layers          = 1;
+			VkFramebuffer created = VK_NULL_HANDLE;
+			if (vkCreateFramebuffer(device, &fbInfo, nullptr, &created) != VK_SUCCESS)
+				return;
+			it = m_fbCache.emplace(key, created).first;
+		}
+		VkFramebuffer fb = it->second;
+
+		// loadOp=LOAD sur tous les attachments → pas de clearValues nécessaires.
+		VkRenderPassBeginInfo rpBegin = {};
+		rpBegin.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		rpBegin.renderPass      = m_renderPassLoad;
+		rpBegin.framebuffer     = fb;
+		rpBegin.renderArea      = { { 0, 0 }, extent };
+		rpBegin.clearValueCount = 0u;
+		rpBegin.pClearValues    = nullptr;
+
+		vkCmdBeginRenderPass(cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkViewport viewport = {};
+		viewport.width    = static_cast<float>(extent.width);
+		viewport.height   = static_cast<float>(extent.height);
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = { { 0, 0 }, extent };
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Le callback émet les drawcalls (ex. RenderVisibleChunks). Il ne doit
+		// PAS appeler vkCmdEndRenderPass — c'est notre responsabilité.
+		recordCallback(cmd);
+
+		vkCmdEndRenderPass(cmd);
+	}
+
+	// -------------------------------------------------------------------------
 	// GeometryPass::Destroy
 	// -------------------------------------------------------------------------
 

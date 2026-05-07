@@ -9,13 +9,13 @@
 #include "engine/render/TerrainChunkPipeline.h"
 
 #include "engine/render/PipelineCache.h"
-#include "engine/render/ShaderCompiler.h"
 #include "engine/core/Log.h"
 #include "engine/world/terrain/TerrainMeshBuilder.h"
 
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 
 namespace engine::render
 {
@@ -53,21 +53,30 @@ namespace engine::render
 			return mod;
 		}
 
-		/// Compile un GLSL en SPIR-V via `ShaderCompiler` (glslangValidator).
-		/// \return false si compilation échouée (et `outError` rempli).
-		bool CompileShader(const std::filesystem::path& glslPath,
-			ShaderStage stage, std::vector<uint32_t>& outSpirv, std::string& outError)
+		/// Charge un fichier SPIR-V `.spv` précompilé depuis disque (pattern
+		/// utilisé par tous les autres pipelines : cf. DeferredPipeline.cpp,
+		/// `loadSpirv`). Évite la dépendance runtime à `glslangValidator` —
+		/// le `.spv` est produit au build par `tools/compile_game_shaders.ps1`.
+		/// \return false si lecture échouée (et `outError` rempli).
+		bool LoadSpirv(const std::filesystem::path& spvPath,
+			std::vector<uint32_t>& outSpirv, std::string& outError)
 		{
-			ShaderCompiler compiler;
-			compiler.LocateCompiler();
-			auto spv = compiler.CompileGlslToSpirv(glslPath, stage);
-			if (!spv.has_value())
+			std::ifstream f(spvPath, std::ios::binary | std::ios::ate);
+			if (!f.is_open())
 			{
-				outError = "Compilation failed for '" + glslPath.string() + "': "
-					+ std::string(compiler.GetLastErrors());
+				outError = "SPIR-V file not found: '" + spvPath.string()
+					+ "' (build step compile_game_shaders.ps1 doit avoir produit ce fichier)";
 				return false;
 			}
-			outSpirv = std::move(*spv);
+			const std::streamsize size = f.tellg();
+			if (size <= 0 || (size % 4) != 0)
+			{
+				outError = "SPIR-V file empty or not aligned to 4 bytes: '" + spvPath.string() + "'";
+				return false;
+			}
+			f.seekg(0, std::ios::beg);
+			outSpirv.resize(static_cast<size_t>(size) / 4u);
+			f.read(reinterpret_cast<char*>(outSpirv.data()), size);
 			return true;
 		}
 	}
@@ -86,16 +95,17 @@ namespace engine::render
 		}
 
 		// ---------------------------------------------------------------------
-		// 1) Compilation des shaders GLSL → SPIR-V (glslangValidator).
+		// 1) Chargement des SPIR-V précompilés (pattern DeferredPipeline).
+		//    Les .spv sont produits par tools/compile_game_shaders.ps1 au build.
 		// ---------------------------------------------------------------------
-		std::filesystem::path vertPath = std::filesystem::path(shaderRootPath) / "terrain_chunk.vert";
-		std::filesystem::path fragPath = std::filesystem::path(shaderRootPath) / "terrain_chunk.frag";
+		std::filesystem::path vertPath = std::filesystem::path(shaderRootPath) / "terrain_chunk.vert.spv";
+		std::filesystem::path fragPath = std::filesystem::path(shaderRootPath) / "terrain_chunk.frag.spv";
 
 		std::vector<uint32_t> vertSpirv;
 		std::vector<uint32_t> fragSpirv;
-		if (!CompileShader(vertPath, ShaderStage::Vertex, vertSpirv, outError))
+		if (!LoadSpirv(vertPath, vertSpirv, outError))
 			return false;
-		if (!CompileShader(fragPath, ShaderStage::Fragment, fragSpirv, outError))
+		if (!LoadSpirv(fragPath, fragSpirv, outError))
 			return false;
 
 		// ---------------------------------------------------------------------

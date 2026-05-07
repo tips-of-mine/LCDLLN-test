@@ -123,6 +123,17 @@ namespace engine::world
 		/// Only valid after at least one Update(); otherwise returns ChunkRing::Far.
 		ChunkRing GetRingForChunk(GlobalChunkCoord chunk) const;
 
+		/// Retourne la liste des chunks actuellement Active + Visible (5x5 + 7x7
+		/// band) autour du dernier centre calculé par \ref Update. Utilisé par le
+		/// `TerrainChunkRenderer` (M100 — Task 12) pour itérer les chunks à
+		/// dessiner chaque frame.
+		///
+		/// \return Vecteur des `GlobalChunkCoord` correspondants. Vide si aucun
+		///         `Update()` n'a encore été appelé.
+		///
+		/// Effet de bord : aucun (lecture seule sur l'état interne).
+		std::vector<GlobalChunkCoord> GetActiveAndVisibleChunks() const;
+
 	private:
 		GlobalChunkCoord m_lastCenterChunk{ -1, -1 };
 		bool m_hasLastCenter = false;

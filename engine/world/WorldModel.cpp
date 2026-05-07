@@ -89,4 +89,26 @@ namespace engine::world
 			return ChunkRing::Visible;
 		return ChunkRing::Far;
 	}
+
+	std::vector<GlobalChunkCoord> World::GetActiveAndVisibleChunks() const
+	{
+		// Helper M100 — Task 12 : itère le carré 7x7 (kVisibleRadius) autour du
+		// dernier centre et retourne les chunks Active + Visible. La frontière
+		// Far est exclue (utilisée seulement par la pipeline HLOD).
+		std::vector<GlobalChunkCoord> result;
+		if (!m_hasLastCenter)
+			return result;
+		const int side = (kVisibleRadius * 2 + 1);
+		result.reserve(static_cast<size_t>(side) * static_cast<size_t>(side));
+		for (int dz = -kVisibleRadius; dz <= kVisibleRadius; ++dz)
+		{
+			for (int dx = -kVisibleRadius; dx <= kVisibleRadius; ++dx)
+			{
+				result.push_back(GlobalChunkCoord{
+					m_lastCenterChunk.x + dx,
+					m_lastCenterChunk.z + dz });
+			}
+		}
+		return result;
+	}
 }

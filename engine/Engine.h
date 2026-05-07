@@ -48,6 +48,7 @@
 #include "engine/render/GpuUploadQueue.h"
 #include "engine/render/vk/StagingAllocator.h"
 #include "engine/render/terrain/TerrainRenderer.h"
+#include "engine/render/terrain_chunk/TerrainChunkRenderer.h"
 #if defined(_WIN32)
 #include "engine/render/terrain/TerrainEditingTools.h"
 #include "engine/editor/TexturePreviewCache.h"
@@ -173,6 +174,22 @@ namespace engine
 		void LoadZoneProbeAssets();
 		/// Charge un .spv terrain (même chargeur que l’éditeur monde).
 		std::vector<uint32_t> LoadTerrainSpirvWords(const char* relativeSpvPath);
+
+		/// M100 — Task 12 : crée le descriptor set layout / pool / UBO host-visible /
+		/// descriptor set utilisés comme set 0 (caméra) du `TerrainChunkPipeline`.
+		/// Rempli par \ref UpdateTerrainChunkCameraUbo chaque frame avec viewProj.
+		///
+		/// \param outError Renseigné en cas d'échec.
+		/// \return true si toutes les ressources sont créées.
+		bool CreateTerrainChunkCameraResources(std::string& outError);
+
+		/// M100 — Task 12 : libère les ressources caméra créées par
+		/// \ref CreateTerrainChunkCameraResources. Idempotent.
+		void DestroyTerrainChunkCameraResources();
+
+		/// M100 — Task 12 : copie `viewProjMat4` (16 floats) dans le mapped pointer
+		/// du UBO caméra. Doit être appelé avant `RenderVisibleChunks` chaque frame.
+		void UpdateTerrainChunkCameraUbo(const float* viewProjMat4);
 #if defined(_WIN32)
 		/// World editor: (re)charge heightmap + outils sculpt depuis le document.
 		void RebuildWorldEditorTerrainGpu();
@@ -289,6 +306,20 @@ namespace engine
 #endif
 		/// Terrain décalé (jeu + world editor exclusif : un seul actif selon le binaire / reload).
 		engine::render::terrain::TerrainRenderer m_terrain;
+		/// M100 — Task 12 : runtime mesh-terrain par chunk avec splat 8-layer.
+		/// Cohabite avec `m_terrain` legacy : skippe les chunks sans terrain.bin/splat.bin.
+		std::unique_ptr<engine::render::terrain_chunk::TerrainChunkRenderer> m_terrainChunkRenderer;
+		/// M100 — Task 12 : descriptor set layout pour le set 0 caméra
+		/// (UBO `CameraUBO { mat4 viewProj; }`) du `TerrainChunkPipeline`.
+		VkDescriptorSetLayout m_terrainChunkCameraSetLayout = VK_NULL_HANDLE;
+		/// M100 — Task 12 : pool descriptor set pour allouer le set caméra.
+		VkDescriptorPool m_terrainChunkCameraPool = VK_NULL_HANDLE;
+		/// M100 — Task 12 : descriptor set caméra (set 0) écrit chaque frame.
+		VkDescriptorSet m_terrainChunkCameraSet = VK_NULL_HANDLE;
+		/// M100 — Task 12 : UBO host-visible (64 octets, mat4 viewProj).
+		VkBuffer m_terrainChunkCameraUbo = VK_NULL_HANDLE;
+		VkDeviceMemory m_terrainChunkCameraUboMem = VK_NULL_HANDLE;
+		void* m_terrainChunkCameraUboMapped = nullptr;
 #if defined(_WIN32)
 		engine::render::terrain::TerrainEditingTools m_worldEditorTerrainTools;
 #endif

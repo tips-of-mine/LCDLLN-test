@@ -1,10 +1,45 @@
 {
     "log": {
         "level": "Info",
+        "_comment_file_level": "M45 — Seuil distinct pour le fichier (peut etre plus permissif que la console). Vide = suit log.level.",
+        "file_level": "",
         "rotation_size_mb": 10,
         "retention_days": 7,
+        "console_colors": true,
         "subsystem_files": {
             "Smtp": "lcdlln-SMTP.log"
+        },
+        "_comment_specialized_files": "M45 — Fichiers spécialisés (cmangos-style). Chaque ligne va aussi dans le log principal. Laisser vide pour désactiver.",
+        "gm_log_file": "",
+        "gm_log_per_account": false,
+        "gm_log_dir": "",
+        "char_log_file": "",
+        "db_error_log_file": "",
+        "packet_log_file": "",
+        "custom_log_file": "",
+        "_comment_filters": "M45 — Filtres bitmask par catégorie. Activer un seul bit suffit à passer LOG_FILTERED, indépendamment de log.level. Tous les filtres sont a false par défaut.",
+        "filters": {
+            "transport_moves": false,
+            "creature_moves": false,
+            "visibility_changes": false,
+            "weather": false,
+            "player_stats": false,
+            "sql_text": false,
+            "player_moves": false,
+            "damage": false,
+            "combat": false,
+            "spell_cast": false,
+            "pathfinding": false,
+            "map_loading": false,
+            "event_ai_dev": false,
+            "db_scripts_dev": false,
+            "packet_io": false,
+            "chat_relay": false,
+            "auth": false,
+            "session": false,
+            "db": false,
+            "migration": false,
+            "custom": false
         }
     },
     "render": {

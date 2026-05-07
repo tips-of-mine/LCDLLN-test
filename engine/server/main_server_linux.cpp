@@ -38,6 +38,7 @@
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/core/LogConfig.h"
 
 #include <csignal>
 #include <chrono>
@@ -78,18 +79,6 @@ namespace
 		LOG_INFO(Server, "###############################################################");
 	}
 
-	engine::core::LogLevel ParseLogLevel(std::string_view text)
-	{
-		if (text == "Trace" || text == "trace") return engine::core::LogLevel::Trace;
-		if (text == "Debug" || text == "debug") return engine::core::LogLevel::Debug;
-		if (text == "Info" || text == "info") return engine::core::LogLevel::Info;
-		if (text == "Warn" || text == "warn") return engine::core::LogLevel::Warn;
-		if (text == "Error" || text == "error") return engine::core::LogLevel::Error;
-		if (text == "Fatal" || text == "fatal") return engine::core::LogLevel::Fatal;
-		if (text == "Off" || text == "off") return engine::core::LogLevel::Off;
-		return engine::core::LogLevel::Info;
-	}
-
 	/// Returns true if \a argv contains --net.stats (or -net.stats).
 	bool ParseNetStatsFlag(int argc, char** argv)
 	{
@@ -116,16 +105,9 @@ int main(int argc, char** argv)
 
 	g_net_stats = ParseNetStatsFlag(argc, argv);
 
-	engine::core::LogSettings logSettings;
-	logSettings.level = ParseLogLevel(config.GetString("log.level", "Info"));
-	logSettings.console = true;
-	logSettings.flushAlways = true;
-	logSettings.filePath = config.GetString("log.file", "engine.log");
-	logSettings.rotation_size_mb = static_cast<size_t>(std::max(static_cast<int64_t>(0), config.GetInt("log.rotation_size_mb", 10)));
-	logSettings.retention_days = static_cast<int>(config.GetInt("log.retention_days", 7));
-	logSettings.subsystemFiles = config.GetStringMapUnderPrefix("log.subsystem_files");
-	// M44.4 — Format JSONL pour ingestion Loki/ELK. Activer en prod via config.
-	logSettings.jsonOutput = config.GetBool("log.json", false);
+	// M45 — Construction centralisée des LogSettings (filtres bitmask, fichiers spécialisés
+	// GM/Char/DBError/Packet/Custom, couleurs console, seuil fichier distinct).
+	engine::core::LogSettings logSettings = engine::core::BuildLogSettingsFromConfig(config, "engine.log");
 	engine::core::Log::Init(logSettings);
 
 	LOG_INFO(Net, "[ServerMain] Linux TCP server starting...");

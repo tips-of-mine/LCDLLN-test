@@ -68,6 +68,11 @@ namespace engine::editor
 	class WorldEditorImGui;
 	class WorldEditorSession;
 }
+namespace engine::editor::world
+{
+	/// M100.1 — Coquille du nouvel éditeur monde, indépendante du shell M43.x.
+	class WorldEditorShell;
+}
 
 #include <array>
 #include <atomic>
@@ -270,6 +275,11 @@ namespace engine
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
 		std::unique_ptr<engine::editor::WorldEditorSession> m_worldEditorSession;
+		/// M100.1 — Coquille du nouvel éditeur monde "couche au-dessus".
+		/// Instancié si `--editor-world` ou `editor.world.enabled = true`.
+		/// Cohabite avec WorldEditorImGui (les deux peuvent être actifs).
+		/// Le shell appelle ImGui (Windows-only) — toujours nul sur Linux.
+		std::unique_ptr<engine::editor::world::WorldEditorShell> m_worldEditorShell;
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;
 

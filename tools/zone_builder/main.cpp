@@ -2,9 +2,9 @@
 /// mode legacy mono-chunk conservé.
 /// Voir `zone_builder --help` et `docs/world_editor_zone_pipeline.md` §3.
 
-#include "ChunkPackageWriter.h"
-#include "GltfImporter.h"
-#include "LayoutImporter.h"
+#include <zone_builder/ChunkPackageWriter.h>
+#include <zone_builder/GltfImporter.h>
+#include <zone_builder/LayoutImporter.h>
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 #include "engine/platform/FileSystem.h"

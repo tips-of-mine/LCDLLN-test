@@ -126,6 +126,16 @@ namespace engine::editor
 		const std::string& GetHubTitle() const { return m_lastWindowTitle; }
 		bool IsDirty() const { return m_dirty; }
 
+		/// M100.1 — True si `--editor-world` ou `editor.world.enabled = true`.
+		/// Distinct de `m_worldEditorExeTitle` (--world-editor, M43.x). M100 est
+		/// la "couche au-dessus" : un nouveau shell ImGui qui cohabite avec
+		/// l'ancien WorldEditorImGui. Les deux peuvent être actifs ensemble.
+		bool IsWorldEditorWorld() const { return m_worldEditorWorld; }
+
+		/// M100.1 — Active/désactive la branche M100. Setter exposé pour
+		/// permettre à Engine::Init de propager le flag CLI / config.
+		void SetWorldEditorWorld(bool enabled) { m_worldEditorWorld = enabled; }
+
 	private:
 		/// Creates one gameplay volume of the requested type at the current editor pivot.
 		bool CreateVolume(VolumeType type);
@@ -191,6 +201,10 @@ namespace engine::editor
 		const char* GetVolumeShapeName(VolumeShape shape) const;
 
 		bool m_worldEditorExeTitle = false;
+		/// M100.1 — Branche éditeur monde "couche au-dessus". Indépendante de
+		/// `m_worldEditorExeTitle` (--world-editor M43.x). Activée par le flag
+		/// CLI `--editor-world` ou la clé config `editor.world.enabled`.
+		bool m_worldEditorWorld = false;
 		bool m_initialized = false;
 		bool m_selected = false;
 		bool m_dirty = false;

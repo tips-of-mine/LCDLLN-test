@@ -138,6 +138,19 @@
             "_comment": "L'editeur utilise Arial (lisible, neutre, riche en glyphs) au lieu de Windlass (decorative, reservee a l'UI auth/in-game). arial_path peut etre absolu (C:/Windows/Fonts/arial.ttf par defaut sur Windows) ou relatif a paths.content si on bundle un Arial avec le client.",
             "arial_path": "C:/Windows/Fonts/arial.ttf",
             "arial_pixel_height": 14
+        },
+        "world": {
+            "_comment": "M100 — World editor 'couche au-dessus' (engine::editor::world::WorldEditorShell). Activer via 'enabled: true' ou le flag CLI --editor-world. Cohabite avec le shell M43.x. Les cles undo.* et camera.* sont posees ici pour M100.2 (CommandStack) et M100.4 (EditorCameraController).",
+            "enabled": false,
+            "layout_path": "editor_world_layout.ini",
+            "undo": {
+                "capacity": 256,
+                "maxBytes": 268435456
+            },
+            "camera": {
+                "lastMode": "FPS",
+                "fpsSpeed": 8.0
+            }
         }
     },
     "client": {

@@ -68,7 +68,8 @@ namespace engine::world::surface
             size_t objStart = content.find('{', cursor);
             if (objStart == std::string::npos)
             {
-                outError = "SurfaceTable: 13 entries expected, got " + std::to_string(parsed);
+                outError = "SurfaceTable: " + std::to_string(expected)
+                    + " entries expected, got " + std::to_string(parsed);
                 return false;
             }
             size_t objEnd = content.find('}', objStart);
@@ -112,8 +113,8 @@ namespace engine::world::surface
         {
             if (!seen[i])
             {
-                outError = "SurfaceTable: 13 entries expected, missing index "
-                    + std::to_string(i);
+                outError = "SurfaceTable: " + std::to_string(expected)
+                    + " entries expected, missing index " + std::to_string(i);
                 return false;
             }
         }

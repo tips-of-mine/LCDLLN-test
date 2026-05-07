@@ -1,5 +1,6 @@
 #include "engine/world/terrain/LayerPalette.h"
 
+#include "engine/core/Log.h"
 #include "engine/world/surface/SurfaceType.h"
 
 #include <cassert>
@@ -102,8 +103,8 @@ namespace engine::world::terrain
 			if (!engine::world::surface::ParseSurfaceType(e.surfaceTypeName, e.surfaceType))
 			{
 				e.surfaceType = engine::world::surface::SurfaceType::Dirt;
-				// Pas de LOG_WARN ici : pour les fixtures de test on tolère, le warn
-				// serait noise. Le caller (Engine::Init) peut logguer s'il veut.
+				LOG_WARN(World, "[LayerPalette] surfaceType inconnu '{}' layer {} → fallback Dirt",
+					e.surfaceTypeName, i);
 			}
 
 			cursor = objEnd + 1;

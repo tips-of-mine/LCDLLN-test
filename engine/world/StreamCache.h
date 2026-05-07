@@ -12,7 +12,7 @@ namespace engine::core { class Config; }
 
 namespace engine::world
 {
-	namespace terrain { struct TerrainChunk; struct TerrainLodChain; }
+	namespace terrain { struct TerrainChunk; struct TerrainLodChain; struct SplatMap; }
 
 	/// LRU cache for decompressed blobs keyed by asset/chunk file path (M10.3).
 	/// Capacity 1–4 GB configurable via config; hit avoids re-IO when re-entering a zone.
@@ -63,6 +63,13 @@ namespace engine::world
 		/// retourne nullptr sans warning si absent (les chunks neufs n'ont pas
 		/// encore de LODs persistés tant qu'aucun OnCommit n'a tourné).
 		std::shared_ptr<engine::world::terrain::TerrainLodChain> LoadTerrainLods(
+			const engine::core::Config& config, int chunkX, int chunkZ);
+
+		/// Charge le `splat.bin` du chunk `(chunkX, chunkZ)` (M100.9). Tente
+		/// le cache (clé `chunks/chunk_<i>_<j>/splat.bin`), sinon lit le
+		/// fichier disque et l'insère. Le fichier est optionnel pour les
+		/// chunks neufs : retourne nullptr sans warning si absent.
+		std::shared_ptr<engine::world::terrain::SplatMap> LoadSplatMap(
 			const engine::core::Config& config, int chunkX, int chunkZ);
 
 	private:

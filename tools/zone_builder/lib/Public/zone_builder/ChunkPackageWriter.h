@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; }
+namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; struct SplatMap; }
 
 namespace tools::zone_builder
 {
@@ -44,4 +44,12 @@ namespace tools::zone_builder
 	/// en runtime (parité éditeur ↔ client).
 	bool WriteTerrainLods(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
 		const engine::world::terrain::TerrainLodChain& chain, std::string& outError);
+
+	/// Écrit `splat.bin` (M100.9) dans `<outputRootDir>/chunks/chunk_<i>_<j>/`.
+	/// Crée le dossier au besoin. Sérialise via
+	/// `engine::world::terrain::SaveSplatBin` (header `SLAT` + xxhash64).
+	/// Format identique à celui que `SplatPaintTool` produit en runtime
+	/// (parité éditeur ↔ client).
+	bool WriteSplatMap(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::terrain::SplatMap& splat, std::string& outError);
 }

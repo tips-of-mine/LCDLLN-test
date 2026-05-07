@@ -117,6 +117,14 @@ namespace engine::editor::world
 		// la demande via `EnsureLoaded`.
 		m_stampTool.Init(m_commandStack, m_terrainDoc);
 
+		// M100.10 — Branche l'outil splat paint sur les mêmes ressources.
+		// Aucun chunk préchargé : `OnMouseDown`/`ApplyAutoRulesToChunk`
+		// font les `EnsureLoaded` + `EnsureSplatLoaded` à la demande.
+		if (!m_splatPaintTool.Init(m_commandStack, m_terrainDoc))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] SplatPaintTool init failed");
+		}
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -145,6 +153,7 @@ namespace engine::editor::world
 			case ActiveTool::None:          name = "None"; break;
 			case ActiveTool::TerrainSculpt: name = "TerrainSculpt"; break;
 			case ActiveTool::TerrainStamp:  name = "TerrainStamp"; break;
+			case ActiveTool::SplatPaint:    name = "SplatPaint"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -442,6 +451,13 @@ namespace engine::editor::world
 		if (!ctrl && !shift && virtualKey == 'N')
 		{
 			SetActiveTool(ActiveTool::TerrainStamp);
+			return true;
+		}
+		// M100.10 — Raccourci 'P' (sans modifiers) active l'outil splat paint.
+		// Spec ticket : "Outil SplatPaintTool (raccourci P)".
+		if (!ctrl && !shift && virtualKey == 'P')
+		{
+			SetActiveTool(ActiveTool::SplatPaint);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

@@ -119,14 +119,19 @@ namespace engine::world::collision
 
 		void AddTriMeshEdges(const CollisionProxy& p, std::vector<Edge3D>& out)
 		{
+			// Defensive bounds check : un proxy en cours d'édition peut avoir
+			// des indices référençant des vertices pas encore présents.
+			const size_t vCount = p.vertices.size();
 			for (size_t i = 0; i + 2 < p.indices.size(); i += 3)
 			{
-				const auto& a = p.vertices[p.indices[i]];
-				const auto& b = p.vertices[p.indices[i + 1]];
-				const auto& c = p.vertices[p.indices[i + 2]];
-				out.emplace_back(a, b);
-				out.emplace_back(b, c);
-				out.emplace_back(c, a);
+				const uint32_t ia = p.indices[i];
+				const uint32_t ib = p.indices[i + 1];
+				const uint32_t ic = p.indices[i + 2];
+				if (ia >= vCount || ib >= vCount || ic >= vCount)
+					continue;  // skip triangle malformé
+				out.emplace_back(p.vertices[ia], p.vertices[ib]);
+				out.emplace_back(p.vertices[ib], p.vertices[ic]);
+				out.emplace_back(p.vertices[ic], p.vertices[ia]);
 			}
 		}
 	}

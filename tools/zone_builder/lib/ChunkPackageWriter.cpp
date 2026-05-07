@@ -5,6 +5,7 @@
 #include "engine/world/OutputVersion.h"
 #include "engine/world/ProbeData.h"
 #include "engine/world/WorldModel.h"
+#include "engine/world/terrain/SplatMap.h"
 #include "engine/world/terrain/TerrainChunk.h"
 #include "engine/world/terrain/TerrainLodChain.h"
 
@@ -553,6 +554,41 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteTerrainLods: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteSplatMap(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::terrain::SplatMap& splat, std::string& outError)
+	{
+		std::filesystem::path chunkDir = std::filesystem::path(outputRootDir)
+			/ "chunks"
+			/ ("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(chunkDir, ec);
+		if (ec)
+		{
+			outError = "WriteSplatMap: mkdir failed: " + ec.message();
+			return false;
+		}
+
+		std::vector<uint8_t> bytes;
+		if (!engine::world::terrain::SaveSplatBin(splat, bytes, outError))
+			return false;
+
+		const std::filesystem::path file = chunkDir / "splat.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteSplatMap: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteSplatMap: write failed: " + file.string();
 			return false;
 		}
 		return true;

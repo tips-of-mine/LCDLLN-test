@@ -271,6 +271,9 @@ add_library(engine_core
   engine/editor/world/TerrainStampTool.cpp
   engine/editor/world/StampLibrary.cpp
   engine/editor/world/ProceduralStampGenerators.cpp
+  engine/editor/world/SplatPaintCommand.cpp
+  engine/editor/world/SplatPaintTool.cpp
+  engine/editor/world/SplatRules.cpp
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
@@ -332,6 +335,7 @@ add_library(engine_core
   engine/render/PsoKey.cpp
   engine/render/PipelineCache.cpp
   engine/render/GeometryPass.cpp
+  engine/render/TerrainChunkPipeline.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp
   engine/render/LightingPass.cpp
@@ -354,6 +358,8 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/terrain/LayerPalette.cpp
+  engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
   engine/world/terrain/TerrainChunkLoader.cpp
   engine/world/terrain/TerrainLodChain.cpp
@@ -721,6 +727,21 @@ if(WIN32)
   add_test(NAME terrain_chunk_tests COMMAND terrain_chunk_tests)
 endif()
 
+# M100.9 — Tests unitaires CPU pour SplatMap (8-layer splat per chunk).
+# Pure CPU (pas d'ImGui ni Vulkan) : pose la struct, le format binaire `SLAT`,
+# Save/LoadSplatBin via OutputVersionHeader + xxhash64. Round-trip byte-exact
+# vérifié dans le même fichier (Test_SaveLoad_Roundtrip + parity ajouté Task 15).
+# Vérifie aussi l'invariant somme=255 par cellule (rejet au Save et au Load).
+if(WIN32)
+  add_executable(splat_map_tests engine/world/terrain/tests/SplatMapTests.cpp)
+  target_include_directories(splat_map_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(splat_map_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(splat_map_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME splat_map_tests COMMAND splat_map_tests)
+endif()
+
 # M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.
 # Round-trip byte-exact (SaveTerrainBin → LoadTerrainBin → memcmp) +
 # meshes deterministe (BuildLod0Mesh produit des vertex/index buffers
@@ -792,6 +813,20 @@ if(WIN32)
   add_test(NAME terrain_stamp_tests COMMAND terrain_stamp_tests)
 endif()
 
+# M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).
+# Couvre l'invariant somme=255, le filtrage MatchesRules, la monotonie du
+# falloff radial, la couture inter-chunks bord-à-bord, et la coalescence par
+# stroke (1 entrée d'historique par geste). Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(splat_paint_tests engine/editor/world/tests/SplatPaintTests.cpp)
+  target_include_directories(splat_paint_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(splat_paint_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(splat_paint_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME splat_paint_tests COMMAND splat_paint_tests)
+endif()
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
   add_executable(client_flow_app engine/network/ClientFlowMain.cpp)
@@ -850,3 +885,9 @@ endif()
 
 # M25.1: Load tester (TLS multi-connection) - Windows only (reuses NetClient TLS)
 add_subdirectory(tools/load_tester)
+
+# M100.9: Mini-tool C++ standalone qui génère 8 PNG 4x4 unicolore dans
+# assets/terrain/placeholders/ via custom command POST_BUILD. Sert de fallback
+# visuellement distinct pour le shader 8-layer terrain en attendant les vrais
+# assets PBR. Pas de dépendance zlib externe (deflate stored block).
+add_subdirectory(tools/gen_terrain_placeholders)

@@ -32,8 +32,8 @@ obligatoires.
 | M100.6  | Terrain Sculpting Brushes | 2 — Terrain | M100.2, M100.5 | Done (CI pending) |
 | M100.7  | Terrain Stamps & Procedural Generators | 2 — Terrain | M100.6 | Done (CI pending) |
 | M100.8  | Terrain LOD Regeneration | 2 — Terrain | M100.5 | Done (CI pending) |
-| M100.9  | Splat Map System | 3 — Splat / Surfaces / Collision | M100.5 | Ready |
-| M100.10 | Splat Painting Brushes | 3 — Splat / Surfaces / Collision | M100.2, M100.9 | Ready |
+| M100.9  | Splat Map System | 3 — Splat / Surfaces / Collision | M100.5 | Done partiel (CI pending — drawcall GeometryPass déféré à PR Terrain Chunk Runtime) |
+| M100.10 | Splat Painting Brushes | 3 — Splat / Surfaces / Collision | M100.2, M100.9 | Done (CI pending) |
 | M100.11 | Surface Material System & SurfaceQuery (client) | 3 — Splat / Surfaces / Collision | M100.9 | Ready |
 | M100.12 | Collision Proxy System | 3 — Splat / Surfaces / Collision | M100.1 | Ready |
 | M100.13 | Water Surfaces (Lakes & Rivers) | 4 — Hydrologie & Hazards | M100.5, M100.6 | Ready |

@@ -199,4 +199,123 @@ namespace engine::editor::world
 					static_cast<std::streamsize>(bytes.size()));
 			});
 	}
+
+	std::shared_ptr<engine::world::terrain::SplatMap>
+	TerrainDocument::EnsureSplatLoaded(const engine::core::Config& config, int chunkX, int chunkZ)
+	{
+		const engine::world::GlobalChunkCoord coord{chunkX, chunkZ};
+		const uint64_t key = PackCoord(coord);
+		auto it = m_splats.find(key);
+		if (it != m_splats.end()) return it->second.splat;
+
+		const std::string contentRoot = config.GetString("paths.content", "game/data");
+		std::ostringstream pathStream;
+		pathStream << contentRoot << "/chunks/chunk_" << chunkX << "_" << chunkZ
+		           << "/splat.bin";
+		const std::string fullPath = pathStream.str();
+
+		std::shared_ptr<engine::world::terrain::SplatMap> splat;
+		std::ifstream f(fullPath, std::ios::binary);
+		if (f.good())
+		{
+			f.seekg(0, std::ios::end);
+			const std::streamsize size = f.tellg();
+			f.seekg(0, std::ios::beg);
+			if (size > 0)
+			{
+				std::vector<uint8_t> blob(static_cast<size_t>(size));
+				f.read(reinterpret_cast<char*>(blob.data()), size);
+				auto loaded = std::make_shared<engine::world::terrain::SplatMap>();
+				std::span<const uint8_t> bytes(blob.data(), blob.size());
+				std::string err;
+				if (engine::world::terrain::LoadSplatBin(bytes, *loaded, err))
+				{
+					splat = std::move(loaded);
+				}
+				else
+				{
+					LOG_WARN(EditorWorld,
+						"[TerrainDocument] LoadSplatBin fail ({}): {}", fullPath, err);
+				}
+			}
+		}
+		// Si chargement échoué ou fichier absent, créer une splat uniforme layer 0 (= dirt).
+		if (!splat)
+		{
+			splat = std::make_shared<engine::world::terrain::SplatMap>(
+				engine::world::terrain::SplatMap::MakeUniform(0u));
+		}
+
+		m_splats.emplace(key, SplatSlot{splat, false});
+		return splat;
+	}
+
+	void TerrainDocument::MarkSplatDirty(engine::world::GlobalChunkCoord coord)
+	{
+		auto it = m_splats.find(PackCoord(coord));
+		if (it == m_splats.end()) return;
+		it->second.dirty = true;
+	}
+
+	std::shared_ptr<engine::world::terrain::SplatMap>
+	TerrainDocument::FindSplat(engine::world::GlobalChunkCoord coord) const
+	{
+		auto it = m_splats.find(PackCoord(coord));
+		return (it == m_splats.end()) ? nullptr : it->second.splat;
+	}
+
+	size_t TerrainDocument::SaveDirtySplatToDisk(const engine::core::Config& config)
+	{
+		size_t written = 0;
+		const std::string contentRoot = config.GetString("paths.content", "game/data");
+		for (auto& [key, slot] : m_splats)
+		{
+			if (!slot.dirty) continue;
+			const uint32_t hi = static_cast<uint32_t>(key >> 32);
+			const uint32_t lo = static_cast<uint32_t>(key & 0xFFFFFFFFu);
+			const int chunkX = static_cast<int>(static_cast<int32_t>(hi));
+			const int chunkZ = static_cast<int>(static_cast<int32_t>(lo));
+
+			std::ostringstream dirStream;
+			dirStream << contentRoot << "/chunks/chunk_" << chunkX << "_" << chunkZ;
+			const std::filesystem::path dir(dirStream.str());
+			std::error_code ec;
+			std::filesystem::create_directories(dir, ec);
+			if (ec)
+			{
+				LOG_WARN(EditorWorld,
+					"[TerrainDocument] mkdir splat fail {}: {}", dir.string(), ec.message());
+				continue;
+			}
+
+			std::vector<uint8_t> bytes;
+			std::string err;
+			if (!engine::world::terrain::SaveSplatBin(*slot.splat, bytes, err))
+			{
+				LOG_WARN(EditorWorld,
+					"[TerrainDocument] SaveSplatBin fail ({},{}): {}", chunkX, chunkZ, err);
+				continue;
+			}
+
+			const std::filesystem::path file = dir / "splat.bin";
+			std::ofstream out(file, std::ios::binary | std::ios::trunc);
+			if (!out.good())
+			{
+				LOG_WARN(EditorWorld,
+					"[TerrainDocument] open splat fail {}", file.string());
+				continue;
+			}
+			out.write(reinterpret_cast<const char*>(bytes.data()),
+				static_cast<std::streamsize>(bytes.size()));
+			if (!out.good())
+			{
+				LOG_WARN(EditorWorld,
+					"[TerrainDocument] write splat fail {}", file.string());
+				continue;
+			}
+			slot.dirty = false;
+			++written;
+		}
+		return written;
+	}
 }

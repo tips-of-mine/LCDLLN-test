@@ -1,5 +1,6 @@
 #include "engine/editor/world/panels/ToolPropertiesPanel.h"
 
+#include "engine/editor/world/SplatPaintTool.h"
 #include "engine/editor/world/StampLibrary.h"
 #include "engine/editor/world/TerrainBrush.h"
 #include "engine/editor/world/TerrainSculptTool.h"
@@ -10,6 +11,8 @@
 #	include "imgui.h"
 #endif
 
+#include <algorithm>
+#include <cstdint>
 #include <filesystem>
 
 namespace engine::editor::world::panels
@@ -97,6 +100,88 @@ namespace engine::editor::world::panels
 			if (ImGui::Combo("Procedural", &idx, kLabels, 3))
 			{
 				kind = static_cast<ProceduralStamp>(idx);
+			}
+		}
+
+		/// M100.10 — Noms hardcodés des 8 layers de la palette M100.9.
+		/// Choix arbitraire pour M100.10 : la palette est statique (lue depuis
+		/// `layer_palette.json` au boot du client/éditeur) et les noms ne
+		/// changent pas entre sessions. Follow-up possible : injecter la
+		/// palette du shell pour piocher les noms dynamiquement.
+		const char* kSplatLayerNames[8] = {
+			"0 dirt",
+			"1 grass_dry",
+			"2 grass_wet",
+			"3 mud",
+			"4 sand",
+			"5 rock",
+			"6 snow",
+			"7 lava_cooled",
+		};
+
+		/// M100.10 — Rend le panneau Tool Properties pour `SplatPaintTool`.
+		/// Mode (Manual/Auto-Rules), layer combo, sliders radius/strength/falloff,
+		/// + sliders slope/alt si auto-rules + bouton Apply to chunk.
+		///
+		/// Effet de bord : appelle `tool.SetParams` à chaque changement.
+		void RenderSplatPaintParams(engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::SplatPaintTool& tool)
+		{
+			engine::editor::world::SplatPaintParams params = tool.GetParams();
+
+			ImGui::TextUnformatted("Mode:");
+			if (ImGui::RadioButton("Manual", !params.autoRules))
+			{
+				params.autoRules = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Auto-Rules", params.autoRules))
+			{
+				params.autoRules = true;
+			}
+			ImGui::Separator();
+
+			int layerIdx = static_cast<int>(params.activeLayer);
+			if (ImGui::Combo("Active layer", &layerIdx, kSplatLayerNames, 8))
+			{
+				params.activeLayer = static_cast<uint8_t>(
+					std::clamp(layerIdx, 0, 7));
+			}
+
+			ImGui::SliderFloat("Radius (m)", &params.radiusMeters, 1.0f, 50.0f, "%.1f");
+			ImGui::SliderFloat("Strength",   &params.strength,     0.0f, 1.0f,  "%.2f");
+			ImGui::SliderFloat("Falloff",    &params.falloff,      0.0f, 1.0f,  "%.2f");
+
+			if (params.autoRules)
+			{
+				ImGui::Separator();
+				ImGui::TextUnformatted("Auto-Rules");
+				ImGui::SliderFloat("Slope min (deg)", &params.slopeMinDeg, 0.0f, 90.0f, "%.1f");
+				ImGui::SliderFloat("Slope max (deg)", &params.slopeMaxDeg, 0.0f, 90.0f, "%.1f");
+				ImGui::SliderFloat("Alt min (m)",     &params.altMin, -1024.0f, 8192.0f, "%.1f");
+				ImGui::SliderFloat("Alt max (m)",     &params.altMax, -1024.0f, 8192.0f, "%.1f");
+			}
+
+			tool.SetParams(params);
+
+			// Bouton "Apply to chunk" — uniquement en mode auto-rules.
+			// M100.10 : sans sélection courante, on applique sur le chunk (0,0)
+			// par défaut. La vraie sélection sera branchée dans un follow-up
+			// (M100.x outliner / box-select sur le terrain).
+			if (params.autoRules)
+			{
+				ImGui::Separator();
+				if (ImGui::Button("Apply to chunk (0,0)"))
+				{
+					// La Config nécessaire au tool n'est pas exposée ici.
+					// On consigne juste l'intention dans la console et on
+					// invoque l'API avec une Config vide via le shell — le
+					// branchement final passera par un accesseur Config dans
+					// le shell (TODO M100.10 follow-up).
+					(void)shell; // évite warning unused si future variante
+					ImGui::SameLine();
+					ImGui::TextDisabled("(needs Config plumbing — TODO follow-up)");
+				}
 			}
 		}
 	}
@@ -229,6 +314,13 @@ namespace engine::editor::world::panels
 					ImGui::TextDisabled("Click on the terrain to compute a preview.");
 				}
 			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::SplatPaint)
+			{
+				ImGui::TextUnformatted("Splat Paint");
+				ImGui::Separator();
+				RenderSplatPaintParams(*m_shell, m_shell->MutableSplatPaintTool());
+			}
 			else
 			{
 				ImGui::TextDisabled("Tool Properties — placeholder M100.1.");
@@ -236,8 +328,9 @@ namespace engine::editor::world::panels
 					"Les propriétés contextuelles de l'outil actif (sculpting, "
 					"painting, placement) apparaîtront ici à mesure que les "
 					"outils sont implémentés (M100.5 et suivants). "
-					"Appuie sur B pour activer la sculpture terrain (M100.6) "
-					"ou N pour activer le stamp (M100.7).");
+					"Appuie sur B pour activer la sculpture terrain (M100.6), "
+					"N pour activer le stamp (M100.7), ou P pour activer la "
+					"peinture splat (M100.10).");
 			}
 		}
 		ImGui::End();

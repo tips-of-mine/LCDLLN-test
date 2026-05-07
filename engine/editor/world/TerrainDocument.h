@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/world/WorldModel.h"
+#include "engine/world/terrain/SplatMap.h"
 #include "engine/world/terrain/TerrainChunk.h"
 #include "engine/world/terrain/TerrainLodWorker.h"
 
@@ -72,6 +73,24 @@ namespace engine::editor::world
 		/// worker, garantissant que les jobs périmés sont jetés.
 		void OnCommit(engine::world::GlobalChunkCoord coord);
 
+		/// Charge la `SplatMap` du chunk `(chunkX, chunkZ)` depuis disque
+		/// (`<paths.content>/chunks/chunk_<i>_<j>/splat.bin`) si présente,
+		/// sinon crée une splat-map uniforme layer 0 (= "dirt"). Met en cache
+		/// dans `m_splats`. Idempotent (M100.9).
+		std::shared_ptr<engine::world::terrain::SplatMap> EnsureSplatLoaded(
+			const engine::core::Config& config, int chunkX, int chunkZ);
+
+		/// Marque la splat-map du chunk `coord` comme modifiée (M100.9).
+		void MarkSplatDirty(engine::world::GlobalChunkCoord coord);
+
+		/// Sauvegarde sur disque toutes les splat-maps dirty (M100.9).
+		/// \return nombre de splat-maps effectivement écrites.
+		size_t SaveDirtySplatToDisk(const engine::core::Config& config);
+
+		/// Accès lecture seule à la splat-map déjà chargée, ou nullptr (M100.9).
+		std::shared_ptr<engine::world::terrain::SplatMap> FindSplat(
+			engine::world::GlobalChunkCoord coord) const;
+
 	private:
 		struct ChunkSlot
 		{
@@ -85,5 +104,14 @@ namespace engine::editor::world
 		std::unordered_map<uint64_t, ChunkSlot> m_chunks;
 		engine::world::terrain::TerrainLodWorker* m_lodWorker = nullptr;
 		std::string m_contentRootForLods;
+
+		/// Slot splat-map (M100.9) parallèle à `ChunkSlot` mais sur un map
+		/// distinct pour éviter de réécrire EnsureLoaded/MarkDirty/Save.
+		struct SplatSlot
+		{
+			std::shared_ptr<engine::world::terrain::SplatMap> splat;
+			bool dirty = false;
+		};
+		std::unordered_map<uint64_t, SplatSlot> m_splats;
 	};
 }

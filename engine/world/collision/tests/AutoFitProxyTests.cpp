@@ -111,6 +111,15 @@ namespace
 		REQUIRE(p.type == ProxyType::ConvexHull);
 		REQUIRE(p.vertices.size() == 8);
 	}
+
+	void Test_AutoFit_EmptyMesh_ReturnsCapsuleDefault()
+	{
+		CollisionMeshCpu empty;
+		CollisionProxy p = AutoFit(empty);
+		// Fallback documenté : default-constructed CollisionProxy = Capsule.
+		REQUIRE(p.type == ProxyType::Capsule);
+		REQUIRE(ApproxEq(p.capsuleRadius, 0.5f));
+	}
 }
 
 int main()
@@ -119,5 +128,6 @@ int main()
 	Test_AutoFit_Compact_PicksConvexHull();
 	Test_AutoFit_StaticComplex_PicksTriMesh();
 	Test_AutoFit_FlatPlane_PicksConvexHull();
+	Test_AutoFit_EmptyMesh_ReturnsCapsuleDefault();
 	return g_failed;
 }

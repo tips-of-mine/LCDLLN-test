@@ -3,10 +3,12 @@
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
 #include "engine/world/terrain/TerrainChunkLoader.h"
+#include "engine/world/terrain/TerrainLodChain.h"
 
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 namespace engine::editor::world
 {
@@ -142,5 +144,59 @@ namespace engine::editor::world
 			++written;
 		}
 		return written;
+	}
+
+	void TerrainDocument::AttachLodWorker(engine::world::terrain::TerrainLodWorker* worker,
+		std::string contentRoot)
+	{
+		m_lodWorker = worker;
+		m_contentRootForLods = std::move(contentRoot);
+	}
+
+	void TerrainDocument::OnCommit(engine::world::GlobalChunkCoord coord)
+	{
+		if (m_lodWorker == nullptr) return;
+		auto chunk = Find(coord);
+		if (!chunk) return; // sécurité : commit sur un chunk non chargé n'a pas de sens
+
+		// Copie défensive du chunk pour que le worker travaille sur un snapshot
+		// indépendant des éditions ultérieures.
+		engine::world::terrain::TerrainChunk lod0 = *chunk;
+		const std::string contentRoot = m_contentRootForLods;
+		m_lodWorker->Enqueue(coord, std::move(lod0),
+			[contentRoot](engine::world::GlobalChunkCoord c,
+				engine::world::terrain::TerrainLodChain chain)
+			{
+				// Callback exécuté sur un thread worker — on peut faire de l'IO.
+				std::ostringstream dirStream;
+				dirStream << contentRoot << "/chunks/chunk_" << c.x << "_" << c.z;
+				const std::filesystem::path dir(dirStream.str());
+				std::error_code ec;
+				std::filesystem::create_directories(dir, ec);
+				if (ec)
+				{
+					LOG_WARN(EditorWorld,
+						"[TerrainLodWorker] mkdir fail {}: {}", dir.string(), ec.message());
+					return;
+				}
+				std::vector<uint8_t> bytes;
+				std::string err;
+				if (!engine::world::terrain::SaveTerrainLodsBin(chain, bytes, err))
+				{
+					LOG_WARN(EditorWorld,
+						"[TerrainLodWorker] SaveTerrainLodsBin fail ({},{}): {}", c.x, c.z, err);
+					return;
+				}
+				const std::filesystem::path file = dir / "terrain_lods.bin";
+				std::ofstream out(file, std::ios::binary | std::ios::trunc);
+				if (!out.good())
+				{
+					LOG_WARN(EditorWorld,
+						"[TerrainLodWorker] open fail {}", file.string());
+					return;
+				}
+				out.write(reinterpret_cast<const char*>(bytes.data()),
+					static_cast<std::streamsize>(bytes.size()));
+			});
 	}
 }

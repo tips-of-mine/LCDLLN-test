@@ -2,6 +2,7 @@
 
 #include "engine/world/WorldModel.h"
 #include "engine/world/terrain/TerrainChunk.h"
+#include "engine/world/terrain/TerrainLodWorker.h"
 
 #include <memory>
 #include <string>
@@ -57,6 +58,20 @@ namespace engine::editor::world
 		/// Nombre de chunks actuellement résidents en RAM.
 		size_t LoadedChunkCount() const { return m_chunks.size(); }
 
+		/// Attache un `TerrainLodWorker` pour la régénération asynchrone des
+		/// LODs (M100.8). Le caller possède le worker (ne le détruit pas pendant
+		/// la durée de vie du document). `contentRoot` est mémorisé pour que le
+		/// callback worker puisse écrire `terrain_lods.bin` au bon emplacement.
+		void AttachLodWorker(engine::world::terrain::TerrainLodWorker* worker,
+			std::string contentRoot);
+
+		/// À appeler après chaque commit d'`ICommand` qui modifie le chunk
+		/// `coord` (M100.8). Si un worker est attaché, enqueue une demande de
+		/// régénération LOD asynchrone ; sinon no-op.
+		/// Effet de bord : incrémente la génération atomique du chunk dans le
+		/// worker, garantissant que les jobs périmés sont jetés.
+		void OnCommit(engine::world::GlobalChunkCoord coord);
+
 	private:
 		struct ChunkSlot
 		{
@@ -68,5 +83,7 @@ namespace engine::editor::world
 		static uint64_t PackCoord(engine::world::GlobalChunkCoord c);
 
 		std::unordered_map<uint64_t, ChunkSlot> m_chunks;
+		engine::world::terrain::TerrainLodWorker* m_lodWorker = nullptr;
+		std::string m_contentRootForLods;
 	};
 }

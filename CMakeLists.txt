@@ -710,6 +710,20 @@ if(WIN32)
   add_test(NAME terrain_chunk_tests COMMAND terrain_chunk_tests)
 endif()
 
+# M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.
+# Round-trip byte-exact (SaveTerrainBin → LoadTerrainBin → memcmp) +
+# meshes deterministe (BuildLod0Mesh produit des vertex/index buffers
+# identiques bit-à-bit pour le chunk source et le chunk re-lu).
+if(WIN32)
+  add_executable(terrain_parity_tests engine/world/terrain/tests/TerrainParityTests.cpp)
+  target_include_directories(terrain_parity_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_parity_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_parity_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_parity_tests COMMAND terrain_parity_tests)
+endif()
+
 # M100.4 — Tests unitaires CPU pour EditorCameraController.
 # Pure CPU (pas d'ImGui ni Vulkan) : on vérifie le mapping des modes
 # FPS/Orbital/TopDownOrtho vers la `engine::render::Camera`. Gating WIN32

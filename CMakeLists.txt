@@ -345,6 +345,7 @@ add_library(engine_core
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
   engine/world/terrain/TerrainChunk.cpp
+  engine/world/terrain/TerrainMeshBuilder.cpp
   engine/render/vk/DeferredDestroyQueue.cpp
   engine/render/GpuUploadQueue.cpp
   engine/render/vk/StagingAllocator.cpp

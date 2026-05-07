@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-namespace engine::world::terrain { struct TerrainChunk; }
+namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; }
 
 namespace tools::zone_builder
 {
@@ -36,4 +36,12 @@ namespace tools::zone_builder
 	/// \return true si OK ; sinon `outError` est renseigné.
 	bool WriteTerrainChunk(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
 		const engine::world::terrain::TerrainChunk& chunk, std::string& outError);
+
+	/// Écrit `terrain_lods.bin` (M100.8) dans `<outputRootDir>/chunks/chunk_<i>_<j>/`.
+	/// Crée le dossier au besoin. Sérialise via
+	/// `engine::world::terrain::SaveTerrainLodsBin` (header `TRLO` +
+	/// xxhash64). Format identique à celui que le `TerrainLodWorker` produit
+	/// en runtime (parité éditeur ↔ client).
+	bool WriteTerrainLods(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::terrain::TerrainLodChain& chain, std::string& outError);
 }

@@ -3,10 +3,12 @@
 #include "engine/core/Log.h"
 #include "engine/world/terrain/TerrainChunk.h"
 #include "engine/world/terrain/TerrainChunkLoader.h"
+#include "engine/world/terrain/TerrainLodChain.h"
 
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 namespace engine::world
@@ -154,5 +156,50 @@ namespace engine::world
 		}
 		Insert(cacheKey, blob);
 		return chunk;
+	}
+
+	std::shared_ptr<engine::world::terrain::TerrainLodChain>
+	StreamCache::LoadTerrainLods(const engine::core::Config& config, int chunkX, int chunkZ)
+	{
+		std::ostringstream keyStream;
+		keyStream << "chunks/chunk_" << chunkX << "_" << chunkZ << "/terrain_lods.bin";
+		const std::string cacheKey = keyStream.str();
+
+		// Cache lookup d'abord.
+		auto cached = Lookup(cacheKey);
+		if (cached.has_value())
+		{
+			auto chain = std::make_shared<engine::world::terrain::TerrainLodChain>();
+			std::span<const uint8_t> bytes(cached->data(), cached->size());
+			std::string err;
+			if (engine::world::terrain::LoadTerrainLodsBin(bytes, *chain, err))
+				return chain;
+			LOG_WARN(World, "[StreamCache] cached terrain_lods.bin invalid: {}", err);
+			// Fall through pour retenter depuis disque.
+		}
+
+		// Disque.
+		const std::string contentRoot = config.GetString("paths.content", "game/data");
+		const std::string fullPath = contentRoot + "/" + cacheKey;
+		std::ifstream f(fullPath, std::ios::binary);
+		if (!f.good()) return nullptr; // optionnel : pas de warning, chunk peut ne pas avoir de LODs
+		f.seekg(0, std::ios::end);
+		const std::streamsize fileSize = f.tellg();
+		f.seekg(0, std::ios::beg);
+		if (fileSize <= 0) return nullptr;
+		std::vector<uint8_t> blob(static_cast<size_t>(fileSize));
+		f.read(reinterpret_cast<char*>(blob.data()), fileSize);
+		if (!f.good() && !f.eof()) return nullptr;
+
+		auto chain = std::make_shared<engine::world::terrain::TerrainLodChain>();
+		std::span<const uint8_t> bytes(blob.data(), blob.size());
+		std::string err;
+		if (!engine::world::terrain::LoadTerrainLodsBin(bytes, *chain, err))
+		{
+			LOG_WARN(World, "[StreamCache] LoadTerrainLodsBin fail ({}): {}", fullPath, err);
+			return nullptr;
+		}
+		Insert(cacheKey, blob);
+		return chain;
 	}
 }

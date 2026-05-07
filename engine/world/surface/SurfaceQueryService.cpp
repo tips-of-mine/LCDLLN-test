@@ -27,7 +27,7 @@ namespace engine::world::surface
     SurfaceQueryResult SurfaceQueryService::Query(engine::math::Vec3 worldPos) const
     {
         SurfaceQueryResult fallback{ SurfaceType::Dirt, {} };
-        if (!m_cache || !m_cfg || !m_palette) return fallback;
+        if (!m_table || !m_cache || !m_cfg || !m_palette) return fallback;
 
         // 1. worldPos.xz → (chunkCoord, localCellX, localCellZ).
         const auto coord = engine::world::WorldToGlobalChunkCoord(worldPos.x, worldPos.z);

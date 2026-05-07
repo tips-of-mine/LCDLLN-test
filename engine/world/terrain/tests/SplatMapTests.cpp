@@ -10,10 +10,12 @@
 /// Style aligné sur engine/world/terrain/tests/TerrainChunkTests.cpp
 /// (REQUIRE macro maison + main() appelant chaque test function).
 
+#include "engine/world/terrain/LayerPalette.h"
 #include "engine/world/terrain/SplatMap.h"
 
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <vector>
 
 namespace
@@ -102,6 +104,31 @@ namespace
 		REQUIRE(!err.empty());
 	}
 
+	/// Charge `assets/terrain/layer_palette.json`, vérifie 8 entrées + nom du
+	/// premier (`dirt`) et du dernier (`lava_cooled`). Skip si fichier absent
+	/// (ex. test lancé hors source root).
+	void Test_LayerPalette_LoadJson()
+	{
+		using engine::world::terrain::LayerPalette;
+		using engine::world::terrain::LoadLayerPalette;
+
+		const std::filesystem::path path = "assets/terrain/layer_palette.json";
+		if (!std::filesystem::exists(path))
+		{
+			std::printf("[SKIP] Test_LayerPalette_LoadJson: %s missing\n", path.string().c_str());
+			return;
+		}
+		LayerPalette palette;
+		std::string err;
+		REQUIRE(LoadLayerPalette(path, palette, err));
+		REQUIRE(err.empty());
+		REQUIRE(palette.version == 1u);
+		REQUIRE(palette.layers[0].name == "dirt");
+		REQUIRE(palette.layers[7].name == "lava_cooled");
+		REQUIRE(palette.layers[1].tilingMeters > 0.0f);
+		REQUIRE(palette.layers[5].surfaceType == "Rock");
+	}
+
 	/// Cellule avec somme != 255 → SaveSplatBin échoue (validate avant écriture)
 	/// et LoadSplatBin échoue aussi sur un blob corrompu.
 	void Test_Load_RejectsSumNot255()
@@ -126,10 +153,11 @@ int main()
 	Test_SaveLoad_Roundtrip();
 	Test_Load_RejectsBadMagic();
 	Test_Load_RejectsSumNot255();
+	Test_LayerPalette_LoadJson();
 
 	if (g_failed == 0)
 	{
-		std::printf("[PASS] SplatMapTests (5/5)\n");
+		std::printf("[PASS] SplatMapTests (6/6)\n");
 		return 0;
 	}
 	std::printf("[FAIL] SplatMapTests: %d failure(s)\n", g_failed);

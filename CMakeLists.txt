@@ -354,6 +354,7 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
   engine/world/terrain/TerrainChunkLoader.cpp

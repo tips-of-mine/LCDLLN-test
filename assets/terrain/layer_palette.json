@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "layers": [
+    {
+      "index": 0,
+      "name": "dirt",
+      "albedo": "tex/terrain/dirt_albedo.texr",
+      "normal": "tex/terrain/dirt_normal.texr",
+      "arm":    "tex/terrain/dirt_arm.texr",
+      "tilingMeters": 4.0,
+      "surfaceType": "Dirt"
+    },
+    {
+      "index": 1,
+      "name": "grass_dry",
+      "albedo": "tex/terrain/grass_dry_albedo.texr",
+      "normal": "tex/terrain/grass_dry_normal.texr",
+      "arm":    "tex/terrain/grass_dry_arm.texr",
+      "tilingMeters": 3.0,
+      "surfaceType": "Grass"
+    },
+    {
+      "index": 2,
+      "name": "grass_wet",
+      "albedo": "tex/terrain/grass_wet_albedo.texr",
+      "normal": "tex/terrain/grass_wet_normal.texr",
+      "arm":    "tex/terrain/grass_wet_arm.texr",
+      "tilingMeters": 3.0,
+      "surfaceType": "Grass"
+    },
+    {
+      "index": 3,
+      "name": "mud",
+      "albedo": "tex/terrain/mud_albedo.texr",
+      "normal": "tex/terrain/mud_normal.texr",
+      "arm":    "tex/terrain/mud_arm.texr",
+      "tilingMeters": 4.0,
+      "surfaceType": "Mud"
+    },
+    {
+      "index": 4,
+      "name": "sand",
+      "albedo": "tex/terrain/sand_albedo.texr",
+      "normal": "tex/terrain/sand_normal.texr",
+      "arm":    "tex/terrain/sand_arm.texr",
+      "tilingMeters": 4.0,
+      "surfaceType": "Sand"
+    },
+    {
+      "index": 5,
+      "name": "rock",
+      "albedo": "tex/terrain/rock_albedo.texr",
+      "normal": "tex/terrain/rock_normal.texr",
+      "arm":    "tex/terrain/rock_arm.texr",
+      "tilingMeters": 5.0,
+      "surfaceType": "Rock"
+    },
+    {
+      "index": 6,
+      "name": "snow",
+      "albedo": "tex/terrain/snow_albedo.texr",
+      "normal": "tex/terrain/snow_normal.texr",
+      "arm":    "tex/terrain/snow_arm.texr",
+      "tilingMeters": 4.0,
+      "surfaceType": "Snow"
+    },
+    {
+      "index": 7,
+      "name": "lava_cooled",
+      "albedo": "tex/terrain/lava_cooled_albedo.texr",
+      "normal": "tex/terrain/lava_cooled_normal.texr",
+      "arm":    "tex/terrain/lava_cooled_arm.texr",
+      "tilingMeters": 6.0,
+      "surfaceType": "LavaCooled"
+    }
+  ]
+}

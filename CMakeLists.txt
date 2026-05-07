@@ -275,6 +275,7 @@ add_library(engine_core
   engine/editor/world/SplatPaintTool.cpp
   engine/editor/world/SplatRules.cpp
   engine/editor/world/EditorCameraController.cpp
+  engine/editor/world/CollisionPreviewCamera.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
   engine/editor/world/panels/AssetBrowserPanel.cpp
@@ -283,6 +284,7 @@ add_library(engine_core
   engine/editor/world/panels/ToolPropertiesPanel.cpp
   engine/editor/world/panels/HistoryPanel.cpp
   engine/editor/world/panels/SurfaceTablePanel.cpp
+  engine/editor/world/panels/CollisionEditorPanel.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
@@ -368,6 +370,9 @@ add_library(engine_core
   engine/world/surface/SurfaceType.cpp
   engine/world/surface/SurfaceTable.cpp
   engine/world/surface/SurfaceQueryService.cpp
+  engine/world/collision/CollisionProxy.cpp
+  engine/world/collision/AutoFitProxy.cpp
+  engine/world/collision/ProxyWireframe.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -942,6 +947,39 @@ if(WIN32)
     target_compile_options(client_prediction_surface_multiplier_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME client_prediction_surface_multiplier_tests COMMAND client_prediction_surface_multiplier_tests)
+endif()
+
+# M100.12 — Tests round-trip CollisionProxy (Phase 3b.2).
+if(WIN32)
+  add_executable(collision_proxy_roundtrip_tests engine/world/collision/tests/CollisionProxyRoundtripTests.cpp)
+  target_include_directories(collision_proxy_roundtrip_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(collision_proxy_roundtrip_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(collision_proxy_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME collision_proxy_roundtrip_tests COMMAND collision_proxy_roundtrip_tests)
+endif()
+
+# M100.12 — Tests AutoFit dispatch heuristique.
+if(WIN32)
+  add_executable(auto_fit_proxy_tests engine/world/collision/tests/AutoFitProxyTests.cpp)
+  target_include_directories(auto_fit_proxy_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(auto_fit_proxy_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(auto_fit_proxy_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME auto_fit_proxy_tests COMMAND auto_fit_proxy_tests)
+endif()
+
+# M100.12 — Tests ProxyWireframe edge generator.
+if(WIN32)
+  add_executable(proxy_wireframe_tests engine/world/collision/tests/ProxyWireframeTests.cpp)
+  target_include_directories(proxy_wireframe_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(proxy_wireframe_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(proxy_wireframe_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME proxy_wireframe_tests COMMAND proxy_wireframe_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

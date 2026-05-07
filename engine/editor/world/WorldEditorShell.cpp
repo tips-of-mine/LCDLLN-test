@@ -9,6 +9,7 @@
 #include "engine/editor/world/panels/ToolPropertiesPanel.h"
 #include "engine/editor/world/panels/HistoryPanel.h"
 #include "engine/editor/world/panels/SurfaceTablePanel.h"
+#include "engine/editor/world/panels/CollisionEditorPanel.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -50,11 +51,11 @@ namespace engine::editor::world
 	}
 
 	/// Initialise la coquille : lit `editor.world.layout_path`, instancie les
-	/// 8 panneaux dans l'ordre stable, charge le fichier .ini de layout s'il
+	/// 9 panneaux dans l'ordre stable, charge le fichier .ini de layout s'il
 	/// existe, sinon réinitialise un layout par défaut. L'ordre des panneaux
 	/// est figé : 0=Scene, 1=Inspector, 2=AssetBrowser, 3=Outliner, 4=Console,
-	/// 5=ToolProperties, 6=History (M100.2), 7=SurfaceTable (M100.11) —
-	/// référencé par les tests M100.1.
+	/// 5=ToolProperties, 6=History (M100.2), 7=SurfaceTable (M100.11),
+	/// 8=CollisionEditor (M100.12) — référencé par les tests M100.1.
 	bool WorldEditorShell::Init(const engine::core::Config& cfg)
 	{
 		m_layoutPath = cfg.GetString("editor.world.layout_path", "editor_world_layout.ini");
@@ -86,6 +87,12 @@ namespace engine::editor::world
 		surfacePanel->LoadFromContentRoot(
 			std::filesystem::path(cfg.GetString("paths.content", "game/data")));
 		m_panels.emplace_back(std::move(surfacePanel));
+		// M100.12 — Panel d'authoring de collision proxies. Hidden par défaut,
+		// toggle via View > Collision Editor.
+		auto collisionPanel = std::make_unique<panels::CollisionEditorPanel>();
+		collisionPanel->Init(
+			std::filesystem::path(cfg.GetString("paths.content", "game/data")));
+		m_panels.emplace_back(std::move(collisionPanel));
 
 #if defined(_WIN32)
 		std::error_code ec;

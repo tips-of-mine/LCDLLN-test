@@ -726,6 +726,19 @@ if(WIN32)
   add_test(NAME terrain_parity_tests COMMAND terrain_parity_tests)
 endif()
 
+# M100.8 — Tests unitaires CPU pour TerrainLodChain + TerrainLodWorker.
+# Vérifie : box filter 2x2, roundtrip terrain_lods.bin, async non-bloquant
+# pour le main thread, génération atomique pour les stale jobs.
+if(WIN32)
+  add_executable(terrain_lod_tests engine/world/terrain/tests/TerrainLodTests.cpp)
+  target_include_directories(terrain_lod_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_lod_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_lod_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_lod_tests COMMAND terrain_lod_tests)
+endif()
+
 # M100.4 — Tests unitaires CPU pour EditorCameraController.
 # Pure CPU (pas d'ImGui ni Vulkan) : on vérifie le mapping des modes
 # FPS/Orbital/TopDownOrtho vers la `engine::render::Camera`. Gating WIN32

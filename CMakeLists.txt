@@ -336,6 +336,7 @@ add_library(engine_core
   engine/render/PipelineCache.cpp
   engine/render/GeometryPass.cpp
   engine/render/TerrainChunkPipeline.cpp
+  engine/render/terrain_chunk/ChunkRuntime.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp
   engine/render/LightingPass.cpp
@@ -740,6 +741,18 @@ if(WIN32)
     target_compile_options(splat_map_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME splat_map_tests COMMAND splat_map_tests)
+endif()
+
+# Terrain Chunk Runtime — Tests unitaires CPU pour ChunkRuntime
+# (cache LRU + budget GPU + protection ring Active/Visible). Pas de Vulkan.
+if(WIN32)
+  add_executable(chunk_runtime_tests engine/render/terrain_chunk/tests/ChunkRuntimeTests.cpp)
+  target_include_directories(chunk_runtime_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(chunk_runtime_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(chunk_runtime_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME chunk_runtime_tests COMMAND chunk_runtime_tests)
 endif()
 
 # M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.

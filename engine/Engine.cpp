@@ -1264,11 +1264,9 @@ namespace engine
 											std::string err;
 											const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 											const std::string shaderRoot = contentRoot + "/shaders";
-											// NOTE : TerrainChunkRenderer::Init attend `engine::render::vk::StagingAllocator*`,
-											// alors que `m_stagingAllocator` réside dans `engine::render`.
-											// Le membre est juste stocké (jamais utilisé en M100 — uploads
-											// one-shot via VulkanBufferAllocator), donc on passe nullptr ici.
-											// Idem pour AssetRegistry — réservé pour PBR lookups futurs.
+											// `staging` et `assetRegistry` sont passés mais non utilisés en M100
+											// (uploads one-shot via VulkanBufferAllocator interne au renderer ;
+											// PBR lookups directs via stb_image). Réservés pour évolutions futures.
 											const bool ok = m_terrainChunkRenderer->Init(
 												m_vkDeviceContext.GetDevice(),
 												m_vkDeviceContext.GetPhysicalDevice(),
@@ -1276,7 +1274,7 @@ namespace engine
 												m_terrainChunkCameraSetLayout,
 												m_vkDeviceContext.GetGraphicsQueue(),
 												m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
-												nullptr,
+												&m_stagingAllocator,
 												&m_assetRegistry,
 												&m_streamCache,
 												m_cfg,

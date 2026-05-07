@@ -41,7 +41,7 @@
 
 namespace engine::core { class Config; }
 namespace engine::render { class AssetRegistry; }
-namespace engine::render::vk { class StagingAllocator; }
+namespace engine::render { class StagingAllocator; }
 namespace engine::world { class StreamCache; }
 
 namespace engine::render::terrain_chunk
@@ -170,7 +170,7 @@ namespace engine::render::terrain_chunk
 		bool Init(VkDevice device, VkPhysicalDevice physDev,
 			VkRenderPass renderPass, VkDescriptorSetLayout cameraSetLayout,
 			VkQueue graphicsQueue, uint32_t graphicsQueueFamilyIndex,
-			engine::render::vk::StagingAllocator* staging,
+			engine::render::StagingAllocator* staging,
 			engine::render::AssetRegistry* assetRegistry,
 			engine::world::StreamCache* streamCache,
 			const engine::core::Config& config,
@@ -253,7 +253,7 @@ namespace engine::render::terrain_chunk
 		VkPhysicalDevice m_physDev = VK_NULL_HANDLE;
 		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 		uint32_t m_graphicsQueueFamily = 0u;
-		engine::render::vk::StagingAllocator* m_staging = nullptr;
+		engine::render::StagingAllocator* m_staging = nullptr;
 		engine::render::AssetRegistry* m_assetRegistry = nullptr;
 		engine::world::StreamCache* m_streamCache = nullptr;
 		const engine::core::Config* m_config = nullptr;

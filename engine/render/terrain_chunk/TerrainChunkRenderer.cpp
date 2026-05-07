@@ -690,7 +690,7 @@ namespace engine::render::terrain_chunk
 	bool TerrainChunkRenderer::Init(VkDevice device, VkPhysicalDevice physDev,
 		VkRenderPass renderPass, VkDescriptorSetLayout cameraSetLayout,
 		VkQueue graphicsQueue, uint32_t graphicsQueueFamilyIndex,
-		engine::render::vk::StagingAllocator* staging,
+		engine::render::StagingAllocator* staging,
 		engine::render::AssetRegistry* assetRegistry,
 		engine::world::StreamCache* streamCache,
 		const engine::core::Config& config,

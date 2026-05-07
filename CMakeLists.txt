@@ -366,6 +366,7 @@ add_library(engine_core
   engine/world/ChunkBudgetStats.cpp
   engine/world/surface/SurfaceType.cpp
   engine/world/surface/SurfaceTable.cpp
+  engine/world/surface/SurfaceQueryService.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -917,6 +918,17 @@ if(WIN32)
     target_compile_options(layer_palette_surface_type_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME layer_palette_surface_type_tests COMMAND layer_palette_surface_type_tests)
+endif()
+
+# M100.11 — Tests SurfaceQueryService (mock cache via Insert).
+if(WIN32)
+  add_executable(surface_query_service_tests engine/world/surface/tests/SurfaceQueryServiceTests.cpp)
+  target_include_directories(surface_query_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(surface_query_service_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(surface_query_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME surface_query_service_tests COMMAND surface_query_service_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

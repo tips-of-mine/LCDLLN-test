@@ -340,6 +340,7 @@ add_library(engine_core
   engine/render/terrain_chunk/DescriptorSetPool.cpp
   engine/render/terrain_chunk/LayerArrayLoader.cpp
   engine/render/terrain_chunk/SplatMapGpuCache.cpp
+  engine/render/terrain_chunk/TerrainChunkRenderer.cpp
   engine/render/terrain_chunk/TerrainMeshGpuCache.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp

@@ -12,9 +12,108 @@ idées, pas porter à l'identique. Aucun code cmangos n'est copié.
 
 ## Sommaire
 
+- [Table récapitulative — 49 modules](#table-récapitulative--49-modules)
 - [Résumé exécutif (top reco par priorité)](#résumé-exécutif)
 - [shared/](#shared)
 - [game/](#game)
+
+---
+
+## Table récapitulative — 49 modules
+
+Triés par priorité puis alphabétique. **Aucun module n'est écarté** : même
+ceux marqués « déjà couvert » ou « MVP non prioritaire » ont une idée
+exploitable listée pour servir de point de départ le jour où on touche le
+sujet.
+
+Légende :
+- **Source** : `s/` = `shared/`, `g/` = `game/`
+- **Cible** : `master` (lobby/auth/relay), `shard` (world sim), `client`,
+  `cross` (master + shard), `outil` (binaire à part)
+- **Priorité** :
+  - **P1** = squelette ou déblocant immédiat
+  - **P2** = feature gameplay essentielle (à implémenter dès la première
+    feature dépendante)
+  - **P3** = ajout à valeur ajoutée, non critique
+  - **P4** = déjà couvert chez nous, ou cas très spécifique / externe
+
+### P1 — Squelette & déblocants (5 modules)
+
+| Module | Source | Cible | Idée principale |
+|---|---|---|---|
+| Chat | g/ | cross | Déblocant MVP : `CanSpeak()` centralisé + `CheckEscapeSequences` + dispatch table-driven + split master(relay) / shard(proximité) |
+| Entities | g/ | shard | `UpdateFields` + `UpdateMask` : delta réseau, pré-requis AoI |
+| Grids | g/ | shard | Partitionnement spatial 2D + Visitor pattern templated + GridStates ; base AoI / spawn / broadcast |
+| Movement | g/ | cross | Spline server-authoritative + interpolation client (réduit drastiquement la bande passante) |
+| vmap | g/ | shard | LOS + height + tile streaming refcount + BIH/BVH + DynamicTree (portes) |
+
+### P2 — Gameplay essentiel (23 modules)
+
+À implémenter dès qu'une feature concrète en dépend. Ordre alphabétique.
+
+| Module | Source | Cible | Idée principale |
+|---|---|---|---|
+| Accounts | g/ | master | Enum `AccountTypes` 5 niveaux + `HasLowerSecurity()` systématique avant action sur autrui |
+| AI | g/ | shard | Registry + Selector pour CreatureAI + couche `EventAI` data-driven quand contenu PvE riche |
+| Arena | g/ | shard | `ArenaTeam` persistant + MMR glicko + `WeeklyMaintenance` (colisée LCDLLN dans une ville, sans cross-realm) |
+| AuctionHouse | g/ | master | Tick global d'expirations + livraison via mail + index RAM secondaire (multi-maisons par faction/région) |
+| BattleGround | g/ | shard | Framework instancié hiérarchique (`BattleGround` virtuelle + 1 classe par variante) + score sous-classé + reconnexion |
+| Combat | g/ | shard | Décomposition `CombatManager` / `ThreatManager` / `HostileRefManager` bidirectionnel + state machine in/leaving/out |
+| Database | s/ | cross | `SQLStorage` (cache RAM read-only) + `SqlDelayThread` (queue async) + prepared statements |
+| DBScripts | g/ | shard | DSL minimaliste ~30 commandes (TALK/MOVE_TO/CAST_SPELL…) + délais + targeting polymorphe + hot-reload |
+| Globals | g/ | shard | Mini-DSL `Conditions` / `UnitCondition` data-driven, réutilisé par quêtes / loot / scripts |
+| Groups | g/ | master | `GroupReference` intrusive (auto-invalidation) + loot rules pluggables + persistance partielle (5-man volatile, raid DB) |
+| Guilds | g/ | master | Schéma DB (guild/member/rank/bank/eventlog) + permissions bitmask par rank + banque multi-onglets |
+| Loot | g/ | shard | Templates DB génériques (`creature_loottemplate`, `go_loottemplate`…) + loot groups (somme = 100%) + reference loot |
+| Mails | g/ | master | Schéma `mail` + `mail_items` + COD + expiration auto + `MassMailMgr` batched |
+| Maps | g/ | shard | « Map = un thread logique » + sous-classes (Dungeon/BG/World) + `SpawnGroup` + `MapPersistentState` |
+| MotionGenerators | g/ | shard | Stack de générateurs (`std::stack<MovementGenerator*>`) + pathfinder Detour navmesh par tile |
+| Pools | g/ | shard | `pool_template` + `pool_creature` + nested pools + sélection pondérée non biaisée |
+| Quests | g/ | cross | Split `QuestTemplate` (DB statique) / `QuestStatusData` (per-player) + objectifs hétérogènes via `std::variant` (plus C++20 idiomatique que arrays parallèles cmangos) + flags bitmask Daily/Weekly/Repeatable |
+| Reputation | g/ | shard | Faction template matrix (faction_a × faction_b → relation) + bitmask flags + paliers calculés + spillover parent |
+| Server | g/ | cross | `PacketLog` rejouable pour debug protocole + table d'opcodes typée + DBC stores équivalents |
+| Social | g/ | master | `FriendsManager` + broadcast présence + ignored filtré côté expéditeur (économie réseau) + notes privées |
+| Spells | g/ | shard | Split `Spell` (instance) / `SpellTemplate` (def) / `SpellAura` (effet appliqué) / `ProcEvent` + state machine cast + `SpellFamily` mask |
+| Trade | g/ | master | 2-phase commit (both-must-accept) + revérification serveur atomique + timer anti-scam 6s post-modif |
+| World | g/ | shard | `WorldStateExpression` mini-DSL conditions data-driven (game-changer pour éditeur monde) + tick multi-niveaux + shutdown gracieux |
+
+### P3 — Ajouts à valeur ajoutée (14 modules)
+
+Non critiques pour le MVP, mais chacun apporte une vraie qualité de vie ou
+de prod.
+
+| Module | Source | Cible | Idée principale |
+|---|---|---|---|
+| Anticheat | g/ | shard | Réserver interface `IServerSideValidator` + validation deltas de position (vitesse réelle vs max théorique) |
+| Cinematics | g/ | client | Trigger via opcode + asset client-side + parsing M2 serveur pour anticheat (téléport pendant cinématique) |
+| GameEvents | g/ | shard | Activation par `event_id` sur spawns + scheduler central + events en cascade (parent/child) |
+| GMTickets | g/ | master | Ticket = row DB simple + handler/Mgr séparés + notification asymétrique joueur/GM |
+| LFG | g/ | master | `LFGQueue` séparée du `LFGMgr` + matching par rôles requis + state machine joueur (Idle/Queued/Proposal/Boot) |
+| Metric | s/ | cross | InfluxDB line-protocol + `Measurement` RAII (`{ Measurement m("X"); ... }` profile à la sortie de scope) + flush async batché |
+| Multithreading | s/ | cross | Pattern `Messager` : file de `std::function` cross-thread, swap-and-execute (élimine contention prolongé) |
+| OutdoorPvP | g/ | shard | `OutdoorPvPMgr` + plugin polymorphe par zone + state machine par objectif (capture de tour) |
+| Platform | s/ | client | `WheatyExceptionReport` adapté pour crash dump joueur Windows (zéro dépendance externe vs Crashpad) |
+| PlayerBot | g/ | shard | `WorldSession` headless réutilisant les vrais handlers — load testing du shard sans client réel (10x à 100x plus de bots) |
+| Skills (craft) | g/ | shard | Hooks data-driven post-action (`skill_discovery_template`, `skill_extra_item_template`) |
+| Tools | g/ | outil | `PlayerDump` format texte pour migration cross-shard + cleaner DB orphelins périodique + `Formulas.h` centralisé |
+| Util | s/ | cross | `ByteBuffer` typé (`<<` / `>>`) + `ProducerConsumerQueue` + `UniqueTrackablePtr` (faible coût atomique) |
+| Weather | g/ | shard | Markov chain par zone (table `game_weather` pondérée) + server-authoritative + transition douce (grade 0→1) |
+
+### P4 — Déjà couvert ou cas spécifique (7 modules)
+
+Listé pour référence — l'idée principale reste utile à connaître.
+
+| Module | Source | Cible | Idée à connaître |
+|---|---|---|---|
+| Addons | g/ | client | Handshake addons à l'AUTH (CRC liste) + `BannedAddonList` côté serveur. **Déjà couvert** par `kProtocolVersion`. À reconsidérer si ImGui devient scriptable côté joueur. |
+| AuctionHouseBot | g/ | master | Bot HV via opcodes internes (pas DB direct) — pertinent uniquement si la pop tombe trop bas pour avoir un HV organique. |
+| Auth | s/ | master | SRP6 + `BigNumber` + `CryptoHash`. Pertinent uniquement si on quitte le mot-de-passe-hashé-en-base actuel pour un protocole zero-knowledge. |
+| Config | s/ | cross | API `GetXxxDefault(key, fallback)`. **Déjà couvert** — notre stack JSON+CLI hiérarchique est strictement plus expressive. |
+| Log | s/ | cross | Niveaux + multi-sinks + filtres. **Déjà couvert** par PR #468. |
+| Network | s/ | cross | Boost.Asio + template `AsyncSocket<T>`. **Déjà couvert** — notre NetServer epoll est mieux adapté aux opcodes binaires fixes Linux. |
+| VoiceChat | g/ | client | Stub TBC vide. À intégrer via service externe (LiveKit, Mumble) le jour venu, pas via master/shard. |
+
+> **Total** : 5 (P1) + 23 (P2) + 14 (P3) + 7 (P4) = **49 modules** (couvre l'intégralité de `shared/` et `game/` cmangos-tbc).
 
 ---
 

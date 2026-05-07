@@ -2,10 +2,17 @@
 #include "engine/editor/world/panels/SurfaceTablePanel.h"
 #include "engine/world/surface/SurfaceType.h"
 
-#include <imgui.h>
+#if defined(_WIN32)
+#	include "imgui.h"
+#endif
 
 namespace engine::editor::world::panels
 {
+	/// Charge `surface_table.json` depuis `<contentRoot>/assets/gameplay/`.
+	/// Effets de bord : remplit `m_table` (succès) et `m_status` (succès ou
+	/// erreur). Appelée une fois par `WorldEditorShell::Init` (main thread).
+	/// Le bouton Reload du panel rappelle `m_table.LoadFromJson(m_jsonPath, err)`
+	/// avec le même path.
 	void SurfaceTablePanel::LoadFromContentRoot(const std::filesystem::path& contentRoot)
 	{
 		m_jsonPath = contentRoot / "assets" / "gameplay" / "surface_table.json";
@@ -20,8 +27,15 @@ namespace engine::editor::world::panels
 		}
 	}
 
+	/// Rend la window ImGui "Surface Table" : ligne source + bouton Reload,
+	/// ligne status (rouge si parse error), puis tableau 4 colonnes
+	/// (SurfaceType / Speed / Audio step / Visual tag) listant les 13 surfaces.
+	/// Aucun champ éditable. Effet de bord : ImGui state, éventuel
+	/// `m_table.LoadFromJson` si Reload cliqué. Doit être appelée depuis le
+	/// main thread, dans la phase ImGui (entre NewFrame et Render).
 	void SurfaceTablePanel::Render()
 	{
+#if defined(_WIN32)
 		if (!ImGui::Begin(GetName(), &m_visible))
 		{
 			ImGui::End();
@@ -49,7 +63,7 @@ namespace engine::editor::world::panels
 
 		if (!m_table.IsLoaded())
 		{
-			ImGui::TextDisabled("(table non chargée)");
+			ImGui::TextDisabled("(table non chargee)");
 			ImGui::End();
 			return;
 		}
@@ -82,5 +96,6 @@ namespace engine::editor::world::panels
 		}
 
 		ImGui::End();
+#endif
 	}
 }

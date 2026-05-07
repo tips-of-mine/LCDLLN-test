@@ -50,11 +50,11 @@ namespace engine::editor::world
 	}
 
 	/// Initialise la coquille : lit `editor.world.layout_path`, instancie les
-	/// 6 panneaux dans l'ordre stable, charge le fichier .ini de layout s'il
+	/// 8 panneaux dans l'ordre stable, charge le fichier .ini de layout s'il
 	/// existe, sinon réinitialise un layout par défaut. L'ordre des panneaux
 	/// est figé : 0=Scene, 1=Inspector, 2=AssetBrowser, 3=Outliner, 4=Console,
-	/// 5=ToolProperties — référencé par les tests M100.1 et HistoryPanel
-	/// (M100.2).
+	/// 5=ToolProperties, 6=History (M100.2), 7=SurfaceTable (M100.11) —
+	/// référencé par les tests M100.1.
 	bool WorldEditorShell::Init(const engine::core::Config& cfg)
 	{
 		m_layoutPath = cfg.GetString("editor.world.layout_path", "editor_world_layout.ini");

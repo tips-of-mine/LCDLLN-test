@@ -144,6 +144,35 @@ namespace
 		REQUIRE(!SaveSplatBin(src, bytes, err));
 		REQUIRE(!err.empty());
 	}
+
+	/// Test de parité éditeur ↔ client (M100.9). Construit une SplatMap avec
+	/// un pattern non trivial (somme=255 conservée), Save → Load, compare
+	/// byte-exact sur les weights.
+	void Test_Parity_EditorWritesClientReadsIdentical()
+	{
+		auto src = SplatMap::MakeUniform(0u);
+		// Pattern : modifier les 100x100 premières cellules à un mélange dirt/rock.
+		for (uint32_t z = 0; z < 100u; ++z)
+		{
+			for (uint32_t x = 0; x < 100u; ++x)
+			{
+				const size_t base = (z * kSplatResolution + x) * kSplatLayerCount;
+				src.weights[base + 0] = 100u; // dirt
+				src.weights[base + 5] = 155u; // rock
+				// somme cellule = 255, autres layers = 0 (déjà initialisés par MakeUniform → 0).
+			}
+		}
+		REQUIRE(src.IsValid());
+
+		std::vector<uint8_t> bytes;
+		std::string err;
+		REQUIRE(SaveSplatBin(src, bytes, err));
+
+		SplatMap dst;
+		REQUIRE(LoadSplatBin(bytes, dst, err));
+		REQUIRE(std::memcmp(dst.weights.data(), src.weights.data(),
+			src.weights.size()) == 0);
+	}
 }
 
 int main()
@@ -154,10 +183,11 @@ int main()
 	Test_Load_RejectsBadMagic();
 	Test_Load_RejectsSumNot255();
 	Test_LayerPalette_LoadJson();
+	Test_Parity_EditorWritesClientReadsIdentical();
 
 	if (g_failed == 0)
 	{
-		std::printf("[PASS] SplatMapTests (6/6)\n");
+		std::printf("[PASS] SplatMapTests (7/7)\n");
 		return 0;
 	}
 	std::printf("[FAIL] SplatMapTests: %d failure(s)\n", g_failed);

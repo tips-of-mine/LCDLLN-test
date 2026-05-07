@@ -261,6 +261,7 @@ add_library(engine_core
   # editor.world.enabled. Pas référencé par engine/server/.
   engine/editor/world/WorldEditorShell.cpp
   engine/editor/world/CommandStack.cpp
+  engine/editor/world/TerrainDocument.cpp
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp

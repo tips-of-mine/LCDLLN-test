@@ -275,6 +275,7 @@ add_library(engine_core
   engine/editor/world/SplatPaintTool.cpp
   engine/editor/world/SplatRules.cpp
   engine/editor/world/EditorCameraController.cpp
+  engine/editor/world/CollisionPreviewCamera.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
   engine/editor/world/panels/AssetBrowserPanel.cpp

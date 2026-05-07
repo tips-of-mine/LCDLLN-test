@@ -9,6 +9,7 @@
 #include "engine/network/ShardToMasterClient.h"
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
+#include "engine/core/LogConfig.h"
 
 #include <csignal>
 #include <chrono>
@@ -24,12 +25,8 @@ namespace
 int main(int argc, char** argv)
 {
 	engine::core::Config config = engine::core::Config::Load("config.json", argc, argv);
-	engine::core::LogSettings logSettings;
-	logSettings.level = engine::core::LogLevel::Info;
-	logSettings.console = true;
-	logSettings.flushAlways = true;
-	logSettings.filePath = config.GetString("log.file", "shard.log");
-	logSettings.subsystemFiles = config.GetStringMapUnderPrefix("log.subsystem_files");
+	// M45 — Construction centralisée des LogSettings (filtres, fichiers spécialisés, couleurs).
+	engine::core::LogSettings logSettings = engine::core::BuildLogSettingsFromConfig(config, "shard.log");
 	engine::core::Log::Init(logSettings);
 
 	LOG_INFO(Net, "[ShardMain] Shard server starting...");

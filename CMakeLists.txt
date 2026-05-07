@@ -204,6 +204,7 @@ add_library(engine_core
   engine/core/Profiler.cpp
   engine/core/jobs/JobSystem.cpp
   engine/core/Log.cpp
+  engine/core/LogConfig.cpp
   engine/core/Time.cpp
   engine/audio/AudioEngine.cpp
   engine/audio/MaMenuMusic.cpp

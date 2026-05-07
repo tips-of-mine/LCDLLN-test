@@ -34,6 +34,7 @@ if(WIN32)
     LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
+    ${CMAKE_SOURCE_DIR}/engine/core/LogConfig.cpp
     ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/engine/server/RateLimitAndBan.cpp
@@ -61,6 +62,7 @@ elseif(UNIX)
     LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
+    ${CMAKE_SOURCE_DIR}/engine/core/LogConfig.cpp
     ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/engine/net/ChatEmotes.cpp

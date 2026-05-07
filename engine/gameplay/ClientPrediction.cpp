@@ -80,6 +80,9 @@ bool ClientPredictionSystem::Init(const engine::math::Vec3& startPosition)
 	m_smoothTimer     = 0.0f;
 	m_correcting      = false;
 
+	// M100.11 — reset multiplier surface (cohérence avec autres champs mutables).
+	m_surfaceSpeedMultiplier = 1.0f;
+
 	m_initialized = true;
 
 	LOG_INFO(Core,

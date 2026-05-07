@@ -867,3 +867,9 @@ endif()
 
 # M25.1: Load tester (TLS multi-connection) - Windows only (reuses NetClient TLS)
 add_subdirectory(tools/load_tester)
+
+# M100.9: Mini-tool C++ standalone qui génère 8 PNG 4x4 unicolore dans
+# assets/terrain/placeholders/ via custom command POST_BUILD. Sert de fallback
+# visuellement distinct pour le shader 8-layer terrain en attendant les vrais
+# assets PBR. Pas de dépendance zlib externe (deflate stored block).
+add_subdirectory(tools/gen_terrain_placeholders)

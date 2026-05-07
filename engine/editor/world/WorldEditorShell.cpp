@@ -107,10 +107,41 @@ namespace engine::editor::world
 			scene->MutableCamera().SetMode(ParseCameraModeString(lastMode));
 		}
 
+		// M100.6 — Branche l'outil de sculpture sur la pile undo + le doc
+		// terrain partagés. Pas de chargement de chunks ici (lazy via
+		// EnsureLoaded).
+		m_sculptTool.Init(m_commandStack, m_terrainDoc);
+
+		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
+		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
+		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
+		if (m_panels.size() > 5 && m_panels[5])
+		{
+			static_cast<panels::ToolPropertiesPanel*>(m_panels[5].get())->SetShell(this);
+		}
+
 		m_initialized = true;
 		LOG_INFO(EditorWorld, "WorldEditorShell init OK, {} panels, layout='{}', cameraMode='{}'",
 			m_panels.size(), m_layoutPath, lastMode);
 		return true;
+	}
+
+	/// M100.6 — Active un outil et logge la transition. Garde l'API simple :
+	/// pas de notification cross-outils (à compléter si les outils gagnent un
+	/// cycle de vie OnEnter/OnExit).
+	void WorldEditorShell::SetActiveTool(ActiveTool tool)
+	{
+		if (m_activeTool == tool) return;
+		const ActiveTool prev = m_activeTool;
+		m_activeTool = tool;
+		const char* name = "None";
+		switch (tool)
+		{
+			case ActiveTool::None:          name = "None"; break;
+			case ActiveTool::TerrainSculpt: name = "TerrainSculpt"; break;
+		}
+		(void)prev;
+		LOG_INFO(EditorWorld, "Active tool -> {}", name);
 	}
 
 	/// Persiste le layout sur disque puis libère les panneaux. Idempotent.
@@ -391,6 +422,13 @@ namespace engine::editor::world
 			m_commandStack.Redo();
 			LOG_INFO(EditorWorld, "Shortcut Ctrl+Y -> Redo (undoSize={}, redoSize={})",
 				m_commandStack.UndoSize(), m_commandStack.RedoSize());
+			return true;
+		}
+		// M100.6 — Raccourci 'B' (sans modifiers) active la sculpture terrain.
+		// Spec ticket : "Tools → Terrain Sculpt ou raccourci B (brush)".
+		if (!ctrl && !shift && virtualKey == 'B')
+		{
+			SetActiveTool(ActiveTool::TerrainSculpt);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

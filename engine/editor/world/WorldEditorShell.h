@@ -1,6 +1,8 @@
 #pragma once
 #include "engine/editor/world/IPanel.h"
 #include "engine/editor/world/CommandStack.h"
+#include "engine/editor/world/TerrainDocument.h"
+#include "engine/editor/world/TerrainSculptTool.h"
 
 #include <memory>
 #include <string>
@@ -12,6 +14,16 @@ namespace engine::core { class Config; }
 namespace engine::editor::world
 {
 	namespace panels { class ScenePanel; }
+
+	/// Identifiant de l'outil actif dans le shell éditeur monde (M100.6+).
+	/// `None` est l'état initial après `Init`. `TerrainSculpt` est activé
+	/// par le raccourci `B` (M100.6) ; les futurs outils (paint, place…)
+	/// s'ajouteront ici.
+	enum class ActiveTool : uint8_t
+	{
+		None          = 0,
+		TerrainSculpt = 1,
+	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
 	/// fois par processus quand `editor.world.enabled` est vrai (config.json)
@@ -90,6 +102,27 @@ namespace engine::editor::world
 		/// non-const car il appelle Clear/RewindTo).
 		const CommandStack& GetCommandStack() const { return m_commandStack; }
 
+		/// M100.6 — Retourne l'outil actuellement actif (None par défaut).
+		ActiveTool GetActiveTool() const { return m_activeTool; }
+
+		/// M100.6 — Active un outil. La transition est immédiate ; aucun
+		/// autre outil n'est notifié (à compléter quand plusieurs outils
+		/// auront un cycle de vie partagé). Effet de bord : log info.
+		void SetActiveTool(ActiveTool tool);
+
+		/// M100.6 — Accès mutable au document terrain partagé. Les outils
+		/// terrain (sculpt, stamps…) lisent/écrivent les chunks via ce
+		/// document.
+		TerrainDocument& MutableTerrainDocument() { return m_terrainDoc; }
+
+		/// M100.6 — Accès mutable à l'outil de sculpt. Le panneau Tool
+		/// Properties l'utilise pour lire/écrire les paramètres de brosse
+		/// quand `m_activeTool == TerrainSculpt`.
+		TerrainSculptTool& MutableSculptTool() { return m_sculptTool; }
+
+		/// M100.6 — Accès lecture seule à l'outil de sculpt (tests, UI).
+		const TerrainSculptTool& GetSculptTool() const { return m_sculptTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -118,6 +151,9 @@ namespace engine::editor::world
 
 		std::vector<std::unique_ptr<IPanel>> m_panels;
 		CommandStack m_commandStack;
+		TerrainDocument m_terrainDoc;
+		TerrainSculptTool m_sculptTool;
+		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;
 		bool m_initialized = false;

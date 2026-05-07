@@ -6,6 +6,8 @@
 #include <string>
 #include <string_view>
 
+namespace engine::world::terrain { struct TerrainChunk; }
+
 namespace tools::zone_builder
 {
 	/// Writes chunk package (M10.5): chunk.meta + geo.pak, tex.pak, instances.bin, navmesh.bin, probes.bin.
@@ -25,4 +27,13 @@ namespace tools::zone_builder
 	/// \param outError Receives a human-readable error on failure.
 	/// \return true on success.
 	bool WriteChunkedZoneOutputs(std::string_view outputRootDir, const engine::core::Config& config, const LayoutDocument& layout, std::string& outError);
+
+	/// Écrit `terrain.bin` (M100.5) dans le dossier du chunk
+	/// `<outputRootDir>/chunks/chunk_<i>_<j>/`. Crée le dossier au besoin.
+	/// Le contenu est sérialisé via `engine::world::terrain::SaveTerrainBin`
+	/// (header `TRRN` + xxhash64). Format identique à celui que l'éditeur
+	/// produit en runtime (parité éditeur ↔ client).
+	/// \return true si OK ; sinon `outError` est renseigné.
+	bool WriteTerrainChunk(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::terrain::TerrainChunk& chunk, std::string& outError);
 }

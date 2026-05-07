@@ -116,6 +116,9 @@ namespace engine::editor::world::panels
 			return out;
 		}
 
+		/// Dispatcher : retourne les arêtes du mesh test sélectionné dans le
+		/// dropdown du panel. index : 0=Cube, 1=Cylinder, 2=Sphere, 3=Slab.
+		/// Fallback Cube pour index hors range.
 		std::vector<Edge3D> GetTestMeshEdges(int index)
 		{
 			switch (index)

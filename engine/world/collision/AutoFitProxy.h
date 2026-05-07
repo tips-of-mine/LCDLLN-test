@@ -6,9 +6,10 @@
 
 namespace engine::world::collision
 {
-	/// Choisit automatiquement un proxy à partir d'un mesh CPU (M100.12) :
-	///  - Capsule si height/widthMax > 3 (mesh très vertical, ex. tronc d'arbre)
+	/// Choisit automatiquement un proxy à partir d'un mesh CPU (M100.12).
+	/// Ordre de dispatch (priorité haute en premier) :
 	///  - TriMesh si vertices.size() > 500 OU mesh.isStatic == true
+	///  - Capsule si height/widthMax > 3 (mesh très vertical, ex. tronc d'arbre)
 	///  - ConvexHull (= bounding box 8 vertices) sinon
 	///
 	/// Note : ConvexHull est un placeholder bounding box. Un vrai quickhull

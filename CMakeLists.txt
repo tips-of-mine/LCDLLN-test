@@ -369,6 +369,7 @@ add_library(engine_core
   engine/world/surface/SurfaceTable.cpp
   engine/world/surface/SurfaceQueryService.cpp
   engine/world/collision/CollisionProxy.cpp
+  engine/world/collision/AutoFitProxy.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -954,6 +955,17 @@ if(WIN32)
     target_compile_options(collision_proxy_roundtrip_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME collision_proxy_roundtrip_tests COMMAND collision_proxy_roundtrip_tests)
+endif()
+
+# M100.12 — Tests AutoFit dispatch heuristique.
+if(WIN32)
+  add_executable(auto_fit_proxy_tests engine/world/collision/tests/AutoFitProxyTests.cpp)
+  target_include_directories(auto_fit_proxy_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(auto_fit_proxy_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(auto_fit_proxy_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME auto_fit_proxy_tests COMMAND auto_fit_proxy_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

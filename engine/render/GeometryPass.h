@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <unordered_map>
 
 namespace engine::render
@@ -69,6 +70,29 @@ namespace engine::render
 		            uint32_t materialIndex = 0,
 		            bool loadExistingGbuffer = false);
 
+		/// Ouvre le render pass `m_renderPassLoad` (loadOp=LOAD) sur la framebuffer
+		/// GBuffer + depth, configure viewport/scissor, invoque `recordCallback`
+		/// pour émettre les drawcalls additionnels (ex. drawcalls terrain chunk
+		/// du `TerrainChunkRenderer` — M100 Task 12), puis ferme le render pass.
+		///
+		/// Usage typique : appelé juste après `Record` ou `RecordIndirect` dans la
+		/// même passe FrameGraph "Geometry" pour superposer des drawcalls
+		/// supplémentaires sur le GBuffer sans le clearer.
+		///
+		/// \param recordCallback Lambda qui reçoit le `VkCommandBuffer` après
+		///        `vkCmdBeginRenderPass` ; doit émettre uniquement des drawcalls
+		///        compatibles (mêmes attachments / format).
+		///
+		/// Effet de bord : peut allouer une `VkFramebuffer` dans la cache si la
+		/// clé n'est pas déjà présente ; aucune autre allocation persistante.
+		///
+		/// Pré-condition : `m_renderPassLoad` doit être valide (`HasLoadPass()`
+		/// renvoie true) ; sinon l'appel est no-op (warning loggué une fois).
+		void RecordTerrainChunkBatch(VkDevice device, VkCommandBuffer cmd, Registry& registry,
+			VkExtent2D extent,
+			ResourceId idA, ResourceId idB, ResourceId idC, ResourceId idVelocity, ResourceId idDepth,
+			const std::function<void(VkCommandBuffer)>& recordCallback);
+
 		/// Releases render pass and pipeline. Safe to call when not initialized.
 		void Destroy(VkDevice device);
 
@@ -82,6 +106,16 @@ namespace engine::render
 
 		/// Returns true if this pass was initialised with a material descriptor set layout.
 		bool HasMaterialLayout() const { return m_hasMaterialLayout; }
+
+		/// Render pass principal de la geometry (4 color + depth, loadOp=CLEAR).
+		/// Exposé pour permettre à `TerrainChunkRenderer` (M100 — Task 12) de
+		/// créer son pipeline graphique compatible avec ce render pass.
+		VkRenderPass GetRenderPass() const { return m_renderPass; }
+
+		/// Render pass load variant (loadOp=LOAD), idéal pour des passes secondaires
+		/// qui contribuent au GBuffer après la geometry principale (ex. terrain
+		/// chunk runtime M100). Peut être VK_NULL_HANDLE si la création a échoué.
+		VkRenderPass GetRenderPassLoad() const { return m_renderPassLoad; }
 
 	private:
 		struct FramebufferKey

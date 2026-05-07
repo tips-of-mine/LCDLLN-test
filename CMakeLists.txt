@@ -282,6 +282,7 @@ add_library(engine_core
   engine/editor/world/panels/ConsolePanel.cpp
   engine/editor/world/panels/ToolPropertiesPanel.cpp
   engine/editor/world/panels/HistoryPanel.cpp
+  engine/editor/world/panels/SurfaceTablePanel.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp

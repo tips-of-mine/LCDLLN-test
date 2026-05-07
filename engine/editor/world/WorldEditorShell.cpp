@@ -8,6 +8,7 @@
 #include "engine/editor/world/panels/ConsolePanel.h"
 #include "engine/editor/world/panels/ToolPropertiesPanel.h"
 #include "engine/editor/world/panels/HistoryPanel.h"
+#include "engine/editor/world/panels/SurfaceTablePanel.h"
 
 #include "engine/core/Config.h"
 #include "engine/core/Log.h"
@@ -79,6 +80,12 @@ namespace engine::editor::world
 		// devient : [Scene=0, Inspector=1, AssetBrowser=2, Outliner=3,
 		//            Console=4, ToolProperties=5, History=6].
 		m_panels.emplace_back(std::make_unique<panels::HistoryPanel>(&m_commandStack));
+		// M100.11 — Panel lecture seule de la table de surfaces. Caché par
+		// défaut, toggle via View > Surface Table.
+		auto surfacePanel = std::make_unique<panels::SurfaceTablePanel>();
+		surfacePanel->LoadFromContentRoot(
+			std::filesystem::path(cfg.GetString("paths.content", "game/data")));
+		m_panels.emplace_back(std::move(surfacePanel));
 
 #if defined(_WIN32)
 		std::error_code ec;

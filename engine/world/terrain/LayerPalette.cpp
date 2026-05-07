@@ -2,6 +2,7 @@
 
 #include "engine/world/surface/SurfaceType.h"
 
+#include <cassert>
 #include <fstream>
 #include <sstream>
 
@@ -113,6 +114,7 @@ namespace engine::world::terrain
 	engine::world::surface::SurfaceType
 	LayerPalette::GetSurfaceTypeForLayer(uint8_t layer) const noexcept
 	{
-		return layers[layer].surfaceType;  // précondition layer < 8 documentée
+		assert(layer < 8u);
+		return layers[layer].surfaceType;
 	}
 }

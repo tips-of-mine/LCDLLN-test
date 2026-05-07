@@ -370,6 +370,7 @@ add_library(engine_core
   engine/world/surface/SurfaceQueryService.cpp
   engine/world/collision/CollisionProxy.cpp
   engine/world/collision/AutoFitProxy.cpp
+  engine/world/collision/ProxyWireframe.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -966,6 +967,17 @@ if(WIN32)
     target_compile_options(auto_fit_proxy_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME auto_fit_proxy_tests COMMAND auto_fit_proxy_tests)
+endif()
+
+# M100.12 — Tests ProxyWireframe edge generator.
+if(WIN32)
+  add_executable(proxy_wireframe_tests engine/world/collision/tests/ProxyWireframeTests.cpp)
+  target_include_directories(proxy_wireframe_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(proxy_wireframe_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(proxy_wireframe_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME proxy_wireframe_tests COMMAND proxy_wireframe_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

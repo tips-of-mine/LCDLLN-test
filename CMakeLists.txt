@@ -337,6 +337,7 @@ add_library(engine_core
   engine/render/GeometryPass.cpp
   engine/render/TerrainChunkPipeline.cpp
   engine/render/terrain_chunk/ChunkRuntime.cpp
+  engine/render/terrain_chunk/SplatMapGpuCache.cpp
   engine/render/terrain_chunk/TerrainMeshGpuCache.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp
@@ -767,6 +768,19 @@ if(WIN32)
     target_compile_options(terrain_mesh_gpu_cache_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME terrain_mesh_gpu_cache_tests COMMAND terrain_mesh_gpu_cache_tests)
+endif()
+
+# Terrain Chunk Runtime — Tests unitaires pour SplatMapGpuCache (mock
+# allocator). Vérifie 2 VkImage par chunk (layers 0..3 + 4..7), cache
+# hit, eviction.
+if(WIN32)
+  add_executable(splat_map_gpu_cache_tests engine/render/terrain_chunk/tests/SplatMapGpuCacheTests.cpp)
+  target_include_directories(splat_map_gpu_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(splat_map_gpu_cache_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(splat_map_gpu_cache_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME splat_map_gpu_cache_tests COMMAND splat_map_gpu_cache_tests)
 endif()
 
 # M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.

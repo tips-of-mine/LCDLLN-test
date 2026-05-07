@@ -262,6 +262,10 @@ add_library(engine_core
   engine/editor/world/WorldEditorShell.cpp
   engine/editor/world/CommandStack.cpp
   engine/editor/world/TerrainDocument.cpp
+  engine/editor/world/TerrainBrush.cpp
+  engine/editor/world/TerrainRaycast.cpp
+  engine/editor/world/TerrainSculptCommand.cpp
+  engine/editor/world/TerrainSculptTool.cpp
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
@@ -752,6 +756,21 @@ if(WIN32)
     target_compile_options(editor_camera_controller_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME editor_camera_controller_tests COMMAND editor_camera_controller_tests)
+endif()
+
+# M100.6 — Tests unitaires CPU pour la sculpture de terrain.
+# Couvre le kernel de brosse (Raise/Lower/Smooth/Flatten/Noise), le merge des
+# commandes par mergeKey de stroke, et un sanity-check de la couture
+# inter-chunks. Pure CPU (pas d'ImGui ni Vulkan), gating WIN32 pour cohérence
+# avec les autres tests éditeur monde.
+if(WIN32)
+  add_executable(terrain_sculpt_tests engine/editor/world/tests/TerrainSculptTests.cpp)
+  target_include_directories(terrain_sculpt_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_sculpt_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_sculpt_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_sculpt_tests COMMAND terrain_sculpt_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

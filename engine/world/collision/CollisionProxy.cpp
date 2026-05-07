@@ -201,7 +201,7 @@ namespace engine::world::collision
 				}
 				uint32_t vertCount = 0;
 				std::memcpy(&vertCount, p, 4); p += 4;
-				if (static_cast<size_t>(end - p) < vertCount * 12u)
+				if (static_cast<size_t>(end - p) < static_cast<size_t>(vertCount) * 12u)
 				{
 					outError = "CollisionProxy: hull vertices truncated";
 					return false;
@@ -227,7 +227,8 @@ namespace engine::world::collision
 				std::memcpy(&vertCount, p,     4);
 				std::memcpy(&idxCount,  p + 4, 4);
 				p += 8;
-				if (static_cast<size_t>(end - p) < vertCount * 12u + idxCount * 4u)
+				if (static_cast<size_t>(end - p) < static_cast<size_t>(vertCount) * 12u
+				                                  + static_cast<size_t>(idxCount) * 4u)
 				{
 					outError = "CollisionProxy: trimesh payload truncated";
 					return false;

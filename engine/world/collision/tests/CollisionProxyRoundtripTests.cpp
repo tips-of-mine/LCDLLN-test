@@ -142,7 +142,7 @@ namespace
 		std::vector<uint8_t> bytes(static_cast<size_t>(size));
 		in.read(reinterpret_cast<char*>(bytes.data()), size);
 		in.close();
-		bytes[32] ^= 0xFFu;  // flip un byte du payload (offset 24+8 = within capsuleA.x)
+		bytes[32] ^= 0xFFu;  // flip 1 byte du payload (offset 24+4 proxyType +4 capsuleA.x = 32)
 
 		std::ofstream out(path, std::ios::binary | std::ios::trunc);
 		out.write(reinterpret_cast<const char*>(bytes.data()), size);

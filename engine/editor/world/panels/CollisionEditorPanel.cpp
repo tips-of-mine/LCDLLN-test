@@ -206,7 +206,7 @@ namespace engine::editor::world::panels
 			ImGui::Button("Re-run AutoFit");
 			ImGui::EndDisabled();
 			if (ImGui::IsItemHovered())
-				ImGui::SetTooltip("Requires mesh CPU data — wired with mesh import (out-of-scope M100.12)");
+				ImGui::SetTooltip("Requires mesh CPU data — wired with mesh import (M100.34 ou follow-up)");
 		}
 		else // TriMesh
 		{

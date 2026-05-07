@@ -908,6 +908,17 @@ if(WIN32)
   add_test(NAME surface_table_tests COMMAND surface_table_tests)
 endif()
 
+# M100.11 — Tests LayerPalette migration string→SurfaceType enum.
+if(WIN32)
+  add_executable(layer_palette_surface_type_tests engine/world/terrain/tests/LayerPaletteSurfaceTypeTests.cpp)
+  target_include_directories(layer_palette_surface_type_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(layer_palette_surface_type_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(layer_palette_surface_type_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME layer_palette_surface_type_tests COMMAND layer_palette_surface_type_tests)
+endif()
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
   add_executable(client_flow_app engine/network/ClientFlowMain.cpp)

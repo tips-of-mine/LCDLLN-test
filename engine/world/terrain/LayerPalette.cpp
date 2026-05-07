@@ -1,5 +1,7 @@
 #include "engine/world/terrain/LayerPalette.h"
 
+#include "engine/world/surface/SurfaceType.h"
+
 #include <fstream>
 #include <sstream>
 
@@ -95,10 +97,22 @@ namespace engine::world::terrain
 			e.normalPath   = ExtractStringField(obj, "normal");
 			e.armPath      = ExtractStringField(obj, "arm");
 			e.tilingMeters = ExtractFloatField(obj, "tilingMeters", 4.0f);
-			e.surfaceType  = ExtractStringField(obj, "surfaceType", "Dirt");
+			e.surfaceTypeName = ExtractStringField(obj, "surfaceType", "Dirt");
+			if (!engine::world::surface::ParseSurfaceType(e.surfaceTypeName, e.surfaceType))
+			{
+				e.surfaceType = engine::world::surface::SurfaceType::Dirt;
+				// Pas de LOG_WARN ici : pour les fixtures de test on tolère, le warn
+				// serait noise. Le caller (Engine::Init) peut logguer s'il veut.
+			}
 
 			cursor = objEnd + 1;
 		}
 		return true;
+	}
+
+	engine::world::surface::SurfaceType
+	LayerPalette::GetSurfaceTypeForLayer(uint8_t layer) const noexcept
+	{
+		return layers[layer].surfaceType;  // précondition layer < 8 documentée
 	}
 }

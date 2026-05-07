@@ -12,6 +12,7 @@
 
 #include "engine/world/terrain/LayerPalette.h"
 #include "engine/world/terrain/SplatMap.h"
+#include "engine/world/surface/SurfaceType.h"
 
 #include <cstdio>
 #include <cstring>
@@ -126,7 +127,7 @@ namespace
 		REQUIRE(palette.layers[0].name == "dirt");
 		REQUIRE(palette.layers[7].name == "lava_cooled");
 		REQUIRE(palette.layers[1].tilingMeters > 0.0f);
-		REQUIRE(palette.layers[5].surfaceType == "Rock");
+		REQUIRE(palette.layers[5].surfaceType == engine::world::surface::SurfaceType::Rock);
 	}
 
 	/// Cellule avec somme != 255 → SaveSplatBin échoue (validate avant écriture)

@@ -8,6 +8,7 @@ namespace engine::world
 		{
 		case ChunkSegment::Geo:       return "geo.pak";
 		case ChunkSegment::Terrain:   return "terrain.bin";
+		case ChunkSegment::Splat:     return "splat.bin";
 		case ChunkSegment::Tex:       return "tex.pak";
 		case ChunkSegment::Instances: return "instances.bin";
 		case ChunkSegment::Nav:       return "navmesh.bin";
@@ -21,6 +22,7 @@ namespace engine::world
 		return {{
 			ChunkSegment::Geo,
 			ChunkSegment::Terrain,
+			ChunkSegment::Splat,
 			ChunkSegment::Tex,
 			ChunkSegment::Instances,
 			ChunkSegment::Nav,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -11,6 +12,8 @@ namespace engine::core { class Config; }
 
 namespace engine::world
 {
+	namespace terrain { struct TerrainChunk; }
+
 	/// LRU cache for decompressed blobs keyed by asset/chunk file path (M10.3).
 	/// Capacity 1–4 GB configurable via config; hit avoids re-IO when re-entering a zone.
 	class StreamCache
@@ -43,6 +46,16 @@ namespace engine::world
 
 		/// Clears the whole cache, used by client zone preload when switching to another zone.
 		void Clear();
+
+		/// Charge le `terrain.bin` du chunk `(chunkX, chunkZ)` (M100.5). Tente le
+		/// cache d'abord (clé `chunks/chunk_<i>_<j>/terrain.bin`) ; sur miss, lit
+		/// le fichier `<paths.content>/chunks/chunk_<i>_<j>/terrain.bin` et
+		/// l'insère dans le cache pour les futures lectures.
+		/// \param config Source de la clé `paths.content` (défaut "game/data").
+		/// \return shared_ptr<TerrainChunk> partagé, ou nullptr si le fichier
+		/// est absent ou si la désérialisation a échoué (log d'erreur émis).
+		std::shared_ptr<engine::world::terrain::TerrainChunk> LoadTerrainChunk(
+			const engine::core::Config& config, int chunkX, int chunkZ);
 
 	private:
 		struct Entry

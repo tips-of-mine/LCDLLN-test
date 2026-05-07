@@ -85,6 +85,13 @@ namespace engine::render::terrain_chunk
 		ChunkResidency GetResidency(ChunkSlotId slot) const;
 		engine::world::ChunkRing GetRingForSlot(ChunkSlotId slot) const;
 
+		/// Retourne le coord associé au slot. Utilisé par
+		/// `TerrainChunkRenderer::Tick` pour libérer les entrées des caches
+		/// concrets (mesh, splat) au moment de l'éviction. Retourne `{0,0}`
+		/// si le slot n'existe pas (caller doit avoir vérifié au préalable
+		/// que le slot vient de `CollectEvictionsForBudget`).
+		engine::world::GlobalChunkCoord GetCoordForSlot(ChunkSlotId slot) const;
+
 	private:
 		struct Slot
 		{

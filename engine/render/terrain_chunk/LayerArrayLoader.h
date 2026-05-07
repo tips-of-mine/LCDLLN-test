@@ -102,6 +102,12 @@ namespace engine::render::terrain_chunk
 
 		const LayerArrayResources& GetResources() const { return m_res; }
 
+		/// Accesseur mutable réservé à `TerrainChunkRenderer` (Task 11) qui
+		/// remplit les 6 handles + 2 samplers après que le loader skeleton a
+		/// été initialisé. Ne pas utiliser depuis du code applicatif —
+		/// préférer `Init` quand l'impl complète sera consolidée ici.
+		LayerArrayResources& GetResourcesMutable() { return m_res; }
+
 	private:
 		IGpuImageArrayAllocator* m_alloc = nullptr;
 		LayerArrayResources m_res;

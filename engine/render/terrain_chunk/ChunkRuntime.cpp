@@ -114,4 +114,10 @@ namespace engine::render::terrain_chunk
 		auto it = m_slots.find(slot);
 		return (it == m_slots.end()) ? engine::world::ChunkRing::Far : it->second.ring;
 	}
+
+	engine::world::GlobalChunkCoord ChunkRuntime::GetCoordForSlot(ChunkSlotId slot) const
+	{
+		auto it = m_slots.find(slot);
+		return (it == m_slots.end()) ? engine::world::GlobalChunkCoord{0, 0} : it->second.coord;
+	}
 }

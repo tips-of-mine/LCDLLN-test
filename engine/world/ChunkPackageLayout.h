@@ -8,10 +8,13 @@
 
 namespace engine::world
 {
-	/// Chunk package segment types for progressive loading (M10.5). Load order: Geo first, then Tex, then Instances, Nav, Probes.
+	/// Chunk package segment types for progressive loading (M10.5, M100.5).
+	/// Load order: Geo first, then Terrain (heightmap LOD0, M100.5),
+	/// then Tex, Instances, Nav, Probes.
 	enum class ChunkSegment : uint8_t
 	{
 		Geo,       /// geo.pak — geometry/HLOD
+		Terrain,   /// terrain.bin — heightmap LOD0 (M100.5)
 		Tex,       /// tex.pak — textures
 		Instances, /// instances.bin
 		Nav,       /// navmesh.bin
@@ -19,7 +22,7 @@ namespace engine::world
 	};
 
 	/// Number of segment types.
-	constexpr uint32_t kChunkSegmentCount = 5u;
+	constexpr uint32_t kChunkSegmentCount = 6u;
 
 	/// Returns the relative filename for the segment (e.g. "geo.pak", "instances.bin").
 	std::string_view GetChunkSegmentFilename(ChunkSegment segment);
@@ -44,4 +47,6 @@ namespace engine::world
 	constexpr uint32_t kChunkMetaHasInstances = 1u << 2;
 	constexpr uint32_t kChunkMetaHasNav = 1u << 3;
 	constexpr uint32_t kChunkMetaHasProbes = 1u << 4;
+	/// Présence de `terrain.bin` (heightmap LOD0, M100.5).
+	constexpr uint32_t kChunkMetaHasTerrain = 1u << 5;
 }

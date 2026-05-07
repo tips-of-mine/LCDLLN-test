@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/world/terrain/TerrainChunk.h"
+#include "engine/world/terrain/TerrainLodChain.h"
 
 #include <cstdint>
 #include <vector>
@@ -33,4 +34,12 @@ namespace engine::world::terrain
 	/// finies sur les voisins immédiats).
 	/// \return mesh prêt à upload GPU.
 	TerrainMeshCpu BuildLod0Mesh(const TerrainChunk& chunk);
+
+	/// Construit un mesh CPU pour un niveau de LOD réduit (M100.8). Identique
+	/// à `BuildLod0Mesh` au niveau de la grille principale, plus une "jupe"
+	/// géométrique optionnelle (vertices dupliqués 2 m sous le bord du chunk +
+	/// triangles de couture) pour masquer les T-junctions entre chunks de LOD
+	/// différent.
+	/// \param withSkirt true pour ajouter la skirt (recommandé runtime).
+	TerrainMeshCpu BuildLodMesh(const TerrainLod& lod, bool withSkirt);
 }

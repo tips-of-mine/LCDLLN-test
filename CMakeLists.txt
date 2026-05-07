@@ -348,6 +348,7 @@ add_library(engine_core
   engine/world/terrain/TerrainChunk.cpp
   engine/world/terrain/TerrainChunkLoader.cpp
   engine/world/terrain/TerrainLodChain.cpp
+  engine/world/terrain/TerrainLodWorker.cpp
   engine/world/terrain/TerrainMeshBuilder.cpp
   engine/render/vk/DeferredDestroyQueue.cpp
   engine/render/GpuUploadQueue.cpp

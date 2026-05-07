@@ -87,23 +87,24 @@ namespace engine::editor::world
 		const float dz = worldPos.z - ez;
 
 		const float vx = dx * rx + dz * rz;       // right (no y component)
-		const float vyy = dx * ux + dy * uy + dz * uz;
+		const float vy = dx * ux + dy * uy + dz * uz;  // up
 		const float vz = dx * fx + dy * fy + dz * fz;  // forward
 
-		if (vz <= kNearZ) return false;  // behind or too close to near plane
+		// Early exit si point hors de la bande [near, far] : ne pas écrire
+		// les out-params pour un point invisible.
+		if (vz <= kNearZ || vz >= kFarZ) return false;
 
 		// Perspective : x'/z' * cot(fov/2) / aspect, y'/z' * cot(fov/2)
 		const float aspect = (viewportH > 0.0f) ? (viewportW / viewportH) : 1.0f;
 		const float t = 1.0f / std::tan(kFovYRad * 0.5f);
 		const float ndcX = (vx * t / aspect) / vz;
-		const float ndcY = (vyy * t) / vz;
+		const float ndcY = (vy * t) / vz;
 
 		// NDC [-1, 1] → pixel space top-left origin
 		outScreenX = (ndcX * 0.5f + 0.5f) * viewportW;
 		outScreenY = (1.0f - (ndcY * 0.5f + 0.5f)) * viewportH;
 
 		return outScreenX >= 0.0f && outScreenX <= viewportW
-		    && outScreenY >= 0.0f && outScreenY <= viewportH
-		    && vz < kFarZ;
+		    && outScreenY >= 0.0f && outScreenY <= viewportH;
 	}
 }

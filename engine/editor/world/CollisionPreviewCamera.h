@@ -29,9 +29,11 @@ namespace engine::editor::world
 			float viewportW, float viewportH,
 			float& outScreenX, float& outScreenY) const;
 
-		// Accesseurs lecture seule pour HUD du panel.
+		/// Yaw courant converti en degrés (pour affichage HUD du panel).
 		float GetYawDegrees() const noexcept;
+		/// Pitch courant converti en degrés (pour affichage HUD du panel).
 		float GetPitchDegrees() const noexcept;
+		/// Distance caméra-origine en mètres (pour affichage HUD du panel).
 		float GetDistance() const noexcept { return m_distance; }
 
 	private:

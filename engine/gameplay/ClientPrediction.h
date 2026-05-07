@@ -187,6 +187,16 @@ namespace engine::gameplay
 		/// Number of unacknowledged InputCommands currently in the buffer.
 		size_t GetBufferSize() const { return m_tickHistory.size(); }
 
+		/// Multiplier appliqué aux walkSpeed/runSpeed effectifs (M100.11).
+		/// Clampé à [0.1, 5.0]. Default = 1.0 (no-op).
+		/// Set par le caller (futur Engine.cpp) après chaque
+		/// `SurfaceQueryService::Query(playerPos)`. Découplé : pas de
+		/// dépendance à world/surface ici.
+		void SetSurfaceSpeedMultiplier(float m) noexcept;
+
+		/// Read-only accessor pour test/debug. Renvoie la valeur courante (clampée).
+		float GetSurfaceSpeedMultiplier() const noexcept { return m_surfaceSpeedMultiplier; }
+
 	private:
 		/// Per-tick record stored in the unacknowledged history buffer.
 		/// Combines the command that drove the tick with the resulting state (M30.2).
@@ -222,6 +232,9 @@ namespace engine::gameplay
 		engine::math::Vec3 m_smoothTarget{};      ///< Target of the current correction lerp.
 		float              m_smoothTimer    = 0.0f;
 		bool               m_correcting     = false;
+
+		/// M100.11 — Multiplier surface (1.0 = neutre).
+		float m_surfaceSpeedMultiplier = 1.0f;
 	};
 
 } // namespace engine::gameplay

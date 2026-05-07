@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <string>
 
+#include "engine/world/surface/SurfaceType.h"
+
 namespace engine::world::terrain
 {
 	/// Une entrée de la `LayerPalette` (M100.9). 8 layers, indexées 0..7.
@@ -19,7 +21,9 @@ namespace engine::world::terrain
 		std::string normalPath;
 		std::string armPath;
 		float tilingMeters = 4.0f;
-		std::string surfaceType; // "Dirt", "Grass", "Rock", etc.
+		std::string surfaceTypeName;                                  // string brute du JSON, conservée pour debug
+		engine::world::surface::SurfaceType surfaceType =
+		    engine::world::surface::SurfaceType::Dirt;                // enum canonique parsée
 	};
 
 	/// Palette des 8 layers terrain. Lue depuis
@@ -29,6 +33,10 @@ namespace engine::world::terrain
 	{
 		uint32_t version = 1u;
 		std::array<LayerEntry, 8> layers;
+
+		/// Précondition : layer < 8. Retourne l'enum canonique de la layer.
+		/// (Layer index hors range : comportement non spécifié — debug-assert.)
+		engine::world::surface::SurfaceType GetSurfaceTypeForLayer(uint8_t layer) const noexcept;
 	};
 
 	/// Charge `path` (JSON) dans `outPalette`. Format :

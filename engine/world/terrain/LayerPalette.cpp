@@ -1,5 +1,9 @@
 #include "engine/world/terrain/LayerPalette.h"
 
+#include "engine/core/Log.h"
+#include "engine/world/surface/SurfaceType.h"
+
+#include <cassert>
 #include <fstream>
 #include <sstream>
 
@@ -95,10 +99,23 @@ namespace engine::world::terrain
 			e.normalPath   = ExtractStringField(obj, "normal");
 			e.armPath      = ExtractStringField(obj, "arm");
 			e.tilingMeters = ExtractFloatField(obj, "tilingMeters", 4.0f);
-			e.surfaceType  = ExtractStringField(obj, "surfaceType", "Dirt");
+			e.surfaceTypeName = ExtractStringField(obj, "surfaceType", "Dirt");
+			if (!engine::world::surface::ParseSurfaceType(e.surfaceTypeName, e.surfaceType))
+			{
+				e.surfaceType = engine::world::surface::SurfaceType::Dirt;
+				LOG_WARN(World, "[LayerPalette] surfaceType inconnu '{}' layer {} → fallback Dirt",
+					e.surfaceTypeName, i);
+			}
 
 			cursor = objEnd + 1;
 		}
 		return true;
+	}
+
+	engine::world::surface::SurfaceType
+	LayerPalette::GetSurfaceTypeForLayer(uint8_t layer) const noexcept
+	{
+		assert(layer < 8u);
+		return layers[layer].surfaceType;
 	}
 }

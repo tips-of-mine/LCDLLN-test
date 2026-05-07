@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "surfaces": [
+    { "type": "Dirt",         "baseSpeed": 1.00, "audioStep": "step_dirt",          "visualTag": "dust_sprint" },
+    { "type": "Grass",        "baseSpeed": 0.95, "audioStep": "step_grass",         "visualTag": "grass_bend" },
+    { "type": "Mud",          "baseSpeed": 0.55, "audioStep": "step_mud_squelch",   "visualTag": "splash_mud" },
+    { "type": "Sand",         "baseSpeed": 0.70, "audioStep": "step_sand",          "visualTag": "footprint_decal_fade" },
+    { "type": "Rock",         "baseSpeed": 1.05, "audioStep": "step_rock",          "visualTag": "" },
+    { "type": "Snow",         "baseSpeed": 0.50, "audioStep": "step_snow_crunch",   "visualTag": "footprint_decal_persistent" },
+    { "type": "ShallowWater", "baseSpeed": 0.40, "audioStep": "step_water",         "visualTag": "splash_water" },
+    { "type": "DeepWater",    "baseSpeed": 0.25, "audioStep": "swim_stroke",        "visualTag": "swim_mode" },
+    { "type": "LavaCooled",   "baseSpeed": 0.85, "audioStep": "step_rock",          "visualTag": "heat_emission" },
+    { "type": "WheatField",   "baseSpeed": 0.85, "audioStep": "step_wheat_rustle",  "visualTag": "wheat_part" },
+    { "type": "CornField",    "baseSpeed": 0.80, "audioStep": "step_corn_rustle",   "visualTag": "corn_part" },
+    { "type": "Road",         "baseSpeed": 1.10, "audioStep": "step_gravel",        "visualTag": "" },
+    { "type": "Bridge",       "baseSpeed": 1.10, "audioStep": "step_wood",          "visualTag": "" }
+  ]
+}

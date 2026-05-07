@@ -282,6 +282,7 @@ add_library(engine_core
   engine/editor/world/panels/ConsolePanel.cpp
   engine/editor/world/panels/ToolPropertiesPanel.cpp
   engine/editor/world/panels/HistoryPanel.cpp
+  engine/editor/world/panels/SurfaceTablePanel.cpp
   engine/Engine.cpp
   engine/platform/FileSystem.cpp
   engine/platform/FileWatcher.cpp
@@ -364,6 +365,9 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/surface/SurfaceType.cpp
+  engine/world/surface/SurfaceTable.cpp
+  engine/world/surface/SurfaceQueryService.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -882,6 +886,62 @@ if(WIN32)
     target_compile_options(splat_paint_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME splat_paint_tests COMMAND splat_paint_tests)
+endif()
+
+# M100.11 — Tests SurfaceType enum + helpers (Phase 3b.1).
+if(WIN32)
+  add_executable(surface_type_tests engine/world/surface/tests/SurfaceTypeTests.cpp)
+  target_include_directories(surface_type_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(surface_type_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(surface_type_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME surface_type_tests COMMAND surface_type_tests)
+endif()
+
+# M100.11 — Tests SurfaceTable JSON loader.
+if(WIN32)
+  add_executable(surface_table_tests engine/world/surface/tests/SurfaceTableTests.cpp)
+  target_include_directories(surface_table_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(surface_table_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(surface_table_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME surface_table_tests COMMAND surface_table_tests)
+endif()
+
+# M100.11 — Tests LayerPalette migration string→SurfaceType enum.
+if(WIN32)
+  add_executable(layer_palette_surface_type_tests engine/world/terrain/tests/LayerPaletteSurfaceTypeTests.cpp)
+  target_include_directories(layer_palette_surface_type_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(layer_palette_surface_type_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(layer_palette_surface_type_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME layer_palette_surface_type_tests COMMAND layer_palette_surface_type_tests)
+endif()
+
+# M100.11 — Tests SurfaceQueryService (mock cache via Insert).
+if(WIN32)
+  add_executable(surface_query_service_tests engine/world/surface/tests/SurfaceQueryServiceTests.cpp)
+  target_include_directories(surface_query_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(surface_query_service_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(surface_query_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME surface_query_service_tests COMMAND surface_query_service_tests)
+endif()
+
+# M100.11 — Tests ClientPredictionSystem.SetSurfaceSpeedMultiplier.
+if(WIN32)
+  add_executable(client_prediction_surface_multiplier_tests
+    engine/gameplay/tests/ClientPredictionSurfaceMultiplierTests.cpp)
+  target_include_directories(client_prediction_surface_multiplier_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(client_prediction_surface_multiplier_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(client_prediction_surface_multiplier_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME client_prediction_surface_multiplier_tests COMMAND client_prediction_surface_multiplier_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

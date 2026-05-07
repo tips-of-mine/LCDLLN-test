@@ -34,7 +34,7 @@ obligatoires.
 | M100.8  | Terrain LOD Regeneration | 2 — Terrain | M100.5 | Done (CI pending) |
 | M100.9  | Splat Map System | 3 — Splat / Surfaces / Collision | M100.5 | Done (CI pending — drawcall livré par PR Terrain Chunk Runtime) |
 | M100.10 | Splat Painting Brushes | 3 — Splat / Surfaces / Collision | M100.2, M100.9 | Done (CI pending) |
-| M100.11 | Surface Material System & SurfaceQuery (client) | 3 — Splat / Surfaces / Collision | M100.9 | Ready |
+| M100.11 | Surface Material System & SurfaceQuery (client) | 3 — Splat / Surfaces / Collision | M100.9 | Done (CI pending) |
 | M100.12 | Collision Proxy System | 3 — Splat / Surfaces / Collision | M100.1 | Ready |
 | M100.13 | Water Surfaces (Lakes & Rivers) | 4 — Hydrologie & Hazards | M100.5, M100.6 | Ready |
 | M100.14 | Water Render Pass | 4 — Hydrologie & Hazards | M100.13 | Ready |

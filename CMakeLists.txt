@@ -271,6 +271,9 @@ add_library(engine_core
   engine/editor/world/TerrainStampTool.cpp
   engine/editor/world/StampLibrary.cpp
   engine/editor/world/ProceduralStampGenerators.cpp
+  engine/editor/world/SplatPaintCommand.cpp
+  engine/editor/world/SplatPaintTool.cpp
+  engine/editor/world/SplatRules.cpp
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
@@ -808,6 +811,20 @@ if(WIN32)
     target_compile_options(terrain_stamp_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME terrain_stamp_tests COMMAND terrain_stamp_tests)
+endif()
+
+# M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).
+# Couvre l'invariant somme=255, le filtrage MatchesRules, la monotonie du
+# falloff radial, la couture inter-chunks bord-à-bord, et la coalescence par
+# stroke (1 entrée d'historique par geste). Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(splat_paint_tests engine/editor/world/tests/SplatPaintTests.cpp)
+  target_include_directories(splat_paint_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(splat_paint_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(splat_paint_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME splat_paint_tests COMMAND splat_paint_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

@@ -332,6 +332,7 @@ add_library(engine_core
   engine/render/PsoKey.cpp
   engine/render/PipelineCache.cpp
   engine/render/GeometryPass.cpp
+  engine/render/TerrainChunkPipeline.cpp
   engine/render/GpuDrivenCullingPass.cpp
   engine/render/HiZPyramidPass.cpp
   engine/render/LightingPass.cpp

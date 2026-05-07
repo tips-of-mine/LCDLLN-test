@@ -364,6 +364,7 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/surface/SurfaceType.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -882,6 +883,17 @@ if(WIN32)
     target_compile_options(splat_paint_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME splat_paint_tests COMMAND splat_paint_tests)
+endif()
+
+# M100.11 — Tests SurfaceType enum + helpers (Phase 3b.1).
+if(WIN32)
+  add_executable(surface_type_tests engine/world/surface/tests/SurfaceTypeTests.cpp)
+  target_include_directories(surface_type_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(surface_type_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(surface_type_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME surface_type_tests COMMAND surface_type_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

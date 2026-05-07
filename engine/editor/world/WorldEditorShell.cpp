@@ -112,6 +112,11 @@ namespace engine::editor::world
 		// EnsureLoaded).
 		m_sculptTool.Init(m_commandStack, m_terrainDoc);
 
+		// M100.7 — Branche l'outil de stamp sur les mêmes ressources. Idem
+		// sculpt : aucun chunk préchargé, c'est `OnClickAt` qui les charge à
+		// la demande via `EnsureLoaded`.
+		m_stampTool.Init(m_commandStack, m_terrainDoc);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -139,6 +144,7 @@ namespace engine::editor::world
 		{
 			case ActiveTool::None:          name = "None"; break;
 			case ActiveTool::TerrainSculpt: name = "TerrainSculpt"; break;
+			case ActiveTool::TerrainStamp:  name = "TerrainStamp"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -429,6 +435,13 @@ namespace engine::editor::world
 		if (!ctrl && !shift && virtualKey == 'B')
 		{
 			SetActiveTool(ActiveTool::TerrainSculpt);
+			return true;
+		}
+		// M100.7 — Raccourci 'N' (sans modifiers) active l'outil stamp.
+		// Spec ticket : "Activer outil via N".
+		if (!ctrl && !shift && virtualKey == 'N')
+		{
+			SetActiveTool(ActiveTool::TerrainStamp);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

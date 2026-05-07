@@ -344,6 +344,7 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/terrain/TerrainChunk.cpp
   engine/render/vk/DeferredDestroyQueue.cpp
   engine/render/GpuUploadQueue.cpp
   engine/render/vk/StagingAllocator.cpp
@@ -689,6 +690,21 @@ if(WIN32)
     target_compile_options(command_stack_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME command_stack_tests COMMAND command_stack_tests)
+endif()
+
+# M100.5 — Tests unitaires CPU pour TerrainChunk (heightmap par chunk).
+# Pure CPU (pas d'ImGui ni Vulkan) : pose la struct, le format binaire `TRRN`,
+# Save/LoadTerrainBin via OutputVersionHeader + xxhash64. Round-trip byte-exact
+# vérifié dans TerrainParityTests (target séparé) ; ici on valide MakeFlat,
+# SampleHeight bilinéaire/clamp, et la robustesse du Load (bad magic/version).
+if(WIN32)
+  add_executable(terrain_chunk_tests engine/world/terrain/tests/TerrainChunkTests.cpp)
+  target_include_directories(terrain_chunk_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_chunk_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_chunk_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_chunk_tests COMMAND terrain_chunk_tests)
 endif()
 
 # M100.4 — Tests unitaires CPU pour EditorCameraController.

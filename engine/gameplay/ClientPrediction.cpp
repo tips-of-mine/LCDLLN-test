@@ -413,7 +413,7 @@ void ClientPredictionSystem::ApplyCommand(const InputCommand& cmd)
 
 void ClientPredictionSystem::SetSurfaceSpeedMultiplier(float m) noexcept
 {
-    m_surfaceSpeedMultiplier = std::clamp(m, 0.1f, 5.0f);
+	m_surfaceSpeedMultiplier = std::clamp(m, 0.1f, 5.0f);
 }
 
 } // namespace engine::gameplay

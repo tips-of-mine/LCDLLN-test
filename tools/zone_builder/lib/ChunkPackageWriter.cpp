@@ -5,6 +5,8 @@
 #include "engine/world/OutputVersion.h"
 #include "engine/world/ProbeData.h"
 #include "engine/world/WorldModel.h"
+#include "engine/world/terrain/TerrainChunk.h"
+#include "engine/world/terrain/TerrainLodChain.h"
 
 #include <array>
 #include <cmath>
@@ -483,6 +485,76 @@ namespace tools::zone_builder
 			rootPath.string(),
 			chunkInstances.size(),
 			contentHash);
+		return true;
+	}
+
+	bool WriteTerrainChunk(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::terrain::TerrainChunk& chunk, std::string& outError)
+	{
+		std::filesystem::path chunkDir = std::filesystem::path(outputRootDir)
+			/ "chunks"
+			/ ("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(chunkDir, ec);
+		if (ec)
+		{
+			outError = "WriteTerrainChunk: mkdir failed: " + ec.message();
+			return false;
+		}
+
+		std::vector<uint8_t> bytes;
+		if (!engine::world::terrain::SaveTerrainBin(chunk, bytes, outError))
+			return false;
+
+		const std::filesystem::path file = chunkDir / "terrain.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteTerrainChunk: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteTerrainChunk: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteTerrainLods(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
+		const engine::world::terrain::TerrainLodChain& chain, std::string& outError)
+	{
+		std::filesystem::path chunkDir = std::filesystem::path(outputRootDir)
+			/ "chunks"
+			/ ("chunk_" + std::to_string(chunkX) + "_" + std::to_string(chunkZ));
+		std::error_code ec;
+		std::filesystem::create_directories(chunkDir, ec);
+		if (ec)
+		{
+			outError = "WriteTerrainLods: mkdir failed: " + ec.message();
+			return false;
+		}
+
+		std::vector<uint8_t> bytes;
+		if (!engine::world::terrain::SaveTerrainLodsBin(chain, bytes, outError))
+			return false;
+
+		const std::filesystem::path file = chunkDir / "terrain_lods.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteTerrainLods: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteTerrainLods: write failed: " + file.string();
+			return false;
+		}
 		return true;
 	}
 }

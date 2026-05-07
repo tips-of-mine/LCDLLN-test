@@ -150,6 +150,10 @@
             "camera": {
                 "lastMode": "FPS",
                 "fpsSpeed": 8.0
+            },
+            "terrain": {
+                "_comment": "M100.8 — Pool de threads pour la regeneration LOD asynchrone. 0 = auto (hardware_concurrency - 2, min 1). Modifie la reactivite percue lors des brushstrokes consecutifs.",
+                "lodWorkers": 0
             }
         }
     },

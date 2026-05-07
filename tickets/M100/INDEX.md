@@ -28,10 +28,10 @@ obligatoires.
 | M100.2  | Command Stack & Undo/Redo | 1 — Fondations | M100.1 | Done (CI pending) |
 | M100.3  | Zone Builder Library Extraction | 1 — Fondations | M100.1 | Done (CI pending) |
 | M100.4  | Editor Camera Modes | 1 — Fondations | M100.1 | Done (CI pending) |
-| M100.5  | Heightmap Data Structure | 2 — Terrain | M100.3, M100.4 | Ready |
-| M100.6  | Terrain Sculpting Brushes | 2 — Terrain | M100.2, M100.5 | Ready |
-| M100.7  | Terrain Stamps & Procedural Generators | 2 — Terrain | M100.6 | Ready |
-| M100.8  | Terrain LOD Regeneration | 2 — Terrain | M100.5 | Ready |
+| M100.5  | Heightmap Data Structure | 2 — Terrain | M100.3, M100.4 | Done partiel (CI pending — drawcall GeometryPass déféré à M100.9) |
+| M100.6  | Terrain Sculpting Brushes | 2 — Terrain | M100.2, M100.5 | Done (CI pending) |
+| M100.7  | Terrain Stamps & Procedural Generators | 2 — Terrain | M100.6 | Done (CI pending) |
+| M100.8  | Terrain LOD Regeneration | 2 — Terrain | M100.5 | Done (CI pending) |
 | M100.9  | Splat Map System | 3 — Splat / Surfaces / Collision | M100.5 | Ready |
 | M100.10 | Splat Painting Brushes | 3 — Splat / Surfaces / Collision | M100.2, M100.9 | Ready |
 | M100.11 | Surface Material System & SurfaceQuery (client) | 3 — Splat / Surfaces / Collision | M100.9 | Ready |

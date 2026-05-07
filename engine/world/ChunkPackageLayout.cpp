@@ -7,6 +7,7 @@ namespace engine::world
 		switch (segment)
 		{
 		case ChunkSegment::Geo:       return "geo.pak";
+		case ChunkSegment::Terrain:   return "terrain.bin";
 		case ChunkSegment::Tex:       return "tex.pak";
 		case ChunkSegment::Instances: return "instances.bin";
 		case ChunkSegment::Nav:       return "navmesh.bin";
@@ -19,6 +20,7 @@ namespace engine::world
 	{
 		return {{
 			ChunkSegment::Geo,
+			ChunkSegment::Terrain,
 			ChunkSegment::Tex,
 			ChunkSegment::Instances,
 			ChunkSegment::Nav,

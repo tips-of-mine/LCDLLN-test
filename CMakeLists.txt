@@ -262,6 +262,15 @@ add_library(engine_core
   # editor.world.enabled. Pas référencé par engine/server/.
   engine/editor/world/WorldEditorShell.cpp
   engine/editor/world/CommandStack.cpp
+  engine/editor/world/TerrainDocument.cpp
+  engine/editor/world/TerrainBrush.cpp
+  engine/editor/world/TerrainRaycast.cpp
+  engine/editor/world/TerrainSculptCommand.cpp
+  engine/editor/world/TerrainSculptTool.cpp
+  engine/editor/world/TerrainStampCommand.cpp
+  engine/editor/world/TerrainStampTool.cpp
+  engine/editor/world/StampLibrary.cpp
+  engine/editor/world/ProceduralStampGenerators.cpp
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
@@ -345,6 +354,11 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/terrain/TerrainChunk.cpp
+  engine/world/terrain/TerrainChunkLoader.cpp
+  engine/world/terrain/TerrainLodChain.cpp
+  engine/world/terrain/TerrainLodWorker.cpp
+  engine/world/terrain/TerrainMeshBuilder.cpp
   engine/render/vk/DeferredDestroyQueue.cpp
   engine/render/GpuUploadQueue.cpp
   engine/render/vk/StagingAllocator.cpp
@@ -692,6 +706,48 @@ if(WIN32)
   add_test(NAME command_stack_tests COMMAND command_stack_tests)
 endif()
 
+# M100.5 — Tests unitaires CPU pour TerrainChunk (heightmap par chunk).
+# Pure CPU (pas d'ImGui ni Vulkan) : pose la struct, le format binaire `TRRN`,
+# Save/LoadTerrainBin via OutputVersionHeader + xxhash64. Round-trip byte-exact
+# vérifié dans TerrainParityTests (target séparé) ; ici on valide MakeFlat,
+# SampleHeight bilinéaire/clamp, et la robustesse du Load (bad magic/version).
+if(WIN32)
+  add_executable(terrain_chunk_tests engine/world/terrain/tests/TerrainChunkTests.cpp)
+  target_include_directories(terrain_chunk_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_chunk_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_chunk_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_chunk_tests COMMAND terrain_chunk_tests)
+endif()
+
+# M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.
+# Round-trip byte-exact (SaveTerrainBin → LoadTerrainBin → memcmp) +
+# meshes deterministe (BuildLod0Mesh produit des vertex/index buffers
+# identiques bit-à-bit pour le chunk source et le chunk re-lu).
+if(WIN32)
+  add_executable(terrain_parity_tests engine/world/terrain/tests/TerrainParityTests.cpp)
+  target_include_directories(terrain_parity_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_parity_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_parity_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_parity_tests COMMAND terrain_parity_tests)
+endif()
+
+# M100.8 — Tests unitaires CPU pour TerrainLodChain + TerrainLodWorker.
+# Vérifie : box filter 2x2, roundtrip terrain_lods.bin, async non-bloquant
+# pour le main thread, génération atomique pour les stale jobs.
+if(WIN32)
+  add_executable(terrain_lod_tests engine/world/terrain/tests/TerrainLodTests.cpp)
+  target_include_directories(terrain_lod_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_lod_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_lod_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_lod_tests COMMAND terrain_lod_tests)
+endif()
+
 # M100.4 — Tests unitaires CPU pour EditorCameraController.
 # Pure CPU (pas d'ImGui ni Vulkan) : on vérifie le mapping des modes
 # FPS/Orbital/TopDownOrtho vers la `engine::render::Camera`. Gating WIN32
@@ -705,6 +761,35 @@ if(WIN32)
     target_compile_options(editor_camera_controller_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME editor_camera_controller_tests COMMAND editor_camera_controller_tests)
+endif()
+
+# M100.6 — Tests unitaires CPU pour la sculpture de terrain.
+# Couvre le kernel de brosse (Raise/Lower/Smooth/Flatten/Noise), le merge des
+# commandes par mergeKey de stroke, et un sanity-check de la couture
+# inter-chunks. Pure CPU (pas d'ImGui ni Vulkan), gating WIN32 pour cohérence
+# avec les autres tests éditeur monde.
+if(WIN32)
+  add_executable(terrain_sculpt_tests engine/editor/world/tests/TerrainSculptTests.cpp)
+  target_include_directories(terrain_sculpt_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_sculpt_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_sculpt_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_sculpt_tests COMMAND terrain_sculpt_tests)
+endif()
+
+# M100.7 — Tests unitaires CPU pour les stamps & generators procéduraux.
+# Couvre les 3 archétypes (Mountain/Valley/Crater), la conversion uint16→float
+# du loader StampLibrary, la TerrainStampCommand (Execute/Undo) et le mode
+# Replace (overwrite vs Add). Pure CPU, gating WIN32 (pattern terrain_sculpt).
+if(WIN32)
+  add_executable(terrain_stamp_tests engine/editor/world/tests/TerrainStampTests.cpp)
+  target_include_directories(terrain_stamp_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(terrain_stamp_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(terrain_stamp_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME terrain_stamp_tests COMMAND terrain_stamp_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

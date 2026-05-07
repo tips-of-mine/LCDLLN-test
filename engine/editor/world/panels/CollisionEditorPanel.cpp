@@ -4,14 +4,13 @@
 
 #if defined(_WIN32)
 #	include "imgui.h"
+#	include <cmath>
+#	include <vector>
 #endif
-
-#include <cmath>
-#include <cstring>
-#include <vector>
 
 namespace engine::editor::world::panels
 {
+#if defined(_WIN32)
 	namespace
 	{
 		using engine::math::Vec3;
@@ -128,6 +127,7 @@ namespace engine::editor::world::panels
 			}
 		}
 	}
+#endif // _WIN32
 
 	void CollisionEditorPanel::Init(const std::filesystem::path& contentRoot)
 	{
@@ -167,18 +167,21 @@ namespace engine::editor::world::panels
 		{
 			m_proxy = engine::world::collision::CollisionProxy{};
 			m_proxy.type = ProxyType::Capsule;
+			m_currentPath.clear();  // évite d'écraser un fichier existant au Save
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("New ConvexHull"))
 		{
 			m_proxy = engine::world::collision::CollisionProxy{};
 			m_proxy.type = ProxyType::ConvexHull;
+			m_currentPath.clear();
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("New TriMesh"))
 		{
 			m_proxy = engine::world::collision::CollisionProxy{};
 			m_proxy.type = ProxyType::TriMesh;
+			m_currentPath.clear();
 		}
 
 		ImGui::Text("Source: %s", m_currentPath.empty() ? "<empty>" : m_currentPath.string().c_str());
@@ -205,7 +208,8 @@ namespace engine::editor::world::panels
 			ImGui::BeginDisabled(true);
 			ImGui::Button("Re-run AutoFit");
 			ImGui::EndDisabled();
-			if (ImGui::IsItemHovered())
+			// Tooltip sur item disabled : requiert AllowWhenDisabled flag.
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 				ImGui::SetTooltip("Requires mesh CPU data — wired with mesh import (M100.34 ou follow-up)");
 		}
 		else // TriMesh

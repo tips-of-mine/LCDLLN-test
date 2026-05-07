@@ -354,6 +354,7 @@ add_library(engine_core
   engine/world/StreamingScheduler.cpp
   engine/world/StreamCache.cpp
   engine/world/ChunkBudgetStats.cpp
+  engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
   engine/world/terrain/TerrainChunkLoader.cpp
   engine/world/terrain/TerrainLodChain.cpp
@@ -719,6 +720,21 @@ if(WIN32)
     target_compile_options(terrain_chunk_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME terrain_chunk_tests COMMAND terrain_chunk_tests)
+endif()
+
+# M100.9 — Tests unitaires CPU pour SplatMap (8-layer splat per chunk).
+# Pure CPU (pas d'ImGui ni Vulkan) : pose la struct, le format binaire `SLAT`,
+# Save/LoadSplatBin via OutputVersionHeader + xxhash64. Round-trip byte-exact
+# vérifié dans le même fichier (Test_SaveLoad_Roundtrip + parity ajouté Task 15).
+# Vérifie aussi l'invariant somme=255 par cellule (rejet au Save et au Load).
+if(WIN32)
+  add_executable(splat_map_tests engine/world/terrain/tests/SplatMapTests.cpp)
+  target_include_directories(splat_map_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(splat_map_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(splat_map_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME splat_map_tests COMMAND splat_map_tests)
 endif()
 
 # M100.5 — Tests de parité éditeur ↔ client pour le format terrain.bin.

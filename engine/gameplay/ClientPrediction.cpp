@@ -2,6 +2,7 @@
 
 #include "engine/core/Log.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace engine::gameplay
@@ -394,10 +395,11 @@ void ClientPredictionSystem::ApplyCommand(const InputCommand& cmd)
 		wishZ *= inv;
 	}
 
-	// Choose target horizontal speed.
-	const float speed = HasFlag(cmd.keys, MovementKeyFlags::Run)
-	                    ? m_cfg.runSpeed
-	                    : m_cfg.walkSpeed;
+	// Choose target horizontal speed (M100.11 : surface modifier appliqué).
+	const float baseSpeed = HasFlag(cmd.keys, MovementKeyFlags::Run)
+	                       ? m_cfg.runSpeed
+	                       : m_cfg.walkSpeed;
+	const float speed = baseSpeed * m_surfaceSpeedMultiplier;
 
 	// Instant velocity set (simple kinematic model; matches authoritative server).
 	m_state.velocity.x = wishX * speed;
@@ -407,6 +409,11 @@ void ClientPredictionSystem::ApplyCommand(const InputCommand& cmd)
 	m_state.position.x += m_state.velocity.x * cmd.dt;
 	m_state.position.z += m_state.velocity.z * cmd.dt;
 	// Y-axis (vertical) is the responsibility of CharacterController; only XZ is predicted here.
+}
+
+void ClientPredictionSystem::SetSurfaceSpeedMultiplier(float m) noexcept
+{
+    m_surfaceSpeedMultiplier = std::clamp(m, 0.1f, 5.0f);
 }
 
 } // namespace engine::gameplay

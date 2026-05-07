@@ -931,6 +931,18 @@ if(WIN32)
   add_test(NAME surface_query_service_tests COMMAND surface_query_service_tests)
 endif()
 
+# M100.11 — Tests ClientPredictionSystem.SetSurfaceSpeedMultiplier.
+if(WIN32)
+  add_executable(client_prediction_surface_multiplier_tests
+    engine/gameplay/tests/ClientPredictionSurfaceMultiplierTests.cpp)
+  target_include_directories(client_prediction_surface_multiplier_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(client_prediction_surface_multiplier_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(client_prediction_surface_multiplier_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME client_prediction_surface_multiplier_tests COMMAND client_prediction_surface_multiplier_tests)
+endif()
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
   add_executable(client_flow_app engine/network/ClientFlowMain.cpp)

@@ -1,6 +1,9 @@
 #include "engine/server/shard/globals/ObjectAccessor.h"
 
 #include <algorithm>
+#include <cctype>
+#include <mutex>
+#include <shared_mutex>
 
 namespace engine::server::shard::globals
 {

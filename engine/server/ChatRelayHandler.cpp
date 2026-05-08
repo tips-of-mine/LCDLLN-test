@@ -164,6 +164,57 @@ namespace engine::server
 			}
 		}
 
+		// Phase 2 CMANGOS.01 sub-PR 2 — ChatCommandRouter : si le texte
+		// commence par '/', on tente un dispatch avant le routage de canal.
+		// Si Dispatched ou InsufficientRole/UnknownCommand, on consume le
+		// message (pas de broadcast). Si NotACommand (pas un '/'), on
+		// continue le flot normal. Si le router est vide (pas de commande
+		// enregistrée), tout '/foo' devient UnknownCommand → on coupe la
+		// chaîne avec une notice — politique conservative : ne pas
+		// broadcaster un slash-command non géré.
+		if (!parsed->text.empty() && parsed->text.front() == '/' && m_accounts)
+		{
+			std::string cmdName;
+			const auto callerRole = m_accounts->GetRole(*accountId);
+			const auto dispatch = m_commandRouter.Dispatch(parsed->text, *accountId,
+				callerRole, &cmdName);
+			switch (dispatch)
+			{
+				case chat::CommandDispatchResult::Dispatched:
+					LOG_INFO(Net, "[ChatRelayHandler] cmd dispatched account={} cmd='/{}'",
+						*accountId, cmdName);
+					return;
+				case chat::CommandDispatchResult::InsufficientRole:
+				{
+					const uint64_t ts0 = NowUnixMsUtc();
+					auto notice = BuildChatRelayPacket(ts0,
+						static_cast<uint8_t>(engine::net::ChatChannel::Server),
+						"system", "Insufficient permissions for that command.",
+						sessionIdHeader);
+					if (!notice.empty())
+						m_server->Send(connId, notice);
+					LOG_INFO(Net, "[ChatRelayHandler] cmd denied account={} cmd='/{}' role={}",
+						*accountId, cmdName, static_cast<int>(callerRole));
+					return;
+				}
+				case chat::CommandDispatchResult::UnknownCommand:
+				{
+					const uint64_t ts0 = NowUnixMsUtc();
+					auto notice = BuildChatRelayPacket(ts0,
+						static_cast<uint8_t>(engine::net::ChatChannel::Server),
+						"system", "Unknown command : /" + cmdName,
+						sessionIdHeader);
+					if (!notice.empty())
+						m_server->Send(connId, notice);
+					return;
+				}
+				case chat::CommandDispatchResult::NotACommand:
+					// Ne devrait pas arriver vu le check '/' au-dessus,
+					// mais par sûreté : on continue le routage.
+					break;
+			}
+		}
+
 		// Phase 4 — Sender display name : preference au character_name (post-EnterWorld)
 		// via SessionCharacterMap, fallback au login d'account si le client n'a pas encore
 		// declaré son perso (ex. message envoyé entre EnterWorld et la confirmation du

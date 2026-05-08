@@ -103,6 +103,8 @@ elseif(UNIX)
     ChatRelayHandler.cpp
     chat/ChatSanitizer.cpp
     chat/ChatGate.cpp
+    chat/ChatCommandRouter.cpp
+    chat/ChatChannelRegistry.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ChatPayloads.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
@@ -314,6 +316,31 @@ elseif(UNIX)
   target_link_libraries(vmap_format_tests PRIVATE engine_core spdlog::spdlog pthread)
   target_compile_options(vmap_format_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME vmap_format_tests COMMAND vmap_format_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
+  add_executable(chat_command_router_tests
+    chat/ChatCommandRouterTests.cpp
+    chat/ChatCommandRouter.cpp
+    AccountRoleService.cpp
+    AccountRole.cpp
+    InMemoryAccountStore.cpp
+    AccountValidation.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
+  )
+  target_include_directories(chat_command_router_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(chat_command_router_tests PRIVATE engine_core engine_auth OpenSSL::SSL spdlog::spdlog pthread)
+  target_compile_options(chat_command_router_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME chat_command_router_tests COMMAND chat_command_router_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.01 (Phase 2.01b) : ChatChannelRegistry pure tests
+  add_executable(chat_channel_registry_tests
+    chat/ChatChannelRegistryTests.cpp
+    chat/ChatChannelRegistry.cpp
+  )
+  target_include_directories(chat_channel_registry_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(chat_channel_registry_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(chat_channel_registry_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME chat_channel_registry_tests COMMAND chat_channel_registry_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests

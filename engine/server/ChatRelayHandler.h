@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/server/chat/ChatChannelRegistry.h"
+#include "engine/server/chat/ChatCommandRouter.h"
 #include "engine/server/chat/ChatGate.h"
 #include "engine/server/chat/ChatSanitizer.h"
 
@@ -62,6 +64,16 @@ namespace engine::server
 		/// au boot de ServerApp.
 		chat::ChatGate& Gate() { return m_gate; }
 
+		/// Phase 2 CMANGOS.01 sub-PR 2 : router de slash-commands. Si non
+		/// peuplé via Register(...), tout slash-command est laissé passer
+		/// au routage de canal classique.
+		chat::ChatCommandRouter& CommandRouter() { return m_commandRouter; }
+
+		/// Phase 2 CMANGOS.01 sub-PR 2 : registry des canaux dynamiques.
+		/// Pas encore exploité par HandlePacket (ChatChannel::Custom à
+		/// venir) ; exposé pour câblage par les handlers /join, /leave.
+		chat::ChatChannelRegistry& Channels() { return m_channels; }
+
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -75,5 +87,7 @@ namespace engine::server
 
 		chat::ChatSanitizerConfig           m_sanitizerCfg{};
 		chat::ChatGate                      m_gate{};
+		chat::ChatCommandRouter             m_commandRouter{};
+		chat::ChatChannelRegistry           m_channels{};
 	};
 }

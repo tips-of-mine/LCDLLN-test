@@ -40,7 +40,7 @@ static void TestBasicOwnership()
 	Probe::s_aliveCount = 0;
 	{
 		UniqueTrackablePtr<Probe> p(new Probe(7));
-		Assert(p, "owner truthy");
+		Assert(static_cast<bool>(p), "owner truthy");
 		Assert(p.Get() != nullptr, "Get non-null");
 		Assert(p->value == 7, "operator-> works");
 		Assert((*p).value == 7, "operator* works");
@@ -64,7 +64,7 @@ static void TestTrackerRefValidWhileOwnerAlive()
 {
 	UniqueTrackablePtr<Probe> p(new Probe(42));
 	TrackerRef<Probe> ref = p.Track();
-	Assert(ref, "ref truthy while owner alive");
+	Assert(static_cast<bool>(ref), "ref truthy while owner alive");
 	Assert(ref.Get() == p.Get(), "ref.Get == owner.Get");
 	Assert(ref->value == 42, "ref operator-> works");
 }
@@ -103,18 +103,18 @@ static void TestMoveSemantics()
 	Probe::s_aliveCount = 0;
 	UniqueTrackablePtr<Probe> p1(new Probe(5));
 	TrackerRef<Probe> ref = p1.Track();
-	Assert(ref, "ref valid before move");
+	Assert(static_cast<bool>(ref), "ref valid before move");
 
 	UniqueTrackablePtr<Probe> p2(std::move(p1));
 	Assert(!p1, "moved-from owner empty");
 	Assert(p2 && p2->value == 5, "moved-to owner has the object");
-	Assert(ref, "ref still valid after move (object not destroyed)");
+	Assert(static_cast<bool>(ref), "ref still valid after move (object not destroyed)");
 
 	UniqueTrackablePtr<Probe> p3;
 	p3 = std::move(p2);
 	Assert(!p2, "moved-from owner empty after move-assign");
 	Assert(p3 && p3->value == 5, "p3 has the object");
-	Assert(ref, "ref still valid after move-assign");
+	Assert(static_cast<bool>(ref), "ref still valid after move-assign");
 
 	p3.Reset();
 	Assert(!ref, "ref invalid after final Reset");

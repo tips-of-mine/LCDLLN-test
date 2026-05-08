@@ -118,18 +118,18 @@
 
 | # | Module | Cible | Statut | Effort | Valeur | Reco | Risque |
 |---|---|---|---|---|---|---|---|
-| [06](./CMANGOS.06.md) | Accounts | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [07](./CMANGOS.07.md) | AI | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [08](./CMANGOS.08.md) | Arena | master+shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [09](./CMANGOS.09.md) | AuctionHouse | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [10](./CMANGOS.10.md) | BattleGround | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [11](./CMANGOS.11.md) | Combat | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [12](./CMANGOS.12.md) | Server | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [13](./CMANGOS.13.md) | Database | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [14](./CMANGOS.14.md) | DBScripts | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [15](./CMANGOS.15.md) | Groups | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [16](./CMANGOS.16.md) | Globals | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [17](./CMANGOS.17.md) | Loot | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| [06](./CMANGOS.06.md) | Accounts | master | 🟡 Partiel | M | Élevée | ✅ Faire | ⚠️ migration DB, sécurité |
+| [07](./CMANGOS.07.md) | AI | shard | ❌ Absent | L | Critique | 🔧 Adapter | ⚠️ migration DB, redéploiement |
+| [08](./CMANGOS.08.md) | Arena | master+shard | ❌ Absent | XL | Élevée | ⏸ Reporter | ⚠️ wire-breaking, migration DB |
+| [09](./CMANGOS.09.md) | AuctionHouse | master | 🟡 Partiel | L | Élevée | 🔧 Adapter | ⚠️ wire-breaking si master, migration DB |
+| [10](./CMANGOS.10.md) | BattleGround | shard | ❌ Absent | L | Élevée | 🔧 Adapter | — |
+| [11](./CMANGOS.11.md) | Combat | shard | ❌ Absent | M-L | Critique | 🔧 Adapter | ⚠️ wire-breaking duel |
+| [12](./CMANGOS.12.md) | Server | cross | 🟡 Partiel | M | Élevée | 🔧 Adapter | ⚠️ confidentialité PII |
+| [13](./CMANGOS.13.md) | Database | cross | 🟡 Partiel | M-L | Élevée | ✅ Faire | — |
+| [14](./CMANGOS.14.md) | DBScripts | shard | ❌ Absent | L | Élevée | 🔧 Adapter | ⚠️ migration DB |
+| [15](./CMANGOS.15.md) | Groups | master | ❌ Absent | M-L | Élevée | 🔧 Adapter | ⚠️ wire-breaking, migration DB |
+| [16](./CMANGOS.16.md) | Globals | shard | ❌ Absent | M-L | Élevée | ✅ Faire | ⚠️ migration DB |
+| [17](./CMANGOS.17.md) | Loot | shard | 🟡 Partiel | L | Critique | ✅ Faire | ⚠️ migration DB |
 | [18](./CMANGOS.18.md) | Mails | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | [19](./CMANGOS.19.md) | Maps | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | [20](./CMANGOS.20.md) | MotionGenerators | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -216,7 +216,7 @@ généralisés).
 |---|---|---|---|
 | 0 — Squelette | INDEX vide + design | ✅ Done | `6b24889` |
 | 1 — P1 | 5 fiches (.01-.05) | ✅ Done | `0649d13` |
-| 2a — P2 part 1 | 12 fiches (.06-.17) | ⏳ Pending | — |
+| 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | _(en cours de commit)_ |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ⏳ Pending | — |
 | 3 — P3 | 14 fiches (.29-.42) | ⏳ Pending | — |
 | 4 — P4 | 2 fiches (.44-.45) | ⏳ Pending | — |

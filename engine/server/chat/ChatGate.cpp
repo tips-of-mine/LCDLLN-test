@@ -35,6 +35,13 @@ namespace engine::server::chat
 		m_windows.clear();
 	}
 
+	void ChatGate::Reconfigure(ChatGateConfig cfg)
+	{
+		std::lock_guard<std::mutex> lk(m_mutex);
+		m_cfg = std::move(cfg);
+		m_windows.clear();
+	}
+
 	void ChatGate::PurgeWindow(WindowState& w, uint64_t nowMs) const
 	{
 		// `nowMs - floodWindowMs` peut underflow si la fenêtre est plus

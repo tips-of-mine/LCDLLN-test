@@ -310,10 +310,26 @@ int main(int argc, char** argv)
 	chatRelayHandler.SetAccountStore(accountStore);
 	// Phase 5.1 — pool DB pour le routage guild (SQL guild_members).
 	chatRelayHandler.SetConnectionPool(&dbPool);
-	// Phase 2 CMANGOS.01 — câblage du gate (ban via AccountStore +
-	// mute via SQL chat_mutes). Pas de wire-breaking : effet seulement
-	// sur les rejets côté master.
-	chatRelayHandler.Gate().WireProduction(&dbPool, accountStore);
+	// Phase 2 CMANGOS.01 — sanitizer + gate (chat hardening).
+	{
+		engine::server::chat::ChatSanitizerConfig sanCfg;
+		sanCfg.maxMessageBytes = static_cast<size_t>(std::max<int64_t>(
+			16, config.GetInt("chat.sanitizer.max_message_bytes", 255)));
+		sanCfg.stripZeroWidth = config.GetBool("chat.sanitizer.strip_zero_width", true);
+		chatRelayHandler.SetSanitizerConfig(sanCfg);
+
+		engine::server::chat::ChatGateConfig gateCfg;
+		gateCfg.floodWindowMs = static_cast<uint64_t>(std::max<int64_t>(
+			0, config.GetInt("chat.gate.flood_window_ms", 5000)));
+		gateCfg.floodMaxMessages = static_cast<size_t>(std::max<int64_t>(
+			1, config.GetInt("chat.gate.flood_max_messages", 5)));
+		gateCfg.maxTrackedAccounts = static_cast<size_t>(std::max<int64_t>(
+			0, config.GetInt("chat.gate.max_tracked_accounts", 4096)));
+		chatRelayHandler.Gate().Reconfigure(gateCfg);
+		chatRelayHandler.Gate().WireProduction(&dbPool, accountStore);
+		LOG_INFO(Net, "[ServerMain] ChatGate configured (window={}ms max={}/win) (CMANGOS.01)",
+			gateCfg.floodWindowMs, gateCfg.floodMaxMessages);
+	}
 
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);

@@ -123,6 +123,11 @@ namespace engine::server::chat
 		/// Reset complet de l'état runtime (anti-flood). Utile en tests.
 		void ResetState();
 
+		/// Remplace la config (ne peut pas se faire via operator= : la mutex
+		/// rend ChatGate non-copiable/non-movable). Garde les callbacks
+		/// déjà câblés. Reset l'état runtime.
+		void Reconfigure(ChatGateConfig cfg);
+
 	private:
 		struct WindowState
 		{

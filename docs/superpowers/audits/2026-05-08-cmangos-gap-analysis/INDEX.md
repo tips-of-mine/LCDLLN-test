@@ -130,17 +130,17 @@
 | [15](./CMANGOS.15.md) | Groups | master | ❌ Absent | M-L | Élevée | 🔧 Adapter | ⚠️ wire-breaking, migration DB |
 | [16](./CMANGOS.16.md) | Globals | shard | ❌ Absent | M-L | Élevée | ✅ Faire | ⚠️ migration DB |
 | [17](./CMANGOS.17.md) | Loot | shard | 🟡 Partiel | L | Critique | ✅ Faire | ⚠️ migration DB |
-| [18](./CMANGOS.18.md) | Mails | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [19](./CMANGOS.19.md) | Maps | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [20](./CMANGOS.20.md) | MotionGenerators | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [21](./CMANGOS.21.md) | Guilds | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [22](./CMANGOS.22.md) | Pools | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [23](./CMANGOS.23.md) | Quests | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [24](./CMANGOS.24.md) | Reputation | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [25](./CMANGOS.25.md) | Social | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [26](./CMANGOS.26.md) | Spells | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [27](./CMANGOS.27.md) | Trade | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [28](./CMANGOS.28.md) | World | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| [18](./CMANGOS.18.md) | Mails | master | ❌ Absent | L | Élevée | ✅ Faire | ⚠️ wire-breaking, migration DB |
+| [19](./CMANGOS.19.md) | Maps | shard | ❌ Absent | XL | Critique | 🔧 Adapter | ⚠️ refonte transversale, conflit archi |
+| [20](./CMANGOS.20.md) | MotionGenerators | shard | ❌ Absent | L | Élevée | 🔧 Adapter | ⚠️ dépendance Detour, migration DB |
+| [21](./CMANGOS.21.md) | Guilds | master | 🟡 Partiel | M-L | Élevée | 🔧 Adapter | ⚠️ wire-breaking, migration DB |
+| [22](./CMANGOS.22.md) | Pools | shard | ❌ Absent | M | Moyenne | 🔧 Adapter | ⚠️ migration DB |
+| [23](./CMANGOS.23.md) | Quests | cross | ❌ Absent | L | Critique | 🔧 Adapter | ⚠️ wire-breaking, migration DB, conflit archi |
+| [24](./CMANGOS.24.md) | Reputation | shard | 🟡 Partiel | M-L | Élevée | 🔧 Adapter | ⚠️ wire-breaking, migration DB |
+| [25](./CMANGOS.25.md) | Social | master | 🟡 Partiel | S-M | Élevée | ✅ Faire | ⚠️ wire-breaking, migration DB |
+| [26](./CMANGOS.26.md) | Spells | shard | 🟡 Partiel | M-XL | Critique | 🔧 Adapter | ⚠️ wire-breaking |
+| [27](./CMANGOS.27.md) | Trade | master | ✅ Fait | S | Élevée | 🟢 Déjà couvert | — |
+| [28](./CMANGOS.28.md) | World | shard | ❌ Absent | M-L | Élevée | 🔧 Adapter | ⚠️ wire-breaking, migration DB |
 
 ### P3 — Ajouts à valeur (14 tickets)
 
@@ -217,7 +217,7 @@ généralisés).
 | 0 — Squelette | INDEX vide + design | ✅ Done | `6b24889` |
 | 1 — P1 | 5 fiches (.01-.05) | ✅ Done | `0649d13` |
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | `c82928e` |
-| 2b — P2 part 2 | 11 fiches (.18-.28) | ⏳ Pending | — |
+| 2b — P2 part 2 | 11 fiches (.18-.28) | ✅ Done | _(en cours de commit)_ |
 | 3 — P3 | 14 fiches (.29-.42) | ⏳ Pending | — |
 | 4 — P4 | 2 fiches (.44-.45) | ⏳ Pending | — |
 | 5 — Consolidation | INDEX rempli | ⏳ Pending | — |

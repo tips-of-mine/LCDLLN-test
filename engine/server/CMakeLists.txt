@@ -273,6 +273,16 @@ elseif(UNIX)
   target_compile_options(chat_gate_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME chat_gate_tests COMMAND chat_gate_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.02 (Phase 2.02a) : ObjectGuid pure tests (no DB)
+  add_executable(object_guid_tests
+    shard/entities/ObjectGuidTests.cpp
+    shard/entities/ObjectGuid.cpp
+  )
+  target_include_directories(object_guid_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(object_guid_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(object_guid_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME object_guid_tests COMMAND object_guid_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

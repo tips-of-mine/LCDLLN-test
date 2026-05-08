@@ -162,6 +162,7 @@ elseif(UNIX)
     AccountRole.cpp
     InMemoryAccountStore.cpp
     AccountValidation.cpp
+    ${CMAKE_SOURCE_DIR}/engine/server/SecurityAuditLog.cpp
   )
   target_include_directories(account_role_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(account_role_service_tests PRIVATE engine_core engine_auth OpenSSL::SSL spdlog::spdlog pthread)

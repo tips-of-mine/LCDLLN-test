@@ -206,6 +206,18 @@ elseif(UNIX)
   target_compile_options(object_accessor_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME object_accessor_tests COMMAND object_accessor_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.16 (Phase 1b) : GraveyardManager tests
+  add_executable(graveyard_manager_tests
+    shard/globals/GraveyardManagerTests.cpp
+    shard/globals/GraveyardManager.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(graveyard_manager_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(graveyard_manager_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(graveyard_manager_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME graveyard_manager_tests COMMAND graveyard_manager_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

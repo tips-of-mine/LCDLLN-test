@@ -85,6 +85,8 @@ elseif(UNIX)
     AccountValidation.cpp
     InMemoryAccountStore.cpp
     MysqlAccountStore.cpp
+    AccountRole.cpp
+    AccountRoleService.cpp
     AuthRegisterHandler.cpp
     ConnectionSessionMap.cpp
     SmtpMailer.cpp

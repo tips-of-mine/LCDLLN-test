@@ -357,6 +357,14 @@ elseif(UNIX)
     shard/movement/MoveSplineTests.cpp
     shard/movement/MoveSpline.cpp)
 
+  # CMANGOS.05 (Phase 2.05d) : VMapStreamer + ManagedModel (refcount + delayed unload).
+  lcdlln_add_simple_test(vmap_streamer_tests
+    shard/vmap/VMapStreamerTests.cpp
+    shard/vmap/VMapStreamer.cpp
+    shard/vmap/VMapManager.cpp
+    shard/vmap/VMapFormat.cpp
+    shard/vmap/AABB.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
   add_executable(chat_command_router_tests
     chat/ChatCommandRouterTests.cpp

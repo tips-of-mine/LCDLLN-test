@@ -77,6 +77,12 @@ namespace engine::render
 		size_t GetInstanceCount() const { return m_drawInfos.size(); }
 		bool IsValid() const { return m_vbo != VK_NULL_HANDLE && m_ibo != VK_NULL_HANDLE; }
 
+		/// Returns true after a successful Init() (i.e., m_device + m_vmaAllocator stored).
+		/// Distinct from IsValid() which is true only after the first successful Rebuild
+		/// (when GPU buffers have been allocated). Use IsInitialized() as the gate to
+		/// attempt Rebuild ; use IsValid() as the gate to draw with the buffers.
+		bool IsInitialized() const { return m_device != VK_NULL_HANDLE; }
+
 	private:
 		/// Alloue ou realloue VBO/IBO si la nouvelle taille depasse la capacite actuelle.
 		/// Reutilise les buffers existants si la capacite est suffisante.

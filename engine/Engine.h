@@ -31,9 +31,12 @@
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
 #include "engine/render/UnderwaterPass.h"
+#include "engine/render/WaterMeshGpu.h"
+#include "engine/render/WaterPass.h"
 #include "engine/render/DayNightCycle.h"
 #include "engine/render/WeatherSystem.h"
 #include "engine/render/DynamicLightSystem.h"
+#include "engine/world/water/WaterSurfaces.h"
 #include "engine/math/Frustum.h"
 #include "engine/math/Math.h"
 #include "engine/world/WorldModel.h"
@@ -229,6 +232,12 @@ namespace engine
 		engine::render::ResourceId m_fgDepthId           = engine::render::kInvalidResourceId;
 		/// SceneColor_HDR: output of the deferred lighting pass (R16G16B16A16_SFLOAT). Added in M03.2.
 		engine::render::ResourceId m_fgSceneColorHDRId   = engine::render::kInvalidResourceId;
+		/// M100.14 — SceneColor_HDR_PostWater: SceneColor_HDR ping-pong target after the
+		/// Water render pass writes back into the HDR scene. Bloom_Prefilter / Bloom_Combine
+		/// (et toute autre passe HDR aval) lisent désormais ce resource id au lieu de
+		/// m_fgSceneColorHDRId. Si WaterPass::Init échoue, un fallback Water_Passthrough
+		/// (vkCmdCopyImage) garantit que cette ressource est bien renseignée chaque frame.
+		engine::render::ResourceId m_fgSceneColorHDRPostWaterId = engine::render::kInvalidResourceId;
 		/// SceneColor_LDR: output of the tonemap pass (R8G8B8A8_UNORM). Added in M03.4.
 		engine::render::ResourceId m_fgSceneColorLDRId   = engine::render::kInvalidResourceId;
 		/// M08.2: SceneColor_HDR + bloom (combine pass output); tonemap reads this.
@@ -267,6 +276,27 @@ namespace engine
 		engine::render::UnderwaterPass m_underwaterPass;
 		/// M37.3: true when camera.y < waterLevel (underwater detection result, updated each frame).
 		bool m_isUnderwater = false;
+
+		/// M100.14 — Water rendering FG-intégré (lit la WaterScene M100.13).
+		/// \note WaterPass::Init nécessite VMA + skybox cube + normal map ; sur les
+		///       builds STAB.7 (VMA disabled) la passe reste invalide et le fallback
+		///       Water_Passthrough (vkCmdCopyImage SceneColor_HDR → PostWater) prend
+		///       le relais — le rendu reste fonctionnel, juste sans réflexion.
+		engine::render::WaterPass    m_waterPass;
+		/// Buffer GPU des meshes d'eau (lakes + rivers). Reconstruit à la demande
+		/// lorsque la WaterScene devient dirty (mode éditeur ou client).
+		engine::render::WaterMeshGpu m_waterMeshGpu;
+		/// Long-lived command pool dédié aux uploads water (RESET between Rebuilds).
+		/// Évite le coût vkCreateCommandPool/vkDestroyCommandPool par frame d'édition.
+		VkCommandPool m_waterTransferPool = VK_NULL_HANDLE;
+		/// Scene d'eau côté client (post-EnterWorld). Nullptr en mode --world-editor
+		/// (ce mode utilise WaterDocument du WorldEditorShell). Non encore renseignée
+		/// par la chaîne de chargement client M100.14 → la passe restera inactive
+		/// tant que m_clientWaterScene reste vide ou non-dirty.
+		std::shared_ptr<engine::world::water::WaterScene> m_clientWaterScene;
+		/// Drapeau dirty côté client : mis à true à chaque réception/rechargement
+		/// d'une WaterScene. Reset à false par le rebuild GPU (cf. Engine::Render).
+		bool m_waterClientSceneDirty = false;
 
 		/// M38.1: day/night cycle (time-of-day, sun direction, sky gradient colours).
 		engine::render::DayNightCycle m_dayNight;

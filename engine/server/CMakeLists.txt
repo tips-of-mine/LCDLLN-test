@@ -100,6 +100,8 @@ elseif(UNIX)
     CharacterEnterWorldHandler.cpp
     SessionCharacterMap.cpp
     ChatRelayHandler.cpp
+    chat/ChatSanitizer.cpp
+    chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ChatPayloads.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
@@ -245,6 +247,31 @@ elseif(UNIX)
   target_link_libraries(locale_strings_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
   target_compile_options(locale_strings_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME locale_strings_tests COMMAND locale_strings_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.01 (Phase 2.01a) : ChatSanitizer pure unit tests (no DB)
+  add_executable(chat_sanitizer_tests
+    chat/ChatSanitizerTests.cpp
+    chat/ChatSanitizer.cpp
+  )
+  target_include_directories(chat_sanitizer_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(chat_sanitizer_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(chat_sanitizer_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME chat_sanitizer_tests COMMAND chat_sanitizer_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.01 (Phase 2.01a) : ChatGate tests (mock callbacks ; pas de
+  # DB ni d'AccountStore réel — ChatGate.cpp embarque les helpers SQL et
+  # AccountStore-banned mais les tests injectent directement des
+  # std::function. On link MySQL/DbHelpers à cause des helpers compilés.
+  add_executable(chat_gate_tests
+    chat/ChatGateTests.cpp
+    chat/ChatGate.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(chat_gate_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(chat_gate_tests PRIVATE engine_core spdlog::spdlog ${MYSQL_LIBRARY} pthread)
+  target_compile_options(chat_gate_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME chat_gate_tests COMMAND chat_gate_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests

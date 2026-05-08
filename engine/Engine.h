@@ -30,7 +30,6 @@
 #include "engine/render/TaaJitter.h"
 #include "engine/render/Camera.h"
 #include "engine/render/CascadedShadowMaps.h"
-#include "engine/render/WaterRenderer.h"
 #include "engine/render/UnderwaterPass.h"
 #include "engine/render/DayNightCycle.h"
 #include "engine/render/WeatherSystem.h"
@@ -263,9 +262,6 @@ namespace engine
 		uint32_t m_avatarMaterialId = 0u;
 		engine::render::DecalSystem m_decalSystem;
 		std::vector<engine::render::VisibleDecal> m_visibleDecals;
-
-		/// M37.1: water plane renderer (mesh + reflection/refraction RTs + forward pass).
-		engine::render::WaterRenderer m_waterRenderer;
 
 		/// M37.3: underwater post-effect pass (blue tint, depth fog, blur vignette).
 		engine::render::UnderwaterPass m_underwaterPass;

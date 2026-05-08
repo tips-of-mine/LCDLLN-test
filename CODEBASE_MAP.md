@@ -746,8 +746,8 @@ Pipelines fixés par PR24 puis PR25 (2026-05-06) :
 Si après une régression future un mesh world-space disparaît, vérifier en
 priorité `frontFace` du pipeline concerné. Tous les fix utilisent
 `VK_FRONT_FACE_CLOCKWISE` (au lieu de `_COUNTER_CLOCKWISE`).
-`ShadowMapPass`, `WaterRenderer`, `DecalPass` utilisent encore CCW —
-applicable seulement si on observe des ombres / eau / decals invisibles.
+`ShadowMapPass`, `DecalPass` utilisent encore CCW —
+applicable seulement si on observe des ombres / decals invisibles.
 
 ### Finalisation éditeur (PR25, 2026-05-06)
 

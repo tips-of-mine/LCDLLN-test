@@ -1295,31 +1295,6 @@ namespace engine
 										}
 									}
 
-									// M37.1 — Water renderer (optional: skipped if shaders not found).
-									if (pipelineOk)
-									{
-										const uint32_t w = static_cast<uint32_t>(m_width);
-										const uint32_t h = static_cast<uint32_t>(m_height);
-										std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
-										std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
-										const float waterLevel = static_cast<float>(m_cfg.GetDouble("render.water.level", 0.0));
-										engine::render::WaterParams waterParams{};
-										waterParams.waterLevel     = waterLevel;
-										waterParams.gridResolution = static_cast<uint32_t>(m_cfg.GetInt("render.water.grid_resolution", 32));
-										waterParams.gridHalfSize   = static_cast<float>(m_cfg.GetDouble("render.water.grid_half_size", 256.0));
-										if (!m_waterRenderer.Init(
-											m_vkDeviceContext.GetDevice(),
-											m_vkDeviceContext.GetPhysicalDevice(),
-											w, h,
-											VK_FORMAT_R16G16B16A16_SFLOAT,
-											waterVert.empty() ? nullptr : waterVert.data(), waterVert.size(),
-											waterFrag.empty() ? nullptr : waterFrag.data(), waterFrag.size(),
-											waterParams))
-										{
-											LOG_WARN(Render, "[Boot] WaterRenderer init failed — water surface disabled");
-										}
-									}
-
 									// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
 										// chemin par défaut conventionnel si la clé est absente ou vide.
 										if (pipelineOk && !m_worldEditorExe)
@@ -2734,8 +2709,6 @@ namespace engine
 			m_terrainChunkRenderer.reset();
 		}
 		DestroyTerrainChunkCameraResources();
-		/// M37.1 — water renderer cleanup.
-		m_waterRenderer.Destroy(m_vkDeviceContext.GetDevice());
 		m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
 			if (m_pipeline)

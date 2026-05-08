@@ -328,7 +328,6 @@ add_library(engine_core
   engine/render/DecalPass.cpp
   engine/render/ParticleSystem.cpp
   engine/render/ParticleBillboardPass.cpp
-  engine/render/WaterRenderer.cpp
   engine/render/UnderwaterPass.cpp
   engine/render/DayNightCycle.cpp
   engine/render/WeatherSystem.cpp

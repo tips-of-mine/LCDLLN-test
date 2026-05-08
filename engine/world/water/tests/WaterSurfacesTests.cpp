@@ -1,5 +1,6 @@
 // engine/world/water/tests/WaterSurfacesTests.cpp
 #include "engine/world/water/WaterSurfaces.h"
+#include "engine/world/water/WaterMeshBuilder.h"
 
 #include <cmath>
 #include <cstdio>
@@ -22,6 +23,7 @@ namespace
 	using engine::world::water::WaterScene;
 	using engine::world::water::SaveWaterBin;
 	using engine::world::water::LoadWaterBin;
+	using engine::world::water::ComputeFlowDirections;
 	using engine::math::Vec3;
 
 	bool ApproxEq(float a, float b, float eps = 1e-5f) { return std::fabs(a - b) <= eps; }
@@ -145,6 +147,24 @@ namespace
 		REQUIRE(!LoadWaterBin(std::span<const uint8_t>(bytes), dst, err));
 		REQUIRE(err.find("contentHash") != std::string::npos);
 	}
+
+	void Test_FlowDirection_AlignsWithSlope()
+	{
+		// Rivière 3 nodes descendant en +X
+		RiverInstance r;
+		r.nodes = {
+			RiverNode{ Vec3{ 0, 10, 0}, 4.0f, 1.0f },
+			RiverNode{ Vec3{10,  5, 0}, 4.0f, 1.0f },
+			RiverNode{ Vec3{20,  0, 0}, 4.0f, 1.0f },
+		};
+		auto flows = ComputeFlowDirections(r);
+		REQUIRE(flows.size() == 2);
+		// flow[0] et flow[1] devraient pointer en +X (1, 0, 0) — flow XZ uniquement
+		REQUIRE(ApproxEq(flows[0].x, 1.0f, 1e-3f));
+		REQUIRE(ApproxEq(flows[0].z, 0.0f, 1e-3f));
+		REQUIRE(ApproxEq(flows[1].x, 1.0f, 1e-3f));
+		REQUIRE(ApproxEq(flows[1].z, 0.0f, 1e-3f));
+	}
 }
 
 int main()
@@ -154,5 +174,6 @@ int main()
 	Test_Roundtrip_LakeAndRiver();
 	Test_Load_BadMagic_Fails();
 	Test_Load_BadContentHash_Fails();
+	Test_FlowDirection_AlignsWithSlope();
 	return g_failed;
 }

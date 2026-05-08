@@ -216,7 +216,7 @@ généralisés).
 |---|---|---|---|
 | 0 — Squelette | INDEX vide + design | ✅ Done | `6b24889` |
 | 1 — P1 | 5 fiches (.01-.05) | ✅ Done | `0649d13` |
-| 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | _(en cours de commit)_ |
+| 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | `c82928e` |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ⏳ Pending | — |
 | 3 — P3 | 14 fiches (.29-.42) | ⏳ Pending | — |
 | 4 — P4 | 2 fiches (.44-.45) | ⏳ Pending | — |

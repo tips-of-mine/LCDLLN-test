@@ -59,9 +59,22 @@ namespace engine::editor::world
 			return true;
 		}
 		const std::streamsize size = f.tellg();
-		f.seekg(0);
+		if (size <= 0)
+		{
+			// Fichier vide : traité comme absent (scene reste vide).
+			m_scene.lakes.clear();
+			m_scene.rivers.clear();
+			m_dirty = false;
+			return true;
+		}
+		f.seekg(0, std::ios::beg);
 		std::vector<uint8_t> bytes(static_cast<size_t>(size));
 		f.read(reinterpret_cast<char*>(bytes.data()), size);
+		if (!f.good() && !f.eof())
+		{
+			outError = "WaterDocument::LoadFromDisk: read failed for " + path.string();
+			return false;
+		}
 
 		if (!engine::world::water::LoadWaterBin(
 			std::span<const uint8_t>(bytes), m_scene, outError))

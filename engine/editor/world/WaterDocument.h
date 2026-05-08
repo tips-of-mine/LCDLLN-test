@@ -15,7 +15,9 @@ namespace engine::editor::world
 	class WaterDocument
 	{
 	public:
+		/// Accès mutable à la scene (modification par les outils de l'éditeur).
 		engine::world::water::WaterScene&       Mutable()       { return m_scene; }
+		/// Accès lecture seule à la scene (rendu, sérialisation).
 		const engine::world::water::WaterScene& Get()     const { return m_scene; }
 
 		bool IsDirty() const noexcept { return m_dirty; }

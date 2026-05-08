@@ -260,7 +260,7 @@ namespace engine::world
 		std::ifstream f(fullPath, std::ios::binary | std::ios::ate);
 		if (!f.good()) return nullptr;  // Silencieux si absent
 		const std::streamsize fileSize = f.tellg();
-		f.seekg(0);
+		f.seekg(0, std::ios::beg);
 		if (fileSize <= 0) return nullptr;
 		std::vector<uint8_t> blob(static_cast<size_t>(fileSize));
 		f.read(reinterpret_cast<char*>(blob.data()), fileSize);

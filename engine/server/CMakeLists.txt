@@ -352,6 +352,11 @@ elseif(UNIX)
     shard/vmap/VMapFormat.cpp
     shard/vmap/AABB.cpp)
 
+  # CMANGOS.04 (Phase 2.04b) : MoveSpline runtime + MoveSplineInit builder.
+  lcdlln_add_simple_test(move_spline_tests
+    shard/movement/MoveSplineTests.cpp
+    shard/movement/MoveSpline.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
   add_executable(chat_command_router_tests
     chat/ChatCommandRouterTests.cpp

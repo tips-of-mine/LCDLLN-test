@@ -101,3 +101,55 @@ worker.Stop();  // drain queue puis join
 **Politique queue pleine** : `EnqueueExecute` retourne `false`. Le caller
 décide (drop, retry, log). Ne **jamais** bloquer le tick en attente de
 slot.
+
+## Phase 1b — Globals (CMANGOS.16)
+
+Quatre utilitaires data-driven dans `engine/server/shard/globals/`,
+chargés au boot du shard et consommés par les tickets P2 downstream.
+
+### `ConditionMgr` — prédicats data-driven
+
+Charge `conditions` + `condition_groups`. Évalue par ID via un
+`EvaluationContext` rempli par le caller (loot, quête, AI EventAI...).
+
+**Convention IDs** : `condition_id ∈ [1, 9999]`, `group_id ∈ [10000, ∞)`.
+Le helper `Evaluate(id, ctx)` dispatche sur cette base.
+
+5 ConditionTypes en Phase 1b : `LevelGE`, `LevelLE`, `HasItem`, `ZoneId`,
+`InGroup`. Étendre via PR séparée au fil des besoins downstream.
+
+### `ObjectAccessor` — façade thread-safe
+
+Registre des entités en ligne (Player + Creature) côté shard.
+Inscription au login/spawn via `Register(snapshot)`, désinscription au
+logout/despawn via `Unregister(entityId)`. Lookups : `Find(entityId)`
+(O(1)) et `FindByName(name)` (O(N), case-insensitive).
+
+Thread-safety : `std::shared_mutex` — readers concurrents, writer
+exclusif. Pour les hot paths existants (whisper par nom), continuer
+d'utiliser `SessionCharacterMap`.
+
+### `GraveyardManager` — closest valid graveyard
+
+Charge `graveyards`. `ClosestGraveyard(mapId, pos, faction)` retourne
+le graveyard valide (faction matchée OU neutral) le plus proche.
+Stockage `std::vector` linéaire — N petit (centaines max), scan OK.
+
+### `LocaleStrings` — i18n côté serveur
+
+Charge `locale_strings`. `GetString(stringId, localeId)` avec fallback
+sur `default_locale` (config). Si même default manque, sentinel
+`"[stringId=<id>]"` (jamais empty pour debug).
+
+`Format(stringId, locale, arg0..arg3)` : remplace `{0}/{1}/{2}/{3}`.
+Limité à 4 args en Phase 1b.
+
+### Convention IDs et tables
+
+| Table | Range IDs | Note |
+|---|---|---|
+| `conditions.condition_id` | 1 — 9999 | Atomic predicates |
+| `condition_groups.group_id` | 10000 — ∞ | Composition logique |
+| `graveyards.id` | 1 — ∞ | Pas de range réservé |
+| `locale_strings.string_id` | 1 — ∞ | Pas de range réservé |
+| `locale_strings.locale_id` | 0=fr_FR, 1=en_US | Étendre selon besoin |

@@ -186,5 +186,10 @@
         "delay_thread_queue_size": 1024,
         "prepared_statement_cache_size_per_conn": 64,
         "sql_storage_log_load_durations": true
+    },
+    "globals": {
+        "default_locale": 0,
+        "fallback_locale": 0,
+        "graveyard_default_faction_neutral_radius_m": 500.0
     }
 }

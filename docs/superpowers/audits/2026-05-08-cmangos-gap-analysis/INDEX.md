@@ -55,48 +55,68 @@
 
 ## Synthèse — répartition
 
-> ⏳ _Compteurs remplis à l'issue de l'audit (Batch 5)_
-
 ### Par statut
 
 | Statut | Nb tickets | % |
 |---|---|---|
-| ✅ Fait | _(à remplir)_ | _(à remplir)_ |
-| 🟡 Partiel | _(à remplir)_ | _(à remplir)_ |
-| ❌ Absent | _(à remplir)_ | _(à remplir)_ |
-| 🔄 En cours | _(à remplir)_ | _(à remplir)_ |
+| ✅ Fait | 1 | 2% |
+| 🟡 Partiel | 16 | 36% |
+| ❌ Absent | 27 | 61% |
+| 🔄 En cours | 0 | 0% |
 
 ### Par recommandation
 
 | Reco | Nb tickets | % |
 |---|---|---|
-| ✅ Faire en l'état | _(à remplir)_ | _(à remplir)_ |
-| 🔧 Adapter et faire | _(à remplir)_ | _(à remplir)_ |
-| ⏸ Reporter | _(à remplir)_ | _(à remplir)_ |
-| 🟢 Déjà couvert | _(à remplir)_ | _(à remplir)_ |
-| 🚫 Ne pas faire | _(à remplir)_ | _(à remplir)_ |
+| ✅ Faire en l'état | 8 | 18% |
+| 🔧 Adapter et faire | 25 | 57% |
+| ⏸ Reporter | 8 | 18% |
+| 🟢 Déjà couvert | 1 | 2% |
+| 🚫 Ne pas faire | 2 | 5% |
 
 ### Par effort
 
-| Effort | Nb tickets |
+| Effort | Nb tickets approximatif |
 |---|---|
-| S | _(à remplir)_ |
-| M | _(à remplir)_ |
-| L | _(à remplir)_ |
-| XL | _(à remplir)_ |
+| S / S-M | ~7 (Trade, Platform crash dump, Skills hooks, Util, Weather, GMTickets, Social ignored) |
+| M / M-L | ~22 |
+| L | ~12 |
+| XL | 3 (Entities, Arena, Maps) |
 
 ---
 
 ## Top reco court terme
 
-> ⏳ _Rempli à l'issue de l'audit (Batch 5)_
+5 tickets prioritaires à attaquer **en premier**, avec rationale :
 
-3 à 5 tickets prioritaires à attaquer en premier, avec rationale en
-1 phrase chacun.
+1. **[CMANGOS.13 Database](./CMANGOS.13.md)** — `SQLStorage` cache RAM
+   typed + `SqlDelayThread` async + `SqlPreparedStatement`. **Déblocant
+   amont** pour 5+ P2 downstream (Loot, AI, AuctionHouse V2, DBScripts,
+   Spells). Aucune dépendance bloquante. Effort M-L. ✅ À attaquer en
+   premier.
 
-1. _(à remplir)_
-2. _(à remplir)_
-3. _(à remplir)_
+2. **[CMANGOS.16 Globals/Conditions](./CMANGOS.16.md)** — `ConditionMgr`
+   data-driven + `ObjectAccessor` + `LocaleStrings` + `GraveyardManager`.
+   **Déblocant amont** pour 5 P2 downstream (Loot, Quests, DBScripts, AI
+   EventAI, Spells). Effort M-L. ✅ À attaquer en parallèle de CMANGOS.13.
+
+3. **[CMANGOS.06 Accounts](./CMANGOS.06.md)** — étendre le `role`
+   ENUM('player','admin') existant en hiérarchie 5 niveaux + `HasLowerSecurity`
+   + `RequireMinRole` + audit. **Pré-requis** explicite pour CMANGOS.01
+   Chat (`ChatCommandRouter`) et tout outillage GM. Effort M.
+
+4. **[CMANGOS.01 Chat](./CMANGOS.01.md)** — déblocant MVP **explicite**.
+   `ChatRelayHandler` master existe mais sans `ChatGate`/`ChatSanitizer`.
+   **Risque sécurité actif** si chat ouvert publiquement (item link
+   forging, hyperlink fake). Dépend de CMANGOS.06. Effort L.
+
+5. **[CMANGOS.05 vmap](./CMANGOS.05.md)** — LOS/height server-side.
+   Déblocant pour combat à distance crédible, anticheat, donjons
+   (portes), spawn de loot au sol. **Plus gros ROI réutilisable**
+   selon `CMANGOS_ANALYSIS.md`. Effort L.
+
+**Plan d'attaque suggéré** : (13 + 16 en parallèle) → (06) → (01) →
+(05). Cumul ~3-4 sprints pour ces 5 tickets, débloque ~10 P2 downstream.
 
 ---
 
@@ -172,41 +192,187 @@
 
 ## Ordre d'intégration recommandé (recalibré)
 
-> ⏳ _Rempli à l'issue de l'audit (Batch 5), avec rationale détaillée_
+L'ordre du `tickets/CMANGOS/CMANGOS.INDEX.md` est théorique. Voici
+l'ordre **recalibré selon l'état actuel du code** et les dépendances
+détectées.
 
-L'ordre du `tickets/CMANGOS/CMANGOS.INDEX.md` est théorique. Cette
-section proposera une version recalibrée selon l'état actuel du code et
-les dépendances détectées.
+### Phase 1 — Foundations (déblocants amont, parallèle possible)
 
-### Phase 1 — Foundations (P1 + pré-requis)
+Tous **sans dépendance bloquante non livrée** :
 
-_(à remplir)_
+1. **CMANGOS.13 Database** _(SQLStorage + async + prepared)_
+2. **CMANGOS.16 Globals/Conditions** _(ConditionMgr + ObjectAccessor +
+   LocaleStrings + GraveyardManager)_
+3. **CMANGOS.06 Accounts** _(rôles 5 niveaux + HasLowerSecurity)_
 
-### Phase 2 — Squelette monde (P1 reste)
+Ces 3 tickets **débloquent ~10 P2 downstream**. Faire en parallèle de
+préférence.
 
-_(à remplir)_
+### Phase 2 — Squelette monde (P1 + chat MVP)
 
-### Phase 3 — Gameplay essentiel (P2 sélectif)
+Ouvrent la simulation shard moderne :
 
-_(à remplir)_
+4. **CMANGOS.01 Chat** _(déblocant MVP + sécurité — dépend de .06)_
+5. **CMANGOS.02 Entities** _(cherrypick : ObjectGuid 64-bit +
+   UpdateFields/UpdateMask delta — option A pragmatique)_
+6. **CMANGOS.03 Grids** _(étendre `SpatialPartition` avec Visitor +
+   GridState machine)_
+7. **CMANGOS.05 vmap** _(LOS + height shard, gros ROI)_
+8. **CMANGOS.04 Movement** _(splines server-auth pour NPCs)_
 
-### Phase 4 — Ajouts de valeur (P3)
+### Phase 3 — Gameplay essentiel
 
-_(à remplir)_
+Le cœur PvE/PvP joueur. Ordre par dépendances :
 
-### Phase 5 — Optionnels (P4)
+9. **CMANGOS.18 Mails** _(déblocant AH/Arena/quêtes offline)_
+10. **CMANGOS.25 Social** _(étendre FriendSystem avec ignored —
+    intégration ChatGate)_
+11. **CMANGOS.20 MotionGenerators** _(stack + navmesh)_
+12. **CMANGOS.07 AI** _(CreatureAI + EventAI DB-driven)_
+13. **CMANGOS.11 Combat** _(audit M14, ajouter ThreatManager +
+    HostileRefManager + DuelHandler)_
+14. **CMANGOS.17 Loot** _(templates DB + groups + reference + conditions)_
+15. **CMANGOS.14 DBScripts** _(DSL ~30 commandes contenu narratif)_
+16. **CMANGOS.23 Quests** _(audit M15.1, intègre Conditions + DBScripts +
+    Loot + Mails)_
+17. **CMANGOS.26 Spells** _(audit M28+M31, ajouter ProcEvent +
+    SpellFamily + Stacking isolé)_
+18. **CMANGOS.24 Reputation** _(faction template matrix + bitmask +
+    spillover)_
+19. **CMANGOS.28 World** _(WorldStateExpression DSL leverage éditorial)_
+20. **CMANGOS.19 Maps** _(adapter — instanceId + MapPersistentState
+    minimal, multi-thread reporté)_
+21. **CMANGOS.21 Guilds** _(étendre M32.3 livraison avec banque +
+    eventlog)_
 
-_(à remplir)_
+### Phase 4 — Ajouts à valeur (P3 sélectifs)
+
+Ops + polish + extensions :
+
+22. **CMANGOS.34 Metric** _(observabilité prod, **avant launch**)_
+23. **CMANGOS.37 Platform crash dump** _(**avant launch**)_
+24. **CMANGOS.35 Multithreading Messager** _(opportune)_
+25. **CMANGOS.10 BattleGround** _(si donjons/colisée roadmap)_
+26. **CMANGOS.22 Pools** _(rare spawns weighted)_
+27. **CMANGOS.40 Tools** _(Formulas centralisé prioritaire, DBCleaner,
+    PlayerDump opportune)_
+28. **CMANGOS.27 Trade** _(audit léger — déjà 90% fait)_
+29. **CMANGOS.42 Weather** _(driver serveur si M100.26 livré côté
+    rendu)_
+30. **CMANGOS.39 Skills** _(hooks craft uniquement si craft central)_
+31. **CMANGOS.12 Server PacketLog** _(prio haute pour debug prod,
+    OpcodeRegistry différé)_
+
+### Phase 5 — Optionnels et polish post-launch
+
+32. **CMANGOS.08 Arena** _(après chaîne PvP : .10 BG + .18 Mails +
+    .13 DB livrés)_
+33. **CMANGOS.29 Anticheat** gameplay _(quand exploits apparaissent)_
+34. **CMANGOS.30 Cinematics** _(polish narratif)_
+35. **CMANGOS.31 GameEvents** _(live ops saisonniers)_
+36. **CMANGOS.32 GMTickets** _(post-launch support)_
+37. **CMANGOS.33 LFG** _(quand donjons matures)_
+38. **CMANGOS.36 OutdoorPvP** _(polish PvP zone)_
+39. **CMANGOS.38 PlayerBot** _(load test scale-up)_
+40. **CMANGOS.41 Util** _(opportune)_
+
+### Skip (Ne pas faire par défaut)
+
+41. **CMANGOS.44 AuctionHouseBot** _(activer uniquement si low-pop avéré)_
+42. **CMANGOS.45 Auth SRP6** _(hash + TLS suffisant, refonte non
+    justifiée)_
 
 ---
 
 ## Notes globales
 
-> ⏳ _Rempli à l'issue de l'audit (Batch 5)_
+Observations transversales relevées en analysant les 44 tickets :
 
-Observations transversales relevées en analysant les 44 tickets
-(ex: dépendances communes, patterns récurrents, points de friction
-généralisés).
+### 1. Trois déblocants amont multipliers
+
+Trois tickets émergent comme **multi-déblocants** :
+- **CMANGOS.13 Database** (SQLStorage cache) → 5+ P2 downstream
+- **CMANGOS.16 Globals/Conditions** (ConditionMgr) → 5+ P2 downstream
+- **CMANGOS.06 Accounts** (rôles 5 niveaux) → 3+ P2 downstream
+
+Faire ces 3 tickets **avant** la majorité des autres P2 est le meilleur
+levier de productivité. Sans eux, chaque ticket downstream réimplémente
+ses propres versions de cache/predicate/role → dette accumulée.
+
+### 2. Conflit architectural OOP cmangos vs data-driven LCDLLN
+
+Plusieurs tickets reposent sur la **hiérarchie OOP profonde** cmangos
+(`Object → WorldObject → Unit → Player`) qui diverge de l'archi
+**data-driven JSON** LCDLLN (`SpawnerRuntime`, archetypes).
+
+Tickets concernés : **.02 Entities, .19 Maps, .23 Quests, .26 Spells**.
+
+→ **Décision archi à valider en amont**. Recommandation par défaut :
+**Adapter** (cherrypick patterns utiles : ObjectGuid, UpdateFields,
+std::variant Quests) plutôt que porter la hiérarchie complète.
+
+### 3. Audit milestones LCDLLN existantes obligatoire
+
+Ces milestones **livrent ou couvrent partiellement** des tickets CMANGOS,
+auditer l'état avant tout code :
+
+| Milestone LCDLLN | Couvre CMANGOS | Action |
+|---|---|---|
+| M14.1/.2 Combat + Aggro | .11 Combat | Auditer + cherrypick |
+| M15.1 Quests JSON | .23 Quests | Décision JSON vs SQL |
+| M15.2 Spawners | .07 AI, .22 Pools | Étendre |
+| M28+M31 Skills/Buffs | .26 Spells | Auditer + ajouter ProcEvents |
+| M32.1 Friends | .25 Social | Étendre avec ignored |
+| M32.3 Guilds | .21 Guilds | Compléter banque + eventlog |
+| M33.1/.2 Auth | .45 Auth SRP6 | Skip (suffisant) |
+| M35.3 Trade | .27 Trade | ✅ Déjà couvert |
+| M35.4 AuctionHouse | .09 AH | Étendre V2 multi-house |
+| M44.1 Migrations | .13 Database | OK base, ajouter SQLStorage |
+| M100.25 Season | .31 GameEvents | Distinct (visuel vs gameplay) |
+| M100.26-28 Weather | .42 Weather | Côté rendu OK, driver shard absent |
+
+### 4. Risques wire-breaking groupables
+
+~12 tickets impliquent un bump `kProtocolVersion` + redéploiement
+lock-step master+shard+client. **Stratégie** : grouper plusieurs
+opcodes dans une même release, pour ne bumper qu'**une fois par
+sprint** (au lieu d'un bump par PR).
+
+### 5. Migrations DB systématiques
+
+~15 tickets ajoutent des tables. Toutes doivent être **idempotentes**
+(convention LCDLLN respectée par les 40+ migrations existantes :
+`IF NOT EXISTS`, vérification colonne avant ALTER, etc.).
+
+### 6. Une seule fiche ✅ Fait
+
+**CMANGOS.27 Trade** est le seul ticket marqué "déjà couvert"
+(`TradeSystem` 802 lignes, M35.3 livré). Tous les autres sont 🟡
+Partiel ou ❌ Absent.
+
+### 7. Volume de travail réaliste
+
+Effort cumulé : ~22 tickets en L, 3 en XL, ~12 en M, ~7 en S/S-M →
+**estimation grossière 25-30 sprints** si tout est attaqué. **Priorisation
+indispensable** : la chaîne Phase 1 + Phase 2 (~10 tickets) suffit pour
+un MVP serveur joué.
+
+### 8. Pas de redéploiement serveur pour cet audit
+
+Conformément à la règle CLAUDE.md du projet, l'audit est purement
+documentaire — **aucun redéploiement serveur master ou shard requis**
+pour les commits de cet audit. Les recommandations downstream
+mentionnent les redéploiements requis quand applicable (wire-breaking).
+
+### 9. Suite recommandée
+
+Cet audit livre l'**état des lieux**. Suite naturelle :
+- **Option A** : créer un plan d'implémentation
+  (`docs/superpowers/plans/2026-05-NN-cmangos-phase-1.md`) pour les 3
+  tickets Phase 1 (CMANGOS.13 + .16 + .06), via la skill
+  `writing-plans`. Effort cumulé estimé : 1-2 sprints.
+- **Option B** : laisser cet audit comme référence et piocher au fil
+  des sprints sans plan global.
 
 ---
 
@@ -219,8 +385,8 @@ généralisés).
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | `c82928e` |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ✅ Done | `8454aaa` |
 | 3 — P3 | 14 fiches (.29-.42) | ✅ Done | `4359521` |
-| 4 — P4 | 2 fiches (.44-.45) | ✅ Done | _(en cours de commit)_ |
-| 5 — Consolidation | INDEX rempli | ⏳ Pending | — |
+| 4 — P4 | 2 fiches (.44-.45) | ✅ Done | `955f410` |
+| 5 — Consolidation | INDEX rempli | ✅ Done | _(en cours de commit)_ |
 
 ---
 

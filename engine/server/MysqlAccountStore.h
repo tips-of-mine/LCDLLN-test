@@ -127,6 +127,14 @@ namespace engine::server
 		/// @param code       Code de vérification (chaîne aléatoire, ex. UUID ou token hex).
 		void PersistEmailVerificationCode(uint64_t account_id, const std::string& code) override;
 
+		/// Retourne le rôle du compte via SELECT role FROM accounts WHERE id=?.
+		/// CMANGOS.06 (Phase 1c).
+		AccountRole GetRole(uint64_t account_id) override;
+
+		/// Met à jour le rôle d'un compte via UPDATE accounts SET role=? WHERE id=?.
+		/// Refuse role=Console (runtime-only). CMANGOS.06 (Phase 1c).
+		bool SetRole(uint64_t account_id, AccountRole role) override;
+
 	private:
 		/// Pointeur non-owning vers le ConnectionPool MySQL master.
 		/// Null uniquement si le constructeur a reçu nullptr — comportement indéfini si accédé après.

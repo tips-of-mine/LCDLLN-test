@@ -153,6 +153,19 @@ elseif(UNIX)
   target_compile_options(db_layer_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME db_layer_tests COMMAND db_layer_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.06 (Phase 1c) : AccountRoleService tests (no DB required)
+  add_executable(account_role_service_tests
+    AccountRoleServiceTests.cpp
+    AccountRoleService.cpp
+    AccountRole.cpp
+    InMemoryAccountStore.cpp
+    AccountValidation.cpp
+  )
+  target_include_directories(account_role_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(account_role_service_tests PRIVATE engine_core engine_auth OpenSSL::SSL spdlog::spdlog pthread)
+  target_compile_options(account_role_service_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME account_role_service_tests COMMAND account_role_service_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # CMANGOS.13 (Phase 1a) : SQLStorage<T> tests
   add_executable(sql_storage_tests db/SQLStorageTests.cpp db/ConnectionPool.cpp db/DbHelpers.cpp)
   target_include_directories(sql_storage_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})

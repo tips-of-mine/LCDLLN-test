@@ -30,6 +30,7 @@ if(WIN32)
     UdpTransport.cpp
     TickScheduler.cpp
     SpatialPartition.cpp
+    GridState.cpp
     ZoneTransitions.cpp
     LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
@@ -292,6 +293,17 @@ elseif(UNIX)
   target_link_libraries(bih_tests PRIVATE engine_core spdlog::spdlog pthread)
   target_compile_options(bih_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME bih_tests COMMAND bih_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.03 (Phase 2.03a) : GridStateTracker pure tests (no DB)
+  add_executable(grid_state_tests
+    GridStateTests.cpp
+    GridState.cpp
+    SpatialPartition.cpp
+  )
+  target_include_directories(grid_state_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(grid_state_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(grid_state_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME grid_state_tests COMMAND grid_state_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests

@@ -10,7 +10,7 @@
 #include <string_view>
 #include <unordered_map>
 
-struct MYSQL;
+#include <mysql.h>
 
 namespace engine::server::db
 {
@@ -78,4 +78,64 @@ namespace engine::server::db
 		std::unordered_map<uint32_t, T> m_entries;
 		bool m_loaded = false;
 	};
+
+	// ─────────────── Implémentation inline (templated, doit rester en header) ───────────────
+
+	template <typename T>
+	bool SQLStorage<T>::Load(ConnectionPool& pool, std::string_view tableName,
+		std::string_view pkColumn, RowMapper mapper)
+	{
+		if (m_loaded)
+		{
+			// Spec : Load() doit être appelé une seule fois. Sinon, le caller
+			// a probablement un bug de séquençage. On échoue plutôt que d'écraser
+			// silencieusement le cache.
+			return false;
+		}
+
+		auto guard = pool.Acquire();
+		MYSQL* mysql = guard.get();
+		if (!mysql)
+			return false;
+
+		// Construit "SELECT * FROM <table> ORDER BY <pk>" — quoting backtick pour
+		// supporter les noms réservés.
+		std::string sql;
+		sql.reserve(64 + tableName.size() + pkColumn.size());
+		sql.append("SELECT * FROM `");
+		sql.append(tableName);
+		sql.append("` ORDER BY `");
+		sql.append(pkColumn);
+		sql.append("`");
+
+		if (mysql_query(mysql, sql.c_str()) != 0)
+			return false;
+
+		MYSQL_RES* res = mysql_store_result(mysql);
+		if (!res)
+			return false;
+
+		MYSQL_ROW row;
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			if (!row[0])
+				continue;  // PK NULL : ligne corrompue, on saute.
+			T entry = mapper(row);
+			const uint32_t pk = static_cast<uint32_t>(std::strtoul(row[0], nullptr, 10));
+			m_entries.emplace(pk, std::move(entry));
+		}
+		mysql_free_result(res);
+
+		m_loaded = true;
+		return true;
+	}
+
+	template <typename T>
+	const T* SQLStorage<T>::Find(uint32_t pk) const
+	{
+		auto it = m_entries.find(pk);
+		if (it == m_entries.end())
+			return nullptr;
+		return &it->second;
+	}
 }

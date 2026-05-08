@@ -373,6 +373,7 @@ add_library(engine_core
   engine/world/collision/CollisionProxy.cpp
   engine/world/collision/AutoFitProxy.cpp
   engine/world/collision/ProxyWireframe.cpp
+  engine/world/water/WaterSurfaces.cpp
   engine/world/terrain/LayerPalette.cpp
   engine/world/terrain/SplatMap.cpp
   engine/world/terrain/TerrainChunk.cpp
@@ -980,6 +981,17 @@ if(WIN32)
     target_compile_options(proxy_wireframe_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME proxy_wireframe_tests COMMAND proxy_wireframe_tests)
+endif()
+
+# M100.13 — Tests WaterSurfaces serialization (Phase 4a).
+if(WIN32)
+  add_executable(water_surfaces_tests engine/world/water/tests/WaterSurfacesTests.cpp)
+  target_include_directories(water_surfaces_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_surfaces_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_surfaces_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_surfaces_tests COMMAND water_surfaces_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

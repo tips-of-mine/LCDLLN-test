@@ -160,6 +160,18 @@ elseif(UNIX)
   target_compile_options(sql_storage_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME sql_storage_tests COMMAND sql_storage_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.13 (Phase 1a) : SqlPreparedStatement + cache tests
+  add_executable(sql_prepared_statement_tests
+    db/SqlPreparedStatementTests.cpp
+    db/SqlPreparedStatement.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(sql_prepared_statement_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(sql_prepared_statement_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(sql_prepared_statement_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME sql_prepared_statement_tests COMMAND sql_prepared_statement_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

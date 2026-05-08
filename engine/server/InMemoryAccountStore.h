@@ -32,6 +32,8 @@ namespace engine::server
 		bool SetEmailVerified(uint64_t account_id) override;
 		bool UpdatePasswordHash(uint64_t account_id, std::string_view new_final_hash) override;
 		void PersistEmailVerificationCode(uint64_t account_id, const std::string& code) override;
+		AccountRole GetRole(uint64_t account_id) override;
+		bool SetRole(uint64_t account_id, AccountRole role) override;
 
 	private:
 		mutable std::recursive_mutex m_mutex;

@@ -8,6 +8,7 @@
 #include "engine/world/terrain/SplatMap.h"
 #include "engine/world/terrain/TerrainChunk.h"
 #include "engine/world/terrain/TerrainLodChain.h"
+#include "engine/world/water/WaterSurfaces.h"
 
 #include <array>
 #include <cmath>
@@ -589,6 +590,40 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteSplatMap: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteWater(std::string_view outputRootDir,
+		const engine::world::water::WaterScene& scene, std::string& outError)
+	{
+		const std::filesystem::path dir =
+			std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteWater: mkdir failed: " + ec.message();
+			return false;
+		}
+
+		std::vector<uint8_t> bytes;
+		if (!engine::world::water::SaveWaterBin(scene, bytes, outError))
+			return false;
+
+		const std::filesystem::path file = dir / "water.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteWater: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteWater: write failed: " + file.string();
 			return false;
 		}
 		return true;

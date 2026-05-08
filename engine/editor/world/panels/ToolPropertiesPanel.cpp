@@ -1,10 +1,13 @@
 #include "engine/editor/world/panels/ToolPropertiesPanel.h"
 
+#include "engine/editor/world/LakeTool.h"
+#include "engine/editor/world/RiverTool.h"
 #include "engine/editor/world/SplatPaintTool.h"
 #include "engine/editor/world/StampLibrary.h"
 #include "engine/editor/world/TerrainBrush.h"
 #include "engine/editor/world/TerrainSculptTool.h"
 #include "engine/editor/world/TerrainStampTool.h"
+#include "engine/editor/world/WaterDocument.h"
 #include "engine/editor/world/WorldEditorShell.h"
 
 #if defined(_WIN32)
@@ -187,6 +190,183 @@ namespace engine::editor::world::panels
 	}
 #endif
 
+	namespace
+	{
+		// M100.13 — État persistant entre frames pour le mini-canvas 2D Lake/River.
+		// Un état partagé OK car les deux outils ne sont pas actifs simultanément.
+		struct WaterCanvasState
+		{
+			float boundsHalfMeters = 50.0f;
+			float centerWorldX = 0.0f;
+			float centerWorldZ = 0.0f;
+		};
+
+		// M100.13 — Events souris du mini-canvas 2D, retournés à la frame.
+		struct WaterCanvasInput
+		{
+			bool   leftClicked  = false;
+			bool   rightClicked = false;
+			float  worldX = 0.0f;
+			float  worldZ = 0.0f;
+		};
+
+		/// Convertit pixel canvas (0..W, 0..H) → coords monde XZ.
+		void PixelToWorld(const WaterCanvasState& s, float w, float h, float px, float py,
+			float& outX, float& outZ)
+		{
+			const float fx = (px / w) * 2.0f - 1.0f;
+			const float fy = (py / h) * 2.0f - 1.0f;
+			outX = s.centerWorldX + fx * s.boundsHalfMeters;
+			outZ = s.centerWorldZ - fy * s.boundsHalfMeters;
+		}
+
+		/// Convertit coords monde XZ → pixel canvas.
+		void WorldToPixel(const WaterCanvasState& s, float w, float h, float worldX, float worldZ,
+			float& outPx, float& outPy)
+		{
+			const float fx = (worldX - s.centerWorldX) / s.boundsHalfMeters;
+			const float fy = (s.centerWorldZ - worldZ) / s.boundsHalfMeters;
+			outPx = (fx * 0.5f + 0.5f) * w;
+			outPy = (fy * 0.5f + 0.5f) * h;
+		}
+
+		/// M100.13 — Rend le canvas 2D top-down dans une ChildWindow ImGui.
+		/// Affiche existing scene en gris + currentPolygon en jaune + currentNodes
+		/// en cyan. Retourne les events souris (LMB add, RMB cancel).
+		WaterCanvasInput RenderTopDownCanvas(
+			WaterCanvasState& state,
+			const engine::world::water::WaterScene& existingScene,
+			const std::vector<engine::math::Vec3>* currentPolygon,
+			const std::vector<engine::world::water::RiverNode>* currentNodes)
+		{
+			WaterCanvasInput input;
+
+#if defined(_WIN32)
+			ImGui::SliderFloat("Bounds (m)", &state.boundsHalfMeters, 5.0f, 500.0f, "%.1f");
+			ImGui::SameLine();
+			if (ImGui::Button("Recenter"))
+			{
+				state.centerWorldX = 0.0f;
+				state.centerWorldZ = 0.0f;
+			}
+
+			const ImVec2 canvasSize{ 300.0f, 300.0f };
+			ImGui::BeginChild("##waterCanvas", canvasSize, true,
+				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			const ImVec2 canvasMin = ImGui::GetCursorScreenPos();
+			const ImVec2 contentSize = ImGui::GetContentRegionAvail();
+			const float w = contentSize.x;
+			const float h = contentSize.y;
+
+			ImGui::InvisibleButton("##canvasInteract", contentSize);
+			const bool hovered = ImGui::IsItemHovered();
+			if (hovered)
+			{
+				const ImVec2 mp = ImGui::GetIO().MousePos;
+				const float px = mp.x - canvasMin.x;
+				const float py = mp.y - canvasMin.y;
+				float wx = 0.0f, wz = 0.0f;
+				PixelToWorld(state, w, h, px, py, wx, wz);
+				input.worldX = wx;
+				input.worldZ = wz;
+				ImGui::SetTooltip("world: (%.1f, %.1f)", wx, wz);
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))  input.leftClicked = true;
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) input.rightClicked = true;
+			}
+
+			ImDrawList* dl = ImGui::GetWindowDrawList();
+
+			// Croix au centre (origine monde)
+			float cx = 0.0f, cy = 0.0f;
+			WorldToPixel(state, w, h, 0.0f, 0.0f, cx, cy);
+			dl->AddLine(ImVec2(canvasMin.x + cx - 5, canvasMin.y + cy),
+			            ImVec2(canvasMin.x + cx + 5, canvasMin.y + cy),
+			            IM_COL32(255, 255, 255, 100), 1.0f);
+			dl->AddLine(ImVec2(canvasMin.x + cx, canvasMin.y + cy - 5),
+			            ImVec2(canvasMin.x + cx, canvasMin.y + cy + 5),
+			            IM_COL32(255, 255, 255, 100), 1.0f);
+
+			auto drawPolygonClosed = [&](const std::vector<engine::math::Vec3>& poly, ImU32 color)
+			{
+				if (poly.size() < 2) return;
+				for (size_t i = 0; i < poly.size(); ++i)
+				{
+					const auto& a = poly[i];
+					const auto& b = poly[(i + 1) % poly.size()];
+					float ax, ay, bx, by;
+					WorldToPixel(state, w, h, a.x, a.z, ax, ay);
+					WorldToPixel(state, w, h, b.x, b.z, bx, by);
+					dl->AddLine(ImVec2(canvasMin.x + ax, canvasMin.y + ay),
+					            ImVec2(canvasMin.x + bx, canvasMin.y + by),
+					            color, 1.5f);
+				}
+				for (const auto& v : poly)
+				{
+					float px, py;
+					WorldToPixel(state, w, h, v.x, v.z, px, py);
+					dl->AddCircleFilled(ImVec2(canvasMin.x + px, canvasMin.y + py), 3.0f, color);
+				}
+			};
+
+			auto drawPolyline = [&](const std::vector<engine::math::Vec3>& nodes, ImU32 color)
+			{
+				for (size_t i = 0; i + 1 < nodes.size(); ++i)
+				{
+					const auto& a = nodes[i];
+					const auto& b = nodes[i + 1];
+					float ax, ay, bx, by;
+					WorldToPixel(state, w, h, a.x, a.z, ax, ay);
+					WorldToPixel(state, w, h, b.x, b.z, bx, by);
+					dl->AddLine(ImVec2(canvasMin.x + ax, canvasMin.y + ay),
+					            ImVec2(canvasMin.x + bx, canvasMin.y + by),
+					            color, 1.5f);
+				}
+				for (const auto& v : nodes)
+				{
+					float px, py;
+					WorldToPixel(state, w, h, v.x, v.z, px, py);
+					dl->AddCircleFilled(ImVec2(canvasMin.x + px, canvasMin.y + py), 3.0f, color);
+				}
+			};
+
+			// Existing lakes en gris clair
+			for (const auto& lake : existingScene.lakes)
+				drawPolygonClosed(lake.polygon, IM_COL32(180, 180, 180, 200));
+
+			// Existing rivers en gris foncé
+			for (const auto& river : existingScene.rivers)
+			{
+				std::vector<engine::math::Vec3> positions;
+				positions.reserve(river.nodes.size());
+				for (const auto& n : river.nodes) positions.push_back(n.position);
+				drawPolyline(positions, IM_COL32(140, 140, 180, 200));
+			}
+
+			// Current polygon (lake en cours) en jaune
+			if (currentPolygon && !currentPolygon->empty())
+				drawPolygonClosed(*currentPolygon, IM_COL32(255, 220, 80, 255));
+
+			// Current river nodes en cyan
+			if (currentNodes && !currentNodes->empty())
+			{
+				std::vector<engine::math::Vec3> positions;
+				positions.reserve(currentNodes->size());
+				for (const auto& n : *currentNodes) positions.push_back(n.position);
+				drawPolyline(positions, IM_COL32(80, 220, 255, 255));
+			}
+
+			ImGui::EndChild();
+#else
+			(void)state; (void)existingScene; (void)currentPolygon; (void)currentNodes;
+#endif
+			return input;
+		}
+
+		// M100.13 — State persistant partagé entre Lake et River (ne sont pas actifs
+		// en même temps).
+		WaterCanvasState g_waterCanvasState;
+	}
+
 	void ToolPropertiesPanel::RefreshStampLibrary()
 	{
 		m_stampLibrary = engine::editor::world::EnumerateStampLibrary(
@@ -197,6 +377,127 @@ namespace engine::editor::world::panels
 		{
 			m_stampLibrarySelected = 0;
 		}
+	}
+
+	void ToolPropertiesPanel::RenderLakeParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::LakeTool& tool)
+	{
+#if defined(_WIN32)
+		ImGui::Text("Lake Tool — M100.13");
+		ImGui::Separator();
+
+		ImGui::Text("Default values for next lake :");
+		ImGui::SliderFloat("Water Level Y", &tool.MutableWaterLevelY(), -50.0f, 50.0f, "%.3f");
+		ImGui::ColorEdit3("Bottom Color", &tool.MutableBottomColor().x);
+		ImGui::SliderFloat("Turbidity", &tool.MutableTurbidity(), 0.0f, 1.0f, "%.2f");
+		ImGui::Separator();
+
+		ImGui::Text("Current polygon : %zu points", tool.GetPointCount());
+		const bool canClose = tool.GetPointCount() >= 3;
+		ImGui::BeginDisabled(!canClose);
+		if (ImGui::Button("Close polygon (commit lake)"))
+			tool.ClosePolygon();
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+			tool.Cancel();
+		ImGui::Separator();
+
+		ImGui::Text("Top-Down Canvas (LMB add point, RMB cancel)");
+		const auto& currentPoints = tool.GetCurrentPoints();
+		const auto canvasInput = RenderTopDownCanvas(
+			g_waterCanvasState,
+			shell.GetWaterDocument().Get(),
+			&currentPoints,
+			nullptr);
+		if (canvasInput.leftClicked)
+			tool.AddPoint(canvasInput.worldX, canvasInput.worldZ);
+		if (canvasInput.rightClicked)
+			tool.Cancel();
+
+		ImGui::Separator();
+		ImGui::Text("Existing lakes (%zu) :", shell.GetWaterDocument().Get().lakes.size());
+		if (ImGui::BeginTable("##lakes", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+		{
+			ImGui::TableSetupColumn("Name");
+			ImGui::TableSetupColumn("Pts", ImGuiTableColumnFlags_WidthFixed, 50);
+			ImGui::TableSetupColumn("Y-level", ImGuiTableColumnFlags_WidthFixed, 70);
+			ImGui::TableSetupColumn("");
+			ImGui::TableHeadersRow();
+			const auto& lakes = shell.GetWaterDocument().Get().lakes;
+			for (size_t i = 0; i < lakes.size(); ++i)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(lakes[i].name.c_str());
+				ImGui::TableSetColumnIndex(1); ImGui::Text("%zu", lakes[i].polygon.size());
+				ImGui::TableSetColumnIndex(2); ImGui::Text("%.1f", lakes[i].waterLevelY);
+				ImGui::TableSetColumnIndex(3); ImGui::TextDisabled("(no del)");
+			}
+			ImGui::EndTable();
+		}
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
+	void ToolPropertiesPanel::RenderRiverParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::RiverTool& tool)
+	{
+#if defined(_WIN32)
+		ImGui::Text("River Tool — M100.13");
+		ImGui::Separator();
+
+		ImGui::Text("Default values for next node :");
+		ImGui::SliderFloat("Width (m)", &tool.MutableDefaultWidth(), 0.5f, 30.0f, "%.2f");
+		ImGui::SliderFloat("Depth (m)", &tool.MutableDefaultDepth(), 0.1f, 10.0f, "%.2f");
+		ImGui::Separator();
+
+		ImGui::Text("Current river : %zu nodes", tool.GetNodeCount());
+		const bool canEnd = tool.GetNodeCount() >= 2;
+		ImGui::BeginDisabled(!canEnd);
+		if (ImGui::Button("End spline (commit river)"))
+			tool.EndSpline();
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+			tool.Cancel();
+		ImGui::Separator();
+
+		ImGui::Text("Top-Down Canvas (LMB add node, RMB cancel)");
+		const auto& currentNodes = tool.GetCurrentNodes();
+		const auto canvasInput = RenderTopDownCanvas(
+			g_waterCanvasState,
+			shell.GetWaterDocument().Get(),
+			nullptr,
+			&currentNodes);
+		if (canvasInput.leftClicked)
+			tool.AddNode(canvasInput.worldX, canvasInput.worldZ);
+		if (canvasInput.rightClicked)
+			tool.Cancel();
+
+		ImGui::Separator();
+		ImGui::Text("Existing rivers (%zu) :", shell.GetWaterDocument().Get().rivers.size());
+		if (ImGui::BeginTable("##rivers", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+		{
+			ImGui::TableSetupColumn("Name");
+			ImGui::TableSetupColumn("Nodes", ImGuiTableColumnFlags_WidthFixed, 60);
+			ImGui::TableSetupColumn("");
+			ImGui::TableHeadersRow();
+			const auto& rivers = shell.GetWaterDocument().Get().rivers;
+			for (size_t i = 0; i < rivers.size(); ++i)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(rivers[i].name.c_str());
+				ImGui::TableSetColumnIndex(1); ImGui::Text("%zu", rivers[i].nodes.size());
+				ImGui::TableSetColumnIndex(2); ImGui::TextDisabled("(no del)");
+			}
+			ImGui::EndTable();
+		}
+#else
+		(void)shell; (void)tool;
+#endif
 	}
 
 	/// Rend le panneau Tool Properties. M100.6 : si l'outil actif est
@@ -320,6 +621,20 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Splat Paint");
 				ImGui::Separator();
 				RenderSplatPaintParams(*m_shell, m_shell->MutableSplatPaintTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Lake)
+			{
+				ImGui::TextUnformatted("Lake");
+				ImGui::Separator();
+				RenderLakeParams(*m_shell, m_shell->MutableLakeTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::River)
+			{
+				ImGui::TextUnformatted("River");
+				ImGui::Separator();
+				RenderRiverParams(*m_shell, m_shell->MutableRiverTool());
 			}
 			else
 			{

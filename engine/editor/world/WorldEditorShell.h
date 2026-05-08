@@ -1,10 +1,13 @@
 #pragma once
 #include "engine/editor/world/IPanel.h"
 #include "engine/editor/world/CommandStack.h"
+#include "engine/editor/world/LakeTool.h"
+#include "engine/editor/world/RiverTool.h"
 #include "engine/editor/world/SplatPaintTool.h"
 #include "engine/editor/world/TerrainDocument.h"
 #include "engine/editor/world/TerrainSculptTool.h"
 #include "engine/editor/world/TerrainStampTool.h"
+#include "engine/editor/world/WaterDocument.h"
 
 #include <memory>
 #include <string>
@@ -28,6 +31,8 @@ namespace engine::editor::world
 		TerrainSculpt = 1,
 		TerrainStamp  = 2,
 		SplatPaint    = 3,
+		Lake          = 4,  // M100.13 — raccourci L
+		River         = 5,  // M100.13 — raccourci R
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -144,6 +149,26 @@ namespace engine::editor::world
 		/// M100.10 — Accès lecture seule à l'outil splat paint (tests, UI).
 		const SplatPaintTool& GetSplatPaintTool() const { return m_splatPaintTool; }
 
+		/// M100.13 — Accès mutable à l'outil lac. Le panneau Tool Properties
+		/// l'utilise pour lire/écrire les paramètres quand `m_activeTool == Lake`.
+		LakeTool&             MutableLakeTool()        { return m_lakeTool; }
+
+		/// M100.13 — Accès lecture seule à l'outil lac (tests, UI).
+		const LakeTool&       GetLakeTool()      const { return m_lakeTool; }
+
+		/// M100.13 — Accès mutable à l'outil rivière. Le panneau Tool Properties
+		/// l'utilise pour lire/écrire les paramètres quand `m_activeTool == River`.
+		RiverTool&            MutableRiverTool()       { return m_riverTool; }
+
+		/// M100.13 — Accès lecture seule à l'outil rivière (tests, UI).
+		const RiverTool&      GetRiverTool()     const { return m_riverTool; }
+
+		/// M100.13 — Accès mutable au document water partagé (lacs + rivières).
+		WaterDocument&        MutableWaterDocument()       { return m_waterDoc; }
+
+		/// M100.13 — Accès lecture seule au document water (tests, UI).
+		const WaterDocument&  GetWaterDocument()     const { return m_waterDoc; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -176,6 +201,9 @@ namespace engine::editor::world
 		TerrainSculptTool m_sculptTool;
 		TerrainStampTool m_stampTool;
 		SplatPaintTool m_splatPaintTool;
+		LakeTool       m_lakeTool;       // M100.13
+		RiverTool      m_riverTool;      // M100.13
+		WaterDocument  m_waterDoc;       // M100.13
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

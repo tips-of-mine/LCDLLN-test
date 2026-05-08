@@ -46,7 +46,7 @@ namespace engine::render
 		std::vector<WaterInstanceDrawInfo>& outDrawInfos);
 
 	/// Buffer GPU contenant tous les meshes d'eau (lakes + rivers concatenes).
-	/// API GPU complete ajoutee en Task 3.
+	/// Reconstruit a la demande depuis une WaterScene CPU via VMA staging.
 	class WaterMeshGpu final
 	{
 	public:
@@ -54,13 +54,46 @@ namespace engine::render
 		WaterMeshGpu(const WaterMeshGpu&) = delete;
 		WaterMeshGpu& operator=(const WaterMeshGpu&) = delete;
 
-		// API GPU (Init/Rebuild/Destroy) en Task 3.
-		// Pour l'instant : accesseurs pour les drawInfos calcules CPU.
+		/// Initialise l'objet. Pas d'allocation buffer ici — Rebuild s'en charge.
+		/// \param vmaAllocator Handle VmaAllocator opaque (evite de polluer le header avec vk_mem_alloc.h).
+		bool Init(VkDevice device, void* vmaAllocator);
+
+		/// Reconstruit VBO/IBO depuis la scene. Realloue si capacite insuffisante,
+		/// reutilise l'allocation existante sinon. Retourne false en cas d'erreur
+		/// (logue ERROR, garde l'etat precedent intact).
+		///
+		/// \param transferPool  Command pool sur la queue transfer (ou graphics).
+		/// \param transferQueue Queue de soumission (sera attendue via fence).
+		/// \return true si l'upload a reussi.
+		bool Rebuild(VkCommandPool transferPool, VkQueue transferQueue,
+		             const engine::world::water::WaterScene& scene);
+
+		/// Detruit toutes les ressources Vulkan. Safe sur etat non-init.
+		void Destroy();
+
+		VkBuffer GetVertexBuffer() const { return m_vbo; }
+		VkBuffer GetIndexBuffer()  const { return m_ibo; }
 		const std::vector<WaterInstanceDrawInfo>& GetDrawInfos() const { return m_drawInfos; }
 		size_t GetInstanceCount() const { return m_drawInfos.size(); }
+		bool IsValid() const { return m_vbo != VK_NULL_HANDLE && m_ibo != VK_NULL_HANDLE; }
 
 	private:
+		/// Alloue ou realloue VBO/IBO si la nouvelle taille depasse la capacite actuelle.
+		/// Reutilise les buffers existants si la capacite est suffisante.
+		/// \return false si vmaCreateBuffer echoue (logue ERROR).
+		bool EnsureCapacity(VkDeviceSize newVboSize, VkDeviceSize newIboSize);
+
+		VkDevice         m_device         = VK_NULL_HANDLE;
+		void*            m_vmaAllocator   = nullptr;  // VmaAllocator (opaque)
+
+		VkBuffer       m_vbo            = VK_NULL_HANDLE;
+		void*          m_vboAllocation  = nullptr;  // VmaAllocation
+		VkDeviceSize   m_vboCapacity    = 0;
+
+		VkBuffer       m_ibo            = VK_NULL_HANDLE;
+		void*          m_iboAllocation  = nullptr;  // VmaAllocation
+		VkDeviceSize   m_iboCapacity    = 0;
+
 		std::vector<WaterInstanceDrawInfo> m_drawInfos;
-		// Champs Vulkan ajoutes en Task 3.
 	};
 }

@@ -3,8 +3,11 @@
 #include "engine/world/water/WaterMeshBuilder.h"
 #include "engine/core/Log.h"
 
+#include <vk_mem_alloc.h>
+
 #include <cassert>
 #include <cmath>
+#include <cstring>
 
 namespace engine::render
 {
@@ -154,5 +157,248 @@ namespace engine::render
 
 			++globalParamIdx;
 		}
+	}
+
+	bool WaterMeshGpu::Init(VkDevice device, void* vmaAllocator)
+	{
+		if (device == VK_NULL_HANDLE || vmaAllocator == nullptr)
+		{
+			LOG_ERROR(Render, "[WaterMeshGpu] Init FAILED: invalid arguments");
+			return false;
+		}
+		m_device       = device;
+		m_vmaAllocator = vmaAllocator;
+		LOG_INFO(Render, "[WaterMeshGpu] Init OK");
+		return true;
+	}
+
+	void WaterMeshGpu::Destroy()
+	{
+		if (m_vmaAllocator == nullptr) return;
+		auto* allocator = static_cast<VmaAllocator>(m_vmaAllocator);
+
+		if (m_vbo != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(allocator, m_vbo, static_cast<VmaAllocation>(m_vboAllocation));
+			m_vbo           = VK_NULL_HANDLE;
+			m_vboAllocation = nullptr;
+			m_vboCapacity   = 0;
+		}
+		if (m_ibo != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(allocator, m_ibo, static_cast<VmaAllocation>(m_iboAllocation));
+			m_ibo           = VK_NULL_HANDLE;
+			m_iboAllocation = nullptr;
+			m_iboCapacity   = 0;
+		}
+		m_drawInfos.clear();
+		m_device       = VK_NULL_HANDLE;
+		m_vmaAllocator = nullptr;
+		LOG_INFO(Render, "[WaterMeshGpu] Destroyed");
+	}
+
+	bool WaterMeshGpu::EnsureCapacity(VkDeviceSize newVboSize, VkDeviceSize newIboSize)
+	{
+		auto* allocator = static_cast<VmaAllocator>(m_vmaAllocator);
+
+		// Helper local : alloue un buffer device-local de taille donnee.
+		auto allocBuffer = [&](VkDeviceSize size, VkBufferUsageFlags usage,
+		                       VkBuffer& outBuf, void*& outAlloc) -> bool
+		{
+			VkBufferCreateInfo bi{};
+			bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bi.size        = size;
+			bi.usage       = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+			bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			VmaAllocationCreateInfo ai{};
+			ai.usage = VMA_MEMORY_USAGE_AUTO;
+			ai.flags = 0;  // Pas d'accès host pour buffers device-local
+			VmaAllocation alloc = nullptr;
+			VkResult r = vmaCreateBuffer(allocator, &bi, &ai, &outBuf, &alloc, nullptr);
+			if (r != VK_SUCCESS) return false;
+			outAlloc = alloc;
+			return true;
+		};
+
+		if (newVboSize > m_vboCapacity)
+		{
+			if (m_vbo != VK_NULL_HANDLE)
+				vmaDestroyBuffer(allocator, m_vbo, static_cast<VmaAllocation>(m_vboAllocation));
+			m_vbo           = VK_NULL_HANDLE;
+			m_vboAllocation = nullptr;
+			if (!allocBuffer(newVboSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_vbo, m_vboAllocation))
+			{
+				LOG_ERROR(Render, "[WaterMeshGpu] vmaCreateBuffer (VBO) failed (size={})", newVboSize);
+				m_vboCapacity = 0;
+				return false;
+			}
+			m_vboCapacity = newVboSize;
+		}
+		if (newIboSize > m_iboCapacity)
+		{
+			if (m_ibo != VK_NULL_HANDLE)
+				vmaDestroyBuffer(allocator, m_ibo, static_cast<VmaAllocation>(m_iboAllocation));
+			m_ibo           = VK_NULL_HANDLE;
+			m_iboAllocation = nullptr;
+			if (!allocBuffer(newIboSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, m_ibo, m_iboAllocation))
+			{
+				LOG_ERROR(Render, "[WaterMeshGpu] vmaCreateBuffer (IBO) failed (size={})", newIboSize);
+				m_iboCapacity = 0;
+				return false;
+			}
+			m_iboCapacity = newIboSize;
+		}
+		return true;
+	}
+
+	bool WaterMeshGpu::Rebuild(VkCommandPool transferPool, VkQueue transferQueue,
+	                           const engine::world::water::WaterScene& scene)
+	{
+		if (m_device == VK_NULL_HANDLE || m_vmaAllocator == nullptr)
+		{
+			LOG_ERROR(Render, "[WaterMeshGpu] Rebuild FAILED: not initialised");
+			return false;
+		}
+
+		std::vector<float>               verts;
+		std::vector<uint32_t>            idx;
+		std::vector<WaterInstanceDrawInfo> infos;
+		BuildDrawInfos(scene, verts, idx, infos);
+
+		// Cas vide : conserve les buffers existants mais drawInfos = empty.
+		// Record() fera no-op si GetInstanceCount() == 0.
+		if (verts.empty() || idx.empty())
+		{
+			m_drawInfos.clear();
+			return true;
+		}
+
+		const VkDeviceSize vboBytes = verts.size() * sizeof(float);
+		const VkDeviceSize iboBytes = idx.size() * sizeof(uint32_t);
+
+		if (!EnsureCapacity(vboBytes, iboBytes))
+			return false;
+
+		auto* allocator = static_cast<VmaAllocator>(m_vmaAllocator);
+
+		// Staging buffer host-visible mappe (CPU_ONLY + MAPPED).
+		VkBuffer          staging      = VK_NULL_HANDLE;
+		VmaAllocation     stagingAlloc = nullptr;
+		const VkDeviceSize stagingSize = vboBytes + iboBytes;
+		{
+			VkBufferCreateInfo bi{};
+			bi.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bi.size        = stagingSize;
+			bi.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			VmaAllocationCreateInfo ai{};
+			ai.usage = VMA_MEMORY_USAGE_AUTO;
+			ai.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
+			         | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+			VmaAllocationInfo allocInfo{};
+			if (vmaCreateBuffer(allocator, &bi, &ai, &staging, &stagingAlloc, &allocInfo) != VK_SUCCESS)
+			{
+				LOG_ERROR(Render, "[WaterMeshGpu] staging vmaCreateBuffer failed (size={})", stagingSize);
+				return false;
+			}
+			std::memcpy(allocInfo.pMappedData, verts.data(), vboBytes);
+			std::memcpy(static_cast<char*>(allocInfo.pMappedData) + vboBytes, idx.data(), iboBytes);
+		}
+
+		// Command buffer one-shot pour copier staging → buffers device-local.
+		VkCommandBufferAllocateInfo cmdAlloc{};
+		cmdAlloc.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdAlloc.commandPool        = transferPool;
+		cmdAlloc.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmdAlloc.commandBufferCount = 1;
+		VkCommandBuffer cmd = VK_NULL_HANDLE;
+		if (vkAllocateCommandBuffers(m_device, &cmdAlloc, &cmd) != VK_SUCCESS)
+		{
+			vmaDestroyBuffer(allocator, staging, stagingAlloc);
+			LOG_ERROR(Render, "[WaterMeshGpu] vkAllocateCommandBuffers failed");
+			return false;
+		}
+
+		VkCommandBufferBeginInfo beg{};
+		beg.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beg.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		if (vkBeginCommandBuffer(cmd, &beg) != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "[WaterMeshGpu] vkBeginCommandBuffer failed");
+			vkFreeCommandBuffers(m_device, transferPool, 1, &cmd);
+			vmaDestroyBuffer(allocator, staging, stagingAlloc);
+			return false;
+		}
+
+		VkBufferCopy copyVbo{};
+		copyVbo.srcOffset = 0;
+		copyVbo.dstOffset = 0;
+		copyVbo.size      = vboBytes;
+		vkCmdCopyBuffer(cmd, staging, m_vbo, 1, &copyVbo);
+
+		VkBufferCopy copyIbo{};
+		copyIbo.srcOffset = vboBytes;
+		copyIbo.dstOffset = 0;
+		copyIbo.size      = iboBytes;
+		vkCmdCopyBuffer(cmd, staging, m_ibo, 1, &copyIbo);
+
+		// Pipeline barrier : visibility entre transfer write et vertex/index read.
+		VkBufferMemoryBarrier barriers[2]{};
+		barriers[0].sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		barriers[0].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barriers[0].dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		barriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barriers[0].buffer        = m_vbo;
+		barriers[0].offset        = 0;
+		barriers[0].size          = VK_WHOLE_SIZE;
+		barriers[1] = barriers[0];
+		barriers[1].dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+		barriers[1].buffer        = m_ibo;
+		vkCmdPipelineBarrier(cmd,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    0, 0, nullptr, 2, barriers, 0, nullptr);
+
+		if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "[WaterMeshGpu] vkEndCommandBuffer failed");
+			vkFreeCommandBuffers(m_device, transferPool, 1, &cmd);
+			vmaDestroyBuffer(allocator, staging, stagingAlloc);
+			return false;
+		}
+
+		VkFenceCreateInfo fci{};
+		fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		VkFence fence = VK_NULL_HANDLE;
+		if (vkCreateFence(m_device, &fci, nullptr, &fence) != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "[WaterMeshGpu] vkCreateFence failed");
+			vkFreeCommandBuffers(m_device, transferPool, 1, &cmd);
+			vmaDestroyBuffer(allocator, staging, stagingAlloc);
+			return false;
+		}
+
+		VkSubmitInfo sub{};
+		sub.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		sub.commandBufferCount = 1;
+		sub.pCommandBuffers    = &cmd;
+		if (vkQueueSubmit(transferQueue, 1, &sub, fence) != VK_SUCCESS)
+		{
+			LOG_ERROR(Render, "[WaterMeshGpu] vkQueueSubmit failed");
+			vkDestroyFence(m_device, fence, nullptr);
+			vkFreeCommandBuffers(m_device, transferPool, 1, &cmd);
+			vmaDestroyBuffer(allocator, staging, stagingAlloc);
+			return false;
+		}
+		vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX);
+
+		vkDestroyFence(m_device, fence, nullptr);
+		vkFreeCommandBuffers(m_device, transferPool, 1, &cmd);
+		vmaDestroyBuffer(allocator, staging, stagingAlloc);
+
+		m_drawInfos = std::move(infos);
+		LOG_INFO(Render, "[WaterMeshGpu] Rebuilt ({} instances, vbo={} B, ibo={} B)",
+		         m_drawInfos.size(), static_cast<long long>(vboBytes), static_cast<long long>(iboBytes));
+		return true;
 	}
 }

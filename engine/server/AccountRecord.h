@@ -7,6 +7,7 @@
 #pragma once
 
 #include "engine/server/LocalizedEmail.h"
+#include "engine/server/AccountRole.h"
 
 #include <cstdint>
 #include <string>
@@ -78,5 +79,10 @@ namespace engine::server
 		/// Identifiant TAG-ID unique généré à l'inscription (ex. "FR60400123").
 		/// Format : [CC][année%10][mois sur 2][account_id sur 5]. Vide si non encore généré.
 		std::string tag_id;
+
+		/// Rôle hiérarchique du compte (CMANGOS.06 Phase 1c). Default = Player.
+		/// Persisté en DB (ENUM 4 valeurs : player/moderator/game_master/
+		/// administrator). `Console` est runtime-only (jamais sérialisé).
+		AccountRole role = AccountRole::Player;
 	};
 }

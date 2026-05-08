@@ -29,12 +29,17 @@ namespace engine::world::water
 	/// Précondition : polygon a >= 3 vertices, simple (non auto-intersectant).
 	/// Si CW, inverse l'ordre interne avant traitement (CCW imposé).
 	/// Tous les vertices output ont Y = lake.waterLevelY (mesh plat).
+	/// Winding : normale +Y monde (CCW vu du dessus, +Y haut). Le caller
+	/// (M100.14 GPU upload) doit configurer VkFrontFace en conséquence ou
+	/// désactiver le backface culling.
 	bool BuildLakeMesh(const LakeInstance& lake,
 		WaterMeshCpu& outMesh, std::string& outError);
 
 	/// Ribbon mesh d'une rivière. N nodes → N-1 segments → 2*(N-1) triangles.
 	/// 2*N vertices total (2 par node, perpendiculaires au tangent local).
 	/// Y de chaque vertex = node.position.y. Précondition : nodes.size() >= 2.
+	/// Winding : normale +Y monde (visible vu du dessus). Le caller
+	/// (M100.14 GPU upload) doit configurer VkFrontFace en conséquence.
 	bool BuildRiverMesh(const RiverInstance& river,
 		WaterMeshCpu& outMesh, std::string& outError);
 

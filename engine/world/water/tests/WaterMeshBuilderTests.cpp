@@ -96,6 +96,15 @@ namespace
 		REQUIRE(!BuildLakeMesh(lake, mesh, err));
 		REQUIRE(err.find(">= 3") != std::string::npos);
 	}
+
+	void Test_BuildRiverMesh_TooFewNodes_Fails()
+	{
+		RiverInstance river;
+		river.nodes = { RiverNode{ Vec3{0,0,0}, 2.0f, 1.0f } };  // 1 node only
+		WaterMeshCpu mesh; std::string err;
+		REQUIRE(!BuildRiverMesh(river, mesh, err));
+		REQUIRE(err.find(">= 2") != std::string::npos);
+	}
 }
 
 int main()
@@ -105,5 +114,6 @@ int main()
 	Test_BuildLakeMesh_ConcaveLShape_ProducesCorrectTris();
 	Test_BuildRiverMesh_4Nodes_Produces6Quads();
 	Test_BuildLakeMesh_TooFewVertices_Fails();
+	Test_BuildRiverMesh_TooFewNodes_Fails();
 	return g_failed;
 }

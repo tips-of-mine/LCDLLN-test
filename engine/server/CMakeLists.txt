@@ -218,6 +218,18 @@ elseif(UNIX)
   target_compile_options(graveyard_manager_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME graveyard_manager_tests COMMAND graveyard_manager_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.16 (Phase 1b) : LocaleStrings tests
+  add_executable(locale_strings_tests
+    shard/globals/LocaleStringsTests.cpp
+    shard/globals/LocaleStrings.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(locale_strings_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(locale_strings_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(locale_strings_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME locale_strings_tests COMMAND locale_strings_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

@@ -277,6 +277,8 @@ add_library(engine_core
   engine/editor/world/EditorCameraController.cpp
   engine/editor/world/CollisionPreviewCamera.cpp
   engine/editor/world/WaterDocument.cpp
+  engine/editor/world/AddLakeCommand.cpp
+  engine/editor/world/AddRiverCommand.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
   engine/editor/world/panels/AssetBrowserPanel.cpp

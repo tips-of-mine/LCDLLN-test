@@ -36,7 +36,7 @@ obligatoires.
 | M100.10 | Splat Painting Brushes | 3 — Splat / Surfaces / Collision | M100.2, M100.9 | Done (CI pending) |
 | M100.11 | Surface Material System & SurfaceQuery (client) | 3 — Splat / Surfaces / Collision | M100.9 | Done (CI pending) |
 | M100.12 | Collision Proxy System | 3 — Splat / Surfaces / Collision | M100.1 | Done (CI pending) |
-| M100.13 | Water Surfaces (Lakes & Rivers) | 4 — Hydrologie & Hazards | M100.5, M100.6 | Ready |
+| M100.13 | Water Surfaces (Lakes & Rivers) | 4 — Hydrologie & Hazards | M100.5, M100.6 | Done (CI pending) |
 | M100.14 | Water Render Pass | 4 — Hydrologie & Hazards | M100.13 | Ready |
 | M100.15 | Water Surface Hook (Wading & Swimming) | 4 — Hydrologie & Hazards | M100.11, M100.13 | Ready |
 | M100.16 | Hazard Volume System | 4 — Hydrologie & Hazards | M100.11 | Ready |

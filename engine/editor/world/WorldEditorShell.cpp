@@ -139,6 +139,17 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld, "[WorldEditorShell] SplatPaintTool init failed");
 		}
 
+		// M100.13 — Init des outils Water (Lake + River) et chargement initial
+		// du WaterDocument depuis instances/water.bin. LoadFromDisk retourne
+		// true silencieusement si le fichier n'existe pas (premier lancement).
+		m_lakeTool.Init(m_commandStack, m_waterDoc);
+		m_riverTool.Init(m_commandStack, m_waterDoc, m_terrainDoc, cfg);
+		std::string waterErr;
+		if (!m_waterDoc.LoadFromDisk(cfg, waterErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] Water LoadFromDisk failed: {}", waterErr);
+		}
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -168,6 +179,8 @@ namespace engine::editor::world
 			case ActiveTool::TerrainSculpt: name = "TerrainSculpt"; break;
 			case ActiveTool::TerrainStamp:  name = "TerrainStamp"; break;
 			case ActiveTool::SplatPaint:    name = "SplatPaint"; break;
+			case ActiveTool::Lake:          name = "Lake"; break;
+			case ActiveTool::River:         name = "River"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -472,6 +485,18 @@ namespace engine::editor::world
 		if (!ctrl && !shift && virtualKey == 'P')
 		{
 			SetActiveTool(ActiveTool::SplatPaint);
+			return true;
+		}
+		// M100.13 — Raccourci 'L' (sans modifiers) active l'outil lac.
+		if (!ctrl && !shift && virtualKey == 'L')
+		{
+			SetActiveTool(ActiveTool::Lake);
+			return true;
+		}
+		// M100.13 — Raccourci 'R' (sans modifiers) active l'outil rivière.
+		if (!ctrl && !shift && virtualKey == 'R')
+		{
+			SetActiveTool(ActiveTool::River);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

@@ -108,11 +108,11 @@
 
 | # | Module | Cible | Statut | Effort | Valeur | Reco | Risque |
 |---|---|---|---|---|---|---|---|
-| [01](./CMANGOS.01.md) | Chat | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [02](./CMANGOS.02.md) | Entities | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [03](./CMANGOS.03.md) | Grids | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [04](./CMANGOS.04.md) | Movement | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [05](./CMANGOS.05.md) | vmap | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| [01](./CMANGOS.01.md) | Chat | cross | 🟡 Partiel | L | Critique | ✅ Faire | ⚠️ wire-breaking, migration DB, sécurité |
+| [02](./CMANGOS.02.md) | Entities | shard | ❌ Absent | XL | Critique | 🔧 Adapter | ⚠️ wire-breaking, migration DB, conflit archi |
+| [03](./CMANGOS.03.md) | Grids | shard | 🟡 Partiel | M | Élevée | 🔧 Adapter | — |
+| [04](./CMANGOS.04.md) | Movement | cross | ❌ Absent | L | Élevée | 🔧 Adapter | ⚠️ wire-breaking |
+| [05](./CMANGOS.05.md) | vmap | shard | ❌ Absent | L | Élevée | ✅ Faire | ⚠️ redéploiement, format binaire versioning |
 
 ### P2 — Gameplay essentiel (23 tickets)
 
@@ -214,8 +214,8 @@ généralisés).
 
 | Batch | Tickets | Statut | Commit |
 |---|---|---|---|
-| 0 — Squelette | INDEX vide + design | ⏳ En cours | — |
-| 1 — P1 | 5 fiches (.01-.05) | ⏳ Pending | — |
+| 0 — Squelette | INDEX vide + design | ✅ Done | `6b24889` |
+| 1 — P1 | 5 fiches (.01-.05) | ✅ Done | _(en cours de commit)_ |
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ⏳ Pending | — |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ⏳ Pending | — |
 | 3 — P3 | 14 fiches (.29-.42) | ⏳ Pending | — |

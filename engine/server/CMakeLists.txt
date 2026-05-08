@@ -196,6 +196,16 @@ elseif(UNIX)
   target_compile_options(condition_mgr_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME condition_mgr_tests COMMAND condition_mgr_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.16 (Phase 1b) : ObjectAccessor tests (no DB required)
+  add_executable(object_accessor_tests
+    shard/globals/ObjectAccessorTests.cpp
+    shard/globals/ObjectAccessor.cpp
+  )
+  target_include_directories(object_accessor_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(object_accessor_tests PRIVATE engine_core pthread)
+  target_compile_options(object_accessor_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME object_accessor_tests COMMAND object_accessor_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

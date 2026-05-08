@@ -279,6 +279,8 @@ add_library(engine_core
   engine/editor/world/WaterDocument.cpp
   engine/editor/world/AddLakeCommand.cpp
   engine/editor/world/AddRiverCommand.cpp
+  engine/editor/world/LakeTool.cpp
+  engine/editor/world/RiverTool.cpp
   engine/editor/world/panels/ScenePanel.cpp
   engine/editor/world/panels/InspectorPanel.cpp
   engine/editor/world/panels/AssetBrowserPanel.cpp

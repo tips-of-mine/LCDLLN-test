@@ -1022,6 +1022,17 @@ if(WIN32)
   add_test(NAME water_mesh_gpu_tests COMMAND water_mesh_gpu_tests)
 endif()
 
+# M100.14 — Tests WaterPassPushConstants layout (sizeof + offsetof).
+if(WIN32)
+  add_executable(water_pass_tests engine/render/tests/WaterPassTests.cpp)
+  target_include_directories(water_pass_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_pass_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_pass_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_pass_tests COMMAND water_pass_tests)
+endif()
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
   add_executable(client_flow_app engine/network/ClientFlowMain.cpp)

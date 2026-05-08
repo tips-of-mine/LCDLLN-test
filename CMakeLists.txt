@@ -328,8 +328,9 @@ add_library(engine_core
   engine/render/DecalPass.cpp
   engine/render/ParticleSystem.cpp
   engine/render/ParticleBillboardPass.cpp
-  engine/render/WaterRenderer.cpp
   engine/render/UnderwaterPass.cpp
+  engine/render/WaterMeshGpu.cpp
+  engine/render/WaterPass.cpp
   engine/render/DayNightCycle.cpp
   engine/render/WeatherSystem.cpp
   engine/render/DynamicLightSystem.cpp
@@ -1009,6 +1010,28 @@ if(WIN32)
     target_compile_options(water_mesh_builder_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME water_mesh_builder_tests COMMAND water_mesh_builder_tests)
+endif()
+
+# M100.14 — Tests WaterMeshGpu CPU BuildDrawInfos.
+if(WIN32)
+  add_executable(water_mesh_gpu_tests engine/render/tests/WaterMeshGpuTests.cpp)
+  target_include_directories(water_mesh_gpu_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_mesh_gpu_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_mesh_gpu_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_mesh_gpu_tests COMMAND water_mesh_gpu_tests)
+endif()
+
+# M100.14 — Tests WaterPassPushConstants layout (sizeof + offsetof).
+if(WIN32)
+  add_executable(water_pass_tests engine/render/tests/WaterPassTests.cpp)
+  target_include_directories(water_pass_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_pass_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_pass_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_pass_tests COMMAND water_pass_tests)
 endif()
 
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).

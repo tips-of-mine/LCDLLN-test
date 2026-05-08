@@ -22,6 +22,9 @@ namespace engine::editor::world
 
 		bool IsDirty() const noexcept { return m_dirty; }
 		void MarkDirty() noexcept     { m_dirty = true; }
+		/// M100.14 — Reset le flag dirty sans toucher au contenu (utilise par
+		/// Engine::Render apres avoir reconstruit les buffers GPU water depuis la scene).
+		void ClearDirty() noexcept    { m_dirty = false; }
 
 		/// Sauvegarde dans `<paths.content>/instances/water.bin`. Reset m_dirty.
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);

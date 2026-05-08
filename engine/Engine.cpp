@@ -1128,8 +1128,15 @@ namespace engine
 
 										engine::render::ImageDesc sceneColorHDRDesc{};
 										sceneColorHDRDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
-										sceneColorHDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+										sceneColorHDRDesc.usage  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+										                         | VK_IMAGE_USAGE_SAMPLED_BIT
+										                         | VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+										                         | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 										m_fgSceneColorHDRId = m_frameGraph.createImage("SceneColor_HDR", sceneColorHDRDesc);
+										// M100.14 — Ping-pong target ecrit par WaterPass (ColorWrite) ou par
+										// le fallback Water_Passthrough (vkCmdCopyImage TransferDst). Lu en
+										// SampledRead par Bloom_Prefilter / Bloom_Combine.
+										m_fgSceneColorHDRPostWaterId = m_frameGraph.createImage("SceneColor_HDR_PostWater", sceneColorHDRDesc);
 
 										engine::render::ImageDesc sceneColorLDRDesc{};
 										sceneColorLDRDesc.format = m_vkSwapchain.GetImageFormat();
@@ -1295,28 +1302,79 @@ namespace engine
 										}
 									}
 
-									// M37.1 — Water renderer (optional: skipped if shaders not found).
+									// M100.14 — Water render pass FG-intégré.
+									// Init WaterMeshGpu (buffer vide, prêt pour Rebuild). Sur les builds
+									// STAB.7 (VMA disabled), m_vmaAllocator == nullptr → Init échoue par
+									// design : la passe restera invalide et le fallback Water_Passthrough
+									// (vkCmdCopyImage) prendra le relais en runtime.
 									if (pipelineOk)
 									{
-										const uint32_t w = static_cast<uint32_t>(m_width);
-										const uint32_t h = static_cast<uint32_t>(m_height);
+										// Crée le command pool long-lived pour les uploads water (RESET entre Rebuilds).
+										// Le pool est créé indépendamment du succès de WaterMeshGpu::Init : si VMA
+										// est absent (STAB.7) Init échouera et le pool ne sera jamais utilisé,
+										// mais il restera valide pour les builds qui réactivent VMA ultérieurement.
+										{
+											VkCommandPoolCreateInfo poolInfo{};
+											poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+											poolInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
+											                          | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+											poolInfo.queueFamilyIndex = m_vkDeviceContext.GetGraphicsQueueFamilyIndex();
+											if (vkCreateCommandPool(m_vkDeviceContext.GetDevice(), &poolInfo, nullptr, &m_waterTransferPool) != VK_SUCCESS)
+											{
+												LOG_WARN(Render, "[Boot] WaterMeshGpu transfer pool creation failed — water rendering will be disabled");
+												m_waterTransferPool = VK_NULL_HANDLE;
+											}
+										}
+
+										if (!m_waterMeshGpu.Init(m_vkDeviceContext.GetDevice(), m_vmaAllocator))
+										{
+											LOG_WARN(Render,
+												"[Boot] WaterMeshGpu::Init failed (vmaAllocator={}) — Water_Passthrough fallback",
+												m_vmaAllocator ? "set" : "null (STAB.7)");
+										}
+
+										// Init WaterPass : prerequisites = shaders + normalMap + skybox cube.
+										// Aucun de ces prerequisites n'est encore exposé par le moteur (pas de
+										// skybox cube view, pas de sampler partagé linear-clamp, pas de tile
+										// normal-map water dédiée). On passe VK_NULL_HANDLE → Init échoue
+										// gracieusement et le fallback Water_Passthrough kicks in.
 										std::vector<uint32_t> waterVert = loadSpirv("shaders/water.vert.spv");
 										std::vector<uint32_t> waterFrag = loadSpirv("shaders/water.frag.spv");
-										const float waterLevel = static_cast<float>(m_cfg.GetDouble("render.water.level", 0.0));
-										engine::render::WaterParams waterParams{};
-										waterParams.waterLevel     = waterLevel;
-										waterParams.gridResolution = static_cast<uint32_t>(m_cfg.GetInt("render.water.grid_resolution", 32));
-										waterParams.gridHalfSize   = static_cast<float>(m_cfg.GetDouble("render.water.grid_half_size", 256.0));
-										if (!m_waterRenderer.Init(
-											m_vkDeviceContext.GetDevice(),
-											m_vkDeviceContext.GetPhysicalDevice(),
-											w, h,
-											VK_FORMAT_R16G16B16A16_SFLOAT,
-											waterVert.empty() ? nullptr : waterVert.data(), waterVert.size(),
-											waterFrag.empty() ? nullptr : waterFrag.data(), waterFrag.size(),
-											waterParams))
+										VkImageView normalView = VK_NULL_HANDLE;
+										VkSampler   normalSamp = VK_NULL_HANDLE;
+										VkImageView skyView    = VK_NULL_HANDLE;
+										VkSampler   skySamp    = VK_NULL_HANDLE;
+
+										if (!waterVert.empty() && !waterFrag.empty()
+											&& normalView != VK_NULL_HANDLE && normalSamp != VK_NULL_HANDLE
+											&& skyView != VK_NULL_HANDLE    && skySamp != VK_NULL_HANDLE
+											&& m_waterMeshGpu.IsInitialized())
 										{
-											LOG_WARN(Render, "[Boot] WaterRenderer init failed — water surface disabled");
+											if (m_waterPass.Init(
+													m_vkDeviceContext.GetDevice(),
+													m_vkDeviceContext.GetPhysicalDevice(),
+													VK_FORMAT_R16G16B16A16_SFLOAT,
+													waterVert.data(), waterVert.size(),
+													waterFrag.data(), waterFrag.size(),
+													normalView, normalSamp,
+													skyView,    skySamp,
+													2u))
+											{
+												LOG_INFO(Render, "[Boot] WaterPass init OK");
+											}
+											else
+											{
+												LOG_WARN(Render, "[Boot] WaterPass::Init failed — Water_Passthrough fallback");
+											}
+										}
+										else
+										{
+											LOG_WARN(Render,
+												"[Boot] WaterPass : prerequisites missing (vert={} frag={} normalMap={} skybox={}) — Water_Passthrough fallback",
+												!waterVert.empty(),
+												!waterFrag.empty(),
+												normalView != VK_NULL_HANDLE,
+												skyView != VK_NULL_HANDLE);
 										}
 									}
 
@@ -1966,9 +2024,76 @@ namespace engine
 													lp, frameIdx);
 											});
 
+										// M100.14 — Water render pass FG-intégré (ping-pong SceneColor_HDR → SceneColor_HDR_PostWater).
+										// Si WaterPass::Init a échoué (shaders, normal map ou skybox absents),
+										// on enregistre un passthrough vkCmdCopyImage à la place pour garantir
+										// que le ping-pong PostWater est toujours renseigné — sinon Bloom_Prefilter
+										// (qui lit PostWater) lirait du contenu indéfini.
+										if (m_waterPass.IsValid())
+										{
+											m_frameGraph.addPass("Water",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::SampledRead);
+													b.read(m_fgDepthId,                   engine::render::ImageUsage::SampledRead);
+													b.write(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::ColorWrite);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													const engine::world::water::WaterScene* scene = nullptr;
+													if (m_worldEditorExe && m_worldEditorShell)
+														scene = &m_worldEditorShell->GetWaterDocument().Get();
+													else if (m_clientWaterScene)
+														scene = m_clientWaterScene.get();
+													if (!scene || !m_waterMeshGpu.IsValid()) return;
+
+													const uint32_t readIdx = m_renderReadIndex.load(std::memory_order_acquire);
+													const engine::RenderState& rs = m_renderStates[readIdx];
+
+													engine::render::WaterPassPushConstants base{};
+													std::memcpy(base.viewProj, rs.viewProjMatrix.m, sizeof(float) * 16);
+													base.cameraPos[0] = rs.camera.position.x;
+													base.cameraPos[1] = rs.camera.position.y;
+													base.cameraPos[2] = rs.camera.position.z;
+													// TODO(M100.x): vraie source de temps wall-clock. Note : perte de précision
+													// float après ~78h (uint32_t > 2^24 = 16.7 M frames @ 60Hz).
+													base.timeSeconds   = static_cast<float>(m_currentFrame) / 60.0f;
+													base.screenSize[0] = static_cast<float>(m_vkSwapchain.GetExtent().width);
+													base.screenSize[1] = static_cast<float>(m_vkSwapchain.GetExtent().height);
+
+													const uint32_t frameIdx = m_currentFrame % 2;
+													m_waterPass.Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(),
+														m_fgSceneColorHDRId, m_fgDepthId, m_fgSceneColorHDRPostWaterId,
+														m_waterMeshGpu, base, *scene, frameIdx);
+												});
+										}
+										else
+										{
+											// Fallback : copie SceneColor_HDR → SceneColor_HDR_PostWater pour
+											// que les passes aval (Bloom_*) lisent une image valide même quand
+											// la passe water est désactivée (shaders/textures absents, VMA off, etc.).
+											m_frameGraph.addPass("Water_Passthrough",
+												[this](engine::render::PassBuilder& b) {
+													b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::TransferSrc);
+													b.write(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::TransferDst);
+												},
+												[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
+													VkImage src = reg.getImage(m_fgSceneColorHDRId);
+													VkImage dst = reg.getImage(m_fgSceneColorHDRPostWaterId);
+													if (src == VK_NULL_HANDLE || dst == VK_NULL_HANDLE) return;
+													VkImageCopy copy{};
+													copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.srcSubresource.layerCount = 1;
+													copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+													copy.dstSubresource.layerCount = 1;
+													VkExtent2D ext = m_vkSwapchain.GetExtent();
+													copy.extent = { ext.width, ext.height, 1 };
+													vkCmdCopyImage(cmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+														dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+												});
+										}
+
 										m_frameGraph.addPass("Bloom_Prefilter",
 											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorHDRId, engine::render::ImageUsage::SampledRead);
+												b.read(m_fgSceneColorHDRPostWaterId, engine::render::ImageUsage::SampledRead);
 												b.write(m_fgBloomDownMipIds[0], engine::render::ImageUsage::ColorWrite);
 											},
 											[this](VkCommandBuffer cmd, engine::render::Registry& reg) {
@@ -1980,7 +2105,7 @@ namespace engine
 												m_pipeline->GetBloomPrefilterPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,
 													m_vkSwapchain.GetExtent(),
-													m_fgSceneColorHDRId, m_fgBloomDownMipIds[0], pp, frameIdx);
+													m_fgSceneColorHDRPostWaterId, m_fgBloomDownMipIds[0], pp, frameIdx);
 											});
 
 										for (uint32_t i = 0; i < engine::render::kBloomMipCount - 1; ++i)
@@ -2029,7 +2154,7 @@ namespace engine
 
 										m_frameGraph.addPass("Bloom_Combine",
 											[this](engine::render::PassBuilder& b) {
-												b.read(m_fgSceneColorHDRId,           engine::render::ImageUsage::SampledRead);
+												b.read(m_fgSceneColorHDRPostWaterId,  engine::render::ImageUsage::SampledRead);
 												b.read(m_fgBloomUpMipIds[0],         engine::render::ImageUsage::SampledRead);
 												b.write(m_fgSceneColorHDRWithBloomId, engine::render::ImageUsage::ColorWrite);
 											},
@@ -2038,7 +2163,7 @@ namespace engine
 												engine::render::BloomCombinePass::CombineParams cp{};
 												cp.intensity = static_cast<float>(m_cfg.GetDouble("bloom.intensity", 1.0));
 												const uint32_t frameIdx = m_currentFrame % 2;
-												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
+												m_pipeline->GetBloomCombinePass().Record(m_vkDeviceContext.GetDevice(), cmd, reg, m_vkSwapchain.GetExtent(), m_fgSceneColorHDRPostWaterId, m_fgBloomUpMipIds[0], m_fgSceneColorHDRWithBloomId, cp, frameIdx);
 											});
 
 										m_frameGraph.addPass("AutoExposure_Luminance",
@@ -2734,10 +2859,18 @@ namespace engine
 			m_terrainChunkRenderer.reset();
 		}
 		DestroyTerrainChunkCameraResources();
-		/// M37.1 — water renderer cleanup.
-		m_waterRenderer.Destroy(m_vkDeviceContext.GetDevice());
 		m_authGlyphPass.Destroy(m_vkDeviceContext.GetDevice());
 			m_authLogoPass.Destroy(m_vkDeviceContext.GetDevice());
+			// M100.14 — Détruit la passe water + ses buffers GPU avant le DeferredPipeline
+			// (les ressources sont indépendantes mais l'ordre symétrique d'Init est plus
+			// lisible côté boot ↔ shutdown).
+			m_waterPass.Destroy(m_vkDeviceContext.GetDevice());
+			m_waterMeshGpu.Destroy();
+			if (m_waterTransferPool != VK_NULL_HANDLE)
+			{
+				vkDestroyCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, nullptr);
+				m_waterTransferPool = VK_NULL_HANDLE;
+			}
 			if (m_pipeline)
 			{
 				m_pipeline->Destroy(m_vkDeviceContext.GetDevice());
@@ -2883,6 +3016,10 @@ namespace engine
 					m_pipeline->InvalidateFramebufferCaches(m_vkDeviceContext.GetDevice());
 				if (m_terrain.IsValid())
 					m_terrain.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
+				// M100.14 — Le cache framebuffer de la passe water est indexé par
+				// VkImageView source : un resize détruit toutes les vues FG → cache
+				// stale. Invalidation au même endroit que terrain/pipeline.
+				m_waterPass.InvalidateFramebufferCache(m_vkDeviceContext.GetDevice());
 
 				m_frameGraph.destroy(m_vkDeviceContext.GetDevice(), m_vmaAllocator);
 				// All frame-graph images are recreated after a resize/out-of-date event, so the
@@ -4325,7 +4462,48 @@ namespace engine
 		    }
 	    }
 #endif
-	
+
+	    // M100.14 — Live update WaterMeshGpu si la WaterScene est dirty.
+	    // No-op si :
+	    //   • pas de WaterMeshGpu valide (typique : VMA disabled STAB.7),
+	    //   • aucune scene (mode jeu sans m_clientWaterScene, ou éditeur sans shell),
+	    //   • flag dirty == false (cas nominal régime établi).
+	    if (m_waterMeshGpu.IsInitialized())
+	    {
+	        const engine::world::water::WaterScene* scene = nullptr;
+	        bool dirty = false;
+	        if (m_worldEditorExe && m_worldEditorShell)
+	        {
+	            scene = &m_worldEditorShell->GetWaterDocument().Get();
+	            dirty = m_worldEditorShell->GetWaterDocument().IsDirty();
+	        }
+	        else if (m_clientWaterScene)
+	        {
+	            scene = m_clientWaterScene.get();
+	            dirty = m_waterClientSceneDirty;
+	        }
+	        if (scene && dirty)
+	        {
+	            // Réutilise le pool long-lived créé au boot pour éviter un create/destroy par frame.
+	            if (m_waterTransferPool == VK_NULL_HANDLE)
+	            {
+	                LOG_WARN(Render, "[Water] m_waterTransferPool non disponible — skipping rebuild this frame");
+	            }
+	            else
+	            {
+	                // Reset cheap : libère les command buffers passés sans détruire le pool.
+	                vkResetCommandPool(m_vkDeviceContext.GetDevice(), m_waterTransferPool, 0);
+	                if (m_waterMeshGpu.Rebuild(m_waterTransferPool, m_vkDeviceContext.GetGraphicsQueue(), *scene))
+	                {
+	                    if (m_worldEditorExe && m_worldEditorShell)
+	                        m_worldEditorShell->MutableWaterDocument().ClearDirty();
+	                    else
+	                        m_waterClientSceneDirty = false;
+	                }
+	            }
+	        }
+	    }
+
 	    if (m_fgSceneColorHDRId != engine::render::kInvalidResourceId && m_fgBackbufferId != engine::render::kInvalidResourceId)
 	    {
 	        VkImage     backbufferImage = m_vkSwapchain.GetImage(imageIndex);

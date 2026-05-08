@@ -184,6 +184,52 @@ elseif(UNIX)
   target_compile_options(sql_delay_thread_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME sql_delay_thread_tests COMMAND sql_delay_thread_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.16 (Phase 1b) : ConditionMgr tests
+  add_executable(condition_mgr_tests
+    shard/globals/ConditionMgrTests.cpp
+    shard/globals/ConditionMgr.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(condition_mgr_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(condition_mgr_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(condition_mgr_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME condition_mgr_tests COMMAND condition_mgr_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.16 (Phase 1b) : ObjectAccessor tests (no DB required)
+  add_executable(object_accessor_tests
+    shard/globals/ObjectAccessorTests.cpp
+    shard/globals/ObjectAccessor.cpp
+  )
+  target_include_directories(object_accessor_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(object_accessor_tests PRIVATE engine_core pthread)
+  target_compile_options(object_accessor_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME object_accessor_tests COMMAND object_accessor_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.16 (Phase 1b) : GraveyardManager tests
+  add_executable(graveyard_manager_tests
+    shard/globals/GraveyardManagerTests.cpp
+    shard/globals/GraveyardManager.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(graveyard_manager_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(graveyard_manager_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(graveyard_manager_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME graveyard_manager_tests COMMAND graveyard_manager_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # CMANGOS.16 (Phase 1b) : LocaleStrings tests
+  add_executable(locale_strings_tests
+    shard/globals/LocaleStringsTests.cpp
+    shard/globals/LocaleStrings.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(locale_strings_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(locale_strings_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(locale_strings_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME locale_strings_tests COMMAND locale_strings_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

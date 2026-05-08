@@ -146,20 +146,20 @@
 
 | # | Module | Cible | Statut | Effort | Valeur | Reco | Risque |
 |---|---|---|---|---|---|---|---|
-| [29](./CMANGOS.29.md) | Anticheat | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [30](./CMANGOS.30.md) | Cinematics | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [31](./CMANGOS.31.md) | GameEvents | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [32](./CMANGOS.32.md) | GMTickets | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [33](./CMANGOS.33.md) | LFG | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [34](./CMANGOS.34.md) | Metric | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [35](./CMANGOS.35.md) | Multithreading | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [36](./CMANGOS.36.md) | OutdoorPvP | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [37](./CMANGOS.37.md) | Platform | client | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [38](./CMANGOS.38.md) | PlayerBot | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [39](./CMANGOS.39.md) | Skills | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [40](./CMANGOS.40.md) | Tools | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [41](./CMANGOS.41.md) | Util | cross | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [42](./CMANGOS.42.md) | Weather | shard | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| [29](./CMANGOS.29.md) | Anticheat | shard | 🟡 Partiel | M | Moyenne | 🔧 Adapter | — |
+| [30](./CMANGOS.30.md) | Cinematics | cross | ❌ Absent | M | Moyenne | ⏸ Reporter | ⚠️ wire-breaking |
+| [31](./CMANGOS.31.md) | GameEvents | shard | ❌ Absent | M | Moyenne | ⏸ Reporter | ⚠️ migration DB |
+| [32](./CMANGOS.32.md) | GMTickets | master | ❌ Absent | S-M | Moyenne | ⏸ Reporter | ⚠️ wire-breaking, migration DB |
+| [33](./CMANGOS.33.md) | LFG | master | ❌ Absent | M-L | Moyenne | ⏸ Reporter | ⚠️ wire-breaking |
+| [34](./CMANGOS.34.md) | Metric | cross | ❌ Absent | M | Moyenne-Élevée | 🔧 Adapter | — |
+| [35](./CMANGOS.35.md) | Multithreading | cross | ❌ Absent | S-M | Moyenne | 🔧 Adapter | — |
+| [36](./CMANGOS.36.md) | OutdoorPvP | shard | ❌ Absent | M-L | Moyenne | ⏸ Reporter | ⚠️ wire-breaking |
+| [37](./CMANGOS.37.md) | Platform | client | ❌ Absent | S | Élevée | 🔧 Adapter | ⚠️ confidentialité PII |
+| [38](./CMANGOS.38.md) | PlayerBot | shard | 🟡 Partiel | M-L | Moyenne | ⏸ Reporter | — |
+| [39](./CMANGOS.39.md) | Skills | shard | 🟡 Partiel | S-M | Moyenne | 🔧 Adapter | ⚠️ migration DB |
+| [40](./CMANGOS.40.md) | Tools | cross | ❌ Absent | M | Moyenne-Élevée | 🔧 Adapter | — |
+| [41](./CMANGOS.41.md) | Util | cross | 🟡 Partiel | S-M | Faible-Moyenne | ⏸ Reporter | — |
+| [42](./CMANGOS.42.md) | Weather | shard | 🟡 Partiel | S-M | Moyenne | 🔧 Adapter | ⚠️ wire-breaking |
 
 ### P4 — Cas spécifiques (2 tickets)
 
@@ -218,7 +218,7 @@ généralisés).
 | 1 — P1 | 5 fiches (.01-.05) | ✅ Done | `0649d13` |
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | `c82928e` |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ✅ Done | `8454aaa` |
-| 3 — P3 | 14 fiches (.29-.42) | ⏳ Pending | — |
+| 3 — P3 | 14 fiches (.29-.42) | ✅ Done | _(en cours de commit)_ |
 | 4 — P4 | 2 fiches (.44-.45) | ⏳ Pending | — |
 | 5 — Consolidation | INDEX rempli | ⏳ Pending | — |
 

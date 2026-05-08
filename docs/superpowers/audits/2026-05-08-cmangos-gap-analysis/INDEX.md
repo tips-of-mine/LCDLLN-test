@@ -215,7 +215,7 @@ généralisés).
 | Batch | Tickets | Statut | Commit |
 |---|---|---|---|
 | 0 — Squelette | INDEX vide + design | ✅ Done | `6b24889` |
-| 1 — P1 | 5 fiches (.01-.05) | ✅ Done | _(en cours de commit)_ |
+| 1 — P1 | 5 fiches (.01-.05) | ✅ Done | `0649d13` |
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ⏳ Pending | — |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ⏳ Pending | — |
 | 3 — P3 | 14 fiches (.29-.42) | ⏳ Pending | — |

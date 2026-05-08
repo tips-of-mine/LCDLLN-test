@@ -191,5 +191,9 @@
         "default_locale": 0,
         "fallback_locale": 0,
         "graveyard_default_faction_neutral_radius_m": 500.0
+    },
+    "accounts": {
+        "default_new_account_role": "player",
+        "role_change_audit": true
     }
 }

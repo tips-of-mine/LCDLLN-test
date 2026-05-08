@@ -7,6 +7,7 @@
 #pragma once
 
 #include "engine/server/AccountRecord.h"
+#include "engine/server/AccountRole.h"
 
 #include <cstdint>
 #include <optional>
@@ -92,5 +93,22 @@ namespace engine::server
 		/// @param account_id Identifiant du compte concerné.
 		/// @param code       Code à 6 chiffres généré par PasswordResetStore::CreateVerificationCode().
 		virtual void PersistEmailVerificationCode(uint64_t account_id, const std::string& code) = 0;
+
+		/// Retourne le rôle d'un compte (CMANGOS.06 Phase 1c).
+		/// \param account_id Identifiant du compte.
+		/// \return Le rôle stocké, ou `AccountRole::Player` si le compte n'existe pas.
+		virtual AccountRole GetRole(uint64_t account_id) = 0;
+
+		/// Met à jour le rôle d'un compte. Persiste en DB (MySql) ou en RAM
+		/// (InMemory). N'écrit PAS d'audit log (responsabilité de
+		/// `AccountRoleService` qui orchestre la combinaison Store + audit).
+		/// \param account_id Compte cible.
+		/// \param role       Nouveau rôle. \pre `role != AccountRole::Console`
+		///                   (Console est runtime-only, jamais persisté). Si
+		///                   appelé avec Console, l'implémentation doit
+		///                   retourner `false` sans modifier l'état.
+		/// \return true si la mise à jour a réussi, false si compte inexistant
+		///         ou si role == Console.
+		virtual bool SetRole(uint64_t account_id, AccountRole role) = 0;
 	};
 }

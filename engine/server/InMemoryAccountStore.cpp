@@ -174,4 +174,31 @@ namespace engine::server
 	{
 		// No-op: in-memory store relies on PasswordResetStore for verification code management.
 	}
+
+	AccountRole InMemoryAccountStore::GetRole(uint64_t account_id)
+	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
+		for (const auto& [login, rec] : m_by_login)
+		{
+			if (rec.account_id == account_id)
+				return rec.role;
+		}
+		return AccountRole::Player;  // not found → safe default
+	}
+
+	bool InMemoryAccountStore::SetRole(uint64_t account_id, AccountRole role)
+	{
+		if (role == AccountRole::Console)
+			return false;  // Console est runtime-only
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
+		for (auto& [login, rec] : m_by_login)
+		{
+			if (rec.account_id == account_id)
+			{
+				rec.role = role;
+				return true;
+			}
+		}
+		return false;
+	}
 }

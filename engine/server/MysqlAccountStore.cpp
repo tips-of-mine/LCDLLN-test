@@ -461,4 +461,54 @@ namespace engine::server
 		LOG_INFO(Auth, "[MysqlAccountStore] UpdatePasswordHash OK (account_id={})", account_id);
 		return true;
 	}
+
+	AccountRole MysqlAccountStore::GetRole(uint64_t account_id)
+	{
+		if (!m_pool)
+			return AccountRole::Player;
+		auto guard = m_pool->Acquire();
+		MYSQL* mysql = guard.get();
+		if (!mysql)
+			return AccountRole::Player;
+
+		const std::string sql = "SELECT role FROM accounts WHERE id=" + std::to_string(account_id) + " LIMIT 1";
+		MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
+		AccountRole role = AccountRole::Player;
+		if (res)
+		{
+			MYSQL_ROW row = mysql_fetch_row(res);
+			if (row && row[0])
+				role = ParseRole(row[0]);
+			engine::server::db::DbFreeResult(res);
+		}
+		return role;
+	}
+
+	bool MysqlAccountStore::SetRole(uint64_t account_id, AccountRole role)
+	{
+		if (role == AccountRole::Console)
+			return false;  // jamais persisté
+
+		if (!m_pool)
+			return false;
+		auto guard = m_pool->Acquire();
+		MYSQL* mysql = guard.get();
+		if (!mysql)
+			return false;
+
+		const std::string roleStr = std::string(RoleToString(role));
+		const std::string esc_role = EscapeMysql(mysql, roleStr);
+		const std::string sql = "UPDATE accounts SET role='" + esc_role
+			+ "' WHERE id=" + std::to_string(account_id) + " LIMIT 1";
+		if (!engine::server::db::DbExecute(mysql, sql))
+			return false;
+		if (mysql_affected_rows(mysql) == 0)
+		{
+			LOG_WARN(Auth, "[MysqlAccountStore] SetRole: account_id={} not found", account_id);
+			return false;
+		}
+		LOG_INFO(Auth, "[MysqlAccountStore] SetRole account_id={} role={}",
+			account_id, roleStr);
+		return true;
+	}
 }

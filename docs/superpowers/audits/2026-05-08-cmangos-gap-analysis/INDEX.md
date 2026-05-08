@@ -386,7 +386,7 @@ Cet audit livre l'**état des lieux**. Suite naturelle :
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ✅ Done | `8454aaa` |
 | 3 — P3 | 14 fiches (.29-.42) | ✅ Done | `4359521` |
 | 4 — P4 | 2 fiches (.44-.45) | ✅ Done | `955f410` |
-| 5 — Consolidation | INDEX rempli | ✅ Done | _(en cours de commit)_ |
+| 5 — Consolidation | INDEX rempli | ✅ Done | `af5a114` |
 
 ---
 

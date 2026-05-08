@@ -456,6 +456,174 @@ namespace engine::render
 		m_framebufferCache.clear();
 	}
 
-	// Record() implementation ajoutée en Task 6.
+	// -------------------------------------------------------------------------
+	// WaterPass::Record
+	// -------------------------------------------------------------------------
+
+	void WaterPass::Record(VkDevice device, VkCommandBuffer cmd, Registry& registry,
+		VkExtent2D extent,
+		ResourceId idSceneColorIn,
+		ResourceId idSceneDepth,
+		ResourceId idSceneColorOut,
+		const WaterMeshGpu& mesh,
+		const WaterPassPushConstants& paramsBase,
+		const engine::world::water::WaterScene& scene,
+		uint32_t frameIndex)
+	{
+		if (!IsValid()) return;
+		if (mesh.GetInstanceCount() == 0) return;
+		if (frameIndex >= m_maxFrames) return;
+
+		VkImage     colorOut     = registry.getImage(idSceneColorOut);
+		VkImageView colorOutView = registry.getImageView(idSceneColorOut);
+		VkImageView sceneInView  = registry.getImageView(idSceneColorIn);
+		VkImageView depthView    = registry.getImageView(idSceneDepth);
+		if (colorOut == VK_NULL_HANDLE || colorOutView == VK_NULL_HANDLE
+		    || sceneInView == VK_NULL_HANDLE || depthView == VK_NULL_HANDLE)
+			return;
+
+		// 1. Update descriptor set for this frame.
+		{
+			VkDescriptorImageInfo info[kWaterBindingCount]{};
+			info[0].sampler     = m_sceneColorSampler;
+			info[0].imageView   = sceneInView;
+			info[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			info[1].sampler     = m_sceneDepthSampler;
+			info[1].imageView   = depthView;
+			info[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			info[2].sampler     = m_normalMapSampler;
+			info[2].imageView   = m_normalMapView;
+			info[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			info[3].sampler     = m_skyboxSampler;
+			info[3].imageView   = m_skyboxCubeView;
+			info[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			VkWriteDescriptorSet writes[kWaterBindingCount]{};
+			for (uint32_t i = 0; i < kWaterBindingCount; ++i)
+			{
+				writes[i].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writes[i].dstSet          = m_descriptorSets[frameIndex];
+				writes[i].dstBinding      = i;
+				writes[i].descriptorCount = 1;
+				writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[i].pImageInfo      = &info[i];
+			}
+			vkUpdateDescriptorSets(device, kWaterBindingCount, writes, 0, nullptr);
+		}
+
+		// 2. Framebuffer cache (keyed par output view + extent).
+		FramebufferKey key{ colorOutView, extent.width, extent.height };
+		VkFramebuffer fb = VK_NULL_HANDLE;
+		auto it = m_framebufferCache.find(key);
+		if (it != m_framebufferCache.end())
+		{
+			fb = it->second;
+		}
+		else
+		{
+			VkFramebufferCreateInfo fbi{};
+			fbi.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbi.renderPass      = m_renderPass;
+			fbi.attachmentCount = 1;
+			fbi.pAttachments    = &colorOutView;
+			fbi.width           = extent.width;
+			fbi.height          = extent.height;
+			fbi.layers          = 1;
+			if (vkCreateFramebuffer(device, &fbi, nullptr, &fb) != VK_SUCCESS)
+			{
+				LOG_WARN(Render, "[WaterPass] vkCreateFramebuffer failed");
+				return;
+			}
+			m_framebufferCache[key] = fb;
+		}
+
+		// 3. Begin render pass.
+		VkRenderPassBeginInfo rpb{};
+		rpb.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		rpb.renderPass        = m_renderPass;
+		rpb.framebuffer       = fb;
+		rpb.renderArea.extent = extent;
+		rpb.clearValueCount   = 0;  // LOAD_OP_DONT_CARE
+		vkCmdBeginRenderPass(cmd, &rpb, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkViewport vp{};
+		vp.x        = 0;
+		vp.y        = 0;
+		vp.width    = static_cast<float>(extent.width);
+		vp.height   = static_cast<float>(extent.height);
+		vp.minDepth = 0.0f;
+		vp.maxDepth = 1.0f;
+		vkCmdSetViewport(cmd, 0, 1, &vp);
+		VkRect2D sc{ { 0, 0 }, extent };
+		vkCmdSetScissor(cmd, 0, 1, &sc);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
+		                        0, 1, &m_descriptorSets[frameIndex], 0, nullptr);
+
+		VkBuffer     vbo  = mesh.GetVertexBuffer();
+		VkBuffer     ibo  = mesh.GetIndexBuffer();
+		VkDeviceSize zero = 0;
+		vkCmdBindVertexBuffers(cmd, 0, 1, &vbo, &zero);
+		vkCmdBindIndexBuffer(cmd, ibo, 0, VK_INDEX_TYPE_UINT32);
+
+		// 4. Loop drawInfos avec push constants par-instance.
+		const auto&    drawInfos = mesh.GetDrawInfos();
+		const uint32_t nLakes    = static_cast<uint32_t>(scene.lakes.size());
+
+		// Défauts hardcodés pour les rivières (RiverInstance n'a pas
+		// bottomColor/turbidity/flowSpeed dans M100.13).
+		constexpr float kRiverDefaultBottomColor[3] = { 0.05f, 0.15f, 0.20f };
+		constexpr float kRiverDefaultTurbidity      = 0.4f;
+		constexpr float kRiverDefaultFlowSpeed      = 0.5f;
+
+		for (const auto& drawInfo : drawInfos)
+		{
+			WaterPassPushConstants pc = paramsBase;
+
+			if (drawInfo.paramsIndex < nLakes)
+			{
+				// Lac : on lit les champs depuis LakeInstance.
+				const auto& lake   = scene.lakes[drawInfo.paramsIndex];
+				pc.bottomColor[0]     = lake.bottomColor.x;
+				pc.bottomColor[1]     = lake.bottomColor.y;
+				pc.bottomColor[2]     = lake.bottomColor.z;
+				pc.turbidity          = lake.turbidity;
+				pc.flowDirection[0]   = 0.0f;
+				pc.flowDirection[1]   = 0.0f;
+				pc.flowSpeed          = 0.0f;   // Lac : pas de flow directionnel
+				pc.refractionAmount   = 0.02f;
+				pc.fresnelPower       = 5.0f;
+				pc.reflectionStrength = 0.5f;
+			}
+			else
+			{
+				// Rivière : défauts hardcodés + flowDirection (1,0) par convention
+				// (le shader utilise vFlowDir interpolé depuis WaterVertex.flowDir).
+				const uint32_t riverIdx = drawInfo.paramsIndex - nLakes;
+				if (riverIdx >= static_cast<uint32_t>(scene.rivers.size())) continue;
+
+				pc.bottomColor[0]     = kRiverDefaultBottomColor[0];
+				pc.bottomColor[1]     = kRiverDefaultBottomColor[1];
+				pc.bottomColor[2]     = kRiverDefaultBottomColor[2];
+				pc.turbidity          = kRiverDefaultTurbidity;
+				pc.flowDirection[0]   = 1.0f;
+				pc.flowDirection[1]   = 0.0f;
+				pc.flowSpeed          = kRiverDefaultFlowSpeed;
+				pc.refractionAmount   = 0.015f;
+				pc.fresnelPower       = 5.0f;
+				pc.reflectionStrength = 0.4f;
+			}
+
+			vkCmdPushConstants(cmd, m_pipelineLayout,
+			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			                   0, sizeof(WaterPassPushConstants), &pc);
+
+			vkCmdDrawIndexed(cmd, drawInfo.indexCount, 1, drawInfo.firstIndex,
+			                 drawInfo.vertexOffset, 0);
+		}
+
+		vkCmdEndRenderPass(cmd);
+	}
 
 } // namespace engine::render

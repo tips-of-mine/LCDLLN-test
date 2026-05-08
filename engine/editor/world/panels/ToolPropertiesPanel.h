@@ -9,6 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
+namespace engine::editor::world { class LakeTool; class RiverTool; }
 
 namespace engine::editor::world::panels
 {
@@ -49,6 +50,11 @@ namespace engine::editor::world::panels
 		/// panneau Stamp si `m_stampLibraryLoaded` est false.
 		/// Effet de bord : remplit `m_stampLibrary`.
 		void RefreshStampLibrary();
+
+		void RenderLakeParams(engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::LakeTool& tool);
+		void RenderRiverParams(engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::RiverTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

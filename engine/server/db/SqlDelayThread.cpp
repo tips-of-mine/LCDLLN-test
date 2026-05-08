@@ -46,6 +46,8 @@ namespace engine::server::db
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
+			if (m_stopRequested.load())
+				return false;  // refuse les enqueues post-Stop (CMANGOS.13 review #5)
 			if (m_queue.size() >= m_maxQueueSize)
 				return false;
 			m_queue.push_back(Job{std::move(sql), std::move(callback)});
@@ -62,6 +64,7 @@ namespace engine::server::db
 
 	void SqlDelayThread::WorkerLoop()
 	{
+		mysql_thread_init();  // libmysql per-thread init (CMANGOS.13 review #2)
 		while (true)
 		{
 			Job job;
@@ -74,7 +77,10 @@ namespace engine::server::db
 				if (m_queue.empty())
 				{
 					if (m_stopRequested.load())
+					{
+						mysql_thread_end();
 						return;
+					}
 					continue;
 				}
 				job = std::move(m_queue.front());

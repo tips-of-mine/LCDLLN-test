@@ -2,7 +2,15 @@
 
 #include <mysql.h>
 
+#include <algorithm>
+#include <cassert>
 #include <cstring>
+
+// Phase 1a code review #4 : MYSQL_BIND::is_null veut un bool* sur libmysqlclient
+// récent. On stocke en std::vector<char> pour stabilité ABI ; ce static_assert
+// documente que la conversion reinterpret_cast<bool*> est safe (1 byte both).
+static_assert(sizeof(bool) == sizeof(char),
+	"SqlPreparedStatement requires sizeof(bool) == sizeof(char) for is_null bridge");
 
 namespace engine::server::db
 {
@@ -200,7 +208,8 @@ namespace engine::server::db
 			return fallback;
 		// Le buffer contient une string ASCII de l'entier (MYSQL_TYPE_STRING).
 		const auto& buf = m_resultBuffers[col];
-		const std::string s(reinterpret_cast<const char*>(buf.data()), m_resultLengths[col]);
+		const unsigned long len = std::min(m_resultLengths[col], static_cast<unsigned long>(buf.size()));
+		const std::string s(reinterpret_cast<const char*>(buf.data()), len);
 		return std::atoi(s.c_str());
 	}
 
@@ -209,7 +218,8 @@ namespace engine::server::db
 		if (col >= m_resultColumnCount || m_resultIsNull[col])
 			return fallback;
 		const auto& buf = m_resultBuffers[col];
-		const std::string s(reinterpret_cast<const char*>(buf.data()), m_resultLengths[col]);
+		const unsigned long len = std::min(m_resultLengths[col], static_cast<unsigned long>(buf.size()));
+		const std::string s(reinterpret_cast<const char*>(buf.data()), len);
 		return std::strtoull(s.c_str(), nullptr, 10);
 	}
 
@@ -218,7 +228,8 @@ namespace engine::server::db
 		if (col >= m_resultColumnCount || m_resultIsNull[col])
 			return {};
 		const auto& buf = m_resultBuffers[col];
-		return std::string(reinterpret_cast<const char*>(buf.data()), m_resultLengths[col]);
+		const unsigned long len = std::min(m_resultLengths[col], static_cast<unsigned long>(buf.size()));
+		return std::string(reinterpret_cast<const char*>(buf.data()), len);
 	}
 
 	bool SqlPreparedStatement::Reset()
@@ -235,6 +246,8 @@ namespace engine::server::db
 	SqlPreparedStatementCache::SqlPreparedStatementCache(size_t maxEntries)
 		: m_maxEntries(maxEntries)
 	{
+		// CMANGOS.13 review #11 : maxEntries=0 ferait croître le cache sans borne.
+		assert(maxEntries > 0 && "SqlPreparedStatementCache requires maxEntries >= 1");
 	}
 
 	SqlPreparedStatementCache::~SqlPreparedStatementCache() = default;

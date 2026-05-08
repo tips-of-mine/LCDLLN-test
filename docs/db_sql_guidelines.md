@@ -153,3 +153,64 @@ Limité à 4 args en Phase 1b.
 | `graveyards.id` | 1 — ∞ | Pas de range réservé |
 | `locale_strings.string_id` | 1 — ∞ | Pas de range réservé |
 | `locale_strings.locale_id` | 0=fr_FR, 1=en_US | Étendre selon besoin |
+
+## Phase 1c — Account Roles (CMANGOS.06)
+
+Hiérarchie 5 niveaux côté serveur :
+
+| Rôle | Valeur | Persisté DB | Capacités |
+|---|---|---|---|
+| Player | 0 | oui | Gameplay normal |
+| Moderator | 1 | oui | .mute, .kick, .warn |
+| GameMaster | 2 | oui | + .ban, .tele, .spawn |
+| Administrator | 3 | oui | + .account create/delete, .set role |
+| Console | 4 | NON (runtime) | Toutes commandes (RCON, stdin process) |
+
+### Règle d'or : `HasLowerSecurity`
+
+**Toute action affectant un autre compte** (ban, kick, mute, set role,
+inspect mail, whisper à GM caché) DOIT appeler `HasLowerSecurity(target,
+source)` avant exécution.
+
+```cpp
+if (!roleService.HasLowerSecurity(targetId, callerId))
+{
+    LOG_WARN(Auth, "[AUDIT] denied_ban target={} by={}", targetId, callerId);
+    return false;  // refus
+}
+// proceed
+```
+
+`HasLowerSecurity` retourne `true` UNIQUEMENT si `target.role < source.role`
+strictement. Égalité = `false` (un GM ne peut pas ban un autre GM ;
+nécessite un Administrator).
+
+### Audit via SecurityAuditLog
+
+Tout `SetRole` produit une ligne `role_change` dans `SecurityAuditLog`
+via `LogModerationAction("role_change", actor_display, target_display,
+"old=X new=Y")`.
+
+### Migration progressive des handlers existants
+
+Les handlers GM existants (avant Phase 1c) testent typiquement
+`account.is_gm` ou `account.role == 'admin'`. Migration au cas par cas :
+
+```cpp
+// AVANT
+if (!record.is_gm) return RefusalReason::NotGM;
+
+// APRÈS (via AccountRoleService)
+if (!roleService.RequireMinRole(callerId, AccountRole::GameMaster))
+    return RefusalReason::InsufficientRole;
+```
+
+### Convention pour Console (RCON, stdin)
+
+Le caller spécial RCON/stdin n'a pas d'`account_id` réel. On utilise un
+sentinel `0xFFFFFFFFFFFFFFFFu` ou un flag dédié `ChatContext::isConsole`
+qui force `RequireMinRole` à retourner `true` quel que soit le min.
+
+`Console` n'est **jamais** stocké en DB. Si une ligne y est trouvée
+(corruption), le store doit la rejeter au load avec un warning et la
+traiter comme `Player`.

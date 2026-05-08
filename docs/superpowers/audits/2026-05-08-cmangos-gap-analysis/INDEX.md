@@ -165,8 +165,8 @@
 
 | # | Module | Cible | Statut | Effort | Valeur | Reco | Risque |
 |---|---|---|---|---|---|---|---|
-| [44](./CMANGOS.44.md) | AuctionHouseBot | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| [45](./CMANGOS.45.md) | Auth SRP6 | master | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| [44](./CMANGOS.44.md) | AuctionHouseBot | master | ❌ Absent | S-M | Conditionnelle | 🚫 Ne pas faire | — |
+| [45](./CMANGOS.45.md) | Auth SRP6 | master | ❌ Absent | L | Faible | 🚫 Ne pas faire | ⚠️ wire-breaking total |
 
 ---
 
@@ -219,7 +219,7 @@ généralisés).
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | `c82928e` |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ✅ Done | `8454aaa` |
 | 3 — P3 | 14 fiches (.29-.42) | ✅ Done | `4359521` |
-| 4 — P4 | 2 fiches (.44-.45) | ⏳ Pending | — |
+| 4 — P4 | 2 fiches (.44-.45) | ✅ Done | _(en cours de commit)_ |
 | 5 — Consolidation | INDEX rempli | ⏳ Pending | — |
 
 ---

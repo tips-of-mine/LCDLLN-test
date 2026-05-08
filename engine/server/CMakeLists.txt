@@ -305,6 +305,16 @@ elseif(UNIX)
   target_compile_options(grid_state_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME grid_state_tests COMMAND grid_state_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.05 (Phase 2.05b) : VMapFormat encode/decode tests (no DB, no I/O)
+  add_executable(vmap_format_tests
+    shard/vmap/VMapFormatTests.cpp
+    shard/vmap/VMapFormat.cpp
+  )
+  target_include_directories(vmap_format_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(vmap_format_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(vmap_format_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME vmap_format_tests COMMAND vmap_format_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

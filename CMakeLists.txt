@@ -206,6 +206,7 @@ add_library(engine_core
   engine/core/Log.cpp
   engine/core/LogConfig.cpp
   engine/core/Time.cpp
+  engine/core/util/ByteBuffer.cpp
   engine/audio/AudioEngine.cpp
   engine/audio/MaMenuMusic.cpp
   engine/client/CombatHud.cpp
@@ -624,6 +625,28 @@ if(MSVC)
   target_compile_options(log_rotation_smoke_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME log_rotation_smoke_tests COMMAND log_rotation_smoke_tests)
+
+# CMANGOS.41: shared utilities (ByteBuffer, ProducerConsumerQueue, UniqueTrackablePtr)
+add_executable(byte_buffer_tests engine/core/util/ByteBufferTests.cpp)
+target_link_libraries(byte_buffer_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(byte_buffer_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME byte_buffer_tests COMMAND byte_buffer_tests)
+
+add_executable(producer_consumer_queue_tests engine/core/util/ProducerConsumerQueueTests.cpp)
+target_link_libraries(producer_consumer_queue_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(producer_consumer_queue_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME producer_consumer_queue_tests COMMAND producer_consumer_queue_tests)
+
+add_executable(unique_trackable_ptr_tests engine/core/util/UniqueTrackablePtrTests.cpp)
+target_link_libraries(unique_trackable_ptr_tests PRIVATE engine_core)
+if(MSVC)
+  target_compile_options(unique_trackable_ptr_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+endif()
+add_test(NAME unique_trackable_ptr_tests COMMAND unique_trackable_ptr_tests)
 
 # M20.2: Argon2 hashing wrapper unit tests (engine_auth first so linker resolves Log from engine_core)
 add_executable(argon2_hash_tests engine/auth/Argon2HashTests.cpp)

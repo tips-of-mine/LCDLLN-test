@@ -78,6 +78,25 @@ namespace
 		LOG_INFO(Core, "[SQLStorageTests] Load+Find+Size+Iterate OK");
 		return true;
 	}
+
+	bool CheckDoubleLoadRejected(engine::server::db::ConnectionPool& pool)
+	{
+		engine::server::db::SQLStorage<TestEntry> storage;
+		const bool ok1 = storage.Load(pool, "phase_1a_test_storage", "entry", MapRow);
+		if (!ok1)
+		{
+			LOG_ERROR(Core, "[SQLStorageTests] First Load failed");
+			return false;
+		}
+		const bool ok2 = storage.Load(pool, "phase_1a_test_storage", "entry", MapRow);
+		if (ok2)
+		{
+			LOG_ERROR(Core, "[SQLStorageTests] Second Load should have returned false");
+			return false;
+		}
+		LOG_INFO(Core, "[SQLStorageTests] Double-load rejected OK");
+		return true;
+	}
 }
 
 int main(int argc, char** argv)
@@ -103,7 +122,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	const bool ok = CheckLoadFindIterate(pool);
+	const bool ok = CheckLoadFindIterate(pool) && CheckDoubleLoadRejected(pool);
 
 	pool.Shutdown();
 	engine::core::Log::Shutdown();

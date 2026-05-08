@@ -283,6 +283,16 @@ elseif(UNIX)
   target_compile_options(object_guid_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME object_guid_tests COMMAND object_guid_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
+  add_executable(bih_tests
+    shard/vmap/BIHTests.cpp
+    shard/vmap/AABB.cpp
+  )
+  target_include_directories(bih_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(bih_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(bih_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME bih_tests COMMAND bih_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

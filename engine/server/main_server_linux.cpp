@@ -310,6 +310,10 @@ int main(int argc, char** argv)
 	chatRelayHandler.SetAccountStore(accountStore);
 	// Phase 5.1 — pool DB pour le routage guild (SQL guild_members).
 	chatRelayHandler.SetConnectionPool(&dbPool);
+	// Phase 2 CMANGOS.01 — câblage du gate (ban via AccountStore +
+	// mute via SQL chat_mutes). Pas de wire-breaking : effet seulement
+	// sur les rejets côté master.
+	chatRelayHandler.Gate().WireProduction(&dbPool, accountStore);
 
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);

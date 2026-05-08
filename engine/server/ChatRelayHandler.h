@@ -1,5 +1,8 @@
 #pragma once
 
+#include "engine/server/chat/ChatGate.h"
+#include "engine/server/chat/ChatSanitizer.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -50,6 +53,15 @@ namespace engine::server
 		void SetAccountStore(AccountStore* accounts);
 		void SetConnectionPool(engine::server::db::ConnectionPool* pool);
 
+		/// Phase 2 CMANGOS.01 : configure le sanitizer (UTF-8 safe trunc,
+		/// strip zero-width, hyperlinks whitelist). Idempotent.
+		void SetSanitizerConfig(const chat::ChatSanitizerConfig& cfg);
+
+		/// Phase 2 CMANGOS.01 : retourne le ChatGate interne (ban/mute/anti-flood)
+		/// pour le câbler à la production via `WireProduction(pool, accounts)`
+		/// au boot de ServerApp.
+		chat::ChatGate& Gate() { return m_gate; }
+
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
 
@@ -60,5 +72,8 @@ namespace engine::server
 		SessionCharacterMap*                m_charMap  = nullptr;
 		AccountStore*                       m_accounts = nullptr;
 		engine::server::db::ConnectionPool* m_pool     = nullptr;
+
+		chat::ChatSanitizerConfig           m_sanitizerCfg{};
+		chat::ChatGate                      m_gate{};
 	};
 }

@@ -44,6 +44,7 @@ namespace engine::server
 	void ChatRelayHandler::SetSessionCharacterMap(SessionCharacterMap* charMap) { m_charMap = charMap; }
 	void ChatRelayHandler::SetAccountStore(AccountStore* accounts)            { m_accounts = accounts; }
 	void ChatRelayHandler::SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_pool = pool; }
+	void ChatRelayHandler::SetSanitizerConfig(const chat::ChatSanitizerConfig& cfg) { m_sanitizerCfg = cfg; }
 
 	void ChatRelayHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize)
@@ -75,6 +76,26 @@ namespace engine::server
 			// doute juste pressé Entrée sans contenu).
 			return;
 		}
+
+		// Phase 2 CMANGOS.01 — Sanitization avant tout routage : UTF-8 safe truncation
+		// (jamais couper au milieu d'un codepoint), strip zero-width chars, hyperlinks
+		// whitelist (item/quest/achievement/spell). Si rejet, on consume silencieusement
+		// (équivalent à "Empty message" — pas d'erreur réseau pour ne pas leaker la
+		// règle exacte au client). Le sanitizer remplace l'ancienne troncature brute
+		// à kMaxChatTextBytes, qui pouvait couper en plein milieu d'un caractère UTF-8.
+		{
+			auto sanitized = chat::Sanitize(parsed->text, m_sanitizerCfg);
+			if (!sanitized.accepted)
+			{
+				LOG_INFO(Net, "[ChatRelayHandler] sanitize rejected reason='{}' text_len={}",
+					sanitized.rejectReason, parsed->text.size());
+				return;
+			}
+			parsed->text = std::move(sanitized.text);
+		}
+		// Garde-fou supplémentaire : si jamais maxMessageBytes était trop laxiste pour
+		// kMaxChatTextBytes (limite wire), on resize encore (UTF-8 safe par construction
+		// puisque le sanitizer a déjà coupé sur frontière).
 		if (parsed->text.size() > kMaxChatTextBytes)
 		{
 			parsed->text.resize(kMaxChatTextBytes);
@@ -95,6 +116,52 @@ namespace engine::server
 			if (!pkt.empty())
 				m_server->Send(connId, pkt);
 			return;
+		}
+
+		// Phase 2 CMANGOS.01 — ChatGate : check ban / mute (DB) / anti-flood (RAM)
+		// avant tout routage. Banned : silencieux (court-circuit, pas d'info au client).
+		// Muted : notice "Server" avec la raison (et l'expiration si non permanente).
+		// Flooding : notice générique "Slow down".
+		{
+			const uint64_t nowMs = NowUnixMsUtc();
+			const auto gateResult = m_gate.DecideAndRecord(*accountId, nowMs);
+			switch (gateResult.decision)
+			{
+				case chat::ChatGateDecision::Banned:
+					LOG_INFO(Net, "[ChatRelayHandler] gate banned account={} text_len={}",
+						*accountId, parsed->text.size());
+					return;
+				case chat::ChatGateDecision::Muted:
+				{
+					std::string body = "You are muted";
+					if (!gateResult.reason.empty())
+						body += " (" + gateResult.reason + ")";
+					if (gateResult.untilTsMs == 0)
+						body += " : permanent.";
+					else
+						body += ".";
+					auto notice = BuildChatRelayPacket(nowMs,
+						static_cast<uint8_t>(engine::net::ChatChannel::Server),
+						"system", body, sessionIdHeader);
+					if (!notice.empty())
+						m_server->Send(connId, notice);
+					LOG_INFO(Net, "[ChatRelayHandler] gate muted account={} until={} reason='{}'",
+						*accountId, gateResult.untilTsMs, gateResult.reason);
+					return;
+				}
+				case chat::ChatGateDecision::Flooding:
+				{
+					auto notice = BuildChatRelayPacket(nowMs,
+						static_cast<uint8_t>(engine::net::ChatChannel::Server),
+						"system", "Slow down — too many messages.", sessionIdHeader);
+					if (!notice.empty())
+						m_server->Send(connId, notice);
+					LOG_INFO(Net, "[ChatRelayHandler] gate flooding account={}", *accountId);
+					return;
+				}
+				case chat::ChatGateDecision::Allowed:
+					break;
+			}
 		}
 
 		// Phase 4 — Sender display name : preference au character_name (post-EnterWorld)

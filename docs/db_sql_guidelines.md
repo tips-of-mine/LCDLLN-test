@@ -214,3 +214,75 @@ qui force `RequireMinRole` à retourner `true` quel que soit le min.
 `Console` n'est **jamais** stocké en DB. Si une ligne y est trouvée
 (corruption), le store doit la rejeter au load avec un warning et la
 traiter comme `Player`.
+
+## Phase 2.01a — Chat sanitizer + gate (CMANGOS.01 sub-PR 1)
+
+Couche de validation côté master, en série avant tout routage par
+`ChatRelayHandler`. Pas de wire-breaking : le protocole n'a pas
+changé, seuls les rejets côté serveur sont nouveaux.
+
+### `ChatSanitizer` — pure function
+
+`engine/server/chat/ChatSanitizer.h`. Étapes en série :
+
+1. Reject si vide → `"empty"`.
+2. UTF-8 safe truncation à `cfg.maxMessageBytes` (défaut 255). Ne coupe
+   **jamais** au milieu d'un codepoint multi-byte. Recule depuis
+   `maxBytes` jusqu'au premier byte non-continuation (`& 0xC0 != 0x80`).
+3. Strip zero-width characters si `cfg.stripZeroWidth` :
+   `U+200B..U+200F`, `U+FEFF`, `U+202A..U+202E`. Re-encode en UTF-8 sans
+   les codepoints filtrés.
+4. Reject si hyperlink `|H<type>:...|h<text>|h` avec `<type>` hors
+   whitelist `{item, quest, achievement, spell}` → `"hyperlink_blocked"`.
+   Hyperlink mal formé (pas de `:` après `|H`) aussi rejeté.
+5. Reject si post-strip le texte est vide → `"post_strip_empty"`.
+
+Aucune dépendance externe (DB, pool, réseau) : thread-safe par nature,
+appelable depuis n'importe quel thread.
+
+### `ChatGate` — décision ban/mute/anti-flood
+
+`engine/server/chat/ChatGate.h`. Trois rejets possibles, ordre de
+priorité descendant :
+
+| Décision | Source | Action côté client |
+|---|---|---|
+| `Banned` | `AccountStore.FindByAccountId().status == Locked` | silencieux (court-circuit) |
+| `Muted` | table `chat_mutes` (PK `account_id`, `until_ts ms UTC`) | notice "Server" + raison |
+| `Flooding` | sliding window RAM (default 5 msg / 5s) | notice "Slow down" |
+
+**API publique** :
+- `Decide(accountId, nowMs)` : check pur, sans mutation. Pour preview.
+- `DecideAndRecord(accountId, nowMs)` : check + record atomique. C'est
+  l'API pour le hot path.
+- `WireProduction(pool, accounts)` : câble les callbacks SQL+Store en
+  prod (un seul appel au boot dans `main_server_linux.cpp`).
+
+**Tuning** dans `ChatGateConfig` : `floodWindowMs`, `floodMaxMessages`,
+`maxTrackedAccounts` (cap soft pour la mémoire).
+
+### Table `chat_mutes`
+
+```sql
+CREATE TABLE IF NOT EXISTS chat_mutes (
+  account_id  BIGINT UNSIGNED NOT NULL,
+  until_ts    BIGINT NOT NULL,           -- 0 = permanent
+  reason      VARCHAR(255) NOT NULL DEFAULT '',
+  PRIMARY KEY (account_id),
+  KEY ix_chat_mutes_until (until_ts)
+);
+```
+
+Migration `0044_chat_mutes.sql`. Idempotente. Insertion d'un mute :
+```sql
+REPLACE INTO chat_mutes (account_id, until_ts, reason) VALUES (?, ?, ?);
+```
+
+`until_ts = 0` = mute permanent (jamais expiré). Sinon epoch ms UTC.
+
+### Intégration
+
+`ChatRelayHandler::HandlePacket` appelle `Sanitize` puis `Gate` avant
+tout routage de canal (Say/Whisper/Guild/Friends/...). Le sanitizer
+opère sur `parsed->text` ; le gate utilise `*accountId`. Les notices
+"Server" muted/flooding ne sont visibles que par l'expéditeur.

@@ -345,6 +345,13 @@ elseif(UNIX)
   lcdlln_add_simple_test(spline_tests
     shard/movement/SplineTests.cpp)
 
+  # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
+  lcdlln_add_simple_test(vmap_manager_tests
+    shard/vmap/VMapManagerTests.cpp
+    shard/vmap/VMapManager.cpp
+    shard/vmap/VMapFormat.cpp
+    shard/vmap/AABB.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
   add_executable(chat_command_router_tests
     chat/ChatCommandRouterTests.cpp

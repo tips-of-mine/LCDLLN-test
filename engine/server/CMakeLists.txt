@@ -172,6 +172,18 @@ elseif(UNIX)
   target_compile_options(sql_prepared_statement_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME sql_prepared_statement_tests COMMAND sql_prepared_statement_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.13 (Phase 1a) : SqlDelayThread async worker tests
+  add_executable(sql_delay_thread_tests
+    db/SqlDelayThreadTests.cpp
+    db/SqlDelayThread.cpp
+    db/ConnectionPool.cpp
+    db/DbHelpers.cpp
+  )
+  target_include_directories(sql_delay_thread_tests PRIVATE ${CMAKE_SOURCE_DIR} ${MYSQL_INCLUDE_DIR})
+  target_link_libraries(sql_delay_thread_tests PRIVATE engine_core ${MYSQL_LIBRARY} pthread)
+  target_compile_options(sql_delay_thread_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME sql_delay_thread_tests COMMAND sql_delay_thread_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
     ShardTicketTests.cpp

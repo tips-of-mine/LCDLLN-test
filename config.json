@@ -180,5 +180,11 @@
             "vendor_talk_target": "vendor:1",
             "auction_talk_target": "auction"
         }
+    },
+    "db": {
+        "delay_thread_enabled": true,
+        "delay_thread_queue_size": 1024,
+        "prepared_statement_cache_size_per_conn": 64,
+        "sql_storage_log_load_durations": true
     }
 }

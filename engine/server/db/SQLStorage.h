@@ -12,10 +12,14 @@
 
 #include <mysql.h>
 
+// Inclusion directe de ConnectionPool.h car l'implémentation templated de
+// Load() utilise pool.Acquire() dans son body — une simple forward declaration
+// déclenche un warning [-Wpedantic] sur GCC ("invalid use of incomplete type")
+// au moment de l'instanciation par les consommateurs.
+#include "engine/server/db/ConnectionPool.h"
+
 namespace engine::server::db
 {
-	class ConnectionPool;
-
 	/// Cache RAM typé d'une table SQL read-only.
 	///
 	/// Usage type :

@@ -5,6 +5,7 @@
 #include "engine/world/terrain/TerrainChunk.h"
 #include "engine/world/terrain/TerrainChunkLoader.h"
 #include "engine/world/terrain/TerrainLodChain.h"
+#include "engine/world/water/WaterSurfaces.h"
 
 #include <algorithm>
 #include <cstring>
@@ -247,5 +248,32 @@ namespace engine::world
 		}
 		Insert(cacheKey, blob);
 		return splat;
+	}
+
+	std::shared_ptr<engine::world::water::WaterScene>
+	StreamCache::LoadWater(const engine::core::Config& config, std::string_view zoneName)
+	{
+		(void)zoneName;  // M100.13 : single global file, partitioning multi-zone = M100.34
+		const std::string contentRoot = config.GetString("paths.content", "game/data");
+		const std::string fullPath = contentRoot + "/instances/water.bin";
+
+		std::ifstream f(fullPath, std::ios::binary | std::ios::ate);
+		if (!f.good()) return nullptr;  // Silencieux si absent
+		const std::streamsize fileSize = f.tellg();
+		f.seekg(0);
+		if (fileSize <= 0) return nullptr;
+		std::vector<uint8_t> blob(static_cast<size_t>(fileSize));
+		f.read(reinterpret_cast<char*>(blob.data()), fileSize);
+		if (!f.good() && !f.eof()) return nullptr;
+
+		auto scene = std::make_shared<engine::world::water::WaterScene>();
+		std::string err;
+		if (!engine::world::water::LoadWaterBin(
+			std::span<const uint8_t>(blob), *scene, err))
+		{
+			LOG_WARN(World, "[StreamCache] LoadWaterBin fail ({}): {}", fullPath, err);
+			return nullptr;
+		}
+		return scene;
 	}
 }

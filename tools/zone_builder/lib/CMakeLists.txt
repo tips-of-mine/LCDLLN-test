@@ -26,6 +26,7 @@ add_library(zone_builder_lib STATIC
   ${CMAKE_SOURCE_DIR}/engine/world/terrain/SplatMap.cpp
   ${CMAKE_SOURCE_DIR}/engine/world/terrain/TerrainChunk.cpp
   ${CMAKE_SOURCE_DIR}/engine/world/terrain/TerrainLodChain.cpp
+  ${CMAKE_SOURCE_DIR}/engine/world/water/WaterSurfaces.cpp
   ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
   ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
   ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp

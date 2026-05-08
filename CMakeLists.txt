@@ -330,6 +330,7 @@ add_library(engine_core
   engine/render/ParticleBillboardPass.cpp
   engine/render/UnderwaterPass.cpp
   engine/render/WaterMeshGpu.cpp
+  engine/render/WaterPass.cpp
   engine/render/DayNightCycle.cpp
   engine/render/WeatherSystem.cpp
   engine/render/DynamicLightSystem.cpp

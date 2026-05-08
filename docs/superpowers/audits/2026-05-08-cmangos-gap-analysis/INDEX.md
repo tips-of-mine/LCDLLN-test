@@ -218,7 +218,7 @@ généralisés).
 | 1 — P1 | 5 fiches (.01-.05) | ✅ Done | `0649d13` |
 | 2a — P2 part 1 | 12 fiches (.06-.17) | ✅ Done | `c82928e` |
 | 2b — P2 part 2 | 11 fiches (.18-.28) | ✅ Done | `8454aaa` |
-| 3 — P3 | 14 fiches (.29-.42) | ✅ Done | _(en cours de commit)_ |
+| 3 — P3 | 14 fiches (.29-.42) | ✅ Done | `4359521` |
 | 4 — P4 | 2 fiches (.44-.45) | ⏳ Pending | — |
 | 5 — Consolidation | INDEX rempli | ⏳ Pending | — |
 

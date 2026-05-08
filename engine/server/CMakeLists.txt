@@ -341,6 +341,10 @@ elseif(UNIX)
   target_compile_options(vmap_format_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME vmap_format_tests COMMAND vmap_format_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.04 (Phase 2.04a) : Spline<T> + MovementTypedefs (header-only).
+  lcdlln_add_simple_test(spline_tests
+    shard/movement/SplineTests.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
   add_executable(chat_command_router_tests
     chat/ChatCommandRouterTests.cpp

@@ -347,6 +347,9 @@ elseif(UNIX)
   lcdlln_add_simple_test(event_ai_tests
     ai/EventAITests.cpp
     ai/EventAI.cpp)
+  # CMANGOS.26 (Phase 3.26a) : SpellFamilyMask 128-bit + ProcEvent matching.
+  lcdlln_add_simple_test(spell_family_mask_tests
+    spell/SpellFamilyMaskTests.cpp)
 
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests

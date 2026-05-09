@@ -317,6 +317,10 @@ elseif(UNIX)
     mail/MailManagerTests.cpp
     mail/MailManager.cpp)
 
+  # CMANGOS.20 (Phase 3.20a) : MotionGeneratorStack (header-only).
+  lcdlln_add_simple_test(motion_generator_stack_tests
+    ai/MotionGeneratorStackTests.cpp)
+
   # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
   lcdlln_add_simple_test(ignore_list_tests
     social/IgnoreListTests.cpp)

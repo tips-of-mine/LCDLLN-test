@@ -364,6 +364,10 @@ elseif(UNIX)
   # CMANGOS.26 (Phase 3.26a) : SpellFamilyMask 128-bit + ProcEvent matching.
   lcdlln_add_simple_test(spell_family_mask_tests
     spell/SpellFamilyMaskTests.cpp)
+  # CMANGOS.14 (Phase 3.14a) : DBScripts VM step-by-step.
+  lcdlln_add_simple_test(dbscript_tests
+    dbscripts/DBScriptTests.cpp
+    dbscripts/DBScript.cpp)
 
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests

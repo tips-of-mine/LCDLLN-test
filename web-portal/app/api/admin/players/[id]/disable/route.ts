@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
-import { sendAccountDisabled } from '@/lib/email'
+import { query } from '@/lib/db/connection'
+import { sendAccountDisabled } from '@/lib/email/sender'
 import type { RowDataPacket } from 'mysql2/promise'
 
 async function checkAdmin() {

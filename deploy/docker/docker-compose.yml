@@ -8,7 +8,7 @@
 #   web-portal — Next.js (sources ./web-portal dans le zip CI)
 #   phpmyadmin — phpMyAdmin (visualisation / administration de la base MySQL)
 #
-# Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, db/, config/, game/data/, web-portal/).
+# Bundle CI : le zip Linux contient deploy/docker/ prêt à l’emploi (bin/, sql/, config/, game/data/, web-portal/).
 #
 # Démarrage (zip décompressé, depuis ce répertoire) :
 #   docker compose up -d
@@ -55,8 +55,8 @@ services:
       - "127.0.0.1:3306:3306"
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ./db/02_fix_schema_v1_checksum.sql:/docker-entrypoint-initdb.d/02_fix_schema_v1_checksum.sql:ro
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./sql/02_fix_schema_v1_checksum.sql:/docker-entrypoint-initdb.d/02_fix_schema_v1_checksum.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
              "-u", "${MYSQL_USER:-lcdlln_user}",

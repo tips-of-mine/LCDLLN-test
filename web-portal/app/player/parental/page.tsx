@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getSession } from '@/lib/session'
-import { query } from '@/lib/db'
+import { getSession } from '@/lib/auth/session'
+import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 import { ParentalForm } from './ParentalForm'
 

@@ -1,0 +1,6341 @@
+#include "src/shared/server_bootstrap/ServerApp.h"
+
+#include "src/shared/core/Log.h"
+#include "src/shared/net/ChatEmotes.h"
+#include "src/shared/net/ChatSystem.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shardd/gameplay/ChatCommandParser.h"
+#include "src/shared/network/ServerProtocol.h"
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <limits>
+#include <sstream>
+#include <functional>
+#include <sstream>
+#include <span>
+#include <string>
+#include <string_view>
+#include <utility>
+
+namespace engine::server
+{
+	namespace
+	{
+		/// Fixed authoritative combat numbers for the MVP ticket.
+		inline constexpr uint32_t kDefaultPlayerHealth = 100;
+		inline constexpr uint32_t kDefaultMobHealth = 60;
+		inline constexpr uint32_t kDefaultPlayerDamage = 10;
+		inline constexpr uint32_t kDefaultMobDamage = 6;
+		inline constexpr uint32_t kDefaultLootBagArchetypeId = 200;
+		inline constexpr float kDefaultAttackRangeMeters = 4.0f;
+		inline constexpr float kDefaultMobLeashDistanceMeters = 24.0f;
+		inline constexpr float kDefaultMobMoveSpeedMetersPerSecond = 3.0f;
+		inline constexpr float kDefaultMobPatrolDistanceMeters = 6.0f;
+		inline constexpr float kDefaultLootPickupRangeMeters = 3.0f;
+
+		/// M32.2 — Base XP granted per mob kill (shared among party members in range).
+		inline constexpr uint32_t kBaseXpPerMobKill = 10;
+
+		/// M32.2 — Maximum range (metres) for party XP and loot sharing.
+		inline constexpr float kPartyShareRangeMeters = 40.0f;
+
+		/// M35.2 — Maximum stack size per shop buy/sell request (anti-spam).
+		inline constexpr uint32_t kMaxShopQuantityPerRequest = 10000u;
+
+		/// M35.4 — merge persisted mailbox into wallet + bags before spawning the character.
+		void MergePersistedMailboxIntoState(PersistedCharacterState& state)
+		{
+			const uint64_t totalGold = static_cast<uint64_t>(state.gold) + static_cast<uint64_t>(state.mailboxGold);
+			state.gold = static_cast<uint32_t>(
+				std::min<uint64_t>(totalGold, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+			state.mailboxGold = 0;
+			for (const ItemStack& m : state.mailboxItems)
+			{
+				if (m.itemId == 0u || m.quantity == 0u)
+				{
+					continue;
+				}
+				bool merged = false;
+				for (ItemStack& inv : state.inventory)
+				{
+					if (inv.itemId == m.itemId)
+					{
+						const uint64_t q = static_cast<uint64_t>(inv.quantity) + static_cast<uint64_t>(m.quantity);
+						inv.quantity = static_cast<uint32_t>(
+							std::min<uint64_t>(q, static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+						merged = true;
+						break;
+					}
+				}
+				if (!merged)
+				{
+					state.inventory.push_back(m);
+				}
+			}
+			state.mailboxItems.clear();
+		}
+
+		/// Parse \p targetId of the form `vendor:<decimal_id>` for M35.2 shop talk routing.
+		bool TryParseVendorTarget(std::string_view targetId, uint32_t& outVendorId)
+		{
+			constexpr std::string_view kPrefix = "vendor:";
+			if (!targetId.starts_with(kPrefix))
+			{
+				return false;
+			}
+			const std::string_view rest = targetId.substr(kPrefix.size());
+			if (rest.empty())
+			{
+				return false;
+			}
+			uint64_t acc = 0;
+			for (const char ch : rest)
+			{
+				if (ch < '0' || ch > '9')
+				{
+					return false;
+				}
+				acc = acc * 10ull + static_cast<uint64_t>(ch - '0');
+				if (acc > 0xFFFFFFFFull)
+				{
+					return false;
+				}
+			}
+			if (acc == 0ull)
+			{
+				return false;
+			}
+			outVendorId = static_cast<uint32_t>(acc);
+			return true;
+		}
+
+		/// Clamp a signed config integer into an unsigned 16-bit range.
+		uint16_t ClampToU16(int64_t value, uint16_t minValue, uint16_t maxValue)
+		{
+			if (value < static_cast<int64_t>(minValue))
+			{
+				return minValue;
+			}
+			if (value > static_cast<int64_t>(maxValue))
+			{
+				return maxValue;
+			}
+			return static_cast<uint16_t>(value);
+		}
+
+		/// Return true when the entity id already exists in the list.
+		bool ContainsEntityId(const std::vector<EntityId>& entityIds, EntityId entityId)
+		{
+			return std::find(entityIds.begin(), entityIds.end(), entityId) != entityIds.end();
+		}
+
+		/// Build the fixed MVP combat component using the current server tick rate.
+		CombatComponent BuildDefaultCombatComponent(uint16_t tickHz, uint32_t damagePerHit)
+		{
+			CombatComponent component{};
+			component.damagePerHit = damagePerHit;
+			component.attackRangeMeters = kDefaultAttackRangeMeters;
+			component.cooldownTicks = std::max<uint32_t>(1u, static_cast<uint32_t>(tickHz / 2u));
+			component.nextAttackTick = 0;
+			return component;
+		}
+
+		/// Return the squared XZ distance used by the range validation.
+		float DistanceSquaredXZ(float ax, float az, float bx, float bz)
+		{
+			const float dx = ax - bx;
+			const float dz = az - bz;
+			return (dx * dx) + (dz * dz);
+		}
+
+		/// Return a readable name for one mob AI state.
+		const char* GetMobAiStateName(MobAiState state)
+		{
+			switch (state)
+			{
+			case MobAiState::Idle:
+				return "Idle";
+			case MobAiState::Patrol:
+				return "Patrol";
+			case MobAiState::Aggro:
+				return "Aggro";
+			case MobAiState::Return:
+				return "Return";
+			}
+
+			return "Idle";
+		}
+
+		/// Return a readable name for one dynamic event status.
+		const char* GetDynamicEventStatusName(DynamicEventStatus status)
+		{
+			switch (status)
+			{
+			case DynamicEventStatus::Idle:
+				return "idle";
+			case DynamicEventStatus::Active:
+				return "active";
+			case DynamicEventStatus::Cooldown:
+				return "cooldown";
+			}
+
+			return "idle";
+		}
+
+		/// Wall-clock milliseconds since Unix epoch (UTC) for chat relay timestamps.
+		uint64_t NowUnixEpochMsUtc()
+		{
+			using namespace std::chrono;
+			return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		}
+
+		/// Parse the loot visibility token found in the data file.
+		bool TryParseLootVisibility(std::string_view text, LootVisibility& outVisibility)
+		{
+			if (text == "owner")
+			{
+				outVisibility = LootVisibility::Owner;
+				return true;
+			}
+
+			if (text == "public")
+			{
+				outVisibility = LootVisibility::Public;
+				return true;
+			}
+
+			return false;
+		}
+	}
+
+	ServerApp::ServerApp(engine::core::Config config)
+		: m_config(std::move(config))
+		, m_characterPersistence(m_config)
+		, m_auctionHouse(m_config)
+		, m_eventRuntime(m_config)
+		, m_questRuntime(m_config)
+		, m_spawnerRuntime(m_config)
+	{
+		LOG_INFO(Core, "[ServerApp] Constructed");
+	}
+
+	ServerApp::~ServerApp()
+	{
+		Shutdown();
+	}
+
+	bool ServerApp::Init()
+	{
+		if (m_initialized)
+		{
+			LOG_WARN(Core, "[ServerApp] Init ignored: already initialized");
+			return true;
+		}
+
+		m_listenPort = ClampToU16(m_config.GetInt("server.listen_port", 27015), 1, 65535);
+		m_tickHz = ResolveTickHz();
+		m_snapshotHz = ResolveSnapshotHz(m_tickHz);
+		m_nextClientId = 1;
+		m_currentTick = 0;
+		m_characterAutosaveIntervalTicks = 0;
+		m_nextCharacterAutosaveTick = 0;
+		m_snapshotAccumulator = 0;
+		m_stopRequested = false;
+		m_clients.clear();
+		m_mobs.clear();
+		m_lootBags.clear();
+		m_lootTableEntries.clear();
+		m_dynamicEvents.clear();
+		m_spawners.clear();
+		m_pendingDatagrams.clear();
+		m_zoneGrids.clear();
+		m_nextServerEntityId = 0x200000000ull;
+		if (!m_zoneTransitionMap.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: zone transition map startup failed");
+			return false;
+		}
+
+		if (!m_transport.Init(m_listenPort))
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: transport startup failed");
+			m_zoneTransitionMap.Shutdown();
+			return false;
+		}
+
+		if (!m_tickScheduler.Init(m_tickHz))
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: tick scheduler startup failed");
+			m_transport.Shutdown();
+			m_zoneTransitionMap.Shutdown();
+			return false;
+		}
+
+		if (!m_characterPersistence.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: character persistence startup failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!m_currencyConfig.Load(m_config))
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: currency config load failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!m_vendorCatalog.Load(m_config))
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: vendor catalog load failed");
+			Shutdown();
+			return false;
+		}
+		m_vendorStock.ResetFromCatalog(m_vendorCatalog.GetVendors());
+
+		m_characterAutosaveIntervalTicks = ResolveCharacterAutosaveIntervalTicks();
+		m_nextCharacterAutosaveTick = m_characterAutosaveIntervalTicks;
+
+		if (!InitLootTables())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: loot tables startup failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!InitQuests())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: quest runtime startup failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!InitSpawners())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: spawner bootstrap failed");
+			Shutdown();
+			return false;
+		}
+
+		if (!InitDynamicEvents())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: dynamic event bootstrap failed");
+			Shutdown();
+			return false;
+		}
+
+		m_tickScheduler.Start();
+		m_chatRateLimiter.Reset();
+		InitModerationAuditSubsystem();
+		LoadChatBanFile();
+
+		// M32.1 — FriendSystem runs in no-DB mode on WIN32 (presence tracking only).
+		m_friendSystem.Init(nullptr);
+
+		// M32.2 — PartySystem (in-memory, no DB dependency).
+		m_partySystem.Init();
+
+		// M35.3 — TradeSystem (in-memory, direct player-to-player trade).
+		m_tradeSystem.Init(m_tickHz);
+
+		// M36.1 — GatheringSystem (resource nodes + harvest sessions).
+		if (!InitGathering())
+		{
+			LOG_WARN(Core, "[ServerApp] GatheringSystem init skipped or partial — harvesting unavailable");
+		}
+
+		// M36.2 — CraftingSystem (recipes + profession skill leveling).
+		if (!InitCrafting())
+		{
+			LOG_WARN(Core, "[ServerApp] CraftingSystem init skipped or partial — crafting unavailable");
+		}
+
+		if (!m_auctionHouse.Init())
+		{
+			LOG_ERROR(Core, "[ServerApp] Init FAILED: auction house startup failed");
+			Shutdown();
+			return false;
+		}
+
+		m_initialized = true;
+		LOG_INFO(Core, "[ServerApp] Init OK (port={}, tick_hz={}, snapshot_hz={})",
+			m_listenPort, m_tickHz, m_snapshotHz);
+		LOG_INFO(Net, "[ServerApp] Chat routing ready (rate_limit_msgs_per_sec={})",
+			engine::net::ChatRateLimiter::kMaxMessagesPerSecond);
+		return true;
+	}
+
+	int ServerApp::Run()
+	{
+		if (!m_initialized)
+		{
+			LOG_ERROR(Core, "[ServerApp] Run FAILED: app not initialized");
+			return 1;
+		}
+
+		LOG_INFO(Core, "[ServerApp] Run loop started");
+		while (!m_stopRequested)
+		{
+			if (!m_tickScheduler.WaitForNextTick())
+			{
+				LOG_ERROR(Core, "[ServerApp] Run FAILED: scheduler tick wait failed");
+				return 1;
+			}
+
+			ProcessIncomingPackets();
+			TickOnce();
+		}
+
+		LOG_INFO(Core, "[ServerApp] Run loop stopped");
+		return 0;
+	}
+
+	void ServerApp::RequestStop()
+	{
+		m_stopRequested = true;
+		LOG_INFO(Core, "[ServerApp] Stop requested");
+	}
+
+	void ServerApp::Shutdown()
+	{
+		m_chatRateLimiter.Reset();
+
+		if (!m_initialized
+			&& !m_transport.IsValid()
+			&& m_clients.empty()
+			&& m_mobs.empty()
+			&& m_lootBags.empty()
+			&& m_lootTableEntries.empty()
+			&& m_zoneGrids.empty()
+			&& m_pendingDatagrams.empty())
+		{
+			m_moderationAuditLog.Shutdown();
+			m_moderationAuditLogReady = false;
+			return;
+		}
+
+		m_initialized = false;
+		for (const ConnectedClient& client : m_clients)
+		{
+			SaveConnectedClient(client, "shutdown");
+			if (client.hasCell)
+			{
+				const auto zoneIt = m_zoneGrids.find(client.zoneId);
+				if (zoneIt != m_zoneGrids.end())
+				{
+					(void)zoneIt->second.RemoveEntity(client.entityId);
+				}
+			}
+		}
+		m_clients.clear();
+		for (const MobEntity& mob : m_mobs)
+		{
+			const auto zoneIt = m_zoneGrids.find(mob.zoneId);
+			if (zoneIt != m_zoneGrids.end())
+			{
+				(void)zoneIt->second.RemoveEntity(mob.entityId);
+			}
+		}
+		m_mobs.clear();
+		for (const LootBagEntity& lootBag : m_lootBags)
+		{
+			const auto zoneIt = m_zoneGrids.find(lootBag.zoneId);
+			if (zoneIt != m_zoneGrids.end())
+			{
+				(void)zoneIt->second.RemoveEntity(lootBag.entityId);
+			}
+		}
+		m_lootBags.clear();
+		m_lootTableEntries.clear();
+		for (auto& [zoneId, zoneGrid] : m_zoneGrids)
+		{
+			(void)zoneId;
+			zoneGrid.Shutdown();
+		}
+		m_zoneGrids.clear();
+		m_pendingDatagrams.clear();
+		m_tickScheduler.Shutdown();
+		m_transport.Shutdown();
+		m_zoneTransitionMap.Shutdown();
+		m_spawnerRuntime.Shutdown();
+		m_eventRuntime.Shutdown();
+		m_questRuntime.Shutdown();
+		m_auctionHouse.Shutdown();
+		m_characterPersistence.Shutdown();
+		m_dynamicEvents.clear();
+		m_spawners.clear();
+		m_moderationAuditLog.Shutdown();
+		m_moderationAuditLogReady = false;
+		m_friendSystem.Shutdown();
+		m_partySystem.Shutdown();
+		m_tradeSystem.Shutdown();
+		if (m_gatheringSystem.IsInitialized())
+			m_gatheringSystem.Shutdown();
+		if (m_craftingSystem.IsInitialized())
+			m_craftingSystem.Shutdown();
+		LOG_INFO(Core, "[ServerApp] Destroyed");
+	}
+
+	uint16_t ServerApp::ResolveTickHz() const
+	{
+		const uint16_t configuredTickHz = ClampToU16(m_config.GetInt("server.tick_hz", 20), 1, 120);
+		if (configuredTickHz == 20 || configuredTickHz == 30)
+		{
+			return configuredTickHz;
+		}
+
+		LOG_WARN(Core, "[ServerApp] Unsupported server.tick_hz={} -> fallback to 20", configuredTickHz);
+		return 20;
+	}
+
+	uint16_t ServerApp::ResolveSnapshotHz(uint16_t tickHz) const
+	{
+		const uint16_t configuredSnapshotHz = ClampToU16(m_config.GetInt("server.snapshot_hz", 10), 1, tickHz);
+		const uint16_t clampedSnapshotHz = std::clamp<uint16_t>(configuredSnapshotHz, 10, tickHz);
+		if (clampedSnapshotHz > 20)
+		{
+			LOG_WARN(Core, "[ServerApp] server.snapshot_hz={} above ticket range -> clamp to 20", clampedSnapshotHz);
+			return 20;
+		}
+		if (clampedSnapshotHz != configuredSnapshotHz)
+		{
+			LOG_WARN(Core, "[ServerApp] server.snapshot_hz={} adjusted to {}", configuredSnapshotHz, clampedSnapshotHz);
+		}
+		return clampedSnapshotHz;
+	}
+
+	uint32_t ServerApp::ResolveCharacterAutosaveIntervalTicks() const
+	{
+		const uint32_t autosaveSeconds = static_cast<uint32_t>(std::max<int64_t>(1, m_config.GetInt("server.character_autosave_seconds", 30)));
+		const uint32_t autosaveTicks = autosaveSeconds * static_cast<uint32_t>(m_tickHz);
+		return std::max<uint32_t>(1u, autosaveTicks);
+	}
+
+	void ServerApp::ProcessIncomingPackets()
+	{
+		m_transport.Receive(m_pendingDatagrams, 64);
+		for (const Datagram& datagram : m_pendingDatagrams)
+		{
+			ProcessPacket(datagram);
+		}
+	}
+
+	void ServerApp::ProcessPacket(const Datagram& datagram)
+	{
+		const std::span<const std::byte> packetBytes(datagram.bytes.data(), datagram.size);
+
+		HelloMessage hello{};
+		if (DecodeHello(packetBytes, hello))
+		{
+			HandleHello(datagram.endpoint, hello.clientNonce);
+			return;
+		}
+
+		InputMessage input{};
+		if (DecodeInput(packetBytes, input))
+		{
+			HandleInput(datagram.endpoint, input.clientId, input.inputSequence, input.positionMetersX, input.positionMetersZ);
+			return;
+		}
+
+		AttackRequestMessage attackRequest{};
+		if (DecodeAttackRequest(packetBytes, attackRequest))
+		{
+			HandleAttackRequest(datagram.endpoint, attackRequest.clientId, attackRequest.targetEntityId);
+			return;
+		}
+
+		PickupRequestMessage pickupRequest{};
+		if (DecodePickupRequest(packetBytes, pickupRequest))
+		{
+			HandlePickupRequest(datagram.endpoint, pickupRequest.clientId, pickupRequest.lootBagEntityId);
+			return;
+		}
+
+		TalkRequestMessage talkRequest{};
+		if (DecodeTalkRequest(packetBytes, talkRequest))
+		{
+			HandleTalkRequest(datagram.endpoint, talkRequest.clientId, talkRequest.targetId);
+			return;
+		}
+
+		ShopBuyRequestMessage shopBuy{};
+		if (DecodeShopBuyRequest(packetBytes, shopBuy))
+		{
+			HandleShopBuyRequest(datagram.endpoint, shopBuy);
+			return;
+		}
+
+		ShopSellRequestMessage shopSell{};
+		if (DecodeShopSellRequest(packetBytes, shopSell))
+		{
+			HandleShopSellRequest(datagram.endpoint, shopSell);
+			return;
+		}
+
+		AuctionBrowseRequestMessage ahBrowse{};
+		if (DecodeAuctionBrowseRequest(packetBytes, ahBrowse))
+		{
+			HandleAuctionBrowseRequest(datagram.endpoint, ahBrowse);
+			return;
+		}
+
+		AuctionListItemRequestMessage ahList{};
+		if (DecodeAuctionListItemRequest(packetBytes, ahList))
+		{
+			HandleAuctionListItemRequest(datagram.endpoint, ahList);
+			return;
+		}
+
+		AuctionBidRequestMessage ahBid{};
+		if (DecodeAuctionBidRequest(packetBytes, ahBid))
+		{
+			HandleAuctionBidRequest(datagram.endpoint, ahBid);
+			return;
+		}
+
+		AuctionBuyoutRequestMessage ahBuy{};
+		if (DecodeAuctionBuyoutRequest(packetBytes, ahBuy))
+		{
+			HandleAuctionBuyoutRequest(datagram.endpoint, ahBuy);
+			return;
+		}
+
+		// M35.3 — Direct player-to-player trade packets.
+		TradeAcceptMessage tradeAccept{};
+		if (DecodeTradeAccept(packetBytes, tradeAccept))
+		{
+			HandleTradeAccept(datagram.endpoint, tradeAccept);
+			return;
+		}
+
+		TradeDeclineMessage tradeDecline{};
+		if (DecodeTradeDecline(packetBytes, tradeDecline))
+		{
+			HandleTradeDecline(datagram.endpoint, tradeDecline);
+			return;
+		}
+
+		TradeAddItemMessage tradeAddItem{};
+		if (DecodeTradeAddItem(packetBytes, tradeAddItem))
+		{
+			HandleTradeAddItem(datagram.endpoint, tradeAddItem);
+			return;
+		}
+
+		TradeSetGoldMessage tradeSetGold{};
+		if (DecodeTradeSetGold(packetBytes, tradeSetGold))
+		{
+			HandleTradeSetGold(datagram.endpoint, tradeSetGold);
+			return;
+		}
+
+		TradeLockMessage tradeLock{};
+		if (DecodeTradeLock(packetBytes, tradeLock))
+		{
+			HandleTradeLock(datagram.endpoint, tradeLock);
+			return;
+		}
+
+		TradeConfirmMessage tradeConfirm{};
+		if (DecodeTradeConfirm(packetBytes, tradeConfirm))
+		{
+			HandleTradeConfirm(datagram.endpoint, tradeConfirm);
+			return;
+		}
+
+		TradeCancelMessage tradeCancelMsg{};
+		if (DecodeTradeCancel(packetBytes, tradeCancelMsg))
+		{
+			HandleTradeCancelPacket(datagram.endpoint, tradeCancelMsg);
+			return;
+		}
+
+		// M36.1 — Gathering / harvesting resource node packets.
+		HarvestRequestMessage harvestReq{};
+		if (DecodeHarvestRequest(packetBytes, harvestReq))
+		{
+			HandleHarvestRequest(datagram.endpoint, harvestReq);
+			return;
+		}
+
+		HarvestCancelRequestMessage harvestCancelReq{};
+		if (DecodeHarvestCancelRequest(packetBytes, harvestCancelReq))
+		{
+			HandleHarvestCancelRequest(datagram.endpoint, harvestCancelReq);
+			return;
+		}
+
+		// M36.2 — Crafting / profession packets.
+		LearnProfessionRequestMessage learnProfReq{};
+		if (DecodeLearnProfessionRequest(packetBytes, learnProfReq))
+		{
+			HandleLearnProfessionRequest(datagram.endpoint, learnProfReq);
+			return;
+		}
+
+		CraftRecipeListRequestMessage recipeListReq{};
+		if (DecodeCraftRecipeListRequest(packetBytes, recipeListReq))
+		{
+			HandleCraftRecipeListRequest(datagram.endpoint, recipeListReq);
+			return;
+		}
+
+		CraftRequestMessage craftReq{};
+		if (DecodeCraftRequest(packetBytes, craftReq))
+		{
+			HandleCraftRequest(datagram.endpoint, craftReq);
+			return;
+		}
+
+		CraftCancelRequestMessage craftCancelReq{};
+		if (DecodeCraftCancelRequest(packetBytes, craftCancelReq))
+		{
+			HandleCraftCancelRequest(datagram.endpoint, craftCancelReq);
+			return;
+		}
+
+		ChatSendRequestMessage chatSend{};
+		if (DecodeChatSend(packetBytes, chatSend))
+		{
+			HandleChatSend(datagram.endpoint, chatSend);
+			return;
+		}
+
+		// M32.1 — Friend request packets (client-initiated via dedicated packet type).
+		FriendRequestMessage friendReq{};
+		if (DecodeFriendRequest(packetBytes, friendReq))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				const std::string playerLabel = "P" + std::to_string(sender->clientId);
+				const uint64_t targetId = m_friendSystem.SendFriendRequest(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					playerLabel,
+					friendReq.targetName,
+					nullptr);
+				if (targetId != 0)
+					LOG_DEBUG(Net, "[ServerApp] FriendRequest routed (client_id={}, target_id={})", sender->clientId, targetId);
+			}
+			return;
+		}
+
+		FriendAcceptMessage friendAccept{};
+		if (DecodeFriendAccept(packetBytes, friendAccept))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				m_friendSystem.AcceptFriendRequest(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					friendAccept.requesterName,
+					nullptr);
+			}
+			return;
+		}
+
+		FriendDeclineMessage friendDecline{};
+		if (DecodeFriendDecline(packetBytes, friendDecline))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				m_friendSystem.DeclineFriendRequest(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					friendDecline.requesterName,
+					nullptr);
+			}
+			return;
+		}
+
+		FriendRemoveMessage friendRemove{};
+		if (DecodeFriendRemove(packetBytes, friendRemove))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender)
+			{
+				m_friendSystem.RemoveFriend(
+					static_cast<uint64_t>(sender->persistenceCharacterKey),
+					friendRemove.friendName,
+					nullptr);
+			}
+			return;
+		}
+
+		// M32.2 — Party accept packet (invitee replies to a pending invite).
+		PartyAcceptMessage partyAccept{};
+		if (DecodePartyAccept(packetBytes, partyAccept))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender && m_partySystem.IsInitialized())
+			{
+				const std::string inviteeLabel = "P" + std::to_string(sender->clientId);
+				const uint32_t partyId = m_partySystem.AcceptInvite(
+				    sender->clientId,
+				    inviteeLabel,
+				    sender->entityId,
+				    m_currentTick);
+				if (partyId != 0)
+				{
+					const Party* party = m_partySystem.FindPartyById(partyId);
+					if (party != nullptr)
+					{
+						BroadcastPartyUpdate(*party);
+						// Notify all members.
+						for (const PartyMember& m : party->members)
+						{
+							ConnectedClient* member = FindClientByEntityId(m.entityId);
+							if (member != nullptr)
+								SendChatSystemNotice(*member, inviteeLabel + " has joined the party.");
+						}
+					}
+					LOG_INFO(Net, "[ServerApp] Party invite accepted via packet (client_id={}, party_id={})",
+					    sender->clientId, partyId);
+				}
+				else
+				{
+					SendChatSystemNotice(*sender, "Party invite expired or invalid.");
+					LOG_WARN(Net, "[ServerApp] Party invite accept failed (client_id={})", sender->clientId);
+				}
+			}
+			return;
+		}
+
+		// M32.2 — Party decline packet (invitee declines a pending invite).
+		PartyDeclineMessage partyDecline{};
+		if (DecodePartyDecline(packetBytes, partyDecline))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender && m_partySystem.IsInitialized())
+			{
+				const PendingPartyInvite* invite = m_partySystem.GetPendingInvite(sender->clientId);
+				const uint32_t inviterClientId   = invite ? invite->inviterClientId : 0;
+				m_partySystem.DeclineInvite(sender->clientId);
+
+				SendChatSystemNotice(*sender, "Party invite declined.");
+
+				if (inviterClientId != 0)
+				{
+					for (ConnectedClient& c : m_clients)
+					{
+						if (c.clientId == inviterClientId)
+						{
+							const std::string senderLabel = "P" + std::to_string(sender->clientId);
+							SendChatSystemNotice(c, "'" + senderLabel + "' declined your party invite.");
+							break;
+						}
+					}
+				}
+				LOG_INFO(Net, "[ServerApp] Party invite declined via packet (client_id={})", sender->clientId);
+			}
+			return;
+		}
+
+		// M32.2 — Party leave packet (client explicitly leaves).
+		PartyLeaveMessage partyLeave{};
+		if (DecodePartyLeave(packetBytes, partyLeave))
+		{
+			ConnectedClient* sender = FindClient(datagram.endpoint);
+			if (sender && m_partySystem.IsInitialized())
+				HandleLeaveCommand(*sender);
+			return;
+		}
+
+		LOG_WARN(Net, "[ServerApp] Dropped invalid packet from {}", UdpTransport::EndpointToString(datagram.endpoint));
+	}
+
+	void ServerApp::HandleHello(const Endpoint& endpoint, uint64_t helloNonce)
+	{
+		// Phase 3.7.5 — tentativeCharacterKey élargi à uint64. Fallback sur m_nextClientId
+		// (uint32) si le client n'a pas envoyé de character_id ; cast widening explicite.
+		const uint64_t tentativeCharacterKey = helloNonce != 0u
+			? helloNonce
+			: static_cast<uint64_t>(m_nextClientId);
+		if (m_bannedCharacterKeys.find(tentativeCharacterKey) != m_bannedCharacterKeys.end())
+		{
+			LOG_WARN(Net,
+				"[ServerApp] Hello rejected: banned character_key={} (endpoint={})",
+				tentativeCharacterKey,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		ConnectedClient* existingClient = FindClient(endpoint);
+		if (existingClient != nullptr)
+		{
+			existingClient->helloNonce = helloNonce;
+			LOG_INFO(Net, "[ServerApp] Handshake refresh (client_id={}, endpoint={}, nonce={})",
+				existingClient->clientId,
+				UdpTransport::EndpointToString(endpoint),
+				helloNonce);
+			(void)SendWelcome(*existingClient);
+			SendDynamicEventBootstrap(*existingClient);
+			SendQuestStateBootstrap(*existingClient);
+			(void)SendWalletUpdate(*existingClient);
+			return;
+		}
+
+		ConnectedClient client{};
+		client.endpoint = endpoint;
+		client.clientId = m_nextClientId++;
+		client.zoneId = 1;
+		client.entityId = static_cast<EntityId>(client.clientId);
+		client.helloNonce = helloNonce;
+		// Phase 3.7.5 — fallback uint32 clientId widened to uint64.
+		client.persistenceCharacterKey = helloNonce != 0u
+			? helloNonce
+			: static_cast<uint64_t>(client.clientId);
+		client.stats.currentHealth = kDefaultPlayerHealth;
+		client.stats.maxHealth = kDefaultPlayerHealth;
+		client.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultPlayerDamage);
+		ConnectedClient& acceptedClient = m_clients.emplace_back(std::move(client));
+		PersistedCharacterState persistedState{};
+		if (m_characterPersistence.LoadCharacter(acceptedClient.persistenceCharacterKey, persistedState))
+		{
+			const bool hadMailbox =
+				persistedState.mailboxGold != 0u || !persistedState.mailboxItems.empty();
+			MergePersistedMailboxIntoState(persistedState);
+			acceptedClient.zoneId = persistedState.zoneId;
+			acceptedClient.positionMetersX = persistedState.positionMetersX;
+			acceptedClient.positionMetersY = persistedState.positionMetersY;
+			acceptedClient.positionMetersZ = persistedState.positionMetersZ;
+			acceptedClient.experiencePoints = persistedState.experiencePoints;
+			acceptedClient.gold = persistedState.gold;
+			acceptedClient.honor = persistedState.honor;
+			acceptedClient.badges = persistedState.badges;
+			acceptedClient.premiumCurrency = persistedState.premiumCurrency;
+			acceptedClient.stats = persistedState.stats;
+			acceptedClient.inventory = persistedState.inventory;
+			acceptedClient.questStates = persistedState.questStates;
+		acceptedClient.chatIgnoredDisplayNames = std::move(persistedState.chatIgnoredDisplayNames);
+		acceptedClient.chatModeratorRole = persistedState.chatModeratorRole;
+		/// M36.2 — restore known professions.
+		acceptedClient.professions = std::move(persistedState.professions);
+		acceptedClient.hasReplicatedState = true;
+			LOG_INFO(Net,
+				"[ServerApp] Character state restored (client_id={}, character_key={}, zone_id={}, inventory_items={}, quests={}, chat_ignore={}, moderator={})",
+				acceptedClient.clientId,
+				acceptedClient.persistenceCharacterKey,
+				acceptedClient.zoneId,
+				acceptedClient.inventory.size(),
+				acceptedClient.questStates.size(),
+				acceptedClient.chatIgnoredDisplayNames.size(),
+				acceptedClient.chatModeratorRole ? "true" : "false");
+			if (hadMailbox)
+			{
+				SaveConnectedClient(acceptedClient, "mailbox_merge_login");
+				LOG_INFO(Net, "[ServerApp] Mailbox merged at login (client_id={})", acceptedClient.clientId);
+			}
+		}
+		else
+		{
+			acceptedClient.hasReplicatedState = true;
+			LOG_INFO(Net,
+				"[ServerApp] Character state defaults active (client_id={}, character_key={})",
+				acceptedClient.clientId,
+				acceptedClient.persistenceCharacterKey);
+		}
+
+		std::vector<QuestProgressDelta> questSyncDeltas;
+		if (m_questRuntime.SyncQuestStates(acceptedClient.questStates, questSyncDeltas))
+		{
+			if (!questSyncDeltas.empty())
+			{
+				LOG_INFO(Net, "[ServerApp] Quest state bootstrap updated (client_id={}, deltas={})",
+					acceptedClient.clientId,
+					questSyncDeltas.size());
+			}
+		}
+		else
+		{
+			LOG_WARN(Net, "[ServerApp] Quest state bootstrap skipped: runtime sync failed (client_id={})",
+				acceptedClient.clientId);
+		}
+
+		UpdateClientInterest(acceptedClient);
+		LOG_INFO(Net, "[ServerApp] Client accepted (client_id={}, entity_id={}, zone_id={}, hp={}, endpoint={}, total_clients={})",
+			acceptedClient.clientId,
+			acceptedClient.entityId,
+			acceptedClient.zoneId,
+			acceptedClient.stats.currentHealth,
+			UdpTransport::EndpointToString(endpoint),
+			m_clients.size());
+		(void)SendWelcome(acceptedClient);
+		SendDynamicEventBootstrap(acceptedClient);
+		SendQuestStateBootstrap(acceptedClient);
+		(void)SendWalletUpdate(acceptedClient);
+		OnClientLogin(acceptedClient);
+	}
+
+	void ServerApp::HandleInput(const Endpoint& endpoint, uint32_t clientId, uint32_t inputSequence, float positionMetersX, float positionMetersZ)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] Input ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] Input ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		const float previousPositionX = client->positionMetersX;
+		const float previousPositionZ = client->positionMetersZ;
+		client->lastInputSequence = inputSequence;
+		client->positionMetersX = positionMetersX;
+		client->positionMetersZ = positionMetersZ;
+		if (client->hasReplicatedState)
+		{
+			const float tickDt = 1.0f / static_cast<float>(m_tickHz);
+			client->velocityMetersPerSecondX = (client->positionMetersX - previousPositionX) / tickDt;
+			client->velocityMetersPerSecondZ = (client->positionMetersZ - previousPositionZ) / tickDt;
+			if (std::abs(client->velocityMetersPerSecondX) > 0.001f || std::abs(client->velocityMetersPerSecondZ) > 0.001f)
+			{
+				client->yawRadians = std::atan2(client->velocityMetersPerSecondX, client->velocityMetersPerSecondZ);
+			}
+		}
+		client->hasReplicatedState = true;
+		MaybeApplyZoneTransition(*client);
+		LOG_DEBUG(Net, "[ServerApp] Input accepted (client_id={}, seq={}, pos=({:.2f}, {:.2f}))",
+			client->clientId,
+			client->lastInputSequence,
+			client->positionMetersX,
+			client->positionMetersZ);
+		UpdateClientInterest(*client);
+	}
+
+	void ServerApp::TickOnce()
+	{
+		++m_currentTick;
+		Simulate();
+		MaybeAutosaveCharacters();
+		RefreshReplication();
+		MaybeSendSnapshots();
+		if ((m_currentTick % m_tickHz) == 0)
+		{
+			LOG_INFO(Core, "[ServerApp] Tick stats (tick={}, clients={}, rx_packets={}, tx_packets={})",
+				m_currentTick,
+				m_clients.size(),
+				m_transport.ReceivedPacketCount(),
+				m_transport.SentPacketCount());
+		}
+	}
+
+	void ServerApp::Simulate()
+	{
+		UpdateMobAi();
+		UpdateSpawners();
+		UpdateDynamicEvents();
+		// M32.2 — Expire stale party invites once per tick.
+		if (m_partySystem.IsInitialized())
+			m_partySystem.ExpireInvites(m_currentTick);
+		ProcessAuctionHouseTick();
+		TickGathering();
+		TickCrafting();
+		LOG_TRACE(Core, "[ServerApp] Simulate tick {}", m_currentTick);
+	}
+
+	bool ServerApp::InitSpawners()
+	{
+		m_mobs.clear();
+		m_spawners.clear();
+		if (!m_spawnerRuntime.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: runtime load failed");
+			return false;
+		}
+
+		for (const SpawnerDefinition& definition : m_spawnerRuntime.GetDefinitions())
+		{
+			CellGrid* zoneGrid = GetOrCreateZoneGrid(definition.zoneId);
+			if (zoneGrid == nullptr)
+			{
+				LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: missing zone grid (spawner_id={}, zone_id={})",
+					definition.spawnerId,
+					definition.zoneId);
+				m_spawners.clear();
+				return false;
+			}
+
+			SpawnerRuntimeState runtimeState{};
+			runtimeState.definition = definition;
+			runtimeState.slots.resize(definition.count);
+			if (!zoneGrid->TryWorldToCellCoord(definition.positionMetersX, definition.positionMetersZ, runtimeState.centerCell))
+			{
+				LOG_ERROR(Net, "[ServerApp] Spawner init FAILED: invalid spawn position (spawner_id={}, zone_id={})",
+					definition.spawnerId,
+					definition.zoneId);
+				m_spawners.clear();
+				return false;
+			}
+
+			m_spawners.push_back(std::move(runtimeState));
+			LOG_INFO(Net, "[ServerApp] Spawner ready (id={}, zone_id={}, count={}, respawn_sec={})",
+				definition.spawnerId,
+				definition.zoneId,
+				definition.count,
+				definition.respawnSeconds);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Spawner init OK (spawners={})", m_spawners.size());
+		return true;
+	}
+
+	bool ServerApp::InitLootTables()
+	{
+		m_lootTableEntries.clear();
+
+		const std::string relativePath = m_config.GetString("server.loot_table_path", "loot/loot_tables.txt");
+		const std::string lootTableText = engine::platform::FileSystem::ReadAllTextContent(m_config, relativePath);
+		if (lootTableText.empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: empty or missing file (path={})", relativePath);
+			return false;
+		}
+
+		std::istringstream input(lootTableText);
+		std::string line;
+		uint32_t lineNumber = 0;
+		while (std::getline(input, line))
+		{
+			++lineNumber;
+			std::string_view lineView(line);
+			if (lineView.empty() || lineView.front() == '#')
+			{
+				continue;
+			}
+
+			std::istringstream lineStream(line);
+			LootTableEntry entry{};
+			std::string visibilityToken;
+			if (!(lineStream >> entry.sourceArchetypeId >> entry.item.itemId >> entry.item.quantity >> visibilityToken))
+			{
+				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: invalid line {} in {}", lineNumber, relativePath);
+				m_lootTableEntries.clear();
+				return false;
+			}
+
+			if (!TryParseLootVisibility(visibilityToken, entry.visibility))
+			{
+				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: invalid visibility '{}' at line {}", visibilityToken, lineNumber);
+				m_lootTableEntries.clear();
+				return false;
+			}
+
+			if (entry.sourceArchetypeId == 0 || entry.item.itemId == 0 || entry.item.quantity == 0)
+			{
+				LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: zero value at line {}", lineNumber);
+				m_lootTableEntries.clear();
+				return false;
+			}
+
+			m_lootTableEntries.push_back(entry);
+		}
+
+		if (m_lootTableEntries.empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot table init FAILED: no entries loaded (path={})", relativePath);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Loot table init OK (path={}, entries={})", relativePath, m_lootTableEntries.size());
+		return true;
+	}
+
+	bool ServerApp::InitQuests()
+	{
+		if (!m_questRuntime.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] Quest init FAILED");
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Quest init OK");
+		return true;
+	}
+
+	bool ServerApp::InitDynamicEvents()
+	{
+		m_dynamicEvents.clear();
+		if (!m_eventRuntime.Init())
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event init FAILED: runtime load failed");
+			return false;
+		}
+
+		for (const DynamicEventDefinition& definition : m_eventRuntime.GetDefinitions())
+		{
+			DynamicEventState state{};
+			state.definition = definition;
+			ScheduleDynamicEventTrigger(state, false);
+			m_dynamicEvents.push_back(std::move(state));
+			LOG_INFO(Net, "[ServerApp] Dynamic event ready (event_id={}, zone_id={}, trigger={}, cooldown_sec={})",
+				definition.eventId,
+				definition.zoneId,
+				GetDynamicEventTriggerTypeName(definition.triggerType),
+				definition.cooldownSeconds);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event init OK (events={})", m_dynamicEvents.size());
+		return true;
+	}
+
+	void ServerApp::MaybeAutosaveCharacters()
+	{
+		if (m_clients.empty() || m_characterAutosaveIntervalTicks == 0 || m_currentTick < m_nextCharacterAutosaveTick)
+		{
+			return;
+		}
+
+		for (const ConnectedClient& client : m_clients)
+		{
+			SaveConnectedClient(client, "autosave");
+		}
+
+		m_nextCharacterAutosaveTick = m_currentTick + m_characterAutosaveIntervalTicks;
+		LOG_INFO(Net, "[ServerApp] Character autosave complete (clients={}, next_tick={})",
+			m_clients.size(),
+			m_nextCharacterAutosaveTick);
+	}
+
+	void ServerApp::SaveConnectedClient(const ConnectedClient& client, std::string_view reason)
+	{
+		if (client.persistenceCharacterKey == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] Character save skipped: missing persistence key (client_id={}, reason={})",
+				client.clientId,
+				reason);
+			return;
+		}
+
+		PersistedCharacterState state{};
+		state.characterKey = client.persistenceCharacterKey;
+		state.zoneId = client.zoneId;
+		state.positionMetersX = client.positionMetersX;
+		state.positionMetersY = client.positionMetersY;
+		state.positionMetersZ = client.positionMetersZ;
+		state.experiencePoints = client.experiencePoints;
+		state.gold = client.gold;
+		state.honor = client.honor;
+		state.badges = client.badges;
+		state.premiumCurrency = client.premiumCurrency;
+		state.stats = client.stats;
+		state.inventory = client.inventory;
+		state.questStates = client.questStates;
+		state.chatIgnoredDisplayNames = client.chatIgnoredDisplayNames;
+		state.chatModeratorRole = client.chatModeratorRole;
+		state.mailboxGold = 0;
+		state.mailboxItems.clear();
+		/// M36.2 — persist profession skill progress.
+		state.professions = client.professions;
+		if (!m_characterPersistence.SaveCharacter(state))
+		{
+			LOG_WARN(Net, "[ServerApp] Character save FAILED (client_id={}, character_key={}, reason={})",
+				client.clientId,
+				client.persistenceCharacterKey,
+				reason);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Character save OK (client_id={}, character_key={}, reason={})",
+			client.clientId,
+			client.persistenceCharacterKey,
+			reason);
+	}
+
+	uint32_t ServerApp::ResolveMobAiIntervalTicks() const
+	{
+		const uint32_t configuredAiHz = static_cast<uint32_t>(std::clamp<int64_t>(
+			m_config.GetInt("server.mob_ai_hz", 10),
+			1,
+			static_cast<int64_t>(m_tickHz)));
+		return std::max<uint32_t>(1u, static_cast<uint32_t>(m_tickHz) / configuredAiHz);
+	}
+
+	void ServerApp::UpdateMobAi()
+	{
+		if (m_mobs.empty())
+		{
+			return;
+		}
+
+		for (MobEntity& mob : m_mobs)
+		{
+			if ((mob.stateFlags & kEntityStateDead) != 0u)
+			{
+				continue;
+			}
+
+			if (m_currentTick < mob.nextAiTick)
+			{
+				continue;
+			}
+
+			mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+			UpdateMobAi(mob);
+		}
+	}
+
+	void ServerApp::UpdateMobAi(MobEntity& mob)
+	{
+		RefreshMobAggroTarget(mob);
+		if (mob.aggroTargetEntityId != 0)
+		{
+			SetMobAiState(mob, MobAiState::Aggro);
+		}
+
+		switch (mob.aiState)
+		{
+		case MobAiState::Idle:
+			if (mob.aggroTargetEntityId == 0 && m_currentTick >= mob.nextPatrolTick)
+			{
+				SetMobAiState(mob, MobAiState::Patrol);
+			}
+			break;
+
+		case MobAiState::Patrol:
+		{
+			const float targetX = mob.patrolForward ? mob.patrolTargetMetersX : mob.homePositionMetersX;
+			const float targetZ = mob.patrolForward ? mob.patrolTargetMetersZ : mob.homePositionMetersZ;
+			if (MoveMobTowards(mob, targetX, targetZ))
+			{
+				mob.patrolForward = !mob.patrolForward;
+				mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+				SetMobAiState(mob, MobAiState::Idle);
+			}
+			break;
+		}
+
+		case MobAiState::Aggro:
+		{
+			ConnectedClient* target = FindClientByEntityId(mob.aggroTargetEntityId);
+			if (target == nullptr
+				|| !target->hasReplicatedState
+				|| target->zoneId != mob.zoneId
+				|| target->stats.currentHealth == 0
+				|| (target->stateFlags & kEntityStateDead) != 0u)
+			{
+				LOG_INFO(Net, "[ServerApp] Mob aggro target lost (mob_entity_id={}, target_entity_id={})",
+					mob.entityId,
+					mob.aggroTargetEntityId);
+				ResetMobThreat(mob);
+				SetMobAiState(mob, MobAiState::Return);
+				break;
+			}
+
+			const float homeDistanceSquared = DistanceSquaredXZ(
+				target->positionMetersX,
+				target->positionMetersZ,
+				mob.homePositionMetersX,
+				mob.homePositionMetersZ);
+			const float leashDistanceSquared = mob.leashDistanceMeters * mob.leashDistanceMeters;
+			if (homeDistanceSquared > leashDistanceSquared)
+			{
+				LOG_INFO(Net, "[ServerApp] Mob leash triggered (mob_entity_id={}, target_entity_id={}, distance_sq={:.2f}, leash_sq={:.2f})",
+					mob.entityId,
+					target->entityId,
+					homeDistanceSquared,
+					leashDistanceSquared);
+				ResetMobThreat(mob);
+				SetMobAiState(mob, MobAiState::Return);
+				break;
+			}
+
+			if (!TryMobAttackPlayer(mob, *target))
+			{
+				(void)MoveMobTowards(mob, target->positionMetersX, target->positionMetersZ);
+			}
+			break;
+		}
+
+		case MobAiState::Return:
+			if (MoveMobTowards(mob, mob.homePositionMetersX, mob.homePositionMetersZ))
+			{
+				mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+				SetMobAiState(mob, MobAiState::Idle);
+			}
+			break;
+		}
+	}
+
+	bool ServerApp::IsSpawnerActivatedByPlayers(const SpawnerRuntimeState& spawner) const
+	{
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!client.hasReplicatedState || !client.hasCell || client.zoneId != spawner.definition.zoneId)
+			{
+				continue;
+			}
+
+			const int dx = std::abs(static_cast<int>(client.currentCell.x) - static_cast<int>(spawner.centerCell.x));
+			const int dz = std::abs(static_cast<int>(client.currentCell.z) - static_cast<int>(spawner.centerCell.z));
+			if (dx <= kBaseInterestRadiusCells && dz <= kBaseInterestRadiusCells)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool ServerApp::SpawnerHasCombat(const SpawnerRuntimeState& spawner) const
+	{
+		for (const SpawnerSlotState& slot : spawner.slots)
+		{
+			if (slot.mobEntityId == 0)
+			{
+				continue;
+			}
+
+			const MobEntity* mob = FindMobByEntityId(slot.mobEntityId);
+			if (mob == nullptr || (mob->stateFlags & kEntityStateDead) != 0u)
+			{
+				continue;
+			}
+
+			if (mob->aggroTargetEntityId != 0 || !mob->threatTable.empty() || mob->aiState == MobAiState::Aggro)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool ServerApp::SpawnMobFromSpawner(SpawnerRuntimeState& spawner, uint32_t slotIndex)
+	{
+		if (slotIndex >= spawner.slots.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob spawn FAILED: invalid slot (spawner_id={}, slot={})",
+				spawner.definition.spawnerId,
+				slotIndex);
+			return false;
+		}
+
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(spawner.definition.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob spawn FAILED: zone grid unavailable (spawner_id={}, zone_id={})",
+				spawner.definition.spawnerId,
+				spawner.definition.zoneId);
+			return false;
+		}
+
+		MobEntity mob{};
+		mob.entityId = m_nextServerEntityId++;
+		mob.zoneId = spawner.definition.zoneId;
+		mob.archetypeId = spawner.definition.archetypeId;
+		mob.positionMetersX = spawner.definition.positionMetersX;
+		mob.positionMetersY = spawner.definition.positionMetersY;
+		mob.positionMetersZ = spawner.definition.positionMetersZ;
+		mob.stats.currentHealth = kDefaultMobHealth;
+		mob.stats.maxHealth = kDefaultMobHealth;
+		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		mob.homePositionMetersX = mob.positionMetersX;
+		mob.homePositionMetersY = mob.positionMetersY;
+		mob.homePositionMetersZ = mob.positionMetersZ;
+		mob.patrolTargetMetersX = mob.positionMetersX + kDefaultMobPatrolDistanceMeters;
+		mob.patrolTargetMetersZ = mob.positionMetersZ;
+		mob.leashDistanceMeters = spawner.definition.leashDistanceMeters;
+		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		mob.aiState = MobAiState::Idle;
+		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+		mob.owningSpawnerIndex = static_cast<uint32_t>(&spawner - m_spawners.data());
+		mob.owningSpawnerSlot = slotIndex;
+
+		CellCoord mappedCell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob spawn FAILED: grid mapping failed (spawner_id={}, slot={}, entity_id={})",
+				spawner.definition.spawnerId,
+				slotIndex,
+				mob.entityId);
+			return false;
+		}
+
+		spawner.slots[slotIndex].mobEntityId = mob.entityId;
+		spawner.slots[slotIndex].nextRespawnTick = 0;
+		m_mobs.push_back(mob);
+		LOG_INFO(Net,
+			"[ServerApp] Spawner mob spawned (spawner_id={}, slot={}, entity_id={}, zone_id={}, archetype_id={})",
+			spawner.definition.spawnerId,
+			slotIndex,
+			mob.entityId,
+			mob.zoneId,
+			mob.archetypeId);
+		return true;
+	}
+
+	bool ServerApp::DespawnSpawnerMob(SpawnerRuntimeState& spawner, uint32_t slotIndex, std::string_view reason, bool scheduleRespawn)
+	{
+		if (slotIndex >= spawner.slots.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] Spawner mob despawn FAILED: invalid slot (spawner_id={}, slot={})",
+				spawner.definition.spawnerId,
+				slotIndex);
+			return false;
+		}
+
+		SpawnerSlotState& slot = spawner.slots[slotIndex];
+		if (slot.mobEntityId == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] Spawner mob despawn ignored: empty slot (spawner_id={}, slot={}, reason={})",
+				spawner.definition.spawnerId,
+				slotIndex,
+				reason);
+			return false;
+		}
+
+		const EntityId entityId = slot.mobEntityId;
+		if (MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr)
+		{
+			if (CellGrid* zoneGrid = GetOrCreateZoneGrid(mob->zoneId); zoneGrid != nullptr)
+			{
+				(void)zoneGrid->RemoveEntity(entityId);
+			}
+		}
+
+		m_mobs.erase(
+			std::remove_if(
+				m_mobs.begin(),
+				m_mobs.end(),
+				[entityId](const MobEntity& mob)
+				{
+					return mob.entityId == entityId;
+				}),
+			m_mobs.end());
+
+		slot.mobEntityId = 0;
+		slot.nextRespawnTick = scheduleRespawn
+			? (m_currentTick + std::max<uint32_t>(1u, spawner.definition.respawnSeconds * static_cast<uint32_t>(m_tickHz)))
+			: 0u;
+		LOG_INFO(Net,
+			"[ServerApp] Spawner mob despawned (spawner_id={}, slot={}, entity_id={}, reason={}, next_respawn_tick={})",
+			spawner.definition.spawnerId,
+			slotIndex,
+			entityId,
+			reason,
+			slot.nextRespawnTick);
+		return true;
+	}
+
+	void ServerApp::UpdateSpawners()
+	{
+		if (m_spawners.empty())
+		{
+			return;
+		}
+
+		for (SpawnerRuntimeState& spawner : m_spawners)
+		{
+			const bool shouldBeActive = IsSpawnerActivatedByPlayers(spawner);
+			if (spawner.isActive != shouldBeActive)
+			{
+				spawner.isActive = shouldBeActive;
+				LOG_INFO(Net, "[ServerApp] Spawner activation updated (spawner_id={}, active={})",
+					spawner.definition.spawnerId,
+					spawner.isActive ? "true" : "false");
+			}
+
+			for (uint32_t slotIndex = 0; slotIndex < spawner.slots.size(); ++slotIndex)
+			{
+				SpawnerSlotState& slot = spawner.slots[slotIndex];
+				if (slot.mobEntityId == 0)
+				{
+					continue;
+				}
+
+				MobEntity* mob = FindMobByEntityId(slot.mobEntityId);
+				if (mob == nullptr)
+				{
+					slot.mobEntityId = 0;
+					continue;
+				}
+
+				if (mob->pendingDespawn)
+				{
+					(void)DespawnSpawnerMob(spawner, slotIndex, "death", true);
+					continue;
+				}
+
+				if (!spawner.isActive)
+				{
+					if (mob->aggroTargetEntityId != 0 || !mob->threatTable.empty() || mob->aiState == MobAiState::Aggro)
+					{
+						LOG_DEBUG(Net, "[ServerApp] Spawner despawn delayed: mob still in combat (spawner_id={}, entity_id={})",
+							spawner.definition.spawnerId,
+							mob->entityId);
+						continue;
+					}
+
+					(void)DespawnSpawnerMob(spawner, slotIndex, "inactive", false);
+				}
+			}
+
+			if (!spawner.isActive || SpawnerHasCombat(spawner))
+			{
+				continue;
+			}
+
+			for (uint32_t slotIndex = 0; slotIndex < spawner.slots.size(); ++slotIndex)
+			{
+				SpawnerSlotState& slot = spawner.slots[slotIndex];
+				if (slot.mobEntityId != 0)
+				{
+					continue;
+				}
+				if (slot.nextRespawnTick != 0 && m_currentTick < slot.nextRespawnTick)
+				{
+					continue;
+				}
+
+				(void)SpawnMobFromSpawner(spawner, slotIndex);
+			}
+		}
+	}
+
+	void ServerApp::ScheduleDynamicEventTrigger(DynamicEventState& eventState, bool fromCooldown)
+	{
+		const uint32_t triggerDelayTicksBase = std::max<uint32_t>(1u, eventState.definition.triggerSeconds * static_cast<uint32_t>(m_tickHz));
+		uint32_t triggerDelayTicks = triggerDelayTicksBase;
+		if (eventState.definition.triggerType == DynamicEventTriggerType::Random)
+		{
+			const size_t hashValue = std::hash<std::string>{}(eventState.definition.eventId)
+				^ static_cast<size_t>(m_currentTick + eventState.definition.cooldownSeconds);
+			triggerDelayTicks = 1u + static_cast<uint32_t>(hashValue % triggerDelayTicksBase);
+		}
+
+		if (fromCooldown)
+		{
+			eventState.status = DynamicEventStatus::Cooldown;
+			eventState.cooldownUntilTick = m_currentTick + std::max<uint32_t>(1u, eventState.definition.cooldownSeconds * static_cast<uint32_t>(m_tickHz));
+			eventState.nextTriggerTick = eventState.cooldownUntilTick + triggerDelayTicks;
+		}
+		else
+		{
+			eventState.status = DynamicEventStatus::Idle;
+			eventState.cooldownUntilTick = 0;
+			eventState.nextTriggerTick = m_currentTick + triggerDelayTicks;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event trigger scheduled (event_id={}, status={}, next_trigger_tick={})",
+			eventState.definition.eventId,
+			GetDynamicEventStatusName(eventState.status),
+			eventState.nextTriggerTick);
+	}
+
+	bool ServerApp::StartDynamicEvent(DynamicEventState& eventState)
+	{
+		if (eventState.definition.phases.empty())
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event start FAILED: no phases (event_id={})", eventState.definition.eventId);
+			return false;
+		}
+
+		eventState.status = DynamicEventStatus::Active;
+		eventState.currentPhaseIndex = 0;
+		eventState.currentPhaseProgress = 0;
+		eventState.phaseMobEntityIds.clear();
+		eventState.participantClientIds.clear();
+		LOG_INFO(Net, "[ServerApp] Dynamic event started (event_id={}, zone_id={})",
+			eventState.definition.eventId,
+			eventState.definition.zoneId);
+		BroadcastDynamicEventState(eventState, eventState.definition.startNotificationText, 0, 0, 0, {});
+		return SpawnDynamicEventPhase(eventState);
+	}
+
+	bool ServerApp::SpawnDynamicEventPhase(DynamicEventState& eventState)
+	{
+		if (eventState.currentPhaseIndex >= eventState.definition.phases.size())
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event phase spawn FAILED: invalid phase index (event_id={}, phase={})",
+				eventState.definition.eventId,
+				eventState.currentPhaseIndex);
+			return false;
+		}
+
+		eventState.currentPhaseProgress = 0;
+		eventState.phaseMobEntityIds.clear();
+		const DynamicEventPhaseDefinition& phase = eventState.definition.phases[eventState.currentPhaseIndex];
+		for (const DynamicEventSpawnDefinition& spawn : phase.spawns)
+		{
+			for (uint32_t spawnOrdinal = 0; spawnOrdinal < spawn.count; ++spawnOrdinal)
+			{
+				if (!SpawnMobForDynamicEvent(eventState, eventState.currentPhaseIndex, spawn, spawnOrdinal))
+				{
+					LOG_ERROR(Net, "[ServerApp] Dynamic event phase spawn FAILED (event_id={}, phase_id={})",
+						eventState.definition.eventId,
+						phase.phaseId);
+					return false;
+				}
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event phase started (event_id={}, phase_id={}, mobs={})",
+			eventState.definition.eventId,
+			phase.phaseId,
+			eventState.phaseMobEntityIds.size());
+		BroadcastDynamicEventState(eventState, phase.notificationText, 0, 0, 0, {});
+		return true;
+	}
+
+	bool ServerApp::SpawnMobForDynamicEvent(
+		DynamicEventState& eventState,
+		uint32_t phaseIndex,
+		const DynamicEventSpawnDefinition& spawnDefinition,
+		uint32_t spawnOrdinal)
+	{
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(eventState.definition.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event mob spawn FAILED: zone grid unavailable (event_id={}, zone_id={})",
+				eventState.definition.eventId,
+				eventState.definition.zoneId);
+			return false;
+		}
+
+		MobEntity mob{};
+		mob.entityId = m_nextServerEntityId++;
+		mob.zoneId = eventState.definition.zoneId;
+		mob.archetypeId = spawnDefinition.archetypeId;
+		mob.positionMetersX = spawnDefinition.positionMetersX;
+		mob.positionMetersY = spawnDefinition.positionMetersY;
+		mob.positionMetersZ = spawnDefinition.positionMetersZ;
+		mob.stats.currentHealth = kDefaultMobHealth;
+		mob.stats.maxHealth = kDefaultMobHealth;
+		mob.combat = BuildDefaultCombatComponent(m_tickHz, kDefaultMobDamage);
+		mob.homePositionMetersX = mob.positionMetersX;
+		mob.homePositionMetersY = mob.positionMetersY;
+		mob.homePositionMetersZ = mob.positionMetersZ;
+		mob.patrolTargetMetersX = mob.positionMetersX + kDefaultMobPatrolDistanceMeters;
+		mob.patrolTargetMetersZ = mob.positionMetersZ;
+		mob.leashDistanceMeters = spawnDefinition.leashDistanceMeters;
+		mob.moveSpeedMetersPerSecond = static_cast<float>(m_config.GetDouble("server.mob_move_speed_meters_per_second", kDefaultMobMoveSpeedMetersPerSecond));
+		mob.aiState = MobAiState::Idle;
+		mob.nextAiTick = m_currentTick + ResolveMobAiIntervalTicks();
+		mob.nextPatrolTick = m_currentTick + (ResolveMobAiIntervalTicks() * 2u);
+		mob.isDynamicEventMob = true;
+		mob.owningEventIndex = static_cast<uint32_t>(&eventState - m_dynamicEvents.data());
+		mob.owningEventPhaseIndex = phaseIndex;
+
+		CellCoord mappedCell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, mappedCell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Dynamic event mob spawn FAILED: grid mapping failed (event_id={}, entity_id={})",
+				eventState.definition.eventId,
+				mob.entityId);
+			return false;
+		}
+
+		m_mobs.push_back(mob);
+		eventState.phaseMobEntityIds.push_back(mob.entityId);
+		LOG_INFO(Net,
+			"[ServerApp] Dynamic event mob spawned (event_id={}, phase={}, entity_id={}, archetype_id={}, ordinal={})",
+			eventState.definition.eventId,
+			phaseIndex,
+			mob.entityId,
+			mob.archetypeId,
+			spawnOrdinal);
+		return true;
+	}
+
+	bool ServerApp::DespawnDynamicEventMob(DynamicEventState& eventState, EntityId entityId, std::string_view reason)
+	{
+		if (MobEntity* mob = FindMobByEntityId(entityId); mob != nullptr)
+		{
+			if (CellGrid* zoneGrid = GetOrCreateZoneGrid(mob->zoneId); zoneGrid != nullptr)
+			{
+				(void)zoneGrid->RemoveEntity(entityId);
+			}
+		}
+
+		m_mobs.erase(
+			std::remove_if(
+				m_mobs.begin(),
+				m_mobs.end(),
+				[entityId](const MobEntity& mob)
+				{
+					return mob.entityId == entityId;
+				}),
+			m_mobs.end());
+
+		eventState.phaseMobEntityIds.erase(
+			std::remove(eventState.phaseMobEntityIds.begin(), eventState.phaseMobEntityIds.end(), entityId),
+			eventState.phaseMobEntityIds.end());
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event mob despawned (event_id={}, entity_id={}, reason={})",
+			eventState.definition.eventId,
+			entityId,
+			reason);
+		return true;
+	}
+
+	bool ServerApp::AdvanceDynamicEventPhase(DynamicEventState& eventState)
+	{
+		if ((eventState.currentPhaseIndex + 1u) >= eventState.definition.phases.size())
+		{
+			CompleteDynamicEvent(eventState);
+			return true;
+		}
+
+		++eventState.currentPhaseIndex;
+		eventState.currentPhaseProgress = 0;
+		eventState.phaseMobEntityIds.clear();
+		LOG_INFO(Net, "[ServerApp] Dynamic event phase advanced (event_id={}, phase_index={})",
+			eventState.definition.eventId,
+			eventState.currentPhaseIndex);
+		return SpawnDynamicEventPhase(eventState);
+	}
+
+	void ServerApp::CompleteDynamicEvent(DynamicEventState& eventState)
+	{
+		const DynamicEventReward rewards = eventState.definition.rewards;
+		eventState.status = DynamicEventStatus::Cooldown;
+		BroadcastDynamicEventState(eventState, eventState.definition.completionNotificationText, 0, 0, 0, {});
+		for (uint32_t participantClientId : eventState.participantClientIds)
+		{
+			for (ConnectedClient& client : m_clients)
+			{
+				if (client.clientId != participantClientId)
+				{
+					continue;
+				}
+
+				client.experiencePoints += rewards.experience;
+				if (rewards.gold != 0u)
+				{
+					std::string walletErr;
+					if (!m_playerWallet.AddCurrency(client, kCurrencyGold, rewards.gold, walletErr))
+					{
+						LOG_WARN(Net,
+							"[ServerApp] Dynamic event gold grant blocked (client_id={}, err={})",
+							client.clientId,
+							walletErr);
+					}
+				}
+				for (const ItemStack& rewardItem : rewards.items)
+				{
+					AddItemToInventory(client, rewardItem);
+				}
+				if (!rewards.items.empty())
+				{
+					(void)SendInventoryDelta(client, rewards.items);
+				}
+				(void)SendDynamicEventState(
+					client,
+					eventState,
+					eventState.definition.completionNotificationText,
+					rewards.experience,
+					rewards.gold,
+					rewards.items);
+				(void)SendWalletUpdate(client);
+				SaveConnectedClient(client, "dynamic_event_reward");
+				LOG_INFO(Net, "[ServerApp] Dynamic event rewards granted (event_id={}, client_id={}, xp={}, gold={}, items={})",
+					eventState.definition.eventId,
+					client.clientId,
+					rewards.experience,
+					rewards.gold,
+					rewards.items.size());
+				break;
+			}
+		}
+
+		eventState.phaseMobEntityIds.clear();
+		eventState.participantClientIds.clear();
+		eventState.currentPhaseIndex = 0;
+		eventState.currentPhaseProgress = 0;
+		ScheduleDynamicEventTrigger(eventState, true);
+		LOG_INFO(Net, "[ServerApp] Dynamic event completed (event_id={}, next_trigger_tick={})",
+			eventState.definition.eventId,
+			eventState.nextTriggerTick);
+	}
+
+	void ServerApp::AddDynamicEventParticipant(DynamicEventState& eventState, const ConnectedClient& client)
+	{
+		if (std::find(eventState.participantClientIds.begin(), eventState.participantClientIds.end(), client.clientId)
+			!= eventState.participantClientIds.end())
+		{
+			return;
+		}
+
+		eventState.participantClientIds.push_back(client.clientId);
+		LOG_INFO(Net, "[ServerApp] Dynamic event participant added (event_id={}, client_id={})",
+			eventState.definition.eventId,
+			client.clientId);
+	}
+
+	bool ServerApp::HasPlayersInZone(uint32_t zoneId) const
+	{
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (client.hasReplicatedState && client.zoneId == zoneId)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void ServerApp::UpdateDynamicEvents()
+	{
+		if (m_dynamicEvents.empty())
+		{
+			return;
+		}
+
+		for (DynamicEventState& eventState : m_dynamicEvents)
+		{
+			if (eventState.status == DynamicEventStatus::Active)
+			{
+				for (size_t index = 0; index < eventState.phaseMobEntityIds.size();)
+				{
+					const EntityId entityId = eventState.phaseMobEntityIds[index];
+					MobEntity* mob = FindMobByEntityId(entityId);
+					if (mob == nullptr)
+					{
+						eventState.phaseMobEntityIds.erase(eventState.phaseMobEntityIds.begin() + static_cast<std::ptrdiff_t>(index));
+						continue;
+					}
+
+					if (mob->pendingDespawn)
+					{
+						(void)DespawnDynamicEventMob(eventState, entityId, "phase_kill");
+						continue;
+					}
+
+					++index;
+				}
+
+				const DynamicEventPhaseDefinition& phase = eventState.definition.phases[eventState.currentPhaseIndex];
+				if (eventState.currentPhaseProgress >= phase.progressRequired && eventState.phaseMobEntityIds.empty())
+				{
+					(void)AdvanceDynamicEventPhase(eventState);
+				}
+				continue;
+			}
+
+			if (m_currentTick < eventState.nextTriggerTick)
+			{
+				continue;
+			}
+
+			if (!HasPlayersInZone(eventState.definition.zoneId))
+			{
+				LOG_DEBUG(Net, "[ServerApp] Dynamic event start delayed: no players in zone (event_id={}, zone_id={})",
+					eventState.definition.eventId,
+					eventState.definition.zoneId);
+				continue;
+			}
+
+			if (!StartDynamicEvent(eventState))
+			{
+				ScheduleDynamicEventTrigger(eventState, true);
+				LOG_WARN(Net, "[ServerApp] Dynamic event start rescheduled after failure (event_id={})",
+					eventState.definition.eventId);
+			}
+		}
+	}
+
+	void ServerApp::MaybeSendSnapshots()
+	{
+		if (m_clients.empty())
+		{
+			return;
+		}
+
+		m_snapshotAccumulator += m_snapshotHz;
+		if (m_snapshotAccumulator < m_tickHz)
+		{
+			return;
+		}
+
+		m_snapshotAccumulator -= m_tickHz;
+		for (const ConnectedClient& client : m_clients)
+		{
+			(void)SendSnapshot(client);
+		}
+	}
+
+	void ServerApp::UpdateClientInterest(ConnectedClient& client)
+	{
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(client.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Interest update FAILED: zone grid unavailable (zone_id={})", client.zoneId);
+			return;
+		}
+
+		CellCoord newCell{};
+		if (!zoneGrid->UpsertEntity(client.entityId, client.positionMetersX, client.positionMetersZ, newCell))
+		{
+			LOG_WARN(Net, "[ServerApp] Interest update skipped (client_id={}, pos=({:.2f}, {:.2f}))",
+				client.clientId,
+				client.positionMetersX,
+				client.positionMetersZ);
+			return;
+		}
+
+		if (client.hasCell && client.currentCell == newCell)
+		{
+			zoneGrid->GatherEntityIds(client.interestCells, client.interestEntityIds);
+			return;
+		}
+
+		const std::vector<CellCoord> previousCells = client.interestCells;
+		client.currentCell = newCell;
+		client.hasCell = true;
+		zoneGrid->BuildInterestSet(client.currentCell, client.interestCells);
+		zoneGrid->GatherEntityIds(client.interestCells, client.interestEntityIds);
+
+		InterestDiff diff{};
+		ComputeInterestDiff(previousCells, client.interestCells, diff);
+		LOG_INFO(Net,
+			"[ServerApp] Interest set updated (client_id={}, zone_id={}, cell={}, {}, entering={}, leaving={}, entities={})",
+			client.clientId,
+			client.zoneId,
+			client.currentCell.x,
+			client.currentCell.z,
+			diff.enteringCells.size(),
+			diff.leavingCells.size(),
+			client.interestEntityIds.size());
+	}
+
+	void ServerApp::MaybeApplyZoneTransition(ConnectedClient& client)
+	{
+		ZoneChangeMessage zoneChange{};
+		if (!m_zoneTransitionMap.ResolveTransition(client.zoneId, client.positionMetersX, client.positionMetersZ, zoneChange))
+		{
+			return;
+		}
+
+		if (client.hasCell)
+		{
+			CellGrid* oldZoneGrid = GetOrCreateZoneGrid(client.zoneId);
+			if (oldZoneGrid != nullptr)
+			{
+				(void)oldZoneGrid->RemoveEntity(client.entityId);
+			}
+		}
+
+		client.zoneId = zoneChange.zoneId;
+		client.positionMetersX = zoneChange.spawnPositionX;
+		client.positionMetersY = zoneChange.spawnPositionY;
+		client.positionMetersZ = zoneChange.spawnPositionZ;
+		client.velocityMetersPerSecondX = 0.0f;
+		client.velocityMetersPerSecondY = 0.0f;
+		client.velocityMetersPerSecondZ = 0.0f;
+		client.hasCell = false;
+		client.currentCell = {};
+		client.interestCells.clear();
+		client.interestEntityIds.clear();
+		client.replicatedEntityIds.clear();
+		LOG_INFO(Net,
+			"[ServerApp] Zone transition applied (client_id={}, zone_id={}, spawn=({:.2f}, {:.2f}, {:.2f}))",
+			client.clientId,
+			client.zoneId,
+			client.positionMetersX,
+			client.positionMetersY,
+			client.positionMetersZ);
+		SaveConnectedClient(client, "zone_transition");
+		(void)SendZoneChange(client, zoneChange);
+		SendDynamicEventBootstrap(client);
+		ApplyQuestEvent(client, QuestStepType::Enter, std::string("zone:") + std::to_string(client.zoneId), 1, "zone_enter");
+	}
+
+	void ServerApp::HandleAttackRequest(const Endpoint& endpoint, uint32_t clientId, EntityId targetEntityId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (!client->hasReplicatedState)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: attacker has no replicated state (client_id={})", client->clientId);
+			return;
+		}
+
+		if ((client->stateFlags & kEntityStateDead) != 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: attacker is dead (client_id={}, entity_id={})",
+				client->clientId,
+				client->entityId);
+			return;
+		}
+
+		MobEntity* target = FindMobByEntityId(targetEntityId);
+		if (target == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: invalid mob target (client_id={}, target_entity_id={})",
+				client->clientId,
+				targetEntityId);
+			return;
+		}
+
+		if (target->zoneId != client->zoneId)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: cross-zone target (client_id={}, attacker_zone={}, target_zone={})",
+				client->clientId,
+				client->zoneId,
+				target->zoneId);
+			return;
+		}
+
+		if ((target->stateFlags & kEntityStateDead) != 0u || target->stats.currentHealth == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: target already dead (client_id={}, target_entity_id={})",
+				client->clientId,
+				target->entityId);
+			return;
+		}
+
+		if (m_currentTick < client->combat.nextAttackTick)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: cooldown active (client_id={}, tick={}, next_attack_tick={})",
+				client->clientId,
+				m_currentTick,
+				client->combat.nextAttackTick);
+			return;
+		}
+
+		const float distanceSquared = DistanceSquaredXZ(
+			client->positionMetersX,
+			client->positionMetersZ,
+			target->positionMetersX,
+			target->positionMetersZ);
+		const float attackRangeSquared = client->combat.attackRangeMeters * client->combat.attackRangeMeters;
+		if (distanceSquared > attackRangeSquared)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: target out of range (client_id={}, target_entity_id={}, distance_sq={:.2f}, range_sq={:.2f})",
+				client->clientId,
+				target->entityId,
+				distanceSquared,
+				attackRangeSquared);
+			return;
+		}
+
+		const uint32_t appliedDamage = std::min(client->combat.damagePerHit, target->stats.currentHealth);
+		if (appliedDamage == 0)
+		{
+			LOG_WARN(Net, "[ServerApp] AttackRequest ignored: zero damage after validation (client_id={}, target_entity_id={})",
+				client->clientId,
+				target->entityId);
+			return;
+		}
+
+		client->combat.nextAttackTick = m_currentTick + client->combat.cooldownTicks;
+		target->stats.currentHealth -= appliedDamage;
+		if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
+		{
+			DynamicEventState& eventState = m_dynamicEvents[target->owningEventIndex];
+			AddDynamicEventParticipant(eventState, *client);
+		}
+		if (target->stats.currentHealth == 0)
+		{
+			target->stateFlags |= kEntityStateDead;
+			target->pendingDespawn = true;
+			target->aggroTargetEntityId = 0;
+			target->threatTable.clear();
+			if (target->isDynamicEventMob && target->owningEventIndex < m_dynamicEvents.size())
+			{
+				DynamicEventState& eventState = m_dynamicEvents[target->owningEventIndex];
+				if (eventState.currentPhaseIndex < eventState.definition.phases.size())
+				{
+					++eventState.currentPhaseProgress;
+					const DynamicEventPhaseDefinition& phase = eventState.definition.phases[eventState.currentPhaseIndex];
+					LOG_INFO(Net, "[ServerApp] Dynamic event progress updated (event_id={}, phase_id={}, progress={}/{})",
+						eventState.definition.eventId,
+						phase.phaseId,
+						eventState.currentPhaseProgress,
+						phase.progressRequired);
+					BroadcastDynamicEventState(eventState, phase.notificationText, 0, 0, 0, {});
+				}
+			}
+			LOG_INFO(Net, "[ServerApp] Mob died (entity_id={}, attacker_entity_id={})", target->entityId, client->entityId);
+			if (!target->hasSpawnedLoot)
+			{
+				target->hasSpawnedLoot = true;
+				// M32.2 — Resolve loot owner based on party loot mode.
+				const EntityId looterEntityId = ResolvePartyLooterEntityId(*client);
+				SpawnLootBagForMob(*target, looterEntityId != 0 ? looterEntityId : client->entityId);
+			}
+			// M32.2 — Distribute XP to party members in range.
+			DistributePartyXp(*client,
+			    target->positionMetersX,
+			    target->positionMetersZ,
+			    kBaseXpPerMobKill);
+			ApplyQuestEvent(*client, QuestStepType::Kill, std::string("mob:") + std::to_string(target->archetypeId), 1, "kill");
+		}
+
+		CombatEventMessage combatEvent{};
+		combatEvent.attackerEntityId = client->entityId;
+		combatEvent.targetEntityId = target->entityId;
+		combatEvent.damage = appliedDamage;
+		combatEvent.targetCurrentHealth = target->stats.currentHealth;
+		combatEvent.targetMaxHealth = target->stats.maxHealth;
+		combatEvent.targetStateFlags = target->stateFlags;
+		LOG_INFO(Net,
+			"[ServerApp] Attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
+			combatEvent.attackerEntityId,
+			combatEvent.targetEntityId,
+			combatEvent.damage,
+			combatEvent.targetCurrentHealth,
+			combatEvent.targetMaxHealth,
+			client->combat.nextAttackTick);
+		BroadcastCombatEvent(combatEvent);
+	}
+
+	void ServerApp::HandlePickupRequest(const Endpoint& endpoint, uint32_t clientId, EntityId lootBagEntityId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		LootBagEntity* lootBag = FindLootBagByEntityId(lootBagEntityId);
+		if (lootBag == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: invalid loot bag (client_id={}, loot_bag_entity_id={})",
+				client->clientId,
+				lootBagEntityId);
+			return;
+		}
+
+		if (lootBag->zoneId != client->zoneId)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: cross-zone bag (client_id={}, client_zone={}, bag_zone={})",
+				client->clientId,
+				client->zoneId,
+				lootBag->zoneId);
+			return;
+		}
+
+		if (lootBag->visibility == LootVisibility::Owner && lootBag->ownerEntityId != client->entityId)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: ownership mismatch (client_id={}, loot_bag_entity_id={}, owner_entity_id={})",
+				client->clientId,
+				lootBag->entityId,
+				lootBag->ownerEntityId);
+			return;
+		}
+
+		const float pickupRangeMeters = static_cast<float>(m_config.GetDouble("server.loot_pickup_range_meters", kDefaultLootPickupRangeMeters));
+		const float distanceSquared = DistanceSquaredXZ(
+			client->positionMetersX,
+			client->positionMetersZ,
+			lootBag->positionMetersX,
+			lootBag->positionMetersZ);
+		const float pickupRangeSquared = pickupRangeMeters * pickupRangeMeters;
+		if (distanceSquared > pickupRangeSquared)
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: loot bag out of range (client_id={}, loot_bag_entity_id={}, distance_sq={:.2f}, range_sq={:.2f})",
+				client->clientId,
+				lootBag->entityId,
+				distanceSquared,
+				pickupRangeSquared);
+			return;
+		}
+
+		if (lootBag->items.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] PickupRequest ignored: empty loot bag (client_id={}, loot_bag_entity_id={})",
+				client->clientId,
+				lootBag->entityId);
+			return;
+		}
+
+		const std::vector<ItemStack> pickedItems = lootBag->items;
+		for (const ItemStack& item : pickedItems)
+		{
+			AddItemToInventory(*client, item);
+		}
+
+		if (CellGrid* zoneGrid = GetOrCreateZoneGrid(lootBag->zoneId); zoneGrid != nullptr)
+		{
+			(void)zoneGrid->RemoveEntity(lootBag->entityId);
+		}
+		m_lootBags.erase(
+			std::remove_if(
+				m_lootBags.begin(),
+				m_lootBags.end(),
+				[lootBagEntityId](const LootBagEntity& lootBagEntry)
+				{
+					return lootBagEntry.entityId == lootBagEntityId;
+				}),
+			m_lootBags.end());
+
+		LOG_INFO(Net, "[ServerApp] Loot bag picked up (client_id={}, loot_bag_entity_id={}, item_count={})",
+			client->clientId,
+			lootBagEntityId,
+			pickedItems.size());
+		for (const ItemStack& item : pickedItems)
+		{
+			ApplyQuestEvent(*client, QuestStepType::Collect, std::string("item:") + std::to_string(item.itemId), item.quantity, "pickup");
+		}
+		SaveConnectedClient(*client, "pickup");
+		(void)SendInventoryDelta(*client, pickedItems);
+	}
+
+	void ServerApp::HandleTalkRequest(const Endpoint& endpoint, uint32_t clientId, std::string_view targetId)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] TalkRequest ignored from unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != clientId)
+		{
+			LOG_WARN(Net, "[ServerApp] TalkRequest ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				client->clientId,
+				clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (targetId.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] TalkRequest ignored: empty target (client_id={})", client->clientId);
+			return;
+		}
+
+		uint32_t vendorId = 0;
+		if (TryParseVendorTarget(targetId, vendorId))
+		{
+			if (m_vendorCatalog.FindVendor(vendorId) != nullptr)
+			{
+				LOG_INFO(Net, "[ServerApp] TalkRequest routes to vendor shop (client_id={}, vendor_id={})", client->clientId, vendorId);
+				(void)SendShopOpen(*client, vendorId);
+				return;
+			}
+
+			LOG_WARN(Net, "[ServerApp] TalkRequest vendor not in catalog (client_id={}, vendor_id={})", client->clientId, vendorId);
+			SendChatSystemNotice(*client, "Vendor not available.");
+			return;
+		}
+
+		if (targetId == "auction" || targetId == "ah")
+		{
+			AuctionBrowseRequestMessage q{};
+			q.clientId = client->clientId;
+			q.minPrice = 0;
+			q.maxPrice = 0;
+			q.itemIdFilter = 0;
+			q.sortMode = 0;
+			q.maxRows = kMaxAuctionBrowseRowsWire;
+			LOG_INFO(Net, "[ServerApp] TalkRequest routes to auction house (client_id={})", client->clientId);
+			(void)SendAuctionBrowseResult(*client, q);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] TalkRequest accepted (client_id={}, target={})", client->clientId, targetId);
+		ApplyQuestEvent(*client, QuestStepType::Talk, targetId, 1, "talk");
+	}
+
+	void ServerApp::HandleChatSend(const Endpoint& endpoint, const ChatSendRequestMessage& request)
+	{
+		ConnectedClient* sender = FindClient(endpoint);
+		if (sender == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: unknown endpoint {}",
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (sender->clientId != request.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatSend ignored: client_id mismatch (expected={}, got={}, endpoint={})",
+				sender->clientId,
+				request.clientId,
+				UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (request.text.empty())
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: empty text (client_id={})", sender->clientId);
+			return;
+		}
+
+		if (!m_chatRateLimiter.Allow(sender->clientId, std::chrono::steady_clock::now()))
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend dropped: rate limited (client_id={})", sender->clientId);
+			return;
+		}
+
+		if (sender->chatMutedUntilServerTick != 0 && m_currentTick < sender->chatMutedUntilServerTick)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatSend blocked: sender muted (client_id={}, until_tick={}, current_tick={})",
+				sender->clientId,
+				sender->chatMutedUntilServerTick,
+				m_currentTick);
+			SendChatSystemNotice(*sender, "You are muted.");
+			return;
+		}
+
+		ParsedChatSlashCommand slashCommand{};
+		if (TryParseChatSlashCommand(request.text, slashCommand))
+		{
+			(void)HandleChatSlashCommand(*sender, slashCommand);
+			return;
+		}
+
+		engine::net::ChatChannel logicalChannel{};
+		if (!engine::net::TryDecodeChannelWire(request.channel, logicalChannel))
+		{
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: invalid channel wire ({})", request.channel);
+			return;
+		}
+
+		ChatRelayMessage relay{};
+		relay.channel = request.channel;
+		relay.senderEntityId = sender->entityId;
+		relay.timestampUnixMs = NowUnixEpochMsUtc();
+		relay.senderDisplay = "P" + std::to_string(sender->clientId);
+		if (relay.senderDisplay.size() > 48)
+		{
+			relay.senderDisplay.resize(48);
+		}
+
+		relay.text = request.text;
+
+		std::vector<ConnectedClient*> recipients;
+		const auto addUnique = [&recipients](ConnectedClient* clientPtr)
+		{
+			if (clientPtr == nullptr)
+			{
+				return;
+			}
+
+			if (std::find(recipients.begin(), recipients.end(), clientPtr) == recipients.end())
+			{
+				recipients.push_back(clientPtr);
+			}
+		};
+
+		const auto addAllInZone = [this, &addUnique](uint32_t zoneId)
+		{
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (peer.zoneId == zoneId)
+				{
+					addUnique(&peer);
+				}
+			}
+		};
+
+		switch (logicalChannel)
+		{
+		case engine::net::ChatChannel::Say:
+		{
+			const float radius = engine::net::kChatSayRadiusMeters;
+			const float radiusSq = radius * radius;
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (peer.zoneId != sender->zoneId)
+				{
+					continue;
+				}
+
+				if (DistanceSquaredXZ(
+						sender->positionMetersX,
+						sender->positionMetersZ,
+						peer.positionMetersX,
+						peer.positionMetersZ) <= radiusSq)
+				{
+					addUnique(&peer);
+				}
+			}
+
+			break;
+		}
+		case engine::net::ChatChannel::Yell:
+		{
+			const float radius = engine::net::kChatYellRadiusMeters;
+			const float radiusSq = radius * radius;
+			for (ConnectedClient& peer : m_clients)
+			{
+				if (peer.zoneId != sender->zoneId)
+				{
+					continue;
+				}
+
+				if (DistanceSquaredXZ(
+						sender->positionMetersX,
+						sender->positionMetersZ,
+						peer.positionMetersX,
+						peer.positionMetersZ) <= radiusSq)
+				{
+					addUnique(&peer);
+				}
+			}
+
+			break;
+		}
+		case engine::net::ChatChannel::Whisper:
+		{
+			ConnectedClient* target = FindClientByEntityId(request.whisperTargetEntityId);
+			if (target == nullptr)
+			{
+				LOG_WARN(Net,
+					"[ServerApp] ChatSend whisper FAILED: target not connected (client_id={}, target_entity_id={})",
+					sender->clientId,
+					request.whisperTargetEntityId);
+				return;
+			}
+
+			addUnique(sender);
+			addUnique(target);
+			break;
+		}
+		case engine::net::ChatChannel::Party:
+		case engine::net::ChatChannel::Guild:
+			LOG_INFO(Net,
+				"[ServerApp] ChatSend party/guild routing stub -> zone broadcast (client_id={}, channel_wire={})",
+				sender->clientId,
+				request.channel);
+			addAllInZone(sender->zoneId);
+			break;
+		case engine::net::ChatChannel::Zone:
+			addAllInZone(sender->zoneId);
+			break;
+		case engine::net::ChatChannel::Global:
+			for (ConnectedClient& peer : m_clients)
+			{
+				addUnique(&peer);
+			}
+
+			break;
+		default:
+			LOG_WARN(Net, "[ServerApp] ChatSend ignored: unhandled channel enum (client_id={})", sender->clientId);
+			return;
+		}
+
+		if (recipients.empty())
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatSend produced zero recipients (client_id={}, channel_wire={})",
+				sender->clientId,
+				request.channel);
+			return;
+		}
+
+		size_t sentOk = 0;
+		for (ConnectedClient* receiver : recipients)
+		{
+			if (receiver->clientId != sender->clientId && IsChatSenderIgnoredBy(*receiver, relay.senderDisplay))
+			{
+				LOG_DEBUG(Net,
+					"[ServerApp] ChatRelay skipped for ignored sender (receiver_client_id={}, sender_display={})",
+					receiver->clientId,
+					relay.senderDisplay);
+				continue;
+			}
+
+			if (SendChatRelay(*receiver, relay))
+			{
+				++sentOk;
+			}
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] ChatSend routed (client_id={}, channel_wire={}, recipients={}, sent_ok={})",
+			sender->clientId,
+			request.channel,
+			recipients.size(),
+			sentOk);
+	}
+
+	void ServerApp::SpawnLootBagForMob(const MobEntity& mob, EntityId ownerEntityId)
+	{
+		std::vector<ItemStack> droppedItems;
+		LootVisibility visibility = LootVisibility::Owner;
+		bool foundLoot = false;
+		for (const LootTableEntry& entry : m_lootTableEntries)
+		{
+			if (entry.sourceArchetypeId != mob.archetypeId)
+			{
+				continue;
+			}
+
+			if (!foundLoot)
+			{
+				visibility = entry.visibility;
+				foundLoot = true;
+			}
+			else if (visibility != entry.visibility)
+			{
+				LOG_WARN(Net, "[ServerApp] Loot bag spawn ignored mixed visibility entries (mob_entity_id={}, archetype_id={})",
+					mob.entityId,
+					mob.archetypeId);
+				return;
+			}
+
+			droppedItems.push_back(entry.item);
+		}
+
+		if (!foundLoot)
+		{
+			LOG_WARN(Net, "[ServerApp] Loot bag spawn skipped: no loot table entry (mob_entity_id={}, archetype_id={})",
+				mob.entityId,
+				mob.archetypeId);
+			return;
+		}
+
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(mob.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot bag spawn FAILED: zone grid unavailable (mob_entity_id={}, zone_id={})",
+				mob.entityId,
+				mob.zoneId);
+			return;
+		}
+
+		LootBagEntity lootBag{};
+		lootBag.entityId = m_nextServerEntityId++;
+		lootBag.zoneId = mob.zoneId;
+		lootBag.archetypeId = kDefaultLootBagArchetypeId;
+		lootBag.positionMetersX = mob.positionMetersX;
+		lootBag.positionMetersY = mob.positionMetersY;
+		lootBag.positionMetersZ = mob.positionMetersZ;
+		lootBag.visibility = visibility;
+		lootBag.ownerEntityId = visibility == LootVisibility::Owner ? ownerEntityId : 0;
+		lootBag.items = droppedItems;
+
+		CellCoord cell{};
+		if (!zoneGrid->UpsertEntity(lootBag.entityId, lootBag.positionMetersX, lootBag.positionMetersZ, cell))
+		{
+			LOG_ERROR(Net, "[ServerApp] Loot bag spawn FAILED: spatial insert failed (loot_bag_entity_id={})", lootBag.entityId);
+			return;
+		}
+
+		m_lootBags.push_back(lootBag);
+		LOG_INFO(Net, "[ServerApp] Loot bag spawned (loot_bag_entity_id={}, mob_entity_id={}, owner_entity_id={}, item_count={}, visibility={})",
+			lootBag.entityId,
+			mob.entityId,
+			lootBag.ownerEntityId,
+			lootBag.items.size(),
+			lootBag.visibility == LootVisibility::Owner ? "owner" : "public");
+	}
+
+	void ServerApp::UpdateThreatFromCombatEvent(const CombatEventMessage& message)
+	{
+		MobEntity* targetMob = FindMobByEntityId(message.targetEntityId);
+		if (targetMob == nullptr || message.damage == 0 || (targetMob->stateFlags & kEntityStateDead) != 0u)
+		{
+			return;
+		}
+
+		const ConnectedClient* attacker = FindClientByEntityId(message.attackerEntityId);
+		if (attacker == nullptr)
+		{
+			return;
+		}
+
+		for (ThreatEntry& entry : targetMob->threatTable)
+		{
+			if (entry.entityId == attacker->entityId)
+			{
+				entry.threat += message.damage;
+				LOG_INFO(Net, "[ServerApp] Threat updated (mob_entity_id={}, attacker_entity_id={}, threat={})",
+					targetMob->entityId,
+					attacker->entityId,
+					entry.threat);
+				RefreshMobAggroTarget(*targetMob);
+				if (targetMob->aggroTargetEntityId != 0)
+				{
+					SetMobAiState(*targetMob, MobAiState::Aggro);
+				}
+				return;
+			}
+		}
+
+		ThreatEntry entry{};
+		entry.entityId = attacker->entityId;
+		entry.threat = message.damage;
+		targetMob->threatTable.push_back(entry);
+		LOG_INFO(Net, "[ServerApp] Threat added (mob_entity_id={}, attacker_entity_id={}, threat={})",
+			targetMob->entityId,
+			attacker->entityId,
+			entry.threat);
+		RefreshMobAggroTarget(*targetMob);
+		if (targetMob->aggroTargetEntityId != 0)
+		{
+			SetMobAiState(*targetMob, MobAiState::Aggro);
+		}
+	}
+
+	void ServerApp::RefreshMobAggroTarget(MobEntity& mob)
+	{
+		mob.threatTable.erase(
+			std::remove_if(
+				mob.threatTable.begin(),
+				mob.threatTable.end(),
+				[this, &mob](const ThreatEntry& entry)
+				{
+					const ConnectedClient* target = FindClientByEntityId(entry.entityId);
+					return target == nullptr
+						|| !target->hasReplicatedState
+						|| target->zoneId != mob.zoneId
+						|| target->stats.currentHealth == 0
+						|| (target->stateFlags & kEntityStateDead) != 0u
+						|| entry.threat == 0;
+				}),
+			mob.threatTable.end());
+
+		EntityId bestEntityId = 0;
+		uint32_t bestThreat = 0;
+		for (const ThreatEntry& entry : mob.threatTable)
+		{
+			if (entry.threat > bestThreat)
+			{
+				bestThreat = entry.threat;
+				bestEntityId = entry.entityId;
+			}
+		}
+
+		if (mob.aggroTargetEntityId != bestEntityId)
+		{
+			LOG_INFO(Net, "[ServerApp] Mob target updated (mob_entity_id={}, target_entity_id={}, threat={})",
+				mob.entityId,
+				bestEntityId,
+				bestThreat);
+			mob.aggroTargetEntityId = bestEntityId;
+		}
+	}
+
+	bool ServerApp::MoveMobTowards(MobEntity& mob, float targetPositionX, float targetPositionZ)
+	{
+		const float dx = targetPositionX - mob.positionMetersX;
+		const float dz = targetPositionZ - mob.positionMetersZ;
+		const float distanceSquared = (dx * dx) + (dz * dz);
+		if (distanceSquared <= 0.0001f)
+		{
+			mob.velocityMetersPerSecondX = 0.0f;
+			mob.velocityMetersPerSecondZ = 0.0f;
+			return true;
+		}
+
+		const uint32_t intervalTicks = ResolveMobAiIntervalTicks();
+		const float simulationDt = static_cast<float>(intervalTicks) / static_cast<float>(m_tickHz);
+		const float maxStep = mob.moveSpeedMetersPerSecond * simulationDt;
+		const float distance = std::sqrt(distanceSquared);
+		if (distance <= maxStep)
+		{
+			mob.velocityMetersPerSecondX = dx / simulationDt;
+			mob.velocityMetersPerSecondZ = dz / simulationDt;
+			mob.positionMetersX = targetPositionX;
+			mob.positionMetersZ = targetPositionZ;
+			mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+			return UpdateMobSpatialState(mob);
+		}
+
+		const float stepScale = maxStep / distance;
+		mob.velocityMetersPerSecondX = (dx * stepScale) / simulationDt;
+		mob.velocityMetersPerSecondZ = (dz * stepScale) / simulationDt;
+		mob.positionMetersX += dx * stepScale;
+		mob.positionMetersZ += dz * stepScale;
+		mob.yawRadians = std::atan2(mob.velocityMetersPerSecondX, mob.velocityMetersPerSecondZ);
+		return UpdateMobSpatialState(mob);
+	}
+
+	bool ServerApp::UpdateMobSpatialState(MobEntity& mob)
+	{
+		CellGrid* zoneGrid = GetOrCreateZoneGrid(mob.zoneId);
+		if (zoneGrid == nullptr)
+		{
+			LOG_ERROR(Net, "[ServerApp] Mob spatial update FAILED: zone grid unavailable (mob_entity_id={}, zone_id={})",
+				mob.entityId,
+				mob.zoneId);
+			return false;
+		}
+
+		CellCoord cell{};
+		if (!zoneGrid->UpsertEntity(mob.entityId, mob.positionMetersX, mob.positionMetersZ, cell))
+		{
+			LOG_WARN(Net, "[ServerApp] Mob spatial update skipped (mob_entity_id={}, pos=({:.2f}, {:.2f}))",
+				mob.entityId,
+				mob.positionMetersX,
+				mob.positionMetersZ);
+			return false;
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] Mob spatial update OK (mob_entity_id={}, cell={}, {})",
+			mob.entityId,
+			cell.x,
+			cell.z);
+		return true;
+	}
+
+	void ServerApp::SetMobAiState(MobEntity& mob, MobAiState newState)
+	{
+		if (mob.aiState == newState)
+		{
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Mob state changed (mob_entity_id={}, {} -> {})",
+			mob.entityId,
+			GetMobAiStateName(mob.aiState),
+			GetMobAiStateName(newState));
+		mob.aiState = newState;
+	}
+
+	void ServerApp::ResetMobThreat(MobEntity& mob)
+	{
+		const size_t clearedCount = mob.threatTable.size();
+		mob.threatTable.clear();
+		mob.aggroTargetEntityId = 0;
+		LOG_INFO(Net, "[ServerApp] Mob threat reset (mob_entity_id={}, cleared_entries={})",
+			mob.entityId,
+			clearedCount);
+	}
+
+	bool ServerApp::TryMobAttackPlayer(MobEntity& mob, ConnectedClient& target)
+	{
+		if (m_currentTick < mob.combat.nextAttackTick)
+		{
+			return false;
+		}
+
+		const float distanceSquared = DistanceSquaredXZ(
+			mob.positionMetersX,
+			mob.positionMetersZ,
+			target.positionMetersX,
+			target.positionMetersZ);
+		const float attackRangeSquared = mob.combat.attackRangeMeters * mob.combat.attackRangeMeters;
+		if (distanceSquared > attackRangeSquared)
+		{
+			return false;
+		}
+
+		const uint32_t appliedDamage = std::min(mob.combat.damagePerHit, target.stats.currentHealth);
+		if (appliedDamage == 0)
+		{
+			return false;
+		}
+
+		mob.combat.nextAttackTick = m_currentTick + mob.combat.cooldownTicks;
+		target.stats.currentHealth -= appliedDamage;
+		if (target.stats.currentHealth == 0)
+		{
+			target.stateFlags |= kEntityStateDead;
+			LOG_INFO(Net, "[ServerApp] Player died (entity_id={}, attacker_entity_id={})",
+				target.entityId,
+				mob.entityId);
+			SaveConnectedClient(target, "player_death");
+		}
+
+		CombatEventMessage combatEvent{};
+		combatEvent.attackerEntityId = mob.entityId;
+		combatEvent.targetEntityId = target.entityId;
+		combatEvent.damage = appliedDamage;
+		combatEvent.targetCurrentHealth = target.stats.currentHealth;
+		combatEvent.targetMaxHealth = target.stats.maxHealth;
+		combatEvent.targetStateFlags = target.stateFlags;
+		LOG_INFO(Net,
+			"[ServerApp] Mob attack applied (attacker_entity_id={}, target_entity_id={}, damage={}, hp={}/{}, next_attack_tick={})",
+			combatEvent.attackerEntityId,
+			combatEvent.targetEntityId,
+			combatEvent.damage,
+			combatEvent.targetCurrentHealth,
+			combatEvent.targetMaxHealth,
+			mob.combat.nextAttackTick);
+		BroadcastCombatEvent(combatEvent);
+		return true;
+	}
+
+	void ServerApp::AddItemToInventory(ConnectedClient& client, const ItemStack& item)
+	{
+		for (ItemStack& inventoryItem : client.inventory)
+		{
+			if (inventoryItem.itemId == item.itemId)
+			{
+				inventoryItem.quantity += item.quantity;
+				LOG_INFO(Net, "[ServerApp] Inventory stack updated (client_id={}, item_id={}, quantity={})",
+					client.clientId,
+					item.itemId,
+					inventoryItem.quantity);
+				return;
+			}
+		}
+
+		client.inventory.push_back(item);
+		LOG_INFO(Net, "[ServerApp] Inventory item added (client_id={}, item_id={}, quantity={})",
+			client.clientId,
+			item.itemId,
+			item.quantity);
+	}
+
+	void ServerApp::ApplyQuestEvent(
+		ConnectedClient& client,
+		QuestStepType eventType,
+		std::string_view targetId,
+		uint32_t amount,
+		std::string_view reason)
+	{
+		std::vector<QuestProgressDelta> deltas;
+		if (!m_questRuntime.ApplyEvent(client.questStates, eventType, targetId, amount, deltas))
+		{
+			return;
+		}
+
+		std::vector<ItemStack> rewardedItems;
+		for (const QuestProgressDelta& delta : deltas)
+		{
+			if (delta.rewardExperience != 0 || delta.rewardGold != 0 || !delta.rewardItems.empty())
+			{
+				client.experiencePoints += delta.rewardExperience;
+				if (delta.rewardGold != 0u)
+				{
+					std::string walletErr;
+					if (!m_playerWallet.AddCurrency(client, kCurrencyGold, delta.rewardGold, walletErr))
+					{
+						LOG_WARN(Net,
+							"[ServerApp] Quest gold grant blocked (client_id={}, err={})",
+							client.clientId,
+							walletErr);
+					}
+				}
+				for (const ItemStack& rewardItem : delta.rewardItems)
+				{
+					AddItemToInventory(client, rewardItem);
+					rewardedItems.push_back(rewardItem);
+				}
+
+				LOG_INFO(Net,
+					"[ServerApp] Quest rewards granted (client_id={}, quest_id={}, xp={}, gold={}, items={})",
+					client.clientId,
+					delta.questId,
+					delta.rewardExperience,
+					delta.rewardGold,
+					delta.rewardItems.size());
+			}
+
+			(void)SendQuestDelta(client, delta);
+		}
+
+		if (!rewardedItems.empty())
+		{
+			(void)SendInventoryDelta(client, rewardedItems);
+		}
+
+		(void)SendWalletUpdate(client);
+		SaveConnectedClient(client, reason);
+		LOG_INFO(Net,
+			"[ServerApp] Quest event applied (client_id={}, type={}, target={}, deltas={}, reason={})",
+			client.clientId,
+			GetQuestStepTypeName(eventType),
+			targetId,
+			deltas.size(),
+			reason);
+	}
+
+	void ServerApp::SendQuestStateBootstrap(const ConnectedClient& receiver)
+	{
+		for (const QuestState& state : receiver.questStates)
+		{
+			QuestProgressDelta delta{};
+			delta.questId = state.questId;
+			delta.status = state.status;
+			delta.stepProgressCounts = state.stepProgressCounts;
+			(void)SendQuestDelta(receiver, delta);
+		}
+
+		LOG_INFO(Net, "[ServerApp] Quest bootstrap sent (client_id={}, quests={})",
+			receiver.clientId,
+			receiver.questStates.size());
+	}
+
+	void ServerApp::SendDynamicEventBootstrap(const ConnectedClient& receiver)
+	{
+		size_t eventCount = 0;
+		for (const DynamicEventState& eventState : m_dynamicEvents)
+		{
+			if (eventState.definition.zoneId != receiver.zoneId || eventState.status == DynamicEventStatus::Idle)
+			{
+				continue;
+			}
+
+			++eventCount;
+			(void)SendDynamicEventState(receiver, eventState, eventState.definition.startNotificationText, 0, 0, {});
+		}
+
+		LOG_INFO(Net, "[ServerApp] Dynamic event bootstrap sent (client_id={}, zone_id={}, events={})",
+			receiver.clientId,
+			receiver.zoneId,
+			eventCount);
+	}
+
+	bool ServerApp::SendInventoryDelta(const ConnectedClient& receiver, std::span<const ItemStack> items)
+	{
+		InventoryDeltaMessage message{};
+		message.clientId = receiver.clientId;
+		const std::vector<std::byte> packet = EncodeInventoryDelta(message, items);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] InventoryDelta send failed (client_id={}, item_count={})",
+				receiver.clientId,
+				items.size());
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] InventoryDelta sent (client_id={}, item_count={})",
+			receiver.clientId,
+			items.size());
+		return true;
+	}
+
+	bool ServerApp::SendWalletUpdate(const ConnectedClient& receiver)
+	{
+		WalletUpdateMessage message{};
+		message.clientId = receiver.clientId;
+		message.gold = receiver.gold;
+		message.honor = receiver.honor;
+		message.badges = receiver.badges;
+		message.premiumCurrency = receiver.premiumCurrency;
+		const std::vector<std::byte> packet = EncodeWalletUpdate(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] WalletUpdate send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net,
+			"[ServerApp] WalletUpdate sent (client_id={}, gold={}, honor={}, badges={}, premium={})",
+			receiver.clientId,
+			message.gold,
+			message.honor,
+			message.badges,
+			message.premiumCurrency);
+		return true;
+	}
+
+	ConnectedClient* ServerApp::FindConnectedClient(uint32_t clientId)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.clientId == clientId)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	bool ServerApp::TryAddCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError)
+	{
+		ConnectedClient* client = FindConnectedClient(clientId);
+		if (client == nullptr)
+		{
+			outError = "client_not_found";
+			LOG_WARN(Net, "[ServerApp] TryAddCurrency FAILED: unknown client_id={}", clientId);
+			return false;
+		}
+		if (!m_playerWallet.AddCurrency(*client, currencyId, amount, outError))
+		{
+			return false;
+		}
+		(void)SendWalletUpdate(*client);
+		SaveConnectedClient(*client, "wallet_add");
+		return true;
+	}
+
+	bool ServerApp::TrySubtractCurrency(uint32_t clientId, uint8_t currencyId, uint64_t amount, std::string& outError)
+	{
+		ConnectedClient* client = FindConnectedClient(clientId);
+		if (client == nullptr)
+		{
+			outError = "client_not_found";
+			LOG_WARN(Net, "[ServerApp] TrySubtractCurrency FAILED: unknown client_id={}", clientId);
+			return false;
+		}
+		if (!m_playerWallet.SubtractCurrency(*client, currencyId, amount, outError))
+		{
+			return false;
+		}
+		(void)SendWalletUpdate(*client);
+		SaveConnectedClient(*client, "wallet_subtract");
+		return true;
+	}
+
+	bool ServerApp::TryTransferCurrency(
+		uint32_t fromClientId,
+		uint32_t toClientId,
+		uint8_t currencyId,
+		uint64_t amount,
+		std::string& outError)
+	{
+		ConnectedClient* from = FindConnectedClient(fromClientId);
+		ConnectedClient* to = FindConnectedClient(toClientId);
+		if (from == nullptr || to == nullptr)
+		{
+			outError = "client_not_found";
+			LOG_WARN(Net,
+				"[ServerApp] TryTransferCurrency FAILED: from={} to={} (missing client)",
+				fromClientId,
+				toClientId);
+			return false;
+		}
+		if (!m_playerWallet.Transfer(*from, *to, currencyId, amount, outError))
+		{
+			return false;
+		}
+		(void)SendWalletUpdate(*from);
+		(void)SendWalletUpdate(*to);
+		SaveConnectedClient(*from, "wallet_transfer_from");
+		SaveConnectedClient(*to, "wallet_transfer_to");
+		return true;
+	}
+
+	bool ServerApp::SendDynamicEventState(
+		const ConnectedClient& receiver,
+		const DynamicEventState& eventState,
+		std::string_view notificationText,
+		uint32_t rewardExperience,
+		uint32_t rewardGold,
+		std::span<const ItemStack> rewardItems)
+	{
+		EventStateMessage message{};
+		message.zoneId = eventState.definition.zoneId;
+		message.status = static_cast<uint8_t>(eventState.status);
+		message.phaseIndex = static_cast<uint16_t>(eventState.status == DynamicEventStatus::Active ? (eventState.currentPhaseIndex + 1u) : 0u);
+		message.phaseCount = static_cast<uint16_t>(eventState.definition.phases.size());
+		message.progressCurrent = eventState.currentPhaseProgress;
+		if (eventState.status == DynamicEventStatus::Active && eventState.currentPhaseIndex < eventState.definition.phases.size())
+		{
+			message.progressRequired = eventState.definition.phases[eventState.currentPhaseIndex].progressRequired;
+		}
+		message.eventId = eventState.definition.eventId;
+		message.notificationText = std::string(notificationText);
+		message.rewardExperience = rewardExperience;
+		message.rewardGold = rewardGold;
+		message.rewardItems.assign(rewardItems.begin(), rewardItems.end());
+
+		const std::vector<std::byte> packet = EncodeEventState(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] EventState send failed (client_id={}, event_id={})",
+				receiver.clientId,
+				eventState.definition.eventId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] EventState sent (client_id={}, event_id={}, status={}, phase={}/{}, progress={}/{})",
+			receiver.clientId,
+			eventState.definition.eventId,
+			GetDynamicEventStatusName(eventState.status),
+			message.phaseIndex,
+			message.phaseCount,
+			message.progressCurrent,
+			message.progressRequired);
+		return true;
+	}
+
+	void ServerApp::BroadcastDynamicEventState(
+		const DynamicEventState& eventState,
+		std::string_view notificationText,
+		uint32_t rewardedClientId,
+		uint32_t rewardExperience,
+		uint32_t rewardGold,
+		std::span<const ItemStack> rewardItems)
+	{
+		size_t recipientCount = 0;
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!client.hasReplicatedState || client.zoneId != eventState.definition.zoneId)
+			{
+				continue;
+			}
+
+			const bool rewardedReceiver = rewardedClientId != 0 && client.clientId == rewardedClientId;
+			++recipientCount;
+			(void)SendDynamicEventState(
+				client,
+				eventState,
+				notificationText,
+				rewardedReceiver ? rewardExperience : 0u,
+				rewardedReceiver ? rewardGold : 0u,
+				rewardedReceiver ? rewardItems : std::span<const ItemStack>{});
+		}
+
+		LOG_INFO(Net, "[ServerApp] EventState broadcast (event_id={}, zone_id={}, recipients={})",
+			eventState.definition.eventId,
+			eventState.definition.zoneId,
+			recipientCount);
+	}
+
+	bool ServerApp::SendQuestDelta(const ConnectedClient& receiver, const QuestProgressDelta& delta)
+	{
+		const QuestDefinition* definition = m_questRuntime.FindQuestDefinition(delta.questId);
+		if (definition == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] QuestDelta skipped: missing definition (client_id={}, quest_id={})",
+				receiver.clientId,
+				delta.questId);
+			return false;
+		}
+
+		QuestDeltaMessage message{};
+		message.clientId = receiver.clientId;
+		message.status = static_cast<uint8_t>(delta.status);
+		message.questId = delta.questId;
+		message.rewardExperience = delta.rewardExperience;
+		message.rewardGold = delta.rewardGold;
+		message.rewardItems = delta.rewardItems;
+		message.steps.reserve(definition->steps.size());
+		for (size_t stepIndex = 0; stepIndex < definition->steps.size(); ++stepIndex)
+		{
+			const QuestStepDefinition& definitionStep = definition->steps[stepIndex];
+			QuestDeltaStep messageStep{};
+			messageStep.stepType = static_cast<uint8_t>(definitionStep.type);
+			messageStep.targetId = definitionStep.targetId;
+			messageStep.requiredCount = definitionStep.requiredCount;
+			if (stepIndex < delta.stepProgressCounts.size())
+			{
+				messageStep.currentCount = delta.stepProgressCounts[stepIndex];
+			}
+			message.steps.push_back(std::move(messageStep));
+		}
+
+		const std::vector<std::byte> packet = EncodeQuestDelta(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] QuestDelta send failed (client_id={}, quest_id={})",
+				receiver.clientId,
+				delta.questId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] QuestDelta sent (client_id={}, quest_id={}, status={}, steps={})",
+			receiver.clientId,
+			delta.questId,
+			GetQuestStatusName(delta.status),
+			message.steps.size());
+		return true;
+	}
+
+	void ServerApp::RefreshReplication()
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			RefreshReplicationForClient(client);
+		}
+	}
+
+	void ServerApp::RefreshReplicationForClient(ConnectedClient& client)
+	{
+		if (!client.hasCell || !client.hasReplicatedState)
+		{
+			return;
+		}
+
+		if (CellGrid* zoneGrid = GetOrCreateZoneGrid(client.zoneId); zoneGrid != nullptr)
+		{
+			zoneGrid->GatherEntityIds(client.interestCells, client.interestEntityIds);
+		}
+		else
+		{
+			LOG_WARN(Net, "[ServerApp] Replication refresh skipped: zone grid unavailable (client_id={}, zone_id={})",
+				client.clientId,
+				client.zoneId);
+			return;
+		}
+
+		BuildRelevantEntityIds(client, m_relevantEntityScratch);
+		for (EntityId entityId : m_relevantEntityScratch)
+		{
+			if (!ContainsEntityId(client.replicatedEntityIds, entityId))
+			{
+				(void)SendSpawn(client, entityId);
+			}
+		}
+
+		for (EntityId entityId : client.replicatedEntityIds)
+		{
+			if (!ContainsEntityId(m_relevantEntityScratch, entityId))
+			{
+				(void)SendDespawn(client, entityId);
+			}
+		}
+
+		client.replicatedEntityIds = m_relevantEntityScratch;
+	}
+
+	void ServerApp::BuildRelevantEntityIds(const ConnectedClient& client, std::vector<EntityId>& outEntityIds) const
+	{
+		outEntityIds.clear();
+		for (EntityId entityId : client.interestEntityIds)
+		{
+			if (entityId == client.entityId)
+			{
+				continue;
+			}
+
+			const ConnectedClient* subjectClient = FindClientByEntityId(entityId);
+			if (subjectClient != nullptr)
+			{
+				if (!subjectClient->hasReplicatedState)
+				{
+					continue;
+				}
+				outEntityIds.push_back(entityId);
+				continue;
+			}
+
+			if (FindMobByEntityId(entityId) != nullptr)
+			{
+				outEntityIds.push_back(entityId);
+				continue;
+			}
+
+			const LootBagEntity* lootBag = FindLootBagByEntityId(entityId);
+			if (lootBag != nullptr)
+			{
+				if (lootBag->visibility == LootVisibility::Public || lootBag->ownerEntityId == client.entityId)
+				{
+					outEntityIds.push_back(entityId);
+				}
+			}
+		}
+	}
+
+	EntityState ServerApp::BuildEntityState(const ConnectedClient& client) const
+	{
+		EntityState state{};
+		state.positionX = client.positionMetersX;
+		state.positionY = client.positionMetersY;
+		state.positionZ = client.positionMetersZ;
+		state.yawRadians = client.yawRadians;
+		state.velocityX = client.velocityMetersPerSecondX;
+		state.velocityY = client.velocityMetersPerSecondY;
+		state.velocityZ = client.velocityMetersPerSecondZ;
+		state.currentHealth = client.stats.currentHealth;
+		state.maxHealth = client.stats.maxHealth;
+		state.stateFlags = client.stateFlags;
+		return state;
+	}
+
+	EntityState ServerApp::BuildEntityState(const MobEntity& mob) const
+	{
+		EntityState state{};
+		state.positionX = mob.positionMetersX;
+		state.positionY = mob.positionMetersY;
+		state.positionZ = mob.positionMetersZ;
+		state.yawRadians = mob.yawRadians;
+		state.velocityX = mob.velocityMetersPerSecondX;
+		state.velocityY = mob.velocityMetersPerSecondY;
+		state.velocityZ = mob.velocityMetersPerSecondZ;
+		state.currentHealth = mob.stats.currentHealth;
+		state.maxHealth = mob.stats.maxHealth;
+		state.stateFlags = mob.stateFlags;
+		return state;
+	}
+
+	EntityState ServerApp::BuildEntityState(const LootBagEntity& lootBag) const
+	{
+		EntityState state{};
+		state.positionX = lootBag.positionMetersX;
+		state.positionY = lootBag.positionMetersY;
+		state.positionZ = lootBag.positionMetersZ;
+		state.yawRadians = lootBag.yawRadians;
+		state.velocityX = lootBag.velocityMetersPerSecondX;
+		state.velocityY = lootBag.velocityMetersPerSecondY;
+		state.velocityZ = lootBag.velocityMetersPerSecondZ;
+		state.currentHealth = 0;
+		state.maxHealth = 0;
+		state.stateFlags = lootBag.stateFlags;
+		return state;
+	}
+
+	bool ServerApp::TryBuildSpawnEntity(EntityId entityId, SpawnEntity& outEntity) const
+	{
+		if (const ConnectedClient* client = FindClientByEntityId(entityId))
+		{
+			outEntity.entityId = client->entityId;
+			outEntity.archetypeId = client->archetypeId;
+			outEntity.state = BuildEntityState(*client);
+			return true;
+		}
+
+		if (const MobEntity* mob = FindMobByEntityId(entityId))
+		{
+			outEntity.entityId = mob->entityId;
+			outEntity.archetypeId = mob->archetypeId;
+			outEntity.state = BuildEntityState(*mob);
+			return true;
+		}
+
+		if (const LootBagEntity* lootBag = FindLootBagByEntityId(entityId))
+		{
+			outEntity.entityId = lootBag->entityId;
+			outEntity.archetypeId = lootBag->archetypeId;
+			outEntity.state = BuildEntityState(*lootBag);
+			return true;
+		}
+
+		LOG_WARN(Net, "[ServerApp] Spawn build ignored: unknown entity_id={}", entityId);
+		return false;
+	}
+
+	bool ServerApp::TryBuildSnapshotEntity(EntityId entityId, SnapshotEntity& outEntity) const
+	{
+		if (const ConnectedClient* client = FindClientByEntityId(entityId))
+		{
+			outEntity.entityId = client->entityId;
+			outEntity.state = BuildEntityState(*client);
+			return true;
+		}
+
+		if (const MobEntity* mob = FindMobByEntityId(entityId))
+		{
+			outEntity.entityId = mob->entityId;
+			outEntity.state = BuildEntityState(*mob);
+			return true;
+		}
+
+		if (const LootBagEntity* lootBag = FindLootBagByEntityId(entityId))
+		{
+			outEntity.entityId = lootBag->entityId;
+			outEntity.state = BuildEntityState(*lootBag);
+			return true;
+		}
+
+		LOG_WARN(Net, "[ServerApp] Snapshot build ignored: unknown entity_id={}", entityId);
+		return false;
+	}
+
+	bool ServerApp::ShouldBroadcastCombatEventToClient(const ConnectedClient& receiver, EntityId attackerEntityId, EntityId targetEntityId) const
+	{
+		if (receiver.entityId == attackerEntityId || receiver.entityId == targetEntityId)
+		{
+			return true;
+		}
+
+		return ContainsEntityId(receiver.interestEntityIds, attackerEntityId)
+			|| ContainsEntityId(receiver.interestEntityIds, targetEntityId);
+	}
+
+	void ServerApp::BroadcastCombatEvent(const CombatEventMessage& message)
+	{
+		UpdateThreatFromCombatEvent(message);
+
+		size_t recipientCount = 0;
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (!ShouldBroadcastCombatEventToClient(client, message.attackerEntityId, message.targetEntityId))
+			{
+				continue;
+			}
+
+			++recipientCount;
+			(void)SendCombatEvent(client, message);
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] CombatEvent broadcast (attacker_entity_id={}, target_entity_id={}, damage={}, recipients={})",
+			message.attackerEntityId,
+			message.targetEntityId,
+			message.damage,
+			recipientCount);
+	}
+
+	bool ServerApp::SendSpawn(const ConnectedClient& receiver, EntityId subjectEntityId)
+	{
+		SpawnEntity entity{};
+		if (!TryBuildSpawnEntity(subjectEntityId, entity))
+		{
+			LOG_WARN(Net, "[ServerApp] Spawn send skipped: unresolved entity_id={}", subjectEntityId);
+			return false;
+		}
+
+		const std::vector<std::byte> packet = EncodeSpawn(entity);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] Spawn send failed (receiver_client_id={}, entity_id={})",
+				receiver.clientId,
+				entity.entityId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Spawn sent (receiver_client_id={}, entity_id={}, archetype_id={})",
+			receiver.clientId,
+			entity.entityId,
+			entity.archetypeId);
+		return true;
+	}
+
+	bool ServerApp::SendDespawn(const ConnectedClient& receiver, EntityId entityId)
+	{
+		DespawnEntity entity{};
+		entity.entityId = entityId;
+		const std::vector<std::byte> packet = EncodeDespawn(entity);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] Despawn send failed (receiver_client_id={}, entity_id={})",
+				receiver.clientId,
+				entityId);
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Despawn sent (receiver_client_id={}, entity_id={})",
+			receiver.clientId,
+			entityId);
+		return true;
+	}
+
+	bool ServerApp::SendZoneChange(const ConnectedClient& receiver, const ZoneChangeMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeZoneChange(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] ZoneChange send failed (client_id={}, zone_id={})",
+				receiver.clientId,
+				message.zoneId);
+			return false;
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] ZoneChange sent (client_id={}, zone_id={}, spawn=({:.2f}, {:.2f}, {:.2f}))",
+			receiver.clientId,
+			message.zoneId,
+			message.spawnPositionX,
+			message.spawnPositionY,
+			message.spawnPositionZ);
+		return true;
+	}
+
+	bool ServerApp::SendCombatEvent(const ConnectedClient& receiver, const CombatEventMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeCombatEvent(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net,
+				"[ServerApp] CombatEvent send failed (client_id={}, attacker_entity_id={}, target_entity_id={})",
+				receiver.clientId,
+				message.attackerEntityId,
+				message.targetEntityId);
+			return false;
+		}
+
+		LOG_DEBUG(Net,
+			"[ServerApp] CombatEvent sent (client_id={}, attacker_entity_id={}, target_entity_id={}, damage={})",
+			receiver.clientId,
+			message.attackerEntityId,
+			message.targetEntityId,
+			message.damage);
+		return true;
+	}
+
+	bool ServerApp::SendChatRelay(const ConnectedClient& receiver, const ChatRelayMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeChatRelay(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ChatRelay send FAILED (receiver_client_id={}, sender_entity_id={})",
+				receiver.clientId,
+				message.senderEntityId);
+			return false;
+		}
+
+		LOG_DEBUG(Net,
+			"[ServerApp] ChatRelay sent (receiver_client_id={}, sender_entity_id={}, channel_wire={})",
+			receiver.clientId,
+			message.senderEntityId,
+			message.channel);
+		return true;
+	}
+
+	bool ServerApp::SendEmoteRelay(const ConnectedClient& receiver, const EmoteRelayMessage& message)
+	{
+		const std::vector<std::byte> packet = EncodeEmoteRelay(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net,
+				"[ServerApp] EmoteRelay send FAILED (receiver_client_id={}, actor_entity_id={})",
+				receiver.clientId,
+				message.actorEntityId);
+			return false;
+		}
+
+		LOG_DEBUG(Net,
+			"[ServerApp] EmoteRelay sent (receiver_client_id={}, actor_entity_id={}, emote_id={})",
+			receiver.clientId,
+			message.actorEntityId,
+			message.emoteId);
+		return true;
+	}
+
+	bool ServerApp::SendWelcome(const ConnectedClient& client)
+	{
+		WelcomeMessage welcome{};
+		welcome.clientId = client.clientId;
+		welcome.tickHz = m_tickHz;
+		welcome.snapshotHz = m_snapshotHz;
+		const std::vector<std::byte> packet = EncodeWelcome(welcome);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] Welcome send failed (client_id={}, endpoint={})",
+				client.clientId,
+				UdpTransport::EndpointToString(client.endpoint));
+			return false;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Welcome sent (client_id={}, endpoint={}, tick_hz={}, snapshot_hz={})",
+			client.clientId,
+			UdpTransport::EndpointToString(client.endpoint),
+			m_tickHz,
+			m_snapshotHz);
+		return true;
+	}
+
+	bool ServerApp::SendSnapshot(const ConnectedClient& client)
+	{
+		m_snapshotEntitiesScratch.clear();
+		for (EntityId entityId : client.replicatedEntityIds)
+		{
+			SnapshotEntity snapshotEntity{};
+			if (!TryBuildSnapshotEntity(entityId, snapshotEntity))
+			{
+				continue;
+			}
+
+			m_snapshotEntitiesScratch.push_back(snapshotEntity);
+		}
+
+		SnapshotMessage snapshot{};
+		snapshot.clientId = client.clientId;
+		snapshot.serverTick = m_currentTick;
+		snapshot.connectedClients = static_cast<uint16_t>(std::min<size_t>(m_clients.size(), 0xFFFFu));
+		snapshot.entityCount = static_cast<uint16_t>(std::min<size_t>(m_snapshotEntitiesScratch.size(), 0xFFFFu));
+		snapshot.receivedPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.ReceivedPacketCount(), 0xFFFFFFFFu));
+		snapshot.sentPackets = static_cast<uint32_t>(std::min<uint64_t>(m_transport.SentPacketCount(), 0xFFFFFFFFu));
+		const std::vector<std::byte> packet = EncodeSnapshot(snapshot, m_snapshotEntitiesScratch);
+		if (!m_transport.Send(client.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] Snapshot send failed (client_id={}, tick={})", client.clientId, m_currentTick);
+			return false;
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] Snapshot sent (client_id={}, tick={}, entity_count={})",
+			client.clientId,
+			m_currentTick,
+			m_snapshotEntitiesScratch.size());
+		return true;
+	}
+
+	ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.endpoint == endpoint)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	const ConnectedClient* ServerApp::FindClient(const Endpoint& endpoint) const
+	{
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (client.endpoint == endpoint)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.entityId == entityId)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	const ConnectedClient* ServerApp::FindClientByEntityId(EntityId entityId) const
+	{
+		for (const ConnectedClient& client : m_clients)
+		{
+			if (client.entityId == entityId)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	MobEntity* ServerApp::FindMobByEntityId(EntityId entityId)
+	{
+		for (MobEntity& mob : m_mobs)
+		{
+			if (mob.entityId == entityId)
+			{
+				return &mob;
+			}
+		}
+		return nullptr;
+	}
+
+	const MobEntity* ServerApp::FindMobByEntityId(EntityId entityId) const
+	{
+		for (const MobEntity& mob : m_mobs)
+		{
+			if (mob.entityId == entityId)
+			{
+				return &mob;
+			}
+		}
+		return nullptr;
+	}
+
+	LootBagEntity* ServerApp::FindLootBagByEntityId(EntityId entityId)
+	{
+		for (LootBagEntity& lootBag : m_lootBags)
+		{
+			if (lootBag.entityId == entityId)
+			{
+				return &lootBag;
+			}
+		}
+		return nullptr;
+	}
+
+	const LootBagEntity* ServerApp::FindLootBagByEntityId(EntityId entityId) const
+	{
+		for (const LootBagEntity& lootBag : m_lootBags)
+		{
+			if (lootBag.entityId == entityId)
+			{
+				return &lootBag;
+			}
+		}
+		return nullptr;
+	}
+
+	CellGrid* ServerApp::GetOrCreateZoneGrid(uint32_t zoneId)
+	{
+		auto [it, inserted] = m_zoneGrids.try_emplace(zoneId);
+		if (inserted)
+		{
+			if (!it->second.Init())
+			{
+				LOG_ERROR(Net, "[ServerApp] Zone grid init FAILED (zone_id={})", zoneId);
+				m_zoneGrids.erase(it);
+				return nullptr;
+			}
+
+			LOG_INFO(Net, "[ServerApp] Zone grid ready (zone_id={})", zoneId);
+		}
+
+		return &it->second;
+	}
+
+	namespace
+	{
+		/// Trim ASCII spaces for chat command argument splitting.
+		std::string_view TrimChatArg(std::string_view text)
+		{
+			while (!text.empty() && (text.front() == ' ' || text.front() == '\t'))
+			{
+				text.remove_prefix(1);
+			}
+
+			while (!text.empty() && (text.back() == ' ' || text.back() == '\t'))
+			{
+				text.remove_suffix(1);
+			}
+
+			return text;
+		}
+
+		/// Split `first rest` from one argument line.
+		std::pair<std::string, std::string> SplitFirstChatArg(std::string_view line)
+		{
+			line = TrimChatArg(line);
+			if (line.empty())
+			{
+				return {{}, {}};
+			}
+
+			const size_t spacePos = line.find(' ');
+			if (spacePos == std::string_view::npos)
+			{
+				return {std::string(line), {}};
+			}
+
+			return {
+				std::string(TrimChatArg(line.substr(0, spacePos))),
+				std::string(TrimChatArg(line.substr(spacePos + 1)))};
+		}
+	}
+
+	void ServerApp::InitModerationAuditSubsystem()
+	{
+		const std::string relativeLog = m_config.GetString("server.moderation_audit_log", "logs/moderation_audit.log");
+		const auto absolutePath = engine::platform::FileSystem::ResolveContentPath(m_config, relativeLog);
+		const size_t rotationMb = static_cast<size_t>((std::max)(static_cast<int64_t>(1), m_config.GetInt("server.moderation_audit_rotation_mb", 10)));
+		const int retentionDays = static_cast<int>(m_config.GetInt("server.moderation_audit_retention_days", 7));
+		if (!m_moderationAuditLog.Init(absolutePath.string(), rotationMb, retentionDays))
+		{
+			LOG_WARN(Net, "[ServerApp] Moderation audit log Init FAILED (path={})", absolutePath.string());
+			m_moderationAuditLogReady = false;
+			return;
+		}
+
+		m_moderationAuditLogReady = true;
+		LOG_INFO(Net, "[ServerApp] Moderation audit subsystem Init OK (path={})", absolutePath.string());
+	}
+
+	void ServerApp::LoadChatBanFile()
+	{
+		m_bannedCharacterKeys.clear();
+		const std::string relativePath = m_config.GetString("server.chat_ban_list_path", "persistence/server/chat_bans.ini");
+		const auto fullPath = engine::platform::FileSystem::ResolveContentPath(m_config, relativePath);
+		if (!engine::platform::FileSystem::Exists(fullPath))
+		{
+			LOG_INFO(Net, "[ServerApp] Chat ban list not present — starting empty (path={})", relativePath);
+			return;
+		}
+
+		engine::core::Config banConfig;
+		if (!banConfig.LoadFromFile(fullPath.string()))
+		{
+			LOG_WARN(Net, "[ServerApp] Chat ban list load FAILED (path={})", relativePath);
+			return;
+		}
+
+		const uint32_t banCount = static_cast<uint32_t>(banConfig.GetInt("ban.count", 0));
+		for (uint32_t banIndex = 0; banIndex < banCount && banIndex < 4096u; ++banIndex)
+		{
+			// Phase 3.7.5 — clé élargie à uint64. Config::GetInt retourne int64_t signé ;
+			// on bit-cast pour préserver la valeur uint64 quand le bit 63 serait positionné.
+			const int64_t rawKey = banConfig.GetInt("ban." + std::to_string(banIndex) + ".key", 0);
+			const uint64_t key = (rawKey == 0) ? 0u : static_cast<uint64_t>(rawKey);
+			if (key != 0u)
+			{
+				m_bannedCharacterKeys.insert(key);
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Chat ban list loaded (path={}, keys={})", relativePath, m_bannedCharacterKeys.size());
+	}
+
+	void ServerApp::SaveChatBanFile()
+	{
+		std::vector<uint64_t> keys(m_bannedCharacterKeys.begin(), m_bannedCharacterKeys.end());
+		std::sort(keys.begin(), keys.end());
+		std::ostringstream output;
+		output << "ban.count=" << keys.size() << "\n";
+		for (size_t banIndex = 0; banIndex < keys.size(); ++banIndex)
+		{
+			output << "ban." << banIndex << ".key=" << keys[banIndex] << "\n";
+		}
+
+		const std::string relativePath = m_config.GetString("server.chat_ban_list_path", "persistence/server/chat_bans.ini");
+		if (!engine::platform::FileSystem::WriteAllTextContent(m_config, relativePath, output.str()))
+		{
+			LOG_ERROR(Net, "[ServerApp] Chat ban list save FAILED (path={})", relativePath);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] Chat ban list saved (path={}, keys={})", relativePath, keys.size());
+	}
+
+	void ServerApp::SendChatSystemNotice(ConnectedClient& receiver, std::string_view text)
+	{
+		ChatRelayMessage notice{};
+		notice.channel = static_cast<uint8_t>(engine::net::ChatChannel::Say);
+		notice.senderEntityId = 0;
+		notice.timestampUnixMs = NowUnixEpochMsUtc();
+		notice.senderDisplay = "System";
+		notice.text.assign(text.begin(), text.end());
+		if (!SendChatRelay(receiver, notice))
+		{
+			LOG_WARN(Net, "[ServerApp] System chat notice send FAILED (client_id={})", receiver.clientId);
+			return;
+		}
+
+		LOG_INFO(Net, "[ServerApp] System chat notice sent (client_id={}, len={})", receiver.clientId, notice.text.size());
+	}
+
+	void ServerApp::BroadcastModerationAnnouncement(std::string_view text)
+	{
+		ChatRelayMessage notice{};
+		notice.channel = static_cast<uint8_t>(engine::net::ChatChannel::Global);
+		notice.senderEntityId = 0;
+		notice.timestampUnixMs = NowUnixEpochMsUtc();
+		notice.senderDisplay = "Moderation";
+		notice.text.assign(text.begin(), text.end());
+		size_t sentOk = 0;
+		for (ConnectedClient& client : m_clients)
+		{
+			if (SendChatRelay(client, notice))
+			{
+				++sentOk;
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] Moderation announce broadcast (recipients_ok={}, text_len={})", sentOk, notice.text.size());
+	}
+
+	void ServerApp::AuditLogChatReport(std::string_view reporterDisplay, std::string_view targetDisplay, std::string_view reason)
+	{
+		if (m_moderationAuditLogReady)
+		{
+			m_moderationAuditLog.LogChatReport(reporterDisplay, targetDisplay, reason);
+		}
+		else
+		{
+			LOG_INFO(Net,
+				"[Moderation/Audit] CHAT_REPORT reporter={} target={} reason={}",
+				reporterDisplay,
+				targetDisplay,
+				reason);
+		}
+	}
+
+	void ServerApp::AuditLogModeration(std::string_view action, std::string_view actorDisplay, std::string_view targetDisplay, std::string_view detail)
+	{
+		if (m_moderationAuditLogReady)
+		{
+			m_moderationAuditLog.LogModerationAction(action, actorDisplay, targetDisplay, detail);
+		}
+		else
+		{
+			LOG_INFO(Net,
+				"[Moderation/Audit] action={} actor={} target={} detail={}",
+				action,
+				actorDisplay,
+				targetDisplay,
+				detail);
+		}
+	}
+
+	bool ServerApp::IsChatSenderIgnoredBy(const ConnectedClient& receiver, std::string_view senderDisplay) const
+	{
+		for (const std::string& ignoredName : receiver.chatIgnoredDisplayNames)
+		{
+			if (ChatNameEqualsAsciiI(ignoredName, senderDisplay))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	ConnectedClient* ServerApp::FindConnectedClientByChatDisplayName(std::string_view displayToken)
+	{
+		const std::string_view token = TrimChatArg(displayToken);
+		if (token.empty())
+		{
+			return nullptr;
+		}
+
+		for (ConnectedClient& client : m_clients)
+		{
+			const std::string selfLabel = "P" + std::to_string(client.clientId);
+			if (ChatNameEqualsAsciiI(token, selfLabel))
+			{
+				return &client;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void ServerApp::DisconnectConnectedClient(uint32_t clientId, std::string_view persistenceReason)
+	{
+		const auto clientIt = std::find_if(
+			m_clients.begin(),
+			m_clients.end(),
+			[clientId](const ConnectedClient& client) { return client.clientId == clientId; });
+		if (clientIt == m_clients.end())
+		{
+			LOG_WARN(Net, "[ServerApp] Disconnect skipped: client_id not found ({})", clientId);
+			return;
+		}
+
+		SaveConnectedClient(*clientIt, persistenceReason);
+		if (clientIt->hasCell)
+		{
+			const auto zoneIt = m_zoneGrids.find(clientIt->zoneId);
+			if (zoneIt != m_zoneGrids.end())
+			{
+				(void)zoneIt->second.RemoveEntity(clientIt->entityId);
+			}
+		}
+
+		OnClientLogout(*clientIt);
+		LOG_INFO(Net, "[ServerApp] Client disconnected (client_id={}, reason={})", clientId, persistenceReason);
+		m_clients.erase(clientIt);
+	}
+
+	bool ServerApp::HandleChatSlashCommand(ConnectedClient& sender, const ParsedChatSlashCommand& command)
+	{
+		const std::string actorLabel = "P" + std::to_string(sender.clientId);
+
+		switch (command.kind)
+		{
+		case ChatSlashCommandKind::Who:
+		{
+			const bool globalWho = ChatNameEqualsAsciiI(TrimChatArg(command.argsRemainder), "global");
+			std::ostringstream list;
+			list << (globalWho ? "ONLINE (global): " : "ONLINE (zone): ");
+			bool first = true;
+			for (const ConnectedClient& peer : m_clients)
+			{
+				if (!globalWho && peer.zoneId != sender.zoneId)
+				{
+					continue;
+				}
+
+				if (!first)
+				{
+					list << ' ';
+				}
+
+				first = false;
+				list << 'P' << peer.clientId;
+			}
+
+			if (first)
+			{
+				list << "(none)";
+			}
+
+			SendChatSystemNotice(sender, list.str());
+			LOG_INFO(Net, "[ServerApp] /who handled (client_id={}, global={})", sender.clientId, globalWho ? "true" : "false");
+			return true;
+		}
+		case ChatSlashCommandKind::Ignore:
+		{
+			const auto [targetName, extra] = SplitFirstChatArg(command.argsRemainder);
+			(void)extra;
+			if (targetName.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /ignore <player>");
+				LOG_WARN(Net, "[ServerApp] /ignore rejected: missing target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			const std::string selfLabel = "P" + std::to_string(sender.clientId);
+			if (ChatNameEqualsAsciiI(targetName, selfLabel))
+			{
+				SendChatSystemNotice(sender, "Cannot ignore yourself.");
+				LOG_WARN(Net, "[ServerApp] /ignore rejected: self-target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			if (sender.chatIgnoredDisplayNames.size() >= 32)
+			{
+				SendChatSystemNotice(sender, "Ignore list full (max 32).");
+				LOG_WARN(Net, "[ServerApp] /ignore rejected: list full (client_id={})", sender.clientId);
+				return true;
+			}
+
+			for (const std::string& existing : sender.chatIgnoredDisplayNames)
+			{
+				if (ChatNameEqualsAsciiI(existing, targetName))
+				{
+					SendChatSystemNotice(sender, "Already ignoring that player.");
+					LOG_INFO(Net, "[ServerApp] /ignore duplicate ignored (client_id={})", sender.clientId);
+					return true;
+				}
+			}
+
+			sender.chatIgnoredDisplayNames.push_back(targetName);
+			SaveConnectedClient(sender, "chat_ignore");
+			SendChatSystemNotice(sender, "Ignored " + targetName + ".");
+			LOG_INFO(Net, "[ServerApp] /ignore applied (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+		case ChatSlashCommandKind::Unignore:
+		{
+			const auto [targetName, extra] = SplitFirstChatArg(command.argsRemainder);
+			(void)extra;
+			if (targetName.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /unignore <player>");
+				LOG_WARN(Net, "[ServerApp] /unignore rejected: missing target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			const auto it = std::find_if(
+				sender.chatIgnoredDisplayNames.begin(),
+				sender.chatIgnoredDisplayNames.end(),
+				[&](const std::string& entry) { return ChatNameEqualsAsciiI(entry, targetName); });
+			if (it == sender.chatIgnoredDisplayNames.end())
+			{
+				SendChatSystemNotice(sender, "Not ignoring that player.");
+				LOG_WARN(Net, "[ServerApp] /unignore rejected: not found (client_id={})", sender.clientId);
+				return true;
+			}
+
+			sender.chatIgnoredDisplayNames.erase(it);
+			SaveConnectedClient(sender, "chat_unignore");
+			SendChatSystemNotice(sender, "Unignored " + targetName + ".");
+			LOG_INFO(Net, "[ServerApp] /unignore applied (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+		case ChatSlashCommandKind::Report:
+		{
+			const auto [targetName, reason] = SplitFirstChatArg(command.argsRemainder);
+			if (targetName.empty() || reason.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /report <player> <reason>");
+				LOG_WARN(Net, "[ServerApp] /report rejected: bad args (client_id={})", sender.clientId);
+				return true;
+			}
+
+			AuditLogChatReport(actorLabel, targetName, reason);
+			SendChatSystemNotice(sender, "Report recorded. Thank you.");
+			LOG_INFO(Net, "[ServerApp] /report recorded (client_id={}, target={})", sender.clientId, targetName);
+			return true;
+		}
+		case ChatSlashCommandKind::Kick:
+		case ChatSlashCommandKind::Ban:
+		case ChatSlashCommandKind::Mute:
+		case ChatSlashCommandKind::Announce:
+		{
+			if (!sender.chatModeratorRole)
+			{
+				SendChatSystemNotice(sender, "Permission denied.");
+				LOG_WARN(Net,
+					"[ServerApp] Admin chat command denied (client_id={}, cmd={})",
+					sender.clientId,
+					ChatSlashCommandLabel(command.kind));
+				return true;
+			}
+
+			if (command.kind == ChatSlashCommandKind::Announce)
+			{
+				const std::string_view announcement = TrimChatArg(command.argsRemainder);
+				if (announcement.empty())
+				{
+					SendChatSystemNotice(sender, "Usage: /announce <message>");
+					LOG_WARN(Net, "[ServerApp] /announce rejected: empty (client_id={})", sender.clientId);
+					return true;
+				}
+
+				BroadcastModerationAnnouncement(announcement);
+				AuditLogModeration("ANNOUNCE", actorLabel, "*", announcement);
+				SendChatSystemNotice(sender, "Announcement broadcast.");
+				LOG_INFO(Net, "[ServerApp] /announce executed (client_id={})", sender.clientId);
+				return true;
+			}
+
+			const auto [targetName, detail] = SplitFirstChatArg(command.argsRemainder);
+			if (targetName.empty())
+			{
+				SendChatSystemNotice(sender, "Usage: /kick|/ban|/mute <player> [detail]");
+				LOG_WARN(Net, "[ServerApp] Admin chat command rejected: missing target (client_id={})", sender.clientId);
+				return true;
+			}
+
+			ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+			if (target == nullptr)
+			{
+				SendChatSystemNotice(sender, "Target not online.");
+				LOG_WARN(Net, "[ServerApp] Admin chat command rejected: target offline (client_id={})", sender.clientId);
+				return true;
+			}
+
+			if (target->clientId == sender.clientId)
+			{
+				SendChatSystemNotice(sender, "Cannot target yourself.");
+				return true;
+			}
+
+			const std::string targetLabel = "P" + std::to_string(target->clientId);
+
+			if (command.kind == ChatSlashCommandKind::Mute)
+			{
+				uint32_t durationSeconds = 60;
+				if (!detail.empty())
+				{
+					char* endPtr = nullptr;
+					const unsigned long parsed = std::strtoul(detail.c_str(), &endPtr, 10);
+					if (endPtr != detail.c_str() && parsed > 0ul && parsed < 604800ul)
+					{
+						durationSeconds = static_cast<uint32_t>(parsed);
+					}
+					else
+					{
+						SendChatSystemNotice(sender, "Mute duration invalid; using 60s.");
+						LOG_WARN(Net, "[ServerApp] /mute duration fallback 60s (client_id={})", sender.clientId);
+					}
+				}
+
+				const uint32_t deltaTicks = durationSeconds * static_cast<uint32_t>(m_tickHz > 0 ? m_tickHz : 20u);
+				target->chatMutedUntilServerTick = m_currentTick + deltaTicks;
+				AuditLogModeration("MUTE", actorLabel, targetLabel, std::to_string(durationSeconds) + "s");
+				SendChatSystemNotice(*target, "You have been muted.");
+				SendChatSystemNotice(sender, "Mute applied.");
+				LOG_INFO(Net,
+					"[ServerApp] /mute applied (actor_client_id={}, target_client_id={}, seconds={})",
+					sender.clientId,
+					target->clientId,
+					durationSeconds);
+				return true;
+			}
+
+			if (command.kind == ChatSlashCommandKind::Kick)
+			{
+				AuditLogModeration("KICK", actorLabel, targetLabel, detail);
+				SendChatSystemNotice(*target, "You were kicked from the server.");
+				DisconnectConnectedClient(target->clientId, "moderation_kick");
+				SendChatSystemNotice(sender, "Kick executed.");
+				LOG_INFO(Net, "[ServerApp] /kick executed (actor_client_id={}, target={})", sender.clientId, targetLabel);
+				return true;
+			}
+
+			if (command.kind == ChatSlashCommandKind::Ban)
+			{
+				const uint64_t characterKey = target->persistenceCharacterKey;
+				if (characterKey == 0)
+				{
+					SendChatSystemNotice(sender, "Ban failed: target has no persistence key.");
+					LOG_WARN(Net, "[ServerApp] /ban rejected: no persistence key (target_client_id={})", target->clientId);
+					return true;
+				}
+
+				m_bannedCharacterKeys.insert(characterKey);
+				SaveChatBanFile();
+				AuditLogModeration("BAN", actorLabel, targetLabel, detail);
+				SendChatSystemNotice(*target, "You are banned from this server.");
+				DisconnectConnectedClient(target->clientId, "moderation_ban");
+				SendChatSystemNotice(sender, "Ban applied.");
+				LOG_INFO(Net,
+					"[ServerApp] /ban executed (actor_client_id={}, character_key={})",
+					sender.clientId,
+					characterKey);
+				return true;
+			}
+		}
+		case ChatSlashCommandKind::Friend:
+			return HandleFriendCommand(sender, command.argsRemainder);
+
+		// M32.2 — Party commands
+		case ChatSlashCommandKind::Invite:
+			return HandleInviteCommand(sender, command.argsRemainder);
+
+		case ChatSlashCommandKind::Leave:
+			return HandleLeaveCommand(sender);
+
+		case ChatSlashCommandKind::Loot:
+			return HandleLootCommand(sender, command.argsRemainder);
+
+		case ChatSlashCommandKind::PartyKick:
+			return HandlePartyKickCommand(sender, command.argsRemainder);
+
+	// M35.3 — Trade command
+	case ChatSlashCommandKind::Trade:
+		return HandleTradeCommand(sender, command.argsRemainder);
+
+	case ChatSlashCommandKind::None:
+	default:
+		LOG_WARN(Net, "[ServerApp] Chat slash command ignored: kind=None (client_id={})", sender.clientId);
+		return true;
+	}
+}
+
+// -------------------------------------------------------------------------
+// M32.1 — Friend system helpers
+// -------------------------------------------------------------------------
+
+	void ServerApp::OnClientLogin(ConnectedClient& client)
+	{
+		if (!m_friendSystem.IsInitialized())
+			return;
+
+		const std::string playerLabel = "P" + std::to_string(client.clientId);
+		m_friendSystem.SetPresence(
+			static_cast<uint64_t>(client.persistenceCharacterKey),
+			playerLabel,
+			PresenceStatus::Online);
+
+		SendFriendListSync(client);
+		BroadcastFriendStatusUpdate(client, PresenceStatus::Online);
+
+		LOG_INFO(Net, "[ServerApp] OnClientLogin: friend presence set online (client_id={})", client.clientId);
+	}
+
+	void ServerApp::OnClientLogout(const ConnectedClient& client)
+	{
+		// M32.2 — Remove the leaving client from their party (promotes leader or disbands).
+		if (m_partySystem.IsInitialized())
+		{
+			const uint32_t partyId = m_partySystem.LeaveParty(client.clientId);
+			if (partyId != 0)
+			{
+				// Broadcast updated party state to remaining members (if party still alive).
+				const Party* party = m_partySystem.FindPartyById(partyId);
+				if (party != nullptr)
+					BroadcastPartyUpdate(*party);
+				LOG_INFO(Net, "[ServerApp] OnClientLogout: party updated on disconnect (client_id={}, party_id={})",
+				    client.clientId, partyId);
+			}
+		}
+
+		if (!m_friendSystem.IsInitialized())
+			return;
+
+		BroadcastFriendStatusUpdate(client, PresenceStatus::Offline);
+		m_friendSystem.SetOffline(static_cast<uint64_t>(client.persistenceCharacterKey));
+
+		LOG_INFO(Net, "[ServerApp] OnClientLogout: friend presence cleared (client_id={})", client.clientId);
+	}
+
+	void ServerApp::SendFriendListSync(const ConnectedClient& receiver)
+	{
+		// In no-DB mode, GetFriendList returns an empty list; we still send the packet
+		// so the client is aware the sync occurred.
+		const auto records = m_friendSystem.GetFriendList(
+			static_cast<uint64_t>(receiver.persistenceCharacterKey), nullptr);
+
+		FriendListSyncMessage msg{};
+		msg.friends.reserve(records.size());
+		for (const auto& rec : records)
+		{
+			FriendListEntry entry;
+			entry.name              = rec.friendName;
+			entry.presenceStatus    = m_friendSystem.GetPresence(rec.friendId);
+			entry.isPendingInbound  = (rec.status == 0);
+			msg.friends.push_back(std::move(entry));
+		}
+
+		const std::vector<std::byte> packet = EncodeFriendListSync(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendFriendListSync send failed (client_id={})", receiver.clientId);
+			return;
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] FriendListSync sent (client_id={}, friends={})",
+			receiver.clientId, msg.friends.size());
+	}
+
+	void ServerApp::BroadcastFriendStatusUpdate(const ConnectedClient& subject, PresenceStatus status)
+	{
+		// Collect online friend ids from the in-memory presence map.
+		// In no-DB mode GetOnlineFriendIds returns empty; we iterate all clients and check if
+		// they have the subject in their (in-memory-only) presence map instead.
+		// This is best-effort: bilateral DB relationships are not available in no-DB mode.
+		const std::string subjectLabel = "P" + std::to_string(subject.clientId);
+
+		FriendStatusUpdateMessage msg{};
+		msg.friendName     = subjectLabel;
+		msg.presenceStatus = status;
+
+		const std::vector<std::byte> packet = EncodeFriendStatusUpdate(msg);
+
+		for (const ConnectedClient& peer : m_clients)
+		{
+			if (peer.clientId == subject.clientId)
+				continue;
+
+			if (!m_transport.Send(peer.endpoint, packet))
+			{
+				LOG_WARN(Net, "[ServerApp] BroadcastFriendStatusUpdate send failed (peer_client_id={})", peer.clientId);
+			}
+		}
+	}
+
+	bool ServerApp::HandleFriendCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		std::string targetName;
+		const FriendSubCommand sub = ParseFriendSubCommand(argsRemainder, targetName);
+
+		if (sub == FriendSubCommand::Unknown || targetName.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /friend add|accept|decline|remove <name>");
+			LOG_WARN(Net, "[ServerApp] /friend unknown sub-command (client_id={}, args='{}')",
+				sender.clientId, argsRemainder);
+			return true;
+		}
+
+		const uint64_t playerId = static_cast<uint64_t>(sender.persistenceCharacterKey);
+		const std::string playerLabel = "P" + std::to_string(sender.clientId);
+
+		switch (sub)
+		{
+		case FriendSubCommand::Add:
+		{
+			const uint64_t targetId = m_friendSystem.SendFriendRequest(playerId, playerLabel, targetName, nullptr);
+			if (targetId == 0)
+				SendChatSystemNotice(sender, "Friend request failed (no-DB mode or target not found).");
+			else
+				SendChatSystemNotice(sender, "Friend request sent to '" + targetName + "'.");
+			break;
+		}
+		case FriendSubCommand::Accept:
+		{
+			const uint64_t requesterId = m_friendSystem.AcceptFriendRequest(playerId, targetName, nullptr);
+			if (requesterId == 0)
+				SendChatSystemNotice(sender, "Accept failed (no-DB mode or request not found).");
+			else
+				SendChatSystemNotice(sender, "Friend request from '" + targetName + "' accepted.");
+			break;
+		}
+		case FriendSubCommand::Decline:
+		{
+			const uint64_t requesterId = m_friendSystem.DeclineFriendRequest(playerId, targetName, nullptr);
+			if (requesterId == 0)
+				SendChatSystemNotice(sender, "Decline failed (no-DB mode or request not found).");
+			else
+				SendChatSystemNotice(sender, "Friend request from '" + targetName + "' declined.");
+			break;
+		}
+		case FriendSubCommand::Remove:
+		{
+			const bool ok = m_friendSystem.RemoveFriend(playerId, targetName, nullptr);
+			if (!ok)
+				SendChatSystemNotice(sender, "Remove failed (no-DB mode or friend not found).");
+			else
+				SendChatSystemNotice(sender, "'" + targetName + "' removed from friends.");
+			break;
+		}
+		default:
+			break;
+		}
+
+		return true;
+	}
+
+	// =========================================================================
+	// M32.2 — Party system helpers
+	// =========================================================================
+
+	bool ServerApp::HandleInviteCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		std::string targetName;
+		if (!ParsePartyTargetName(argsRemainder, targetName))
+		{
+			SendChatSystemNotice(sender, "Usage: /invite <player_name>");
+			return true;
+		}
+
+		// Resolve target by display-name token (format "P<clientId>").
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player '" + targetName + "' not found.");
+			LOG_WARN(Net, "[ServerApp] /invite target not found (client_id={}, target='{}')",
+			    sender.clientId, targetName);
+			return true;
+		}
+
+		if (target->clientId == sender.clientId)
+		{
+			SendChatSystemNotice(sender, "You cannot invite yourself.");
+			return true;
+		}
+
+		const std::string senderLabel = "P" + std::to_string(sender.clientId);
+		if (!m_partySystem.SendInvite(sender.clientId, target->clientId, targetName, m_currentTick))
+		{
+			SendChatSystemNotice(sender, "Cannot invite '" + targetName + "' (already in party or invite pending).");
+			return true;
+		}
+
+		// Notify the target.
+		PartyInviteNotifyMessage notify{};
+		notify.inviterName = senderLabel;
+		const std::vector<std::byte> notifyPacket = EncodePartyInviteNotify(notify);
+		if (!m_transport.Send(target->endpoint, notifyPacket))
+		{
+			LOG_WARN(Net, "[ServerApp] PartyInviteNotify send failed (target_client_id={})", target->clientId);
+		}
+
+		SendChatSystemNotice(sender, "Party invite sent to '" + targetName + "'.");
+		SendChatSystemNotice(*target, "'" + senderLabel + "' has invited you to a party. Type /accept to join.");
+		LOG_INFO(Net, "[ServerApp] /invite sent (inviter_client_id={}, invitee_client_id={})",
+		    sender.clientId, target->clientId);
+		return true;
+	}
+
+	bool ServerApp::HandleLeaveCommand(ConnectedClient& sender)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		const uint32_t partyId = m_partySystem.LeaveParty(sender.clientId);
+		if (partyId == 0)
+		{
+			SendChatSystemNotice(sender, "You are not in a party.");
+			return true;
+		}
+
+		SendChatSystemNotice(sender, "You have left the party.");
+
+		// Broadcast updated state to remaining members.
+		const Party* party = m_partySystem.FindPartyById(partyId);
+		if (party != nullptr)
+		{
+			BroadcastPartyUpdate(*party);
+			// Notify remaining members.
+			const std::string senderLabel = "P" + std::to_string(sender.clientId);
+			for (const PartyMember& m : party->members)
+			{
+				ConnectedClient* member = FindClientByEntityId(m.entityId);
+				if (member != nullptr)
+					SendChatSystemNotice(*member, "'" + senderLabel + "' has left the party.");
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] /leave handled (client_id={}, party_id={})", sender.clientId, partyId);
+		return true;
+	}
+
+	bool ServerApp::HandleLootCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		const Party* party = m_partySystem.FindPartyByMember(sender.clientId);
+		if (party == nullptr)
+		{
+			SendChatSystemNotice(sender, "You are not in a party.");
+			return true;
+		}
+
+		if (!m_partySystem.IsPartyLeader(sender.clientId))
+		{
+			SendChatSystemNotice(sender, "Only the party leader can change the loot mode.");
+			return true;
+		}
+
+		std::string token;
+		if (!ParseLootCommandToken(argsRemainder, token))
+		{
+			SendChatSystemNotice(sender, "Usage: /loot <ffa|roundrobin|master|needgreed>");
+			return true;
+		}
+
+		LootMode mode = LootMode::FreeForAll;
+		if (!ParseLootModeToken(token, mode))
+		{
+			SendChatSystemNotice(sender, "Unknown loot mode '" + token + "'. Use: ffa, roundrobin, master, needgreed.");
+			return true;
+		}
+
+		if (!m_partySystem.SetLootMode(party->partyId, sender.clientId, mode))
+		{
+			SendChatSystemNotice(sender, "Failed to change loot mode.");
+			return true;
+		}
+
+		// Refresh party pointer after modification.
+		const Party* updatedParty = m_partySystem.FindPartyById(party->partyId);
+		if (updatedParty != nullptr)
+		{
+			BroadcastPartyUpdate(*updatedParty);
+			const std::string notice = std::string("Loot mode changed to: ") + LootModeLabel(mode);
+			for (const PartyMember& m : updatedParty->members)
+			{
+				ConnectedClient* member = FindClientByEntityId(m.entityId);
+				if (member != nullptr)
+					SendChatSystemNotice(*member, notice);
+			}
+		}
+
+		LOG_INFO(Net, "[ServerApp] /loot handled (client_id={}, mode={})", sender.clientId, LootModeLabel(mode));
+		return true;
+	}
+
+	bool ServerApp::HandlePartyKickCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		if (!m_partySystem.IsInitialized())
+		{
+			SendChatSystemNotice(sender, "Party system unavailable.");
+			return true;
+		}
+
+		const Party* party = m_partySystem.FindPartyByMember(sender.clientId);
+		if (party == nullptr)
+		{
+			SendChatSystemNotice(sender, "You are not in a party.");
+			return true;
+		}
+
+		if (!m_partySystem.IsPartyLeader(sender.clientId))
+		{
+			SendChatSystemNotice(sender, "Only the party leader can kick members.");
+			return true;
+		}
+
+		std::string targetName;
+		if (!ParsePartyTargetName(argsRemainder, targetName))
+		{
+			SendChatSystemNotice(sender, "Usage: /pkick <player_name>");
+			return true;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player '" + targetName + "' not found.");
+			return true;
+		}
+
+		const uint32_t savedPartyId = party->partyId;
+		if (!m_partySystem.KickMember(savedPartyId, sender.clientId, target->clientId))
+		{
+			SendChatSystemNotice(sender, "Could not kick '" + targetName + "' (not in party or not leader).");
+			return true;
+		}
+
+		const std::string senderLabel = "P" + std::to_string(sender.clientId);
+		SendChatSystemNotice(*target, "You have been kicked from the party by '" + senderLabel + "'.");
+		SendChatSystemNotice(sender, "'" + targetName + "' has been kicked from the party.");
+
+		// Broadcast updated party state to remaining members.
+		const Party* updatedParty = m_partySystem.FindPartyById(savedPartyId);
+		if (updatedParty != nullptr)
+			BroadcastPartyUpdate(*updatedParty);
+
+		LOG_INFO(Net, "[ServerApp] /pkick handled (leader_client_id={}, kicked_client_id={})",
+		    sender.clientId, target->clientId);
+		return true;
+	}
+
+	void ServerApp::BroadcastPartyUpdate(const Party& party)
+	{
+		const std::vector<std::byte> packet = [&]
+		{
+			PartyUpdateMessage msg{};
+			msg.partyId  = party.partyId;
+			msg.leaderId = party.leaderId;
+			msg.lootMode = static_cast<WireLootMode>(party.lootMode);
+			msg.members.reserve(party.members.size());
+			for (const PartyMember& m : party.members)
+			{
+				PartyMemberEntry entry{};
+				entry.clientId      = m.clientId;
+				entry.currentHealth = m.currentHealth;
+				entry.maxHealth     = m.maxHealth;
+				entry.currentMana   = m.currentMana;
+				entry.maxMana       = m.maxMana;
+				entry.displayName   = m.displayName;
+				msg.members.push_back(std::move(entry));
+			}
+			return EncodePartyUpdate(msg);
+		}();
+
+		for (const PartyMember& m : party.members)
+		{
+			const ConnectedClient* member = FindClientByEntityId(m.entityId);
+			if (member == nullptr)
+				continue;
+			if (!m_transport.Send(member->endpoint, packet))
+			{
+				LOG_WARN(Net, "[ServerApp] BroadcastPartyUpdate send failed (client_id={})", m.clientId);
+			}
+		}
+
+		LOG_DEBUG(Net, "[ServerApp] PartyUpdate broadcast (party_id={}, members={})",
+		    party.partyId, party.members.size());
+	}
+
+	bool ServerApp::SendPartyUpdate(const ConnectedClient& receiver, const Party& party)
+	{
+		PartyUpdateMessage msg{};
+		msg.partyId  = party.partyId;
+		msg.leaderId = party.leaderId;
+		msg.lootMode = static_cast<WireLootMode>(party.lootMode);
+		msg.members.reserve(party.members.size());
+		for (const PartyMember& m : party.members)
+		{
+			PartyMemberEntry entry{};
+			entry.clientId      = m.clientId;
+			entry.currentHealth = m.currentHealth;
+			entry.maxHealth     = m.maxHealth;
+			entry.currentMana   = m.currentMana;
+			entry.maxMana       = m.maxMana;
+			entry.displayName   = m.displayName;
+			msg.members.push_back(std::move(entry));
+		}
+		const std::vector<std::byte> packet = EncodePartyUpdate(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendPartyUpdate send failed (client_id={})", receiver.clientId);
+			return false;
+		}
+		return true;
+	}
+
+	void ServerApp::DistributePartyXp(ConnectedClient& attacker,
+	                                   float            killPosX,
+	                                   float            killPosZ,
+	                                   uint32_t         baseXp)
+	{
+		const Party* party = m_partySystem.FindPartyByMember(attacker.clientId);
+		if (party == nullptr || party->members.size() <= 1)
+		{
+			// Solo player: grant full XP.
+			attacker.experiencePoints += baseXp;
+			LOG_DEBUG(Net, "[ServerApp] XP granted solo (client_id={}, xp={}, total_xp={})",
+			    attacker.clientId, baseXp, attacker.experiencePoints);
+			return;
+		}
+
+		// Collect members within range.
+		const std::vector<uint32_t> inRange = m_partySystem.GetMembersInRange(
+		    party->partyId,
+		    attacker.clientId,
+		    killPosX,
+		    killPosZ,
+		    kPartyShareRangeMeters,
+		    [this](uint32_t clientId, float& outX, float& outZ) -> bool
+		    {
+			    for (const ConnectedClient& c : m_clients)
+			    {
+				    if (c.clientId == clientId)
+				    {
+					    outX = c.positionMetersX;
+					    outZ = c.positionMetersZ;
+					    return true;
+				    }
+			    }
+			    return false;
+		    });
+
+		if (inRange.empty())
+		{
+			attacker.experiencePoints += baseXp;
+			return;
+		}
+
+		// Split XP evenly; always at least 1 XP per member.
+		const uint32_t share = std::max(1u, baseXp / static_cast<uint32_t>(inRange.size()));
+
+		for (const uint32_t memberId : inRange)
+		{
+			for (ConnectedClient& c : m_clients)
+			{
+				if (c.clientId == memberId)
+				{
+					c.experiencePoints += share;
+					LOG_DEBUG(Net, "[ServerApp] Party XP share granted (client_id={}, share={}, total_xp={})",
+					    c.clientId, share, c.experiencePoints);
+					break;
+				}
+			}
+		}
+	}
+
+	EntityId ServerApp::ResolvePartyLooterEntityId(const ConnectedClient& killerClient)
+	{
+		const Party* party = m_partySystem.FindPartyByMember(killerClient.clientId);
+		if (party == nullptr || party->members.size() <= 1)
+			return 0; // Solo or not in party — caller uses killer's entityId.
+
+		switch (party->lootMode)
+		{
+		case LootMode::FreeForAll:
+			return 0; // Public loot bag — anyone can pick up.
+
+		case LootMode::RoundRobin:
+		{
+			// GetNextLooterEntityId advances the round-robin index.
+			Party* mutableParty = m_partySystem.FindPartyById(party->partyId);
+			if (mutableParty == nullptr)
+				return killerClient.entityId;
+			const EntityId looter = m_partySystem.GetNextLooterEntityId(mutableParty->partyId);
+			return (looter != 0) ? looter : killerClient.entityId;
+		}
+		case LootMode::MasterLooter:
+		{
+			Party* mutableParty = m_partySystem.FindPartyById(party->partyId);
+			if (mutableParty == nullptr)
+				return killerClient.entityId;
+			const EntityId looter = m_partySystem.GetNextLooterEntityId(mutableParty->partyId);
+			return (looter != 0) ? looter : killerClient.entityId;
+		}
+		case LootMode::NeedGreed:
+		{
+			// Auto-roll for all members in range; highest roll wins.
+			const std::vector<uint32_t> inRange = m_partySystem.GetMembersInRange(
+			    party->partyId,
+			    killerClient.clientId,
+			    killerClient.positionMetersX,
+			    killerClient.positionMetersZ,
+			    kPartyShareRangeMeters,
+			    [this](uint32_t clientId, float& outX, float& outZ) -> bool
+			    {
+				    for (const ConnectedClient& c : m_clients)
+				    {
+					    if (c.clientId == clientId)
+					    {
+						    outX = c.positionMetersX;
+						    outZ = c.positionMetersZ;
+						    return true;
+					    }
+				    }
+				    return false;
+			    });
+
+			if (inRange.empty())
+				return killerClient.entityId;
+
+			// Deterministic roll using clientId + current tick as seed.
+			uint32_t bestRoll   = 0;
+			uint32_t winnerClientId = killerClient.clientId;
+			for (const uint32_t memberId : inRange)
+			{
+				// Simple LCG hash: reproducible per tick, varies per member.
+				const uint32_t roll = ((memberId * 1664525u) + m_currentTick * 1013904223u) % 100u + 1u;
+				if (roll > bestRoll)
+				{
+					bestRoll = roll;
+					winnerClientId = memberId;
+				}
+			}
+
+			for (const ConnectedClient& c : m_clients)
+			{
+				if (c.clientId == winnerClientId)
+				{
+					LOG_INFO(Net, "[ServerApp] NeedGreed roll winner (client_id={}, roll={}, party_id={})",
+					    winnerClientId, bestRoll, party->partyId);
+					return c.entityId;
+				}
+			}
+			return killerClient.entityId;
+		}
+		default:
+			return 0;
+		}
+	}
+
+	bool ServerApp::SendShopOpen(const ConnectedClient& receiver, uint32_t vendorId)
+	{
+		const VendorDefinition* vendor = m_vendorCatalog.FindVendor(vendorId);
+		if (vendor == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] SendShopOpen FAILED: unknown vendor_id={}", vendorId);
+			return false;
+		}
+
+		ShopOpenMessage message{};
+		message.vendorId = vendorId;
+		message.displayName = vendor->displayName;
+		message.offers.reserve(vendor->items.size());
+		for (const VendorItemDefinition& it : vendor->items)
+		{
+			ShopOfferWire row{};
+			row.itemId = it.itemId;
+			row.buyPrice = it.buyPrice;
+			if (it.stock < 0)
+			{
+				row.stock = kShopInfiniteStockWire;
+			}
+			else
+			{
+				const std::optional<uint32_t> rem = m_vendorStock.GetRemaining(vendorId, it.itemId);
+				row.stock = rem.value_or(0u);
+			}
+			message.offers.push_back(row);
+		}
+
+		const std::vector<std::byte> packet = EncodeShopOpen(message);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] SendShopOpen FAILED: transport send (client_id={})", receiver.clientId);
+			return false;
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] SendShopOpen OK (client_id={}, vendor_id={}, offers={})",
+			receiver.clientId,
+			vendorId,
+			message.offers.size());
+		return true;
+	}
+
+	void ServerApp::HandleShopBuyRequest(const Endpoint& endpoint, const ShopBuyRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopBuy ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+
+		if (message.quantity == 0u || message.quantity > kMaxShopQuantityPerRequest)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy ignored: bad quantity ({})", message.quantity);
+			SendChatSystemNotice(*client, "Invalid quantity.");
+			return;
+		}
+
+		const VendorItemDefinition* row = m_vendorCatalog.FindVendorItem(message.vendorId, message.itemId);
+		if (row == nullptr)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopBuy ignored: unknown offer (vendor_id={}, item_id={})",
+				message.vendorId,
+				message.itemId);
+			SendChatSystemNotice(*client, "Item not sold here.");
+			return;
+		}
+
+		if (row->stock >= 0)
+		{
+			const std::optional<uint32_t> rem = m_vendorStock.GetRemaining(message.vendorId, message.itemId);
+			const uint32_t have = rem.value_or(0u);
+			if (have < message.quantity)
+			{
+				LOG_WARN(Net, "[ServerApp] ShopBuy blocked: out of stock (have={}, need={})", have, message.quantity);
+				SendChatSystemNotice(*client, "Vendor is out of stock.");
+				return;
+			}
+		}
+
+		if (row->buyPrice > 0u && message.quantity > (std::numeric_limits<uint32_t>::max() / row->buyPrice))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy blocked: cost overflow");
+			SendChatSystemNotice(*client, "Invalid purchase.");
+			return;
+		}
+
+		const uint64_t totalCostU64 = static_cast<uint64_t>(row->buyPrice) * static_cast<uint64_t>(message.quantity);
+		if (totalCostU64 > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy blocked: cost overflow");
+			SendChatSystemNotice(*client, "Invalid purchase.");
+			return;
+		}
+
+		std::string walletErr;
+		if (!m_playerWallet.SubtractCurrency(*client, kCurrencyGold, totalCostU64, walletErr))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopBuy blocked: wallet ({})", walletErr);
+			SendChatSystemNotice(*client, "Not enough gold.");
+			return;
+		}
+
+		if (row->stock >= 0)
+		{
+			std::string stockErr;
+			if (!m_vendorStock.TryConsume(message.vendorId, message.itemId, message.quantity, stockErr))
+			{
+				std::string refundErr;
+				(void)m_playerWallet.AddCurrency(*client, kCurrencyGold, totalCostU64, refundErr);
+				LOG_WARN(Net, "[ServerApp] ShopBuy rolled back: stock ({})", stockErr);
+				SendChatSystemNotice(*client, "Vendor is out of stock.");
+				return;
+			}
+		}
+
+		AddItemToInventory(*client, ItemStack{ message.itemId, message.quantity });
+		SaveConnectedClient(*client, "shop_buy");
+		(void)SendWalletUpdate(*client);
+		(void)SendInventoryDelta(
+			*client,
+			std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+		LOG_INFO(Net,
+			"[ServerApp] ShopBuy OK (client_id={}, vendor_id={}, item_id={}, qty={})",
+			client->clientId,
+			message.vendorId,
+			message.itemId,
+			message.quantity);
+	}
+
+	void ServerApp::HandleShopSellRequest(const Endpoint& endpoint, const ShopSellRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopSell ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+
+		if (message.quantity == 0u || message.quantity > kMaxShopQuantityPerRequest)
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell ignored: bad quantity ({})", message.quantity);
+			SendChatSystemNotice(*client, "Invalid quantity.");
+			return;
+		}
+
+		const VendorItemDefinition* row = m_vendorCatalog.FindVendorItem(message.vendorId, message.itemId);
+		if (row == nullptr)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] ShopSell ignored: item not in vendor table (vendor_id={}, item_id={})",
+				message.vendorId,
+				message.itemId);
+			SendChatSystemNotice(*client, "Cannot sell that here.");
+			return;
+		}
+
+		const uint32_t unitSell = VendorCatalog::ComputeSellPrice(row->buyPrice);
+		if (unitSell > 0u && message.quantity > (std::numeric_limits<uint32_t>::max() / unitSell))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell blocked: gold overflow");
+			SendChatSystemNotice(*client, "Invalid sale.");
+			return;
+		}
+
+		const uint64_t totalGoldU64 = static_cast<uint64_t>(unitSell) * static_cast<uint64_t>(message.quantity);
+		if (totalGoldU64 > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell blocked: gold overflow");
+			SendChatSystemNotice(*client, "Invalid sale.");
+			return;
+		}
+
+		std::string invErr;
+		if (!RemoveStackFromInventory(*client, message.itemId, message.quantity, invErr))
+		{
+			LOG_WARN(Net, "[ServerApp] ShopSell blocked: inventory ({})", invErr);
+			SendChatSystemNotice(*client, "Not enough items.");
+			return;
+		}
+
+		std::string walletErr;
+		if (totalGoldU64 > 0u && !m_playerWallet.AddCurrency(*client, kCurrencyGold, totalGoldU64, walletErr))
+		{
+			AddItemToInventory(*client, ItemStack{ message.itemId, message.quantity });
+			LOG_WARN(Net, "[ServerApp] ShopSell rolled back: wallet ({})", walletErr);
+			SendChatSystemNotice(*client, "Cannot carry more gold.");
+			return;
+		}
+
+		SaveConnectedClient(*client, "shop_sell");
+		(void)SendWalletUpdate(*client);
+		(void)SendInventoryDelta(
+			*client,
+			std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+		LOG_INFO(Net,
+			"[ServerApp] ShopSell OK (client_id={}, vendor_id={}, item_id={}, qty={}, gold={})",
+			client->clientId,
+			message.vendorId,
+			message.itemId,
+			message.quantity,
+			totalGoldU64);
+	}
+
+	ConnectedClient* ServerApp::FindConnectedClientByCharacterKey(uint64_t characterKey)
+	{
+		for (ConnectedClient& client : m_clients)
+		{
+			if (client.persistenceCharacterKey == characterKey)
+			{
+				return &client;
+			}
+		}
+		return nullptr;
+	}
+
+	bool ServerApp::SendAuctionBrowseResult(const ConnectedClient& receiver, const AuctionBrowseRequestMessage& query)
+	{
+		const uint32_t maxRows = std::max(1u, std::min(query.maxRows, static_cast<uint32_t>(kMaxAuctionBrowseRowsWire)));
+		const uint8_t sortMode = static_cast<uint8_t>(std::min<uint32_t>(query.sortMode, 2u));
+		const std::vector<const AuctionListingRecord*> rows = m_auctionHouse.QueryBrowse(
+			query.minPrice,
+			query.maxPrice,
+			query.itemIdFilter,
+			sortMode,
+			maxRows);
+		AuctionBrowseResultMessage msg{};
+		msg.clientId = receiver.clientId;
+		for (const AuctionListingRecord* p : rows)
+		{
+			AuctionListingWireRow w{};
+			w.listingId = p->listingId;
+			w.itemId = p->itemId;
+			w.quantity = p->quantity;
+			w.startBid = p->startBid;
+			w.buyoutPrice = p->buyoutPrice;
+			w.currentBid = p->currentBid;
+			w.expiresAtTick = p->expiresAtTick;
+			msg.rows.push_back(w);
+		}
+		const std::vector<std::byte> packet = EncodeAuctionBrowseResult(msg);
+		if (!m_transport.Send(receiver.endpoint, packet))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBrowseResult send FAILED (client_id={})", receiver.clientId);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] AuctionBrowseResult OK (client_id={}, rows={})", receiver.clientId, msg.rows.size());
+		return true;
+	}
+
+	void ServerApp::HandleAuctionBrowseRequest(const Endpoint& endpoint, const AuctionBrowseRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBrowse ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionBrowse ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		(void)SendAuctionBrowseResult(*client, message);
+	}
+
+	void ServerApp::HandleAuctionListItemRequest(const Endpoint& endpoint, const AuctionListItemRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionListItem ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		if (message.quantity == 0u || message.quantity > kMaxShopQuantityPerRequest)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem ignored: bad quantity ({})", message.quantity);
+			SendChatSystemNotice(*client, "Invalid quantity.");
+			return;
+		}
+		std::string verr;
+		if (!m_auctionHouse.ValidateNewListingParams(
+				message.startBid,
+				message.buyoutPrice,
+				static_cast<uint8_t>(message.durationHours),
+				verr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem blocked: {}", verr);
+			SendChatSystemNotice(*client, "Invalid auction parameters.");
+			return;
+		}
+		std::string invErr;
+		if (!RemoveStackFromInventory(*client, message.itemId, message.quantity, invErr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionListItem blocked: {}", invErr);
+			SendChatSystemNotice(*client, "You do not have that item.");
+			return;
+		}
+		AuctionListingRecord row{};
+		row.sellerClientId = client->clientId;
+		row.sellerCharacterKey = client->persistenceCharacterKey;
+		row.itemId = message.itemId;
+		row.quantity = message.quantity;
+		row.startBid = message.startBid;
+		row.buyoutPrice = message.buyoutPrice;
+		row.expiresAtTick = m_currentTick + message.durationHours * 3600u * static_cast<uint32_t>(m_tickHz);
+		const uint32_t newId = m_auctionHouse.EmplaceListing(row);
+		SaveConnectedClient(*client, "auction_list");
+		(void)SendInventoryDelta(
+			*client,
+			std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+		SendChatSystemNotice(*client, "Item listed on auction house.");
+		LOG_INFO(Net,
+			"[ServerApp] AuctionListItem OK (client_id={}, listing_id={}, item_id={}, qty={})",
+			client->clientId,
+			newId,
+			message.itemId,
+			message.quantity);
+	}
+
+	void ServerApp::HandleAuctionBidRequest(const Endpoint& endpoint, const AuctionBidRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBid ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionBid ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		AuctionListingRecord* row = m_auctionHouse.FindListing(message.listingId);
+		if (row == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBid ignored: unknown listing_id={}", message.listingId);
+			SendChatSystemNotice(*client, "That listing is gone.");
+			return;
+		}
+		if (row->sellerCharacterKey == client->persistenceCharacterKey)
+		{
+			SendChatSystemNotice(*client, "You cannot bid on your own auction.");
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: own listing (client_id={})", client->clientId);
+			return;
+		}
+		const uint32_t minBid = m_auctionHouse.MinimumNextBid(*row);
+		if (message.bidAmount < minBid)
+		{
+			SendChatSystemNotice(*client, "Bid too low.");
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: bid {} < min {}", message.bidAmount, minBid);
+			return;
+		}
+		if (row->currentBid > 0u && message.bidAmount <= row->currentBid)
+		{
+			SendChatSystemNotice(*client, "Bid too low.");
+			return;
+		}
+		const uint64_t prevCk = row->highBidderCharacterKey;
+		const uint32_t prevBid = row->currentBid;
+		const uint64_t bidderCk = client->persistenceCharacterKey;
+		uint64_t charge = message.bidAmount;
+		if (prevCk == bidderCk && prevBid > 0u)
+		{
+			charge = static_cast<uint64_t>(message.bidAmount) - static_cast<uint64_t>(prevBid);
+		}
+		std::string werr;
+		if (charge > 0u
+			&& !m_playerWallet.SubtractCurrency(*client, kCurrencyGold, charge, werr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBid blocked: wallet ({})", werr);
+			SendChatSystemNotice(*client, "Not enough gold.");
+			return;
+		}
+		if (charge > 0u)
+		{
+			(void)SendWalletUpdate(*client);
+			SaveConnectedClient(*client, "auction_bid_charge");
+		}
+		if (prevCk != 0u && prevCk != bidderCk)
+		{
+			RefundGoldToCharacter(prevCk, prevBid, "outbid");
+			ConnectedClient* prev = FindConnectedClientByCharacterKey(prevCk);
+			if (prev != nullptr)
+			{
+				SendChatSystemNotice(*prev, "You were outbid.");
+			}
+		}
+		row->currentBid = message.bidAmount;
+		row->highBidderCharacterKey = bidderCk;
+		row->highBidderClientId = client->clientId;
+		(void)m_auctionHouse.PersistListings();
+		SendChatSystemNotice(*client, "Bid accepted.");
+		LOG_INFO(Net,
+			"[ServerApp] AuctionBid OK (client_id={}, listing_id={}, bid={})",
+			client->clientId,
+			message.listingId,
+			message.bidAmount);
+	}
+
+	void ServerApp::HandleAuctionBuyoutRequest(const Endpoint& endpoint, const AuctionBuyoutRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBuyout ignored: unknown endpoint {}", UdpTransport::EndpointToString(endpoint));
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Net,
+				"[ServerApp] AuctionBuyout ignored: client_id mismatch (expected={}, got={})",
+				client->clientId,
+				message.clientId);
+			return;
+		}
+		AuctionListingRecord* row = m_auctionHouse.FindListing(message.listingId);
+		if (row == nullptr || row->buyoutPrice == 0u)
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBuyout ignored: invalid listing_id={}", message.listingId);
+			SendChatSystemNotice(*client, "Buyout not available.");
+			return;
+		}
+		if (row->sellerCharacterKey == client->persistenceCharacterKey)
+		{
+			SendChatSystemNotice(*client, "You cannot buy out your own auction.");
+			return;
+		}
+		const uint64_t buyerCk = client->persistenceCharacterKey;
+		uint64_t charge = row->buyoutPrice;
+		if (row->highBidderCharacterKey == buyerCk && row->currentBid > 0u)
+		{
+			charge = static_cast<uint64_t>(row->buyoutPrice) - static_cast<uint64_t>(row->currentBid);
+		}
+		std::string werr;
+		if (charge > 0u && !m_playerWallet.SubtractCurrency(*client, kCurrencyGold, charge, werr))
+		{
+			LOG_WARN(Net, "[ServerApp] AuctionBuyout blocked: wallet ({})", werr);
+			SendChatSystemNotice(*client, "Not enough gold.");
+			return;
+		}
+		if (charge > 0u)
+		{
+			(void)SendWalletUpdate(*client);
+			SaveConnectedClient(*client, "auction_buyout_charge");
+		}
+		const uint64_t hiCk = row->highBidderCharacterKey;
+		const uint32_t hiBid = row->currentBid;
+		if (hiCk != 0u && hiCk != buyerCk)
+		{
+			RefundGoldToCharacter(hiCk, hiBid, "buyout_refund");
+			ConnectedClient* prev = FindConnectedClientByCharacterKey(hiCk);
+			if (prev != nullptr)
+			{
+				SendChatSystemNotice(*prev, "Auction ended (buyout). Your bid was refunded.");
+			}
+		}
+		AuctionSettlement settlement{};
+		settlement.listingId = row->listingId;
+		settlement.item = ItemStack{ row->itemId, row->quantity };
+		settlement.sellerCharacterKey = row->sellerCharacterKey;
+		settlement.buyerCharacterKey = buyerCk;
+		settlement.buyerClientId = client->clientId;
+		settlement.finalPrice = row->buyoutPrice;
+		settlement.sellerProceeds =
+			(row->buyoutPrice * static_cast<uint32_t>(100u - kAuctionHouseFeePercent)) / 100u;
+		settlement.expiredWithoutBids = false;
+		const uint32_t lid = row->listingId;
+		const uint32_t buyoutPaid = row->buyoutPrice;
+		m_auctionHouse.EraseListing(lid);
+		ApplyAuctionSettlement(settlement);
+		SendChatSystemNotice(*client, "Buyout successful.");
+		LOG_INFO(Net,
+			"[ServerApp] AuctionBuyout OK (client_id={}, listing_id={}, price={})",
+			client->clientId,
+			lid,
+			buyoutPaid);
+	}
+
+	void ServerApp::ProcessAuctionHouseTick()
+	{
+		std::vector<AuctionSettlement> settlements;
+		m_auctionHouse.CollectExpired(m_currentTick, settlements);
+		for (const AuctionSettlement& s : settlements)
+		{
+			ApplyAuctionSettlement(s);
+		}
+	}
+
+	void ServerApp::RefundGoldToCharacter(uint64_t characterKey, uint32_t amountGold, std::string_view /*reason*/)
+	{
+		if (amountGold == 0u)
+		{
+			return;
+		}
+		ConnectedClient* online = FindConnectedClientByCharacterKey(characterKey);
+		if (online != nullptr)
+		{
+			std::string err;
+			if (!m_playerWallet.AddCurrency(*online, kCurrencyGold, amountGold, err))
+			{
+				LOG_WARN(Net, "[ServerApp] RefundGold AddCurrency FAILED (ck={}, {}) — mailing", characterKey, err);
+				(void)DepositMailboxDelivery(characterKey, amountGold, nullptr);
+				return;
+			}
+			(void)SendWalletUpdate(*online);
+			SaveConnectedClient(*online, "auction_refund");
+			LOG_INFO(Net, "[ServerApp] RefundGold OK online (ck={}, amount={})", characterKey, amountGold);
+			return;
+		}
+		if (!DepositMailboxDelivery(characterKey, amountGold, nullptr))
+		{
+			LOG_ERROR(Net, "[ServerApp] Refund gold mailbox FAILED (ck={}, amount={})", characterKey, amountGold);
+			return;
+		}
+		LOG_INFO(Net, "[ServerApp] RefundGold mailed (ck={}, amount={})", characterKey, amountGold);
+	}
+
+	bool ServerApp::DepositMailboxDelivery(uint64_t characterKey, uint32_t goldDelta, const ItemStack* itemOptional)
+	{
+		PersistedCharacterState state{};
+		if (!m_characterPersistence.LoadCharacter(characterKey, state))
+		{
+			LOG_WARN(Net, "[ServerApp] DepositMailbox FAILED: cannot load character_key={}", characterKey);
+			return false;
+		}
+		const uint64_t newMailGold = static_cast<uint64_t>(state.mailboxGold) + static_cast<uint64_t>(goldDelta);
+		state.mailboxGold = static_cast<uint32_t>(std::min<uint64_t>(
+			newMailGold,
+			static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())));
+		if (itemOptional != nullptr && itemOptional->itemId != 0u && itemOptional->quantity != 0u)
+		{
+			constexpr size_t kMaxMailboxItems = 64;
+			if (state.mailboxItems.size() >= kMaxMailboxItems)
+			{
+				LOG_WARN(Net, "[ServerApp] DepositMailbox item dropped: mailbox full (character_key={})", characterKey);
+			}
+			else
+			{
+				state.mailboxItems.push_back(*itemOptional);
+			}
+		}
+		if (!m_characterPersistence.SaveCharacter(state))
+		{
+			LOG_ERROR(Net, "[ServerApp] DepositMailbox Save FAILED (character_key={})", characterKey);
+			return false;
+		}
+		LOG_INFO(Net, "[ServerApp] DepositMailbox OK (character_key={}, gold_delta={}, item={})",
+			characterKey,
+			goldDelta,
+			itemOptional != nullptr);
+		return true;
+	}
+
+	void ServerApp::ApplyAuctionSettlement(const AuctionSettlement& s)
+	{
+		{
+			std::ostringstream hist;
+			hist << "listing=" << s.listingId << " final=" << s.finalPrice << " seller_ck=" << s.sellerCharacterKey
+				<< " buyer_ck=" << s.buyerCharacterKey << " no_bids=" << (s.expiredWithoutBids ? 1 : 0);
+			if (!m_auctionHouse.AppendHistoryLine(hist.str()))
+			{
+				LOG_WARN(Net, "[ServerApp] Auction history append failed (listing_id={})", s.listingId);
+			}
+		}
+
+		if (s.expiredWithoutBids)
+		{
+			ConnectedClient* seller = FindConnectedClientByCharacterKey(s.sellerCharacterKey);
+			if (seller != nullptr)
+			{
+				AddItemToInventory(*seller, s.item);
+				SaveConnectedClient(*seller, "auction_expired_return");
+				SendChatSystemNotice(*seller, "Auction expired. Item returned.");
+				(void)SendInventoryDelta(
+					*seller,
+					std::span<const ItemStack>(seller->inventory.data(), seller->inventory.size()));
+				LOG_INFO(Net, "[ServerApp] Auction expired: item returned online (seller_ck={})", s.sellerCharacterKey);
+			}
+			else
+			{
+				if (!DepositMailboxDelivery(s.sellerCharacterKey, 0, &s.item))
+				{
+					LOG_ERROR(Net, "[ServerApp] Auction expired: mailbox return FAILED (seller_ck={})", s.sellerCharacterKey);
+				}
+			}
+			return;
+		}
+
+		ConnectedClient* buyer = FindConnectedClientByCharacterKey(s.buyerCharacterKey);
+		if (buyer != nullptr)
+		{
+			AddItemToInventory(*buyer, s.item);
+			SaveConnectedClient(*buyer, "auction_won_item");
+			(void)SendInventoryDelta(
+				*buyer,
+				std::span<const ItemStack>(buyer->inventory.data(), buyer->inventory.size()));
+			SendChatSystemNotice(*buyer, "You won an auction: item received.");
+			LOG_INFO(Net, "[ServerApp] Auction won: buyer online (buyer_ck={})", s.buyerCharacterKey);
+		}
+		else if (!DepositMailboxDelivery(s.buyerCharacterKey, 0, &s.item))
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction won: item mailbox FAILED (buyer_ck={})", s.buyerCharacterKey);
+		}
+
+		if (s.sellerProceeds == 0u)
+		{
+			return;
+		}
+		ConnectedClient* seller = FindConnectedClientByCharacterKey(s.sellerCharacterKey);
+		if (seller != nullptr)
+		{
+			std::string werr;
+			if (m_playerWallet.AddCurrency(*seller, kCurrencyGold, s.sellerProceeds, werr))
+			{
+				(void)SendWalletUpdate(*seller);
+				SaveConnectedClient(*seller, "auction_seller_paid");
+				SendChatSystemNotice(*seller, "Your auction sold.");
+				LOG_INFO(Net, "[ServerApp] Auction seller paid online (ck={}, amount={})", s.sellerCharacterKey, s.sellerProceeds);
+			}
+			else
+			{
+				LOG_WARN(Net, "[ServerApp] Seller wallet full, mailing proceeds (ck={}, err={})", s.sellerCharacterKey, werr);
+				(void)DepositMailboxDelivery(s.sellerCharacterKey, s.sellerProceeds, nullptr);
+			}
+		}
+		else if (!DepositMailboxDelivery(s.sellerCharacterKey, s.sellerProceeds, nullptr))
+		{
+			LOG_ERROR(Net, "[ServerApp] Auction seller mailbox FAILED (ck={})", s.sellerCharacterKey);
+		}
+	}
+
+	bool ServerApp::RemoveStackFromInventory(ConnectedClient& client, uint32_t itemId, uint32_t quantity, std::string& outError)
+	{
+		if (quantity == 0u)
+		{
+			outError = "zero_quantity";
+			LOG_WARN(Net, "[ServerApp] RemoveStackFromInventory FAILED: zero quantity (client_id={})", client.clientId);
+			return false;
+		}
+
+		uint32_t remaining = quantity;
+		for (size_t i = 0; i < client.inventory.size() && remaining > 0;)
+		{
+			ItemStack& stack = client.inventory[i];
+			if (stack.itemId != itemId)
+			{
+				++i;
+				continue;
+			}
+
+			if (stack.quantity <= remaining)
+			{
+				remaining -= stack.quantity;
+				client.inventory.erase(client.inventory.begin() + static_cast<std::ptrdiff_t>(i));
+				continue;
+			}
+
+			stack.quantity -= remaining;
+			remaining = 0;
+			break;
+		}
+
+		if (remaining != 0u)
+		{
+			outError = "not_enough_items";
+			LOG_WARN(Net,
+				"[ServerApp] RemoveStackFromInventory FAILED: insufficient (client_id={}, item_id={}, short_by={})",
+				client.clientId,
+				itemId,
+				remaining);
+			return false;
+		}
+
+		LOG_INFO(Net,
+			"[ServerApp] RemoveStackFromInventory OK (client_id={}, item_id={}, quantity={})",
+			client.clientId,
+			itemId,
+			quantity);
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M35.3 — Direct player-to-player trade handlers
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::HandleTradeCommand(ConnectedClient& sender, std::string_view argsRemainder)
+	{
+		const std::string_view targetName = argsRemainder;
+		if (targetName.empty())
+		{
+			SendChatSystemNotice(sender, "Usage: /trade <player_name>");
+			return true;
+		}
+
+		ConnectedClient* target = FindConnectedClientByChatDisplayName(targetName);
+		if (target == nullptr)
+		{
+			SendChatSystemNotice(sender, "Player not found or not in range.");
+			LOG_WARN(Net, "[TradeSystem] /trade target not found (sender={}, target='{}')",
+			         sender.clientId, targetName);
+			return true;
+		}
+
+		if (target->clientId == sender.clientId)
+		{
+			SendChatSystemNotice(sender, "You cannot trade with yourself.");
+			return true;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.SendTradeRequest(sender, *target, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(sender, "Trade request failed: " + error);
+			return true;
+		}
+
+		/// Notify target via TradeRequestNotify packet.
+		const TradeRequestNotifyMessage notify{ "P" + std::to_string(sender.clientId) };
+		const auto packet = EncodeTradeRequestNotify(notify);
+		m_transport.Send(target->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+
+		SendChatSystemNotice(sender, "Trade request sent to " + std::string(targetName) + ".");
+		LOG_INFO(Net, "[TradeSystem] /trade request sent (sender={}, target={})",
+		         sender.clientId, target->clientId);
+		return true;
+	}
+
+	void ServerApp::HandleTradeAccept(const Endpoint& endpoint, const TradeAcceptMessage& message)
+	{
+		ConnectedClient* acceptor = FindClient(endpoint);
+		if (acceptor == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeAccept: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.AcceptTradeRequest(*acceptor, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*acceptor, "Trade accept failed: " + error);
+			LOG_WARN(Net, "[TradeSystem] TradeAccept failed (client={}, reason={})",
+			         acceptor->clientId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(acceptor->clientId);
+		BroadcastTradeWindowUpdate(acceptor->clientId, partnerClientId);
+		LOG_INFO(Net, "[TradeSystem] TradeAccept OK (client={}, partner={})",
+		         acceptor->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeDecline(const Endpoint& endpoint, const TradeDeclineMessage& message)
+	{
+		ConnectedClient* decliner = FindClient(endpoint);
+		if (decliner == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeDecline: unknown endpoint");
+			return;
+		}
+
+		/// Find initiator before declining so we can notify them.
+		const PendingTradeRequest* req = m_tradeSystem.FindPendingRequest(decliner->clientId);
+		uint32_t initiatorClientId = req ? req->initiatorClientId : 0;
+
+		std::string error;
+		m_tradeSystem.DeclineTradeRequest(*decliner, error);
+
+		SendChatSystemNotice(*decliner, "Trade request declined.");
+		if (initiatorClientId != 0)
+		{
+			ConnectedClient* initiator = FindConnectedClient(initiatorClientId);
+			if (initiator != nullptr)
+			{
+				SendChatSystemNotice(*initiator,
+					"P" + std::to_string(decliner->clientId) + " declined your trade request.");
+			}
+		}
+		LOG_INFO(Net, "[TradeSystem] TradeDecline OK (client={})", decliner->clientId);
+	}
+
+	void ServerApp::HandleTradeAddItem(const Endpoint& endpoint, const TradeAddItemMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeAddItem: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.AddItem(*caller, message.itemId, message.quantity, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*caller, "Cannot add item: " + error);
+			LOG_WARN(Net, "[TradeSystem] AddItem failed (client={}, item={}, reason={})",
+			         caller->clientId, message.itemId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeSetGold(const Endpoint& endpoint, const TradeSetGoldMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeSetGold: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.SetGold(*caller, message.goldAmount, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*caller, "Cannot set gold: " + error);
+			LOG_WARN(Net, "[TradeSystem] SetGold failed (client={}, reason={})",
+			         caller->clientId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeLock(const Endpoint& endpoint, const TradeLockMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeLock: unknown endpoint");
+			return;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.Lock(*caller, m_currentTick, error);
+		if (result != TradeOpResult::Ok)
+		{
+			SendChatSystemNotice(*caller, "Cannot lock trade: " + error);
+			LOG_WARN(Net, "[TradeSystem] Lock failed (client={}, reason={})",
+			         caller->clientId, error);
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+	}
+
+	void ServerApp::HandleTradeConfirm(const Endpoint& endpoint, const TradeConfirmMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeConfirm: unknown endpoint");
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		ConnectedClient* partner = FindConnectedClient(partnerClientId);
+		if (partner == nullptr)
+		{
+			/// Partner disconnected — cancel the trade.
+			std::string cancelError;
+			m_tradeSystem.Cancel(caller->clientId, cancelError);
+			SendChatSystemNotice(*caller, "Trade cancelled: partner disconnected.");
+			LOG_WARN(Net, "[TradeSystem] TradeConfirm: partner not found (caller={}, partner_id={})",
+			         caller->clientId, partnerClientId);
+			return;
+		}
+
+		/// Build audit strings before swap (items may change after ApplySwap).
+		const TradeSession* sessionSnap = m_tradeSystem.FindSession(caller->clientId);
+		std::string itemsA, itemsB;
+		uint32_t goldA = 0, goldB = 0;
+		if (sessionSnap != nullptr)
+		{
+			for (const auto& s : sessionSnap->sideA.items)
+				itemsA += std::to_string(s.itemId) + "x" + std::to_string(s.quantity) + " ";
+			for (const auto& s : sessionSnap->sideB.items)
+				itemsB += std::to_string(s.itemId) + "x" + std::to_string(s.quantity) + " ";
+			goldA = sessionSnap->sideA.goldAmount;
+			goldB = sessionSnap->sideB.goldAmount;
+		}
+
+		std::string error;
+		const TradeOpResult result = m_tradeSystem.Confirm(*caller, *partner, error);
+		if (result == TradeOpResult::Ok)
+		{
+			/// Check whether session was closed (both confirmed & swap applied).
+			if (m_tradeSystem.FindSession(caller->clientId) == nullptr)
+			{
+				LogTradeAudit(caller->clientId, partnerClientId, itemsA, itemsB, goldA, goldB);
+				/// Send WalletUpdate to both so gold counters refresh.
+				SendWalletUpdate(*caller);
+				SendWalletUpdate(*partner);
+				BroadcastTradeComplete(caller->clientId, partnerClientId);
+				LOG_INFO(Net, "[TradeSystem] TradeConfirm: swap completed (A={} B={})",
+				         caller->clientId, partnerClientId);
+			}
+			else
+			{
+				/// Waiting for partner — send updated window.
+				BroadcastTradeWindowUpdate(caller->clientId, partnerClientId);
+			}
+		}
+		else
+		{
+			/// Validation failed — cancel trade and return items (no swap occurred).
+			BroadcastTradeCancelled(caller->clientId, partnerClientId, error);
+			LOG_WARN(Net, "[TradeSystem] TradeConfirm: validation failed (caller={}, reason={})",
+			         caller->clientId, error);
+		}
+	}
+
+	void ServerApp::HandleTradeCancelPacket(const Endpoint& endpoint, const TradeCancelMessage& message)
+	{
+		ConnectedClient* caller = FindClient(endpoint);
+		if (caller == nullptr)
+		{
+			LOG_WARN(Net, "[TradeSystem] TradeCancel: unknown endpoint");
+			return;
+		}
+
+		const uint32_t partnerClientId = m_tradeSystem.GetPartnerClientId(caller->clientId);
+		std::string error;
+		m_tradeSystem.Cancel(caller->clientId, error);
+		BroadcastTradeCancelled(caller->clientId, partnerClientId, "Trade cancelled by player.");
+		LOG_INFO(Net, "[TradeSystem] TradeCancel by client={}", caller->clientId);
+	}
+
+	void ServerApp::BroadcastTradeWindowUpdate(uint32_t clientIdA, uint32_t clientIdB)
+	{
+		ConnectedClient* clientA = FindConnectedClient(clientIdA);
+		ConnectedClient* clientB = FindConnectedClient(clientIdB);
+
+		if (clientA != nullptr)
+		{
+			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdA, m_currentTick);
+			const auto packet = EncodeTradeWindowUpdate(msg);
+			m_transport.Send(clientA->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		}
+		if (clientB != nullptr)
+		{
+			const TradeWindowUpdateMessage msg = m_tradeSystem.BuildWindowUpdate(clientIdB, m_currentTick);
+			const auto packet = EncodeTradeWindowUpdate(msg);
+			m_transport.Send(clientB->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		}
+	}
+
+	void ServerApp::BroadcastTradeComplete(uint32_t clientIdA, uint32_t clientIdB)
+	{
+		auto sendComplete = [&](uint32_t clientId)
+		{
+			ConnectedClient* client = FindConnectedClient(clientId);
+			if (client == nullptr)
+			{
+				return;
+			}
+			const TradeCompleteMessage msg{ clientId };
+			const auto packet = EncodeTradeComplete(msg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendChatSystemNotice(*client, "Trade completed successfully.");
+		};
+		sendComplete(clientIdA);
+		sendComplete(clientIdB);
+		LOG_INFO(Net, "[TradeSystem] BroadcastTradeComplete: A={} B={}", clientIdA, clientIdB);
+	}
+
+	void ServerApp::BroadcastTradeCancelled(uint32_t clientIdA, uint32_t clientIdB, std::string_view reason)
+	{
+		const TradeCancelledMessage msg{ std::string(reason) };
+		const auto packet = EncodeTradeCancelled(msg);
+
+		auto sendCancelled = [&](uint32_t clientId)
+		{
+			ConnectedClient* client = FindConnectedClient(clientId);
+			if (client == nullptr)
+			{
+				return;
+			}
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			SendChatSystemNotice(*client, "Trade cancelled: " + std::string(reason));
+		};
+		sendCancelled(clientIdA);
+		if (clientIdB != 0 && clientIdB != clientIdA)
+		{
+			sendCancelled(clientIdB);
+		}
+		LOG_INFO(Net, "[TradeSystem] BroadcastTradeCancelled: A={} B={} reason={}",
+		         clientIdA, clientIdB, reason);
+	}
+
+	void ServerApp::LogTradeAudit(
+		uint32_t clientIdA,
+		uint32_t clientIdB,
+		const std::string& itemsA,
+		const std::string& itemsB,
+		uint32_t goldA,
+		uint32_t goldB)
+	{
+		LOG_INFO(Gameplay,
+		         "[TradeAudit] TRADE A={} B={} | A_gave_gold={} A_gave_items=[{}] | "
+		         "B_gave_gold={} B_gave_items=[{}]",
+		         clientIdA, clientIdB, goldA, itemsA, goldB, itemsB);
+	}
+
+	// -------------------------------------------------------------------------
+	// M36.1 — Gathering / harvesting resource nodes handlers
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::InitGathering()
+	{
+		if (!m_gatheringSystem.Init(m_config, m_tickHz, m_nextServerEntityId))
+		{
+			LOG_WARN(Core, "[ServerApp] GatheringSystem Init FAILED — harvesting disabled");
+			return false;
+		}
+		LOG_INFO(Core, "[ServerApp] GatheringSystem Init OK (nodes={})", m_gatheringSystem.NodeCount());
+		return true;
+	}
+
+	void ServerApp::HandleHarvestRequest(const Endpoint& endpoint, const HarvestRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: unknown endpoint");
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: clientId mismatch (expected={}, got={})",
+			         client->clientId, message.clientId);
+			return;
+		}
+		if (!m_gatheringSystem.IsInitialized())
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest ignored: system not initialized");
+			return;
+		}
+
+		uint32_t durationTicks = 0;
+		const HarvestOpResult result = m_gatheringSystem.TryStartHarvest(
+			*client, message.nodeEntityId, m_currentTick, durationTicks);
+
+		switch (result)
+		{
+		case HarvestOpResult::Ok:
+		{
+			const HarvestStartMessage startMsg{ message.nodeEntityId, durationTicks };
+			const auto packet = EncodeHarvestStart(startMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			LOG_INFO(Gameplay, "[GatheringSystem] HarvestRequest OK: client={} node={} ticks={}",
+			         client->clientId, message.nodeEntityId, durationTicks);
+			break;
+		}
+		case HarvestOpResult::NodeNotFound:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: node {} not found", message.nodeEntityId);
+			break;
+		case HarvestOpResult::NodeNotAvailable:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: node {} depleted", message.nodeEntityId);
+			break;
+		case HarvestOpResult::OutOfRange:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: client {} out of range of node {}",
+			         client->clientId, message.nodeEntityId);
+			break;
+		case HarvestOpResult::AlreadyHarvesting:
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestRequest: client {} already harvesting",
+			         client->clientId);
+			break;
+		}
+	}
+
+	void ServerApp::HandleHarvestCancelRequest(const Endpoint& endpoint, const HarvestCancelRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[GatheringSystem] HarvestCancelRequest: unknown endpoint");
+			return;
+		}
+		if (!m_gatheringSystem.IsInitialized())
+		{
+			return;
+		}
+
+		const EntityId nodeId = m_gatheringSystem.CancelHarvest(client->clientId);
+		if (nodeId != 0)
+		{
+			(void)SendHarvestCancelled(*client, nodeId, HarvestCancelReason::PlayerRequested);
+		}
+	}
+
+	void ServerApp::TickGathering()
+	{
+		if (!m_gatheringSystem.IsInitialized())
+		{
+			return;
+		}
+
+		std::vector<EntityId>                outCompletedNodeIds;
+		std::vector<uint32_t>                outCompletedClientIds;
+		std::vector<std::vector<ItemStack>>  outCompletedItems;
+		std::vector<EntityId>                outMoveCancelledNodeIds;
+		std::vector<uint32_t>                outMoveCancelledClientIds;
+
+		m_gatheringSystem.Tick(
+			m_currentTick,
+			m_clients,
+			outCompletedNodeIds,
+			outCompletedClientIds,
+			outCompletedItems,
+			outMoveCancelledNodeIds,
+			outMoveCancelledClientIds);
+
+		/// Handle completed harvests — grant loot + notify client.
+		for (size_t i = 0; i < outCompletedClientIds.size(); ++i)
+		{
+			ConnectedClient* client = FindConnectedClient(outCompletedClientIds[i]);
+			if (client == nullptr)
+			{
+				continue;
+			}
+
+			/// Add loot to inventory.
+			const std::vector<ItemStack>& loot = outCompletedItems[i];
+			for (const ItemStack& item : loot)
+			{
+				AddItemToInventory(*client, item);
+			}
+
+			/// Send HarvestComplete then InventoryDelta.
+			const HarvestCompleteMessage completeMsg{ outCompletedNodeIds[i] };
+			const auto completePkt = EncodeHarvestComplete(completeMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
+
+			if (!loot.empty())
+			{
+				(void)SendInventoryDelta(
+					*client,
+					std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+				SaveConnectedClient(*client, "harvest_complete");
+			}
+
+			LOG_INFO(Gameplay,
+			         "[GatheringSystem] Harvest delivered: client={} node={} items={}",
+			         client->clientId, outCompletedNodeIds[i], loot.size());
+		}
+
+		/// Handle movement cancellations.
+		for (size_t i = 0; i < outMoveCancelledClientIds.size(); ++i)
+		{
+			ConnectedClient* client = FindConnectedClient(outMoveCancelledClientIds[i]);
+			if (client == nullptr)
+			{
+				continue;
+			}
+			(void)SendHarvestCancelled(*client, outMoveCancelledNodeIds[i], HarvestCancelReason::PlayerMoved);
+		}
+	}
+
+	bool ServerApp::SendHarvestCancelled(
+		const ConnectedClient& receiver,
+		EntityId               nodeEntityId,
+		HarvestCancelReason    reason)
+	{
+		const HarvestCancelledMessage msg{ nodeEntityId, reason };
+		const auto packet = EncodeHarvestCancelled(msg);
+		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		LOG_DEBUG(Gameplay, "[GatheringSystem] HarvestCancelled sent: client={} node={} reason={}",
+		          receiver.clientId, nodeEntityId, static_cast<uint8_t>(reason));
+		return true;
+	}
+
+	// -------------------------------------------------------------------------
+	// M36.2 — Crafting / profession skill system handlers
+	// -------------------------------------------------------------------------
+
+	bool ServerApp::InitCrafting()
+	{
+		if (!m_craftingSystem.Init(m_config, m_tickHz))
+		{
+			LOG_WARN(Core, "[ServerApp] CraftingSystem Init FAILED — crafting disabled");
+			return false;
+		}
+		LOG_INFO(Core, "[ServerApp] CraftingSystem Init OK (recipes={})", m_craftingSystem.RecipeCount());
+		return true;
+	}
+
+	void ServerApp::HandleLearnProfessionRequest(const Endpoint& endpoint, const LearnProfessionRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession: unknown endpoint");
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession: clientId mismatch");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession: system not initialized");
+			return;
+		}
+
+		const bool asPrimary = (message.asPrimary != 0);
+		const LearnProfessionResult result = m_craftingSystem.LearnProfession(*client, message.professionKey, asPrimary);
+
+		switch (result)
+		{
+		case LearnProfessionResult::Ok:
+			(void)SendProfessionUpdate(*client);
+			SaveConnectedClient(*client, "learn_profession");
+			LOG_INFO(Gameplay, "[CraftingSystem] LearnProfession OK: client={} profession='{}'",
+			         client->clientId, message.professionKey);
+			break;
+		case LearnProfessionResult::AlreadyKnown:
+			SendChatSystemNotice(*client, "You already know that profession.");
+			break;
+		case LearnProfessionResult::TooManyPrimary:
+			SendChatSystemNotice(*client, "You already have the maximum number of primary professions.");
+			LOG_WARN(Gameplay, "[CraftingSystem] LearnProfession blocked: too many primary (client={})",
+			         client->clientId);
+			break;
+		}
+	}
+
+	void ServerApp::HandleCraftRecipeListRequest(const Endpoint& endpoint, const CraftRecipeListRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] RecipeListRequest: unknown endpoint");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		/// Find the player's skill level for the requested profession.
+		uint32_t playerSkill = 0;
+		for (const ProfessionEntry& e : client->professions)
+		{
+			if (e.professionKey == message.professionKey) { playerSkill = e.skillLevel; break; }
+		}
+
+		const std::vector<const RecipeDefinition*> recipes =
+			m_craftingSystem.GetVisibleRecipes(message.professionKey, playerSkill);
+
+		CraftRecipeListResultMessage result{};
+		result.clientId      = client->clientId;
+		result.professionKey = message.professionKey;
+		for (const RecipeDefinition* r : recipes)
+		{
+			CraftRecipeWireRow row{};
+			row.recipeId       = r->recipeId;
+			row.skillRequired  = r->skillRequired;
+			row.outputItemId   = r->outputItemId;
+			row.outputQuantity = r->outputQuantity;
+			result.recipes.push_back(std::move(row));
+		}
+
+		const auto packet = EncodeCraftRecipeListResult(result);
+		m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		LOG_DEBUG(Gameplay, "[CraftingSystem] RecipeListResult sent: client={} profession='{}' recipes={}",
+		          client->clientId, message.professionKey, result.recipes.size());
+	}
+
+	void ServerApp::HandleCraftRequest(const Endpoint& endpoint, const CraftRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] CraftRequest: unknown endpoint");
+			return;
+		}
+		if (client->clientId != message.clientId)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] CraftRequest: clientId mismatch");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		uint32_t durationTicks = 0;
+		const CraftOpResult result = m_craftingSystem.TryStartCraft(
+			*client, message.recipeId, m_currentTick, durationTicks);
+
+		switch (result)
+		{
+		case CraftOpResult::Ok:
+		{
+			const CraftStartMessage startMsg{ message.recipeId, durationTicks };
+			const auto packet = EncodeCraftStart(startMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			LOG_INFO(Gameplay, "[CraftingSystem] CraftStart: client={} recipe='{}' ticks={}",
+			         client->clientId, message.recipeId, durationTicks);
+			break;
+		}
+		case CraftOpResult::RecipeNotFound:
+			SendChatSystemNotice(*client, "Unknown recipe.");
+			break;
+		case CraftOpResult::NoProfession:
+			SendChatSystemNotice(*client, "You don't have the required profession.");
+			break;
+		case CraftOpResult::SkillTooLow:
+			SendChatSystemNotice(*client, "Your skill level is too low for this recipe.");
+			break;
+		case CraftOpResult::MissingIngredients:
+			SendChatSystemNotice(*client, "You are missing required ingredients.");
+			break;
+		case CraftOpResult::AlreadyCrafting:
+			SendChatSystemNotice(*client, "You are already crafting something.");
+			break;
+		}
+	}
+
+	void ServerApp::HandleCraftCancelRequest(const Endpoint& endpoint, const CraftCancelRequestMessage& message)
+	{
+		ConnectedClient* client = FindClient(endpoint);
+		if (client == nullptr)
+		{
+			LOG_WARN(Gameplay, "[CraftingSystem] CraftCancelRequest: unknown endpoint");
+			return;
+		}
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		const std::string cancelled = m_craftingSystem.CancelCraft(client->clientId);
+		if (!cancelled.empty())
+		{
+			const CraftCancelledMessage msg{ cancelled };
+			const auto packet = EncodeCraftCancelled(msg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+			LOG_INFO(Gameplay, "[CraftingSystem] CraftCancelled: client={} recipe='{}'",
+			         client->clientId, cancelled);
+		}
+	}
+
+	void ServerApp::TickCrafting()
+	{
+		if (!m_craftingSystem.IsInitialized())
+		{
+			return;
+		}
+
+		std::vector<uint32_t>          completedClientIds;
+		std::vector<std::string>       completedRecipeIds;
+		std::vector<uint8_t>           skillGained;
+		std::vector<uint32_t>          newSkillLevel;
+		std::vector<CraftQualityTier>  qualityTiers;
+
+		m_craftingSystem.Tick(
+			m_currentTick,
+			m_clients,
+			completedClientIds,
+			completedRecipeIds,
+			skillGained,
+			newSkillLevel,
+			qualityTiers);
+
+		for (size_t i = 0; i < completedClientIds.size(); ++i)
+		{
+			ConnectedClient* client = FindConnectedClient(completedClientIds[i]);
+			if (client == nullptr) continue;
+
+			/// Send CraftComplete (includes quality tier from M36.3).
+			CraftCompleteMessage completeMsg{};
+			completeMsg.recipeId      = completedRecipeIds[i];
+			completeMsg.skillGained   = skillGained[i];
+			completeMsg.newSkillLevel = newSkillLevel[i];
+			completeMsg.qualityTier   = static_cast<uint8_t>(qualityTiers[i]);
+			const auto completePkt = EncodeCraftComplete(completeMsg);
+			m_transport.Send(client->endpoint, std::span<const std::byte>(completePkt.data(), completePkt.size()));
+
+			/// Send InventoryDelta so the client refreshes its bag.
+			(void)SendInventoryDelta(
+				*client,
+				std::span<const ItemStack>(client->inventory.data(), client->inventory.size()));
+
+			/// If a skill-up occurred, send ProfessionUpdate.
+			if (skillGained[i] != 0)
+			{
+				(void)SendProfessionUpdate(*client);
+			}
+
+			SaveConnectedClient(*client, "craft_complete");
+
+			LOG_INFO(Gameplay,
+			         "[CraftingSystem] Craft delivered: client={} recipe='{}' quality={} skillGained={} newLevel={}",
+			         client->clientId, completedRecipeIds[i],
+			         static_cast<uint8_t>(qualityTiers[i]), skillGained[i], newSkillLevel[i]);
+		}
+	}
+
+	bool ServerApp::SendProfessionUpdate(const ConnectedClient& receiver)
+	{
+		ProfessionUpdateMessage msg{};
+		msg.clientId = receiver.clientId;
+		for (const ProfessionEntry& e : receiver.professions)
+		{
+			ProfessionWireEntry wire{};
+			wire.professionKey = e.professionKey;
+			wire.skillLevel    = e.skillLevel;
+			wire.isPrimary     = e.isPrimary ? 1u : 0u;
+			msg.professions.push_back(std::move(wire));
+		}
+		const auto packet = EncodeProfessionUpdate(msg);
+		m_transport.Send(receiver.endpoint, std::span<const std::byte>(packet.data(), packet.size()));
+		LOG_DEBUG(Gameplay, "[CraftingSystem] ProfessionUpdate sent: client={} professions={}",
+		          receiver.clientId, msg.professions.size());
+		return true;
+	}
+
+	void ServerApp::ApplyPersistedProfessions(ConnectedClient& client, const PersistedCharacterState& state)
+	{
+		client.professions = state.professions;
+		LOG_DEBUG(Gameplay, "[CraftingSystem] Professions restored: client={} count={}",
+		          client.clientId, client.professions.size());
+	}
+}

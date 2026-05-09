@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Assemble sous deploy/docker/ un bundle prêt pour docker compose :
-#   binaires + db + game/data + lib MySQL + sources web-portal (image web-portal au docker compose up).
+#   binaires + sql + game/data + lib MySQL + sources web-portal (image web-portal au docker compose up).
 # Usage : depuis la racine du dépôt, après build Release Linux :
 #   BUILD_DIR=build/linux-x64-release ./scripts/pack-linux-docker-bundle.sh
 #

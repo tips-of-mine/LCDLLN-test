@@ -2,7 +2,7 @@
 // DELETE /api/admin/faq/[id] — delete faq item
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 
 function isAdmin(): boolean {
   const jar = cookies()

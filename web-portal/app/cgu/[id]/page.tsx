@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { query } from "@/lib/db";
+import { query } from "@/lib/db/connection";
 import type { RowDataPacket } from "mysql2/promise";
 
 type EditionRow = RowDataPacket & {

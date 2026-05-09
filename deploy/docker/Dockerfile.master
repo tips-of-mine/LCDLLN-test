@@ -26,8 +26,8 @@ RUN chmod +x /app/lcdlln_server
 # Config par défaut dans l’image ; en runtime, docker-compose monte ./config/master.config.json sur /app/config.json
 COPY config/master.config.json /app/config.json
 
-# MigrationRunner (M21.3) : chemins relatifs à WORKDIR /app → db/migrations
-COPY db/migrations /app/db/migrations
+# MigrationRunner (M21.3) : chemins relatifs à WORKDIR /app → sql/migrations
+COPY sql/migrations /app/sql/migrations
 
 EXPOSE 3840 3842
 

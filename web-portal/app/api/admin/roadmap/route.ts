@@ -2,7 +2,7 @@
 // POST /api/admin/roadmap — creates a new roadmap item
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 
 function isAdmin(): boolean {

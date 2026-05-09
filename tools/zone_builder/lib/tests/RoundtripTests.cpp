@@ -29,7 +29,7 @@
 #include <zone_builder/JsonDocument.h>
 #include <zone_builder/LayoutImporter.h>
 
-#include "engine/world/OutputVersion.h"
+#include "src/client/world/OutputVersion.h"
 
 #include <cstdint>
 #include <cstdio>

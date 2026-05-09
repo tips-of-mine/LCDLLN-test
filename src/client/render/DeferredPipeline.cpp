@@ -1,0 +1,372 @@
+#include "src/client/render/DeferredPipeline.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+
+#include <vulkan/vulkan_core.h>
+#include <cstdio>
+
+namespace engine::render
+{
+	bool DeferredPipeline::Init(VkDevice device, VkPhysicalDevice physicalDevice,
+		void* vmaAllocator,
+		const engine::core::Config& config,
+		uint32_t shadowMapResolution,
+		VkFormat sceneColorLDRFormat,
+		VkQueue graphicsQueue,
+		uint32_t graphicsQueueFamilyIndex,
+		ShaderLoaderFn loadSpirv)
+	{
+
+		if (device == VK_NULL_HANDLE || physicalDevice == VK_NULL_HANDLE || !loadSpirv)
+			return false;
+
+		// M18.5: Pipeline cache + warmup phase (PSO creation only during this phase).
+		const std::string contentPath = config.GetString("paths.content", "game/data");
+		const std::string cachePath = contentPath + "/cache/pipeline_cache.bin";
+		if (!m_pipelineCache.Init(device, cachePath))
+			LOG_WARN(Render, "[Boot] Pipeline cache init failed — pipelines will still be created without cache");
+		VkPipelineCache pipelineCacheHandle = m_pipelineCache.IsValid() ? m_pipelineCache.GetHandle() : VK_NULL_HANDLE;
+		PipelineCache::BeginWarmup();
+
+		// M05.1: BRDF LUT
+		{
+			std::vector<uint32_t> brdfComp = loadSpirv("shaders/brdf_lut.comp.spv");
+			if (!brdfComp.empty())
+			{
+				const uint32_t lutSize = 256u;
+				if (m_brdfLutPass.Init(device, physicalDevice, vmaAllocator, lutSize,
+						brdfComp.data(), brdfComp.size(), graphicsQueueFamilyIndex, pipelineCacheHandle))
+				{
+					m_brdfLutPass.Generate(device, graphicsQueue);
+					LOG_INFO(Render, "[Boot] DeferredPipeline BRDF LUT OK");
+				}
+				else
+					LOG_WARN(Render, "M05.1: BRDF LUT init failed — LUT disabled");
+			}
+			else
+				LOG_WARN(Render, "M05.1: BRDF LUT shader not found — LUT disabled");
+		}
+
+		// M05.3: Specular prefilter
+		{
+			std::vector<uint32_t> specComp = loadSpirv("shaders/specular_prefilter.comp.spv");
+			if (!specComp.empty())
+			{
+				const uint32_t cubeSize = 256u;
+				const uint32_t mipCount = 5u;
+				if (m_specularPrefilterPass.Init(device, physicalDevice, vmaAllocator,
+						cubeSize, mipCount,
+						specComp.data(), specComp.size(),
+						graphicsQueueFamilyIndex, pipelineCacheHandle))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline SpecularPrefilter OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "M05.3: SpecularPrefilter init failed — disabled");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "M05.3: SpecularPrefilter shader not found — disabled");
+			}
+		}
+
+		// M06.1: SSAO kernel + noise
+		{
+			if (!m_ssaoKernelNoise.Init(device, physicalDevice, vmaAllocator,
+					config, graphicsQueue, graphicsQueueFamilyIndex))
+			{
+				LOG_WARN(Render, "M06.1: SSAO kernel+noise init failed — SSAO disabled");
+			}
+			else
+			{
+				LOG_INFO(Render, "[SSAO] Kernel and noise texture initialized ({} samples)",
+					static_cast<size_t>(SsaoKernelNoise::kKernelSize));
+				LOG_INFO(Render, "M06.1: SSAO kernel+noise ready");
+			}
+		}
+
+		// M06.2: SSAO generate
+		{
+			std::vector<uint32_t> ssaoVert = loadSpirv("shaders/ssao.vert.spv");
+			std::vector<uint32_t> ssaoFrag = loadSpirv("shaders/ssao.frag.spv");
+			if (!ssaoVert.empty() && !ssaoFrag.empty() && m_ssaoKernelNoise.IsValid())
+			{
+				if (!m_ssaoPass.Init(device, physicalDevice, VK_FORMAT_R16_SFLOAT,
+						ssaoVert.data(), ssaoVert.size(), ssaoFrag.data(), ssaoFrag.size(), 2, pipelineCacheHandle))
+					LOG_WARN(Render, "M06.2: SSAO pass init failed");
+				else
+					LOG_INFO(Render, "M06.2: SSAO generate pass ready");
+			}
+			else if (!m_ssaoKernelNoise.IsValid())
+				LOG_WARN(Render, "M06.2: SSAO pass skipped (kernel/noise not ready)");
+		}
+
+		// M06.3: SSAO blur
+		{
+			std::vector<uint32_t> blurVert = loadSpirv("shaders/ssao_blur.vert.spv");
+			std::vector<uint32_t> blurFrag = loadSpirv("shaders/ssao_blur.frag.spv");
+			if (!blurVert.empty() && !blurFrag.empty())
+			{
+				if (m_ssaoBlurPass.Init(device, physicalDevice, VK_FORMAT_R16_SFLOAT,
+						blurVert.data(), blurVert.size(), blurFrag.data(), blurFrag.size(), 2, pipelineCacheHandle))
+					LOG_INFO(Render, "M06.3: SSAO bilateral blur pass ready");
+				else
+					LOG_WARN(Render, "M06.3: SSAO blur pass init failed");
+			}
+			else
+				LOG_WARN(Render, "M06.3: SSAO blur shaders not found — blur disabled");
+		}
+
+		// Geometry pass
+		{
+			std::vector<uint32_t> vertSpirv = loadSpirv("shaders/gbuffer_geometry.vert.spv");
+			std::vector<uint32_t> fragSpirv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
+			std::vector<uint32_t> cullCompSpirv = loadSpirv("shaders/gpu_cull.comp.spv");
+			std::vector<uint32_t> hiZCompSpirv = loadSpirv("shaders/hiz_build.comp.spv");
+			const bool bindlessMaterialsReady = m_materialDescriptorCache.Init(device, physicalDevice);
+			if (!bindlessMaterialsReady)
+				LOG_WARN(Render, "[Boot] DeferredPipeline bindless material cache init failed");
+			else
+				LOG_INFO(Render, "[Boot] DeferredPipeline bindless material cache OK");
+			if (!vertSpirv.empty() && !fragSpirv.empty())
+			{
+				if (m_geometryPass.Init(device, physicalDevice,
+						VK_FORMAT_R8G8B8A8_SRGB,
+						VK_FORMAT_A2B10G10R10_UNORM_PACK32,
+						VK_FORMAT_R8G8B8A8_UNORM,
+						VK_FORMAT_R16G16_SFLOAT,
+						VK_FORMAT_D32_SFLOAT,
+						vertSpirv.data(), vertSpirv.size(),
+						fragSpirv.data(), fragSpirv.size(),
+						bindlessMaterialsReady ? m_materialDescriptorCache.GetLayout() : VK_NULL_HANDLE,
+						pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline GeometryPass OK");
+				else
+					LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass init failed");
+			}
+			else
+				LOG_WARN(Render, "[Boot] DeferredPipeline GeometryPass shaders not found");
+
+			if (!cullCompSpirv.empty())
+			{
+				if (m_gpuDrivenCullingPass.Init(device, physicalDevice,
+						cullCompSpirv.data(), cullCompSpirv.size(),
+						GpuDrivenCullingPass::kDefaultFramesInFlight,
+						GpuDrivenCullingPass::kDefaultMaxDrawItems,
+						pipelineCacheHandle))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline GPU-driven culling OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] DeferredPipeline GPU-driven culling init failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] DeferredPipeline GPU-driven culling shader not found");
+			}
+
+			if (!hiZCompSpirv.empty())
+			{
+				if (m_hiZPyramidPass.Init(device, physicalDevice, hiZCompSpirv.data(), hiZCompSpirv.size(),
+						HiZPyramidPass::kDefaultFramesInFlight, pipelineCacheHandle))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline Hi-Z pyramid OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "[Boot] DeferredPipeline Hi-Z pyramid init failed");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "[Boot] DeferredPipeline Hi-Z pyramid shader not found");
+			}
+		}
+
+		// Shadow map pass
+		{
+			std::vector<uint32_t> smVert = loadSpirv("shaders/shadow_depth.vert.spv");
+			std::vector<uint32_t> smFrag = loadSpirv("shaders/shadow_depth.frag.spv");
+			if (!smVert.empty() && !smFrag.empty())
+			{
+				if (m_shadowMapPass.Init(device, physicalDevice, VK_FORMAT_D32_SFLOAT, shadowMapResolution,
+						smVert.data(), smVert.size(), smFrag.data(), smFrag.size(), pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline ShadowMapPass OK");
+				else
+					LOG_WARN(Render, "M04.2: shadow map pass init failed — disabled");
+			}
+			else
+				LOG_WARN(Render, "M04.2: shadow map shaders not found — shadow pass disabled");
+		}
+
+		// Deferred decal pass
+		{
+			std::vector<uint32_t> decalVert = loadSpirv("shaders/decal.vert.spv");
+			std::vector<uint32_t> decalFrag = loadSpirv("shaders/decal.frag.spv");
+			if (!decalVert.empty() && !decalFrag.empty())
+			{
+				if (m_decalPass.Init(device, physicalDevice, VK_FORMAT_R8G8B8A8_SRGB,
+						decalVert.data(), decalVert.size(), decalFrag.data(), decalFrag.size(), 2u, pipelineCacheHandle))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline DecalPass OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "M17.3: decal pass init failed — decals disabled");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "M17.3: decal shaders not found — decals disabled");
+			}
+		}
+
+		// Lighting pass
+		{
+			std::vector<uint32_t> litVert = loadSpirv("shaders/lighting.vert.spv");
+			std::vector<uint32_t> litFrag = loadSpirv("shaders/lighting.frag.spv");
+			if (!litVert.empty() && !litFrag.empty())
+			{
+				if (m_lightingPass.Init(device, physicalDevice, VK_FORMAT_R16G16B16A16_SFLOAT,
+						litVert.data(), litVert.size(), litFrag.data(), litFrag.size(), 2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline LightingPass OK");
+				else
+					LOG_WARN(Render, "M03.2: lighting pass init failed — disabled");
+			}
+			else
+				LOG_WARN(Render, "M03.2: lighting shaders not found — lighting pass disabled");
+		}
+
+		// Tonemap pass
+		{
+			std::vector<uint32_t> tmVert = loadSpirv("shaders/tonemap.vert.spv");
+			std::vector<uint32_t> tmFrag = loadSpirv("shaders/tonemap.frag.spv");
+			if (!tmVert.empty() && !tmFrag.empty())
+			{
+				if (m_tonemapPass.Init(device, physicalDevice, sceneColorLDRFormat,
+						tmVert.data(), tmVert.size(), tmFrag.data(), tmFrag.size(), 2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline TonemapPass OK");
+				else
+					LOG_WARN(Render, "M03.4: tonemap pass init failed — disabled");
+			}
+			else
+				LOG_WARN(Render, "M03.4: tonemap shaders not found — tonemap pass disabled");
+		}
+
+		// Bloom prefilter + downsample
+		{
+			std::vector<uint32_t> bpVert = loadSpirv("shaders/bloom_prefilter.vert.spv");
+			std::vector<uint32_t> bpFrag = loadSpirv("shaders/bloom_prefilter.frag.spv");
+			std::vector<uint32_t> bdVert = loadSpirv("shaders/bloom_downsample.vert.spv");
+			std::vector<uint32_t> bdFrag = loadSpirv("shaders/bloom_downsample.frag.spv");
+			const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
+			if (!bpVert.empty() && !bpFrag.empty())
+				m_bloomPrefilterPass.Init(device, physicalDevice, bloomFmt,
+					bpVert.data(), bpVert.size(), bpFrag.data(), bpFrag.size(), 2u, pipelineCacheHandle);
+			if (!bdVert.empty() && !bdFrag.empty())
+				m_bloomDownsamplePass.Init(device, physicalDevice, bloomFmt,
+					bdVert.data(), bdVert.size(), bdFrag.data(), bdFrag.size(), 2u, pipelineCacheHandle);
+		}
+
+		// Bloom upsample + combine
+		{
+			std::vector<uint32_t> buVert = loadSpirv("shaders/bloom_upsample.vert.spv");
+			std::vector<uint32_t> buFrag = loadSpirv("shaders/bloom_upsample.frag.spv");
+			std::vector<uint32_t> bcVert = loadSpirv("shaders/bloom_combine.vert.spv");
+			std::vector<uint32_t> bcFrag = loadSpirv("shaders/bloom_combine.frag.spv");
+			const VkFormat bloomFmt = VK_FORMAT_R16G16B16A16_SFLOAT;
+			if (!buVert.empty() && !buFrag.empty())
+				m_bloomUpsamplePass.Init(device, physicalDevice, bloomFmt,
+					buVert.data(), buVert.size(), buFrag.data(), buFrag.size(), 2u, pipelineCacheHandle);
+			if (!bcVert.empty() && !bcFrag.empty())
+				m_bloomCombinePass.Init(device, physicalDevice, bloomFmt,
+					bcVert.data(), bcVert.size(), bcFrag.data(), bcFrag.size(), 2u, pipelineCacheHandle);
+		}
+
+		// M08.6: Auto-exposure histogram
+		{
+			std::vector<uint32_t> histogramComp = loadSpirv("shaders/luminance_histogram.comp.spv");
+			std::vector<uint32_t> histogramAvgComp = loadSpirv("shaders/luminance_histogram_avg.comp.spv");
+			if (!histogramComp.empty() && !histogramAvgComp.empty())
+			{
+				const float percentileLow = static_cast<float>(config.GetDouble("exposure.histogram_percentile_low", 0.10));
+				const float percentileHigh = static_cast<float>(config.GetDouble("exposure.histogram_percentile_high", 0.90));
+				if (m_autoExposure.Init(device, physicalDevice, vmaAllocator,
+						histogramComp.data(), histogramComp.size(),
+						histogramAvgComp.data(), histogramAvgComp.size(),
+						percentileLow, percentileHigh, pipelineCacheHandle))
+				{
+					LOG_INFO(Render, "[Boot] DeferredPipeline AutoExposure OK");
+				}
+				else
+				{
+					LOG_WARN(Render, "M08.6: AutoExposure histogram init failed — disabled");
+				}
+			}
+			else
+			{
+				LOG_WARN(Render, "M08.6: AutoExposure histogram shaders not found — disabled");
+			}
+		}
+
+		// M07.4: TAA
+		{
+			std::vector<uint32_t> taaVert = loadSpirv("shaders/taa.vert.spv");
+			std::vector<uint32_t> taaFrag = loadSpirv("shaders/taa.frag.spv");
+			if (!taaVert.empty() && !taaFrag.empty())
+			{
+				if (m_taaPass.Init(device, physicalDevice, sceneColorLDRFormat,
+						taaVert.data(), taaVert.size(), taaFrag.data(), taaFrag.size(), 2u, pipelineCacheHandle))
+					LOG_INFO(Render, "[Boot] DeferredPipeline TAA OK");
+				else
+					LOG_WARN(Render, "M07.4: TAA pass init failed");
+			}
+			else
+				LOG_WARN(Render, "M07.4: TAA shaders not found — TAA disabled");
+		}
+
+		PipelineCache::EndWarmup();
+
+		LOG_INFO(Render, "[Boot] DeferredPipeline all passes init done");
+		return true;
+	}
+
+	void DeferredPipeline::Destroy(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+		// Reverse init order: TAA → auto-exposure → bloom → tonemap → lighting → decals → shadow → geometry → SSAO → specular/BRDF.
+		m_taaPass.Destroy(device);
+		m_autoExposure.Destroy(device);
+		m_bloomCombinePass.Destroy(device);
+		m_bloomUpsamplePass.Destroy(device);
+		m_bloomDownsamplePass.Destroy(device);
+		m_bloomPrefilterPass.Destroy(device);
+		m_tonemapPass.Destroy(device);
+		m_lightingPass.Destroy(device);
+		m_decalPass.Destroy(device);
+		m_shadowMapPass.Destroy(device);
+		m_hiZPyramidPass.Destroy(device);
+		m_gpuDrivenCullingPass.Destroy(device);
+		m_materialDescriptorCache.Destroy(device);
+		m_geometryPass.Destroy(device);
+		m_ssaoBlurPass.Destroy(device);
+		m_ssaoPass.Destroy(device);
+		m_ssaoKernelNoise.Destroy(device);
+		m_specularPrefilterPass.Destroy(device);
+		m_brdfLutPass.Destroy(device);
+		m_pipelineCache.Destroy(device);
+		LOG_INFO(Render, "[DeferredPipeline] Destroyed");
+	}
+
+	void DeferredPipeline::InvalidateFramebufferCaches(VkDevice device)
+	{
+		if (device == VK_NULL_HANDLE) return;
+		m_geometryPass.InvalidateFramebufferCache(device);
+		m_shadowMapPass.InvalidateFramebufferCache(device);
+		m_decalPass.InvalidateFramebufferCache(device);
+	}
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resetPasswordWithToken } from "@/lib/passwordRecovery";
+import { resetPasswordWithToken } from "@/lib/auth/passwordRecovery";
 
 export async function POST(request: Request) {
   try {

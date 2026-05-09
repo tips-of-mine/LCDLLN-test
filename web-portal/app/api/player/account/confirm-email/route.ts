@@ -1,6 +1,6 @@
 // GET /api/player/account/confirm-email?token=xxx
 import { NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 
 export async function GET(request: Request) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifyPortalCredentials } from "@/lib/portalLogin";
-import { query } from "@/lib/db";
+import { verifyPortalCredentials } from "@/lib/auth/portalLogin";
+import { query } from "@/lib/db/connection";
 import type { RowDataPacket } from "mysql2/promise";
 
 const COOKIE_NAME = "lcdlln_portal_account";

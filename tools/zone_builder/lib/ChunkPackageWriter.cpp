@@ -1,14 +1,14 @@
 #include <zone_builder/ChunkPackageWriter.h>
 
-#include "engine/core/Log.h"
-#include "engine/world/ChunkPackageLayout.h"
-#include "engine/world/OutputVersion.h"
-#include "engine/world/ProbeData.h"
-#include "engine/world/WorldModel.h"
-#include "engine/world/terrain/SplatMap.h"
-#include "engine/world/terrain/TerrainChunk.h"
-#include "engine/world/terrain/TerrainLodChain.h"
-#include "engine/world/water/WaterSurfaces.h"
+#include "src/shared/core/Log.h"
+#include "src/client/world/ChunkPackageLayout.h"
+#include "src/client/world/OutputVersion.h"
+#include "src/client/world/ProbeData.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/SplatMap.h"
+#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainLodChain.h"
+#include "src/client/world/water/WaterSurfaces.h"
 
 #include <array>
 #include <cmath>

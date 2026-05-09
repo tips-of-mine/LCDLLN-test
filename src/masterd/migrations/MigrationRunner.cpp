@@ -96,7 +96,7 @@ namespace engine::server
 		std::string user = config.GetString("db.user", "");
 		std::string password = config.GetString("db.password", "");
 		std::string database = config.GetString("db.database", "lcdlln_master");
-		std::string migrationsPath = config.GetString("db.migrations_path", "db/migrations");
+		std::string migrationsPath = config.GetString("db.migrations_path", "sql/migrations");
 
 		MYSQL* mysql = mysql_init(nullptr);
 		if (!mysql)

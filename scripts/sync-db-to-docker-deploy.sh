@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Copie db/schema.sql et db/migrations/ → deploy/docker/db/ (Dockerfile.master COPY + MySQL init).
+# Copie sql/schema.sql et sql/migrations/ → deploy/docker/sql/ (Dockerfile.master COPY + MySQL init).
 # Appelé par pack-linux-docker-bundle.sh et par la CI avant/assemblage du zip.
 # Usage : depuis la racine du dépôt :
 #   ./scripts/sync-db-to-docker-deploy.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DOCKER_DIR="$ROOT/deploy/docker"
-SRC_DB="$ROOT/db"
+SRC_DB="$ROOT/sql"
 
 if [[ ! -f "$SRC_DB/schema.sql" ]]; then
   echo "ERROR: $SRC_DB/schema.sql introuvable." >&2
@@ -17,9 +17,9 @@ if [[ ! -d "$SRC_DB/migrations" ]]; then
   exit 1
 fi
 
-mkdir -p "$DOCKER_DIR/db/migrations"
-cp -f "$SRC_DB/schema.sql" "$DOCKER_DIR/db/schema.sql"
-rm -rf "$DOCKER_DIR/db/migrations"
-mkdir -p "$DOCKER_DIR/db/migrations"
-cp -r "$SRC_DB/migrations/." "$DOCKER_DIR/db/migrations/"
-echo "OK — db/ synchronisé vers $DOCKER_DIR/db/"
+mkdir -p "$DOCKER_DIR/sql/migrations"
+cp -f "$SRC_DB/schema.sql" "$DOCKER_DIR/sql/schema.sql"
+rm -rf "$DOCKER_DIR/sql/migrations"
+mkdir -p "$DOCKER_DIR/sql/migrations"
+cp -r "$SRC_DB/migrations/." "$DOCKER_DIR/sql/migrations/"
+echo "OK — sql/ synchronisé vers $DOCKER_DIR/sql/"

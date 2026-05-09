@@ -131,6 +131,7 @@ elseif(UNIX)
     chat/ChatChannelRegistry.cpp
     mail/MailManager.cpp
     mail/MysqlMailStore.cpp
+    social/MysqlIgnoreStore.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ChatPayloads.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp

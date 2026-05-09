@@ -349,6 +349,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(cinematic_sequence_tests
     cinematics/CinematicSequenceTests.cpp)
 
+  # CMANGOS.40 (Phase 4.40a) : Formulas (header-only).
+  lcdlln_add_simple_test(formulas_tests
+    formulas/FormulasTests.cpp)
+
   # CMANGOS.19 (Phase 3.19a) : InstanceManager (header-only).
   lcdlln_add_simple_test(instance_manager_tests
     maps/InstanceManagerTests.cpp)

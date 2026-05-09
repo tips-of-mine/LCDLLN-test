@@ -349,6 +349,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(cinematic_sequence_tests
     cinematics/CinematicSequenceTests.cpp)
 
+  # CMANGOS.21 (Phase 3.21a) : GuildPermissionMatrix (header-only).
+  lcdlln_add_simple_test(guild_permission_matrix_tests
+    guild/GuildPermissionMatrixTests.cpp)
+
   # CMANGOS.19 (Phase 3.19a) : InstanceManager (header-only).
   lcdlln_add_simple_test(instance_manager_tests
     maps/InstanceManagerTests.cpp)

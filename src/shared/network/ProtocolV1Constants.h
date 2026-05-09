@@ -193,4 +193,23 @@ namespace engine::network
 
 	constexpr uint16_t kOpcodeCharacterEnterWorldRequest  = 47u; ///< Client→Master : déclare le personnage actif après EnterWorld.
 	constexpr uint16_t kOpcodeCharacterEnterWorldResponse = 48u; ///< Master→Client : ACK ou erreur (NOT_OWNED, NAME_MISMATCH, …).
+
+	// -------------------------------------------------------------------------
+	// Opcodes Mail (valeurs 49–58)
+	// Référence : Phase 3 CMANGOS.18 step 3. Wire client→master pour la
+	// messagerie in-game. Le step 1 (MailManager + Mail.h) et le step 2
+	// (MysqlMailStore + migration 0045) sont déjà mergés ; cette série
+	// expose les opérations CRUD au client via 5 paires request/response.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeMailSendRequest             = 49u; ///< Client→Master : envoie un mail (subject, body, recipient, copperGold/Cod).
+	constexpr uint16_t kOpcodeMailSendResponse            = 50u; ///< Master→Client : ACK avec mail_id ou erreur (RECIPIENT_NOT_FOUND, INSUFFICIENT_GOLD, …).
+	constexpr uint16_t kOpcodeMailListInboxRequest        = 51u; ///< Client→Master : demande la liste des mails reçus du compte courant.
+	constexpr uint16_t kOpcodeMailListInboxResponse       = 52u; ///< Master→Client : liste des mails (id, sender, subject, sent_ts, expires_ts, state).
+	constexpr uint16_t kOpcodeMailReadRequest             = 53u; ///< Client→Master : demande le body complet d'un mail (marque comme lu).
+	constexpr uint16_t kOpcodeMailReadResponse            = 54u; ///< Master→Client : body + items attachés.
+	constexpr uint16_t kOpcodeMailTakeAttachmentsRequest  = 55u; ///< Client→Master : récupère les items + gold attachés à un mail.
+	constexpr uint16_t kOpcodeMailTakeAttachmentsResponse = 56u; ///< Master→Client : ACK avec liste items pris + gold versé, ou erreur.
+	constexpr uint16_t kOpcodeMailDeleteRequest           = 57u; ///< Client→Master : supprime un mail de l'inbox.
+	constexpr uint16_t kOpcodeMailDeleteResponse          = 58u; ///< Master→Client : ACK ou erreur (NOT_FOUND, NOT_OWNER).
 }

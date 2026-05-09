@@ -2,7 +2,7 @@
 // Body: { visibility: 'public' | 'friends' | 'none' }
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 
 export async function PATCH(request: Request) {
   const jar = cookies()

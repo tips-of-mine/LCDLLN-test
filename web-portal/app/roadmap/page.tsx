@@ -1,4 +1,4 @@
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 
 type RoadmapItem = RowDataPacket & {

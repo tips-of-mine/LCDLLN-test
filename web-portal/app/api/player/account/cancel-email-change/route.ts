@@ -1,7 +1,7 @@
 // POST /api/player/account/cancel-email-change
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 
 export async function POST() {
   const jar = cookies()

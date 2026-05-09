@@ -3,7 +3,7 @@
 // Creates a new terms_edition (status='draft') + terms_localizations entries
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 function isAdmin(): boolean {

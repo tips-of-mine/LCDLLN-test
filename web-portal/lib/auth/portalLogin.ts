@@ -1,7 +1,7 @@
 import { scryptSync, timingSafeEqual } from "node:crypto";
 import type { RowDataPacket } from "mysql2/promise";
-import { query } from "@/lib/db";
-import { verifyGameMasterPassword } from "@/lib/gamePasswordHash";
+import { query } from "@/lib/db/connection";
+import { verifyGameMasterPassword } from "@/lib/auth/gamePasswordHash";
 
 function normalizeLower(value: string): string {
   return value.trim().toLowerCase();

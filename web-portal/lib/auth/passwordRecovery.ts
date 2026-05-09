@@ -1,7 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { query } from "@/lib/db";
-import { hashPasswordForGameMaster } from "@/lib/gamePasswordHash";
+import { query } from "@/lib/db/connection";
+import { hashPasswordForGameMaster } from "@/lib/auth/gamePasswordHash";
 
 type AccountRow = RowDataPacket & {
   id: number;

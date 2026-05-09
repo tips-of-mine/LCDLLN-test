@@ -2,8 +2,8 @@
 // Body: { currentPassword: string, newPassword: string }
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
-import { verifyGameMasterPassword, hashPasswordForGameMaster } from '@/lib/gamePasswordHash'
+import { query } from '@/lib/db/connection'
+import { verifyGameMasterPassword, hashPasswordForGameMaster } from '@/lib/auth/gamePasswordHash'
 import type { RowDataPacket } from 'mysql2/promise'
 
 export async function POST(request: Request) {

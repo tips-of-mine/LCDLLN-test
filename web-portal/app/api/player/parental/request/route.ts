@@ -2,8 +2,8 @@
 // Body: { parentalEmail: string }
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
-import { sendParentalValidation } from '@/lib/email'
+import { query } from '@/lib/db/connection'
+import { sendParentalValidation } from '@/lib/email/sender'
 import { randomBytes } from 'node:crypto'
 import type { RowDataPacket } from 'mysql2/promise'
 

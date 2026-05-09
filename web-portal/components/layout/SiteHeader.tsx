@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getSession } from '@/lib/session'
+import { getSession } from '@/lib/auth/session'
 import { HeaderActions } from './HeaderActions'
 
 export async function SiteHeader() {

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Session } from '@/lib/session'
+import type { Session } from '@/lib/auth/session'
 
 interface Props {
   session: Session

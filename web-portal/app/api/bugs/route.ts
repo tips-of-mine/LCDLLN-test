@@ -2,7 +2,7 @@
 // Body: { title, body, category }
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 const VALID_CATEGORIES = ['gameplay', 'graphique', 'reseau', 'interface', 'autre'] as const

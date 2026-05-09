@@ -53,7 +53,7 @@
 #include "src/client/render/terrain_chunk/TerrainChunkRenderer.h"
 #if defined(_WIN32)
 #include "src/client/render/terrain/TerrainEditingTools.h"
-#include "src/world_editor/TexturePreviewCache.h"
+#include "src/world_editor/ui/TexturePreviewCache.h"
 #endif
 
 struct GLFWwindow;

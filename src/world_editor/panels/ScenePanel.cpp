@@ -1,4 +1,4 @@
-#include "src/world_editor/world/panels/ScenePanel.h"
+#include "src/world_editor/panels/ScenePanel.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

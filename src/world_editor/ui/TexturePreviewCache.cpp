@@ -1,4 +1,4 @@
-#include "src/world_editor/TexturePreviewCache.h"
+#include "src/world_editor/ui/TexturePreviewCache.h"
 
 #include "src/shared/core/Log.h"
 

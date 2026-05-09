@@ -1,5 +1,5 @@
 #pragma once
-#include "src/world_editor/world/IPanel.h"
+#include "src/world_editor/IPanel.h"
 
 namespace engine::editor::world::panels
 {

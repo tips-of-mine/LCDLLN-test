@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/world_editor/WorldMapEditDocument.h"
+#include "src/world_editor/ui/WorldMapEditDocument.h"
 
 #include <cstddef>
 #include <string>

@@ -1,5 +1,5 @@
-// src/world_editor/world/panels/SurfaceTablePanel.cpp
-#include "src/world_editor/world/panels/SurfaceTablePanel.h"
+// src/world_editor/panels/SurfaceTablePanel.cpp
+#include "src/world_editor/panels/SurfaceTablePanel.h"
 #include "src/client/world/surface/SurfaceType.h"
 
 #if defined(_WIN32)

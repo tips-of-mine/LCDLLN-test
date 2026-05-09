@@ -1,6 +1,6 @@
 #pragma once
-#include "src/world_editor/world/IPanel.h"
-#include "src/world_editor/world/EditorCameraController.h"
+#include "src/world_editor/IPanel.h"
+#include "src/world_editor/EditorCameraController.h"
 
 namespace engine::editor::world::panels
 {

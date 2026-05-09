@@ -1,7 +1,7 @@
-#include "src/world_editor/world/TerrainSculptTool.h"
+#include "src/world_editor/TerrainSculptTool.h"
 
-#include "src/world_editor/world/TerrainRaycast.h"
-#include "src/world_editor/world/TerrainSculptCommand.h"
+#include "src/world_editor/TerrainRaycast.h"
+#include "src/world_editor/TerrainSculptCommand.h"
 #include "src/client/world/terrain/TerrainChunk.h"
 
 #include <algorithm>

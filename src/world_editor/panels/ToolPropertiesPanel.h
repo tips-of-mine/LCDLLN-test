@@ -1,6 +1,6 @@
 #pragma once
-#include "src/world_editor/world/IPanel.h"
-#include "src/world_editor/world/StampLibrary.h"
+#include "src/world_editor/IPanel.h"
+#include "src/world_editor/StampLibrary.h"
 
 #include <string>
 #include <vector>

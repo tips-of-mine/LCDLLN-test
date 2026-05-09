@@ -1,7 +1,7 @@
 #pragma once
 
-#include "src/world_editor/WorldMapEditDocument.h"
-#include "src/world_editor/TreeSpeciesCatalog.h"
+#include "src/world_editor/ui/WorldMapEditDocument.h"
+#include "src/world_editor/ui/TreeSpeciesCatalog.h"
 
 #include <array>
 #include <cstdint>

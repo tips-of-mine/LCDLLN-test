@@ -1,4 +1,4 @@
-#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/CommandStack.h"
 
 #include <chrono>
 #include <utility>

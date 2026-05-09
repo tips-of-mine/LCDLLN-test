@@ -1,6 +1,6 @@
-#include "src/world_editor/WorldEditorSession.h"
+#include "src/world_editor/ui/WorldEditorSession.h"
 
-#include "src/world_editor/WorldMapIo.h"
+#include "src/world_editor/ui/WorldMapIo.h"
 
 #include "src/client/world/WorldModel.h"
 

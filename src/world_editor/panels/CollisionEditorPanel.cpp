@@ -1,5 +1,5 @@
-// src/world_editor/world/panels/CollisionEditorPanel.cpp
-#include "src/world_editor/world/panels/CollisionEditorPanel.h"
+// src/world_editor/panels/CollisionEditorPanel.cpp
+#include "src/world_editor/panels/CollisionEditorPanel.h"
 #include "src/client/world/collision/ProxyWireframe.h"
 
 #if defined(_WIN32)

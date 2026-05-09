@@ -1,4 +1,4 @@
-#include "src/world_editor/TreeSpeciesCatalog.h"
+#include "src/world_editor/ui/TreeSpeciesCatalog.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"

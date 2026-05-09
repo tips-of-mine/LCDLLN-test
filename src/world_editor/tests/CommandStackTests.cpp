@@ -17,7 +17,7 @@
 /// Pas de dépendance ImGui ni Vulkan : la pile est pure CPU. Les tests se
 /// lancent sur n'importe quelle plate-forme où engine_core compile.
 
-#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/CommandStack.h"
 
 #include <cstdio>
 #include <memory>

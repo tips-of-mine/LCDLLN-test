@@ -1,7 +1,7 @@
-#include "src/world_editor/world/SplatPaintTool.h"
+#include "src/world_editor/SplatPaintTool.h"
 
-#include "src/world_editor/world/SplatRules.h"
-#include "src/world_editor/world/TerrainRaycast.h"
+#include "src/world_editor/SplatRules.h"
+#include "src/world_editor/TerrainRaycast.h"
 #include "src/client/world/terrain/SplatMap.h"
 #include "src/client/world/terrain/TerrainChunk.h"
 

@@ -15,8 +15,8 @@
 /// tourne en CI sans GPU.
 
 #include "src/shared/core/Config.h"
-#include "src/world_editor/WorldEditorSession.h"
-#include "src/world_editor/WorldMapEditDocument.h"
+#include "src/world_editor/ui/WorldEditorSession.h"
+#include "src/world_editor/ui/WorldMapEditDocument.h"
 
 #include <cstdio>
 #include <cstring>

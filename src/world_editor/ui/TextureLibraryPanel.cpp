@@ -1,8 +1,8 @@
-#include "src/world_editor/TextureLibraryPanel.h"
+#include "src/world_editor/ui/TextureLibraryPanel.h"
 
-#include "src/world_editor/WorldEditorSession.h"
-#include "src/world_editor/TexturePreviewCache.h"
-#include "src/world_editor/WorldMapEditDocument.h"
+#include "src/world_editor/ui/WorldEditorSession.h"
+#include "src/world_editor/ui/TexturePreviewCache.h"
+#include "src/world_editor/ui/WorldMapEditDocument.h"
 
 #if defined(_WIN32)
 #   include "imgui.h"

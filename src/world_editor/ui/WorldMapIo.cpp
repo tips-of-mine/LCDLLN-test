@@ -1,6 +1,6 @@
-#include "src/world_editor/WorldMapIo.h"
+#include "src/world_editor/ui/WorldMapIo.h"
 
-#include "src/world_editor/WorldMapEditDocument.h"
+#include "src/world_editor/ui/WorldMapEditDocument.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/FileSystem.h"

@@ -1,4 +1,4 @@
-#include "src/world_editor/world/panels/InspectorPanel.h"
+#include "src/world_editor/panels/InspectorPanel.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

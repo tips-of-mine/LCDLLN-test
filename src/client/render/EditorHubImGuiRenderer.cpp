@@ -1,6 +1,6 @@
 #include "src/client/render/EditorHubImGuiRenderer.h"
 
-#include "src/world_editor/EditorMode.h"
+#include "src/world_editor/ui/EditorMode.h"
 #include "src/client/render/LnTheme.h"
 
 #if defined(_WIN32)

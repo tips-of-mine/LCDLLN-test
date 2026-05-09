@@ -8,7 +8,7 @@
 ///   - Load rejette magic invalide.
 ///   - Load rejette version invalide.
 ///
-/// Style de test aligné sur src/world_editor/world/tests/CommandStackTests.cpp
+/// Style de test aligné sur src/world_editor/tests/CommandStackTests.cpp
 /// (REQUIRE macro maison + main() appelant chaque test function).
 
 #include "src/client/world/terrain/TerrainChunk.h"

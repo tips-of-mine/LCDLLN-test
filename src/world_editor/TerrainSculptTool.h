@@ -1,8 +1,8 @@
 #pragma once
 
-#include "src/world_editor/world/CommandStack.h"
-#include "src/world_editor/world/TerrainBrush.h"
-#include "src/world_editor/world/TerrainDocument.h"
+#include "src/world_editor/CommandStack.h"
+#include "src/world_editor/TerrainBrush.h"
+#include "src/world_editor/TerrainDocument.h"
 #include "src/client/render/Camera.h"
 
 #include <cstdint>

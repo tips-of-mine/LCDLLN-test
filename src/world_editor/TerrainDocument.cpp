@@ -1,4 +1,4 @@
-#include "src/world_editor/world/TerrainDocument.h"
+#include "src/world_editor/TerrainDocument.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"

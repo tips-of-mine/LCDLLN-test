@@ -1,5 +1,5 @@
-// src/world_editor/world/AddRiverCommand.cpp
-#include "src/world_editor/world/AddRiverCommand.h"
+// src/world_editor/AddRiverCommand.cpp
+#include "src/world_editor/AddRiverCommand.h"
 
 namespace engine::editor::world
 {

@@ -1,4 +1,4 @@
-#include "src/world_editor/world/SplatRules.h"
+#include "src/world_editor/SplatRules.h"
 
 #include <algorithm>
 #include <cmath>

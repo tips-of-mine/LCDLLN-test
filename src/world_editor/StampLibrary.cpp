@@ -1,4 +1,4 @@
-#include "src/world_editor/world/StampLibrary.h"
+#include "src/world_editor/StampLibrary.h"
 
 // stb_image est inclus SANS définir STB_IMAGE_IMPLEMENTATION : la macro est
 // déjà posée dans 3 autres TU (WorldMapIo.cpp, TexturePreviewCache.cpp,

@@ -1,7 +1,7 @@
-// src/world_editor/world/RiverTool.h
+// src/world_editor/RiverTool.h
 #pragma once
 
-#include "src/world_editor/world/WaterDocument.h"
+#include "src/world_editor/WaterDocument.h"
 #include "src/client/world/water/WaterSurfaces.h"
 
 #include <vector>

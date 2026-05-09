@@ -1,4 +1,4 @@
-#include "src/world_editor/EditorMode.h"
+#include "src/world_editor/ui/EditorMode.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"

@@ -1,4 +1,4 @@
-// src/world_editor/world/WaterDocument.h
+// src/world_editor/WaterDocument.h
 #pragma once
 
 #include "src/client/world/water/WaterSurfaces.h"

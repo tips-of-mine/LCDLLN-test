@@ -1,4 +1,4 @@
-// src/world_editor/world/CollisionPreviewCamera.h
+// src/world_editor/CollisionPreviewCamera.h
 #pragma once
 
 #include "src/shared/math/Math.h"

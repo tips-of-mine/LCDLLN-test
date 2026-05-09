@@ -3,7 +3,7 @@
 /// - GenerateProceduralAlbedoLayer (deterministe)
 /// Pas de Vulkan ici : ces tests doivent tourner en CI sans GPU.
 
-#include "src/world_editor/TexturePreviewCache.h"
+#include "src/world_editor/ui/TexturePreviewCache.h"
 #include "src/client/render/terrain/TerrainSplatting.h"
 
 #include <cstdint>

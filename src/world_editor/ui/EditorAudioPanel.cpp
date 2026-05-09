@@ -1,4 +1,4 @@
-#include "src/world_editor/EditorAudioPanel.h"
+#include "src/world_editor/ui/EditorAudioPanel.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"

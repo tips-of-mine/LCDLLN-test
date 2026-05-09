@@ -1,8 +1,8 @@
-// src/world_editor/world/LakeTool.cpp
-#include "src/world_editor/world/LakeTool.h"
+// src/world_editor/LakeTool.cpp
+#include "src/world_editor/LakeTool.h"
 
-#include "src/world_editor/world/AddLakeCommand.h"
-#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/AddLakeCommand.h"
+#include "src/world_editor/CommandStack.h"
 
 #include <memory>
 #include <string>

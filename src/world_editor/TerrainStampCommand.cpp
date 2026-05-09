@@ -1,4 +1,4 @@
-#include "src/world_editor/world/TerrainStampCommand.h"
+#include "src/world_editor/TerrainStampCommand.h"
 
 #include "src/client/world/terrain/TerrainChunk.h"
 

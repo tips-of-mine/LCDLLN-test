@@ -1,8 +1,8 @@
-// src/world_editor/world/AddRiverCommand.h
+// src/world_editor/AddRiverCommand.h
 #pragma once
 
-#include "src/world_editor/world/CommandStack.h"
-#include "src/world_editor/world/WaterDocument.h"
+#include "src/world_editor/CommandStack.h"
+#include "src/world_editor/WaterDocument.h"
 #include "src/client/world/water/WaterSurfaces.h"
 
 namespace engine::editor::world

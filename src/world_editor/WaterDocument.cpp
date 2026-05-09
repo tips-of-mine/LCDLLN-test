@@ -1,5 +1,5 @@
-// src/world_editor/world/WaterDocument.cpp
-#include "src/world_editor/world/WaterDocument.h"
+// src/world_editor/WaterDocument.cpp
+#include "src/world_editor/WaterDocument.h"
 
 #include "src/shared/core/Config.h"
 

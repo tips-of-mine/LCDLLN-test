@@ -1,4 +1,4 @@
-#include "src/world_editor/world/SplatPaintCommand.h"
+#include "src/world_editor/SplatPaintCommand.h"
 
 #include "src/client/world/terrain/SplatMap.h"
 

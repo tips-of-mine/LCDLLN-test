@@ -1,4 +1,4 @@
-#include "src/world_editor/world/EditorCameraController.h"
+#include "src/world_editor/EditorCameraController.h"
 
 #include "src/shared/platform/Input.h"
 

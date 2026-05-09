@@ -1,9 +1,9 @@
-// src/world_editor/world/RiverTool.cpp
-#include "src/world_editor/world/RiverTool.h"
+// src/world_editor/RiverTool.cpp
+#include "src/world_editor/RiverTool.h"
 
-#include "src/world_editor/world/AddRiverCommand.h"
-#include "src/world_editor/world/CommandStack.h"
-#include "src/world_editor/world/TerrainDocument.h"
+#include "src/world_editor/AddRiverCommand.h"
+#include "src/world_editor/CommandStack.h"
+#include "src/world_editor/TerrainDocument.h"
 #include "src/client/world/WorldModel.h"
 #include "src/client/world/terrain/TerrainChunk.h"
 

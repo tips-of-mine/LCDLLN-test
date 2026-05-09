@@ -6,7 +6,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "src/world_editor/WorldMapEditDocument.h"
+#include "src/world_editor/ui/WorldMapEditDocument.h"
 
 namespace engine::core
 {

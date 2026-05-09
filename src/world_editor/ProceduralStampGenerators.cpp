@@ -1,4 +1,4 @@
-#include "src/world_editor/world/ProceduralStampGenerators.h"
+#include "src/world_editor/ProceduralStampGenerators.h"
 
 #include <algorithm>
 #include <cmath>

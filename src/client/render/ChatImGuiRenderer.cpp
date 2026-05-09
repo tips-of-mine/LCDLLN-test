@@ -1,6 +1,6 @@
 #include "src/client/render/ChatImGuiRenderer.h"
 
-#include "src/client/ChatUi.h"
+#include "src/client/chat/ChatUi.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/client/render/LnTheme.h"

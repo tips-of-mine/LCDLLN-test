@@ -19,10 +19,10 @@
 ///
 /// Pas de Catch2 — framework `REQUIRE` maison aligné sur CommandStackTests.
 
-#include "src/world_editor/CommandStack.h"
-#include "src/world_editor/SplatPaintCommand.h"
-#include "src/world_editor/SplatRules.h"
-#include "src/world_editor/TerrainDocument.h"
+#include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/splat/SplatPaintCommand.h"
+#include "src/world_editor/splat/SplatRules.h"
+#include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/client/world/terrain/SplatMap.h"
 #include "src/client/world/terrain/TerrainChunk.h"
 

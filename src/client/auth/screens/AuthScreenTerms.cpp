@@ -1,7 +1,7 @@
 // AUTH-UI.10 — Couche modèle pour l'écran d'acceptation des CGU.
 
 // Couche modèle : BuildModel_Terms affiche le texte paginé, StartTermsStatusWorker et StartTermsAcceptWorker gèrent le réseau.
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/shared/network/NetClient.h"
 #include "src/shared/network/ProtocolV1Constants.h"

@@ -1,7 +1,7 @@
 // src/world_editor/panels/SurfaceTablePanel.h
 #pragma once
 
-#include "src/world_editor/IPanel.h"
+#include "src/world_editor/core/IPanel.h"
 #include "src/client/world/surface/SurfaceTable.h"
 
 #include <filesystem>

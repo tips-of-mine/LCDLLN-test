@@ -1,7 +1,7 @@
 // AUTH-UI.6 — Couche modèle pour l'overlay Options (phase LanguageOptions).
 
 // Couche modèle : BuildModel_Options expose les catégories et leurs réglages, Update_Options gère la navigation clavier.
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/Input.h"

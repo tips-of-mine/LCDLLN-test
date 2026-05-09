@@ -28,11 +28,11 @@
 /// qu'il faut pour partir d'une heightmap connue.
 
 #include "src/shared/core/Config.h"
-#include "src/world_editor/CommandStack.h"
-#include "src/world_editor/TerrainBrush.h"
-#include "src/world_editor/TerrainDocument.h"
-#include "src/world_editor/TerrainSculptCommand.h"
-#include "src/world_editor/TerrainSculptTool.h"
+#include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/terrain/TerrainBrush.h"
+#include "src/world_editor/terrain/TerrainDocument.h"
+#include "src/world_editor/terrain/TerrainSculptCommand.h"
+#include "src/world_editor/terrain/TerrainSculptTool.h"
 #include "src/client/world/terrain/TerrainChunk.h"
 
 #include <cmath>

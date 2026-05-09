@@ -1,7 +1,7 @@
 // AUTH-UI.3 — Écran de récupération de mot de passe : saisie de l'e-mail et envoi de la demande de réinitialisation.
 //
 // Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/network/AuthRegisterPayloads.h"

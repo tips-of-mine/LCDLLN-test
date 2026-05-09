@@ -2,7 +2,7 @@
 
 // BuildModel_VerifyEmail : saisie du code pendant l'inscription.
 // BuildModel_EmailConfirmationPending : page post-inscription avec bouton de renvoi après 15 min.
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/shared/core/Log.h"
 

@@ -11,6 +11,7 @@
 #include "src/shared/network/NetServer.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 #include "src/masterd/session/SessionManager.h"
+#include "src/masterd/social/IgnoreList.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
 
@@ -277,11 +278,29 @@ namespace engine::server
 			auto destSessionOpt = m_connMap->GetSessionId(destConn);
 			if (destSessionOpt)
 			{
-				// Texte vu par le destinataire : "[from sender] body" — pour qu'il sache de qui ca vient.
-				const std::string toRecipient = "[from " + sender + "] " + parsed->text;
-				auto pktDest = BuildChatRelayPacket(ts, parsed->channel, sender, toRecipient, *destSessionOpt);
-				if (!pktDest.empty())
-					m_server->Send(destConn, pktDest);
+				// CMANGOS.25 (Phase 3.25 step 3+4) — IgnoreList filter : si le
+				// destinataire a ignore l'expediteur, on drop silencieusement
+				// l'envoi vers le destinataire. L'echo a l'expediteur est conserve
+				// (le but du ticket : l'expediteur ne sait pas qu'il est ignore).
+				bool dropForRecipient = false;
+				if (m_ignoreMgr)
+				{
+					auto destAccountOpt = m_sessions->GetAccountId(*destSessionOpt);
+					if (destAccountOpt && m_ignoreMgr->IsIgnored(*destAccountOpt, *accountId))
+					{
+						dropForRecipient = true;
+						LOG_INFO(Net, "[ChatRelayHandler] Whisper drop for recipient (ignored) sender_acc={} dest_acc={}",
+							*accountId, *destAccountOpt);
+					}
+				}
+				if (!dropForRecipient)
+				{
+					// Texte vu par le destinataire : "[from sender] body" — pour qu'il sache de qui ca vient.
+					const std::string toRecipient = "[from " + sender + "] " + parsed->text;
+					auto pktDest = BuildChatRelayPacket(ts, parsed->channel, sender, toRecipient, *destSessionOpt);
+					if (!pktDest.empty())
+						m_server->Send(destConn, pktDest);
+				}
 			}
 
 			// Echo expéditeur : "[to target] body" — confirmation que le whisper est bien parti.
@@ -466,8 +485,22 @@ namespace engine::server
 		const uint64_t ts = NowUnixMsUtc();
 		const auto snapshot = m_connMap->Snapshot();
 		size_t delivered = 0;
+		size_t droppedByIgnore = 0;
 		for (const auto& [destConn, destSession] : snapshot)
 		{
+			// CMANGOS.25 (Phase 3.25 step 3+4) — IgnoreList filter : skip
+			// destinataires qui ont ignore l'expediteur. Le sender ne s'ignore
+			// pas lui-meme (verifie cote IgnoreListManager::Ignore via SelfIgnore),
+			// donc l'echo personnel passe toujours.
+			if (m_ignoreMgr)
+			{
+				auto destAccountOpt = m_sessions->GetAccountId(destSession);
+				if (destAccountOpt && m_ignoreMgr->IsIgnored(*destAccountOpt, *accountId))
+				{
+					++droppedByIgnore;
+					continue;
+				}
+			}
 			auto pkt = BuildChatRelayPacket(ts, parsed->channel, sender, parsed->text, destSession);
 			if (pkt.empty())
 				continue;
@@ -483,7 +516,7 @@ namespace engine::server
 			textForLog.resize(200u);
 			textForLog += "...[truncated]";
 		}
-		LOG_INFO(Net, "[ChatRelayHandler] Chat broadcast sender='{}' channel={} text_len={} delivered={}/{} text='{}'",
-			sender, static_cast<unsigned>(parsed->channel), parsed->text.size(), delivered, snapshot.size(), textForLog);
+		LOG_INFO(Net, "[ChatRelayHandler] Chat broadcast sender='{}' channel={} text_len={} delivered={}/{} dropped_ignore={} text='{}'",
+			sender, static_cast<unsigned>(parsed->channel), parsed->text.size(), delivered, snapshot.size(), droppedByIgnore, textForLog);
 	}
 }

@@ -9,6 +9,7 @@
 #include "src/client/chat/ChatUi.h"
 #include "src/client/mail/MailUi.h"
 #include "src/client/quest/QuestUi.h"
+#include "src/client/social/IgnoreListUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
@@ -395,6 +396,11 @@ namespace engine
 		/// CMANGOS.23 (Phase 5.23 step 3+4) — Visibilite du panneau quete
 		/// (toggle via slash command \c /quest ou \c /quests). Faux par defaut.
 		bool                             m_questVisible = false;
+		/// CMANGOS.25 (Phase 3.25 step 3+4) — Presenter liste d'ignore. Recoit
+		/// les reponses opcodes 69/71/73 via le push handler du master ;
+		/// fire-and-forget des requetes 68/70/72 via
+		/// \c m_authUi.SendGenericRequestAsync.
+		engine::client::IgnoreListUiPresenter m_ignoreListUi;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

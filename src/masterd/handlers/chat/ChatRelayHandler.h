@@ -13,6 +13,11 @@ namespace engine::server::db
 	class ConnectionPool;
 }
 
+namespace engine::server::social
+{
+	class IgnoreListManager;
+}
+
 namespace engine::server
 {
 	class NetServer;
@@ -55,6 +60,11 @@ namespace engine::server
 		void SetAccountStore(AccountStore* accounts);
 		void SetConnectionPool(engine::server::db::ConnectionPool* pool);
 
+		/// CMANGOS.25 (Phase 3.25 step 3+4) — branche le manager IgnoreList pour
+		/// que les whispers et chat soient silencieusement drop si le destinataire
+		/// a ignore l'expediteur. Optionnel : si nullptr, aucun filtre n'est applique.
+		void SetIgnoreManager(engine::server::social::IgnoreListManager* mgr) { m_ignoreMgr = mgr; }
+
 		/// Phase 2 CMANGOS.01 : configure le sanitizer (UTF-8 safe trunc,
 		/// strip zero-width, hyperlinks whitelist). Idempotent.
 		void SetSanitizerConfig(const chat::ChatSanitizerConfig& cfg);
@@ -78,12 +88,13 @@ namespace engine::server
 			const uint8_t* payload, size_t payloadSize);
 
 	private:
-		NetServer*                          m_server   = nullptr;
-		SessionManager*                     m_sessions = nullptr;
-		ConnectionSessionMap*               m_connMap  = nullptr;
-		SessionCharacterMap*                m_charMap  = nullptr;
-		AccountStore*                       m_accounts = nullptr;
-		engine::server::db::ConnectionPool* m_pool     = nullptr;
+		NetServer*                                m_server    = nullptr;
+		SessionManager*                           m_sessions  = nullptr;
+		ConnectionSessionMap*                     m_connMap   = nullptr;
+		SessionCharacterMap*                      m_charMap   = nullptr;
+		AccountStore*                             m_accounts  = nullptr;
+		engine::server::db::ConnectionPool*       m_pool      = nullptr;
+		engine::server::social::IgnoreListManager* m_ignoreMgr = nullptr;
 
 		chat::ChatSanitizerConfig           m_sanitizerCfg{};
 		chat::ChatGate                      m_gate{};

@@ -231,4 +231,25 @@ namespace engine::network
 	constexpr uint16_t kOpcodeQuestListRequest      = 65u; ///< Client→Master : liste les quêtes connues du compte (vide, account dérivé de la session).
 	constexpr uint16_t kOpcodeQuestListResponse     = 66u; ///< Master→Client : tableau {questId, status} ou Unauthorized.
 	constexpr uint16_t kOpcodeQuestStateUpdate      = 67u; ///< Master→Client (push, request_id=0) : le serveur a changé l'état d'une quête (admin reset, etc.).
+
+	// -------------------------------------------------------------------------
+	// Opcodes IgnoreList (valeurs 68–73)
+	// Référence : Phase 3 CMANGOS.25 step 3+4. Wire client→master pour la liste
+	// d'ignore : un joueur peut silencieusement bloquer les whispers/chat
+	// venant d'un autre account. Le step 1 (IgnoreListManager + IIgnoreStore)
+	// et le step 2 (MysqlIgnoreStore + migration 0049) sont déjà mergés.
+	// Cette série expose les opérations au client via 3 paires request/response :
+	//   - Add (68/69)
+	//   - Remove (70/71)
+	//   - List (72/73)
+	// La résolution se fait par account_id direct (V1) — la résolution par
+	// character_name viendra avec PartySystem display ultérieurement.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeIgnoreAddRequest     = 68u; ///< Client→Master : ajoute un account_id à la liste d'ignore.
+	constexpr uint16_t kOpcodeIgnoreAddResponse    = 69u; ///< Master→Client : OK ou AlreadyIgnored / ListFull / SelfIgnore.
+	constexpr uint16_t kOpcodeIgnoreRemoveRequest  = 70u; ///< Client→Master : retire un account_id de la liste d'ignore.
+	constexpr uint16_t kOpcodeIgnoreRemoveResponse = 71u; ///< Master→Client : OK ou NotIgnored.
+	constexpr uint16_t kOpcodeIgnoreListRequest    = 72u; ///< Client→Master : demande la liste complète des account_id ignorés (vide).
+	constexpr uint16_t kOpcodeIgnoreListResponse   = 73u; ///< Master→Client : tableau d'account_id ignorés ou Unauthorized.
 }

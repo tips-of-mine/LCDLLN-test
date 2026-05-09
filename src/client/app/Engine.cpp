@@ -8,6 +8,7 @@
 #include "src/shared/core/memory/Memory.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/network/ChatPayloads.h"
+#include "src/shared/network/IgnoreListPayloads.h"
 #include "src/shared/network/MailPayloads.h"
 #include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/PacketBuilder.h"
@@ -821,6 +822,21 @@ namespace engine
 			return m_authUi.SendGenericRequestAsync(opcode, payload);
 		});
 
+		// CMANGOS.25 (Phase 3.25 step 3+4) — Init du presenter IgnoreList +
+		// cable du send callback. La reception est dispatchee dans le
+		// SetMasterPushHandler ci-dessous (opcodes 69/71/73). Le presenter
+		// maintient une cache locale m_ignoredAccountIds.
+		if (!m_ignoreListUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] IgnoreListUiPresenter init FAILED — feature ignore desactivee");
+		}
+		else
+		{
+			m_ignoreListUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).
 		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
 		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
@@ -856,6 +872,84 @@ namespace engine
 					m_questUi.RequestQuestList();
 				}
 				LOG_INFO(Core, "[Engine] /quest toggle (visible={})", m_questVisible);
+				return true;
+			}
+			// CMANGOS.25 (Phase 3.25 step 3+4) — Slash commands /ignore et /unignore.
+			// Format V1 : "/ignore <account_id>" et "/unignore <account_id>" — la
+			// resolution par character_name viendra avec PartySystem display.
+			// "/ignore list" sans argument refresh la cache depuis le master.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/ignore" || text.starts_with("/ignore ") || text.starts_with("/ignore\t")))
+			{
+				const auto spaceIdx = text.find_first_of(" \t");
+				if (spaceIdx == std::string_view::npos)
+				{
+					// "/ignore" tout seul : refresh la liste.
+					m_ignoreListUi.RequestIgnoreList();
+					LOG_INFO(Core, "[Engine] /ignore (refresh list)");
+					return true;
+				}
+				std::string_view arg = text.substr(spaceIdx + 1);
+				while (!arg.empty() && (arg.front() == ' ' || arg.front() == '\t'))
+					arg.remove_prefix(1u);
+				if (arg == "list" || arg.empty())
+				{
+					m_ignoreListUi.RequestIgnoreList();
+					LOG_INFO(Core, "[Engine] /ignore list");
+					return true;
+				}
+				// Parse account_id en uint64 (base 10).
+				uint64_t targetAccountId = 0u;
+				bool parsed = false;
+				try
+				{
+					size_t pos = 0;
+					const std::string argStr(arg);
+					targetAccountId = std::stoull(argStr, &pos, 10);
+					parsed = (pos > 0u && targetAccountId != 0u);
+				}
+				catch (...)
+				{
+					parsed = false;
+				}
+				if (!parsed)
+				{
+					LOG_WARN(Core, "[Engine] /ignore : argument '{}' n'est pas un account_id valide",
+						std::string(arg));
+					return true;
+				}
+				m_ignoreListUi.IgnoreAccount(targetAccountId);
+				LOG_INFO(Core, "[Engine] /ignore {}", targetAccountId);
+				return true;
+			}
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text.starts_with("/unignore ") || text.starts_with("/unignore\t")))
+			{
+				const auto spaceIdx = text.find_first_of(" \t");
+				std::string_view arg = text.substr(spaceIdx + 1);
+				while (!arg.empty() && (arg.front() == ' ' || arg.front() == '\t'))
+					arg.remove_prefix(1u);
+				uint64_t targetAccountId = 0u;
+				bool parsed = false;
+				try
+				{
+					size_t pos = 0;
+					const std::string argStr(arg);
+					targetAccountId = std::stoull(argStr, &pos, 10);
+					parsed = (pos > 0u && targetAccountId != 0u);
+				}
+				catch (...)
+				{
+					parsed = false;
+				}
+				if (!parsed)
+				{
+					LOG_WARN(Core, "[Engine] /unignore : argument '{}' n'est pas un account_id valide",
+						std::string(arg));
+					return true;
+				}
+				m_ignoreListUi.UnignoreAccount(targetAccountId);
+				LOG_INFO(Core, "[Engine] /unignore {}", targetAccountId);
 				return true;
 			}
 			return m_authUi.SendChatAsync(channel, targetToken, text);
@@ -979,6 +1073,41 @@ namespace engine
 					return;
 				}
 				m_questUi.OnQuestStateUpdate(*parsed);
+				return;
+			}
+			// CMANGOS.25 (Phase 3.25 step 3+4) — Dispatch des reponses IgnoreList
+			// (69/71/73). La cache locale du presenter est mise a jour ici.
+			case kOpcodeIgnoreAddResponse:
+			{
+				auto parsed = ParseIgnoreAddResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] IGNORE_ADD_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_ignoreListUi.OnIgnoreAddResponse(*parsed);
+				return;
+			}
+			case kOpcodeIgnoreRemoveResponse:
+			{
+				auto parsed = ParseIgnoreRemoveResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] IGNORE_REMOVE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_ignoreListUi.OnIgnoreRemoveResponse(*parsed);
+				return;
+			}
+			case kOpcodeIgnoreListResponse:
+			{
+				auto parsed = ParseIgnoreListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] IGNORE_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_ignoreListUi.OnIgnoreListResponse(*parsed);
 				return;
 			}
 			default:

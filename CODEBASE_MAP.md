@@ -320,10 +320,19 @@ Les clés utilisées dans les écrans auth commencent par `auth.`, `common.`, `l
 | `.github/workflows/build-windows.yml` | CI build Windows (MSVC). |
 | `.github/workflows/build-linux.yml` | CI build Linux (GCC/Clang). |
 | `.gitea/workflows/build-test-linux.yml` | Tests Linux sur Gitea. |
+| `cmake/LCDLLNHelpers.cmake` | Helpers CMake réutilisables (`lcdlln_add_simple_test()`). Parité [cmangos-tbc/cmake/](https://github.com/cmangos/mangos-tbc/tree/master/cmake). |
+| `cmake/README.md` | Doc des modules CMake (chargement, ajout d'un nouveau module). |
 | `tools/hlod_builder/` | Génère les niveaux de détail (HLOD) pour les zones 3D. |
 | `tools/zone_builder/` | Construit les packages de zones (chunks, GLTF → PAK). |
 | `tools/load_tester/` | Simule des connexions massives pour tester la charge serveur. |
 | `tools/migration_checksum/` | Vérifie l'intégrité des migrations SQL. |
+
+**Modules CMake** : le `CMakeLists.txt` racine charge les helpers via :
+```cmake
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(LCDLLNHelpers)
+```
+`lcdlln_add_simple_test(target_name srcs...)` est ainsi disponible partout (racine + sous-CMakeLists). Pour ajouter un helper : créer `cmake/<NomModule>.cmake` avec un `include_guard(GLOBAL)` puis l'inclure depuis le racine.
 
 ---
 

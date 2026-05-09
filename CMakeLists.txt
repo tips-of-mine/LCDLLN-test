@@ -9,6 +9,12 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
 
+# Modules CMake reutilisables (parite cmangos-tbc/cmake/).
+# Charger AVANT add_subdirectory(src) pour que les helpers comme
+# lcdlln_add_simple_test() soient disponibles dans les sous-CMakeLists.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(LCDLLNHelpers)
+
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)

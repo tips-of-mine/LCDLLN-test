@@ -349,6 +349,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(cinematic_sequence_tests
     cinematics/CinematicSequenceTests.cpp)
 
+  # CMANGOS.36 (Phase 5.36a) : OutdoorPvPManager (header-only, zones contestees).
+  lcdlln_add_simple_test(outdoor_pvp_manager_tests
+    outdoorpvp/OutdoorPvPManagerTests.cpp)
+
   # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
   lcdlln_add_simple_test(ignore_list_tests
     social/IgnoreListTests.cpp)

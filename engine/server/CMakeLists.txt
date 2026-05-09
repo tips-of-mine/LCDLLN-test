@@ -345,6 +345,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(game_event_manager_tests
     events/GameEventManagerTests.cpp)
 
+  # CMANGOS.30 (Phase 5.30a) : CinematicSequence (header-only, camera keyframe interp).
+  lcdlln_add_simple_test(cinematic_sequence_tests
+    cinematics/CinematicSequenceTests.cpp)
+
   # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
   lcdlln_add_simple_test(ignore_list_tests
     social/IgnoreListTests.cpp)

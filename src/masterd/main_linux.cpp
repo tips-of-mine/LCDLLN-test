@@ -34,6 +34,9 @@
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
+#include "src/masterd/handlers/mail/MailHandler.h"
+#include "src/masterd/mail/MailManager.h"
+#include "src/masterd/mail/MysqlMailStore.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
 #include "src/shared/core/Config.h"
@@ -331,6 +334,29 @@ int main(int argc, char** argv)
 			gateCfg.floodWindowMs, gateCfg.floodMaxMessages);
 	}
 
+	// CMANGOS.18 (Phase 3.18 step 3) — Mail wire server.
+	// Le store DB est instancié seulement si dbPool est dispo (sinon le master
+	// tourne en mode "no-DB" — accountStoreMem — et on ne peut pas persister
+	// de mails). Dans ce mode dégradé, on laisse m_mgr=nullptr côté handler →
+	// HandlePacket logge un warning et drop. C'est cohérent avec le fait qu'en
+	// mode no-DB, l'auth n'est pas non plus persistée et la mailbox n'a pas
+	// de raison d'être réellement utilisable.
+	engine::server::mail::MysqlMailStore mailStore(&dbPool);
+	engine::server::mail::MailManager mailManager(&mailStore);
+	engine::server::MailHandler mailHandler;
+	if (dbPool.IsInitialized())
+	{
+		mailHandler.SetMailManager(&mailManager);
+		mailHandler.SetServer(&server);
+		mailHandler.SetSessionManager(&sessionManager);
+		mailHandler.SetConnectionSessionMap(&connSessionMap);
+		LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] MailHandler skipped (DB pool unavailable)");
+	}
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -370,7 +396,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -397,6 +423,12 @@ int main(int argc, char** argv)
 			chatRelayHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeCharacterEnterWorldRequest)
 			characterEnterWorldHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeMailSendRequest
+		      || opcode == kOpcodeMailListInboxRequest
+		      || opcode == kOpcodeMailReadRequest
+		      || opcode == kOpcodeMailTakeAttachmentsRequest
+		      || opcode == kOpcodeMailDeleteRequest)
+			mailHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

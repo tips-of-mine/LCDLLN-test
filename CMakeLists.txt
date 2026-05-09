@@ -417,6 +417,7 @@ add_library(engine_core
   src/shared/network/AuthRegisterPayloads.cpp
   src/shared/network/CharacterPayloads.cpp
   src/shared/network/ChatPayloads.cpp
+  src/shared/network/MailPayloads.cpp
   src/shared/network/ShardPayloads.cpp
   src/shared/network/TermsPayloads.cpp
 )
@@ -623,6 +624,11 @@ add_test(NAME character_save_position_payloads_tests COMMAND character_save_posi
 add_executable(chat_payloads_tests src/shared/network/ChatPayloadsTests.cpp)
 target_link_libraries(chat_payloads_tests PRIVATE engine_core)
 add_test(NAME chat_payloads_tests COMMAND chat_payloads_tests)
+
+# CMANGOS.18 (Phase 3.18 step 3): MAIL_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(mail_payloads_tests src/shared/network/MailPayloadsTests.cpp)
+target_link_libraries(mail_payloads_tests PRIVATE engine_core)
+add_test(NAME mail_payloads_tests COMMAND mail_payloads_tests)
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests src/shared/core/LogRotationSmokeTest.cpp)

@@ -336,6 +336,10 @@ elseif(UNIX)
   # CMANGOS.24 (Phase 3.24a) : ReputationManager + spillover (header-only).
   lcdlln_add_simple_test(reputation_manager_tests
     reputation/ReputationManagerTests.cpp)
+  # CMANGOS.07 (Phase 3.07a) : EventAI data-driven evaluator.
+  lcdlln_add_simple_test(event_ai_tests
+    ai/EventAITests.cpp
+    ai/EventAI.cpp)
 
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests

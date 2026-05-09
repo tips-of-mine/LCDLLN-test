@@ -329,6 +329,9 @@ elseif(UNIX)
   # CMANGOS.11 (Phase 3.11a) : ThreatList AI target selector (header-only).
   lcdlln_add_simple_test(threat_list_tests
     combat/ThreatListTests.cpp)
+  # CMANGOS.24 (Phase 3.24a) : ReputationManager + spillover (header-only).
+  lcdlln_add_simple_test(reputation_manager_tests
+    reputation/ReputationManagerTests.cpp)
 
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests

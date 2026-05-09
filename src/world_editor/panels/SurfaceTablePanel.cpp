@@ -8,14 +8,14 @@
 
 namespace engine::editor::world::panels
 {
-	/// Charge `surface_table.json` depuis `<contentRoot>/assets/gameplay/`.
+	/// Charge `surface_table.json` depuis `<contentRoot>/game/data/gameplay/`.
 	/// Effets de bord : remplit `m_table` (succès) et `m_status` (succès ou
 	/// erreur). Appelée une fois par `WorldEditorShell::Init` (main thread).
 	/// Le bouton Reload du panel rappelle `m_table.LoadFromJson(m_jsonPath, err)`
 	/// avec le même path.
 	void SurfaceTablePanel::LoadFromContentRoot(const std::filesystem::path& contentRoot)
 	{
-		m_jsonPath = contentRoot / "assets" / "gameplay" / "surface_table.json";
+		m_jsonPath = contentRoot / "game" / "data" / "gameplay" / "surface_table.json";
 		std::string err;
 		if (m_table.LoadFromJson(m_jsonPath, err))
 		{

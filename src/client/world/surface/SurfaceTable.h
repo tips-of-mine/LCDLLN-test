@@ -17,7 +17,7 @@ namespace engine::world::surface
         std::string visualTag;
     };
 
-    /// Charge une fois `assets/gameplay/surface_table.json` au boot.
+    /// Charge une fois `game/data/gameplay/surface_table.json` au boot.
     /// Format : { "version":1, "surfaces":[ {type, baseSpeed, audioStep, visualTag}, ... 13 ] }.
     /// Validation : exactement 13 entrées, types uniques, baseSpeed >= 0.
     class SurfaceTable

@@ -27,7 +27,7 @@ namespace engine::world::terrain
 	};
 
 	/// Palette des 8 layers terrain. Lue depuis
-	/// `assets/terrain/layer_palette.json` au démarrage du runtime + de
+	/// `game/data/terrain/layer_palette.json` au démarrage du runtime + de
 	/// l'éditeur. M100.9 fixe le nombre à 8 (`kSplatLayerCount`).
 	struct LayerPalette
 	{

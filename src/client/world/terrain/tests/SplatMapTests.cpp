@@ -105,7 +105,7 @@ namespace
 		REQUIRE(!err.empty());
 	}
 
-	/// Charge `assets/terrain/layer_palette.json`, vérifie 8 entrées + nom du
+	/// Charge `game/data/terrain/layer_palette.json`, vérifie 8 entrées + nom du
 	/// premier (`dirt`) et du dernier (`lava_cooled`). Skip si fichier absent
 	/// (ex. test lancé hors source root).
 	void Test_LayerPalette_LoadJson()
@@ -113,7 +113,7 @@ namespace
 		using engine::world::terrain::LayerPalette;
 		using engine::world::terrain::LoadLayerPalette;
 
-		const std::filesystem::path path = "assets/terrain/layer_palette.json";
+		const std::filesystem::path path = "game/data/terrain/layer_palette.json";
 		if (!std::filesystem::exists(path))
 		{
 			std::printf("[SKIP] Test_LayerPalette_LoadJson: %s missing\n", path.string().c_str());

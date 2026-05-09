@@ -723,9 +723,9 @@ namespace engine::render::terrain_chunk
 			return false;
 		}
 
-		// 2. Charge la palette (canonical: assets/terrain/layer_palette.json).
+		// 2. Charge la palette (canonical: game/data/terrain/layer_palette.json).
 		engine::world::terrain::LayerPalette palette;
-		const std::filesystem::path palettePath = "assets/terrain/layer_palette.json";
+		const std::filesystem::path palettePath = "game/data/terrain/layer_palette.json";
 		std::string palErr;
 		if (!engine::world::terrain::LoadLayerPalette(palettePath, palette, palErr))
 		{

@@ -8,9 +8,12 @@
 #include "src/shared/core/memory/Memory.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/network/ChatPayloads.h"
+#include "src/shared/network/MailPayloads.h"
+#include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/client/render/AuthImGuiRenderer.h"
 #include "src/client/render/ChatImGuiRenderer.h"
+#include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -794,15 +797,110 @@ namespace engine
 			LOG_WARN(Core, "[Boot] AuthUiPresenter viewport FAILED — using fallback layout");
 		}
 
+		// CMANGOS.18 (Phase 3.18 step 4) — Init du presenter Mail. Doit etre
+		// fait avant l'installation du push handler ci-dessous (qui dispatche
+		// les opcodes Mail vers ce presenter).
+		if (!m_mailUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] MailUiPresenter init FAILED — boite mail desactivee");
+		}
+		else
+		{
+			m_mailUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendMailRequestAsync(opcode, payload);
+			});
+		}
+
 		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).
 		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
 		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
 		// vers un handler qui parse et appelle ChatUi::PushNetworkLine.
 		m_chatUi.SetSendCallback([this](uint8_t channel, std::string_view targetToken, std::string_view text) -> bool {
+			// CMANGOS.18 (Phase 3.18 step 4) — Intercept /mail avant l'envoi
+			// chat. ParseSlashPrefixes ne connait pas /mail, donc le texte
+			// arrive sur le canal Say avec text == "/mail" (ou "/mail ...").
+			// On consomme le slash command localement et retourne true (le
+			// chat presenter pense que c'est envoye et clear l'input).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/mail" || text.starts_with("/mail ") || text.starts_with("/mail\t")))
+			{
+				m_mailVisible = !m_mailVisible;
+				if (m_mailVisible)
+				{
+					m_mailUi.RequestInbox();
+				}
+				LOG_INFO(Core, "[Engine] /mail toggle (visible={})", m_mailVisible);
+				return true;
+			}
 			return m_authUi.SendChatAsync(channel, targetToken, text);
 		});
 		m_authUi.SetMasterPushHandler([this](uint16_t opcode, const uint8_t* payload, size_t payloadSize) {
 			using namespace engine::network;
+			// CMANGOS.18 (Phase 3.18 step 4) — Dispatch des reponses Mail. Les
+			// reponses (opcodes 50/52/54/56/58) ne sont pas des push purs mais
+			// arrivent via le meme mecanisme PacketReceived puisque le client
+			// n'utilise pas de RequestResponseDispatcher pour Mail (requestId=0
+			// fire-and-forget cote envoi). On parse + dispatche ici.
+			switch (opcode)
+			{
+			case kOpcodeMailListInboxResponse:
+			{
+				auto parsed = ParseMailListInboxResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] MAIL_LIST_INBOX_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_mailUi.OnInboxResponse(*parsed);
+				return;
+			}
+			case kOpcodeMailReadResponse:
+			{
+				auto parsed = ParseMailReadResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] MAIL_READ_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_mailUi.OnReadResponse(*parsed);
+				return;
+			}
+			case kOpcodeMailSendResponse:
+			{
+				auto parsed = ParseMailSendResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] MAIL_SEND_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_mailUi.OnSendResponse(*parsed);
+				return;
+			}
+			case kOpcodeMailTakeAttachmentsResponse:
+			{
+				auto parsed = ParseMailTakeAttachmentsResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] MAIL_TAKE_ATTACHMENTS_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_mailUi.OnTakeAttachmentsResponse(*parsed);
+				return;
+			}
+			case kOpcodeMailDeleteResponse:
+			{
+				auto parsed = ParseMailDeleteResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] MAIL_DELETE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_mailUi.OnDeleteResponse(*parsed);
+				return;
+			}
+			default:
+				break;
+			}
 			if (opcode != kOpcodeChatRelay)
 				return;
 			auto parsed = ParseChatRelayPayload(payload, payloadSize);
@@ -2932,6 +3030,7 @@ namespace engine
 		ShutdownGameplayNet();
 		m_authUi.Shutdown();
 		m_chatUi.Shutdown();
+		m_mailUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3129,6 +3228,12 @@ namespace engine
 				// Phase 3.11.1 — partage du même contexte ImGui (NewFrame/Render gérés par m_worldEditorImGui).
 				m_chatImGui = std::make_unique<engine::render::ChatImGuiRenderer>();
 				m_chatImGui->BindChatUi(&m_chatUi, &m_cfg);
+				// CMANGOS.18 (Phase 3.18 step 4) — Renderer ImGui de la boite mail.
+				// Partage le contexte ImGui avec auth/chat. Visible uniquement quand
+				// m_mailVisible (toggle via /mail). La taille viewport est mise a
+				// jour dans le boucle Render plus bas.
+				m_mailImGui = std::make_unique<engine::render::MailImGuiRenderer>();
+				m_mailImGui->SetPresenter(&m_mailUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -4141,6 +4246,16 @@ namespace engine
 			}
 			// `inWorldShard` = true uniquement post-EnterWorld : ajoute le canal Zone.
 			m_chatImGui->Render(dw, dh, m_authUi.IsInWorldShard());
+			// CMANGOS.18 (Phase 3.18 step 4) — Render du panneau Mail si visible.
+			// Le panneau partage la frame ImGui en cours (NewFrame deja appele
+			// par chatImguiOverlayNewFrame plus haut). Visible uniquement quand
+			// l'utilisateur a fait /mail (toggle dans le SendCallback du chat).
+			if (m_mailVisible && m_mailImGui && m_mailUi.IsInitialized())
+			{
+				m_mailImGui->SetEnabled(true);
+				m_mailImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_mailImGui->Render();
+			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)
 			{

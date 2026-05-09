@@ -7,6 +7,7 @@
 #include "src/client/audio/AudioEngine.h"
 #include "src/client/auth/AuthUi.h"
 #include "src/client/chat/ChatUi.h"
+#include "src/client/mail/MailUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
@@ -62,6 +63,7 @@ namespace engine::render
 {
 	class AuthImGuiRenderer;
 	class ChatImGuiRenderer;
+	class MailImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -314,6 +316,10 @@ namespace engine
 		std::unique_ptr<engine::render::AuthImGuiRenderer> m_authImGui;
 		/// Phase 3.11.1 — Panneau chat Dear ImGui (post-auth, partage le même contexte ImGui que m_authImGui).
 		std::unique_ptr<engine::render::ChatImGuiRenderer> m_chatImGui;
+		/// CMANGOS.18 (Phase 3.18 step 4) — Panneau boite mail (post-auth, ImGui).
+		/// Partage le contexte ImGui avec m_authImGui / m_chatImGui. Visibilite
+		/// pilotee par \c m_mailVisible (toggle via slash command /mail).
+		std::unique_ptr<engine::render::MailImGuiRenderer> m_mailImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -373,6 +379,13 @@ namespace engine
 		engine::client::ProfilerHudPresenter m_profilerHud;
 		engine::client::AuthUiPresenter m_authUi;
 		engine::client::ChatUiPresenter m_chatUi;
+		/// CMANGOS.18 (Phase 3.18 step 4) — Presenter boite mail. Recoit les
+		/// reponses opcodes 50/52/54/56/58 via le push handler du master ;
+		/// fire-and-forget des requetes 49/51/53/55/57 via \c m_authUi.
+		engine::client::MailUiPresenter m_mailUi;
+		/// CMANGOS.18 (Phase 3.18 step 4) — Visibilite du panneau mail
+		/// (toggle via slash command \c /mail). Faux par defaut.
+		bool                            m_mailVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

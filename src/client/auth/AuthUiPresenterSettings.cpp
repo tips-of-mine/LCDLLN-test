@@ -362,6 +362,49 @@ namespace engine::client
 		return true;
 	}
 
+	bool AuthUiPresenter::SendMailRequestAsync(uint16_t opcode, const std::vector<uint8_t>& payload)
+	{
+		// CMANGOS.18 (Phase 3.18 step 4) — Wrapper generique pour les opcodes Mail
+		// (49, 51, 53, 55, 57). Mirror de SendChatAsync : meme pattern PacketBuilder /
+		// Send, requestId=0 (les reponses sont dispatched via le push handler).
+		if (!m_masterClient || m_masterSessionId == 0u)
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: no master session (opcode={})",
+				static_cast<unsigned>(opcode));
+			return false;
+		}
+		engine::network::PacketBuilder builder;
+		auto w = builder.PayloadWriter();
+		if (!payload.empty() && !w.WriteBytes(payload.data(), payload.size()))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: WriteBytes failed (opcode={})",
+				static_cast<unsigned>(opcode));
+			return false;
+		}
+		if (!builder.Finalize(opcode, /*flags=*/0u, /*requestId=*/0u, m_masterSessionId, payload.size()))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: Finalize failed (opcode={})",
+				static_cast<unsigned>(opcode));
+			return false;
+		}
+		const auto& packet = builder.Data();
+		if (packet.empty())
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: empty packet (opcode={})",
+				static_cast<unsigned>(opcode));
+			return false;
+		}
+		if (!m_masterClient->Send(std::span<const uint8_t>(packet.data(), packet.size())))
+		{
+			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: Send failed (opcode={})",
+				static_cast<unsigned>(opcode));
+			return false;
+		}
+		LOG_DEBUG(Net, "[AuthUiPresenter] SendMailRequestAsync queued (opcode={}, payload_size={})",
+			static_cast<unsigned>(opcode), payload.size());
+		return true;
+	}
+
 	bool AuthUiPresenter::SendEnterWorldAsync(uint64_t characterId, std::string_view characterName)
 	{
 		if (!m_masterClient || m_masterSessionId == 0u || characterId == 0u || characterName.empty())

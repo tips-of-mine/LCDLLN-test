@@ -251,6 +251,7 @@ add_library(engine_core
   src/client/ui_common/UIModel.cpp
   src/client/chat/ChatUi.cpp
   src/client/chat/ChatWorldVisualPresenter.cpp
+  src/client/mail/MailUi.cpp
   src/client/social/FriendsUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
@@ -329,6 +330,7 @@ add_library(engine_core
   src/client/render/LnTheme.h
   src/client/render/AuthImGuiRenderer.cpp
   src/client/render/ChatImGuiRenderer.cpp
+  src/client/render/MailImGuiRenderer.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp

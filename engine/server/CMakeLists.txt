@@ -320,6 +320,9 @@ elseif(UNIX)
   # CMANGOS.20 (Phase 3.20a) : MotionGeneratorStack (header-only).
   lcdlln_add_simple_test(motion_generator_stack_tests
     ai/MotionGeneratorStackTests.cpp)
+  # CMANGOS.42 (Phase 4.42a) : WeatherManager (header-only).
+  lcdlln_add_simple_test(weather_manager_tests
+    weather/WeatherManagerTests.cpp)
 
   # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
   lcdlln_add_simple_test(ignore_list_tests

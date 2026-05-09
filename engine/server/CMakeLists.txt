@@ -370,6 +370,17 @@ elseif(UNIX)
     shard/vmap/VMapFormat.cpp
     shard/vmap/AABB.cpp)
 
+  # CMANGOS.04 (Phase 2.04c) : MoveSplinePacketBuilder pure encode/decode.
+  lcdlln_add_simple_test(move_spline_packet_tests
+    shard/movement/MoveSplinePacketBuilderTests.cpp
+    shard/movement/MoveSplinePacketBuilder.cpp
+    shard/movement/MoveSpline.cpp)
+
+  # CMANGOS.01 (Phase 2.01c) : ChatLocalPayload pure encode/decode.
+  lcdlln_add_simple_test(chat_local_payload_tests
+    shard/chat/ChatLocalPayloadTests.cpp
+    shard/chat/ChatLocalPayload.cpp)
+
   # CMANGOS.01 (Phase 2.01b) : ChatCommandRouter pure tests
   add_executable(chat_command_router_tests
     chat/ChatCommandRouterTests.cpp

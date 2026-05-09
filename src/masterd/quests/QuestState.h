@@ -74,6 +74,17 @@ namespace engine::server::quests
 
 		void Clear() { m_state.clear(); }
 
+		/// CMANGOS.23 (Phase 5.23 step 3+4) — Liste toutes les quetes connues du
+		/// compte. Utilise par QuestHandler::HandleList pour repondre au client.
+		/// Retourne une copie ; complexite O(n) sur le nombre de quetes du compte.
+		std::unordered_map<QuestId, QuestStatus> ListAll(AccountId account) const
+		{
+			auto it = m_state.find(account);
+			if (it == m_state.end())
+				return {};
+			return it->second;
+		}
+
 	private:
 		std::unordered_map<AccountId, std::unordered_map<QuestId, QuestStatus>> m_state;
 	};

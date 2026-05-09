@@ -9,6 +9,7 @@
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/network/ChatPayloads.h"
 #include "src/shared/network/MailPayloads.h"
+#include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/client/render/AuthImGuiRenderer.h"
@@ -807,9 +808,18 @@ namespace engine
 		else
 		{
 			m_mailUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
-				return m_authUi.SendMailRequestAsync(opcode, payload);
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
 			});
 		}
+
+		// CMANGOS.23 (Phase 5.23 step 3+4) — Cable le QuestUi presenter au
+		// master via le helper generique d'AuthUi. Le presenter etait deja
+		// init via Init(m_cfg) plus haut dans le boot ; ici on ne fait que
+		// brancher le canal d'envoi reseau. La reception est dispatchee dans
+		// le SetMasterPushHandler ci-dessous (opcodes 60/62/64/66/67).
+		m_questUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+			return m_authUi.SendGenericRequestAsync(opcode, payload);
+		});
 
 		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).
 		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
@@ -830,6 +840,22 @@ namespace engine
 					m_mailUi.RequestInbox();
 				}
 				LOG_INFO(Core, "[Engine] /mail toggle (visible={})", m_mailVisible);
+				return true;
+			}
+			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests
+			// pour ouvrir/fermer le panneau quete et synchroniser la liste depuis
+			// le master au moment de l'ouverture.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/quest" || text == "/quests"
+				    || text.starts_with("/quest ") || text.starts_with("/quest\t")
+				    || text.starts_with("/quests ") || text.starts_with("/quests\t")))
+			{
+				m_questVisible = !m_questVisible;
+				if (m_questVisible)
+				{
+					m_questUi.RequestQuestList();
+				}
+				LOG_INFO(Core, "[Engine] /quest toggle (visible={})", m_questVisible);
 				return true;
 			}
 			return m_authUi.SendChatAsync(channel, targetToken, text);
@@ -896,6 +922,63 @@ namespace engine
 					return;
 				}
 				m_mailUi.OnDeleteResponse(*parsed);
+				return;
+			}
+			// CMANGOS.23 (Phase 5.23 step 3+4) — Dispatch des reponses Quest
+			// (60/62/64/66) + push QuestStateUpdate (67).
+			case kOpcodeQuestAcceptResponse:
+			{
+				auto parsed = ParseQuestAcceptResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] QUEST_ACCEPT_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_questUi.OnQuestAcceptResponse(*parsed);
+				return;
+			}
+			case kOpcodeQuestCompleteResponse:
+			{
+				auto parsed = ParseQuestCompleteResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] QUEST_COMPLETE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_questUi.OnQuestCompleteResponse(*parsed);
+				return;
+			}
+			case kOpcodeQuestRewardResponse:
+			{
+				auto parsed = ParseQuestRewardResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] QUEST_REWARD_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_questUi.OnQuestRewardResponse(*parsed);
+				return;
+			}
+			case kOpcodeQuestListResponse:
+			{
+				auto parsed = ParseQuestListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] QUEST_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_questUi.OnQuestListResponse(*parsed);
+				return;
+			}
+			case kOpcodeQuestStateUpdate:
+			{
+				auto parsed = ParseQuestStateUpdatePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] QUEST_STATE_UPDATE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_questUi.OnQuestStateUpdate(*parsed);
 				return;
 			}
 			default:

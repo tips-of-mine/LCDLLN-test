@@ -2,10 +2,13 @@
 
 #include "src/client/ui_common/UIModel.h"
 #include "src/shared/core/Config.h"
+#include "src/shared/network/QuestPayloads.h"
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace engine::client
@@ -103,6 +106,55 @@ namespace engine::client
 		/// Return the immutable resolved quest UI state.
 		const QuestUiState& GetState() const { return m_state; }
 
+		// ---------------------------------------------------------------------
+		// CMANGOS.23 (Phase 5.23 step 3+4) — Network wiring
+		// ---------------------------------------------------------------------
+
+		/// Callback fire-and-forget : (opcode, payload) sur la connexion master.
+		/// Cable via \ref SetSendCallback. Mirror de \ref MailSendCallback.
+		using SendCallback = std::function<bool(uint16_t opcode, const std::vector<uint8_t>& payload)>;
+
+		/// Cable le callback pour fire-and-forget des requetes au master.
+		/// Doit etre appele avant tout RequestQuestList / AcceptQuest / etc.
+		void SetSendCallback(SendCallback cb) { m_send = std::move(cb); }
+
+		/// Demande la liste des quetes au master (envoie QuestListRequest).
+		/// La reponse est consommee via \ref OnQuestListResponse.
+		void RequestQuestList();
+
+		/// Envoie un QuestAcceptRequest pour la quete \p questId.
+		void AcceptQuest(uint32_t questId);
+
+		/// Envoie un QuestCompleteRequest pour la quete \p questId.
+		void CompleteQuest(uint32_t questId);
+
+		/// Envoie un QuestRewardRequest pour la quete \p questId. V1 : le
+		/// serveur bascule l'etat Completed -> Rewarded sans deposer
+		/// effectivement les recompenses dans l'inventaire.
+		void RewardQuest(uint32_t questId);
+
+		/// Recoit une reponse QuestListResponse : remplit \ref m_questStates.
+		void OnQuestListResponse(const engine::network::QuestListResponsePayload& resp);
+
+		/// Recoit une reponse QuestAcceptResponse : update local cache.
+		void OnQuestAcceptResponse(const engine::network::QuestAcceptResponsePayload& resp);
+
+		/// Recoit une reponse QuestCompleteResponse : update local cache.
+		void OnQuestCompleteResponse(const engine::network::QuestCompleteResponsePayload& resp);
+
+		/// Recoit une reponse QuestRewardResponse : update local cache.
+		void OnQuestRewardResponse(const engine::network::QuestRewardResponsePayload& resp);
+
+		/// Recoit un push QuestStateUpdate (admin reset, expiration).
+		void OnQuestStateUpdate(const engine::network::QuestStateUpdatePayload& update);
+
+		/// Lit l'etat cache local d'une quete. 0 (None) si la quete est inconnue.
+		uint8_t GetCachedStatus(uint32_t questId) const;
+
+		/// Snapshot du cache (pour le renderer ImGui debug). Cle = questId,
+		/// valeur = QuestStatus brut.
+		const std::unordered_map<uint32_t, uint8_t>& GetCachedStates() const { return m_questStates; }
+
 	private:
 		/// Load minimap zone metadata from the configured content-relative file.
 		bool LoadZoneMetadata(const engine::core::Config& config);
@@ -142,5 +194,12 @@ namespace engine::client
 		uint32_t m_viewportHeight = 0;
 		std::string m_relativeZoneMetadataPath;
 		bool m_initialized = false;
+
+		/// CMANGOS.23 (Phase 5.23 step 3+4) — Cable serveur : callback
+		/// fire-and-forget pour envoyer les requetes au master.
+		SendCallback m_send;
+		/// Cache local des etats de quete recus du serveur (questId -> QuestStatus
+		/// brut). Mis a jour par les OnXxxResponse + OnQuestStateUpdate.
+		std::unordered_map<uint32_t, uint8_t> m_questStates;
 	};
 }

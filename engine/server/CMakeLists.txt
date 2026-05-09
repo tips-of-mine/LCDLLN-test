@@ -319,6 +319,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(ignore_list_tests
     social/IgnoreListTests.cpp)
 
+  # CMANGOS.17 (Phase 3.17a) : LootTable + roll deterministe (seed-based).
+  lcdlln_add_simple_test(loot_table_tests
+    loot/LootTableTests.cpp
+    loot/LootTable.cpp)
+
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests
     shard/vmap/BIHTests.cpp

@@ -310,6 +310,11 @@ elseif(UNIX)
   target_compile_options(object_guid_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME object_guid_tests COMMAND object_guid_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+  # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).
+  lcdlln_add_simple_test(mail_manager_tests
+    mail/MailManagerTests.cpp
+    mail/MailManager.cpp)
+
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests
     shard/vmap/BIHTests.cpp

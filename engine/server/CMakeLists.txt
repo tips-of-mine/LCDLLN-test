@@ -321,6 +321,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(quest_state_tests
     quests/QuestStateTests.cpp)
 
+  # CMANGOS.28 (Phase 3.28a) : WorldStateRegistry (header-only).
+  lcdlln_add_simple_test(world_state_registry_tests
+    world/WorldStateRegistryTests.cpp)
+
   # CMANGOS.20 (Phase 3.20a) : MotionGeneratorStack (header-only).
   lcdlln_add_simple_test(motion_generator_stack_tests
     ai/MotionGeneratorStackTests.cpp)

@@ -129,12 +129,10 @@ jobs:
             } |
             Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
 
-          # Assets
-          $assetsSource = "$env:GITHUB_WORKSPACE\assets"
-          if (Test-Path $assetsSource) {
-            Copy-Item -Recurse -Path $assetsSource `
-              -Destination "$env:GITHUB_WORKSPACE\artifacts\assets" -Force
-          }
+          # NB : ex-step "assets/" supprime suite a la migration des 2 JSONs
+          # (surface_table, layer_palette) vers game/data/. Le top-level
+          # assets/ n'existe plus. game/data/ est copie plus bas et inclut
+          # desormais ces fichiers.
 
           # Copie les DLLs MSVC Release depuis VS Redist
           $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"

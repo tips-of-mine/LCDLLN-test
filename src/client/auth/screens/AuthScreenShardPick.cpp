@@ -1,7 +1,7 @@
 // AUTH-UI.8 — Couche modèle pour l'écran de choix du royaume (shard).
 
 // Couche modèle : BuildModel_ShardPick liste les shards disponibles, Update_ShardPick gère la navigation clavier.
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/shared/core/Log.h"
 #include "src/shared/platform/Input.h"

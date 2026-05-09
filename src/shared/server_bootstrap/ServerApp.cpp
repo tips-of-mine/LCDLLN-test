@@ -4,7 +4,7 @@
 #include "src/shared/net/ChatEmotes.h"
 #include "src/shared/net/ChatSystem.h"
 #include "src/shared/platform/FileSystem.h"
-#include "src/shardd/gameplay/ChatCommandParser.h"
+#include "src/shardd/gameplay/chat/ChatCommandParser.h"
 #include "src/shared/network/ServerProtocol.h"
 
 #include <algorithm>

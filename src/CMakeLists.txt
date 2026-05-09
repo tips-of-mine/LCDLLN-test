@@ -18,26 +18,26 @@ if(WIN32)
   add_executable(server_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_win.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/server_bootstrap/ServerApp.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/ChatCommandParser.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/chat/ChatCommandParser.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerProtocol.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/FriendSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/PartySystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GuildSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GuildTabard.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GuildBank.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/net/ChatEmotes.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/CharacterPersistence.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/CurrencyConfig.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/VendorCatalog.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/PlayerWalletService.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/TradeSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GatheringSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/CraftingSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/AuctionHouse.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/QuestRuntime.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/SpawnerRuntime.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/EventRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/character/CharacterPersistence.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/CurrencyConfig.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/VendorCatalog.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/economy/PlayerWalletService.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/trade/TradeSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/gathering/GatheringSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/crafting/CraftingSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/auction/AuctionHouse.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/quest/QuestRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/spawner/SpawnerRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/event/EventRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/UdpTransport.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
@@ -89,29 +89,29 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/TermsPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/FriendSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/PartySystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GuildSystem.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GuildTabard.cpp
-    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/GuildBank.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/FriendSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/social/PartySystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildTabard.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/gameplay/guild/GuildBank.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountValidation.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/InMemoryAccountStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/MysqlAccountStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRole.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/account/AccountRoleService.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/AuthRegisterHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/auth/AuthRegisterHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/session/ConnectionSessionMap.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/email/SmtpMailer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/email/LocalizedEmail.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/TermsRepository.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/TermsHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/CharacterCreateHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/CharacterListHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/CharacterDeleteHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/CharacterSavePositionHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/CharacterEnterWorldHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/terms/TermsRepository.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/terms/TermsHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterCreateHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterListHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterDeleteHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterSavePositionHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterEnterWorldHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMap.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ChatRelayHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/chat/ChatRelayHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp
@@ -123,8 +123,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/quests/MysqlQuestStateStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/social/MysqlIgnoreStore.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ChatPayloads.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/PasswordResetStore.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/PasswordResetHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/RateLimitAndBan.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/security/SecurityAuditLog.cpp
@@ -133,11 +133,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/security/BotDetector.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ServerRegistry.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardRegisterHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketCrypto.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketValidator.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ServerListHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardRegisterHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketValidator.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ServerListHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/metrics/HealthEndpoint.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/metrics/PrometheusMetrics.cpp
   )
@@ -536,9 +536,9 @@ elseif(UNIX)
 
   # M22.4: Shard ticket validation tests
   add_executable(shard_ticket_tests
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketTests.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketValidator.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketValidator.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
@@ -551,7 +551,7 @@ elseif(UNIX)
 
   # M22.5: Server list and shard selection policy tests
   add_executable(server_list_policy_tests
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ServerListPolicyTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ServerListPolicyTests.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/shards/ShardRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ServerListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
@@ -567,9 +567,9 @@ elseif(UNIX)
   add_executable(shard_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_linux.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketValidator.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketHandshakeHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/ShardTicketCrypto.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketValidator.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketHandshakeHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ShardTicketCrypto.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/metrics/HealthEndpoint.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/metrics/PrometheusMetrics.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ShardToMasterClient.cpp

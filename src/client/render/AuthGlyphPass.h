@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/FontAtlasTtf.h"
 

@@ -4,7 +4,7 @@
 #include "src/world_editor/ui/EditorMode.h"
 #include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
-#include "src/world_editor/WorldEditorShell.h"
+#include "src/world_editor/core/WorldEditorShell.h"
 #include "src/shared/core/memory/Memory.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/network/ChatPayloads.h"

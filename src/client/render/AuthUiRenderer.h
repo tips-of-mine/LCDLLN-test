@@ -1,6 +1,6 @@
 #pragma once
 
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 #include "src/shared/core/Config.h"
 
 #include <vulkan/vulkan.h>

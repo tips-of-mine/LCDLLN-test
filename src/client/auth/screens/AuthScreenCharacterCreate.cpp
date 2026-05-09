@@ -1,7 +1,7 @@
 // AUTH-UI.11 — Couche modèle pour l'écran de création de personnage.
 
 // Couche modèle : BuildModel_CharacterCreate expose le champ nom, StartCharacterCreateWorker envoie la requête réseau.
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/shared/network/CharacterPayloads.h"
 #include "src/shared/network/ErrorPacket.h"

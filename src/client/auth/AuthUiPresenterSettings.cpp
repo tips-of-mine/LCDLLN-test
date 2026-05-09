@@ -1,4 +1,4 @@
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/shared/core/DefaultClientEndpoints.h"
 #include "src/shared/core/Log.h"

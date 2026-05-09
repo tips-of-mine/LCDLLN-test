@@ -21,13 +21,13 @@
 /// identique à TerrainSculptTests.
 
 #include "src/shared/core/Config.h"
-#include "src/world_editor/CommandStack.h"
-#include "src/world_editor/ProceduralStampGenerators.h"
-#include "src/world_editor/StampLibrary.h"
-#include "src/world_editor/TerrainBrush.h"
-#include "src/world_editor/TerrainDocument.h"
-#include "src/world_editor/TerrainStampCommand.h"
-#include "src/world_editor/TerrainStampTool.h"
+#include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/terrain/ProceduralStampGenerators.h"
+#include "src/world_editor/terrain/StampLibrary.h"
+#include "src/world_editor/terrain/TerrainBrush.h"
+#include "src/world_editor/terrain/TerrainDocument.h"
+#include "src/world_editor/terrain/TerrainStampCommand.h"
+#include "src/world_editor/terrain/TerrainStampTool.h"
 #include "src/client/world/terrain/TerrainChunk.h"
 
 #include <cmath>

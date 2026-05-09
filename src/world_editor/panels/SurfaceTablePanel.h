@@ -1,7 +1,7 @@
 // src/world_editor/panels/SurfaceTablePanel.h
 #pragma once
 
-#include "src/world_editor/IPanel.h"
+#include "src/world_editor/core/IPanel.h"
 #include "src/client/world/surface/SurfaceTable.h"
 
 #include <filesystem>
@@ -10,7 +10,7 @@
 namespace engine::editor::world::panels
 {
 	/// Panel ImGui lecture seule listant les 13 surfaces de
-	/// `assets/gameplay/surface_table.json` (M100.11). Aucune édition runtime
+	/// `game/data/gameplay/surface_table.json` (M100.11). Aucune édition runtime
 	/// — modifier le JSON via éditeur externe + bouton [Reload].
 	class SurfaceTablePanel final : public engine::editor::world::IPanel
 	{
@@ -20,7 +20,7 @@ namespace engine::editor::world::panels
 		bool IsVisible() const override { return m_visible; }
 		void SetVisible(bool v) override { m_visible = v; }
 
-		/// Charge le JSON depuis `<contentRoot>/assets/gameplay/surface_table.json`.
+		/// Charge le JSON depuis `<contentRoot>/game/data/gameplay/surface_table.json`.
 		/// `contentRoot` typique : "game/data". Appelé une fois par WorldEditorShell::Init.
 		/// Effet de bord : remplit `m_table` et `m_status`.
 		void LoadFromContentRoot(const std::filesystem::path& contentRoot);

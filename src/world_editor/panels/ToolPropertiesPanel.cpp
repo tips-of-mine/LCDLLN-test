@@ -1,14 +1,14 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 
-#include "src/world_editor/LakeTool.h"
-#include "src/world_editor/RiverTool.h"
-#include "src/world_editor/SplatPaintTool.h"
-#include "src/world_editor/StampLibrary.h"
-#include "src/world_editor/TerrainBrush.h"
-#include "src/world_editor/TerrainSculptTool.h"
-#include "src/world_editor/TerrainStampTool.h"
-#include "src/world_editor/WaterDocument.h"
-#include "src/world_editor/WorldEditorShell.h"
+#include "src/world_editor/water/LakeTool.h"
+#include "src/world_editor/water/RiverTool.h"
+#include "src/world_editor/splat/SplatPaintTool.h"
+#include "src/world_editor/terrain/StampLibrary.h"
+#include "src/world_editor/terrain/TerrainBrush.h"
+#include "src/world_editor/terrain/TerrainSculptTool.h"
+#include "src/world_editor/terrain/TerrainStampTool.h"
+#include "src/world_editor/water/WaterDocument.h"
+#include "src/world_editor/core/WorldEditorShell.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

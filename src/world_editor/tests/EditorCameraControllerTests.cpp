@@ -18,7 +18,7 @@
 /// monde (M100.1, M100.2) — pas une nécessité technique mais un choix
 /// de cohérence.
 
-#include "src/world_editor/EditorCameraController.h"
+#include "src/world_editor/camera/EditorCameraController.h"
 
 #include <cmath>
 #include <cstdio>

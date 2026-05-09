@@ -5,7 +5,7 @@
 #include "src/client/render/AuthImGuiRenderer.h"
 #include "src/client/render/LnTheme.h"
 
-#include "src/client/LocalizationService.h"
+#include "src/client/localization/LocalizationService.h"
 #include "src/shared/network/CharacterPayloads.h"
 
 #include <algorithm>

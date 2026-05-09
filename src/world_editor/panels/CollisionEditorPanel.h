@@ -1,8 +1,8 @@
 // src/world_editor/panels/CollisionEditorPanel.h
 #pragma once
 
-#include "src/world_editor/CollisionPreviewCamera.h"
-#include "src/world_editor/IPanel.h"
+#include "src/world_editor/camera/CollisionPreviewCamera.h"
+#include "src/world_editor/core/IPanel.h"
 #include "src/client/world/collision/CollisionProxy.h"
 
 #include <filesystem>

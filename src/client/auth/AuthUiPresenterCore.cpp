@@ -14,7 +14,7 @@
 #pragma comment(lib, "winhttp.lib")
 #endif
 
-#include "src/client/AuthUi.h"
+#include "src/client/auth/AuthUi.h"
 
 #include "src/client/render/AuthUiRenderer.h"
 

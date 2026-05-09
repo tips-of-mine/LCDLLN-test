@@ -20,7 +20,7 @@
 /// la seule où ImGui est compilé) — cohérent avec le fait que l'éditeur
 /// monde est un binaire Windows / Vulkan.
 
-#include "src/world_editor/WorldEditorShell.h"
+#include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/panels/InspectorPanel.h"
 #include "src/shared/core/Config.h"
 

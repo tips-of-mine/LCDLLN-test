@@ -214,8 +214,8 @@ add_library(engine_core
   src/shared/core/Time.cpp
   src/client/audio/AudioEngine.cpp
   src/client/audio/MaMenuMusic.cpp
-  src/client/CombatHud.cpp
-  src/client/LocalizationService.cpp
+  src/client/combat/CombatHud.cpp
+  src/client/localization/LocalizationService.cpp
   src/client/auth/AuthUiPresenterCore.cpp
   src/client/auth/AuthUiPresenterSettings.cpp
   src/client/auth/AuthUiPresenterNative.cpp
@@ -230,30 +230,30 @@ add_library(engine_core
   src/client/auth/screens/AuthScreenTerms.cpp
   src/client/auth/screens/AuthScreenCharacterCreate.cpp
   src/client/auth/screens/AuthScreenCharacterSelect.cpp
-  src/client/AoEPreviewSystem.cpp
-  src/client/BuffBarPresenter.cpp
-  src/client/AuraFXSystem.cpp
-  src/client/FXManager.cpp
-  src/client/InventoryUi.cpp
-  src/client/TradeWindowUi.cpp
-  src/client/HarvestCastBar.cpp
-  src/client/CraftingUi.cpp
-  src/client/CharacterCreationUi.cpp
-  src/client/SettingsMenuUi.cpp
-  src/client/HudLayoutEditor.cpp
-  src/client/AdvancedCombatUi.cpp
-  src/client/AuctionUi.cpp
-  src/client/ShopUi.cpp
-  src/client/GameplayUdpClient.cpp
-  src/client/ProfilerHud.cpp
-  src/client/QuestUi.cpp
-  src/client/ThemeManager.cpp
-  src/client/UIModel.cpp
-  src/client/ChatUi.cpp
-  src/client/ChatWorldVisualPresenter.cpp
-  src/client/FriendsUi.cpp
-  src/client/PartyHud.cpp
-  src/client/ZonePreloadHook.cpp
+  src/client/combat/AoEPreviewSystem.cpp
+  src/client/combat/BuffBarPresenter.cpp
+  src/client/combat/AuraFXSystem.cpp
+  src/client/fx/FXManager.cpp
+  src/client/inventory/InventoryUi.cpp
+  src/client/trade/TradeWindowUi.cpp
+  src/client/crafting/HarvestCastBar.cpp
+  src/client/crafting/CraftingUi.cpp
+  src/client/character_creation/CharacterCreationUi.cpp
+  src/client/settings/SettingsMenuUi.cpp
+  src/client/hud/HudLayoutEditor.cpp
+  src/client/combat/AdvancedCombatUi.cpp
+  src/client/economy/AuctionUi.cpp
+  src/client/economy/ShopUi.cpp
+  src/client/net/GameplayUdpClient.cpp
+  src/client/debug/ProfilerHud.cpp
+  src/client/quest/QuestUi.cpp
+  src/client/ui_common/ThemeManager.cpp
+  src/client/ui_common/UIModel.cpp
+  src/client/chat/ChatUi.cpp
+  src/client/chat/ChatWorldVisualPresenter.cpp
+  src/client/social/FriendsUi.cpp
+  src/client/social/PartyHud.cpp
+  src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
   src/shared/net/ChatEmotes.cpp
   src/world_editor/ui/EditorMode.cpp
@@ -266,27 +266,27 @@ add_library(engine_core
   # M100.1 — World editor "couche au-dessus" (engine::editor::world).
   # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
   # editor.world.enabled. Pas référencé par engine/server/.
-  src/world_editor/WorldEditorShell.cpp
-  src/world_editor/CommandStack.cpp
-  src/world_editor/TerrainDocument.cpp
-  src/world_editor/TerrainBrush.cpp
-  src/world_editor/TerrainRaycast.cpp
-  src/world_editor/TerrainSculptCommand.cpp
-  src/world_editor/TerrainSculptTool.cpp
-  src/world_editor/TerrainStampCommand.cpp
-  src/world_editor/TerrainStampTool.cpp
-  src/world_editor/StampLibrary.cpp
-  src/world_editor/ProceduralStampGenerators.cpp
-  src/world_editor/SplatPaintCommand.cpp
-  src/world_editor/SplatPaintTool.cpp
-  src/world_editor/SplatRules.cpp
-  src/world_editor/EditorCameraController.cpp
-  src/world_editor/CollisionPreviewCamera.cpp
-  src/world_editor/WaterDocument.cpp
-  src/world_editor/AddLakeCommand.cpp
-  src/world_editor/AddRiverCommand.cpp
-  src/world_editor/LakeTool.cpp
-  src/world_editor/RiverTool.cpp
+  src/world_editor/core/WorldEditorShell.cpp
+  src/world_editor/core/CommandStack.cpp
+  src/world_editor/terrain/TerrainDocument.cpp
+  src/world_editor/terrain/TerrainBrush.cpp
+  src/world_editor/terrain/TerrainRaycast.cpp
+  src/world_editor/terrain/TerrainSculptCommand.cpp
+  src/world_editor/terrain/TerrainSculptTool.cpp
+  src/world_editor/terrain/TerrainStampCommand.cpp
+  src/world_editor/terrain/TerrainStampTool.cpp
+  src/world_editor/terrain/StampLibrary.cpp
+  src/world_editor/terrain/ProceduralStampGenerators.cpp
+  src/world_editor/splat/SplatPaintCommand.cpp
+  src/world_editor/splat/SplatPaintTool.cpp
+  src/world_editor/splat/SplatRules.cpp
+  src/world_editor/camera/EditorCameraController.cpp
+  src/world_editor/camera/CollisionPreviewCamera.cpp
+  src/world_editor/water/WaterDocument.cpp
+  src/world_editor/water/AddLakeCommand.cpp
+  src/world_editor/water/AddRiverCommand.cpp
+  src/world_editor/water/LakeTool.cpp
+  src/world_editor/water/RiverTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -683,7 +683,7 @@ endif()
 add_test(NAME ddos_connection_protector_tests COMMAND ddos_connection_protector_tests)
 
 # STAB.14: Runtime localization service unit tests
-add_executable(localization_service_tests src/client/LocalizationServiceTests.cpp)
+add_executable(localization_service_tests src/client/localization/LocalizationServiceTests.cpp)
 target_link_libraries(localization_service_tests PRIVATE engine_core)
 if(MSVC)
   target_compile_options(localization_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -1100,7 +1100,7 @@ endif()
 add_subdirectory(tools/load_tester)
 
 # M100.9: Mini-tool C++ standalone qui génère 8 PNG 4x4 unicolore dans
-# assets/terrain/placeholders/ via custom command POST_BUILD. Sert de fallback
+# game/data/terrain/placeholders/ via custom command POST_BUILD. Sert de fallback
 # visuellement distinct pour le shader 8-layer terrain en attendant les vrais
 # assets PBR. Pas de dépendance zlib externe (deflate stored block).
 add_subdirectory(tools/gen_terrain_placeholders)

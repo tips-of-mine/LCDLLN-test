@@ -1,7 +1,7 @@
-#include "engine/render/AuthGlyphPass.h"
+#include "src/client/render/AuthGlyphPass.h"
 
-#include "engine/core/Log.h"
-#include "engine/render/vk/VkUtils.h"
+#include "src/shared/core/Log.h"
+#include "src/client/render/vk/VkUtils.h"
 
 #include <algorithm>
 #include <array>

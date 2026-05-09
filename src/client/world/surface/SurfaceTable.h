@@ -1,7 +1,7 @@
-// engine/world/surface/SurfaceTable.h
+// src/client/world/surface/SurfaceTable.h
 #pragma once
 
-#include "engine/world/surface/SurfaceType.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 #include <array>
 #include <filesystem>

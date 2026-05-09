@@ -1,6 +1,6 @@
-#include "engine/client/UIModel.h"
+#include "src/client/UIModel.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <string_view>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/world/WorldModel.h"
-#include "engine/world/terrain/TerrainChunk.h"
-#include "engine/world/terrain/TerrainLodChain.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainLodChain.h"
 
 #include <atomic>
 #include <condition_variable>

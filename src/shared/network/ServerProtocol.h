@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/server/ReplicationTypes.h"
+#include "src/shared/network/ReplicationTypes.h"
 
 #include <cstddef>
 #include <cstdint>

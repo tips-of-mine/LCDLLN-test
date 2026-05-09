@@ -1,6 +1,6 @@
-#include "engine/audio/MaMenuMusic.h"
+#include "src/client/audio/MaMenuMusic.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cstring>

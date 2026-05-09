@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/network/CharacterPayloads.h"
-#include "engine/network/ServerListPayloads.h"
+#include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/ServerListPayloads.h"
 
 #include <cstdint>
 #include <optional>

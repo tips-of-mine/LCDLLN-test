@@ -1,7 +1,7 @@
-#include "engine/render/UnderwaterPass.h"
-#include "engine/render/PipelineCache.h"
-#include "engine/render/PsoKey.h"
-#include "engine/core/Log.h"
+#include "src/client/render/UnderwaterPass.h"
+#include "src/client/render/PipelineCache.h"
+#include "src/client/render/PsoKey.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
 #include <array>

@@ -1,8 +1,8 @@
-// engine/world/water/WaterMeshBuilder.h
+// src/client/world/water/WaterMeshBuilder.h
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/world/water/WaterSurfaces.h"
+#include "src/shared/math/Math.h"
+#include "src/client/world/water/WaterSurfaces.h"
 
 #include <cstdint>
 #include <string>

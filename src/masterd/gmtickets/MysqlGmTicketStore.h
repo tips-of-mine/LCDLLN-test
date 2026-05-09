@@ -3,7 +3,7 @@
 // tickets GM (table gm_tickets, migration 0046). Cible UNIX shard.
 // Le WIN32 sandbox utilise GmTicketSystem (header-only en memoire).
 
-#include "engine/server/gmtickets/GmTicketSystem.h"
+#include "src/masterd/gmtickets/GmTicketSystem.h"
 
 #include <optional>
 #include <vector>

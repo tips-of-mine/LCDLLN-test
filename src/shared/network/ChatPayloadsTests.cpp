@@ -3,9 +3,9 @@
  * Pure encoding tests — no DB / no network. Returns 0 on success, non-zero on first failure.
  */
 
-#include "engine/network/ChatPayloads.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/ChatPayloads.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <cstdlib>
 #include <iostream>

@@ -1,8 +1,8 @@
-#include "engine/server/shard/globals/ConditionMgr.h"
+#include "src/shardd/internals/globals/ConditionMgr.h"
 
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

@@ -1,9 +1,9 @@
 // CMANGOS.13 (Phase 1a) — Tests SqlPreparedStatement + Cache.
 
-#include "engine/server/db/SqlPreparedStatement.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/SqlPreparedStatement.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

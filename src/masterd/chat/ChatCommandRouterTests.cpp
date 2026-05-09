@@ -1,8 +1,8 @@
 // CMANGOS.01 (Phase 2.01b) — Tests ChatCommandRouter.
 // Pure : aucune dépendance DB.
 
-#include "engine/server/chat/ChatCommandRouter.h"
-#include "engine/core/Log.h"
+#include "src/masterd/chat/ChatCommandRouter.h"
+#include "src/shared/core/Log.h"
 
 #include <atomic>
 #include <string>

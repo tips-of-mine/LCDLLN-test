@@ -1,7 +1,7 @@
-#include "engine/server/TradeSystem.h"
+#include "src/shardd/gameplay/TradeSystem.h"
 
-#include "engine/server/ServerApp.h"
-#include "engine/core/Log.h"
+#include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cmath>

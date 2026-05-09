@@ -1,7 +1,7 @@
-#include "engine/server/db/SqlDelayThread.h"
+#include "src/shared/db/SqlDelayThread.h"
 
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
 
 #include <mysql.h>
 

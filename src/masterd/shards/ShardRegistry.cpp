@@ -1,7 +1,7 @@
 // M22.1 — Master shard registry: state machine (registering → online → degraded → offline), in-memory + optional persistence by caller.
 
-#include "engine/server/ShardRegistry.h"
-#include "engine/core/Log.h"
+#include "src/masterd/shards/ShardRegistry.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <chrono>

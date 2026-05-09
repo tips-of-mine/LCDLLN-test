@@ -3,8 +3,8 @@
 // la DB et le store. Couvre : ban / mute permanent / mute expiré /
 // anti-flood / sliding window / Decide vs DecideAndRecord.
 
-#include "engine/server/chat/ChatGate.h"
-#include "engine/core/Log.h"
+#include "src/masterd/chat/ChatGate.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdint>
 #include <string>

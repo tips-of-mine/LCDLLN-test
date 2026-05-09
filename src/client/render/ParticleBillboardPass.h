@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/render/Camera.h"
-#include "engine/render/ParticleSystem.h"
+#include "src/shared/math/Math.h"
+#include "src/client/render/Camera.h"
+#include "src/client/render/ParticleSystem.h"
 
 #include <vector>
 

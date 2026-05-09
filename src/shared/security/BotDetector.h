@@ -5,7 +5,7 @@
 // Suspicious accounts are flagged for manual review or auto-banned.
 // Thread-safe only if caller serialises access (single-worker v1).
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <chrono>
 #include <cstdint>

@@ -1,6 +1,6 @@
-#include "engine/render/DynamicLightSystem.h"
+#include "src/client/render/DynamicLightSystem.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <string>

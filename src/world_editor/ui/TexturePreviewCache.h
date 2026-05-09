@@ -34,7 +34,7 @@ namespace engine::editor
                           uint32_t dstSize, std::vector<uint8_t>& outRgba);
 
     /// Decode un fichier .texr (magic TEXR + RGBA8) ou un PNG/JPG (via stb_image).
-    /// Le format .texr est defini dans engine/render/AssetRegistry.cpp :
+    /// Le format .texr est defini dans src/client/render/AssetRegistry.cpp :
     ///   bytes 0..3 : magic 'TEXR' (0x52584554 LE)
     ///   bytes 4..7 : width (uint32 LE)
     ///   bytes 8..11: height (uint32 LE)

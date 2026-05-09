@@ -2,14 +2,14 @@
 // Pump() est le point central : il dépile les événements NetClient, identifie chaque paquet
 // par son request_id, résout les requêtes en attente ou route les push, puis expire les timeouts.
 // Les callbacks sont toujours appelés depuis Pump() — jamais depuis le thread IO.
-#include "engine/network/RequestResponseDispatcher.h"
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/NetClient.h"
-#include "engine/network/PacketBuilder.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/RequestResponseDispatcher.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <mutex>

@@ -3,11 +3,11 @@
 // On platforms without MySQL (e.g. WIN32 game shard), the system operates in no-DB
 // mode: presence tracking is fully functional; persistent DB operations are skipped.
 
-#include "engine/server/FriendSystem.h"
-#include "engine/core/Log.h"
+#include "src/shardd/gameplay/FriendSystem.h"
+#include "src/shared/core/Log.h"
 
 #if ENGINE_HAS_MYSQL
-#  include "engine/server/db/DbHelpers.h"
+#  include "src/shared/db/DbHelpers.h"
 #  include <mysql.h>
 #endif
 

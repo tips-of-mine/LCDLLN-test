@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/render/Camera.h"
+#include "src/client/render/Camera.h"
 
 #include <functional>
 

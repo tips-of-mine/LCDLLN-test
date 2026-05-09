@@ -1,5 +1,5 @@
-#include "engine/render/terrain/TerrainHoleMask.h"
-#include "engine/core/Log.h"
+#include "src/client/render/terrain/TerrainHoleMask.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
 

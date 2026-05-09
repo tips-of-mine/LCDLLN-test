@@ -1,8 +1,8 @@
-// engine/editor/world/RiverTool.h
+// src/world_editor/world/RiverTool.h
 #pragma once
 
-#include "engine/editor/world/WaterDocument.h"
-#include "engine/world/water/WaterSurfaces.h"
+#include "src/world_editor/world/WaterDocument.h"
+#include "src/client/world/water/WaterSurfaces.h"
 
 #include <vector>
 

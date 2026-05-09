@@ -4,11 +4,11 @@
 // On platforms without MySQL (WIN32 game shard) the system operates in no-DB mode:
 // presence tracking and in-memory state are fully functional; DB operations are skipped.
 
-#include "engine/server/GuildSystem.h"
-#include "engine/core/Log.h"
+#include "src/shardd/gameplay/GuildSystem.h"
+#include "src/shared/core/Log.h"
 
 #if ENGINE_HAS_MYSQL
-#  include "engine/server/db/DbHelpers.h"
+#  include "src/shared/db/DbHelpers.h"
 #  include <mysql.h>
 #endif
 

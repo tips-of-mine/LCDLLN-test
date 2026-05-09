@@ -1,5 +1,5 @@
-#include "engine/server/weather/WeatherManager.h"
-#include "engine/core/Log.h"
+#include "src/shardd/weather/WeatherManager.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

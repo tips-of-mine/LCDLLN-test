@@ -6,10 +6,10 @@
 ///   - Visible ring jamais évincé (protection).
 ///   - LRU eviction par ordre d'usage (Touch déplace en tête).
 ///
-/// Style aligné sur engine/world/terrain/tests/TerrainChunkTests.cpp
+/// Style aligné sur src/client/world/terrain/tests/TerrainChunkTests.cpp
 /// (REQUIRE macro maison + main() appelant chaque test function).
 
-#include "engine/render/terrain_chunk/ChunkRuntime.h"
+#include "src/client/render/terrain_chunk/ChunkRuntime.h"
 
 #include <cstdio>
 

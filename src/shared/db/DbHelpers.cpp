@@ -1,7 +1,7 @@
 // M21.6 — Helpers Execute/Query and explicit transactions for raw SQL access.
 
-#include "engine/server/db/DbHelpers.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

@@ -1,5 +1,5 @@
-#include "engine/network/PacketView.h"
-#include "engine/network/ByteReader.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ByteReader.h"
 
 namespace engine::network
 {

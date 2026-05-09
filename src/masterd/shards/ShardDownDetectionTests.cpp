@@ -5,8 +5,8 @@
  * No external test framework; returns 0 if all pass, non-zero on first failure.
  */
 
-#include "engine/server/ShardRegistry.h"
-#include "engine/core/Log.h"
+#include "src/masterd/shards/ShardRegistry.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <cstdlib>

@@ -1,4 +1,4 @@
-#include "engine/network/ByteWriter.h"
+#include "src/shared/network/ByteWriter.h"
 
 #include <cstring>
 

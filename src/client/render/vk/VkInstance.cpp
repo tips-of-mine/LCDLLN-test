@@ -1,5 +1,5 @@
-#include "engine/render/vk/VkInstance.h"
-#include "engine/core/Log.h"
+#include "src/client/render/vk/VkInstance.h"
+#include "src/shared/core/Log.h"
 
 #if defined(_WIN32)
 #define VK_USE_PLATFORM_WIN32_KHR

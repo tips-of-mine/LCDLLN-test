@@ -1,10 +1,10 @@
 // CMANGOS.04 (Phase 2.04c) — Tests MoveSplinePacketBuilder.
 // Round-trip pure (encode → decode → equality).
 
-#include "engine/server/shard/movement/MoveSpline.h"
-#include "engine/server/shard/movement/MoveSplineInit.h"
-#include "engine/server/shard/movement/MoveSplinePacketBuilder.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/movement/MoveSpline.h"
+#include "src/shardd/internals/movement/MoveSplineInit.h"
+#include "src/shardd/internals/movement/MoveSplinePacketBuilder.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 

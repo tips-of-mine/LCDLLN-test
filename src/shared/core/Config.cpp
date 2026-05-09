@@ -1,6 +1,6 @@
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
-#include "engine/core/DefaultClientEndpoints.h"
+#include "src/shared/core/DefaultClientEndpoints.h"
 
 #include <algorithm>
 #include <cmath>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/server/ReplicationTypes.h"
-#include "engine/world/WorldModel.h"
+#include "src/shared/network/ReplicationTypes.h"
+#include "src/client/world/WorldModel.h"
 
 #include <cstddef>
 #include <cstdint>

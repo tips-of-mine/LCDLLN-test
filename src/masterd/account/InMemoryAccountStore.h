@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/server/AccountRecord.h"
-#include "engine/server/AccountStore.h"
+#include "src/masterd/account/AccountRecord.h"
+#include "src/masterd/account/AccountStore.h"
 
 #include <cstdint>
 #include <mutex>

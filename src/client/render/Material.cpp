@@ -1,6 +1,6 @@
-#include "engine/render/Material.h"
-#include "engine/core/Log.h"
-#include "engine/render/vk/VkUtils.h"
+#include "src/client/render/Material.h"
+#include "src/shared/core/Log.h"
+#include "src/client/render/vk/VkUtils.h"
 
 #include <vulkan/vulkan_core.h>
 

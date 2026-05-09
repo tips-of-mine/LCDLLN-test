@@ -1,9 +1,9 @@
-// engine/editor/world/panels/CollisionEditorPanel.h
+// src/world_editor/world/panels/CollisionEditorPanel.h
 #pragma once
 
-#include "engine/editor/world/CollisionPreviewCamera.h"
-#include "engine/editor/world/IPanel.h"
-#include "engine/world/collision/CollisionProxy.h"
+#include "src/world_editor/world/CollisionPreviewCamera.h"
+#include "src/world_editor/world/IPanel.h"
+#include "src/client/world/collision/CollisionProxy.h"
 
 #include <filesystem>
 #include <string>

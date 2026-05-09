@@ -18,9 +18,9 @@
 //   - Sérialisation reseau (sub-PR ulterieure : MoveSplinePacketBuilder).
 //   - Interpolation client (sub-PR client : MoveSplineInterpolator).
 
-#include "engine/server/shard/movement/MoveSplineFlag.h"
-#include "engine/server/shard/movement/MovementTypedefs.h"
-#include "engine/server/shard/movement/Spline.h"
+#include "src/shardd/internals/movement/MoveSplineFlag.h"
+#include "src/shardd/internals/movement/MovementTypedefs.h"
+#include "src/shardd/internals/movement/Spline.h"
 
 #include <chrono>
 #include <cstdint>

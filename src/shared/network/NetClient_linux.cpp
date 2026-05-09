@@ -1,9 +1,9 @@
 #if !defined(_WIN32)
 
-#include "engine/network/NetClient.h"
-#include "engine/network/PacketView.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/PacketView.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>

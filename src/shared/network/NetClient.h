@@ -13,8 +13,8 @@
 ///                Connect() et Disconnect() peuvent être appelés depuis n'importe quel thread.
 ///                Les compteurs (GetBytes*/GetPackets*) sont atomiques.
 
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/platform/StableMutex.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/platform/StableMutex.h"
 
 #include <atomic>
 #include <cstdint>

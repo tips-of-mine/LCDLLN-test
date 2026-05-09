@@ -1,7 +1,7 @@
-#include "engine/client/ThemeManager.h"
+#include "src/client/ThemeManager.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 namespace engine::client
 {

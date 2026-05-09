@@ -2,7 +2,7 @@
 // CMANGOS.18 (Phase 3.18a) — InMemoryMailStore : implementation RAM
 // d'IMailStore pour les tests + fallback dev sans MySQL.
 
-#include "engine/server/mail/MailManager.h"
+#include "src/masterd/mail/MailManager.h"
 
 #include <unordered_map>
 

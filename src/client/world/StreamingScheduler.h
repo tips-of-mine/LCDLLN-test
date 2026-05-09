@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/world/WorldModel.h"
-#include "engine/world/ChunkPackageLayout.h"
+#include "src/shared/math/Math.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/ChunkPackageLayout.h"
 
 #include <cstdint>
 #include <optional>

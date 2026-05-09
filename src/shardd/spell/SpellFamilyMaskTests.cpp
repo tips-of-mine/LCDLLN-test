@@ -1,5 +1,5 @@
-#include "engine/server/spell/SpellFamilyMask.h"
-#include "engine/core/Log.h"
+#include "src/shardd/spell/SpellFamilyMask.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

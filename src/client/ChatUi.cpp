@@ -1,6 +1,6 @@
-#include "engine/client/ChatUi.h"
+#include "src/client/ChatUi.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <chrono>

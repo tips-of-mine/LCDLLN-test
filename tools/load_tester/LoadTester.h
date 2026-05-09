@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/network/NetClient.h"
-#include "engine/network/RequestResponseDispatcher.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/RequestResponseDispatcher.h"
 
 #include <chrono>
 #include <cstdint>

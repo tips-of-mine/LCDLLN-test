@@ -1,7 +1,7 @@
-#include "engine/render/SpecularPrefilterPass.h"
-#include "engine/render/PipelineCache.h"
+#include "src/client/render/SpecularPrefilterPass.h"
+#include "src/client/render/PipelineCache.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan.h>
 #include <cstdio>

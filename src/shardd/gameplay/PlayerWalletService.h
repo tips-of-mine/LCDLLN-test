@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/server/CurrencyConfig.h"
+#include "src/shardd/gameplay/CurrencyConfig.h"
 
 #include <cstdint>
 #include <string>

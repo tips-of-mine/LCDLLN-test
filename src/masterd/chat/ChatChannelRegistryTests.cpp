@@ -1,8 +1,8 @@
 // CMANGOS.01 (Phase 2.01b) — Tests ChatChannelRegistry.
 // Pure : aucune dépendance externe. RAM-only.
 
-#include "engine/server/chat/ChatChannelRegistry.h"
-#include "engine/core/Log.h"
+#include "src/masterd/chat/ChatChannelRegistry.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <vector>

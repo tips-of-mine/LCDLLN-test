@@ -1,6 +1,6 @@
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/network/ServerProtocol.h"
 
-#include "engine/net/ChatSystem.h"
+#include "src/shared/net/ChatSystem.h"
 
 #include <algorithm>
 #include <bit>

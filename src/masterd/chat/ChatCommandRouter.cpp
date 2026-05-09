@@ -1,5 +1,5 @@
-#include "engine/server/chat/ChatCommandRouter.h"
-#include "engine/server/AccountRoleService.h"
+#include "src/masterd/chat/ChatCommandRouter.h"
+#include "src/masterd/account/AccountRoleService.h"
 
 #include <cctype>
 

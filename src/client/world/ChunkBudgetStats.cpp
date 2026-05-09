@@ -1,6 +1,6 @@
-#include "engine/world/ChunkBudgetStats.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/client/world/ChunkBudgetStats.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <cstddef>
 

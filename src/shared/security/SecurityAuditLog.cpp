@@ -1,5 +1,5 @@
-#include "engine/server/SecurityAuditLog.h"
-#include "engine/core/Log.h"
+#include "src/shared/security/SecurityAuditLog.h"
+#include "src/shared/core/Log.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/rotating_file_sink.h>

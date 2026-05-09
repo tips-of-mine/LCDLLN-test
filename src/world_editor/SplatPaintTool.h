@@ -1,9 +1,9 @@
 #pragma once
 
-#include "engine/editor/world/CommandStack.h"
-#include "engine/editor/world/SplatPaintCommand.h"
-#include "engine/editor/world/TerrainDocument.h"
-#include "engine/render/Camera.h"
+#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/world/SplatPaintCommand.h"
+#include "src/world_editor/world/TerrainDocument.h"
+#include "src/client/render/Camera.h"
 
 #include <cstdint>
 #include <vector>

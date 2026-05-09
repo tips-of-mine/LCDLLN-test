@@ -7,7 +7,7 @@
 // flags, puis `Launch` configure le MoveSpline du caller. Le builder
 // est jetable (un par mouvement).
 
-#include "engine/server/shard/movement/MoveSpline.h"
+#include "src/shardd/internals/movement/MoveSpline.h"
 
 #include <cstdint>
 #include <utility>

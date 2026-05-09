@@ -1,5 +1,5 @@
-#include "engine/render/vk/StagingAllocator.h"
-#include "engine/core/Log.h"
+#include "src/client/render/vk/StagingAllocator.h"
+#include "src/shared/core/Log.h"
 
 #include <cstddef>
 

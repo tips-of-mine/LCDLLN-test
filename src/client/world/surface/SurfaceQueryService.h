@@ -1,8 +1,8 @@
-// engine/world/surface/SurfaceQueryService.h
+// src/client/world/surface/SurfaceQueryService.h
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/world/surface/SurfaceType.h"
+#include "src/shared/math/Math.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 #include <cstdint>
 #include <unordered_set>

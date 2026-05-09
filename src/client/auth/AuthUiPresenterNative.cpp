@@ -1,10 +1,10 @@
-#include "engine/client/AuthUi.h"
-#include "engine/render/AuthUiRenderer.h"
-#include "engine/core/DefaultClientEndpoints.h"
-#include "engine/core/Log.h"
-#include "engine/network/NetClient.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/platform/Window.h"
+#include "src/client/AuthUi.h"
+#include "src/client/render/AuthUiRenderer.h"
+#include "src/shared/core/DefaultClientEndpoints.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shared/platform/Window.h"
 #include <algorithm>
 #include <cctype>
 #include <cstdint>

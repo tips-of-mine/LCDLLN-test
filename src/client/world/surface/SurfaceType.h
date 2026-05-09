@@ -1,4 +1,4 @@
-// engine/world/surface/SurfaceType.h
+// src/client/world/surface/SurfaceType.h
 #pragma once
 
 #include <cstdint>

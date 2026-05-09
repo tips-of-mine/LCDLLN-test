@@ -1,6 +1,6 @@
-// engine/world/water/tests/WaterSurfacesTests.cpp
-#include "engine/world/water/WaterSurfaces.h"
-#include "engine/world/water/WaterMeshBuilder.h"
+// src/client/world/water/tests/WaterSurfacesTests.cpp
+#include "src/client/world/water/WaterSurfaces.h"
+#include "src/client/world/water/WaterMeshBuilder.h"
 
 #include <cmath>
 #include <cstdio>

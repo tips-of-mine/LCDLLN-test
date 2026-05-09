@@ -1,5 +1,5 @@
-#include "engine/server/TermsRepository.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/TermsRepository.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

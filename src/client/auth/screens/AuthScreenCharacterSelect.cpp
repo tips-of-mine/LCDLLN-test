@@ -3,16 +3,16 @@
 // Jouer (personnage sélectionné), Créer un nouveau personnage, Retour.
 // Phase 3.9 — ajoute la suppression logique (CHARACTER_DELETE_REQUEST).
 
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
-#include "engine/core/Log.h"
-#include "engine/network/CharacterPayloads.h"
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/NetClient.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/network/RequestResponseDispatcher.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/Window.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/RequestResponseDispatcher.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/Window.h"
 
 #include <chrono>
 #include <mutex>

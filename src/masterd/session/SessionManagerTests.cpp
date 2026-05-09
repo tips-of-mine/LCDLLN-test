@@ -3,9 +3,9 @@
  * No external test framework; returns 0 if all pass, non-zero on first failure.
  */
 
-#include "engine/server/SessionManager.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/masterd/session/SessionManager.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 #include <chrono>
 #include <cstdlib>
 #include <iostream>

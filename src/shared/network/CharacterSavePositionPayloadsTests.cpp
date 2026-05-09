@@ -3,10 +3,10 @@
  * Pure encoding tests — no DB / no network. Returns 0 on success, non-zero on first failure.
  */
 
-#include "engine/network/CharacterPayloads.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/core/Log.h"
+#include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdlib>
 #include <iostream>

@@ -1,6 +1,6 @@
-#include "engine/client/CraftingUi.h"
+#include "src/client/CraftingUi.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

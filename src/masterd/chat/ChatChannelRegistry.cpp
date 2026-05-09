@@ -1,4 +1,4 @@
-#include "engine/server/chat/ChatChannelRegistry.h"
+#include "src/masterd/chat/ChatChannelRegistry.h"
 
 #include <algorithm>
 #include <cctype>

@@ -6,7 +6,7 @@
 // On Windows the HTTP verification layer emits a LOG_WARN and falls back to bypass.
 // Thread-safe only if caller serialises access (single-worker v1).
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <string>
 #include <string_view>

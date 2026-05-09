@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/world/WorldModel.h"
+#include "src/client/world/WorldModel.h"
 
 namespace engine::core { class Config; }
 

@@ -1,8 +1,8 @@
-#include "engine/server/AccountRoleService.h"
+#include "src/masterd/account/AccountRoleService.h"
 
-#include "engine/server/AccountStore.h"
-#include "engine/server/SecurityAuditLog.h"
-#include "engine/core/Log.h"
+#include "src/masterd/account/AccountStore.h"
+#include "src/shared/security/SecurityAuditLog.h"
+#include "src/shared/core/Log.h"
 
 #include <string>
 

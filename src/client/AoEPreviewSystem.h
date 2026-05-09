@@ -1,10 +1,10 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/gameplay/SkillSystem.h"
-#include "engine/platform/Input.h"
-#include "engine/render/Camera.h"
-#include "engine/render/DecalSystem.h"
+#include "src/shared/core/Config.h"
+#include "src/client/gameplay/SkillSystem.h"
+#include "src/shared/platform/Input.h"
+#include "src/client/render/Camera.h"
+#include "src/client/render/DecalSystem.h"
 
 #include <cstdint>
 #include <string>

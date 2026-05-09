@@ -1,7 +1,7 @@
-#include "engine/network/ShardPayloads.h"
-#include "engine/network/ByteReader.h"
-#include "engine/network/ByteWriter.h"
-#include "engine/network/PacketBuilder.h"
+#include "src/shared/network/ShardPayloads.h"
+#include "src/shared/network/ByteReader.h"
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/PacketBuilder.h"
 
 #include <vector>
 

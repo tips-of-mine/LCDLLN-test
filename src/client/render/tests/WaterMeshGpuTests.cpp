@@ -1,5 +1,5 @@
-// engine/render/tests/WaterMeshGpuTests.cpp
-#include "engine/render/WaterMeshGpu.h"
+// src/client/render/tests/WaterMeshGpuTests.cpp
+#include "src/client/render/WaterMeshGpu.h"
 
 #include <cstdio>
 

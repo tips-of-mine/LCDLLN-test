@@ -1,6 +1,6 @@
-#include "engine/render/TaaPass.h"
-#include "engine/render/PipelineCache.h"
-#include "engine/core/Log.h"
+#include "src/client/render/TaaPass.h"
+#include "src/client/render/PipelineCache.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
 #include <array>

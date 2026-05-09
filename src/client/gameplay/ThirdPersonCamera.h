@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/core/Log.h"
-#include "engine/math/Math.h"
-#include "engine/render/Camera.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/math/Math.h"
+#include "src/client/render/Camera.h"
 
 namespace engine::platform { class Input; }
 

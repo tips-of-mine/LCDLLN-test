@@ -1,6 +1,6 @@
-#include "engine/client/AuctionUi.h"
+#include "src/client/AuctionUi.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cstdint>

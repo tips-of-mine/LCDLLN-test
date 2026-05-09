@@ -1,6 +1,6 @@
 #pragma once
 
-// engine/render/terrain_chunk/LayerArrayLoader.h
+// src/client/render/terrain_chunk/LayerArrayLoader.h
 //
 // Charge les 24 textures PBR (8 layers × 3 maps : albedo / normal / arm)
 // dans 3 `VkImage2DArray` partagées + 5 samplers (1 nearest pour les
@@ -16,7 +16,7 @@
 // La fonction de résolution `ResolveLayerAssetPath` est extraite et pure
 // pour permettre les tests CPU sans Vulkan.
 
-#include "engine/world/terrain/LayerPalette.h"
+#include "src/client/world/terrain/LayerPalette.h"
 
 #include <array>
 #include <filesystem>

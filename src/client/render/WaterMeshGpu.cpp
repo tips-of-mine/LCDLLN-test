@@ -1,7 +1,7 @@
-// engine/render/WaterMeshGpu.cpp
-#include "engine/render/WaterMeshGpu.h"
-#include "engine/world/water/WaterMeshBuilder.h"
-#include "engine/core/Log.h"
+// src/client/render/WaterMeshGpu.cpp
+#include "src/client/render/WaterMeshGpu.h"
+#include "src/client/world/water/WaterMeshBuilder.h"
+#include "src/shared/core/Log.h"
 
 #include <vk_mem_alloc.h>
 

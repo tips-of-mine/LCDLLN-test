@@ -1,10 +1,10 @@
 // CMANGOS.06 (Phase 1c) — Tests AccountRoleService.
 // Utilise InMemoryAccountStore pour éviter la dépendance MySQL.
 
-#include "engine/server/AccountRoleService.h"
-#include "engine/server/AccountRole.h"
-#include "engine/server/InMemoryAccountStore.h"
-#include "engine/core/Log.h"
+#include "src/masterd/account/AccountRoleService.h"
+#include "src/masterd/account/AccountRole.h"
+#include "src/masterd/account/InMemoryAccountStore.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

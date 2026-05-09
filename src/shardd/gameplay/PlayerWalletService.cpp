@@ -1,8 +1,8 @@
-#include "engine/server/PlayerWalletService.h"
+#include "src/shardd/gameplay/PlayerWalletService.h"
 
-#include "engine/server/ServerApp.h" // ConnectedClient layout (defined here; header only forward-declares).
+#include "src/shared/server_bootstrap/ServerApp.h" // ConnectedClient layout (defined here; header only forward-declares).
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 namespace engine::server
 {

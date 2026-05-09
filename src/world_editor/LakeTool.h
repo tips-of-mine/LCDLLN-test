@@ -1,8 +1,8 @@
-// engine/editor/world/LakeTool.h
+// src/world_editor/world/LakeTool.h
 #pragma once
 
-#include "engine/editor/world/WaterDocument.h"
-#include "engine/math/Math.h"
+#include "src/world_editor/world/WaterDocument.h"
+#include "src/shared/math/Math.h"
 
 #include <vector>
 

@@ -1,5 +1,5 @@
-#include "engine/server/guild/GuildPermissionMatrix.h"
-#include "engine/core/Log.h"
+#include "src/shardd/guild/GuildPermissionMatrix.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

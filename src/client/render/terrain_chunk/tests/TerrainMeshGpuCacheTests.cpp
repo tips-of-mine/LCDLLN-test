@@ -6,7 +6,7 @@
 ///   - Evict détruit les VkBuffer via l'allocator + retire du cache.
 ///   - GetOrUpload track la résidence dans ChunkRuntime.
 
-#include "engine/render/terrain_chunk/TerrainMeshGpuCache.h"
+#include "src/client/render/terrain_chunk/TerrainMeshGpuCache.h"
 
 #include <cstdio>
 #include <cstdint>

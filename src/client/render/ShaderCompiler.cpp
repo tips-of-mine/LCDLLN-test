@@ -1,5 +1,5 @@
-#include "engine/render/ShaderCompiler.h"
-#include "engine/core/Log.h"
+#include "src/client/render/ShaderCompiler.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <cstdlib>

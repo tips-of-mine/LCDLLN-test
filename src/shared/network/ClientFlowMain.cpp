@@ -2,10 +2,10 @@
 
 #if defined(_WIN32) || defined(WIN32)
 
-#include "engine/network/MasterShardClientFlow.h"
-#include "engine/network/NetClient.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/network/MasterShardClientFlow.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <iostream>
 #include <cstdlib>

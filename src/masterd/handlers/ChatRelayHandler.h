@@ -1,9 +1,9 @@
 #pragma once
 
-#include "engine/server/chat/ChatChannelRegistry.h"
-#include "engine/server/chat/ChatCommandRouter.h"
-#include "engine/server/chat/ChatGate.h"
-#include "engine/server/chat/ChatSanitizer.h"
+#include "src/masterd/chat/ChatChannelRegistry.h"
+#include "src/masterd/chat/ChatCommandRouter.h"
+#include "src/masterd/chat/ChatGate.h"
+#include "src/masterd/chat/ChatSanitizer.h"
 
 #include <cstddef>
 #include <cstdint>

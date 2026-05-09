@@ -1,5 +1,5 @@
-#include "engine/server/metric/MetricRegistry.h"
-#include "engine/core/Log.h"
+#include "src/shared/metric/MetricRegistry.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

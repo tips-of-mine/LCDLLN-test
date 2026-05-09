@@ -1,5 +1,5 @@
-#include "engine/server/ShardTicketCrypto.h"
-#include "engine/network/ByteWriter.h"
+#include "src/masterd/handlers/ShardTicketCrypto.h"
+#include "src/shared/network/ByteWriter.h"
 
 #include <openssl/hmac.h>
 #include <openssl/sha.h>

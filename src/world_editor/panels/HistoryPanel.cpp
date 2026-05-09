@@ -1,5 +1,5 @@
-#include "engine/editor/world/panels/HistoryPanel.h"
-#include "engine/editor/world/CommandStack.h"
+#include "src/world_editor/world/panels/HistoryPanel.h"
+#include "src/world_editor/world/CommandStack.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

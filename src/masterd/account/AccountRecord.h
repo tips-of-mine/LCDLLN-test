@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "engine/server/LocalizedEmail.h"
-#include "engine/server/AccountRole.h"
+#include "src/masterd/email/LocalizedEmail.h"
+#include "src/masterd/account/AccountRole.h"
 
 #include <cstdint>
 #include <string>

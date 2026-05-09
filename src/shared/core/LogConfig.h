@@ -1,11 +1,11 @@
 #pragma once
 
-/// @file engine/core/LogConfig.h
+/// @file src/shared/core/LogConfig.h
 /// @brief M45 — Pont Config → LogSettings : factorise la lecture de toutes les
 /// clés \c log.* (filtres bitmask, fichiers spécialisés GM/Char/DBError/Packet/Custom,
 /// couleurs console, seuil fichier distinct) entre les binaires master et shard.
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <string_view>
 

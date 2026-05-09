@@ -1,4 +1,4 @@
-#include "engine/network/ByteReader.h"
+#include "src/shared/network/ByteReader.h"
 
 #include <cstring>
 

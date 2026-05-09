@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/render/Camera.h"
+#include "src/shared/math/Math.h"
+#include "src/client/render/Camera.h"
 
 namespace engine::render
 {

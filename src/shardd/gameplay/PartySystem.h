@@ -1,7 +1,7 @@
 #pragma once
 // M32.2 — Server-side party system: invite, accept/decline, kick, loot modes, XP sharing.
 
-#include "engine/server/ReplicationTypes.h"
+#include "src/shared/network/ReplicationTypes.h"
 
 #include <cstdint>
 #include <functional>

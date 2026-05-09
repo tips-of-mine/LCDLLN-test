@@ -1,8 +1,8 @@
-#include "engine/editor/world/TerrainStampTool.h"
+#include "src/world_editor/world/TerrainStampTool.h"
 
-#include "engine/editor/world/StampLibrary.h"
-#include "engine/editor/world/TerrainStampCommand.h"
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/world_editor/world/StampLibrary.h"
+#include "src/world_editor/world/TerrainStampCommand.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <algorithm>
 #include <cmath>

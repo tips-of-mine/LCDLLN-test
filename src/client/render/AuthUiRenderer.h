@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/client/AuthUi.h"
-#include "engine/core/Config.h"
+#include "src/client/AuthUi.h"
+#include "src/shared/core/Config.h"
 
 #include <vulkan/vulkan.h>
 

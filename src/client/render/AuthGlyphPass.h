@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/client/AuthUi.h"
-#include "engine/render/AuthUiRenderer.h"
-#include "engine/render/FontAtlasTtf.h"
+#include "src/client/AuthUi.h"
+#include "src/client/render/AuthUiRenderer.h"
+#include "src/client/render/FontAtlasTtf.h"
 
 #include <vulkan/vulkan_core.h>
 

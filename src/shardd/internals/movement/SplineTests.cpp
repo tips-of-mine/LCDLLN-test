@@ -1,9 +1,9 @@
 // CMANGOS.04 (Phase 2.04a) — Tests Spline<T> + MovementTypedefs.
 // Pure math, pas de DB.
 
-#include "engine/server/shard/movement/MovementTypedefs.h"
-#include "engine/server/shard/movement/Spline.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/movement/MovementTypedefs.h"
+#include "src/shardd/internals/movement/Spline.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 

@@ -1,9 +1,9 @@
 // CMANGOS.04 (Phase 2.04b) — Tests MoveSpline runtime + MoveSplineInit.
 // Pas de DB ni de threading.
 
-#include "engine/server/shard/movement/MoveSpline.h"
-#include "engine/server/shard/movement/MoveSplineInit.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/movement/MoveSpline.h"
+#include "src/shardd/internals/movement/MoveSplineInit.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 

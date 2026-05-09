@@ -1,5 +1,5 @@
-#include "engine/render/Camera.h"
-#include "engine/platform/Input.h"
+#include "src/client/render/Camera.h"
+#include "src/shared/platform/Input.h"
 #include <algorithm>
 #include <cmath>
 

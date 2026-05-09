@@ -1,5 +1,5 @@
-// engine/world/collision/tests/ProxyWireframeTests.cpp
-#include "engine/world/collision/ProxyWireframe.h"
+// src/client/world/collision/tests/ProxyWireframeTests.cpp
+#include "src/client/world/collision/ProxyWireframe.h"
 
 #include <cstdio>
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/core/Log.h"
-#include "engine/math/Math.h"
-#include "engine/platform/Input.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/math/Math.h"
+#include "src/shared/platform/Input.h"
 
 #include <cstdint>
 #include <deque>

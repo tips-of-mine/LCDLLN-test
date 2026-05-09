@@ -1,5 +1,5 @@
-// engine/world/collision/AutoFitProxy.cpp
-#include "engine/world/collision/AutoFitProxy.h"
+// src/client/world/collision/AutoFitProxy.cpp
+#include "src/client/world/collision/AutoFitProxy.h"
 
 #include <algorithm>
 #include <cfloat>

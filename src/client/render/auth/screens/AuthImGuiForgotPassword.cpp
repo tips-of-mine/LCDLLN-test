@@ -1,6 +1,6 @@
 // AUTH-UI.9 - rendu ImGui ecran mot de passe oublie (split depuis AuthImGuiRenderer.cpp).
 
-#include "engine/render/AuthImGuiRenderer.h"
+#include "src/client/render/AuthImGuiRenderer.h"
 
 #include <string>
 

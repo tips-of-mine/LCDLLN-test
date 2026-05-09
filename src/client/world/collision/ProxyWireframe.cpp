@@ -1,5 +1,5 @@
-// engine/world/collision/ProxyWireframe.cpp
-#include "engine/world/collision/ProxyWireframe.h"
+// src/client/world/collision/ProxyWireframe.cpp
+#include "src/client/world/collision/ProxyWireframe.h"
 
 #include <cmath>
 

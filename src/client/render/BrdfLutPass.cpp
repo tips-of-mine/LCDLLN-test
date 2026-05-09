@@ -1,6 +1,6 @@
-#include "engine/render/BrdfLutPass.h"
-#include "engine/render/PipelineCache.h"
-#include "engine/core/Log.h"
+#include "src/client/render/BrdfLutPass.h"
+#include "src/client/render/PipelineCache.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan.h>
 #include <cstdio>

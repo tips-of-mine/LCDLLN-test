@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "engine/server/AccountRecord.h"
-#include "engine/server/AccountRole.h"
+#include "src/masterd/account/AccountRecord.h"
+#include "src/masterd/account/AccountRole.h"
 
 #include <cstdint>
 #include <optional>

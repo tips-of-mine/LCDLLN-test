@@ -1,6 +1,6 @@
-#include "engine/render/LightingPass.h"
-#include "engine/render/PipelineCache.h"
-#include "engine/core/Log.h"
+#include "src/client/render/LightingPass.h"
+#include "src/client/render/PipelineCache.h"
+#include "src/shared/core/Log.h"
 
 #include <array>
 #include <cstdio>

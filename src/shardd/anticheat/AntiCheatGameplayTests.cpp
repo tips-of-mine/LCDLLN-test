@@ -1,5 +1,5 @@
-#include "engine/server/anticheat/AntiCheatGameplay.h"
-#include "engine/core/Log.h"
+#include "src/shardd/anticheat/AntiCheatGameplay.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

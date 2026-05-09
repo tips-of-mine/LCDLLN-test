@@ -1,11 +1,11 @@
 // AUTH-UI.7 — Couche modèle pour l'écran de sélection de langue au premier lancement.
 
 // Couche modèle : BuildModel_LanguageSelect peuple les cartes langue, ApplyLocaleSelection persiste le choix.
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/Window.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/Window.h"
 
 #include <algorithm>
 #include <cctype>

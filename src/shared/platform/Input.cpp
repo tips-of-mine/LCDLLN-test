@@ -1,10 +1,10 @@
-#include "engine/platform/Input.h"
+#include "src/shared/platform/Input.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cctype>

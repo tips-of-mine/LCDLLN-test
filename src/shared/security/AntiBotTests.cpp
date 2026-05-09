@@ -3,10 +3,10 @@
  * No external test framework; returns 0 if all pass, non-zero on failure.
  */
 
-#include "engine/server/UserRateLimiter.h"
-#include "engine/server/CaptchaVerifier.h"
-#include "engine/server/BotDetector.h"
-#include "engine/core/Log.h"
+#include "src/shared/security/UserRateLimiter.h"
+#include "src/shared/security/CaptchaVerifier.h"
+#include "src/shared/security/BotDetector.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <cstdlib>

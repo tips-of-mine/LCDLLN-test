@@ -1,4 +1,4 @@
-#include "engine/editor/world/panels/AssetBrowserPanel.h"
+#include "src/world_editor/world/panels/AssetBrowserPanel.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

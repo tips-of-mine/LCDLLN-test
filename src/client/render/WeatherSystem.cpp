@@ -1,6 +1,6 @@
-#include "engine/render/WeatherSystem.h"
+#include "src/client/render/WeatherSystem.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cmath>

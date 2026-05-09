@@ -1,8 +1,8 @@
 // CMANGOS.18 (Phase 3.18a) — Tests MailManager workflow (Send/Take/Delete/COD/expire).
 
-#include "engine/server/mail/InMemoryMailStore.h"
-#include "engine/server/mail/MailManager.h"
-#include "engine/core/Log.h"
+#include "src/masterd/mail/InMemoryMailStore.h"
+#include "src/masterd/mail/MailManager.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

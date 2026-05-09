@@ -28,9 +28,9 @@
 // (separation logique). Viendront avec leurs propres builders puis
 // l'integration wire commune.
 
-#include "engine/server/shard/movement/MoveSpline.h"
-#include "engine/server/shard/movement/MoveSplineFlag.h"
-#include "engine/server/shard/movement/MovementTypedefs.h"
+#include "src/shardd/internals/movement/MoveSpline.h"
+#include "src/shardd/internals/movement/MoveSplineFlag.h"
+#include "src/shardd/internals/movement/MovementTypedefs.h"
 
 #include <cstddef>
 #include <cstdint>

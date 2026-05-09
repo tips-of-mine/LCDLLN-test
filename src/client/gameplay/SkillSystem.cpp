@@ -1,6 +1,6 @@
-#include "engine/gameplay/SkillSystem.h"
+#include "src/client/gameplay/SkillSystem.h"
 
-#include "engine/platform/FileSystem.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cmath>

@@ -1,5 +1,5 @@
-#include "engine/server/world/WorldClock.h"
-#include "engine/core/Log.h"
+#include "src/masterd/world/WorldClock.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

@@ -8,7 +8,7 @@
 // InMemoryMailStore). La couche reseau (MailHandler + opcodes wire)
 // + la persistance MySQL viendront en sub-PRs ulterieures.
 
-#include "engine/server/mail/Mail.h"
+#include "src/masterd/mail/Mail.h"
 
 #include <cstdint>
 #include <memory>

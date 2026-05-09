@@ -4,8 +4,8 @@
 //
 // This helper is designed for NetServer's epoll IO thread (single-threaded usage).
 
-#include "engine/core/Log.h"
-#include "engine/server/NetServer.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/NetServer.h"
 
 #include <algorithm>
 #include <chrono>

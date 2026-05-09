@@ -1,6 +1,6 @@
-#include "engine/client/TradeWindowUi.h"
+#include "src/client/TradeWindowUi.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

@@ -1,7 +1,7 @@
 // M25.2 — NetServer TX bandwidth cap + priority unit tests (no epoll)
 
-#include "engine/core/Log.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <algorithm>
 #include <cstdint>

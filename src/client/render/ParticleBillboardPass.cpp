@@ -1,6 +1,6 @@
-#include "engine/render/ParticleBillboardPass.h"
+#include "src/client/render/ParticleBillboardPass.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 

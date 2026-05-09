@@ -1,5 +1,5 @@
-#include "engine/core/jobs/JobSystem.h"
-#include "engine/core/Profiler.h"
+#include "src/shared/core/jobs/JobSystem.h"
+#include "src/shared/core/Profiler.h"
 
 #include <algorithm>
 #include <chrono>

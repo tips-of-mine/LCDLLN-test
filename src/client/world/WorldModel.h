@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 #include <cstdint>
 #include <span>

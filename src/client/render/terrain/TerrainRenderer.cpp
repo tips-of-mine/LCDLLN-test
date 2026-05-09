@@ -1,8 +1,8 @@
-#include "engine/render/terrain/TerrainRenderer.h"
-#include "engine/render/terrain/TerrainGrassDetail.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/client/render/terrain/TerrainRenderer.h"
+#include "src/client/render/terrain/TerrainGrassDetail.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <vulkan/vulkan_core.h>
 

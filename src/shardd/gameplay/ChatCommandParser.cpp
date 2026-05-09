@@ -1,6 +1,6 @@
-#include "engine/server/ChatCommandParser.h"
+#include "src/shardd/gameplay/ChatCommandParser.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cctype>
 

@@ -1,6 +1,6 @@
-#include "engine/render/FontAtlasTtf.h"
+#include "src/client/render/FontAtlasTtf.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 #include <cstring>

@@ -1,5 +1,5 @@
-#include "engine/server/events/GameEventManager.h"
-#include "engine/core/Log.h"
+#include "src/masterd/events/GameEventManager.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

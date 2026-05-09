@@ -1,8 +1,8 @@
-#include "engine/server/GatheringSystem.h"
+#include "src/shardd/gameplay/GatheringSystem.h"
 
-#include "engine/server/ServerApp.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cctype>

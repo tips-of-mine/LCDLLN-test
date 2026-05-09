@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/world/OutputVersion.h"
+#include "src/client/world/OutputVersion.h"
 
 #include <cstdint>
 #include <span>

@@ -1,6 +1,6 @@
-#include "engine/render/DeferredPipeline.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/client/render/DeferredPipeline.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
 #include <cstdio>

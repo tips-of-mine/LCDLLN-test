@@ -1,9 +1,9 @@
 // CMANGOS.05 (Phase 2.05a) — Tests AABB + BIH<T>.
 // Pure math, pas de DB.
 
-#include "engine/server/shard/vmap/AABB.h"
-#include "engine/server/shard/vmap/BIH.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/vmap/AABB.h"
+#include "src/shardd/internals/vmap/BIH.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 #include <vector>

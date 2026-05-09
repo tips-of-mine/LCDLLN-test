@@ -4,14 +4,14 @@
 
 #if defined(__linux__)
 
-#include "engine/network/AuthRegisterPayloads.h"
-#include "engine/network/ByteWriter.h"
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/PacketBuilder.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/AuthRegisterPayloads.h"
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -763,7 +763,7 @@ int main(int argc, char** argv)
 
 #else
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 int main(int, char**)
 {

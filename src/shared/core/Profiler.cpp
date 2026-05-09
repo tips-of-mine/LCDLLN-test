@@ -1,6 +1,6 @@
-#include "engine/core/Profiler.h"
+#include "src/shared/core/Profiler.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <functional>

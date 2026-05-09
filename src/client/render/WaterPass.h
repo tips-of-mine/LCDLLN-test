@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/render/FrameGraph.h"
-#include "engine/render/WaterMeshGpu.h"
-#include "engine/world/water/WaterSurfaces.h"
+#include "src/client/render/FrameGraph.h"
+#include "src/client/render/WaterMeshGpu.h"
+#include "src/client/world/water/WaterSurfaces.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -18,7 +18,7 @@ namespace engine::render
 	/// Layout aligné std140 (les vec3 prennent 16 B avec padding).
 	/// Offsets vérifiés par tests offsetof — toute modification doit aussi
 	/// mettre à jour le layout GLSL `push_constant` correspondant dans
-	/// engine/render/shaders/water.vert + water.frag.
+	/// src/client/render/shaders/water.vert + water.frag.
 	struct WaterPassPushConstants
 	{
 		float viewProj[16];        // offset   0, size 64

@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/editor/world/IPanel.h"
+#include "src/world_editor/world/IPanel.h"
 
 namespace engine::editor::world { class CommandStack; }
 

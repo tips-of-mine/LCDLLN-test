@@ -14,9 +14,9 @@
 /// terrain (heightmap r16h / splat slap / grass grms / JSON), donc le test
 /// tourne en CI sans GPU.
 
-#include "engine/core/Config.h"
-#include "engine/editor/WorldEditorSession.h"
-#include "engine/editor/WorldMapEditDocument.h"
+#include "src/shared/core/Config.h"
+#include "src/world_editor/WorldEditorSession.h"
+#include "src/world_editor/WorldMapEditDocument.h"
 
 #include <cstdio>
 #include <cstring>

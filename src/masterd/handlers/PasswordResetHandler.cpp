@@ -1,19 +1,19 @@
 // M33.2 — PasswordResetHandler implementation.
 
-#include "engine/server/PasswordResetHandler.h"
-#include "engine/server/NetServer.h"
-#include "engine/server/AccountStore.h"
-#include "engine/server/PasswordResetStore.h"
-#include "engine/server/SmtpMailer.h"
-#include "engine/server/RateLimitAndBan.h"
-#include "engine/server/SecurityAuditLog.h"
-#include "engine/server/AccountValidation.h"
-#include "engine/server/LocalizedEmail.h"
-#include "engine/auth/Argon2Hash.h"
-#include "engine/network/AuthRegisterPayloads.h"
-#include "engine/network/NetErrorCode.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/PasswordResetHandler.h"
+#include "src/shared/network/NetServer.h"
+#include "src/masterd/account/AccountStore.h"
+#include "src/masterd/handlers/PasswordResetStore.h"
+#include "src/masterd/email/SmtpMailer.h"
+#include "src/shared/security/RateLimitAndBan.h"
+#include "src/shared/security/SecurityAuditLog.h"
+#include "src/masterd/account/AccountValidation.h"
+#include "src/masterd/email/LocalizedEmail.h"
+#include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/network/AuthRegisterPayloads.h"
+#include "src/shared/network/NetErrorCode.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
 
 #include <string>
 

@@ -1,4 +1,4 @@
-#include "engine/server/loot/LootTable.h"
+#include "src/shardd/loot/LootTable.h"
 
 namespace engine::server::loot
 {

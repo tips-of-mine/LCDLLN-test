@@ -2,7 +2,7 @@
 // CMANGOS.16 (Phase 1b) — ConditionMgr : moteur d'évaluation data-driven
 // chargé une fois au boot depuis 2 tables SQL (conditions + condition_groups).
 
-#include "engine/server/shard/globals/Condition.h"
+#include "src/shardd/internals/globals/Condition.h"
 
 #include <cstdint>
 #include <string>

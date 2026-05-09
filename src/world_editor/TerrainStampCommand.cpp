@@ -1,6 +1,6 @@
-#include "engine/editor/world/TerrainStampCommand.h"
+#include "src/world_editor/world/TerrainStampCommand.h"
 
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <utility>
 

@@ -1,4 +1,4 @@
-#include "engine/editor/world/panels/OutlinerPanel.h"
+#include "src/world_editor/world/panels/OutlinerPanel.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

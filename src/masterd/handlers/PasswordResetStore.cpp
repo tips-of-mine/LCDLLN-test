@@ -1,8 +1,8 @@
 // M33.2 — PasswordResetStore implementation.
 
-#include "engine/server/PasswordResetStore.h"
-#include "engine/auth/Argon2Hash.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/PasswordResetStore.h"
+#include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdio>
 #include <cstdint>

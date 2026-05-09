@@ -19,7 +19,7 @@
 // memory" — pas applicable au vmap statique). Eviction LRU automatique
 // si on depasse `maxLoadedTiles` viendra plus tard.
 
-#include "engine/server/shard/vmap/VMapManager.h"
+#include "src/shardd/internals/vmap/VMapManager.h"
 
 #include <chrono>
 #include <cstddef>

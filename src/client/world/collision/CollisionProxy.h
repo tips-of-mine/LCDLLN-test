@@ -1,7 +1,7 @@
-// engine/world/collision/CollisionProxy.h
+// src/client/world/collision/CollisionProxy.h
 #pragma once
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 #include <cstdint>
 #include <filesystem>

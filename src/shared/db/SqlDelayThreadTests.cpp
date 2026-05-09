@@ -1,9 +1,9 @@
 // CMANGOS.13 (Phase 1a) — Tests SqlDelayThread.
 
-#include "engine/server/db/SqlDelayThread.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/SqlDelayThread.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <atomic>
 #include <chrono>

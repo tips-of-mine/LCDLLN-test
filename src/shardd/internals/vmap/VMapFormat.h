@@ -32,7 +32,7 @@
 // opérations LOS/raycast côté shard travaillent en local au tile et
 // transforment au moment du `IsInLineOfSight(world_p1, world_p2)`.
 
-#include "engine/server/shard/vmap/AABB.h"
+#include "src/shardd/internals/vmap/AABB.h"
 
 #include <cstddef>
 #include <cstdint>

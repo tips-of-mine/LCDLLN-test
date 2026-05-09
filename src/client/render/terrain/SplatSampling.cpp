@@ -1,4 +1,4 @@
-#include "engine/render/terrain/SplatSampling.h"
+#include "src/client/render/terrain/SplatSampling.h"
 
 #include <cstddef>
 

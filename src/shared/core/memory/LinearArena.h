@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Log.h"
-#include "engine/core/memory/Memory.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/core/memory/Memory.h"
 
 #include <array>
 #include <cstddef>

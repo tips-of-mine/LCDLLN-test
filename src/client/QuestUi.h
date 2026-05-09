@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/client/UIModel.h"
-#include "engine/core/Config.h"
+#include "src/client/UIModel.h"
+#include "src/shared/core/Config.h"
 
 #include <cstdint>
 #include <string>

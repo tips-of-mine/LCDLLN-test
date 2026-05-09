@@ -9,12 +9,12 @@
 ///   - Émettre les accusés REGISTER_OK ou REGISTER_ERROR via NetServer::Send.
 /// Thread-safety : non — doit être appelé depuis le thread réseau du Master uniquement.
 
-#include "engine/server/ShardRegisterHandler.h"
-#include "engine/server/NetServer.h"
-#include "engine/server/ShardRegistry.h"
-#include "engine/network/ShardPayloads.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/ShardRegisterHandler.h"
+#include "src/shared/network/NetServer.h"
+#include "src/masterd/shards/ShardRegistry.h"
+#include "src/shared/network/ShardPayloads.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdio>
 

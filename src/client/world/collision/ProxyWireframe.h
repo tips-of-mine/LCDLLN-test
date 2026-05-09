@@ -1,8 +1,8 @@
-// engine/world/collision/ProxyWireframe.h
+// src/client/world/collision/ProxyWireframe.h
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/world/collision/CollisionProxy.h"
+#include "src/shared/math/Math.h"
+#include "src/client/world/collision/CollisionProxy.h"
 
 #include <utility>
 #include <vector>

@@ -1,7 +1,7 @@
 // M25.4 — ConnectionDDoSProtector unit tests (no sockets)
 
-#include "engine/core/Log.h"
-#include "engine/server/ConnectionDDoSProtector.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/security/ConnectionDDoSProtector.h"
 
 #include <chrono>
 #include <cstdint>

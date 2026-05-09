@@ -1,4 +1,4 @@
-#include "engine/editor/world/TerrainBrush.h"
+#include "src/world_editor/world/TerrainBrush.h"
 
 #include <algorithm>
 #include <array>

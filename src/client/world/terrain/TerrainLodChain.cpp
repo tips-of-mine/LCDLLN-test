@@ -1,5 +1,5 @@
-#include "engine/world/terrain/TerrainLodChain.h"
-#include "engine/world/OutputVersion.h"
+#include "src/client/world/terrain/TerrainLodChain.h"
+#include "src/client/world/OutputVersion.h"
 
 #include <cstring>
 

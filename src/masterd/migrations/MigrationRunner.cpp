@@ -1,10 +1,10 @@
 // M21.3 — Master applies pending migrations on startup.
 // Connect to MySQL, take advisory lock, read schema_version, verify checksums, apply pending migrations, update schema_version.
 
-#include "engine/server/MigrationRunner.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/masterd/migrations/MigrationRunner.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <openssl/sha.h>
 

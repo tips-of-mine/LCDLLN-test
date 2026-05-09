@@ -1,5 +1,5 @@
-// engine/world/collision/tests/AutoFitProxyTests.cpp
-#include "engine/world/collision/AutoFitProxy.h"
+// src/client/world/collision/tests/AutoFitProxyTests.cpp
+#include "src/client/world/collision/AutoFitProxy.h"
 
 #include <cmath>
 #include <cstdio>

@@ -1,8 +1,8 @@
-#include "engine/server/reputation/MysqlReputationStore.h"
+#include "src/masterd/reputation/MysqlReputationStore.h"
 
-#include "engine/core/Log.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
 
 #include <mysql.h>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/core/memory/LinearArena.h"
+#include "src/shared/core/memory/LinearArena.h"
 
 #include <cstdint>
 #include <vector>

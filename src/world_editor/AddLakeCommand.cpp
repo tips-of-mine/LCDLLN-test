@@ -1,5 +1,5 @@
-// engine/editor/world/AddLakeCommand.cpp
-#include "engine/editor/world/AddLakeCommand.h"
+// src/world_editor/world/AddLakeCommand.cpp
+#include "src/world_editor/world/AddLakeCommand.h"
 
 namespace engine::editor::world
 {

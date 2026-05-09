@@ -1,5 +1,5 @@
-#include "engine/client/LocalizationService.h"
-#include "engine/platform/FileSystem.h"
+#include "src/client/LocalizationService.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <cstdlib>
 #include <filesystem>

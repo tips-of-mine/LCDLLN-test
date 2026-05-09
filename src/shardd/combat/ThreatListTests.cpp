@@ -1,7 +1,7 @@
 // CMANGOS.11 (Phase 3.11a) — Tests ThreatList.
 
-#include "engine/server/combat/ThreatList.h"
-#include "engine/core/Log.h"
+#include "src/shardd/combat/ThreatList.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

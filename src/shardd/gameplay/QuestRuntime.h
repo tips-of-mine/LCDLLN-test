@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/server/ReplicationTypes.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/network/ReplicationTypes.h"
 
 #include <cstdint>
 #include <string>

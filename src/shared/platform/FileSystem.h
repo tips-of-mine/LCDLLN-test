@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <cstdint>
 #include <filesystem>

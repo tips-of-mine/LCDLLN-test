@@ -1,5 +1,5 @@
-#include "engine/server/arena/ArenaTeam.h"
-#include "engine/core/Log.h"
+#include "src/shardd/arena/ArenaTeam.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

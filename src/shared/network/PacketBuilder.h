@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/network/ByteWriter.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <cstdint>
 #include <span>

@@ -1,6 +1,6 @@
-#include "engine/client/HarvestCastBar.h"
+#include "src/client/HarvestCastBar.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

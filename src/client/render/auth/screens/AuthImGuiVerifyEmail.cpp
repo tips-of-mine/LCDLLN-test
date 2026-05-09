@@ -1,9 +1,9 @@
 // AUTH-UI.3 - Ecrans de verification d'e-mail (saisie du code 6 chiffres et confirmation d'inscription)
 
 // Contient RenderVerifyScreen (inscription en cours) et RenderEmailConfirmationScreen (inscription reussie, renvoi disponible apres 15 min).
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/auth/AuthImGuiCommon.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/auth/AuthImGuiCommon.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <cstring>

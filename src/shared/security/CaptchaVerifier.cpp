@@ -1,8 +1,8 @@
 // M33.3 — CAPTCHA token verifier implementation.
 // UNIX: uses blocking POSIX socket + OpenSSL to POST to the provider verify endpoint.
 // Windows: HTTP layer not implemented — logs warning, returns true (bypass for local/dev builds).
-#include "engine/server/CaptchaVerifier.h"
-#include "engine/core/Log.h"
+#include "src/shared/security/CaptchaVerifier.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <string>

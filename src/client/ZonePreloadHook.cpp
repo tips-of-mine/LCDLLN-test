@@ -1,9 +1,9 @@
-#include "engine/client/ZonePreloadHook.h"
+#include "src/client/ZonePreloadHook.h"
 
-#include "engine/core/Log.h"
-#include "engine/world/StreamCache.h"
-#include "engine/world/StreamingScheduler.h"
-#include "engine/world/WorldModel.h"
+#include "src/shared/core/Log.h"
+#include "src/client/world/StreamCache.h"
+#include "src/client/world/StreamingScheduler.h"
+#include "src/client/world/WorldModel.h"
 
 namespace engine::client
 {

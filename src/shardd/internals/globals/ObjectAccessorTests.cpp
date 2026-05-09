@@ -1,9 +1,9 @@
 // CMANGOS.16 (Phase 1b) — Tests ObjectAccessor : Register/Unregister/Find +
 // concurrence multi-readers / writer exclusif.
 
-#include "engine/server/shard/globals/ObjectAccessor.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/globals/ObjectAccessor.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <atomic>
 #include <chrono>

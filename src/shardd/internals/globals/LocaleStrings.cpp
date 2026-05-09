@@ -1,8 +1,8 @@
-#include "engine/server/shard/globals/LocaleStrings.h"
+#include "src/shardd/internals/globals/LocaleStrings.h"
 
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

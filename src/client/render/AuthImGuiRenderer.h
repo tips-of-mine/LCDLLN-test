@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
 namespace engine::core
 {

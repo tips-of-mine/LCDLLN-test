@@ -1,9 +1,9 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/core/Time.h"
-#include "engine/math/Math.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/core/Time.h"
+#include "src/shared/math/Math.h"
 
 #include <cstdint>
 #include <string>

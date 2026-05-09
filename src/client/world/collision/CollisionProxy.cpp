@@ -1,7 +1,7 @@
-// engine/world/collision/CollisionProxy.cpp
-#include "engine/world/collision/CollisionProxy.h"
+// src/client/world/collision/CollisionProxy.cpp
+#include "src/client/world/collision/CollisionProxy.h"
 
-#include "engine/world/OutputVersion.h"
+#include "src/client/world/OutputVersion.h"
 
 #include <cstring>
 #include <fstream>

@@ -1,13 +1,13 @@
-#include "engine/editor/WorldMapIo.h"
+#include "src/world_editor/WorldMapIo.h"
 
-#include "engine/editor/WorldMapEditDocument.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/render/terrain/HeightmapLoader.h"
-#include "engine/render/terrain/TerrainSplatting.h"
-#include "engine/world/OutputVersion.h"
-#include "engine/world/WorldModel.h"
+#include "src/world_editor/WorldMapEditDocument.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/client/render/terrain/HeightmapLoader.h"
+#include "src/client/render/terrain/TerrainSplatting.h"
+#include "src/client/world/OutputVersion.h"
+#include "src/client/world/WorldModel.h"
 
 #include <algorithm>
 #include <cmath>

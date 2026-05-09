@@ -1,8 +1,8 @@
-#include "engine/editor/EditorAudioPanel.h"
+#include "src/world_editor/EditorAudioPanel.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <fstream>
 #include <sstream>

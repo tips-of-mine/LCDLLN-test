@@ -1,7 +1,7 @@
-// engine/editor/world/CollisionPreviewCamera.h
+// src/world_editor/world/CollisionPreviewCamera.h
 #pragma once
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 namespace engine::editor::world
 {

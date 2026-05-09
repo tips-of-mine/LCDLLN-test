@@ -1,5 +1,5 @@
-#include "engine/server/gmtickets/GmTicketSystem.h"
-#include "engine/core/Log.h"
+#include "src/masterd/gmtickets/GmTicketSystem.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

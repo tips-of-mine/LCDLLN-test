@@ -1,7 +1,7 @@
-#include "engine/world/ProbeData.h"
+#include "src/client/world/ProbeData.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <cstring>
 #include <filesystem>

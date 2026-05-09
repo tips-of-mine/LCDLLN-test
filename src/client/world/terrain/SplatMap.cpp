@@ -1,4 +1,4 @@
-#include "engine/world/terrain/SplatMap.h"
+#include "src/client/world/terrain/SplatMap.h"
 
 #include <cstring>
 

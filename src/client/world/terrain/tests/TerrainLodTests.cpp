@@ -7,8 +7,8 @@
 ///   - TerrainLodWorker : multiples enqueues sur le même coord → seuls les
 ///     jobs récents délivrent (stale jobs jetés via génération atomique).
 
-#include "engine/world/terrain/TerrainLodChain.h"
-#include "engine/world/terrain/TerrainLodWorker.h"
+#include "src/client/world/terrain/TerrainLodChain.h"
+#include "src/client/world/terrain/TerrainLodWorker.h"
 
 #include <atomic>
 #include <chrono>

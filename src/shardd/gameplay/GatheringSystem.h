@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/server/ReplicationTypes.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/network/ReplicationTypes.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <cstdint>
 #include <string>

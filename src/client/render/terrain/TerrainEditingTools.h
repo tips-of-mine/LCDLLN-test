@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/render/terrain/HeightmapLoader.h"
-#include "engine/render/terrain/TerrainHoleMask.h"
-#include "engine/render/terrain/TerrainSplatting.h"
+#include "src/client/render/terrain/HeightmapLoader.h"
+#include "src/client/render/terrain/TerrainHoleMask.h"
+#include "src/client/render/terrain/TerrainSplatting.h"
 
 #include <cstdint>
 #include <string>

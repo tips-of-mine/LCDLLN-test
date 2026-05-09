@@ -1,5 +1,5 @@
-#include "engine/server/world/WorldStateRegistry.h"
-#include "engine/core/Log.h"
+#include "src/masterd/world/WorldStateRegistry.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

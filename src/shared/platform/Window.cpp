@@ -1,6 +1,6 @@
-#include "engine/platform/Window.h"
+#include "src/shared/platform/Window.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

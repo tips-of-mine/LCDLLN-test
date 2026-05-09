@@ -2,9 +2,9 @@
 // UNIX: minimal SMTP/ESMTP client (plain + STARTTLS via OpenSSL).
 // Windows: no-op stub.
 
-#include "engine/server/SmtpMailer.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/masterd/email/SmtpMailer.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <filesystem>
 #include <string>

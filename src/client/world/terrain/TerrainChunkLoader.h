@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <memory>
 #include <string>

@@ -1,8 +1,8 @@
 // AUTH-UI.10 - rendu ImGui ecran d'acceptation des Conditions Generales d'Utilisation (split depuis AuthImGuiRenderer.cpp).
 // Contient RenderTermsScreen : panneau avec texte defilant des CGU, case a cocher d'accuse de lecture, et boutons Refuser / Accepter.
 
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <string>

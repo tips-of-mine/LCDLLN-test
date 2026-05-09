@@ -1,10 +1,10 @@
-#include "engine/client/ChatWorldVisualPresenter.h"
+#include "src/client/ChatWorldVisualPresenter.h"
 
-#include "engine/core/Log.h"
-#include "engine/net/ChatEmotes.h"
-#include "engine/net/ChatSystem.h"
-#include "engine/server/ReplicationTypes.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/net/ChatEmotes.h"
+#include "src/shared/net/ChatSystem.h"
+#include "src/shared/network/ReplicationTypes.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <algorithm>
 #include <cmath>

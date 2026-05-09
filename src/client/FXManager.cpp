@@ -1,8 +1,8 @@
-#include "engine/client/FXManager.h"
+#include "src/client/FXManager.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <algorithm>
 

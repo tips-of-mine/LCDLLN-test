@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/math/Math.h"
-#include "engine/render/Camera.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/math/Math.h"
+#include "src/client/render/Camera.h"
 
 #include <cstdint>
 #include <string>

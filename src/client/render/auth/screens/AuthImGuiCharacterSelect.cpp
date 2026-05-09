@@ -2,11 +2,11 @@
 // Affiche la liste des personnages recus du master via CHARACTER_LIST (opcode 39) apres TICKET_ACCEPTED,
 // puis 3 actions : Jouer (perso selectionne), Creer un nouveau personnage, Retour.
 
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/LnTheme.h"
 
-#include "engine/client/LocalizationService.h"
-#include "engine/network/CharacterPayloads.h"
+#include "src/client/LocalizationService.h"
+#include "src/shared/network/CharacterPayloads.h"
 
 #include <algorithm>
 #include <cstdint>

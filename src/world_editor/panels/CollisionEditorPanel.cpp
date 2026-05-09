@@ -1,6 +1,6 @@
-// engine/editor/world/panels/CollisionEditorPanel.cpp
-#include "engine/editor/world/panels/CollisionEditorPanel.h"
-#include "engine/world/collision/ProxyWireframe.h"
+// src/world_editor/world/panels/CollisionEditorPanel.cpp
+#include "src/world_editor/world/panels/CollisionEditorPanel.h"
+#include "src/client/world/collision/ProxyWireframe.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

@@ -20,9 +20,9 @@
 //     une fois Load OK, donc lectures concurrentes sans modification
 //     pourraient marcher en pratique mais on documente non-safe.
 
-#include "engine/server/shard/vmap/AABB.h"
-#include "engine/server/shard/vmap/BIH.h"
-#include "engine/server/shard/vmap/VMapFormat.h"
+#include "src/shardd/internals/vmap/AABB.h"
+#include "src/shardd/internals/vmap/BIH.h"
+#include "src/shardd/internals/vmap/VMapFormat.h"
 
 #include <memory>
 #include <optional>

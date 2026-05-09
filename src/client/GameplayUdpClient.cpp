@@ -1,6 +1,6 @@
-#include "engine/client/GameplayUdpClient.h"
+#include "src/client/GameplayUdpClient.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <array>

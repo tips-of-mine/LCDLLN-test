@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/server/NetServer.h"
+#include "src/shared/network/NetServer.h"
 
 #include <atomic>
 #include <cstdint>

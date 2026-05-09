@@ -1,4 +1,4 @@
-#include "engine/render/terrain_chunk/SplatMapGpuCache.h"
+#include "src/client/render/terrain_chunk/SplatMapGpuCache.h"
 
 #include <vector>
 

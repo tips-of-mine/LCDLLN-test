@@ -1,4 +1,4 @@
-#include "engine/server/dbscripts/DBScript.h"
+#include "src/shardd/dbscripts/DBScript.h"
 
 namespace engine::server::dbscripts
 {

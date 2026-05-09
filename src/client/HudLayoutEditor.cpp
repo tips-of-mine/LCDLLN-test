@@ -1,7 +1,7 @@
-#include "engine/client/HudLayoutEditor.h"
+#include "src/client/HudLayoutEditor.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cmath>

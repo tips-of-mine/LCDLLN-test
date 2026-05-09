@@ -1,6 +1,6 @@
-#include "engine/render/AuthLogoPass.h"
+#include "src/client/render/AuthLogoPass.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 #include <cstring>

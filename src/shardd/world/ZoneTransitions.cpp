@@ -1,7 +1,7 @@
-#include "engine/server/ZoneTransitions.h"
+#include "src/shardd/world/ZoneTransitions.h"
 
-#include "engine/core/Log.h"
-#include "engine/server/SpatialPartition.h"
+#include "src/shared/core/Log.h"
+#include "src/shardd/world/SpatialPartition.h"
 
 #include <algorithm>
 

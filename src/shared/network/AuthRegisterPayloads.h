@@ -5,8 +5,8 @@
 // Thread-safety : toutes les fonctions sont stateless et thread-safe.
 #pragma once
 
-#include "engine/network/NetErrorCode.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/NetErrorCode.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <cstdint>
 #include <optional>

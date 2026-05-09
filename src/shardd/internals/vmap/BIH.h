@@ -20,7 +20,7 @@
 // **filtre** les candidats via leurs AABB et délègue le test précis
 // au caller. C'est le contrat classique d'une structure d'accélération.
 
-#include "engine/server/shard/vmap/AABB.h"
+#include "src/shardd/internals/vmap/AABB.h"
 
 #include <cstddef>
 #include <cstdint>

@@ -1,6 +1,6 @@
-#include "engine/editor/world/EditorCameraController.h"
+#include "src/world_editor/world/EditorCameraController.h"
 
-#include "engine/platform/Input.h"
+#include "src/shared/platform/Input.h"
 
 #include <cmath>
 

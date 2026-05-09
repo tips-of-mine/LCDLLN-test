@@ -1,6 +1,6 @@
-#include "engine/server/ServerRegistry.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/masterd/shards/ServerRegistry.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

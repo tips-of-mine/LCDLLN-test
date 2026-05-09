@@ -1,9 +1,9 @@
 // AUTH-UI.6 - overlay Options de la phase LanguageOptions : sidebar de navigation par onglets et panneau principal multi-sections (split depuis AuthImGuiRenderer.cpp).
 // Contient RenderOptionsScreen avec ses lambdas internes (sliderVol01, sectionTitle, hintLine, toggleRow, submitOptionsMirror) et les sept onglets de configuration.
 
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/auth/AuthImGuiCommon.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/auth/AuthImGuiCommon.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <cstdio>

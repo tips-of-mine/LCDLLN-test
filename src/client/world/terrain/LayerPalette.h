@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <string>
 
-#include "engine/world/surface/SurfaceType.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 namespace engine::world::terrain
 {

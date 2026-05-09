@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/math/Frustum.h"
-#include "engine/math/Math.h"
-#include "engine/server/ReplicationTypes.h"
+#include "src/shared/math/Frustum.h"
+#include "src/shared/math/Math.h"
+#include "src/shared/network/ReplicationTypes.h"
 
 #include <chrono>
 #include <cstdint>

@@ -1,5 +1,5 @@
-#include "engine/server/quests/QuestState.h"
-#include "engine/core/Log.h"
+#include "src/masterd/quests/QuestState.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

@@ -1,6 +1,6 @@
-#include "engine/server/SpatialPartition.h"
+#include "src/shardd/world/SpatialPartition.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cmath>

@@ -1,6 +1,6 @@
-#include "engine/render/ShaderHotReload.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/client/render/ShaderHotReload.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <filesystem>
 

@@ -1,9 +1,9 @@
 // CMANGOS.05 (Phase 2.05d) — Tests VMapStreamer + ManagedModel.
 // Loader callback simule en RAM (un dict in-memory de blobs).
 
-#include "engine/server/shard/vmap/VMapFormat.h"
-#include "engine/server/shard/vmap/VMapStreamer.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/vmap/VMapFormat.h"
+#include "src/shardd/internals/vmap/VMapStreamer.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <unordered_map>

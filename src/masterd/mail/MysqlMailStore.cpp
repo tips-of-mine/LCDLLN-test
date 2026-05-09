@@ -1,8 +1,8 @@
-#include "engine/server/mail/MysqlMailStore.h"
+#include "src/masterd/mail/MysqlMailStore.h"
 
-#include "engine/core/Log.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
 
 #include <mysql.h>
 

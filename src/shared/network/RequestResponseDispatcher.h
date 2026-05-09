@@ -5,9 +5,9 @@
 //                 Pump() et TickHeartbeat() doivent être appelés depuis le thread principal uniquement.
 #pragma once
 
-#include "engine/network/NetErrorCode.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/platform/StableMutex.h"
+#include "src/shared/network/NetErrorCode.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/platform/StableMutex.h"
 
 #include <atomic>
 #include <chrono>

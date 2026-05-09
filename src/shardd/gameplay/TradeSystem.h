@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/server/ReplicationTypes.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/network/ReplicationTypes.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <cstdint>
 #include <string>

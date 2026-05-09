@@ -1,8 +1,8 @@
-#include "engine/render/AuthImGuiRenderer.h"
+#include "src/client/render/AuthImGuiRenderer.h"
 
-#include "engine/client/LocalizationService.h"
-#include "engine/render/LnTheme.h"
-#include "engine/render/SharedFontHandles.h"
+#include "src/client/LocalizationService.h"
+#include "src/client/render/LnTheme.h"
+#include "src/client/render/SharedFontHandles.h"
 
 #include <algorithm>
 #include <cmath>

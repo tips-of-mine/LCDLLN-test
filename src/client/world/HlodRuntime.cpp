@@ -1,8 +1,8 @@
-#include "engine/world/HlodRuntime.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/math/Frustum.h"
-#include "engine/world/WorldModel.h"
+#include "src/client/world/HlodRuntime.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/math/Frustum.h"
+#include "src/client/world/WorldModel.h"
 
 #include <cmath>
 #include <format>

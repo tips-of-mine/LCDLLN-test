@@ -1,12 +1,12 @@
 #pragma once
 
-#include "engine/client/LocalizationService.h"
-#include "engine/core/Config.h"
-#include "engine/network/CharacterPayloads.h"
-#include "engine/network/NetClient.h"
-#include "engine/network/ServerListPayloads.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/StableMutex.h"
+#include "src/client/LocalizationService.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/ServerListPayloads.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/StableMutex.h"
 
 #include <atomic>
 #include <chrono>

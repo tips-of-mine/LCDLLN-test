@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/platform/Input.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/platform/Input.h"
 
 #include <cstdint>
 #include <filesystem>

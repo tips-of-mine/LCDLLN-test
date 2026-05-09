@@ -3,7 +3,7 @@
  * Pure in-memory, no DB, no network. Returns 0 on success, non-zero on first failure.
  */
 
-#include "engine/server/SessionCharacterMap.h"
+#include "src/masterd/session/SessionCharacterMap.h"
 
 #include <cstdlib>
 #include <iostream>

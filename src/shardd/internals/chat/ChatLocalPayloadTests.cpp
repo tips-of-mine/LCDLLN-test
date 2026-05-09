@@ -1,7 +1,7 @@
 // CMANGOS.01 (Phase 2.01c) — Tests ChatLocalPayload round-trip.
 
-#include "engine/server/shard/chat/ChatLocalPayload.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/chat/ChatLocalPayload.h"
+#include "src/shared/core/Log.h"
 
 #include <string>
 

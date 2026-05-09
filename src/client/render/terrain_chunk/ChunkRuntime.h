@@ -1,6 +1,6 @@
 #pragma once
 
-// engine/render/terrain_chunk/ChunkRuntime.h
+// src/client/render/terrain_chunk/ChunkRuntime.h
 //
 // Cache LRU global du runtime terrain (M100 — PR Terrain Chunk Runtime).
 // Tracke les chunks visibles, leur résidence GPU, et applique une politique
@@ -12,7 +12,7 @@
 // stockent leurs ressources GPU séparément et déclarent leur taille via
 // `AddResidentBytes`.
 
-#include "engine/world/WorldModel.h" // GlobalChunkCoord, ChunkRing
+#include "src/client/world/WorldModel.h" // GlobalChunkCoord, ChunkRing
 
 #include <cstdint>
 #include <list>

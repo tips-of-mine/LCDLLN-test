@@ -7,8 +7,8 @@
 ///   - `contentRoot` est bien préfixé.
 ///   - Les 3 mapTypes (Albedo, Normal, Arm) produisent des paths distincts.
 
-#include "engine/render/terrain_chunk/LayerArrayLoader.h"
-#include "engine/world/terrain/LayerPalette.h"
+#include "src/client/render/terrain_chunk/LayerArrayLoader.h"
+#include "src/client/world/terrain/LayerPalette.h"
 
 #include <cstdio>
 #include <set>

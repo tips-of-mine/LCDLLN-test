@@ -1,6 +1,6 @@
-#include "engine/editor/world/TerrainSculptCommand.h"
+#include "src/world_editor/world/TerrainSculptCommand.h"
 
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <utility>
 

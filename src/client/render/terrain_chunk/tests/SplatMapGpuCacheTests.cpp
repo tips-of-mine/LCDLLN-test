@@ -5,7 +5,7 @@
 ///   - GetOrUpload caches + ne re-upload pas au 2e appel.
 ///   - Evict détruit les 2 paires (image, view) via l'allocator.
 
-#include "engine/render/terrain_chunk/SplatMapGpuCache.h"
+#include "src/client/render/terrain_chunk/SplatMapGpuCache.h"
 
 #include <cstdio>
 #include <cstdint>

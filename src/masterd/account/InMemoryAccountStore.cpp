@@ -1,7 +1,7 @@
-#include "engine/server/InMemoryAccountStore.h"
-#include "engine/server/AccountValidation.h"
-#include "engine/auth/Argon2Hash.h"
-#include "engine/core/Log.h"
+#include "src/masterd/account/InMemoryAccountStore.h"
+#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <ctime>

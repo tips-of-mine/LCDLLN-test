@@ -14,15 +14,15 @@
 #pragma comment(lib, "winhttp.lib")
 #endif
 
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
-#include "engine/render/AuthUiRenderer.h"
+#include "src/client/render/AuthUiRenderer.h"
 
-#include "engine/core/DefaultClientEndpoints.h"
-#include "engine/core/Log.h"
-#include "engine/network/NetClient.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/platform/Window.h"
+#include "src/shared/core/DefaultClientEndpoints.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shared/platform/Window.h"
 
 #include <algorithm>
 #include <array>
@@ -42,14 +42,14 @@
 #include <vector>
 
 #if defined(_WIN32)
-#	include "engine/auth/Argon2Hash.h"
-#	include "engine/network/AuthRegisterPayloads.h"
-#	include "engine/network/ErrorPacket.h"
-#	include "engine/network/CharacterPayloads.h"
-#	include "engine/network/MasterShardClientFlow.h"
-#	include "engine/network/ProtocolV1Constants.h"
-#	include "engine/network/RequestResponseDispatcher.h"
-#	include "engine/network/TermsPayloads.h"
+#	include "src/shared/auth/Argon2Hash.h"
+#	include "src/shared/network/AuthRegisterPayloads.h"
+#	include "src/shared/network/ErrorPacket.h"
+#	include "src/shared/network/CharacterPayloads.h"
+#	include "src/shared/network/MasterShardClientFlow.h"
+#	include "src/shared/network/ProtocolV1Constants.h"
+#	include "src/shared/network/RequestResponseDispatcher.h"
+#	include "src/shared/network/TermsPayloads.h"
 #endif
 
 namespace engine::client

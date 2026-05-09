@@ -1,7 +1,7 @@
 // CMANGOS.07 (Phase 3.07a) — Tests EventAI evaluator.
 
-#include "engine/server/ai/EventAI.h"
-#include "engine/core/Log.h"
+#include "src/shardd/ai/EventAI.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

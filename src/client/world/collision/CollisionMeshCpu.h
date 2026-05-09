@@ -1,7 +1,7 @@
-// engine/world/collision/CollisionMeshCpu.h
+// src/client/world/collision/CollisionMeshCpu.h
 #pragma once
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 #include <cstdint>
 #include <vector>

@@ -1,5 +1,5 @@
-#include "engine/world/terrain/TerrainChunkLoader.h"
-#include "engine/world/StreamCache.h"
+#include "src/client/world/terrain/TerrainChunkLoader.h"
+#include "src/client/world/StreamCache.h"
 
 #include <sstream>
 

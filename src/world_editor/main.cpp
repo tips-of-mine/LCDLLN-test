@@ -1,6 +1,6 @@
-#include "engine/Engine.h"
+#include "src/client/app/Engine.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdio>
 #include <cstring>

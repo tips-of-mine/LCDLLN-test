@@ -2,7 +2,7 @@
 ///
 /// Vérifient les invariants du kernel de brosse, du raycast, de la commande
 /// undo/redo, et du tool. Pas de dépendance ImGui ni Vulkan : tout passe par
-/// l'API CPU des fichiers `engine/editor/world/Terrain*`.
+/// l'API CPU des fichiers `src/world_editor/world/Terrain*`.
 ///
 /// Sept tests :
 ///   - Test_RaiseBrush_AddsExpectedDelta       : un tick Raise au centre
@@ -27,13 +27,13 @@
 /// sous CTest, donc `EnsureLoaded` crée un chunk plat à 0 — exactement ce
 /// qu'il faut pour partir d'une heightmap connue.
 
-#include "engine/core/Config.h"
-#include "engine/editor/world/CommandStack.h"
-#include "engine/editor/world/TerrainBrush.h"
-#include "engine/editor/world/TerrainDocument.h"
-#include "engine/editor/world/TerrainSculptCommand.h"
-#include "engine/editor/world/TerrainSculptTool.h"
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/shared/core/Config.h"
+#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/world/TerrainBrush.h"
+#include "src/world_editor/world/TerrainDocument.h"
+#include "src/world_editor/world/TerrainSculptCommand.h"
+#include "src/world_editor/world/TerrainSculptTool.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <cmath>
 #include <cstdio>

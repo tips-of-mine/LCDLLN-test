@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/editor/world/CommandStack.h"
-#include "engine/editor/world/TerrainBrush.h"
-#include "engine/editor/world/TerrainDocument.h"
+#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/world/TerrainBrush.h"
+#include "src/world_editor/world/TerrainDocument.h"
 
 #include <vector>
 

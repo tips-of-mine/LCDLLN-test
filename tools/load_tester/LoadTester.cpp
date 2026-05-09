@@ -1,9 +1,9 @@
 #include "LoadTester.h"
 
-#include "engine/core/Log.h"
-#include "engine/network/AuthRegisterPayloads.h"
-#include "engine/network/PacketBuilder.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/AuthRegisterPayloads.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <algorithm>
 #include <chrono>

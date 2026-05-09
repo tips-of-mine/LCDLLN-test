@@ -1,12 +1,12 @@
-#include "engine/editor/EditorMode.h"
+#include "src/world_editor/EditorMode.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/Window.h"
-#include "engine/render/AssetRegistry.h"
-#include "engine/world/WorldModel.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/Window.h"
+#include "src/client/render/AssetRegistry.h"
+#include "src/client/world/WorldModel.h"
 
 #include <algorithm>
 #include <array>

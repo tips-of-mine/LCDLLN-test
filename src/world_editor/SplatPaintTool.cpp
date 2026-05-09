@@ -1,9 +1,9 @@
-#include "engine/editor/world/SplatPaintTool.h"
+#include "src/world_editor/world/SplatPaintTool.h"
 
-#include "engine/editor/world/SplatRules.h"
-#include "engine/editor/world/TerrainRaycast.h"
-#include "engine/world/terrain/SplatMap.h"
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/world_editor/world/SplatRules.h"
+#include "src/world_editor/world/TerrainRaycast.h"
+#include "src/client/world/terrain/SplatMap.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <algorithm>
 #include <atomic>

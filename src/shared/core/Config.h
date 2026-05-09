@@ -1,4 +1,4 @@
-/// @file engine/core/Config.h
+/// @file src/shared/core/Config.h
 /// @brief Système de configuration hiérarchique pour le MMORPG.
 ///
 /// Résolution des valeurs (ordre de priorité décroissant) :

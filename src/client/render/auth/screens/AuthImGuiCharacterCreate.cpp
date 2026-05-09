@@ -1,8 +1,8 @@
 // AUTH-UI.11 - rendu ImGui ecran de creation de personnage avec saisie du nom et confirmation (split depuis AuthImGuiRenderer.cpp).
 // Contient RenderCharCreateScreen : panneau avec champ de nom, lignes d'information issues du modele, et boutons Annuler / Creer.
 
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/LnTheme.h"
 
 #include <string>
 

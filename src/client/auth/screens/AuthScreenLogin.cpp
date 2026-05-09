@@ -1,14 +1,14 @@
 // AUTH-UI.1 — Écran de connexion : saisie identifiant/mot de passe, navigation vers inscription/récupération.
 //
 // Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
-#include "engine/client/AuthUi.h"
-#include "engine/render/AuthUiRenderer.h"
-#include "engine/core/DefaultClientEndpoints.h"
-#include "engine/core/Log.h"
-#include "engine/network/NetClient.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/Window.h"
+#include "src/client/AuthUi.h"
+#include "src/client/render/AuthUiRenderer.h"
+#include "src/shared/core/DefaultClientEndpoints.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/Window.h"
 
 #include <algorithm>
 #include <cctype>

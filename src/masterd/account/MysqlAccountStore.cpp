@@ -6,13 +6,13 @@
 /// (2 lettres ASCII majuscules) avant d'être inclus dans un LIKE. Aucun mot de passe en clair
 /// ni hash intermédiaire n'est loggué ou persisté — seul le hash Argon2 final est écrit.
 
-#include "engine/server/MysqlAccountStore.h"
-#include "engine/server/AccountValidation.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
-#include "engine/auth/Argon2Hash.h"
-#include "engine/core/Log.h"
-#include "engine/network/NetErrorCode.h"
+#include "src/masterd/account/MysqlAccountStore.h"
+#include "src/masterd/account/AccountValidation.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
+#include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/NetErrorCode.h"
 
 #include <mysql.h>
 

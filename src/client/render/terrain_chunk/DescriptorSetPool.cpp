@@ -1,4 +1,4 @@
-#include "engine/render/terrain_chunk/DescriptorSetPool.h"
+#include "src/client/render/terrain_chunk/DescriptorSetPool.h"
 
 namespace engine::render::terrain_chunk
 {

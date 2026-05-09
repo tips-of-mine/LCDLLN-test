@@ -1,8 +1,8 @@
-#include "engine/editor/world/TerrainSculptTool.h"
+#include "src/world_editor/world/TerrainSculptTool.h"
 
-#include "engine/editor/world/TerrainRaycast.h"
-#include "engine/editor/world/TerrainSculptCommand.h"
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/world_editor/world/TerrainRaycast.h"
+#include "src/world_editor/world/TerrainSculptCommand.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <algorithm>
 #include <atomic>

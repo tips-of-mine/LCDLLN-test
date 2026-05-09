@@ -1,9 +1,9 @@
 // AUTH-UI.7 - rendu ImGui ecran choix de langue au premier lancement (split depuis AuthImGuiRenderer.cpp).
 // Contient DrawLanguageFirstRunCards (grille de cartes drapeaux cliquables) et RenderLangScreen (panneau centre avec titre, cartes et bouton Continuer).
 
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/auth/AuthImGuiCommon.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/auth/AuthImGuiCommon.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <cmath>

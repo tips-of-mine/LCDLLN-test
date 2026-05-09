@@ -1,7 +1,7 @@
 // AUTH-UI.4 - rendu ImGui de l'ecran d'erreur d'authentification (erreur simple ou erreur enrichie d'inscription).
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/auth/AuthImGuiCommon.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/auth/AuthImGuiCommon.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <cstdio>

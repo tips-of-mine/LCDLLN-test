@@ -3,10 +3,10 @@
  * No external test framework; returns 0 if all pass, non-zero on first failure.
  */
 
-#include "engine/server/ShardTicketValidator.h"
-#include "engine/server/ShardTicketCrypto.h"
-#include "engine/network/ShardTicketPayloads.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/ShardTicketValidator.h"
+#include "src/masterd/handlers/ShardTicketCrypto.h"
+#include "src/shared/network/ShardTicketPayloads.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <cstdlib>

@@ -1,6 +1,6 @@
-#include "engine/client/CombatHud.h"
+#include "src/client/CombatHud.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <string>

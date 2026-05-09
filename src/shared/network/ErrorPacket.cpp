@@ -1,12 +1,12 @@
 // Implémentation de BuildErrorPacket et ParseErrorPayload (voir ErrorPacket.h).
 // BuildErrorPacket utilise PacketBuilder pour produire un paquet complet avec en-tête v1.
 // ParseErrorPayload lit séquentiellement via ByteReader ; tout buffer < 4 octets est rejeté.
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/ByteReader.h"
-#include "engine/network/ByteWriter.h"
-#include "engine/network/PacketBuilder.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/ByteReader.h"
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/PacketBuilder.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 namespace engine::network
 {

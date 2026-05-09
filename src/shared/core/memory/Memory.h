@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Log.h"
-#include "engine/core/memory/MemoryTags.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/core/memory/MemoryTags.h"
 
 #include <array>
 #include <atomic>

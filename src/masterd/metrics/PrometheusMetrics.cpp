@@ -1,7 +1,7 @@
 // M23.2 — Prometheus text format and DB latency histogram.
 
-#include "engine/server/PrometheusMetrics.h"
-#include "engine/core/Log.h"
+#include "src/masterd/metrics/PrometheusMetrics.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 #include <limits>

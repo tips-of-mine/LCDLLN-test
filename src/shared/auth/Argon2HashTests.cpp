@@ -4,7 +4,7 @@
  * No plaintext password is stored or transmitted; only hashes and salts in tests.
  */
 
-#include "engine/auth/Argon2Hash.h"
+#include "src/shared/auth/Argon2Hash.h"
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>

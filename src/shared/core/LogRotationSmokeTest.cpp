@@ -1,7 +1,7 @@
 /// M23.4 — Smoke test: verify log rotation by size (runtime logger).
 /// Writes enough data to exceed rotation_size_mb then checks rotated files exist.
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdlib>
 #include <filesystem>

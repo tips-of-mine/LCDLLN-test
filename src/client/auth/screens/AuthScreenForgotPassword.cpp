@@ -1,15 +1,15 @@
 // AUTH-UI.3 — Écran de récupération de mot de passe : saisie de l'e-mail et envoi de la demande de réinitialisation.
 //
 // Couche modèle : BuildModel_* peuple RenderModel, Update_* gère les entrées clavier hors ImGui, ImGui* reçoit les actions du renderer.
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
-#include "engine/core/Log.h"
-#include "engine/network/AuthRegisterPayloads.h"
-#include "engine/network/NetClient.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/network/RequestResponseDispatcher.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/Window.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/AuthRegisterPayloads.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/RequestResponseDispatcher.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/Window.h"
 
 #include <chrono>
 #include <cstdint>

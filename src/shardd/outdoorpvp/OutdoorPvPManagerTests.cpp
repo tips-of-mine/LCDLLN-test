@@ -1,5 +1,5 @@
-#include "engine/server/outdoorpvp/OutdoorPvPManager.h"
-#include "engine/core/Log.h"
+#include "src/shardd/outdoorpvp/OutdoorPvPManager.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

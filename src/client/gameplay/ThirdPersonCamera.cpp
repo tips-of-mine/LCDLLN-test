@@ -1,6 +1,6 @@
-#include "engine/gameplay/ThirdPersonCamera.h"
-#include "engine/platform/Input.h"
-#include "engine/core/Log.h"
+#include "src/client/gameplay/ThirdPersonCamera.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 

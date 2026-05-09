@@ -1,10 +1,10 @@
-#include "engine/client/ShopUi.h"
+#include "src/client/ShopUi.h"
 
 
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/network/ServerProtocol.h"
 
 
 

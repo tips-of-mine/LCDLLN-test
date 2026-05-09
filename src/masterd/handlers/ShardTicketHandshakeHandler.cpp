@@ -1,9 +1,9 @@
-#include "engine/server/ShardTicketHandshakeHandler.h"
-#include "engine/server/NetServer.h"
-#include "engine/server/ShardTicketValidator.h"
-#include "engine/network/ShardTicketPayloads.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/ShardTicketHandshakeHandler.h"
+#include "src/shared/network/NetServer.h"
+#include "src/masterd/handlers/ShardTicketValidator.h"
+#include "src/shared/network/ShardTicketPayloads.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
 
 #include <cstdio>
 

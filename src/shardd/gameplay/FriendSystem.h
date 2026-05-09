@@ -1,7 +1,7 @@
 #pragma once
 // M32.1 — Server-side friend system: requests, bilateral relationship, online presence tracking.
 
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <chrono>
 #include <cstdint>

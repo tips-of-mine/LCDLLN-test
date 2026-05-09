@@ -1,5 +1,5 @@
-// engine/world/collision/tests/CollisionProxyRoundtripTests.cpp
-#include "engine/world/collision/CollisionProxy.h"
+// src/client/world/collision/tests/CollisionProxyRoundtripTests.cpp
+#include "src/client/world/collision/CollisionProxy.h"
 
 #include <cstdio>
 #include <cstring>

@@ -1,9 +1,9 @@
 // CMANGOS.16 (Phase 1b) — Tests ConditionMgr.
 
-#include "engine/server/shard/globals/ConditionMgr.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/globals/ConditionMgr.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

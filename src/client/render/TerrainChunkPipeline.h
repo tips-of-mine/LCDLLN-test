@@ -1,6 +1,6 @@
 #pragma once
 
-// engine/render/TerrainChunkPipeline.h (M100.9 — Task 13)
+// src/client/render/TerrainChunkPipeline.h (M100.9 — Task 13)
 //
 // Pipeline Vulkan dédié au draw d'un `TerrainChunk` LOD0 avec son splat-map
 // 8 layers (PR M100 Phase 3a — Splat Map System). Distinct du legacy
@@ -32,7 +32,7 @@
 // désactive `colorWriteMask` sur l'attachment velocity pour rester
 // compatible avec le render pass GBuffer existant sans toucher aux shaders.
 //
-// Référence d'implémentation : `engine/render/GeometryPass.cpp` (boilerplate
+// Référence d'implémentation : `src/client/render/GeometryPass.cpp` (boilerplate
 // MRT 4 color + depth, render pass + pipeline) — copié-adapté minimalement.
 
 #include <vulkan/vulkan_core.h>

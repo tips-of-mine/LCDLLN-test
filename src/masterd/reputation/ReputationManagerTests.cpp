@@ -1,7 +1,7 @@
 // CMANGOS.24 (Phase 3.24a) — Tests ReputationManager + Spillover.
 
-#include "engine/server/reputation/ReputationManager.h"
-#include "engine/core/Log.h"
+#include "src/masterd/reputation/ReputationManager.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

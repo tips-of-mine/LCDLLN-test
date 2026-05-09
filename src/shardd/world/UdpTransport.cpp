@@ -1,6 +1,6 @@
-#include "engine/server/UdpTransport.h"
+#include "src/shardd/world/UdpTransport.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>

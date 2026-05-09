@@ -1,7 +1,7 @@
-#include "engine/client/InventoryUi.h"
+#include "src/client/InventoryUi.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <array>

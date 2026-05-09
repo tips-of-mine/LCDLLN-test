@@ -20,15 +20,15 @@
 /// Pas de Catch2 : framework REQUIRE maison + main monolithique, pattern
 /// identique à TerrainSculptTests.
 
-#include "engine/core/Config.h"
-#include "engine/editor/world/CommandStack.h"
-#include "engine/editor/world/ProceduralStampGenerators.h"
-#include "engine/editor/world/StampLibrary.h"
-#include "engine/editor/world/TerrainBrush.h"
-#include "engine/editor/world/TerrainDocument.h"
-#include "engine/editor/world/TerrainStampCommand.h"
-#include "engine/editor/world/TerrainStampTool.h"
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/shared/core/Config.h"
+#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/world/ProceduralStampGenerators.h"
+#include "src/world_editor/world/StampLibrary.h"
+#include "src/world_editor/world/TerrainBrush.h"
+#include "src/world_editor/world/TerrainDocument.h"
+#include "src/world_editor/world/TerrainStampCommand.h"
+#include "src/world_editor/world/TerrainStampTool.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <cmath>
 #include <cstdint>

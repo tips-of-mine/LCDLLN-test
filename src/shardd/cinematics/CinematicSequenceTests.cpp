@@ -1,5 +1,5 @@
-#include "engine/server/cinematics/CinematicSequence.h"
-#include "engine/core/Log.h"
+#include "src/shardd/cinematics/CinematicSequence.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 

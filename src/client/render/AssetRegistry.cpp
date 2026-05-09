@@ -1,6 +1,6 @@
-#include "engine/render/AssetRegistry.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/client/render/AssetRegistry.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <vulkan/vulkan_core.h>
 

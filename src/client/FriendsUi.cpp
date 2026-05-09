@@ -1,7 +1,7 @@
 // M32.1 — Client-side friends list UI panel presenter implementation.
 
-#include "engine/client/FriendsUi.h"
-#include "engine/core/Log.h"
+#include "src/client/FriendsUi.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <string>

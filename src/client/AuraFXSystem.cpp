@@ -1,6 +1,6 @@
-#include "engine/client/AuraFXSystem.h"
+#include "src/client/AuraFXSystem.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

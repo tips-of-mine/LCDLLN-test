@@ -1,16 +1,16 @@
 #if defined(__linux__)
 
-#include "engine/server/NetServer.h"
+#include "src/shared/network/NetServer.h"
 
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/NetErrorCode.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/network/NetworkBufferPool.h"
-#include "engine/server/ServerProtocol.h"
-#include "engine/server/ConnectionDDoSProtector.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/NetErrorCode.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/NetworkBufferPool.h"
+#include "src/shared/network/ServerProtocol.h"
+#include "src/shared/security/ConnectionDDoSProtector.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <atomic>
 #include <cerrno>
@@ -1183,9 +1183,9 @@ namespace engine::server
 
 #else
 
-#include "engine/server/NetServer.h"
+#include "src/shared/network/NetServer.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 namespace engine::server
 {

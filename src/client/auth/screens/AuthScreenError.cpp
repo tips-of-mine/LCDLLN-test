@@ -1,9 +1,9 @@
 // AUTH-UI.4 — Couche modèle pour l'écran d'erreur d'authentification.
 
 // BuildModel_Error peuple le RenderModel avec le layout riche (inscription) ou générique selon la phase d'origine.
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cctype>

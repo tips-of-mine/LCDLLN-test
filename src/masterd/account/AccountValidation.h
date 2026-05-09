@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "engine/network/NetErrorCode.h"
+#include "src/shared/network/NetErrorCode.h"
 
 #include <cstddef>
 #include <optional>

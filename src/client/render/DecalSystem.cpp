@@ -1,6 +1,6 @@
-#include "engine/render/DecalSystem.h"
+#include "src/client/render/DecalSystem.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

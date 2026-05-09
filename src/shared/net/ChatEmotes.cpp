@@ -1,6 +1,6 @@
-#include "engine/net/ChatEmotes.h"
+#include "src/shared/net/ChatEmotes.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <cctype>
 #include <string_view>

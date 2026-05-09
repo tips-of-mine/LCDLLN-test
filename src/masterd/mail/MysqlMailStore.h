@@ -3,7 +3,7 @@
 // d'IMailStore pour persistance production. Cible UNIX uniquement
 // (le shard WIN32 utilise InMemoryMailStore par défaut).
 
-#include "engine/server/mail/MailManager.h"
+#include "src/masterd/mail/MailManager.h"
 
 namespace engine::server::db { class ConnectionPool; }
 

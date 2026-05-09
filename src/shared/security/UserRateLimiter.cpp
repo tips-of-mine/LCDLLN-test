@@ -1,6 +1,6 @@
 // M33.3 — User-based rate limiter implementation.
-#include "engine/server/UserRateLimiter.h"
-#include "engine/core/Log.h"
+#include "src/shared/security/UserRateLimiter.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <chrono>

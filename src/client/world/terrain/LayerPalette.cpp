@@ -1,7 +1,7 @@
-#include "engine/world/terrain/LayerPalette.h"
+#include "src/client/world/terrain/LayerPalette.h"
 
-#include "engine/core/Log.h"
-#include "engine/world/surface/SurfaceType.h"
+#include "src/shared/core/Log.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 #include <cassert>
 #include <fstream>

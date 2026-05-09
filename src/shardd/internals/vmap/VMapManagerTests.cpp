@@ -1,9 +1,9 @@
 // CMANGOS.05 (Phase 2.05c) — Tests VMapManager IsInLineOfSight + GetHeight.
 // Pure : pas de DB, pas d'I/O disque (tile fabriqué en mémoire).
 
-#include "engine/server/shard/vmap/VMapFormat.h"
-#include "engine/server/shard/vmap/VMapManager.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/vmap/VMapFormat.h"
+#include "src/shardd/internals/vmap/VMapManager.h"
+#include "src/shared/core/Log.h"
 
 #include <cmath>
 

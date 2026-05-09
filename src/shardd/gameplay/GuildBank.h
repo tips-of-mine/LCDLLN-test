@@ -3,7 +3,7 @@
 // Each tab has per-rank access permissions (view, deposit, withdraw).
 // All withdrawals are appended to an in-memory audit log.
 
-#include "engine/server/ReplicationTypes.h"
+#include "src/shared/network/ReplicationTypes.h"
 
 #include <array>
 #include <cstdint>

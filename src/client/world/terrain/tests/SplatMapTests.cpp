@@ -7,12 +7,12 @@
 ///   - Load rejette magic invalide.
 ///   - Load rejette une cellule de somme != 255.
 ///
-/// Style aligné sur engine/world/terrain/tests/TerrainChunkTests.cpp
+/// Style aligné sur src/client/world/terrain/tests/TerrainChunkTests.cpp
 /// (REQUIRE macro maison + main() appelant chaque test function).
 
-#include "engine/world/terrain/LayerPalette.h"
-#include "engine/world/terrain/SplatMap.h"
-#include "engine/world/surface/SurfaceType.h"
+#include "src/client/world/terrain/LayerPalette.h"
+#include "src/client/world/terrain/SplatMap.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 #include <cstdio>
 #include <cstring>

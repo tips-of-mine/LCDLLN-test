@@ -1,8 +1,8 @@
 // M21.6 — Connection pool: configurable size, health check (ping), reconnect on Acquire. Thread-safe.
 
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

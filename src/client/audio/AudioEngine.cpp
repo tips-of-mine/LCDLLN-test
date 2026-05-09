@@ -1,9 +1,9 @@
-#include "engine/audio/AudioEngine.h"
+#include "src/client/audio/AudioEngine.h"
 
-#include "engine/audio/MaMenuMusic.h"
+#include "src/client/audio/MaMenuMusic.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cstdio>

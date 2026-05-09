@@ -1,7 +1,7 @@
-#include "engine/server/ServerApp.h"
+#include "src/shared/server_bootstrap/ServerApp.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

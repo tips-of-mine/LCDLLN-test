@@ -1,8 +1,8 @@
 #if !defined(_WIN32)
 
-#include "engine/platform/Window.h"
+#include "src/shared/platform/Window.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 namespace engine::platform
 {

@@ -2,7 +2,7 @@
 // M32.1 — Client-side friends list UI panel presenter.
 // Displays online status per friend, exposes whisper shortcut on double-click.
 
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <cstdint>
 #include <string>

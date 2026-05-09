@@ -1,7 +1,7 @@
-#include "engine/network/NetClient.h"
-#include "engine/network/PacketView.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/PacketView.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>

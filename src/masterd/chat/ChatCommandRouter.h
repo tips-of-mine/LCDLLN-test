@@ -8,7 +8,7 @@
 // on dispatche au handler enregistré ; sinon on rejette (`UnknownCommand`
 // ou `InsufficientRole`) et le caller décide quoi montrer à l'utilisateur.
 
-#include "engine/server/AccountRole.h"
+#include "src/masterd/account/AccountRole.h"
 
 #include <cstdint>
 #include <functional>

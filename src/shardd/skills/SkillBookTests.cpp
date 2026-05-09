@@ -1,5 +1,5 @@
-#include "engine/server/skills/SkillBook.h"
-#include "engine/core/Log.h"
+#include "src/shardd/skills/SkillBook.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

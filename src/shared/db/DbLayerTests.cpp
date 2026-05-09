@@ -1,9 +1,9 @@
 // M21.6 — Smoke tests for DB layer: pool Acquire/Release, Execute/Query.
 
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #include <mysql.h>
 

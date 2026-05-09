@@ -1,10 +1,10 @@
-#include "engine/server/chat/ChatGate.h"
+#include "src/masterd/chat/ChatGate.h"
 
-#include "engine/core/Log.h"
-#include "engine/server/AccountRecord.h"
-#include "engine/server/AccountStore.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
+#include "src/masterd/account/AccountRecord.h"
+#include "src/masterd/account/AccountStore.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <mysql.h>

@@ -1,14 +1,14 @@
 #pragma once
 
-// engine/render/terrain_chunk/TerrainMeshGpuCache.h
+// src/client/render/terrain_chunk/TerrainMeshGpuCache.h
 //
 // Cache des `TerrainMeshGpu` (vertex + index VkBuffer) par chunk. Délègue
 // l'upload Vulkan à un allocateur injectable (`IGpuBufferAllocator`) pour
 // permettre des tests CPU avec un mock counter.
 
-#include "engine/render/terrain_chunk/ChunkRuntime.h"
-#include "engine/world/WorldModel.h"
-#include "engine/world/terrain/TerrainMeshBuilder.h" // TerrainMeshGpu, TerrainVertex, BuildLod0Mesh
+#include "src/client/render/terrain_chunk/ChunkRuntime.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/TerrainMeshBuilder.h" // TerrainMeshGpu, TerrainVertex, BuildLod0Mesh
 
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>

@@ -1,7 +1,7 @@
 // M23.1 — Minimal HTTP health/readiness endpoint. UNIX only.
 
-#include "engine/server/HealthEndpoint.h"
-#include "engine/core/Log.h"
+#include "src/masterd/metrics/HealthEndpoint.h"
+#include "src/shared/core/Log.h"
 
 #if defined(__unix__) || defined(__linux__)
 #include <arpa/inet.h>

@@ -1,13 +1,13 @@
 #pragma once
-#include "engine/editor/world/IPanel.h"
-#include "engine/editor/world/CommandStack.h"
-#include "engine/editor/world/LakeTool.h"
-#include "engine/editor/world/RiverTool.h"
-#include "engine/editor/world/SplatPaintTool.h"
-#include "engine/editor/world/TerrainDocument.h"
-#include "engine/editor/world/TerrainSculptTool.h"
-#include "engine/editor/world/TerrainStampTool.h"
-#include "engine/editor/world/WaterDocument.h"
+#include "src/world_editor/world/IPanel.h"
+#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/world/LakeTool.h"
+#include "src/world_editor/world/RiverTool.h"
+#include "src/world_editor/world/SplatPaintTool.h"
+#include "src/world_editor/world/TerrainDocument.h"
+#include "src/world_editor/world/TerrainSculptTool.h"
+#include "src/world_editor/world/TerrainStampTool.h"
+#include "src/world_editor/world/WaterDocument.h"
 
 #include <memory>
 #include <string>

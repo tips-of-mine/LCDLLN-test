@@ -26,7 +26,7 @@
 // (jamais wall_clock) — un changement d'heure système (NTP, suspend)
 // ne doit PAS décharger toute la map.
 
-#include "engine/server/SpatialPartition.h"
+#include "src/shardd/world/SpatialPartition.h"
 
 #include <chrono>
 #include <cstdint>

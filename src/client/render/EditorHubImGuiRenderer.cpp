@@ -1,7 +1,7 @@
-#include "engine/render/EditorHubImGuiRenderer.h"
+#include "src/client/render/EditorHubImGuiRenderer.h"
 
-#include "engine/editor/EditorMode.h"
-#include "engine/render/LnTheme.h"
+#include "src/world_editor/EditorMode.h"
+#include "src/client/render/LnTheme.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

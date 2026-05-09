@@ -1,17 +1,17 @@
-#include "engine/editor/WorldEditorSession.h"
+#include "src/world_editor/WorldEditorSession.h"
 
-#include "engine/editor/WorldMapIo.h"
+#include "src/world_editor/WorldMapIo.h"
 
-#include "engine/world/WorldModel.h"
+#include "src/client/world/WorldModel.h"
 
 #include <array>
 #include <algorithm>
 #include <cmath>
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/render/terrain/TerrainGrassDetail.h"
-#include "engine/render/terrain/TerrainHoleMask.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/client/render/terrain/TerrainGrassDetail.h"
+#include "src/client/render/terrain/TerrainHoleMask.h"
 
 #include <atomic>
 #include <charconv>

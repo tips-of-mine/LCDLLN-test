@@ -1,9 +1,9 @@
 #pragma once
 
-#include "engine/world/WorldModel.h"
-#include "engine/world/terrain/SplatMap.h"
-#include "engine/world/terrain/TerrainChunk.h"
-#include "engine/world/terrain/TerrainLodWorker.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/SplatMap.h"
+#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainLodWorker.h"
 
 #include <memory>
 #include <string>

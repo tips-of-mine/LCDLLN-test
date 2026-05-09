@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/render/AssetRegistry.h"
+#include "src/client/render/AssetRegistry.h"
 
 #include <vulkan/vulkan_core.h>
 

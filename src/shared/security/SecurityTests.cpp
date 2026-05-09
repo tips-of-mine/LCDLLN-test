@@ -2,9 +2,9 @@
  * M20.4: Unit tests for rate limiting and IP ban. No external test framework; returns 0 if all pass.
  */
 
-#include "engine/server/RateLimitAndBan.h"
-#include "engine/server/SecurityAuditLog.h"
-#include "engine/core/Log.h"
+#include "src/shared/security/RateLimitAndBan.h"
+#include "src/shared/security/SecurityAuditLog.h"
+#include "src/shared/core/Log.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>

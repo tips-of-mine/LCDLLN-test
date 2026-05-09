@@ -2,8 +2,8 @@
 // Enforces per-rank per-tab permissions and appends an audit-log entry
 // for every successful withdrawal.
 
-#include "engine/server/GuildBank.h"
-#include "engine/core/Log.h"
+#include "src/shardd/gameplay/GuildBank.h"
+#include "src/shared/core/Log.h"
 
 #include <ctime>
 

@@ -3,10 +3,10 @@
 // base pour la BIH (Bounding Interval Hierarchy) qui sera la structure
 // d'accélération du vmap server-side (LOS / GetHeight / projectile).
 //
-// Pure math, pas de dépendance externe au-delà de engine/math/Math.h
+// Pure math, pas de dépendance externe au-delà de src/shared/math/Math.h
 // (Vec3). Testable en isolation.
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 #include <algorithm>
 #include <cmath>

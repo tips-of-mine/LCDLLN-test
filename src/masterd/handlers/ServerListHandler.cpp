@@ -1,10 +1,10 @@
-#include "engine/server/ServerListHandler.h"
-#include "engine/server/NetServer.h"
-#include "engine/server/ShardRegistry.h"
-#include "engine/server/ServerRegistry.h"
-#include "engine/network/ServerListPayloads.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/ServerListHandler.h"
+#include "src/shared/network/NetServer.h"
+#include "src/masterd/shards/ShardRegistry.h"
+#include "src/masterd/shards/ServerRegistry.h"
+#include "src/shared/network/ServerListPayloads.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
 
 #include <vector>
 

@@ -1,5 +1,5 @@
-#include "engine/server/lfg/LfgQueue.h"
-#include "engine/core/Log.h"
+#include "src/masterd/lfg/LfgQueue.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

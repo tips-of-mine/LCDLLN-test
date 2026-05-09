@@ -3,11 +3,11 @@
  * No external test framework; returns 0 if all pass, non-zero on first failure.
  */
 
-#include "engine/network/ByteReader.h"
-#include "engine/network/ByteWriter.h"
-#include "engine/network/PacketBuilder.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/ByteReader.h"
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <cassert>
 #include <cstdint>

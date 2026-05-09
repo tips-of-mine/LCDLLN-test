@@ -1,5 +1,5 @@
-// engine/editor/world/CollisionPreviewCamera.cpp
-#include "engine/editor/world/CollisionPreviewCamera.h"
+// src/world_editor/world/CollisionPreviewCamera.cpp
+#include "src/world_editor/world/CollisionPreviewCamera.h"
 
 #include <algorithm>
 #include <cmath>

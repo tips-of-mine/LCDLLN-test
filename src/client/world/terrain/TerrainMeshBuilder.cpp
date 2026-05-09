@@ -1,4 +1,4 @@
-#include "engine/world/terrain/TerrainMeshBuilder.h"
+#include "src/client/world/terrain/TerrainMeshBuilder.h"
 
 #include <algorithm>
 #include <cmath>

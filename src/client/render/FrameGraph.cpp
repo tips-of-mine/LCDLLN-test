@@ -1,6 +1,6 @@
-#include "engine/render/FrameGraph.h"
-#include "engine/core/Log.h"
-#include "engine/core/Profiler.h"
+#include "src/client/render/FrameGraph.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/core/Profiler.h"
 
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>

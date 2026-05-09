@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/render/DecalSystem.h"
-#include "engine/render/FrameGraph.h"
+#include "src/client/render/DecalSystem.h"
+#include "src/client/render/FrameGraph.h"
 
 #include <vulkan/vulkan_core.h>
 

@@ -1,9 +1,9 @@
 // AUTH-UI.0 — Helpers ImGui réutilisés par tous les écrans d'authentification
 
 // Fournit les primitives communes : bannières, toggle, boutons (primaire, fantôme, danger, texte), drapeaux vectoriels et indicateurs de raccourcis clavier.
-#include "engine/render/auth/AuthImGuiCommon.h"
+#include "src/client/render/auth/AuthImGuiCommon.h"
 
-#include "engine/render/LnTheme.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <cmath>

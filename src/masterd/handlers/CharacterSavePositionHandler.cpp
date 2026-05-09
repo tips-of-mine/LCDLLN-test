@@ -1,14 +1,14 @@
-#include "engine/server/CharacterSavePositionHandler.h"
+#include "src/masterd/handlers/CharacterSavePositionHandler.h"
 
-#include "engine/core/Log.h"
-#include "engine/network/CharacterPayloads.h"
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/server/ConnectionSessionMap.h"
-#include "engine/server/NetServer.h"
-#include "engine/server/SessionManager.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/server/db/DbHelpers.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/masterd/session/ConnectionSessionMap.h"
+#include "src/shared/network/NetServer.h"
+#include "src/masterd/session/SessionManager.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
 
 #include <mysql.h>
 

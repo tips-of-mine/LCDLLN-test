@@ -1,8 +1,8 @@
 // M32.4 — Guild tabard item constants and emblem serialization.
 // Uses only standard C++20 facilities; no external JSON library required.
 
-#include "engine/server/GuildTabard.h"
-#include "engine/core/Log.h"
+#include "src/shardd/gameplay/GuildTabard.h"
+#include "src/shared/core/Log.h"
 
 #include <charconv>
 #include <format>

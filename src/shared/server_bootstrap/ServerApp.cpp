@@ -1,11 +1,11 @@
-#include "engine/server/ServerApp.h"
+#include "src/shared/server_bootstrap/ServerApp.h"
 
-#include "engine/core/Log.h"
-#include "engine/net/ChatEmotes.h"
-#include "engine/net/ChatSystem.h"
-#include "engine/platform/FileSystem.h"
-#include "engine/server/ChatCommandParser.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/net/ChatEmotes.h"
+#include "src/shared/net/ChatSystem.h"
+#include "src/shared/platform/FileSystem.h"
+#include "src/shardd/gameplay/ChatCommandParser.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <algorithm>
 #include <chrono>

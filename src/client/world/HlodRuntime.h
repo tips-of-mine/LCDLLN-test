@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/math/Frustum.h"
-#include "engine/world/WorldModel.h"
+#include "src/shared/math/Math.h"
+#include "src/shared/math/Frustum.h"
+#include "src/client/world/WorldModel.h"
 
 #include <cstddef>
 #include <string>

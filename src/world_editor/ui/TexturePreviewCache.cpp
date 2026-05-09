@@ -1,6 +1,6 @@
-#include "engine/editor/TexturePreviewCache.h"
+#include "src/world_editor/TexturePreviewCache.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 // stb_image deja defini dans WorldMapIo.cpp / AssetRegistry.cpp — NE PAS redefinir
 // STB_IMAGE_IMPLEMENTATION ici (link error sinon).
@@ -17,7 +17,7 @@
 #if defined(_WIN32)
 #   include "imgui_impl_vulkan.h"
 #endif
-#include "engine/render/terrain/TerrainSplatting.h"
+#include "src/client/render/terrain/TerrainSplatting.h"
 
 namespace engine::editor
 {

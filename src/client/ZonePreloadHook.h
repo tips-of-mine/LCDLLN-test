@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/math/Math.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/math/Math.h"
+#include "src/shared/network/ServerProtocol.h"
 
 namespace engine::world
 {

@@ -1,8 +1,8 @@
-// engine/world/collision/AutoFitProxy.h
+// src/client/world/collision/AutoFitProxy.h
 #pragma once
 
-#include "engine/world/collision/CollisionMeshCpu.h"
-#include "engine/world/collision/CollisionProxy.h"
+#include "src/client/world/collision/CollisionMeshCpu.h"
+#include "src/client/world/collision/CollisionProxy.h"
 
 namespace engine::world::collision
 {

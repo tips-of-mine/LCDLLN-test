@@ -8,7 +8,7 @@
 // d'une spline. Implementation minimale (somme + produit scalaire,
 // pas de slerp dans cette PR — viendra avec MoveSpline runtime).
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 #include <cmath>
 

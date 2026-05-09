@@ -1,7 +1,7 @@
-// engine/editor/world/WaterDocument.cpp
-#include "engine/editor/world/WaterDocument.h"
+// src/world_editor/world/WaterDocument.cpp
+#include "src/world_editor/world/WaterDocument.h"
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <filesystem>
 #include <fstream>

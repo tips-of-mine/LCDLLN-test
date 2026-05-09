@@ -1,4 +1,4 @@
-#include "engine/render/terrain_chunk/TerrainMeshGpuCache.h"
+#include "src/client/render/terrain_chunk/TerrainMeshGpuCache.h"
 
 namespace engine::render::terrain_chunk
 {

@@ -1,7 +1,7 @@
 // CMANGOS.25 (Phase 3.25a) — Tests IgnoreListManager.
 
-#include "engine/server/social/IgnoreList.h"
-#include "engine/core/Log.h"
+#include "src/masterd/social/IgnoreList.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

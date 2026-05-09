@@ -1,5 +1,5 @@
-#include "engine/auth/Argon2Hash.h"
-#include "engine/core/Log.h"
+#include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/core/Log.h"
 #include <argon2.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>

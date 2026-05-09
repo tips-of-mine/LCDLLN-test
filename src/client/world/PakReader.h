@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/world/PakFormat.h"
+#include "src/client/world/PakFormat.h"
 
 #include <cstdint>
 #include <fstream>

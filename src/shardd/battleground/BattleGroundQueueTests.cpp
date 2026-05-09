@@ -1,5 +1,5 @@
-#include "engine/server/battleground/BattleGroundQueue.h"
-#include "engine/core/Log.h"
+#include "src/shardd/battleground/BattleGroundQueue.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

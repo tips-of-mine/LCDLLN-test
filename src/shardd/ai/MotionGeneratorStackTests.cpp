@@ -1,5 +1,5 @@
-#include "engine/server/ai/MotionGeneratorStack.h"
-#include "engine/core/Log.h"
+#include "src/shardd/ai/MotionGeneratorStack.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

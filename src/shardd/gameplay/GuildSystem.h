@@ -5,7 +5,7 @@
 // On platforms without MySQL (WIN32 game shard) the system operates in no-DB mode:
 // all data is in-memory only; DB operations are skipped.
 
-#include "engine/server/GuildTabard.h"
+#include "src/shardd/gameplay/GuildTabard.h"
 
 #include <cstdint>
 #include <string>

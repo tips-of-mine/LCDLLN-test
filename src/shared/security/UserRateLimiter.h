@@ -4,7 +4,7 @@
 // Token bucket for skills; sliding window for chat.
 // Thread-safe only if caller serialises access (single-worker v1).
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <chrono>
 #include <cstdint>

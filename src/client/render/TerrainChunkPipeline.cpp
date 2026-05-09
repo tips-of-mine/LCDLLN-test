@@ -1,4 +1,4 @@
-// engine/render/TerrainChunkPipeline.cpp (M100.9 — Task 13)
+// src/client/render/TerrainChunkPipeline.cpp (M100.9 — Task 13)
 //
 // Implémentation du pipeline graphique terrain_chunk. Voir
 // `TerrainChunkPipeline.h` pour la documentation API. Ce fichier se concentre
@@ -6,11 +6,11 @@
 // existant (4 color + 1 depth, formats fournis par l'appelant via le
 // `renderPass`).
 
-#include "engine/render/TerrainChunkPipeline.h"
+#include "src/client/render/TerrainChunkPipeline.h"
 
-#include "engine/render/PipelineCache.h"
-#include "engine/core/Log.h"
-#include "engine/world/terrain/TerrainMeshBuilder.h"
+#include "src/client/render/PipelineCache.h"
+#include "src/shared/core/Log.h"
+#include "src/client/world/terrain/TerrainMeshBuilder.h"
 
 #include <cstdint>
 #include <cstring>

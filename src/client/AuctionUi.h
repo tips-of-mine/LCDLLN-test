@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/client/InventoryUi.h"
-#include "engine/client/UIModel.h"
+#include "src/client/InventoryUi.h"
+#include "src/client/UIModel.h"
 
 #include <cstdint>
 #include <string>

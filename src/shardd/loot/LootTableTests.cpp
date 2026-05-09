@@ -1,7 +1,7 @@
 // CMANGOS.17 (Phase 3.17a) — Tests LootTable roll deterministe.
 
-#include "engine/server/loot/LootTable.h"
-#include "engine/core/Log.h"
+#include "src/shardd/loot/LootTable.h"
+#include "src/shared/core/Log.h"
 
 #include <random>
 

@@ -1,6 +1,6 @@
-// engine/editor/world/panels/SurfaceTablePanel.cpp
-#include "engine/editor/world/panels/SurfaceTablePanel.h"
-#include "engine/world/surface/SurfaceType.h"
+// src/world_editor/world/panels/SurfaceTablePanel.cpp
+#include "src/world_editor/world/panels/SurfaceTablePanel.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"

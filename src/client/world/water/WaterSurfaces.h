@@ -1,7 +1,7 @@
-// engine/world/water/WaterSurfaces.h
+// src/client/world/water/WaterSurfaces.h
 #pragma once
 
-#include "engine/math/Math.h"
+#include "src/shared/math/Math.h"
 
 #include <cstdint>
 #include <span>

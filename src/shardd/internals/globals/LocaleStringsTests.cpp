@@ -1,9 +1,9 @@
 // CMANGOS.16 (Phase 1b) — Tests LocaleStrings.
 
-#include "engine/server/shard/globals/LocaleStrings.h"
-#include "engine/server/db/ConnectionPool.h"
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/globals/LocaleStrings.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

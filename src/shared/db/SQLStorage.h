@@ -16,7 +16,7 @@
 // Load() utilise pool.Acquire() dans son body — une simple forward declaration
 // déclenche un warning [-Wpedantic] sur GCC ("invalid use of incomplete type")
 // au moment de l'instanciation par les consommateurs.
-#include "engine/server/db/ConnectionPool.h"
+#include "src/shared/db/ConnectionPool.h"
 
 namespace engine::server::db
 {

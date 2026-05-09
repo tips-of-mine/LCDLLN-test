@@ -1,7 +1,7 @@
-#include "engine/server/SpawnerRuntime.h"
+#include "src/shardd/gameplay/SpawnerRuntime.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <cctype>
 #include <cmath>

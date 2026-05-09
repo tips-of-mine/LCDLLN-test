@@ -1,5 +1,5 @@
-#include "engine/server/dbscripts/DBScript.h"
-#include "engine/core/Log.h"
+#include "src/shardd/dbscripts/DBScript.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

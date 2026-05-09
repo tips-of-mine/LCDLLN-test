@@ -1,5 +1,5 @@
-#include "engine/server/maps/InstanceManager.h"
-#include "engine/core/Log.h"
+#include "src/shardd/maps/InstanceManager.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

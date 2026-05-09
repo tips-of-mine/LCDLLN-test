@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/server/db/ConnectionPool.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/db/ConnectionPool.h"
 
 #include <cstdint>
 #include <string>

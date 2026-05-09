@@ -1,9 +1,9 @@
-#include "engine/network/ShardToMasterClient.h"
-#include "engine/network/NetClient.h"
-#include "engine/network/PacketBuilder.h"
-#include "engine/network/PacketView.h"
-#include "engine/network/ShardPayloads.h"
-#include "engine/core/Log.h"
+#include "src/shared/network/ShardToMasterClient.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/PacketView.h"
+#include "src/shared/network/ShardPayloads.h"
+#include "src/shared/core/Log.h"
 
 #include <chrono>
 #include <cstdio>

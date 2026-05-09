@@ -1,15 +1,15 @@
 // AUTH-UI.11 — Couche modèle pour l'écran de création de personnage.
 
 // Couche modèle : BuildModel_CharacterCreate expose le champ nom, StartCharacterCreateWorker envoie la requête réseau.
-#include "engine/client/AuthUi.h"
+#include "src/client/AuthUi.h"
 
-#include "engine/network/CharacterPayloads.h"
-#include "engine/network/ErrorPacket.h"
-#include "engine/network/NetClient.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/network/RequestResponseDispatcher.h"
-#include "engine/platform/Input.h"
-#include "engine/platform/Window.h"
+#include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/ErrorPacket.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/RequestResponseDispatcher.h"
+#include "src/shared/platform/Input.h"
+#include "src/shared/platform/Window.h"
 
 #include <chrono>
 #include <cstdint>

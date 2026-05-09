@@ -1,5 +1,5 @@
-#include "engine/render/terrain/TerrainMesh.h"
-#include "engine/core/Log.h"
+#include "src/client/render/terrain/TerrainMesh.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
 

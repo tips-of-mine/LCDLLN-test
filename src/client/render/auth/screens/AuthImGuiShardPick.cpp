@@ -1,10 +1,10 @@
 // AUTH-UI.8 - rendu ImGui ecran de selection du serveur de jeu (shard) avec liste detaillee et indicateurs de charge (split depuis AuthImGuiRenderer.cpp).
 // Contient les helpers d'extraction d'hote/initiale depuis l'endpoint et RenderShardScreen (liste scrollable de shards avec barre de charge, statut et bouton Entrer).
 
-#include "engine/render/AuthImGuiRenderer.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/render/AuthImGuiRenderer.h"
+#include "src/client/render/LnTheme.h"
 
-#include "engine/client/LocalizationService.h"
+#include "src/client/LocalizationService.h"
 
 #include <algorithm>
 #include <cctype>

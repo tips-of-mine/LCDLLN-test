@@ -1,9 +1,9 @@
-#include "engine/render/ChatImGuiRenderer.h"
+#include "src/client/render/ChatImGuiRenderer.h"
 
-#include "engine/client/ChatUi.h"
-#include "engine/core/Config.h"
-#include "engine/net/ChatSystem.h"
-#include "engine/render/LnTheme.h"
+#include "src/client/ChatUi.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/net/ChatSystem.h"
+#include "src/client/render/LnTheme.h"
 
 #include <algorithm>
 #include <cfloat>

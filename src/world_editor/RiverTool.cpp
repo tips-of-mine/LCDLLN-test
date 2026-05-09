@@ -1,11 +1,11 @@
-// engine/editor/world/RiverTool.cpp
-#include "engine/editor/world/RiverTool.h"
+// src/world_editor/world/RiverTool.cpp
+#include "src/world_editor/world/RiverTool.h"
 
-#include "engine/editor/world/AddRiverCommand.h"
-#include "engine/editor/world/CommandStack.h"
-#include "engine/editor/world/TerrainDocument.h"
-#include "engine/world/WorldModel.h"
-#include "engine/world/terrain/TerrainChunk.h"
+#include "src/world_editor/world/AddRiverCommand.h"
+#include "src/world_editor/world/CommandStack.h"
+#include "src/world_editor/world/TerrainDocument.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 
 #include <memory>
 #include <string>

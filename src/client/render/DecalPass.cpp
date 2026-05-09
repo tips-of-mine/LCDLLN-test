@@ -1,7 +1,7 @@
-#include "engine/render/DecalPass.h"
-#include "engine/render/PipelineCache.h"
+#include "src/client/render/DecalPass.h"
+#include "src/client/render/PipelineCache.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <array>
 #include <cstring>

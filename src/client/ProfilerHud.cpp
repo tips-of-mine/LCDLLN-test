@@ -1,6 +1,6 @@
-#include "engine/client/ProfilerHud.h"
+#include "src/client/ProfilerHud.h"
 
-#include "engine/core/Log.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

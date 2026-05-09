@@ -1,6 +1,6 @@
-// engine/world/terrain/tests/LayerPaletteSurfaceTypeTests.cpp
-#include "engine/world/terrain/LayerPalette.h"
-#include "engine/world/surface/SurfaceType.h"
+// src/client/world/terrain/tests/LayerPaletteSurfaceTypeTests.cpp
+#include "src/client/world/terrain/LayerPalette.h"
+#include "src/client/world/surface/SurfaceType.h"
 
 #include <cstdio>
 #include <filesystem>

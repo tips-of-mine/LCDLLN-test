@@ -1,9 +1,9 @@
-#include "engine/editor/world/TerrainDocument.h"
+#include "src/world_editor/world/TerrainDocument.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/world/terrain/TerrainChunkLoader.h"
-#include "engine/world/terrain/TerrainLodChain.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/client/world/terrain/TerrainChunkLoader.h"
+#include "src/client/world/terrain/TerrainLodChain.h"
 
 #include <filesystem>
 #include <fstream>

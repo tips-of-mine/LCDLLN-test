@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/net/ChatSystem.h"
-#include "engine/platform/Input.h"
+#include "src/shared/net/ChatSystem.h"
+#include "src/shared/platform/Input.h"
 
 #include <cstdint>
 #include <functional>

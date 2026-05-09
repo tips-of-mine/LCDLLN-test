@@ -1,7 +1,7 @@
-#include "engine/world/StreamingScheduler.h"
-#include "engine/world/StreamCache.h"
-#include "engine/world/ChunkPackageLayout.h"
-#include "engine/core/Log.h"
+#include "src/client/world/StreamingScheduler.h"
+#include "src/client/world/StreamCache.h"
+#include "src/client/world/ChunkPackageLayout.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 

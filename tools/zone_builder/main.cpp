@@ -5,9 +5,9 @@
 #include <zone_builder/ChunkPackageWriter.h>
 #include <zone_builder/GltfImporter.h>
 #include <zone_builder/LayoutImporter.h>
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cctype>

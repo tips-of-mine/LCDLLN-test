@@ -1,8 +1,8 @@
 // CMANGOS.03 (Phase 2.03a) — Tests GridStateTracker.
 // Pure logic, pas de DB, pas de threading.
 
-#include "engine/server/GridState.h"
-#include "engine/core/Log.h"
+#include "src/shardd/world/GridState.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <chrono>

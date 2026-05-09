@@ -27,7 +27,7 @@
 //   - T operator*(float)
 //   - T.LengthSq() ou .Length() pour LengthApprox (Vec3 OK).
 
-#include "engine/server/shard/movement/MovementTypedefs.h"
+#include "src/shardd/internals/movement/MovementTypedefs.h"
 
 #include <cmath>
 #include <cstddef>

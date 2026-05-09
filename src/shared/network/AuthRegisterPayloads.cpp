@@ -3,11 +3,11 @@
 // ce qui garantit la compatibilité descendante — un ancien client sans champs optionnels est accepté.
 // Stratégie de build : les champs optionnels (first_name…country_code) ne sont sérialisés que si
 // au moins un d'eux est non-vide, pour rester compatible avec les anciens serveurs.
-#include "engine/network/AuthRegisterPayloads.h"
-#include "engine/network/ByteReader.h"
-#include "engine/network/ByteWriter.h"
-#include "engine/network/PacketBuilder.h"
-#include "engine/network/ProtocolV1Constants.h"
+#include "src/shared/network/AuthRegisterPayloads.h"
+#include "src/shared/network/ByteReader.h"
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/ProtocolV1Constants.h"
 
 #include <vector>
 

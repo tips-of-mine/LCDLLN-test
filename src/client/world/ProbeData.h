@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Config.h"
-#include "engine/world/OutputVersion.h"
+#include "src/shared/core/Config.h"
+#include "src/client/world/OutputVersion.h"
 
 #include <array>
 #include <cstdint>

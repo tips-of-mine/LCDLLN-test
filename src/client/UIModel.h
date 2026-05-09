@@ -1,9 +1,9 @@
 #pragma once
 
-#include "engine/client/ChatWorldVisualPresenter.h"
-#include "engine/math/Frustum.h"
-#include "engine/math/Math.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/client/ChatWorldVisualPresenter.h"
+#include "src/shared/math/Frustum.h"
+#include "src/shared/math/Math.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <cstddef>
 #include <cstdint>

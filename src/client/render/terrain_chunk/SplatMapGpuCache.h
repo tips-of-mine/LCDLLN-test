@@ -1,6 +1,6 @@
 #pragma once
 
-// engine/render/terrain_chunk/SplatMapGpuCache.h
+// src/client/render/terrain_chunk/SplatMapGpuCache.h
 //
 // Cache des splat-maps GPU par chunk. Chaque chunk produit deux VkImage
 // RGBA8 257² (image0 = layers 0..3, image1 = layers 4..7) à partir du blob
@@ -8,9 +8,9 @@
 // l'upload Vulkan à un allocateur injectable (`IGpuImageAllocator`) pour
 // permettre des tests CPU avec un mock counter.
 
-#include "engine/render/terrain_chunk/ChunkRuntime.h"
-#include "engine/world/WorldModel.h"
-#include "engine/world/terrain/SplatMap.h"
+#include "src/client/render/terrain_chunk/ChunkRuntime.h"
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/SplatMap.h"
 
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>

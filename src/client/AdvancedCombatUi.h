@@ -4,8 +4,8 @@
 // Depends on M16.2 (CombatHud) and M32.2 (PartyHud).
 // Self-contained presenter: no GPU resources, purely CPU-side state.
 
-#include "engine/client/UIModel.h"
-#include "engine/server/ServerProtocol.h"
+#include "src/client/UIModel.h"
+#include "src/shared/network/ServerProtocol.h"
 
 #include <cstdint>
 #include <deque>

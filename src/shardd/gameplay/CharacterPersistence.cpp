@@ -1,9 +1,9 @@
-#include "engine/server/CharacterPersistence.h"
+#include "src/shardd/gameplay/CharacterPersistence.h"
 
-#include "engine/server/ServerProtocol.h"
+#include "src/shared/network/ServerProtocol.h"
 
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <sstream>

@@ -1,10 +1,10 @@
-// engine/render/terrain_chunk/TerrainChunkRenderer.cpp (Task 11 — M100)
+// src/client/render/terrain_chunk/TerrainChunkRenderer.cpp (Task 11 — M100)
 //
 // Implémentation de `TerrainChunkRenderer`. Voir TerrainChunkRenderer.h pour
 // la documentation API. Ce fichier contient :
 //   1. 3 allocateurs Vulkan concrets (Buffer / Image / ImageArray) qui
 //      reproduisent le pattern staging buffer + barrier + copyBufferToImage
-//      du legacy `engine/render/terrain/TerrainSplatting.cpp`.
+//      du legacy `src/client/render/terrain/TerrainSplatting.cpp`.
 //   2. Le chargement boot-time des 24 textures PBR (8 layers × 3 maps) via
 //      `stb_image::stbi_load` + résolution de path par `ResolveLayerAssetPath`.
 //      Stratégie de fallback : magenta 1×1 si fichier absent ou taille
@@ -16,17 +16,17 @@
 //
 // Pas de branche `m_editorEnabled` : critère M100.5/.9.
 
-#include "engine/render/terrain_chunk/TerrainChunkRenderer.h"
+#include "src/client/render/terrain_chunk/TerrainChunkRenderer.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/render/AssetRegistry.h"
-#include "engine/render/vk/StagingAllocator.h"
-#include "engine/world/StreamCache.h"
-#include "engine/world/terrain/LayerPalette.h"
-#include "engine/world/terrain/SplatMap.h"
-#include "engine/world/terrain/TerrainChunk.h"
-#include "engine/world/terrain/TerrainMeshBuilder.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/client/render/AssetRegistry.h"
+#include "src/client/render/vk/StagingAllocator.h"
+#include "src/client/world/StreamCache.h"
+#include "src/client/world/terrain/LayerPalette.h"
+#include "src/client/world/terrain/SplatMap.h"
+#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainMeshBuilder.h"
 
 // stb_image: STB_IMAGE_IMPLEMENTATION est défini dans AssetRegistry.cpp.
 // On inclut l'en-tête uniquement pour les déclarations de stbi_load /

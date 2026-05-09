@@ -1,6 +1,6 @@
-#include "engine/core/LogConfig.h"
+#include "src/shared/core/LogConfig.h"
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <algorithm>
 #include <cstdint>

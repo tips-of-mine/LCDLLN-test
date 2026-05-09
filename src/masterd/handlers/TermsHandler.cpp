@@ -1,15 +1,15 @@
-#include "engine/server/TermsHandler.h"
-#include "engine/server/NetServer.h"
-#include "engine/server/SessionManager.h"
-#include "engine/server/ConnectionSessionMap.h"
-#include "engine/server/AccountStore.h"
-#include "engine/server/TermsRepository.h"
-#include "engine/server/LocalizedEmail.h"
-#include "engine/network/TermsPayloads.h"
-#include "engine/network/ProtocolV1Constants.h"
-#include "engine/core/Log.h"
+#include "src/masterd/handlers/TermsHandler.h"
+#include "src/shared/network/NetServer.h"
+#include "src/masterd/session/SessionManager.h"
+#include "src/masterd/session/ConnectionSessionMap.h"
+#include "src/masterd/account/AccountStore.h"
+#include "src/masterd/handlers/TermsRepository.h"
+#include "src/masterd/email/LocalizedEmail.h"
+#include "src/shared/network/TermsPayloads.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/core/Log.h"
 
-#include "engine/server/SmtpMailer.h"
+#include "src/masterd/email/SmtpMailer.h"
 
 #include <algorithm>
 #include <string>

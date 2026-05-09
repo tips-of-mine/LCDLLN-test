@@ -1,13 +1,13 @@
 #pragma once
 
-#include "engine/render/terrain/HeightmapLoader.h"
-#include "engine/render/terrain/TerrainMesh.h"
-#include "engine/render/terrain/TerrainSplatting.h"
-#include "engine/render/terrain/TerrainHoleMask.h"
-#include "engine/render/terrain/TerrainCliffMesh.h"
-#include "engine/render/FrameGraph.h"
-#include "engine/math/Frustum.h"
-#include "engine/math/Math.h"
+#include "src/client/render/terrain/HeightmapLoader.h"
+#include "src/client/render/terrain/TerrainMesh.h"
+#include "src/client/render/terrain/TerrainSplatting.h"
+#include "src/client/render/terrain/TerrainHoleMask.h"
+#include "src/client/render/terrain/TerrainCliffMesh.h"
+#include "src/client/render/FrameGraph.h"
+#include "src/shared/math/Frustum.h"
+#include "src/shared/math/Math.h"
 
 #include <vulkan/vulkan_core.h>
 

@@ -1,8 +1,8 @@
-// engine/editor/world/panels/SurfaceTablePanel.h
+// src/world_editor/world/panels/SurfaceTablePanel.h
 #pragma once
 
-#include "engine/editor/world/IPanel.h"
-#include "engine/world/surface/SurfaceTable.h"
+#include "src/world_editor/world/IPanel.h"
+#include "src/client/world/surface/SurfaceTable.h"
 
 #include <filesystem>
 #include <string>

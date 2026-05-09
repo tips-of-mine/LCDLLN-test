@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/core/Log.h"
-#include "engine/math/Math.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/math/Math.h"
 
 #include <cstdint>
 

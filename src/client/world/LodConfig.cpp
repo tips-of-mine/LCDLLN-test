@@ -1,5 +1,5 @@
-#include "engine/world/LodConfig.h"
-#include "engine/core/Config.h"
+#include "src/client/world/LodConfig.h"
+#include "src/shared/core/Config.h"
 
 #include <algorithm>
 #include <cmath>

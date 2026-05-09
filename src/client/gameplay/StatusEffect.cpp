@@ -1,4 +1,4 @@
-#include "engine/gameplay/StatusEffect.h"
+#include "src/client/gameplay/StatusEffect.h"
 
 #include <algorithm>
 #include <cassert>

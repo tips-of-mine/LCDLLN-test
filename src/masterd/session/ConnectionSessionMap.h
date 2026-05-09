@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/server/SessionManager.h"
+#include "src/masterd/session/SessionManager.h"
 
 #include <cstdint>
 #include <mutex>

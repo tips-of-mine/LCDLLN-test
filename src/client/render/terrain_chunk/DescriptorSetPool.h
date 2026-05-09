@@ -1,6 +1,6 @@
 #pragma once
 
-// engine/render/terrain_chunk/DescriptorSetPool.h
+// src/client/render/terrain_chunk/DescriptorSetPool.h
 //
 // Pool dédié au splat set du `TerrainChunkPipeline` (M100). Sized pour la
 // taille max de Visible ring (7×7 = 49 sets résidents simultanés). Le set

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "engine/world/terrain/TerrainChunk.h"
-#include "engine/world/terrain/TerrainLodChain.h"
+#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/client/world/terrain/TerrainLodChain.h"
 
 #include <vulkan/vulkan_core.h>
 

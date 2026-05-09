@@ -1,6 +1,6 @@
 // M33.3 — Bot detection heuristics implementation.
-#include "engine/server/BotDetector.h"
-#include "engine/core/Log.h"
+#include "src/shared/security/BotDetector.h"
+#include "src/shared/core/Log.h"
 
 #include <algorithm>
 #include <cmath>

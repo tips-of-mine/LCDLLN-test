@@ -1,8 +1,8 @@
-// engine/render/WaterPass.cpp
-#include "engine/render/WaterPass.h"
-#include "engine/render/PipelineCache.h"
-#include "engine/render/PsoKey.h"
-#include "engine/core/Log.h"
+// src/client/render/WaterPass.cpp
+#include "src/client/render/WaterPass.h"
+#include "src/client/render/PipelineCache.h"
+#include "src/client/render/PsoKey.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan_core.h>
 

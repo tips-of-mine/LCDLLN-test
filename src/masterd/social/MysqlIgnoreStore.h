@@ -3,7 +3,7 @@
 // d'IIgnoreStore pour persistance production. Cible UNIX shard.
 // (WIN32 sandbox utilise InMemoryIgnoreStore.)
 
-#include "engine/server/social/IgnoreList.h"
+#include "src/masterd/social/IgnoreList.h"
 
 namespace engine::server::db { class ConnectionPool; }
 

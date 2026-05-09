@@ -1,5 +1,5 @@
-#include "engine/server/packetlog/PacketLog.h"
-#include "engine/core/Log.h"
+#include "src/shared/packetlog/PacketLog.h"
+#include "src/shared/core/Log.h"
 
 namespace
 {

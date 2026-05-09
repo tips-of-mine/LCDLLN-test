@@ -1,8 +1,8 @@
-#include "engine/server/ServerApp.h"
-#include "engine/server/ServerRegistry.h"
+#include "src/shared/server_bootstrap/ServerApp.h"
+#include "src/masterd/shards/ServerRegistry.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

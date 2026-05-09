@@ -1,6 +1,6 @@
 #pragma once
 
-// engine/render/terrain_chunk/TerrainChunkRenderer.h (Task 11 — M100)
+// src/client/render/terrain_chunk/TerrainChunkRenderer.h (Task 11 — M100)
 //
 // Orchestrateur principal du runtime terrain chunk-based : agrège
 // `TerrainChunkPipeline`, le `ChunkRuntime` (LRU + budget), les caches GPU
@@ -24,13 +24,13 @@
 // Pas de branche `m_editorEnabled` : critère M100.5/.9 — l'orchestrateur
 // est utilisé identiquement par le client et l'éditeur monde.
 
-#include "engine/render/TerrainChunkPipeline.h"
-#include "engine/render/terrain_chunk/ChunkRuntime.h"
-#include "engine/render/terrain_chunk/DescriptorSetPool.h"
-#include "engine/render/terrain_chunk/LayerArrayLoader.h"
-#include "engine/render/terrain_chunk/SplatMapGpuCache.h"
-#include "engine/render/terrain_chunk/TerrainMeshGpuCache.h"
-#include "engine/world/WorldModel.h"
+#include "src/client/render/TerrainChunkPipeline.h"
+#include "src/client/render/terrain_chunk/ChunkRuntime.h"
+#include "src/client/render/terrain_chunk/DescriptorSetPool.h"
+#include "src/client/render/terrain_chunk/LayerArrayLoader.h"
+#include "src/client/render/terrain_chunk/SplatMapGpuCache.h"
+#include "src/client/render/terrain_chunk/TerrainMeshGpuCache.h"
+#include "src/client/world/WorldModel.h"
 
 #include <cstdint>
 #include <memory>

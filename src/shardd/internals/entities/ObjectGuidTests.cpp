@@ -1,8 +1,8 @@
 // CMANGOS.02 (Phase 2.02a) — Tests ObjectGuid.
 // Pure : aucune dépendance externe.
 
-#include "engine/server/shard/entities/ObjectGuid.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/entities/ObjectGuid.h"
+#include "src/shared/core/Log.h"
 
 #include <unordered_set>
 

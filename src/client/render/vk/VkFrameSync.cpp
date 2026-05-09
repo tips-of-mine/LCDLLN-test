@@ -1,5 +1,5 @@
-#include "engine/render/vk/VkFrameSync.h"
-#include "engine/core/Log.h"
+#include "src/client/render/vk/VkFrameSync.h"
+#include "src/shared/core/Log.h"
 
 #include <vulkan/vulkan.h>
 

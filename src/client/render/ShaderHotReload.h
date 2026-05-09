@@ -1,10 +1,10 @@
 #pragma once
 
-#include "engine/render/ShaderCache.h"
-#include "engine/render/ShaderCompiler.h"
-#include "engine/platform/FileWatcher.h"
+#include "src/client/render/ShaderCache.h"
+#include "src/client/render/ShaderCompiler.h"
+#include "src/shared/platform/FileWatcher.h"
 
-#include "engine/core/Config.h"
+#include "src/shared/core/Config.h"
 
 #include <atomic>
 #include <chrono>

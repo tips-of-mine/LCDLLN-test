@@ -1,8 +1,8 @@
-#include "engine/client/SettingsMenuUi.h"
+#include "src/client/SettingsMenuUi.h"
 
-#include "engine/core/Config.h"
-#include "engine/core/Log.h"
-#include "engine/platform/FileSystem.h"
+#include "src/shared/core/Config.h"
+#include "src/shared/core/Log.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <cmath>

@@ -1,5 +1,5 @@
-#include "engine/render/GpuUploadQueue.h"
-#include "engine/core/Config.h"
+#include "src/client/render/GpuUploadQueue.h"
+#include "src/shared/core/Config.h"
 
 namespace engine::render
 {

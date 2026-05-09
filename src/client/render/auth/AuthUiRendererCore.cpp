@@ -1,9 +1,9 @@
 // AUTH-UI.1 — Orchestrateur principal du rendu UI d'authentification (fond Vulkan, cadre, routage vers les écrans)
 
 // Calcule les métriques de disposition, construit les couches Vulkan de fond/cadre et route vers le Render*Screen approprié selon la Phase courante.
-#include "engine/render/AuthUiRenderer.h"
+#include "src/client/render/AuthUiRenderer.h"
 
-#include "engine/platform/FileSystem.h"
+#include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
 #include <array>

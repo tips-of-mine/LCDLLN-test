@@ -1,8 +1,8 @@
 // CMANGOS.05 (Phase 2.05b) — Tests VMapFormat encode/decode round-trip.
 // Pure : pas de DB, pas d'I/O disque.
 
-#include "engine/server/shard/vmap/VMapFormat.h"
-#include "engine/core/Log.h"
+#include "src/shardd/internals/vmap/VMapFormat.h"
+#include "src/shared/core/Log.h"
 
 #include <cstring>
 

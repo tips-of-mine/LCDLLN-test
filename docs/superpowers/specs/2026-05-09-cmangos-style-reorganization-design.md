@@ -32,7 +32,7 @@ design/                ← inchangé
 scripts/               ← inchangé
 tools/                 ← inchangé
 tickets/               ← inchangé
-web-portal/            ← inchangé (Next.js)
+web-portal/            ← réorganisé en interne (cf. section 7)
 legacy/                ← NOUVEAU : "Editeur d'univers/" + "Editeur de monde/" déplacés ici
 .github/               ← workflows ajustés (paths)
 CMakeLists.txt         ← refactoré pour utiliser src/
@@ -138,6 +138,53 @@ src/world_editor/
   tests/                    TerrainChunkTests, SplatMapTests, etc.
 ```
 
+### 7. `web-portal/` (Next.js 13+ portal — 4e app)
+
+**Placement** : reste top-level (séparé de `src/` qui est C++). Next.js attend une structure projet à la racine (`package.json`, `next.config.mjs`, etc.). Le placer sous `src/` confondrait CMake.
+
+**Réorganisation interne** par domaine (cmangos-style) :
+
+```
+web-portal/
+  app/                            Next.js app router (kept structure)
+    admin/                        admin pages (acceptances, bugs, cgu, faq, players, roadmap)
+    api/                          API routes par domaine
+      auth/                       login, logout, session
+      admin/                      admin endpoints
+      bugs/                       bug reports
+      health/                     healthcheck
+      password-recovery/
+      player/
+    player/                       player pages (account, cgu, chronicles, exploits, parental, privacy, recovery-profile, security)
+    bugs/, cgu/, contact/, login/, password-recovery/, roadmap/, support/
+    layout.tsx, page.tsx, globals.css
+
+  components/                     SPLIT BY DOMAIN
+    auth/                         AccountForm, PasswordChangeForm, PasswordRecoveryRequestForm, ResetPasswordForm
+    bugs/                         BugReportForm
+    cgu/                          CguAcceptButton
+    character/                    CharacterDeleteButton
+    exploits/                     ExploitsProfile
+    player/                       PrivacyForm, RecoveryProfileForm
+    layout/                       SiteHeader, HeaderActions
+    admin/                        BugAdmin, CguManager, FaqAdmin, PlayerActions (déjà groupés)
+
+  lib/                            SPLIT BY DOMAIN
+    db/                           db.ts → db/connection.ts (MySQL pool)
+    email/                        email.ts → email/sender.ts (intégration Nodemailer)
+    auth/                         gamePasswordHash.ts, passwordRecovery.ts, portalLogin.ts, session.ts
+    exploits/                     exploitTier.ts, exploitsData.ts
+
+  email-templates/                kept (référencé par lib/email)
+  nginx/                          kept (config reverse proxy déploiement)
+  middleware.ts                   kept (Next.js middleware racine)
+  Dockerfile, package.json, tsconfig.json, etc. kept
+```
+
+**Pourquoi `app/api/admin/` ET `components/admin/` séparés** : convention Next.js 13+ qui attend les API handlers sous `app/api/<domain>/route.ts`, et les composants React sous `components/<domain>/<Name>.tsx`. On respecte la convention Next.js et on calque la même organisation par domaine des deux côtés.
+
+**Imports TypeScript** : Next.js utilise des paths absolus via `tsconfig.json` (`@/lib/auth/session`, `@/components/auth/AccountForm`). À mettre à jour dans `tsconfig.json` après le déplacement.
+
 ## CMake
 
 - Top-level `CMakeLists.txt` reste à la racine, mais délégue : `add_subdirectory(src)`.
@@ -181,7 +228,16 @@ Le repo actuel a **un seul** `add_executable(server_app)` avec une branche `if (
 
 - `scripts/sync-db-to-docker-deploy.sh` : `db/` → `sql/`.
 - `scripts/pack-linux-docker-bundle.sh` : `db/` → `sql/`.
+- `scripts/sync-web-portal-to-docker-deploy.sh` : path `$SRC` reste `web-portal/` (pas de move). Aucun changement requis tant que le top-level reste `web-portal/`.
 - `MigrationRunner` (config default `db.migrations_path` reste `db/migrations` mais le code lit la config depuis `config.json` ; on peut soit changer le default à `sql/migrations`, soit garder le default et changer le `config.json`). Choix : changer le default à `sql/migrations`, simpler.
+
+### Web-portal CI/CD
+
+Le portail Next.js n'a **pas de workflow GitHub Actions dédié**. Il est packagé dans le bundle Docker Linux via `scripts/sync-web-portal-to-docker-deploy.sh` (copie `web-portal/` → `deploy/docker/web-portal/`), puis le `docker compose` build l'image au déploiement. La réorganisation interne de `web-portal/` n'affecte pas le workflow CI tant que la racine `web-portal/` (et ses fichiers `Dockerfile`, `package.json`, `next.config.mjs`) reste à la même place.
+
+Tests post-réorg :
+- `npm run build` doit passer dans `web-portal/` (vérifie les imports TypeScript après split de `lib/` et `components/`).
+- L'image Docker doit builder via `docker compose build web-portal` (locally testable).
 
 ## Stratégie de migration (3 commits)
 
@@ -205,7 +261,15 @@ Le repo actuel a **un seul** `add_executable(server_app)` avec une branche `if (
 - Update `.github/workflows/build-linux.yml` : `db/` → `sql/` dans les steps.
 - Update `.github/workflows/build-windows.yml` : paths Vulkan SDK pour shaders, paths artifacts (devraient être inchangés mais à verifier).
 - Update `scripts/sync-db-to-docker-deploy.sh`, `scripts/pack-linux-docker-bundle.sh`.
-- Update `CODEBASE_MAP.md` : sections 1, 5, 6, et "Aide-mémoire" pour refléter la nouvelle structure. Préserver les sections 2/3 (flux d'auth) et 13-17 (UX iterations).
+- Update `CODEBASE_MAP.md` : sections 1, 5, 6, 12 (web-portal), et "Aide-mémoire" pour refléter la nouvelle structure. Préserver les sections 2/3 (flux d'auth) et 13-17 (UX iterations).
+
+### Commit 4 — réorganisation interne web-portal
+
+- `git mv` des composants vers `components/<domain>/`.
+- `git mv` des helpers `lib/` vers `lib/<domain>/`.
+- Update tous les imports TypeScript (`@/lib/db` → `@/lib/db/connection`, `@/components/AccountForm` → `@/components/auth/AccountForm`).
+- `npm run build` doit passer.
+- Test : `docker compose build web-portal` build sans erreur.
 
 ## Risques identifiés
 
@@ -241,5 +305,5 @@ Sections **préservées telles quelles** (contenu inchangé, seuls les paths) :
 ## Branche & PR
 
 - 1 branche : `claude/reorg-cmangos-style`.
-- 1 PR avec 3 commits (moves, includes+cmake, ci+map).
-- Déploiement : ⚠️ **REDÉPLOIEMENT SERVEUR REQUIS** — `db/` → `sql/` synchronisé avec l'image Docker.
+- 1 PR avec 4 commits (moves C++, includes+cmake, ci+map, web-portal interne).
+- Déploiement : ⚠️ **REDÉPLOIEMENT SERVEUR REQUIS** — `db/` → `sql/` synchronisé avec l'image Docker (master + shard + web-portal en lock-step via le bundle `lcdlln-docker-linux-<sha>`).

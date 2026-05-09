@@ -349,6 +349,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(cinematic_sequence_tests
     cinematics/CinematicSequenceTests.cpp)
 
+  # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
+  lcdlln_add_simple_test(metric_registry_tests
+    metric/MetricRegistryTests.cpp)
+
   # CMANGOS.19 (Phase 3.19a) : InstanceManager (header-only).
   lcdlln_add_simple_test(instance_manager_tests
     maps/InstanceManagerTests.cpp)

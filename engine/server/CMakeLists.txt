@@ -349,6 +349,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(cinematic_sequence_tests
     cinematics/CinematicSequenceTests.cpp)
 
+  # CMANGOS.08 (Phase 5.08a) : ArenaTeam + ELO (header-only).
+  lcdlln_add_simple_test(arena_team_tests
+    arena/ArenaTeamTests.cpp)
+
   # CMANGOS.19 (Phase 3.19a) : InstanceManager (header-only).
   lcdlln_add_simple_test(instance_manager_tests
     maps/InstanceManagerTests.cpp)

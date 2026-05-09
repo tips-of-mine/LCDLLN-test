@@ -131,6 +131,10 @@ elseif(UNIX)
     chat/ChatChannelRegistry.cpp
     mail/MailManager.cpp
     mail/MysqlMailStore.cpp
+    gmtickets/MysqlGmTicketStore.cpp
+    reputation/MysqlReputationStore.cpp
+    quests/MysqlQuestStateStore.cpp
+    social/MysqlIgnoreStore.cpp
     ${CMAKE_SOURCE_DIR}/engine/network/ChatPayloads.cpp
     PasswordResetStore.cpp
     PasswordResetHandler.cpp
@@ -356,6 +360,66 @@ elseif(UNIX)
   # CMANGOS.36 (Phase 5.36a) : OutdoorPvPManager (header-only, zones contestees).
   lcdlln_add_simple_test(outdoor_pvp_manager_tests
     outdoorpvp/OutdoorPvPManagerTests.cpp)
+
+  # CMANGOS.22 (Phase 4.22a) : PoolManager weighted spawn (header-only).
+  lcdlln_add_simple_test(pool_manager_tests
+    pools/PoolManagerTests.cpp)
+
+  # CMANGOS.08 (Phase 5.08a) : ArenaTeam + ELO (header-only).
+  lcdlln_add_simple_test(arena_team_tests
+    arena/ArenaTeamTests.cpp)
+
+  # CMANGOS.38 (Phase 5.38a) : PlayerBotProfile (header-only).
+  lcdlln_add_simple_test(player_bot_profile_tests
+    playerbot/PlayerBotProfileTests.cpp)
+
+  # CMANGOS.41 (Phase 5.41a) : ServerUtil (header-only).
+  lcdlln_add_simple_test(server_util_tests
+    util/ServerUtilTests.cpp)
+
+  # CMANGOS.40 (Phase 4.40a) : Formulas (header-only).
+  lcdlln_add_simple_test(formulas_tests
+    formulas/FormulasTests.cpp)
+
+  # CMANGOS.34 (Phase 4.34a) : MetricRegistry (header-only).
+  lcdlln_add_simple_test(metric_registry_tests
+    metric/MetricRegistryTests.cpp)
+
+  # CMANGOS.37 (Phase 4.37a) : CrashContext (header-only).
+  lcdlln_add_simple_test(crash_context_tests
+    platform/CrashContextTests.cpp)
+
+  # CMANGOS.35 (Phase 4.35a) : Messager MPSC (header-only).
+  lcdlln_add_simple_test(messager_tests
+    messager/MessagerTests.cpp)
+
+  # CMANGOS.10 (Phase 4.10a) : BattleGroundQueue (header-only).
+  lcdlln_add_simple_test(battle_ground_queue_tests
+    battleground/BattleGroundQueueTests.cpp)
+
+  # CMANGOS.27 (Phase 4.27a) : TradeSession FSM (header-only).
+  lcdlln_add_simple_test(trade_session_tests
+    trade/TradeSessionTests.cpp)
+
+  # CMANGOS.39 (Phase 4.39a) : SkillBook (header-only).
+  lcdlln_add_simple_test(skill_book_tests
+    skills/SkillBookTests.cpp)
+
+  # CMANGOS.12 (Phase 4.12a) : PacketLog ring buffer (header-only).
+  lcdlln_add_simple_test(packet_log_tests
+    packetlog/PacketLogTests.cpp)
+
+  # CMANGOS.28 (Phase 3.28a) : WorldClock (header-only).
+  lcdlln_add_simple_test(world_clock_tests
+    world/WorldClockTests.cpp)
+
+  # CMANGOS.21 (Phase 3.21a) : GuildPermissionMatrix (header-only).
+  lcdlln_add_simple_test(guild_permission_matrix_tests
+    guild/GuildPermissionMatrixTests.cpp)
+
+  # CMANGOS.44 (Phase 5.44a) : AuctionHouseBot (header-only, low-pop AH filler).
+  lcdlln_add_simple_test(auction_house_bot_tests
+    auction/AuctionHouseBotTests.cpp)
 
   # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
   lcdlln_add_simple_test(ignore_list_tests

@@ -324,6 +324,10 @@ elseif(UNIX)
     loot/LootTableTests.cpp
     loot/LootTable.cpp)
 
+  # CMANGOS.11 (Phase 3.11a) : ThreatList AI target selector (header-only).
+  lcdlln_add_simple_test(threat_list_tests
+    combat/ThreatListTests.cpp)
+
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests
     shard/vmap/BIHTests.cpp

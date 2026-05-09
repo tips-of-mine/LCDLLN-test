@@ -324,10 +324,12 @@ static void TestDeleteResponseHasAttachments()
 static void TestSendRequestUtf8()
 {
 	// Wire format byte-pour-byte : on encode des octets >= 0x80 directement
-	// (\xc3\xa9 = 'é' UTF-8). Pas de literal UTF-8 dans la source pour rester
-	// portable MSVC sans /utf-8.
-	const std::string subjectUtf8 = "Re: \xc3\xa9p\xc3\xa9e";
-	const std::string bodyUtf8    = "L'\xc3\xa9p\xc3\xa9e brille \xc3\xa0 la lune.";
+	// (\xc3\xa9 = 'e' acute UTF-8). MSVC parse \xHH greedy (lit tous les
+	// hex digits adjacents), donc "\xc3\xa9p" devient "\xc3\xa9p" entier
+	// puis "\xa9p" out of range. Solution : casser via concatenation de
+	// string literals adjacents pour forcer la fin de l'escape.
+	const std::string subjectUtf8 = "Re: " "\xc3\xa9" "p" "\xc3\xa9" "e";
+	const std::string bodyUtf8    = "L'" "\xc3\xa9" "p" "\xc3\xa9" "e brille " "\xc3\xa0" " la lune.";
 	auto buf = BuildMailSendRequestPayload(1ull, subjectUtf8, bodyUtf8, 0ull, 0ull);
 	auto parsed = ParseMailSendRequestPayload(buf.data(), buf.size());
 	Assert(parsed.has_value(), "UTF-8 parses");

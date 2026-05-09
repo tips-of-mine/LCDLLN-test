@@ -315,6 +315,10 @@ elseif(UNIX)
     mail/MailManagerTests.cpp
     mail/MailManager.cpp)
 
+  # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
+  lcdlln_add_simple_test(ignore_list_tests
+    social/IgnoreListTests.cpp)
+
   # CMANGOS.05 (Phase 2.05a) : BIH<T> + AABB pure math tests (no DB)
   add_executable(bih_tests
     shard/vmap/BIHTests.cpp

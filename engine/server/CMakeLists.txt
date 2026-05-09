@@ -320,6 +320,9 @@ elseif(UNIX)
   # CMANGOS.23 (Phase 3.23a) : QuestStateTracker (header-only state machine).
   lcdlln_add_simple_test(quest_state_tests
     quests/QuestStateTests.cpp)
+  # CMANGOS.33 (Phase 5.33a) : LfgQueue header-only.
+  lcdlln_add_simple_test(lfg_queue_tests
+    lfg/LfgQueueTests.cpp)
 
   # CMANGOS.20 (Phase 3.20a) : MotionGeneratorStack (header-only).
   lcdlln_add_simple_test(motion_generator_stack_tests

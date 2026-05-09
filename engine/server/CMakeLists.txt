@@ -349,6 +349,10 @@ elseif(UNIX)
   lcdlln_add_simple_test(cinematic_sequence_tests
     cinematics/CinematicSequenceTests.cpp)
 
+  # CMANGOS.38 (Phase 5.38a) : PlayerBotProfile (header-only).
+  lcdlln_add_simple_test(player_bot_profile_tests
+    playerbot/PlayerBotProfileTests.cpp)
+
   # CMANGOS.19 (Phase 3.19a) : InstanceManager (header-only).
   lcdlln_add_simple_test(instance_manager_tests
     maps/InstanceManagerTests.cpp)

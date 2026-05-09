@@ -8,6 +8,7 @@
 #include "src/client/auth/AuthUi.h"
 #include "src/client/chat/ChatUi.h"
 #include "src/client/mail/MailUi.h"
+#include "src/client/quest/QuestUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
@@ -386,6 +387,14 @@ namespace engine
 		/// CMANGOS.18 (Phase 3.18 step 4) — Visibilite du panneau mail
 		/// (toggle via slash command \c /mail). Faux par defaut.
 		bool                            m_mailVisible = false;
+		/// CMANGOS.23 (Phase 5.23 step 3+4) — Presenter quete cote client.
+		/// Recoit les reponses opcodes 60/62/64/66/67 via le push handler du
+		/// master ; fire-and-forget des requetes 59/61/63/65 via
+		/// \c m_authUi.SendGenericRequestAsync.
+		engine::client::QuestUiPresenter m_questUi;
+		/// CMANGOS.23 (Phase 5.23 step 3+4) — Visibilite du panneau quete
+		/// (toggle via slash command \c /quest ou \c /quests). Faux par defaut.
+		bool                             m_questVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

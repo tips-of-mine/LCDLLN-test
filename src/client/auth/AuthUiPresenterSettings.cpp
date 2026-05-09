@@ -362,14 +362,16 @@ namespace engine::client
 		return true;
 	}
 
-	bool AuthUiPresenter::SendMailRequestAsync(uint16_t opcode, const std::vector<uint8_t>& payload)
+	bool AuthUiPresenter::SendGenericRequestAsync(uint16_t opcode, const std::vector<uint8_t>& payload)
 	{
-		// CMANGOS.18 (Phase 3.18 step 4) — Wrapper generique pour les opcodes Mail
-		// (49, 51, 53, 55, 57). Mirror de SendChatAsync : meme pattern PacketBuilder /
-		// Send, requestId=0 (les reponses sont dispatched via le push handler).
+		// CMANGOS.18 (Phase 3.18 step 4) + CMANGOS.23 (Phase 5.23 step 3+4) —
+		// Wrapper generique pour les opcodes type-specific Mail (49, 51, 53, 55, 57)
+		// et Quest (59, 61, 63, 65). Mirror de SendChatAsync : meme pattern
+		// PacketBuilder / Send, requestId=0 (les reponses sont dispatched via le
+		// push handler du master).
 		if (!m_masterClient || m_masterSessionId == 0u)
 		{
-			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: no master session (opcode={})",
+			LOG_WARN(Net, "[AuthUiPresenter] SendGenericRequestAsync: no master session (opcode={})",
 				static_cast<unsigned>(opcode));
 			return false;
 		}
@@ -377,30 +379,30 @@ namespace engine::client
 		auto w = builder.PayloadWriter();
 		if (!payload.empty() && !w.WriteBytes(payload.data(), payload.size()))
 		{
-			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: WriteBytes failed (opcode={})",
+			LOG_WARN(Net, "[AuthUiPresenter] SendGenericRequestAsync: WriteBytes failed (opcode={})",
 				static_cast<unsigned>(opcode));
 			return false;
 		}
 		if (!builder.Finalize(opcode, /*flags=*/0u, /*requestId=*/0u, m_masterSessionId, payload.size()))
 		{
-			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: Finalize failed (opcode={})",
+			LOG_WARN(Net, "[AuthUiPresenter] SendGenericRequestAsync: Finalize failed (opcode={})",
 				static_cast<unsigned>(opcode));
 			return false;
 		}
 		const auto& packet = builder.Data();
 		if (packet.empty())
 		{
-			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: empty packet (opcode={})",
+			LOG_WARN(Net, "[AuthUiPresenter] SendGenericRequestAsync: empty packet (opcode={})",
 				static_cast<unsigned>(opcode));
 			return false;
 		}
 		if (!m_masterClient->Send(std::span<const uint8_t>(packet.data(), packet.size())))
 		{
-			LOG_WARN(Net, "[AuthUiPresenter] SendMailRequestAsync: Send failed (opcode={})",
+			LOG_WARN(Net, "[AuthUiPresenter] SendGenericRequestAsync: Send failed (opcode={})",
 				static_cast<unsigned>(opcode));
 			return false;
 		}
-		LOG_DEBUG(Net, "[AuthUiPresenter] SendMailRequestAsync queued (opcode={}, payload_size={})",
+		LOG_DEBUG(Net, "[AuthUiPresenter] SendGenericRequestAsync queued (opcode={}, payload_size={})",
 			static_cast<unsigned>(opcode), payload.size());
 		return true;
 	}

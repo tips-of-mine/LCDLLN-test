@@ -444,13 +444,15 @@ namespace engine::client
 		/// payload vide, ou Send rejeté.
 		bool SendChatAsync(uint8_t channel, std::string_view targetToken, std::string_view text);
 
-		/// CMANGOS.18 (Phase 3.18 step 4) — Envoi fire-and-forget d'une requete
-		/// Mail (opcodes 49, 51, 53, 55, 57) sur la connexion master active.
-		/// Le payload doit deja etre serialise via les helpers
-		/// \c BuildMail*RequestPayload de \ref MailPayloads.h. requestId=0
-		/// (les reponses correspondantes sont dispatched via le push handler
-		/// du master). Retourne \c false si pas de session ou Send rejete.
-		bool SendMailRequestAsync(uint16_t opcode, const std::vector<uint8_t>& payload);
+		/// CMANGOS.18 (Phase 3.18 step 4) + CMANGOS.23 (Phase 5.23 step 3+4) —
+		/// Envoi fire-and-forget d'une requete arbitraire sur la connexion master
+		/// active. Utilise pour Mail (opcodes 49, 51, 53, 55, 57), Quest
+		/// (59, 61, 63, 65) et tout futur ticket suivant le meme pattern de
+		/// requetes type-specific. Le payload doit deja etre serialise via les
+		/// helpers Build*Payload correspondants. requestId=0 (les reponses
+		/// correspondantes sont dispatched via le push handler du master).
+		/// Retourne \c false si pas de session ou Send rejete.
+		bool SendGenericRequestAsync(uint16_t opcode, const std::vector<uint8_t>& payload);
 
 		/// Phase 4 chat — Annonce au master le personnage actif après EnterWorld.
 		/// Master valide ownership (account_id + character_id en DB) et enregistre le binding

@@ -113,7 +113,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMap.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/chat/ChatRelayHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/mail/MailHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/quest/QuestHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/QuestPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp

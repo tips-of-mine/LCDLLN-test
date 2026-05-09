@@ -327,6 +327,9 @@ elseif(UNIX)
   # CMANGOS.42 (Phase 4.42a) : WeatherManager (header-only).
   lcdlln_add_simple_test(weather_manager_tests
     weather/WeatherManagerTests.cpp)
+  # CMANGOS.31 (Phase 5.31a) : GameEventManager (header-only, recurring events).
+  lcdlln_add_simple_test(game_event_manager_tests
+    events/GameEventManagerTests.cpp)
 
   # CMANGOS.25 (Phase 3.25a) : IgnoreListManager (header-only).
   lcdlln_add_simple_test(ignore_list_tests

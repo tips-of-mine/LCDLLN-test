@@ -15,9 +15,15 @@
 // LOG_INFO macro utilise une string runtime, pas une enum, donc
 // n'importe quel nom est accepte).
 //
-// V1 : pour les commandes autres que "/sky moon", la reponse est un Ok
-// avec result vide (stub). Les futures PR ajouteront les dispatchers
-// specifiques (kick, ban, mute, promote, etc.).
+// Commandes dispatchees V1 (Wave 1) :
+//   - "/sky moon <phase>"   admin   (pilot)
+//   - "/sky time <hours>"   admin
+//   - "/sky info"           player  (audit-only)
+//   - "/loot"               admin   (UI toggle + audit)
+//   - "/promote <id> <role>" admin   (mise a jour role via AccountRoleService)
+// Pour toute autre commande connue du registre, la reponse est un Ok stub
+// avec result vide. Les futures PR ajouteront les dispatchers specifiques
+// (kick, ban, mute, etc.).
 
 #include <cstddef>
 #include <cstdint>

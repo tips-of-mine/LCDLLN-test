@@ -18,6 +18,7 @@
 #include "src/shared/network/OutdoorPvpPayloads.h"
 #include "src/shared/network/WeatherPayloads.h"
 #include "src/shared/network/GameEventPayloads.h"
+#include "src/shared/network/GuildPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -34,6 +35,7 @@
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
 #include "src/client/render/WeatherImGuiRenderer.h"
 #include "src/client/render/GameEventImGuiRenderer.h"
+#include "src/client/render/GuildImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -1008,6 +1010,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Init du presenter Guildes +
+		// cable du send callback pour les requetes 164/166/168/170. Reception
+		// dispatchee dans le push handler ci-dessous (responses 165/167/169/171
+		// + push 172 MotdUpdate).
+		if (!m_guildUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] GuildUiPresenter init FAILED — panneau Guildes desactive");
+		}
+		else
+		{
+			m_guildUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1226,6 +1243,23 @@ namespace engine
 					m_gameEventUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /events toggle (visible={})", m_gameEventVisible);
+				return true;
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Slash command /guild
+			// pour ouvrir/fermer le panneau Guildes et synchroniser la liste
+			// depuis le master au moment de l'ouverture. La touche U fait
+			// la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/guild" || text == "/guilds"
+				    || text.starts_with("/guild ") || text.starts_with("/guild\t")
+				    || text.starts_with("/guilds ") || text.starts_with("/guilds\t")))
+			{
+				m_guildVisible = !m_guildVisible;
+				if (m_guildVisible)
+				{
+					m_guildUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] /guild toggle (visible={})", m_guildVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1890,6 +1924,63 @@ namespace engine
 					return;
 				}
 				m_gameEventUi.OnStateChangeNotification(*parsed);
+				return;
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Dispatch des reponses
+			// Guild (165/167/169/171) + push notification (172 MotdUpdate).
+			case kOpcodeGuildListResponse:
+			{
+				auto parsed = ParseGuildListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GUILD_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_guildUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeGuildMembersResponse:
+			{
+				auto parsed = ParseGuildMembersResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GUILD_MEMBERS_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_guildUi.OnMembersResponse(*parsed);
+				return;
+			}
+			case kOpcodeGuildPermissionsResponse:
+			{
+				auto parsed = ParseGuildPermissionsResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GUILD_PERMISSIONS_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_guildUi.OnPermissionsResponse(*parsed);
+				return;
+			}
+			case kOpcodeGuildBankResponse:
+			{
+				auto parsed = ParseGuildBankResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GUILD_BANK_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_guildUi.OnBankResponse(*parsed);
+				return;
+			}
+			case kOpcodeGuildMotdUpdateNotification:
+			{
+				auto parsed = ParseGuildMotdUpdateNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GUILD_MOTD_UPDATE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_guildUi.OnMotdUpdateNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -4196,6 +4287,7 @@ namespace engine
 		m_outdoorPvpUi.Shutdown();
 		m_weatherUi.Shutdown();
 		m_gameEventUi.Shutdown();
+		m_guildUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -4369,6 +4461,20 @@ namespace engine
 					m_gameEventUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] E toggle gameevents (visible={})", m_gameEventVisible);
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Touche U : toggle
+			// panneau Guildes + RequestList si on l'ouvre. Memes guards que
+			// E (chat focus, pause, editor). Pas de conflit Ctrl+U.
+			if (inGameNoMenu && !chatBlocks
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasPressed(engine::platform::Key::U))
+			{
+				m_guildVisible = !m_guildVisible;
+				if (m_guildVisible)
+				{
+					m_guildUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] U toggle guilds (visible={})", m_guildVisible);
 			}
 		}
 
@@ -4593,6 +4699,12 @@ namespace engine
 				// arriver panneau ferme).
 				m_gameEventImGui = std::make_unique<engine::render::GameEventImGuiRenderer>();
 				m_gameEventImGui->SetPresenter(&m_gameEventUi);
+				// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Renderer ImGui
+				// Guildes. Le panel principal n'est visible que quand
+				// m_guildVisible (toggle via /guild ou touche U). Le toast 5s
+				// sur dernier MotdUpdate reçu est rendu independamment du flag.
+				m_guildImGui = std::make_unique<engine::render::GuildImGuiRenderer>();
+				m_guildImGui->SetPresenter(&m_guildUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5715,6 +5827,16 @@ namespace engine
 				m_gameEventImGui->SetEnabled(m_gameEventVisible);
 				m_gameEventImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_gameEventImGui->Render();
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Render du panel Guildes
+			// si m_guildVisible (toggle via /guild ou touche U), ET du toast 5s
+			// sur dernier MotdUpdate reçu (rendu independamment par Render()
+			// si lastMotdChangeTimeMs est recent).
+			if (m_guildImGui && m_guildUi.IsInitialized())
+			{
+				m_guildImGui->SetEnabled(m_guildVisible);
+				m_guildImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_guildImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

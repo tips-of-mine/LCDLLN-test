@@ -17,6 +17,7 @@
 #include "src/client/outdoorpvp/OutdoorPvpUi.h"
 #include "src/client/weather/WeatherUi.h"
 #include "src/client/events/GameEventUi.h"
+#include "src/client/guild/GuildUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -87,6 +88,7 @@ namespace engine::render
 	class OutdoorPvpImGuiRenderer;
 	class WeatherImGuiRenderer;
 	class GameEventImGuiRenderer;
+	class GuildImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -393,6 +395,12 @@ namespace engine
 		/// (toggle via slash command /events ou touche E). Le toast 5s sur
 		/// dernier StateChange reçu est rendu independamment du flag.
 		std::unique_ptr<engine::render::GameEventImGuiRenderer> m_gameEventImGui;
+		/// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Panneau "Guilds" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec les autres panneaux post-auth.
+		/// Le panel principal est visible uniquement quand m_guildVisible
+		/// (toggle via slash command /guild ou touche U). Le toast 5s sur
+		/// dernier MotdUpdate reçu est rendu independamment du flag.
+		std::unique_ptr<engine::render::GuildImGuiRenderer> m_guildImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -557,6 +565,15 @@ namespace engine
 		/// (toggle via slash command \c /events ou touche E). Faux par defaut.
 		/// Le toast 5s sur dernier StateChange reçu est rendu independamment.
 		bool                                  m_gameEventVisible = false;
+		/// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Presenter de la fenetre Guildes.
+		/// Recoit les responses opcodes 165/167/169/171 et la push notification
+		/// 172 (MotdUpdate) via le push handler du master ; fire-and-forget des
+		/// requetes 164/166/168/170 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::GuildUiPresenter      m_guildUi;
+		/// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Visibilite du panneau Guildes
+		/// (toggle via slash command \c /guild ou touche U). Faux par defaut.
+		/// Le toast 5s sur dernier MotdUpdate reçu est rendu independamment.
+		bool                                  m_guildVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

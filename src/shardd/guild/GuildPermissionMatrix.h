@@ -49,6 +49,26 @@ namespace engine::server::guild
 			return (rit->second.mask & Bit(p)) != 0;
 		}
 
+		/// Renvoie le mask brut d'un rang (0 si guilde ou rang inconnu).
+		/// Utilise par GuildHandler pour serialiser la matrice complete sur
+		/// le wire (rang -> mask).
+		uint32_t GetMask(GuildId g, RankId r) const
+		{
+			auto git = m_perms.find(g);
+			if (git == m_perms.end()) return 0u;
+			auto rit = git->second.find(r);
+			if (rit == git->second.end()) return 0u;
+			return rit->second.mask;
+		}
+
+		/// Indique si une guilde a au moins un rang configure dans la matrice.
+		/// Utilise par GuildHandler pour valider qu'un guildId existe avant de
+		/// servir une requete permissions/members/bank.
+		bool HasGuild(GuildId g) const
+		{
+			return m_perms.find(g) != m_perms.end();
+		}
+
 		/// Configure le defaut WoW-like : GM=tout, Officer=invite/remove/promote +
 		/// bank, Member=bank view/deposit, Initiate=rien.
 		void SetupWowDefaults(GuildId g)

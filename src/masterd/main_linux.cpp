@@ -44,6 +44,7 @@
 #include "src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.h"
 #include "src/masterd/handlers/weather/WeatherHandler.h"
 #include "src/masterd/handlers/events/GameEventHandler.h"
+#include "src/masterd/handlers/guild/GuildHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -603,6 +604,22 @@ int main(int argc, char** argv)
 	gameEventHandler.SeedV1Events();
 	LOG_INFO(Net, "[ServerMain] GameEventHandler configured (CMANGOS.31 step 3+4, in-memory, 4 events seed)");
 
+	// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — GuildHandler : list /
+	// members / permissions / bank + push MotdUpdate. V1 : 2 guildes
+	// seedees au boot ("Les Gardiens", "L'Ombre") avec membres + bank
+	// + WoW perms defaults par rang. Les opcodes 164/166/168/170 sont
+	// dispatches au handler ; les responses 165/167/169/171 et la push
+	// notification 172 (MotdUpdate) sont emises par le handler. V1
+	// limitations : pas de filtrage par account membership, bank tab 0
+	// only, lecture seule (pas de modification client). Pas de SyncGuilds
+	// RPC entre master et shardd.
+	engine::server::GuildHandler guildHandler;
+	guildHandler.SetServer(&server);
+	guildHandler.SetSessionManager(&sessionManager);
+	guildHandler.SetConnectionSessionMap(&connSessionMap);
+	guildHandler.SeedV1Guilds();
+	LOG_INFO(Net, "[ServerMain] GuildHandler configured (CMANGOS.21 step 3+4 Guilds, in-memory, 2 guilds seed)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -642,7 +659,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -731,6 +748,11 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeGameEventSubscribeRequest
 		      || opcode == kOpcodeGameEventUnsubscribeRequest)
 			gameEventHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeGuildListRequest
+		      || opcode == kOpcodeGuildMembersRequest
+		      || opcode == kOpcodeGuildPermissionsRequest
+		      || opcode == kOpcodeGuildBankRequest)
+			guildHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

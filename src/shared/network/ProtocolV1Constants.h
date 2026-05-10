@@ -777,4 +777,19 @@ namespace engine::network
 	constexpr uint16_t kOpcodeLootRollResultNotification  = 185u; ///< Master to Client (push, request_id=0) : roll terminee (rollId, winnerName, winnerChoice, winnerRoll uint8 0-100, itemTemplateId, itemName, count).
 	constexpr uint16_t kOpcodeLootSimulateRollRequest     = 186u; ///< Client to Master : DEBUG simule une roll (creator devient eligible) — V1 outil dev.
 	constexpr uint16_t kOpcodeLootSimulateRollResponse    = 187u; ///< Master to Client : OK + rollId, ou Unauthorized.
+
+	// =====================================================================
+	// Phase 5 step 3+4 — Lunar wire (16 phases lunaires synchronisees serveur
+	// -> client). Cycle de 14 jours reels (16 phases x ~21h chacune), calcul
+	// deterministe depuis epoch Unix. Master autoritaire ; client recoit
+	// l'etat initial sur EnterWorld puis un push toutes les ~21h sur
+	// changement de phase.
+	//
+	// Decoupage opcode :
+	//   - State                    (192/193)             : etat initial sur connexion.
+	//   - PhaseChangeNotification  (194, push, request_id=0) : changement de phase.
+	// =====================================================================
+	constexpr uint16_t kOpcodeLunarStateRequest             = 192u; ///< Client to Master : etat lunaire actuel (vide).
+	constexpr uint16_t kOpcodeLunarStateResponse            = 193u; ///< Master to Client : phase 0..15, illumination 0..1, cycleStart, cycleDuration.
+	constexpr uint16_t kOpcodeLunarPhaseChangeNotification  = 194u; ///< Master to Client (push, request_id=0) : changement de phase.
 }

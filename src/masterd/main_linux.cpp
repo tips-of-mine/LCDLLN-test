@@ -47,6 +47,7 @@
 #include "src/masterd/handlers/guild/GuildHandler.h"
 #include "src/masterd/handlers/auction/AuctionHandler.h"
 #include "src/masterd/handlers/loot/LootHandler.h"
+#include "src/masterd/handlers/lunar/LunarHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -654,6 +655,27 @@ int main(int argc, char** argv)
 	lootHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] LootHandler configured (CMANGOS.17 step 3+4 Loot, in-memory, simulation V1)");
 
+	// Phase 5 step 3+4 Lunar — LunarHandler : etat lunaire authoritative
+	// (16 phases, cycle 14 jours reels, deterministe depuis epoch). Tick
+	// periodique (5 min) detecte changement de phase et push broadcast.
+	// Pas de Subscribe : la lune est globale.
+	engine::server::LunarHandler lunarHandler;
+	lunarHandler.SetServer(&server);
+	lunarHandler.SetSessionManager(&sessionManager);
+	lunarHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] LunarHandler configured (Phase 5 Lunar, cycle 14j, 16 phases)");
+
+	// Premier Tick au boot : etablit la phase courante (m_lastBroadcastPhase
+	// passe de 0xFF a la valeur reelle, broadcast initial aux clients
+	// connectes — V1 il n'y en a pas encore puisque le serveur vient de
+	// demarrer, mais c'est defensif et coherent).
+	{
+		const uint64_t bootNowMs = static_cast<uint64_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+		lunarHandler.Tick(bootNowMs);
+	}
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -693,7 +715,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -795,6 +817,8 @@ int main(int argc, char** argv)
 		else if (opcode == kOpcodeLootRollChoiceRequest
 		      || opcode == kOpcodeLootSimulateRollRequest)
 			lootHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeLunarStateRequest)
+			lunarHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});
@@ -1029,6 +1053,15 @@ int main(int argc, char** argv)
 	auto lastSummaryLog = std::chrono::steady_clock::now();
 	constexpr auto kSummaryInterval = std::chrono::seconds(60);
 
+	// Phase 5 Lunar — Tick periodique (5 min) pour detecter changement de phase
+	// et push broadcast aux clients connectes. Le calcul est deterministe via
+	// LunarCalendar : la phase courante est purement fonction du timestamp
+	// realNowMs + cycleStart + cycleDuration. Le Tick compare avec la derniere
+	// phase broadcastee (m_lastBroadcastPhase) et n'emet un push que si
+	// different.
+	auto lastLunarTickTime = std::chrono::steady_clock::now();
+	constexpr auto kLunarTickInterval = std::chrono::seconds(300);
+
 	while (server.IsRunning() && g_quit == 0)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1084,6 +1117,17 @@ int main(int argc, char** argv)
 				LogNetworkStats(stats);
 				lastStatsDump = now;
 			}
+		}
+
+		// Phase 5 Lunar — Tick periodique (5 min) detection changement de phase.
+		// Le Tick compare avec la derniere phase broadcastee et push 194 si different.
+		if (now - lastLunarTickTime >= kLunarTickInterval)
+		{
+			const uint64_t realNowMs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			lunarHandler.Tick(realNowMs);
+			lastLunarTickTime = now;
 		}
 	}
 

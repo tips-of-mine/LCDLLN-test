@@ -367,6 +367,7 @@ add_library(engine_core
   src/client/render/WaterMeshGpu.cpp
   src/client/render/WaterPass.cpp
   src/client/render/DayNightCycle.cpp
+  src/client/render/SkyPass.cpp
   src/client/render/WeatherSystem.cpp
   src/client/render/DynamicLightSystem.cpp
   src/client/render/CascadedShadowMaps.cpp
@@ -459,6 +460,7 @@ add_library(engine_core
   src/shared/network/GuildPayloads.cpp
   src/shared/network/AuctionPayloads.cpp
   src/shared/network/LootPayloads.cpp
+  src/shared/network/LunarPayloads.cpp
   src/shared/network/LfgPayloads.cpp
   src/shared/network/CinematicPayloads.cpp
   src/shared/network/SkillPayloads.cpp
@@ -749,6 +751,21 @@ add_test(NAME auction_payloads_tests COMMAND auction_payloads_tests)
 add_executable(loot_payloads_tests src/shared/network/LootPayloadsTests.cpp)
 target_link_libraries(loot_payloads_tests PRIVATE engine_core)
 add_test(NAME loot_payloads_tests COMMAND loot_payloads_tests)
+
+# Phase 5 Lunar — round-trip tests payloads (192-194).
+add_executable(lunar_payloads_tests src/shared/network/LunarPayloadsTests.cpp)
+target_link_libraries(lunar_payloads_tests PRIVATE engine_core)
+add_test(NAME lunar_payloads_tests COMMAND lunar_payloads_tests)
+
+# Phase 5 Lunar — calendar deterministe tests (header-only).
+add_executable(lunar_calendar_tests src/shardd/world/LunarCalendarTests.cpp)
+target_link_libraries(lunar_calendar_tests PRIVATE engine_core)
+add_test(NAME lunar_calendar_tests COMMAND lunar_calendar_tests)
+
+# M38.1 + Phase 5 Lunar — DayNightCycle existant + extension lunaire.
+add_executable(daynight_cycle_tests src/client/render/DayNightCycleTests.cpp)
+target_link_libraries(daynight_cycle_tests PRIVATE engine_core)
+add_test(NAME daynight_cycle_tests COMMAND daynight_cycle_tests)
 
 # CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
 add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)

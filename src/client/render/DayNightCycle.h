@@ -60,6 +60,16 @@ namespace engine::render
 
 			/// True when the sun is above the horizon (elevation > 0).
 			bool isDaytime = true;
+
+			// ---- Lunar phase (master-driven via OnLunarPhaseChange callback) ----
+
+			/// Index de la phase lunaire courante (0..15). 0=NewMoon, 7=FullMoon, 15=Earthshine late.
+			/// Mis a jour uniquement via OnLunarPhaseChange (master autoritaire).
+			uint8_t moonPhase = 0;
+
+			/// Fraction de la lune eclairee (0..1). 0 = noir (NewMoon), 1 = pleine.
+			/// Mis a jour uniquement via OnLunarPhaseChange (master autoritaire).
+			float moonIllumination = 0.0f;
 		};
 
 		DayNightCycle() = default;
@@ -82,6 +92,17 @@ namespace engine::render
 		/// Used by the editor's "Atmosphere" panel slider. Clamps to [0.1, 1000.0]
 		/// to avoid divide-by-zero or wraparound issues.
 		void SetTimeScale(float realSecondsPerHour);
+
+		/// Met a jour la phase lunaire courante (recue depuis le master via
+		/// opcode 193 LunarStateResponse ou 194 LunarPhaseChangeNotification).
+		/// L'appel est idempotent et thread-safe au sens "appel main thread"
+		/// (pas de mutex : le main thread reception du Engine appelle ce
+		/// setter, le main thread render lit moonPhase/moonIllumination via
+		/// GetState()). Si \p phase >= 16, l'appel est ignore (defense V1).
+		/// Si \p illumination est hors [0..1], il est clampe.
+		/// \param phase        0..15
+		/// \param illumination 0..1 (clamp si hors plage)
+		void OnLunarPhaseChange(uint8_t phase, float illumination);
 
 		/// Return the current time scale (real seconds per in-game hour).
 		float GetTimeScale() const { return m_timeScale; }

@@ -21,6 +21,7 @@
 #include "src/shared/network/GuildPayloads.h"
 #include "src/shared/network/AuctionPayloads.h"
 #include "src/shared/network/LootPayloads.h"
+#include "src/shared/network/LunarPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -1326,6 +1327,59 @@ namespace engine
 				LOG_INFO(Core, "[Engine] /loot toggle (visible={})", m_lootRollVisible);
 				return true;
 			}
+			// Phase 5 step 3+4 Lunar + M38.1 Sky : slash commands debug pour
+			// inspecter et override le cycle jour/nuit + phase lunaire.
+			//   /sky info        : log timeOfDay + sun dir + moon phase + illumination.
+			//   /sky time <h>    : SetTime(h), ex. "/sky time 22.5".
+			//   /sky moon <i>    : OnLunarPhaseChange(i, calc(i)), ex. "/sky moon 7".
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/sky info" || text == "/sky"))
+			{
+				const auto& s = m_dayNight.GetState();
+				const char* moonName[16] = {
+					"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
+					"WaxingGibbousEarly", "WaxingGibbousLate", "FullMoonRising", "FullMoon",
+					"FullMoonSetting", "WaningGibbousEarly", "WaningGibbousLate", "LastQuarter",
+					"WaningCrescentEarly", "WaningCrescentLate", "EarthshineEarly", "EarthshineLate"
+				};
+				LOG_INFO(Render, "[Sky] timeOfDay={:.2f}h isDaytime={}", s.timeOfDay, s.isDaytime);
+				LOG_INFO(Render, "[Sky] sunDir=({:.2f},{:.2f},{:.2f})", s.lightDir[0], s.lightDir[1], s.lightDir[2]);
+				LOG_INFO(Render, "[Sky] moonPhase={} ({}) illumination={:.0f}%",
+					static_cast<unsigned>(s.moonPhase),
+					moonName[s.moonPhase < 16 ? s.moonPhase : 0],
+					s.moonIllumination * 100.0f);
+				return true;
+			}
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/sky time "))
+			{
+				const auto rest = text.substr(10);
+				float hours = 0.0f;
+				try { hours = std::stof(std::string(rest)); } catch (...) { hours = 12.0f; }
+				m_dayNight.SetTime(hours);
+				LOG_INFO(Render, "[Sky] time set to {:.2f}h", hours);
+				return true;
+			}
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/sky moon "))
+			{
+				const auto rest = text.substr(10);
+				int phase = 0;
+				try { phase = std::stoi(std::string(rest)); } catch (...) { phase = 0; }
+				if (phase < 0 || phase > 15)
+				{
+					LOG_WARN(Render, "[Sky] phase {} hors plage [0..15]", phase);
+					return true;
+				}
+				// Calcul illumination locale (cf. LunarCalendar::ComputeIllumination).
+				constexpr float kPi = 3.14159265358979323846f;
+				float t = (static_cast<float>(phase) - 7.0f) * (kPi / 8.0f);
+				float illumination = 0.5f * (1.0f + std::cos(t));
+				m_dayNight.OnLunarPhaseChange(static_cast<uint8_t>(phase), illumination);
+				LOG_INFO(Render, "[Sky] moon phase override: {} illumination={:.0f}% (master state inchange)",
+					phase, illumination * 100.0f);
+				return true;
+			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
 			// pour ouvrir/fermer le panneau Support GM et synchroniser la liste
 			// depuis le master au moment de l'ouverture.
@@ -2152,6 +2206,39 @@ namespace engine
 				m_lootRollUi.OnSimulateRollResponse(*parsed);
 				return;
 			}
+			// Phase 5 step 3+4 Lunar — Dispatch des opcodes 193 (StateResponse)
+			// et 194 (PhaseChangeNotification, push). Master autoritaire ; le
+			// client recoit l'etat initial sur EnterWorld puis un push toutes
+			// les ~21h sur changement de phase.
+			case kOpcodeLunarStateResponse:
+			{
+				engine::network::lunar::LunarStateResponse parsed;
+				if (!engine::network::lunar::ParseLunarStateResponsePayload(payload, payloadSize, parsed))
+				{
+					LOG_WARN(Net, "[Engine] LUNAR_STATE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				if (parsed.status == engine::network::lunar::LunarStatus::Ok)
+				{
+					m_dayNight.OnLunarPhaseChange(parsed.phase, parsed.illumination);
+					LOG_INFO(Render, "[Engine] LunarState received: phase={} illumination={:.3f}",
+						static_cast<unsigned>(parsed.phase), parsed.illumination);
+				}
+				return;
+			}
+			case kOpcodeLunarPhaseChangeNotification:
+			{
+				engine::network::lunar::LunarPhaseChangeNotification parsed;
+				if (!engine::network::lunar::ParseLunarPhaseChangeNotificationPayload(payload, payloadSize, parsed))
+				{
+					LOG_WARN(Net, "[Engine] LUNAR_PHASE_CHANGE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_dayNight.OnLunarPhaseChange(parsed.newPhase, parsed.newIllumination);
+				LOG_INFO(Render, "[Engine] LunarPhaseChange: phase={} illumination={:.3f}",
+					static_cast<unsigned>(parsed.newPhase), parsed.newIllumination);
+				return;
+			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
 			// (101/103/105) + push MatchProposalNotification (106).
 			case kOpcodeLfgQueueResponse:
@@ -2888,6 +2975,34 @@ namespace engine
 												!waterFrag.empty(),
 												normalView != VK_NULL_HANDLE,
 												skyView != VK_NULL_HANDLE);
+										}
+									}
+
+									// Phase 5 Lunar + M38.1 Sky : init du SkyPass (charge sky.vert.spv +
+									// sky.frag.spv depuis game/data/shaders, compile pipeline avec push
+									// constants etendus pour la phase lunaire). Si l'init echoue
+									// (shaders absents, push constants size mismatch, etc.), m_skyPassReady
+									// reste false et le rendu fallback sur le clearColor existant.
+									if (pipelineOk)
+									{
+										std::vector<uint32_t> skyVert = loadSpirv("shaders/sky.vert.spv");
+										std::vector<uint32_t> skyFrag = loadSpirv("shaders/sky.frag.spv");
+										if (!skyVert.empty() && !skyFrag.empty())
+										{
+											m_skyPassReady = m_skyPass.Init(
+												m_vkDeviceContext.GetDevice(),
+												m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+												/*subpass*/ 0u,
+												skyVert.data(), skyVert.size(),
+												skyFrag.data(), skyFrag.size());
+											if (!m_skyPassReady)
+												LOG_WARN(Render, "[Boot] SkyPass init failed -- fallback clearColor");
+											else
+												LOG_INFO(Render, "[Boot] SkyPass ready (Phase 5 Lunar + M38.1 Sky)");
+										}
+										else
+										{
+											LOG_WARN(Render, "[Boot] SkyPass : sky.vert.spv or sky.frag.spv missing -- fallback clearColor");
 										}
 									}
 
@@ -4378,6 +4493,14 @@ namespace engine
 			// (les ressources sont indépendantes mais l'ordre symétrique d'Init est plus
 			// lisible côté boot ↔ shutdown).
 			m_waterPass.Destroy(m_vkDeviceContext.GetDevice());
+			// Phase 5 Lunar + M38.1 Sky : detruit le SkyPass (pipeline + layout)
+			// avant le DeferredPipeline (m_skyPass depend du renderPass de
+			// GeometryPass, donc on libere le pipeline d'abord).
+			if (m_skyPassReady)
+			{
+				m_skyPass.Shutdown(m_vkDeviceContext.GetDevice());
+				m_skyPassReady = false;
+			}
 			m_waterMeshGpu.Destroy();
 			if (m_waterTransferPool != VK_NULL_HANDLE)
 			{
@@ -5238,6 +5361,18 @@ namespace engine
 					// Phase 5 reconnect — mémorise l'identité pour pouvoir ré-envoyer
 					// CHARACTER_ENTER_WORLD à la reconnexion sans repasser par tout le flow.
 					m_authUi.RememberPostEnterWorldCharacter(m_currentCharacterId, enterCmd.characterName);
+				}
+
+				// Phase 5 Lunar — fetch initial lunar state (master-authoritative).
+				// Le master repondra via opcode 193 (LunarStateResponse) qui est
+				// dispatche dans le push handler ci-dessus pour appeler
+				// m_dayNight.OnLunarPhaseChange. Le push 194 arrive ensuite a
+				// chaque changement de phase (~21h).
+				{
+					std::vector<uint8_t> lunarPayload;
+					engine::network::lunar::BuildLunarStateRequestPayload(lunarPayload);
+					(void)m_authUi.SendGenericRequestAsync(
+						engine::network::kOpcodeLunarStateRequest, lunarPayload);
 				}
 
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.

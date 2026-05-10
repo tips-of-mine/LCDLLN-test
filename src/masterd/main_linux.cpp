@@ -39,6 +39,7 @@
 #include "src/masterd/mail/MysqlMailStore.h"
 #include "src/masterd/handlers/quest/QuestHandler.h"
 #include "src/masterd/handlers/reputation/ReputationHandler.h"
+#include "src/masterd/handlers/arena/ArenaHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -521,6 +522,22 @@ int main(int argc, char** argv)
 	skillHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] SkillHandler configured (CMANGOS.39 step 3+4, in-memory store)");
 
+	// CMANGOS.21 (Phase 5.21 step 3+4) — Arena wire server.
+	// Le master tient en memoire un ArenaTeamRegistry (V1, seed hardcode
+	// par account au premier acces : 3 teams 2v2/3v3/5v5 a rating 1500)
+	// + une queue par account + un map de proposals actifs. Les opcodes
+	// 120/122/124/127 sont dispatches au handler ; les responses
+	// 121/123/125/128 et les push notifications 126 (MatchProposal) +
+	// 129 (MatchResult) sont emises par le handler.
+	// V1 limitations : match contre AI Team Alpha fictif, result win/loss
+	// random 50%, pas de SyncArena RPC entre master et shardd. Pas de
+	// persistance DB (sub-PR future avec MysqlArenaStore).
+	engine::server::ArenaHandler arenaHandler;
+	arenaHandler.SetServer(&server);
+	arenaHandler.SetSessionManager(&sessionManager);
+	arenaHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] ArenaHandler configured (CMANGOS.21 step 3+4, in-memory registry)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -560,7 +577,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -626,6 +643,11 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeSkillLearnRequest
 		      || opcode == kOpcodeSkillUseRequest)
 			skillHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeArenaTeamListRequest
+		      || opcode == kOpcodeArenaQueueRequest
+		      || opcode == kOpcodeArenaLeaveQueueRequest
+		      || opcode == kOpcodeArenaMatchAcceptRequest)
+			arenaHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

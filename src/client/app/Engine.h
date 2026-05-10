@@ -12,6 +12,7 @@
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
+#include "src/client/arena/ArenaUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -77,6 +78,7 @@ namespace engine::render
 	class LfgImGuiRenderer;
 	class CinematicImGuiRenderer;
 	class SkillBookImGuiRenderer;
+	class ArenaImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -355,6 +357,11 @@ namespace engine
 		/// Visible uniquement quand m_skillBookVisible (toggle via slash command
 		/// /skills ou touche B).
 		std::unique_ptr<engine::render::SkillBookImGuiRenderer> m_skillBookImGui;
+		/// CMANGOS.21 (Phase 5.21 step 3+4) — Panneau "Arena" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec les autres panneaux post-auth.
+		/// Visible uniquement quand m_arenaVisible (toggle via slash command
+		/// /arena ou touche A).
+		std::unique_ptr<engine::render::ArenaImGuiRenderer> m_arenaImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -477,6 +484,14 @@ namespace engine
 		/// CMANGOS.39 (Phase 4.39 step 3+4) — Visibilite du panneau Skill Book
 		/// (toggle via slash command \c /skills ou touche B). Faux par defaut.
 		bool                                  m_skillBookVisible = false;
+		/// CMANGOS.21 (Phase 5.21 step 3+4) — Presenter de la fenetre Arena.
+		/// Recoit les responses opcodes 121/123/125/128 et les push notifications
+		/// 126/129 via le push handler du master ; fire-and-forget des requetes
+		/// 120/122/124/127 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::ArenaUiPresenter      m_arenaUi;
+		/// CMANGOS.21 (Phase 5.21 step 3+4) — Visibilite du panneau Arena
+		/// (toggle via slash command \c /arena ou touche A). Faux par defaut.
+		bool                                  m_arenaVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

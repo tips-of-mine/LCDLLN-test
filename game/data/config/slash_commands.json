@@ -26,8 +26,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1089"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1089",
+      "notes": "Wave 3 RBAC migration : client toggles localement et envoie un AdminCommand audit (opcode 195) au master qui log [AdminCommand] result=OK."
     },
     {
       "command": "/quest",
@@ -37,8 +38,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1103"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1103",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/trade",
@@ -59,8 +61,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1165"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1165",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/skills",
@@ -70,8 +73,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1182"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1182",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/lfg",
@@ -81,8 +85,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1198"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1198",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/arena",
@@ -92,8 +97,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1213"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1213",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/bg",
@@ -103,8 +109,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1228"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1228",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/pvp",
@@ -114,8 +121,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1243"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1243",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/weather",
@@ -125,8 +133,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1258"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1258",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/events",
@@ -136,8 +145,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1273"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1273",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/guild",
@@ -147,8 +157,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1288"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1288",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/ah",
@@ -158,8 +169,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1305"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1305",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/loot",
@@ -217,8 +229,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1387"
+      "status": "implemented",
+      "implementation_file": "src/client/app/Engine.cpp:1387",
+      "notes": "Wave 3 RBAC migration : audit log only (toggle UI client-side)."
     },
     {
       "command": "/ignore <account_id>",

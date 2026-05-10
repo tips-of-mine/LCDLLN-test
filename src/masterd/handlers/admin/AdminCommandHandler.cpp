@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace engine::server
@@ -110,6 +111,35 @@ namespace engine::server
 			if (!accIdOpt || *accIdOpt == 0u) return false;
 			outAccountId = *accIdOpt;
 			return true;
+		}
+
+		/// Liste des UI panel commands (Wave 3 RBAC migration). Pour ces
+		/// commandes, le master ne fait rien d'autre que valider l'auth +
+		/// emettre le log audit ; le client applique le toggle visuel
+		/// localement, l'effet metier est nul cote serveur. Toutes ces
+		/// commandes ont minRole=player et sont systematiquement Ok.
+		///
+		/// Le set inclut les formes canoniques ET les alias (ex: "/quest"
+		/// et "/quests") pour que le HandleRequest puisse trancher sans
+		/// re-resoudre via le registre.
+		const std::unordered_set<std::string>& UiPanelCommandSet()
+		{
+			static const std::unordered_set<std::string> kSet = {
+				"/mail",
+				"/quest", "/quests",
+				"/guild", "/guilds",
+				"/ah", "/auction",
+				"/skills", "/skill",
+				"/lfg",
+				"/arena",
+				"/bg",
+				"/pvp",
+				"/weather",
+				"/events",
+				"/rep", "/reputation",
+				"/ticket", "/gmticket",
+			};
+			return kSet;
 		}
 
 		/// Dispatch metier pour "/sky moon <phase>". Valide l'argument et
@@ -231,6 +261,16 @@ namespace engine::server
 		if (req.command == "/sky moon")
 		{
 			DispatchSkyMoon(req.args, resp);
+			handled = true;
+		}
+		else if (UiPanelCommandSet().count(req.command) > 0)
+		{
+			// Wave 3 RBAC migration : les UI panel commands sont log-only.
+			// Le client applique le toggle visuel localement ; le master
+			// ne fait que valider l'auth + role + emettre le log audit.
+			// Pas de result echo (le client n'a pas besoin de payload).
+			resp.status = AdminCommandStatus::Ok;
+			resp.message = "UI panel toggle audit logged";
 			handled = true;
 		}
 

@@ -1330,9 +1330,27 @@ namespace engine
 			}
 			// Phase 5 step 3+4 Lunar + M38.1 Sky : slash commands debug pour
 			// inspecter et override le cycle jour/nuit + phase lunaire.
-			//   /sky info        : log timeOfDay + sun dir + moon phase + illumination.
+			//   /sky info        : log + chat-echo timeOfDay + sun dir + moon phase + illumination.
 			//   /sky time <h>    : SetTime(h), ex. "/sky time 22.5".
 			//   /sky moon <i>    : OnLunarPhaseChange(i, calc(i)), ex. "/sky moon 7".
+			//
+			// Chat echo : chaque commande pousse une ligne sur le canal Server
+			// (sender="[Sky]") via m_chatUi.PushNetworkLine, en plus du LOG_INFO
+			// dans le fichier engine.log. Le joueur voit donc le retour de la
+			// commande directement dans la fenetre de chat in-game.
+			auto pushSkyChatLine = [this](const char* fmt, auto... args) {
+				char buf[256];
+				std::snprintf(buf, sizeof(buf), fmt, args...);
+				engine::net::ChatMessage msg;
+				msg.timestampUnixMs = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::system_clock::now().time_since_epoch()).count());
+				msg.channel = engine::net::ChatChannel::Server;
+				msg.sender  = "[Sky]";
+				msg.text    = buf;
+				m_chatUi.PushNetworkLine(msg);
+			};
+
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& (text == "/sky info" || text == "/sky"))
 			{
@@ -1349,6 +1367,16 @@ namespace engine
 					static_cast<unsigned>(s.moonPhase),
 					moonName[s.moonPhase < 16 ? s.moonPhase : 0],
 					s.moonIllumination * 100.0f);
+				pushSkyChatLine("timeOfDay=%.2fh isDaytime=%s",
+					static_cast<double>(s.timeOfDay), s.isDaytime ? "true" : "false");
+				pushSkyChatLine("sunDir=(%.2f,%.2f,%.2f)",
+					static_cast<double>(s.lightDir[0]),
+					static_cast<double>(s.lightDir[1]),
+					static_cast<double>(s.lightDir[2]));
+				pushSkyChatLine("moonPhase=%u (%s) illumination=%.0f%%",
+					static_cast<unsigned>(s.moonPhase),
+					moonName[s.moonPhase < 16 ? s.moonPhase : 0],
+					static_cast<double>(s.moonIllumination * 100.0f));
 				return true;
 			}
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
@@ -1359,6 +1387,7 @@ namespace engine
 				try { hours = std::stof(std::string(rest)); } catch (...) { hours = 12.0f; }
 				m_dayNight.SetTime(hours);
 				LOG_INFO(Render, "[Sky] time set to {:.2f}h", hours);
+				pushSkyChatLine("time set to %.2fh", static_cast<double>(hours));
 				return true;
 			}
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
@@ -1370,12 +1399,15 @@ namespace engine
 				if (phase < 0 || phase > 15)
 				{
 					LOG_WARN(Render, "[Sky] phase {} hors plage [0..15]", phase);
+					pushSkyChatLine("phase %d hors plage [0..15]", phase);
 					return true;
 				}
 				// AdminCommand RBAC pilot : /sky moon est admin-only. On envoie au
 				// master qui valide le role + log audit + retourne Ok/Denied.
 				// Le client applique l'override visuel SEULEMENT apres ACK Ok
 				// (voir dispatch kOpcodeAdminCommandResponse plus bas).
+				// Chat echo immediat pour feedback : la suite (Ok/Denied) sera
+				// rendue par le case kOpcodeAdminCommandResponse.
 				engine::network::admin::AdminCommandRequest req;
 				req.command = "/sky moon";
 				req.args.push_back(std::to_string(phase));
@@ -1384,6 +1416,7 @@ namespace engine
 				(void)m_authUi.SendGenericRequestAsync(
 					engine::network::kOpcodeAdminCommandRequest, payload);
 				LOG_INFO(Render, "[Sky] /sky moon {} sent to master for RBAC validation", phase);
+				pushSkyChatLine("/sky moon %d envoye au master (validation RBAC en cours...)", phase);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -2257,6 +2290,20 @@ namespace engine
 					LOG_WARN(Net, "[Engine] ADMIN_COMMAND_RESPONSE parse failed (size={})", payloadSize);
 					return;
 				}
+				// Helper inline pour pousser une ligne SRV dans le chat in-game
+				// (cf. pattern pushSkyChatLine du send callback).
+				auto pushAdminChatLine = [this](const char* sender, const char* fmt, auto... args) {
+					char buf[256];
+					std::snprintf(buf, sizeof(buf), fmt, args...);
+					engine::net::ChatMessage chatMsg;
+					chatMsg.timestampUnixMs = static_cast<uint64_t>(
+						std::chrono::duration_cast<std::chrono::milliseconds>(
+							std::chrono::system_clock::now().time_since_epoch()).count());
+					chatMsg.channel = engine::net::ChatChannel::Server;
+					chatMsg.sender  = sender;
+					chatMsg.text    = buf;
+					m_chatUi.PushNetworkLine(chatMsg);
+				};
 				if (parsed.status == engine::network::admin::AdminCommandStatus::Ok)
 				{
 					if (parsed.command == "/sky moon")
@@ -2280,10 +2327,15 @@ namespace engine
 						m_dayNight.OnLunarPhaseChange(phase, illumination);
 						LOG_INFO(Render, "[Sky] /sky moon ACK applied : phase={} illumination={:.3f}",
 							static_cast<unsigned>(phase), illumination);
+						pushAdminChatLine("[Sky]",
+							"OK : moon phase %u illumination=%.0f%% (master autorise)",
+							static_cast<unsigned>(phase),
+							static_cast<double>(illumination * 100.0f));
 					}
 					else
 					{
 						LOG_INFO(Net, "[AdminCommand] OK : command={} (no client effect V1)", parsed.command);
+						pushAdminChatLine("[AdminCommand]", "OK : %s", parsed.command.c_str());
 					}
 				}
 				else
@@ -2292,6 +2344,22 @@ namespace engine
 						parsed.command,
 						static_cast<unsigned>(parsed.status),
 						parsed.message);
+					const char* statusName = "ERROR";
+					switch (parsed.status)
+					{
+						case engine::network::admin::AdminCommandStatus::Unauthorized:
+							statusName = "UNAUTHORIZED"; break;
+						case engine::network::admin::AdminCommandStatus::Denied:
+							statusName = "DENIED (role insuffisant)"; break;
+						case engine::network::admin::AdminCommandStatus::UnknownCommand:
+							statusName = "UNKNOWN_COMMAND"; break;
+						case engine::network::admin::AdminCommandStatus::InvalidArgs:
+							statusName = "INVALID_ARGS"; break;
+						default: break;
+					}
+					pushAdminChatLine("[AdminCommand]",
+						"REFUSE %s : %s -- %s",
+						statusName, parsed.command.c_str(), parsed.message.c_str());
 				}
 				return;
 			}

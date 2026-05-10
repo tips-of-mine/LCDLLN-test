@@ -3715,12 +3715,19 @@ namespace engine
 												// Couleur du ciel utilisée par lighting.frag pour les pixels
 												// sans géométrie (depth==1.0). Pilotée par DayNightCycle pour
 												// rendre le cycle jour/nuit visible sans skybox dédié.
+												// Phase 5 Lunar (PR #561 fix Concern 3) : skyColor.w sert de
+												// flag "SkyPass ready". Quand m_skyPassReady=true, le SkyPass
+												// a ecrit la sky procedurale (gradient + sun glow + moon disk
+												// avec phase) dans GBufferA pour les pixels depth==1.0 ;
+												// lighting.frag lit alors GBufferA. Sinon (SkyPass.Init failed
+												// ou shaders absents) on tombe sur la flat skyColor pour
+												// preserver le rendu jour/nuit.
 												{
 													const engine::render::DayNightCycle::State& dnLight = m_dayNight.GetState();
 													lp.skyColor[0] = dnLight.skyHorizon[0];
 													lp.skyColor[1] = dnLight.skyHorizon[1];
 													lp.skyColor[2] = dnLight.skyHorizon[2];
-													lp.skyColor[3] = 0.0f;
+													lp.skyColor[3] = m_skyPassReady ? 1.0f : 0.0f;
 												}
 												VkImageView irrView       = VK_NULL_HANDLE;
 												VkSampler   irrSamp       = VK_NULL_HANDLE;

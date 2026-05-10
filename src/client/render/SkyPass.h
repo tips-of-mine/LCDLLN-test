@@ -1,12 +1,16 @@
 #pragma once
 // SkyPass : pipeline Vulkan qui dessine le ciel + disque lunaire procedural.
-// Consomme les shaders game/data/shaders/sky.vert et sky.frag (existants
-// jusqu'ici non wires). Le fragment shader recoit en push-constants la
-// matrice inverse view-projection, les directions soleil/lune, les couleurs
-// zenith/horizon, et les parametres lunaires (phase + illumination + intensity).
+// Consomme les shaders game/data/shaders/sky.vert et sky.frag. Le fragment
+// shader recoit en push-constants la matrice inverse view-projection, les
+// directions soleil/lune, les couleurs zenith/horizon, et les parametres
+// lunaires (phase + illumination + intensity).
 //
-// La pass est dessinee EN PREMIER dans la frame (avant le geometry pass)
-// avec depthTest = false / depthWrite = false pour servir de fond.
+// La pass est dessinee dans le render pass loadOp=LOAD du GeometryPass,
+// APRES le draw geometry principal. sky.vert ecrit gl_Position.z=1.0
+// (far plane), pipeline avec depthTest=TRUE / LESS_OR_EQUAL / write=FALSE :
+// le sky ne s'ecrit que la ou il n'y a pas de geometrie (depth==1.0).
+// Le sky n'ecrit que dans GBufferA (albedo) ; LightingPass lit GBufferA
+// pour les pixels sky (depth==1.0) au lieu d'utiliser un skyColor flat.
 // Couts negligeables (1 fullscreen quad genere via gl_VertexIndex).
 //
 // Pattern aligne sur LightingPass et autres passes Vulkan du repo :

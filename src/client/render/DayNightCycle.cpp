@@ -234,9 +234,18 @@ namespace engine::render
 		else
 		{
 			// Nighttime: moonlight (dim, cold).
-			m_state.lightColor[0] = kLightColorMoon[0] * kIntensityNight;
-			m_state.lightColor[1] = kLightColorMoon[1] * kIntensityNight;
-			m_state.lightColor[2] = kLightColorMoon[2] * kIntensityNight;
+			//
+			// Wave 4 polish (Phase 5 Lunar) : modulation par moonIllumination
+			// pour qu'une pleine lune (illumination=1) eclaire ~2x plus qu'une
+			// nouvelle lune (illumination=0). Coherent avec la realite physique
+			// (la pleine lune apporte ~0.25 lux, la nouvelle lune ~0). On garde
+			// un plancher 0.5 pour eviter une nuit completement noire en
+			// nouvelle lune (l'ambient minimum + lumiere stellaire compensent).
+			// Formule : moonBoost = 0.5 + illumination * 0.5 -> [0.5..1.0].
+			const float moonBoost = 0.5f + m_state.moonIllumination * 0.5f;
+			m_state.lightColor[0] = kLightColorMoon[0] * kIntensityNight * moonBoost;
+			m_state.lightColor[1] = kLightColorMoon[1] * kIntensityNight * moonBoost;
+			m_state.lightColor[2] = kLightColorMoon[2] * kIntensityNight * moonBoost;
 		}
 
 		// ---- Ambient colour --------------------------------------------------
@@ -245,6 +254,20 @@ namespace engine::render
 		m_state.ambientColor[0] = 0.04f * ambientScale + 0.02f * dayT;
 		m_state.ambientColor[1] = 0.04f * ambientScale + 0.04f * dayT;
 		m_state.ambientColor[2] = 0.08f * ambientScale + 0.06f * dayT;
+
+		// Wave 4 polish (Phase 5 Lunar) : la nuit, on module aussi l'ambient
+		// par moonIllumination. La pleine lune eclaire l'environnement de
+		// maniere diffuse (ciel un peu plus clair, ombres moins noires), la
+		// nouvelle lune au contraire laisse l'ambient minimum (kAmbientNightMin
+		// scaled). On applique le moonBoost UNIQUEMENT si !isSunUp pour ne pas
+		// affecter le rendu jour. Meme formule que pour lightColor (cf. supra).
+		if (!isSunUp)
+		{
+			const float moonBoost = 0.5f + m_state.moonIllumination * 0.5f;
+			m_state.ambientColor[0] *= moonBoost;
+			m_state.ambientColor[1] *= moonBoost;
+			m_state.ambientColor[2] *= moonBoost;
+		}
 
 		// ---- Sky gradient colours -------------------------------------------
 		// Blend between night → dawn/dusk → noon based on sun elevation.

@@ -25,5 +25,12 @@
     }
   },
   "paths": { "content": "game/data" },
-  "terms": { "enforce": true }
+  "terms": { "enforce": true },
+  "world": {
+    "lunar": {
+      "_comment": "Phase 5 Lunar (Wave 4) -- parametres du cycle authoritative cote master. Defaults : cycle_start = 1767225600000 ms (2026-01-01 UTC), duration = 1209600000 ms (14 jours reels).",
+      "cycle_start_unix_ms": 1767225600000,
+      "cycle_duration_ms": 1209600000
+    }
+  }
 }

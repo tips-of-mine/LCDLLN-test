@@ -127,6 +127,11 @@
             "z": 0.0,
             "yaw_deg": 0.0,
             "pitch_deg": -10.0
+        },
+        "lunar": {
+            "_comment": "Phase 5 Lunar (Wave 4) — parametres du cycle lunaire authoritative cote master. cycle_start_unix_ms : timestamp Unix (ms) du debut du cycle de reference (defaut 1767225600000 = 2026-01-01 00:00:00 UTC). cycle_duration_ms : duree d'un cycle complet (defaut 1209600000 = 14 jours reels = 16 phases x ~21h). LunarHandler relit ces deux cles au boot via SetCycleParams() ; un changement requiert un redemarrage du master. Le shardd recalcule la phase via LunarCalendar (header-only), pas besoin de relire ces cles cote shard.",
+            "cycle_start_unix_ms": 1767225600000,
+            "cycle_duration_ms": 1209600000
         }
     },
     "paths": {

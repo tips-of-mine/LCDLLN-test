@@ -511,4 +511,30 @@ namespace engine::server
 			account_id, roleStr);
 		return true;
 	}
+
+	/// Met a jour account_status (Active=0, Locked=2) via UPDATE direct.
+	/// Utilise par AdminCommandHandler::DispatchBan.
+	bool MysqlAccountStore::SetAccountStatus(uint64_t account_id, AccountStatus status)
+	{
+		if (!m_pool)
+			return false;
+		auto guard = m_pool->Acquire();
+		MYSQL* mysql = guard.get();
+		if (!mysql)
+			return false;
+
+		const int statusInt = static_cast<int>(status);
+		const std::string sql = "UPDATE accounts SET account_status=" + std::to_string(statusInt)
+			+ " WHERE id=" + std::to_string(account_id) + " LIMIT 1";
+		if (!engine::server::db::DbExecute(mysql, sql))
+			return false;
+		if (mysql_affected_rows(mysql) == 0)
+		{
+			LOG_WARN(Auth, "[MysqlAccountStore] SetAccountStatus: account_id={} not found", account_id);
+			return false;
+		}
+		LOG_INFO(Auth, "[MysqlAccountStore] SetAccountStatus account_id={} status={}",
+			account_id, statusInt);
+		return true;
+	}
 }

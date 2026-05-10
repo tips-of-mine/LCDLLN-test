@@ -840,7 +840,14 @@ int main(int argc, char** argv)
 	adminCommandHandler.SetConnectionSessionMap(&connSessionMap);
 	adminCommandHandler.SetAccountRoleService(&accountRoleService);
 	adminCommandHandler.SetSlashCommandRegistry(&slashCommandRegistry);
-	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log)");
+	// Wave 2 moderation tools : /who, /report, /kick, /mute, /ban, /announce
+	// necessitent l'AccountStore (lookup login -> account_id), le
+	// GmTicketSystem (creation ticket via /report), et le pool MySQL
+	// (INSERT chat_mutes via /mute).
+	adminCommandHandler.SetAccountStore(accountStore);
+	adminCommandHandler.SetGmTicketSystem(&gmTicketSystem);
+	adminCommandHandler.SetConnectionPool(&dbPool);
+	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log + Wave 2 moderation wiring)");
 
 	// Phase 5 Lunar — Branche le GameEventHandler sur le LunarHandler pour
 	// pouvoir filtrer les events par phase lunaire (event "Nuit de la

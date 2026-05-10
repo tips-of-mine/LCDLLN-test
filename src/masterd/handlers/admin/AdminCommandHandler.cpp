@@ -4,18 +4,29 @@
 
 #include "src/masterd/handlers/admin/AdminCommandHandler.h"
 
+#include "src/masterd/account/AccountRecord.h"
 #include "src/masterd/account/AccountRole.h"
 #include "src/masterd/account/AccountRoleService.h"
+#include "src/masterd/account/AccountStore.h"
+#include "src/masterd/account/AccountValidation.h"
 #include "src/masterd/admin/SlashCommandRegistry.h"
+#include "src/masterd/gmtickets/GmTicketSystem.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shardd/world/LunarCalendar.h"
 #include "src/shared/core/Log.h"
+#include "src/shared/db/ConnectionPool.h"
+#include "src/shared/db/DbHelpers.h"
+#include "src/shared/net/ChatSystem.h"
 #include "src/shared/network/AdminCommandPayloads.h"
+#include "src/shared/network/ChatPayloads.h"
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 
+#include <mysql.h>
+
+#include <chrono>
 #include <cstdio>
 #include <sstream>
 #include <string>
@@ -141,6 +152,27 @@ namespace engine::server
 				"/ticket", "/gmticket",
 			};
 			return kSet;
+		}
+
+		/// Timestamp Unix en millisecondes (UTC), aligne sur ChatRelayHandler.
+		uint64_t NowUnixMsUtc()
+		{
+			using namespace std::chrono;
+			return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+		}
+
+		/// Echappe une chaine pour SQL (utilise par /mute : INSERT). Aligne
+		/// sur le helper DbHelpers (mais defini ici car on n'a pas
+		/// EscapeMysql exporte publiquement).
+		std::string EscapeForSql(MYSQL* mysql, std::string_view input)
+		{
+			if (!mysql)
+				return std::string(input);
+			std::string out(input.size() * 2u + 1u, '\0');
+			const unsigned long len = mysql_real_escape_string(mysql,
+				out.data(), input.data(), static_cast<unsigned long>(input.size()));
+			out.resize(len);
+			return out;
 		}
 
 		/// Dispatch metier pour "/sky moon <phase>". Valide l'argument et
@@ -420,6 +452,36 @@ namespace engine::server
 			DispatchPromote(req.args, accountId, m_roleService, resp);
 			handled = true;
 		}
+		else if (req.command == "/who")
+		{
+			DispatchWho(resp);
+			handled = true;
+		}
+		else if (req.command == "/report")
+		{
+			DispatchReport(accountId, req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/kick")
+		{
+			DispatchKick(accountId, req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/mute")
+		{
+			DispatchMute(accountId, req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/ban")
+		{
+			DispatchBan(accountId, req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/announce")
+		{
+			DispatchAnnounce(accountId, req.args, resp);
+			handled = true;
+		}
 		else if (UiPanelCommandSet().count(req.command) > 0)
 		{
 			// Wave 3 RBAC migration : les UI panel commands sont log-only.
@@ -441,5 +503,391 @@ namespace engine::server
 
 		LogAudit(accountId, userRole, req.command, req.args, resp.status);
 		SendResponse(m_server, connId, requestId, sessionIdHeader, resp);
+	}
+
+	// ============================================================
+	// Wave 2 dispatchers : moderation tools.
+	// ============================================================
+
+	/// Liste tous les joueurs connectes (etat Authenticated / Active).
+	/// Renvoie result = ["count=N", "logins=alice,bob,charlie"]. Visible
+	/// par minRole player (registry decide) ; resout login via store.
+	void AdminCommandHandler::DispatchWho(engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (!m_sessionMgr || !m_accountStore)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/who : sessionMgr ou accountStore non cable";
+			return;
+		}
+		const auto accountIds = m_sessionMgr->ListActiveAccountIds();
+		std::string logins;
+		size_t resolved = 0u;
+		for (size_t i = 0; i < accountIds.size(); ++i)
+		{
+			auto rec = m_accountStore->FindByAccountId(accountIds[i]);
+			if (!rec) continue;
+			if (resolved > 0u) logins.push_back(',');
+			logins += rec->login;
+			++resolved;
+		}
+
+		char countBuf[32];
+		std::snprintf(countBuf, sizeof(countBuf), "count=%zu", resolved);
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(countBuf);
+		resp.result.push_back(std::string("logins=") + logins);
+		resp.message = "OK";
+	}
+
+	/// Cree un ticket GM cote master. Le body du ticket est un message
+	/// generique mentionnant le report ; le GM consultera la liste pour
+	/// suivre. Pas d'effet client direct hormis l'ACK avec ticket_id.
+	void AdminCommandHandler::DispatchReport(uint64_t actorAccountId,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (args.size() < 1u)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /report <player>";
+			return;
+		}
+		if (!m_accountStore || !m_gmTicketSys)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/report : accountStore ou gmTicketSystem non cable";
+			return;
+		}
+		const std::string& targetLogin = args[0];
+		const auto normLogin = engine::server::NormaliseLoginView(targetLogin);
+		auto target = m_accountStore->FindByLogin(normLogin);
+		if (!target)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Joueur introuvable : " + targetLogin;
+			return;
+		}
+
+		// Body du ticket : reference le compte cible + le timestamp.
+		const uint64_t nowMs = NowUnixMsUtc();
+		std::string body = "Report contre '";
+		body += target->login;
+		body += "' (account_id=";
+		body += std::to_string(target->account_id);
+		body += ").";
+
+		const auto ticketId = m_gmTicketSys->Open(actorAccountId, body, nowMs);
+
+		char idBuf[48];
+		std::snprintf(idBuf, sizeof(idBuf), "ticket_id=%llu",
+			static_cast<unsigned long long>(ticketId));
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(idBuf);
+		resp.message = "Ticket cree (id=" + std::to_string(ticketId) + ")";
+	}
+
+	/// Kick : ferme la connexion TCP du joueur cible. Verifie role
+	/// inferieur strict (un mod ne peut pas kick un autre mod). Trouve
+	/// la connection via Snapshot + GetAccountId.
+	void AdminCommandHandler::DispatchKick(uint64_t actorAccountId,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (args.size() < 1u)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /kick <player>";
+			return;
+		}
+		if (!m_accountStore || !m_sessionMgr || !m_connMap || !m_server)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/kick : dependences non cablees";
+			return;
+		}
+		const auto normLogin = engine::server::NormaliseLoginView(args[0]);
+		auto target = m_accountStore->FindByLogin(normLogin);
+		if (!target)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Joueur introuvable : " + args[0];
+			return;
+		}
+
+		// Check : role cible strictement inferieur a celui de l'acteur.
+		// Un moderator ne peut pas kick un autre moderator (regle ticket).
+		if (m_roleService && !m_roleService->HasLowerSecurity(target->account_id, actorAccountId))
+		{
+			resp.status = AdminCommandStatus::Denied;
+			resp.message = "Impossible de kicker un compte de rang egal ou superieur";
+			return;
+		}
+
+		// Trouve la connId du target via la snapshot connMap.
+		const auto snapshot = m_connMap->Snapshot();
+		uint32_t targetConnId = 0u;
+		bool found = false;
+		for (const auto& [connId, sessId] : snapshot)
+		{
+			auto accIdOpt = m_sessionMgr->GetAccountId(sessId);
+			if (accIdOpt && *accIdOpt == target->account_id)
+			{
+				targetConnId = connId;
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Joueur '" + args[0] + "' n'est pas connecte";
+			return;
+		}
+
+		m_server->CloseConnection(targetConnId, DisconnectReason::PeerClosed);
+		LOG_INFO(Audit, "[AdminCommand] Kick actor={} target_account={} target_login={} conn={}",
+			static_cast<unsigned long long>(actorAccountId),
+			static_cast<unsigned long long>(target->account_id),
+			target->login,
+			static_cast<unsigned>(targetConnId));
+
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(std::string("kicked=") + target->login);
+		resp.message = "Joueur kicke : " + target->login;
+	}
+
+	/// Mute : INSERT/REPLACE dans chat_mutes avec until_ts dans le futur.
+	/// Necessite un pool MySQL cable. Verifie role inferieur strict.
+	void AdminCommandHandler::DispatchMute(uint64_t actorAccountId,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (args.size() < 2u)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /mute <player> <duration_minutes>";
+			return;
+		}
+		if (!m_accountStore || !m_dbPool)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/mute : accountStore ou dbPool non cable";
+			return;
+		}
+
+		int durationMin = -1;
+		try { durationMin = std::stoi(args[1]); }
+		catch (...) { durationMin = -1; }
+		if (durationMin <= 0 || durationMin > 60 * 24 * 365)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "duree invalide (minutes, 1..525600)";
+			return;
+		}
+
+		const auto normLogin = engine::server::NormaliseLoginView(args[0]);
+		auto target = m_accountStore->FindByLogin(normLogin);
+		if (!target)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Joueur introuvable : " + args[0];
+			return;
+		}
+		if (m_roleService && !m_roleService->HasLowerSecurity(target->account_id, actorAccountId))
+		{
+			resp.status = AdminCommandStatus::Denied;
+			resp.message = "Impossible de mute un compte de rang egal ou superieur";
+			return;
+		}
+
+		const uint64_t nowMs = NowUnixMsUtc();
+		const uint64_t untilTsMs = nowMs + static_cast<uint64_t>(durationMin) * 60ull * 1000ull;
+		const std::string reason = std::string("muted by account_id=")
+			+ std::to_string(actorAccountId);
+
+		auto guard = m_dbPool->Acquire();
+		MYSQL* mysql = guard.get();
+		if (!mysql)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "DB indisponible";
+			return;
+		}
+		const std::string escReason = EscapeForSql(mysql, reason);
+		char sqlBuf[512];
+		std::snprintf(sqlBuf, sizeof(sqlBuf),
+			"REPLACE INTO chat_mutes (account_id, until_ts, reason) "
+			"VALUES (%llu, %llu, '%s')",
+			static_cast<unsigned long long>(target->account_id),
+			static_cast<unsigned long long>(untilTsMs),
+			escReason.c_str());
+		if (!engine::server::db::DbExecute(mysql, sqlBuf))
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "DB write failed";
+			return;
+		}
+
+		char untilBuf[64];
+		std::snprintf(untilBuf, sizeof(untilBuf), "until_ts_ms=%llu",
+			static_cast<unsigned long long>(untilTsMs));
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(std::string("muted=") + target->login);
+		resp.result.push_back(untilBuf);
+		resp.message = "Joueur mute : " + target->login;
+	}
+
+	/// Ban : UPDATE accounts.status=Locked. Si online, kick aussi pour
+	/// effet immediat. Verifie role inferieur strict.
+	void AdminCommandHandler::DispatchBan(uint64_t actorAccountId,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (args.size() < 1u)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /ban <player> [reason]";
+			return;
+		}
+		if (!m_accountStore)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/ban : accountStore non cable";
+			return;
+		}
+
+		const auto normLogin = engine::server::NormaliseLoginView(args[0]);
+		auto target = m_accountStore->FindByLogin(normLogin);
+		if (!target)
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Joueur introuvable : " + args[0];
+			return;
+		}
+		if (m_roleService && !m_roleService->HasLowerSecurity(target->account_id, actorAccountId))
+		{
+			resp.status = AdminCommandStatus::Denied;
+			resp.message = "Impossible de ban un compte de rang egal ou superieur";
+			return;
+		}
+
+		std::string reason;
+		for (size_t i = 1; i < args.size(); ++i)
+		{
+			if (i > 1u) reason.push_back(' ');
+			reason += args[i];
+		}
+
+		if (!m_accountStore->SetAccountStatus(target->account_id, AccountStatus::Locked))
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "Echec mise a jour status compte";
+			return;
+		}
+
+		// Si online, deconnecte aussi (ban prend effet immediat).
+		if (m_sessionMgr && m_connMap && m_server)
+		{
+			const auto snapshot = m_connMap->Snapshot();
+			for (const auto& [connId, sessId] : snapshot)
+			{
+				auto accIdOpt = m_sessionMgr->GetAccountId(sessId);
+				if (accIdOpt && *accIdOpt == target->account_id)
+				{
+					m_server->CloseConnection(connId, DisconnectReason::PeerClosed);
+					break;
+				}
+			}
+		}
+
+		LOG_INFO(Audit, "[AdminCommand] Ban actor={} target_account={} target_login={} reason='{}'",
+			static_cast<unsigned long long>(actorAccountId),
+			static_cast<unsigned long long>(target->account_id),
+			target->login,
+			reason);
+
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(std::string("banned=") + target->login);
+		if (!reason.empty())
+			resp.result.push_back(std::string("reason=") + reason);
+		resp.message = "Joueur banni : " + target->login;
+	}
+
+	/// Announce : broadcast un ChatRelay channel=Server a toutes les
+	/// sessions actives. Pas de filtre IgnoreList (un announce admin
+	/// doit toucher tout le monde).
+	void AdminCommandHandler::DispatchAnnounce(uint64_t actorAccountId,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+		if (args.empty())
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Usage : /announce <message>";
+			return;
+		}
+		if (!m_server || !m_connMap || !m_sessionMgr)
+		{
+			resp.status = AdminCommandStatus::ServerError;
+			resp.message = "/announce : dependences non cablees";
+			return;
+		}
+
+		// Reconstruit le message a partir des args.
+		std::string message;
+		for (size_t i = 0; i < args.size(); ++i)
+		{
+			if (i > 0u) message.push_back(' ');
+			message += args[i];
+		}
+		if (message.empty())
+		{
+			resp.status = AdminCommandStatus::InvalidArgs;
+			resp.message = "Message vide";
+			return;
+		}
+
+		// Sender : tag generique + login si dispo.
+		std::string sender = "[Announce]";
+		if (m_accountStore)
+		{
+			auto rec = m_accountStore->FindByAccountId(actorAccountId);
+			if (rec)
+			{
+				sender = "[Announce] ";
+				sender += rec->login;
+			}
+		}
+
+		const uint64_t ts = NowUnixMsUtc();
+		const uint8_t channel = static_cast<uint8_t>(engine::net::ChatChannel::Server);
+		const auto snapshot = m_connMap->Snapshot();
+		size_t delivered = 0u;
+		for (const auto& [connId, sessId] : snapshot)
+		{
+			auto pkt = engine::network::BuildChatRelayPacket(ts, channel, sender, message, sessId);
+			if (pkt.empty()) continue;
+			if (m_server->Send(connId, pkt))
+				++delivered;
+		}
+
+		LOG_INFO(Audit, "[AdminCommand] Announce actor={} delivered={}/{} text='{}'",
+			static_cast<unsigned long long>(actorAccountId),
+			delivered, snapshot.size(),
+			message.size() > 200u ? message.substr(0, 200u) + "...[truncated]" : message);
+
+		char deliveredBuf[48];
+		std::snprintf(deliveredBuf, sizeof(deliveredBuf), "delivered=%zu", delivered);
+		resp.status = AdminCommandStatus::Ok;
+		resp.result.push_back(deliveredBuf);
+		resp.message = "Announce diffuse";
 	}
 }

@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace engine::server
 {
@@ -100,6 +101,13 @@ namespace engine::server
 
 		/// Returns account_id for \a session_id if session exists. For M22.4 (shard ticket request).
 		std::optional<uint64_t> GetAccountId(uint64_t session_id) const;
+
+		/// Liste les accountId des sessions actuellement en etat Authenticated
+		/// ou Active. Utilise par AdminCommandHandler (/who) pour enumerer
+		/// les joueurs connectes. L'ordre n'est pas garanti (depend de
+		/// l'iteration unordered_map). Pas de filtrage : tous les comptes
+		/// authentifies remontent, y compris les staff / admins.
+		std::vector<uint64_t> ListActiveAccountIds() const;
 
 	private:
 		using Clock = std::chrono::steady_clock;

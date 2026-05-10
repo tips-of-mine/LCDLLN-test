@@ -1484,9 +1484,6 @@ namespace engine
 				}
 				std::string accIdStr(rest.substr(0, spacePos));
 				std::string roleStr(rest.substr(spacePos + 1));
-				// On ne valide pas plus avant cote client : le master fait
-				// la validation autoritative (account_id non nul, role connu)
-				// et repond InvalidArgs si besoin.
 				engine::network::admin::AdminCommandRequest req;
 				req.command = "/promote";
 				req.args.push_back(accIdStr);
@@ -1497,6 +1494,164 @@ namespace engine
 					engine::network::kOpcodeAdminCommandRequest, payload);
 				LOG_INFO(Core, "[Admin] /promote {} -> {} envoye au master (RBAC + audit)",
 					accIdStr, roleStr);
+				return true;
+			}
+			// Wave 2 RBAC migration : /who (player) -> AdminCommand.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/who" || text.starts_with("/who ") || text.starts_with("/who\t")))
+			{
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/who";
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /who sent to master");
+				return true;
+			}
+			// Wave 2 RBAC migration : /report <player> (player) -> AdminCommand.
+			// Cree un ticket GM cote master ; la reponse affiche le ticket_id.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/report "))
+			{
+				std::string_view rest = text.substr(8);
+				while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+					rest.remove_prefix(1u);
+				if (rest.empty())
+				{
+					LOG_WARN(Core, "[Engine] /report sans argument joueur");
+					return true;
+				}
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/report";
+				req.args.push_back(std::string(rest));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /report {} sent to master", std::string(rest));
+				return true;
+			}
+			// Wave 2 RBAC migration : /kick <player> (moderator) -> AdminCommand.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/kick "))
+			{
+				std::string_view rest = text.substr(6);
+				while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+					rest.remove_prefix(1u);
+				if (rest.empty())
+				{
+					LOG_WARN(Core, "[Engine] /kick sans argument joueur");
+					return true;
+				}
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/kick";
+				req.args.push_back(std::string(rest));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /kick {} sent to master", std::string(rest));
+				return true;
+			}
+			// Wave 2 RBAC migration : /mute <player> <duration_min> (moderator).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/mute "))
+			{
+				std::string_view rest = text.substr(6);
+				while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+					rest.remove_prefix(1u);
+				if (rest.empty())
+				{
+					LOG_WARN(Core, "[Engine] /mute sans arguments");
+					return true;
+				}
+				// Split : premier mot = player, reste = duration (ou plus).
+				auto firstSpace = rest.find_first_of(" \t");
+				if (firstSpace == std::string_view::npos)
+				{
+					LOG_WARN(Core, "[Engine] /mute necessite <player> <duration_minutes>");
+					return true;
+				}
+				std::string player(rest.substr(0, firstSpace));
+				std::string_view durView = rest.substr(firstSpace + 1u);
+				while (!durView.empty() && (durView.front() == ' ' || durView.front() == '\t'))
+					durView.remove_prefix(1u);
+				if (durView.empty())
+				{
+					LOG_WARN(Core, "[Engine] /mute : duree manquante");
+					return true;
+				}
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/mute";
+				req.args.push_back(std::move(player));
+				req.args.push_back(std::string(durView));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /mute sent to master");
+				return true;
+			}
+			// Wave 2 RBAC migration : /ban <player> <reason...> (game_master).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/ban "))
+			{
+				std::string_view rest = text.substr(5);
+				while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+					rest.remove_prefix(1u);
+				if (rest.empty())
+				{
+					LOG_WARN(Core, "[Engine] /ban sans argument joueur");
+					return true;
+				}
+				auto firstSpace = rest.find_first_of(" \t");
+				std::string player;
+				std::string reason;
+				if (firstSpace == std::string_view::npos)
+				{
+					player = std::string(rest);
+				}
+				else
+				{
+					player = std::string(rest.substr(0, firstSpace));
+					std::string_view reasonView = rest.substr(firstSpace + 1u);
+					while (!reasonView.empty() && (reasonView.front() == ' ' || reasonView.front() == '\t'))
+						reasonView.remove_prefix(1u);
+					reason = std::string(reasonView);
+				}
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/ban";
+				req.args.push_back(std::move(player));
+				if (!reason.empty())
+					req.args.push_back(std::move(reason));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /ban sent to master");
+				return true;
+			}
+			// Wave 2 RBAC migration : /announce <message> (game_master).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/announce "))
+			{
+				std::string_view rest = text.substr(10);
+				while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+					rest.remove_prefix(1u);
+				if (rest.empty())
+				{
+					LOG_WARN(Core, "[Engine] /announce : message vide");
+					return true;
+				}
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/announce";
+				req.args.push_back(std::string(rest));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Engine] /announce sent to master");
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -2415,8 +2570,6 @@ namespace engine
 					}
 					else if (parsed.command == "/sky time")
 					{
-						// Parse echoed arg : ["hours=22.500"]. Le master a deja
-						// valide la plage [0..24) — on applique sans recheck.
 						float hours = 12.0f;
 						for (const auto& kv : parsed.result)
 						{
@@ -2432,10 +2585,6 @@ namespace engine
 					}
 					else if (parsed.command == "/sky info")
 					{
-						// Read-only : le master ne renvoie pas d'etat metier
-						// (le client a deja le state local DayNight). On
-						// dump l'etat local cote log Render maintenant qu'on
-						// a l'autorisation serveur (audit cote master deja emis).
 						const auto& s = m_dayNight.GetState();
 						static const char* kMoonName[16] = {
 							"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
@@ -2454,15 +2603,69 @@ namespace engine
 					}
 					else if (parsed.command == "/loot")
 					{
-						// Toggle deja applique localement a la frappe (le panneau
-						// UI ne dependant pas du master). On log juste l'ACK audit.
 						LOG_INFO(Core, "[Admin] /loot ACK : {}", parsed.message);
 					}
 					else if (parsed.command == "/promote")
 					{
-						// Echo : ["account_id=123", "new_role=moderator"]. On log
-						// pour feedback admin (la persistance est cote master).
 						LOG_INFO(Core, "[Admin] /promote ACK : {}", parsed.message);
+					}
+					else if (parsed.command == "/who"
+					      || parsed.command == "/report"
+					      || parsed.command == "/kick"
+					      || parsed.command == "/mute"
+					      || parsed.command == "/ban"
+					      || parsed.command == "/announce")
+					{
+						// Wave 2 : reponses moderation. Affiche le resultat
+						// dans le chat (canal Server) pour feedback joueur.
+						std::string body;
+						if (parsed.command == "/who")
+						{
+							std::string countStr;
+							std::string loginsStr;
+							for (const auto& kv : parsed.result)
+							{
+								if (kv.starts_with("count="))
+									countStr = kv.substr(6);
+								else if (kv.starts_with("logins="))
+									loginsStr = kv.substr(7);
+							}
+							body = "[Who] " + countStr + " joueurs connectes";
+							if (!loginsStr.empty())
+								body += " : " + loginsStr;
+						}
+						else if (parsed.command == "/report")
+						{
+							body = "[Report] " + parsed.message;
+						}
+						else if (parsed.command == "/kick")
+						{
+							body = "[Kick] " + parsed.message;
+						}
+						else if (parsed.command == "/mute")
+						{
+							body = "[Mute] " + parsed.message;
+						}
+						else if (parsed.command == "/ban")
+						{
+							body = "[Ban] " + parsed.message;
+						}
+						else if (parsed.command == "/announce")
+						{
+							body = "[Announce] " + parsed.message;
+						}
+
+						if (!body.empty() && m_chatUi.IsInitialized())
+						{
+							engine::net::ChatMessage line;
+							line.timestampUnixMs = 0;
+							line.channel = engine::net::ChatChannel::Server;
+							line.sender = "system";
+							line.text = std::move(body);
+							m_chatUi.PushNetworkLine(line);
+						}
+						LOG_INFO(Net, "[AdminCommand] OK command={} message={}",
+							parsed.command, parsed.message);
 					}
 					else
 					{

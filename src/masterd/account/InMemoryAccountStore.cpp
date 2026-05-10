@@ -201,4 +201,23 @@ namespace engine::server
 		}
 		return false;
 	}
+
+	/// Met a jour le statut d'un compte en RAM. Iteration lineaire sur les
+	/// comptes via m_by_login (cout O(N) acceptable pour tests / fallback).
+	bool InMemoryAccountStore::SetAccountStatus(uint64_t account_id, AccountStatus status)
+	{
+		std::lock_guard<std::recursive_mutex> lock(m_mutex);
+		for (auto& [login, rec] : m_by_login)
+		{
+			if (rec.account_id == account_id)
+			{
+				rec.status = status;
+				LOG_INFO(Auth, "[InMemoryAccountStore] SetAccountStatus OK account_id={} status={}",
+					account_id, static_cast<int>(status));
+				return true;
+			}
+		}
+		LOG_WARN(Auth, "[InMemoryAccountStore] SetAccountStatus: account_id={} not found", account_id);
+		return false;
+	}
 }

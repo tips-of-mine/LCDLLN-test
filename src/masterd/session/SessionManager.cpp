@@ -172,6 +172,24 @@ namespace engine::server
 		return it->second.account_id;
 	}
 
+	/// Enumere tous les accountId associes a une session en etat
+	/// Authenticated ou Active. Utilise par AdminCommandHandler::DispatchWho
+	/// pour construire la liste des joueurs connectes. Pas de garantie
+	/// d'ordre (unordered_map). Pas de filtrage role : tous les comptes
+	/// connectes remontent.
+	std::vector<uint64_t> SessionManager::ListActiveAccountIds() const
+	{
+		std::vector<uint64_t> out;
+		out.reserve(m_by_session_id.size());
+		for (const auto& [id, s] : m_by_session_id)
+		{
+			(void)id;
+			if (s.state == SessionState::Authenticated || s.state == SessionState::Active)
+				out.push_back(s.account_id);
+		}
+		return out;
+	}
+
 	void SessionManager::EvictExpired()
 	{
 		auto now = Clock::now();

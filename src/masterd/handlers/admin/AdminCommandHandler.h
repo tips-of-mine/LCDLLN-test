@@ -15,15 +15,27 @@
 // LOG_INFO macro utilise une string runtime, pas une enum, donc
 // n'importe quel nom est accepte).
 //
-// Commandes dispatchees V1 (Wave 1) :
-//   - "/sky moon <phase>"   admin   (pilot)
-//   - "/sky time <hours>"   admin
-//   - "/sky info"           player  (audit-only)
-//   - "/loot"               admin   (UI toggle + audit)
-//   - "/promote <id> <role>" admin   (mise a jour role via AccountRoleService)
+// Commandes dispatchees (Wave 1 + Wave 2) :
+//   Wave 1 (debug + admin tool) :
+//     - "/sky moon <phase>"      admin        (pilot)
+//     - "/sky time <hours>"      admin
+//     - "/sky info"              player       (audit-only)
+//     - "/loot"                  admin        (UI toggle + audit)
+//     - "/promote <id> <role>"   admin        (AccountRoleService::SetRole)
+//   Wave 2 (moderation) :
+//     - "/who"                   player       (liste joueurs connectes)
+//     - "/report <player>"       player       (cree un ticket GM)
+//     - "/kick <player>"         moderator    (deconnecte un joueur)
+//     - "/mute <player> <min>"   moderator    (chat_mutes via DB)
+//     - "/ban <player> <reason>" game_master  (account_status=Locked + kick)
+//     - "/announce <message>"    game_master  (broadcast canal Server)
+//   Wave 3 (UI panels log-only) : /mail, /quest, /guild, /ah, /skills, /lfg,
+//     /arena, /bg, /pvp, /weather, /events, /rep, /ticket
+//
 // Pour toute autre commande connue du registre, la reponse est un Ok stub
-// avec result vide. Les futures PR ajouteront les dispatchers specifiques
-// (kick, ban, mute, etc.).
+// avec result vide. Les futures PR ajouteront les dispatchers specifiques.
+
+#include "src/shared/network/AdminCommandPayloads.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -34,7 +46,18 @@ namespace engine::server
 	class SessionManager;
 	class ConnectionSessionMap;
 	class AccountRoleService;
+	class AccountStore;
 	class SlashCommandRegistry;
+}
+
+namespace engine::server::db
+{
+	class ConnectionPool;
+}
+
+namespace engine::server::gmtickets
+{
+	class GmTicketSystem;
 }
 
 namespace engine::server
@@ -61,6 +84,19 @@ namespace engine::server
 		/// Branche le registre des commandes (charge depuis slash_commands.json).
 		void SetSlashCommandRegistry(SlashCommandRegistry* r) { m_registry = r; }
 
+		/// Branche l'AccountStore pour resoudre login -> account_id
+		/// (utilise par /kick, /mute, /ban, /report). Si nullptr, ces
+		/// commandes repondront ServerError.
+		void SetAccountStore(AccountStore* store) { m_accountStore = store; }
+
+		/// Branche le GmTicketSystem pour creer des tickets via /report.
+		/// Si nullptr, /report repondra ServerError.
+		void SetGmTicketSystem(engine::server::gmtickets::GmTicketSystem* sys) { m_gmTicketSys = sys; }
+
+		/// Branche le pool MySQL pour /mute (INSERT chat_mutes). Si nullptr,
+		/// /mute repondra ServerError.
+		void SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_dbPool = pool; }
+
 		/// Dispatch packet : traite uniquement opcode 195
 		/// (kOpcodeAdminCommandRequest). Pour tout autre opcode, no-op.
 		///
@@ -79,10 +115,69 @@ namespace engine::server
 		void HandleRequest(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,
 		                   const uint8_t* payload, size_t payloadSize);
 
+		/// Dispatch "/who" : enumere les sessions actives, resout
+		/// account_id -> login via AccountStore, et remplit \p resp avec
+		/// "count=N" + "logins=alice,bob,..." en compact CSV.
+		/// \param resp Reponse a remplir (status sera Ok meme si liste vide).
+		void DispatchWho(engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/report <player>" : valide args, resout target par
+		/// login, et cree un ticket GM via GmTicketSystem avec
+		/// actorAccountId comme reporter.
+		/// \param actorAccountId  Compte qui execute la commande.
+		/// \param args            args[0] = nom du joueur cible.
+		/// \param resp            Reponse a remplir (status Ok / InvalidArgs / ServerError).
+		void DispatchReport(uint64_t actorAccountId,
+		                    const std::vector<std::string>& args,
+		                    engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/kick <player>" : verifie role inferieur strict
+		/// (un mod ne kick pas un mod), trouve la connexion via la
+		/// snapshot connMap, puis CloseConnection.
+		/// \param actorAccountId  Compte qui execute la commande.
+		/// \param args            args[0] = nom du joueur cible.
+		/// \param resp            Reponse a remplir.
+		void DispatchKick(uint64_t actorAccountId,
+		                  const std::vector<std::string>& args,
+		                  engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/mute <player> <duration_minutes>" : verifie role
+		/// inferieur strict, INSERT/REPLACE dans la table chat_mutes avec
+		/// until_ts = NowUnixMsUtc() + duration_minutes * 60_000.
+		/// \param actorAccountId  Compte qui execute la commande.
+		/// \param args            args[0] = nom joueur, args[1] = duree en minutes (>0).
+		/// \param resp            Reponse a remplir.
+		void DispatchMute(uint64_t actorAccountId,
+		                  const std::vector<std::string>& args,
+		                  engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/ban <player> <reason>" : verifie role inferieur,
+		/// UPDATE accounts.status=Locked via AccountStore::SetAccountStatus,
+		/// puis deconnecte le compte si online.
+		/// \param actorAccountId  Compte qui execute la commande.
+		/// \param args            args[0] = nom joueur, args[1..] = raison libre.
+		/// \param resp            Reponse a remplir.
+		void DispatchBan(uint64_t actorAccountId,
+		                 const std::vector<std::string>& args,
+		                 engine::network::admin::AdminCommandResponse& resp);
+
+		/// Dispatch "/announce <message>" : broadcast un ChatRelay
+		/// (channel=Server, sender="[Announce] <actorLogin>") a toutes
+		/// les sessions actives via la snapshot connMap.
+		/// \param actorAccountId  Compte qui execute la commande (pour login dans sender).
+		/// \param args            args[0..] = message complet (concatene si plusieurs).
+		/// \param resp            Reponse a remplir.
+		void DispatchAnnounce(uint64_t actorAccountId,
+		                      const std::vector<std::string>& args,
+		                      engine::network::admin::AdminCommandResponse& resp);
+
 		NetServer*            m_server      = nullptr;
 		SessionManager*       m_sessionMgr  = nullptr;
 		ConnectionSessionMap* m_connMap     = nullptr;
 		AccountRoleService*   m_roleService = nullptr;
 		SlashCommandRegistry* m_registry    = nullptr;
+		AccountStore*         m_accountStore = nullptr;
+		engine::server::gmtickets::GmTicketSystem* m_gmTicketSys = nullptr;
+		engine::server::db::ConnectionPool*        m_dbPool      = nullptr;
 	};
 }

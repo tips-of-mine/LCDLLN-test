@@ -42,6 +42,7 @@
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
+#include "src/masterd/handlers/skills/SkillHandler.h"
 #include "src/masterd/quests/MysqlQuestStateStore.h"
 #include "src/masterd/reputation/MysqlReputationStore.h"
 #include "src/masterd/reputation/ReputationManager.h"
@@ -506,6 +507,20 @@ int main(int argc, char** argv)
 	cinematicHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] CinematicHandler configured (CMANGOS.30 step 3+4, push-only)");
 
+	// CMANGOS.39 (Phase 4.39 step 3+4) — Skills wire server.
+	// Le master tient en memoire la skill book par account (V1, starter set
+	// hardcode : Cooking, Herbalism, Mining, FirstAid, Lockpicking). Les
+	// opcodes 113/115/117 sont dispatches au handler ; les responses
+	// 114/116/118 et la push notification 119 sont emis par le handler aux
+	// clients. Pas de persistance DB en V1 (sub-PR future avec migration
+	// MysqlSkillStore). PushSkillUpgrade est expose pour usage futur par
+	// le CraftingSystem ou autres handlers.
+	engine::server::SkillHandler skillHandler;
+	skillHandler.SetServer(&server);
+	skillHandler.SetSessionManager(&sessionManager);
+	skillHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] SkillHandler configured (CMANGOS.39 step 3+4, in-memory store)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -545,7 +560,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -607,6 +622,10 @@ int main(int argc, char** argv)
 		else if (opcode == kOpcodeCinematicAckRequest
 		      || opcode == kOpcodeCinematicSkipRequest)
 			cinematicHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeSkillsListRequest
+		      || opcode == kOpcodeSkillLearnRequest
+		      || opcode == kOpcodeSkillUseRequest)
+			skillHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

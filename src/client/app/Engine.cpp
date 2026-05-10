@@ -15,6 +15,7 @@
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
+#include "src/shared/network/SkillPayloads.h"
 #include "src/shared/network/TradePayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -25,6 +26,7 @@
 #include "src/client/render/ReputationImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
+#include "src/client/render/SkillBookImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -906,6 +908,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.39 (Phase 4.39 step 3+4) — Init du presenter Skill Book +
+		// cable du send callback. Reception dispatchee dans le push handler
+		// ci-dessous (opcodes 114/116/118 responses + 119 push). Fire-and-forget
+		// des requetes 113/115/117 via SendGenericRequestAsync.
+		if (!m_skillBookUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] SkillBookUiPresenter init FAILED — panneau skill book desactive");
+		}
+		else
+		{
+			m_skillBookUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1018,6 +1035,23 @@ namespace engine
 					m_reputationUi.RequestReputationList();
 				}
 				LOG_INFO(Core, "[Engine] /rep toggle (visible={})", m_reputationVisible);
+				return true;
+			}
+			// CMANGOS.39 (Phase 4.39 step 3+4) — Slash command /skills pour
+			// ouvrir/fermer le panneau Skill Book et synchroniser la liste
+			// depuis le master au moment de l'ouverture. La touche B fait
+			// la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/skills" || text == "/skill"
+				    || text.starts_with("/skills ") || text.starts_with("/skills\t")
+				    || text.starts_with("/skill ") || text.starts_with("/skill\t")))
+			{
+				m_skillBookVisible = !m_skillBookVisible;
+				if (m_skillBookVisible)
+				{
+					m_skillBookUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] /skills toggle (visible={})", m_skillBookVisible);
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -1354,6 +1388,52 @@ namespace engine
 					return;
 				}
 				m_reputationUi.OnUpdateNotification(*parsed);
+				return;
+			}
+			// CMANGOS.39 (Phase 4.39 step 3+4) — Dispatch des reponses Skills
+			// (114/116/118) + push UpgradeNotification (119).
+			case kOpcodeSkillsListResponse:
+			{
+				auto parsed = ParseSkillsListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] SKILLS_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_skillBookUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeSkillLearnResponse:
+			{
+				auto parsed = ParseSkillLearnResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] SKILL_LEARN_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_skillBookUi.OnLearnResponse(*parsed);
+				return;
+			}
+			case kOpcodeSkillUseResponse:
+			{
+				auto parsed = ParseSkillUseResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] SKILL_USE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_skillBookUi.OnUseResponse(*parsed);
+				return;
+			}
+			case kOpcodeSkillUpgradeNotification:
+			{
+				auto parsed = ParseSkillUpgradeNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] SKILL_UPGRADE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_skillBookUi.OnUpgradeNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -3654,6 +3734,7 @@ namespace engine
 		m_reputationUi.Shutdown();
 		m_lfgUi.Shutdown();
 		m_cinematicUi.Shutdown();
+		m_skillBookUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3719,6 +3800,29 @@ namespace engine
 
 		if (m_input.WasPressed(engine::platform::Key::F_11))
     		m_window.ToggleFullscreen();
+
+		// CMANGOS.39 (Phase 4.39 step 3+4) — Touche B post-auth toggle le
+		// panneau Skill Book (equivalent a la slash command /skills). Bloquee
+		// si le chat a le focus (l'utilisateur tape) ou si le menu pause /
+		// editor est ouvert pour eviter les toggles accidentels.
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			if (inGameNoMenu && !chatBlocks
+				&& m_input.WasPressed(engine::platform::Key::B))
+			{
+				m_skillBookVisible = !m_skillBookVisible;
+				if (m_skillBookVisible)
+				{
+					m_skillBookUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] B toggle skillbook (visible={})", m_skillBookVisible);
+			}
+		}
 
 		// M100.2 — Dispatch des raccourcis éditeur monde vers le shell. Ctrl+Z
 		// / Ctrl+Shift+Z / Ctrl+Y branchent la pile undo/redo ; F1..F12
@@ -3902,6 +4006,12 @@ namespace engine
 				// le declenchement est server-pushed.
 				m_cinematicImGui = std::make_unique<engine::render::CinematicImGuiRenderer>();
 				m_cinematicImGui->SetPresenter(&m_cinematicUi);
+				// CMANGOS.39 (Phase 4.39 step 3+4) — Renderer ImGui du panneau
+				// Skill Book. Partage le contexte ImGui avec auth/chat/mail/gmtickets/
+				// reputation/lfg. Visible uniquement quand m_skillBookVisible
+				// (toggle via /skills ou touche B).
+				m_skillBookImGui = std::make_unique<engine::render::SkillBookImGuiRenderer>();
+				m_skillBookImGui->SetPresenter(&m_skillBookUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -4961,6 +5071,16 @@ namespace engine
 			{
 				m_cinematicImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_cinematicImGui->Render();
+			}
+			// CMANGOS.39 (Phase 4.39 step 3+4) — Tick l'indicateur Use puis
+			// render le panneau Skill Book si visible. L'indicateur Use est rendu
+			// en plus de la liste si actif (overlay non bloquant).
+			m_skillBookUi.TickIndicator(static_cast<float>(m_time.DeltaSeconds()));
+			if (m_skillBookVisible && m_skillBookImGui && m_skillBookUi.IsInitialized())
+			{
+				m_skillBookImGui->SetEnabled(true);
+				m_skillBookImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_skillBookImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

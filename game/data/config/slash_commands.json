@@ -205,9 +205,9 @@
       "minRole": "administrator",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1363",
-      "notes": "Visual override only ; valid phases 0..15 (NewMoon..EarthshineLate)."
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Pilot migration AdminCommand RBAC : client envoie au master (opcode 195) qui valide le role administrator + log audit, master repond Ok+result (opcode 196), client applique l'override visuel uniquement apres ACK. Valid phases 0..15 (NewMoon..EarthshineLate)."
     },
     {
       "command": "/ticket",

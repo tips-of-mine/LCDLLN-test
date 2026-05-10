@@ -792,4 +792,13 @@ namespace engine::network
 	constexpr uint16_t kOpcodeLunarStateRequest             = 192u; ///< Client to Master : etat lunaire actuel (vide).
 	constexpr uint16_t kOpcodeLunarStateResponse            = 193u; ///< Master to Client : phase 0..15, illumination 0..1, cycleStart, cycleDuration.
 	constexpr uint16_t kOpcodeLunarPhaseChangeNotification  = 194u; ///< Master to Client (push, request_id=0) : changement de phase.
+
+	// =====================================================================
+	// AdminCommand wire — pattern centralise pour toutes les slash commands
+	// avec RBAC (Role-Based Access Control) + audit log obligatoire serveur.
+	// Voir game/data/config/slash_commands.json (source de verite) et
+	// docs/slash_commands_rbac.md (convention 3 regles).
+	// =====================================================================
+	constexpr uint16_t kOpcodeAdminCommandRequest  = 195u; ///< Client to Master : execution d'une slash command (command, args).
+	constexpr uint16_t kOpcodeAdminCommandResponse = 196u; ///< Master to Client : ACK Ok + data echo, ou Denied / UnknownCommand / InvalidArgs / Unauthorized.
 }

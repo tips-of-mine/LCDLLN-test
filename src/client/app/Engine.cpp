@@ -22,6 +22,7 @@
 #include "src/shared/network/AuctionPayloads.h"
 #include "src/shared/network/LootPayloads.h"
 #include "src/shared/network/LunarPayloads.h"
+#include "src/shared/network/AdminCommandPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -1371,13 +1372,18 @@ namespace engine
 					LOG_WARN(Render, "[Sky] phase {} hors plage [0..15]", phase);
 					return true;
 				}
-				// Calcul illumination locale (cf. LunarCalendar::ComputeIllumination).
-				constexpr float kPi = 3.14159265358979323846f;
-				float t = (static_cast<float>(phase) - 7.0f) * (kPi / 8.0f);
-				float illumination = 0.5f * (1.0f + std::cos(t));
-				m_dayNight.OnLunarPhaseChange(static_cast<uint8_t>(phase), illumination);
-				LOG_INFO(Render, "[Sky] moon phase override: {} illumination={:.0f}% (master state inchange)",
-					phase, illumination * 100.0f);
+				// AdminCommand RBAC pilot : /sky moon est admin-only. On envoie au
+				// master qui valide le role + log audit + retourne Ok/Denied.
+				// Le client applique l'override visuel SEULEMENT apres ACK Ok
+				// (voir dispatch kOpcodeAdminCommandResponse plus bas).
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/sky moon";
+				req.args.push_back(std::to_string(phase));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Render, "[Sky] /sky moon {} sent to master for RBAC validation", phase);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -2237,6 +2243,56 @@ namespace engine
 				m_dayNight.OnLunarPhaseChange(parsed.newPhase, parsed.newIllumination);
 				LOG_INFO(Render, "[Engine] LunarPhaseChange: phase={} illumination={:.3f}",
 					static_cast<unsigned>(parsed.newPhase), parsed.newIllumination);
+				return;
+			}
+			// AdminCommand RBAC — reponse master apres validation du role +
+			// log audit. Si status==Ok, on dispatch sur le nom de la commande
+			// pour appliquer l'effet local (ex: /sky moon -> override visuel).
+			// Sinon on log le refus.
+			case kOpcodeAdminCommandResponse:
+			{
+				engine::network::admin::AdminCommandResponse parsed;
+				if (!engine::network::admin::ParseAdminCommandResponsePayload(payload, payloadSize, parsed))
+				{
+					LOG_WARN(Net, "[Engine] ADMIN_COMMAND_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				if (parsed.status == engine::network::admin::AdminCommandStatus::Ok)
+				{
+					if (parsed.command == "/sky moon")
+					{
+						// Parse echoed args : ["phase=7", "illumination=1.000"]
+						uint8_t phase = 0;
+						float illumination = 0.0f;
+						for (const auto& kv : parsed.result)
+						{
+							if (kv.starts_with("phase="))
+							{
+								try { phase = static_cast<uint8_t>(std::stoi(kv.substr(6))); }
+								catch (...) { phase = 0; }
+							}
+							else if (kv.starts_with("illumination="))
+							{
+								try { illumination = std::stof(kv.substr(13)); }
+								catch (...) { illumination = 0.0f; }
+							}
+						}
+						m_dayNight.OnLunarPhaseChange(phase, illumination);
+						LOG_INFO(Render, "[Sky] /sky moon ACK applied : phase={} illumination={:.3f}",
+							static_cast<unsigned>(phase), illumination);
+					}
+					else
+					{
+						LOG_INFO(Net, "[AdminCommand] OK : command={} (no client effect V1)", parsed.command);
+					}
+				}
+				else
+				{
+					LOG_WARN(Net, "[AdminCommand] REFUSED command={} status={} message={}",
+						parsed.command,
+						static_cast<unsigned>(parsed.status),
+						parsed.message);
+				}
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG

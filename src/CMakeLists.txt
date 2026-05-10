@@ -130,6 +130,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/auction/AuctionHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/loot/LootHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/lunar/LunarHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/admin/AdminCommandHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
@@ -149,6 +151,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/AuctionPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LootPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/LunarPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/AdminCommandPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp

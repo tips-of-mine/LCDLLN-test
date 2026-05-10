@@ -21,6 +21,7 @@
 #include "src/shared/network/GuildPayloads.h"
 #include "src/shared/network/AuctionPayloads.h"
 #include "src/shared/network/LootPayloads.h"
+#include "src/shared/network/LunarPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -1326,6 +1327,59 @@ namespace engine
 				LOG_INFO(Core, "[Engine] /loot toggle (visible={})", m_lootRollVisible);
 				return true;
 			}
+			// Phase 5 step 3+4 Lunar + M38.1 Sky : slash commands debug pour
+			// inspecter et override le cycle jour/nuit + phase lunaire.
+			//   /sky info        : log timeOfDay + sun dir + moon phase + illumination.
+			//   /sky time <h>    : SetTime(h), ex. "/sky time 22.5".
+			//   /sky moon <i>    : OnLunarPhaseChange(i, calc(i)), ex. "/sky moon 7".
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/sky info" || text == "/sky"))
+			{
+				const auto& s = m_dayNight.GetState();
+				const char* moonName[16] = {
+					"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
+					"WaxingGibbousEarly", "WaxingGibbousLate", "FullMoonRising", "FullMoon",
+					"FullMoonSetting", "WaningGibbousEarly", "WaningGibbousLate", "LastQuarter",
+					"WaningCrescentEarly", "WaningCrescentLate", "EarthshineEarly", "EarthshineLate"
+				};
+				LOG_INFO(Render, "[Sky] timeOfDay={:.2f}h isDaytime={}", s.timeOfDay, s.isDaytime);
+				LOG_INFO(Render, "[Sky] sunDir=({:.2f},{:.2f},{:.2f})", s.lightDir[0], s.lightDir[1], s.lightDir[2]);
+				LOG_INFO(Render, "[Sky] moonPhase={} ({}) illumination={:.0f}%",
+					static_cast<unsigned>(s.moonPhase),
+					moonName[s.moonPhase < 16 ? s.moonPhase : 0],
+					s.moonIllumination * 100.0f);
+				return true;
+			}
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/sky time "))
+			{
+				const auto rest = text.substr(10);
+				float hours = 0.0f;
+				try { hours = std::stof(std::string(rest)); } catch (...) { hours = 12.0f; }
+				m_dayNight.SetTime(hours);
+				LOG_INFO(Render, "[Sky] time set to {:.2f}h", hours);
+				return true;
+			}
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/sky moon "))
+			{
+				const auto rest = text.substr(10);
+				int phase = 0;
+				try { phase = std::stoi(std::string(rest)); } catch (...) { phase = 0; }
+				if (phase < 0 || phase > 15)
+				{
+					LOG_WARN(Render, "[Sky] phase {} hors plage [0..15]", phase);
+					return true;
+				}
+				// Calcul illumination locale (cf. LunarCalendar::ComputeIllumination).
+				constexpr float kPi = 3.14159265358979323846f;
+				float t = (static_cast<float>(phase) - 7.0f) * (kPi / 8.0f);
+				float illumination = 0.5f * (1.0f + std::cos(t));
+				m_dayNight.OnLunarPhaseChange(static_cast<uint8_t>(phase), illumination);
+				LOG_INFO(Render, "[Sky] moon phase override: {} illumination={:.0f}% (master state inchange)",
+					phase, illumination * 100.0f);
+				return true;
+			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
 			// pour ouvrir/fermer le panneau Support GM et synchroniser la liste
 			// depuis le master au moment de l'ouverture.
@@ -2152,6 +2206,39 @@ namespace engine
 				m_lootRollUi.OnSimulateRollResponse(*parsed);
 				return;
 			}
+			// Phase 5 step 3+4 Lunar — Dispatch des opcodes 193 (StateResponse)
+			// et 194 (PhaseChangeNotification, push). Master autoritaire ; le
+			// client recoit l'etat initial sur EnterWorld puis un push toutes
+			// les ~21h sur changement de phase.
+			case kOpcodeLunarStateResponse:
+			{
+				engine::network::lunar::LunarStateResponse parsed;
+				if (!engine::network::lunar::ParseLunarStateResponsePayload(payload, payloadSize, parsed))
+				{
+					LOG_WARN(Net, "[Engine] LUNAR_STATE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				if (parsed.status == engine::network::lunar::LunarStatus::Ok)
+				{
+					m_dayNight.OnLunarPhaseChange(parsed.phase, parsed.illumination);
+					LOG_INFO(Render, "[Engine] LunarState received: phase={} illumination={:.3f}",
+						static_cast<unsigned>(parsed.phase), parsed.illumination);
+				}
+				return;
+			}
+			case kOpcodeLunarPhaseChangeNotification:
+			{
+				engine::network::lunar::LunarPhaseChangeNotification parsed;
+				if (!engine::network::lunar::ParseLunarPhaseChangeNotificationPayload(payload, payloadSize, parsed))
+				{
+					LOG_WARN(Net, "[Engine] LUNAR_PHASE_CHANGE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_dayNight.OnLunarPhaseChange(parsed.newPhase, parsed.newIllumination);
+				LOG_INFO(Render, "[Engine] LunarPhaseChange: phase={} illumination={:.3f}",
+					static_cast<unsigned>(parsed.newPhase), parsed.newIllumination);
+				return;
+			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
 			// (101/103/105) + push MatchProposalNotification (106).
 			case kOpcodeLfgQueueResponse:
@@ -2891,6 +2978,34 @@ namespace engine
 										}
 									}
 
+									// Phase 5 Lunar + M38.1 Sky : init du SkyPass (charge sky.vert.spv +
+									// sky.frag.spv depuis game/data/shaders, compile pipeline avec push
+									// constants etendus pour la phase lunaire). Si l'init echoue
+									// (shaders absents, push constants size mismatch, etc.), m_skyPassReady
+									// reste false et le rendu fallback sur le clearColor existant.
+									if (pipelineOk)
+									{
+										std::vector<uint32_t> skyVert = loadSpirv("shaders/sky.vert.spv");
+										std::vector<uint32_t> skyFrag = loadSpirv("shaders/sky.frag.spv");
+										if (!skyVert.empty() && !skyFrag.empty())
+										{
+											m_skyPassReady = m_skyPass.Init(
+												m_vkDeviceContext.GetDevice(),
+												m_pipeline->GetGeometryPass().GetRenderPassLoad(),
+												/*subpass*/ 0u,
+												skyVert.data(), skyVert.size(),
+												skyFrag.data(), skyFrag.size());
+											if (!m_skyPassReady)
+												LOG_WARN(Render, "[Boot] SkyPass init failed -- fallback clearColor");
+											else
+												LOG_INFO(Render, "[Boot] SkyPass ready (Phase 5 Lunar + M38.1 Sky)");
+										}
+										else
+										{
+											LOG_WARN(Render, "[Boot] SkyPass : sky.vert.spv or sky.frag.spv missing -- fallback clearColor");
+										}
+									}
+
 									// Client jeu : le terrain est toujours tenté (pas de drapeau « enabled ») ;
 										// chemin par défaut conventionnel si la clé est absente ou vide.
 										if (pipelineOk && !m_worldEditorExe)
@@ -3262,6 +3377,93 @@ namespace engine
 																	visibleChunks);
 															});
 													}
+												}
+
+												// Phase 5 Lunar + M38.1 Sky : enregistre le draw fullscreen-quad
+												// du SkyPass (ciel + disque lunaire procedural) dans le render
+												// pass loadOp=LOAD du GeometryPass. SkyPass a ete Init contre
+												// `GetRenderPassLoad()` au boot, donc on doit etre dans ce
+												// render pass actif pour que vkCmdDraw soit valide. On reuse
+												// `RecordTerrainChunkBatch` (qui ouvre exactement ce render
+												// pass + framebuffer GBuffer + viewport/scissor) comme
+												// wrapper. La pass est emise en fin de lambda Geometry pour
+												// que le clear initial du GeometryPass ne l'ecrase pas. Avec
+												// le pipeline SkyPass (depthTest=FALSE, depthWrite=FALSE), le
+												// fullscreen-quad couvre tout le champ de vision ; les pixels
+												// reels de geometrie ont deja ete ecrits dans GBuffer
+												// avant. La consommation finale par LightingPass se fait via
+												// les autres attachments (depth, normal, ORM) — Sky ne
+												// renseigne que GBuffer A (albedo).
+												if (m_skyPassReady)
+												{
+													engine::render::SkyPass::PushConstants skyPc{};
+
+													// Calcul invViewProj inline (meme pattern que Decals/Lighting plus bas
+													// dans le fichier — pas de helper Mat4::Inverse global pour l'instant).
+													const float* vp = rs.viewProjMatrix.m;
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float invDet = 1.0f / det;
+														skyPc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*invDet;
+														skyPc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*invDet;
+														skyPc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*invDet;
+														skyPc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*invDet;
+														skyPc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*invDet;
+														skyPc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*invDet;
+														skyPc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*invDet;
+														skyPc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*invDet;
+														skyPc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*invDet;
+														skyPc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*invDet;
+														skyPc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*invDet;
+														skyPc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*invDet;
+														skyPc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*invDet;
+														skyPc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*invDet;
+														skyPc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*invDet;
+														skyPc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*invDet;
+													}
+													else
+													{
+														// Identity fallback — l'invViewProj sera approximatif mais le
+														// shader continuera a tourner sans NaN.
+														skyPc.invViewProj[0] = skyPc.invViewProj[5] =
+															skyPc.invViewProj[10] = skyPc.invViewProj[15] = 1.0f;
+													}
+
+													const auto& dn = m_dayNight.GetState();
+													skyPc.lightDir[0]      = dn.lightDir[0];
+													skyPc.lightDir[1]      = dn.lightDir[1];
+													skyPc.lightDir[2]      = dn.lightDir[2];
+													skyPc.zenithColor[0]   = dn.skyZenith[0];
+													skyPc.zenithColor[1]   = dn.skyZenith[1];
+													skyPc.zenithColor[2]   = dn.skyZenith[2];
+													skyPc.horizonColor[0]  = dn.skyHorizon[0];
+													skyPc.horizonColor[1]  = dn.skyHorizon[1];
+													skyPc.horizonColor[2]  = dn.skyHorizon[2];
+													// Lune = direction opposee au soleil (convention LCDLLN).
+													skyPc.moonDir[0]       = -dn.lightDir[0];
+													skyPc.moonDir[1]       = -dn.lightDir[1];
+													skyPc.moonDir[2]       = -dn.lightDir[2];
+													skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
+													skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
+													skyPc.moonIllumination = dn.moonIllumination;
+
+													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+														m_fgGBufferVelocityId, m_fgDepthId,
+														[this, &skyPc](VkCommandBuffer innerCmd) {
+															m_skyPass.Record(innerCmd, skyPc);
+														});
 												}
 											});
 
@@ -4378,6 +4580,14 @@ namespace engine
 			// (les ressources sont indépendantes mais l'ordre symétrique d'Init est plus
 			// lisible côté boot ↔ shutdown).
 			m_waterPass.Destroy(m_vkDeviceContext.GetDevice());
+			// Phase 5 Lunar + M38.1 Sky : detruit le SkyPass (pipeline + layout)
+			// avant le DeferredPipeline (m_skyPass depend du renderPass de
+			// GeometryPass, donc on libere le pipeline d'abord).
+			if (m_skyPassReady)
+			{
+				m_skyPass.Shutdown(m_vkDeviceContext.GetDevice());
+				m_skyPassReady = false;
+			}
 			m_waterMeshGpu.Destroy();
 			if (m_waterTransferPool != VK_NULL_HANDLE)
 			{
@@ -5238,6 +5448,18 @@ namespace engine
 					// Phase 5 reconnect — mémorise l'identité pour pouvoir ré-envoyer
 					// CHARACTER_ENTER_WORLD à la reconnexion sans repasser par tout le flow.
 					m_authUi.RememberPostEnterWorldCharacter(m_currentCharacterId, enterCmd.characterName);
+				}
+
+				// Phase 5 Lunar — fetch initial lunar state (master-authoritative).
+				// Le master repondra via opcode 193 (LunarStateResponse) qui est
+				// dispatche dans le push handler ci-dessus pour appeler
+				// m_dayNight.OnLunarPhaseChange. Le push 194 arrive ensuite a
+				// chaque changement de phase (~21h).
+				{
+					std::vector<uint8_t> lunarPayload;
+					engine::network::lunar::BuildLunarStateRequestPayload(lunarPayload);
+					(void)m_authUi.SendGenericRequestAsync(
+						engine::network::kOpcodeLunarStateRequest, lunarPayload);
 				}
 
 				// Override runtime du host:port gameplay UDP par l'endpoint du shard accepté.

@@ -51,6 +51,7 @@
 #include "src/client/render/WaterMeshGpu.h"
 #include "src/client/render/WaterPass.h"
 #include "src/client/render/DayNightCycle.h"
+#include "src/client/render/SkyPass.h"
 #include "src/client/render/WeatherSystem.h"
 #include "src/client/render/DynamicLightSystem.h"
 #include "src/client/world/water/WaterSurfaces.h"
@@ -331,6 +332,14 @@ namespace engine
 
 		/// M38.1: day/night cycle (time-of-day, sun direction, sky gradient colours).
 		engine::render::DayNightCycle m_dayNight;
+
+		/// Sky pass V1 (M38.1 + Phase 5 Lunar) : pipeline ciel + disque lunaire
+		/// procedural via push-constants. Consomme sky.frag et sky.vert. Le
+		/// pipeline est cree au boot dans InitVulkan ; m_skyPassReady passe a
+		/// true uniquement si la creation reussit (sinon fallback : le ciel
+		/// reste un clearColor simple, sans rendering du disque lunaire).
+		engine::render::SkyPass m_skyPass;
+		bool                    m_skyPassReady = false;
 
 		/// M38.2: weather system (state machine, rain/snow particles, fog density, audio volume).
 		engine::render::WeatherSystem m_weatherSystem;

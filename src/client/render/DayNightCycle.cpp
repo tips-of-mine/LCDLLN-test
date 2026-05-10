@@ -266,4 +266,21 @@ namespace engine::render
 		}
 	}
 
+	// -------------------------------------------------------------------------
+	// OnLunarPhaseChange — callback master-driven (Phase 5 Lunar)
+	// -------------------------------------------------------------------------
+
+	/// Setter idempotent : valide la phase (rejet si >= 16) et clampe
+	/// l'illumination dans [0..1]. Ne touche pas a m_timeOfDay ni au reste
+	/// du State (le ciel jour/nuit reste calcule par ComputeState() depuis
+	/// le clock interne ; seuls moonPhase et moonIllumination sont mis a jour
+	/// ici, pour servir au SkyPass via push-constants).
+	void DayNightCycle::OnLunarPhaseChange(uint8_t phase, float illumination)
+	{
+		if (phase >= 16) return;
+		m_state.moonPhase = phase;
+		m_state.moonIllumination = illumination < 0.0f ? 0.0f
+		                          : (illumination > 1.0f ? 1.0f : illumination);
+	}
+
 } // namespace engine::render

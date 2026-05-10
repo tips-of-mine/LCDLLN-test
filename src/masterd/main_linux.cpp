@@ -39,6 +39,8 @@
 #include "src/masterd/mail/MysqlMailStore.h"
 #include "src/masterd/handlers/quest/QuestHandler.h"
 #include "src/masterd/handlers/reputation/ReputationHandler.h"
+#include "src/masterd/handlers/lfg/LfgHandler.h"
+#include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/quests/MysqlQuestStateStore.h"
 #include "src/masterd/reputation/MysqlReputationStore.h"
 #include "src/masterd/reputation/ReputationManager.h"
@@ -475,6 +477,22 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[ServerMain] ReputationHandler running in no-DB mode (List will return empty)");
 	}
 
+	// CMANGOS.33 (Phase 5.33 step 3+4) — LookForGroup wire server.
+	// La queue est transient (pas de persistance DB) : au reboot, toutes
+	// les inscriptions LFG sont perdues, ce qui est acceptable pour le V1
+	// (les clients re-affichent une UI vide au prochain login). Les opcodes
+	// 100/102/104/107 sont dispatches au handler ; les responses 101/103/105
+	// et la push notification 106 sont emis par le handler aux participants.
+	// Note V1 : TickMatchmaking n'est pas appele en boucle automatique ; un
+	// timer 5s sera cable dans une sub-PR future.
+	engine::server::lfg::LfgQueue lfgQueue;
+	engine::server::LfgHandler lfgHandler;
+	lfgHandler.SetQueue(&lfgQueue);
+	lfgHandler.SetServer(&server);
+	lfgHandler.SetSessionManager(&sessionManager);
+	lfgHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] LfgHandler configured (CMANGOS.33 step 3+4, transient queue)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -514,7 +532,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -568,6 +586,11 @@ int main(int argc, char** argv)
 			tradeHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeReputationListRequest)
 			reputationHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeLfgQueueRequest
+		      || opcode == kOpcodeLfgLeaveRequest
+		      || opcode == kOpcodeLfgStatusRequest
+		      || opcode == kOpcodeLfgMatchAcceptRequest)
+			lfgHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

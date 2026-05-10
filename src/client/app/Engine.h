@@ -12,6 +12,7 @@
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
+#include "src/client/lfg/LfgUi.h"
 #include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
@@ -71,6 +72,7 @@ namespace engine::render
 	class MailImGuiRenderer;
 	class GmTicketImGuiRenderer;
 	class ReputationImGuiRenderer;
+	class LfgImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -335,6 +337,10 @@ namespace engine
 		/// Partage le contexte ImGui avec auth/chat/mail/gmtickets. Visible uniquement
 		/// quand m_reputationVisible (toggle via slash command /rep ou /reputation).
 		std::unique_ptr<engine::render::ReputationImGuiRenderer> m_reputationImGui;
+		/// CMANGOS.33 (Phase 5.33 step 3+4) — Panneau "LFG" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec auth/chat/mail/gmtickets/reputation.
+		/// Visible uniquement quand m_lfgVisible (toggle via slash command /lfg).
+		std::unique_ptr<engine::render::LfgImGuiRenderer> m_lfgImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -429,6 +435,14 @@ namespace engine
 		/// CMANGOS.24 (Phase 3.24 step 3+4) — Visibilite du panneau Reputation
 		/// (toggle via slash command \c /rep ou \c /reputation). Faux par defaut.
 		bool                                  m_reputationVisible = false;
+		/// CMANGOS.33 (Phase 5.33 step 3+4) — Presenter de la fenetre LFG
+		/// (LookForGroup). Recoit les responses opcodes 101/103/105 et la push
+		/// notification 106 via le push handler du master ; fire-and-forget des
+		/// requetes 100/102/104/107 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::LfgUiPresenter        m_lfgUi;
+		/// CMANGOS.33 (Phase 5.33 step 3+4) — Visibilite du panneau LFG (toggle
+		/// via slash command \c /lfg). Faux par defaut.
+		bool                                  m_lfgVisible = false;
 		/// CMANGOS.27 (Phase 4.27 step 3+4) — Presenter de la fenetre d'echange
 		/// direct entre 2 joueurs. Recoit les responses opcodes 84/87/89/92 et
 		/// les push notifications 85/90/94 via le push handler du master ;

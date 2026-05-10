@@ -253,6 +253,7 @@ add_library(engine_core
   src/client/chat/ChatWorldVisualPresenter.cpp
   src/client/mail/MailUi.cpp
   src/client/social/FriendsUi.cpp
+  src/client/social/IgnoreListUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
@@ -419,6 +420,7 @@ add_library(engine_core
   src/shared/network/AuthRegisterPayloads.cpp
   src/shared/network/CharacterPayloads.cpp
   src/shared/network/ChatPayloads.cpp
+  src/shared/network/IgnoreListPayloads.cpp
   src/shared/network/MailPayloads.cpp
   src/shared/network/QuestPayloads.cpp
   src/shared/network/ShardPayloads.cpp
@@ -637,6 +639,11 @@ add_test(NAME mail_payloads_tests COMMAND mail_payloads_tests)
 add_executable(quest_payloads_tests src/shared/network/QuestPayloadsTests.cpp)
 target_link_libraries(quest_payloads_tests PRIVATE engine_core)
 add_test(NAME quest_payloads_tests COMMAND quest_payloads_tests)
+
+# CMANGOS.25 (Phase 3.25 step 3+4): IGNORE_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(ignore_list_payloads_tests src/shared/network/IgnoreListPayloadsTests.cpp)
+target_link_libraries(ignore_list_payloads_tests PRIVATE engine_core)
+add_test(NAME ignore_list_payloads_tests COMMAND ignore_list_payloads_tests)
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests src/shared/core/LogRotationSmokeTest.cpp)

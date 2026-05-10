@@ -40,6 +40,9 @@
 #include "src/masterd/handlers/quest/QuestHandler.h"
 #include "src/masterd/quests/MysqlQuestStateStore.h"
 #include "src/masterd/quests/QuestState.h"
+#include "src/masterd/handlers/social/IgnoreListHandler.h"
+#include "src/masterd/social/IgnoreList.h"
+#include "src/masterd/social/MysqlIgnoreStore.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
 #include "src/shared/core/Config.h"
@@ -382,6 +385,29 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[ServerMain] QuestHandler running in no-DB mode (no persistence)");
 	}
 
+	// CMANGOS.25 (Phase 3.25 step 3+4) — IgnoreList wire server.
+	// Le store DB est instancie seulement si dbPool est dispo (sinon mode no-DB :
+	// le manager prend un store nul -> opErr toujours NotIgnored, ce qui est
+	// coherent avec le ticket : feature desactivee silencieusement en mode degrade).
+	// Le manager est aussi cable sur ChatRelayHandler pour le filter whisper/chat.
+	engine::server::social::MysqlIgnoreStore ignoreStore(&dbPool);
+	engine::server::social::IgnoreListManager ignoreManager(&ignoreStore);
+	engine::server::IgnoreListHandler ignoreListHandler;
+	if (dbPool.IsInitialized())
+	{
+		ignoreListHandler.SetManager(&ignoreManager);
+		ignoreListHandler.SetServer(&server);
+		ignoreListHandler.SetSessionManager(&sessionManager);
+		ignoreListHandler.SetConnectionSessionMap(&connSessionMap);
+		// Cable le manager sur ChatRelayHandler pour le filter ignore lors des whispers.
+		chatRelayHandler.SetIgnoreManager(&ignoreManager);
+		LOG_INFO(Net, "[ServerMain] IgnoreListHandler configured + ChatRelayHandler ignore filter armed (CMANGOS.25 step 3+4)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] IgnoreListHandler skipped (DB pool unavailable)");
+	}
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -421,7 +447,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -459,6 +485,10 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeQuestRewardRequest
 		      || opcode == kOpcodeQuestListRequest)
 			questHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeIgnoreAddRequest
+		      || opcode == kOpcodeIgnoreRemoveRequest
+		      || opcode == kOpcodeIgnoreListRequest)
+			ignoreListHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

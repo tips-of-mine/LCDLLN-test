@@ -1,10 +1,11 @@
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
+import { normalizeRole, type AccountRole } from '@/lib/auth/roles'
 
 export type Session = {
   accountId: number
-  role: 'player' | 'admin'
+  role: AccountRole
   tagId: string | null
   login: string
 } | null
@@ -26,7 +27,7 @@ export async function getSession(): Promise<Session> {
     if (!row) return null
     return {
       accountId: row.id,
-      role: (row.role === 'admin' ? 'admin' : 'player') as 'player' | 'admin',
+      role: normalizeRole(row.role),
       tagId: row.tag_id ?? null,
       login: row.login,
     }

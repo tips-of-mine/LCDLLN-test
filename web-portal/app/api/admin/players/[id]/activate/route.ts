@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
+import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
-  return role === 'admin'
+  return isStaff(role)
 }
 
 export async function PATCH(_req: Request, { params }: { params: { id: string } }) {

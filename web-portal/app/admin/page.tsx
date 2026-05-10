@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+import { isStaff } from "@/lib/auth/roles";
 import { query } from "@/lib/db/connection";
 import type { RowDataPacket } from "mysql2/promise";
 
@@ -26,7 +27,7 @@ async function getStats() {
 export default async function AdminHomePage() {
   const session = await getSession();
   if (!session) redirect("/login?redirect=/admin");
-  if (session.role !== "admin") redirect("/");
+  if (!isStaff(session.role)) redirect("/");
 
   const stats = await getStats();
 

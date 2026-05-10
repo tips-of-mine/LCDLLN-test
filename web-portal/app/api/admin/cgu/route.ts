@@ -1,14 +1,15 @@
-// POST /api/admin/cgu
+﻿// POST /api/admin/cgu
 // Body: { versionLabel, titleFr, contentFr, titleEn?, contentEn? }
 // Creates a new terms_edition (status='draft') + terms_localizations entries
 import { NextResponse } from 'next/server'
+import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { ResultSetHeader } from 'mysql2/promise'
 
 function isAdmin(): boolean {
   const jar = cookies()
-  return jar.get('lcdlln_portal_role')?.value === 'admin'
+  return isStaff(jar.get('lcdlln_portal_role')?.value)
 }
 
 export async function POST(request: Request) {

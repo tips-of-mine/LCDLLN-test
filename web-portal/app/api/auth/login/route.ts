@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifyPortalCredentials } from "@/lib/auth/portalLogin";
 import { query } from "@/lib/db/connection";
 import type { RowDataPacket } from "mysql2/promise";
+import { isStaff, normalizeRole } from "@/lib/auth/roles";
 
 const COOKIE_NAME = "lcdlln_portal_account";
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       'SELECT role, tag_id FROM accounts WHERE id = ? LIMIT 1',
       [result.accountId]
     );
-    const accountRole = accountRows[0]?.role ?? 'player';
+    const accountRole = normalizeRole(accountRows[0]?.role);
     const accountTagId = accountRows[0]?.tag_id ?? null;
 
     const jar = cookies();
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       ok: true,
       login: result.login,
       tagId: accountTagId,
-      redirect: accountRole === 'admin' ? '/admin' : '/player',
+      redirect: isStaff(accountRole) ? '/admin' : '/player',
     });
   } catch {
     return NextResponse.json({ ok: false, message: "Requête invalide." }, { status: 400 });

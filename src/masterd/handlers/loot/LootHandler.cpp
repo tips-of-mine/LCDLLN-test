@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/loot/LootHandler.h"
 
+#include "src/masterd/loot/MysqlLootStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -43,6 +44,39 @@ namespace engine::server
 		char buf[32]{};
 		std::snprintf(buf, sizeof(buf), "Item #%u", static_cast<unsigned>(itemTemplateId));
 		return std::string(buf);
+	}
+
+	// -------------------------------------------------------------------------
+	// LoadLootTablesFromDb - Wave 5 phase 2 (Phase 3.17b) : warm-load
+	// des loot tables depuis le store DB pour log diagnostique. V1 :
+	// les entries chargees ne sont pas encore branchees sur SimulateRoll
+	// (qui garde son tableau hardcode 5 items). Une PR ulterieure pourra
+	// remplacer PickRandomItemIdLocked par un tirage sur les entries DB.
+	// -------------------------------------------------------------------------
+
+	void LootHandler::LoadLootTablesFromDb()
+	{
+		m_loadedLootEntries = 0;
+		if (!m_lootStore || !m_lootStore->IsAvailable())
+		{
+			LOG_INFO(Net, "[LootHandler] LoadLootTablesFromDb : no store / DB unavailable, keeping hardcoded V1 items");
+			return;
+		}
+		auto tables = m_lootStore->LoadAllTables();
+		if (tables.empty())
+		{
+			LOG_INFO(Net, "[LootHandler] LoadLootTablesFromDb : 0 tables in DB (fallback hardcoded V1 items)");
+			return;
+		}
+		for (const auto& t : tables)
+		{
+			auto entries = m_lootStore->LoadEntriesForTable(t.tableId);
+			m_loadedLootEntries += entries.size();
+			LOG_INFO(Net, "[LootHandler] LoadLootTablesFromDb : table id={} name={} entries={}",
+				t.tableId, t.name, entries.size());
+		}
+		LOG_INFO(Net, "[LootHandler] LoadLootTablesFromDb : total {} entries across {} tables",
+			m_loadedLootEntries, tables.size());
 	}
 
 	// -------------------------------------------------------------------------

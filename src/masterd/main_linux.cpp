@@ -69,13 +69,17 @@
 #include "src/masterd/trade/TradeSessionRegistry.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
-// Wave 5 Persistence (Phase 5.x b series) : stores DB pour les systemes
-// Auction / Arena / GameEvents / Skills / OutdoorPvp.
+// Wave 5 Persistence phase 1 : stores DB pour Auction / Arena / GameEvents /
+// Skills / OutdoorPvp.
 #include "src/masterd/auction/MysqlAuctionStore.h"
 #include "src/masterd/events/MysqlGameEventStore.h"
 #include "src/masterd/arena/MysqlArenaStore.h"
 #include "src/masterd/skills/MysqlSkillStore.h"
 #include "src/masterd/outdoorpvp/MysqlOutdoorPvpStore.h"
+// Wave 5 Persistence phase 2 : stores DB pour Guild / BattleGround / Loot.
+#include "src/masterd/guild/MysqlGuildStore.h"
+#include "src/masterd/battleground/MysqlBattleGroundStore.h"
+#include "src/masterd/loot/MysqlLootStore.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
@@ -593,6 +597,17 @@ int main(int argc, char** argv)
 	bgHandler.SetServer(&server);
 	bgHandler.SetSessionManager(&sessionManager);
 	bgHandler.SetConnectionSessionMap(&connSessionMap);
+	// Wave 5 Phase 5.10b : store DB pour archiver l'historique des matchs (write-only V1).
+	engine::server::bg_db::MysqlBattleGroundStore bgHistoryStore(&dbPool);
+	if (dbPool.IsInitialized())
+	{
+		bgHandler.SetMatchHistoryStore(&bgHistoryStore);
+		LOG_INFO(Net, "[ServerMain] BattleGroundHandler with DB history store (Wave 5 Phase 5.10b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] BattleGroundHandler running in no-DB mode (matches not archived)");
+	}
 	LOG_INFO(Net, "[ServerMain] BattleGroundHandler configured (CMANGOS.10 step 3+4, in-memory)");
 
 	// CMANGOS.36 (Phase 5.36 step 3+4) — OutdoorPvp wire server.
@@ -672,9 +687,22 @@ int main(int argc, char** argv)
 	// only, lecture seule (pas de modification client). Pas de SyncGuilds
 	// RPC entre master et shardd.
 	engine::server::GuildHandler guildHandler;
+	// Wave 5 Phase 5.21b : store DB pour la persistence des guildes
+	// (definition + membres + bank tab 0). Branche AVANT SeedV1Guilds
+	// pour qu'il puisse LoadAll plutot que le seed hardcode.
+	engine::server::guilds_db::MysqlGuildStore guildStore(&dbPool);
 	guildHandler.SetServer(&server);
 	guildHandler.SetSessionManager(&sessionManager);
 	guildHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		guildHandler.SetGuildStore(&guildStore);
+		LOG_INFO(Net, "[ServerMain] GuildHandler with DB store (Wave 5 Phase 5.21b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] GuildHandler running in no-DB mode (hardcoded seed only)");
+	}
 	guildHandler.SeedV1Guilds();
 	LOG_INFO(Net, "[ServerMain] GuildHandler configured (CMANGOS.21 step 3+4 Guilds, in-memory, 2 guilds seed)");
 
@@ -716,9 +744,21 @@ int main(int argc, char** argv)
 	// timeout tick periodique (scan a chaque HandleChoice), pas de SyncLoot
 	// RPC entre master et shardd.
 	engine::server::LootHandler lootHandler;
+	// Wave 5 Phase 3.17b : store DB pour les loot tables (read-only V1).
+	engine::server::loot_db::MysqlLootStore lootStore(&dbPool);
 	lootHandler.SetServer(&server);
 	lootHandler.SetSessionManager(&sessionManager);
 	lootHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		lootHandler.SetLootStore(&lootStore);
+		lootHandler.LoadLootTablesFromDb();
+		LOG_INFO(Net, "[ServerMain] LootHandler with DB store (Wave 5 Phase 3.17b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] LootHandler running in no-DB mode (hardcoded 5 items only)");
+	}
 	LOG_INFO(Net, "[ServerMain] LootHandler configured (CMANGOS.17 step 3+4 Loot, in-memory, simulation V1)");
 
 	// Phase 5 step 3+4 Lunar — LunarHandler : etat lunaire authoritative

@@ -162,12 +162,16 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/reputation/MysqlReputationStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/quests/MysqlQuestStateStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/social/MysqlIgnoreStore.cpp
-    # Wave 5 Persistence : Auction / Arena / GameEvents / Skills / OutdoorPvp.
+    # Wave 5 Persistence phase 1 : Auction / Arena / GameEvents / Skills / OutdoorPvp.
     ${CMAKE_SOURCE_DIR}/src/masterd/auction/MysqlAuctionStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/arena/MysqlArenaStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/events/MysqlGameEventStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/skills/MysqlSkillStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/outdoorpvp/MysqlOutdoorPvpStore.cpp
+    # Wave 5 Persistence phase 2 : Guild / BattleGround / Loot stores.
+    ${CMAKE_SOURCE_DIR}/src/masterd/guild/MysqlGuildStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/battleground/MysqlBattleGroundStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/loot/MysqlLootStore.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ChatPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandler.cpp

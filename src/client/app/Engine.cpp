@@ -3378,6 +3378,93 @@ namespace engine
 															});
 													}
 												}
+
+												// Phase 5 Lunar + M38.1 Sky : enregistre le draw fullscreen-quad
+												// du SkyPass (ciel + disque lunaire procedural) dans le render
+												// pass loadOp=LOAD du GeometryPass. SkyPass a ete Init contre
+												// `GetRenderPassLoad()` au boot, donc on doit etre dans ce
+												// render pass actif pour que vkCmdDraw soit valide. On reuse
+												// `RecordTerrainChunkBatch` (qui ouvre exactement ce render
+												// pass + framebuffer GBuffer + viewport/scissor) comme
+												// wrapper. La pass est emise en fin de lambda Geometry pour
+												// que le clear initial du GeometryPass ne l'ecrase pas. Avec
+												// le pipeline SkyPass (depthTest=FALSE, depthWrite=FALSE), le
+												// fullscreen-quad couvre tout le champ de vision ; les pixels
+												// reels de geometrie ont deja ete ecrits dans GBuffer
+												// avant. La consommation finale par LightingPass se fait via
+												// les autres attachments (depth, normal, ORM) — Sky ne
+												// renseigne que GBuffer A (albedo).
+												if (m_skyPassReady)
+												{
+													engine::render::SkyPass::PushConstants skyPc{};
+
+													// Calcul invViewProj inline (meme pattern que Decals/Lighting plus bas
+													// dans le fichier — pas de helper Mat4::Inverse global pour l'instant).
+													const float* vp = rs.viewProjMatrix.m;
+													const float a00=vp[0], a10=vp[1], a20=vp[2],  a30=vp[3];
+													const float a01=vp[4], a11=vp[5], a21=vp[6],  a31=vp[7];
+													const float a02=vp[8], a12=vp[9], a22=vp[10], a32=vp[11];
+													const float a03=vp[12],a13=vp[13],a23=vp[14], a33=vp[15];
+													const float b00=a00*a11-a10*a01, b01=a00*a21-a20*a01, b02=a00*a31-a30*a01;
+													const float b03=a10*a21-a20*a11, b04=a10*a31-a30*a11, b05=a20*a31-a30*a21;
+													const float b06=a02*a13-a12*a03, b07=a02*a23-a22*a03, b08=a02*a33-a32*a03;
+													const float b09=a12*a23-a22*a13, b10=a12*a33-a32*a13, b11=a22*a33-a32*a23;
+													const float det = b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+													if (det > 1e-7f || det < -1e-7f)
+													{
+														const float invDet = 1.0f / det;
+														skyPc.invViewProj[0]  = ( a11*b11-a21*b10+a31*b09)*invDet;
+														skyPc.invViewProj[1]  = (-a10*b11+a20*b10-a30*b09)*invDet;
+														skyPc.invViewProj[2]  = ( a13*b05-a23*b04+a33*b03)*invDet;
+														skyPc.invViewProj[3]  = (-a12*b05+a22*b04-a32*b03)*invDet;
+														skyPc.invViewProj[4]  = (-a01*b11+a21*b08-a31*b07)*invDet;
+														skyPc.invViewProj[5]  = ( a00*b11-a20*b08+a30*b07)*invDet;
+														skyPc.invViewProj[6]  = (-a03*b05+a23*b02-a33*b01)*invDet;
+														skyPc.invViewProj[7]  = ( a02*b05-a22*b02+a32*b01)*invDet;
+														skyPc.invViewProj[8]  = ( a01*b10-a11*b08+a31*b06)*invDet;
+														skyPc.invViewProj[9]  = (-a00*b10+a10*b08-a30*b06)*invDet;
+														skyPc.invViewProj[10] = ( a03*b04-a13*b02+a33*b00)*invDet;
+														skyPc.invViewProj[11] = (-a02*b04+a12*b02-a32*b00)*invDet;
+														skyPc.invViewProj[12] = (-a01*b09+a11*b07-a21*b06)*invDet;
+														skyPc.invViewProj[13] = ( a00*b09-a10*b07+a20*b06)*invDet;
+														skyPc.invViewProj[14] = (-a03*b03+a13*b01-a23*b00)*invDet;
+														skyPc.invViewProj[15] = ( a02*b03-a12*b01+a22*b00)*invDet;
+													}
+													else
+													{
+														// Identity fallback — l'invViewProj sera approximatif mais le
+														// shader continuera a tourner sans NaN.
+														skyPc.invViewProj[0] = skyPc.invViewProj[5] =
+															skyPc.invViewProj[10] = skyPc.invViewProj[15] = 1.0f;
+													}
+
+													const auto& dn = m_dayNight.GetState();
+													skyPc.lightDir[0]      = dn.lightDir[0];
+													skyPc.lightDir[1]      = dn.lightDir[1];
+													skyPc.lightDir[2]      = dn.lightDir[2];
+													skyPc.zenithColor[0]   = dn.skyZenith[0];
+													skyPc.zenithColor[1]   = dn.skyZenith[1];
+													skyPc.zenithColor[2]   = dn.skyZenith[2];
+													skyPc.horizonColor[0]  = dn.skyHorizon[0];
+													skyPc.horizonColor[1]  = dn.skyHorizon[1];
+													skyPc.horizonColor[2]  = dn.skyHorizon[2];
+													// Lune = direction opposee au soleil (convention LCDLLN).
+													skyPc.moonDir[0]       = -dn.lightDir[0];
+													skyPc.moonDir[1]       = -dn.lightDir[1];
+													skyPc.moonDir[2]       = -dn.lightDir[2];
+													skyPc.moonIntensity    = dn.isDaytime ? 0.0f : 1.0f;
+													skyPc.moonPhase        = static_cast<float>(dn.moonPhase);
+													skyPc.moonIllumination = dn.moonIllumination;
+
+													m_pipeline->GetGeometryPass().RecordTerrainChunkBatch(
+														m_vkDeviceContext.GetDevice(), cmd, reg,
+														m_vkSwapchain.GetExtent(),
+														m_fgGBufferAId, m_fgGBufferBId, m_fgGBufferCId,
+														m_fgGBufferVelocityId, m_fgDepthId,
+														[this, &skyPc](VkCommandBuffer innerCmd) {
+															m_skyPass.Record(innerCmd, skyPc);
+														});
+												}
 											});
 
 										m_frameGraph.addPass("HiZ_Build",

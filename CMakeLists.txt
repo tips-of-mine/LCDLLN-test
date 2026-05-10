@@ -426,6 +426,7 @@ add_library(engine_core
   src/shared/network/MailPayloads.cpp
   src/shared/network/QuestPayloads.cpp
   src/shared/network/GmTicketPayloads.cpp
+  src/shared/network/TradePayloads.cpp
   src/shared/network/ShardPayloads.cpp
   src/shared/network/TermsPayloads.cpp
 )
@@ -652,6 +653,11 @@ add_test(NAME ignore_list_payloads_tests COMMAND ignore_list_payloads_tests)
 add_executable(gm_ticket_payloads_tests src/shared/network/GmTicketPayloadsTests.cpp)
 target_link_libraries(gm_ticket_payloads_tests PRIVATE engine_core)
 add_test(NAME gm_ticket_payloads_tests COMMAND gm_ticket_payloads_tests)
+
+# CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
+add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)
+target_link_libraries(trade_payloads_tests PRIVATE engine_core)
+add_test(NAME trade_payloads_tests COMMAND trade_payloads_tests)
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests src/shared/core/LogRotationSmokeTest.cpp)

@@ -11,6 +11,7 @@
 #include "src/client/quest/QuestUi.h"
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
+#include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
@@ -415,6 +416,12 @@ namespace engine
 		/// CMANGOS.32 (Phase 5.32 step 3+4) — Visibilite du panneau Support GM
 		/// (toggle via slash command \c /ticket ou \c /gmticket). Faux par defaut.
 		bool                                m_gmTicketsVisible = false;
+		/// CMANGOS.27 (Phase 4.27 step 3+4) — Presenter de la fenetre d'echange
+		/// direct entre 2 joueurs. Recoit les responses opcodes 84/87/89/92 et
+		/// les push notifications 85/90/94 via le push handler du master ;
+		/// fire-and-forget des requetes 83/86/88/91/93 via
+		/// \c m_authUi.SendGenericRequestAsync.
+		engine::client::TradeWindowUiPresenter m_tradeWindowUi;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/arena/ArenaHandler.h"
 
+#include "src/masterd/arena/MysqlArenaStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -116,39 +117,101 @@ namespace engine::server
 		using engine::server::arena::ArenaTeam;
 		using engine::server::arena::TeamSize;
 
+		// Note V1 : appele sous m_mutex. Les eventuels Load/Upsert DB se font
+		// sous mutex (perf acceptable car 1 seul appel par account et par vie
+		// du master). Une optimisation future precharge l'etat hors mutex.
 		auto it = m_accountSeeded.find(accountId);
 		if (it != m_accountSeeded.end())
 			return;
 
-		// V1 : 3 teams hardcode par account. Note : le registry n'est pas
-		// segmente par account, donc les teamIds sont partages — un teamId
-		// 1 vu en TeamList par account A est le meme objet que pour account B.
-		// Acceptable V1 (sub-PR future avec persistance DB et teamId
-		// globalement unique).
-		ArenaTeam t1;
-		t1.id = kSeedTeam1Id;
-		t1.size = TeamSize::v2;
-		t1.name = "LCDLLN A";
-		t1.rating = kSeedInitialRating;
-		m_registry.AddTeam(t1);
+		// Wave 5 : tente de charger depuis la DB avant de seeder. Si la
+		// DB renvoie au moins une team pour cet account, on l'utilise pour
+		// reconstruire le registry (V1 : le registry n'est pas segmente
+		// par account, on ecrase donc les entrees existantes pour le dernier
+		// account ayant fait TeamList ; acceptable V1).
+		bool loadedFromDb = false;
+		if (m_store && m_store->IsAvailable())
+		{
+			auto rows = m_store->LoadForAccount(accountId);
+			if (!rows.empty())
+			{
+				for (const auto& r : rows)
+				{
+					ArenaTeam t;
+					t.id          = r.teamId;
+					switch (r.size)
+					{
+					case 2: t.size = TeamSize::v2; break;
+					case 3: t.size = TeamSize::v3; break;
+					case 5: t.size = TeamSize::v5; break;
+					default: t.size = TeamSize::v2; break;
+					}
+					t.name        = r.name;
+					t.rating      = r.rating;
+					t.weeklyGames = r.weeklyGames;
+					t.weeklyWins  = r.weeklyWins;
+					t.seasonGames = r.seasonGames;
+					t.seasonWins  = r.seasonWins;
+					m_registry.AddTeam(t);
+				}
+				loadedFromDb = true;
+				LOG_INFO(Net, "[ArenaHandler] Loaded {} arena teams from DB for account={}",
+					rows.size(), accountId);
+			}
+		}
 
-		ArenaTeam t2;
-		t2.id = kSeedTeam2Id;
-		t2.size = TeamSize::v3;
-		t2.name = "LCDLLN B";
-		t2.rating = kSeedInitialRating;
-		m_registry.AddTeam(t2);
+		if (!loadedFromDb)
+		{
+			// V1 : 3 teams hardcode par account. Note : le registry n'est pas
+			// segmente par account, donc les teamIds sont partages -- un teamId
+			// 1 vu en TeamList par account A est le meme objet que pour account B.
+			// Acceptable V1 (sub-PR future avec persistance DB et teamId
+			// globalement unique).
+			ArenaTeam t1;
+			t1.id = kSeedTeam1Id;
+			t1.size = TeamSize::v2;
+			t1.name = "LCDLLN A";
+			t1.rating = kSeedInitialRating;
+			m_registry.AddTeam(t1);
 
-		ArenaTeam t3;
-		t3.id = kSeedTeam3Id;
-		t3.size = TeamSize::v5;
-		t3.name = "LCDLLN C";
-		t3.rating = kSeedInitialRating;
-		m_registry.AddTeam(t3);
+			ArenaTeam t2;
+			t2.id = kSeedTeam2Id;
+			t2.size = TeamSize::v3;
+			t2.name = "LCDLLN B";
+			t2.rating = kSeedInitialRating;
+			m_registry.AddTeam(t2);
+
+			ArenaTeam t3;
+			t3.id = kSeedTeam3Id;
+			t3.size = TeamSize::v5;
+			t3.name = "LCDLLN C";
+			t3.rating = kSeedInitialRating;
+			m_registry.AddTeam(t3);
+
+			// Wave 5 : persiste les 3 teams initiales pour cet account.
+			if (m_store && m_store->IsAvailable())
+			{
+				const ArenaTeam* seeded[3] = { &t1, &t2, &t3 };
+				for (const ArenaTeam* t : seeded)
+				{
+					engine::server::arena::ArenaTeamRow row;
+					row.teamId         = t->id;
+					row.accountIdOwner = accountId;
+					row.name           = t->name;
+					row.size           = static_cast<uint8_t>(t->size);
+					row.rating         = t->rating;
+					row.weeklyGames    = t->weeklyGames;
+					row.weeklyWins     = t->weeklyWins;
+					row.seasonGames    = t->seasonGames;
+					row.seasonWins     = t->seasonWins;
+					(void)m_store->Upsert(row);
+				}
+			}
+
+			LOG_INFO(Net, "[ArenaHandler] Seeded 3 starter teams for account={}", accountId);
+		}
 
 		m_accountSeeded[accountId] = true;
-
-		LOG_INFO(Net, "[ArenaHandler] Seeded 3 starter teams for account={}", accountId);
 	}
 
 	// -------------------------------------------------------------------------
@@ -449,6 +512,36 @@ namespace engine::server
 				}
 			}
 		}
+
+		// Wave 5 : persiste l'update de team (rating + stats) apres
+		// RecordMatch. On lit l'etat sous m_mutex, on upsert hors mutex
+		// pour eviter de bloquer le mutex pendant la requete DB.
+		std::vector<engine::server::arena::ArenaTeamRow> toUpsert;
+		if (acceptOk && acceptValueWasTrue && m_store && m_store->IsAvailable())
+		{
+			std::lock_guard<std::mutex> lock(m_mutex);
+			// V1 : on upsert les 3 starter teams (le teamId precis du match
+			// n'est pas conserve dans proposalId apres l'erase). Acceptable
+			// V1 car les 3 lignes restent en memoire.
+			for (uint32_t tid : {kSeedTeam1Id, kSeedTeam2Id, kSeedTeam3Id})
+			{
+				auto* t = m_registry.Get(tid);
+				if (!t) continue;
+				engine::server::arena::ArenaTeamRow row;
+				row.teamId         = t->id;
+				row.accountIdOwner = accountId;
+				row.name           = t->name;
+				row.size           = static_cast<uint8_t>(t->size);
+				row.rating         = t->rating;
+				row.weeklyGames    = t->weeklyGames;
+				row.weeklyWins     = t->weeklyWins;
+				row.seasonGames    = t->seasonGames;
+				row.seasonWins     = t->seasonWins;
+				toUpsert.push_back(std::move(row));
+			}
+		}
+		for (const auto& row : toUpsert)
+			(void)m_store->Upsert(row);
 
 		if (unknownProposal)
 		{

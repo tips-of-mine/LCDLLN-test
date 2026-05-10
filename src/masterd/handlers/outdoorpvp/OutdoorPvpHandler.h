@@ -52,6 +52,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::outdoorpvp_db
+{
+	class MysqlOutdoorPvpStore;
+}
+
 namespace engine::server
 {
 	/// Dispatcher OutdoorPvP cote joueur. Doit etre configure via Set*() avant
@@ -65,6 +70,11 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// Wave 5 (Phase 5.36b) : branche le store MySQL pour la persistance
+		/// des objectifs (owner, capturePct, capturingBy) et scores. Si null
+		/// (mode no-DB), seed in-memory au reboot et perte des captures.
+		void SetOutdoorPvpStore(engine::server::outdoorpvp_db::MysqlOutdoorPvpStore* s) { m_store = s; }
 
 		/// Initialise le store V1 : enregistre les 2 zones contestees hardcodees
 		/// (Hellfire Peninsula 3 objectifs, Eastern Plaguelands 4 objectifs).
@@ -150,6 +160,9 @@ namespace engine::server
 		NetServer*                                       m_server     = nullptr;
 		SessionManager*                                  m_sessionMgr = nullptr;
 		ConnectionSessionMap*                            m_connMap    = nullptr;
+
+		/// Wave 5 : store DB. null = mode no-DB.
+		engine::server::outdoorpvp_db::MysqlOutdoorPvpStore* m_store  = nullptr;
 
 		/// Mutex protegeant m_manager + m_subscriptions + m_zoneNames + seeded.
 		std::mutex                                       m_mutex;

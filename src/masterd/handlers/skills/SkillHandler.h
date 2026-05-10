@@ -38,6 +38,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::skills
+{
+	class MysqlSkillStore;
+}
+
 namespace engine::server
 {
 	/// Dispatcher Skills cote joueur. Doit etre configure via Set*() avant
@@ -51,6 +56,11 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// Wave 5 (Phase 4.39b) : branche le store MySQL pour la persistance
+		/// du skill book par account (V1 : character_id = account_id).
+		/// Si null (mode no-DB), seed in-memory au reboot.
+		void SetSkillStore(engine::server::skills::MysqlSkillStore* s) { m_store = s; }
 
 		/// Point d'entree appele par NetServer pour les opcodes Skills.
 		/// Dispatch vers HandleListRequest / HandleLearnRequest / HandleUseRequest
@@ -116,6 +126,9 @@ namespace engine::server
 		NetServer*                                                                          m_server     = nullptr;
 		SessionManager*                                                                     m_sessionMgr = nullptr;
 		ConnectionSessionMap*                                                               m_connMap    = nullptr;
+
+		/// Wave 5 : store DB. null = mode no-DB (seed in-memory au reboot).
+		engine::server::skills::MysqlSkillStore*                                            m_store      = nullptr;
 
 		/// Store in-memory : account_id -> (skillId -> SkillBookEntry).
 		/// Protege par m_mutex (HandlePacket peut etre appele depuis le thread

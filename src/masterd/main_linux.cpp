@@ -69,6 +69,14 @@
 #include "src/masterd/trade/TradeSessionRegistry.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
+// Wave 5 Persistence (Phase 5.x b series) : stores DB pour les systemes
+// Auction / Arena / GameEvents / Skills / OutdoorPvp.
+#include "src/masterd/auction/MysqlAuctionStore.h"
+#include "src/masterd/events/MysqlGameEventStore.h"
+#include "src/masterd/arena/MysqlArenaStore.h"
+#include "src/masterd/skills/MysqlSkillStore.h"
+#include "src/masterd/outdoorpvp/MysqlOutdoorPvpStore.h"
+
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/core/LogConfig.h"
@@ -531,6 +539,17 @@ int main(int argc, char** argv)
 	skillHandler.SetServer(&server);
 	skillHandler.SetSessionManager(&sessionManager);
 	skillHandler.SetConnectionSessionMap(&connSessionMap);
+	// Wave 5 Phase 4.39b : store DB pour la skill book (per-character V1 = per-account).
+	engine::server::skills::MysqlSkillStore skillStore(&dbPool);
+	if (dbPool.IsInitialized())
+	{
+		skillHandler.SetSkillStore(&skillStore);
+		LOG_INFO(Net, "[ServerMain] SkillHandler configured with DB store (Wave 5 Phase 4.39b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] SkillHandler running in no-DB mode (no persistence)");
+	}
 	LOG_INFO(Net, "[ServerMain] SkillHandler configured (CMANGOS.39 step 3+4, in-memory store)");
 
 	// CMANGOS.21 (Phase 5.21 step 3+4) — Arena wire server.
@@ -547,6 +566,17 @@ int main(int argc, char** argv)
 	arenaHandler.SetServer(&server);
 	arenaHandler.SetSessionManager(&sessionManager);
 	arenaHandler.SetConnectionSessionMap(&connSessionMap);
+	// Wave 5 Phase 5.21b : store DB pour les teams arene (rating ELO + stats).
+	engine::server::arena::MysqlArenaStore arenaStore(&dbPool);
+	if (dbPool.IsInitialized())
+	{
+		arenaHandler.SetArenaStore(&arenaStore);
+		LOG_INFO(Net, "[ServerMain] ArenaHandler configured with DB store (Wave 5 Phase 5.21b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] ArenaHandler running in no-DB mode (no persistence)");
+	}
 	LOG_INFO(Net, "[ServerMain] ArenaHandler configured (CMANGOS.21 step 3+4, in-memory registry)");
 
 	// CMANGOS.10 (Phase 5 step 3+4) — BattleGround wire server.
@@ -574,9 +604,20 @@ int main(int argc, char** argv)
 	// handler. V1 limitations : capture simulee instantanement, pas de
 	// SyncOutdoorPvp RPC entre master et shardd. Pas de persistance DB.
 	engine::server::OutdoorPvpHandler outdoorPvpHandler;
+	// Wave 5 Phase 5.36b : store DB pour objectives + scores des zones.
+	engine::server::outdoorpvp_db::MysqlOutdoorPvpStore outdoorPvpStore(&dbPool);
 	outdoorPvpHandler.SetServer(&server);
 	outdoorPvpHandler.SetSessionManager(&sessionManager);
 	outdoorPvpHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		outdoorPvpHandler.SetOutdoorPvpStore(&outdoorPvpStore);
+		LOG_INFO(Net, "[ServerMain] OutdoorPvpHandler with DB store (Wave 5 Phase 5.36b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] OutdoorPvpHandler running in no-DB mode (no persistence)");
+	}
 	outdoorPvpHandler.SeedV1Zones();
 	LOG_INFO(Net, "[ServerMain] OutdoorPvpHandler configured (CMANGOS.36 step 3+4, in-memory, 2 zones seed)");
 
@@ -604,9 +645,20 @@ int main(int argc, char** argv)
 	// cross-subscribers, pas de tick periodique). Pas de SyncGameEvents RPC
 	// entre master et shardd.
 	engine::server::GameEventHandler gameEventHandler;
+	// Wave 5 Phase 5.31b : store DB pour la definition des events saisonniers.
+	engine::server::events::MysqlGameEventStore gameEventStore(&dbPool);
 	gameEventHandler.SetServer(&server);
 	gameEventHandler.SetSessionManager(&sessionManager);
 	gameEventHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		gameEventHandler.SetGameEventStore(&gameEventStore);
+		LOG_INFO(Net, "[ServerMain] GameEventHandler with DB store (Wave 5 Phase 5.31b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] GameEventHandler running in no-DB mode (hardcoded seed only)");
+	}
 	gameEventHandler.SeedV1Events();
 	LOG_INFO(Net, "[ServerMain] GameEventHandler configured (CMANGOS.31 step 3+4, in-memory, 4 events seed)");
 
@@ -636,9 +688,20 @@ int main(int argc, char** argv)
 	// "Account#<id>", pas de paiement reel (economie cosmetique), pas de
 	// SyncAuction RPC entre master et shardd.
 	engine::server::AuctionHandler auctionHandler;
+	// Wave 5 Phase 5.09b : store DB pour les listings auctions.
+	engine::server::auctions::MysqlAuctionStore auctionStore(&dbPool);
 	auctionHandler.SetServer(&server);
 	auctionHandler.SetSessionManager(&sessionManager);
 	auctionHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		auctionHandler.SetAuctionStore(&auctionStore);
+		LOG_INFO(Net, "[ServerMain] AuctionHandler with DB store (Wave 5 Phase 5.09b)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] AuctionHandler running in no-DB mode (no persistence)");
+	}
 	auctionHandler.SeedV1Auctions();
 	LOG_INFO(Net, "[ServerMain] AuctionHandler configured (CMANGOS.09 step 3+4 AuctionHouse, in-memory, 8 listings seed)");
 

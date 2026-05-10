@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/auction/AuctionHandler.h"
 
+#include "src/masterd/auction/MysqlAuctionStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -51,6 +52,39 @@ namespace engine::server
 				static_cast<unsigned long long>(accountId));
 			return std::string(buf);
 		}
+
+		/// Wave 5 helper : convertit un steady_clock::time_point en epoch ms
+		/// wallclock pour la persistance DB. Calcul du delta steady->now et
+		/// addition a system_clock::now() pour eviter la derive d'horloges.
+		///
+		/// \param tp instant cible en steady_clock (typiquement expiresAt).
+		/// \return epoch ms (system_clock).
+		uint64_t SteadyToUnixMs(std::chrono::steady_clock::time_point tp)
+		{
+			const auto steadyNow = std::chrono::steady_clock::now();
+			const auto sysNow    = std::chrono::system_clock::now();
+			const auto delta     = tp - steadyNow;
+			const auto wallclock = sysNow + delta;
+			const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+				wallclock.time_since_epoch()).count();
+			return static_cast<uint64_t>(ms < 0 ? 0 : ms);
+		}
+
+		/// Wave 5 helper : convertit un epoch ms wallclock en steady_clock::time_point.
+		/// Si le timestamp est deja passe, retourne now() (l'auction sera marquee
+		/// expired au prochain scan).
+		///
+		/// \param unixMs epoch ms cible (wallclock).
+		/// \return steady_clock::time_point equivalent au mieux possible.
+		std::chrono::steady_clock::time_point UnixMsToSteady(uint64_t unixMs)
+		{
+			const auto sysNow    = std::chrono::system_clock::now();
+			const auto steadyNow = std::chrono::steady_clock::now();
+			const auto sysTarget = std::chrono::system_clock::time_point(
+				std::chrono::milliseconds(unixMs));
+			const auto delta = sysTarget - sysNow;
+			return steadyNow + delta;
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -77,6 +111,44 @@ namespace engine::server
 		{
 			LOG_DEBUG(Net, "[AuctionHandler] SeedV1Auctions already seeded (idempotent skip)");
 			return;
+		}
+
+		// Wave 5 : si store DB branche, prefere LoadAllActive. Si la requete
+		// retourne au moins une ligne, on l'utilise comme verite. Sinon
+		// (DB vide ou indisponible), fallback sur le seed hardcode.
+		if (m_store && m_store->IsAvailable())
+		{
+			auto rows = m_store->LoadAllActive();
+			if (!rows.empty())
+			{
+				uint64_t maxId = 0u;
+				for (const auto& r : rows)
+				{
+					InMemoryAuction a;
+					a.auctionId              = r.auctionId;
+					a.itemTemplateId         = r.itemTemplateId;
+					a.itemName               = r.itemName;
+					a.count                  = r.count;
+					a.startBidCopper         = r.startBidCopper;
+					a.currentBidCopper       = r.currentBidCopper;
+					a.buyoutCopper           = r.buyoutCopper;
+					a.ownerName              = r.ownerName;
+					a.ownerAccountId         = r.ownerAccountId;
+					a.highestBidderName      = r.highestBidderName;
+					a.highestBidderAccountId = r.highestBidderAccountId;
+					a.expiresAt              = UnixMsToSteady(r.expiresAtUnixMs);
+					a.ended                  = r.ended;
+					a.wonByBuyout            = r.wonByBuyout;
+					if (a.auctionId > maxId) maxId = a.auctionId;
+					m_auctions.push_back(std::move(a));
+				}
+				m_nextAuctionId.store(maxId + 1u, std::memory_order_relaxed);
+				m_seeded = true;
+				LOG_INFO(Net, "[AuctionHandler] V1 auctions loaded from DB : {} active listings (nextId={})",
+					m_auctions.size(), maxId + 1u);
+				return;
+			}
+			LOG_INFO(Net, "[AuctionHandler] DB store available but no active listings ; falling back to hardcoded seed");
 		}
 
 		const auto now = std::chrono::steady_clock::now();
@@ -274,6 +346,18 @@ namespace engine::server
 			}
 		}
 
+		// Wave 5 : persiste l'etat ended pour chaque auction nouvellement
+		// expiree (sans buyout). Hors mutex, best-effort.
+		if (m_store && m_store->IsAvailable())
+		{
+			for (const auto& item : expiredOwners)
+			{
+				// won=1 ici signifie qu'il y avait un bidder ; wonByBuyout
+				// reste false (le buyout est marque dans HandleBid, pas ici).
+				(void)m_store->MarkEnded(item.auctionId, /*wonByBuyout=*/false);
+			}
+		}
+
 		// Push notifications hors mutex (ne devrait pas reentrer dans le handler).
 		for (const auto& item : expiredOwners)
 		{
@@ -338,9 +422,46 @@ namespace engine::server
 			return;
 		}
 
-		const uint64_t newId = m_nextAuctionId.fetch_add(1u, std::memory_order_relaxed);
+		// Wave 5 : si store DB branche, on tente d'inserer pour recuperer un
+		// id AUTO_INCREMENT. Sinon (no-DB ou echec), fallback sur le compteur
+		// atomic local.
+		uint64_t newId = 0u;
 		const auto now = std::chrono::steady_clock::now();
 		const auto expiresAt = now + std::chrono::hours(static_cast<long long>(durationHours));
+
+		if (m_store && m_store->IsAvailable())
+		{
+			engine::server::auctions::AuctionRow row;
+			row.itemTemplateId   = itemTemplateId;
+			row.itemName         = ResolveItemName(itemTemplateId);
+			row.count            = count;
+			row.startBidCopper   = startBid;
+			row.currentBidCopper = startBid;
+			row.buyoutCopper     = buyout;
+			row.ownerName        = FormatAccountOwnerName(accountId);
+			row.ownerAccountId   = accountId;
+			row.expiresAtUnixMs  = SteadyToUnixMs(expiresAt);
+			newId = m_store->Insert(row);
+		}
+		if (newId == 0u)
+		{
+			// Fallback : id local. Cela peut creer un mismatch avec la DB en
+			// cas de redemarrage simultane multi-master ; acceptable V1 (un
+			// seul master).
+			newId = m_nextAuctionId.fetch_add(1u, std::memory_order_relaxed);
+		}
+		else
+		{
+			// On garde m_nextAuctionId au-dessus du max DB pour eviter une
+			// collision si on bascule vers no-DB plus tard.
+			uint64_t expected = m_nextAuctionId.load(std::memory_order_relaxed);
+			while (expected <= newId
+				&& !m_nextAuctionId.compare_exchange_weak(expected, newId + 1u,
+					std::memory_order_relaxed))
+			{
+				// retry
+			}
+		}
 
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
@@ -468,6 +589,16 @@ namespace engine::server
 			return;
 		}
 
+		// Wave 5 : best-effort persistance de la bid (et du end si buyout).
+		// Effectue hors mutex car les operations DB peuvent etre lentes.
+		if (m_store && m_store->IsAvailable())
+		{
+			const std::string bidderName = FormatAccountOwnerName(accountId);
+			(void)m_store->UpdateBid(auctionId, bidAmount, bidderName, accountId);
+			if (isBuyout == 1u)
+				(void)m_store->MarkEnded(auctionId, /*wonByBuyout=*/true);
+		}
+
 		LOG_INFO(Net, "[AuctionHandler] Bid Ok account={} auctionId={} bid={} buyout={}",
 			accountId, auctionId, bidAmount, static_cast<unsigned>(isBuyout));
 
@@ -555,6 +686,10 @@ namespace engine::server
 				m_server->Send(connId, pkt);
 			return;
 		}
+
+		// Wave 5 : best-effort persistance du cancel.
+		if (m_store && m_store->IsAvailable())
+			(void)m_store->MarkEnded(auctionId, /*wonByBuyout=*/false);
 
 		LOG_INFO(Net, "[AuctionHandler] Cancel Ok account={} auctionId={}",
 			accountId, auctionId);

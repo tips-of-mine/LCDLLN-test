@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.h"
 
+#include "src/masterd/outdoorpvp/MysqlOutdoorPvpStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -54,6 +55,47 @@ namespace engine::server
 
 		m_seeded = true;
 		LOG_INFO(Net, "[OutdoorPvpHandler] V1 zones seeded : Hellfire (3 obj), Eastern Plaguelands (4 obj)");
+
+		// Wave 5 : restaure l'etat persiste par-dessus le seed default. On
+		// applique les rows DB ; les objectifs non vus en DB conservent
+		// leur state hardcoded (neutre, 0%).
+		if (m_store && m_store->IsAvailable())
+		{
+			const auto stateRows = m_store->LoadStates();
+			for (const auto& r : stateRows)
+			{
+				engine::server::outdoorpvp::Objective patch;
+				patch.id          = r.objectiveId;
+				patch.owner       = r.owner;
+				patch.capturePct  = r.capturePct;
+				patch.capturingBy = r.capturingBy;
+				// Patch direct via BeginCapture est inadapte (reset capturePct).
+				// On reconstruit en allant chercher la zone dans le manager.
+				auto* zone = const_cast<engine::server::outdoorpvp::Zone*>(
+					m_manager.GetZone(r.zoneId));
+				if (!zone) continue;
+				for (auto& o : zone->objectives)
+				{
+					if (o.id == r.objectiveId)
+					{
+						o.owner       = r.owner;
+						o.capturePct  = r.capturePct;
+						o.capturingBy = r.capturingBy;
+						break;
+					}
+				}
+			}
+			const auto scoreRows = m_store->LoadScores();
+			for (const auto& r : scoreRows)
+			{
+				auto* zone = const_cast<engine::server::outdoorpvp::Zone*>(
+					m_manager.GetZone(r.zoneId));
+				if (!zone) continue;
+				zone->score[r.faction] = r.score;
+			}
+			LOG_INFO(Net, "[OutdoorPvpHandler] Restored {} objective states + {} scores from DB",
+				stateRows.size(), scoreRows.size());
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -371,6 +413,31 @@ namespace engine::server
 		{
 			LOG_WARN(Net, "[OutdoorPvpHandler] TickCapture(100) returned false (unexpected) account={} zid={} oid={}",
 				accountId, parsed->zoneId, parsed->objectiveId);
+		}
+
+		// Wave 5 : persiste la transition owner + scores apres capture.
+		// Best-effort hors mutex.
+		if (captured && m_store && m_store->IsAvailable())
+		{
+			engine::server::outdoorpvp_db::ObjectiveRow obj;
+			obj.zoneId      = parsed->zoneId;
+			obj.objectiveId = parsed->objectiveId;
+			obj.owner       = newOwner;
+			obj.capturePct  = 0u; // TickCapture remet a 0 apres transition.
+			obj.capturingBy = 0xFFu;
+			(void)m_store->UpsertObjective(obj);
+
+			engine::server::outdoorpvp_db::ScoreRow sA;
+			sA.zoneId  = parsed->zoneId;
+			sA.faction = 0u;
+			sA.score   = allianceScore;
+			(void)m_store->UpsertScore(sA);
+
+			engine::server::outdoorpvp_db::ScoreRow sH;
+			sH.zoneId  = parsed->zoneId;
+			sH.faction = 1u;
+			sH.score   = hordeScore;
+			(void)m_store->UpsertScore(sH);
 		}
 
 		// Push CompletedNotification avec nouveau owner et scores finaux.

@@ -4,6 +4,7 @@
 
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
+#include "src/masterd/skills/MysqlSkillStore.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -97,21 +98,66 @@ namespace engine::server
 	{
 		using namespace engine::network;
 
+		// Note V1 : appele sous m_mutex. Les Load/Upsert DB sont effectues
+		// sous mutex (perf acceptable car appele une seule fois par account).
 		auto& entry = m_skillsByAccount[accountId];
 		if (!entry.empty())
 			return;
 
-		// Starter set V1 : Cooking, Herbalism, Mining, FirstAid (tous value=1
-		// pour signaler un debut concret au joueur), Lockpicking (value=0,
-		// debutant seulement si trainer apprend).
-		entry[1u] = SkillBookEntry{1u, 1u, kInitialCap, 0u}; // Cooking
-		entry[2u] = SkillBookEntry{2u, 1u, kInitialCap, 0u}; // Herbalism
-		entry[3u] = SkillBookEntry{3u, 1u, kInitialCap, 0u}; // Mining
-		entry[4u] = SkillBookEntry{4u, 1u, kInitialCap, 0u}; // FirstAid
-		entry[5u] = SkillBookEntry{5u, 0u, kInitialCap, 0u}; // Lockpicking
+		// Wave 5 : tente de charger depuis la DB. Si la table renvoie
+		// au moins une ligne, on utilise comme verite. Sinon (DB vide ou
+		// indisponible), fallback sur le starter set hardcode et persiste
+		// ces lignes.
+		bool loadedFromDb = false;
+		if (m_store && m_store->IsAvailable())
+		{
+			auto rows = m_store->LoadForCharacter(accountId);
+			if (!rows.empty())
+			{
+				for (const auto& r : rows)
+				{
+					SkillBookEntry e;
+					e.skillId = static_cast<uint16_t>(r.skillId);
+					e.value   = static_cast<uint16_t>(r.value);
+					e.cap     = static_cast<uint16_t>(r.cap);
+					e.bonus   = static_cast<uint16_t>(r.bonus);
+					entry[e.skillId] = e;
+				}
+				loadedFromDb = true;
+				LOG_INFO(Net, "[SkillHandler] Loaded {} skills from DB for account={}",
+					rows.size(), accountId);
+			}
+		}
 
-		LOG_INFO(Net, "[SkillHandler] Seeded starter set for account={} ({} skills)",
-			accountId, entry.size());
+		if (!loadedFromDb)
+		{
+			// Starter set V1 : Cooking, Herbalism, Mining, FirstAid (tous value=1
+			// pour signaler un debut concret au joueur), Lockpicking (value=0,
+			// debutant seulement si trainer apprend).
+			entry[1u] = SkillBookEntry{1u, 1u, kInitialCap, 0u}; // Cooking
+			entry[2u] = SkillBookEntry{2u, 1u, kInitialCap, 0u}; // Herbalism
+			entry[3u] = SkillBookEntry{3u, 1u, kInitialCap, 0u}; // Mining
+			entry[4u] = SkillBookEntry{4u, 1u, kInitialCap, 0u}; // FirstAid
+			entry[5u] = SkillBookEntry{5u, 0u, kInitialCap, 0u}; // Lockpicking
+
+			// Wave 5 : persiste le starter set pour cet account.
+			if (m_store && m_store->IsAvailable())
+			{
+				for (const auto& [skillId, e] : entry)
+				{
+					engine::server::skills::SkillRow row;
+					row.characterId = accountId;
+					row.skillId     = skillId;
+					row.value       = e.value;
+					row.cap         = e.cap;
+					row.bonus       = e.bonus;
+					(void)m_store->Upsert(row);
+				}
+			}
+
+			LOG_INFO(Net, "[SkillHandler] Seeded starter set for account={} ({} skills)",
+				accountId, entry.size());
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -210,6 +256,18 @@ namespace engine::server
 
 		LOG_INFO(Net, "[SkillHandler] Learn OK account={} skillId={} cap={}",
 			accountId, skillId, kInitialCap);
+
+		// Wave 5 : persiste la nouvelle ligne.
+		if (m_store && m_store->IsAvailable())
+		{
+			engine::server::skills::SkillRow row;
+			row.characterId = accountId;
+			row.skillId     = skillId;
+			row.value       = newValue;
+			row.cap         = newCap;
+			row.bonus       = 0u;
+			(void)m_store->Upsert(row);
+		}
 
 		auto pkt = BuildSkillLearnResponsePacket(0u, kInitialCap, requestId, sessionIdHeader);
 		if (!pkt.empty())
@@ -310,6 +368,18 @@ namespace engine::server
 
 		LOG_INFO(Net, "[SkillHandler] Use account={} skillId={} target={} result={} delta={}",
 			accountId, skillId, targetEntityId, static_cast<unsigned>(result), delta);
+
+		// Wave 5 : persiste si gain effectif (le RNG fail ne modifie rien).
+		if (gained && m_store && m_store->IsAvailable())
+		{
+			engine::server::skills::SkillRow row;
+			row.characterId = accountId;
+			row.skillId     = skillId;
+			row.value       = newValue;
+			row.cap         = newCap;
+			row.bonus       = 0u;
+			(void)m_store->Upsert(row);
+		}
 
 		auto pkt = BuildSkillUseResponsePacket(0u, result, delta, requestId, sessionIdHeader);
 		if (!pkt.empty())

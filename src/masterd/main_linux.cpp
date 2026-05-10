@@ -676,6 +676,15 @@ int main(int argc, char** argv)
 		lunarHandler.Tick(bootNowMs);
 	}
 
+	// Phase 5 Lunar — Branche le GameEventHandler sur le LunarHandler pour
+	// pouvoir filtrer les events par phase lunaire (event "Nuit de la
+	// Lune Noire" gate sur phases 0/14/15). Doit imperativement etre fait
+	// apres lunarHandler.Tick(bootNowMs) pour garantir que CurrentPhase()
+	// renvoie une valeur valide (et non 0xFF) si HandleList arrive juste
+	// apres le wiring.
+	gameEventHandler.SetLunarHandler(&lunarHandler);
+	LOG_INFO(Net, "[ServerMain] GameEventHandler branched to LunarHandler (lunar phase filter active)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);

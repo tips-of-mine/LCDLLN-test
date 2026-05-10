@@ -13,6 +13,7 @@
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
 #include "src/client/arena/ArenaUi.h"
+#include "src/client/battleground/BattleGroundUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -79,6 +80,7 @@ namespace engine::render
 	class CinematicImGuiRenderer;
 	class SkillBookImGuiRenderer;
 	class ArenaImGuiRenderer;
+	class BattleGroundImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -362,6 +364,12 @@ namespace engine
 		/// Visible uniquement quand m_arenaVisible (toggle via slash command
 		/// /arena ou touche A).
 		std::unique_ptr<engine::render::ArenaImGuiRenderer> m_arenaImGui;
+		/// CMANGOS.10 (Phase 5 step 3+4) — Panneau "BattleGround" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec les autres panneaux post-auth.
+		/// Visible uniquement quand m_battleGroundVisible (toggle via slash
+		/// command /bg ou touche G) ou quand un match BG est actif (le
+		/// scoreboard s'affiche tout seul, push 136).
+		std::unique_ptr<engine::render::BattleGroundImGuiRenderer> m_battleGroundImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -492,6 +500,14 @@ namespace engine
 		/// CMANGOS.21 (Phase 5.21 step 3+4) — Visibilite du panneau Arena
 		/// (toggle via slash command \c /arena ou touche A). Faux par defaut.
 		bool                                  m_arenaVisible = false;
+		/// CMANGOS.10 (Phase 5 step 3+4) — Presenter de la fenetre BattleGround.
+		/// Recoit les responses opcodes 131/133/135 et les push notifications
+		/// 136/137/138 via le push handler du master ; fire-and-forget des
+		/// requetes 130/132/134/139 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::BattleGroundUiPresenter m_battleGroundUi;
+		/// CMANGOS.10 (Phase 5 step 3+4) — Visibilite du panneau BattleGround
+		/// (toggle via slash command \c /bg ou touche G). Faux par defaut.
+		bool                                  m_battleGroundVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

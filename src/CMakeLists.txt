@@ -190,6 +190,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/shard/ServerListHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/metrics/HealthEndpoint.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/metrics/PrometheusMetrics.cpp
+    # Wave 7 Entities foundation : Object base (header-only en pratique, .cpp
+    # garde un translation unit nomme pour futures methodes out-of-line).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
@@ -360,6 +363,14 @@ elseif(UNIX)
   target_link_libraries(object_guid_tests PRIVATE engine_core spdlog::spdlog pthread)
   target_compile_options(object_guid_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME object_guid_tests COMMAND object_guid_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Wave 7 Entities foundation : ObjectGuid + UpdateMask + UpdateField + Object base.
+  # Note : namespace engine::server::entities, distinct du ObjectGuid existant
+  # dans engine::server::shard. Les deux cohabitent ; la migration progressive
+  # vers la version "entities" sera faite par PRs futures.
+  lcdlln_add_simple_test(entities_foundation_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/ObjectGuidTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).
   lcdlln_add_simple_test(mail_manager_tests

@@ -121,6 +121,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/lfg/LfgHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/cinematics/CinematicHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/skills/SkillHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/arena/ArenaHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
@@ -131,6 +132,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/LfgPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/CinematicPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/SkillPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/ArenaPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp

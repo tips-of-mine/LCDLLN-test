@@ -13,6 +13,7 @@
 #include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
+#include "src/shared/network/ArenaPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -24,6 +25,7 @@
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"
+#include "src/client/render/ArenaImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -923,6 +925,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.21 (Phase 5.21 step 3+4) — Init du presenter Arena + cable
+		// du send callback pour les requetes 120/122/124/127. Reception
+		// dispatchee dans le push handler ci-dessous (responses 121/123/125/128
+		// + push 126/129).
+		if (!m_arenaUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] ArenaUiPresenter init FAILED — panneau arena desactive");
+		}
+		else
+		{
+			m_arenaUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1066,6 +1083,21 @@ namespace engine
 					m_lfgUi.RequestStatus();
 				}
 				LOG_INFO(Core, "[Engine] /lfg toggle (visible={})", m_lfgVisible);
+				return true;
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4) — Slash command /arena pour
+			// ouvrir/fermer la fenetre Arena et synchroniser la liste des
+			// teams depuis le master au moment de l'ouverture. La touche A
+			// fait la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/arena" || text.starts_with("/arena ") || text.starts_with("/arena\t")))
+			{
+				m_arenaVisible = !m_arenaVisible;
+				if (m_arenaVisible)
+				{
+					m_arenaUi.RequestTeams();
+				}
+				LOG_INFO(Core, "[Engine] /arena toggle (visible={})", m_arenaVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1434,6 +1466,74 @@ namespace engine
 					return;
 				}
 				m_skillBookUi.OnUpgradeNotification(*parsed);
+				return;
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4) — Dispatch des reponses Arena
+			// (121/123/125/128) + push notifications (126/129).
+			case kOpcodeArenaTeamListResponse:
+			{
+				auto parsed = ParseArenaTeamListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] ARENA_TEAM_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_arenaUi.OnTeamListResponse(*parsed);
+				return;
+			}
+			case kOpcodeArenaQueueResponse:
+			{
+				auto parsed = ParseArenaQueueResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] ARENA_QUEUE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_arenaUi.OnQueueResponse(*parsed);
+				return;
+			}
+			case kOpcodeArenaLeaveQueueResponse:
+			{
+				auto parsed = ParseArenaLeaveQueueResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] ARENA_LEAVE_QUEUE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_arenaUi.OnLeaveQueueResponse(*parsed);
+				return;
+			}
+			case kOpcodeArenaMatchProposalNotification:
+			{
+				auto parsed = ParseArenaMatchProposalNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] ARENA_MATCH_PROPOSAL_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_arenaUi.OnMatchProposalNotification(*parsed);
+				return;
+			}
+			case kOpcodeArenaMatchAcceptResponse:
+			{
+				auto parsed = ParseArenaMatchAcceptResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] ARENA_MATCH_ACCEPT_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_arenaUi.OnMatchAcceptResponse(*parsed);
+				return;
+			}
+			case kOpcodeArenaMatchResultNotification:
+			{
+				auto parsed = ParseArenaMatchResultNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] ARENA_MATCH_RESULT_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_arenaUi.OnMatchResultNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -3735,6 +3835,7 @@ namespace engine
 		m_lfgUi.Shutdown();
 		m_cinematicUi.Shutdown();
 		m_skillBookUi.Shutdown();
+		m_arenaUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3821,6 +3922,28 @@ namespace engine
 					m_skillBookUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] B toggle skillbook (visible={})", m_skillBookVisible);
+			}
+		}
+
+		// CMANGOS.21 (Phase 5.21 step 3+4) — Touche A post-auth toggle le
+		// panneau Arena (equivalent a la slash command /arena). Memes guards
+		// que la touche B (chat focus + pause + editor + auth flow).
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			if (inGameNoMenu && !chatBlocks
+				&& m_input.WasPressed(engine::platform::Key::A))
+			{
+				m_arenaVisible = !m_arenaVisible;
+				if (m_arenaVisible)
+				{
+					m_arenaUi.RequestTeams();
+				}
+				LOG_INFO(Core, "[Engine] A toggle arena (visible={})", m_arenaVisible);
 			}
 		}
 
@@ -4012,6 +4135,14 @@ namespace engine
 				// (toggle via /skills ou touche B).
 				m_skillBookImGui = std::make_unique<engine::render::SkillBookImGuiRenderer>();
 				m_skillBookImGui->SetPresenter(&m_skillBookUi);
+				// CMANGOS.21 (Phase 5.21 step 3+4) — Renderer ImGui du panneau
+				// Arena. Visible uniquement quand m_arenaVisible (toggle via
+				// /arena ou touche A). Le popup proposal s'affiche aussi quand
+				// pendingProposalId.has_value() == true (meme si le panneau
+				// principal est masque), pour que le joueur ne rate pas la
+				// formation de match.
+				m_arenaImGui = std::make_unique<engine::render::ArenaImGuiRenderer>();
+				m_arenaImGui->SetPresenter(&m_arenaUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5081,6 +5212,17 @@ namespace engine
 				m_skillBookImGui->SetEnabled(true);
 				m_skillBookImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_skillBookImGui->Render();
+			}
+			// CMANGOS.21 (Phase 5.21 step 3+4) — Render du panneau Arena si
+			// visible. Le popup proposal s'affiche aussi quand pendingProposalId
+			// est set (meme si le panneau principal est masque), pour que le
+			// joueur ne rate pas la formation de match.
+			if (m_arenaImGui && m_arenaUi.IsInitialized()
+				&& (m_arenaVisible || m_arenaUi.GetState().pendingProposalId.has_value()))
+			{
+				m_arenaImGui->SetEnabled(true);
+				m_arenaImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_arenaImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

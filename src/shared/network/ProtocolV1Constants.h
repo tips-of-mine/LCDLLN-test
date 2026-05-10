@@ -457,4 +457,46 @@ namespace engine::network
 	constexpr uint16_t kOpcodeSkillUseRequest          = 117u; ///< Client to Master : utilise un skill non-combat (lockpicking, fishing).
 	constexpr uint16_t kOpcodeSkillUseResponse         = 118u; ///< Master to Client : OK + result + delta value, ou SkillNotLearned / SkillFailed / Unauthorized.
 	constexpr uint16_t kOpcodeSkillUpgradeNotification = 119u; ///< Master to Client (push, request_id=0) : skill upgrade (skillId, newValue, newCap, delta).
+
+	// -------------------------------------------------------------------------
+	// Opcodes Arena (valeurs 120-129)
+	// Reference : Phase 5 CMANGOS.21 step 3+4. Wire client<->master pour le
+	// systeme d'arenes (queue 2v2/3v3/5v5, match proposal, result push avec
+	// rating ELO). Le step 1+2 (ArenaTeam + ArenaTeamRegistry header-only avec
+	// ApplyEloUpdate / RecordMatch / ResetWeekly) est deja merge.
+	//
+	// Architecture : le master tient en memoire un ArenaTeamRegistry (V1, seed
+	// hardcode par account au premier acces : 3 teams 2v2/3v3/5v5 a rating 1500)
+	// + une queue par account + un map de proposals actifs. Quand un account
+	// rejoint la queue, le master cree immediatement un proposal contre une AI
+	// fictive ("AI Team Alpha" rating 1500) et push une notification (V1).
+	//
+	// V1 limitations :
+	//   - Seed teams hardcode par account (3 teams 2v2/3v3/5v5). Vraie creation
+	//     via CMANGOS.41 (Trainers + ArenaTeam create UI).
+	//   - Match contre AI Team Alpha fictif ; vrai pairing 2 accounts a venir.
+	//   - Result win/loss random 50% (V1) ; vraie simulation match a venir.
+	//   - Pas de SyncArena RPC entre master et shardd (master autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - TeamList   (120/121)  : le client demande la liste de ses arena teams.
+	//   - Queue      (122/123)  : inscription en queue (teamId + size 2/3/5).
+	//   - LeaveQueue (124/125)  : quitte la queue.
+	//   - MatchProposalNotification (126, push) : un match a ete forme
+	//     (proposalId, opponentTeamName, opponentRating).
+	//   - MatchAccept (127/128) : accepte ou rejette un match propose.
+	//   - MatchResultNotification (129, push) : fin de match (win, oldRating,
+	//     newRating, opponentName).
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeArenaTeamListRequest           = 120u; ///< Client to Master : liste des arena teams (vide).
+	constexpr uint16_t kOpcodeArenaTeamListResponse          = 121u; ///< Master to Client : liste {teamId, size, name, rating, weeklyGames, weeklyWins} ou Unauthorized.
+	constexpr uint16_t kOpcodeArenaQueueRequest              = 122u; ///< Client to Master : s'inscrit en queue arena (teamId + size 2/3/5).
+	constexpr uint16_t kOpcodeArenaQueueResponse             = 123u; ///< Master to Client : OK + estimatedWaitSec, ou AlreadyQueued / TeamNotFound / InvalidSize / Unauthorized.
+	constexpr uint16_t kOpcodeArenaLeaveQueueRequest         = 124u; ///< Client to Master : quitte la queue arena.
+	constexpr uint16_t kOpcodeArenaLeaveQueueResponse        = 125u; ///< Master to Client : OK ou NotInQueue / Unauthorized.
+	constexpr uint16_t kOpcodeArenaMatchProposalNotification = 126u; ///< Master to Client (push, request_id=0) : un match a ete forme (proposalId, opponentTeamName, opponentRating).
+	constexpr uint16_t kOpcodeArenaMatchAcceptRequest        = 127u; ///< Client to Master : accepte (true) ou rejette (false) le match propose (proposalId + accept bool).
+	constexpr uint16_t kOpcodeArenaMatchAcceptResponse       = 128u; ///< Master to Client : ACK Ok ou ProposalExpired / UnknownProposal / Unauthorized.
+	constexpr uint16_t kOpcodeArenaMatchResultNotification   = 129u; ///< Master to Client (push, request_id=0) : fin de match (win bool, oldRating, newRating, opponentName).
 }

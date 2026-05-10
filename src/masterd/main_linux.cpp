@@ -48,6 +48,9 @@
 #include "src/masterd/handlers/auction/AuctionHandler.h"
 #include "src/masterd/handlers/loot/LootHandler.h"
 #include "src/masterd/handlers/lunar/LunarHandler.h"
+#include "src/masterd/handlers/admin/AdminCommandHandler.h"
+#include "src/masterd/admin/SlashCommandRegistry.h"
+#include "src/masterd/account/AccountRoleService.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -676,6 +679,39 @@ int main(int argc, char** argv)
 		lunarHandler.Tick(bootNowMs);
 	}
 
+	// AdminCommand RBAC — registre des slash commands (charge depuis
+	// game/data/config/slash_commands.json) + handler central qui valide
+	// le role + log audit pour TOUTES les slash commands. Pattern central
+	// (cf. docs/slash_commands_rbac.md).
+	engine::server::SlashCommandRegistry slashCommandRegistry;
+	{
+		const std::string slashCommandsPath = config.GetString(
+			"server.slash_commands_path", "game/data/config/slash_commands.json");
+		if (!slashCommandRegistry.LoadFromFile(slashCommandsPath))
+		{
+			LOG_WARN(Net, "[ServerMain] SlashCommandRegistry load FAILED ({}): AdminCommands will reject ALL",
+				slashCommandsPath);
+		}
+		else
+		{
+			LOG_INFO(Net, "[ServerMain] SlashCommandRegistry loaded ({} commands)",
+				static_cast<unsigned long long>(slashCommandRegistry.Size()));
+		}
+	}
+
+	// AccountRoleService : facade au-dessus d'AccountStore qui expose
+	// GetRole/RequireMinRole. Utilise par AdminCommandHandler pour la
+	// verification du minRole. Lecture seule cote AdminCommand.
+	engine::server::AccountRoleService accountRoleService(*accountStore, &auditLog);
+
+	engine::server::AdminCommandHandler adminCommandHandler;
+	adminCommandHandler.SetServer(&server);
+	adminCommandHandler.SetSessionManager(&sessionManager);
+	adminCommandHandler.SetConnectionSessionMap(&connSessionMap);
+	adminCommandHandler.SetAccountRoleService(&accountRoleService);
+	adminCommandHandler.SetSlashCommandRegistry(&slashCommandRegistry);
+	LOG_INFO(Net, "[ServerMain] AdminCommandHandler configured (RBAC + audit log)");
+
 	// Phase 5 Lunar — Branche le GameEventHandler sur le LunarHandler pour
 	// pouvoir filtrer les events par phase lunaire (event "Nuit de la
 	// Lune Noire" gate sur phases 0/14/15). Doit imperativement etre fait
@@ -724,7 +760,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -828,6 +864,8 @@ int main(int argc, char** argv)
 			lootHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeLunarStateRequest)
 			lunarHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeAdminCommandRequest)
+			adminCommandHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

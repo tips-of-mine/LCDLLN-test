@@ -461,6 +461,7 @@ add_library(engine_core
   src/shared/network/AuctionPayloads.cpp
   src/shared/network/LootPayloads.cpp
   src/shared/network/LunarPayloads.cpp
+  src/shared/network/AdminCommandPayloads.cpp
   src/shared/network/LfgPayloads.cpp
   src/shared/network/CinematicPayloads.cpp
   src/shared/network/SkillPayloads.cpp
@@ -756,6 +757,11 @@ add_test(NAME loot_payloads_tests COMMAND loot_payloads_tests)
 add_executable(lunar_payloads_tests src/shared/network/LunarPayloadsTests.cpp)
 target_link_libraries(lunar_payloads_tests PRIVATE engine_core)
 add_test(NAME lunar_payloads_tests COMMAND lunar_payloads_tests)
+
+# AdminCommand RBAC — round-trip tests payloads (195/196).
+add_executable(admin_command_payloads_tests src/shared/network/AdminCommandPayloadsTests.cpp)
+target_link_libraries(admin_command_payloads_tests PRIVATE engine_core)
+add_test(NAME admin_command_payloads_tests COMMAND admin_command_payloads_tests)
 
 # Phase 5 Lunar — calendar deterministe tests (header-only).
 add_executable(lunar_calendar_tests src/shardd/world/LunarCalendarTests.cpp)

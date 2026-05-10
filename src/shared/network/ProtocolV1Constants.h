@@ -536,4 +536,45 @@ namespace engine::network
 	constexpr uint16_t kOpcodeBgScoreUpdateNotification    = 137u; ///< Master to Client (push, request_id=0) : score changes (matchId, allianceScore, hordeScore, elapsedSec).
 	constexpr uint16_t kOpcodeBgMatchEndNotification       = 138u; ///< Master to Client (push, request_id=0) : fin de match (matchId, winnerFaction 0/1/2 = Alliance/Horde/Draw, allianceScore, hordeScore, durationSec).
 	constexpr uint16_t kOpcodeBgLeaveMatchRequest          = 139u; ///< Client to Master : quitte le match en cours (forfait V1) ou vide.
+
+	// =====================================================================
+	// CMANGOS.36 step 3+4 — OutdoorPvP wire (zones contestees, objectifs
+	// capturables par faction, score par zone, push capture progress + complete).
+	// Master tient en memoire un OutdoorPvPManager (V1 seed hardcode).
+	//
+	// Architecture : 2 zones contestees au boot (Hellfire Peninsula 3
+	// objectifs, Eastern Plaguelands 4 objectifs). Le master tient en
+	// memoire les subscriptions par account et l'etat des objectifs.
+	// V1 simplifie : a chaque CaptureStartRequest, master simule la
+	// capture instantanee : push 4 progress (25/50/75/100) puis call
+	// TickCapture(100) qui transitionne l'owner et incremente le score,
+	// puis push CaptureCompletedNotification.
+	//
+	// V1 limitations :
+	//   - 2 zones hardcodees (Hellfire, Eastern Plaguelands). Vraies
+	//     zones via M40+ futur.
+	//   - Capture simulee instantanement (V1) ; vrai gameplay capture
+	//     via shardd futur.
+	//   - Subscriptions in-memory (pas de persistance V1).
+	//   - Pas de SyncOutdoorPvp RPC entre master et shardd (master
+	//     autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - ZoneList    (140/141)               : liste des zones + objectifs + scores.
+	//   - Subscribe   (142/143)               : s'abonne aux push d'une zone.
+	//   - Unsubscribe (144/145)               : se desabonne.
+	//   - CaptureStart (146/147)              : lance la capture d'un objectif.
+	//   - CaptureProgressNotification (148, push)  : progression capture.
+	//   - CaptureCompletedNotification (149, push) : fin capture (owner change + scores).
+	// =====================================================================
+	constexpr uint16_t kOpcodeOutdoorPvpZoneListRequest              = 140u; ///< Client to Master : liste des zones contestees (vide).
+	constexpr uint16_t kOpcodeOutdoorPvpZoneListResponse             = 141u; ///< Master to Client : liste {zoneId, name, allianceScore, hordeScore, objectives[]} ou Unauthorized.
+	constexpr uint16_t kOpcodeOutdoorPvpSubscribeRequest             = 142u; ///< Client to Master : s'abonne aux push d'une zone (zoneId).
+	constexpr uint16_t kOpcodeOutdoorPvpSubscribeResponse            = 143u; ///< Master to Client : OK ou UnknownZone / Unauthorized.
+	constexpr uint16_t kOpcodeOutdoorPvpUnsubscribeRequest           = 144u; ///< Client to Master : se desabonne (zoneId).
+	constexpr uint16_t kOpcodeOutdoorPvpUnsubscribeResponse          = 145u; ///< Master to Client : OK ou NotSubscribed / Unauthorized.
+	constexpr uint16_t kOpcodeOutdoorPvpCaptureStartRequest          = 146u; ///< Client to Master : commence la capture d'un objectif (zoneId, objectiveId, faction).
+	constexpr uint16_t kOpcodeOutdoorPvpCaptureStartResponse         = 147u; ///< Master to Client : OK ou UnknownObjective / InvalidFaction / Unauthorized.
+	constexpr uint16_t kOpcodeOutdoorPvpCaptureProgressNotification  = 148u; ///< Master to Client (push, request_id=0) : progression capture (zoneId, objectiveId, capturePct, capturingBy).
+	constexpr uint16_t kOpcodeOutdoorPvpCaptureCompletedNotification = 149u; ///< Master to Client (push, request_id=0) : capture finie (zoneId, objectiveId, newOwner, allianceScore, hordeScore).
 }

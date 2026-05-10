@@ -1081,6 +1081,22 @@ namespace engine
 		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
 		// vers un handler qui parse et appelle ChatUi::PushNetworkLine.
 		m_chatUi.SetSendCallback([this](uint8_t channel, std::string_view targetToken, std::string_view text) -> bool {
+			// Wave 3 RBAC migration : helper local pour envoyer un audit
+			// AdminCommand au master pour les UI panel toggles. Fire-and-forget
+			// (requestId=0, on n'attend pas l'ACK : le toggle visuel est
+			// applique immediatement, le master log juste le geste).
+			//
+			// Le master valide l'auth + role (player suffit pour ces commandes)
+			// et emet [AdminCommand] result=OK dans son log audit.
+			auto sendAdminAudit = [this](std::string_view cmd) {
+				engine::network::admin::AdminCommandRequest req;
+				req.command = std::string(cmd);
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+			};
+
 			// CMANGOS.18 (Phase 3.18 step 4) — Intercept /mail avant l'envoi
 			// chat. ParseSlashPrefixes ne connait pas /mail, donc le texte
 			// arrive sur le canal Say avec text == "/mail" (ou "/mail ...").
@@ -1095,6 +1111,7 @@ namespace engine
 					m_mailUi.RequestInbox();
 				}
 				LOG_INFO(Core, "[Engine] /mail toggle (visible={})", m_mailVisible);
+				sendAdminAudit("/mail");
 				return true;
 			}
 			// CMANGOS.23 (Phase 5.23 step 3+4) — Slash command /quest et /quests
@@ -1111,6 +1128,7 @@ namespace engine
 					m_questUi.RequestQuestList();
 				}
 				LOG_INFO(Core, "[Engine] /quest toggle (visible={})", m_questVisible);
+				sendAdminAudit("/quest");
 				return true;
 			}
 			// CMANGOS.27 (Phase 4.27 step 3+4) — Slash command /trade <accountId>
@@ -1173,6 +1191,7 @@ namespace engine
 					m_reputationUi.RequestReputationList();
 				}
 				LOG_INFO(Core, "[Engine] /rep toggle (visible={})", m_reputationVisible);
+				sendAdminAudit("/rep");
 				return true;
 			}
 			// CMANGOS.39 (Phase 4.39 step 3+4) — Slash command /skills pour
@@ -1190,6 +1209,7 @@ namespace engine
 					m_skillBookUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /skills toggle (visible={})", m_skillBookVisible);
+				sendAdminAudit("/skills");
 				return true;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
@@ -1204,6 +1224,7 @@ namespace engine
 					m_lfgUi.RequestStatus();
 				}
 				LOG_INFO(Core, "[Engine] /lfg toggle (visible={})", m_lfgVisible);
+				sendAdminAudit("/lfg");
 				return true;
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4) — Slash command /arena pour
@@ -1219,6 +1240,7 @@ namespace engine
 					m_arenaUi.RequestTeams();
 				}
 				LOG_INFO(Core, "[Engine] /arena toggle (visible={})", m_arenaVisible);
+				sendAdminAudit("/arena");
 				return true;
 			}
 			// CMANGOS.10 (Phase 5 step 3+4) — Slash command /bg pour ouvrir/
@@ -1234,6 +1256,7 @@ namespace engine
 					m_battleGroundUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /bg toggle (visible={})", m_battleGroundVisible);
+				sendAdminAudit("/bg");
 				return true;
 			}
 			// CMANGOS.36 (Phase 5.36 step 3+4) — Slash command /pvp pour
@@ -1249,6 +1272,7 @@ namespace engine
 					m_outdoorPvpUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /pvp toggle (visible={})", m_outdoorPvpVisible);
+				sendAdminAudit("/pvp");
 				return true;
 			}
 			// CMANGOS.42 (Phase 4.42 step 3+4) — Slash command /weather pour
@@ -1264,6 +1288,7 @@ namespace engine
 					m_weatherUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /weather toggle (visible={})", m_weatherVisible);
+				sendAdminAudit("/weather");
 				return true;
 			}
 			// CMANGOS.31 (Phase 5.31 step 3+4) — Slash command /events pour
@@ -1279,6 +1304,7 @@ namespace engine
 					m_gameEventUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /events toggle (visible={})", m_gameEventVisible);
+				sendAdminAudit("/events");
 				return true;
 			}
 			// CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Slash command /guild
@@ -1296,6 +1322,7 @@ namespace engine
 					m_guildUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /guild toggle (visible={})", m_guildVisible);
+				sendAdminAudit("/guild");
 				return true;
 			}
 			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Slash command /ah
@@ -1313,6 +1340,7 @@ namespace engine
 					m_auctionHouseUi.RequestList(0u);
 				}
 				LOG_INFO(Core, "[Engine] /ah toggle (visible={})", m_auctionHouseVisible);
+				sendAdminAudit("/ah");
 				return true;
 			}
 			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Slash command /loot
@@ -1433,6 +1461,7 @@ namespace engine
 					m_gmTicketUi.RequestMyTickets();
 				}
 				LOG_INFO(Core, "[Engine] /ticket toggle (visible={})", m_gmTicketsVisible);
+				sendAdminAudit("/ticket");
 				return true;
 			}
 			// CMANGOS.25 (Phase 3.25 step 3+4) — Slash commands /ignore et /unignore.

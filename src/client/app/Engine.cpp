@@ -11,11 +11,13 @@
 #include "src/shared/network/IgnoreListPayloads.h"
 #include "src/shared/network/MailPayloads.h"
 #include "src/shared/network/QuestPayloads.h"
+#include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/client/render/AuthImGuiRenderer.h"
 #include "src/client/render/ChatImGuiRenderer.h"
 #include "src/client/render/MailImGuiRenderer.h"
+#include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -837,6 +839,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.32 (Phase 5.32 step 3+4) — Init du presenter GmTickets +
+		// cable du send callback. Reception dispatchee dans le push handler
+		// ci-dessous (opcodes 77/79/81/82). Fire-and-forget des requetes
+		// 76/78/80 via SendGenericRequestAsync.
+		if (!m_gmTicketUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] GmTicketUiPresenter init FAILED — support GM desactive");
+		}
+		else
+		{
+			m_gmTicketUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).
 		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
 		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
@@ -872,6 +889,22 @@ namespace engine
 					m_questUi.RequestQuestList();
 				}
 				LOG_INFO(Core, "[Engine] /quest toggle (visible={})", m_questVisible);
+				return true;
+			}
+			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
+			// pour ouvrir/fermer le panneau Support GM et synchroniser la liste
+			// depuis le master au moment de l'ouverture.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/ticket" || text == "/gmticket"
+				    || text.starts_with("/ticket ") || text.starts_with("/ticket\t")
+				    || text.starts_with("/gmticket ") || text.starts_with("/gmticket\t")))
+			{
+				m_gmTicketsVisible = !m_gmTicketsVisible;
+				if (m_gmTicketsVisible)
+				{
+					m_gmTicketUi.RequestMyTickets();
+				}
+				LOG_INFO(Core, "[Engine] /ticket toggle (visible={})", m_gmTicketsVisible);
 				return true;
 			}
 			// CMANGOS.25 (Phase 3.25 step 3+4) — Slash commands /ignore et /unignore.
@@ -1108,6 +1141,52 @@ namespace engine
 					return;
 				}
 				m_ignoreListUi.OnIgnoreListResponse(*parsed);
+				return;
+			}
+			// CMANGOS.32 (Phase 5.32 step 3+4) — Dispatch des reponses GmTickets
+			// (77/79/81) + push GmTicketResolvedNotification (82).
+			case kOpcodeGmTicketOpenResponse:
+			{
+				auto parsed = ParseGmTicketOpenResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GMTICKET_OPEN_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gmTicketUi.OnOpenResponse(*parsed);
+				return;
+			}
+			case kOpcodeGmTicketListMineResponse:
+			{
+				auto parsed = ParseGmTicketListMineResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GMTICKET_LIST_MINE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gmTicketUi.OnListMineResponse(*parsed);
+				return;
+			}
+			case kOpcodeGmTicketCancelResponse:
+			{
+				auto parsed = ParseGmTicketCancelResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GMTICKET_CANCEL_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gmTicketUi.OnCancelResponse(*parsed);
+				return;
+			}
+			case kOpcodeGmTicketResolvedNotification:
+			{
+				auto parsed = ParseGmTicketResolvedNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GMTICKET_RESOLVED_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gmTicketUi.OnResolvedNotification(*parsed);
 				return;
 			}
 			default:
@@ -3243,6 +3322,7 @@ namespace engine
 		m_authUi.Shutdown();
 		m_chatUi.Shutdown();
 		m_mailUi.Shutdown();
+		m_gmTicketUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3446,6 +3526,12 @@ namespace engine
 				// jour dans le boucle Render plus bas.
 				m_mailImGui = std::make_unique<engine::render::MailImGuiRenderer>();
 				m_mailImGui->SetPresenter(&m_mailUi);
+				// CMANGOS.32 (Phase 5.32 step 3+4) — Renderer ImGui du panneau
+				// Support GM. Partage le contexte ImGui avec auth/chat/mail. Visible
+				// uniquement quand m_gmTicketsVisible (toggle via /ticket). La
+				// taille viewport est mise a jour dans la boucle Render plus bas.
+				m_gmTicketImGui = std::make_unique<engine::render::GmTicketImGuiRenderer>();
+				m_gmTicketImGui->SetPresenter(&m_gmTicketUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -4467,6 +4553,14 @@ namespace engine
 				m_mailImGui->SetEnabled(true);
 				m_mailImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_mailImGui->Render();
+			}
+			// CMANGOS.32 (Phase 5.32 step 3+4) — Render du panneau Support GM si visible.
+			// Le panneau partage la frame ImGui en cours (cf. m_mailImGui ci-dessus).
+			if (m_gmTicketsVisible && m_gmTicketImGui && m_gmTicketUi.IsInitialized())
+			{
+				m_gmTicketImGui->SetEnabled(true);
+				m_gmTicketImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_gmTicketImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

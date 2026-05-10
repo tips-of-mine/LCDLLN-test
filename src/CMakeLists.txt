@@ -115,9 +115,11 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/mail/MailHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/quest/QuestHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/social/IgnoreListHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/gmtickets/GmTicketHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/QuestPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/GmTicketPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp

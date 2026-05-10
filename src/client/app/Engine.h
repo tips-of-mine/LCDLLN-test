@@ -10,6 +10,7 @@
 #include "src/client/mail/MailUi.h"
 #include "src/client/quest/QuestUi.h"
 #include "src/client/social/IgnoreListUi.h"
+#include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
 #include "src/client/inventory/InventoryUi.h"
@@ -66,6 +67,7 @@ namespace engine::render
 	class AuthImGuiRenderer;
 	class ChatImGuiRenderer;
 	class MailImGuiRenderer;
+	class GmTicketImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -322,6 +324,10 @@ namespace engine
 		/// Partage le contexte ImGui avec m_authImGui / m_chatImGui. Visibilite
 		/// pilotee par \c m_mailVisible (toggle via slash command /mail).
 		std::unique_ptr<engine::render::MailImGuiRenderer> m_mailImGui;
+		/// CMANGOS.32 (Phase 5.32 step 3+4) — Panneau "Support GM" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec m_authImGui / m_chatImGui / m_mailImGui.
+		/// Visibilite pilotee par \c m_gmTicketsVisible (toggle via slash command /ticket).
+		std::unique_ptr<engine::render::GmTicketImGuiRenderer> m_gmTicketImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -401,6 +407,14 @@ namespace engine
 		/// fire-and-forget des requetes 68/70/72 via
 		/// \c m_authUi.SendGenericRequestAsync.
 		engine::client::IgnoreListUiPresenter m_ignoreListUi;
+		/// CMANGOS.32 (Phase 5.32 step 3+4) — Presenter boite a tickets support GM.
+		/// Recoit les reponses opcodes 77/79/81/82 via le push handler du master ;
+		/// fire-and-forget des requetes 76/78/80 via
+		/// \c m_authUi.SendGenericRequestAsync.
+		engine::client::GmTicketUiPresenter m_gmTicketUi;
+		/// CMANGOS.32 (Phase 5.32 step 3+4) — Visibilite du panneau Support GM
+		/// (toggle via slash command \c /ticket ou \c /gmticket). Faux par defaut.
+		bool                                m_gmTicketsVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

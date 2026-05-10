@@ -252,4 +252,27 @@ namespace engine::network
 	constexpr uint16_t kOpcodeIgnoreRemoveResponse = 71u; ///< Master→Client : OK ou NotIgnored.
 	constexpr uint16_t kOpcodeIgnoreListRequest    = 72u; ///< Client→Master : demande la liste complète des account_id ignorés (vide).
 	constexpr uint16_t kOpcodeIgnoreListResponse   = 73u; ///< Master→Client : tableau d'account_id ignorés ou Unauthorized.
+
+		// -------------------------------------------------------------------------
+		// Opcodes GmTickets (valeurs 76-82)
+		// Reference : Phase 5 CMANGOS.32 step 3+4. Wire client->master pour le
+		// support GM. Le step 1 (GmTicketSystem header-only) et le step 2
+		// (MysqlGmTicketStore + migration 0046) sont deja merges. Cette serie
+		// expose les operations cote joueur au client via 3 paires request/response
+		// + 1 push notification :
+		//   - Open   (76/77)               : le joueur ouvre un nouveau ticket support.
+		//   - ListMine (78/79)             : le joueur liste ses propres tickets ouverts.
+		//   - Cancel (80/81)               : le joueur annule son propre ticket.
+		//   - ResolvedNotification (82, push) : le master notifie le joueur quand
+		//     un GM a resolu son ticket.
+		// La V1 ne couvre pas l'UI GM cote support (admin tools, viendra plus tard).
+		// -------------------------------------------------------------------------
+
+		constexpr uint16_t kOpcodeGmTicketOpenRequest          = 76u; ///< Client to Master : ouvre un nouveau ticket (body texte).
+		constexpr uint16_t kOpcodeGmTicketOpenResponse         = 77u; ///< Master to Client : OK + ticketId, ou BodyEmpty / BodyTooLong.
+		constexpr uint16_t kOpcodeGmTicketListMineRequest      = 78u; ///< Client to Master : liste les tickets ouverts par ce joueur (vide).
+		constexpr uint16_t kOpcodeGmTicketListMineResponse     = 79u; ///< Master to Client : tableau {id, createdTsMs, state, resolvedTsMs} ou Unauthorized.
+		constexpr uint16_t kOpcodeGmTicketCancelRequest        = 80u; ///< Client to Master : annule son propre ticket.
+		constexpr uint16_t kOpcodeGmTicketCancelResponse       = 81u; ///< Master to Client : OK / NotFound / NotOwner / AlreadyResolved.
+		constexpr uint16_t kOpcodeGmTicketResolvedNotification = 82u; ///< Master to Client (push, request_id=0) : un GM a resolu un ticket de ce joueur.
 }

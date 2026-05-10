@@ -254,6 +254,7 @@ add_library(engine_core
   src/client/mail/MailUi.cpp
   src/client/social/FriendsUi.cpp
   src/client/social/IgnoreListUi.cpp
+  src/client/gmtickets/GmTicketUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
@@ -332,6 +333,7 @@ add_library(engine_core
   src/client/render/AuthImGuiRenderer.cpp
   src/client/render/ChatImGuiRenderer.cpp
   src/client/render/MailImGuiRenderer.cpp
+  src/client/render/GmTicketImGuiRenderer.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp
@@ -423,6 +425,7 @@ add_library(engine_core
   src/shared/network/IgnoreListPayloads.cpp
   src/shared/network/MailPayloads.cpp
   src/shared/network/QuestPayloads.cpp
+  src/shared/network/GmTicketPayloads.cpp
   src/shared/network/ShardPayloads.cpp
   src/shared/network/TermsPayloads.cpp
 )
@@ -644,6 +647,11 @@ add_test(NAME quest_payloads_tests COMMAND quest_payloads_tests)
 add_executable(ignore_list_payloads_tests src/shared/network/IgnoreListPayloadsTests.cpp)
 target_link_libraries(ignore_list_payloads_tests PRIVATE engine_core)
 add_test(NAME ignore_list_payloads_tests COMMAND ignore_list_payloads_tests)
+
+# CMANGOS.32 (Phase 5.32 step 3+4): GMTICKET_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(gm_ticket_payloads_tests src/shared/network/GmTicketPayloadsTests.cpp)
+target_link_libraries(gm_ticket_payloads_tests PRIVATE engine_core)
+add_test(NAME gm_ticket_payloads_tests COMMAND gm_ticket_payloads_tests)
 
 # M23.4: Log rotation smoke test (runtime logger)
 add_executable(log_rotation_smoke_tests src/shared/core/LogRotationSmokeTest.cpp)

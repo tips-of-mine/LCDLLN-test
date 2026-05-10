@@ -43,6 +43,9 @@
 #include "src/masterd/handlers/social/IgnoreListHandler.h"
 #include "src/masterd/social/IgnoreList.h"
 #include "src/masterd/social/MysqlIgnoreStore.h"
+#include "src/masterd/handlers/gmtickets/GmTicketHandler.h"
+#include "src/masterd/gmtickets/GmTicketSystem.h"
+#include "src/masterd/gmtickets/MysqlGmTicketStore.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
 #include "src/shared/core/Config.h"
@@ -408,6 +411,28 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[ServerMain] IgnoreListHandler skipped (DB pool unavailable)");
 	}
 
+	// CMANGOS.32 (Phase 5.32 step 3+4) — GmTickets wire server.
+	// Le system in-memory est l'autorite runtime des tickets ouverts. Le store
+	// MySQL sert de persistance audit (et future reload au login). En mode
+	// no-DB on garde le system mais on saute le store : la perte au reboot
+	// est acceptable pour cette MVP (le client redemandera la liste).
+	engine::server::gmtickets::GmTicketSystem gmTicketSystem;
+	engine::server::gmtickets::MysqlGmTicketStore gmTicketStore(&dbPool);
+	engine::server::GmTicketHandler gmTicketHandler;
+	gmTicketHandler.SetSystem(&gmTicketSystem);
+	gmTicketHandler.SetServer(&server);
+	gmTicketHandler.SetSessionManager(&sessionManager);
+	gmTicketHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		gmTicketHandler.SetStore(&gmTicketStore);
+		LOG_INFO(Net, "[ServerMain] GmTicketHandler configured with DB store (CMANGOS.32 step 3+4)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] GmTicketHandler running in no-DB mode (no persistence)");
+	}
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -447,7 +472,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -489,6 +514,10 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeIgnoreRemoveRequest
 		      || opcode == kOpcodeIgnoreListRequest)
 			ignoreListHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeGmTicketOpenRequest
+		      || opcode == kOpcodeGmTicketListMineRequest
+		      || opcode == kOpcodeGmTicketCancelRequest)
+			gmTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

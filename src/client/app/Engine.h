@@ -18,6 +18,7 @@
 #include "src/client/weather/WeatherUi.h"
 #include "src/client/events/GameEventUi.h"
 #include "src/client/guild/GuildUi.h"
+#include "src/client/auction/AuctionUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -89,6 +90,7 @@ namespace engine::render
 	class WeatherImGuiRenderer;
 	class GameEventImGuiRenderer;
 	class GuildImGuiRenderer;
+	class AuctionImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -401,6 +403,13 @@ namespace engine
 		/// (toggle via slash command /guild ou touche U). Le toast 5s sur
 		/// dernier MotdUpdate reçu est rendu independamment du flag.
 		std::unique_ptr<engine::render::GuildImGuiRenderer> m_guildImGui;
+		/// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Panneau "Auction
+		/// House" (post-auth, ImGui). Partage le contexte ImGui avec les
+		/// autres panneaux post-auth. Le panel principal est visible
+		/// uniquement quand m_auctionHouseVisible (toggle via slash command
+		/// /ah ou touche H). Les toasts 5s sur derniere bid + dernier
+		/// AuctionExpired sont rendus independamment du flag.
+		std::unique_ptr<engine::render::AuctionImGuiRenderer> m_auctionHouseImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -574,6 +583,18 @@ namespace engine
 		/// (toggle via slash command \c /guild ou touche U). Faux par defaut.
 		/// Le toast 5s sur dernier MotdUpdate reçu est rendu independamment.
 		bool                                  m_guildVisible = false;
+		/// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Presenter de la
+		/// fenetre Hotel des Ventes. Recoit les responses opcodes
+		/// 174/176/178/180 et la push notification 181 (AuctionExpired) via
+		/// le push handler du master ; fire-and-forget des requetes
+		/// 173/175/177/179 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::AuctionHousePresenter m_auctionHouseUi;
+		/// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Visibilite du
+		/// panneau Hotel des Ventes (toggle via slash command \c /ah ou
+		/// touche H). Faux par defaut. Le toast 5s sur derniere bid + le
+		/// toast 5s sur dernier AuctionExpired reçu sont rendus
+		/// independamment.
+		bool                                  m_auctionHouseVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

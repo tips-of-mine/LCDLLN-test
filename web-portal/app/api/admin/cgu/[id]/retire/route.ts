@@ -4,6 +4,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
+import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 
 export async function POST(
@@ -11,7 +12,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const jar = cookies()
-  if (jar.get('lcdlln_portal_role')?.value !== 'admin') {
+  if (!isStaff(jar.get('lcdlln_portal_role')?.value)) {
     return NextResponse.json({ ok: false }, { status: 403 })
   }
 

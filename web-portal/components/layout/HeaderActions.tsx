@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session } from '@/lib/auth/session'
+import { isStaff } from '@/lib/auth/roles'
 
 interface Props {
   session: Session
@@ -39,7 +40,7 @@ export function HeaderActions({ session }: Props) {
           <Link href="/player">Espace joueur</Link>
         )}
 
-        {session?.role === 'admin' && (
+        {isStaff(session?.role) && (
           <Link href="/admin">Admin</Link>
         )}
 

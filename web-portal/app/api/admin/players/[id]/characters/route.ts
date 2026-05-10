@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
+import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
 import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
-  return role === 'admin'
+  return isStaff(role)
 }
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {

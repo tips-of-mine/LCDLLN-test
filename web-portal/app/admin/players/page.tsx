@@ -2,8 +2,18 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { query } from '@/lib/db/connection'
 import { getSession } from '@/lib/auth/session'
+import { isStaff, type AccountRole } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import { PlayerActions, type PlayerRow } from '@/components/admin/PlayerActions'
+
+function roleBadgeLabel(role: AccountRole): string {
+  switch (role) {
+    case 'administrator': return 'Admin'
+    case 'game_master':   return 'GM'
+    case 'moderator':     return 'Mod'
+    default:              return ''
+  }
+}
 
 const PAGE_SIZE = 25
 
@@ -27,7 +37,7 @@ function emailBadge(verified: number) {
 export default async function AdminPlayersPage({ searchParams }: PageProps) {
   const session = await getSession();
   if (!session) redirect('/login?redirect=/admin/players');
-  if (session.role !== 'admin') redirect('/');
+  if (!isStaff(session.role)) redirect('/');
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1)
   const status: AccountStatus = (['active', 'disabled'].includes(searchParams.status ?? '') ? searchParams.status : 'all') as AccountStatus
@@ -194,8 +204,8 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
 
                   {/* Badges */}
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {/* Role badge for admins */}
-                    {player.role === 'admin' && (
+                    {/* Role badge pour staff (admin / GM / moderateur) */}
+                    {isStaff(player.role) && (
                       <span style={{
                         display: 'inline-flex', alignItems: 'center',
                         fontFamily: 'var(--font-ui)', fontSize: '9.5px', letterSpacing: '.2em', textTransform: 'uppercase',
@@ -203,7 +213,7 @@ export default async function AdminPlayersPage({ searchParams }: PageProps) {
                         border: '1px solid rgba(232,197,110,.6)',
                         color: 'var(--ln-accent)', background: 'rgba(232,197,110,.1)', flexShrink: 0,
                       }}>
-                        Admin
+                        {roleBadgeLabel(player.role as AccountRole)}
                       </span>
                     )}
                     {/* Account status */}

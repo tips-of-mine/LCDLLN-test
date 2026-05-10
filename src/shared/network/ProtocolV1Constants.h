@@ -316,4 +316,30 @@ namespace engine::network
 		constexpr uint16_t kOpcodeTradeCommitResponse           = 92u; ///< Master to Client : ACK (OK) ou erreur (WrongState, ...).
 		constexpr uint16_t kOpcodeTradeCancelRequest            = 93u; ///< Client to Master : annule la trade (depuis n'importe quel etat non-terminal).
 		constexpr uint16_t kOpcodeTradeCancelNotification       = 94u; ///< Master to Client (push, request_id=0) : envoye aux 2 participants pour annoncer l'annulation.
+
+	// -------------------------------------------------------------------------
+	// Opcodes Reputation (valeurs 95-97)
+	// Reference : Phase 3 CMANGOS.24 step 3+4. Wire client<->master pour la
+	// reputation par account/faction. Le step 1 (ReputationManager header-only,
+	// avec spillover bitmask) et le step 2 (MysqlReputationStore + migration
+	// 0047) sont deja merges. La reputation est read-only cote client : le
+	// serveur seul decide quand l'incrementer (quete reward, kill, etc.).
+	//
+	// Decoupage opcode :
+	//   - List   (95/96)               : le client demande la liste de ses
+	//     reputations (faction, value, standing).
+	//   - UpdateNotification (97, push) : le serveur notifie le client d'un
+	//     changement (suite a un game event). V1 ne pousse que la faction
+	//     primaire — les valeurs spillover sont persistees mais pas push.
+	//
+	// V1 limitations :
+	//   - Faction names hardcodes "Faction #N" cote client (FactionTemplate
+	//     ticket viendra fournir le map id->name).
+	//   - Pas de rate limiting sur les push (un par GainReputation direct).
+	//   - 98 et 99 reserves pour usage futur.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeReputationListRequest        = 95u; ///< Client to Master : liste les reputations de l'account courant (vide).
+	constexpr uint16_t kOpcodeReputationListResponse       = 96u; ///< Master to Client : tableau {factionId, value, standing} ou Unauthorized.
+	constexpr uint16_t kOpcodeReputationUpdateNotification = 97u; ///< Master to Client (push, request_id=0) : changement d'une reputation (factionId, newValue, newStanding, delta).
 }

@@ -12,6 +12,7 @@
 #include "src/shared/network/MailPayloads.h"
 #include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/GmTicketPayloads.h"
+#include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/TradePayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -19,6 +20,7 @@
 #include "src/client/render/ChatImGuiRenderer.h"
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
+#include "src/client/render/ReputationImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -855,6 +857,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.24 (Phase 3.24 step 3+4) — Init du presenter Reputation +
+		// cable du send callback. Reception dispatchee dans le push handler
+		// ci-dessous (opcodes 96/97). Fire-and-forget de la requete 95 via
+		// SendGenericRequestAsync.
+		if (!m_reputationUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] ReputationUiPresenter init FAILED — panneau reputation desactive");
+		}
+		else
+		{
+			m_reputationUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -951,6 +968,22 @@ namespace engine
 				}
 				m_tradeWindowUi.RequestBeginTrade(targetAccountId);
 				LOG_INFO(Core, "[Engine] /trade {}", targetAccountId);
+				return true;
+			}
+			// CMANGOS.24 (Phase 3.24 step 3+4) — Slash command /rep et /reputation
+			// pour ouvrir/fermer le panneau Reputation et synchroniser la liste
+			// depuis le master au moment de l'ouverture.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/rep" || text == "/reputation"
+				    || text.starts_with("/rep ") || text.starts_with("/rep\t")
+				    || text.starts_with("/reputation ") || text.starts_with("/reputation\t")))
+			{
+				m_reputationVisible = !m_reputationVisible;
+				if (m_reputationVisible)
+				{
+					m_reputationUi.RequestReputationList();
+				}
+				LOG_INFO(Core, "[Engine] /rep toggle (visible={})", m_reputationVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1249,6 +1282,30 @@ namespace engine
 					return;
 				}
 				m_gmTicketUi.OnResolvedNotification(*parsed);
+				return;
+			}
+			// CMANGOS.24 (Phase 3.24 step 3+4) — Dispatch des reponses Reputation
+			// (96) + push UpdateNotification (97).
+			case kOpcodeReputationListResponse:
+			{
+				auto parsed = ParseReputationListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] REPUTATION_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_reputationUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeReputationUpdateNotification:
+			{
+				auto parsed = ParseReputationUpdateNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] REPUTATION_UPDATE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_reputationUi.OnUpdateNotification(*parsed);
 				return;
 			}
 			// CMANGOS.27 (Phase 4.27 step 3+4) — Dispatch des reponses Trade
@@ -3464,6 +3521,7 @@ namespace engine
 		m_chatUi.Shutdown();
 		m_mailUi.Shutdown();
 		m_gmTicketUi.Shutdown();
+		m_reputationUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3673,6 +3731,12 @@ namespace engine
 				// taille viewport est mise a jour dans la boucle Render plus bas.
 				m_gmTicketImGui = std::make_unique<engine::render::GmTicketImGuiRenderer>();
 				m_gmTicketImGui->SetPresenter(&m_gmTicketUi);
+				// CMANGOS.24 (Phase 3.24 step 3+4) — Renderer ImGui du panneau
+				// Reputation. Partage le contexte ImGui avec auth/chat/mail/gmtickets.
+				// Visible uniquement quand m_reputationVisible (toggle via /rep).
+				// La taille viewport est mise a jour dans la boucle Render plus bas.
+				m_reputationImGui = std::make_unique<engine::render::ReputationImGuiRenderer>();
+				m_reputationImGui->SetPresenter(&m_reputationUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -4702,6 +4766,16 @@ namespace engine
 				m_gmTicketImGui->SetEnabled(true);
 				m_gmTicketImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_gmTicketImGui->Render();
+			}
+			// CMANGOS.24 (Phase 3.24 step 3+4) — Tick le toast (expire ~3s) puis
+			// render le panneau Reputation si visible. Le toast push est rendu
+			// en plus de la liste si actif (overlay non bloquant).
+			m_reputationUi.TickToast(static_cast<float>(m_time.DeltaSeconds()));
+			if (m_reputationVisible && m_reputationImGui && m_reputationUi.IsInitialized())
+			{
+				m_reputationImGui->SetEnabled(true);
+				m_reputationImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_reputationImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

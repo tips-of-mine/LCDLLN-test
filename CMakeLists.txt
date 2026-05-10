@@ -255,6 +255,7 @@ add_library(engine_core
   src/client/social/FriendsUi.cpp
   src/client/social/IgnoreListUi.cpp
   src/client/gmtickets/GmTicketUi.cpp
+  src/client/reputation/ReputationUi.cpp
   src/client/social/PartyHud.cpp
   src/client/world/ZonePreloadHook.cpp
   src/shared/net/ChatSystem.cpp
@@ -334,6 +335,7 @@ add_library(engine_core
   src/client/render/ChatImGuiRenderer.cpp
   src/client/render/MailImGuiRenderer.cpp
   src/client/render/GmTicketImGuiRenderer.cpp
+  src/client/render/ReputationImGuiRenderer.cpp
   src/client/render/EditorHubImGuiRenderer.cpp
   src/client/render/DecalSystem.cpp
   src/client/render/DecalPass.cpp
@@ -426,6 +428,7 @@ add_library(engine_core
   src/shared/network/MailPayloads.cpp
   src/shared/network/QuestPayloads.cpp
   src/shared/network/GmTicketPayloads.cpp
+  src/shared/network/ReputationPayloads.cpp
   src/shared/network/TradePayloads.cpp
   src/shared/network/ShardPayloads.cpp
   src/shared/network/TermsPayloads.cpp
@@ -653,6 +656,11 @@ add_test(NAME ignore_list_payloads_tests COMMAND ignore_list_payloads_tests)
 add_executable(gm_ticket_payloads_tests src/shared/network/GmTicketPayloadsTests.cpp)
 target_link_libraries(gm_ticket_payloads_tests PRIVATE engine_core)
 add_test(NAME gm_ticket_payloads_tests COMMAND gm_ticket_payloads_tests)
+
+# CMANGOS.24 (Phase 3.24 step 3+4): REPUTATION_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(reputation_payloads_tests src/shared/network/ReputationPayloadsTests.cpp)
+target_link_libraries(reputation_payloads_tests PRIVATE engine_core)
+add_test(NAME reputation_payloads_tests COMMAND reputation_payloads_tests)
 
 # CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
 add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)

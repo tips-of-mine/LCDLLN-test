@@ -616,4 +616,48 @@ namespace engine::network
 	constexpr uint16_t kOpcodeWeatherUnsubscribeRequest  = 154u; ///< Client to Master : se desabonne (zoneId).
 	constexpr uint16_t kOpcodeWeatherUnsubscribeResponse = 155u; ///< Master to Client : OK ou NotSubscribed / Unauthorized.
 	constexpr uint16_t kOpcodeWeatherUpdateNotification  = 156u; ///< Master to Client (push, request_id=0) : changement meteo (zoneId, kind, intensity).
+
+	// =====================================================================
+	// CMANGOS.31 step 3+4 — GameEvents wire (events saisonniers, list,
+	// subscribe global, push state change). Master tient en memoire un
+	// GameEventManager (V1 seed 4 events : Halloween, Winter Veil, Lunar
+	// Festival, Midsummer Fire Festival).
+	//
+	// Architecture : 4 events seedees au boot avec timestamps absolus
+	// (ms depuis epoch) + duration + recur period. Le master tient en
+	// memoire la liste des subscribers globaux (abonnement non par event
+	// mais general aux changements). V1 simplifie : a chaque
+	// SubscribeRequest, master envoie un snapshot complet des events au
+	// nouvel abonne via une serie de StateChangeNotification (un par event
+	// dont l'etat differe du dernier broadcast). Pas de tick periodique
+	// V1.
+	//
+	// V1 limitations :
+	//   - 4 events hardcodes (Halloween, Winter Veil, Lunar Festival,
+	//     Midsummer Fire). Future PR : DB seed via MysqlGameEventStore.
+	//   - Subscribe = snapshot one-shot pour le nouvel abonne (pas de
+	//     broadcast cross-subscribers V1). Vrai broadcast quand tick
+	//     periodique sera branche.
+	//   - Subscriptions in-memory (perdues au reboot).
+	//   - Pas de SyncGameEvents RPC entre master et shardd (master
+	//     autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - List       (157/158)               : liste des events + state.
+	//   - Subscribe  (159/160)               : abonnement global aux push.
+	//   - Unsubscribe (161/162)              : retire l'abonnement global.
+	//   - StateChangeNotification (163, push) : changement etat event
+	//                                           (eventId, newState, untilTsMs).
+	//
+	// Wire format state : uint8 (Inactive=0, Active=1). untilTsMs : uint64
+	// LE (timestamp absolu ms epoch, prochaine bascule ; 0 = pas de
+	// recurrence et event termine definitivement).
+	// =====================================================================
+	constexpr uint16_t kOpcodeGameEventListRequest             = 157u; ///< Client to Master : liste des events saisonniers (vide).
+	constexpr uint16_t kOpcodeGameEventListResponse            = 158u; ///< Master to Client : liste {eventId, name, state, startTsMs, durationMs, recurMs} ou Unauthorized.
+	constexpr uint16_t kOpcodeGameEventSubscribeRequest        = 159u; ///< Client to Master : s'abonne aux push (vide, abonnement global).
+	constexpr uint16_t kOpcodeGameEventSubscribeResponse       = 160u; ///< Master to Client : OK ou AlreadySubscribed / Unauthorized.
+	constexpr uint16_t kOpcodeGameEventUnsubscribeRequest      = 161u; ///< Client to Master : se desabonne (vide).
+	constexpr uint16_t kOpcodeGameEventUnsubscribeResponse     = 162u; ///< Master to Client : OK ou NotSubscribed / Unauthorized.
+	constexpr uint16_t kOpcodeGameEventStateChangeNotification = 163u; ///< Master to Client (push, request_id=0) : changement etat event (eventId, newState, untilTsMs).
 }

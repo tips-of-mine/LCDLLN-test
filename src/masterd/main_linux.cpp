@@ -43,6 +43,7 @@
 #include "src/masterd/handlers/battleground/BattleGroundHandler.h"
 #include "src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.h"
 #include "src/masterd/handlers/weather/WeatherHandler.h"
+#include "src/masterd/handlers/events/GameEventHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -587,6 +588,21 @@ int main(int argc, char** argv)
 	weatherHandler.SeedV1Zones();
 	LOG_INFO(Net, "[ServerMain] WeatherHandler configured (CMANGOS.42 step 3+4, in-memory, 3 zones seed)");
 
+	// CMANGOS.31 (Phase 5.31 step 3+4) — GameEventHandler : list/subscribe
+	// global + push StateChange. V1 : 4 events seedees au boot (Halloween,
+	// Winter Veil, Lunar Festival, Midsummer Fire). Les opcodes 157/159/161
+	// sont dispatches au handler ; les responses 158/160/162 et la push
+	// notification 163 (StateChange) sont emises par le handler. V1
+	// limitations : subscribe = snapshot one-shot (pas de broadcast
+	// cross-subscribers, pas de tick periodique). Pas de SyncGameEvents RPC
+	// entre master et shardd.
+	engine::server::GameEventHandler gameEventHandler;
+	gameEventHandler.SetServer(&server);
+	gameEventHandler.SetSessionManager(&sessionManager);
+	gameEventHandler.SetConnectionSessionMap(&connSessionMap);
+	gameEventHandler.SeedV1Events();
+	LOG_INFO(Net, "[ServerMain] GameEventHandler configured (CMANGOS.31 step 3+4, in-memory, 4 events seed)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -711,6 +727,10 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeWeatherSubscribeRequest
 		      || opcode == kOpcodeWeatherUnsubscribeRequest)
 			weatherHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeGameEventListRequest
+		      || opcode == kOpcodeGameEventSubscribeRequest
+		      || opcode == kOpcodeGameEventUnsubscribeRequest)
+			gameEventHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

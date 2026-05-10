@@ -125,6 +125,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/battleground/BattleGroundHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/weather/WeatherHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/events/GameEventHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
@@ -139,6 +140,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/BattleGroundPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/OutdoorPvpPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/WeatherPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/GameEventPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatSanitizer.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatGate.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/chat/ChatCommandRouter.cpp

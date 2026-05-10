@@ -17,6 +17,7 @@
 #include "src/shared/network/BattleGroundPayloads.h"
 #include "src/shared/network/OutdoorPvpPayloads.h"
 #include "src/shared/network/WeatherPayloads.h"
+#include "src/shared/network/GameEventPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -32,6 +33,7 @@
 #include "src/client/render/BattleGroundImGuiRenderer.h"
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
 #include "src/client/render/WeatherImGuiRenderer.h"
+#include "src/client/render/GameEventImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -991,6 +993,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.31 (Phase 5.31 step 3+4) — Init du presenter GameEvents +
+		// cable du send callback pour les requetes 157/159/161. Reception
+		// dispatchee dans le push handler ci-dessous (responses 158/160/162
+		// + push 163 StateChange).
+		if (!m_gameEventUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] GameEventUiPresenter init FAILED — panneau GameEvents desactive");
+		}
+		else
+		{
+			m_gameEventUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1194,6 +1211,21 @@ namespace engine
 					m_weatherUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /weather toggle (visible={})", m_weatherVisible);
+				return true;
+			}
+			// CMANGOS.31 (Phase 5.31 step 3+4) — Slash command /events pour
+			// ouvrir/fermer le panneau GameEvents et synchroniser la liste
+			// depuis le master au moment de l'ouverture. La touche E fait
+			// la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/events" || text.starts_with("/events ") || text.starts_with("/events\t")))
+			{
+				m_gameEventVisible = !m_gameEventVisible;
+				if (m_gameEventVisible)
+				{
+					m_gameEventUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] /events toggle (visible={})", m_gameEventVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1812,6 +1844,52 @@ namespace engine
 					return;
 				}
 				m_weatherUi.OnUpdateNotification(*parsed);
+				return;
+			}
+			// CMANGOS.31 (Phase 5.31 step 3+4) — Dispatch des reponses
+			// GameEvents (158/160/162) + push notification (163).
+			case kOpcodeGameEventListResponse:
+			{
+				auto parsed = ParseGameEventListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GAME_EVENT_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gameEventUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeGameEventSubscribeResponse:
+			{
+				auto parsed = ParseGameEventSubscribeResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GAME_EVENT_SUBSCRIBE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gameEventUi.OnSubscribeResponse(*parsed);
+				return;
+			}
+			case kOpcodeGameEventUnsubscribeResponse:
+			{
+				auto parsed = ParseGameEventUnsubscribeResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GAME_EVENT_UNSUBSCRIBE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gameEventUi.OnUnsubscribeResponse(*parsed);
+				return;
+			}
+			case kOpcodeGameEventStateChangeNotification:
+			{
+				auto parsed = ParseGameEventStateChangeNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] GAME_EVENT_STATE_CHANGE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_gameEventUi.OnStateChangeNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -4117,6 +4195,7 @@ namespace engine
 		m_battleGroundUi.Shutdown();
 		m_outdoorPvpUi.Shutdown();
 		m_weatherUi.Shutdown();
+		m_gameEventUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -4276,6 +4355,20 @@ namespace engine
 					m_weatherUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] Y toggle weather (visible={})", m_weatherVisible);
+			}
+			// CMANGOS.31 (Phase 5.31 step 3+4) — Touche E : toggle panneau
+			// GameEvents + RequestList si on l'ouvre. Memes guards que Y.
+			// Pas de conflit Ctrl+E (non utilise par WorldEditorShell).
+			if (inGameNoMenu && !chatBlocks
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasPressed(engine::platform::Key::E))
+			{
+				m_gameEventVisible = !m_gameEventVisible;
+				if (m_gameEventVisible)
+				{
+					m_gameEventUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] E toggle gameevents (visible={})", m_gameEventVisible);
 			}
 		}
 
@@ -4493,6 +4586,13 @@ namespace engine
 				// presenter (selectionne via le bouton "Set Active" du panel).
 				m_weatherImGui = std::make_unique<engine::render::WeatherImGuiRenderer>();
 				m_weatherImGui->SetPresenter(&m_weatherUi);
+				// CMANGOS.31 (Phase 5.31 step 3+4) — Renderer ImGui GameEvents.
+				// Le panel principal n'est visible que quand m_gameEventVisible
+				// (toggle via /events ou touche E). Le toast 5s sur dernier
+				// StateChange reçu est rendu independamment du flag (peut
+				// arriver panneau ferme).
+				m_gameEventImGui = std::make_unique<engine::render::GameEventImGuiRenderer>();
+				m_gameEventImGui->SetPresenter(&m_gameEventUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5605,6 +5705,16 @@ namespace engine
 				m_weatherImGui->SetEnabled(m_weatherVisible);
 				m_weatherImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_weatherImGui->Render();
+			}
+			// CMANGOS.31 (Phase 5.31 step 3+4) — Render du panel GameEvents
+			// si m_gameEventVisible (toggle via /events ou touche E), ET du
+			// toast 5s sur dernier StateChange reçu (rendu independamment
+			// par Render() si lastChangeTimeMs est recent).
+			if (m_gameEventImGui && m_gameEventUi.IsInitialized())
+			{
+				m_gameEventImGui->SetEnabled(m_gameEventVisible);
+				m_gameEventImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_gameEventImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

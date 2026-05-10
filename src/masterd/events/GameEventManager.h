@@ -57,6 +57,12 @@ namespace engine::server::events
 
 		size_t Size() const noexcept { return m_events.size(); }
 
+		/// CMANGOS.31 step 3+4 — Acces lecture seule a la map d'events pour
+		/// les iterations cote handler (List response, snapshot subscribe).
+		/// Modification additive : permet au GameEventHandler de construire
+		/// les summaries sans dupliquer la liste des ids.
+		const std::unordered_map<EventId, GameEventDef>& Events() const noexcept { return m_events; }
+
 	private:
 		std::unordered_map<EventId, GameEventDef> m_events;
 	};

@@ -38,6 +38,7 @@ namespace engine::platform
 		S = 'S',
 		D = 'D',
 		E = 'E',
+		U = 'U',
 		X = 'X',
 		Y = 'Y',
 		Z = 'Z',

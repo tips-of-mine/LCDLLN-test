@@ -261,6 +261,7 @@ add_library(engine_core
   src/client/outdoorpvp/OutdoorPvpUi.cpp
   src/client/weather/WeatherUi.cpp
   src/client/events/GameEventUi.cpp
+  src/client/guild/GuildUi.cpp
   src/client/lfg/LfgUi.cpp
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
@@ -349,6 +350,7 @@ add_library(engine_core
   src/client/render/OutdoorPvpImGuiRenderer.cpp
   src/client/render/WeatherImGuiRenderer.cpp
   src/client/render/GameEventImGuiRenderer.cpp
+  src/client/render/GuildImGuiRenderer.cpp
   src/client/render/LfgImGuiRenderer.cpp
   src/client/render/CinematicImGuiRenderer.cpp
   src/client/render/SkillBookImGuiRenderer.cpp
@@ -450,6 +452,7 @@ add_library(engine_core
   src/shared/network/OutdoorPvpPayloads.cpp
   src/shared/network/WeatherPayloads.cpp
   src/shared/network/GameEventPayloads.cpp
+  src/shared/network/GuildPayloads.cpp
   src/shared/network/LfgPayloads.cpp
   src/shared/network/CinematicPayloads.cpp
   src/shared/network/SkillPayloads.cpp
@@ -725,6 +728,11 @@ add_test(NAME weather_payloads_tests COMMAND weather_payloads_tests)
 add_executable(gameevent_payloads_tests src/shared/network/GameEventPayloadsTests.cpp)
 target_link_libraries(gameevent_payloads_tests PRIVATE engine_core)
 add_test(NAME gameevent_payloads_tests COMMAND gameevent_payloads_tests)
+
+# CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Guild payloads round-trip tests (no DB / no network).
+add_executable(guild_payloads_tests src/shared/network/GuildPayloadsTests.cpp)
+target_link_libraries(guild_payloads_tests PRIVATE engine_core)
+add_test(NAME guild_payloads_tests COMMAND guild_payloads_tests)
 
 # CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
 add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)

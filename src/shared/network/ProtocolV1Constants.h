@@ -660,4 +660,41 @@ namespace engine::network
 	constexpr uint16_t kOpcodeGameEventUnsubscribeRequest      = 161u; ///< Client to Master : se desabonne (vide).
 	constexpr uint16_t kOpcodeGameEventUnsubscribeResponse     = 162u; ///< Master to Client : OK ou NotSubscribed / Unauthorized.
 	constexpr uint16_t kOpcodeGameEventStateChangeNotification = 163u; ///< Master to Client (push, request_id=0) : changement etat event (eventId, newState, untilTsMs).
+
+	// =====================================================================
+	// CMANGOS.21 step 3+4 — Guilds wire (guild list, members, bank, permissions
+	// par rang). Master tient en memoire un registry guildes (V1 seed hardcode
+	// 2 guildes + GuildPermissionMatrix WoW defaults).
+	//
+	// Architecture : 2 guildes seedees au boot (Les Gardiens + L'Ombre) avec
+	// leurs membres, bank tab 0 et permissions par rang. Le master tient en
+	// memoire un std::vector<InMemoryGuild> et la matrice de permissions
+	// (cf. GuildPermissionMatrix). V1 simplifie : pas de filtrage par account
+	// membership (n'importe quel client logged-in peut consulter n'importe
+	// quelle guilde) ; vraie ACL via la matrice viendra plus tard.
+	//
+	// V1 limitations :
+	//   - 2 guildes hardcodees (Les Gardiens, L'Ombre). Future PR : DB seed
+	//     via MysqlGuildStore + creation in-game via /guild create.
+	//   - Pas de filtrage par account membership (lecture seule globale V1).
+	//   - Bank tab 0 only (V1). Future PR : multi-onglets.
+	//   - Pas de modification client (Invite/Remove/Promote/Demote V1 read-only).
+	//   - Pas de SyncGuilds RPC entre master et shardd (master autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - List         (164/165) : liste des guildes (summary).
+	//   - Members      (166/167) : liste des membres d'une guilde.
+	//   - Permissions  (168/169) : matrice mask par rang.
+	//   - Bank         (170/171) : contenu de la bank tab 0.
+	//   - MotdUpdate   (172, push, request_id=0) : changement de MOTD.
+	// =====================================================================
+	constexpr uint16_t kOpcodeGuildListRequest            = 164u; ///< Client to Master : liste des guildes (vide).
+	constexpr uint16_t kOpcodeGuildListResponse           = 165u; ///< Master to Client : liste {guildId, name, motd, memberCount, leaderName} ou Unauthorized.
+	constexpr uint16_t kOpcodeGuildMembersRequest         = 166u; ///< Client to Master : liste des membres d'une guilde (guildId).
+	constexpr uint16_t kOpcodeGuildMembersResponse        = 167u; ///< Master to Client : liste {accountName, rankId, rankName, online} ou UnknownGuild / Unauthorized.
+	constexpr uint16_t kOpcodeGuildPermissionsRequest     = 168u; ///< Client to Master : matrice permissions (guildId).
+	constexpr uint16_t kOpcodeGuildPermissionsResponse    = 169u; ///< Master to Client : liste {rankId, rankName, mask} ou UnknownGuild / Unauthorized.
+	constexpr uint16_t kOpcodeGuildBankRequest            = 170u; ///< Client to Master : contenu bank d'une guilde (guildId, tabIndex).
+	constexpr uint16_t kOpcodeGuildBankResponse           = 171u; ///< Master to Client : liste {slotIndex, itemName, count} ou UnknownGuild / NoPermission / Unauthorized.
+	constexpr uint16_t kOpcodeGuildMotdUpdateNotification = 172u; ///< Master to Client (push, request_id=0) : changement MOTD (guildId, newMotd).
 }

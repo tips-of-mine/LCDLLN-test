@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/events/GameEventHandler.h"
 
+#include "src/masterd/handlers/lunar/LunarHandler.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -10,6 +11,7 @@
 #include "src/shared/network/ProtocolV1Constants.h"
 
 #include <chrono>
+#include <climits>
 #include <vector>
 
 namespace engine::server
@@ -144,8 +146,27 @@ namespace engine::server
 			m_eventNames[kEventMidsummerFire] = "Midsummer Fire Festival";
 		}
 
+		// Event 5 : "Nuit de la Lune Noire" — Phase 5 Lunar gate event.
+		// Fil rouge thematique LCDLLN. Toujours actif time-wise
+		// (startTs=0, durationMs ~= forever, pas de recurrence) ; gate
+		// par les phases lunaires 0 (NewMoon), 14 (EarthshineEarly),
+		// 15 (EarthshineLate) via kLunarPhaseNoireMask = 0xC001.
+		// Visible dans la liste seulement quand la lune est noire
+		// (~21% du temps reel sur le cycle 14j).
+		{
+			GameEventDef d;
+			d.id                       = kEventLuneNoire;
+			d.name                     = "Nuit de la Lune Noire";
+			d.startTsMs                = 0u;
+			d.durationMs               = ULLONG_MAX / 2u;
+			d.recurMs                  = 0u;
+			d.requiresLunarPhaseMask   = engine::server::events::kLunarPhaseNoireMask;
+			m_manager.Register(d);
+			m_eventNames[kEventLuneNoire] = "Nuit de la Lune Noire";
+		}
+
 		m_seeded = true;
-		LOG_INFO(Net, "[GameEventHandler] V1 events seeded : Halloween, Winter Veil, Lunar Festival, Midsummer Fire Festival");
+		LOG_INFO(Net, "[GameEventHandler] V1 events seeded : Halloween, Winter Veil, Lunar Festival, Midsummer Fire Festival, Nuit de la Lune Noire");
 	}
 
 	// -------------------------------------------------------------------------
@@ -228,6 +249,11 @@ namespace engine::server
 		using namespace engine::network;
 
 		const uint64_t nowMs = NowMs();
+		// Phase lunaire courante : si LunarHandler est branche on l'utilise
+		// pour filtrer (CurrentPhase prend son propre mutex). Si null,
+		// 0 par defaut (et le filtre sera kLunarPhaseAny -> bypass).
+		const uint8_t currentLunarPhase = m_lunarHandler
+			? m_lunarHandler->CurrentPhase() : static_cast<uint8_t>(0u);
 		std::vector<GameEventSummary> events;
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
@@ -235,7 +261,9 @@ namespace engine::server
 			events.reserve(evs.size());
 			for (const auto& [eid, def] : evs)
 			{
-				const EventState st = m_manager.GetState(eid, nowMs);
+				const EventState st = m_lunarHandler
+					? m_manager.GetStateFiltered(eid, nowMs, currentLunarPhase)
+					: m_manager.GetState(eid, nowMs);
 				GameEventSummary summary;
 				summary.eventId    = eid;
 				summary.name       = def.name;
@@ -247,8 +275,8 @@ namespace engine::server
 			}
 		}
 
-		LOG_INFO(Net, "[GameEventHandler] List account={} count={}",
-			accountId, events.size());
+		LOG_INFO(Net, "[GameEventHandler] List account={} count={} lunarPhase={}",
+			accountId, events.size(), static_cast<unsigned>(currentLunarPhase));
 
 		auto pkt = BuildGameEventListResponsePacket(0u, events, requestId, sessionIdHeader);
 		if (!pkt.empty())
@@ -269,6 +297,11 @@ namespace engine::server
 		(void)ParseGameEventSubscribeRequestPayload(payload, payloadSize);
 
 		const uint64_t nowMs = NowMs();
+		// Phase lunaire courante (cf HandleList). Lue avant de prendre
+		// m_mutex car CurrentPhase prend son propre mutex (eviter
+		// l'inter-locking avec m_lunarHandler).
+		const uint8_t currentLunarPhase = m_lunarHandler
+			? m_lunarHandler->CurrentPhase() : static_cast<uint8_t>(0u);
 		bool alreadySubscribed = false;
 
 		// Snapshot a pousser au nouvel abonne : eventId -> (newState, untilTsMs).
@@ -291,7 +324,9 @@ namespace engine::server
 				snapshot.reserve(evs.size());
 				for (const auto& [eid, def] : evs)
 				{
-					const EventState curSt = m_manager.GetState(eid, nowMs);
+					const EventState curSt = m_lunarHandler
+						? m_manager.GetStateFiltered(eid, nowMs, currentLunarPhase)
+						: m_manager.GetState(eid, nowMs);
 					const uint8_t curStByte = static_cast<uint8_t>(curSt);
 					auto it = m_lastBroadcastState.find(eid);
 					const bool changed = (it == m_lastBroadcastState.end())

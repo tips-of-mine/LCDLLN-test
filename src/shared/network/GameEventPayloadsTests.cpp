@@ -5,11 +5,15 @@
  * Returns 0 on success, 1 on first failure.
  */
 
+#include "src/masterd/events/GameEventManager.h"
 #include "src/shared/network/GameEventPayloads.h"
 #include "src/shared/network/PacketView.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 
+#include <cassert>
+#include <climits>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -417,6 +421,128 @@ static void TestStateChangePacket()
 }
 
 // -----------------------------------------------------------------------------
+// Phase 5 Lunar : filtre lune <-> GameEvents (GameEventManager)
+// -----------------------------------------------------------------------------
+
+/// Verifie que kLunarPhaseAny laisse passer toutes les phases (0..15).
+/// Sentinel 0xFFFF = "pas de restriction lunaire".
+static void TestLunarPhaseAllowedAny()
+{
+	using engine::server::events::GameEventManager;
+	using engine::server::events::kLunarPhaseAny;
+	for (uint8_t p = 0; p < 16; ++p)
+	{
+		Assert(GameEventManager::IsLunarPhaseAllowed(kLunarPhaseAny, p),
+			"kLunarPhaseAny accepte toutes les phases 0..15");
+	}
+	// Phase >= 16 reste rejetee meme avec kLunarPhaseAny... non,
+	// kLunarPhaseAny passe toujours par early-return dans le helper.
+	Assert(GameEventManager::IsLunarPhaseAllowed(kLunarPhaseAny, 99),
+		"kLunarPhaseAny accepte meme phase invalide (early-return mask=0xFFFF)");
+	std::puts("[OK] TestLunarPhaseAllowedAny");
+}
+
+/// Verifie que kLunarPhaseNoireMask = 0xC001 autorise uniquement les
+/// phases 0/14/15 (Lune Noire) et rejette les autres.
+static void TestLunarPhaseNoireMask()
+{
+	using engine::server::events::GameEventManager;
+	using engine::server::events::kLunarPhaseNoireMask;
+	Assert(GameEventManager::IsLunarPhaseAllowed(kLunarPhaseNoireMask, 0),
+		"kLunarPhaseNoireMask accepte phase 0 (NewMoon)");
+	Assert(GameEventManager::IsLunarPhaseAllowed(kLunarPhaseNoireMask, 14),
+		"kLunarPhaseNoireMask accepte phase 14 (EarthshineEarly)");
+	Assert(GameEventManager::IsLunarPhaseAllowed(kLunarPhaseNoireMask, 15),
+		"kLunarPhaseNoireMask accepte phase 15 (EarthshineLate)");
+	Assert(!GameEventManager::IsLunarPhaseAllowed(kLunarPhaseNoireMask, 7),
+		"kLunarPhaseNoireMask rejette phase 7 (FullMoon)");
+	Assert(!GameEventManager::IsLunarPhaseAllowed(kLunarPhaseNoireMask, 1),
+		"kLunarPhaseNoireMask rejette phase 1");
+	Assert(!GameEventManager::IsLunarPhaseAllowed(kLunarPhaseNoireMask, 16),
+		"kLunarPhaseNoireMask rejette phase invalide >= 16");
+	std::puts("[OK] TestLunarPhaseNoireMask");
+}
+
+/// Verifie GetStateFiltered : un event toujours-actif time-wise doit etre
+/// Active si la phase lunaire est autorisee, Inactive sinon. Verifie aussi
+/// que GetState (sans filtre) reste inchange (backward compat).
+static void TestGetStateFiltered()
+{
+	using namespace engine::server::events;
+	GameEventManager mgr;
+	GameEventDef def;
+	def.id          = 100u;
+	def.name        = "TestLuneNoire";
+	def.startTsMs   = 0u;
+	def.durationMs  = ULLONG_MAX / 2u;
+	def.recurMs     = 0u;
+	def.requiresLunarPhaseMask = kLunarPhaseNoireMask;
+	mgr.Register(def);
+
+	// Phase 0 -> Active (NewMoon dans le mask).
+	Assert(mgr.GetStateFiltered(100u, 1000u, 0) == EventState::Active,
+		"GetStateFiltered phase 0 -> Active");
+	// Phase 7 -> Inactive (time OK, lunaire NOK).
+	Assert(mgr.GetStateFiltered(100u, 1000u, 7) == EventState::Inactive,
+		"GetStateFiltered phase 7 -> Inactive (filtre lune)");
+	// Phase 14 -> Active (EarthshineEarly).
+	Assert(mgr.GetStateFiltered(100u, 1000u, 14) == EventState::Active,
+		"GetStateFiltered phase 14 -> Active");
+	// Phase 15 -> Active (EarthshineLate).
+	Assert(mgr.GetStateFiltered(100u, 1000u, 15) == EventState::Active,
+		"GetStateFiltered phase 15 -> Active");
+	// Sans filtre : Active (time-wise) — backward compat preservee.
+	Assert(mgr.GetState(100u, 1000u) == EventState::Active,
+		"GetState sans filtre -> Active (backward compat)");
+
+	// Event sans restriction lunaire : doit etre Active quelle que soit la phase.
+	GameEventDef def2;
+	def2.id          = 200u;
+	def2.name        = "TestNoLunarRestriction";
+	def2.startTsMs   = 0u;
+	def2.durationMs  = ULLONG_MAX / 2u;
+	def2.recurMs     = 0u;
+	// requiresLunarPhaseMask = kLunarPhaseAny (default).
+	mgr.Register(def2);
+	for (uint8_t p = 0; p < 16; ++p)
+	{
+		Assert(mgr.GetStateFiltered(200u, 1000u, p) == EventState::Active,
+			"GetStateFiltered event sans filtre lunaire -> Active toutes phases");
+	}
+
+	// Event inexistant -> Inactive.
+	Assert(mgr.GetStateFiltered(999u, 1000u, 0) == EventState::Inactive,
+		"GetStateFiltered event inexistant -> Inactive");
+
+	// ActiveEventsFiltered : phase 7 -> doit voir 200 (no restriction)
+	// mais pas 100 (Lune Noire only).
+	auto activeP7 = mgr.ActiveEventsFiltered(1000u, 7);
+	bool sees200P7 = false;
+	bool sees100P7 = false;
+	for (auto id : activeP7)
+	{
+		if (id == 200u) sees200P7 = true;
+		if (id == 100u) sees100P7 = true;
+	}
+	Assert(sees200P7 && !sees100P7,
+		"ActiveEventsFiltered phase 7 : voit 200 (no restriction), pas 100 (LuneNoire)");
+
+	// Phase 0 : doit voir les deux.
+	auto activeP0 = mgr.ActiveEventsFiltered(1000u, 0);
+	bool sees200P0 = false;
+	bool sees100P0 = false;
+	for (auto id : activeP0)
+	{
+		if (id == 200u) sees200P0 = true;
+		if (id == 100u) sees100P0 = true;
+	}
+	Assert(sees200P0 && sees100P0,
+		"ActiveEventsFiltered phase 0 : voit 100 (LuneNoire) ET 200 (no restriction)");
+
+	std::puts("[OK] TestGetStateFiltered");
+}
+
+// -----------------------------------------------------------------------------
 // main
 // -----------------------------------------------------------------------------
 
@@ -453,6 +579,11 @@ int main()
 	TestStateChangeEventIdMax();
 	TestStateChangeRejectsShort();
 	TestStateChangePacket();
+
+	// Phase 5 Lunar : filtre lune <-> GameEvents.
+	TestLunarPhaseAllowedAny();
+	TestLunarPhaseNoireMask();
+	TestGetStateFiltered();
 
 	std::cerr << (s_failCount == 0 ? "[OK] all gameevent payload tests passed\n"
 	                                : "[FAIL] some gameevent tests failed\n");

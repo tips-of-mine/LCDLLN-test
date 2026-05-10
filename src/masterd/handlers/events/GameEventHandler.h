@@ -51,6 +51,7 @@ namespace engine::server
 	class NetServer;
 	class SessionManager;
 	class ConnectionSessionMap;
+	class LunarHandler;
 }
 
 namespace engine::server
@@ -68,9 +69,19 @@ namespace engine::server
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
 
-		/// Initialise le store V1 : enregistre les 4 events hardcodes
+		/// Branche le LunarHandler pour pouvoir filtrer les events par phase
+		/// lunaire. Optionnel (peut etre null) ; si null, le filtre est
+		/// ignore (kLunarPhaseAny par defaut sur tous les events).
+		///
+		/// \param h Pointeur non-owning sur le LunarHandler partage. La duree
+		///          de vie doit englober celle du GameEventHandler (cf
+		///          main_linux.cpp ou les deux sont des locaux du scope main).
+		void SetLunarHandler(engine::server::LunarHandler* h) { m_lunarHandler = h; }
+
+		/// Initialise le store V1 : enregistre les events hardcodes
 		/// (Halloween, Winter Veil, Lunar Festival, Midsummer Fire Festival)
-		/// avec leurs timestamps absolus + duration + recur period.
+		/// + en Phase 5 Lunar le 5e event "Nuit de la Lune Noire" gate par
+		/// les phases lunaires 0/14/15 (kLunarPhaseNoireMask).
 		/// Idempotent : appelable a chaque boot.
 		void SeedV1Events();
 
@@ -126,15 +137,21 @@ namespace engine::server
 		/// si la connexion n'a pas de session ou si la map n'est pas branchee.
 		uint64_t FindSessionIdForConn(uint32_t connId) const;
 
-		/// V1 : 4 events hardcodes au boot.
+		/// V1 : 4 events hardcodes au boot + 1 event Phase 5 Lunar
+		/// gate par phase lunaire (Lune Noire).
 		static constexpr uint32_t kEventHalloween       = 1u;
 		static constexpr uint32_t kEventWinterVeil      = 2u;
 		static constexpr uint32_t kEventLunarFestival   = 3u;
 		static constexpr uint32_t kEventMidsummerFire   = 4u;
+		static constexpr uint32_t kEventLuneNoire       = 5u;
 
-		NetServer*                                       m_server     = nullptr;
-		SessionManager*                                  m_sessionMgr = nullptr;
-		ConnectionSessionMap*                            m_connMap    = nullptr;
+		NetServer*                                       m_server       = nullptr;
+		SessionManager*                                  m_sessionMgr   = nullptr;
+		ConnectionSessionMap*                            m_connMap      = nullptr;
+		/// Optionnel : si non-null, sa CurrentPhase() est utilisee pour
+		/// filtrer les events via GetStateFiltered. Si null, comportement
+		/// inchange (backward compat tests sans LunarHandler).
+		LunarHandler*                                    m_lunarHandler = nullptr;
 
 		/// Mutex protegeant m_manager + m_eventNames + m_subscribers
 		/// + m_lastBroadcastState + m_seeded.

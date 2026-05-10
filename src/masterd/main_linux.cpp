@@ -38,7 +38,10 @@
 #include "src/masterd/mail/MailManager.h"
 #include "src/masterd/mail/MysqlMailStore.h"
 #include "src/masterd/handlers/quest/QuestHandler.h"
+#include "src/masterd/handlers/reputation/ReputationHandler.h"
 #include "src/masterd/quests/MysqlQuestStateStore.h"
+#include "src/masterd/reputation/MysqlReputationStore.h"
+#include "src/masterd/reputation/ReputationManager.h"
 #include "src/masterd/quests/QuestState.h"
 #include "src/masterd/handlers/social/IgnoreListHandler.h"
 #include "src/masterd/social/IgnoreList.h"
@@ -449,6 +452,29 @@ int main(int argc, char** argv)
 	tradeHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] TradeHandler configured (CMANGOS.27 step 3+4, transient registry)");
 
+	// CMANGOS.24 (Phase 3.24 step 3+4) — Reputation wire server.
+	// Le manager in-memory est l'autorite runtime des reputations + spillover.
+	// Le store MySQL sert de persistance (et de source de verite pour la
+	// REPUTATION_LIST_REQUEST en V1, cf. ReputationHandler::HandleListRequest).
+	// En mode no-DB, la liste retournee au client est vide (le manager n'expose
+	// pas d'iteration directe sur les factions d'un account en V1).
+	engine::server::reputation::ReputationManager reputationManager;
+	engine::server::reputation::MysqlReputationStore reputationStore(&dbPool);
+	engine::server::ReputationHandler reputationHandler;
+	reputationHandler.SetManager(&reputationManager);
+	reputationHandler.SetServer(&server);
+	reputationHandler.SetSessionManager(&sessionManager);
+	reputationHandler.SetConnectionSessionMap(&connSessionMap);
+	if (dbPool.IsInitialized())
+	{
+		reputationHandler.SetStore(&reputationStore);
+		LOG_INFO(Net, "[ServerMain] ReputationHandler configured with DB store (CMANGOS.24 step 3+4)");
+	}
+	else
+	{
+		LOG_WARN(Net, "[ServerMain] ReputationHandler running in no-DB mode (List will return empty)");
+	}
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -488,7 +514,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -540,6 +566,8 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeTradeCommitRequest
 		      || opcode == kOpcodeTradeCancelRequest)
 			tradeHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeReputationListRequest)
+			reputationHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

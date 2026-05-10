@@ -11,6 +11,7 @@
 #include "src/client/quest/QuestUi.h"
 #include "src/client/social/IgnoreListUi.h"
 #include "src/client/gmtickets/GmTicketUi.h"
+#include "src/client/reputation/ReputationUi.h"
 #include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
@@ -69,6 +70,7 @@ namespace engine::render
 	class ChatImGuiRenderer;
 	class MailImGuiRenderer;
 	class GmTicketImGuiRenderer;
+	class ReputationImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -329,6 +331,10 @@ namespace engine
 		/// Partage le contexte ImGui avec m_authImGui / m_chatImGui / m_mailImGui.
 		/// Visibilite pilotee par \c m_gmTicketsVisible (toggle via slash command /ticket).
 		std::unique_ptr<engine::render::GmTicketImGuiRenderer> m_gmTicketImGui;
+		/// CMANGOS.24 (Phase 3.24 step 3+4) — Panneau "Reputation" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec auth/chat/mail/gmtickets. Visible uniquement
+		/// quand m_reputationVisible (toggle via slash command /rep ou /reputation).
+		std::unique_ptr<engine::render::ReputationImGuiRenderer> m_reputationImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -416,6 +422,13 @@ namespace engine
 		/// CMANGOS.32 (Phase 5.32 step 3+4) — Visibilite du panneau Support GM
 		/// (toggle via slash command \c /ticket ou \c /gmticket). Faux par defaut.
 		bool                                m_gmTicketsVisible = false;
+		/// CMANGOS.24 (Phase 3.24 step 3+4) — Presenter de la liste de reputations.
+		/// Recoit la reponse opcode 96 et le push 97 via le push handler du master ;
+		/// fire-and-forget de la requete 95 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::ReputationUiPresenter m_reputationUi;
+		/// CMANGOS.24 (Phase 3.24 step 3+4) — Visibilite du panneau Reputation
+		/// (toggle via slash command \c /rep ou \c /reputation). Faux par defaut.
+		bool                                  m_reputationVisible = false;
 		/// CMANGOS.27 (Phase 4.27 step 3+4) — Presenter de la fenetre d'echange
 		/// direct entre 2 joueurs. Recoit les responses opcodes 84/87/89/92 et
 		/// les push notifications 85/90/94 via le push handler du master ;

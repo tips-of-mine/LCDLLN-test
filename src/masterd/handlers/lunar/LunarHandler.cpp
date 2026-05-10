@@ -53,14 +53,22 @@ namespace engine::server
 
 		LunarStateResponse resp;
 
+		LOG_INFO(Net, "[LunarHandler] HandleStateRequest received (connId={} requestId={} sessionIdHeader={})",
+			connId, requestId, static_cast<unsigned long long>(sessionIdHeader));
+
 		// Validation session : si pas de session valide -> Unauthorized.
 		if (m_connMap && m_sessionMgr)
 		{
 			auto sessIdOpt = m_connMap->GetSessionId(connId);
+			const uint64_t sessIdResolved = sessIdOpt.has_value() ? *sessIdOpt : 0u;
 			if (!sessIdOpt || *sessIdOpt == 0u || sessionIdHeader == 0u
 				|| *sessIdOpt != sessionIdHeader)
 			{
 				resp.status = LunarStatus::Unauthorized;
+				LOG_WARN(Net, "[LunarHandler] auth REJECTED (connId={} sessIdResolved={} sessionIdHeader={} match={})",
+					connId, static_cast<unsigned long long>(sessIdResolved),
+					static_cast<unsigned long long>(sessionIdHeader),
+					(sessIdOpt.has_value() && *sessIdOpt == sessionIdHeader) ? 1 : 0);
 			}
 			else
 			{
@@ -68,6 +76,14 @@ namespace engine::server
 				if (!accIdOpt || *accIdOpt == 0u)
 				{
 					resp.status = LunarStatus::Unauthorized;
+					LOG_WARN(Net, "[LunarHandler] auth REJECTED account_id missing (connId={} sessId={})",
+						connId, static_cast<unsigned long long>(sessIdResolved));
+				}
+				else
+				{
+					LOG_INFO(Net, "[LunarHandler] auth OK (connId={} sessId={} accountId={})",
+						connId, static_cast<unsigned long long>(sessIdResolved),
+						static_cast<unsigned long long>(*accIdOpt));
 				}
 			}
 		}
@@ -75,6 +91,8 @@ namespace engine::server
 		{
 			// Handler pas cable -> repond Unauthorized par defaut (defensive).
 			resp.status = LunarStatus::Unauthorized;
+			LOG_WARN(Net, "[LunarHandler] handler not wired (connMap={} sessionMgr={})",
+				m_connMap ? 1 : 0, m_sessionMgr ? 1 : 0);
 		}
 
 		if (resp.status == LunarStatus::Ok)
@@ -88,6 +106,10 @@ namespace engine::server
 			resp.illumination = info.illumination;
 			resp.cycleStartMs = m_cycleStartMs;
 			resp.cycleDurationMs = m_cycleDurationMs;
+			LOG_INFO(Net, "[LunarHandler] sending LunarStateResponse (connId={} phase={} illumination={:.3f} cycleStartMs={} cycleDurationMs={})",
+				connId, static_cast<unsigned>(resp.phase), resp.illumination,
+				static_cast<unsigned long long>(resp.cycleStartMs),
+				static_cast<unsigned long long>(resp.cycleDurationMs));
 		}
 
 		std::vector<uint8_t> payload;

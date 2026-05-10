@@ -263,6 +263,7 @@ add_library(engine_core
   src/client/events/GameEventUi.cpp
   src/client/guild/GuildUi.cpp
   src/client/auction/AuctionUi.cpp
+  src/client/loot/LootRollUi.cpp
   src/client/lfg/LfgUi.cpp
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
@@ -353,6 +354,7 @@ add_library(engine_core
   src/client/render/GameEventImGuiRenderer.cpp
   src/client/render/GuildImGuiRenderer.cpp
   src/client/render/AuctionImGuiRenderer.cpp
+  src/client/render/LootRollImGuiRenderer.cpp
   src/client/render/LfgImGuiRenderer.cpp
   src/client/render/CinematicImGuiRenderer.cpp
   src/client/render/SkillBookImGuiRenderer.cpp
@@ -456,6 +458,7 @@ add_library(engine_core
   src/shared/network/GameEventPayloads.cpp
   src/shared/network/GuildPayloads.cpp
   src/shared/network/AuctionPayloads.cpp
+  src/shared/network/LootPayloads.cpp
   src/shared/network/LfgPayloads.cpp
   src/shared/network/CinematicPayloads.cpp
   src/shared/network/SkillPayloads.cpp
@@ -741,6 +744,11 @@ add_test(NAME guild_payloads_tests COMMAND guild_payloads_tests)
 add_executable(auction_payloads_tests src/shared/network/AuctionPayloadsTests.cpp)
 target_link_libraries(auction_payloads_tests PRIVATE engine_core)
 add_test(NAME auction_payloads_tests COMMAND auction_payloads_tests)
+
+# CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Loot payloads round-trip tests (no DB / no network).
+add_executable(loot_payloads_tests src/shared/network/LootPayloadsTests.cpp)
+target_link_libraries(loot_payloads_tests PRIVATE engine_core)
+add_test(NAME loot_payloads_tests COMMAND loot_payloads_tests)
 
 # CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
 add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)

@@ -738,4 +738,43 @@ namespace engine::network
 	constexpr uint16_t kOpcodeAuctionCancelRequest        = 179u; ///< Client to Master : annule sa propre enchere (auctionId).
 	constexpr uint16_t kOpcodeAuctionCancelResponse       = 180u; ///< Master to Client : OK ou NotOwner / AuctionNotFound / Unauthorized.
 	constexpr uint16_t kOpcodeAuctionExpiredNotification  = 181u; ///< Master to Client (push, request_id=0) : enchere expiree (auctionId, won bool, finalBidCopper, winnerName).
+
+	// =====================================================================
+	// CMANGOS.17 step 3+4 — Loot wire (group roll Need/Greed/Pass + result
+	// push). Master tient en memoire les rolls actifs (V1 simulation simple :
+	// un seul eligible par roll, le creator). 6 opcodes : 2 paires Request/
+	// Response (Choice + SimulateRoll) + 2 push notifications (RollNotification
+	// + RollResultNotification).
+	//
+	// Architecture : a chaque SimulateRollRequest (V1 outil dev), master cree
+	// une nouvelle ActiveRoll avec creator comme seul eligible, item aleatoire
+	// dans 1..5, count=1, durationSec=30. Push immediatement RollNotification
+	// au creator. Quand creator envoie ChoiceRequest (Need/Greed/Pass), master
+	// resout immediatement la roll (un seul eligible) : random uint8 0..100,
+	// regle Need > Greed > Pass + plus haut roll dans la meme categorie. Push
+	// RollResultNotification au creator.
+	//
+	// V1 limitations :
+	//   - SimulateRoll = creator-only eligible (pas de groupe). Future PR :
+	//     integration avec Group/Party (CMANGOS.15).
+	//   - Items hardcode (5 entries V1). Future PR : integration LootTable +
+	//     ItemTemplate (engine::server::loot::LootTable).
+	//   - Pas de timeout tick periodique : scan a chaque HandleChoice.
+	//   - Pas de SyncLoot RPC entre master et shardd (master autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - RollNotification        (182, push, request_id=0) : nouvelle roll proposee.
+	//   - Choice                  (183/184)                 : Need/Greed/Pass.
+	//   - RollResultNotification  (185, push, request_id=0) : roll terminee.
+	//   - SimulateRoll            (186/187)                 : DEBUG simule une roll.
+	//
+	// Wire format choice : uint8 (Pass=0, Greed=1, Need=2). Wire format
+	// winnerRoll : uint8 0..100.
+	// =====================================================================
+	constexpr uint16_t kOpcodeLootRollNotification        = 182u; ///< Master to Client (push, request_id=0) : nouvelle roll proposee (rollId, itemTemplateId, itemName, count, durationSec).
+	constexpr uint16_t kOpcodeLootRollChoiceRequest       = 183u; ///< Client to Master : choix du joueur (rollId, choice 0=Pass/1=Greed/2=Need).
+	constexpr uint16_t kOpcodeLootRollChoiceResponse      = 184u; ///< Master to Client : OK ou InvalidChoice / RollNotFound / RollEnded / Unauthorized.
+	constexpr uint16_t kOpcodeLootRollResultNotification  = 185u; ///< Master to Client (push, request_id=0) : roll terminee (rollId, winnerName, winnerChoice, winnerRoll uint8 0-100, itemTemplateId, itemName, count).
+	constexpr uint16_t kOpcodeLootSimulateRollRequest     = 186u; ///< Client to Master : DEBUG simule une roll (creator devient eligible) — V1 outil dev.
+	constexpr uint16_t kOpcodeLootSimulateRollResponse    = 187u; ///< Master to Client : OK + rollId, ou Unauthorized.
 }

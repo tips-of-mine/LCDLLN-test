@@ -20,6 +20,7 @@
 #include "src/shared/network/GameEventPayloads.h"
 #include "src/shared/network/GuildPayloads.h"
 #include "src/shared/network/AuctionPayloads.h"
+#include "src/shared/network/LootPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -38,6 +39,7 @@
 #include "src/client/render/GameEventImGuiRenderer.h"
 #include "src/client/render/GuildImGuiRenderer.h"
 #include "src/client/render/AuctionImGuiRenderer.h"
+#include "src/client/render/LootRollImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -1042,6 +1044,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Init du presenter Loot Roll
+		// + cable du send callback pour les requetes 183/186. Reception
+		// dispatchee dans le push handler ci-dessous (responses 184/187 + push
+		// 182 RollNotification + push 185 RollResultNotification).
+		if (!m_lootRollUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] LootRollUiPresenter init FAILED — fenetre Loot Roll desactivee");
+		}
+		else
+		{
+			m_lootRollUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1294,6 +1311,19 @@ namespace engine
 					m_auctionHouseUi.RequestList(0u);
 				}
 				LOG_INFO(Core, "[Engine] /ah toggle (visible={})", m_auctionHouseVisible);
+				return true;
+			}
+			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Slash command /loot
+			// pour ouvrir/fermer la fenetre Loot Roll. La touche L fait la
+			// meme chose (cf. boucle input dans BeginFrame). Pas de fetch
+			// immediat : la fenetre montre les pending rolls reçus via push
+			// + le bouton Simulate Loot Roll (debug V1).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/loot"
+				    || text.starts_with("/loot ") || text.starts_with("/loot\t")))
+			{
+				m_lootRollVisible = !m_lootRollVisible;
+				LOG_INFO(Core, "[Engine] /loot toggle (visible={})", m_lootRollVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -2073,6 +2103,53 @@ namespace engine
 					return;
 				}
 				m_auctionHouseUi.OnExpiredNotification(*parsed);
+				return;
+			}
+			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Dispatch des push Loot
+			// (182 RollNotification + 185 RollResultNotification) + responses
+			// (184 ChoiceResponse + 187 SimulateRollResponse).
+			case kOpcodeLootRollNotification:
+			{
+				auto parsed = ParseLootRollNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LOOT_ROLL_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lootRollUi.OnRollNotification(*parsed);
+				return;
+			}
+			case kOpcodeLootRollChoiceResponse:
+			{
+				auto parsed = ParseLootRollChoiceResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LOOT_ROLL_CHOICE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lootRollUi.OnChoiceResponse(*parsed);
+				return;
+			}
+			case kOpcodeLootRollResultNotification:
+			{
+				auto parsed = ParseLootRollResultNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LOOT_ROLL_RESULT_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lootRollUi.OnRollResultNotification(*parsed);
+				return;
+			}
+			case kOpcodeLootSimulateRollResponse:
+			{
+				auto parsed = ParseLootSimulateRollResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LOOT_SIMULATE_ROLL_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lootRollUi.OnSimulateRollResponse(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -4381,6 +4458,7 @@ namespace engine
 		m_gameEventUi.Shutdown();
 		m_guildUi.Shutdown();
 		m_auctionHouseUi.Shutdown();
+		m_lootRollUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -4582,6 +4660,17 @@ namespace engine
 					m_auctionHouseUi.RequestList(0u);
 				}
 				LOG_INFO(Core, "[Engine] H toggle auction house (visible={})", m_auctionHouseVisible);
+			}
+			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Touche L : toggle
+			// fenetre Loot Roll. Memes guards que U. Pas de conflit Ctrl+L.
+			// Pas de fetch a l'ouverture : les pending rolls arrivent via
+			// push, le bouton Simulate sert pour la demo V1.
+			if (inGameNoMenu && !chatBlocks
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasPressed(engine::platform::Key::L))
+			{
+				m_lootRollVisible = !m_lootRollVisible;
+				LOG_INFO(Core, "[Engine] L toggle loot roll (visible={})", m_lootRollVisible);
 			}
 		}
 
@@ -4819,6 +4908,13 @@ namespace engine
 				// AuctionExpired sont rendus independamment du flag.
 				m_auctionHouseImGui = std::make_unique<engine::render::AuctionImGuiRenderer>();
 				m_auctionHouseImGui->SetPresenter(&m_auctionHouseUi);
+
+				// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Renderer ImGui Loot
+				// Roll. Le panel principal n'est visible que quand
+				// m_lootRollVisible (toggle via /loot ou touche L). Le toast
+				// 5s sur dernier RollResult reçu est rendu independamment.
+				m_lootRollImGui = std::make_unique<engine::render::LootRollImGuiRenderer>();
+				m_lootRollImGui->SetPresenter(&m_lootRollUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5962,6 +6058,16 @@ namespace engine
 				m_auctionHouseImGui->SetEnabled(m_auctionHouseVisible);
 				m_auctionHouseImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_auctionHouseImGui->Render();
+			}
+			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Render du panneau Loot
+			// Roll si m_lootRollVisible (toggle via /loot ou touche L), ET du
+			// toast 5s sur dernier RollResult reçu (rendu independamment par
+			// Render() si lastResultTimeMs est recent).
+			if (m_lootRollImGui && m_lootRollUi.IsInitialized())
+			{
+				m_lootRollImGui->SetEnabled(m_lootRollVisible);
+				m_lootRollImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_lootRollImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

@@ -19,6 +19,7 @@
 #include "src/client/events/GameEventUi.h"
 #include "src/client/guild/GuildUi.h"
 #include "src/client/auction/AuctionUi.h"
+#include "src/client/loot/LootRollUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -91,6 +92,7 @@ namespace engine::render
 	class GameEventImGuiRenderer;
 	class GuildImGuiRenderer;
 	class AuctionImGuiRenderer;
+	class LootRollImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -410,6 +412,11 @@ namespace engine
 		/// /ah ou touche H). Les toasts 5s sur derniere bid + dernier
 		/// AuctionExpired sont rendus independamment du flag.
 		std::unique_ptr<engine::render::AuctionImGuiRenderer> m_auctionHouseImGui;
+		/// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Panneau "Loot Roll" (post-auth, ImGui).
+		/// Le panel principal est visible uniquement quand m_lootRollVisible
+		/// (toggle via slash command \c /loot ou touche L). Le toast 5s sur
+		/// dernier RollResult reçu est rendu independamment du flag.
+		std::unique_ptr<engine::render::LootRollImGuiRenderer> m_lootRollImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -595,6 +602,15 @@ namespace engine
 		/// toast 5s sur dernier AuctionExpired reçu sont rendus
 		/// independamment.
 		bool                                  m_auctionHouseVisible = false;
+		/// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Presenter de la fenetre Loot
+		/// Roll. Recoit les push opcodes 182/185 et la response 184/187 via le
+		/// push handler du master ; fire-and-forget des requetes 183/186 via
+		/// \c m_authUi.SendGenericRequestAsync.
+		engine::client::LootRollUiPresenter   m_lootRollUi;
+		/// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Visibilite du panneau Loot Roll
+		/// (toggle via slash command \c /loot ou touche L). Faux par defaut.
+		/// Le toast 5s sur dernier RollResult reçu est rendu independamment.
+		bool                                  m_lootRollVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

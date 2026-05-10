@@ -46,6 +46,7 @@
 #include "src/masterd/handlers/events/GameEventHandler.h"
 #include "src/masterd/handlers/guild/GuildHandler.h"
 #include "src/masterd/handlers/auction/AuctionHandler.h"
+#include "src/masterd/handlers/loot/LootHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -637,6 +638,22 @@ int main(int argc, char** argv)
 	auctionHandler.SeedV1Auctions();
 	LOG_INFO(Net, "[ServerMain] AuctionHandler configured (CMANGOS.09 step 3+4 AuctionHouse, in-memory, 8 listings seed)");
 
+	// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — LootHandler : Choice
+	// (Need/Greed/Pass) + SimulateRoll DEBUG + push RollNotification + push
+	// RollResultNotification. V1 simulation simple : un seul eligible par roll
+	// (le creator), items hardcodes (5 entries), random roll 0..100, regle
+	// Need > Greed > Pass + plus haut roll dans la meme categorie. Les
+	// opcodes 183/186 sont dispatches au handler ; les responses 184/187 et
+	// les push notifications 182/185 sont emises par le handler. V1
+	// limitations : pas de groupe (CMANGOS.15), items hardcodes, pas de
+	// timeout tick periodique (scan a chaque HandleChoice), pas de SyncLoot
+	// RPC entre master et shardd.
+	engine::server::LootHandler lootHandler;
+	lootHandler.SetServer(&server);
+	lootHandler.SetSessionManager(&sessionManager);
+	lootHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] LootHandler configured (CMANGOS.17 step 3+4 Loot, in-memory, simulation V1)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -676,7 +693,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -775,6 +792,9 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeAuctionBidRequest
 		      || opcode == kOpcodeAuctionCancelRequest)
 			auctionHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeLootRollChoiceRequest
+		      || opcode == kOpcodeLootSimulateRollRequest)
+			lootHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

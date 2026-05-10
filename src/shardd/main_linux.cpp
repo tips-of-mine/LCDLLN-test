@@ -10,6 +10,9 @@
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 #include "src/shared/core/LogConfig.h"
+// Wave 6 — Wiring runtime des modules internes (EventAI + PoolManager).
+#include "src/shardd/ai/EventAIRuntime.h"
+#include "src/shardd/pools/PoolManagerRuntime.h"
 
 #include <csignal>
 #include <chrono>
@@ -126,6 +129,30 @@ int main(int argc, char** argv)
 	toMaster.SetHeartbeatIntervalSec(static_cast<int>(config.GetInt("shard.heartbeat_interval_sec", 10)));
 	toMaster.Start();
 
+	// Wave 6 — Instanciation + seed des modules internes (EventAI + Pools).
+	// V1 : scripts/pools hardcodes. Future iteration : SeedFromDb() qui
+	// remplace SeedV1Events/SeedV1Pools. Le but ici est de prouver que les
+	// path tick EventAI / Roll PoolManager sont reellement exerces au
+	// runtime, pas seulement testes en unit.
+	engine::server::ai::EventAIRuntime eventAi;
+	eventAi.SeedV1Events();
+	LOG_INFO(AI, "[EventAI] seeded {} V1 events at boot", eventAi.RowCount());
+
+	engine::server::pools::PoolManagerRuntime pools;
+	pools.SeedV1Pools();
+	LOG_INFO(Pools, "[PoolManager] {} pools registered at boot", pools.PoolCount());
+
+	// Tick periodique EventAI : intervalle 1s. La boucle principale tourne
+	// a 100ms (sleep_for(100ms) ci-dessous) donc on filtre via
+	// lastEventAiTickMs. Idem pour le log periodique 60s qui dump le
+	// cumul "N events fired".
+	using clock = std::chrono::steady_clock;
+	auto lastEventAiTickTime = clock::now();
+	auto lastEventAiLogTime  = clock::now();
+	const auto kEventAiTickInterval = std::chrono::milliseconds(1000);
+	const auto kEventAiLogInterval  = std::chrono::seconds(60);
+	std::uint64_t firesSinceLastLog = 0;
+
 	LOG_INFO(Net, "[ShardMain] Shard server running (Ctrl+C to stop); master {}:{} register endpoint='{}'",
 		masterHost, masterPort, regEndpoint);
 
@@ -138,6 +165,27 @@ int main(int argc, char** argv)
 		// a 0 car SetCurrentLoad n'etait jamais appele.
 		toMaster.SetCurrentLoad(server.GetConnectionCount());
 		toMaster.Pump();
+
+		// Wave 6 — Tick EventAI (1Hz). Convertit steady_clock en wall-clock
+		// (system_clock) car les triggers Timer comparent ctx.nowMs avec un
+		// timer interne aussi en ms wall-clock.
+		const auto nowSteady = clock::now();
+		if (nowSteady - lastEventAiTickTime >= kEventAiTickInterval)
+		{
+			const std::uint64_t realNowMs = static_cast<std::uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			firesSinceLastLog += eventAi.Tick(realNowMs);
+			lastEventAiTickTime = nowSteady;
+		}
+		if (nowSteady - lastEventAiLogTime >= kEventAiLogInterval)
+		{
+			LOG_INFO(AI, "[EventAI] tick : {} events fired (last 60s), total since boot {}",
+				firesSinceLastLog, eventAi.TotalFires());
+			firesSinceLastLog = 0;
+			lastEventAiLogTime = nowSteady;
+		}
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 

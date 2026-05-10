@@ -16,6 +16,7 @@
 #include "src/client/battleground/BattleGroundUi.h"
 #include "src/client/outdoorpvp/OutdoorPvpUi.h"
 #include "src/client/weather/WeatherUi.h"
+#include "src/client/events/GameEventUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -85,6 +86,7 @@ namespace engine::render
 	class BattleGroundImGuiRenderer;
 	class OutdoorPvpImGuiRenderer;
 	class WeatherImGuiRenderer;
+	class GameEventImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -385,6 +387,12 @@ namespace engine
 		/// (toggle via slash command /weather ou touche Y). Le HUD top-right
 		/// est rendu independamment du flag des que activeZoneId est set.
 		std::unique_ptr<engine::render::WeatherImGuiRenderer> m_weatherImGui;
+		/// CMANGOS.31 (Phase 5.31 step 3+4) — Panneau "Game Events" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec les autres panneaux post-auth.
+		/// Le panel principal est visible uniquement quand m_gameEventVisible
+		/// (toggle via slash command /events ou touche E). Le toast 5s sur
+		/// dernier StateChange reçu est rendu independamment du flag.
+		std::unique_ptr<engine::render::GameEventImGuiRenderer> m_gameEventImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -540,6 +548,15 @@ namespace engine
 		/// (toggle via slash command \c /weather ou touche Y). Faux par defaut.
 		/// Le HUD top-right est rendu independamment quand activeZoneId set.
 		bool                                  m_weatherVisible = false;
+		/// CMANGOS.31 (Phase 5.31 step 3+4) — Presenter de la fenetre GameEvents.
+		/// Recoit les responses opcodes 158/160/162 et la push notification
+		/// 163 (StateChange) via le push handler du master ; fire-and-forget
+		/// des requetes 157/159/161 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::GameEventUiPresenter  m_gameEventUi;
+		/// CMANGOS.31 (Phase 5.31 step 3+4) — Visibilite du panneau GameEvents
+		/// (toggle via slash command \c /events ou touche E). Faux par defaut.
+		/// Le toast 5s sur dernier StateChange reçu est rendu independamment.
+		bool                                  m_gameEventVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

@@ -19,6 +19,7 @@
 #include "src/shared/network/WeatherPayloads.h"
 #include "src/shared/network/GameEventPayloads.h"
 #include "src/shared/network/GuildPayloads.h"
+#include "src/shared/network/AuctionPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -36,6 +37,7 @@
 #include "src/client/render/WeatherImGuiRenderer.h"
 #include "src/client/render/GameEventImGuiRenderer.h"
 #include "src/client/render/GuildImGuiRenderer.h"
+#include "src/client/render/AuctionImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -1025,6 +1027,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Init du presenter
+		// Hotel des Ventes + cable du send callback pour les requetes
+		// 173/175/177/179. Reception dispatchee dans le push handler ci-dessous
+		// (responses 174/176/178/180 + push 181 AuctionExpired).
+		if (!m_auctionHouseUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] AuctionHousePresenter init FAILED — panneau Hotel des Ventes desactive");
+		}
+		else
+		{
+			m_auctionHouseUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1260,6 +1277,23 @@ namespace engine
 					m_guildUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /guild toggle (visible={})", m_guildVisible);
+				return true;
+			}
+			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Slash command /ah
+			// pour ouvrir/fermer le panneau Hotel des Ventes et synchroniser
+			// la liste des encheres depuis le master au moment de l'ouverture.
+			// La touche H fait la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/ah" || text == "/auction"
+				    || text.starts_with("/ah ") || text.starts_with("/ah\t")
+				    || text.starts_with("/auction ") || text.starts_with("/auction\t")))
+			{
+				m_auctionHouseVisible = !m_auctionHouseVisible;
+				if (m_auctionHouseVisible)
+				{
+					m_auctionHouseUi.RequestList(0u);
+				}
+				LOG_INFO(Core, "[Engine] /ah toggle (visible={})", m_auctionHouseVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1981,6 +2015,64 @@ namespace engine
 					return;
 				}
 				m_guildUi.OnMotdUpdateNotification(*parsed);
+				return;
+			}
+			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Dispatch des
+			// reponses Auction (174/176/178/180) + push notification 181
+			// (AuctionExpired).
+			case kOpcodeAuctionListResponse:
+			{
+				auto parsed = ParseAuctionListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] AUCTION_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_auctionHouseUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeAuctionPostResponse:
+			{
+				auto parsed = ParseAuctionPostResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] AUCTION_POST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_auctionHouseUi.OnPostResponse(*parsed);
+				return;
+			}
+			case kOpcodeAuctionBidResponse:
+			{
+				auto parsed = ParseAuctionBidResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] AUCTION_BID_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_auctionHouseUi.OnBidResponse(*parsed);
+				return;
+			}
+			case kOpcodeAuctionCancelResponse:
+			{
+				auto parsed = ParseAuctionCancelResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] AUCTION_CANCEL_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_auctionHouseUi.OnCancelResponse(*parsed);
+				return;
+			}
+			case kOpcodeAuctionExpiredNotification:
+			{
+				auto parsed = ParseAuctionExpiredNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] AUCTION_EXPIRED_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_auctionHouseUi.OnExpiredNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -4288,6 +4380,7 @@ namespace engine
 		m_weatherUi.Shutdown();
 		m_gameEventUi.Shutdown();
 		m_guildUi.Shutdown();
+		m_auctionHouseUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -4475,6 +4568,20 @@ namespace engine
 					m_guildUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] U toggle guilds (visible={})", m_guildVisible);
+			}
+			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Touche H : toggle
+			// panneau Hotel des Ventes + RequestList si on l'ouvre. Memes
+			// guards que U. Pas de conflit Ctrl+H.
+			if (inGameNoMenu && !chatBlocks
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasPressed(engine::platform::Key::H))
+			{
+				m_auctionHouseVisible = !m_auctionHouseVisible;
+				if (m_auctionHouseVisible)
+				{
+					m_auctionHouseUi.RequestList(0u);
+				}
+				LOG_INFO(Core, "[Engine] H toggle auction house (visible={})", m_auctionHouseVisible);
 			}
 		}
 
@@ -4705,6 +4812,13 @@ namespace engine
 				// sur dernier MotdUpdate reçu est rendu independamment du flag.
 				m_guildImGui = std::make_unique<engine::render::GuildImGuiRenderer>();
 				m_guildImGui->SetPresenter(&m_guildUi);
+				// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Renderer
+				// ImGui Hotel des Ventes. Le panel principal n'est visible
+				// que quand m_auctionHouseVisible (toggle via /ah ou touche
+				// H). Les toasts 5s sur derniere bid + dernier
+				// AuctionExpired sont rendus independamment du flag.
+				m_auctionHouseImGui = std::make_unique<engine::render::AuctionImGuiRenderer>();
+				m_auctionHouseImGui->SetPresenter(&m_auctionHouseUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5837,6 +5951,17 @@ namespace engine
 				m_guildImGui->SetEnabled(m_guildVisible);
 				m_guildImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_guildImGui->Render();
+			}
+			// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Render du panel
+			// Hotel des Ventes si m_auctionHouseVisible (toggle via /ah ou
+			// touche H), ET des toasts 5s sur derniere bid + dernier
+			// AuctionExpired (rendus independamment par Render() si
+			// lastBidTimeMs / lastExpirationTimeMs sont recents).
+			if (m_auctionHouseImGui && m_auctionHouseUi.IsInitialized())
+			{
+				m_auctionHouseImGui->SetEnabled(m_auctionHouseVisible);
+				m_auctionHouseImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_auctionHouseImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

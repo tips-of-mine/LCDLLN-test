@@ -45,6 +45,7 @@
 #include "src/masterd/handlers/weather/WeatherHandler.h"
 #include "src/masterd/handlers/events/GameEventHandler.h"
 #include "src/masterd/handlers/guild/GuildHandler.h"
+#include "src/masterd/handlers/auction/AuctionHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -620,6 +621,22 @@ int main(int argc, char** argv)
 	guildHandler.SeedV1Guilds();
 	LOG_INFO(Net, "[ServerMain] GuildHandler configured (CMANGOS.21 step 3+4 Guilds, in-memory, 2 guilds seed)");
 
+	// CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — AuctionHandler : list /
+	// post / bid / cancel + push AuctionExpired. V1 : 8 listings hardcodes
+	// au boot avec differents owners (Aragorn, Legolas, Gimli, Saruman) et
+	// expirations echelonnees (1h-48h). Les opcodes 173/175/177/179 sont
+	// dispatches au handler ; les responses 174/176/178/180 et la push
+	// notification 181 (AuctionExpired) sont emises par le handler. V1
+	// limitations : item name table 10 entries hardcode, owner name =
+	// "Account#<id>", pas de paiement reel (economie cosmetique), pas de
+	// SyncAuction RPC entre master et shardd.
+	engine::server::AuctionHandler auctionHandler;
+	auctionHandler.SetServer(&server);
+	auctionHandler.SetSessionManager(&sessionManager);
+	auctionHandler.SetConnectionSessionMap(&connSessionMap);
+	auctionHandler.SeedV1Auctions();
+	LOG_INFO(Net, "[ServerMain] AuctionHandler configured (CMANGOS.09 step 3+4 AuctionHouse, in-memory, 8 listings seed)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -659,7 +676,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -753,6 +770,11 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeGuildPermissionsRequest
 		      || opcode == kOpcodeGuildBankRequest)
 			guildHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeAuctionListRequest
+		      || opcode == kOpcodeAuctionPostRequest
+		      || opcode == kOpcodeAuctionBidRequest
+		      || opcode == kOpcodeAuctionCancelRequest)
+			auctionHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

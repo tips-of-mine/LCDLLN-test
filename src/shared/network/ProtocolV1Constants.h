@@ -697,4 +697,45 @@ namespace engine::network
 	constexpr uint16_t kOpcodeGuildBankRequest            = 170u; ///< Client to Master : contenu bank d'une guilde (guildId, tabIndex).
 	constexpr uint16_t kOpcodeGuildBankResponse           = 171u; ///< Master to Client : liste {slotIndex, itemName, count} ou UnknownGuild / NoPermission / Unauthorized.
 	constexpr uint16_t kOpcodeGuildMotdUpdateNotification = 172u; ///< Master to Client (push, request_id=0) : changement MOTD (guildId, newMotd).
+
+	// =====================================================================
+	// CMANGOS.09 step 3+4 — AuctionHouse wire (list, post, bid, cancel, expired
+	// push). Master tient en memoire un registry de listings (V1 seed via
+	// 8 listings hardcodes au boot) + handle bids + simule les expirations
+	// au scan a chaque AuctionListRequest.
+	//
+	// Architecture : 8 auctions seedees au boot avec differents owners
+	// (Aragorn, Legolas, Gimli, Saruman) et expirations echelonnees
+	// (1h-48h), avec ou sans buyout. Le master tient en memoire un
+	// std::vector<InMemoryAuction> protege par mutex. V1 simplifie : pas
+	// de Tick periodique pour expirations -- le scan est fait a chaque
+	// AuctionListRequest (les auctions expirees sont marquees ended et
+	// poussent une AuctionExpiredNotification a leur owner via connId
+	// resolu si possible).
+	//
+	// V1 limitations :
+	//   - 8 listings hardcodes au boot. Future PR : DB seed via
+	//     MysqlAuctionStore + AuctionHouseBot integration pour low-pop.
+	//   - Item name table 10 entries hardcode. Future PR : ItemTemplate join.
+	//   - Owner name = "Account#<id>" V1. Future PR : lookup CharacterName.
+	//   - Pas d'expiration tick periodique : scan a chaque AuctionListRequest.
+	//   - Pas de SyncAuction RPC entre master et shardd (master autoritaire V1).
+	//   - Pas de paiement reel : economie cosmetique V1 (pas de gold debit/credit).
+	//
+	// Decoupage opcode :
+	//   - List   (173/174)               : liste les listings actifs (filter optionnel).
+	//   - Post   (175/176)               : poste une nouvelle enchere.
+	//   - Bid    (177/178)               : place une bid (ou achete via buyout).
+	//   - Cancel (179/180)               : annule sa propre enchere.
+	//   - ExpiredNotification (181, push) : enchere expiree (vendue ou non).
+	// =====================================================================
+	constexpr uint16_t kOpcodeAuctionListRequest          = 173u; ///< Client to Master : liste listings (filter optionnel : itemTemplateId).
+	constexpr uint16_t kOpcodeAuctionListResponse         = 174u; ///< Master to Client : liste {auctionId, itemTemplateId, itemName, count, currentBidCopper, buyoutCopper, ownerName, secondsUntilExpiration} ou Unauthorized.
+	constexpr uint16_t kOpcodeAuctionPostRequest          = 175u; ///< Client to Master : post nouvelle enchere (itemTemplateId, count, startBidCopper, buyoutCopper, durationHours).
+	constexpr uint16_t kOpcodeAuctionPostResponse         = 176u; ///< Master to Client : OK + auctionId, ou InvalidParams / Unauthorized.
+	constexpr uint16_t kOpcodeAuctionBidRequest           = 177u; ///< Client to Master : place une bid (auctionId, bidAmountCopper).
+	constexpr uint16_t kOpcodeAuctionBidResponse          = 178u; ///< Master to Client : OK + isBuyout bool, ou BidTooLow / AuctionExpired / OwnAuction / Unauthorized.
+	constexpr uint16_t kOpcodeAuctionCancelRequest        = 179u; ///< Client to Master : annule sa propre enchere (auctionId).
+	constexpr uint16_t kOpcodeAuctionCancelResponse       = 180u; ///< Master to Client : OK ou NotOwner / AuctionNotFound / Unauthorized.
+	constexpr uint16_t kOpcodeAuctionExpiredNotification  = 181u; ///< Master to Client (push, request_id=0) : enchere expiree (auctionId, won bool, finalBidCopper, winnerName).
 }

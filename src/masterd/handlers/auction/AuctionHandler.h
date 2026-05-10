@@ -46,6 +46,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::auctions
+{
+	class MysqlAuctionStore;
+}
+
 namespace engine::server
 {
 	/// Auction in-memory V1.
@@ -78,6 +83,14 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// Wave 5 (Phase 5.09b) : branche le store MySQL pour la persistance
+		/// des auctions. Si null (mode no-DB), le handler retombe sur le
+		/// seed in-memory et perd l'etat au reboot.
+		///
+		/// \param s pointeur non-owning sur le store. Doit etre branche AVANT
+		///          SeedV1Auctions pour que le LoadAllActive prime l'in-memory.
+		void SetAuctionStore(engine::server::auctions::MysqlAuctionStore* s) { m_store = s; }
 
 		/// Initialise le store V1 : enregistre 8 auctions hardcodees avec
 		/// differents owners (Aragorn, Legolas, Gimli, Saruman) et expirations
@@ -171,6 +184,9 @@ namespace engine::server
 		NetServer*                                       m_server     = nullptr;
 		SessionManager*                                  m_sessionMgr = nullptr;
 		ConnectionSessionMap*                            m_connMap    = nullptr;
+
+		/// Wave 5 : pointeur non-owning sur le store MySQL. null = mode no-DB.
+		engine::server::auctions::MysqlAuctionStore*     m_store      = nullptr;
 
 		/// Mutex protegeant m_auctions + m_seeded.
 		mutable std::mutex                               m_mutex;

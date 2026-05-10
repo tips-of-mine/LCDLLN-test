@@ -45,6 +45,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::arena
+{
+	class MysqlArenaStore;
+}
+
 namespace engine::server
 {
 	/// Dispatcher Arena cote joueur. Doit etre configure via Set*() avant
@@ -58,6 +63,11 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// Wave 5 (Phase 5.21b) : branche le store MySQL pour la persistance
+		/// des teams + progression ELO. Si null (mode no-DB), le handler
+		/// reseed les teams au reboot et perd toute progression.
+		void SetArenaStore(engine::server::arena::MysqlArenaStore* s) { m_store = s; }
 
 		/// Point d'entree appele par NetServer pour les opcodes Arena.
 		/// Dispatch vers HandleTeamList / HandleQueue / HandleLeaveQueue /
@@ -169,6 +179,9 @@ namespace engine::server
 		NetServer*                                       m_server     = nullptr;
 		SessionManager*                                  m_sessionMgr = nullptr;
 		ConnectionSessionMap*                            m_connMap    = nullptr;
+
+		/// Wave 5 : pointeur non-owning vers le store DB. null = mode no-DB.
+		engine::server::arena::MysqlArenaStore*          m_store      = nullptr;
 
 		/// Registry in-memory : seedage par account au premier acces. Le registry
 		/// expose Get / AddTeam / RecordMatch / ResetWeekly. V1 : pas d'isolation

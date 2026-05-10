@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/events/GameEventHandler.h"
 
+#include "src/masterd/events/MysqlGameEventStore.h"
 #include "src/masterd/handlers/lunar/LunarHandler.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
@@ -91,6 +92,33 @@ namespace engine::server
 		{
 			LOG_DEBUG(Net, "[GameEventHandler] SeedV1Events already seeded (idempotent skip)");
 			return;
+		}
+
+		// Wave 5 : si store DB branche, prefere LoadAll. Si la requete
+		// retourne au moins une ligne, on l'utilise comme verite. Sinon
+		// (DB vide ou indisponible), fallback sur le seed hardcode.
+		if (m_store && m_store->IsAvailable())
+		{
+			auto rows = m_store->LoadAll();
+			if (!rows.empty())
+			{
+				for (const auto& r : rows)
+				{
+					GameEventDef d;
+					d.id                       = r.eventId;
+					d.name                     = r.name;
+					d.startTsMs                = r.startTsMs;
+					d.durationMs               = r.durationMs;
+					d.recurMs                  = r.recurMs;
+					d.requiresLunarPhaseMask   = r.requiresLunarPhaseMask;
+					m_manager.Register(d);
+					m_eventNames[r.eventId] = r.name;
+				}
+				m_seeded = true;
+				LOG_INFO(Net, "[GameEventHandler] V1 events loaded from DB : {} events", rows.size());
+				return;
+			}
+			LOG_INFO(Net, "[GameEventHandler] DB store available but no events ; falling back to hardcoded seed");
 		}
 
 		// Constantes V1 : durations + recur en ms.

@@ -54,6 +54,11 @@ namespace engine::server
 	class LunarHandler;
 }
 
+namespace engine::server::events
+{
+	class MysqlGameEventStore;
+}
+
 namespace engine::server
 {
 	/// Dispatcher GameEvent cote joueur. Doit etre configure via Set*() avant
@@ -77,6 +82,14 @@ namespace engine::server
 		///          de vie doit englober celle du GameEventHandler (cf
 		///          main_linux.cpp ou les deux sont des locaux du scope main).
 		void SetLunarHandler(engine::server::LunarHandler* h) { m_lunarHandler = h; }
+
+		/// Wave 5 (Phase 5.31b) : branche le store MySQL pour charger les
+		/// events depuis la DB plutot que le hardcode. Si null ou DB vide,
+		/// SeedV1Events utilise le seed hardcode (5 events).
+		///
+		/// \param s pointeur non-owning sur le store ; doit etre branche
+		///          AVANT SeedV1Events pour effet.
+		void SetGameEventStore(engine::server::events::MysqlGameEventStore* s) { m_store = s; }
 
 		/// Initialise le store V1 : enregistre les events hardcodes
 		/// (Halloween, Winter Veil, Lunar Festival, Midsummer Fire Festival)
@@ -152,6 +165,9 @@ namespace engine::server
 		/// filtrer les events via GetStateFiltered. Si null, comportement
 		/// inchange (backward compat tests sans LunarHandler).
 		LunarHandler*                                    m_lunarHandler = nullptr;
+
+		/// Wave 5 : pointeur non-owning vers le store DB. null = mode no-DB.
+		engine::server::events::MysqlGameEventStore*     m_store        = nullptr;
 
 		/// Mutex protegeant m_manager + m_eventNames + m_subscribers
 		/// + m_lastBroadcastState + m_seeded.

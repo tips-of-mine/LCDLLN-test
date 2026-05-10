@@ -20,9 +20,11 @@
 //   vec4  lightDir      – normalised direction *toward* the light (xyz, w unused)
 //   vec4  lightColor    – RGB radiance (color * intensity, w unused)
 //   vec4  ambientColor  – constant ambient RGB (fallback when useIBL == 0)
-//   vec4  skyColor      – RGB couleur du ciel (utilisée pour les pixels sans
-//                         géométrie, c.-à-d. depth == 1.0). Pilotée par
-//                         DayNightCycle (skyHorizon) côté CPU. w unused.
+//   vec4  skyColor      – RGB couleur du ciel pour les pixels sans géométrie
+//                         (depth == 1.0). Pilotée par DayNightCycle
+//                         (skyHorizon) côté CPU. w = 1.0 si SkyPass est
+//                         ready (alors on lit GBufferA pour la sky), 0.0
+//                         si on utilise la flat skyColor.
 //   float useIBL        – 1.0 = use IBL, 0.0 = constant ambient
 
 layout(location = 0) in  vec2 inUV;
@@ -47,7 +49,7 @@ layout(push_constant) uniform PC
     vec4  lightDir;     // normalised direction toward the directional light (xyz)
     vec4  lightColor;   // RGB radiance (xyz = color * intensity)
     vec4  ambientColor; // constant ambient RGB (fallback when useIBL == 0)
-    vec4  skyColor;     // RGB couleur du ciel pour les pixels sans géométrie
+    vec4  skyColor;     // rgb = couleur du ciel flat (fallback) ; w = 1.0 si SkyPass ready
     float useIBL;       // 1.0 = use IBL, 0.0 = constant ambient
 } pc;
 
@@ -105,11 +107,19 @@ void main()
     float depth     = texture(depthTex, inUV).r;
 
     // ---- Sky / empty fragments (depth == 1.0 means no geometry) --------
-    // On utilise la couleur du ciel pilotée par DayNightCycle (horizon).
-    // Permet de voir l'effet jour/nuit dans l'éditeur même sans skybox.
+    // Phase 5 Lunar (PR #561 fix Concern 3) : si SkyPass est ready
+    // (signale par pc.skyColor.w >= 0.5), il a dessine le ciel
+    // procedural + disque lunaire dans GBufferA dans le render pass
+    // loadOp=LOAD du GeometryPass, uniquement la ou depth==1.0
+    // (depthTest=LESS_OR_EQUAL avec gl_Position.z=1.0). On passe alors
+    // GBufferA tel quel au scene color HDR sans re-eclairage. Sinon
+    // (SkyPass.Init a echoue ou shaders absents au boot) on garde le
+    // fallback flat skyColor pilote par DayNightCycle pour ne pas
+    // casser le rendu jour/nuit.
     if (depth >= 1.0)
     {
-        outSceneColorHDR = vec4(pc.skyColor.rgb, 1.0);
+        vec3 skyOut = (pc.skyColor.w >= 0.5) ? baseAlbedo.rgb : pc.skyColor.rgb;
+        outSceneColorHDR = vec4(skyOut, 1.0);
         return;
     }
 

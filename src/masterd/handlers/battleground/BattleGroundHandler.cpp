@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/battleground/BattleGroundHandler.h"
 
+#include "src/masterd/battleground/MysqlBattleGroundStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -343,6 +344,22 @@ namespace engine::server
 		}
 
 		PushMatchEnd(connId, newMatchId, winnerFaction, finalAlliance, finalHorde, kV1MatchDuration);
+
+		// Wave 5 (Phase 5.10b) : archive le match en DB (best-effort).
+		// Le startedAtUnixMs est recalcule a partir du chrono in-memory :
+		// system_clock::now() - kV1MatchDuration secondes, approximation
+		// suffisante V1 (le match est joue en quasi-instantane cote master).
+		if (m_historyStore && m_historyStore->IsAvailable())
+		{
+			const auto nowMs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			const uint64_t startedAtMs = (nowMs > kV1MatchDuration * 1000ull)
+				? (nowMs - kV1MatchDuration * 1000ull) : 0ull;
+			m_historyStore->InsertMatch(parsed->bgType, bgInfo.mapName,
+				finalAlliance, finalHorde, winnerFaction,
+				kV1MatchDuration, startedAtMs);
+		}
 
 		// Cleanup : retire le match cote master apres push de End. Le client
 		// gere la disparition cote UI quand il recoit le End.

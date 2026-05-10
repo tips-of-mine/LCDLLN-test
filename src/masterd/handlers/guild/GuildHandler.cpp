@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/guild/GuildHandler.h"
 
+#include "src/masterd/guild/MysqlGuildStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -9,12 +10,41 @@
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 
+#include <cstdio>
 #include <vector>
 
 namespace engine::server
 {
 	namespace
 	{
+		/// Mapping account_id -> nom de personnage V1. Utilise pour
+		/// reconstituer le member.accountName / guild.leaderName lors
+		/// du LoadAll DB (les tables guild_members / guilds_master
+		/// referencent account_id, pas un display name). V1 hardcode
+		/// 6 entries -- aligne sur le seed de la migration 0055 et le
+		/// seed in-memory hardcode plus bas. Pour un id inconnu on
+		/// fallback sur "Account#<id>" (ASCII safe MSVC).
+		///
+		/// Une PR ulterieure pourra basculer la resolution sur
+		/// AccountStore (lookup live sur la table accounts).
+		std::string ResolveV1AccountName(uint64_t accountId)
+		{
+			switch (accountId)
+			{
+			case 1ull: return std::string("Aragorn");
+			case 2ull: return std::string("Legolas");
+			case 3ull: return std::string("Gimli");
+			case 4ull: return std::string("Frodo");
+			case 5ull: return std::string("Saruman");
+			case 6ull: return std::string("Wormtongue");
+			default:   break;
+			}
+			char buf[32]{};
+			std::snprintf(buf, sizeof(buf), "Account#%llu",
+				static_cast<unsigned long long>(accountId));
+			return std::string(buf);
+		}
+
 		/// Noms des rangs WoW par defaut (0=Guild Master ... 9=Initiate).
 		/// Static array : adresses stables pour const char* pour le wire.
 		const char* const kDefaultRankNames[10] = {
@@ -53,6 +83,52 @@ namespace engine::server
 		{
 			LOG_DEBUG(Net, "[GuildHandler] SeedV1Guilds already seeded (idempotent skip)");
 			return;
+		}
+
+		// Wave 5 phase 2 : si store DB branche, prefere LoadAll. Si la requete
+		// retourne au moins une guilde, on l'utilise comme verite. Sinon
+		// (DB vide ou indisponible), fallback sur le seed hardcode.
+		if (m_store && m_store->IsAvailable())
+		{
+			auto rows = m_store->LoadAll();
+			if (!rows.empty())
+			{
+				for (const auto& r : rows)
+				{
+					InMemoryGuild g;
+					g.guildId    = r.guildId;
+					g.name       = r.name;
+					g.motd       = r.motd;
+					g.leaderName = ResolveV1AccountName(r.leaderAccountId);
+
+					for (const auto& mr : r.members)
+					{
+						InMemoryGuildMember m;
+						m.accountName = ResolveV1AccountName(mr.accountId);
+						m.rankId      = mr.rankId;
+						// online inconnu cote DB V1 (snapshot statique).
+						// Le handler ne push pas d'event presence V1 :
+						// online reste false par defaut sauf pour le leader
+						// (heuristique simple V1 : leader = online).
+						m.online      = (mr.accountId == r.leaderAccountId);
+						g.members.push_back(std::move(m));
+					}
+					for (const auto& bi : r.bank0)
+					{
+						InMemoryGuildBankItem b;
+						b.slotIndex = bi.slotIndex;
+						b.itemName  = bi.itemName;
+						b.count     = bi.count;
+						g.bank0.push_back(std::move(b));
+					}
+					m_perms.SetupWowDefaults(g.guildId);
+					m_guilds.push_back(std::move(g));
+				}
+				m_seeded = true;
+				LOG_INFO(Net, "[GuildHandler] V1 guilds loaded from DB : {} guilds", rows.size());
+				return;
+			}
+			LOG_INFO(Net, "[GuildHandler] DB store available but empty, falling back to hardcoded seed");
 		}
 
 		// Guilde 1 : Les Gardiens.

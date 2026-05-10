@@ -52,6 +52,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::guilds_db
+{
+	class MysqlGuildStore;
+}
+
 namespace engine::server
 {
 	/// Membre in-memory d'une guilde V1.
@@ -93,9 +98,20 @@ namespace engine::server
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
 
+		/// Wave 5 (Phase 5.21b) : branche le store MySQL pour charger les
+		/// guildes + membres + bank depuis la DB plutot que le hardcode.
+		/// Si null ou DB vide, SeedV1Guilds utilise le seed hardcode
+		/// (2 guildes).
+		///
+		/// \param s pointeur non-owning sur le store ; doit etre branche
+		///          AVANT SeedV1Guilds pour effet.
+		void SetGuildStore(engine::server::guilds_db::MysqlGuildStore* s) { m_store = s; }
+
 		/// Initialise le store V1 : enregistre les 2 guildes hardcodees
 		/// ("Les Gardiens", "L'Ombre") avec leurs membres + bank + perms WoW.
-		/// Idempotent : appelable a chaque boot.
+		/// Idempotent : appelable a chaque boot. Si m_store est branche
+		/// et que la DB contient des guildes, prefere LoadAll au seed
+		/// hardcode (cf. Wave 5 phase 2).
 		void SeedV1Guilds();
 
 		/// Point d'entree appele par NetServer pour les opcodes Guild.
@@ -172,5 +188,10 @@ namespace engine::server
 
 		/// True une fois SeedV1Guilds() appele avec succes.
 		bool                                             m_seeded = false;
+
+		/// Wave 5 (Phase 5.21b) : store DB optionnel. Si non-null et la DB
+		/// renvoie au moins une guilde au boot, prefere LoadAll au seed
+		/// hardcode. Non-owning ; lifetime gere par main_linux.
+		engine::server::guilds_db::MysqlGuildStore*      m_store      = nullptr;
 	};
 }

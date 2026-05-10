@@ -60,6 +60,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::loot_db
+{
+	class MysqlLootStore;
+}
+
 namespace engine::server
 {
 	/// Choix d'un joueur pour une roll de loot. Wire format uint8.
@@ -101,6 +106,26 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// Wave 5 (Phase 3.17b) : branche le store MySQL pour charger
+		/// les loot tables depuis la DB. Optionnel ; si null ou DB vide,
+		/// le handler continue d'utiliser son tableau hardcode 5 items
+		/// pour SimulateRoll (le DB store reste expose pour future
+		/// integration drop-by-creature, hors scope V1).
+		///
+		/// \param s pointeur non-owning sur le store. La duree de vie
+		///          doit englober celle du handler (cf main_linux).
+		void SetLootStore(engine::server::loot_db::MysqlLootStore* s) { m_lootStore = s; }
+
+		/// Wave 5 (Phase 3.17b) : charge les loot tables depuis le store
+		/// DB (si branche et disponible). V1 : le resultat est logge pour
+		/// traceabilite mais le handler ne l'utilise pas encore au runtime
+		/// (SimulateRoll garde son tableau hardcode 5 items). Une PR
+		/// ulterieure remplacera kV1Items par les entries DB.
+		///
+		/// Idempotent : appelable a chaque boot. Effet de bord : ecrit
+		/// dans m_loadedLootEntries (utilise pour log diagnostique uniquement V1).
+		void LoadLootTablesFromDb();
 
 		/// Point d'entree appele par NetServer pour les opcodes Loot.
 		/// Dispatch vers HandleChoice / HandleSimulateRoll selon l'opcode.
@@ -206,5 +231,14 @@ namespace engine::server
 		/// Protege par m_mutex.
 		std::mt19937                                     m_rng;
 		bool                                             m_rngSeeded = false;
+
+		/// Wave 5 (Phase 3.17b) : store DB optionnel pour les loot tables.
+		/// Non-owning ; lifetime gere par main_linux.
+		engine::server::loot_db::MysqlLootStore*         m_lootStore = nullptr;
+
+		/// Wave 5 (Phase 3.17b) : nombre d'entrees loot tables chargees
+		/// au boot (somme sur toutes les tables). 0 si pas de store ou
+		/// DB vide. Utilise pour log diagnostique uniquement V1.
+		size_t                                           m_loadedLootEntries = 0;
 	};
 }

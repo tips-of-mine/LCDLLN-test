@@ -56,6 +56,11 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::bg_db
+{
+	class MysqlBattleGroundStore;
+}
+
 namespace engine::server
 {
 	/// Dispatcher BattleGround cote joueur. Doit etre configure via Set*() avant
@@ -69,6 +74,15 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+
+		/// Wave 5 (Phase 5.10b) : branche le store MySQL pour archiver
+		/// les matchs joues (table bg_match_history). Optionnel ; si
+		/// null ou DB indisponible, les matchs ne sont pas persistes
+		/// (les push wire continuent normalement, mode degrade).
+		///
+		/// \param s pointeur non-owning sur le store. La duree de vie
+		///          doit englober celle du handler (cf main_linux).
+		void SetMatchHistoryStore(engine::server::bg_db::MysqlBattleGroundStore* s) { m_historyStore = s; }
 
 		/// Point d'entree appele par NetServer pour les opcodes BG.
 		/// Dispatch vers HandleList / HandleQueue / HandleLeaveQueue /
@@ -209,6 +223,10 @@ namespace engine::server
 		NetServer*                                       m_server     = nullptr;
 		SessionManager*                                  m_sessionMgr = nullptr;
 		ConnectionSessionMap*                            m_connMap    = nullptr;
+
+		/// Wave 5 (Phase 5.10b) : store DB optionnel pour archiver les
+		/// matchs joues. Non-owning ; lifetime gere par main_linux.
+		engine::server::bg_db::MysqlBattleGroundStore*   m_historyStore = nullptr;
 
 		/// Mutex protegeant queue + matches + accountMatch + nextMatchId + RNG.
 		std::mutex                                       m_mutex;

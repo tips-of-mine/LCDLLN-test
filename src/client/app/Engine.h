@@ -13,6 +13,7 @@
 #include "src/client/gmtickets/GmTicketUi.h"
 #include "src/client/reputation/ReputationUi.h"
 #include "src/client/lfg/LfgUi.h"
+#include "src/client/cinematics/CinematicUi.h"
 #include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
@@ -73,6 +74,7 @@ namespace engine::render
 	class GmTicketImGuiRenderer;
 	class ReputationImGuiRenderer;
 	class LfgImGuiRenderer;
+	class CinematicImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -341,6 +343,11 @@ namespace engine
 		/// Partage le contexte ImGui avec auth/chat/mail/gmtickets/reputation.
 		/// Visible uniquement quand m_lfgVisible (toggle via slash command /lfg).
 		std::unique_ptr<engine::render::LfgImGuiRenderer> m_lfgImGui;
+		/// CMANGOS.30 (Phase 5.30 step 3+4) — Overlay cinematique (black bars
+		/// + skip hint). Visible uniquement quand une cinematique est en cours
+		/// de lecture (m_cinematicUi.GetState().isPlaying). Toggle pilote par
+		/// les push 108 du master.
+		std::unique_ptr<engine::render::CinematicImGuiRenderer> m_cinematicImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -443,6 +450,12 @@ namespace engine
 		/// CMANGOS.33 (Phase 5.33 step 3+4) — Visibilite du panneau LFG (toggle
 		/// via slash command \c /lfg). Faux par defaut.
 		bool                                  m_lfgVisible = false;
+		/// CMANGOS.30 (Phase 5.30 step 3+4) — Presenter de lecture cinematique.
+		/// Recoit le push opcode 108 (PlayNotification) + responses 110/112 via
+		/// le push handler du master ; envoie 109 (Ack) et 111 (SkipRequest)
+		/// via \c m_authUi.SendGenericRequestAsync. Tick chaque frame quand
+		/// une cinematique est active (interpolation camera + sound cues).
+		engine::client::CinematicUiPresenter  m_cinematicUi;
 		/// CMANGOS.27 (Phase 4.27 step 3+4) — Presenter de la fenetre d'echange
 		/// direct entre 2 joueurs. Recoit les responses opcodes 84/87/89/92 et
 		/// les push notifications 85/90/94 via le push handler du master ;

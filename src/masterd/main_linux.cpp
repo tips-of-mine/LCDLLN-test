@@ -41,6 +41,7 @@
 #include "src/masterd/handlers/reputation/ReputationHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
+#include "src/masterd/handlers/cinematics/CinematicHandler.h"
 #include "src/masterd/quests/MysqlQuestStateStore.h"
 #include "src/masterd/reputation/MysqlReputationStore.h"
 #include "src/masterd/reputation/ReputationManager.h"
@@ -493,6 +494,18 @@ int main(int argc, char** argv)
 	lfgHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] LfgHandler configured (CMANGOS.33 step 3+4, transient queue)");
 
+	// CMANGOS.30 (Phase 5.30 step 3+4) — CinematicHandler. Le master pousse une
+	// cinematic au client (intro, fin de quete, etc.) via PushCinematic. Les
+	// opcodes 109 (Ack) et 111 (Skip) sont dispatches au handler ; les
+	// responses 110/112 sont emises par le handler. La push notification 108
+	// est emise par d'autres handlers (Quest reward, etc.) via
+	// CinematicHandler::PushCinematic. V1 : pas de tracking server-side.
+	engine::server::CinematicHandler cinematicHandler;
+	cinematicHandler.SetServer(&server);
+	cinematicHandler.SetSessionManager(&sessionManager);
+	cinematicHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] CinematicHandler configured (CMANGOS.30 step 3+4, push-only)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -532,7 +545,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -591,6 +604,9 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeLfgStatusRequest
 		      || opcode == kOpcodeLfgMatchAcceptRequest)
 			lfgHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeCinematicAckRequest
+		      || opcode == kOpcodeCinematicSkipRequest)
+			cinematicHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

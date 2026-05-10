@@ -14,6 +14,7 @@
 #include "src/client/reputation/ReputationUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
+#include "src/client/skills/SkillBookUi.h"
 #include "src/client/trade/TradeWindowUi.h"
 #include "src/client/economy/AuctionUi.h"
 #include "src/client/net/GameplayUdpClient.h"
@@ -75,6 +76,7 @@ namespace engine::render
 	class ReputationImGuiRenderer;
 	class LfgImGuiRenderer;
 	class CinematicImGuiRenderer;
+	class SkillBookImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -348,6 +350,11 @@ namespace engine
 		/// de lecture (m_cinematicUi.GetState().isPlaying). Toggle pilote par
 		/// les push 108 du master.
 		std::unique_ptr<engine::render::CinematicImGuiRenderer> m_cinematicImGui;
+		/// CMANGOS.39 (Phase 4.39 step 3+4) — Panneau "Skill Book" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec auth/chat/mail/gmtickets/reputation/lfg.
+		/// Visible uniquement quand m_skillBookVisible (toggle via slash command
+		/// /skills ou touche B).
+		std::unique_ptr<engine::render::SkillBookImGuiRenderer> m_skillBookImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -462,6 +469,14 @@ namespace engine
 		/// fire-and-forget des requetes 83/86/88/91/93 via
 		/// \c m_authUi.SendGenericRequestAsync.
 		engine::client::TradeWindowUiPresenter m_tradeWindowUi;
+		/// CMANGOS.39 (Phase 4.39 step 3+4) — Presenter de la skill book cote
+		/// client. Recoit les responses opcodes 114/116/118 et la push 119
+		/// via le push handler du master ; fire-and-forget des requetes
+		/// 113/115/117 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::SkillBookUiPresenter m_skillBookUi;
+		/// CMANGOS.39 (Phase 4.39 step 3+4) — Visibilite du panneau Skill Book
+		/// (toggle via slash command \c /skills ou touche B). Faux par defaut.
+		bool                                  m_skillBookVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

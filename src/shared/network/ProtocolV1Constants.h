@@ -419,4 +419,42 @@ namespace engine::network
 	constexpr uint16_t kOpcodeCinematicAckResponse      = 110u; ///< Master to Client : ACK Ok ou erreur (UnknownSequence, NoActiveCinematic, ...).
 	constexpr uint16_t kOpcodeCinematicSkipRequest      = 111u; ///< Client to Master : le user a appuye sur Esc et demande a skip la cinematique en cours.
 	constexpr uint16_t kOpcodeCinematicSkipResponse     = 112u; ///< Master to Client : OK + allowed (true V1) ou SkipNotAllowed (cinematique obligatoire).
+
+	// -------------------------------------------------------------------------
+	// Opcodes Skills (valeurs 113-119)
+	// Reference : Phase 4 CMANGOS.39 step 3+4. Wire client<->master pour le
+	// SkillBook (cooking, herbalism, mining, lockpicking, weapon skills).
+	// Le step 1 (SkillBook header-only avec Get/Set/Gain/Effective) et le
+	// step 2 (tests) sont deja merges. Cette serie expose les operations
+	// au client via 3 paires request/response + 1 push notification.
+	//
+	// Architecture : le master tient en memoire la skill book par account
+	// (V1, starter set hardcode). Toute mutation (Learn / Use gain) declenche
+	// une push SkillUpgradeNotification au client pour synchroniser son UI.
+	//
+	// V1 limitations :
+	//   - Starter set hardcode cote master (Cooking=1, Herbalism=2, Mining=3,
+	//     FirstAid=4, Lockpicking=5). Trainer real venant en CMANGOS.41.
+	//   - Use random 70% success (V1) ; calibration economie a venir.
+	//   - Pas encore de SyncSkill RPC entre master et shardd (master autoritaire V1).
+	//   - Pas de Crafting hook -> SkillUpgrade (future PR avec CraftingSystem).
+	//
+	// Decoupage opcode :
+	//   - List   (113/114)               : le client demande la liste de ses
+	//     skills (value, cap, bonus).
+	//   - Learn  (115/116)               : le client demande apprendre un skill
+	//     (typiquement depuis un trainer).
+	//   - Use    (117/118)               : le client utilise un skill
+	//     non-combat (lockpicking, fishing).
+	//   - UpgradeNotification (119, push) : le master notifie le client d'un
+	//     gain (value+1) ou d'un changement de cap.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeSkillsListRequest        = 113u; ///< Client to Master : demande la liste des skills (vide).
+	constexpr uint16_t kOpcodeSkillsListResponse       = 114u; ///< Master to Client : liste {skillId, value, cap, bonus} ou Unauthorized.
+	constexpr uint16_t kOpcodeSkillLearnRequest        = 115u; ///< Client to Master : demande apprendre un skill (skillId, par ex. cooking depuis trainer).
+	constexpr uint16_t kOpcodeSkillLearnResponse       = 116u; ///< Master to Client : OK + cap initial, ou AlreadyLearned / UnknownSkill / Unauthorized.
+	constexpr uint16_t kOpcodeSkillUseRequest          = 117u; ///< Client to Master : utilise un skill non-combat (lockpicking, fishing).
+	constexpr uint16_t kOpcodeSkillUseResponse         = 118u; ///< Master to Client : OK + result + delta value, ou SkillNotLearned / SkillFailed / Unauthorized.
+	constexpr uint16_t kOpcodeSkillUpgradeNotification = 119u; ///< Master to Client (push, request_id=0) : skill upgrade (skillId, newValue, newCap, delta).
 }

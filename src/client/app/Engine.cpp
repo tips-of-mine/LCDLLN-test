@@ -13,6 +13,7 @@
 #include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
+#include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/TradePayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -21,6 +22,7 @@
 #include "src/client/render/MailImGuiRenderer.h"
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"
+#include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -872,6 +874,20 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.33 (Phase 5.33 step 3+4) — Init du presenter LFG + cable du
+		// send callback pour les requetes 100/102/104/107. Reception dispatchee
+		// dans le push handler ci-dessous (responses 101/103/105 + push 106).
+		if (!m_lfgUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] LfgUiPresenter init FAILED — panneau LFG desactive");
+		}
+		else
+		{
+			m_lfgUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -984,6 +1000,20 @@ namespace engine
 					m_reputationUi.RequestReputationList();
 				}
 				LOG_INFO(Core, "[Engine] /rep toggle (visible={})", m_reputationVisible);
+				return true;
+			}
+			// CMANGOS.33 (Phase 5.33 step 3+4) — Slash command /lfg pour
+			// ouvrir/fermer la fenetre LFG et synchroniser le status depuis le
+			// master au moment de l'ouverture.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/lfg" || text.starts_with("/lfg ") || text.starts_with("/lfg\t")))
+			{
+				m_lfgVisible = !m_lfgVisible;
+				if (m_lfgVisible)
+				{
+					m_lfgUi.RequestStatus();
+				}
+				LOG_INFO(Core, "[Engine] /lfg toggle (visible={})", m_lfgVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1306,6 +1336,52 @@ namespace engine
 					return;
 				}
 				m_reputationUi.OnUpdateNotification(*parsed);
+				return;
+			}
+			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
+			// (101/103/105) + push MatchProposalNotification (106).
+			case kOpcodeLfgQueueResponse:
+			{
+				auto parsed = ParseLfgQueueResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LFG_QUEUE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lfgUi.OnQueueResponse(*parsed);
+				return;
+			}
+			case kOpcodeLfgLeaveResponse:
+			{
+				auto parsed = ParseLfgLeaveResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LFG_LEAVE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lfgUi.OnLeaveResponse(*parsed);
+				return;
+			}
+			case kOpcodeLfgStatusResponse:
+			{
+				auto parsed = ParseLfgStatusResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LFG_STATUS_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lfgUi.OnStatusResponse(*parsed);
+				return;
+			}
+			case kOpcodeLfgMatchProposalNotification:
+			{
+				auto parsed = ParseLfgMatchProposalNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] LFG_MATCH_PROPOSAL_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_lfgUi.OnMatchProposal(*parsed);
 				return;
 			}
 			// CMANGOS.27 (Phase 4.27 step 3+4) — Dispatch des reponses Trade
@@ -3522,6 +3598,7 @@ namespace engine
 		m_mailUi.Shutdown();
 		m_gmTicketUi.Shutdown();
 		m_reputationUi.Shutdown();
+		m_lfgUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3737,6 +3814,11 @@ namespace engine
 				// La taille viewport est mise a jour dans la boucle Render plus bas.
 				m_reputationImGui = std::make_unique<engine::render::ReputationImGuiRenderer>();
 				m_reputationImGui->SetPresenter(&m_reputationUi);
+				// CMANGOS.33 (Phase 5.33 step 3+4) — Renderer ImGui du panneau LFG.
+				// Partage le contexte ImGui avec auth/chat/mail/gmtickets/reputation.
+				// Visible uniquement quand m_lfgVisible (toggle via /lfg).
+				m_lfgImGui = std::make_unique<engine::render::LfgImGuiRenderer>();
+				m_lfgImGui->SetPresenter(&m_lfgUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -4776,6 +4858,17 @@ namespace engine
 				m_reputationImGui->SetEnabled(true);
 				m_reputationImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_reputationImGui->Render();
+			}
+			// CMANGOS.33 (Phase 5.33 step 3+4) — Render du panneau LFG si visible.
+			// Le modal proposal s'affiche aussi quand hasProposal == true (meme si
+			// le panneau principal est masque), pour que le joueur ne rate pas
+			// la formation de groupe.
+			if (m_lfgImGui && m_lfgUi.IsInitialized()
+				&& (m_lfgVisible || m_lfgUi.GetState().hasProposal))
+			{
+				m_lfgImGui->SetEnabled(true);
+				m_lfgImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_lfgImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

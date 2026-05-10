@@ -342,4 +342,44 @@ namespace engine::network
 	constexpr uint16_t kOpcodeReputationListRequest        = 95u; ///< Client to Master : liste les reputations de l'account courant (vide).
 	constexpr uint16_t kOpcodeReputationListResponse       = 96u; ///< Master to Client : tableau {factionId, value, standing} ou Unauthorized.
 	constexpr uint16_t kOpcodeReputationUpdateNotification = 97u; ///< Master to Client (push, request_id=0) : changement d'une reputation (factionId, newValue, newStanding, delta).
+
+	// -------------------------------------------------------------------------
+	// Opcodes Lfg / LookForGroup (valeurs 100-107)
+	// Reference : Phase 5 CMANGOS.33 step 3+4. Wire client<->master pour le
+	// matchmaking dungeon (LookForGroup queue + match proposal). Le step 1
+	// (LfgQueue header-only, queue par dungeon avec roles Tank/Healer/Damage)
+	// est deja merge ; pas de step 2 DB (queue transient, perdue au reboot).
+	//
+	// Architecture : le master gere une LfgQueue transient. TickMatchmaking
+	// (declenche manuellement en V1, periodique sub-PR future) appelle
+	// TryMatch() sur chaque dungeon connu et envoie une push proposal a
+	// chaque membre du groupe forme.
+	//
+	// V1 limitations :
+	//   - Pas d'etat « proposal » cote master : MatchAccept est juste loggee
+	//     et retourne Ok (le proposal lifecycle viendra dans une sub-PR).
+	//   - estimatedWaitSec hardcode 60s (sera calcule statistiquement plus tard).
+	//   - Tick matchmaking pas appele en boucle automatique : sera cable a
+	//     un timer dans une sub-PR future (e.g. toutes les 5s).
+	//
+	// Decoupage opcode :
+	//   - Queue       (100/101)               : le joueur s'inscrit dans la queue.
+	//   - Leave       (102/103)               : le joueur quitte la queue.
+	//   - Status      (104/105)               : interroge l'etat de la queue
+	//     (en queue ? role/dungeon ? duree ecoulee ?).
+	//   - MatchProposalNotification (106, push) : un groupe a ete forme ;
+	//     liste des membres. Envoye a chaque membre.
+	//   - MatchAccept (107)                   : le client accepte ou rejette
+	//     le match propose. V1 : pas de response payload separee, juste
+	//     log cote master.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeLfgQueueRequest               = 100u; ///< Client to Master : s'inscrit dans la queue dungeon (role + dungeonId).
+	constexpr uint16_t kOpcodeLfgQueueResponse              = 101u; ///< Master to Client : OK + estimatedWaitSec, ou AlreadyQueued / InvalidRole / InvalidDungeon / Unauthorized.
+	constexpr uint16_t kOpcodeLfgLeaveRequest               = 102u; ///< Client to Master : quitte la queue (vide ; account derive de la session).
+	constexpr uint16_t kOpcodeLfgLeaveResponse              = 103u; ///< Master to Client : OK ou NotInQueue / Unauthorized.
+	constexpr uint16_t kOpcodeLfgStatusRequest              = 104u; ///< Client to Master : interroge l'etat de queue (vide).
+	constexpr uint16_t kOpcodeLfgStatusResponse             = 105u; ///< Master to Client : inQueue + role + dungeonId + elapsedSec, ou Unauthorized.
+	constexpr uint16_t kOpcodeLfgMatchProposalNotification  = 106u; ///< Master to Client (push, request_id=0) : un groupe a ete forme (proposalId, dungeonId, members).
+	constexpr uint16_t kOpcodeLfgMatchAcceptRequest         = 107u; ///< Client to Master : accepte ou rejette un match propose (proposalId + accept bool). V1 : log + ack.
 }

@@ -275,4 +275,45 @@ namespace engine::network
 		constexpr uint16_t kOpcodeGmTicketCancelRequest        = 80u; ///< Client to Master : annule son propre ticket.
 		constexpr uint16_t kOpcodeGmTicketCancelResponse       = 81u; ///< Master to Client : OK / NotFound / NotOwner / AlreadyResolved.
 		constexpr uint16_t kOpcodeGmTicketResolvedNotification = 82u; ///< Master to Client (push, request_id=0) : un GM a resolu un ticket de ce joueur.
+
+		// -------------------------------------------------------------------------
+		// Opcodes Trade (valeurs 83-94)
+		// Reference : Phase 4 CMANGOS.27 step 3+4. Wire client<->master pour le
+		// systeme d'echange direct entre 2 joueurs (TradeSession FSM :
+		// Open -> LockedA/B -> BothLocked -> Committed/Cancelled). Le step 1
+		// (TradeSession header-only) est deja merge ; pas de step 2 DB
+		// (sessions de trade transitoires, pas persistees).
+		//
+		// Architecture : le master gere un TradeSessionRegistry qui mappe
+		// account_id -> TradeSession active. Toute transition d'etat (SetOffer,
+		// Lock, Commit, Cancel) declenche une push notification a l'autre
+		// participant pour synchroniser son UI.
+		//
+		// V1 limitations :
+		//   - Resolution par account_id direct (pas encore par character_name).
+		//   - Pas d'application reelle du delta inventory au Commit (TODO wallet
+		//     integration). Le Commit valide juste la FSM.
+		//
+		// Decoupage opcode :
+		//   - Begin       (83/84) + push BeginNotification (85)
+		//   - SetOffer    (86/87)
+		//   - Lock        (88/89)
+		//   - StateUpdate push notification (90)  -> pousse aux 2 a chaque
+		//     changement d'offer/lock pour mise a jour reciproque de l'UI.
+		//   - Commit      (91/92)
+		//   - Cancel      (93) + push CancelNotification (94)
+		// -------------------------------------------------------------------------
+
+		constexpr uint16_t kOpcodeTradeBeginRequest             = 83u; ///< Client to Master : initie une demande de trade vers targetAccountId.
+		constexpr uint16_t kOpcodeTradeBeginResponse            = 84u; ///< Master to Client (initiateur) : ACK avec sessionId + partnerAccountId, ou erreur.
+		constexpr uint16_t kOpcodeTradeBeginNotification        = 85u; ///< Master to Client (push, request_id=0) : envoye au target pour annoncer la trade entrante.
+		constexpr uint16_t kOpcodeTradeSetOfferRequest          = 86u; ///< Client to Master : modifie l'offer (gold + items) cote sender. Refuse si la session est lockee cote sender.
+		constexpr uint16_t kOpcodeTradeSetOfferResponse         = 87u; ///< Master to Client : ACK ou erreur (WrongState, NotPartOfSession, ...).
+		constexpr uint16_t kOpcodeTradeLockRequest              = 88u; ///< Client to Master : verrouille l'offer cote sender.
+		constexpr uint16_t kOpcodeTradeLockResponse             = 89u; ///< Master to Client : ACK avec newState (0=Open, 1=LockedA, 2=LockedB, 3=BothLocked, ...).
+		constexpr uint16_t kOpcodeTradeStateUpdateNotification  = 90u; ///< Master to Client (push, request_id=0) : envoye au partenaire a chaque changement (offer/lock/commit/cancel).
+		constexpr uint16_t kOpcodeTradeCommitRequest            = 91u; ///< Client to Master : finalise l'echange (n'est valide qu'en BothLocked).
+		constexpr uint16_t kOpcodeTradeCommitResponse           = 92u; ///< Master to Client : ACK (OK) ou erreur (WrongState, ...).
+		constexpr uint16_t kOpcodeTradeCancelRequest            = 93u; ///< Client to Master : annule la trade (depuis n'importe quel etat non-terminal).
+		constexpr uint16_t kOpcodeTradeCancelNotification       = 94u; ///< Master to Client (push, request_id=0) : envoye aux 2 participants pour annoncer l'annulation.
 }

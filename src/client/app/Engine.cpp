@@ -12,6 +12,7 @@
 #include "src/shared/network/MailPayloads.h"
 #include "src/shared/network/QuestPayloads.h"
 #include "src/shared/network/GmTicketPayloads.h"
+#include "src/shared/network/TradePayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/client/render/AuthImGuiRenderer.h"
@@ -854,6 +855,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
+		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
+		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
+		// Le presenter Init() existant a la signature (config) ; on lui passe m_cfg.
+		if (!m_tradeWindowUi.Init(m_cfg))
+		{
+			LOG_WARN(Core, "[Boot] TradeWindowUiPresenter init FAILED — trade desactive");
+		}
+		else
+		{
+			m_tradeWindowUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// Chat MVP — câblage bidirectionnel ChatUi <-> AuthUi (master TCP).
 		// Send : ChatUi::SubmitInputLine appelle AuthUi::SendChatAsync sur la connexion master vivante.
 		// Receive : AuthUi::PumpPostAuthEvents dispatche les paquets push (CHAT_RELAY notamment)
@@ -889,6 +905,52 @@ namespace engine
 					m_questUi.RequestQuestList();
 				}
 				LOG_INFO(Core, "[Engine] /quest toggle (visible={})", m_questVisible);
+				return true;
+			}
+			// CMANGOS.27 (Phase 4.27 step 3+4) — Slash command /trade <accountId>
+			// pour initier un echange avec le joueur cible. V1 : resolution par
+			// account_id direct (la resolution par character_name viendra avec
+			// PartySystem display ulterieurement). "/trade cancel" annule la
+			// trade en cours.
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/trade" || text.starts_with("/trade ") || text.starts_with("/trade\t")))
+			{
+				const auto spaceIdx = text.find_first_of(" \t");
+				if (spaceIdx == std::string_view::npos)
+				{
+					LOG_INFO(Core, "[Engine] /trade : usage /trade <account_id> ou /trade cancel");
+					return true;
+				}
+				std::string_view arg = text.substr(spaceIdx + 1);
+				while (!arg.empty() && (arg.front() == ' ' || arg.front() == '\t'))
+					arg.remove_prefix(1u);
+				if (arg == "cancel")
+				{
+					m_tradeWindowUi.Cancel();
+					LOG_INFO(Core, "[Engine] /trade cancel");
+					return true;
+				}
+				uint64_t targetAccountId = 0u;
+				bool parsed = false;
+				try
+				{
+					size_t pos = 0;
+					const std::string argStr(arg);
+					targetAccountId = std::stoull(argStr, &pos, 10);
+					parsed = (pos > 0u && targetAccountId != 0u);
+				}
+				catch (...)
+				{
+					parsed = false;
+				}
+				if (!parsed)
+				{
+					LOG_WARN(Core, "[Engine] /trade : argument '{}' n'est pas un account_id valide",
+						std::string(arg));
+					return true;
+				}
+				m_tradeWindowUi.RequestBeginTrade(targetAccountId);
+				LOG_INFO(Core, "[Engine] /trade {}", targetAccountId);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1187,6 +1249,85 @@ namespace engine
 					return;
 				}
 				m_gmTicketUi.OnResolvedNotification(*parsed);
+				return;
+			}
+			// CMANGOS.27 (Phase 4.27 step 3+4) — Dispatch des reponses Trade
+			// (84/87/89/92) + push notifications (85/90/94).
+			case kOpcodeTradeBeginResponse:
+			{
+				auto parsed = ParseTradeBeginResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_BEGIN_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeBeginResponse(*parsed);
+				return;
+			}
+			case kOpcodeTradeBeginNotification:
+			{
+				auto parsed = ParseTradeBeginNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_BEGIN_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeBeginNotification(*parsed);
+				return;
+			}
+			case kOpcodeTradeSetOfferResponse:
+			{
+				auto parsed = ParseTradeSetOfferResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_SET_OFFER_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeSetOfferResponse(*parsed);
+				return;
+			}
+			case kOpcodeTradeLockResponse:
+			{
+				auto parsed = ParseTradeLockResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_LOCK_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeLockResponse(*parsed);
+				return;
+			}
+			case kOpcodeTradeStateUpdateNotification:
+			{
+				auto parsed = ParseTradeStateUpdateNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_STATE_UPDATE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeStateUpdate(*parsed);
+				return;
+			}
+			case kOpcodeTradeCommitResponse:
+			{
+				auto parsed = ParseTradeCommitResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_COMMIT_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeCommitResponse(*parsed);
+				return;
+			}
+			case kOpcodeTradeCancelNotification:
+			{
+				auto parsed = ParseTradeCancelNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] TRADE_CANCEL_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_tradeWindowUi.OnTradeCancelNotification(*parsed);
 				return;
 			}
 			default:

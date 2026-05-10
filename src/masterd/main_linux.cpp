@@ -46,6 +46,8 @@
 #include "src/masterd/handlers/gmtickets/GmTicketHandler.h"
 #include "src/masterd/gmtickets/GmTicketSystem.h"
 #include "src/masterd/gmtickets/MysqlGmTicketStore.h"
+#include "src/masterd/handlers/trade/TradeHandler.h"
+#include "src/masterd/trade/TradeSessionRegistry.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 
 #include "src/shared/core/Config.h"
@@ -433,6 +435,20 @@ int main(int argc, char** argv)
 		LOG_WARN(Net, "[ServerMain] GmTicketHandler running in no-DB mode (no persistence)");
 	}
 
+	// CMANGOS.27 (Phase 4.27 step 3+4) -- Trade wire server. Le registry est
+	// transient (pas persiste cote DB) : au reboot, toutes les trades en cours
+	// sont implicitement perdues, ce qui est acceptable pour le V1 (les
+	// clients re-affichent une UI vide au prochain login). Les opcodes 83/86/
+	// 88/91/93 sont dispatches au handler ; les responses 84/87/89/92 et les
+	// push notifications 85/90/94 sont emis par le handler aux participants.
+	engine::server::trade::TradeSessionRegistry tradeRegistry;
+	engine::server::TradeHandler tradeHandler;
+	tradeHandler.SetRegistry(&tradeRegistry);
+	tradeHandler.SetServer(&server);
+	tradeHandler.SetSessionManager(&sessionManager);
+	tradeHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] TradeHandler configured (CMANGOS.27 step 3+4, transient registry)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -472,7 +488,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -518,6 +534,12 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeGmTicketListMineRequest
 		      || opcode == kOpcodeGmTicketCancelRequest)
 			gmTicketHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeTradeBeginRequest
+		      || opcode == kOpcodeTradeSetOfferRequest
+		      || opcode == kOpcodeTradeLockRequest
+		      || opcode == kOpcodeTradeCommitRequest
+		      || opcode == kOpcodeTradeCancelRequest)
+			tradeHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

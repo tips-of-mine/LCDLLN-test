@@ -577,4 +577,43 @@ namespace engine::network
 	constexpr uint16_t kOpcodeOutdoorPvpCaptureStartResponse         = 147u; ///< Master to Client : OK ou UnknownObjective / InvalidFaction / Unauthorized.
 	constexpr uint16_t kOpcodeOutdoorPvpCaptureProgressNotification  = 148u; ///< Master to Client (push, request_id=0) : progression capture (zoneId, objectiveId, capturePct, capturingBy).
 	constexpr uint16_t kOpcodeOutdoorPvpCaptureCompletedNotification = 149u; ///< Master to Client (push, request_id=0) : capture finie (zoneId, objectiveId, newOwner, allianceScore, hordeScore).
+
+	// =====================================================================
+	// CMANGOS.42 step 3+4 — Weather wire (zone subscribe, push current state
+	// + push state change). Master tient en memoire un WeatherManager (V1
+	// seed hardcode, tick simule a la demande).
+	//
+	// Architecture : 3 zones meteo seedees au boot (Stormwind Plains avec
+	// pClear=0.6/pRain=0.3/pStorm=0.1, Frozen Tundra avec
+	// pClear=0.4/pSnow=0.5/pFog=0.1, Tanaris Desert avec
+	// pClear=0.5/pSandstorm=0.4/pFog=0.1). Le master tient en memoire la
+	// liste des subscribers par zone et l'etat courant. V1 simplifie : a
+	// chaque SubscribeRequest, master force un reroll (Tick) ; si le state
+	// d'une zone change, broadcast WeatherUpdateNotification a tous les
+	// subscribers de la zone.
+	//
+	// V1 limitations :
+	//   - 3 zones meteo hardcodees (Stormwind Plains, Frozen Tundra,
+	//     Tanaris Desert). Vraies zones via M40+ futur.
+	//   - Tick simule a chaque SubscribeRequest (force reroll). Vrai tick
+	//     periodique via shardd futur.
+	//   - Subscriptions in-memory (pas de persistance V1).
+	//   - Pas de SyncWeather RPC entre master et shardd (master autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - List       (150/151)               : liste des zones meteo + state.
+	//   - Subscribe  (152/153)               : s'abonne aux push d'une zone.
+	//   - Unsubscribe (154/155)              : se desabonne.
+	//   - UpdateNotification (156, push)     : changement meteo (zoneId, kind, intensity).
+	//
+	// Wire format kind : uint8 (Clear=0, Rain=1, Snow=2, Storm=3,
+	// Sandstorm=4, Fog=5). Wire format intensity : float32 LE (0..1).
+	// =====================================================================
+	constexpr uint16_t kOpcodeWeatherListRequest         = 150u; ///< Client to Master : liste des zones meteo (vide).
+	constexpr uint16_t kOpcodeWeatherListResponse        = 151u; ///< Master to Client : liste {zoneId, name, kind, intensity} ou Unauthorized.
+	constexpr uint16_t kOpcodeWeatherSubscribeRequest    = 152u; ///< Client to Master : s'abonne au push d'une zone (zoneId).
+	constexpr uint16_t kOpcodeWeatherSubscribeResponse   = 153u; ///< Master to Client : OK + current {kind, intensity}, ou UnknownZone / Unauthorized.
+	constexpr uint16_t kOpcodeWeatherUnsubscribeRequest  = 154u; ///< Client to Master : se desabonne (zoneId).
+	constexpr uint16_t kOpcodeWeatherUnsubscribeResponse = 155u; ///< Master to Client : OK ou NotSubscribed / Unauthorized.
+	constexpr uint16_t kOpcodeWeatherUpdateNotification  = 156u; ///< Master to Client (push, request_id=0) : changement meteo (zoneId, kind, intensity).
 }

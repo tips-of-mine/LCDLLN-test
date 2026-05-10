@@ -15,6 +15,7 @@
 #include "src/client/arena/ArenaUi.h"
 #include "src/client/battleground/BattleGroundUi.h"
 #include "src/client/outdoorpvp/OutdoorPvpUi.h"
+#include "src/client/weather/WeatherUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -83,6 +84,7 @@ namespace engine::render
 	class ArenaImGuiRenderer;
 	class BattleGroundImGuiRenderer;
 	class OutdoorPvpImGuiRenderer;
+	class WeatherImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -377,6 +379,12 @@ namespace engine
 		/// Visible uniquement quand m_outdoorPvpVisible (toggle via slash
 		/// command /pvp ou touche P).
 		std::unique_ptr<engine::render::OutdoorPvpImGuiRenderer> m_outdoorPvpImGui;
+		/// CMANGOS.42 (Phase 4.42 step 3+4) — Panneau "Weather" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec les autres panneaux post-auth.
+		/// Le panel principal est visible uniquement quand m_weatherVisible
+		/// (toggle via slash command /weather ou touche Y). Le HUD top-right
+		/// est rendu independamment du flag des que activeZoneId est set.
+		std::unique_ptr<engine::render::WeatherImGuiRenderer> m_weatherImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -523,6 +531,15 @@ namespace engine
 		/// CMANGOS.36 (Phase 5.36 step 3+4) — Visibilite du panneau OutdoorPvp
 		/// (toggle via slash command \c /pvp ou touche P). Faux par defaut.
 		bool                                  m_outdoorPvpVisible = false;
+		/// CMANGOS.42 (Phase 4.42 step 3+4) — Presenter de la fenetre Weather.
+		/// Recoit les responses opcodes 151/153/155 et la push notification
+		/// 156 via le push handler du master ; fire-and-forget des requetes
+		/// 150/152/154 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::WeatherUiPresenter   m_weatherUi;
+		/// CMANGOS.42 (Phase 4.42 step 3+4) — Visibilite du panneau Weather
+		/// (toggle via slash command \c /weather ou touche Y). Faux par defaut.
+		/// Le HUD top-right est rendu independamment quand activeZoneId set.
+		bool                                  m_weatherVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

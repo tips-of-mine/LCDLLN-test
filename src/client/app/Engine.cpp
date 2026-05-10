@@ -15,6 +15,7 @@
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/ArenaPayloads.h"
 #include "src/shared/network/BattleGroundPayloads.h"
+#include "src/shared/network/OutdoorPvpPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -28,6 +29,7 @@
 #include "src/client/render/ReputationImGuiRenderer.h"
 #include "src/client/render/ArenaImGuiRenderer.h"
 #include "src/client/render/BattleGroundImGuiRenderer.h"
+#include "src/client/render/OutdoorPvpImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -957,6 +959,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.36 (Phase 5.36 step 3+4) — Init du presenter OutdoorPvp + cable
+		// du send callback pour les requetes 140/142/144/146. Reception
+		// dispatchee dans le push handler ci-dessous (responses 141/143/145/147
+		// + push 148/149).
+		if (!m_outdoorPvpUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] OutdoorPvpUiPresenter init FAILED — panneau OutdoorPvp desactive");
+		}
+		else
+		{
+			m_outdoorPvpUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1130,6 +1147,21 @@ namespace engine
 					m_battleGroundUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /bg toggle (visible={})", m_battleGroundVisible);
+				return true;
+			}
+			// CMANGOS.36 (Phase 5.36 step 3+4) — Slash command /pvp pour
+			// ouvrir/fermer la fenetre OutdoorPvp et synchroniser la liste
+			// des zones depuis le master au moment de l'ouverture. La touche
+			// P fait la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/pvp" || text.starts_with("/pvp ") || text.starts_with("/pvp\t")))
+			{
+				m_outdoorPvpVisible = !m_outdoorPvpVisible;
+				if (m_outdoorPvpVisible)
+				{
+					m_outdoorPvpUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] /pvp toggle (visible={})", m_outdoorPvpVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1634,6 +1666,74 @@ namespace engine
 					return;
 				}
 				m_battleGroundUi.OnMatchEndNotification(*parsed);
+				return;
+			}
+			// CMANGOS.36 (Phase 5.36 step 3+4) — Dispatch des reponses OutdoorPvp
+			// (141/143/145/147) + push notifications (148/149).
+			case kOpcodeOutdoorPvpZoneListResponse:
+			{
+				auto parsed = ParseOutdoorPvpZoneListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] OUTDOOR_PVP_ZONE_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_outdoorPvpUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeOutdoorPvpSubscribeResponse:
+			{
+				auto parsed = ParseOutdoorPvpSubscribeResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] OUTDOOR_PVP_SUBSCRIBE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_outdoorPvpUi.OnSubscribeResponse(*parsed);
+				return;
+			}
+			case kOpcodeOutdoorPvpUnsubscribeResponse:
+			{
+				auto parsed = ParseOutdoorPvpUnsubscribeResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] OUTDOOR_PVP_UNSUBSCRIBE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_outdoorPvpUi.OnUnsubscribeResponse(*parsed);
+				return;
+			}
+			case kOpcodeOutdoorPvpCaptureStartResponse:
+			{
+				auto parsed = ParseOutdoorPvpCaptureStartResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] OUTDOOR_PVP_CAPTURE_START_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_outdoorPvpUi.OnCaptureStartResponse(*parsed);
+				return;
+			}
+			case kOpcodeOutdoorPvpCaptureProgressNotification:
+			{
+				auto parsed = ParseOutdoorPvpCaptureProgressNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] OUTDOOR_PVP_CAPTURE_PROGRESS_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_outdoorPvpUi.OnCaptureProgressNotification(*parsed);
+				return;
+			}
+			case kOpcodeOutdoorPvpCaptureCompletedNotification:
+			{
+				auto parsed = ParseOutdoorPvpCaptureCompletedNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] OUTDOOR_PVP_CAPTURE_COMPLETED_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_outdoorPvpUi.OnCaptureCompletedNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -3937,6 +4037,7 @@ namespace engine
 		m_skillBookUi.Shutdown();
 		m_arenaUi.Shutdown();
 		m_battleGroundUi.Shutdown();
+		m_outdoorPvpUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -4067,6 +4168,18 @@ namespace engine
 					m_battleGroundUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] G toggle battleground (visible={})", m_battleGroundVisible);
+			}
+			// CMANGOS.36 (Phase 5.36 step 3+4) — Touche P : toggle panneau
+			// OutdoorPvp + RequestList si on l'ouvre. Memes guards que A/G.
+			if (inGameNoMenu && !chatBlocks
+				&& m_input.WasPressed(engine::platform::Key::P))
+			{
+				m_outdoorPvpVisible = !m_outdoorPvpVisible;
+				if (m_outdoorPvpVisible)
+				{
+					m_outdoorPvpUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] P toggle outdoorpvp (visible={})", m_outdoorPvpVisible);
 			}
 		}
 
@@ -4272,6 +4385,11 @@ namespace engine
 				// scoreboard s'auto-affiche apres le push 136 MatchStart).
 				m_battleGroundImGui = std::make_unique<engine::render::BattleGroundImGuiRenderer>();
 				m_battleGroundImGui->SetPresenter(&m_battleGroundUi);
+				// CMANGOS.36 (Phase 5.36 step 3+4) — Renderer ImGui du panneau
+				// OutdoorPvp. Visible uniquement quand m_outdoorPvpVisible
+				// (toggle via /pvp ou touche P).
+				m_outdoorPvpImGui = std::make_unique<engine::render::OutdoorPvpImGuiRenderer>();
+				m_outdoorPvpImGui->SetPresenter(&m_outdoorPvpUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5363,6 +5481,16 @@ namespace engine
 				m_battleGroundImGui->SetEnabled(true);
 				m_battleGroundImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_battleGroundImGui->Render();
+			}
+			// CMANGOS.36 (Phase 5.36 step 3+4) — Render du panneau OutdoorPvp
+			// si visible. Pas de scoreboard auto-affiche : V1 le panneau est
+			// strictement toggle-only via /pvp ou la touche P.
+			if (m_outdoorPvpImGui && m_outdoorPvpUi.IsInitialized()
+				&& m_outdoorPvpVisible)
+			{
+				m_outdoorPvpImGui->SetEnabled(true);
+				m_outdoorPvpImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_outdoorPvpImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

@@ -35,6 +35,20 @@ namespace engine::server::outdoorpvp
 		void RegisterZone(const Zone& z) { m_zones[z.id] = z; }
 		bool HasZone(ZoneId zid) const { return m_zones.count(zid) > 0; }
 
+		/// Lecture de la zone par id. Retourne nullptr si inconnue. Utilise
+		/// par les handlers wire (master) pour recuperer la liste d'objectifs
+		/// + scores actuels lors d'une ZoneListRequest. La structure exposee
+		/// reste const : aucune mutation ne doit passer par ce getter.
+		///
+		/// \param zid identifiant de la zone (1 = Hellfire, 2 = Eastern Plaguelands V1).
+		/// \return pointeur const sur la Zone, ou nullptr si \p zid inconnu.
+		const Zone* GetZone(ZoneId zid) const
+		{
+			auto it = m_zones.find(zid);
+			if (it == m_zones.end()) return nullptr;
+			return &it->second;
+		}
+
 		/// Demarre une capture par \p fac sur l'objectif \p oid de la zone \p zid.
 		/// Reset capturePct si la faction change. Retourne false si zone/objectif inconnu.
 		bool BeginCapture(ZoneId zid, ObjectiveId oid, FactionId fac)

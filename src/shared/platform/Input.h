@@ -25,6 +25,7 @@ namespace engine::platform
 		M = 'M',
 		N = 'N',
 		O = 'O',
+		P = 'P',
 		Q = 'Q',
 		V = 'V',
 		G = 'G',

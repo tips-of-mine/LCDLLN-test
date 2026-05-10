@@ -14,6 +14,7 @@
 #include "src/client/reputation/ReputationUi.h"
 #include "src/client/arena/ArenaUi.h"
 #include "src/client/battleground/BattleGroundUi.h"
+#include "src/client/outdoorpvp/OutdoorPvpUi.h"
 #include "src/client/lfg/LfgUi.h"
 #include "src/client/cinematics/CinematicUi.h"
 #include "src/client/skills/SkillBookUi.h"
@@ -81,6 +82,7 @@ namespace engine::render
 	class SkillBookImGuiRenderer;
 	class ArenaImGuiRenderer;
 	class BattleGroundImGuiRenderer;
+	class OutdoorPvpImGuiRenderer;
 	class EditorHubImGuiRenderer;
 	class DeferredPipeline;
 }
@@ -370,6 +372,11 @@ namespace engine
 		/// command /bg ou touche G) ou quand un match BG est actif (le
 		/// scoreboard s'affiche tout seul, push 136).
 		std::unique_ptr<engine::render::BattleGroundImGuiRenderer> m_battleGroundImGui;
+		/// CMANGOS.36 (Phase 5.36 step 3+4) — Panneau "Outdoor PvP" (post-auth, ImGui).
+		/// Partage le contexte ImGui avec les autres panneaux post-auth.
+		/// Visible uniquement quand m_outdoorPvpVisible (toggle via slash
+		/// command /pvp ou touche P).
+		std::unique_ptr<engine::render::OutdoorPvpImGuiRenderer> m_outdoorPvpImGui;
 		/// M43.4 — Panneau "Editor Hub" overlay quand `--editor` actif.
 		std::unique_ptr<engine::render::EditorHubImGuiRenderer> m_editorHubImGui;
 		/// Données carte / import (uniquement si \c m_worldEditorExe).
@@ -508,6 +515,14 @@ namespace engine
 		/// CMANGOS.10 (Phase 5 step 3+4) — Visibilite du panneau BattleGround
 		/// (toggle via slash command \c /bg ou touche G). Faux par defaut.
 		bool                                  m_battleGroundVisible = false;
+		/// CMANGOS.36 (Phase 5.36 step 3+4) — Presenter de la fenetre OutdoorPvp.
+		/// Recoit les responses opcodes 141/143/145/147 et les push notifications
+		/// 148/149 via le push handler du master ; fire-and-forget des requetes
+		/// 140/142/144/146 via \c m_authUi.SendGenericRequestAsync.
+		engine::client::OutdoorPvpUiPresenter m_outdoorPvpUi;
+		/// CMANGOS.36 (Phase 5.36 step 3+4) — Visibilite du panneau OutdoorPvp
+		/// (toggle via slash command \c /pvp ou touche P). Faux par defaut.
+		bool                                  m_outdoorPvpVisible = false;
 		/// Phase 3.5 — Bannière "Bienvenue, X" affichée transitoirement après EnterWorld.
 		/// Vide quand inactive. Comparée à \c steady_clock::now() chaque frame.
 		std::string                                  m_enterWorldBannerText;

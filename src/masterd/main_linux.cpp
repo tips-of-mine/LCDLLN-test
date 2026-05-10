@@ -666,6 +666,33 @@ int main(int argc, char** argv)
 	lunarHandler.SetServer(&server);
 	lunarHandler.SetSessionManager(&sessionManager);
 	lunarHandler.SetConnectionSessionMap(&connSessionMap);
+
+	// Wave 4 polish (Phase 5 Lunar) -- externalisation des parametres du
+	// cycle dans config.json (cles world.lunar.*). Defaults identiques
+	// aux constantes hardcodees existantes (cycle_start = 2026-01-01 UTC,
+	// duration = 14 jours reels). Lecture en int64_t depuis Config (cf.
+	// src/shared/core/Config.h) puis cast en uint64_t (les valeurs sont
+	// toujours positives). Doit etre appele AVANT le boot Tick pour que
+	// le premier broadcast utilise les bons parametres.
+	{
+		const int64_t kDefaultCycleStartMs = 1767225600000ll;
+		const int64_t kDefaultCycleDurMs   = 1209600000ll;
+		const int64_t cfgStartMs = config.GetInt(
+			"world.lunar.cycle_start_unix_ms", kDefaultCycleStartMs);
+		const int64_t cfgDurMs   = config.GetInt(
+			"world.lunar.cycle_duration_ms", kDefaultCycleDurMs);
+		const uint64_t cycleStartMs = (cfgStartMs > 0)
+			? static_cast<uint64_t>(cfgStartMs)
+			: static_cast<uint64_t>(kDefaultCycleStartMs);
+		const uint64_t cycleDurMs   = (cfgDurMs   > 0)
+			? static_cast<uint64_t>(cfgDurMs)
+			: static_cast<uint64_t>(kDefaultCycleDurMs);
+		lunarHandler.SetCycleParams(cycleStartMs, cycleDurMs);
+		LOG_INFO(Net, "[ServerMain] Lunar cycle config : start={}ms duration={}ms",
+			static_cast<unsigned long long>(cycleStartMs),
+			static_cast<unsigned long long>(cycleDurMs));
+	}
+
 	LOG_INFO(Net, "[ServerMain] LunarHandler configured (Phase 5 Lunar, cycle 14j, 16 phases)");
 
 	// Premier Tick au boot : etablit la phase courante (m_lastBroadcastPhase

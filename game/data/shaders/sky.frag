@@ -81,6 +81,28 @@ vec3 RenderMoonDisk(vec3 viewDir, vec3 baseSky)
 
     vec3 moonSurface = vec3(0.95, 0.92, 0.85) * shadowMask;
 
+    // Wave 4 polish — texture surface lunaire procedurale (no asset needed).
+    // V1 simple : value-noise sparse pour simuler des cratere-spots, plus une
+    // tache plus large simulant un Mare (ex. Mare Tranquillitatis). La
+    // multiplication garde la tonalite generale et assombrit ponctuellement
+    // pour donner du relief visuel. Une PR future pourra remplacer par une
+    // vraie texture lunaire (cube ou sphere mapping). On applique uniquement
+    // si on est dans la zone illuminee (shadowMask > epsilon) pour ne pas
+    // crepiter la zone sombre.
+    if (shadowMask > 0.01)
+    {
+        // Value-noise simple a partir des coords (u, v) du disque.
+        float craterNoise = fract(sin(dot(vec2(u, v), vec2(12.9898, 78.233))) * 43758.5453);
+        // smoothstep(0.85, 0.95) -> ~10% des points donnent un cratere visible.
+        craterNoise = smoothstep(0.85, 0.95, craterNoise);
+        moonSurface *= 1.0 - craterNoise * 0.25;  // assombrissement 25% ponctuel.
+
+        // Cratere "Mare" plus grand a (u=0.2, v=0.1) — ombre douce ~15%.
+        float distFromMare = length(vec2(u - 0.2, v - 0.1));
+        float mareMask     = smoothstep(0.4, 0.3, distFromMare);
+        moonSurface *= 1.0 - mareMask * 0.15;
+    }
+
     // Earthshine sur les phases tres sombres (0..2 et 13..15) : bleute discret
     // sur la partie ombragee.
     if (pc.moonPhase < 3.0 || pc.moonPhase > 13.0)

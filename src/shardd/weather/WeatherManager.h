@@ -74,6 +74,20 @@ namespace engine::server::weather
 			}
 		}
 
+		/// Force le prochain Tick a rerouler la zone donnee, peu importe le
+		/// nowMs. Utilise par le wire (CMANGOS.42 step 3+4) pour declencher un
+		/// changement immediat de meteo dans une zone (e.g. au moment d'une
+		/// SubscribeRequest pour la V1, qui veut faire bouger la meteo aussi
+		/// souvent que possible). No-op si la zone n'est pas enregistree.
+		///
+		/// \param zoneId identifiant de la zone a rerouler.
+		void ForceReroll(ZoneId zoneId)
+		{
+			auto it = m_state.find(zoneId);
+			if (it == m_state.end()) return;
+			it->second.nextChangeTsMs = 0;
+		}
+
 		size_t ZoneCount() const noexcept { return m_state.size(); }
 
 	private:

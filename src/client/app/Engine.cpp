@@ -16,6 +16,7 @@
 #include "src/shared/network/ArenaPayloads.h"
 #include "src/shared/network/BattleGroundPayloads.h"
 #include "src/shared/network/OutdoorPvpPayloads.h"
+#include "src/shared/network/WeatherPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -30,6 +31,7 @@
 #include "src/client/render/ArenaImGuiRenderer.h"
 #include "src/client/render/BattleGroundImGuiRenderer.h"
 #include "src/client/render/OutdoorPvpImGuiRenderer.h"
+#include "src/client/render/WeatherImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -974,6 +976,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.42 (Phase 4.42 step 3+4) — Init du presenter Weather + cable
+		// du send callback pour les requetes 150/152/154. Reception
+		// dispatchee dans le push handler ci-dessous (responses 151/153/155
+		// + push 156).
+		if (!m_weatherUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] WeatherUiPresenter init FAILED — panneau Weather desactive");
+		}
+		else
+		{
+			m_weatherUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1162,6 +1179,21 @@ namespace engine
 					m_outdoorPvpUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] /pvp toggle (visible={})", m_outdoorPvpVisible);
+				return true;
+			}
+			// CMANGOS.42 (Phase 4.42 step 3+4) — Slash command /weather pour
+			// ouvrir/fermer le panneau Weather et synchroniser la liste des
+			// zones meteo depuis le master au moment de l'ouverture. La
+			// touche Y fait la meme chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/weather" || text.starts_with("/weather ") || text.starts_with("/weather\t")))
+			{
+				m_weatherVisible = !m_weatherVisible;
+				if (m_weatherVisible)
+				{
+					m_weatherUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] /weather toggle (visible={})", m_weatherVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1734,6 +1766,52 @@ namespace engine
 					return;
 				}
 				m_outdoorPvpUi.OnCaptureCompletedNotification(*parsed);
+				return;
+			}
+			// CMANGOS.42 (Phase 4.42 step 3+4) — Dispatch des reponses Weather
+			// (151/153/155) + push notification (156).
+			case kOpcodeWeatherListResponse:
+			{
+				auto parsed = ParseWeatherListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] WEATHER_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_weatherUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeWeatherSubscribeResponse:
+			{
+				auto parsed = ParseWeatherSubscribeResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] WEATHER_SUBSCRIBE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_weatherUi.OnSubscribeResponse(*parsed);
+				return;
+			}
+			case kOpcodeWeatherUnsubscribeResponse:
+			{
+				auto parsed = ParseWeatherUnsubscribeResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] WEATHER_UNSUBSCRIBE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_weatherUi.OnUnsubscribeResponse(*parsed);
+				return;
+			}
+			case kOpcodeWeatherUpdateNotification:
+			{
+				auto parsed = ParseWeatherUpdateNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] WEATHER_UPDATE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_weatherUi.OnUpdateNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -4038,6 +4116,7 @@ namespace engine
 		m_arenaUi.Shutdown();
 		m_battleGroundUi.Shutdown();
 		m_outdoorPvpUi.Shutdown();
+		m_weatherUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -4180,6 +4259,23 @@ namespace engine
 					m_outdoorPvpUi.RequestList();
 				}
 				LOG_INFO(Core, "[Engine] P toggle outdoorpvp (visible={})", m_outdoorPvpVisible);
+			}
+			// CMANGOS.42 (Phase 4.42 step 3+4) — Touche Y : toggle panneau
+			// Weather + RequestList si on l'ouvre. Memes guards que A/G/P.
+			// Note : la touche Y est aussi utilisee comme Ctrl+Y pour le
+			// redo dans WorldEditorShell, mais le guard inGameNoMenu inclut
+			// !m_editorEnabled donc pas de conflit. WorldEditorShell traite
+			// Ctrl+Y / Ctrl+Shift+Y dans son propre bloc en aval.
+			if (inGameNoMenu && !chatBlocks
+				&& !m_input.IsDown(engine::platform::Key::Control)
+				&& m_input.WasPressed(engine::platform::Key::Y))
+			{
+				m_weatherVisible = !m_weatherVisible;
+				if (m_weatherVisible)
+				{
+					m_weatherUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] Y toggle weather (visible={})", m_weatherVisible);
 			}
 		}
 
@@ -4390,6 +4486,13 @@ namespace engine
 				// (toggle via /pvp ou touche P).
 				m_outdoorPvpImGui = std::make_unique<engine::render::OutdoorPvpImGuiRenderer>();
 				m_outdoorPvpImGui->SetPresenter(&m_outdoorPvpUi);
+				// CMANGOS.42 (Phase 4.42 step 3+4) — Renderer ImGui Weather.
+				// Le panel principal n'est visible que quand m_weatherVisible
+				// (toggle via /weather ou touche Y). Le HUD top-right est
+				// rendu independamment des que activeZoneId est set sur le
+				// presenter (selectionne via le bouton "Set Active" du panel).
+				m_weatherImGui = std::make_unique<engine::render::WeatherImGuiRenderer>();
+				m_weatherImGui->SetPresenter(&m_weatherUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5491,6 +5594,17 @@ namespace engine
 				m_outdoorPvpImGui->SetEnabled(true);
 				m_outdoorPvpImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_outdoorPvpImGui->Render();
+			}
+			// CMANGOS.42 (Phase 4.42 step 3+4) — Render du panel Weather si
+			// m_weatherVisible (toggle via /weather ou touche Y), ET du HUD
+			// top-right si activeZoneId set. Render() lui-meme gere ces
+			// 2 cas independamment : on lui passe juste l'enabled flag pour
+			// le panel ; le HUD est conditionne par le presenter state.
+			if (m_weatherImGui && m_weatherUi.IsInitialized())
+			{
+				m_weatherImGui->SetEnabled(m_weatherVisible);
+				m_weatherImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_weatherImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

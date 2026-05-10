@@ -42,6 +42,7 @@
 #include "src/masterd/handlers/arena/ArenaHandler.h"
 #include "src/masterd/handlers/battleground/BattleGroundHandler.h"
 #include "src/masterd/handlers/outdoorpvp/OutdoorPvpHandler.h"
+#include "src/masterd/handlers/weather/WeatherHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -571,6 +572,21 @@ int main(int argc, char** argv)
 	outdoorPvpHandler.SeedV1Zones();
 	LOG_INFO(Net, "[ServerMain] OutdoorPvpHandler configured (CMANGOS.36 step 3+4, in-memory, 2 zones seed)");
 
+	// CMANGOS.42 (Phase 4.42 step 3+4) — Weather wire server.
+	// Le master tient en memoire un WeatherManager seede au boot avec 3 zones
+	// meteo (Stormwind Plains tempere, Frozen Tundra polaire, Tanaris Desert
+	// aride). Les opcodes 150/152/154 sont dispatches au handler ; les
+	// responses 151/153/155 et la push notification 156 (WeatherUpdate)
+	// sont emises par le handler. V1 limitations : tick simule a chaque
+	// SubscribeRequest (force reroll), pas de SyncWeather RPC entre master
+	// et shardd. Pas de persistance DB.
+	engine::server::WeatherHandler weatherHandler;
+	weatherHandler.SetServer(&server);
+	weatherHandler.SetSessionManager(&sessionManager);
+	weatherHandler.SetConnectionSessionMap(&connSessionMap);
+	weatherHandler.SeedV1Zones();
+	LOG_INFO(Net, "[ServerMain] WeatherHandler configured (CMANGOS.42 step 3+4, in-memory, 3 zones seed)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -610,7 +626,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -691,6 +707,10 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeOutdoorPvpUnsubscribeRequest
 		      || opcode == kOpcodeOutdoorPvpCaptureStartRequest)
 			outdoorPvpHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeWeatherListRequest
+		      || opcode == kOpcodeWeatherSubscribeRequest
+		      || opcode == kOpcodeWeatherUnsubscribeRequest)
+			weatherHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

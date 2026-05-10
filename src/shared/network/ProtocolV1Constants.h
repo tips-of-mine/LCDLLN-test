@@ -382,4 +382,41 @@ namespace engine::network
 	constexpr uint16_t kOpcodeLfgStatusResponse             = 105u; ///< Master to Client : inQueue + role + dungeonId + elapsedSec, ou Unauthorized.
 	constexpr uint16_t kOpcodeLfgMatchProposalNotification  = 106u; ///< Master to Client (push, request_id=0) : un groupe a ete forme (proposalId, dungeonId, members).
 	constexpr uint16_t kOpcodeLfgMatchAcceptRequest         = 107u; ///< Client to Master : accepte ou rejette un match propose (proposalId + accept bool). V1 : log + ack.
+
+	// -------------------------------------------------------------------------
+	// Opcodes Cinematics (valeurs 108-112)
+	// Reference : Phase 5 CMANGOS.30 step 3+4. Wire master->client (push) +
+	// client->master (ack/skip) pour la lecture de cinematiques scriptees
+	// (intro de zone, fin de quete, etc.). Le step 1 (CinematicSequence
+	// header-only avec keyframes camera + sound + SampleAt linear interp)
+	// est deja merge ; pas de step 2 DB (les sequences sont content-driven,
+	// chargees depuis fichiers data).
+	//
+	// Architecture : la cinematique est entierement server-pushed. Le master
+	// (ou le shard via le master) decide quand declencher une cinematique
+	// pour un client donne (entree zone, fin de quete, intro). Le client
+	// charge la sequence depuis ses fichiers data locaux (game/data/
+	// cinematics/seq<id>.json) et execute la lecture (interpolation lineaire
+	// de la camera + sound cues + input desactive). A la fin, le client
+	// notifie le master par un ack request, et peut demander a skip via
+	// le skip request si l'utilisateur appuie sur Esc.
+	//
+	// V1 limitations :
+	//   - Skip toujours autorise (allowed=true). Future PR introduira un
+	//     catalog "non-skippable sequences" cote master.
+	//   - Pas de tracking server-side d'active cinematic (le master se
+	//     contente de log et repondre Ok aux acks).
+	//   - 113 reserve pour usage futur (e.g. CinematicPause si besoin).
+	//
+	// Decoupage opcode :
+	//   - PlayNotification (108, push)    : master annonce une cinematic au client.
+	//   - Ack             (109/110)       : client signale completion / cancellation.
+	//   - Skip            (111/112)       : client demande a skip (permis V1).
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeCinematicPlayNotification = 108u; ///< Master to Client (push, request_id=0) : declenche la lecture d'une cinematique (sequenceId + reason).
+	constexpr uint16_t kOpcodeCinematicAckRequest       = 109u; ///< Client to Master : signale la fin (ou interruption) de lecture (sequenceId + completionState).
+	constexpr uint16_t kOpcodeCinematicAckResponse      = 110u; ///< Master to Client : ACK Ok ou erreur (UnknownSequence, NoActiveCinematic, ...).
+	constexpr uint16_t kOpcodeCinematicSkipRequest      = 111u; ///< Client to Master : le user a appuye sur Esc et demande a skip la cinematique en cours.
+	constexpr uint16_t kOpcodeCinematicSkipResponse     = 112u; ///< Master to Client : OK + allowed (true V1) ou SkipNotAllowed (cinematique obligatoire).
 }

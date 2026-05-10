@@ -14,6 +14,7 @@
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
+#include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/TradePayloads.h"
 #include "src/shared/network/PacketBuilder.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -23,6 +24,7 @@
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
+#include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/EditorHubImGuiRenderer.h"
 #include "src/client/render/AuthUiRenderer.h"
 #include "src/client/render/DeferredPipeline.h"
@@ -888,6 +890,22 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.30 (Phase 5.30 step 3+4) — Init du presenter cinematique.
+		// Le presenter envoie 109 (Ack) et 111 (SkipRequest) ; il recoit le
+		// push 108 + responses 110/112 dans le push handler ci-dessous. Un
+		// Tick(nowMs) est appele chaque frame depuis BeginFrame quand une
+		// cinematique est en cours.
+		if (!m_cinematicUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] CinematicUiPresenter init FAILED — cinematiques desactivees");
+		}
+		else
+		{
+			m_cinematicUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1382,6 +1400,42 @@ namespace engine
 					return;
 				}
 				m_lfgUi.OnMatchProposal(*parsed);
+				return;
+			}
+			// CMANGOS.30 (Phase 5.30 step 3+4) — Dispatch des opcodes Cinematics
+			// (push 108 + responses 110/112). 109 (Ack) et 111 (SkipRequest)
+			// sont sortants : pas de dispatch ici.
+			case kOpcodeCinematicPlayNotification:
+			{
+				auto parsed = ParseCinematicPlayNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] CINEMATIC_PLAY_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_cinematicUi.OnPlayNotification(*parsed);
+				return;
+			}
+			case kOpcodeCinematicAckResponse:
+			{
+				auto parsed = ParseCinematicAckResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] CINEMATIC_ACK_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_cinematicUi.OnAckResponse(*parsed);
+				return;
+			}
+			case kOpcodeCinematicSkipResponse:
+			{
+				auto parsed = ParseCinematicSkipResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] CINEMATIC_SKIP_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_cinematicUi.OnSkipResponse(*parsed);
 				return;
 			}
 			// CMANGOS.27 (Phase 4.27 step 3+4) — Dispatch des reponses Trade
@@ -3599,6 +3653,7 @@ namespace engine
 		m_gmTicketUi.Shutdown();
 		m_reputationUi.Shutdown();
 		m_lfgUi.Shutdown();
+		m_cinematicUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3617,6 +3672,16 @@ namespace engine
 			{
 				if (!m_authUi.OnEscape())
 					OnQuit();
+			}
+		}
+		else if (m_cinematicUi.IsInitialized() && m_cinematicUi.GetState().isPlaying)
+		{
+			// CMANGOS.30 (Phase 5.30 step 3+4) — Pendant une cinematique, Esc
+			// envoie une demande de skip au master. La reponse asynchrone via
+			// OnSkipResponse termine effectivement la lecture si allowed=true.
+			if (m_input.WasPressed(engine::platform::Key::Escape))
+			{
+				m_cinematicUi.RequestSkip();
 			}
 		}
 		else if (m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive())
@@ -3739,6 +3804,18 @@ namespace engine
 		if (m_terrainChunkRenderer)
 			m_terrainChunkRenderer->Tick(m_vkDeviceContext.GetDevice());
 		PumpGameplayPackets();
+
+		// CMANGOS.30 (Phase 5.30 step 3+4) — Tick le presenter cinematique pour
+		// faire avancer l'interpolation camera + la detection de fin de
+		// sequence. No-op si aucune cinematique active. Le timestamp est en
+		// ms epoch (meme reference utilisee par le presenter pour startTimeMs).
+		if (m_cinematicUi.IsInitialized() && m_cinematicUi.GetState().isPlaying)
+		{
+			using namespace std::chrono;
+			const uint64_t nowMs = static_cast<uint64_t>(
+				duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
+			m_cinematicUi.Tick(nowMs);
+		}
 	}
 
 	void Engine::Update()
@@ -3819,6 +3896,12 @@ namespace engine
 				// Visible uniquement quand m_lfgVisible (toggle via /lfg).
 				m_lfgImGui = std::make_unique<engine::render::LfgImGuiRenderer>();
 				m_lfgImGui->SetPresenter(&m_lfgUi);
+				// CMANGOS.30 (Phase 5.30 step 3+4) — Renderer overlay cinematique
+				// (black bars + skip hint). Visible uniquement quand une cinematique
+				// est en cours (state.isPlaying == true). Pas de toggle slash command :
+				// le declenchement est server-pushed.
+				m_cinematicImGui = std::make_unique<engine::render::CinematicImGuiRenderer>();
+				m_cinematicImGui->SetPresenter(&m_cinematicUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -4869,6 +4952,15 @@ namespace engine
 				m_lfgImGui->SetEnabled(true);
 				m_lfgImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_lfgImGui->Render();
+			}
+			// CMANGOS.30 (Phase 5.30 step 3+4) — Render de l'overlay cinematique
+			// (black bars + skip hint) pendant la lecture d'une cinematique.
+			// state.isPlaying == false => pas de rendering (no-op interne).
+			if (m_cinematicImGui && m_cinematicUi.IsInitialized()
+				&& m_cinematicUi.GetState().isPlaying)
+			{
+				m_cinematicImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_cinematicImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

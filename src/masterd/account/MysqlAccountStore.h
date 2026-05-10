@@ -135,6 +135,12 @@ namespace engine::server
 		/// Refuse role=Console (runtime-only). CMANGOS.06 (Phase 1c).
 		bool SetRole(uint64_t account_id, AccountRole role) override;
 
+		/// Met a jour le statut d'un compte via UPDATE accounts SET
+		/// account_status=? WHERE id=?. Utilise par AdminCommandHandler
+		/// pour /ban (status=Locked). Aucun audit ecrit ici : la
+		/// responsabilite est du caller.
+		bool SetAccountStatus(uint64_t account_id, AccountStatus status) override;
+
 	private:
 		/// Pointeur non-owning vers le ConnectionPool MySQL master.
 		/// Null uniquement si le constructeur a reçu nullptr — comportement indéfini si accédé après.

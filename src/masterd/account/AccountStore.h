@@ -110,5 +110,14 @@ namespace engine::server
 		/// \return true si la mise à jour a réussi, false si compte inexistant
 		///         ou si role == Console.
 		virtual bool SetRole(uint64_t account_id, AccountRole role) = 0;
+
+		/// Met a jour le statut d'un compte (Active / Locked). Utilise par
+		/// AdminCommandHandler::DispatchBan pour bannir un compte. N'ecrit
+		/// PAS de log audit (responsabilite du caller). Persiste en RAM ou
+		/// en DB selon l'implementation.
+		/// \param account_id Compte cible.
+		/// \param status     Nouveau statut.
+		/// \return true si la mise a jour a reussi, false si compte inexistant.
+		virtual bool SetAccountStatus(uint64_t account_id, AccountStatus status) = 0;
 	};
 }

@@ -263,8 +263,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "shardd_routed",
-      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp:53"
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 2 RBAC migration : client envoie au master (opcode 195), master enumere les sessions actives via SessionManager.ListActiveAccountIds + resout login via AccountStore.FindByAccountId, response affichee dans le chat."
     },
     {
       "command": "/report <player>",
@@ -274,8 +275,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "shardd_routed",
-      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp:59"
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 2 RBAC migration : cree un ticket GM via GmTicketSystem.Open avec actor = reporter, target lookup via AccountStore.FindByLogin. Response contient ticket_id."
     },
     {
       "command": "/friend <player>",
@@ -330,8 +332,9 @@
       "minRole": "moderator",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "shardd_routed",
-      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp:61"
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 2 RBAC migration : verifie role inferieur strict via AccountRoleService.HasLowerSecurity, trouve la connexion via ConnectionSessionMap.Snapshot, ferme via NetServer.CloseConnection."
     },
     {
       "command": "/ban <player> <reason>",
@@ -341,8 +344,9 @@
       "minRole": "game_master",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "shardd_routed",
-      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp:63"
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 2 RBAC migration : UPDATE accounts.account_status=Locked via AccountStore.SetAccountStatus, deconnecte le compte si online. Verifie role inferieur strict."
     },
     {
       "command": "/mute <player> <duration>",
@@ -352,8 +356,9 @@
       "minRole": "moderator",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "shardd_routed",
-      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp:65"
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 2 RBAC migration : REPLACE INTO chat_mutes (migration 0044) avec until_ts = now + duration_minutes. ChatGate filtre les messages a l'envoi. Verifie role inferieur strict."
     },
     {
       "command": "/announce <message>",
@@ -363,8 +368,9 @@
       "minRole": "game_master",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "shardd_routed",
-      "implementation_file": "src/shardd/gameplay/chat/ChatCommandParser.cpp:67"
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 2 RBAC migration : broadcast un ChatRelay channel=Server, sender=[Announce] login a toutes les sessions actives via ConnectionSessionMap.Snapshot. Pas de filtre IgnoreList."
     },
     {
       "command": "/promote <account_id> <role>",

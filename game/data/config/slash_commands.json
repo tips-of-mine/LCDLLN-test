@@ -181,9 +181,9 @@
       "minRole": "administrator",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1323",
-      "notes": "Simulate Roll button bypasses gameplay loot rules -- admin only."
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 1 RBAC : le client envoie /loot au master (audit + role administrator), le toggle UI est applique localement independamment de la reponse. Le bouton Simulate Roll lui-meme reste gate cote serveur via LootHandler."
     },
     {
       "command": "/sky info",
@@ -193,9 +193,9 @@
       "minRole": "player",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1335",
-      "notes": "Read-only inspection. Player allowed but server must log the read attempt."
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 1 RBAC : commande lecture seule (player allowed) mais le master log la tentative d'inspection. Le client dump le DayNight state local au ACK Ok."
     },
     {
       "command": "/sky time <hours>",
@@ -205,9 +205,9 @@
       "minRole": "administrator",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "client_only_legacy",
-      "implementation_file": "src/client/app/Engine.cpp:1353",
-      "notes": "Visual override only; affects this client's rendering."
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 1 RBAC : le master valide hours dans [0..24) + role administrator. Override visuel uniquement, l'etat serveur du cycle jour/nuit reste inchange."
     },
     {
       "command": "/sky moon <phase 0..15>",
@@ -369,14 +369,14 @@
     {
       "command": "/promote <account_id> <role>",
       "aliases": [],
-      "description": "Change a target account's role (admin tool, not yet implemented).",
+      "description": "Promote/demote a target account to a given role.",
       "category": "admin",
       "minRole": "administrator",
       "serverInteraction": true,
       "serverLogged": true,
-      "status": "planned",
-      "implementation_file": null,
-      "notes": "Required for testing admin-only commands without manual DB access."
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 1 RBAC : applique via AccountRoleService::SetRole (DB + audit role_change). Role attendu : player/moderator/game_master/administrator. Required for testing admin-only commands without manual DB access."
     }
   ]
 }

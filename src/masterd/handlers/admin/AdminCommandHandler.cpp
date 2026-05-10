@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -180,6 +181,141 @@ namespace engine::server
 			resp.message = "OK";
 			return true;
 		}
+
+		/// Dispatch metier pour "/sky time <hours>". Override visuel local cote
+		/// client ; le master valide juste la plage [0..24) et echo la valeur.
+		/// Le state serveur du cycle jour/nuit reste inchange (preview client).
+		///
+		/// \return true si execution Ok, false si arguments invalides.
+		bool DispatchSkyTime(const std::vector<std::string>& args,
+		                     engine::network::admin::AdminCommandResponse& resp)
+		{
+			using namespace engine::network::admin;
+			if (args.size() != 1)
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "Usage : /sky time <hours 0..24>";
+				return false;
+			}
+			float hours = -1.0f;
+			try { hours = std::stof(args[0]); }
+			catch (...) { hours = -1.0f; }
+			if (!(hours >= 0.0f) || hours >= 24.0f)
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "Hours hors plage [0..24) : " + args[0];
+				return false;
+			}
+
+			char hoursBuf[32];
+			std::snprintf(hoursBuf, sizeof(hoursBuf), "hours=%.3f", static_cast<double>(hours));
+
+			resp.status = AdminCommandStatus::Ok;
+			resp.result.push_back(hoursBuf);
+			resp.message = "Time set to " + args[0] + "h";
+			return true;
+		}
+
+		/// Dispatch metier pour "/sky info". Commande lecture seule cote
+		/// gameplay : le master ne fait rien d'autre qu'acquitter (le client
+		/// dispose deja du DayNight state local pour afficher). L'audit log
+		/// capture qui a inspecte et quand.
+		bool DispatchSkyInfo(const std::vector<std::string>& args,
+		                     engine::network::admin::AdminCommandResponse& resp)
+		{
+			using namespace engine::network::admin;
+			if (!args.empty())
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "Usage : /sky info (pas d'argument)";
+				return false;
+			}
+			resp.status = AdminCommandStatus::Ok;
+			resp.message = "Sky info inspection authorized";
+			return true;
+		}
+
+		/// Dispatch metier pour "/loot". V1 : la commande toggle simplement
+		/// le panneau Loot Roll cote client (UI debug, bouton Simulate gate
+		/// admin-only). Le master valide juste le role + log audit. Le client
+		/// applique le toggle local independamment de la reponse master.
+		bool DispatchLoot(const std::vector<std::string>& args,
+		                  engine::network::admin::AdminCommandResponse& resp)
+		{
+			using namespace engine::network::admin;
+			(void)args;
+			resp.status = AdminCommandStatus::Ok;
+			resp.message = "Loot Roll panel toggled (audit logged)";
+			return true;
+		}
+
+		/// Dispatch metier pour "/promote <account_id> <role>". Outil admin
+		/// permettant de promouvoir/retrograder un compte sans acces direct
+		/// DB. Valide les 2 arguments, applique via AccountRoleService::SetRole
+		/// qui ecrit en DB + emet l'audit role_change.
+		///
+		/// \param actorAccountId  identifiant du compte qui execute la commande
+		///                        (admin). Persiste dans l'audit role_change.
+		/// \param roleService     service AccountRole (non-owning) ; si nullptr
+		///                        la commande retourne ServerError.
+		bool DispatchPromote(const std::vector<std::string>& args,
+		                     uint64_t actorAccountId,
+		                     engine::server::AccountRoleService* roleService,
+		                     engine::network::admin::AdminCommandResponse& resp)
+		{
+			using namespace engine::network::admin;
+			if (args.size() != 2)
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "Usage : /promote <account_id> <role> "
+				               "(role : player/moderator/game_master/administrator)";
+				return false;
+			}
+			uint64_t targetId = 0;
+			try { targetId = std::stoull(args[0]); }
+			catch (...) { targetId = 0; }
+			if (targetId == 0u)
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "account_id invalide : " + args[0];
+				return false;
+			}
+			// ParseRole retombe sur Player pour toute valeur inconnue : il faut
+			// donc valider explicitement avant l'appel pour distinguer un vrai
+			// "player" d'une typo. On accepte la forme snake_case stricte.
+			const std::string_view roleArg{args[1]};
+			const bool roleKnown =
+				roleArg == "player" || roleArg == "moderator"
+				|| roleArg == "game_master" || roleArg == "administrator";
+			if (!roleKnown)
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "role invalide : " + args[1]
+				               + " (attendu : player/moderator/game_master/administrator)";
+				return false;
+			}
+			const engine::server::AccountRole newRole = engine::server::ParseRole(roleArg);
+			if (!roleService)
+			{
+				resp.status = AdminCommandStatus::ServerError;
+				resp.message = "AccountRoleService indisponible";
+				return false;
+			}
+			if (!roleService->SetRole(targetId, newRole, actorAccountId))
+			{
+				resp.status = AdminCommandStatus::ServerError;
+				resp.message = "Echec mise a jour role (account_id introuvable ou DB en erreur)";
+				return false;
+			}
+			resp.status = AdminCommandStatus::Ok;
+			resp.message = "Role mis a jour : account_id="
+			               + std::to_string(targetId) + " -> "
+			               + std::string(engine::server::RoleToString(newRole));
+			resp.result.push_back("account_id=" + std::to_string(targetId));
+			resp.result.push_back(std::string("new_role=")
+			                     + std::string(engine::server::RoleToString(newRole)));
+			return true;
+		}
 	}
 
 	void AdminCommandHandler::HandlePacket(uint32_t connId, uint16_t opcode,
@@ -256,11 +392,32 @@ namespace engine::server
 			return;
 		}
 
-		// Dispatch metier par nom de commande.
+		// Dispatch metier par nom de commande. L'accountId est l'identifiant
+		// de l'utilisateur qui a emis la commande (audit + acteur de /promote).
 		bool handled = false;
 		if (req.command == "/sky moon")
 		{
 			DispatchSkyMoon(req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/sky time")
+		{
+			DispatchSkyTime(req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/sky info")
+		{
+			DispatchSkyInfo(req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/loot")
+		{
+			DispatchLoot(req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/promote")
+		{
+			DispatchPromote(req.args, accountId, m_roleService, resp);
 			handled = true;
 		}
 		else if (UiPanelCommandSet().count(req.command) > 0)

@@ -1345,27 +1345,43 @@ namespace engine
 			}
 			// CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Slash command /loot
 			// pour ouvrir/fermer la fenetre Loot Roll. La touche L fait la
-			// meme chose (cf. boucle input dans BeginFrame). Pas de fetch
-			// immediat : la fenetre montre les pending rolls reçus via push
-			// + le bouton Simulate Loot Roll (debug V1).
+			// meme chose (cf. boucle input dans BeginFrame).
+			//
+			// Wave 1 RBAC : /loot est admin-gated (le bouton Simulate Roll
+			// bypass la logique loot serveur). On envoie une AdminCommand
+			// au master pour audit + validation role administrator. Le
+			// toggle UI s'applique localement independamment de la reponse
+			// master (le panneau est purement visuel ; le bouton Simulate
+			// reste lui-meme gate cote serveur via LootHandler).
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& (text == "/loot"
 				    || text.starts_with("/loot ") || text.starts_with("/loot\t")))
 			{
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/loot";
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
 				m_lootRollVisible = !m_lootRollVisible;
-				LOG_INFO(Core, "[Engine] /loot toggle (visible={})", m_lootRollVisible);
+				LOG_INFO(Core, "[Engine] /loot toggle (visible={}) + admin audit envoye",
+					m_lootRollVisible);
 				return true;
 			}
 			// Phase 5 step 3+4 Lunar + M38.1 Sky : slash commands debug pour
 			// inspecter et override le cycle jour/nuit + phase lunaire.
-			//   /sky info        : log + chat-echo timeOfDay + sun dir + moon phase + illumination.
-			//   /sky time <h>    : SetTime(h), ex. "/sky time 22.5".
-			//   /sky moon <i>    : OnLunarPhaseChange(i, calc(i)), ex. "/sky moon 7".
+			// Wave 1 RBAC : toutes les sous-commandes /sky passent par
+			// AdminCommand pour audit et validation role serveur (minRole
+			// player pour /sky info, administrator pour /sky time et
+			// /sky moon — cf. game/data/config/slash_commands.json).
+			//   /sky info        : audit + applique l'affichage local sur ACK Ok.
+			//   /sky time <h>    : audit + applique SetTime(h) sur ACK Ok.
+			//   /sky moon <i>    : audit + OnLunarPhaseChange(i, calc(i)) sur ACK Ok.
 			//
-			// Chat echo : chaque commande pousse une ligne sur le canal Server
-			// (sender="[Sky]") via m_chatUi.PushNetworkLine, en plus du LOG_INFO
-			// dans le fichier engine.log. Le joueur voit donc le retour de la
-			// commande directement dans la fenetre de chat in-game.
+			// Chat echo immediat : chaque commande pousse une ligne sur le canal
+			// Server (sender="[Sky]") via m_chatUi.PushNetworkLine pour feedback
+			// utilisateur. La suite (Ok/Denied/etc.) est rendue par le case
+			// kOpcodeAdminCommandResponse plus bas.
 			auto pushSkyChatLine = [this](const char* fmt, auto... args) {
 				char buf[256];
 				std::snprintf(buf, sizeof(buf), fmt, args...);
@@ -1382,40 +1398,43 @@ namespace engine
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& (text == "/sky info" || text == "/sky"))
 			{
-				const auto& s = m_dayNight.GetState();
-				const char* moonName[16] = {
-					"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
-					"WaxingGibbousEarly", "WaxingGibbousLate", "FullMoonRising", "FullMoon",
-					"FullMoonSetting", "WaningGibbousEarly", "WaningGibbousLate", "LastQuarter",
-					"WaningCrescentEarly", "WaningCrescentLate", "EarthshineEarly", "EarthshineLate"
-				};
-				LOG_INFO(Render, "[Sky] timeOfDay={:.2f}h isDaytime={}", s.timeOfDay, s.isDaytime);
-				LOG_INFO(Render, "[Sky] sunDir=({:.2f},{:.2f},{:.2f})", s.lightDir[0], s.lightDir[1], s.lightDir[2]);
-				LOG_INFO(Render, "[Sky] moonPhase={} ({}) illumination={:.0f}%",
-					static_cast<unsigned>(s.moonPhase),
-					moonName[s.moonPhase < 16 ? s.moonPhase : 0],
-					s.moonIllumination * 100.0f);
-				pushSkyChatLine("timeOfDay=%.2fh isDaytime=%s",
-					static_cast<double>(s.timeOfDay), s.isDaytime ? "true" : "false");
-				pushSkyChatLine("sunDir=(%.2f,%.2f,%.2f)",
-					static_cast<double>(s.lightDir[0]),
-					static_cast<double>(s.lightDir[1]),
-					static_cast<double>(s.lightDir[2]));
-				pushSkyChatLine("moonPhase=%u (%s) illumination=%.0f%%",
-					static_cast<unsigned>(s.moonPhase),
-					moonName[s.moonPhase < 16 ? s.moonPhase : 0],
-					static_cast<double>(s.moonIllumination * 100.0f));
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/sky info";
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Render, "[Sky] /sky info envoye au master (audit + RBAC)");
+				pushSkyChatLine("/sky info envoye au master (audit + RBAC)");
 				return true;
 			}
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
 				&& text.starts_with("/sky time "))
 			{
 				const auto rest = text.substr(10);
-				float hours = 0.0f;
-				try { hours = std::stof(std::string(rest)); } catch (...) { hours = 12.0f; }
-				m_dayNight.SetTime(hours);
-				LOG_INFO(Render, "[Sky] time set to {:.2f}h", hours);
-				pushSkyChatLine("time set to %.2fh", static_cast<double>(hours));
+				// Validation cliente legere : on echoue tot si la valeur n'est
+				// pas un float dans [0..24). La validation autoritative reste
+				// cote master (DispatchSkyTime).
+				float hours = -1.0f;
+				try { hours = std::stof(std::string(rest)); } catch (...) { hours = -1.0f; }
+				if (!(hours >= 0.0f) || hours >= 24.0f)
+				{
+					LOG_WARN(Render, "[Sky] /sky time : '{}' hors plage [0..24)",
+						std::string(rest));
+					pushSkyChatLine("/sky time '%s' hors plage [0..24)", std::string(rest).c_str());
+					return true;
+				}
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/sky time";
+				req.args.push_back(std::string(rest));
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Render, "[Sky] /sky time {} envoye au master pour validation RBAC",
+					std::string(rest));
+				pushSkyChatLine("/sky time %.2fh envoye au master (validation RBAC en cours...)",
+					static_cast<double>(hours));
 				return true;
 			}
 			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
@@ -1445,6 +1464,39 @@ namespace engine
 					engine::network::kOpcodeAdminCommandRequest, payload);
 				LOG_INFO(Render, "[Sky] /sky moon {} sent to master for RBAC validation", phase);
 				pushSkyChatLine("/sky moon %d envoye au master (validation RBAC en cours...)", phase);
+				return true;
+			}
+			// Wave 1 RBAC : /promote <account_id> <role> est un outil admin
+			// permettant de promouvoir/retrograder un compte sans acces direct
+			// DB. Le serveur valide le role administrator + applique la mise
+			// a jour via AccountRoleService::SetRole (qui ecrit en DB + emet
+			// l'audit role_change).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& text.starts_with("/promote "))
+			{
+				const auto rest = text.substr(9);
+				const auto spacePos = rest.find(' ');
+				if (spacePos == std::string_view::npos)
+				{
+					LOG_WARN(Core,
+						"[Admin] /promote usage : /promote <account_id> <role>");
+					return true;
+				}
+				std::string accIdStr(rest.substr(0, spacePos));
+				std::string roleStr(rest.substr(spacePos + 1));
+				// On ne valide pas plus avant cote client : le master fait
+				// la validation autoritative (account_id non nul, role connu)
+				// et repond InvalidArgs si besoin.
+				engine::network::admin::AdminCommandRequest req;
+				req.command = "/promote";
+				req.args.push_back(accIdStr);
+				req.args.push_back(roleStr);
+				std::vector<uint8_t> payload;
+				engine::network::admin::BuildAdminCommandRequestPayload(req, payload);
+				(void)m_authUi.SendGenericRequestAsync(
+					engine::network::kOpcodeAdminCommandRequest, payload);
+				LOG_INFO(Core, "[Admin] /promote {} -> {} envoye au master (RBAC + audit)",
+					accIdStr, roleStr);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -2361,6 +2413,57 @@ namespace engine
 							static_cast<unsigned>(phase),
 							static_cast<double>(illumination * 100.0f));
 					}
+					else if (parsed.command == "/sky time")
+					{
+						// Parse echoed arg : ["hours=22.500"]. Le master a deja
+						// valide la plage [0..24) — on applique sans recheck.
+						float hours = 12.0f;
+						for (const auto& kv : parsed.result)
+						{
+							if (kv.starts_with("hours="))
+							{
+								try { hours = std::stof(kv.substr(6)); }
+								catch (...) { hours = 12.0f; }
+							}
+						}
+						m_dayNight.SetTime(hours);
+						LOG_INFO(Render, "[Sky] /sky time ACK applied : {:.2f}h",
+							static_cast<double>(hours));
+					}
+					else if (parsed.command == "/sky info")
+					{
+						// Read-only : le master ne renvoie pas d'etat metier
+						// (le client a deja le state local DayNight). On
+						// dump l'etat local cote log Render maintenant qu'on
+						// a l'autorisation serveur (audit cote master deja emis).
+						const auto& s = m_dayNight.GetState();
+						static const char* kMoonName[16] = {
+							"NewMoon", "WaxingCrescentEarly", "WaxingCrescentLate", "FirstQuarter",
+							"WaxingGibbousEarly", "WaxingGibbousLate", "FullMoonRising", "FullMoon",
+							"FullMoonSetting", "WaningGibbousEarly", "WaningGibbousLate", "LastQuarter",
+							"WaningCrescentEarly", "WaningCrescentLate", "EarthshineEarly", "EarthshineLate"
+						};
+						LOG_INFO(Render, "[Sky] timeOfDay={:.2f}h isDaytime={}",
+							s.timeOfDay, s.isDaytime);
+						LOG_INFO(Render, "[Sky] sunDir=({:.2f},{:.2f},{:.2f})",
+							s.lightDir[0], s.lightDir[1], s.lightDir[2]);
+						LOG_INFO(Render, "[Sky] moonPhase={} ({}) illumination={:.0f}%",
+							static_cast<unsigned>(s.moonPhase),
+							kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
+							s.moonIllumination * 100.0f);
+					}
+					else if (parsed.command == "/loot")
+					{
+						// Toggle deja applique localement a la frappe (le panneau
+						// UI ne dependant pas du master). On log juste l'ACK audit.
+						LOG_INFO(Core, "[Admin] /loot ACK : {}", parsed.message);
+					}
+					else if (parsed.command == "/promote")
+					{
+						// Echo : ["account_id=123", "new_role=moderator"]. On log
+						// pour feedback admin (la persistance est cote master).
+						LOG_INFO(Core, "[Admin] /promote ACK : {}", parsed.message);
+					}
 					else
 					{
 						LOG_INFO(Net, "[AdminCommand] OK : command={} (no client effect V1)", parsed.command);
@@ -2369,6 +2472,9 @@ namespace engine
 				}
 				else
 				{
+					// Tout refus (Denied, InvalidArgs, Unauthorized, ServerError,
+					// UnknownCommand) est trace cote client. L'audit cote master
+					// a deja ete emis avec result=DENIED/INVALID_ARGS/etc.
 					LOG_WARN(Net, "[AdminCommand] REFUSED command={} status={} message={}",
 						parsed.command,
 						static_cast<unsigned>(parsed.status),

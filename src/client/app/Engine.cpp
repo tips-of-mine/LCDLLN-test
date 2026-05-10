@@ -14,6 +14,7 @@
 #include "src/shared/network/GmTicketPayloads.h"
 #include "src/shared/network/ReputationPayloads.h"
 #include "src/shared/network/ArenaPayloads.h"
+#include "src/shared/network/BattleGroundPayloads.h"
 #include "src/shared/network/LfgPayloads.h"
 #include "src/shared/network/CinematicPayloads.h"
 #include "src/shared/network/SkillPayloads.h"
@@ -26,6 +27,7 @@
 #include "src/client/render/GmTicketImGuiRenderer.h"
 #include "src/client/render/ReputationImGuiRenderer.h"
 #include "src/client/render/ArenaImGuiRenderer.h"
+#include "src/client/render/BattleGroundImGuiRenderer.h"
 #include "src/client/render/LfgImGuiRenderer.h"
 #include "src/client/render/CinematicImGuiRenderer.h"
 #include "src/client/render/SkillBookImGuiRenderer.h"
@@ -940,6 +942,21 @@ namespace engine
 			});
 		}
 
+		// CMANGOS.10 (Phase 5 step 3+4) — Init du presenter BattleGround + cable
+		// du send callback pour les requetes 130/132/134/139. Reception
+		// dispatchee dans le push handler ci-dessous (responses 131/133/135
+		// + push 136/137/138).
+		if (!m_battleGroundUi.Init())
+		{
+			LOG_WARN(Core, "[Boot] BattleGroundUiPresenter init FAILED — panneau BG desactive");
+		}
+		else
+		{
+			m_battleGroundUi.SetSendCallback([this](uint16_t opcode, const std::vector<uint8_t>& payload) -> bool {
+				return m_authUi.SendGenericRequestAsync(opcode, payload);
+			});
+		}
+
 		// CMANGOS.27 (Phase 4.27 step 3+4) — Init du presenter TradeWindow + cable
 		// du send callback pour les requetes 83/86/88/91/93. Reception dispatchee
 		// dans le push handler ci-dessous (responses 84/87/89/92 + push 85/90/94).
@@ -1098,6 +1115,21 @@ namespace engine
 					m_arenaUi.RequestTeams();
 				}
 				LOG_INFO(Core, "[Engine] /arena toggle (visible={})", m_arenaVisible);
+				return true;
+			}
+			// CMANGOS.10 (Phase 5 step 3+4) — Slash command /bg pour ouvrir/
+			// fermer la fenetre BattleGround et synchroniser la liste depuis
+			// le master au moment de l'ouverture. La touche G fait la meme
+			// chose (cf. boucle input dans BeginFrame).
+			if (channel == static_cast<uint8_t>(engine::net::ChatChannel::Say)
+				&& (text == "/bg" || text.starts_with("/bg ") || text.starts_with("/bg\t")))
+			{
+				m_battleGroundVisible = !m_battleGroundVisible;
+				if (m_battleGroundVisible)
+				{
+					m_battleGroundUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] /bg toggle (visible={})", m_battleGroundVisible);
 				return true;
 			}
 			// CMANGOS.32 (Phase 5.32 step 3+4) — Slash command /ticket et /gmticket
@@ -1534,6 +1566,74 @@ namespace engine
 					return;
 				}
 				m_arenaUi.OnMatchResultNotification(*parsed);
+				return;
+			}
+			// CMANGOS.10 (Phase 5 step 3+4) — Dispatch des reponses BattleGround
+			// (131/133/135) + push notifications (136/137/138).
+			case kOpcodeBgListResponse:
+			{
+				auto parsed = ParseBgListResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] BG_LIST_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_battleGroundUi.OnListResponse(*parsed);
+				return;
+			}
+			case kOpcodeBgQueueResponse:
+			{
+				auto parsed = ParseBgQueueResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] BG_QUEUE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_battleGroundUi.OnQueueResponse(*parsed);
+				return;
+			}
+			case kOpcodeBgLeaveQueueResponse:
+			{
+				auto parsed = ParseBgLeaveQueueResponsePayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] BG_LEAVE_QUEUE_RESPONSE parse failed (size={})", payloadSize);
+					return;
+				}
+				m_battleGroundUi.OnLeaveQueueResponse(*parsed);
+				return;
+			}
+			case kOpcodeBgMatchStartNotification:
+			{
+				auto parsed = ParseBgMatchStartNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] BG_MATCH_START_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_battleGroundUi.OnMatchStartNotification(*parsed);
+				return;
+			}
+			case kOpcodeBgScoreUpdateNotification:
+			{
+				auto parsed = ParseBgScoreUpdateNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] BG_SCORE_UPDATE_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_battleGroundUi.OnScoreUpdateNotification(*parsed);
+				return;
+			}
+			case kOpcodeBgMatchEndNotification:
+			{
+				auto parsed = ParseBgMatchEndNotificationPayload(payload, payloadSize);
+				if (!parsed)
+				{
+					LOG_WARN(Net, "[Engine] BG_MATCH_END_NOTIFICATION parse failed (size={})", payloadSize);
+					return;
+				}
+				m_battleGroundUi.OnMatchEndNotification(*parsed);
 				return;
 			}
 			// CMANGOS.33 (Phase 5.33 step 3+4) — Dispatch des reponses LFG
@@ -3836,6 +3936,7 @@ namespace engine
 		m_cinematicUi.Shutdown();
 		m_skillBookUi.Shutdown();
 		m_arenaUi.Shutdown();
+		m_battleGroundUi.Shutdown();
 		m_window.Destroy();
 		LOG_INFO(Core, "[Engine] Shutdown complete");
 		return 0;
@@ -3944,6 +4045,28 @@ namespace engine
 					m_arenaUi.RequestTeams();
 				}
 				LOG_INFO(Core, "[Engine] A toggle arena (visible={})", m_arenaVisible);
+			}
+		}
+
+		// CMANGOS.10 (Phase 5 step 3+4) — Touche G post-auth toggle le panneau
+		// BattleGround (equivalent a la slash command /bg). Memes guards que
+		// la touche A (chat focus + pause + editor + auth flow).
+		{
+			const bool chatBlocks = m_chatUi.IsInitialized() && m_chatUi.IsChatFocusActive();
+			const bool inGameNoMenu = !m_inGamePauseMenuVisible
+				&& !m_inGameOptionsPanelVisible
+				&& !m_editorEnabled
+				&& m_authUi.IsInitialized()
+				&& m_authUi.IsFlowComplete();
+			if (inGameNoMenu && !chatBlocks
+				&& m_input.WasPressed(engine::platform::Key::G))
+			{
+				m_battleGroundVisible = !m_battleGroundVisible;
+				if (m_battleGroundVisible)
+				{
+					m_battleGroundUi.RequestList();
+				}
+				LOG_INFO(Core, "[Engine] G toggle battleground (visible={})", m_battleGroundVisible);
 			}
 		}
 
@@ -4143,6 +4266,12 @@ namespace engine
 				// formation de match.
 				m_arenaImGui = std::make_unique<engine::render::ArenaImGuiRenderer>();
 				m_arenaImGui->SetPresenter(&m_arenaUi);
+				// CMANGOS.10 (Phase 5 step 3+4) — Renderer ImGui du panneau
+				// BattleGround. Visible quand m_battleGroundVisible (toggle
+				// /bg ou touche G), ou quand un match BG est actif (le
+				// scoreboard s'auto-affiche apres le push 136 MatchStart).
+				m_battleGroundImGui = std::make_unique<engine::render::BattleGroundImGuiRenderer>();
+				m_battleGroundImGui->SetPresenter(&m_battleGroundUi);
 				// M43.4 — Editor Hub overlay : créé inconditionnellement, ne s'affiche que
 				// si --editor est actif (cf. condition Render branch plus bas).
 				m_editorHubImGui = std::make_unique<engine::render::EditorHubImGuiRenderer>();
@@ -5223,6 +5352,17 @@ namespace engine
 				m_arenaImGui->SetEnabled(true);
 				m_arenaImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
 				m_arenaImGui->Render();
+			}
+			// CMANGOS.10 (Phase 5 step 3+4) — Render du panneau BattleGround si
+			// visible OU si un match est actif (le scoreboard s'affiche tout
+			// seul tant que activeMatchId est set, meme si le panneau principal
+			// est masque, pour que le joueur ne rate pas le match push-pousse).
+			if (m_battleGroundImGui && m_battleGroundUi.IsInitialized()
+				&& (m_battleGroundVisible || m_battleGroundUi.GetState().activeMatchId.has_value()))
+			{
+				m_battleGroundImGui->SetEnabled(true);
+				m_battleGroundImGui->SetViewportSize(static_cast<uint32_t>(dw), static_cast<uint32_t>(dh));
+				m_battleGroundImGui->Render();
 			}
 			// DIAG chat-only branch (in-game).
 			if ((m_currentFrame % 60u) == 0u)

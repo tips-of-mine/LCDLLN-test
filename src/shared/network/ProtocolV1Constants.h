@@ -499,4 +499,41 @@ namespace engine::network
 	constexpr uint16_t kOpcodeArenaMatchAcceptRequest        = 127u; ///< Client to Master : accepte (true) ou rejette (false) le match propose (proposalId + accept bool).
 	constexpr uint16_t kOpcodeArenaMatchAcceptResponse       = 128u; ///< Master to Client : ACK Ok ou ProposalExpired / UnknownProposal / Unauthorized.
 	constexpr uint16_t kOpcodeArenaMatchResultNotification   = 129u; ///< Master to Client (push, request_id=0) : fin de match (win bool, oldRating, newRating, opponentName).
+
+	// =====================================================================
+	// CMANGOS.10 step 3+4 — BattleGround wire (BG list, queue par faction
+	// Alliance/Horde, match start, score updates, match end). Master tient
+	// en memoire un BattleGroundQueue + matches actifs (V1).
+	//
+	// Architecture : 3 BG hardcodes au boot (Warsong Gulch, Arathi Basin,
+	// Alterac Valley). Le master tient en memoire la queue par account et
+	// les matches actifs. V1 simplifie : a la queue, master cree
+	// immediatement un match contre AI bot (faction opposee) et push la
+	// sequence Start -> Score(s) -> End. Pas besoin de Tick().
+	//
+	// V1 limitations :
+	//   - 3 BG hardcodes (Warsong/Arathi/Alterac). Vrais BG via M40+ futur.
+	//   - Match vs AI bot fictif (V1) ; vrai matchmaking 2 factions a venir.
+	//   - Score evolution simulee instantanee (V1) ; vrai gameplay BG via shardd futur.
+	//   - Pas de SyncBg RPC entre master et shardd (master autoritaire V1).
+	//
+	// Decoupage opcode :
+	//   - List       (130/131)               : liste des BG disponibles.
+	//   - Queue      (132/133)               : inscription en queue (bgType + faction 0/1).
+	//   - LeaveQueue (134/135)               : quitte la queue.
+	//   - MatchStartNotification (136, push) : match commence (matchId, mapName, counts).
+	//   - ScoreUpdateNotification (137, push): scores changes (matchId, scores, elapsed).
+	//   - MatchEndNotification (138, push)   : fin de match (winnerFaction, scores, duration).
+	//   - LeaveMatch (139)                   : forfait V1 (push fire-and-forget, pas de Response paire).
+	// =====================================================================
+	constexpr uint16_t kOpcodeBgListRequest                = 130u; ///< Client to Master : liste des BG disponibles (vide).
+	constexpr uint16_t kOpcodeBgListResponse               = 131u; ///< Master to Client : liste {bgType, name, teamSize, mapName} ou Unauthorized.
+	constexpr uint16_t kOpcodeBgQueueRequest               = 132u; ///< Client to Master : s'inscrit en queue BG (bgType + faction Alliance=0/Horde=1).
+	constexpr uint16_t kOpcodeBgQueueResponse              = 133u; ///< Master to Client : OK + estimatedWaitSec + queuePosition, ou AlreadyQueued / UnknownBg / InvalidFaction / Unauthorized.
+	constexpr uint16_t kOpcodeBgLeaveQueueRequest          = 134u; ///< Client to Master : quitte la queue BG (vide).
+	constexpr uint16_t kOpcodeBgLeaveQueueResponse         = 135u; ///< Master to Client : OK ou NotInQueue / Unauthorized.
+	constexpr uint16_t kOpcodeBgMatchStartNotification     = 136u; ///< Master to Client (push, request_id=0) : match commence (bgType, mapName, allianceCount, hordeCount, matchId).
+	constexpr uint16_t kOpcodeBgScoreUpdateNotification    = 137u; ///< Master to Client (push, request_id=0) : score changes (matchId, allianceScore, hordeScore, elapsedSec).
+	constexpr uint16_t kOpcodeBgMatchEndNotification       = 138u; ///< Master to Client (push, request_id=0) : fin de match (matchId, winnerFaction 0/1/2 = Alliance/Horde/Draw, allianceScore, hordeScore, durationSec).
+	constexpr uint16_t kOpcodeBgLeaveMatchRequest          = 139u; ///< Client to Master : quitte le match en cours (forfait V1) ou vide.
 }

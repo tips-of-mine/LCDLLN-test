@@ -257,6 +257,7 @@ add_library(engine_core
   src/client/gmtickets/GmTicketUi.cpp
   src/client/reputation/ReputationUi.cpp
   src/client/arena/ArenaUi.cpp
+  src/client/battleground/BattleGroundUi.cpp
   src/client/lfg/LfgUi.cpp
   src/client/cinematics/CinematicUi.cpp
   src/client/skills/SkillBookUi.cpp
@@ -341,6 +342,7 @@ add_library(engine_core
   src/client/render/GmTicketImGuiRenderer.cpp
   src/client/render/ReputationImGuiRenderer.cpp
   src/client/render/ArenaImGuiRenderer.cpp
+  src/client/render/BattleGroundImGuiRenderer.cpp
   src/client/render/LfgImGuiRenderer.cpp
   src/client/render/CinematicImGuiRenderer.cpp
   src/client/render/SkillBookImGuiRenderer.cpp
@@ -438,6 +440,7 @@ add_library(engine_core
   src/shared/network/GmTicketPayloads.cpp
   src/shared/network/ReputationPayloads.cpp
   src/shared/network/ArenaPayloads.cpp
+  src/shared/network/BattleGroundPayloads.cpp
   src/shared/network/LfgPayloads.cpp
   src/shared/network/CinematicPayloads.cpp
   src/shared/network/SkillPayloads.cpp
@@ -693,6 +696,11 @@ add_test(NAME skill_payloads_tests COMMAND skill_payloads_tests)
 add_executable(arena_payloads_tests src/shared/network/ArenaPayloadsTests.cpp)
 target_link_libraries(arena_payloads_tests PRIVATE engine_core)
 add_test(NAME arena_payloads_tests COMMAND arena_payloads_tests)
+
+# CMANGOS.10 (Phase 5 step 3+4) — BattleGround payloads round-trip tests (no DB / no network).
+add_executable(battleground_payloads_tests src/shared/network/BattleGroundPayloadsTests.cpp)
+target_link_libraries(battleground_payloads_tests PRIVATE engine_core)
+add_test(NAME battleground_payloads_tests COMMAND battleground_payloads_tests)
 
 # CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
 add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)

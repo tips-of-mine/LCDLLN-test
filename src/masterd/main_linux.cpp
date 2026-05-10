@@ -40,6 +40,7 @@
 #include "src/masterd/handlers/quest/QuestHandler.h"
 #include "src/masterd/handlers/reputation/ReputationHandler.h"
 #include "src/masterd/handlers/arena/ArenaHandler.h"
+#include "src/masterd/handlers/battleground/BattleGroundHandler.h"
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
@@ -538,6 +539,22 @@ int main(int argc, char** argv)
 	arenaHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] ArenaHandler configured (CMANGOS.21 step 3+4, in-memory registry)");
 
+	// CMANGOS.10 (Phase 5 step 3+4) — BattleGround wire server.
+	// Le master tient en memoire un store de queue + matches actifs
+	// (V1 : 3 BG hardcodes Warsong/Arathi/Alterac, queue par account,
+	// match V1 vs AI bot fictif a la queue). Les opcodes 130/132/134/139
+	// sont dispatches au handler ; les responses 131/133/135 et les push
+	// notifications 136 (MatchStart) / 137 (ScoreUpdate) / 138 (MatchEnd)
+	// sont emises par le handler.
+	// V1 limitations : match vs AI bot, score evolution simulee
+	// instantanee, winnerFaction tirage 50/50, pas de SyncBg RPC entre
+	// master et shardd. Pas de persistance DB.
+	engine::server::BattleGroundHandler bgHandler;
+	bgHandler.SetServer(&server);
+	bgHandler.SetSessionManager(&sessionManager);
+	bgHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] BattleGroundHandler configured (CMANGOS.10 step 3+4, in-memory)");
+
 	// Wire PasswordResetHandler dependencies.
 	passwordResetHandler.SetServer(&server);
 	passwordResetHandler.SetAccountStore(accountStore);
@@ -577,7 +594,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -648,6 +665,11 @@ int main(int argc, char** argv)
 		      || opcode == kOpcodeArenaLeaveQueueRequest
 		      || opcode == kOpcodeArenaMatchAcceptRequest)
 			arenaHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeBgListRequest
+		      || opcode == kOpcodeBgQueueRequest
+		      || opcode == kOpcodeBgLeaveQueueRequest
+		      || opcode == kOpcodeBgLeaveMatchRequest)
+			bgHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else
 			authHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 	});

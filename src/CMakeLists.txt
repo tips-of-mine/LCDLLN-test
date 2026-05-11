@@ -578,6 +578,10 @@ elseif(UNIX)
   # CMANGOS.26 (Phase 3.26a) : SpellFamilyMask 128-bit + ProcEvent matching.
   lcdlln_add_simple_test(spell_family_mask_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/spell/SpellFamilyMaskTests.cpp)
+  # Wave 23 (CMANGOS.26 step 2) : SpellMgr + Spell state machine + Aura
+  # tick/stack + ProcMgr event dispatch (header-only, etend SpellFamily).
+  lcdlln_add_simple_test(spell_mgr_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/spell/SpellMgrTests.cpp)
   # CMANGOS.14 (Phase 3.14a) : DBScripts VM step-by-step.
   lcdlln_add_simple_test(dbscript_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/dbscripts/DBScriptTests.cpp

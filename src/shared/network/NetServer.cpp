@@ -250,6 +250,37 @@ namespace engine::server
 			}
 		}
 
+		// Wave 15 — Dump des paquets recents pour cette conn si PacketLog opt-in
+		// est active ET reason indique une anomalie protocole / reseau. On exclut
+		// les fermetures "normales" (PeerClosed, HeartbeatTimeout, KickedByDuplicateLogin)
+		// pour ne dumper que les vrais bugs (decode, send, ssl, queue cap, handshake).
+		// Le dump sort en LOG_WARN avec le FormatEntries de PacketLog -- ne s'imprime
+		// que si packetLog != nullptr (cf. server.debug.packetlog.enabled).
+		if (hadConn && packetLog != nullptr)
+		{
+			const bool isProtocolError =
+				reason == DisconnectReason::InvalidPacket
+				|| reason == DisconnectReason::DecodeFailures
+				|| reason == DisconnectReason::HandshakeTimeout
+				|| reason == DisconnectReason::TlsHandshakeFailed
+				|| reason == DisconnectReason::SslReadError
+				|| reason == DisconnectReason::SslWriteError
+				|| reason == DisconnectReason::RecvError
+				|| reason == DisconnectReason::SendError
+				|| reason == DisconnectReason::TxQueueCap;
+			if (isProtocolError)
+			{
+				auto recent = packetLog->DrainForConn(connId);
+				if (!recent.empty())
+				{
+					LOG_WARN(Net,
+						"[PacketLog] dump on close connId={} reason={} entries={} :\n{}",
+						connId, DisconnectReasonString(reason), recent.size(),
+						engine::server::netdebug::FormatEntries(recent));
+				}
+			}
+		}
+
 		// M25.4: update DDoS tracking regardless of other close causes.
 		if (ipHostOrder != 0u)
 			ddosProtector.OnConnectionClosed(ipHostOrder, reason, std::chrono::steady_clock::now());

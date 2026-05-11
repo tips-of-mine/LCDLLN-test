@@ -42,6 +42,9 @@ if(WIN32)
     ${CMAKE_SOURCE_DIR}/src/shardd/world/TickScheduler.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/GridState.cpp
+    # Wave 18 : GridNotifier (foncteur Visitor + filter predicate).
+    # GridVisitor.h est header-only template, pas de .cpp.
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/ZoneTransitions.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/world/LagCompensation.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
@@ -572,6 +575,29 @@ elseif(UNIX)
   target_link_libraries(grid_state_tests PRIVATE engine_core spdlog::spdlog pthread)
   target_compile_options(grid_state_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME grid_state_tests COMMAND grid_state_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Wave 18 (CMANGOS.03 step 2) : GridVisitor pattern (template free function)
+  # parcourt l'AoI 7x7 cells autour d'une position.
+  add_executable(grid_visitor_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridVisitorTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
+  )
+  target_include_directories(grid_visitor_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(grid_visitor_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(grid_visitor_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME grid_visitor_tests COMMAND grid_visitor_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Wave 18 (CMANGOS.03 step 2) : GridNotifier foncteur Visitor avec filter
+  # predicate (utilise pour broadcasts localises -- collecte recipients).
+  add_executable(grid_notifier_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifierTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/GridNotifier.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/world/SpatialPartition.cpp
+  )
+  target_include_directories(grid_notifier_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(grid_notifier_tests PRIVATE engine_core spdlog::spdlog pthread)
+  target_compile_options(grid_notifier_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME grid_notifier_tests COMMAND grid_notifier_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # CMANGOS.05 (Phase 2.05b) : VMapFormat encode/decode tests (no DB, no I/O)
   add_executable(vmap_format_tests

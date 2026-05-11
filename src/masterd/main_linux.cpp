@@ -54,6 +54,8 @@
 #include "src/masterd/handlers/lfg/LfgHandler.h"
 #include "src/masterd/lfg/LfgQueue.h"
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
+#include "src/masterd/cinematics/InMemoryCinematicStore.h"
+#include "src/masterd/cinematics/MysqlCinematicStore.h"
 #include "src/masterd/handlers/skills/SkillHandler.h"
 #include "src/masterd/quests/MysqlQuestStateStore.h"
 #include "src/masterd/reputation/MysqlReputationStore.h"
@@ -530,6 +532,25 @@ int main(int argc, char** argv)
 	cinematicHandler.SetSessionManager(&sessionManager);
 	cinematicHandler.SetConnectionSessionMap(&connSessionMap);
 	LOG_INFO(Net, "[ServerMain] CinematicHandler configured (CMANGOS.30 step 3+4, push-only)");
+
+	// Wave 11 — CinematicStore : DB-backed si pool dispo, fallback in-memory sinon.
+	// Permet de tracker quelles cutscenes un account a deja vues (futur :
+	// skip intro a la 2e session). Le store survit au handler car les deux
+	// objets sont locaux a main et detruits dans le meme scope.
+	engine::server::cinematics::MysqlCinematicStore cinematicStoreDb(&dbPool);
+	engine::server::cinematics::InMemoryCinematicStore cinematicStoreInMem;
+	engine::server::cinematics::ICinematicStore* cinematicStore = nullptr;
+	if (cinematicStoreDb.IsAvailable())
+	{
+		cinematicStore = &cinematicStoreDb;
+		LOG_INFO(Net, "[CinematicStore] MySQL-backed (Wave 11)");
+	}
+	else
+	{
+		cinematicStore = &cinematicStoreInMem;
+		LOG_WARN(Net, "[CinematicStore] in-memory fallback - cinematic 'seen' state will not persist this session");
+	}
+	cinematicHandler.SetCinematicStore(cinematicStore);
 
 	// CMANGOS.39 (Phase 4.39 step 3+4) — Skills wire server.
 	// Le master tient en memoire la skill book par account (V1, starter set

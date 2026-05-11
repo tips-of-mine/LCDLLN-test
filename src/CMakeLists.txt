@@ -172,6 +172,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/guild/MysqlGuildStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/battleground/MysqlBattleGroundStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/loot/MysqlLootStore.cpp
+    # Wave 11 Persistence : Cinematic seen store (table cinematic_seen, 0058).
+    ${CMAKE_SOURCE_DIR}/src/masterd/cinematics/InMemoryCinematicStore.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/cinematics/MysqlCinematicStore.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ChatPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetStore.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/password/PasswordResetHandler.cpp

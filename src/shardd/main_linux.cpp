@@ -16,6 +16,10 @@
 // Wave 8 — Wiring runtime des modules internes (ThreatList + DBScripts).
 #include "src/shardd/combat/ThreatListRuntime.h"
 #include "src/shardd/dbscripts/DBScriptRuntime.h"
+// Wave 9 — Wiring runtime AntiCheat + SpellFamily + InstanceManager.
+#include "src/shardd/anticheat/AntiCheatGameplayRuntime.h"
+#include "src/shardd/spell/SpellFamilyRuntime.h"
+#include "src/shardd/maps/InstanceManagerRuntime.h"
 
 #include <csignal>
 #include <chrono>
@@ -163,6 +167,21 @@ int main(int argc, char** argv)
 		"[DBScripts] {} scripts loaded at boot",
 		dbScripts.ScriptCount());
 
+	// Wave 9 — AntiCheat + SpellFamily + InstanceManager. Meme pattern : on
+	// seede au boot pour qu'au moins UN cycle V1 soit exerce en prod (et
+	// pour qu'un futur SeedFromDb() ait son point d'accroche evident).
+	engine::server::anticheat::AntiCheatGameplayRuntime antiCheat;
+	antiCheat.SeedV1Config();
+	LOG_INFO(AntiCheat, "[AntiCheat] runtime configured (V1 thresholds : maxSpeed=7.5 m/s, tolerance=1.5, maxStep=50 m)");
+
+	engine::server::spell::SpellFamilyRuntime spellFamily;
+	spellFamily.SeedV1Families();
+	LOG_INFO(Spell, "[SpellFamily] {} spells registered at boot", spellFamily.SpellCount());
+
+	engine::server::maps::InstanceManagerRuntime instanceMgr;
+	instanceMgr.SeedV1Maps();
+	LOG_INFO(Maps, "[InstanceManager] {} maps registered at boot", instanceMgr.MapCount());
+
 	// Tick periodique EventAI : intervalle 1s. La boucle principale tourne
 	// a 100ms (sleep_for(100ms) ci-dessous) donc on filtre via
 	// lastEventAiTickMs. Idem pour le log periodique 60s qui dump le
@@ -207,6 +226,17 @@ int main(int argc, char** argv)
 				dbScripts.ActiveCount());
 		}
 	}
+
+	// Wave 9 — Cadence AntiCheat : 1Hz (granularite mouvement client). Le
+	// log periodique 60s ne dump que si le cumul est > 0 (pas de bruit en
+	// regime nominal). cumulativeAntiCheatViolations est volontairement
+	// distinct de TotalViolations() pour pouvoir reset par tranche de 60s
+	// sans toucher au cumul "depuis boot" expose par le runtime.
+	auto lastAntiCheatTickTime = clock::now();
+	auto lastAntiCheatLogTime  = clock::now();
+	const auto kAntiCheatTickInterval = std::chrono::milliseconds(1000);
+	const auto kAntiCheatLogInterval  = std::chrono::seconds(60);
+	std::uint64_t cumulativeAntiCheatViolations = 0;
 
 	LOG_INFO(Net, "[ShardMain] Shard server running (Ctrl+C to stop); master {}:{} register endpoint='{}'",
 		masterHost, masterPort, regEndpoint);
@@ -280,6 +310,29 @@ int main(int argc, char** argv)
 				dbScripts.ActiveCount());
 			dbScriptFiresSinceLastLog = 0;
 			lastDbScriptLogTime = nowSteady;
+		}
+
+		// Wave 9 — Tick AntiCheat (1Hz). Meme conversion steady -> wall-clock
+		// que pour EventAI : le detecteur calcule un dt en millisecondes
+		// wall-clock, donc passer realNowMs est obligatoire.
+		if (nowSteady - lastAntiCheatTickTime >= kAntiCheatTickInterval)
+		{
+			const std::uint64_t realNowMs = static_cast<std::uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			cumulativeAntiCheatViolations += antiCheat.Tick(realNowMs);
+			lastAntiCheatTickTime = nowSteady;
+		}
+		if (nowSteady - lastAntiCheatLogTime >= kAntiCheatLogInterval)
+		{
+			if (cumulativeAntiCheatViolations > 0)
+			{
+				LOG_INFO(AntiCheat,
+					"[AntiCheat] {} violations in last 60s (total since boot {})",
+					cumulativeAntiCheatViolations, antiCheat.TotalViolations());
+				cumulativeAntiCheatViolations = 0;
+			}
+			lastAntiCheatLogTime = nowSteady;
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));

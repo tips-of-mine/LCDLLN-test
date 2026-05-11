@@ -906,6 +906,12 @@ int main(int argc, char** argv)
 	engine::server::ServerListHandler serverListHandler;
 	serverListHandler.SetServer(&server);
 	serverListHandler.SetShardRegistry(&shardRegistry);
+	// Single-shard online → on assigne le total master-side au shard unique. Sinon le
+	// wire SERVER_LIST renvoie current_load (heartbeat) qui reste a 0 (le shard binaire
+	// ne voit que les TCP transitoires post-handshake) et le client affiche 0/500 alors
+	// que /status JSON montre players=1. Meme logique que statusProvider plus bas.
+	serverListHandler.SetMasterSessionCountHook(
+		[&sessionCharMap]() { return static_cast<uint32_t>(sessionCharMap.Count()); });
 
 	engine::server::ServerRegistry serverRegistry;
 	// Le master ne s'auto-enregistre dans game_servers que si server.self_register=true.

@@ -13,6 +13,7 @@ namespace engine::server
 	void ServerListHandler::SetServer(NetServer* server) { m_server = server; }
 	void ServerListHandler::SetShardRegistry(ShardRegistry* registry) { m_registry = registry; }
 	void ServerListHandler::SetCharacterCountHook(std::function<uint32_t(uint32_t)> hook) { m_characterCountHook = std::move(hook); }
+	void ServerListHandler::SetMasterSessionCountHook(std::function<uint32_t()> hook) { m_masterSessionCountHook = std::move(hook); }
 
 	void ServerListHandler::SetServerRegistry(ServerRegistry* selfRegistry)
 	{
@@ -33,13 +34,31 @@ namespace engine::server
 		std::vector<engine::network::ServerListEntry> entries;
 		{
 			auto list = m_registry->ListShards();
+			// Compteur shards online/degraded : si UN SEUL est actif, on lui assigne
+			// le total master-side (sessionCharMap.Count()) au lieu de s.current_load.
+			// Meme logique que statusProvider dans main_linux.cpp pour /status JSON.
+			// Sans ce fallback, current_load reste a 0 (heartbeat shard ne voit que
+			// les TCP transitoires) -> client affiche 0/500 alors que API montre 1.
+			uint32_t shardsOnline = 0;
+			for (const auto& s : list)
+			{
+				if (s.state == engine::server::ShardState::Online
+					|| s.state == engine::server::ShardState::Degraded)
+					++shardsOnline;
+			}
+			const bool singleShardOnline = (shardsOnline == 1u);
+			const uint32_t masterSessions = m_masterSessionCountHook ? m_masterSessionCountHook() : 0u;
 			entries.reserve(list.size());
 			for (const auto& s : list)
 			{
+				const bool isOnline = (s.state == engine::server::ShardState::Online
+					|| s.state == engine::server::ShardState::Degraded);
 				engine::network::ServerListEntry e;
 				e.shard_id = s.shard_id;
 				e.status = static_cast<uint8_t>(s.state);
-				e.current_load = s.current_load;
+				e.current_load = (singleShardOnline && isOnline)
+					? masterSessions
+					: s.current_load;
 				e.max_capacity = s.max_capacity;
 				e.character_count = m_characterCountHook ? m_characterCountHook(s.shard_id) : 0u;
 				e.endpoint = s.endpoint;

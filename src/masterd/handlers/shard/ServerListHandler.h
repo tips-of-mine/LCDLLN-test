@@ -25,6 +25,15 @@ namespace engine::server
 		void SetCharacterCountHook(std::function<uint32_t(uint32_t shard_id)> hook);
 		void SetServerRegistry(ServerRegistry* selfRegistry);
 
+		/// Optional: nombre total de sessions actives cote master (sessionCharMap.Count()).
+		/// Quand UN SEUL shard est online (cas dev/single-shard), on utilise cette valeur a
+		/// la place de `current_load` (issu du heartbeat shard). Le shard binaire ne voit que
+		/// les TCP transitoires (handshake ticket → close), donc son current_load reste a 0
+		/// en pratique pendant que des joueurs sont en monde. Sans ce hook, le client affiche
+		/// 0/500 alors que l'API HTTP `/status` (qui applique la meme logique) montre players=1.
+		/// Si non cable, on retombe sur s.current_load pour toutes les entrees.
+		void SetMasterSessionCountHook(std::function<uint32_t()> hook);
+
 		/// Handles SERVER_LIST_REQUEST only. Ignores other opcodes.
 		void HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 			const uint8_t* payload, size_t payloadSize);
@@ -34,5 +43,6 @@ namespace engine::server
 		ShardRegistry* m_registry = nullptr;
 		ServerRegistry* m_serverRegistry = nullptr;
 		std::function<uint32_t(uint32_t)> m_characterCountHook;
+		std::function<uint32_t()> m_masterSessionCountHook;
 	};
 }

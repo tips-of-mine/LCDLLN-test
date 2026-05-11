@@ -15,6 +15,20 @@ namespace engine::server
 	void ShardTicketHandshakeHandler::OnConnectionClosed(uint32_t connId)
 	{
 		m_handshakeDone.erase(connId);
+		// Nettoie aussi les maps account<->conn pour eviter de laisser un
+		// account orphelin (si reconnexion plus tard, on n'evicterait pas
+		// la "fausse" conn deja fermee). Si l'account avait une autre
+		// connexion entre temps, m_accountToConn[account] != connId donc
+		// on ne purge pas par erreur.
+		auto it = m_connToAccount.find(connId);
+		if (it != m_connToAccount.end())
+		{
+			const uint64_t accountId = it->second;
+			auto acctIt = m_accountToConn.find(accountId);
+			if (acctIt != m_accountToConn.end() && acctIt->second == connId)
+				m_accountToConn.erase(acctIt);
+			m_connToAccount.erase(it);
+		}
 	}
 
 	void ShardTicketHandshakeHandler::HandlePacket(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t /*sessionIdHeader*/,
@@ -49,6 +63,27 @@ namespace engine::server
 			m_server->CloseConnection(connId, DisconnectReason::InvalidPacket);
 			return;
 		}
+		// Eviction du duplicate-ticket : si cet account a deja une connexion shard active,
+		// on la ferme avant d'accepter la nouvelle. Suivi du fix #584 cote master.
+		// Sans cette eviction, la fenetre HeartbeatTimeout (~60s) permettait au precedent
+		// client de jouer le meme personnage en parallele du nouveau.
+		{
+			auto prev = m_accountToConn.find(accept->account_id);
+			if (prev != m_accountToConn.end() && prev->second != connId)
+			{
+				const uint32_t oldConnId = prev->second;
+				LOG_INFO(Core,
+					"[ShardTicketHandshakeHandler] evicting prior connection (account_id={} oldConnId={} newConnId={})",
+					accept->account_id, oldConnId, connId);
+				m_server->CloseConnection(oldConnId, DisconnectReason::KickedByDuplicateLogin);
+				// On nettoie nos maps en avance (sans attendre OnConnectionClosed du NetServer
+				// qui peut etre asynchrone) : la nouvelle conn va inserer juste apres.
+				m_handshakeDone.erase(oldConnId);
+				m_connToAccount.erase(oldConnId);
+				m_accountToConn.erase(prev);
+			}
+		}
+
 		auto pkt = BuildShardTicketAcceptedPacket(requestId);
 		if (pkt.empty() || !m_server->Send(connId, pkt))
 		{
@@ -57,6 +92,8 @@ namespace engine::server
 			return;
 		}
 		m_handshakeDone.insert(connId);
+		m_accountToConn[accept->account_id] = connId;
+		m_connToAccount[connId] = accept->account_id;
 		LOG_INFO(Core, "[ShardTicketHandshakeHandler] Ticket accepted (connId={} account_id={} target_shard_id={})", connId, accept->account_id, accept->target_shard_id);
 	}
 }

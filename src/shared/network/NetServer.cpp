@@ -7,6 +7,7 @@
 #include "src/shared/network/PacketView.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 #include "src/shared/network/NetworkBufferPool.h"
+#include "src/shared/network/PacketLog.h"
 #include "src/shared/network/ServerProtocol.h"
 #include "src/shared/security/ConnectionDDoSProtector.h"
 
@@ -157,6 +158,15 @@ namespace engine::server
 
 		std::mutex handlerMutex;
 		NetServerPacketHandler packetHandler;
+
+		// Wave 14 — PacketLog opt-in (debug RX/TX trace). nullptr par defaut :
+		// aucune capture, aucun cout (un seul branch sur le hot path). Ownership
+		// reste a l'appelant (typiquement masterd/shardd main_linux.cpp). Le
+		// pointeur n'est ecrit que via NetServer::SetPacketLog avant que le
+		// trafic ne commence ; les Append() sont serialises par le mutex
+		// interne de PacketLog donc l'IO thread + workers peuvent y ecrire en
+		// parallele sans race.
+		engine::server::netdebug::PacketLog* packetLog = nullptr;
 
 		std::vector<std::thread> workers;
 		std::atomic<bool> workersQuit{ false };
@@ -656,6 +666,27 @@ namespace engine::server
 								}
 								std::memcpy(payload.data(), view.Payload(), payloadSize);
 							}
+							// Wave 14 — capture RX dans PacketLog (opt-in). On capture
+							// APRES Parse OK + token-bucket OK : on n'enregistre pas les
+							// paquets rejetes (invalid / rate-limited) pour limiter le
+							// bruit en debug. Le pointeur est lu sans verrou : ecrit une
+							// seule fois avant le demarrage du trafic via SetPacketLog ;
+							// le Append() lui-meme est thread-safe.
+							if (packetLog != nullptr)
+							{
+								const uint64_t nowMs = static_cast<uint64_t>(
+									std::chrono::duration_cast<std::chrono::milliseconds>(
+										std::chrono::system_clock::now().time_since_epoch()).count());
+								packetLog->Append(
+									engine::server::netdebug::PacketDirection::RX,
+									c.connId,
+									view.Opcode(),
+									view.RequestId(),
+									view.SessionId(),
+									view.Payload(),
+									view.PayloadSize(),
+									nowMs);
+							}
 							{
 								std::lock_guard jobLock(jobMutex);
 								jobQueue.push({ c.connId, view.Opcode(), view.RequestId(), view.SessionId(), std::move(payload) });
@@ -1113,6 +1144,49 @@ namespace engine::server
 			else
 				c.txQueueControl.push_back({ std::move(pooledPacket), 0u });
 			m_impl->MaybeModifyEpollOut(fd, true);
+
+			// Wave 14 — capture TX dans PacketLog (opt-in). On capture apres
+			// enqueue reussi (avant la sortie de Send), pas apres l'envoi reel
+			// sur le socket : ainsi on enregistre l'intention du serveur meme
+			// si le socket se ferme entre-temps. Le header v1 (18 octets)
+			// contient size/opcode/flags/requestId/sessionId ; on extrait
+			// directement opcode / requestId / sessionId depuis le buffer
+			// (memes offsets que PacketView::Parse).
+			// Layout : [u16 size][u16 opcode][u16 flags][u32 requestId][u64 sessionId][payload]
+			if (m_impl->packetLog != nullptr
+				&& packet.size() >= engine::network::kProtocolV1HeaderSize)
+			{
+				const uint16_t opcodeHdr = static_cast<uint16_t>(
+					packet[2] | (static_cast<uint16_t>(packet[3]) << 8));
+				const uint32_t requestIdHdr =
+					static_cast<uint32_t>(packet[6])
+					| (static_cast<uint32_t>(packet[7]) << 8)
+					| (static_cast<uint32_t>(packet[8]) << 16)
+					| (static_cast<uint32_t>(packet[9]) << 24);
+				const uint64_t sessionIdHdr =
+					static_cast<uint64_t>(packet[10])
+					| (static_cast<uint64_t>(packet[11]) << 8)
+					| (static_cast<uint64_t>(packet[12]) << 16)
+					| (static_cast<uint64_t>(packet[13]) << 24)
+					| (static_cast<uint64_t>(packet[14]) << 32)
+					| (static_cast<uint64_t>(packet[15]) << 40)
+					| (static_cast<uint64_t>(packet[16]) << 48)
+					| (static_cast<uint64_t>(packet[17]) << 56);
+				const uint8_t* payloadPtr = packet.data() + engine::network::kProtocolV1HeaderSize;
+				const size_t payloadSz = packet.size() - engine::network::kProtocolV1HeaderSize;
+				const uint64_t nowMs = static_cast<uint64_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::system_clock::now().time_since_epoch()).count());
+				m_impl->packetLog->Append(
+					engine::server::netdebug::PacketDirection::TX,
+					connId,
+					opcodeHdr,
+					requestIdHdr,
+					sessionIdHdr,
+					payloadPtr,
+					payloadSz,
+					nowMs);
+			}
 			return true;
 		}
 		return false;
@@ -1140,6 +1214,16 @@ namespace engine::server
 			std::lock_guard lock(m_impl->handlerMutex);
 			m_impl->packetHandler = std::move(handler);
 		}
+	}
+
+	// Wave 14 — Branche un PacketLog opt-in (capture RX/TX). nullptr = pas de
+	// capture (defaut). Doit etre appele avant le demarrage du trafic ; le
+	// caller garde l'ownership et la duree de vie. Voir NetServer.h pour les
+	// regles thread-safety detaillees.
+	void NetServer::SetPacketLog(engine::server::netdebug::PacketLog* log)
+	{
+		if (m_impl != nullptr)
+			m_impl->packetLog = log;
 	}
 
 	uint32_t NetServer::GetConnectionCount() const
@@ -1205,6 +1289,10 @@ namespace engine::server
 	void NetServer::CloseConnection(uint32_t /*connId*/, DisconnectReason /*reason*/) {}
 
 	void NetServer::SetPacketHandler(NetServerPacketHandler /*handler*/) {}
+
+	// Wave 14 — Stub non-Linux : NetServer ne tourne que sous Linux (epoll).
+	// L'appel est silencieusement ignore (m_impl reste nullptr).
+	void NetServer::SetPacketLog(engine::server::netdebug::PacketLog* /*log*/) {}
 
 	uint32_t NetServer::GetConnectionCount() const { return 0; }
 

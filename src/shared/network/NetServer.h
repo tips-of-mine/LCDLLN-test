@@ -12,6 +12,12 @@
 #include <span>
 #include <string>
 
+// Wave 14 — Forward-declaration de PacketLog (capture RX/TX opt-in).
+// Decouple l'API NetServer du header complet de PacketLog : seul le .cpp
+// inclut PacketLog.h. Quand m_impl->packetLog == nullptr (defaut), aucune
+// capture n'a lieu (no-op total : pointeur null + un seul branch).
+namespace engine::server::netdebug { class PacketLog; }
+
 namespace engine::server
 {
 	/// Raison normalisée de déconnexion, stable pour les logs et les compteurs d'observabilité.
@@ -148,6 +154,18 @@ namespace engine::server
 
 		/// Fills \a out with a snapshot of all network counters. Thread-safe. Call when server is running or after Shutdown for final stats.
 		void GetNetworkStats(NetServerStats& out) const;
+
+		/// Wave 14 — Branche un PacketLog opt-in. nullptr (defaut) = aucune
+		/// capture. Quand configure (server.debug.packetlog.enabled), chaque
+		/// paquet RX correctement parse et chaque paquet TX effectivement
+		/// enqueue est Append() au ring buffer. Pas de capture pour les
+		/// chemins d'echec (TX queue cap, decode failures, send errors,
+		/// rate limit) afin de limiter le bruit. Le PacketLog doit rester
+		/// vivant tant que le NetServer tourne ; l'appelant en garde
+		/// l'ownership. Thread-safe (le pointeur est stocke sous mutex
+		/// court ; les Append concurrents sont serialises par PacketLog
+		/// lui-meme).
+		void SetPacketLog(engine::server::netdebug::PacketLog* log);
 
 	private:
 		struct Impl;

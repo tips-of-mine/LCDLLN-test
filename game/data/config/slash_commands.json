@@ -383,6 +383,42 @@
       "status": "implemented",
       "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
       "notes": "Wave 1 RBAC : applique via AccountRoleService::SetRole (DB + audit role_change). Role attendu : player/moderator/game_master/administrator. Required for testing admin-only commands without manual DB access."
+    },
+    {
+      "command": "/packetlog status",
+      "aliases": [],
+      "description": "Affiche l'etat du PacketLog (active/desactive, capacite, taille courante).",
+      "category": "debug",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 16 RBAC : reporte enabled=true/false + capacity + size courante du ring buffer. Si server.debug.packetlog.enabled=false, retourne Ok avec message 'PacketLog disabled'."
+    },
+    {
+      "command": "/packetlog dump <connId> <n>",
+      "aliases": [],
+      "description": "Dump on-demand des n derniers paquets RX/TX d'une connexion donnee (defaut 20).",
+      "category": "debug",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 16 RBAC : utilise PacketLog::DrainForConn(connId) puis FormatEntries. n optionnel (defaut 20). Resultat tronque a ~4 KB pour tenir dans un seul paquet wire."
+    },
+    {
+      "command": "/packetlog dump_all <n>",
+      "aliases": [],
+      "description": "Dump on-demand des n derniers paquets RX/TX toutes connexions confondues (defaut 20).",
+      "category": "debug",
+      "minRole": "administrator",
+      "serverInteraction": true,
+      "serverLogged": true,
+      "status": "implemented",
+      "implementation_file": "src/masterd/handlers/admin/AdminCommandHandler.cpp",
+      "notes": "Wave 16 RBAC : utilise PacketLog::Drain() puis FormatEntries. n optionnel (defaut 20). Resultat tronque a ~4 KB pour tenir dans un seul paquet wire."
     }
   ]
 }

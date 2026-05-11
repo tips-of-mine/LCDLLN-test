@@ -465,10 +465,6 @@ elseif(UNIX)
   lcdlln_add_simple_test(skill_book_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/skills/SkillBookTests.cpp)
 
-  # CMANGOS.12 (Phase 4.12a) : PacketLog ring buffer (header-only).
-  lcdlln_add_simple_test(packet_log_tests
-    ${CMAKE_SOURCE_DIR}/src/shared/packetlog/PacketLogTests.cpp)
-
   # CMANGOS.28 (Phase 3.28a) : WorldClock (header-only).
   lcdlln_add_simple_test(world_clock_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/world/WorldClockTests.cpp)
@@ -632,18 +628,17 @@ elseif(UNIX)
 
   # Wave 12: PacketLog ring buffer (debug RX/TX trace, opt-in) — pure unit tests.
   # Aucun lien sur engine_core ni OpenSSL : PacketLog est autonome (std + threads).
-  # NB : ce module vit dans engine::server::netdebug (src/shared/network/),
-  # distinct de l'ancien engine::server::packetlog (src/shared/packetlog/,
-  # header-only, test cible `packet_log_tests`). Cible CTest dediee :
-  # `packet_log_netdebug_tests`.
-  add_executable(packet_log_netdebug_tests
+  # Module dans engine::server::netdebug (src/shared/network/PacketLog).
+  # Wave 13 a supprime l'ancien stub header-only `engine::server::packetlog`
+  # (src/shared/packetlog/) qui n'avait jamais ete utilise hors de son propre test.
+  add_executable(packet_log_tests
     ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLogTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
   )
-  target_include_directories(packet_log_netdebug_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(packet_log_netdebug_tests PRIVATE pthread)
-  target_compile_options(packet_log_netdebug_tests PRIVATE -Wall -Wextra -Wpedantic)
-  add_test(NAME packet_log_netdebug_tests COMMAND packet_log_netdebug_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  target_include_directories(packet_log_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(packet_log_tests PRIVATE pthread)
+  target_compile_options(packet_log_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME packet_log_tests COMMAND packet_log_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.6: Shard server (ticket handshake + enregistrement TLS/TCP vers le Master via ShardToMasterClient)
   # Wave 6: + EventAIRuntime + PoolManagerRuntime (tickes + seedes au boot).

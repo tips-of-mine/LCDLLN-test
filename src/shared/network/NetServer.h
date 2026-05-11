@@ -32,6 +32,11 @@ namespace engine::server
 		SendError,
 		TxQueueCap,
 		HeartbeatTimeout,
+		/// Connexion fermee a la demande de l'application (ex: SessionManager
+		/// cascade kick suite a un duplicate-login). N'est jamais positionnee
+		/// par le NetServer lui-meme : seulement par les handlers qui
+		/// appellent CloseConnection() depuis le hook OnSessionClosed.
+		KickedByDuplicateLogin,
 		Count
 	};
 

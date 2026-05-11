@@ -26,6 +26,12 @@ namespace engine::server
 		/// Returns session_id for \a connId if registered. For M22.4 (shard ticket: connId → account_id).
 		std::optional<uint64_t> GetSessionId(uint32_t connId) const;
 
+		/// Reverse lookup : connId associe a \a sessionId si enregistre. Utilise par le
+		/// hook OnSessionClosed (cf. SessionManager) pour fermer la TCP de la session
+		/// duplicate-login. Walk O(N) sous mutex ; N petit (connexions actives) donc
+		/// pas de besoin de map inverse maintenue en permanence.
+		std::optional<uint32_t> FindConnIdForSession(uint64_t sessionId) const;
+
 		/// Chat MVP — Snapshot des paires (connId, sessionId) actuellement enregistrées.
 		/// Utilisé par les handlers broadcast (chat) qui doivent envoyer un même paquet à
 		/// toutes les sessions actives. Verrouille brièvement le mutex pour copier la map ;

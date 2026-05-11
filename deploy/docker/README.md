@@ -6,8 +6,8 @@
 2. Décompressez-le : vous obtenez un dossier `deploy/docker/` avec notamment :
    - `bin/` — `lcdlln_server`, `lcdlln_shard`
    - `lib/` — **client MySQL** (`libmysqlclient.so.21` et liens) copiés depuis l’hôte de build CI ; utilisés par l’image Docker du master et optionnellement pour un lancement **hors** Docker
-   - `db/schema.sql` — initialisation MySQL
-   - `db/migrations/` — scripts SQL pour le **MigrationRunner** du master (copiés dans l’image Docker)
+   - `sql/schema.sql` — initialisation MySQL
+   - `sql/migrations/` — scripts SQL pour le **MigrationRunner** du master (copiés dans l’image Docker)
    - `config/` — `master.config.json`, `shard.config.json`
    - `game/data/` — contenu client requis par les serveurs
    - `web-portal/` — sources Next.js (build au premier `docker compose up -d` si l’image manque)
@@ -24,7 +24,7 @@ docker compose up -d      # premier run : mysql + master + shard + web-portal (b
 
 **CI / CD** : le workflow Linux exécute `scripts/pack-linux-docker-bundle.sh`, qui enchaîne `sync-db-to-docker-deploy.sh`, **`sync-web-portal-to-docker-deploy.sh`**, puis binaires / `lib/` / `game/data/`. Le ZIP contient **`deploy/docker/`** en entier (y compris **`web-portal/`**).
 
-**Depuis un clone Git en local** : le pack refait les synchros ; pour ne mettre à jour que le portail : `./scripts/sync-web-portal-to-docker-deploy.sh`. Le dossier `deploy/docker/db/` versionné sert de repli pour un `docker compose build` sans pack complet.
+**Depuis un clone Git en local** : le pack refait les synchros ; pour ne mettre à jour que le portail : `./scripts/sync-web-portal-to-docker-deploy.sh`. Le dossier `deploy/docker/sql/` versionné sert de repli pour un `docker compose build` sans pack complet.
 
 Ports par défaut : **3840** (master TCP jeu), **3843** (shard TCP jeu), **3844** (shard HTTP santé), **3000** (portail sur 127.0.0.1), MySQL sur **127.0.0.1:3306**. Le shard s’enregistre sur le master (`master:3840`) et annonce une adresse **joignable par les clients** dans `shard.register.endpoint` (fichier `config/shard.config.json` ou variable d’environnement **`SHARD_REGISTER_ENDPOINT`** passée au conteneur, ex. `10.0.0.5:3843` pour un client sur le LAN).
 
@@ -35,7 +35,7 @@ Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysq
 1. `ls -la config/master.config.json` (et `shard.config.json` si vous lancez le shard) — si c’est un dossier : `rm -rf` puis recopiez le JSON (dépôt ou zip CI).
 2. Relancez : `docker compose up -d` (rebuild des images seulement si vous modifiez les Dockerfiles).
 
-**Erreur `Checksum mismatch for version 1`** : le répertoire **`./data/mysql`** a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `db/migrations/0001_init.sql`.
+**Erreur `Checksum mismatch for version 1`** : le répertoire **`./data/mysql`** a été initialisé avec un ancien `schema.sql` qui insérait le checksum factice `0000…001` dans `schema_version`, alors que le master compare au SHA-256 réel de `sql/migrations/0001_init.sql`.
 
 À partir de **M24.6**, le **master** corrige automatiquement ce seul cas au démarrage (`UPDATE schema_version` pour la v1). Reconstruisez / redéployez le binaire `lcdlln_server` puis `docker compose up --build`.
 
@@ -51,13 +51,13 @@ Arrêt : `docker compose down`. Les données sont sur l’hôte : **`./data/mysq
   ```
 - **Ou** recréer la base : `docker compose down`, `rm -rf data/mysql`, puis `up` (**toutes les données MySQL perdues**).
 
-Les nouveaux déploiements avec ce dépôt montent aussi `db/02_fix_schema_v1_checksum.sql` en init : sur un **nouveau** datadir vide (`data/mysql`), si l’étape 01 avait encore le mauvais checksum, l’étape 02 le corrige (idempotent).
+Les nouveaux déploiements avec ce dépôt montent aussi `sql/02_fix_schema_v1_checksum.sql` en init : sur un **nouveau** datadir vide (`data/mysql`), si l’étape 01 avait encore le mauvais checksum, l’étape 02 le corrige (idempotent).
 
-(Recalculer le checksum si vous modifiez `db/migrations/0001_init.sql` : `tools/migration_checksum` ou `sha256sum`.)
+(Recalculer le checksum si vous modifiez `sql/migrations/0001_init.sql` : `tools/migration_checksum` ou `sha256sum`.)
 
 **Message `pull access denied for lcdlln-master`** : normal si l’image est uniquement construite en local ; le compose utilise `pull_policy: build`. Si une vieille version de Compose refuse `pull_policy`, retirez ces lignes dans `docker-compose.yml` ou mettez à jour Docker / Compose Plugin.
 
-**Erreur migration 0004** (`fk_characters_server_id`, colonnes dupliquées, `server_id` en BIGINT, ou erreur SQL du type `near IF NOT EXISTS active_session`) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** via `information_schema` et `PREPARE` (sans `ADD COLUMN IF NOT EXISTS`, refusé sur certains moteurs / parseurs malgré un affichage « 8.0.x »). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK si présentes. Après mise à jour des fichiers `db/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, supprimez **`data/mysql`** puis relancez `up`.
+**Erreur migration 0004** (`fk_characters_server_id`, colonnes dupliquées, `server_id` en BIGINT, ou erreur SQL du type `near IF NOT EXISTS active_session`) : le script `0004_auth_mvp_m33_1.sql` est **idempotent** via `information_schema` et `PREPARE` (sans `ADD COLUMN IF NOT EXISTS`, refusé sur certains moteurs / parseurs malgré un affichage « 8.0.x »). Il normalise `server_id` en `INT UNSIGNED` après avoir retiré les FK si présentes. Après mise à jour des fichiers `sql/migrations`, **rebuild** du master (`docker compose build master`). En **dev**, si la base est trop incohérente, supprimez **`data/mysql`** puis relancez `up`.
 
 **Checksum mismatch sur la version 4** : si vous avez modifié le fichier `0004_*.sql` alors que `schema_version` indique déjà la v4 appliquée, le master refusera de démarrer. Mettez à jour `schema_version.checksum` pour la ligne `version = 4` (hash SHA-256 du fichier actuel via `tools/migration_checksum` ou `sha256sum`), ou repartez avec un **`data/mysql`** neuf en dev.
 

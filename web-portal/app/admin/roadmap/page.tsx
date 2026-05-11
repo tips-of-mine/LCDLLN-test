@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { query } from '@/lib/db'
-import { getSession } from '@/lib/session'
+import { query } from '@/lib/db/connection'
+import { getSession } from '@/lib/auth/session'
+import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import RoadmapAdmin from './RoadmapAdmin'
 
@@ -17,7 +18,7 @@ type RoadmapItem = RowDataPacket & {
 export default async function AdminRoadmapPage() {
   const session = await getSession();
   if (!session) redirect('/login?redirect=/admin/roadmap');
-  if (session.role !== 'admin') redirect('/');
+  if (!isStaff(session.role)) redirect('/');
 
   let items: RoadmapItem[] = []
   let dbError = false

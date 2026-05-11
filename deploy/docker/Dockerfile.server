@@ -34,7 +34,7 @@ RUN chmod +x /app/lcdlln_server
 COPY server-config/config.json /app/config.json
 
 # Copier le schéma DB (pour référence, non exécuté ici)
-COPY ../db/schema.sql /app/db/schema.sql
+COPY ../sql/schema.sql /app/sql/schema.sql
 
 # Port d'écoute du serveur
 EXPOSE 3840

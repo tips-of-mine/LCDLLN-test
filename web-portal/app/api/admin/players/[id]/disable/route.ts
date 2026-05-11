@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
-import { sendAccountDisabled } from '@/lib/email'
+import { query } from '@/lib/db/connection'
+import { isStaff } from '@/lib/auth/roles'
+import { sendAccountDisabled } from '@/lib/email/sender'
 import type { RowDataPacket } from 'mysql2/promise'
 
 async function checkAdmin() {
   const role = cookies().get('lcdlln_portal_role')?.value
-  return role === 'admin'
+  return isStaff(role)
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {

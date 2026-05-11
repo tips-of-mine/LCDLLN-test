@@ -1,0 +1,130 @@
+#include "src/shared/auth/Argon2Hash.h"
+#include "src/shared/core/Log.h"
+#include <argon2.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
+#include <cstring>
+#include <string>
+
+namespace engine::auth
+{
+	namespace
+	{
+		constexpr std::size_t kEncodedHashMaxLen = 512;
+
+		/// Same UTF-8 prefix as `web-portal/lib/gamePasswordHash.ts` (do not change without migrating stored hashes).
+		constexpr char kClientSaltDerivationPrefix[] = "LCDLLN\x1f""client_argon_salt\x1f""v1\x1f";
+
+		std::string_view TrimView(std::string_view s)
+		{
+			auto start = s.find_first_not_of(" \t\r\n");
+			if (start == std::string_view::npos)
+				return {};
+			auto end = s.find_last_not_of(" \t\r\n");
+			return s.substr(start, end == std::string_view::npos ? s.size() - start : end - start + 1);
+		}
+	}
+
+	std::string Hash(std::string_view secret, std::string_view salt, const Argon2Params& params)
+	{
+		char encoded[kEncodedHashMaxLen];
+		const int rc = argon2id_hash_encoded(
+			params.time_cost,
+			params.memory_kib,
+			params.parallelism,
+			secret.data(),
+			secret.size(),
+			salt.data(),
+			salt.size(),
+			params.hash_len,
+			encoded,
+			sizeof(encoded)
+		);
+		if (rc != ARGON2_OK)
+		{
+			LOG_ERROR(Auth, "[Argon2Hash] Hash FAILED: {}", argon2_error_message(rc));
+			return {};
+		}
+		LOG_DEBUG(Auth, "[Argon2Hash] Hash OK (params: t={}, m={} KiB, p={})", params.time_cost, params.memory_kib, params.parallelism);
+		return std::string(encoded);
+	}
+
+	std::string Hash(std::string_view secret, const std::vector<std::uint8_t>& salt, const Argon2Params& params)
+	{
+		if (salt.empty())
+		{
+			LOG_WARN(Auth, "[Argon2Hash] Hash called with empty salt");
+			return {};
+		}
+		return Hash(secret, std::string_view(reinterpret_cast<const char*>(salt.data()), salt.size()), params);
+	}
+
+	bool Verify(std::string_view secret, std::string_view stored_encoded_hash)
+	{
+		if (stored_encoded_hash.empty())
+		{
+			LOG_WARN(Auth, "[Argon2Hash] Verify called with empty stored hash");
+			return false;
+		}
+		std::string encoded(stored_encoded_hash);
+		const int rc = argon2id_verify(encoded.c_str(), secret.data(), secret.size());
+		if (rc == ARGON2_OK)
+		{
+			LOG_DEBUG(Auth, "[Argon2Hash] Verify OK");
+			return true;
+		}
+		if (rc == ARGON2_VERIFY_MISMATCH)
+		{
+			LOG_DEBUG(Auth, "[Argon2Hash] Verify mismatch");
+			return false;
+		}
+		LOG_WARN(Auth, "[Argon2Hash] Verify FAILED: {}", argon2_error_message(rc));
+		return false;
+	}
+
+	std::vector<std::uint8_t> GenerateSalt(std::size_t byte_count)
+	{
+		if (byte_count == 0)
+		{
+			LOG_WARN(Auth, "[Argon2Hash] GenerateSalt called with byte_count=0");
+			return {};
+		}
+		std::vector<std::uint8_t> salt(byte_count);
+		if (RAND_bytes(salt.data(), static_cast<int>(byte_count)) != 1)
+		{
+			LOG_ERROR(Auth, "[Argon2Hash] GenerateSalt FAILED: RAND_bytes error");
+			return {};
+		}
+		LOG_DEBUG(Auth, "[Argon2Hash] GenerateSalt OK ({} bytes)", byte_count);
+		return salt;
+	}
+
+	std::vector<std::uint8_t> DeriveClientPasswordSaltFromLogin(std::string_view login)
+	{
+		const std::string_view trimmed = TrimView(login);
+		if (trimmed.empty())
+		{
+			LOG_WARN(Auth, "[Argon2Hash] DeriveClientPasswordSaltFromLogin: empty login after trim");
+			return {};
+		}
+		SHA256_CTX ctx;
+		if (SHA256_Init(&ctx) != 1)
+		{
+			LOG_ERROR(Auth, "[Argon2Hash] DeriveClientPasswordSaltFromLogin: SHA256_Init failed");
+			return {};
+		}
+		if (SHA256_Update(&ctx, kClientSaltDerivationPrefix, sizeof(kClientSaltDerivationPrefix) - 1) != 1
+			|| SHA256_Update(&ctx, trimmed.data(), trimmed.size()) != 1)
+		{
+			LOG_ERROR(Auth, "[Argon2Hash] DeriveClientPasswordSaltFromLogin: SHA256_Update failed");
+			return {};
+		}
+		unsigned char hash[SHA256_DIGEST_LENGTH];
+		if (SHA256_Final(hash, &ctx) != 1)
+		{
+			LOG_ERROR(Auth, "[Argon2Hash] DeriveClientPasswordSaltFromLogin: SHA256_Final failed");
+			return {};
+		}
+		return std::vector<std::uint8_t>(hash, hash + kArgon2SaltLength);
+	}
+}

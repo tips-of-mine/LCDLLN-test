@@ -9,6 +9,12 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 endif()
 
+# Modules CMake reutilisables (parite cmangos-tbc/cmake/).
+# Charger AVANT add_subdirectory(src) pour que les helpers comme
+# lcdlln_add_simple_test() soient disponibles dans les sous-CMakeLists.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(LCDLLNHelpers)
+
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -153,7 +159,7 @@ FetchContent_MakeAvailable(spdlog)
 set(BUILD_SHARED_LIBS ${_saved_BUILD_SHARED_LIBS})
 message(STATUS "M23.4: spdlog for logging rotation")
 
-add_library(engine_auth STATIC engine/auth/Argon2Hash.cpp)
+add_library(engine_auth STATIC src/shared/auth/Argon2Hash.cpp)
 target_include_directories(engine_auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(engine_auth PUBLIC argon2_ref OpenSSL::SSL)
 if(MSVC)
@@ -193,229 +199,279 @@ if(WIN32)
   endif()
 endif()
 
-set_source_files_properties(engine/render/vk/VmaAllocator.cpp PROPERTIES
+set_source_files_properties(src/client/render/vk/VmaAllocator.cpp PROPERTIES
     COMPILE_DEFINITIONS "VMA_IMPLEMENTATION;VMA_STATIC_VULKAN_FUNCTIONS=0;VMA_DYNAMIC_VULKAN_FUNCTIONS=0"
 )
 
 add_library(engine_core
-  engine/render/vk/VmaAllocator.cpp
-  engine/render/vk/VkUtils.cpp
-  engine/core/Config.cpp
-  engine/core/Profiler.cpp
-  engine/core/jobs/JobSystem.cpp
-  engine/core/Log.cpp
-  engine/core/LogConfig.cpp
-  engine/core/Time.cpp
-  engine/core/util/ByteBuffer.cpp
-  engine/audio/AudioEngine.cpp
-  engine/audio/MaMenuMusic.cpp
-  engine/client/CombatHud.cpp
-  engine/client/LocalizationService.cpp
-  engine/client/auth/AuthUiPresenterCore.cpp
-  engine/client/auth/AuthUiPresenterSettings.cpp
-  engine/client/auth/AuthUiPresenterNative.cpp
-  engine/client/auth/screens/AuthScreenLanguageSelect.cpp
-  engine/client/auth/screens/AuthScreenLogin.cpp
-  engine/client/auth/screens/AuthScreenRegister.cpp
-  engine/client/auth/screens/AuthScreenForgotPassword.cpp
-  engine/client/auth/screens/AuthScreenVerifyEmail.cpp
-  engine/client/auth/screens/AuthScreenOptions.cpp
-  engine/client/auth/screens/AuthScreenError.cpp
-  engine/client/auth/screens/AuthScreenShardPick.cpp
-  engine/client/auth/screens/AuthScreenTerms.cpp
-  engine/client/auth/screens/AuthScreenCharacterCreate.cpp
-  engine/client/auth/screens/AuthScreenCharacterSelect.cpp
-  engine/client/AoEPreviewSystem.cpp
-  engine/client/BuffBarPresenter.cpp
-  engine/client/AuraFXSystem.cpp
-  engine/client/FXManager.cpp
-  engine/client/InventoryUi.cpp
-  engine/client/TradeWindowUi.cpp
-  engine/client/HarvestCastBar.cpp
-  engine/client/CraftingUi.cpp
-  engine/client/CharacterCreationUi.cpp
-  engine/client/SettingsMenuUi.cpp
-  engine/client/HudLayoutEditor.cpp
-  engine/client/AdvancedCombatUi.cpp
-  engine/client/AuctionUi.cpp
-  engine/client/ShopUi.cpp
-  engine/client/GameplayUdpClient.cpp
-  engine/client/ProfilerHud.cpp
-  engine/client/QuestUi.cpp
-  engine/client/ThemeManager.cpp
-  engine/client/UIModel.cpp
-  engine/client/ChatUi.cpp
-  engine/client/ChatWorldVisualPresenter.cpp
-  engine/client/FriendsUi.cpp
-  engine/client/PartyHud.cpp
-  engine/client/ZonePreloadHook.cpp
-  engine/net/ChatSystem.cpp
-  engine/net/ChatEmotes.cpp
-  engine/editor/EditorMode.cpp
-  engine/editor/WorldEditorImGui.cpp
-  engine/editor/WorldMapIo.cpp
-  engine/editor/TreeSpeciesCatalog.cpp
-  engine/editor/WorldEditorSession.cpp
-  engine/editor/TexturePreviewCache.cpp
-  engine/editor/TextureLibraryPanel.cpp
+  src/client/render/vk/VmaAllocator.cpp
+  src/client/render/vk/VkUtils.cpp
+  src/shared/core/Config.cpp
+  src/shared/core/Profiler.cpp
+  src/shared/core/jobs/JobSystem.cpp
+  src/shared/core/Log.cpp
+  src/shared/core/LogConfig.cpp
+  src/shared/core/Time.cpp
+  src/shared/core/util/ByteBuffer.cpp
+  src/client/audio/AudioEngine.cpp
+  src/client/audio/MaMenuMusic.cpp
+  src/client/combat/CombatHud.cpp
+  src/client/localization/LocalizationService.cpp
+  src/client/auth/AuthUiPresenterCore.cpp
+  src/client/auth/AuthUiPresenterSettings.cpp
+  src/client/auth/AuthUiPresenterNative.cpp
+  src/client/auth/screens/AuthScreenLanguageSelect.cpp
+  src/client/auth/screens/AuthScreenLogin.cpp
+  src/client/auth/screens/AuthScreenRegister.cpp
+  src/client/auth/screens/AuthScreenForgotPassword.cpp
+  src/client/auth/screens/AuthScreenVerifyEmail.cpp
+  src/client/auth/screens/AuthScreenOptions.cpp
+  src/client/auth/screens/AuthScreenError.cpp
+  src/client/auth/screens/AuthScreenShardPick.cpp
+  src/client/auth/screens/AuthScreenTerms.cpp
+  src/client/auth/screens/AuthScreenCharacterCreate.cpp
+  src/client/auth/screens/AuthScreenCharacterSelect.cpp
+  src/client/combat/AoEPreviewSystem.cpp
+  src/client/combat/BuffBarPresenter.cpp
+  src/client/combat/AuraFXSystem.cpp
+  src/client/fx/FXManager.cpp
+  src/client/inventory/InventoryUi.cpp
+  src/client/trade/TradeWindowUi.cpp
+  src/client/crafting/HarvestCastBar.cpp
+  src/client/crafting/CraftingUi.cpp
+  src/client/character_creation/CharacterCreationUi.cpp
+  src/client/settings/SettingsMenuUi.cpp
+  src/client/hud/HudLayoutEditor.cpp
+  src/client/combat/AdvancedCombatUi.cpp
+  src/client/economy/AuctionUi.cpp
+  src/client/economy/ShopUi.cpp
+  src/client/net/GameplayUdpClient.cpp
+  src/client/debug/ProfilerHud.cpp
+  src/client/quest/QuestUi.cpp
+  src/client/ui_common/ThemeManager.cpp
+  src/client/ui_common/UIModel.cpp
+  src/client/chat/ChatUi.cpp
+  src/client/chat/ChatWorldVisualPresenter.cpp
+  src/client/mail/MailUi.cpp
+  src/client/social/FriendsUi.cpp
+  src/client/social/IgnoreListUi.cpp
+  src/client/gmtickets/GmTicketUi.cpp
+  src/client/reputation/ReputationUi.cpp
+  src/client/arena/ArenaUi.cpp
+  src/client/battleground/BattleGroundUi.cpp
+  src/client/outdoorpvp/OutdoorPvpUi.cpp
+  src/client/weather/WeatherUi.cpp
+  src/client/events/GameEventUi.cpp
+  src/client/guild/GuildUi.cpp
+  src/client/auction/AuctionUi.cpp
+  src/client/loot/LootRollUi.cpp
+  src/client/lfg/LfgUi.cpp
+  src/client/cinematics/CinematicUi.cpp
+  src/client/skills/SkillBookUi.cpp
+  src/client/social/PartyHud.cpp
+  src/client/world/ZonePreloadHook.cpp
+  src/shared/net/ChatSystem.cpp
+  src/shared/net/ChatEmotes.cpp
+  src/world_editor/ui/EditorMode.cpp
+  src/world_editor/ui/WorldEditorImGui.cpp
+  src/world_editor/ui/WorldMapIo.cpp
+  src/world_editor/ui/TreeSpeciesCatalog.cpp
+  src/world_editor/ui/WorldEditorSession.cpp
+  src/world_editor/ui/TexturePreviewCache.cpp
+  src/world_editor/ui/TextureLibraryPanel.cpp
   # M100.1 — World editor "couche au-dessus" (engine::editor::world).
   # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
   # editor.world.enabled. Pas référencé par engine/server/.
-  engine/editor/world/WorldEditorShell.cpp
-  engine/editor/world/CommandStack.cpp
-  engine/editor/world/TerrainDocument.cpp
-  engine/editor/world/TerrainBrush.cpp
-  engine/editor/world/TerrainRaycast.cpp
-  engine/editor/world/TerrainSculptCommand.cpp
-  engine/editor/world/TerrainSculptTool.cpp
-  engine/editor/world/TerrainStampCommand.cpp
-  engine/editor/world/TerrainStampTool.cpp
-  engine/editor/world/StampLibrary.cpp
-  engine/editor/world/ProceduralStampGenerators.cpp
-  engine/editor/world/SplatPaintCommand.cpp
-  engine/editor/world/SplatPaintTool.cpp
-  engine/editor/world/SplatRules.cpp
-  engine/editor/world/EditorCameraController.cpp
-  engine/editor/world/CollisionPreviewCamera.cpp
-  engine/editor/world/WaterDocument.cpp
-  engine/editor/world/AddLakeCommand.cpp
-  engine/editor/world/AddRiverCommand.cpp
-  engine/editor/world/LakeTool.cpp
-  engine/editor/world/RiverTool.cpp
-  engine/editor/world/panels/ScenePanel.cpp
-  engine/editor/world/panels/InspectorPanel.cpp
-  engine/editor/world/panels/AssetBrowserPanel.cpp
-  engine/editor/world/panels/OutlinerPanel.cpp
-  engine/editor/world/panels/ConsolePanel.cpp
-  engine/editor/world/panels/ToolPropertiesPanel.cpp
-  engine/editor/world/panels/HistoryPanel.cpp
-  engine/editor/world/panels/SurfaceTablePanel.cpp
-  engine/editor/world/panels/CollisionEditorPanel.cpp
-  engine/Engine.cpp
-  engine/platform/FileSystem.cpp
-  engine/platform/FileWatcher.cpp
-  engine/render/vk/VkInstance.cpp
-  engine/render/vk/VkDeviceContext.cpp
-  engine/render/vk/VkSwapchain.cpp
-  engine/render/vk/VkFrameSync.cpp
-  engine/render/FrameGraph.cpp
-  engine/render/AssetRegistry.cpp
-  engine/render/Material.cpp
-  engine/render/ShaderCompiler.cpp
-  engine/render/ShaderCache.cpp
-  engine/render/ShaderHotReload.cpp
-  engine/render/Camera.cpp
-  engine/render/AuthGlyphPass.cpp
-  engine/render/FontAtlasTtf.cpp
-  engine/render/AuthLogoPass.cpp
-  engine/render/auth/AuthUiRendererCore.cpp
-  engine/render/auth/AuthImGuiCommon.cpp
-  engine/render/auth/screens/AuthImGuiLanguageSelect.cpp
-  engine/render/auth/screens/AuthImGuiLogin.cpp
-  engine/render/auth/screens/AuthImGuiRegister.cpp
-  engine/render/auth/screens/AuthImGuiError.cpp
-  engine/render/auth/screens/AuthImGuiVerifyEmail.cpp
-  engine/render/auth/screens/AuthImGuiForgotPassword.cpp
-  engine/render/auth/screens/AuthImGuiOptions.cpp
-  engine/render/auth/screens/AuthImGuiShardPick.cpp
-  engine/render/auth/screens/AuthImGuiTerms.cpp
-  engine/render/auth/screens/AuthImGuiCharacterCreate.cpp
-  engine/render/auth/screens/AuthImGuiCharacterSelect.cpp
-  engine/render/LnTheme.h
-  engine/render/AuthImGuiRenderer.cpp
-  engine/render/ChatImGuiRenderer.cpp
-  engine/render/EditorHubImGuiRenderer.cpp
-  engine/render/DecalSystem.cpp
-  engine/render/DecalPass.cpp
-  engine/render/ParticleSystem.cpp
-  engine/render/ParticleBillboardPass.cpp
-  engine/render/WaterRenderer.cpp
-  engine/render/UnderwaterPass.cpp
-  engine/render/DayNightCycle.cpp
-  engine/render/WeatherSystem.cpp
-  engine/render/DynamicLightSystem.cpp
-  engine/render/CascadedShadowMaps.cpp
-  engine/render/BrdfLutPass.cpp
-  engine/render/SpecularPrefilterPass.cpp
-  engine/render/SsaoKernelNoise.cpp
-  engine/render/SsaoPass.cpp
-  engine/render/SsaoBlurPass.cpp
-  engine/render/ShadowMapPass.cpp
-  engine/render/PsoKey.cpp
-  engine/render/PipelineCache.cpp
-  engine/render/GeometryPass.cpp
-  engine/render/TerrainChunkPipeline.cpp
-  engine/render/terrain_chunk/ChunkRuntime.cpp
-  engine/render/terrain_chunk/DescriptorSetPool.cpp
-  engine/render/terrain_chunk/LayerArrayLoader.cpp
-  engine/render/terrain_chunk/SplatMapGpuCache.cpp
-  engine/render/terrain_chunk/TerrainChunkRenderer.cpp
-  engine/render/terrain_chunk/TerrainMeshGpuCache.cpp
-  engine/render/GpuDrivenCullingPass.cpp
-  engine/render/HiZPyramidPass.cpp
-  engine/render/LightingPass.cpp
-  engine/render/TonemapPass.cpp
-  engine/render/BloomPass.cpp
-  engine/render/AutoExposure.cpp
-  engine/render/TaaPass.cpp
-  engine/render/DeferredPipeline.cpp
-  engine/math/Frustum.cpp
-  engine/gameplay/CharacterController.cpp
-  engine/gameplay/ThirdPersonCamera.cpp
-  engine/gameplay/SkillSystem.cpp
-  engine/gameplay/ClientPrediction.cpp
-  engine/gameplay/StatusEffect.cpp
-  engine/world/WorldModel.cpp
-  engine/world/OutputVersion.cpp
-  engine/world/ProbeData.cpp
-  engine/world/PakReader.cpp
-  engine/world/ChunkPackageLayout.cpp
-  engine/world/StreamingScheduler.cpp
-  engine/world/StreamCache.cpp
-  engine/world/ChunkBudgetStats.cpp
-  engine/world/surface/SurfaceType.cpp
-  engine/world/surface/SurfaceTable.cpp
-  engine/world/surface/SurfaceQueryService.cpp
-  engine/world/collision/CollisionProxy.cpp
-  engine/world/collision/AutoFitProxy.cpp
-  engine/world/collision/ProxyWireframe.cpp
-  engine/world/water/WaterSurfaces.cpp
-  engine/world/water/WaterMeshBuilder.cpp
-  engine/world/terrain/LayerPalette.cpp
-  engine/world/terrain/SplatMap.cpp
-  engine/world/terrain/TerrainChunk.cpp
-  engine/world/terrain/TerrainChunkLoader.cpp
-  engine/world/terrain/TerrainLodChain.cpp
-  engine/world/terrain/TerrainLodWorker.cpp
-  engine/world/terrain/TerrainMeshBuilder.cpp
-  engine/render/vk/DeferredDestroyQueue.cpp
-  engine/render/GpuUploadQueue.cpp
-  engine/render/vk/StagingAllocator.cpp
-  engine/world/LodConfig.cpp
-  engine/world/HlodRuntime.cpp
-  engine/render/terrain/HeightmapLoader.cpp
-  engine/render/terrain/TerrainMesh.cpp
-  engine/render/terrain/TerrainSplatting.cpp
-  engine/render/terrain/SplatSampling.cpp
-  engine/render/terrain/TerrainHoleMask.cpp
-  engine/render/terrain/TerrainGrassDetail.cpp
-  engine/render/terrain/TerrainCliffMesh.cpp
-  engine/render/terrain/TerrainRenderer.cpp
-  engine/render/terrain/TerrainEditingTools.cpp
-  engine/network/ByteWriter.cpp
-  engine/network/ByteReader.cpp
-  engine/network/PacketBuilder.cpp
-  engine/network/PacketView.cpp
-  engine/network/RequestResponseDispatcher.cpp
-  engine/network/ErrorPacket.cpp
-  engine/network/AuthRegisterPayloads.cpp
-  engine/network/CharacterPayloads.cpp
-  engine/network/ChatPayloads.cpp
-  engine/network/ShardPayloads.cpp
-  engine/network/TermsPayloads.cpp
+  src/world_editor/core/WorldEditorShell.cpp
+  src/world_editor/core/CommandStack.cpp
+  src/world_editor/terrain/TerrainDocument.cpp
+  src/world_editor/terrain/TerrainBrush.cpp
+  src/world_editor/terrain/TerrainRaycast.cpp
+  src/world_editor/terrain/TerrainSculptCommand.cpp
+  src/world_editor/terrain/TerrainSculptTool.cpp
+  src/world_editor/terrain/TerrainStampCommand.cpp
+  src/world_editor/terrain/TerrainStampTool.cpp
+  src/world_editor/terrain/StampLibrary.cpp
+  src/world_editor/terrain/ProceduralStampGenerators.cpp
+  src/world_editor/splat/SplatPaintCommand.cpp
+  src/world_editor/splat/SplatPaintTool.cpp
+  src/world_editor/splat/SplatRules.cpp
+  src/world_editor/camera/EditorCameraController.cpp
+  src/world_editor/camera/CollisionPreviewCamera.cpp
+  src/world_editor/water/WaterDocument.cpp
+  src/world_editor/water/AddLakeCommand.cpp
+  src/world_editor/water/AddRiverCommand.cpp
+  src/world_editor/water/LakeTool.cpp
+  src/world_editor/water/RiverTool.cpp
+  src/world_editor/panels/ScenePanel.cpp
+  src/world_editor/panels/InspectorPanel.cpp
+  src/world_editor/panels/AssetBrowserPanel.cpp
+  src/world_editor/panels/OutlinerPanel.cpp
+  src/world_editor/panels/ConsolePanel.cpp
+  src/world_editor/panels/ToolPropertiesPanel.cpp
+  src/world_editor/panels/HistoryPanel.cpp
+  src/world_editor/panels/SurfaceTablePanel.cpp
+  src/world_editor/panels/CollisionEditorPanel.cpp
+  src/client/app/Engine.cpp
+  src/shared/platform/FileSystem.cpp
+  src/shared/platform/FileWatcher.cpp
+  src/client/render/vk/VkInstance.cpp
+  src/client/render/vk/VkDeviceContext.cpp
+  src/client/render/vk/VkSwapchain.cpp
+  src/client/render/vk/VkFrameSync.cpp
+  src/client/render/FrameGraph.cpp
+  src/client/render/AssetRegistry.cpp
+  src/client/render/Material.cpp
+  src/client/render/ShaderCompiler.cpp
+  src/client/render/ShaderCache.cpp
+  src/client/render/ShaderHotReload.cpp
+  src/client/render/Camera.cpp
+  src/client/render/AuthGlyphPass.cpp
+  src/client/render/FontAtlasTtf.cpp
+  src/client/render/AuthLogoPass.cpp
+  src/client/render/auth/AuthUiRendererCore.cpp
+  src/client/render/auth/AuthImGuiCommon.cpp
+  src/client/render/auth/screens/AuthImGuiLanguageSelect.cpp
+  src/client/render/auth/screens/AuthImGuiLogin.cpp
+  src/client/render/auth/screens/AuthImGuiRegister.cpp
+  src/client/render/auth/screens/AuthImGuiError.cpp
+  src/client/render/auth/screens/AuthImGuiVerifyEmail.cpp
+  src/client/render/auth/screens/AuthImGuiForgotPassword.cpp
+  src/client/render/auth/screens/AuthImGuiOptions.cpp
+  src/client/render/auth/screens/AuthImGuiShardPick.cpp
+  src/client/render/auth/screens/AuthImGuiTerms.cpp
+  src/client/render/auth/screens/AuthImGuiCharacterCreate.cpp
+  src/client/render/auth/screens/AuthImGuiCharacterSelect.cpp
+  src/client/render/LnTheme.h
+  src/client/render/AuthImGuiRenderer.cpp
+  src/client/render/ChatImGuiRenderer.cpp
+  src/client/render/MailImGuiRenderer.cpp
+  src/client/render/GmTicketImGuiRenderer.cpp
+  src/client/render/ReputationImGuiRenderer.cpp
+  src/client/render/ArenaImGuiRenderer.cpp
+  src/client/render/BattleGroundImGuiRenderer.cpp
+  src/client/render/OutdoorPvpImGuiRenderer.cpp
+  src/client/render/WeatherImGuiRenderer.cpp
+  src/client/render/GameEventImGuiRenderer.cpp
+  src/client/render/GuildImGuiRenderer.cpp
+  src/client/render/AuctionImGuiRenderer.cpp
+  src/client/render/LootRollImGuiRenderer.cpp
+  src/client/render/LfgImGuiRenderer.cpp
+  src/client/render/CinematicImGuiRenderer.cpp
+  src/client/render/SkillBookImGuiRenderer.cpp
+  src/client/render/EditorHubImGuiRenderer.cpp
+  src/client/render/DecalSystem.cpp
+  src/client/render/DecalPass.cpp
+  src/client/render/ParticleSystem.cpp
+  src/client/render/ParticleBillboardPass.cpp
+  src/client/render/UnderwaterPass.cpp
+  src/client/render/WaterMeshGpu.cpp
+  src/client/render/WaterPass.cpp
+  src/client/render/DayNightCycle.cpp
+  src/client/render/SkyPass.cpp
+  src/client/render/WeatherSystem.cpp
+  src/client/render/DynamicLightSystem.cpp
+  src/client/render/CascadedShadowMaps.cpp
+  src/client/render/BrdfLutPass.cpp
+  src/client/render/SpecularPrefilterPass.cpp
+  src/client/render/SsaoKernelNoise.cpp
+  src/client/render/SsaoPass.cpp
+  src/client/render/SsaoBlurPass.cpp
+  src/client/render/ShadowMapPass.cpp
+  src/client/render/PsoKey.cpp
+  src/client/render/PipelineCache.cpp
+  src/client/render/GeometryPass.cpp
+  src/client/render/TerrainChunkPipeline.cpp
+  src/client/render/terrain_chunk/ChunkRuntime.cpp
+  src/client/render/terrain_chunk/DescriptorSetPool.cpp
+  src/client/render/terrain_chunk/LayerArrayLoader.cpp
+  src/client/render/terrain_chunk/SplatMapGpuCache.cpp
+  src/client/render/terrain_chunk/TerrainChunkRenderer.cpp
+  src/client/render/terrain_chunk/TerrainMeshGpuCache.cpp
+  src/client/render/GpuDrivenCullingPass.cpp
+  src/client/render/HiZPyramidPass.cpp
+  src/client/render/LightingPass.cpp
+  src/client/render/TonemapPass.cpp
+  src/client/render/BloomPass.cpp
+  src/client/render/AutoExposure.cpp
+  src/client/render/TaaPass.cpp
+  src/client/render/DeferredPipeline.cpp
+  src/shared/math/Frustum.cpp
+  src/client/gameplay/CharacterController.cpp
+  src/client/gameplay/ThirdPersonCamera.cpp
+  src/client/gameplay/SkillSystem.cpp
+  src/client/gameplay/ClientPrediction.cpp
+  src/client/gameplay/StatusEffect.cpp
+  src/client/world/WorldModel.cpp
+  src/client/world/OutputVersion.cpp
+  src/client/world/ProbeData.cpp
+  src/client/world/PakReader.cpp
+  src/client/world/ChunkPackageLayout.cpp
+  src/client/world/StreamingScheduler.cpp
+  src/client/world/StreamCache.cpp
+  src/client/world/ChunkBudgetStats.cpp
+  src/client/world/surface/SurfaceType.cpp
+  src/client/world/surface/SurfaceTable.cpp
+  src/client/world/surface/SurfaceQueryService.cpp
+  src/client/world/collision/CollisionProxy.cpp
+  src/client/world/collision/AutoFitProxy.cpp
+  src/client/world/collision/ProxyWireframe.cpp
+  src/client/world/water/WaterSurfaces.cpp
+  src/client/world/water/WaterMeshBuilder.cpp
+  src/client/world/terrain/LayerPalette.cpp
+  src/client/world/terrain/SplatMap.cpp
+  src/client/world/terrain/TerrainChunk.cpp
+  src/client/world/terrain/TerrainChunkLoader.cpp
+  src/client/world/terrain/TerrainLodChain.cpp
+  src/client/world/terrain/TerrainLodWorker.cpp
+  src/client/world/terrain/TerrainMeshBuilder.cpp
+  src/client/render/vk/DeferredDestroyQueue.cpp
+  src/client/render/GpuUploadQueue.cpp
+  src/client/render/vk/StagingAllocator.cpp
+  src/client/world/LodConfig.cpp
+  src/client/world/HlodRuntime.cpp
+  src/client/render/terrain/HeightmapLoader.cpp
+  src/client/render/terrain/TerrainMesh.cpp
+  src/client/render/terrain/TerrainSplatting.cpp
+  src/client/render/terrain/SplatSampling.cpp
+  src/client/render/terrain/TerrainHoleMask.cpp
+  src/client/render/terrain/TerrainGrassDetail.cpp
+  src/client/render/terrain/TerrainCliffMesh.cpp
+  src/client/render/terrain/TerrainRenderer.cpp
+  src/client/render/terrain/TerrainEditingTools.cpp
+  src/shared/network/ByteWriter.cpp
+  src/shared/network/ByteReader.cpp
+  src/shared/network/PacketBuilder.cpp
+  src/shared/network/PacketView.cpp
+  src/shared/network/RequestResponseDispatcher.cpp
+  src/shared/network/ErrorPacket.cpp
+  src/shared/network/AuthRegisterPayloads.cpp
+  src/shared/network/CharacterPayloads.cpp
+  src/shared/network/ChatPayloads.cpp
+  src/shared/network/IgnoreListPayloads.cpp
+  src/shared/network/MailPayloads.cpp
+  src/shared/network/QuestPayloads.cpp
+  src/shared/network/GmTicketPayloads.cpp
+  src/shared/network/ReputationPayloads.cpp
+  src/shared/network/ArenaPayloads.cpp
+  src/shared/network/BattleGroundPayloads.cpp
+  src/shared/network/OutdoorPvpPayloads.cpp
+  src/shared/network/WeatherPayloads.cpp
+  src/shared/network/GameEventPayloads.cpp
+  src/shared/network/GuildPayloads.cpp
+  src/shared/network/AuctionPayloads.cpp
+  src/shared/network/LootPayloads.cpp
+  src/shared/network/LunarPayloads.cpp
+  src/shared/network/AdminCommandPayloads.cpp
+  src/shared/network/LfgPayloads.cpp
+  src/shared/network/CinematicPayloads.cpp
+  src/shared/network/SkillPayloads.cpp
+  src/shared/network/TradePayloads.cpp
+  src/shared/network/ShardPayloads.cpp
+  src/shared/network/TermsPayloads.cpp
 )
 # Shared gameplay wire codec (Encode*/Decode*); linked into client — must not be server-only.
-target_sources(engine_core PRIVATE engine/server/ServerProtocol.cpp)
+target_sources(engine_core PRIVATE src/shared/network/ServerProtocol.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb
@@ -446,24 +502,24 @@ else()
 endif()
 if(WIN32)
   target_sources(engine_core PRIVATE
-    engine/platform/Input.cpp
-    engine/platform/Window.cpp
-    engine/network/NetClient.cpp
-    engine/network/ShardToMasterClient.cpp
-    engine/network/ServerListPayloads.cpp
-    engine/network/ShardTicketPayloads.cpp
-    engine/network/MasterShardClientFlow.cpp
+    src/shared/platform/Input.cpp
+    src/shared/platform/Window.cpp
+    src/shared/network/NetClient.cpp
+    src/shared/network/ShardToMasterClient.cpp
+    src/shared/network/ServerListPayloads.cpp
+    src/shared/network/ShardTicketPayloads.cpp
+    src/shared/network/MasterShardClientFlow.cpp
   )
 else()
   target_sources(engine_core PRIVATE
-    engine/platform/Input_linux.cpp
-    engine/platform/Window_linux.cpp
-    engine/network/NetClient_linux.cpp
+    src/shared/platform/Input_linux.cpp
+    src/shared/platform/Window_linux.cpp
+    src/shared/network/NetClient_linux.cpp
   )
 endif()
 
 add_executable(engine_app
-  engine/app/main.cpp
+  src/client/main.cpp
 )
 if(WIN32)
   target_sources(engine_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_client.rc")
@@ -484,7 +540,7 @@ endif()
 
 # World Editor : exécutable séparé, même cœur Vulkan que le jeu (flag interne --world-editor).
 add_executable(world_editor_app
-  engine/app/world_editor_main.cpp
+  src/world_editor/main.cpp
 )
 if(WIN32)
   target_sources(world_editor_app PRIVATE "${CMAKE_SOURCE_DIR}/game/data/icons/lcdlln_world_editor.rc")
@@ -598,28 +654,133 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/external/external_links.json")
 endif()
 
 # M19.2: Protocol v1 serialization unit tests
-add_executable(protocol_v1_tests engine/network/ProtocolV1Tests.cpp)
+add_executable(protocol_v1_tests src/shared/network/ProtocolV1Tests.cpp)
 target_link_libraries(protocol_v1_tests PRIVATE engine_core)
 enable_testing()
 add_test(NAME protocol_v1_tests COMMAND protocol_v1_tests)
 
 # Phase 1: CHARACTER_LIST request/response payload round-trip tests
-add_executable(character_list_payloads_tests engine/network/CharacterListPayloadsTests.cpp)
+add_executable(character_list_payloads_tests src/shared/network/CharacterListPayloadsTests.cpp)
 target_link_libraries(character_list_payloads_tests PRIVATE engine_core)
 add_test(NAME character_list_payloads_tests COMMAND character_list_payloads_tests)
 
 # Phase 3.6.5: CHARACTER_SAVE_POSITION request/response payload round-trip tests
-add_executable(character_save_position_payloads_tests engine/network/CharacterSavePositionPayloadsTests.cpp)
+add_executable(character_save_position_payloads_tests src/shared/network/CharacterSavePositionPayloadsTests.cpp)
 target_link_libraries(character_save_position_payloads_tests PRIVATE engine_core)
 add_test(NAME character_save_position_payloads_tests COMMAND character_save_position_payloads_tests)
 
 # Chat MVP: CHAT_SEND_REQUEST / CHAT_RELAY payload round-trip tests
-add_executable(chat_payloads_tests engine/network/ChatPayloadsTests.cpp)
+add_executable(chat_payloads_tests src/shared/network/ChatPayloadsTests.cpp)
 target_link_libraries(chat_payloads_tests PRIVATE engine_core)
 add_test(NAME chat_payloads_tests COMMAND chat_payloads_tests)
 
+# CMANGOS.18 (Phase 3.18 step 3): MAIL_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(mail_payloads_tests src/shared/network/MailPayloadsTests.cpp)
+target_link_libraries(mail_payloads_tests PRIVATE engine_core)
+add_test(NAME mail_payloads_tests COMMAND mail_payloads_tests)
+
+# CMANGOS.23 (Phase 5.23 step 3+4): QUEST_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(quest_payloads_tests src/shared/network/QuestPayloadsTests.cpp)
+target_link_libraries(quest_payloads_tests PRIVATE engine_core)
+add_test(NAME quest_payloads_tests COMMAND quest_payloads_tests)
+
+# CMANGOS.25 (Phase 3.25 step 3+4): IGNORE_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(ignore_list_payloads_tests src/shared/network/IgnoreListPayloadsTests.cpp)
+target_link_libraries(ignore_list_payloads_tests PRIVATE engine_core)
+add_test(NAME ignore_list_payloads_tests COMMAND ignore_list_payloads_tests)
+
+# CMANGOS.32 (Phase 5.32 step 3+4): GMTICKET_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(gm_ticket_payloads_tests src/shared/network/GmTicketPayloadsTests.cpp)
+target_link_libraries(gm_ticket_payloads_tests PRIVATE engine_core)
+add_test(NAME gm_ticket_payloads_tests COMMAND gm_ticket_payloads_tests)
+
+# CMANGOS.24 (Phase 3.24 step 3+4): REPUTATION_*_REQUEST/RESPONSE payload round-trip tests
+add_executable(reputation_payloads_tests src/shared/network/ReputationPayloadsTests.cpp)
+target_link_libraries(reputation_payloads_tests PRIVATE engine_core)
+add_test(NAME reputation_payloads_tests COMMAND reputation_payloads_tests)
+
+# CMANGOS.33 (Phase 5.33 step 3+4) — Lfg payloads round-trip tests (no DB / no network).
+add_executable(lfg_payloads_tests src/shared/network/LfgPayloadsTests.cpp)
+target_link_libraries(lfg_payloads_tests PRIVATE engine_core)
+add_test(NAME lfg_payloads_tests COMMAND lfg_payloads_tests)
+
+# CMANGOS.30 (Phase 5.30 step 3+4) — Cinematic payloads round-trip tests (no DB / no network).
+add_executable(cinematic_payloads_tests src/shared/network/CinematicPayloadsTests.cpp)
+target_link_libraries(cinematic_payloads_tests PRIVATE engine_core)
+add_test(NAME cinematic_payloads_tests COMMAND cinematic_payloads_tests)
+
+# CMANGOS.39 (Phase 4.39 step 3+4) — Skill payloads round-trip tests (no DB / no network).
+add_executable(skill_payloads_tests src/shared/network/SkillPayloadsTests.cpp)
+target_link_libraries(skill_payloads_tests PRIVATE engine_core)
+add_test(NAME skill_payloads_tests COMMAND skill_payloads_tests)
+
+# CMANGOS.21 (Phase 5.21 step 3+4) — Arena payloads round-trip tests (no DB / no network).
+add_executable(arena_payloads_tests src/shared/network/ArenaPayloadsTests.cpp)
+target_link_libraries(arena_payloads_tests PRIVATE engine_core)
+add_test(NAME arena_payloads_tests COMMAND arena_payloads_tests)
+
+# CMANGOS.10 (Phase 5 step 3+4) — BattleGround payloads round-trip tests (no DB / no network).
+add_executable(battleground_payloads_tests src/shared/network/BattleGroundPayloadsTests.cpp)
+target_link_libraries(battleground_payloads_tests PRIVATE engine_core)
+add_test(NAME battleground_payloads_tests COMMAND battleground_payloads_tests)
+
+# CMANGOS.36 (Phase 5.36 step 3+4) — OutdoorPvp payloads round-trip tests (no DB / no network).
+add_executable(outdoorpvp_payloads_tests src/shared/network/OutdoorPvpPayloadsTests.cpp)
+target_link_libraries(outdoorpvp_payloads_tests PRIVATE engine_core)
+add_test(NAME outdoorpvp_payloads_tests COMMAND outdoorpvp_payloads_tests)
+
+# CMANGOS.42 (Phase 4.42 step 3+4) — Weather payloads round-trip tests (no DB / no network).
+add_executable(weather_payloads_tests src/shared/network/WeatherPayloadsTests.cpp)
+target_link_libraries(weather_payloads_tests PRIVATE engine_core)
+add_test(NAME weather_payloads_tests COMMAND weather_payloads_tests)
+
+# CMANGOS.31 (Phase 5.31 step 3+4) — GameEvent payloads round-trip tests (no DB / no network).
+add_executable(gameevent_payloads_tests src/shared/network/GameEventPayloadsTests.cpp)
+target_link_libraries(gameevent_payloads_tests PRIVATE engine_core)
+add_test(NAME gameevent_payloads_tests COMMAND gameevent_payloads_tests)
+
+# CMANGOS.21 (Phase 5.21 step 3+4 Guilds) — Guild payloads round-trip tests (no DB / no network).
+add_executable(guild_payloads_tests src/shared/network/GuildPayloadsTests.cpp)
+target_link_libraries(guild_payloads_tests PRIVATE engine_core)
+add_test(NAME guild_payloads_tests COMMAND guild_payloads_tests)
+
+# CMANGOS.09 (Phase 5.09 step 3+4 AuctionHouse) — Auction payloads round-trip tests (no DB / no network).
+add_executable(auction_payloads_tests src/shared/network/AuctionPayloadsTests.cpp)
+target_link_libraries(auction_payloads_tests PRIVATE engine_core)
+add_test(NAME auction_payloads_tests COMMAND auction_payloads_tests)
+
+# CMANGOS.17 (Phase 3.17 step 3+4 Loot) — Loot payloads round-trip tests (no DB / no network).
+add_executable(loot_payloads_tests src/shared/network/LootPayloadsTests.cpp)
+target_link_libraries(loot_payloads_tests PRIVATE engine_core)
+add_test(NAME loot_payloads_tests COMMAND loot_payloads_tests)
+
+# Phase 5 Lunar — round-trip tests payloads (192-194).
+add_executable(lunar_payloads_tests src/shared/network/LunarPayloadsTests.cpp)
+target_link_libraries(lunar_payloads_tests PRIVATE engine_core)
+add_test(NAME lunar_payloads_tests COMMAND lunar_payloads_tests)
+
+# AdminCommand RBAC — round-trip tests payloads (195/196).
+add_executable(admin_command_payloads_tests src/shared/network/AdminCommandPayloadsTests.cpp)
+target_link_libraries(admin_command_payloads_tests PRIVATE engine_core)
+add_test(NAME admin_command_payloads_tests COMMAND admin_command_payloads_tests)
+
+# Phase 5 Lunar — calendar deterministe tests (header-only).
+add_executable(lunar_calendar_tests src/shardd/world/LunarCalendarTests.cpp)
+target_link_libraries(lunar_calendar_tests PRIVATE engine_core)
+add_test(NAME lunar_calendar_tests COMMAND lunar_calendar_tests)
+
+# M38.1 + Phase 5 Lunar — DayNightCycle existant + extension lunaire.
+add_executable(daynight_cycle_tests src/client/render/DayNightCycleTests.cpp)
+target_link_libraries(daynight_cycle_tests PRIVATE engine_core)
+add_test(NAME daynight_cycle_tests COMMAND daynight_cycle_tests)
+
+# CMANGOS.27 (Phase 4.27 step 3+4): TRADE_*_REQUEST/RESPONSE/NOTIFICATION payload round-trip tests
+add_executable(trade_payloads_tests src/shared/network/TradePayloadsTests.cpp)
+target_link_libraries(trade_payloads_tests PRIVATE engine_core)
+add_test(NAME trade_payloads_tests COMMAND trade_payloads_tests)
+
 # M23.4: Log rotation smoke test (runtime logger)
-add_executable(log_rotation_smoke_tests engine/core/LogRotationSmokeTest.cpp)
+add_executable(log_rotation_smoke_tests src/shared/core/LogRotationSmokeTest.cpp)
 target_link_libraries(log_rotation_smoke_tests PRIVATE engine_core)
 if(MSVC)
   target_compile_options(log_rotation_smoke_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -627,21 +788,21 @@ endif()
 add_test(NAME log_rotation_smoke_tests COMMAND log_rotation_smoke_tests)
 
 # CMANGOS.41: shared utilities (ByteBuffer, ProducerConsumerQueue, UniqueTrackablePtr)
-add_executable(byte_buffer_tests engine/core/util/ByteBufferTests.cpp)
+add_executable(byte_buffer_tests src/shared/core/util/ByteBufferTests.cpp)
 target_link_libraries(byte_buffer_tests PRIVATE engine_core)
 if(MSVC)
   target_compile_options(byte_buffer_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME byte_buffer_tests COMMAND byte_buffer_tests)
 
-add_executable(producer_consumer_queue_tests engine/core/util/ProducerConsumerQueueTests.cpp)
+add_executable(producer_consumer_queue_tests src/shared/core/util/ProducerConsumerQueueTests.cpp)
 target_link_libraries(producer_consumer_queue_tests PRIVATE engine_core)
 if(MSVC)
   target_compile_options(producer_consumer_queue_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
 endif()
 add_test(NAME producer_consumer_queue_tests COMMAND producer_consumer_queue_tests)
 
-add_executable(unique_trackable_ptr_tests engine/core/util/UniqueTrackablePtrTests.cpp)
+add_executable(unique_trackable_ptr_tests src/shared/core/util/UniqueTrackablePtrTests.cpp)
 target_link_libraries(unique_trackable_ptr_tests PRIVATE engine_core)
 if(MSVC)
   target_compile_options(unique_trackable_ptr_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -649,12 +810,12 @@ endif()
 add_test(NAME unique_trackable_ptr_tests COMMAND unique_trackable_ptr_tests)
 
 # M20.2: Argon2 hashing wrapper unit tests (engine_auth first so linker resolves Log from engine_core)
-add_executable(argon2_hash_tests engine/auth/Argon2HashTests.cpp)
+add_executable(argon2_hash_tests src/shared/auth/Argon2HashTests.cpp)
 target_link_libraries(argon2_hash_tests PRIVATE engine_auth engine_core)
 add_test(NAME argon2_hash_tests COMMAND argon2_hash_tests)
 
 # M20.3: Session manager state transitions unit tests
-add_executable(session_manager_tests engine/server/SessionManagerTests.cpp engine/server/SessionManager.cpp)
+add_executable(session_manager_tests src/masterd/session/SessionManagerTests.cpp src/masterd/session/SessionManager.cpp)
 target_include_directories(session_manager_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(session_manager_tests PRIVATE engine_core)
 if(MSVC)
@@ -663,7 +824,7 @@ endif()
 add_test(NAME session_manager_tests COMMAND session_manager_tests)
 
 # M20.4: Rate limiting, IP ban, audit log unit tests
-add_executable(security_tests engine/server/SecurityTests.cpp engine/server/RateLimitAndBan.cpp engine/server/SecurityAuditLog.cpp)
+add_executable(security_tests src/shared/security/SecurityTests.cpp src/shared/security/RateLimitAndBan.cpp src/shared/security/SecurityAuditLog.cpp)
 target_include_directories(security_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(security_tests PRIVATE engine_core)
 if(MSVC)
@@ -672,7 +833,7 @@ endif()
 add_test(NAME security_tests COMMAND security_tests)
 
 # M22.3: Shard down detection integration test (EvictStaleHeartbeats + callback)
-add_executable(shard_down_detection_tests engine/server/ShardDownDetectionTests.cpp engine/server/ShardRegistry.cpp)
+add_executable(shard_down_detection_tests src/masterd/shards/ShardDownDetectionTests.cpp src/masterd/shards/ShardRegistry.cpp)
 target_include_directories(shard_down_detection_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(shard_down_detection_tests PRIVATE engine_core)
 if(MSVC)
@@ -681,7 +842,7 @@ endif()
 add_test(NAME shard_down_detection_tests COMMAND shard_down_detection_tests)
 
 # M25.2: NetServer bandwidth caps + backpressure unit tests
-add_executable(netserver_bandwidth_tests engine/server/NetServerBandwidthThrottleTests.cpp)
+add_executable(netserver_bandwidth_tests src/shared/network/NetServerBandwidthThrottleTests.cpp)
 target_include_directories(netserver_bandwidth_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(netserver_bandwidth_tests PRIVATE engine_core)
 if(MSVC)
@@ -690,7 +851,7 @@ endif()
 add_test(NAME netserver_bandwidth_tests COMMAND netserver_bandwidth_tests)
 
 # M25.4: DDoS basic mitigation (connection throttle) unit tests
-add_executable(ddos_connection_protector_tests engine/server/ConnectionDDoSProtectorTests.cpp)
+add_executable(ddos_connection_protector_tests src/shared/security/ConnectionDDoSProtectorTests.cpp)
 target_include_directories(ddos_connection_protector_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ddos_connection_protector_tests PRIVATE engine_core)
 if(MSVC)
@@ -699,7 +860,7 @@ endif()
 add_test(NAME ddos_connection_protector_tests COMMAND ddos_connection_protector_tests)
 
 # STAB.14: Runtime localization service unit tests
-add_executable(localization_service_tests engine/client/LocalizationServiceTests.cpp)
+add_executable(localization_service_tests src/client/localization/LocalizationServiceTests.cpp)
 target_link_libraries(localization_service_tests PRIVATE engine_core)
 if(MSVC)
   target_compile_options(localization_service_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -708,7 +869,7 @@ add_test(NAME localization_service_tests COMMAND localization_service_tests)
 
 # Tests unitaires CPU pour TexturePreviewCache (ResampleRgba8Box, GenerateProceduralAlbedoLayer).
 # Pas de dependance Vulkan : tournables en CI sans GPU.
-add_executable(texture_preview_cache_tests engine/editor/tests/TexturePreviewCacheTests.cpp)
+add_executable(texture_preview_cache_tests src/world_editor/tests/TexturePreviewCacheTests.cpp)
 target_include_directories(texture_preview_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(texture_preview_cache_tests PRIVATE engine_core)
 if(MSVC)
@@ -720,7 +881,7 @@ add_test(NAME texture_preview_cache_tests COMMAND texture_preview_cache_tests)
 # Garde la propriete "splatLayerTextureRefs vide apres ActionNewMap" qui pilote
 # le fallback orange du World Editor (terrain.frag push-constant noUserTextures).
 # Pas de dependance Vulkan : ActionNewMap utilise uniquement la couche fichiers.
-add_executable(world_editor_session_tests engine/editor/tests/WorldEditorSessionTests.cpp)
+add_executable(world_editor_session_tests src/world_editor/tests/WorldEditorSessionTests.cpp)
 target_include_directories(world_editor_session_tests PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(world_editor_session_tests PRIVATE engine_core)
 if(MSVC)
@@ -734,7 +895,7 @@ add_test(NAME world_editor_session_tests COMMAND world_editor_session_tests)
 # contexte ImGui isolé en interne (pas de fenêtre Vulkan ni device).
 # Windows-only : ImGui n'est compilé que sous WIN32 dans ce repo.
 if(WIN32)
-  add_executable(world_editor_shell_tests engine/editor/world/tests/WorldEditorShellTests.cpp)
+  add_executable(world_editor_shell_tests src/world_editor/tests/WorldEditorShellTests.cpp)
   target_include_directories(world_editor_shell_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(world_editor_shell_tests PRIVATE engine_core imgui_lcdlln)
   if(MSVC)
@@ -748,7 +909,7 @@ endif()
 # rester cohérent avec les autres tests éditeur monde et éviter de tirer
 # engine_core sous Linux (where editor pieces aren't built anyway).
 if(WIN32)
-  add_executable(command_stack_tests engine/editor/world/tests/CommandStackTests.cpp)
+  add_executable(command_stack_tests src/world_editor/tests/CommandStackTests.cpp)
   target_include_directories(command_stack_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(command_stack_tests PRIVATE engine_core)
   if(MSVC)
@@ -763,7 +924,7 @@ endif()
 # vérifié dans TerrainParityTests (target séparé) ; ici on valide MakeFlat,
 # SampleHeight bilinéaire/clamp, et la robustesse du Load (bad magic/version).
 if(WIN32)
-  add_executable(terrain_chunk_tests engine/world/terrain/tests/TerrainChunkTests.cpp)
+  add_executable(terrain_chunk_tests src/client/world/terrain/tests/TerrainChunkTests.cpp)
   target_include_directories(terrain_chunk_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(terrain_chunk_tests PRIVATE engine_core)
   if(MSVC)
@@ -778,7 +939,7 @@ endif()
 # vérifié dans le même fichier (Test_SaveLoad_Roundtrip + parity ajouté Task 15).
 # Vérifie aussi l'invariant somme=255 par cellule (rejet au Save et au Load).
 if(WIN32)
-  add_executable(splat_map_tests engine/world/terrain/tests/SplatMapTests.cpp)
+  add_executable(splat_map_tests src/client/world/terrain/tests/SplatMapTests.cpp)
   target_include_directories(splat_map_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(splat_map_tests PRIVATE engine_core)
   if(MSVC)
@@ -790,7 +951,7 @@ endif()
 # Terrain Chunk Runtime — Tests unitaires CPU pour ChunkRuntime
 # (cache LRU + budget GPU + protection ring Active/Visible). Pas de Vulkan.
 if(WIN32)
-  add_executable(chunk_runtime_tests engine/render/terrain_chunk/tests/ChunkRuntimeTests.cpp)
+  add_executable(chunk_runtime_tests src/client/render/terrain_chunk/tests/ChunkRuntimeTests.cpp)
   target_include_directories(chunk_runtime_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(chunk_runtime_tests PRIVATE engine_core)
   if(MSVC)
@@ -803,7 +964,7 @@ endif()
 # (mock allocator, pas de Vulkan). Vérifie cache hit/miss, eviction,
 # tracking budget runtime.
 if(WIN32)
-  add_executable(terrain_mesh_gpu_cache_tests engine/render/terrain_chunk/tests/TerrainMeshGpuCacheTests.cpp)
+  add_executable(terrain_mesh_gpu_cache_tests src/client/render/terrain_chunk/tests/TerrainMeshGpuCacheTests.cpp)
   target_include_directories(terrain_mesh_gpu_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(terrain_mesh_gpu_cache_tests PRIVATE engine_core)
   if(MSVC)
@@ -816,7 +977,7 @@ endif()
 # allocator). Vérifie 2 VkImage par chunk (layers 0..3 + 4..7), cache
 # hit, eviction.
 if(WIN32)
-  add_executable(splat_map_gpu_cache_tests engine/render/terrain_chunk/tests/SplatMapGpuCacheTests.cpp)
+  add_executable(splat_map_gpu_cache_tests src/client/render/terrain_chunk/tests/SplatMapGpuCacheTests.cpp)
   target_include_directories(splat_map_gpu_cache_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(splat_map_gpu_cache_tests PRIVATE engine_core)
   if(MSVC)
@@ -829,7 +990,7 @@ endif()
 # resolution (pure CPU, pas de Vulkan). Vérifie .texr first, fallback
 # placeholders, contentRoot prefix, distinct paths par mapType.
 if(WIN32)
-  add_executable(layer_array_loader_tests engine/render/terrain_chunk/tests/LayerArrayLoaderTests.cpp)
+  add_executable(layer_array_loader_tests src/client/render/terrain_chunk/tests/LayerArrayLoaderTests.cpp)
   target_include_directories(layer_array_loader_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(layer_array_loader_tests PRIVATE engine_core)
   if(MSVC)
@@ -843,7 +1004,7 @@ endif()
 # meshes deterministe (BuildLod0Mesh produit des vertex/index buffers
 # identiques bit-à-bit pour le chunk source et le chunk re-lu).
 if(WIN32)
-  add_executable(terrain_parity_tests engine/world/terrain/tests/TerrainParityTests.cpp)
+  add_executable(terrain_parity_tests src/client/world/terrain/tests/TerrainParityTests.cpp)
   target_include_directories(terrain_parity_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(terrain_parity_tests PRIVATE engine_core)
   if(MSVC)
@@ -856,7 +1017,7 @@ endif()
 # Vérifie : box filter 2x2, roundtrip terrain_lods.bin, async non-bloquant
 # pour le main thread, génération atomique pour les stale jobs.
 if(WIN32)
-  add_executable(terrain_lod_tests engine/world/terrain/tests/TerrainLodTests.cpp)
+  add_executable(terrain_lod_tests src/client/world/terrain/tests/TerrainLodTests.cpp)
   target_include_directories(terrain_lod_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(terrain_lod_tests PRIVATE engine_core)
   if(MSVC)
@@ -871,7 +1032,7 @@ endif()
 # uniquement pour cohérence avec les autres tests éditeur monde
 # (M100.1 / M100.2) ; le test lui-même est portable.
 if(WIN32)
-  add_executable(editor_camera_controller_tests engine/editor/world/tests/EditorCameraControllerTests.cpp)
+  add_executable(editor_camera_controller_tests src/world_editor/tests/EditorCameraControllerTests.cpp)
   target_include_directories(editor_camera_controller_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(editor_camera_controller_tests PRIVATE engine_core)
   if(MSVC)
@@ -886,7 +1047,7 @@ endif()
 # inter-chunks. Pure CPU (pas d'ImGui ni Vulkan), gating WIN32 pour cohérence
 # avec les autres tests éditeur monde.
 if(WIN32)
-  add_executable(terrain_sculpt_tests engine/editor/world/tests/TerrainSculptTests.cpp)
+  add_executable(terrain_sculpt_tests src/world_editor/tests/TerrainSculptTests.cpp)
   target_include_directories(terrain_sculpt_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(terrain_sculpt_tests PRIVATE engine_core)
   if(MSVC)
@@ -900,7 +1061,7 @@ endif()
 # du loader StampLibrary, la TerrainStampCommand (Execute/Undo) et le mode
 # Replace (overwrite vs Add). Pure CPU, gating WIN32 (pattern terrain_sculpt).
 if(WIN32)
-  add_executable(terrain_stamp_tests engine/editor/world/tests/TerrainStampTests.cpp)
+  add_executable(terrain_stamp_tests src/world_editor/tests/TerrainStampTests.cpp)
   target_include_directories(terrain_stamp_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(terrain_stamp_tests PRIVATE engine_core)
   if(MSVC)
@@ -914,7 +1075,7 @@ endif()
 # falloff radial, la couture inter-chunks bord-à-bord, et la coalescence par
 # stroke (1 entrée d'historique par geste). Pure CPU, gating WIN32.
 if(WIN32)
-  add_executable(splat_paint_tests engine/editor/world/tests/SplatPaintTests.cpp)
+  add_executable(splat_paint_tests src/world_editor/tests/SplatPaintTests.cpp)
   target_include_directories(splat_paint_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(splat_paint_tests PRIVATE engine_core)
   if(MSVC)
@@ -925,7 +1086,7 @@ endif()
 
 # M100.11 — Tests SurfaceType enum + helpers (Phase 3b.1).
 if(WIN32)
-  add_executable(surface_type_tests engine/world/surface/tests/SurfaceTypeTests.cpp)
+  add_executable(surface_type_tests src/client/world/surface/tests/SurfaceTypeTests.cpp)
   target_include_directories(surface_type_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(surface_type_tests PRIVATE engine_core)
   if(MSVC)
@@ -936,7 +1097,7 @@ endif()
 
 # M100.11 — Tests SurfaceTable JSON loader.
 if(WIN32)
-  add_executable(surface_table_tests engine/world/surface/tests/SurfaceTableTests.cpp)
+  add_executable(surface_table_tests src/client/world/surface/tests/SurfaceTableTests.cpp)
   target_include_directories(surface_table_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(surface_table_tests PRIVATE engine_core)
   if(MSVC)
@@ -947,7 +1108,7 @@ endif()
 
 # M100.11 — Tests LayerPalette migration string→SurfaceType enum.
 if(WIN32)
-  add_executable(layer_palette_surface_type_tests engine/world/terrain/tests/LayerPaletteSurfaceTypeTests.cpp)
+  add_executable(layer_palette_surface_type_tests src/client/world/terrain/tests/LayerPaletteSurfaceTypeTests.cpp)
   target_include_directories(layer_palette_surface_type_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(layer_palette_surface_type_tests PRIVATE engine_core)
   if(MSVC)
@@ -958,7 +1119,7 @@ endif()
 
 # M100.11 — Tests SurfaceQueryService (mock cache via Insert).
 if(WIN32)
-  add_executable(surface_query_service_tests engine/world/surface/tests/SurfaceQueryServiceTests.cpp)
+  add_executable(surface_query_service_tests src/client/world/surface/tests/SurfaceQueryServiceTests.cpp)
   target_include_directories(surface_query_service_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(surface_query_service_tests PRIVATE engine_core)
   if(MSVC)
@@ -970,7 +1131,7 @@ endif()
 # M100.11 — Tests ClientPredictionSystem.SetSurfaceSpeedMultiplier.
 if(WIN32)
   add_executable(client_prediction_surface_multiplier_tests
-    engine/gameplay/tests/ClientPredictionSurfaceMultiplierTests.cpp)
+    src/client/gameplay/tests/ClientPredictionSurfaceMultiplierTests.cpp)
   target_include_directories(client_prediction_surface_multiplier_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(client_prediction_surface_multiplier_tests PRIVATE engine_core)
   if(MSVC)
@@ -981,7 +1142,7 @@ endif()
 
 # M100.12 — Tests round-trip CollisionProxy (Phase 3b.2).
 if(WIN32)
-  add_executable(collision_proxy_roundtrip_tests engine/world/collision/tests/CollisionProxyRoundtripTests.cpp)
+  add_executable(collision_proxy_roundtrip_tests src/client/world/collision/tests/CollisionProxyRoundtripTests.cpp)
   target_include_directories(collision_proxy_roundtrip_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(collision_proxy_roundtrip_tests PRIVATE engine_core)
   if(MSVC)
@@ -992,7 +1153,7 @@ endif()
 
 # M100.12 — Tests AutoFit dispatch heuristique.
 if(WIN32)
-  add_executable(auto_fit_proxy_tests engine/world/collision/tests/AutoFitProxyTests.cpp)
+  add_executable(auto_fit_proxy_tests src/client/world/collision/tests/AutoFitProxyTests.cpp)
   target_include_directories(auto_fit_proxy_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(auto_fit_proxy_tests PRIVATE engine_core)
   if(MSVC)
@@ -1003,7 +1164,7 @@ endif()
 
 # M100.12 — Tests ProxyWireframe edge generator.
 if(WIN32)
-  add_executable(proxy_wireframe_tests engine/world/collision/tests/ProxyWireframeTests.cpp)
+  add_executable(proxy_wireframe_tests src/client/world/collision/tests/ProxyWireframeTests.cpp)
   target_include_directories(proxy_wireframe_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(proxy_wireframe_tests PRIVATE engine_core)
   if(MSVC)
@@ -1014,7 +1175,7 @@ endif()
 
 # M100.13 — Tests WaterSurfaces serialization (Phase 4a).
 if(WIN32)
-  add_executable(water_surfaces_tests engine/world/water/tests/WaterSurfacesTests.cpp)
+  add_executable(water_surfaces_tests src/client/world/water/tests/WaterSurfacesTests.cpp)
   target_include_directories(water_surfaces_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(water_surfaces_tests PRIVATE engine_core)
   if(MSVC)
@@ -1025,7 +1186,7 @@ endif()
 
 # M100.13 — Tests WaterMeshBuilder ear clipping + ribbon polyline.
 if(WIN32)
-  add_executable(water_mesh_builder_tests engine/world/water/tests/WaterMeshBuilderTests.cpp)
+  add_executable(water_mesh_builder_tests src/client/world/water/tests/WaterMeshBuilderTests.cpp)
   target_include_directories(water_mesh_builder_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(water_mesh_builder_tests PRIVATE engine_core)
   if(MSVC)
@@ -1034,9 +1195,31 @@ if(WIN32)
   add_test(NAME water_mesh_builder_tests COMMAND water_mesh_builder_tests)
 endif()
 
+# M100.14 — Tests WaterMeshGpu CPU BuildDrawInfos.
+if(WIN32)
+  add_executable(water_mesh_gpu_tests src/client/render/tests/WaterMeshGpuTests.cpp)
+  target_include_directories(water_mesh_gpu_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_mesh_gpu_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_mesh_gpu_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_mesh_gpu_tests COMMAND water_mesh_gpu_tests)
+endif()
+
+# M100.14 — Tests WaterPassPushConstants layout (sizeof + offsetof).
+if(WIN32)
+  add_executable(water_pass_tests src/client/render/tests/WaterPassTests.cpp)
+  target_include_directories(water_pass_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_pass_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_pass_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_pass_tests COMMAND water_pass_tests)
+endif()
+
 # M22.6: Client flow app (AUTH → SERVER_LIST → TICKET → CONNECT SHARD). Windows only (NetClient).
 if(WIN32)
-  add_executable(client_flow_app engine/network/ClientFlowMain.cpp)
+  add_executable(client_flow_app src/shared/network/ClientFlowMain.cpp)
   target_link_libraries(client_flow_app PRIVATE engine_core)
   if(MSVC)
     target_compile_options(client_flow_app PRIVATE /W4 /permissive- /Zc:preprocessor)
@@ -1079,12 +1262,12 @@ add_subdirectory(tools/zone_builder)
 # M21.2: Migration checksum tool (SHA-256 of db/migrations/*.sql)
 add_subdirectory(tools/migration_checksum)
 # M15.4: Server app (headless, no Vulkan)
-add_subdirectory(engine/server)
+add_subdirectory(src)
 
 # M19.10: Network integration tests (Linux only: start server, TLS connect, scenarios)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   find_package(OpenSSL REQUIRED)
-  add_executable(network_integration_tests engine/network/NetworkIntegrationTests.cpp)
+  add_executable(network_integration_tests src/shared/network/NetworkIntegrationTests.cpp)
   target_link_libraries(network_integration_tests PRIVATE engine_core OpenSSL::SSL)
   add_dependencies(network_integration_tests server_app)
   add_test(NAME network_integration_tests COMMAND network_integration_tests pkg/server/lcdlln_server ${CMAKE_BINARY_DIR} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -1094,7 +1277,7 @@ endif()
 add_subdirectory(tools/load_tester)
 
 # M100.9: Mini-tool C++ standalone qui génère 8 PNG 4x4 unicolore dans
-# assets/terrain/placeholders/ via custom command POST_BUILD. Sert de fallback
+# game/data/terrain/placeholders/ via custom command POST_BUILD. Sert de fallback
 # visuellement distinct pour le shader 8-layer terrain en attendant les vrais
 # assets PBR. Pas de dépendance zlib externe (deflate stored block).
 add_subdirectory(tools/gen_terrain_placeholders)

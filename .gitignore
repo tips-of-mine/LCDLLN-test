@@ -11,4 +11,4 @@ game/data/shaders/*.spv
 # Répertoires de build CMake locaux (build/linux-x64*, build/win-x64*, etc.).
 build/
 # M100.9 : PNG placeholders 4x4 generes par tools/gen_terrain_placeholders au build.
-assets/terrain/placeholders/*.png
+game/data/terrain/placeholders/*.png

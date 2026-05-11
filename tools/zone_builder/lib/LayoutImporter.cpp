@@ -1,8 +1,8 @@
 #include <zone_builder/LayoutImporter.h>
 
 #include <zone_builder/JsonDocument.h>
-#include "engine/core/Log.h"
-#include "engine/world/WorldModel.h"
+#include "src/shared/core/Log.h"
+#include "src/client/world/WorldModel.h"
 
 #include <cmath>
 #include <filesystem>

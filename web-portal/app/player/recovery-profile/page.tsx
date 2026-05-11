@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RecoveryProfileForm } from "@/components/RecoveryProfileForm";
+import { RecoveryProfileForm } from "@/components/player/RecoveryProfileForm";
 
 type PageProps = {
   searchParams: { accountId?: string };

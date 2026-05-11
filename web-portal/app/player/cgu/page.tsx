@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
-import { query } from "@/lib/db";
-import { CguAcceptButton } from "@/components/CguAcceptButton";
+import { getSession } from "@/lib/auth/session";
+import { query } from "@/lib/db/connection";
+import { CguAcceptButton } from "@/components/cgu/CguAcceptButton";
 import type { RowDataPacket } from "mysql2/promise";
 
 type CguRow = RowDataPacket & {

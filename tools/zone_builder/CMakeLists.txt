@@ -10,8 +10,8 @@ add_executable(zone_builder
 )
 
 # Les headers sont consommés via `<zone_builder/...>` (chemin public exposé par
-# `zone_builder_lib`) ; on garde la racine du dépôt pour `engine/core/Config.h`
-# et `engine/platform/FileSystem.h` utilisés directement par main.cpp.
+# `zone_builder_lib`) ; on garde la racine du dépôt pour `src/shared/core/Config.h`
+# et `src/shared/platform/FileSystem.h` utilisés directement par main.cpp.
 target_include_directories(zone_builder PRIVATE
   ${CMAKE_SOURCE_DIR}
 )

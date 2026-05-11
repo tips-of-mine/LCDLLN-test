@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { query } from '@/lib/db'
-import { getSession } from '@/lib/session'
+import { query } from '@/lib/db/connection'
+import { getSession } from '@/lib/auth/session'
+import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 import BugAdmin from '@/components/admin/BugAdmin'
 
@@ -28,7 +29,7 @@ export default async function AdminBugsPage({
 }) {
   const session = await getSession();
   if (!session) redirect('/login?redirect=/admin/bugs');
-  if (session.role !== 'admin') redirect('/');
+  if (!isStaff(session.role)) redirect('/');
 
   const rawStatus = searchParams.status ?? 'all'
   const status: StatusFilter = VALID_STATUSES.includes(rawStatus as StatusFilter)

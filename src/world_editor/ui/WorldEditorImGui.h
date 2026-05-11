@@ -1,0 +1,149 @@
+#pragma once
+
+#include <cstdint>
+
+#include <vector>
+
+#include <vulkan/vulkan_core.h>
+
+#include "src/world_editor/ui/WorldMapEditDocument.h"
+
+namespace engine::core
+{
+	class Config;
+}
+namespace engine::platform
+{
+	class Window;
+}
+namespace engine::render
+{
+	class VkDeviceContext;
+	class DayNightCycle;
+}
+namespace engine::render::terrain
+{
+	struct HeightmapData;
+}
+
+namespace engine::editor
+{
+	class WorldEditorSession;
+	class TexturePreviewCache;  // vignettes splatting (Task 12)
+
+	/// Données pour dessiner grille + aperçu brosse par-dessus la vue 3D (avant \c ImGui::Render).
+	struct WorldEditorViewportOverlayDesc
+	{
+		const float* viewProjColMajor = nullptr;
+		/// Position / angles caméra (monde), remplis chaque frame — la grille utilise \c viewProjColMajor, pas ces champs.
+		float cameraWorldX = 0.f;
+		float cameraWorldY = 0.f;
+		float cameraWorldZ = 0.f;
+		float cameraYawDeg = 0.f;
+		float cameraPitchDeg = 0.f;
+		int viewportWidth = 0;
+		int viewportHeight = 0;
+		bool showGrid = false;
+		float gridCellMeters = 8.f;
+		float terrainOriginX = 0.f;
+		float terrainOriginZ = 0.f;
+		float terrainWorldSize = 1024.f;
+		float heightScale = 200.f;
+		const engine::render::terrain::HeightmapData* heightmap = nullptr;
+		bool showBrushPreview = false;
+		float brushWorldX = 0.f;
+		float brushWorldZ = 0.f;
+		float brushRadiusMeters = 10.f;
+		/// Marqueurs debug instances (monde m). Nullptr = rien à dessiner.
+		const std::vector<WorldMapEditLayoutInstance>* layoutInstancesOverlay = nullptr;
+		int selectedLayoutInstanceOverlay = -1;
+	};
+
+	/// ImGui + Vulkan (rendu dynamique) pour \c lcdlln_world_editor.exe uniquement (Windows).
+	/// Sur les autres plateformes, les appels sont des no-op.
+	class WorldEditorImGui final
+	{
+	public:
+		WorldEditorImGui() = default;
+		WorldEditorImGui(const WorldEditorImGui&) = delete;
+		WorldEditorImGui& operator=(const WorldEditorImGui&) = delete;
+		WorldEditorImGui(WorldEditorImGui&&) = delete;
+		WorldEditorImGui& operator=(WorldEditorImGui&&) = delete;
+		~WorldEditorImGui();
+
+		/// \param hwndNative \c HWND sous Windows, sinon ignoré.
+		/// \param cfg utilisé pour charger les polices TTF de l'UI auth (Windlass / Morpheus) dans
+		/// l'atlas ImGui avant la création de la texture de fonts par ImGui_ImplVulkan_Init.
+		/// \param isWorldEditorExe \c true pour \c lcdlln_world_editor.exe : la police par defaut
+		/// devient Arial (lisible, neutre pour un editeur de carte) au lieu de Windlass (decorative,
+		/// reservee a l'UI auth/in-game). Cf. \c editor.font.arial_path / \c editor.font.arial_pixel_height
+		/// dans config.json. Aucun effet si \c false (UI auth garde Windlass).
+		bool Init(VkInstance instance,
+			const engine::render::VkDeviceContext& deviceContext,
+			VkFormat swapchainFormat,
+			uint32_t swapchainImageCount,
+			uint32_t vulkanApiVersion,
+			void* hwndNative,
+			const engine::core::Config* cfg = nullptr,
+			bool isWorldEditorExe = false);
+
+		void Shutdown(VkDevice device);
+
+		void OnSwapchainRecreate(uint32_t swapchainImageCount);
+
+		/// À appeler chaque frame avant \ref RecordToBackbuffer (côté CPU).
+		void NewFrame(float deltaSeconds, float displayWidth, float displayHeight);
+		void BuildUi(const WorldEditorViewportOverlayDesc* viewportOverlay = nullptr);
+
+		/// Contexte données éditeur (\c lcdlln_world_editor uniquement). Peut être nul.
+		void SetEditorContext(WorldEditorSession* session, engine::core::Config* cfg);
+
+		/// Branche le DayNightCycle pour que le panneau "Atmosphere" puisse modifier
+		/// la time-of-day, le timeScale et l'ambient en live. Pointeur non possede.
+		/// Nul si non branche -> panneau Atmosphere affiche un message d'attente.
+		void SetDayNightCycle(engine::render::DayNightCycle* dayNight) { m_dayNight = dayNight; }
+
+		/// Branche le cache de vignettes (possede par Engine). Pointeur non
+		/// possede. Si nul, les vignettes sont rendues comme cellules grises
+		/// (ImGui::Dummy 48x48) — l'UI reste fonctionnelle, juste sans previews.
+		void SetTexturePreviewCache(engine::editor::TexturePreviewCache* cache) { m_texturePreviewCache = cache; }
+
+		/// Win32 : branche \c ImGui_ImplWin32_WndProcHandler avant le traitement LCDLLN.
+		void AttachPlatformWindow(void* hwndNative, engine::platform::Window& window);
+		void DetachPlatformWindow(engine::platform::Window& window);
+
+		[[nodiscard]] bool IsReady() const { return m_ready; }
+		[[nodiscard]] bool WantsCaptureMouse() const;
+		[[nodiscard]] bool WantsCaptureKeyboard() const;
+
+		/// Image swapchain en \c TRANSFER_DST_OPTIMAL → présentation. Dessine ImGui par-dessus la scène copiée.
+		bool RecordToBackbuffer(VkCommandBuffer cmd,
+			VkImage backbufferImage,
+			VkImageView backbufferView,
+			VkExtent2D extent,
+			const engine::render::VkDeviceContext& deviceContext);
+
+	private:
+		bool m_ready = false;
+		void* m_hwnd = nullptr;
+		WorldEditorSession* m_session = nullptr;
+		engine::core::Config* m_cfg = nullptr;
+		engine::render::DayNightCycle* m_dayNight = nullptr;
+		engine::editor::TexturePreviewCache* m_texturePreviewCache = nullptr;
+		bool m_showTextureLibrary = false;  // pilote par le menu Affichage (Task 14)
+		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
+		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
+		/// repassé à true après la pose.
+		bool m_defaultLayoutAttempted = false;
+		/// Dimensions du dockspace au dernier frame BuildUi. Sert a detecter un
+		/// resize de fenetre pour forcer DockBuilderSetNodeSize sur le node racine
+		/// (sinon les panneaux dockes restent ancres a l'ancienne taille apres
+		/// un drag de bord de fenetre, donnant une UI vide ou hors viewport).
+		float m_lastDockSpaceWidth  = 0.0f;
+		float m_lastDockSpaceHeight = 0.0f;
+#if defined(_WIN32)
+		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+#endif
+	};
+
+} // namespace engine::editor

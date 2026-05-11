@@ -2,12 +2,13 @@
 // DELETE /api/admin/cgu/[id] — delete draft edition
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
+import { isStaff } from '@/lib/auth/roles'
 import type { RowDataPacket } from 'mysql2/promise'
 
 function isAdmin(): boolean {
   const jar = cookies()
-  return jar.get('lcdlln_portal_role')?.value === 'admin'
+  return isStaff(jar.get('lcdlln_portal_role')?.value)
 }
 
 async function getEdition(id: number) {

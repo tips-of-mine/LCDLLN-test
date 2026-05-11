@@ -1,4 +1,4 @@
-import { PasswordChangeForm } from '@/components/PasswordChangeForm'
+import { PasswordChangeForm } from '@/components/auth/PasswordChangeForm'
 
 export default function SecurityPage() {
   return (

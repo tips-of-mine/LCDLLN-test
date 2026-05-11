@@ -1,0 +1,156 @@
+#pragma once
+
+#include "src/shared/math/Math.h"
+
+#include <cstdint>
+#include <span>
+#include <vector>
+
+namespace engine::world
+{
+	/// Zone side length in meters (streaming / zone-local space). **10 km** exact.
+	constexpr int kZoneSize = 10000;
+	/// Chunk side length in meters (must divide \ref kZoneSize). **500 m** → 20×20 chunks sur 10 km.
+	/// (512 m ne divise pas 10 000 ; 500 m reste proche de la cible « ~512 ».)
+	constexpr int kChunkSize = 500;
+	/// Number of chunks per zone axis (kZoneSize / kChunkSize).
+	constexpr int kChunksPerZoneAxis = kZoneSize / kChunkSize;
+
+	/// Grille spatiale intérêt / réplication (m) côté serveur ; doit diviser \ref kZoneSize.
+	/// **100 m** → 100×100 cellules ; divise aussi \ref kChunkSize (5×5 cellules par chunk).
+	constexpr int kSpatialCellSizeMeters = 100;
+
+	static_assert(kZoneSize % kChunkSize == 0, "kZoneSize must be an integer multiple of kChunkSize");
+	static_assert(kZoneSize % kSpatialCellSizeMeters == 0,
+	              "kZoneSize must be an integer multiple of kSpatialCellSizeMeters");
+	static_assert(kChunkSize % kSpatialCellSizeMeters == 0,
+	              "kChunkSize should align with spatial cells (tooling / debug consistency)");
+
+	/// Chunk index in world space (2D, XZ plane), without clamp.
+	/// Values are signed and may be negative for zones left/below origin.
+	struct GlobalChunkCoord
+	{
+		int32_t x = 0;
+		int32_t z = 0;
+
+		bool operator==(const GlobalChunkCoord& o) const { return x == o.x && z == o.z; }
+		bool operator!=(const GlobalChunkCoord& o) const { return !(*this == o); }
+	};
+
+	/// Chunk index within a zone (always in [0, kChunksPerZoneAxis - 1]).
+	struct LocalChunkCoord
+	{
+		int32_t x = 0;
+		int32_t z = 0;
+	};
+
+	/// Zone index in the global world grid.
+	struct ZoneCoord
+	{
+		int32_t x = 0;
+		int32_t z = 0;
+	};
+
+	/// Compatibility alias for existing call-sites migrated incrementally.
+	using ChunkCoord = GlobalChunkCoord;
+
+	/// Axis-aligned bounds of a chunk in absolute world-space meters (XZ only).
+	struct ChunkBounds
+	{
+		float minX = 0.0f;
+		float minZ = 0.0f;
+		float maxX = 0.0f;
+		float maxZ = 0.0f;
+	};
+
+	/// Ring type for streaming priority (Active > Visible > Far).
+	enum class ChunkRing : uint8_t
+	{
+		Active,  /// 5x5 around player
+		Visible, /// 7x7 band (excluding Active)
+		Far      /// HLOD beyond 7x7
+	};
+
+	/// Request emitted toward the streaming scheduler (M10).
+	/// Priority is set by the scheduler (higher = load first): Active > Visible > Far; in front of player > behind.
+	/// streamVersion (M10.2) is set by the scheduler when pushing; used to drop stale jobs at IO/CPU/GPU stages.
+	struct ChunkRequest
+	{
+		GlobalChunkCoord chunkId;
+		ChunkRing targetState;
+		uint32_t priority = 0;
+		uint32_t streamVersion = 0;
+	};
+
+	/// One zone: \ref kZoneSize m × \ref kZoneSize m, origin-local in meters.
+	struct Zone
+	{
+		static constexpr int kSize = kZoneSize;
+	};
+
+	/// One chunk: \ref kChunkSize m × \ref kChunkSize m within a zone.
+	struct Chunk
+	{
+		LocalChunkCoord coord;
+		static constexpr int kSize = kChunkSize;
+	};
+
+	/// World: holds zone layout and produces chunk requests from player position.
+	struct World
+	{
+		Zone zone;
+
+		/// Converts absolute world position (meters, XZ) to global chunk coordinate.
+		/// Uses floor and never clamps to the current zone.
+		static GlobalChunkCoord WorldToGlobalChunkCoord(float worldX, float worldZ);
+
+		/// Converts a global chunk coordinate into zone index + local chunk index.
+		/// Local coordinates are always in [0, kChunksPerZoneAxis - 1].
+		static void GlobalToZoneAndLocal(GlobalChunkCoord g, ZoneCoord& zone, LocalChunkCoord& local);
+
+		/// Returns chunk bounds in absolute world-space meters (min/max X and Z).
+		static struct ChunkBounds ChunkBounds(GlobalChunkCoord c);
+
+		/// Updates required chunks from absolute player position.
+		/// Uses hysteresis: only recomputes when player moves to a different chunk.
+		/// Call GetPendingChunkRequests() after Update to obtain requests for the scheduler (M10).
+		void Update(const engine::math::Vec3& playerPositionWorld);
+
+		/// Returns the list of chunk requests produced by the last Update (for M10 scheduler).
+		std::span<const ChunkRequest> GetPendingChunkRequests() const;
+
+		/// Returns the ring for the given chunk relative to the last computed center (M09.2).
+		/// Only valid after at least one Update(); otherwise returns ChunkRing::Far.
+		ChunkRing GetRingForChunk(GlobalChunkCoord chunk) const;
+
+		/// Retourne la liste des chunks actuellement Active + Visible (5x5 + 7x7
+		/// band) autour du dernier centre calculé par \ref Update. Utilisé par le
+		/// `TerrainChunkRenderer` (M100 — Task 12) pour itérer les chunks à
+		/// dessiner chaque frame.
+		///
+		/// \return Vecteur des `GlobalChunkCoord` correspondants. Vide si aucun
+		///         `Update()` n'a encore été appelé.
+		///
+		/// Effet de bord : aucun (lecture seule sur l'état interne).
+		std::vector<GlobalChunkCoord> GetActiveAndVisibleChunks() const;
+
+	private:
+		GlobalChunkCoord m_lastCenterChunk{ -1, -1 };
+		bool m_hasLastCenter = false;
+		std::vector<ChunkRequest> m_pendingRequests;
+	};
+
+	// --- Free functions (mirror World static API for use without a World instance) ---
+
+	/// Converts absolute world position (meters, XZ) to global chunk coordinate.
+	inline GlobalChunkCoord WorldToGlobalChunkCoord(float worldX, float worldZ)
+	{
+		return World::WorldToGlobalChunkCoord(worldX, worldZ);
+	}
+
+	/// Returns chunk bounds in absolute world-space meters.
+	inline struct ChunkBounds ChunkBounds(ChunkCoord c)
+	{
+		return World::ChunkBounds(c);
+	}
+}

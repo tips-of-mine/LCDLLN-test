@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isStaff } from '@/lib/auth/roles'
 
 export function middleware(request: NextRequest) {
   const accountId = request.cookies.get('lcdlln_portal_account')?.value
@@ -20,7 +21,7 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
     }
-    if (role !== 'admin') {
+    if (!isStaff(role)) {
       return NextResponse.redirect(new URL('/', request.url))
     }
   }

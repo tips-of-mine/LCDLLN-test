@@ -107,21 +107,32 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\artifacts"
 
           # Copie les binaires produits (hors vcpkg et hors debug) "*.exe" "*.dll" "*.pdb" 
+          # Filtres successifs :
+          #  - vcpkg, debug : sources externes ou builds debug, pas du release
+          #  - *_tests.exe : test executables (tournent en ctest, pas a shipper)
+          #  - CompilerId*.exe : fichiers cmake pour detection compilo
+          #  - VmaSample* : sample du Vulkan Memory Allocator (dependance externe)
+          #  - client_flow_app.exe : test d'integration headless, pas outil utilisateur
+          # Ce qui reste : lcdlln.exe, lcdlln_world_editor.exe, lcdlln_server.exe,
+          # zone_builder.exe, hlod_builder.exe, migration_checksum.exe,
+          # gen_terrain_placeholders.exe, load_tester.exe + DLLs.
           Get-ChildItem -Recurse -Path "$env:GITHUB_WORKSPACE" `
             -Include "*.exe","*.dll" |
             Where-Object {
               $_.FullName -notlike "*\vcpkg\*" -and
               $_.FullName -notlike "*\debug\*" -and
-              $_.FullName -notlike "*\Debug\*"
+              $_.FullName -notlike "*\Debug\*" -and
+              $_.Name -notlike "*_tests.exe" -and
+              $_.Name -notlike "CompilerId*.exe" -and
+              $_.Name -notlike "VmaSample*" -and
+              $_.Name -ne "client_flow_app.exe"
             } |
             Copy-Item -Destination "$env:GITHUB_WORKSPACE\artifacts" -Force
 
-          # Assets
-          $assetsSource = "$env:GITHUB_WORKSPACE\assets"
-          if (Test-Path $assetsSource) {
-            Copy-Item -Recurse -Path $assetsSource `
-              -Destination "$env:GITHUB_WORKSPACE\artifacts\assets" -Force
-          }
+          # NB : ex-step "assets/" supprime suite a la migration des 2 JSONs
+          # (surface_table, layer_palette) vers game/data/. Le top-level
+          # assets/ n'existe plus. game/data/ est copie plus bas et inclut
+          # desormais ces fichiers.
 
           # Copie les DLLs MSVC Release depuis VS Redist
           $vcRedistBase = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"

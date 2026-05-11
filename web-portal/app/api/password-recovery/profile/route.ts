@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRecoveryProfile, upsertRecoveryProfile } from "@/lib/passwordRecovery";
+import { getRecoveryProfile, upsertRecoveryProfile } from "@/lib/auth/passwordRecovery";
 
 function parseAccountId(value: string | null): number {
   const parsed = Number.parseInt(value || "", 10);

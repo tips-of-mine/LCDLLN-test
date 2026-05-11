@@ -1,8 +1,9 @@
-// POST /api/admin/cgu/[id]/publish
+﻿// POST /api/admin/cgu/[id]/publish
 // Publishes a draft CGU edition
 import { NextResponse } from 'next/server'
+import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 
 export async function POST(
@@ -10,7 +11,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const jar = cookies()
-  if (jar.get('lcdlln_portal_role')?.value !== 'admin') {
+  if (!isStaff(jar.get('lcdlln_portal_role')?.value)) {
     return NextResponse.json({ ok: false }, { status: 403 })
   }
 
@@ -23,10 +24,10 @@ export async function POST(
       [id]
     )
     const edition = rows[0] ?? null
-    if (!edition) return NextResponse.json({ ok: false, message: 'Édition introuvable' }, { status: 404 })
+    if (!edition) return NextResponse.json({ ok: false, message: 'Ã‰dition introuvable' }, { status: 404 })
     if (edition.status !== 'draft') {
       return NextResponse.json(
-        { ok: false, message: 'Seules les éditions en brouillon peuvent être publiées' },
+        { ok: false, message: 'Seules les Ã©ditions en brouillon peuvent Ãªtre publiÃ©es' },
         { status: 409 }
       )
     }

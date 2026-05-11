@@ -4,7 +4,7 @@
 # format binaire (anti-duplication des writers).
 #
 # Dépendances :
-#   - PUBLIC : aucune (les headers ne tirent que la STL et engine/core/Config.h
+#   - PUBLIC : aucune (les headers ne tirent que la STL et src/shared/core/Config.h
 #     qui est header-only à l'usage exposé).
 #   - PRIVATE : spdlog (transitif via engine::core::Log) + sources individuelles
 #     de engine_core (Config.cpp, Log.cpp, FileSystem.cpp, OutputVersion.cpp)
@@ -21,15 +21,15 @@ add_library(zone_builder_lib STATIC
   GltfImporter.cpp
   JsonDocument.cpp
   LayoutImporter.cpp
-  ${CMAKE_SOURCE_DIR}/engine/world/OutputVersion.cpp
-  ${CMAKE_SOURCE_DIR}/engine/world/terrain/LayerPalette.cpp
-  ${CMAKE_SOURCE_DIR}/engine/world/terrain/SplatMap.cpp
-  ${CMAKE_SOURCE_DIR}/engine/world/terrain/TerrainChunk.cpp
-  ${CMAKE_SOURCE_DIR}/engine/world/terrain/TerrainLodChain.cpp
-  ${CMAKE_SOURCE_DIR}/engine/world/water/WaterSurfaces.cpp
-  ${CMAKE_SOURCE_DIR}/engine/core/Config.cpp
-  ${CMAKE_SOURCE_DIR}/engine/core/Log.cpp
-  ${CMAKE_SOURCE_DIR}/engine/platform/FileSystem.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/OutputVersion.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/LayerPalette.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/SplatMap.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/TerrainChunk.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/terrain/TerrainLodChain.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/water/WaterSurfaces.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
+  ${CMAKE_SOURCE_DIR}/src/shared/platform/FileSystem.cpp
 )
 
 # Le dossier `Public/` expose `<zone_builder/XXX.h>` aux consommateurs
@@ -37,7 +37,7 @@ add_library(zone_builder_lib STATIC
 target_include_directories(zone_builder_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/Public
 )
-# Les sources de la lib utilisent encore `engine/core/Log.h`, etc., donc on
+# Les sources de la lib utilisent encore `src/shared/core/Log.h`, etc., donc on
 # expose aussi la racine du dépôt pour les implémentations.
 target_include_directories(zone_builder_lib PRIVATE
   ${CMAKE_SOURCE_DIR}

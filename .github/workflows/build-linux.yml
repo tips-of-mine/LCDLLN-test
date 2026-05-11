@@ -79,9 +79,9 @@ jobs:
             exit 1
           fi
 
-      # Copie automatique db/schema.sql + db/migrations/ → deploy/docker/db/ (Docker + MigrationRunner).
+      # Copie automatique sql/schema.sql + sql/migrations/ → deploy/docker/sql/ (Docker + MigrationRunner).
       # Réalisée dans pack-linux-docker-bundle.sh via scripts/sync-db-to-docker-deploy.sh (pas de copie manuelle en CI).
-      - name: Assembler deploy/docker (sync db + binaires + lib MySQL + game/data)
+      - name: Assembler deploy/docker (sync sql + binaires + lib MySQL + game/data)
         env:
           BUILD_DIR: ${{ github.workspace }}/build/linux-x64-release
         run: bash "${{ github.workspace }}/scripts/pack-linux-docker-bundle.sh"

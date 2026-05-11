@@ -1,6 +1,6 @@
-// PATCH /api/admin/bugs/[id]
+﻿// PATCH /api/admin/bugs/[id]
 // Body: { adminStatus, adminComment?, awardExploit?: boolean }
-// Auth: requires cookie lcdlln_portal_role === 'admin'
+// Auth: requires staff role (moderator / game_master / administrator)
 //
 // Exploit award logic (when awardExploit === true && adminStatus === 'resolved'):
 //  1. Count the number of already-awarded (resolved) bug reports for the reporter.
@@ -9,13 +9,14 @@
 //  4. Set exploit_awarded = 1 on the bug report.
 
 import { NextResponse } from 'next/server'
+import { isStaff } from '@/lib/auth/roles'
 import { cookies } from 'next/headers'
-import { query } from '@/lib/db'
+import { query } from '@/lib/db/connection'
 import type { RowDataPacket } from 'mysql2/promise'
 
 function isAdmin(): boolean {
   const jar = cookies()
-  return jar.get('lcdlln_portal_role')?.value === 'admin'
+  return isStaff(jar.get('lcdlln_portal_role')?.value)
 }
 
 const VALID_STATUSES = ['pending', 'confirmed', 'in_progress', 'resolved', 'not_a_bug'] as const
@@ -41,7 +42,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   if (!isAdmin()) {
-    return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    return NextResponse.json({ error: 'AccÃ¨s refusÃ©' }, { status: 403 })
   }
 
   const id = parseInt(params.id, 10)

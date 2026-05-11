@@ -1,5 +1,5 @@
-// Génère 8 PNG 4x4 unicolore dans `assets/terrain/placeholders/` (chemin
-// passé en argv[1], défaut `./assets/terrain/placeholders/`). Utilisé par la
+// Génère 8 PNG 4x4 unicolore dans `game/data/terrain/placeholders/` (chemin
+// passé en argv[1], défaut `./game/data/terrain/placeholders/`). Utilisé par la
 // custom command CMake POST_BUILD pour fournir des placeholders au shader
 // 8-layer terrain (M100.9). Remplaçables transparents quand les vrais PBR
 // arriveront.
@@ -19,7 +19,7 @@
 
 namespace
 {
-	/// Couleurs RGB 8-bit par layer, alignées sur `assets/terrain/layer_palette.json`.
+	/// Couleurs RGB 8-bit par layer, alignées sur `game/data/terrain/layer_palette.json`.
 	/// Choisies pour être visuellement distinctes au blend dans le shader.
 	constexpr std::array<std::array<uint8_t, 3>, 8> kLayerColors {{
 		{{139,  90,  43}}, // dirt        — brun chocolat
@@ -178,7 +178,7 @@ namespace
 
 int main(int argc, char* argv[])
 {
-	std::filesystem::path outDir = (argc > 1) ? argv[1] : "assets/terrain/placeholders";
+	std::filesystem::path outDir = (argc > 1) ? argv[1] : "game/data/terrain/placeholders";
 	std::error_code ec;
 	std::filesystem::create_directories(outDir, ec);
 	if (ec)

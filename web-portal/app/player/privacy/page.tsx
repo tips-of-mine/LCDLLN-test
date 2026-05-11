@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { query } from '@/lib/db'
-import { getSession } from '@/lib/session'
+import { query } from '@/lib/db/connection'
+import { getSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import type { RowDataPacket } from 'mysql2/promise'
-import { PrivacyForm } from '@/components/PrivacyForm'
-import { CguAcceptButton } from '@/components/CguAcceptButton'
+import { PrivacyForm } from '@/components/player/PrivacyForm'
+import { CguAcceptButton } from '@/components/cgu/CguAcceptButton'
 
 type CguRow = RowDataPacket & {
   id: number

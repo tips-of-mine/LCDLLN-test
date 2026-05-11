@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PasswordRecoveryRequestForm } from "@/components/PasswordRecoveryRequestForm";
+import { PasswordRecoveryRequestForm } from "@/components/auth/PasswordRecoveryRequestForm";
 
 export default function PasswordRecoveryPage() {
   return (

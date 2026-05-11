@@ -156,8 +156,18 @@ namespace engine::render
 			const float bottomBar = 28.f;
 			const float scrollH = std::max(40.f, ImGui::GetContentRegionAvail().y - bottomBar);
 
-			ImGui::BeginChild("##ln_chat_scroll", ImVec2(0.f, scrollH), false,
-				ImGuiWindowFlags_HorizontalScrollbar);
+			// Pas de HorizontalScrollbar : le wrap (PushTextWrapPos) gere les lignes longues.
+			ImGui::BeginChild("##ln_chat_scroll", ImVec2(0.f, scrollH), false, 0);
+
+			// ItemSpacing.y bumpe de 4 a 8 px : sans ca, les jambages des lignes (g, p, y)
+			// chevauchent visuellement la ligne suivante (cf. AuthImGuiRenderer ligne 592).
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,
+				ImVec2(ImGui::GetStyle().ItemSpacing.x, 8.f));
+
+			// Word-wrap a la largeur du child window moins une gouttiere de 8 px (evite
+			// que le texte ne colle au bord droit / a la scrollbar verticale).
+			const float wrapWidth = ImGui::GetContentRegionAvail().x - 8.f;
+			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + wrapWidth);
 
 			const auto& lines = m_chat->History().Lines();
 
@@ -174,6 +184,9 @@ namespace engine::render
 				ImGui::TextColored(color, "%s %s %s: %s",
 					hhmm.c_str(), tag, msg.sender.c_str(), msg.text.c_str());
 			}
+
+			ImGui::PopTextWrapPos();
+			ImGui::PopStyleVar();
 
 			// Auto-scroll bottom uniquement si l'utilisateur n'a pas remonté manuellement
 			// (ChatUiPresenter::m_scrollLinesFromEnd > 0 = remonté ; 0 = en bas).

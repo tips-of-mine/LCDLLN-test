@@ -413,6 +413,17 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 
+  # Wave 17 Entities suite : UpdateMask delta tests cross-classe.
+  # Verifie que les modifications sur Unit/Player/Creature ne marquent que
+  # les champs effectivement changes (critique pour delta replication).
+  lcdlln_add_simple_test(update_mask_delta_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/UpdateMaskDeltaTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).
   lcdlln_add_simple_test(mail_manager_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/mail/MailManagerTests.cpp

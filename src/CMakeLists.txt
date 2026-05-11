@@ -540,6 +540,11 @@ elseif(UNIX)
   # CMANGOS.11 (Phase 3.11a) : ThreatList AI target selector (header-only).
   lcdlln_add_simple_test(threat_list_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/combat/ThreatListTests.cpp)
+  # Wave 19 (CMANGOS.11 step 2) : HostileRefManager bidirectionnel (cibles +
+  # attaquants) avec helpers EngageHostile / DisengageHostile / CleanupOnDeath.
+  lcdlln_add_simple_test(hostile_ref_manager_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/combat/HostileRefManagerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/combat/HostileRefManager.cpp)
   # CMANGOS.24 (Phase 3.24a) : ReputationManager + spillover (header-only).
   lcdlln_add_simple_test(reputation_manager_tests
     ${CMAKE_SOURCE_DIR}/src/masterd/reputation/ReputationManagerTests.cpp)
@@ -736,6 +741,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/ai/EventAIRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/pools/PoolManagerRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/combat/ThreatListRuntime.cpp
+    # Wave 19 : HostileRefManager bidirectionnel (cibles + attaquants).
+    ${CMAKE_SOURCE_DIR}/src/shardd/combat/HostileRefManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/dbscripts/DBScript.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/dbscripts/DBScriptRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/anticheat/AntiCheatGameplayRuntime.cpp

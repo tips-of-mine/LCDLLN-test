@@ -70,13 +70,15 @@ namespace
 		// "héllo" en UTF-8 : h=0x68, é=0xC3 0xA9, l=0x6C, l=0x6C, o=0x6F → 6 bytes.
 		// maxBytes=4 → on doit couper APRÈS 'h' + 'é' (3 bytes) ou avant 'é' (1 byte),
 		// jamais entre 0xC3 et 0xA9. Le code recule depuis maxBytes=4 jusqu'à un byte
-		// non-continuation. À l'index 4 le byte est 'l' (0x6C) qui n'est PAS
-		// continuation → coupe à 4 → "hé" + "l" = "héll"... attendons :
-		// indexes : 0=h 1=0xC3 2=0xA9 3=l 4=l 5=o
-		// maxBytes=4 → cut=4 → s[4]=0x6C (non-continuation) → coupe à 4 → "héll" (4 bytes).
+		// indexes : 0=h 1=0xC3 2=0xA9 3=l 4=l 5=o (6 bytes : "é" = 2 bytes UTF-8).
+		// maxBytes=4 → cut=4 → s[4]='l'=0x6C (non-continuation) → coupe à 4
+		// → substr(0,4) = [0x68, 0xC3, 0xA9, 0x6C] = "h\xC3\xA9l" = "hél"
+		// (3 chars visibles, 4 bytes). L'ancien commentaire prétendait "héll
+		// (4 bytes)" mais c'est faux : "héll" UTF-8 = 5 bytes (h=1 + é=2 +
+		// l=1 + l=1). L'implementation respecte strictement maxMessageBytes.
 		ChatSanitizerConfig cfg;
 		cfg.maxMessageBytes = 4;
-		if (!ExpectAccepted("utf8 safe trunc 4", "h\xC3\xA9llo", "h\xC3\xA9ll", cfg))
+		if (!ExpectAccepted("utf8 safe trunc 4", "h\xC3\xA9llo", "h\xC3\xA9l", cfg))
 			return false;
 
 		// maxBytes=2 → cut=2, s[2]=0xA9 (continuation 10xxxxxx) → recule à 1, s[1]=0xC3

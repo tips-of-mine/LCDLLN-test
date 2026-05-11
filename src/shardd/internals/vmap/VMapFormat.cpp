@@ -74,6 +74,14 @@ namespace engine::server::shard::vmap
 	VMapDecodeResult DecodeVMapTile(std::span<const uint8_t> in, VMapTile& out,
 		uint32_t* outErrVersion)
 	{
+		// Header complet = 6 floats (24 octets) + 4 uint32 (16 octets) = 40 octets
+		// (cf. EncodeVMapTile commentaire). On verifie la taille AVANT de lire le
+		// magic : sinon un buffer trop court mais avec 4 bytes lisibles partirait
+		// en BadMagic au lieu de BufferTooSmall (test TestBufferTooSmall).
+		static constexpr size_t kVMapHeaderSize = 40;
+		if (in.size() < kVMapHeaderSize)
+			return VMapDecodeResult::BufferTooSmall;
+
 		size_t off = 0;
 		uint32_t magic = 0;
 		if (!Read(in, off, magic))

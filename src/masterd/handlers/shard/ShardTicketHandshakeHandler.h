@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace engine::server
@@ -12,6 +13,13 @@ namespace engine::server
 namespace engine::server
 {
 	/// Shard-side handler: first packet from each connection must be PRESENT_SHARD_TICKET; validates and responds TICKET_ACCEPTED or TICKET_REJECTED (M22.6).
+	///
+	/// Suivi de #584 (master-side kick) : quand un nouveau ticket arrive pour un account_id
+	/// deja en monde sur ce shard, on evicte la connexion precedente (close TCP + cleanup).
+	/// Sans cette eviction, le shard accepte les 2 tickets et garde les 2 TCP alive jusqu'au
+	/// HeartbeatTimeout (~60s), permettant un duplicate-play pendant cette fenetre. Le map
+	/// account_id -> connId est tenue ici (handler du shard) car le shard n'a pas de
+	/// SessionManager equivalent au master.
 	class ShardTicketHandshakeHandler
 	{
 	public:
@@ -31,5 +39,11 @@ namespace engine::server
 		NetServer* m_server = nullptr;
 		ShardTicketValidator* m_validator = nullptr;
 		std::unordered_set<uint32_t> m_handshakeDone;
+		/// account_id -> connId pour eviction sur duplicate-ticket. Le shard
+		/// ne maintient pas de SessionManager : on s'appuie sur cette map locale
+		/// pour ne garder qu'une connexion par account a la fois.
+		std::unordered_map<uint64_t, uint32_t> m_accountToConn;
+		/// connId -> account_id pour reverse lookup au cleanup (OnConnectionClosed).
+		std::unordered_map<uint32_t, uint64_t> m_connToAccount;
 	};
 }

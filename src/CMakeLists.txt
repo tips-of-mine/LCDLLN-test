@@ -199,6 +199,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
     # Wave 17 Entities suite : WorldObject (Object + position 3D + map/zone).
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    # Wave 17 Entities suite : Unit (WorldObject + HP/MP/level/faction).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
@@ -381,6 +383,13 @@ elseif(UNIX)
   # Wave 17 Entities suite : WorldObject tests (position, map, zone, IsInWorld).
   lcdlln_add_simple_test(worldobject_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObjectTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : Unit tests (HP/MP/level/faction, clamp, IsAlive).
+  lcdlln_add_simple_test(unit_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/UnitTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 

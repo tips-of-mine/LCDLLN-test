@@ -31,6 +31,10 @@
 //     - "/announce <message>"    game_master  (broadcast canal Server)
 //   Wave 3 (UI panels log-only) : /mail, /quest, /guild, /ah, /skills, /lfg,
 //     /arena, /bg, /pvp, /weather, /events, /rep, /ticket
+//   Wave 16 (debug PacketLog on-demand) :
+//     - "/packetlog status"             admin   (etat ring buffer)
+//     - "/packetlog dump <connId> [n]"  admin   (dump entries d'une conn)
+//     - "/packetlog dump_all [n]"       admin   (dump global)
 //
 // Pour toute autre commande connue du registre, la reponse est un Ok stub
 // avec result vide. Les futures PR ajouteront les dispatchers specifiques.
@@ -58,6 +62,11 @@ namespace engine::server::db
 namespace engine::server::gmtickets
 {
 	class GmTicketSystem;
+}
+
+namespace engine::server::netdebug
+{
+	class PacketLog;
 }
 
 namespace engine::server
@@ -96,6 +105,12 @@ namespace engine::server
 		/// Branche le pool MySQL pour /mute (INSERT chat_mutes). Si nullptr,
 		/// /mute repondra ServerError.
 		void SetConnectionPool(engine::server::db::ConnectionPool* pool) { m_dbPool = pool; }
+
+		/// Branche le ring buffer PacketLog (Wave 12) pour les commandes
+		/// /packetlog status, /packetlog dump, /packetlog dump_all. Si
+		/// nullptr (cas server.debug.packetlog.enabled=false), les
+		/// commandes repondront Ok avec un message "PacketLog disabled".
+		void SetPacketLog(engine::server::netdebug::PacketLog* log) { m_packetLog = log; }
 
 		/// Dispatch packet : traite uniquement opcode 195
 		/// (kOpcodeAdminCommandRequest). Pour tout autre opcode, no-op.
@@ -171,6 +186,21 @@ namespace engine::server
 		                      const std::vector<std::string>& args,
 		                      engine::network::admin::AdminCommandResponse& resp);
 
+		/// Dispatch des trois sous-commandes "/packetlog status",
+		/// "/packetlog dump <connId> [n]" et "/packetlog dump_all [n]".
+		/// Wave 16 : si m_packetLog == nullptr, retourne Ok avec un message
+		/// "PacketLog disabled". Sinon, formate les entries demandees et
+		/// les inscrit dans resp.result (tronquees a ~4 KB).
+		/// \param subCommand  Identifiant de la sous-commande : "status",
+		///                    "dump" ou "dump_all" (extrait du nom canonique
+		///                    "/packetlog <sub>").
+		/// \param args        Arguments positionnels apres la sous-commande
+		///                    (connId pour dump, n optionnel partout).
+		/// \param resp        Reponse a remplir.
+		void DispatchPacketLog(const std::string& subCommand,
+		                       const std::vector<std::string>& args,
+		                       engine::network::admin::AdminCommandResponse& resp);
+
 		NetServer*            m_server      = nullptr;
 		SessionManager*       m_sessionMgr  = nullptr;
 		ConnectionSessionMap* m_connMap     = nullptr;
@@ -179,5 +209,6 @@ namespace engine::server
 		AccountStore*         m_accountStore = nullptr;
 		engine::server::gmtickets::GmTicketSystem* m_gmTicketSys = nullptr;
 		engine::server::db::ConnectionPool*        m_dbPool      = nullptr;
+		engine::server::netdebug::PacketLog*       m_packetLog   = nullptr;
 	};
 }

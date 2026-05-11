@@ -22,6 +22,7 @@
 #include "src/shared/network/ChatPayloads.h"
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/PacketLog.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 
 #include <mysql.h>
@@ -482,6 +483,21 @@ namespace engine::server
 			DispatchAnnounce(accountId, req.args, resp);
 			handled = true;
 		}
+		else if (req.command == "/packetlog status")
+		{
+			DispatchPacketLog("status", req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/packetlog dump")
+		{
+			DispatchPacketLog("dump", req.args, resp);
+			handled = true;
+		}
+		else if (req.command == "/packetlog dump_all")
+		{
+			DispatchPacketLog("dump_all", req.args, resp);
+			handled = true;
+		}
 		else if (UiPanelCommandSet().count(req.command) > 0)
 		{
 			// Wave 3 RBAC migration : les UI panel commands sont log-only.
@@ -889,5 +905,153 @@ namespace engine::server
 		resp.status = AdminCommandStatus::Ok;
 		resp.result.push_back(deliveredBuf);
 		resp.message = "Announce diffuse";
+	}
+
+	// ============================================================
+	// Wave 16 : /packetlog (debug ring buffer on-demand dump).
+	// ============================================================
+
+	/// Implementation des 3 sous-commandes /packetlog. Garde-fou commun :
+	/// si m_packetLog == nullptr (server.debug.packetlog.enabled=false),
+	/// repond Ok avec un message indiquant que la fonctionnalite est
+	/// desactivee — pas d'erreur (rationale : c'est une commande de
+	/// diagnostic, on veut un feedback explicite plutot qu'un refus).
+	///
+	/// Truncation : le payload AdminCommandResponse total doit tenir dans
+	/// un paquet wire de 16 KB max ; on borne le dump a ~4 KB pour laisser
+	/// de la marge aux autres champs (command echo, message, header).
+	void AdminCommandHandler::DispatchPacketLog(const std::string& subCommand,
+		const std::vector<std::string>& args,
+		engine::network::admin::AdminCommandResponse& resp)
+	{
+		using namespace engine::network::admin;
+
+		// Cas PacketLog desactive : on retourne Ok avec un message clair
+		// (le client peut ainsi distinguer "feature off" de "ServerError").
+		if (m_packetLog == nullptr)
+		{
+			resp.status = AdminCommandStatus::Ok;
+			resp.message = "PacketLog disabled (server.debug.packetlog.enabled=false)";
+			resp.result.push_back("enabled=false");
+			return;
+		}
+
+		// Borne de truncation pour tenir dans un seul paquet wire.
+		// kProtocolV1MaxPacketSize == 16384, on garde ~4 KB pour le dump.
+		constexpr size_t kMaxDumpBytes = 4096u;
+		// Defaut "n" si non fourni : 20 entries.
+		constexpr size_t kDefaultN = 20u;
+
+		// Helper : tronque chronologiquement aux N entries les plus
+		// recentes (l'ordre de FormatEntries est plus vieux -> plus
+		// recent ; on garde donc le suffixe).
+		auto KeepLastN = [](std::vector<engine::server::netdebug::PacketLogEntry>& v, size_t n)
+		{
+			if (v.size() > n)
+				v.erase(v.begin(), v.begin() + (v.size() - n));
+		};
+
+		// Helper : tronque la chaine \p text a \p maxBytes et ajoute un
+		// suffixe explicite si truncation a eu lieu.
+		auto TruncateToMax = [](std::string& text, size_t maxBytes)
+		{
+			constexpr const char kSuffix[] = "... (truncated)";
+			const size_t suffixLen = sizeof(kSuffix) - 1u;
+			if (text.size() <= maxBytes) return;
+			if (maxBytes <= suffixLen)
+			{
+				text.assign(kSuffix, suffixLen);
+				return;
+			}
+			text.resize(maxBytes - suffixLen);
+			text.append(kSuffix, suffixLen);
+		};
+
+		if (subCommand == "status")
+		{
+			const size_t cap = m_packetLog->Capacity();
+			const size_t sz  = m_packetLog->Size();
+			char buf[96];
+			std::snprintf(buf, sizeof(buf),
+				"enabled, capacity=%zu, size=%zu", cap, sz);
+			resp.status = AdminCommandStatus::Ok;
+			resp.result.push_back("enabled=true");
+			char capBuf[48];
+			std::snprintf(capBuf, sizeof(capBuf), "capacity=%zu", cap);
+			resp.result.push_back(capBuf);
+			char sizeBuf[48];
+			std::snprintf(sizeBuf, sizeof(sizeBuf), "size=%zu", sz);
+			resp.result.push_back(sizeBuf);
+			resp.message = buf;
+			return;
+		}
+
+		if (subCommand == "dump")
+		{
+			if (args.empty())
+			{
+				resp.status = AdminCommandStatus::InvalidArgs;
+				resp.message = "Usage : /packetlog dump <connId> [n]";
+				return;
+			}
+			uint32_t connId = 0u;
+			try { connId = static_cast<uint32_t>(std::stoul(args[0])); }
+			catch (...) { connId = 0u; }
+			// Note : connId == 0 est une valeur valide (slot NetServer
+			// commence a 0 ou 1 selon allocations). On ne rejette pas.
+
+			size_t n = kDefaultN;
+			if (args.size() >= 2u)
+			{
+				try { n = static_cast<size_t>(std::stoul(args[1])); }
+				catch (...) { n = kDefaultN; }
+				if (n == 0u) n = kDefaultN;
+			}
+
+			auto entries = m_packetLog->DrainForConn(connId);
+			KeepLastN(entries, n);
+
+			std::string dump = engine::server::netdebug::FormatEntries(entries);
+			TruncateToMax(dump, kMaxDumpBytes);
+
+			char hdrBuf[96];
+			std::snprintf(hdrBuf, sizeof(hdrBuf),
+				"connId=%u count=%zu", static_cast<unsigned>(connId), entries.size());
+			resp.status = AdminCommandStatus::Ok;
+			resp.result.push_back(hdrBuf);
+			resp.result.push_back(std::string("dump=\n") + dump);
+			resp.message = "OK";
+			return;
+		}
+
+		if (subCommand == "dump_all")
+		{
+			size_t n = kDefaultN;
+			if (!args.empty())
+			{
+				try { n = static_cast<size_t>(std::stoul(args[0])); }
+				catch (...) { n = kDefaultN; }
+				if (n == 0u) n = kDefaultN;
+			}
+
+			auto entries = m_packetLog->Drain();
+			KeepLastN(entries, n);
+
+			std::string dump = engine::server::netdebug::FormatEntries(entries);
+			TruncateToMax(dump, kMaxDumpBytes);
+
+			char hdrBuf[64];
+			std::snprintf(hdrBuf, sizeof(hdrBuf), "count=%zu", entries.size());
+			resp.status = AdminCommandStatus::Ok;
+			resp.result.push_back(hdrBuf);
+			resp.result.push_back(std::string("dump=\n") + dump);
+			resp.message = "OK";
+			return;
+		}
+
+		// Defensif : sous-commande inconnue (ne devrait pas arriver car le
+		// dispatcher en amont matche par nom canonique).
+		resp.status = AdminCommandStatus::InvalidArgs;
+		resp.message = "Sous-commande /packetlog inconnue : " + subCommand;
 	}
 }

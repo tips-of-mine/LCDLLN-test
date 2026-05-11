@@ -8,6 +8,7 @@
 #include "src/masterd/metrics/HealthEndpoint.h"
 #include "src/masterd/metrics/PrometheusMetrics.h"
 #include "src/shared/network/NetServer.h"
+#include "src/shared/network/PacketLog.h"
 #include "src/masterd/shards/ServerRegistry.h"
 #include "src/masterd/handlers/shard/ShardRegisterHandler.h"
 #include "src/masterd/shards/ShardRegistry.h"
@@ -92,6 +93,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <string_view>
 #include <thread>
 
@@ -230,6 +232,23 @@ int main(int argc, char** argv)
 		LOG_ERROR(Net, "[ServerMain] NetServer Init failed");
 		engine::core::Log::Shutdown();
 		return 1;
+	}
+
+	// Wave 14 — PacketLog opt-in (debug RX/TX trace). Desactive par defaut.
+	// Quand `server.debug.packetlog.enabled` = true, on instancie un ring
+	// buffer de capacite `server.debug.packetlog.capacity` (defaut 512) qui
+	// capture chaque paquet RX parse + chaque paquet TX enqueue. L'unique
+	// pointeur garde la duree de vie via le NetServer (qui shutdown avant
+	// la destruction de packetLogOpt en sortie de main).
+	std::unique_ptr<engine::server::netdebug::PacketLog> packetLogOpt;
+	const bool packetLogEnabled = config.GetBool("server.debug.packetlog.enabled", false);
+	if (packetLogEnabled)
+	{
+		const int capacityCfg = static_cast<int>(config.GetInt("server.debug.packetlog.capacity", 512));
+		const size_t capacity = capacityCfg > 0 ? static_cast<size_t>(capacityCfg) : 512u;
+		packetLogOpt = std::make_unique<engine::server::netdebug::PacketLog>(capacity);
+		server.SetPacketLog(packetLogOpt.get());
+		LOG_INFO(Net, "[PacketLog] enabled (capacity={})", capacity);
 	}
 
 	engine::server::SessionManager sessionManager;

@@ -3,6 +3,7 @@
 #include "src/masterd/metrics/HealthEndpoint.h"
 #include "src/masterd/metrics/PrometheusMetrics.h"
 #include "src/shared/network/NetServer.h"
+#include "src/shared/network/PacketLog.h"
 #include "src/masterd/handlers/shard/ShardTicketValidator.h"
 #include "src/masterd/handlers/shard/ShardTicketHandshakeHandler.h"
 #include "src/shared/network/ProtocolV1Constants.h"
@@ -24,6 +25,7 @@
 #include <csignal>
 #include <chrono>
 #include <algorithm>
+#include <memory>
 #include <thread>
 
 namespace
@@ -91,6 +93,22 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	LOG_INFO(Net, "[ShardMain] NetServer listening on port {}", port);
+
+	// Wave 14 — PacketLog opt-in (debug RX/TX trace). Desactive par defaut.
+	// Memes cles de config que masterd : `server.debug.packetlog.enabled`
+	// + `server.debug.packetlog.capacity` (defaut 512). Le pointeur reste
+	// vivant tant que le shard tourne (detruit en sortie de main, apres
+	// server.Shutdown() implicite).
+	std::unique_ptr<engine::server::netdebug::PacketLog> packetLogOpt;
+	const bool packetLogEnabled = config.GetBool("server.debug.packetlog.enabled", false);
+	if (packetLogEnabled)
+	{
+		const int capacityCfg = static_cast<int>(config.GetInt("server.debug.packetlog.capacity", 512));
+		const size_t capacity = capacityCfg > 0 ? static_cast<size_t>(capacityCfg) : 512u;
+		packetLogOpt = std::make_unique<engine::server::netdebug::PacketLog>(capacity);
+		server.SetPacketLog(packetLogOpt.get());
+		LOG_INFO(Net, "[PacketLog] enabled (capacity={})", capacity);
+	}
 
 	// M23.1 + M23.2 — Health/readiness and Prometheus /metrics (Shard: no auth/sessions/shard registry/DB).
 	engine::server::HealthEndpoint healthEndpoint;

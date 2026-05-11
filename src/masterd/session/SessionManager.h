@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -109,12 +110,23 @@ namespace engine::server
 		/// authentifies remontent, y compris les staff / admins.
 		std::vector<uint64_t> ListActiveAccountIds() const;
 
+		/// Callback fire des qu'une session est fermee via Close() (y compris
+		/// la fermeture interne lors de duplicate-login policy KickExisting).
+		/// Le hook recoit (session_id, account_id, reason). Utilise par
+		/// main_linux.cpp pour cascader la fermeture : trouver la TCP du
+		/// connId associe (via ConnectionSessionMap::FindConnIdForSession),
+		/// la fermer, et nettoyer SessionCharacterMap. Sans ce hook le client
+		/// duplicate-login restait connecte au master TCP + au shard, et
+        /// pouvait jouer le meme personnage en parallele du nouveau client.
+		void SetOnSessionClosed(std::function<void(uint64_t sessionId, uint64_t accountId, SessionCloseReason)> hook);
+
 	private:
 		using Clock = std::chrono::steady_clock;
 
 		SessionManagerConfig m_config;
 		std::unordered_map<uint64_t, Session> m_by_session_id;
 		std::unordered_map<uint64_t, uint64_t> m_by_account_id;
+		std::function<void(uint64_t, uint64_t, SessionCloseReason)> m_onSessionClosed;
 
 		bool isValid(const Session& s, Clock::time_point now) const;
 		uint64_t generateSessionId();

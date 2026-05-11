@@ -23,6 +23,17 @@ namespace engine::server
 		return it->second;
 	}
 
+	std::optional<uint32_t> ConnectionSessionMap::FindConnIdForSession(uint64_t sessionId) const
+	{
+		std::lock_guard lock(m_mutex);
+		for (const auto& [conn, sess] : m_connToSession)
+		{
+			if (sess == sessionId)
+				return conn;
+		}
+		return std::nullopt;
+	}
+
 	std::vector<std::pair<uint32_t, uint64_t>> ConnectionSessionMap::Snapshot() const
 	{
 		std::vector<std::pair<uint32_t, uint64_t>> out;

@@ -202,6 +202,7 @@ namespace engine::server
 		case DisconnectReason::SendError: return "send_error";
 		case DisconnectReason::TxQueueCap: return "tx_queue_cap";
 		case DisconnectReason::HeartbeatTimeout: return "heartbeat_timeout";
+		case DisconnectReason::KickedByDuplicateLogin: return "kicked_by_duplicate_login";
 		default: return "unknown";
 	}
 }

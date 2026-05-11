@@ -342,6 +342,30 @@ int main(int argc, char** argv)
 	// Phase 4 chat — mapping connId → (character_id, character_name) pour sender display + whisper target.
 	engine::server::SessionCharacterMap sessionCharMap;
 
+	// Fix duplicate-login : quand SessionManager::Close fire (notamment via la policy
+	// KickExisting), on cascade la fermeture : trouver le connId du client kicke,
+	// fermer sa TCP master + nettoyer ConnectionSessionMap + SessionCharacterMap.
+	// Sans ce hook, le client garde sa connexion master + shard alive et peut jouer
+	// le meme personnage en parallele du nouveau client (cf. bug observe avec deux
+	// IP differentes sur account_id=1).
+	sessionManager.SetOnSessionClosed(
+		[&server, &connSessionMap, &sessionCharMap](uint64_t sessionId, uint64_t accountId,
+			engine::server::SessionCloseReason reason)
+		{
+			(void)accountId;
+			(void)reason;
+			auto oldConn = connSessionMap.FindConnIdForSession(sessionId);
+			if (!oldConn)
+				return;
+			LOG_INFO(Net,
+				"[SessionManager] cascading close : connId={} sessionId={} reason={}",
+				*oldConn, sessionId, engine::server::SessionCloseReasonToString(reason));
+			server.CloseConnection(*oldConn,
+				engine::server::DisconnectReason::KickedByDuplicateLogin);
+			connSessionMap.Remove(*oldConn);
+			sessionCharMap.Remove(*oldConn);
+		});
+
 	engine::server::CharacterEnterWorldHandler characterEnterWorldHandler;
 	characterEnterWorldHandler.SetServer(&server);
 	characterEnterWorldHandler.SetSessionManager(&sessionManager);

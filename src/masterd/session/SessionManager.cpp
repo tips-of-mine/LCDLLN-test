@@ -11,6 +11,11 @@ namespace engine::server
 		constexpr uint64_t kInvalidSessionId = 0;
 	}
 
+	void SessionManager::SetOnSessionClosed(std::function<void(uint64_t, uint64_t, SessionCloseReason)> hook)
+	{
+		m_onSessionClosed = std::move(hook);
+	}
+
 	void SessionManager::SetConfig(const SessionManagerConfig& config)
 	{
 		m_config = config;
@@ -134,6 +139,12 @@ namespace engine::server
 		it->second.state = SessionState::Closed;
 		m_by_account_id.erase(account_id);
 		LOG_INFO(Net, "[SessionManager] Close: session_id={} account_id={} reason={}", session_id, account_id, SessionCloseReasonToString(reason));
+		// Fire le hook APRES log + cleanup interne : le subscriber peut, ex. fermer
+		// la TCP du connId associe et nettoyer SessionCharacterMap. La copie locale
+		// du hook evite un crash si le subscriber le reset au milieu de l'appel.
+		auto hook = m_onSessionClosed;
+		if (hook)
+			hook(session_id, account_id, reason);
 	}
 
 	void SessionManager::SetState(uint64_t session_id, SessionState state)

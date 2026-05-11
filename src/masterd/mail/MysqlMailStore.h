@@ -15,6 +15,11 @@ namespace engine::server::mail
 		explicit MysqlMailStore(engine::server::db::ConnectionPool* pool)
 			: m_pool(pool) {}
 
+		/// Retourne true si le store est en mode DB (pool initialise).
+		/// Le caller s'en sert pour decider d'instancier le MailManager
+		/// avec ce store ou avec un InMemoryMailStore (mode no-DB / tests).
+		bool IsAvailable() const noexcept;
+
 		uint64_t Insert(Mail& out) override;
 		std::optional<Mail> Find(uint64_t mailId) const override;
 		std::vector<Mail> ListInbox(uint64_t receiverAccountId) const override;

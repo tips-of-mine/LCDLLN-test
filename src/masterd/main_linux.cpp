@@ -35,6 +35,7 @@
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
 #include "src/masterd/handlers/mail/MailHandler.h"
+#include "src/masterd/mail/InMemoryMailStore.h"
 #include "src/masterd/mail/MailManager.h"
 #include "src/masterd/mail/MysqlMailStore.h"
 #include "src/masterd/handlers/quest/QuestHandler.h"
@@ -377,27 +378,32 @@ int main(int argc, char** argv)
 	}
 
 	// CMANGOS.18 (Phase 3.18 step 3) — Mail wire server.
-	// Le store DB est instancié seulement si dbPool est dispo (sinon le master
-	// tourne en mode "no-DB" — accountStoreMem — et on ne peut pas persister
-	// de mails). Dans ce mode dégradé, on laisse m_mgr=nullptr côté handler →
-	// HandlePacket logge un warning et drop. C'est cohérent avec le fait qu'en
-	// mode no-DB, l'auth n'est pas non plus persistée et la mailbox n'a pas
-	// de raison d'être réellement utilisable.
-	engine::server::mail::MysqlMailStore mailStore(&dbPool);
-	engine::server::mail::MailManager mailManager(&mailStore);
-	engine::server::MailHandler mailHandler;
-	if (dbPool.IsInitialized())
+	// Wave 10 : on instancie les deux stores (Mysql + InMemory) et on
+	// branche le MailManager sur celui qui est disponible. En production
+	// (DB pool initialise) c'est MysqlMailStore et les mails persistent ;
+	// en mode no-DB (dev local, tests integration sans MySQL) on retombe
+	// sur InMemoryMailStore — la mailbox reste fonctionnelle pour la
+	// session courante mais ne survit pas a un reboot.
+	engine::server::mail::MysqlMailStore mailStoreDb(&dbPool);
+	engine::server::mail::InMemoryMailStore mailStoreMem;
+	engine::server::mail::IMailStore* mailStoreActive = nullptr;
+	if (mailStoreDb.IsAvailable())
 	{
-		mailHandler.SetMailManager(&mailManager);
-		mailHandler.SetServer(&server);
-		mailHandler.SetSessionManager(&sessionManager);
-		mailHandler.SetConnectionSessionMap(&connSessionMap);
-		LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");
+		mailStoreActive = &mailStoreDb;
+		LOG_INFO(Net, "[ServerMain] MailStore : MySQL-backed (Wave 10)");
 	}
 	else
 	{
-		LOG_WARN(Net, "[ServerMain] MailHandler skipped (DB pool unavailable)");
+		mailStoreActive = &mailStoreMem;
+		LOG_WARN(Net, "[ServerMain] MailStore : in-memory fallback (DB unavailable, mails will not persist)");
 	}
+	engine::server::mail::MailManager mailManager(mailStoreActive);
+	engine::server::MailHandler mailHandler;
+	mailHandler.SetMailManager(&mailManager);
+	mailHandler.SetServer(&server);
+	mailHandler.SetSessionManager(&sessionManager);
+	mailHandler.SetConnectionSessionMap(&connSessionMap);
+	LOG_INFO(Net, "[ServerMain] MailHandler configured (CMANGOS.18 step 3)");
 
 	// CMANGOS.23 (Phase 5.23 step 3+4) — Quest wire server.
 	// Le tracker in-memory est l'autorite runtime des etats Quest. Le store

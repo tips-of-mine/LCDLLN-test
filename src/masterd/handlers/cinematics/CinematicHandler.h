@@ -31,6 +31,8 @@ namespace engine::server
 	class ConnectionSessionMap;
 }
 
+namespace engine::server::cinematics { class ICinematicStore; }
+
 namespace engine::server
 {
 	/// Dispatcher Cinematics. Doit etre configure via Set*() avant tout
@@ -44,6 +46,19 @@ namespace engine::server
 		void SetSessionManager(SessionManager* sm) { m_sessionMgr = sm; }
 		/// Branche la map connId -> sessionId.
 		void SetConnectionSessionMap(ConnectionSessionMap* cm) { m_connMap = cm; }
+		/// Branche le store cinematic_seen (Wave 11). Si null, le handler
+		/// ne persiste pas le "seen" mais reste fonctionnel (V1 fallback).
+		/// Le store doit survivre au handler.
+		void SetCinematicStore(engine::server::cinematics::ICinematicStore* s) { m_store = s; }
+
+		/// True si l'account a deja vu la sequence selon le store branche.
+		/// Retourne false si le store est null (mode no-store = jamais vue).
+		/// Pratique pour les callers PushCinematic qui veulent gater les
+		/// replays (ex: skip intro a la 2e session).
+		///
+		/// \param accountId  account interroge.
+		/// \param sequenceId id de la cinematic.
+		bool HasSeen(uint64_t accountId, uint32_t sequenceId) const;
 
 		/// Point d'entree appele par NetServer pour les opcodes Cinematics
 		/// entrants (109 Ack, 111 Skip). Si l'opcode n'est pas un opcode
@@ -101,5 +116,6 @@ namespace engine::server
 		NetServer*            m_server     = nullptr;
 		SessionManager*       m_sessionMgr = nullptr;
 		ConnectionSessionMap* m_connMap    = nullptr;
+		engine::server::cinematics::ICinematicStore* m_store = nullptr;
 	};
 }

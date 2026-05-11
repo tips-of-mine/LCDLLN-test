@@ -2,6 +2,7 @@
 
 #include "src/masterd/handlers/cinematics/CinematicHandler.h"
 
+#include "src/masterd/cinematics/CinematicStore.h"
 #include "src/masterd/session/ConnectionSessionMap.h"
 #include "src/masterd/session/SessionManager.h"
 #include "src/shared/core/Log.h"
@@ -9,6 +10,7 @@
 #include "src/shared/network/NetServer.h"
 #include "src/shared/network/ProtocolV1Constants.h"
 
+#include <chrono>
 #include <vector>
 
 namespace engine::server
@@ -97,9 +99,29 @@ namespace engine::server
 		LOG_INFO(Net, "[CinematicHandler] Ack account={} sequenceId={} completionState={}",
 			accountId, parsed->sequenceId, static_cast<unsigned>(parsed->completionState));
 
+		// Wave 11 : persistance "seen" via le store branche (si dispo).
+		// Le timestamp first-seen est un wall-clock ms (system_clock) :
+		// on s'aligne sur le format ms unix UTC utilise par les autres
+		// migrations (mail.sent_ts_ms, guilds.created_at_unix_ms).
+		if (m_store)
+		{
+			const uint64_t nowMs = static_cast<uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			m_store->MarkSeen(accountId, parsed->sequenceId, nowMs);
+		}
+
 		auto pkt = BuildCinematicAckResponsePacket(0u, requestId, sessionIdHeader);
 		if (!pkt.empty())
 			m_server->Send(connId, pkt);
+	}
+
+	// -------------------------------------------------------------------------
+
+	bool CinematicHandler::HasSeen(uint64_t accountId, uint32_t sequenceId) const
+	{
+		if (!m_store) return false;
+		return m_store->HasSeen(accountId, sequenceId);
 	}
 
 	void CinematicHandler::HandleSkipRequest(uint32_t connId, uint32_t requestId, uint64_t sessionIdHeader,

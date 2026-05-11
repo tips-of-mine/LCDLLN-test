@@ -145,9 +145,9 @@ Une première analyse (Explore agent, basée sur les commit messages) suggérait
 - **Quoi** : système de groupes (party 5p, raid 10/25p). Master-side car cross-shard si raid futur. Pattern `GroupReference` intrusif.
 - **Migration** : `0060_groups.sql` — `groups`, `group_members`, `group_loot_rolls`.
 - **Code** :
-  - `src/masterd/groups/GroupManager.h/cpp`
-  - `src/masterd/groups/Group.h/cpp`
-  - `src/masterd/groups/GroupReference.h`
+  - `src/masterd/Groups/GroupManager.h/cpp`
+  - `src/masterd/Groups/Group.h/cpp`
+  - `src/masterd/Groups/GroupReference.h`
   - `src/masterd/handlers/groups/GroupHandler.h/cpp` (opcodes invite/accept/leave/loot)
   - `src/shardd/loot/LootRule.h` (interface) + 4 impls (FFA, RR, ML, NBG)
 - **Wire** : opcodes nouveaux (51-54 ou suivants). Additif, pas wire-breaking.
@@ -175,9 +175,9 @@ Une première analyse (Explore agent, basée sur les commit messages) suggérait
 - **Dépendances** : ajouter `recastnavigation` à `vcpkg.json`.
 - **Migration** : `0062_creature_movement.sql` — `creature_movement(creature_guid, point_idx, x/y/z, wait_ms, script_id)`.
 - **Code** :
-  - `src/shardd/movement/NavmeshManager.h/cpp` (charge `.navmesh` tiles par map)
-  - `src/shardd/movement/PathFollowMotion.h/cpp` (Detour-driven, branche dans `MotionGeneratorStack`)
-  - `src/shardd/movement/WaypointMgr.h/cpp` (lit `creature_movement` DB)
+  - `src/shardd/Movement/NavmeshManager.h/cpp` (charge `.navmesh` tiles par map)
+  - `src/shardd/Movement/PathFollowMotion.h/cpp` (Detour-driven, branche dans `MotionGeneratorStack`)
+  - `src/shardd/Movement/WaypointMgr.h/cpp` (lit `creature_movement` DB)
 - **Assets** : `.navmesh` tiles via `tools/navmesh_builder/` (à créer — proposer création comme PR séparée si effort important).
 - **Tests** : `navmesh_pathfind_tests` (3-4 scenarios fixture), `waypoint_mgr_tests`.
 - **Wire** : pas de changement (la spline existe déjà Wave 4).

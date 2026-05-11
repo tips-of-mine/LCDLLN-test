@@ -197,6 +197,8 @@ elseif(UNIX)
     # Wave 7 Entities foundation : Object base (header-only en pratique, .cpp
     # garde un translation unit nomme pour futures methodes out-of-line).
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
+    # Wave 17 Entities suite : WorldObject (Object + position 3D + map/zone).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
@@ -374,6 +376,12 @@ elseif(UNIX)
   # vers la version "entities" sera faite par PRs futures.
   lcdlln_add_simple_test(entities_foundation_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/ObjectGuidTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : WorldObject tests (position, map, zone, IsInWorld).
+  lcdlln_add_simple_test(worldobject_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObjectTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).

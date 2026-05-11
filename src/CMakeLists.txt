@@ -476,6 +476,16 @@ elseif(UNIX)
   lcdlln_add_simple_test(pool_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/pools/PoolManagerTests.cpp)
 
+  # Wave 20 (CMANGOS.22 step 2) : Pool nested + persistence.
+  # PoolManager.h gagne le support nested + cycle detection (backward compat
+  # avec les pools simples : si Pool.nested est vide, comportement identique
+  # a la Phase 4.22a). PoolStatePersistence.h est header-only (interface +
+  # InMemoryPoolStateStore pour tests).
+  lcdlln_add_simple_test(pool_nested_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/pools/PoolNestedTests.cpp)
+  lcdlln_add_simple_test(pool_persistence_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/pools/PoolPersistenceTests.cpp)
+
   # CMANGOS.08 (Phase 5.08a) : ArenaTeam + ELO (header-only).
   lcdlln_add_simple_test(arena_team_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/arena/ArenaTeamTests.cpp)

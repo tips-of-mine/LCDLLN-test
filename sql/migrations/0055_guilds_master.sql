@@ -1,5 +1,5 @@
 -- 0055 - Wave 5 Persistence Guilds (Phase 5.21b) : tables guilds_master,
--- guild_members et guild_bank pour persister la definition des guildes
+-- guild_members_v2 et guild_bank pour persister la definition des guildes
 -- V1 (2 guildes hardcodees + leurs membres + bank tab 0). Au boot, le
 -- master prefere charger depuis la DB plutot que le seed hardcode dans
 -- GuildHandler::SeedV1Guilds. Si la table est vide ou la DB indisponible,
@@ -12,7 +12,7 @@
 --     decorelles des accounts reels).
 --   - created_at_unix_ms : timestamp creation pour l'audit.
 --
--- guild_members :
+-- guild_members_v2 :
 --   - cle composite (guild_id, account_id) : un account ne peut etre
 --     que dans une seule guilde a la fois (regle V1).
 --   - rank_id : 0=Guild Master .. 9=Initiate, defaut 5=Member.
@@ -42,14 +42,14 @@ CREATE TABLE IF NOT EXISTS guilds_master (
     KEY idx_leader (leader_account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS guild_members (
+CREATE TABLE IF NOT EXISTS guild_members_v2 (
     guild_id           INT UNSIGNED NOT NULL,
     account_id         BIGINT UNSIGNED NOT NULL,
     rank_id            TINYINT UNSIGNED NOT NULL DEFAULT 5,
     joined_at_unix_ms  BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (guild_id, account_id),
     KEY idx_account (account_id),
-    CONSTRAINT fk_guild_members_guild FOREIGN KEY (guild_id)
+    CONSTRAINT fk_guild_members_v2_guild FOREIGN KEY (guild_id)
         REFERENCES guilds_master(guild_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -79,7 +79,7 @@ INSERT IGNORE INTO guilds_master (guild_id, name, motd, leader_account_id, creat
 -- account_id mapping V1 (resolu cote handler via lookup local) :
 --   1=Aragorn (GM), 2=Legolas (Officer), 3=Gimli (Member), 4=Frodo (Initiate)
 --   5=Saruman (GM), 6=Wormtongue (Member)
-INSERT IGNORE INTO guild_members (guild_id, account_id, rank_id, joined_at_unix_ms) VALUES
+INSERT IGNORE INTO guild_members_v2 (guild_id, account_id, rank_id, joined_at_unix_ms) VALUES
     (1, 1, 0, 1767225600000),
     (1, 2, 1, 1767225600000),
     (1, 3, 5, 1767225600000),

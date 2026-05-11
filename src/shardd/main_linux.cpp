@@ -13,6 +13,9 @@
 // Wave 6 — Wiring runtime des modules internes (EventAI + PoolManager).
 #include "src/shardd/ai/EventAIRuntime.h"
 #include "src/shardd/pools/PoolManagerRuntime.h"
+// Wave 8 — Wiring runtime des modules internes (ThreatList + DBScripts).
+#include "src/shardd/combat/ThreatListRuntime.h"
+#include "src/shardd/dbscripts/DBScriptRuntime.h"
 
 #include <csignal>
 #include <chrono>
@@ -142,6 +145,24 @@ int main(int argc, char** argv)
 	pools.SeedV1Pools();
 	LOG_INFO(Pools, "[PoolManager] {} pools registered at boot", pools.PoolCount());
 
+	// Wave 8 — Instanciation + seed ThreatList + DBScripts. Meme pattern
+	// que Wave 6 : on prouve que les path tick (decay ThreatList + Step
+	// VM DBScripts) sont reellement exerces au runtime, pas seulement en
+	// unit tests. Pas de loader DB pour cette PR ; future iteration
+	// branche les vraies sources de donnees + dispatch reel des fired
+	// commands DBScripts.
+	engine::server::combat::ThreatListRuntime threats;
+	threats.SeedV1Aggro();
+	LOG_INFO(Combat,
+		"[ThreatList] {} creature(s) seeded with {} aggro entries at boot",
+		threats.CreatureCount(), threats.TotalEntries());
+
+	engine::server::dbscripts::DBScriptRuntime dbScripts;
+	dbScripts.SeedV1Scripts();
+	LOG_INFO(DBScripts,
+		"[DBScripts] {} scripts loaded at boot",
+		dbScripts.ScriptCount());
+
 	// Tick periodique EventAI : intervalle 1s. La boucle principale tourne
 	// a 100ms (sleep_for(100ms) ci-dessous) donc on filtre via
 	// lastEventAiTickMs. Idem pour le log periodique 60s qui dump le
@@ -152,6 +173,40 @@ int main(int argc, char** argv)
 	const auto kEventAiTickInterval = std::chrono::milliseconds(1000);
 	const auto kEventAiLogInterval  = std::chrono::seconds(60);
 	std::uint64_t firesSinceLastLog = 0;
+
+	// Wave 8 — Cadences propres aux deux nouveaux modules :
+	//   - ThreatList : decay periodique tous les 5s (combat plus lent
+	//     a tick que l'AI). Log periodique 60s dump du cumul purges.
+	//   - DBScripts  : Step VM tous les 1s. Log periodique 60s dump du
+	//     cumul commandes firees. RunScript(1) une seule fois apres le
+	//     seed pour que l'execution V1 fire reellement au runtime, ce
+	//     qui valide la chaine complete Start -> Step -> teardown.
+	auto lastThreatTickTime  = clock::now();
+	auto lastThreatLogTime   = clock::now();
+	auto lastDbScriptTickTime = clock::now();
+	auto lastDbScriptLogTime  = clock::now();
+	const auto kThreatTickInterval   = std::chrono::seconds(5);
+	const auto kThreatLogInterval    = std::chrono::seconds(60);
+	const auto kDbScriptTickInterval = std::chrono::seconds(1);
+	const auto kDbScriptLogInterval  = std::chrono::seconds(60);
+	std::uint64_t decaysSinceLastLog       = 0;
+	std::uint64_t dbScriptFiresSinceLastLog = 0;
+
+	// Demarre une execution V1 de scriptId=1 ("greet") pour que la
+	// boucle Step en ait au moins une a faire avancer. En prod ce
+	// RunScript sera declenche par un evenement gameplay (interaction
+	// NPC, etc.) plutot que cable inconditionnellement au boot.
+	{
+		const std::uint64_t bootNowMs = static_cast<std::uint64_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count());
+		if (dbScripts.RunScript(1, bootNowMs))
+		{
+			LOG_INFO(DBScripts,
+				"[DBScripts] V1 script 1 ('greet') started at boot ({} active)",
+				dbScripts.ActiveCount());
+		}
+	}
 
 	LOG_INFO(Net, "[ShardMain] Shard server running (Ctrl+C to stop); master {}:{} register endpoint='{}'",
 		masterHost, masterPort, regEndpoint);
@@ -184,6 +239,47 @@ int main(int argc, char** argv)
 				firesSinceLastLog, eventAi.TotalFires());
 			firesSinceLastLog = 0;
 			lastEventAiLogTime = nowSteady;
+		}
+
+		// Wave 8 — Tick ThreatList (5s). Wall-clock pas indispensable V1
+		// (decay par tick), mais on passe nowMs pour parite API et pour
+		// futurs scenarios de decay base sur l'inactivite.
+		if (nowSteady - lastThreatTickTime >= kThreatTickInterval)
+		{
+			const std::uint64_t realNowMs = static_cast<std::uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			decaysSinceLastLog += threats.Tick(realNowMs);
+			lastThreatTickTime = nowSteady;
+		}
+		if (nowSteady - lastThreatLogTime >= kThreatLogInterval)
+		{
+			LOG_INFO(Combat,
+				"[ThreatList] tick : {} entries decayed (last 60s), total since boot {}, currently {} entries across {} creatures",
+				decaysSinceLastLog, threats.TotalDecayed(),
+				threats.TotalEntries(), threats.CreatureCount());
+			decaysSinceLastLog = 0;
+			lastThreatLogTime = nowSteady;
+		}
+
+		// Wave 8 — Tick DBScripts (1s). nowMs en wall-clock car la VM
+		// compare nextRunTickMs (initialise depuis Start) a nowMs.
+		if (nowSteady - lastDbScriptTickTime >= kDbScriptTickInterval)
+		{
+			const std::uint64_t realNowMs = static_cast<std::uint64_t>(
+				std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::system_clock::now().time_since_epoch()).count());
+			dbScriptFiresSinceLastLog += dbScripts.Tick(realNowMs);
+			lastDbScriptTickTime = nowSteady;
+		}
+		if (nowSteady - lastDbScriptLogTime >= kDbScriptLogInterval)
+		{
+			LOG_INFO(DBScripts,
+				"[DBScripts] tick : {} commands fired (last 60s), total since boot {}, {} active",
+				dbScriptFiresSinceLastLog, dbScripts.TotalFires(),
+				dbScripts.ActiveCount());
+			dbScriptFiresSinceLastLog = 0;
+			lastDbScriptLogTime = nowSteady;
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));

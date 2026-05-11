@@ -49,8 +49,15 @@ namespace engine::server::db
 
 	bool ConnectionPool::ConnectOne(MYSQL* mysql) const
 	{
+		// CLIENT_FOUND_ROWS : mysql_affected_rows() retourne le nombre de rangs MATCHES
+		// (et non changes) sur les UPDATE. Sans ce flag, un UPDATE avec valeurs
+		// identiques (ex: joueur immobile -> spawn_x/y/z inchanges) renvoie 0 et
+		// les handlers logguent un faux warning "no row updated". Avec ce flag,
+		// la semantique "0 -> row absente" devient fiable. Aucun callsite n'a
+		// besoin de la semantique "changed only" : tous attendent matched.
 		return mysql_real_connect(mysql, m_host.c_str(), m_user.c_str(),
-			m_password.empty() ? nullptr : m_password.c_str(), m_database.c_str(), m_port, nullptr, 0) != nullptr;
+			m_password.empty() ? nullptr : m_password.c_str(), m_database.c_str(),
+			m_port, nullptr, CLIENT_FOUND_ROWS) != nullptr;
 	}
 
 	bool ConnectionPool::Init(const engine::core::Config& config)

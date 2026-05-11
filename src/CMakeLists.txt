@@ -468,6 +468,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(instance_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/maps/InstanceManagerTests.cpp)
 
+  # Wave 21 (CMANGOS.19 step 2) : Map hierarchie -- base abstraite +
+  # WorldMap / DungeonMap / BattlegroundMap. Header-only, pas de .cpp.
+  lcdlln_add_simple_test(maps_subclasses_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/maps/MapsSubclassesTests.cpp)
+
   # CMANGOS.36 (Phase 5.36a) : OutdoorPvPManager (header-only, zones contestees).
   lcdlln_add_simple_test(outdoor_pvp_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/outdoorpvp/OutdoorPvPManagerTests.cpp)

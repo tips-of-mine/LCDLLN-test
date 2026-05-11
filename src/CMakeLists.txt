@@ -626,6 +626,7 @@ elseif(UNIX)
 
   # M22.6: Shard server (ticket handshake + enregistrement TLS/TCP vers le Master via ShardToMasterClient)
   # Wave 6: + EventAIRuntime + PoolManagerRuntime (tickes + seedes au boot).
+  # Wave 8: + ThreatListRuntime + DBScriptRuntime (idem).
   add_executable(shard_app
     ${CMAKE_SOURCE_DIR}/src/shardd/main_linux.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/NetServer.cpp
@@ -642,6 +643,9 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/ai/EventAI.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/ai/EventAIRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/pools/PoolManagerRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/combat/ThreatListRuntime.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/dbscripts/DBScript.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/dbscripts/DBScriptRuntime.cpp
   )
   target_include_directories(shard_app PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_app PRIVATE engine_core OpenSSL::SSL pthread)

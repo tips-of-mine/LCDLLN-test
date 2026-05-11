@@ -453,6 +453,12 @@ elseif(UNIX)
   # CMANGOS.20 (Phase 3.20a) : MotionGeneratorStack (header-only).
   lcdlln_add_simple_test(motion_generator_stack_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/ai/MotionGeneratorStackTests.cpp)
+  # Wave 24 (CMANGOS.20 step 2) SCAFFOLD : INavmeshProvider interface +
+  # StubNavmeshProvider + WaypointMgr + PathFollowMotion state machine.
+  # L'integration recast/detour vraie viendra dans une PR ulterieure
+  # avec ajout vcpkg recastnavigation + RecastNavmeshProvider impl.
+  lcdlln_add_simple_test(movement_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/Movement/MovementTests.cpp)
   # CMANGOS.42 (Phase 4.42a) : WeatherManager (header-only).
   lcdlln_add_simple_test(weather_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/weather/WeatherManagerTests.cpp)

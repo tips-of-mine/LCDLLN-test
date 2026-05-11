@@ -1,0 +1,137 @@
+// Wave 17 entities tests : Unit (HP/MP/level/faction, clamp, IsAlive,
+// OnReplicationSent). Pattern aligne sur ObjectGuidTests.cpp : asserts +
+// printf, pas de framework.
+// Cible CTest : unit_tests (cf. src/CMakeLists.txt).
+
+#include "src/shardd/entities/Unit.h"
+
+#include <cassert>
+#include <cstdio>
+
+using namespace engine::server::entities;
+
+namespace
+{
+	/// Construction basique : tous stats a zero, IsAlive=false (HP=0).
+	void TestUnitConstruction()
+	{
+		ObjectGuid g(ObjectType::Creature, 1);
+		Unit u(g, kUnitFieldCount);
+		assert(u.GetHealth() == 0);
+		assert(u.GetMaxHealth() == 0);
+		assert(u.GetLevel() == 0);
+		assert(u.GetFaction() == 0);
+		assert(u.IsAlive() == false); // HP == 0 → dead
+		std::puts("[OK] TestUnitConstruction");
+	}
+
+	/// SetHealth/SetMaxHealth : marque 2 bits dirty, IsAlive devient true.
+	void TestUnitHealthSet()
+	{
+		ObjectGuid g(ObjectType::Creature, 2);
+		Unit u(g, kUnitFieldCount);
+		u.SetMaxHealth(1000);
+		u.SetHealth(500);
+		assert(u.GetHealth() == 500);
+		assert(u.GetMaxHealth() == 1000);
+		assert(u.IsAlive() == true);
+		assert(u.Mask().TestBit(kUnitFieldHealth));
+		assert(u.Mask().TestBit(kUnitFieldMaxHealth));
+		std::puts("[OK] TestUnitHealthSet");
+	}
+
+	/// SetHealth > maxHealth : clamp a max. La valeur stockee = max.
+	void TestUnitHealthClampOverflow()
+	{
+		ObjectGuid g(ObjectType::Creature, 3);
+		Unit u(g, kUnitFieldCount);
+		u.SetMaxHealth(100);
+		u.SetHealth(200); // > max → clamp a max
+		assert(u.GetHealth() == 100);
+		std::puts("[OK] TestUnitHealthClampOverflow");
+	}
+
+	/// SetMana : meme logique de clamp que SetHealth.
+	void TestUnitManaClamp()
+	{
+		ObjectGuid g(ObjectType::Creature, 4);
+		Unit u(g, kUnitFieldCount);
+		u.SetMaxMana(500);
+		u.SetMana(1000); // > max → clamp a 500
+		assert(u.GetMana() == 500);
+		std::puts("[OK] TestUnitManaClamp");
+	}
+
+	/// Set Level + Faction : champs independants, chacun son bit.
+	void TestUnitFactionLevel()
+	{
+		ObjectGuid g(ObjectType::Creature, 5);
+		Unit u(g, kUnitFieldCount);
+		u.SetLevel(60);
+		u.SetFaction(35); // exemple : faction alliance
+		assert(u.GetLevel() == 60);
+		assert(u.GetFaction() == 35);
+		assert(u.Mask().TestBit(kUnitFieldLevel));
+		assert(u.Mask().TestBit(kUnitFieldFaction));
+		std::puts("[OK] TestUnitFactionLevel");
+	}
+
+	/// OnReplicationSent : Mask().Clear(), IsDirty() devient false. La
+	/// valeur des champs reste intacte (seul le mask est reset).
+	void TestUnitOnReplicationSentClearsMask()
+	{
+		ObjectGuid g(ObjectType::Creature, 6);
+		Unit u(g, kUnitFieldCount);
+		u.SetMaxHealth(100);
+		u.SetHealth(75);
+		assert(u.IsDirty());
+		u.OnReplicationSent();
+		assert(!u.IsDirty());
+		// Les valeurs sont preservees.
+		assert(u.GetHealth() == 75);
+		assert(u.GetMaxHealth() == 100);
+		std::puts("[OK] TestUnitOnReplicationSentClearsMask");
+	}
+
+	/// IsAlive : false si HP = 0, true sinon. Toggle par SetHealth.
+	void TestUnitIsAliveToggle()
+	{
+		ObjectGuid g(ObjectType::Creature, 7);
+		Unit u(g, kUnitFieldCount);
+		u.SetMaxHealth(100);
+		u.SetHealth(100);
+		assert(u.IsAlive());
+		u.SetHealth(0);
+		assert(!u.IsAlive());
+		u.SetHealth(1);
+		assert(u.IsAlive());
+		std::puts("[OK] TestUnitIsAliveToggle");
+	}
+
+	/// Unit herite de WorldObject : la position fonctionne.
+	void TestUnitHeriteWorldObject()
+	{
+		ObjectGuid g(ObjectType::Creature, 8);
+		Unit u(g, kUnitFieldCount);
+		u.SetPosition(10.0f, 20.0f, 30.0f, 0.5f);
+		assert(u.GetPosX() == 10.0f);
+		assert(u.GetMapId() == 0); // pas encore set
+		u.SetMapId(1);
+		assert(u.GetMapId() == 1);
+		std::puts("[OK] TestUnitHeriteWorldObject");
+	}
+}
+
+int main()
+{
+	TestUnitConstruction();
+	TestUnitHealthSet();
+	TestUnitHealthClampOverflow();
+	TestUnitManaClamp();
+	TestUnitFactionLevel();
+	TestUnitOnReplicationSentClearsMask();
+	TestUnitIsAliveToggle();
+	TestUnitHeriteWorldObject();
+	std::puts("All Unit tests passed");
+	return 0;
+}

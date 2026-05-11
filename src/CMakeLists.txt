@@ -197,6 +197,14 @@ elseif(UNIX)
     # Wave 7 Entities foundation : Object base (header-only en pratique, .cpp
     # garde un translation unit nomme pour futures methodes out-of-line).
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp
+    # Wave 17 Entities suite : WorldObject (Object + position 3D + map/zone).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    # Wave 17 Entities suite : Unit (WorldObject + HP/MP/level/faction).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    # Wave 17 Entities suite : Player (Unit + accountId/characterId/name/xp).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
+    # Wave 17 Entities suite : Creature (Unit + templateEntry/spawnId).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
@@ -374,6 +382,46 @@ elseif(UNIX)
   # vers la version "entities" sera faite par PRs futures.
   lcdlln_add_simple_test(entities_foundation_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/ObjectGuidTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : WorldObject tests (position, map, zone, IsInWorld).
+  lcdlln_add_simple_test(worldobject_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObjectTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : Unit tests (HP/MP/level/faction, clamp, IsAlive).
+  lcdlln_add_simple_test(unit_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/UnitTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : Player tests (accountId/characterId/name/xp + heritage Unit).
+  lcdlln_add_simple_test(player_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/PlayerTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : Creature tests (templateEntry/spawnId + heritage Unit).
+  lcdlln_add_simple_test(creature_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/CreatureTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : UpdateMask delta tests cross-classe.
+  # Verifie que les modifications sur Unit/Player/Creature ne marquent que
+  # les champs effectivement changes (critique pour delta replication).
+  lcdlln_add_simple_test(update_mask_delta_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/UpdateMaskDeltaTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
 
   # CMANGOS.18 (Phase 3.18a) : MailManager core (workflow Send/Take/COD/expire).

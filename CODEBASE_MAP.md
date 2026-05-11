@@ -199,16 +199,16 @@ RenderModel
 | `src/masterd/shards/ShardRegistry.h/.cpp` | Registre des shards connectés au master. |
 | `src/shared/db/ConnectionPool.h/.cpp` | Pool de connexions MySQL. |
 
-### Utilitaires partagés (`engine/core/util/`)
+### Utilitaires partagés (`src/shared/core/util/`)
 
 Briques réutilisées par master, shard et client. Pas de dépendance à la
 couche réseau ni à la couche DB — pure C++ standard.
 
 | Fichier | Rôle |
 |---|---|
-| `engine/core/util/ByteBuffer.h/.cpp` | Sérialisation binaire little-endian, curseurs read/write séparés, bit-packing, flag d'erreur sur overflow read. Utilisé pour les payloads ad hoc et le rejouage de paquets. |
-| `engine/core/util/ProducerConsumerQueue.h` | File MPMC thread-safe (mutex + condvar) avec `WaitAndPop` timeout-able et `Cancel()` pour shutdown propre. Base pour les workers async (SqlDelayThread, log async, message bus). |
-| `engine/core/util/UniqueTrackablePtr.h` | Smart pointer propriétaire (move-only) qui expose des `TrackerRef<T>` faibles. À la destruction de l'owner, `TrackerRef::Get()` retourne `nullptr` immédiatement — alternative légère à `weak_ptr` quand on n'a pas besoin de prolonger la vie de la cible (cas type : un Spell qui vise un Unit). |
+| `src/shared/core/util/ByteBuffer.h/.cpp` | Sérialisation binaire little-endian, curseurs read/write séparés, bit-packing, flag d'erreur sur overflow read. Utilisé pour les payloads ad hoc et le rejouage de paquets. |
+| `src/shared/core/util/ProducerConsumerQueue.h` | File MPMC thread-safe (mutex + condvar) avec `WaitAndPop` timeout-able et `Cancel()` pour shutdown propre. Base pour les workers async (SqlDelayThread, log async, message bus). |
+| `src/shared/core/util/UniqueTrackablePtr.h` | Smart pointer propriétaire (move-only) qui expose des `TrackerRef<T>` faibles. À la destruction de l'owner, `TrackerRef::Get()` retourne `nullptr` immédiatement — alternative légère à `weak_ptr` quand on n'a pas besoin de prolonger la vie de la cible (cas type : un Spell qui vise un Unit). |
 
 Tests unitaires : `byte_buffer_tests`, `producer_consumer_queue_tests`,
 `unique_trackable_ptr_tests` (chacun = un `main()` autonome).

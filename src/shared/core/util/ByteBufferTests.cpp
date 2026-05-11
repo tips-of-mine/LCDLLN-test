@@ -3,7 +3,7 @@
  * No external test framework; returns 0 if all pass, non-zero on first failure.
  */
 
-#include "engine/core/util/ByteBuffer.h"
+#include "src/shared/core/util/ByteBuffer.h"
 
 #include <cstdint>
 #include <cstring>

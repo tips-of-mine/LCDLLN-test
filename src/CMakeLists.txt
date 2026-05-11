@@ -552,6 +552,14 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/loot/LootTableTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/loot/LootTable.cpp)
 
+  # Wave 22 (CMANGOS.15 + CMANGOS.17 step 2) : Groups master-side +
+  # LootRule 4 impls (FFA, RoundRobin, MasterLooter, NeedBeforeGreed).
+  # Header-only (Group + GroupManager + ILootRule + concrete impls).
+  lcdlln_add_simple_test(group_manager_tests
+    ${CMAKE_SOURCE_DIR}/src/masterd/Groups/GroupManagerTests.cpp)
+  lcdlln_add_simple_test(loot_rule_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/loot/LootRuleTests.cpp)
+
   # CMANGOS.11 (Phase 3.11a) : ThreatList AI target selector (header-only).
   lcdlln_add_simple_test(threat_list_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/combat/ThreatListTests.cpp)

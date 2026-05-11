@@ -203,6 +203,8 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
     # Wave 17 Entities suite : Player (Unit + accountId/characterId/name/xp).
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
+    # Wave 17 Entities suite : Creature (Unit + templateEntry/spawnId).
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
   )
   target_include_directories(server_app PRIVATE ${MYSQL_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
   # M32.1: MySQL available on UNIX — FriendSystem compiles with full DB support.
@@ -399,6 +401,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(player_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/PlayerTests.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Player.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)
+
+  # Wave 17 Entities suite : Creature tests (templateEntry/spawnId + heritage Unit).
+  lcdlln_add_simple_test(creature_tests
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/CreatureTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shardd/entities/Creature.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Unit.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/WorldObject.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/entities/Object.cpp)

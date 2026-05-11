@@ -82,11 +82,11 @@ namespace engine::server::guilds_db
 		{
 			const char* sql =
 				"SELECT guild_id, account_id, rank_id, joined_at_unix_ms "
-				"FROM guild_members ORDER BY guild_id ASC, rank_id ASC, account_id ASC";
+				"FROM guild_members_v2 ORDER BY guild_id ASC, rank_id ASC, account_id ASC";
 			MYSQL_RES* res = engine::server::db::DbQuery(mysql, sql);
 			if (!res)
 			{
-				LOG_WARN(Net, "[MysqlGuildStore] LoadAll guild_members query failed");
+				LOG_WARN(Net, "[MysqlGuildStore] LoadAll guild_members_v2 query failed");
 				// On retourne quand meme les guildes meme sans membres.
 				return out;
 			}
@@ -174,7 +174,7 @@ namespace engine::server::guilds_db
 
 		char sql[256];
 		std::snprintf(sql, sizeof(sql),
-			"INSERT INTO guild_members (guild_id, account_id, rank_id, joined_at_unix_ms) "
+			"INSERT INTO guild_members_v2 (guild_id, account_id, rank_id, joined_at_unix_ms) "
 			"VALUES (%u, %llu, %u, %llu)",
 			guildId,
 			static_cast<unsigned long long>(accountId),

@@ -82,6 +82,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ErrorPacket.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/AuthRegisterPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/CharacterPayloads.cpp
@@ -604,6 +605,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
   )
   target_include_directories(shard_ticket_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(shard_ticket_tests PRIVATE engine_core OpenSSL::SSL)
@@ -618,11 +620,27 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
   )
   target_include_directories(server_list_policy_tests PRIVATE ${CMAKE_SOURCE_DIR})
   target_link_libraries(server_list_policy_tests PRIVATE engine_core)
   target_compile_options(server_list_policy_tests PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME server_list_policy_tests COMMAND server_list_policy_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+  # Wave 12: PacketLog ring buffer (debug RX/TX trace, opt-in) — pure unit tests.
+  # Aucun lien sur engine_core ni OpenSSL : PacketLog est autonome (std + threads).
+  # NB : ce module vit dans engine::server::netdebug (src/shared/network/),
+  # distinct de l'ancien engine::server::packetlog (src/shared/packetlog/,
+  # header-only, test cible `packet_log_tests`). Cible CTest dediee :
+  # `packet_log_netdebug_tests`.
+  add_executable(packet_log_netdebug_tests
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLogTests.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
+  )
+  target_include_directories(packet_log_netdebug_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(packet_log_netdebug_tests PRIVATE pthread)
+  target_compile_options(packet_log_netdebug_tests PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME packet_log_netdebug_tests COMMAND packet_log_netdebug_tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
   # M22.6: Shard server (ticket handshake + enregistrement TLS/TCP vers le Master via ShardToMasterClient)
   # Wave 6: + EventAIRuntime + PoolManagerRuntime (tickes + seedes au boot).
@@ -641,6 +659,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteReader.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/ByteWriter.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/PacketBuilder.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/PacketLog.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/ai/EventAI.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/ai/EventAIRuntime.cpp
     ${CMAKE_SOURCE_DIR}/src/shardd/pools/PoolManagerRuntime.cpp

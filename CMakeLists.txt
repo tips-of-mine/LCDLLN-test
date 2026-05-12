@@ -1185,6 +1185,17 @@ if(WIN32)
   add_test(NAME hazard_volumes_tests COMMAND hazard_volumes_tests)
 endif()
 
+# M100.16 — Tests state machine HazardSimulator.
+if(WIN32)
+  add_executable(hazard_simulator_tests src/client/world/hazard/tests/HazardSimulatorTests.cpp)
+  target_include_directories(hazard_simulator_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(hazard_simulator_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(hazard_simulator_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME hazard_simulator_tests COMMAND hazard_simulator_tests)
+endif()
+
 # M100.14 — Tests WaterMeshGpu CPU BuildDrawInfos.
 if(WIN32)
   add_executable(water_mesh_gpu_tests src/client/render/tests/WaterMeshGpuTests.cpp)

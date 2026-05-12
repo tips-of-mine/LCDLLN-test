@@ -23,7 +23,7 @@ namespace engine::world::hazard
 	}
 
 	HazardEffect HazardSimulator::Update(float dt, engine::math::Vec3 playerPos,
-		bool /*actionPressed*/) noexcept
+		bool actionPressed) noexcept
 	{
 		if (!m_scene) return HazardEffect{};
 
@@ -73,7 +73,67 @@ namespace engine::world::hazard
 		// Sinking progressif (Quicksand/Bog/Tar).
 		m_state.currentDepth += hz.sinkRateMps * dt;
 
-		// (Escape modes implémentés en Task 4.)
+		// Escape modes : tente l'évasion AVANT le check de mort.
+		bool escaped = false;
+		switch (hz.escapeMode)
+		{
+			case EscapeMode::MashButton:
+			case EscapeMode::MashButtonItem:
+			{
+				// Fenêtre glissante de kMashWindowSec.
+				m_state.mashWindowSec += dt;
+				if (m_state.mashWindowSec > kMashWindowSec)
+				{
+					m_state.mashWindowSec = 0.0f;
+					m_state.mashCount = 0;
+				}
+				if (actionPressed) ++m_state.mashCount;
+
+				if (m_state.mashCount >= kMashThreshold)
+				{
+					if (hz.escapeMode == EscapeMode::MashButtonItem)
+					{
+						// L'item est requis pour libérer.
+						if (m_cb.hasItem && m_cb.hasItem(hz.requiredItemId))
+						{
+							escaped = true;
+						}
+					}
+					else
+					{
+						escaped = true;
+					}
+				}
+				break;
+			}
+			case EscapeMode::LateralMove:
+			{
+				if (m_hasLastPos)
+				{
+					const float dxz = std::sqrt(
+						  (playerPos.x - m_lastPlayerPos.x) * (playerPos.x - m_lastPlayerPos.x)
+						+ (playerPos.z - m_lastPlayerPos.z) * (playerPos.z - m_lastPlayerPos.z));
+					m_state.lateralTraveled += dxz;
+				}
+				if (m_state.lateralTraveled >= kLateralThresholdMeters)
+				{
+					escaped = true;
+				}
+				break;
+			}
+			case EscapeMode::None:
+			default:
+				break;
+		}
+
+		if (escaped)
+		{
+			if (m_cb.onExit) m_cb.onExit();
+			m_state = HazardState{};
+			m_lastPlayerPos = playerPos;
+			m_hasLastPos = true;
+			return HazardEffect{};
+		}
 
 		// Mort si profondeur max atteinte sans escape.
 		if (m_state.currentDepth >= hz.maxDepthMeters)

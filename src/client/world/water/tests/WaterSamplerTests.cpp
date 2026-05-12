@@ -100,29 +100,34 @@ namespace
 
 	void Test_MultiOverlap_ReturnsDeepest()
 	{
-		// Lac à Y=10 (depth=5 si pieds à 5) ET rivière à Y=7 (depth=2 si pieds à 5)
-		// au même point monde. Doit retourner le hit le plus profond (lac).
+		// Test DISCRIMINANT : lac PEU profond traité en premier par Sample(),
+		// rivière PLUS PROFONDE traitée en second. Avec l'ancienne sémantique
+		// « premier hit » → lac (depth=2). Avec « deepest wins » → rivière
+		// (depth=5). Si on échange les profondeurs avec lac comme plus profond,
+		// le test passerait par hasard sous l'ancienne sémantique.
 		WaterScene s;
 		LakeInstance lake;
-		lake.polygon = { {0, 10, 0}, {10, 10, 0}, {10, 10, 10}, {0, 10, 10} };
-		lake.waterLevelY = 10.0f;
+		lake.name = "shallow_lake";
+		lake.polygon = { {0, 7, 0}, {10, 7, 0}, {10, 7, 10}, {0, 7, 10} };
+		lake.waterLevelY = 7.0f;  // surface à Y=7, peu profond
 		s.lakes.push_back(lake);
 
 		RiverInstance r;
+		r.name = "deep_river";
 		r.nodes = {
-			RiverNode{ Vec3{  0, 7, 5 }, 6.0f, 1.0f },
-			RiverNode{ Vec3{ 20, 7, 5 }, 6.0f, 1.0f },
+			RiverNode{ Vec3{  0, 10, 5 }, 6.0f, 1.0f },
+			RiverNode{ Vec3{ 20, 10, 5 }, 6.0f, 1.0f },
 		};
 		s.rivers.push_back(r);
 
 		WaterSampler sampler;
 		REQUIRE(sampler.Init(s));
 
-		// Pieds à (5, 5, 5). Lac : depth=5. Rivière : depth=2.
+		// Pieds à (5, 5, 5). Lac : depth=2 (premier hit). Rivière : depth=5 (deepest).
 		auto hit = sampler.Sample(Vec3{ 5.0f, 5.0f, 5.0f });
 		REQUIRE(hit.has_value());
-		REQUIRE(std::fabs(hit->surfaceY - 10.0f) < 1e-5f);  // surface lac
-		REQUIRE(std::fabs(hit->depthMeters - 5.0f) < 1e-5f); // profondeur lac
+		REQUIRE(std::fabs(hit->surfaceY - 10.0f) < 1e-5f);  // surface rivière (deepest)
+		REQUIRE(std::fabs(hit->depthMeters - 5.0f) < 1e-5f); // profondeur rivière
 	}
 
 	void Test_FeetAboveSurface_ReturnsNullopt()

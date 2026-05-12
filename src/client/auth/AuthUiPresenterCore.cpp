@@ -1655,6 +1655,29 @@ namespace engine::client
 			m_authAvailabilityChecking = false;
 			m_authAvailabilityPollTimer = 0.f;
 			m_authLogoRotationRad = 0.f;
+
+			// Workaround : si on est sur ShardPick, on surcharge le current_load des entries
+			// avec les valeurs de l'API HTTP /status. Le wire SERVER_LIST_RESPONSE retourne 0
+			// quand le master ne tourne pas avec #583 deploye, alors que /status a sa propre
+			// logique single-shard => sessionCharMap.Count() depuis bien plus longtemps. On
+			// matche par index (ordre stable garanti par le master : meme requete pour les
+			// deux endpoints). Cas single-shard suffit pour l'usage actuel.
+			if (m_phase == Phase::ShardPick && copy.success && !m_shardPickEntries.empty() && !copy.statusCache.servers.empty())
+			{
+				const size_t n = std::min(m_shardPickEntries.size(), copy.statusCache.servers.size());
+				for (size_t i = 0; i < n; ++i)
+				{
+					const uint32_t newLoad = copy.statusCache.servers[i].players;
+					if (m_shardPickEntries[i].current_load != newLoad)
+					{
+						LOG_INFO(Core,
+							"[ShardPick] override current_load from /status JSON: entry[{}] shard_id={} {} -> {}",
+							i, m_shardPickEntries[i].shard_id, m_shardPickEntries[i].current_load, newLoad);
+						m_shardPickEntries[i].current_load = newLoad;
+					}
+				}
+			}
+
 			LOG_INFO(Core,
 				"[StatusProbe] thread principal: résultat consommé — httpLayerOk={} authOk={} masterOk={} shards={} totalJoueurs={} "
 				"infoMessage='{}' workerMsg='{}' → UI: maintenance seulement si httpLayerOk et JSON indique indisponibilité",
@@ -2780,7 +2803,10 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			return;
 
 		LOG_DEBUG(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
-		constexpr float kStatusProbeIntervalSeconds = 120.0f;
+		// Sur ShardPick, on accelere le polling /status a 3s pour servir de source de
+		// verite cote client (wire SERVER_LIST_RESPONSE peut etre faux si le master n'a
+		// pas le fix #583 deploye). Ailleurs, on garde 120s pour ne pas saturer le master.
+		const float kStatusProbeIntervalSeconds = (m_phase == Phase::ShardPick) ? 3.0f : 120.0f;
 		const bool shouldProbeStatus = !m_masterAvailabilityUrl.empty() && !m_flowComplete && m_phase != Phase::Submitting;
 		const bool statusProbeInFlight = m_worker.joinable() && m_pendingAsyncKind == AsyncKind::StatusProbe;
 		m_authAvailabilityChecking = statusProbeInFlight;
@@ -2816,27 +2842,15 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_statusPollTimer = 0.f;
 		}
 
-		// Auto-refresh nb joueurs sur l'ecran ShardPick : on accumule deltaSeconds tant que
-		// l'utilisateur reste sur la phase, et on relance SERVER_LIST_REQUEST des que le
-		// seuil est atteint (defaut 3000 ms ; plancher 500 ms pour eviter de saturer le master
-		// si une mauvaise valeur de config est saisie). Le check !m_worker.joinable() evite de
-		// marcher sur un worker en vol (Login, StatusProbe, etc.) ; le timer est seulement
-		// remis a zero quand on lance effectivement le refresh, pas a chaque frame.
-		if (m_phase == Phase::ShardPick && m_masterClient && m_masterSessionId != 0u)
-		{
-			const int64_t refreshIntervalMs = std::max<int64_t>(500, cfg.GetInt("client.auth_ui.shard_pick_refresh_ms", 3000));
-			const float refreshIntervalSec = static_cast<float>(refreshIntervalMs) / 1000.f;
-			m_shardPickRefreshTimer += deltaSeconds;
-			if (m_shardPickRefreshTimer >= refreshIntervalSec && !m_worker.joinable())
-			{
-				m_shardPickRefreshTimer = 0.f;
-				StartRefreshShardListWorker(cfg);
-			}
-		}
-		else
-		{
-			m_shardPickRefreshTimer = 0.f;
-		}
+		// Auto-refresh nb joueurs sur l'ecran ShardPick : la source de verite est l'API
+		// HTTP /status sondee par StatusProbe (intervalle accelere a 3s sur cette phase,
+		// cf. kStatusProbeIntervalSeconds ci-dessus). PollAsyncResult applique le
+		// resultat sur m_shardPickEntries quand on est sur Phase::ShardPick.
+		// Le wire SERVER_LIST_REQUEST renvoie current_load (issu du heartbeat shard) qui
+		// reste a 0 quand le master ne tourne pas avec #583 deploye ; /status JSON a sa
+		// propre logique single-shard => sessionCharMap.Count() depuis bien plus longtemps,
+		// donc on s'en sert comme source primaire pour le UI display de cette phase.
+		m_shardPickRefreshTimer = 0.f;
 
 		if (m_phase == Phase::Submitting)
 		{

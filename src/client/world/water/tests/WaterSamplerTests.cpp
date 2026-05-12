@@ -97,6 +97,44 @@ namespace
 		auto hit = sampler.Sample(Vec3{ 10.0f, 3.0f, 3.0f });
 		REQUIRE(!hit.has_value());
 	}
+
+	void Test_MultiOverlap_ReturnsDeepest()
+	{
+		// Lac à Y=10 (depth=5 si pieds à 5) ET rivière à Y=7 (depth=2 si pieds à 5)
+		// au même point monde. Doit retourner le hit le plus profond (lac).
+		WaterScene s;
+		LakeInstance lake;
+		lake.polygon = { {0, 10, 0}, {10, 10, 0}, {10, 10, 10}, {0, 10, 10} };
+		lake.waterLevelY = 10.0f;
+		s.lakes.push_back(lake);
+
+		RiverInstance r;
+		r.nodes = {
+			RiverNode{ Vec3{  0, 7, 5 }, 6.0f, 1.0f },
+			RiverNode{ Vec3{ 20, 7, 5 }, 6.0f, 1.0f },
+		};
+		s.rivers.push_back(r);
+
+		WaterSampler sampler;
+		REQUIRE(sampler.Init(s));
+
+		// Pieds à (5, 5, 5). Lac : depth=5. Rivière : depth=2.
+		auto hit = sampler.Sample(Vec3{ 5.0f, 5.0f, 5.0f });
+		REQUIRE(hit.has_value());
+		REQUIRE(std::fabs(hit->surfaceY - 10.0f) < 1e-5f);  // surface lac
+		REQUIRE(std::fabs(hit->depthMeters - 5.0f) < 1e-5f); // profondeur lac
+	}
+
+	void Test_FeetAboveSurface_ReturnsNullopt()
+	{
+		WaterScene scene = MakeSquareLake();  // surface Y=10
+		WaterSampler sampler;
+		REQUIRE(sampler.Init(scene));
+
+		// Pieds à Y=12, au-dessus de la surface (saut/vol au-dessus du lac).
+		auto hit = sampler.Sample(Vec3{ 5.0f, 12.0f, 5.0f });
+		REQUIRE(!hit.has_value());
+	}
 }
 
 int main()
@@ -105,6 +143,8 @@ int main()
 	Test_Lake_PointOutside_ReturnsNullopt();
 	Test_River_ProjectionOnSegment();
 	Test_River_PointBeyondWidth_Misses();
-	if (g_failed == 0) std::printf("[OK] 4 tests passed\n");
+	Test_MultiOverlap_ReturnsDeepest();
+	Test_FeetAboveSurface_ReturnsNullopt();
+	if (g_failed == 0) std::printf("[OK] 6 tests passed\n");
 	return g_failed == 0 ? 0 : 1;
 }

@@ -66,17 +66,24 @@ namespace engine::world::water
 	{
 		if (!m_scene) return std::nullopt;
 
+		std::optional<WaterSample> best;
+
+		auto consider = [&](float surfaceY) {
+			const float depth = surfaceY - worldPos.y;
+			if (depth <= 0.0f) return;
+			if (!best || depth > best->depthMeters) {
+				best = WaterSample{ surfaceY, depth };
+			}
+		};
+
 		for (const auto& lake : m_scene->lakes)
 		{
 			if (PointInPolygonXZ(worldPos.x, worldPos.z, lake.polygon))
 			{
-				const float depth = lake.waterLevelY - worldPos.y;
-				if (depth > 0.0f)
-				{
-					return WaterSample{ lake.waterLevelY, depth };
-				}
+				consider(lake.waterLevelY);
 			}
 		}
+
 		for (const auto& river : m_scene->rivers)
 		{
 			for (size_t i = 0; i + 1 < river.nodes.size(); ++i)
@@ -88,14 +95,11 @@ namespace engine::world::water
 				if (proj.distXZ <= widthLocal * 0.5f)
 				{
 					const float surfaceY = na.position.y * (1.0f - proj.t) + nb.position.y * proj.t;
-					const float depth = surfaceY - worldPos.y;
-					if (depth > 0.0f)
-					{
-						return WaterSample{ surfaceY, depth };
-					}
+					consider(surfaceY);
 				}
 			}
 		}
-		return std::nullopt;
+
+		return best;
 	}
 }

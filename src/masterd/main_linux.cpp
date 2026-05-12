@@ -959,6 +959,7 @@ int main(int argc, char** argv)
 	// que /status JSON montre players=1. Meme logique que statusProvider plus bas.
 	serverListHandler.SetMasterSessionCountHook(
 		[&sessionCharMap]() { return static_cast<uint32_t>(sessionCharMap.Count()); });
+	LOG_INFO(Server, "[MAIN_SRV] ServerListHandler MasterSessionCountHook installe (single-shard => sessionCharMap.Count() sur le wire)");
 
 	engine::server::ServerRegistry serverRegistry;
 	// Le master ne s'auto-enregistre dans game_servers que si server.self_register=true.

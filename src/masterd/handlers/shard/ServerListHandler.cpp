@@ -48,6 +48,13 @@ namespace engine::server
 			}
 			const bool singleShardOnline = (shardsOnline == 1u);
 			const uint32_t masterSessions = m_masterSessionCountHook ? m_masterSessionCountHook() : 0u;
+			// Diagnostic explicite : permet de tracer en prod si la divergence
+			// wire / HTTP /status vient du hook null, d'un sessionCharMap vide,
+			// ou d'un branche `singleShardOnline=false` (multi-shard ou shard offline).
+			LOG_INFO(Core,
+				"[ServerListHandler] computing entries: list.size={} shardsOnline={} singleShardOnline={} hook_set={} masterSessions={}",
+				list.size(), shardsOnline, singleShardOnline,
+				m_masterSessionCountHook ? "yes" : "NO", masterSessions);
 			entries.reserve(list.size());
 			for (const auto& s : list)
 			{
@@ -62,6 +69,10 @@ namespace engine::server
 				e.max_capacity = s.max_capacity;
 				e.character_count = m_characterCountHook ? m_characterCountHook(s.shard_id) : 0u;
 				e.endpoint = s.endpoint;
+				LOG_INFO(Core,
+					"[ServerListHandler]   shard_id={} state={} isOnline={} s.current_load={} -> e.current_load={} endpoint='{}'",
+					s.shard_id, static_cast<uint32_t>(s.state), isOnline, s.current_load,
+					e.current_load, s.endpoint);
 				entries.push_back(e);
 			}
 		}

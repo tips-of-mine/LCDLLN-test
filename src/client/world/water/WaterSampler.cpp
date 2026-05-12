@@ -18,7 +18,7 @@ namespace engine::world::water
 				const float xi = poly[i].x, zi = poly[i].z;
 				const float xj = poly[j].x, zj = poly[j].z;
 				const bool intersect = ((zi > pz) != (zj > pz)) &&
-					(px < (xj - xi) * (pz - zi) / (zj - zi + 1e-30f) + xi);
+					(px < (xj - xi) * (pz - zi) / (zj - zi) + xi);
 				if (intersect) inside = !inside;
 			}
 			return inside;

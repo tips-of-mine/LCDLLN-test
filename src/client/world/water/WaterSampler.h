@@ -18,7 +18,8 @@ namespace engine::world::water
 	/// - Rivière : projection orthogonale de `worldPos.xz` sur chaque segment,
 	///   hit si distance latérale <= widthLocal/2 (interpolation linéaire de la
 	///   largeur entre les deux nodes).
-	/// - Multi-overlap : retourne le hit le plus profond (plus grand `depthMeters`).
+	/// - Multi-overlap : retourne le premier hit (la sélection deepest-wins
+	///   sera ajoutée en Task 4 de M100.15).
 	/// - Filtre `depth > 0` : pas de hit si pieds au-dessus de la surface.
 	class WaterSampler
 	{

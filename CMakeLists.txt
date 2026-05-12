@@ -1163,6 +1163,17 @@ if(WIN32)
   add_test(NAME water_surfaces_tests COMMAND water_surfaces_tests)
 endif()
 
+# M100.13 — Tests WaterMeshBuilder ear clipping + ribbon polyline.
+if(WIN32)
+  add_executable(water_mesh_builder_tests src/client/world/water/tests/WaterMeshBuilderTests.cpp)
+  target_include_directories(water_mesh_builder_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_mesh_builder_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_mesh_builder_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_mesh_builder_tests COMMAND water_mesh_builder_tests)
+endif()
+
 # M100.15 — Tests WaterSampler (PIP lac + projection rivière).
 if(WIN32)
   add_executable(water_sampler_tests src/client/world/water/tests/WaterSamplerTests.cpp)
@@ -1195,17 +1206,6 @@ if(WIN32)
     target_compile_options(cc_water_hysteresis_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME cc_water_hysteresis_tests COMMAND cc_water_hysteresis_tests)
-endif()
-
-# M100.13 — Tests WaterMeshBuilder ear clipping + ribbon polyline.
-if(WIN32)
-  add_executable(water_mesh_builder_tests src/client/world/water/tests/WaterMeshBuilderTests.cpp)
-  target_include_directories(water_mesh_builder_tests PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(water_mesh_builder_tests PRIVATE engine_core)
-  if(MSVC)
-    target_compile_options(water_mesh_builder_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
-  endif()
-  add_test(NAME water_mesh_builder_tests COMMAND water_mesh_builder_tests)
 endif()
 
 # M100.14 — Tests WaterMeshGpu CPU BuildDrawInfos.

@@ -75,6 +75,13 @@ namespace engine::gameplay
 		}
 
 		// Detect water/flying mode (using optional water query + input flags).
+		// M100.15 : `inWater` pilote la physique eau (gravité réduite, damping,
+		// surface breaching) pour TOUTE depth > 0. `depthSaysSwim` (calculé
+		// plus bas avec hystérésis 1.0/0.7 m) pilote `MovementMode::Water`.
+		// Pour 0 < depth < 1.0 m : physique eau active mais mode reste Ground/
+		// Air (wading). Comportement intentionnel — cohérent avec l'audit
+		// gap-analysis M100 (WaterQuery autoritaire pour flottabilité,
+		// SurfaceQueryService/seuils autoritaires pour mode/audio).
 		IWorldCollider::WaterQuery wq{};
 		const bool inWater = world.QueryWater(m_positionCenter, wq) && wq.inWater;
 		const bool wantFly = m_cfg.enableFlying && input.flyPressed && (!inWater) && (m_staminaSec > 0.0f);

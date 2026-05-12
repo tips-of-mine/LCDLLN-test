@@ -1,8 +1,5 @@
 // src/client/gameplay/tests/CharacterControllerWaterHysteresisTests.cpp
 #include "src/client/gameplay/CharacterController.h"
-#include "src/client/gameplay/WorldColliderImpl.h"
-#include "src/client/world/water/WaterSampler.h"
-#include "src/client/world/water/WaterSurfaces.h"
 
 #include <cstdio>
 
@@ -20,10 +17,6 @@ namespace
 	using engine::math::Vec3;
 	using engine::gameplay::CharacterController;
 	using engine::gameplay::MoveInput;
-	using engine::gameplay::WorldColliderImpl;
-	using engine::world::water::LakeInstance;
-	using engine::world::water::WaterSampler;
-	using engine::world::water::WaterScene;
 
 	// Mini-IWorldCollider qui retourne directement la profondeur configurée
 	// (évite la conversion center→feet, donne contrôle parfait sur depth).

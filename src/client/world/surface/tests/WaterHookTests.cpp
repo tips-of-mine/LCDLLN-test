@@ -9,7 +9,6 @@
 #include "src/shared/core/Config.h"
 
 #include <cstdio>
-#include <cmath>
 
 namespace
 {
@@ -93,9 +92,11 @@ namespace
 		h.Setup(10.0f);
 		h.service.SetWaterSampler(nullptr);
 
+		// Sans sampler, StreamCache vide → LoadSplatMap nullptr → return fallback
+		// (SurfaceType::Dirt, défini ligne 51 de SurfaceQueryService.cpp).
+		// ApplyWaterOverride sans sampler retourne fallback inchangé.
 		auto r = h.service.Query(Vec3{ 5.0f, 9.0f, 5.0f });
-		REQUIRE(r.base != SurfaceType::ShallowWater);
-		REQUIRE(r.base != SurfaceType::DeepWater);
+		REQUIRE(r.base == SurfaceType::Dirt);
 	}
 }
 

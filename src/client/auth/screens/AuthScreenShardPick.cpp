@@ -71,11 +71,12 @@ namespace engine::client
 		JoinWorker();
 		if (!m_masterClient || m_masterSessionId == 0u)
 		{
-			// Pas de session master vivante : pas de refresh possible. On reste sur la
-			// snapshot precedente ; le bouton "Retour" puis re-login reconstruira l'etat.
+			LOG_WARN(Net, "[RefreshShardList] skip: master_client={} session_id={} (rien a faire, attente re-login)",
+				m_masterClient ? "ALIVE" : "NULL", m_masterSessionId);
 			return;
 		}
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.shard_pick_refresh_timeout_ms", 3000));
+		LOG_INFO(Net, "[RefreshShardList] start: session_id={} timeout_ms={}", m_masterSessionId, timeoutMs);
 
 		m_pendingAsyncKind = AsyncKind::RefreshShardList;
 		{
@@ -89,6 +90,7 @@ namespace engine::client
 			AsyncResult local{};
 			if (masterClient == nullptr)
 			{
+				LOG_ERROR(Net, "[RefreshShardList] worker: master_client null (race?), abort");
 				local.ready = true;
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
@@ -98,17 +100,33 @@ namespace engine::client
 			disp.SetSessionId(sessionId);
 			bool done = false;
 			std::vector<engine::network::ServerListEntry> entries;
+			LOG_INFO(Net, "[RefreshShardList] worker: sending SERVER_LIST_REQUEST (opcode={}, session_id={})",
+				engine::network::kOpcodeServerListRequest, sessionId);
 			if (!disp.SendRequest(engine::network::kOpcodeServerListRequest, {},
 					[&](uint32_t, bool timeout, std::vector<uint8_t> payload) {
 						done = true;
-						if (timeout || payload.empty())
+						if (timeout)
 						{
+							LOG_WARN(Net, "[RefreshShardList] worker: response TIMEOUT (no reply within {}ms)", timeoutMs);
+							return;
+						}
+						if (payload.empty())
+						{
+							LOG_WARN(Net, "[RefreshShardList] worker: response empty payload");
 							return;
 						}
 						entries = engine::network::ParseServerListResponsePayload(payload.data(), payload.size());
+						LOG_INFO(Net, "[RefreshShardList] worker: response received, {} entry(ies) parsed", entries.size());
+						for (size_t i = 0; i < entries.size(); ++i)
+						{
+							const auto& e = entries[i];
+							LOG_INFO(Net, "[RefreshShardList] worker:   entry[{}] shard_id={} status={} current_load={} max_capacity={} endpoint='{}'",
+								i, e.shard_id, static_cast<uint32_t>(e.status), e.current_load, e.max_capacity, e.endpoint);
+						}
 					},
 					timeoutMs))
 			{
+				LOG_ERROR(Net, "[RefreshShardList] worker: SendRequest FAILED (connection dead?)");
 				local.ready = true;
 				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 				m_asyncResult = local;
@@ -123,6 +141,8 @@ namespace engine::client
 			local.ready = true;
 			local.success = done && !entries.empty();
 			local.serverListForPick = std::move(entries);
+			LOG_INFO(Net, "[RefreshShardList] worker: done={} success={} entries_pushed={}",
+				done, local.success, local.serverListForPick.size());
 			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
 			m_asyncResult = local;
 		});

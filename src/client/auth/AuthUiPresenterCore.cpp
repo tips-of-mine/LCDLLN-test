@@ -1615,6 +1615,8 @@ namespace engine::client
 			// Le choix utilisateur courant (m_shardPickChoiceShardId) est preserve s'il fait
 			// toujours partie de la liste apres mise a jour ; sinon on retombe sur le premier
 			// shard online (meme heuristique qu'a l'arrivee sur Phase::ShardPick).
+			LOG_INFO(Core, "[RefreshShardList] PollAsyncResult: success={} entries={} phase={}",
+				copy.success, copy.serverListForPick.size(), static_cast<int>(m_phase));
 			if (copy.success && !copy.serverListForPick.empty() && m_phase == Phase::ShardPick)
 			{
 				m_shardPickEntries = std::move(copy.serverListForPick);
@@ -1970,7 +1972,14 @@ namespace engine::client
 			SetPhase(Phase::ShardPick);
 			m_userErrorText.clear();
 			m_infoBanner.clear();
-			LOG_INFO(Core, "[AuthUiPresenter] Shard choice UI ({} liste entrées)", m_shardPickEntries.size());
+			LOG_INFO(Core, "[AuthUiPresenter] Shard choice UI ({} liste entrées) session_id={} master_client={}",
+				m_shardPickEntries.size(), m_masterSessionId, m_masterClient ? "ALIVE" : "NULL");
+			for (size_t i = 0; i < m_shardPickEntries.size(); ++i)
+			{
+				const auto& e = m_shardPickEntries[i];
+				LOG_INFO(Core, "[AuthUiPresenter] Shard choice UI:   entry[{}] shard_id={} status={} current_load={}/{} endpoint='{}'",
+					i, e.shard_id, static_cast<uint32_t>(e.status), e.current_load, e.max_capacity, e.endpoint);
+			}
 			return;
 		}
 

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.40 — Cave Tool</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar { background:#2b2b2b; border:1px solid #3a3a3a; padding:4px 6px; display:flex; gap:4px; align-items:center; height:48px; }
+.tool-btn { width:40px; height:40px; background:#3a3a3a; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:18px; color:#ddd; cursor:pointer; position:relative; }
+.tool-btn.active { background:rgba(150,100,60,0.55); border-color:#a06030; color:#fff; }
+.tool-btn:hover { background:#444; } .tool-btn.disabled { opacity:0.35; cursor:not-allowed; }
+.tool-btn .lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:#888; white-space:nowrap; }
+.tool-btn.x { color:#f88; }
+.viewport-mock { background:linear-gradient(180deg,#2c3540 0%,#4a5560 55%,#6a7060 100%); height:360px; position:relative; border:1px solid #3a3a3a; overflow:hidden; }
+.hud-tip { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.65); padding:6px 10px; font-size:11px; color:#cdcdcd; border:1px solid #444; }
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.catalog-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border: 1px solid #333; margin-bottom: 4px;
+  background: #1c1c1c; cursor: pointer;
+}
+.catalog-item.selected { border-color: #a06030; background: #2a1f15; }
+.catalog-item:hover { background: #222; }
+.thumb { width: 48px; height: 36px; background: #444; border: 1px solid #666;
+         display: flex; align-items: center; justify-content: center; font-size: 18px; color: #888; }
+.thumb.cave { background: linear-gradient(180deg, #4a3520, #221510); color: #d4b890; }
+.catalog-item .name { font-size: 12px; color: #ddd; }
+.catalog-item .meta { font-size: 10px; color: #888; }
+.bridge-warning {
+  background: #3a2f1f; border: 1px solid #6a5530;
+  color: #f0c060; font-size: 11px; padding: 6px 10px;
+  margin-top: 8px; border-radius: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — la preview ghost de mesh insert utilise
+  le pipeline rendu standard (MeshAsset + alpha 0.5, lecture seule sur depth).
+  Aucun nouveau render pass, aucune touche au frustum cull / fallback orange.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span><span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpt">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lake">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="River">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Mountain">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Valley">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="River Net">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn" title="Coastline">🌅<span class="lbl">Coastline</span></div>
+    <div class="tool-btn" title="Hydraulic">💧↘<span class="lbl">Hydraulic</span></div>
+    <div class="tool-btn" title="Thermal/Wind">⛰⤓🌬<span class="lbl">Thermal/W</span></div>
+    <div class="tool-btn active" title="Cave Tool — actif">
+      🕳️<span class="lbl" style="color:#a06030">Cave</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn disabled" title="Bientôt">🌳<span class="lbl">Vegetation</span></div>
+    <div class="tool-btn x" title="Désél.">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 demo_plains</div>
+        <div style="margin-left:14px;color:#aaa">▸ Terrain (heightmap)</div>
+        <div style="margin-left:14px;color:#6cf">▸ Water surfaces</div>
+        <div style="margin-left:14px;color:#a06030">▾ Mesh Inserts (1)</div>
+        <div style="margin-left:28px;color:#a06030">▾ Cave (1)</div>
+        <div style="margin-left:42px;color:#fc4">▸ cave_medium_01 (draft, preview)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Erosion stack appliquée</div>
+      </div>
+    </div>
+
+    <div class="viewport viewport-mock">
+      <div class="hud-tip">
+        Outil actif : <b style="color:#a06030">Cave</b><br>
+        Sélection : <b>cave_medium_01</b><br>
+        Click sur terrain pour placer
+      </div>
+
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+
+        <!-- Terrain de fond (montagne) -->
+        <path d="M 0,250 C 100,200 200,180 320,170 C 440,180 540,210 640,250 L 640,360 L 0,360 Z"
+              fill="#5a6058" stroke="none"/>
+
+        <!-- Preview ghost de la grotte (ovale sombre semi-transparent) -->
+        <g opacity="0.55">
+          <!-- Entrée de la grotte (arche sombre) -->
+          <ellipse cx="340" cy="220" rx="42" ry="28" fill="#1a1410" stroke="#a06030" stroke-width="2" stroke-dasharray="5 3"/>
+          <!-- Indication du volume intérieur (AABB pointillé) -->
+          <rect x="295" y="175" width="100" height="65" fill="none"
+                stroke="#a06030" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7"/>
+          <text x="298" y="172" fill="#a06030" font-size="9" font-family="Consolas">AABB intérieur</text>
+        </g>
+
+        <!-- Cercle camouflage splat « Rocher » (rayon 8m) -->
+        <circle cx="340" cy="220" r="55" fill="#7a6050" fill-opacity="0.25"
+                stroke="#7a6050" stroke-width="1.5" stroke-dasharray="2 2"/>
+        <text x="285" y="280" fill="#7a6050" font-size="10" font-family="Consolas">camouflage splat « Rocher » (R=8m)</text>
+
+        <!-- Props rochers auto (cercles dispersés autour) -->
+        <g>
+          <circle cx="290" cy="225" r="6" fill="#6a5040" stroke="#444" stroke-width="1"/>
+          <circle cx="395" cy="218" r="7" fill="#6a5040" stroke="#444" stroke-width="1"/>
+          <circle cx="305" cy="245" r="5" fill="#6a5040" stroke="#444" stroke-width="1"/>
+          <circle cx="380" cy="245" r="6" fill="#6a5040" stroke="#444" stroke-width="1"/>
+        </g>
+        <text x="270" y="305" fill="#a08070" font-size="10" font-family="Consolas">4 props rochers auto-posés</text>
+
+        <!-- Indicateur point d'entrée (croix au sol) -->
+        <g stroke="#fc4" stroke-width="2">
+          <line x1="335" y1="245" x2="345" y2="245"/>
+          <line x1="340" y1="240" x2="340" y2="250"/>
+        </g>
+        <text x="345" y="252" fill="#fc4" font-size="10" font-family="Consolas">entrancePoint snap au sol</text>
+
+        <!-- Gizmo rotation Y -->
+        <g stroke="#6cf" stroke-width="1.5" fill="none" stroke-opacity="0.7">
+          <circle cx="340" cy="220" r="50"/>
+          <polygon points="385,213 393,220 385,227" fill="#6cf"/>
+        </g>
+        <text x="395" y="215" fill="#6cf" font-size="9" font-family="Consolas">Y=45°</text>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.55); padding:4px 8px">
+        Snap au sol ✓ · Y=45° (snap 15°) · scale 1.0 ·
+        <span style="color:#fc4">preview (pas encore commit)</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Tool Properties — Cave</div>
+      <div class="body">
+
+        <div style="color:#a06030; font-size:11px; margin-bottom:6px">Catalogue (3)</div>
+        <div class="catalog-item">
+          <div class="thumb cave">🕳</div>
+          <div><div class="name">cave_small_01</div><div class="meta">AABB ~6×4×5 m</div></div>
+        </div>
+        <div class="catalog-item selected">
+          <div class="thumb cave">🕳</div>
+          <div><div class="name">cave_medium_01 (•)</div><div class="meta">AABB ~12×8×10 m</div></div>
+        </div>
+        <div class="catalog-item">
+          <div class="thumb cave">🕳</div>
+          <div><div class="name">cave_large_01</div><div class="meta">AABB ~20×15×18 m</div></div>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#fc4; font-size:11px; margin-bottom:6px">— Placement —</div>
+        </div>
+        <div><span class="radio checked">Click sur terrain</span></div>
+        <div><span class="radio">Drag depuis catalogue</span></div>
+
+        <div class="row"><span>Rotation Y</span>
+          <div class="slider"><div class="fill" style="width:25%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">45° (snap 15°)</span></div>
+
+        <div class="row"><span>Scale</span>
+          <div class="slider"><div class="fill" style="width:50%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">1.0</span></div>
+
+        <div><span class="checkbox checked">Snap au sol</span></div>
+        <div><span class="checkbox">Auto-rotation X/Z (suivre pente)</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#a06030; font-size:11px; margin-bottom:6px">— Camouflage entrée —</div>
+        </div>
+        <div><span class="checkbox checked">Auto-peindre splat « Rocher »</span></div>
+        <div class="row"><span>Rayon</span>
+          <div class="slider"><div class="fill amber" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">8 m</span></div>
+        <div class="row"><span>Force</span>
+          <div class="slider"><div class="fill amber" style="width:60%"></div></div></div>
+
+        <div><span class="checkbox checked">Auto-poser props rochers</span></div>
+        <div class="row"><span>Nombre</span>
+          <div class="slider"><div class="fill" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">4 props</span></div>
+        <div class="row"><span>Catalogue</span><span class="combo">props/rocks/*</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#6cf; font-size:11px; margin-bottom:6px">— Gameplay —</div>
+        </div>
+        <div><span class="checkbox checked">Volume intérieur (SurfaceQuery)</span></div>
+        <div><span class="checkbox checked">Reverb audio (grotte)</span></div>
+        <div><span class="checkbox">Permet l'eau (rivière entre)</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#888; font-size:11px; margin-bottom:6px">— Lighting —</div>
+        </div>
+        <div class="row"><span>Intensité probe</span>
+          <div class="slider"><div class="fill" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.4 (sombre)</span></div>
+
+        <div class="bridge-warning">
+          ⚠ Le serveur ne reçoit pas encore les mesh inserts<br>
+          (bridge vmap → <b>M100.44</b>).<br>
+          Pas de collision/LOS server-side temporaire.
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Place</span>
+          <span class="btn danger">Cancel</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] EditorToolbar: SetActiveTool(Cave)</div>
+        <div>[INFO] CaveCatalog loaded from game/data/meshes/caves/catalog.json (3 entries)</div>
+        <div>[INFO] CaveTool: selected cave_medium_01 (AABB 12×8×10 m)</div>
+        <div>[DEBUG] Anchoring: terrain Y at (4225, 1870) = 145.2 m + entrancePoint.y=-0.8 → worldPos.y=144.4</div>
+        <div>[DEBUG] Preview ghost rendered via MeshAsset (alpha=0.5, depth read-only)</div>
+        <div>[DEBUG] Camouflage preview: 8m radius patch → 199 splat cells affected</div>
+        <div>[DEBUG] 4 props rocks suggested at radial positions around entrance</div>
+        <div style="color:#fc4">[INFO] Bridge vmap server: NOT yet implemented (M100.44)</div>
+        <div style="color:#6c6">[OK] Terrain visible preserved</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>14:52:18</span><span>Hydraulic apply</span><span>247 chunks</span><span>↶</span></div>
+        <div class="hist-row"><span>15:04:30</span><span>Thermal+Wind apply</span><span>481 cells T+W</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#a06030">→ preview</span><span>Cave place (cave_medium_01)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title pink">Phase 11 Bilan</div>
+      <div class="body" style="font-size:11px;line-height:1.7">
+        <div style="color:#a06030">⏳ <b>M100.40 Cave Tool (en cours)</b></div>
+        <div style="color:#888">⏳ M100.41 Overhang Tool</div>
+        <div style="color:#888">⏳ M100.42 Natural Arch Tool</div>
+        <div style="color:#888">⏳ M100.43 Dungeon Portal</div>
+        <div style="color:#888">⏳ M100.44 VMap Bridge</div>
+        <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #444;color:#666">
+          Phase 2.5 ✅ terminée
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.40 — Mesh Insert Foundation + Cave Tool · Phase 11 démarre · LCDLLN World Editor</footer>
+</body></html>

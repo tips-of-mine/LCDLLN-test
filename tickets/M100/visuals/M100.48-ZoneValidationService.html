@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.48 — Zone Validation Service</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.toolbar-bar { background:#2b2b2b; border:1px solid #3a3a3a; padding:4px 6px; display:flex; gap:4px; align-items:center; height:48px; }
+.tool-btn { width:40px; height:40px; background:#3a3a3a; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:18px; color:#ddd; cursor:pointer; position:relative; }
+.tool-btn.validate { background:#3a2520; border-color:#a05030; color:#ff8050; }
+.tool-btn.validate .badge {
+  position:absolute; top:-4px; right:-4px;
+  background:#d04020; color:#fff; font-size:10px;
+  padding:1px 4px; border-radius:8px; min-width:14px; text-align:center;
+}
+.tool-btn .lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:#888; white-space:nowrap; }
+
+.validation-panel {
+  background:#1c1c1c; border:1px solid #444;
+}
+.vp-header {
+  padding: 10px 14px; border-bottom: 1px solid #333;
+  display: flex; align-items: center; gap: 12px;
+}
+.vp-header .actions { display: flex; gap: 6px; }
+.vp-header button { background:#3a3a3a; border:1px solid #555; color:#cdcdcd; padding:5px 10px; font-size:11px; cursor:pointer; }
+.vp-header button:hover { background:#444; }
+.vp-status {
+  padding: 10px 14px; background:#252525; font-size:12px;
+  display: flex; gap: 16px; align-items: center;
+}
+.vp-status .err { color:#f88; }
+.vp-status .warn { color:#fc4; }
+.vp-status .hint { color:#6cf; }
+.vp-status .time { color:#888; margin-left:auto; font-size:11px; }
+
+.issue-section {
+  border-bottom: 1px solid #333;
+}
+.issue-section .sec-header {
+  padding: 8px 14px; background:#1a1a1a;
+  color:#fc4; font-weight:bold; font-size:12px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+}
+.issue-section .sec-header.error { color:#f88; }
+.issue-section .sec-header.warning { color:#fc4; }
+.issue-section .sec-header.hint { color:#6cf; }
+
+.issue-row {
+  padding: 10px 14px 12px 30px;
+  border-top: 1px dotted #333;
+  position: relative;
+}
+.issue-row:hover { background:#1f1f1f; }
+.issue-row .icon {
+  position: absolute; left: 10px; top: 11px; font-size: 14px;
+}
+.issue-row.error .icon { color:#f88; }
+.issue-row.warning .icon { color:#fc4; }
+.issue-row.hint .icon { color:#6cf; }
+.issue-row .title { color:#cdcdcd; font-size:12px; font-weight:bold; margin-bottom:4px; }
+.issue-row .desc { color:#aaa; font-size:11px; line-height:1.5; margin-bottom:6px; }
+.issue-row .meta { color:#888; font-size:10px; margin-bottom:6px; }
+.issue-row .meta code { background:#0f0f0f; color:#a0d0ff; padding:1px 4px; font-size:10px; }
+.issue-row .suggestion {
+  color:#a0d0ff; font-size:10px; font-style:italic;
+  margin-bottom:6px; padding:4px 8px; background:#1f2a30; border-left:2px solid #4080d0;
+}
+.issue-row .row-actions { display: flex; gap: 6px; margin-top: 4px; }
+.issue-row .row-actions button {
+  background:#3a3a3a; border:1px solid #555; color:#cdcdcd;
+  padding:3px 10px; font-size:10px; cursor:pointer;
+}
+.issue-row .row-actions button.primary { background:#4080d0; border-color:#4080d0; color:#fff; font-weight:bold; }
+.issue-row .row-actions button.fix { background:#3a4a2a; border-color:#6c6; color:#a0d090; }
+.issue-row .row-actions a { color:#fc4; font-size:10px; padding:3px 6px; cursor:pointer; text-decoration:none; }
+
+.export-blocked-modal {
+  background:#1c1c1c; border:3px solid #d04020;
+  padding:20px 26px; max-width:500px; margin: 16px auto;
+  box-shadow: 0 12px 40px rgba(208,64,32,0.4);
+}
+.export-blocked-modal .ebm-title { color:#f88; font-size:16px; font-weight:bold; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #444; }
+.export-blocked-modal .ebm-icon { font-size:32px; margin-bottom:10px; }
+.export-blocked-modal .ebm-body { color:#cdcdcd; font-size:13px; line-height:1.6; margin-bottom:14px; }
+.export-blocked-modal .ebm-list { background:#0f0f0f; border:1px solid #333; padding:10px; font-size:11px; color:#f88; margin-bottom:14px; }
+.export-blocked-modal .ebm-actions { text-align:right; }
+.export-blocked-modal .ebm-actions button { padding:8px 18px; font-size:12px; margin-left:8px; cursor:pointer; border:none; }
+.btn-danger { background:#a04030; color:#fff; }
+.btn-secondary { background:#3a3a3a; color:#cdcdcd; border:1px solid #555; }
+
+.status-bar {
+  background:#1a1a1a; border:1px solid #333;
+  padding:6px 12px; display:flex; align-items:center; gap:14px;
+  font-size:11px; color:#cdcdcd;
+}
+.status-bar .indicator { display:flex; align-items:center; gap:6px; }
+.status-bar .indicator.green { color:#6c6; }
+.status-bar .indicator.yellow { color:#fc4; }
+.status-bar .indicator.red { color:#f88; }
+.status-bar .indicator-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+}
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — validation = lecture seule sur les
+  documents. « Aller à » utilise une animation caméra douce qui partage
+  l'infra mouvement existante. Aucun render pass dédié.
+</div>
+
+<div style="background:#1f2a1f; border:1px solid #4a8a4a; padding:10px 14px; color:#a0e0a0; font-size:13px; margin-bottom:12px">
+  🛡 <b>Phase 12 — Accessibilité (4/7)</b> · Avant export, l'éditeur valide
+  la zone : 18 règles MVP en 6 catégories (heightmap, splat, water, mesh inserts,
+  dungeons, general). Modal bloquant si Error, navigation « Aller à » jusqu'au
+  problème.
+</div>
+
+<!-- Toolbar avec le bouton Valider -->
+<div class="toolbar-bar" style="margin-bottom:14px">
+  <div class="tool-btn">⛰️<span class="lbl">Sculpt</span></div>
+  <div class="tool-btn">🌊<span class="lbl">River</span></div>
+  <div class="tool-btn">🌅<span class="lbl">Coast</span></div>
+  <div class="tool-btn">💧↘<span class="lbl">Hydra</span></div>
+  <div class="tool-btn">🕳️<span class="lbl">Cave</span></div>
+  <div class="tool-btn">🚪✨<span class="lbl">Dungeon</span></div>
+  <div style="flex:1"></div>
+  <div class="tool-btn validate" title="Valider la zone (Ctrl+Shift+V)">
+    🛡<span class="badge">10</span><span class="lbl" style="color:#ff8050">Valider</span>
+  </div>
+</div>
+
+<!-- Panel de validation -->
+<div class="validation-panel">
+
+  <div class="vp-header">
+    <div class="actions">
+      <button>🔄 Re-valider</button>
+      <button>▼ Filtres</button>
+      <button>⚙ Options</button>
+    </div>
+    <div style="flex:1"></div>
+    <button>✕</button>
+  </div>
+
+  <div class="vp-status">
+    <span class="err">❌ <b>2 erreurs</b></span>
+    <span class="warn">⚠ <b>5 warnings</b></span>
+    <span class="hint">💡 <b>3 hints</b></span>
+    <span class="time">⏱ 1.2 s · Zone : demo_plains (10×10 km, 100 inserts)</span>
+  </div>
+
+  <!-- Section ERREURS -->
+  <div class="issue-section">
+    <div class="sec-header error">
+      ▾ ❌ Erreurs (2) — bloquent l'export
+    </div>
+
+    <div class="issue-row error">
+      <div class="icon">❌</div>
+      <div class="title">Donjons : ID dupliqué</div>
+      <div class="desc">
+        Deux portails de donjon ont l'identifiant <code>dungeon_001_ancient_ruin</code>.
+        L'unicité est requise pour l'allocation d'instance côté serveur.
+      </div>
+      <div class="meta">
+        📍 Positions : <code>(2120, 1860)</code> et <code>(7400, 3200)</code>
+      </div>
+      <div class="row-actions">
+        <button class="primary">Aller à la première</button>
+        <button>Aller à la seconde</button>
+        <a>📖 Doc</a>
+        <button>Ignorer</button>
+      </div>
+    </div>
+
+    <div class="issue-row error">
+      <div class="icon">❌</div>
+      <div class="title">Mesh inserts : glTF manquant</div>
+      <div class="desc">
+        L'instance <code>cave_medium_01 #3</code> référence
+        <code>meshes/caves/cave_xyz.gltf</code> qui est introuvable dans le
+        content path.
+      </div>
+      <div class="meta">
+        📍 Position : <code>(5200, 4800, 142.5)</code>
+      </div>
+      <div class="row-actions">
+        <button class="primary">Aller à</button>
+        <a>📖 Doc</a>
+        <button>Ignorer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section WARNINGS -->
+  <div class="issue-section">
+    <div class="sec-header warning">
+      ▾ ⚠ Warnings (5) — impactent le rendu/gameplay mais n'empêchent pas l'export
+    </div>
+
+    <div class="issue-row warning">
+      <div class="icon">⚠</div>
+      <div class="title">Mesh insert flottant (overhang_dramatic_01)</div>
+      <div class="desc">
+        L'entrancePoint est à +2.4 m au-dessus du terrain courant.
+        Probablement causé par une érosion appliquée après le placement.
+      </div>
+      <div class="meta">
+        📍 Position : <code>(3400, 2100, 158.2)</code> · Catégorie : overhang
+      </div>
+      <div class="suggestion">
+        💡 Suggestion : Snap au sol depuis l'Inspector, ou ré-anchorer en
+        déplaçant légèrement.
+      </div>
+      <div class="row-actions">
+        <button class="primary">Aller à</button>
+        <button class="fix">⚙ Snap au sol</button>
+        <a>📖 Doc</a>
+        <button>Ignorer</button>
+      </div>
+    </div>
+
+    <div class="issue-row warning">
+      <div class="icon">⚠</div>
+      <div class="title">Rivière orpheline #2</div>
+      <div class="desc">
+        La rivière #2 ne se jette ni dans un lac, ni dans la mer, ni dans une
+        autre rivière. Elle s'arrête au milieu du terrain.
+      </div>
+      <div class="meta">
+        📍 Fin de rivière : <code>(4520, 6100, 89.4)</code>
+      </div>
+      <div class="row-actions">
+        <button class="primary">Aller à</button>
+        <a>📖 Doc</a>
+        <button>Ignorer</button>
+      </div>
+    </div>
+
+    <div class="issue-row warning">
+      <div class="icon">⚠</div>
+      <div class="title">AABB en collision (cave_small_01 + arch_medium_01)</div>
+      <div class="desc">
+        Les volumes de ces deux mesh inserts se chevauchent à 38 %.
+        Cela peut causer des artefacts visuels et des bugs de collision.
+      </div>
+      <div class="meta">
+        📍 Centre du chevauchement : <code>(6800, 3500, 145.0)</code>
+      </div>
+      <div class="row-actions">
+        <button class="primary">Aller à</button>
+        <a>📖 Doc</a>
+        <button>Ignorer</button>
+      </div>
+    </div>
+
+    <div style="padding:8px 14px; font-size:11px; color:#888; font-style:italic">
+      + 2 autres warnings (chunks dirty non bakés, splat sum proche de 1.05) — cliquer pour afficher
+    </div>
+  </div>
+
+  <!-- Section HINTS (collapsé) -->
+  <div class="issue-section">
+    <div class="sec-header hint">
+      ▸ 💡 Hints (3) — suggestions de style
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Export bloqué -->
+<h3 style="color:#fc4; margin-top:24px;">Modal bloquant à l'export quand Error détectée</h3>
+
+<div class="export-blocked-modal">
+  <div class="ebm-icon">🛑</div>
+  <div class="ebm-title">Export impossible</div>
+  <div class="ebm-body">
+    La zone <b>demo_plains</b> contient <b>2 erreurs</b> qui doivent être
+    corrigées avant l'export. Les erreurs indiquent un contenu corrompu ou
+    incomplet qui ferait échouer le runtime.
+  </div>
+  <div class="ebm-list">
+    ❌ Donjons : ID dupliqué (dungeon_001_ancient_ruin)<br>
+    ❌ Mesh inserts : glTF manquant (cave_xyz.gltf)
+  </div>
+  <div class="ebm-actions">
+    <button class="btn-secondary">Annuler</button>
+    <button class="btn-danger">Voir les erreurs →</button>
+  </div>
+</div>
+
+<!-- Status bar avec indicateur live -->
+<h3 style="color:#fc4; margin-top:24px;">Indicateur status bar (mode background activé)</h3>
+
+<div class="status-bar">
+  <div class="indicator green">
+    <span class="indicator-dot" style="background:#6c6"></span>
+    <span>OK — Validation OK (zone saine)</span>
+  </div>
+  <div style="border-left:1px solid #333; height:14px"></div>
+  <div class="indicator yellow">
+    <span class="indicator-dot" style="background:#fc4"></span>
+    <span>5 warnings, 3 hints</span>
+  </div>
+  <div style="border-left:1px solid #333; height:14px"></div>
+  <div class="indicator red">
+    <span class="indicator-dot" style="background:#f88"></span>
+    <span><b>2 erreurs bloquantes</b></span>
+  </div>
+  <div style="flex:1"></div>
+  <span style="color:#888">Dernière validation : il y a 4 s · 1.2 s</span>
+</div>
+
+<!-- Catalogue des règles -->
+<div class="shell" style="margin-top:16px; grid-template-rows:auto">
+  <div class="dock" style="grid-template-columns:1fr 1fr">
+
+    <div class="panel">
+      <div class="title amber">Catalogue MVP — 18 règles en 6 catégories</div>
+      <div class="body">
+        <table style="width:100%; font-size:11px; color:#cdcdcd">
+          <tr style="color:#fc4">
+            <th style="text-align:left; padding:3px">Catégorie</th>
+            <th style="text-align:left; padding:3px">Règle</th>
+            <th style="text-align:center; padding:3px">Sév.</th>
+          </tr>
+          <tr><td rowspan="4" style="color:#888"><b>heightmap</b></td><td>heightmap.holes</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>heightmap.discontinuity_chunk_border</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>heightmap.extreme_slope</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>heightmap.dirty_not_baked</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td rowspan="3" style="color:#888"><b>splat</b></td><td>splat.sum_exceeds_one</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>splat.empty_cell</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>splat.dominant_layer</td><td style="text-align:center"><span style="color:#6cf">💡</span></td></tr>
+          <tr><td rowspan="4" style="color:#888"><b>water</b></td><td>water.river_orphan</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>water.lake_crossed_by_river</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>water.river_above_terrain</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>water.sea_level_inconsistent</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td rowspan="5" style="color:#888"><b>mesh_inserts</b></td><td>mesh_inserts.aabb_collision</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>mesh_inserts.floating</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>mesh_inserts.submerged</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td>mesh_inserts.gltf_missing</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>mesh_inserts.collision_proxy_missing</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td rowspan="4" style="color:#888"><b>dungeons</b></td><td>dungeons.duplicate_id</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>dungeons.invalid_id_format</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>dungeons.missing_localized_name</td><td style="text-align:center"><span style="color:#f88">❌</span></td></tr>
+          <tr><td>dungeons.unreachable</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+          <tr><td rowspan="2" style="color:#888"><b>general</b></td><td>general.no_points_of_interest</td><td style="text-align:center"><span style="color:#6cf">💡</span></td></tr>
+          <tr><td>general.large_dirty_buffer</td><td style="text-align:center"><span style="color:#fc4">⚠</span></td></tr>
+        </table>
+        <div style="margin-top:10px; font-size:11px; color:#888">
+          ➜ Phase 13 ajoutera 5-10 règles (vegetation density, panneaux non-localisés, etc.)
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Phase 12 — Bilan</div>
+      <div class="body" style="font-size:11px; line-height:1.7">
+        <div style="color:#6c6">✅ M100.45 Mode + Tool Presets</div>
+        <div style="color:#6c6">✅ M100.46 Zone Presets Library</div>
+        <div style="color:#6c6">✅ M100.47 Tooltips & F1 Doc</div>
+        <div style="color:#fc4">⏳ <b>M100.48 Zone Validation (en cours)</b></div>
+        <div style="color:#888">⏳ M100.49 Tutoriel & Diagnostic</div>
+        <div style="color:#888">⏳ M100.50 Quick Start Wizard</div>
+        <div style="color:#888">⏳ M100.51 CI Deployment</div>
+        <div style="margin-top:10px; padding-top:6px; border-top:1px dashed #444; color:#666">
+          Avec validation + tooltips, un mappeur identifie ses erreurs sans
+          aller demander à un dev.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>M100.48 — Zone Validation Service · 18 règles MVP · LCDLLN World Editor</footer>
+</body></html>

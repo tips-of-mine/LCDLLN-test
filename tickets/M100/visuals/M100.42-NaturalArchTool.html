@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.42 — Natural Arch Tool</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar { background:#2b2b2b; border:1px solid #3a3a3a; padding:4px 6px; display:flex; gap:4px; align-items:center; height:48px; }
+.tool-btn { width:40px; height:40px; background:#3a3a3a; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:18px; color:#ddd; cursor:pointer; position:relative; }
+.tool-btn.active { background:rgba(180,140,90,0.55); border-color:#c08040; color:#fff; }
+.tool-btn:hover { background:#444; } .tool-btn.disabled { opacity:0.35; cursor:not-allowed; }
+.tool-btn .lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:#888; white-space:nowrap; }
+.tool-btn.x { color:#f88; }
+.viewport-mock { background:linear-gradient(180deg,#2c3540 0%,#4a5560 55%,#6a7060 100%); height:360px; position:relative; border:1px solid #3a3a3a; overflow:hidden; }
+.hud-tip { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.65); padding:6px 10px; font-size:11px; color:#cdcdcd; border:1px solid #444; }
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.catalog-item { display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid #333; margin-bottom:4px; background:#1c1c1c; cursor:pointer; }
+.catalog-item.selected { border-color:#c08040; background:#241c14; }
+.thumb { width:48px; height:36px; background:#444; border:1px solid #666; display:flex; align-items:center; justify-content:center; font-size:14px; color:#888; }
+.thumb.arch { background:linear-gradient(180deg,#5a4a30,#221813); color:#c08040; }
+.catalog-item .name { font-size:12px; color:#ddd; } .catalog-item .meta { font-size:10px; color:#888; }
+.pillar-row { display:flex; gap:8px; padding:4px 6px; font-size:11px; background:#1c1c1c; border:1px solid #333; margin-bottom:3px; }
+.pillar-row.placed { border-color:#c08040; }
+.pillar-row .lbl { color:#fc4; min-width:80px; }
+.pillar-row .pos { color:#cdcdcd; }
+.warning-pulse { background:#3a2f1f; border:1px solid #c08040; color:#f0c060; font-size:11px; padding:6px 10px; margin-top:8px; }
+.bridge-warning { background:#3a2f1f; border:1px solid #6a5530; color:#f0c060; font-size:11px; padding:6px 10px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — preview ghost arche via MeshAsset
+  standard. Patches splat aux pieds via SplatDocument. Aucun touch render.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span><span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpt">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lake">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="River">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Mountain">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Valley">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="River Net">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn" title="Coastline">🌅<span class="lbl">Coastline</span></div>
+    <div class="tool-btn" title="Hydraulic">💧↘<span class="lbl">Hydraulic</span></div>
+    <div class="tool-btn" title="Thermal/Wind">⛰⤓🌬<span class="lbl">Thermal/W</span></div>
+    <div class="tool-btn" title="Cave">🕳️<span class="lbl">Cave</span></div>
+    <div class="tool-btn" title="Overhang">⛰⤴<span class="lbl">Overhang</span></div>
+    <div class="tool-btn active" title="Natural Arch — actif">
+      🌉<span class="lbl" style="color:#c08040">Arch</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn x" title="Désél.">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 demo_plains</div>
+        <div style="margin-left:14px;color:#a06030">▾ Mesh Inserts (3)</div>
+        <div style="margin-left:28px;color:#a06030">▾ Caves (1)</div>
+        <div style="margin-left:28px;color:#806040">▾ Overhangs (1)</div>
+        <div style="margin-left:28px;color:#c08040">▾ Arches (1)</div>
+        <div style="margin-left:42px;color:#fc4">▸ arch_medium_01 (preview)</div>
+      </div>
+    </div>
+
+    <div class="viewport viewport-mock">
+      <div class="hud-tip">
+        Outil actif : <b style="color:#c08040">Arch</b><br>
+        2 piliers posés · distance <b>8.4 m</b><br>
+        Sélection : <b>arch_medium_01</b> (span 8 m)
+      </div>
+
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+
+        <!-- Canyon : deux côtés rocheux séparés -->
+        <path d="M 0,160 L 230,160 L 240,200 L 240,330 L 0,330 Z" fill="#5a5048"/>
+        <path d="M 400,200 L 410,160 L 640,160 L 640,330 L 400,330 Z" fill="#5a5048"/>
+        <!-- Fond du canyon (plus sombre) -->
+        <path d="M 240,200 L 400,200 L 410,330 L 230,330 Z" fill="#3a3530"/>
+
+        <!-- Preview ghost de l'arche -->
+        <g opacity="0.65">
+          <!-- Pieds piliers -->
+          <ellipse cx="245" cy="200" rx="18" ry="6" fill="#5a4030"/>
+          <ellipse cx="405" cy="200" rx="18" ry="6" fill="#5a4030"/>
+          <!-- Courbe de l'arche -->
+          <path d="M 245,200 Q 245,80 325,80 Q 405,80 405,200"
+                fill="none" stroke="#c08040" stroke-width="22" stroke-linecap="round"/>
+          <path d="M 245,200 Q 245,80 325,80 Q 405,80 405,200"
+                fill="none" stroke="#a07030" stroke-width="22" stroke-linecap="round"
+                stroke-dasharray="6 4" stroke-opacity="0.5"/>
+          <text x="290" y="92" fill="#fff" font-size="11" font-family="Consolas">
+            arch_medium_01
+          </text>
+        </g>
+
+        <!-- Marqueurs Pilier A et B -->
+        <g>
+          <circle cx="245" cy="200" r="8" fill="#fc4" stroke="#fff" stroke-width="2"/>
+          <text x="220" y="225" fill="#fc4" font-size="11" font-family="Consolas">Pilier A</text>
+          <text x="220" y="237" fill="#888" font-size="10" font-family="Consolas">(2120, 1860)</text>
+
+          <circle cx="405" cy="200" r="8" fill="#fc4" stroke="#fff" stroke-width="2"/>
+          <text x="412" y="225" fill="#fc4" font-size="11" font-family="Consolas">Pilier B</text>
+          <text x="412" y="237" fill="#888" font-size="10" font-family="Consolas">(2960, 1860)</text>
+        </g>
+
+        <!-- Ligne A → B avec distance -->
+        <line x1="245" y1="200" x2="405" y2="200" stroke="#6cf" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity="0.7"/>
+        <text x="295" y="195" fill="#6cf" font-size="10" font-family="Consolas">8.4 m</text>
+
+        <!-- Patches splat aux pieds -->
+        <circle cx="245" cy="200" r="22" fill="#6a5040" fill-opacity="0.30" stroke="#6a5040" stroke-width="1" stroke-dasharray="2 2"/>
+        <circle cx="405" cy="200" r="22" fill="#6a5040" fill-opacity="0.30" stroke="#6a5040" stroke-width="1" stroke-dasharray="2 2"/>
+        <text x="220" y="265" fill="#a08070" font-size="9" font-family="Consolas">splat « Rock » R=3m</text>
+        <text x="385" y="265" fill="#a08070" font-size="9" font-family="Consolas">splat « Rock » R=3m</text>
+
+        <!-- Indicateur passage -->
+        <g>
+          <line x1="290" y1="160" x2="290" y2="200" stroke="#6c6" stroke-width="1" stroke-dasharray="2 2"/>
+          <line x1="360" y1="160" x2="360" y2="200" stroke="#6c6" stroke-width="1" stroke-dasharray="2 2"/>
+          <text x="305" y="148" fill="#6c6" font-size="10" font-family="Consolas">passage 3 m</text>
+        </g>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.55); padding:4px 8px">
+        Auto-scale ✓ : ratio 1.05 (8.4 / 8.0 natural) · auto-rotate ✓ aligné A→B
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Tool Properties — Arch</div>
+      <div class="body">
+
+        <div style="color:#c08040; font-size:11px; margin-bottom:6px">Catalogue (3)</div>
+        <div class="catalog-item">
+          <div class="thumb arch">∩</div>
+          <div><div class="name">arch_small_01</div><div class="meta">span 4 m</div></div>
+        </div>
+        <div class="catalog-item selected">
+          <div class="thumb arch">⌒</div>
+          <div><div class="name">arch_medium_01 (•)</div><div class="meta">span 8 m</div></div>
+        </div>
+        <div class="catalog-item">
+          <div class="thumb arch">𝖢</div>
+          <div><div class="name">arch_canyon_01</div><div class="meta">span 20 m</div></div>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#fc4; font-size:11px; margin-bottom:6px">— Placement (2 points) —</div>
+        </div>
+        <div class="pillar-row placed">
+          <span class="lbl">Pilier A ✓</span>
+          <span class="pos">X=2120 Z=1860 Y=144.2</span>
+        </div>
+        <div class="pillar-row placed">
+          <span class="lbl">Pilier B ✓</span>
+          <span class="pos">X=2960 Z=1860 Y=144.0</span>
+        </div>
+        <div style="font-size:11px; color:#6cf; margin:6px 0">
+          Distance : <b>8.4 m</b> · Natural span : 8.0 m · ratio <b style="color:#6c6">1.05</b>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#888; font-size:11px; margin-bottom:6px">— Scale & orientation —</div>
+        </div>
+        <div class="row"><span>Scale</span>
+          <div class="slider"><div class="fill" style="width:50%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">1.05 (auto)</span></div>
+        <div><span class="checkbox checked">Auto-scale to fit distance</span></div>
+        <div><span class="checkbox checked">Auto-rotate to align A→B</span></div>
+
+        <div class="row"><span>Tolérance ratio</span>
+          <div class="slider"><div class="fill" style="width:25%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">±25%</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#a06030; font-size:11px; margin-bottom:6px">— Camouflage piliers —</div>
+        </div>
+        <div><span class="checkbox checked">Patch splat « Rocher » à chaque pied</span></div>
+        <div class="row"><span>Rayon par pied</span>
+          <div class="slider"><div class="fill amber" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">3 m</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#888; font-size:11px; margin-bottom:6px">— Gameplay —</div>
+        </div>
+        <div><span class="checkbox">Volume intérieur (rare)</span></div>
+        <div><span class="checkbox">Reverb audio (rare)</span></div>
+
+        <div class="bridge-warning">
+          ⚠ Server ne voit pas l'arche.<br>
+          Bridge vmap → <b>M100.44</b>.
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Place</span>
+          <span class="btn danger">Cancel</span>
+          <span class="btn">Reset points</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] ArchTool active, catalog loaded (3 entries)</div>
+        <div>[INFO] Pilier A placed at (2120, 1860, 144.2)</div>
+        <div>[INFO] Pilier B placed at (2960, 1860, 144.0)</div>
+        <div>[DEBUG] ArchAlignment: midpoint=(2540, 1860, 144.1), rotY=0° (A→B colinéaire X)</div>
+        <div>[DEBUG] AutoScale: distance/naturalSpan = 8.4/8.0 = 1.05 (within ±25%)</div>
+        <div>[DEBUG] 2 splat patches preview: 2 × 3m radius at pillar feet</div>
+        <div style="color:#6c6">[OK] Ratio within tolerance, no warning</div>
+        <div style="color:#fc4">[INFO] Server collision: pending M100.44</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>15:18:42</span><span>Cave place</span><span>medium_01</span><span>↶</span></div>
+        <div class="hist-row"><span>15:24:10</span><span>Overhang place</span><span>dramatic_01</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#c08040">→ preview</span><span>Arch place (medium_01)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title pink">Phase 11 Bilan</div>
+      <div class="body" style="font-size:11px;line-height:1.7">
+        <div style="color:#6c6">✅ M100.40 Cave Tool</div>
+        <div style="color:#6c6">✅ M100.41 Overhang Tool</div>
+        <div style="color:#c08040">⏳ <b>M100.42 Natural Arch (en cours)</b></div>
+        <div style="color:#888">⏳ M100.43 Dungeon Portal</div>
+        <div style="color:#888">⏳ M100.44 VMap Bridge</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.42 — Natural Arch Tool · placement à 2 points · Phase 11 · LCDLLN World Editor</footer>
+</body></html>

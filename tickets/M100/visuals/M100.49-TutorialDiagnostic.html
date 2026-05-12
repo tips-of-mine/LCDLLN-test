@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.49 — Tutorial & Diagnostic</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+
+.intro-modal {
+  background:#1c1c1c; border:2px solid #6cf;
+  padding:30px 36px; max-width:520px; margin:0 auto 16px auto;
+  box-shadow: 0 16px 50px rgba(108,204,255,0.4);
+}
+.intro-modal .imd-icon { text-align:center; font-size:48px; margin-bottom:14px; }
+.intro-modal .imd-title { color:#6cf; font-size:18px; font-weight:bold; text-align:center; margin-bottom:14px; }
+.intro-modal .imd-body { color:#cdcdcd; font-size:13px; line-height:1.6; margin-bottom:14px; text-align:center; }
+.intro-modal ul.imd-list { color:#cdcdcd; font-size:12px; padding-left:24px; line-height:1.8; }
+.intro-modal .imd-list li::marker { color:#fc4; }
+.intro-modal .imd-time { color:#888; text-align:center; font-size:11px; margin:14px 0; }
+.intro-modal .imd-actions { text-align:center; margin-top:14px; }
+.intro-modal .imd-actions button {
+  padding:10px 22px; font-size:13px; margin:0 6px; cursor:pointer; border:none;
+}
+.btn-primary { background:#4080d0; color:#fff; font-weight:bold; }
+.btn-secondary { background:#3a3a3a; color:#cdcdcd; border:1px solid #555; }
+.btn-tertiary { background:transparent; color:#888; }
+
+/* Step overlay simulation */
+.step-overlay-demo {
+  position: relative; height: 320px;
+  background: linear-gradient(180deg, #2c3540 0%, #4a5560 100%);
+  border: 1px solid #444;
+  overflow: hidden;
+}
+.step-overlay-demo .veil {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.45);
+  pointer-events: none;
+}
+.step-overlay-demo .menubar-demo {
+  background:#1a1a1a; padding:6px 12px; color:#cdcdcd; font-size:12px;
+  display:flex; gap:14px; position:relative; z-index:2;
+}
+.step-overlay-demo .menubar-demo .item.target {
+  background:#fc4; color:#000;
+  padding:4px 10px; border-radius:2px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(252, 196, 64, 0.7); }
+  70% { box-shadow: 0 0 0 14px rgba(252, 196, 64, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(252, 196, 64, 0); }
+}
+.step-overlay-demo .menubar-demo .item.target::before {
+  content: "👆"; position: absolute;
+  margin-left: -22px; margin-top: 22px;
+  font-size: 26px;
+}
+.step-overlay-demo .step-bubble {
+  position: absolute; top: 50px; left: 120px;
+  background:#1a1a1a; border:2px solid #fc4; padding:14px 18px;
+  width: 360px; box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+  z-index: 3;
+}
+.step-overlay-demo .step-bubble::before {
+  content: ""; position: absolute;
+  top: -10px; left: 24px;
+  width: 0; height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #fc4;
+}
+.step-overlay-demo .step-bubble .step-num {
+  color:#fc4; font-weight:bold; font-size:12px; margin-bottom:6px;
+}
+.step-overlay-demo .step-bubble .step-text {
+  color:#cdcdcd; font-size:13px; line-height:1.5; margin-bottom:10px;
+}
+.step-overlay-demo .step-bubble .step-actions {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px;
+}
+.step-overlay-demo .step-bubble .step-actions a { color:#888; cursor:pointer; }
+
+/* Diagnostic panel */
+.diag-panel {
+  background:#1c1c1c; border:1px solid #444;
+}
+.diag-header {
+  padding:14px 18px; border-bottom:1px solid #333;
+  display:flex; align-items:center; gap:10px;
+}
+.diag-header .icon { font-size:24px; color:#6cf; }
+.diag-header .title { color:#6cf; font-weight:bold; font-size:14px; flex:1; }
+.diag-header .meta { color:#888; font-size:11px; }
+
+.diag-card {
+  margin: 12px 14px; padding: 12px 14px; border-radius: 3px;
+}
+.diag-card.critical { background:#3a1f1f; border-left:4px solid #d04020; }
+.diag-card.strong   { background:#3a2a1f; border-left:4px solid #d09040; }
+.diag-card.tip      { background:#1f2a30; border-left:4px solid #6cf; }
+.diag-card .level-label {
+  font-size:10px; font-weight:bold; text-transform:uppercase;
+  padding:2px 6px; border-radius:2px; margin-bottom:8px; display:inline-block;
+}
+.diag-card.critical .level-label { background:#d04020; color:#fff; }
+.diag-card.strong .level-label { background:#d09040; color:#000; }
+.diag-card.tip .level-label { background:#4080d0; color:#fff; }
+.diag-card .diag-title { color:#cdcdcd; font-size:13px; font-weight:bold; margin-bottom:6px; }
+.diag-card .diag-explanation { color:#aaa; font-size:12px; line-height:1.6; margin-bottom:10px; }
+.diag-card .diag-actions { display:flex; gap:8px; }
+.diag-card .diag-actions button {
+  padding:6px 12px; font-size:11px; cursor:pointer; border:none;
+}
+.diag-card .diag-actions .doc-link { color:#fc4; padding:6px 8px; cursor:pointer; font-size:11px; }
+
+/* Confirmation modal */
+.confirm-modal {
+  background:#1c1c1c; border:2px solid #d09040;
+  padding:20px 26px; max-width:440px; margin:16px auto;
+}
+.confirm-modal .cm-title { color:#fc4; font-weight:bold; font-size:14px; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid #444; }
+.confirm-modal .cm-body { color:#cdcdcd; font-size:12px; line-height:1.6; margin-bottom:14px; }
+.confirm-modal .cm-list { background:#0f0f0f; border:1px solid #333; padding:8px 12px; font-size:11px; color:#cdcdcd; margin-bottom:14px; }
+.confirm-modal .cm-list li { line-height:1.7; }
+.confirm-modal .cm-actions { text-align:right; }
+
+/* Tutorial steps list */
+.tutorial-steps {
+  background:#1c1c1c; border:1px solid #444; padding:14px;
+}
+.tutorial-steps .step-item {
+  padding:8px 12px; border-bottom:1px dotted #333;
+  display:flex; align-items:center; gap:10px; font-size:12px;
+}
+.tutorial-steps .step-item:last-child { border-bottom:none; }
+.tutorial-steps .step-item .num {
+  background:#3a3a3a; color:#888; width:22px; height:22px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:bold;
+}
+.tutorial-steps .step-item.done .num { background:#6c6; color:#000; }
+.tutorial-steps .step-item.current .num { background:#fc4; color:#000; }
+.tutorial-steps .step-item .label { color:#cdcdcd; flex:1; }
+.tutorial-steps .step-item.done .label { color:#888; text-decoration:line-through; }
+.tutorial-steps .step-item.current .label { color:#fc4; font-weight:bold; }
+.tutorial-steps .step-item .widget { color:#888; font-size:10px; font-family:Consolas; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — surlignage via ImGui::GetForegroundDrawList()
+  (rectangles pulsants), voile semi-transparent par-dessus le viewport sans
+  modifier le rendu. Aucun render pass dédié.
+</div>
+
+<div style="background:#1f2a1f; border:1px solid #4a8a4a; padding:10px 14px; color:#a0e0a0; font-size:13px; margin-bottom:12px">
+  🎓 <b>Phase 12 — Accessibilité (5/7)</b> · Le mappeur apprend par la
+  pratique : tutoriel 8 étapes au 1er lancement (vraies actions, vraie zone
+  produite). Diagnostic « Pourquoi ça ne marche pas ? » avec one-click fixes.
+</div>
+
+<!-- BLOC 1 : Modal d'accueil au premier lancement -->
+<h3 style="color:#fc4">Modal d'accueil au premier lancement</h3>
+
+<div class="intro-modal">
+  <div class="imd-icon">🏔</div>
+  <div class="imd-title">Bienvenue dans l'éditeur LCDLLN</div>
+  <div class="imd-body">
+    Vous êtes ici pour la première fois.<br>
+    Voulez-vous suivre le tutoriel de 5 minutes qui vous guidera dans la
+    création de votre première zone ?
+  </div>
+  <div style="background:#1a1a1a; padding:12px 16px; border:1px solid #333">
+    <div style="color:#fc4; font-size:11px; margin-bottom:6px">Vous apprendrez à :</div>
+    <ul class="imd-list" style="margin:0">
+      <li>Créer une zone à partir d'un template</li>
+      <li>Ajouter un mesh insert (grotte)</li>
+      <li>Valider et exporter votre zone</li>
+    </ul>
+  </div>
+  <div class="imd-time">⏱ Durée estimée : ~5 minutes</div>
+  <div class="imd-actions">
+    <button class="btn-primary">Lancer le tutoriel</button>
+    <button class="btn-secondary">Plus tard</button>
+    <button class="btn-tertiary">Passer définitivement</button>
+  </div>
+</div>
+
+<!-- BLOC 2 : Simulation d'une étape avec overlay + surlignage + bulle -->
+<h3 style="color:#fc4; margin-top:24px">Étape 1/8 — Surlignage widget + bulle d'instruction</h3>
+
+<div class="step-overlay-demo">
+  <div class="menubar-demo">
+    <span class="item target">Fichier ▾</span>
+    <span class="item" style="opacity:0.5">Vue</span>
+    <span class="item" style="opacity:0.5">Outils</span>
+    <span class="item" style="opacity:0.5">Options</span>
+    <span class="item" style="opacity:0.5">Aide</span>
+  </div>
+  <div class="veil"></div>
+  <div class="step-bubble">
+    <div class="step-num">Étape 1/8</div>
+    <div class="step-text">
+      Ouvrons le dialog de création de zone. Clique sur
+      <b>Fichier → Nouvelle zone depuis preset</b>.
+    </div>
+    <div class="step-actions">
+      <a>« Passer le tutoriel</a>
+      <a>Quitter pour l'instant »</a>
+    </div>
+  </div>
+</div>
+
+<!-- BLOC 3 : Liste des 8 étapes -->
+<h3 style="color:#fc4; margin-top:24px">Séquence complète des 8 étapes</h3>
+
+<div class="tutorial-steps">
+  <div class="step-item done">
+    <span class="num">✓</span>
+    <span class="label">Ouvrir Fichier → Nouvelle zone depuis preset</span>
+    <span class="widget">menubar.file.new_from_preset</span>
+  </div>
+  <div class="step-item done">
+    <span class="num">✓</span>
+    <span class="label">Choisir la Forêt tempérée</span>
+    <span class="widget">zone_preset_dialog.temperate_forest</span>
+  </div>
+  <div class="step-item current">
+    <span class="num">3</span>
+    <span class="label">Laisser les sliders par défaut et cliquer Créer la zone</span>
+    <span class="widget">zone_preset_dialog.button.create</span>
+  </div>
+  <div class="step-item">
+    <span class="num">4</span>
+    <span class="label">Cliquer sur Cave dans la barre d'outils</span>
+    <span class="widget">toolbar.button.cave</span>
+  </div>
+  <div class="step-item">
+    <span class="num">5</span>
+    <span class="label">Sélectionner cave_small_01 dans le catalogue</span>
+    <span class="widget">panel.tool_properties.catalog.cave_small_01</span>
+  </div>
+  <div class="step-item">
+    <span class="num">6</span>
+    <span class="label">Cliquer sur le terrain pour poser la grotte</span>
+    <span class="widget">viewport (custom validator)</span>
+  </div>
+  <div class="step-item">
+    <span class="num">7</span>
+    <span class="label">Cliquer sur 🛡 Valider dans la toolbar</span>
+    <span class="widget">toolbar.button.validate</span>
+  </div>
+  <div class="step-item">
+    <span class="num">8</span>
+    <span class="label">Découvrir Fichier → Exporter (informationnel)</span>
+    <span class="widget">menubar.file.export</span>
+  </div>
+</div>
+
+<!-- BLOC 4 : Système de diagnostic -->
+<h3 style="color:#fc4; margin-top:24px">🩺 Pourquoi ça ne marche pas ? — Diagnostic contextuel</h3>
+
+<div class="diag-panel">
+  <div class="diag-header">
+    <div class="icon">🩺</div>
+    <div class="title">Pourquoi ça ne marche pas ?</div>
+    <div class="meta">3 suggestions · Analyse 84 ms</div>
+  </div>
+
+  <!-- Critique -->
+  <div class="diag-card critical">
+    <div class="level-label">🔴 Critique</div>
+    <div class="diag-title">Tu as essayé d'exporter mais ta zone a 2 erreurs</div>
+    <div class="diag-explanation">
+      L'export est bloqué tant que les erreurs ne sont pas corrigées.
+      Ouvre le panel de Validation pour voir les détails et naviguer
+      jusqu'aux problèmes.
+    </div>
+    <div class="diag-actions">
+      <button class="btn-primary">Ouvrir le panel Validation</button>
+      <span class="doc-link">📖 Comprendre</span>
+    </div>
+  </div>
+
+  <!-- Suggestion forte -->
+  <div class="diag-card strong">
+    <div class="level-label">🟠 Suggestion forte</div>
+    <div class="diag-title">Tes rivières flottent au-dessus du terrain</div>
+    <div class="diag-explanation">
+      Tu as appliqué une <b>érosion hydraulique</b> APRÈS avoir généré ton
+      réseau de rivières. Les rivières suivent l'ancienne topographie alors
+      que le terrain a changé. Re-lance le watershed pour que les rivières
+      suivent le nouveau terrain.
+    </div>
+    <div class="diag-actions">
+      <button class="btn-primary" style="background:#d09040; color:#000">⚙ Re-lancer le watershed</button>
+      <span class="doc-link">📖 Comprendre pourquoi</span>
+    </div>
+  </div>
+
+  <!-- Astuce -->
+  <div class="diag-card tip">
+    <div class="level-label">🟡 Astuce</div>
+    <div class="diag-title">47 modifications sans sauvegarder</div>
+    <div class="diag-explanation">
+      Tu as effectué 47 actions depuis ta dernière sauvegarde.
+      Un crash maintenant te ferait perdre tout ce travail.
+    </div>
+    <div class="diag-actions">
+      <button class="btn-primary" style="background:#4080d0">💾 Sauvegarder maintenant</button>
+      <span class="doc-link">Ignorer cette suggestion</span>
+    </div>
+  </div>
+
+  <div style="padding:14px 18px; color:#888; font-size:11px; font-style:italic; text-align:center; border-top:1px solid #333">
+    Aucune autre suggestion. Tu as l'air sur les bons rails ! 👍
+  </div>
+</div>
+
+<!-- BLOC 5 : Modal de confirmation pour one-click action -->
+<h3 style="color:#fc4; margin-top:24px">Confirmation modale avant action one-click</h3>
+
+<div class="confirm-modal">
+  <div class="cm-title">⚙ Re-lancer le watershed ?</div>
+  <div class="cm-body">
+    Cette action automatique va :
+  </div>
+  <ul class="cm-list" style="margin:0; padding-left:24px">
+    <li>Re-générer le réseau hydrographique avec les paramètres actuels</li>
+    <li>Remplacer les rivières existantes</li>
+    <li>Ajouter une commande dans l'historique (annulable via Ctrl+Z)</li>
+  </ul>
+  <div class="cm-body" style="margin-top:14px; color:#888; font-size:11px; font-style:italic">
+    Si tu préfères contrôler les paramètres manuellement, choisis « Non »
+    et utilise l'outil River Network depuis la toolbar.
+  </div>
+  <div class="cm-actions">
+    <button class="btn-secondary">Non, je préfère le faire moi-même</button>
+    <button class="btn-primary" style="background:#d09040; color:#000">Oui, re-lancer</button>
+  </div>
+</div>
+
+<!-- BLOC 6 : Catalogue des 10 règles de diagnostic -->
+<div class="shell" style="margin-top:16px; grid-template-rows:auto">
+  <div class="dock" style="grid-template-columns:1fr 1fr">
+
+    <div class="panel">
+      <div class="title amber">Catalogue MVP — 10 règles de diagnostic</div>
+      <div class="body">
+        <table style="width:100%; font-size:11px; color:#cdcdcd">
+          <tr style="color:#fc4">
+            <th style="text-align:left; padding:3px">Rule ID</th>
+            <th style="text-align:center; padding:3px">Imp.</th>
+            <th style="text-align:left; padding:3px">One-click</th>
+          </tr>
+          <tr><td>workflow.empty_zone_active_tool</td><td style="text-align:center">🟠</td><td>Ouvrir Zone Preset</td></tr>
+          <tr style="background:#2a1f1c"><td><b>workflow.rivers_after_erosion</b></td><td style="text-align:center"><b>🟠</b></td><td><b>Re-lancer watershed</b></td></tr>
+          <tr><td>workflow.no_sea_level_set</td><td style="text-align:center">🟡</td><td>—</td></tr>
+          <tr><td>workflow.no_active_tool</td><td style="text-align:center">🟡</td><td>Highlight toolbar</td></tr>
+          <tr><td>workflow.export_attempted_with_errors</td><td style="text-align:center">🔴</td><td>Ouvrir Validation</td></tr>
+          <tr><td>workflow.unsaved_changes_long_time</td><td style="text-align:center">🟡</td><td>Sauvegarder</td></tr>
+          <tr><td>workflow.tool_selected_but_no_action</td><td style="text-align:center">🟡</td><td>Ouvrir F1 sur l'outil</td></tr>
+          <tr><td>workflow.preset_just_applied_no_save</td><td style="text-align:center">🟡</td><td>Sauvegarder</td></tr>
+          <tr><td>workflow.cave_placed_no_camouflage</td><td style="text-align:center">🟡</td><td>Ré-éditer</td></tr>
+          <tr><td>workflow.simple_mode_advanced_attempted</td><td style="text-align:center">🟡</td><td>Basculer Advanced</td></tr>
+        </table>
+        <div style="margin-top:12px; font-size:11px; color:#888">
+          ➜ Architecture extensible : Phase 13 et tickets futurs peuvent
+          ajouter des règles sans modifier le service.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Phase 12 — Bilan</div>
+      <div class="body" style="font-size:11px; line-height:1.7">
+        <div style="color:#6c6">✅ M100.45 Mode + Tool Presets</div>
+        <div style="color:#6c6">✅ M100.46 Zone Presets Library</div>
+        <div style="color:#6c6">✅ M100.47 Tooltips & F1 Doc</div>
+        <div style="color:#6c6">✅ M100.48 Zone Validation</div>
+        <div style="color:#fc4">⏳ <b>M100.49 Tutoriel & Diagnostic (en cours)</b></div>
+        <div style="color:#888">⏳ M100.50 Quick Start Wizard</div>
+        <div style="color:#888">⏳ M100.51 CI Deployment</div>
+        <div style="margin-top:10px; padding-top:6px; border-top:1px dashed #444; color:#666">
+          Au 1er lancement, un mappeur sans formation produit une zone
+          jouable en 5 minutes en suivant le tutoriel.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>M100.49 — Tutoriel interactif & Diagnostic · LCDLLN World Editor</footer>
+</body></html>

@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.47 — Tooltips & F1 Doc</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.rich-tooltip {
+  background:#1a1a1a; border:1px solid #4080d0; padding:10px 12px;
+  width:280px; box-shadow:0 6px 20px rgba(0,0,0,0.6);
+  font-size:12px;
+}
+.rich-tooltip .tip-title { color:#6cf; font-weight:bold; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #333; }
+.rich-tooltip .tip-mode { color:#888; font-size:10px; font-style:italic; margin-left:6px; }
+.rich-tooltip .tip-desc { color:#cdcdcd; line-height:1.5; margin-bottom:8px; }
+.rich-tooltip .tip-svg { background:#0f0f0f; border:1px solid #333; padding:6px; margin-bottom:8px; }
+.rich-tooltip .tip-meta { color:#888; font-size:11px; line-height:1.6; }
+.rich-tooltip .tip-meta b { color:#cdcdcd; }
+.rich-tooltip .tip-link { color:#fc4; margin-top:6px; font-size:11px; cursor:pointer; }
+.rich-tooltip .tip-link:hover { text-decoration:underline; }
+
+.help-window {
+  background:#1c1c1c; border:2px solid #4080d0;
+  display:grid; grid-template-columns:240px 1fr;
+  height:560px; box-shadow:0 12px 40px rgba(0,0,0,0.7);
+}
+.help-window .toc {
+  background:#181818; border-right:1px solid #333;
+  padding:0; overflow-y:auto;
+}
+.help-window .toc .search {
+  padding:10px 12px; border-bottom:1px solid #333;
+  background:#0f0f0f;
+}
+.help-window .toc .search input {
+  width:100%; background:#1c1c1c; border:1px solid #444;
+  color:#cdcdcd; padding:6px 10px; font-size:12px; box-sizing:border-box;
+}
+.help-window .toc-list { padding:8px 0; }
+.help-window .toc-item {
+  padding:5px 14px; font-size:12px; color:#cdcdcd; cursor:pointer;
+  border-left:3px solid transparent;
+}
+.help-window .toc-item:hover { background:#222; }
+.help-window .toc-item.parent { color:#fc4; font-weight:bold; padding-top:8px; }
+.help-window .toc-item.child { padding-left:24px; color:#aaa; }
+.help-window .toc-item.subchild { padding-left:38px; color:#888; font-size:11px; }
+.help-window .toc-item.active { background:#2a1f1c; color:#fc4; border-left-color:#fc4; }
+.help-window .content {
+  padding:20px 26px; overflow-y:auto;
+}
+.help-window .content h1 {
+  color:#6cf; font-size:22px; margin:0 0 12px 0; padding-bottom:8px; border-bottom:1px solid #333;
+}
+.help-window .content h2 { color:#fc4; font-size:16px; margin:18px 0 8px 0; }
+.help-window .content p { color:#cdcdcd; line-height:1.65; font-size:13px; margin:0 0 12px 0; }
+.help-window .content code { background:#0f0f0f; color:#a0d0ff; padding:1px 6px; font-size:11px; border-radius:2px; }
+.help-window .content ul { color:#cdcdcd; line-height:1.7; }
+.help-window .content .tip {
+  background:#1f2a30; border-left:3px solid #6cf;
+  padding:8px 12px; margin:12px 0; color:#a0d0ff; font-size:12px;
+}
+.help-window .content .warning {
+  background:#2a2520; border-left:3px solid #fc4;
+  padding:8px 12px; margin:12px 0; color:#fc4; font-size:12px;
+}
+.help-window .content .svg-fig {
+  background:#0f0f0f; border:1px solid #333; padding:10px;
+  margin:12px 0; text-align:center;
+}
+.help-window .content .nav-buttons {
+  margin-top:24px; padding-top:14px; border-top:1px solid #333;
+  display:flex; justify-content:space-between; font-size:12px;
+}
+.help-window .content .nav-buttons a { color:#fc4; cursor:pointer; }
+
+.search-results {
+  background:#1a1a1a; border:1px solid #4080d0;
+  padding:8px 0; margin-top:4px;
+}
+.search-result {
+  padding:8px 14px; border-bottom:1px dotted #333; cursor:pointer; font-size:11px;
+}
+.search-result:hover { background:#222; }
+.search-result .res-title { color:#6cf; font-weight:bold; margin-bottom:4px; }
+.search-result .res-snippet { color:#888; line-height:1.5; }
+.search-result .res-snippet mark { background:#fc4; color:#000; padding:0 2px; }
+
+.help-button {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; background:#3a3a3a; border:1px solid #555;
+  color:#fc4; font-size:14px; cursor:pointer;
+  margin-left:auto;
+}
+.help-button:hover { background:#fc4; color:#000; }
+
+.panel-with-help {
+  background:#1c1c1c; border:1px solid #444; padding:14px;
+}
+.panel-with-help .panel-header {
+  display:flex; align-items:center; gap:8px;
+  padding-bottom:8px; border-bottom:1px solid #444; margin-bottom:10px;
+}
+.panel-with-help .panel-header .title { color:#d09040; font-size:13px; font-weight:bold; flex:1; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — la fenêtre F1 est un panel ImGui standard
+  dockable. Tooltips rendus via ImGui draw-list standard. Aucun nouveau render
+  pass, aucune touche caméra.
+</div>
+
+<div style="background:#1f2a1f; border:1px solid #4a8a4a; padding:10px 14px; color:#a0e0a0; font-size:13px; margin-bottom:12px">
+  🚀 <b>Phase 12 — Accessibilité (3/7)</b> · Le mappeur n'a plus à deviner :
+  tooltips au survol + F1 ouvre une doc complète navigable. Contenu en
+  markdown éditable sans recompiler.
+</div>
+
+<!-- BLOC 1 : Tooltip riche en action (sur un slider Hydraulic) -->
+<div class="shell" style="grid-template-rows:auto">
+  <div class="dock" style="grid-template-columns:1fr 1fr">
+
+    <div class="panel-with-help">
+      <div class="panel-header">
+        <span class="title">Hydraulic Erosion</span>
+        <span class="help-button" title="Ouvrir la doc (F1)">❓</span>
+      </div>
+      <div style="font-size:12px; color:#cdcdcd">
+        <div style="display:flex; align-items:center; padding:6px 0; gap:8px;">
+          <span style="min-width:130px">Nombre de gouttes</span>
+          <div style="flex:1; height:10px; background:#333; position:relative; border:2px dashed #4080d0">
+            <div style="background:#d09040; height:100%; width:50%"></div>
+          </div>
+          <span style="color:#888; font-size:11px; min-width:50px; text-align:right">100k</span>
+        </div>
+        <div style="font-size:10px; color:#888; margin-top:4px; font-style:italic">
+          ⏱ Survol &gt; 600 ms → tooltip s'affiche ↓
+        </div>
+      </div>
+    </div>
+
+    <!-- Tooltip riche en mode Simple -->
+    <div class="rich-tooltip">
+      <div class="tip-title">Nombre de gouttes <span class="tip-mode">(mode Simple)</span></div>
+      <div class="tip-desc">
+        Plus de gouttes = érosion plus marquée. Augmente le temps de calcul.
+      </div>
+      <div class="tip-svg">
+        <svg viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg">
+          <!-- Avant -->
+          <text x="2" y="12" fill="#888" font-size="9">Avant</text>
+          <path d="M 5,40 L 35,15 L 65,40 L 95,15 L 100,40" fill="none" stroke="#888" stroke-width="1.5"/>
+          <!-- Après érosion (gouttes peu nombreuses) -->
+          <text x="120" y="12" fill="#888" font-size="9">100k gouttes</text>
+          <path d="M 120,40 L 145,22 L 165,30 L 185,22 L 215,40 Q 195,42 165,40 Q 145,38 120,40" fill="#3a4a30" stroke="#6c6" stroke-width="1.5"/>
+          <!-- Gouttes -->
+          <g fill="#6cf">
+            <circle cx="130" cy="18" r="1"/>
+            <circle cx="150" cy="20" r="1"/>
+            <circle cx="172" cy="20" r="1"/>
+            <circle cx="195" cy="25" r="1"/>
+          </g>
+        </svg>
+      </div>
+      <div class="tip-meta">
+        <b>Défaut</b> : 100 000<br>
+        <b>Plage</b> : 10 000 — 500 000
+      </div>
+      <div class="tip-link">📖 En savoir plus (F1) →</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BLOC 2 : Fenêtre F1 / Help Window -->
+<h3 style="color:#fc4; margin-top:16px;">F1 — Fenêtre de documentation embarquée</h3>
+
+<div class="help-window">
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="search">
+      <input type="text" placeholder="🔍 Rechercher…" value="érosion">
+    </div>
+
+    <!-- Résultats de recherche affichés sous le champ -->
+    <div class="search-results">
+      <div class="search-result">
+        <div class="res-title">Érosion hydraulique</div>
+        <div class="res-snippet">L'<mark>érosion</mark> hydraulique simule N gouttes d'eau parcourant le terrain depuis les points hauts...</div>
+      </div>
+      <div class="search-result">
+        <div class="res-title">Érosion thermale et vent</div>
+        <div class="res-snippet">Deux mécanismes d'<mark>érosion</mark> complémentaires : thermal effondre les pentes...</div>
+      </div>
+      <div class="search-result">
+        <div class="res-title">Glossaire — Érosion</div>
+        <div class="res-snippet">Phénomène par lequel le relief évolue sous l'action de l'eau, du vent...</div>
+      </div>
+    </div>
+
+    <div class="toc-list" style="opacity:0.7">
+      <div class="toc-item parent">📘 Bienvenue</div>
+      <div class="toc-item">Premiers pas</div>
+      <div class="toc-item parent">⚙ Les outils</div>
+      <div class="toc-item child">Vue d'ensemble</div>
+      <div class="toc-item child">Sculpter</div>
+      <div class="toc-item child">Peindre (Splat)</div>
+      <div class="toc-item child">L'eau</div>
+      <div class="toc-item child">Macros (Mountain/Valley)</div>
+      <div class="toc-item child parent" style="background:#2a1f1c">▾ Érosion</div>
+      <div class="toc-item subchild active">▸ Hydraulic</div>
+      <div class="toc-item subchild">Thermal</div>
+      <div class="toc-item subchild">Wind</div>
+      <div class="toc-item parent">🏔 Volumes 3D</div>
+      <div class="toc-item child">Grottes</div>
+      <div class="toc-item child">Overhangs</div>
+      <div class="toc-item child">Arches</div>
+      <div class="toc-item child">Donjons</div>
+      <div class="toc-item parent">📋 Zone presets</div>
+      <div class="toc-item parent">📖 Glossaire</div>
+      <div class="toc-item parent">❓ FAQ</div>
+    </div>
+  </div>
+
+  <!-- Contenu -->
+  <div class="content">
+    <h1>Érosion hydraulique</h1>
+    <p>
+      L'érosion hydraulique simule <code>N</code> gouttes d'eau parcourant
+      le terrain depuis les points hauts. Chaque goutte transporte du
+      sédiment qu'elle dépose dans les creux, ce qui creuse les vallées
+      et adoucit le terrain de façon réaliste.
+    </p>
+
+    <div class="svg-fig">
+      <svg viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Avant -->
+        <text x="10" y="14" fill="#888" font-size="10">Avant érosion</text>
+        <path d="M 10,80 L 60,20 L 110,80 L 160,20 L 180,80" fill="none" stroke="#888" stroke-width="2"/>
+        <!-- Après -->
+        <text x="220" y="14" fill="#888" font-size="10">Après 100k gouttes</text>
+        <path d="M 220,80 L 260,30 Q 270,40 280,55 L 290,80 L 320,80 L 330,35 Q 340,45 350,55 L 360,80 L 390,80"
+              fill="#3a4a30" stroke="#6c6" stroke-width="2"/>
+        <!-- Flèches eau -->
+        <g stroke="#6cf" stroke-width="1.2" fill="none">
+          <path d="M 265,30 L 270,55 L 280,75" marker-end="url(#arrow)"/>
+        </g>
+      </svg>
+      <div style="font-size:10px; color:#888; margin-top:4px">Schéma : effet typique de l'érosion hydraulique sur des reliefs anguleux</div>
+    </div>
+
+    <h2>Paramètres</h2>
+    <ul>
+      <li><b>Nombre de gouttes</b> {#numDroplets} : 10k - 500k. Plus = érosion plus marquée, calcul plus long.</li>
+      <li><b>Capacité sédiment</b> {#sedimentCapacity} : multiplicateur. Élevé = creuse plus, dépose plus.</li>
+      <li><b>Taux d'érosion / déposition</b> : ratio. Garder ~0.3 / 0.3 pour stabilité visuelle.</li>
+    </ul>
+
+    <div class="tip">
+      <b>💡 Astuce</b> — Pour un premier essai, prends le preset
+      « Réaliste » qui pose tous les paramètres à des valeurs équilibrées.
+      Tu peux toujours tweaker après.
+    </div>
+
+    <h2>Ordre recommandé</h2>
+    <p>
+      L'érosion hydraulique fonctionne mieux dans cet ordre :
+    </p>
+    <ol style="color:#cdcdcd; line-height:1.7">
+      <li>Pose tes <a style="color:#6cf">chaînes de montagnes</a> (M100.35)</li>
+      <li>Génère le <a style="color:#6cf">réseau de rivières</a> (M100.36)</li>
+      <li>Configure ta <a style="color:#6cf">côte</a> (M100.37)</li>
+      <li>Lance l'érosion hydraulique (ici)</li>
+      <li>Re-lance le watershed pour aligner les rivières sur le nouveau terrain</li>
+    </ol>
+
+    <div class="warning">
+      <b>⚠ Attention</b> — Si tu as déjà placé des grottes (M100.40), elles ne
+      bougeront pas mais la heightmap autour pourrait s'éroder en dessous.
+      Vérifie l'anchoring après.
+    </div>
+
+    <div class="nav-buttons">
+      <a>◀ Précédent : Macros</a>
+      <a>Suivant : Thermal ▶</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- BLOC 3 : Aperçu de la structure des contenus -->
+<div class="shell" style="margin-top:16px; grid-template-rows:auto">
+  <div class="dock" style="grid-template-columns:1fr 1fr">
+
+    <div class="panel">
+      <div class="title blue">Format tooltip JSON</div>
+      <div class="body">
+        <pre style="background:#0f0f0f; padding:10px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0; line-height:1.5">
+{
+  "toolId": "hydraulic_erosion",
+  "tooltips": {
+    "numDroplets": {
+      "label": "Nombre de gouttes",
+      "description_simple":
+        "Plus de gouttes = érosion plus marquée.",
+      "description_advanced":
+        "Particules. 50k pour preview, 500k+ pour qualité.",
+      "svgInline": "&lt;svg viewBox='0 0 200 80'&gt;...&lt;/svg&gt;",
+      "defaultValue": "100000",
+      "range": "10000 - 500000",
+      "docSectionId":
+        "tool/hydraulic_erosion#numDroplets"
+    },
+    "sedimentCapacity": { /* ... */ }
+    // ~80-100 entrées total sur 13 outils
+  }
+}</pre>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Markdown source (extrait)</div>
+      <div class="body">
+        <pre style="background:#0f0f0f; padding:10px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0; line-height:1.5">
+# Érosion hydraulique
+{#tool/hydraulic_erosion}
+
+L'érosion hydraulique simule N gouttes...
+
+&lt;svg-fig src="hydraulic_before_after.svg" /&gt;
+
+## Paramètres
+
+### Nombre de gouttes
+{#numDroplets}
+
+Plus de gouttes = érosion plus marquée...
+
+## Ordre recommandé
+
+1. Pose tes [chaînes de montagnes](tool/mountain_macro)
+2. Génère le [réseau de rivières](tool/river_network)
+...
+
+[← Précédent : Macros](tool/mountain_macro)
+[Suivant : Thermal →](tool/thermal_wind_erosion)
+</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">Couverture MVP</div>
+      <div class="body" style="font-size:11px; line-height:1.7">
+        <div><b style="color:#fc4">13 fichiers tooltips JSON</b> (un par outil) · ~80-100 entrées au total</div>
+        <div><b style="color:#fc4">12 sections markdown</b> : Bienvenue, Premiers pas, Vue d'ensemble outils, Sculpter, Peindre, Eau, Macros, Érosion, Volumes 3D, Zone presets, Glossaire, FAQ</div>
+        <div><b style="color:#fc4">~5000 mots</b> de doc estimés · 15-20 SVG illustrations inline</div>
+        <div><b style="color:#fc4">Recherche</b> BM25 simplifié, FR + EN stopwords, index en RAM (< 100 ms boot)</div>
+        <div><b style="color:#fc4">Hot-reload</b> dev (<code>Ctrl+Shift+H</code>) pour itérer sans relancer l'éditeur</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Phase 12 — Bilan</div>
+      <div class="body" style="font-size:11px; line-height:1.7">
+        <div style="color:#6c6">✅ M100.45 Mode + Tool Presets</div>
+        <div style="color:#6c6">✅ M100.46 Zone Presets Library</div>
+        <div style="color:#fc4">⏳ <b>M100.47 Tooltips & F1 Doc (en cours)</b></div>
+        <div style="color:#888">⏳ M100.48 Zone Validation</div>
+        <div style="color:#888">⏳ M100.49 Tutoriel & Diagnostic</div>
+        <div style="color:#888">⏳ M100.50 Quick Start Wizard</div>
+        <div style="color:#888">⏳ M100.51 CI Deployment</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.47 — Tooltips & F1 Doc · Aide intégrée offline · LCDLLN World Editor</footer>
+</body></html>

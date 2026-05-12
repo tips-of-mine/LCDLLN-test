@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.46 — Zone Presets Library</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.phase13-banner { background:#1f2a30; border:1px solid #406070; padding:8px 12px; color:#90c0e0; font-size:12px; margin-bottom:12px; }
+.phase13-banner b { color:#a0d0ff; }
+.dialog {
+  background:#1c1c1c; border:2px solid #4080d0;
+  padding:20px; max-width:1100px; margin:0 auto 16px auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+}
+.dialog .dialog-title {
+  color:#6cf; font-size:16px; font-weight:bold; margin-bottom:14px;
+  padding-bottom:8px; border-bottom:1px solid #444;
+}
+.dialog .section-title { color:#fc4; font-size:12px; margin: 12px 0 8px 0; }
+.preset-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.preset-card {
+  background:#1a1a1a; border:1px solid #444;
+  padding:8px; cursor:pointer; transition:border-color 0.2s;
+}
+.preset-card:hover { border-color:#888; }
+.preset-card.selected { border-color:#6cf; background:#1f2a30; box-shadow:0 0 8px rgba(108,204,255,0.4); }
+.preset-card .thumb {
+  width:100%; height:90px; margin-bottom:6px;
+  display:flex; align-items:flex-end; justify-content:flex-start;
+  padding:6px; box-sizing:border-box;
+}
+.preset-card .thumb-label { font-size: 24px; color: #fff; opacity:0.85; }
+.preset-card .name { font-size:12px; color:#cdcdcd; font-weight:bold; }
+.preset-card .tags { font-size:10px; color:#888; margin-top:2px; }
+
+/* Color themes per preset (thumbnails are CSS gradients) */
+.thumb.temperate { background: linear-gradient(135deg, #4a6a3a 0%, #3a5028 50%, #6a8050 100%); }
+.thumb.rocky-coast { background: linear-gradient(135deg, #2a3540 0%, #4a5560 40%, #6a6058 80%, #8090a0 100%); }
+.thumb.desert { background: linear-gradient(135deg, #c8a060 0%, #d9b070 50%, #e0c890 100%); }
+.thumb.snowy { background: linear-gradient(135deg, #8090a0 0%, #c0c8d0 50%, #f0f0f5 100%); }
+.thumb.marsh { background: linear-gradient(135deg, #3a4a30 0%, #4a5a3a 50%, #5a6555 100%); }
+.thumb.elven { background: linear-gradient(135deg, #2a4a3a 0%, #4a6850 50%, #80a080 100%); }
+.thumb.dead { background: linear-gradient(135deg, #5a4a3a 0%, #4a3a2a 50%, #2a2520 100%); }
+.thumb.volcanic { background: linear-gradient(135deg, #5a2a20 0%, #3a1a10 50%, #1a0a05 80%, #ff6020 100%); }
+
+.desc-block {
+  background:#0f1418; border:1px solid #2a4050;
+  padding:10px 14px; font-size:12px; color:#cdcdcd;
+  line-height:1.5; margin: 10px 0;
+}
+.desc-block .desc-title { color:#6cf; font-weight:bold; margin-bottom:6px; font-size:13px; }
+.desc-block .meta { color:#888; font-size:11px; margin-top:6px; }
+
+.customization { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 10px 0; }
+.cust-slider { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+.cust-slider .name { color: #cdcdcd; min-width: 130px; }
+.cust-slider .slider { flex: 1; height: 10px; background: #333; position: relative; }
+.cust-slider .slider .fill { background: #4080d0; height: 100%; }
+.cust-slider .val { color:#6cf; min-width: 60px; text-align: right; font-size: 11px; }
+
+.deco-note {
+  background:#2a2520; border:1px solid #5a4530;
+  padding:10px 14px; font-size:12px; color:#c0a080;
+  border-radius: 3px; margin: 12px 0;
+}
+.deco-note .ⓘ { color:#fc4; font-size:14px; margin-right:6px; }
+
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #444; }
+.btn-primary { background:#4080d0; color:#fff; padding:8px 20px; border:none; font-size:13px; cursor:pointer; font-weight:bold; }
+.btn-secondary { background:#3a3a3a; color:#cdcdcd; padding:8px 20px; border:1px solid #555; font-size:13px; cursor:pointer; }
+
+/* Modale de progression */
+.modal-progress-card {
+  background:#1c1c1c; border:2px solid #fc4;
+  padding:20px 26px; max-width:480px; margin: 16px auto;
+}
+.modal-progress-card .mp-title { color:#fc4; font-weight:bold; font-size:14px; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid #444; }
+.modal-progress-card .step-current { color:#cdcdcd; font-size:13px; margin-bottom:10px; }
+.modal-progress-card .step-num { color:#fc4; font-weight:bold; }
+.modal-progress-card .bar { background:#333; height:14px; position:relative; margin-bottom:6px; }
+.modal-progress-card .bar .fill { background:linear-gradient(90deg, #fc4, #ffb040); height:100%; width:37%; }
+.modal-progress-card .timing { font-size:11px; color:#888; display:flex; justify-content:space-between; }
+.modal-progress-card .step-list {
+  margin-top: 14px; padding-top:10px; border-top:1px dashed #444;
+  font-size: 11px;
+}
+.modal-progress-card .step-list .step { padding: 3px 0; display: flex; justify-content: space-between; }
+.modal-progress-card .step-list .step.done { color: #6c6; }
+.modal-progress-card .step-list .step.current { color: #fc4; font-weight: bold; }
+.modal-progress-card .step-list .step.pending { color: #666; }
+
+/* JSON sample */
+pre.json-sample { background:#0f0f0f; padding:12px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0; line-height:1.4; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — l'application d'un preset utilise les outils existants
+  (M100.35-43) qui respectent déjà l'invariant. Aucun nouveau render pass, aucune touche
+  caméra. La modale de progression est ImGui.
+</div>
+
+<div class="phase13-banner">
+  <b>📝 Préparation Phase 13</b> — la section <code>decoration: []</code> est laissée vide
+  pour le MVP. Quand Phase 13 livrera Vegetation Painter, Linear Structures, Signposts et
+  Decorative Scatter, les 8 presets seront enrichis sans refactor du format JSON.
+</div>
+
+<!-- Dialog principal -->
+<div class="dialog">
+  <div class="dialog-title">📁 Nouvelle zone depuis preset</div>
+
+  <div class="section-title">Choisissez un template (8 disponibles)</div>
+
+  <div class="preset-grid">
+    <div class="preset-card">
+      <div class="thumb temperate"><span class="thumb-label">🌳</span></div>
+      <div class="name">Forêt tempérée</div>
+      <div class="tags">forest · humid · lowland</div>
+    </div>
+    <div class="preset-card selected">
+      <div class="thumb rocky-coast"><span class="thumb-label">🌊</span></div>
+      <div class="name">Côte rocheuse ✓</div>
+      <div class="tags">coastal · mountainous</div>
+    </div>
+    <div class="preset-card">
+      <div class="thumb desert"><span class="thumb-label">🏜</span></div>
+      <div class="name">Désert</div>
+      <div class="tags">arid · sandy · flat</div>
+    </div>
+    <div class="preset-card">
+      <div class="thumb snowy"><span class="thumb-label">❄</span></div>
+      <div class="name">Plateau enneigé</div>
+      <div class="tags">mountain · snow · cold</div>
+    </div>
+    <div class="preset-card">
+      <div class="thumb marsh"><span class="thumb-label">💧</span></div>
+      <div class="name">Marais</div>
+      <div class="tags">wetland · humid · flat</div>
+    </div>
+    <div class="preset-card">
+      <div class="thumb elven"><span class="thumb-label">🌿</span></div>
+      <div class="name">Vallée elfique</div>
+      <div class="tags">forest · magic · sacred</div>
+    </div>
+    <div class="preset-card">
+      <div class="thumb dead"><span class="thumb-label">💀</span></div>
+      <div class="name">Terres mortes</div>
+      <div class="tags">arid · cursed · eroded</div>
+    </div>
+    <div class="preset-card">
+      <div class="thumb volcanic"><span class="thumb-label">🌋</span></div>
+      <div class="name">Île volcanique</div>
+      <div class="tags">island · volcanic</div>
+    </div>
+  </div>
+
+  <div class="desc-block">
+    <div class="desc-title">📍 Sélection : Côte rocheuse</div>
+    <div>
+      Falaises spectaculaires bordant un océan tempétueux. Chaîne côtière dans
+      l'arrière-pays, lagune protégée derrière une avancée rocheuse, plage de
+      galets accessible par une crique. Idéal pour zones de transition terre-mer.
+    </div>
+    <div class="meta">
+      🏷 Tags : <b>coastal, mountainous, humid</b><br>
+      ⏱ Temps d'exécution estimé : <b>~45 s</b><br>
+      🔧 Opérations : <b>8 commandes</b> (mountain, valley, coastline, lake, river_network, hydraulic, thermal/wind, cave)
+    </div>
+  </div>
+
+  <div class="section-title">Customisation</div>
+  <div class="customization">
+    <div class="cust-slider">
+      <span class="name">Niveau de relief</span>
+      <div class="slider"><div class="fill" style="width:60%"></div></div>
+      <span class="val">1.20</span>
+    </div>
+    <div class="cust-slider">
+      <span class="name">Densité de l'eau</span>
+      <div class="slider"><div class="fill" style="width:40%"></div></div>
+      <span class="val">0.80</span>
+    </div>
+    <div class="cust-slider">
+      <span class="name">Sécheresse</span>
+      <div class="slider"><div class="fill" style="width:50%"></div></div>
+      <span class="val">1.00</span>
+    </div>
+    <div class="cust-slider">
+      <span class="name">Seed RNG</span>
+      <span style="font-family:Consolas; color:#fc4; padding:4px 10px; background:#0f0f0f; border:1px solid #333; flex:1; max-width:80px">42</span>
+    </div>
+  </div>
+
+  <div class="deco-note">
+    <span class="ⓘ">ⓘ</span>
+    <b>Décoration : Phase 13 à venir.</b>
+    La végétation (arbres, champs, fleurs) et les éléments décoratifs (barrières,
+    murs, ponts, panneaux, cailloux) ne sont pas inclus dans ce preset.
+    Vous pourrez les ajouter manuellement après la création, ou attendre la
+    livraison des outils Phase 13.
+  </div>
+
+  <div class="dialog-actions">
+    <button class="btn-secondary">Annuler</button>
+    <button class="btn-primary">Créer la zone →</button>
+  </div>
+</div>
+
+<!-- Modale de progression -->
+<div class="modal-progress-card">
+  <div class="mp-title">⚡ Création de la zone : Côte rocheuse</div>
+
+  <div class="step-current">
+    Étape <span class="step-num">3/8</span> : Configuration de la côte (coastline)
+  </div>
+
+  <div class="bar"><div class="fill"></div></div>
+  <div class="timing">
+    <span>37 % complété</span>
+    <span>Temps écoulé : 17 s · Restant estimé : 28 s</span>
+  </div>
+
+  <div class="step-list">
+    <div class="step done">✓ Étape 1 : Pose de la chaîne de montagnes (mountain_macro)</div>
+    <div class="step done">✓ Étape 2 : Tracé de la vallée glaciaire (valley_macro)</div>
+    <div class="step current">⏳ Étape 3 : Configuration de la côte (coastline)</div>
+    <div class="step pending">◦ Étape 4 : Création de la lagune (lake_polygon)</div>
+    <div class="step pending">◦ Étape 5 : Génération du réseau hydrographique (river_network)</div>
+    <div class="step pending">◦ Étape 6 : Érosion hydraulique (hydraulic_erosion)</div>
+    <div class="step pending">◦ Étape 7 : Érosion thermique + vent (thermal_wind_erosion)</div>
+    <div class="step pending">◦ Étape 8 : Pose d'une grotte cachée (place_cave)</div>
+  </div>
+
+  <div style="text-align:right; margin-top:14px">
+    <button class="btn-secondary">Annuler</button>
+  </div>
+</div>
+
+<!-- Documentation visuelle du format JSON -->
+<div class="shell" style="grid-template-rows: auto">
+  <div class="dock" style="grid-template-columns: 1fr 1fr">
+
+    <div class="panel">
+      <div class="title blue">Format JSON d'un preset</div>
+      <div class="body">
+        <pre class="json-sample">{
+  "version": 1,
+  "id": "rocky_coast",
+  "displayName": {
+    "fr": "Côte rocheuse",
+    "en": "Rocky coast"
+  },
+  "description": {
+    "fr": "Falaises spectaculaires...",
+    "en": "Dramatic cliffs..."
+  },
+  "thumbnail": "thumbnails/rocky_coast.png",
+  "tags": ["coastal", "mountainous", "humid"],
+  "estimatedExecutionSeconds": 45,
+
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "pre_alpine",
+      "polyline": [[1500, 6500], [4500, 6800], [7500, 6500]],
+      "widthMeters": 1200,
+      "heightMeters": 500,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "coastline",
+      "preset": "rocky_cliffs",
+      "seaLevelMeters": 30,
+      "beachEnabled": true,
+      "beachLayerSplat": "Pebble",
+      "cliffsEnabled": true,
+      "affectedBy": []
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "realistic",
+      "numDroplets": 80000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    },
+    // ... 5 autres opérations ...
+  ],
+
+  "decoration": []
+  /* ⬆ Phase 13 enrichira cette section :
+     - vegetation_scatter (arbres, fleurs, champs)
+     - linear_fence / linear_wall / linear_bridge
+     - signpost (panneaux personnalisables)
+     - decorative_scatter (cailloux)
+     Le format ne changera pas. */
+}</pre>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Catalogue MVP — 8 presets</div>
+      <div class="body">
+        <table style="width:100%; font-size:11px; color:#cdcdcd">
+          <tr style="color:#fc4">
+            <th style="text-align:left; padding:4px">ID</th>
+            <th style="text-align:left; padding:4px">Display FR</th>
+            <th style="text-align:right; padding:4px">~temps</th>
+            <th style="text-align:right; padding:4px">ops</th>
+          </tr>
+          <tr><td>temperate_forest</td><td>Forêt tempérée</td><td style="text-align:right">~40s</td><td style="text-align:right">7</td></tr>
+          <tr style="background:#1f2a30"><td><b>rocky_coast</b></td><td><b>Côte rocheuse</b></td><td style="text-align:right"><b>~45s</b></td><td style="text-align:right"><b>8</b></td></tr>
+          <tr><td>desert</td><td>Désert</td><td style="text-align:right">~30s</td><td style="text-align:right">5</td></tr>
+          <tr><td>snowy_plateau</td><td>Plateau enneigé</td><td style="text-align:right">~50s</td><td style="text-align:right">7</td></tr>
+          <tr><td>marshland</td><td>Marais</td><td style="text-align:right">~35s</td><td style="text-align:right">6</td></tr>
+          <tr><td>elven_valley</td><td>Vallée elfique</td><td style="text-align:right">~55s</td><td style="text-align:right">9</td></tr>
+          <tr><td>dead_lands</td><td>Terres mortes</td><td style="text-align:right">~50s</td><td style="text-align:right">7</td></tr>
+          <tr><td>volcanic_island</td><td>Île volcanique</td><td style="text-align:right">~50s</td><td style="text-align:right">8</td></tr>
+        </table>
+
+        <div style="margin-top:12px; font-size:11px; color:#888">
+          Total : <b style="color:#fc4">57 opérations</b> distribuées sur 8 presets.<br>
+          Tous les outils M100.35-43 sont exercés au moins 1 fois.
+        </div>
+
+        <div style="margin-top:14px; padding:10px; background:#1f2a1f; border:1px solid #4a8a4a; font-size:11px; color:#a0e0a0">
+          ✓ Chaque preset référence des <b>tool presets</b> de M100.45<br>
+          ✓ Chaque commande pushed sur <b>CommandStack</b> (undoable individuellement)<br>
+          ✓ Déterminisme : même preset + même seed → terrain.bin byte-equal
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">Customisation — 3 multiplicateurs globaux</div>
+      <div class="body" style="font-size:12px">
+        <table style="width:100%; font-size:11px">
+          <tr style="color:#fc4">
+            <th style="text-align:left">Slider</th>
+            <th style="text-align:left">Paramètres affectés</th>
+            <th style="text-align:left">Effet à 0.0</th>
+            <th style="text-align:left">Effet à 2.0</th>
+          </tr>
+          <tr>
+            <td><b>Niveau de relief</b></td>
+            <td><code>heightMeters, depthMeters, amplitudeMeters</code></td>
+            <td>Plat absolu</td>
+            <td>Altitude doublée</td>
+          </tr>
+          <tr>
+            <td><b>Densité de l'eau</b></td>
+            <td><code>numDroplets, numRiverSources, flowAccumThreshold</code></td>
+            <td>Pas d'eau</td>
+            <td>Hydraulique × 2</td>
+          </tr>
+          <tr>
+            <td><b>Sécheresse</b></td>
+            <td><code>evaporationRate (+), numRivers (-), windStrength (+)</code></td>
+            <td>Très humide</td>
+            <td>Très aride</td>
+          </tr>
+        </table>
+        <div style="margin-top:10px; color:#888; font-size:11px">
+          Une opération avec <code>affectedBy: []</code> n'est sensible à aucun slider.<br>
+          Les opérations Phase 11 (place_cave, place_dungeon, etc.) sont typiquement insensibles.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Phase 12 — Bilan</div>
+      <div class="body" style="font-size:11px; line-height:1.7">
+        <div style="color:#6c6">✅ M100.45 Mode + Presets</div>
+        <div style="color:#fc4">⏳ <b>M100.46 Zone Presets (en cours)</b></div>
+        <div style="color:#888">⏳ M100.47 Tooltips & F1 Doc</div>
+        <div style="color:#888">⏳ M100.48 Zone Validation</div>
+        <div style="color:#888">⏳ M100.49 Tutoriel & Diagnostic</div>
+        <div style="color:#888">⏳ M100.50 Quick Start Wizard</div>
+        <div style="color:#888">⏳ M100.51 CI Deployment</div>
+        <div style="margin-top:10px; padding-top:6px; border-top:1px dashed #444; color:#666">
+          Phase 13 décoration arrivera ensuite, viendra enrichir les 8 presets.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.46 — Zone Presets Library · 8 templates MVP · LCDLLN World Editor</footer>
+</body></html>

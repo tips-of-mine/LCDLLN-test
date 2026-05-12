@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.45 — Simple/Advanced Mode + Tool Presets</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar { background:#2b2b2b; border:1px solid #3a3a3a; padding:4px 6px; display:flex; gap:4px; align-items:center; height:48px; }
+.tool-btn { width:40px; height:40px; background:#3a3a3a; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:18px; color:#ddd; cursor:pointer; position:relative; }
+.tool-btn.active { background:rgba(208,128,64,0.45); border-color:#d09040; color:#fff; }
+.tool-btn .lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:#888; white-space:nowrap; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px; }
+.mode-panel { background:#1c1c1c; border:2px solid #3a3a3a; padding:14px; }
+.mode-panel.simple { border-color:#6c6; }
+.mode-panel.advanced { border-color:#fc4; }
+.mode-panel .mode-title { font-size:14px; font-weight:bold; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #444; }
+.mode-panel.simple .mode-title { color:#6c6; }
+.mode-panel.advanced .mode-title { color:#fc4; }
+.mode-panel .tool-title { color:#d09040; font-size:13px; margin-bottom:10px; }
+.mode-panel .preset-row {
+  background: #2a1f1c; border:1px solid #5a4030;
+  padding: 8px 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.mode-panel .preset-row .lbl { color:#fc4; font-size:11px; }
+.mode-panel .preset-row .dropdown {
+  flex: 1; background:#1c1c1c; border:1px solid #5a4030; padding:4px 8px; color:#fc4; font-size:12px;
+}
+.mode-panel .preset-row .info { color:#888; font-size:14px; cursor:help; }
+.param-row { display: flex; align-items: center; padding: 5px 0; font-size: 12px; gap:8px; }
+.param-row .name { color: #cdcdcd; min-width: 130px; }
+.param-row .slider {
+  flex: 1; height: 10px; background: #333; position: relative;
+}
+.param-row .slider .fill { background: #4080d0; height: 100%; }
+.param-row .slider .fill.amber { background:#d09040; }
+.param-row .val { color: #888; font-size: 11px; min-width: 50px; text-align:right; }
+.params-advanced-marker {
+  color:#fc4; font-size:11px; padding:8px 0 4px 0;
+  border-top: 1px dashed #fc4;
+  margin: 10px 0 6px 0;
+  font-weight: bold;
+}
+.options-menu {
+  position: absolute; right: 14px; top: 56px;
+  background: #1a1a1a; border:1px solid #444;
+  padding: 4px 0; min-width: 280px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.options-menu .item {
+  padding: 8px 14px; font-size:13px; color:#cdcdcd;
+}
+.options-menu .item.sub { padding-left: 28px; font-size:12px; }
+.options-menu .item.sub:hover { background:#2a2a2a; }
+.options-menu .item.parent { color:#fc4; }
+.options-menu .item .check { color:#6c6; margin-right:6px; }
+.toast {
+  background: #1f2a30; border:1px solid #4080d0;
+  padding: 14px 18px; margin: 12px;
+  display: flex; align-items: center; gap: 14px;
+}
+.toast .icon { font-size:24px; color:#6cf; }
+.toast .text { flex:1; }
+.toast .text .title { color:#6cf; font-weight: bold; font-size:13px; margin-bottom:4px; }
+.toast .text .body { color:#cdcdcd; font-size:11px; }
+.toast .dismiss { color:#888; cursor:pointer; padding:4px 8px; font-size:14px; }
+.preset-dropdown-open {
+  position: absolute; background:#1a1a1a;
+  border:1px solid #5a4030; min-width:220px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+}
+.preset-dropdown-open .item {
+  padding: 8px 12px; font-size:12px; color:#cdcdcd; cursor:pointer; border-bottom:1px dotted #2a2a2a;
+}
+.preset-dropdown-open .item:hover { background:#2a2a2a; }
+.preset-dropdown-open .item.selected { background:#3a2a20; color:#fc4; }
+.preset-dropdown-open .item .name { display:block; font-weight:bold; margin-bottom:2px; }
+.preset-dropdown-open .item .desc { display:block; color:#888; font-size:10px; }
+.preset-dropdown-open .item.custom { color:#888; font-style:italic; }
+</style>
+</head>
+<body>
+
+<div style="background:#1f2a1f; border:1px solid #4a8a4a; padding:10px 14px; color:#a0e0a0; font-size:13px; margin-bottom:12px">
+  🚀 <b>Phase 12 démarre — Accessibilité éditeur</b> · M100.45 livre la
+  fondation transverse : mode Simple/Advanced + Presets par outil.
+  L'éditeur devient utilisable dès la première session.
+</div>
+
+<div class="shell">
+
+  <div class="menubar" style="position:relative">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span>
+    <span class="item parent" style="background:#2a1f1c">Options ▾</span>
+    <span class="item">Carte</span>
+
+    <!-- Menu Options ouvert (montre le toggle de mode) -->
+    <div class="options-menu">
+      <div class="item parent">Mode éditeur ▸</div>
+      <div class="item sub"><span class="check">✓</span> Simple — recommandé pour démarrer</div>
+      <div class="item sub" style="padding-left:54px">Avancé — accès complet aux paramètres</div>
+      <div style="border-top:1px solid #444;margin:4px 0"></div>
+      <div class="item">Tooltips avancés <span style="color:#888">(M100.47)</span></div>
+      <div class="item">Tutoriel <span style="color:#888">(M100.49)</span></div>
+      <div class="item">Préférences…</div>
+    </div>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpt">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lake">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="River">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Mountain">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Valley">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="River Net">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn" title="Coastline">🌅<span class="lbl">Coastline</span></div>
+    <div class="tool-btn active" title="Hydraulic">💧↘<span class="lbl">Hydraulic</span></div>
+    <div class="tool-btn" title="Thermal/Wind">⛰⤓🌬<span class="lbl">Thermal/W</span></div>
+    <div class="tool-btn" title="Cave">🕳️<span class="lbl">Cave</span></div>
+    <div class="tool-btn" title="Overhang">⛰⤴<span class="lbl">Overhang</span></div>
+    <div class="tool-btn" title="Arch">🌉<span class="lbl">Arch</span></div>
+    <div class="tool-btn" title="Dungeon">🚪✨<span class="lbl">Dungeon</span></div>
+    <div style="flex:1"></div>
+  </div>
+
+  <!-- Toast first launch -->
+  <div class="toast">
+    <div class="icon">💡</div>
+    <div class="text">
+      <div class="title">Bienvenue dans l'éditeur LCDLLN</div>
+      <div class="body">
+        Vous êtes en <b style="color:#6c6">Mode Simple</b> : seuls les
+        paramètres essentiels sont affichés. Pour accéder à tous les
+        paramètres avancés, allez dans <b>Options → Mode éditeur → Avancé</b>.
+      </div>
+    </div>
+    <div class="dismiss">✕</div>
+  </div>
+
+  <!-- Comparaison Simple vs Advanced du même outil -->
+  <div class="compare-grid">
+
+    <!-- Mode SIMPLE -->
+    <div class="mode-panel simple">
+      <div class="mode-title">✓ Mode Simple <span style="color:#888;font-weight:normal;font-size:11px">(par défaut)</span></div>
+      <div class="tool-title">Hydraulic Erosion</div>
+
+      <div class="preset-row" style="position:relative">
+        <span class="lbl">Preset</span>
+        <div class="dropdown">Réaliste ▼</div>
+        <span class="info">ⓘ</span>
+
+        <!-- Dropdown ouvert pour montrer les options -->
+        <div class="preset-dropdown-open" style="top:32px; left:0; z-index:10">
+          <div class="item">
+            <span class="name">Légère</span>
+            <span class="desc">Érosion douce, vallées subtiles. Terrain quasi-stable.</span>
+          </div>
+          <div class="item selected">
+            <span class="name">• Réaliste</span>
+            <span class="desc">Équilibre par défaut. Vallées visibles, dépositions naturelles.</span>
+          </div>
+          <div class="item">
+            <span class="name">Intense</span>
+            <span class="desc">Vallées creusées profondes. Pour terrain dramatique.</span>
+          </div>
+          <div class="item">
+            <span class="name">Désertique</span>
+            <span class="desc">Peu d'eau, transport limité. À combiner avec Wind.</span>
+          </div>
+          <div class="item custom">
+            <span class="name">Custom (modifié)</span>
+            <span class="desc">Apparaît quand vous tweakez après un preset</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="param-row">
+        <span class="name">Intensité globale</span>
+        <div class="slider"><div class="fill" style="width:30%"></div></div>
+        <span class="val">0.30</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Nombre de gouttes</span>
+        <div class="slider"><div class="fill" style="width:50%"></div></div>
+        <span class="val">100k</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Niveau de détail</span>
+        <div class="slider"><div class="fill" style="width:60%"></div></div>
+        <span class="val">0.60</span>
+      </div>
+
+      <div style="border-top:1px solid #333; margin-top:14px; padding-top:10px;">
+        <span class="btn active" style="background:#6c6;color:#000">▶ Simulate</span>
+        <span style="color:#888; font-size:11px; margin-left:8px">~8 s</span>
+      </div>
+
+      <div style="margin-top:12px; padding:10px; background:#1f2a1f; border:1px solid #4a8a4a; font-size:11px; color:#a0e0a0">
+        ✓ <b>3 paramètres</b> seulement.<br>
+        ✓ Le preset fait tout le travail par défaut.<br>
+        ✓ Néophyte peut produire un terrain en 30 secondes.
+      </div>
+    </div>
+
+    <!-- Mode ADVANCED -->
+    <div class="mode-panel advanced">
+      <div class="mode-title">⚙ Mode Avancé</div>
+      <div class="tool-title">Hydraulic Erosion</div>
+
+      <div class="preset-row">
+        <span class="lbl">Preset</span>
+        <div class="dropdown">Réaliste ▼</div>
+        <span class="info">ⓘ</span>
+      </div>
+
+      <!-- Paramètres simples (toujours visibles) -->
+      <div class="param-row">
+        <span class="name">Intensité globale</span>
+        <div class="slider"><div class="fill" style="width:30%"></div></div>
+        <span class="val">0.30</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Nombre de gouttes</span>
+        <div class="slider"><div class="fill" style="width:50%"></div></div>
+        <span class="val">100k</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Niveau de détail</span>
+        <div class="slider"><div class="fill" style="width:60%"></div></div>
+        <span class="val">0.60</span>
+      </div>
+
+      <div class="params-advanced-marker">— Paramètres avancés —</div>
+
+      <div class="param-row">
+        <span class="name">Capacité sédiment</span>
+        <div class="slider"><div class="fill amber" style="width:40%"></div></div>
+        <span class="val">4.0</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Évaporation</span>
+        <div class="slider"><div class="fill amber" style="width:10%"></div></div>
+        <span class="val">0.01</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Gravité</span>
+        <div class="slider"><div class="fill amber" style="width:60%"></div></div>
+        <span class="val">4.0</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Inertie</span>
+        <div class="slider"><div class="fill amber" style="width:30%"></div></div>
+        <span class="val">0.05</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Pente min érosion</span>
+        <div class="slider"><div class="fill amber" style="width:10%"></div></div>
+        <span class="val">0.01</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Delta max/cell</span>
+        <div class="slider"><div class="fill amber" style="width:50%"></div></div>
+        <span class="val">2.0 m</span>
+      </div>
+      <div class="param-row">
+        <span class="name">Distribution</span>
+        <div style="flex:1;color:#888;font-size:11px">Weighted altitude</div>
+      </div>
+      <div class="param-row">
+        <span class="name">Seed RNG</span>
+        <div style="flex:1;color:#888;font-size:11px">42</div>
+      </div>
+
+      <div style="border-top:1px solid #333; margin-top:14px; padding-top:10px;">
+        <span class="btn active">▶ Simulate</span>
+      </div>
+
+      <div style="margin-top:12px; padding:10px; background:#3a2f1f; border:1px solid #6a5530; font-size:11px; color:#f0c060">
+        ⚙ <b>9 paramètres</b> exposés.<br>
+        Pour technical artists qui veulent du contrôle fin.<br>
+        Le preset sert de point de départ, on peut tout tweaker.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Liste des 13 outils migrés avec leur nombre de presets -->
+  <div class="panel">
+    <div class="title pink">Couverture migration — 13 outils touchés</div>
+    <div class="body">
+      <table style="width:100%; font-size:11px; color:#cdcdcd">
+        <tr style="color:#fc4">
+          <th style="text-align:left; padding:4px">Outil</th>
+          <th style="text-align:left; padding:4px">Display</th>
+          <th style="text-align:center; padding:4px">Presets MVP</th>
+          <th style="text-align:left; padding:4px">Sliders Simple</th>
+          <th style="text-align:right; padding:4px">Cachés en Simple</th>
+        </tr>
+        <tr><td>sculpt</td><td>Sculpter</td><td style="text-align:center">3</td><td>Rayon, Force, Mode</td><td style="text-align:right;color:#888">+3</td></tr>
+        <tr><td>stamp</td><td>Stamp</td><td style="text-align:center">4</td><td>Échelle, Rotation, Hauteur</td><td style="text-align:right;color:#888">+3</td></tr>
+        <tr><td>splat_paint</td><td>Splat</td><td style="text-align:center">3</td><td>Couche, Rayon, Force</td><td style="text-align:right;color:#888">+3</td></tr>
+        <tr><td>lake_polygon</td><td>Lac</td><td style="text-align:center">3</td><td>Niveau, Couleur</td><td style="text-align:right;color:#888">+3</td></tr>
+        <tr><td>river_manual</td><td>Rivière manuelle</td><td style="text-align:center">3</td><td>Largeur, Profondeur</td><td style="text-align:right;color:#888">+3</td></tr>
+        <tr><td>coastline</td><td>Côte</td><td style="text-align:center">3</td><td>Sea level, Plage on/off</td><td style="text-align:right;color:#888">+5</td></tr>
+        <tr><td>mountain_macro</td><td>Chaîne montagnes</td><td style="text-align:center">4</td><td>Hauteur, Largeur</td><td style="text-align:right;color:#888">+4</td></tr>
+        <tr><td>valley_macro</td><td>Vallée</td><td style="text-align:center">3</td><td>Profondeur, Largeur</td><td style="text-align:right;color:#888">+4</td></tr>
+        <tr><td>river_network</td><td>Réseau rivières</td><td style="text-align:center">3</td><td>Densité, Sea level</td><td style="text-align:right;color:#888">+5</td></tr>
+        <tr style="background:#2a1f1c"><td><b>hydraulic_erosion</b></td><td><b>Hydraulic</b></td><td style="text-align:center"><b>4</b></td><td><b>Intensité, Gouttes, Détail</b></td><td style="text-align:right;color:#fc4">+6</td></tr>
+        <tr><td>thermal_wind_erosion</td><td>Thermal/Wind</td><td style="text-align:center">3</td><td>Sous-mode, Force</td><td style="text-align:right;color:#888">+6</td></tr>
+        <tr><td>cave_tool</td><td>Cave</td><td style="text-align:center">catalog</td><td>Catalog, Rotation, Snap</td><td style="text-align:right;color:#888">+10</td></tr>
+        <tr><td>overhang_tool</td><td>Overhang</td><td style="text-align:center">catalog</td><td>Catalog, Pente min</td><td style="text-align:right;color:#888">+8</td></tr>
+        <tr><td>arch_tool</td><td>Arch</td><td style="text-align:center">catalog</td><td>Catalog, 2 piliers</td><td style="text-align:right;color:#888">+5</td></tr>
+        <tr><td>dungeon_tool</td><td>Dungeon</td><td style="text-align:center">catalog</td><td>Catalog, Métadonnées</td><td style="text-align:right;color:#888">+8</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">user_prefs.json (persisté)</div>
+      <div class="body">
+        <pre style="background:#0f0f0f; padding:10px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0">
+{
+  "version": 1,
+  "editorMode": "Simple",
+  "lastPresetByTool": {
+    "hydraulic_erosion": "realistic",
+    "mountain_macro": "alpine_range",
+    "thermal_wind_erosion": "soft_smooth"
+  },
+  "showAdvancedTooltips": false,
+  "tutorialCompletionFlags": {
+    "first_launch_toast_dismissed": true
+  }
+}</pre>
+        <div style="margin-top:10px; font-size:11px; color:#888">
+          Vit dans <code>game/data/editor/user_prefs.json</code><br>
+          .gitignored · sauve atomique (.tmp + rename) · tolérant aux champs manquants
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title blue">Format tool_presets/hydraulic_erosion.json</div>
+      <div class="body">
+        <pre style="background:#0f0f0f; padding:10px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0">
+{
+  "toolId": "hydraulic_erosion",
+  "defaultPreset": "realistic",
+  "presets": [
+    {
+      "id": "subtle",
+      "displayName": "Légère",
+      "description": "Érosion douce, vallées subtiles.",
+      "parameters": {
+        "numDroplets": 30000,
+        "erosionRate": 0.15,
+        "sedimentCapacity": 2.5,
+        "evaporationRate": 0.02,
+        // ... 7 paramètres total
+      }
+    },
+    { "id": "realistic", "displayName": "Réaliste", ... },
+    { "id": "intense", "displayName": "Intense", ... },
+    { "id": "desert", "displayName": "Désertique", ... }
+  ]
+}</pre>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Phase 12 — Bilan</div>
+      <div class="body" style="font-size:11px;line-height:1.7">
+        <div style="color:#fc4">⏳ <b>M100.45 Mode + Presets (en cours)</b></div>
+        <div style="color:#888">⏳ (Phase 13 décoration possiblement ici)</div>
+        <div style="color:#888">⏳ M100.46 Zone Presets</div>
+        <div style="color:#888">⏳ M100.47 Tooltips & F1 Doc</div>
+        <div style="color:#888">⏳ M100.48 Zone Validation</div>
+        <div style="color:#888">⏳ M100.49 Tutoriel & Diagnostic</div>
+        <div style="color:#888">⏳ M100.50 Quick Start Wizard</div>
+        <div style="color:#888">⏳ M100.51 CI Deployment</div>
+        <div style="margin-top:10px; padding-top:6px; border-top:1px dashed #444; color:#666">
+          Phase 2.5 ✅ · Phase 11 ✅<br>
+          Phase 12 vise : <b>30 secondes de la 1ère ouverture à un terrain produit</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.45 — Simple/Advanced Mode + Tool Parameter Presets · Phase 12 démarre · LCDLLN World Editor</footer>
+</body></html>

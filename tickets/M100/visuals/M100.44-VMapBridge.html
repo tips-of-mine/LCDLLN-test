@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.44 — VMap Bridge (clôture Phase 11)</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.completion-banner { background:#1f2a1f; border:1px solid #4a8a4a; padding:10px 14px; color:#a0e0a0; font-size:13px; margin-bottom:12px; }
+.completion-banner b { color:#80ff80; }
+.flow-container { display:flex; flex-direction:column; gap:8px; }
+.flow-step { background:#1c1c1c; border:1px solid #444; padding:10px 14px; position:relative; }
+.flow-step .title { color:#fc4; font-size:13px; font-weight:bold; margin-bottom:6px; }
+.flow-step .desc { color:#cdcdcd; font-size:11px; line-height:1.5; }
+.flow-step.editor { border-left:4px solid #6cf; }
+.flow-step.tool { border-left:4px solid #fc4; }
+.flow-step.server { border-left:4px solid #f88; }
+.flow-arrow { text-align:center; color:#888; font-size:14px; margin:2px 0; }
+.metric-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.metric-tile { background:#1c1c1c; border:1px solid #2a4050; padding:10px 12px; }
+.metric-tile .val { color:#6c6; font-size:18px; font-weight:bold; }
+.metric-tile .lbl { color:#888; font-size:10px; margin-top:2px; }
+.test-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dotted #333; font-size:11px; }
+.test-row .name { color:#cdcdcd; }
+.test-row .status { color:#6c6; font-weight:bold; }
+.deploy-warning { background:#3a1f1f; border:1px solid #8a3030; color:#ff8080; font-size:11px; padding:8px 12px; margin-top:10px; }
+.phase-summary { background:#1f2a30; border:1px solid #2a4050; padding:10px 14px; margin-bottom:12px; }
+.phase-summary h3 { color:#6cf; font-size:13px; margin:0 0 8px 0; }
+.phase-summary table { width:100%; font-size:11px; color:#cdcdcd; }
+.phase-summary table td { padding:2px 0; }
+.phase-summary table .check { color:#6c6; width:24px; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — ce ticket ne touche pas le rendu client.
+  Bridge offline + runtime serveur uniquement.
+</div>
+<div class="completion-banner">
+  ✅ <b>Clôture Phase 11 « Volumes 3D »</b> — ce ticket boucle la dette
+  technique accumulée par M100.35-43 : édits terrain + mesh inserts
+  propagés vers les tiles <code>.vmap</code> server-side avec validation
+  de hash et tests d'intégration.
+</div>
+
+<div class="shell" style="grid-template-rows:auto auto auto">
+
+  <div class="menubar">
+    <span class="item">M100.44 — VMap Bridge</span>
+    <span class="item">Outil offline</span>
+    <span class="item">Runtime server</span>
+    <span class="item">Tests d'intégration</span>
+  </div>
+
+  <div class="dock" style="grid-template-columns:1fr 1fr 1fr">
+
+    <!-- Pipeline / Flow -->
+    <div class="panel">
+      <div class="title blue">Pipeline de bake</div>
+      <div class="body">
+        <div class="flow-container">
+
+          <div class="flow-step editor">
+            <div class="title">1. Éditeur (M100.35-43)</div>
+            <div class="desc">
+              terrain.bin (érosion appliquée)<br>
+              mesh_inserts.bin (4 catégories : cave + overhang + arch + dungeon)<br>
+              dungeons.bin (métadonnées portails)<br>
+              splat.bin, water.bin
+            </div>
+          </div>
+
+          <div class="flow-arrow">▼ Save Zone Bundle</div>
+
+          <div class="flow-step tool">
+            <div class="title">2. Outil offline <code>lcdlln_vmap_extractor</code></div>
+            <div class="desc">
+              <code>--zone-bundle path --out vmap_tiles/</code><br>
+              • Bake heightmap classique (CMANGOS.05)<br>
+              • Pour chaque mesh insert dans la tile : ajoute AuxiliaryColliders<br>
+              • SHA-256 du mesh_inserts.bin embarqué en header<br>
+              • Écrit .vmap <b>v(N+1)</b> par tile (533 × 533 m)
+            </div>
+          </div>
+
+          <div class="flow-arrow">▼ Deploy (rsync / S3) + UPDATE zone_content_versions</div>
+
+          <div class="flow-step server">
+            <div class="title">3. Shard server</div>
+            <div class="desc">
+              • Refuse .vmap v(N) → message clair<br>
+              • Vérifie hash header vs zone_content_versions<br>
+              • AuxiliaryColliderCache : load .collision.bin partagé<br>
+              • LOS/GetHeight/Raycast incluent les colliders<br>
+              • Hot-reload non supporté → cold restart
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Format extension -->
+    <div class="panel">
+      <div class="title amber">Extension format .vmap</div>
+      <div class="body">
+
+        <div style="color:#fc4; font-size:12px; margin-bottom:6px">Header étendu</div>
+        <pre style="background:#0f0f0f; padding:8px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0">
+struct VmapTileHeader {
+  char     magic[4];     // "VMAP"
+  uint32_t version;      // N+1 (bumpé)
+  uint32_t tileX, tileZ;
+  byte     meshInsertsBinHash[32]; // ← NOUVEAU SHA-256
+  uint32_t auxiliarySectionOffset; // ← NOUVEAU
+  // ... sections classiques (heightmap, etc.)
+};</pre>
+
+        <div style="color:#fc4; font-size:12px; margin:10px 0 6px 0">Section AUXC (auxiliary colliders)</div>
+        <pre style="background:#0f0f0f; padding:8px; font-size:10px; color:#a0d0ff; border:1px solid #333; margin:0">
+[AuxiliaryColliders]
+  magic   : "AUXC"
+  version : 1
+  count   : uint32
+
+  for each collider:
+    guid             : 16 bytes
+    meshPath         : "meshes/caves/cave_medium_01.gltf"
+    worldTransform   : float32[16]  // 4x4 row-major
+    localAABB        : float32[6]   // min + max
+    collisionProxy   : "meshes/caves/cave_medium_01.collision.bin"
+    flags            : u8
+      bit 0 = blockLOS
+      bit 1 = blockMovement
+      bit 2 = isDungeonPortalSolid
+    dungeonId        : "dungeon_001_ancient_ruin" (or empty)</pre>
+
+        <div class="deploy-warning">
+          🚨 <b>Bump kVmapFormatVersion</b> + redéploiement shard +
+          re-bake intégral de toutes les zones modifiées.<br>
+          Pas de hot-reload — cold restart requis.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tests + bilan -->
+    <div class="panel">
+      <div class="title pink">Tests intégration (7)</div>
+      <div class="body">
+
+        <div class="test-row">
+          <span class="name">Cave_LOS_Blocked</span>
+          <span class="status">✓</span>
+        </div>
+        <div class="test-row">
+          <span class="name">Cave_GetHeight_AboveFloor</span>
+          <span class="status">✓</span>
+        </div>
+        <div class="test-row">
+          <span class="name">Overhang_GetHeight_OnTop</span>
+          <span class="status">✓</span>
+        </div>
+        <div class="test-row">
+          <span class="name">Arch_LOS_BlockedSides_NotMiddle</span>
+          <span class="status">✓</span>
+        </div>
+        <div class="test-row">
+          <span class="name">Dungeon_Threshold_Solid</span>
+          <span class="status">✓</span>
+        </div>
+        <div class="test-row">
+          <span class="name">Erosion_GetHeight_UpdatedAfterBake</span>
+          <span class="status">✓</span>
+        </div>
+        <div class="test-row" style="border-bottom:none">
+          <span class="name">HashMismatch_TileRejected</span>
+          <span class="status">✓</span>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:12px 0; padding-top:10px;">
+          <div style="color:#6cf; font-size:11px; margin-bottom:6px">Métriques Phase 11</div>
+          <div class="metric-grid">
+            <div class="metric-tile">
+              <div class="val">4</div>
+              <div class="lbl">Catégories mesh insert</div>
+            </div>
+            <div class="metric-tile">
+              <div class="val">14</div>
+              <div class="lbl">Entrées catalogue MVP</div>
+            </div>
+            <div class="metric-tile">
+              <div class="val">2</div>
+              <div class="lbl">Nouveaux opcodes (51/52)</div>
+            </div>
+            <div class="metric-tile">
+              <div class="val">1</div>
+              <div class="lbl">Nouvelle table DB</div>
+            </div>
+            <div class="metric-tile">
+              <div class="val">7</div>
+              <div class="lbl">Tests end-to-end</div>
+            </div>
+            <div class="metric-tile">
+              <div class="val">v(N+1)</div>
+              <div class="lbl">Bump .vmap</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bilan global Phase 2.5 + Phase 11 -->
+  <div class="dock-bottom" style="grid-template-columns:1fr 1fr">
+
+    <div class="panel">
+      <div class="title green">Phase 2.5 — Terrain naturaliste ✅</div>
+      <div class="body">
+        <table style="width:100%;font-size:12px;color:#cdcdcd">
+          <tr><td style="color:#6c6;width:24px">✓</td><td>M100.35 — Toolbar + Mountain & Valley macros</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.36 — River Network Generator (watershed D8)</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.37 — Coastline & Sea Level Editor</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.38 — Hydraulic Erosion (particle sim)</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.39 — Thermal & Wind Erosion</td></tr>
+        </table>
+        <div style="margin-top:10px;color:#888;font-size:11px;line-height:1.5">
+          Le mappeur peut désormais sculpter un terrain naturaliste cohérent :
+          relief macroscopique → hydrographie réaliste → océan/côtes →
+          érosion fluviale → relaxation thermique → transport éolien.
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Phase 11 — Volumes 3D ✅</div>
+      <div class="body">
+        <table style="width:100%;font-size:12px;color:#cdcdcd">
+          <tr><td style="color:#6c6;width:24px">✓</td><td>M100.40 — Mesh Insert Foundation + Cave Tool</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.41 — Overhang Cliff Tool</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.42 — Natural Arch Tool</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.43 — Dungeon Portal System (réseau)</td></tr>
+          <tr><td style="color:#6c6">✓</td><td>M100.44 — VMap Bridge & Validation (présent)</td></tr>
+        </table>
+        <div style="margin-top:10px;color:#888;font-size:11px;line-height:1.5">
+          Les meshes 3D (grottes, surplombs, arches, portails de donjon)
+          enrichissent le terrain. Le bridge propage tout vers le serveur
+          avec validation de hash et tests d'intégration.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title amber">Dette technique restante (backlog)</div>
+      <div class="body" style="font-size:11px; line-height:1.7;color:#cdcdcd">
+        <div>• <b>Implémentation runtime donjon</b> : allocation shard d'instance, peuplement mobs, sauvegarde d'état par joueur — futur ticket CMANGOS.20 / Instance Manager.</div>
+        <div>• <b>Génération procédurale</b> : grottes (Voronoi 3D), rivières secondaires, formations rocheuses — backlog Phase 12.</div>
+        <div>• <b>Hot-reload .vmap</b> : pour l'instant cold restart obligatoire — recherche en cours.</div>
+        <div>• <b>Drag-drop in-game</b> des mesh inserts (édition légère sans relancer l'éditeur) — futur.</div>
+        <div>• <b>Compression .collision.bin</b> : pour les gros catalogues, gain disque potentiel.</div>
+        <div>• <b>Lighting baking server-side</b> : restées client-only pour l'instant.</div>
+        <div>• <b>Audio reverb propagation</b> : idem.</div>
+        <div>• <b>Multi-difficulté donjon</b> (normal / hardcore / mythique) — gameplay design pending.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  M100.44 — VMap Bridge & Phase 11 Validation · Clôture des Phases 2.5 + 11 ·
+  LCDLLN World Editor
+</footer>
+</body></html>

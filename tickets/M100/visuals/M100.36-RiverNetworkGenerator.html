@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.36 — River Network Generator</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar {
+  background: #2b2b2b; border: 1px solid #3a3a3a;
+  padding: 4px 6px;
+  display: flex; gap: 4px; align-items: center;
+  height: 48px;
+}
+.tool-btn {
+  width: 40px; height: 40px;
+  background: #3a3a3a; border: 1px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #ddd;
+  cursor: pointer; position: relative;
+}
+.tool-btn.active { background: rgba(80, 160, 240, 0.40); border-color: #4080d0; color: #fff; }
+.tool-btn:hover { background: #444; }
+.tool-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+.tool-btn .lbl {
+  position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: #888; white-space: nowrap;
+}
+.tool-btn.x { color: #f88; }
+.viewport-mock {
+  background: linear-gradient(180deg, #2c3540 0%, #4a5560 55%, #5a7060 100%);
+  height: 360px; position: relative; border: 1px solid #3a3a3a;
+  overflow: hidden;
+}
+.hud-tip {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0,0,0,0.65); padding: 6px 10px;
+  font-size: 11px; color: #cdcdcd; border: 1px solid #444;
+}
+.legend-color {
+  display: inline-block; width: 12px; height: 12px;
+  vertical-align: middle; margin-right: 6px; border: 1px solid #333;
+}
+.invariant-banner {
+  background: #2a1f1f; border: 1px solid #6a3030; padding: 8px 12px;
+  color: #f0a0a0; font-size: 12px; margin-bottom: 12px;
+}
+.invariant-banner b { color: #ff8080; }
+.source-row {
+  display: grid; grid-template-columns: 30px 1fr 60px 24px;
+  gap: 6px; padding: 3px 0; font-size: 11px;
+  border-bottom: 1px dotted #333;
+}
+.source-row .idx { color: #6cf; }
+.result-box {
+  background: #1f2a30; border: 1px solid #2a4050;
+  padding: 8px 10px; font-size: 12px; color: #6cf;
+  margin-top: 10px;
+}
+.result-box b { color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — la simulation hydrologique ne touche
+  ni la position caméra, ni le frustum cull bypass, ni `m_noUserTextures`.
+  La preview du réseau est un overlay 2D additif (ImGui draw list), pas un
+  render pass. L'outil reste fonctionnel même quand le terrain est en mode
+  fallback orange.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span>
+    <span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpter">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lac">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="Rivière (manuelle)">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Chaîne de montagnes">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Vallée">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn active" title="Réseau de rivières (watershed) — outil actif">
+      ⇉🌊<span class="lbl" style="color:#6cf">River Network</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn disabled" title="Bientôt">🌳<span class="lbl">Vegetation</span></div>
+    <div class="tool-btn x" title="Désélectionner">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <!-- Outliner -->
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 Zone : demo_plains</div>
+        <div style="margin-left:14px;color:#aaa">▸ Terrain (heightmap)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Splat layers (5)</div>
+        <div style="margin-left:14px;color:#6cf">▾ Water surfaces (post-sim preview)</div>
+        <div style="margin-left:28px;color:#888">▸ Rivière manuelle #1 (existante)</div>
+        <div style="margin-left:28px;color:#6cf">▸ Auto-river #1 (draft, flowAcc=8 240)</div>
+        <div style="margin-left:28px;color:#6cf">▸ Auto-river #2 (draft, flowAcc=5 110)</div>
+        <div style="margin-left:28px;color:#6cf">▸ Auto-river #3 (draft, flowAcc=3 850)</div>
+        <div style="margin-left:28px;color:#6cf">▸ Auto-lake #1 (sink @ 312 m)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Macro polylines (M100.35)</div>
+      </div>
+    </div>
+
+    <!-- Viewport mock avec réseau -->
+    <div class="viewport viewport-mock">
+      <div class="hud-tip">
+        Outil actif : <b style="color:#6cf">River Network</b><br>
+        Cliquez le sol pour poser des sources<br>
+        Right-click : retirer · Drag : déplacer
+      </div>
+
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+
+        <!-- Réseau de rivières prévisualisé -->
+        <!-- River 1 : source haute -> embouchure mer (gros débit) -->
+        <path d="M 130,80 C 180,130 210,160 260,200 S 360,250 460,290 L 590,310"
+              stroke="#4080d0" stroke-width="3.5" fill="none" stroke-opacity="0.85"/>
+        <!-- River 2 : source moyenne -> rejoint river 1 (tributary) -->
+        <path d="M 280,110 C 290,160 280,180 260,200"
+              stroke="#4080d0" stroke-width="2.5" fill="none" stroke-opacity="0.75"/>
+        <!-- River 3 : source -> sink (lac auto, pas la mer) -->
+        <path d="M 450,90 C 440,130 420,150 405,170 L 405,180"
+              stroke="#4080d0" stroke-width="2" fill="none" stroke-opacity="0.7"/>
+
+        <!-- Sources (gouttes bleues) -->
+        <g>
+          <circle cx="130" cy="80" r="6" fill="#6cf" stroke="#fff" stroke-width="1"/>
+          <text x="140" y="84" fill="#fff" font-size="10" font-family="Consolas">#1</text>
+          <circle cx="280" cy="110" r="6" fill="#6cf" stroke="#fff" stroke-width="1"/>
+          <text x="290" y="114" fill="#fff" font-size="10" font-family="Consolas">#2</text>
+          <circle cx="450" cy="90" r="6" fill="#6cf" stroke="#fff" stroke-width="1"/>
+          <text x="460" y="94" fill="#fff" font-size="10" font-family="Consolas">#3</text>
+          <circle cx="520" cy="180" r="6" fill="#6cf" stroke="#fff" stroke-width="1"/>
+          <text x="530" y="184" fill="#fff" font-size="10" font-family="Consolas">#4 (orphan)</text>
+        </g>
+
+        <!-- Confluence -->
+        <circle cx="260" cy="200" r="7" fill="none" stroke="#fff" stroke-width="2"/>
+        <text x="270" y="195" fill="#fff" font-size="10" font-family="Consolas">confluence</text>
+
+        <!-- Embouchure (triangle mer) -->
+        <polygon points="588,308 600,304 600,316" fill="#6cf" stroke="#fff" stroke-width="1"/>
+        <text x="540" y="328" fill="#fff" font-size="10" font-family="Consolas">embouchure</text>
+
+        <!-- Lac auto (sink) -->
+        <ellipse cx="405" cy="183" rx="14" ry="6" fill="#4080d0" fill-opacity="0.65" stroke="#fff" stroke-width="1"/>
+        <text x="425" y="187" fill="#fff" font-size="10" font-family="Consolas">lac auto (sink)</text>
+
+        <!-- Ligne de niveau mer -->
+        <line x1="0" y1="305" x2="640" y2="305"
+              stroke="#6cf" stroke-width="1" stroke-dasharray="4 4" stroke-opacity="0.6"/>
+        <text x="6" y="318" fill="#6cf" font-size="9" font-family="Consolas">sea level Y = 50 m</text>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.5); padding:4px 8px">
+        <span class="legend-color" style="background:#6cf"></span>source posée
+        &nbsp;
+        <span class="legend-color" style="background:#4080d0"></span>rivière (épaisseur ∝ log(flow))
+        &nbsp;
+        <span class="legend-color" style="background:#4080d0;opacity:0.65"></span>lac auto
+      </div>
+    </div>
+
+    <!-- Tool Properties River Network -->
+    <div class="panel">
+      <div class="title blue">Tool Properties — River Network</div>
+      <div class="body">
+
+        <div style="color:#888;font-size:11px;margin-bottom:8px">
+          Sources posées : <b style="color:#6cf">4 / max 64</b>
+        </div>
+
+        <div style="border:1px solid #3a3a3a; background:#1c1c1c; padding:6px 8px; max-height:120px; overflow-y:auto">
+          <div class="source-row"><span class="idx">#1</span><span>X=2 130  Z=1 875</span><span style="color:#888">Y=820</span><span style="color:#f88;cursor:pointer">✕</span></div>
+          <div class="source-row"><span class="idx">#2</span><span>X=3 410  Z=2 050</span><span style="color:#888">Y=745</span><span style="color:#f88;cursor:pointer">✕</span></div>
+          <div class="source-row"><span class="idx">#3</span><span>X=4 220  Z=1 690</span><span style="color:#888">Y=690</span><span style="color:#f88;cursor:pointer">✕</span></div>
+          <div class="source-row"><span class="idx">#4</span><span>X=5 080  Z=2 290</span><span style="color:#888">Y=512</span><span style="color:#f88;cursor:pointer">✕</span></div>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#6cf; font-size:11px; margin-bottom:6px">— Paramètres de simulation —</div>
+        </div>
+
+        <div class="row"><span>Sea level (Y)</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">50 m</span></div>
+
+        <div class="row"><span>Flow threshold</span>
+          <div class="slider"><div class="fill" style="width:50%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">200 cells (~80 m²)</span></div>
+
+        <div class="row"><span>Tolerance D-P.</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">5 m</span></div>
+
+        <div style="margin-top:6px"><span class="checkbox checked">Auto-lakes at sinks</span></div>
+        <div class="row"><span>Max lake depth</span>
+          <div class="slider"><div class="fill" style="width:20%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">10 m</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#d90; font-size:11px; margin-bottom:6px">— Carving heightmap (optionnel) —</div>
+        </div>
+
+        <div style="margin-top:4px"><span class="checkbox checked">Carve along rivers</span></div>
+        <div class="row"><span>Depth</span>
+          <div class="slider"><div class="fill amber" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">3 m</span></div>
+        <div class="row"><span>Width</span>
+          <div class="slider"><div class="fill amber" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">12 m</span></div>
+
+        <div style="margin-top:14px">
+          <span class="btn active" style="font-size:13px">▶ Simulate</span>
+          <span style="color:#888;font-size:10px;margin-left:6px">~1-5 s sur zone complète</span>
+        </div>
+
+        <div class="result-box">
+          🌊 Dernier résultat<br>
+          <b>3 rivières</b> · <b>1 confluence</b><br>
+          <b>1 embouchure</b> · <b>1 lac auto</b><br>
+          <span style="color:#888;font-size:11px">Source #4 orpheline (sea level direct)</span>
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Apply</span>
+          <span class="btn danger">Cancel</span>
+          <span class="btn">Reset sources</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] EditorToolbar: SetActiveTool(RiverNetwork)</div>
+        <div>[INFO] RiverNetworkTool: 4 sources posées</div>
+        <div>[DEBUG] WatershedSimulation: D8 computed (5121² cells, 142 ms)</div>
+        <div>[DEBUG] FlowAccumulation: topo sort + accum (178 ms)</div>
+        <div>[DEBUG] Path tracing: 4 sources → 3 rivers, 1 confluence, 1 sink, 0 boundary, 1 below-threshold rejected</div>
+        <div>[DEBUG] Douglas-Peucker: 4380 cell-points → 87 spline-points (tol=5m)</div>
+        <div style="color:#6c6">[OK] Total simulation: 892 ms — under 1500 ms budget</div>
+        <div style="color:#6c6">[OK] Terrain visible preserved: noUserTextures=0, frustumCull bypassed</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>14:31:02</span><span>Mountain Range #1</span><span>7 chunks</span><span>↶</span></div>
+        <div class="hist-row"><span>14:33:18</span><span>Splat paint (rock)</span><span>~840 cells</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#6cf">→ preview</span><span>River Network (3 rivers + 1 lake)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Scene Stats</div>
+      <div class="body" style="font-size:11px">
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th></tr>
+          <tr><td>Chunks chargés</td><td>400 / 400 (full zone)</td></tr>
+          <tr><td>Heightmap consolidée</td><td>5121² = 26.2M cells</td></tr>
+          <tr><td>Sim total</td><td>892 ms</td></tr>
+          <tr><td>Rivières détectées</td><td>3</td></tr>
+          <tr><td>Splines générées</td><td>3 (87 points)</td></tr>
+          <tr><td>Carving deltas</td><td>~18 240 cellules · 14 chunks</td></tr>
+          <tr><td>Mémoire pic</td><td>208 MB</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  M100.36 — River Network Generator (Watershed Simulation D8) ·
+  ImGui dark · LCDLLN World Editor
+</footer>
+
+</body>
+</html>

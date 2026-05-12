@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.35 — Toolbar + Macro Terrain Tools</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+/* Compléments spécifiques M100.35 — overlay au CSS partagé. */
+.toolbar-bar {
+  background: #2b2b2b; border: 1px solid #3a3a3a;
+  padding: 4px 6px;
+  display: flex; gap: 4px; align-items: center;
+  height: 48px;
+}
+.tool-btn {
+  width: 40px; height: 40px;
+  background: #3a3a3a; border: 1px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #ddd;
+  cursor: pointer; position: relative;
+}
+.tool-btn.active { background: rgba(255, 196, 64, 0.38); border-color: #d09040; color: #fff; }
+.tool-btn:hover  { background: #444; }
+.tool-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+.tool-btn .lbl {
+  position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: #888; white-space: nowrap;
+}
+.tool-btn.x { color: #f88; }
+.viewport-mock {
+  background: linear-gradient(180deg, #2c3540 0%, #4a5560 60%, #7a6a4a 100%);
+  height: 340px; position: relative; border: 1px solid #3a3a3a;
+  overflow: hidden;
+}
+.polyline {
+  position: absolute; pointer-events: none;
+}
+.polyline svg { width: 100%; height: 100%; display: block; }
+.hud-tip {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0,0,0,0.65); padding: 6px 10px;
+  font-size: 11px; color: #cdcdcd; border: 1px solid #444;
+}
+.preview-band {
+  position: absolute; pointer-events: none;
+  opacity: 0.55;
+}
+.legend-color {
+  display: inline-block; width: 12px; height: 12px;
+  vertical-align: middle; margin-right: 6px; border: 1px solid #333;
+}
+.invariant-banner {
+  background: #2a1f1f; border: 1px solid #6a3030; padding: 8px 12px;
+  color: #f0a0a0; font-size: 12px; margin-bottom: 12px;
+}
+.invariant-banner b { color: #ff8080; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — ce ticket s'engage à ne pas masquer ni
+  occulter le rendu terrain (ni la toolbar 48 px, ni la preview ambre/bleu,
+  ni l'activation des nouveaux outils ne doivent toucher la pipeline rendu,
+  le frustum cull bypass, ni la position caméra).
+</div>
+
+<div class="shell">
+
+  <!-- Menu bar (existant, conservé) -->
+  <div class="menubar">
+    <span class="item">Fichier</span>
+    <span class="item">Vue</span>
+    <span class="item">Outils</span>
+    <span class="item">Options</span>
+    <span class="item">Carte</span>
+  </div>
+
+  <!-- TOOLBAR à icônes — partie A du ticket -->
+  <div class="toolbar-bar" title="Toolbar éditeur — 48 px, ne couvre pas le viewport 3D">
+    <div class="tool-btn"             title="Sculpter le relief">
+      ⛰️<span class="lbl">Sculpt</span>
+    </div>
+    <div class="tool-btn"             title="Tamponner un stamp">
+      🔨<span class="lbl">Stamp</span>
+    </div>
+    <div class="tool-btn"             title="Peindre les surfaces">
+      🎨<span class="lbl">Splat</span>
+    </div>
+    <div class="tool-btn"             title="Tracer un lac">
+      💧<span class="lbl">Lake</span>
+    </div>
+    <div class="tool-btn"             title="Tracer une rivière">
+      🌊<span class="lbl">River</span>
+    </div>
+    <div class="tool-btn active"      title="Tracer une chaîne de montagnes (outil actif)">
+      ⛰⛰⛰<span class="lbl" style="color:#fc4">Mountain</span>
+    </div>
+    <div class="tool-btn"             title="Tracer une vallée">
+      ⛰⌄⛰<span class="lbl">Valley</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn disabled"    title="Bientôt disponible">
+      🌳<span class="lbl">Vegetation</span>
+    </div>
+    <div class="tool-btn x"           title="Désélectionner l'outil">
+      ✕<span class="lbl">Désél.</span>
+    </div>
+  </div>
+
+  <!-- Dock principal : panels gauche / viewport / panels droite -->
+  <div class="dock">
+
+    <!-- Outliner panel (existant, juste pour montrer le contexte) -->
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 Zone : demo_plains</div>
+        <div style="margin-left:14px;color:#aaa">▸ Terrain (heightmap)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Splat layers (5)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Water surfaces (2)</div>
+        <div style="margin-left:14px;color:#fc4">▾ Macro polylines (en cours)</div>
+        <div style="margin-left:28px;color:#fc4">▸ Mountain Range #1 (4 vertices, draft)</div>
+      </div>
+    </div>
+
+    <!-- Viewport 3D mock avec polyline en cours de pose -->
+    <div class="viewport viewport-mock">
+      <div class="hud-tip">
+        Outil actif : <b style="color:#fc4">Mountain Range</b><br>
+        Caméra : oblique (170 m alt., pitch 0.35)<br>
+        Cliquez sur le sol pour poser des vertices
+      </div>
+
+      <!-- SVG overlay : polyline jaune + bande preview ambre -->
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+        <!-- Bande preview ambre (la future crête) -->
+        <path d="M 90,260 Q 220,220 320,180 T 540,140 L 590,130"
+              stroke="#d09040" stroke-width="38"
+              stroke-opacity="0.35" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Polyline jaune (vertices + segments) -->
+        <path d="M 90,260 Q 220,220 320,180 T 540,140 L 590,130"
+              stroke="#fc4" stroke-width="2.5" fill="none"/>
+        <!-- Disques de vertex -->
+        <circle cx="90"  cy="260" r="6" fill="#fc4"/>
+        <circle cx="220" cy="220" r="6" fill="#fc4"/>
+        <circle cx="320" cy="180" r="6" fill="#fc4"/>
+        <circle cx="430" cy="155" r="6" fill="#fc4"/>
+        <circle cx="540" cy="140" r="6" fill="#fc4"/>
+        <circle cx="590" cy="130" r="6" fill="#fc4"/>
+        <!-- Label du vertex sélectionné -->
+        <text x="332" y="170" fill="#fff" font-size="11" font-family="Consolas">vertex #2</text>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.5); padding:4px 8px">
+        <span class="legend-color" style="background:#fc4"></span>polyline jaune
+        &nbsp;&nbsp;
+        <span class="legend-color" style="background:#d09040;opacity:0.55"></span>preview crête (ambre)
+      </div>
+    </div>
+
+    <!-- Tool Properties panel — Mountain Range actif -->
+    <div class="panel">
+      <div class="title amber">Tool Properties — Mountain Range</div>
+      <div class="body">
+
+        <div style="margin-bottom:10px;color:#888;font-size:11px">
+          Vertices posés : <b style="color:#fc4">6 / 32</b><br>
+          Chunks impactés : <b style="color:#6cf">7 / 400</b>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:8px 0; padding-top:8px;">
+          <div style="color:#6cf; margin-bottom:6px; font-size:11px">— Polyline complète —</div>
+        </div>
+
+        <div class="row"><span>Mode polyline</span><span class="combo">Open</span></div>
+        <div class="row"><span>Profil flanc</span><span class="combo">Smoothstep</span></div>
+        <div class="row"><span>Seed bruit</span><span>42</span></div>
+        <div class="row"><span>Fréquence bruit</span>
+          <div class="slider"><div class="fill green" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.005 cycles/m</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#fc4; margin-bottom:6px; font-size:11px">— Vertex sélectionné : #2 / 6 —</div>
+        </div>
+
+        <div class="row"><span>Position X</span><span>4 230.0 m</span></div>
+        <div class="row"><span>Position Z</span><span>1 875.0 m</span></div>
+
+        <div class="row"><span>Largeur base</span>
+          <div class="slider"><div class="fill" style="width:70%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">250 m</span></div>
+
+        <div class="row"><span>Hauteur crête</span>
+          <div class="slider"><div class="fill amber" style="width:80%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">400 m</span></div>
+
+        <div class="row"><span>Bruit crête</span>
+          <div class="slider"><div class="fill green" style="width:20%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">30 m</span></div>
+
+        <div class="row"><span>Asymétrie</span>
+          <div class="slider"><div class="fill" style="width:60%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">+0.2 (flanc S plus abrupt)</span></div>
+
+        <div style="margin-top:10px;font-size:11px">
+          <span class="btn danger" style="font-size:11px">Supprimer vertex</span>
+          <span class="btn" style="font-size:11px">Réinitialiser</span>
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Apply</span>
+          <span class="btn danger">Cancel</span>
+          <span class="btn">Undo last point</span>
+        </div>
+
+        <div style="margin-top:10px;color:#666;font-size:10px;line-height:1.6">
+          ℹ️ Cliquez sur le terrain pour ajouter un vertex. Double-clic
+          pour figer la polyline (mode Open) ou clic sur le premier vertex
+          pour fermer en Loop. Drag d'un disque jaune pour le repositionner.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dock bas : panneaux secondaires -->
+  <div class="dock-bottom">
+
+    <!-- History -->
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>14:22:08</span><span>Splat paint</span><span>~12 cells</span><span>↶</span></div>
+        <div class="hist-row"><span>14:22:53</span><span>Terrain sculpt (Raise)</span><span>~340 cells</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#fc4">→ en cours</span><span>Mountain Range (draft)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+
+    <!-- Console -->
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] EditorToolbar: SetActiveTool(MountainRange)</div>
+        <div>[INFO] MountainRangeTool: polyline draft (6 vertices)</div>
+        <div>[DEBUG] RasterizeMacroPolyline: bbox 5500×750 m, ~1.08M cells</div>
+        <div>[DEBUG] Preview cost: 218 ms single-thread (under 500 ms budget)</div>
+        <div style="color:#6c6">[OK] Terrain visible: noUserTextures=0, frustumCull bypassed (editor mode)</div>
+      </div>
+    </div>
+
+    <!-- Scene Stats -->
+    <div class="panel">
+      <div class="title pink">Scene Stats</div>
+      <div class="body" style="font-size:11px">
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th></tr>
+          <tr><td>Chunks chargés</td><td>49 / 400</td></tr>
+          <tr><td>Triangles rendus</td><td>1 285 472</td></tr>
+          <tr><td>Draw calls</td><td>225</td></tr>
+          <tr><td>Heightmap dirty</td><td>0 chunk</td></tr>
+          <tr><td>LOD regen queue</td><td>0</td></tr>
+          <tr><td>Frame time</td><td>14.2 ms</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  M100.35 — Toolbar à icônes + Outils macros terrain (Mountain Ranges & Valley Chains) ·
+  ImGui dark · LCDLLN World Editor
+</footer>
+
+</body>
+</html>

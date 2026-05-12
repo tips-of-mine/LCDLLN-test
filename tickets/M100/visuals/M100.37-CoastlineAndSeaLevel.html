@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.37 — Coastline & Sea Level</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar {
+  background: #2b2b2b; border: 1px solid #3a3a3a;
+  padding: 4px 6px; display: flex; gap: 4px; align-items: center;
+  height: 48px;
+}
+.tool-btn {
+  width: 40px; height: 40px;
+  background: #3a3a3a; border: 1px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #ddd; cursor: pointer; position: relative;
+}
+.tool-btn.active { background: rgba(80, 160, 240, 0.40); border-color: #4080d0; color: #fff; }
+.tool-btn:hover { background: #444; }
+.tool-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+.tool-btn .lbl {
+  position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: #888; white-space: nowrap;
+}
+.tool-btn.x { color: #f88; }
+.viewport-mock {
+  background: linear-gradient(180deg, #2c3540 0%, #4a5560 45%, #6a7060 100%);
+  height: 360px; position: relative; border: 1px solid #3a3a3a;
+  overflow: hidden;
+}
+.sea-plane {
+  position: absolute; left: 0; right: 0;
+  background: linear-gradient(180deg,
+    rgba(64,128,208,0.30) 0%,
+    rgba(64,128,208,0.50) 50%,
+    rgba(64,128,208,0.65) 100%);
+  border-top: 1px solid rgba(108,204,255,0.7);
+  pointer-events: none;
+}
+.hud-tip {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0,0,0,0.65); padding: 6px 10px;
+  font-size: 11px; color: #cdcdcd; border: 1px solid #444;
+}
+.legend-color {
+  display: inline-block; width: 12px; height: 12px;
+  vertical-align: middle; margin-right: 6px; border: 1px solid #333;
+}
+.invariant-banner {
+  background: #2a1f1f; border: 1px solid #6a3030; padding: 8px 12px;
+  color: #f0a0a0; font-size: 12px; margin-bottom: 12px;
+}
+.invariant-banner b { color: #ff8080; }
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px 12px; font-size: 11px; margin-top: 8px;
+}
+.stats-grid .lbl { color: #888; }
+.stats-grid .val { color: #6cf; font-weight: bold; text-align: right; }
+.color-swatch {
+  display: inline-block; width: 18px; height: 14px;
+  vertical-align: middle; border: 1px solid #555;
+  background: #1a3a55;
+}
+.compat-warning {
+  background: #3a2f1f; border: 1px solid #6a5530;
+  color: #f0c060; font-size: 11px; padding: 6px 10px;
+  margin-top: 8px; border-radius: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — le plan sea level est un mesh additif
+  blended (lecture seule sur depth), le trait côtier jaune est une draw-list 2D.
+  Ni l'activation, ni le drag du slider, ni l'Apply ne touchent la caméra, le
+  frustum cull bypass ou `m_noUserTextures`. Outil utilisable même quand le
+  terrain est en fallback orange.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span>
+    <span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpter">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lac">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="Rivière">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Chaîne de montagnes">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Vallée">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="Réseau de rivières">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn active" title="Coastline & Sea Level — outil actif">
+      🌅<span class="lbl" style="color:#6cf">Coastline</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn disabled" title="Bientôt">🌳<span class="lbl">Vegetation</span></div>
+    <div class="tool-btn x" title="Désélectionner">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <!-- Outliner -->
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 Zone : demo_plains</div>
+        <div style="margin-left:14px;color:#aaa">▸ Terrain (heightmap)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Splat layers (5)</div>
+        <div style="margin-left:28px;color:#aaa">▾ Sand (live preview band)</div>
+        <div style="margin-left:42px;color:#fc4">▸ 18 420 cells touchées</div>
+        <div style="margin-left:14px;color:#6cf">▾ Water surfaces</div>
+        <div style="margin-left:28px;color:#6cf">▸ <b>🌊 Océan global</b> (preview, isOcean=true)</div>
+        <div style="margin-left:28px;color:#888">▸ Rivière manuelle #1</div>
+        <div style="margin-left:14px;color:#aaa">▸ Macro polylines</div>
+      </div>
+    </div>
+
+    <!-- Viewport avec plan sea level + côte -->
+    <div class="viewport viewport-mock">
+      <!-- Plan sea level (overlay bleu transparent dégradé) -->
+      <div class="sea-plane" style="top: 58%; bottom: 0"></div>
+
+      <div class="hud-tip">
+        Outil actif : <b style="color:#6cf">Coastline</b><br>
+        Sea level Y = <b>50 m</b><br>
+        Drag le slider pour ajuster
+      </div>
+
+      <!-- Trait côtier (marching squares overlay) -->
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+
+        <!-- Trait côtier jaune (iso-altitude = sea level) -->
+        <path d="M 0,210 C 50,200 110,225 175,215 S 270,235 340,220
+                 C 410,210 460,235 510,215 S 590,225 640,210"
+              stroke="#fc4" stroke-width="2.5" fill="none"
+              stroke-opacity="0.92" stroke-linecap="round"/>
+
+        <!-- Surlignage bande de plage côté terre (semi-transparent jaune sable) -->
+        <path d="M 0,210 C 50,200 110,225 175,215 S 270,235 340,220
+                 C 410,210 460,235 510,215 S 590,225 640,210
+                 L 640,195 C 590,210 510,200 410,195 S 270,220 175,200
+                 C 110,210 50,185 0,195 Z"
+              fill="#e8d090" fill-opacity="0.35" stroke="none"/>
+
+        <!-- Surlignage bande de plage côté mer -->
+        <path d="M 0,210 C 50,200 110,225 175,215 S 270,235 340,220
+                 C 410,210 460,235 510,215 S 590,225 640,210
+                 L 640,222 C 590,235 510,225 410,222 S 270,245 175,228
+                 C 110,238 50,213 0,222 Z"
+              fill="#c8b888" fill-opacity="0.28" stroke="none"/>
+
+        <!-- Marqueur d'une rivière qui débouche dans la mer (depuis M100.36) -->
+        <path d="M 220,80 C 240,140 260,180 280,210" stroke="#4080d0" stroke-width="2" fill="none"/>
+        <polygon points="278,208 290,206 290,214" fill="#6cf" stroke="#fff" stroke-width="1"/>
+        <text x="290" y="200" fill="#cdcdcd" font-size="10" font-family="Consolas">embouchure</text>
+
+        <!-- Label sea level (à gauche, sur le plan) -->
+        <text x="6" y="206" fill="#6cf" font-size="10" font-family="Consolas">
+          Y = 50 m (sea level)
+        </text>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.55); padding:4px 8px">
+        <span class="legend-color" style="background:rgba(64,128,208,0.6)"></span>plan sea level (mesh blended)
+        &nbsp;
+        <span class="legend-color" style="background:#fc4"></span>côte (marching squares)
+        &nbsp;
+        <span class="legend-color" style="background:#e8d090"></span>plage auto
+      </div>
+    </div>
+
+    <!-- Tool Properties Coastline -->
+    <div class="panel">
+      <div class="title blue">Tool Properties — Coastline</div>
+      <div class="body">
+
+        <div class="row"><span>Sea level (Y)</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">50 m</span></div>
+        <div style="font-size:10px;color:#888;margin-top:-4px;margin-bottom:8px">
+          ↪ Partagé avec M100.36 River Network
+        </div>
+
+        <div class="row"><span>Couleur fond</span>
+          <span><span class="color-swatch"></span> #1a3a55</span></div>
+        <div class="row"><span>Turbidité</span>
+          <div class="slider"><div class="fill" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.4</span></div>
+        <div class="row"><span>Vagues (vent)</span>
+          <div class="slider"><div class="fill" style="width:20%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.2</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#fc4; font-size:11px; margin-bottom:6px">— Smoothing côtier —</div>
+        </div>
+        <div><span class="checkbox">Lisser la côte</span></div>
+        <div class="row" style="opacity:0.5"><span>Bande verticale</span>
+          <div class="slider"><div class="fill" style="width:20%"></div></div></div>
+        <div class="row" style="opacity:0.5"><span></span><span style="font-size:11px;color:#888">±5 m</span></div>
+        <div class="row" style="opacity:0.5"><span>Force</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#d90; font-size:11px; margin-bottom:6px">— Plage automatique —</div>
+        </div>
+        <div><span class="checkbox checked">Peindre une bande de sable</span></div>
+        <div class="row"><span>Couche splat</span><span class="combo">Sand</span></div>
+        <div class="row"><span>Côté terre</span>
+          <div class="slider"><div class="fill amber" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">8 m</span></div>
+        <div class="row"><span>Côté mer</span>
+          <div class="slider"><div class="fill amber" style="width:20%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">3 m</span></div>
+        <div class="row"><span>Atténuation</span>
+          <div class="slider"><div class="fill amber" style="width:60%"></div></div></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#888; font-size:11px; margin-bottom:6px">— Falaises côtières —</div>
+        </div>
+        <div><span class="checkbox">Générer des falaises</span></div>
+        <div class="row" style="opacity:0.5"><span>Seuil pente</span>
+          <div class="slider"><div class="fill" style="width:60%"></div></div></div>
+        <div class="row" style="opacity:0.5"><span></span><span style="font-size:11px;color:#888">45°</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#6cf; font-size:11px; margin-bottom:6px">— Statistiques en direct —</div>
+        </div>
+        <div class="stats-grid">
+          <span class="lbl">Surface terre</span><span class="val">52.4 %</span>
+          <span class="lbl">Surface océan</span><span class="val">47.6 %</span>
+          <span class="lbl">Longueur côte</span><span class="val">314.2 km</span>
+          <span class="lbl">Cells plage</span><span class="val">18 420</span>
+        </div>
+
+        <div class="compat-warning">
+          ⚠ Bump <code>kWaterBinVersion</code> à l'Apply<br>
+          (ajout du flag <code>isOcean</code>)
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Apply</span>
+          <span class="btn danger">Cancel</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] EditorToolbar: SetActiveTool(Coastline)</div>
+        <div>[INFO] CoastlineEditorTool: overlay sea plane + segments activés</div>
+        <div>[DEBUG] MarchingSquares: extraction 5121² grid → 2 814 segments (24 ms)</div>
+        <div>[DEBUG] CoastlineStats: terre=52.4% mer=47.6% length=314.2km (31 ms)</div>
+        <div>[DEBUG] Slider drag sea=48→52 m: re-extraction segments (27 ms, debounce 200 ms)</div>
+        <div>[INFO] Source unique seaLevelMeters : WaterDocument::OceanSettings (lecture M100.36)</div>
+        <div style="color:#6c6">[OK] Terrain visible preserved · ocean overlay = blend additif</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>14:33:18</span><span>Splat paint (rock)</span><span>~840 cells</span><span>↶</span></div>
+        <div class="hist-row"><span>14:41:02</span><span>River Network apply</span><span>3 rivers</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#6cf">→ preview</span><span>Coastline (ocean + plage)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Scene Stats</div>
+      <div class="body" style="font-size:11px">
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th></tr>
+          <tr><td>Chunks chargés</td><td>400 / 400</td></tr>
+          <tr><td>Segments côte</td><td>2 814</td></tr>
+          <tr><td>Polygone océan</td><td>5 vertices (zone + 1000 m)</td></tr>
+          <tr><td>Splat sable</td><td>+18 420 cells (cumulé)</td></tr>
+          <tr><td>Frame time</td><td>14.7 ms</td></tr>
+          <tr><td>Mémoire pic</td><td>112 MB</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  M100.37 — Coastline & Sea Level Editor (marching squares + ocean polygon) ·
+  ImGui dark · LCDLLN World Editor
+</footer>
+
+</body>
+</html>

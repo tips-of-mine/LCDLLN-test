@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.38 — Hydraulic Erosion</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar {
+  background: #2b2b2b; border: 1px solid #3a3a3a;
+  padding: 4px 6px; display: flex; gap: 4px; align-items: center;
+  height: 48px;
+}
+.tool-btn {
+  width: 40px; height: 40px;
+  background: #3a3a3a; border: 1px solid #555;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #ddd; cursor: pointer; position: relative;
+}
+.tool-btn.active { background: rgba(208, 128, 64, 0.45); border-color: #d09040; color: #fff; }
+.tool-btn:hover { background: #444; }
+.tool-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+.tool-btn .lbl {
+  position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: #888; white-space: nowrap;
+}
+.tool-btn.x { color: #f88; }
+.viewport-mock {
+  background: linear-gradient(180deg, #2c3540 0%, #4a5560 55%, #6a7060 100%);
+  height: 360px; position: relative; border: 1px solid #3a3a3a;
+  overflow: hidden;
+}
+.hud-tip {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0,0,0,0.65); padding: 6px 10px;
+  font-size: 11px; color: #cdcdcd; border: 1px solid #444;
+}
+.legend-color {
+  display: inline-block; width: 12px; height: 12px;
+  vertical-align: middle; margin-right: 6px; border: 1px solid #333;
+}
+.invariant-banner {
+  background: #2a1f1f; border: 1px solid #6a3030; padding: 8px 12px;
+  color: #f0a0a0; font-size: 12px; margin-bottom: 12px;
+}
+.invariant-banner b { color: #ff8080; }
+.warning-banner {
+  background: #3a2f1f; border: 1px solid #6a5530;
+  color: #f0c060; font-size: 11px; padding: 6px 10px;
+  margin-top: 8px; border-radius: 2px;
+}
+.stats-grid {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 4px 12px; font-size: 11px;
+}
+.stats-grid .lbl { color: #888; }
+.stats-grid .val { color: #fc4; font-weight: bold; }
+.modal-progress {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  background: #1c1c1c; border: 1px solid #555;
+  padding: 18px 26px; min-width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+.modal-progress .step { color: #6cf; font-size: 13px; margin-bottom: 10px; }
+.modal-progress .bar { background: #333; height: 12px; position: relative; }
+.modal-progress .bar .fill {
+  background: linear-gradient(90deg, #4080d0, #6cf);
+  height: 100%; width: 73%;
+}
+.modal-progress .pct { font-size: 11px; color: #cdcdcd; margin-top: 6px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — la modale de progression est ImGui (pas
+  un viewport switch). La preview rouge/vert post-sim est une draw-list 2D
+  additive, lecture seule sur depth. Aucun touche à `m_noUserTextures`,
+  frustum cull, position caméra. Outil utilisable même quand le terrain est
+  en fallback orange.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span>
+    <span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpter">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lac">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="Rivière">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Chaîne de montagnes">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Vallée">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="Réseau de rivières">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn" title="Coastline">🌅<span class="lbl">Coastline</span></div>
+    <div class="tool-btn active" title="Érosion hydraulique — outil actif">
+      💧↘<span class="lbl" style="color:#d90">Hydraulic</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn disabled" title="Bientôt">🌳<span class="lbl">Vegetation</span></div>
+    <div class="tool-btn x" title="Désélectionner">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <!-- Outliner -->
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 Zone : demo_plains</div>
+        <div style="margin-left:14px;color:#aaa">▸ Terrain (heightmap)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Splat layers (5)</div>
+        <div style="margin-left:14px;color:#6cf">▸ Water surfaces (1 ocean + 3 rivers)</div>
+        <div style="margin-left:14px;color:#fc4">▾ Erosion preview (en cours)</div>
+        <div style="margin-left:28px;color:#f88">▸ Erosion : 412 380 cells</div>
+        <div style="margin-left:28px;color:#6c6">▸ Deposition : 387 940 cells</div>
+        <div style="margin-left:14px;color:#aaa">▸ Macro polylines</div>
+      </div>
+    </div>
+
+    <!-- Viewport avec overlay érosion -->
+    <div class="viewport viewport-mock">
+      <div class="hud-tip">
+        Outil actif : <b style="color:#fc4">Hydraulic Erosion</b><br>
+        100k gouttes simulées en <b>8.3 s</b><br>
+        Preview rouge/vert affichée
+      </div>
+
+      <!-- SVG overlay : zones érodées (rouge) et déposées (vert) -->
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+
+        <!-- Cellules érodées (rouge) — concentrées en haut sur les versants -->
+        <ellipse cx="180" cy="80"  rx="60" ry="22" fill="#d04020" fill-opacity="0.50"/>
+        <ellipse cx="260" cy="95"  rx="48" ry="18" fill="#d04020" fill-opacity="0.45"/>
+        <ellipse cx="350" cy="75"  rx="55" ry="20" fill="#d04020" fill-opacity="0.55"/>
+        <ellipse cx="440" cy="100" rx="42" ry="16" fill="#d04020" fill-opacity="0.40"/>
+        <ellipse cx="510" cy="115" rx="40" ry="20" fill="#d04020" fill-opacity="0.35"/>
+        <!-- Stries d'érosion (gouttes le long des versants) -->
+        <g stroke="#d04020" stroke-opacity="0.45" stroke-width="1.5" fill="none">
+          <path d="M 195,85  Q 215,130 240,170"/>
+          <path d="M 260,100 Q 270,140 280,180"/>
+          <path d="M 348,82  Q 365,135 380,180"/>
+          <path d="M 432,108 Q 440,150 450,195"/>
+          <path d="M 502,118 Q 495,160 478,200"/>
+        </g>
+
+        <!-- Cellules déposées (vert) — dans les vallées et plaines -->
+        <ellipse cx="240" cy="220" rx="80" ry="18" fill="#40a040" fill-opacity="0.45"/>
+        <ellipse cx="390" cy="225" rx="90" ry="16" fill="#40a040" fill-opacity="0.50"/>
+        <ellipse cx="155" cy="280" rx="55" ry="14" fill="#40a040" fill-opacity="0.40"/>
+        <ellipse cx="480" cy="290" rx="70" ry="20" fill="#40a040" fill-opacity="0.55"/>
+        <ellipse cx="580" cy="270" rx="40" ry="12" fill="#40a040" fill-opacity="0.40"/>
+
+        <!-- Trait des rivières (légèrement plus accentué qu'avant l'érosion) -->
+        <path d="M 130,80 C 180,130 210,160 260,200 S 360,250 460,290 L 590,310"
+              stroke="#4080d0" stroke-width="3" fill="none" stroke-opacity="0.7"/>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.55); padding:4px 8px">
+        <span class="legend-color" style="background:#d04020;opacity:0.55"></span>érosion (delta négatif)
+        &nbsp;
+        <span class="legend-color" style="background:#40a040;opacity:0.55"></span>déposition (delta positif)
+        &nbsp;
+        <span class="legend-color" style="background:#4080d0;opacity:0.7"></span>rivières existantes
+      </div>
+    </div>
+
+    <!-- Tool Properties Hydraulic Erosion -->
+    <div class="panel">
+      <div class="title amber">Tool Properties — Hydraulic Erosion</div>
+      <div class="body">
+
+        <div class="row"><span>Nombre gouttes</span>
+          <div class="slider"><div class="fill amber" style="width:50%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">100 000</span></div>
+
+        <div class="row"><span>Durée vie max</span>
+          <div class="slider"><div class="fill amber" style="width:60%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">30 steps</span></div>
+
+        <div class="row"><span>Capacité séd.</span>
+          <div class="slider"><div class="fill" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">4.0</span></div>
+
+        <div class="row"><span>Taux d'érosion</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.3</span></div>
+
+        <div class="row"><span>Taux déposition</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.3</span></div>
+
+        <div class="row"><span>Évaporation</span>
+          <div class="slider"><div class="fill" style="width:10%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.01</span></div>
+
+        <div class="row"><span>Gravité</span>
+          <div class="slider"><div class="fill" style="width:60%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">4.0</span></div>
+
+        <div class="row"><span>Inertie</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.05</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#6cf; font-size:11px; margin-bottom:6px">— Initialisation —</div>
+        </div>
+        <div class="row"><span>Distribution</span><span class="combo">Weighted altitude</span></div>
+        <div class="row"><span>Seed RNG</span><span>42</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#888; font-size:11px; margin-bottom:6px">— Bornes —</div>
+        </div>
+        <div class="row"><span>Min pente érosion</span>
+          <div class="slider"><div class="fill" style="width:10%"></div></div></div>
+        <div class="row"><span>Max Δ / cell</span>
+          <div class="slider"><div class="fill" style="width:50%"></div></div></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#888; font-size:11px; margin-bottom:6px">— Préservation —</div>
+        </div>
+        <div><span class="checkbox checked">Stopper sous sea level</span></div>
+        <div><span class="checkbox">Préserver zones plates</span></div>
+
+        <div style="margin-top:14px">
+          <span class="btn active" style="font-size:13px">▶ Simulate</span>
+          <span style="color:#888;font-size:10px;margin-left:6px">~2-20 s</span>
+        </div>
+
+        <div style="background:#1f2a30; border:1px solid #2a4050; padding:8px 10px; font-size:11px; margin-top:10px">
+          <div style="color:#fc4;margin-bottom:4px">🧪 Dernière simulation</div>
+          <div class="stats-grid">
+            <span class="lbl">Gouttes</span><span class="val">100 000</span>
+            <span class="lbl">Total steps</span><span class="val">2.84 M</span>
+            <span class="lbl">Cells érodées</span><span class="val">412 380</span>
+            <span class="lbl">Cells déposées</span><span class="val">387 940</span>
+            <span class="lbl">Δ min / max</span><span class="val">-1.92 / +1.41 m</span>
+            <span class="lbl">Wall time</span><span class="val">8.3 s</span>
+            <span class="lbl">Mode</span><span class="val">parallel × 8</span>
+          </div>
+        </div>
+
+        <div class="warning-banner">
+          ⚠ Une <b>RiverNetworkCommand</b> (M100.36) est dans l'historique.<br>
+          Recommandation : <b>re-simulez le watershed</b> après Apply pour
+          réaligner les splines des rivières sur la nouvelle heightmap.
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Apply</span>
+          <span class="btn danger">Cancel</span>
+          <span class="btn">Re-simulate</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de progression (en alternative visuelle, sous le dock pour mémoire) -->
+  <div style="position:relative; margin-top:8px">
+    <div class="panel">
+      <div class="title blue">Modale de progression (pendant Simulate)</div>
+      <div class="body" style="position:relative; height:120px; background:#222">
+        <div class="modal-progress">
+          <div class="step">⏳ Simulation des gouttes (3/5)</div>
+          <div class="bar"><div class="fill"></div></div>
+          <div class="pct">73% — 73 000 / 100 000 gouttes (5.8 s)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] EditorToolbar: SetActiveTool(HydraulicErosion)</div>
+        <div>[DEBUG] ConsolidatedHeightGrid: 5121² cells assembled (38 ms)</div>
+        <div>[DEBUG] CDF distribution: WeightedAltitude (124 ms)</div>
+        <div>[DEBUG] Worker pool: 8 threads, 12500 droplets/worker</div>
+        <div>[DEBUG] Simulation done: 100k droplets, 2.84M steps, 7.41 s</div>
+        <div>[DEBUG] Reduction: 8 thread-local SparseChunkDeltas merged (240 ms)</div>
+        <div>[DEBUG] Preview overlay: ImGui draw-list, 800k cells colorized</div>
+        <div style="color:#6c6">[OK] Total simulation: 8.3 s · parallel mode</div>
+        <div style="color:#fc4">[INFO] Watershed (M100.36) was applied earlier — recommend re-sim after Apply</div>
+        <div style="color:#6c6">[OK] Terrain visible preserved · no render pass changes</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>14:41:02</span><span>River Network apply</span><span>3 rivers</span><span>↶</span></div>
+        <div class="hist-row"><span>14:48:30</span><span>Coastline apply</span><span>ocean+beach</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#fc4">→ preview</span><span>Hydraulic Erosion (100k drops)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title pink">Scene Stats</div>
+      <div class="body" style="font-size:11px">
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th></tr>
+          <tr><td>Chunks chargés</td><td>400 / 400</td></tr>
+          <tr><td>Heightmap consolidée</td><td>5121² · 26.2M cells</td></tr>
+          <tr><td>Buffer deltas (preview)</td><td>~800 000 cells</td></tr>
+          <tr><td>Chunks dirty post-Apply</td><td>247 / 400</td></tr>
+          <tr><td>LOD regen attendus</td><td>247 chunks (async)</td></tr>
+          <tr><td>Mémoire pic</td><td>284 MB</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  M100.38 — Hydraulic Erosion (Particle-Based Simulation) ·
+  ImGui dark · LCDLLN World Editor
+</footer>
+
+</body>
+</html>

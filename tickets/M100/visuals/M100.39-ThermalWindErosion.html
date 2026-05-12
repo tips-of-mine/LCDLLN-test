@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.39 — Thermal & Wind Erosion</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar { background:#2b2b2b; border:1px solid #3a3a3a; padding:4px 6px; display:flex; gap:4px; align-items:center; height:48px; }
+.tool-btn { width:40px; height:40px; background:#3a3a3a; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:18px; color:#ddd; cursor:pointer; position:relative; }
+.tool-btn.active { background:rgba(208,160,80,0.45); border-color:#d9a040; color:#fff; }
+.tool-btn:hover { background:#444; } .tool-btn.disabled { opacity:0.35; cursor:not-allowed; }
+.tool-btn .lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:#888; white-space:nowrap; }
+.tool-btn.x { color:#f88; }
+.viewport-mock { background:linear-gradient(180deg,#2c3540 0%,#4a5560 55%,#6a7060 100%); height:360px; position:relative; border:1px solid #3a3a3a; overflow:hidden; }
+.hud-tip { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.65); padding:6px 10px; font-size:11px; color:#cdcdcd; border:1px solid #444; }
+.legend-color { display:inline-block; width:12px; height:12px; vertical-align:middle; margin-right:6px; border:1px solid #333; }
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.wind-arrow { position:absolute; font-size:32px; color:#6cf; text-shadow:0 0 8px rgba(108,204,255,0.6); }
+.mode-switch { background:#1c1c1c; border:1px solid #3a3a3a; padding:8px 10px; margin-bottom:10px; }
+.mode-switch .lbl { color:#fc4; font-size:11px; margin-bottom:6px; }
+.section-title { color:#fc4; font-size:11px; margin:8px 0 6px 0; border-top:1px dashed #444; padding-top:8px; }
+.section-title.wind { color:#6cf; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — toutes les previews (arêtes thermal orange,
+  flèche vent + quivers, sable doré post-sim) sont des draw-list 2D additives.
+  Aucune mutation caméra, frustum cull, fallback orange.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span><span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpter">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lac">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="Rivière">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Mountain">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Vallée">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="River Net">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn" title="Coastline">🌅<span class="lbl">Coastline</span></div>
+    <div class="tool-btn" title="Hydraulic">💧↘<span class="lbl">Hydraulic</span></div>
+    <div class="tool-btn active" title="Thermal & Wind — outil actif">
+      ⛰⤓🌬<span class="lbl" style="color:#d9a040">Thermal/Wind</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn disabled" title="Bientôt">🌳<span class="lbl">Vegetation</span></div>
+    <div class="tool-btn x" title="Désél.">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 demo_plains</div>
+        <div style="margin-left:14px;color:#aaa">▸ Terrain (heightmap)</div>
+        <div style="margin-left:14px;color:#aaa">▸ Splat (5 layers, dont Sand)</div>
+        <div style="margin-left:14px;color:#6cf">▸ Water surfaces</div>
+        <div style="margin-left:14px;color:#fc4">▾ Erosion stack appliquée</div>
+        <div style="margin-left:28px;color:#888">▸ Hydraulic (100k drops)</div>
+        <div style="margin-left:28px;color:#d9a040">▸ Thermal (40 passes, draft)</div>
+        <div style="margin-left:28px;color:#6cf">▸ Wind N→S 30k particles (draft)</div>
+      </div>
+    </div>
+
+    <div class="viewport viewport-mock">
+      <!-- Flèche vent principale dans le coin -->
+      <div class="wind-arrow" style="top:14px; left:14px;">↓</div>
+      <div style="position:absolute; top:50px; left:14px; color:#6cf; font-size:10px; font-family:Consolas">
+        Vent N→S<br>180° · 0.5
+      </div>
+
+      <div class="hud-tip">
+        Outil actif : <b style="color:#d9a040">Thermal/Wind (Both)</b><br>
+        Thermal 40p convergé à 28 (412 ms) ·<br>
+        Wind 30k particles (3.8 s parallèle)
+      </div>
+
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+
+        <!-- Arêtes thermal (orange) sur les pentes > talus -->
+        <g stroke="#d09040" stroke-width="2.5" stroke-opacity="0.6" fill="none">
+          <line x1="175" y1="60"  x2="220" y2="85"/>
+          <line x1="220" y1="85"  x2="260" y2="105"/>
+          <line x1="320" y1="60"  x2="360" y2="80"/>
+          <line x1="360" y1="80"  x2="395" y2="100"/>
+          <line x1="430" y1="75"  x2="470" y2="100"/>
+          <line x1="470" y1="100" x2="510" y2="125"/>
+        </g>
+
+        <!-- Quivers vent (sparse grid de petites flèches) -->
+        <g stroke="#6cf" stroke-width="1" stroke-opacity="0.35" fill="#6cf" fill-opacity="0.35">
+          <g>
+            <line x1="50"  y1="140" x2="50"  y2="155"/><polygon points="47,153 50,160 53,153"/>
+            <line x1="150" y1="140" x2="150" y2="155"/><polygon points="147,153 150,160 153,153"/>
+            <line x1="250" y1="140" x2="250" y2="155"/><polygon points="247,153 250,160 253,153"/>
+            <line x1="350" y1="140" x2="350" y2="155"/><polygon points="347,153 350,160 353,153"/>
+            <line x1="450" y1="140" x2="450" y2="155"/><polygon points="447,153 450,160 453,153"/>
+            <line x1="550" y1="140" x2="550" y2="155"/><polygon points="547,153 550,160 553,153"/>
+            <line x1="50"  y1="220" x2="50"  y2="235"/><polygon points="47,233 50,240 53,233"/>
+            <line x1="150" y1="220" x2="150" y2="235"/><polygon points="147,233 150,240 153,233"/>
+            <line x1="250" y1="220" x2="250" y2="235"/><polygon points="247,233 250,240 253,233"/>
+            <line x1="350" y1="220" x2="350" y2="235"/><polygon points="347,233 350,240 353,233"/>
+            <line x1="450" y1="220" x2="450" y2="235"/><polygon points="447,233 450,240 453,233"/>
+            <line x1="550" y1="220" x2="550" y2="235"/><polygon points="547,233 550,240 553,233"/>
+          </g>
+        </g>
+
+        <!-- Zones érosion thermal (gris-rocher post-sim) sur les crêtes -->
+        <ellipse cx="220" cy="80" rx="50" ry="15" fill="#888" fill-opacity="0.35"/>
+        <ellipse cx="360" cy="75" rx="55" ry="14" fill="#888" fill-opacity="0.35"/>
+        <ellipse cx="470" cy="90" rx="48" ry="16" fill="#888" fill-opacity="0.35"/>
+
+        <!-- Zones déposition thermal (au pied des crêtes) -->
+        <ellipse cx="240" cy="155" rx="80" ry="16" fill="#6c6" fill-opacity="0.30"/>
+        <ellipse cx="395" cy="165" rx="90" ry="18" fill="#6c6" fill-opacity="0.30"/>
+
+        <!-- Zones wind erosion (face nord = exposée) — beige clair -->
+        <ellipse cx="200" cy="180" rx="60" ry="10" fill="#d4b890" fill-opacity="0.40"/>
+        <ellipse cx="380" cy="185" rx="70" ry="11" fill="#d4b890" fill-opacity="0.40"/>
+
+        <!-- Zones wind deposition (face sud = abritée) — sable doré -->
+        <ellipse cx="225" cy="290" rx="70" ry="12" fill="#d9a040" fill-opacity="0.55"/>
+        <ellipse cx="410" cy="305" rx="90" ry="14" fill="#d9a040" fill-opacity="0.60"/>
+        <ellipse cx="555" cy="280" rx="50" ry="11" fill="#d9a040" fill-opacity="0.50"/>
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.55); padding:4px 8px">
+        <span class="legend-color" style="background:#d09040;opacity:0.6"></span>arêtes > talus (thermal)
+        &nbsp;
+        <span class="legend-color" style="background:#6cf;opacity:0.4"></span>vent (quivers)
+        &nbsp;
+        <span class="legend-color" style="background:#d9a040;opacity:0.6"></span>sable déposé (wind)
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Tool Properties — Thermal/Wind</div>
+      <div class="body">
+
+        <div class="mode-switch">
+          <div class="lbl">Sous-mode</div>
+          <span class="radio">Thermal seul</span>
+          <span class="radio">Wind seul</span>
+          <span class="radio checked">Both</span>
+        </div>
+
+        <div class="section-title">— Thermal Erosion —</div>
+
+        <div class="row"><span>Angle de talus</span>
+          <div class="slider"><div class="fill amber" style="width:70%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">35°</span></div>
+
+        <div class="row"><span>Force / passe</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.3</span></div>
+
+        <div class="row"><span>Nb passes</span>
+          <div class="slider"><div class="fill" style="width:40%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">40 (convergé à 28)</span></div>
+
+        <div style="margin-top:6px"><span class="checkbox">Préserver pentes voulues (&gt;60°)</span></div>
+
+        <div class="section-title wind">— Wind Erosion —</div>
+
+        <div class="row"><span>Direction</span><span class="combo">N → S</span></div>
+        <div class="row"><span>Angle</span><span>180.0°</span></div>
+
+        <div class="row"><span>Force vent</span>
+          <div class="slider"><div class="fill" style="width:50%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.5</span></div>
+
+        <div class="row"><span>Nb particules</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">30 000</span></div>
+
+        <div class="row"><span>Exposition R</span>
+          <div class="slider"><div class="fill" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">30 m</span></div>
+
+        <div style="margin-top:6px">
+          <span class="checkbox checked">Stopper sous sea level</span><br>
+          <span class="checkbox">Restreindre splat « Sand »</span>
+        </div>
+
+        <div style="background:#1f2a30; border:1px solid #2a4050; padding:8px 10px; font-size:11px; margin-top:12px;">
+          <div style="color:#fc4;margin-bottom:4px">Workflow recommandé</div>
+          <div style="font-size:10px;color:#aaa;line-height:1.5">
+            M35 → 36 → 37 → 38 (hydraulic) → <b style="color:#d9a040">39 (thermal+wind)</b>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <span class="btn active" style="font-size:13px">▶ Simulate</span>
+          <span style="color:#888;font-size:10px;margin-left:6px">~6.4 s (Both, parallèle)</span>
+        </div>
+
+        <div style="background:#1f2a30; border:1px solid #2a4050; padding:8px 10px; font-size:11px; margin-top:10px">
+          <div style="color:#d9a040;margin-bottom:4px">🧪 Dernière simulation</div>
+          <div style="font-size:11px;line-height:1.6;color:#aaa">
+            Mode <b style="color:#fc4">Both</b><br>
+            Thermal : 28/40 passes (412 ms)<br>
+            Cells affectées T : <b style="color:#fc4">285 400</b><br>
+            Mass-conservation : <b style="color:#6c6">|Σ|=2.1e-5 m ✓</b><br>
+            Wind : 30k particles (3.8 s)<br>
+            Cells affectées W : <b style="color:#fc4">196 250</b><br>
+            Δ min/max global : <b style="color:#fc4">-0.74 / +0.61 m</b>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Apply</span>
+          <span class="btn danger">Cancel</span>
+          <span class="btn">Re-simulate</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">Console</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] EditorToolbar: SetActiveTool(ThermalWindErosion) mode=Both</div>
+        <div>[DEBUG] ConsolidatedHeightGrid: reuse from previous sim (cached)</div>
+        <div>[DEBUG] Thermal pass 28/40: |total transferred|=4.7e-6 < threshold → converged</div>
+        <div>[DEBUG] Wind sim: 8 worker threads, 3750 particles/worker</div>
+        <div>[DEBUG] Wind direction (180°, 0.5), exposure R=30m</div>
+        <div style="color:#6c6">[OK] Mass conservation thermal: |Σ deltas| = 2.1e-5 m (under threshold)</div>
+        <div style="color:#6c6">[OK] Both sim total: 6.4 s · parallel · preserved terrain visibility</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>14:48:30</span><span>Coastline apply</span><span>ocean+beach</span><span>↶</span></div>
+        <div class="hist-row"><span>14:52:18</span><span>Hydraulic apply</span><span>247 chunks</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#d9a040">→ preview</span><span>Thermal+Wind (Both)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title pink">Phase 2.5 Bilan</div>
+      <div class="body" style="font-size:11px;line-height:1.7">
+        <div style="color:#6c6">✅ M100.35 Montagnes/Vallées</div>
+        <div style="color:#6c6">✅ M100.36 Rivières watershed</div>
+        <div style="color:#6c6">✅ M100.37 Côtes + océan</div>
+        <div style="color:#6c6">✅ M100.38 Hydraulic erosion</div>
+        <div style="color:#d9a040">⏳ M100.39 Thermal+Wind <b>(en cours)</b></div>
+        <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #444;color:#888">
+          Reste : Phase 11 (M100.40-44 grottes/overhangs/arches/donjons/vmap bridge)
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.39 — Thermal & Wind Erosion (talus + wind particle) · LCDLLN World Editor</footer>
+</body></html>

@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.51 — Deployment Pipeline CI</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+
+.flow-container {
+  background:#1c1c1c; border:1px solid #444;
+  padding:18px;
+}
+.flow-step {
+  background:#0f0f0f; border-left:4px solid #4080d0;
+  padding:10px 14px; margin-bottom:8px;
+  display:flex; align-items:center; gap:14px;
+}
+.flow-step.success { border-left-color:#6c6; }
+.flow-step.failed { border-left-color:#f88; background:#2a1a1a; }
+.flow-step .num {
+  background:#4080d0; color:#fff; width:28px; height:28px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:bold; font-size:13px;
+}
+.flow-step.success .num { background:#6c6; color:#000; }
+.flow-step.failed .num { background:#f88; color:#000; }
+.flow-step .content { flex:1; }
+.flow-step .title { color:#cdcdcd; font-weight:bold; font-size:13px; }
+.flow-step .desc { color:#888; font-size:11px; margin-top:2px; }
+.flow-step .time { color:#fc4; font-size:11px; font-family:Consolas; }
+
+.workflow-yaml {
+  background:#0f0f0f; color:#a0d0ff; padding:14px;
+  font-family:Consolas; font-size:10px; line-height:1.5; border:1px solid #333;
+}
+.workflow-yaml .key { color:#fc4; }
+.workflow-yaml .str { color:#a0e090; }
+.workflow-yaml .comment { color:#666; }
+
+.pr-comment {
+  background:#0d1117; border:1px solid #30363d;
+  padding:18px 22px; margin: 16px 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #c9d1d9;
+}
+.pr-comment .pr-header {
+  display:flex; align-items:center; gap:10px;
+  padding-bottom:12px; border-bottom:1px solid #30363d; margin-bottom:14px;
+}
+.pr-comment .pr-header .bot-icon {
+  background:#161b22; border:1px solid #30363d;
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+}
+.pr-comment .pr-header .bot-name { font-weight:bold; color:#58a6ff; }
+.pr-comment .pr-header .bot-meta { color:#7d8590; font-size:11px; }
+.pr-comment h2 { color:#c9d1d9; font-size:16px; margin:0 0 12px 0; }
+.pr-comment h3 { color:#c9d1d9; font-size:13px; margin:14px 0 6px 0; }
+.pr-comment .status-ok { color:#56d364; font-weight:bold; }
+.pr-comment .status-link { color:#58a6ff; font-weight:bold; }
+.pr-comment .pr-table {
+  width:100%; border-collapse:collapse;
+  font-size:11px; margin:6px 0;
+}
+.pr-comment .pr-table th, .pr-comment .pr-table td {
+  padding:4px 8px; border-bottom:1px solid #30363d; text-align:left;
+}
+.pr-comment .pr-table th { color:#7d8590; }
+.pr-comment .pr-table .delta-plus { color:#56d364; }
+.pr-comment .pr-table .delta-minus { color:#f85149; }
+.pr-comment .smoke-line { margin: 3px 0; font-size: 12px; }
+.pr-comment .smoke-line .pass { color: #56d364; }
+.pr-comment .pr-footer { color:#7d8590; font-size:11px; margin-top:14px; padding-top:12px; border-top:1px solid #30363d; }
+
+.pr-comment.failure { border-color:#f85149; }
+.pr-comment.failure h2 { color:#f85149; }
+.pr-comment.failure .status-failed { color:#f85149; font-weight:bold; }
+.pr-comment.failure pre {
+  background:#161b22; border:1px solid #30363d; color:#f85149;
+  padding:10px; font-size:11px; font-family:Consolas;
+}
+
+.metric-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+.metric-tile { background:#1c1c1c; border:1px solid #2a4050; padding:12px 14px; text-align:center; }
+.metric-tile .val { color:#6c6; font-size:22px; font-weight:bold; }
+.metric-tile .lbl { color:#888; font-size:10px; margin-top:3px; }
+
+.summary-table {
+  width:100%; font-size:11px; color:#cdcdcd;
+}
+.summary-table th { color:#fc4; padding:6px; text-align:left; background:#1a1a1a; }
+.summary-table td { padding:5px 6px; border-bottom:1px dotted #333; }
+.summary-table .before { color:#f88; }
+.summary-table .after { color:#6c6; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — ce ticket ne touche pas le code de
+  rendu client. Pipeline offline + GitHub Actions + runtime serveur.
+</div>
+
+<div style="background:#1f2a1f; border:1px solid #4a8a4a; padding:12px 16px; color:#a0e0a0; font-size:13px; margin-bottom:14px">
+  🎯 <b>Phase 12 — Accessibilité (7/7 — CLÔTURE)</b> · Le mappeur fait
+  <code>git push zone/X</code> → quelques minutes plus tard, lien staging
+  testable dans la PR. Rollback automatique en cas d'échec. Plus aucune
+  commande shell à connaître.
+</div>
+
+<!-- BLOC 1 : Pipeline complet visualisé -->
+<h3 style="color:#fc4">Pipeline complet — 9 étapes automatisées</h3>
+
+<div class="flow-container">
+
+  <div class="flow-step success">
+    <div class="num">1</div>
+    <div class="content">
+      <div class="title">git push zone/rocky_coast_01</div>
+      <div class="desc">Déclenche le workflow `build-and-deploy-zone.yml`</div>
+    </div>
+    <div class="time">T+0s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">2</div>
+    <div class="content">
+      <div class="title">Rate limit check</div>
+      <div class="desc">Vérifie que > 5 min depuis le dernier deploy de cette PR</div>
+    </div>
+    <div class="time">T+2s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">3</div>
+    <div class="content">
+      <div class="title">Build des outils requis</div>
+      <div class="desc">zone_validator_cli, lcdlln_vmap_extractor, dungeon_db_sync</div>
+    </div>
+    <div class="time">T+45s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">4</div>
+    <div class="content">
+      <div class="title">Détection des zones modifiées</div>
+      <div class="desc">git diff sur game/data/zones/** → liste des bundles touchés</div>
+    </div>
+    <div class="time">T+47s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">5</div>
+    <div class="content">
+      <div class="title">Validation (M100.48) — bloquant si Error</div>
+      <div class="desc">zone_validator_cli sur chaque zone, échec si exit code = 1</div>
+    </div>
+    <div class="time">T+52s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">6</div>
+    <div class="content">
+      <div class="title">Bake des vmaps (M100.44)</div>
+      <div class="desc">lcdlln_vmap_extractor avec 8 threads, 256 tiles produites</div>
+    </div>
+    <div class="time">T+1m 47s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">7</div>
+    <div class="content">
+      <div class="title">Backup + rsync vers staging</div>
+      <div class="desc">vmaps précédents sauvegardés, nouveaux artefacts pushés via SSH</div>
+    </div>
+    <div class="time">T+2m 02s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">8</div>
+    <div class="content">
+      <div class="title">Sync dungeons DB + update zone_content_versions</div>
+      <div class="desc">dungeon_db_sync + UPDATE SQL du hash mesh_inserts.bin</div>
+    </div>
+    <div class="time">T+2m 18s</div>
+  </div>
+
+  <div class="flow-step success">
+    <div class="num">9</div>
+    <div class="content">
+      <div class="title">Cold restart shard + smoke tests</div>
+      <div class="desc">systemctl restart, wait for boot (max 60s), smoke tests login/spawn/getheight</div>
+    </div>
+    <div class="time">T+2m 47s</div>
+  </div>
+
+</div>
+
+<!-- BLOC 2 : Workflow YAML extrait -->
+<h3 style="color:#fc4; margin-top:20px">Workflow YAML (extrait)</h3>
+
+<div class="workflow-yaml">
+<span class="key">name</span>: Build &amp; Deploy Zone (Staging)<br>
+<br>
+<span class="key">on</span>:<br>
+&nbsp;&nbsp;<span class="key">push</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">branches</span>: [<span class="str">'zone/**'</span>]<br>
+<br>
+<span class="key">concurrency</span>:<br>
+&nbsp;&nbsp;<span class="key">group</span>: deploy-staging-${{ github.ref }}<br>
+&nbsp;&nbsp;<span class="key">cancel-in-progress</span>: <span class="str">true</span><br>
+<br>
+<span class="key">jobs</span>:<br>
+&nbsp;&nbsp;<span class="key">validate-and-build</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">runs-on</span>: ubuntu-latest<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">steps</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">uses</span>: actions/checkout@v4.2.2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Build all required tools<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">run</span>: |<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmake --preset linux-x64-release<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmake --build --preset linux-x64-release --target \<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zone_validator_cli lcdlln_vmap_extractor dungeon_db_sync<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Validate each zone (must pass)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">run</span>: |<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for zone in ${{ steps.detect.outputs.zones }}; do<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;./build/zone_validator_cli --zone-bundle <span class="str">"$zone"</span> --min-severity error<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;done<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ... bake vmaps, upload artifacts</span><br>
+<br>
+&nbsp;&nbsp;<span class="key">deploy-staging</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">needs</span>: validate-and-build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">steps</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Backup current staging vmaps<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Rsync artifacts to staging<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Sync dungeons DB<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Cold restart shard staging<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Wait for boot OK (max 60s)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Smoke tests<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="key">name</span>: Rollback on failure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">if</span>: failure()
+</div>
+
+<!-- BLOC 3 : Commentaire PR (succès) -->
+<h3 style="color:#fc4; margin-top:20px">Commentaire PR auto-posté (succès)</h3>
+
+<div class="pr-comment">
+  <div class="pr-header">
+    <div class="bot-icon">🤖</div>
+    <div>
+      <div class="bot-name">lcdlln-deploy-bot</div>
+      <div class="bot-meta">Posted automatically · 2 minutes ago</div>
+    </div>
+  </div>
+
+  <h2>🚀 Zone déployée sur staging</h2>
+
+  <p>
+    <span class="status-ok">✅ Statut</span> : Déploiement réussi en <b>2m 47s</b><br>
+    <span class="status-link">🔗 Test live</span> :
+    <code>staging.lcdlln.example:5101</code> — zone <code>rocky_coast_01</code>
+  </p>
+
+  <h3>📋 Validation</h3>
+  <ul style="font-size:12px; line-height:1.6">
+    <li><span style="color:#56d364">●</span> <b>0 erreurs</b></li>
+    <li><span style="color:#d29922">●</span> <b>3 warnings</b> (cliquer pour voir détails)</li>
+    <li><span style="color:#58a6ff">●</span> <b>5 hints</b></li>
+  </ul>
+
+  <h3>📦 Artefacts générés</h3>
+  <table class="pr-table">
+    <tr><th>Fichier</th><th>Taille</th><th>Delta</th></tr>
+    <tr><td>terrain.bin</td><td>24.2 MB</td><td class="delta-plus">+180 KB</td></tr>
+    <tr><td>mesh_inserts.bin</td><td>8.1 KB</td><td class="delta-plus">+1.2 KB</td></tr>
+    <tr><td>vmap_tiles/*.vmap (256 files)</td><td>142 MB</td><td class="delta-plus">+4.2 MB</td></tr>
+    <tr><td>splat.bin</td><td>11.4 MB</td><td class="delta-minus">−2 KB</td></tr>
+  </table>
+
+  <h3>🧪 Smoke tests</h3>
+  <div class="smoke-line"><span class="pass">✓</span> Login OK · <span class="pass">✓</span> Spawn OK · <span class="pass">✓</span> GetHeight OK · <span class="pass">✓</span> Mesh inserts OK</div>
+
+  <h3>📖 Comment tester</h3>
+  <ol style="font-size:12px; line-height:1.6">
+    <li>Lancer le client en pointant sur <code>staging.lcdlln.example:5100</code></li>
+    <li>Compte de test : <code>tester01</code> / mot de passe partagé dans le Discord</li>
+    <li>Spawn directement dans <code>rocky_coast_01</code></li>
+  </ol>
+
+  <div class="pr-footer">
+    💬 Posté automatiquement par CI ·
+    <a style="color:#58a6ff">Workflow run #1842</a>
+  </div>
+</div>
+
+<!-- BLOC 4 : Commentaire PR (échec + rollback) -->
+<h3 style="color:#fc4; margin-top:20px">Commentaire PR auto-posté (échec + rollback)</h3>
+
+<div class="pr-comment failure">
+  <div class="pr-header">
+    <div class="bot-icon">🤖</div>
+    <div>
+      <div class="bot-name">lcdlln-deploy-bot</div>
+      <div class="bot-meta">Posted automatically · 1 minute ago</div>
+    </div>
+  </div>
+
+  <h2>🛑 Déploiement échoué</h2>
+
+  <p>
+    <span class="status-failed">Statut</span> : Rollback automatique effectué<br>
+    <b>Étape qui a échoué</b> : Smoke tests (timeout après 60s)
+  </p>
+
+  <h3>📋 Logs</h3>
+  <pre>[ERROR] Failed to spawn test character: server returned NotImplemented
+[ERROR] Smoke test 'spawn_in_zone' failed at T+58.4s
+[INFO] Rollback initiated: restoring vmap_tiles.previous/
+[OK]   Vmap tiles restored (256 files)
+[OK]   zone_content_versions restored to previous hash
+[OK]   Shard restarted with previous version
+[OK]   Boot OK in 14.2s</pre>
+
+  <h3>💡 Actions suggérées</h3>
+  <ul style="font-size:12px; line-height:1.6">
+    <li>Vérifier les logs complets dans le workflow run.</li>
+    <li>Si erreur sur l'allocation d'instance : ouvrir un ticket runtime donjon.</li>
+    <li>Les .vmap précédents ont été restaurés, staging fonctionne avec l'ancienne version.</li>
+  </ul>
+
+  <div class="pr-footer">
+    💬 Posté automatiquement par CI · <a style="color:#58a6ff">Workflow run #1843</a>
+  </div>
+</div>
+
+<!-- BLOC 5 : Phase 12 récapitulatif final -->
+<h3 style="color:#fc4; margin-top:24px">Phase 12 LIVRÉE — Récapitulatif</h3>
+
+<div class="metric-grid">
+  <div class="metric-tile">
+    <div class="val">7</div>
+    <div class="lbl">Tickets Phase 12</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">13</div>
+    <div class="lbl">Outils migrés Simple/Advanced</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">8</div>
+    <div class="lbl">Zone presets MVP</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">192</div>
+    <div class="lbl">Combinaisons wizard</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">12</div>
+    <div class="lbl">Sections doc F1</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">18</div>
+    <div class="lbl">Règles validation</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">10</div>
+    <div class="lbl">Règles diagnostic</div>
+  </div>
+  <div class="metric-tile">
+    <div class="val">8</div>
+    <div class="lbl">Étapes tutoriel</div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:14px">
+  <div class="title green">Avant / Après Phase 12</div>
+  <div class="body">
+    <table class="summary-table">
+      <tr><th>Aspect</th><th class="before">Avant Phase 12</th><th class="after">Après Phase 12</th></tr>
+      <tr>
+        <td><b>Paramètres exposés par outil</b></td>
+        <td class="before">8-15 sliders</td>
+        <td class="after">3-4 sliders en mode Simple + dropdown presets</td>
+      </tr>
+      <tr>
+        <td><b>Création d'une zone</b></td>
+        <td class="before">À la main, action par action (~30 min)</td>
+        <td class="after">~30s via preset, ~2 min via wizard</td>
+      </tr>
+      <tr>
+        <td><b>Aide intégrée</b></td>
+        <td class="before">Aucune</td>
+        <td class="after">Tooltips riches + F1 doc + tutoriel 8 étapes + diagnostic</td>
+      </tr>
+      <tr>
+        <td><b>Détection d'erreurs</b></td>
+        <td class="before">Bugs découverts en prod</td>
+        <td class="after">18 règles validation + blocage export si Error</td>
+      </tr>
+      <tr>
+        <td><b>Déploiement vers staging</b></td>
+        <td class="before">8 étapes manuelles en ligne de commande</td>
+        <td class="after">git push zone/X → lien staging en quelques minutes</td>
+      </tr>
+      <tr>
+        <td><b>Profil utilisateur cible</b></td>
+        <td class="before">Technical artist / développeur</td>
+        <td class="after">Contributeur communautaire sans formation</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:14px">
+  <div class="title pink">Position globale</div>
+  <div class="body" style="font-size:12px; line-height:1.7">
+    <div style="color:#6c6">✅ <b>Phase 2.5</b> Terrain naturaliste (M100.35-39, 5 tickets)</div>
+    <div style="color:#6c6">✅ <b>Phase 11</b> Volumes 3D (M100.40-44, 5 tickets)</div>
+    <div style="color:#6c6">✅ <b>Phase 12</b> Accessibilité éditeur (M100.45-51, 7 tickets — <b>CLÔTURE</b>)</div>
+    <div style="margin-top:8px; color:#888">⏳ <b>Phase 13</b> Décoration (~4 tickets : Vegetation, Linear Structures, Signposts, Decorative Scatter)</div>
+    <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #444; color:#666">
+      Total Phase 2.5 + 11 + 12 : <b>17 tickets</b> livrés (markdown + visuel HTML chacun = 34 fichiers).
+    </div>
+  </div>
+</div>
+
+<footer>M100.51 — Deployment Pipeline CI · Phase 12 CLÔTURE · LCDLLN World Editor</footer>
+</body></html>

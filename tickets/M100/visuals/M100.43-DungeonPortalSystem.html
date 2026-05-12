@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>M100.43 — Dungeon Portal System</title>
+<link rel="stylesheet" href="_style.css">
+<style>
+.toolbar-bar { background:#2b2b2b; border:1px solid #3a3a3a; padding:4px 6px; display:flex; gap:4px; align-items:center; height:48px; }
+.tool-btn { width:40px; height:40px; background:#3a3a3a; border:1px solid #555; display:flex; align-items:center; justify-content:center; font-size:18px; color:#ddd; cursor:pointer; position:relative; }
+.tool-btn.active { background:rgba(170,80,160,0.50); border-color:#a050a0; color:#fff; }
+.tool-btn:hover { background:#444; } .tool-btn.disabled { opacity:0.35; cursor:not-allowed; }
+.tool-btn .lbl { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:9px; color:#888; white-space:nowrap; }
+.tool-btn.x { color:#f88; }
+.viewport-mock { background:linear-gradient(180deg,#2c3540 0%,#4a5560 55%,#6a7060 100%); height:360px; position:relative; border:1px solid #3a3a3a; overflow:hidden; }
+.hud-tip { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.65); padding:6px 10px; font-size:11px; color:#cdcdcd; border:1px solid #444; }
+.invariant-banner { background:#2a1f1f; border:1px solid #6a3030; padding:8px 12px; color:#f0a0a0; font-size:12px; margin-bottom:12px; }
+.invariant-banner b { color:#ff8080; }
+.network-banner { background:#1f2f3a; border:1px solid #406070; padding:8px 12px; color:#90c0e0; font-size:12px; margin-bottom:12px; }
+.network-banner b { color:#a0d0ff; }
+.catalog-item { display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid #333; margin-bottom:4px; background:#1c1c1c; cursor:pointer; }
+.catalog-item.selected { border-color:#a050a0; background:#251a25; }
+.thumb { width:48px; height:36px; background:#444; border:1px solid #666; display:flex; align-items:center; justify-content:center; font-size:18px; color:#888; }
+.thumb.dungeon { background:linear-gradient(180deg,#2a1830,#0a0510); color:#c080c0; }
+.catalog-item .name { font-size:12px; color:#ddd; } .catalog-item .meta { font-size:10px; color:#888; }
+.bubble-overlay {
+  position: absolute; padding: 10px 14px;
+  background: rgba(20,15,25,0.92); border: 2px solid #a050a0;
+  border-radius: 4px; color: #fff; font-size: 12px;
+  box-shadow: 0 0 16px rgba(160,80,160,0.5);
+}
+.bubble-overlay .title { color: #c080c0; font-weight: bold; margin-bottom: 4px; font-size: 13px; }
+.bubble-overlay .key { display: inline-block; padding: 2px 6px; background: #2a1830; border: 1px solid #a050a0; border-radius: 3px; color: #fc4; font-family: Consolas; }
+.bridge-warning { background:#3a2f1f; border:1px solid #6a5530; color:#f0c060; font-size:11px; padding:6px 10px; margin-top:8px; }
+.metadata-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; font-size:11px; }
+.metadata-grid .lbl { color:#888; }
+.metadata-grid .val { color:#cdcdcd; }
+.deploy-banner { background:#3a1f1f; border:1px solid #8a3030; color:#ff8080; font-size:11px; padding:6px 10px; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="invariant-banner">
+  <b>Invariant terrain visible</b> — mesh insert via pipeline standard.
+  Threshold AABB rendu en wireframe ImGui (debug). Pas de touch render/camera.
+</div>
+<div class="network-banner">
+  <b>⚡ Premier ticket Phase 11 avec réseau</b> — nouveaux opcodes
+  <code>51/52</code> (INSTANCE_ENTER_REQUEST/RESPONSE), nouvelle table DB
+  <code>dungeons</code>, <b>bump kProtocolVersion</b>. Redéploiement master
+  serveur obligatoire en lock-step avec le client.
+</div>
+
+<div class="shell">
+
+  <div class="menubar">
+    <span class="item">Fichier</span><span class="item">Vue</span>
+    <span class="item">Outils</span><span class="item">Options</span><span class="item">Carte</span>
+  </div>
+
+  <div class="toolbar-bar">
+    <div class="tool-btn" title="Sculpt">⛰️<span class="lbl">Sculpt</span></div>
+    <div class="tool-btn" title="Stamp">🔨<span class="lbl">Stamp</span></div>
+    <div class="tool-btn" title="Splat">🎨<span class="lbl">Splat</span></div>
+    <div class="tool-btn" title="Lake">💧<span class="lbl">Lake</span></div>
+    <div class="tool-btn" title="River">🌊<span class="lbl">River</span></div>
+    <div class="tool-btn" title="Mountain">⛰⛰⛰<span class="lbl">Mountain</span></div>
+    <div class="tool-btn" title="Valley">⛰⌄⛰<span class="lbl">Valley</span></div>
+    <div class="tool-btn" title="River Net">⇉🌊<span class="lbl">River Net</span></div>
+    <div class="tool-btn" title="Coastline">🌅<span class="lbl">Coastline</span></div>
+    <div class="tool-btn" title="Hydraulic">💧↘<span class="lbl">Hydraulic</span></div>
+    <div class="tool-btn" title="Thermal/Wind">⛰⤓🌬<span class="lbl">Thermal/W</span></div>
+    <div class="tool-btn" title="Cave">🕳️<span class="lbl">Cave</span></div>
+    <div class="tool-btn" title="Overhang">⛰⤴<span class="lbl">Overhang</span></div>
+    <div class="tool-btn" title="Arch">🌉<span class="lbl">Arch</span></div>
+    <div class="tool-btn active" title="Dungeon Portal — actif">
+      🚪✨<span class="lbl" style="color:#c080c0">Dungeon</span>
+    </div>
+    <div style="flex:1"></div>
+    <div class="tool-btn x" title="Désél.">✕<span class="lbl">Désél.</span></div>
+  </div>
+
+  <div class="dock">
+
+    <div class="panel">
+      <div class="title pink">Outliner</div>
+      <div class="body" style="font-size:12px">
+        <div>📁 demo_plains</div>
+        <div style="margin-left:14px;color:#a06030">▾ Mesh Inserts (4)</div>
+        <div style="margin-left:28px;color:#a06030">▸ Caves (1)</div>
+        <div style="margin-left:28px;color:#806040">▸ Overhangs (1)</div>
+        <div style="margin-left:28px;color:#c08040">▸ Arches (1)</div>
+        <div style="margin-left:28px;color:#a050a0">▾ Dungeons (1)</div>
+        <div style="margin-left:42px;color:#fc4">▸ dungeon_001_ancient_ruin (preview)</div>
+      </div>
+    </div>
+
+    <div class="viewport viewport-mock">
+      <div class="hud-tip">
+        Outil actif : <b style="color:#c080c0">Dungeon</b><br>
+        Sélection : <b>entrance_ruin</b><br>
+        Dungeon ID : <b>dungeon_001_ancient_ruin</b>
+      </div>
+
+      <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none">
+        <!-- Sol -->
+        <path d="M 0,230 C 100,210 200,205 320,200 C 440,210 540,225 640,240 L 640,360 L 0,360 Z"
+              fill="#5a6058"/>
+
+        <!-- Façade portail de ruine (mesh ghost) -->
+        <g opacity="0.65">
+          <!-- Encadrement -->
+          <path d="M 280,120 L 280,225 L 280,230 L 380,230 L 380,225 L 380,120 L 360,90 L 300,90 Z"
+                fill="#2a2030" stroke="#a050a0" stroke-width="2" stroke-dasharray="5 3"/>
+          <!-- Ouverture (porte sombre) -->
+          <path d="M 305,140 L 305,225 L 355,225 L 355,140 Q 355,115 330,115 Q 305,115 305,140 Z"
+                fill="#1a0a10"/>
+          <!-- Glyphes magiques sur l'encadrement -->
+          <text x="290" y="105" fill="#c080c0" font-size="10" font-family="Georgia" style="font-style:italic">✦ ✦ ✦</text>
+          <text x="298" y="135" fill="#c080c0" font-size="9" font-family="Georgia" style="font-style:italic">⚜ ⚜ ⚜</text>
+        </g>
+
+        <!-- Threshold AABB (volume trigger, en wireframe magenta) -->
+        <g stroke="#ff80ff" stroke-width="1.5" fill="none" stroke-opacity="0.7" stroke-dasharray="4 2">
+          <rect x="295" y="195" width="70" height="55"/>
+          <line x1="295" y1="195" x2="305" y2="180"/>
+          <line x1="365" y1="195" x2="375" y2="180"/>
+          <line x1="305" y1="180" x2="375" y2="180"/>
+          <line x1="305" y1="180" x2="305" y2="235"/>
+          <line x1="375" y1="180" x2="375" y2="235"/>
+          <line x1="295" y1="250" x2="305" y2="235"/>
+          <line x1="365" y1="250" x2="375" y2="235"/>
+        </g>
+        <text x="380" y="220" fill="#ff80ff" font-size="10" font-family="Consolas">thresholdAABB<br/></text>
+        <text x="380" y="232" fill="#ff80ff" font-size="9" font-family="Consolas">2 × 3 × 2 m</text>
+
+        <!-- Patch splat « Stone » au seuil -->
+        <ellipse cx="330" cy="240" rx="38" ry="10" fill="#6a6058" fill-opacity="0.40"
+                 stroke="#6a6058" stroke-width="1" stroke-dasharray="2 2"/>
+        <text x="290" y="280" fill="#a0a090" font-size="9" font-family="Consolas">splat « Stone » R=4m</text>
+
+        <!-- Bulle interactive (simulation joueur dans threshold) -->
+        <foreignObject x="395" y="100" width="220" height="100">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="bubble-overlay" style="position:static">
+            <div class="title">⚡ Ruine antique de Selemar</div>
+            <div style="font-size:10px;color:#aaa;margin-bottom:4px">
+              Niveau 10-20 · Groupe 1-5
+            </div>
+            <div style="font-size:11px">Entrer : <span class="key">F</span></div>
+            <div style="font-size:9px;color:#888;margin-top:4px">(simulation : preview UX)</div>
+          </div>
+        </foreignObject>
+
+        <!-- Petit personnage joueur (figurine) à l'approche -->
+        <g>
+          <circle cx="320" cy="262" r="4" fill="#fc4"/>
+          <line x1="320" y1="266" x2="320" y2="275" stroke="#fc4" stroke-width="2"/>
+          <line x1="320" y1="270" x2="315" y2="278" stroke="#fc4" stroke-width="1.5"/>
+          <line x1="320" y1="270" x2="325" y2="278" stroke="#fc4" stroke-width="1.5"/>
+          <text x="305" y="295" fill="#fc4" font-size="9" font-family="Consolas">Joueur (dans AABB)</text>
+        </g>
+
+      </svg>
+
+      <div style="position:absolute; bottom:8px; left:10px; font-size:11px; color:#cdcdcd; background:rgba(0,0,0,0.55); padding:4px 8px">
+        Preview · joueur dans threshold → bulle [F] · pression envoie
+        <code style="color:#a0d0ff">INSTANCE_ENTER_REQUEST</code>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title amber">Tool Properties — Dungeon</div>
+      <div class="body">
+
+        <div style="color:#c080c0; font-size:11px; margin-bottom:6px">Catalogue (4)</div>
+        <div class="catalog-item">
+          <div class="thumb dungeon">🕳</div>
+          <div><div class="name">entrance_cave</div><div class="meta">caverne sombre</div></div>
+        </div>
+        <div class="catalog-item selected">
+          <div class="thumb dungeon">⛩</div>
+          <div><div class="name">entrance_ruin (•)</div><div class="meta">ruine antique</div></div>
+        </div>
+        <div class="catalog-item">
+          <div class="thumb dungeon">🏰</div>
+          <div><div class="name">entrance_fortress</div><div class="meta">forteresse</div></div>
+        </div>
+        <div class="catalog-item">
+          <div class="thumb dungeon">⛪</div>
+          <div><div class="name">entrance_temple</div><div class="meta">temple sacré</div></div>
+        </div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#c080c0; font-size:11px; margin-bottom:6px">— Métadonnées Gameplay —</div>
+        </div>
+        <div style="font-size:11px;line-height:1.6">
+          <div><span style="color:#888">Dungeon ID :</span> <span style="color:#fc4;font-family:Consolas">dungeon_001_ancient_ruin</span></div>
+          <div><span style="color:#888">Nom FR :</span> Ruine antique de Selemar</div>
+          <div><span style="color:#888">Nom EN :</span> Ancient Ruin of Selemar</div>
+        </div>
+        <div class="metadata-grid" style="margin-top:6px">
+          <span class="lbl">Niveau min</span><span class="val">10</span>
+          <span class="lbl">Niveau max</span><span class="val">20</span>
+          <span class="lbl">Groupe min</span><span class="val">1</span>
+          <span class="lbl">Groupe max</span><span class="val">5</span>
+          <span class="lbl">Faction</span><span class="val">Aucune</span>
+          <span class="lbl">Jour/Nuit</span><span class="val">Aucun</span>
+        </div>
+
+        <div style="margin-top:8px"><span class="checkbox">Caché tant que quête non accomplie</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#ff80ff; font-size:11px; margin-bottom:6px">— Threshold (trigger) —</div>
+        </div>
+        <div style="font-size:11px;color:#cdcdcd">AABB : <b>2.0 × 3.0 × 2.0 m</b> (catalog)</div>
+        <div class="row"><span>Distance d'entrée</span>
+          <div class="slider"><div class="fill" style="width:25%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">0.5 m</span></div>
+
+        <div style="border-top:1px dashed #444; margin:10px 0; padding-top:8px;">
+          <div style="color:#a06030; font-size:11px; margin-bottom:6px">— Camouflage seuil —</div>
+        </div>
+        <div><span class="checkbox checked">Auto-peindre splat « Stone »</span></div>
+        <div class="row"><span>Rayon</span>
+          <div class="slider"><div class="fill amber" style="width:30%"></div></div></div>
+        <div class="row"><span></span><span style="font-size:11px;color:#888">4 m</span></div>
+
+        <div class="bridge-warning">
+          ⚠ Server ne voit pas le mesh (collision).<br>
+          Bridge vmap → <b>M100.44</b>.
+        </div>
+
+        <div class="deploy-banner">
+          🚨 <b>Lock-step déploiement requis</b><br>
+          Bump <code>kProtocolVersion</code> + master server redéployé +
+          migration <code>00XX_dungeons.sql</code> + outil offline
+          <code>dungeon_db_sync</code> à lancer.
+        </div>
+
+        <div style="border-top:1px solid #3a3a3a; margin-top:14px; padding-top:10px;">
+          <span class="btn active">Place</span>
+          <span class="btn danger">Cancel</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock-bottom">
+    <div class="panel">
+      <div class="title green">Console (Client + Master)</div>
+      <div class="body" style="font-size:11px;color:#aaa;line-height:1.5">
+        <div>[INFO] DungeonTool active, catalog 4 entries</div>
+        <div>[INFO] PlaceDungeonCommand: instance + dungeons.bin row written</div>
+        <div>[INFO] Run tools/dungeon_db_sync --in instances/dungeons.bin --db ${MYSQL}</div>
+        <div style="color:#90c0e0">[NET] Client send INSTANCE_ENTER_REQUEST(opcode=51, char=42, dungeon=dungeon_001)</div>
+        <div style="color:#90c0e0">[NET] Master recv: validate session ✓ load Character ✓ load dungeon ✓</div>
+        <div style="color:#90c0e0">[NET] Master: checks (level=15 ∈ [10,20] ✓, faction Light not locked ✓, party 1 ∈ [1,5] ✓)</div>
+        <div style="color:#fc4">[NET] Master reply: Status::NotImplemented "Dungeon runtime in future ticket"</div>
+        <div style="color:#90c0e0">[NET] Client recv: display toast UI "Donjon en construction"</div>
+        <div style="color:#6c6">[OK] Network hook end-to-end working</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title blue">History</div>
+      <div class="body" style="font-size:11px">
+        <div class="hist-row"><span>15:24:10</span><span>Overhang place</span><span>dramatic_01</span><span>↶</span></div>
+        <div class="hist-row"><span>15:31:55</span><span>Arch place</span><span>medium_01</span><span>↶</span></div>
+        <div class="hist-row active"><span style="color:#c080c0">→ preview</span><span>Dungeon place (entrance_ruin)</span><span>—</span><span></span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title pink">Phase 11 Bilan</div>
+      <div class="body" style="font-size:11px;line-height:1.7">
+        <div style="color:#6c6">✅ M100.40 Cave Tool</div>
+        <div style="color:#6c6">✅ M100.41 Overhang Tool</div>
+        <div style="color:#6c6">✅ M100.42 Natural Arch</div>
+        <div style="color:#c080c0">⏳ <b>M100.43 Dungeon Portal (en cours)</b></div>
+        <div style="color:#888">⏳ M100.44 VMap Bridge</div>
+        <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #444;color:#666">
+          Mesh inserts : 4 catégories (cave, overhang, arch, dungeon)
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>M100.43 — Dungeon Portal System · Network opcodes 51/52 · LCDLLN World Editor + Master Server</footer>
+</body></html>

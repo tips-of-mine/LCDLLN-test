@@ -1,6 +1,8 @@
 smtp.local.json
 .claude/
+.gitea/
 .clone/
+.vscode/
 .superpowers/
 world_editor_imgui.ini
 world_editor.log

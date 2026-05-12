@@ -102,6 +102,12 @@ namespace engine::gameplay
 		/// \param combat true -> tighten distance and override pitch.
 		void SetCombatMode(bool combat);
 
+		/// M100.16 — décalage Y appliqué à la cible (élève la caméra par rapport
+		/// aux pieds joueur). Utile pour les hazards : pendant l'enfoncement, les
+		/// pieds descendent mais la tête (cible caméra) doit rester à sa hauteur
+		/// d'origine. `offset > 0` → caméra plus haute.
+		void SetGroundOffset(float offsetY) noexcept;
+
 		/// Returns current yaw angle in radians.
 		float GetYaw()             const { return m_yaw; }
 		/// Returns current pitch angle in radians.
@@ -122,5 +128,6 @@ namespace engine::gameplay
 		bool m_focusInitialized = false;
 		bool m_combatMode = false;
 		bool   m_initialized     = false;
+		float  m_groundOffsetY = 0.0f;   ///< M100.16 — décalage Y additionnel à la cible
 	};
 }

@@ -181,9 +181,10 @@ namespace engine::gameplay
 			}
 		}
 
+		const float targetY = targetPos.y + m_cfg.targetOffsetY + m_groundOffsetY;
 		const engine::math::Vec3 followTarget(
 			targetPos.x + lookAheadOffset.x,
-			targetPos.y + m_cfg.targetOffsetY,
+			targetY,
 			targetPos.z + lookAheadOffset.z);
 
 		if (!m_focusInitialized)
@@ -263,5 +264,10 @@ namespace engine::gameplay
 
 		outCamera.yaw   = m_yaw;
 		outCamera.pitch = m_pitch;
+	}
+
+	void ThirdPersonCamera::SetGroundOffset(float offsetY) noexcept
+	{
+		m_groundOffsetY = offsetY;
 	}
 }

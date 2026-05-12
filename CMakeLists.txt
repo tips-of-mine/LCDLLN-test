@@ -302,6 +302,8 @@ add_library(engine_core
   src/world_editor/water/AddRiverCommand.cpp
   src/world_editor/water/LakeTool.cpp
   src/world_editor/water/RiverTool.cpp
+  src/world_editor/hazard/HazardDocument.cpp
+  src/world_editor/hazard/HazardTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp

@@ -2600,6 +2600,21 @@ namespace engine
 							static_cast<unsigned>(s.moonPhase),
 							kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
 							s.moonIllumination * 100.0f);
+
+						// Affichage chat in-game : sans ce push, l'utilisateur ne voit
+						// l'info que dans les logs. Cf. pattern identique pour /sky moon
+						// (pushAdminChatLine plus haut) et /who/report/kick/ban/announce.
+						pushAdminChatLine("[Sky]", "timeOfDay=%.2fh isDaytime=%d",
+							static_cast<double>(s.timeOfDay),
+							static_cast<int>(s.isDaytime));
+						pushAdminChatLine("[Sky]", "sunDir=(%.2f,%.2f,%.2f)",
+							static_cast<double>(s.lightDir[0]),
+							static_cast<double>(s.lightDir[1]),
+							static_cast<double>(s.lightDir[2]));
+						pushAdminChatLine("[Sky]", "moonPhase=%u (%s) illumination=%.0f%%",
+							static_cast<unsigned>(s.moonPhase),
+							kMoonName[s.moonPhase < 16 ? s.moonPhase : 0],
+							static_cast<double>(s.moonIllumination * 100.0f));
 					}
 					else if (parsed.command == "/loot")
 					{

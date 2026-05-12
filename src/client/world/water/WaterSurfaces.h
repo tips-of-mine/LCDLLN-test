@@ -39,6 +39,16 @@ namespace engine::world::water
 		std::vector<RiverNode> nodes;                     // au moins 2 pour produire un mesh
 	};
 
+	/// Résultat d'un sampling (M100.15). `surfaceY` est la hauteur monde de
+	/// la surface d'eau au point sondé. `depthMeters = surfaceY - feetY`,
+	/// toujours strictement positif quand le sample est retourné (les hits
+	/// avec pieds au-dessus de la surface ne sont pas remontés).
+	struct WaterSample
+	{
+		float surfaceY = 0.0f;
+		float depthMeters = 0.0f;
+	};
+
 	struct WaterScene
 	{
 		std::vector<LakeInstance>  lakes;

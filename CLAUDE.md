@@ -15,7 +15,7 @@ nécessaire ou non.
   qui rend un client neuf incompatible avec un serveur ancien (ou inverse).
 - **Nouveau handler côté serveur** : un handler master/shard qui répond à un
   nouvel opcode (sinon le client envoie dans le vide et reçoit BAD_REQUEST).
-- **Migration DB** : tout fichier `engine/server/migrations/00xx_*.sql` ajouté
+- **Migration DB** : tout fichier `sql/migrations/00xx_*.sql` ajouté
   ou modifié (idempotent ou pas — il faut quand même rejouer le binaire serveur
   pour que la migration s'applique au boot).
 - **Modification de gating sécurité** : changement dans SessionManager,
@@ -68,7 +68,7 @@ riche en glyphes accentués/ponctuation, standard sur Windows.
   Arial comme police par défaut au lieu de Windlass. Le fallback ProggyClean
   et la fonte « valeurs » Morpheus sont aussi désactivés (Arial couvre tout).
 - Pour un futur changement (autre police, taille différente), modifier la
-  branche `if (isWorldEditorExe)` dans `engine/editor/WorldEditorImGui.cpp`.
+  branche `if (isWorldEditorExe)` dans `src/world_editor/WorldEditorImGui.cpp`.
 
 ### Documentation des fonctions
 
@@ -89,9 +89,9 @@ Doivent être présents au minimum :
    avant `ImGui_ImplVulkan_Init` ».
 
 Périmètre concerné par cette règle :
-- `engine/editor/` (tous les fichiers)
-- `engine/render/terrain/TerrainEditingTools.{h,cpp}`
-- toute partie de `engine/Engine.cpp` ou `engine/render/WorldEditorImGui.cpp`
+- `src/world_editor/` (tous les fichiers)
+- `src/client/render/terrain/TerrainEditingTools.{h,cpp}`
+- toute partie de `src/client/app/Engine.cpp` ou `src/client/render/WorldEditorImGui.cpp`
   spécifique au mode éditeur (gardée par `m_worldEditorExe` ou
   `m_editorEnabled`).
 

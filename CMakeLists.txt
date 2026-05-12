@@ -397,6 +397,7 @@ add_library(engine_core
   src/client/render/DeferredPipeline.cpp
   src/shared/math/Frustum.cpp
   src/client/gameplay/CharacterController.cpp
+  src/client/gameplay/WorldColliderImpl.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
   src/client/gameplay/ClientPrediction.cpp

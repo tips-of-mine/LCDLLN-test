@@ -9,6 +9,7 @@
 #include "src/client/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainLodChain.h"
 #include "src/client/world/water/WaterSurfaces.h"
+#include "src/client/world/hazard/HazardVolumes.h"
 
 #include <array>
 #include <cmath>
@@ -624,6 +625,41 @@ namespace tools::zone_builder
 		if (!out.good())
 		{
 			outError = "WriteWater: write failed: " + file.string();
+			return false;
+		}
+		return true;
+	}
+
+	bool WriteHazards(std::string_view outputRootDir,
+		const engine::world::hazard::HazardScene& scene,
+		std::string& outError)
+	{
+		const std::filesystem::path dir =
+			std::filesystem::path(outputRootDir) / "instances";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec)
+		{
+			outError = "WriteHazards: mkdir failed: " + ec.message();
+			return false;
+		}
+
+		std::vector<uint8_t> bytes;
+		if (!engine::world::hazard::SaveHazardsBin(scene, bytes, outError))
+			return false;
+
+		const std::filesystem::path file = dir / "hazards.bin";
+		std::ofstream out(file, std::ios::binary | std::ios::trunc);
+		if (!out.good())
+		{
+			outError = "WriteHazards: open failed: " + file.string();
+			return false;
+		}
+		out.write(reinterpret_cast<const char*>(bytes.data()),
+			static_cast<std::streamsize>(bytes.size()));
+		if (!out.good())
+		{
+			outError = "WriteHazards: write failed: " + file.string();
 			return false;
 		}
 		return true;

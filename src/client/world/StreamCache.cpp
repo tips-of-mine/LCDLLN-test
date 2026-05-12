@@ -6,6 +6,7 @@
 #include "src/client/world/terrain/TerrainChunkLoader.h"
 #include "src/client/world/terrain/TerrainLodChain.h"
 #include "src/client/world/water/WaterSurfaces.h"
+#include "src/client/world/hazard/HazardVolumes.h"
 
 #include <algorithm>
 #include <cstring>
@@ -272,6 +273,33 @@ namespace engine::world
 			std::span<const uint8_t>(blob), *scene, err))
 		{
 			LOG_WARN(World, "[StreamCache] LoadWaterBin fail ({}): {}", fullPath, err);
+			return nullptr;
+		}
+		return scene;
+	}
+
+	std::shared_ptr<engine::world::hazard::HazardScene>
+	StreamCache::LoadHazards(const engine::core::Config& config, std::string_view zoneName)
+	{
+		(void)zoneName;  // M100.16 : single global file, partitioning multi-zone = M100.34
+		const std::string contentRoot = config.GetString("paths.content", "game/data");
+		const std::string fullPath = contentRoot + "/instances/hazards.bin";
+
+		std::ifstream f(fullPath, std::ios::binary | std::ios::ate);
+		if (!f.good()) return nullptr;  // Silencieux si absent
+		const std::streamsize fileSize = f.tellg();
+		f.seekg(0, std::ios::beg);
+		if (fileSize <= 0) return nullptr;
+		std::vector<uint8_t> blob(static_cast<size_t>(fileSize));
+		f.read(reinterpret_cast<char*>(blob.data()), fileSize);
+		if (!f.good() && !f.eof()) return nullptr;
+
+		auto scene = std::make_shared<engine::world::hazard::HazardScene>();
+		std::string err;
+		if (!engine::world::hazard::LoadHazardsBin(
+			std::span<const uint8_t>(blob), *scene, err))
+		{
+			LOG_WARN(World, "[StreamCache] LoadHazardsBin fail ({}): {}", fullPath, err);
 			return nullptr;
 		}
 		return scene;

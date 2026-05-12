@@ -14,6 +14,7 @@ namespace engine::world
 {
 	namespace terrain { struct TerrainChunk; struct TerrainLodChain; struct SplatMap; }
 	namespace water   { struct WaterScene; }    // <- nouveau
+	namespace hazard  { struct HazardScene; }
 
 	/// LRU cache for decompressed blobs keyed by asset/chunk file path (M10.3).
 	/// Capacity 1–4 GB configurable via config; hit avoids re-IO when re-entering a zone.
@@ -77,6 +78,12 @@ namespace engine::world
 		/// fichier absent, retourne nullptr sans warning (cas premier lancement).
 		/// \param zoneName réservé pour multi-zone (M100.34) — actuellement ignoré.
 		std::shared_ptr<engine::world::water::WaterScene> LoadWater(
+			const engine::core::Config& config, std::string_view zoneName);
+
+		/// Charge le `instances/hazards.bin` global de la zone (M100.16).
+		/// Si fichier absent, retourne nullptr sans warning (zone sans hazards).
+		/// \param zoneName réservé pour multi-zone (M100.34) — actuellement ignoré.
+		std::shared_ptr<engine::world::hazard::HazardScene> LoadHazards(
 			const engine::core::Config& config, std::string_view zoneName);
 
 	private:

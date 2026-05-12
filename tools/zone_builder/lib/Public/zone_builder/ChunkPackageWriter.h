@@ -8,6 +8,7 @@
 
 namespace engine::world::terrain { struct TerrainChunk; struct TerrainLodChain; struct SplatMap; }
 namespace engine::world::water { struct WaterScene; }
+namespace engine::world::hazard { struct HazardScene; }
 
 namespace tools::zone_builder
 {
@@ -59,4 +60,10 @@ namespace tools::zone_builder
 	/// WriteSplatMap.
 	bool WriteWater(std::string_view outputRootDir,
 		const engine::world::water::WaterScene& scene, std::string& outError);
+
+	/// Écrit `instances/hazards.bin` (M100.16) à `outputRootDir/instances/hazards.bin`.
+	/// Crée le dossier parent si nécessaire. Retourne false + outError sur erreur I/O.
+	bool WriteHazards(std::string_view outputRootDir,
+		const engine::world::hazard::HazardScene& scene,
+		std::string& outError);
 }

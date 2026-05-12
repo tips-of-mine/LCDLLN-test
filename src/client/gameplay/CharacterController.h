@@ -5,6 +5,8 @@
 
 #include <cstdint>
 
+namespace engine::world::hazard { struct HazardEffect; }
+
 namespace engine::gameplay
 {
 	/// World collision query needed by CharacterController.
@@ -120,6 +122,15 @@ namespace engine::gameplay
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }
 
+		/// M100.16 — applique un effet hazard (sinking + slowdown) pour la frame
+		/// courante. Doit être appelé chaque frame depuis l'Engine après
+		/// `HazardSimulator::Update`. Sans appel : pas d'effet (comportement
+		/// par défaut M100.15 préservé).
+		void SetHazardEffect(const engine::world::hazard::HazardEffect& effect) noexcept;
+
+		/// True si la frame courante a un sink rate forcé (joueur s'enfonce).
+		bool IsSinking() const noexcept;
+
 	private:
 		static float DotXZ(const engine::math::Vec3& a, const engine::math::Vec3& b)
 		{
@@ -163,6 +174,13 @@ namespace engine::gameplay
 		bool m_isGrounded = false;
 		float m_timeSinceLeftGroundSec = 0.0f;
 		float m_timeSinceJumpPressedSec = 999.0f; // invalid until jumpPressed occurs
+
+		// M100.16 — effet hazard appliqué la frame courante.
+		// Dénormalisé en 3 champs pour éviter d'inclure HazardSimulator.h
+		// (forward decl `struct HazardEffect` au top du fichier).
+		bool m_hazardApplySinkRate = false;
+		float m_hazardSinkRateMps = 0.0f;
+		float m_hazardSlowdownMul = 1.0f;
 	};
 }
 

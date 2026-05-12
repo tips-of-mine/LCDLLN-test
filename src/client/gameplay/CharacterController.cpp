@@ -1,4 +1,5 @@
 #include "src/client/gameplay/CharacterController.h"
+#include "src/client/world/hazard/HazardSimulator.h"
 
 #include <cmath>
 #include <algorithm>
@@ -197,6 +198,15 @@ namespace engine::gameplay
 		bool grounded = false;
 		bool didJumpThisFrame = false;
 
+		// M100.16 — hazard slowdown : multiplie la vitesse horizontale.
+		// Application APRÈS le calcul nominal pour ne pas brider les inputs ;
+		// la vitesse résultante est seulement réduite, pas annulée.
+		if (m_hazardSlowdownMul != 1.0f)
+		{
+			vel.x *= m_hazardSlowdownMul;
+			vel.z *= m_hazardSlowdownMul;
+		}
+
 		// Water vertical control and surface breaching.
 		if (inWater)
 		{
@@ -227,6 +237,14 @@ namespace engine::gameplay
 			m_timeSinceLeftGroundSec = m_cfg.coyoteTimeSec + 1.0f;
 			m_isGrounded = false;
 			didJumpThisFrame = true;
+		}
+
+		// M100.16 — hazard sink rate : remplace vel.y par -sinkRateMps.
+		// Override la gravité et le breach surface eau. Applique seulement
+		// si le simulator a posé un sinkRate (Quicksand/Bog/Tar actif).
+		if (m_hazardApplySinkRate)
+		{
+			vel.y = -m_hazardSinkRateMps;
 		}
 
 		// Clamp vertical velocity to avoid accumulation.
@@ -366,6 +384,19 @@ namespace engine::gameplay
 		outVel = ProjectOnPlane(outVel, downHit.normal);
 		outVel.y = 0.0f;
 		return true;
+	}
+
+	void CharacterController::SetHazardEffect(
+		const engine::world::hazard::HazardEffect& effect) noexcept
+	{
+		m_hazardApplySinkRate = effect.applySinkRate;
+		m_hazardSinkRateMps = effect.sinkRateMps;
+		m_hazardSlowdownMul = effect.slowdownMul;
+	}
+
+	bool CharacterController::IsSinking() const noexcept
+	{
+		return m_hazardApplySinkRate;
 	}
 }
 

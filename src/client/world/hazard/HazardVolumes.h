@@ -11,7 +11,7 @@
 namespace engine::world::hazard
 {
 	/// Magic du fichier `instances/hazards.bin` ("HAZA" little-endian).
-	constexpr uint32_t kHazardsMagic   = 0x5A415748u;
+	constexpr uint32_t kHazardsMagic   = 0x415A4148u;
 	constexpr uint32_t kHazardsVersion = 1u;
 
 	/// Type de hazard. Détermine les paramètres de simulation par défaut

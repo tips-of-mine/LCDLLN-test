@@ -331,6 +331,15 @@ namespace engine::gameplay
 		m_isGrounded = grounded;
 		if (!inWater && !isFlying && m_isGrounded)
 			m_timeSinceLeftGroundSec = 0.0f;
+
+		// M100.16 — reset l'effet hazard pour la frame suivante. L'Engine
+		// doit reposer la valeur via SetHazardEffect() chaque frame AVANT
+		// Update() ; ce reset assure que sans appel, le comportement
+		// retombe sur la référence M100.15.
+		m_hazardApplySinkRate = false;
+		m_hazardSinkRateMps = 0.0f;
+		m_hazardSlowdownMul = 1.0f;
+
 		return true;
 	}
 

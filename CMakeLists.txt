@@ -1173,6 +1173,17 @@ if(WIN32)
   add_test(NAME water_mesh_builder_tests COMMAND water_mesh_builder_tests)
 endif()
 
+# M100.16 — Tests round-trip + point-in-volume HazardVolumes.
+if(WIN32)
+  add_executable(hazard_volumes_tests src/client/world/hazard/tests/HazardVolumesTests.cpp)
+  target_include_directories(hazard_volumes_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(hazard_volumes_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(hazard_volumes_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME hazard_volumes_tests COMMAND hazard_volumes_tests)
+endif()
+
 # M100.14 — Tests WaterMeshGpu CPU BuildDrawInfos.
 if(WIN32)
   add_executable(water_mesh_gpu_tests src/client/render/tests/WaterMeshGpuTests.cpp)

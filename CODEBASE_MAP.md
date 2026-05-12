@@ -349,7 +349,9 @@ Le dossier `tickets/` contient 405 fichiers Markdown documentant chaque mileston
 - `M11+` : Gameplay (skills, craft, guildes, combat, quêtes)
 - `M20` : Authentification Argon2
 - `M33` : Auth UI complète (inscription, reset pwd, vérif email)
-- `M44` : Milestones finaux
+- `M43` : Panneaux ImGui spécialisés (M43.4 = ImGui foundation, prérequis M100)
+- `M44` : Infrastructure serveur (auth, persistence stores, packetlog, RBAC)
+- `M100` : **Éditeur de monde 3D AAA + simulation environnementale gameplay** — 51 tickets organisés en 12 phases logiques (Fondations, Terrain, Terrain naturaliste, Splat/Surfaces/Collision, Hydrologie/Hazards, Placement/Végétation, Atmosphère, Saisons/Météo/Thermal, Routes/Ponts, Objets interactifs, Polissage, Volumes 3D, Accessibilité éditeur). Voir `tickets/M100/INDEX.md` pour la liste complète, les statuts (Done/Ready/Draft/Blocked), les contrats partagés et les gates de déploiement serveur (3 tiers).
 
 Les plans d'implémentation récents sont dans `docs/superpowers/plans/`.
 

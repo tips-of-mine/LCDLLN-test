@@ -416,6 +416,7 @@ add_library(engine_core
   src/client/world/collision/AutoFitProxy.cpp
   src/client/world/collision/ProxyWireframe.cpp
   src/client/world/water/WaterSurfaces.cpp
+  src/client/world/water/WaterSampler.cpp
   src/client/world/water/WaterMeshBuilder.cpp
   src/client/world/terrain/LayerPalette.cpp
   src/client/world/terrain/SplatMap.cpp
@@ -1159,6 +1160,17 @@ if(WIN32)
     target_compile_options(water_surfaces_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME water_surfaces_tests COMMAND water_surfaces_tests)
+endif()
+
+# M100.15 — Tests WaterSampler (PIP lac + projection rivière).
+if(WIN32)
+  add_executable(water_sampler_tests src/client/world/water/tests/WaterSamplerTests.cpp)
+  target_include_directories(water_sampler_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_sampler_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_sampler_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_sampler_tests COMMAND water_sampler_tests)
 endif()
 
 # M100.13 — Tests WaterMeshBuilder ear clipping + ribbon polyline.

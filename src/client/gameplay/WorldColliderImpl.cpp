@@ -13,7 +13,7 @@ namespace engine::gameplay
 	bool WorldColliderImpl::SweepCapsule(const Capsule& /*capsule*/,
 		const engine::math::Vec3& /*startCenter*/,
 		const engine::math::Vec3& /*endCenter*/,
-		SweepHit& outHit) const
+		SweepHit& outHit) const noexcept
 	{
 		// Stub MVP : aucun obstacle détecté. La version complète viendra
 		// avec la chaîne CHAR-MODEL (heightmap + collision proxies M100.12).
@@ -22,7 +22,7 @@ namespace engine::gameplay
 	}
 
 	bool WorldColliderImpl::QueryWater(const engine::math::Vec3& worldCenter,
-		WaterQuery& out) const
+		WaterQuery& out) const noexcept
 	{
 		out = WaterQuery{};
 		if (!m_waterSampler) return false;

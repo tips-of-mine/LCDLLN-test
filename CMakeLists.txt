@@ -1185,6 +1185,18 @@ if(WIN32)
   add_test(NAME water_hook_tests COMMAND water_hook_tests)
 endif()
 
+# M100.15 — Tests CharacterController hystérésis eau + callbacks.
+if(WIN32)
+  add_executable(cc_water_hysteresis_tests
+    src/client/gameplay/tests/CharacterControllerWaterHysteresisTests.cpp)
+  target_include_directories(cc_water_hysteresis_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(cc_water_hysteresis_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(cc_water_hysteresis_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME cc_water_hysteresis_tests COMMAND cc_water_hysteresis_tests)
+endif()
+
 # M100.13 — Tests WaterMeshBuilder ear clipping + ribbon polyline.
 if(WIN32)
   add_executable(water_mesh_builder_tests src/client/world/water/tests/WaterMeshBuilderTests.cpp)

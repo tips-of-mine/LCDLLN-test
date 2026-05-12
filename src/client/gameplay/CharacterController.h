@@ -4,6 +4,7 @@
 #include "src/shared/math/Math.h"
 
 #include <cstdint>
+#include <functional>
 
 namespace engine::gameplay
 {
@@ -41,11 +42,11 @@ namespace engine::gameplay
 		virtual bool SweepCapsule(const Capsule& capsule,
 			const engine::math::Vec3& startCenter,
 			const engine::math::Vec3& endCenter,
-			SweepHit& outHit) const = 0;
+			SweepHit& outHit) const noexcept = 0;
 
 		/// Optional water volume query for swimming/flying.
 		/// Default implementation returns `inWater=false`.
-		virtual bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const
+		virtual bool QueryWater(const engine::math::Vec3& worldCenter, WaterQuery& out) const noexcept
 		{
 			(void)worldCenter;
 			out = WaterQuery{};
@@ -120,6 +121,14 @@ namespace engine::gameplay
 		engine::math::Vec3 GetVelocity() const { return m_velocity; }
 		IWorldCollider::Capsule GetCapsule() const { return m_capsule; }
 
+		/// Callback à appeler quand le CC bascule en `MovementMode::Water`.
+		/// Consommé par l'Engine pour jouer `splash_water_enter`. Pas de
+		/// dépendance audio dans le CC.
+		using WaterTransitionCallback = std::function<void()>;
+		void SetWaterTransitionCallbacks(
+			WaterTransitionCallback onEnter,
+			WaterTransitionCallback onExit);
+
 	private:
 		static float DotXZ(const engine::math::Vec3& a, const engine::math::Vec3& b)
 		{
@@ -163,6 +172,10 @@ namespace engine::gameplay
 		bool m_isGrounded = false;
 		float m_timeSinceLeftGroundSec = 0.0f;
 		float m_timeSinceJumpPressedSec = 999.0f; // invalid until jumpPressed occurs
+
+		// M100.15 — callbacks audio transitions eau (consommés par l'Engine).
+		WaterTransitionCallback m_onEnterWater;
+		WaterTransitionCallback m_onExitWater;
 	};
 }
 

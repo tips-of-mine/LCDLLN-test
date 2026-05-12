@@ -80,11 +80,30 @@ namespace engine::gameplay
 		const bool wantFly = m_cfg.enableFlying && input.flyPressed && (!inWater) && (m_staminaSec > 0.0f);
 		const bool isFlying = wantFly;
 
+		// M100.15 — hystérésis : entrée swim à >= 1.0 m, sortie à < 0.7 m.
+		// L'état précédent est lu depuis m_mode (pas de membre dédié).
+		constexpr float kSwimEnterDepth = 1.0f;
+		constexpr float kSwimExitDepth  = 0.7f;
+		const bool wasInWaterMode = (m_mode == MovementMode::Water);
+		const bool depthSaysSwim =
+			inWater && (wq.depth >= kSwimEnterDepth ||
+			            (wasInWaterMode && wq.depth >= kSwimExitDepth));
+
 		const MovementMode desiredMode =
-			isFlying ? MovementMode::Fly : (inWater ? MovementMode::Water : (m_isGrounded ? MovementMode::Ground : MovementMode::Air));
+			isFlying ? MovementMode::Fly
+			         : (depthSaysSwim ? MovementMode::Water
+			         : (m_isGrounded ? MovementMode::Ground : MovementMode::Air));
 
 		if (desiredMode != m_mode)
 		{
+			// M100.15 — callbacks audio (Engine consomme) AVANT mutation de m_mode.
+			if (desiredMode == MovementMode::Water && m_onEnterWater)
+				m_onEnterWater();
+			else if (m_mode == MovementMode::Water
+			         && desiredMode != MovementMode::Water
+			         && m_onExitWater)
+				m_onExitWater();
+
 			m_mode = desiredMode;
 			if (m_mode == MovementMode::Water)
 				LOG_INFO(Core, "[CharacterController] Mode -> Water (depth={})", wq.depth);
@@ -366,6 +385,14 @@ namespace engine::gameplay
 		outVel = ProjectOnPlane(outVel, downHit.normal);
 		outVel.y = 0.0f;
 		return true;
+	}
+
+	void CharacterController::SetWaterTransitionCallbacks(
+		WaterTransitionCallback onEnter,
+		WaterTransitionCallback onExit)
+	{
+		m_onEnterWater = std::move(onEnter);
+		m_onExitWater = std::move(onExit);
 	}
 }
 

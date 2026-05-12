@@ -1572,6 +1572,8 @@ namespace engine::client
 				return "StatusProbe";
 			case AsyncKind::UsernameCheck:
 				return "UsernameCheck";
+			case AsyncKind::RefreshShardList:
+				return "RefreshShardList";
 			default:
 				return "?";
 			}
@@ -1605,6 +1607,41 @@ namespace engine::client
 
 		const AsyncKind kind = m_pendingAsyncKind;
 		m_pendingAsyncKind = AsyncKind::None;
+
+		if (kind == AsyncKind::RefreshShardList)
+		{
+			// Auto-refresh shard list pendant Phase::ShardPick : on remplace les entries SI le
+			// worker a reussi (success && !empty) ET que l'utilisateur est toujours sur l'ecran.
+			// Le choix utilisateur courant (m_shardPickChoiceShardId) est preserve s'il fait
+			// toujours partie de la liste apres mise a jour ; sinon on retombe sur le premier
+			// shard online (meme heuristique qu'a l'arrivee sur Phase::ShardPick).
+			if (copy.success && !copy.serverListForPick.empty() && m_phase == Phase::ShardPick)
+			{
+				m_shardPickEntries = std::move(copy.serverListForPick);
+				bool choiceStillValid = false;
+				for (const auto& e : m_shardPickEntries)
+				{
+					if (e.shard_id == m_shardPickChoiceShardId && e.status == 1u && !e.endpoint.empty())
+					{
+						choiceStillValid = true;
+						break;
+					}
+				}
+				if (!choiceStillValid)
+				{
+					m_shardPickChoiceShardId = 0;
+					for (const auto& e : m_shardPickEntries)
+					{
+						if (e.status == 1u && !e.endpoint.empty())
+						{
+							m_shardPickChoiceShardId = e.shard_id;
+							break;
+						}
+					}
+				}
+			}
+			return;
+		}
 
 		if (kind == AsyncKind::StatusProbe)
 		{
@@ -1923,6 +1960,13 @@ namespace engine::client
 					break;
 				}
 			}
+			// La session master reste vivante pendant ShardPick : on memorise son id pour
+			// pouvoir envoyer des SERVER_LIST_REQUEST periodiques (auto-refresh nb joueurs).
+			if (copy.sessionId != 0u)
+			{
+				m_masterSessionId = copy.sessionId;
+			}
+			m_shardPickRefreshTimer = 0.f;
 			SetPhase(Phase::ShardPick);
 			m_userErrorText.clear();
 			m_infoBanner.clear();
@@ -2264,6 +2308,10 @@ namespace engine::client
 				local.serverListForPick = std::move(r.server_list_for_pick);
 				local.success = false;
 				local.message.clear();
+				// La connexion master (m_masterClient) + la session AUTH sont conservees apres
+				// le flow ; le presenter en a besoin pour les refresh periodiques de la liste
+				// shards sur l'ecran ShardPick (auto-refresh nb joueurs).
+				local.sessionId = r.session_id;
 			}
 			else
 			{
@@ -2757,6 +2805,28 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			m_authLogoRotationRad = 0.f;
 			m_statusProbeInitialized = false;
 			m_statusPollTimer = 0.f;
+		}
+
+		// Auto-refresh nb joueurs sur l'ecran ShardPick : on accumule deltaSeconds tant que
+		// l'utilisateur reste sur la phase, et on relance SERVER_LIST_REQUEST des que le
+		// seuil est atteint (defaut 3000 ms ; plancher 500 ms pour eviter de saturer le master
+		// si une mauvaise valeur de config est saisie). Le check !m_worker.joinable() evite de
+		// marcher sur un worker en vol (Login, StatusProbe, etc.) ; le timer est seulement
+		// remis a zero quand on lance effectivement le refresh, pas a chaque frame.
+		if (m_phase == Phase::ShardPick && m_masterClient && m_masterSessionId != 0u)
+		{
+			const int64_t refreshIntervalMs = std::max<int64_t>(500, cfg.GetInt("client.auth_ui.shard_pick_refresh_ms", 3000));
+			const float refreshIntervalSec = static_cast<float>(refreshIntervalMs) / 1000.f;
+			m_shardPickRefreshTimer += deltaSeconds;
+			if (m_shardPickRefreshTimer >= refreshIntervalSec && !m_worker.joinable())
+			{
+				m_shardPickRefreshTimer = 0.f;
+				StartRefreshShardListWorker(cfg);
+			}
+		}
+		else
+		{
+			m_shardPickRefreshTimer = 0.f;
 		}
 
 		if (m_phase == Phase::Submitting)

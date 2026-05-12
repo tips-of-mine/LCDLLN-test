@@ -678,6 +678,11 @@ namespace engine::client
 		void StartTermsStatusWorker(const engine::core::Config& cfg);
 		void StartTermsAcceptWorker(const engine::core::Config& cfg);
 		void StartCharacterCreateWorker(const engine::core::Config& cfg);
+		/// Lance un worker qui re-emet SERVER_LIST_REQUEST sur la connexion master (deja AUTH)
+		/// pour rafraichir \ref m_shardPickEntries pendant que l'utilisateur reste sur l'ecran
+		/// ShardPick. Sans effet si \ref m_masterClient n'est pas connecte ou si un worker
+		/// est deja en vol. Le resultat repeuple \ref m_shardPickEntries via \ref PollAsyncResult.
+		void StartRefreshShardListWorker(const engine::core::Config& cfg);
 		/// Phase 3.9 — Lance le worker reseau pour supprimer le personnage selectionne (id stocke
 		/// dans \ref m_pendingDeleteCharacterId par \ref ImGuiRequestDeleteCharacter).
 		void StartCharacterDeleteWorker(const engine::core::Config& cfg);
@@ -843,6 +848,11 @@ namespace engine::client
 		std::vector<engine::network::ServerListEntry> m_shardPickEntries;
 		uint32_t m_shardPickChoiceShardId = 0;
 		uint32_t m_shardFlowOverrideId = 0;
+		/// Compteur seconde accumule pendant \c Phase::ShardPick ; quand il atteint
+		/// \c client.auth_ui.shard_pick_refresh_ms (defaut 3000 ms), un worker est lance
+		/// pour re-emettre SERVER_LIST_REQUEST sur la connexion master et actualiser
+		/// le nb joueurs affiches (\ref m_shardPickEntries) sans re-AUTH ni reconnexion.
+		float m_shardPickRefreshTimer = 0.f;
 		/// Royaume choisi par l'utilisateur sur l'écran ShardPick. Persiste à travers Phase::CharacterCreate
 		/// puis sert d'override pour StartMasterFlowWorker une fois le personnage créé.
 		uint32_t m_chosenShardId = 0;
@@ -1003,7 +1013,8 @@ namespace engine::client
 			CharacterDelete,    ///< Phase 3.9 : suppression logique d'un personnage.
 			Login,
 			StatusProbe,
-			UsernameCheck  ///< Plan C : vérification disponibilité username (debounce).
+			UsernameCheck,  ///< Plan C : vérification disponibilité username (debounce).
+			RefreshShardList ///< Auto-refresh de la liste des shards pendant Phase::ShardPick (nb joueurs).
 		};
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;

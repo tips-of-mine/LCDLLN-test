@@ -4,10 +4,19 @@
 #include "src/client/auth/AuthUi.h"
 
 #include "src/shared/core/Log.h"
+#include "src/shared/network/NetClient.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+#include "src/shared/network/RequestResponseDispatcher.h"
+#include "src/shared/network/ServerListPayloads.h"
 #include "src/shared/platform/Input.h"
 #include "src/shared/platform/Window.h"
 
+#include <chrono>
+#include <cstdint>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <vector>
 
 namespace engine::client
 {
@@ -47,6 +56,76 @@ namespace engine::client
 		m_shardPickEntries.clear();
 		m_chosenShardId = 0;
 		m_postRegistrationCharacterCreatePending = false;
+	}
+
+	/// Lance un worker qui re-emet SERVER_LIST_REQUEST sur la connexion master deja AUTH
+	/// pour rafraichir la liste des shards (nb joueurs courant) pendant que l'utilisateur
+	/// reste sur l'ecran ShardPick. Ne fait rien si aucune connexion master vivante
+	/// (\ref m_masterClient absent ou \ref m_masterSessionId nul) ni si un worker est deja
+	/// en vol (l'appelant doit verifier \c !m_worker.joinable() avant d'appeler). Le resultat
+	/// (vecteur des entrees a jour) est publie via \c AsyncResult::serverListForPick sous
+	/// la kind \c AsyncKind::RefreshShardList ; \ref PollAsyncResult applique le resultat
+	/// sur \ref m_shardPickEntries en preservant le choix utilisateur courant.
+	void AuthUiPresenter::StartRefreshShardListWorker(const engine::core::Config& cfg)
+	{
+		JoinWorker();
+		if (!m_masterClient || m_masterSessionId == 0u)
+		{
+			// Pas de session master vivante : pas de refresh possible. On reste sur la
+			// snapshot precedente ; le bouton "Retour" puis re-login reconstruira l'etat.
+			return;
+		}
+		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.shard_pick_refresh_timeout_ms", 3000));
+
+		m_pendingAsyncKind = AsyncKind::RefreshShardList;
+		{
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = {};
+		}
+
+		engine::network::NetClient* const masterClient = m_masterClient.get();
+		const uint64_t sessionId = m_masterSessionId;
+		m_worker = std::thread([this, masterClient, sessionId, timeoutMs]() {
+			AsyncResult local{};
+			if (masterClient == nullptr)
+			{
+				local.ready = true;
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			engine::network::RequestResponseDispatcher disp(masterClient);
+			disp.SetSessionId(sessionId);
+			bool done = false;
+			std::vector<engine::network::ServerListEntry> entries;
+			if (!disp.SendRequest(engine::network::kOpcodeServerListRequest, {},
+					[&](uint32_t, bool timeout, std::vector<uint8_t> payload) {
+						done = true;
+						if (timeout || payload.empty())
+						{
+							return;
+						}
+						entries = engine::network::ParseServerListResponsePayload(payload.data(), payload.size());
+					},
+					timeoutMs))
+			{
+				local.ready = true;
+				std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+				m_asyncResult = local;
+				return;
+			}
+			auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs + 500);
+			while (!done && std::chrono::steady_clock::now() < deadline)
+			{
+				disp.Pump();
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			}
+			local.ready = true;
+			local.success = done && !entries.empty();
+			local.serverListForPick = std::move(entries);
+			std::lock_guard<AuthMutex> lock(*m_asyncMutex);
+			m_asyncResult = local;
+		});
 	}
 
 	/// Peuple la liste des shards disponibles (nom, charge, endpoint) avec indication du shard sélectionné.
@@ -188,6 +267,8 @@ namespace engine::client
 	void AuthUiPresenter::Update_ShardPick(engine::platform::Input&, const engine::core::Config&, engine::platform::Window&, bool, bool)
 	{
 	}
+
+	void AuthUiPresenter::StartRefreshShardListWorker(const engine::core::Config&) {}
 
 #endif
 } // namespace engine::client

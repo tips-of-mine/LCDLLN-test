@@ -220,7 +220,11 @@ namespace engine::network
 			LOG_INFO(Net,
 				"[MasterShardClientFlow] {} online shard(s); returning shard_choice_required for UI",
 				eligible.size());
-			masterClient->Disconnect("shard_choice_required");
+			// La connexion master + la session AUTH sont volontairement conservees pour
+			// permettre au presenter d'envoyer des SERVER_LIST_REQUEST periodiques pendant
+			// que l'utilisateur est sur l'ecran ShardPick (auto-refresh nb joueurs).
+			// La connexion sera fermee/recyclee au prochain StartMasterFlowWorker (submit
+			// shard pick ou back-to-login → relogin) qui reset m_masterClient cote presenter.
 			return result;
 		}
 		else

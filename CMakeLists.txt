@@ -417,6 +417,7 @@ add_library(engine_core
   src/client/world/collision/ProxyWireframe.cpp
   src/client/world/water/WaterSurfaces.cpp
   src/client/world/hazard/HazardVolumes.cpp
+  src/client/world/hazard/HazardSimulator.cpp
   src/client/world/water/WaterMeshBuilder.cpp
   src/client/world/terrain/LayerPalette.cpp
   src/client/world/terrain/SplatMap.cpp

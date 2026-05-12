@@ -243,7 +243,7 @@ au minimum (le shard reste optionnel à ce ticket).
 
 | Ticket | Impact serveur |
 |--------|----------------|
-| M100.43 | `INSTANCE_ENTER_REQUEST/RESPONSE` (validation level / faction / quest / day-night) ; `engine/server/migrations/00XX_dungeons.sql` ; bump `kProtocolVersion`. Réponse `NotImplemented` pour l'allocation d'instance shard (follow-up CMANGOS.19). |
+| M100.43 | `INSTANCE_ENTER_REQUEST/RESPONSE` (validation level / faction / quest / day-night) ; `sql/migrations/00XX_dungeons.sql` ; bump `kProtocolVersion`. Réponse `NotImplemented` pour l'allocation d'instance shard (follow-up CMANGOS.19). |
 
 ### Tier 3 — Lock-step client + server obligatoire (bump format binaire serveur)
 

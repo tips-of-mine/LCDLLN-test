@@ -1173,6 +1173,17 @@ if(WIN32)
   add_test(NAME water_sampler_tests COMMAND water_sampler_tests)
 endif()
 
+# M100.15 — Tests intégration SurfaceQueryService ↔ WaterSampler.
+if(WIN32)
+  add_executable(water_hook_tests src/client/world/surface/tests/WaterHookTests.cpp)
+  target_include_directories(water_hook_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(water_hook_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(water_hook_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME water_hook_tests COMMAND water_hook_tests)
+endif()
+
 # M100.13 — Tests WaterMeshBuilder ear clipping + ribbon polyline.
 if(WIN32)
   add_executable(water_mesh_builder_tests src/client/world/water/tests/WaterMeshBuilderTests.cpp)

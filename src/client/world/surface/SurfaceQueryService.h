@@ -10,6 +10,7 @@
 namespace engine::core { class Config; }
 namespace engine::world { class StreamCache; }
 namespace engine::world::terrain { struct LayerPalette; }
+namespace engine::world::water { class WaterSampler; }
 
 namespace engine::world::surface
 {
@@ -50,6 +51,12 @@ namespace engine::world::surface
 
         SurfaceQueryResult Query(engine::math::Vec3 worldPos) const;
 
+        /// Branche optionnellement un `WaterSampler` (M100.15) pour overrider
+        /// le résultat splat-map vers `ShallowWater` (depth < 1 m) ou
+        /// `DeepWater` (depth >= 1 m) si le point est dans un volume d'eau.
+        /// Passer `nullptr` désactive l'override (comportement M100.11 pur).
+        void SetWaterSampler(const engine::world::water::WaterSampler* sampler) noexcept;
+
     private:
         // m_table est stocké pour M100.26 (computation des modifiers depuis
         // météo/saison). Inutilisé en M100.11 — Query renvoie toujours des
@@ -62,5 +69,12 @@ namespace engine::world::surface
         // Encodage clé : (int64_t(chunkX) << 32) | uint32_t(chunkZ).
         // Non thread-safe (cf. contrainte thread sur la classe).
         mutable std::unordered_set<int64_t>              m_warnedChunks;
+        const engine::world::water::WaterSampler*        m_waterSampler = nullptr;
+
+        /// M100.15 — applique l'override Shallow/DeepWater au résultat splat
+        /// si un sampler est branché ET que le point est dans l'eau. Sinon
+        /// retourne `r` tel quel.
+        SurfaceQueryResult ApplyWaterOverride(SurfaceQueryResult r,
+                                              engine::math::Vec3 worldPos) const noexcept;
     };
 }

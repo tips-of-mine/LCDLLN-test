@@ -7,6 +7,7 @@
 #include "src/client/world/terrain/SplatMap.h"
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
+#include "src/client/world/water/WaterSampler.h"
 
 #include <algorithm>
 
@@ -22,6 +23,27 @@ namespace engine::world::surface
         m_cfg     = &cfg;
         m_palette = &palette;
         return true;
+    }
+
+    void SurfaceQueryService::SetWaterSampler(
+        const engine::world::water::WaterSampler* sampler) noexcept
+    {
+        m_waterSampler = sampler;
+    }
+
+    SurfaceQueryResult SurfaceQueryService::ApplyWaterOverride(
+        SurfaceQueryResult r, engine::math::Vec3 worldPos) const noexcept
+    {
+        if (m_waterSampler)
+        {
+            if (auto sample = m_waterSampler->Sample(worldPos))
+            {
+                r.base = (sample->depthMeters >= 1.0f)
+                    ? SurfaceType::DeepWater
+                    : SurfaceType::ShallowWater;
+            }
+        }
+        return r;
     }
 
     SurfaceQueryResult SurfaceQueryService::Query(engine::math::Vec3 worldPos) const
@@ -59,7 +81,7 @@ namespace engine::world::surface
                 LOG_WARN(World, "[SurfaceQuery] splat absent for chunk ({},{}) → fallback Dirt",
                     coord.x, coord.z);
             }
-            return fallback;
+            return ApplyWaterOverride(fallback, worldPos);
         }
 
         // 3. Lire les 8 poids à (localCellX, localCellZ). Tie-break : plus petit index.
@@ -82,6 +104,6 @@ namespace engine::world::surface
         SurfaceQueryResult r;
         r.base = m_palette->GetSurfaceTypeForLayer(static_cast<uint8_t>(maxLayer));
         // 6. modifiers neutres en M100.11.
-        return r;
+        return ApplyWaterOverride(r, worldPos);
     }
 }

@@ -11,6 +11,10 @@
     {
       "id": "UI",
       "volume": 0.9
+    },
+    {
+      "id": "Weather",
+      "volume": 1.0
     }
   ],
   "sounds": [

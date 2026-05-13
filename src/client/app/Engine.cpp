@@ -4743,9 +4743,11 @@ namespace engine
 														}
 														LOG_DEBUG(Render, "[CopyPresent] UI layers cleared; recording glyphs (if valid)");
 														// Dessiner le logo AVANT le texte pour éviter qu’un PNG opaque ne recouvre les glyphes.
-														// Logo statut : uniquement pendant la requête HTTP (pas quand le cache est à jour).
+														// Logo statut : affiche pendant la requete HTTP (spin) ET ensuite, des qu'un
+														// resultat de sonde est connu, pour montrer success/error. Sans cette seconde
+														// condition, l'utilisateur perd tout retour visuel quand le master est down.
 														const bool showAuthStatusLogo = authVisualState.login
-															&& authVisualState.authLogoSpin;
+															&& (authVisualState.authLogoSpin || authVisualState.authStatusKnown);
 														if (m_authLogoPass.IsValid() && showAuthStatusLogo)
 														{
 															engine::render::TextureAsset* logoTex = nullptr;
@@ -4753,11 +4755,13 @@ namespace engine
 															{
 																logoTex = m_authLogoTexture.Get();
 															}
-															else if (authVisualState.authStatusOk && m_authLogoSuccessTexture.IsValid())
+															else if (authVisualState.authStatusKnown && authVisualState.authStatusOk
+																&& m_authLogoSuccessTexture.IsValid())
 															{
 																logoTex = m_authLogoSuccessTexture.Get();
 															}
-															else if (!authVisualState.authStatusOk && m_authLogoErrorTexture.IsValid())
+															else if (authVisualState.authStatusKnown && !authVisualState.authStatusOk
+																&& m_authLogoErrorTexture.IsValid())
 															{
 																logoTex = m_authLogoErrorTexture.Get();
 															}

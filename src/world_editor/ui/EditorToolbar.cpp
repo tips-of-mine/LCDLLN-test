@@ -19,6 +19,7 @@ namespace engine::editor::world
 			ActiveTool::River,
 			ActiveTool::MountainRange,
 			ActiveTool::ValleyChain,
+			ActiveTool::RiverNetwork,   // M100.36
 		};
 	}
 

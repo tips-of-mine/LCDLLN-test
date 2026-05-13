@@ -159,6 +159,12 @@ namespace engine::editor::world
 		m_mountainRangeTool.Init(m_commandStack, m_terrainDoc, cfg);
 		m_valleyChainTool.Init(m_commandStack, m_terrainDoc, cfg);
 
+		// M100.36 — Init de l'outil River Network. Lit `OceanSettings` du
+		// WaterDoc et initialise le buffer du slider sea level. Source du sea
+		// level pour la sim : `m_waterDoc.GetOcean().seaLevelMeters` (jamais
+		// un buffer local).
+		m_riverNetworkTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -192,6 +198,7 @@ namespace engine::editor::world
 			case ActiveTool::River:         name = "River"; break;
 			case ActiveTool::MountainRange: name = "MountainRange"; break;
 			case ActiveTool::ValleyChain:   name = "ValleyChain"; break;
+			case ActiveTool::RiverNetwork:  name = "RiverNetwork"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -531,6 +538,13 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'V')
 		{
 			SetActiveTool(ActiveTool::ValleyChain);
+			return true;
+		}
+		// M100.36 — Ctrl+Shift+N : River Network ("N" pour Network, évite la
+		// collision avec 'R' (River simple, M100.13) et 'N' (TerrainStamp).
+		if (ctrl && shift && virtualKey == 'N')
+		{
+			SetActiveTool(ActiveTool::RiverNetwork);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

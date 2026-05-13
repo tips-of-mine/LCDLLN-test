@@ -22,6 +22,8 @@ namespace engine::editor::world
 				return { 0xFFAA7755u, "M", "Tracer une chaîne de montagnes", true };
 			case ActiveTool::ValleyChain:
 				return { 0xFF557099u, "V", "Tracer une vallée",         true  };
+			case ActiveTool::RiverNetwork:
+				return { 0xFF2D6AA0u, "N", "Générer un réseau de rivières (watershed)", true };
 		}
 		// Fallback générique pour outils futurs non encore mappés : carré
 		// neutre, désactivé, tooltip standard "Bientôt disponible".

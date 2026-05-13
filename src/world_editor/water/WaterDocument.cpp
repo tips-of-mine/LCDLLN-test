@@ -23,7 +23,8 @@ namespace engine::editor::world
 		}
 
 		std::vector<uint8_t> bytes;
-		if (!engine::world::water::SaveWaterBin(m_scene, bytes, outError))
+		if (!engine::world::water::SaveWaterBin(m_scene, m_ocean.seaLevelMeters,
+			bytes, outError))
 			return false;
 
 		std::ofstream f(path, std::ios::binary | std::ios::trunc);
@@ -55,6 +56,7 @@ namespace engine::editor::world
 			// Fichier absent : pas une erreur, scene reste vide.
 			m_scene.lakes.clear();
 			m_scene.rivers.clear();
+			m_ocean = OceanSettings{};
 			m_dirty = false;
 			return true;
 		}
@@ -64,6 +66,7 @@ namespace engine::editor::world
 			// Fichier vide : traité comme absent (scene reste vide).
 			m_scene.lakes.clear();
 			m_scene.rivers.clear();
+			m_ocean = OceanSettings{};
 			m_dirty = false;
 			return true;
 		}
@@ -76,9 +79,13 @@ namespace engine::editor::world
 			return false;
 		}
 
+		// M100.36 : initialise outSeaLevel à la valeur défaut pour que le
+		// reader v1 (sans section ocean) laisse `m_ocean` à `OceanSettings{}`.
+		float seaLevel = OceanSettings{}.seaLevelMeters;
 		if (!engine::world::water::LoadWaterBin(
-			std::span<const uint8_t>(bytes), m_scene, outError))
+			std::span<const uint8_t>(bytes), m_scene, seaLevel, outError))
 			return false;
+		m_ocean.seaLevelMeters = seaLevel;
 
 		m_dirty = false;
 		return true;

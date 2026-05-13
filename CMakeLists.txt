@@ -314,6 +314,14 @@ add_library(engine_core
   src/world_editor/water/AddRiverCommand.cpp
   src/world_editor/water/LakeTool.cpp
   src/world_editor/water/RiverTool.cpp
+  # M100.36 — River Network Generator (watershed D8 + OceanSettings)
+  src/world_editor/water/ConsolidatedHeightGrid.cpp
+  src/world_editor/water/D8FlowDirection.cpp
+  src/world_editor/water/FlowAccumulation.cpp
+  src/world_editor/water/PathSimplifyDouglasPeucker.cpp
+  src/world_editor/water/WatershedSimulation.cpp
+  src/world_editor/water/RiverNetworkCommand.cpp
+  src/world_editor/water/RiverNetworkTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1085,6 +1093,19 @@ if(WIN32)
     target_compile_options(editor_toolbar_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME editor_toolbar_tests COMMAND editor_toolbar_tests)
+endif()
+
+# M100.36 — Tests unitaires CPU pour le watershed D8 + flow accumulation +
+# Douglas-Peucker + OceanSettings + RiverNetworkCommand + water.bin v1/v2
+# round-trip. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(river_network_tests src/world_editor/tests/RiverNetworkTests.cpp)
+  target_include_directories(river_network_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(river_network_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(river_network_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME river_network_tests COMMAND river_network_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

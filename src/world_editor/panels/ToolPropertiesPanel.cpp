@@ -1,6 +1,7 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 
 #include "src/world_editor/water/LakeTool.h"
+#include "src/world_editor/water/RiverNetworkTool.h"
 #include "src/world_editor/water/RiverTool.h"
 #include "src/world_editor/splat/SplatPaintTool.h"
 #include "src/world_editor/terrain/MountainRangeTool.h"
@@ -702,6 +703,229 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderRiverNetworkParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::RiverNetworkTool& tool)
+	{
+#if defined(_WIN32)
+		ImGui::Text("River Network — M100.36 (watershed D8)");
+
+		// Liste des sources posées.
+		ImGui::Text("Sources posées : %zu / %zu",
+			tool.Springs().size(),
+			engine::editor::world::RiverNetworkTool::kMaxSprings);
+		if (ImGui::SmallButton("Reset all sources"))
+		{
+			tool.Cancel();
+		}
+		ImGui::Separator();
+
+		// Petit canvas top-down pour poser les sources. Échelle 1000 m de
+		// demi-côté pour matcher les distances typiques d'une zone 10 km.
+		static float canvasHalfM   = 1000.0f;
+		static float canvasCenterX = 0.0f;
+		static float canvasCenterZ = 0.0f;
+		ImGui::SliderFloat("Vue canvas (demi-côté m)", &canvasHalfM,
+			50.0f, 5000.0f, "%.0f");
+
+		const ImVec2 canvasSize{ 320.0f, 320.0f };
+		ImGui::BeginChild("##riverNetCanvas", canvasSize, true,
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		const ImVec2 contentSize = ImGui::GetContentRegionAvail();
+		const ImVec2 canvasMin = ImGui::GetCursorScreenPos();
+		const float cw = contentSize.x;
+		const float ch = contentSize.y;
+		ImGui::InvisibleButton("##rnInteract", contentSize);
+		const bool hoveredC = ImGui::IsItemHovered();
+		auto pixelToWorld = [&](float px, float py, float& wx, float& wz) {
+			const float fx = (px / cw) * 2.0f - 1.0f;
+			const float fy = (py / ch) * 2.0f - 1.0f;
+			wx = canvasCenterX + fx * canvasHalfM;
+			wz = canvasCenterZ - fy * canvasHalfM;
+		};
+		auto worldToPixel = [&](float wx, float wz, float& px, float& py) {
+			const float fx = (wx - canvasCenterX) / canvasHalfM;
+			const float fy = (canvasCenterZ - wz) / canvasHalfM;
+			px = (fx * 0.5f + 0.5f) * cw;
+			py = (fy * 0.5f + 0.5f) * ch;
+		};
+		if (hoveredC)
+		{
+			const ImVec2 mp = ImGui::GetIO().MousePos;
+			const float px = mp.x - canvasMin.x;
+			const float py = mp.y - canvasMin.y;
+			float wx = 0.0f, wz = 0.0f;
+			pixelToWorld(px, py, wx, wz);
+			ImGui::SetTooltip("world: (%.1f, %.1f) m", static_cast<double>(wx),
+				static_cast<double>(wz));
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			{
+				// Sample Y depuis le doc terrain (chunk déjà résident dans
+				// le pire des cas — sinon Y=0 et la sim re-sample de toute façon).
+				float worldY = 0.0f;
+				auto& terrainDoc = shell.MutableTerrainDocument();
+				const int chunkSpan =
+					(engine::world::terrain::kTerrainResolution - 1) * 1;
+				const int chunkX = static_cast<int>(std::floor(wx / chunkSpan));
+				const int chunkZ = static_cast<int>(std::floor(wz / chunkSpan));
+				auto chunkPtr = terrainDoc.Find({ chunkX, chunkZ });
+				if (chunkPtr)
+				{
+					const float localX = wx - chunkX * static_cast<float>(chunkSpan);
+					const float localZ = wz - chunkZ * static_cast<float>(chunkSpan);
+					worldY = chunkPtr->SampleHeight(localX, localZ);
+				}
+				tool.AddSpring(wx, wz, worldY);
+			}
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				// Cherche la source la plus proche dans un rayon de 30 m et la retire.
+				float bestDist = 30.0f;
+				size_t bestIdx = tool.Springs().size();
+				for (size_t i = 0; i < tool.Springs().size(); ++i)
+				{
+					const float dx = tool.Springs()[i].worldX - wx;
+					const float dz = tool.Springs()[i].worldZ - wz;
+					const float d = std::sqrt(dx * dx + dz * dz);
+					if (d < bestDist)
+					{
+						bestDist = d;
+						bestIdx = i;
+					}
+				}
+				if (bestIdx < tool.Springs().size())
+				{
+					tool.RemoveSpring(bestIdx);
+				}
+			}
+		}
+		ImDrawList* dl = ImGui::GetWindowDrawList();
+		{
+			float cx = 0.0f, cy = 0.0f;
+			worldToPixel(0.0f, 0.0f, cx, cy);
+			dl->AddLine(
+				ImVec2(canvasMin.x + cx - 5, canvasMin.y + cy),
+				ImVec2(canvasMin.x + cx + 5, canvasMin.y + cy),
+				IM_COL32(255, 255, 255, 80), 1.0f);
+			dl->AddLine(
+				ImVec2(canvasMin.x + cx, canvasMin.y + cy - 5),
+				ImVec2(canvasMin.x + cx, canvasMin.y + cy + 5),
+				IM_COL32(255, 255, 255, 80), 1.0f);
+		}
+		for (const auto& s : tool.Springs())
+		{
+			float px, py;
+			worldToPixel(s.worldX, s.worldZ, px, py);
+			dl->AddCircleFilled(ImVec2(canvasMin.x + px, canvasMin.y + py),
+				5.0f, IM_COL32(80, 180, 255, 255));
+		}
+		// Preview du résultat dernier Simulate : lignes bleues pour les rivières.
+		if (tool.HasResult())
+		{
+			for (const auto& river : tool.LastResult().rivers)
+			{
+				for (size_t i = 0; i + 1u < river.nodes.size(); ++i)
+				{
+					float ax, ay, bx, by;
+					worldToPixel(river.nodes[i].position.x, river.nodes[i].position.z, ax, ay);
+					worldToPixel(river.nodes[i + 1u].position.x, river.nodes[i + 1u].position.z, bx, by);
+					dl->AddLine(
+						ImVec2(canvasMin.x + ax, canvasMin.y + ay),
+						ImVec2(canvasMin.x + bx, canvasMin.y + by),
+						IM_COL32(60, 140, 240, 180), 2.0f);
+				}
+			}
+			// Lacs auto en bleu rempli.
+			for (const auto& lake : tool.LastResult().autoLakes)
+			{
+				for (size_t i = 0; i < lake.polygon.size(); ++i)
+				{
+					const auto& a = lake.polygon[i];
+					const auto& b = lake.polygon[(i + 1u) % lake.polygon.size()];
+					float ax, ay, bx, by;
+					worldToPixel(a.x, a.z, ax, ay);
+					worldToPixel(b.x, b.z, bx, by);
+					dl->AddLine(
+						ImVec2(canvasMin.x + ax, canvasMin.y + ay),
+						ImVec2(canvasMin.x + bx, canvasMin.y + by),
+						IM_COL32(60, 100, 220, 220), 1.5f);
+				}
+			}
+		}
+		ImGui::EndChild();
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Paramètres de simulation :");
+
+		// Sea level — buffer local, écrit dans WaterDocument seulement à Apply.
+		float seaBuf = tool.SeaLevelBuffer();
+		if (ImGui::SliderFloat("Sea level (Y)", &seaBuf, -100.0f, 500.0f, "%.1f m"))
+		{
+			tool.SetSeaLevelBuffer(seaBuf);
+		}
+		ImGui::TextDisabled("(source de vérité : WaterDocument::GetOcean — édité aussi par Coastline M100.37)");
+
+		int flowThreshold = static_cast<int>(tool.MutableParams().minFlowThresholdCells);
+		if (ImGui::SliderInt("Flow threshold (cells)", &flowThreshold, 1, 5000))
+		{
+			tool.MutableParams().minFlowThresholdCells = static_cast<uint32_t>(std::max(1, flowThreshold));
+		}
+		ImGui::SliderFloat("Tolerance Douglas-P. (m)",
+			&tool.MutableParams().simplificationToleranceMeters, 0.5f, 50.0f, "%.1f");
+		ImGui::Checkbox("Auto-lakes at sinks", &tool.MutableParams().autoLakesAtSinks);
+		if (tool.MutableParams().autoLakesAtSinks)
+		{
+			ImGui::SliderFloat("Max lake depth (m)",
+				&tool.MutableParams().autoLakeMaxDepthMeters, 0.5f, 100.0f, "%.1f");
+		}
+
+		ImGui::Separator();
+		ImGui::Checkbox("Carve heightmap along rivers", &tool.MutableParams().carveHeightmap);
+		if (tool.MutableParams().carveHeightmap)
+		{
+			ImGui::SliderFloat("Carve depth (m)",
+				&tool.MutableParams().carveDepthMeters, 0.1f, 30.0f, "%.1f");
+			ImGui::SliderFloat("Carve width (m)",
+				&tool.MutableParams().carveWidthMeters, 1.0f, 100.0f, "%.1f");
+		}
+
+		ImGui::Separator();
+		if (ImGui::Button("Simulate"))
+		{
+			tool.Simulate();
+		}
+		ImGui::SameLine();
+		ImGui::TextDisabled("⌛ ~1-5 s sur une zone complète.");
+
+		if (tool.HasResult())
+		{
+			const auto& r = tool.LastResult();
+			ImGui::Text("🌊 %zu rivières · %u confluences · %u embouchures · %zu lacs auto",
+				r.rivers.size(), r.confluenceCount, r.mouthCount, r.autoLakes.size());
+			if (r.rejectedByThreshold > 0)
+			{
+				ImGui::TextDisabled("  (rejetées par threshold : %u)", r.rejectedByThreshold);
+			}
+		}
+
+		ImGui::Separator();
+		const bool canApply = tool.HasResult() && !tool.LastResult().rivers.empty();
+		ImGui::BeginDisabled(!canApply);
+		if (ImGui::Button("Apply"))
+		{
+			tool.Apply();
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			tool.Cancel();
+		}
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderRiverParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::RiverTool& tool)
@@ -910,6 +1134,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Valley Chain");
 				ImGui::Separator();
 				RenderValleyChainParams(*m_shell, m_shell->MutableValleyChainTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::RiverNetwork)
+			{
+				ImGui::TextUnformatted("River Network");
+				ImGui::Separator();
+				RenderRiverNetworkParams(*m_shell, m_shell->MutableRiverNetworkTool());
 			}
 			else
 			{

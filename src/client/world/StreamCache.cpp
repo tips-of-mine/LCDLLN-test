@@ -268,8 +268,16 @@ namespace engine::world
 
 		auto scene = std::make_shared<engine::world::water::WaterScene>();
 		std::string err;
+		// M100.36 : la valeur de sea level lue par le client de jeu via le
+		// StreamCache n'est pas exposée ici (le client lit la scene directement,
+		// sans connaissance de `OceanSettings`). On utilise un buffer local et
+		// on l'ignore — le runtime client se basera sur la scene déjà
+		// pré-établie par l'éditeur (le sea level apparaîtra explicitement
+		// quand un système client en aura besoin, ex. brouillard distance fog
+		// au-dessus de l'océan en M100.37+).
+		float seaLevelIgnored = 50.0f;
 		if (!engine::world::water::LoadWaterBin(
-			std::span<const uint8_t>(blob), *scene, err))
+			std::span<const uint8_t>(blob), *scene, seaLevelIgnored, err))
 		{
 			LOG_WARN(World, "[StreamCache] LoadWaterBin fail ({}): {}", fullPath, err);
 			return nullptr;

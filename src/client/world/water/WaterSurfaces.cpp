@@ -43,11 +43,14 @@ namespace engine::world::water
 			size_t total = 4u + 4u;  // lakeCount + riverCount
 			for (const auto& l : s.lakes)  total += LakeSize(l);
 			for (const auto& r : s.rivers) total += RiverSize(r);
+			// M100.36 — section ocean : 4 octets seaLevelMeters (toujours
+			// présente en v2, lecture rétro-compatible v1 si absente).
+			total += 4u;
 			return total;
 		}
 	}
 
-	bool SaveWaterBin(const WaterScene& scene,
+	bool SaveWaterBin(const WaterScene& scene, float seaLevelMeters,
 		std::vector<uint8_t>& outBytes, std::string& outError)
 	{
 		(void)outError;  // SaveWaterBin actuel ne fail jamais (alloc-only)
@@ -87,6 +90,9 @@ namespace engine::world::water
 			}
 		}
 
+		// M100.36 — section ocean en queue de payload (4 octets).
+		std::memcpy(p, &seaLevelMeters, 4); p += 4;
+
 		// ContentHash xxhash64 sur payload post-header
 		std::span<const uint8_t> payload(outBytes.data() + headerSize, totalSize - headerSize);
 		const uint64_t contentHash = engine::world::ComputeXxHash64(payload);
@@ -102,7 +108,7 @@ namespace engine::world::water
 	}
 
 	bool LoadWaterBin(std::span<const uint8_t> bytes,
-		WaterScene& outScene, std::string& outError)
+		WaterScene& outScene, float& outSeaLevelMeters, std::string& outError)
 	{
 		outScene.lakes.clear();
 		outScene.rivers.clear();
@@ -121,11 +127,14 @@ namespace engine::world::water
 			outError = "WaterScene: bad magic (expected WATR)";
 			return false;
 		}
-		if (hdr.formatVersion != kWaterVersion)
+		// M100.36 : accepte v1 (sans ocean) ET v2 (avec ocean). Rejette v0
+		// ou v>2 explicitement.
+		if (hdr.formatVersion < 1u || hdr.formatVersion > kWaterVersion)
 		{
-			outError = "WaterScene: bad version";
+			outError = "WaterScene: unsupported version";
 			return false;
 		}
+		const bool hasOceanSection = (hdr.formatVersion >= 2u);
 		std::span<const uint8_t> payload = bytes.subspan(24);
 		if (engine::world::ComputeXxHash64(payload) != hdr.contentHash)
 		{
@@ -199,6 +208,20 @@ namespace engine::world::water
 				readF32(river.nodes[n].depthMeters);
 			}
 			outScene.rivers.push_back(std::move(river));
+		}
+
+		// M100.36 — section ocean optionnelle (v2 uniquement). Si v1, on
+		// laisse `outSeaLevelMeters` à la valeur d'entrée. Si v2, on lit 4
+		// octets ; en cas de payload tronqué (corruption), on garde silencieusement
+		// la valeur d'entrée — le hash de contenu détecterait déjà la corruption
+		// plus haut.
+		if (hasOceanSection)
+		{
+			float sea = outSeaLevelMeters;
+			if (readF32(sea))
+			{
+				outSeaLevelMeters = sea;
+			}
 		}
 
 		return true;

@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; }
 
 namespace engine::editor::world::panels
 {
@@ -67,6 +67,14 @@ namespace engine::editor::world::panels
 		void RenderValleyChainParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::ValleyChainTool& tool);
+
+		/// M100.36 — Bloc UI "River Network" pour la simulation watershed :
+		/// liste des sources, sliders sea level (binding direct
+		/// `WaterDocument::OceanSettings`), threshold, simplification,
+		/// auto-lakes, carving, boutons Simulate / Apply / Cancel.
+		void RenderRiverNetworkParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::RiverNetworkTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

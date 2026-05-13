@@ -596,7 +596,9 @@ namespace tools::zone_builder
 	}
 
 	bool WriteWater(std::string_view outputRootDir,
-		const engine::world::water::WaterScene& scene, std::string& outError)
+		const engine::world::water::WaterScene& scene,
+		float seaLevelMeters,
+		std::string& outError)
 	{
 		const std::filesystem::path dir =
 			std::filesystem::path(outputRootDir) / "instances";
@@ -609,7 +611,7 @@ namespace tools::zone_builder
 		}
 
 		std::vector<uint8_t> bytes;
-		if (!engine::world::water::SaveWaterBin(scene, bytes, outError))
+		if (!engine::world::water::SaveWaterBin(scene, seaLevelMeters, bytes, outError))
 			return false;
 
 		const std::filesystem::path file = dir / "water.bin";

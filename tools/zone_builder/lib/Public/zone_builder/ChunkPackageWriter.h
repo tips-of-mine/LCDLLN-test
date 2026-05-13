@@ -54,9 +54,16 @@ namespace tools::zone_builder
 	bool WriteSplatMap(std::string_view outputRootDir, int32_t chunkX, int32_t chunkZ,
 		const engine::world::terrain::SplatMap& splat, std::string& outError);
 
-	/// Écrit `instances/water.bin` pour la scene fournie (M100.13). Crée le
-	/// dossier `instances/` au besoin. Cohérent avec WriteTerrainChunk /
-	/// WriteSplatMap.
+	/// Écrit `instances/water.bin` pour la scene fournie (M100.13, étendu
+	/// M100.36). Crée le dossier `instances/` au besoin. Cohérent avec
+	/// WriteTerrainChunk / WriteSplatMap.
+	///
+	/// \param seaLevelMeters Niveau de mer global de la zone (M100.36 ;
+	///                       persisté dans la section ocean v2 du fichier).
+	///                       Défaut 50.0f pour les zones legacy / les
+	///                       contextes qui n'expriment pas un sea level.
 	bool WriteWater(std::string_view outputRootDir,
-		const engine::world::water::WaterScene& scene, std::string& outError);
+		const engine::world::water::WaterScene& scene,
+		float seaLevelMeters,
+		std::string& outError);
 }

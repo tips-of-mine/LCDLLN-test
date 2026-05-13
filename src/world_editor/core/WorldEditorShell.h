@@ -6,6 +6,8 @@
 #include "src/world_editor/volumes/MeshInsertDocument.h"
 #include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/caves/CaveTool.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
 #include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
@@ -52,6 +54,7 @@ namespace engine::editor::world
 		Cave                = 12,  // M100.40 — raccourci Ctrl+Shift+G (Grotte)
 		Overhang            = 13,  // M100.41 — raccourci Ctrl+Shift+O (Overhang)
 		Arch                = 14,  // M100.42 — raccourci Ctrl+Shift+A (Arche)
+		DungeonPortal       = 15,  // M100.43 — raccourci Ctrl+Shift+D (Donjon)
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -244,6 +247,16 @@ namespace engine::editor::world
 		volumes::arches::ArchTool&       MutableArchTool()       { return m_archTool; }
 		const volumes::arches::ArchTool& GetArchTool()     const { return m_archTool; }
 
+		/// M100.43 — Accès mutable au document Dungeon Portal (Phase 11).
+		/// Distinct du MeshInsertDocument car porte des metadata gameplay
+		/// (template id, difficulty range, level gating).
+		volumes::dungeons::DungeonPortalDocument&       MutableDungeonPortalDocument()       { return m_dungeonPortalDoc; }
+		const volumes::dungeons::DungeonPortalDocument& GetDungeonPortalDocument()     const { return m_dungeonPortalDoc; }
+
+		/// M100.43 — Accès mutable à l'outil Dungeon Portal.
+		volumes::dungeons::DungeonPortalTool&       MutableDungeonPortalTool()       { return m_dungeonPortalTool; }
+		const volumes::dungeons::DungeonPortalTool& GetDungeonPortalTool()     const { return m_dungeonPortalTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -289,6 +302,8 @@ namespace engine::editor::world
 		volumes::caves::CaveTool    m_caveTool;               // M100.40
 		volumes::overhangs::OverhangTool m_overhangTool;      // M100.41
 		volumes::arches::ArchTool   m_archTool;               // M100.42
+		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
+		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

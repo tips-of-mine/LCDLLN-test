@@ -801,4 +801,19 @@ namespace engine::network
 	// =====================================================================
 	constexpr uint16_t kOpcodeAdminCommandRequest  = 195u; ///< Client to Master : execution d'une slash command (command, args).
 	constexpr uint16_t kOpcodeAdminCommandResponse = 196u; ///< Master to Client : ACK Ok + data echo, ou Denied / UnknownCommand / InvalidArgs / Unauthorized.
+
+	// -------------------------------------------------------------------------
+	// Opcodes Dungeon (valeurs 197-198)
+	// Référence : M100.43 — Dungeon Portal System (Phase 11 « Volumes 3D »).
+	// Le joueur déclenche un portail de donjon posé par l'éditeur monde ; le
+	// master crée (ou résout) une instance dans `dungeon_instances` (migration
+	// 0063) et renvoie un shard endpoint à atteindre. Les opcodes sont
+	// **réservés en M100.43** mais ne sont pas encore câblés à un handler ;
+	// le wiring serveur viendra avec M100.44 (VMap Bridge & Phase 11
+	// Validation). Un client qui enverrait kOpcodeEnterDungeonRequest dès
+	// maintenant recevrait BAD_REQUEST côté master.
+	// -------------------------------------------------------------------------
+
+	constexpr uint16_t kOpcodeEnterDungeonRequest  = 197u; ///< Client to Master : déclenche un portail (dungeonTemplateId, difficulty). Reservé M100.43, non câblé jusqu'a M100.44.
+	constexpr uint16_t kOpcodeEnterDungeonResponse = 198u; ///< Master to Client : ACK avec instanceId + shardEndpoint, ou erreur (TemplateNotFound / InstanceFull / DifficultyLocked).
 }

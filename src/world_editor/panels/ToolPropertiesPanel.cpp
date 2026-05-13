@@ -4,6 +4,8 @@
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/caves/CaveTool.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
 #include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
@@ -1037,6 +1039,86 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderDungeonPortalParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::volumes::dungeons::DungeonPortalTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		ImGui::Text("Dungeon Portal Tool — M100.43 (Phase 11)");
+		ImGui::TextDisabled("(MVP éditeur-side : handler serveur câblé en M100.44)");
+		ImGui::Separator();
+
+		const auto& cat = tool.Catalog();
+		ImGui::Text("Catalogue : %zu templates de donjon", cat.Size());
+		if (cat.Size() == 0u)
+		{
+			ImGui::TextDisabled("Aucun catalogue. Vérifie game/data/meshes/dungeons/catalog.json");
+		}
+		else
+		{
+			ImGui::TextUnformatted("Sélection :");
+			for (const auto& entry : cat.Entries())
+			{
+				const bool selected = (tool.SelectedTemplateId() == entry.id);
+				if (ImGui::RadioButton(entry.displayName.c_str(), selected))
+				{
+					tool.SelectByTemplateId(entry.id);
+				}
+				if (selected && !entry.description.empty())
+				{
+					ImGui::TextWrapped("%s", entry.description.c_str());
+				}
+			}
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Position cible :");
+		ImGui::InputFloat("World X", &tool.TargetWorldX(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("World Y", &tool.TargetWorldY(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("World Z", &tool.TargetWorldZ(), 1.0f, 10.0f, "%.1f");
+		ImGui::SliderFloat("Yaw (deg)", &tool.YawDeg(), -180.0f, 180.0f, "%.1f");
+		ImGui::SliderFloat("Trigger radius (m)", &tool.TriggerRadius(), 0.5f, 30.0f, "%.1f");
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Gating gameplay :");
+		int reqLevel = static_cast<int>(tool.RequiredLevel());
+		if (ImGui::SliderInt("Niveau requis", &reqLevel, 1, 80))
+			tool.RequiredLevel() = static_cast<uint16_t>(reqLevel);
+		int minD = static_cast<int>(tool.MinDifficulty());
+		int maxD = static_cast<int>(tool.MaxDifficulty());
+		if (ImGui::SliderInt("Min difficulty", &minD, 1, 5))
+			tool.MinDifficulty() = static_cast<uint8_t>(minD);
+		if (ImGui::SliderInt("Max difficulty", &maxD, 1, 5))
+			tool.MaxDifficulty() = static_cast<uint8_t>(maxD);
+		ImGui::Checkbox("One-shot (raid partagé)",        &tool.IsOneShot());
+		ImGui::Checkbox("Persiste entre les sessions",    &tool.PersistsAcrossLogin());
+
+		ImGui::Separator();
+		const bool canPlace = !tool.SelectedTemplateId().empty()
+			&& tool.MinDifficulty() > 0u
+			&& tool.MaxDifficulty() >= tool.MinDifficulty();
+		ImGui::BeginDisabled(!canPlace);
+		if (ImGui::Button("Place"))
+		{
+			tool.Place();
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			tool.Cancel();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Portails posés : %zu",
+			shell.GetDungeonPortalDocument().Size());
+		ImGui::TextDisabled("Opcode 197/198 réservés ; handler shard wiring → M100.44");
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderThermalWindErosionParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::erosion::ThermalWindErosionTool& tool)
@@ -1758,6 +1840,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Arch (Phase 11)");
 				ImGui::Separator();
 				RenderArchParams(*m_shell, m_shell->MutableArchTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::DungeonPortal)
+			{
+				ImGui::TextUnformatted("Dungeon Portal (Phase 11)");
+				ImGui::Separator();
+				RenderDungeonPortalParams(*m_shell, m_shell->MutableDungeonPortalTool());
 			}
 			else
 			{

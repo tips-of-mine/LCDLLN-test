@@ -195,6 +195,17 @@ namespace engine::editor::world
 		// M100.42 — Init de l'outil Arch (catalogue `meshes/arches/catalog.json`).
 		m_archTool.Init(m_commandStack, m_meshInsertDoc, cfg);
 
+		// M100.43 — Init du document Dungeon Portal (Phase 11, persiste dans
+		// `instances/dungeon_portals.bin` LCDP v1) + outil DungeonPortal.
+		// Distinct du MeshInsertDocument car portail = donnée gameplay.
+		std::string dungeonErr;
+		if (!m_dungeonPortalDoc.LoadFromDisk(cfg, dungeonErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] DungeonPortal LoadFromDisk failed: {}",
+				dungeonErr);
+		}
+		m_dungeonPortalTool.Init(m_commandStack, m_dungeonPortalDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -235,6 +246,7 @@ namespace engine::editor::world
 			case ActiveTool::Cave:                name = "Cave"; break;
 			case ActiveTool::Overhang:            name = "Overhang"; break;
 			case ActiveTool::Arch:                name = "Arch"; break;
+			case ActiveTool::DungeonPortal:       name = "DungeonPortal"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -617,6 +629,12 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'A')
 		{
 			SetActiveTool(ActiveTool::Arch);
+			return true;
+		}
+		// M100.43 — Ctrl+Shift+D : Dungeon Portal (portail de donjon).
+		if (ctrl && shift && virtualKey == 'D')
+		{
+			SetActiveTool(ActiveTool::DungeonPortal);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } namespace volumes::overhangs { class OverhangTool; } namespace volumes::arches { class ArchTool; } }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } namespace volumes::overhangs { class OverhangTool; } namespace volumes::arches { class ArchTool; } namespace volumes::dungeons { class DungeonPortalTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -123,6 +123,14 @@ namespace engine::editor::world::panels
 		void RenderArchParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::volumes::arches::ArchTool& tool);
+
+		/// M100.43 — Bloc UI "Dungeon Portal" (Phase 11). Catalogue de
+		/// templates de donjon + sliders triggerRadius / yaw / requiredLevel
+		/// / difficulty range / flags. Compteur "Portails posés" lit
+		/// `DungeonPortalDocument`.
+		void RenderDungeonPortalParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::dungeons::DungeonPortalTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

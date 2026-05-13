@@ -366,6 +366,15 @@ add_library(engine_core
   src/world_editor/volumes/arches/ArchCatalog.cpp
   src/world_editor/volumes/arches/PlaceArchCommand.cpp
   src/world_editor/volumes/arches/ArchTool.cpp
+  # M100.43 — Dungeon Portal System (Phase 11). Premier ticket Phase 11
+  # qui touche au serveur : opcodes 197/198 + migration 0063 +
+  # nouveau format binaire LCDP v1 dans `instances/dungeon_portals.bin`
+  # (distinct de LCMI car porte des metadata gameplay).
+  src/world_editor/volumes/dungeons/DungeonCatalog.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalDocument.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
+  src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -511,6 +520,7 @@ add_library(engine_core
   src/shared/network/AuthRegisterPayloads.cpp
   src/shared/network/CharacterPayloads.cpp
   src/shared/network/ChatPayloads.cpp
+  src/shared/network/DungeonPayloads.cpp   # M100.43 — opcodes 197/198, réservés (handler M100.44)
   src/shared/network/IgnoreListPayloads.cpp
   src/shared/network/MailPayloads.cpp
   src/shared/network/QuestPayloads.cpp
@@ -1231,6 +1241,31 @@ if(WIN32)
     target_compile_options(arch_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME arch_tool_tests COMMAND arch_tool_tests)
+endif()
+
+# M100.43 — Tests unitaires CPU pour le Dungeon Portal System (Phase 11).
+# LCDP v1 round-trip, Document CRUD, Catalog JSON, Command Apply/Undo,
+# Tool gating. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(dungeon_portal_tests src/world_editor/tests/DungeonPortalTests.cpp)
+  target_include_directories(dungeon_portal_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(dungeon_portal_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(dungeon_portal_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME dungeon_portal_tests COMMAND dungeon_portal_tests)
+endif()
+
+# M100.43 — Tests round-trip pour les payloads EnterDungeon{Request,
+# Response} (opcodes 197/198, réservés en M100.43 / câblés en M100.44).
+if(WIN32)
+  add_executable(dungeon_payloads_tests src/shared/network/DungeonPayloadsTests.cpp)
+  target_include_directories(dungeon_payloads_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(dungeon_payloads_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(dungeon_payloads_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME dungeon_payloads_tests COMMAND dungeon_payloads_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

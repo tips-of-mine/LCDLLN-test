@@ -26,6 +26,7 @@ namespace engine::editor::world
 			ActiveTool::Cave,               // M100.40 (démarre Phase 11)
 			ActiveTool::Overhang,           // M100.41
 			ActiveTool::Arch,               // M100.42
+			ActiveTool::DungeonPortal,      // M100.43
 		};
 	}
 

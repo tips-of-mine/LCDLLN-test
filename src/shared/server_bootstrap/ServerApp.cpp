@@ -879,6 +879,33 @@ namespace engine::server
 			return;
 		}
 
+		// Duplicate-login eviction : si un autre client (endpoint UDP different) joue deja
+		// avec ce character_key, on l'expulse proprement avant d'accepter le nouveau Hello.
+		// Sans cette eviction, deux clients sur deux machines avec le meme perso jouent en
+		// parallele, sauvegardent l'etat de maniere concurrente, et corrompent les donnees DB.
+		// Le ShardTicketHandshakeHandler (TCP) faisait deja cette eviction pour le handshake
+		// ticket, mais la session de jeu reelle est sur UDP : c'est ici qu'il faut deduplifier.
+		// On collecte d'abord les clientIds a evicter avant d'appeler DisconnectConnectedClient
+		// qui modifie m_clients (eviter l'invalidation d'iterateur sur le std::vector).
+		if (helloNonce != 0u)
+		{
+			std::vector<uint32_t> toEvict;
+			for (const ConnectedClient& other : m_clients)
+			{
+				if (other.persistenceCharacterKey == tentativeCharacterKey && !(other.endpoint == endpoint))
+				{
+					toEvict.push_back(other.clientId);
+				}
+			}
+			for (uint32_t clientId : toEvict)
+			{
+				LOG_INFO(Net,
+					"[ServerApp] Hello evicting prior session for duplicate character_key (character_key={}, evicted_client_id={}, new_endpoint={})",
+					tentativeCharacterKey, clientId, UdpTransport::EndpointToString(endpoint));
+				DisconnectConnectedClient(clientId, "duplicate_login_evict");
+			}
+		}
+
 		ConnectedClient client{};
 		client.endpoint = endpoint;
 		client.clientId = m_nextClientId++;

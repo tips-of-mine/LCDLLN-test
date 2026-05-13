@@ -32,6 +32,8 @@ namespace engine::editor::world
 				return { 0xFF7A6042u, "T", "Érosion thermique + éolienne",          true };
 			case ActiveTool::Cave:
 				return { 0xFF3A2A1Au, "G", "Placer une grotte (Phase 11)",          true };
+			case ActiveTool::Overhang:
+				return { 0xFF4A3A28u, "O", "Placer un surplomb rocheux (Phase 11)", true };
 		}
 		// Fallback générique pour outils futurs non encore mappés : carré
 		// neutre, désactivé, tooltip standard "Bientôt disponible".

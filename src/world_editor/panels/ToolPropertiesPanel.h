@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } namespace volumes::overhangs { class OverhangTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -107,6 +107,14 @@ namespace engine::editor::world::panels
 		void RenderCaveParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::volumes::caves::CaveTool& tool);
+
+		/// M100.41 — Bloc UI "Overhang" (Phase 11). Catalogue de surplombs
+		/// glTF + sliders position, yaw normal mur, tilt latéral, scale,
+		/// validation manuelle de la slope locale (en attendant un raycast
+		/// normal automatique de M100.17).
+		void RenderOverhangParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::overhangs::OverhangTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

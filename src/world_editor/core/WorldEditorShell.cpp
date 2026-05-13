@@ -187,6 +187,11 @@ namespace engine::editor::world
 		}
 		m_caveTool.Init(m_commandStack, m_meshInsertDoc, m_terrainDoc, cfg);
 
+		// M100.41 — Init de l'outil Overhang (réutilise le `MeshInsertDoc`
+		// initialisé ci-dessus). Le tool charge son propre catalogue
+		// `meshes/overhangs/catalog.json`.
+		m_overhangTool.Init(m_commandStack, m_meshInsertDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -225,6 +230,7 @@ namespace engine::editor::world
 			case ActiveTool::HydraulicErosion:    name = "HydraulicErosion"; break;
 			case ActiveTool::ThermalWindErosion:  name = "ThermalWindErosion"; break;
 			case ActiveTool::Cave:                name = "Cave"; break;
+			case ActiveTool::Overhang:            name = "Overhang"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -595,6 +601,12 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'G')
 		{
 			SetActiveTool(ActiveTool::Cave);
+			return true;
+		}
+		// M100.41 — Ctrl+Shift+O : Overhang (surplomb rocheux).
+		if (ctrl && shift && virtualKey == 'O')
+		{
+			SetActiveTool(ActiveTool::Overhang);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

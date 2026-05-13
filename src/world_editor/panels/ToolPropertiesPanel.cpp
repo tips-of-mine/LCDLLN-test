@@ -3,6 +3,7 @@
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/caves/CaveTool.h"
+#include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -878,6 +879,83 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderOverhangParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::volumes::overhangs::OverhangTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		ImGui::Text("Overhang Tool — M100.41 (Phase 11)");
+		ImGui::TextDisabled("(MVP éditeur-side : raycast cliff + normal auto en follow-up M100.17)");
+		ImGui::Separator();
+
+		const auto& cat = tool.Catalog();
+		ImGui::Text("Catalogue : %zu surplombs disponibles", cat.Size());
+		if (cat.Size() == 0u)
+		{
+			ImGui::TextDisabled("Aucun catalogue chargé. Vérifie game/data/meshes/overhangs/catalog.json");
+		}
+		else
+		{
+			ImGui::TextUnformatted("Sélection :");
+			for (const auto& entry : cat.Entries())
+			{
+				const bool selected = (tool.SelectedId() == entry.id);
+				if (ImGui::RadioButton(entry.displayName.c_str(), selected))
+				{
+					tool.SelectById(entry.id);
+				}
+			}
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Position cible (cliff click → raycast viewport, MVP : input manuel) :");
+		ImGui::InputFloat("World X", &tool.TargetWorldX(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("World Y", &tool.TargetWorldY(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("World Z", &tool.TargetWorldZ(), 1.0f, 10.0f, "%.1f");
+
+		ImGui::Separator();
+		ImGui::SliderFloat("Yaw normal mur (deg)", &tool.WallNormalYawDeg(), -180.0f, 180.0f, "%.1f");
+		ImGui::SliderFloat("Tilt latéral (deg)",   &tool.TiltDeg(),          -30.0f, 30.0f, "%.1f");
+		ImGui::SliderFloat("Scale uniforme",       &tool.UniformScale(),     0.1f, 5.0f, "%.2f");
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Validation cliff :");
+		ImGui::SliderFloat("Slope requise (deg)",  &tool.RequiredSlopeDeg(), 0.0f, 89.0f, "%.1f");
+		ImGui::SliderFloat("Slope observée (deg)", &tool.ObservedSlopeDeg(), 0.0f, 89.0f, "%.1f");
+		const bool slopeOk = tool.IsSlopeOk();
+		ImGui::TextColored(slopeOk ? ImVec4(0.5f, 1.0f, 0.5f, 1.0f) : ImVec4(1.0f, 0.5f, 0.5f, 1.0f),
+			slopeOk ? "Cliff OK" : "Slope insuffisante");
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Gameplay :");
+		ImGui::Checkbox("Projette une ombre",          &tool.CastsShadow());
+		ImGui::Checkbox("Reverb audio",                &tool.ReceivesAudioReverb());
+		ImGui::SliderFloat("Intensité probe lumière",  &tool.LightProbeIntensity(),
+			0.0f, 2.0f, "%.2f");
+
+		ImGui::Separator();
+		const bool canPlace = !tool.SelectedId().empty() && slopeOk;
+		ImGui::BeginDisabled(!canPlace);
+		if (ImGui::Button("Place"))
+		{
+			tool.Place();
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			tool.Cancel();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Overhangs posés : %zu",
+			shell.GetMeshInsertDocument().GetByCategory("overhang").size());
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderThermalWindErosionParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::erosion::ThermalWindErosionTool& tool)
@@ -1585,6 +1663,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Cave (Phase 11)");
 				ImGui::Separator();
 				RenderCaveParams(*m_shell, m_shell->MutableCaveTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Overhang)
+			{
+				ImGui::TextUnformatted("Overhang (Phase 11)");
+				ImGui::Separator();
+				RenderOverhangParams(*m_shell, m_shell->MutableOverhangTool());
 			}
 			else
 			{

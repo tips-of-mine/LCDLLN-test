@@ -353,6 +353,13 @@ add_library(engine_core
   src/world_editor/volumes/caves/CaveCamouflage.cpp
   src/world_editor/volumes/caves/PlaceCaveCommand.cpp
   src/world_editor/volumes/caves/CaveTool.cpp
+  # M100.41 — Overhang Cliff Tool (Phase 11, réutilise MeshInsertSystem).
+  # Pas de nouveau format binaire ; instances avec
+  # `insertCategory = "overhang"` partagent `instances/mesh_inserts.bin`
+  # avec les grottes de M100.40.
+  src/world_editor/volumes/overhangs/OverhangCatalog.cpp
+  src/world_editor/volumes/overhangs/PlaceOverhangCommand.cpp
+  src/world_editor/volumes/overhangs/OverhangTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1192,6 +1199,19 @@ if(WIN32)
     target_compile_options(mesh_insert_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME mesh_insert_tests COMMAND mesh_insert_tests)
+endif()
+
+# M100.41 — Tests unitaires CPU pour l'Overhang Cliff Tool (Phase 11).
+# OverhangCatalog JSON parsing, PlaceOverhangCommand Apply/Undo, gating
+# slope. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(overhang_tool_tests src/world_editor/tests/OverhangToolTests.cpp)
+  target_include_directories(overhang_tool_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(overhang_tool_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(overhang_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME overhang_tool_tests COMMAND overhang_tool_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

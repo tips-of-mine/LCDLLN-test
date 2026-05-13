@@ -318,7 +318,7 @@ namespace engine::render
 
 	AssetId AssetRegistry::loadMeshInternal(std::string_view relativePath)
 	{
-		LOG_WARN(Render, "[ASSET] loadMesh '%.*s'", static_cast<int>(relativePath.size()), relativePath.data());
+		LOG_WARN(Render, "[ASSET] loadMesh '{}'", relativePath);
 		if (!m_config || m_device == VK_NULL_HANDLE) return kInvalidAssetId;
 		std::vector<uint8_t> data = engine::platform::FileSystem::ReadAllBytesContent(*m_config, relativePath);
 		if (data.size() < 16) { LOG_ERROR(Render, "AssetRegistry: mesh file too small: {}", relativePath); return kInvalidAssetId; }
@@ -461,7 +461,7 @@ namespace engine::render
 
 	AssetId AssetRegistry::loadTextureInternal(std::string_view relativePath, bool useSrgb, VkFormat presentBlitDstFormat)
 	{
-		LOG_WARN(Render, "[ASSET] loadTexture '%.*s'", static_cast<int>(relativePath.size()), relativePath.data());
+		LOG_WARN(Render, "[ASSET] loadTexture '{}'", relativePath);
 		if (!m_config || m_device == VK_NULL_HANDLE)
 			return kInvalidAssetId;
 		std::vector<uint8_t> data = engine::platform::FileSystem::ReadAllBytesContent(*m_config, relativePath);

@@ -164,7 +164,7 @@ LOG_DEBUG(Net, "[STMC] SendRegister name='{}' endpoint='{}' cap={}", m_name.c_st
 
 	void ShardToMasterClient::OnDisconnected(std::string_view reason)
 	{
-LOG_INFO(Net, "[STMC] OnDisconnected reason='%.*s' next_backoff={}s", static_cast<int>(reason.size()), reason.data(), m_reconnect_backoff_sec);
+		LOG_INFO(Net, "[STMC] OnDisconnected reason='{}' next_backoff={}s", reason, m_reconnect_backoff_sec);
 		m_state = State::Disconnected;
 		m_shard_id = 0;
 		ScheduleReconnect();

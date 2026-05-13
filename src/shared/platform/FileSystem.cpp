@@ -7,7 +7,23 @@ namespace engine::platform
 {
 	std::filesystem::path FileSystem::Join(std::string_view a, std::string_view b)
 	{
-		return std::filesystem::path(a) / std::filesystem::path(b);
+		// On evite std::filesystem::path::operator/ qui inserait le separateur prefere
+		// du systeme : sous Windows, joindre "game/data" et "audio/foo.mp3" produisait
+		// "game/data\\audio/foo.mp3" (slashes mixes), ce qui pollue les logs et complique
+		// la diff de chemins. On construit ici une representation a slashes uniformes
+		// (forward), compatible avec les APIs filesystem Windows comme POSIX.
+		std::string out(a);
+		if (!out.empty())
+		{
+			const char last = out.back();
+			if (last != '/' && last != '\\')
+				out += '/';
+		}
+		out.append(b.data(), b.size());
+		// Normalise un eventuel '\\' deja present dans la base ou la sous-cle.
+		for (char& c : out)
+			if (c == '\\') c = '/';
+		return std::filesystem::path(out);
 	}
 
 	std::filesystem::path FileSystem::ResolveContentPath(const engine::core::Config& cfg, std::string_view relativeContentPath)

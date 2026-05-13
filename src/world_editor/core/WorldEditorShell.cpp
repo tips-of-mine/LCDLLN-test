@@ -10,6 +10,7 @@
 #include "src/world_editor/panels/HistoryPanel.h"
 #include "src/world_editor/panels/SurfaceTablePanel.h"
 #include "src/world_editor/panels/CollisionEditorPanel.h"
+#include "src/world_editor/ui/EditorToolbar.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
@@ -150,6 +151,14 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld, "[WorldEditorShell] Water LoadFromDisk failed: {}", waterErr);
 		}
 
+		// M100.35 — Init des outils macro terrain (Mountain Range + Valley
+		// Chain). Aucune pré-allocation de polyline ; l'utilisateur démarre
+		// avec un état vide à chaque sélection d'outil. La Config est
+		// mémorisée par chaque outil pour `EnsureLoaded` des chunks
+		// impactés au moment de `Apply` (cf. RiverTool, même pattern).
+		m_mountainRangeTool.Init(m_commandStack, m_terrainDoc, cfg);
+		m_valleyChainTool.Init(m_commandStack, m_terrainDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -181,6 +190,8 @@ namespace engine::editor::world
 			case ActiveTool::SplatPaint:    name = "SplatPaint"; break;
 			case ActiveTool::Lake:          name = "Lake"; break;
 			case ActiveTool::River:         name = "River"; break;
+			case ActiveTool::MountainRange: name = "MountainRange"; break;
+			case ActiveTool::ValleyChain:   name = "ValleyChain"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -227,6 +238,15 @@ namespace engine::editor::world
 		if (!m_initialized) return;
 #if defined(_WIN32)
 		RenderMenuBar();
+		// M100.35 — Toolbar à icônes rendue juste sous le menu bar, au-dessus
+		// du dockspace. La fenêtre est non-dockable, fixée en haut, hauteur
+		// 48 px. Elle remplace la `BeginTabBar("OutilsTabs")` historique de
+		// `WorldEditorImGui::Render` (laquelle est supprimée par le même
+		// ticket). Pas de mutation de la caméra ni du frustum cull.
+		{
+			EditorToolbar toolbar(*this);
+			toolbar.Render();
+		}
 		RenderDockspace();
 		for (auto& panel : m_panels)
 		{
@@ -497,6 +517,20 @@ namespace engine::editor::world
 		if (!ctrl && !shift && virtualKey == 'R')
 		{
 			SetActiveTool(ActiveTool::River);
+			return true;
+		}
+		// M100.35 — Raccourcis optionnels (non documentés en UI principale)
+		// pour activer les outils macros terrain. La spec impose Ctrl+Shift
+		// pour éviter toute collision avec d'éventuels raccourcis 'M' / 'V'
+		// simples qui pourraient être réservés à des futurs outils.
+		if (ctrl && shift && virtualKey == 'M')
+		{
+			SetActiveTool(ActiveTool::MountainRange);
+			return true;
+		}
+		if (ctrl && shift && virtualKey == 'V')
+		{
+			SetActiveTool(ActiveTool::ValleyChain);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

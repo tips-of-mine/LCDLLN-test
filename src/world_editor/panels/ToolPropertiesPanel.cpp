@@ -3,10 +3,12 @@
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverTool.h"
 #include "src/world_editor/splat/SplatPaintTool.h"
+#include "src/world_editor/terrain/MountainRangeTool.h"
 #include "src/world_editor/terrain/StampLibrary.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/TerrainSculptTool.h"
 #include "src/world_editor/terrain/TerrainStampTool.h"
+#include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/core/WorldEditorShell.h"
 
@@ -441,6 +443,265 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	namespace
+	{
+#if defined(_WIN32)
+		/// M100.35 — Helper templaté pour le bloc "Macro polyline" partagé
+		/// entre Mountain Range et Valley Chain. La méthode `Apply` / `Cancel`
+		/// est identique sur les deux types (interface dupliquée), donc on
+		/// peut paramétrer le helper sur le tool concret.
+		template <typename Tool>
+		void RenderMacroPolylineBlock(Tool& tool, const char* title)
+		{
+			using engine::editor::world::FlankProfile;
+			using engine::editor::world::PolylineMode;
+			using engine::editor::world::kMacroPolylineMaxVertices;
+
+			auto& params = tool.MutableParams();
+
+			ImGui::Text("%s", title);
+			ImGui::Text("Vertices posés : %zu / max %zu",
+				params.vertices.size(), kMacroPolylineMaxVertices);
+			ImGui::Separator();
+
+			// Mode polyline (Open / Loop)
+			int modeIdx = (params.mode == PolylineMode::Loop) ? 1 : 0;
+			static const char* kModeLabels[2] = { "Open", "Loop" };
+			if (ImGui::Combo("Mode polyline", &modeIdx, kModeLabels, 2))
+			{
+				params.mode = (modeIdx == 1) ? PolylineMode::Loop : PolylineMode::Open;
+			}
+
+			// Profil flanc (Smoothstep / Linear / Exp)
+			int profIdx = static_cast<int>(params.profile);
+			static const char* kProfileLabels[3] = { "Smoothstep", "Linear", "Exp" };
+			if (ImGui::Combo("Profil flanc", &profIdx, kProfileLabels, 3))
+			{
+				params.profile = static_cast<FlankProfile>(
+					std::clamp(profIdx, 0, 2));
+			}
+
+			// Seed + fréquence bruit (globaux à la polyline).
+			int seed = static_cast<int>(params.noiseSeed);
+			if (ImGui::InputInt("Seed bruit", &seed))
+			{
+				params.noiseSeed = static_cast<uint32_t>(std::max(0, seed));
+			}
+			ImGui::SliderFloat("Fréq. bruit (1/m)",
+				&params.noiseFrequency, 0.0005f, 0.05f, "%.4f");
+
+			ImGui::Separator();
+
+			// Sélection vertex actif. Si la polyline est vide, on saute le bloc.
+			if (!params.vertices.empty())
+			{
+				size_t activeIdx = tool.GetActiveVertex();
+				if (activeIdx >= params.vertices.size())
+				{
+					activeIdx = params.vertices.size() - 1u;
+				}
+				int activeI = static_cast<int>(activeIdx);
+				int vcount  = static_cast<int>(params.vertices.size());
+				if (ImGui::SliderInt("Vertex actif", &activeI, 0, vcount - 1))
+				{
+					tool.SetActiveVertex(static_cast<size_t>(
+						std::clamp(activeI, 0, vcount - 1)));
+				}
+
+				auto& v = params.vertices[tool.GetActiveVertex()];
+				ImGui::Text("Position monde : X=%.1f m   Z=%.1f m",
+					static_cast<double>(v.worldX), static_cast<double>(v.worldZ));
+				ImGui::SliderFloat("Largeur base (m)", &v.widthMeters,    10.0f, 2000.0f, "%.1f");
+				ImGui::SliderFloat("Hauteur crête (m)", &v.heightMeters,  -1000.0f, 1000.0f, "%.1f");
+				ImGui::SliderFloat("Bruit crête (m)",   &v.noiseAmplitude, 0.0f, 200.0f, "%.1f");
+				ImGui::SliderFloat("Asymétrie",         &v.asymmetry,     -1.0f, 1.0f, "%.2f");
+				if (ImGui::Button("Supprimer vertex"))
+				{
+					tool.RemoveVertex(tool.GetActiveVertex());
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Réinitialiser vertex"))
+				{
+					// Reset partiel : conserve la position, restaure les defaults.
+					v.widthMeters    = 250.0f;
+					v.heightMeters   = 400.0f;
+					v.noiseAmplitude = 30.0f;
+					v.asymmetry      = 0.0f;
+				}
+			}
+			else
+			{
+				ImGui::TextDisabled("Posez des vertices via le canvas top-down ci-dessous.");
+			}
+
+			ImGui::Separator();
+
+			// Petit canvas top-down 2D pour poser/déplacer les vertices.
+			// État partagé entre Mountain et Valley (mais pas avec Lake/River,
+			// pour éviter qu'une bascule d'outil ne perde la vue caméra de
+			// l'autre).
+			static float canvasHalfM   = 1000.0f;
+			static float canvasCenterX = 0.0f;
+			static float canvasCenterZ = 0.0f;
+
+			ImGui::SliderFloat("Vue canvas (demi-côté m)", &canvasHalfM,
+				50.0f, 10000.0f, "%.0f");
+			ImGui::SameLine();
+			if (ImGui::Button("Centrer sur polyline"))
+			{
+				if (!params.vertices.empty())
+				{
+					float meanX = 0.0f, meanZ = 0.0f;
+					for (const auto& vt : params.vertices)
+					{
+						meanX += vt.worldX;
+						meanZ += vt.worldZ;
+					}
+					canvasCenterX = meanX / static_cast<float>(params.vertices.size());
+					canvasCenterZ = meanZ / static_cast<float>(params.vertices.size());
+				}
+			}
+
+			const ImVec2 canvasSize{ 320.0f, 320.0f };
+			ImGui::BeginChild("##macroCanvas", canvasSize, true,
+				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			const ImVec2 contentSize = ImGui::GetContentRegionAvail();
+			const ImVec2 canvasMin = ImGui::GetCursorScreenPos();
+			const float cw = contentSize.x;
+			const float ch = contentSize.y;
+			ImGui::InvisibleButton("##macroInteract", contentSize);
+			const bool hoveredC = ImGui::IsItemHovered();
+			auto pixelToWorld = [&](float px, float py, float& wx, float& wz) {
+				const float fx = (px / cw) * 2.0f - 1.0f;
+				const float fy = (py / ch) * 2.0f - 1.0f;
+				wx = canvasCenterX + fx * canvasHalfM;
+				wz = canvasCenterZ - fy * canvasHalfM;
+			};
+			auto worldToPixel = [&](float wx, float wz, float& px, float& py) {
+				const float fx = (wx - canvasCenterX) / canvasHalfM;
+				const float fy = (canvasCenterZ - wz) / canvasHalfM;
+				px = (fx * 0.5f + 0.5f) * cw;
+				py = (fy * 0.5f + 0.5f) * ch;
+			};
+			if (hoveredC)
+			{
+				const ImVec2 mp = ImGui::GetIO().MousePos;
+				const float px = mp.x - canvasMin.x;
+				const float py = mp.y - canvasMin.y;
+				float wx = 0.0f, wz = 0.0f;
+				pixelToWorld(px, py, wx, wz);
+				ImGui::SetTooltip("world: (%.1f, %.1f) m", static_cast<double>(wx),
+					static_cast<double>(wz));
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					tool.AddVertex(wx, wz);
+				}
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+				{
+					tool.Cancel();
+				}
+			}
+
+			ImDrawList* dl = ImGui::GetWindowDrawList();
+			// Croix au centre monde.
+			{
+				float cx = 0.0f, cy = 0.0f;
+				worldToPixel(0.0f, 0.0f, cx, cy);
+				dl->AddLine(
+					ImVec2(canvasMin.x + cx - 5, canvasMin.y + cy),
+					ImVec2(canvasMin.x + cx + 5, canvasMin.y + cy),
+					IM_COL32(255, 255, 255, 80), 1.0f);
+				dl->AddLine(
+					ImVec2(canvasMin.x + cx, canvasMin.y + cy - 5),
+					ImVec2(canvasMin.x + cx, canvasMin.y + cy + 5),
+					IM_COL32(255, 255, 255, 80), 1.0f);
+			}
+			// Segments polyline.
+			for (size_t i = 0; i + 1u < params.vertices.size(); ++i)
+			{
+				const auto& a = params.vertices[i];
+				const auto& b = params.vertices[i + 1u];
+				float ax, ay, bx, by;
+				worldToPixel(a.worldX, a.worldZ, ax, ay);
+				worldToPixel(b.worldX, b.worldZ, bx, by);
+				dl->AddLine(
+					ImVec2(canvasMin.x + ax, canvasMin.y + ay),
+					ImVec2(canvasMin.x + bx, canvasMin.y + by),
+					IM_COL32(255, 220, 80, 220), 1.5f);
+			}
+			// Segment de fermeture si Loop.
+			if (params.mode == PolylineMode::Loop && params.vertices.size() >= 2)
+			{
+				const auto& a = params.vertices.back();
+				const auto& b = params.vertices.front();
+				float ax, ay, bx, by;
+				worldToPixel(a.worldX, a.worldZ, ax, ay);
+				worldToPixel(b.worldX, b.worldZ, bx, by);
+				dl->AddLine(
+					ImVec2(canvasMin.x + ax, canvasMin.y + ay),
+					ImVec2(canvasMin.x + bx, canvasMin.y + by),
+					IM_COL32(255, 200, 80, 150), 1.0f);
+			}
+			// Vertices : actifs en orange, autres en jaune.
+			for (size_t i = 0; i < params.vertices.size(); ++i)
+			{
+				const auto& v = params.vertices[i];
+				float px, py;
+				worldToPixel(v.worldX, v.worldZ, px, py);
+				const ImU32 c = (i == tool.GetActiveVertex())
+					? IM_COL32(255, 140, 50, 255)
+					: IM_COL32(255, 220, 80, 255);
+				dl->AddCircleFilled(
+					ImVec2(canvasMin.x + px, canvasMin.y + py), 4.0f, c);
+			}
+			ImGui::EndChild();
+
+			ImGui::Separator();
+
+			const size_t chunkCount = tool.BuildDeltas().size();
+			ImGui::Text("Chunks impactés (estimation) : %zu", chunkCount);
+			ImGui::Separator();
+
+			const bool canApply = params.vertices.size() >= 2u;
+			ImGui::BeginDisabled(!canApply);
+			if (ImGui::Button("Apply"))
+			{
+				tool.Apply();
+			}
+			ImGui::EndDisabled();
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				tool.Cancel();
+			}
+		}
+#endif
+	}
+
+	void ToolPropertiesPanel::RenderMountainRangeParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::MountainRangeTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		RenderMacroPolylineBlock(tool, "Mountain Range — M100.35");
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
+	void ToolPropertiesPanel::RenderValleyChainParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::ValleyChainTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		RenderMacroPolylineBlock(tool, "Valley Chain — M100.35");
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderRiverParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::RiverTool& tool)
@@ -635,6 +896,20 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("River");
 				ImGui::Separator();
 				RenderRiverParams(*m_shell, m_shell->MutableRiverTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::MountainRange)
+			{
+				ImGui::TextUnformatted("Mountain Range");
+				ImGui::Separator();
+				RenderMountainRangeParams(*m_shell, m_shell->MutableMountainRangeTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::ValleyChain)
+			{
+				ImGui::TextUnformatted("Valley Chain");
+				ImGui::Separator();
+				RenderValleyChainParams(*m_shell, m_shell->MutableValleyChainTool());
 			}
 			else
 			{

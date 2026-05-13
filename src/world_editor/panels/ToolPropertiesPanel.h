@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; }
 
 namespace engine::editor::world::panels
 {
@@ -55,6 +55,18 @@ namespace engine::editor::world::panels
 			engine::editor::world::LakeTool& tool);
 		void RenderRiverParams(engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::RiverTool& tool);
+		/// M100.35 — Bloc UI "Macro polyline" pour l'outil Mountain Range.
+		/// Affiche la liste des vertices posés, les paramètres globaux
+		/// (mode Loop, profil, seed/freq bruit), le bloc du vertex sélectionné
+		/// (largeur, hauteur, bruit, asymétrie) et les boutons Apply/Cancel.
+		void RenderMountainRangeParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::MountainRangeTool& tool);
+		/// M100.35 — Identique à `RenderMountainRangeParams` pour Valley Chain
+		/// (defaults différents côté UI, sémantique soustractive côté outil).
+		void RenderValleyChainParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::ValleyChainTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

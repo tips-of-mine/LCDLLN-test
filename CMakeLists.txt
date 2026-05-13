@@ -292,6 +292,18 @@ add_library(engine_core
   src/world_editor/terrain/TerrainStampTool.cpp
   src/world_editor/terrain/StampLibrary.cpp
   src/world_editor/terrain/ProceduralStampGenerators.cpp
+  # M100.35 — Toolbar à icônes + outils macros terrain (Mountain Range &
+  # Valley Chain). Pas de Vulkan, pas de PNG d'icônes embarqués : la toolbar
+  # rend des placeholders procéduraux (carré coloré + lettre) via
+  # ImDrawList. Voir game/data/icons/editor/tools/README.md.
+  src/world_editor/ui/EditorToolbar.cpp
+  src/world_editor/ui/ToolbarIconAtlas.cpp
+  src/world_editor/terrain/PolylineMacroCore.cpp
+  src/world_editor/terrain/MacroPolylineCommandBase.cpp
+  src/world_editor/terrain/MountainRangeCommand.cpp
+  src/world_editor/terrain/MountainRangeTool.cpp
+  src/world_editor/terrain/ValleyChainCommand.cpp
+  src/world_editor/terrain/ValleyChainTool.cpp
   src/world_editor/splat/SplatPaintCommand.cpp
   src/world_editor/splat/SplatPaintTool.cpp
   src/world_editor/splat/SplatRules.cpp
@@ -1045,6 +1057,34 @@ if(WIN32)
     target_compile_options(terrain_stamp_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME terrain_stamp_tests COMMAND terrain_stamp_tests)
+endif()
+
+# M100.35 — Tests unitaires CPU pour les outils macros terrain (Mountain
+# Range & Valley Chain). Couvre la rasterisation sparse multi-chunks, la
+# couture inter-chunks, le déterminisme du bruit, l'asymétrie, et la
+# symétrie Execute/Undo de la commande. Pure CPU, gating WIN32 (pattern
+# terrain_sculpt / terrain_stamp).
+if(WIN32)
+  add_executable(macro_terrain_tests src/world_editor/tests/MacroTerrainTests.cpp)
+  target_include_directories(macro_terrain_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(macro_terrain_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(macro_terrain_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME macro_terrain_tests COMMAND macro_terrain_tests)
+endif()
+
+# M100.35 — Tests unitaires CPU pour la toolbar à icônes : layout, hit-test
+# pur, routage des clics vers `WorldEditorShell::SetActiveTool`, invariant
+# de couverture viewport, fallback placeholder de l'atlas d'icônes.
+if(WIN32)
+  add_executable(editor_toolbar_tests src/world_editor/tests/EditorToolbarTests.cpp)
+  target_include_directories(editor_toolbar_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(editor_toolbar_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(editor_toolbar_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME editor_toolbar_tests COMMAND editor_toolbar_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

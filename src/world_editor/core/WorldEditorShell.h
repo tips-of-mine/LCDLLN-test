@@ -4,9 +4,11 @@
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverTool.h"
 #include "src/world_editor/splat/SplatPaintTool.h"
+#include "src/world_editor/terrain/MountainRangeTool.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/terrain/TerrainSculptTool.h"
 #include "src/world_editor/terrain/TerrainStampTool.h"
+#include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 
 #include <memory>
@@ -33,6 +35,8 @@ namespace engine::editor::world
 		SplatPaint    = 3,
 		Lake          = 4,  // M100.13 — raccourci L
 		River         = 5,  // M100.13 — raccourci R
+		MountainRange = 6,  // M100.35 — raccourci Ctrl+Shift+M
+		ValleyChain   = 7,  // M100.35 — raccourci Ctrl+Shift+V
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -169,6 +173,18 @@ namespace engine::editor::world
 		/// M100.13 — Accès lecture seule au document water (tests, UI).
 		const WaterDocument&  GetWaterDocument()     const { return m_waterDoc; }
 
+		/// M100.35 — Accès mutable à l'outil Mountain Range (chaîne de
+		/// montagnes par polyline). Le panneau Tool Properties l'utilise
+		/// pour lire/écrire la polyline en cours quand `m_activeTool ==
+		/// MountainRange`.
+		MountainRangeTool&       MutableMountainRangeTool()       { return m_mountainRangeTool; }
+		const MountainRangeTool& GetMountainRangeTool()     const { return m_mountainRangeTool; }
+
+		/// M100.35 — Accès mutable à l'outil Valley Chain. Jumeau de
+		/// `MountainRangeTool` en mode soustractif (vallées).
+		ValleyChainTool&         MutableValleyChainTool()       { return m_valleyChainTool; }
+		const ValleyChainTool&   GetValleyChainTool()     const { return m_valleyChainTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -204,6 +220,8 @@ namespace engine::editor::world
 		LakeTool       m_lakeTool;       // M100.13
 		RiverTool      m_riverTool;      // M100.13
 		WaterDocument  m_waterDoc;       // M100.13
+		MountainRangeTool m_mountainRangeTool; // M100.35
+		ValleyChainTool   m_valleyChainTool;   // M100.35
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; }
 
 namespace engine::editor::world::panels
 {
@@ -75,6 +75,14 @@ namespace engine::editor::world::panels
 		void RenderRiverNetworkParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::RiverNetworkTool& tool);
+
+		/// M100.37 — Bloc UI "Coastline" pour l'édition du niveau de mer
+		/// et la génération automatique de l'océan : sliders sea level
+		/// (binding direct `WaterDocument::OceanSettings`), couleur de fond,
+		/// turbidité, smoothing / falaises optionnels, statistiques live.
+		void RenderCoastlineParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::CoastlineEditorTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

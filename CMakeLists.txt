@@ -322,6 +322,14 @@ add_library(engine_core
   src/world_editor/water/WatershedSimulation.cpp
   src/world_editor/water/RiverNetworkCommand.cpp
   src/world_editor/water/RiverNetworkTool.cpp
+  # M100.37 — Coastline & Sea Level Editor (marching squares + smoothing
+  # + cliffs ; étend `OceanSettings` v3 + `LakeInstance::isOcean`).
+  src/world_editor/water/CoastlineSegmentExtractor.cpp
+  src/world_editor/water/CoastlineStats.cpp
+  src/world_editor/water/CoastlineSmoothing.cpp
+  src/world_editor/water/CoastlineCliffs.cpp
+  src/world_editor/water/CoastlineCommand.cpp
+  src/world_editor/water/CoastlineEditorTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1106,6 +1114,20 @@ if(WIN32)
     target_compile_options(river_network_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME river_network_tests COMMAND river_network_tests)
+endif()
+
+# M100.37 — Tests unitaires CPU pour la Coastline : marching squares,
+# stats, smoothing band-filtered, cliffs slope-driven, water.bin v3
+# round-trip (incl. LakeInstance::isOcean + OceanSettings étendu),
+# CoastlineCommand Apply/Undo. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(coastline_tests src/world_editor/tests/CoastlineTests.cpp)
+  target_include_directories(coastline_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(coastline_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(coastline_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME coastline_tests COMMAND coastline_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

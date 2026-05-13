@@ -1,5 +1,6 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 
+#include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
 #include "src/world_editor/water/RiverTool.h"
@@ -703,6 +704,94 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderCoastlineParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::CoastlineEditorTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		auto& ocean = tool.MutableOceanBuffer();
+
+		ImGui::Text("Coastline — M100.37");
+		ImGui::Separator();
+		ImGui::TextUnformatted("Sea level + ocean parameters (commités à Apply) :");
+		bool changed = false;
+		changed |= ImGui::SliderFloat("Sea level (Y)", &ocean.seaLevelMeters,
+			-100.0f, 500.0f, "%.1f m");
+		changed |= ImGui::ColorEdit3("Couleur de fond océan", ocean.bottomColor);
+		changed |= ImGui::SliderFloat("Turbidité",
+			&ocean.turbidity, 0.0f, 1.0f, "%.2f");
+		changed |= ImGui::SliderFloat("Wind influence",
+			&ocean.windInfluence, 0.0f, 1.0f, "%.2f");
+		changed |= ImGui::Checkbox("Océan activé", &ocean.enabled);
+		ImGui::TextDisabled("(source de vérité : WaterDocument::OceanSettings, partagée avec River Network M100.36)");
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Smoothing côtier :");
+		ImGui::Checkbox("Lisser la côte", &tool.SmoothingEnabled());
+		if (tool.SmoothingEnabled())
+		{
+			changed |= ImGui::SliderFloat("Bande verticale (m)",
+				&tool.SmoothingBandMeters(), 0.5f, 50.0f, "%.1f");
+			changed |= ImGui::SliderFloat("Force lissage",
+				&tool.SmoothingForce(), 0.0f, 1.0f, "%.2f");
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Falaises côtières :");
+		ImGui::Checkbox("Générer des falaises", &tool.CliffsEnabled());
+		if (tool.CliffsEnabled())
+		{
+			changed |= ImGui::SliderFloat("Bande verticale (m)##cliffs",
+				&tool.CliffsThresholdMeters(), 0.5f, 50.0f, "%.1f");
+			changed |= ImGui::SliderFloat("Seuil de pente (deg)",
+				&tool.CliffsSlopeThresholdDeg(), 0.0f, 90.0f, "%.1f");
+			changed |= ImGui::SliderFloat("Hauteur côté terre (m)",
+				&tool.CliffsLandSideMeters(), 0.0f, 30.0f, "%.1f");
+			changed |= ImGui::SliderFloat("Profondeur côté mer (m)",
+				&tool.CliffsSeaSideMeters(), 0.0f, 30.0f, "%.1f");
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Plage automatique :");
+		ImGui::Checkbox("Peindre une bande de sable", &tool.BeachSplatEnabled());
+		if (tool.BeachSplatEnabled())
+		{
+			changed |= ImGui::SliderFloat("Largeur côté terre (m)",
+				&tool.BeachLandBandMeters(), 0.5f, 50.0f, "%.1f");
+			changed |= ImGui::SliderFloat("Largeur côté mer (m)",
+				&tool.BeachSeaBandMeters(), 0.5f, 50.0f, "%.1f");
+			ImGui::TextDisabled("Note MVP M100.37 : flag conservé, splat sable non câblé à la commande pour l'instant (suivra un follow-up).");
+		}
+
+		ImGui::Separator();
+		if (changed) tool.RefreshPreview();
+		if (ImGui::SmallButton("Rafraîchir preview")) tool.RefreshPreview();
+
+		const auto& stats = tool.Stats();
+		ImGui::Text("Terre %u cells · Océan %u cells",
+			stats.landCells, stats.oceanCells);
+		ImGui::Text("Longueur côte %.1f m (%.2f km)",
+			static_cast<double>(stats.coastlineLengthMeters),
+			static_cast<double>(stats.coastlineLengthMeters / 1000.0f));
+		ImGui::Text("Cellules dans la bande plage : %u", stats.beachBandCells);
+		ImGui::Text("Segments marching squares : %zu", tool.Segments().size());
+
+		ImGui::Separator();
+		if (ImGui::Button("Apply"))
+		{
+			tool.Apply();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			tool.Cancel();
+		}
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderRiverNetworkParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::RiverNetworkTool& tool)
@@ -1141,6 +1230,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("River Network");
 				ImGui::Separator();
 				RenderRiverNetworkParams(*m_shell, m_shell->MutableRiverNetworkTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Coastline)
+			{
+				ImGui::TextUnformatted("Coastline");
+				ImGui::Separator();
+				RenderCoastlineParams(*m_shell, m_shell->MutableCoastlineEditorTool());
 			}
 			else
 			{

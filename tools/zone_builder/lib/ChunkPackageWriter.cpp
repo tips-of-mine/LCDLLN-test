@@ -611,7 +611,9 @@ namespace tools::zone_builder
 		}
 
 		std::vector<uint8_t> bytes;
-		if (!engine::world::water::SaveWaterBin(scene, seaLevelMeters, bytes, outError))
+		engine::world::water::OceanSectionData sec;
+		sec.seaLevelMeters = seaLevelMeters;
+		if (!engine::world::water::SaveWaterBin(scene, sec, bytes, outError))
 			return false;
 
 		const std::filesystem::path file = dir / "water.bin";

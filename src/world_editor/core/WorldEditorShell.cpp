@@ -165,6 +165,10 @@ namespace engine::editor::world
 		// un buffer local).
 		m_riverNetworkTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
 
+		// M100.37 — Init de l'outil Coastline. Partage la même `OceanSettings`
+		// que River Network. Buffer local initialisé depuis le document.
+		m_coastlineEditorTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -199,6 +203,7 @@ namespace engine::editor::world
 			case ActiveTool::MountainRange: name = "MountainRange"; break;
 			case ActiveTool::ValleyChain:   name = "ValleyChain"; break;
 			case ActiveTool::RiverNetwork:  name = "RiverNetwork"; break;
+			case ActiveTool::Coastline:     name = "Coastline"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -545,6 +550,12 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'N')
 		{
 			SetActiveTool(ActiveTool::RiverNetwork);
+			return true;
+		}
+		// M100.37 — Ctrl+Shift+C : Coastline & Sea Level Editor.
+		if (ctrl && shift && virtualKey == 'C')
+		{
+			SetActiveTool(ActiveTool::Coastline);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

@@ -29,8 +29,10 @@ namespace engine::world::water
 
 		size_t LakeSize(const LakeInstance& l)
 		{
-			// nameLen(4) + name + vertexCount(4) + polygon*(12) + bottomColor(12) + turbidity(4) + waterLevelY(4)
-			return 4u + l.name.size() + 4u + l.polygon.size() * 12u + 12u + 4u + 4u;
+			// nameLen(4) + name + vertexCount(4) + polygon*(12) + bottomColor(12)
+			// + turbidity(4) + waterLevelY(4) + isOcean(1, M100.37 v3).
+			return 4u + l.name.size() + 4u + l.polygon.size() * 12u
+				 + 12u + 4u + 4u + 1u;
 		}
 		size_t RiverSize(const RiverInstance& r)
 		{
@@ -38,19 +40,21 @@ namespace engine::world::water
 			return 4u + r.name.size() + 4u + r.nodes.size() * 20u;
 		}
 
+		/// Taille de la section ocean v3 : seaLevel(4) + bottomColor(12) +
+		/// turbidity(4) + windInfluence(4) + enabled(1).
+		constexpr size_t kOceanSectionSizeV3 = 4u + 12u + 4u + 4u + 1u;
+
 		size_t ComputePayloadSize(const WaterScene& s)
 		{
 			size_t total = 4u + 4u;  // lakeCount + riverCount
 			for (const auto& l : s.lakes)  total += LakeSize(l);
 			for (const auto& r : s.rivers) total += RiverSize(r);
-			// M100.36 — section ocean : 4 octets seaLevelMeters (toujours
-			// présente en v2, lecture rétro-compatible v1 si absente).
-			total += 4u;
+			total += kOceanSectionSizeV3;  // M100.37 v3
 			return total;
 		}
 	}
 
-	bool SaveWaterBin(const WaterScene& scene, float seaLevelMeters,
+	bool SaveWaterBin(const WaterScene& scene, const OceanSectionData& ocean,
 		std::vector<uint8_t>& outBytes, std::string& outError)
 	{
 		(void)outError;  // SaveWaterBin actuel ne fail jamais (alloc-only)
@@ -75,6 +79,9 @@ namespace engine::world::water
 			p = WriteVec3(p, lake.bottomColor);
 			std::memcpy(p, &lake.turbidity, 4);   p += 4;
 			std::memcpy(p, &lake.waterLevelY, 4); p += 4;
+			// M100.37 — flag isOcean (1 octet).
+			const uint8_t isOceanByte = lake.isOcean ? 1u : 0u;
+			std::memcpy(p, &isOceanByte, 1); p += 1;
 		}
 		for (const auto& river : scene.rivers)
 		{
@@ -90,8 +97,13 @@ namespace engine::world::water
 			}
 		}
 
-		// M100.36 — section ocean en queue de payload (4 octets).
-		std::memcpy(p, &seaLevelMeters, 4); p += 4;
+		// M100.37 — section ocean étendue en queue de payload (~32 octets).
+		std::memcpy(p, &ocean.seaLevelMeters, 4);                   p += 4;
+		std::memcpy(p,  ocean.bottomColor,    12);                  p += 12;
+		std::memcpy(p, &ocean.turbidity,      4);                   p += 4;
+		std::memcpy(p, &ocean.windInfluence,  4);                   p += 4;
+		const uint8_t enabledByte = ocean.enabled ? 1u : 0u;
+		std::memcpy(p, &enabledByte, 1);                            p += 1;
 
 		// ContentHash xxhash64 sur payload post-header
 		std::span<const uint8_t> payload(outBytes.data() + headerSize, totalSize - headerSize);
@@ -108,7 +120,7 @@ namespace engine::world::water
 	}
 
 	bool LoadWaterBin(std::span<const uint8_t> bytes,
-		WaterScene& outScene, float& outSeaLevelMeters, std::string& outError)
+		WaterScene& outScene, OceanSectionData& outOcean, std::string& outError)
 	{
 		outScene.lakes.clear();
 		outScene.rivers.clear();
@@ -127,14 +139,16 @@ namespace engine::world::water
 			outError = "WaterScene: bad magic (expected WATR)";
 			return false;
 		}
-		// M100.36 : accepte v1 (sans ocean) ET v2 (avec ocean). Rejette v0
-		// ou v>2 explicitement.
+		// Accepte v1 (M100.13), v2 (M100.36) et v3 (M100.37). Rejette v0
+		// ou v>3 explicitement.
 		if (hdr.formatVersion < 1u || hdr.formatVersion > kWaterVersion)
 		{
 			outError = "WaterScene: unsupported version";
 			return false;
 		}
-		const bool hasOceanSection = (hdr.formatVersion >= 2u);
+		const bool hasOceanSectionV2 = (hdr.formatVersion >= 2u);
+		const bool isV3OrAbove       = (hdr.formatVersion >= 3u);
+
 		std::span<const uint8_t> payload = bytes.subspan(24);
 		if (engine::world::ComputeXxHash64(payload) != hdr.contentHash)
 		{
@@ -145,6 +159,10 @@ namespace engine::world::water
 		const uint8_t* p = bytes.data() + 24;
 		const uint8_t* end = bytes.data() + bytes.size();
 
+		auto readU8 = [&](uint8_t& v) -> bool {
+			if (end - p < 1) return false;
+			std::memcpy(&v, p, 1); p += 1; return true;
+		};
 		auto readU32 = [&](uint32_t& v) -> bool {
 			if (end - p < 4) return false;
 			std::memcpy(&v, p, 4); p += 4; return true;
@@ -184,6 +202,14 @@ namespace engine::world::water
 			if (!readVec3(lake.bottomColor))   { outError = "WaterScene: lake bottomColor truncated"; return false; }
 			if (!readF32(lake.turbidity))      { outError = "WaterScene: lake turbidity truncated"; return false; }
 			if (!readF32(lake.waterLevelY))    { outError = "WaterScene: lake waterLevelY truncated"; return false; }
+			// M100.37 — `isOcean` (1 octet) en v3 uniquement. En v1/v2 le
+			// flag reste à `false` par défaut (lake n'avait pas ce concept).
+			if (isV3OrAbove)
+			{
+				uint8_t isOceanByte = 0u;
+				if (!readU8(isOceanByte)) { outError = "WaterScene: lake isOcean truncated"; return false; }
+				lake.isOcean = (isOceanByte != 0u);
+			}
 			outScene.lakes.push_back(std::move(lake));
 		}
 
@@ -210,18 +236,30 @@ namespace engine::world::water
 			outScene.rivers.push_back(std::move(river));
 		}
 
-		// M100.36 — section ocean optionnelle (v2 uniquement). Si v1, on
-		// laisse `outSeaLevelMeters` à la valeur d'entrée. Si v2, on lit 4
-		// octets ; en cas de payload tronqué (corruption), on garde silencieusement
-		// la valeur d'entrée — le hash de contenu détecterait déjà la corruption
-		// plus haut.
-		if (hasOceanSection)
+		// Section ocean. Champs absents en v1/v2 prennent la valeur d'entrée
+		// de `outOcean` (typiquement le défaut `OceanSectionData{}`).
+		if (hasOceanSectionV2)
 		{
-			float sea = outSeaLevelMeters;
-			if (readF32(sea))
+			float sea = outOcean.seaLevelMeters;
+			if (readF32(sea)) outOcean.seaLevelMeters = sea;
+		}
+		if (isV3OrAbove)
+		{
+			float r = outOcean.bottomColor[0];
+			float g = outOcean.bottomColor[1];
+			float b = outOcean.bottomColor[2];
+			if (readF32(r) && readF32(g) && readF32(b))
 			{
-				outSeaLevelMeters = sea;
+				outOcean.bottomColor[0] = r;
+				outOcean.bottomColor[1] = g;
+				outOcean.bottomColor[2] = b;
 			}
+			float turb = outOcean.turbidity;
+			if (readF32(turb)) outOcean.turbidity = turb;
+			float wind = outOcean.windInfluence;
+			if (readF32(wind)) outOcean.windInfluence = wind;
+			uint8_t enabledByte = outOcean.enabled ? 1u : 0u;
+			if (readU8(enabledByte)) outOcean.enabled = (enabledByte != 0u);
 		}
 
 		return true;

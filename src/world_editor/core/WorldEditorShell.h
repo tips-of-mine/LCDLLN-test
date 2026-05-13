@@ -1,6 +1,7 @@
 #pragma once
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
 #include "src/world_editor/water/RiverTool.h"
@@ -39,6 +40,7 @@ namespace engine::editor::world
 		MountainRange = 6,  // M100.35 — raccourci Ctrl+Shift+M
 		ValleyChain   = 7,  // M100.35 — raccourci Ctrl+Shift+V
 		RiverNetwork  = 8,  // M100.36 — raccourci Ctrl+Shift+N (network)
+		Coastline     = 9,  // M100.37 — raccourci Ctrl+Shift+C
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -193,6 +195,12 @@ namespace engine::editor::world
 		RiverNetworkTool&        MutableRiverNetworkTool()       { return m_riverNetworkTool; }
 		const RiverNetworkTool&  GetRiverNetworkTool()     const { return m_riverNetworkTool; }
 
+		/// M100.37 — Accès mutable à l'outil Coastline (sea level + ocean
+		/// generation + smoothing/cliffs). Lit/écrit `WaterDocument::OceanSettings`
+		/// via les mêmes accesseurs que River Network.
+		CoastlineEditorTool&       MutableCoastlineEditorTool()       { return m_coastlineEditorTool; }
+		const CoastlineEditorTool& GetCoastlineEditorTool()     const { return m_coastlineEditorTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -231,6 +239,7 @@ namespace engine::editor::world
 		MountainRangeTool m_mountainRangeTool; // M100.35
 		ValleyChainTool   m_valleyChainTool;   // M100.35
 		RiverNetworkTool  m_riverNetworkTool;  // M100.36
+		CoastlineEditorTool m_coastlineEditorTool; // M100.37
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

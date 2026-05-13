@@ -223,13 +223,16 @@ namespace
 
 		std::vector<uint8_t> bytes;
 		std::string err;
-		REQUIRE(engine::world::water::SaveWaterBin(scene, 73.5f, bytes, err));
+		engine::world::water::OceanSectionData seaIn;
+		seaIn.seaLevelMeters = 73.5f;
+		REQUIRE(engine::world::water::SaveWaterBin(scene, seaIn, bytes, err));
 
 		engine::world::water::WaterScene scene2;
-		float seaOut = 0.0f;
+		engine::world::water::OceanSectionData oceanOut;
+		oceanOut.seaLevelMeters = 0.0f;
 		REQUIRE(engine::world::water::LoadWaterBin(
-			std::span<const uint8_t>(bytes), scene2, seaOut, err));
-		REQUIRE(seaOut == 73.5f);
+			std::span<const uint8_t>(bytes), scene2, oceanOut, err));
+		REQUIRE(oceanOut.seaLevelMeters == 73.5f);
 		REQUIRE(scene2.rivers.size() == 1u);
 	}
 

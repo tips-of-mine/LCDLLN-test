@@ -23,8 +23,17 @@ namespace engine::editor::world
 		}
 
 		std::vector<uint8_t> bytes;
-		if (!engine::world::water::SaveWaterBin(m_scene, m_ocean.seaLevelMeters,
-			bytes, outError))
+		// M100.37 : sérialise toute la struct ocean (v3). Conversion editor →
+		// water namespace via copie POD-à-POD.
+		engine::world::water::OceanSectionData sec;
+		sec.seaLevelMeters = m_ocean.seaLevelMeters;
+		sec.bottomColor[0] = m_ocean.bottomColor[0];
+		sec.bottomColor[1] = m_ocean.bottomColor[1];
+		sec.bottomColor[2] = m_ocean.bottomColor[2];
+		sec.turbidity      = m_ocean.turbidity;
+		sec.windInfluence  = m_ocean.windInfluence;
+		sec.enabled        = m_ocean.enabled;
+		if (!engine::world::water::SaveWaterBin(m_scene, sec, bytes, outError))
 			return false;
 
 		std::ofstream f(path, std::ios::binary | std::ios::trunc);
@@ -79,13 +88,27 @@ namespace engine::editor::world
 			return false;
 		}
 
-		// M100.36 : initialise outSeaLevel à la valeur défaut pour que le
-		// reader v1 (sans section ocean) laisse `m_ocean` à `OceanSettings{}`.
-		float seaLevel = OceanSettings{}.seaLevelMeters;
+		// M100.37 : section ocean v3. Init avec les valeurs par défaut pour
+		// que le reader v1/v2 laisse les champs non-présents au défaut.
+		engine::world::water::OceanSectionData sec;
+		const OceanSettings def;
+		sec.seaLevelMeters = def.seaLevelMeters;
+		sec.bottomColor[0] = def.bottomColor[0];
+		sec.bottomColor[1] = def.bottomColor[1];
+		sec.bottomColor[2] = def.bottomColor[2];
+		sec.turbidity      = def.turbidity;
+		sec.windInfluence  = def.windInfluence;
+		sec.enabled        = def.enabled;
 		if (!engine::world::water::LoadWaterBin(
-			std::span<const uint8_t>(bytes), m_scene, seaLevel, outError))
+			std::span<const uint8_t>(bytes), m_scene, sec, outError))
 			return false;
-		m_ocean.seaLevelMeters = seaLevel;
+		m_ocean.seaLevelMeters = sec.seaLevelMeters;
+		m_ocean.bottomColor[0] = sec.bottomColor[0];
+		m_ocean.bottomColor[1] = sec.bottomColor[1];
+		m_ocean.bottomColor[2] = sec.bottomColor[2];
+		m_ocean.turbidity      = sec.turbidity;
+		m_ocean.windInfluence  = sec.windInfluence;
+		m_ocean.enabled        = sec.enabled;
 
 		m_dirty = false;
 		return true;

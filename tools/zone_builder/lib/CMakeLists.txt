@@ -27,6 +27,7 @@ add_library(zone_builder_lib STATIC
   ${CMAKE_SOURCE_DIR}/src/client/world/terrain/TerrainChunk.cpp
   ${CMAKE_SOURCE_DIR}/src/client/world/terrain/TerrainLodChain.cpp
   ${CMAKE_SOURCE_DIR}/src/client/world/water/WaterSurfaces.cpp
+  ${CMAKE_SOURCE_DIR}/src/client/world/hazard/HazardVolumes.cpp
   ${CMAKE_SOURCE_DIR}/src/shared/core/Config.cpp
   ${CMAKE_SOURCE_DIR}/src/shared/core/Log.cpp
   ${CMAKE_SOURCE_DIR}/src/shared/platform/FileSystem.cpp

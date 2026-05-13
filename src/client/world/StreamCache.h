@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace engine::core { class Config; }
@@ -87,6 +88,10 @@ namespace engine::world
 		};
 		std::unordered_map<std::string, Entry> m_map;
 		std::vector<std::string> m_lruOrder;
+		/// Cles deja signalees comme absentes/vides par LoadTerrainChunk : evite de re-spammer
+		/// le meme WARN a chaque frame quand le scheduler interroge un chunk inexistant
+		/// (49 chunks * ~60 fps = ~3000 WARN/s sinon). Vide par Clear().
+		std::unordered_set<std::string> m_terrainChunkMissWarned;
 		size_t m_maxSizeBytes = 1024 * 1024 * 1024; // 1 GB default
 		size_t m_currentSizeBytes = 0;
 		uint64_t m_hitCount = 0;

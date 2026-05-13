@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -99,6 +99,14 @@ namespace engine::editor::world::panels
 		void RenderThermalWindErosionParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::erosion::ThermalWindErosionTool& tool);
+
+		/// M100.40 — Bloc UI "Cave" (démarre la Phase 11 « Volumes 3D »).
+		/// Catalogue de grottes glTF (sélection par id) + sliders position,
+		/// rotation, scale, camouflage splat « rocher », flags volume
+		/// intérieur / reverb / water ingress, intensité probe lumière.
+		void RenderCaveParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::caves::CaveTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

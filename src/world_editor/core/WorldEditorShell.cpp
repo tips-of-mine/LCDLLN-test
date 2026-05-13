@@ -177,6 +177,16 @@ namespace engine::editor::world
 		// la Phase 2.5 du milestone M100).
 		m_thermalWindErosionTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
 
+		// M100.40 — Init du document Mesh Inserts (Phase 11 « Volumes 3D »)
+		// + outil Cave. Charge `instances/mesh_inserts.bin` si présent.
+		std::string meshInsertErr;
+		if (!m_meshInsertDoc.LoadFromDisk(cfg, meshInsertErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] MeshInsert LoadFromDisk failed: {}",
+				meshInsertErr);
+		}
+		m_caveTool.Init(m_commandStack, m_meshInsertDoc, m_terrainDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -214,6 +224,7 @@ namespace engine::editor::world
 			case ActiveTool::Coastline:           name = "Coastline"; break;
 			case ActiveTool::HydraulicErosion:    name = "HydraulicErosion"; break;
 			case ActiveTool::ThermalWindErosion:  name = "ThermalWindErosion"; break;
+			case ActiveTool::Cave:                name = "Cave"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -578,6 +589,12 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'T')
 		{
 			SetActiveTool(ActiveTool::ThermalWindErosion);
+			return true;
+		}
+		// M100.40 — Ctrl+Shift+G : Cave (Grotte, démarre Phase 11).
+		if (ctrl && shift && virtualKey == 'G')
+		{
+			SetActiveTool(ActiveTool::Cave);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

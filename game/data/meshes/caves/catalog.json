@@ -1,0 +1,38 @@
+{
+  "_comment": "M100.40 placeholder catalog. Les .gltf et thumbnails seront livrés par un ticket d'art dédié. En MVP, ces entrées suffisent à exercer le tool de placement (data model + persistance LCMI v1 + camouflage splat).",
+  "caves": [
+    {
+      "id": "cave_small_01",
+      "gltf": "meshes/caves/cave_small_01.gltf",
+      "displayName": "Petite grotte",
+      "thumbnail": "meshes/caves/thumbnails/cave_small_01.png",
+      "aabbMin": [-3.0, 0.0, -2.0],
+      "aabbMax": [3.0, 4.0, 2.0],
+      "entrancePoint": [0.0, 0.0, -2.0],
+      "interiorAabbMin": [-2.0, 0.0, -1.0],
+      "interiorAabbMax": [2.0, 3.0, 1.0]
+    },
+    {
+      "id": "cave_medium_01",
+      "gltf": "meshes/caves/cave_medium_01.gltf",
+      "displayName": "Grotte moyenne",
+      "thumbnail": "meshes/caves/thumbnails/cave_medium_01.png",
+      "aabbMin": [-6.0, 0.0, -4.0],
+      "aabbMax": [6.0, 7.0, 4.0],
+      "entrancePoint": [0.0, 0.0, -4.0],
+      "interiorAabbMin": [-5.0, 0.0, -2.0],
+      "interiorAabbMax": [5.0, 6.0, 2.0]
+    },
+    {
+      "id": "cave_large_01",
+      "gltf": "meshes/caves/cave_large_01.gltf",
+      "displayName": "Grande grotte",
+      "thumbnail": "meshes/caves/thumbnails/cave_large_01.png",
+      "aabbMin": [-12.0, 0.0, -8.0],
+      "aabbMax": [12.0, 12.0, 8.0],
+      "entrancePoint": [0.0, 0.0, -8.0],
+      "interiorAabbMin": [-10.0, 0.0, -5.0],
+      "interiorAabbMax": [10.0, 10.0, 5.0]
+    }
+  ]
+}

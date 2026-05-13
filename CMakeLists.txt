@@ -343,6 +343,16 @@ add_library(engine_core
   src/world_editor/terrain/erosion/WindSimulation.cpp
   src/world_editor/terrain/erosion/ThermalWindErosionCommand.cpp
   src/world_editor/terrain/erosion/ThermalWindErosionTool.cpp
+  # M100.40 — Mesh Insert Foundation + Cave Tool (démarre Phase 11
+  # « Volumes 3D »). MVP éditeur-side : data model + IO binaire LCMI v1 +
+  # CRUD document + outil Cave avec catalog JSON + camouflage splat.
+  # Rendu glTF runtime + gizmo + auto-props reportés en follow-ups.
+  src/world_editor/volumes/MeshInsertIo.cpp
+  src/world_editor/volumes/MeshInsertDocument.cpp
+  src/world_editor/volumes/caves/CaveCatalog.cpp
+  src/world_editor/volumes/caves/CaveCamouflage.cpp
+  src/world_editor/volumes/caves/PlaceCaveCommand.cpp
+  src/world_editor/volumes/caves/CaveTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1168,6 +1178,20 @@ if(WIN32)
     target_compile_options(thermal_wind_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME thermal_wind_erosion_tests COMMAND thermal_wind_erosion_tests)
+endif()
+
+# M100.40 — Tests unitaires CPU pour la fondation Mesh Insert + Cave Tool
+# (démarre Phase 11) : LCMI v1 binary round-trip, MeshInsertDocument CRUD,
+# CaveCatalog JSON parsing, CaveCamouflage poids, PlaceCaveCommand
+# Apply/Undo bit-equal. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(mesh_insert_tests src/world_editor/tests/MeshInsertTests.cpp)
+  target_include_directories(mesh_insert_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(mesh_insert_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(mesh_insert_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME mesh_insert_tests COMMAND mesh_insert_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

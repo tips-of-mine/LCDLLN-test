@@ -2,6 +2,7 @@
 
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
+#include "src/world_editor/volumes/caves/CaveTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -794,6 +795,89 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderCaveParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::volumes::caves::CaveTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		ImGui::Text("Cave Tool — M100.40 (Phase 11 démarrage)");
+		ImGui::TextDisabled("(MVP éditeur-side : rendu glTF runtime à câbler en follow-up)");
+		ImGui::Separator();
+
+		const auto& cat = tool.Catalog();
+		ImGui::Text("Catalogue : %zu grottes disponibles", cat.Size());
+		if (cat.Size() == 0u)
+		{
+			ImGui::TextDisabled("Aucun catalogue chargé. Vérifie game/data/meshes/caves/catalog.json");
+		}
+		else
+		{
+			ImGui::TextUnformatted("Sélection :");
+			for (const auto& entry : cat.Entries())
+			{
+				const bool selected = (tool.SelectedId() == entry.id);
+				if (ImGui::RadioButton(entry.displayName.c_str(), selected))
+				{
+					tool.SelectById(entry.id);
+				}
+			}
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Position cible (raycast viewport — éditable ici) :");
+		ImGui::InputFloat("World X", &tool.TargetWorldX(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("World Z", &tool.TargetWorldZ(), 1.0f, 10.0f, "%.1f");
+		float y = tool.TargetWorldY();
+		if (ImGui::InputFloat("World Y (terrain)", &y, 1.0f, 10.0f, "%.1f"))
+		{
+			tool.SetTargetWorldY(y);
+		}
+
+		ImGui::Separator();
+		ImGui::SliderFloat("Rotation Y (deg)", &tool.RotationYDeg(), -180.0f, 180.0f, "%.1f");
+		ImGui::SliderFloat("Scale uniforme",  &tool.UniformScale(),  0.1f, 5.0f, "%.2f");
+		ImGui::Checkbox("Snap au sol", &tool.SnapToGround());
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Camouflage entrée :");
+		ImGui::Checkbox("Auto-peindre splat « Rocher »", &tool.CamouflageEnabled());
+		if (tool.CamouflageEnabled())
+		{
+			ImGui::SliderFloat("Rayon (m)",   &tool.CamouflageRadius(),   1.0f, 50.0f, "%.1f");
+			ImGui::SliderFloat("Force",       &tool.CamouflageStrength(), 0.0f, 1.0f, "%.2f");
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Gameplay :");
+		ImGui::Checkbox("Volume intérieur (SurfaceQuery)", &tool.HasInteriorVolume());
+		ImGui::Checkbox("Reverb audio",                    &tool.ReceivesAudioReverb());
+		ImGui::Checkbox("Permet l'eau (ingress)",          &tool.AllowsWaterIngress());
+		ImGui::SliderFloat("Intensité probe lumière",      &tool.LightProbeIntensity(),
+			0.0f, 2.0f, "%.2f");
+
+		ImGui::Separator();
+		const bool canPlace = !tool.SelectedId().empty();
+		ImGui::BeginDisabled(!canPlace);
+		if (ImGui::Button("Place"))
+		{
+			tool.Place();
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			tool.Cancel();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Grottes posées : %zu",
+			shell.GetMeshInsertDocument().GetByCategory("cave").size());
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderThermalWindErosionParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::erosion::ThermalWindErosionTool& tool)
@@ -1494,6 +1578,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Thermal / Wind Erosion");
 				ImGui::Separator();
 				RenderThermalWindErosionParams(*m_shell, m_shell->MutableThermalWindErosionTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Cave)
+			{
+				ImGui::TextUnformatted("Cave (Phase 11)");
+				ImGui::Separator();
+				RenderCaveParams(*m_shell, m_shell->MutableCaveTool());
 			}
 			else
 			{

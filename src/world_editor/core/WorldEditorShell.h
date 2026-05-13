@@ -3,6 +3,8 @@
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
+#include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/volumes/caves/CaveTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -45,6 +47,7 @@ namespace engine::editor::world
 		Coastline           = 9,   // M100.37 — raccourci Ctrl+Shift+C
 		HydraulicErosion    = 10,  // M100.38 — raccourci Ctrl+Shift+H
 		ThermalWindErosion  = 11,  // M100.39 — raccourci Ctrl+Shift+T
+		Cave                = 12,  // M100.40 — raccourci Ctrl+Shift+G (Grotte)
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -216,6 +219,17 @@ namespace engine::editor::world
 		erosion::ThermalWindErosionTool&       MutableThermalWindErosionTool()       { return m_thermalWindErosionTool; }
 		const erosion::ThermalWindErosionTool& GetThermalWindErosionTool()     const { return m_thermalWindErosionTool; }
 
+		/// M100.40 — Accès mutable au document Mesh Inserts (volumes 3D
+		/// Phase 11). Consommé par les outils Cave (M100.40), Overhang
+		/// (M100.41), Arch (M100.42), Dungeon (M100.43).
+		volumes::MeshInsertDocument&       MutableMeshInsertDocument()       { return m_meshInsertDoc; }
+		const volumes::MeshInsertDocument& GetMeshInsertDocument()     const { return m_meshInsertDoc; }
+
+		/// M100.40 — Accès mutable à l'outil Cave (placement de grottes
+		/// depuis catalogue glTF).
+		volumes::caves::CaveTool&       MutableCaveTool()       { return m_caveTool; }
+		const volumes::caves::CaveTool& GetCaveTool()     const { return m_caveTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -257,6 +271,8 @@ namespace engine::editor::world
 		CoastlineEditorTool m_coastlineEditorTool; // M100.37
 		erosion::HydraulicErosionTool m_hydraulicErosionTool; // M100.38
 		erosion::ThermalWindErosionTool m_thermalWindErosionTool; // M100.39
+		volumes::MeshInsertDocument m_meshInsertDoc;          // M100.40
+		volumes::caves::CaveTool    m_caveTool;               // M100.40
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

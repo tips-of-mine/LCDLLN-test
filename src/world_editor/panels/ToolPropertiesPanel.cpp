@@ -1,6 +1,7 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -793,6 +794,141 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderThermalWindErosionParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::erosion::ThermalWindErosionTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		auto& p = tool.MutableParams();
+		ImGui::Text("Thermal / Wind Erosion — M100.39");
+		ImGui::TextDisabled("(clôt la Phase 2.5 — Terrain naturaliste)");
+		ImGui::Separator();
+
+		// Sous-mode.
+		int subModeIdx = static_cast<int>(p.subMode);
+		static const char* kSubModeLabels[3] = {
+			"Thermal seul (~500 ms)",
+			"Wind seul (~5-15 s)",
+			"Both (Thermal puis Wind)",
+		};
+		ImGui::Combo("Sous-mode", &subModeIdx, kSubModeLabels, 3);
+		p.subMode = static_cast<engine::editor::world::erosion::ErosionSubMode>(
+			std::clamp(subModeIdx, 0, 2));
+
+		const bool showThermal = (p.subMode == engine::editor::world::erosion::ErosionSubMode::Thermal
+			|| p.subMode == engine::editor::world::erosion::ErosionSubMode::Both);
+		const bool showWind = (p.subMode == engine::editor::world::erosion::ErosionSubMode::Wind
+			|| p.subMode == engine::editor::world::erosion::ErosionSubMode::Both);
+
+		if (showThermal)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Thermal Erosion :");
+			auto& t = p.thermal;
+			ImGui::SliderFloat("Angle de talus (deg)", &t.talusAngleDeg, 5.0f, 80.0f, "%.1f");
+			ImGui::SliderFloat("Force par passe",      &t.forcePerPass, 0.0f, 1.0f, "%.2f");
+			int np = static_cast<int>(t.numPasses);
+			if (ImGui::SliderInt("Nombre de passes",   &np, 1, 200))
+			{
+				t.numPasses = static_cast<uint32_t>(std::max(1, np));
+			}
+			ImGui::SliderFloat("Pente min activation (deg)",
+				&t.minActivationSlopeDeg, 0.0f, 45.0f, "%.1f");
+			ImGui::Checkbox("Stopper sous sea level##th",  &t.stopUnderSeaLevel);
+			ImGui::Checkbox("Préserver pentes raides",     &t.preserveSteepSlopes);
+			if (t.preserveSteepSlopes)
+			{
+				ImGui::SliderFloat("Seuil exception (deg)",
+					&t.preserveSteepThresholdDeg, 0.0f, 90.0f, "%.1f");
+			}
+		}
+
+		if (showWind)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Wind Erosion :");
+			auto& w = p.wind;
+			ImGui::SliderFloat("Direction du vent (deg)", &w.windAngleDeg, 0.0f, 360.0f, "%.1f");
+			ImGui::SliderFloat("Force du vent",           &w.windStrength, 0.0f, 2.0f, "%.2f");
+			int npart = static_cast<int>(w.numParticles);
+			if (ImGui::SliderInt("Nombre de particules", &npart, 0, 200000))
+			{
+				w.numParticles = static_cast<uint32_t>(std::max(0, npart));
+			}
+			int life = static_cast<int>(w.maxLifetimeSteps);
+			if (ImGui::SliderInt("Durée de vie max",     &life, 1, 200))
+			{
+				w.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
+			}
+			ImGui::SliderFloat("Capacité sable",         &w.sandCapacityFactor, 0.0f, 2.0f, "%.2f");
+			ImGui::SliderFloat("Exposition R (m)",       &w.exposureRadiusMeters, 1.0f, 200.0f, "%.1f");
+			int seed = static_cast<int>(w.rngSeed);
+			if (ImGui::InputInt("Seed RNG##wind", &seed))
+			{
+				w.rngSeed = static_cast<uint32_t>(std::max(0, seed));
+			}
+			ImGui::Checkbox("Stopper sous sea level##wd", &w.stopUnderSeaLevel);
+			ImGui::Checkbox("Restreindre aux cellules Sand (flag MVP)", &w.restrictToSandSplat);
+			if (w.restrictToSandSplat)
+			{
+				ImGui::TextDisabled("Note MVP : flag conservé mais non câblé au splat (follow-up).");
+			}
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Workflow recommandé :");
+		ImGui::TextDisabled("M100.35 mountains -> 36 rivers -> 37 coast -> 38 hydraulic -> 39 thermal+wind");
+		ImGui::Separator();
+
+		if (ImGui::Button("▶ Simulate"))
+		{
+			tool.Simulate();
+		}
+
+		if (tool.HasResult())
+		{
+			ImGui::Separator();
+			const auto& tr = tool.LastThermalResult();
+			const auto& wr = tool.LastWindResult();
+			ImGui::Text("Résultat dernière simulation :");
+			if (showThermal)
+			{
+				ImGui::Text("  Thermal passes      : %u%s",
+					tr.passesExecuted,
+					tr.converged ? " (convergé)" : "");
+				ImGui::Text("  Total transféré (T) : %.2f m", static_cast<double>(tr.totalTransferredMeters));
+				ImGui::Text("  Temps (T)           : %.1f ms", tr.wallTimeMillis);
+			}
+			if (showWind)
+			{
+				ImGui::Text("  Particules simulées : %u", wr.particlesSimulated);
+				ImGui::Text("  Total steps (W)     : %llu",
+					static_cast<unsigned long long>(wr.totalSteps));
+				ImGui::Text("  Érodées / Déposées  : %u / %u",
+					wr.cellsEroded, wr.cellsDeposited);
+				ImGui::Text("  Δ min / max (W)     : %.2f / %.2f m",
+					static_cast<double>(wr.minDelta),
+					static_cast<double>(wr.maxDelta));
+				ImGui::Text("  Temps (W)           : %.1f ms", wr.wallTimeMillis);
+			}
+
+			ImGui::Separator();
+			if (ImGui::Button("Apply"))   tool.Apply();
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))  tool.Cancel();
+			ImGui::SameLine();
+			if (ImGui::Button("Re-simulate")) tool.Simulate();
+		}
+		else
+		{
+			ImGui::TextDisabled("Cliquez Simulate pour lancer l'érosion choisie.");
+		}
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderHydraulicErosionParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::erosion::HydraulicErosionTool& tool)
@@ -1351,6 +1487,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Hydraulic Erosion");
 				ImGui::Separator();
 				RenderHydraulicErosionParams(*m_shell, m_shell->MutableHydraulicErosionTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::ThermalWindErosion)
+			{
+				ImGui::TextUnformatted("Thermal / Wind Erosion");
+				ImGui::Separator();
+				RenderThermalWindErosionParams(*m_shell, m_shell->MutableThermalWindErosionTool());
 			}
 			else
 			{

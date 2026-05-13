@@ -2,6 +2,7 @@
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -41,8 +42,9 @@ namespace engine::editor::world
 		MountainRange    = 6,   // M100.35 — raccourci Ctrl+Shift+M
 		ValleyChain      = 7,   // M100.35 — raccourci Ctrl+Shift+V
 		RiverNetwork     = 8,   // M100.36 — raccourci Ctrl+Shift+N (network)
-		Coastline        = 9,   // M100.37 — raccourci Ctrl+Shift+C
-		HydraulicErosion = 10,  // M100.38 — raccourci Ctrl+Shift+H
+		Coastline           = 9,   // M100.37 — raccourci Ctrl+Shift+C
+		HydraulicErosion    = 10,  // M100.38 — raccourci Ctrl+Shift+H
+		ThermalWindErosion  = 11,  // M100.39 — raccourci Ctrl+Shift+T
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -209,6 +211,11 @@ namespace engine::editor::world
 		erosion::HydraulicErosionTool&       MutableHydraulicErosionTool()       { return m_hydraulicErosionTool; }
 		const erosion::HydraulicErosionTool& GetHydraulicErosionTool()     const { return m_hydraulicErosionTool; }
 
+		/// M100.39 — Accès mutable à l'outil Thermal/Wind Erosion (clôture
+		/// la Phase 2.5 « Terrain naturaliste »).
+		erosion::ThermalWindErosionTool&       MutableThermalWindErosionTool()       { return m_thermalWindErosionTool; }
+		const erosion::ThermalWindErosionTool& GetThermalWindErosionTool()     const { return m_thermalWindErosionTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -249,6 +256,7 @@ namespace engine::editor::world
 		RiverNetworkTool  m_riverNetworkTool;  // M100.36
 		CoastlineEditorTool m_coastlineEditorTool; // M100.37
 		erosion::HydraulicErosionTool m_hydraulicErosionTool; // M100.38
+		erosion::ThermalWindErosionTool m_thermalWindErosionTool; // M100.39
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

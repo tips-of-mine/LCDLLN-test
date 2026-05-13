@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; } }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -92,6 +92,13 @@ namespace engine::editor::world::panels
 		void RenderHydraulicErosionParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::erosion::HydraulicErosionTool& tool);
+
+		/// M100.39 — Bloc UI "Thermal / Wind Erosion" (clôt la Phase 2.5).
+		/// Radio sous-mode (Thermal / Wind / Both), deux sections de
+		/// paramètres physiques, encart workflow recommandé, stats résultat.
+		void RenderThermalWindErosionParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::erosion::ThermalWindErosionTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

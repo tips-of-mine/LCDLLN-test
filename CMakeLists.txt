@@ -338,6 +338,11 @@ add_library(engine_core
   src/world_editor/terrain/erosion/HydraulicSimulation.cpp
   src/world_editor/terrain/erosion/HydraulicErosionCommand.cpp
   src/world_editor/terrain/erosion/HydraulicErosionTool.cpp
+  # M100.39 — Thermal & Wind Erosion (clôt Phase 2.5 terrain naturaliste).
+  src/world_editor/terrain/erosion/ThermalSimulation.cpp
+  src/world_editor/terrain/erosion/WindSimulation.cpp
+  src/world_editor/terrain/erosion/ThermalWindErosionCommand.cpp
+  src/world_editor/terrain/erosion/ThermalWindErosionTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1149,6 +1154,20 @@ if(WIN32)
     target_compile_options(hydraulic_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME hydraulic_erosion_tests COMMAND hydraulic_erosion_tests)
+endif()
+
+# M100.39 — Tests unitaires CPU pour l'érosion thermique + éolienne
+# (clôt Phase 2.5) : thermal flat / cone / mass conservation / convergence /
+# preserveSteep, wind flat / déterminisme / 0 particules, Command
+# Apply/Undo bit-equal. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(thermal_wind_erosion_tests src/world_editor/tests/ThermalWindErosionTests.cpp)
+  target_include_directories(thermal_wind_erosion_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(thermal_wind_erosion_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(thermal_wind_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME thermal_wind_erosion_tests COMMAND thermal_wind_erosion_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

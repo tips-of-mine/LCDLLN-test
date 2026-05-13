@@ -28,6 +28,8 @@ namespace engine::editor::world
 				return { 0xFF1A3A55u, "C", "Éditer la côte et le niveau de mer",     true };
 			case ActiveTool::HydraulicErosion:
 				return { 0xFF335577u, "H", "Érosion hydraulique (particules)",      true };
+			case ActiveTool::ThermalWindErosion:
+				return { 0xFF7A6042u, "T", "Érosion thermique + éolienne",          true };
 		}
 		// Fallback générique pour outils futurs non encore mappés : carré
 		// neutre, désactivé, tooltip standard "Bientôt disponible".

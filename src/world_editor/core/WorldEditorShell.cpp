@@ -192,6 +192,9 @@ namespace engine::editor::world
 		// `meshes/overhangs/catalog.json`.
 		m_overhangTool.Init(m_commandStack, m_meshInsertDoc, cfg);
 
+		// M100.42 — Init de l'outil Arch (catalogue `meshes/arches/catalog.json`).
+		m_archTool.Init(m_commandStack, m_meshInsertDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -231,6 +234,7 @@ namespace engine::editor::world
 			case ActiveTool::ThermalWindErosion:  name = "ThermalWindErosion"; break;
 			case ActiveTool::Cave:                name = "Cave"; break;
 			case ActiveTool::Overhang:            name = "Overhang"; break;
+			case ActiveTool::Arch:                name = "Arch"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -607,6 +611,12 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'O')
 		{
 			SetActiveTool(ActiveTool::Overhang);
+			return true;
+		}
+		// M100.42 — Ctrl+Shift+A : Arch (arche naturelle).
+		if (ctrl && shift && virtualKey == 'A')
+		{
+			SetActiveTool(ActiveTool::Arch);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

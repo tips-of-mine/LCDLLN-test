@@ -4,6 +4,7 @@
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/caves/CaveTool.h"
 #include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
@@ -50,6 +51,7 @@ namespace engine::editor::world
 		ThermalWindErosion  = 11,  // M100.39 — raccourci Ctrl+Shift+T
 		Cave                = 12,  // M100.40 — raccourci Ctrl+Shift+G (Grotte)
 		Overhang            = 13,  // M100.41 — raccourci Ctrl+Shift+O (Overhang)
+		Arch                = 14,  // M100.42 — raccourci Ctrl+Shift+A (Arche)
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -237,6 +239,11 @@ namespace engine::editor::world
 		volumes::overhangs::OverhangTool&       MutableOverhangTool()       { return m_overhangTool; }
 		const volumes::overhangs::OverhangTool& GetOverhangTool()     const { return m_overhangTool; }
 
+		/// M100.42 — Accès mutable à l'outil Arch (placement d'arches
+		/// naturelles à partir de deux pieds monde).
+		volumes::arches::ArchTool&       MutableArchTool()       { return m_archTool; }
+		const volumes::arches::ArchTool& GetArchTool()     const { return m_archTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -281,6 +288,7 @@ namespace engine::editor::world
 		volumes::MeshInsertDocument m_meshInsertDoc;          // M100.40
 		volumes::caves::CaveTool    m_caveTool;               // M100.40
 		volumes::overhangs::OverhangTool m_overhangTool;      // M100.41
+		volumes::arches::ArchTool   m_archTool;               // M100.42
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

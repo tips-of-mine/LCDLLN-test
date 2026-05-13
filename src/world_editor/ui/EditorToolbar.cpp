@@ -25,6 +25,7 @@ namespace engine::editor::world
 			ActiveTool::ThermalWindErosion, // M100.39 (clôt Phase 2.5)
 			ActiveTool::Cave,               // M100.40 (démarre Phase 11)
 			ActiveTool::Overhang,           // M100.41
+			ActiveTool::Arch,               // M100.42
 		};
 	}
 

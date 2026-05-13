@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } namespace volumes::overhangs { class OverhangTool; } }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } namespace volumes::overhangs { class OverhangTool; } namespace volumes::arches { class ArchTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -115,6 +115,14 @@ namespace engine::editor::world::panels
 		void RenderOverhangParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::volumes::overhangs::OverhangTool& tool);
+
+		/// M100.42 — Bloc UI "Arch" (Phase 11). Catalogue d'arches glTF +
+		/// saisie des deux pieds monde (pointA, pointB) ; le panel affiche
+		/// les valeurs dérivées (span, yaw, scale) en lecture seule pour
+		/// que l'utilisateur visualise l'effet avant Apply.
+		void RenderArchParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::arches::ArchTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

@@ -2,6 +2,7 @@
 
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
+#include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/caves/CaveTool.h"
 #include "src/world_editor/volumes/overhangs/OverhangTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
@@ -956,6 +957,86 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderArchParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::volumes::arches::ArchTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		ImGui::Text("Arch Tool — M100.42 (Phase 11)");
+		ImGui::TextDisabled("(MVP éditeur-side : raycast viewport ↦ M100.17)");
+		ImGui::Separator();
+
+		const auto& cat = tool.Catalog();
+		ImGui::Text("Catalogue : %zu arches disponibles", cat.Size());
+		if (cat.Size() == 0u)
+		{
+			ImGui::TextDisabled("Aucun catalogue chargé. Vérifie game/data/meshes/arches/catalog.json");
+		}
+		else
+		{
+			ImGui::TextUnformatted("Sélection :");
+			for (const auto& entry : cat.Entries())
+			{
+				const bool selected = (tool.SelectedId() == entry.id);
+				if (ImGui::RadioButton(entry.displayName.c_str(), selected))
+				{
+					tool.SelectById(entry.id);
+				}
+			}
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Pied A (monde) :");
+		ImGui::InputFloat("A.x", &tool.PointAX(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("A.y", &tool.PointAY(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("A.z", &tool.PointAZ(), 1.0f, 10.0f, "%.1f");
+
+		ImGui::TextUnformatted("Pied B (monde) :");
+		ImGui::InputFloat("B.x", &tool.PointBX(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("B.y", &tool.PointBY(), 1.0f, 10.0f, "%.1f");
+		ImGui::InputFloat("B.z", &tool.PointBZ(), 1.0f, 10.0f, "%.1f");
+
+		ImGui::Separator();
+		ImGui::Text("Span monde     : %.2f m", tool.SpanMeters());
+		ImGui::Text("Yaw dérivé     : %.1f deg", tool.DerivedYawDeg());
+		const float scale = tool.DerivedScale();
+		ImGui::Text("Scale dérivé   : %.2f×", scale);
+		const bool scaleOk = (scale >= tool.MinScaleRatio() && scale <= tool.MaxScaleRatio());
+		ImGui::TextColored(scaleOk ? ImVec4(0.5f, 1.0f, 0.5f, 1.0f) : ImVec4(1.0f, 0.5f, 0.5f, 1.0f),
+			scaleOk ? "Scale dans bornes" : "Scale hors bornes — refusé");
+
+		ImGui::SliderFloat("Min scale", &tool.MinScaleRatio(), 0.05f, 1.0f, "%.2f");
+		ImGui::SliderFloat("Max scale", &tool.MaxScaleRatio(), 1.0f, 10.0f, "%.2f");
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Gameplay :");
+		ImGui::Checkbox("Projette une ombre", &tool.CastsShadow());
+		ImGui::SliderFloat("Intensité probe lumière", &tool.LightProbeIntensity(),
+			0.0f, 2.0f, "%.2f");
+
+		ImGui::Separator();
+		const bool canPlace = !tool.SelectedId().empty() && scaleOk;
+		ImGui::BeginDisabled(!canPlace);
+		if (ImGui::Button("Place"))
+		{
+			tool.Place();
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			tool.Cancel();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Arches posées : %zu",
+			shell.GetMeshInsertDocument().GetByCategory("arch").size());
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderThermalWindErosionParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::erosion::ThermalWindErosionTool& tool)
@@ -1670,6 +1751,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Overhang (Phase 11)");
 				ImGui::Separator();
 				RenderOverhangParams(*m_shell, m_shell->MutableOverhangTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::Arch)
+			{
+				ImGui::TextUnformatted("Arch (Phase 11)");
+				ImGui::Separator();
+				RenderArchParams(*m_shell, m_shell->MutableArchTool());
 			}
 			else
 			{

@@ -1,0 +1,38 @@
+{
+  "_comment": "M100.42 placeholder catalog. archAnchorA / archAnchorB sont les deux pieds pivot-relatifs (Y au sol modélisé). archHeight = distance corde→clé. Le tool calcule yaw + scale uniforme à partir de 2 points monde cliqués.",
+  "arches": [
+    {
+      "id": "arch_small_01",
+      "gltf": "meshes/arches/arch_small_01.gltf",
+      "displayName": "Petite arche",
+      "thumbnail": "meshes/arches/thumbnails/arch_small_01.png",
+      "aabbMin": [-3.0, 0.0, -1.0],
+      "aabbMax": [3.0, 3.5, 1.0],
+      "archAnchorA": [-2.5, 0.0, 0.0],
+      "archAnchorB": [2.5, 0.0, 0.0],
+      "archHeight": 3.0
+    },
+    {
+      "id": "arch_medium_01",
+      "gltf": "meshes/arches/arch_medium_01.gltf",
+      "displayName": "Arche moyenne",
+      "thumbnail": "meshes/arches/thumbnails/arch_medium_01.png",
+      "aabbMin": [-6.0, 0.0, -1.5],
+      "aabbMax": [6.0, 7.0, 1.5],
+      "archAnchorA": [-5.0, 0.0, 0.0],
+      "archAnchorB": [5.0, 0.0, 0.0],
+      "archHeight": 6.0
+    },
+    {
+      "id": "arch_large_01",
+      "gltf": "meshes/arches/arch_large_01.gltf",
+      "displayName": "Grande arche",
+      "thumbnail": "meshes/arches/thumbnails/arch_large_01.png",
+      "aabbMin": [-12.0, 0.0, -3.0],
+      "aabbMax": [12.0, 14.0, 3.0],
+      "archAnchorA": [-10.0, 0.0, 0.0],
+      "archAnchorB": [10.0, 0.0, 0.0],
+      "archHeight": 12.0
+    }
+  ]
+}

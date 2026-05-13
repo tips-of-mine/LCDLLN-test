@@ -360,6 +360,12 @@ add_library(engine_core
   src/world_editor/volumes/overhangs/OverhangCatalog.cpp
   src/world_editor/volumes/overhangs/PlaceOverhangCommand.cpp
   src/world_editor/volumes/overhangs/OverhangTool.cpp
+  # M100.42 — Natural Arch Tool (Phase 11, réutilise MeshInsertSystem).
+  # Pas de nouveau format binaire ; instances avec
+  # `insertCategory = "arch"` partagent `instances/mesh_inserts.bin`.
+  src/world_editor/volumes/arches/ArchCatalog.cpp
+  src/world_editor/volumes/arches/PlaceArchCommand.cpp
+  src/world_editor/volumes/arches/ArchTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1212,6 +1218,19 @@ if(WIN32)
     target_compile_options(overhang_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME overhang_tool_tests COMMAND overhang_tool_tests)
+endif()
+
+# M100.42 — Tests unitaires CPU pour le Natural Arch Tool (Phase 11).
+# ArchCatalog JSON parsing, PlaceArchCommand Apply/Undo, ArchTool
+# dérivation yaw/scale/position, garde-fou scale hors bornes.
+if(WIN32)
+  add_executable(arch_tool_tests src/world_editor/tests/ArchToolTests.cpp)
+  target_include_directories(arch_tool_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(arch_tool_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(arch_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME arch_tool_tests COMMAND arch_tool_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

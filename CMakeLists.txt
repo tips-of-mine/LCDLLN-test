@@ -330,6 +330,14 @@ add_library(engine_core
   src/world_editor/water/CoastlineCliffs.cpp
   src/world_editor/water/CoastlineCommand.cpp
   src/world_editor/water/CoastlineEditorTool.cpp
+  # M100.38 — Hydraulic Erosion (particle-based, réutilise grid
+  # consolidé + D8 + flow accumulation de M100.36).
+  src/world_editor/terrain/erosion/BilinearGradientSample.cpp
+  src/world_editor/terrain/erosion/DropletInitDistribution.cpp
+  src/world_editor/terrain/erosion/DropletKernel.cpp
+  src/world_editor/terrain/erosion/HydraulicSimulation.cpp
+  src/world_editor/terrain/erosion/HydraulicErosionCommand.cpp
+  src/world_editor/terrain/erosion/HydraulicErosionTool.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1128,6 +1136,19 @@ if(WIN32)
     target_compile_options(coastline_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME coastline_tests COMMAND coastline_tests)
+endif()
+
+# M100.38 — Tests unitaires CPU pour l'érosion hydraulique : déterminisme,
+# bilinear distribute (conservation + parité couture), single-droplet,
+# HydraulicErosionCommand Apply/Undo, max delta clamp. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(hydraulic_erosion_tests src/world_editor/tests/HydraulicErosionTests.cpp)
+  target_include_directories(hydraulic_erosion_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(hydraulic_erosion_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(hydraulic_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME hydraulic_erosion_tests COMMAND hydraulic_erosion_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

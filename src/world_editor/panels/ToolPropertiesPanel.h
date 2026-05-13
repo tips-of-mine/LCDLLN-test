@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -83,6 +83,15 @@ namespace engine::editor::world::panels
 		void RenderCoastlineParams(
 			engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::CoastlineEditorTool& tool);
+
+		/// M100.38 — Bloc UI "Hydraulic Erosion" : sliders physique
+		/// (sediment capacity, erosion/deposition rates, gravity, inertia,
+		/// evaporation), distribution de seeding, paramètres de bornes,
+		/// boutons Simulate / Apply / Cancel / Re-simulate, stats du
+		/// dernier résultat.
+		void RenderHydraulicErosionParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::erosion::HydraulicErosionTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

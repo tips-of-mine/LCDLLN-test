@@ -26,6 +26,8 @@ namespace engine::editor::world
 				return { 0xFF2D6AA0u, "N", "Générer un réseau de rivières (watershed)", true };
 			case ActiveTool::Coastline:
 				return { 0xFF1A3A55u, "C", "Éditer la côte et le niveau de mer",     true };
+			case ActiveTool::HydraulicErosion:
+				return { 0xFF335577u, "H", "Érosion hydraulique (particules)",      true };
 		}
 		// Fallback générique pour outils futurs non encore mappés : carré
 		// neutre, désactivé, tooltip standard "Bientôt disponible".

@@ -19,8 +19,9 @@ namespace engine::editor::world
 			ActiveTool::River,
 			ActiveTool::MountainRange,
 			ActiveTool::ValleyChain,
-			ActiveTool::RiverNetwork,   // M100.36
-			ActiveTool::Coastline,      // M100.37
+			ActiveTool::RiverNetwork,     // M100.36
+			ActiveTool::Coastline,        // M100.37
+			ActiveTool::HydraulicErosion, // M100.38
 		};
 	}
 

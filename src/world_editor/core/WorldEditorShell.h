@@ -1,6 +1,7 @@
 #pragma once
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -37,10 +38,11 @@ namespace engine::editor::world
 		SplatPaint    = 3,
 		Lake          = 4,  // M100.13 — raccourci L
 		River         = 5,  // M100.13 — raccourci R
-		MountainRange = 6,  // M100.35 — raccourci Ctrl+Shift+M
-		ValleyChain   = 7,  // M100.35 — raccourci Ctrl+Shift+V
-		RiverNetwork  = 8,  // M100.36 — raccourci Ctrl+Shift+N (network)
-		Coastline     = 9,  // M100.37 — raccourci Ctrl+Shift+C
+		MountainRange    = 6,   // M100.35 — raccourci Ctrl+Shift+M
+		ValleyChain      = 7,   // M100.35 — raccourci Ctrl+Shift+V
+		RiverNetwork     = 8,   // M100.36 — raccourci Ctrl+Shift+N (network)
+		Coastline        = 9,   // M100.37 — raccourci Ctrl+Shift+C
+		HydraulicErosion = 10,  // M100.38 — raccourci Ctrl+Shift+H
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -201,6 +203,12 @@ namespace engine::editor::world
 		CoastlineEditorTool&       MutableCoastlineEditorTool()       { return m_coastlineEditorTool; }
 		const CoastlineEditorTool& GetCoastlineEditorTool()     const { return m_coastlineEditorTool; }
 
+		/// M100.38 — Accès mutable à l'outil Hydraulic Erosion. Lit le sea
+		/// level via `WaterDocument::GetOcean().seaLevelMeters` pour la
+		/// condition `stopUnderSeaLevel`.
+		erosion::HydraulicErosionTool&       MutableHydraulicErosionTool()       { return m_hydraulicErosionTool; }
+		const erosion::HydraulicErosionTool& GetHydraulicErosionTool()     const { return m_hydraulicErosionTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -240,6 +248,7 @@ namespace engine::editor::world
 		ValleyChainTool   m_valleyChainTool;   // M100.35
 		RiverNetworkTool  m_riverNetworkTool;  // M100.36
 		CoastlineEditorTool m_coastlineEditorTool; // M100.37
+		erosion::HydraulicErosionTool m_hydraulicErosionTool; // M100.38
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

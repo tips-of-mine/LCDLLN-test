@@ -1,5 +1,6 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 
+#include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
 #include "src/world_editor/water/RiverNetworkTool.h"
@@ -792,6 +793,112 @@ namespace engine::editor::world::panels
 #endif
 	}
 
+	void ToolPropertiesPanel::RenderHydraulicErosionParams(
+		engine::editor::world::WorldEditorShell& shell,
+		engine::editor::world::erosion::HydraulicErosionTool& tool)
+	{
+#if defined(_WIN32)
+		(void)shell;
+		auto& p = tool.MutableParams();
+		ImGui::Text("Hydraulic Erosion — M100.38");
+		ImGui::TextDisabled("(simulation particle-based, lit sea level via OceanSettings)");
+		ImGui::Separator();
+
+		int n = static_cast<int>(p.numDroplets);
+		if (ImGui::SliderInt("Nombre de gouttes", &n, 0, 500000))
+		{
+			p.numDroplets = static_cast<uint32_t>(std::max(0, n));
+		}
+		int life = static_cast<int>(p.maxLifetimeSteps);
+		if (ImGui::SliderInt("Durée de vie max (steps)", &life, 1, 200))
+		{
+			p.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
+		}
+		ImGui::Separator();
+		ImGui::TextUnformatted("Physique :");
+		ImGui::SliderFloat("Capacité sédiment",  &p.sedimentCapacity,  0.1f, 20.0f, "%.2f");
+		ImGui::SliderFloat("Taux d'érosion",     &p.erosionRate,       0.0f, 1.0f, "%.2f");
+		ImGui::SliderFloat("Taux de déposition", &p.depositionRate,    0.0f, 1.0f, "%.2f");
+		ImGui::SliderFloat("Évaporation",        &p.evaporationRate,   0.0f, 0.5f, "%.3f");
+		ImGui::SliderFloat("Gravité",            &p.gravity,           0.1f, 20.0f, "%.2f");
+		ImGui::SliderFloat("Inertie",            &p.inertia,           0.0f, 1.0f, "%.2f");
+		ImGui::SliderFloat("Pente min érosion",  &p.minSlopeForErosion, 0.0f, 1.0f, "%.3f");
+		ImGui::SliderFloat("Delta max / cell (m)", &p.maxDeltaPerCellMeters, 0.1f, 20.0f, "%.2f");
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Initialisation :");
+		int distIdx = static_cast<int>(p.distribution);
+		static const char* kDistLabels[3] = { "Uniform", "Weighted altitude", "Weighted flow accum" };
+		if (ImGui::Combo("Distribution sources", &distIdx, kDistLabels, 3))
+		{
+			p.distribution = static_cast<engine::editor::world::erosion::DropletDistribution>(
+				std::clamp(distIdx, 0, 2));
+		}
+		int seed = static_cast<int>(p.rngSeed);
+		if (ImGui::InputInt("Seed RNG", &seed))
+		{
+			p.rngSeed = static_cast<uint32_t>(std::max(0, seed));
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Bornes / sécurité :");
+		ImGui::Checkbox("Stopper sous sea level", &p.stopUnderSeaLevel);
+		ImGui::Checkbox("Préserver les zones plates", &p.preserveFlatAreas);
+		if (p.preserveFlatAreas)
+		{
+			ImGui::SliderFloat("Seuil pente plate (deg)",
+				&p.flatAreaSlopeThresholdDeg, 0.0f, 45.0f, "%.1f");
+		}
+
+		ImGui::Separator();
+		if (ImGui::Button("▶ Simulate"))
+		{
+			tool.Simulate();
+		}
+		ImGui::SameLine();
+		ImGui::TextDisabled("(~1-20 s bloquant selon numDroplets)");
+
+		if (tool.HasResult())
+		{
+			const auto& r = tool.LastResult();
+			ImGui::Separator();
+			ImGui::Text("Résultat dernière simulation :");
+			ImGui::Text("  Gouttes simulées : %u", r.dropletsSimulated);
+			ImGui::Text("  Total steps      : %llu",
+				static_cast<unsigned long long>(r.totalSteps));
+			ImGui::Text("  Cellules érodées : %u", r.cellsEroded);
+			ImGui::Text("  Cellules déposées: %u", r.cellsDeposited);
+			ImGui::Text("  Delta min / max  : %.2f / %.2f m",
+				static_cast<double>(r.minDelta), static_cast<double>(r.maxDelta));
+			ImGui::Text("  Temps total      : %.1f ms", r.wallTimeMillis);
+			ImGui::Checkbox("Afficher preview érosion (overlay 2D)",
+				&tool.PreviewEnabled());
+
+			ImGui::Separator();
+			if (ImGui::Button("Apply"))
+			{
+				tool.Apply();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				tool.Cancel();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Re-simulate"))
+			{
+				tool.Simulate();
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("Cliquez Simulate pour lancer une passe d'érosion.");
+		}
+#else
+		(void)shell; (void)tool;
+#endif
+	}
+
 	void ToolPropertiesPanel::RenderRiverNetworkParams(
 		engine::editor::world::WorldEditorShell& shell,
 		engine::editor::world::RiverNetworkTool& tool)
@@ -1237,6 +1344,13 @@ namespace engine::editor::world::panels
 				ImGui::TextUnformatted("Coastline");
 				ImGui::Separator();
 				RenderCoastlineParams(*m_shell, m_shell->MutableCoastlineEditorTool());
+			}
+			else if (m_shell != nullptr &&
+				m_shell->GetActiveTool() == engine::editor::world::ActiveTool::HydraulicErosion)
+			{
+				ImGui::TextUnformatted("Hydraulic Erosion");
+				ImGui::Separator();
+				RenderHydraulicErosionParams(*m_shell, m_shell->MutableHydraulicErosionTool());
 			}
 			else
 			{

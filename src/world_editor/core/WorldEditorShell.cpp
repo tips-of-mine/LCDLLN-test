@@ -169,6 +169,10 @@ namespace engine::editor::world
 		// que River Network. Buffer local initialisé depuis le document.
 		m_coastlineEditorTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
 
+		// M100.38 — Init de l'outil Hydraulic Erosion. Lit le sea level via
+		// `WaterDocument::GetOcean()` pour le `stopUnderSeaLevel`.
+		m_hydraulicErosionTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -200,10 +204,11 @@ namespace engine::editor::world
 			case ActiveTool::SplatPaint:    name = "SplatPaint"; break;
 			case ActiveTool::Lake:          name = "Lake"; break;
 			case ActiveTool::River:         name = "River"; break;
-			case ActiveTool::MountainRange: name = "MountainRange"; break;
-			case ActiveTool::ValleyChain:   name = "ValleyChain"; break;
-			case ActiveTool::RiverNetwork:  name = "RiverNetwork"; break;
-			case ActiveTool::Coastline:     name = "Coastline"; break;
+			case ActiveTool::MountainRange:    name = "MountainRange"; break;
+			case ActiveTool::ValleyChain:      name = "ValleyChain"; break;
+			case ActiveTool::RiverNetwork:     name = "RiverNetwork"; break;
+			case ActiveTool::Coastline:        name = "Coastline"; break;
+			case ActiveTool::HydraulicErosion: name = "HydraulicErosion"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -556,6 +561,12 @@ namespace engine::editor::world
 		if (ctrl && shift && virtualKey == 'C')
 		{
 			SetActiveTool(ActiveTool::Coastline);
+			return true;
+		}
+		// M100.38 — Ctrl+Shift+H : Hydraulic Erosion.
+		if (ctrl && shift && virtualKey == 'H')
+		{
+			SetActiveTool(ActiveTool::HydraulicErosion);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

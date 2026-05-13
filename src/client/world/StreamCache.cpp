@@ -106,6 +106,10 @@ namespace engine::world
 		const size_t entryCount = m_map.size();
 		m_map.clear();
 		m_lruOrder.clear();
+		// Le set de cles "deja warnees" suit le meme cycle de vie : changer de zone
+		// reset le contexte et on veut a nouveau diagnostiquer un eventuel chunk
+		// manquant dans la nouvelle zone.
+		m_terrainChunkMissWarned.clear();
 		m_currentSizeBytes = 0;
 		m_hitCount = 0;
 		m_missCount = 0;
@@ -129,7 +133,11 @@ namespace engine::world
 		std::ifstream f(fullPath, std::ios::binary);
 		if (!f.good())
 		{
-			LOG_WARN(World, "[StreamCache] terrain.bin absent: {}", fullPath);
+			// Le scheduler peut interroger ce chunk a chaque frame. On garde le WARN
+			// pour signaler une fois l'absence (utile en diag), mais on dedup par cle
+			// pour ne pas inonder le log (cf. m_terrainChunkMissWarned).
+			if (m_terrainChunkMissWarned.insert(cacheKey).second)
+				LOG_WARN(World, "[StreamCache] terrain.bin absent: {} (warn unique par cle, voir Clear())", fullPath);
 			return nullptr;
 		}
 		f.seekg(0, std::ios::end);
@@ -137,7 +145,8 @@ namespace engine::world
 		f.seekg(0, std::ios::beg);
 		if (fileSize <= 0)
 		{
-			LOG_WARN(World, "[StreamCache] terrain.bin vide: {}", fullPath);
+			if (m_terrainChunkMissWarned.insert(cacheKey).second)
+				LOG_WARN(World, "[StreamCache] terrain.bin vide: {} (warn unique par cle)", fullPath);
 			return nullptr;
 		}
 		std::vector<uint8_t> blob(static_cast<size_t>(fileSize));
@@ -156,6 +165,9 @@ namespace engine::world
 			LOG_WARN(World, "[StreamCache] LoadTerrainBin fail ({}): {}", fullPath, err);
 			return nullptr;
 		}
+		// Chargement OK : retirer la cle du set de warns deduppe pour qu'un eventuel
+		// futur passage absent->present->absent puisse a nouveau emettre un warn.
+		m_terrainChunkMissWarned.erase(cacheKey);
 		Insert(cacheKey, blob);
 		return chunk;
 	}

@@ -233,6 +233,7 @@
   "auth.info.character_cancelled": "Creation du personnage annulee. Retour a la connexion.",
   "auth.info.reconnect_in_progress": "Connexion perdue. Reconnexion en cours...",
   "auth.info.reconnect_success": "Connexion retablie.",
+  "auth.info.server_unavailable": "Serveur indisponible. Reessayez dans quelques instants.",
   "auth.error.reconnect_failed_back_to_login": "Reconnexion impossible. Retour a la connexion.",
   "auth.hint.login.submit": "Entree pour se connecter",
   "auth.hint.login.register": "Ctrl+R creer un compte",

@@ -233,6 +233,7 @@
   "auth.info.character_cancelled": "Character creation cancelled. Back to login.",
   "auth.info.reconnect_in_progress": "Connection lost. Reconnecting...",
   "auth.info.reconnect_success": "Connection restored.",
+  "auth.info.server_unavailable": "Server unavailable. Please try again in a moment.",
   "auth.error.reconnect_failed_back_to_login": "Reconnection failed. Back to login.",
   "auth.hint.login.submit": "Enter to log in",
   "auth.hint.login.register": "Ctrl+R create an account",

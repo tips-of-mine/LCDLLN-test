@@ -635,7 +635,11 @@ namespace engine::client
 				return resp;
 			}
 
-			WinHttpSetTimeouts(hRequest, 10000u, 10000u, timeoutMs, timeoutMs);
+			// Propager le timeout configure aux 4 phases (resolve, connect, send, receive) :
+			// sans cela, resolve/connect restent a 10 s chacun et WinHTTP retente plusieurs
+			// fois => le worker bloque ~30 s quand le master est down, alors qu'on attend
+			// un echec rapide pour basculer l'UI sur "serveur indisponible".
+			WinHttpSetTimeouts(hRequest, timeoutMs, timeoutMs, timeoutMs, timeoutMs);
 			LOG_INFO(Core, "[StatusProbe] WinHTTP: envoi de la requête…");
 
 			if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0))
@@ -1616,6 +1620,26 @@ namespace engine::client
 			m_authAvailabilityChecking = false;
 			m_authAvailabilityPollTimer = 0.f;
 			m_authLogoRotationRad = 0.f;
+			// Le master peut etre injoignable (transport HTTP en echec) ou repondre que le service
+			// est indisponible (authOk/masterOk faux). Dans ces deux cas, exposer un message clair
+			// dans m_infoBanner pour que l'utilisateur sache pourquoi la connexion ne progresse pas.
+			// Quand la sonde redevient OK, on retire un eventuel ancien message server_unavailable
+			// pour ne pas le laisser trainer.
+			{
+				const bool probeOk = copy.success && m_statusCache.authOk && m_statusCache.masterOk;
+				const std::string unavailableMsg = Tr("auth.info.server_unavailable");
+				if (!probeOk)
+				{
+					if (m_infoBanner.empty() || m_infoBanner == unavailableMsg)
+					{
+						m_infoBanner = m_statusCache.infoMessage.empty() ? unavailableMsg : m_statusCache.infoMessage;
+					}
+				}
+				else if (m_infoBanner == unavailableMsg)
+				{
+					m_infoBanner.clear();
+				}
+			}
 			LOG_INFO(Core,
 				"[StatusProbe] thread principal: résultat consommé — httpLayerOk={} authOk={} masterOk={} shards={} totalJoueurs={} "
 				"infoMessage='{}' workerMsg='{}' → UI: maintenance seulement si httpLayerOk et JSON indique indisponibilité",

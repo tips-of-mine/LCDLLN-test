@@ -6,6 +6,7 @@
 #include "src/shared/platform/FileSystem.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
@@ -263,7 +264,14 @@ namespace engine::audio
 			return false;
 		}
 
-		it->second.volume = std::clamp(volume, 0.0f, 1.0f);
+		// Cette methode est aussi appelee a chaque frame depuis Engine pour piloter le
+		// bus "Weather" depuis l'intensite de pluie. On dedup avec un epsilon pour eviter
+		// d'inonder le log INFO quand la valeur n'a pas change reellement (rain stable).
+		const float clamped = std::clamp(volume, 0.0f, 1.0f);
+		constexpr float kVolumeEpsilon = 1.0f / 256.0f; // ~0.004, sous le seuil audible
+		if (std::abs(clamped - it->second.volume) < kVolumeEpsilon)
+			return true;
+		it->second.volume = clamped;
 		LOG_INFO(Core, "[AudioEngine] Bus volume updated (bus={}, volume={:.2f})", busId, it->second.volume);
 		return true;
 	}

@@ -375,6 +375,12 @@ add_library(engine_core
   src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
   src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
   src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
+  # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
+  # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
+  # documents de volumes. Phase11Validator : checks de cohérence
+  # cross-fichiers avant export.
+  src/world_editor/volumes/bridge/VMapBridge.cpp
+  src/world_editor/volumes/bridge/Phase11Validator.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1256,8 +1262,9 @@ if(WIN32)
   add_test(NAME dungeon_portal_tests COMMAND dungeon_portal_tests)
 endif()
 
-# M100.43 — Tests round-trip pour les payloads EnterDungeon{Request,
-# Response} (opcodes 197/198, réservés en M100.43 / câblés en M100.44).
+# M100.43/.44 — Tests round-trip pour les payloads EnterDungeon{Request,
+# Response} (opcodes 197/198). M100.43 réserve les opcodes ; M100.44
+# câble le handler + ajoute BuildEnterDungeonResponsePacket.
 if(WIN32)
   add_executable(dungeon_payloads_tests src/shared/network/DungeonPayloadsTests.cpp)
   target_include_directories(dungeon_payloads_tests PRIVATE ${CMAKE_SOURCE_DIR})
@@ -1266,6 +1273,20 @@ if(WIN32)
     target_compile_options(dungeon_payloads_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME dungeon_payloads_tests COMMAND dungeon_payloads_tests)
+endif()
+
+# M100.44 — Tests unitaires CPU pour VMap Bridge & Phase 11 Validation
+# (clôture Phase 11). TransformLocalAabbToWorld, VMapBridge::Build,
+# LCVC v1 round-trip, Phase11Validator (guids dupliqués, gltf vide,
+# template orphelin, difficulty range, triggerRadius). Pure CPU, WIN32.
+if(WIN32)
+  add_executable(phase11_bridge_tests src/world_editor/tests/Phase11BridgeTests.cpp)
+  target_include_directories(phase11_bridge_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(phase11_bridge_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(phase11_bridge_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME phase11_bridge_tests COMMAND phase11_bridge_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

@@ -114,6 +114,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterDeleteHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterSavePositionHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/character/CharacterEnterWorldHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/masterd/handlers/dungeon/EnterDungeonHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/session/SessionCharacterMap.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/chat/ChatRelayHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/handlers/mail/MailHandler.cpp
@@ -138,6 +139,7 @@ elseif(UNIX)
     ${CMAKE_SOURCE_DIR}/src/masterd/admin/SlashCommandRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/masterd/trade/TradeSessionRegistry.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/IgnoreListPayloads.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/network/DungeonPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/MailPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/QuestPayloads.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/network/GmTicketPayloads.cpp

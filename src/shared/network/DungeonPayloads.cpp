@@ -1,5 +1,9 @@
 #include "src/shared/network/DungeonPayloads.h"
 
+#include "src/shared/network/ByteWriter.h"
+#include "src/shared/network/PacketBuilder.h"
+#include "src/shared/network/ProtocolV1Constants.h"
+
 #include <algorithm>
 #include <cstring>
 
@@ -114,5 +118,21 @@ namespace engine::network
 			return std::nullopt;
 		if (!ReadU8(payload, payloadSize, cursor, p.errorCode)) return std::nullopt;
 		return p;
+	}
+
+	std::vector<uint8_t> BuildEnterDungeonResponsePacket(bool success,
+		uint64_t instanceId, std::string_view shardEndpoint, uint8_t errorCode,
+		uint32_t requestId, uint64_t sessionIdHeader)
+	{
+		const std::vector<uint8_t> payload =
+			BuildEnterDungeonResponsePayload(success, instanceId, shardEndpoint, errorCode);
+		PacketBuilder builder;
+		ByteWriter w = builder.PayloadWriter();
+		if (!payload.empty() && !w.WriteBytes(payload.data(), payload.size()))
+			return {};
+		const size_t payloadBytes = w.Offset();
+		if (!builder.Finalize(kOpcodeEnterDungeonResponse, 0, requestId, sessionIdHeader, payloadBytes))
+			return {};
+		return builder.Data();
 	}
 }

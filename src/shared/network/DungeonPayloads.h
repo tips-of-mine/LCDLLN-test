@@ -61,4 +61,13 @@ namespace engine::network
 		uint64_t instanceId, std::string_view shardEndpoint, uint8_t errorCode);
 	std::optional<EnterDungeonResponsePayload> ParseEnterDungeonResponsePayload(
 		const uint8_t* payload, size_t payloadSize);
+
+	/// M100.44 — builder packet complet (header + payload) pour la réponse
+	/// EnterDungeon, consommé par le `EnterDungeonHandler` master. Wrappe
+	/// `BuildEnterDungeonResponsePayload` dans un `PacketBuilder::Finalize`
+	/// (opcode 198, statusCode 0, request_id écho). Renvoie un vecteur
+	/// vide en cas d'échec d'encodage.
+	std::vector<uint8_t> BuildEnterDungeonResponsePacket(bool success,
+		uint64_t instanceId, std::string_view shardEndpoint, uint8_t errorCode,
+		uint32_t requestId, uint64_t sessionIdHeader);
 }

@@ -2,7 +2,10 @@
 
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
+#include "src/world_editor/volumes/MeshInsertDocument.h"
 #include "src/world_editor/volumes/arches/ArchTool.h"
+#include "src/world_editor/volumes/bridge/Phase11Validator.h"
+#include "src/world_editor/volumes/bridge/VMapBridge.h"
 #include "src/world_editor/volumes/caves/CaveTool.h"
 #include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
 #include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
@@ -1113,7 +1116,72 @@ namespace engine::editor::world::panels
 		ImGui::Separator();
 		ImGui::Text("Portails posés : %zu",
 			shell.GetDungeonPortalDocument().Size());
-		ImGui::TextDisabled("Opcode 197/198 réservés ; handler shard wiring → M100.44");
+
+		// --- M100.44 : VMap Bridge & Phase 11 Validation (clôture) ---
+		ImGui::Separator();
+		ImGui::TextUnformatted("VMap Bridge & validation (Phase 11) :");
+
+		namespace vb = engine::editor::world::volumes::bridge;
+		const auto& meshDoc   = shell.GetMeshInsertDocument();
+		const auto& portalDoc = shell.GetDungeonPortalDocument();
+
+		// Validation cohérence.
+		vb::Phase11Validator validator;
+		validator.SetCaveCatalog(&shell.GetCaveTool().Catalog());
+		validator.SetOverhangCatalog(&shell.GetOverhangTool().Catalog());
+		validator.SetArchCatalog(&shell.GetArchTool().Catalog());
+		validator.SetDungeonCatalog(&shell.GetDungeonPortalTool().Catalog());
+		const vb::ValidationReport report = validator.Validate(meshDoc, portalDoc);
+
+		ImGui::Text("Validation : %zu erreur(s), %zu avertissement(s), %zu info",
+			report.errorCount, report.warningCount, report.infoCount);
+		for (const auto& issue : report.issues)
+		{
+			ImVec4 col;
+			switch (issue.severity)
+			{
+				case vb::ValidationSeverity::Error:
+					col = ImVec4(1.0f, 0.45f, 0.45f, 1.0f); break;
+				case vb::ValidationSeverity::Warning:
+					col = ImVec4(1.0f, 0.82f, 0.40f, 1.0f); break;
+				default:
+					col = ImVec4(0.65f, 0.78f, 1.0f, 1.0f); break;
+			}
+			ImGui::TextColored(col, "  - %s", issue.message.c_str());
+		}
+
+		// Export VMap : gardé derrière l'absence d'erreurs bloquantes.
+		const bool exportBlocked = report.HasBlockingErrors();
+		ImGui::BeginDisabled(exportBlocked);
+		if (ImGui::Button("Exporter collision VMap (volume_collision.bin)"))
+		{
+			vb::VMapBridge bridge;
+			bridge.SetCaveCatalog(&shell.GetCaveTool().Catalog());
+			bridge.SetOverhangCatalog(&shell.GetOverhangTool().Catalog());
+			bridge.SetArchCatalog(&shell.GetArchTool().Catalog());
+			size_t unresolved = 0u;
+			bridge.Build(meshDoc, portalDoc, unresolved);
+			std::string err;
+			const std::string contentRoot = "game/data";
+			if (bridge.WriteToDisk(contentRoot, err))
+			{
+				LOG_INFO(EditorWorld,
+					"[ToolPropertiesPanel] VMap export OK : {} proxies ({} non résolus)",
+					bridge.Size(), unresolved);
+			}
+			else
+			{
+				LOG_WARN(EditorWorld, "[ToolPropertiesPanel] VMap export échec : {}", err);
+			}
+		}
+		ImGui::EndDisabled();
+		if (exportBlocked)
+		{
+			ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.45f, 1.0f),
+				"Export bloqué : corrige les erreurs ci-dessus.");
+		}
+
+		ImGui::TextDisabled("Opcode 197/198 câblés (EnterDungeonHandler) — M100.44");
 #else
 		(void)shell; (void)tool;
 #endif

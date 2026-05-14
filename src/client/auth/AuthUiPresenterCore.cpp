@@ -492,8 +492,9 @@ namespace engine::client
 						s.name = statusCfg.GetString(keyName, std::string("server") + std::to_string(i));
 						s.ok = statusCfg.GetBool(keyOk, true);
 						s.players = static_cast<uint32_t>(std::max<int64_t>(0, statusCfg.GetInt(keyPlayers, 0)));
-						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' ok={} players={}", i, s.name, s.ok ? "true" : "false",
-							s.players);
+						s.endpoint = statusCfg.GetString(base + "endpoint", "");
+						LOG_INFO(Core, "[StatusProbe] parse: shard [{}] name='{}' ok={} players={} endpoint='{}'", i, s.name,
+							s.ok ? "true" : "false", s.players, s.endpoint);
 						cache.servers.push_back(std::move(s));
 					}
 				}
@@ -1067,6 +1068,7 @@ namespace engine::client
 	void AuthUiPresenter::StartTermsAcceptWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartCharacterCreateWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::StartStatusProbeWorker(const engine::core::Config&) {}
+	void AuthUiPresenter::RefreshShardPickEntriesFromStatusCache() {}
 	void AuthUiPresenter::ResetMasterSession() {}
 	void AuthUiPresenter::StartMasterFlowWorker(const engine::core::Config&) {}
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config&) {}
@@ -1544,6 +1546,37 @@ namespace engine::client
 		return Tr(std::string("language.name.") + std::string(localeTag));
 	}
 
+	void AuthUiPresenter::RefreshShardPickEntriesFromStatusCache()
+	{
+		// m_shardPickEntries vient d'un unique SERVER_LIST pris pendant le flux de connexion,
+		// puis la connexion master est fermee : son current_load reste donc fige (souvent 0)
+		// meme si des joueurs entrent/sortent. La sonde /status, elle, est rafraichie toutes
+		// les 2 min et porte le compte a jour (sessionCharMap cote master). On reinjecte donc
+		// players -> current_load par correspondance d'endpoint.
+		if (m_shardPickEntries.empty() || m_statusCache.servers.empty())
+			return;
+		size_t patched = 0;
+		for (auto& entry : m_shardPickEntries)
+		{
+			if (entry.endpoint.empty())
+				continue;
+			for (const auto& srv : m_statusCache.servers)
+			{
+				if (srv.endpoint == entry.endpoint)
+				{
+					if (entry.current_load != srv.players)
+					{
+						entry.current_load = srv.players;
+						++patched;
+					}
+					break;
+				}
+			}
+		}
+		if (patched > 0)
+			LOG_INFO(Core, "[AuthUiPresenter] Shard pick: {} entree(s) de charge rafraichie(s) depuis la sonde /status", patched);
+	}
+
 	void AuthUiPresenter::PollAsyncResult(const engine::core::Config& cfg)
 	{
 		auto pendingKindTag = [](AsyncKind k) -> const char*
@@ -1613,6 +1646,9 @@ namespace engine::client
 		if (kind == AsyncKind::StatusProbe)
 		{
 			m_statusCache = copy.statusCache;
+			// La sonde /status porte le compte de joueurs a jour : on le repercute sur
+			// l'ecran de choix de serveur, sinon il reste fige sur l'instantanee de connexion.
+			RefreshShardPickEntriesFromStatusCache();
 			m_statusProbeCompletedOnce = true;
 			m_lastStatusProbeHttpSuccess = copy.success;
 			// Si on a fini la première vérification, on autorise les refresh périodiques.
@@ -1938,6 +1974,10 @@ namespace engine::client
 		if (kind == AsyncKind::Login && copy.shardChoiceRequired)
 		{
 			m_shardPickEntries = std::move(copy.serverListForPick);
+			// Applique tout de suite le dernier compte connu de la sonde /status (la
+			// connexion master est fermee apres SERVER_LIST : pas d'autre rafraichissement
+			// avant la prochaine sonde periodique).
+			RefreshShardPickEntriesFromStatusCache();
 			m_shardPickChoiceShardId = 0;
 			for (const auto& e : m_shardPickEntries)
 			{

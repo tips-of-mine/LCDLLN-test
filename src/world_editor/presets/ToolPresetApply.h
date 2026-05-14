@@ -7,6 +7,7 @@ namespace engine::editor::world
 	struct TerrainBrushParams;
 	struct SplatPaintParams;
 	struct WatershedSimulationParams;
+	struct MacroPolylineParams;
 }
 
 namespace engine::editor::world::erosion
@@ -74,5 +75,18 @@ namespace engine::editor::world::presets
 	/// posées par l'utilisateur) n'est jamais touché par un preset.
 	void ApplyRiverNetworkPreset(
 		engine::editor::world::WatershedSimulationParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/{mountain,valley}_macro.json` vers
+	/// `MacroPolylineParams` (partagé par Mountain Range et Valley Chain).
+	/// Clés globales : profile (0=Smoothstep/1=Linear/2=Exp),
+	/// noiseFrequency. Clés par-vertex : widthMeters, heightMeters,
+	/// noiseAmplitude, asymmetry — appliquées **à tous les vertices déjà
+	/// posés** (caractère de forme uniforme ; l'utilisateur retouche
+	/// ensuite individuellement). Si la polyline est vide, seuls les
+	/// paramètres globaux changent. Les positions des vertices et le
+	/// `mode` (Open/Loop) ne sont jamais touchés.
+	void ApplyMacroPolylinePreset(
+		engine::editor::world::MacroPolylineParams& params,
 		const ToolPreset& preset);
 }

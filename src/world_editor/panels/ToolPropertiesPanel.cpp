@@ -514,11 +514,16 @@ namespace engine::editor::world::panels
 		/// est identique sur les deux types (interface dupliquée), donc on
 		/// peut paramétrer le helper sur le tool concret.
 		template <typename Tool>
-		void RenderMacroPolylineBlock(Tool& tool, const char* title)
+		void RenderMacroPolylineBlock(Tool& tool, const char* title, const char* toolId)
 		{
 			using engine::editor::world::FlankProfile;
 			using engine::editor::world::PolylineMode;
 			using engine::editor::world::kMacroPolylineMaxVertices;
+
+			// M100.45 Phase B — outil migré Simple/Advanced.
+			const bool advanced =
+				engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+					== engine::editor::world::modes::EditorMode::Advanced;
 
 			auto& params = tool.MutableParams();
 
@@ -526,6 +531,15 @@ namespace engine::editor::world::panels
 			ImGui::Text("Vertices posés : %zu / max %zu",
 				params.vertices.size(), kMacroPolylineMaxVertices);
 			ImGui::Separator();
+
+			// M100.45 A.6 — dropdown de presets ({mountain,valley}_macro.json).
+			// Le preset applique les globaux + les valeurs par-vertex à tous
+			// les sommets déjà posés.
+			engine::editor::world::ui::RenderPresetDropdown(
+				toolId,
+				[&params](const engine::editor::world::presets::ToolPreset& preset) {
+					engine::editor::world::presets::ApplyMacroPolylinePreset(params, preset);
+				});
 
 			// Mode polyline (Open / Loop)
 			int modeIdx = (params.mode == PolylineMode::Loop) ? 1 : 0;
@@ -535,23 +549,26 @@ namespace engine::editor::world::panels
 				params.mode = (modeIdx == 1) ? PolylineMode::Loop : PolylineMode::Open;
 			}
 
-			// Profil flanc (Smoothstep / Linear / Exp)
-			int profIdx = static_cast<int>(params.profile);
-			static const char* kProfileLabels[3] = { "Smoothstep", "Linear", "Exp" };
-			if (ImGui::Combo("Profil flanc", &profIdx, kProfileLabels, 3))
+			if (advanced)
 			{
-				params.profile = static_cast<FlankProfile>(
-					std::clamp(profIdx, 0, 2));
-			}
+				// Profil flanc (Smoothstep / Linear / Exp)
+				int profIdx = static_cast<int>(params.profile);
+				static const char* kProfileLabels[3] = { "Smoothstep", "Linear", "Exp" };
+				if (ImGui::Combo("Profil flanc", &profIdx, kProfileLabels, 3))
+				{
+					params.profile = static_cast<FlankProfile>(
+						std::clamp(profIdx, 0, 2));
+				}
 
-			// Seed + fréquence bruit (globaux à la polyline).
-			int seed = static_cast<int>(params.noiseSeed);
-			if (ImGui::InputInt("Seed bruit", &seed))
-			{
-				params.noiseSeed = static_cast<uint32_t>(std::max(0, seed));
+				// Seed + fréquence bruit (globaux à la polyline).
+				int seed = static_cast<int>(params.noiseSeed);
+				if (ImGui::InputInt("Seed bruit", &seed))
+				{
+					params.noiseSeed = static_cast<uint32_t>(std::max(0, seed));
+				}
+				ImGui::SliderFloat("Fréq. bruit (1/m)",
+					&params.noiseFrequency, 0.0005f, 0.05f, "%.4f");
 			}
-			ImGui::SliderFloat("Fréq. bruit (1/m)",
-				&params.noiseFrequency, 0.0005f, 0.05f, "%.4f");
 
 			ImGui::Separator();
 
@@ -574,10 +591,14 @@ namespace engine::editor::world::panels
 				auto& v = params.vertices[tool.GetActiveVertex()];
 				ImGui::Text("Position monde : X=%.1f m   Z=%.1f m",
 					static_cast<double>(v.worldX), static_cast<double>(v.worldZ));
+				// Mode Simple : largeur + hauteur du vertex actif.
 				ImGui::SliderFloat("Largeur base (m)", &v.widthMeters,    10.0f, 2000.0f, "%.1f");
 				ImGui::SliderFloat("Hauteur crête (m)", &v.heightMeters,  -1000.0f, 1000.0f, "%.1f");
-				ImGui::SliderFloat("Bruit crête (m)",   &v.noiseAmplitude, 0.0f, 200.0f, "%.1f");
-				ImGui::SliderFloat("Asymétrie",         &v.asymmetry,     -1.0f, 1.0f, "%.2f");
+				if (advanced)
+				{
+					ImGui::SliderFloat("Bruit crête (m)",   &v.noiseAmplitude, 0.0f, 200.0f, "%.1f");
+					ImGui::SliderFloat("Asymétrie",         &v.asymmetry,     -1.0f, 1.0f, "%.2f");
+				}
 				if (ImGui::Button("Supprimer vertex"))
 				{
 					tool.RemoveVertex(tool.GetActiveVertex());
@@ -747,7 +768,7 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
-		RenderMacroPolylineBlock(tool, "Mountain Range — M100.35");
+		RenderMacroPolylineBlock(tool, "Mountain Range — M100.35", "mountain_macro");
 #else
 		(void)shell; (void)tool;
 #endif
@@ -759,7 +780,7 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
-		RenderMacroPolylineBlock(tool, "Valley Chain — M100.35");
+		RenderMacroPolylineBlock(tool, "Valley Chain — M100.35", "valley_macro");
 #else
 		(void)shell; (void)tool;
 #endif

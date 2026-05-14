@@ -12,6 +12,7 @@
 #include "src/world_editor/presets/ToolPresetApply.h"
 #include "src/world_editor/presets/ToolPresetIo.h"
 #include "src/world_editor/splat/SplatPaintTool.h"
+#include "src/world_editor/terrain/PolylineMacroCore.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
@@ -35,6 +36,9 @@ namespace
 	using engine::editor::world::TerrainBrushMode;
 	using engine::editor::world::SplatPaintParams;
 	using engine::editor::world::WatershedSimulationParams;
+	using engine::editor::world::MacroPolylineParams;
+	using engine::editor::world::PolylineVertex;
+	using engine::editor::world::FlankProfile;
 	using engine::editor::world::erosion::HydraulicSimulationParams;
 	using engine::editor::world::erosion::ThermalWindErosionParams;
 	using engine::editor::world::erosion::ErosionSubMode;
@@ -348,6 +352,64 @@ namespace
 		REQUIRE(p.minFlowThresholdCells == 800u);  // appliqué
 		REQUIRE(p.carveWidthMeters == 99.0f);      // intact
 	}
+
+	// --- macro polyline (mountain/valley) : globaux + par-vertex --------
+
+	/// Un preset macro applique les globaux + les valeurs par-vertex à
+	/// TOUS les sommets posés. Les positions des sommets restent intactes.
+	void Test_MacroPreset_AppliesGlobalsAndAllVertices()
+	{
+		MacroPolylineParams p;
+		PolylineVertex a; a.worldX = 10.0f; a.worldZ = 20.0f;
+		PolylineVertex b; b.worldX = 90.0f; b.worldZ = 80.0f;
+		p.vertices.push_back(a);
+		p.vertices.push_back(b);
+
+		const auto preset = MakePreset({
+			{ "profile", 2.0 },
+			{ "noiseFrequency", 0.006 },
+			{ "widthMeters", 1400.0 },
+			{ "heightMeters", 1600.0 },
+			{ "noiseAmplitude", 90.0 },
+			{ "asymmetry", 0.45 },
+		});
+		presets::ApplyMacroPolylinePreset(p, preset);
+
+		REQUIRE(p.profile == FlankProfile::Exp);
+		REQUIRE(p.noiseFrequency == 0.006f);
+		for (const auto& v : p.vertices)
+		{
+			REQUIRE(v.widthMeters == 1400.0f);
+			REQUIRE(v.heightMeters == 1600.0f);
+			REQUIRE(v.noiseAmplitude == 90.0f);
+			REQUIRE(v.asymmetry == 0.45f);
+		}
+		// positions intactes
+		REQUIRE(p.vertices[0].worldX == 10.0f);
+		REQUIRE(p.vertices[1].worldX == 90.0f);
+	}
+
+	/// Polyline vide : seuls les globaux changent, pas de crash.
+	void Test_MacroPreset_EmptyPolylineOnlyGlobals()
+	{
+		MacroPolylineParams p;
+		presets::ApplyMacroPolylinePreset(p,
+			MakePreset({ { "noiseFrequency", 0.02 }, { "widthMeters", 500.0 } }));
+		REQUIRE(p.noiseFrequency == 0.02f);
+		REQUIRE(p.vertices.empty());
+	}
+
+	/// Preset partiel : une clé par-vertex absente laisse ce champ intact
+	/// sur tous les sommets.
+	void Test_MacroPreset_PartialLeavesVertexFields()
+	{
+		MacroPolylineParams p;
+		PolylineVertex v; v.widthMeters = 333.0f; v.heightMeters = 777.0f;
+		p.vertices.push_back(v);
+		presets::ApplyMacroPolylinePreset(p, MakePreset({ { "heightMeters", 1000.0 } }));
+		REQUIRE(p.vertices[0].heightMeters == 1000.0f); // appliqué
+		REQUIRE(p.vertices[0].widthMeters == 333.0f);   // intact
+	}
 }
 
 int main()
@@ -369,6 +431,9 @@ int main()
 	Test_RiverNetworkPreset_AppliesAndLeavesSprings();
 	Test_RiverNetworkPreset_NegativeThresholdClamped();
 	Test_RiverNetworkPreset_PartialLeavesOthers();
+	Test_MacroPreset_AppliesGlobalsAndAllVertices();
+	Test_MacroPreset_EmptyPolylineOnlyGlobals();
+	Test_MacroPreset_PartialLeavesVertexFields();
 
 	if (g_failed > 0)
 	{

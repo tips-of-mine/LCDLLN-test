@@ -1,6 +1,7 @@
 #include "src/world_editor/presets/ToolPresetApply.h"
 
 #include "src/world_editor/splat/SplatPaintTool.h"
+#include "src/world_editor/terrain/PolylineMacroCore.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
@@ -151,5 +152,37 @@ namespace engine::editor::world::presets
 			"carveDepthMeters", p.carveDepthMeters));
 		p.carveWidthMeters = static_cast<float>(preset.GetParam(
 			"carveWidthMeters", p.carveWidthMeters));
+	}
+
+	void ApplyMacroPolylinePreset(
+		engine::editor::world::MacroPolylineParams& p,
+		const ToolPreset& preset)
+	{
+		using engine::editor::world::FlankProfile;
+
+		// --- Paramètres globaux à la polyline ---
+		if (preset.HasParam("profile"))
+		{
+			const int idx = std::clamp(
+				static_cast<int>(preset.GetParam("profile", 0.0)), 0, 2);
+			p.profile = static_cast<FlankProfile>(idx);
+		}
+		p.noiseFrequency = static_cast<float>(
+			preset.GetParam("noiseFrequency", p.noiseFrequency));
+
+		// --- Paramètres par-vertex : appliqués à TOUS les sommets posés.
+		// Si la polyline est vide, seuls les globaux changent. Les
+		// positions (worldX/worldZ) ne sont jamais touchées.
+		const bool hasWidth     = preset.HasParam("widthMeters");
+		const bool hasHeight    = preset.HasParam("heightMeters");
+		const bool hasNoiseAmp  = preset.HasParam("noiseAmplitude");
+		const bool hasAsymmetry = preset.HasParam("asymmetry");
+		for (auto& v : p.vertices)
+		{
+			if (hasWidth)     v.widthMeters    = static_cast<float>(preset.GetParam("widthMeters", v.widthMeters));
+			if (hasHeight)    v.heightMeters   = static_cast<float>(preset.GetParam("heightMeters", v.heightMeters));
+			if (hasNoiseAmp)  v.noiseAmplitude = static_cast<float>(preset.GetParam("noiseAmplitude", v.noiseAmplitude));
+			if (hasAsymmetry) v.asymmetry      = static_cast<float>(preset.GetParam("asymmetry", v.asymmetry));
+		}
 	}
 }

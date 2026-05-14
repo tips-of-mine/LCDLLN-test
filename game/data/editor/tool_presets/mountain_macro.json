@@ -5,26 +5,26 @@
     {
       "id": "hills",
       "displayName": "Collines",
-      "description": "Reliefs doux et bas, flancs arrondis. Pour campagnes vallonnées.",
+      "description": "Reliefs doux et bas, flancs arrondis, peu de bruit. Campagnes vallonnées.",
       "parameters": {
-        "targetHeightMeters": 120.0,
-        "baseWidthMeters": 600.0,
-        "ridgeSharpness": 0.2,
-        "noiseAmplitude": 0.15,
-        "noiseFrequency": 0.004,
+        "profile": 0,
+        "noiseFrequency": 0.012,
+        "widthMeters": 400.0,
+        "heightMeters": 120.0,
+        "noiseAmplitude": 12.0,
         "asymmetry": 0.1
       }
     },
     {
       "id": "pre_alpine",
       "displayName": "Pré-Alpes",
-      "description": "Chaîne de moyenne montagne, crêtes marquées mais accessibles.",
+      "description": "Moyenne montagne, crêtes marquées mais accessibles.",
       "parameters": {
-        "targetHeightMeters": 900.0,
-        "baseWidthMeters": 1400.0,
-        "ridgeSharpness": 0.5,
-        "noiseAmplitude": 0.35,
-        "noiseFrequency": 0.0025,
+        "profile": 0,
+        "noiseFrequency": 0.008,
+        "widthMeters": 900.0,
+        "heightMeters": 600.0,
+        "noiseAmplitude": 45.0,
         "asymmetry": 0.25
       }
     },
@@ -33,11 +33,11 @@
       "displayName": "Alpes",
       "description": "Haute montagne, crêtes aiguës, flancs raides asymétriques.",
       "parameters": {
-        "targetHeightMeters": 2600.0,
-        "baseWidthMeters": 2200.0,
-        "ridgeSharpness": 0.8,
-        "noiseAmplitude": 0.55,
-        "noiseFrequency": 0.002,
+        "profile": 2,
+        "noiseFrequency": 0.006,
+        "widthMeters": 1400.0,
+        "heightMeters": 1600.0,
+        "noiseAmplitude": 90.0,
         "asymmetry": 0.45
       }
     },
@@ -46,11 +46,11 @@
       "displayName": "Himalayen",
       "description": "Chaîne extrême, sommets très hauts et tranchants.",
       "parameters": {
-        "targetHeightMeters": 5200.0,
-        "baseWidthMeters": 3200.0,
-        "ridgeSharpness": 0.95,
-        "noiseAmplitude": 0.7,
-        "noiseFrequency": 0.0015,
+        "profile": 2,
+        "noiseFrequency": 0.004,
+        "widthMeters": 1900.0,
+        "heightMeters": 3200.0,
+        "noiseAmplitude": 140.0,
         "asymmetry": 0.6
       }
     }

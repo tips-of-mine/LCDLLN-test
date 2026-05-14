@@ -1207,6 +1207,26 @@ namespace engine::editor
 				ImGui::TextDisabled("Le clic gauche est ignore quand la souris est au-dessus de l'UI ; visez la zone 3D.");
 				ImGui::Separator();
 			}
+			// M100.35 — La BeginTabBar("OutilsTabs") historique a été
+			// supprimée. Sélection d'outil et paramètres se font désormais
+			// via la barre à icônes du WorldEditorShell (en haut du
+			// viewport) et le panneau "Tool Properties" du shell. Les
+			// sliders/options de l'outil actif (Sculpt, Stamp, Splat, Lake,
+			// River, Mountain Range, Valley Chain) y sont rendus
+			// contextuellement.
+			ImGui::TextDisabled("Sélection d'outil : barre d'icônes en haut du viewport.");
+			ImGui::TextDisabled("Paramètres : panneau « Tool Properties ».");
+			ImGui::Separator();
+			ImGui::TextWrapped(
+				"Outils historiquement intégrés ici (« Herbe », « Objets », "
+				"« Routes ») seront migrés vers de nouveaux outils dédiés dans "
+				"des tickets ultérieurs (M100.18 végétation, M100.17 placement, "
+				"M100.29 splines).");
+#if 0
+			// Bloc historique préservé sous #if 0 pour faciliter la migration
+			// progressive des sous-modes vers les nouveaux outils. Ne pas
+			// activer : il pousse `m_session->TerrainEditMode()` qui n'a plus
+			// de consommateur depuis le passage à `WorldEditorShell::SetActiveTool`.
 			if (ImGui::BeginTabBar("OutilsTabs"))
 			{
 				int& tm = m_session->TerrainEditMode();
@@ -1446,6 +1466,7 @@ namespace engine::editor
 				tm = std::clamp(tm, 0, 4);
 				ImGui::EndTabBar();
 			}
+#endif
 			ImGui::End();
 
 			ImGui::Begin("Import assets");

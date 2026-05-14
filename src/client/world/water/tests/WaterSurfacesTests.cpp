@@ -64,11 +64,11 @@ namespace
 	{
 		WaterScene src = MakeLakeScene();
 		std::vector<uint8_t> bytes; std::string err;
-		REQUIRE(SaveWaterBin(src, bytes, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(SaveWaterBin(src, o, bytes, err)); }
 		REQUIRE(err.empty());
 
 		WaterScene dst;
-		REQUIRE(LoadWaterBin(std::span<const uint8_t>(bytes), dst, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(LoadWaterBin(std::span<const uint8_t>(bytes), dst, o, err)); }
 		REQUIRE(dst.lakes.size() == 1);
 		REQUIRE(dst.rivers.size() == 0);
 		REQUIRE(dst.lakes[0].name == src.lakes[0].name);
@@ -84,10 +84,10 @@ namespace
 	{
 		WaterScene src = MakeRiverScene();
 		std::vector<uint8_t> bytes; std::string err;
-		REQUIRE(SaveWaterBin(src, bytes, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(SaveWaterBin(src, o, bytes, err)); }
 
 		WaterScene dst;
-		REQUIRE(LoadWaterBin(std::span<const uint8_t>(bytes), dst, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(LoadWaterBin(std::span<const uint8_t>(bytes), dst, o, err)); }
 		REQUIRE(dst.lakes.size() == 0);
 		REQUIRE(dst.rivers.size() == 1);
 		REQUIRE(dst.rivers[0].name == src.rivers[0].name);
@@ -112,10 +112,10 @@ namespace
 		src.rivers = MakeRiverScene().rivers;
 
 		std::vector<uint8_t> bytes; std::string err;
-		REQUIRE(SaveWaterBin(src, bytes, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(SaveWaterBin(src, o, bytes, err)); }
 
 		WaterScene dst;
-		REQUIRE(LoadWaterBin(std::span<const uint8_t>(bytes), dst, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(LoadWaterBin(std::span<const uint8_t>(bytes), dst, o, err)); }
 		REQUIRE(dst.lakes.size() == 2);
 		REQUIRE(dst.rivers.size() == 1);
 		REQUIRE(dst.lakes[0].name == "lake_test");
@@ -132,7 +132,8 @@ namespace
 		// version, builderVer, engineVer, hash : laissés à 0
 		// Counts 0/0
 		WaterScene dst; std::string err;
-		REQUIRE(!LoadWaterBin(std::span<const uint8_t>(bytes), dst, err));
+		engine::world::water::OceanSectionData oceanOut;
+		REQUIRE(!LoadWaterBin(std::span<const uint8_t>(bytes), dst, oceanOut, err));
 		REQUIRE(err.find("magic") != std::string::npos);
 	}
 
@@ -140,11 +141,12 @@ namespace
 	{
 		WaterScene src = MakeLakeScene();
 		std::vector<uint8_t> bytes; std::string err;
-		REQUIRE(SaveWaterBin(src, bytes, err));
+		{ engine::world::water::OceanSectionData o; REQUIRE(SaveWaterBin(src, o, bytes, err)); }
 		// Flip un byte du payload (offset 24 + 8 = lakeCount/riverCount frontière)
 		bytes[32] ^= 0xFFu;
 		WaterScene dst;
-		REQUIRE(!LoadWaterBin(std::span<const uint8_t>(bytes), dst, err));
+		engine::world::water::OceanSectionData oceanOut;
+		REQUIRE(!LoadWaterBin(std::span<const uint8_t>(bytes), dst, oceanOut, err));
 		REQUIRE(err.find("contentHash") != std::string::npos);
 	}
 

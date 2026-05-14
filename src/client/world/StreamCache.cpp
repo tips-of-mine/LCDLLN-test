@@ -280,8 +280,14 @@ namespace engine::world
 
 		auto scene = std::make_shared<engine::world::water::WaterScene>();
 		std::string err;
+		// M100.37 : la struct ocean lue par le client de jeu via le StreamCache
+		// n'est pas exposée ici (le client lit la scene seule, sans
+		// connaissance de `OceanSettings`). On utilise un buffer local
+		// éphémère qu'on ignore. Le futur ticket de fog distance / weather
+		// branchera proprement ces valeurs côté client jeu.
+		engine::world::water::OceanSectionData oceanIgnored;
 		if (!engine::world::water::LoadWaterBin(
-			std::span<const uint8_t>(blob), *scene, err))
+			std::span<const uint8_t>(blob), *scene, oceanIgnored, err))
 		{
 			LOG_WARN(World, "[StreamCache] LoadWaterBin fail ({}): {}", fullPath, err);
 			return nullptr;

@@ -292,6 +292,18 @@ add_library(engine_core
   src/world_editor/terrain/TerrainStampTool.cpp
   src/world_editor/terrain/StampLibrary.cpp
   src/world_editor/terrain/ProceduralStampGenerators.cpp
+  # M100.35 — Toolbar à icônes + outils macros terrain (Mountain Range &
+  # Valley Chain). Pas de Vulkan, pas de PNG d'icônes embarqués : la toolbar
+  # rend des placeholders procéduraux (carré coloré + lettre) via
+  # ImDrawList. Voir game/data/icons/editor/tools/README.md.
+  src/world_editor/ui/EditorToolbar.cpp
+  src/world_editor/ui/ToolbarIconAtlas.cpp
+  src/world_editor/terrain/PolylineMacroCore.cpp
+  src/world_editor/terrain/MacroPolylineCommandBase.cpp
+  src/world_editor/terrain/MountainRangeCommand.cpp
+  src/world_editor/terrain/MountainRangeTool.cpp
+  src/world_editor/terrain/ValleyChainCommand.cpp
+  src/world_editor/terrain/ValleyChainTool.cpp
   src/world_editor/splat/SplatPaintCommand.cpp
   src/world_editor/splat/SplatPaintTool.cpp
   src/world_editor/splat/SplatRules.cpp
@@ -302,6 +314,73 @@ add_library(engine_core
   src/world_editor/water/AddRiverCommand.cpp
   src/world_editor/water/LakeTool.cpp
   src/world_editor/water/RiverTool.cpp
+  # M100.36 — River Network Generator (watershed D8 + OceanSettings)
+  src/world_editor/water/ConsolidatedHeightGrid.cpp
+  src/world_editor/water/D8FlowDirection.cpp
+  src/world_editor/water/FlowAccumulation.cpp
+  src/world_editor/water/PathSimplifyDouglasPeucker.cpp
+  src/world_editor/water/WatershedSimulation.cpp
+  src/world_editor/water/RiverNetworkCommand.cpp
+  src/world_editor/water/RiverNetworkTool.cpp
+  # M100.37 — Coastline & Sea Level Editor (marching squares + smoothing
+  # + cliffs ; étend `OceanSettings` v3 + `LakeInstance::isOcean`).
+  src/world_editor/water/CoastlineSegmentExtractor.cpp
+  src/world_editor/water/CoastlineStats.cpp
+  src/world_editor/water/CoastlineSmoothing.cpp
+  src/world_editor/water/CoastlineCliffs.cpp
+  src/world_editor/water/CoastlineCommand.cpp
+  src/world_editor/water/CoastlineEditorTool.cpp
+  # M100.38 — Hydraulic Erosion (particle-based, réutilise grid
+  # consolidé + D8 + flow accumulation de M100.36).
+  src/world_editor/terrain/erosion/BilinearGradientSample.cpp
+  src/world_editor/terrain/erosion/DropletInitDistribution.cpp
+  src/world_editor/terrain/erosion/DropletKernel.cpp
+  src/world_editor/terrain/erosion/HydraulicSimulation.cpp
+  src/world_editor/terrain/erosion/HydraulicErosionCommand.cpp
+  src/world_editor/terrain/erosion/HydraulicErosionTool.cpp
+  # M100.39 — Thermal & Wind Erosion (clôt Phase 2.5 terrain naturaliste).
+  src/world_editor/terrain/erosion/ThermalSimulation.cpp
+  src/world_editor/terrain/erosion/WindSimulation.cpp
+  src/world_editor/terrain/erosion/ThermalWindErosionCommand.cpp
+  src/world_editor/terrain/erosion/ThermalWindErosionTool.cpp
+  # M100.40 — Mesh Insert Foundation + Cave Tool (démarre Phase 11
+  # « Volumes 3D »). MVP éditeur-side : data model + IO binaire LCMI v1 +
+  # CRUD document + outil Cave avec catalog JSON + camouflage splat.
+  # Rendu glTF runtime + gizmo + auto-props reportés en follow-ups.
+  src/world_editor/volumes/MeshInsertIo.cpp
+  src/world_editor/volumes/MeshInsertDocument.cpp
+  src/world_editor/volumes/caves/CaveCatalog.cpp
+  src/world_editor/volumes/caves/CaveCamouflage.cpp
+  src/world_editor/volumes/caves/PlaceCaveCommand.cpp
+  src/world_editor/volumes/caves/CaveTool.cpp
+  # M100.41 — Overhang Cliff Tool (Phase 11, réutilise MeshInsertSystem).
+  # Pas de nouveau format binaire ; instances avec
+  # `insertCategory = "overhang"` partagent `instances/mesh_inserts.bin`
+  # avec les grottes de M100.40.
+  src/world_editor/volumes/overhangs/OverhangCatalog.cpp
+  src/world_editor/volumes/overhangs/PlaceOverhangCommand.cpp
+  src/world_editor/volumes/overhangs/OverhangTool.cpp
+  # M100.42 — Natural Arch Tool (Phase 11, réutilise MeshInsertSystem).
+  # Pas de nouveau format binaire ; instances avec
+  # `insertCategory = "arch"` partagent `instances/mesh_inserts.bin`.
+  src/world_editor/volumes/arches/ArchCatalog.cpp
+  src/world_editor/volumes/arches/PlaceArchCommand.cpp
+  src/world_editor/volumes/arches/ArchTool.cpp
+  # M100.43 — Dungeon Portal System (Phase 11). Premier ticket Phase 11
+  # qui touche au serveur : opcodes 197/198 + migration 0063 +
+  # nouveau format binaire LCDP v1 dans `instances/dungeon_portals.bin`
+  # (distinct de LCMI car porte des metadata gameplay).
+  src/world_editor/volumes/dungeons/DungeonCatalog.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalDocument.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalIo.cpp
+  src/world_editor/volumes/dungeons/DungeonPortalTool.cpp
+  src/world_editor/volumes/dungeons/PlaceDungeonPortalCommand.cpp
+  # M100.44 — VMap Bridge & Phase 11 Validation (clôture Phase 11).
+  # VMapBridge : export AABB proxy collision (LCVC v1) depuis les
+  # documents de volumes. Phase11Validator : checks de cohérence
+  # cross-fichiers avant export.
+  src/world_editor/volumes/bridge/VMapBridge.cpp
+  src/world_editor/volumes/bridge/Phase11Validator.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -447,6 +526,7 @@ add_library(engine_core
   src/shared/network/AuthRegisterPayloads.cpp
   src/shared/network/CharacterPayloads.cpp
   src/shared/network/ChatPayloads.cpp
+  src/shared/network/DungeonPayloads.cpp   # M100.43 — opcodes 197/198, réservés (handler M100.44)
   src/shared/network/IgnoreListPayloads.cpp
   src/shared/network/MailPayloads.cpp
   src/shared/network/QuestPayloads.cpp
@@ -1045,6 +1125,168 @@ if(WIN32)
     target_compile_options(terrain_stamp_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME terrain_stamp_tests COMMAND terrain_stamp_tests)
+endif()
+
+# M100.35 — Tests unitaires CPU pour les outils macros terrain (Mountain
+# Range & Valley Chain). Couvre la rasterisation sparse multi-chunks, la
+# couture inter-chunks, le déterminisme du bruit, l'asymétrie, et la
+# symétrie Execute/Undo de la commande. Pure CPU, gating WIN32 (pattern
+# terrain_sculpt / terrain_stamp).
+if(WIN32)
+  add_executable(macro_terrain_tests src/world_editor/tests/MacroTerrainTests.cpp)
+  target_include_directories(macro_terrain_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(macro_terrain_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(macro_terrain_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME macro_terrain_tests COMMAND macro_terrain_tests)
+endif()
+
+# M100.35 — Tests unitaires CPU pour la toolbar à icônes : layout, hit-test
+# pur, routage des clics vers `WorldEditorShell::SetActiveTool`, invariant
+# de couverture viewport, fallback placeholder de l'atlas d'icônes.
+if(WIN32)
+  add_executable(editor_toolbar_tests src/world_editor/tests/EditorToolbarTests.cpp)
+  target_include_directories(editor_toolbar_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(editor_toolbar_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(editor_toolbar_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME editor_toolbar_tests COMMAND editor_toolbar_tests)
+endif()
+
+# M100.36 — Tests unitaires CPU pour le watershed D8 + flow accumulation +
+# Douglas-Peucker + OceanSettings + RiverNetworkCommand + water.bin v1/v2
+# round-trip. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(river_network_tests src/world_editor/tests/RiverNetworkTests.cpp)
+  target_include_directories(river_network_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(river_network_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(river_network_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME river_network_tests COMMAND river_network_tests)
+endif()
+
+# M100.37 — Tests unitaires CPU pour la Coastline : marching squares,
+# stats, smoothing band-filtered, cliffs slope-driven, water.bin v3
+# round-trip (incl. LakeInstance::isOcean + OceanSettings étendu),
+# CoastlineCommand Apply/Undo. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(coastline_tests src/world_editor/tests/CoastlineTests.cpp)
+  target_include_directories(coastline_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(coastline_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(coastline_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME coastline_tests COMMAND coastline_tests)
+endif()
+
+# M100.38 — Tests unitaires CPU pour l'érosion hydraulique : déterminisme,
+# bilinear distribute (conservation + parité couture), single-droplet,
+# HydraulicErosionCommand Apply/Undo, max delta clamp. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(hydraulic_erosion_tests src/world_editor/tests/HydraulicErosionTests.cpp)
+  target_include_directories(hydraulic_erosion_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(hydraulic_erosion_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(hydraulic_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME hydraulic_erosion_tests COMMAND hydraulic_erosion_tests)
+endif()
+
+# M100.39 — Tests unitaires CPU pour l'érosion thermique + éolienne
+# (clôt Phase 2.5) : thermal flat / cone / mass conservation / convergence /
+# preserveSteep, wind flat / déterminisme / 0 particules, Command
+# Apply/Undo bit-equal. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(thermal_wind_erosion_tests src/world_editor/tests/ThermalWindErosionTests.cpp)
+  target_include_directories(thermal_wind_erosion_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(thermal_wind_erosion_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(thermal_wind_erosion_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME thermal_wind_erosion_tests COMMAND thermal_wind_erosion_tests)
+endif()
+
+# M100.40 — Tests unitaires CPU pour la fondation Mesh Insert + Cave Tool
+# (démarre Phase 11) : LCMI v1 binary round-trip, MeshInsertDocument CRUD,
+# CaveCatalog JSON parsing, CaveCamouflage poids, PlaceCaveCommand
+# Apply/Undo bit-equal. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(mesh_insert_tests src/world_editor/tests/MeshInsertTests.cpp)
+  target_include_directories(mesh_insert_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(mesh_insert_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(mesh_insert_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME mesh_insert_tests COMMAND mesh_insert_tests)
+endif()
+
+# M100.41 — Tests unitaires CPU pour l'Overhang Cliff Tool (Phase 11).
+# OverhangCatalog JSON parsing, PlaceOverhangCommand Apply/Undo, gating
+# slope. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(overhang_tool_tests src/world_editor/tests/OverhangToolTests.cpp)
+  target_include_directories(overhang_tool_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(overhang_tool_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(overhang_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME overhang_tool_tests COMMAND overhang_tool_tests)
+endif()
+
+# M100.42 — Tests unitaires CPU pour le Natural Arch Tool (Phase 11).
+# ArchCatalog JSON parsing, PlaceArchCommand Apply/Undo, ArchTool
+# dérivation yaw/scale/position, garde-fou scale hors bornes.
+if(WIN32)
+  add_executable(arch_tool_tests src/world_editor/tests/ArchToolTests.cpp)
+  target_include_directories(arch_tool_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(arch_tool_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(arch_tool_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME arch_tool_tests COMMAND arch_tool_tests)
+endif()
+
+# M100.43 — Tests unitaires CPU pour le Dungeon Portal System (Phase 11).
+# LCDP v1 round-trip, Document CRUD, Catalog JSON, Command Apply/Undo,
+# Tool gating. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(dungeon_portal_tests src/world_editor/tests/DungeonPortalTests.cpp)
+  target_include_directories(dungeon_portal_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(dungeon_portal_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(dungeon_portal_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME dungeon_portal_tests COMMAND dungeon_portal_tests)
+endif()
+
+# M100.43/.44 — Tests round-trip pour les payloads EnterDungeon{Request,
+# Response} (opcodes 197/198). M100.43 réserve les opcodes ; M100.44
+# câble le handler + ajoute BuildEnterDungeonResponsePacket.
+if(WIN32)
+  add_executable(dungeon_payloads_tests src/shared/network/DungeonPayloadsTests.cpp)
+  target_include_directories(dungeon_payloads_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(dungeon_payloads_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(dungeon_payloads_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME dungeon_payloads_tests COMMAND dungeon_payloads_tests)
+endif()
+
+# M100.44 — Tests unitaires CPU pour VMap Bridge & Phase 11 Validation
+# (clôture Phase 11). TransformLocalAabbToWorld, VMapBridge::Build,
+# LCVC v1 round-trip, Phase11Validator (guids dupliqués, gltf vide,
+# template orphelin, difficulty range, triggerRadius). Pure CPU, WIN32.
+if(WIN32)
+  add_executable(phase11_bridge_tests src/world_editor/tests/Phase11BridgeTests.cpp)
+  target_include_directories(phase11_bridge_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(phase11_bridge_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(phase11_bridge_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME phase11_bridge_tests COMMAND phase11_bridge_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

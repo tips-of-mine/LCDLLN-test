@@ -1,0 +1,35 @@
+{
+  "_comment": "M100.43 placeholder catalog. Templates de donjon — métadonnées descriptives seulement. Le `id` est l'identifiant string consommé par le master (handler EnterDungeonHandler, M100.44) pour résoudre une entry dans `dungeon_instances` (migration 0063). Le `decorativeMesh` est purement cosmétique (arche d'entrée, brasier). Pas de .gltf livré : ticket d'art dédié.",
+  "dungeons": [
+    {
+      "id": "dungeon_starter_keep",
+      "displayName": "Donjon du Donjon Royal",
+      "description": "Un donjon d'introduction pour les nouveaux héros. Niveau 1-10.",
+      "decorativeMesh": "meshes/dungeons/decorative/starter_keep_entrance.gltf",
+      "thumbnail": "meshes/dungeons/thumbnails/starter_keep.png",
+      "requiredLevel": 1,
+      "minDifficulty": 1,
+      "maxDifficulty": 1
+    },
+    {
+      "id": "dungeon_crypt_of_echoes",
+      "displayName": "Crypte des Échos",
+      "description": "Crypte hantée. Mode normal et héroïque. Niveau 15-25.",
+      "decorativeMesh": "meshes/dungeons/decorative/crypt_entrance.gltf",
+      "thumbnail": "meshes/dungeons/thumbnails/crypt_of_echoes.png",
+      "requiredLevel": 15,
+      "minDifficulty": 1,
+      "maxDifficulty": 2
+    },
+    {
+      "id": "dungeon_abyssal_caverns",
+      "displayName": "Cavernes Abyssales",
+      "description": "Donjon haut niveau, 3 modes de difficulté (Normal/Héroïque/Mythique). Niveau 40+.",
+      "decorativeMesh": "meshes/dungeons/decorative/abyssal_entrance.gltf",
+      "thumbnail": "meshes/dungeons/thumbnails/abyssal_caverns.png",
+      "requiredLevel": 40,
+      "minDifficulty": 1,
+      "maxDifficulty": 3
+    }
+  ]
+}

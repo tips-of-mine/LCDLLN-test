@@ -34,6 +34,7 @@
 #include "src/masterd/handlers/character/CharacterDeleteHandler.h"
 #include "src/masterd/handlers/character/CharacterSavePositionHandler.h"
 #include "src/masterd/handlers/character/CharacterEnterWorldHandler.h"
+#include "src/masterd/handlers/dungeon/EnterDungeonHandler.h"
 #include "src/masterd/handlers/chat/ChatRelayHandler.h"
 #include "src/masterd/handlers/mail/MailHandler.h"
 #include "src/masterd/mail/InMemoryMailStore.h"
@@ -391,6 +392,15 @@ int main(int argc, char** argv)
 	characterEnterWorldHandler.SetConnectionSessionMap(&connSessionMap);
 	characterEnterWorldHandler.SetSessionCharacterMap(&sessionCharMap);
 	characterEnterWorldHandler.SetConnectionPool(&dbPool);
+
+	// M100.44 — handler des portails de donjon (Phase 11). Câble les
+	// opcodes 197/198 réservés par M100.43 : INSERT dans dungeon_instances
+	// (migration 0063) + renvoi de l'instanceId créé.
+	engine::server::EnterDungeonHandler enterDungeonHandler;
+	enterDungeonHandler.SetServer(&server);
+	enterDungeonHandler.SetSessionManager(&sessionManager);
+	enterDungeonHandler.SetConnectionSessionMap(&connSessionMap);
+	enterDungeonHandler.SetConnectionPool(&dbPool);
 
 	// Chat MVP — handler de relais des messages chat (broadcast à toutes les sessions actives).
 	engine::server::ChatRelayHandler chatRelayHandler;
@@ -977,7 +987,7 @@ int main(int argc, char** argv)
 	PrintStartupBanner();
 
 	LOG_DEBUG(Server, "[MAIN_SRV] avant SetPacketHandler");
-	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
+	server.SetPacketHandler([&authHandler, &shardRegisterHandler, &shardTicketHandler, &serverListHandler, &passwordResetHandler, &termsHandler, &characterCreateHandler, &characterListHandler, &characterDeleteHandler, &characterSavePositionHandler, &chatRelayHandler, &characterEnterWorldHandler, &enterDungeonHandler, &mailHandler, &questHandler, &ignoreListHandler, &gmTicketHandler, &tradeHandler, &reputationHandler, &lfgHandler, &cinematicHandler, &skillHandler, &arenaHandler, &bgHandler, &outdoorPvpHandler, &weatherHandler, &gameEventHandler, &guildHandler, &auctionHandler, &lootHandler, &lunarHandler, &adminCommandHandler](uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionIdHeader,
 		const uint8_t* payload, size_t payloadSize) {
 		using namespace engine::network;
 		if (opcode == kOpcodeShardRegister || opcode == kOpcodeShardHeartbeat)
@@ -1004,6 +1014,8 @@ int main(int argc, char** argv)
 			chatRelayHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeCharacterEnterWorldRequest)
 			characterEnterWorldHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
+		else if (opcode == kOpcodeEnterDungeonRequest)
+			enterDungeonHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeMailSendRequest
 		      || opcode == kOpcodeMailListInboxRequest
 		      || opcode == kOpcodeMailReadRequest

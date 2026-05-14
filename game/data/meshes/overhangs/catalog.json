@@ -1,0 +1,38 @@
+{
+  "_comment": "M100.41 placeholder catalog. Les .gltf et thumbnails seront livrés par un ticket d'art dédié. En MVP, ces entrées suffisent à exercer le tool de placement (data model + persistance LCMI v1 partagée avec M100.40).",
+  "overhangs": [
+    {
+      "id": "overhang_small_01",
+      "gltf": "meshes/overhangs/overhang_small_01.gltf",
+      "displayName": "Petit surplomb",
+      "thumbnail": "meshes/overhangs/thumbnails/overhang_small_01.png",
+      "aabbMin": [-2.0, 0.0, -3.0],
+      "aabbMax": [2.0, 1.5, 0.5],
+      "wallAnchorPoint": [0.0, 0.0, 0.0],
+      "wallNormalDirection": [0.0, 0.0, -1.0],
+      "coverageRadius": 3.0
+    },
+    {
+      "id": "overhang_medium_01",
+      "gltf": "meshes/overhangs/overhang_medium_01.gltf",
+      "displayName": "Surplomb moyen",
+      "thumbnail": "meshes/overhangs/thumbnails/overhang_medium_01.png",
+      "aabbMin": [-4.0, 0.0, -6.0],
+      "aabbMax": [4.0, 3.0, 1.0],
+      "wallAnchorPoint": [0.0, 0.0, 0.5],
+      "wallNormalDirection": [0.0, 0.0, -1.0],
+      "coverageRadius": 5.0
+    },
+    {
+      "id": "overhang_large_01",
+      "gltf": "meshes/overhangs/overhang_large_01.gltf",
+      "displayName": "Grand surplomb",
+      "thumbnail": "meshes/overhangs/thumbnails/overhang_large_01.png",
+      "aabbMin": [-7.0, 0.0, -10.0],
+      "aabbMax": [7.0, 5.0, 2.0],
+      "wallAnchorPoint": [0.0, 0.5, 1.0],
+      "wallNormalDirection": [0.0, 0.0, -1.0],
+      "coverageRadius": 8.0
+    }
+  ]
+}

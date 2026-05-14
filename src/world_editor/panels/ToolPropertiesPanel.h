@@ -9,7 +9,7 @@ namespace engine::editor::world
 {
 	class WorldEditorShell;
 }
-namespace engine::editor::world { class LakeTool; class RiverTool; }
+namespace engine::editor::world { class LakeTool; class RiverTool; class MountainRangeTool; class ValleyChainTool; class RiverNetworkTool; class CoastlineEditorTool; namespace erosion { class HydraulicErosionTool; class ThermalWindErosionTool; } namespace volumes::caves { class CaveTool; } namespace volumes::overhangs { class OverhangTool; } namespace volumes::arches { class ArchTool; } namespace volumes::dungeons { class DungeonPortalTool; } }
 
 namespace engine::editor::world::panels
 {
@@ -55,6 +55,82 @@ namespace engine::editor::world::panels
 			engine::editor::world::LakeTool& tool);
 		void RenderRiverParams(engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::RiverTool& tool);
+		/// M100.35 — Bloc UI "Macro polyline" pour l'outil Mountain Range.
+		/// Affiche la liste des vertices posés, les paramètres globaux
+		/// (mode Loop, profil, seed/freq bruit), le bloc du vertex sélectionné
+		/// (largeur, hauteur, bruit, asymétrie) et les boutons Apply/Cancel.
+		void RenderMountainRangeParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::MountainRangeTool& tool);
+		/// M100.35 — Identique à `RenderMountainRangeParams` pour Valley Chain
+		/// (defaults différents côté UI, sémantique soustractive côté outil).
+		void RenderValleyChainParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::ValleyChainTool& tool);
+
+		/// M100.36 — Bloc UI "River Network" pour la simulation watershed :
+		/// liste des sources, sliders sea level (binding direct
+		/// `WaterDocument::OceanSettings`), threshold, simplification,
+		/// auto-lakes, carving, boutons Simulate / Apply / Cancel.
+		void RenderRiverNetworkParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::RiverNetworkTool& tool);
+
+		/// M100.37 — Bloc UI "Coastline" pour l'édition du niveau de mer
+		/// et la génération automatique de l'océan : sliders sea level
+		/// (binding direct `WaterDocument::OceanSettings`), couleur de fond,
+		/// turbidité, smoothing / falaises optionnels, statistiques live.
+		void RenderCoastlineParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::CoastlineEditorTool& tool);
+
+		/// M100.38 — Bloc UI "Hydraulic Erosion" : sliders physique
+		/// (sediment capacity, erosion/deposition rates, gravity, inertia,
+		/// evaporation), distribution de seeding, paramètres de bornes,
+		/// boutons Simulate / Apply / Cancel / Re-simulate, stats du
+		/// dernier résultat.
+		void RenderHydraulicErosionParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::erosion::HydraulicErosionTool& tool);
+
+		/// M100.39 — Bloc UI "Thermal / Wind Erosion" (clôt la Phase 2.5).
+		/// Radio sous-mode (Thermal / Wind / Both), deux sections de
+		/// paramètres physiques, encart workflow recommandé, stats résultat.
+		void RenderThermalWindErosionParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::erosion::ThermalWindErosionTool& tool);
+
+		/// M100.40 — Bloc UI "Cave" (démarre la Phase 11 « Volumes 3D »).
+		/// Catalogue de grottes glTF (sélection par id) + sliders position,
+		/// rotation, scale, camouflage splat « rocher », flags volume
+		/// intérieur / reverb / water ingress, intensité probe lumière.
+		void RenderCaveParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::caves::CaveTool& tool);
+
+		/// M100.41 — Bloc UI "Overhang" (Phase 11). Catalogue de surplombs
+		/// glTF + sliders position, yaw normal mur, tilt latéral, scale,
+		/// validation manuelle de la slope locale (en attendant un raycast
+		/// normal automatique de M100.17).
+		void RenderOverhangParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::overhangs::OverhangTool& tool);
+
+		/// M100.42 — Bloc UI "Arch" (Phase 11). Catalogue d'arches glTF +
+		/// saisie des deux pieds monde (pointA, pointB) ; le panel affiche
+		/// les valeurs dérivées (span, yaw, scale) en lecture seule pour
+		/// que l'utilisateur visualise l'effet avant Apply.
+		void RenderArchParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::arches::ArchTool& tool);
+
+		/// M100.43 — Bloc UI "Dungeon Portal" (Phase 11). Catalogue de
+		/// templates de donjon + sliders triggerRadius / yaw / requiredLevel
+		/// / difficulty range / flags. Compteur "Portails posés" lit
+		/// `DungeonPortalDocument`.
+		void RenderDungeonPortalParams(
+			engine::editor::world::WorldEditorShell& shell,
+			engine::editor::world::volumes::dungeons::DungeonPortalTool& tool);
 
 		bool m_visible = true;
 		WorldEditorShell* m_shell = nullptr;

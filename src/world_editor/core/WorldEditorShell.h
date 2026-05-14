@@ -1,12 +1,24 @@
 #pragma once
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
+#include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/volumes/arches/ArchTool.h"
+#include "src/world_editor/volumes/caves/CaveTool.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalTool.h"
+#include "src/world_editor/volumes/overhangs/OverhangTool.h"
+#include "src/world_editor/water/CoastlineEditorTool.h"
 #include "src/world_editor/water/LakeTool.h"
+#include "src/world_editor/water/RiverNetworkTool.h"
 #include "src/world_editor/water/RiverTool.h"
 #include "src/world_editor/splat/SplatPaintTool.h"
+#include "src/world_editor/terrain/MountainRangeTool.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/terrain/TerrainSculptTool.h"
 #include "src/world_editor/terrain/TerrainStampTool.h"
+#include "src/world_editor/terrain/ValleyChainTool.h"
 #include "src/world_editor/water/WaterDocument.h"
 
 #include <memory>
@@ -33,6 +45,16 @@ namespace engine::editor::world
 		SplatPaint    = 3,
 		Lake          = 4,  // M100.13 — raccourci L
 		River         = 5,  // M100.13 — raccourci R
+		MountainRange    = 6,   // M100.35 — raccourci Ctrl+Shift+M
+		ValleyChain      = 7,   // M100.35 — raccourci Ctrl+Shift+V
+		RiverNetwork     = 8,   // M100.36 — raccourci Ctrl+Shift+N (network)
+		Coastline           = 9,   // M100.37 — raccourci Ctrl+Shift+C
+		HydraulicErosion    = 10,  // M100.38 — raccourci Ctrl+Shift+H
+		ThermalWindErosion  = 11,  // M100.39 — raccourci Ctrl+Shift+T
+		Cave                = 12,  // M100.40 — raccourci Ctrl+Shift+G (Grotte)
+		Overhang            = 13,  // M100.41 — raccourci Ctrl+Shift+O (Overhang)
+		Arch                = 14,  // M100.42 — raccourci Ctrl+Shift+A (Arche)
+		DungeonPortal       = 15,  // M100.43 — raccourci Ctrl+Shift+D (Donjon)
 	};
 
 	/// Coquille principale de l'éditeur de monde 3D (M100.1). Instanciée une
@@ -169,6 +191,72 @@ namespace engine::editor::world
 		/// M100.13 — Accès lecture seule au document water (tests, UI).
 		const WaterDocument&  GetWaterDocument()     const { return m_waterDoc; }
 
+		/// M100.35 — Accès mutable à l'outil Mountain Range (chaîne de
+		/// montagnes par polyline). Le panneau Tool Properties l'utilise
+		/// pour lire/écrire la polyline en cours quand `m_activeTool ==
+		/// MountainRange`.
+		MountainRangeTool&       MutableMountainRangeTool()       { return m_mountainRangeTool; }
+		const MountainRangeTool& GetMountainRangeTool()     const { return m_mountainRangeTool; }
+
+		/// M100.35 — Accès mutable à l'outil Valley Chain. Jumeau de
+		/// `MountainRangeTool` en mode soustractif (vallées).
+		ValleyChainTool&         MutableValleyChainTool()       { return m_valleyChainTool; }
+		const ValleyChainTool&   GetValleyChainTool()     const { return m_valleyChainTool; }
+
+		/// M100.36 — Accès mutable à l'outil River Network. Le panneau Tool
+		/// Properties l'utilise pour gérer la liste des sources et les
+		/// paramètres de simulation quand `m_activeTool == RiverNetwork`.
+		RiverNetworkTool&        MutableRiverNetworkTool()       { return m_riverNetworkTool; }
+		const RiverNetworkTool&  GetRiverNetworkTool()     const { return m_riverNetworkTool; }
+
+		/// M100.37 — Accès mutable à l'outil Coastline (sea level + ocean
+		/// generation + smoothing/cliffs). Lit/écrit `WaterDocument::OceanSettings`
+		/// via les mêmes accesseurs que River Network.
+		CoastlineEditorTool&       MutableCoastlineEditorTool()       { return m_coastlineEditorTool; }
+		const CoastlineEditorTool& GetCoastlineEditorTool()     const { return m_coastlineEditorTool; }
+
+		/// M100.38 — Accès mutable à l'outil Hydraulic Erosion. Lit le sea
+		/// level via `WaterDocument::GetOcean().seaLevelMeters` pour la
+		/// condition `stopUnderSeaLevel`.
+		erosion::HydraulicErosionTool&       MutableHydraulicErosionTool()       { return m_hydraulicErosionTool; }
+		const erosion::HydraulicErosionTool& GetHydraulicErosionTool()     const { return m_hydraulicErosionTool; }
+
+		/// M100.39 — Accès mutable à l'outil Thermal/Wind Erosion (clôture
+		/// la Phase 2.5 « Terrain naturaliste »).
+		erosion::ThermalWindErosionTool&       MutableThermalWindErosionTool()       { return m_thermalWindErosionTool; }
+		const erosion::ThermalWindErosionTool& GetThermalWindErosionTool()     const { return m_thermalWindErosionTool; }
+
+		/// M100.40 — Accès mutable au document Mesh Inserts (volumes 3D
+		/// Phase 11). Consommé par les outils Cave (M100.40), Overhang
+		/// (M100.41), Arch (M100.42), Dungeon (M100.43).
+		volumes::MeshInsertDocument&       MutableMeshInsertDocument()       { return m_meshInsertDoc; }
+		const volumes::MeshInsertDocument& GetMeshInsertDocument()     const { return m_meshInsertDoc; }
+
+		/// M100.40 — Accès mutable à l'outil Cave (placement de grottes
+		/// depuis catalogue glTF).
+		volumes::caves::CaveTool&       MutableCaveTool()       { return m_caveTool; }
+		const volumes::caves::CaveTool& GetCaveTool()     const { return m_caveTool; }
+
+		/// M100.41 — Accès mutable à l'outil Overhang (placement de
+		/// surplombs rocheux contre des falaises).
+		volumes::overhangs::OverhangTool&       MutableOverhangTool()       { return m_overhangTool; }
+		const volumes::overhangs::OverhangTool& GetOverhangTool()     const { return m_overhangTool; }
+
+		/// M100.42 — Accès mutable à l'outil Arch (placement d'arches
+		/// naturelles à partir de deux pieds monde).
+		volumes::arches::ArchTool&       MutableArchTool()       { return m_archTool; }
+		const volumes::arches::ArchTool& GetArchTool()     const { return m_archTool; }
+
+		/// M100.43 — Accès mutable au document Dungeon Portal (Phase 11).
+		/// Distinct du MeshInsertDocument car porte des metadata gameplay
+		/// (template id, difficulty range, level gating).
+		volumes::dungeons::DungeonPortalDocument&       MutableDungeonPortalDocument()       { return m_dungeonPortalDoc; }
+		const volumes::dungeons::DungeonPortalDocument& GetDungeonPortalDocument()     const { return m_dungeonPortalDoc; }
+
+		/// M100.43 — Accès mutable à l'outil Dungeon Portal.
+		volumes::dungeons::DungeonPortalTool&       MutableDungeonPortalTool()       { return m_dungeonPortalTool; }
+		const volumes::dungeons::DungeonPortalTool& GetDungeonPortalTool()     const { return m_dungeonPortalTool; }
+
 	private:
 		/// Rend la barre de menu File/Edit/View/Tools/Window/Help (M100.1
 		/// stubs pour la plupart des items). Effet de bord : ImGui state.
@@ -204,6 +292,18 @@ namespace engine::editor::world
 		LakeTool       m_lakeTool;       // M100.13
 		RiverTool      m_riverTool;      // M100.13
 		WaterDocument  m_waterDoc;       // M100.13
+		MountainRangeTool m_mountainRangeTool; // M100.35
+		ValleyChainTool   m_valleyChainTool;   // M100.35
+		RiverNetworkTool  m_riverNetworkTool;  // M100.36
+		CoastlineEditorTool m_coastlineEditorTool; // M100.37
+		erosion::HydraulicErosionTool m_hydraulicErosionTool; // M100.38
+		erosion::ThermalWindErosionTool m_thermalWindErosionTool; // M100.39
+		volumes::MeshInsertDocument m_meshInsertDoc;          // M100.40
+		volumes::caves::CaveTool    m_caveTool;               // M100.40
+		volumes::overhangs::OverhangTool m_overhangTool;      // M100.41
+		volumes::arches::ArchTool   m_archTool;               // M100.42
+		volumes::dungeons::DungeonPortalDocument m_dungeonPortalDoc;  // M100.43
+		volumes::dungeons::DungeonPortalTool     m_dungeonPortalTool; // M100.43
 		ActiveTool m_activeTool = ActiveTool::None;
 		std::string m_layoutPath;
 		bool m_dirty = false;

@@ -10,6 +10,7 @@
 #include "src/world_editor/panels/HistoryPanel.h"
 #include "src/world_editor/panels/SurfaceTablePanel.h"
 #include "src/world_editor/panels/CollisionEditorPanel.h"
+#include "src/world_editor/ui/EditorToolbar.h"
 
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
@@ -150,6 +151,61 @@ namespace engine::editor::world
 			LOG_WARN(EditorWorld, "[WorldEditorShell] Water LoadFromDisk failed: {}", waterErr);
 		}
 
+		// M100.35 — Init des outils macro terrain (Mountain Range + Valley
+		// Chain). Aucune pré-allocation de polyline ; l'utilisateur démarre
+		// avec un état vide à chaque sélection d'outil. La Config est
+		// mémorisée par chaque outil pour `EnsureLoaded` des chunks
+		// impactés au moment de `Apply` (cf. RiverTool, même pattern).
+		m_mountainRangeTool.Init(m_commandStack, m_terrainDoc, cfg);
+		m_valleyChainTool.Init(m_commandStack, m_terrainDoc, cfg);
+
+		// M100.36 — Init de l'outil River Network. Lit `OceanSettings` du
+		// WaterDoc et initialise le buffer du slider sea level. Source du sea
+		// level pour la sim : `m_waterDoc.GetOcean().seaLevelMeters` (jamais
+		// un buffer local).
+		m_riverNetworkTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
+		// M100.37 — Init de l'outil Coastline. Partage la même `OceanSettings`
+		// que River Network. Buffer local initialisé depuis le document.
+		m_coastlineEditorTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
+		// M100.38 — Init de l'outil Hydraulic Erosion. Lit le sea level via
+		// `WaterDocument::GetOcean()` pour le `stopUnderSeaLevel`.
+		m_hydraulicErosionTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
+		// M100.39 — Init de l'outil combiné Thermal + Wind Erosion (clôture
+		// la Phase 2.5 du milestone M100).
+		m_thermalWindErosionTool.Init(m_commandStack, m_terrainDoc, m_waterDoc, cfg);
+
+		// M100.40 — Init du document Mesh Inserts (Phase 11 « Volumes 3D »)
+		// + outil Cave. Charge `instances/mesh_inserts.bin` si présent.
+		std::string meshInsertErr;
+		if (!m_meshInsertDoc.LoadFromDisk(cfg, meshInsertErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] MeshInsert LoadFromDisk failed: {}",
+				meshInsertErr);
+		}
+		m_caveTool.Init(m_commandStack, m_meshInsertDoc, m_terrainDoc, cfg);
+
+		// M100.41 — Init de l'outil Overhang (réutilise le `MeshInsertDoc`
+		// initialisé ci-dessus). Le tool charge son propre catalogue
+		// `meshes/overhangs/catalog.json`.
+		m_overhangTool.Init(m_commandStack, m_meshInsertDoc, cfg);
+
+		// M100.42 — Init de l'outil Arch (catalogue `meshes/arches/catalog.json`).
+		m_archTool.Init(m_commandStack, m_meshInsertDoc, cfg);
+
+		// M100.43 — Init du document Dungeon Portal (Phase 11, persiste dans
+		// `instances/dungeon_portals.bin` LCDP v1) + outil DungeonPortal.
+		// Distinct du MeshInsertDocument car portail = donnée gameplay.
+		std::string dungeonErr;
+		if (!m_dungeonPortalDoc.LoadFromDisk(cfg, dungeonErr))
+		{
+			LOG_WARN(EditorWorld, "[WorldEditorShell] DungeonPortal LoadFromDisk failed: {}",
+				dungeonErr);
+		}
+		m_dungeonPortalTool.Init(m_commandStack, m_dungeonPortalDoc, cfg);
+
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
 		// sert pour lire `GetActiveTool()` et muter `MutableSculptTool()`.
@@ -181,6 +237,16 @@ namespace engine::editor::world
 			case ActiveTool::SplatPaint:    name = "SplatPaint"; break;
 			case ActiveTool::Lake:          name = "Lake"; break;
 			case ActiveTool::River:         name = "River"; break;
+			case ActiveTool::MountainRange:    name = "MountainRange"; break;
+			case ActiveTool::ValleyChain:      name = "ValleyChain"; break;
+			case ActiveTool::RiverNetwork:     name = "RiverNetwork"; break;
+			case ActiveTool::Coastline:           name = "Coastline"; break;
+			case ActiveTool::HydraulicErosion:    name = "HydraulicErosion"; break;
+			case ActiveTool::ThermalWindErosion:  name = "ThermalWindErosion"; break;
+			case ActiveTool::Cave:                name = "Cave"; break;
+			case ActiveTool::Overhang:            name = "Overhang"; break;
+			case ActiveTool::Arch:                name = "Arch"; break;
+			case ActiveTool::DungeonPortal:       name = "DungeonPortal"; break;
 		}
 		(void)prev;
 		LOG_INFO(EditorWorld, "Active tool -> {}", name);
@@ -227,6 +293,15 @@ namespace engine::editor::world
 		if (!m_initialized) return;
 #if defined(_WIN32)
 		RenderMenuBar();
+		// M100.35 — Toolbar à icônes rendue juste sous le menu bar, au-dessus
+		// du dockspace. La fenêtre est non-dockable, fixée en haut, hauteur
+		// 48 px. Elle remplace la `BeginTabBar("OutilsTabs")` historique de
+		// `WorldEditorImGui::Render` (laquelle est supprimée par le même
+		// ticket). Pas de mutation de la caméra ni du frustum cull.
+		{
+			EditorToolbar toolbar(*this);
+			toolbar.Render();
+		}
 		RenderDockspace();
 		for (auto& panel : m_panels)
 		{
@@ -497,6 +572,69 @@ namespace engine::editor::world
 		if (!ctrl && !shift && virtualKey == 'R')
 		{
 			SetActiveTool(ActiveTool::River);
+			return true;
+		}
+		// M100.35 — Raccourcis optionnels (non documentés en UI principale)
+		// pour activer les outils macros terrain. La spec impose Ctrl+Shift
+		// pour éviter toute collision avec d'éventuels raccourcis 'M' / 'V'
+		// simples qui pourraient être réservés à des futurs outils.
+		if (ctrl && shift && virtualKey == 'M')
+		{
+			SetActiveTool(ActiveTool::MountainRange);
+			return true;
+		}
+		if (ctrl && shift && virtualKey == 'V')
+		{
+			SetActiveTool(ActiveTool::ValleyChain);
+			return true;
+		}
+		// M100.36 — Ctrl+Shift+N : River Network ("N" pour Network, évite la
+		// collision avec 'R' (River simple, M100.13) et 'N' (TerrainStamp).
+		if (ctrl && shift && virtualKey == 'N')
+		{
+			SetActiveTool(ActiveTool::RiverNetwork);
+			return true;
+		}
+		// M100.37 — Ctrl+Shift+C : Coastline & Sea Level Editor.
+		if (ctrl && shift && virtualKey == 'C')
+		{
+			SetActiveTool(ActiveTool::Coastline);
+			return true;
+		}
+		// M100.38 — Ctrl+Shift+H : Hydraulic Erosion.
+		if (ctrl && shift && virtualKey == 'H')
+		{
+			SetActiveTool(ActiveTool::HydraulicErosion);
+			return true;
+		}
+		// M100.39 — Ctrl+Shift+T : Thermal/Wind Erosion (clôt la Phase 2.5).
+		if (ctrl && shift && virtualKey == 'T')
+		{
+			SetActiveTool(ActiveTool::ThermalWindErosion);
+			return true;
+		}
+		// M100.40 — Ctrl+Shift+G : Cave (Grotte, démarre Phase 11).
+		if (ctrl && shift && virtualKey == 'G')
+		{
+			SetActiveTool(ActiveTool::Cave);
+			return true;
+		}
+		// M100.41 — Ctrl+Shift+O : Overhang (surplomb rocheux).
+		if (ctrl && shift && virtualKey == 'O')
+		{
+			SetActiveTool(ActiveTool::Overhang);
+			return true;
+		}
+		// M100.42 — Ctrl+Shift+A : Arch (arche naturelle).
+		if (ctrl && shift && virtualKey == 'A')
+		{
+			SetActiveTool(ActiveTool::Arch);
+			return true;
+		}
+		// M100.43 — Ctrl+Shift+D : Dungeon Portal (portail de donjon).
+		if (ctrl && shift && virtualKey == 'D')
+		{
+			SetActiveTool(ActiveTool::DungeonPortal);
 			return true;
 		}
 		return HandleShortcut(virtualKey);

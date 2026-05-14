@@ -381,6 +381,13 @@ add_library(engine_core
   # cross-fichiers avant export.
   src/world_editor/volumes/bridge/VMapBridge.cpp
   src/world_editor/volumes/bridge/Phase11Validator.cpp
+  # M100.45 — Phase 12 « Accessibilité » — infrastructure transverse
+  # (Phase A) : registry de mode Simple/Advanced, registry de presets
+  # d'outils (JSON), store de préférences utilisateur persistées.
+  src/world_editor/modes/EditorModeRegistry.cpp
+  src/world_editor/presets/ToolPresetIo.cpp
+  src/world_editor/presets/ToolPresetRegistry.cpp
+  src/world_editor/prefs/UserPrefsStore.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1287,6 +1294,21 @@ if(WIN32)
     target_compile_options(phase11_bridge_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME phase11_bridge_tests COMMAND phase11_bridge_tests)
+endif()
+
+# M100.45 — Tests unitaires CPU pour la Phase A « Accessibilité » :
+# EditorModeRegistry (set + subscribers), ToolPresetIo (parsing JSON
+# tolérant), ToolPresetRegistry (chargement répertoire + résilience
+# fichier corrompu), UserPrefsStore (round-trip disque + sauvegarde
+# atomique + premier lancement). Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(editor_modes_tests src/world_editor/tests/EditorModesTests.cpp)
+  target_include_directories(editor_modes_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(editor_modes_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(editor_modes_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME editor_modes_tests COMMAND editor_modes_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

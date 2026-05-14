@@ -1,0 +1,51 @@
+{
+  "toolId": "thermal_wind_erosion",
+  "defaultPreset": "realistic",
+  "presets": [
+    {
+      "id": "soft_smoothing",
+      "displayName": "Adoucissement léger",
+      "description": "Relaxation thermique douce, peu de vent. Adoucit les crêtes sans les effacer.",
+      "parameters": {
+        "subMode": 0,
+        "thermalPasses": 4,
+        "thermalForcePerPass": 0.25,
+        "talusAngleDeg": 38.0,
+        "preserveSteepSlopes": 1,
+        "windParticles": 0,
+        "windAngleDeg": 0.0,
+        "windExposureScale": 0.0
+      }
+    },
+    {
+      "id": "realistic",
+      "displayName": "Réaliste",
+      "description": "Thermal + Wind chaînés. Crêtes adoucies, sable déposé sous le vent.",
+      "parameters": {
+        "subMode": 2,
+        "thermalPasses": 8,
+        "thermalForcePerPass": 0.35,
+        "talusAngleDeg": 34.0,
+        "preserveSteepSlopes": 1,
+        "windParticles": 60000,
+        "windAngleDeg": 45.0,
+        "windExposureScale": 0.5
+      }
+    },
+    {
+      "id": "sand_and_talus",
+      "displayName": "Sable & talus",
+      "description": "Vent dominant, talus prononcés. Pour dunes et terrains désertiques.",
+      "parameters": {
+        "subMode": 1,
+        "thermalPasses": 12,
+        "thermalForcePerPass": 0.5,
+        "talusAngleDeg": 30.0,
+        "preserveSteepSlopes": 0,
+        "windParticles": 200000,
+        "windAngleDeg": 90.0,
+        "windExposureScale": 0.85
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "toolId": "hydraulic_erosion",
+  "defaultPreset": "realistic",
+  "presets": [
+    {
+      "id": "subtle",
+      "displayName": "Légère",
+      "description": "Érosion douce, vallées subtiles. Idéal pour un terrain quasi-stable.",
+      "parameters": {
+        "numDroplets": 30000,
+        "erosionRate": 0.15,
+        "depositionRate": 0.15,
+        "sedimentCapacity": 2.5,
+        "evaporationRate": 0.02,
+        "gravity": 4.0,
+        "inertia": 0.05,
+        "maxLifetimeSteps": 20,
+        "minSlopeForErosion": 0.02,
+        "maxDeltaPerCellMeters": 1.0
+      }
+    },
+    {
+      "id": "realistic",
+      "displayName": "Réaliste",
+      "description": "Équilibre par défaut. Vallées visibles, dépositions naturelles.",
+      "parameters": {
+        "numDroplets": 120000,
+        "erosionRate": 0.3,
+        "depositionRate": 0.3,
+        "sedimentCapacity": 4.0,
+        "evaporationRate": 0.025,
+        "gravity": 4.0,
+        "inertia": 0.05,
+        "maxLifetimeSteps": 32,
+        "minSlopeForErosion": 0.01,
+        "maxDeltaPerCellMeters": 2.0
+      }
+    },
+    {
+      "id": "intense",
+      "displayName": "Intense",
+      "description": "Vallées creusées profondes, érosion marquée. Pour terrain dramatique.",
+      "parameters": {
+        "numDroplets": 500000,
+        "erosionRate": 0.55,
+        "depositionRate": 0.25,
+        "sedimentCapacity": 8.0,
+        "evaporationRate": 0.015,
+        "gravity": 6.0,
+        "inertia": 0.02,
+        "maxLifetimeSteps": 48,
+        "minSlopeForErosion": 0.005,
+        "maxDeltaPerCellMeters": 4.0
+      }
+    },
+    {
+      "id": "desert",
+      "displayName": "Désertique",
+      "description": "Peu d'eau, transport limité. À combiner avec l'érosion éolienne.",
+      "parameters": {
+        "numDroplets": 20000,
+        "erosionRate": 0.1,
+        "depositionRate": 0.4,
+        "sedimentCapacity": 1.5,
+        "evaporationRate": 0.08,
+        "gravity": 4.0,
+        "inertia": 0.1,
+        "maxLifetimeSteps": 14,
+        "minSlopeForErosion": 0.03,
+        "maxDeltaPerCellMeters": 0.8
+      }
+    }
+  ]
+}

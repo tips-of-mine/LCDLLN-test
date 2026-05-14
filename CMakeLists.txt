@@ -388,12 +388,15 @@ add_library(engine_core
   src/world_editor/presets/ToolPresetIo.cpp
   src/world_editor/presets/ToolPresetRegistry.cpp
   src/world_editor/prefs/UserPrefsStore.cpp
-  # M100.46 — Zone Presets Library (incrément 1 : socle data). Format
-  # JSON de template de zone + parsing + registry + validation. Le
-  # moteur d'exécution + l'UI viennent en incréments suivants.
+  # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
+  # JSON + parsing + registry + validation). Incrément 2a : couche de
+  # paramètres typés (OperationParams) + customisation (relief/eau/
+  # sécheresse). Le dispatcher + l'exécuteur + le reset viennent ensuite.
   src/world_editor/zone_presets/ZonePreset.cpp
   src/world_editor/zone_presets/ZonePresetIo.cpp
   src/world_editor/zone_presets/ZonePresetRegistry.cpp
+  src/world_editor/zone_presets/OperationParams.cpp
+  src/world_editor/zone_presets/CustomizationApplier.cpp
   # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
   # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
   # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.

@@ -5,6 +5,9 @@
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/presets/ToolPresetApply.h"
+#include "src/world_editor/ui/PresetDropdownWidget.h"
 #include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/bridge/Phase11Validator.h"
 #include "src/world_editor/volumes/bridge/VMapBridge.h"
@@ -1331,54 +1334,78 @@ namespace engine::editor::world::panels
 #if defined(_WIN32)
 		(void)shell;
 		auto& p = tool.MutableParams();
+		// M100.45 Phase B — outil migré Simple/Advanced. Le mode courant
+		// vient du EditorModeRegistry (toggle Options > Mode editeur).
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Hydraulic Erosion — M100.38");
 		ImGui::TextDisabled("(simulation particle-based, lit sea level via OceanSettings)");
 		ImGui::Separator();
 
+		// M100.45 A.6 — dropdown de presets. La sélection applique les
+		// valeurs JSON (tool_presets/hydraulic_erosion.json) au struct.
+		engine::editor::world::ui::RenderPresetDropdown(
+			"hydraulic_erosion",
+			[&p](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyHydraulicErosionPreset(p, preset);
+			});
+
+		// --- Mode Simple : 3 paramètres essentiels, toujours visibles ---
 		int n = static_cast<int>(p.numDroplets);
 		if (ImGui::SliderInt("Nombre de gouttes", &n, 0, 500000))
 		{
 			p.numDroplets = static_cast<uint32_t>(std::max(0, n));
 		}
+		ImGui::SliderFloat("Intensité (taux d'érosion)", &p.erosionRate, 0.0f, 1.0f, "%.2f");
 		int life = static_cast<int>(p.maxLifetimeSteps);
-		if (ImGui::SliderInt("Durée de vie max (steps)", &life, 1, 200))
+		if (ImGui::SliderInt("Niveau de détail (durée de vie)", &life, 1, 200))
 		{
 			p.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
 		}
-		ImGui::Separator();
-		ImGui::TextUnformatted("Physique :");
-		ImGui::SliderFloat("Capacité sédiment",  &p.sedimentCapacity,  0.1f, 20.0f, "%.2f");
-		ImGui::SliderFloat("Taux d'érosion",     &p.erosionRate,       0.0f, 1.0f, "%.2f");
-		ImGui::SliderFloat("Taux de déposition", &p.depositionRate,    0.0f, 1.0f, "%.2f");
-		ImGui::SliderFloat("Évaporation",        &p.evaporationRate,   0.0f, 0.5f, "%.3f");
-		ImGui::SliderFloat("Gravité",            &p.gravity,           0.1f, 20.0f, "%.2f");
-		ImGui::SliderFloat("Inertie",            &p.inertia,           0.0f, 1.0f, "%.2f");
-		ImGui::SliderFloat("Pente min érosion",  &p.minSlopeForErosion, 0.0f, 1.0f, "%.3f");
-		ImGui::SliderFloat("Delta max / cell (m)", &p.maxDeltaPerCellMeters, 0.1f, 20.0f, "%.2f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Initialisation :");
-		int distIdx = static_cast<int>(p.distribution);
-		static const char* kDistLabels[3] = { "Uniform", "Weighted altitude", "Weighted flow accum" };
-		if (ImGui::Combo("Distribution sources", &distIdx, kDistLabels, 3))
+		// --- Mode Advanced : tous les paramètres physiques + bornes ---
+		if (advanced)
 		{
-			p.distribution = static_cast<engine::editor::world::erosion::DropletDistribution>(
-				std::clamp(distIdx, 0, 2));
-		}
-		int seed = static_cast<int>(p.rngSeed);
-		if (ImGui::InputInt("Seed RNG", &seed))
-		{
-			p.rngSeed = static_cast<uint32_t>(std::max(0, seed));
-		}
+			ImGui::Separator();
+			ImGui::TextUnformatted("Physique :");
+			ImGui::SliderFloat("Capacité sédiment",  &p.sedimentCapacity,  0.1f, 20.0f, "%.2f");
+			ImGui::SliderFloat("Taux de déposition", &p.depositionRate,    0.0f, 1.0f, "%.2f");
+			ImGui::SliderFloat("Évaporation",        &p.evaporationRate,   0.0f, 0.5f, "%.3f");
+			ImGui::SliderFloat("Gravité",            &p.gravity,           0.1f, 20.0f, "%.2f");
+			ImGui::SliderFloat("Inertie",            &p.inertia,           0.0f, 1.0f, "%.2f");
+			ImGui::SliderFloat("Pente min érosion",  &p.minSlopeForErosion, 0.0f, 1.0f, "%.3f");
+			ImGui::SliderFloat("Delta max / cell (m)", &p.maxDeltaPerCellMeters, 0.1f, 20.0f, "%.2f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Bornes / sécurité :");
-		ImGui::Checkbox("Stopper sous sea level", &p.stopUnderSeaLevel);
-		ImGui::Checkbox("Préserver les zones plates", &p.preserveFlatAreas);
-		if (p.preserveFlatAreas)
+			ImGui::Separator();
+			ImGui::TextUnformatted("Initialisation :");
+			int distIdx = static_cast<int>(p.distribution);
+			static const char* kDistLabels[3] = { "Uniform", "Weighted altitude", "Weighted flow accum" };
+			if (ImGui::Combo("Distribution sources", &distIdx, kDistLabels, 3))
+			{
+				p.distribution = static_cast<engine::editor::world::erosion::DropletDistribution>(
+					std::clamp(distIdx, 0, 2));
+			}
+			int seed = static_cast<int>(p.rngSeed);
+			if (ImGui::InputInt("Seed RNG", &seed))
+			{
+				p.rngSeed = static_cast<uint32_t>(std::max(0, seed));
+			}
+
+			ImGui::Separator();
+			ImGui::TextUnformatted("Bornes / sécurité :");
+			ImGui::Checkbox("Stopper sous sea level", &p.stopUnderSeaLevel);
+			ImGui::Checkbox("Préserver les zones plates", &p.preserveFlatAreas);
+			if (p.preserveFlatAreas)
+			{
+				ImGui::SliderFloat("Seuil pente plate (deg)",
+					&p.flatAreaSlopeThresholdDeg, 0.0f, 45.0f, "%.1f");
+			}
+		}
+		else
 		{
-			ImGui::SliderFloat("Seuil pente plate (deg)",
-				&p.flatAreaSlopeThresholdDeg, 0.0f, 45.0f, "%.1f");
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour tout regler.");
 		}
 
 		ImGui::Separator();

@@ -388,6 +388,11 @@ add_library(engine_core
   src/world_editor/presets/ToolPresetIo.cpp
   src/world_editor/presets/ToolPresetRegistry.cpp
   src/world_editor/prefs/UserPrefsStore.cpp
+  # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
+  # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
+  # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.
+  src/world_editor/presets/ToolPresetApply.cpp
+  src/world_editor/ui/PresetDropdownWidget.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1309,6 +1314,20 @@ if(WIN32)
     target_compile_options(editor_modes_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME editor_modes_tests COMMAND editor_modes_tests)
+endif()
+
+# M100.45 Phase B — Tests unitaires CPU pour la migration des outils :
+# application d'un preset aux paramètres internes (full / partiel /
+# vide / clamp / round-trip JSON réel). Incrément 1 = hydraulic_erosion.
+# Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(tool_migration_tests src/world_editor/tests/ToolMigrationTests.cpp)
+  target_include_directories(tool_migration_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(tool_migration_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(tool_migration_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME tool_migration_tests COMMAND tool_migration_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

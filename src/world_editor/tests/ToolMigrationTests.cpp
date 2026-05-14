@@ -14,6 +14,7 @@
 #include "src/world_editor/splat/SplatPaintTool.h"
 #include "src/world_editor/terrain/PolylineMacroCore.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
+#include "src/world_editor/terrain/TerrainStampTool.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 #include "src/world_editor/water/WatershedSimulationParams.h"
@@ -39,6 +40,7 @@ namespace
 	using engine::editor::world::MacroPolylineParams;
 	using engine::editor::world::PolylineVertex;
 	using engine::editor::world::FlankProfile;
+	using engine::editor::world::StampParams;
 	using engine::editor::world::erosion::HydraulicSimulationParams;
 	using engine::editor::world::erosion::ThermalWindErosionParams;
 	using engine::editor::world::erosion::ErosionSubMode;
@@ -410,6 +412,55 @@ namespace
 		REQUIRE(p.vertices[0].heightMeters == 1000.0f); // appliqué
 		REQUIRE(p.vertices[0].widthMeters == 333.0f);   // intact
 	}
+
+	// --- stamp : struct StampParams -------------------------------------
+
+	/// Un preset stamp applique footprint/strength/rotation. mode et
+	/// procedural (état d'interaction) ne sont pas touchés.
+	void Test_StampPreset_AppliesAndLeavesInteractionState()
+	{
+		StampParams p;
+		const bool procBefore = p.useProcedural;
+		presets::ApplyStampPreset(p, MakePreset({
+			{ "footprintMeters", 320.0 },
+			{ "strengthMeters", 110.0 },
+		}));
+		REQUIRE(p.footprintMeters == 320.0f);
+		REQUIRE(p.strengthMeters == 110.0f);
+		REQUIRE(p.useProcedural == procBefore); // intact
+	}
+
+	/// Preset partiel stamp : seule la clé définie change.
+	void Test_StampPreset_PartialLeavesOthers()
+	{
+		StampParams p;
+		p.strengthMeters = 42.0f;
+		presets::ApplyStampPreset(p, MakePreset({ { "footprintMeters", 55.0 } }));
+		REQUIRE(p.footprintMeters == 55.0f);  // appliqué
+		REQUIRE(p.strengthMeters == 42.0f);   // intact
+	}
+
+	// --- river_manual : deux scalaires (width, depth) -------------------
+
+	/// Un preset river_manual applique les deux scalaires width/depth.
+	void Test_RiverManualPreset_Applies()
+	{
+		float width = 6.0f, depth = 1.5f;
+		presets::ApplyRiverManualPreset(width, depth,
+			MakePreset({ { "width", 20.0 }, { "depth", 4.0 } }));
+		REQUIRE(width == 20.0f);
+		REQUIRE(depth == 4.0f);
+	}
+
+	/// Preset partiel river_manual : seule la clé définie change.
+	void Test_RiverManualPreset_PartialLeavesOther()
+	{
+		float width = 6.0f, depth = 1.5f;
+		presets::ApplyRiverManualPreset(width, depth,
+			MakePreset({ { "width", 1.5 } }));
+		REQUIRE(width == 1.5f);   // appliqué
+		REQUIRE(depth == 1.5f);   // intact
+	}
 }
 
 int main()
@@ -434,6 +485,10 @@ int main()
 	Test_MacroPreset_AppliesGlobalsAndAllVertices();
 	Test_MacroPreset_EmptyPolylineOnlyGlobals();
 	Test_MacroPreset_PartialLeavesVertexFields();
+	Test_StampPreset_AppliesAndLeavesInteractionState();
+	Test_StampPreset_PartialLeavesOthers();
+	Test_RiverManualPreset_Applies();
+	Test_RiverManualPreset_PartialLeavesOther();
 
 	if (g_failed > 0)
 	{

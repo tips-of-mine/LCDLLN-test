@@ -1,0 +1,42 @@
+{
+  "toolId": "stamp",
+  "defaultPreset": "medium",
+  "presets": [
+    {
+      "id": "small",
+      "displayName": "Petit",
+      "description": "Empreinte réduite, amplitude modérée. Pour les détails de relief.",
+      "parameters": {
+        "footprintMeters": 40.0,
+        "strengthMeters": 25.0
+      }
+    },
+    {
+      "id": "medium",
+      "displayName": "Moyen",
+      "description": "Empreinte et amplitude équilibrées. Stamp polyvalent.",
+      "parameters": {
+        "footprintMeters": 120.0,
+        "strengthMeters": 60.0
+      }
+    },
+    {
+      "id": "large",
+      "displayName": "Grand",
+      "description": "Large empreinte pour bloquer rapidement de gros volumes.",
+      "parameters": {
+        "footprintMeters": 320.0,
+        "strengthMeters": 110.0
+      }
+    },
+    {
+      "id": "sharp",
+      "displayName": "Pointu",
+      "description": "Empreinte serrée, forte amplitude. Pour les pics et formes nettes.",
+      "parameters": {
+        "footprintMeters": 55.0,
+        "strengthMeters": 160.0
+      }
+    }
+  ]
+}

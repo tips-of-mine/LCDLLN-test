@@ -449,13 +449,26 @@ namespace engine::editor::world::panels
 		engine::editor::world::LakeTool& tool)
 	{
 #if defined(_WIN32)
+		// M100.45 Phase B — outil migré Simple/Advanced (pas de presets :
+		// la taille d'un lac vient du polygone tracé, pas d'un struct).
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Lake Tool — M100.13");
 		ImGui::Separator();
 
 		ImGui::Text("Default values for next lake :");
 		ImGui::SliderFloat("Water Level Y", &tool.MutableWaterLevelY(), -50.0f, 50.0f, "%.3f");
 		ImGui::ColorEdit3("Bottom Color", &tool.MutableBottomColor().x);
-		ImGui::SliderFloat("Turbidity", &tool.MutableTurbidity(), 0.0f, 1.0f, "%.2f");
+		if (advanced)
+		{
+			ImGui::SliderFloat("Turbidity", &tool.MutableTurbidity(), 0.0f, 1.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour la turbidité.");
+		}
 		ImGui::Separator();
 
 		ImGui::Text("Current polygon : %zu points", tool.GetPointCount());
@@ -794,6 +807,12 @@ namespace engine::editor::world::panels
 		(void)shell;
 		auto& ocean = tool.MutableOceanBuffer();
 
+		// M100.45 Phase B — outil migré Simple/Advanced (pas de presets :
+		// l'outil édite l'état océan partagé du WaterDocument).
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Coastline — M100.37");
 		ImGui::Separator();
 		ImGui::TextUnformatted("Sea level + ocean parameters (commités à Apply) :");
@@ -801,12 +820,21 @@ namespace engine::editor::world::panels
 		changed |= ImGui::SliderFloat("Sea level (Y)", &ocean.seaLevelMeters,
 			-100.0f, 500.0f, "%.1f m");
 		changed |= ImGui::ColorEdit3("Couleur de fond océan", ocean.bottomColor);
+		changed |= ImGui::Checkbox("Océan activé", &ocean.enabled);
+		ImGui::TextDisabled("(source de vérité : WaterDocument::OceanSettings, partagée avec River Network M100.36)");
+
+		if (!advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour turbidité, vent, smoothing, falaises, plage.");
+		}
+
+		if (advanced)
+		{
 		changed |= ImGui::SliderFloat("Turbidité",
 			&ocean.turbidity, 0.0f, 1.0f, "%.2f");
 		changed |= ImGui::SliderFloat("Wind influence",
 			&ocean.windInfluence, 0.0f, 1.0f, "%.2f");
-		changed |= ImGui::Checkbox("Océan activé", &ocean.enabled);
-		ImGui::TextDisabled("(source de vérité : WaterDocument::OceanSettings, partagée avec River Network M100.36)");
 
 		ImGui::Separator();
 		ImGui::TextUnformatted("Smoothing côtier :");
@@ -845,6 +873,7 @@ namespace engine::editor::world::panels
 				&tool.BeachSeaBandMeters(), 0.5f, 50.0f, "%.1f");
 			ImGui::TextDisabled("Note MVP M100.37 : flag conservé, splat sable non câblé à la commande pour l'instant (suivra un follow-up).");
 		}
+		} // fin du bloc mode Advanced (M100.45 Phase B)
 
 		ImGui::Separator();
 		if (changed) tool.RefreshPreview();
@@ -1853,6 +1882,16 @@ namespace engine::editor::world::panels
 		ImGui::Text("River Tool — M100.13");
 		ImGui::Separator();
 
+		// M100.45 A.6 — dropdown de presets (tool_presets/river_manual.json).
+		// L'outil n'a que 2 paramètres (largeur, profondeur), tous deux
+		// essentiels → pas de split Simple/Advanced, juste le preset.
+		engine::editor::world::ui::RenderPresetDropdown(
+			"river_manual",
+			[&tool](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyRiverManualPreset(
+					tool.MutableDefaultWidth(), tool.MutableDefaultDepth(), preset);
+			});
+
 		ImGui::Text("Default values for next node :");
 		ImGui::SliderFloat("Width (m)", &tool.MutableDefaultWidth(), 0.5f, 30.0f, "%.2f");
 		ImGui::SliderFloat("Depth (m)", &tool.MutableDefaultDepth(), 0.1f, 10.0f, "%.2f");
@@ -1937,6 +1976,17 @@ namespace engine::editor::world::panels
 
 				engine::editor::world::TerrainStampTool& tool = m_shell->MutableStampTool();
 				engine::editor::world::StampParams params = tool.GetParams();
+
+				// M100.45 A.6 — dropdown de presets (tool_presets/stamp.json).
+				// Le stamp a peu de paramètres tunables (footprint, strength,
+				// rotation) tous essentiels + de l'état d'interaction
+				// (source, mode) → pas de split Simple/Advanced, juste le
+				// preset. Le callback synchrone mute la copie locale `params`.
+				engine::editor::world::ui::RenderPresetDropdown(
+					"stamp",
+					[&params](const engine::editor::world::presets::ToolPreset& preset) {
+						engine::editor::world::presets::ApplyStampPreset(params, preset);
+					});
 
 				// Source : Library / Procedural
 				ImGui::TextUnformatted("Source:");

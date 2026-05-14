@@ -8,6 +8,7 @@ namespace engine::editor::world
 	struct SplatPaintParams;
 	struct WatershedSimulationParams;
 	struct MacroPolylineParams;
+	struct StampParams;
 }
 
 namespace engine::editor::world::erosion
@@ -88,5 +89,19 @@ namespace engine::editor::world::presets
 	/// `mode` (Open/Loop) ne sont jamais touchés.
 	void ApplyMacroPolylinePreset(
 		engine::editor::world::MacroPolylineParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/stamp.json` vers `StampParams`.
+	/// Clés reconnues : footprintMeters, strengthMeters, rotationYDeg.
+	/// `mode` et `procedural` ne sont pas touchés (choix d'interaction).
+	void ApplyStampPreset(
+		engine::editor::world::StampParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/river_manual.json` vers les deux
+	/// scalaires par défaut du RiverTool. Le tool n'a pas de struct de
+	/// params ; on prend donc les deux références directement. Clés
+	/// reconnues : width, depth.
+	void ApplyRiverManualPreset(float& defaultWidth, float& defaultDepth,
 		const ToolPreset& preset);
 }

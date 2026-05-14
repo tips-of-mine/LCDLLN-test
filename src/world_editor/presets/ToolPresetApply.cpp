@@ -3,6 +3,7 @@
 #include "src/world_editor/splat/SplatPaintTool.h"
 #include "src/world_editor/terrain/PolylineMacroCore.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
+#include "src/world_editor/terrain/TerrainStampTool.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 #include "src/world_editor/water/WatershedSimulationParams.h"
@@ -184,5 +185,24 @@ namespace engine::editor::world::presets
 			if (hasNoiseAmp)  v.noiseAmplitude = static_cast<float>(preset.GetParam("noiseAmplitude", v.noiseAmplitude));
 			if (hasAsymmetry) v.asymmetry      = static_cast<float>(preset.GetParam("asymmetry", v.asymmetry));
 		}
+	}
+
+	void ApplyStampPreset(
+		engine::editor::world::StampParams& p,
+		const ToolPreset& preset)
+	{
+		p.footprintMeters = static_cast<float>(
+			preset.GetParam("footprintMeters", p.footprintMeters));
+		p.strengthMeters = static_cast<float>(
+			preset.GetParam("strengthMeters", p.strengthMeters));
+		p.rotationYDeg = static_cast<float>(
+			preset.GetParam("rotationYDeg", p.rotationYDeg));
+	}
+
+	void ApplyRiverManualPreset(float& defaultWidth, float& defaultDepth,
+		const ToolPreset& preset)
+	{
+		defaultWidth = static_cast<float>(preset.GetParam("width", defaultWidth));
+		defaultDepth = static_cast<float>(preset.GetParam("depth", defaultDepth));
 	}
 }

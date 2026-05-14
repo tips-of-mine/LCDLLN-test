@@ -4213,10 +4213,6 @@ namespace engine
 												VkImageView brdfView      = m_pipeline->GetBrdfLutPass().GetImageView();
 												VkSampler   brdfSamp      = m_pipeline->GetBrdfLutPass().GetSampler();
 												lp.useIBL = (irrView != VK_NULL_HANDLE && prefilterView != VK_NULL_HANDLE && brdfView != VK_NULL_HANDLE) ? 1.0f : 0.0f;
-												// Diag "terrain invisible" (2026-05-14) : mode debug lighting pilote
-												// par config. 0 = normal, 1 = depth pass/fail (vert/rouge), 2 = GBufferA
-												// brut, 3 = depth en gris. Cf. docs/INVESTIGATION_terrain_invisible.md.
-												lp.debugMode = static_cast<float>(m_cfg.GetInt("render.lighting_debug_mode", 0));
 												const uint32_t frameIdx = m_currentFrame % 2;
 												m_pipeline->GetLightingPass().Record(
 													m_vkDeviceContext.GetDevice(), cmd, reg,

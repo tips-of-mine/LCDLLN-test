@@ -1,8 +1,10 @@
 # INVESTIGATION — Terrain invisible dans World Editor (et probablement client jeu)
 
-**Date** : 2026-05-04
-**Statut** : ⛔ Bloquant (impossible d'avancer client + éditeur)
-**PR de contexte** : #427 (branche `claude/terrain-default-fallback-JlWpU`)
+**Date** : 2026-05-04 — **Résolu le 2026-05-14** (cf. section 12.7)
+**Statut** : ✅ Résolu — cause racine : `frontFace` terrain inversé (backface
+cull rejetait tous les patches). Correctif dans la PR #613.
+**PR de contexte** : #427 (branche `claude/terrain-default-fallback-JlWpU`),
+puis #613 (branche `claude/fix-terrain-invisible`) pour le diagnostic + fix.
 **Auteur initial du chantier** : Hubert Cornet + Claude Sonnet/Opus
 
 ---
@@ -456,7 +458,39 @@ Avantage : un seul build, l'utilisateur teste les 4 cas en éditant
 terrain visible ⇒ on rend permanent le cas 2 (`frontFace=CCW`) et on retire
 le sélecteur + le mode debug lighting.
 
-*À valider sur le build Windows.*
+### 12.7 RÉSOLU (2026-05-14) — `frontFace` terrain inversé
+
+Captures + logs fournis par l'utilisateur :
+- `render.terrain_debug_cull = 1` (`cullMode=NONE`) → **terrain visible**.
+- `render.terrain_debug_cull = 2` (`cullMode=BACK`, `frontFace=CCW`) →
+  **terrain visible** (et correctement backface-cull).
+
+**Cause racine** : le pipeline terrain utilisait
+`frontFace = VK_FRONT_FACE_CLOCKWISE`. Le mesh de patch est généré CCW vu de
+dessus (`TerrainMesh.cpp`) ; avec la matrice `PerspectiveVulkan` qui inverse Y,
+les triangles restent CCW en framebuffer Vulkan. Avec `frontFace=CW` +
+`cullMode=BACK`, **tous les patches étaient backface-cull** → terrain
+invisible, profondeur jamais écrite, `lighting.frag` sortait la sky color
+partout (d'où l'écran uniforme + l'absence d'orange). Le « fix » `frontFace=CW`
+de la PR #427 était dans le mauvais sens.
+
+**Correctif** (PR #613) :
+- `TerrainRenderer.cpp` : `rasCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE`
+  (permanent), `cullMode=BACK` conservé.
+- Instrumentation de diagnostic retirée (`render.lighting_debug_mode`,
+  `render.terrain_debug_cull`, champ `debugMode` de `LightingPass::LightParams`,
+  branches debug de `lighting.frag`).
+
+**Suivi non bloquant** :
+- Le pipeline *falaises* (`TerrainRenderer.cpp`, `m_cliffPipeline`) garde
+  `frontFace=CLOCKWISE` avec le même commentaire « fix » suspect. Les meshes de
+  falaise sont chargés depuis fichier (winding non vérifiable côté code) et il
+  n'y en avait aucun dans le repro (`Cliff meshes loaded: 0/0`). À revérifier
+  quand des falaises seront réellement testées en jeu/éditeur.
+- `GeometryPass` (avatar) garde `frontFace=CLOCKWISE` — non touché, l'avatar
+  n'était pas dans le repro ; à confirmer indépendamment.
+- §8.2 (`Frustum::ExtractFromMatrix` convention OpenGL) reste ouvert mais
+  non bloquant (cull CPU bypassé en éditeur).
 
 ---
 

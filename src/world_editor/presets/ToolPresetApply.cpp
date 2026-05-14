@@ -1,5 +1,6 @@
 #include "src/world_editor/presets/ToolPresetApply.h"
 
+#include "src/world_editor/splat/SplatPaintTool.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
@@ -121,5 +122,17 @@ namespace engine::editor::world::presets
 			const int clamped = std::clamp(static_cast<int>(v), 1, 6);
 			p.noiseOctaves = static_cast<uint8_t>(clamped);
 		}
+	}
+
+	void ApplySplatPaintPreset(
+		engine::editor::world::SplatPaintParams& p,
+		const ToolPreset& preset)
+	{
+		p.radiusMeters = static_cast<float>(
+			preset.GetParam("radiusMeters", p.radiusMeters));
+		p.strength = static_cast<float>(
+			preset.GetParam("strength", p.strength));
+		p.falloff = static_cast<float>(
+			preset.GetParam("falloff", p.falloff));
 	}
 }

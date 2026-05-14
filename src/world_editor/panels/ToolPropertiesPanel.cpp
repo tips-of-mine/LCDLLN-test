@@ -174,7 +174,21 @@ namespace engine::editor::world::panels
 		void RenderSplatPaintParams(engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::SplatPaintTool& tool)
 		{
+			// M100.45 Phase B — outil migré : dropdown de presets + split
+			// Simple/Advanced. Simple = mode + couche + rayon + force ;
+			// Advanced += falloff + filtres auto-rules slope/alt.
+			const bool advanced =
+				engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+					== engine::editor::world::modes::EditorMode::Advanced;
+
 			engine::editor::world::SplatPaintParams params = tool.GetParams();
+
+			// M100.45 A.6 — dropdown de presets (tool_presets/splat_paint.json).
+			engine::editor::world::ui::RenderPresetDropdown(
+				"splat_paint",
+				[&params](const engine::editor::world::presets::ToolPreset& preset) {
+					engine::editor::world::presets::ApplySplatPaintPreset(params, preset);
+				});
 
 			ImGui::TextUnformatted("Mode:");
 			if (ImGui::RadioButton("Manual", !params.autoRules))
@@ -197,16 +211,23 @@ namespace engine::editor::world::panels
 
 			ImGui::SliderFloat("Radius (m)", &params.radiusMeters, 1.0f, 50.0f, "%.1f");
 			ImGui::SliderFloat("Strength",   &params.strength,     0.0f, 1.0f,  "%.2f");
-			ImGui::SliderFloat("Falloff",    &params.falloff,      0.0f, 1.0f,  "%.2f");
 
-			if (params.autoRules)
+			if (advanced)
 			{
-				ImGui::Separator();
-				ImGui::TextUnformatted("Auto-Rules");
-				ImGui::SliderFloat("Slope min (deg)", &params.slopeMinDeg, 0.0f, 90.0f, "%.1f");
-				ImGui::SliderFloat("Slope max (deg)", &params.slopeMaxDeg, 0.0f, 90.0f, "%.1f");
-				ImGui::SliderFloat("Alt min (m)",     &params.altMin, -1024.0f, 8192.0f, "%.1f");
-				ImGui::SliderFloat("Alt max (m)",     &params.altMax, -1024.0f, 8192.0f, "%.1f");
+				ImGui::SliderFloat("Falloff",    &params.falloff,      0.0f, 1.0f,  "%.2f");
+				if (params.autoRules)
+				{
+					ImGui::Separator();
+					ImGui::TextUnformatted("Auto-Rules");
+					ImGui::SliderFloat("Slope min (deg)", &params.slopeMinDeg, 0.0f, 90.0f, "%.1f");
+					ImGui::SliderFloat("Slope max (deg)", &params.slopeMaxDeg, 0.0f, 90.0f, "%.1f");
+					ImGui::SliderFloat("Alt min (m)",     &params.altMin, -1024.0f, 8192.0f, "%.1f");
+					ImGui::SliderFloat("Alt max (m)",     &params.altMax, -1024.0f, 8192.0f, "%.1f");
+				}
+			}
+			else
+			{
+				ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour falloff + auto-rules.");
 			}
 
 			tool.SetParams(params);

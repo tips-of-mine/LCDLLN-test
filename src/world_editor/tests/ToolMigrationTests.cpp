@@ -11,6 +11,7 @@
 #include "src/world_editor/presets/ToolPreset.h"
 #include "src/world_editor/presets/ToolPresetApply.h"
 #include "src/world_editor/presets/ToolPresetIo.h"
+#include "src/world_editor/splat/SplatPaintTool.h"
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
@@ -31,6 +32,7 @@ namespace
 	namespace presets = engine::editor::world::presets;
 	using engine::editor::world::TerrainBrushParams;
 	using engine::editor::world::TerrainBrushMode;
+	using engine::editor::world::SplatPaintParams;
 	using engine::editor::world::erosion::HydraulicSimulationParams;
 	using engine::editor::world::erosion::ThermalWindErosionParams;
 	using engine::editor::world::erosion::ErosionSubMode;
@@ -268,6 +270,40 @@ namespace
 		REQUIRE(p.radiusMeters == 3.0f);   // appliqué
 		REQUIRE(p.strengthMps == 99.0f);   // intact
 	}
+
+	// --- splat_paint : struct plat SplatPaintParams ---------------------
+
+	/// Un preset splat applique radius / strength / falloff. activeLayer
+	/// et autoRules ne sont pas touchés (choix d'interaction).
+	void Test_SplatPreset_AppliesAndLeavesInteractionState()
+	{
+		SplatPaintParams p;
+		p.activeLayer = 5u;
+		p.autoRules = true;
+		const auto preset = MakePreset({
+			{ "radiusMeters", 14.0 },
+			{ "strength", 0.4 },
+			{ "falloff", 0.85 },
+		});
+		presets::ApplySplatPaintPreset(p, preset);
+		REQUIRE(p.radiusMeters == 14.0f);
+		REQUIRE(p.strength == 0.4f);
+		REQUIRE(p.falloff == 0.85f);
+		REQUIRE(p.activeLayer == 5u);   // intact
+		REQUIRE(p.autoRules == true);   // intact
+	}
+
+	/// Preset partiel : seule la clé définie change.
+	void Test_SplatPreset_PartialLeavesOthers()
+	{
+		SplatPaintParams p;
+		p.radiusMeters = 30.0f;
+		p.falloff = 0.1f;
+		presets::ApplySplatPaintPreset(p, MakePreset({ { "strength", 0.95 } }));
+		REQUIRE(p.strength == 0.95f);     // appliqué
+		REQUIRE(p.radiusMeters == 30.0f); // intact
+		REQUIRE(p.falloff == 0.1f);       // intact
+	}
 }
 
 int main()
@@ -284,6 +320,8 @@ int main()
 	Test_SculptPreset_AppliesAndLeavesModeUntouched();
 	Test_SculptPreset_NoiseOctavesClamped();
 	Test_SculptPreset_PartialLeavesOthers();
+	Test_SplatPreset_AppliesAndLeavesInteractionState();
+	Test_SplatPreset_PartialLeavesOthers();
 
 	if (g_failed > 0)
 	{

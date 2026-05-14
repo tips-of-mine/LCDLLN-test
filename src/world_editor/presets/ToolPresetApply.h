@@ -5,6 +5,7 @@
 namespace engine::editor::world
 {
 	struct TerrainBrushParams;
+	struct SplatPaintParams;
 }
 
 namespace engine::editor::world::erosion
@@ -55,5 +56,13 @@ namespace engine::editor::world::presets
 	/// touché par un preset (c'est un choix d'interaction de l'utilisateur).
 	void ApplySculptPreset(
 		engine::editor::world::TerrainBrushParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/splat_paint.json` vers
+	/// `SplatPaintParams`. Clés reconnues : radiusMeters, strength,
+	/// falloff. `activeLayer` et `autoRules` ne sont pas touchés (choix
+	/// d'interaction de l'utilisateur, comme le `mode` du sculpt).
+	void ApplySplatPaintPreset(
+		engine::editor::world::SplatPaintParams& params,
 		const ToolPreset& preset);
 }

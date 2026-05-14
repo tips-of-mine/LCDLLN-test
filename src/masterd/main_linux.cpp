@@ -386,6 +386,20 @@ int main(int argc, char** argv)
 			sessionCharMap.Remove(*oldConn);
 		});
 
+	// Compteur /status fluide : NetServer ne notifie pas l'application des
+	// deconnexions. Sans ce hook, un joueur restait compte dans SessionCharacterMap
+	// jusqu'a l'expiration de sa session (~120s via HeartbeatTimeout) alors que sa
+	// TCP etait deja tombee. On retire son binding character des la fermeture de la
+	// connexion ; la session elle-meme garde son cycle de vie normal (fenetre de
+	// reconnexion + watchdog connSessionMap.CollectExpired inchanges). sessionCharMap
+	// .Remove est idempotent : un retrait ulterieur par le watchdog ou le hook
+	// SetOnSessionClosed est sans effet.
+	server.SetConnectionClosedHandler(
+		[&sessionCharMap](uint32_t connId, engine::server::DisconnectReason /*reason*/)
+		{
+			sessionCharMap.Remove(connId);
+		});
+
 	engine::server::CharacterEnterWorldHandler characterEnterWorldHandler;
 	characterEnterWorldHandler.SetServer(&server);
 	characterEnterWorldHandler.SetSessionManager(&sessionManager);
@@ -1174,11 +1188,26 @@ int main(int argc, char** argv)
 		const bool authOk = dbOk;
 		const bool masterOk = dbOk && shardsOnline > 0;
 
+		// Ventilation des joueurs en jeu par rôle de compte (sous-compteurs API).
+		// La source est la même que totalPlayers (SessionCharacterMap), donc la
+		// somme des 4 champs vaut playersFromMaster.
+		const engine::server::SessionCharacterMap::RoleCounts roleCounts = sessionCharMap.CountByRole();
+
+		// Sérialise un objet players_by_role {player,moderator,game_master,administrator}.
+		auto roleCountsJson = [](const engine::server::SessionCharacterMap::RoleCounts& rc) -> std::string {
+			return std::string("{\"player\":") + std::to_string(rc.player)
+				+ ",\"moderator\":" + std::to_string(rc.moderator)
+				+ ",\"game_master\":" + std::to_string(rc.game_master)
+				+ ",\"administrator\":" + std::to_string(rc.administrator)
+				+ "}";
+		};
+
 		std::string serversJson;
-		serversJson.reserve(shards.size() * 64u + 32u);
+		serversJson.reserve(shards.size() * 96u + 32u);
 
 		auto appendServer = [&](std::string_view name, bool ok, uint32_t players,
-			std::string_view endpoint, std::string_view region, uint32_t maxCapacity, engine::server::ShardState state) {
+			std::string_view endpoint, std::string_view region, uint32_t maxCapacity, engine::server::ShardState state,
+			const engine::server::SessionCharacterMap::RoleCounts& byRole) {
 			if (!serversJson.empty())
 				serversJson += ",";
 			serversJson += "{";
@@ -1190,6 +1219,9 @@ int main(int argc, char** argv)
 			serversJson += ",";
 			serversJson += "\"players\":";
 			serversJson += std::to_string(players);
+			serversJson += ",";
+			serversJson += "\"players_by_role\":";
+			serversJson += roleCountsJson(byRole);
 			serversJson += ",";
 			serversJson += "\"max_capacity\":";
 			serversJson += std::to_string(maxCapacity);
@@ -1205,23 +1237,30 @@ int main(int argc, char** argv)
 			serversJson += "}";
 		};
 
+		// Ventilation par rôle vide : utilisée pour les serveurs dont le compte de
+		// joueurs vient du heartbeat shard (current_load), sans détail par rôle.
+		const engine::server::SessionCharacterMap::RoleCounts kNoRoleBreakdown{};
+
 		if (shards.empty())
 		{
-			appendServer("NO_SHARD", false, 0u, "", "", 0u, engine::server::ShardState::Offline);
+			appendServer("NO_SHARD", false, 0u, "", "", 0u, engine::server::ShardState::Offline, kNoRoleBreakdown);
 		}
 		else
 		{
-			// Si un seul shard online, on lui assigne 100% des EnterWorld actifs.
-			// Sinon, on retombe sur s.current_load (heartbeat) -- pas exact mais
-			// au moins distribue.
+			// Si un seul shard online, on lui assigne 100% des EnterWorld actifs
+			// (et la ventilation par rôle correspondante). Sinon, on retombe sur
+			// s.current_load (heartbeat) -- pas exact mais au moins distribue --
+			// sans ventilation par rôle disponible.
 			const bool singleShardOnline = (shardsOnline == 1u);
 			for (const auto& s : shards)
 			{
 				const bool ok = (s.state == engine::server::ShardState::Online || s.state == engine::server::ShardState::Degraded);
-				const uint32_t players = (ok && singleShardOnline)
+				const bool useMasterCount = (ok && singleShardOnline);
+				const uint32_t players = useMasterCount
 					? static_cast<uint32_t>(playersFromMaster)
 					: s.current_load;
-				appendServer(s.name, ok, players, s.endpoint, s.region, s.max_capacity, s.state);
+				appendServer(s.name, ok, players, s.endpoint, s.region, s.max_capacity, s.state,
+					useMasterCount ? roleCounts : kNoRoleBreakdown);
 			}
 		}
 
@@ -1233,6 +1272,7 @@ int main(int argc, char** argv)
 			+ "\"ok\":" + (masterOk ? "true" : "false")
 			+ "},"
 			+ "\"totalPlayers\":" + std::to_string(totalPlayers) + ","
+			+ "\"totalPlayersByRole\":" + roleCountsJson(roleCounts) + ","
 			+ "\"game_servers\":["
 			+ serversJson
 			+ "]}";

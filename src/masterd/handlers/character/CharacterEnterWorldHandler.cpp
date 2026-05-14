@@ -8,6 +8,7 @@
 #include "src/shared/network/NetServer.h"
 #include "src/masterd/session/SessionCharacterMap.h"
 #include "src/masterd/session/SessionManager.h"
+#include "src/masterd/account/AccountRole.h"
 #include "src/shared/db/ConnectionPool.h"
 #include "src/shared/db/DbHelpers.h"
 
@@ -116,9 +117,28 @@ namespace engine::server
 			return;
 		}
 
+		// Rôle du compte : alimente la ventilation par rôle de l'API /status
+		// (players_by_role). Une requête séparée et tolérante aux erreurs — un rôle
+		// indéterminé retombe sur Player (sentinel sûr de ParseRole).
+		AccountRole accountRole = AccountRole::Player;
+		{
+			char roleQuery[160]{};
+			std::snprintf(roleQuery, sizeof(roleQuery),
+				"SELECT role FROM accounts WHERE id = %llu",
+				static_cast<unsigned long long>(*accountId));
+			MYSQL_RES* roleRes = engine::server::db::DbQuery(mysql, roleQuery);
+			if (roleRes)
+			{
+				MYSQL_ROW roleRow = mysql_fetch_row(roleRes);
+				if (roleRow && roleRow[0])
+					accountRole = engine::server::ParseRole(roleRow[0]);
+				engine::server::db::DbFreeResult(roleRes);
+			}
+		}
+
 		// Tout est validé : on enregistre le mapping pour le chat.
 		const std::string normalized = SessionCharacterMap::Normalize(parsed->characterName);
-		m_charMap->Set(connId, parsed->characterId, parsed->characterName, normalized);
+		m_charMap->Set(connId, parsed->characterId, parsed->characterName, normalized, accountRole);
 		LOG_INFO(Net, "[CharacterEnterWorldHandler] registered (account_id={}, character_id={}, name='{}')",
 			*accountId, parsed->characterId, parsed->characterName);
 

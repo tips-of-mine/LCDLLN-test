@@ -16,7 +16,8 @@ namespace engine::server
 		return out;
 	}
 
-	void SessionCharacterMap::Set(uint32_t connId, uint64_t characterId, std::string characterName, std::string normalizedName)
+	void SessionCharacterMap::Set(uint32_t connId, uint64_t characterId, std::string characterName, std::string normalizedName,
+		AccountRole role)
 	{
 		std::lock_guard lock(m_mutex);
 
@@ -48,6 +49,7 @@ namespace engine::server
 		info.characterId = characterId;
 		info.characterName = std::move(characterName);
 		info.normalizedName = normalizedName;
+		info.role = role;
 		m_byConn[connId] = std::move(info);
 		m_byNormalizedName[normalizedName] = connId;
 	}
@@ -86,5 +88,26 @@ namespace engine::server
 	{
 		std::lock_guard lock(m_mutex);
 		return m_byConn.size();
+	}
+
+	SessionCharacterMap::RoleCounts SessionCharacterMap::CountByRole() const
+	{
+		std::lock_guard lock(m_mutex);
+		RoleCounts rc{};
+		for (const auto& [connId, info] : m_byConn)
+		{
+			switch (info.role)
+			{
+				case AccountRole::Moderator:     ++rc.moderator; break;
+				case AccountRole::GameMaster:    ++rc.game_master; break;
+				case AccountRole::Administrator: ++rc.administrator; break;
+				// Player + Console (sentinel runtime jamais persisté, donc jamais
+				// attendu en jeu) : comptés comme player pour que la somme des
+				// quatre champs reste égale à Count().
+				case AccountRole::Player:
+				case AccountRole::Console:       ++rc.player; break;
+			}
+		}
+		return rc;
 	}
 }

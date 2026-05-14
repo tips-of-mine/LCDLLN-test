@@ -158,6 +158,9 @@ namespace engine::server
 
 		std::mutex handlerMutex;
 		NetServerPacketHandler packetHandler;
+		// Notifie l'appelant de la fermeture d'une connexion (cf. SetConnectionClosedHandler).
+		// nullptr par defaut. Lu/ecrit sous handlerMutex, invoque hors verrou.
+		NetServerConnectionClosedHandler connectionClosedHandler;
 
 		// Wave 14 — PacketLog opt-in (debug RX/TX trace). nullptr par defaut :
 		// aucune capture, aucun cout (un seul branch sur le hot path). Ownership
@@ -311,6 +314,21 @@ namespace engine::server
 		else
 		{
 			LOG_INFO(Net, "[NetServer] Connection closed (fd={}, reason={}, peer=unknown — no connection state)", fd, DisconnectReasonString(reason));
+		}
+
+		// Notifie l'appelant (hors connMutex) pour qu'il purge ses registres sans
+		// attendre le timeout de session. Une copie sous handlerMutex puis appel
+		// hors verrou : meme schema que packetHandler, evite tout deadlock si le
+		// handler venait a rappeler dans NetServer.
+		if (hadConn)
+		{
+			NetServerConnectionClosedHandler closedHandler;
+			{
+				std::lock_guard lock(handlerMutex);
+				closedHandler = connectionClosedHandler;
+			}
+			if (closedHandler)
+				closedHandler(connId, reason);
 		}
 	}
 
@@ -1247,6 +1265,15 @@ namespace engine::server
 		}
 	}
 
+	void NetServer::SetConnectionClosedHandler(NetServerConnectionClosedHandler handler)
+	{
+		if (m_impl != nullptr)
+		{
+			std::lock_guard lock(m_impl->handlerMutex);
+			m_impl->connectionClosedHandler = std::move(handler);
+		}
+	}
+
 	// Wave 14 — Branche un PacketLog opt-in (capture RX/TX). nullptr = pas de
 	// capture (defaut). Doit etre appele avant le demarrage du trafic ; le
 	// caller garde l'ownership et la duree de vie. Voir NetServer.h pour les
@@ -1320,6 +1347,8 @@ namespace engine::server
 	void NetServer::CloseConnection(uint32_t /*connId*/, DisconnectReason /*reason*/) {}
 
 	void NetServer::SetPacketHandler(NetServerPacketHandler /*handler*/) {}
+
+	void NetServer::SetConnectionClosedHandler(NetServerConnectionClosedHandler /*handler*/) {}
 
 	// Wave 14 — Stub non-Linux : NetServer ne tourne que sous Linux (epoll).
 	// L'appel est silencieusement ignore (m_impl reste nullptr).

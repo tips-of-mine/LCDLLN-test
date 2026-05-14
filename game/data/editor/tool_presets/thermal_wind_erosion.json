@@ -5,31 +5,34 @@
     {
       "id": "soft_smoothing",
       "displayName": "Adoucissement léger",
-      "description": "Relaxation thermique douce, peu de vent. Adoucit les crêtes sans les effacer.",
+      "description": "Relaxation thermique douce, sans vent. Adoucit les crêtes sans les effacer.",
       "parameters": {
         "subMode": 0,
-        "thermalPasses": 4,
-        "thermalForcePerPass": 0.25,
-        "talusAngleDeg": 38.0,
-        "preserveSteepSlopes": 1,
-        "windParticles": 0,
-        "windAngleDeg": 0.0,
-        "windExposureScale": 0.0
+        "thermal.talusAngleDeg": 38.0,
+        "thermal.forcePerPass": 0.2,
+        "thermal.numPasses": 20,
+        "thermal.minActivationSlopeDeg": 2.0,
+        "thermal.preserveSteepSlopes": 1
       }
     },
     {
       "id": "realistic",
       "displayName": "Réaliste",
-      "description": "Thermal + Wind chaînés. Crêtes adoucies, sable déposé sous le vent.",
+      "description": "Thermal puis Wind chaînés. Crêtes adoucies, sable déposé sous le vent.",
       "parameters": {
         "subMode": 2,
-        "thermalPasses": 8,
-        "thermalForcePerPass": 0.35,
-        "talusAngleDeg": 34.0,
-        "preserveSteepSlopes": 1,
-        "windParticles": 60000,
-        "windAngleDeg": 45.0,
-        "windExposureScale": 0.5
+        "thermal.talusAngleDeg": 34.0,
+        "thermal.forcePerPass": 0.35,
+        "thermal.numPasses": 40,
+        "thermal.minActivationSlopeDeg": 1.0,
+        "thermal.preserveSteepSlopes": 1,
+        "wind.windAngleDeg": 45.0,
+        "wind.windStrength": 0.5,
+        "wind.numParticles": 60000,
+        "wind.maxLifetimeSteps": 40,
+        "wind.sandCapacityFactor": 0.3,
+        "wind.exposureRadiusMeters": 30.0,
+        "wind.maxDeltaPerCellMeters": 1.0
       }
     },
     {
@@ -38,13 +41,17 @@
       "description": "Vent dominant, talus prononcés. Pour dunes et terrains désertiques.",
       "parameters": {
         "subMode": 1,
-        "thermalPasses": 12,
-        "thermalForcePerPass": 0.5,
-        "talusAngleDeg": 30.0,
-        "preserveSteepSlopes": 0,
-        "windParticles": 200000,
-        "windAngleDeg": 90.0,
-        "windExposureScale": 0.85
+        "thermal.talusAngleDeg": 30.0,
+        "thermal.forcePerPass": 0.5,
+        "thermal.numPasses": 60,
+        "thermal.preserveSteepSlopes": 0,
+        "wind.windAngleDeg": 90.0,
+        "wind.windStrength": 1.2,
+        "wind.numParticles": 180000,
+        "wind.maxLifetimeSteps": 64,
+        "wind.sandCapacityFactor": 0.85,
+        "wind.exposureRadiusMeters": 45.0,
+        "wind.maxDeltaPerCellMeters": 2.0
       }
     }
   ]

@@ -12,6 +12,7 @@
 #include "src/world_editor/presets/ToolPresetApply.h"
 #include "src/world_editor/presets/ToolPresetIo.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 
 #include <cstdio>
 #include <string>
@@ -28,6 +29,8 @@ namespace
 
 	namespace presets = engine::editor::world::presets;
 	using engine::editor::world::erosion::HydraulicSimulationParams;
+	using engine::editor::world::erosion::ThermalWindErosionParams;
+	using engine::editor::world::erosion::ErosionSubMode;
 
 	presets::ToolPreset MakePreset(std::initializer_list<std::pair<std::string, double>> kv)
 	{
@@ -134,6 +137,93 @@ namespace
 		REQUIRE(p.maxLifetimeSteps == 48u);
 		REQUIRE(p.gravity == 6.0f);
 	}
+
+	// --- thermal_wind_erosion : struct imbriqué, clés pointées ----------
+
+	/// Un preset thermal/wind applique subMode + les sous-blocs imbriqués.
+	void Test_ThermalWindPreset_NestedApply()
+	{
+		ThermalWindErosionParams p;
+		const auto preset = MakePreset({
+			{ "subMode", 2.0 },
+			{ "thermal.talusAngleDeg", 34.0 },
+			{ "thermal.forcePerPass", 0.35 },
+			{ "thermal.numPasses", 40.0 },
+			{ "thermal.preserveSteepSlopes", 1.0 },
+			{ "wind.windAngleDeg", 45.0 },
+			{ "wind.windStrength", 0.5 },
+			{ "wind.numParticles", 60000.0 },
+		});
+		presets::ApplyThermalWindErosionPreset(p, preset);
+		REQUIRE(p.subMode == ErosionSubMode::Both);
+		REQUIRE(p.thermal.talusAngleDeg == 34.0f);
+		REQUIRE(p.thermal.forcePerPass == 0.35f);
+		REQUIRE(p.thermal.numPasses == 40u);
+		REQUIRE(p.thermal.preserveSteepSlopes == true);
+		REQUIRE(p.wind.windAngleDeg == 45.0f);
+		REQUIRE(p.wind.windStrength == 0.5f);
+		REQUIRE(p.wind.numParticles == 60000u);
+	}
+
+	/// subMode hors borne est clampé sur l'enum (pas d'UB).
+	void Test_ThermalWindPreset_SubModeClamped()
+	{
+		ThermalWindErosionParams p;
+		presets::ApplyThermalWindErosionPreset(p, MakePreset({ { "subMode", 99.0 } }));
+		REQUIRE(p.subMode == ErosionSubMode::Both);          // clamp haut → 2
+		presets::ApplyThermalWindErosionPreset(p, MakePreset({ { "subMode", -3.0 } }));
+		REQUIRE(p.subMode == ErosionSubMode::Thermal);       // clamp bas → 0
+	}
+
+	/// Preset partiel : seul le bloc thermal touché, le bloc wind intact.
+	void Test_ThermalWindPreset_PartialLeavesWindIntact()
+	{
+		ThermalWindErosionParams p;
+		p.wind.windStrength = 1.75f;
+		p.wind.numParticles = 9999u;
+		presets::ApplyThermalWindErosionPreset(p,
+			MakePreset({ { "thermal.forcePerPass", 0.9 } }));
+		REQUIRE(p.thermal.forcePerPass == 0.9f);   // appliqué
+		REQUIRE(p.wind.windStrength == 1.75f);     // intact
+		REQUIRE(p.wind.numParticles == 9999u);     // intact
+	}
+
+	/// Le JSON canonique du repo se parse et s'applique sans perte.
+	void Test_ThermalWindPreset_RealJsonRoundTrip()
+	{
+		const std::string json = R"({
+			"toolId": "thermal_wind_erosion",
+			"defaultPreset": "realistic",
+			"presets": [
+				{
+					"id": "sand_and_talus",
+					"displayName": "Sable & talus",
+					"parameters": {
+						"subMode": 1,
+						"thermal.talusAngleDeg": 30.0, "thermal.forcePerPass": 0.5,
+						"thermal.numPasses": 60, "thermal.preserveSteepSlopes": 0,
+						"wind.windAngleDeg": 90.0, "wind.windStrength": 1.2,
+						"wind.numParticles": 180000, "wind.maxLifetimeSteps": 64,
+						"wind.sandCapacityFactor": 0.85,
+						"wind.exposureRadiusMeters": 45.0,
+						"wind.maxDeltaPerCellMeters": 2.0
+					}
+				}
+			]
+		})";
+		presets::ToolPresetFile file;
+		std::string err;
+		REQUIRE(presets::ParseToolPresetJson(json, file, err));
+		REQUIRE(file.presets.size() == 1u);
+
+		ThermalWindErosionParams p;
+		presets::ApplyThermalWindErosionPreset(p, file.presets[0]);
+		REQUIRE(p.subMode == ErosionSubMode::Wind);
+		REQUIRE(p.thermal.numPasses == 60u);
+		REQUIRE(p.thermal.preserveSteepSlopes == false);
+		REQUIRE(p.wind.numParticles == 180000u);
+		REQUIRE(p.wind.windStrength == 1.2f);
+	}
 }
 
 int main()
@@ -143,6 +233,10 @@ int main()
 	Test_HydraulicPreset_EmptyIsNoOp();
 	Test_HydraulicPreset_NegativeCountClampedToZero();
 	Test_HydraulicPreset_RealJsonRoundTrip();
+	Test_ThermalWindPreset_NestedApply();
+	Test_ThermalWindPreset_SubModeClamped();
+	Test_ThermalWindPreset_PartialLeavesWindIntact();
+	Test_ThermalWindPreset_RealJsonRoundTrip();
 
 	if (g_failed > 0)
 	{

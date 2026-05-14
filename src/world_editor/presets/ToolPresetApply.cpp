@@ -1,6 +1,7 @@
 #include "src/world_editor/presets/ToolPresetApply.h"
 
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -45,5 +46,59 @@ namespace engine::editor::world::presets
 			preset.GetParam("minSlopeForErosion", p.minSlopeForErosion));
 		p.maxDeltaPerCellMeters = static_cast<float>(
 			preset.GetParam("maxDeltaPerCellMeters", p.maxDeltaPerCellMeters));
+	}
+
+	void ApplyThermalWindErosionPreset(
+		engine::editor::world::erosion::ThermalWindErosionParams& p,
+		const ToolPreset& preset)
+	{
+		using engine::editor::world::erosion::ErosionSubMode;
+
+		// subMode : 0=Thermal, 1=Wind, 2=Both. Clamp défensif sur l'enum.
+		if (preset.HasParam("subMode"))
+		{
+			const double raw = preset.GetParam("subMode", 2.0);
+			const int idx = static_cast<int>(raw);
+			p.subMode = static_cast<ErosionSubMode>(std::clamp(idx, 0, 2));
+		}
+
+		// --- Bloc thermal (clés pointées thermal.<champ>) ---
+		auto& t = p.thermal;
+		t.talusAngleDeg = static_cast<float>(
+			preset.GetParam("thermal.talusAngleDeg", t.talusAngleDeg));
+		t.forcePerPass = static_cast<float>(
+			preset.GetParam("thermal.forcePerPass", t.forcePerPass));
+		t.numPasses = ToU32(
+			preset.GetParam("thermal.numPasses", static_cast<double>(t.numPasses)));
+		t.minActivationSlopeDeg = static_cast<float>(
+			preset.GetParam("thermal.minActivationSlopeDeg", t.minActivationSlopeDeg));
+		if (preset.HasParam("thermal.preserveSteepSlopes"))
+		{
+			t.preserveSteepSlopes =
+				preset.GetParam("thermal.preserveSteepSlopes", 0.0) != 0.0;
+		}
+		t.preserveSteepThresholdDeg = static_cast<float>(
+			preset.GetParam("thermal.preserveSteepThresholdDeg", t.preserveSteepThresholdDeg));
+
+		// --- Bloc wind (clés pointées wind.<champ>) ---
+		auto& w = p.wind;
+		w.windAngleDeg = static_cast<float>(
+			preset.GetParam("wind.windAngleDeg", w.windAngleDeg));
+		w.windStrength = static_cast<float>(
+			preset.GetParam("wind.windStrength", w.windStrength));
+		w.numParticles = ToU32(
+			preset.GetParam("wind.numParticles", static_cast<double>(w.numParticles)));
+		w.maxLifetimeSteps = ToU32(
+			preset.GetParam("wind.maxLifetimeSteps", static_cast<double>(w.maxLifetimeSteps)));
+		w.sandCapacityFactor = static_cast<float>(
+			preset.GetParam("wind.sandCapacityFactor", w.sandCapacityFactor));
+		w.erosionRate = static_cast<float>(
+			preset.GetParam("wind.erosionRate", w.erosionRate));
+		w.depositionRate = static_cast<float>(
+			preset.GetParam("wind.depositionRate", w.depositionRate));
+		w.exposureRadiusMeters = static_cast<float>(
+			preset.GetParam("wind.exposureRadiusMeters", w.exposureRadiusMeters));
+		w.maxDeltaPerCellMeters = static_cast<float>(
+			preset.GetParam("wind.maxDeltaPerCellMeters", w.maxDeltaPerCellMeters));
 	}
 }

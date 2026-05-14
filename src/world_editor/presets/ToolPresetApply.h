@@ -5,6 +5,7 @@
 namespace engine::editor::world::erosion
 {
 	struct HydraulicSimulationParams;
+	struct ThermalWindErosionParams;
 }
 
 namespace engine::editor::world::presets
@@ -25,5 +26,21 @@ namespace engine::editor::world::presets
 	/// maxDeltaPerCellMeters.
 	void ApplyHydraulicErosionPreset(
 		engine::editor::world::erosion::HydraulicSimulationParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/thermal_wind_erosion.json` vers
+	/// `ThermalWindErosionParams`. Les paramètres sont nichés : clés
+	/// pointées `thermal.<champ>` / `wind.<champ>` + `subMode` à la
+	/// racine (0=Thermal, 1=Wind, 2=Both). Clés reconnues :
+	///   subMode,
+	///   thermal.talusAngleDeg, thermal.forcePerPass, thermal.numPasses,
+	///   thermal.minActivationSlopeDeg, thermal.preserveSteepSlopes,
+	///   thermal.preserveSteepThresholdDeg,
+	///   wind.windAngleDeg, wind.windStrength, wind.numParticles,
+	///   wind.maxLifetimeSteps, wind.sandCapacityFactor,
+	///   wind.erosionRate, wind.depositionRate, wind.exposureRadiusMeters,
+	///   wind.maxDeltaPerCellMeters.
+	void ApplyThermalWindErosionPreset(
+		engine::editor::world::erosion::ThermalWindErosionParams& params,
 		const ToolPreset& preset);
 }

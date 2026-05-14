@@ -1199,9 +1199,21 @@ namespace engine::editor::world::panels
 #if defined(_WIN32)
 		(void)shell;
 		auto& p = tool.MutableParams();
+		// M100.45 Phase B — outil migré Simple/Advanced.
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Thermal / Wind Erosion — M100.39");
 		ImGui::TextDisabled("(clôt la Phase 2.5 — Terrain naturaliste)");
 		ImGui::Separator();
+
+		// M100.45 A.6 — dropdown de presets (tool_presets/thermal_wind_erosion.json).
+		engine::editor::world::ui::RenderPresetDropdown(
+			"thermal_wind_erosion",
+			[&p](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyThermalWindErosionPreset(p, preset);
+			});
 
 		// Sous-mode.
 		int subModeIdx = static_cast<int>(p.subMode);
@@ -1224,21 +1236,25 @@ namespace engine::editor::world::panels
 			ImGui::Separator();
 			ImGui::TextUnformatted("Thermal Erosion :");
 			auto& t = p.thermal;
-			ImGui::SliderFloat("Angle de talus (deg)", &t.talusAngleDeg, 5.0f, 80.0f, "%.1f");
+			// Mode Simple : la « force globale » suffit.
 			ImGui::SliderFloat("Force par passe",      &t.forcePerPass, 0.0f, 1.0f, "%.2f");
-			int np = static_cast<int>(t.numPasses);
-			if (ImGui::SliderInt("Nombre de passes",   &np, 1, 200))
+			if (advanced)
 			{
-				t.numPasses = static_cast<uint32_t>(std::max(1, np));
-			}
-			ImGui::SliderFloat("Pente min activation (deg)",
-				&t.minActivationSlopeDeg, 0.0f, 45.0f, "%.1f");
-			ImGui::Checkbox("Stopper sous sea level##th",  &t.stopUnderSeaLevel);
-			ImGui::Checkbox("Préserver pentes raides",     &t.preserveSteepSlopes);
-			if (t.preserveSteepSlopes)
-			{
-				ImGui::SliderFloat("Seuil exception (deg)",
-					&t.preserveSteepThresholdDeg, 0.0f, 90.0f, "%.1f");
+				ImGui::SliderFloat("Angle de talus (deg)", &t.talusAngleDeg, 5.0f, 80.0f, "%.1f");
+				int np = static_cast<int>(t.numPasses);
+				if (ImGui::SliderInt("Nombre de passes",   &np, 1, 200))
+				{
+					t.numPasses = static_cast<uint32_t>(std::max(1, np));
+				}
+				ImGui::SliderFloat("Pente min activation (deg)",
+					&t.minActivationSlopeDeg, 0.0f, 45.0f, "%.1f");
+				ImGui::Checkbox("Stopper sous sea level##th",  &t.stopUnderSeaLevel);
+				ImGui::Checkbox("Préserver pentes raides",     &t.preserveSteepSlopes);
+				if (t.preserveSteepSlopes)
+				{
+					ImGui::SliderFloat("Seuil exception (deg)",
+						&t.preserveSteepThresholdDeg, 0.0f, 90.0f, "%.1f");
+				}
 			}
 		}
 
@@ -1247,31 +1263,41 @@ namespace engine::editor::world::panels
 			ImGui::Separator();
 			ImGui::TextUnformatted("Wind Erosion :");
 			auto& w = p.wind;
-			ImGui::SliderFloat("Direction du vent (deg)", &w.windAngleDeg, 0.0f, 360.0f, "%.1f");
+			// Mode Simple : la « force du vent » suffit.
 			ImGui::SliderFloat("Force du vent",           &w.windStrength, 0.0f, 2.0f, "%.2f");
-			int npart = static_cast<int>(w.numParticles);
-			if (ImGui::SliderInt("Nombre de particules", &npart, 0, 200000))
+			if (advanced)
 			{
-				w.numParticles = static_cast<uint32_t>(std::max(0, npart));
+				ImGui::SliderFloat("Direction du vent (deg)", &w.windAngleDeg, 0.0f, 360.0f, "%.1f");
+				int npart = static_cast<int>(w.numParticles);
+				if (ImGui::SliderInt("Nombre de particules", &npart, 0, 200000))
+				{
+					w.numParticles = static_cast<uint32_t>(std::max(0, npart));
+				}
+				int life = static_cast<int>(w.maxLifetimeSteps);
+				if (ImGui::SliderInt("Durée de vie max",     &life, 1, 200))
+				{
+					w.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
+				}
+				ImGui::SliderFloat("Capacité sable",         &w.sandCapacityFactor, 0.0f, 2.0f, "%.2f");
+				ImGui::SliderFloat("Exposition R (m)",       &w.exposureRadiusMeters, 1.0f, 200.0f, "%.1f");
+				int seed = static_cast<int>(w.rngSeed);
+				if (ImGui::InputInt("Seed RNG##wind", &seed))
+				{
+					w.rngSeed = static_cast<uint32_t>(std::max(0, seed));
+				}
+				ImGui::Checkbox("Stopper sous sea level##wd", &w.stopUnderSeaLevel);
+				ImGui::Checkbox("Restreindre aux cellules Sand (flag MVP)", &w.restrictToSandSplat);
+				if (w.restrictToSandSplat)
+				{
+					ImGui::TextDisabled("Note MVP : flag conservé mais non câblé au splat (follow-up).");
+				}
 			}
-			int life = static_cast<int>(w.maxLifetimeSteps);
-			if (ImGui::SliderInt("Durée de vie max",     &life, 1, 200))
-			{
-				w.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
-			}
-			ImGui::SliderFloat("Capacité sable",         &w.sandCapacityFactor, 0.0f, 2.0f, "%.2f");
-			ImGui::SliderFloat("Exposition R (m)",       &w.exposureRadiusMeters, 1.0f, 200.0f, "%.1f");
-			int seed = static_cast<int>(w.rngSeed);
-			if (ImGui::InputInt("Seed RNG##wind", &seed))
-			{
-				w.rngSeed = static_cast<uint32_t>(std::max(0, seed));
-			}
-			ImGui::Checkbox("Stopper sous sea level##wd", &w.stopUnderSeaLevel);
-			ImGui::Checkbox("Restreindre aux cellules Sand (flag MVP)", &w.restrictToSandSplat);
-			if (w.restrictToSandSplat)
-			{
-				ImGui::TextDisabled("Note MVP : flag conservé mais non câblé au splat (follow-up).");
-			}
+		}
+
+		if (!advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour tout regler.");
 		}
 
 		ImGui::Separator();

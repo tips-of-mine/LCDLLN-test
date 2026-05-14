@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/masterd/account/AccountRole.h"
+
 #include <cstdint>
 #include <mutex>
 #include <optional>
@@ -24,12 +26,25 @@ namespace engine::server
 			uint64_t    characterId = 0;
 			std::string characterName;        ///< Original UTF-8, displayed as-is.
 			std::string normalizedName;       ///< Lowercased ASCII for whisper target match.
+			AccountRole role = AccountRole::Player; ///< Rôle du compte (pour la ventilation /status par rôle).
+		};
+
+		/// Ventilation du nombre de joueurs en jeu par rôle de compte. La somme des
+		/// quatre champs vaut \ref Count() (un rôle Console — sentinel runtime non
+		/// persisté — est compté comme \c player, cf. \ref CountByRole).
+		struct RoleCounts
+		{
+			size_t player = 0;
+			size_t moderator = 0;
+			size_t game_master = 0;
+			size_t administrator = 0;
 		};
 
 		/// Register or update the active character for \a connId.
 		/// Removes any previous binding for the same connId and any name → conn binding
 		/// that pointed at the old name (consistency under updates).
-		void Set(uint32_t connId, uint64_t characterId, std::string characterName, std::string normalizedName);
+		void Set(uint32_t connId, uint64_t characterId, std::string characterName, std::string normalizedName,
+			AccountRole role);
 
 		/// Drop the binding for \a connId (call on connection close).
 		void Remove(uint32_t connId);
@@ -43,6 +58,10 @@ namespace engine::server
 		/// Nombre de joueurs ayant valide EnterWorld (connId actuellement en jeu).
 		/// Utilise par l'API /status pour le compteur totalPlayers / per-shard players.
 		size_t Count() const;
+
+		/// Ventilation de \ref Count() par rôle de compte. Utilisé par l'API /status
+		/// pour les sous-compteurs players_by_role.
+		RoleCounts CountByRole() const;
 
 		/// Lowercase ASCII normalization (anything outside 0x00–0x7F is left untouched ;
 		/// case folding restricted to 'A'–'Z'). Whisper lookup uses byte-equality on the

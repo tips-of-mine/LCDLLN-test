@@ -493,6 +493,26 @@ namespace engine::client
 				}
 			}
 		}
+
+		// Heartbeat périodique sur la connexion master tant que le joueur est en jeu.
+		// Sans ça, le client n'émet plus rien après EnterWorld : le master applique
+		// HeartbeatTimeout (~120s), ferme la session, et le joueur disparaît de
+		// SessionCharacterMap → le compteur /status retombe à 0 alors qu'on joue.
+		// (m_masterClient est garanti non-nul ici : le seul chemin qui le reset
+		// ci-dessus fait un return immédiat.)
+		if (m_masterSessionId != 0u)
+		{
+			const auto now = std::chrono::steady_clock::now();
+			if (now - m_lastMasterHeartbeatAt >= std::chrono::seconds(30))
+			{
+				const auto hb = engine::network::BuildHeartbeatPacket(m_masterSessionId);
+				if (!hb.empty()
+					&& m_masterClient->Send(std::span<const uint8_t>(hb.data(), hb.size())))
+				{
+					m_lastMasterHeartbeatAt = now;
+				}
+			}
+		}
 	}
 
 	void AuthUiPresenter::RememberPostEnterWorldCharacter(uint64_t characterId, std::string characterName)

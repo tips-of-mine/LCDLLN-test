@@ -3,10 +3,15 @@
 -- (raid future).
 --
 -- Idempotente : CREATE TABLE IF NOT EXISTS. Rejouable sans erreur.
+--
+-- Note : la table `groups` est backtick-quotee partout — `GROUPS` est un
+-- mot reserve depuis MySQL 8.0.2 (window functions). Sans les backticks,
+-- `CREATE TABLE groups` et `REFERENCES groups` sont des syntax errors sur
+-- MySQL 8.x (OK sur 5.7, d'ou le passage CI initial).
 
 -- Table groups : 1 ligne par groupe actif (party ou raid). Disband =
 -- DELETE (cascade member rows via FK ON DELETE CASCADE).
-CREATE TABLE IF NOT EXISTS groups
+CREATE TABLE IF NOT EXISTS `groups`
 (
 	group_id     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	group_type   TINYINT UNSIGNED NOT NULL DEFAULT 0,  -- 0=Party, 1=Raid
@@ -31,7 +36,7 @@ CREATE TABLE IF NOT EXISTS group_members
 	UNIQUE KEY uniq_group_members_player (player_id),
 	KEY idx_group_members_group (group_id),
 	CONSTRAINT fk_group_members_group
-		FOREIGN KEY (group_id) REFERENCES groups (group_id)
+		FOREIGN KEY (group_id) REFERENCES `groups` (group_id)
 		ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

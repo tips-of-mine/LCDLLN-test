@@ -813,6 +813,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Cave Tool — M100.40 (Phase 11 démarrage)");
 		ImGui::TextDisabled("(MVP éditeur-side : rendu glTF runtime à câbler en follow-up)");
 		ImGui::Separator();
@@ -851,22 +854,31 @@ namespace engine::editor::world::panels
 		ImGui::SliderFloat("Scale uniforme",  &tool.UniformScale(),  0.1f, 5.0f, "%.2f");
 		ImGui::Checkbox("Snap au sol", &tool.SnapToGround());
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Camouflage entrée :");
-		ImGui::Checkbox("Auto-peindre splat « Rocher »", &tool.CamouflageEnabled());
-		if (tool.CamouflageEnabled())
+		// M100.45 Phase B — mode Advanced : camouflage + flags gameplay.
+		if (advanced)
 		{
-			ImGui::SliderFloat("Rayon (m)",   &tool.CamouflageRadius(),   1.0f, 50.0f, "%.1f");
-			ImGui::SliderFloat("Force",       &tool.CamouflageStrength(), 0.0f, 1.0f, "%.2f");
-		}
+			ImGui::Separator();
+			ImGui::TextUnformatted("Camouflage entrée :");
+			ImGui::Checkbox("Auto-peindre splat « Rocher »", &tool.CamouflageEnabled());
+			if (tool.CamouflageEnabled())
+			{
+				ImGui::SliderFloat("Rayon (m)",   &tool.CamouflageRadius(),   1.0f, 50.0f, "%.1f");
+				ImGui::SliderFloat("Force",       &tool.CamouflageStrength(), 0.0f, 1.0f, "%.2f");
+			}
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gameplay :");
-		ImGui::Checkbox("Volume intérieur (SurfaceQuery)", &tool.HasInteriorVolume());
-		ImGui::Checkbox("Reverb audio",                    &tool.ReceivesAudioReverb());
-		ImGui::Checkbox("Permet l'eau (ingress)",          &tool.AllowsWaterIngress());
-		ImGui::SliderFloat("Intensité probe lumière",      &tool.LightProbeIntensity(),
-			0.0f, 2.0f, "%.2f");
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gameplay :");
+			ImGui::Checkbox("Volume intérieur (SurfaceQuery)", &tool.HasInteriorVolume());
+			ImGui::Checkbox("Reverb audio",                    &tool.ReceivesAudioReverb());
+			ImGui::Checkbox("Permet l'eau (ingress)",          &tool.AllowsWaterIngress());
+			ImGui::SliderFloat("Intensité probe lumière",      &tool.LightProbeIntensity(),
+				0.0f, 2.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour camouflage + gameplay.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedId().empty();
@@ -896,6 +908,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Overhang Tool — M100.41 (Phase 11)");
 		ImGui::TextDisabled("(MVP éditeur-side : raycast cliff + normal auto en follow-up M100.17)");
 		ImGui::Separator();
@@ -938,12 +953,21 @@ namespace engine::editor::world::panels
 		ImGui::TextColored(slopeOk ? ImVec4(0.5f, 1.0f, 0.5f, 1.0f) : ImVec4(1.0f, 0.5f, 0.5f, 1.0f),
 			slopeOk ? "Cliff OK" : "Slope insuffisante");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gameplay :");
-		ImGui::Checkbox("Projette une ombre",          &tool.CastsShadow());
-		ImGui::Checkbox("Reverb audio",                &tool.ReceivesAudioReverb());
-		ImGui::SliderFloat("Intensité probe lumière",  &tool.LightProbeIntensity(),
-			0.0f, 2.0f, "%.2f");
+		// M100.45 Phase B — mode Advanced : flags gameplay + lighting.
+		if (advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gameplay :");
+			ImGui::Checkbox("Projette une ombre",          &tool.CastsShadow());
+			ImGui::Checkbox("Reverb audio",                &tool.ReceivesAudioReverb());
+			ImGui::SliderFloat("Intensité probe lumière",  &tool.LightProbeIntensity(),
+				0.0f, 2.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour le gameplay.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedId().empty() && slopeOk;
@@ -973,6 +997,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Arch Tool — M100.42 (Phase 11)");
 		ImGui::TextDisabled("(MVP éditeur-side : raycast viewport ↦ M100.17)");
 		ImGui::Separator();
@@ -1019,11 +1046,20 @@ namespace engine::editor::world::panels
 		ImGui::SliderFloat("Min scale", &tool.MinScaleRatio(), 0.05f, 1.0f, "%.2f");
 		ImGui::SliderFloat("Max scale", &tool.MaxScaleRatio(), 1.0f, 10.0f, "%.2f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gameplay :");
-		ImGui::Checkbox("Projette une ombre", &tool.CastsShadow());
-		ImGui::SliderFloat("Intensité probe lumière", &tool.LightProbeIntensity(),
-			0.0f, 2.0f, "%.2f");
+		// M100.45 Phase B — mode Advanced : flags gameplay + lighting.
+		if (advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gameplay :");
+			ImGui::Checkbox("Projette une ombre", &tool.CastsShadow());
+			ImGui::SliderFloat("Intensité probe lumière", &tool.LightProbeIntensity(),
+				0.0f, 2.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour le gameplay.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedId().empty() && scaleOk;
@@ -1053,6 +1089,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Dungeon Portal Tool — M100.43 (Phase 11)");
 		ImGui::TextDisabled("(MVP éditeur-side : handler serveur câblé en M100.44)");
 		ImGui::Separator();
@@ -1088,19 +1127,30 @@ namespace engine::editor::world::panels
 		ImGui::SliderFloat("Yaw (deg)", &tool.YawDeg(), -180.0f, 180.0f, "%.1f");
 		ImGui::SliderFloat("Trigger radius (m)", &tool.TriggerRadius(), 0.5f, 30.0f, "%.1f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gating gameplay :");
-		int reqLevel = static_cast<int>(tool.RequiredLevel());
-		if (ImGui::SliderInt("Niveau requis", &reqLevel, 1, 80))
-			tool.RequiredLevel() = static_cast<uint16_t>(reqLevel);
-		int minD = static_cast<int>(tool.MinDifficulty());
-		int maxD = static_cast<int>(tool.MaxDifficulty());
-		if (ImGui::SliderInt("Min difficulty", &minD, 1, 5))
-			tool.MinDifficulty() = static_cast<uint8_t>(minD);
-		if (ImGui::SliderInt("Max difficulty", &maxD, 1, 5))
-			tool.MaxDifficulty() = static_cast<uint8_t>(maxD);
-		ImGui::Checkbox("One-shot (raid partagé)",        &tool.IsOneShot());
-		ImGui::Checkbox("Persiste entre les sessions",    &tool.PersistsAcrossLogin());
+		// M100.45 Phase B — mode Advanced : gating gameplay détaillé.
+		// En mode Simple, niveau/difficulté gardent les valeurs préremplies
+		// depuis le catalogue par SelectByTemplateId (Place reste valide).
+		if (advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gating gameplay :");
+			int reqLevel = static_cast<int>(tool.RequiredLevel());
+			if (ImGui::SliderInt("Niveau requis", &reqLevel, 1, 80))
+				tool.RequiredLevel() = static_cast<uint16_t>(reqLevel);
+			int minD = static_cast<int>(tool.MinDifficulty());
+			int maxD = static_cast<int>(tool.MaxDifficulty());
+			if (ImGui::SliderInt("Min difficulty", &minD, 1, 5))
+				tool.MinDifficulty() = static_cast<uint8_t>(minD);
+			if (ImGui::SliderInt("Max difficulty", &maxD, 1, 5))
+				tool.MaxDifficulty() = static_cast<uint8_t>(maxD);
+			ImGui::Checkbox("One-shot (raid partagé)",        &tool.IsOneShot());
+			ImGui::Checkbox("Persiste entre les sessions",    &tool.PersistsAcrossLogin());
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — gating niveau/difficulté hérité du catalogue.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedTemplateId().empty()

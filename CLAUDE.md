@@ -98,3 +98,47 @@ Périmètre concerné par cette règle :
 Cette règle aide les futurs mappeurs et contributeurs à comprendre
 l'outillage sans relire tout le code. Elle s'ajoute à la convention générale
 du repo (commentaires en français, clarté > brièveté).
+
+## Convention winding / face culling (rendu Vulkan) — NE PAS RE-CASSER
+
+**Le terrain a déjà disparu plusieurs fois** à cause d'un `frontFace` inversé.
+Cette section est la garde anti-régression : la lire **avant** de toucher à un
+`VkPipelineRasterizationStateCreateInfo` (`cullMode` / `frontFace`).
+
+### La règle
+
+`Mat4::PerspectiveVulkan` (`src/shared/math/Math.h`) **inverse Y** (`m[5] = -t`).
+Conséquence : un maillage généré **CCW vu de la caméra** reste CCW en
+framebuffer Vulkan. Donc, pour un tel maillage, le pipeline doit utiliser :
+
+- `cullMode = VK_CULL_MODE_BACK_BIT`
+- `frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE`
+
+### Pipeline terrain — figé
+
+`TerrainRenderer` (`src/client/render/terrain/TerrainRenderer.cpp`) : le mesh de
+patch est généré **CCW vu de dessus** (`TerrainMesh.cpp`, quads `bl,tl,tr` /
+`bl,tr,br`). Le pipeline terrain **DOIT** rester
+`frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE` + `cullMode = BACK`.
+
+⛔ **Ne JAMAIS repasser ce `frontFace` à `CLOCKWISE`.** C'est exactement le bug
+corrigé par la PR #613 (et introduit à tort par la PR #427). Symptôme quand
+c'est cassé : terrain **invisible**, viewport uniformément couleur ciel,
+**pas même l'orange** du fallback `noUserTextures`, alors que les logs
+`[TerrainRenderer] Record diag` montrent `kept=225`. Historique complet :
+`docs/INVESTIGATION_terrain_invisible.md` section 12.
+
+### Diagnostic rapide si une géométrie 3D disparaît
+
+1. Suspecter `frontFace` **en premier** (avant la matrice, le frustum, la caméra).
+2. Mettre temporairement `cullMode = VK_CULL_MODE_NONE` : si la géométrie
+   réapparaît → c'est bien le winding, corriger `frontFace` (et **pas**
+   laisser `cullMode = NONE`).
+
+### Attention : ne pas aligner aveuglément les pipelines entre eux
+
+`GeometryPass` (avatar) et le pipeline *falaises* de `TerrainRenderer` utilisent
+actuellement `frontFace = CLOCKWISE`. Leurs maillages viennent de **fichiers**
+(winding potentiellement différent du grid terrain). Chaque pipeline a sa
+propre convention selon la source de son mesh — **vérifier le winding réel du
+maillage concerné**, ne pas « uniformiser » un `frontFace` sur un autre.

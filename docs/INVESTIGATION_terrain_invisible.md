@@ -1,8 +1,10 @@
 # INVESTIGATION — Terrain invisible dans World Editor (et probablement client jeu)
 
-**Date** : 2026-05-04
-**Statut** : ⛔ Bloquant (impossible d'avancer client + éditeur)
-**PR de contexte** : #427 (branche `claude/terrain-default-fallback-JlWpU`)
+**Date** : 2026-05-04 — **Résolu le 2026-05-14** (cf. section 12.7)
+**Statut** : ✅ Résolu — cause racine : `frontFace` terrain inversé (backface
+cull rejetait tous les patches). Correctif dans la PR #613.
+**PR de contexte** : #427 (branche `claude/terrain-default-fallback-JlWpU`),
+puis #613 (branche `claude/fix-terrain-invisible`) pour le diagnostic + fix.
 **Auteur initial du chantier** : Hubert Cornet + Claude Sonnet/Opus
 
 ---
@@ -305,6 +307,190 @@ Sans terrain visible :
 
 → Bloque tickets World Editor postérieurs ET vérification du flux jeu
 in-world (zones, déplacement avatar, collision sol).
+
+---
+
+## 12. Reprise 2026-05-14 — audit pipeline + build de diagnostic
+
+**Branche** : `claude/fix-terrain-invisible` (périmètre `src/client/render/` +
+shaders uniquement — disjoint de la session éditeur).
+
+### 12.1 Correction factuelle sur le §2.4
+
+Le §2.4 conclut « matrice viewProj correcte » en ne vérifiant que `clip.w > 0`.
+Or le log `proj(centerPatch)=(-0.00,107.31,27.33,27.43)` donne
+**NDC.y = 107.31 / 27.43 = 3.91**, soit largement hors de `[-1,+1]` : le patch
+central est *hors écran*. Ce n'est PAS un bug en soi (la caméra est pile
+au-dessus du centre du terrain et regarde vers l'avant, donc le patch central
+est sous le champ de vision), mais la preuve « la matrice est bonne » est
+mal interprétée. Recalcul manuel : les patches **vers l'avant** (Z décroissant
+depuis la caméra) projettent bien dans `[-1,+1]`. La matrice est donc
+*probablement* correcte, mais ce n'est pas démontré par le diagnostic existant.
+
+### 12.2 Mécanisme central identifié
+
+Le symptôme « écran **uniformément** couleur ciel + **aucun orange** » n'est
+PAS compatible avec « la lighting pass mange l'albedo » (§4.1) : si l'albedo
+orange était dans GBufferA et la profondeur correcte, `lighting.frag` ferait
+du PBR sur l'orange → orange ombré visible, pas la couleur du ciel.
+
+`lighting.frag` (≈ ligne 119) :
+```glsl
+if (depth >= 1.0) { outSceneColorHDR = vec4(skyOut, 1.0); return; } // ne lit jamais GBufferA
+```
+Le seul état produisant un écran *uniforme* couleur ciel est
+**`depth >= 1.0` sur tout l'écran**. La lighting pass sort alors la sky color
+partout et **ne regarde même pas l'albedo** (donc l'orange est invisible par
+construction, quoi qu'écrive `terrain.frag`).
+
+Vérifié au passage : `SkyPass` a en réalité `depthTestEnable = VK_TRUE`
++ `LESS_OR_EQUAL` (`SkyPass.cpp:104`) — le commentaire `Engine.cpp:3868`
+« depthTest=FALSE » est faux/obsolète. SkyPass est donc correctement gated par
+la profondeur, ce qui **confirme** que tout dépend de la profondeur écrite
+par le terrain.
+
+**Conclusion** : le bug est que le terrain **n'écrit pas de profondeur
+`< 1.0`** dans `m_fgDepthId` au moment où la LightingPass l'échantillonne —
+soit il ne rasterise aucun fragment, soit ses écritures de depth ne tiennent
+pas. L'hypothèse §4.1 est rétrogradée.
+
+### 12.3 Hypothèses re-classées
+
+1. 🔴 **Le terrain ne rasterise aucun fragment** → depth reste à 1.0.
+   Winding toujours faux malgré le fix `frontFace=CW` (`TerrainRenderer.cpp:537`),
+   OU `terrain.vert` produit un `gl_Position` NaN/hors-range (heightmap GPU
+   mal liée/uploadée dans `RebuildWorldEditorTerrainGpu`).
+2. 🟠 **Le terrain rasterise la couleur mais pas la profondeur** (ou la depth
+   ne persiste pas jusqu'à la LightingPass) — aspect du `VkImageView` depth,
+   identité d'image entre le render pass privé du terrain et celui lu par la
+   lighting.
+3. 🟡 Mismatch framebuffer/barrière (§4.2) — vérifié sur le papier (mêmes
+   ResourceId, `storeOp=STORE` partout, layouts qui s'enchaînent) : semble OK,
+   à confirmer RenderDoc.
+4. 🟢 La lighting pass « mange » l'albedo (§4.1) — **rétrogradée**,
+   incompatible avec un écran *uniforme* couleur ciel.
+
+### 12.4 Build de diagnostic ajouté
+
+Ajout d'un mode debug dans `lighting.frag`, piloté par la clé config
+`render.lighting_debug_mode` (entier, défaut 0) :
+
+- `0` — rendu normal.
+- `1` — `depth < 1.0` → **vert**, `depth >= 1.0` → **rouge**.
+  *Écran tout rouge ⇒ le terrain n'écrit aucune profondeur (hyp. 1/2).*
+  *Présence de vert ⇒ depth OK, bug en aval.*
+- `2` — GBufferA (albedo) brut, sans éclairage.
+  *Orange visible ⇒ terrain écrit l'albedo. Pas d'orange ⇒ ne rasterise pas.*
+- `3` — profondeur brute en niveaux de gris.
+
+Implémentation : champ `float debugMode` ajouté à `LightingPass::LightParams`
+(push-constant 148 → 152 octets) + branches dans `lighting.frag` + lecture
+config dans la lambda « Lighting » de `Engine.cpp`.
+
+**À faire côté build Windows** :
+1. Recompiler les shaders (`tools/compile_game_shaders.ps1`) — `lighting.frag.spv`
+   est un fichier suivi, il sera régénéré.
+2. Lancer l'éditeur avec `render.lighting_debug_mode` = 1 puis 2 dans
+   `config.json`, coller ici les captures + les logs `[TerrainRenderer]`.
+3. Selon le résultat : voir §12.3 pour l'hypothèse à creuser ensuite.
+
+*À valider sur le build Windows — aucune validation graphique possible côté
+session Claude (pas d'environnement Vulkan).*
+
+### 12.5 Résultats du build de diagnostic (2026-05-14)
+
+Captures fournies par l'utilisateur :
+- **`render.lighting_debug_mode = 1`** → écran **entièrement ROUGE**.
+  ⇒ `depth >= 1.0` sur **tout** l'écran : le terrain n'écrit **aucune**
+  profondeur. Il ne rasterise **aucun fragment**.
+- **`render.lighting_debug_mode = 2`** → écran uniformément gris/beige (pas
+  d'orange). Cohérent : `SkyPass` (depthTest=`LESS_OR_EQUAL`, depth==1.0
+  partout) remplit GBufferA avec la couleur du ciel sur tout l'écran.
+
+Logs (`log.level` doit être à `Debug` ? — non, les lignes `[TerrainRenderer]`
+sortent en `LOG_INFO`/`Render` et apparaissent bien) :
+```
+[TerrainRenderer] Init OK (15×15 patches, worldSize=10000 heightScale=200)
+[WorldEditor] Camera reset: pos=(659.9,180.0,659.9) farZ=5000 actualExt=(2344x2344)
+[TerrainRenderer] Record diag: patches total=225 kept=225 culled=0 noUserTex=1
+[TerrainRenderer] viewProj row0=(0.7892,0.0000,0.0000,-520.7736)
+[TerrainRenderer] viewProj row1=(0.0000,-1.3415,0.4900,-81.8793)
+[TerrainRenderer] viewProj row2=(0.0000,-0.3429,-0.9394,681.5039)
+[TerrainRenderer] viewProj row3=(0.0000,-0.3429,-0.9394,681.5902)
+[TerrainRenderer] proj(cam-Z100)=(0.00,-49.00,93.84,93.94)   <- devant, w>0
+[TerrainRenderer] proj(centerPatch=(660,100,660))=(0.00,107.31,27.33,27.43)
+```
+
+Analyse :
+- La matrice viewProj est **correcte**. `row2 ≈ row3` est *normal* ici (near=0.1,
+  far=5000 ⇒ `f/(f-n) ≈ 1`), ce n'est pas le bug pré-existant.
+- `Record()` est appelé, 225 patches soumis (cull CPU bypassé).
+- Recalcul manuel : un patch « vers l'avant » à `(660, 100, 0)` projette en
+  NDC `(0, -0.33, 0.9999)` — **pleinement à l'écran**, profondeur valide.
+- Pourtant rien ne rasterise et `depth` reste à 1.0.
+
+⇒ Les triangles sont **on-screen + depth valide**, mais aucun fragment n'est
+produit. Le seul mécanisme de rejet restant est le **backface culling**. Le
+maillage est généré « CCW vu de dessus » (`TerrainMesh.cpp:146,166`,
+`bl,tl,tr` / `bl,tr,br`) et le « fix » `frontFace=VK_FRONT_FACE_CLOCKWISE`
+(`TerrainRenderer.cpp`) **est très probablement dans le mauvais sens**. Le
+commentaire « confirmé avec cullMode=NONE : terrain visible » décrit un état
+antérieur — soit le fix n'a jamais été testé avec `cullMode=BACK`, soit un
+commit ultérieur a re-modifié la convention.
+
+### 12.6 Build de diagnostic n°2 — sélecteur cull/winding
+
+Ajout de la clé config `render.terrain_debug_cull` (lue par
+`TerrainRenderer::Init`, donc rejouée à chaque « Nouvelle carte ») :
+
+- `0` (défaut) — `cullMode=BACK`, `frontFace=CW` (comportement actuel).
+- `1` — `cullMode=NONE` → **si le terrain APPARAÎT, le winding est confirmé
+  comme cause racine** (les triangles étaient tous backface-cull).
+- `2` — `cullMode=BACK`, `frontFace=CCW` → **le correctif suspecté**.
+- `3` — `cullMode=FRONT` → vérification symétrique.
+
+Avantage : un seul build, l'utilisateur teste les 4 cas en éditant
+`config.json` + « Nouvelle carte ». Pas besoin de toucher `lighting.frag`
+(remettre `render.lighting_debug_mode` à `0`).
+
+**À faire côté build Windows** : recompiler le `.exe`, puis tester
+`render.terrain_debug_cull` = 1 puis 2. Résultat attendu : 1 et 2 rendent le
+terrain visible ⇒ on rend permanent le cas 2 (`frontFace=CCW`) et on retire
+le sélecteur + le mode debug lighting.
+
+### 12.7 RÉSOLU (2026-05-14) — `frontFace` terrain inversé
+
+Captures + logs fournis par l'utilisateur :
+- `render.terrain_debug_cull = 1` (`cullMode=NONE`) → **terrain visible**.
+- `render.terrain_debug_cull = 2` (`cullMode=BACK`, `frontFace=CCW`) →
+  **terrain visible** (et correctement backface-cull).
+
+**Cause racine** : le pipeline terrain utilisait
+`frontFace = VK_FRONT_FACE_CLOCKWISE`. Le mesh de patch est généré CCW vu de
+dessus (`TerrainMesh.cpp`) ; avec la matrice `PerspectiveVulkan` qui inverse Y,
+les triangles restent CCW en framebuffer Vulkan. Avec `frontFace=CW` +
+`cullMode=BACK`, **tous les patches étaient backface-cull** → terrain
+invisible, profondeur jamais écrite, `lighting.frag` sortait la sky color
+partout (d'où l'écran uniforme + l'absence d'orange). Le « fix » `frontFace=CW`
+de la PR #427 était dans le mauvais sens.
+
+**Correctif** (PR #613) :
+- `TerrainRenderer.cpp` : `rasCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE`
+  (permanent), `cullMode=BACK` conservé.
+- Instrumentation de diagnostic retirée (`render.lighting_debug_mode`,
+  `render.terrain_debug_cull`, champ `debugMode` de `LightingPass::LightParams`,
+  branches debug de `lighting.frag`).
+
+**Suivi non bloquant** :
+- Le pipeline *falaises* (`TerrainRenderer.cpp`, `m_cliffPipeline`) garde
+  `frontFace=CLOCKWISE` avec le même commentaire « fix » suspect. Les meshes de
+  falaise sont chargés depuis fichier (winding non vérifiable côté code) et il
+  n'y en avait aucun dans le repro (`Cliff meshes loaded: 0/0`). À revérifier
+  quand des falaises seront réellement testées en jeu/éditeur.
+- `GeometryPass` (avatar) garde `frontFace=CLOCKWISE` — non touché, l'avatar
+  n'était pas dans le repro ; à confirmer indépendamment.
+- §8.2 (`Frustum::ExtractFromMatrix` convention OpenGL) reste ouvert mais
+  non bloquant (cull CPU bypassé en éditeur).
 
 ---
 

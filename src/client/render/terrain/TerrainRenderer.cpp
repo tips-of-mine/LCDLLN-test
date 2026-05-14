@@ -525,16 +525,21 @@ namespace engine::render::terrain
             rasCI.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             rasCI.polygonMode = VK_POLYGON_MODE_FILL;
             rasCI.cullMode    = VK_CULL_MODE_BACK_BIT;
-            // PR #427 follow-up : winding apparent en clip space inverse depuis le commit
-            // ee181da (Reapply view matrix transposee, convention Vulkan LH +Z forward).
-            // Le mesh terrain est genere en CCW dans le plan XZ world space, mais la nouvelle
-            // matrice view fait apparaitre les triangles en CW dans le clip space. Avec
-            // frontFace=CCW, le pipeline rejetait silencieusement TOUS les patches (terrain
-            // invisible malgre patches kept=225 cote CPU frustum cull). Confirme par PR
-            // diag avec cullMode=NONE : terrain visible (depth<1 = bleu, sky=rouge dans la
-            // viz depth). Fix permanent : passer frontFace en CLOCKWISE pour matcher la
-            // nouvelle convention du clip space sans toucher au mesh.
-            rasCI.frontFace   = VK_FRONT_FACE_CLOCKWISE;
+            // Winding terrain : le mesh de patch est genere CCW vu de dessus
+            // (TerrainMesh.cpp : quads bl,tl,tr / bl,tr,br). Avec la matrice
+            // PerspectiveVulkan qui inverse Y (m[5] = -t), un triangle CCW en
+            // espace camera devient CCW en framebuffer Vulkan -> frontFace doit
+            // etre COUNTER_CLOCKWISE pour que cullMode=BACK garde les patches.
+            //
+            // Historique : un "fix" anterieur (PR #427 follow-up) avait pose
+            // frontFace=CLOCKWISE en pensant corriger le commit ee181da. C'etait
+            // le mauvais sens : tous les patches etaient backface-cull (terrain
+            // invisible malgre kept=225 cote CPU). Confirme le 2026-05-14 par le
+            // build de diagnostic render.terrain_debug_cull (cf.
+            // docs/INVESTIGATION_terrain_invisible.md section 12) : cas 1
+            // (cullMode=NONE) ET cas 2 (BACK + frontFace=CCW) rendent le terrain
+            // visible. Le cas 2 est rendu permanent ici.
+            rasCI.frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 
             VkPipelineMultisampleStateCreateInfo msCI{};

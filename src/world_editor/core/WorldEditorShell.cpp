@@ -15,6 +15,10 @@
 #include "src/shared/core/Config.h"
 #include "src/shared/core/Log.h"
 
+#include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/prefs/UserPrefsStore.h"
+#include "src/world_editor/presets/ToolPresetRegistry.h"
+
 #if defined(_WIN32)
 #	include "imgui.h"
 #endif
@@ -205,6 +209,26 @@ namespace engine::editor::world
 				dungeonErr);
 		}
 		m_dungeonPortalTool.Init(m_commandStack, m_dungeonPortalDoc, cfg);
+
+		// M100.45 — Phase 12 « Accessibilité ». Charge les préférences
+		// utilisateur (`editor/user_prefs.json` — créé avec les défauts au
+		// premier lancement) + le catalogue de presets d'outils
+		// (`editor/tool_presets/*.json`). Le registry de mode est aligné
+		// sur la préférence chargée sans ré-écrire le fichier.
+		{
+			const std::string contentRoot = cfg.GetString("paths.content", "game/data");
+			const bool prefsExisted =
+				engine::editor::world::prefs::UserPrefsStore::Instance().Init(contentRoot);
+			const size_t presetFiles =
+				engine::editor::world::presets::ToolPresetRegistry::Instance()
+					.LoadFromContentPath(contentRoot);
+			engine::editor::world::modes::EditorModeRegistry::Instance()
+				.SetCurrentModeSilent(
+					engine::editor::world::prefs::UserPrefsStore::Instance().GetEditorMode());
+			LOG_INFO(EditorWorld,
+				"[WorldEditorShell] M100.45 prefs {} ({} fichiers de presets)",
+				prefsExisted ? "chargées" : "créées (premier lancement)", presetFiles);
+		}
 
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
 		// (index 5, ordre stable garanti par l'init ci-dessus). Le panel s'en
@@ -637,6 +661,17 @@ namespace engine::editor::world
 			SetActiveTool(ActiveTool::DungeonPortal);
 			return true;
 		}
+		// M100.45 (Partie C) — Ctrl+Shift+R : hot-reload des presets d'outils
+		// depuis le disque. Réservé aux builds debug — permet d'itérer sur
+		// les `tool_presets/*.json` sans relancer l'éditeur.
+#if !defined(NDEBUG)
+		if (ctrl && shift && virtualKey == 'R')
+		{
+			const size_t n = presets::ToolPresetRegistry::Instance().Reload();
+			LOG_INFO(EditorWorld, "[WorldEditorShell] Hot-reload presets : {} fichier(s)", n);
+			return true;
+		}
+#endif
 		return HandleShortcut(virtualKey);
 	}
 

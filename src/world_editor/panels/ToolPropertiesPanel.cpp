@@ -5,6 +5,9 @@
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/presets/ToolPresetApply.h"
+#include "src/world_editor/ui/PresetDropdownWidget.h"
 #include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/bridge/Phase11Validator.h"
 #include "src/world_editor/volumes/bridge/VMapBridge.h"
@@ -64,26 +67,51 @@ namespace engine::editor::world::panels
 
 		/// Rend les sliders communs (radius/strength/falloff) puis les
 		/// paramètres dépendants du mode (noise) et les checkboxes mirror.
+		/// M100.45 Phase B — outil migré : dropdown de presets + split
+		/// Simple/Advanced. Simple = mode + rayon + force ; Advanced +=
+		/// falloff, bruit, mirror.
 		void RenderSculptParams(engine::editor::world::TerrainSculptTool& tool)
 		{
+			const bool advanced =
+				engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+					== engine::editor::world::modes::EditorMode::Advanced;
+
 			engine::editor::world::TerrainBrushParams params = tool.GetParams();
+
+			// M100.45 A.6 — dropdown de presets (tool_presets/sculpt.json).
+			// Le callback s'exécute synchrone : il mute la copie locale
+			// `params`, les sliders ci-dessous reflètent la nouvelle valeur.
+			engine::editor::world::ui::RenderPresetDropdown(
+				"sculpt",
+				[&params](const engine::editor::world::presets::ToolPreset& preset) {
+					engine::editor::world::presets::ApplySculptPreset(params, preset);
+				});
+
 			RenderBrushModeRadios(params.mode);
 			ImGui::Separator();
 			ImGui::SliderFloat("Radius (m)",   &params.radiusMeters, 1.0f, 50.0f, "%.1f");
 			ImGui::SliderFloat("Strength",     &params.strengthMps,  0.1f, 50.0f, "%.2f");
-			ImGui::SliderFloat("Falloff",      &params.falloff,      0.0f, 1.0f,  "%.2f");
-			if (params.mode == engine::editor::world::TerrainBrushMode::Noise)
+
+			if (advanced)
 			{
-				ImGui::SliderFloat("Noise freq",  &params.noiseFreq, 0.001f, 1.0f, "%.3f");
-				int octaves = static_cast<int>(params.noiseOctaves);
-				if (ImGui::SliderInt("Noise octaves", &octaves, 1, 6))
+				ImGui::SliderFloat("Falloff",      &params.falloff,      0.0f, 1.0f,  "%.2f");
+				if (params.mode == engine::editor::world::TerrainBrushMode::Noise)
 				{
-					params.noiseOctaves = static_cast<uint8_t>(octaves);
+					ImGui::SliderFloat("Noise freq",  &params.noiseFreq, 0.001f, 1.0f, "%.3f");
+					int octaves = static_cast<int>(params.noiseOctaves);
+					if (ImGui::SliderInt("Noise octaves", &octaves, 1, 6))
+					{
+						params.noiseOctaves = static_cast<uint8_t>(octaves);
+					}
 				}
+				ImGui::Checkbox("Mirror X", &params.mirrorX);
+				ImGui::SameLine();
+				ImGui::Checkbox("Mirror Z", &params.mirrorZ);
 			}
-			ImGui::Checkbox("Mirror X", &params.mirrorX);
-			ImGui::SameLine();
-			ImGui::Checkbox("Mirror Z", &params.mirrorZ);
+			else
+			{
+				ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour falloff/bruit/mirror.");
+			}
 			tool.SetParams(params);
 		}
 
@@ -146,7 +174,21 @@ namespace engine::editor::world::panels
 		void RenderSplatPaintParams(engine::editor::world::WorldEditorShell& shell,
 			engine::editor::world::SplatPaintTool& tool)
 		{
+			// M100.45 Phase B — outil migré : dropdown de presets + split
+			// Simple/Advanced. Simple = mode + couche + rayon + force ;
+			// Advanced += falloff + filtres auto-rules slope/alt.
+			const bool advanced =
+				engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+					== engine::editor::world::modes::EditorMode::Advanced;
+
 			engine::editor::world::SplatPaintParams params = tool.GetParams();
+
+			// M100.45 A.6 — dropdown de presets (tool_presets/splat_paint.json).
+			engine::editor::world::ui::RenderPresetDropdown(
+				"splat_paint",
+				[&params](const engine::editor::world::presets::ToolPreset& preset) {
+					engine::editor::world::presets::ApplySplatPaintPreset(params, preset);
+				});
 
 			ImGui::TextUnformatted("Mode:");
 			if (ImGui::RadioButton("Manual", !params.autoRules))
@@ -169,16 +211,23 @@ namespace engine::editor::world::panels
 
 			ImGui::SliderFloat("Radius (m)", &params.radiusMeters, 1.0f, 50.0f, "%.1f");
 			ImGui::SliderFloat("Strength",   &params.strength,     0.0f, 1.0f,  "%.2f");
-			ImGui::SliderFloat("Falloff",    &params.falloff,      0.0f, 1.0f,  "%.2f");
 
-			if (params.autoRules)
+			if (advanced)
 			{
-				ImGui::Separator();
-				ImGui::TextUnformatted("Auto-Rules");
-				ImGui::SliderFloat("Slope min (deg)", &params.slopeMinDeg, 0.0f, 90.0f, "%.1f");
-				ImGui::SliderFloat("Slope max (deg)", &params.slopeMaxDeg, 0.0f, 90.0f, "%.1f");
-				ImGui::SliderFloat("Alt min (m)",     &params.altMin, -1024.0f, 8192.0f, "%.1f");
-				ImGui::SliderFloat("Alt max (m)",     &params.altMax, -1024.0f, 8192.0f, "%.1f");
+				ImGui::SliderFloat("Falloff",    &params.falloff,      0.0f, 1.0f,  "%.2f");
+				if (params.autoRules)
+				{
+					ImGui::Separator();
+					ImGui::TextUnformatted("Auto-Rules");
+					ImGui::SliderFloat("Slope min (deg)", &params.slopeMinDeg, 0.0f, 90.0f, "%.1f");
+					ImGui::SliderFloat("Slope max (deg)", &params.slopeMaxDeg, 0.0f, 90.0f, "%.1f");
+					ImGui::SliderFloat("Alt min (m)",     &params.altMin, -1024.0f, 8192.0f, "%.1f");
+					ImGui::SliderFloat("Alt max (m)",     &params.altMax, -1024.0f, 8192.0f, "%.1f");
+				}
+			}
+			else
+			{
+				ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour falloff + auto-rules.");
 			}
 
 			tool.SetParams(params);
@@ -400,13 +449,26 @@ namespace engine::editor::world::panels
 		engine::editor::world::LakeTool& tool)
 	{
 #if defined(_WIN32)
+		// M100.45 Phase B — outil migré Simple/Advanced (pas de presets :
+		// la taille d'un lac vient du polygone tracé, pas d'un struct).
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Lake Tool — M100.13");
 		ImGui::Separator();
 
 		ImGui::Text("Default values for next lake :");
 		ImGui::SliderFloat("Water Level Y", &tool.MutableWaterLevelY(), -50.0f, 50.0f, "%.3f");
 		ImGui::ColorEdit3("Bottom Color", &tool.MutableBottomColor().x);
-		ImGui::SliderFloat("Turbidity", &tool.MutableTurbidity(), 0.0f, 1.0f, "%.2f");
+		if (advanced)
+		{
+			ImGui::SliderFloat("Turbidity", &tool.MutableTurbidity(), 0.0f, 1.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour la turbidité.");
+		}
 		ImGui::Separator();
 
 		ImGui::Text("Current polygon : %zu points", tool.GetPointCount());
@@ -465,11 +527,16 @@ namespace engine::editor::world::panels
 		/// est identique sur les deux types (interface dupliquée), donc on
 		/// peut paramétrer le helper sur le tool concret.
 		template <typename Tool>
-		void RenderMacroPolylineBlock(Tool& tool, const char* title)
+		void RenderMacroPolylineBlock(Tool& tool, const char* title, const char* toolId)
 		{
 			using engine::editor::world::FlankProfile;
 			using engine::editor::world::PolylineMode;
 			using engine::editor::world::kMacroPolylineMaxVertices;
+
+			// M100.45 Phase B — outil migré Simple/Advanced.
+			const bool advanced =
+				engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+					== engine::editor::world::modes::EditorMode::Advanced;
 
 			auto& params = tool.MutableParams();
 
@@ -477,6 +544,15 @@ namespace engine::editor::world::panels
 			ImGui::Text("Vertices posés : %zu / max %zu",
 				params.vertices.size(), kMacroPolylineMaxVertices);
 			ImGui::Separator();
+
+			// M100.45 A.6 — dropdown de presets ({mountain,valley}_macro.json).
+			// Le preset applique les globaux + les valeurs par-vertex à tous
+			// les sommets déjà posés.
+			engine::editor::world::ui::RenderPresetDropdown(
+				toolId,
+				[&params](const engine::editor::world::presets::ToolPreset& preset) {
+					engine::editor::world::presets::ApplyMacroPolylinePreset(params, preset);
+				});
 
 			// Mode polyline (Open / Loop)
 			int modeIdx = (params.mode == PolylineMode::Loop) ? 1 : 0;
@@ -486,23 +562,26 @@ namespace engine::editor::world::panels
 				params.mode = (modeIdx == 1) ? PolylineMode::Loop : PolylineMode::Open;
 			}
 
-			// Profil flanc (Smoothstep / Linear / Exp)
-			int profIdx = static_cast<int>(params.profile);
-			static const char* kProfileLabels[3] = { "Smoothstep", "Linear", "Exp" };
-			if (ImGui::Combo("Profil flanc", &profIdx, kProfileLabels, 3))
+			if (advanced)
 			{
-				params.profile = static_cast<FlankProfile>(
-					std::clamp(profIdx, 0, 2));
-			}
+				// Profil flanc (Smoothstep / Linear / Exp)
+				int profIdx = static_cast<int>(params.profile);
+				static const char* kProfileLabels[3] = { "Smoothstep", "Linear", "Exp" };
+				if (ImGui::Combo("Profil flanc", &profIdx, kProfileLabels, 3))
+				{
+					params.profile = static_cast<FlankProfile>(
+						std::clamp(profIdx, 0, 2));
+				}
 
-			// Seed + fréquence bruit (globaux à la polyline).
-			int seed = static_cast<int>(params.noiseSeed);
-			if (ImGui::InputInt("Seed bruit", &seed))
-			{
-				params.noiseSeed = static_cast<uint32_t>(std::max(0, seed));
+				// Seed + fréquence bruit (globaux à la polyline).
+				int seed = static_cast<int>(params.noiseSeed);
+				if (ImGui::InputInt("Seed bruit", &seed))
+				{
+					params.noiseSeed = static_cast<uint32_t>(std::max(0, seed));
+				}
+				ImGui::SliderFloat("Fréq. bruit (1/m)",
+					&params.noiseFrequency, 0.0005f, 0.05f, "%.4f");
 			}
-			ImGui::SliderFloat("Fréq. bruit (1/m)",
-				&params.noiseFrequency, 0.0005f, 0.05f, "%.4f");
 
 			ImGui::Separator();
 
@@ -525,10 +604,14 @@ namespace engine::editor::world::panels
 				auto& v = params.vertices[tool.GetActiveVertex()];
 				ImGui::Text("Position monde : X=%.1f m   Z=%.1f m",
 					static_cast<double>(v.worldX), static_cast<double>(v.worldZ));
+				// Mode Simple : largeur + hauteur du vertex actif.
 				ImGui::SliderFloat("Largeur base (m)", &v.widthMeters,    10.0f, 2000.0f, "%.1f");
 				ImGui::SliderFloat("Hauteur crête (m)", &v.heightMeters,  -1000.0f, 1000.0f, "%.1f");
-				ImGui::SliderFloat("Bruit crête (m)",   &v.noiseAmplitude, 0.0f, 200.0f, "%.1f");
-				ImGui::SliderFloat("Asymétrie",         &v.asymmetry,     -1.0f, 1.0f, "%.2f");
+				if (advanced)
+				{
+					ImGui::SliderFloat("Bruit crête (m)",   &v.noiseAmplitude, 0.0f, 200.0f, "%.1f");
+					ImGui::SliderFloat("Asymétrie",         &v.asymmetry,     -1.0f, 1.0f, "%.2f");
+				}
 				if (ImGui::Button("Supprimer vertex"))
 				{
 					tool.RemoveVertex(tool.GetActiveVertex());
@@ -698,7 +781,7 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
-		RenderMacroPolylineBlock(tool, "Mountain Range — M100.35");
+		RenderMacroPolylineBlock(tool, "Mountain Range — M100.35", "mountain_macro");
 #else
 		(void)shell; (void)tool;
 #endif
@@ -710,7 +793,7 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
-		RenderMacroPolylineBlock(tool, "Valley Chain — M100.35");
+		RenderMacroPolylineBlock(tool, "Valley Chain — M100.35", "valley_macro");
 #else
 		(void)shell; (void)tool;
 #endif
@@ -724,6 +807,12 @@ namespace engine::editor::world::panels
 		(void)shell;
 		auto& ocean = tool.MutableOceanBuffer();
 
+		// M100.45 Phase B — outil migré Simple/Advanced (pas de presets :
+		// l'outil édite l'état océan partagé du WaterDocument).
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Coastline — M100.37");
 		ImGui::Separator();
 		ImGui::TextUnformatted("Sea level + ocean parameters (commités à Apply) :");
@@ -731,12 +820,21 @@ namespace engine::editor::world::panels
 		changed |= ImGui::SliderFloat("Sea level (Y)", &ocean.seaLevelMeters,
 			-100.0f, 500.0f, "%.1f m");
 		changed |= ImGui::ColorEdit3("Couleur de fond océan", ocean.bottomColor);
+		changed |= ImGui::Checkbox("Océan activé", &ocean.enabled);
+		ImGui::TextDisabled("(source de vérité : WaterDocument::OceanSettings, partagée avec River Network M100.36)");
+
+		if (!advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour turbidité, vent, smoothing, falaises, plage.");
+		}
+
+		if (advanced)
+		{
 		changed |= ImGui::SliderFloat("Turbidité",
 			&ocean.turbidity, 0.0f, 1.0f, "%.2f");
 		changed |= ImGui::SliderFloat("Wind influence",
 			&ocean.windInfluence, 0.0f, 1.0f, "%.2f");
-		changed |= ImGui::Checkbox("Océan activé", &ocean.enabled);
-		ImGui::TextDisabled("(source de vérité : WaterDocument::OceanSettings, partagée avec River Network M100.36)");
 
 		ImGui::Separator();
 		ImGui::TextUnformatted("Smoothing côtier :");
@@ -775,6 +873,7 @@ namespace engine::editor::world::panels
 				&tool.BeachSeaBandMeters(), 0.5f, 50.0f, "%.1f");
 			ImGui::TextDisabled("Note MVP M100.37 : flag conservé, splat sable non câblé à la commande pour l'instant (suivra un follow-up).");
 		}
+		} // fin du bloc mode Advanced (M100.45 Phase B)
 
 		ImGui::Separator();
 		if (changed) tool.RefreshPreview();
@@ -810,6 +909,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Cave Tool — M100.40 (Phase 11 démarrage)");
 		ImGui::TextDisabled("(MVP éditeur-side : rendu glTF runtime à câbler en follow-up)");
 		ImGui::Separator();
@@ -848,22 +950,31 @@ namespace engine::editor::world::panels
 		ImGui::SliderFloat("Scale uniforme",  &tool.UniformScale(),  0.1f, 5.0f, "%.2f");
 		ImGui::Checkbox("Snap au sol", &tool.SnapToGround());
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Camouflage entrée :");
-		ImGui::Checkbox("Auto-peindre splat « Rocher »", &tool.CamouflageEnabled());
-		if (tool.CamouflageEnabled())
+		// M100.45 Phase B — mode Advanced : camouflage + flags gameplay.
+		if (advanced)
 		{
-			ImGui::SliderFloat("Rayon (m)",   &tool.CamouflageRadius(),   1.0f, 50.0f, "%.1f");
-			ImGui::SliderFloat("Force",       &tool.CamouflageStrength(), 0.0f, 1.0f, "%.2f");
-		}
+			ImGui::Separator();
+			ImGui::TextUnformatted("Camouflage entrée :");
+			ImGui::Checkbox("Auto-peindre splat « Rocher »", &tool.CamouflageEnabled());
+			if (tool.CamouflageEnabled())
+			{
+				ImGui::SliderFloat("Rayon (m)",   &tool.CamouflageRadius(),   1.0f, 50.0f, "%.1f");
+				ImGui::SliderFloat("Force",       &tool.CamouflageStrength(), 0.0f, 1.0f, "%.2f");
+			}
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gameplay :");
-		ImGui::Checkbox("Volume intérieur (SurfaceQuery)", &tool.HasInteriorVolume());
-		ImGui::Checkbox("Reverb audio",                    &tool.ReceivesAudioReverb());
-		ImGui::Checkbox("Permet l'eau (ingress)",          &tool.AllowsWaterIngress());
-		ImGui::SliderFloat("Intensité probe lumière",      &tool.LightProbeIntensity(),
-			0.0f, 2.0f, "%.2f");
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gameplay :");
+			ImGui::Checkbox("Volume intérieur (SurfaceQuery)", &tool.HasInteriorVolume());
+			ImGui::Checkbox("Reverb audio",                    &tool.ReceivesAudioReverb());
+			ImGui::Checkbox("Permet l'eau (ingress)",          &tool.AllowsWaterIngress());
+			ImGui::SliderFloat("Intensité probe lumière",      &tool.LightProbeIntensity(),
+				0.0f, 2.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour camouflage + gameplay.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedId().empty();
@@ -893,6 +1004,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Overhang Tool — M100.41 (Phase 11)");
 		ImGui::TextDisabled("(MVP éditeur-side : raycast cliff + normal auto en follow-up M100.17)");
 		ImGui::Separator();
@@ -935,12 +1049,21 @@ namespace engine::editor::world::panels
 		ImGui::TextColored(slopeOk ? ImVec4(0.5f, 1.0f, 0.5f, 1.0f) : ImVec4(1.0f, 0.5f, 0.5f, 1.0f),
 			slopeOk ? "Cliff OK" : "Slope insuffisante");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gameplay :");
-		ImGui::Checkbox("Projette une ombre",          &tool.CastsShadow());
-		ImGui::Checkbox("Reverb audio",                &tool.ReceivesAudioReverb());
-		ImGui::SliderFloat("Intensité probe lumière",  &tool.LightProbeIntensity(),
-			0.0f, 2.0f, "%.2f");
+		// M100.45 Phase B — mode Advanced : flags gameplay + lighting.
+		if (advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gameplay :");
+			ImGui::Checkbox("Projette une ombre",          &tool.CastsShadow());
+			ImGui::Checkbox("Reverb audio",                &tool.ReceivesAudioReverb());
+			ImGui::SliderFloat("Intensité probe lumière",  &tool.LightProbeIntensity(),
+				0.0f, 2.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour le gameplay.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedId().empty() && slopeOk;
@@ -970,6 +1093,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Arch Tool — M100.42 (Phase 11)");
 		ImGui::TextDisabled("(MVP éditeur-side : raycast viewport ↦ M100.17)");
 		ImGui::Separator();
@@ -1016,11 +1142,20 @@ namespace engine::editor::world::panels
 		ImGui::SliderFloat("Min scale", &tool.MinScaleRatio(), 0.05f, 1.0f, "%.2f");
 		ImGui::SliderFloat("Max scale", &tool.MaxScaleRatio(), 1.0f, 10.0f, "%.2f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gameplay :");
-		ImGui::Checkbox("Projette une ombre", &tool.CastsShadow());
-		ImGui::SliderFloat("Intensité probe lumière", &tool.LightProbeIntensity(),
-			0.0f, 2.0f, "%.2f");
+		// M100.45 Phase B — mode Advanced : flags gameplay + lighting.
+		if (advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gameplay :");
+			ImGui::Checkbox("Projette une ombre", &tool.CastsShadow());
+			ImGui::SliderFloat("Intensité probe lumière", &tool.LightProbeIntensity(),
+				0.0f, 2.0f, "%.2f");
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour le gameplay.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedId().empty() && scaleOk;
@@ -1050,6 +1185,9 @@ namespace engine::editor::world::panels
 	{
 #if defined(_WIN32)
 		(void)shell;
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
 		ImGui::Text("Dungeon Portal Tool — M100.43 (Phase 11)");
 		ImGui::TextDisabled("(MVP éditeur-side : handler serveur câblé en M100.44)");
 		ImGui::Separator();
@@ -1085,19 +1223,30 @@ namespace engine::editor::world::panels
 		ImGui::SliderFloat("Yaw (deg)", &tool.YawDeg(), -180.0f, 180.0f, "%.1f");
 		ImGui::SliderFloat("Trigger radius (m)", &tool.TriggerRadius(), 0.5f, 30.0f, "%.1f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Gating gameplay :");
-		int reqLevel = static_cast<int>(tool.RequiredLevel());
-		if (ImGui::SliderInt("Niveau requis", &reqLevel, 1, 80))
-			tool.RequiredLevel() = static_cast<uint16_t>(reqLevel);
-		int minD = static_cast<int>(tool.MinDifficulty());
-		int maxD = static_cast<int>(tool.MaxDifficulty());
-		if (ImGui::SliderInt("Min difficulty", &minD, 1, 5))
-			tool.MinDifficulty() = static_cast<uint8_t>(minD);
-		if (ImGui::SliderInt("Max difficulty", &maxD, 1, 5))
-			tool.MaxDifficulty() = static_cast<uint8_t>(maxD);
-		ImGui::Checkbox("One-shot (raid partagé)",        &tool.IsOneShot());
-		ImGui::Checkbox("Persiste entre les sessions",    &tool.PersistsAcrossLogin());
+		// M100.45 Phase B — mode Advanced : gating gameplay détaillé.
+		// En mode Simple, niveau/difficulté gardent les valeurs préremplies
+		// depuis le catalogue par SelectByTemplateId (Place reste valide).
+		if (advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("Gating gameplay :");
+			int reqLevel = static_cast<int>(tool.RequiredLevel());
+			if (ImGui::SliderInt("Niveau requis", &reqLevel, 1, 80))
+				tool.RequiredLevel() = static_cast<uint16_t>(reqLevel);
+			int minD = static_cast<int>(tool.MinDifficulty());
+			int maxD = static_cast<int>(tool.MaxDifficulty());
+			if (ImGui::SliderInt("Min difficulty", &minD, 1, 5))
+				tool.MinDifficulty() = static_cast<uint8_t>(minD);
+			if (ImGui::SliderInt("Max difficulty", &maxD, 1, 5))
+				tool.MaxDifficulty() = static_cast<uint8_t>(maxD);
+			ImGui::Checkbox("One-shot (raid partagé)",        &tool.IsOneShot());
+			ImGui::Checkbox("Persiste entre les sessions",    &tool.PersistsAcrossLogin());
+		}
+		else
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — gating niveau/difficulté hérité du catalogue.");
+		}
 
 		ImGui::Separator();
 		const bool canPlace = !tool.SelectedTemplateId().empty()
@@ -1196,9 +1345,21 @@ namespace engine::editor::world::panels
 #if defined(_WIN32)
 		(void)shell;
 		auto& p = tool.MutableParams();
+		// M100.45 Phase B — outil migré Simple/Advanced.
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Thermal / Wind Erosion — M100.39");
 		ImGui::TextDisabled("(clôt la Phase 2.5 — Terrain naturaliste)");
 		ImGui::Separator();
+
+		// M100.45 A.6 — dropdown de presets (tool_presets/thermal_wind_erosion.json).
+		engine::editor::world::ui::RenderPresetDropdown(
+			"thermal_wind_erosion",
+			[&p](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyThermalWindErosionPreset(p, preset);
+			});
 
 		// Sous-mode.
 		int subModeIdx = static_cast<int>(p.subMode);
@@ -1221,21 +1382,25 @@ namespace engine::editor::world::panels
 			ImGui::Separator();
 			ImGui::TextUnformatted("Thermal Erosion :");
 			auto& t = p.thermal;
-			ImGui::SliderFloat("Angle de talus (deg)", &t.talusAngleDeg, 5.0f, 80.0f, "%.1f");
+			// Mode Simple : la « force globale » suffit.
 			ImGui::SliderFloat("Force par passe",      &t.forcePerPass, 0.0f, 1.0f, "%.2f");
-			int np = static_cast<int>(t.numPasses);
-			if (ImGui::SliderInt("Nombre de passes",   &np, 1, 200))
+			if (advanced)
 			{
-				t.numPasses = static_cast<uint32_t>(std::max(1, np));
-			}
-			ImGui::SliderFloat("Pente min activation (deg)",
-				&t.minActivationSlopeDeg, 0.0f, 45.0f, "%.1f");
-			ImGui::Checkbox("Stopper sous sea level##th",  &t.stopUnderSeaLevel);
-			ImGui::Checkbox("Préserver pentes raides",     &t.preserveSteepSlopes);
-			if (t.preserveSteepSlopes)
-			{
-				ImGui::SliderFloat("Seuil exception (deg)",
-					&t.preserveSteepThresholdDeg, 0.0f, 90.0f, "%.1f");
+				ImGui::SliderFloat("Angle de talus (deg)", &t.talusAngleDeg, 5.0f, 80.0f, "%.1f");
+				int np = static_cast<int>(t.numPasses);
+				if (ImGui::SliderInt("Nombre de passes",   &np, 1, 200))
+				{
+					t.numPasses = static_cast<uint32_t>(std::max(1, np));
+				}
+				ImGui::SliderFloat("Pente min activation (deg)",
+					&t.minActivationSlopeDeg, 0.0f, 45.0f, "%.1f");
+				ImGui::Checkbox("Stopper sous sea level##th",  &t.stopUnderSeaLevel);
+				ImGui::Checkbox("Préserver pentes raides",     &t.preserveSteepSlopes);
+				if (t.preserveSteepSlopes)
+				{
+					ImGui::SliderFloat("Seuil exception (deg)",
+						&t.preserveSteepThresholdDeg, 0.0f, 90.0f, "%.1f");
+				}
 			}
 		}
 
@@ -1244,31 +1409,41 @@ namespace engine::editor::world::panels
 			ImGui::Separator();
 			ImGui::TextUnformatted("Wind Erosion :");
 			auto& w = p.wind;
-			ImGui::SliderFloat("Direction du vent (deg)", &w.windAngleDeg, 0.0f, 360.0f, "%.1f");
+			// Mode Simple : la « force du vent » suffit.
 			ImGui::SliderFloat("Force du vent",           &w.windStrength, 0.0f, 2.0f, "%.2f");
-			int npart = static_cast<int>(w.numParticles);
-			if (ImGui::SliderInt("Nombre de particules", &npart, 0, 200000))
+			if (advanced)
 			{
-				w.numParticles = static_cast<uint32_t>(std::max(0, npart));
+				ImGui::SliderFloat("Direction du vent (deg)", &w.windAngleDeg, 0.0f, 360.0f, "%.1f");
+				int npart = static_cast<int>(w.numParticles);
+				if (ImGui::SliderInt("Nombre de particules", &npart, 0, 200000))
+				{
+					w.numParticles = static_cast<uint32_t>(std::max(0, npart));
+				}
+				int life = static_cast<int>(w.maxLifetimeSteps);
+				if (ImGui::SliderInt("Durée de vie max",     &life, 1, 200))
+				{
+					w.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
+				}
+				ImGui::SliderFloat("Capacité sable",         &w.sandCapacityFactor, 0.0f, 2.0f, "%.2f");
+				ImGui::SliderFloat("Exposition R (m)",       &w.exposureRadiusMeters, 1.0f, 200.0f, "%.1f");
+				int seed = static_cast<int>(w.rngSeed);
+				if (ImGui::InputInt("Seed RNG##wind", &seed))
+				{
+					w.rngSeed = static_cast<uint32_t>(std::max(0, seed));
+				}
+				ImGui::Checkbox("Stopper sous sea level##wd", &w.stopUnderSeaLevel);
+				ImGui::Checkbox("Restreindre aux cellules Sand (flag MVP)", &w.restrictToSandSplat);
+				if (w.restrictToSandSplat)
+				{
+					ImGui::TextDisabled("Note MVP : flag conservé mais non câblé au splat (follow-up).");
+				}
 			}
-			int life = static_cast<int>(w.maxLifetimeSteps);
-			if (ImGui::SliderInt("Durée de vie max",     &life, 1, 200))
-			{
-				w.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
-			}
-			ImGui::SliderFloat("Capacité sable",         &w.sandCapacityFactor, 0.0f, 2.0f, "%.2f");
-			ImGui::SliderFloat("Exposition R (m)",       &w.exposureRadiusMeters, 1.0f, 200.0f, "%.1f");
-			int seed = static_cast<int>(w.rngSeed);
-			if (ImGui::InputInt("Seed RNG##wind", &seed))
-			{
-				w.rngSeed = static_cast<uint32_t>(std::max(0, seed));
-			}
-			ImGui::Checkbox("Stopper sous sea level##wd", &w.stopUnderSeaLevel);
-			ImGui::Checkbox("Restreindre aux cellules Sand (flag MVP)", &w.restrictToSandSplat);
-			if (w.restrictToSandSplat)
-			{
-				ImGui::TextDisabled("Note MVP : flag conservé mais non câblé au splat (follow-up).");
-			}
+		}
+
+		if (!advanced)
+		{
+			ImGui::Separator();
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour tout regler.");
 		}
 
 		ImGui::Separator();
@@ -1331,54 +1506,78 @@ namespace engine::editor::world::panels
 #if defined(_WIN32)
 		(void)shell;
 		auto& p = tool.MutableParams();
+		// M100.45 Phase B — outil migré Simple/Advanced. Le mode courant
+		// vient du EditorModeRegistry (toggle Options > Mode editeur).
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("Hydraulic Erosion — M100.38");
 		ImGui::TextDisabled("(simulation particle-based, lit sea level via OceanSettings)");
 		ImGui::Separator();
 
+		// M100.45 A.6 — dropdown de presets. La sélection applique les
+		// valeurs JSON (tool_presets/hydraulic_erosion.json) au struct.
+		engine::editor::world::ui::RenderPresetDropdown(
+			"hydraulic_erosion",
+			[&p](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyHydraulicErosionPreset(p, preset);
+			});
+
+		// --- Mode Simple : 3 paramètres essentiels, toujours visibles ---
 		int n = static_cast<int>(p.numDroplets);
 		if (ImGui::SliderInt("Nombre de gouttes", &n, 0, 500000))
 		{
 			p.numDroplets = static_cast<uint32_t>(std::max(0, n));
 		}
+		ImGui::SliderFloat("Intensité (taux d'érosion)", &p.erosionRate, 0.0f, 1.0f, "%.2f");
 		int life = static_cast<int>(p.maxLifetimeSteps);
-		if (ImGui::SliderInt("Durée de vie max (steps)", &life, 1, 200))
+		if (ImGui::SliderInt("Niveau de détail (durée de vie)", &life, 1, 200))
 		{
 			p.maxLifetimeSteps = static_cast<uint32_t>(std::max(1, life));
 		}
-		ImGui::Separator();
-		ImGui::TextUnformatted("Physique :");
-		ImGui::SliderFloat("Capacité sédiment",  &p.sedimentCapacity,  0.1f, 20.0f, "%.2f");
-		ImGui::SliderFloat("Taux d'érosion",     &p.erosionRate,       0.0f, 1.0f, "%.2f");
-		ImGui::SliderFloat("Taux de déposition", &p.depositionRate,    0.0f, 1.0f, "%.2f");
-		ImGui::SliderFloat("Évaporation",        &p.evaporationRate,   0.0f, 0.5f, "%.3f");
-		ImGui::SliderFloat("Gravité",            &p.gravity,           0.1f, 20.0f, "%.2f");
-		ImGui::SliderFloat("Inertie",            &p.inertia,           0.0f, 1.0f, "%.2f");
-		ImGui::SliderFloat("Pente min érosion",  &p.minSlopeForErosion, 0.0f, 1.0f, "%.3f");
-		ImGui::SliderFloat("Delta max / cell (m)", &p.maxDeltaPerCellMeters, 0.1f, 20.0f, "%.2f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Initialisation :");
-		int distIdx = static_cast<int>(p.distribution);
-		static const char* kDistLabels[3] = { "Uniform", "Weighted altitude", "Weighted flow accum" };
-		if (ImGui::Combo("Distribution sources", &distIdx, kDistLabels, 3))
+		// --- Mode Advanced : tous les paramètres physiques + bornes ---
+		if (advanced)
 		{
-			p.distribution = static_cast<engine::editor::world::erosion::DropletDistribution>(
-				std::clamp(distIdx, 0, 2));
-		}
-		int seed = static_cast<int>(p.rngSeed);
-		if (ImGui::InputInt("Seed RNG", &seed))
-		{
-			p.rngSeed = static_cast<uint32_t>(std::max(0, seed));
-		}
+			ImGui::Separator();
+			ImGui::TextUnformatted("Physique :");
+			ImGui::SliderFloat("Capacité sédiment",  &p.sedimentCapacity,  0.1f, 20.0f, "%.2f");
+			ImGui::SliderFloat("Taux de déposition", &p.depositionRate,    0.0f, 1.0f, "%.2f");
+			ImGui::SliderFloat("Évaporation",        &p.evaporationRate,   0.0f, 0.5f, "%.3f");
+			ImGui::SliderFloat("Gravité",            &p.gravity,           0.1f, 20.0f, "%.2f");
+			ImGui::SliderFloat("Inertie",            &p.inertia,           0.0f, 1.0f, "%.2f");
+			ImGui::SliderFloat("Pente min érosion",  &p.minSlopeForErosion, 0.0f, 1.0f, "%.3f");
+			ImGui::SliderFloat("Delta max / cell (m)", &p.maxDeltaPerCellMeters, 0.1f, 20.0f, "%.2f");
 
-		ImGui::Separator();
-		ImGui::TextUnformatted("Bornes / sécurité :");
-		ImGui::Checkbox("Stopper sous sea level", &p.stopUnderSeaLevel);
-		ImGui::Checkbox("Préserver les zones plates", &p.preserveFlatAreas);
-		if (p.preserveFlatAreas)
+			ImGui::Separator();
+			ImGui::TextUnformatted("Initialisation :");
+			int distIdx = static_cast<int>(p.distribution);
+			static const char* kDistLabels[3] = { "Uniform", "Weighted altitude", "Weighted flow accum" };
+			if (ImGui::Combo("Distribution sources", &distIdx, kDistLabels, 3))
+			{
+				p.distribution = static_cast<engine::editor::world::erosion::DropletDistribution>(
+					std::clamp(distIdx, 0, 2));
+			}
+			int seed = static_cast<int>(p.rngSeed);
+			if (ImGui::InputInt("Seed RNG", &seed))
+			{
+				p.rngSeed = static_cast<uint32_t>(std::max(0, seed));
+			}
+
+			ImGui::Separator();
+			ImGui::TextUnformatted("Bornes / sécurité :");
+			ImGui::Checkbox("Stopper sous sea level", &p.stopUnderSeaLevel);
+			ImGui::Checkbox("Préserver les zones plates", &p.preserveFlatAreas);
+			if (p.preserveFlatAreas)
+			{
+				ImGui::SliderFloat("Seuil pente plate (deg)",
+					&p.flatAreaSlopeThresholdDeg, 0.0f, 45.0f, "%.1f");
+			}
+		}
+		else
 		{
-			ImGui::SliderFloat("Seuil pente plate (deg)",
-				&p.flatAreaSlopeThresholdDeg, 0.0f, 45.0f, "%.1f");
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour tout regler.");
 		}
 
 		ImGui::Separator();
@@ -1435,6 +1634,11 @@ namespace engine::editor::world::panels
 		engine::editor::world::RiverNetworkTool& tool)
 	{
 #if defined(_WIN32)
+		// M100.45 Phase B — outil migré Simple/Advanced.
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("River Network — M100.36 (watershed D8)");
 
 		// Liste des sources posées.
@@ -1584,6 +1788,14 @@ namespace engine::editor::world::panels
 		ImGui::Separator();
 		ImGui::TextUnformatted("Paramètres de simulation :");
 
+		// M100.45 A.6 — dropdown de presets (tool_presets/river_network.json).
+		engine::editor::world::ui::RenderPresetDropdown(
+			"river_network",
+			[&tool](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyRiverNetworkPreset(
+					tool.MutableParams(), preset);
+			});
+
 		// Sea level — buffer local, écrit dans WaterDocument seulement à Apply.
 		float seaBuf = tool.SeaLevelBuffer();
 		if (ImGui::SliderFloat("Sea level (Y)", &seaBuf, -100.0f, 500.0f, "%.1f m"))
@@ -1592,28 +1804,37 @@ namespace engine::editor::world::panels
 		}
 		ImGui::TextDisabled("(source de vérité : WaterDocument::GetOcean — édité aussi par Coastline M100.37)");
 
+		// Mode Simple : « densité » du réseau = flow threshold.
 		int flowThreshold = static_cast<int>(tool.MutableParams().minFlowThresholdCells);
-		if (ImGui::SliderInt("Flow threshold (cells)", &flowThreshold, 1, 5000))
+		if (ImGui::SliderInt("Densité (flow threshold, cells)", &flowThreshold, 1, 5000))
 		{
 			tool.MutableParams().minFlowThresholdCells = static_cast<uint32_t>(std::max(1, flowThreshold));
 		}
-		ImGui::SliderFloat("Tolerance Douglas-P. (m)",
-			&tool.MutableParams().simplificationToleranceMeters, 0.5f, 50.0f, "%.1f");
-		ImGui::Checkbox("Auto-lakes at sinks", &tool.MutableParams().autoLakesAtSinks);
-		if (tool.MutableParams().autoLakesAtSinks)
-		{
-			ImGui::SliderFloat("Max lake depth (m)",
-				&tool.MutableParams().autoLakeMaxDepthMeters, 0.5f, 100.0f, "%.1f");
-		}
 
-		ImGui::Separator();
-		ImGui::Checkbox("Carve heightmap along rivers", &tool.MutableParams().carveHeightmap);
-		if (tool.MutableParams().carveHeightmap)
+		if (advanced)
 		{
-			ImGui::SliderFloat("Carve depth (m)",
-				&tool.MutableParams().carveDepthMeters, 0.1f, 30.0f, "%.1f");
-			ImGui::SliderFloat("Carve width (m)",
-				&tool.MutableParams().carveWidthMeters, 1.0f, 100.0f, "%.1f");
+			ImGui::SliderFloat("Tolerance Douglas-P. (m)",
+				&tool.MutableParams().simplificationToleranceMeters, 0.5f, 50.0f, "%.1f");
+			ImGui::Checkbox("Auto-lakes at sinks", &tool.MutableParams().autoLakesAtSinks);
+			if (tool.MutableParams().autoLakesAtSinks)
+			{
+				ImGui::SliderFloat("Max lake depth (m)",
+					&tool.MutableParams().autoLakeMaxDepthMeters, 0.5f, 100.0f, "%.1f");
+			}
+
+			ImGui::Separator();
+			ImGui::Checkbox("Carve heightmap along rivers", &tool.MutableParams().carveHeightmap);
+			if (tool.MutableParams().carveHeightmap)
+			{
+				ImGui::SliderFloat("Carve depth (m)",
+					&tool.MutableParams().carveDepthMeters, 0.1f, 30.0f, "%.1f");
+				ImGui::SliderFloat("Carve width (m)",
+					&tool.MutableParams().carveWidthMeters, 1.0f, 100.0f, "%.1f");
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour tolérance + lacs + carving.");
 		}
 
 		ImGui::Separator();
@@ -1660,6 +1881,16 @@ namespace engine::editor::world::panels
 #if defined(_WIN32)
 		ImGui::Text("River Tool — M100.13");
 		ImGui::Separator();
+
+		// M100.45 A.6 — dropdown de presets (tool_presets/river_manual.json).
+		// L'outil n'a que 2 paramètres (largeur, profondeur), tous deux
+		// essentiels → pas de split Simple/Advanced, juste le preset.
+		engine::editor::world::ui::RenderPresetDropdown(
+			"river_manual",
+			[&tool](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyRiverManualPreset(
+					tool.MutableDefaultWidth(), tool.MutableDefaultDepth(), preset);
+			});
 
 		ImGui::Text("Default values for next node :");
 		ImGui::SliderFloat("Width (m)", &tool.MutableDefaultWidth(), 0.5f, 30.0f, "%.2f");
@@ -1745,6 +1976,17 @@ namespace engine::editor::world::panels
 
 				engine::editor::world::TerrainStampTool& tool = m_shell->MutableStampTool();
 				engine::editor::world::StampParams params = tool.GetParams();
+
+				// M100.45 A.6 — dropdown de presets (tool_presets/stamp.json).
+				// Le stamp a peu de paramètres tunables (footprint, strength,
+				// rotation) tous essentiels + de l'état d'interaction
+				// (source, mode) → pas de split Simple/Advanced, juste le
+				// preset. Le callback synchrone mute la copie locale `params`.
+				engine::editor::world::ui::RenderPresetDropdown(
+					"stamp",
+					[&params](const engine::editor::world::presets::ToolPreset& preset) {
+						engine::editor::world::presets::ApplyStampPreset(params, preset);
+					});
 
 				// Source : Library / Procedural
 				ImGui::TextUnformatted("Source:");

@@ -1,0 +1,45 @@
+{
+  "toolId": "valley_macro",
+  "defaultPreset": "glacial_valley",
+  "presets": [
+    {
+      "id": "small_valley",
+      "displayName": "Petite vallée",
+      "description": "Dépression douce et peu profonde, fond large, flancs arrondis.",
+      "parameters": {
+        "profile": 0,
+        "noiseFrequency": 0.012,
+        "widthMeters": 400.0,
+        "heightMeters": 80.0,
+        "noiseAmplitude": 8.0,
+        "asymmetry": 0.1
+      }
+    },
+    {
+      "id": "glacial_valley",
+      "displayName": "Vallée glaciaire",
+      "description": "Profil en U : fond large, parois soutenues, bruit modéré.",
+      "parameters": {
+        "profile": 0,
+        "noiseFrequency": 0.008,
+        "widthMeters": 900.0,
+        "heightMeters": 320.0,
+        "noiseAmplitude": 30.0,
+        "asymmetry": 0.15
+      }
+    },
+    {
+      "id": "canyon",
+      "displayName": "Canyon",
+      "description": "Profil en V étroit, parois quasi-verticales, bruit prononcé.",
+      "parameters": {
+        "profile": 2,
+        "noiseFrequency": 0.006,
+        "widthMeters": 350.0,
+        "heightMeters": 700.0,
+        "noiseAmplitude": 60.0,
+        "asymmetry": 0.4
+      }
+    }
+  ]
+}

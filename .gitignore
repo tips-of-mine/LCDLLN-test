@@ -14,3 +14,6 @@ game/data/shaders/*.spv
 build/
 # M100.9 : PNG placeholders 4x4 generes par tools/gen_terrain_placeholders au build.
 game/data/terrain/placeholders/*.png
+# M100.45 : prefs editeur locales par utilisateur (creees au premier lancement).
+game/data/editor/user_prefs.json
+game/data/editor/user_prefs.json.tmp

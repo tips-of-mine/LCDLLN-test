@@ -1,0 +1,36 @@
+{
+  "toolId": "splat_paint",
+  "defaultPreset": "blend",
+  "presets": [
+    {
+      "id": "blend",
+      "displayName": "Fondu",
+      "description": "Grand rayon, force modérée, bord très progressif. Transitions douces entre textures.",
+      "parameters": {
+        "radiusMeters": 14.0,
+        "strength": 0.4,
+        "falloff": 0.85
+      }
+    },
+    {
+      "id": "precise",
+      "displayName": "Précis",
+      "description": "Petit rayon, bord net. Pour détourer une texture avec précision.",
+      "parameters": {
+        "radiusMeters": 4.0,
+        "strength": 0.6,
+        "falloff": 0.25
+      }
+    },
+    {
+      "id": "strong",
+      "displayName": "Texture forte",
+      "description": "Force élevée, bord moyen. Pose une texture dominante en peu de passes.",
+      "parameters": {
+        "radiusMeters": 9.0,
+        "strength": 0.95,
+        "falloff": 0.55
+      }
+    }
+  ]
+}

@@ -4,6 +4,7 @@
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
+#include "src/world_editor/water/WatershedSimulationParams.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -134,5 +135,21 @@ namespace engine::editor::world::presets
 			preset.GetParam("strength", p.strength));
 		p.falloff = static_cast<float>(
 			preset.GetParam("falloff", p.falloff));
+	}
+
+	void ApplyRiverNetworkPreset(
+		engine::editor::world::WatershedSimulationParams& p,
+		const ToolPreset& preset)
+	{
+		p.minFlowThresholdCells = ToU32(preset.GetParam(
+			"minFlowThresholdCells", static_cast<double>(p.minFlowThresholdCells)));
+		p.simplificationToleranceMeters = static_cast<float>(preset.GetParam(
+			"simplificationToleranceMeters", p.simplificationToleranceMeters));
+		p.autoLakeMaxDepthMeters = static_cast<float>(preset.GetParam(
+			"autoLakeMaxDepthMeters", p.autoLakeMaxDepthMeters));
+		p.carveDepthMeters = static_cast<float>(preset.GetParam(
+			"carveDepthMeters", p.carveDepthMeters));
+		p.carveWidthMeters = static_cast<float>(preset.GetParam(
+			"carveWidthMeters", p.carveWidthMeters));
 	}
 }

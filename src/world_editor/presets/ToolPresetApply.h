@@ -6,6 +6,7 @@ namespace engine::editor::world
 {
 	struct TerrainBrushParams;
 	struct SplatPaintParams;
+	struct WatershedSimulationParams;
 }
 
 namespace engine::editor::world::erosion
@@ -64,5 +65,14 @@ namespace engine::editor::world::presets
 	/// d'interaction de l'utilisateur, comme le `mode` du sculpt).
 	void ApplySplatPaintPreset(
 		engine::editor::world::SplatPaintParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/river_network.json` vers
+	/// `WatershedSimulationParams`. Clés reconnues : minFlowThresholdCells,
+	/// simplificationToleranceMeters, autoLakeMaxDepthMeters,
+	/// carveDepthMeters, carveWidthMeters. Le vecteur `springs` (sources
+	/// posées par l'utilisateur) n'est jamais touché par un preset.
+	void ApplyRiverNetworkPreset(
+		engine::editor::world::WatershedSimulationParams& params,
 		const ToolPreset& preset);
 }

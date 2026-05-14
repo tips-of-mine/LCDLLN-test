@@ -1,0 +1,39 @@
+{
+  "toolId": "river_network",
+  "defaultPreset": "standard",
+  "presets": [
+    {
+      "id": "light",
+      "displayName": "Légère",
+      "description": "Seuil de débit élevé : seules les rivières principales apparaissent. Réseau clairsemé.",
+      "parameters": {
+        "minFlowThresholdCells": 800,
+        "simplificationToleranceMeters": 8.0,
+        "carveDepthMeters": 2.0,
+        "carveWidthMeters": 8.0
+      }
+    },
+    {
+      "id": "standard",
+      "displayName": "Standard",
+      "description": "Équilibre par défaut : rivières et affluents notables, lit modéré.",
+      "parameters": {
+        "minFlowThresholdCells": 200,
+        "simplificationToleranceMeters": 5.0,
+        "carveDepthMeters": 3.0,
+        "carveWidthMeters": 12.0
+      }
+    },
+    {
+      "id": "dense",
+      "displayName": "Dense",
+      "description": "Seuil de débit bas : réseau hydrographique fin, nombreux ruisseaux. Lit profond.",
+      "parameters": {
+        "minFlowThresholdCells": 40,
+        "simplificationToleranceMeters": 3.0,
+        "carveDepthMeters": 4.0,
+        "carveWidthMeters": 16.0
+      }
+    }
+  ]
+}

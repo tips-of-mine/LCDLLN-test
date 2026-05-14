@@ -1584,6 +1584,11 @@ namespace engine::editor::world::panels
 		engine::editor::world::RiverNetworkTool& tool)
 	{
 #if defined(_WIN32)
+		// M100.45 Phase B — outil migré Simple/Advanced.
+		const bool advanced =
+			engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+				== engine::editor::world::modes::EditorMode::Advanced;
+
 		ImGui::Text("River Network — M100.36 (watershed D8)");
 
 		// Liste des sources posées.
@@ -1733,6 +1738,14 @@ namespace engine::editor::world::panels
 		ImGui::Separator();
 		ImGui::TextUnformatted("Paramètres de simulation :");
 
+		// M100.45 A.6 — dropdown de presets (tool_presets/river_network.json).
+		engine::editor::world::ui::RenderPresetDropdown(
+			"river_network",
+			[&tool](const engine::editor::world::presets::ToolPreset& preset) {
+				engine::editor::world::presets::ApplyRiverNetworkPreset(
+					tool.MutableParams(), preset);
+			});
+
 		// Sea level — buffer local, écrit dans WaterDocument seulement à Apply.
 		float seaBuf = tool.SeaLevelBuffer();
 		if (ImGui::SliderFloat("Sea level (Y)", &seaBuf, -100.0f, 500.0f, "%.1f m"))
@@ -1741,28 +1754,37 @@ namespace engine::editor::world::panels
 		}
 		ImGui::TextDisabled("(source de vérité : WaterDocument::GetOcean — édité aussi par Coastline M100.37)");
 
+		// Mode Simple : « densité » du réseau = flow threshold.
 		int flowThreshold = static_cast<int>(tool.MutableParams().minFlowThresholdCells);
-		if (ImGui::SliderInt("Flow threshold (cells)", &flowThreshold, 1, 5000))
+		if (ImGui::SliderInt("Densité (flow threshold, cells)", &flowThreshold, 1, 5000))
 		{
 			tool.MutableParams().minFlowThresholdCells = static_cast<uint32_t>(std::max(1, flowThreshold));
 		}
-		ImGui::SliderFloat("Tolerance Douglas-P. (m)",
-			&tool.MutableParams().simplificationToleranceMeters, 0.5f, 50.0f, "%.1f");
-		ImGui::Checkbox("Auto-lakes at sinks", &tool.MutableParams().autoLakesAtSinks);
-		if (tool.MutableParams().autoLakesAtSinks)
-		{
-			ImGui::SliderFloat("Max lake depth (m)",
-				&tool.MutableParams().autoLakeMaxDepthMeters, 0.5f, 100.0f, "%.1f");
-		}
 
-		ImGui::Separator();
-		ImGui::Checkbox("Carve heightmap along rivers", &tool.MutableParams().carveHeightmap);
-		if (tool.MutableParams().carveHeightmap)
+		if (advanced)
 		{
-			ImGui::SliderFloat("Carve depth (m)",
-				&tool.MutableParams().carveDepthMeters, 0.1f, 30.0f, "%.1f");
-			ImGui::SliderFloat("Carve width (m)",
-				&tool.MutableParams().carveWidthMeters, 1.0f, 100.0f, "%.1f");
+			ImGui::SliderFloat("Tolerance Douglas-P. (m)",
+				&tool.MutableParams().simplificationToleranceMeters, 0.5f, 50.0f, "%.1f");
+			ImGui::Checkbox("Auto-lakes at sinks", &tool.MutableParams().autoLakesAtSinks);
+			if (tool.MutableParams().autoLakesAtSinks)
+			{
+				ImGui::SliderFloat("Max lake depth (m)",
+					&tool.MutableParams().autoLakeMaxDepthMeters, 0.5f, 100.0f, "%.1f");
+			}
+
+			ImGui::Separator();
+			ImGui::Checkbox("Carve heightmap along rivers", &tool.MutableParams().carveHeightmap);
+			if (tool.MutableParams().carveHeightmap)
+			{
+				ImGui::SliderFloat("Carve depth (m)",
+					&tool.MutableParams().carveDepthMeters, 0.1f, 30.0f, "%.1f");
+				ImGui::SliderFloat("Carve width (m)",
+					&tool.MutableParams().carveWidthMeters, 1.0f, 100.0f, "%.1f");
+			}
+		}
+		else
+		{
+			ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour tolérance + lacs + carving.");
 		}
 
 		ImGui::Separator();

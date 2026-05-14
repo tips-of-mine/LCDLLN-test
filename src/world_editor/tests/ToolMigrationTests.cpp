@@ -15,6 +15,7 @@
 #include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
+#include "src/world_editor/water/WatershedSimulationParams.h"
 
 #include <cstdio>
 #include <string>
@@ -33,6 +34,7 @@ namespace
 	using engine::editor::world::TerrainBrushParams;
 	using engine::editor::world::TerrainBrushMode;
 	using engine::editor::world::SplatPaintParams;
+	using engine::editor::world::WatershedSimulationParams;
 	using engine::editor::world::erosion::HydraulicSimulationParams;
 	using engine::editor::world::erosion::ThermalWindErosionParams;
 	using engine::editor::world::erosion::ErosionSubMode;
@@ -304,6 +306,48 @@ namespace
 		REQUIRE(p.radiusMeters == 30.0f); // intact
 		REQUIRE(p.falloff == 0.1f);       // intact
 	}
+
+	// --- river_network : struct WatershedSimulationParams ---------------
+
+	/// Un preset river_network applique les seuils + carving. Le vecteur
+	/// `springs` (sources posées par l'utilisateur) n'est jamais touché.
+	void Test_RiverNetworkPreset_AppliesAndLeavesSprings()
+	{
+		WatershedSimulationParams p;
+		p.springs.push_back({});  // une source déjà posée
+		const auto preset = MakePreset({
+			{ "minFlowThresholdCells", 40.0 },
+			{ "simplificationToleranceMeters", 3.0 },
+			{ "carveDepthMeters", 4.0 },
+			{ "carveWidthMeters", 16.0 },
+		});
+		presets::ApplyRiverNetworkPreset(p, preset);
+		REQUIRE(p.minFlowThresholdCells == 40u);
+		REQUIRE(p.simplificationToleranceMeters == 3.0f);
+		REQUIRE(p.carveDepthMeters == 4.0f);
+		REQUIRE(p.carveWidthMeters == 16.0f);
+		REQUIRE(p.springs.size() == 1u);   // intact
+	}
+
+	/// minFlowThresholdCells négatif clampé à 0 (pas de wrap uint).
+	void Test_RiverNetworkPreset_NegativeThresholdClamped()
+	{
+		WatershedSimulationParams p;
+		presets::ApplyRiverNetworkPreset(p,
+			MakePreset({ { "minFlowThresholdCells", -10.0 } }));
+		REQUIRE(p.minFlowThresholdCells == 0u);
+	}
+
+	/// Preset partiel : seule la clé définie change.
+	void Test_RiverNetworkPreset_PartialLeavesOthers()
+	{
+		WatershedSimulationParams p;
+		p.carveWidthMeters = 99.0f;
+		presets::ApplyRiverNetworkPreset(p,
+			MakePreset({ { "minFlowThresholdCells", 800.0 } }));
+		REQUIRE(p.minFlowThresholdCells == 800u);  // appliqué
+		REQUIRE(p.carveWidthMeters == 99.0f);      // intact
+	}
 }
 
 int main()
@@ -322,6 +366,9 @@ int main()
 	Test_SculptPreset_PartialLeavesOthers();
 	Test_SplatPreset_AppliesAndLeavesInteractionState();
 	Test_SplatPreset_PartialLeavesOthers();
+	Test_RiverNetworkPreset_AppliesAndLeavesSprings();
+	Test_RiverNetworkPreset_NegativeThresholdClamped();
+	Test_RiverNetworkPreset_PartialLeavesOthers();
 
 	if (g_failed > 0)
 	{

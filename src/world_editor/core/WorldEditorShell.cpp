@@ -661,6 +661,17 @@ namespace engine::editor::world
 			SetActiveTool(ActiveTool::DungeonPortal);
 			return true;
 		}
+		// M100.45 (Partie C) — Ctrl+Shift+R : hot-reload des presets d'outils
+		// depuis le disque. Réservé aux builds debug — permet d'itérer sur
+		// les `tool_presets/*.json` sans relancer l'éditeur.
+#if !defined(NDEBUG)
+		if (ctrl && shift && virtualKey == 'R')
+		{
+			const size_t n = presets::ToolPresetRegistry::Instance().Reload();
+			LOG_INFO(EditorWorld, "[WorldEditorShell] Hot-reload presets : {} fichier(s)", n);
+			return true;
+		}
+#endif
 		return HandleShortcut(virtualKey);
 	}
 

@@ -2787,7 +2787,11 @@ void AuthUiPresenter::SubmitCurrentPhase(const engine::core::Config& cfg)
 			return;
 
 		LOG_DEBUG(Core, "[DIAG-AUTH] before statusProbe check phase={}", static_cast<int>(m_phase));
-		constexpr float kStatusProbeIntervalSeconds = 120.0f;
+		// Rafraîchissement de la sonde /status : 20 s. Ce timer pilote la fraîcheur
+		// du compteur joueurs affiché sur l'écran de connexion et « Choisir un serveur ».
+		// 120 s donnait un affichage trop figé ; 20 s reste léger (GET HTTP uniquement
+		// pendant le flux d'auth, jamais en jeu) tout en restant « fluide ».
+		constexpr float kStatusProbeIntervalSeconds = 20.0f;
 		const bool shouldProbeStatus = !m_masterAvailabilityUrl.empty() && !m_flowComplete && m_phase != Phase::Submitting;
 		const bool statusProbeInFlight = m_worker.joinable() && m_pendingAsyncKind == AsyncKind::StatusProbe;
 		m_authAvailabilityChecking = statusProbeInFlight;

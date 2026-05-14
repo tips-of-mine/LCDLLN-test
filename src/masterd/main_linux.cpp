@@ -386,6 +386,20 @@ int main(int argc, char** argv)
 			sessionCharMap.Remove(*oldConn);
 		});
 
+	// Compteur /status fluide : NetServer ne notifie pas l'application des
+	// deconnexions. Sans ce hook, un joueur restait compte dans SessionCharacterMap
+	// jusqu'a l'expiration de sa session (~120s via HeartbeatTimeout) alors que sa
+	// TCP etait deja tombee. On retire son binding character des la fermeture de la
+	// connexion ; la session elle-meme garde son cycle de vie normal (fenetre de
+	// reconnexion + watchdog connSessionMap.CollectExpired inchanges). sessionCharMap
+	// .Remove est idempotent : un retrait ulterieur par le watchdog ou le hook
+	// SetOnSessionClosed est sans effet.
+	server.SetConnectionClosedHandler(
+		[&sessionCharMap](uint32_t connId, engine::server::DisconnectReason /*reason*/)
+		{
+			sessionCharMap.Remove(connId);
+		});
+
 	engine::server::CharacterEnterWorldHandler characterEnterWorldHandler;
 	characterEnterWorldHandler.SetServer(&server);
 	characterEnterWorldHandler.SetSessionManager(&sessionManager);

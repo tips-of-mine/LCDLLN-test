@@ -104,6 +104,14 @@ namespace engine::server
 	/// @param payloadSize Taille du payload en octets.
 	using NetServerPacketHandler = std::function<void(uint32_t connId, uint16_t opcode, uint32_t requestId, uint64_t sessionId, const uint8_t* payload, size_t payloadSize)>;
 
+	/// Callback appelé lorsqu'une connexion est fermée, quelle qu'en soit la raison
+	/// (peer_closed, timeout, kick, erreur réseau). Invoqué depuis un thread worker/IO,
+	/// hors de tout verrou interne du NetServer. NE PAS effectuer d'opérations bloquantes.
+	/// Permet à l'appelant (master) de retirer immédiatement la connexion de ses registres
+	/// — sans ce hook, NetServer ne notifie rien et l'appelant ne découvre la perte qu'au
+	/// timeout de session (~120 s), ce qui fige le compteur /status.
+	using NetServerConnectionClosedHandler = std::function<void(uint32_t connId, DisconnectReason reason)>;
+
 	/// Snapshot of server network counters (M19.11). Thread-safe read via GetNetworkStats().
 	struct NetServerStats
 	{
@@ -142,6 +150,10 @@ namespace engine::server
 
 		/// Set handler called from worker threads for each received packet. Optional; not called if unset.
 		void SetPacketHandler(NetServerPacketHandler handler);
+
+		/// Set handler called when a connection is closed (any reason). Optional; not called if unset.
+		/// Invoked once per connection that had established state, from a worker/IO thread.
+		void SetConnectionClosedHandler(NetServerConnectionClosedHandler handler);
 
 		/// Current number of connected clients. Thread-safe.
 		uint32_t GetConnectionCount() const;

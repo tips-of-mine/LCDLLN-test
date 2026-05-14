@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "id": "volcanic_island",
+  "displayName": { "fr": "Île volcanique", "en": "Volcanic island" },
+  "description": {
+    "fr": "Île circulaire dominée par un volcan central, plages de sable noir, lac de cratère au sommet, tunnels de lave creusés dans les flancs.",
+    "en": "A circular island dominated by a central volcano, black sand beaches, a summit crater lake, lava tunnels carved into the slopes."
+  },
+  "thumbnail": "thumbnails/volcanic_island.png",
+  "tags": ["island", "volcanic", "arid"],
+  "estimatedExecutionSeconds": 48,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "himalayan",
+      "polyline": [[5000, 5000], [5000, 5000]],
+      "widthMeters": 2200,
+      "heightMeters": 1400,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "coastline",
+      "seaLevelMeters": 40,
+      "beachEnabled": true,
+      "cliffsEnabled": true,
+      "cliffsSlopeThresholdDeg": 55,
+      "affectedBy": []
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[4800, 4800], [5200, 4800], [5200, 5200], [4800, 5200]],
+      "waterLevel": 1100,
+      "affectedBy": []
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "realistic",
+      "numDroplets": 75000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    },
+    {
+      "type": "thermal_wind_erosion",
+      "preset": "soft_smoothing",
+      "thermalEnabled": true,
+      "windEnabled": false,
+      "windAngleDeg": 0,
+      "affectedBy": ["dryness"]
+    },
+    {
+      "type": "place_cave",
+      "catalogId": "cave_large_01",
+      "worldPosition": [3800, 0, 5000],
+      "rotationY": 0,
+      "autoSnapToGround": true,
+      "affectedBy": []
+    }
+  ],
+  "decoration": []
+}

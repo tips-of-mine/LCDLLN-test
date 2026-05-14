@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "id": "rocky_coast",
+  "displayName": { "fr": "Côte rocheuse", "en": "Rocky coast" },
+  "description": {
+    "fr": "Falaises spectaculaires bordant un océan tempétueux. Chaîne côtière dans l'arrière-pays, lagune protégée derrière une avancée rocheuse, plage de galets accessible par une crique.",
+    "en": "Dramatic cliffs lining a stormy ocean. Coastal range inland, a lagoon sheltered behind a rocky headland, a pebble beach reached through a cove."
+  },
+  "thumbnail": "thumbnails/rocky_coast.png",
+  "tags": ["coastal", "mountainous", "humid"],
+  "estimatedExecutionSeconds": 45,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "pre_alpine",
+      "polyline": [[1500, 6500], [4500, 6800], [7500, 6500], [9000, 7000]],
+      "widthMeters": 1200,
+      "heightMeters": 500,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "valley_macro",
+      "preset": "glacial_valley",
+      "polyline": [[3000, 6800], [3500, 5000], [3700, 3000]],
+      "widthMeters": 400,
+      "heightMeters": 180,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "coastline",
+      "seaLevelMeters": 30,
+      "beachEnabled": true,
+      "cliffsEnabled": true,
+      "cliffsSlopeThresholdDeg": 50,
+      "affectedBy": []
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[2800, 1200], [3500, 1100], [3700, 1800], [3100, 2000]],
+      "waterLevel": 35,
+      "affectedBy": []
+    },
+    {
+      "type": "river_network",
+      "preset": "standard",
+      "sources": [[4500, 6500], [3500, 6700]],
+      "seaLevelMeters": 30,
+      "carvingEnabled": true,
+      "affectedBy": ["water_density"]
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "realistic",
+      "numDroplets": 80000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    },
+    {
+      "type": "thermal_wind_erosion",
+      "preset": "soft_smoothing",
+      "thermalEnabled": true,
+      "windEnabled": true,
+      "windAngleDeg": 270,
+      "affectedBy": ["dryness"]
+    },
+    {
+      "type": "place_cave",
+      "catalogId": "cave_medium_01",
+      "worldPosition": [3200, 0, 800],
+      "rotationY": 90,
+      "autoSnapToGround": true,
+      "affectedBy": []
+    }
+  ],
+  "decoration": []
+}

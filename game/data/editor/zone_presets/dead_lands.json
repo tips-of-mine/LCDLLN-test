@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "id": "dead_lands",
+  "displayName": { "fr": "Terres mortes", "en": "Dead lands" },
+  "description": {
+    "fr": "Terrain ravagé par une érosion extrême : ravines profondes, falaises effondrées, pas une goutte d'eau. Un paysage maudit et stérile.",
+    "en": "Land ravaged by extreme erosion: deep gullies, collapsed cliffs, not a drop of water. A cursed, sterile landscape."
+  },
+  "thumbnail": "thumbnails/dead_lands.png",
+  "tags": ["arid", "cursed", "eroded"],
+  "estimatedExecutionSeconds": 60,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "alpine",
+      "polyline": [[1500, 4000], [4500, 5500], [7500, 4500], [9000, 5000]],
+      "widthMeters": 1300,
+      "heightMeters": 900,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "valley_macro",
+      "preset": "canyon",
+      "polyline": [[2000, 5000], [4000, 4000], [6000, 3000], [8000, 2500]],
+      "widthMeters": 300,
+      "heightMeters": 350,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "intense",
+      "numDroplets": 200000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    },
+    {
+      "type": "thermal_wind_erosion",
+      "preset": "sand_and_talus",
+      "thermalEnabled": true,
+      "windEnabled": true,
+      "windAngleDeg": 120,
+      "affectedBy": ["dryness"]
+    }
+  ],
+  "decoration": []
+}

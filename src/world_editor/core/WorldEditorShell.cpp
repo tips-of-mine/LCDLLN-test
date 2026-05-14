@@ -18,6 +18,7 @@
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"
+#include "src/world_editor/zone_presets/ZonePresetRegistry.h"
 
 #if defined(_WIN32)
 #	include "imgui.h"
@@ -228,6 +229,14 @@ namespace engine::editor::world
 			LOG_INFO(EditorWorld,
 				"[WorldEditorShell] M100.45 prefs {} ({} fichiers de presets)",
 				prefsExisted ? "chargées" : "créées (premier lancement)", presetFiles);
+
+			// M100.46 — catalogue de zone presets (`editor/zone_presets/*.json`),
+			// consommé par le dialog « Nouvelle zone depuis preset ».
+			const size_t zonePresets =
+				engine::editor::world::zone_presets::ZonePresetRegistry::Instance()
+					.LoadFromContentPath(contentRoot);
+			LOG_INFO(EditorWorld,
+				"[WorldEditorShell] M100.46 {} zone preset(s) chargé(s)", zonePresets);
 		}
 
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel

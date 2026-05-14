@@ -308,4 +308,93 @@ in-world (zones, déplacement avatar, collision sol).
 
 ---
 
+## 12. Reprise 2026-05-14 — audit pipeline + build de diagnostic
+
+**Branche** : `claude/fix-terrain-invisible` (périmètre `src/client/render/` +
+shaders uniquement — disjoint de la session éditeur).
+
+### 12.1 Correction factuelle sur le §2.4
+
+Le §2.4 conclut « matrice viewProj correcte » en ne vérifiant que `clip.w > 0`.
+Or le log `proj(centerPatch)=(-0.00,107.31,27.33,27.43)` donne
+**NDC.y = 107.31 / 27.43 = 3.91**, soit largement hors de `[-1,+1]` : le patch
+central est *hors écran*. Ce n'est PAS un bug en soi (la caméra est pile
+au-dessus du centre du terrain et regarde vers l'avant, donc le patch central
+est sous le champ de vision), mais la preuve « la matrice est bonne » est
+mal interprétée. Recalcul manuel : les patches **vers l'avant** (Z décroissant
+depuis la caméra) projettent bien dans `[-1,+1]`. La matrice est donc
+*probablement* correcte, mais ce n'est pas démontré par le diagnostic existant.
+
+### 12.2 Mécanisme central identifié
+
+Le symptôme « écran **uniformément** couleur ciel + **aucun orange** » n'est
+PAS compatible avec « la lighting pass mange l'albedo » (§4.1) : si l'albedo
+orange était dans GBufferA et la profondeur correcte, `lighting.frag` ferait
+du PBR sur l'orange → orange ombré visible, pas la couleur du ciel.
+
+`lighting.frag` (≈ ligne 119) :
+```glsl
+if (depth >= 1.0) { outSceneColorHDR = vec4(skyOut, 1.0); return; } // ne lit jamais GBufferA
+```
+Le seul état produisant un écran *uniforme* couleur ciel est
+**`depth >= 1.0` sur tout l'écran**. La lighting pass sort alors la sky color
+partout et **ne regarde même pas l'albedo** (donc l'orange est invisible par
+construction, quoi qu'écrive `terrain.frag`).
+
+Vérifié au passage : `SkyPass` a en réalité `depthTestEnable = VK_TRUE`
++ `LESS_OR_EQUAL` (`SkyPass.cpp:104`) — le commentaire `Engine.cpp:3868`
+« depthTest=FALSE » est faux/obsolète. SkyPass est donc correctement gated par
+la profondeur, ce qui **confirme** que tout dépend de la profondeur écrite
+par le terrain.
+
+**Conclusion** : le bug est que le terrain **n'écrit pas de profondeur
+`< 1.0`** dans `m_fgDepthId` au moment où la LightingPass l'échantillonne —
+soit il ne rasterise aucun fragment, soit ses écritures de depth ne tiennent
+pas. L'hypothèse §4.1 est rétrogradée.
+
+### 12.3 Hypothèses re-classées
+
+1. 🔴 **Le terrain ne rasterise aucun fragment** → depth reste à 1.0.
+   Winding toujours faux malgré le fix `frontFace=CW` (`TerrainRenderer.cpp:537`),
+   OU `terrain.vert` produit un `gl_Position` NaN/hors-range (heightmap GPU
+   mal liée/uploadée dans `RebuildWorldEditorTerrainGpu`).
+2. 🟠 **Le terrain rasterise la couleur mais pas la profondeur** (ou la depth
+   ne persiste pas jusqu'à la LightingPass) — aspect du `VkImageView` depth,
+   identité d'image entre le render pass privé du terrain et celui lu par la
+   lighting.
+3. 🟡 Mismatch framebuffer/barrière (§4.2) — vérifié sur le papier (mêmes
+   ResourceId, `storeOp=STORE` partout, layouts qui s'enchaînent) : semble OK,
+   à confirmer RenderDoc.
+4. 🟢 La lighting pass « mange » l'albedo (§4.1) — **rétrogradée**,
+   incompatible avec un écran *uniforme* couleur ciel.
+
+### 12.4 Build de diagnostic ajouté
+
+Ajout d'un mode debug dans `lighting.frag`, piloté par la clé config
+`render.lighting_debug_mode` (entier, défaut 0) :
+
+- `0` — rendu normal.
+- `1` — `depth < 1.0` → **vert**, `depth >= 1.0` → **rouge**.
+  *Écran tout rouge ⇒ le terrain n'écrit aucune profondeur (hyp. 1/2).*
+  *Présence de vert ⇒ depth OK, bug en aval.*
+- `2` — GBufferA (albedo) brut, sans éclairage.
+  *Orange visible ⇒ terrain écrit l'albedo. Pas d'orange ⇒ ne rasterise pas.*
+- `3` — profondeur brute en niveaux de gris.
+
+Implémentation : champ `float debugMode` ajouté à `LightingPass::LightParams`
+(push-constant 148 → 152 octets) + branches dans `lighting.frag` + lecture
+config dans la lambda « Lighting » de `Engine.cpp`.
+
+**À faire côté build Windows** :
+1. Recompiler les shaders (`tools/compile_game_shaders.ps1`) — `lighting.frag.spv`
+   est un fichier suivi, il sera régénéré.
+2. Lancer l'éditeur avec `render.lighting_debug_mode` = 1 puis 2 dans
+   `config.json`, coller ici les captures + les logs `[TerrainRenderer]`.
+3. Selon le résultat : voir §12.3 pour l'hypothèse à creuser ensuite.
+
+*À valider sur le build Windows — aucune validation graphique possible côté
+session Claude (pas d'environnement Vulkan).*
+
+---
+
 *Fin du document de passation.*

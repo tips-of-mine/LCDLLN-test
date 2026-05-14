@@ -14,7 +14,7 @@
 // Outputs:
 //   outSceneColorHDR (location 0) – SceneColor_HDR, R16G16B16A16_SFLOAT
 //
-// Push constants (148 bytes, fragment stage):
+// Push constants (152 bytes, fragment stage):
 //   mat4  invVP         – inverse view-projection matrix
 //   vec4  cameraPos     – camera world-space position (xyz, w unused)
 //   vec4  lightDir      – normalised direction *toward* the light (xyz, w unused)
@@ -26,6 +26,13 @@
 //                         ready (alors on lit GBufferA pour la sky), 0.0
 //                         si on utilise la flat skyColor.
 //   float useIBL        – 1.0 = use IBL, 0.0 = constant ambient
+//   float debugMode     – diag "terrain invisible" (2026-05-14) :
+//                         0 = rendu normal,
+//                         1 = depth < 1.0 -> vert, depth >= 1.0 -> rouge
+//                             (isole si le terrain ecrit la profondeur),
+//                         2 = GBufferA (albedo) brut, sans eclairage
+//                             (isole si le terrain ecrit l'albedo orange),
+//                         3 = depth brut en niveaux de gris.
 
 layout(location = 0) in  vec2 inUV;
 layout(location = 0) out vec4 outSceneColorHDR;
@@ -51,6 +58,7 @@ layout(push_constant) uniform PC
     vec4  ambientColor; // constant ambient RGB (fallback when useIBL == 0)
     vec4  skyColor;     // rgb = couleur du ciel flat (fallback) ; w = 1.0 si SkyPass ready
     float useIBL;       // 1.0 = use IBL, 0.0 = constant ambient
+    float debugMode;    // 0 = normal, 1 = depth pass/fail, 2 = albedo brut, 3 = depth gris (diag terrain invisible)
 } pc;
 
 // ---- Constants --------------------------------------------------------------
@@ -105,6 +113,27 @@ void main()
     float roughness = max(orm.g, kMinRgh);
     float metallic  = orm.b;
     float depth     = texture(depthTex, inUV).r;
+
+    // ---- Debug visualisations (diag "terrain invisible", 2026-05-14) ---
+    // Court-circuite tout l'eclairage pour isoler ou la chaine lache.
+    //   mode 1 : depth < 1.0 -> vert, depth >= 1.0 -> rouge. Ecran tout
+    //            rouge => le terrain n'ecrit AUCUNE profondeur (il ne
+    //            rasterise pas, ou ses ecritures depth ne tiennent pas).
+    //            Du vert => la profondeur est ecrite, le bug est en aval.
+    //   mode 2 : GBufferA brut. Orange visible => terrain.frag ecrit bien
+    //            l'albedo ; pas d'orange => terrain ne rasterise pas / la
+    //            SkyPass l'a ecrase.
+    //   mode 3 : profondeur brute en niveaux de gris (noir = proche).
+    if (pc.debugMode >= 0.5)
+    {
+        if (pc.debugMode < 1.5)
+            outSceneColorHDR = vec4((depth < 1.0) ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0), 1.0);
+        else if (pc.debugMode < 2.5)
+            outSceneColorHDR = vec4(baseAlbedo.rgb, 1.0);
+        else
+            outSceneColorHDR = vec4(vec3(depth), 1.0);
+        return;
+    }
 
     // ---- Sky / empty fragments (depth == 1.0 means no geometry) --------
     // Phase 5 Lunar (PR #561 fix Concern 3) : si SkyPass est ready

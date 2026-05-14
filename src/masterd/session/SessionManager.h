@@ -120,6 +120,16 @@ namespace engine::server
         /// pouvait jouer le meme personnage en parallele du nouveau client.
 		void SetOnSessionClosed(std::function<void(uint64_t sessionId, uint64_t accountId, SessionCloseReason)> hook);
 
+		/// Hook optionnel interrogé par \ref CreateSession sur détection de duplicate-login.
+		/// Reçoit la \a existingSessionId (la session déjà en place pour le compte) et doit
+		/// renvoyer true si elle correspond à un joueur réellement en jeu (EnterWorld validé).
+		/// Si true, la nouvelle authentification est **refusée** quelle que soit la policy —
+		/// le joueur en jeu est protégé. Si false (ou hook non câblé), la policy configurée
+		/// s'applique : \c KickExisting kicke alors la session existante, ce qui reste correct
+		/// pour une session pré-monde transitoire (ex. le double-auth du flux de connexion
+		/// client : auth initiale puis re-auth dans MasterShardClientFlow).
+		void SetSessionInWorldHook(std::function<bool(uint64_t existingSessionId)> hook);
+
 	private:
 		using Clock = std::chrono::steady_clock;
 
@@ -127,6 +137,7 @@ namespace engine::server
 		std::unordered_map<uint64_t, Session> m_by_session_id;
 		std::unordered_map<uint64_t, uint64_t> m_by_account_id;
 		std::function<void(uint64_t, uint64_t, SessionCloseReason)> m_onSessionClosed;
+		std::function<bool(uint64_t)> m_sessionInWorldHook;
 
 		bool isValid(const Session& s, Clock::time_point now) const;
 		uint64_t generateSessionId();

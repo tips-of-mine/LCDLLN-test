@@ -2052,8 +2052,16 @@ namespace engine::client
 			SetPhase(Phase::CharacterSelect);
 			return;
 		}
-		EnterAuthErrorPhase(Phase::Login, copy.message);
-		LOG_WARN(Core, "[AuthUiPresenter] Master/shard flow FAILED: {}", copy.message);
+		// Compte déjà connecté en jeu : le master a refusé cette 2ᵉ authentification
+		// (ALREADY_LOGGED_IN). On affiche un message dédié — l'utilisateur doit savoir
+		// que son compte est déjà en ligne, et contacter le support + changer son mot
+		// de passe si ce n'est pas lui.
+		const std::string flowErrorMsg = copy.flowAuthAlreadyLoggedIn
+			? Tr("auth.error.already_logged_in")
+			: copy.message;
+		EnterAuthErrorPhase(Phase::Login, flowErrorMsg);
+		LOG_WARN(Core, "[AuthUiPresenter] Master/shard flow FAILED: {} (alreadyLoggedIn={})",
+			copy.message, copy.flowAuthAlreadyLoggedIn ? 1 : 0);
 	}
 
 	void AuthUiPresenter::StartLoginWorker(const engine::core::Config& cfg)
@@ -2333,6 +2341,8 @@ namespace engine::client
 			{
 				local.success = r.success;
 				local.message = r.success ? (std::string("Shard ready (shard_id=") + std::to_string(r.shard_id) + ").") : r.errorMessage;
+				local.flowAuthAlreadyLoggedIn =
+					!r.success && r.authErrorCode == engine::network::NetErrorCode::ALREADY_LOGGED_IN;
 				if (r.success)
 				{
 					// Phase 2 — la liste optionnelle est récupérée par le flow sur la connexion master ;

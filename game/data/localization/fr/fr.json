@@ -213,6 +213,7 @@
   "auth.error.terms_session_inactive": "La session des conditions n'est pas active.",
   "auth.error.character_session_inactive": "La session de creation du personnage n'est pas active.",
   "auth.error.invalid_credentials": "Identifiant ou mot de passe incorrect.",
+  "auth.error.already_logged_in": "Ce compte est deja connecte en jeu. Si ce n'est pas vous, contactez le support et changez votre mot de passe immediatement.",
   "auth.info.register_ok": "Inscription OK. Saisissez le code de verification envoye par email.",
   "auth.info.tag_id": "Votre TAG-ID :",
   "auth.email_confirmation.title": "Inscription reussie",

@@ -115,6 +115,7 @@ namespace engine::network
 			bool authDone = false;
 			bool authOk = false;
 			uint64_t sessionId = 0;
+			NetErrorCode authErrorCode = NetErrorCode::OK;
 			if (!disp.SendRequest(kOpcodeAuthRequest, authPayload, [&](uint32_t, bool timeout, std::vector<uint8_t> payload) {
 				authDone = true;
 				authTimeout = timeout;
@@ -123,6 +124,7 @@ namespace engine::network
 					auto p = ParseAuthResponsePayload(payload.data(), payload.size());
 					authOk = p && p->success != 0;
 					if (authOk) sessionId = p->session_id;
+					else if (p) authErrorCode = p->error_code;
 				}
 			}, m_timeoutMs))
 			{
@@ -138,8 +140,10 @@ namespace engine::network
 			}
 			if (!authDone || authTimeout || !authOk)
 			{
+				result.authErrorCode = authErrorCode;
 				result.errorMessage = authTimeout ? "AUTH timeout" : "AUTH failed";
-				LOG_WARN(Net, "[MasterShardClientFlow] {}", result.errorMessage);
+				LOG_WARN(Net, "[MasterShardClientFlow] {} (authErrorCode={})",
+					result.errorMessage, static_cast<uint32_t>(authErrorCode));
 				return result;
 			}
 			disp.SetSessionId(sessionId);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/shared/network/CharacterPayloads.h"
+#include "src/shared/network/NetErrorCode.h"
 #include "src/shared/network/ServerListPayloads.h"
 
 #include <cstdint>
@@ -25,6 +26,9 @@ namespace engine::network
 		bool shard_choice_required = false;
 		std::vector<ServerListEntry> server_list_for_pick;
 		std::string errorMessage;
+		/// Code d'erreur de l'étape AUTH quand elle échoue (sinon \c OK). Permet à l'UI
+		/// d'afficher un message dédié — notamment \c ALREADY_LOGGED_IN (compte déjà en jeu).
+		NetErrorCode authErrorCode = NetErrorCode::OK;
 		uint64_t account_id = 0;
 		uint32_t shard_id = 0;
 		/// Phase 3 — endpoint host:port du shard accepté (renseigné quand \c success=true).

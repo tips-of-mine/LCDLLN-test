@@ -16,6 +16,11 @@ namespace engine::server
 		m_onSessionClosed = std::move(hook);
 	}
 
+	void SessionManager::SetSessionInWorldHook(std::function<bool(uint64_t)> hook)
+	{
+		m_sessionInWorldHook = std::move(hook);
+	}
+
 	void SessionManager::SetConfig(const SessionManagerConfig& config)
 	{
 		m_config = config;
@@ -69,6 +74,16 @@ namespace engine::server
 			auto sit = m_by_session_id.find(existing_id);
 			if (sit != m_by_session_id.end() && isValid(sit->second, now))
 			{
+				// Protection prioritaire : si la session existante correspond à un joueur
+				// réellement en jeu (EnterWorld validé), on refuse la nouvelle auth quelle
+				// que soit la policy — le joueur en place n'est jamais kické. KickExisting
+				// ne s'applique donc qu'aux sessions pré-monde transitoires (typiquement le
+				// double-auth du flux de connexion client : auth initiale + re-auth du flow).
+				if (m_sessionInWorldHook && m_sessionInWorldHook(existing_id))
+				{
+					LOG_INFO(Net, "[SessionManager] CreateSession refused: account_id={} already in-world (session_id={})", account_id, existing_id);
+					return kInvalidSessionId;
+				}
 				if (m_config.duplicate_login_policy == DuplicateLoginPolicy::RefuseNew)
 				{
 					LOG_INFO(Net, "[SessionManager] CreateSession refused: account_id={} already has active session", account_id);

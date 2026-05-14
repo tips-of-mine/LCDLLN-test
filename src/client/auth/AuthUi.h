@@ -987,6 +987,9 @@ namespace engine::client
 
 			/// AsyncKind::Login : plusieurs shards en ligne, choix utilisateur requis.
 			bool shardChoiceRequired = false;
+			/// AsyncKind::Login : l'AUTH a échoué avec ALREADY_LOGGED_IN (compte déjà en jeu).
+			/// Le main thread affiche alors un message dédié au lieu du message générique.
+			bool flowAuthAlreadyLoggedIn = false;
 			std::vector<engine::network::ServerListEntry> serverListForPick;
 			/// Phase 2 — Personnages reçus via CHARACTER_LIST après TICKET_ACCEPTED. Vide si aucun
 			/// (route vers CharacterCreate) ou si la requête optionnelle a échoué (même routage).

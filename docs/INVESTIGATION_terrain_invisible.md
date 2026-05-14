@@ -395,6 +395,69 @@ config dans la lambda « Lighting » de `Engine.cpp`.
 *À valider sur le build Windows — aucune validation graphique possible côté
 session Claude (pas d'environnement Vulkan).*
 
+### 12.5 Résultats du build de diagnostic (2026-05-14)
+
+Captures fournies par l'utilisateur :
+- **`render.lighting_debug_mode = 1`** → écran **entièrement ROUGE**.
+  ⇒ `depth >= 1.0` sur **tout** l'écran : le terrain n'écrit **aucune**
+  profondeur. Il ne rasterise **aucun fragment**.
+- **`render.lighting_debug_mode = 2`** → écran uniformément gris/beige (pas
+  d'orange). Cohérent : `SkyPass` (depthTest=`LESS_OR_EQUAL`, depth==1.0
+  partout) remplit GBufferA avec la couleur du ciel sur tout l'écran.
+
+Logs (`log.level` doit être à `Debug` ? — non, les lignes `[TerrainRenderer]`
+sortent en `LOG_INFO`/`Render` et apparaissent bien) :
+```
+[TerrainRenderer] Init OK (15×15 patches, worldSize=10000 heightScale=200)
+[WorldEditor] Camera reset: pos=(659.9,180.0,659.9) farZ=5000 actualExt=(2344x2344)
+[TerrainRenderer] Record diag: patches total=225 kept=225 culled=0 noUserTex=1
+[TerrainRenderer] viewProj row0=(0.7892,0.0000,0.0000,-520.7736)
+[TerrainRenderer] viewProj row1=(0.0000,-1.3415,0.4900,-81.8793)
+[TerrainRenderer] viewProj row2=(0.0000,-0.3429,-0.9394,681.5039)
+[TerrainRenderer] viewProj row3=(0.0000,-0.3429,-0.9394,681.5902)
+[TerrainRenderer] proj(cam-Z100)=(0.00,-49.00,93.84,93.94)   <- devant, w>0
+[TerrainRenderer] proj(centerPatch=(660,100,660))=(0.00,107.31,27.33,27.43)
+```
+
+Analyse :
+- La matrice viewProj est **correcte**. `row2 ≈ row3` est *normal* ici (near=0.1,
+  far=5000 ⇒ `f/(f-n) ≈ 1`), ce n'est pas le bug pré-existant.
+- `Record()` est appelé, 225 patches soumis (cull CPU bypassé).
+- Recalcul manuel : un patch « vers l'avant » à `(660, 100, 0)` projette en
+  NDC `(0, -0.33, 0.9999)` — **pleinement à l'écran**, profondeur valide.
+- Pourtant rien ne rasterise et `depth` reste à 1.0.
+
+⇒ Les triangles sont **on-screen + depth valide**, mais aucun fragment n'est
+produit. Le seul mécanisme de rejet restant est le **backface culling**. Le
+maillage est généré « CCW vu de dessus » (`TerrainMesh.cpp:146,166`,
+`bl,tl,tr` / `bl,tr,br`) et le « fix » `frontFace=VK_FRONT_FACE_CLOCKWISE`
+(`TerrainRenderer.cpp`) **est très probablement dans le mauvais sens**. Le
+commentaire « confirmé avec cullMode=NONE : terrain visible » décrit un état
+antérieur — soit le fix n'a jamais été testé avec `cullMode=BACK`, soit un
+commit ultérieur a re-modifié la convention.
+
+### 12.6 Build de diagnostic n°2 — sélecteur cull/winding
+
+Ajout de la clé config `render.terrain_debug_cull` (lue par
+`TerrainRenderer::Init`, donc rejouée à chaque « Nouvelle carte ») :
+
+- `0` (défaut) — `cullMode=BACK`, `frontFace=CW` (comportement actuel).
+- `1` — `cullMode=NONE` → **si le terrain APPARAÎT, le winding est confirmé
+  comme cause racine** (les triangles étaient tous backface-cull).
+- `2` — `cullMode=BACK`, `frontFace=CCW` → **le correctif suspecté**.
+- `3` — `cullMode=FRONT` → vérification symétrique.
+
+Avantage : un seul build, l'utilisateur teste les 4 cas en éditant
+`config.json` + « Nouvelle carte ». Pas besoin de toucher `lighting.frag`
+(remettre `render.lighting_debug_mode` à `0`).
+
+**À faire côté build Windows** : recompiler le `.exe`, puis tester
+`render.terrain_debug_cull` = 1 puis 2. Résultat attendu : 1 et 2 rendent le
+terrain visible ⇒ on rend permanent le cas 2 (`frontFace=CCW`) et on retire
+le sélecteur + le mode debug lighting.
+
+*À valider sur le build Windows.*
+
 ---
 
 *Fin du document de passation.*

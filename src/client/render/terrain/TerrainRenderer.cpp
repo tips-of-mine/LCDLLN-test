@@ -537,6 +537,38 @@ namespace engine::render::terrain
             rasCI.frontFace   = VK_FRONT_FACE_CLOCKWISE;
             rasCI.lineWidth   = 1.0f;
 
+            // Diag "terrain invisible" (2026-05-14) : selecteur cull/winding pilote par
+            // config `render.terrain_debug_cull` pour tester sans recompiler le .exe
+            // (le terrain est reconstruit a chaque "Nouvelle carte" / "Charger la carte").
+            //   0 = defaut (cullMode=BACK, frontFace=CW),
+            //   1 = cullMode=NONE  -> si le terrain APPARAIT, le bug est bien le winding
+            //                         (les triangles etaient tous backface-cull),
+            //   2 = cullMode=BACK, frontFace=CCW -> le correctif suspecte,
+            //   3 = cullMode=FRONT (frontFace=CW) -> verif symetrique.
+            // Cf. docs/INVESTIGATION_terrain_invisible.md section 12.
+            const int64_t terrainDebugCull = config.GetInt("render.terrain_debug_cull", 0);
+            switch (terrainDebugCull)
+            {
+            case 1:
+                rasCI.cullMode  = VK_CULL_MODE_NONE;
+                break;
+            case 2:
+                rasCI.cullMode  = VK_CULL_MODE_BACK_BIT;
+                rasCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+                break;
+            case 3:
+                rasCI.cullMode  = VK_CULL_MODE_FRONT_BIT;
+                rasCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
+                break;
+            default:
+                break; // 0 : comportement par defaut inchange
+            }
+            if (terrainDebugCull != 0)
+            {
+                LOG_WARN(Render, "[TerrainRenderer] DEBUG render.terrain_debug_cull={} (cullMode={} frontFace={})",
+                         terrainDebugCull, static_cast<int>(rasCI.cullMode), static_cast<int>(rasCI.frontFace));
+            }
+
             VkPipelineMultisampleStateCreateInfo msCI{};
             msCI.sType               = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
             msCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;

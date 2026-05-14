@@ -1,5 +1,7 @@
 #include "src/world_editor/panels/ToolPropertiesPanel.h"
 
+#include "src/shared/core/Log.h"
+
 #include "src/world_editor/terrain/erosion/HydraulicErosionTool.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"

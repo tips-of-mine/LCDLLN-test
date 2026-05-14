@@ -11,6 +11,7 @@
 #include "src/world_editor/presets/ToolPreset.h"
 #include "src/world_editor/presets/ToolPresetApply.h"
 #include "src/world_editor/presets/ToolPresetIo.h"
+#include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 
@@ -28,6 +29,8 @@ namespace
 	} while (0)
 
 	namespace presets = engine::editor::world::presets;
+	using engine::editor::world::TerrainBrushParams;
+	using engine::editor::world::TerrainBrushMode;
 	using engine::editor::world::erosion::HydraulicSimulationParams;
 	using engine::editor::world::erosion::ThermalWindErosionParams;
 	using engine::editor::world::erosion::ErosionSubMode;
@@ -224,6 +227,47 @@ namespace
 		REQUIRE(p.wind.numParticles == 180000u);
 		REQUIRE(p.wind.windStrength == 1.2f);
 	}
+
+	// --- sculpt : struct plat TerrainBrushParams ------------------------
+
+	/// Un preset sculpt applique radius / strength / falloff. Le `mode`
+	/// de la brosse n'est jamais touché (choix d'interaction utilisateur).
+	void Test_SculptPreset_AppliesAndLeavesModeUntouched()
+	{
+		TerrainBrushParams p;
+		p.mode = TerrainBrushMode::Flatten;
+		const auto preset = MakePreset({
+			{ "radiusMeters", 24.0 },
+			{ "strengthMps", 12.0 },
+			{ "falloff", 0.35 },
+		});
+		presets::ApplySculptPreset(p, preset);
+		REQUIRE(p.radiusMeters == 24.0f);
+		REQUIRE(p.strengthMps == 12.0f);
+		REQUIRE(p.falloff == 0.35f);
+		REQUIRE(p.mode == TerrainBrushMode::Flatten); // intact
+	}
+
+	/// noiseOctaves hors borne est clampé à [1, 6].
+	void Test_SculptPreset_NoiseOctavesClamped()
+	{
+		TerrainBrushParams p;
+		presets::ApplySculptPreset(p, MakePreset({ { "noiseOctaves", 99.0 } }));
+		REQUIRE(p.noiseOctaves == 6u);
+		presets::ApplySculptPreset(p, MakePreset({ { "noiseOctaves", 0.0 } }));
+		REQUIRE(p.noiseOctaves == 1u);
+	}
+
+	/// Preset partiel : seule la clé définie change.
+	void Test_SculptPreset_PartialLeavesOthers()
+	{
+		TerrainBrushParams p;
+		p.radiusMeters = 7.0f;
+		p.strengthMps = 99.0f;
+		presets::ApplySculptPreset(p, MakePreset({ { "radiusMeters", 3.0 } }));
+		REQUIRE(p.radiusMeters == 3.0f);   // appliqué
+		REQUIRE(p.strengthMps == 99.0f);   // intact
+	}
 }
 
 int main()
@@ -237,6 +281,9 @@ int main()
 	Test_ThermalWindPreset_SubModeClamped();
 	Test_ThermalWindPreset_PartialLeavesWindIntact();
 	Test_ThermalWindPreset_RealJsonRoundTrip();
+	Test_SculptPreset_AppliesAndLeavesModeUntouched();
+	Test_SculptPreset_NoiseOctavesClamped();
+	Test_SculptPreset_PartialLeavesOthers();
 
 	if (g_failed > 0)
 	{

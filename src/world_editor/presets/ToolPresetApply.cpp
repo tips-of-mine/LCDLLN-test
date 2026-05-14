@@ -1,5 +1,6 @@
 #include "src/world_editor/presets/ToolPresetApply.h"
 
+#include "src/world_editor/terrain/TerrainBrush.h"
 #include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 
@@ -100,5 +101,25 @@ namespace engine::editor::world::presets
 			preset.GetParam("wind.exposureRadiusMeters", w.exposureRadiusMeters));
 		w.maxDeltaPerCellMeters = static_cast<float>(
 			preset.GetParam("wind.maxDeltaPerCellMeters", w.maxDeltaPerCellMeters));
+	}
+
+	void ApplySculptPreset(
+		engine::editor::world::TerrainBrushParams& p,
+		const ToolPreset& preset)
+	{
+		p.radiusMeters = static_cast<float>(
+			preset.GetParam("radiusMeters", p.radiusMeters));
+		p.strengthMps = static_cast<float>(
+			preset.GetParam("strengthMps", p.strengthMps));
+		p.falloff = static_cast<float>(
+			preset.GetParam("falloff", p.falloff));
+		p.noiseFreq = static_cast<float>(
+			preset.GetParam("noiseFreq", p.noiseFreq));
+		if (preset.HasParam("noiseOctaves"))
+		{
+			const double v = preset.GetParam("noiseOctaves", 3.0);
+			const int clamped = std::clamp(static_cast<int>(v), 1, 6);
+			p.noiseOctaves = static_cast<uint8_t>(clamped);
+		}
 	}
 }

@@ -2,6 +2,11 @@
 
 #include "src/world_editor/presets/ToolPreset.h"
 
+namespace engine::editor::world
+{
+	struct TerrainBrushParams;
+}
+
 namespace engine::editor::world::erosion
 {
 	struct HydraulicSimulationParams;
@@ -42,5 +47,13 @@ namespace engine::editor::world::presets
 	///   wind.maxDeltaPerCellMeters.
 	void ApplyThermalWindErosionPreset(
 		engine::editor::world::erosion::ThermalWindErosionParams& params,
+		const ToolPreset& preset);
+
+	/// Mappe les clés JSON `tool_presets/sculpt.json` vers
+	/// `TerrainBrushParams`. Clés reconnues : radiusMeters, strengthMps,
+	/// falloff, noiseFreq, noiseOctaves. Le `mode` de la brosse n'est pas
+	/// touché par un preset (c'est un choix d'interaction de l'utilisateur).
+	void ApplySculptPreset(
+		engine::editor::world::TerrainBrushParams& params,
 		const ToolPreset& preset);
 }

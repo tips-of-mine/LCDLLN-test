@@ -67,26 +67,51 @@ namespace engine::editor::world::panels
 
 		/// Rend les sliders communs (radius/strength/falloff) puis les
 		/// paramètres dépendants du mode (noise) et les checkboxes mirror.
+		/// M100.45 Phase B — outil migré : dropdown de presets + split
+		/// Simple/Advanced. Simple = mode + rayon + force ; Advanced +=
+		/// falloff, bruit, mirror.
 		void RenderSculptParams(engine::editor::world::TerrainSculptTool& tool)
 		{
+			const bool advanced =
+				engine::editor::world::modes::EditorModeRegistry::Instance().GetCurrentMode()
+					== engine::editor::world::modes::EditorMode::Advanced;
+
 			engine::editor::world::TerrainBrushParams params = tool.GetParams();
+
+			// M100.45 A.6 — dropdown de presets (tool_presets/sculpt.json).
+			// Le callback s'exécute synchrone : il mute la copie locale
+			// `params`, les sliders ci-dessous reflètent la nouvelle valeur.
+			engine::editor::world::ui::RenderPresetDropdown(
+				"sculpt",
+				[&params](const engine::editor::world::presets::ToolPreset& preset) {
+					engine::editor::world::presets::ApplySculptPreset(params, preset);
+				});
+
 			RenderBrushModeRadios(params.mode);
 			ImGui::Separator();
 			ImGui::SliderFloat("Radius (m)",   &params.radiusMeters, 1.0f, 50.0f, "%.1f");
 			ImGui::SliderFloat("Strength",     &params.strengthMps,  0.1f, 50.0f, "%.2f");
-			ImGui::SliderFloat("Falloff",      &params.falloff,      0.0f, 1.0f,  "%.2f");
-			if (params.mode == engine::editor::world::TerrainBrushMode::Noise)
+
+			if (advanced)
 			{
-				ImGui::SliderFloat("Noise freq",  &params.noiseFreq, 0.001f, 1.0f, "%.3f");
-				int octaves = static_cast<int>(params.noiseOctaves);
-				if (ImGui::SliderInt("Noise octaves", &octaves, 1, 6))
+				ImGui::SliderFloat("Falloff",      &params.falloff,      0.0f, 1.0f,  "%.2f");
+				if (params.mode == engine::editor::world::TerrainBrushMode::Noise)
 				{
-					params.noiseOctaves = static_cast<uint8_t>(octaves);
+					ImGui::SliderFloat("Noise freq",  &params.noiseFreq, 0.001f, 1.0f, "%.3f");
+					int octaves = static_cast<int>(params.noiseOctaves);
+					if (ImGui::SliderInt("Noise octaves", &octaves, 1, 6))
+					{
+						params.noiseOctaves = static_cast<uint8_t>(octaves);
+					}
 				}
+				ImGui::Checkbox("Mirror X", &params.mirrorX);
+				ImGui::SameLine();
+				ImGui::Checkbox("Mirror Z", &params.mirrorZ);
 			}
-			ImGui::Checkbox("Mirror X", &params.mirrorX);
-			ImGui::SameLine();
-			ImGui::Checkbox("Mirror Z", &params.mirrorZ);
+			else
+			{
+				ImGui::TextDisabled("Mode Simple — Options > Mode editeur > Avance pour falloff/bruit/mirror.");
+			}
 			tool.SetParams(params);
 		}
 

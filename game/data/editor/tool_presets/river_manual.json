@@ -1,0 +1,33 @@
+{
+  "toolId": "river_manual",
+  "defaultPreset": "river",
+  "presets": [
+    {
+      "id": "stream",
+      "displayName": "Ruisseau",
+      "description": "Cours d'eau étroit et peu profond.",
+      "parameters": {
+        "width": 1.5,
+        "depth": 0.4
+      }
+    },
+    {
+      "id": "river",
+      "displayName": "Rivière",
+      "description": "Largeur et profondeur moyennes. Cours d'eau standard.",
+      "parameters": {
+        "width": 6.0,
+        "depth": 1.5
+      }
+    },
+    {
+      "id": "great_river",
+      "displayName": "Grand fleuve",
+      "description": "Cours d'eau large et profond, type fleuve majeur.",
+      "parameters": {
+        "width": 20.0,
+        "depth": 4.0
+      }
+    }
+  ]
+}

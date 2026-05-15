@@ -1,0 +1,36 @@
+{
+  "toolId": "sculpt",
+  "defaultPreset": "standard",
+  "presets": [
+    {
+      "id": "soft",
+      "displayName": "Doux",
+      "description": "Petit rayon, faible force, bord progressif. Pour les retouches fines.",
+      "parameters": {
+        "radiusMeters": 4.0,
+        "strengthMps": 1.5,
+        "falloff": 0.85
+      }
+    },
+    {
+      "id": "standard",
+      "displayName": "Standard",
+      "description": "Équilibre par défaut. Sculpture polyvalente de terrain.",
+      "parameters": {
+        "radiusMeters": 8.0,
+        "strengthMps": 3.0,
+        "falloff": 0.7
+      }
+    },
+    {
+      "id": "aggressive",
+      "displayName": "Aggressif",
+      "description": "Grand rayon, forte amplitude, bord net. Pour le blocage rapide de relief.",
+      "parameters": {
+        "radiusMeters": 24.0,
+        "strengthMps": 12.0,
+        "falloff": 0.35
+      }
+    }
+  ]
+}

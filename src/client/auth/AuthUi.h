@@ -350,6 +350,10 @@ namespace engine::client
 			std::string name;
 			bool ok = false;
 			uint32_t players = 0;
+			/// "host:port" du shard, tel que renvoyé par /status. Sert de clé de
+			/// correspondance avec \ref engine::network::ServerListEntry::endpoint
+			/// pour rafraîchir le compteur de joueurs de l'écran de choix de serveur.
+			std::string endpoint;
 		};
 
 		struct StatusCache
@@ -682,6 +686,12 @@ namespace engine::client
 		/// dans \ref m_pendingDeleteCharacterId par \ref ImGuiRequestDeleteCharacter).
 		void StartCharacterDeleteWorker(const engine::core::Config& cfg);
 		void StartStatusProbeWorker(const engine::core::Config& cfg);
+		/// Réinjecte le compteur de joueurs frais de \ref m_statusCache (sonde /status,
+		/// rafraîchie périodiquement) dans le \c current_load de \ref m_shardPickEntries.
+		/// Sans cela, l'écran « Choisir un serveur » reste figé sur l'instantané pris au
+		/// moment de la connexion (typiquement 0 joueur). Correspondance par endpoint ;
+		/// les entrées sans correspondance gardent leur valeur d'origine.
+		void RefreshShardPickEntriesFromStatusCache();
 		void ResetMasterSession();
 		void StartMasterFlowWorker(const engine::core::Config& cfg);
 		void PollAsyncResult(const engine::core::Config& cfg);
@@ -1008,6 +1018,11 @@ namespace engine::client
 		AsyncKind m_pendingAsyncKind = AsyncKind::None;
 		uint64_t m_masterSessionId = 0;
 		std::unique_ptr<engine::network::NetClient> m_masterClient;
+		/// Dernier kOpcodeHeartbeat émis sur m_masterClient. PumpPostAuthEvents envoie
+		/// un heartbeat périodique tant que le joueur est en jeu, pour que la session
+		/// master reste vivante (sinon HeartbeatTimeout ~120s côté master fait tomber
+		/// la connexion et le joueur disparaît du compteur /status).
+		std::chrono::steady_clock::time_point m_lastMasterHeartbeatAt{};
 		// Heap-allocated in Init() — StableMutex avoids SRWLOCK crash (STAB.14).
 		std::unique_ptr<AuthMutex> m_asyncMutex;
 		std::string m_registeredTagId; ///< TAG-ID reçu après inscription réussie. Conservé pour affichage (bandeau) et usage futur (copie presse-papier, champ dédié).

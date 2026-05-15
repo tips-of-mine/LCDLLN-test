@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "id": "desert",
+  "displayName": { "fr": "Désert", "en": "Desert" },
+  "description": {
+    "fr": "Plateau légèrement vallonné battu par les vents, une oasis isolée comme seule source d'eau, des dunes sculptées par l'érosion éolienne.",
+    "en": "A gently rolling, wind-scoured plateau, a single isolated oasis, dunes carved by aeolian erosion."
+  },
+  "thumbnail": "thumbnails/desert.png",
+  "tags": ["arid", "sandy", "flat"],
+  "estimatedExecutionSeconds": 35,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "hills",
+      "polyline": [[2000, 5000], [6000, 5200], [9000, 4800]],
+      "widthMeters": 1400,
+      "heightMeters": 90,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[4700, 4600], [5100, 4550], [5200, 4950], [4750, 5000]],
+      "waterLevel": 12,
+      "affectedBy": []
+    },
+    {
+      "type": "thermal_wind_erosion",
+      "preset": "sand_and_talus",
+      "thermalEnabled": true,
+      "windEnabled": true,
+      "windAngleDeg": 90,
+      "affectedBy": ["dryness"]
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "desert",
+      "numDroplets": 18000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    }
+  ],
+  "decoration": []
+}

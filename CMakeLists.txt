@@ -381,6 +381,27 @@ add_library(engine_core
   # cross-fichiers avant export.
   src/world_editor/volumes/bridge/VMapBridge.cpp
   src/world_editor/volumes/bridge/Phase11Validator.cpp
+  # M100.45 — Phase 12 « Accessibilité » — infrastructure transverse
+  # (Phase A) : registry de mode Simple/Advanced, registry de presets
+  # d'outils (JSON), store de préférences utilisateur persistées.
+  src/world_editor/modes/EditorModeRegistry.cpp
+  src/world_editor/presets/ToolPresetIo.cpp
+  src/world_editor/presets/ToolPresetRegistry.cpp
+  src/world_editor/prefs/UserPrefsStore.cpp
+  # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
+  # JSON + parsing + registry + validation). Incrément 2a : couche de
+  # paramètres typés (OperationParams) + customisation (relief/eau/
+  # sécheresse). Le dispatcher + l'exécuteur + le reset viennent ensuite.
+  src/world_editor/zone_presets/ZonePreset.cpp
+  src/world_editor/zone_presets/ZonePresetIo.cpp
+  src/world_editor/zone_presets/ZonePresetRegistry.cpp
+  src/world_editor/zone_presets/OperationParams.cpp
+  src/world_editor/zone_presets/CustomizationApplier.cpp
+  # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
+  # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
+  # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.
+  src/world_editor/presets/ToolPresetApply.cpp
+  src/world_editor/ui/PresetDropdownWidget.cpp
   src/world_editor/panels/ScenePanel.cpp
   src/world_editor/panels/InspectorPanel.cpp
   src/world_editor/panels/AssetBrowserPanel.cpp
@@ -1287,6 +1308,49 @@ if(WIN32)
     target_compile_options(phase11_bridge_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME phase11_bridge_tests COMMAND phase11_bridge_tests)
+endif()
+
+# M100.45 — Tests unitaires CPU pour la Phase A « Accessibilité » :
+# EditorModeRegistry (set + subscribers), ToolPresetIo (parsing JSON
+# tolérant), ToolPresetRegistry (chargement répertoire + résilience
+# fichier corrompu), UserPrefsStore (round-trip disque + sauvegarde
+# atomique + premier lancement). Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(editor_modes_tests src/world_editor/tests/EditorModesTests.cpp)
+  target_include_directories(editor_modes_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(editor_modes_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(editor_modes_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME editor_modes_tests COMMAND editor_modes_tests)
+endif()
+
+# M100.45 Phase B — Tests unitaires CPU pour la migration des outils :
+# application d'un preset aux paramètres internes (full / partiel /
+# vide / clamp / round-trip JSON réel). Incrément 1 = hydraulic_erosion.
+# Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(tool_migration_tests src/world_editor/tests/ToolMigrationTests.cpp)
+  target_include_directories(tool_migration_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(tool_migration_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(tool_migration_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME tool_migration_tests COMMAND tool_migration_tests)
+endif()
+
+# M100.46 — Tests unitaires CPU pour la Zone Presets Library (incrément 1) :
+# parsing JSON, Validate (type/affectedBy inconnus, decoration non vide),
+# helpers de type, registry (chargement répertoire + résilience). Pure
+# CPU, gating WIN32.
+if(WIN32)
+  add_executable(zone_presets_tests src/world_editor/tests/ZonePresetsTests.cpp)
+  target_include_directories(zone_presets_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(zone_presets_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(zone_presets_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME zone_presets_tests COMMAND zone_presets_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

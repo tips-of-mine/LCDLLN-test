@@ -6,6 +6,7 @@
 #include "src/world_editor/ui/TexturePreviewCache.h"
 #include "src/world_editor/ui/TreeSpeciesCatalog.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
+#include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Window.h"
@@ -804,6 +805,28 @@ namespace engine::editor
 				{
 					m_cfg->SetValue("controls.movement_layout", std::string("zqsd"));
 					TryPersistMovementLayoutToUserSettings("zqsd");
+				}
+
+				// M100.45 (A.5) — toggle Mode éditeur Simple/Avancé. Le
+				// EditorModeRegistry persiste le choix dans user_prefs.json
+				// et notifie les ToolPropertiesPanel pour re-render immédiat.
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Mode editeur"))
+				{
+					namespace modes = engine::editor::world::modes;
+					auto& reg = modes::EditorModeRegistry::Instance();
+					const modes::EditorMode current = reg.GetCurrentMode();
+					if (ImGui::MenuItem("Simple", "recommande pour demarrer",
+						current == modes::EditorMode::Simple))
+					{
+						reg.SetCurrentMode(modes::EditorMode::Simple);
+					}
+					if (ImGui::MenuItem("Avance", "acces complet aux parametres",
+						current == modes::EditorMode::Advanced))
+					{
+						reg.SetCurrentMode(modes::EditorMode::Advanced);
+					}
+					ImGui::EndMenu();
 				}
 				ImGui::EndMenu();
 			}

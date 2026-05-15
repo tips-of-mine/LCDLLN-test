@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "id": "marshland",
+  "displayName": { "fr": "Marais", "en": "Marshland" },
+  "description": {
+    "fr": "Plaine basse et détrempée, parsemée d'étangs, traversée de rivières lentes et de chenaux. Relief quasi nul, eau partout.",
+    "en": "A low, waterlogged plain dotted with ponds, threaded by slow rivers and channels. Almost no relief, water everywhere."
+  },
+  "thumbnail": "thumbnails/marshland.png",
+  "tags": ["wetland", "humid", "flat"],
+  "estimatedExecutionSeconds": 38,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "hills",
+      "polyline": [[1500, 8000], [5000, 8200], [8500, 8000]],
+      "widthMeters": 2000,
+      "heightMeters": 40,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[2000, 3000], [3000, 2900], [3200, 3800], [2200, 3900]],
+      "waterLevel": 8,
+      "affectedBy": []
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[5500, 2500], [6400, 2450], [6600, 3200], [5700, 3300]],
+      "waterLevel": 8,
+      "affectedBy": []
+    },
+    {
+      "type": "river_network",
+      "preset": "dense",
+      "sources": [[3000, 7800], [5000, 7900], [7000, 7800]],
+      "seaLevelMeters": 6,
+      "carvingEnabled": true,
+      "affectedBy": ["water_density"]
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "subtle",
+      "numDroplets": 50000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    }
+  ],
+  "decoration": []
+}

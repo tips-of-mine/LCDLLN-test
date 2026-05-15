@@ -1,0 +1,58 @@
+{
+  "toolId": "mountain_macro",
+  "defaultPreset": "pre_alpine",
+  "presets": [
+    {
+      "id": "hills",
+      "displayName": "Collines",
+      "description": "Reliefs doux et bas, flancs arrondis, peu de bruit. Campagnes vallonnées.",
+      "parameters": {
+        "profile": 0,
+        "noiseFrequency": 0.012,
+        "widthMeters": 400.0,
+        "heightMeters": 120.0,
+        "noiseAmplitude": 12.0,
+        "asymmetry": 0.1
+      }
+    },
+    {
+      "id": "pre_alpine",
+      "displayName": "Pré-Alpes",
+      "description": "Moyenne montagne, crêtes marquées mais accessibles.",
+      "parameters": {
+        "profile": 0,
+        "noiseFrequency": 0.008,
+        "widthMeters": 900.0,
+        "heightMeters": 600.0,
+        "noiseAmplitude": 45.0,
+        "asymmetry": 0.25
+      }
+    },
+    {
+      "id": "alpine",
+      "displayName": "Alpes",
+      "description": "Haute montagne, crêtes aiguës, flancs raides asymétriques.",
+      "parameters": {
+        "profile": 2,
+        "noiseFrequency": 0.006,
+        "widthMeters": 1400.0,
+        "heightMeters": 1600.0,
+        "noiseAmplitude": 90.0,
+        "asymmetry": 0.45
+      }
+    },
+    {
+      "id": "himalayan",
+      "displayName": "Himalayen",
+      "description": "Chaîne extrême, sommets très hauts et tranchants.",
+      "parameters": {
+        "profile": 2,
+        "noiseFrequency": 0.004,
+        "widthMeters": 1900.0,
+        "heightMeters": 3200.0,
+        "noiseAmplitude": 140.0,
+        "asymmetry": 0.6
+      }
+    }
+  ]
+}

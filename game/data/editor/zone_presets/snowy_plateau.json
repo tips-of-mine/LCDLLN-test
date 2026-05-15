@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "snowy_plateau",
+  "displayName": { "fr": "Plateau enneigé", "en": "Snowy plateau" },
+  "description": {
+    "fr": "Hauts plateaux balayés par le froid, lacs gelés en contrebas, pics aigus dominant l'horizon. La végétation de conifères viendra avec la Phase 13.",
+    "en": "Cold-swept high plateaus, frozen lakes below, sharp peaks dominating the skyline. Conifer vegetation arrives with Phase 13."
+  },
+  "thumbnail": "thumbnails/snowy_plateau.png",
+  "tags": ["mountain", "snow", "cold"],
+  "estimatedExecutionSeconds": 55,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "alpine",
+      "polyline": [[1000, 3000], [3500, 6000], [6000, 6500], [8500, 4000]],
+      "widthMeters": 1600,
+      "heightMeters": 1800,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "valley_macro",
+      "preset": "glacial_valley",
+      "polyline": [[3500, 6000], [4200, 4000], [4600, 2000]],
+      "widthMeters": 700,
+      "heightMeters": 300,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[4000, 2200], [4900, 2100], [5100, 2900], [4200, 3000]],
+      "waterLevel": 60,
+      "affectedBy": []
+    },
+    {
+      "type": "thermal_wind_erosion",
+      "preset": "realistic",
+      "thermalEnabled": true,
+      "windEnabled": true,
+      "windAngleDeg": 315,
+      "affectedBy": ["dryness"]
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "realistic",
+      "numDroplets": 70000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    }
+  ],
+  "decoration": []
+}

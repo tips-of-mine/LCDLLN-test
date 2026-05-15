@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "temperate_forest",
+  "displayName": { "fr": "Forêt tempérée", "en": "Temperate forest" },
+  "description": {
+    "fr": "Collines douces, deux rivières serpentant vers un lac central, une grotte cachée dans un repli de terrain. Climat humide et lumineux.",
+    "en": "Gentle hills, two rivers winding toward a central lake, a cave hidden in a fold of terrain. Humid, bright climate."
+  },
+  "thumbnail": "thumbnails/temperate_forest.png",
+  "tags": ["forest", "humid", "lowland"],
+  "estimatedExecutionSeconds": 40,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "hills",
+      "polyline": [[1000, 7000], [4000, 7400], [7000, 7000]],
+      "widthMeters": 700,
+      "heightMeters": 160,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "river_network",
+      "preset": "standard",
+      "sources": [[3000, 6800], [5200, 6900]],
+      "seaLevelMeters": 20,
+      "carvingEnabled": true,
+      "affectedBy": ["water_density"]
+    },
+    {
+      "type": "lake_polygon",
+      "polygon": [[3600, 3000], [4600, 2900], [4900, 3900], [3800, 4100]],
+      "waterLevel": 28,
+      "affectedBy": []
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "subtle",
+      "numDroplets": 60000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    },
+    {
+      "type": "place_cave",
+      "catalogId": "cave_small_01",
+      "worldPosition": [2400, 0, 5200],
+      "rotationY": 45,
+      "autoSnapToGround": true,
+      "affectedBy": []
+    }
+  ],
+  "decoration": []
+}

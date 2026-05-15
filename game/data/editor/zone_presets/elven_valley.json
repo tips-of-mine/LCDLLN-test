@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "id": "elven_valley",
+  "displayName": { "fr": "Vallée elfique", "en": "Elven valley" },
+  "description": {
+    "fr": "Vallée encaissée et sacrée, une rivière centrale, une arche naturelle enjambant le cours d'eau, l'entrée d'un donjon ancien dans la paroi.",
+    "en": "A secluded, sacred valley with a central river, a natural arch spanning the watercourse, the entrance of an ancient dungeon in the cliff face."
+  },
+  "thumbnail": "thumbnails/elven_valley.png",
+  "tags": ["forest", "magic", "sacred"],
+  "estimatedExecutionSeconds": 50,
+  "operations": [
+    {
+      "type": "mountain_macro",
+      "preset": "pre_alpine",
+      "polyline": [[1000, 5000], [1500, 5200], [2000, 5000]],
+      "widthMeters": 900,
+      "heightMeters": 700,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "mountain_macro",
+      "preset": "pre_alpine",
+      "polyline": [[8000, 5000], [8500, 5200], [9000, 5000]],
+      "widthMeters": 900,
+      "heightMeters": 700,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "valley_macro",
+      "preset": "canyon",
+      "polyline": [[2000, 5000], [5000, 5100], [8000, 5000]],
+      "widthMeters": 600,
+      "heightMeters": 400,
+      "affectedBy": ["relief"]
+    },
+    {
+      "type": "river_manual",
+      "preset": "river",
+      "polyline": [[2200, 5000], [5000, 5100], [7800, 5000]],
+      "affectedBy": ["water_density"]
+    },
+    {
+      "type": "hydraulic_erosion",
+      "preset": "realistic",
+      "numDroplets": 65000,
+      "rngSeed": "global",
+      "affectedBy": ["water_density", "dryness"]
+    },
+    {
+      "type": "place_arch",
+      "catalogId": "arch_medium_01",
+      "pillarA": [4600, 0, 4900],
+      "pillarB": [5400, 0, 5300],
+      "affectedBy": []
+    },
+    {
+      "type": "place_dungeon",
+      "catalogId": "dungeon_portal_stone",
+      "worldPosition": [7600, 0, 5000],
+      "dungeonId": "elven_crypt",
+      "rotationY": 180,
+      "affectedBy": []
+    }
+  ],
+  "decoration": []
+}

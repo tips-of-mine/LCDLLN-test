@@ -388,6 +388,15 @@ add_library(engine_core
   src/world_editor/presets/ToolPresetIo.cpp
   src/world_editor/presets/ToolPresetRegistry.cpp
   src/world_editor/prefs/UserPrefsStore.cpp
+  # M100.46 — Zone Presets Library. Incrément 1 : socle data (format
+  # JSON + parsing + registry + validation). Incrément 2a : couche de
+  # paramètres typés (OperationParams) + customisation (relief/eau/
+  # sécheresse). Le dispatcher + l'exécuteur + le reset viennent ensuite.
+  src/world_editor/zone_presets/ZonePreset.cpp
+  src/world_editor/zone_presets/ZonePresetIo.cpp
+  src/world_editor/zone_presets/ZonePresetRegistry.cpp
+  src/world_editor/zone_presets/OperationParams.cpp
+  src/world_editor/zone_presets/CustomizationApplier.cpp
   # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
   # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
   # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.
@@ -1328,6 +1337,20 @@ if(WIN32)
     target_compile_options(tool_migration_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME tool_migration_tests COMMAND tool_migration_tests)
+endif()
+
+# M100.46 — Tests unitaires CPU pour la Zone Presets Library (incrément 1) :
+# parsing JSON, Validate (type/affectedBy inconnus, decoration non vide),
+# helpers de type, registry (chargement répertoire + résilience). Pure
+# CPU, gating WIN32.
+if(WIN32)
+  add_executable(zone_presets_tests src/world_editor/tests/ZonePresetsTests.cpp)
+  target_include_directories(zone_presets_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(zone_presets_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(zone_presets_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME zone_presets_tests COMMAND zone_presets_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

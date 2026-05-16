@@ -414,6 +414,10 @@ add_library(engine_core
   # carte courante (entrée menu Fichier > "Appliquer un preset de
   # zone..."). Single-thread : bloque le main thread pendant Execute.
   src/world_editor/zone_presets/ZonePresetDialog.cpp
+  # M100.47 incrément 1 — HelpContentStore : socle data des tooltips
+  # riches (chargement editor/tooltips/*.json, lookup par id, hot-reload).
+  # L'UI (RichTooltipWidget + HelpWindow) viendra en incréments suivants.
+  src/world_editor/help/HelpContentStore.cpp
   # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
   # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
   # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.
@@ -1368,6 +1372,19 @@ if(WIN32)
     target_compile_options(zone_presets_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
   endif()
   add_test(NAME zone_presets_tests COMMAND zone_presets_tests)
+endif()
+
+# M100.47 incrément 1 — Tests unitaires CPU pour le HelpContentStore :
+# parsing JSON tooltips, loader content-path, robustesse aux fichiers
+# corrompus / dossier absent / doublons. Pure CPU, gating WIN32.
+if(WIN32)
+  add_executable(help_content_tests src/world_editor/tests/HelpContentTests.cpp)
+  target_include_directories(help_content_tests PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(help_content_tests PRIVATE engine_core)
+  if(MSVC)
+    target_compile_options(help_content_tests PRIVATE /W4 /permissive- /Zc:preprocessor)
+  endif()
+  add_test(NAME help_content_tests COMMAND help_content_tests)
 endif()
 
 # M100.10 — Tests unitaires CPU pour la peinture splat (manual + auto-rules).

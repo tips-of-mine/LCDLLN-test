@@ -1,0 +1,45 @@
+{
+  "toolId": "hydraulic_erosion",
+  "tooltips": {
+    "numDroplets": {
+      "label": "Nombre de gouttes",
+      "description_simple": "Plus de gouttes = érosion plus marquée. Augmente le temps de calcul.",
+      "description_advanced": "Nombre de particules de simulation. Recommandé 50k pour preview, 200k+ pour qualité finale. Coût ~1ms / 1000 gouttes en single-thread.",
+      "defaultValue": "100000",
+      "range": "10000 - 500000",
+      "docSectionId": "tool/hydraulic_erosion#numDroplets"
+    },
+    "erosionRate": {
+      "label": "Taux d'érosion",
+      "description_simple": "À quelle vitesse chaque goutte gratte le sol.",
+      "description_advanced": "Fraction de sédiment retiré par cellule à chaque pas, proportionnelle à la pente. Plage utile [0.1, 0.7].",
+      "defaultValue": "0.3",
+      "range": "0.05 - 0.95",
+      "docSectionId": "tool/hydraulic_erosion#erosionRate"
+    },
+    "depositionRate": {
+      "label": "Taux de dépôt",
+      "description_simple": "À quelle vitesse la goutte relâche son sédiment.",
+      "description_advanced": "Fraction du sédiment transporté qui se dépose quand la capacité chute (pente faible, vitesse basse).",
+      "defaultValue": "0.3",
+      "range": "0.05 - 0.95",
+      "docSectionId": "tool/hydraulic_erosion#depositionRate"
+    },
+    "sedimentCapacity": {
+      "label": "Capacité de sédiment",
+      "description_simple": "Combien chaque goutte peut transporter avant de déposer.",
+      "description_advanced": "Quantité max de matière transportée par goutte, proportionnelle à pente × vitesse. Cf. Sebastian Lague hydraulic model.",
+      "defaultValue": "4.0",
+      "range": "1.0 - 10.0",
+      "docSectionId": "tool/hydraulic_erosion#sedimentCapacity"
+    },
+    "rngSeed": {
+      "label": "Seed RNG",
+      "description_simple": "Garantit que la même érosion produit le même résultat à chaque lancement.",
+      "description_advanced": "Seed du PCG pour positions initiales et bruit Simplex. Identique à la valeur global du zone preset si réglée à \"global\".",
+      "defaultValue": "42",
+      "range": "0 - 2147483647",
+      "docSectionId": "tool/hydraulic_erosion#rngSeed"
+    }
+  }
+}

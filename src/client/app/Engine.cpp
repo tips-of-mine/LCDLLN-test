@@ -3078,15 +3078,6 @@ namespace engine
 											}
 										}
 										m_decalSystem.Init(m_cfg, m_assetRegistry);
-										{
-											engine::render::DecalComponent decal{};
-											decal.center = { 0.0f, 0.05f, 0.0f };
-											decal.halfExtents = { 2.0f, 1.0f, 2.0f };
-											decal.albedoTexturePath = "textures/test.texr";
-											decal.lifetimeSeconds = 30.0f;
-											decal.fadeDurationSeconds = 5.0f;
-											m_decalSystem.Spawn(decal);
-										}
 
 										{
 											std::string lutPath = m_cfg.GetString("color_grading.lut_path", "");

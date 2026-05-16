@@ -1748,9 +1748,16 @@ namespace engine::client
 			}
 			else
 			{
+				// Compte déjà connecté en jeu : message dédié (priorité sur le filtre
+				// generique invalid_credentials/account_not_found, qui masque la
+				// distinction identifiant/mot de passe).
+				if (copy.flowAuthAlreadyLoggedIn)
+				{
+					EnterAuthErrorPhase(Phase::Login, Tr("auth.error.already_logged_in"));
+				}
 				// Masquer la distinction identifiant/mot de passe pour ne pas révéler
 				// si c'est le login ou le mot de passe qui est incorrect.
-				if (copy.message == "Invalid credentials" || copy.message == "Account not found")
+				else if (copy.message == "Invalid credentials" || copy.message == "Account not found")
 				{
 					EnterAuthErrorPhase(Phase::Login, Tr("auth.error.invalid_credentials"));
 				}
@@ -2135,6 +2142,11 @@ namespace engine::client
 						if (auth && auth->success == 0)
 						{
 							errMsg = std::string(NetErrorLabel(auth->error_code));
+							// Compte déjà connecté en jeu : on lève le flag pour que le
+							// consumer PollAsyncResult affiche le message localisé dédié
+							// au lieu du label réseau brut « Already logged in ».
+							if (auth->error_code == engine::network::NetErrorCode::ALREADY_LOGGED_IN)
+								local.flowAuthAlreadyLoggedIn = true;
 							return;
 						}
 						auto er = engine::network::ParseErrorPayload(pl.data(), pl.size());

@@ -806,7 +806,8 @@ namespace
 		REQUIRE(NearEq(river.nodes[1].position.y, 0.0)); // Y = 0 en MVP
 	}
 
-	/// Type encore non câblé (coastline en 2d) → Unsupported, pas de crash.
+	/// `splat_paint` reste Unsupported après l'incrément 2e (action ponctuelle,
+	/// pas une op batch déterministe). Ne crash pas, ne lève rien.
 	void Test_Dispatcher_UnsupportedType_GracefulSkip()
 	{
 		vol::caves::CaveCatalog caveCat;
@@ -819,14 +820,111 @@ namespace
 		vol::dungeons::DungeonPortalDocument portalDoc;
 
 		zp::ZonePresetOperation op;
-		op.type    = "hydraulic_erosion";  // connu mais non câblé
-		op.rawJson = R"({"type":"hydraulic_erosion","numDroplets":1000})";
+		op.type    = "splat_paint";
+		op.rawJson = R"({"type":"splat_paint","layerIndex":2,"strength":0.5})";
 
 		const auto ctx = MakeMinimalCtx(terrain, water, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
 		std::unique_ptr<ew::ICommand> cmd;
 		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
 		REQUIRE(rc == zp::DispatchResult::Unsupported);
 		REQUIRE(cmd == nullptr);
+	}
+
+	// --- Incrément 2e : hydraulic_erosion / thermal_wind_erosion /
+	//                    river_network / coastline (config-required)
+
+	/// Les 4 ops simulation refusent gracieusement quand `Config` est absent
+	/// du DispatchContext (impossible de charger les chunks). Pas de crash,
+	/// renvoie Failed + log warning.
+	void Test_Dispatcher_HydraulicErosion_RequiresConfig()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		zp::ZonePresetOperation op;
+		op.type    = "hydraulic_erosion";
+		op.rawJson = R"({"type":"hydraulic_erosion","numDroplets":5000,"rngSeed":"global"})";
+
+		// MakeMinimalCtx ne renseigne pas Config (defaults nullptr).
+		const auto ctx = MakeMinimalCtx(terrain, water, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Failed);
+		REQUIRE(cmd == nullptr);
+	}
+
+	/// `thermal_wind_erosion` avec aucune passe activée → Failed (avant même
+	/// le check Config — gating au plus tôt).
+	void Test_Dispatcher_ThermalWindErosion_RejectsAllDisabled()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		zp::ZonePresetOperation op;
+		op.type    = "thermal_wind_erosion";
+		op.rawJson = R"({"type":"thermal_wind_erosion","thermalEnabled":false,"windEnabled":false})";
+
+		const auto ctx = MakeMinimalCtx(terrain, water, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Failed);
+	}
+
+	/// `river_network` sans sources → Failed (validation paramètres avant
+	/// même de toucher Config).
+	void Test_Dispatcher_RiverNetwork_RejectsEmptySources()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		zp::ZonePresetOperation op;
+		op.type    = "river_network";
+		op.rawJson = R"({"type":"river_network","sources":[],"carvingEnabled":true})";
+
+		const auto ctx = MakeMinimalCtx(terrain, water, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Failed);
+	}
+
+	/// `coastline` sans Config → Failed.
+	void Test_Dispatcher_Coastline_RequiresConfig()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		zp::ZonePresetOperation op;
+		op.type    = "coastline";
+		op.rawJson = R"({"type":"coastline","seaLevelMeters":30,"beachEnabled":true,"cliffsEnabled":true})";
+
+		const auto ctx = MakeMinimalCtx(terrain, water, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Failed);
 	}
 
 	// --- ZonePresetExecutor (incrément 2b) ---------------------------------
@@ -858,10 +956,12 @@ namespace
 
 		zp::ZonePreset preset;
 		preset.id = "mixed";
-		// 1) hydraulic = non supporté → skipped
+		// 1) splat_paint = connu mais pas câblé → skipped (incrément 2e
+		//    a câblé hydraulic_erosion ; il ne reste que sculpt_brush /
+		//    splat_paint comme types non câblés).
 		zp::ZonePresetOperation op1;
-		op1.type    = "hydraulic_erosion";
-		op1.rawJson = R"({"type":"hydraulic_erosion"})";
+		op1.type    = "splat_paint";
+		op1.rawJson = R"({"type":"splat_paint","layerIndex":2})";
 		preset.operations.push_back(op1);
 		// 2) place_cave OK
 		zp::ZonePresetOperation op2;
@@ -888,7 +988,7 @@ namespace
 
 		REQUIRE(summary.totalSteps == 4u);
 		REQUIRE(summary.commandsPushed == 2u);     // cave + dungeon
-		REQUIRE(summary.unsupportedSkipped == 1u);  // hydraulic
+		REQUIRE(summary.unsupportedSkipped == 1u);  // splat_paint
 		REQUIRE(summary.failed == 1u);              // cave ghost
 		REQUIRE(!summary.wasCancelled);
 		REQUIRE(callbackCount == 4);
@@ -976,6 +1076,10 @@ int main()
 	Test_Dispatcher_LakePolygon_RejectsDegenerate();
 	Test_Dispatcher_RiverManual_BuildsCommand();
 	Test_Dispatcher_UnsupportedType_GracefulSkip();
+	Test_Dispatcher_HydraulicErosion_RequiresConfig();
+	Test_Dispatcher_ThermalWindErosion_RejectsAllDisabled();
+	Test_Dispatcher_RiverNetwork_RejectsEmptySources();
+	Test_Dispatcher_Coastline_RequiresConfig();
 	Test_Executor_RunsAndSummarizes();
 	Test_Executor_CancelViaCallback();
 

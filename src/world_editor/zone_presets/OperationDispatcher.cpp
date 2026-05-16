@@ -1,10 +1,21 @@
 #include "src/world_editor/zone_presets/OperationDispatcher.h"
 
+#include "src/client/world/WorldModel.h"
+#include "src/client/world/terrain/TerrainChunk.h"
 #include "src/client/world/water/WaterSurfaces.h"
 #include "src/shared/core/Log.h"
 #include "src/world_editor/terrain/MountainRangeCommand.h"
 #include "src/world_editor/terrain/PolylineMacroCore.h"
+#include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/terrain/ValleyChainCommand.h"
+#include "src/world_editor/terrain/erosion/HydraulicErosionCommand.h"
+#include "src/world_editor/terrain/erosion/HydraulicSimulation.h"
+#include "src/world_editor/terrain/erosion/HydraulicSimulationParams.h"
+#include "src/world_editor/terrain/erosion/ThermalSimulation.h"
+#include "src/world_editor/terrain/erosion/ThermalSimulationParams.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionCommand.h"
+#include "src/world_editor/terrain/erosion/WindSimulation.h"
+#include "src/world_editor/terrain/erosion/WindSimulationParams.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
 #include "src/world_editor/volumes/MeshInsertInstance.h"
 #include "src/world_editor/volumes/arches/ArchCatalog.h"
@@ -19,9 +30,20 @@
 #include "src/world_editor/volumes/overhangs/PlaceOverhangCommand.h"
 #include "src/world_editor/water/AddLakeCommand.h"
 #include "src/world_editor/water/AddRiverCommand.h"
+#include "src/world_editor/water/CoastlineCliffs.h"
+#include "src/world_editor/water/CoastlineCommand.h"
+#include "src/world_editor/water/CoastlineSmoothing.h"
+#include "src/world_editor/water/ConsolidatedHeightGrid.h"
+#include "src/world_editor/water/OceanSettings.h"
+#include "src/world_editor/water/RiverNetworkCommand.h"
+#include "src/world_editor/water/SpringSource.h"
+#include "src/world_editor/water/WaterDocument.h"
+#include "src/world_editor/water/WatershedSimulation.h"
+#include "src/world_editor/water/WatershedSimulationParams.h"
 #include "src/world_editor/zone_presets/OperationParams.h"
 
 #include <cmath>
+#include <optional>
 #include <utility>
 
 namespace engine::editor::world::zone_presets
@@ -382,6 +404,323 @@ namespace engine::editor::world::zone_presets
 			return DispatchResult::Ok;
 		}
 
+		// --- Sim helpers ---------------------------------------------------
+
+		/// Assemble un `ConsolidatedHeightGrid` 2×2 chunks (~1025×1025 cellules)
+		/// à partir des chunks chargés du `TerrainDocument`. Réplique le pattern
+		/// `BuildGrid` dupliqué dans `ThermalWindErosionTool` / `CoastlineEditorTool`.
+		///
+		/// Effet de bord : appelle `TerrainDocument::EnsureLoaded` (bloque le
+		/// main thread le temps du chargement disque/CPU).
+		engine::editor::world::ConsolidatedHeightGrid
+		BuildGridFromLoadedChunks(engine::editor::world::TerrainDocument& terrain,
+			const engine::core::Config& cfg)
+		{
+			constexpr int kRes      = static_cast<int>(engine::world::terrain::kTerrainResolution);
+			constexpr int kChunksDim = 2;
+			engine::editor::world::ConsolidatedHeightGrid grid;
+			grid.cellSizeMeters = engine::world::terrain::kTerrainCellSizeMeters;
+			grid.originCellX = 0;
+			grid.originCellZ = 0;
+			const int W = kChunksDim * (kRes - 1) + 1;
+			const int H = kChunksDim * (kRes - 1) + 1;
+			grid.width = W;
+			grid.height = H;
+			grid.heights.assign(static_cast<size_t>(W) * H, 0.0f);
+			for (int cz = 0; cz < kChunksDim; ++cz)
+			{
+				for (int cx = 0; cx < kChunksDim; ++cx)
+				{
+					auto chunk = terrain.EnsureLoaded(cfg, cx, cz);
+					if (!chunk) continue;
+					const int baseX = cx * (kRes - 1);
+					const int baseZ = cz * (kRes - 1);
+					for (int iz = 0; iz < kRes; ++iz)
+					{
+						for (int ix = 0; ix < kRes; ++ix)
+						{
+							const int gx = baseX + ix;
+							const int gz = baseZ + iz;
+							if (gx >= W || gz >= H) continue;
+							grid.heights[static_cast<size_t>(gz) * W + gx] =
+								chunk->heights[static_cast<size_t>(iz) * kRes + ix];
+						}
+					}
+				}
+			}
+			return grid;
+		}
+
+		/// Fusionne `src` dans `dst` cellule par cellule (les valeurs s'additionnent).
+		void MergeDeltas(engine::editor::world::SparseChunkDeltas& dst,
+			const engine::editor::world::SparseChunkDeltas& src)
+		{
+			for (const auto& kv : src)
+			{
+				auto& chunkMap = dst[kv.first];
+				for (const auto& cell : kv.second)
+					chunkMap[cell.first] += cell.second;
+			}
+		}
+
+		/// Si la clé `rngSeed` est une chaîne "global", utilise `custom.seed`.
+		/// Sinon, lit la valeur numérique. Défaut : `fallback`.
+		uint32_t ReadRngSeed(const OperationParams& params,
+			const CustomizationParams& custom, uint32_t fallback)
+		{
+			std::string s;
+			if (params.GetString("rngSeed", s) && s == "global")
+				return custom.seed;
+			double v = 0.0;
+			if (params.GetNumber("rngSeed", v))
+				return static_cast<uint32_t>(v < 0.0 ? 0.0 : v);
+			return fallback;
+		}
+
+		// --- hydraulic_erosion --------------------------------------------
+
+		DispatchResult DispatchHydraulicErosion(const OperationParams& params,
+			const CustomizationParams& custom,
+			const DispatchContext& ctx,
+			std::unique_ptr<engine::editor::world::ICommand>& outCmd)
+		{
+			if (ctx.config == nullptr)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] hydraulic_erosion : Config absent du DispatchContext");
+				return DispatchResult::Failed;
+			}
+
+			using namespace engine::editor::world::erosion;
+			HydraulicSimulationParams sim;
+			sim.numDroplets = static_cast<uint32_t>(
+				ReadFloat(params, "numDroplets", static_cast<float>(sim.numDroplets)));
+			sim.maxLifetimeSteps = static_cast<uint32_t>(
+				ReadFloat(params, "maxLifetimeSteps", static_cast<float>(sim.maxLifetimeSteps)));
+			sim.sedimentCapacity = ReadFloat(params, "sedimentCapacity", sim.sedimentCapacity);
+			sim.erosionRate      = ReadFloat(params, "erosionRate",      sim.erosionRate);
+			sim.depositionRate   = ReadFloat(params, "depositionRate",   sim.depositionRate);
+			sim.evaporationRate  = ReadFloat(params, "evaporationRate",  sim.evaporationRate);
+			sim.gravity          = ReadFloat(params, "gravity",          sim.gravity);
+			sim.inertia          = ReadFloat(params, "inertia",          sim.inertia);
+			sim.rngSeed          = ReadRngSeed(params, custom, sim.rngSeed);
+
+			auto grid = BuildGridFromLoadedChunks(ctx.terrain, *ctx.config);
+			const float seaLevel = ctx.water.GetOcean().seaLevelMeters;
+
+			auto result = RunHydraulicOnGrid(grid, seaLevel, sim);
+			outCmd = std::make_unique<HydraulicErosionCommand>(ctx.terrain,
+				std::move(result), sim);
+			return DispatchResult::Ok;
+		}
+
+		// --- thermal_wind_erosion ------------------------------------------
+
+		DispatchResult DispatchThermalWindErosion(const OperationParams& params,
+			const CustomizationParams& custom,
+			const DispatchContext& ctx,
+			std::unique_ptr<engine::editor::world::ICommand>& outCmd)
+		{
+			if (ctx.config == nullptr)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] thermal_wind_erosion : Config absent");
+				return DispatchResult::Failed;
+			}
+
+			using namespace engine::editor::world::erosion;
+			const bool thermalEnabled = ReadBool(params, "thermalEnabled", true);
+			const bool windEnabled    = ReadBool(params, "windEnabled",    true);
+			if (!thermalEnabled && !windEnabled)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] thermal_wind_erosion : aucune passe activée");
+				return DispatchResult::Failed;
+			}
+
+			ThermalSimulationParams thermalP;
+			thermalP.talusAngleDeg  = ReadFloat(params, "talusAngleDeg",  thermalP.talusAngleDeg);
+			thermalP.forcePerPass   = ReadFloat(params, "forcePerPass",   thermalP.forcePerPass);
+			thermalP.numPasses      = static_cast<uint32_t>(
+				ReadFloat(params, "numPasses", static_cast<float>(thermalP.numPasses)));
+
+			WindSimulationParams windP;
+			windP.windAngleDeg   = ReadFloat(params, "windAngleDeg",   windP.windAngleDeg);
+			windP.windStrength   = ReadFloat(params, "windStrength",   windP.windStrength);
+			windP.numParticles   = static_cast<uint32_t>(
+				ReadFloat(params, "numParticles", static_cast<float>(windP.numParticles)));
+			windP.rngSeed        = ReadRngSeed(params, custom, windP.rngSeed);
+
+			auto grid = BuildGridFromLoadedChunks(ctx.terrain, *ctx.config);
+			const float seaLevel = ctx.water.GetOcean().seaLevelMeters;
+
+			ThermalWindErosionCommand::Data data;
+			if (thermalEnabled)
+			{
+				auto r = RunThermalSimulation(grid, seaLevel, thermalP);
+				data.thermalDeltas = r.deltas;
+				data.thermalStats  = r;
+			}
+			if (windEnabled)
+			{
+				// `grid` muté par thermal sert d'input à wind (ordre respecté).
+				auto r = RunWindSimulation(grid, seaLevel, windP);
+				data.windDeltas = r.deltas;
+				data.windStats  = r;
+			}
+
+			outCmd = std::make_unique<ThermalWindErosionCommand>(ctx.terrain, std::move(data));
+			return DispatchResult::Ok;
+		}
+
+		// --- river_network -------------------------------------------------
+
+		DispatchResult DispatchRiverNetwork(const OperationParams& params,
+			const CustomizationParams& custom,
+			const DispatchContext& ctx,
+			std::unique_ptr<engine::editor::world::ICommand>& outCmd)
+		{
+			(void)custom; // pas de customisation directe ici (water_density déjà appliqué upstream)
+			if (ctx.config == nullptr)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] river_network : Config absent");
+				return DispatchResult::Failed;
+			}
+
+			std::vector<double> sources;
+			if (!params.GetNumberList("sources", sources) || sources.size() < 2
+				|| (sources.size() % 2) != 0)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] river_network : sources invalides (besoin ≥ 1 paire [x,z])");
+				return DispatchResult::Failed;
+			}
+
+			engine::editor::world::WatershedSimulationParams sim;
+			sim.springs.reserve(sources.size() / 2);
+			for (size_t i = 0; i + 1 < sources.size(); i += 2)
+			{
+				engine::editor::world::SpringSource s;
+				s.worldX = static_cast<float>(sources[i]);
+				s.worldZ = static_cast<float>(sources[i + 1]);
+				s.worldY = 0.0f; // résolu par re-sampling dans le simulateur
+				sim.springs.push_back(s);
+			}
+			sim.carveHeightmap = ReadBool(params, "carvingEnabled", sim.carveHeightmap);
+			sim.minFlowThresholdCells = static_cast<uint32_t>(
+				ReadFloat(params, "minFlowThresholdCells",
+					static_cast<float>(sim.minFlowThresholdCells)));
+
+			auto grid = BuildGridFromLoadedChunks(ctx.terrain, *ctx.config);
+			const float seaLevel = ctx.water.GetOcean().seaLevelMeters;
+
+			auto result = engine::editor::world::RunWatershedOnGrid(grid, seaLevel, sim);
+			const auto& currentOcean = ctx.water.GetOcean();
+			outCmd = std::make_unique<engine::editor::world::RiverNetworkCommand>(
+				ctx.terrain, ctx.water, std::move(result),
+				currentOcean, currentOcean);
+			return DispatchResult::Ok;
+		}
+
+		// --- coastline -----------------------------------------------------
+
+		DispatchResult DispatchCoastline(const OperationParams& params,
+			const CustomizationParams& custom,
+			const DispatchContext& ctx,
+			std::unique_ptr<engine::editor::world::ICommand>& outCmd)
+		{
+			(void)custom;
+			if (ctx.config == nullptr)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] coastline : Config absent");
+				return DispatchResult::Failed;
+			}
+
+			// Construit OceanSettings depuis le JSON, défauts depuis la valeur
+			// courante (cohérent avec l'usage du tool — l'utilisateur ne
+			// renseigne souvent que seaLevelMeters).
+			engine::editor::world::OceanSettings newOcean = ctx.water.GetOcean();
+			newOcean.seaLevelMeters = ReadFloat(params, "seaLevelMeters",
+				newOcean.seaLevelMeters);
+			newOcean.turbidity      = ReadFloat(params, "turbidity",      newOcean.turbidity);
+			newOcean.windInfluence  = ReadFloat(params, "windInfluence",  newOcean.windInfluence);
+			newOcean.enabled        = ReadBool(params, "oceanEnabled",    newOcean.enabled);
+
+			const bool smoothingEnabled = ReadBool(params, "beachEnabled", true);
+			const bool cliffsEnabled    = ReadBool(params, "cliffsEnabled", false);
+
+			engine::editor::world::CoastlineCommand::ApplyData data;
+			data.previousOcean = ctx.water.GetOcean();
+			data.newOcean      = newOcean;
+
+			// Recherche / insertion de la LakeInstance océan (mêmes
+			// défauts visuels que CoastlineEditorTool : marge 1000 m,
+			// rectangle englobant + 1 pt de fermeture).
+			const auto& scene = ctx.water.Get();
+			int existingIndex = -1;
+			for (size_t i = 0; i < scene.lakes.size(); ++i)
+			{
+				if (scene.lakes[i].isOcean)
+				{
+					existingIndex = static_cast<int>(i);
+					break;
+				}
+			}
+			data.existingOceanIndex = existingIndex;
+			if (existingIndex >= 0)
+			{
+				data.previousOceanLake = scene.lakes[static_cast<size_t>(existingIndex)];
+			}
+			else
+			{
+				constexpr float kOceanMarginMeters = 1000.0f;
+				constexpr float kZoneSizeMeters =
+					static_cast<float>(engine::world::kZoneSize);
+				engine::world::water::LakeInstance lake;
+				lake.name = "ocean";
+				lake.polygon = {
+					{ -kOceanMarginMeters, newOcean.seaLevelMeters, -kOceanMarginMeters },
+					{ kZoneSizeMeters + kOceanMarginMeters, newOcean.seaLevelMeters, -kOceanMarginMeters },
+					{ kZoneSizeMeters + kOceanMarginMeters, newOcean.seaLevelMeters,  kZoneSizeMeters + kOceanMarginMeters },
+					{ -kOceanMarginMeters, newOcean.seaLevelMeters,  kZoneSizeMeters + kOceanMarginMeters },
+					{ -kOceanMarginMeters, newOcean.seaLevelMeters, -kOceanMarginMeters },
+				};
+				lake.waterLevelY = newOcean.seaLevelMeters;
+				lake.bottomColor = engine::math::Vec3{
+					newOcean.bottomColor[0],
+					newOcean.bottomColor[1],
+					newOcean.bottomColor[2]
+				};
+				lake.turbidity = newOcean.turbidity;
+				lake.isOcean   = true;
+				data.oceanToInsert = std::move(lake);
+			}
+
+			if (smoothingEnabled || cliffsEnabled)
+			{
+				auto grid = BuildGridFromLoadedChunks(ctx.terrain, *ctx.config);
+				if (smoothingEnabled)
+				{
+					const float bandM  = ReadFloat(params, "smoothingBandMeters", 5.0f);
+					const float forceF = ReadFloat(params, "smoothingForce",      0.3f);
+					auto deltas = engine::editor::world::ComputeCoastlineSmoothingDeltas(
+						grid, newOcean.seaLevelMeters, bandM, forceF);
+					MergeDeltas(data.heightmapDeltas, deltas);
+				}
+				if (cliffsEnabled)
+				{
+					const float thresholdM  = ReadFloat(params, "cliffsThresholdMeters",   8.0f);
+					const float slopeDeg    = ReadFloat(params, "cliffsSlopeThresholdDeg", 45.0f);
+					const float landSideM   = ReadFloat(params, "cliffsLandSideMeters",    6.0f);
+					const float seaSideM    = ReadFloat(params, "cliffsSeaSideMeters",     3.0f);
+					auto deltas = engine::editor::world::ComputeCoastlineCliffsDeltas(
+						grid, newOcean.seaLevelMeters,
+						thresholdM, slopeDeg, landSideM, seaSideM);
+					MergeDeltas(data.heightmapDeltas, deltas);
+				}
+			}
+
+			outCmd = std::make_unique<engine::editor::world::CoastlineCommand>(
+				ctx.terrain, ctx.water, std::move(data));
+			return DispatchResult::Ok;
+		}
+
 		// --- place_dungeon --------------------------------------------------
 
 		DispatchResult DispatchPlaceDungeon(const OperationParams& params,
@@ -457,13 +796,20 @@ namespace engine::editor::world::zone_presets
 		if (op.type == "lake_polygon")   return DispatchLakePolygon(params, ctx, outCmd);
 		if (op.type == "river_manual")   return DispatchRiverManual(params, ctx, outCmd);
 
-		// Types connus mais non câblés (besoin d'extraire la simulation des
-		// Tools UI ou de capturer un snapshot d'état pré-action) :
-		// `coastline`, `river_network`, `hydraulic_erosion`,
-		// `thermal_wind_erosion`. Comportement aligné sur le skip silencieux
-		// de la section `decoration` §A.4.
+		// Incrément 2e — câblage des 4 ops simulation via les variantes
+		// pures `Run*OnGrid` / `RunThermalSimulation` / `RunWindSimulation`
+		// + le helper local `BuildGridFromLoadedChunks`. 14/14 types câblés.
+		if (op.type == "hydraulic_erosion")     return DispatchHydraulicErosion(params, custom, ctx, outCmd);
+		if (op.type == "thermal_wind_erosion")  return DispatchThermalWindErosion(params, custom, ctx, outCmd);
+		if (op.type == "river_network")         return DispatchRiverNetwork(params, custom, ctx, outCmd);
+		if (op.type == "coastline")             return DispatchCoastline(params, custom, ctx, outCmd);
+
+		// `sculpt_brush` et `splat_paint` connus mais pas câblés (les 8
+		// presets livrés ne les utilisent pas et leurs ICommand sont des
+		// actions ponctuelles, pas du batch déterministe). Skip silencieux
+		// aligné sur le comportement §A.4 pour `decoration`.
 		LOG_INFO(EditorWorld,
-			"[OperationDispatcher] type '{}' connu mais non câblé en M100.46 incrément 2d (op ignorée)",
+			"[OperationDispatcher] type '{}' connu mais pas câblé en M100.46 (sculpt_brush/splat_paint = ponctuel, pas batch)",
 			op.type);
 		return DispatchResult::Unsupported;
 	}

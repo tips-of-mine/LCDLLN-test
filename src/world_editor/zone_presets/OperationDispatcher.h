@@ -6,6 +6,11 @@
 
 #include <memory>
 
+namespace engine::core
+{
+	class Config;
+}
+
 namespace engine::editor::world
 {
 	class TerrainDocument;
@@ -27,22 +32,29 @@ namespace engine::editor::world::volumes
 
 namespace engine::editor::world::zone_presets
 {
-	/// Contexte fourni au dispatcher : refs sur les documents et catalogs
-	/// nécessaires pour construire les commandes des opérations
-	/// supportées (M100.46 incréments 2b + 2d).
+	/// Contexte fourni au dispatcher : refs sur les documents, catalogs et
+	/// `Config` nécessaires pour construire les commandes (M100.46 incréments
+	/// 2b + 2c + 2d + 2e).
 	///
-	/// Types câblés end-to-end :
-	///   - **place_*** (cave, overhang, arch, dungeon) — incrément 2b/2c.
-	///   - **mountain_macro / valley_macro** — incrément 2d via
-	///     `RasterizeMacroPolyline` + `MountainRangeCommand / ValleyChainCommand`.
-	///   - **lake_polygon / river_manual** — incrément 2d via
-	///     `AddLakeCommand / AddRiverCommand` (path direct, structs plain data).
+	/// Types câblés end-to-end (12/14 après incrément 2e) :
+	///   - **place_*** (cave, overhang, arch, dungeon) — 2b/2c.
+	///   - **mountain_macro / valley_macro** — 2d via `RasterizeMacroPolyline`.
+	///   - **lake_polygon / river_manual** — 2d via Add*Command plain data.
+	///   - **hydraulic_erosion / thermal_wind_erosion / river_network /
+	///     coastline** — 2e via assemblage `ConsolidatedHeightGrid` +
+	///     simulations pures (`RunHydraulicOnGrid`, `RunThermalSimulation`,
+	///     `RunWindSimulation`, `RunWatershedOnGrid`,
+	///     `ComputeCoastlineSmoothing/CliffsDeltas`).
 	///
-	/// Types encore non câblés (incréments 2e+, demandent d'extraire la
-	/// simulation des Tools UI ou de capturer un snapshot d'état pré-action) :
-	/// `coastline`, `river_network`, `hydraulic_erosion`,
-	/// `thermal_wind_erosion`. Ces 4 types restent gracieusement
-	/// **Unsupported** + LOG_INFO.
+	/// Restent **`sculpt_brush`** et **`splat_paint`** comme `Unsupported` :
+	/// les 8 presets livrés ne les utilisent pas, et leurs ICommand sont
+	/// des actions ponctuelles non destinées à du batch déterministe.
+	/// Câblage repoussé jusqu'à ce qu'un preset les exige.
+	///
+	/// Le `config` est requis par les 4 ops simulation (lecture des chunks
+	/// via `TerrainDocument::EnsureLoaded`). Si `config == nullptr` ces 4
+	/// ops renvoient `Failed` avec un LOG_WARN ; les 10 autres ops ne le
+	/// consultent pas.
 	struct DispatchContext
 	{
 		engine::editor::world::TerrainDocument&                        terrain;
@@ -54,6 +66,11 @@ namespace engine::editor::world::zone_presets
 		const engine::editor::world::volumes::overhangs::OverhangCatalog& overhangCatalog;
 		const engine::editor::world::volumes::arches::ArchCatalog&     archCatalog;
 		const engine::editor::world::volumes::dungeons::DungeonCatalog& dungeonCatalog;
+
+		/// Pointeur nullable. Requis pour les 4 ops sim (hydraulic /
+		/// thermal_wind / river_network / coastline) qui chargent des chunks
+		/// terrain via `EnsureLoaded(*config, ...)`. Null → ces ops failed.
+		const engine::core::Config*                                    config = nullptr;
 	};
 
 	/// Résultat d'un dispatch.

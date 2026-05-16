@@ -6,6 +6,11 @@
 #include <cstdint>
 #include <string>
 
+namespace engine::core
+{
+	class Config;
+}
+
 namespace engine::editor::world
 {
 	class WorldEditorShell;
@@ -50,9 +55,13 @@ namespace engine::editor::world::zone_presets
 
 		/// Dessine la popup si elle est ouverte. Reçoit le Shell pour
 		/// résoudre les documents (terrain / water / mesh / dungeon) et
-		/// les 4 catalogs (caves / overhangs / arches / dungeons) au
-		/// moment de l'exécution.
-		void Draw(engine::editor::world::WorldEditorShell& shell);
+		/// les 4 catalogs (caves / overhangs / arches / dungeons), plus
+		/// la `Config` requise par les 4 ops simulation (incrément 2e).
+		/// `cfg` peut être null mais les ops `hydraulic_erosion`,
+		/// `thermal_wind_erosion`, `river_network`, `coastline` renverront
+		/// alors `Failed`.
+		void Draw(engine::editor::world::WorldEditorShell& shell,
+			const engine::core::Config* cfg);
 
 	private:
 		/// État interne de la popup. Pas exposé en public pour garder le
@@ -63,13 +72,15 @@ namespace engine::editor::world::zone_presets
 			Result  = 1,  ///< résumé post-exécution
 		};
 
-		void DrawSelectScreen(engine::editor::world::WorldEditorShell& shell);
+		void DrawSelectScreen(engine::editor::world::WorldEditorShell& shell,
+			const engine::core::Config* cfg);
 		void DrawResultScreen();
 
 		/// Exécute le preset sélectionné. Renseigne `m_lastSummary` et
 		/// bascule l'écran à `Result`. Le main thread ImGui est bloqué
 		/// pendant la durée — comportement attendu.
-		void RunSelectedPreset(engine::editor::world::WorldEditorShell& shell);
+		void RunSelectedPreset(engine::editor::world::WorldEditorShell& shell,
+			const engine::core::Config* cfg);
 
 		/// `true` au prochain frame quand `Open()` a été appelé — pousse
 		/// `ImGui::OpenPopup` une seule fois puis remet à `false`.

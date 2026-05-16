@@ -33,7 +33,8 @@ namespace engine::editor::world::zone_presets
 	/// durée — convention single-thread acceptée (cf. ZonePresetExecutor.h).
 	/// Renseigne `m_lastSummary`, `m_lastPresetId`, `m_lastDurationMs`
 	/// puis bascule à l'écran résultat.
-	void ZonePresetDialog::RunSelectedPreset(engine::editor::world::WorldEditorShell& shell)
+	void ZonePresetDialog::RunSelectedPreset(engine::editor::world::WorldEditorShell& shell,
+		const engine::core::Config* cfg)
 	{
 		const auto& presets = ZonePresetRegistry::Instance().Presets();
 		if (m_selectedIndex >= presets.size())
@@ -55,6 +56,7 @@ namespace engine::editor::world::zone_presets
 			shell.GetOverhangTool().Catalog(),
 			shell.GetArchTool().Catalog(),
 			shell.GetDungeonPortalTool().Catalog(),
+			cfg,  // M100.46 incrément 2e — requis par les 4 ops simulation.
 		};
 
 		LOG_INFO(EditorWorld,
@@ -89,7 +91,8 @@ namespace engine::editor::world::zone_presets
 	/// Doit être appelée chaque frame depuis WorldEditorImGui::BuildUi.
 	/// Effet de bord : pose un popup ImGui actif sur le premier frame
 	/// après `Open()`.
-	void ZonePresetDialog::Draw(engine::editor::world::WorldEditorShell& shell)
+	void ZonePresetDialog::Draw(engine::editor::world::WorldEditorShell& shell,
+		const engine::core::Config* cfg)
 	{
 		if (m_openRequested)
 		{
@@ -111,7 +114,7 @@ namespace engine::editor::world::zone_presets
 		}
 
 		if (m_screen == Screen::Select)
-			DrawSelectScreen(shell);
+			DrawSelectScreen(shell, cfg);
 		else
 			DrawResultScreen();
 
@@ -122,7 +125,8 @@ namespace engine::editor::world::zone_presets
 	}
 
 	/// Écran de sélection : liste à gauche, détails + sliders à droite.
-	void ZonePresetDialog::DrawSelectScreen(engine::editor::world::WorldEditorShell& shell)
+	void ZonePresetDialog::DrawSelectScreen(engine::editor::world::WorldEditorShell& shell,
+		const engine::core::Config* cfg)
 	{
 		ImGui::TextUnformatted("Applique un template de zone à la carte courante.");
 		ImGui::TextWrapped("ATTENTION : terrain, water, mesh inserts et portails de donjon "
@@ -188,7 +192,7 @@ namespace engine::editor::world::zone_presets
 		const bool canApply = (m_selectedIndex < presets.size());
 		if (!canApply) ImGui::BeginDisabled();
 		if (ImGui::Button("Appliquer", ImVec2(140.0f, 0.0f)) && canApply)
-			RunSelectedPreset(shell);
+			RunSelectedPreset(shell, cfg);
 		if (!canApply) ImGui::EndDisabled();
 
 		ImGui::SameLine();
@@ -243,8 +247,10 @@ namespace engine::editor::world::zone_presets
 	// Pas d'ImGui hors Windows : le world editor est Windows-only. On garde
 	// les symboles linkés pour que l'unité de compilation soit utilisable
 	// dans engine_core sans condition. Les méthodes sont no-op.
-	void ZonePresetDialog::Draw(engine::editor::world::WorldEditorShell&)        { }
-	void ZonePresetDialog::DrawSelectScreen(engine::editor::world::WorldEditorShell&) { }
+	void ZonePresetDialog::Draw(engine::editor::world::WorldEditorShell&,
+		const engine::core::Config*) { }
+	void ZonePresetDialog::DrawSelectScreen(engine::editor::world::WorldEditorShell&,
+		const engine::core::Config*) { }
 	void ZonePresetDialog::DrawResultScreen()                                    { }
 #endif
 }

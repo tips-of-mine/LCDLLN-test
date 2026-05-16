@@ -904,10 +904,12 @@ namespace engine::editor
 		}
 
 		// M100.46 incrément 3 — dessine la popup modale Zone Presets
-		// (no-op si non ouverte ou Shell non branché).
+		// (no-op si non ouverte ou Shell non branché). m_cfg passé pour
+		// les ops simulation (incrément 2e) : si null, les 4 ops sim
+		// renverront Failed.
 		if (m_zonePresetDialog && m_shell)
 		{
-			m_zonePresetDialog->Draw(*m_shell);
+			m_zonePresetDialog->Draw(*m_shell, m_cfg);
 		}
 
 		ImGuiViewport* vp = ImGui::GetMainViewport();

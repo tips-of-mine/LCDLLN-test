@@ -51,6 +51,16 @@ namespace engine::editor::world::volumes
 		void MarkDirty() noexcept     { m_dirty = true; }
 		void ClearDirty() noexcept    { m_dirty = false; }
 
+		/// M100.46 — Vide intégralement le document (instances + compteur
+		/// de guid). Marque `m_dirty`. Utilisé par `WorldMapEditDocumentReset`
+		/// avant l'exécution d'un zone preset sur une zone non vide.
+		void Reset() noexcept
+		{
+			m_instances.clear();
+			m_nextGuid = 0u;
+			m_dirty    = true;
+		}
+
 		/// Sauvegarde dans `<paths.content>/instances/mesh_inserts.bin`. Reset
 		/// `m_dirty`.
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);

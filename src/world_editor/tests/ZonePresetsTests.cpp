@@ -5,9 +5,20 @@
 /// CustomizationApplier) et l'UI sont des incréments suivants — leurs
 /// tests (déterminisme, customisation, annulation) viendront avec.
 
+#include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/terrain/TerrainDocument.h"
+#include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/volumes/caves/CaveCatalog.h"
+#include "src/world_editor/volumes/dungeons/DungeonCatalog.h"
+#include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
+#include "src/world_editor/volumes/overhangs/OverhangCatalog.h"
+#include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/zone_presets/CustomizationApplier.h"
+#include "src/world_editor/zone_presets/OperationDispatcher.h"
 #include "src/world_editor/zone_presets/OperationParams.h"
+#include "src/world_editor/zone_presets/WorldMapEditDocumentReset.h"
 #include "src/world_editor/zone_presets/ZonePreset.h"
+#include "src/world_editor/zone_presets/ZonePresetExecutor.h"
 #include "src/world_editor/zone_presets/ZonePresetIo.h"
 #include "src/world_editor/zone_presets/ZonePresetRegistry.h"
 
@@ -402,6 +413,276 @@ namespace
 		REQUIRE(p.GetNumber("heightMeters", h) && NearEq(h, 600.0));
 		REQUIRE(p.GetNumber("numDroplets", n) && NearEq(n, 80000.0));
 	}
+
+	// --- WorldMapEditDocumentReset (incrément 2b) --------------------------
+
+	namespace ew = engine::editor::world;
+	namespace vol = engine::editor::world::volumes;
+
+	/// Reset vide les 4 documents en mémoire.
+	void Test_WorldMapEditDocumentReset_ClearsAllDocs()
+	{
+		ew::TerrainDocument terrain;
+		ew::WaterDocument   water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		// Pré-remplissage minimal.
+		vol::MeshInsertInstance mi;
+		mi.gltfRelativePath = "x"; mi.insertCategory = "cave";
+		meshDoc.Add(mi);
+		vol::dungeons::DungeonPortalInstance dp;
+		dp.dungeonTemplateId = "y";
+		portalDoc.Add(dp);
+		REQUIRE(meshDoc.Size() == 1u);
+		REQUIRE(portalDoc.Size() == 1u);
+
+		zp::ResetEditedZoneDocuments(terrain, water, meshDoc, portalDoc);
+		REQUIRE(meshDoc.Size() == 0u);
+		REQUIRE(portalDoc.Size() == 0u);
+		// terrain/water n'ont pas de Size() public mais leur Reset est appelé.
+	}
+
+	// --- OperationDispatcher (incrément 2b) --------------------------------
+
+	zp::DispatchContext MakeMinimalCtx(
+		ew::TerrainDocument& t, vol::MeshInsertDocument& m,
+		vol::dungeons::DungeonPortalDocument& d,
+		vol::caves::CaveCatalog& cv, vol::overhangs::OverhangCatalog& oh,
+		vol::dungeons::DungeonCatalog& dc)
+	{
+		return zp::DispatchContext{ t, m, d, cv, oh, dc };
+	}
+
+	/// place_cave : trouve l'entrée catalogue, construit une commande
+	/// PlaceCaveCommand qui exécutée pousse l'instance dans le doc.
+	void Test_Dispatcher_PlaceCave_BuildsCommand()
+	{
+		vol::caves::CaveCatalog caveCat;
+		std::string err;
+		REQUIRE(caveCat.ParseJson(R"({
+			"caves":[{"id":"c1","gltf":"caves/c1.gltf","displayName":"Petite grotte",
+				"aabbMin":[-2,0,-2],"aabbMax":[2,3,2],"entrancePoint":[0,0,-2]}]
+		})", err));
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::dungeons::DungeonCatalog dgCat;
+
+		ew::TerrainDocument terrain;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		zp::ZonePresetOperation op;
+		op.type    = "place_cave";
+		op.rawJson = R"({
+			"type":"place_cave",
+			"catalogId":"c1",
+			"worldPosition":[100,50,200],
+			"rotationY":45,
+			"autoSnapToGround":true
+		})";
+
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		REQUIRE(cmd != nullptr);
+
+		stack.Push(std::move(cmd));
+		REQUIRE(meshDoc.Size() == 1u);
+		REQUIRE(meshDoc.All()[0].insertCategory == "cave");
+		REQUIRE(meshDoc.All()[0].gltfRelativePath == "caves/c1.gltf");
+		// Snap au sol : y = 50 - entrancePoint.y(=0) = 50 (entrancePoint.y
+		// est 0 dans le catalogue ci-dessus).
+		REQUIRE(NearEq(meshDoc.All()[0].worldPosition.y, 50.0));
+	}
+
+	/// place_cave avec catalogId introuvable → Failed.
+	void Test_Dispatcher_PlaceCave_UnknownCatalog()
+	{
+		vol::caves::CaveCatalog caveCat;
+		std::string err;
+		(void)caveCat.ParseJson(R"({"caves":[]})", err);
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		zp::ZonePresetOperation op;
+		op.type    = "place_cave";
+		op.rawJson = R"({"type":"place_cave","catalogId":"ghost","worldPosition":[0,0,0]})";
+
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Failed);
+		REQUIRE(cmd == nullptr);
+	}
+
+	/// place_dungeon : catalogId du dungeon catalog, instance créée.
+	void Test_Dispatcher_PlaceDungeon_BuildsCommand()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		std::string err;
+		REQUIRE(dgCat.ParseJson(R"({
+			"dungeons":[{"id":"dt","displayName":"Donjon test","requiredLevel":15,
+				"minDifficulty":1,"maxDifficulty":2}]
+		})", err));
+
+		ew::TerrainDocument terrain;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		zp::ZonePresetOperation op;
+		op.type    = "place_dungeon";
+		op.rawJson = R"({
+			"type":"place_dungeon","catalogId":"dt",
+			"worldPosition":[800,0,800],"rotationY":90,
+			"triggerRadius":4
+		})";
+
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		stack.Push(std::move(cmd));
+		REQUIRE(portalDoc.Size() == 1u);
+		REQUIRE(portalDoc.All()[0].dungeonTemplateId == "dt");
+		REQUIRE(NearEq(portalDoc.All()[0].triggerRadius, 4.0));
+		REQUIRE(portalDoc.All()[0].requiredLevel == 15u); // depuis le catalog
+	}
+
+	/// Type non câblé en MVP → Unsupported, pas de crash.
+	void Test_Dispatcher_UnsupportedType_GracefulSkip()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		zp::ZonePresetOperation op;
+		op.type    = "hydraulic_erosion";  // connu mais non câblé
+		op.rawJson = R"({"type":"hydraulic_erosion","numDroplets":1000})";
+
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Unsupported);
+		REQUIRE(cmd == nullptr);
+	}
+
+	// --- ZonePresetExecutor (incrément 2b) ---------------------------------
+
+	/// Exécution complète : reset + boucle ops. Vérifie le résumé.
+	void Test_Executor_RunsAndSummarizes()
+	{
+		vol::caves::CaveCatalog caveCat;
+		std::string err;
+		REQUIRE(caveCat.ParseJson(R"({
+			"caves":[{"id":"c1","gltf":"x.gltf","aabbMin":[-1,0,-1],"aabbMax":[1,2,1],
+				"entrancePoint":[0,0,0]}]
+		})", err));
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		REQUIRE(dgCat.ParseJson(R"({"dungeons":[{"id":"dt","minDifficulty":1,"maxDifficulty":1}]})", err));
+
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		// Pré-remplissage : reset doit nettoyer.
+		vol::MeshInsertInstance pre;
+		pre.gltfRelativePath = "pre"; pre.insertCategory = "cave";
+		meshDoc.Add(pre);
+
+		zp::ZonePreset preset;
+		preset.id = "mixed";
+		// 1) hydraulic = non supporté → skipped
+		zp::ZonePresetOperation op1;
+		op1.type    = "hydraulic_erosion";
+		op1.rawJson = R"({"type":"hydraulic_erosion"})";
+		preset.operations.push_back(op1);
+		// 2) place_cave OK
+		zp::ZonePresetOperation op2;
+		op2.type    = "place_cave";
+		op2.rawJson = R"({"type":"place_cave","catalogId":"c1","worldPosition":[0,10,0]})";
+		preset.operations.push_back(op2);
+		// 3) place_cave catalogId ghost → failed
+		zp::ZonePresetOperation op3;
+		op3.type    = "place_cave";
+		op3.rawJson = R"({"type":"place_cave","catalogId":"ghost","worldPosition":[0,0,0]})";
+		preset.operations.push_back(op3);
+		// 4) place_dungeon OK
+		zp::ZonePresetOperation op4;
+		op4.type    = "place_dungeon";
+		op4.rawJson = R"({"type":"place_dungeon","catalogId":"dt","worldPosition":[5,0,5]})";
+		preset.operations.push_back(op4);
+
+		zp::ZonePresetExecutor executor;
+		const zp::DispatchContext ctx{ terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat };
+		int callbackCount = 0;
+		const auto summary = executor.Execute(preset, zp::CustomizationParams{},
+			stack, ctx, water,
+			[&](const zp::ExecutionProgress&) { ++callbackCount; return true; });
+
+		REQUIRE(summary.totalSteps == 4u);
+		REQUIRE(summary.commandsPushed == 2u);     // cave + dungeon
+		REQUIRE(summary.unsupportedSkipped == 1u);  // hydraulic
+		REQUIRE(summary.failed == 1u);              // cave ghost
+		REQUIRE(!summary.wasCancelled);
+		REQUIRE(callbackCount == 4);
+		// Le pré-remplissage a été nettoyé par le reset, puis le cave OK
+		// a poussé 1 instance.
+		REQUIRE(meshDoc.Size() == 1u);
+		REQUIRE(portalDoc.Size() == 1u);
+	}
+
+	/// Callback retournant false → cancel après l'op courante.
+	void Test_Executor_CancelViaCallback()
+	{
+		vol::caves::CaveCatalog caveCat;
+		std::string err;
+		REQUIRE(caveCat.ParseJson(R"({
+			"caves":[{"id":"c1","gltf":"x.gltf","aabbMin":[-1,0,-1],"aabbMax":[1,2,1]}]
+		})", err));
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::dungeons::DungeonCatalog dgCat;
+
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		zp::ZonePreset preset;
+		preset.id = "cancel_test";
+		for (int i = 0; i < 3; ++i)
+		{
+			zp::ZonePresetOperation op;
+			op.type    = "place_cave";
+			op.rawJson = R"({"type":"place_cave","catalogId":"c1","worldPosition":[0,0,0]})";
+			preset.operations.push_back(op);
+		}
+
+		zp::ZonePresetExecutor executor;
+		const zp::DispatchContext ctx{ terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat };
+		const auto summary = executor.Execute(preset, zp::CustomizationParams{},
+			stack, ctx, water,
+			[](const zp::ExecutionProgress& p) {
+				// Stoppe après l'étape 1.
+				return p.currentStep < 2u;
+			});
+		REQUIRE(summary.wasCancelled);
+		REQUIRE(summary.commandsPushed == 1u); // seule la 1ère op est passée
+	}
 }
 
 int main()
@@ -429,6 +710,13 @@ int main()
 	Test_Customization_UnaffectedOpUnchanged();
 	Test_Customization_WaterAndDryness();
 	Test_Customization_NeutralLeavesParamsIdentical();
+	Test_WorldMapEditDocumentReset_ClearsAllDocs();
+	Test_Dispatcher_PlaceCave_BuildsCommand();
+	Test_Dispatcher_PlaceCave_UnknownCatalog();
+	Test_Dispatcher_PlaceDungeon_BuildsCommand();
+	Test_Dispatcher_UnsupportedType_GracefulSkip();
+	Test_Executor_RunsAndSummarizes();
+	Test_Executor_CancelViaCallback();
 
 	if (g_failed > 0)
 	{

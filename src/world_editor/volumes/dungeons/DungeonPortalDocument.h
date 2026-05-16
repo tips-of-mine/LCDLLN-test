@@ -34,6 +34,15 @@ namespace engine::editor::world::volumes::dungeons
 		bool IsDirty() const noexcept { return m_dirty; }
 		void ClearDirty() noexcept    { m_dirty = false; }
 
+		/// M100.46 — Vide intégralement le document. Marque `m_dirty`.
+		/// Utilisé par `WorldMapEditDocumentReset` avant un zone preset.
+		void Reset() noexcept
+		{
+			m_instances.clear();
+			m_nextGuid = 0u;
+			m_dirty    = true;
+		}
+
 		/// Sauve dans `<paths.content>/instances/dungeon_portals.bin`.
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);
 		/// Charge depuis `<paths.content>/instances/dungeon_portals.bin`.

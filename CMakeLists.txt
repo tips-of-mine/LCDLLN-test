@@ -316,6 +316,10 @@ add_library(engine_core
   src/world_editor/water/RiverTool.cpp
   # M100.36 — River Network Generator (watershed D8 + OceanSettings)
   src/world_editor/water/ConsolidatedHeightGrid.cpp
+  # M100.46 — helper partagé qui assemble un grid 2x2 chunks depuis le
+  # TerrainDocument (anciennement dupliqué dans CoastlineEditorTool,
+  # ThermalWindErosionTool et OperationDispatcher).
+  src/world_editor/water/HeightGridAssembly.cpp
   src/world_editor/water/D8FlowDirection.cpp
   src/world_editor/water/FlowAccumulation.cpp
   src/world_editor/water/PathSimplifyDouglasPeucker.cpp

@@ -6,6 +6,8 @@
 /// valley_macro / lake_polygon / river_manual). L'UI (incrément 3)
 /// vient avec ses propres tests.
 
+#include "src/client/world/terrain/TerrainChunk.h"
+#include "src/shared/core/Config.h"
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
@@ -14,6 +16,7 @@
 #include "src/world_editor/volumes/dungeons/DungeonCatalog.h"
 #include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
 #include "src/world_editor/volumes/overhangs/OverhangCatalog.h"
+#include "src/world_editor/water/HeightGridAssembly.h"
 #include "src/world_editor/water/WaterDocument.h"
 #include "src/world_editor/zone_presets/CustomizationApplier.h"
 #include "src/world_editor/zone_presets/OperationDispatcher.h"
@@ -830,6 +833,60 @@ namespace
 		REQUIRE(cmd == nullptr);
 	}
 
+	// --- Helper partagé : BuildGridFromLoadedChunks --------------------
+
+	/// `BuildGridFromLoadedChunks` doit produire une grille bien
+	/// dimensionnée (2×(kRes-1)+1 par axe) avec heights initiales à 0
+	/// quand aucun chunk n'existe sur disque (EnsureLoaded crée des
+	/// chunks plats par défaut).
+	void Test_HeightGridAssembly_BuildsFlat()
+	{
+		engine::core::Config cfg;
+		ew::TerrainDocument terrain;
+
+		const auto grid = ew::BuildGridFromLoadedChunks(terrain, cfg);
+
+		const int kRes = static_cast<int>(engine::world::terrain::kTerrainResolution);
+		const int expectedDim = 2 * (kRes - 1) + 1;
+		REQUIRE(grid.width  == expectedDim);
+		REQUIRE(grid.height == expectedDim);
+		REQUIRE(grid.heights.size() ==
+			static_cast<size_t>(expectedDim) * expectedDim);
+		REQUIRE(NearEq(grid.cellSizeMeters,
+			engine::world::terrain::kTerrainCellSizeMeters));
+		REQUIRE(grid.originCellX == 0);
+		REQUIRE(grid.originCellZ == 0);
+
+		// Toutes les heights sont à 0 : EnsureLoaded crée des chunks plats
+		// quand aucun terrain.bin n'existe sur disque.
+		for (float h : grid.heights)
+		{
+			REQUIRE(NearEq(h, 0.0));
+		}
+
+		// EnsureLoaded a chargé 2x2 chunks = 4.
+		REQUIRE(terrain.LoadedChunkCount() == 4u);
+	}
+
+	/// Hauteurs non nulles : on injecte une valeur dans un chunk déjà chargé
+	/// avant l'appel et on vérifie qu'elle se retrouve dans la grille.
+	void Test_HeightGridAssembly_PreservesNonZeroHeights()
+	{
+		engine::core::Config cfg;
+		ew::TerrainDocument terrain;
+		// Pré-charge le chunk (0,0) et injecte une hauteur connue.
+		auto chunk = terrain.EnsureLoaded(cfg, 0, 0);
+		REQUIRE(chunk);
+		const int kRes = static_cast<int>(engine::world::terrain::kTerrainResolution);
+		// Cellule (10, 20) du chunk → height 42.0.
+		chunk->heights[static_cast<size_t>(20) * kRes + 10] = 42.0f;
+
+		const auto grid = ew::BuildGridFromLoadedChunks(terrain, cfg);
+		// Mapping : cellule (10, 20) du chunk (0,0) → cellule (10, 20)
+		// de la grille (chunks (0,0) occupent baseX=0, baseZ=0).
+		REQUIRE(NearEq(grid.Get(10, 20), 42.0));
+	}
+
 	// --- Incrément 2e : hydraulic_erosion / thermal_wind_erosion /
 	//                    river_network / coastline (config-required)
 
@@ -1076,6 +1133,8 @@ int main()
 	Test_Dispatcher_LakePolygon_RejectsDegenerate();
 	Test_Dispatcher_RiverManual_BuildsCommand();
 	Test_Dispatcher_UnsupportedType_GracefulSkip();
+	Test_HeightGridAssembly_BuildsFlat();
+	Test_HeightGridAssembly_PreservesNonZeroHeights();
 	Test_Dispatcher_HydraulicErosion_RequiresConfig();
 	Test_Dispatcher_ThermalWindErosion_RejectsAllDisabled();
 	Test_Dispatcher_RiverNetwork_RejectsEmptySources();

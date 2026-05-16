@@ -37,6 +37,7 @@
 #include "src/world_editor/water/CoastlineCommand.h"
 #include "src/world_editor/water/CoastlineSmoothing.h"
 #include "src/world_editor/water/ConsolidatedHeightGrid.h"
+#include "src/world_editor/water/HeightGridAssembly.h"
 #include "src/world_editor/water/OceanSettings.h"
 #include "src/world_editor/water/RiverNetworkCommand.h"
 #include "src/world_editor/water/SpringSource.h"
@@ -409,50 +410,10 @@ namespace engine::editor::world::zone_presets
 
 		// --- Sim helpers ---------------------------------------------------
 
-		/// Assemble un `ConsolidatedHeightGrid` 2×2 chunks (~1025×1025 cellules)
-		/// à partir des chunks chargés du `TerrainDocument`. Réplique le pattern
-		/// `BuildGrid` dupliqué dans `ThermalWindErosionTool` / `CoastlineEditorTool`.
-		///
-		/// Effet de bord : appelle `TerrainDocument::EnsureLoaded` (bloque le
-		/// main thread le temps du chargement disque/CPU).
-		engine::editor::world::ConsolidatedHeightGrid
-		BuildGridFromLoadedChunks(engine::editor::world::TerrainDocument& terrain,
-			const engine::core::Config& cfg)
-		{
-			constexpr int kRes      = static_cast<int>(engine::world::terrain::kTerrainResolution);
-			constexpr int kChunksDim = 2;
-			engine::editor::world::ConsolidatedHeightGrid grid;
-			grid.cellSizeMeters = engine::world::terrain::kTerrainCellSizeMeters;
-			grid.originCellX = 0;
-			grid.originCellZ = 0;
-			const int W = kChunksDim * (kRes - 1) + 1;
-			const int H = kChunksDim * (kRes - 1) + 1;
-			grid.width = W;
-			grid.height = H;
-			grid.heights.assign(static_cast<size_t>(W) * H, 0.0f);
-			for (int cz = 0; cz < kChunksDim; ++cz)
-			{
-				for (int cx = 0; cx < kChunksDim; ++cx)
-				{
-					auto chunk = terrain.EnsureLoaded(cfg, cx, cz);
-					if (!chunk) continue;
-					const int baseX = cx * (kRes - 1);
-					const int baseZ = cz * (kRes - 1);
-					for (int iz = 0; iz < kRes; ++iz)
-					{
-						for (int ix = 0; ix < kRes; ++ix)
-						{
-							const int gx = baseX + ix;
-							const int gz = baseZ + iz;
-							if (gx >= W || gz >= H) continue;
-							grid.heights[static_cast<size_t>(gz) * W + gx] =
-								chunk->heights[static_cast<size_t>(iz) * kRes + ix];
-						}
-					}
-				}
-			}
-			return grid;
-		}
+		// L'assemblage du `ConsolidatedHeightGrid` 2×2 chunks vit maintenant
+		// dans `water/HeightGridAssembly.{h,cpp}` (partagé avec
+		// CoastlineEditorTool et ThermalWindErosionTool). On le réutilise tel
+		// quel via `engine::editor::world::BuildGridFromLoadedChunks(...)`.
 
 		/// Fusionne `src` dans `dst` cellule par cellule (les valeurs s'additionnent).
 		void MergeDeltas(engine::editor::world::SparseChunkDeltas& dst,

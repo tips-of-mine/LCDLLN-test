@@ -1121,6 +1121,109 @@ namespace
 		REQUIRE(water.Get().lakes[0].isOcean);
 	}
 
+	/// river_network happy path : 2 sources sur terrain pentu → commande
+	/// construite. Petit minFlowThresholdCells pour que les rivières
+	/// ne soient pas rejetées sur ce mini terrain.
+	void Test_Dispatcher_RiverNetwork_OkWithConfig()
+	{
+		engine::core::Config cfg;
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		InjectSlopedHeights(terrain, cfg, 200.0f);
+
+		zp::ZonePresetOperation op;
+		op.type    = "river_network";
+		// Deux sources, threshold bas pour ne pas rejeter, pas de carving
+		// (sinon la commande applique des deltas qui demandent un chunk
+		// dirty path).
+		op.rawJson = R"({"type":"river_network","sources":[[50,50],[100,100]],"minFlowThresholdCells":10,"carvingEnabled":false})";
+
+		const zp::DispatchContext ctx{
+			terrain, water, meshDoc, portalDoc,
+			caveCat, ohCat, arCat, dgCat, &cfg };
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		REQUIRE(cmd != nullptr);
+		REQUIRE(std::string(cmd->GetLabel()) == "River Network");
+	}
+
+	// --- Executor end-to-end : mini-preset mixte (macro + place + sim) ---
+
+	/// Test d'intégration : un mini ZonePreset construit en mémoire avec
+	/// 3 ops de natures différentes (mountain_macro = macro polyline,
+	/// place_cave = mesh insert, hydraulic_erosion = sim) exécuté
+	/// complètement via le ZonePresetExecutor → CommandStack peuplé +
+	/// documents mutés. Couvre le chemin happy path complet.
+	void Test_Executor_MixedPresetEndToEnd()
+	{
+		engine::core::Config cfg;
+		vol::caves::CaveCatalog caveCat;
+		std::string err;
+		REQUIRE(caveCat.ParseJson(R"({
+			"caves":[{"id":"c1","gltf":"caves/c1.gltf","displayName":"Petite grotte",
+				"aabbMin":[-2,0,-2],"aabbMax":[2,3,2],"entrancePoint":[0,0,-2]}]
+		})", err));
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		// Pré-remplis le terrain pour que hydraulic_erosion ait quelque
+		// chose à éroder.
+		InjectSlopedHeights(terrain, cfg, 100.0f);
+
+		zp::ZonePreset preset;
+		preset.id = "e2e_mixed";
+		preset.operations.push_back({
+			"mountain_macro", "", {},
+			R"({"type":"mountain_macro","polyline":[[100,100],[400,150],[700,100]],"widthMeters":200,"heightMeters":50})"
+		});
+		preset.operations.push_back({
+			"place_cave", "", {},
+			R"({"type":"place_cave","catalogId":"c1","worldPosition":[300,20,400]})"
+		});
+		preset.operations.push_back({
+			"hydraulic_erosion", "", {},
+			R"({"type":"hydraulic_erosion","numDroplets":30,"maxLifetimeSteps":8,"rngSeed":3})"
+		});
+
+		zp::ZonePresetExecutor executor;
+		const zp::DispatchContext ctx{
+			terrain, water, meshDoc, portalDoc,
+			caveCat, ohCat, arCat, dgCat, &cfg };
+
+		int callbackCount = 0;
+		const auto summary = executor.Execute(preset, zp::CustomizationParams{},
+			stack, ctx,
+			[&](const zp::ExecutionProgress&) { ++callbackCount; return true; });
+
+		REQUIRE(summary.totalSteps == 3u);
+		REQUIRE(summary.commandsPushed == 3u);
+		REQUIRE(summary.unsupportedSkipped == 0u);
+		REQUIRE(summary.failed == 0u);
+		REQUIRE(!summary.wasCancelled);
+		REQUIRE(callbackCount == 3);
+
+		// La cave a effectivement été poussée dans MeshInsertDocument.
+		REQUIRE(meshDoc.Size() == 1u);
+		REQUIRE(meshDoc.All()[0].insertCategory == "cave");
+		// Le CommandStack a 3 commandes (= rien skip).
+		REQUIRE(stack.UndoSize() == 3u);
+	}
+
 	// --- ZonePresetExecutor (incrément 2b) ---------------------------------
 
 	/// Exécution complète : reset + boucle ops. Vérifie le résumé.
@@ -1279,6 +1382,8 @@ int main()
 	Test_Dispatcher_HydraulicErosion_OkWithConfig();
 	Test_Dispatcher_ThermalWindErosion_OkWithConfig();
 	Test_Dispatcher_Coastline_OkWithConfig();
+	Test_Dispatcher_RiverNetwork_OkWithConfig();
+	Test_Executor_MixedPresetEndToEnd();
 	Test_Executor_RunsAndSummarizes();
 	Test_Executor_CancelViaCallback();
 

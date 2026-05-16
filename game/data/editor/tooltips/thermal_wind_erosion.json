@@ -1,0 +1,61 @@
+{
+  "toolId": "thermal_wind_erosion",
+  "tooltips": {
+    "thermalEnabled": {
+      "label": "Érosion thermique",
+      "description_simple": "Active l'effondrement des pentes raides vers leur angle de repos.",
+      "description_advanced": "Si vrai, lance la simulation thermique : transferts de matière des cellules hautes vers les voisines basses tant que slope > talusAngleDeg.",
+      "defaultValue": "true",
+      "range": "true / false",
+      "docSectionId": "tool/thermal_wind_erosion#thermalEnabled"
+    },
+    "talusAngleDeg": {
+      "label": "Angle de repos",
+      "description_simple": "Pente max stable. Au-delà, la matière s'effondre.",
+      "description_advanced": "Angle critique en degrés. Roche dure ~45°, sable ~30°, gravier ~35°. Le talus stable est obtenu après convergence.",
+      "defaultValue": "35",
+      "range": "20 - 60",
+      "docSectionId": "tool/thermal_wind_erosion#talusAngleDeg"
+    },
+    "numPasses": {
+      "label": "Nombre de passes thermal",
+      "description_simple": "Plus de passes = plus de relaxation, mais plus lent.",
+      "description_advanced": "Nombre d'itérations de relaxation. Early-exit si transfert / cellule < convergenceThresholdMetersPerCell.",
+      "defaultValue": "40",
+      "range": "5 - 200",
+      "docSectionId": "tool/thermal_wind_erosion#numPasses"
+    },
+    "windEnabled": {
+      "label": "Érosion éolienne",
+      "description_simple": "Active le transport de particules par le vent.",
+      "description_advanced": "Si vrai, lance la simulation wind après la passe thermal (qui modifie le grid). Particules suivent windAngleDeg, érodent les faces exposées et déposent sous le vent.",
+      "defaultValue": "true",
+      "range": "true / false",
+      "docSectionId": "tool/thermal_wind_erosion#windEnabled"
+    },
+    "windAngleDeg": {
+      "label": "Direction du vent",
+      "description_simple": "0° = Nord, 90° = Est, 180° = Sud, 270° = Ouest.",
+      "description_advanced": "Cap du vent dominant en degrés (sens horaire depuis le Nord). Les particules avancent dans cette direction.",
+      "defaultValue": "180",
+      "range": "0 - 360",
+      "docSectionId": "tool/thermal_wind_erosion#windAngleDeg"
+    },
+    "windStrength": {
+      "label": "Force du vent",
+      "description_simple": "Plus fort = particules vont plus vite et plus loin.",
+      "description_advanced": "Vitesse initiale des particules (m/s simulés). Influence aussi la capacité de transport.",
+      "defaultValue": "0.5",
+      "range": "0.0 - 2.0",
+      "docSectionId": "tool/thermal_wind_erosion#windStrength"
+    },
+    "numParticles": {
+      "label": "Nombre de particules",
+      "description_simple": "Plus de particules = effet plus marqué, mais plus lent.",
+      "description_advanced": "Particules de simulation wind. Recommandé 10k preview, 60k+ pour qualité finale.",
+      "defaultValue": "30000",
+      "range": "5000 - 200000",
+      "docSectionId": "tool/thermal_wind_erosion#numParticles"
+    }
+  }
+}

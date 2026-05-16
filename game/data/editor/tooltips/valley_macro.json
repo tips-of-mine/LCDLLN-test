@@ -1,0 +1,45 @@
+{
+  "toolId": "valley_macro",
+  "tooltips": {
+    "widthMeters": {
+      "label": "Largeur de la vallée",
+      "description_simple": "Largeur du creux, en mètres.",
+      "description_advanced": "Base totale du profil radial perpendiculaire à l'axe. S'étale sur ±width/2 de chaque côté.",
+      "defaultValue": "250",
+      "range": "50 - 3000",
+      "docSectionId": "tool/valley_macro#widthMeters"
+    },
+    "heightMeters": {
+      "label": "Profondeur",
+      "description_simple": "Profondeur du creux, en mètres (la valeur est soustraite).",
+      "description_advanced": "Amplitude verticale du delta soustrait (le rasterizer utilise invert=true → delta négatif).",
+      "defaultValue": "400",
+      "range": "20 - 2000",
+      "docSectionId": "tool/valley_macro#heightMeters"
+    },
+    "noiseAmplitude": {
+      "label": "Bruit de fond",
+      "description_simple": "Irrégularité ajoutée au fond de la vallée.",
+      "description_advanced": "Amplitude du bruit Simplex 2D ajoutée au profil, en mètres. 0 = fond lisse.",
+      "defaultValue": "30",
+      "range": "0 - 200",
+      "docSectionId": "tool/valley_macro#noiseAmplitude"
+    },
+    "noiseFrequency": {
+      "label": "Fréquence du bruit",
+      "description_simple": "Plus haut = irrégularités plus fines.",
+      "description_advanced": "Fréquence Simplex 2D en 1/mètres. 0.005 = ondulations larges, 0.05 = motifs fins.",
+      "defaultValue": "0.005",
+      "range": "0.0005 - 0.1",
+      "docSectionId": "tool/valley_macro#noiseFrequency"
+    },
+    "asymmetry": {
+      "label": "Asymétrie",
+      "description_simple": "0 = vallée symétrique, +1 = flanc droit plus long.",
+      "description_advanced": "Coefficient -1..+1. Permet de modéliser une vallée glaciaire en U asymétrique.",
+      "defaultValue": "0.0",
+      "range": "-1.0 - 1.0",
+      "docSectionId": "tool/valley_macro#asymmetry"
+    }
+  }
+}

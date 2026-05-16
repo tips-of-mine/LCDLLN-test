@@ -1,0 +1,29 @@
+{
+  "toolId": "stamp",
+  "tooltips": {
+    "footprintMeters": {
+      "label": "Empreinte du stamp",
+      "description_simple": "Taille du tampon, en mètres.",
+      "description_advanced": "Côté de la zone d'application (carré). Le stamp est rééchantillonné à cette dimension monde.",
+      "defaultValue": "50",
+      "range": "5 - 1000",
+      "docSectionId": "tool/stamp#footprintMeters"
+    },
+    "strengthMeters": {
+      "label": "Hauteur du stamp",
+      "description_simple": "Amplitude verticale du tampon (mètres).",
+      "description_advanced": "Multiplicateur appliqué aux valeurs du stamp (qui sont en [0,1]). Positif = additif, négatif = soustractif.",
+      "defaultValue": "20",
+      "range": "-500 - 500",
+      "docSectionId": "tool/stamp#strengthMeters"
+    },
+    "rotationYDeg": {
+      "label": "Rotation Y",
+      "description_simple": "Angle de rotation autour de l'axe vertical, en degrés.",
+      "description_advanced": "Rotation appliquée lors du rééchantillonnage. 0° = orientation originale.",
+      "defaultValue": "0",
+      "range": "0 - 360",
+      "docSectionId": "tool/stamp#rotationYDeg"
+    }
+  }
+}

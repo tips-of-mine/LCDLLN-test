@@ -1,0 +1,21 @@
+{
+  "toolId": "river_manual",
+  "tooltips": {
+    "widthMeters": {
+      "label": "Largeur du cours d'eau",
+      "description_simple": "Largeur visible de la rivière au sol, en mètres.",
+      "description_advanced": "Demi-largeur du mesh procédural généré par RiverTool. Identique pour tous les nodes sauf override per-node.",
+      "defaultValue": "4",
+      "range": "1 - 50",
+      "docSectionId": "tool/river_manual#widthMeters"
+    },
+    "depthMeters": {
+      "label": "Profondeur visuelle",
+      "description_simple": "Profondeur visuelle du fond de la rivière.",
+      "description_advanced": "Décale le mesh d'eau sous le terrain (uniquement visuel, pas de carving heightmap par cet outil — voir river_network pour le carving).",
+      "defaultValue": "1",
+      "range": "0.2 - 10",
+      "docSectionId": "tool/river_manual#depthMeters"
+    }
+  }
+}

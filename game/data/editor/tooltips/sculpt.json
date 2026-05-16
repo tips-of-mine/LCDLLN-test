@@ -1,0 +1,37 @@
+{
+  "toolId": "sculpt",
+  "tooltips": {
+    "radiusMeters": {
+      "label": "Rayon de la brosse",
+      "description_simple": "Taille de la zone affectée par chaque clic.",
+      "description_advanced": "Rayon en mètres dans l'espace monde. Le falloff radial atténue l'effet en bord de brosse.",
+      "defaultValue": "10",
+      "range": "1 - 100",
+      "docSectionId": "tool/sculpt#radiusMeters"
+    },
+    "strengthMps": {
+      "label": "Force",
+      "description_simple": "À quelle vitesse le terrain monte ou descend.",
+      "description_advanced": "Mètres par seconde. La brosse intègre `strength * deltaTime` à chaque frame tenue.",
+      "defaultValue": "5",
+      "range": "0.1 - 50",
+      "docSectionId": "tool/sculpt#strengthMps"
+    },
+    "falloff": {
+      "label": "Falloff",
+      "description_simple": "0 = brosse dure (carré), 1 = très douce (gaussienne).",
+      "description_advanced": "Forme du profil radial : 0 = constant, 1 = smoothstep(0,1).",
+      "defaultValue": "0.5",
+      "range": "0.0 - 1.0",
+      "docSectionId": "tool/sculpt#falloff"
+    },
+    "mode": {
+      "label": "Mode",
+      "description_simple": "Monter, descendre, lisser, ou aplatir.",
+      "description_advanced": "Raise (additif positif), Lower (négatif), Smooth (moyenne 3x3), Flatten (vers altitude target), Noise (Simplex additif).",
+      "defaultValue": "Raise",
+      "range": "Raise / Lower / Smooth / Flatten / Noise",
+      "docSectionId": "tool/sculpt#mode"
+    }
+  }
+}

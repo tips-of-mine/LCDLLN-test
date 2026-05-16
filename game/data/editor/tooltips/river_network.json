@@ -1,0 +1,53 @@
+{
+  "toolId": "river_network",
+  "tooltips": {
+    "minFlowThresholdCells": {
+      "label": "Seuil de flux minimum",
+      "description_simple": "Une rivière n'apparaît que si assez d'eau s'y accumule.",
+      "description_advanced": "Nombre de cellules amont minimum pour qu'un chemin soit retenu (D8 flow accumulation). Plus haut = rivières plus maigres éliminées.",
+      "defaultValue": "200",
+      "range": "10 - 5000",
+      "docSectionId": "tool/river_network#minFlowThresholdCells"
+    },
+    "simplificationToleranceMeters": {
+      "label": "Tolérance de simplification",
+      "description_simple": "Lisse le tracé : plus haut = moins de virages.",
+      "description_advanced": "Tolérance Douglas-Peucker en mètres. Réduit le nombre de points de la polyline en gardant la forme.",
+      "defaultValue": "5",
+      "range": "0.5 - 50",
+      "docSectionId": "tool/river_network#simplificationToleranceMeters"
+    },
+    "autoLakesAtSinks": {
+      "label": "Lacs automatiques aux sinks",
+      "description_simple": "Crée un lac quand la rivière finit dans un creux sans sortie.",
+      "description_advanced": "Si vrai, un chemin qui termine sur un minimum local génère une LakeInstance couvrant le bassin local.",
+      "defaultValue": "true",
+      "range": "true / false",
+      "docSectionId": "tool/river_network#autoLakesAtSinks"
+    },
+    "carveHeightmap": {
+      "label": "Creuser le lit",
+      "description_simple": "Le terrain s'enfonce le long de la rivière pour la rendre visible.",
+      "description_advanced": "Si vrai, applique un profil gaussien transverse au terrain (deltas négatifs). Désactive si tu veux juste le mesh d'eau.",
+      "defaultValue": "true",
+      "range": "true / false",
+      "docSectionId": "tool/river_network#carveHeightmap"
+    },
+    "carveDepthMeters": {
+      "label": "Profondeur du lit",
+      "description_simple": "Profondeur de creusement du lit, en mètres.",
+      "description_advanced": "Amplitude verticale du profil de carving. Seulement actif si carveHeightmap = true.",
+      "defaultValue": "3",
+      "range": "0.5 - 20",
+      "docSectionId": "tool/river_network#carveDepthMeters"
+    },
+    "carveWidthMeters": {
+      "label": "Largeur du lit",
+      "description_simple": "Largeur du creusement du lit.",
+      "description_advanced": "Demi-largeur du profil gaussien transverse, en mètres.",
+      "defaultValue": "12",
+      "range": "2 - 100",
+      "docSectionId": "tool/river_network#carveWidthMeters"
+    }
+  }
+}

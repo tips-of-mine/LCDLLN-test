@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 #include <vector>
 
@@ -24,6 +25,14 @@ namespace engine::render
 namespace engine::render::terrain
 {
 	struct HeightmapData;
+}
+namespace engine::editor::world
+{
+	class WorldEditorShell;
+}
+namespace engine::editor::world::zone_presets
+{
+	class ZonePresetDialog;
 }
 
 namespace engine::editor
@@ -70,6 +79,17 @@ namespace engine::editor
 		WorldEditorImGui(WorldEditorImGui&&) = delete;
 		WorldEditorImGui& operator=(WorldEditorImGui&&) = delete;
 		~WorldEditorImGui();
+
+		/// Branche le `WorldEditorShell` propriétaire des 4 documents
+		/// (terrain / water / mesh inserts / dungeon portals), du
+		/// `CommandStack` et des 4 catalogs (caves, overhangs, arches,
+		/// dungeons) — requis pour l'entrée menu Fichier > « Appliquer un
+		/// preset de zone » (M100.46 incrément 3). Pointeur non possédé.
+		/// Si nul, l'entrée menu est désactivée.
+		void SetWorldEditorShell(engine::editor::world::WorldEditorShell* shell)
+		{
+			m_shell = shell;
+		}
 
 		/// \param hwndNative \c HWND sous Windows, sinon ignoré.
 		/// \param cfg utilisé pour charger les polices TTF de l'UI auth (Windlass / Morpheus) dans
@@ -130,6 +150,11 @@ namespace engine::editor
 		engine::core::Config* m_cfg = nullptr;
 		engine::render::DayNightCycle* m_dayNight = nullptr;
 		engine::editor::TexturePreviewCache* m_texturePreviewCache = nullptr;
+		engine::editor::world::WorldEditorShell* m_shell = nullptr;
+		/// Dialog modal Zone Presets (M100.46 incrément 3). PIMPL via
+		/// unique_ptr pour éviter d'exposer le header dans l'API publique
+		/// du WorldEditorImGui (cycle Shell ↔ dialog).
+		std::unique_ptr<engine::editor::world::zone_presets::ZonePresetDialog> m_zonePresetDialog;
 		bool m_showTextureLibrary = false;  // pilote par le menu Affichage (Task 14)
 		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,

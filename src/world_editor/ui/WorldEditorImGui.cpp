@@ -7,6 +7,7 @@
 #include "src/world_editor/ui/TreeSpeciesCatalog.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
 #include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/zone_presets/ZonePresetDialog.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/platform/Window.h"
@@ -50,6 +51,15 @@ namespace engine::editor
 	{
 		m_session = session;
 		m_cfg = cfg;
+		// Instancie le dialog Zone Presets (M100.46 incrément 3) à la
+		// première mise en place du contexte éditeur. Toujours créé pour
+		// que l'entrée menu Fichier soit cliquable dès que le Shell est
+		// branché en plus.
+		if (!m_zonePresetDialog)
+		{
+			m_zonePresetDialog =
+				std::make_unique<engine::editor::world::zone_presets::ZonePresetDialog>();
+		}
 	}
 
 #if defined(_WIN32)
@@ -740,6 +750,16 @@ namespace engine::editor
 					(void)m_session->ActionExportRuntime(*m_cfg);
 				}
 				ImGui::Separator();
+				// M100.46 incrément 3 — entrée menu pour appliquer un Zone
+				// Preset. Désactivée si le Shell n'est pas branché (le
+				// dialog a besoin des 4 documents + catalogs).
+				if (ImGui::MenuItem("Appliquer un preset de zone...", nullptr, false,
+					m_shell != nullptr && m_zonePresetDialog != nullptr)
+					&& m_shell && m_zonePresetDialog)
+				{
+					m_zonePresetDialog->Open();
+				}
+				ImGui::Separator();
 				if (ImGui::MenuItem("Importer une texture (PNG/JPG/TGA/BMP)...", nullptr, false, m_session != nullptr && m_cfg != nullptr)
 					&& m_session && m_cfg)
 				{
@@ -875,6 +895,13 @@ namespace engine::editor
 				}
 			}
 			ImGui::EndMainMenuBar();
+		}
+
+		// M100.46 incrément 3 — dessine la popup modale Zone Presets
+		// (no-op si non ouverte ou Shell non branché).
+		if (m_zonePresetDialog && m_shell)
+		{
+			m_zonePresetDialog->Draw(*m_shell);
 		}
 
 		ImGuiViewport* vp = ImGui::GetMainViewport();

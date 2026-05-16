@@ -398,12 +398,18 @@ add_library(engine_core
   src/world_editor/zone_presets/OperationParams.cpp
   src/world_editor/zone_presets/CustomizationApplier.cpp
   # Incrément 2b : Reset des documents + dispatcher + exécuteur.
-  # Le dispatcher câble end-to-end les types place_cave / place_overhang
-  # / place_dungeon ; les 11 autres types sont gracieusement skipped
-  # (log info, aligné sur le skip silencieux des entrées `decoration`).
+  # Incrément 2c : place_arch câblé. Incrément 2d : mountain_macro /
+  # valley_macro / lake_polygon / river_manual câblés. Au total 8/14
+  # types câblés ; les 4 restants (coastline, river_network,
+  # hydraulic_erosion, thermal_wind_erosion) demandent d'extraire la
+  # simulation des Tools UI (incrément 2e+).
   src/world_editor/zone_presets/WorldMapEditDocumentReset.cpp
   src/world_editor/zone_presets/OperationDispatcher.cpp
   src/world_editor/zone_presets/ZonePresetExecutor.cpp
+  # Incrément 3 : dialog modal ImGui pour appliquer un preset à la
+  # carte courante (entrée menu Fichier > "Appliquer un preset de
+  # zone..."). Single-thread : bloque le main thread pendant Execute.
+  src/world_editor/zone_presets/ZonePresetDialog.cpp
   # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
   # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
   # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.

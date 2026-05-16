@@ -73,7 +73,11 @@ namespace engine::editor
 	class WorldEditorImGui final
 	{
 	public:
-		WorldEditorImGui() = default;
+		/// Constructeur out-of-line : la définition vit dans le `.cpp` où
+		/// `ZonePresetDialog.h` est inclus en entier. Sans cela, le
+		/// unique_ptr<ZonePresetDialog> ne peut pas instancier son cleanup
+		/// d'exception (type incomplet vu depuis Engine.cpp).
+		WorldEditorImGui();
 		WorldEditorImGui(const WorldEditorImGui&) = delete;
 		WorldEditorImGui& operator=(const WorldEditorImGui&) = delete;
 		WorldEditorImGui(WorldEditorImGui&&) = delete;

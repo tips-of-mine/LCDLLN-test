@@ -376,6 +376,12 @@ namespace engine::editor
 	} // namespace
 #endif
 
+	// Ctor + dtor out-of-line : la définition de `ZonePresetDialog` doit
+	// être visible ici pour que `std::unique_ptr<ZonePresetDialog>` puisse
+	// générer son cleanup d'exception. L'`#include` au top du fichier
+	// fournit le type complet.
+	WorldEditorImGui::WorldEditorImGui() = default;
+
 	WorldEditorImGui::~WorldEditorImGui()
 	{
 #if defined(_WIN32)

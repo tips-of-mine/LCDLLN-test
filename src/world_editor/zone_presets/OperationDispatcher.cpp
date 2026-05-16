@@ -4,6 +4,8 @@
 #include "src/client/world/terrain/TerrainChunk.h"
 #include "src/client/world/water/WaterSurfaces.h"
 #include "src/shared/core/Log.h"
+#include "src/world_editor/presets/ToolPresetApply.h"
+#include "src/world_editor/presets/ToolPresetRegistry.h"
 #include "src/world_editor/terrain/MountainRangeCommand.h"
 #include "src/world_editor/terrain/PolylineMacroCore.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
@@ -14,6 +16,7 @@
 #include "src/world_editor/terrain/erosion/ThermalSimulation.h"
 #include "src/world_editor/terrain/erosion/ThermalSimulationParams.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionCommand.h"
+#include "src/world_editor/terrain/erosion/ThermalWindErosionParams.h"
 #include "src/world_editor/terrain/erosion/WindSimulation.h"
 #include "src/world_editor/terrain/erosion/WindSimulationParams.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
@@ -477,6 +480,41 @@ namespace engine::editor::world::zone_presets
 			return fallback;
 		}
 
+		/// Lit la clé `"preset"` du JSON op et applique l'overlay de preset
+		/// si trouvée dans le `ToolPresetRegistry`. M100.46 incrément 2e+ :
+		/// connecte les `tool_presets/<toolId>.json` (chargés au boot) aux
+		/// dispatchers, pour que `"preset":"subtle"` (hydraulic) ou
+		/// `"preset":"sand_and_talus"` (thermal_wind) charge réellement les
+		/// physics params, pas seulement les scalaires explicites du JSON.
+		///
+		/// Ordre du remplissage des params : defaults struct → preset
+		/// overlay (ici) → JSON scalar overrides (après l'appel).
+		/// JSON gagne toujours sur preset.
+		///
+		/// \param toolId       id du tool dans le registry (ex. "hydraulic_erosion")
+		/// \param jsonParams   params de l'op (lit la clé "preset")
+		/// \param applyFn      fonctor `void(const ToolPreset&)` qui appelle
+		///                     l'ApplyXxxPreset typé sur le struct cible.
+		/// Effet de bord : log warn si `presetId` non vide mais introuvable.
+		template <typename ApplyFn>
+		void MaybeApplyToolPreset(const std::string& toolId,
+			const OperationParams& jsonParams, ApplyFn&& applyFn)
+		{
+			std::string presetId;
+			if (!jsonParams.GetString("preset", presetId) || presetId.empty())
+				return;
+			const auto* tp = engine::editor::world::presets::ToolPresetRegistry::Instance()
+				.FindPreset(toolId, presetId);
+			if (tp == nullptr)
+			{
+				LOG_WARN(EditorWorld,
+					"[OperationDispatcher] preset '{}' introuvable pour tool '{}'",
+					presetId, toolId);
+				return;
+			}
+			applyFn(*tp);
+		}
+
 		// --- hydraulic_erosion --------------------------------------------
 
 		DispatchResult DispatchHydraulicErosion(const OperationParams& params,
@@ -492,6 +530,13 @@ namespace engine::editor::world::zone_presets
 
 			using namespace engine::editor::world::erosion;
 			HydraulicSimulationParams sim;
+
+			// Preset overlay (defaults → preset → JSON scalars).
+			MaybeApplyToolPreset("hydraulic_erosion", params,
+				[&](const engine::editor::world::presets::ToolPreset& tp) {
+					engine::editor::world::presets::ApplyHydraulicErosionPreset(sim, tp);
+				});
+
 			sim.numDroplets = static_cast<uint32_t>(
 				ReadFloat(params, "numDroplets", static_cast<float>(sim.numDroplets)));
 			sim.maxLifetimeSteps = static_cast<uint32_t>(
@@ -535,13 +580,21 @@ namespace engine::editor::world::zone_presets
 				return DispatchResult::Failed;
 			}
 
-			ThermalSimulationParams thermalP;
+			// Wrapper attendu par ApplyThermalWindErosionPreset. Les
+			// scalaires JSON viendront overrider après l'overlay preset.
+			ThermalWindErosionParams combined;
+			MaybeApplyToolPreset("thermal_wind_erosion", params,
+				[&](const engine::editor::world::presets::ToolPreset& tp) {
+					engine::editor::world::presets::ApplyThermalWindErosionPreset(combined, tp);
+				});
+			ThermalSimulationParams& thermalP = combined.thermal;
+			WindSimulationParams&    windP    = combined.wind;
+
 			thermalP.talusAngleDeg  = ReadFloat(params, "talusAngleDeg",  thermalP.talusAngleDeg);
 			thermalP.forcePerPass   = ReadFloat(params, "forcePerPass",   thermalP.forcePerPass);
 			thermalP.numPasses      = static_cast<uint32_t>(
 				ReadFloat(params, "numPasses", static_cast<float>(thermalP.numPasses)));
 
-			WindSimulationParams windP;
 			windP.windAngleDeg   = ReadFloat(params, "windAngleDeg",   windP.windAngleDeg);
 			windP.windStrength   = ReadFloat(params, "windStrength",   windP.windStrength);
 			windP.numParticles   = static_cast<uint32_t>(
@@ -593,6 +646,14 @@ namespace engine::editor::world::zone_presets
 			}
 
 			engine::editor::world::WatershedSimulationParams sim;
+
+			// Preset overlay (laisse `springs` intacts, conforme au
+			// docstring d'ApplyRiverNetworkPreset).
+			MaybeApplyToolPreset("river_network", params,
+				[&](const engine::editor::world::presets::ToolPreset& tp) {
+					engine::editor::world::presets::ApplyRiverNetworkPreset(sim, tp);
+				});
+
 			sim.springs.reserve(sources.size() / 2);
 			for (size_t i = 0; i + 1 < sources.size(); i += 2)
 			{

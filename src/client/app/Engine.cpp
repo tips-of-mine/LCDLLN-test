@@ -5488,6 +5488,10 @@ namespace engine
 				if (m_worldEditorExe)
 				{
 					m_worldEditorImGui->SetEditorContext(m_worldEditorSession.get(), &m_cfg);
+					// M100.46 incrément 3 — branche le Shell pour que le
+					// dialog Zone Presets puisse résoudre documents et
+					// catalogs au moment de l'exécution.
+					m_worldEditorImGui->SetWorldEditorShell(m_worldEditorShell.get());
 
 					// Cache de vignettes pour les textures de splatting.
 					m_texturePreviewCache = std::make_unique<engine::editor::TexturePreviewCache>();

@@ -59,6 +59,16 @@ namespace engine::editor::world
 		/// Nombre de chunks actuellement résidents en RAM.
 		size_t LoadedChunkCount() const { return m_chunks.size(); }
 
+		/// M100.46 — Vide intégralement le cache RAM (chunks + splats).
+		/// Les prochains `EnsureLoaded` / `EnsureSplatLoaded` reconstruiront
+		/// des chunks plats à 0 m. Utilisé par `WorldMapEditDocumentReset`
+		/// avant l'exécution d'un zone preset sur une zone non vide.
+		void Reset() noexcept
+		{
+			m_chunks.clear();
+			m_splats.clear();
+		}
+
 		/// Attache un `TerrainLodWorker` pour la régénération asynchrone des
 		/// LODs (M100.8). Le caller possède le worker (ne le détruit pas pendant
 		/// la durée de vie du document). `contentRoot` est mémorisé pour que le

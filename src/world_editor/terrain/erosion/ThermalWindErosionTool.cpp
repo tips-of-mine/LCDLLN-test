@@ -1,8 +1,8 @@
 #include "src/world_editor/terrain/erosion/ThermalWindErosionTool.h"
 
-#include "src/client/world/terrain/TerrainChunk.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/terrain/erosion/ThermalWindErosionCommand.h"
+#include "src/world_editor/water/HeightGridAssembly.h"
 #include "src/world_editor/water/WaterDocument.h"
 
 #include <memory>
@@ -10,51 +10,9 @@
 
 namespace engine::editor::world::erosion
 {
-	namespace
-	{
-		constexpr int kRes =
-			static_cast<int>(engine::world::terrain::kTerrainResolution);
-
-		/// Assemble un grid 2×2 chunks autour de l'origine (même périmètre
-		/// MVP que les autres outils Phase 2.5).
-		engine::editor::world::ConsolidatedHeightGrid BuildGrid(
-			engine::editor::world::TerrainDocument& terrain,
-			const engine::core::Config& cfg)
-		{
-			constexpr int kChunksDim = 2;
-			engine::editor::world::ConsolidatedHeightGrid grid;
-			grid.cellSizeMeters = engine::world::terrain::kTerrainCellSizeMeters;
-			grid.originCellX = 0;
-			grid.originCellZ = 0;
-			const int W = kChunksDim * (kRes - 1) + 1;
-			const int H = kChunksDim * (kRes - 1) + 1;
-			grid.width = W;
-			grid.height = H;
-			grid.heights.assign(static_cast<size_t>(W) * H, 0.0f);
-			for (int cz = 0; cz < kChunksDim; ++cz)
-			{
-				for (int cx = 0; cx < kChunksDim; ++cx)
-				{
-					auto chunk = terrain.EnsureLoaded(cfg, cx, cz);
-					if (!chunk) continue;
-					const int baseX = cx * (kRes - 1);
-					const int baseZ = cz * (kRes - 1);
-					for (int iz = 0; iz < kRes; ++iz)
-					{
-						for (int ix = 0; ix < kRes; ++ix)
-						{
-							const int gx = baseX + ix;
-							const int gz = baseZ + iz;
-							if (gx >= W || gz >= H) continue;
-							grid.heights[static_cast<size_t>(gz) * W + gx] =
-								chunk->heights[static_cast<size_t>(iz) * kRes + ix];
-						}
-					}
-				}
-			}
-			return grid;
-		}
-	}
+	// `BuildGridFromLoadedChunks` vit maintenant dans
+	// `water/HeightGridAssembly.{h,cpp}` (partagé avec CoastlineEditorTool
+	// et OperationDispatcher). Voir l'include ci-dessus.
 
 	bool ThermalWindErosionTool::Init(engine::editor::world::CommandStack& stack,
 		engine::editor::world::TerrainDocument& terrain,
@@ -83,7 +41,7 @@ namespace engine::editor::world::erosion
 	{
 		if (m_terrain == nullptr || m_water == nullptr || m_cfg == nullptr) return false;
 
-		auto grid = BuildGrid(*m_terrain, *m_cfg);
+		auto grid = engine::editor::world::BuildGridFromLoadedChunks(*m_terrain, *m_cfg);
 		const float seaLevel = m_water->GetOcean().seaLevelMeters;
 
 		m_thermalDeltas.clear();

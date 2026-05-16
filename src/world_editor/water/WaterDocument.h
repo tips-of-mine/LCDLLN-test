@@ -50,6 +50,16 @@ namespace engine::editor::world
 		/// Engine::Render apres avoir reconstruit les buffers GPU water depuis la scene).
 		void ClearDirty() noexcept    { m_dirty = false; }
 
+		/// M100.46 — Vide intégralement la scène (lakes, rivers, océan
+		/// par défaut). Marque `m_dirty`. Utilisé par `WorldMapEditDocumentReset`
+		/// avant l'exécution d'un zone preset sur une zone non vide.
+		void Reset() noexcept
+		{
+			m_scene = engine::world::water::WaterScene{};
+			m_ocean = OceanSettings{};
+			m_dirty = true;
+		}
+
 		/// Sauvegarde dans `<paths.content>/instances/water.bin`. Reset m_dirty.
 		/// Écrit toujours en format v2 (avec `m_ocean.seaLevelMeters`).
 		bool SaveToDisk(const engine::core::Config& cfg, std::string& outError);

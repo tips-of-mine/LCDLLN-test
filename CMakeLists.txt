@@ -316,6 +316,10 @@ add_library(engine_core
   src/world_editor/water/RiverTool.cpp
   # M100.36 — River Network Generator (watershed D8 + OceanSettings)
   src/world_editor/water/ConsolidatedHeightGrid.cpp
+  # M100.46 — helper partagé qui assemble un grid 2x2 chunks depuis le
+  # TerrainDocument (anciennement dupliqué dans CoastlineEditorTool,
+  # ThermalWindErosionTool et OperationDispatcher).
+  src/world_editor/water/HeightGridAssembly.cpp
   src/world_editor/water/D8FlowDirection.cpp
   src/world_editor/water/FlowAccumulation.cpp
   src/world_editor/water/PathSimplifyDouglasPeucker.cpp
@@ -397,6 +401,19 @@ add_library(engine_core
   src/world_editor/zone_presets/ZonePresetRegistry.cpp
   src/world_editor/zone_presets/OperationParams.cpp
   src/world_editor/zone_presets/CustomizationApplier.cpp
+  # Incrément 2b : Reset des documents + dispatcher + exécuteur.
+  # Incrément 2c : place_arch câblé. Incrément 2d : mountain_macro /
+  # valley_macro / lake_polygon / river_manual câblés. Au total 8/14
+  # types câblés ; les 4 restants (coastline, river_network,
+  # hydraulic_erosion, thermal_wind_erosion) demandent d'extraire la
+  # simulation des Tools UI (incrément 2e+).
+  src/world_editor/zone_presets/WorldMapEditDocumentReset.cpp
+  src/world_editor/zone_presets/OperationDispatcher.cpp
+  src/world_editor/zone_presets/ZonePresetExecutor.cpp
+  # Incrément 3 : dialog modal ImGui pour appliquer un preset à la
+  # carte courante (entrée menu Fichier > "Appliquer un preset de
+  # zone..."). Single-thread : bloque le main thread pendant Execute.
+  src/world_editor/zone_presets/ZonePresetDialog.cpp
   # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
   # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
   # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.

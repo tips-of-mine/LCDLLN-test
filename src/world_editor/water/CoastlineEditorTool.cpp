@@ -5,6 +5,7 @@
 #include "src/world_editor/water/CoastlineCliffs.h"
 #include "src/world_editor/water/CoastlineCommand.h"
 #include "src/world_editor/water/CoastlineSmoothing.h"
+#include "src/world_editor/water/HeightGridAssembly.h"
 #include "src/world_editor/water/WaterDocument.h"
 
 #include <algorithm>
@@ -16,58 +17,14 @@ namespace engine::editor::world
 {
 	namespace
 	{
-		constexpr int kRes =
-			static_cast<int>(engine::world::terrain::kTerrainResolution);
-
 		/// Marge externe du polygone océan en mètres (cf. spec §"Génération
 		/// du polygone océan").
 		constexpr float kOceanMarginMeters = 1000.0f;
 
-		/// Construit un `ConsolidatedHeightGrid` à partir des chunks
-		/// actuellement chargés dans `terrain`, sur une plage donnée
-		/// (déterminée par les coords des chunks chargés). Pour M100.37
-		/// MVP : on construit autour du chunk (0, 0) si chargé ; sinon
-		/// retourne un grid vide. Le ticket d'optimisation pourra étendre
-		/// pour zone-complète.
-		ConsolidatedHeightGrid BuildGridFromLoadedChunks(
-			TerrainDocument& terrain, const engine::core::Config& cfg)
-		{
-			ConsolidatedHeightGrid grid;
-			grid.cellSizeMeters = engine::world::terrain::kTerrainCellSizeMeters;
-			// MVP : on assemble juste 2×2 chunks autour de l'origine.
-			constexpr int kChunksDim = 2;
-			constexpr int kBaseX = 0;
-			constexpr int kBaseZ = 0;
-			grid.originCellX = kBaseX * (kRes - 1);
-			grid.originCellZ = kBaseZ * (kRes - 1);
-			const int W = kChunksDim * (kRes - 1) + 1;
-			const int H = kChunksDim * (kRes - 1) + 1;
-			grid.width = W;
-			grid.height = H;
-			grid.heights.assign(static_cast<size_t>(W) * H, 0.0f);
-			for (int cz = 0; cz < kChunksDim; ++cz)
-			{
-				for (int cx = 0; cx < kChunksDim; ++cx)
-				{
-					auto chunk = terrain.EnsureLoaded(cfg, kBaseX + cx, kBaseZ + cz);
-					if (!chunk) continue;
-					const int baseX = cx * (kRes - 1);
-					const int baseZ = cz * (kRes - 1);
-					for (int iz = 0; iz < kRes; ++iz)
-					{
-						for (int ix = 0; ix < kRes; ++ix)
-						{
-							const int gx = baseX + ix;
-							const int gz = baseZ + iz;
-							if (gx >= W || gz >= H) continue;
-							grid.heights[static_cast<size_t>(gz) * W + gx] =
-								chunk->heights[static_cast<size_t>(iz) * kRes + ix];
-						}
-					}
-				}
-			}
-			return grid;
-		}
+		// `BuildGridFromLoadedChunks` vit maintenant dans
+		// `water/HeightGridAssembly.{h,cpp}` (partagé avec
+		// ThermalWindErosionTool et OperationDispatcher). Voir l'include
+		// ci-dessus.
 	}
 
 	bool CoastlineEditorTool::Init(CommandStack& stack, TerrainDocument& terrain,

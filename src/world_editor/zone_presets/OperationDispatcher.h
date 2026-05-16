@@ -9,6 +9,7 @@
 namespace engine::editor::world
 {
 	class TerrainDocument;
+	class WaterDocument;
 }
 
 namespace engine::editor::world::volumes
@@ -28,18 +29,24 @@ namespace engine::editor::world::zone_presets
 {
 	/// Contexte fourni au dispatcher : refs sur les documents et catalogs
 	/// nécessaires pour construire les commandes des opérations
-	/// supportées (M100.46 incrément 2b).
+	/// supportées (M100.46 incréments 2b + 2d).
 	///
-	/// Pour cet incrément, les types câblés end-to-end sont les
-	/// **place_*** (cave, overhang, dungeon) dont les chemins de commande
-	/// existent déjà (M100.40-43). Les 11 autres types (mountain_macro,
-	/// valley_macro, sculpt_brush, splat_paint, lake_polygon, river_manual,
-	/// coastline, river_network, hydraulic_erosion, thermal_wind_erosion,
-	/// place_arch) demandent d'ajouter des chemins « headless » aux outils
-	/// concernés — itérations suivantes (2c, 2d…).
+	/// Types câblés end-to-end :
+	///   - **place_*** (cave, overhang, arch, dungeon) — incrément 2b/2c.
+	///   - **mountain_macro / valley_macro** — incrément 2d via
+	///     `RasterizeMacroPolyline` + `MountainRangeCommand / ValleyChainCommand`.
+	///   - **lake_polygon / river_manual** — incrément 2d via
+	///     `AddLakeCommand / AddRiverCommand` (path direct, structs plain data).
+	///
+	/// Types encore non câblés (incréments 2e+, demandent d'extraire la
+	/// simulation des Tools UI ou de capturer un snapshot d'état pré-action) :
+	/// `coastline`, `river_network`, `hydraulic_erosion`,
+	/// `thermal_wind_erosion`. Ces 4 types restent gracieusement
+	/// **Unsupported** + LOG_INFO.
 	struct DispatchContext
 	{
 		engine::editor::world::TerrainDocument&                        terrain;
+		engine::editor::world::WaterDocument&                          water;
 		engine::editor::world::volumes::MeshInsertDocument&            meshInserts;
 		engine::editor::world::volumes::dungeons::DungeonPortalDocument& dungeonPortals;
 

@@ -1,0 +1,14 @@
+{
+  "lcdlln_runtime_manifest_version": 3,
+  "zone_id": "cell_n000_e000",
+  "terrain_heightmap": null,
+  "terrain_splatmap": null,
+  "terrain_grass_mask": null,
+  "source_edit_format_version": 1,
+  "terrain_world_size_m": 10000,
+  "texture_assets": [],
+  "exported_textures": [],
+  "texture_assets_source_missing": [],
+  "object_prefab_ids": [],
+  "note": "Prototype cellule monde — Oracle / centre de l'empire. Convention cell_<N|S>DDD_<E|W>DDD (voir docs/world_cell_grid_convention.md). Stub minimal : aucun terrain ni splat ; l'éditeur générera les binaires (terrain_height.r16h, terrain_splat.slap, …) au premier Save après application d'un Zone Preset (M100.46)."
+}

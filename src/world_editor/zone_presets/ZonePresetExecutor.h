@@ -12,7 +12,6 @@
 namespace engine::editor::world
 {
 	class CommandStack;
-	class WaterDocument;
 }
 
 namespace engine::editor::world::zone_presets
@@ -33,12 +32,12 @@ namespace engine::editor::world::zone_presets
 	{
 		uint32_t totalSteps         = 0u;
 		uint32_t commandsPushed     = 0u; ///< nombre d'ICommand vraiment exécutées
-		uint32_t unsupportedSkipped = 0u; ///< type connu mais pas câblé (incrément 2b)
+		uint32_t unsupportedSkipped = 0u; ///< type connu mais pas câblé (incrément 2d)
 		uint32_t failed             = 0u; ///< dispatch failed (catalog introuvable, etc.)
 		bool     wasCancelled       = false;
 	};
 
-	/// Moteur d'exécution d'un zone preset (M100.46 incrément 2b).
+	/// Moteur d'exécution d'un zone preset (M100.46 incréments 2b + 2d).
 	///
 	/// Workflow (cf. spec §D) :
 	///   1. Vide la zone (`ResetEditedZoneDocuments`) — destructif en MVP.
@@ -50,11 +49,14 @@ namespace engine::editor::world::zone_presets
 	///      d. arrêt si `progressCallback` retourne false OU si
 	///         `RequestCancel()` a été appelé entretemps.
 	///
-	/// Une opération non supportée par le dispatcher (11 des 14 types en
-	/// MVP incrément 2b) est ignorée silencieusement avec un log info,
-	/// conformément au comportement du spec pour la section `decoration`
-	/// avec types inconnus. Le compteur `unsupportedSkipped` du résumé
-	/// permet à l'UI d'informer l'utilisateur.
+	/// Types câblés (incréments 2b + 2c + 2d) : `place_cave`, `place_overhang`,
+	/// `place_arch`, `place_dungeon`, `mountain_macro`, `valley_macro`,
+	/// `lake_polygon`, `river_manual` (8 sur 14). Les 4 restants
+	/// (`coastline`, `river_network`, `hydraulic_erosion`,
+	/// `thermal_wind_erosion`) sont ignorés silencieusement avec un log info
+	/// (besoin d'extraire la simulation des Tools UI — itération 2e+). Le
+	/// compteur `unsupportedSkipped` du résumé permet à l'UI d'informer
+	/// l'utilisateur.
 	class ZonePresetExecutor
 	{
 	public:
@@ -64,12 +66,13 @@ namespace engine::editor::world::zone_presets
 
 		/// Exécute `preset`. `commandStack` reçoit les commandes (une par
 		/// opération supportée). `progressCallback` peut être nul. Renvoie
-		/// un résumé d'exécution.
+		/// un résumé d'exécution. Les 4 documents (terrain, water,
+		/// meshInserts, dungeonPortals) sont accédés via `dispatchCtx` —
+		/// utilisés à la fois pour le reset initial et par les dispatchers.
 		ExecutionSummary Execute(const ZonePreset& preset,
 			const CustomizationParams& custom,
 			engine::editor::world::CommandStack& commandStack,
 			const DispatchContext& dispatchCtx,
-			engine::editor::world::WaterDocument& water,
 			const ProgressCallback& progressCallback);
 
 		/// Demande l'arrêt de l'exécution en cours. Appelable depuis le

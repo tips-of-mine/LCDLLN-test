@@ -13,7 +13,6 @@ namespace engine::editor::world::zone_presets
 		const CustomizationParams& custom,
 		engine::editor::world::CommandStack& commandStack,
 		const DispatchContext& dispatchCtx,
-		engine::editor::world::WaterDocument& water,
 		const ProgressCallback& progressCallback)
 	{
 		m_cancelRequested.store(false, std::memory_order_release);
@@ -22,7 +21,7 @@ namespace engine::editor::world::zone_presets
 		summary.totalSteps = static_cast<uint32_t>(preset.operations.size());
 
 		// 1) Reset destructif de la zone (M100.46 §D.3).
-		ResetEditedZoneDocuments(dispatchCtx.terrain, water,
+		ResetEditedZoneDocuments(dispatchCtx.terrain, dispatchCtx.water,
 			dispatchCtx.meshInserts, dispatchCtx.dungeonPortals);
 		LOG_INFO(EditorWorld, "[ZonePresetExecutor] Zone reset pour '{}' ({} ops)",
 			preset.id, summary.totalSteps);

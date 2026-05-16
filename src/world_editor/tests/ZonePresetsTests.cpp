@@ -984,6 +984,143 @@ namespace
 		REQUIRE(rc == zp::DispatchResult::Failed);
 	}
 
+	// --- Happy path : ops sim avec Config + chunks préchargés -------------
+	//
+	// Ces tests valident le wiring complet :
+	//   BuildGridFromLoadedChunks → Run*Simulation → command builder.
+	// Petits paramètres (50 gouttes, lifetime 10) pour rester < 100 ms.
+
+	/// Helper : remplit les 4 chunks (0,0)..(1,1) d'une pente diagonale
+	/// pour que les sims aient quelque chose à éroder / suivre.
+	void InjectSlopedHeights(ew::TerrainDocument& terrain,
+		const engine::core::Config& cfg, float maxHeight)
+	{
+		const int kRes = static_cast<int>(engine::world::terrain::kTerrainResolution);
+		for (int cz = 0; cz < 2; ++cz)
+		{
+			for (int cx = 0; cx < 2; ++cx)
+			{
+				auto chunk = terrain.EnsureLoaded(cfg, cx, cz);
+				REQUIRE(chunk);
+				for (int iz = 0; iz < kRes; ++iz)
+				{
+					for (int ix = 0; ix < kRes; ++ix)
+					{
+						const float gx = static_cast<float>(cx * (kRes - 1) + ix);
+						const float gz = static_cast<float>(cz * (kRes - 1) + iz);
+						const float totalDim = static_cast<float>(2 * (kRes - 1));
+						// Pente diagonale 0..maxHeight.
+						chunk->heights[static_cast<size_t>(iz) * kRes + ix] =
+							maxHeight * (gx + gz) / (2.0f * totalDim);
+					}
+				}
+			}
+		}
+	}
+
+	/// hydraulic_erosion happy path : Config + chunks pentus → dispatcher
+	/// renvoie Ok et la commande "Hydraulic Erosion" est construite.
+	void Test_Dispatcher_HydraulicErosion_OkWithConfig()
+	{
+		engine::core::Config cfg;
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		InjectSlopedHeights(terrain, cfg, 100.0f);
+
+		zp::ZonePresetOperation op;
+		op.type    = "hydraulic_erosion";
+		// Petits params pour test rapide. rngSeed fixe pour déterminisme.
+		op.rawJson = R"({"type":"hydraulic_erosion","numDroplets":50,"maxLifetimeSteps":10,"rngSeed":7})";
+
+		const zp::DispatchContext ctx{
+			terrain, water, meshDoc, portalDoc,
+			caveCat, ohCat, arCat, dgCat, &cfg };
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		REQUIRE(cmd != nullptr);
+		REQUIRE(std::string(cmd->GetLabel()) == "Hydraulic Erosion");
+	}
+
+	/// thermal_wind_erosion happy path : valide le wiring du wrapper
+	/// `ThermalWindErosionParams` (incrément 2e+ : preset overlay) sans
+	/// preset, défauts struct + JSON.
+	void Test_Dispatcher_ThermalWindErosion_OkWithConfig()
+	{
+		engine::core::Config cfg;
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+
+		InjectSlopedHeights(terrain, cfg, 80.0f);
+
+		zp::ZonePresetOperation op;
+		op.type    = "thermal_wind_erosion";
+		// Thermal seulement (rapide). 3 passes pour test minimal.
+		op.rawJson = R"({"type":"thermal_wind_erosion","thermalEnabled":true,"windEnabled":false,"numPasses":3})";
+
+		const zp::DispatchContext ctx{
+			terrain, water, meshDoc, portalDoc,
+			caveCat, ohCat, arCat, dgCat, &cfg };
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		REQUIRE(cmd != nullptr);
+		REQUIRE(std::string(cmd->GetLabel()) == "Thermal/Wind Erosion");
+	}
+
+	/// coastline happy path : sea level réglé + smoothing seul (cliffs
+	/// désactivés pour rapidité). Vérifie l'insertion du LakeInstance
+	/// océan + construction de la commande.
+	void Test_Dispatcher_Coastline_OkWithConfig()
+	{
+		engine::core::Config cfg;
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		ew::TerrainDocument terrain;
+		ew::WaterDocument water;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		InjectSlopedHeights(terrain, cfg, 80.0f);
+
+		zp::ZonePresetOperation op;
+		op.type    = "coastline";
+		op.rawJson = R"({"type":"coastline","seaLevelMeters":40,"beachEnabled":true,"cliffsEnabled":false})";
+
+		const zp::DispatchContext ctx{
+			terrain, water, meshDoc, portalDoc,
+			caveCat, ohCat, arCat, dgCat, &cfg };
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		REQUIRE(cmd != nullptr);
+		REQUIRE(std::string(cmd->GetLabel()) == "Coastline");
+
+		// Push pour valider que Execute() ne crash pas (côté coastline
+		// le LakeInstance océan est inséré ET le sea level écrit dans
+		// WaterDocument).
+		stack.Push(std::move(cmd));
+		REQUIRE(NearEq(water.GetOcean().seaLevelMeters, 40.0));
+		REQUIRE(water.Get().lakes.size() == 1u);
+		REQUIRE(water.Get().lakes[0].isOcean);
+	}
+
 	// --- ZonePresetExecutor (incrément 2b) ---------------------------------
 
 	/// Exécution complète : reset + boucle ops. Vérifie le résumé.
@@ -1139,6 +1276,9 @@ int main()
 	Test_Dispatcher_ThermalWindErosion_RejectsAllDisabled();
 	Test_Dispatcher_RiverNetwork_RejectsEmptySources();
 	Test_Dispatcher_Coastline_RequiresConfig();
+	Test_Dispatcher_HydraulicErosion_OkWithConfig();
+	Test_Dispatcher_ThermalWindErosion_OkWithConfig();
+	Test_Dispatcher_Coastline_OkWithConfig();
 	Test_Executor_RunsAndSummarizes();
 	Test_Executor_CancelViaCallback();
 

@@ -16,6 +16,7 @@ namespace engine::editor::world::volumes
 	class MeshInsertDocument;
 	namespace caves    { class CaveCatalog; }
 	namespace overhangs { class OverhangCatalog; }
+	namespace arches   { class ArchCatalog; }
 	namespace dungeons
 	{
 		class DungeonPortalDocument;
@@ -44,6 +45,7 @@ namespace engine::editor::world::zone_presets
 
 		const engine::editor::world::volumes::caves::CaveCatalog&      caveCatalog;
 		const engine::editor::world::volumes::overhangs::OverhangCatalog& overhangCatalog;
+		const engine::editor::world::volumes::arches::ArchCatalog&     archCatalog;
 		const engine::editor::world::volumes::dungeons::DungeonCatalog& dungeonCatalog;
 	};
 

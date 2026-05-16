@@ -8,6 +8,7 @@
 #include "src/world_editor/core/CommandStack.h"
 #include "src/world_editor/terrain/TerrainDocument.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
+#include "src/world_editor/volumes/arches/ArchCatalog.h"
 #include "src/world_editor/volumes/caves/CaveCatalog.h"
 #include "src/world_editor/volumes/dungeons/DungeonCatalog.h"
 #include "src/world_editor/volumes/dungeons/DungeonPortalDocument.h"
@@ -449,9 +450,10 @@ namespace
 		ew::TerrainDocument& t, vol::MeshInsertDocument& m,
 		vol::dungeons::DungeonPortalDocument& d,
 		vol::caves::CaveCatalog& cv, vol::overhangs::OverhangCatalog& oh,
+		vol::arches::ArchCatalog& ar,
 		vol::dungeons::DungeonCatalog& dc)
 	{
-		return zp::DispatchContext{ t, m, d, cv, oh, dc };
+		return zp::DispatchContext{ t, m, d, cv, oh, ar, dc };
 	}
 
 	/// place_cave : trouve l'entrée catalogue, construit une commande
@@ -465,6 +467,7 @@ namespace
 				"aabbMin":[-2,0,-2],"aabbMax":[2,3,2],"entrancePoint":[0,0,-2]}]
 		})", err));
 		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
 		vol::dungeons::DungeonCatalog dgCat;
 
 		ew::TerrainDocument terrain;
@@ -482,7 +485,7 @@ namespace
 			"autoSnapToGround":true
 		})";
 
-		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
 		std::unique_ptr<ew::ICommand> cmd;
 		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
 		REQUIRE(rc == zp::DispatchResult::Ok);
@@ -504,6 +507,7 @@ namespace
 		std::string err;
 		(void)caveCat.ParseJson(R"({"caves":[]})", err);
 		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
 		vol::dungeons::DungeonCatalog dgCat;
 		ew::TerrainDocument terrain;
 		vol::MeshInsertDocument meshDoc;
@@ -513,7 +517,7 @@ namespace
 		op.type    = "place_cave";
 		op.rawJson = R"({"type":"place_cave","catalogId":"ghost","worldPosition":[0,0,0]})";
 
-		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
 		std::unique_ptr<ew::ICommand> cmd;
 		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
 		REQUIRE(rc == zp::DispatchResult::Failed);
@@ -525,6 +529,7 @@ namespace
 	{
 		vol::caves::CaveCatalog caveCat;
 		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
 		vol::dungeons::DungeonCatalog dgCat;
 		std::string err;
 		REQUIRE(dgCat.ParseJson(R"({
@@ -545,7 +550,7 @@ namespace
 			"triggerRadius":4
 		})";
 
-		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
 		std::unique_ptr<ew::ICommand> cmd;
 		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
 		REQUIRE(rc == zp::DispatchResult::Ok);
@@ -556,11 +561,57 @@ namespace
 		REQUIRE(portalDoc.All()[0].requiredLevel == 15u); // depuis le catalog
 	}
 
+	/// place_arch : géométrie dérivée (midpoint, yaw, scale) à partir
+	/// des deux piliers + résolution du catalog. Mirror de ArchTool::Place.
+	void Test_Dispatcher_PlaceArch_DerivesGeometry()
+	{
+		vol::caves::CaveCatalog caveCat;
+		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
+		vol::dungeons::DungeonCatalog dgCat;
+		std::string err;
+		// Arche native : pillarA=[-2,0,0], pillarB=[2,0,0] → span natif = 4 m.
+		REQUIRE(arCat.ParseJson(R"({
+			"arches":[{"id":"a1","gltf":"arches/a1.gltf","displayName":"Arche test",
+				"archAnchorA":[-2.0,0.0,0.0],"archAnchorB":[2.0,0.0,0.0],
+				"archHeight":3.0,"aabbMin":[-3,0,-1],"aabbMax":[3,4,1]}]
+		})", err));
+
+		ew::TerrainDocument terrain;
+		vol::MeshInsertDocument meshDoc;
+		vol::dungeons::DungeonPortalDocument portalDoc;
+		ew::CommandStack stack;
+
+		zp::ZonePresetOperation op;
+		op.type    = "place_arch";
+		// Monde : A=(0,10,0), B=(8,10,0) → span = 8 m, scale = 8/4 = 2,
+		// midpoint = (4,10,0), yaw = atan2(0,8) = 0 deg.
+		op.rawJson = R"({
+			"type":"place_arch","catalogId":"a1",
+			"pillarA":[0,10,0],"pillarB":[8,10,0]
+		})";
+
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
+		std::unique_ptr<ew::ICommand> cmd;
+		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
+		REQUIRE(rc == zp::DispatchResult::Ok);
+		stack.Push(std::move(cmd));
+		REQUIRE(meshDoc.Size() == 1u);
+		const auto& inst = meshDoc.All()[0];
+		REQUIRE(inst.insertCategory == "arch");
+		REQUIRE(NearEq(inst.worldPosition.x, 4.0));    // midpoint
+		REQUIRE(NearEq(inst.worldPosition.y, 10.0));
+		REQUIRE(NearEq(inst.worldPosition.z, 0.0));
+		REQUIRE(NearEq(inst.uniformScale, 2.0));        // 8 / 4
+		REQUIRE(std::fabs(inst.eulerRotationDeg.y) < 0.1f); // yaw ≈ 0 deg
+	}
+
 	/// Type non câblé en MVP → Unsupported, pas de crash.
 	void Test_Dispatcher_UnsupportedType_GracefulSkip()
 	{
 		vol::caves::CaveCatalog caveCat;
 		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
 		vol::dungeons::DungeonCatalog dgCat;
 		ew::TerrainDocument terrain;
 		vol::MeshInsertDocument meshDoc;
@@ -570,7 +621,7 @@ namespace
 		op.type    = "hydraulic_erosion";  // connu mais non câblé
 		op.rawJson = R"({"type":"hydraulic_erosion","numDroplets":1000})";
 
-		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat);
+		const auto ctx = MakeMinimalCtx(terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat);
 		std::unique_ptr<ew::ICommand> cmd;
 		const auto rc = zp::DispatchOperation(op, zp::CustomizationParams{}, ctx, cmd);
 		REQUIRE(rc == zp::DispatchResult::Unsupported);
@@ -589,6 +640,7 @@ namespace
 				"entrancePoint":[0,0,0]}]
 		})", err));
 		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
 		vol::dungeons::DungeonCatalog dgCat;
 		REQUIRE(dgCat.ParseJson(R"({"dungeons":[{"id":"dt","minDifficulty":1,"maxDifficulty":1}]})", err));
 
@@ -627,7 +679,7 @@ namespace
 		preset.operations.push_back(op4);
 
 		zp::ZonePresetExecutor executor;
-		const zp::DispatchContext ctx{ terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat };
+		const zp::DispatchContext ctx{ terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat };
 		int callbackCount = 0;
 		const auto summary = executor.Execute(preset, zp::CustomizationParams{},
 			stack, ctx, water,
@@ -654,6 +706,7 @@ namespace
 			"caves":[{"id":"c1","gltf":"x.gltf","aabbMin":[-1,0,-1],"aabbMax":[1,2,1]}]
 		})", err));
 		vol::overhangs::OverhangCatalog ohCat;
+		vol::arches::ArchCatalog arCat;
 		vol::dungeons::DungeonCatalog dgCat;
 
 		ew::TerrainDocument terrain;
@@ -673,7 +726,7 @@ namespace
 		}
 
 		zp::ZonePresetExecutor executor;
-		const zp::DispatchContext ctx{ terrain, meshDoc, portalDoc, caveCat, ohCat, dgCat };
+		const zp::DispatchContext ctx{ terrain, meshDoc, portalDoc, caveCat, ohCat, arCat, dgCat };
 		const auto summary = executor.Execute(preset, zp::CustomizationParams{},
 			stack, ctx, water,
 			[](const zp::ExecutionProgress& p) {
@@ -714,6 +767,7 @@ int main()
 	Test_Dispatcher_PlaceCave_BuildsCommand();
 	Test_Dispatcher_PlaceCave_UnknownCatalog();
 	Test_Dispatcher_PlaceDungeon_BuildsCommand();
+	Test_Dispatcher_PlaceArch_DerivesGeometry();
 	Test_Dispatcher_UnsupportedType_GracefulSkip();
 	Test_Executor_RunsAndSummarizes();
 	Test_Executor_CancelViaCallback();

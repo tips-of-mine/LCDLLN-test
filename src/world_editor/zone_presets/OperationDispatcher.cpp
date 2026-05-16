@@ -3,6 +3,7 @@
 #include "src/shared/core/Log.h"
 #include "src/world_editor/volumes/MeshInsertDocument.h"
 #include "src/world_editor/volumes/MeshInsertInstance.h"
+#include "src/world_editor/volumes/arches/ArchCatalog.h"
 #include "src/world_editor/volumes/arches/PlaceArchCommand.h"
 #include "src/world_editor/volumes/caves/CaveCatalog.h"
 #include "src/world_editor/volumes/caves/PlaceCaveCommand.h"
@@ -14,6 +15,7 @@
 #include "src/world_editor/volumes/overhangs/PlaceOverhangCommand.h"
 #include "src/world_editor/zone_presets/OperationParams.h"
 
+#include <cmath>
 #include <utility>
 
 namespace engine::editor::world::zone_presets
@@ -148,6 +150,77 @@ namespace engine::editor::world::zone_presets
 			return DispatchResult::Ok;
 		}
 
+		// --- place_arch -----------------------------------------------------
+
+		/// Lit un Vec3 (3 floats aplatis) depuis `params` sous la clé `key`.
+		bool ReadVec3Key(const OperationParams& params, const char* key, Vec3& out)
+		{
+			std::vector<double> v;
+			if (!params.GetNumberList(key, v) || v.size() < 3u) return false;
+			out.x = static_cast<float>(v[0]);
+			out.y = static_cast<float>(v[1]);
+			out.z = static_cast<float>(v[2]);
+			return true;
+		}
+
+		DispatchResult DispatchPlaceArch(const OperationParams& params,
+			const DispatchContext& ctx,
+			std::unique_ptr<engine::editor::world::ICommand>& outCmd)
+		{
+			std::string catalogId;
+			if (!params.GetString("catalogId", catalogId) || catalogId.empty())
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] place_arch : catalogId manquant");
+				return DispatchResult::Failed;
+			}
+			const auto* entry = ctx.archCatalog.FindById(catalogId);
+			if (entry == nullptr)
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] place_arch : catalogId '{}' introuvable",
+					catalogId);
+				return DispatchResult::Failed;
+			}
+			Vec3 pillarA{}, pillarB{};
+			if (!ReadVec3Key(params, "pillarA", pillarA)
+				|| !ReadVec3Key(params, "pillarB", pillarB))
+			{
+				LOG_WARN(EditorWorld, "[OperationDispatcher] place_arch : pillarA/B manquants");
+				return DispatchResult::Failed;
+			}
+
+			// Géométrie dérivée (mirror de ArchTool::Place) :
+			//   worldPosition = midpoint(A, B),
+			//   eulerRotationDeg.y = atan2(Bz-Az, Bx-Ax) en degrés,
+			//   uniformScale = span_world / span_natif (clampé > 0).
+			constexpr float kRadToDeg = 57.29577951308232f;
+			const float dx = pillarB.x - pillarA.x;
+			const float dz = pillarB.z - pillarA.z;
+			const float spanWorld  = std::sqrt(dx * dx + dz * dz);
+			const float spanNative = entry->NativeSpanMeters();
+			const float scale = (spanNative > 0.001f && spanWorld > 0.001f)
+				? (spanWorld / spanNative) : 1.0f;
+
+			using engine::editor::world::volumes::MeshInsertInstance;
+			using engine::editor::world::volumes::arches::PlaceArchCommand;
+
+			MeshInsertInstance inst;
+			inst.guid              = 0u;
+			inst.gltfRelativePath  = entry->gltfRelativePath;
+			inst.worldPosition.x   = 0.5f * (pillarA.x + pillarB.x);
+			inst.worldPosition.y   = 0.5f * (pillarA.y + pillarB.y);
+			inst.worldPosition.z   = 0.5f * (pillarA.z + pillarB.z);
+			inst.eulerRotationDeg  = { 0.0f, std::atan2(dz, dx) * kRadToDeg, 0.0f };
+			inst.uniformScale      = scale;
+			inst.insertCategory    = "arch";
+			inst.displayName       = entry->displayName.empty() ? entry->id : entry->displayName;
+			inst.hasInteriorVolume   = false;
+			inst.receivesAudioReverb = false;
+			inst.allowsWaterIngress  = false;
+
+			outCmd = std::make_unique<PlaceArchCommand>(ctx.meshInserts, std::move(inst));
+			return DispatchResult::Ok;
+		}
+
 		// --- place_dungeon --------------------------------------------------
 
 		DispatchResult DispatchPlaceDungeon(const OperationParams& params,
@@ -212,9 +285,10 @@ namespace engine::editor::world::zone_presets
 		OperationParams params = OperationParams::Parse(op.rawJson);
 		ApplyCustomization(params, op.affectedBy, custom);
 
-		if (op.type == "place_cave")    return DispatchPlaceCave(params, ctx, outCmd);
+		if (op.type == "place_cave")     return DispatchPlaceCave(params, ctx, outCmd);
 		if (op.type == "place_overhang") return DispatchPlaceOverhang(params, ctx, outCmd);
-		if (op.type == "place_dungeon") return DispatchPlaceDungeon(params, ctx, outCmd);
+		if (op.type == "place_arch")     return DispatchPlaceArch(params, ctx, outCmd);
+		if (op.type == "place_dungeon")  return DispatchPlaceDungeon(params, ctx, outCmd);
 
 		// Types connus mais non câblés en MVP incrément 2b — l'executor
 		// logge et continue (comportement aligné sur le skip silencieux

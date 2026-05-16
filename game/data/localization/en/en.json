@@ -213,6 +213,7 @@
   "auth.error.terms_session_inactive": "Terms session is not active.",
   "auth.error.character_session_inactive": "Character creation session is not active.",
   "auth.error.invalid_credentials": "Username or password incorrect.",
+  "auth.error.already_logged_in": "An active session already exists with this login. If this is not you, contact support and change your password immediately.",
   "auth.info.register_ok": "Registration OK. Enter the verification code sent by email.",
   "auth.info.tag_id": "Your TAG-ID:",
   "auth.email_confirmation.title": "Registration successful",

@@ -400,6 +400,24 @@ int main(int argc, char** argv)
 			sessionCharMap.Remove(connId);
 		});
 
+	// Protection in-world contre le double-login : si un compte est deja en jeu
+	// (EnterWorld valide), une seconde authentification du meme compte est refusee
+	// au lieu de kicker le joueur en place. CreateSession interroge ce hook sur
+	// detection de duplicate-login. Chaine de resolution :
+	//   existingSessionId -> connId (ConnectionSessionMap::FindConnIdForSession)
+	//                     -> SessionCharacterMap::GetByConnId : present == en jeu.
+	// Si la session existante n'est PAS en jeu (auth pre-monde transitoire, ex. le
+	// double-auth du flux de connexion client), le hook renvoie false et la policy
+	// KickExisting habituelle s'applique : le flux client n'est pas casse.
+	sessionManager.SetSessionInWorldHook(
+		[&connSessionMap, &sessionCharMap](uint64_t existingSessionId) -> bool
+		{
+			auto connId = connSessionMap.FindConnIdForSession(existingSessionId);
+			if (!connId)
+				return false;
+			return sessionCharMap.GetByConnId(*connId).has_value();
+		});
+
 	engine::server::CharacterEnterWorldHandler characterEnterWorldHandler;
 	characterEnterWorldHandler.SetServer(&server);
 	characterEnterWorldHandler.SetSessionManager(&sessionManager);

@@ -7216,6 +7216,84 @@ namespace engine
 	        VkImageView backbufferView  = m_vkSwapchain.GetImageView(imageIndex);
 	        m_fgRegistry.bindImage(m_fgBackbufferId, backbufferImage, backbufferView);
 	        m_frameGraph.execute(m_vkDeviceContext.GetDevice(), m_vkDeviceContext.GetPhysicalDevice(), m_vmaAllocator, fr.cmdBuffer, m_fgRegistry, frameIndex, extent, 2u, m_vkDeviceContext.SupportsSynchronization2(), m_profiler.IsInitialized() ? &m_profiler : nullptr);
+
+	        // M100.34 incrément 2 — Pont SceneColor_LDR → EditorViewportRenderTarget.
+	        // Copie la scène rendue (post-tonemap, post-TAA, AVANT ImGui — donc le
+	        // ScenePanel n'affiche pas son propre overlay = pas de récursion) vers
+	        // l'image offscreen. Barriers à la main parce qu'on est hors FrameGraph
+	        // ici (juste après son execute()).
+	        if (m_worldEditorExe && m_editorViewportTarget.IsValid()
+	            && m_fgSceneColorLDRId != engine::render::kInvalidResourceId)
+	        {
+	            VkImage sceneLdr = m_fgRegistry.getImage(m_fgSceneColorLDRId);
+	            VkImage dst      = m_editorViewportTarget.GetImage();
+	            if (sceneLdr != VK_NULL_HANDLE && dst != VK_NULL_HANDLE)
+	            {
+	                // Step 1: transitions de layout.
+	                //   src (SceneColor_LDR) : `TRANSFER_SRC_OPTIMAL` post-CopyPresent
+	                //     (cf. ligne 4538 — le dernier consumer FrameGraph le lit
+	                //     en TransferSrc) → on garde tel quel, pas de barrier.
+	                //   dst (ma target) : `SHADER_READ_ONLY` (init PR 1) →
+	                //     `TRANSFER_DST_OPTIMAL` pour le blit.
+	                VkImageMemoryBarrier bDst{};
+	                bDst.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	                bDst.oldLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	                bDst.newLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	                bDst.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	                bDst.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	                bDst.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	                bDst.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	                bDst.image            = dst;
+	                bDst.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+	                vkCmdPipelineBarrier(fr.cmdBuffer,
+	                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	                    VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                    0, 0, nullptr, 0, nullptr, 1, &bDst);
+
+	                // Step 2: vkCmdBlitImage (gère size + format mismatch via
+	                // LINEAR filter — utile parce que SceneColor_LDR est au
+	                // format swapchain (typiquement BGRA8) et ma target est RGBA8).
+	                VkImageBlit region{};
+	                region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+	                region.srcOffsets[0]  = { 0, 0, 0 };
+	                region.srcOffsets[1]  = {
+	                    static_cast<int32_t>(extent.width),
+	                    static_cast<int32_t>(extent.height),
+	                    1
+	                };
+	                region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+	                region.dstOffsets[0]  = { 0, 0, 0 };
+	                region.dstOffsets[1]  = {
+	                    static_cast<int32_t>(m_editorViewportTarget.GetWidth()),
+	                    static_cast<int32_t>(m_editorViewportTarget.GetHeight()),
+	                    1
+	                };
+	                vkCmdBlitImage(fr.cmdBuffer,
+	                    sceneLdr,  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                    dst,       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                    1, &region, VK_FILTER_LINEAR);
+
+	                // Step 3: transition retour de dst → SHADER_READ_ONLY pour
+	                // qu'ImGui::Image puisse sampler dans le ScenePanel cette
+	                // même frame. SceneColor_LDR reste en TRANSFER_SRC ; le
+	                // FrameGraph re-transitionnera au prochain frame selon
+	                // ses propres `read/write` declarations (auto-géré).
+	                VkImageMemoryBarrier bDst2{};
+	                bDst2.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	                bDst2.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	                bDst2.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	                bDst2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	                bDst2.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	                bDst2.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	                bDst2.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	                bDst2.image            = dst;
+	                bDst2.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+	                vkCmdPipelineBarrier(fr.cmdBuffer,
+	                    VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	                    0, 0, nullptr, 0, nullptr, 1, &bDst2);
+	            }
+	        }
 	    }
 	    LOG_DEBUG(Render, "[DIAG] FrameGraph execute returned frame={}", m_currentFrame);
 

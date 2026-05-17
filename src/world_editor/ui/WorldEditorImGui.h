@@ -160,6 +160,18 @@ namespace engine::editor
 		/// du WorldEditorImGui (cycle Shell ↔ dialog).
 		std::unique_ptr<engine::editor::world::zone_presets::ZonePresetDialog> m_zonePresetDialog;
 		bool m_showTextureLibrary = false;  // pilote par le menu Affichage (Task 14)
+		/// Pattern drag-stable pour le slider "Heure" du panneau Atmosphere.
+		/// Sans ça, le slider est inutilisable parce que `dn.timeOfDay` est
+		/// re-écrit chaque frame par le cycle jour/nuit (timeScale != 0) et
+		/// ImGui interprète la valeur changeante externellement comme un
+		/// "reset" du drag state.
+		///
+		/// Tant que `m_atmosphereHourEditing` est vrai (l'utilisateur tient
+		/// le slider via `IsItemActive`), le slider lit `m_atmosphereHourLocal`
+		/// au lieu de la valeur live du cycle. Le SetTime du DayNightCycle
+		/// est appelé à chaque tick. Au release : retour à la valeur live.
+		bool  m_atmosphereHourEditing = false;
+		float m_atmosphereHourLocal   = 0.0f;
 		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.

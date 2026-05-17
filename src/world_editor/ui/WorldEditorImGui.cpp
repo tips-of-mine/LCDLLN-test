@@ -1226,10 +1226,29 @@ namespace engine::editor
 			else
 			{
 				const engine::render::DayNightCycle::State& dn = m_dayNight->GetState();
-				float tod = dn.timeOfDay;
+				// Petit padding pour que le slider ne soit pas collé contre la
+				// barre d'onglets du dock (la zone de clic du tab interceptait
+				// les events au-dessus du slider, le rendant difficile à drag).
+				ImGui::Dummy(ImVec2(0.0f, 2.0f));
+
+				// Pattern drag-stable : tant que l'utilisateur tient le slider,
+				// on lit la valeur locale snapshotée pour éviter qu'ImGui ne
+				// reset son drag state à cause de `dn.timeOfDay` mis à jour
+				// chaque frame par le cycle (timeScale = 60 ⇒ +0.000278h/frame).
+				float tod = m_atmosphereHourEditing
+					? m_atmosphereHourLocal
+					: dn.timeOfDay;
 				if (ImGui::SliderFloat("Heure (0-24)", &tod, 0.0f, 24.0f, "%.2f h"))
 				{
+					m_atmosphereHourLocal   = tod;
+					m_atmosphereHourEditing = true;
 					m_dayNight->SetTime(tod);
+				}
+				// Detection release : si plus actif, on relâche le snapshot
+				// et le slider re-suit la valeur live du cycle.
+				if (m_atmosphereHourEditing && !ImGui::IsItemActive())
+				{
+					m_atmosphereHourEditing = false;
 				}
 				float ts = m_dayNight->GetTimeScale();
 				if (ImGui::SliderFloat("Vitesse temps (s/heure)", &ts, 0.1f, 600.0f, "%.1f"))

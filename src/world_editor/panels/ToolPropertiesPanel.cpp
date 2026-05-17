@@ -8,6 +8,7 @@
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/presets/ToolPresetApply.h"
 #include "src/world_editor/ui/PresetDropdownWidget.h"
+#include "src/world_editor/ui/RichTooltipWidget.h"
 #include "src/world_editor/volumes/arches/ArchTool.h"
 #include "src/world_editor/volumes/bridge/Phase11Validator.h"
 #include "src/world_editor/volumes/bridge/VMapBridge.h"
@@ -581,6 +582,8 @@ namespace engine::editor::world::panels
 				}
 				ImGui::SliderFloat("Fréq. bruit (1/m)",
 					&params.noiseFrequency, 0.0005f, 0.05f, "%.4f");
+				engine::editor::world::ui::RichTooltip(
+					std::string(toolId) + ".noiseFrequency");
 			}
 
 			ImGui::Separator();
@@ -606,11 +609,19 @@ namespace engine::editor::world::panels
 					static_cast<double>(v.worldX), static_cast<double>(v.worldZ));
 				// Mode Simple : largeur + hauteur du vertex actif.
 				ImGui::SliderFloat("Largeur base (m)", &v.widthMeters,    10.0f, 2000.0f, "%.1f");
+				engine::editor::world::ui::RichTooltip(
+					std::string(toolId) + ".widthMeters");
 				ImGui::SliderFloat("Hauteur crête (m)", &v.heightMeters,  -1000.0f, 1000.0f, "%.1f");
+				engine::editor::world::ui::RichTooltip(
+					std::string(toolId) + ".heightMeters");
 				if (advanced)
 				{
 					ImGui::SliderFloat("Bruit crête (m)",   &v.noiseAmplitude, 0.0f, 200.0f, "%.1f");
+					engine::editor::world::ui::RichTooltip(
+						std::string(toolId) + ".noiseAmplitude");
 					ImGui::SliderFloat("Asymétrie",         &v.asymmetry,     -1.0f, 1.0f, "%.2f");
+					engine::editor::world::ui::RichTooltip(
+						std::string(toolId) + ".asymmetry");
 				}
 				if (ImGui::Button("Supprimer vertex"))
 				{

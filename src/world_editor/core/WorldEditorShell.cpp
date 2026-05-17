@@ -18,6 +18,7 @@
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"
+#include "src/world_editor/help/HelpContentStore.h"
 #include "src/world_editor/zone_presets/ZonePresetRegistry.h"
 
 #if defined(_WIN32)
@@ -237,6 +238,16 @@ namespace engine::editor::world
 					.LoadFromContentPath(contentRoot);
 			LOG_INFO(EditorWorld,
 				"[WorldEditorShell] M100.46 {} zone preset(s) chargé(s)", zonePresets);
+
+			// M100.47 incrément 1 — catalogue de tooltips
+			// (`editor/tooltips/*.json`), consommé par RichTooltipWidget
+			// (incrément 3) au survol des sliders dans les
+			// ToolPropertiesPanel.
+			const size_t tooltips =
+				engine::editor::world::help::HelpContentStore::Instance()
+					.LoadFromContentPath(contentRoot);
+			LOG_INFO(EditorWorld,
+				"[WorldEditorShell] M100.47 {} tooltip(s) chargé(s)", tooltips);
 		}
 
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel

@@ -668,8 +668,18 @@ namespace engine
 		// --world-editor qui active le shell M43.x). Activée par le flag CLI
 		// --editor-world ou par editor.world.enabled = true dans config.json.
 		// Les deux shells peuvent cohabiter pendant la transition.
+		//
+		// **Auto-activation pour `lcdlln_world_editor.exe`** : depuis M100.46
+		// incrément 3 (dialog Zone Presets), l'éditeur monde a besoin du
+		// `WorldEditorShell` pour résoudre les 4 documents + 4 catalogs. Sans
+		// le Shell, l'entrée menu « Appliquer un preset de zone… » est grisée
+		// (m_shell nul). Le binaire `--world-editor` implique donc
+		// `--editor-world` par défaut. La warning « deux shells coexistent »
+		// reste loguée plus bas en info — c'est attendu.
 		const bool worldEditorWorldFlag =
-			HasCliFlag(argc, argv, "--editor-world") || m_cfg.GetBool("editor.world.enabled", false);
+			HasCliFlag(argc, argv, "--editor-world")
+			|| m_cfg.GetBool("editor.world.enabled", false)
+			|| m_worldEditorExe;
 
 		if (m_worldEditorExe)
 		{
@@ -751,10 +761,19 @@ namespace engine
 		// public si un sous-système a besoin de le savoir.
 		if (worldEditorWorldFlag)
 		{
-			if (m_worldEditorExe)
+			// `--world-editor` implique désormais `--editor-world` (M100.46
+			// incrément 3 — la dialog Zone Presets exige le Shell). On
+			// log seulement si l'utilisateur a explicitement combiné les
+			// deux flags ou réglé `editor.world.enabled = true` ET lancé
+			// l'exe éditeur — pour signaler la coexistence des deux shells
+			// (M43.x toolbar + M100.1 WorldEditorShell).
+			const bool worldEditorWorldExplicit =
+				HasCliFlag(argc, argv, "--editor-world")
+				|| m_cfg.GetBool("editor.world.enabled", false);
+			if (m_worldEditorExe && worldEditorWorldExplicit)
 			{
-				LOG_WARN(Core,
-					"[Boot] --world-editor ET --editor-world activés — cas non-supporté ; les deux shells vont coexister");
+				LOG_INFO(Core,
+					"[Boot] --world-editor + --editor-world (ou editor.world.enabled) — les deux shells coexistent");
 			}
 			if (m_editorMode)
 			{

@@ -4544,6 +4544,28 @@ namespace engine
 												VkImage dstImg = reg.getImage(m_fgBackbufferId);
 												if (srcImg == VK_NULL_HANDLE || dstImg == VK_NULL_HANDLE) return;
 												VkExtent2D ext = m_vkSwapchain.GetExtent();
+
+												// M100.34 incrément 4 — En mode éditeur monde, on ne copie PAS
+												// `SceneColor_LDR` vers le backbuffer (sinon le rendu 3D apparaît
+												// dupliqué : une fois en plein écran + une fois dans le ScenePanel).
+												// Le backbuffer est clearé à un gris neutre. ImGui rendra ses panels
+												// par-dessus (incluant le ScenePanel qui affiche le rendu via la
+												// target offscreen — incr 2).
+												if (m_worldEditorExe)
+												{
+													const VkClearColorValue editorBgColor = { { 0.10f, 0.11f, 0.13f, 1.0f } };
+													VkImageSubresourceRange clearRange{};
+													clearRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+													clearRange.baseMipLevel   = 0;
+													clearRange.levelCount     = 1;
+													clearRange.baseArrayLayer = 0;
+													clearRange.layerCount     = 1;
+													vkCmdClearColorImage(cmd, dstImg,
+														VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+														&editorBgColor, 1, &clearRange);
+													return; // skip copy + auth UI blit (pas pertinent en éditeur)
+												}
+
 												bool authPhotoBackdrop = false;
 												const bool presentSolidColorDebug = m_cfg.GetBool("render.debug_present_solid_color.enabled", false);
 												if (presentSolidColorDebug)

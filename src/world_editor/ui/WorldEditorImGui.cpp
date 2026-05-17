@@ -854,6 +854,12 @@ namespace engine::editor
 					}
 				}
 				ImGui::MenuItem("Bibliotheque de textures", nullptr, &m_showTextureLibrary);
+				// Panneau « Atmosphere » (cycle jour/nuit). Le panneau est
+				// dessine inline par `BuildUi` (pas un Shell panel), donc
+				// pas liste dans la boucle Panels() ci-dessus. Toggle direct
+				// via ce flag — corrige la regression apres #622 (suppression
+				// barre M100.1 qui exposait tous les panels).
+				ImGui::MenuItem("Atmosphere (jour/nuit)", nullptr, &m_showAtmospherePanel);
 				ImGui::Separator();
 				if (m_cfg)
 				{
@@ -1217,7 +1223,12 @@ namespace engine::editor
 			// time-of-day (0-24h), timeScale (vitesse du temps), et lecture des
 			// valeurs derivees (direction soleil, couleurs ciel zenith/horizon,
 			// ambient, isDaytime).
-			ImGui::Begin("Atmosphere");
+			// Panneau pilote par `m_showAtmospherePanel` (menu `Vue >
+			// Atmosphere`). Sans ce p_open, l'utilisateur ne pouvait pas
+			// rouvrir le panneau apres l'avoir ferme via la croix du dock.
+			if (m_showAtmospherePanel)
+			{
+			ImGui::Begin("Atmosphere", &m_showAtmospherePanel);
 			if (m_dayNight == nullptr)
 			{
 				ImGui::TextDisabled("DayNightCycle non branche.");
@@ -1302,6 +1313,7 @@ namespace engine::editor
 				}
 			}
 			ImGui::End();
+			} // if (m_showAtmospherePanel)
 
 			ImGui::Begin("Outils");
 			// Etat du terrain - visible en permanence, pour expliquer pourquoi le clic peut etre inactif.

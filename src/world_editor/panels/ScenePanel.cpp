@@ -59,7 +59,13 @@ namespace engine::editor::world::panels
 			// copie depuis SceneColor_LDR pour montrer le rendu réel.
 			if (m_editorViewportTexId != 0u && m_viewportWidth > 0 && m_viewportHeight > 0)
 			{
-				ImGui::Image(reinterpret_cast<ImTextureID>(m_editorViewportTexId),
+				// `ImTextureID` est défini comme `ImU64` (numérique) dans cette
+				// version d'ImGui — `static_cast` direct, pas `reinterpret_cast`
+				// (le cast pointeur échoue sous MSVC C2440). Le `uint64_t`
+				// stocké côté `EditorViewportRenderTarget` est le
+				// `VkDescriptorSet` retourné par `ImGui_ImplVulkan_AddTexture`,
+				// déjà tronqué/casté en uint64.
+				ImGui::Image(static_cast<ImTextureID>(m_editorViewportTexId),
 					avail);
 			}
 			else

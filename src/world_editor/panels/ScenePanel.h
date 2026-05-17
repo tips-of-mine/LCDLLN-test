@@ -2,6 +2,8 @@
 #include "src/world_editor/core/IPanel.h"
 #include "src/world_editor/camera/EditorCameraController.h"
 
+#include <cstdint>
+
 namespace engine::editor::world::panels
 {
 	/// Panneau Scene du shell éditeur monde (M100.1 + M100.4).
@@ -46,10 +48,24 @@ namespace engine::editor::world::panels
 		/// frame pour obtenir la matrice de vue/projection courante.
 		const engine::editor::world::EditorCameraController& GetCamera() const { return m_camera; }
 
+		/// M100.34 incrément 1 — Texture ID ImGui (descriptor VkDescriptorSet
+		/// reinterprété en uint64_t) de l'image offscreen `EditorViewportRenderTarget`
+		/// owned par `Engine`. Renseigné depuis `Engine` chaque frame après
+		/// Init de la target. 0 = pas encore disponible → fallback placeholder
+		/// texte.
+		///
+		/// La PR 1 livre l'infra : le texture ID pointe sur une image **noire**
+		/// (rien n'est encore copié dedans). La PR 2 branche la passe FrameGraph
+		/// qui copie `SceneColor_LDR` dans cette image → le rendu réel apparaîtra
+		/// dans le panneau.
+		void     SetEditorViewportTextureId(uint64_t id) { m_editorViewportTexId = id; }
+		uint64_t GetEditorViewportTextureId() const     { return m_editorViewportTexId; }
+
 	private:
 		bool m_visible = true;
 		int m_viewportWidth = 0;
 		int m_viewportHeight = 0;
 		engine::editor::world::EditorCameraController m_camera;
+		uint64_t m_editorViewportTexId = 0u;
 	};
 }

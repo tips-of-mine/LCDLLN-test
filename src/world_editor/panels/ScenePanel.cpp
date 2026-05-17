@@ -52,11 +52,30 @@ namespace engine::editor::world::panels
 			const ImVec2 avail = ImGui::GetContentRegionAvail();
 			m_viewportWidth = static_cast<int>(avail.x);
 			m_viewportHeight = static_cast<int>(avail.y);
-			ImGui::TextDisabled("Scene viewport — placeholder M100.1.");
-			ImGui::TextWrapped(
-				"La vue 3D principale du monde en édition apparaîtra ici "
-				"à partir de M100.34 (integration rendu offscreen).");
-			ImGui::Text("Viewport courant : %d x %d px", m_viewportWidth, m_viewportHeight);
+
+			// M100.34 incrément 1 — affiche l'image offscreen via ImGui::Image
+			// si l'`EditorViewportRenderTarget` du Engine a fourni un texture ID.
+			// La target est initialement vide (noire) ; la PR 2 branchera la
+			// copie depuis SceneColor_LDR pour montrer le rendu réel.
+			if (m_editorViewportTexId != 0u && m_viewportWidth > 0 && m_viewportHeight > 0)
+			{
+				// `ImTextureID` est défini comme `ImU64` (numérique) dans cette
+				// version d'ImGui — `static_cast` direct, pas `reinterpret_cast`
+				// (le cast pointeur échoue sous MSVC C2440). Le `uint64_t`
+				// stocké côté `EditorViewportRenderTarget` est le
+				// `VkDescriptorSet` retourné par `ImGui_ImplVulkan_AddTexture`,
+				// déjà tronqué/casté en uint64.
+				ImGui::Image(static_cast<ImTextureID>(m_editorViewportTexId),
+					avail);
+			}
+			else
+			{
+				ImGui::TextDisabled("Scene viewport — placeholder M100.1.");
+				ImGui::TextWrapped(
+					"La vue 3D principale du monde en édition apparaîtra ici "
+					"à partir de M100.34 (integration rendu offscreen).");
+				ImGui::Text("Viewport courant : %d x %d px", m_viewportWidth, m_viewportHeight);
+			}
 		}
 		ImGui::End();
 #endif

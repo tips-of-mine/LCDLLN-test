@@ -73,6 +73,7 @@
 #include "src/client/render/terrain/TerrainEditingTools.h"
 #include "src/world_editor/ui/TexturePreviewCache.h"
 #endif
+#include "src/world_editor/render/EditorViewportRenderTarget.h"
 
 struct GLFWwindow;
 
@@ -447,6 +448,16 @@ namespace engine
 		/// Cohabite avec WorldEditorImGui (les deux peuvent être actifs).
 		/// Le shell appelle ImGui (Windows-only) — toujours nul sur Linux.
 		std::unique_ptr<engine::editor::world::WorldEditorShell> m_worldEditorShell;
+
+		/// M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
+		/// éditeur. Possédée par Engine, init après VkDeviceContext valide
+		/// + ImGui_ImplVulkan_Init OK, détruite avant le shutdown Vulkan.
+		/// Le `ScenePanel` lit `GetImguiTextureId()` chaque frame pour
+		/// l'afficher via `ImGui::Image`. L'image est créée mais reste
+		/// noire en PR 1 (rendu réel branché en PR 2 via passe FrameGraph
+		/// qui copie `SceneColor_LDR`).
+		engine::editor::world::EditorViewportRenderTarget m_editorViewportTarget;
+
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;
 

@@ -280,7 +280,15 @@ namespace engine::editor
 			{
 				return;
 			}
-			ImDrawList* dl = ImGui::GetForegroundDrawList();
+			// Background draw list (et non Foreground) pour que la grille et
+			// les marqueurs d'overlay viewport 3D soient **dessinés sous les
+			// fenêtres ImGui dockées** (panneaux Outils, Inspector, Tool
+			// Properties, etc.). En Foreground la grille débordait sur toutes
+			// les fenêtres et rendait l'UI illisible. L'ordre Z final est :
+			//   Vulkan terrain (fond) → BackgroundDrawList (grille, brush
+			//   preview, marqueurs) → fenêtres ImGui (recouvrent) →
+			//   ForegroundDrawList (reservé aux popups critiques).
+			ImDrawList* dl = ImGui::GetBackgroundDrawList();
 			const float* vp = d.viewProjColMajor;
 			const int vw = d.viewportWidth;
 			const int vh = d.viewportHeight;
@@ -801,6 +809,18 @@ namespace engine::editor
 			}
 			if (ImGui::BeginMenu("Vue"))
 			{
+				// Toggle grille — placé en tête du menu Vue pour être trouvable
+				// immédiatement sans ré-ouvrir le panneau "Affichage & grille"
+				// (qui peut être fermé par l'utilisateur sans moyen évident
+				// de le rouvrir). Le checkmark reflète l'état courant de
+				// `WorldEditorSession::ShowGrid()`. Pas de raccourci clavier
+				// par choix utilisateur.
+				if (m_session)
+				{
+					ImGui::MenuItem("Grille (afficher/masquer)", nullptr,
+						&m_session->ShowGrid());
+				}
+				ImGui::Separator();
 				// Panel toggles — migrés depuis WorldEditorShell::RenderMenuBar.
 				// Chaque panneau du Shell se rend dockable individuellement.
 				if (m_shell)

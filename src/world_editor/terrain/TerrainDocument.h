@@ -113,6 +113,14 @@ namespace engine::editor::world
 		using OnChunkChangedCallback = std::function<void(engine::world::GlobalChunkCoord)>;
 		void SetOnChunkChanged(OnChunkChangedCallback cb) { m_onChunkChanged = std::move(cb); }
 
+		/// Itère **tous les chunks actuellement chargés** en RAM, appelant
+		/// `visitor(coord, chunk_ptr)` pour chaque. Utilisé par
+		/// `Engine::SyncWorldEditorHeightmapFromDocument` pour pousser tous
+		/// les chunks au GPU (et pas seulement les 2×2 du coin SW).
+		using ChunkVisitor = std::function<void(engine::world::GlobalChunkCoord,
+			const std::shared_ptr<engine::world::terrain::TerrainChunk>&)>;
+		void ForEachLoadedChunk(const ChunkVisitor& visitor) const;
+
 	private:
 		struct ChunkSlot
 		{

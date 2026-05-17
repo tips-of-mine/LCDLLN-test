@@ -8039,19 +8039,21 @@ namespace engine
 		constexpr float kCell =
 			engine::world::terrain::kTerrainCellSizeMeters;
 
-		// Itère les chunks chargés du document. Chaque cellule (ix, iz) du
-		// chunk a une position monde ; on la convertit en pixel heightmap.
-		// La conversion float (m) → uint16 normalise par heightScale.
+		// Itère **tous les chunks chargés** du document (pas seulement 2×2),
+		// car les zone presets s'appliquent sur 10 km (toute la zone) et
+		// peuvent charger n'importe quelle paire (cx, cz). Pour chaque
+		// cellule (ix, iz), on calcule sa position monde → pixel heightmap.
+		// Conversion float (m) → uint16 normalise par heightScale.
 		uint32_t touchedChunks = 0u;
-		for (int cz = 0; cz < 2; ++cz)
-		{
-			for (int cx = 0; cx < 2; ++cx)
+		uint64_t modifiedCells = 0u;
+		terrainDoc.ForEachLoadedChunk(
+			[&](engine::world::GlobalChunkCoord coord,
+			    const std::shared_ptr<engine::world::terrain::TerrainChunk>& chunk)
 			{
-				auto chunk = terrainDoc.Find({ cx, cz });
-				if (!chunk) continue;
+				if (!chunk) return;
 				++touchedChunks;
-				const float chunkOriginX = static_cast<float>(cx) * (kChunkRes - 1u) * kCell;
-				const float chunkOriginZ = static_cast<float>(cz) * (kChunkRes - 1u) * kCell;
+				const float chunkOriginX = static_cast<float>(coord.x) * (kChunkRes - 1u) * kCell;
+				const float chunkOriginZ = static_cast<float>(coord.z) * (kChunkRes - 1u) * kCell;
 				for (uint32_t iz = 0; iz < kChunkRes; ++iz)
 				{
 					for (uint32_t ix = 0; ix < kChunkRes; ++ix)
@@ -8068,10 +8070,13 @@ namespace engine
 						const float norm = std::clamp(heightMeters / heightScale, 0.0f, 1.0f);
 						const uint16_t u16 = static_cast<uint16_t>(norm * 65535.0f + 0.5f);
 						hm.heights[pz * hmW + px] = u16;
+						++modifiedCells;
 					}
 				}
-			}
-		}
+			});
+		LOG_INFO(EditorWorld,
+			"[Engine] SyncHeightmapFromDocument: {} chunks visited, {} cells written, hm={}x{}, heightScale={:.1f}m",
+			touchedChunks, modifiedCells, hmW, hmH, heightScale);
 		if (touchedChunks == 0u) return;
 
 		// Pousse au GPU. FlushHeightmap re-upload la heightmap CPU complète

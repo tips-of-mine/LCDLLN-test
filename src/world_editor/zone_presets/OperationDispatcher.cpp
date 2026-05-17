@@ -294,6 +294,53 @@ namespace engine::editor::world::zone_presets
 			return true;
 		}
 
+		/// Pré-charge tous les chunks couverts par le bounding box d'un
+		/// polyline macro (largeur max × 1.5 de padding). Sans ce
+		/// pré-chargement, `MacroPolylineCommandBase::ApplyDeltas` fait
+		/// `Find(coord)` → nullptr → skip silencieux pour les chunks non
+		/// chargés. Avec les zone presets qui dessinent sur 10 km (zone
+		/// complète), il faut charger plusieurs chunks au-delà du 2×2 du
+		/// coin SW initial.
+		///
+		/// Requiert `ctx.config != nullptr`. No-op sinon (les ops macro
+		/// sans Config dégradent silencieusement).
+		void PreloadChunksForMacroPolyline(const MacroPolylineParams& macroParams,
+			const DispatchContext& ctx)
+		{
+			if (ctx.config == nullptr) return;
+			if (macroParams.vertices.empty()) return;
+
+			constexpr float kChunkSpanMeters =
+				(engine::world::terrain::kTerrainResolution - 1u) *
+				 engine::world::terrain::kTerrainCellSizeMeters;
+
+			float maxWidth = 0.0f;
+			float bbMinX = +1e30f, bbMaxX = -1e30f;
+			float bbMinZ = +1e30f, bbMaxZ = -1e30f;
+			for (const auto& v : macroParams.vertices)
+			{
+				maxWidth = std::max(maxWidth, v.widthMeters);
+				bbMinX = std::min(bbMinX, v.worldX);
+				bbMaxX = std::max(bbMaxX, v.worldX);
+				bbMinZ = std::min(bbMinZ, v.worldZ);
+				bbMaxZ = std::max(bbMaxZ, v.worldZ);
+			}
+			const float pad = maxWidth * 1.5f;
+			bbMinX -= pad; bbMaxX += pad;
+			bbMinZ -= pad; bbMaxZ += pad;
+			const int cxMin = static_cast<int>(std::floor(bbMinX / kChunkSpanMeters));
+			const int cxMax = static_cast<int>(std::floor(bbMaxX / kChunkSpanMeters));
+			const int czMin = static_cast<int>(std::floor(bbMinZ / kChunkSpanMeters));
+			const int czMax = static_cast<int>(std::floor(bbMaxZ / kChunkSpanMeters));
+			for (int cz = czMin; cz <= czMax; ++cz)
+			{
+				for (int cx = cxMin; cx <= cxMax; ++cx)
+				{
+					(void)ctx.terrain.EnsureLoaded(*ctx.config, cx, cz);
+				}
+			}
+		}
+
 		DispatchResult DispatchMountainMacro(const OperationParams& params,
 			const DispatchContext& ctx,
 			std::unique_ptr<engine::editor::world::ICommand>& outCmd)
@@ -304,6 +351,8 @@ namespace engine::editor::world::zone_presets
 				LOG_WARN(EditorWorld, "[OperationDispatcher] mountain_macro : polyline invalide");
 				return DispatchResult::Failed;
 			}
+			// Pré-charge les chunks couverts (zone preset sur 10 km).
+			PreloadChunksForMacroPolyline(macroParams, ctx);
 			auto deltas = RasterizeMacroPolyline(macroParams, /*invert*/ false);
 			if (deltas.empty())
 			{
@@ -324,6 +373,7 @@ namespace engine::editor::world::zone_presets
 				LOG_WARN(EditorWorld, "[OperationDispatcher] valley_macro : polyline invalide");
 				return DispatchResult::Failed;
 			}
+			PreloadChunksForMacroPolyline(macroParams, ctx);
 			auto deltas = RasterizeMacroPolyline(macroParams, /*invert*/ true);
 			if (deltas.empty())
 			{

@@ -18,6 +18,20 @@ namespace engine::editor::world
 			 | static_cast<uint64_t>(static_cast<uint32_t>(c.z));
 	}
 
+	void TerrainDocument::ForEachLoadedChunk(const ChunkVisitor& visitor) const
+	{
+		if (!visitor) return;
+		for (const auto& kv : m_chunks)
+		{
+			if (!kv.second.chunk) continue;
+			engine::world::GlobalChunkCoord coord{
+				static_cast<int32_t>(static_cast<uint32_t>(kv.first >> 32)),
+				static_cast<int32_t>(static_cast<uint32_t>(kv.first & 0xFFFFFFFFull))
+			};
+			visitor(coord, kv.second.chunk);
+		}
+	}
+
 	std::shared_ptr<engine::world::terrain::TerrainChunk>
 	TerrainDocument::EnsureLoaded(const engine::core::Config& config, int chunkX, int chunkZ)
 	{

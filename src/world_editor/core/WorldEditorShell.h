@@ -123,6 +123,16 @@ namespace engine::editor::world
 
 		/// Accès lecture seule pour les tests et le HistoryPanel (M100.2).
 		const std::vector<std::unique_ptr<IPanel>>& Panels() const { return m_panels; }
+		std::vector<std::unique_ptr<IPanel>>&       MutablePanels()     { return m_panels; }
+
+		/// Quand l'éditeur monde tourne dans le binaire `lcdlln_world_editor.exe`,
+		/// la barre de menu M43.x (`WorldEditorImGui::BuildUi`) prend la main
+		/// avec un menu français complet (incluant Zone Presets M100.46).
+		/// Cette méthode supprime alors la barre M100.1 anglaise pour éviter
+		/// la duplication visible — sans toucher au reste (panels, dockspace,
+		/// shortcuts clavier). Appelée depuis `Engine.cpp` au boot.
+		void SetMenuBarSuppressed(bool suppressed) { m_menuBarSuppressed = suppressed; }
+		bool IsMenuBarSuppressed() const           { return m_menuBarSuppressed; }
 
 		/// Accès mutable à la pile undo/redo (M100.2). Les outils concrets
 		/// (sculpt, paint, place…) y poussent leurs `ICommand` via cet
@@ -308,5 +318,6 @@ namespace engine::editor::world
 		std::string m_layoutPath;
 		bool m_dirty = false;
 		bool m_initialized = false;
+		bool m_menuBarSuppressed = false;
 	};
 }

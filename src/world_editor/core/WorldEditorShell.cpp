@@ -367,6 +367,14 @@ namespace engine::editor::world
 	void WorldEditorShell::RenderMenuBar()
 	{
 #if defined(_WIN32)
+		// M100.46/47 — Quand le binaire éditeur monde tourne, la barre M43.x
+		// (WorldEditorImGui::BuildUi) affiche un menu français complet avec
+		// Zone Presets / Imports / Sauvegarde. La barre M100.1 anglaise serait
+		// donc dupliquée et perturberait l'utilisateur — Engine.cpp la
+		// supprime via SetMenuBarSuppressed(true) au boot. Les fonctions
+		// (panels, undo/redo, layout reset) sont migrées dans le menu français
+		// par WorldEditorImGui.
+		if (m_menuBarSuppressed) return;
 		if (!ImGui::BeginMainMenuBar()) return;
 
 		if (ImGui::BeginMenu("File"))

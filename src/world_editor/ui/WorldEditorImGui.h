@@ -168,6 +168,17 @@ namespace engine::editor
 		/// dual-menu (#622) qui ont supprimé l'ancienne barre M100.1
 		/// listant tous les panels.
 		bool m_showAtmospherePanel = true;
+		/// Fenêtre d'aide caméra (anciennement « Scene » inline, renommée
+		/// en « Camera (aide) » dans #629). Masquée par défaut parce que :
+		///   - elle a `NoMouseInputs` (pour laisser passer les clics vers
+		///     le viewport 3D) — quand dockée dans un node avec d'autres
+		///     tabs, ces flags se propagent au tab bar et empêchent le
+		///     basculement entre onglets (bug confirmé utilisateur).
+		///   - le `ScenePanel` du Shell (M100.34) prend en charge le
+		///     viewport principal, l'aide texte n'est plus essentielle.
+		/// Toggle via `Vue > Aide camera`. Quand affichée, elle flotte
+		/// (pas de DockBuilderDockWindow associé).
+		bool m_showCameraHelp = false;
 		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.

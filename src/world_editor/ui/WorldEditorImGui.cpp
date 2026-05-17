@@ -860,6 +860,10 @@ namespace engine::editor
 				// via ce flag — corrige la regression apres #622 (suppression
 				// barre M100.1 qui exposait tous les panels).
 				ImGui::MenuItem("Atmosphere (jour/nuit)", nullptr, &m_showAtmospherePanel);
+				// Aide caméra : overlay texte avec instructions WASD,
+				// position monde, etc. Cachée par défaut pour ne pas
+				// polluer le dock (cf. #629).
+				ImGui::MenuItem("Aide camera (instructions WASD)", nullptr, &m_showCameraHelp);
 				ImGui::Separator();
 				if (m_cfg)
 				{
@@ -1059,10 +1063,11 @@ namespace engine::editor
 					ImGui::DockBuilderDockWindow("Atmosphere", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
-					// Fenêtre d'aide caméra (anciennement "Scene"). Le panneau
-					// "Scene" qui affiche maintenant le rendu offscreen est
-					// docké via WorldEditorShell (centre du dockspace).
-					ImGui::DockBuilderDockWindow("Camera (aide)", idRight);
+					// La fenêtre « Camera (aide) » n'est PAS dockée — ses flags
+					// `NoMouseInputs` polluent le tab bar du node quand elle
+					// est dans le même groupe que d'autres tabs (cause des
+					// onglets non cliquables, bug confirmé utilisateur).
+					// Elle est opt-in via `Vue > Aide camera` et flotte.
 
 					// Statut en bas, plein largeur.
 					ImGui::DockBuilderDockWindow("Statut", idBottom);
@@ -1081,20 +1086,14 @@ namespace engine::editor
 		ImGui::End();
 		ImGui::PopStyleVar(3);
 
-		// Fenêtre d'aide caméra (anciennement nommée "Scene", renommée en
-		// "Camera (aide)" pour éviter la collision de hash avec le panneau
-		// "Scene" du `WorldEditorShell` (M100.34 incrément 1/2) qui affiche
-		// le rendu 3D offscreen via `ImGui::Image`. Quand deux `ImGui::Begin`
-		// utilisaient le même titre dans la même frame, les flags
-		// `NoMouseInputs` de cette fenêtre **se propageaient au ScenePanel
-		// du Shell** et bloquaient tous les clics sur le dock node (tabs
-		// non cliquables, slider non utilisable, etc.). Le rename casse
-		// la collision et restaure la mouse capture sur les tabs.
-		//
-		// `NoBackground` + `NoMouseInputs` : cette fenêtre est un overlay
-		// d'aide textuelle qui ne doit pas intercepter les clics destinés
-		// au viewport 3D dessous.
-		ImGui::Begin("Camera (aide)", nullptr,
+		// Fenêtre d'aide caméra (overlay texte avec instructions WASD,
+		// position monde, etc.). Cachée par défaut depuis #629 parce que
+		// son flag `NoMouseInputs` polluait le tab bar du dock node quand
+		// elle y était groupée. Désormais opt-in via `Vue > Aide camera`
+		// et flotte (pas de DockBuilder associé).
+		if (m_showCameraHelp)
+		{
+		ImGui::Begin("Camera (aide)", &m_showCameraHelp,
 			ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoBackground);
 		ImGui::TextUnformatted("Vue 3D Vulkan (meme moteur que le jeu).");
 		ImGui::TextUnformatted(
@@ -1119,6 +1118,7 @@ namespace engine::editor
 				"(focus ImGui, etc.). S'ils bougent mais l'image ne change pas, il s'agit d'un autre probleme de rendu.");
 		}
 		ImGui::End();
+		} // if (m_showCameraHelp)
 
 		if (m_session && m_cfg)
 		{

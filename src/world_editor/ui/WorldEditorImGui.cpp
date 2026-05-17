@@ -860,6 +860,10 @@ namespace engine::editor
 				// via ce flag — corrige la regression apres #622 (suppression
 				// barre M100.1 qui exposait tous les panels).
 				ImGui::MenuItem("Atmosphere (jour/nuit)", nullptr, &m_showAtmospherePanel);
+				// Aide caméra : overlay texte avec instructions WASD,
+				// position monde, etc. Cachée par défaut pour ne pas
+				// polluer le dock (cf. #629).
+				ImGui::MenuItem("Aide camera (instructions WASD)", nullptr, &m_showCameraHelp);
 				ImGui::Separator();
 				if (m_cfg)
 				{
@@ -1059,7 +1063,11 @@ namespace engine::editor
 					ImGui::DockBuilderDockWindow("Atmosphere", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
-					ImGui::DockBuilderDockWindow("Scene", idRight);
+					// La fenêtre « Camera (aide) » n'est PAS dockée — ses flags
+					// `NoMouseInputs` polluent le tab bar du node quand elle
+					// est dans le même groupe que d'autres tabs (cause des
+					// onglets non cliquables, bug confirmé utilisateur).
+					// Elle est opt-in via `Vue > Aide camera` et flotte.
 
 					// Statut en bas, plein largeur.
 					ImGui::DockBuilderDockWindow("Statut", idBottom);
@@ -1078,10 +1086,15 @@ namespace engine::editor
 		ImGui::End();
 		ImGui::PopStyleVar(3);
 
-		// NoBackground : si la fenetre Scene est dockee dans un node qui n'est plus passthrough,
-		// son fond ne masque pas la 3D dessous. NoMouseInputs : les clics passent au travers vers
-		// la couche viewport overlay (raycast terrain, peinture splat, etc.).
-		ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoBackground);
+		// Fenêtre d'aide caméra (overlay texte avec instructions WASD,
+		// position monde, etc.). Cachée par défaut depuis #629 parce que
+		// son flag `NoMouseInputs` polluait le tab bar du dock node quand
+		// elle y était groupée. Désormais opt-in via `Vue > Aide camera`
+		// et flotte (pas de DockBuilder associé).
+		if (m_showCameraHelp)
+		{
+		ImGui::Begin("Camera (aide)", &m_showCameraHelp,
+			ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoBackground);
 		ImGui::TextUnformatted("Vue 3D Vulkan (meme moteur que le jeu).");
 		ImGui::TextUnformatted(
 			"Deplacement : menu 'Options' -> QWERTY (WASD) ou AZERTY (ZQSD), un seul a la fois. Shift = plus rapide ; "
@@ -1105,6 +1118,7 @@ namespace engine::editor
 				"(focus ImGui, etc.). S'ils bougent mais l'image ne change pas, il s'agit d'un autre probleme de rendu.");
 		}
 		ImGui::End();
+		} // if (m_showCameraHelp)
 
 		if (m_session && m_cfg)
 		{

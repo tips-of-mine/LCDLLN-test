@@ -20,8 +20,9 @@ namespace engine::editor::world::panels
 		bool IsVisible() const override { return m_visible; }
 		void SetVisible(bool v) override { m_visible = v; }
 
-		/// Charge le JSON depuis `<contentRoot>/game/data/gameplay/surface_table.json`.
-		/// `contentRoot` typique : "game/data". Appelé une fois par WorldEditorShell::Init.
+		/// Charge le JSON depuis `<contentRoot>/gameplay/surface_table.json`.
+		/// `contentRoot` typique : "game/data" (lu depuis `paths.content`).
+		/// Appelé une fois par WorldEditorShell::Init.
 		/// Effet de bord : remplit `m_table` et `m_status`.
 		void LoadFromContentRoot(const std::filesystem::path& contentRoot);
 

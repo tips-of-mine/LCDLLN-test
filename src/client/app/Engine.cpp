@@ -6615,7 +6615,56 @@ namespace engine
 					overlay.gridCellMeters = m_worldEditorSession->GridCellMeters();
 					overlay.brushRadiusMeters = m_worldEditorSession->BrushRadius();
 					const bool capBeforeUi = m_worldEditorImGui->WantsCaptureMouse();
-					terrainPick = RaycastTerrainFromCamera(out.camera, vw, vh, m_input.MouseX(), m_input.MouseY(), hm,
+
+					// M100.34 incr 4.1 — rebase des coords souris pour le pick éditeur.
+					// La scène est rendue en taille backbuffer (vw x vh) puis cette
+					// image est étirée par `ImGui::Image` dans le sous-rectangle du
+					// ScenePanel. Pour que cliquer SUR le terrain visible donne un
+					// hit cohérent, on traduit la position souris en fraction du
+					// rect du panel, puis on remappe cette fraction sur les pixels
+					// backbuffer (qui sont les coords attendues par la projection
+					// camera courante). Hors panel → pas de pick (et donc pas
+					// d'overlay brush ni d'édition déclenchée plus bas).
+					int pickMouseX = m_input.MouseX();
+					int pickMouseY = m_input.MouseY();
+					bool pickAllowed = true;
+					if (m_worldEditorExe && m_worldEditorShell
+						&& m_worldEditorShell->IsInitialized()
+						&& !m_worldEditorShell->Panels().empty()
+						&& m_worldEditorShell->Panels()[0])
+					{
+						auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
+							m_worldEditorShell->MutablePanels()[0].get());
+						int rxMin = 0, ryMin = 0, rxMax = 0, ryMax = 0;
+						if (scenePanel && scenePanel->GetViewportScreenRect(rxMin, ryMin, rxMax, ryMax))
+						{
+							const int rw = rxMax - rxMin;
+							const int rh = ryMax - ryMin;
+							if (rw > 0 && rh > 0
+								&& pickMouseX >= rxMin && pickMouseX < rxMax
+								&& pickMouseY >= ryMin && pickMouseY < ryMax)
+							{
+								const float u = static_cast<float>(pickMouseX - rxMin)
+								              / static_cast<float>(rw);
+								const float v = static_cast<float>(pickMouseY - ryMin)
+								              / static_cast<float>(rh);
+								pickMouseX = static_cast<int>(u * static_cast<float>(vw));
+								pickMouseY = static_cast<int>(v * static_cast<float>(vh));
+							}
+							else
+							{
+								pickAllowed = false;
+							}
+						}
+						else
+						{
+							// ScenePanel pas encore prêt (placeholder texte ou masqué) :
+							// on bloque les outils pour éviter d'éditer dans le vide.
+							pickAllowed = false;
+						}
+					}
+
+					terrainPick = pickAllowed && RaycastTerrainFromCamera(out.camera, vw, vh, pickMouseX, pickMouseY, hm,
 						overlay.terrainOriginX, overlay.terrainOriginZ, overlay.terrainWorldSize, overlay.heightScale,
 						pickX, pickZ);
 					overlay.showBrushPreview =

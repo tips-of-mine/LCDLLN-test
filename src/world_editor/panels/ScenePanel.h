@@ -61,11 +61,44 @@ namespace engine::editor::world::panels
 		void     SetEditorViewportTextureId(uint64_t id) { m_editorViewportTexId = id; }
 		uint64_t GetEditorViewportTextureId() const     { return m_editorViewportTexId; }
 
+		/// M100.34 incr 4.1 — Rect écran (pixels client de la fenêtre OS) occupé
+		/// par l'`ImGui::Image` du viewport offscreen lors de la dernière frame.
+		/// Renseigné chaque frame dans `Render()` juste après `ImGui::Image`.
+		/// Retourne `false` tant que le placeholder texte est affiché (texture
+		/// non encore disponible) ou si le panel est replié/masqué — dans ce
+		/// cas, le caller doit ignorer l'input éditeur (pas de pick, pas de
+		/// brush preview).
+		///
+		/// Utilisé par `Engine.cpp` pour rebaser les coords souris du raycast
+		/// terrain : sans ça les outils sculpt/splat/place tirent contre les
+		/// dimensions du backbuffer plein écran alors que le rendu réel est
+		/// confiné dans ce sous-rectangle (régression cassante depuis M100.34
+		/// incrément 4 qui clear le swapchain en gris).
+		bool GetViewportScreenRect(int& outMinX, int& outMinY,
+			int& outMaxX, int& outMaxY) const
+		{
+			if (!m_hasViewportRect) return false;
+			outMinX = m_contentMinX;
+			outMinY = m_contentMinY;
+			outMaxX = m_contentMaxX;
+			outMaxY = m_contentMaxY;
+			return true;
+		}
+
 	private:
 		bool m_visible = true;
 		int m_viewportWidth = 0;
 		int m_viewportHeight = 0;
 		engine::editor::world::EditorCameraController m_camera;
 		uint64_t m_editorViewportTexId = 0u;
+
+		// M100.34 incr 4.1 — capture du rect écran de l'`ImGui::Image` (rebase
+		// des coords d'input par `Engine.cpp`). Reste à `false` tant qu'aucune
+		// frame n'a affiché l'image (placeholder texte → input éditeur ignoré).
+		bool m_hasViewportRect = false;
+		int  m_contentMinX = 0;
+		int  m_contentMinY = 0;
+		int  m_contentMaxX = 0;
+		int  m_contentMaxY = 0;
 	};
 }

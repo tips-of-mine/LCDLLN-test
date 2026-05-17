@@ -27,6 +27,9 @@ namespace engine::editor::world::panels
 	void ScenePanel::Render()
 	{
 #if defined(_WIN32)
+		// Reset chaque frame : si le panel est masqué ou affiche le placeholder
+		// texte, `GetViewportScreenRect` doit renvoyer false (cf. M100.34 incr 4.1).
+		m_hasViewportRect = false;
 		if (!m_visible) return;
 		if (ImGui::Begin("Scene", &m_visible))
 		{
@@ -67,6 +70,20 @@ namespace engine::editor::world::panels
 				// déjà tronqué/casté en uint64.
 				ImGui::Image(static_cast<ImTextureID>(m_editorViewportTexId),
 					avail);
+
+				// M100.34 incr 4.1 — capture du rect écran de l'image juste
+				// après son draw. `GetItemRectMin/Max` renvoie des coords en
+				// pixels client de la fenêtre OS (même repère que `m_input.MouseX/Y`
+				// côté Engine), ce qui permet à `Engine.cpp` de rebaser les
+				// coords souris du raycast terrain sur ce sous-rectangle.
+				const ImVec2 rmin = ImGui::GetItemRectMin();
+				const ImVec2 rmax = ImGui::GetItemRectMax();
+				m_contentMinX = static_cast<int>(rmin.x);
+				m_contentMinY = static_cast<int>(rmin.y);
+				m_contentMaxX = static_cast<int>(rmax.x);
+				m_contentMaxY = static_cast<int>(rmax.y);
+				m_hasViewportRect = (m_contentMaxX > m_contentMinX)
+				                 && (m_contentMaxY > m_contentMinY);
 			}
 			else
 			{

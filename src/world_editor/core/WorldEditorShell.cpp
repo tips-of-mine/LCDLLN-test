@@ -18,6 +18,7 @@
 #include "src/world_editor/modes/EditorModeRegistry.h"
 #include "src/world_editor/prefs/UserPrefsStore.h"
 #include "src/world_editor/presets/ToolPresetRegistry.h"
+#include "src/world_editor/help/HelpContentStore.h"
 #include "src/world_editor/zone_presets/ZonePresetRegistry.h"
 
 #if defined(_WIN32)
@@ -237,6 +238,16 @@ namespace engine::editor::world
 					.LoadFromContentPath(contentRoot);
 			LOG_INFO(EditorWorld,
 				"[WorldEditorShell] M100.46 {} zone preset(s) chargé(s)", zonePresets);
+
+			// M100.47 incrément 1 — catalogue de tooltips
+			// (`editor/tooltips/*.json`), consommé par RichTooltipWidget
+			// (incrément 3) au survol des sliders dans les
+			// ToolPropertiesPanel.
+			const size_t tooltips =
+				engine::editor::world::help::HelpContentStore::Instance()
+					.LoadFromContentPath(contentRoot);
+			LOG_INFO(EditorWorld,
+				"[WorldEditorShell] M100.47 {} tooltip(s) chargé(s)", tooltips);
 		}
 
 		// M100.6 — Injecte la référence au shell dans le ToolPropertiesPanel
@@ -356,6 +367,14 @@ namespace engine::editor::world
 	void WorldEditorShell::RenderMenuBar()
 	{
 #if defined(_WIN32)
+		// M100.46/47 — Quand le binaire éditeur monde tourne, la barre M43.x
+		// (WorldEditorImGui::BuildUi) affiche un menu français complet avec
+		// Zone Presets / Imports / Sauvegarde. La barre M100.1 anglaise serait
+		// donc dupliquée et perturberait l'utilisateur — Engine.cpp la
+		// supprime via SetMenuBarSuppressed(true) au boot. Les fonctions
+		// (panels, undo/redo, layout reset) sont migrées dans le menu français
+		// par WorldEditorImGui.
+		if (m_menuBarSuppressed) return;
 		if (!ImGui::BeginMainMenuBar()) return;
 
 		if (ImGui::BeginMenu("File"))

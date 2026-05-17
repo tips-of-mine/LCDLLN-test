@@ -788,6 +788,13 @@ namespace engine
 			else
 			{
 				LOG_INFO(EditorWorld, "[Boot] WorldEditorShell M100.1 instancié (--editor-world)");
+				// M100.46/47 — Quand le binaire éditeur monde gère lui-même la
+				// barre de menu (français, plus complète), on supprime celle
+				// de M100.1 pour éviter la duplication File/Fichier visible.
+				if (m_worldEditorExe)
+				{
+					m_worldEditorShell->SetMenuBarSuppressed(true);
+				}
 			}
 		}
 

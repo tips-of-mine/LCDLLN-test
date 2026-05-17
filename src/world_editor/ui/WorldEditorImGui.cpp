@@ -7,6 +7,9 @@
 #include "src/world_editor/ui/TreeSpeciesCatalog.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
 #include "src/world_editor/modes/EditorModeRegistry.h"
+#include "src/world_editor/core/CommandStack.h"
+#include "src/world_editor/core/IPanel.h"
+#include "src/world_editor/core/WorldEditorShell.h"
 #include "src/world_editor/zone_presets/ZonePresetDialog.h"
 #include "src/client/render/DayNightCycle.h"
 #include "src/shared/platform/FileSystem.h"
@@ -780,8 +783,39 @@ namespace engine::editor
 				ImGui::MenuItem("Quitter", nullptr, false, false);
 				ImGui::EndMenu();
 			}
+			// Menu Édition — migré depuis WorldEditorShell::RenderMenuBar
+			// quand sa barre est supprimée (m_worldEditorExe). Undo/Redo
+			// forwardés au CommandStack du Shell.
+			if (m_shell && ImGui::BeginMenu("Edition"))
+			{
+				auto& stack = m_shell->MutableCommandStack();
+				if (ImGui::MenuItem("Annuler", "Ctrl+Z", false, stack.CanUndo()))
+				{
+					stack.Undo();
+				}
+				if (ImGui::MenuItem("Rétablir", "Ctrl+Y", false, stack.CanRedo()))
+				{
+					stack.Redo();
+				}
+				ImGui::EndMenu();
+			}
 			if (ImGui::BeginMenu("Vue"))
 			{
+				// Panel toggles — migrés depuis WorldEditorShell::RenderMenuBar.
+				// Chaque panneau du Shell se rend dockable individuellement.
+				if (m_shell)
+				{
+					for (auto& panel : m_shell->MutablePanels())
+					{
+						if (!panel) continue;
+						bool visible = panel->IsVisible();
+						if (ImGui::MenuItem(panel->GetName(), nullptr, &visible))
+						{
+							panel->SetVisible(visible);
+						}
+					}
+					ImGui::Separator();
+				}
 				if (ImGui::MenuItem("Reinitialiser la disposition des fenetres"))
 				{
 					// Reinitialisation in-process : on retire le node DockBuilder courant et on

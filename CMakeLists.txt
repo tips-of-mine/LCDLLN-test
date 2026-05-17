@@ -416,8 +416,12 @@ add_library(engine_core
   src/world_editor/zone_presets/ZonePresetDialog.cpp
   # M100.47 incrément 1 — HelpContentStore : socle data des tooltips
   # riches (chargement editor/tooltips/*.json, lookup par id, hot-reload).
-  # L'UI (RichTooltipWidget + HelpWindow) viendra en incréments suivants.
   src/world_editor/help/HelpContentStore.cpp
+  # M100.47 incrément 3 — RichTooltipWidget : popup ImGui au survol d'un
+  # widget. Consomme HelpContentStore. Mode Simple/Advanced piloté par
+  # EditorModeRegistry. Hooké dans ToolPropertiesPanel (sliders macro
+  # polyline en démo). HelpWindow F1 viendra en incrément suivant.
+  src/world_editor/ui/RichTooltipWidget.cpp
   # M100.45 Phase B — migration des outils vers Simple/Advanced + presets.
   # ToolPresetApply : mapping pur preset -> struct d'outil (testable).
   # PresetDropdownWidget : widget ImGui A.6 réutilisable par les panels.

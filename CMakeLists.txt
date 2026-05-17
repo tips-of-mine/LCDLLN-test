@@ -278,6 +278,11 @@ add_library(engine_core
   src/world_editor/ui/WorldEditorSession.cpp
   src/world_editor/ui/TexturePreviewCache.cpp
   src/world_editor/ui/TextureLibraryPanel.cpp
+  # M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
+  # éditeur, exposée à ImGui pour affichage dans le ScenePanel.
+  # L'image est créée + transitionnée SHADER_READ_ONLY mais reste noire
+  # tant que la PR 2 ne branche pas la copie depuis SceneColor_LDR.
+  src/world_editor/render/EditorViewportRenderTarget.cpp
   # M100.1 — World editor "couche au-dessus" (engine::editor::world).
   # Cohabite avec WorldEditorImGui ; activé par --editor-world ou
   # editor.world.enabled. Pas référencé par engine/server/.

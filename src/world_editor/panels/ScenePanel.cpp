@@ -52,11 +52,24 @@ namespace engine::editor::world::panels
 			const ImVec2 avail = ImGui::GetContentRegionAvail();
 			m_viewportWidth = static_cast<int>(avail.x);
 			m_viewportHeight = static_cast<int>(avail.y);
-			ImGui::TextDisabled("Scene viewport — placeholder M100.1.");
-			ImGui::TextWrapped(
-				"La vue 3D principale du monde en édition apparaîtra ici "
-				"à partir de M100.34 (integration rendu offscreen).");
-			ImGui::Text("Viewport courant : %d x %d px", m_viewportWidth, m_viewportHeight);
+
+			// M100.34 incrément 1 — affiche l'image offscreen via ImGui::Image
+			// si l'`EditorViewportRenderTarget` du Engine a fourni un texture ID.
+			// La target est initialement vide (noire) ; la PR 2 branchera la
+			// copie depuis SceneColor_LDR pour montrer le rendu réel.
+			if (m_editorViewportTexId != 0u && m_viewportWidth > 0 && m_viewportHeight > 0)
+			{
+				ImGui::Image(reinterpret_cast<ImTextureID>(m_editorViewportTexId),
+					avail);
+			}
+			else
+			{
+				ImGui::TextDisabled("Scene viewport — placeholder M100.1.");
+				ImGui::TextWrapped(
+					"La vue 3D principale du monde en édition apparaîtra ici "
+					"à partir de M100.34 (integration rendu offscreen).");
+				ImGui::Text("Viewport courant : %d x %d px", m_viewportWidth, m_viewportHeight);
+			}
 		}
 		ImGui::End();
 #endif

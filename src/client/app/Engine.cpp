@@ -5,6 +5,7 @@
 #include "src/world_editor/ui/WorldEditorImGui.h"
 #include "src/world_editor/ui/WorldEditorSession.h"
 #include "src/world_editor/core/WorldEditorShell.h"
+#include "src/world_editor/panels/ScenePanel.h"
 #include "src/shared/core/memory/Memory.h"
 #include "src/shared/platform/FileSystem.h"
 #include "src/shared/network/ChatPayloads.h"
@@ -5057,6 +5058,10 @@ namespace engine
 		if (m_vkDeviceContext.IsValid())
 		{
 			vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+			// M100.34 incrément 1 — détruit l'image offscreen viewport
+			// AVANT TexturePreviewCache (qui possède aussi des descriptors
+			// ImGui), pour respecter l'ordre LIFO de désallocation.
+			m_editorViewportTarget.Shutdown(m_vkDeviceContext.GetDevice());
 #if defined(_WIN32)
 			if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
 			m_texturePreviewCache.reset();
@@ -5535,6 +5540,22 @@ namespace engine
 					if (m_worldEditorImGui && m_texturePreviewCache)
 					{
 						m_worldEditorImGui->SetTexturePreviewCache(m_texturePreviewCache.get());
+					}
+
+					// M100.34 incrément 1 — Cible offscreen viewport éditeur.
+					// Taille initiale alignée sur la swapchain ; la PR 2 ajoutera
+					// la passe FrameGraph qui y copie SceneColor_LDR + la
+					// logique de resize sur la taille du ScenePanel.
+					const uint32_t initW = m_vkSwapchain.GetExtent().width;
+					const uint32_t initH = m_vkSwapchain.GetExtent().height;
+					if (!m_editorViewportTarget.Init(
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkDeviceContext.GetGraphicsQueue(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+						initW, initH))
+					{
+						LOG_WARN(Render, "[Engine] EditorViewportRenderTarget init failed -- ScenePanel restera en mode placeholder");
 					}
 				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
@@ -6184,6 +6205,23 @@ namespace engine
 		if (m_worldEditorShell && m_worldEditorShell->IsInitialized()
 			&& m_worldEditorImGui && m_worldEditorImGui->IsReady())
 		{
+			// M100.34 incrément 1 — pousse le texture ID de l'image offscreen
+			// du viewport au ScenePanel (premier panel du Shell, ordre stable
+			// garanti par WorldEditorShell::Init). PR 1 : image noire, pas
+			// encore branchée au FrameGraph. PR 2 : copie SceneColor_LDR
+			// dedans et la cible devient visible.
+			if (m_editorViewportTarget.IsValid()
+				&& !m_worldEditorShell->Panels().empty()
+				&& m_worldEditorShell->Panels()[0])
+			{
+				auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
+					m_worldEditorShell->MutablePanels()[0].get());
+				if (scenePanel != nullptr)
+				{
+					scenePanel->SetEditorViewportTextureId(
+						m_editorViewportTarget.GetImguiTextureId());
+				}
+			}
 			m_worldEditorShell->RenderFrame();
 		}
 #endif

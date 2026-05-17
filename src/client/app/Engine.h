@@ -228,6 +228,18 @@ namespace engine
 		/// World editor: (re)charge heightmap + outils sculpt depuis le document.
 		void RebuildWorldEditorTerrainGpu();
 
+		/// M100.46+ — Pont CPU TerrainDocument → GPU HeightmapData.
+		/// Itère les chunks chargés du TerrainDocument du Shell, copie leurs
+		/// heights float (mètres) vers la HeightmapData CPU uint16 du
+		/// TerrainRenderer (conversion par `terrain.height_scale`), puis
+		/// pousse au GPU via `m_worldEditorTerrainTools.FlushHeightmap`.
+		///
+		/// Appelée chaque frame uniquement si `m_worldEditorTerrainNeedsSync`
+		/// est vrai (flag set par le callback `OnChunkChanged` du document).
+		/// No-op si l'éditeur monde n'est pas actif ou si les structures
+		/// ne sont pas valides.
+		void SyncWorldEditorHeightmapFromDocument();
+
 		/// Si WorldEditorSession::ConsumeSplatRefsDirty() == true, repack les
 		/// 4 layers (procedural fallback + textures importees via le cache)
 		/// dans m_terrain.GetSplatting() et reuploade le GPU array.
@@ -461,6 +473,13 @@ namespace engine
 #if defined(_WIN32)
 		engine::render::terrain::TerrainEditingTools m_worldEditorTerrainTools;
 #endif
+		/// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Mis à true
+		/// quand `TerrainDocument::OnCommit` est appelé (callback enregistré
+		/// au boot éditeur monde) ; consommé au tick suivant par
+		/// `SyncWorldEditorHeightmapFromDocument` qui copie les chunks du
+		/// document dans la heightmap CPU (uint16) puis appelle
+		/// `FlushHeightmap` pour pousser au GPU.
+		std::atomic<bool> m_worldEditorTerrainNeedsSync{ false };
 		/// M08.4: Optional color grading LUT (strip 256x16 .texr). Loaded from config color_grading.lut_path.
 		engine::render::TextureHandle m_colorGradingLutHandle;
 		/// Fond plein écran pour l’écran auth (PNG sous paths.content, ex. ui/login/background.png).

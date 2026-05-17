@@ -155,6 +155,16 @@ namespace engine::editor::world
 
 	void TerrainDocument::OnCommit(engine::world::GlobalChunkCoord coord)
 	{
+		// M100.46+ — pont CPU → GPU (rendu éditeur). Notifie l'observer
+		// avant tout autre traitement pour que la heightmap GPU soit
+		// re-synchronisée au prochain tick Engine, même si aucun worker
+		// LOD n'est attaché (cas typique : tests + binaire éditeur en mode
+		// préview rapide).
+		if (m_onChunkChanged)
+		{
+			m_onChunkChanged(coord);
+		}
+
 		if (m_lodWorker == nullptr) return;
 		auto chunk = Find(coord);
 		if (!chunk) return; // sécurité : commit sur un chunk non chargé n'a pas de sens

@@ -1059,7 +1059,10 @@ namespace engine::editor
 					ImGui::DockBuilderDockWindow("Atmosphere", idRight);
 					ImGui::DockBuilderDockWindow("Import assets", idRight);
 					ImGui::DockBuilderDockWindow("Objets sur la carte", idRight);
-					ImGui::DockBuilderDockWindow("Scene", idRight);
+					// Fenêtre d'aide caméra (anciennement "Scene"). Le panneau
+					// "Scene" qui affiche maintenant le rendu offscreen est
+					// docké via WorldEditorShell (centre du dockspace).
+					ImGui::DockBuilderDockWindow("Camera (aide)", idRight);
 
 					// Statut en bas, plein largeur.
 					ImGui::DockBuilderDockWindow("Statut", idBottom);
@@ -1078,10 +1081,21 @@ namespace engine::editor
 		ImGui::End();
 		ImGui::PopStyleVar(3);
 
-		// NoBackground : si la fenetre Scene est dockee dans un node qui n'est plus passthrough,
-		// son fond ne masque pas la 3D dessous. NoMouseInputs : les clics passent au travers vers
-		// la couche viewport overlay (raycast terrain, peinture splat, etc.).
-		ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoBackground);
+		// Fenêtre d'aide caméra (anciennement nommée "Scene", renommée en
+		// "Camera (aide)" pour éviter la collision de hash avec le panneau
+		// "Scene" du `WorldEditorShell` (M100.34 incrément 1/2) qui affiche
+		// le rendu 3D offscreen via `ImGui::Image`. Quand deux `ImGui::Begin`
+		// utilisaient le même titre dans la même frame, les flags
+		// `NoMouseInputs` de cette fenêtre **se propageaient au ScenePanel
+		// du Shell** et bloquaient tous les clics sur le dock node (tabs
+		// non cliquables, slider non utilisable, etc.). Le rename casse
+		// la collision et restaure la mouse capture sur les tabs.
+		//
+		// `NoBackground` + `NoMouseInputs` : cette fenêtre est un overlay
+		// d'aide textuelle qui ne doit pas intercepter les clics destinés
+		// au viewport 3D dessous.
+		ImGui::Begin("Camera (aide)", nullptr,
+			ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoBackground);
 		ImGui::TextUnformatted("Vue 3D Vulkan (meme moteur que le jeu).");
 		ImGui::TextUnformatted(
 			"Deplacement : menu 'Options' -> QWERTY (WASD) ou AZERTY (ZQSD), un seul a la fois. Shift = plus rapide ; "

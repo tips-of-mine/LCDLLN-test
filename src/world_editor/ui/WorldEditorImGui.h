@@ -160,6 +160,14 @@ namespace engine::editor
 		/// du WorldEditorImGui (cycle Shell ↔ dialog).
 		std::unique_ptr<engine::editor::world::zone_presets::ZonePresetDialog> m_zonePresetDialog;
 		bool m_showTextureLibrary = false;  // pilote par le menu Affichage (Task 14)
+		/// Flag de visibilité du panneau « Atmosphere » (cycle jour/nuit
+		/// + couleurs ciel + ambient). Par défaut visible. Pilote par
+		/// l'entrée menu `Vue > Atmosphere`. Sans ce toggle, le panneau
+		/// ne peut pas être ré-ouvert une fois fermé via la croix du
+		/// dock — d'où la régression signalée utilisateur après les fix
+		/// dual-menu (#622) qui ont supprimé l'ancienne barre M100.1
+		/// listant tous les panels.
+		bool m_showAtmospherePanel = true;
 		/// Flag traçant si une tentative de pose de la disposition par défaut (DockBuilder) a déjà
 		/// été faite. Reset à false au démarrage et lors d'un « Réinitialiser la disposition »,
 		/// repassé à true après la pose.

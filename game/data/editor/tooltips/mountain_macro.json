@@ -1,0 +1,45 @@
+{
+  "toolId": "mountain_macro",
+  "tooltips": {
+    "widthMeters": {
+      "label": "Largeur de la crête",
+      "description_simple": "Largeur de la chaîne de montagne, en mètres.",
+      "description_advanced": "Base totale du profil radial perpendiculaire à l'axe (s'étale donc sur ±width/2 de chaque côté).",
+      "defaultValue": "250",
+      "range": "50 - 3000",
+      "docSectionId": "tool/mountain_macro#widthMeters"
+    },
+    "heightMeters": {
+      "label": "Hauteur",
+      "description_simple": "Hauteur du sommet de la chaîne, en mètres.",
+      "description_advanced": "Amplitude verticale du delta appliqué (positif = montée). Combine avec le bruit Simplex pour irrégularité.",
+      "defaultValue": "400",
+      "range": "20 - 2000",
+      "docSectionId": "tool/mountain_macro#heightMeters"
+    },
+    "noiseAmplitude": {
+      "label": "Bruit de crête",
+      "description_simple": "Irrégularité ajoutée le long du sommet.",
+      "description_advanced": "Amplitude du bruit Simplex 2D ajouté à la crête, en mètres. 0 = crête lisse, valeur élevée = sommet déchiqueté.",
+      "defaultValue": "30",
+      "range": "0 - 200",
+      "docSectionId": "tool/mountain_macro#noiseAmplitude"
+    },
+    "noiseFrequency": {
+      "label": "Fréquence du bruit",
+      "description_simple": "Plus haut = irrégularités plus fines.",
+      "description_advanced": "Fréquence Simplex 2D, exprimée en 1/mètres. 0.005 = ondulations larges (~200 m), 0.05 = motifs fins (~20 m).",
+      "defaultValue": "0.005",
+      "range": "0.0005 - 0.1",
+      "docSectionId": "tool/mountain_macro#noiseFrequency"
+    },
+    "asymmetry": {
+      "label": "Asymétrie",
+      "description_simple": "0 = montagne symétrique, +1 = flanc droit allongé.",
+      "description_advanced": "Coefficient -1..+1. Multiplie le delta par (1+asym) côté positif du cross-product, (1-asym) côté négatif.",
+      "defaultValue": "0.0",
+      "range": "-1.0 - 1.0",
+      "docSectionId": "tool/mountain_macro#asymmetry"
+    }
+  }
+}

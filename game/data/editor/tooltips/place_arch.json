@@ -1,0 +1,29 @@
+{
+  "toolId": "place_arch",
+  "tooltips": {
+    "catalogId": {
+      "label": "Modèle d'arche",
+      "description_simple": "Sélection dans la bibliothèque d'arches naturelles.",
+      "description_advanced": "Id du `ArchCatalogEntry`. Le gltf et les piliers natifs (archAnchorA/B) sont résolus au dispatch.",
+      "defaultValue": "arch_small_01",
+      "range": "voir catalog",
+      "docSectionId": "tool/place_arch#catalogId"
+    },
+    "pillarA": {
+      "label": "Pilier A",
+      "description_simple": "Premier point d'ancrage de l'arche au sol (X, Y, Z).",
+      "description_advanced": "Coordonnée monde du pied gauche. La position finale, le yaw et l'échelle uniforme sont dérivés des deux piliers (midpoint, atan2(dz,dx), spanWorld/spanNative).",
+      "defaultValue": "0, 0, 0",
+      "range": "monde XYZ",
+      "docSectionId": "tool/place_arch#pillarA"
+    },
+    "pillarB": {
+      "label": "Pilier B",
+      "description_simple": "Second point d'ancrage de l'arche au sol.",
+      "description_advanced": "Coordonnée monde du pied droit. La distance pillarB-pillarA détermine l'échelle (spanWorld / spanNative).",
+      "defaultValue": "10, 0, 0",
+      "range": "monde XYZ",
+      "docSectionId": "tool/place_arch#pillarB"
+    }
+  }
+}

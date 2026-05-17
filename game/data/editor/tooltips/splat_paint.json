@@ -1,0 +1,37 @@
+{
+  "toolId": "splat_paint",
+  "tooltips": {
+    "radiusMeters": {
+      "label": "Rayon de la brosse",
+      "description_simple": "Taille de la zone peinte par chaque clic.",
+      "description_advanced": "Rayon en mètres dans l'espace monde. Le falloff radial atténue l'effet en bord de brosse.",
+      "defaultValue": "8",
+      "range": "1 - 100",
+      "docSectionId": "tool/splat_paint#radiusMeters"
+    },
+    "strength": {
+      "label": "Force",
+      "description_simple": "0 = aucun effet, 1 = remplace la couche en un coup.",
+      "description_advanced": "Fraction du blend appliquée par seconde de pression. Mode override (vs additif) selon la layer rule.",
+      "defaultValue": "0.5",
+      "range": "0.0 - 1.0",
+      "docSectionId": "tool/splat_paint#strength"
+    },
+    "falloff": {
+      "label": "Falloff",
+      "description_simple": "0 = brosse dure, 1 = très douce.",
+      "description_advanced": "Forme du profil radial du blend.",
+      "defaultValue": "0.5",
+      "range": "0.0 - 1.0",
+      "docSectionId": "tool/splat_paint#falloff"
+    },
+    "activeLayer": {
+      "label": "Couche active",
+      "description_simple": "Quelle texture est peinte (terre / herbe / roche / neige).",
+      "description_advanced": "Index 0..3 de la couche écrite dans la splatmap RGBA8. Les 4 canaux somment à 255 après normalize au commit.",
+      "defaultValue": "0",
+      "range": "0 - 3",
+      "docSectionId": "tool/splat_paint#activeLayer"
+    }
+  }
+}

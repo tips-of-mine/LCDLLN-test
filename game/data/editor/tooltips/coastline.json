@@ -1,0 +1,53 @@
+{
+  "toolId": "coastline",
+  "tooltips": {
+    "seaLevelMeters": {
+      "label": "Niveau de la mer",
+      "description_simple": "Hauteur de l'océan (tout sous cette ligne est immergé).",
+      "description_advanced": "Source de vérité globale pour la zone (WaterDocument::OceanSettings.seaLevelMeters). Lu aussi par hydraulic, watershed, et l'extracteur de côte.",
+      "defaultValue": "50",
+      "range": "0 - 1000",
+      "docSectionId": "tool/coastline#seaLevelMeters"
+    },
+    "beachEnabled": {
+      "label": "Plages",
+      "description_simple": "Adoucit le bord de mer pour créer des plages.",
+      "description_advanced": "Active la passe de smoothing gaussien autour de l'iso-altitude seaLevel. Cumule avec la passe cliffs si les deux sont activées.",
+      "defaultValue": "true",
+      "range": "true / false",
+      "docSectionId": "tool/coastline#beachEnabled"
+    },
+    "smoothingBandMeters": {
+      "label": "Largeur de la plage",
+      "description_simple": "Largeur de la zone adoucie autour du rivage.",
+      "description_advanced": "Bande horizontale en mètres autour de l'iso-seaLevel où le smoothing s'applique.",
+      "defaultValue": "5",
+      "range": "1 - 50",
+      "docSectionId": "tool/coastline#smoothingBandMeters"
+    },
+    "smoothingForce": {
+      "label": "Force d'adoucissement",
+      "description_simple": "0 = aucun effet, 1 = adoucissement maximum.",
+      "description_advanced": "Coefficient appliqué au gradient gaussien 3x3 utilisé pour réduire les angles aigus de la côte.",
+      "defaultValue": "0.3",
+      "range": "0.0 - 1.0",
+      "docSectionId": "tool/coastline#smoothingForce"
+    },
+    "cliffsEnabled": {
+      "label": "Falaises",
+      "description_simple": "Génère des falaises là où la pente est forte.",
+      "description_advanced": "Active la passe cliffs (sharpening). Détecte les cellules où slope > cliffsSlopeThresholdDeg ET altitude > seaLevel + cliffsThresholdMeters.",
+      "defaultValue": "false",
+      "range": "true / false",
+      "docSectionId": "tool/coastline#cliffsEnabled"
+    },
+    "cliffsSlopeThresholdDeg": {
+      "label": "Pente minimum pour falaise",
+      "description_simple": "Angle minimal pour qu'un bord devienne une falaise (degrés).",
+      "description_advanced": "Si la pente locale dépasse ce seuil ET l'altitude est > seaLevel + cliffsThresholdMeters, la cellule est candidate falaise.",
+      "defaultValue": "45",
+      "range": "20 - 80",
+      "docSectionId": "tool/coastline#cliffsSlopeThresholdDeg"
+    }
+  }
+}

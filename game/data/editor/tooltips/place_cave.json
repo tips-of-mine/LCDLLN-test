@@ -1,0 +1,37 @@
+{
+  "toolId": "place_cave",
+  "tooltips": {
+    "catalogId": {
+      "label": "Modèle de grotte",
+      "description_simple": "Sélection dans la bibliothèque de grottes pré-faites.",
+      "description_advanced": "Id du `CaveCatalogEntry` (cave_small_01, cave_medium_01, etc.). Le gltf et l'entrancePoint sont résolus depuis le catalog.",
+      "defaultValue": "cave_small_01",
+      "range": "voir catalog",
+      "docSectionId": "tool/place_cave#catalogId"
+    },
+    "rotationY": {
+      "label": "Rotation Y",
+      "description_simple": "Direction d'ouverture de l'entrée (degrés).",
+      "description_advanced": "Angle de rotation autour de l'axe vertical en degrés. 0 = orientation native du gltf.",
+      "defaultValue": "0",
+      "range": "0 - 360",
+      "docSectionId": "tool/place_cave#rotationY"
+    },
+    "autoSnapToGround": {
+      "label": "Snap au sol",
+      "description_simple": "Aligne automatiquement l'entrée de la grotte sur le terrain.",
+      "description_advanced": "Si vrai, soustrait `entrancePoint.y` de la worldPosition.y pour que le pied de l'entrée soit au sol.",
+      "defaultValue": "true",
+      "range": "true / false",
+      "docSectionId": "tool/place_cave#autoSnapToGround"
+    },
+    "uniformScale": {
+      "label": "Échelle",
+      "description_simple": "Agrandit ou réduit la grotte (1 = taille originale).",
+      "description_advanced": "Multiplicateur uniforme appliqué au mesh. Affecte aussi l'AABB de collision.",
+      "defaultValue": "1.0",
+      "range": "0.5 - 3.0",
+      "docSectionId": "tool/place_cave#uniformScale"
+    }
+  }
+}

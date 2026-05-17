@@ -1,0 +1,37 @@
+{
+  "toolId": "place_overhang",
+  "tooltips": {
+    "catalogId": {
+      "label": "Modèle d'avancée rocheuse",
+      "description_simple": "Sélection dans la bibliothèque d'overhangs / corniches.",
+      "description_advanced": "Id du `OverhangCatalogEntry`. Le gltf est résolu depuis le catalog au dispatch.",
+      "defaultValue": "overhang_small_01",
+      "range": "voir catalog",
+      "docSectionId": "tool/place_overhang#catalogId"
+    },
+    "wallNormalYawDeg": {
+      "label": "Orientation",
+      "description_simple": "Direction de la falaise contre laquelle s'appuie l'avancée (degrés).",
+      "description_advanced": "Yaw appliqué pour aligner l'overhang à la normale du mur. 0° = orientation native.",
+      "defaultValue": "0",
+      "range": "0 - 360",
+      "docSectionId": "tool/place_overhang#wallNormalYawDeg"
+    },
+    "tiltDeg": {
+      "label": "Inclinaison",
+      "description_simple": "Angle d'inclinaison par rapport au mur (degrés).",
+      "description_advanced": "Pitch additionnel (axe local Z). Permet une corniche en surplomb ou plus plate.",
+      "defaultValue": "0",
+      "range": "-30 - 30",
+      "docSectionId": "tool/place_overhang#tiltDeg"
+    },
+    "uniformScale": {
+      "label": "Échelle",
+      "description_simple": "1 = taille originale.",
+      "description_advanced": "Multiplicateur uniforme appliqué au mesh.",
+      "defaultValue": "1.0",
+      "range": "0.5 - 3.0",
+      "docSectionId": "tool/place_overhang#uniformScale"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "toolId": "place_dungeon",
+  "tooltips": {
+    "catalogId": {
+      "label": "Modèle de donjon",
+      "description_simple": "Sélection dans la bibliothèque de portails de donjon.",
+      "description_advanced": "Id du `DungeonCatalogEntry`. Hérite requiredLevel, minDifficulty, maxDifficulty et decorativeMeshPath du catalog.",
+      "defaultValue": "dungeon_minor_01",
+      "range": "voir catalog",
+      "docSectionId": "tool/place_dungeon#catalogId"
+    },
+    "dungeonId": {
+      "label": "Id du template de donjon",
+      "description_simple": "Quelle instance instanciée pour ce portail (optionnel).",
+      "description_advanced": "Si vide, prend l'id du catalog par défaut. Permet de différencier deux portails qui utilisent le même mesh décoratif mais mènent à des donjons distincts.",
+      "defaultValue": "(catalogId)",
+      "range": "id alphanum",
+      "docSectionId": "tool/place_dungeon#dungeonId"
+    },
+    "rotationY": {
+      "label": "Rotation Y",
+      "description_simple": "Direction d'ouverture du portail (degrés).",
+      "description_advanced": "Yaw appliqué au mesh décoratif. 0° = orientation native du gltf.",
+      "defaultValue": "0",
+      "range": "0 - 360",
+      "docSectionId": "tool/place_dungeon#rotationY"
+    },
+    "triggerRadius": {
+      "label": "Rayon du trigger",
+      "description_simple": "Distance à laquelle le joueur peut entrer dans le donjon (mètres).",
+      "description_advanced": "Rayon du trigger sphérique d'interaction. Le client teste cette distance avant d'envoyer INSTANCE_ENTER_REQUEST.",
+      "defaultValue": "3",
+      "range": "1 - 15",
+      "docSectionId": "tool/place_dungeon#triggerRadius"
+    },
+    "requiredLevel": {
+      "label": "Niveau requis",
+      "description_simple": "Niveau minimum du joueur pour pouvoir entrer.",
+      "description_advanced": "Override le `requiredLevel` du catalog. Validé côté master (M100.43).",
+      "defaultValue": "(catalog)",
+      "range": "1 - 80",
+      "docSectionId": "tool/place_dungeon#requiredLevel"
+    }
+  }
+}

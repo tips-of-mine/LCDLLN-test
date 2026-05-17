@@ -1,0 +1,21 @@
+{
+  "toolId": "lake_polygon",
+  "tooltips": {
+    "waterLevel": {
+      "label": "Niveau d'eau",
+      "description_simple": "Hauteur de la surface du lac, en mètres.",
+      "description_advanced": "Y absolu du polygone CCW. Toutes les vertices reçoivent cette altitude ; le fond du lac suit la heightmap sous le polygone.",
+      "defaultValue": "0",
+      "range": "-100 - 3000",
+      "docSectionId": "tool/lake_polygon#waterLevel"
+    },
+    "turbidity": {
+      "label": "Turbidité",
+      "description_simple": "0 = eau claire, 1 = eau opaque.",
+      "description_advanced": "Multiplicateur d'absorption visuelle. Affecte la profondeur de visibilité sous l'eau.",
+      "defaultValue": "0.4",
+      "range": "0.0 - 1.0",
+      "docSectionId": "tool/lake_polygon#turbidity"
+    }
+  }
+}

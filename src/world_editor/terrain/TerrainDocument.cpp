@@ -18,6 +18,20 @@ namespace engine::editor::world
 			 | static_cast<uint64_t>(static_cast<uint32_t>(c.z));
 	}
 
+	void TerrainDocument::ForEachLoadedChunk(const ChunkVisitor& visitor) const
+	{
+		if (!visitor) return;
+		for (const auto& kv : m_chunks)
+		{
+			if (!kv.second.chunk) continue;
+			engine::world::GlobalChunkCoord coord{
+				static_cast<int32_t>(static_cast<uint32_t>(kv.first >> 32)),
+				static_cast<int32_t>(static_cast<uint32_t>(kv.first & 0xFFFFFFFFull))
+			};
+			visitor(coord, kv.second.chunk);
+		}
+	}
+
 	std::shared_ptr<engine::world::terrain::TerrainChunk>
 	TerrainDocument::EnsureLoaded(const engine::core::Config& config, int chunkX, int chunkZ)
 	{
@@ -155,6 +169,16 @@ namespace engine::editor::world
 
 	void TerrainDocument::OnCommit(engine::world::GlobalChunkCoord coord)
 	{
+		// M100.46+ — pont CPU → GPU (rendu éditeur). Notifie l'observer
+		// avant tout autre traitement pour que la heightmap GPU soit
+		// re-synchronisée au prochain tick Engine, même si aucun worker
+		// LOD n'est attaché (cas typique : tests + binaire éditeur en mode
+		// préview rapide).
+		if (m_onChunkChanged)
+		{
+			m_onChunkChanged(coord);
+		}
+
 		if (m_lodWorker == nullptr) return;
 		auto chunk = Find(coord);
 		if (!chunk) return; // sécurité : commit sur un chunk non chargé n'a pas de sens

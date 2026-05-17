@@ -5649,6 +5649,15 @@ namespace engine
 		{
 			RebuildWorldEditorTerrainGpu();
 		}
+		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Consomme le
+		// flag set par le callback OnChunkChanged et déclenche la copie
+		// chunks → heightmap CPU + FlushHeightmap GPU. Coût ~10-30 ms par
+		// tick concerné (acceptable pour des ops one-shot ; pas atteint par
+		// les brushstrokes interactifs qui ont leur propre path direct).
+		if (m_worldEditorTerrainNeedsSync.exchange(false, std::memory_order_acq_rel))
+		{
+			SyncWorldEditorHeightmapFromDocument();
+		}
 		if (m_worldEditorExe && m_worldEditorSession && m_texturePreviewCache)
 		{
 			for (const std::string& rel : m_worldEditorSession->RecentlyImportedTextures())
@@ -7906,6 +7915,20 @@ namespace engine
 		}
 		m_terrain.InvalidateFramebufferCache(device);
 
+		// M100.46+ — Pont TerrainDocument → HeightmapData GPU. Le callback
+		// est appelé synchrone par OnCommit (thread main) — il ne fait que
+		// set un flag atomique pour différer la sync au prochain tick (où
+		// l'on a accès à VkDeviceContext sans race). Re-set à chaque
+		// Rebuild pour ne pas perdre l'observer si Shell ou Tools sont
+		// reset.
+		if (m_worldEditorShell && m_worldEditorShell->IsInitialized())
+		{
+			m_worldEditorShell->MutableTerrainDocument().SetOnChunkChanged(
+				[this](engine::world::GlobalChunkCoord) {
+					m_worldEditorTerrainNeedsSync.store(true, std::memory_order_release);
+				});
+		}
+
 		// Detection "aucune texture utilisateur assignee" -> pousse le flag fallback
 		// orange au TerrainRenderer (via push-constant). Des qu'au moins une couche
 		// splat recoit un mapping texture (refs[i] non vide), le flag retombe a
@@ -7980,6 +8003,93 @@ namespace engine
 				reset.position.x, reset.position.y, reset.position.z, reset.farZ,
 				actualExtX, actualExtZ, ox, oz);
 		}
+	}
+
+	void Engine::SyncWorldEditorHeightmapFromDocument()
+	{
+#if defined(_WIN32)
+		// Garde stricte : seul l'éditeur monde a un TerrainDocument actif
+		// (le Shell). Le client jeu ne passe jamais ici.
+		if (!m_worldEditorExe || !m_worldEditorShell || !m_worldEditorShell->IsInitialized())
+			return;
+		if (!m_worldEditorTerrainTools.IsValid()) return;
+		if (!m_terrain.IsValid()) return;
+
+		auto& terrainDoc = m_worldEditorShell->MutableTerrainDocument();
+		auto& hm         = m_terrain.GetMutableHeightmapData();
+		if (hm.width == 0 || hm.height == 0 || hm.heights.empty()) return;
+
+		const float heightScale = m_terrain.GetHeightScale();
+		if (heightScale <= 0.0f) return;
+
+		// Map terrain world coords → heightmap pixel coords.
+		// La heightmap couvre `terrainWorldSize` mètres avec `width-1` mailles
+		// horizontales. Origine en (terrainOriginX, terrainOriginZ).
+		const float originX     = m_terrain.GetTerrainOriginX();
+		const float originZ     = m_terrain.GetTerrainOriginZ();
+		const float worldSize   = m_terrain.GetTerrainWorldSize();
+		if (worldSize <= 0.0f) return;
+		const uint32_t hmW      = hm.width;
+		const uint32_t hmH      = hm.height;
+		const float pixelsPerMX = static_cast<float>(hmW - 1u) / worldSize;
+		const float pixelsPerMZ = static_cast<float>(hmH - 1u) / worldSize;
+
+		constexpr uint32_t kChunkRes =
+			static_cast<uint32_t>(engine::world::terrain::kTerrainResolution);
+		constexpr float kCell =
+			engine::world::terrain::kTerrainCellSizeMeters;
+
+		// Itère **tous les chunks chargés** du document (pas seulement 2×2),
+		// car les zone presets s'appliquent sur 10 km (toute la zone) et
+		// peuvent charger n'importe quelle paire (cx, cz). Pour chaque
+		// cellule (ix, iz), on calcule sa position monde → pixel heightmap.
+		// Conversion float (m) → uint16 normalise par heightScale.
+		uint32_t touchedChunks = 0u;
+		uint64_t modifiedCells = 0u;
+		terrainDoc.ForEachLoadedChunk(
+			[&](engine::world::GlobalChunkCoord coord,
+			    const std::shared_ptr<engine::world::terrain::TerrainChunk>& chunk)
+			{
+				if (!chunk) return;
+				++touchedChunks;
+				const float chunkOriginX = static_cast<float>(coord.x) * (kChunkRes - 1u) * kCell;
+				const float chunkOriginZ = static_cast<float>(coord.z) * (kChunkRes - 1u) * kCell;
+				for (uint32_t iz = 0; iz < kChunkRes; ++iz)
+				{
+					for (uint32_t ix = 0; ix < kChunkRes; ++ix)
+					{
+						const float worldX = originX + chunkOriginX + static_cast<float>(ix) * kCell;
+						const float worldZ = originZ + chunkOriginZ + static_cast<float>(iz) * kCell;
+						const float fx = (worldX - originX) * pixelsPerMX;
+						const float fz = (worldZ - originZ) * pixelsPerMZ;
+						if (fx < 0.0f || fz < 0.0f) continue;
+						const uint32_t px = static_cast<uint32_t>(fx + 0.5f);
+						const uint32_t pz = static_cast<uint32_t>(fz + 0.5f);
+						if (px >= hmW || pz >= hmH) continue;
+						const float heightMeters = chunk->heights[iz * kChunkRes + ix];
+						const float norm = std::clamp(heightMeters / heightScale, 0.0f, 1.0f);
+						const uint16_t u16 = static_cast<uint16_t>(norm * 65535.0f + 0.5f);
+						hm.heights[pz * hmW + px] = u16;
+						++modifiedCells;
+					}
+				}
+			});
+		LOG_INFO(EditorWorld,
+			"[Engine] SyncHeightmapFromDocument: {} chunks visited, {} cells written, hm={}x{}, heightScale={:.1f}m",
+			touchedChunks, modifiedCells, hmW, hmH, heightScale);
+		if (touchedChunks == 0u) return;
+
+		// Pousse au GPU. FlushHeightmap re-upload la heightmap CPU complète
+		// vers l'image GPU R16 (single staging buffer + one-time command
+		// buffer). Coût ~10-30 ms sur 1025² uint16 (~2 MB).
+		const auto& hmGpu = m_terrain.GetHeightmapGpu();
+		(void)m_worldEditorTerrainTools.FlushHeightmap(
+			m_vkDeviceContext.GetDevice(),
+			m_vkDeviceContext.GetPhysicalDevice(),
+			m_vkDeviceContext.GetGraphicsQueue(),
+			m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+			hmGpu.image);
+#endif
 	}
 
 	void Engine::ProcessSplatRefsDirty()

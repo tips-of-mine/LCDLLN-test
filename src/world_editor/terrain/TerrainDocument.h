@@ -5,6 +5,7 @@
 #include "src/client/world/terrain/TerrainChunk.h"
 #include "src/client/world/terrain/TerrainLodWorker.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -101,6 +102,25 @@ namespace engine::editor::world
 		std::shared_ptr<engine::world::terrain::SplatMap> FindSplat(
 			engine::world::GlobalChunkCoord coord) const;
 
+		/// Callback invoqué par `OnCommit(coord)` à chaque mutation
+		/// committée d'un chunk (M100.46+ pont CPU → GPU). Permet à un
+		/// observer (Engine) de marquer la heightmap GPU à re-synchroniser.
+		///
+		/// Effet de bord : le callback est invoqué **synchrone** depuis le
+		/// thread qui appelle `OnCommit`. Doit donc être très court (set un
+		/// flag, ne pas faire d'IO ni de Vulkan call) — la synchro lourde
+		/// est repoussée au prochain tick Engine.
+		using OnChunkChangedCallback = std::function<void(engine::world::GlobalChunkCoord)>;
+		void SetOnChunkChanged(OnChunkChangedCallback cb) { m_onChunkChanged = std::move(cb); }
+
+		/// Itère **tous les chunks actuellement chargés** en RAM, appelant
+		/// `visitor(coord, chunk_ptr)` pour chaque. Utilisé par
+		/// `Engine::SyncWorldEditorHeightmapFromDocument` pour pousser tous
+		/// les chunks au GPU (et pas seulement les 2×2 du coin SW).
+		using ChunkVisitor = std::function<void(engine::world::GlobalChunkCoord,
+			const std::shared_ptr<engine::world::terrain::TerrainChunk>&)>;
+		void ForEachLoadedChunk(const ChunkVisitor& visitor) const;
+
 	private:
 		struct ChunkSlot
 		{
@@ -114,6 +134,7 @@ namespace engine::editor::world
 		std::unordered_map<uint64_t, ChunkSlot> m_chunks;
 		engine::world::terrain::TerrainLodWorker* m_lodWorker = nullptr;
 		std::string m_contentRootForLods;
+		OnChunkChangedCallback m_onChunkChanged;
 
 		/// Slot splat-map (M100.9) parallèle à `ChunkSlot` mais sur un map
 		/// distinct pour éviter de réécrire EnsureLoaded/MarkDirty/Save.

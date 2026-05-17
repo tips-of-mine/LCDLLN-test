@@ -6206,6 +6206,50 @@ namespace engine
 			m_worldEditorImGui->NewFrame(static_cast<float>(dt), imguiDw, imguiDh);
 		}
 
+		// M100.34 incrément 3 — Resize de la cible offscreen viewport sur la
+		// taille réelle du ScenePanel. Sans ça, la target reste fixée à la
+		// taille de la swapchain au boot et l'image est étirée par
+		// `ImGui::Image` dans le panneau (aspect ratio cassé). La mesure
+		// `ScenePanel::GetViewportWidth/Height` vient du frame précédent
+		// (set dans `ScenePanel::Render` post-`ImGui::GetContentRegionAvail`).
+		// Si elle diffère de la target actuelle, on attend que le device
+		// soit idle (sinon destroy d'une image en cours d'utilisation) puis
+		// on recrée à la nouvelle taille. Pattern rare (resize panel = action
+		// utilisateur sporadique), donc waitIdle acceptable côté perf.
+		if (m_worldEditorExe && m_worldEditorShell
+			&& m_worldEditorShell->IsInitialized()
+			&& m_editorViewportTarget.IsValid()
+			&& !m_worldEditorShell->Panels().empty()
+			&& m_worldEditorShell->Panels()[0])
+		{
+			auto* scenePanel = dynamic_cast<engine::editor::world::panels::ScenePanel*>(
+				m_worldEditorShell->MutablePanels()[0].get());
+			if (scenePanel != nullptr)
+			{
+				const int wRaw = scenePanel->GetViewportWidth();
+				const int hRaw = scenePanel->GetViewportHeight();
+				const uint32_t w = (wRaw > 0) ? static_cast<uint32_t>(wRaw) : 0u;
+				const uint32_t h = (hRaw > 0) ? static_cast<uint32_t>(hRaw) : 0u;
+				if (w > 0u && h > 0u
+					&& (w != m_editorViewportTarget.GetWidth()
+					 || h != m_editorViewportTarget.GetHeight()))
+				{
+					vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
+					if (!m_editorViewportTarget.Resize(
+						m_vkDeviceContext.GetDevice(),
+						m_vkDeviceContext.GetPhysicalDevice(),
+						m_vkDeviceContext.GetGraphicsQueue(),
+						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
+						w, h))
+					{
+						LOG_WARN(Render,
+							"[Engine] EditorViewportRenderTarget::Resize({}x{}) failed",
+							w, h);
+					}
+				}
+			}
+		}
+
 		// M100.1 — Rendu de la coquille du nouvel éditeur monde. Doit être
 		// appelée après ImGui::NewFrame (fait par WorldEditorImGui::NewFrame
 		// ci-dessus, qui partage le même contexte ImGui) et avant

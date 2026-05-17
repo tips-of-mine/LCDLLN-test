@@ -4548,9 +4548,14 @@ namespace engine
 												// M100.34 incrément 4 — En mode éditeur monde, on ne copie PAS
 												// `SceneColor_LDR` vers le backbuffer (sinon le rendu 3D apparaît
 												// dupliqué : une fois en plein écran + une fois dans le ScenePanel).
-												// Le backbuffer est clearé à un gris neutre. ImGui rendra ses panels
-												// par-dessus (incluant le ScenePanel qui affiche le rendu via la
-												// target offscreen — incr 2).
+												// Le backbuffer reçoit un clear gris neutre. ImGui rendra ses
+												// panels par-dessus via `RecordToBackbuffer` plus bas dans cette
+												// même lambda.
+												//
+												// **Critique** : ne PAS faire `return` ici, sinon on skip aussi
+												// l'appel `m_worldEditorImGui->RecordToBackbuffer(...)` plus bas
+												// → écran complètement vide (régression observée — fix en 2 commit).
+												bool skipSceneCopyForEditor = false;
 												if (m_worldEditorExe)
 												{
 													const VkClearColorValue editorBgColor = { { 0.10f, 0.11f, 0.13f, 1.0f } };
@@ -4563,7 +4568,7 @@ namespace engine
 													vkCmdClearColorImage(cmd, dstImg,
 														VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 														&editorBgColor, 1, &clearRange);
-													return; // skip copy + auth UI blit (pas pertinent en éditeur)
+													skipSceneCopyForEditor = true;
 												}
 
 												bool authPhotoBackdrop = false;
@@ -4581,7 +4586,7 @@ namespace engine
 													vkCmdClearColorImage(cmd, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &debugColor, 1, &clearRange);
 													LOG_DEBUG(Render, "[CopyPresent] debug clear color applied");
 												}
-												else
+												else if (!skipSceneCopyForEditor)
 												{
 													LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage begin");
 													// Use a direct copy for presentation. Some Intel/swapchain combinations are fragile
@@ -4595,6 +4600,9 @@ namespace engine
 													vkCmdCopyImage(cmd, srcImg, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 													LOG_DEBUG(Render, "[CopyPresent] vkCmdCopyImage done");
 												}
+												// `else` implicite : `skipSceneCopyForEditor` est vrai → le backbuffer
+												// est déjà clearé en gris, on saute le copy. Le code continue pour
+												// laisser passer `RecordToBackbuffer` (ImGui) ci-dessous.
 												const engine::client::AuthUiPresenter::VisualState authVisualState = m_authUi.GetVisualState();
 												const bool authBgBlitWanted = authVisualState.active && m_authUiBackgroundTexture.IsValid()
 													&& m_cfg.GetBool("render.auth_ui.background_blit.enabled", true) && !presentSolidColorDebug;

@@ -5083,7 +5083,11 @@ namespace engine
 			// M100.34 incrément 1 — détruit l'image offscreen viewport
 			// AVANT TexturePreviewCache (qui possède aussi des descriptors
 			// ImGui), pour respecter l'ordre LIFO de désallocation.
-			m_editorViewportTarget.Shutdown(m_vkDeviceContext.GetDevice());
+			// M100.34 incr 5 — shutdown les 4 targets (index 1-3 sont no-op s'ils n'ont jamais été init).
+		for (auto& target : m_editorViewportTargets)
+		{
+			target.Shutdown(m_vkDeviceContext.GetDevice());
+		}
 #if defined(_WIN32)
 			if (m_texturePreviewCache) m_texturePreviewCache->Shutdown();
 			m_texturePreviewCache.reset();
@@ -5570,14 +5574,17 @@ namespace engine
 					// logique de resize sur la taille du ScenePanel.
 					const uint32_t initW = m_vkSwapchain.GetExtent().width;
 					const uint32_t initH = m_vkSwapchain.GetExtent().height;
-					if (!m_editorViewportTarget.Init(
+					// M100.34 incr 5 — Init seulement l'index 0 (vue 3D libre).
+					// Les targets 1-3 (ortho Top/Front/Side) seront init en incr 6
+					// quand on aura les caméras correspondantes.
+					if (!m_editorViewportTargets[0].Init(
 						m_vkDeviceContext.GetDevice(),
 						m_vkDeviceContext.GetPhysicalDevice(),
 						m_vkDeviceContext.GetGraphicsQueue(),
 						m_vkDeviceContext.GetGraphicsQueueFamilyIndex(),
 						initW, initH))
 					{
-						LOG_WARN(Render, "[Engine] EditorViewportRenderTarget init failed -- ScenePanel restera en mode placeholder");
+						LOG_WARN(Render, "[Engine] EditorViewportRenderTarget[0] init failed -- ScenePanel restera en mode placeholder");
 					}
 				}
 				// Branche le DayNightCycle au panneau "Atmosphere" pour que l'utilisateur
@@ -6240,7 +6247,7 @@ namespace engine
 		// utilisateur sporadique), donc waitIdle acceptable côté perf.
 		if (m_worldEditorExe && m_worldEditorShell
 			&& m_worldEditorShell->IsInitialized()
-			&& m_editorViewportTarget.IsValid()
+			&& m_editorViewportTargets[0].IsValid()
 			&& !m_worldEditorShell->Panels().empty()
 			&& m_worldEditorShell->Panels()[0])
 		{
@@ -6253,11 +6260,11 @@ namespace engine
 				const uint32_t w = (wRaw > 0) ? static_cast<uint32_t>(wRaw) : 0u;
 				const uint32_t h = (hRaw > 0) ? static_cast<uint32_t>(hRaw) : 0u;
 				if (w > 0u && h > 0u
-					&& (w != m_editorViewportTarget.GetWidth()
-					 || h != m_editorViewportTarget.GetHeight()))
+					&& (w != m_editorViewportTargets[0].GetWidth()
+					 || h != m_editorViewportTargets[0].GetHeight()))
 				{
 					vkDeviceWaitIdle(m_vkDeviceContext.GetDevice());
-					if (!m_editorViewportTarget.Resize(
+					if (!m_editorViewportTargets[0].Resize(
 						m_vkDeviceContext.GetDevice(),
 						m_vkDeviceContext.GetPhysicalDevice(),
 						m_vkDeviceContext.GetGraphicsQueue(),
@@ -6285,7 +6292,7 @@ namespace engine
 			// garanti par WorldEditorShell::Init). PR 1 : image noire, pas
 			// encore branchée au FrameGraph. PR 2 : copie SceneColor_LDR
 			// dedans et la cible devient visible.
-			if (m_editorViewportTarget.IsValid()
+			if (m_editorViewportTargets[0].IsValid()
 				&& !m_worldEditorShell->Panels().empty()
 				&& m_worldEditorShell->Panels()[0])
 			{
@@ -6294,7 +6301,7 @@ namespace engine
 				if (scenePanel != nullptr)
 				{
 					scenePanel->SetEditorViewportTextureId(
-						m_editorViewportTarget.GetImguiTextureId());
+						m_editorViewportTargets[0].GetImguiTextureId());
 				}
 			}
 			m_worldEditorShell->RenderFrame();
@@ -7288,11 +7295,11 @@ namespace engine
 	        // ScenePanel n'affiche pas son propre overlay = pas de récursion) vers
 	        // l'image offscreen. Barriers à la main parce qu'on est hors FrameGraph
 	        // ici (juste après son execute()).
-	        if (m_worldEditorExe && m_editorViewportTarget.IsValid()
+	        if (m_worldEditorExe && m_editorViewportTargets[0].IsValid()
 	            && m_fgSceneColorLDRId != engine::render::kInvalidResourceId)
 	        {
 	            VkImage sceneLdr = m_fgRegistry.getImage(m_fgSceneColorLDRId);
-	            VkImage dst      = m_editorViewportTarget.GetImage();
+	            VkImage dst      = m_editorViewportTargets[0].GetImage();
 	            if (sceneLdr != VK_NULL_HANDLE && dst != VK_NULL_HANDLE)
 	            {
 	                // Step 1: transitions de layout.
@@ -7330,8 +7337,8 @@ namespace engine
 	                region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
 	                region.dstOffsets[0]  = { 0, 0, 0 };
 	                region.dstOffsets[1]  = {
-	                    static_cast<int32_t>(m_editorViewportTarget.GetWidth()),
-	                    static_cast<int32_t>(m_editorViewportTarget.GetHeight()),
+	                    static_cast<int32_t>(m_editorViewportTargets[0].GetWidth()),
+	                    static_cast<int32_t>(m_editorViewportTargets[0].GetHeight()),
 	                    1
 	                };
 	                vkCmdBlitImage(fr.cmdBuffer,

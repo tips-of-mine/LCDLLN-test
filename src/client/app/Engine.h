@@ -449,14 +449,18 @@ namespace engine
 		/// Le shell appelle ImGui (Windows-only) — toujours nul sur Linux.
 		std::unique_ptr<engine::editor::world::WorldEditorShell> m_worldEditorShell;
 
-		/// M100.34 incrément 1 — Cible offscreen R8G8B8A8 dédiée au viewport
-		/// éditeur. Possédée par Engine, init après VkDeviceContext valide
-		/// + ImGui_ImplVulkan_Init OK, détruite avant le shutdown Vulkan.
-		/// Le `ScenePanel` lit `GetImguiTextureId()` chaque frame pour
-		/// l'afficher via `ImGui::Image`. L'image est créée mais reste
-		/// noire en PR 1 (rendu réel branché en PR 2 via passe FrameGraph
-		/// qui copie `SceneColor_LDR`).
-		engine::editor::world::EditorViewportRenderTarget m_editorViewportTarget;
+		/// M100.34 incrément 1-5 — Cibles offscreen R8G8B8A8 pour le multi-viewport.
+		/// 4 cibles, une par caméra dans le futur layout 2x2 (incr 7) :
+		///   - `[0]` : caméra 3D libre (Orbital / FPS) — utilisée par le ScenePanel
+		///             actuel. Init dès le boot de l'éditeur.
+		///   - `[1]` : caméra Top ortho — init en incr 6.
+		///   - `[2]` : caméra Front ortho — init en incr 6.
+		///   - `[3]` : caméra Side ortho — init en incr 6.
+		///
+		/// Incréments 1-4 (livrés) : seul l'index 0 est utilisé.
+		/// Incrément 5 (cette livraison) : refactor en `std::array` pour préparer
+		/// l'usage des index 1-3 sans toucher au code Engine en aval.
+		std::array<engine::editor::world::EditorViewportRenderTarget, 4> m_editorViewportTargets;
 
 #if defined(_WIN32)
 		std::unique_ptr<engine::editor::TexturePreviewCache> m_texturePreviewCache;

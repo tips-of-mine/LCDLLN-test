@@ -526,6 +526,7 @@ add_library(engine_core
   src/client/render/TaaPass.cpp
   src/client/render/DeferredPipeline.cpp
   src/shared/math/Frustum.cpp
+  src/shared/math/Quat.cpp
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp

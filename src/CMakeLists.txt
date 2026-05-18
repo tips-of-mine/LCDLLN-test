@@ -653,6 +653,11 @@ elseif(UNIX)
   lcdlln_add_simple_test(spline_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/movement/SplineTests.cpp)
 
+  # Sous-projet A (skinning/animation) etape 2/17 : Quat + slerp pour le runtime
+  # d'animation. Quat.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(quat_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/QuatTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

@@ -1,0 +1,3 @@
+# Source FBX files dropped here are inputs only, not committed.
+*.fbx
+!.gitignore

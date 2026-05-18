@@ -653,6 +653,39 @@ elseif(UNIX)
   lcdlln_add_simple_test(spline_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/movement/SplineTests.cpp)
 
+  # Sous-projet A (skinning/animation) etape 2/17 : Quat + slerp pour le runtime
+  # d'animation. Quat.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(quat_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/QuatTests.cpp)
+
+  # Sous-projet A (skinning/animation) etape 3/17 : Skeleton + Bone (plain-data,
+  # bones en ordre topologique parent-avant-enfant).
+  # Skeleton.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(skeleton_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkeletonTests.cpp)
+
+  # Sous-projet A (skinning/animation) etape 4/17 : AnimationClip + helpers
+  # d'interpolation de keyframes (lerp Vec3, slerp Quat, clamp hors-plage).
+  # AnimationClip.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(animation_clip_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationClipTests.cpp)
+
+  # Sous-projet A (skinning/animation) etape 5/17 : AnimationSampler::SamplePose.
+  # Compose les keyframes (translation/rotation/scale) en matrices locales TRS,
+  # avec fallback bindLocal pour les bones sans piste. Tasks 6 et 7 ajouteront
+  # ComputeGlobalMatrices et ComputeFinalMatrices a la meme classe.
+  # AnimationSampler.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(animation_sampler_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationSamplerTests.cpp)
+
+  # Sous-projet A (skinning/animation) etape 10/17 : SkinnedMeshLoader::LoadCpuOnlyForTests.
+  # Parse un .glb via cgltf et produit SkinnedMeshCpuData (Skeleton + vertices + indices + clips).
+  # Le test charge le vrai fixture game/data/models/avatars/y_bot/y_bot.glb et vérifie les
+  # invariants (squelette topo-ordered, mesh non vide, clip mixamo trouvée, poids normalisés).
+  # SkinnedMeshLoader.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(skinned_mesh_loader_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkinnedMeshLoaderTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

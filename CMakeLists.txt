@@ -526,6 +526,13 @@ add_library(engine_core
   src/client/render/TaaPass.cpp
   src/client/render/DeferredPipeline.cpp
   src/shared/math/Frustum.cpp
+  src/shared/math/Quat.cpp
+  src/client/render/skinned/Skeleton.cpp
+  src/client/render/skinned/AnimationClip.cpp
+  src/client/render/skinned/AnimationSampler.cpp
+  src/client/render/skinned/SkinnedMeshLoader.cpp
+  src/client/render/skinned/SkinnedMesh.cpp
+  src/client/render/skinned/SkinnedRenderer.cpp
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp
@@ -605,6 +612,7 @@ target_sources(engine_core PRIVATE src/shared/network/ServerProtocol.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb
+  ${CMAKE_SOURCE_DIR}/external/cgltf
   ${CMAKE_SOURCE_DIR}/external/miniaudio
   ${VMA_INCLUDE_DIRS}
 )

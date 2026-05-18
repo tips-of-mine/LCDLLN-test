@@ -76,4 +76,14 @@ std::vector<engine::math::Mat4> AnimationSampler::ComputeGlobalMatrices(const Sk
     return globals;
 }
 
+std::vector<engine::math::Mat4> AnimationSampler::ComputeFinalMatrices(const Skeleton& skeleton,
+                                                                        const std::vector<engine::math::Mat4>& globals)
+{
+    std::vector<engine::math::Mat4> finals(skeleton.bones.size());
+    for (size_t i = 0; i < skeleton.bones.size(); ++i) {
+        finals[i] = globals[i] * skeleton.bones[i].inverseBindGlobal;
+    }
+    return finals;
+}
+
 }  // namespace engine::render::skinned

@@ -74,11 +74,36 @@ namespace
         // child global == root global * child local == translate(10,0,0) * identity == translate(10,0,0)
         REQUIRE(Approx(globals[1].m[12], 10.0f));
     }
+
+    void Test_ComputeFinalMatrices_BindPose_GivesIdentity()
+    {
+        // Property: if the bones are sampled as their bindLocal AND inverseBindGlobal is correctly set,
+        // the final matrices should all be identity (i.e., the mesh is in bind pose, undeformed).
+        Skeleton skel;
+        Mat4 rootBindLocal;
+        rootBindLocal.m[12] = 5.0f; // translate(5,0,0)
+        Mat4 rootInvBindGlobal;
+        rootInvBindGlobal.m[12] = -5.0f; // inverse of translate(5,0,0) is translate(-5,0,0)
+        skel.bones.push_back(Bone{"root", -1, rootBindLocal, rootInvBindGlobal});
+
+        std::vector<Mat4> locals = {rootBindLocal};
+        std::vector<Mat4> globals = AnimationSampler::ComputeGlobalMatrices(skel, locals);
+        std::vector<Mat4> finals = AnimationSampler::ComputeFinalMatrices(skel, globals);
+
+        REQUIRE(finals.size() == 1);
+        // Diagonal stays identity (no rotation)
+        REQUIRE(Approx(finals[0].m[0], 1.0f));
+        REQUIRE(Approx(finals[0].m[5], 1.0f));
+        REQUIRE(Approx(finals[0].m[10], 1.0f));
+        // Translation cancels out: globals[0] = translate(5,0,0), finals[0] = translate(5,0,0) * translate(-5,0,0) = identity
+        REQUIRE(Approx(finals[0].m[12], 0.0f));
+    }
 }
 
 int main()
 {
     Test_SamplePose_AtMidTime_HalfRotation();
     Test_ComputeGlobalMatrices_TwoBoneChain_AppliesParent();
+    Test_ComputeFinalMatrices_BindPose_GivesIdentity();
     return g_failed == 0 ? 0 : 1;
 }

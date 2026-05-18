@@ -44,6 +44,12 @@ public:
     // Requires locals.size() == skeleton.bones.size().
     static std::vector<engine::math::Mat4> ComputeGlobalMatrices(const Skeleton& skeleton,
                                                                   const std::vector<engine::math::Mat4>& locals);
+
+    // Multiplies each global matrix by the bone's inverse-bind matrix.
+    // The result is what gets uploaded to the bone matrix SSBO.
+    // Requires globals.size() == skeleton.bones.size().
+    static std::vector<engine::math::Mat4> ComputeFinalMatrices(const Skeleton& skeleton,
+                                                                 const std::vector<engine::math::Mat4>& globals);
 };
 
 }  // namespace engine::render::skinned

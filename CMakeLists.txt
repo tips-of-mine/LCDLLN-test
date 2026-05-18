@@ -530,6 +530,7 @@ add_library(engine_core
   src/client/render/skinned/Skeleton.cpp
   src/client/render/skinned/AnimationClip.cpp
   src/client/render/skinned/AnimationSampler.cpp
+  src/client/render/skinned/AnimationCrossfade.cpp
   src/client/render/skinned/SkinnedMeshLoader.cpp
   src/client/render/skinned/SkinnedMesh.cpp
   src/client/render/skinned/SkinnedRenderer.cpp

@@ -96,6 +96,22 @@ public:
     /// Effet de bord : alloue 2 VkBuffer + 2 VkDeviceMemory en cas de succès.
     static std::optional<SkinnedMesh> Load(VkDevice device, VkPhysicalDevice physicalDevice,
                                             const std::string& path);
+
+    /// Charge uniquement les clips d'animation d'un fichier .glb et les recible
+    /// (retarget) sur le squelette cible en faisant correspondre les bones par
+    /// leur nom. Robuste à un réordonnancement des joints entre deux exports
+    /// Mixamo. Les bones présents dans la source mais absents de la cible sont
+    /// silencieusement ignorés (la track correspondante est droppée).
+    ///
+    /// \param path           Chemin vers le .glb source (typiquement un export
+    ///                       Mixamo animation-only ou avec skin).
+    /// \param targetSkeleton Squelette de destination (celui du mesh joué) —
+    ///                       les tracks retournées sont indexées sur ses bones.
+    /// \return Vecteur de clips retargetés (chacun avec tracks.size() ==
+    ///         targetSkeleton.bones.size()). Vecteur vide si le parse échoue.
+    /// Effet de bord : aucun (CPU only — pas d'allocation Vulkan).
+    static std::vector<AnimationClip> LoadClipsRetargeted(const std::string& path,
+                                                            const Skeleton& targetSkeleton);
 };
 
 }  // namespace engine::render::skinned

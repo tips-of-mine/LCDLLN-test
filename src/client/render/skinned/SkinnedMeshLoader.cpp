@@ -260,4 +260,50 @@ std::optional<SkinnedMesh> SkinnedMeshLoader::Load(VkDevice device, VkPhysicalDe
     return m;
 }
 
+/// Charge un .glb pour en extraire uniquement les clips d'animation, retargetés
+/// par nom sur `targetSkeleton`. Permet de fusionner plusieurs fichiers Mixamo
+/// (un par animation) sur un seul mesh joué — robuste à un réordonnancement
+/// des joints entre exports tant que les noms restent stables.
+///
+/// \param path           Chemin du .glb source (peut contenir un skin différent).
+/// \param targetSkeleton Squelette cible (mesh joué). Les tracks retournées sont
+///                       indexées sur ses bones (size == targetSkeleton.bones.size()).
+/// \return Vecteur de clips retargetés ; vide si parse échoue.
+///         Les bones source non trouvés dans la cible sont silencieusement droppés.
+std::vector<AnimationClip> SkinnedMeshLoader::LoadClipsRetargeted(const std::string& path,
+                                                                    const Skeleton& targetSkeleton)
+{
+    auto loaded = LoadCpuOnlyForTests(path);
+    if (!loaded) {
+        return {};
+    }
+
+    const Skeleton& sourceSkel = loaded->skeleton;
+
+    // Construit la table de mapping: index_bone_source -> index_bone_cible (par nom).
+    // -1 signifie "bone source absent de la cible" -> la track sera droppée.
+    std::vector<int> sourceToTarget(sourceSkel.bones.size(), -1);
+    for (size_t s = 0; s < sourceSkel.bones.size(); ++s) {
+        sourceToTarget[s] = targetSkeleton.FindBoneIndex(sourceSkel.bones[s].name);
+    }
+
+    std::vector<AnimationClip> retargeted;
+    retargeted.reserve(loaded->clips.size());
+    for (const auto& srcClip : loaded->clips) {
+        AnimationClip dst;
+        dst.name = srcClip.name;
+        dst.duration = srcClip.duration;
+        // Important : taille sur la CIBLE, pas sur la source — l'AnimationSampler
+        // indexe tracks[] par bone index du squelette cible.
+        dst.tracks.resize(targetSkeleton.bones.size());
+        for (size_t s = 0; s < srcClip.tracks.size(); ++s) {
+            const int t = sourceToTarget[s];
+            if (t < 0) continue;  // bone source absent de la cible -- drop track
+            dst.tracks[t] = srcClip.tracks[s];
+        }
+        retargeted.push_back(std::move(dst));
+    }
+    return retargeted;
+}
+
 }  // namespace engine::render::skinned

@@ -532,6 +532,7 @@ add_library(engine_core
   src/client/render/skinned/AnimationSampler.cpp
   src/client/render/skinned/SkinnedMeshLoader.cpp
   src/client/render/skinned/SkinnedMesh.cpp
+  src/client/render/skinned/SkinnedRenderer.cpp
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp

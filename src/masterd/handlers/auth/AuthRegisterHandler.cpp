@@ -306,6 +306,17 @@ namespace engine::server
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
+		// Audit 2026-05-18 : avant ce fix, les reponses differenciaient
+		// ACCOUNT_NOT_FOUND (compte inexistant) de INVALID_CREDENTIALS (mauvais
+		// password) -> enumeration triviale des comptes via dictionnaire de
+		// logins. ACCOUNT_LOCKED leakait aussi l'existence du compte.
+		//
+		// Fix : on garde la distinction en interne (audit log + RecordAuthFailure
+		// pour les metriques + ban), MAIS sur le wire on renvoie un code uniforme
+		// `INVALID_CREDENTIALS` pour les trois cas "compte n'existe pas" / "mauvais
+		// password" / "compte verrouille". L'utilisateur legitime d'un compte
+		// verrouille recevra le message generique, c'est le prix a payer pour
+		// fermer l'enumeration. Le helpdesk reste joignable via les CGU.
 		auto opt = m_accountStore->FindByLogin(login_norm);
 		if (!opt)
 		{
@@ -313,7 +324,7 @@ namespace engine::server
 			LOG_WARN(Auth, "[AUTH] HandleAuth result={} session_id={}", "FAIL", (unsigned long long)0);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "account_not_found");
 			if (m_rateLimit) m_rateLimit->RecordAuthFailure(ipKey);
-			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::ACCOUNT_NOT_FOUND, requestId, sessionIdHeader);
+			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::INVALID_CREDENTIALS, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -322,7 +333,7 @@ namespace engine::server
 			m_authFailTotal.fetch_add(1, std::memory_order_relaxed);
 			LOG_WARN(Auth, "[AUTH] HandleAuth result={} session_id={}", "FAIL", (unsigned long long)0);
 			if (m_auditLog) m_auditLog->LogLoginFail(ipKey, "account_locked");
-			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::ACCOUNT_LOCKED, requestId, sessionIdHeader);
+			auto pkt = BuildAuthResponseErrorPacket(NetErrorCode::INVALID_CREDENTIALS, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}

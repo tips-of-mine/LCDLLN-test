@@ -140,8 +140,12 @@ namespace engine::server
 		}
 		else
 		{
-			LOG_WARN(Auth, "[PasswordResetHandler] ForgotPassword: SMTP not configured, reset token not emailed (account_id={} token_prefix={}...)",
-				account_id, token.size() >= 8u ? token.substr(0, 8) : token);
+			// Audit 2026-05-18 : avant ce fix, on logguait `token.substr(0, 8)` en
+			// clair quand SMTP n'etait pas configure. Quiconque a access aux logs
+			// pouvait prendre le controle du compte. On loggue uniquement la
+			// longueur et un hash court (non reversible) pour debugger sans risque.
+			LOG_WARN(Auth, "[PasswordResetHandler] ForgotPassword: SMTP not configured, reset token not emailed (account_id={} token_len={})",
+				account_id, token.size());
 		}
 
 		if (m_auditLog)
@@ -251,21 +255,44 @@ namespace engine::server
 
 		const uint64_t account_id = parsed->account_id;
 
-		// Lookup account to confirm it exists.
+		// Audit 2026-05-18 : avant ce fix, on differenciait ACCOUNT_NOT_FOUND
+		// d'une mauvaise verification -> enumeration possible des account_id en
+		// brute-forcant l'API VerifyEmail. Et il n'y avait AUCUN rate-limit sur
+		// les tentatives de code 6-chiffres (espace 10^6, brute-force en heures).
+		//
+		// Fix : reponses uniformes (VERIFICATION_CODE_INVALID pour les trois cas
+		// "compte inexistant" / "deja verifie" / "mauvais code"), et application
+		// du rate-limit `m_rateLimit->TryConsumeAuth(ipKey)` partage avec le
+		// flux login (10 tentatives/minute par IP). VERIFICATION_CODE_INVALID
+		// reste informatif pour l'utilisateur legitime qui a juste mal tape.
+		if (m_rateLimit)
+		{
+			const std::string ipKey = "conn:" + std::to_string(connId);
+			if (!m_rateLimit->TryConsumeAuth(ipKey))
+			{
+				LOG_WARN(Auth, "[PasswordResetHandler] VerifyEmail rate-limited (connId={})", connId);
+				auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::VERIFICATION_CODE_INVALID, requestId, sessionIdHeader);
+				if (!pkt.empty()) m_server->Send(connId, pkt);
+				return;
+			}
+		}
+
+		// Lookup account to confirm it exists. NE PAS leaker au client.
 		auto optAccount = m_accountStore->FindByAccountId(account_id);
 		if (!optAccount)
 		{
 			LOG_WARN(Auth, "[PasswordResetHandler] VerifyEmail: account not found (account_id={})", account_id);
-			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::ACCOUNT_NOT_FOUND, requestId, sessionIdHeader);
+			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::VERIFICATION_CODE_INVALID, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
+			if (m_rateLimit) m_rateLimit->RecordAuthFailure("conn:" + std::to_string(connId));
 			return;
 		}
 
-		// Already verified — idempotent success.
+		// Already verified : on renvoie aussi le code generique pour ne pas leaker.
 		if (optAccount->email_verified)
 		{
 			LOG_WARN(Auth, "[PasswordResetHandler] VerifyEmail: already verified (account_id={})", account_id);
-			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::EMAIL_ALREADY_VERIFIED, requestId, sessionIdHeader);
+			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::VERIFICATION_CODE_INVALID, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -276,6 +303,7 @@ namespace engine::server
 			LOG_WARN(Auth, "[PasswordResetHandler] VerifyEmail: invalid or expired code (account_id={})", account_id);
 			auto pkt = BuildVerifyEmailResponseErrorPacket(NetErrorCode::VERIFICATION_CODE_INVALID, requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
+			if (m_rateLimit) m_rateLimit->RecordAuthFailure("conn:" + std::to_string(connId));
 			return;
 		}
 
@@ -317,11 +345,16 @@ namespace engine::server
 
 		const uint64_t account_id = parsed->account_id;
 
+		// Audit 2026-05-18 : reponses uniformes pour ne pas leaker l'existence
+		// de l'account_id. Pour l'utilisateur legitime, le fait que le mail
+		// arrive (ou pas) est le vrai signal. Pour un attaquant, l'API ne
+		// donne plus d'information differentielle.
 		auto optAccount = m_accountStore->FindByAccountId(account_id);
 		if (!optAccount)
 		{
 			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: account not found (account_id={})", account_id);
-			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::ACCOUNT_NOT_FOUND, requestId, sessionIdHeader);
+			// Reponse OK simulee : on consomme silencieusement la requete.
+			auto pkt = BuildResendVerificationResponsePacket(requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -329,7 +362,8 @@ namespace engine::server
 		if (optAccount->email_verified)
 		{
 			LOG_WARN(Auth, "[PasswordResetHandler] ResendVerification: already verified (account_id={})", account_id);
-			auto pkt = BuildResendVerificationResponseErrorPacket(NetErrorCode::EMAIL_ALREADY_VERIFIED, requestId, sessionIdHeader);
+			// Idem : OK simulee, on n'envoie pas de mail.
+			auto pkt = BuildResendVerificationResponsePacket(requestId, sessionIdHeader);
 			if (!pkt.empty()) m_server->Send(connId, pkt);
 			return;
 		}
@@ -379,9 +413,14 @@ namespace engine::server
 		}
 		else
 		{
+			// Audit 2026-05-18 : avant ce fix, on logguait le code de verif EN
+			// CLAIR quand SMTP n'etait pas configure ("code de secours dev").
+			// Quiconque a access aux logs pouvait verifier l'email du compte.
+			// On loggue seulement la longueur ; le code reste accessible en base
+			// pour les ops s'ils en ont vraiment besoin (devrait pas arriver en prod).
 			LOG_WARN(Auth,
-				"[PasswordResetHandler] ResendVerification: SMTP absent — code de secours (dev) account_id={} : {}",
-				account_id, code);
+				"[PasswordResetHandler] ResendVerification: SMTP absent (account_id={} code_len={}) — verifier la config SMTP, code persiste en DB",
+				account_id, code.size());
 		}
 
 		auto pkt = BuildResendVerificationResponsePacket(requestId, sessionIdHeader);

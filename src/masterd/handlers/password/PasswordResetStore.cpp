@@ -4,6 +4,8 @@
 #include "src/shared/auth/Argon2Hash.h"
 #include "src/shared/core/Log.h"
 
+#include <openssl/crypto.h>
+
 #include <cstdio>
 #include <cstdint>
 
@@ -58,7 +60,11 @@ namespace engine::server
 		entry.expires_at = Clock::now() + hours(1);
 		entry.used       = false;
 		m_reset_tokens[token] = std::move(entry);
-		LOG_INFO(Auth, "[PasswordResetStore] Reset token created (account_id={} token_prefix={}...)", account_id, token.substr(0, 8));
+		// Audit 2026-05-18 : on logguait `token.substr(0, 8)` en clair. Quelqu'un
+		// avec access aux logs pouvait s'en servir pour confirmer la presence
+		// d'un token et tenter un brute-force des bytes manquants. On retire le
+		// prefixe ; pour debugger on garde juste account_id et longueur token.
+		LOG_INFO(Auth, "[PasswordResetStore] Reset token created (account_id={} token_len={})", account_id, token.size());
 		return token;
 	}
 
@@ -132,7 +138,19 @@ namespace engine::server
 			LOG_WARN(Auth, "[PasswordResetStore] ValidateVerificationCode: code expired (account_id={})", account_id);
 			return false;
 		}
-		if (it->second.code != code)
+		// Audit 2026-05-18 : avant ce fix, on faisait `it->second.code != code`,
+		// soit `std::string::operator!=` qui early-exit sur le premier byte
+		// different -> timing oracle theorique sur les premiers chiffres du code
+		// 6-digit. On bascule sur `CRYPTO_memcmp` (constant-time, OpenSSL).
+		// Si les longueurs different on retourne false immediatement (la longueur
+		// n'est pas un secret : c'est toujours 6 pour un code valide).
+		const std::string& stored = it->second.code;
+		if (stored.size() != code.size())
+		{
+			LOG_WARN(Auth, "[PasswordResetStore] ValidateVerificationCode: code length mismatch (account_id={})", account_id);
+			return false;
+		}
+		if (CRYPTO_memcmp(stored.data(), code.data(), stored.size()) != 0)
 		{
 			LOG_WARN(Auth, "[PasswordResetStore] ValidateVerificationCode: code mismatch (account_id={})", account_id);
 			return false;

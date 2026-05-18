@@ -658,6 +658,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(quat_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/QuatTests.cpp)
 
+  # Sous-projet A (skinning/animation) etape 3/17 : Skeleton + Bone (plain-data,
+  # bones en ordre topologique parent-avant-enfant).
+  # Skeleton.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(skeleton_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkeletonTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

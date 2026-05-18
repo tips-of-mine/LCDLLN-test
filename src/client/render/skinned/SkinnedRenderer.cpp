@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstring>
 
 namespace engine::render::skinned
@@ -519,32 +520,117 @@ bool SkinnedRenderer::Init(VkDevice device,
 }
 
 // -----------------------------------------------------------------------------
-// SkinnedRenderer::Record — stub (implémentation Task 14).
+// SkinnedRenderer::Record — implémentation Task 14.
+//
+// Enregistre une draw call skinnée dans `cmd`. L'appelant est responsable de
+// vkCmdBeginRenderPass / vkCmdEndRenderPass autour de Record (même convention
+// que `GeometryPass::Record`). Les paramètres `renderPass` / `framebuffer`
+// restent dans la signature pour symétrie et usage futur éventuel.
+//
+// Caveat known FIF (frame-in-flight) : si l'engine a FIF >= 2, les buffers
+// host-coherent réécrits chaque frame peuvent racer avec la draw précédente.
+// Pour l'unique avatar du scope A c'est peu visible, mais le fix propre
+// (duplication des buffers par frame) appartient à une PR de suivi.
 // -----------------------------------------------------------------------------
 
-void SkinnedRenderer::Record(VkDevice /*device*/, VkCommandBuffer /*cmd*/,
-                             VkExtent2D /*extent*/,
+void SkinnedRenderer::Record(VkDevice device, VkCommandBuffer cmd,
+                             VkExtent2D extent,
                              VkRenderPass /*renderPass*/, VkFramebuffer /*framebuffer*/,
-                             const float* /*prevViewProj*/, const float* /*viewProj*/,
-                             const SkinnedMesh& /*mesh*/,
-                             const std::vector<engine::math::Mat4>& /*finalBoneMatrices*/,
-                             VkDescriptorSet /*materialDescriptorSet*/,
-                             const float* /*modelMatrixColumnMajor4x4*/,
-                             uint32_t /*materialIndex*/)
+                             const float* prevViewProj, const float* viewProj,
+                             const SkinnedMesh& mesh,
+                             const std::vector<engine::math::Mat4>& finalBoneMatrices,
+                             VkDescriptorSet materialDescriptorSet,
+                             const float* modelMatrixColumnMajor4x4,
+                             uint32_t materialIndex)
 {
-    // Implémentation arrive en Task 14 :
-    //   - memcpy finalBoneMatrices dans m_boneSsboMemory (map/unmap).
-    //   - memcpy modelMatrixColumnMajor4x4 dans m_modelInstanceMemory.
-    //   - vkCmdBeginRenderPass(renderPass, framebuffer).
-    //   - vkCmdBindPipeline(m_pipeline).
-    //   - vkCmdSetViewport / vkCmdSetScissor.
-    //   - vkCmdPushConstants (prevViewProj + viewProj + materialIndex).
-    //   - vkCmdBindDescriptorSets(set 0 = materialDescriptorSet,
-    //                              set 1 = m_boneDescriptorSet).
-    //   - vkCmdBindVertexBuffers(2: mesh.vertexBuffer + m_modelInstanceBuffer).
-    //   - vkCmdBindIndexBuffer(mesh.indexBuffer).
-    //   - vkCmdDrawIndexed(mesh.indexCount, 1, 0, 0, 0).
-    //   - vkCmdEndRenderPass.
+    // 1. Upload des matrices de bones dans le SSBO host-visible.
+    //    Clamp au max alloué dans Init pour ne jamais déborder (256 bones par
+    //    défaut). Si la liste est vide on saute l'upload (mesh sans skin
+    //    valide ne devrait normalement pas arriver mais on reste défensif).
+    {
+        const size_t boneCountClamped = std::min<size_t>(finalBoneMatrices.size(), m_maxBones);
+        const size_t boneBytes = boneCountClamped * sizeof(engine::math::Mat4);
+        if (boneBytes > 0) {
+            void* mapped = nullptr;
+            if (vkMapMemory(device, m_boneSsboMemory, 0, boneBytes, 0, &mapped) == VK_SUCCESS) {
+                std::memcpy(mapped, finalBoneMatrices.data(), boneBytes);
+                vkUnmapMemory(device, m_boneSsboMemory);
+            } else {
+                spdlog::warn("[SkinnedRenderer] vkMapMemory failed for bone SSBO; skipping draw");
+                return;
+            }
+        }
+    }
+
+    // 2. Upload de la matrice modèle (64 octets) dans le per-instance buffer.
+    {
+        void* mapped = nullptr;
+        if (vkMapMemory(device, m_modelInstanceMemory, 0, 64, 0, &mapped) == VK_SUCCESS) {
+            std::memcpy(mapped, modelMatrixColumnMajor4x4, 64);
+            vkUnmapMemory(device, m_modelInstanceMemory);
+        } else {
+            spdlog::warn("[SkinnedRenderer] vkMapMemory failed for model instance buffer; skipping draw");
+            return;
+        }
+    }
+
+    // 3. Bind du pipeline graphique.
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+
+    // 4. Viewport + scissor dynamiques (le pipeline a été créé avec
+    //    DYNAMIC_STATE_VIEWPORT/SCISSOR).
+    VkViewport vp{};
+    vp.x = 0.0f;
+    vp.y = 0.0f;
+    vp.width = static_cast<float>(extent.width);
+    vp.height = static_cast<float>(extent.height);
+    vp.minDepth = 0.0f;
+    vp.maxDepth = 1.0f;
+    vkCmdSetViewport(cmd, 0, 1, &vp);
+
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = extent;
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+    // 5. Bind des descriptor sets : set 0 = matériau (fourni par l'appelant),
+    //    set 1 = bone SSBO (interne, mis à jour à l'Init).
+    VkDescriptorSet sets[2] = { materialDescriptorSet, m_boneDescriptorSet };
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout,
+                             /*firstSet*/ 0, /*setCount*/ 2, sets, 0, nullptr);
+
+    // 6. Push constants — layout identique à gbuffer_geometry.vert :
+    //    prevViewProj (mat4, 64) + viewProj (mat4, 64) + materialIndex (uint,
+    //    +12 padding pour aligner sur 16) = 144 octets. Doit matcher
+    //    `kPushConstantSize` utilisé pour le pipeline layout.
+    struct PushConstants {
+        float prevViewProj[16];
+        float viewProj[16];
+        uint32_t materialIndex;
+        uint32_t pad0;
+        uint32_t pad1;
+        uint32_t pad2;
+    } pc;
+    static_assert(sizeof(PushConstants) == 144, "PushConstants must match shader layout");
+    std::memcpy(pc.prevViewProj, prevViewProj, sizeof(float) * 16);
+    std::memcpy(pc.viewProj, viewProj, sizeof(float) * 16);
+    pc.materialIndex = materialIndex;
+    pc.pad0 = pc.pad1 = pc.pad2 = 0;
+    vkCmdPushConstants(cmd, m_pipelineLayout,
+                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                       0, sizeof(PushConstants), &pc);
+
+    // 7. Bind des vertex buffers : per-vertex @ binding 0 (mesh), per-instance
+    //    @ binding 1 (matrice modèle). Cf. layout vertex input dans Init.
+    VkBuffer vbufs[2] = { mesh.vertexBuffer, m_modelInstanceBuffer };
+    VkDeviceSize offsets[2] = { 0, 0 };
+    vkCmdBindVertexBuffers(cmd, 0, 2, vbufs, offsets);
+
+    // 8. Bind de l'index buffer (UINT32 — cf. SkinnedMeshCpuData::indices).
+    vkCmdBindIndexBuffer(cmd, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+    // 9. Une seule instance (1 avatar).
+    vkCmdDrawIndexed(cmd, mesh.indexCount, /*instanceCount*/ 1, 0, 0, 0);
 }
 
 // -----------------------------------------------------------------------------

@@ -372,17 +372,19 @@ namespace engine::render
 		VkPipelineRasterizationStateCreateInfo rs = {};
 		rs.sType       = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rs.polygonMode = VK_POLYGON_MODE_FILL;
-		rs.cullMode    = VK_CULL_MODE_BACK_BIT;
-		// PR25 (M??.?) : meme correction que TerrainRenderer.cpp:528 (PR24).
-		// Le commit ee181da (Reapply view matrix transposee) a change la
-		// convention de Camera::ComputeViewMatrix vers Vulkan LH +Z forward.
-		// Avec cette nouvelle matrice, les meshes generes en CCW world-space
-		// apparaissent en CW dans le clip space. Avec frontFace=CCW +
-		// cullMode=BACK_BIT, le pipeline rejetait silencieusement TOUS les
-		// triangles -> avatar humanoide invisible en mode editeur (item 2 de
-		// la finalisation editeur 2026-05-06) ET dans le client de jeu post-
-		// EnterWorld (regression notee 2026-05-05). Fix : frontFace=CW.
-		rs.frontFace   = VK_FRONT_FACE_CLOCKWISE;
+		// =====================================================================
+		// DIAGNOSTIC TEMPORAIRE — audit 2026-05-18 : avatar invisible client
+		// PR25 (3009263) avait fixe l'editeur en passant CCW->CW. L'utilisateur
+		// rapporte que l'avatar reste invisible dans le client de jeu apres
+		// EnterWorld malgre PR25. Hypotheses : (a) winding mesh different entre
+		// editeur et client (b) autre cause (descriptor, depth, position).
+		// On force `cullMode=NONE` pour eliminer/confirmer la cause winding.
+		//   - Si avatar visible en client => probleme de winding, basculer CCW.
+		//   - Si avatar toujours invisible => bug ailleurs.
+		// A REVERTIR EN BACK_BIT (+ winding decide selon resultat) avant merge.
+		// =====================================================================
+		rs.cullMode    = VK_CULL_MODE_NONE;
+		rs.frontFace   = VK_FRONT_FACE_CLOCKWISE; // sans effet tant que cullMode=NONE
 		rs.lineWidth   = 1.0f;
 
 		VkPipelineMultisampleStateCreateInfo ms = {};

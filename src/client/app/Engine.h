@@ -74,6 +74,8 @@
 #include "src/client/render/skinned/SkinnedMesh.h"
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
 #include "src/client/render/skinned/AnimationSampler.h"
+// Sous-projet B.1 (Task 11) : crossfade entre clips de locomotion (7 etats).
+#include "src/client/render/skinned/AnimationCrossfade.h"
 // Sous-projet B.1 (Task 9) : physics + collision pour l'avatar joueur.
 #include "src/client/gameplay/CharacterController.h"
 #include "src/client/gameplay/TerrainCollider.h"
@@ -496,16 +498,54 @@ namespace engine
 		/// Sert de gate per-frame : si false, on dessine le cube placeholder.
 		bool                                                      m_skinnedAvatarReady = false;
 
-		/// Sous-projet A polish — state machine de locomotion de l'avatar.
-		/// 3 états : Idle (clip "Idle" looped), StartWalking (clip "StartWalking"
-		/// joué une fois puis transition vers Walking), Walking (clip "Walking" looped).
-		/// Sous-projet B raffinera (crossfade, vitesses, autres états).
-		enum class AvatarLocomotionState { Idle, StartWalking, Walking };
+		/// Sous-projet B.1 (Task 11) — State machine de locomotion de l'avatar.
+		/// 7 etats :
+		///   - Idle           : clip "Idle" looped, perso immobile au sol.
+		///   - StartWalking   : clip "StartWalking" one-shot (lift-off de Idle vers
+		///                      la marche pleine vitesse). Transite vers Walk ou Run
+		///                      a la fin du clip.
+		///   - Walk           : clip "Walk" looped, marche normale (input.run = false).
+		///                      Renomme de "Walking" (A polish) -> "Walk" pour la
+		///                      coherence Mixamo + brievete.
+		///   - Run            : clip "Run" looped, course (input.run = true / Shift).
+		///   - Jump           : clip "Jump" one-shot, phase takeoff (les premiers 40%
+		///                      du clip), declenche par input.jumpPressed depuis Idle/
+		///                      Walk/Run/StartWalking.
+		///   - Fall           : clip "Fall" looped, en l'air apres la fin du takeoff
+		///                      ou si le CC perd le contact sol sans avoir saute.
+		///   - Land           : clip "Land" one-shot au touch ground depuis Fall.
+		///                      Transite vers Idle/Walk/Run selon input a la fin du clip.
+		///
+		/// Transitions driven par `CharacterController::IsGrounded()`, `input.jumpPressed`,
+		/// `input.run` et `moveDirXZ` (cf. `Engine::Update`). Crossfade entre clips
+		/// par `m_avatarCrossfade.Play(...)` (kCrossfadeDuration = 0.15 s).
+		enum class AvatarLocomotionState
+		{
+			Idle,
+			StartWalking,
+			Walk,
+			Run,
+			Jump,
+			Fall,
+			Land
+		};
 		AvatarLocomotionState                                     m_avatarLocoState = AvatarLocomotionState::Idle;
 		/// Instant d'entrée dans l'état courant. Utilisé pour :
-		///   - boucler / clamper le temps écoulé dans le clip,
-		///   - détecter la fin de "StartWalking" (durée écoulée >= clip.duration).
+		///   - détecter la fin de StartWalking / Jump / Land (durée écoulée >= clip.duration).
+		///   - tracer la transition Jump -> Fall après 40% du clip Jump (takeoff).
 		std::chrono::steady_clock::time_point                     m_avatarLocoStateEnterTime;
+		/// Sous-projet B.1 (Task 11) — Crossfade entre clips de locomotion.
+		///
+		/// `Play(clip, loops, nowSec)` est appele dans `Engine::Update` a chaque
+		/// transition d'etat (la state machine remplit `m_avatarLocoState` puis
+		/// declenche le crossfade vers le clip correspondant). `Sample(skel, nowSec)`
+		/// est appele dans le lambda Geometry pour produire la pose locale qui
+		/// alimente `ComputeGlobalMatrices` + `ComputeFinalMatrices` + `Record`.
+		///
+		/// La meme valeur de `now` (secondes depuis steady_clock::time_since_epoch())
+		/// doit etre utilisee dans Play et Sample : sinon le t reel applique au clip
+		/// est decale et la pose initiale "snap" au lieu de demarrer a 0.
+		engine::render::skinned::AnimationCrossfade               m_avatarCrossfade;
 
 		/// Sous-projet B.1 (Task 9) — Physics et collision pour le joueur.
 		///

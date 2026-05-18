@@ -93,6 +93,17 @@
     "camera": {
         "mouse_sensitivity": 0.002
     },
+    "_comment_player_movement": "Sous-projet B.1 — CharacterController params. Defaults sensibles si absent (CharacterController::Config). walk_speed/run_speed en m/s. gravity en m/s2 (signe negatif). jump_speed = impulse m/s a l'instant du jump. coyote_time_s = jump grace apres avoir quitte le sol. jump_buffer_s = jump grace si presse juste avant atterrissage.",
+    "player": {
+        "movement": {
+            "walk_speed": 5.0,
+            "run_speed": 9.0,
+            "gravity": -20.0,
+            "jump_speed": 9.0,
+            "coyote_time_s": 0.1,
+            "jump_buffer_s": 0.1
+        }
+    },
     "shadows": {
         "resolution": 1024,
         "depth_bias_constant": 1.25,

@@ -3746,11 +3746,16 @@ namespace engine
 										// instance) cote SkinnedRenderer + 2 VkBuffer/VkDeviceMemory cote mesh
 										// (vertex/index). Tout est libere au Shutdown (cf. bloc Destroy plus bas,
 										// juste avant m_pipeline->Destroy).
+										LOG_INFO(Render, "[SkinnedInit] step 1/6 -- checking guards (skinnedReady={} pipeline={})", m_skinnedAvatarReady, (void*)m_pipeline.get());
 										if (!m_skinnedAvatarReady && m_pipeline)
 										{
+											LOG_INFO(Render, "[SkinnedInit] step 2/6 -- getting material cache");
 											auto& materialCache = m_pipeline->GetMaterialDescriptorCache();
+											LOG_INFO(Render, "[SkinnedInit] step 3/6 -- loading vert SPV (path=shaders/skinned_gbuffer.vert.spv)");
 											const std::vector<uint32_t> skinnedVertSpv = loadSpirv("shaders/skinned_gbuffer.vert.spv");
+											LOG_INFO(Render, "[SkinnedInit] step 3.5/6 -- loaded vert SPV ({} bytes), loading frag SPV (path=shaders/gbuffer_geometry.frag.spv)", skinnedVertSpv.size() * sizeof(uint32_t));
 											const std::vector<uint32_t> skinnedFragSpv = loadSpirv("shaders/gbuffer_geometry.frag.spv");
+											LOG_INFO(Render, "[SkinnedInit] step 3.9/6 -- SPVs loaded (vert={} words frag={} words materialCacheValid={})", skinnedVertSpv.size(), skinnedFragSpv.size(), materialCache.IsValid());
 											if (!skinnedVertSpv.empty() && !skinnedFragSpv.empty() && materialCache.IsValid())
 											{
 												// Memes formats GBuffer / depth que DeferredPipeline.cpp:135-140 :
@@ -3759,6 +3764,7 @@ namespace engine
 												// depthFormat = D32_SFLOAT. Necessaire pour que le pipeline skinne
 												// soit compatible avec le render pass LOAD de GeometryPass (que nous
 												// utiliserons via RecordTerrainChunkBatch pour eviter de nested-passer).
+												LOG_INFO(Render, "[SkinnedInit] step 4/6 -- calling SkinnedRenderer::Init (matLayout={})", (void*)materialCache.GetLayout());
 												const bool skinnedInitOk = m_skinnedRenderer.Init(
 													m_vkDeviceContext.GetDevice(),
 													m_vkDeviceContext.GetPhysicalDevice(),
@@ -3773,12 +3779,15 @@ namespace engine
 													/*maxBonesPerSkeleton*/ 256u);
 												if (skinnedInitOk)
 												{
+													LOG_INFO(Render, "[SkinnedInit] step 5/6 -- SkinnedRenderer::Init OK, about to load Y Bot.glb (path=...)");
 													const std::string contentRoot = m_cfg.GetString("paths.content", "game/data");
 													const std::string yBotPath = contentRoot + "/models/avatars/y_bot/y_bot.glb";
+													LOG_INFO(Render, "[SkinnedInit] step 5.5/6 -- calling SkinnedMeshLoader::Load (path={})", yBotPath);
 													auto loaded = engine::render::skinned::SkinnedMeshLoader::Load(
 														m_vkDeviceContext.GetDevice(),
 														m_vkDeviceContext.GetPhysicalDevice(),
 														yBotPath);
+													LOG_INFO(Render, "[SkinnedInit] step 6/6 -- load returned (has_value={})", loaded.has_value());
 													if (loaded)
 													{
 														m_playerSkinnedMesh = std::move(*loaded);

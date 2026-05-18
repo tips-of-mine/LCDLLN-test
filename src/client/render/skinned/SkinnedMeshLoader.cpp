@@ -13,7 +13,7 @@
 
 #include "src/shared/math/Quat.h"
 
-#include <spdlog/spdlog.h>
+#include "src/shared/core/Log.h"
 
 #include <cstdio>
 #include <cstring>
@@ -66,13 +66,13 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
     cgltf_data* data = nullptr;
     cgltf_result result = cgltf_parse_file(&options, path.c_str(), &data);
     if (result != cgltf_result_success) {
-        spdlog::warn("[SkinnedMeshLoader] Parse failed for '{}' (cgltf result={})",
+        LOG_WARN(Render, "[SkinnedMeshLoader] Parse failed for '{}' (cgltf result={})",
                      path, static_cast<int>(result));
         if (data) cgltf_free(data);
         return std::nullopt;
     }
     if (cgltf_load_buffers(&options, data, path.c_str()) != cgltf_result_success) {
-        spdlog::warn("[SkinnedMeshLoader] Buffer load failed for '{}'", path);
+        LOG_WARN(Render, "[SkinnedMeshLoader] Buffer load failed for '{}'", path);
         cgltf_free(data);
         return std::nullopt;
     }
@@ -80,7 +80,7 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
     SkinnedMeshCpuData out;
 
     if (data->skins_count == 0 || !data->skins) {
-        spdlog::warn("[SkinnedMeshLoader] No skin in '{}'", path);
+        LOG_WARN(Render, "[SkinnedMeshLoader] No skin in '{}'", path);
         cgltf_free(data);
         return std::nullopt;
     }
@@ -136,7 +136,7 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
     // On émet un warn (pas throw) si violé — le test attrape l'erreur tôt.
     for (size_t i = 0; i < out.skeleton.bones.size(); ++i) {
         if (out.skeleton.bones[i].parentIndex >= static_cast<int>(i)) {
-            spdlog::warn("[SkinnedMeshLoader] Skeleton not in topological order: bone {} ('{}') parent={} >= self={}",
+            LOG_WARN(Render, "[SkinnedMeshLoader] Skeleton not in topological order: bone {} ('{}') parent={} >= self={}",
                          i, out.skeleton.bones[i].name, out.skeleton.bones[i].parentIndex, i);
         }
     }
@@ -195,7 +195,7 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
         }
     }
     if (!meshLoaded) {
-        spdlog::warn("[SkinnedMeshLoader] No skinned primitive in '{}'", path);
+        LOG_WARN(Render, "[SkinnedMeshLoader] No skinned primitive in '{}'", path);
         cgltf_free(data);
         return std::nullopt;
     }

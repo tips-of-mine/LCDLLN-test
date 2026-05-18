@@ -1,6 +1,6 @@
 #include "src/client/render/skinned/SkinnedMesh.h"
 
-#include <spdlog/spdlog.h>
+#include "src/shared/core/Log.h"
 
 #include <cstring>
 
@@ -99,12 +99,12 @@ bool SkinnedMesh::Upload(VkDevice device, VkPhysicalDevice physicalDevice, const
 
     if (!CreateHostVisibleBuffer(device, physicalDevice, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                   cpu.vertices.data(), vBytes, &vertexBuffer, &vertexMemory)) {
-        spdlog::error("[SkinnedMesh] vertex buffer creation failed ({} bytes)", vBytes);
+        LOG_ERROR(Render, "[SkinnedMesh] vertex buffer creation failed ({} bytes)", vBytes);
         return false;
     }
     if (!CreateHostVisibleBuffer(device, physicalDevice, VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                                   cpu.indices.data(), iBytes, &indexBuffer, &indexMemory)) {
-        spdlog::error("[SkinnedMesh] index buffer creation failed ({} bytes)", iBytes);
+        LOG_ERROR(Render, "[SkinnedMesh] index buffer creation failed ({} bytes)", iBytes);
         // Nettoie le vertex buffer déjà alloué pour éviter une fuite.
         vkDestroyBuffer(device, vertexBuffer, nullptr);
         vkFreeMemory(device, vertexMemory, nullptr);

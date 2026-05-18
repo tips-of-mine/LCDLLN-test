@@ -670,6 +670,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(animation_clip_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationClipTests.cpp)
 
+  # Sous-projet A (skinning/animation) etape 5/17 : AnimationSampler::SamplePose.
+  # Compose les keyframes (translation/rotation/scale) en matrices locales TRS,
+  # avec fallback bindLocal pour les bones sans piste. Tasks 6 et 7 ajouteront
+  # ComputeGlobalMatrices et ComputeFinalMatrices a la meme classe.
+  # AnimationSampler.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(animation_sampler_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationSamplerTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

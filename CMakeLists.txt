@@ -529,6 +529,7 @@ add_library(engine_core
   src/shared/math/Quat.cpp
   src/client/render/skinned/Skeleton.cpp
   src/client/render/skinned/AnimationClip.cpp
+  src/client/render/skinned/AnimationSampler.cpp
   src/client/gameplay/CharacterController.cpp
   src/client/gameplay/ThirdPersonCamera.cpp
   src/client/gameplay/SkillSystem.cpp

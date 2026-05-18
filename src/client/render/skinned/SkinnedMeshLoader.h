@@ -3,6 +3,8 @@
 #include "src/client/render/skinned/AnimationClip.h"
 #include "src/client/render/skinned/Skeleton.h"
 
+#include <vulkan/vulkan_core.h>
+
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -53,11 +55,19 @@ struct SkinnedMeshCpuData
     std::vector<AnimationClip> clips;
 };
 
-/// Chargeur CPU-only de mesh skinné via cgltf.
+/// Forward declaration : SkinnedMesh est défini dans SkinnedMesh.h qui inclut
+/// CE fichier. On ne peut donc PAS inclure SkinnedMesh.h ici (cycle), d'où la
+/// déclaration anticipée — le .cpp qui implémente Load() inclura le header
+/// complet pour pouvoir construire/uploader la struct.
+struct SkinnedMesh;
+
+/// Chargeur de mesh skinné via cgltf.
 ///
-/// Le pipeline Task 11 réutilisera cette fonction puis uploadera les buffers
-/// sur le GPU. Exposée publiquement pour les tests unitaires qui n'ont pas
-/// accès à un VkDevice.
+/// Deux entrées :
+///   - LoadCpuOnlyForTests : parse seulement (utilisé par les tests unitaires
+///     qui n'ont pas accès à un VkDevice).
+///   - Load                : parse + upload GPU en un seul appel (chemin de
+///     production utilisé par le runtime client).
 class SkinnedMeshLoader
 {
 public:
@@ -72,6 +82,20 @@ public:
     ///         - aucun primitive du mesh n'a les attributs POSITION + JOINTS_0 + WEIGHTS_0.
     /// Émet un spdlog::warn dans chacun de ces cas pour faciliter le diagnostic.
     static std::optional<SkinnedMeshCpuData> LoadCpuOnlyForTests(const std::string& path);
+
+    /// Chargement complet : parse le glTF puis uploade les buffers sur le GPU.
+    ///
+    /// \param device         Logical device Vulkan valide (utilisé pour les
+    ///                       allocations VkBuffer / VkDeviceMemory).
+    /// \param physicalDevice Physical device associé (pour query memory types).
+    /// \param path           Chemin vers le .glb (voir LoadCpuOnlyForTests).
+    /// \return SkinnedMesh prêt à dessiner, ou std::nullopt si le parse OU
+    ///         l'upload GPU échoue. L'appelant prend la propriété du mesh
+    ///         retourné et doit appeler Destroy(device) avant de détruire le
+    ///         device.
+    /// Effet de bord : alloue 2 VkBuffer + 2 VkDeviceMemory en cas de succès.
+    static std::optional<SkinnedMesh> Load(VkDevice device, VkPhysicalDevice physicalDevice,
+                                            const std::string& path);
 };
 
 }  // namespace engine::render::skinned

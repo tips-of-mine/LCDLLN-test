@@ -1,5 +1,10 @@
 #include "src/client/render/skinned/SkinnedMeshLoader.h"
 
+// SkinnedMesh.h inclut SkinnedMeshLoader.h ; comme on l'inclut après le header
+// du loader, le forward-decl `struct SkinnedMesh;` côté loader est déjà visible
+// quand le compilateur voit la définition complète ici — pas de cycle.
+#include "src/client/render/skinned/SkinnedMesh.h"
+
 // Définit l'implémentation interne de cgltf (header-only stb-style). Ne doit
 // être défini que dans UN seul .cpp du projet ; aucune autre TU n'inclut
 // cgltf actuellement (vérifié à la création de Task 10).
@@ -240,6 +245,19 @@ std::optional<SkinnedMeshCpuData> SkinnedMeshLoader::LoadCpuOnlyForTests(const s
 
     cgltf_free(data);
     return out;
+}
+
+/// Chemin de production : enchaîne parse CPU + upload GPU. Si l'une des deux
+/// étapes échoue, renvoie nullopt (et les ressources partielles d'Upload sont
+/// nettoyées par Upload lui-même).
+std::optional<SkinnedMesh> SkinnedMeshLoader::Load(VkDevice device, VkPhysicalDevice physicalDevice,
+                                                    const std::string& path)
+{
+    auto cpu = LoadCpuOnlyForTests(path);
+    if (!cpu) return std::nullopt;
+    SkinnedMesh m;
+    if (!m.Upload(device, physicalDevice, *cpu)) return std::nullopt;
+    return m;
 }
 
 }  // namespace engine::render::skinned

@@ -128,7 +128,12 @@ namespace engine::client
 				+ EscapeJsonString(locale)
 				+ "\",\n    \"auth_ui\": {\n      \"remember_login\": "
 				+ JsonBool(rememberLogin)
-				+ ",\n      \"timeout_ms\": 5000\n    },\n    \"allow_insecure_dev\": true,\n    \"gameplay_udp\": {\n      \"enabled\": false\n    }\n  },\n  \"render\": {\n    \"fullscreen\": "
+				// Audit 2026-05-18 : fallback `allow_insecure_dev` passe a `false`
+				// par defaut. Un client neuf valide la chaine de cert master TLS sauf
+				// si l'utilisateur opt-in explicitement (option dev). Avant : `true`
+				// = accept self-signed silencieusement = MITM trivial pour qui peut
+				// intercepter le trafic master du joueur.
+				+ ",\n      \"timeout_ms\": 5000\n    },\n    \"allow_insecure_dev\": false,\n    \"gameplay_udp\": {\n      \"enabled\": false\n    }\n  },\n  \"render\": {\n    \"fullscreen\": "
 				+ JsonBool(fullscreen)
 				+ ",\n    \"vsync\": "
 				+ JsonBool(vsync)
@@ -1211,7 +1216,7 @@ namespace engine::client
 		m_pendingControlSettings = {};
 		m_gameplayUdpEnabled = cfg.GetBool("client.gameplay_udp.enabled", false);
 		m_gameplayUdpEnabledPending = m_gameplayUdpEnabled;
-		m_allowInsecureDev = cfg.GetBool("client.allow_insecure_dev", true);
+		m_allowInsecureDev = cfg.GetBool("client.allow_insecure_dev", false);
 		m_allowInsecureDevPending = m_allowInsecureDev;
 		m_authTimeoutMs = static_cast<uint32_t>(std::clamp<int64_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000), 1000, 15000));
 		m_authTimeoutMsPending = m_authTimeoutMs;
@@ -2087,7 +2092,7 @@ namespace engine::client
 		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", false);
 		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
 		const std::string locale = CurrentLocale();
@@ -2301,7 +2306,7 @@ namespace engine::client
 		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", false);
 		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const std::string login = m_login;
 		const bool shardPickWhenMultiple = cfg.GetBool("client.auth_ui.shard_pick_when_multiple", true);
@@ -2381,7 +2386,7 @@ namespace engine::client
 		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", false);
 		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const uint64_t accountId = m_pendingVerifyAccountId;
 		const std::string code = m_verifyCode;
@@ -2454,7 +2459,7 @@ namespace engine::client
 		const std::string host = cfg.GetEffectiveMasterHost("localhost");
 		const uint16_t port = static_cast<uint16_t>(cfg.GetInt("client.master_port", 3840));
 		const uint32_t timeoutMs = static_cast<uint32_t>(cfg.GetInt("client.auth_ui.timeout_ms", 5000));
-		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", true);
+		const bool allowInsecure = cfg.GetBool("client.allow_insecure_dev", false);
 		const std::string serverFingerprint = cfg.GetString("client.server_fingerprint", "");
 		const uint64_t accountId = m_pendingVerifyAccountId;
 

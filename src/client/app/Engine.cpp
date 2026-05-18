@@ -290,7 +290,7 @@ namespace engine
 			if (persisted.Has("client.gameplay_udp.enabled"))
 				cfg.SetValue("client.gameplay_udp.enabled", persisted.GetBool("client.gameplay_udp.enabled", cfg.GetBool("client.gameplay_udp.enabled", false)));
 			if (persisted.Has("client.allow_insecure_dev"))
-				cfg.SetValue("client.allow_insecure_dev", persisted.GetBool("client.allow_insecure_dev", cfg.GetBool("client.allow_insecure_dev", true)));
+				cfg.SetValue("client.allow_insecure_dev", persisted.GetBool("client.allow_insecure_dev", cfg.GetBool("client.allow_insecure_dev", false)));
 			if (persisted.Has("client.auth_ui.timeout_ms"))
 				cfg.SetValue("client.auth_ui.timeout_ms", persisted.GetInt("client.auth_ui.timeout_ms", cfg.GetInt("client.auth_ui.timeout_ms", 5000)));
 			if (persisted.Has("render.auth_ui.background_blit.enabled"))
@@ -315,7 +315,7 @@ namespace engine
 				cfg.GetBool("controls.invert_y", false),
 				cfg.GetString("controls.movement_layout", "wasd"),
 				cfg.GetBool("client.gameplay_udp.enabled", false),
-				cfg.GetBool("client.allow_insecure_dev", true),
+				cfg.GetBool("client.allow_insecure_dev", false),
 				cfg.GetInt("client.auth_ui.timeout_ms", 5000),
 				cfg.GetBool("render.auth_ui.background_blit.enabled", true),
 				cfg.GetString("render.auth_ui.background_blit.fit", "cover_height"));

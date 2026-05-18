@@ -635,7 +635,7 @@ n'est plus FPS mais **orbitale 3ᵉ personne** autour d'une position cible repr�
 ### Limites assumées (à enrichir dans des PR ultérieurs)
 - Avatar = humanoïde Y Bot Mixamo animé en boucle Walking permanente (sous-projet A, cf. §14.5). Texture diffuse, variantes raciales et state machine sont les sous-projets C et B respectivement.
 - Pas d'orientation différenciée selon direction de mouvement (perso suit la caméra).
-- Walk-bob = oscillation Y placeholder (pas de vraies anims squelettiques).
+- Walk-bob = oscillation Y synthétique de `OrbitalCameraController` toujours appliquée au modelMatrix, **en plus** de la vraie animation squelettique du clip Y Bot. Légèrement redondant (~4-7 cm d'amplitude superposée à la marche). Cleanup planifié en sous-projet B (state machine locomotion).
 - Sol supposé plat à Y=0 (pas de raycast contre la heightmap terrain).
 - Synchro position via `CHARACTER_SAVE_POSITION_REQUEST` (TCP master, ~1 s en mouvement) — pas un vrai protocole UDP gameplay temps-réel.
 

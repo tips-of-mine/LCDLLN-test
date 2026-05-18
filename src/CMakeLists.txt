@@ -664,6 +664,12 @@ elseif(UNIX)
   lcdlln_add_simple_test(skeleton_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkeletonTests.cpp)
 
+  # Sous-projet A (skinning/animation) etape 4/17 : AnimationClip + helpers
+  # d'interpolation de keyframes (lerp Vec3, slerp Quat, clamp hors-plage).
+  # AnimationClip.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(animation_clip_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationClipTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

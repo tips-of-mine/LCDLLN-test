@@ -3936,6 +3936,67 @@ namespace engine
 															} else {
 																LOG_INFO(Render, "[Engine] StartWalking clip loaded from '{}'", startWalkPath);
 															}
+
+															// B.1 (Task 12) : load 4 new clips (Run + Jump = with-skin via
+															// LoadClipsRetargeted, Fall + Land = animation-only via
+															// LoadClipsAnimOnly qui n'exige pas de cgltf_skin dans le .glb).
+															// Chacun est renomme depuis "mixamo.com" en "Run" / "Jump" /
+															// "Fall" / "Land" pour matcher StateToClipName (cf. anon ns).
+															auto loadWithSkin = [&](const std::string& path, const char* renameTo) -> bool {
+																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsRetargeted(
+																	path, m_playerSkinnedMesh->skeleton);
+																for (auto& c : clipsLoaded) {
+																	if (c.duration > 0.0f && c.name == "mixamo.com") {
+																		c.name = renameTo;
+																		m_playerSkinnedMesh->clips.push_back(std::move(c));
+																		return true;
+																	}
+																}
+																return false;
+															};
+
+															auto loadAnimOnly = [&](const std::string& path, const char* renameTo) -> bool {
+																auto clipsLoaded = engine::render::skinned::SkinnedMeshLoader::LoadClipsAnimOnly(
+																	path, m_playerSkinnedMesh->skeleton);
+																for (auto& c : clipsLoaded) {
+																	if (c.duration > 0.0f && c.name == "mixamo.com") {
+																		c.name = renameTo;
+																		m_playerSkinnedMesh->clips.push_back(std::move(c));
+																		return true;
+																	}
+																}
+																return false;
+															};
+
+															const std::string runPath  = contentRoot + "/models/avatars/y_bot_run/y_bot_run.glb";
+															const std::string jumpPath = contentRoot + "/models/avatars/y_bot_jump/y_bot_jump.glb";
+															const std::string fallPath = contentRoot + "/models/avatars/y_bot_fall/y_bot_fall.glb";
+															const std::string landPath = contentRoot + "/models/avatars/y_bot_land/y_bot_land.glb";
+
+															if (loadWithSkin(runPath,  "Run"))  LOG_INFO(Render, "[Engine] Run clip loaded from '{}'", runPath);
+															else                                LOG_WARN(Render, "[Engine] Run clip not loaded from '{}'", runPath);
+															if (loadWithSkin(jumpPath, "Jump")) LOG_INFO(Render, "[Engine] Jump clip loaded from '{}'", jumpPath);
+															else                                LOG_WARN(Render, "[Engine] Jump clip not loaded from '{}'", jumpPath);
+															if (loadAnimOnly(fallPath, "Fall")) LOG_INFO(Render, "[Engine] Fall clip loaded from '{}'", fallPath);
+															else                                LOG_WARN(Render, "[Engine] Fall clip not loaded from '{}'", fallPath);
+															if (loadAnimOnly(landPath, "Land")) LOG_INFO(Render, "[Engine] Land clip loaded from '{}'", landPath);
+															else                                LOG_WARN(Render, "[Engine] Land clip not loaded from '{}'", landPath);
+
+															// Etat initial : Idle. On lance la premiere animation explicitement
+															// pour eviter d'afficher la pose bind au tout premier frame avant
+															// que la state machine n'enclenche un Play (cf. lambda Geometry
+															// qui sample m_avatarCrossfade.Sample(skel, nowSec)).
+															// Defensif : si Idle a echoue au load, on garde l'init existante
+															// (m_avatarLocoStateEnterTime / m_avatarLocoState = Idle deja faits
+															// plus haut), la state machine fera son fallback (Task 11).
+															const engine::render::skinned::AnimationClip* idleClip = m_playerSkinnedMesh->FindClip("Idle");
+															if (idleClip) {
+																const float nowSec = std::chrono::duration<float>(
+																	std::chrono::steady_clock::now().time_since_epoch()).count();
+																m_avatarCrossfade.Play(*idleClip, /*loops=*/ true, nowSec);
+																m_avatarLocoStateEnterTime = std::chrono::steady_clock::now();
+																m_avatarLocoState = AvatarLocomotionState::Idle;
+															}
 														}
 													}
 													else

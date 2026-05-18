@@ -39,6 +39,11 @@ public:
     static std::vector<engine::math::Mat4> SamplePose(const Skeleton& skeleton,
                                                        const AnimationClip& clip,
                                                        float t);
+
+    // Walks the bone hierarchy (parent always before child) and returns global matrices.
+    // Requires locals.size() == skeleton.bones.size().
+    static std::vector<engine::math::Mat4> ComputeGlobalMatrices(const Skeleton& skeleton,
+                                                                  const std::vector<engine::math::Mat4>& locals);
 };
 
 }  // namespace engine::render::skinned

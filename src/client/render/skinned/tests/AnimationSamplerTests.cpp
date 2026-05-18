@@ -53,10 +53,32 @@ namespace
         REQUIRE(Approx(locals[0].m[0],  0.70710677f, 1e-3f)); // column 0, x component
         REQUIRE(Approx(locals[0].m[10], 0.70710677f, 1e-3f)); // column 2, z component
     }
+
+    void Test_ComputeGlobalMatrices_TwoBoneChain_AppliesParent()
+    {
+        Skeleton skel;
+        skel.bones.push_back(Bone{"root", -1, Mat4{}, Mat4{}});
+        skel.bones.push_back(Bone{"child", 0, Mat4{}, Mat4{}});
+
+        // root local = translate (10, 0, 0), child local = identity.
+        Mat4 rootLocal;
+        rootLocal.m[12] = 10.0f;
+        Mat4 childLocal; // identity (Mat4 default ctor)
+
+        std::vector<Mat4> locals = {rootLocal, childLocal};
+        std::vector<Mat4> globals = AnimationSampler::ComputeGlobalMatrices(skel, locals);
+
+        REQUIRE(globals.size() == 2);
+        // root global == root local (parent == -1)
+        REQUIRE(Approx(globals[0].m[12], 10.0f));
+        // child global == root global * child local == translate(10,0,0) * identity == translate(10,0,0)
+        REQUIRE(Approx(globals[1].m[12], 10.0f));
+    }
 }
 
 int main()
 {
     Test_SamplePose_AtMidTime_HalfRotation();
+    Test_ComputeGlobalMatrices_TwoBoneChain_AppliesParent();
     return g_failed == 0 ? 0 : 1;
 }

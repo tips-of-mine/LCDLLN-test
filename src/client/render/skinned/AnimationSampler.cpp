@@ -61,4 +61,19 @@ std::vector<engine::math::Mat4> AnimationSampler::SamplePose(const Skeleton& ske
     return locals;
 }
 
+std::vector<engine::math::Mat4> AnimationSampler::ComputeGlobalMatrices(const Skeleton& skeleton,
+                                                                         const std::vector<engine::math::Mat4>& locals)
+{
+    std::vector<engine::math::Mat4> globals(skeleton.bones.size());
+    for (size_t i = 0; i < skeleton.bones.size(); ++i) {
+        const int parent = skeleton.bones[i].parentIndex;
+        if (parent < 0) {
+            globals[i] = locals[i];
+        } else {
+            globals[i] = globals[parent] * locals[i];
+        }
+    }
+    return globals;
+}
+
 }  // namespace engine::render::skinned

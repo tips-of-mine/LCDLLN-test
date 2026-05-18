@@ -1,21 +1,30 @@
-# Y Bot — Run (Fast Run, Mixamo)
+# Y Bot — Run (running, Mixamo)
 
-**Source** : Mixamo (Adobe), personnage Y Bot, animation **Fast Run**, with-skin.
+**Source** : Mixamo (Adobe), animation **running**, **animation-only** (option "without skin" cochée).
 **Téléchargé le** : 2026-05-18.
-**Conversion** : `fbx_to_gltf.ps1 -EntityName y_bot_run -Category avatars -SourceFbx "Fast Run"` (FBX2glTF v0.13.0 Godot fork).
-**Taille** : ~1.94 MB (with-skin = mesh + skeleton + clip baked).
+**Conversion** : `fbx_to_gltf.ps1 -EntityName y_bot_run -Category avatars -SourceFbx "running"` (FBX2glTF v0.13.0 Godot fork).
+**Taille** : ~43 KB (très petit — pas de mesh, juste les keyframes du squelette).
+
+## Particularité : animation-only
+
+Ce `.glb` n'a **pas** de `cgltf_skin` (Mixamo n'en exporte pas quand "without skin" est coché). Le loader standard `SkinnedMeshLoader::LoadClipsRetargeted` ne marche PAS dessus — il bail au check `data->skins_count == 0`.
 
 ## Animations dans le fichier
 
-Le .glb contient 2 animations exposées par FBX2glTF :
-- **`mixamo.com`** : Fast Run cycle, 16 frames — c'est le clip à jouer, renommé `Run` au load par Engine.cpp.
-- **`Take 001`** : track vide héritée de l'export FBX (range UINT32_MAX). Filtrée par `duration > 0.0f` dans le loader.
+- **`mixamo.com`** : running cycle, 21 frames. Renommé `Run` au load par Engine.cpp.
 
 ## Usage runtime
 
-Chargé via `SkinnedMeshLoader::LoadClipsRetargeted` (loader standard for with-skin files).
-État `AvatarLocomotionState::Run` dans la state machine de `Engine.cpp` (sous-projet B.1).
+Chargé via le helper dédié **`SkinnedMeshLoader::LoadClipsAnimOnly`** (Task 4 de B.1) qui parse les channels d'animation directement et retargete sur le skeleton de Y Bot par nom de bone.
+
+État `AvatarLocomotionState::Run` dans la state machine de `Engine.cpp` (déclenché par input.run quand le perso se déplace).
+
+## Choix « running » plutôt que « Fast Run »
+
+Initialement importé depuis `Fast Run.fbx` (with-skin, 1.78 MB). Bascule sur `running.fbx`
+(animation-only, 43 KB) le 2026-05-18 pour : (1) cycle de course plus générique / réaliste,
+(2) réduction du poids repo (1.94 MB → 43 KB).
 
 ## Licence
 
-Mixamo Terms of Use — usage commercial autorisé pour les assets téléchargés.
+Mixamo Terms of Use — usage commercial autorisé.

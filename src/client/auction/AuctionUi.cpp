@@ -196,16 +196,29 @@ namespace engine::client
 			LOG_WARN(Net, "[AuctionHousePresenter] Bid: no send callback");
 			return;
 		}
+		// Audit 2026-05-18 : double-submit guard. Avant ce check, m_pendingBidAuctionId
+		// etait mis a jour APRES m_send -> deux clics rapides envoyaient deux
+		// BidRequest sur le wire, le serveur devait dedupliquer (ou pas, doublant
+		// la mise). On block desormais cote client tant qu'une mise est en vol.
+		if (m_pendingBidAuctionId == auctionId)
+		{
+			LOG_DEBUG(Net, "[AuctionHousePresenter] Bid: deja en vol pour auctionId={}, ignore", auctionId);
+			return;
+		}
 		const auto payload = engine::network::BuildAuctionBidRequestPayload(
 			auctionId, bidAmountCopper);
+		// On reserve le slot AVANT l'envoi pour que la fenetre de race
+		// (entre Send et m_pendingBidAuctionId=X) ne laisse pas passer un double clic.
+		const uint64_t previousPending = m_pendingBidAuctionId;
+		m_pendingBidAuctionId = auctionId;
 		if (!m_send(engine::network::kOpcodeAuctionBidRequest, payload))
 		{
 			m_state.lastErrorText = "Echec envoi (mise enchere).";
 			LOG_WARN(Net, "[AuctionHousePresenter] Bid: send failed auctionId={} amount={}",
 				auctionId, bidAmountCopper);
+			m_pendingBidAuctionId = previousPending; // rollback du flag pour permettre un retry
 			return;
 		}
-		m_pendingBidAuctionId = auctionId;
 		LOG_DEBUG(Net, "[AuctionHousePresenter] Auction BidRequest queued auctionId={} amount={}",
 			auctionId, bidAmountCopper);
 	}

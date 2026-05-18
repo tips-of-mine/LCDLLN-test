@@ -298,13 +298,15 @@ namespace engine::audio
 		}
 
 		m_currentZoneId = zoneId;
-		for (Active3DSound& sound : m_activeSounds)
-		{
-			if (sound.zoneLoop)
-			{
-				sound.active = false;
-			}
-		}
+		// Audit 2026-05-18 : avant ce fix, les sounds zoneLoop des zones quittees
+		// etaient marques `active=false` mais JAMAIS retires de m_activeSounds.
+		// Sur une longue session avec changements de zone frequents, le vecteur
+		// croissait indefiniment et Tick iterait toute l'historique morte.
+		// On erase desormais : zoneLoop des zones precedentes + toute entry deja
+		// marquee inactive (defense supplementaire contre les leaks Play3D).
+		std::erase_if(m_activeSounds, [](const Active3DSound& s) {
+			return s.zoneLoop || !s.active;
+		});
 
 		bool activated = false;
 		for (const ZoneAmbienceDefinition& ambience : m_zoneAmbience)

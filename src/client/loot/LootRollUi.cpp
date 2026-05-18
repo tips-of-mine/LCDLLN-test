@@ -79,22 +79,43 @@ namespace engine::client
 			LOG_WARN(Net, "[LootRollUiPresenter] Choose: no send callback");
 			return;
 		}
+		// Audit 2026-05-18 : double-submit guard. Avant ce check, myChoice etait
+		// pose APRES m_send -> double-clic envoyait deux ChoiceRequest.
+		// On reserve le slot AVANT l'envoi pour fermer la fenetre de race.
+		uint8_t previousChoice = 0;
+		bool reserved = false;
+		for (auto& p : m_state.pendingRolls)
+		{
+			if (p.rollId == rollId)
+			{
+				if (p.myChoice != 0)
+				{
+					LOG_DEBUG(Net, "[LootRollUiPresenter] Choose: choix deja envoye rollId={}, ignore", rollId);
+					return;
+				}
+				previousChoice = p.myChoice;
+				p.myChoice = choice;
+				reserved = true;
+				break;
+			}
+		}
 		const auto payload = engine::network::BuildLootRollChoiceRequestPayload(rollId, choice);
 		if (!m_send(engine::network::kOpcodeLootRollChoiceRequest, payload))
 		{
 			m_state.lastErrorText = "Echec envoi (loot choice).";
 			LOG_WARN(Net, "[LootRollUiPresenter] Choose: send failed rollId={}", rollId);
-			return;
-		}
-
-		// Marque myChoice dans le pending pour griser les boutons.
-		for (auto& p : m_state.pendingRolls)
-		{
-			if (p.rollId == rollId)
+			if (reserved) // rollback du flag pour permettre un retry
 			{
-				p.myChoice = choice;
-				break;
+				for (auto& p : m_state.pendingRolls)
+				{
+					if (p.rollId == rollId)
+					{
+						p.myChoice = previousChoice;
+						break;
+					}
+				}
 			}
+			return;
 		}
 		LOG_DEBUG(Net, "[LootRollUiPresenter] Choice queued rollId={} choice={}",
 			rollId, static_cast<unsigned>(choice));

@@ -605,6 +605,7 @@ target_sources(engine_core PRIVATE src/shared/network/ServerProtocol.cpp)
 target_include_directories(engine_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/external/stb
+  ${CMAKE_SOURCE_DIR}/external/cgltf
   ${CMAKE_SOURCE_DIR}/external/miniaudio
   ${VMA_INCLUDE_DIRS}
 )

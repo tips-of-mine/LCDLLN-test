@@ -674,6 +674,8 @@ Parsing au runtime via **cgltf** (single-header MIT, vendored dans `external/cgl
 | `src/client/render/skinned/SkinnedRenderer.h/.cpp` | Pipeline Vulkan dédié skinné (init + record). Renderpass adapté de `m_renderPassLoad` du GeometryPass (draw au-dessus du G-buffer terrain). |
 | `game/data/shaders/skinned_gbuffer.vert` | Applique skinning par matrices d'os ; outputs identiques à `gbuffer_geometry.vert` → réutilise `gbuffer_geometry.frag` tel quel. |
 | `game/data/models/avatars/y_bot/y_bot.glb` | Premier humanoïde de référence (Mixamo Y Bot, mannequin gris, ~65 bones + clip "mixamo.com" walking 36 frames). |
+| `game/data/models/avatars/y_bot_idle/y_bot_idle.glb` | Mixamo Y Bot + clip "Standing Idle" baked (~2 MB). |
+| `game/data/models/avatars/y_bot_start_walking/y_bot_start_walking.glb` | Mixamo Y Bot + clip "Start Walking" baked (~2 MB). |
 | `tools/asset_pipeline/download_fbx2gltf.ps1` | Télécharge `FBX2glTF.exe` v0.13.0 (Godot fork) avec vérif SHA256. Binaire gitignored. |
 | `tools/asset_pipeline/fbx_to_gltf.ps1` | Wrapper convertit FBX inbox → glTF binaire game/data/models/. Param `-SourceFbx` optionnel. |
 | `tools/asset_pipeline/README.md` | Procédure utilisateur Mixamo → drop → conversion. |
@@ -693,6 +695,50 @@ Le draw par frame :
 
 **Fallback préservé** : si `y_bot.glb` absent / SPV manquant / init Vulkan échoue, le cube
 `avatar_placeholder.mesh` reste affiché avec un log warning. Pas de crash.
+
+### State machine de locomotion (3 états — sortie partielle du sous-projet B)
+
+L'utilisateur a demandé après validation de A un comportement réaliste : Y Bot
+en pose Idle quand immobile, transition "Start Walking" quand il commence à
+marcher, puis cycle "Standard Walk" en boucle. Implémenté **en minimal** au
+sein de A (le sous-projet B propre apportera blend / crossfade / surface
+modulation / saut).
+
+État courant : `Engine::AvatarLocomotionState { Idle, StartWalking, Walking }`
+(`Engine.h`).
+
+Transitions (évaluées par frame dans le lambda FrameGraph "Geometry") :
+
+| Depuis | Vers | Condition |
+|---|---|---|
+| Idle | StartWalking | `movingNow == true` (delta XZ > 1e-4 m sur la frame) |
+| StartWalking | Walking | `stateElapsed >= StartWalking.duration` |
+| StartWalking | Idle | `movingNow == false` (interruption en cours de transition) |
+| Walking | Idle | `movingNow == false` |
+
+Sélection de clip : `m_playerSkinnedMesh->FindClip(name)` où name vaut
+`"Idle"`, `"StartWalking"`, ou `"Walking"`. Les 3 clips sont chargés depuis
+3 .glb séparés et fusionnés au boot via `SkinnedMeshLoader::LoadClipsRetargeted`
+(retarget par nom de bone — robuste aux différences d'ordre des joints).
+
+Temps dans le clip : `fmod(stateElapsed, clip.duration)` pour les clips loop
+(Idle, Walking), `min(stateElapsed, clip.duration)` pour les clips one-shot
+(StartWalking).
+
+**Hard cuts** entre clips — la pose snap d'une frame à l'autre, pas de blend.
+Acceptable comme placeholder ; le crossfade propre est full sous-projet B.
+
+Détection de mouvement : delta XZ du modelMatrix entre 2 frames consécutives,
+threshold 1e-4 m (équivalent ~6 mm/s à 60 FPS). **Fragile** : sous-projet B
+branchera ça sur un vrai signal input/gameplay au lieu du delta de position.
+
+### Orientation 180° de l'avatar
+
+Mixamo Y Bot a son "forward" en +Z par défaut. La convention caméra
+3ᵉ personne de LCDLLN attend que l'avatar fasse FACE à l'opposé de la
+caméra (on voit son dos). Fix : rotation 180° autour de Y appliquée à la
+model matrix juste avant `SkinnedRenderer::Record`. Code :
+`finalModelMat = cameraModel * Quat::FromAxisAngle({0,1,0}, π).ToMat4()`.
 
 ### Convention winding (anti-régression critique)
 
@@ -717,8 +763,10 @@ les frontFace entre pipelines** — vérifier le winding réel du mesh concerné
 
 ### Limites assumées (à enrichir dans sous-projets B/C+)
 
-- Une seule animation (`"mixamo.com"` = Walking) jouée en boucle permanente, **pas de
-  state machine** Idle/Walk/Run (→ sous-projet B).
+- State machine **minimale** Idle / StartWalking / Walking (3 clips, hard cuts).
+  Le sous-projet B apportera : blend / crossfade entre clips, surface modulation
+  (eau / sable / neige), saut hauteur / longueur, état Run distinct, courrir/marcher slow,
+  vraie détection input/gameplay au lieu du delta XZ position.
 - Pas de variantes raciales — Y Bot affiché pour TOUS les personnages quelle que soit
   la race choisie à la création (→ sous-projet C).
 - Pas de remote players visibles animés — seul l'avatar local est skinné (→ B + réseau).

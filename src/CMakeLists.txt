@@ -678,6 +678,14 @@ elseif(UNIX)
   lcdlln_add_simple_test(animation_sampler_tests
     ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/AnimationSamplerTests.cpp)
 
+  # Sous-projet A (skinning/animation) etape 10/17 : SkinnedMeshLoader::LoadCpuOnlyForTests.
+  # Parse un .glb via cgltf et produit SkinnedMeshCpuData (Skeleton + vertices + indices + clips).
+  # Le test charge le vrai fixture game/data/models/avatars/y_bot/y_bot.glb et vérifie les
+  # invariants (squelette topo-ordered, mesh non vide, clip mixamo trouvée, poids normalisés).
+  # SkinnedMeshLoader.cpp est compile dans engine_core (CMakeLists racine).
+  lcdlln_add_simple_test(skinned_mesh_loader_tests
+    ${CMAKE_SOURCE_DIR}/src/client/render/skinned/tests/SkinnedMeshLoaderTests.cpp)
+
   # CMANGOS.05 (Phase 2.05c) : VMapManager LOS + GetHeight tests.
   lcdlln_add_simple_test(vmap_manager_tests
     ${CMAKE_SOURCE_DIR}/src/shardd/internals/vmap/VMapManagerTests.cpp

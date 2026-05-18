@@ -1030,7 +1030,13 @@ int main(int argc, char** argv)
 			serverListHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeForgotPasswordRequest
 		      || opcode == kOpcodeResetPasswordRequest
-		      || opcode == kOpcodeVerifyEmailRequest)
+		      || opcode == kOpcodeVerifyEmailRequest
+		      // Audit 2026-05-18 : opcode 37 (kOpcodeResendVerificationRequest)
+		      // etait orphelin — PasswordResetHandler::HandlePacket l.49 le gere
+		      // (HandleResendVerification l.296) mais le routing principal ne le
+		      // dispatchait pas, le client envoyait dans le vide et tombait dans
+		      // le default branch -> authHandler -> BAD_REQUEST silencieux.
+		      || opcode == kOpcodeResendVerificationRequest)
 			passwordResetHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
 		else if (opcode == kOpcodeTermsStatusRequest || opcode == kOpcodeTermsContentRequest || opcode == kOpcodeTermsAcceptRequest)
 			termsHandler.HandlePacket(connId, opcode, requestId, sessionIdHeader, payload, payloadSize);
